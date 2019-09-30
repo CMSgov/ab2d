@@ -1,0 +1,13 @@
+# macOS generated files
+.DS_Store
+
+# Local Terraform files and directories
+**/.terraform/*
+**/*.tfstate
+**/*.tfstate.*
+**/*.tfvars
+**/terraform.tfstate.*.backup
+
+# Packer output manifest from builds
+**/packer/**/output.txt
+
