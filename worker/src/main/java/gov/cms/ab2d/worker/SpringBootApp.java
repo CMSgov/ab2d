@@ -1,14 +1,14 @@
-package gov.cms.ab2d;
+package gov.cms.ab2d.worker;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 
 @SpringBootApplication
-public class App {
+public class SpringBootApp {
 
     public static void main(String[] args) {
-        SpringApplication.run(App.class, args);
+        SpringApplication.run(SpringBootApp.class, args);
     }
 
 }
