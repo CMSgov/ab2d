@@ -61,7 +61,7 @@ sudo mv -f /tmp/splunk-deploymentclient.conf /opt/splunkforwarder/etc/system/loc
 #
 # # Install newrelic infrastructure agent
 # cd /tmp
-# aws s3 cp s3://sb-terraform-moss/encrypted-newrelic-infra.yml ./encrypted-newrelic-infra.yml
+# aws s3 cp s3://sb-terraform-ab2d/encrypted-newrelic-infra.yml ./encrypted-newrelic-infra.yml
 # aws kms --region us-east-1 decrypt --ciphertext-blob fileb://encrypted-newrelic-infra.yml --output text --query Plaintext | base64 --decode > newrelic-infra.yml
 # [ -s newrelic-infra.yml ] || (echo "NewRelic file decryption failed" && exit 1)
 # sudo mv newrelic-infra.yml /etc/newrelic-infra.yml
