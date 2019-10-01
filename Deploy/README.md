@@ -13,6 +13,7 @@
    * [Install the AWS CLI using pip3](#install-the-aws-cli-using-pip3)
    * [Create an AWS IAM user](#create-an-aws-iam-user)
    * [Configure AWS CLI](#configure-aws-cli)
+2. [Deploy solution](#deploy-solution)
 
 ## Setup develoment machine
 
@@ -95,7 +96,7 @@
    $ pip3 install detect-secrets
    ```
 
-## Install Packer
+### Install Packer
 
 1. Install Packer using HomeBrew
 
@@ -109,7 +110,7 @@
    $ packer --version
    ```
 
-## Install Terraform
+### Install Terraform
 
 1. Install Terraform 0.12
 
@@ -123,14 +124,41 @@
    $ terraform --version
    ```
 
-## Install the AWS CLI using pip3
+### Install the AWS CLI using pip3
 
 > *** TO DO ***
 
-## Create an AWS IAM user
+### Create an AWS IAM user
 
 > *** TO DO ***
 
-## Configure AWS CLI
+### Configure AWS CLI
 
 > *** TO DO ***
+
+### Create AWS profile
+
+1. Add an "ab2d" profile to the AWS credentials file
+
+   > *** TO DO ***
+
+## Deploy solution
+
+1. Change to the "ab2d" repo directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d
+   ```
+   
+1. Set AWS_PROFILE
+
+   ```ShellSession
+   $ source ./Deploy/set-aws-profile.sh
+   ```
+
+1. Deploy the solution to the AWS account associated with the AWS profile
+
+   ```ShellSession
+   $ ./Deploy/deploy.sh
+   ```
+   
