@@ -26,3 +26,15 @@
    "vpc_id": "VPC_ID",
    ```
 
+1. Open "app.json" for "app" under packer
+
+   ```ShellSession
+   $ vim ./Deploy/packer/app/splunk-deploymentclient.conf
+   ```
+
+1. Update the following
+
+   ```
+   targetUri = DEPLOYMENT_SERVER_PRIVATE_IP:8089
+   ```
+
