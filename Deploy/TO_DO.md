@@ -7,6 +7,8 @@
 
 ## To do after granted access to AWS account
 
+1. Complete "Setup develoment machine" section for AWS access
+
 1. Verify the gold AMI
 
    ```
