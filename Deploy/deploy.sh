@@ -64,7 +64,7 @@ fi
 
 
 # # Switch context to terraform environment
-# cd terraform/environments/ab2d-$ENVIRONMENT
+# cd terraform/environments/cms-ab2d-$ENVIRONMENT
 
 
 # # Ensure Old Autoscaling Groups and containers are around to service requests
