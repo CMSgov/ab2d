@@ -128,3 +128,51 @@
      --subnet-id $SUBNET_ID
    ```
 
+1. Create security group
+
+   *Example for test cluster:*
+   
+   ```ShellSession
+   $ aws --region us-east-1 ec2 create-security-group \
+     --description "test cluster" \
+     --group-name test-cluster-sg \
+     --vpc-id $VPC_ID
+   ```
+
+1. Set SG_ID environment variable
+
+   *Example:*
+   
+   ```ShellSession
+   $ export SG_ID=sg-032be103af7f834fc
+   ```
+
+1. Add SSH security group ingress rule
+
+   ```ShellSession
+   $ aws --region us-east-1 ec2 authorize-security-group-ingress \
+     --group-id $SG_ID \
+     --protocol tcp \
+     --port 22 \
+     --cidr 0.0.0.0/0
+   ```
+
+1. Create keypair
+
+   *Example for test cluster:*
+   
+   ```ShellSession
+   $ aws --region us-east-1 ec2 create-key-pair \
+     --key-name test-cluster \
+     --query 'KeyMaterial' \
+     --output text \
+     > ~/.ssh/test-cluster.pem
+   ```
+
+1. Change permissions of the key
+
+   *Example for test cluster:*
+   
+   ```ShellSession
+   $ chmod 600 ~/.ssh/test-cluster.pem
+   ```
