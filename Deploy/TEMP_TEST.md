@@ -3,6 +3,7 @@
 ## Table of Contents
 
 1. [Create base AWS networking](#create-base-aws-networking)
+1. [Create AWS security components](#create-aws-security-components)
 
 ## Create AWS networking
 
@@ -127,6 +128,8 @@
      --route-table-id $RT_ID \
      --subnet-id $SUBNET_ID
    ```
+
+## Create AWS security components
 
 1. Create security group
 
