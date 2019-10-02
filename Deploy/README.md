@@ -126,22 +126,95 @@
 
 ### Install the AWS CLI using pip3
 
-> *** TO DO ***
+1. Install the AWS CLI using pip3
 
+   ```ShellSession
+   $ pip3 install awscli --upgrade --user --no-warn-script-location
+   ```
+
+1. Check AWS CLI version
+
+   ```ShellSession
+   $ aws --version
+   ```
+
+1. Backup existing profile shell script
+   
+   *Example for bash:*
+
+   ```ShellSession
+   $ cp ~/.bash_profile ~/.bash_profile_backup
+   ```
+
+1. Add AWS CLI path to your interactive shell script
+
+   *Example for bash:*
+   
+   ```ShellSession
+   $ printf '\n# Add AWS CLI to Path' >> ~/.bash_profile
+   $ printf '\nexport PATH="$PATH:$HOME/Library/Python/3.7/bin"' >> ~/.bash_profile
+   ```
+
+1. Load updated profile in the current terminal
+
+   ```ShellSession
+   $ source ~/.bash_profile
+   ```
+
+1. Check the AWS version
+
+   ```ShellSession
+   $ aws --version
+   ```
+   
 ### Create an AWS IAM user
 
-> *** TO DO ***
+1. Request AWS administrator to create a user that has both console and programmatic access
+
+1. Note that the administrator will provide you with a "credentials.csv" file that will include the following information
+   
+   - User name
+
+   - Password
+
+   - Access key ID
+
+   - Secret access key
+
+   - Console login link
 
 ### Configure AWS CLI
 
-> *** TO DO ***
+1. Configure AWS CLI
 
-### Create AWS profile
+   *Example for "semanticbitsdemo" AWS account:*
+   
+   ```ShellSession
+   $ aws configure --profile=sbdemo
+   ```
 
-1. Add an "ab2d" profile to the AWS credentials file
+1. Enter {your aws access key} at the **AWS Access Key ID** prompt
 
-   > *** TO DO ***
+1. Enter {your aws secret access key} at the AWS Secret Access Key prompt
 
+1. Enter the following at the **Default region name** prompt
+
+   ```
+   us-east-1
+   ```
+
+1. Enter the following at the **Default output format** prompt
+
+   ```
+   json
+   ```
+
+1. Examine the contents of your AWS credentials file
+
+   ```ShellSession
+   $ cat ~/.aws/credentials
+   ```
+   
 ## Deploy solution
 
 1. Change to the "ab2d" repo directory
