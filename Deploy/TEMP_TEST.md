@@ -4,6 +4,7 @@
 
 1. [Create base AWS networking](#create-base-aws-networking)
 1. [Create AWS security components](#create-aws-security-components)
+1. [Create an image in an AWS Elastic Container Registry](#create-an-image-in-an-aws-elastic-container-egistry)
 
 ## Create AWS networking
 
@@ -179,3 +180,121 @@
    ```ShellSession
    $ chmod 600 ~/.ssh/test-cluster.pem
    ```
+
+## Update files for AWS test environment
+
+1. Change to the repo directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d
+   ```
+
+1. Backup the "app.json" file to be used for the government AWS account
+
+   ```ShellSession
+   $ cp Deploy/packer/app/app.json Deploy/packer/app/app.json.gov
+   ```
+
+1. Set target profile
+
+   *Example for the "semanticbitsdemo" AWS account:*
+   
+   ```ShellSession
+   $ export AWS_PROFILE="sbdemo"
+   ```
+
+1. Get the latest CentOS AMI
+
+   ```ShellSession
+   $ aws --region us-east-1 ec2 describe-images \
+     --owners aws-marketplace \
+     --filters Name=product-code,Values=aw0evgkw8e5c1q413zgy5pjce \
+     --query 'Images[*].[ImageId,CreationDate]' \
+     --output text \
+     | sort -k2 -r \
+     | head -n1
+   ```
+
+1. Note the AMI in the output
+
+   *Example:*
+   
+   ```
+   ami-02eac2c0129f6376
+   ```
+
+1. Open the "app.json" file
+
+   ```ShellSession
+   $ vim Deploy/packer/app/app.json
+   ```
+
+1. Change the following with the noted AMI
+
+   *Example:*
+   
+   ```
+   "gold_ami": "ami-02eac2c0129f6376"
+   ```
+
+1. Change the networking settings based on the VPC that was created
+
+   *Example:*
+   
+   ```
+   "subnet_id": "subnet-0b8ba5ef9b89b07ed",
+   "vpc_id": "vpc-064c3621b7205922a",
+   ```
+
+1. Change the SSH user
+
+   *Example:*
+
+   ```
+   "ssh_username": "centos",
+   ```
+
+1. Save and close "app.json"
+
+1. Backup the "provision-app-instance.sh" file to be used for the government AWS account
+
+   ```ShellSession
+   $ cp Deploy/packer/app/provision-app-instance.sh Deploy/packer/app/provision-app-instance.sh.gov
+   ```
+
+1. Open "provision-app-instance.sh"
+
+   ```ShellSession
+   $ vim Deploy/packer/app/provision-app-instance.sh
+   ```
+
+1. Comment out gold disk related items
+
+   1. Comment out "Update splunk forwarder config" section
+
+      ```
+      #
+      # LSH Comment out gold disk related section
+      #
+      # # Update splunk forwarder config
+      # sudo chown splunk:splunk /tmp/splunk-deploymentclient.conf
+      # sudo mv -f /tmp/splunk-deploymentclient.conf /opt/splunkforwarder/etc/system/local/deploymentclient.conf
+      ```
+
+   1. Comment out "Make sure splunk can read all logs" section
+
+      ```
+      #
+      # LSH Comment out gold disk related section
+      #
+      # # Make sure splunk can read all logs
+      # sudo /opt/splunkforwarder/bin/splunk stop
+      # sudo /opt/splunkforwarder/bin/splunk clone-prep-clear-config
+      # sudo /opt/splunkforwarder/bin/splunk start
+      ```
+
+1. Save and close "provision-app-instance.sh"
+   
+## Create an image in an AWS Elastic Container Registry
+
+> *** TO DO ***

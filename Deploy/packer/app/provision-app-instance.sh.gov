@@ -52,12 +52,9 @@ sudo chmod 755 /etc/use_dsa_with_iptables
 # Increase default rsyslog rate limit threshold
 sudo sed -i '/SystemLogRateLimitBurst/c\$SystemLogRateLimitBurst 2000' /etc/rsyslog.conf
 
-#
-# LSH Comment out gold disk related section
-#
-# # Update splunk forwarder config
-# sudo chown splunk:splunk /tmp/splunk-deploymentclient.conf
-# sudo mv -f /tmp/splunk-deploymentclient.conf /opt/splunkforwarder/etc/system/local/deploymentclient.conf
+# Update splunk forwarder config
+sudo chown splunk:splunk /tmp/splunk-deploymentclient.conf
+sudo mv -f /tmp/splunk-deploymentclient.conf /opt/splunkforwarder/etc/system/local/deploymentclient.conf
 
 #
 # LSH *** TO DO ***: Need to implement S3 with "encrypted-newrelic-infra.yml" file
@@ -72,13 +69,10 @@ sudo sed -i '/SystemLogRateLimitBurst/c\$SystemLogRateLimitBurst 2000' /etc/rsys
 # sudo yum -q makecache -y --disablerepo='*' --enablerepo='newrelic-infra'
 # sudo yum install newrelic-infra -y
 
-#
-# LSH Comment out gold disk related section
-#
-# # Make sure splunk can read all logs
-# sudo /opt/splunkforwarder/bin/splunk stop
-# sudo /opt/splunkforwarder/bin/splunk clone-prep-clear-config
-# sudo /opt/splunkforwarder/bin/splunk start
+# Make sure splunk can read all logs
+sudo /opt/splunkforwarder/bin/splunk stop
+sudo /opt/splunkforwarder/bin/splunk clone-prep-clear-config
+sudo /opt/splunkforwarder/bin/splunk start
 
 # Make sure ec2 userdata is enabled
 sudo touch /var/tmp/initial
