@@ -2,7 +2,6 @@ package gov.cms.ab2d.domain;
 
 
 import javax.persistence.*;
-import java.util.Objects;
 import java.util.Set;
 
 @Entity
@@ -16,7 +15,7 @@ public class Contract {
     private String contractId;
 
     @OneToMany(mappedBy = "contract")
-    private Set<Authorization> authorizations;
+    private Set<Attestation> attestations;
 
     @ManyToMany(mappedBy = "contracts")
     private Set<Beneficiary> beneficiaries;
@@ -37,12 +36,12 @@ public class Contract {
         this.contractId = contractId;
     }
 
-    public Set<Authorization> getAuthorizations() {
-        return authorizations;
+    public Set<Attestation> getAttestations() {
+        return attestations;
     }
 
-    public void setAuthorizations(Set<Authorization> authorizations) {
-        this.authorizations = authorizations;
+    public void setAttestations(Set<Attestation> attestations) {
+        this.attestations = attestations;
     }
 
     public Set<Beneficiary> getBeneficiaries() {
@@ -53,16 +52,5 @@ public class Contract {
         this.beneficiaries = beneficiaries;
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        Contract contract = (Contract) o;
-        return Objects.equals(id, contract.id);
-    }
 
-    @Override
-    public int hashCode() {
-        return Objects.hash(id);
-    }
 }

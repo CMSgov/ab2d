@@ -1,11 +1,6 @@
 package gov.cms.ab2d.domain;
 
 import javax.persistence.*;
-import java.util.Collection;
-import java.util.Date;
-import java.util.Objects;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 @Entity
 @Table(name = "`user`")
@@ -16,15 +11,10 @@ public class User {
     private Long id;
 
     @Column(unique = true)
-    private String login;
-
-    private String passwordHash;
+    private String userID;
     private String name;
     private String email;
-    private Date expire;
-
-    @OneToMany(mappedBy = "user", fetch = FetchType.EAGER)
-    private Set<Authorization> authorizations;
+    private Boolean accountDisabled;
 
     public Long getId() {
         return id;
@@ -34,20 +24,12 @@ public class User {
         this.id = id;
     }
 
-    public String getLogin() {
-        return login;
+    public String getUserID() {
+        return userID;
     }
 
-    public void setLogin(String login) {
-        this.login = login;
-    }
-
-    public String getPasswordHash() {
-        return passwordHash;
-    }
-
-    public void setPasswordHash(String passwordHash) {
-        this.passwordHash = passwordHash;
+    public void setUserID(String userID) {
+        this.userID = userID;
     }
 
     public String getName() {
@@ -66,39 +48,11 @@ public class User {
         this.email = email;
     }
 
-    public Date getExpire() {
-        return expire;
+    public Boolean getAccountDisabled() {
+        return accountDisabled;
     }
 
-    public void setExpire(Date expire) {
-        this.expire = expire;
-    }
-
-    public Set<Authorization> getAuthorizations() {
-        return authorizations;
-    }
-
-    public void setAuthorizations(Set<Authorization> authorizations) {
-        this.authorizations = authorizations;
-    }
-
-    @Transient
-    public Collection<Contract> getAuthorizedContracts() {
-        return getAuthorizations().stream().
-                filter(auth -> auth.getAttestDate().before(new Date())).
-                map(auth -> auth.getContract()).collect(Collectors.toSet());
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        User user = (User) o;
-        return Objects.equals(id, user.id);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(id);
+    public void setAccountDisabled(Boolean accountDisabled) {
+        this.accountDisabled = accountDisabled;
     }
 }
