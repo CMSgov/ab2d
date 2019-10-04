@@ -3,14 +3,14 @@
     "aws_profile": "{{env `AWS_PROFILE`}}",
     "my_ip_address": "",
     "git_commit_hash": "",
-    "gold_ami": "ami-02eac2c0129f6376"
+    "gold_ami": "ami-02eac2c0129f6376b"
   },
   "builders": [
     {
       "ssh_pty": true,
       "type": "amazon-ebs",
       "profile": "{{ user `aws_profile`}}",
-      "iam_instance_profile": "AB2D",
+      "iam_instance_profile": "Ab2dInstanceProfile",
       "region": "us-east-1",
       "instance_type": "c4.xlarge",
       "subnet_id": "subnet-0b8ba5ef9b89b07ed",
@@ -20,7 +20,7 @@
       "ami_virtualization_type": "hvm",
       "associate_public_ip_address": "true",
       "temporary_security_group_source_cidrs": "{{user `my_ip_address`}}/32",
-      "ssh_username": "ec2-user",
+      "ssh_username": "centos",
       "tags": {
         "application_git_hash": "{{user `git_commit_hash`}}",
         "application_name": "AB2D",

@@ -1,9 +1,14 @@
-# TEMP TEST
+# Internal Test Environment
 
 ## Table of Contents
 
 1. [Create base AWS networking](#create-base-aws-networking)
 1. [Create AWS security components](#create-aws-security-components)
+1. [Update files for AWS test environment](#update-files-for-aws-test-environment)
+1. [Create S3 bucket for automation](#create-s3-bucket-for-automation)
+1. [Create policies](#create-policies)
+1. [Create roles](#create-roles)
+1. [Test deployment](#test-deployment)
 1. [Create an image in an AWS Elastic Container Registry](#create-an-image-in-an-aws-elastic-container-egistry)
 
 ## Create AWS networking
@@ -220,7 +225,7 @@
    *Example:*
    
    ```
-   ami-02eac2c0129f6376
+   ami-02eac2c0129f6376b
    ```
 
 1. Open the "app.json" file
@@ -234,7 +239,7 @@
    *Example:*
    
    ```
-   "gold_ami": "ami-02eac2c0129f6376"
+   "gold_ami": "ami-02eac2c0129f6376b"
    ```
 
 1. Change the networking settings based on the VPC that was created
@@ -246,11 +251,12 @@
    "vpc_id": "vpc-064c3621b7205922a",
    ```
 
-1. Change the SSH user
+1. Change the builders settings
 
    *Example:*
 
    ```
+   "iam_instance_profile": "lonnie.hanekamp@semanticbits.com",
    "ssh_username": "centos",
    ```
 
@@ -294,7 +300,160 @@
       ```
 
 1. Save and close "provision-app-instance.sh"
+
+## Create S3 bucket for automation
+
+1. Set target profile
+
+   *Example for the "semanticbitsdemo" AWS account:*
    
+   ```ShellSession
+   $ export AWS_PROFILE="sbdemo"
+   ```
+
+1. Create S3 bucket for automation
+
+   ```ShellSession
+   $ aws s3api create-bucket --bucket cms-ab2d-automation --region us-east-1
+   ```
+
+1. Block public access on bucket
+
+   ```ShellSession
+   $ aws s3api put-public-access-block \
+     --bucket cms-ab2d-automation \
+     --region us-east-1 \
+     --public-access-block-configuration BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true
+   ```
+   
+## Create policies
+
+1. Set target profile
+
+   *Example for the "semanticbitsdemo" AWS account:*
+   
+   ```ShellSession
+   $ export AWS_PROFILE="sbdemo"
+   ```
+
+1. Change to the "iam-policies" directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d/Deploy/aws/iam-policies
+   ```
+
+1. Create "Ab2dAccessPolicy"
+
+   ```ShellSession
+   $ aws iam create-policy --policy-name Ab2dAccessPolicy --policy-document file://ab2d-access-policy.json
+   ```
+
+1. Create "Ab2dAssumePolicy"
+
+   ```ShellSession
+   $ aws iam create-policy --policy-name Ab2dAssumePolicy --policy-document file://ab2d-assume-policy.json
+   ```
+
+1. Create "Ab2dInitPolicy"
+
+   ```ShellSession
+   $ aws iam create-policy --policy-name Ab2dInitPolicy --policy-document file://ab2d-init-policy.json
+   ```
+
+1. Create "Ab2dPackerPolicy"
+
+   ```ShellSession
+   $ aws iam create-policy --policy-name Ab2dPackerPolicy --policy-document file://ab2d-packer-policy.json
+   ```
+
+1. Create "Ab2dS3AccessPolicy"
+
+   ```ShellSession
+   $ aws iam create-policy --policy-name Ab2dS3AccessPolicy --policy-document file://ab2d-s3-access-policy.json
+   ```
+
+## Create roles
+
+1. Set target profile
+
+   *Example for the "semanticbitsdemo" AWS account:*
+   
+   ```ShellSession
+   $ export AWS_PROFILE="sbdemo"
+   ```
+
+1. Change to the "iam-roles-trust-relationships" directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d/Deploy/aws/iam-roles-trust-relationships
+   ```
+
+1. Create "Ab2dInstanceRole" role
+
+   ```ShelSession
+   $ aws iam create-role --role-name Ab2dInstanceRole --assume-role-policy-document file://ab2d-instance-role.json
+   ```
+
+1. Attach required policies to the "Ab2dInstanceRole" role
+
+   ```ShellSession
+   $ aws iam attach-role-policy --role-name Ab2dInstanceRole --policy-arn arn:aws:iam::114601554524:policy/Ab2dAssumePolicy
+   $ aws iam attach-role-policy --role-name Ab2dInstanceRole --policy-arn arn:aws:iam::114601554524:policy/Ab2dPackerPolicy
+   $ aws iam attach-role-policy --role-name Ab2dInstanceRole --policy-arn arn:aws:iam::114601554524:policy/Ab2dS3AccessPolicy
+   $ aws iam attach-role-policy --role-name Ab2dInstanceRole --policy-arn arn:aws:iam::114601554524:policy/Ab2dInitPolicy
+   ```
+
+1. Create "Ab2dManagedRole" role
+
+   ```ShelSession
+   $ aws iam create-role --role-name Ab2dManagedRole --assume-role-policy-document file://ab2d-managed-role.json
+   ```
+
+1. Attach required policies to the "Ab2dManagedRole" role
+
+   ```ShellSession
+   $ aws iam attach-role-policy --role-name Ab2dManagedRole --policy-arn arn:aws:iam::114601554524:policy/Ab2dAccessPolicy
+   ```
+
+## Create instance profiles
+
+1. Note that instance profiles are not visible within the AWS console
+
+1. Create instance profile
+
+   ```ShellSession
+   $ aws iam create-instance-profile --instance-profile-name Ab2dInstanceProfile
+   ```
+
+1. Attach "Ab2dInstanceRole" to "Ab2dInstanceProfile"
+
+   ```ShellSession
+   $ aws iam add-role-to-instance-profile --role-name Ab2dInstanceRole --instance-profile-name Ab2dInstanceProfile
+   ```
+   
+## Test deployment
+
+1. Set target profile
+
+   *Example for the "semanticbitsdemo" AWS account:*
+   
+   ```ShellSession
+   $ export AWS_PROFILE="sbdemo"
+   ```
+
+1. Change to the "Deploy" directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d/Deploy
+   ```
+
+1. Test deployment
+
+   ```ShellSession
+   $ ./deploy.sh --environment=cms-ab2d-dev
+   ```
+
+
 ## Create an image in an AWS Elastic Container Registry
 
 > *** TO DO ***

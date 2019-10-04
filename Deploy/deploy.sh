@@ -31,20 +31,20 @@ if [ -z "${ENVIRONMENT}" ]; then
 fi
 
 
+# If no AMI is specified then create a new one
+if [ -z "${AMI_ID}" ]; then
+  cd packer/app/
+  IP=$(curl ipinfo.io/ip)
+  COMMIT=$(git rev-parse HEAD)
+  packer build --var my_ip_address=$IP --var git_commit_hash=$COMMIT app.json  2>&1 | tee output.txt
+  AMI_ID=$(cat output.txt | awk 'match($0, /ami-.*/) { print substr($0, RSTART, RLENGTH) }' | tail -1)
+  cd ../../
+fi
+
+
 #
 # *** TO DO ***: Uncomment and test each section iteratively
 #
-
-
-# # If no AMI is specified then create a new one
-# if [ -z "${AMI_ID}" ]; then
-#   cd packer/app/
-#   IP=$(curl ipinfo.io/ip)
-#   COMMIT=$(git rev-parse HEAD)
-#   packer build --var my_ip_address=$IP --var git_commit_hash=$COMMIT app.json  2>&1 | tee output.txt
-#   AMI_ID=$(cat output.txt | awk 'match($0, /ami-.*/) { print substr($0, RSTART, RLENGTH) }' | tail -1)
-#   cd ../../
-# fi
 
 
 # # Get current known good ECS task definitions
