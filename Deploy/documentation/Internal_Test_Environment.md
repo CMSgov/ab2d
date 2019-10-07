@@ -8,8 +8,9 @@
 1. [Create S3 bucket for automation](#create-s3-bucket-for-automation)
 1. [Create policies](#create-policies)
 1. [Create roles](#create-roles)
-1. [Test deployment](#test-deployment)
 1. [Create an image in an AWS Elastic Container Registry](#create-an-image-in-an-aws-elastic-container-egistry)
+1. [Prepare terraform](#prepare-terraform)
+1. [Test deployment](#test-deployment)
 
 ## Create AWS networking
 
@@ -52,30 +53,92 @@
    *Example:*
    
    ```ShellSession
-   $ aws --region us-east-1 ec2 create-vpc \
-     --cidr-block 10.124.0.0/16
+   $ VPC_ID=$(aws ec2 create-vpc \
+     --cidr-block 10.124.0.0/16 \
+     --query 'Vpc.{VpcId:VpcId}' \
+     --output text \
+     --region us-east-1)
    ```
 
-1. Set VPC_ID environment variable
+1. Create first public subnet
 
-   *Example:*
-   
    ```ShellSession
-   $ export VPC_ID=vpc-064c3621b7205922a
+   $ SUBNET_PUBLIC_1_ID=$(aws ec2 create-subnet \
+     --vpc-id $VPC_ID \
+     --cidr-block 10.124.1.0/24 \
+     --availability-zone us-east-1a \
+     --query 'Subnet.{SubnetId:SubnetId}' \
+     --output text \
+     --region us-east-1)
+   ```
+
+1. Create second public subnet
+
+   ```ShellSession
+   $ SUBNET_PUBLIC_2_ID=$(aws ec2 create-subnet \
+     --vpc-id $VPC_ID \
+     --cidr-block 10.124.2.0/24 \
+     --availability-zone us-east-1b \
+     --query 'Subnet.{SubnetId:SubnetId}' \
+     --output text \
+     --region us-east-1)
+   ```
+
+1. Create third public subnet
+
+   ```ShellSession
+   $ SUBNET_PUBLIC_3_ID=$(aws ec2 create-subnet \
+     --vpc-id $VPC_ID \
+     --cidr-block 10.124.3.0/24 \
+     --availability-zone us-east-1c \
+     --query 'Subnet.{SubnetId:SubnetId}' \
+     --output text \
+     --region us-east-1)
+   ```
+
+1. Create first private subnet
+
+   ```ShellSession
+   $ SUBNET_PRIVATE_1_ID=$(aws ec2 create-subnet \
+     --vpc-id $VPC_ID \
+     --cidr-block 10.124.4.0/24 \
+     --availability-zone us-east-1d \
+     --query 'Subnet.{SubnetId:SubnetId}' \
+     --output text \
+     --region us-east-1)
+   ```
+
+1. Create second private subnet
+
+   ```ShellSession
+   $ SUBNET_PRIVATE_2_ID=$(aws ec2 create-subnet \
+     --vpc-id $VPC_ID \
+     --cidr-block 10.124.5.0/24 \
+     --availability-zone us-east-1e \
+     --query 'Subnet.{SubnetId:SubnetId}' \
+     --output text \
+     --region us-east-1)
+   ```
+
+1. Create third private subnet
+
+   ```ShellSession
+   $ SUBNET_PRIVATE_3_ID=$(aws ec2 create-subnet \
+     --vpc-id $VPC_ID \
+     --cidr-block 10.124.6.0/24 \
+     --availability-zone us-east-1f \
+     --query 'Subnet.{SubnetId:SubnetId}' \
+     --output text \
+     --region us-east-1)
    ```
 
 1. Create internet gateway
 
    ```ShellSession
-   $ aws --region us-east-1 ec2 create-internet-gateway
-   ```
-
-1. Set IGW_ID environment variable
-
-   *Example:*
-   
-   ```ShellSession
-   $ export IGW_ID=igw-001a4056026aef4b4
+   $ IGW_ID=$(aws ec2 create-internet-gateway \
+     --query 'InternetGateway.{InternetGatewayId:InternetGatewayId}' \
+     --output text \
+     --region us-east-1)
    ```
 
 1. Attach internet gateway to VPC
@@ -86,55 +149,253 @@
      --vpc-id $VPC_ID
    ```
 
-1. Describe route table
+1. Note that the main route table was automatically created and will be used by the private subnets
+
+1. Create a custom route table for public subnets
 
    ```ShellSession
-   $ aws --region us-east-1 ec2 describe-route-tables \
-     --filter "Name=vpc-id,Values=$VPC_ID"
+   $ ROUTE_TABLE_ID=$(aws ec2 create-route-table \
+     --vpc-id $VPC_ID \
+     --query 'RouteTable.{RouteTableId:RouteTableId}' \
+     --output text \
+     --region us-east-1)
    ```
 
-1. Set RT_ID environment variable
-
-   *Example:*
-   
-   ```ShellSession
-   $ export RT_ID=rtb-0404876fb61e5fe2f
-   ```
-
-1. Add route for internet gateway
+1. Add route for internet gateway to the custom route table for public subnets
 
    ```ShellSession
    $ aws --region us-east-1 ec2 create-route \
      --destination-cidr-block 0.0.0.0/0 \
      --gateway-id $IGW_ID \
-     --route-table-id $RT_ID
+     --route-table-id $ROUTE_TABLE_ID
    ```
 
-1. Create first subnet
+1. Associate the first public subnet with the custom route table for public subnets
 
    ```ShellSession
-   $ aws --region us-east-1 ec2 create-subnet \
-     --availability-zone us-east-1a \
-     --cidr-block 10.124.1.0/24 \
-     --vpc-id $VPC_ID
+   $ aws ec2 associate-route-table  \
+     --subnet-id $SUBNET_PUBLIC_1_ID \
+     --route-table-id $ROUTE_TABLE_ID \
+     --region us-east-1
    ```
 
-1. Set SUBNET_ID environment variable
+1. Associate the second public subnet with the custom route table for public subnets
 
-   *Example:*
+   ```ShellSession
+   $ aws ec2 associate-route-table  \
+     --subnet-id $SUBNET_PUBLIC_2_ID \
+     --route-table-id $ROUTE_TABLE_ID \
+     --region us-east-1
+   ```
+
+1. Associate the third public subnet with the custom route table for public subnets
+
+   ```ShellSession
+   $ aws ec2 associate-route-table  \
+     --subnet-id $SUBNET_PUBLIC_3_ID \
+     --route-table-id $ROUTE_TABLE_ID \
+     --region us-east-1
+   ```
+
+1. Enable Auto-assign Public IP on the first public subnet
+
+   ```ShellSession
+   $ aws ec2 modify-subnet-attribute \
+     --subnet-id $SUBNET_PUBLIC_1_ID \
+     --map-public-ip-on-launch \
+     --region us-east-1
+   ```
+
+1. Enable Auto-assign Public IP on the second public subnet
+
+   ```ShellSession
+   $ aws ec2 modify-subnet-attribute \
+     --subnet-id $SUBNET_PUBLIC_2_ID \
+     --map-public-ip-on-launch \
+     --region us-east-1
+   ```
+
+1. Enable Auto-assign Public IP on the second public subnet
+
+   ```ShellSession
+   $ aws ec2 modify-subnet-attribute \
+     --subnet-id $SUBNET_PUBLIC_3_ID \
+     --map-public-ip-on-launch \
+     --region us-east-1
+   ```
+
+1. Create NAT Gateway for the first public subnet
+
+   1. Allocate Elastic IP Address for first NAT Gateway
    
-   ```ShellSession
-   $ export SUBNET_ID=subnet-0b8ba5ef9b89b07ed
-   ```
+      ```ShellSession
+      $ EIP_ALLOC_1_ID=$(aws ec2 allocate-address \
+        --domain vpc \
+        --query '{AllocationId:AllocationId}' \
+        --output text \
+        --region us-east-1)
+      ```
+   
+   1. Create NAT gateway
+   
+      ```ShellSession
+      $ NAT_GW_1_ID=$(aws ec2 create-nat-gateway \
+        --subnet-id $SUBNET_PUBLIC_1_ID \
+        --allocation-id $EIP_ALLOC_1_ID \
+        --query 'NatGateway.{NatGatewayId:NatGatewayId}' \
+        --output text \
+        --region us-east-1)
+      ```
 
-1. Associate route table with the subnet
+   1. Wait for the NAT gateway to have a status of AVAILABLE before proceeding
 
-   ```ShellSession
-   $ aws --region us-east-1 ec2 associate-route-table \
-     --route-table-id $RT_ID \
-     --subnet-id $SUBNET_ID
-   ```
+1. Associate the first private subnet with the NAT Gateway for the first public subnet
 
+   1. Create a custom route table for the first private subnet
+   
+      ```ShellSession
+      $ ROUTE_TABLE_FOR_PRIVATE_SUBNET_1_ID=$(aws ec2 create-route-table \
+        --vpc-id $VPC_ID \
+        --query 'RouteTable.{RouteTableId:RouteTableId}' \
+        --output text \
+        --region us-east-1)
+      ```
+
+   1. Create route to NAT Gateway
+
+      ```ShellSession
+      $ aws ec2 create-route \
+        --route-table-id $ROUTE_TABLE_FOR_PRIVATE_SUBNET_1_ID \
+        --destination-cidr-block 0.0.0.0/0 \
+        --gateway-id $NAT_GW_1_ID \
+        --region us-east-1
+      ```
+
+   1. Associate the first private subnet with the custom route table for public subnets
+   
+      ```ShellSession
+      $ aws ec2 associate-route-table  \
+        --subnet-id $SUBNET_PRIVATE_1_ID \
+        --route-table-id $ROUTE_TABLE_FOR_PRIVATE_SUBNET_1_ID \
+        --region us-east-1
+      ```
+
+1. Create NAT Gateway for the second public subnet
+
+   1. Allocate Elastic IP Address for second NAT Gateway
+   
+      ```ShellSession
+      $ EIP_ALLOC_2_ID=$(aws ec2 allocate-address \
+        --domain vpc \
+        --query '{AllocationId:AllocationId}' \
+        --output text \
+        --region us-east-1)
+      ```
+   
+   1. Create NAT gateway
+   
+      ```ShellSession
+      $ NAT_GW_2_ID=$(aws ec2 create-nat-gateway \
+        --subnet-id $SUBNET_PUBLIC_2_ID \
+        --allocation-id $EIP_ALLOC_2_ID \
+        --query 'NatGateway.{NatGatewayId:NatGatewayId}' \
+        --output text \
+        --region us-east-1)
+      ```
+
+   1. Wait for the NAT gateway to have a status of AVAILABLE before proceeding
+
+1. Associate the second private subnet with the NAT Gateway for the second public subnet
+
+   1. Create a custom route table for the second private subnet
+   
+      ```ShellSession
+      $ ROUTE_TABLE_FOR_PRIVATE_SUBNET_2_ID=$(aws ec2 create-route-table \
+        --vpc-id $VPC_ID \
+        --query 'RouteTable.{RouteTableId:RouteTableId}' \
+        --output text \
+        --region us-east-1)
+      ```
+
+   1. Create route to NAT Gateway
+
+      ```ShellSession
+      $ aws ec2 create-route \
+        --route-table-id $ROUTE_TABLE_FOR_PRIVATE_SUBNET_2_ID \
+        --destination-cidr-block 0.0.0.0/0 \
+        --gateway-id $NAT_GW_2_ID \
+        --region us-east-1
+      ```
+
+   1. Associate the second private subnet with the custom route table for public subnets
+   
+      ```ShellSession
+      $ aws ec2 associate-route-table  \
+        --subnet-id $SUBNET_PRIVATE_2_ID \
+        --route-table-id $ROUTE_TABLE_FOR_PRIVATE_SUBNET_2_ID \
+        --region us-east-1
+      ```
+
+
+
+
+
+1. Create NAT Gateway for the third public subnet
+
+   1. Allocate Elastic IP Address for third NAT Gateway
+   
+      ```ShellSession
+      $ EIP_ALLOC_3_ID=$(aws ec2 allocate-address \
+        --domain vpc \
+        --query '{AllocationId:AllocationId}' \
+        --output text \
+        --region us-east-1)
+      ```
+   
+   1. Create NAT gateway
+   
+      ```ShellSession
+      $ NAT_GW_3_ID=$(aws ec2 create-nat-gateway \
+        --subnet-id $SUBNET_PUBLIC_3_ID \
+        --allocation-id $EIP_ALLOC_3_ID \
+        --query 'NatGateway.{NatGatewayId:NatGatewayId}' \
+        --output text \
+        --region us-east-1)
+      ```
+
+   1. Wait for the NAT gateway to have a status of AVAILABLE before proceeding
+
+1. Associate the third private subnet with the NAT Gateway for the third public subnet
+
+   1. Create a custom route table for the third private subnet
+   
+      ```ShellSession
+      $ ROUTE_TABLE_FOR_PRIVATE_SUBNET_3_ID=$(aws ec2 create-route-table \
+        --vpc-id $VPC_ID \
+        --query 'RouteTable.{RouteTableId:RouteTableId}' \
+        --output text \
+        --region us-east-1)
+      ```
+
+   1. Create route to NAT Gateway
+
+      ```ShellSession
+      $ aws ec2 create-route \
+        --route-table-id $ROUTE_TABLE_FOR_PRIVATE_SUBNET_3_ID \
+        --destination-cidr-block 0.0.0.0/0 \
+        --gateway-id $NAT_GW_3_ID \
+        --region us-east-1
+      ```
+
+   1. Associate the third private subnet with the custom route table for public subnets
+   
+      ```ShellSession
+      $ aws ec2 associate-route-table  \
+        --subnet-id $SUBNET_PRIVATE_3_ID \
+        --route-table-id $ROUTE_TABLE_FOR_PRIVATE_SUBNET_3_ID \
+        --region us-east-1
+      ```
+      
 ## Create AWS security components
 
 1. Create security group
@@ -430,7 +691,51 @@
    ```ShellSession
    $ aws iam add-role-to-instance-profile --role-name Ab2dInstanceRole --instance-profile-name Ab2dInstanceProfile
    ```
+
+## Create an image in an AWS Elastic Container Registry
+
+1. Set target profile
+
+   *Example for the "semanticbitsdemo" AWS account:*
    
+   ```ShellSession
+   $ export AWS_PROFILE="sbdemo"
+   ```
+
+1. Authenticate Docker to default Registry
+
+   1. Get the docker login for ECR
+   
+      ```ShellSession
+      $ aws ecr get-login --region us-east-1 --no-include-email
+      ```
+
+   > *** TO DO ***
+   
+1. Create an AWS Elastic Container Registry (ECR)
+
+   > *** TO DO ***
+
+## Prepare terraform
+
+1. Change to the "cms-ab2d-dev" environment
+
+   ```ShellSession
+   $ cd ~/code/ab2d/Deploy/terraform/environments/cms-ab2d-dev
+   ```
+
+1. Initialize terraform
+
+   ```ShellSession
+   $ terraform init
+   ```
+
+1. Validate terraform
+
+   ```ShellSession
+   $ terraform validate
+   ```
+
 ## Test deployment
 
 1. Set target profile
@@ -452,8 +757,3 @@
    ```ShellSession
    $ ./deploy.sh --environment=cms-ab2d-dev
    ```
-
-
-## Create an image in an AWS Elastic Container Registry
-
-> *** TO DO ***
