@@ -10,7 +10,7 @@ provider "aws" {
 # https://www.terraform.io/docs/backends/types/s3.html
 terraform {
   backend "s3" {
-    bucket         = "sb-terraform-ab2d"
+    bucket         = "cms-ab2d-automation"
     key            = "cms-ab2d-dev/terraform/terraform.tfstate"
     region         = "us-east-1"
     encrypt = true
