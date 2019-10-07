@@ -226,7 +226,7 @@
 1. Set AWS_PROFILE
 
    ```ShellSession
-   $ source ./Deploy/set-aws-profile.sh
+   $ source ./Deploy/scripts/set-aws-profile.sh
    ```
 
 1. Deploy the solution to the AWS account associated with the AWS profile
