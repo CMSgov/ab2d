@@ -1,9 +1,14 @@
 package gov.cms.ab2d.domain;
 
+import lombok.Getter;
+import lombok.Setter;
+
 import javax.persistence.*;
 import java.util.Set;
 
 @Entity
+@Getter
+@Setter
 public class Sponsor {
 
     @Id
@@ -16,38 +21,5 @@ public class Sponsor {
 
     @OneToMany(mappedBy = "sponsor")
     private Set<Attestation> attestations;
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public String getSponsorID() {
-        return sponsorID;
-    }
-
-    public void setSponsorID(String sponsorID) {
-        this.sponsorID = sponsorID;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public Set<Attestation> getAttestations() {
-        return attestations;
-    }
-
-    public void setAttestations(Set<Attestation> attestations) {
-        this.attestations = attestations;
-    }
-
 
 }

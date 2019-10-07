@@ -29,7 +29,6 @@ services:
       - "8080:8080"
     depends_on:
       - db
-      - build
   worker:
     build:
       context: ./worker
@@ -41,4 +40,3 @@ services:
       - AB2D_DB_PASSWORD=ab2d
     depends_on:
       - db
-      - build
