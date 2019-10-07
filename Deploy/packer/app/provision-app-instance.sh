@@ -18,8 +18,9 @@ sudo yum -y install \
   python-pip \
   telnet
 
-# LSH Testing environment
+# LSH Testing environment BEGIN
 sudo yum -y install wget
+# LSH Testing environment END
 
 # Postgres 10
 wget https://download.postgresql.org/pub/repos/yum/RPM-GPG-KEY-PGDG-10
@@ -33,9 +34,19 @@ sudo rpm --import https://download.docker.com/linux/centos/gpg
 sudo yum-config-manager --enable rhel-7-server-extras-rpms
 sudo yum-config-manager --enable rhui-REGION-rhel-server-extras
 sudo yum -y install docker-ce-18.06.1.ce-3.el7
-sudo usermod -aG docker ec2-user
+
+# LSH Testing environment BEGIN
+# sudo usermod -aG docker ec2-user
+sudo usermod -aG docker centos
+# LSH Testing environment END
+
 sudo systemctl enable docker
 sudo systemctl start docker
+
+# LSH Testing environment BEGIN
+sudo yum -y install epel-release
+sudo yum -y install python-pip
+# LSH Testing environment END
 
 # Install awscli
 sudo pip install awscli
