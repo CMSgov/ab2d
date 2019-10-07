@@ -18,6 +18,9 @@ sudo yum -y install \
   python-pip \
   telnet
 
+# LSH Testing environment
+sudo yum -y install wget
+
 # Postgres 10
 wget https://download.postgresql.org/pub/repos/yum/RPM-GPG-KEY-PGDG-10
 sudo rpm --import RPM-GPG-KEY-PGDG-10
