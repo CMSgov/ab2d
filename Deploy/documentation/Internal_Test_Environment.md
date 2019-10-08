@@ -755,5 +755,5 @@
 1. Test deployment
 
    ```ShellSession
-   $ ./deploy.sh --environment=cms-ab2d-dev
+   $ ./deploy.sh --environment=sbdemo
    ```
