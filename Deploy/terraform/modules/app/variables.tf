@@ -19,6 +19,10 @@ variable "max_instances" {}
 variable "autoscale_group_wait" {}
 variable "gold_disk_name" {}
 variable "override_task_definition_arn" {default=""}
-variable "enterprise-tools-sec-group-id" {}
-variable "vpn-private-sec-group-id" {}
+
+# LSH SKIP FOR NOW BEGIN
+# variable "enterprise-tools-sec-group-id" {}
+# variable "vpn-private-sec-group-id" {}
+# LSH SKIP FOR NOW END
+
 variable "percent_capacity_increase" {default="20"}
