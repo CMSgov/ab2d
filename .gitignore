@@ -1,13 +1,64 @@
-# macOS generated files
-.DS_Store
+**/.DS_Store
+**/manifests/*.*
+**/manifests/*.*
+.terraform
+.terraform.d/
+.terraform/*
+secrets.tf
+terraform.tfstate
+terraform.tfstate.backup
+.aws/
+.bash_history
+.viminfo
+*.pw
+*.pem
+*.pub
+*_key
+*-key
+mpsm_key.pub
+mpsm-20190111*
+0
+*tfstate*
+.kube/
+kops.output
+kops-cluster.sh
+nodejs-app.yml
+.docker/
+.gnupg/
+secrets.yml
+*.zip
 
-# Local Terraform files and directories
-**/.terraform/*
-**/*.tfstate
-**/*.tfstate.*
-**/*.tfvars
-**/terraform.tfstate.*.backup
+HELP.md
+target/
+!.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**
+!**/src/test/**
+
+### STS ###
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+
+### IntelliJ IDEA ###
+.idea
+*.iws
+*.iml
+*.ipr
+
+### NetBeans ###
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+build/
+
+### VS Code ###
+.vscode/
 
 # Packer output manifest from builds
 **/packer/**/output.txt
-
