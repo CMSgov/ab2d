@@ -72,6 +72,15 @@
      --region us-east-1)
    ```
 
+1. Tag first public subnet
+
+   ```ShellSession
+   $ aws ec2 create-tags \
+     --resources $SUBNET_PUBLIC_1_ID \
+     --tags "Key=Name,Value=ab2d-public-subnet-01" \
+     --region us-east-1
+   ```
+
 1. Create second public subnet
 
    ```ShellSession
@@ -82,6 +91,15 @@
      --query 'Subnet.{SubnetId:SubnetId}' \
      --output text \
      --region us-east-1)
+   ```
+
+1. Tag second public subnet
+
+   ```ShellSession
+   $ aws ec2 create-tags \
+     --resources $SUBNET_PUBLIC_2_ID \
+     --tags "Key=Name,Value=ab2d-public-subnet-02" \
+     --region us-east-1
    ```
 
 1. Create third public subnet
@@ -96,6 +114,15 @@
      --region us-east-1)
    ```
 
+1. Tag third public subnet
+
+   ```ShellSession
+   $ aws ec2 create-tags \
+     --resources $SUBNET_PUBLIC_3_ID \
+     --tags "Key=Name,Value=ab2d-public-subnet-03" \
+     --region us-east-1
+   ```
+
 1. Create first private subnet
 
    ```ShellSession
@@ -106,6 +133,15 @@
      --query 'Subnet.{SubnetId:SubnetId}' \
      --output text \
      --region us-east-1)
+   ```
+
+1. Tag first private subnet
+
+   ```ShellSession
+   $ aws ec2 create-tags \
+     --resources $SUBNET_PRIVATE_1_ID \
+     --tags "Key=Name,Value=ab2d-private-subnet-01" \
+     --region us-east-1
    ```
 
 1. Create second private subnet
@@ -120,6 +156,15 @@
      --region us-east-1)
    ```
 
+1. Tag second private subnet
+
+   ```ShellSession
+   $ aws ec2 create-tags \
+     --resources $SUBNET_PRIVATE_2_ID \
+     --tags "Key=Name,Value=ab2d-private-subnet-02" \
+     --region us-east-1
+   ```
+
 1. Create third private subnet
 
    ```ShellSession
@@ -130,6 +175,15 @@
      --query 'Subnet.{SubnetId:SubnetId}' \
      --output text \
      --region us-east-1)
+   ```
+
+1. Tag third private subnet
+
+   ```ShellSession
+   $ aws ec2 create-tags \
+     --resources $SUBNET_PRIVATE_3_ID \
+     --tags "Key=Name,Value=ab2d-private-subnet-03" \
+     --region us-east-1
    ```
 
 1. Create internet gateway
@@ -428,15 +482,13 @@
    ```
 
 1. Create keypair
-
-   *Example for test cluster:*
    
    ```ShellSession
    $ aws --region us-east-1 ec2 create-key-pair \
-     --key-name test-cluster \
+     --key-name ab2d-sbdemo \
      --query 'KeyMaterial' \
      --output text \
-     > ~/.ssh/test-cluster.pem
+     > ~/.ssh/ab2d-sbdemo.pem
    ```
 
 1. Change permissions of the key
@@ -444,7 +496,7 @@
    *Example for test cluster:*
    
    ```ShellSession
-   $ chmod 600 ~/.ssh/test-cluster.pem
+   $ chmod 600 ~/.ssh/ab2d-sbdemo.pem
    ```
 
 ## Update files for AWS test environment
@@ -703,18 +755,107 @@
    ```
 
 1. Authenticate Docker to default Registry
-
-   1. Get the docker login for ECR
    
+   ```ShellSession
+   $ read -sra cmd < <(aws ecr get-login --no-include-email)
+   $ pass="${cmd[5]}"
+   $ unset cmd[4] cmd[5]
+   $ "${cmd[@]}" --password-stdin <<< "$pass"
+   ```
+
+1. Note that the authentication is good for a 12 hour session
+
+1. Change to the repo directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d
+   ```
+   
+1. Build the docker images of API and Worker nodes
+
+   1. Build all docker images
+
       ```ShellSession
-      $ aws ecr get-login --region us-east-1 --no-include-email
+      $ make docker-build
       ```
 
-   > *** TO DO ***
-   
-1. Create an AWS Elastic Container Registry (ECR)
+   1. Check the docker images
 
-   > *** TO DO ***
+      ```ShellSession
+      $ docker image ls
+      ```
+
+   1. Note the output only includes the following
+
+      *Format:*
+
+      ```
+      {repository}:{tag}
+      ```
+
+      *Example:*
+
+      ```
+      maven:3-jdk-12
+      ```
+      
+   1. Build with "docker-compose"
+
+      ```ShellSession
+      $ docker-compose build
+      ```
+      
+   1. Check the docker images
+
+      ```ShellSession
+      $ docker image ls
+      ```
+
+   1. Note the output includes the following
+
+      - ab2d_worker:latest
+
+      - ab2d_api:latest
+
+      - maven:3-jdk-12
+
+      - openjdk:12
+
+1. Create an AWS Elastic Container Registry (ECR) for "ab2d_api"
+
+   ```ShellSession
+   $ aws ecr create-repository --repository-name ab2d_api
+   ```
+
+1. Tag the "ab2d_api" image for ECR
+
+   ```ShellSession
+   $ docker tag ab2d_api:latest 114601554524.dkr.ecr.us-east-1.amazonaws.com/ab2d_api:latest
+   ```
+
+1. Push the "ab2d_api" image to ECR
+
+   ```ShellSession
+   $ docker push 114601554524.dkr.ecr.us-east-1.amazonaws.com/ab2d_api:latest
+   ```
+
+1. Create an AWS Elastic Container Registry (ECR) for "ab2d_worker"
+
+   ```ShellSession
+   $ aws ecr create-repository --repository-name ab2d_worker
+   ```
+
+1. Tag the "ab2d_worker" image for ECR
+
+   ```ShellSession
+   $ docker tag ab2d_worker:latest 114601554524.dkr.ecr.us-east-1.amazonaws.com/ab2d_worker:latest
+   ```
+
+1. Push the "ab2d_worker" image to ECR
+
+   ```ShellSession
+   $ docker push 114601554524.dkr.ecr.us-east-1.amazonaws.com/ab2d_worker:latest
+   ```
 
 ## Prepare terraform
 
@@ -755,5 +896,5 @@
 1. Test deployment
 
    ```ShellSession
-   $ ./deploy.sh --environment=sbdemo
+   $ ./deploy.sh --environment=sbdemo --auto-approve
    ```
