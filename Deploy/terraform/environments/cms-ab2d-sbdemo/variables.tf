@@ -1,26 +1,26 @@
 variable "aws_profile" {
-  default = "ab2d"
+  default = "sbdemo"
 }
 
 variable "env" {
-  default = "dev"
+  default = "sbdemo"
 }
 
 variable "vpc_id" {
-  default = "vpc-09a9ad141cc53e39d"
+  default = "vpc-09d8e15457c7ebcf5"
 }
 
 ## EC2 specific variables ########################################################################
 
 variable "private_subnet_ids" {
   type        = list(string)
-  default     = ["subnet-078ffc37780c010af", "subnet-030e47900032cb0bb", "subnet-0c14499ea66bd9dc1"]
+  default     = ["subnet-0d63fa6104a9dc6e0", "subnet-0ed121109fa2e591d", "subnet-019fa7279e8ce1452"]
   description = "App instances and DB go here"
 }
 
 variable "deployment_controller_subnet_ids" {
   type        = list(string)
-  default     = ["subnet-0169444a442ed9d28", "subnet-0581df111f086f55b", "subnet-091dde638f2bc571d"]
+  default     = ["subnet-0f4e1bf22c4607bef", "subnet-077653c984ad36969", "subnet-003a4583b59ea314b"]
   description = "Deployment controllers go here"
 }
 
@@ -34,7 +34,7 @@ variable "ec2_instance_type" {
 }
 
 variable "ssh_key_name" {
-  default = "ab2d-dev"
+  default = "ab2d-sbdemo"
 }
 
 variable "max_ec2_instance_count" {
@@ -64,7 +64,7 @@ variable "elb_healthcheck_url" {
 }
 
 variable "ec2_iam_profile" {
-  default = "AB2D"
+  default = "Ab2dInstanceProfile"
 }
 
 variable "ec2_desired_instance_count" {
@@ -83,13 +83,17 @@ variable "gold_image_name" {
   default = "EAST-RH 7-6 Gold Image V.1.09 (HVM) 06-26-19"
 }
 
-variable "enterprise-tools-sec-group-id" {
-  default = "sg-0566ad330966d8ba7"
-}
+# LSH SKIP FOR NOW BEGIN
+# variable "enterprise-tools-sec-group-id" {
+#   default = "sg-0566ad330966d8ba7"
+# }
+# LSH SKIP FOR NOW END
 
-variable "vpn-private-sec-group-id" {
-  default = "sg-07fbbd710a8b15851"
-}
+# LSH SKIP FOR NOW BEGIN
+# variable "vpn-private-sec-group-id" {
+#   default = "sg-07fbbd710a8b15851"
+# }
+# LSH SKIP FOR NOW END
 
 ## RDS specific variables ########################################################################
 
