@@ -50,45 +50,53 @@ resource "aws_security_group_rule" "controller_access" {
   security_group_id = aws_security_group.api.id
 }
 
-resource "aws_security_group_rule" "vpn_http" {
-  type        = "ingress"
-  description = "VPN Access"
-  from_port   = var.host_port
-  to_port     = var.host_port
-  protocol    = "tcp"
-  cidr_blocks = ["10.252.0.0/16", "10.232.32.0/19", "10.251.0.0/16", "52.20.26.200/32", "34.196.35.156/32"]
-  security_group_id = aws_security_group.api.id
-}
+# LSH SKIP FOR NOW BEGIN
+# resource "aws_security_group_rule" "vpn_http" {
+#   type        = "ingress"
+#   description = "VPN Access"
+#   from_port   = var.host_port
+#   to_port     = var.host_port
+#   protocol    = "tcp"
+#   cidr_blocks = ["10.252.0.0/16", "10.232.32.0/19", "10.251.0.0/16", "52.20.26.200/32", "34.196.35.156/32"]
+#   security_group_id = aws_security_group.api.id
+# }
+# LSH SKIP FOR NOW END
 
-resource "aws_security_group_rule" "vpn_https" {
-  type        = "ingress"
-  description = "VPN Access"
-  from_port   = "443"
-  to_port     = "443"
-  protocol    = "tcp"
-  cidr_blocks = ["10.252.0.0/16", "10.232.32.0/19", "10.251.0.0/16", "52.20.26.200/32", "34.196.35.156/32"]
-  security_group_id = aws_security_group.api.id
-}
+# LSH SKIP FOR NOW BEGIN
+# resource "aws_security_group_rule" "vpn_https" {
+#   type        = "ingress"
+#   description = "VPN Access"
+#   from_port   = "443"
+#   to_port     = "443"
+#   protocol    = "tcp"
+#   cidr_blocks = ["10.252.0.0/16", "10.232.32.0/19", "10.251.0.0/16", "52.20.26.200/32", "34.196.35.156/32"]
+#   security_group_id = aws_security_group.api.id
+# }
+# LSH SKIP FOR NOW END
 
-resource "aws_security_group_rule" "kong_http" {
-  type        = "ingress"
-  description = "Kong"
-  from_port   = var.host_port
-  to_port     = var.host_port
-  protocol    = "tcp"
-  cidr_blocks = ["34.204.33.165/32","34.226.82.144/32","34.200.65.22/32","34.227.6.19/32"]
-  security_group_id = aws_security_group.api.id
-}
+# LSH SKIP FOR NOW BEGIN
+# resource "aws_security_group_rule" "kong_http" {
+#   type        = "ingress"
+#   description = "Kong"
+#   from_port   = var.host_port
+#   to_port     = var.host_port
+#   protocol    = "tcp"
+#   cidr_blocks = ["34.204.33.165/32","34.226.82.144/32","34.200.65.22/32","34.227.6.19/32"]
+#   security_group_id = aws_security_group.api.id
+# }
+# LSH SKIP FOR NOW END
 
-resource "aws_security_group_rule" "kong_https" {
-  type        = "ingress"
-  description = "Kong"
-  from_port   = "443"
-  to_port     = "443"
-  protocol    = "tcp"
-  cidr_blocks = ["34.204.33.165/32","34.226.82.144/32","34.200.65.22/32","34.227.6.19/32"]
-  security_group_id = aws_security_group.api.id
-}
+# LSH SKIP FOR NOW BEGIN
+# resource "aws_security_group_rule" "kong_https" {
+#   type        = "ingress"
+#   description = "Kong"
+#   from_port   = "443"
+#   to_port     = "443"
+#   protocol    = "tcp"
+#   cidr_blocks = ["34.204.33.165/32","34.226.82.144/32","34.200.65.22/32","34.227.6.19/32"]
+#   security_group_id = aws_security_group.api.id
+# }
+# LSH SKIP FOR NOW END
 
 resource "aws_security_group_rule" "egress_app" {
   type        = "egress"
@@ -125,10 +133,13 @@ resource "random_shuffle" "public_subnets" {
   result_count = 1
 }
 
+# LSH SKIP FOR NOW BEGIN
+# vpc_security_group_ids = [aws_security_group.deployment_controller.id,var.enterprise-tools-sec-group-id,var.vpn-private-sec-group-id]
+# LSH SKIP FOR NOW END
 resource "aws_instance" "deployment_controller" {
   ami = var.ami_id
   instance_type = var.instance_type
-  vpc_security_group_ids = [aws_security_group.deployment_controller.id,var.enterprise-tools-sec-group-id,var.vpn-private-sec-group-id]
+  vpc_security_group_ids = [aws_security_group.deployment_controller.id]
   disable_api_termination = false
   key_name = var.ssh_key_name
   monitoring = true
@@ -142,7 +153,7 @@ resource "aws_instance" "deployment_controller" {
     stack = var.env
     purpose = "ECS container instance"
     sensitivity = "Public"
-    maintainer = "federico.rosario@semanticbits.com"
+    maintainer = "lonnie.hanekamp@semanticbits.com"
     cpm_backup = "NoBackup"
     purchase_type = "On-Demand"
     os_license = "Red Hat Enterprise Linux"
@@ -310,13 +321,16 @@ resource "aws_ecs_service" "api" {
   }
 }
 
+# LSH SKIP FOR NOW BEGIN
+# security_groups = [aws_security_group.api.id,var.enterprise-tools-sec-group-id,var.vpn-private-sec-group-id]
+# LSH SKIP FOR NOW BEGIN
 resource "aws_launch_configuration" "launch_config" {
   name_prefix = "ab2d-${var.env}-"
   image_id = var.ami_id
   instance_type = var.instance_type
   iam_instance_profile = var.iam_instance_profile
   key_name = var.ssh_key_name
-  security_groups = [aws_security_group.api.id,var.enterprise-tools-sec-group-id,var.vpn-private-sec-group-id]
+  security_groups = [aws_security_group.api.id]  
   user_data = templatefile("${path.module}/userdata.tpl",{ env = var.env, cluster_name = "ab2d-${var.env}" })
   lifecycle { create_before_destroy = true }
 }
@@ -364,7 +378,7 @@ resource "aws_autoscaling_group" "asg" {
     },
     {
       key = "maintainer"
-      value = "federico.rosario@semanticbits.com"
+      value = "lonnie.hanekamp@semanticbits.com"
       propagate_at_launch = true
     },
     {
