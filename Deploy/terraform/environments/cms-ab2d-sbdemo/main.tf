@@ -54,6 +54,10 @@ module "s3" {
   username_list       = var.s3_username_whitelist
 }
 
+# LSH SKIP FOR NOW BEGIN
+# vpn-private-sec-group-id      = var.vpn-private-sec-group-id
+# enterprise-tools-sec-group-id = var.enterprise-tools-sec-group-id
+# LSH SKIP FOR NOW END
 module "app" {
   source                        = "../../modules/app"
   env                           = var.env
@@ -67,17 +71,14 @@ module "app" {
   logging_bucket                = var.logging_bucket_name
   healthcheck_url               = var.elb_healthcheck_url
   iam_instance_profile          = var.ec2_iam_profile
-  docker_repository_url         = "626512334475.dkr.ecr.us-east-1.amazonaws.com/ab2d:ab2d-server-develop-5d7a5837b8687e02356870579d5ad0f160b757d3"
-                                  "114601554524.dkr.ecr.us-east-1.amazonaws.com"
-  iam_role_arn                  = "arn:aws:iam::626512334475:role/AB2D"
+  docker_repository_url         = "114601554524.dkr.ecr.us-east-1.amazonaws.com/ab2d_api:latest"
+  iam_role_arn                  = "arn:aws:iam::114601554524:role/Ab2dInstanceRole"
   desired_instances             = var.ec2_desired_instance_count
   min_instances                 = var.ec2_minimum_instance_count
   max_instances                 = var.ec2_maximum_instance_count
   autoscale_group_wait          = "0" #Change this later for 0 downtime deployment
   gold_disk_name                = var.gold_image_name
-  override_task_definition_arn  = var.current_task_definition_arn
-  vpn-private-sec-group-id      = var.vpn-private-sec-group-id
-  enterprise-tools-sec-group-id = var.enterprise-tools-sec-group-id
+  override_task_definition_arn  = var.current_task_definition_arn  
 }
 
 module "lonnie_access_controller" {
