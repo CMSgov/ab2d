@@ -33,6 +33,10 @@ variable "ec2_instance_type" {
   default = "c4.2xlarge"
 }
 
+variable "linux_user" {
+  default = "centos"
+}
+
 variable "ssh_key_name" {
   default = "ab2d-sbdemo"
 }
@@ -158,15 +162,15 @@ variable "db_password" {
 ## S3 specific variables #########################################################################
 
 variable "file_bucket_name" {
-  default = "ab2d-dev"
+  default = "cms-ab2d-dev"
 }
 
 variable "logging_bucket_name" {
-  default = "ab2d-cloudtrail"
+  default = "cms-ab2d-cloudtrail"
 }
 
 variable "s3_username_whitelist" {
-  default = ["HV7K"]
+  default = ["lonnie.hanekamp@semanticbits.com"]
 }
 
 ## ECS specific variables #########################################################################
