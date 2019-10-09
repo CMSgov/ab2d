@@ -1,7 +1,7 @@
 #!/bin/bash
 # Script to list app instances in the environment
 
-export CMS_ENV="" #Change me to DEV, SBX, IMPL, or PROD
+export CMS_ENV="SBDEMO" #Examples: DEV, SBX, IMPL, PROD, SBDEMO
 
 echo "*******************************************"
 echo "App instances in $CMS_ENV environment"
