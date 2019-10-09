@@ -66,6 +66,7 @@ module "app" {
   controller_subnet_ids         = var.deployment_controller_subnet_ids
   ami_id                        = var.ami_id
   instance_type                 = var.ec2_instance_type
+  linux_user                    = var.linux_user
   ssh_key_name                  = var.ssh_key_name
   node_subnet_ids               = var.private_subnet_ids
   logging_bucket                = var.logging_bucket_name
