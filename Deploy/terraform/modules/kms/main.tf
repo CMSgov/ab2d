@@ -13,9 +13,9 @@ resource "aws_kms_key" "a" {
             "Effect": "Allow",
             "Principal": {
                 "AWS": [
-                    "arn:aws:iam::626512334475:root",
-                    "arn:aws:iam::626512334475:role/AB2D",
-                    "arn:aws:iam::626512334475:user/HV7K"
+                    "arn:aws:iam::114601554524:root",
+                    "arn:aws:iam::114601554524:role/Ab2dInstanceRole",
+                    "arn:aws:iam::114601554524:user/lonnie.hanekamp@semanticbits.com"
                 ]
             },
             "Action": "kms:*",
