@@ -5,12 +5,13 @@
 1. [Create base AWS networking](#create-base-aws-networking)
 1. [Create AWS security components](#create-aws-security-components)
 1. [Update files for AWS test environment](#update-files-for-aws-test-environment)
-1. [Create S3 bucket for automation](#create-s3-bucket-for-automation)
+1. [Create required S3 buckets](#create-required-s3-buckets)
 1. [Create policies](#create-policies)
 1. [Create roles](#create-roles)
 1. [Create an image in an AWS Elastic Container Registry](#create-an-image-in-an-aws-elastic-container-egistry)
 1. [Prepare terraform](#prepare-terraform)
 1. [Test deployment](#test-deployment)
+1. [Destroy deployment](#destroy-deployment)
 
 ## Create AWS networking
 
@@ -614,7 +615,7 @@
 
 1. Save and close "provision-app-instance.sh"
 
-## Create S3 bucket for automation
+## Create required S3 buckets
 
 1. Set target profile
 
@@ -638,7 +639,67 @@
      --region us-east-1 \
      --public-access-block-configuration BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true
    ```
+
+1. Create S3 file bucket
+
+   ```ShellSession
+   $ aws s3api create-bucket --bucket cms-ab2d-dev --region us-east-1
+   ```
+
+1. Block public access on bucket
+
+   ```ShellSession
+   $ aws s3api put-public-access-block \
+     --bucket cms-ab2d-dev \
+     --region us-east-1 \
+     --public-access-block-configuration BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true
+   ```
+
+1. Create S3 file bucket
+
+   ```ShellSession
+   $ aws s3api create-bucket --bucket cms-ab2d-cloudtrail --region us-east-1
+   ```
+
+1. Note that the "Elastic Load Balancing Account ID for us-east-1" is the following:
+
+   ```
+   127311923021
+   ```
+
+1. Note that the "Elastic Load Balancing Account ID" for other regions can be found here
+
+   > See https://docs.aws.amazon.com/elasticloadbalancing/latest/classic/enable-access-logs.html
    
+1. Add this bucket policy to the "cms-ab2d-cloudtrail" S3 bucket via the AWS console
+
+   > *** TO DO ***: Need to script this using AWS CLI
+   
+   ```
+   {
+     "Version": "2012-10-17",
+     "Statement": [
+       {
+         "Effect": "Allow",
+         "Principal": {
+           "AWS": "arn:aws:iam::127311923021:root"
+         },
+         "Action": "s3:PutObject",
+         "Resource": "arn:aws:s3:::cms-ab2d-cloudtrail/*"
+       }
+     ]
+   }
+   ```
+
+1. Block public access on bucket
+
+   ```ShellSession
+   $ aws s3api put-public-access-block \
+     --bucket cms-ab2d-cloudtrail \
+     --region us-east-1 \
+     --public-access-block-configuration BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true
+   ```
+
 ## Create policies
 
 1. Set target profile
@@ -879,6 +940,40 @@
 
 ## Test deployment
 
+1. Modify the SSH config file
+
+   1. Open the SSH config file
+
+      ```ShellSession
+      $ vim ~/.ssh/config
+      ```
+
+   2. Add or modify SSH config file to include the following line
+
+      ```
+      StrictHostKeyChecking no
+      ```
+
+1. Ensure terraform log directory exists
+
+   ```ShellSession
+   $ sudo mkdir -p /var/log/terraform
+   $ sudo chown -R "$(id -u)":"$(id -g -nr)" /var/log/terraform
+   ```
+
+1. Turn on terraform logging
+
+   ```ShellSession
+   $ export TF_LOG=TRACE
+   $ export TF_LOG_PATH=/var/log/terraform/tf.log
+   ```
+
+1. Delete existing log file
+
+   ```ShelSession
+   $ rm -f /var/log/terraform/tf.log
+   ```
+   
 1. Set target profile
 
    *Example for the "semanticbitsdemo" AWS account:*
@@ -898,3 +993,35 @@
    ```ShellSession
    $ ./deploy.sh --environment=sbdemo --auto-approve
    ```
+
+## Destroy deployment
+
+1. Set target profile
+
+   *Example for the "semanticbitsdemo" AWS account:*
+   
+   ```ShellSession
+   $ export AWS_PROFILE="sbdemo"
+   ```
+   
+1. Set the AMI_ID used by the deployment
+
+   ```ShellSession
+   $ export AMI_ID=ami-07d8d582ab4e0b101
+   ```
+
+1. Note that "API_TASK_DEFINITION" will be empty in the next step
+
+1. Destroy the environment
+
+   ```ShellSession
+   $ terraform destroy --var "ami_id=$AMI_ID" --var "current_task_definition_arn=$API_TASK_DEFINITION" --target module.app --auto-approve
+   ```
+
+1. Manually destroy any remnants of the deployment that might have been caused by a failed deployment
+
+   *List of components that needs to be deleted manually:*
+   
+   - cms-ab2d-sbdemo-DatabaseSecurityGroup
+
+
