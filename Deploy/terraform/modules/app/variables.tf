@@ -4,6 +4,7 @@ variable "db_sec_group_id" {}
 variable "controller_subnet_ids" {type=list(string)}
 variable "ami_id" {}
 variable "instance_type" {}
+variable "linux_user" {}
 variable "ssh_key_name" {}
 variable "node_subnet_ids" {type=list(string)}
 variable "logging_bucket" {}
