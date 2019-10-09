@@ -5,7 +5,9 @@
             "Effect": "Allow",
             "Action": "s3:*",
             "Resource": [
-		"arn:aws:s3:::cms-ab2d-automation"
+		"arn:aws:s3:::cms-ab2d-automation",
+		"arn:aws:s3:::cms-ab2d-cloudtrail",
+		"arn:aws:s3:::cms-ab2d-dev"
             ]
         }
     ]
