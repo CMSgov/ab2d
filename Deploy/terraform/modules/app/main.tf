@@ -14,6 +14,17 @@ resource "aws_security_group_rule" "node_access" {
   security_group_id = aws_security_group.deployment_controller.id
 }
 
+# *** TO DO ***: eliminate this after VPN access is setup
+resource "aws_security_group_rule" "whitelist_lonnie" {
+  type        = "ingress"
+  description = "Whitelist Lonnie"
+  from_port   = "22"
+  to_port     = "22"
+  protocol    = "TCP"
+  cidr_blocks = ["152.208.13.223/32"]
+  security_group_id = aws_security_group.deployment_controller.id
+}
+
 resource "aws_security_group_rule" "egress_controller" {
   type        = "egress"
   description = "Allow all egress"
@@ -182,11 +193,11 @@ resource "null_resource" "list-app-instances-script" {
   triggers = {controller_id = aws_instance.deployment_controller.id}
 
   provisioner "local-exec" {
-    command = "scp -i ~/.ssh/${var.ssh_key_name}.pem ${path.cwd}/../../modules/app/list-app-instances.sh ec2-user@${aws_eip.deployment_controller.public_ip}:/home/ec2-user"
+    command = "scp -i ~/.ssh/${var.ssh_key_name}.pem ${path.cwd}/../../environments/cms-ab2d-${var.env}/list-app-instances.sh ${var.linux_user}@${aws_eip.deployment_controller.public_ip}:/home/${var.linux_user}"
   }
 
   provisioner "local-exec" {
-    command = "ssh -i ~/.ssh/${var.ssh_key_name}.pem ec2-user@${aws_eip.deployment_controller.public_ip} 'chmod +x /home/ec2-user/list-app-instances.sh'"
+    command = "ssh -i ~/.ssh/${var.ssh_key_name}.pem ${var.linux_user}@${aws_eip.deployment_controller.public_ip} 'chmod +x /home/${var.linux_user}/list-app-instances.sh'"
   }
 }
 
@@ -195,7 +206,7 @@ resource "null_resource" "set-hostname" {
   triggers = {controller_id = aws_instance.deployment_controller.id}
 
   provisioner "local-exec" {
-    command = "ssh -tt -i ~/.ssh/${var.ssh_key_name}.pem ec2-user@${aws_eip.deployment_controller.public_ip} 'echo \"ab2d-${var.env}\" > /tmp/hostname && sudo mv /tmp/hostname /etc/hostname && sudo hostname \"ab2d-${var.env}\"'"
+    command = "ssh -tt -i ~/.ssh/${var.ssh_key_name}.pem ${var.linux_user}@${aws_eip.deployment_controller.public_ip} 'echo \"ab2d-${var.env}\" > /tmp/hostname && sudo mv /tmp/hostname /etc/hostname && sudo hostname \"ab2d-${var.env}\"'"
   }
 }
 
@@ -203,11 +214,11 @@ resource "null_resource" "deployment_contoller_private_key" {
   depends_on = ["null_resource.wait"]
   triggers = {controller_id = aws_instance.deployment_controller.id}
   provisioner "local-exec" {
-    command = "scp -i ~/.ssh/${var.ssh_key_name}.pem ~/.ssh/${var.ssh_key_name}.pem ec2-user@${aws_eip.deployment_controller.public_ip}:/tmp/id.rsa"
+    command = "scp -i ~/.ssh/${var.ssh_key_name}.pem ~/.ssh/${var.ssh_key_name}.pem ${var.linux_user}@${aws_eip.deployment_controller.public_ip}:/tmp/id.rsa"
   }
 
   provisioner "local-exec" {
-    command = "ssh -i ~/.ssh/${var.ssh_key_name}.pem ec2-user@${aws_eip.deployment_controller.public_ip} 'chmod 600 /tmp/id.rsa && mv /tmp/id.rsa ~/.ssh/'"
+    command = "ssh -i ~/.ssh/${var.ssh_key_name}.pem ${var.linux_user}@${aws_eip.deployment_controller.public_ip} 'chmod 600 /tmp/id.rsa && mv /tmp/id.rsa ~/.ssh/'"
   }
 }
 
@@ -215,11 +226,11 @@ resource "null_resource" "ssh_client_config" {
   depends_on = ["null_resource.wait"]
   triggers = {controller_id = aws_instance.deployment_controller.id}
   provisioner "local-exec" {
-    command = "scp -i ~/.ssh/${var.ssh_key_name}.pem ../../modules/app/client_config ec2-user@${aws_eip.deployment_controller.public_ip}:/home/ec2-user/.ssh/config"
+    command = "scp -i ~/.ssh/${var.ssh_key_name}.pem ../../environments/cms-ab2d-${var.env}/client_config ${var.linux_user}@${aws_eip.deployment_controller.public_ip}:/home/${var.linux_user}/.ssh/config"
   }
 
   provisioner "local-exec" {
-    command = "ssh -i ~/.ssh/${var.ssh_key_name}.pem ec2-user@${aws_eip.deployment_controller.public_ip} 'chmod 640 /home/ec2-user/.ssh/config'"
+    command = "ssh -i ~/.ssh/${var.ssh_key_name}.pem ${var.linux_user}@${aws_eip.deployment_controller.public_ip} 'chmod 640 /home/${var.linux_user}/.ssh/config'"
   }
 }
 
@@ -227,7 +238,7 @@ resource "null_resource" "remove_docker_from_controller" {
   depends_on = ["null_resource.wait"]
   triggers = {controller_id = aws_instance.deployment_controller.id}
   provisioner "local-exec" {
-    command = "ssh -tt -i ~/.ssh/${var.ssh_key_name}.pem ec2-user@${aws_eip.deployment_controller.public_ip} 'sudo yum -y remove docker-ce-*'"
+    command = "ssh -tt -i ~/.ssh/${var.ssh_key_name}.pem ${var.linux_user}@${aws_eip.deployment_controller.public_ip} 'sudo yum -y remove docker-ce-*'"
   }
 }
 
@@ -261,7 +272,7 @@ JSON
   network_mode = "bridge"
   cpu = 1024
   memory = 2048
-  execution_role_arn = "arn:aws:iam::626512334475:role/AB2D"
+  execution_role_arn = "arn:aws:iam::114601554524:role/Ab2dInstanceRole"
 }
 
 resource "aws_lb" "api" {
@@ -307,6 +318,7 @@ resource "aws_lb_listener" "api" {
 }
 
 resource "aws_ecs_service" "api" {
+  depends_on = ["aws_lb.api"]
   name = "ab2d-api"
   cluster = aws_ecs_cluster.ab2d.id
   task_definition = var.override_task_definition_arn != "" ? var.override_task_definition_arn : aws_ecs_task_definition.api.arn
