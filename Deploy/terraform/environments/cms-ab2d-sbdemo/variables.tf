@@ -7,20 +7,20 @@ variable "env" {
 }
 
 variable "vpc_id" {
-  default = "vpc-09d8e15457c7ebcf5"
+  default = "vpc-05ffe97d300c31d39"
 }
 
 ## EC2 specific variables ########################################################################
 
 variable "private_subnet_ids" {
   type        = list(string)
-  default     = ["subnet-0d63fa6104a9dc6e0", "subnet-0ed121109fa2e591d", "subnet-019fa7279e8ce1452"]
+  default     = ["subnet-02209ace447e29509", "subnet-091fdbf064c7463a4", "subnet-0fde740acb2972bd7"]
   description = "App instances and DB go here"
 }
 
 variable "deployment_controller_subnet_ids" {
   type        = list(string)
-  default     = ["subnet-0f4e1bf22c4607bef", "subnet-077653c984ad36969", "subnet-003a4583b59ea314b"]
+  default     = ["subnet-04da613d381ab2c33", "subnet-09c07aeba11fca056", "subnet-07bdafd74f268e7a7"]
   description = "Deployment controllers go here"
 }
 
@@ -115,6 +115,10 @@ variable "db_instance_class" {
 
 variable "db_snapshot_id" {
   default = ""
+}
+
+variable "db_skip_final_snapshot" {
+  default = "true"
 }
 
 variable "db_subnet_group_name" {
