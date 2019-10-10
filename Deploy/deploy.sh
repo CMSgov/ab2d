@@ -137,7 +137,7 @@ fi
 # Deploy new AMI out to AWS
 if [ -z "${AUTOAPPROVE}" ]; then
   # Confirm with the caller prior to applying changes.
-  terraform apply --var "ami_id=$AMI_ID" --var "current_task_definition_arn=$API_TASK_DEFINITION" --target module.app
+  terraform apply --var "ami_id=$AMI_ID" --var "current_task_definition_arn=$API_TASK_DEFINITION" --target module.api
 
   # LSH SKIP FOR NOW BEGIN
   # terraform apply --var "ami_id=$AMI_ID" --var "current_task_definition_arn=$API_TASK_DEFINITION" --target module.cloudwatch
@@ -147,7 +147,7 @@ if [ -z "${AUTOAPPROVE}" ]; then
   # LSH SKIP FOR NOW END
 else
   # Apply the changes without prompting
-  terraform apply --var "ami_id=$AMI_ID" --var "current_task_definition_arn=$API_TASK_DEFINITION" --target module.app --auto-approve
+  terraform apply --var "ami_id=$AMI_ID" --var "current_task_definition_arn=$API_TASK_DEFINITION" --target module.api --auto-approve
 
   # LSH SKIP FOR NOW BEGIN
   # terraform apply --var "ami_id=$AMI_ID" --var "current_task_definition_arn=$API_TASK_DEFINITION" --target module.cloudwatch --auto-approve
