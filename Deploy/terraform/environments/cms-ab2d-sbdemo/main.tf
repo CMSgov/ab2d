@@ -42,6 +42,7 @@ module "db" {
   multi_az                = var.db_multi_az
   username                = var.db_username
   password                = var.db_password
+  skip_final_snapshot     = var.db_skip_final_snapshot
 }
 
 module "s3" {
@@ -58,8 +59,8 @@ module "s3" {
 # vpn-private-sec-group-id      = var.vpn-private-sec-group-id
 # enterprise-tools-sec-group-id = var.enterprise-tools-sec-group-id
 # LSH SKIP FOR NOW END
-module "app" {
-  source                        = "../../modules/app"
+module "api" {
+  source                        = "../../modules/api"
   env                           = var.env
   vpc_id                        = var.vpc_id
   db_sec_group_id               = module.db.aws_security_group_sg_database_id
@@ -86,5 +87,5 @@ module "lonnie_access_controller" {
   description  = "Lonnie"
   cidr_blocks  = ["152.208.13.223/32"]
   source       = "../../modules/access_controller"
-  sec_group_id = module.app.deployment_controller_sec_group_id
+  sec_group_id = module.api.deployment_controller_sec_group_id
 }
