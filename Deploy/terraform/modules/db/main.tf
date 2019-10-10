@@ -50,4 +50,5 @@ resource "aws_db_instance" "db" {
   vpc_security_group_ids = [aws_security_group.sg_database.id]
   username = var.username
   password = var.password
+  skip_final_snapshot = var.skip_final_snapshot
 }
