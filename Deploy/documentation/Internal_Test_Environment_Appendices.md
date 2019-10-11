@@ -211,8 +211,12 @@
 
 1. Manually deregister the AMI through the AWS console
 
-    > *** TO DO ***: need to script this with AWS CLI
+   > *** TO DO ***: need to script this with AWS CLI
 
+1. Manually delete the empty ECS cluster through the AWS console
+
+   > *** TO DO ***: need to script this with AWS CLI
+   
 1. Manually delete the VPC through the AWS console
 
    *Note that you can't delete the VPC from the AWS CLI when there are resources within the VPC.*

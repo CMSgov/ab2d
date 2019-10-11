@@ -456,8 +456,13 @@
 
 1. Use the AWS Console to give "Write objects" and "Read bucket permissions" to the "S3 log delivery group" of the "cms-ab2d-cloudtrail" bucket
 
-   > *** TO DO ***: need to script this with AWS CLI
-
+   ```ShellSession
+   $ aws s3api put-bucket-acl \
+     --bucket cms-ab2d-cloudtrail \
+     --grant-write URI=http://acs.amazonaws.com/groups/s3/LogDelivery \
+     --grant-read-acp URI=http://acs.amazonaws.com/groups/s3/LogDelivery
+   ```
+   
 1. Deploy additional S3 configuration
 
    ```ShellSession
@@ -467,24 +472,10 @@
 
 1. Add this bucket policy to the "cms-ab2d-cloudtrail" S3 bucket via the AWS console
 
-   > *** TO DO ***: need to script this using AWS CLI
+   ```ShellSession
+   $ aws s3api put-bucket-policy --bucket cms-ab2d-cloudtrail --policy file://cms-ab2d-cloudtrail-bucket-policy.json
+   ```
    
-   ```
-   {
-     "Version": "2012-10-17",
-     "Statement": [
-       {
-         "Effect": "Allow",
-         "Principal": {
-           "AWS": "arn:aws:iam::127311923021:root"
-         },
-         "Action": "s3:PutObject",
-         "Resource": "arn:aws:s3:::cms-ab2d-cloudtrail/*"
-       }
-     ]
-   }
-   ```
-
 1. Configure the networking
 
    1. Open the "variables.tf"
@@ -540,6 +531,55 @@
    $ cd ~/code/ab2d/Deploy
    ```
 
+1. Determine and note the latest CentOS AMI
+
+   ```ShellSession
+   $ aws --region us-east-1 ec2 describe-images \
+     --owners aws-marketplace \
+     --filters Name=product-code,Values=aw0evgkw8e5c1q413zgy5pjce \
+     --query 'Images[*].[ImageId,CreationDate]' \
+     --output text \
+     | sort -k2 -r \
+     | head -n1
+   ```
+   
+1. Configure packer
+
+   1. Open the "app.json" file
+
+      ```ShellSession
+      $ vim ~/code/ab2d/Deploy/packer/app/app.json
+      ```
+
+   1. Change the gold disk AMI to the noted CentOS AMI
+
+      ```
+      ami-02eac2c0129f6376b
+      ```
+      
+   1. Change the subnet to the first public subnet
+
+      ```
+      "subnet_id": "subnet-077269e0fb659e953",
+      ```
+
+   1. Change the VPC ID
+
+      ```
+      "vpc_id": "vpc-00dcfaadb3fe8e3a2",
+      ```
+
+   1. Change the builders settings
+   
+      *Example:*
+   
+      ```
+      "iam_instance_profile": "lonnie.hanekamp@semanticbits.com",
+      "ssh_username": "centos",
+      ```
+
+   1. Save and close the file
+      
 1. Deploy application components
 
    ```ShellSession

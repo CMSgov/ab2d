@@ -7,20 +7,20 @@ variable "env" {
 }
 
 variable "vpc_id" {
-  default = "vpc-05ffe97d300c31d39"
+  default = "vpc-00dcfaadb3fe8e3a2"
 }
 
 ## EC2 specific variables ########################################################################
 
 variable "private_subnet_ids" {
   type        = list(string)
-  default     = ["subnet-02209ace447e29509", "subnet-091fdbf064c7463a4", "subnet-0fde740acb2972bd7"]
+  default     = ["subnet-09fe6a03c783e0e8b", "subnet-0a06d6c59dead565e", "subnet-0f705fee369c49184"]
   description = "App instances and DB go here"
 }
 
 variable "deployment_controller_subnet_ids" {
   type        = list(string)
-  default     = ["subnet-04da613d381ab2c33", "subnet-09c07aeba11fca056", "subnet-07bdafd74f268e7a7"]
+  default     = ["subnet-077269e0fb659e953", "subnet-0f36ecc59af6ee4f4", "subnet-09aca9941679c01a0"]
   description = "Deployment controllers go here"
 }
 
