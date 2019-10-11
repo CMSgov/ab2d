@@ -89,3 +89,15 @@ module "lonnie_access_controller" {
   source       = "../../modules/access_controller"
   sec_group_id = module.api.deployment_controller_sec_group_id
 }
+
+resource "null_resource" "authorized_keys_file" {
+  depends_on = [module.api]
+
+  provisioner "local-exec" {
+    command = "scp -o StrictHostKeyChecking=no -i ~/.ssh/${var.ssh_key_name}.pem ./authorized_keys ${var.linux_user}@${module.api.deployment_controller_public_ip}:/home/${var.linux_user}/.ssh"
+  }
+
+  provisioner "local-exec" {
+    command = "ssh -i ~/.ssh/${var.ssh_key_name}.pem ${var.linux_user}@${module.api.deployment_controller_public_ip} 'chmod 600 ~/.ssh/authorized_keys'"
+  }
+}
