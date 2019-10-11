@@ -4,7 +4,7 @@
         {
             "Action": "sts:AssumeRole",
             "Resource": [
-                "arn:aws:iam::114601554524:role/SpinnakerManagedProfile"
+                "arn:aws:iam::114601554524:role/Ab2dManagedRole"
             ],
             "Effect": "Allow"
         }
