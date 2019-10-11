@@ -2,8 +2,9 @@
 set -e #Exit on first error
 set -x #Be verbose
 
-
+#
 # Parse options
+#
 
 echo "Parse options..."
 for i in "$@"
@@ -11,6 +12,7 @@ do
 case $i in
   --environment=*)
   ENVIRONMENT="${i#*=}"
+  CMS_ENV=$(echo $ENVIRONMENT | tr '[:lower:]' '[:upper:]')
   shift # past argument=value
   ;;
   --ami=*)
@@ -25,7 +27,9 @@ esac
 done
 
 
+#
 # Check vars are not empty before proceeding
+#
 
 echo "Check vars are not empty before proceeding..."
 if [ -z "${ENVIRONMENT}" ]; then
@@ -34,8 +38,21 @@ if [ -z "${ENVIRONMENT}" ]; then
   exit 1
 fi
 
+#
+# Set AMI_ID if it already exists for the deployment
+#
 
+echo "Set AMI_ID if it already exists for the deployment..."
+AMI_ID=$(aws --region us-east-1 ec2 describe-images \
+  --owners self \
+  --filters "Name=tag:Name,Values=AB2D-$CMS_ENV-AMI" \
+  --query "Images[*].[ImageId]" \
+  --output text)
+
+
+#
 # If no AMI is specified then create a new one
+#
 
 echo "If no AMI is specified then create a new one..."
 if [ -z "${AMI_ID}" ]; then
@@ -45,21 +62,29 @@ if [ -z "${AMI_ID}" ]; then
   packer build --var my_ip_address=$IP --var git_commit_hash=$COMMIT app.json  2>&1 | tee output.txt
   AMI_ID=$(cat output.txt | awk 'match($0, /ami-.*/) { print substr($0, RSTART, RLENGTH) }' | tail -1)
   cd ../../
+  # Add name tag to AMI
+  aws --region us-east-1 ec2 create-tags \
+    --resources $AMI_ID \
+    --tags "Key=Name,Value=AB2D-$CMS_ENV-AMI"
 fi
 
-
+#
 # Get current known good ECS task definitions
+#
 
 echo "Get current known good ECS task definitions..."
 CLUSTER_ARNS=$(aws --region us-east-1 ecs list-clusters --query 'clusterArns' --output text)
 if [ -z "${CLUSTER_ARNS}" ]; then
   echo "Skipping getting current ECS task definitions, since there are no existing clusters"
 else  
-  API_TASK_DEFINITION=$(aws --region us-east-1 ecs describe-services --services ab2d-api  --cluster ab2d-$ENVIRONMENT | grep "taskDefinition" | head -1)
+  API_TASK_DEFINITION=$(aws --region us-east-1 ecs describe-services --services ab2d-api --cluster ab2d-$ENVIRONMENT | grep "taskDefinition" | head -1)
   API_TASK_DEFINITION=$(echo $API_TASK_DEFINITION | awk -F'": "' '{print $2}' | tr -d '"' | tr -d ',')
 fi
 
+
+#
 # Get ECS task counts before making any changes
+#
 
 echo "Get ECS task counts before making any changes..."
 
@@ -77,18 +102,23 @@ fi
 
 if [ -z "${CLUSTER_ARNS}" ]; then
   echo "Skipping setting EXPECTED_API_COUNT, since there are no existing clusters"
+  EXPECTED_API_COUNT="2"
 else
   EXPECTED_API_COUNT="$OLD_API_TASK_COUNT*2"
 fi
 
 
+#
 # Switch context to terraform environment
+#
 
 echo "Switch context to terraform environment..."
 cd terraform/environments/cms-ab2d-$ENVIRONMENT
 
 
+#
 # Ensure Old Autoscaling Groups and containers are around to service requests
+#
 
 echo "Ensure Old Autoscaling Groups and containers are around to service requests..."
 
@@ -112,7 +142,9 @@ else
 fi
 
 
+#
 # Deploy new AMI out to AWS
+#
 
 echo "Deploy new AMI out to AWS..."
 if [ -z "${AUTOAPPROVE}" ]; then
@@ -124,7 +156,9 @@ else
 fi
 
 
+#
 # Apply schedule autoscaling if applicable
+#
 
 echo "Apply schedule autoscaling if applicable..."
 if [ -f ./autoscaling-schedule.tf ]; then
@@ -133,7 +167,9 @@ if [ -f ./autoscaling-schedule.tf ]; then
 fi
 
 
+#
 # Push authorized_keys file to deployment_controller
+#
 
 echo "Push authorized_keys file to deployment_controller..."
 terraform taint -allow-missing null_resource.authorized_keys_file
@@ -146,7 +182,9 @@ else
 fi
 
 
+#
 # Ensure new autoscaling group is running containers
+#
 
 echo "Ensure new autoscaling group is running containers..."
 
