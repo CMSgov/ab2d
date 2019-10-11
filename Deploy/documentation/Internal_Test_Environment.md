@@ -10,7 +10,6 @@
 1. [Create an image in an AWS Elastic Container Registry](#create-an-image-in-an-aws-elastic-container-egistry)
 1. [Create base aws environment](#create-base-aws-environment)
 1. [Deploy to test environment](#deploy-to-test-environment)
-1. [Destroy deployment](#destroy-deployment)
          
 ## Create AWS keypair
 
@@ -585,55 +584,4 @@
    ```ShellSession
    $ ./deploy.sh --environment=sbdemo --auto-approve
    ```
-
-## Destroy deployment
-
-1. Set target profile
-
-   *Example for the "semanticbitsdemo" AWS account:*
-   
-   ```ShellSession
-   $ export AWS_PROFILE="sbdemo"
-   ```
-   
-1. Change to the environment directory
-
-   ```ShellSession
-   $ cd ~/code/ab2d/Deploy/terraform/environments/cms-ab2d-sbdemo
-   ```
-   
-1. Destroy the environment of the "app" module
-
-   ```ShellSession
-   $ terraform destroy \
-     --target module.api --auto-approve
-   ```
-
-1. Destroy the environment of the "db" module
-
-   ```ShellSession
-   $ terraform destroy \
-     --target module.db --auto-approve
-   ```
-
-1. Destroy the changes made via the "s3" module
-
-   ```ShellSession
-   $ terraform destroy \
-     --target module.s3 --auto-approve
-   ```
-
-1. Destroy the changes made via the "kms" module
-
-   ```ShellSession
-   $ terraform destroy \
-     --target module.kms --auto-approve
-   ```
-
-1. Manually destroy any remnants of the deployment that might have been caused by a failed deployment
-
-   *List of components that needs to be deleted manually:*
-   
-   - cms-ab2d-sbdemo-DatabaseSecurityGroup
-
 

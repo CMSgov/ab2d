@@ -2,91 +2,10 @@
 
 ## Table of Contents
 
-1. [Appendix AA: Retest terraform using existing AMI](#appendix-aa-retest-terraform-using-existing-ami)
-1. [Appendix BB: Destroy complete environment](#appendix-bb-destroy-complete-environment)
-1. [Appendix CC: Preparation notes](#appendix-cc-preparation-notes)
+1. [Appendix A: Destroy complete environment](#appendix-bb-destroy-complete-environment)
+1. [Appendix B: Retest terraform using existing AMI](#appendix-aa-retest-terraform-using-existing-ami)
 
-## Appendix AA: Retest terraform using existing AMI
-
-1. Set AWS profile
-
-   ```ShellSession
-   $ export AWS_PROFILE="sbdemo"
-   ```
-   
-1. Set the AMI_ID used by the deployment
-
-   ```ShellSession
-   $ export AMI_ID=ami-07d8d582ab4e0b101
-   ```
-
-1. Note that "API_TASK_DEFINITION" will be empty in the next step
-
-1. Change to the environment directory
-
-   ```ShellSession
-   $ cd ~/code/ab2d/Deploy/terraform/environments/cms-ab2d-sbdemo
-   ```
-
-1. Destroy the environment
-
-   ```ShellSession
-   $ terraform destroy \
-     --var "ami_id=$AMI_ID" \
-     --var "current_task_definition_arn=$API_TASK_DEFINITION" \
-     --target module.app --auto-approve
-   ```
-
-1. Manually destroy any remnants of the deployment that might have been caused by a failed deployment
-
-   *List of components that needs to be deleted manually:*
-   
-   - cms-ab2d-sbdemo-DatabaseSecurityGroup
-
-1. Note the following logging levels are available
-
-   - TRACE
-
-   - DEBUG
-
-   - INFO
-
-   - WARN
-
-   - ERROR
-   
-1. Turn on terraform logging
-
-   *Example of logging "WARN" and "ERROR":*
-   
-   ```ShellSession
-   $ export TF_LOG=WARN
-   $ export TF_LOG_PATH=/var/log/terraform/tf.log
-   ```
-
-   *Example of logging everything:*
-
-   ```ShellSession
-   $ export TF_LOG=TRACE
-   $ export TF_LOG_PATH=/var/log/terraform/tf.log
-   ```
-
-1. Delete existing log file
-
-   ```ShelSession
-   $ rm -f /var/log/terraform/tf.log
-   ```
-   
-1. Rerun the terraform apply
-
-   ```ShellSession
-   $ terraform apply \
-     --var "ami_id=$AMI_ID" \
-     --var "current_task_definition_arn=$API_TASK_DEFINITION" \
-     --target module.app --auto-approve
-   ```
-
-## Appendix BB: Destroy complete environment
+## Appendix A: Destroy complete environment
 
 1. Set target profile
 
@@ -114,7 +33,7 @@
 
    > *** TO DO ***: need to script this with AWS CLI
 
-1. Destroy the environment of the "app" module
+1. Destroy the environment of the "api" module
 
    ```ShellSession
    $ terraform destroy \
@@ -209,10 +128,6 @@
 
     > *** TO DO ***: need to script this with AWS CLI
 
-1. Manually deregister the AMI through the AWS console
-
-   > *** TO DO ***: need to script this with AWS CLI
-
 1. Manually delete the empty ECS cluster through the AWS console
 
    > *** TO DO ***: need to script this with AWS CLI
@@ -221,117 +136,94 @@
 
    *Note that you can't delete the VPC from the AWS CLI when there are resources within the VPC.*
 
-## Appendix CC: Preparation notes
+1. Note that if you want to retest using this existing AMI, jump to the following section:
 
-1. Change to the repo directory
+   [Appendix B: Retest terraform using existing AMI](#appendix-aa-retest-terraform-using-existing-ami)
 
-   ```ShellSession
-   $ cd ~/code/ab2d
-   ```
+1. Manually deregister the AMI through the AWS console
 
-1. Backup the "app.json" file to be used for the government AWS account
+   > *** TO DO ***: need to script this with AWS CLI
 
-   ```ShellSession
-   $ cp Deploy/packer/app/app.json Deploy/packer/app/app.json.gov
-   ```
+## Appendix B: Retest terraform using existing AMI
 
-1. Set target profile
+1. Destroy existing environment by completing the following section first
 
-   *Example for the "semanticbitsdemo" AWS account:*
+   [Appendix A: Destroy complete environment](#appendix-bb-destroy-complete-environment)
    
+1. Set AWS profile
+
    ```ShellSession
    $ export AWS_PROFILE="sbdemo"
    ```
-
-1. Get the latest CentOS AMI
-
-   ```ShellSession
-   $ aws --region us-east-1 ec2 describe-images \
-     --owners aws-marketplace \
-     --filters Name=product-code,Values=aw0evgkw8e5c1q413zgy5pjce \
-     --query 'Images[*].[ImageId,CreationDate]' \
-     --output text \
-     | sort -k2 -r \
-     | head -n1
-   ```
-
-1. Note the AMI in the output
-
-   *Example:*
    
-   ```
-   ami-02eac2c0129f6376b
-   ```
-
-1. Open the "app.json" file
+1. Set the AMI_ID used by the deployment
 
    ```ShellSession
-   $ vim Deploy/packer/app/app.json
+   $ export AMI_ID=ami-07d8d582ab4e0b101
    ```
 
-1. Change the following with the noted AMI
+1. Note that "API_TASK_DEFINITION" will be empty in the next step
 
-   *Example:*
+1. Change to the environment directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d/Deploy/terraform/environments/cms-ab2d-sbdemo
+   ```
+
+1. Destroy the environment
+
+   ```ShellSession
+   $ terraform destroy \
+     --var "ami_id=$AMI_ID" \
+     --var "current_task_definition_arn=$API_TASK_DEFINITION" \
+     --target module.app --auto-approve
+   ```
+
+1. Manually destroy any remnants of the deployment that might have been caused by a failed deployment
+
+   *List of components that needs to be deleted manually:*
    
-   ```
-   "gold_ami": "ami-02eac2c0129f6376b"
-   ```
+   - cms-ab2d-sbdemo-DatabaseSecurityGroup
 
-1. Change the networking settings based on the VPC that was created
+1. Note the following logging levels are available
 
-   *Example:*
+   - TRACE
+
+   - DEBUG
+
+   - INFO
+
+   - WARN
+
+   - ERROR
    
-   ```
-   "subnet_id": "subnet-0b8ba5ef9b89b07ed",
-   "vpc_id": "vpc-064c3621b7205922a",
-   ```
+1. Turn on terraform logging
 
-1. Change the builders settings
-
-   *Example:*
-
-   ```
-   "iam_instance_profile": "lonnie.hanekamp@semanticbits.com",
-   "ssh_username": "centos",
+   *Example of logging "WARN" and "ERROR":*
+   
+   ```ShellSession
+   $ export TF_LOG=WARN
+   $ export TF_LOG_PATH=/var/log/terraform/tf.log
    ```
 
-1. Save and close "app.json"
-
-1. Backup the "provision-app-instance.sh" file to be used for the government AWS account
+   *Example of logging everything:*
 
    ```ShellSession
-   $ cp Deploy/packer/app/provision-app-instance.sh Deploy/packer/app/provision-app-instance.sh.gov
+   $ export TF_LOG=TRACE
+   $ export TF_LOG_PATH=/var/log/terraform/tf.log
    ```
 
-1. Open "provision-app-instance.sh"
+1. Delete existing log file
+
+   ```ShelSession
+   $ rm -f /var/log/terraform/tf.log
+   ```
+   
+1. Rerun the terraform apply
 
    ```ShellSession
-   $ vim Deploy/packer/app/provision-app-instance.sh
+   $ terraform apply \
+     --var "ami_id=$AMI_ID" \
+     --var "current_task_definition_arn=$API_TASK_DEFINITION" \
+     --target module.app --auto-approve
    ```
-
-1. Comment out gold disk related items
-
-   1. Comment out "Update splunk forwarder config" section
-
-      ```
-      #
-      # LSH Comment out gold disk related section
-      #
-      # # Update splunk forwarder config
-      # sudo chown splunk:splunk /tmp/splunk-deploymentclient.conf
-      # sudo mv -f /tmp/splunk-deploymentclient.conf /opt/splunkforwarder/etc/system/local/deploymentclient.conf
-      ```
-
-   1. Comment out "Make sure splunk can read all logs" section
-
-      ```
-      #
-      # LSH Comment out gold disk related section
-      #
-      # # Make sure splunk can read all logs
-      # sudo /opt/splunkforwarder/bin/splunk stop
-      # sudo /opt/splunkforwarder/bin/splunk clone-prep-clear-config
-      # sudo /opt/splunkforwarder/bin/splunk start
-      ```
-
-1. Save and close "provision-app-instance.sh"
