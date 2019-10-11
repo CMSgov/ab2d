@@ -4,6 +4,8 @@ set -x #Be verbose
 
 
 # Parse options
+
+echo "Parse options..."
 for i in "$@"
 do
 case $i in
@@ -24,6 +26,8 @@ done
 
 
 # Check vars are not empty before proceeding
+
+echo "Check vars are not empty before proceeding..."
 if [ -z "${ENVIRONMENT}" ]; then
   echo "Try running the script like so:"
   echo "./deploy.sh --environment=prototype"
@@ -32,6 +36,8 @@ fi
 
 
 # If no AMI is specified then create a new one
+
+echo "If no AMI is specified then create a new one..."
 if [ -z "${AMI_ID}" ]; then
   cd packer/app/
   IP=$(curl ipinfo.io/ip)
@@ -43,6 +49,8 @@ fi
 
 
 # Get current known good ECS task definitions
+
+echo "Get current known good ECS task definitions..."
 CLUSTER_ARNS=$(aws --region us-east-1 ecs list-clusters --query 'clusterArns' --output text)
 if [ -z "${CLUSTER_ARNS}" ]; then
   echo "Skipping getting current ECS task definitions, since there are no existing clusters"
@@ -52,6 +60,9 @@ else
 fi
 
 # Get ECS task counts before making any changes
+
+echo "Get ECS task counts before making any changes..."
+
 if [ -z "${CLUSTER_ARNS}" ]; then
   echo "Skipping getting ECS task counts, since there are no existing clusters"
 else
@@ -67,15 +78,19 @@ fi
 if [ -z "${CLUSTER_ARNS}" ]; then
   echo "Skipping setting EXPECTED_API_COUNT, since there are no existing clusters"
 else
-  let EXPECTED_API_COUNT="$OLD_API_TASK_COUNT*2"
+  EXPECTED_API_COUNT="$OLD_API_TASK_COUNT*2"
 fi
 
 
 # Switch context to terraform environment
+
+echo "Switch context to terraform environment..."
 cd terraform/environments/cms-ab2d-$ENVIRONMENT
 
 
 # Ensure Old Autoscaling Groups and containers are around to service requests
+
+echo "Ensure Old Autoscaling Groups and containers are around to service requests..."
 
 if [ -z "${CLUSTER_ARNS}" ]; then
   echo "Skipping setting OLD_API_ASG, since there are no existing clusters"
@@ -98,6 +113,8 @@ fi
 
 
 # Deploy new AMI out to AWS
+
+echo "Deploy new AMI out to AWS..."
 if [ -z "${AUTOAPPROVE}" ]; then
   # Confirm with the caller prior to applying changes.
   terraform apply --var "ami_id=$AMI_ID" --var "current_task_definition_arn=$API_TASK_DEFINITION" --target module.api
@@ -108,6 +125,8 @@ fi
 
 
 # Apply schedule autoscaling if applicable
+
+echo "Apply schedule autoscaling if applicable..."
 if [ -f ./autoscaling-schedule.tf ]; then
   terraform apply --auto-approve -var "ami_id=$AMI_ID" --var "current_task_definition_arn=$API_TASK_DEFINITION" -target=aws_autoscaling_schedule.morning
   terraform apply --auto-approve -var "ami_id=$AMI_ID" --var "current_task_definition_arn=$API_TASK_DEFINITION" -target=aws_autoscaling_schedule.night
@@ -115,6 +134,8 @@ fi
 
 
 # Push authorized_keys file to deployment_controller
+
+echo "Push authorized_keys file to deployment_controller..."
 terraform taint -allow-missing null_resource.authorized_keys_file
 if [ -z "${AUTOAPPROVE}" ]; then
   # Confirm with the caller prior to applying changes.
@@ -126,6 +147,9 @@ fi
 
 
 # Ensure new autoscaling group is running containers
+
+echo "Ensure new autoscaling group is running containers..."
+
 ACTUAL_API_COUNT=0
 RETRIES_API=0
 
