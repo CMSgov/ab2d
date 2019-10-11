@@ -31,6 +31,24 @@
    $ chmod 600 ~/.ssh/ab2d-sbdemo.pem
    ```
 
+1. Output the public key to the clipboard
+
+   ```ShellSession
+   $ ssh-keygen -y -f ~/.ssh/ab2d-sbdemo.pem | pbcopy
+   ```
+
+1. Update the "authorized_keys" file for the environment
+
+   1. Open the "authorized_keys" file for the environment
+   
+      ```ShellSession
+      $ vim ~/code/ab2d/Deploy/terraform/environments/cms-ab2d-sbdemo/authorized_keys
+      ```
+
+   1. Paste the public key under the "Keys included with CentOS image" section
+
+   1. Save and close the file
+
 ## Create required S3 buckets
 
 1. Set target profile
@@ -162,6 +180,12 @@
    $ aws iam create-policy --policy-name Ab2dS3AccessPolicy --policy-document file://ab2d-s3-access-policy.json
    ```
 
+1. Create "Ab2dEcsForEc2Policy"
+
+   ```ShellSession
+   $ aws iam create-policy --policy-name Ab2dEcsForEc2Policy --policy-document file://ab2d-ecs-for-ec2-policy.json
+   ```
+
 ## Create roles
 
 1. Set target profile
@@ -191,6 +215,7 @@
    $ aws iam attach-role-policy --role-name Ab2dInstanceRole --policy-arn arn:aws:iam::114601554524:policy/Ab2dPackerPolicy
    $ aws iam attach-role-policy --role-name Ab2dInstanceRole --policy-arn arn:aws:iam::114601554524:policy/Ab2dS3AccessPolicy
    $ aws iam attach-role-policy --role-name Ab2dInstanceRole --policy-arn arn:aws:iam::114601554524:policy/Ab2dInitPolicy
+   $ aws iam attach-role-policy --role-name Ab2dInstanceRole --policy-arn arn:aws:iam::114601554524:policy/Ab2dEcsForEc2Policy
    ```
 
 1. Create "Ab2dManagedRole" role
@@ -584,4 +609,4 @@
    ```ShellSession
    $ ./deploy.sh --environment=sbdemo --auto-approve
    ```
-
+   
