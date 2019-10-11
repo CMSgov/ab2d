@@ -1,6 +1,6 @@
 resource "aws_security_group" "deployment_controller" {
-  name        = "ab2d-deployment-controller-${var.env}"
-  description = "Deployment Controller"
+  name        = "ab2d-worker-${var.env}"
+  description = "Worker security group"
   vpc_id      = var.vpc_id
 }
 
