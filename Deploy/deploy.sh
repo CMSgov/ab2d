@@ -51,12 +51,6 @@ else
   API_TASK_DEFINITION=$(echo $API_TASK_DEFINITION | awk -F'": "' '{print $2}' | tr -d '"' | tr -d ',')
 fi
 
-# LSH SKIP FOR NOW BEGIN
-# TAXONOMY_TASK_DEFINITION=$(aws --region us-east-1 ecs describe-services --services ab2d-taxonomy  --cluster ab2d-taxonomy-$ENVIRONMENT | grep "taskDefinition" | head -1)
-# TAXONOMY_TASK_DEFINITION=$(echo $TAXONOMY_TASK_DEFINITION | awk -F'": "' '{print $2}' | tr -d '"' | tr -d ',')
-# LSH SKIP FOR NOW END
-
-
 # Get ECS task counts before making any changes
 if [ -z "${CLUSTER_ARNS}" ]; then
   echo "Skipping getting ECS task counts, since there are no existing clusters"
@@ -64,29 +58,17 @@ else
   api_task_count() { aws --region us-east-1 ecs list-tasks --cluster ab2d-$ENVIRONMENT|grep "\:task\/"|wc -l|tr -d ' '; }
 fi
 
-# LSH SKIP FOR NOW BEGIN
-# taxonomy_task_count() { aws --region us-east-1 ecs list-tasks --cluster ab2d-taxonomy-$ENVIRONMENT|grep "\:task\/"|wc -l|tr -d ' '; }
-# LSH SKIP FOR NOW END
-
 if [ -z "${CLUSTER_ARNS}" ]; then
   echo "Skipping setting OLD_API_TASK_COUNT, since there are no existing clusters"
 else
   OLD_API_TASK_COUNT=$(api_task_count)
 fi
 
-# LSH SKIP FOR NOW BEGIN
-# OLD_TAXONOMY_TASK_COUNT=$(taxonomy_task_count)
-# LSH SKIP FOR NOW END
-
 if [ -z "${CLUSTER_ARNS}" ]; then
   echo "Skipping setting EXPECTED_API_COUNT, since there are no existing clusters"
 else
   let EXPECTED_API_COUNT="$OLD_API_TASK_COUNT*2"
 fi
-
-# LSH SKIP FOR NOW BEGIN
-# let EXPECTED_TAXONOMY_COUNT="$OLD_TAXONOMY_TASK_COUNT*2"
-# LSH SKIP FOR NOW END
 
 
 # Switch context to terraform environment
@@ -101,10 +83,6 @@ else
   OLD_API_ASG=$(terraform show|grep :autoScalingGroup:|awk -F" = " '{print $2}'|grep ab2d-$ENVIRONMENT)
 fi
 
-# LSH SKIP FOR NOW BEGIN
-# OLD_TAXONOMY_ASG=$(terraform show|grep :autoScalingGroup:|awk -F" = " '{print $2}'|grep ab2d-taxonomy-$ENVIRONMENT)
-# LSH SKIP FOR NOW END
-
 if [ -z "${CLUSTER_ARNS}" ]; then
   echo "Skipping removing autosclaing group and launch configuration, since there are no existing clusters"
 else
@@ -112,56 +90,27 @@ else
   terraform state rm module.app.aws_launch_configuration.launch_config
 fi
 
-# LSH SKIP FOR NOW BEGIN
-# terraform state rm module.taxonomy.aws_autoscaling_group.asg
-# terraform state rm module.taxonomy.aws_launch_configuration.launch_config
-# LSH SKIP FOR NOW END
-
 if [ -z "${CLUSTER_ARNS}" ]; then
   echo "Skipping removing autosclaing group and launch configuration, since there are no existing clusters"
 else
   OLD_API_CONTAINER_INSTANCES=$(aws --region us-east-1 ecs list-container-instances --cluster ab2d-$ENVIRONMENT|grep container-instance)
 fi
 
-# LSH SKIP FOR NOW BEGIN
-# OLD_TAXONOMY_CONTAINER_INSTANCES=$(aws --region us-east-1 ecs list-container-instances --cluster ab2d-taxonomy-$ENVIRONMENT|grep container-instance)
-# LSH SKIP FOR NOW END
-
-
-# LSH SKIP FOR NOW BEGIN
-# #Make sure new deployment controller gets data migration scripts
-# terraform state rm module.data_migration
-# LSH SKIP FOR NOW END
-
 
 # Deploy new AMI out to AWS
 if [ -z "${AUTOAPPROVE}" ]; then
   # Confirm with the caller prior to applying changes.
   terraform apply --var "ami_id=$AMI_ID" --var "current_task_definition_arn=$API_TASK_DEFINITION" --target module.api
-
-  # LSH SKIP FOR NOW BEGIN
-  # terraform apply --var "ami_id=$AMI_ID" --var "current_task_definition_arn=$API_TASK_DEFINITION" --target module.cloudwatch
-  # terraform apply --var "ami_id=$AMI_ID" --var "current_task_definition_arn=$API_TASK_DEFINITION" --target module.data_migration
-  # terraform apply --var "ami_id=$AMI_ID" --var "current_task_definition_arn=$TAXONOMY_TASK_DEFINITION" --target module.taxonomy
-  # terraform apply --var "ami_id=$AMI_ID" --var "current_task_definition_arn=$TAXONOMY_TASK_DEFINITION" --target module.cloudwatch_taxonomy
-  # LSH SKIP FOR NOW END
 else
   # Apply the changes without prompting
   terraform apply --var "ami_id=$AMI_ID" --var "current_task_definition_arn=$API_TASK_DEFINITION" --target module.api --auto-approve
-
-  # LSH SKIP FOR NOW BEGIN
-  # terraform apply --var "ami_id=$AMI_ID" --var "current_task_definition_arn=$API_TASK_DEFINITION" --target module.cloudwatch --auto-approve
-  # terraform apply --var "ami_id=$AMI_ID" --var "current_task_definition_arn=$API_TASK_DEFINITION" --target module.data_migration --auto-approve  
-  # terraform apply --var "ami_id=$AMI_ID" --var "current_task_definition_arn=$TAXONOMY_TASK_DEFINITION" --target module.taxonomy --auto-approve
-  # terraform apply --var "ami_id=$AMI_ID" --var "current_task_definition_arn=$TAXONOMY_TASK_DEFINITION" --target module.cloudwatch_taxonomy --auto-approve
-  # LSH SKIP FOR NOW END
 fi
 
 
 # Apply schedule autoscaling if applicable
 if [ -f ./autoscaling-schedule.tf ]; then
-    terraform apply --auto-approve -var "ami_id=$AMI_ID" --var "current_task_definition_arn=$API_TASK_DEFINITION" -target=aws_autoscaling_schedule.morning
-    terraform apply --auto-approve -var "ami_id=$AMI_ID" --var "current_task_definition_arn=$API_TASK_DEFINITION" -target=aws_autoscaling_schedule.night
+  terraform apply --auto-approve -var "ami_id=$AMI_ID" --var "current_task_definition_arn=$API_TASK_DEFINITION" -target=aws_autoscaling_schedule.morning
+  terraform apply --auto-approve -var "ami_id=$AMI_ID" --var "current_task_definition_arn=$API_TASK_DEFINITION" -target=aws_autoscaling_schedule.night
 fi
 
 
@@ -192,41 +141,3 @@ while [ "$ACTUAL_API_COUNT" -lt "$EXPECTED_API_COUNT" ]; do
     exit 1
   fi
 done
-
-# LSH SKIP FOR NOW BEGIN
-# ACTUAL_TAXONOMY_COUNT=0
-# RETRIES_TAXONOMY=0
-
-# while [ "$ACTUAL_TAXONOMY_COUNT" -lt "$EXPECTED_TAXONOMY_COUNT" ]; do
-#   ACTUAL_TAXONOMY_COUNT=$(taxonomy_task_count)
-#   echo "Running Taxonomy Tasks: $ACTUAL_TAXONOMY_COUNT, Expected: $EXPECTED_TAXONOMY_COUNT"
-#   if [ "$RETRIES_TAXONOMY" != "15" ]; then
-#     echo "Retry in 60 seconds..."
-#     sleep 60
-#     RETRIES_TAXONOMY=$(expr $RETRIES_TAXONOMY + 1)
-#   else
-#     echo "Max retries reached. Exiting..."
-#     exit 1
-#   fi
-# done
-# LSH SKIP FOR NOW END
-
-
-# LSH SKIP FOR NOW BEGIN
-# # Drain old container instances
-# OLD_API_INSTANCE_LIST=$(echo $OLD_API_CONTAINER_INSTANCES|tr -d ' '|tr "\n" " "|tr -d ","|tr '""' ' ' |tr -d '"')
-# OLD_TAXONOMY_INSTANCE_LIST=$(echo $OLD_TAXONOMY_CONTAINER_INSTANCES|tr -d ' '|tr "\n" " "|tr -d ","|tr '""' ' ' |tr -d '"')
-# aws --region us-east-1 ecs update-container-instances-state --cluster ab2d-$ENVIRONMENT --status DRAINING --container-instances $OLD_API_INSTANCE_LIST
-# aws --region us-east-1 ecs update-container-instances-state --cluster ab2d-taxonomy-$ENVIRONMENT --status DRAINING --container-instances $OLD_TAXONOMY_INSTANCE_LIST
-# echo "Allowing all instances to drain for 60 seconds before proceeding..."
-# sleep 60
-# LSH SKIP FOR NOW END
-
-
-# LSH SKIP FOR NOW BEGIN
-# # Remove old Autoscaling group
-# OLD_API_ASG=$(echo $OLD_API_ASG|awk -F"/" '{print $2}')
-# OLD_TAXONOMY_ASG=$(echo $OLD_TAXONOMY_ASG|awk -F"/" '{print $2}')
-# aws --region us-east-1 autoscaling delete-auto-scaling-group --auto-scaling-group-name $OLD_API_ASG --force-delete || true
-# aws --region us-east-1 autoscaling delete-auto-scaling-group --auto-scaling-group-name $OLD_TAXONOMY_ASG --force-delete || true
-# LSH SKIP FOR NOW END
