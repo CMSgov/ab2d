@@ -80,6 +80,8 @@
      --target module.kms --auto-approve
    ```
 
+1. Note that if you want to preserve the networking, you can stop here
+
 1. Get the ID of the first NAT gateway
 
    ```ShellSession
