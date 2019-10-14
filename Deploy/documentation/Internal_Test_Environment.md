@@ -186,6 +186,12 @@
    $ aws iam create-policy --policy-name Ab2dEcsForEc2Policy --policy-document file://ab2d-ecs-for-ec2-policy.json
    ```
 
+1. Create "Ab2dPermissionToPassRolesPolicy"
+
+   ```ShellSession
+   $ aws iam create-policy --policy-name Ab2dPermissionToPassRolesPolicy --policy-document file://ab2d-permission-to-pass-roles-policy.json
+   ```
+
 ## Create roles
 
 1. Set target profile
@@ -243,7 +249,21 @@
 1. Attach "Ab2dInstanceRole" to "Ab2dInstanceProfile"
 
    ```ShellSession
-   $ aws iam add-role-to-instance-profile --role-name Ab2dInstanceRole --instance-profile-name Ab2dInstanceProfile
+   $ aws iam add-role-to-instance-profile \
+     --role-name Ab2dInstanceRole \
+     --instance-profile-name Ab2dInstanceProfile
+   ```
+
+## Configure IAM user deployers
+
+1. Attach the Ab2dPermissionToPassRolesPolicy to an IAM user that runs the automation
+
+   *Example for lonnie.hanekamp@semanticbits.com:*
+   
+   ```ShellSession
+   $ aws iam attach-user-policy \
+     --policy-arn arn:aws:iam::114601554524:policy/Ab2dPermissionToPassRolesPolicy \
+     --user-name lonnie.hanekamp@semanticbits.com
    ```
 
 ## Create an image in an AWS Elastic Container Registry
@@ -538,7 +558,7 @@
 
    1. Save and close the file
       
-1. Configure database
+1. Deploy database
 
    *Format:*
    
@@ -547,12 +567,6 @@
      --var "db_username={db username}" \
      --var "db_password={db password}" \
      --target module.db --auto-approve
-   ```
-
-1. Change to the "Deploy" directory
-
-   ```ShellSession
-   $ cd ~/code/ab2d/Deploy
    ```
 
 1. Determine and note the latest CentOS AMI
@@ -603,7 +617,13 @@
       ```
 
    1. Save and close the file
-      
+
+1. Change to the "Deploy" directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d/Deploy
+   ```
+
 1. Deploy application components
 
    ```ShellSession

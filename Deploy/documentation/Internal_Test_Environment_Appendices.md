@@ -4,6 +4,7 @@
 
 1. [Appendix A: Destroy complete environment](#appendix-a-destroy-complete-environment)
 1. [Appendix B: Retest terraform using existing AMI](#appendix-b-retest-terraform-using-existing-ami)
+1. [Appendix C: Stop and restart the ECS cluster](#appendix-c-stop-and-restart-the-ecs-cluster)
 
 ## Appendix A: Destroy complete environment
 
@@ -186,4 +187,45 @@
    ```ShellSession
    $ ./deploy.sh --environment=sbdemo --auto-approve
    ```
+
+## Appendix C: Stop and restart the ECS cluster
+
+1. Connect to the deployment controller instance
+
+   *Format:*
+
+   ```ShellSession
+   $ ssh centos@{public ip address of deployment controller}
+   ```
    
+   *Example:*
+   
+   ```ShellSession
+   $ ssh centos@35.174.193.247
+   ```
+
+1. Connect to the first ECS instance from the deployment controller
+
+   *Format:*
+   
+   ```ShellSession
+   $ ssh centos@{private ip address of first ecs instance}
+   ```
+   
+   *Example:*
+   
+   ```ShellSession
+   $ ssh centos@10.124.4.124
+   ```
+
+1. Stop the ecs agent
+
+   ```ShellSession
+   $ docker stop ecs-agent
+   ```
+
+1. Start the ecs agent
+
+   ```ShellSession
+   $ docker start ecs-agent
+   ```
