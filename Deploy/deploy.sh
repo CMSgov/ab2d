@@ -88,18 +88,17 @@ fi
 
 echo "Get ECS task counts before making any changes..."
 
-if [ -z "${CLUSTER_ARNS}" ]; then
-  echo "Skipping getting ECS task counts, since there are no existing clusters"
-else
-  api_task_count() { aws --region us-east-1 ecs list-tasks --cluster ab2d-$ENVIRONMENT|grep "\:task\/"|wc -l|tr -d ' '; }
-fi
+# Define api_task_count
+api_task_count() { aws --region us-east-1 ecs list-tasks --cluster ab2d-$ENVIRONMENT|grep "\:task\/"|wc -l|tr -d ' '; }
 
+# Get old api task count (if exists)
 if [ -z "${CLUSTER_ARNS}" ]; then
   echo "Skipping setting OLD_API_TASK_COUNT, since there are no existing clusters"
 else
   OLD_API_TASK_COUNT=$(api_task_count)
 fi
 
+# Get expected api task count
 if [ -z "${CLUSTER_ARNS}" ]; then
   echo "Skipping setting EXPECTED_API_COUNT, since there are no existing clusters"
   EXPECTED_API_COUNT="2"
