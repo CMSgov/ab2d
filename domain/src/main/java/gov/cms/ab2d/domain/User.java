@@ -21,4 +21,7 @@ public class User {
     private String email;
     private Boolean accountDisabled;
 
+    @ManyToOne
+    private Sponsor sponsor;
+
 }
