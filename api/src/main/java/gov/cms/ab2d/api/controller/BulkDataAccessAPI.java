@@ -1,16 +1,27 @@
 package gov.cms.ab2d.api.controller;
 
 
+import gov.cms.ab2d.api.service.JobService;
+import gov.cms.ab2d.api.service.UserService;
 import gov.cms.ab2d.api.util.Constants;
+import gov.cms.ab2d.api.util.FHIRUtil;
+import gov.cms.ab2d.domain.Job;
+import gov.cms.ab2d.domain.User;
 import io.swagger.annotations.*;
+import org.hl7.fhir.dstu3.model.OperationOutcome;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import javax.validation.constraints.NotBlank;
 import java.io.IOException;
+
+import static gov.cms.ab2d.api.util.Constants.API_PREFIX;
+import static gov.cms.ab2d.api.util.FHIRUtil.getSuccessfulOutcome;
 
 @Api(value = "Bulk Data Access API", description =
         "API through which an authenticated and authorized PDP sponsor" +
@@ -18,7 +29,7 @@ import java.io.IOException;
                 "regarding progress in the generation of the requested files, and retrieve these " +
                 "files")
 @RestController
-@RequestMapping(path = "/api/v1", produces = "application/json")
+@RequestMapping(path = API_PREFIX, produces = "application/json")
 /**
  * The sole REST controller for AB2D's implementation of the FHIR Bulk Data API specification.
  */
@@ -26,6 +37,12 @@ public class BulkDataAccessAPI {
 
     private static final String ALLOWABLE_OUTPUT_FORMATS =
             "application/fhir+ndjson,application/ndjson,ndjson";
+
+    @Autowired
+    private JobService jobService;
+
+    @Autowired
+    private UserService userService;
 
     @ApiOperation(value = "Initiate Part A & B bulk claim export job")
     @ApiImplicitParams(
@@ -38,7 +55,7 @@ public class BulkDataAccessAPI {
     )
     @ResponseStatus(value = HttpStatus.ACCEPTED)
     @GetMapping("/Patient/$export")
-    public ResponseEntity<Void> exportAllPatients(
+    public ResponseEntity<String> exportAllPatients(
             @ApiParam(value = "String of comma-delimited FHIR resource types. Only resources of " +
                     "the specified resource types(s) SHALL be included in the response.",
                     allowableValues = "ExplanationOfBenefits")
@@ -51,8 +68,19 @@ public class BulkDataAccessAPI {
                     "+ndjson"
             )
             @RequestParam(required = false, name = "_outputFormat") String outputFormat) throws IOException {
-        //String encoded = FHIRUtil.outcomeToJSON(FHIRUtil.getSuccessfulOutcome("OK"));
-        return new ResponseEntity<>(null, null,
+        activeRequestCheck();
+
+        Job job = jobService.createJob(resourceTypes, since, outputFormat, ServletUriComponentsBuilder.fromCurrentRequest().toUriString());
+
+        String statusURL = ServletUriComponentsBuilder.fromCurrentRequestUri().replacePath
+                (String.format("/status/%s", job.getJobID())).toUriString();
+        HttpHeaders responseHeaders = new HttpHeaders();
+        responseHeaders.add("Content-Location", statusURL);
+
+        OperationOutcome operationOutcome = getSuccessfulOutcome(String.format("Request %s accepted for processing", job.getJobID()));
+
+        String encoded = FHIRUtil.outcomeToJSON(operationOutcome);
+        return new ResponseEntity<>(encoded, responseHeaders,
                 HttpStatus.ACCEPTED);
     }
 
@@ -63,11 +91,11 @@ public class BulkDataAccessAPI {
     )
     @DeleteMapping(value = "/Job/{jobId}/$status")
     @ResponseStatus(value = HttpStatus.ACCEPTED)
-    public ResponseEntity<Void> deleteRequest(
+    public ResponseEntity<String> deleteRequest(
             @ApiParam(value = "A job identifier", required = true)
             @PathVariable @NotBlank String jobId) throws IOException {
         //String encoded = FHIRUtil.outcomeToJSON(FHIRUtil.getSuccessfulOutcome("OK"));
-        return new ResponseEntity<>(null, null,
+        return new ResponseEntity<>("Hello World", null,
                 HttpStatus.ACCEPTED);
     }
 
@@ -106,6 +134,14 @@ public class BulkDataAccessAPI {
         HttpHeaders responseHeaders = new HttpHeaders();
         responseHeaders.add("X-Progress", "0%");
         return new ResponseEntity<>(null, responseHeaders, HttpStatus.ACCEPTED);
+    }
+
+
+    private void activeRequestCheck() {
+        User user = userService.getCurrentUser();
+        if (jobService.getActiveJob(user) != null) {
+            throw new RuntimeException("The current user has an active job");
+        }
     }
 
 
