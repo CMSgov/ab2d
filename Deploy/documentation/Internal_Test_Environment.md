@@ -113,26 +113,20 @@
 
    > See https://docs.aws.amazon.com/elasticloadbalancing/latest/classic/enable-access-logs.html
 
+1. Change to the s3 bucket policies directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d/Deploy/aws/s3-bucket-policies
+   ```
+   
 1. Add this bucket policy to the "cms-ab2d-cloudtrail" S3 bucket via the AWS console
 
-   > *** TO DO ***: Need to script this using AWS CLI
-
+   ```ShellSession
+   $ aws s3api put-bucket-policy \
+     --bucket cms-ab2d-cloudtrail \
+     --policy file://cms-ab2d-cloudtrail-bucket-policy.json
    ```
-   {
-     "Version": "2012-10-17",
-     "Statement": [
-       {
-         "Effect": "Allow",
-         "Principal": {
-           "AWS": "arn:aws:iam::127311923021:root"
-         },
-         "Action": "s3:PutObject",
-         "Resource": "arn:aws:s3:::cms-ab2d-cloudtrail/*"
-       }
-     ]
-   }
-   ```
-
+   
 1. Block public access on bucket
 
    ```ShellSession
