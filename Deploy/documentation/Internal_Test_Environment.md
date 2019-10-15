@@ -267,6 +267,8 @@
      --user-name lonnie.hanekamp@semanticbits.com
    ```
 
+2. Repeat this step for all users
+
 ## Create an image in an AWS Elastic Container Registry
 
 1. Set target profile
