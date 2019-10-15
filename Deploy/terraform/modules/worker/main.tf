@@ -1,54 +1,39 @@
-resource "aws_security_group" "deployment_controller" {
+resource "aws_security_group" "worker" {
   name        = "ab2d-worker-${var.env}"
   description = "Worker security group"
   vpc_id      = var.vpc_id
 }
 
-resource "aws_security_group_rule" "node_access" {
+# LSH SKIP FOR NOW BEGIN
+# resource "aws_security_group_rule" "healthchecks" {
+#   type        = "ingress"
+#   description = "Network LoadBalancer Healthchecks"
+#   from_port   = "7474"
+#   to_port     = "7474"
+#   protocol    = "tcp"
+#   cidr_blocks = ["10.224.202.0/24"]
+#   security_group_id = aws_security_group.worker.id
+# }
+# LSH SKIP FOR NOW END
+
+resource "aws_security_group_rule" "network_loadbalancer" {
   type        = "ingress"
-  description = "Node Access"
-  from_port   = "-1"
-  to_port     = "-1"
-  protocol    = "-1"
-  source_security_group_id = aws_security_group.api.id
-  security_group_id = aws_security_group.deployment_controller.id
-}
-
-# *** TO DO ***: eliminate this after VPN access is setup
-resource "aws_security_group_rule" "whitelist_lonnie" {
-  type        = "ingress"
-  description = "Whitelist Lonnie"
-  from_port   = "22"
-  to_port     = "22"
-  protocol    = "TCP"
-  cidr_blocks = ["152.208.13.223/32"]
-  security_group_id = aws_security_group.deployment_controller.id
-}
-
-resource "aws_security_group_rule" "egress_controller" {
-  type        = "egress"
-  description = "Allow all egress"
-  from_port   = "0"
-  to_port     = "0"
-  protocol    = "-1"
-  cidr_blocks = ["0.0.0.0/0"]
-  security_group_id = aws_security_group.deployment_controller.id
-}
-
-resource "aws_security_group" "api" {
-  name        = "ab2d-api-${var.env}"
-  description = "Application security group"
-  vpc_id      = var.vpc_id
-}
-
-resource "aws_security_group_rule" "host_port" {
-  type        = "ingress"
-  description = "Host Port"
+  description = "Network LoadBalancer"
   from_port   = var.host_port
   to_port     = var.host_port
   protocol    = "tcp"
-  source_security_group_id = aws_security_group.api.id
-  security_group_id = aws_security_group.api.id
+  cidr_blocks = ["10.124.3.0/24"]
+  security_group_id = aws_security_group.worker.id
+}
+
+resource "aws_security_group_rule" "api_container_access" {
+  type        = "ingress"
+  description = "API container access"
+  from_port   = var.host_port
+  to_port     = var.host_port
+  protocol    = "tcp"
+  cidr_blocks = var.vpc_cidrs
+  security_group_id = aws_security_group.worker.id
 }
 
 resource "aws_security_group_rule" "controller_access" {
@@ -57,201 +42,46 @@ resource "aws_security_group_rule" "controller_access" {
   from_port   = "-1"
   to_port     = "-1"
   protocol    = "-1"
-  source_security_group_id = aws_security_group.deployment_controller.id
-  security_group_id = aws_security_group.api.id
+  source_security_group_id = var.controller_sec_group_id
+  security_group_id = aws_security_group.worker.id
 }
 
-# LSH SKIP FOR NOW BEGIN
-# resource "aws_security_group_rule" "vpn_http" {
+# resource "aws_security_group_rule" "app_node_access" {
 #   type        = "ingress"
-#   description = "VPN Access"
+#   description = "App node access"
 #   from_port   = var.host_port
 #   to_port     = var.host_port
 #   protocol    = "tcp"
-#   cidr_blocks = ["10.252.0.0/16", "10.232.32.0/19", "10.251.0.0/16", "52.20.26.200/32", "34.196.35.156/32"]
-#   security_group_id = aws_security_group.api.id
+#   source_security_group_id = var.app_sec_group_id
+#   security_group_id = var.app_sec_group_id
 # }
-# LSH SKIP FOR NOW END
 
-# LSH SKIP FOR NOW BEGIN
-# resource "aws_security_group_rule" "vpn_https" {
-#   type        = "ingress"
-#   description = "VPN Access"
-#   from_port   = "443"
-#   to_port     = "443"
-#   protocol    = "tcp"
-#   cidr_blocks = ["10.252.0.0/16", "10.232.32.0/19", "10.251.0.0/16", "52.20.26.200/32", "34.196.35.156/32"]
-#   security_group_id = aws_security_group.api.id
-# }
-# LSH SKIP FOR NOW END
-
-# LSH SKIP FOR NOW BEGIN
-# resource "aws_security_group_rule" "kong_http" {
-#   type        = "ingress"
-#   description = "Kong"
-#   from_port   = var.host_port
-#   to_port     = var.host_port
-#   protocol    = "tcp"
-#   cidr_blocks = ["34.204.33.165/32","34.226.82.144/32","34.200.65.22/32","34.227.6.19/32"]
-#   security_group_id = aws_security_group.api.id
-# }
-# LSH SKIP FOR NOW END
-
-# LSH SKIP FOR NOW BEGIN
-# resource "aws_security_group_rule" "kong_https" {
-#   type        = "ingress"
-#   description = "Kong"
-#   from_port   = "443"
-#   to_port     = "443"
-#   protocol    = "tcp"
-#   cidr_blocks = ["34.204.33.165/32","34.226.82.144/32","34.200.65.22/32","34.227.6.19/32"]
-#   security_group_id = aws_security_group.api.id
-# }
-# LSH SKIP FOR NOW END
-
-resource "aws_security_group_rule" "egress_app" {
+resource "aws_security_group_rule" "egress_worker" {
   type        = "egress"
   description = "Allow all egress"
   from_port   = "0"
   to_port     = "0"
   protocol    = "-1"
   cidr_blocks = ["0.0.0.0/0"]
-  security_group_id = aws_security_group.api.id
+  security_group_id = aws_security_group.worker.id
 }
 
-resource "aws_security_group_rule" "db_access" {
-  type        = "ingress"
-  description = "App connections"
-  from_port   = "5432"
-  to_port     = "5432"
-  protocol    = "tcp"
-  source_security_group_id = aws_security_group.api.id
-  security_group_id = var.db_sec_group_id
-}
-
-resource "aws_security_group_rule" "db_access_from_controller" {
-  type        = "ingress"
-  description = "Deployment Controller"
-  from_port   = "5432"
-  to_port     = "5432"
-  protocol    = "tcp"
-  source_security_group_id = aws_security_group.deployment_controller.id
-  security_group_id = var.db_sec_group_id
-}
-
-resource "random_shuffle" "public_subnets" {
-  input = var.controller_subnet_ids
-  result_count = 1
-}
-
-# LSH SKIP FOR NOW BEGIN
-# vpc_security_group_ids = [aws_security_group.deployment_controller.id,var.enterprise-tools-sec-group-id,var.vpn-private-sec-group-id]
-# LSH SKIP FOR NOW END
-resource "aws_instance" "deployment_controller" {
-  ami = var.ami_id
-  instance_type = var.instance_type
-  vpc_security_group_ids = [aws_security_group.deployment_controller.id]
-  disable_api_termination = false
-  key_name = var.ssh_key_name
-  monitoring = true
-  subnet_id = random_shuffle.public_subnets.result[0]
-  associate_public_ip_address = true
-  iam_instance_profile = var.iam_instance_profile
-
-  tags = {
-    Name = "AB2D-${upper(var.env)}-DEPLOYMENT-CONTROLLER"
-    application = "AB2D"
-    stack = var.env
-    purpose = "ECS container instance"
-    sensitivity = "Public"
-    maintainer = "lonnie.hanekamp@semanticbits.com"
-    cpm_backup = "NoBackup"
-    purchase_type = "On-Demand"
-    os_license = "Red Hat Enterprise Linux"
-    gold_disk_name = var.gold_disk_name
-    business = "CMS"
-  }
-
-}
-
-resource "aws_eip" "deployment_controller" {
-  instance = aws_instance.deployment_controller.id
-  vpc = true
-}
-
-resource "null_resource" "wait" {
-  depends_on = ["aws_instance.deployment_controller","aws_eip.deployment_controller"]
-  triggers = {controller_id = aws_instance.deployment_controller.id}
-
-  provisioner "local-exec" {
-    command = "sleep 120"
-  }
-}
-
-resource "null_resource" "list-app-instances-script" {
-  depends_on = ["null_resource.wait"]
-  triggers = {controller_id = aws_instance.deployment_controller.id}
-
-  provisioner "local-exec" {
-    command = "scp -i ~/.ssh/${var.ssh_key_name}.pem ${path.cwd}/../../environments/cms-ab2d-${var.env}/list-app-instances.sh ${var.linux_user}@${aws_eip.deployment_controller.public_ip}:/home/${var.linux_user}"
-  }
-
-  provisioner "local-exec" {
-    command = "ssh -i ~/.ssh/${var.ssh_key_name}.pem ${var.linux_user}@${aws_eip.deployment_controller.public_ip} 'chmod +x /home/${var.linux_user}/list-app-instances.sh'"
-  }
-}
-
-resource "null_resource" "set-hostname" {
-  depends_on = ["null_resource.wait"]
-  triggers = {controller_id = aws_instance.deployment_controller.id}
-
-  provisioner "local-exec" {
-    command = "ssh -tt -i ~/.ssh/${var.ssh_key_name}.pem ${var.linux_user}@${aws_eip.deployment_controller.public_ip} 'echo \"ab2d-${var.env}\" > /tmp/hostname && sudo mv /tmp/hostname /etc/hostname && sudo hostname \"ab2d-${var.env}\"'"
-  }
-}
-
-resource "null_resource" "deployment_contoller_private_key" {
-  depends_on = ["null_resource.wait"]
-  triggers = {controller_id = aws_instance.deployment_controller.id}
-  provisioner "local-exec" {
-    command = "scp -i ~/.ssh/${var.ssh_key_name}.pem ~/.ssh/${var.ssh_key_name}.pem ${var.linux_user}@${aws_eip.deployment_controller.public_ip}:/tmp/id.rsa"
-  }
-
-  provisioner "local-exec" {
-    command = "ssh -i ~/.ssh/${var.ssh_key_name}.pem ${var.linux_user}@${aws_eip.deployment_controller.public_ip} 'chmod 600 /tmp/id.rsa && mv /tmp/id.rsa ~/.ssh/'"
-  }
-}
-
-resource "null_resource" "ssh_client_config" {
-  depends_on = ["null_resource.wait"]
-  triggers = {controller_id = aws_instance.deployment_controller.id}
-  provisioner "local-exec" {
-    command = "scp -i ~/.ssh/${var.ssh_key_name}.pem ../../environments/cms-ab2d-${var.env}/client_config ${var.linux_user}@${aws_eip.deployment_controller.public_ip}:/home/${var.linux_user}/.ssh/config"
-  }
-
-  provisioner "local-exec" {
-    command = "ssh -i ~/.ssh/${var.ssh_key_name}.pem ${var.linux_user}@${aws_eip.deployment_controller.public_ip} 'chmod 640 /home/${var.linux_user}/.ssh/config'"
-  }
-}
-
-resource "null_resource" "remove_docker_from_controller" {
-  depends_on = ["null_resource.wait"]
-  triggers = {controller_id = aws_instance.deployment_controller.id}
-  provisioner "local-exec" {
-    command = "ssh -tt -i ~/.ssh/${var.ssh_key_name}.pem ${var.linux_user}@${aws_eip.deployment_controller.public_ip} 'sudo yum -y remove docker-ce-*'"
-  }
-}
-
-resource "aws_ecs_cluster" "ab2d" {
-  name = "ab2d-${var.env}"
+resource "aws_ecs_cluster" "ab2d-worker" {
+  name = "ab2d-worker-${var.env}"
 }
 
 resource "aws_ecs_task_definition" "api" {
-  family = "api"
+  family = "worker"
+  # LSH SKIP FOR NOW BEGIN
+  # volume {
+  #   name      = "main"
+  #   host_path = "/mnt/efs"
+  # }
+  # LSH SKIP FOR NOW END
   container_definitions = <<JSON
   [
     {
-      "name": "ab2d-api",
+      "name": "ab2d-worker",
       "image": "${var.docker_repository_url}",
       "essential": true,
       "memory": 2048,
@@ -275,75 +105,85 @@ JSON
   execution_role_arn = "arn:aws:iam::114601554524:role/Ab2dInstanceRole"
 }
 
-resource "aws_lb" "api" {
-  name = "ab2d-${var.env}"
-  internal = false
-  load_balancer_type = "application"
-  security_groups = [aws_security_group.api.id]
-  subnets = var.controller_subnet_ids
+resource "aws_lb" "worker" {
+  name = "ab2d-worker-${var.env}"
+  internal = true
+  load_balancer_type = "network"
+  subnets = var.loadbalancer_subnet_ids
   enable_deletion_protection = true
   enable_cross_zone_load_balancing = true
 
-  access_logs {
-    bucket = var.logging_bucket
-    prefix = "ab2d-${var.env}"
-    enabled = true
-  }
+  # LSH SKIP FOR NOW BEGIN
+  # access_logs {
+  #   bucket = var.logging_bucket
+  #   prefix = "ab2d-worker-${var.env}"
+  #   enabled = true
+  # }
+  # LSH SKIP FOR NOW END
+  
 }
 
-resource "aws_lb_target_group" "api" {
-  name = "ab2d-api-${var.env}"
+resource "aws_lb_target_group" "worker" {
+  name = "ab2d-worker-${var.env}"
   port = var.host_port
-  protocol = "HTTP"
+  protocol = "TCP"
   vpc_id = var.vpc_id
 
-  health_check {
-    healthy_threshold = 5
-    unhealthy_threshold = 2
-    timeout = 2
-    path = "/api"
-    interval = 5
+  stickiness {
+   enabled = false
+   type = "lb_cookie"
   }
+
+  # health_check {
+  #   healthy_threshold = 5
+  #   unhealthy_threshold = 3
+  #   timeout = 10
+  #   port = 7474
+  #   path = "/browser"
+  #   interval = 30
+  #   matcher = "200,302"
+  # }
 }
 
-resource "aws_lb_listener" "api" {
-  load_balancer_arn = aws_lb.api.arn
+resource "aws_lb_listener" "worker" {
+  depends_on = ["aws_lb.worker"]
+  load_balancer_arn = aws_lb.worker.arn
   port = var.host_port
-  protocol = "HTTP"
+  protocol = "TCP"
 
   default_action {
-    target_group_arn = aws_lb_target_group.api.arn
+    target_group_arn = aws_lb_target_group.worker.arn
     type = "forward"
   }
 }
 
-resource "aws_ecs_service" "api" {
-  depends_on = ["aws_lb.api"]
-  name = "ab2d-api"
-  cluster = aws_ecs_cluster.ab2d.id
+resource "aws_ecs_service" "worker" {
+  depends_on = ["aws_lb.worker"]
+  name = "ab2d-worker"
+  cluster = aws_ecs_cluster.ab2d-worker.id
   task_definition = var.override_task_definition_arn != "" ? var.override_task_definition_arn : aws_ecs_task_definition.api.arn
   desired_count = 5
   launch_type = "EC2"
   scheduling_strategy = "DAEMON"
 
   load_balancer {
-    target_group_arn = aws_lb_target_group.api.arn
-    container_name = "ab2d-api"
+    target_group_arn = aws_lb_target_group.worker.arn
+    container_name = "ab2d-worker"
     container_port = var.container_port
   }
 }
 
 # LSH SKIP FOR NOW BEGIN
-# security_groups = [aws_security_group.api.id,var.enterprise-tools-sec-group-id,var.vpn-private-sec-group-id]
-# LSH SKIP FOR NOW BEGIN
+# security_groups = [aws_security_group.worker.id,var.enterprise-tools-sec-group-id,var.vpn-private-sec-group-id]
+# LSH SKIP FOR NOW END
 resource "aws_launch_configuration" "launch_config" {
-  name_prefix = "ab2d-${var.env}-"
+  name_prefix = "ab2d-worker-${var.env}-"
   image_id = var.ami_id
   instance_type = var.instance_type
   iam_instance_profile = var.iam_instance_profile
   key_name = var.ssh_key_name
-  security_groups = [aws_security_group.api.id]  
-  user_data = templatefile("${path.module}/userdata.tpl",{ env = var.env, cluster_name = "ab2d-${var.env}" })
+  security_groups = [aws_security_group.worker.id]
+  user_data = templatefile("${path.module}/userdata.tpl",{ env = var.env, cluster_name = "ab2d-worker-${var.env}" })
   lifecycle { create_before_destroy = true }
 }
 
@@ -356,7 +196,7 @@ resource "aws_autoscaling_group" "asg" {
   desired_capacity = var.desired_instances
   health_check_type = "EC2"
   launch_configuration = aws_launch_configuration.launch_config.name
-  target_group_arns = [aws_lb_target_group.api.arn]
+  target_group_arns = [aws_lb_target_group.worker.arn]
   enabled_metrics = ["GroupTerminatingInstances", "GroupInServiceInstances", "GroupMaxSize", "GroupTotalInstances", "GroupMinSize", "GroupPendingInstances", "GroupDesiredCapacity", "GroupStandbyInstances"]
   wait_for_elb_capacity = var.autoscale_group_wait
   vpc_zone_identifier = var.node_subnet_ids
@@ -365,7 +205,7 @@ resource "aws_autoscaling_group" "asg" {
   tags = [
     {
       key = "Name"
-      value = "AB2D-API-${upper(var.env)}"
+      value = "AB2D-WORKER-${upper(var.env)}"
       propagate_at_launch = true
     },
     {
@@ -390,7 +230,7 @@ resource "aws_autoscaling_group" "asg" {
     },
     {
       key = "maintainer"
-      value = "lonnie.hanekamp@semanticbits.com"
+      value = "federico.rosario@semanticbits.com"
       propagate_at_launch = true
     },
     {
@@ -428,7 +268,6 @@ resource "aws_autoscaling_policy" "percent_capacity" {
   cooldown = 300
   autoscaling_group_name = aws_autoscaling_group.asg.name
 }
-
 
 resource "aws_autoscaling_policy" "target_cpu" {
   name = "target_CPU"
