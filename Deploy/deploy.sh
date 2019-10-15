@@ -38,6 +38,7 @@ if [ -z "${ENVIRONMENT}" ]; then
   exit 1
 fi
 
+
 #
 # Set AMI_ID if it already exists for the deployment
 #
