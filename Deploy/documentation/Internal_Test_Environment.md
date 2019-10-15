@@ -106,7 +106,9 @@
 
    > See https://docs.aws.amazon.com/elasticloadbalancing/latest/classic/enable-access-logs.html
 
-1. Note that that the following policy statement allows logging from an application load balancer
+1. Add this bucket policy to the "cms-ab2d-cloudtrail" S3 bucket via the AWS console
+
+   > *** TO DO ***: Need to script this using AWS CLI
 
    ```
    {
@@ -121,94 +123,6 @@
          "Resource": "arn:aws:s3:::cms-ab2d-cloudtrail/*"
        }
      ]
-   }
-   ```
-
-1. Note that that the following policy statement allows logging from a network load balancer
-
-   ```
-   {
-       "Version": "2012-10-17",
-       "Id": "AWSConsole-AccessLogs-Policy-1571098355053",
-       "Statement": [
-           {
-               "Sid": "AWSConsoleStmt-1571098355053",
-               "Effect": "Allow",
-               "Principal": {
-                   "AWS": "arn:aws:iam::127311923021:root"
-               },
-               "Action": "s3:PutObject",
-               "Resource": "arn:aws:s3:::cms-ab2d-cloudtrail-nlb/AWSLogs/114601554524/*"
-           },
-           {
-               "Sid": "AWSLogDeliveryWrite",
-               "Effect": "Allow",
-               "Principal": {
-                   "Service": "delivery.logs.amazonaws.com"
-               },
-               "Action": "s3:PutObject",
-               "Resource": "arn:aws:s3:::cms-ab2d-cloudtrail-nlb/AWSLogs/114601554524/*",
-               "Condition": {
-                   "StringEquals": {
-                       "s3:x-amz-acl": "bucket-owner-full-control"
-                   }
-               }
-           },
-           {
-               "Sid": "AWSLogDeliveryAclCheck",
-               "Effect": "Allow",
-               "Principal": {
-                   "Service": "delivery.logs.amazonaws.com"
-               },
-               "Action": "s3:GetBucketAcl",
-               "Resource": "arn:aws:s3:::cms-ab2d-cloudtrail-nlb"
-           }
-       ]
-   }
-   ```
-
-1. Note that the statements are combined for a single bucket policy in the next step
-
-1. Add this bucket policy to the "cms-ab2d-cloudtrail" S3 bucket via the AWS console
-
-   > *** TO DO ***: Need to script this using AWS CLI
-   
-   ```
-   {
-       "Version": "2012-10-17",
-       "Statement": [
-           {
-               "Effect": "Allow",
-               "Principal": {
-                   "AWS": "arn:aws:iam::127311923021:root"
-               },
-               "Action": "s3:PutObject",
-               "Resource": "arn:aws:s3:::cms-ab2d-cloudtrail/*"
-           },
-           {
-               "Sid": "AWSLogDeliveryWrite",
-               "Effect": "Allow",
-               "Principal": {
-                   "Service": "delivery.logs.amazonaws.com"
-               },
-               "Action": "s3:PutObject",
-               "Resource": "arn:aws:s3:::cms-ab2d-cloudtrail/nlb/AWSLogs/114601554524/*",
-               "Condition": {
-                   "StringEquals": {
-                       "s3:x-amz-acl": "bucket-owner-full-control"
-                   }
-               }
-           },
-           {
-               "Sid": "AWSLogDeliveryAclCheck",
-               "Effect": "Allow",
-               "Principal": {
-                   "Service": "delivery.logs.amazonaws.com"
-               },
-               "Action": "s3:GetBucketAcl",
-               "Resource": "arn:aws:s3:::cms-ab2d-cloudtrail"
-           }
-       ]
    }
    ```
 
@@ -1133,7 +1047,7 @@
      --target module.s3 --auto-approve
    ```
 
-1. Add this bucket policy to the "cms-ab2d-cloudtrail" S3 bucket via the AWS console
+1. Add the bucket policy to the "cms-ab2d-cloudtrail" S3 bucket
 
    ```ShellSession
    $ aws s3api put-bucket-policy --bucket cms-ab2d-cloudtrail --policy file://cms-ab2d-cloudtrail-bucket-policy.json
@@ -1195,7 +1109,7 @@
    *Example:
    
    ```
-   fs-7f7bb9fe
+   fs-bfbb773e
    ```
 
 1. Update "provision-app-instance.sh" with the file system id
