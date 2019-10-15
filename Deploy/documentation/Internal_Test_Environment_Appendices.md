@@ -30,6 +30,25 @@
    $ cd ~/code/ab2d/Deploy/terraform/environments/cms-ab2d-sbdemo
    ```
 
+1. Turn off "delete protection" for the network load balancer
+
+   1. Get network load balancer ARN
+
+      ```ShellSession
+      $ NLB_ARN=$(aws --region us-east-1 elbv2 describe-load-balancers \
+        --name=ab2d-worker-sbdemo \
+	--query 'LoadBalancers[*].[LoadBalancerArn]' \
+        --output text)
+      ```
+
+   1. Turn off "delete protection" for the application load balancer
+      
+      ```ShellSession
+      $ aws elbv2 modify-load-balancer-attributes \
+        --load-balancer-arn $NLB_ARN \
+        --attributes Key=deletion_protection.enabled,Value=false
+      ```
+      
 1. Turn off "delete protection" for the application load balancer
 
    1. Get application load balancer ARN
@@ -49,6 +68,13 @@
         --attributes Key=deletion_protection.enabled,Value=false
       ```
 
+1. Destroy the environment of the "worker" module
+
+   ```ShellSession
+   $ terraform destroy \
+     --target module.worker --auto-approve
+   ```
+
 1. Destroy the environment of the "api" module
 
    ```ShellSession
@@ -67,6 +93,13 @@
      --target module.db --auto-approve
    ```
 
+1. Destroy the changes made via the "s3" module
+
+   ```ShellSession
+   $ terraform destroy \
+     --target module.efs --auto-approve
+   ```
+   
 1. Destroy the changes made via the "s3" module
 
    ```ShellSession

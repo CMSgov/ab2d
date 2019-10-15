@@ -9,6 +9,7 @@
 1. [Create roles](#create-roles)
 1. [Create an image in an AWS Elastic Container Registry](#create-an-image-in-an-aws-elastic-container-egistry)
 1. [Create base aws environment](#create-base-aws-environment)
+1. [Create Jenkins](#create-jenkins)
 1. [Deploy to test environment](#deploy-to-test-environment)
          
 ## Create AWS keypair
@@ -104,11 +105,9 @@
 1. Note that the "Elastic Load Balancing Account ID" for other regions can be found here
 
    > See https://docs.aws.amazon.com/elasticloadbalancing/latest/classic/enable-access-logs.html
-   
-1. Add this bucket policy to the "cms-ab2d-cloudtrail" S3 bucket via the AWS console
 
-   > *** TO DO ***: Need to script this using AWS CLI
-   
+1. Note that that the following policy statement allows logging from an application load balancer
+
    ```
    {
      "Version": "2012-10-17",
@@ -122,6 +121,94 @@
          "Resource": "arn:aws:s3:::cms-ab2d-cloudtrail/*"
        }
      ]
+   }
+   ```
+
+1. Note that that the following policy statement allows logging from a network load balancer
+
+   ```
+   {
+       "Version": "2012-10-17",
+       "Id": "AWSConsole-AccessLogs-Policy-1571098355053",
+       "Statement": [
+           {
+               "Sid": "AWSConsoleStmt-1571098355053",
+               "Effect": "Allow",
+               "Principal": {
+                   "AWS": "arn:aws:iam::127311923021:root"
+               },
+               "Action": "s3:PutObject",
+               "Resource": "arn:aws:s3:::cms-ab2d-cloudtrail-nlb/AWSLogs/114601554524/*"
+           },
+           {
+               "Sid": "AWSLogDeliveryWrite",
+               "Effect": "Allow",
+               "Principal": {
+                   "Service": "delivery.logs.amazonaws.com"
+               },
+               "Action": "s3:PutObject",
+               "Resource": "arn:aws:s3:::cms-ab2d-cloudtrail-nlb/AWSLogs/114601554524/*",
+               "Condition": {
+                   "StringEquals": {
+                       "s3:x-amz-acl": "bucket-owner-full-control"
+                   }
+               }
+           },
+           {
+               "Sid": "AWSLogDeliveryAclCheck",
+               "Effect": "Allow",
+               "Principal": {
+                   "Service": "delivery.logs.amazonaws.com"
+               },
+               "Action": "s3:GetBucketAcl",
+               "Resource": "arn:aws:s3:::cms-ab2d-cloudtrail-nlb"
+           }
+       ]
+   }
+   ```
+
+1. Note that the statements are combined for a single bucket policy in the next step
+
+1. Add this bucket policy to the "cms-ab2d-cloudtrail" S3 bucket via the AWS console
+
+   > *** TO DO ***: Need to script this using AWS CLI
+   
+   ```
+   {
+       "Version": "2012-10-17",
+       "Statement": [
+           {
+               "Effect": "Allow",
+               "Principal": {
+                   "AWS": "arn:aws:iam::127311923021:root"
+               },
+               "Action": "s3:PutObject",
+               "Resource": "arn:aws:s3:::cms-ab2d-cloudtrail/*"
+           },
+           {
+               "Sid": "AWSLogDeliveryWrite",
+               "Effect": "Allow",
+               "Principal": {
+                   "Service": "delivery.logs.amazonaws.com"
+               },
+               "Action": "s3:PutObject",
+               "Resource": "arn:aws:s3:::cms-ab2d-cloudtrail/nlb/AWSLogs/114601554524/*",
+               "Condition": {
+                   "StringEquals": {
+                       "s3:x-amz-acl": "bucket-owner-full-control"
+                   }
+               }
+           },
+           {
+               "Sid": "AWSLogDeliveryAclCheck",
+               "Effect": "Allow",
+               "Principal": {
+                   "Service": "delivery.logs.amazonaws.com"
+               },
+               "Action": "s3:GetBucketAcl",
+               "Resource": "arn:aws:s3:::cms-ab2d-cloudtrail"
+           }
+       ]
    }
    ```
 
@@ -393,6 +480,86 @@
    $ ./create-base-environment.sh
    ```
 
+## Create Jenkins
+
+1. Set target profile
+
+   *Example for the "semanticbitsdemo" AWS account:*
+   
+   ```ShellSession
+   $ export AWS_PROFILE="sbdemo"
+   ```
+
+1. Set CMS environment
+
+   *Example for the "semanticbitsdemo" AWS account:*
+   
+   ```ShellSession
+   $ export CMS_ENV="SBDEMO"
+   ```
+   
+1. Determine and note the latest CentOS AMI
+
+   ```ShellSession
+   $ aws --region us-east-1 ec2 describe-images \
+     --owners aws-marketplace \
+     --filters Name=product-code,Values=aw0evgkw8e5c1q413zgy5pjce \
+     --query 'Images[*].[ImageId,CreationDate]' \
+     --output text \
+     | sort -k2 -r \
+     | head -n1
+   ```
+   
+1. Configure packer for jenkins
+
+   1. Open the "app.json" file
+
+      ```ShellSession
+      $ vim ~/code/ab2d/Deploy/packer/jenkins/app.json
+      ```
+
+   1. Change the gold disk AMI to the noted CentOS AMI
+
+      *Example:*
+      
+      ```
+      ami-02eac2c0129f6376b
+      ```
+      
+   1. Change the subnet to the first public subnet
+
+      ```
+      "subnet_id": "subnet-077269e0fb659e953",
+      ```
+
+   1. Change the VPC ID
+
+      ```
+      "vpc_id": "vpc-00dcfaadb3fe8e3a2",
+      ```
+
+   1. Change the ssh_username
+   
+      *Example:*
+   
+      ```
+      "ssh_username": "centos",
+      ```
+
+   1. Save and close the file
+
+1. Change to the environment directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d/Deploy/terraform/environments/cms-ab2d-sbdemo
+   ```
+
+1. Create Jenkins AMI
+
+   ```ShellSession
+   $ ./create-jenkins-ami.sh --environment=sbdemo
+   ```
+   
 ## Deploy to test environment
 
 1. Modify the SSH config file
@@ -557,6 +724,51 @@
       ```
 
    1. Save and close the file
+
+1. Deploy Elastic File System (EFS)
+
+   ```ShellSession
+   $ terraform apply \
+     --target module.efs --auto-approve
+   ```
+
+1. Get the file system id of EFS
+
+   ```ShellSession
+   $ aws efs describe-file-systems | grep FileSystemId
+   ```
+
+1. Note the file system id
+
+   *Example:
+   
+   ```
+   fs-7f7bb9fe
+   ```
+
+1. Update "provision-app-instance.sh" with the file system id
+
+   1. Open "provision-app-instance.sh"
+
+      ```ShellSession
+      $ vim ~/code/ab2d/Deploy/packer/app/provision-app-instance.sh
+      ```
+
+   1. Update the following line
+
+      *Format:*
+      
+      ```
+      echo '{file system id}:/ /mnt/efs efs defaults,_netdev 0 0' | sudo tee -a /etc/fstab
+      ```
+
+      *Example:*
+      
+      ```
+      echo 'fs-7f7bb9fe:/ /mnt/efs efs defaults,_netdev 0 0' | sudo tee -a /etc/fstab
+      ```
+
+   1. Save and close the file
       
 1. Deploy database
 
@@ -581,7 +793,7 @@
      | head -n1
    ```
    
-1. Configure packer
+1. Configure packer for the application
 
    1. Open the "app.json" file
 
@@ -591,6 +803,8 @@
 
    1. Change the gold disk AMI to the noted CentOS AMI
 
+      *Example:*
+       
       ```
       ami-02eac2c0129f6376b
       ```
