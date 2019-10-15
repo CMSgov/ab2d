@@ -6,3 +6,8 @@ jdk:
 cache:
   directories:
     - $HOME/.m2
+
+# `mvn test` without `clean` is failing with an odd FindBugs issue.
+script:
+  - mvn clean test
+
