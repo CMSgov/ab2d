@@ -3,15 +3,16 @@
 ## Table of Contents
 
 1. [Create AWS keypair](#create-aws-keypair)
-1. [Update files for AWS test environment](#update-files-for-aws-test-environment)
 1. [Create required S3 buckets](#create-required-s3-buckets)
 1. [Create policies](#create-policies)
 1. [Create roles](#create-roles)
-1. [Create an image in an AWS Elastic Container Registry](#create-an-image-in-an-aws-elastic-container-egistry)
+1. [Create instance profiles](#create-instance-profiles)
+1. [Configure IAM user deployers](#configure-iam-user-deployers)
+1. [Create AWS Elastic Container Registry repositories for images](#create-aws-elastic-container-registry-repositories-for-images)
 1. [Create base aws environment](#create-base-aws-environment)
 1. [Create Jenkins](#create-jenkins)
 1. [Deploy to test environment](#deploy-to-test-environment)
-         
+
 ## Create AWS keypair
 
 1. Create keypair
@@ -269,7 +270,7 @@
 
 2. Repeat this step for all users
 
-## Create an image in an AWS Elastic Container Registry
+## Create AWS Elastic Container Registry repositories for images
 
 1. Set target profile
 
