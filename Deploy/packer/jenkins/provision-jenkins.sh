@@ -53,8 +53,10 @@ sudo yum -y install vim
 
 sudo pip install awscli
 
-# Disable trendmicro during builder
-sudo service ds_agent stop
+# LSH Testing environment BEGIN
+# # Disable trendmicro during builder
+# sudo service ds_agent stop
+# LSH Testing environment END
 
 # Remove tty requirement for sudo in scripts and ssh calls
 sudo sed -i.bak '/Defaults    requiretty/d' /etc/sudoers
