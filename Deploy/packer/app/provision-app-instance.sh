@@ -51,6 +51,21 @@ sudo yum -y install python-pip
 # Install awscli
 sudo pip install awscli
 
+# Build and install amazon-efs-utils as an RPM package
+sudo yum -y install git
+sudo yum -y install rpm-build
+cd /tmp
+git clone https://github.com/aws/efs-utils
+cd efs-utils
+sudo make rpm
+sudo yum -y install ./build/amazon-efs-utils*rpm
+
+# Configure running container instances to use an Amazon EFS file system
+sudo mkdir /mnt/efs
+sudo cp /etc/fstab /etc/fstab.bak
+echo 'fs-7f7bb9fe:/ /mnt/efs efs defaults,_netdev 0 0' | sudo tee -a /etc/fstab
+sudo mount -a
+
 # Disable trendmicro, and Amazon SSM
 # sudo systemctl disable amazon-ssm-agent
 # sudo systemctl disable ds_agent
