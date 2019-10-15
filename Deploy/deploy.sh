@@ -68,6 +68,7 @@ if [ -z "${AMI_ID}" ]; then
     --tags "Key=Name,Value=AB2D-$CMS_ENV-AMI"
 fi
 
+
 #
 # Get current known good ECS task definitions
 #
@@ -149,9 +150,11 @@ echo "Deploy new AMI out to AWS..."
 if [ -z "${AUTOAPPROVE}" ]; then
   # Confirm with the caller prior to applying changes.
   terraform apply --var "ami_id=$AMI_ID" --var "current_task_definition_arn=$API_TASK_DEFINITION" --target module.api
+  terraform apply --var "ami_id=$AMI_ID" --var "current_task_definition_arn=$API_TASK_DEFINITION" --target module.worker
 else
   # Apply the changes without prompting
   terraform apply --var "ami_id=$AMI_ID" --var "current_task_definition_arn=$API_TASK_DEFINITION" --target module.api --auto-approve
+  terraform apply --var "ami_id=$AMI_ID" --var "current_task_definition_arn=$API_TASK_DEFINITION" --target module.worker --auto-approve
 fi
 
 
