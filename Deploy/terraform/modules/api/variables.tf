@@ -12,7 +12,12 @@ variable "healthcheck_url" {}
 variable "iam_instance_profile" {}
 variable "docker_repository_url" {}
 variable "iam_role_arn" {}
-variable "container_port" {default=3000}
+
+# LSH BEGIN
+# variable "container_port" {default=3000}
+variable "container_port" {default=8080}
+# LSH END
+
 variable "host_port" {default=80}
 variable "desired_instances" {}
 variable "min_instances" {}
