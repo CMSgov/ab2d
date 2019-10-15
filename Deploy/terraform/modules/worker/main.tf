@@ -113,6 +113,10 @@ resource "aws_lb" "worker" {
   enable_deletion_protection = true
   enable_cross_zone_load_balancing = true
 
+  timeouts {
+    create = "60m"
+  }
+  
   # LSH SKIP FOR NOW BEGIN
   # access_logs {
   #   bucket = var.logging_bucket
