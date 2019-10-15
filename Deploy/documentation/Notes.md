@@ -6,6 +6,8 @@
 1. [To do later](#to-do-later)
 1. [Preparation notes](#preparation-notes)
 1. [Issues](#issues)
+   * [Network Load Balancer bucket policy](#network-load-balancer-bucket-policy)
+   * [EFS mounting](#efs-mounting)
 
 ## To do after granted access to AWS account
 
@@ -214,22 +216,117 @@
 
 ## Issues
 
-1. Note and resolve the following output from "deploy.sh" process
+### Network Load Balancer bucket policy
+
+1. Note that that the following policy statement allows logging from an application load balancer
 
    ```
-   + terraform taint -allow-missing null_resource.authorized_keys_file
-   
-   Warning: No such resource instance
-   
-   Resource instance %s was not found, but this is not an error because
-   -allow-missing was set.
-   
-   + '[' -z true ']'
-   + terraform apply --auto-approve --var ami_id=ami-02a271acc8ef134ab --var current_task_definition_arn= -target=null_resource.authorized_keys_file
-   
-   Apply complete! Resources: 0 added, 0 changed, 0 destroyed.
-   + ACTUAL_API_COUNT=0
-   + RETRIES_API=0
-   + '[' 0 -lt '' ']'
-   ./deploy.sh: line 133: [: : integer expression expected
+   {
+     "Version": "2012-10-17",
+     "Statement": [
+       {
+         "Effect": "Allow",
+         "Principal": {
+           "AWS": "arn:aws:iam::127311923021:root"
+         },
+         "Action": "s3:PutObject",
+         "Resource": "arn:aws:s3:::cms-ab2d-cloudtrail/*"
+       }
+     ]
+   }
    ```
+
+1. Note that that the following policy statement allows logging from a network load balancer
+
+   ```
+   {
+       "Version": "2012-10-17",
+       "Id": "AWSConsole-AccessLogs-Policy-1571098355053",
+       "Statement": [
+           {
+               "Sid": "AWSConsoleStmt-1571098355053",
+               "Effect": "Allow",
+               "Principal": {
+                   "AWS": "arn:aws:iam::127311923021:root"
+               },
+               "Action": "s3:PutObject",
+               "Resource": "arn:aws:s3:::cms-ab2d-cloudtrail-nlb/AWSLogs/114601554524/*"
+           },
+           {
+               "Sid": "AWSLogDeliveryWrite",
+               "Effect": "Allow",
+               "Principal": {
+                   "Service": "delivery.logs.amazonaws.com"
+               },
+               "Action": "s3:PutObject",
+               "Resource": "arn:aws:s3:::cms-ab2d-cloudtrail-nlb/AWSLogs/114601554524/*",
+               "Condition": {
+                   "StringEquals": {
+                       "s3:x-amz-acl": "bucket-owner-full-control"
+                   }
+               }
+           },
+           {
+               "Sid": "AWSLogDeliveryAclCheck",
+               "Effect": "Allow",
+               "Principal": {
+                   "Service": "delivery.logs.amazonaws.com"
+               },
+               "Action": "s3:GetBucketAcl",
+               "Resource": "arn:aws:s3:::cms-ab2d-cloudtrail-nlb"
+           }
+       ]
+   }
+   ```
+
+1. Note that the statements are combined for a single bucket policy in the next step
+
+1. Add this bucket policy to the "cms-ab2d-cloudtrail" S3 bucket via the AWS console
+
+   > *** TO DO ***: Need to script this using AWS CLI
+   
+   ```
+   {
+       "Version": "2012-10-17",
+       "Statement": [
+           {
+               "Effect": "Allow",
+               "Principal": {
+                   "AWS": "arn:aws:iam::127311923021:root"
+               },
+               "Action": "s3:PutObject",
+               "Resource": "arn:aws:s3:::cms-ab2d-cloudtrail/*"
+           },
+           {
+               "Sid": "AWSLogDeliveryWrite",
+               "Effect": "Allow",
+               "Principal": {
+                   "Service": "delivery.logs.amazonaws.com"
+               },
+               "Action": "s3:PutObject",
+               "Resource": "arn:aws:s3:::cms-ab2d-cloudtrail/nlb/AWSLogs/114601554524/*",
+               "Condition": {
+                   "StringEquals": {
+                       "s3:x-amz-acl": "bucket-owner-full-control"
+                   }
+               }
+           },
+           {
+               "Sid": "AWSLogDeliveryAclCheck",
+               "Effect": "Allow",
+               "Principal": {
+                   "Service": "delivery.logs.amazonaws.com"
+               },
+               "Action": "s3:GetBucketAcl",
+               "Resource": "arn:aws:s3:::cms-ab2d-cloudtrail"
+           }
+       ]
+   }
+   ```
+
+### EFS mounting
+
+> https://docs.aws.amazon.com/efs/latest/ug/efs-mount-helper.html
+
+> https://docs.aws.amazon.com/efs/latest/ug/mounting-fs.html
+
