@@ -7,13 +7,12 @@ import gov.cms.ab2d.domain.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Example;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Service
-@Transactional
+//@Transactional
 public class JobService {
 
     @Autowired
@@ -22,17 +21,19 @@ public class JobService {
     @Autowired
     private JobRepository jobRepository;
 
-    public Job createJob(String resourceTypes, String since, String outputFormat, String url) {
+    public static final String INITIAL_JOB_STATUS_MESSAGE = "0%";
+
+    public Job createJob(String resourceTypes, String url) {
         Job job = new Job();
         job.setResourceTypes(resourceTypes);
         job.setJobID(UUID.randomUUID().toString());
         job.setRequestURL(url);
         job.setStatus(JobStatus.SUBMITTED);
-        job.setStatusMessage("0%");
+        job.setStatusMessage(INITIAL_JOB_STATUS_MESSAGE);
         job.setCreatedAt(LocalDateTime.now());
         job.setUser(userService.getCurrentUser());
 
-        return jobRepository.saveAndFlush(job);
+        return jobRepository.save(job);
     }
 
     public Job getActiveJob(User user) {
@@ -40,6 +41,7 @@ public class JobService {
         job.setStatus(JobStatus.SUBMITTED);
         job.setUser(user);
 
-        return jobRepository.findOne(Example.of(job)).orElse(null);
+        Example<Job> test = Example.of(job);
+        return jobRepository.findOne(test).orElse(null);
     }
 }
