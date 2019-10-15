@@ -60,11 +60,13 @@ cd efs-utils
 sudo make rpm
 sudo yum -y install ./build/amazon-efs-utils*rpm
 
+# LSH SKIP FOR NOW BEGIN
 # Configure running container instances to use an Amazon EFS file system
-sudo mkdir /mnt/efs
-sudo cp /etc/fstab /etc/fstab.bak
-echo 'fs-7f7bb9fe:/ /mnt/efs efs defaults,_netdev 0 0' | sudo tee -a /etc/fstab
-sudo mount -a
+# sudo mkdir /mnt/efs
+# sudo cp /etc/fstab /etc/fstab.bak
+# echo 'fs-bfbb773e:/ /mnt/efs efs defaults,_netdev 0 0' | sudo tee -a /etc/fstab
+# sudo mount -a
+# LSH SKIP FOR NOW END
 
 # Disable trendmicro, and Amazon SSM
 # sudo systemctl disable amazon-ssm-agent
