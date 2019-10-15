@@ -1,0 +1,8 @@
+dist: bionic
+language: java
+jdk:
+  - openjdk12
+
+cache:
+  directories:
+    - $HOME/.m2
