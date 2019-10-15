@@ -2,18 +2,23 @@
 
 ## Table of Contents
 
-1. [Create AWS keypair](#create-aws-keypair)
-1. [Create required S3 buckets](#create-required-s3-buckets)
-1. [Create policies](#create-policies)
-1. [Create roles](#create-roles)
-1. [Create instance profiles](#create-instance-profiles)
-1. [Configure IAM user deployers](#configure-iam-user-deployers)
-1. [Create AWS Elastic Container Registry repositories for images](#create-aws-elastic-container-registry-repositories-for-images)
-1. [Create base aws environment](#create-base-aws-environment)
-1. [Create Jenkins](#create-jenkins)
+1. [Configure base AWS environment](#configure-base-aws-environment)
+   * [Create AWS keypair](#create-aws-keypair)
+   * [Create required S3 buckets](#create-required-s3-buckets)
+   * [Create policies](#create-policies)
+   * [Create roles](#create-roles)
+   * [Create instance profiles](#create-instance-profiles)
+   * [Configure IAM user deployers](#configure-iam-user-deployers)
+   * [Create AWS Elastic Container Registry repositories for images](#create-aws-elastic-container-registry-repositories-for-images)
+   * [Create base aws environment](#create-base-aws-environment)
+1. [Deploy and configure Jenkins](#deploy-and-configure-jenkins)
 1. [Deploy to test environment](#deploy-to-test-environment)
+   * [Configure terraform](#configure-terraform)
+   * [Deploy AWS dependency modules](#deploy-aws-dependency-modules)
 
-## Create AWS keypair
+## Configure base AWS environment
+
+### Create AWS keypair
 
 1. Create keypair
    
@@ -51,7 +56,7 @@
 
    1. Save and close the file
 
-## Create required S3 buckets
+### Create required S3 buckets
 
 1. Set target profile
 
@@ -136,7 +141,7 @@
      --public-access-block-configuration BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true
    ```
 
-## Create policies
+### Create policies
 
 1. Set target profile
 
@@ -194,7 +199,7 @@
    $ aws iam create-policy --policy-name Ab2dPermissionToPassRolesPolicy --policy-document file://ab2d-permission-to-pass-roles-policy.json
    ```
 
-## Create roles
+### Create roles
 
 1. Set target profile
 
@@ -238,7 +243,7 @@
    $ aws iam attach-role-policy --role-name Ab2dManagedRole --policy-arn arn:aws:iam::114601554524:policy/Ab2dAccessPolicy
    ```
 
-## Create instance profiles
+### Create instance profiles
 
 1. Note that instance profiles are not visible within the AWS console
 
@@ -256,7 +261,7 @@
      --instance-profile-name Ab2dInstanceProfile
    ```
 
-## Configure IAM user deployers
+### Configure IAM user deployers
 
 1. Attach the Ab2dPermissionToPassRolesPolicy to an IAM user that runs the automation
 
@@ -270,7 +275,7 @@
 
 2. Repeat this step for all users
 
-## Create AWS Elastic Container Registry repositories for images
+### Create AWS Elastic Container Registry repositories for images
 
 1. Set target profile
 
@@ -383,7 +388,7 @@
    $ docker push 114601554524.dkr.ecr.us-east-1.amazonaws.com/ab2d_worker:latest
    ```
 
-## Create base aws environment
+### Create base aws environment
 
 1. Change to the environment directory
 
@@ -397,7 +402,7 @@
    $ ./create-base-environment.sh
    ```
 
-## Create Jenkins
+## Deploy and configure Jenkins
 
 1. Set target profile
 
@@ -931,6 +936,8 @@
 
 ## Deploy to test environment
 
+### Configure terraform
+
 1. Modify the SSH config file
 
    1. Open the SSH config file
@@ -985,7 +992,9 @@
    ```ShelSession
    $ rm -f /var/log/terraform/tf.log
    ```
-   
+
+### Deploy AWS dependency modules
+
 1. Set target profile
 
    *Example for the "semanticbitsdemo" AWS account:*
@@ -1201,6 +1210,14 @@
 
    1. Save and close the file
 
+### Deploy AWS application modules
+
+1. Set the AWS profile for the target environment
+
+   ```ShellSession
+   $ source ~/code/ab2d/Deploy/terraform/environments/cms-ab2d-sbdemo/set-aws-profile.sh
+   ```
+   
 1. Change to the "Deploy" directory
 
    ```ShellSession
