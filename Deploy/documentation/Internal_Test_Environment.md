@@ -15,6 +15,7 @@
 1. [Deploy to test environment](#deploy-to-test-environment)
    * [Configure terraform](#configure-terraform)
    * [Deploy AWS dependency modules](#deploy-aws-dependency-modules)
+   * [Deploy AWS application modules](#deploy-aws-application-modules)
 
 ## Configure base AWS environment
 
