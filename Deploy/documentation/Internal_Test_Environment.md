@@ -119,7 +119,7 @@
    $ cd ~/code/ab2d/Deploy/aws/s3-bucket-policies
    ```
    
-1. Add this bucket policy to the "cms-ab2d-cloudtrail" S3 bucket via the AWS console
+1. Add this bucket policy to the "cms-ab2d-cloudtrail" S3 bucket
 
    ```ShellSession
    $ aws s3api put-bucket-policy \
@@ -239,8 +239,6 @@
    ```
 
 ### Create instance profiles
-
-1. Note that instance profiles are not visible within the AWS console
 
 1. Create instance profile
 
@@ -1038,7 +1036,7 @@
      --public-access-block-configuration BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true
    ```
 
-1. Use the AWS Console to give "Write objects" and "Read bucket permissions" to the "S3 log delivery group" of the "cms-ab2d-cloudtrail" bucket
+1. Give "Write objects" and "Read bucket permissions" to the "S3 log delivery group" of the "cms-ab2d-cloudtrail" bucket
 
    ```ShellSession
    $ aws s3api put-bucket-acl \

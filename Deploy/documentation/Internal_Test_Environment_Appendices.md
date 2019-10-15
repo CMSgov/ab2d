@@ -114,56 +114,102 @@
      --target module.kms --auto-approve
    ```
 
+1. Note that if you want to preserve the AMIs, you can stop here
+
+1. Deregister the application AMI
+      
+   1. Get ami id for the application AMI
+
+      ```ShellSession
+      $ AMI_ID=$(aws --region us-east-1 ec2 describe-images \
+        --owners self \
+        --filters "Name=tag:Name,Values=AB2D-$CMS_ENV-AMI" \
+        --query "Images[*].[ImageId]" \
+        --output text)
+      ```
+
+   1. Deregister the application AMI
+   
+      ```ShellSession
+      $ aws ec2 deregister-image \
+        --image-id $AMI_ID
+      ```
+
+1. Deregister the Jenkins AMI
+      
+   1. Get ami id for the application AMI
+
+      ```ShellSession
+      $ AMI_ID=$(aws --region us-east-1 ec2 describe-images \
+        --owners self \
+        --filters "Name=tag:Name,Values=AB2D-$CMS_ENV-JENKINS-AMI" \
+        --query "Images[*].[ImageId]" \
+        --output text)
+      ```
+
+   1. Deregister the application AMI
+   
+      ```ShellSession
+      $ aws ec2 deregister-image \
+        --image-id $AMI_ID
+      ```
+
 1. Note that if you want to preserve the networking, you can stop here
-
-1. Get the ID of the first NAT gateway
-
-   ```ShellSession
-   $ NAT_GW_1_ID=$(aws --region us-east-1 ec2 describe-nat-gateways \
-     --filter "Name=tag:Name,Values=AB2D-$CMS_ENV-NGW-1" "Name=state,Values=available" \
-     --query 'NatGateways[*].{NatGatewayId:NatGatewayId}' \
-     --output text)
-   ```
 
 1. Delete the first NAT gateway
 
-   ```ShellSession
-   $ aws --region us-east-1 ec2 delete-nat-gateway \
-     --nat-gateway-id $NAT_GW_1_ID
-   ```
-
-1. Get the ID of the second NAT gateway
-
-   ```ShellSession
-   $ NAT_GW_2_ID=$(aws --region us-east-1 ec2 describe-nat-gateways \
-     --filter "Name=tag:Name,Values=AB2D-$CMS_ENV-NGW-2" "Name=state,Values=available" \
-     --query 'NatGateways[*].{NatGatewayId:NatGatewayId}' \
-     --output text)
-   ```
+   1. Get the ID of the first NAT gateway
+   
+      ```ShellSession
+      $ NAT_GW_1_ID=$(aws --region us-east-1 ec2 describe-nat-gateways \
+        --filter "Name=tag:Name,Values=AB2D-$CMS_ENV-NGW-1" "Name=state,Values=available" \
+        --query 'NatGateways[*].{NatGatewayId:NatGatewayId}' \
+        --output text)
+      ```
+   
+   1. Delete the first NAT gateway
+   
+      ```ShellSession
+      $ aws --region us-east-1 ec2 delete-nat-gateway \
+        --nat-gateway-id $NAT_GW_1_ID
+      ```
 
 1. Delete the second NAT gateway
 
-   ```ShellSession
-   $ aws --region us-east-1 ec2 delete-nat-gateway \
-     --nat-gateway-id $NAT_GW_2_ID
-   ```
-
-1. Get the ID of the third NAT gateway
-
-   ```ShellSession
-   $ NAT_GW_3_ID=$(aws --region us-east-1 ec2 describe-nat-gateways \
-     --filter "Name=tag:Name,Values=AB2D-$CMS_ENV-NGW-3" "Name=state,Values=available" \
-     --query 'NatGateways[*].{NatGatewayId:NatGatewayId}' \
-     --output text)
-   ```
+   1. Get the ID of the second NAT gateway
+   
+      ```ShellSession
+      $ NAT_GW_2_ID=$(aws --region us-east-1 ec2 describe-nat-gateways \
+        --filter "Name=tag:Name,Values=AB2D-$CMS_ENV-NGW-2" "Name=state,Values=available" \
+        --query 'NatGateways[*].{NatGatewayId:NatGatewayId}' \
+        --output text)
+      ```
+   
+   1. Delete the second NAT gateway
+   
+      ```ShellSession
+      $ aws --region us-east-1 ec2 delete-nat-gateway \
+        --nat-gateway-id $NAT_GW_2_ID
+      ```
 
 1. Delete the third NAT gateway
 
-   ```ShellSession
-   $ aws --region us-east-1 ec2 delete-nat-gateway \
-     --nat-gateway-id $NAT_GW_3_ID
-   ```
-
+   1. Get the ID of the third NAT gateway
+   
+      ```ShellSession
+      $ NAT_GW_3_ID=$(aws --region us-east-1 ec2 describe-nat-gateways \
+        --filter "Name=tag:Name,Values=AB2D-$CMS_ENV-NGW-3" "Name=state,Values=available" \
+        --query 'NatGateways[*].{NatGatewayId:NatGatewayId}' \
+        --output text)
+      ```
+   
+   1. Delete the third NAT gateway
+   
+      ```ShellSession
+      $ aws --region us-east-1 ec2 delete-nat-gateway \
+        --nat-gateway-id $NAT_GW_3_ID
+      ```
+   
 1. Verify that all three NAT gateways are in the deleted state
 
    1. Enter the following
@@ -179,14 +225,60 @@
 
    1. If there is output, wait for a few minutes and check again before proceeding
 
-1. Manually deregister the AMI through the AWS console
+1. Manually release the first Elastic IP address
 
-   > *** TO DO ***: need to script this with AWS CLI
+   1. Get the allocation id of the first Elastic IP address
 
-1. Manually release all Elastic IP addresses through the AWS console
+      ```ShellSession
+      $ NGW_EIP_1_ALLOCATION_ID=$(aws --region us-east-1 ec2 describe-addresses \
+        --filter "Name=tag:Name,Values=AB2D-$CMS_ENV-NGW-EIP-1" \
+        --query 'Addresses[*].[AllocationId]' \
+        --output text)
+      ```
 
-    > *** TO DO ***: need to script this with AWS CLI
+   1. Release the first Elastic IP address
    
+      ```ShellSession
+      $ aws --region us-east-1 ec2 release-address \
+        --allocation-id $NGW_EIP_1_ALLOCATION_ID
+      ```
+
+1. Manually release the second Elastic IP address
+
+   1. Get the allocation id of the first Elastic IP address
+
+      ```ShellSession
+      $ NGW_EIP_2_ALLOCATION_ID=$(aws --region us-east-1 ec2 describe-addresses \
+        --filter "Name=tag:Name,Values=AB2D-$CMS_ENV-NGW-EIP-2" \
+        --query 'Addresses[*].[AllocationId]' \
+        --output text)
+      ```
+
+   1. Release the first Elastic IP address
+   
+      ```ShellSession
+      $ aws --region us-east-1 ec2 release-address \
+        --allocation-id $NGW_EIP_2_ALLOCATION_ID
+      ```
+
+1. Manually release the third Elastic IP address
+
+   1. Get the allocation id of the first Elastic IP address
+
+      ```ShellSession
+      $ NGW_EIP_3_ALLOCATION_ID=$(aws --region us-east-1 ec2 describe-addresses \
+        --filter "Name=tag:Name,Values=AB2D-$CMS_ENV-NGW-EIP-3" \
+        --query 'Addresses[*].[AllocationId]' \
+        --output text)
+      ```
+
+   1. Release the first Elastic IP address
+   
+      ```ShellSession
+      $ aws --region us-east-1 ec2 release-address \
+        --allocation-id $NGW_EIP_3_ALLOCATION_ID
+      ```
+
 1. Manually delete the VPC through the AWS console
 
    *Note that you can't delete the VPC from the AWS CLI when there are resources within the VPC.*
