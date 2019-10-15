@@ -37,7 +37,7 @@ resource "aws_security_group_rule" "egress_controller" {
 
 resource "aws_security_group" "api" {
   name        = "ab2d-api-${var.env}"
-  description = "Application security group"
+  description = "API security group"
   vpc_id      = var.vpc_id
 }
 
@@ -109,7 +109,7 @@ resource "aws_security_group_rule" "controller_access" {
 # }
 # LSH SKIP FOR NOW END
 
-resource "aws_security_group_rule" "egress_app" {
+resource "aws_security_group_rule" "egress_api" {
   type        = "egress"
   description = "Allow all egress"
   from_port   = "0"
@@ -119,7 +119,7 @@ resource "aws_security_group_rule" "egress_app" {
   security_group_id = aws_security_group.api.id
 }
 
-resource "aws_security_group_rule" "db_access" {
+resource "aws_security_group_rule" "db_access_api" {
   type        = "ingress"
   description = "App connections"
   from_port   = "5432"
@@ -188,16 +188,16 @@ resource "null_resource" "wait" {
   }
 }
 
-resource "null_resource" "list-app-instances-script" {
+resource "null_resource" "list-api-instances-script" {
   depends_on = ["null_resource.wait"]
   triggers = {controller_id = aws_instance.deployment_controller.id}
 
   provisioner "local-exec" {
-    command = "scp -i ~/.ssh/${var.ssh_key_name}.pem ${path.cwd}/../../environments/cms-ab2d-${var.env}/list-app-instances.sh ${var.linux_user}@${aws_eip.deployment_controller.public_ip}:/home/${var.linux_user}"
+    command = "scp -i ~/.ssh/${var.ssh_key_name}.pem ${path.cwd}/../../environments/cms-ab2d-${var.env}/list-api-instances.sh ${var.linux_user}@${aws_eip.deployment_controller.public_ip}:/home/${var.linux_user}"
   }
 
   provisioner "local-exec" {
-    command = "ssh -i ~/.ssh/${var.ssh_key_name}.pem ${var.linux_user}@${aws_eip.deployment_controller.public_ip} 'chmod +x /home/${var.linux_user}/list-app-instances.sh'"
+    command = "ssh -i ~/.ssh/${var.ssh_key_name}.pem ${var.linux_user}@${aws_eip.deployment_controller.public_ip} 'chmod +x /home/${var.linux_user}/list-api-instances.sh'"
   }
 }
 
