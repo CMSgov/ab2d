@@ -9,6 +9,7 @@
    * [Network Load Balancer bucket policy](#network-load-balancer-bucket-policy)
    * [EFS mounting](#efs-mounting)
    * [Resolve repeated start and stop of ECS tasks](#resolve-repeated-start-and-stop-of-ecs-tasks)
+   * [Separate API and Worker into separate AMIs](#separate-api-and-worker-into-separate-amis)
 
 ## To do after granted access to AWS account
 
@@ -335,4 +336,6 @@
 
 > *** TO DO ***
 
+### Separate API and Worker into separate AMIs
 
+*Need to separate the AMIs because only Worker needs EFS mounting.*
