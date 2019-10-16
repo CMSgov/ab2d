@@ -165,66 +165,6 @@
    $ aws --version
    ```
 
-### Clone and configure the repo
-
-1. Change to the code directory
-
-   *Format:*
-   
-   ```ShellSession
-   $ cd {code directory}
-   ```
-
-   *Example:*
-   
-   ```ShellSession
-   $ cd ~/code
-   ```
-
-1. Clone the repo
-
-   *Option #1: https clone:*
-   
-   ```ShellSession
-   $ git clone https://github.com/CMSgov/ab2d.git
-   ```
-
-   *Option #2: ssh clone:*
-   
-   ```ShellSession
-   $ git clone git@github.com:CMSgov/ab2d.git
-   ```
-
-1. Change to the repo directory
-
-   ```ShellSession
-   $ cd ab2d
-   ```
-
-1. Install "git-secrets" for the repo
-
-   ```ShellSession
-   $ git secrets --install
-   ```
-
-1. Note the output
-
-   ```
-   Installed commit-msg hook to .git/hooks/commit-msg
-   Installed pre-commit hook to .git/hooks/pre-commit
-   Installed prepare-commit-msg hook to .git/hooks/prepare-commit-msg
-   ```
-
-1. Register AWS
-
-   ```ShellSession
-   $ git secrets --register-aws
-   ```
-
-1. See the README.md for "git-secrets" for more info
-
-   > https://github.com/awslabs/git-secrets
-
 ## Deploy the solution
 
 1. If deploying to the "semantbitsdemo" AWS account, jump to the following document
