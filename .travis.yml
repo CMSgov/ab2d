@@ -7,6 +7,9 @@ cache:
   directories:
     - $HOME/.m2
 
+# Skip built-in Maven install
+install: true
+
 # `mvn test` without `clean` is failing with an odd FindBugs issue.
 script:
   - mvn clean test
