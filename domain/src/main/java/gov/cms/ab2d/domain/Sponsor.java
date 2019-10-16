@@ -16,8 +16,12 @@ public class Sponsor {
     private Long id;
 
     @Column(unique = true)
-    private String sponsorID;
-    private String name;
+    private Integer hpmsID;
+    private String orgName;
+    private String legalName;
+
+    @ManyToOne
+    private Sponsor parent;
 
     @OneToMany(mappedBy = "sponsor")
     private Set<Attestation> attestations;
