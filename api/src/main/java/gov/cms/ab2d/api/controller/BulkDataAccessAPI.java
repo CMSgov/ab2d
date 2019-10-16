@@ -21,7 +21,8 @@ import javax.validation.constraints.NotBlank;
 import java.io.IOException;
 
 import static gov.cms.ab2d.api.util.Constants.API_PREFIX;
-import static gov.cms.ab2d.api.util.FHIRUtil.*;
+import static gov.cms.ab2d.api.util.FHIRUtil.getErrorOutcome;
+import static gov.cms.ab2d.api.util.FHIRUtil.outcomeToJSON;
 
 @Api(value = "Bulk Data Access API", description =
         "API through which an authenticated and authorized PDP sponsor" +
