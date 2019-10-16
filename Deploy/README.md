@@ -11,8 +11,6 @@
    * [Install Packer](#install-packer)
    * [Install Terraform](#install-terraform)
    * [Install the AWS CLI using pip3](#install-the-aws-cli-using-pip3)
-   * [Create an AWS IAM user](#create-an-aws-iam-user)
-   * [Configure AWS CLI](#configure-aws-cli)
 2. [Deploy solution](#deploy-solution)
 
 ## Setup develoment machine
