@@ -103,7 +103,7 @@
 
    - required setup of the development machine (Mac specific)
 
-   - a deploy the solotion section that directs you to an environment specific document
+   - a 'deploy the solution' section that directs you to an environment specific document
 
 1. Jump to the "AB2D Deploy" document
 
