@@ -12,6 +12,7 @@
 
     <properties>
         <project.root>${basedir}/..</project.root>
+        <springframework.version>5.2.0.RELEASE</springframework.version>
         <springfox.version>2.9.2</springfox.version>
         <springboot.version>2.1.6.RELEASE</springboot.version>
     </properties>
@@ -44,7 +45,7 @@
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-core</artifactId>
-            <version>5.2.0.RELEASE</version>
+            <version>${springframework.version}</version>
         </dependency>
 
         <dependency>
@@ -56,7 +57,7 @@
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-test</artifactId>
-            <version>5.2.0.RELEASE</version>
+            <version>${springframework.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>

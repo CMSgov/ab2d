@@ -1,14 +1,9 @@
 package gov.cms.ab2d.api.controller;
 
-
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import gov.cms.ab2d.api.service.JobService;
 import gov.cms.ab2d.api.util.Constants;
-import gov.cms.ab2d.api.util.FHIRUtil;
 import gov.cms.ab2d.domain.Job;
 import io.swagger.annotations.*;
-import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.hl7.fhir.dstu3.model.OperationOutcome;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
@@ -22,7 +17,8 @@ import javax.validation.constraints.NotBlank;
 import java.io.IOException;
 
 import static gov.cms.ab2d.api.util.Constants.API_PREFIX;
-import static gov.cms.ab2d.api.util.FHIRUtil.*;
+import static gov.cms.ab2d.api.util.FHIRUtil.getSuccessfulOutcome;
+import static gov.cms.ab2d.api.util.FHIRUtil.outcomeToJSON;
 
 @Api(value = "Bulk Data Access API", description =
         "API through which an authenticated and authorized PDP sponsor" +
@@ -80,7 +76,7 @@ public class BulkDataAccessAPI {
 
         OperationOutcome operationOutcome = getSuccessfulOutcome(String.format("Request %s accepted for processing", job.getJobID()));
 
-        String encoded = FHIRUtil.outcomeToJSON(operationOutcome);
+        String encoded = outcomeToJSON(operationOutcome);
         return new ResponseEntity<>(encoded, responseHeaders,
                 HttpStatus.ACCEPTED);
     }
@@ -137,20 +133,10 @@ public class BulkDataAccessAPI {
         return new ResponseEntity<>(null, responseHeaders, HttpStatus.ACCEPTED);
     }
 
-
     /*private void activeRequestCheck() {
         User user = userService.getCurrentUser();
         if (jobService.getActiveJob(user) != null) {
             throw new RuntimeException("The current user has an active job");
         }
     }*/
-
-    @ExceptionHandler(Exception.class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ResponseEntity<JsonNode> assertionException(final Exception e) throws IOException {
-        String msg = ExceptionUtils.getRootCauseMessage(e);
-        OperationOutcome operationOutcome = getErrorOutcome(msg);
-        String encoded = outcomeToJSON(operationOutcome);
-        return new ResponseEntity<>(new ObjectMapper().readTree(encoded), HttpStatus.BAD_REQUEST);
-    }
 }

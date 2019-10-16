@@ -1,5 +1,6 @@
 package gov.cms.ab2d.api.service;
 
+
 import gov.cms.ab2d.api.repository.JobRepository;
 import gov.cms.ab2d.domain.Job;
 import gov.cms.ab2d.domain.JobStatus;
@@ -7,12 +8,13 @@ import gov.cms.ab2d.domain.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Example;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Service
-//@Transactional
+@Transactional
 public class JobService {
 
     @Autowired
