@@ -7,10 +7,10 @@
    * [Change ownership of HomeBrew related directories](#change-ownership-of-homebrew-related-directories)
    * [Install python3](#install-python3)
    * [Configure python3](#configure-python3)
-   * [Configure pip3](#configure-pip3)
    * [Install Packer](#install-packer)
    * [Install Terraform](#install-terraform)
    * [Install the AWS CLI using pip3](#install-the-aws-cli-using-pip3)
+   * [Clone and configure the repo](#clone-and-configure-the-repo)
 2. [Deploy the solution](#deploy-the-solution)
 
 ## Setup develoment machine
@@ -64,8 +64,6 @@
    $ brew install python3
    ```
 
-### Configure pip3
-
 1. Upgrade pip3
 
    *Ignore the incompatible warnings.*
@@ -74,7 +72,9 @@
    $ pip3 install --upgrade pip
    ```
 
-2. Install lxml
+### Install dependencies
+
+1. Install lxml
 
    *Note that "lxml" is a library for parsing XML and HTML.*
    
@@ -82,16 +82,16 @@
    $ pip3 install lxml
    ```
 
-3. Install requests
+1. Install requests
 
    ```ShellSession
    $ pip3 install requests
    ```
 
-4. Install "detect-secrets"
+1. Install git-secrets
 
    ```ShellSession
-   $ pip3 install detect-secrets
+   $ brew install git-secrets
    ```
 
 ### Install Packer
@@ -102,7 +102,7 @@
    $ brew install packer
    ```
 
-2. Verify the packer installation by checking the version of packer
+1. Verify the packer installation by checking the version of packer
 
    ```ShellSession
    $ packer --version
@@ -116,7 +116,7 @@
    $ brew install terraform@0.12
    ```
    
-2. Check the terraform version
+1. Check the terraform version
 
    ```ShellSession
    $ terraform --version
@@ -163,6 +163,62 @@
 
    ```ShellSession
    $ aws --version
+   ```
+
+### Clone and configure the repo
+
+1. Change to the code directory
+
+   *Format:*
+   
+   ```ShellSession
+   $ cd {code directory}
+   ```
+
+   *Example:*
+   
+   ```ShellSession
+   $ cd ~/code
+   ```
+
+1. Clone the repo
+
+   *Option #1: https clone:*
+   
+   ```ShellSession
+   $ git clone https://github.com/CMSgov/ab2d.git
+   ```
+
+   *Option #2: ssh clone:*
+   
+   ```ShellSession
+   $ git clone git@github.com:CMSgov/ab2d.git
+   ```
+
+1. Change to the repo directory
+
+   ```ShellSession
+   $ cd ab2d
+   ```
+
+1. Install "git-secrets" for the repo
+
+   ```ShellSession
+   $ git secrets --install
+   ```
+
+1. Note the output
+
+   ```
+   Installed commit-msg hook to .git/hooks/commit-msg
+   Installed pre-commit hook to .git/hooks/pre-commit
+   Installed prepare-commit-msg hook to .git/hooks/prepare-commit-msg
+   ```
+
+1. Register AWS
+
+   ```ShellSession
+   $ git secrets --register-aws
    ```
 
 ## Deploy the solution
