@@ -11,7 +11,7 @@
    * [Install Packer](#install-packer)
    * [Install Terraform](#install-terraform)
    * [Install the AWS CLI using pip3](#install-the-aws-cli-using-pip3)
-2. [Deploy solution](#deploy-solution)
+2. [Deploy the solution](#deploy-the-solution)
 
 ## Setup develoment machine
 
