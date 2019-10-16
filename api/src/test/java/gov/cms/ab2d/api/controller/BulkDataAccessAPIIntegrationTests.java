@@ -4,7 +4,6 @@ import gov.cms.ab2d.api.SpringBootApp;
 import gov.cms.ab2d.api.repository.JobRepository;
 import gov.cms.ab2d.domain.Job;
 import gov.cms.ab2d.domain.JobStatus;
-import org.hamcrest.core.Is;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -22,7 +21,6 @@ import static gov.cms.ab2d.api.util.Constants.API_PREFIX;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = SpringBootApp.class, webEnvironment = SpringBootTest.WebEnvironment.MOCK)
@@ -46,11 +44,7 @@ public class BulkDataAccessAPIIntegrationTests {
         String statusUrl = "http://localhost" + API_PREFIX + "/status/" + job.getJobID();
 
         resultActions.andExpect(status().isAccepted())
-                .andExpect(header().string("Content-Location", statusUrl))
-                .andExpect(jsonPath("$.resourceType", Is.is("OperationOutcome")))
-                .andExpect(jsonPath("$.issue[0].severity", Is.is("information")))
-                .andExpect(jsonPath("$.issue[0].code", Is.is("informational")))
-                .andExpect(jsonPath("$.issue[0].details.text", Is.is("Request " + job.getJobID() + " accepted for processing")));
+                .andExpect(header().string("Content-Location", statusUrl));
 
         Assert.assertEquals(job.getStatus(), JobStatus.SUBMITTED);
         Assert.assertEquals(job.getStatusMessage(), INITIAL_JOB_STATUS_MESSAGE);
@@ -70,11 +64,7 @@ public class BulkDataAccessAPIIntegrationTests {
         String statusUrl = "http://localhost" + API_PREFIX + "/status/" + job.getJobID();
 
         resultActions.andExpect(status().isAccepted())
-                .andExpect(header().string("Content-Location", statusUrl))
-                .andExpect(jsonPath("$.resourceType", Is.is("OperationOutcome")))
-                .andExpect(jsonPath("$.issue[0].severity", Is.is("information")))
-                .andExpect(jsonPath("$.issue[0].code", Is.is("informational")))
-                .andExpect(jsonPath("$.issue[0].details.text", Is.is("Request " + job.getJobID() + " accepted for processing")));
+                .andExpect(header().string("Content-Location", statusUrl));
 
         Assert.assertEquals(job.getStatus(), JobStatus.SUBMITTED);
         Assert.assertEquals(job.getStatusMessage(), INITIAL_JOB_STATUS_MESSAGE);

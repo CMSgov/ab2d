@@ -25,6 +25,7 @@
         <project.root>${basedir}</project.root>
         <java.version>12</java.version>
         <checkstyle.config>${project.root}/src/main/resources/checkstyle.xml</checkstyle.config>
+        <springboot.version>2.1.6.RELEASE</springboot.version>
     </properties>
 
     <dependencies>
