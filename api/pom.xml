@@ -12,7 +12,6 @@
 
     <properties>
         <project.root>${basedir}/..</project.root>
-        <springframework.version>5.2.0.RELEASE</springframework.version>
         <springfox.version>2.9.2</springfox.version>
         <springboot.version>2.1.6.RELEASE</springboot.version>
     </properties>
