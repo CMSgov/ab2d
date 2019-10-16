@@ -1,13 +1,22 @@
 #!/bin/bash
 
+#
 # Create base AWS networking
+#
 
+# Change to working directory
+cd "$(dirname "$0")"
+
+# Set environment
 export AWS_PROFILE="sbdemo"
+export ENVIRONMENT="sbdemo"
 export CMS_ENV="SBDEMO"
 
+# Check if VPN already exists
 VPC_EXISTS=$(aws --region us-east-1 ec2 describe-vpcs --output text \
   --filters "Name=tag:Name,Values=AB2D-$CMS_ENV-VPC")
 
+# Continue process if VPC does not exist
 if [ -z "${VPC_EXISTS}" ]; then
   # Create VPC
   VPC_ID=$(aws ec2 create-vpc \
@@ -16,7 +25,7 @@ if [ -z "${VPC_EXISTS}" ]; then
     --output text \
     --region us-east-1)
   echo "Creating VPC..."
-else
+else # Exit shell script if VPN already exists
   echo "Skipping network creation since VPC already exists."
   exit
 fi
@@ -427,3 +436,12 @@ aws ec2 associate-route-table  \
   --subnet-id $SUBNET_PRIVATE_3_ID \
   --route-table-id $ROUTE_TABLE_FOR_NGW_3_ID \
   --region us-east-1
+
+# Recreate the ".auto.tfvars" file for the environment
+echo 'vpc_id = "'$VPC_ID'"' \
+  > $ENVIRONMENT.auto.tfvars
+echo 'private_subnet_ids = ["'$SUBNET_PRIVATE_1_ID'","'$SUBNET_PRIVATE_2_ID'","'$SUBNET_PRIVATE_3_ID'"]' \
+  >> $ENVIRONMENT.auto.tfvars
+echo 'deployment_controller_subnet_ids = ["'$SUBNET_PUBLIC_1_ID'","'$SUBNET_PUBLIC_2_ID'","'$SUBNET_PUBLIC_3_ID'"]' \
+  >> $ENVIRONMENT.auto.tfvars
+
