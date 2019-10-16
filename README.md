@@ -6,40 +6,9 @@
 
 ## Table of Contents
 
-1. [Clone the repo](#clone-the-repo)
 1. [Configure local repo with "git-secrets" protection](#configure-local-repo-with-git-secrets-protection)
 1. [Running in Docker](#running-in-docker)
 1. [Deploying the solution](#deploying-the-solution)
-
-## Clone the repo
-
-1. Change to the code directory
-
-   *Format:*
-   
-   ```ShellSession
-   $ cd {code directory}
-   ```
-
-   *Example:*
-   
-   ```ShellSession
-   $ cd ~/code
-   ```
-
-1. Clone the repo
-
-   *Option #1: https clone:*
-   
-   ```ShellSession
-   $ git clone https://github.com/CMSgov/ab2d.git
-   ```
-
-   *Option #2: ssh clone:*
-   
-   ```ShellSession
-   $ git clone git@github.com:CMSgov/ab2d.git
-   ```
 
 ## Configure local repo with "git-secrets" protection
 
