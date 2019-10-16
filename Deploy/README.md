@@ -221,6 +221,10 @@
    $ git secrets --register-aws
    ```
 
+1. See the README.md for "git-secrets" for more info
+
+   > https://github.com/awslabs/git-secrets
+
 ## Deploy the solution
 
 1. If deploying to the "semantbitsdemo" AWS account, jump to the following document
