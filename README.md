@@ -107,4 +107,4 @@
 
 1. Jump to the "AB2D Deploy" document
 
-   [Deploying the solution](Deploy/README.md)
+   [AB2D Deploy](Deploy/README.md)
