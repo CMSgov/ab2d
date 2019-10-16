@@ -1044,6 +1044,14 @@
    $ export AWS_PROFILE="sbdemo"
    ```
 
+1. Set CMS environment
+
+   *Example for the "semanticbitsdemo" AWS account:*
+   
+   ```ShellSession
+   $ export CMS_ENV="SBDEMO"
+   ```
+   
 1. Change to the environment directory
 
    ```ShellSession
@@ -1108,6 +1116,15 @@
    
 1. Configure the networking
 
+   1. Get and note the VPC ID
+
+      ```ShellSession
+      $ aws --region us-east-1 ec2 describe-vpcs \
+        --filters "Name=tag:Name,Values=AB2D-$CMS_ENV-VPC" \
+	--query "Vpcs[*].[VpcId]" \
+	--output text
+      ```
+      
    1. Open the "variables.tf"
 
       ```ShellSession
@@ -1116,6 +1133,8 @@
 
    1. Change the following lines to the correct VPC ID
 
+      *Format:*
+      
       ```
       variable "vpc_id" {
         default = "{vpc id}"
@@ -1124,6 +1143,8 @@
 
    1. Change the following lines to the correct private subnet IDs
 
+      *Format:*
+      
       ```
       variable "private_subnet_ids" {
         type        = list(string)
