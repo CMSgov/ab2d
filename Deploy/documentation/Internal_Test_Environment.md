@@ -2,6 +2,8 @@
 
 ## Table of Contents
 
+1. [Create an AWS IAM user](#create-an-aws-iam-user)
+1. [Configure AWS CLI](#configure-aws-cli)
 1. [Configure base AWS environment](#configure-base-aws-environment)
    * [Create AWS keypair](#create-aws-keypair)
    * [Create required S3 buckets](#create-required-s3-buckets)
@@ -17,6 +19,52 @@
    * [Deploy AWS dependency modules](#deploy-aws-dependency-modules)
    * [Deploy AWS application modules](#deploy-aws-application-modules)
 
+## Create an AWS IAM user
+
+1. Request AWS administrator to create a user that has both console and programmatic access to the semanticbitsdemo AWS account
+
+1. Note that the administrator will provide you with a "credentials.csv" file that will include the following information
+   
+   - User name
+
+   - Password
+
+   - Access key ID
+
+   - Secret access key
+
+   - Console login link
+
+## Configure AWS CLI
+
+1. Configure AWS CLI
+   
+   ```ShellSession
+   $ aws configure --profile=sbdemo
+   ```
+
+1. Enter {your aws access key} at the **AWS Access Key ID** prompt
+
+1. Enter {your aws secret access key} at the AWS Secret Access Key prompt
+
+1. Enter the following at the **Default region name** prompt
+
+   ```
+   us-east-1
+   ```
+
+1. Enter the following at the **Default output format** prompt
+
+   ```
+   json
+   ```
+
+1. Examine the contents of your AWS credentials file
+
+   ```ShellSession
+   $ cat ~/.aws/credentials
+   ```
+   
 ## Configure base AWS environment
 
 ### Create AWS keypair

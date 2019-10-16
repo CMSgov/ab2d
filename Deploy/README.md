@@ -166,72 +166,14 @@
    ```ShellSession
    $ aws --version
    ```
-   
-### Create an AWS IAM user
 
-1. Request AWS administrator to create a user that has both console and programmatic access
+## Deploy the solution
 
-1. Note that the administrator will provide you with a "credentials.csv" file that will include the following information
-   
-   - User name
+1. If deploying to the "semantbitsdemo" AWS account, jump to the following document
 
-   - Password
+   [Internal Test Environment](documentation/Internal_Test_Environment.md)
 
-   - Access key ID
+1. If deploying to the customer's AWS account, jump to the following document
 
-   - Secret access key
-
-   - Console login link
-
-### Configure AWS CLI
-
-1. Configure AWS CLI
-
-   *Example for "semanticbitsdemo" AWS account:*
-   
-   ```ShellSession
-   $ aws configure --profile=sbdemo
-   ```
-
-1. Enter {your aws access key} at the **AWS Access Key ID** prompt
-
-1. Enter {your aws secret access key} at the AWS Secret Access Key prompt
-
-1. Enter the following at the **Default region name** prompt
-
-   ```
-   us-east-1
-   ```
-
-1. Enter the following at the **Default output format** prompt
-
-   ```
-   json
-   ```
-
-1. Examine the contents of your AWS credentials file
-
-   ```ShellSession
-   $ cat ~/.aws/credentials
-   ```
-   
-## Deploy solution
-
-1. Change to the "ab2d" repo directory
-
-   ```ShellSession
-   $ cd ~/code/ab2d
-   ```
-   
-1. Set AWS_PROFILE
-
-   ```ShellSession
-   $ source ./Deploy/scripts/set-aws-profile.sh
-   ```
-
-1. Deploy the solution to the AWS account associated with the AWS profile
-
-   ```ShellSession
-   $ ./Deploy/deploy.sh
-   ```
+   > *** TO DO ***
    
