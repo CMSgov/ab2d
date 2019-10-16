@@ -2,7 +2,7 @@
 
 ## Table of Contents
 
-1. [Setup develoment machine](#setup-develoment-machine)
+1. [Setup development machine](#setup-development-machine)
    * [Assumptions](#assumptions)
    * [Change ownership of HomeBrew related directories](#change-ownership-of-homebrew-related-directories)
    * [Install python3](#install-python3)
@@ -13,7 +13,7 @@
    * [Clone and configure the repo](#clone-and-configure-the-repo)
 2. [Deploy the solution](#deploy-the-solution)
 
-## Setup develoment machine
+## Setup development machine
 
 ### Assumptions
 
