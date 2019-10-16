@@ -1,4 +1,4 @@
-# TO DO
+# Notes
 
 ## Table of Contents
 
@@ -8,7 +8,7 @@
 1. [Issues](#issues)
    * [Network Load Balancer bucket policy](#network-load-balancer-bucket-policy)
    * [EFS mounting](#efs-mounting)
-   * [Network Load Balancer timeout](#network-load-balancer-timeout)
+   * [Resolve repeated start and stop of ECS tasks](#resolve-repeated-start-and-stop-of-ecs-tasks)
 
 ## To do after granted access to AWS account
 
@@ -331,11 +331,8 @@
 
 > https://docs.aws.amazon.com/efs/latest/ug/mounting-fs.html
 
-### Network Load Balancer timeout
+### Resolve repeated start and stop of ECS tasks
 
-```
-Error: timeout while waiting for state to become 'active' (last state: 'provisioning', timeout: 10m0s)
+> *** TO DO ***
 
-  on ../../modules/worker/main.tf line 108, in resource "aws_lb" "worker":
- 108: resource "aws_lb" "worker" {
-```
+
