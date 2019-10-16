@@ -101,4 +101,4 @@
 
 *Jump to the following document:*
 
-[Deploying the solution](Deploy/README.md]
+[Deploying the solution](Deploy/README.md)
