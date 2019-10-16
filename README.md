@@ -99,6 +99,12 @@
 
 ## Deploying the solution
 
-*Jump to the following document:*
+1. Note that the "AB2D Deploy" document includes the following
 
-[Deploying the solution](Deploy/README.md)
+   - required setup of the development machine (Mac specific)
+
+   - a deploy the solotion section that directs you to an environment specific document
+
+1. Jump to the "AB2D Deploy" document
+
+   [Deploying the solution](Deploy/README.md)
