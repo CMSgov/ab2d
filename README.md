@@ -9,6 +9,7 @@
 1. [Clone the repo](#clone-the-repo)
 1. [Configure local repo with "git-secrets" protection](#configure-local-repo-with-git-secrets-protection)
 1. [Running in Docker](#running-in-docker)
+1. [Deploying the solution](#deploying-the-solution)
 
 ## Clone the repo
 
@@ -96,4 +97,8 @@
 
 1. Note that this starts up Postgres, and both API & Worker Spring Boot apps
 
+## Deploying the solution
 
+*Jump to the following document:*
+
+[Deploying the solution](Deploy/README.md]
