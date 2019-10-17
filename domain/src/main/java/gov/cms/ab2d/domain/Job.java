@@ -1,22 +1,24 @@
 package gov.cms.ab2d.domain;
 
 
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 
 import javax.persistence.*;
 import javax.validation.constraints.Pattern;
 import java.time.LocalDateTime;
-import java.util.Objects;
 import java.util.Set;
 
 @Entity
 @Getter
 @Setter
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class Job {
 
     @Id
     @GeneratedValue
+    @EqualsAndHashCode.Include
     private Long id;
 
     @Column(unique = true)
@@ -39,21 +41,6 @@ public class Job {
     private String statusMessage;
     private Integer progress;
 
-    @Pattern(regexp = "^(((Patient)|(ExplanationOfBenefits)),?)*$",
-            message = "_type should contain a string of comma-delimited FHIR resource types; "
-                    + "currently limited to Patient and ExplanationOfBenefits")
-    private String resourceTypes;
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        Job request = (Job) o;
-        return Objects.equals(id, request.id);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(id);
-    }
+    @Pattern(regexp = "ExplanationOfBenefits", message = "_type should be ExplanationOfBenefits")
+    private String resourceTypes; // for now just limited to ExplanationOfBenefits
 }

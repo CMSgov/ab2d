@@ -1,28 +1,22 @@
 package gov.cms.ab2d.api.controller;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import gov.cms.ab2d.api.service.JobService;
 import gov.cms.ab2d.api.util.Constants;
 import gov.cms.ab2d.domain.Job;
 import io.swagger.annotations.*;
-import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.hl7.fhir.dstu3.model.OperationOutcome;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import javax.validation.constraints.NotBlank;
 import java.io.IOException;
+import java.util.Set;
 
 import static gov.cms.ab2d.api.util.Constants.API_PREFIX;
-import static gov.cms.ab2d.api.util.FHIRUtil.getErrorOutcome;
-import static gov.cms.ab2d.api.util.FHIRUtil.outcomeToJSON;
 
 @Api(value = "Bulk Data Access API", description =
         "API through which an authenticated and authorized PDP sponsor" +
@@ -36,8 +30,12 @@ import static gov.cms.ab2d.api.util.FHIRUtil.outcomeToJSON;
  */
 public class BulkDataAccessAPI {
 
-    private static final String ALLOWABLE_OUTPUT_FORMATS =
-            "application/fhir+ndjson,application/ndjson,ndjson";
+    private static final Set<String> ALLOWABLE_OUTPUT_FORMAT_SET = Set.of("application/fhir+ndjson", "application/ndjson", "ndjson");
+
+    // Since this is used in an annotation, it can't be derived from the Set, otherwise it will be an error
+    private static final String ALLOWABLE_OUTPUT_FORMATS = "application/fhir+ndjson,application/ndjson,ndjson";
+
+    private static final String RESOURCE_TYPE_VALUE = "ExplanationOfBenefits";
 
     @Autowired
     private JobService jobService;
@@ -59,7 +57,7 @@ public class BulkDataAccessAPI {
     public ResponseEntity<Void> exportAllPatients(
             @ApiParam(value = "String of comma-delimited FHIR resource types. Only resources of " +
                     "the specified resource types(s) SHALL be included in the response.",
-                    allowableValues = "ExplanationOfBenefits")
+                    allowableValues = RESOURCE_TYPE_VALUE)
             @RequestParam(required = false, name = "_type") String resourceTypes,
             @ApiParam(value = "A FHIR instant. Resources will be included in the response if " +
                     "their state has changed after the supplied time.")
@@ -71,10 +69,17 @@ public class BulkDataAccessAPI {
             @RequestParam(required = false, name = "_outputFormat") String outputFormat) {
         //activeRequestCheck();
 
+        if (resourceTypes != null && !resourceTypes.equals(RESOURCE_TYPE_VALUE)) {
+            throw new IllegalArgumentException("_type must be " + RESOURCE_TYPE_VALUE);
+        }
+        if (outputFormat != null && !ALLOWABLE_OUTPUT_FORMAT_SET.contains(outputFormat)) {
+            throw new IllegalArgumentException("An _outputFormat of " + outputFormat + " is not valid");
+        }
+
         Job job = jobService.createJob(resourceTypes, ServletUriComponentsBuilder.fromCurrentRequest().toUriString());
 
         String statusURL = ServletUriComponentsBuilder.fromCurrentRequestUri().replacePath
-                (String.format(API_PREFIX + "/status/%s", job.getJobID())).toUriString();
+                (String.format(API_PREFIX + "/Job/%s/$status", job.getJobID())).toUriString();
         HttpHeaders responseHeaders = new HttpHeaders();
         responseHeaders.add("Content-Location", statusURL);
 
@@ -140,17 +145,4 @@ public class BulkDataAccessAPI {
             throw new RuntimeException("The current user has an active job");
         }
     }*/
-
-    @ControllerAdvice
-    class ErrorHandler extends ResponseEntityExceptionHandler {
-
-        @ExceptionHandler(Exception.class)
-        @ResponseStatus(HttpStatus.BAD_REQUEST)
-        public ResponseEntity<JsonNode> assertionException(final Exception e) throws IOException {
-            String msg = ExceptionUtils.getRootCauseMessage(e);
-            OperationOutcome operationOutcome = getErrorOutcome(msg);
-            String encoded = outcomeToJSON(operationOutcome);
-            return new ResponseEntity<>(new ObjectMapper().readTree(encoded), HttpStatus.BAD_REQUEST);
-        }
-    }
 }
