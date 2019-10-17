@@ -2,6 +2,7 @@
 set -e #Exit on first error
 set -x #Be verbose
 
+
 #
 # Parse options
 #
@@ -34,7 +35,7 @@ done
 echo "Check vars are not empty before proceeding..."
 if [ -z "${ENVIRONMENT}" ]; then
   echo "Try running the script like so:"
-  echo "./deploy.sh --environment=prototype"
+  echo "./deploy.sh --environment=sbdemo"
   exit 1
 fi
 
