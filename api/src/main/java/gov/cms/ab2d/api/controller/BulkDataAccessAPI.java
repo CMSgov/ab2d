@@ -40,9 +40,6 @@ public class BulkDataAccessAPI {
     @Autowired
     private JobService jobService;
 
-    /*@Autowired
-    private UserService userService;*/
-
     @ApiOperation(value = "Initiate Part A & B bulk claim export job")
     @ApiImplicitParams(
             @ApiImplicitParam(name = "Prefer", required = true, paramType = "header", value =
@@ -67,7 +64,6 @@ public class BulkDataAccessAPI {
                     "+ndjson"
             )
             @RequestParam(required = false, name = "_outputFormat") String outputFormat) {
-        //activeRequestCheck();
 
         if (resourceTypes != null && !resourceTypes.equals(RESOURCE_TYPE_VALUE)) {
             throw new IllegalArgumentException("_type must be " + RESOURCE_TYPE_VALUE);
@@ -138,11 +134,4 @@ public class BulkDataAccessAPI {
         responseHeaders.add("X-Progress", "0%");
         return new ResponseEntity<>(null, responseHeaders, HttpStatus.ACCEPTED);
     }
-
-    /*private void activeRequestCheck() {
-        User user = userService.getCurrentUser();
-        if (jobService.getActiveJob(user) != null) {
-            throw new RuntimeException("The current user has an active job");
-        }
-    }*/
 }

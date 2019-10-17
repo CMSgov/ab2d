@@ -16,7 +16,7 @@ import java.util.UUID;
 public class JobServiceImpl implements JobService {
 
     @Autowired
-    private UserServiceImpl userService;
+    private UserService userService;
 
     @Autowired
     private JobRepository jobRepository;
