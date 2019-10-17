@@ -1,0 +1,4 @@
+{
+  "storage-driver": "overlay2",
+  "data-root": "/mnt/docker-ebs-volume"
+}

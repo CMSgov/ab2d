@@ -1,0 +1,60 @@
+{
+  "variables": {
+    "aws_profile": "{{env `AWS_PROFILE`}}",
+    "my_ip_address": "",
+    "git_commit_hash": "",
+    "gold_ami": "ami-02eac2c0129f6376b"
+  },
+  "builders": [
+    {
+      "ssh_pty": true,
+      "type": "amazon-ebs",
+      "profile": "{{ user `aws_profile`}}",
+      "iam_instance_profile": "Ab2dInstanceProfile",
+      "region": "us-east-1",
+      "instance_type": "c4.xlarge",
+      "subnet_id": "subnet-077269e0fb659e953",
+      "vpc_id": "vpc-00dcfaadb3fe8e3a2",
+      "ami_name": "ab2d-{{user `git_commit_hash`}}",
+      "source_ami": "{{user `gold_ami`}}",
+      "ami_virtualization_type": "hvm",
+      "associate_public_ip_address": "true",
+      "temporary_security_group_source_cidrs": "{{user `my_ip_address`}}/32",
+      "ssh_username": "centos",
+      "tags": {
+        "application_git_hash": "{{user `git_commit_hash`}}",
+        "application_name": "AB2D",
+        "creator": "packer",
+        "gold_ami": "{{user `gold_ami`}}"
+      },
+      "launch_block_device_mappings": [
+        {
+        "device_name": "/dev/sda1",
+        "volume_type": "gp2",
+        "delete_on_termination": true,
+        "encrypted": true
+        }
+      ]
+    }],
+  "provisioners": [
+    {
+      "type": "file",
+      "source": "./splunk-deploymentclient.conf",
+      "destination": "/tmp/splunk-deploymentclient.conf"
+    },
+    {
+      "type": "file",
+      "source": "./master.sh",
+      "destination": "/tmp/master.sh"
+    },
+    {
+      "type": "file",
+      "source": "./node.sh",
+      "destination": "/tmp/node.sh"
+    },
+    {
+      "type": "shell",
+      "script": "./provision-app-instance.sh"
+    }
+  ]
+}
