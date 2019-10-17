@@ -29,25 +29,6 @@
    ```ShellSession
    $ cd ~/code/ab2d/Deploy/terraform/environments/cms-ab2d-sbdemo
    ```
-
-1. Turn off "delete protection" for the network load balancer
-
-   1. Get network load balancer ARN
-
-      ```ShellSession
-      $ NLB_ARN=$(aws --region us-east-1 elbv2 describe-load-balancers \
-        --name=ab2d-worker-sbdemo \
-	--query 'LoadBalancers[*].[LoadBalancerArn]' \
-        --output text)
-      ```
-
-   1. Turn off "delete protection" for the application load balancer
-      
-      ```ShellSession
-      $ aws elbv2 modify-load-balancer-attributes \
-        --load-balancer-arn $NLB_ARN \
-        --attributes Key=deletion_protection.enabled,Value=false
-      ```
       
 1. Turn off "delete protection" for the application load balancer
 
@@ -93,7 +74,7 @@
      --target module.db --auto-approve
    ```
 
-1. Destroy the changes made via the "s3" module
+1. Destroy the changes made via the "efs" module
 
    ```ShellSession
    $ terraform destroy \
@@ -326,7 +307,7 @@
    *Example:*
    
    ```ShellSession
-   $ ssh centos@35.174.193.247
+   $ ssh centos@3.84.160.10
    ```
 
 1. Connect to the first ECS instance from the deployment controller
@@ -340,17 +321,33 @@
    *Example:*
    
    ```ShellSession
-   $ ssh centos@10.124.4.124
+   $ ssh centos@10.124.4.246
    ```
 
-1. Stop the ecs agent
+1. Stop the ecs agent on the API ECS instances
 
    ```ShellSession
-   $ docker stop ecs-agent
+   $ ssh centos@10.124.4.246 'docker stop ecs-agent'
+   $ ssh centos@10.124.5.116 'docker stop ecs-agent'
    ```
 
-1. Start the ecs agent
+1. Stop the ecs agent on the worker ECS instances
 
    ```ShellSession
-   $ docker start ecs-agent
+   $ ssh centos@10.124.4.163 'docker stop ecs-agent'
+   $ ssh centos@10.124.5.89 'docker stop ecs-agent'
+   ```
+
+1. Start the ecs agent on the API ECS instances
+
+   ```ShellSession
+   $ ssh centos@10.124.4.246 'docker start ecs-agent'
+   $ ssh centos@10.124.5.116 'docker start ecs-agent'
+   ```
+
+1. Start the ecs agent on the worker ECS instances
+
+   ```ShellSession
+   $ ssh centos@10.124.4.163 'docker start ecs-agent'
+   $ ssh centos@10.124.5.89 'docker start ecs-agent'
    ```

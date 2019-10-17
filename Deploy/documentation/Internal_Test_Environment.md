@@ -1114,57 +1114,6 @@
    $ aws s3api put-bucket-policy --bucket cms-ab2d-cloudtrail --policy file://cms-ab2d-cloudtrail-bucket-policy.json
    ```
    
-1. Configure the networking
-
-   1. Get and note the VPC ID
-
-      ```ShellSession
-      $ aws --region us-east-1 ec2 describe-vpcs \
-        --filters "Name=tag:Name,Values=AB2D-$CMS_ENV-VPC" \
-	--query "Vpcs[*].[VpcId]" \
-	--output text
-      ```
-      
-   1. Open the "variables.tf"
-
-      ```ShellSession
-      $ vim variables.tf
-      ```
-
-   1. Change the following lines to the correct VPC ID
-
-      *Format:*
-      
-      ```
-      variable "vpc_id" {
-        default = "{vpc id}"
-      }
-      ```
-
-   1. Change the following lines to the correct private subnet IDs
-
-      *Format:*
-      
-      ```
-      variable "private_subnet_ids" {
-        type        = list(string)
-        default     = ["{first private subnet id}", "{second private subnet id}", "{third private subnet id}"]
-        description = "App instances and DB go here"
-      }
-      ```
-
-   1. Change the following lines to the correct public subnet IDs
-
-      ```
-      variable "deployment_controller_subnet_ids" {
-        type        = list(string)
-        default     = ["{first public subnet id}", "{second public subnet id}", "{third public subnet id}"]
-        description = "Deployment controllers go here"
-      }
-      ```
-
-   1. Save and close the file
-
 1. Deploy Elastic File System (EFS)
 
    ```ShellSession
@@ -1183,7 +1132,7 @@
    *Example:
    
    ```
-   fs-bfbb773e
+   fs-225c97a3
    ```
 
 1. Update "provision-app-instance.sh" with the file system id
