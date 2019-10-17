@@ -4,28 +4,6 @@ resource "aws_security_group" "worker" {
   vpc_id      = var.vpc_id
 }
 
-# LSH SKIP FOR NOW BEGIN
-# resource "aws_security_group_rule" "healthchecks" {
-#   type        = "ingress"
-#   description = "Network LoadBalancer Healthchecks"
-#   from_port   = "7474"
-#   to_port     = "7474"
-#   protocol    = "tcp"
-#   cidr_blocks = ["10.224.202.0/24"]
-#   security_group_id = aws_security_group.worker.id
-# }
-# LSH SKIP FOR NOW END
-
-resource "aws_security_group_rule" "network_loadbalancer" {
-  type        = "ingress"
-  description = "Network LoadBalancer"
-  from_port   = var.host_port
-  to_port     = var.host_port
-  protocol    = "tcp"
-  cidr_blocks = ["10.124.3.0/24"]
-  security_group_id = aws_security_group.worker.id
-}
-
 resource "aws_security_group_rule" "api_container_access" {
   type        = "ingress"
   description = "API container access"
@@ -45,16 +23,6 @@ resource "aws_security_group_rule" "controller_access" {
   source_security_group_id = var.controller_sec_group_id
   security_group_id = aws_security_group.worker.id
 }
-
-# resource "aws_security_group_rule" "app_node_access" {
-#   type        = "ingress"
-#   description = "App node access"
-#   from_port   = var.host_port
-#   to_port     = var.host_port
-#   protocol    = "tcp"
-#   source_security_group_id = var.app_sec_group_id
-#   security_group_id = var.app_sec_group_id
-# }
 
 resource "aws_security_group_rule" "egress_worker" {
   type        = "egress"
@@ -105,76 +73,14 @@ JSON
   execution_role_arn = "arn:aws:iam::114601554524:role/Ab2dInstanceRole"
 }
 
-resource "aws_lb" "worker" {
-  name = "ab2d-worker-${var.env}"
-  internal = true
-  load_balancer_type = "network"
-  subnets = var.loadbalancer_subnet_ids
-  enable_deletion_protection = true
-  enable_cross_zone_load_balancing = true
-
-  timeouts {
-    create = "60m"
-  }
-  
-  # LSH SKIP FOR NOW BEGIN
-  # access_logs {
-  #   bucket = var.logging_bucket
-  #   prefix = "ab2d-worker-${var.env}"
-  #   enabled = true
-  # }
-  # LSH SKIP FOR NOW END
-  
-}
-
-resource "aws_lb_target_group" "worker" {
-  name = "ab2d-worker-${var.env}"
-  port = var.host_port
-  protocol = "TCP"
-  vpc_id = var.vpc_id
-
-  stickiness {
-   enabled = false
-   type = "lb_cookie"
-  }
-
-  # health_check {
-  #   healthy_threshold = 5
-  #   unhealthy_threshold = 3
-  #   timeout = 10
-  #   port = 7474
-  #   path = "/browser"
-  #   interval = 30
-  #   matcher = "200,302"
-  # }
-}
-
-resource "aws_lb_listener" "worker" {
-  depends_on = ["aws_lb.worker"]
-  load_balancer_arn = aws_lb.worker.arn
-  port = var.host_port
-  protocol = "TCP"
-
-  default_action {
-    target_group_arn = aws_lb_target_group.worker.arn
-    type = "forward"
-  }
-}
 
 resource "aws_ecs_service" "worker" {
-  depends_on = ["aws_lb.worker"]
   name = "ab2d-worker"
   cluster = aws_ecs_cluster.ab2d-worker.id
   task_definition = var.override_task_definition_arn != "" ? var.override_task_definition_arn : aws_ecs_task_definition.api.arn
   desired_count = 5
   launch_type = "EC2"
   scheduling_strategy = "DAEMON"
-
-  load_balancer {
-    target_group_arn = aws_lb_target_group.worker.arn
-    container_name = "ab2d-worker"
-    container_port = var.container_port
-  }
 }
 
 # LSH SKIP FOR NOW BEGIN
@@ -200,9 +106,7 @@ resource "aws_autoscaling_group" "asg" {
   desired_capacity = var.desired_instances
   health_check_type = "EC2"
   launch_configuration = aws_launch_configuration.launch_config.name
-  target_group_arns = [aws_lb_target_group.worker.arn]
   enabled_metrics = ["GroupTerminatingInstances", "GroupInServiceInstances", "GroupMaxSize", "GroupTotalInstances", "GroupMinSize", "GroupPendingInstances", "GroupDesiredCapacity", "GroupStandbyInstances"]
-  wait_for_elb_capacity = var.autoscale_group_wait
   vpc_zone_identifier = var.node_subnet_ids
   lifecycle { create_before_destroy = true }
 
