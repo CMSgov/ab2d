@@ -30,10 +30,10 @@ import static gov.cms.ab2d.api.util.Constants.API_PREFIX;
  */
 public class BulkDataAccessAPI {
 
-    private static final Set<String> ALLOWABLE_OUTPUT_FORMAT_SET = Set.of("application/fhir+ndjson", "application/ndjson", "ndjson");
-
     // Since this is used in an annotation, it can't be derived from the Set, otherwise it will be an error
     private static final String ALLOWABLE_OUTPUT_FORMATS = "application/fhir+ndjson,application/ndjson,ndjson";
+
+    private static final Set<String> ALLOWABLE_OUTPUT_FORMAT_SET = Set.of(ALLOWABLE_OUTPUT_FORMATS.split(","));
 
     private static final String RESOURCE_TYPE_VALUE = "ExplanationOfBenefits";
 
