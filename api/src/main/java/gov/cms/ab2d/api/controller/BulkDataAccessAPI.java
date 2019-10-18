@@ -12,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import javax.persistence.EntityNotFoundException;
 import javax.validation.constraints.NotBlank;
 import java.io.IOException;
 import java.util.Set;
@@ -36,6 +37,10 @@ public class BulkDataAccessAPI {
     private static final Set<String> ALLOWABLE_OUTPUT_FORMAT_SET = Set.of(ALLOWABLE_OUTPUT_FORMATS.split(","));
 
     private static final String RESOURCE_TYPE_VALUE = "ExplanationOfBenefits";
+
+    public static final String JOB_NOT_FOUND_ERROR_MSG = "Job not found. " + Constants.GENERIC_FHIR_ERR_MSG;
+
+    public static final String JOB_CANCELLED_MSG = "Job canceled";
 
     @Autowired
     private JobService jobService;
@@ -85,16 +90,21 @@ public class BulkDataAccessAPI {
 
     @ApiOperation(value = "Cancel a pending export job")
     @ApiResponses(value = {
-            @ApiResponse(code = 202, message = "Job canceled"),
-            @ApiResponse(code = 404, message = "Job not found. " + Constants.GENERIC_FHIR_ERR_MSG)}
+            @ApiResponse(code = 202, message = JOB_CANCELLED_MSG),
+            @ApiResponse(code = 404, message = JOB_NOT_FOUND_ERROR_MSG)}
     )
     @DeleteMapping(value = "/Job/{jobId}/$status")
     @ResponseStatus(value = HttpStatus.ACCEPTED)
-    public ResponseEntity<Void> deleteRequest(
+    public ResponseEntity<String> deleteRequest(
             @ApiParam(value = "A job identifier", required = true)
-            @PathVariable @NotBlank String jobId) throws IOException {
-        //String encoded = FHIRUtil.outcomeToJSON(FHIRUtil.getSuccessfulOutcome("OK"));
-        return new ResponseEntity<>(null, null,
+            @PathVariable @NotBlank String jobId) {
+        try {
+            jobService.cancelJob(jobId);
+        } catch (EntityNotFoundException e) {
+            return new ResponseEntity<>(JOB_NOT_FOUND_ERROR_MSG, null, HttpStatus.NOT_FOUND);
+        }
+
+        return new ResponseEntity<>(JOB_CANCELLED_MSG, null,
                 HttpStatus.ACCEPTED);
     }
 

@@ -11,6 +11,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.transaction.TransactionSystemException;
 
+import javax.persistence.EntityNotFoundException;
+
 import static gov.cms.ab2d.api.service.JobServiceImpl.INITIAL_JOB_STATUS_MESSAGE;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
@@ -26,7 +28,7 @@ public class JobServiceTest {
     JobRepository jobRepository;
 
     @Test
-    public void createRequest() {
+    public void createJob() {
         Job job = jobService.createJob("ExplanationOfBenefits", "http://localhost:8080");
         assertThat(job).isNotNull();
         assertThat(job.getId()).isNotNull();
@@ -47,5 +49,22 @@ public class JobServiceTest {
     @Test(expected = TransactionSystemException.class)
     public void failedValidation() {
         jobService.createJob("Patient,ExplanationOfBenefits,Coverage", "http://localhost:8080");
+    }
+
+    @Test
+    public void cancelJob() {
+        Job job = jobService.createJob("ExplanationOfBenefits", "http://localhost:8080");
+
+        jobService.cancelJob(job.getJobID());
+
+        // Verify that it has the correct status
+        Job cancelledJob = jobRepository.findByJobID(job.getJobID());
+
+        assertEquals(JobStatus.CANCELLED, cancelledJob.getStatus());
+    }
+
+    @Test(expected = EntityNotFoundException.class)
+    public void cancelNonExistingJob() {
+        jobService.cancelJob("NonExistingJob");
     }
 }

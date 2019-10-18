@@ -17,6 +17,8 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 
+import static gov.cms.ab2d.api.controller.BulkDataAccessAPI.JOB_CANCELLED_MSG;
+import static gov.cms.ab2d.api.controller.BulkDataAccessAPI.JOB_NOT_FOUND_ERROR_MSG;
 import static gov.cms.ab2d.api.service.JobServiceImpl.INITIAL_JOB_STATUS_MESSAGE;
 import static gov.cms.ab2d.api.util.Constants.API_PREFIX;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -97,5 +99,27 @@ public class BulkDataAccessAPIIntegrationTests {
                 .andExpect(jsonPath("$.issue[0].severity", Is.is("error")))
                 .andExpect(jsonPath("$.issue[0].code", Is.is("invalid")))
                 .andExpect(jsonPath("$.issue[0].details.text", Is.is("IllegalArgumentException: An _outputFormat of Invalid is not valid")));
+    }
+
+    @Test
+    public void testDeleteJob() throws Exception {
+        this.mockMvc.perform(get(API_PREFIX + PATIENT_EXPORT_PATH).contentType(MediaType.APPLICATION_JSON));
+        Job job = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
+
+        System.out.println(job.getJobID());
+
+        this.mockMvc.perform(delete(API_PREFIX + "/Job/" + job.getJobID() + "/$status"))
+            .andExpect(status().is(202))
+            .andExpect(content().string(JOB_CANCELLED_MSG));
+
+        Job cancelledJob = jobRepository.findByJobID(job.getJobID());
+        Assert.assertEquals(JobStatus.CANCELLED, cancelledJob.getStatus());
+    }
+
+    @Test
+    public void testDeleteNonExistentJob() throws Exception {
+        this.mockMvc.perform(delete(API_PREFIX + "/Job/NonExistentJob/$status"))
+                .andExpect(status().is(404))
+                .andExpect(content().string(JOB_NOT_FOUND_ERROR_MSG));
     }
 }
