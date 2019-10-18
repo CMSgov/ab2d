@@ -8,6 +8,8 @@ public final class Constants {
             "Please refer to the body of the response for " +
             "details.";
 
+    public static final String API_PREFIX = "/api/v1";
+
     private Constants() {
     }
 

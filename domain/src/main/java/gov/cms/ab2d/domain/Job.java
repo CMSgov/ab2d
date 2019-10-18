@@ -1,20 +1,24 @@
 package gov.cms.ab2d.domain;
 
 
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 
 import javax.persistence.*;
+import javax.validation.constraints.Pattern;
 import java.time.LocalDateTime;
 import java.util.Set;
 
 @Entity
 @Getter
 @Setter
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class Job {
 
     @Id
     @GeneratedValue
+    @EqualsAndHashCode.Include
     private Long id;
 
     @Column(unique = true)
@@ -24,7 +28,7 @@ public class Job {
     private User user;
 
     @OneToMany(
-            mappedBy = "request",
+            mappedBy = "job",
             cascade = CascadeType.ALL,
             orphanRemoval = true,
             fetch = FetchType.EAGER
@@ -36,6 +40,7 @@ public class Job {
     private JobStatus status;
     private String statusMessage;
     private Integer progress;
-    private String resourceTypes;
 
+    @Pattern(regexp = "ExplanationOfBenefits", message = "_type should be ExplanationOfBenefits")
+    private String resourceTypes; // for now just limited to ExplanationOfBenefits
 }
