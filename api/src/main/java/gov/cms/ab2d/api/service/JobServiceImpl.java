@@ -40,7 +40,7 @@ public class JobServiceImpl implements JobService {
 
     public void cancelJob(String jobId) {
         Job job = jobRepository.findByJobID(jobId);
-        if(job == null) {
+        if (job == null) {
             throw new EntityNotFoundException("No job with jobID " +  jobId + "  was found");
         }
 
