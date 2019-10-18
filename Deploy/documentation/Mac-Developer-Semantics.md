@@ -1,4 +1,4 @@
-# Mac Developer Semantics
+# Mac Developer SemanticBits
 
 ## Table of Contents
 
