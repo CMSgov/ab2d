@@ -1,16 +1,22 @@
 package gov.cms.ab2d.api.controller;
 
-
+import gov.cms.ab2d.api.service.JobService;
 import gov.cms.ab2d.api.util.Constants;
+import gov.cms.ab2d.domain.Job;
 import io.swagger.annotations.*;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import javax.validation.constraints.NotBlank;
 import java.io.IOException;
+import java.util.Set;
+
+import static gov.cms.ab2d.api.util.Constants.API_PREFIX;
 
 @Api(value = "Bulk Data Access API", description =
         "API through which an authenticated and authorized PDP sponsor" +
@@ -18,14 +24,21 @@ import java.io.IOException;
                 "regarding progress in the generation of the requested files, and retrieve these " +
                 "files")
 @RestController
-@RequestMapping(path = "/api/v1", produces = "application/json")
+@RequestMapping(path = API_PREFIX, produces = "application/json")
 /**
  * The sole REST controller for AB2D's implementation of the FHIR Bulk Data API specification.
  */
 public class BulkDataAccessAPI {
 
-    private static final String ALLOWABLE_OUTPUT_FORMATS =
-            "application/fhir+ndjson,application/ndjson,ndjson";
+    // Since this is used in an annotation, it can't be derived from the Set, otherwise it will be an error
+    private static final String ALLOWABLE_OUTPUT_FORMATS = "application/fhir+ndjson,application/ndjson,ndjson";
+
+    private static final Set<String> ALLOWABLE_OUTPUT_FORMAT_SET = Set.of(ALLOWABLE_OUTPUT_FORMATS.split(","));
+
+    private static final String RESOURCE_TYPE_VALUE = "ExplanationOfBenefits";
+
+    @Autowired
+    private JobService jobService;
 
     @ApiOperation(value = "Initiate Part A & B bulk claim export job")
     @ApiImplicitParams(
@@ -41,7 +54,7 @@ public class BulkDataAccessAPI {
     public ResponseEntity<Void> exportAllPatients(
             @ApiParam(value = "String of comma-delimited FHIR resource types. Only resources of " +
                     "the specified resource types(s) SHALL be included in the response.",
-                    allowableValues = "ExplanationOfBenefits")
+                    allowableValues = RESOURCE_TYPE_VALUE)
             @RequestParam(required = false, name = "_type") String resourceTypes,
             @ApiParam(value = "A FHIR instant. Resources will be included in the response if " +
                     "their state has changed after the supplied time.")
@@ -50,9 +63,23 @@ public class BulkDataAccessAPI {
                     allowableValues = ALLOWABLE_OUTPUT_FORMATS, defaultValue = "application/fhir" +
                     "+ndjson"
             )
-            @RequestParam(required = false, name = "_outputFormat") String outputFormat) throws IOException {
-        //String encoded = FHIRUtil.outcomeToJSON(FHIRUtil.getSuccessfulOutcome("OK"));
-        return new ResponseEntity<>(null, null,
+            @RequestParam(required = false, name = "_outputFormat") String outputFormat) {
+
+        if (resourceTypes != null && !resourceTypes.equals(RESOURCE_TYPE_VALUE)) {
+            throw new IllegalArgumentException("_type must be " + RESOURCE_TYPE_VALUE);
+        }
+        if (outputFormat != null && !ALLOWABLE_OUTPUT_FORMAT_SET.contains(outputFormat)) {
+            throw new IllegalArgumentException("An _outputFormat of " + outputFormat + " is not valid");
+        }
+
+        Job job = jobService.createJob(resourceTypes, ServletUriComponentsBuilder.fromCurrentRequest().toUriString());
+
+        String statusURL = ServletUriComponentsBuilder.fromCurrentRequestUri().replacePath
+                (String.format(API_PREFIX + "/Job/%s/$status", job.getJobID())).toUriString();
+        HttpHeaders responseHeaders = new HttpHeaders();
+        responseHeaders.add("Content-Location", statusURL);
+
+        return new ResponseEntity<>(null, responseHeaders,
                 HttpStatus.ACCEPTED);
     }
 
@@ -107,6 +134,4 @@ public class BulkDataAccessAPI {
         responseHeaders.add("X-Progress", "0%");
         return new ResponseEntity<>(null, responseHeaders, HttpStatus.ACCEPTED);
     }
-
-
 }

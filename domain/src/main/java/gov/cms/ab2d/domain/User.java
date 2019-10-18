@@ -1,5 +1,6 @@
 package gov.cms.ab2d.domain;
 
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -9,10 +10,12 @@ import javax.persistence.*;
 @Table(name = "`user`")
 @Getter
 @Setter
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class User {
 
     @Id
     @GeneratedValue
+    @EqualsAndHashCode.Include
     private Long id;
 
     @Column(unique = true)
@@ -23,5 +26,4 @@ public class User {
 
     @ManyToOne
     private Sponsor sponsor;
-
 }
