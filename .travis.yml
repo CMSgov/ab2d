@@ -21,6 +21,6 @@ before_script:
 script:
   - mvn clean verify
 after_script:
-  - ./cc-test-reporter format-coverage ./api/target/site/jacoco/jacoco.xml --input-type jacoco -o codeclimate.api.json
+  - JACOCO_SOURCE_PATH=./api/src/main/java; ./cc-test-reporter format-coverage ./api/target/site/jacoco/jacoco.xml --input-type jacoco -o codeclimate.api.json
   - ./cc-test-reporter sum-coverage codeclimate.*.json -o coverage/codeclimate.json
   - if [[ "$TRAVIS_TEST_RESULT" == 0 ]]; then ./cc-test-reporter upload-coverage; fi
