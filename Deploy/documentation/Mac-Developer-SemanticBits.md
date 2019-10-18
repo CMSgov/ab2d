@@ -301,7 +301,7 @@
    $ pip3 install --upgrade pip
    ```
 
-2. Install lxml
+1. Install lxml
 
    *Note that "lxml" is a library for parsing XML and HTML.*
    
@@ -309,7 +309,7 @@
    $ pip3 install lxml
    ```
 
-3. Install requests
+1. Install requests
 
    ```ShellSession
    $ pip3 install requests
