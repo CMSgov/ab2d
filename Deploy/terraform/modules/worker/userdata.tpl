@@ -36,7 +36,7 @@ sudo ln -s /usr/local/bin/stunnel /bin/stunnel
 # Configure running container instances to use an Amazon EFS file system
 sudo mkdir /mnt/efs
 sudo cp /etc/fstab /etc/fstab.bak
-echo 'fs-225c97a3 /mnt/efs efs _netdev,tls 0 0' | sudo tee -a /etc/fstab
+echo 'fs-39cd1ab8 /mnt/efs efs _netdev,tls 0 0' | sudo tee -a /etc/fstab
 sudo mount -a
 
 

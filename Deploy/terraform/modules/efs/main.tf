@@ -6,18 +6,3 @@ resource "aws_efs_file_system" "efs" {
     Name = "AB2D-${upper(var.env)}-EFS"
   }
 }
-
-resource "aws_efs_mount_target" "alpha" {
-  file_system_id = "${aws_efs_file_system.efs.id}"
-  subnet_id      = var.alpha
-}
-
-resource "aws_efs_mount_target" "beta" {
-  file_system_id = "${aws_efs_file_system.efs.id}"
-  subnet_id      = var.beta
-}
-
-resource "aws_efs_mount_target" "gamma" {
-  file_system_id = "${aws_efs_file_system.efs.id}"
-  subnet_id      = var.gamma
-}

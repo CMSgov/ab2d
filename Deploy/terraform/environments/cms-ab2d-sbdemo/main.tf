@@ -59,9 +59,6 @@ module "efs" {
   source              = "../../modules/efs"
   env                 = var.env
   encryption_key_arn  = module.kms.arn
-  alpha               = var.private_subnet_ids[0]
-  beta                = var.private_subnet_ids[1]
-  gamma               = var.private_subnet_ids[2]
 }
 
 # LSH SKIP FOR NOW BEGIN
@@ -116,7 +113,11 @@ module "worker" {
   app_sec_group_id              = module.api.application_security_group_id
   controller_sec_group_id       = module.api.deployment_controller_sec_group_id
   loadbalancer_subnet_ids       = var.deployment_controller_subnet_ids
-  vpc_cidrs = ["10.124.1.0/24"]
+  vpc_cidrs                     = ["10.124.1.0/24"]
+  efs_id                        = module.efs.efs_id
+  alpha                         = var.private_subnet_ids[0]
+  beta                          = var.private_subnet_ids[1]
+  gamma                         = var.private_subnet_ids[2]
 }
 
 module "lonnie_access_controller" {

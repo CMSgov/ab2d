@@ -28,4 +28,8 @@ variable "vpc_cidrs" {type=list(string)}
 
 # LSH BEGIN
 variable "docker_repository_url" {}
+variable "efs_id" {}
+variable "alpha" {}
+variable "beta" {}
+variable "gamma" {}
 # LSH END

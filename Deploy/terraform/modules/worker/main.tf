@@ -34,6 +34,51 @@ resource "aws_security_group_rule" "egress_worker" {
   security_group_id = aws_security_group.worker.id
 }
 
+#
+# Begin EFS configuration
+#
+
+resource "aws_security_group" "efs" {
+  name        = "ab2d-${var.env}-efs-sg"
+  description = "EFS"
+  vpc_id      = var.vpc_id
+  tags = {
+    Name = "AB2D-${upper(var.env)}-EFS-SG"
+  }
+}
+
+resource "aws_security_group_rule" "efs_ingress" {
+  type        = "ingress"
+  description = "NFS"
+  from_port   = "2049"
+  to_port     = "2049"
+  protocol    = "tcp"
+  source_security_group_id = aws_security_group.worker.id
+  security_group_id = aws_security_group.efs.id
+}
+
+resource "aws_efs_mount_target" "alpha" {
+  file_system_id  = var.efs_id
+  subnet_id       = var.alpha
+  security_groups = [aws_security_group.efs.id]
+}
+
+resource "aws_efs_mount_target" "beta" {
+  file_system_id = var.efs_id
+  subnet_id      = var.beta
+  security_groups = [aws_security_group.efs.id]
+}
+
+resource "aws_efs_mount_target" "gamma" {
+  file_system_id = var.efs_id
+  subnet_id      = var.gamma
+  security_groups = [aws_security_group.efs.id]
+}
+
+#
+# End EFS configuration
+#
+
 resource "aws_ecs_cluster" "ab2d-worker" {
   name = "ab2d-worker-${var.env}"
 }
