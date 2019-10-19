@@ -30,6 +30,11 @@ else # Exit shell script if VPN already exists
   exit
 fi
 
+# Enable DNS hostname on VPC
+aws ec2 modify-vpc-attribute \
+  --vpc-id $VPC_ID \
+  --enable-dns-hostnames
+
 # Add name tag to VPC
 aws --region us-east-1 ec2 create-tags \
   --resources $VPC_ID \
