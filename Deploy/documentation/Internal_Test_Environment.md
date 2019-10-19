@@ -13,11 +13,11 @@
    * [Configure IAM user deployers](#configure-iam-user-deployers)
    * [Create AWS Elastic Container Registry repositories for images](#create-aws-elastic-container-registry-repositories-for-images)
    * [Create base aws environment](#create-base-aws-environment)
-1. [Deploy and configure Jenkins](#deploy-and-configure-jenkins)
 1. [Deploy to test environment](#deploy-to-test-environment)
    * [Configure terraform](#configure-terraform)
    * [Deploy AWS dependency modules](#deploy-aws-dependency-modules)
    * [Deploy AWS application modules](#deploy-aws-application-modules)
+1. [Deploy and configure Jenkins](#deploy-and-configure-jenkins)
 
 ## Create an AWS IAM user
 
@@ -441,6 +441,272 @@
 
    ```ShellSession
    $ ./create-base-environment.sh
+   ```
+
+## Deploy to test environment
+
+### Configure terraform
+
+1. Modify the SSH config file
+
+   1. Open the SSH config file
+
+      ```ShellSession
+      $ vim ~/.ssh/config
+      ```
+
+   2. Add or modify SSH config file to include the following line
+
+      ```
+      StrictHostKeyChecking no
+      ```
+
+1. Ensure terraform log directory exists
+
+   ```ShellSession
+   $ sudo mkdir -p /var/log/terraform
+   $ sudo chown -R "$(id -u)":"$(id -g -nr)" /var/log/terraform
+   ```
+
+1. Note the following terraform logging levels are available
+
+   - TRACE
+
+   - DEBUG
+
+   - INFO
+
+   - WARN
+
+   - ERROR
+   
+1. Turn on terraform logging
+
+   *Example of logging "WARN" and "ERROR":*
+   
+   ```ShellSession
+   $ export TF_LOG=WARN
+   $ export TF_LOG_PATH=/var/log/terraform/tf.log
+   ```
+
+   *Example of logging everything:*
+
+   ```ShellSession
+   $ export TF_LOG=TRACE
+   $ export TF_LOG_PATH=/var/log/terraform/tf.log
+   ```
+   
+1. Delete existing log file
+
+   ```ShelSession
+   $ rm -f /var/log/terraform/tf.log
+   ```
+
+### Deploy AWS dependency modules
+
+1. Set target profile
+
+   *Example for the "semanticbitsdemo" AWS account:*
+   
+   ```ShellSession
+   $ export AWS_PROFILE="sbdemo"
+   ```
+
+1. Set CMS environment
+
+   *Example for the "semanticbitsdemo" AWS account:*
+   
+   ```ShellSession
+   $ export CMS_ENV="SBDEMO"
+   ```
+   
+1. Change to the environment directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d/Deploy/terraform/environments/cms-ab2d-sbdemo
+   ```
+
+1. Initialize terraform
+
+   ```ShellSession
+   $ terraform init
+   ```
+
+1. Validate terraform
+
+   ```ShellSession
+   $ terraform validate
+   ```
+
+1. Deploy KMS
+
+   ```ShellSession
+   $ terraform apply \
+     --target module.kms --auto-approve
+   ```
+
+1. Create S3 "cms-ab2d-cloudtrail" bucket
+
+   ```ShellSession
+   $ aws s3api create-bucket --bucket cms-ab2d-cloudtrail --region us-east-1
+   ```
+
+1. Block public access on bucket
+
+   ```ShellSession
+   $ aws s3api put-public-access-block \
+     --bucket cms-ab2d-cloudtrail \
+     --region us-east-1 \
+     --public-access-block-configuration BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true
+   ```
+
+1. Give "Write objects" and "Read bucket permissions" to the "S3 log delivery group" of the "cms-ab2d-cloudtrail" bucket
+
+   ```ShellSession
+   $ aws s3api put-bucket-acl \
+     --bucket cms-ab2d-cloudtrail \
+     --grant-write URI=http://acs.amazonaws.com/groups/s3/LogDelivery \
+     --grant-read-acp URI=http://acs.amazonaws.com/groups/s3/LogDelivery
+   ```
+   
+1. Deploy additional S3 configuration
+
+   ```ShellSession
+   $ terraform apply \
+     --target module.s3 --auto-approve
+   ```
+
+1. Add the bucket policy to the "cms-ab2d-cloudtrail" S3 bucket
+
+   ```ShellSession
+   $ aws s3api put-bucket-policy --bucket cms-ab2d-cloudtrail --policy file://cms-ab2d-cloudtrail-bucket-policy.json
+   ```
+   
+1. Deploy Elastic File System (EFS)
+
+   ```ShellSession
+   $ terraform apply \
+     --target module.efs --auto-approve
+   ```
+
+1. Get the file system id of EFS
+
+   ```ShellSession
+   $ aws efs describe-file-systems | grep FileSystemId
+   ```
+
+1. Note the file system id
+
+   *Example:
+   
+   ```
+   fs-39cd1ab8
+   ```
+
+1. Update "userdata.tpl" with the file system id
+
+   1. Open "userdata.tpl"
+
+      ```ShellSession
+      $ vim ~/code/ab2d/Deploy/terraform/modules/worker/userdata.tpl
+      ```
+
+   1. Update the following line
+
+      *Format:*
+      
+      ```
+      echo '{file system id} /mnt/efs efs _netdev,tls 0 0' | sudo tee -a /etc/fstab
+      ```
+
+      *Example:*
+      
+      ```
+      echo 'fs-225c97a3 /mnt/efs efs _netdev,tls 0 0' | sudo tee -a /etc/fstab
+      ```
+
+   1. Save and close the file
+      
+1. Deploy database
+
+   *Format:*
+   
+   ```ShellSession
+   $ terraform apply \
+     --var "db_username={db username}" \
+     --var "db_password={db password}" \
+     --target module.db --auto-approve
+   ```
+
+1. Determine and note the latest CentOS AMI
+
+   ```ShellSession
+   $ aws --region us-east-1 ec2 describe-images \
+     --owners aws-marketplace \
+     --filters Name=product-code,Values=aw0evgkw8e5c1q413zgy5pjce \
+     --query 'Images[*].[ImageId,CreationDate]' \
+     --output text \
+     | sort -k2 -r \
+     | head -n1
+   ```
+   
+1. Configure packer for the application
+
+   1. Open the "app.json" file
+
+      ```ShellSession
+      $ vim ~/code/ab2d/Deploy/packer/app/app.json
+      ```
+
+   1. Change the gold disk AMI to the noted CentOS AMI
+
+      *Example:*
+       
+      ```
+      ami-02eac2c0129f6376b
+      ```
+      
+   1. Change the subnet to the first public subnet
+
+      ```
+      "subnet_id": "subnet-03142a8b7cc4ebb1a",
+      ```
+
+   1. Change the VPC ID
+
+      ```
+      "vpc_id": "vpc-03ddd8bae20d56cbb",
+      ```
+
+   1. Change the builders settings
+   
+      *Example:*
+   
+      ```
+      "iam_instance_profile": "Ab2dInstanceProfile",
+      "ssh_username": "centos",
+      ```
+
+   1. Save and close the file
+
+### Deploy AWS application modules
+
+1. Set the AWS profile for the target environment
+
+   ```ShellSession
+   $ source ~/code/ab2d/Deploy/terraform/environments/cms-ab2d-sbdemo/set-aws-profile.sh
+   ```
+   
+1. Change to the "Deploy" directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d/Deploy
+   ```
+
+1. Deploy application components
+
+   ```ShellSession
+   $ ./deploy.sh --environment=sbdemo --auto-approve
    ```
 
 ## Deploy and configure Jenkins
@@ -974,270 +1240,3 @@
     1. Note that the above setting for the jenkins user is not ideal since it means that the jenkins user will be able to do "sudo" on all commands
 
     1. Note that it would be better to lock down the jenkins user so that it can only do "sudo" on a certain subset of commands based on the requirements
-
-## Deploy to test environment
-
-### Configure terraform
-
-1. Modify the SSH config file
-
-   1. Open the SSH config file
-
-      ```ShellSession
-      $ vim ~/.ssh/config
-      ```
-
-   2. Add or modify SSH config file to include the following line
-
-      ```
-      StrictHostKeyChecking no
-      ```
-
-1. Ensure terraform log directory exists
-
-   ```ShellSession
-   $ sudo mkdir -p /var/log/terraform
-   $ sudo chown -R "$(id -u)":"$(id -g -nr)" /var/log/terraform
-   ```
-
-1. Note the following terraform logging levels are available
-
-   - TRACE
-
-   - DEBUG
-
-   - INFO
-
-   - WARN
-
-   - ERROR
-   
-1. Turn on terraform logging
-
-   *Example of logging "WARN" and "ERROR":*
-   
-   ```ShellSession
-   $ export TF_LOG=WARN
-   $ export TF_LOG_PATH=/var/log/terraform/tf.log
-   ```
-
-   *Example of logging everything:*
-
-   ```ShellSession
-   $ export TF_LOG=TRACE
-   $ export TF_LOG_PATH=/var/log/terraform/tf.log
-   ```
-   
-1. Delete existing log file
-
-   ```ShelSession
-   $ rm -f /var/log/terraform/tf.log
-   ```
-
-### Deploy AWS dependency modules
-
-1. Set target profile
-
-   *Example for the "semanticbitsdemo" AWS account:*
-   
-   ```ShellSession
-   $ export AWS_PROFILE="sbdemo"
-   ```
-
-1. Set CMS environment
-
-   *Example for the "semanticbitsdemo" AWS account:*
-   
-   ```ShellSession
-   $ export CMS_ENV="SBDEMO"
-   ```
-   
-1. Change to the environment directory
-
-   ```ShellSession
-   $ cd ~/code/ab2d/Deploy/terraform/environments/cms-ab2d-sbdemo
-   ```
-
-1. Initialize terraform
-
-   ```ShellSession
-   $ terraform init
-   ```
-
-1. Validate terraform
-
-   ```ShellSession
-   $ terraform validate
-   ```
-
-1. Deploy KMS
-
-   ```ShellSession
-   $ terraform apply \
-     --target module.kms --auto-approve
-   ```
-
-1. Create S3 "cms-ab2d-cloudtrail" bucket
-
-   ```ShellSession
-   $ aws s3api create-bucket --bucket cms-ab2d-cloudtrail --region us-east-1
-   ```
-
-1. Block public access on bucket
-
-   ```ShellSession
-   $ aws s3api put-public-access-block \
-     --bucket cms-ab2d-cloudtrail \
-     --region us-east-1 \
-     --public-access-block-configuration BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true
-   ```
-
-1. Give "Write objects" and "Read bucket permissions" to the "S3 log delivery group" of the "cms-ab2d-cloudtrail" bucket
-
-   ```ShellSession
-   $ aws s3api put-bucket-acl \
-     --bucket cms-ab2d-cloudtrail \
-     --grant-write URI=http://acs.amazonaws.com/groups/s3/LogDelivery \
-     --grant-read-acp URI=http://acs.amazonaws.com/groups/s3/LogDelivery
-   ```
-   
-1. Deploy additional S3 configuration
-
-   ```ShellSession
-   $ terraform apply \
-     --target module.s3 --auto-approve
-   ```
-
-1. Add the bucket policy to the "cms-ab2d-cloudtrail" S3 bucket
-
-   ```ShellSession
-   $ aws s3api put-bucket-policy --bucket cms-ab2d-cloudtrail --policy file://cms-ab2d-cloudtrail-bucket-policy.json
-   ```
-   
-1. Deploy Elastic File System (EFS)
-
-   ```ShellSession
-   $ terraform apply \
-     --target module.efs --auto-approve
-   ```
-
-1. Get the file system id of EFS
-
-   ```ShellSession
-   $ aws efs describe-file-systems | grep FileSystemId
-   ```
-
-1. Note the file system id
-
-   *Example:
-   
-   ```
-   fs-225c97a3
-   ```
-
-1. Update "provision-app-instance.sh" with the file system id
-
-   1. Open "provision-app-instance.sh"
-
-      ```ShellSession
-      $ vim ~/code/ab2d/Deploy/packer/app/provision-app-instance.sh
-      ```
-
-   1. Update the following line
-
-      *Format:*
-      
-      ```
-      echo '{file system id}:/ /mnt/efs efs defaults,_netdev 0 0' | sudo tee -a /etc/fstab
-      ```
-
-      *Example:*
-      
-      ```
-      echo 'fs-7f7bb9fe:/ /mnt/efs efs defaults,_netdev 0 0' | sudo tee -a /etc/fstab
-      ```
-
-   1. Save and close the file
-      
-1. Deploy database
-
-   *Format:*
-   
-   ```ShellSession
-   $ terraform apply \
-     --var "db_username={db username}" \
-     --var "db_password={db password}" \
-     --target module.db --auto-approve
-   ```
-
-1. Determine and note the latest CentOS AMI
-
-   ```ShellSession
-   $ aws --region us-east-1 ec2 describe-images \
-     --owners aws-marketplace \
-     --filters Name=product-code,Values=aw0evgkw8e5c1q413zgy5pjce \
-     --query 'Images[*].[ImageId,CreationDate]' \
-     --output text \
-     | sort -k2 -r \
-     | head -n1
-   ```
-   
-1. Configure packer for the application
-
-   1. Open the "app.json" file
-
-      ```ShellSession
-      $ vim ~/code/ab2d/Deploy/packer/app/app.json
-      ```
-
-   1. Change the gold disk AMI to the noted CentOS AMI
-
-      *Example:*
-       
-      ```
-      ami-02eac2c0129f6376b
-      ```
-      
-   1. Change the subnet to the first public subnet
-
-      ```
-      "subnet_id": "subnet-077269e0fb659e953",
-      ```
-
-   1. Change the VPC ID
-
-      ```
-      "vpc_id": "vpc-00dcfaadb3fe8e3a2",
-      ```
-
-   1. Change the builders settings
-   
-      *Example:*
-   
-      ```
-      "iam_instance_profile": "lonnie.hanekamp@semanticbits.com",
-      "ssh_username": "centos",
-      ```
-
-   1. Save and close the file
-
-### Deploy AWS application modules
-
-1. Set the AWS profile for the target environment
-
-   ```ShellSession
-   $ source ~/code/ab2d/Deploy/terraform/environments/cms-ab2d-sbdemo/set-aws-profile.sh
-   ```
-   
-1. Change to the "Deploy" directory
-
-   ```ShellSession
-   $ cd ~/code/ab2d/Deploy
-   ```
-
-1. Deploy application components
-
-   ```ShellSession
-   $ ./deploy.sh --environment=sbdemo --auto-approve
-   ```
-   

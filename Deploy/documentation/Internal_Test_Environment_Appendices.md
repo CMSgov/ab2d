@@ -118,7 +118,7 @@
 
 1. Deregister the Jenkins AMI
       
-   1. Get ami id for the application AMI
+   1. Get ami id for the Jenkins AMI
 
       ```ShellSession
       $ AMI_ID=$(aws --region us-east-1 ec2 describe-images \
@@ -128,7 +128,7 @@
         --output text)
       ```
 
-   1. Deregister the application AMI
+   1. Deregister the Jenkins AMI
    
       ```ShellSession
       $ aws ec2 deregister-image \
