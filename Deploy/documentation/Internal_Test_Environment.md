@@ -230,12 +230,6 @@
    $ aws iam create-policy --policy-name Ab2dS3AccessPolicy --policy-document file://ab2d-s3-access-policy.json
    ```
 
-1. Create "Ab2dEcsForEc2Policy"
-
-   ```ShellSession
-   $ aws iam create-policy --policy-name Ab2dEcsForEc2Policy --policy-document file://ab2d-ecs-for-ec2-policy.json
-   ```
-
 1. Create "Ab2dPermissionToPassRolesPolicy"
 
    ```ShellSession
@@ -271,7 +265,7 @@
    $ aws iam attach-role-policy --role-name Ab2dInstanceRole --policy-arn arn:aws:iam::114601554524:policy/Ab2dPackerPolicy
    $ aws iam attach-role-policy --role-name Ab2dInstanceRole --policy-arn arn:aws:iam::114601554524:policy/Ab2dS3AccessPolicy
    $ aws iam attach-role-policy --role-name Ab2dInstanceRole --policy-arn arn:aws:iam::114601554524:policy/Ab2dInitPolicy
-   $ aws iam attach-role-policy --role-name Ab2dInstanceRole --policy-arn arn:aws:iam::114601554524:policy/Ab2dEcsForEc2Policy
+   $ aws iam attach-role-policy --role-name Ab2dInstanceRole --policy-arn arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role
    ```
 
 1. Create "Ab2dManagedRole" role
