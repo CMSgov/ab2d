@@ -7,7 +7,6 @@ import gov.cms.ab2d.api.util.Constants;
 import gov.cms.ab2d.api.util.DateUtil;
 import gov.cms.ab2d.domain.Job;
 import io.swagger.annotations.*;
-import org.apache.commons.lang3.time.DateUtils;
 import org.hl7.fhir.dstu3.model.DateTimeType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -20,7 +19,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import javax.validation.constraints.NotBlank;
 import java.io.IOException;
-import java.util.Date;
+import java.time.LocalDateTime;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -125,9 +124,9 @@ public class BulkDataAccessAPI {
             @ApiParam(value = "A job identifier", required = true) @PathVariable @NotBlank String jobId) {
         Job job = jobService.getJobByJobID(jobId);
 
-        Date now = new Date();
+        LocalDateTime now = LocalDateTime.now();
 
-        if (job.getLastPollTime() != null && DateUtils.addSeconds(job.getLastPollTime(), retryAfterDelay).after(now)) {
+        if (job.getLastPollTime() != null && job.getLastPollTime().plusSeconds(retryAfterDelay).isAfter(now)) {
             throw new TooManyRequestsException("You are polling too frequently");
         }
 
@@ -136,7 +135,7 @@ public class BulkDataAccessAPI {
 
         HttpHeaders responseHeaders = new HttpHeaders();
         if (job.getProgress().equals(100)) {
-            responseHeaders.add("Expires", DateUtil.formatDateAsDateTime(job.getExpires()));
+            responseHeaders.add("Expires", DateUtil.formatLocalDateTimeAsUTC(job.getExpires()));
             JobCompletedResponse resp = new JobCompletedResponse();
             resp.setTransactionTime(new DateTimeType(convertLocalDateTimeToDate(job.getCompletedAt())).toHumanDisplay());
             resp.setRequest(job.getRequestURL());

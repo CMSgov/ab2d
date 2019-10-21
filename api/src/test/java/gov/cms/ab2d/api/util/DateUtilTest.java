@@ -5,19 +5,18 @@ import org.junit.Test;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.time.LocalDateTime;
+import java.time.*;
 import java.util.Date;
 
 public class DateUtilTest {
 
     @Test
-    public void testFormatDateAsDateTime() throws ParseException {
-        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
+    public void testFormatDateAsDateTimeAsUTC() throws ParseException {
+        LocalDateTime localDateTime = LocalDateTime.of(2019, 10, 21, 0, 0);
 
-        String dateString = format.format( new Date()   );
-        Date date = format.parse ("2019-10-21");
-        String formattedDate = DateUtil.formatDateAsDateTime(date);
-        Assert.assertEquals("Mon, 21 Oct 2019 05:00:00 GMT", formattedDate);
+        String formattedDate = DateUtil.formatLocalDateTimeAsUTC(localDateTime);
+
+        Assert.assertEquals("Mon, 21 Oct 2019 00:00:00 GMT", formattedDate);
     }
 
     @Test

@@ -1,6 +1,5 @@
 package gov.cms.ab2d.domain;
 
-
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
@@ -8,7 +7,6 @@ import lombok.Setter;
 import javax.persistence.*;
 import javax.validation.constraints.Pattern;
 import java.time.LocalDateTime;
-import java.util.Date;
 import java.util.List;
 
 @Entity
@@ -41,8 +39,8 @@ public class Job {
     private JobStatus status;
     private String statusMessage;
     private Integer progress;
-    private Date lastPollTime;
-    private Date expires;
+    private LocalDateTime lastPollTime;
+    private LocalDateTime expires;
 
     @Pattern(regexp = "ExplanationOfBenefits", message = "_type should be ExplanationOfBenefits")
     private String resourceTypes; // for now just limited to ExplanationOfBenefits

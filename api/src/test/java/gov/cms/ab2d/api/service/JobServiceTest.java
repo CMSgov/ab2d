@@ -77,7 +77,7 @@ public class JobServiceTest {
     @Test
     public void updateJob() {
         Job job = jobService.createJob("ExplanationOfBenefits", "http://localhost:8080");
-        Date now = new Date();
+        LocalDateTime now = LocalDateTime.now();
         LocalDateTime localDateTime = LocalDateTime.now();
         job.setProgress(100);
         job.setLastPollTime(now);

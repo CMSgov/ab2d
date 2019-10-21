@@ -135,7 +135,7 @@ public class BulkDataAccessAPIIntegrationTests {
         Job job = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
         job.setStatus(JobStatus.SUCCESSFUL);
         job.setProgress(100);
-        Date expireDate = new Date(1562946897214L);
+        LocalDateTime expireDate = LocalDateTime.now().plusDays(100);
         job.setExpires(expireDate);
         LocalDateTime now = LocalDateTime.now();
         job.setCompletedAt(now);
@@ -157,7 +157,7 @@ public class BulkDataAccessAPIIntegrationTests {
 
         this.mockMvc.perform(get(statusUrl).contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().is(200))
-                .andExpect(header().string("Expires", DateUtil.formatDateAsDateTime(expireDate)))
+                .andExpect(header().string("Expires", DateUtil.formatLocalDateTimeAsUTC(expireDate)))
                 .andExpect(jsonPath("$.transactionTime", Is.is(new DateTimeType(DateUtil.convertLocalDateTimeToDate(now)).toHumanDisplay())))
                 .andExpect(jsonPath("$.request", Is.is(job.getRequestURL())))
                 .andExpect(jsonPath("$.requiresAccessToken", Is.is(false)))
