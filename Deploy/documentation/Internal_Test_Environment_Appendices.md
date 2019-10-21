@@ -28,19 +28,19 @@
    $ ./destroy-environment.sh --environment=sbdemo
    ```
 
-   *Example to destroy the environment, but perserve the AMIs:*
+   *Example to destroy the environment, but preserve the AMIs:*
    
    ```ShellSession
    $ ./destroy-environment.sh --environment=sbdemo --keep-ami
    ```
 
-   *Example to destroy the environment, but perserve the networking:*
+   *Example to destroy the environment, but preserve the networking:*
    
    ```ShellSession
    $ ./destroy-environment.sh --environment=sbdemo --keep-networking
    ```
 
-   *Example to destroy the environment, but perserve bothe the AMIs and the networking:*
+   *Example to destroy the environment, but preserve both the AMIs and the networking:*
    
    ```ShellSession
    $ ./destroy-environment.sh --environment=sbdemo --keep-ami --keep-networking
