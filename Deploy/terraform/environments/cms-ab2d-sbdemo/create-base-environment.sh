@@ -360,7 +360,7 @@ aws ec2 create-route \
   --gateway-id $NAT_GW_2_ID \
   --region us-east-1
 
-# Associate the second private subnet with the custom route table for the first NAT Gateway
+# Associate the second private subnet with the custom route table for the second NAT Gateway
 aws ec2 associate-route-table  \
   --subnet-id $SUBNET_PRIVATE_2_ID \
   --route-table-id $ROUTE_TABLE_FOR_NGW_2_ID \
@@ -436,7 +436,7 @@ aws ec2 create-route \
   --gateway-id $NAT_GW_3_ID \
   --region us-east-1
 
-# Associate the third private subnet with the custom route table for the first NAT Gateway
+# Associate the third private subnet with the custom route table for the third NAT Gateway
 aws ec2 associate-route-table  \
   --subnet-id $SUBNET_PRIVATE_3_ID \
   --route-table-id $ROUTE_TABLE_FOR_NGW_3_ID \
