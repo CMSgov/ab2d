@@ -120,7 +120,7 @@ else
   if [ -z "${KEEP_AMI}" ]; then
     echo "Deregistering application AMI..."
     aws ec2 deregister-image \
-      --image-id $AMI_ID
+      --image-id $APPLICATION_AMI_ID
   else
     echo "Preserving application AMI..."
   fi
