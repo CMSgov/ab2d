@@ -11,7 +11,7 @@ provider "aws" {
 terraform {
   backend "s3" {
     bucket         = "cms-ab2d-automation"
-    key            = "cms-ab2d-dev/terraform/terraform.tfstate"
+    key            = "cms-ab2d-sbdemo/terraform/terraform.tfstate"
     region         = "us-east-1"
     encrypt = true
   }

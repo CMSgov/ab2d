@@ -122,7 +122,7 @@ variable "db_skip_final_snapshot" {
 }
 
 variable "db_subnet_group_name" {
-  default = "cms-ab2d-dev-rdssubnetgroup"
+  default = "cms-ab2d-sbdemo-rdssubnetgroup"
 }
 
 variable "db_backup_retention_period" {
@@ -146,7 +146,7 @@ variable "db_maintenance_window" {
 }
 
 variable "db_identifier" {
-  default = "cms-ab2d-dev"
+  default = "cms-ab2d-sbdemo"
 }
 
 variable "db_multi_az" {
@@ -166,7 +166,7 @@ variable "db_password" {
 ## S3 specific variables #########################################################################
 
 variable "file_bucket_name" {
-  default = "cms-ab2d-dev"
+  default = "cms-ab2d-sbdemo"
 }
 
 variable "logging_bucket_name" {
