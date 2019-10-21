@@ -8,7 +8,8 @@ import lombok.Setter;
 import javax.persistence.*;
 import javax.validation.constraints.Pattern;
 import java.time.LocalDateTime;
-import java.util.Set;
+import java.util.Date;
+import java.util.List;
 
 @Entity
 @Getter
@@ -33,13 +34,15 @@ public class Job {
             orphanRemoval = true,
             fetch = FetchType.EAGER
     )
-    private Set<JobOutput> jobOutput;
+    private List<JobOutput> jobOutput;
     private LocalDateTime createdAt;
     private LocalDateTime completedAt;
     private String requestURL;
     private JobStatus status;
     private String statusMessage;
     private Integer progress;
+    private Date lastPollTime;
+    private Date expires;
 
     @Pattern(regexp = "ExplanationOfBenefits", message = "_type should be ExplanationOfBenefits")
     private String resourceTypes; // for now just limited to ExplanationOfBenefits

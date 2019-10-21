@@ -1,10 +1,16 @@
 package gov.cms.ab2d.api.controller;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import gov.cms.ab2d.api.service.JobService;
 import gov.cms.ab2d.api.util.Constants;
+import gov.cms.ab2d.api.util.DateUtil;
 import gov.cms.ab2d.domain.Job;
 import io.swagger.annotations.*;
+import org.apache.commons.lang3.time.DateUtils;
+import org.hl7.fhir.dstu3.model.DateTimeType;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -14,9 +20,12 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import javax.validation.constraints.NotBlank;
 import java.io.IOException;
+import java.util.Date;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static gov.cms.ab2d.api.util.Constants.API_PREFIX;
+import static gov.cms.ab2d.api.util.DateUtil.convertLocalDateTimeToDate;
 
 @Api(value = "Bulk Data Access API", description =
         "API through which an authenticated and authorized PDP sponsor" +
@@ -36,6 +45,9 @@ public class BulkDataAccessAPI {
     private static final Set<String> ALLOWABLE_OUTPUT_FORMAT_SET = Set.of(ALLOWABLE_OUTPUT_FORMATS.split(","));
 
     private static final String RESOURCE_TYPE_VALUE = "ExplanationOfBenefits";
+
+    @Value("${api.retry-after.delay}")
+    private int retryAfterDelay;
 
     @Autowired
     private JobService jobService;
@@ -109,11 +121,33 @@ public class BulkDataAccessAPI {
     )
     @GetMapping(value = "/Job/{jobId}/$status")
     @ResponseStatus(value = HttpStatus.OK)
-    public ResponseEntity<Void> getJobStatus(
-            @ApiParam(value = "A job identifier", required = true) @PathVariable @NotBlank String jobId) throws IOException {
+    public ResponseEntity<JsonNode> getJobStatus(
+            @ApiParam(value = "A job identifier", required = true) @PathVariable @NotBlank String jobId) {
+        Job job = jobService.getJobByJobID(jobId);
+
+        Date now = new Date();
+
+        if (job.getLastPollTime() != null && DateUtils.addSeconds(job.getLastPollTime(), retryAfterDelay).after(now)) {
+            throw new TooManyRequestsException("You are polling too frequently");
+        }
+
+        job.setLastPollTime(now);
+        jobService.updateJob(job);
+
         HttpHeaders responseHeaders = new HttpHeaders();
-        responseHeaders.add("X-Progress", "0%");
-        return new ResponseEntity<>(null, responseHeaders, HttpStatus.ACCEPTED);
+        if (job.getProgress().equals(100)) {
+            responseHeaders.add("Expires", DateUtil.formatDateAsDateTime(job.getExpires()));
+            JobCompletedResponse resp = new JobCompletedResponse();
+            resp.setTransactionTime(new DateTimeType(convertLocalDateTimeToDate(job.getCompletedAt())).toHumanDisplay());
+            resp.setRequest(job.getRequestURL());
+            resp.setOutput(job.getJobOutput().stream().filter(o -> !o.isError()).map(o -> new JobCompletedResponse.Output(o.getFhirResourceType(), o.getFilePath())).collect(Collectors.toList()));
+            resp.setError(job.getJobOutput().stream().filter(o -> o.isError()).map(o -> new JobCompletedResponse.Output(o.getFhirResourceType(), o.getFilePath())).collect(Collectors.toList()));
+            return new ResponseEntity<>(new ObjectMapper().valueToTree(resp), responseHeaders, HttpStatus.OK);
+        } else {
+            responseHeaders.add("X-Progress", job.getProgress() + "% complete");
+            responseHeaders.add("Retry-After", Integer.toString(retryAfterDelay));
+            return new ResponseEntity<>(null, responseHeaders, HttpStatus.ACCEPTED);
+        }
     }
 
     @ApiOperation(value = "Downloads a file produced by an export job.", response = String.class,
