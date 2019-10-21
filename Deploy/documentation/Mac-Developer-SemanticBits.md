@@ -37,6 +37,7 @@
    * [Configure semanticbitsdemo AWS account](#configure-semanticbitsdemo-aws-account)
 1. [Install Docker Desktop on Mac](#install-docker-desktop-on-mac)
 1. [Install MesiterTask](#install-mesitertask)
+1. [Install ECS CLI](#install-ecs-cli)
 
 ## Install Slack
 
@@ -946,3 +947,33 @@
 ## Install MesiterTask
 
 > https://www.meistertask.com/apps
+
+## Install ECS CLI
+
+1. Download the Amazon ECS CLI binary
+
+   ```ShellSession
+   $ sudo curl -o /usr/local/bin/ecs-cli https://amazon-ecs-cli.s3.amazonaws.com/ecs-cli-darwin-amd64-latest
+   ```
+
+1. Verify the Amazon ECS CLI using the MD5 Sum
+
+   1. Enter the following
+   
+      ```ShellSession
+      $ curl -s https://amazon-ecs-cli.s3.amazonaws.com/ecs-cli-darwin-amd64-latest.md5 && md5 -q /usr/local/bin/ecs-cli
+      ```
+
+   2. Verify that the two output strings match
+
+1. Apply Execute Permissions to the Binary
+
+   ```ShellSession
+   $ sudo chmod +x /usr/local/bin/ecs-cli
+   ```
+
+1. Check the version of the ECS CLI in order to verify that it is working
+
+   ```ShellSession
+   $ ecs-cli --version
+   ```
