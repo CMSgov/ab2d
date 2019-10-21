@@ -594,7 +594,7 @@
    *Example:
    
    ```
-   fs-39cd1ab8
+   fs-9c74a91d
    ```
 
 1. Update "userdata.tpl" with the file system id
@@ -616,7 +616,7 @@
       *Example:*
       
       ```
-      echo 'fs-225c97a3 /mnt/efs efs _netdev,tls 0 0' | sudo tee -a /etc/fstab
+      echo 'fs-9c74a91d /mnt/efs efs _netdev,tls 0 0' | sudo tee -a /etc/fstab
       ```
 
    1. Save and close the file
@@ -663,13 +663,13 @@
    1. Change the subnet to the first public subnet
 
       ```
-      "subnet_id": "subnet-03142a8b7cc4ebb1a",
+      "subnet_id": "subnet-02acb784b8426f09c",
       ```
 
    1. Change the VPC ID
 
       ```
-      "vpc_id": "vpc-03ddd8bae20d56cbb",
+      "vpc_id": "vpc-0dcdeaed64b1c0522",
       ```
 
    1. Change the builders settings

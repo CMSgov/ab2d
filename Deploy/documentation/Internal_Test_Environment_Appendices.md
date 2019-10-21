@@ -8,20 +8,10 @@
 
 ## Appendix A: Destroy complete environment
 
-1. Set target profile
+1. Set the AWS profile for the target environment
 
-   *Example for the "semanticbitsdemo" AWS account:*
-   
    ```ShellSession
-   $ export AWS_PROFILE="sbdemo"
-   ```
-
-1. Set CMS environment
-
-   *Example for the "semanticbitsdemo" AWS account:*
-   
-   ```ShellSession
-   $ export CMS_ENV="SBDEMO"
+   $ source ~/code/ab2d/Deploy/terraform/environments/cms-ab2d-sbdemo/set-aws-profile.sh
    ```
 
 1. Change to the environment directory
@@ -29,7 +19,33 @@
    ```ShellSession
    $ cd ~/code/ab2d/Deploy/terraform/environments/cms-ab2d-sbdemo
    ```
-      
+
+1. Destroy the environment
+
+   *Example to destroy the complete environment:*
+   
+   ```ShellSession
+   $ ./destroy-environment.sh --environment=sbdemo
+   ```
+
+   *Example to destroy the environment, but perserve the AMIs:*
+   
+   ```ShellSession
+   $ ./destroy-environment.sh --environment=sbdemo --keep-ami
+   ```
+
+   *Example to destroy the environment, but perserve the networking:*
+   
+   ```ShellSession
+   $ ./destroy-environment.sh --environment=sbdemo --keep-networking
+   ```
+
+   *Example to destroy the environment, but perserve bothe the AMIs and the networking:*
+   
+   ```ShellSession
+   $ ./destroy-environment.sh --environment=sbdemo --keep-ami --keep-networking
+   ```
+
 1. Turn off "delete protection" for the application load balancer
 
    1. Get application load balancer ARN
