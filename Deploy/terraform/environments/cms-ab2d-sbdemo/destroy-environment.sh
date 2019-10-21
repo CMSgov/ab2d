@@ -247,3 +247,213 @@ NGW_EIP_3_ALLOCATION_ID=$(aws --region us-east-1 ec2 describe-addresses \
 
 aws --region us-east-1 ec2 release-address \
   --allocation-id $NGW_EIP_3_ALLOCATION_ID
+
+#
+# Disassociate the subnet from the NAT Gateway route tables
+#
+
+# Disassociate the first subnet from the first NAT Gateway route table
+
+NGW_RT_1_ASSOCIATION_ID=$(aws --region us-east-1 ec2 describe-route-tables \
+  --filter "Name=tag:Name,Values=AB2D-$CMS_ENV-NGW-RT-1" \
+  --query 'RouteTables[*].Associations[*].[RouteTableAssociationId]' \
+  --output text)
+
+aws --region us-east-1 ec2 disassociate-route-table \
+  --association-id $NGW_RT_1_ASSOCIATION_ID
+
+# Disassociate the second subnet from the second NAT Gateway route table
+
+NGW_RT_2_ASSOCIATION_ID=$(aws --region us-east-1 ec2 describe-route-tables \
+  --filter "Name=tag:Name,Values=AB2D-$CMS_ENV-NGW-RT-2" \
+  --query 'RouteTables[*].Associations[*].[RouteTableAssociationId]' \
+  --output text)
+
+aws --region us-east-1 ec2 disassociate-route-table \
+  --association-id $NGW_RT_2_ASSOCIATION_ID
+
+# Disassociate the third subnet from the third NAT Gateway route table
+
+NGW_RT_3_ASSOCIATION_ID=$(aws --region us-east-1 ec2 describe-route-tables \
+  --filter "Name=tag:Name,Values=AB2D-$CMS_ENV-NGW-RT-3" \
+  --query 'RouteTables[*].Associations[*].[RouteTableAssociationId]' \
+  --output text)
+
+aws --region us-east-1 ec2 disassociate-route-table \
+  --association-id $NGW_RT_3_ASSOCIATION_ID
+
+#
+# Delete route tables
+#
+
+# Delete the first NAT Gateway route table for the first NAT gateway
+
+NGW_RT_1_ID=$(aws --region us-east-1 ec2 describe-route-tables \
+  --filter "Name=tag:Name,Values=AB2D-$CMS_ENV-NGW-RT-1" \
+  --query 'RouteTables[*].[RouteTableId]' \
+  --output text)
+
+aws --region us-east-1 ec2 delete-route-table \
+  --route-table-id $NGW_RT_1_ID
+
+# Delete the second NAT Gateway route table for the second NAT gateway
+
+NGW_RT_2_ID=$(aws --region us-east-1 ec2 describe-route-tables \
+  --filter "Name=tag:Name,Values=AB2D-$CMS_ENV-NGW-RT-2" \
+  --query 'RouteTables[*].[RouteTableId]' \
+  --output text)
+
+aws --region us-east-1 ec2 delete-route-table \
+  --route-table-id $NGW_RT_2_ID
+
+# Delete the third NAT Gateway route table for the third NAT gateway
+
+NGW_RT_3_ID=$(aws --region us-east-1 ec2 describe-route-tables \
+  --filter "Name=tag:Name,Values=AB2D-$CMS_ENV-NGW-RT-3" \
+  --query 'RouteTables[*].[RouteTableId]' \
+  --output text)
+
+aws --region us-east-1 ec2 delete-route-table \
+  --route-table-id $NGW_RT_3_ID
+
+#
+# Disassociate the subnet from the Internet Gateway route table
+#
+
+# Disassociate the first subnet from the Internet Gateway route table
+
+IGW_RT_ASSOCIATION_ID_1=$(aws --region us-east-1 ec2 describe-route-tables \
+  --filter "Name=tag:Name,Values=AB2D-$CMS_ENV-IGW-RT" \
+  --query 'RouteTables[*].Associations[0].[RouteTableAssociationId]' \
+  --output text)
+
+aws --region us-east-1 ec2 disassociate-route-table \
+  --association-id $IGW_RT_ASSOCIATION_ID_1
+
+# Disassociate the second subnet from the Internet Gateway route table
+
+IGW_RT_ASSOCIATION_ID_2=$(aws --region us-east-1 ec2 describe-route-tables \
+  --filter "Name=tag:Name,Values=AB2D-$CMS_ENV-IGW-RT" \
+  --query 'RouteTables[*].Associations[1].[RouteTableAssociationId]' \
+  --output text)
+
+aws --region us-east-1 ec2 disassociate-route-table \
+  --association-id $IGW_RT_ASSOCIATION_ID_2
+
+# Disassociate the third subnet from the Internet Gateway route table
+
+IGW_RT_ASSOCIATION_ID_3=$(aws --region us-east-1 ec2 describe-route-tables \
+  --filter "Name=tag:Name,Values=AB2D-$CMS_ENV-IGW-RT" \
+  --query 'RouteTables[*].Associations[2].[RouteTableAssociationId]' \
+  --output text)
+
+aws --region us-east-1 ec2 disassociate-route-table \
+  --association-id $IGW_RT_ASSOCIATION_ID_3
+
+#
+# Delete the Internet Gateway route table
+#
+
+IGW_RT_ID=$(aws --region us-east-1 ec2 describe-route-tables \
+  --filter "Name=tag:Name,Values=AB2D-$CMS_ENV-IGW-RT" \
+  --query 'RouteTables[*].[RouteTableId]' \
+  --output text)
+
+aws --region us-east-1 ec2 delete-route-table \
+  --route-table-id $IGW_RT_ID
+
+#
+# Detach Internet Gateway from VPC
+#
+
+VPC_ID=$(aws --region us-east-1 ec2 describe-vpcs \
+  --filters "Name=tag:Name,Values=AB2D-$CMS_ENV-VPC" \
+  --query 'Vpcs[*].[VpcId]' \
+  --output text)
+
+IGW_ID=$(aws --region us-east-1 ec2 describe-internet-gateways \
+  --filter "Name=tag:Name,Values=AB2D-$CMS_ENV-IGW" \
+  --query 'InternetGateways[*].[InternetGatewayId]' \
+  --output text)
+
+aws --region us-east-1 ec2 detach-internet-gateway \
+  --vpc-id $VPC_ID \
+  --internet-gateway-id $IGW_ID
+
+#
+# Delete Internet Gateway
+#
+
+aws --region us-east-1 ec2 delete-internet-gateway \
+  --internet-gateway-id $IGW_ID
+
+#
+# Delete subnets
+#
+
+# Delete the first private subnet
+
+SUBNET_PRIVATE_1_ID=$(aws --region us-east-1 ec2 describe-subnets \
+  --filter "Name=tag:Name,Values=AB2D-$CMS_ENV-PRIVATE-SUBNET-01" \
+  --query 'Subnets[*].[SubnetId]' \
+  --output text)
+
+aws --region us-east-1 ec2 delete-subnet \
+  --subnet-id $SUBNET_PRIVATE_1_ID
+
+# Delete the second private subnet
+
+SUBNET_PRIVATE_2_ID=$(aws --region us-east-1 ec2 describe-subnets \
+  --filter "Name=tag:Name,Values=AB2D-$CMS_ENV-PRIVATE-SUBNET-02" \
+  --query 'Subnets[*].[SubnetId]' \
+  --output text)
+
+aws --region us-east-1 ec2 delete-subnet \
+  --subnet-id $SUBNET_PRIVATE_2_ID
+
+# Delete the third private subnet
+
+SUBNET_PRIVATE_3_ID=$(aws --region us-east-1 ec2 describe-subnets \
+  --filter "Name=tag:Name,Values=AB2D-$CMS_ENV-PRIVATE-SUBNET-03" \
+  --query 'Subnets[*].[SubnetId]' \
+  --output text)
+
+aws --region us-east-1 ec2 delete-subnet \
+  --subnet-id $SUBNET_PRIVATE_3_ID
+
+# Delete the first public subnet
+
+SUBNET_PUBLIC_1_ID=$(aws --region us-east-1 ec2 describe-subnets \
+  --filter "Name=tag:Name,Values=AB2D-$CMS_ENV-PUBLIC-SUBNET-01" \
+  --query 'Subnets[*].[SubnetId]' \
+  --output text)
+
+aws --region us-east-1 ec2 delete-subnet \
+  --subnet-id $SUBNET_PUBLIC_1_ID
+
+# Delete the second public subnet
+
+SUBNET_PUBLIC_2_ID=$(aws --region us-east-1 ec2 describe-subnets \
+  --filter "Name=tag:Name,Values=AB2D-$CMS_ENV-PUBLIC-SUBNET-02" \
+  --query 'Subnets[*].[SubnetId]' \
+  --output text)
+
+aws --region us-east-1 ec2 delete-subnet \
+  --subnet-id $SUBNET_PUBLIC_2_ID
+
+# Delete the third public subnet
+
+SUBNET_PUBLIC_3_ID=$(aws --region us-east-1 ec2 describe-subnets \
+  --filter "Name=tag:Name,Values=AB2D-$CMS_ENV-PUBLIC-SUBNET-03" \
+  --query 'Subnets[*].[SubnetId]' \
+  --output text)
+
+aws --region us-east-1 ec2 delete-subnet \
+  --subnet-id $SUBNET_PUBLIC_3_ID
+
+#
+# Delete VPC
+#
+
+aws --region us-east-1 ec2 delete-vpc \
+  --vpc-id $VPC_ID
