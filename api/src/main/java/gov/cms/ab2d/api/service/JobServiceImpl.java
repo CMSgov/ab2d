@@ -8,7 +8,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.persistence.EntityNotFoundException;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -41,7 +40,7 @@ public class JobServiceImpl implements JobService {
     public Job getJobByJobID(String jobID) {
         Job job = jobRepository.findByJobID(jobID);
         if (job == null) {
-            throw new EntityNotFoundException("No job with jobID " +  jobID + "  was found");
+            throw new ResourceNotFoundException("No job with jobID " +  jobID + "  was found");
         }
 
         return job;

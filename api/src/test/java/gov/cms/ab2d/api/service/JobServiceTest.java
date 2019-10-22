@@ -13,10 +13,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.transaction.TransactionSystemException;
 
-import javax.persistence.EntityNotFoundException;
-
 import java.time.LocalDateTime;
-import java.util.Date;
 import java.util.List;
 
 import static gov.cms.ab2d.api.service.JobServiceImpl.INITIAL_JOB_STATUS_MESSAGE;
@@ -69,7 +66,7 @@ public class JobServiceTest {
         assertEquals(job, retrievedJob);
     }
 
-    @Test(expected = EntityNotFoundException.class)
+    @Test(expected = ResourceNotFoundException.class)
     public void getNonExistentJob() {
         jobService.getJobByJobID("NonExistent");
     }

@@ -2,6 +2,7 @@ package gov.cms.ab2d.api.controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import gov.cms.ab2d.api.service.ResourceNotFoundException;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.hl7.fhir.dstu3.model.OperationOutcome;
 import org.springframework.beans.factory.annotation.Value;
@@ -36,7 +37,7 @@ class ErrorHandler extends ResponseEntityExceptionHandler {
         return generateFHIRError(e, HttpStatus.BAD_REQUEST);
     }
 
-    @ExceptionHandler(EntityNotFoundException.class)
+    @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<JsonNode> handleNotFoundExceptions(final EntityNotFoundException e) throws IOException {
         return generateFHIRError(e, HttpStatus.NOT_FOUND);
     }

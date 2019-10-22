@@ -134,18 +134,25 @@ public class BulkDataAccessAPI {
         jobService.updateJob(job);
 
         HttpHeaders responseHeaders = new HttpHeaders();
-        if (job.getProgress().equals(100)) {
-            responseHeaders.add("Expires", DateUtil.formatLocalDateTimeAsUTC(job.getExpires()));
-            JobCompletedResponse resp = new JobCompletedResponse();
-            resp.setTransactionTime(new DateTimeType(convertLocalDateTimeToDate(job.getCompletedAt())).toHumanDisplay());
-            resp.setRequest(job.getRequestURL());
-            resp.setOutput(job.getJobOutput().stream().filter(o -> !o.isError()).map(o -> new JobCompletedResponse.Output(o.getFhirResourceType(), o.getFilePath())).collect(Collectors.toList()));
-            resp.setError(job.getJobOutput().stream().filter(o -> o.isError()).map(o -> new JobCompletedResponse.Output(o.getFhirResourceType(), o.getFilePath())).collect(Collectors.toList()));
-            return new ResponseEntity<>(new ObjectMapper().valueToTree(resp), responseHeaders, HttpStatus.OK);
-        } else {
-            responseHeaders.add("X-Progress", job.getProgress() + "% complete");
-            responseHeaders.add("Retry-After", Integer.toString(retryAfterDelay));
-            return new ResponseEntity<>(null, responseHeaders, HttpStatus.ACCEPTED);
+        switch (job.getStatus()) {
+            case SUCCESSFUL:
+                responseHeaders.add("Expires", DateUtil.formatLocalDateTimeAsUTC(job.getExpires()));
+                JobCompletedResponse resp = new JobCompletedResponse();
+                resp.setTransactionTime(new DateTimeType(convertLocalDateTimeToDate(job.getCompletedAt())).toHumanDisplay());
+                resp.setRequest(job.getRequestURL());
+                resp.setRequiresAccessToken(true);
+                resp.setOutput(job.getJobOutput().stream().filter(o -> !o.isError()).map(o -> new JobCompletedResponse.Output(o.getFhirResourceType(), o.getFilePath())).collect(Collectors.toList()));
+                resp.setError(job.getJobOutput().stream().filter(o -> o.isError()).map(o -> new JobCompletedResponse.Output(o.getFhirResourceType(), o.getFilePath())).collect(Collectors.toList()));
+                return new ResponseEntity<>(new ObjectMapper().valueToTree(resp), responseHeaders, HttpStatus.OK);
+            case SUBMITTED:
+                IN_PROGRESS:
+                responseHeaders.add("X-Progress", job.getProgress() + "% complete");
+                responseHeaders.add("Retry-After", Integer.toString(retryAfterDelay));
+                return new ResponseEntity<>(null, responseHeaders, HttpStatus.ACCEPTED);
+            case FAILED:
+                throw new JobProcessingException("Job failed while processing");
+            default:
+                throw new RuntimeException("Unknown status of job");
         }
     }
 

@@ -160,10 +160,31 @@ public class BulkDataAccessAPIIntegrationTests {
                 .andExpect(header().string("Expires", DateUtil.formatLocalDateTimeAsUTC(expireDate)))
                 .andExpect(jsonPath("$.transactionTime", Is.is(new DateTimeType(DateUtil.convertLocalDateTimeToDate(now)).toHumanDisplay())))
                 .andExpect(jsonPath("$.request", Is.is(job.getRequestURL())))
-                .andExpect(jsonPath("$.requiresAccessToken", Is.is(false)))
+                .andExpect(jsonPath("$.requiresAccessToken", Is.is(true)))
                 .andExpect(jsonPath("$.output[0].type", Is.is("ExplanationOfBenefits")))
                 .andExpect(jsonPath("$.output[0].url", Is.is("http://localhost/some/path/file.ndjson")))
                 .andExpect(jsonPath("$.error[0].type", Is.is(OPERATION_OUTCOME)))
                 .andExpect(jsonPath("$.error[0].url", Is.is("http://localhost/some/path/error.ndjson")));
+    }
+
+    @Test
+    public void testGetStatusWhileFailed() throws Exception {
+        MvcResult mvcResult = this.mockMvc.perform(get(API_PREFIX + PATIENT_EXPORT_PATH + "?_type=ExplanationOfBenefits").contentType(MediaType.APPLICATION_JSON))
+                .andReturn();
+        String statusUrl = mvcResult.getResponse().getHeader("Content-Location");
+
+        Job job = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
+        job.setStatus(JobStatus.FAILED);
+        LocalDateTime expireDate = LocalDateTime.now().plusDays(100);
+        job.setExpires(expireDate);
+
+        jobRepository.saveAndFlush(job);
+
+        this.mockMvc.perform(get(statusUrl).contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().is(500))
+                .andExpect(jsonPath("$.resourceType", Is.is("OperationOutcome")))
+                .andExpect(jsonPath("$.issue[0].severity", Is.is("error")))
+                .andExpect(jsonPath("$.issue[0].code", Is.is("invalid")))
+                .andExpect(jsonPath("$.issue[0].details.text", Is.is("JobProcessingException: Job failed while processing")));
     }
 }
