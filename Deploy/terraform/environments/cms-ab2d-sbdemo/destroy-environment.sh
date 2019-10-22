@@ -56,16 +56,23 @@ fi
 #
 
 # Change to the environment directory
-ALB_ARN=$(aws --region us-east-1 elbv2 describe-load-balancers \
-  --name=ab2d-sbdemo \
+LOAD_BALANCERS_EXIST=$(aws --region us-east-1 elbv2 describe-load-balancers \
   --query 'LoadBalancers[*].[LoadBalancerArn]' \
   --output text)
+if [ -n "${LOAD_BALANCERS_EXIST}" ]; then
+  ALB_ARN=$(aws --region us-east-1 elbv2 describe-load-balancers \
+    --name=ab2d-sbdemo \
+    --query 'LoadBalancers[*].[LoadBalancerArn]' \
+    --output text)
+fi
 
 # Turn off "delete protection" for the application load balancer
 echo "Turn off 'delete protection' for the application load balancer..."
-aws elbv2 modify-load-balancer-attributes \
-  --load-balancer-arn $ALB_ARN \
-  --attributes Key=deletion_protection.enabled,Value=false
+if [ -n "${ALB_ARN}" ]; then
+  aws --region us-east-1 elbv2 modify-load-balancer-attributes \
+    --load-balancer-arn $ALB_ARN \
+    --attributes Key=deletion_protection.enabled,Value=false
+fi
 
 # Destroy the environment of the "worker" module
 echo "Destroying worker components..."
@@ -96,8 +103,18 @@ echo "Destroying S3 components..."
 terraform destroy \
   --target module.s3 --auto-approve
 
+#
 # Destroy the environment of the "kms" module
+#
+
 echo "Destroying KMS components..."
+
+# Rerun db destroy again to ensure that it is in correct state
+# - this is a workaround that prevents the kms module from raising an eror sporadically
+terraform destroy \
+  --target module.db --auto-approve
+
+# Destroy the KMS module
 terraform destroy \
   --target module.kms --auto-approve
 
@@ -119,7 +136,7 @@ if [ -z "${APPLICATION_AMI_ID}" ]; then
 else
   if [ -z "${KEEP_AMI}" ]; then
     echo "Deregistering application AMI..."
-    aws ec2 deregister-image \
+    aws --region us-east-1 ec2 deregister-image \
       --image-id $APPLICATION_AMI_ID
   else
     echo "Preserving application AMI..."
@@ -144,7 +161,7 @@ if [ -z "${JENKINS_AMI_ID}" ]; then
 else
   if [ -z "${KEEP_AMI}" ]; then
     echo "Deregistering Jenkins AMI..."
-    aws ec2 deregister-image \
+    aws --region us-east-1 ec2 deregister-image \
       --image-id $JENKINS_AMI_ID
   else
     echo "Preserving Jenkins AMI..."
@@ -162,8 +179,10 @@ NAT_GW_1_ID=$(aws --region us-east-1 ec2 describe-nat-gateways \
   --query 'NatGateways[*].{NatGatewayId:NatGatewayId}' \
   --output text)
 
-aws --region us-east-1 ec2 delete-nat-gateway \
-  --nat-gateway-id $NAT_GW_1_ID
+if [ -n "${NAT_GW_1_ID}" ]; then
+  aws --region us-east-1 ec2 delete-nat-gateway \
+    --nat-gateway-id $NAT_GW_1_ID
+fi
 
 # Delete second NAT gateway
 
@@ -172,8 +191,10 @@ NAT_GW_2_ID=$(aws --region us-east-1 ec2 describe-nat-gateways \
   --query 'NatGateways[*].{NatGatewayId:NatGatewayId}' \
   --output text)
 
-aws --region us-east-1 ec2 delete-nat-gateway \
-  --nat-gateway-id $NAT_GW_2_ID
+if [ -n "${NAT_GW_2_ID}" ]; then
+  aws --region us-east-1 ec2 delete-nat-gateway \
+    --nat-gateway-id $NAT_GW_2_ID
+fi
 
 # Delete third NAT gateway
 
@@ -182,8 +203,10 @@ NAT_GW_3_ID=$(aws --region us-east-1 ec2 describe-nat-gateways \
   --query 'NatGateways[*].{NatGatewayId:NatGatewayId}' \
   --output text)
 
-aws --region us-east-1 ec2 delete-nat-gateway \
-  --nat-gateway-id $NAT_GW_3_ID
+if [ -n "${NAT_GW_3_ID}" ]; then
+  aws --region us-east-1 ec2 delete-nat-gateway \
+    --nat-gateway-id $NAT_GW_3_ID
+fi
 
 # Wait for NAT gateways to all enter the deleted state
 
@@ -206,7 +229,6 @@ while [ -n "${NAT_GATEWAYS_STATE}" ]; do
       RETRIES_NGW=$(expr $RETRIES_NGW + 1)
     else
       echo "NAT gateways successfully deleted..."
-      exit 0
     fi
   else
     echo "Max retries reached. Exiting..."
@@ -225,8 +247,10 @@ NGW_EIP_1_ALLOCATION_ID=$(aws --region us-east-1 ec2 describe-addresses \
   --query 'Addresses[*].[AllocationId]' \
   --output text)
 
-aws --region us-east-1 ec2 release-address \
-  --allocation-id $NGW_EIP_1_ALLOCATION_ID
+if [ -n "${NGW_EIP_1_ALLOCATION_ID}" ]; then
+  aws --region us-east-1 ec2 release-address \
+    --allocation-id $NGW_EIP_1_ALLOCATION_ID
+fi
 
 # Release second Elastic IP address
 
@@ -235,9 +259,11 @@ NGW_EIP_2_ALLOCATION_ID=$(aws --region us-east-1 ec2 describe-addresses \
   --query 'Addresses[*].[AllocationId]' \
   --output text)
 
-aws --region us-east-1 ec2 release-address \
-  --allocation-id $NGW_EIP_2_ALLOCATION_ID
-
+if [ -n "${NGW_EIP_2_ALLOCATION_ID}" ]; then
+  aws --region us-east-1 ec2 release-address \
+    --allocation-id $NGW_EIP_2_ALLOCATION_ID
+fi
+  
 # Release third Elastic IP address
 
 NGW_EIP_3_ALLOCATION_ID=$(aws --region us-east-1 ec2 describe-addresses \
@@ -245,9 +271,11 @@ NGW_EIP_3_ALLOCATION_ID=$(aws --region us-east-1 ec2 describe-addresses \
   --query 'Addresses[*].[AllocationId]' \
   --output text)
 
-aws --region us-east-1 ec2 release-address \
-  --allocation-id $NGW_EIP_3_ALLOCATION_ID
-
+if [ -n "${NGW_EIP_3_ALLOCATION_ID}" ]; then
+  aws --region us-east-1 ec2 release-address \
+    --allocation-id $NGW_EIP_3_ALLOCATION_ID
+fi
+  
 #
 # Disassociate the subnet from the NAT Gateway route tables
 #
@@ -259,8 +287,10 @@ NGW_RT_1_ASSOCIATION_ID=$(aws --region us-east-1 ec2 describe-route-tables \
   --query 'RouteTables[*].Associations[*].[RouteTableAssociationId]' \
   --output text)
 
-aws --region us-east-1 ec2 disassociate-route-table \
-  --association-id $NGW_RT_1_ASSOCIATION_ID
+if [ -n "${NGW_RT_1_ASSOCIATION_ID}" ]; then
+  aws --region us-east-1 ec2 disassociate-route-table \
+    --association-id $NGW_RT_1_ASSOCIATION_ID
+fi
 
 # Disassociate the second subnet from the second NAT Gateway route table
 
@@ -269,9 +299,11 @@ NGW_RT_2_ASSOCIATION_ID=$(aws --region us-east-1 ec2 describe-route-tables \
   --query 'RouteTables[*].Associations[*].[RouteTableAssociationId]' \
   --output text)
 
-aws --region us-east-1 ec2 disassociate-route-table \
-  --association-id $NGW_RT_2_ASSOCIATION_ID
-
+if [ -n "${NGW_RT_2_ASSOCIATION_ID}" ]; then
+  aws --region us-east-1 ec2 disassociate-route-table \
+    --association-id $NGW_RT_2_ASSOCIATION_ID
+fi
+   
 # Disassociate the third subnet from the third NAT Gateway route table
 
 NGW_RT_3_ASSOCIATION_ID=$(aws --region us-east-1 ec2 describe-route-tables \
@@ -279,8 +311,10 @@ NGW_RT_3_ASSOCIATION_ID=$(aws --region us-east-1 ec2 describe-route-tables \
   --query 'RouteTables[*].Associations[*].[RouteTableAssociationId]' \
   --output text)
 
-aws --region us-east-1 ec2 disassociate-route-table \
-  --association-id $NGW_RT_3_ASSOCIATION_ID
+if [ -n "${NGW_RT_3_ASSOCIATION_ID}" ]; then
+  aws --region us-east-1 ec2 disassociate-route-table \
+    --association-id $NGW_RT_3_ASSOCIATION_ID
+fi
 
 #
 # Delete route tables
@@ -293,9 +327,11 @@ NGW_RT_1_ID=$(aws --region us-east-1 ec2 describe-route-tables \
   --query 'RouteTables[*].[RouteTableId]' \
   --output text)
 
-aws --region us-east-1 ec2 delete-route-table \
-  --route-table-id $NGW_RT_1_ID
-
+if [ -n "${NGW_RT_1_ID}" ]; then
+  aws --region us-east-1 ec2 delete-route-table \
+    --route-table-id $NGW_RT_1_ID
+fi
+   
 # Delete the second NAT Gateway route table for the second NAT gateway
 
 NGW_RT_2_ID=$(aws --region us-east-1 ec2 describe-route-tables \
@@ -303,8 +339,10 @@ NGW_RT_2_ID=$(aws --region us-east-1 ec2 describe-route-tables \
   --query 'RouteTables[*].[RouteTableId]' \
   --output text)
 
-aws --region us-east-1 ec2 delete-route-table \
-  --route-table-id $NGW_RT_2_ID
+if [ -n "${NGW_RT_2_ID}" ]; then
+  aws --region us-east-1 ec2 delete-route-table \
+    --route-table-id $NGW_RT_2_ID
+fi
 
 # Delete the third NAT Gateway route table for the third NAT gateway
 
@@ -313,32 +351,14 @@ NGW_RT_3_ID=$(aws --region us-east-1 ec2 describe-route-tables \
   --query 'RouteTables[*].[RouteTableId]' \
   --output text)
 
-aws --region us-east-1 ec2 delete-route-table \
-  --route-table-id $NGW_RT_3_ID
+if [ -n "${NGW_RT_3_ID}" ]; then
+  aws --region us-east-1 ec2 delete-route-table \
+    --route-table-id $NGW_RT_3_ID
+fi
 
 #
-# Disassociate the subnet from the Internet Gateway route table
+# Disassociate the subnets in reverse order from the Internet Gateway route table
 #
-
-# Disassociate the first subnet from the Internet Gateway route table
-
-IGW_RT_ASSOCIATION_ID_1=$(aws --region us-east-1 ec2 describe-route-tables \
-  --filter "Name=tag:Name,Values=AB2D-$CMS_ENV-IGW-RT" \
-  --query 'RouteTables[*].Associations[0].[RouteTableAssociationId]' \
-  --output text)
-
-aws --region us-east-1 ec2 disassociate-route-table \
-  --association-id $IGW_RT_ASSOCIATION_ID_1
-
-# Disassociate the second subnet from the Internet Gateway route table
-
-IGW_RT_ASSOCIATION_ID_2=$(aws --region us-east-1 ec2 describe-route-tables \
-  --filter "Name=tag:Name,Values=AB2D-$CMS_ENV-IGW-RT" \
-  --query 'RouteTables[*].Associations[1].[RouteTableAssociationId]' \
-  --output text)
-
-aws --region us-east-1 ec2 disassociate-route-table \
-  --association-id $IGW_RT_ASSOCIATION_ID_2
 
 # Disassociate the third subnet from the Internet Gateway route table
 
@@ -347,8 +367,34 @@ IGW_RT_ASSOCIATION_ID_3=$(aws --region us-east-1 ec2 describe-route-tables \
   --query 'RouteTables[*].Associations[2].[RouteTableAssociationId]' \
   --output text)
 
-aws --region us-east-1 ec2 disassociate-route-table \
-  --association-id $IGW_RT_ASSOCIATION_ID_3
+if [ -n "${IGW_RT_ASSOCIATION_ID_3}" ]; then
+  aws --region us-east-1 ec2 disassociate-route-table \
+    --association-id $IGW_RT_ASSOCIATION_ID_3
+fi
+
+# Disassociate the second subnet from the Internet Gateway route table
+
+IGW_RT_ASSOCIATION_ID_2=$(aws --region us-east-1 ec2 describe-route-tables \
+  --filter "Name=tag:Name,Values=AB2D-$CMS_ENV-IGW-RT" \
+  --query 'RouteTables[*].Associations[1].[RouteTableAssociationId]' \
+  --output text)
+
+if [ -n "${IGW_RT_ASSOCIATION_ID_2}" ]; then
+  aws --region us-east-1 ec2 disassociate-route-table \
+    --association-id $IGW_RT_ASSOCIATION_ID_2
+fi
+
+# Disassociate the first subnet from the Internet Gateway route table
+
+IGW_RT_ASSOCIATION_ID_1=$(aws --region us-east-1 ec2 describe-route-tables \
+  --filter "Name=tag:Name,Values=AB2D-$CMS_ENV-IGW-RT" \
+  --query 'RouteTables[*].Associations[0].[RouteTableAssociationId]' \
+  --output text)
+
+if [ -n "${IGW_RT_ASSOCIATION_ID_1}" ]; then
+  aws --region us-east-1 ec2 disassociate-route-table \
+    --association-id $IGW_RT_ASSOCIATION_ID_1
+fi
 
 #
 # Delete the Internet Gateway route table
@@ -359,8 +405,10 @@ IGW_RT_ID=$(aws --region us-east-1 ec2 describe-route-tables \
   --query 'RouteTables[*].[RouteTableId]' \
   --output text)
 
-aws --region us-east-1 ec2 delete-route-table \
-  --route-table-id $IGW_RT_ID
+if [ -n "${IGW_RT_ID}" ]; then
+  aws --region us-east-1 ec2 delete-route-table \
+    --route-table-id $IGW_RT_ID
+fi
 
 #
 # Detach Internet Gateway from VPC
@@ -376,16 +424,20 @@ IGW_ID=$(aws --region us-east-1 ec2 describe-internet-gateways \
   --query 'InternetGateways[*].[InternetGatewayId]' \
   --output text)
 
-aws --region us-east-1 ec2 detach-internet-gateway \
-  --vpc-id $VPC_ID \
-  --internet-gateway-id $IGW_ID
+if [ -n "${VPC_ID}" ] && [ -n "${IGW_ID}" ]; then
+  aws --region us-east-1 ec2 detach-internet-gateway \
+    --vpc-id $VPC_ID \
+    --internet-gateway-id $IGW_ID
+fi
 
 #
 # Delete Internet Gateway
 #
 
-aws --region us-east-1 ec2 delete-internet-gateway \
-  --internet-gateway-id $IGW_ID
+if [ -n "${IGW_ID}" ]; then
+  aws --region us-east-1 ec2 delete-internet-gateway \
+    --internet-gateway-id $IGW_ID
+fi
 
 #
 # Delete subnets
@@ -398,8 +450,10 @@ SUBNET_PRIVATE_1_ID=$(aws --region us-east-1 ec2 describe-subnets \
   --query 'Subnets[*].[SubnetId]' \
   --output text)
 
-aws --region us-east-1 ec2 delete-subnet \
-  --subnet-id $SUBNET_PRIVATE_1_ID
+if [ -n "${SUBNET_PRIVATE_1_ID}" ]; then
+  aws --region us-east-1 ec2 delete-subnet \
+    --subnet-id $SUBNET_PRIVATE_1_ID
+fi
 
 # Delete the second private subnet
 
@@ -408,8 +462,10 @@ SUBNET_PRIVATE_2_ID=$(aws --region us-east-1 ec2 describe-subnets \
   --query 'Subnets[*].[SubnetId]' \
   --output text)
 
-aws --region us-east-1 ec2 delete-subnet \
-  --subnet-id $SUBNET_PRIVATE_2_ID
+if [ -n "${SUBNET_PRIVATE_2_ID}" ]; then
+  aws --region us-east-1 ec2 delete-subnet \
+    --subnet-id $SUBNET_PRIVATE_2_ID
+fi
 
 # Delete the third private subnet
 
@@ -418,8 +474,10 @@ SUBNET_PRIVATE_3_ID=$(aws --region us-east-1 ec2 describe-subnets \
   --query 'Subnets[*].[SubnetId]' \
   --output text)
 
-aws --region us-east-1 ec2 delete-subnet \
-  --subnet-id $SUBNET_PRIVATE_3_ID
+if [ -n "${SUBNET_PRIVATE_3_ID}" ]; then
+  aws --region us-east-1 ec2 delete-subnet \
+    --subnet-id $SUBNET_PRIVATE_3_ID
+fi
 
 # Delete the first public subnet
 
@@ -428,8 +486,10 @@ SUBNET_PUBLIC_1_ID=$(aws --region us-east-1 ec2 describe-subnets \
   --query 'Subnets[*].[SubnetId]' \
   --output text)
 
-aws --region us-east-1 ec2 delete-subnet \
-  --subnet-id $SUBNET_PUBLIC_1_ID
+if [ -n "${SUBNET_PUBLIC_1_ID}" ]; then
+  aws --region us-east-1 ec2 delete-subnet \
+    --subnet-id $SUBNET_PUBLIC_1_ID
+fi
 
 # Delete the second public subnet
 
@@ -438,8 +498,10 @@ SUBNET_PUBLIC_2_ID=$(aws --region us-east-1 ec2 describe-subnets \
   --query 'Subnets[*].[SubnetId]' \
   --output text)
 
-aws --region us-east-1 ec2 delete-subnet \
-  --subnet-id $SUBNET_PUBLIC_2_ID
+if [ -n "${SUBNET_PUBLIC_2_ID}" ]; then
+  aws --region us-east-1 ec2 delete-subnet \
+    --subnet-id $SUBNET_PUBLIC_2_ID
+fi
 
 # Delete the third public subnet
 
@@ -448,12 +510,16 @@ SUBNET_PUBLIC_3_ID=$(aws --region us-east-1 ec2 describe-subnets \
   --query 'Subnets[*].[SubnetId]' \
   --output text)
 
-aws --region us-east-1 ec2 delete-subnet \
-  --subnet-id $SUBNET_PUBLIC_3_ID
+if [ -n "${SUBNET_PUBLIC_3_ID}" ]; then
+  aws --region us-east-1 ec2 delete-subnet \
+    --subnet-id $SUBNET_PUBLIC_3_ID
+fi
 
 #
 # Delete VPC
 #
 
-aws --region us-east-1 ec2 delete-vpc \
-  --vpc-id $VPC_ID
+if [ -n "${VPC_ID}" ]; then
+  aws --region us-east-1 ec2 delete-vpc \
+    --vpc-id $VPC_ID
+fi
