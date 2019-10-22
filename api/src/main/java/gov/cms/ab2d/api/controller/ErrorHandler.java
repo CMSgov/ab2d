@@ -13,7 +13,6 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
-import javax.persistence.EntityNotFoundException;
 import java.io.IOException;
 
 import static gov.cms.ab2d.api.util.FHIRUtil.getErrorOutcome;
@@ -38,7 +37,7 @@ class ErrorHandler extends ResponseEntityExceptionHandler {
     }
 
     @ExceptionHandler(ResourceNotFoundException.class)
-    public ResponseEntity<JsonNode> handleNotFoundExceptions(final EntityNotFoundException e) throws IOException {
+    public ResponseEntity<JsonNode> handleNotFoundExceptions(final ResourceNotFoundException e) throws IOException {
         return generateFHIRError(e, HttpStatus.NOT_FOUND);
     }
 

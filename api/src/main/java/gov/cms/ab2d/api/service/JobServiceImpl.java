@@ -40,7 +40,7 @@ public class JobServiceImpl implements JobService {
     public Job getJobByJobID(String jobID) {
         Job job = jobRepository.findByJobID(jobID);
         if (job == null) {
-            throw new ResourceNotFoundException("No job with jobID " +  jobID + "  was found");
+            throw new ResourceNotFoundException("No job with jobID " +  jobID + " was found");
         }
 
         return job;

@@ -22,7 +22,6 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.ResultActions;
 
 import java.time.LocalDateTime;
-import java.util.Date;
 
 import static gov.cms.ab2d.api.service.JobServiceImpl.INITIAL_JOB_STATUS_MESSAGE;
 import static gov.cms.ab2d.api.util.Constants.API_PREFIX;
@@ -186,5 +185,61 @@ public class BulkDataAccessAPIIntegrationTests {
                 .andExpect(jsonPath("$.issue[0].severity", Is.is("error")))
                 .andExpect(jsonPath("$.issue[0].code", Is.is("invalid")))
                 .andExpect(jsonPath("$.issue[0].details.text", Is.is("JobProcessingException: Job failed while processing")));
+    }
+
+    @Test
+    public void testGetStatusWithJobNotFound() throws Exception {
+        this.mockMvc.perform(get(API_PREFIX + PATIENT_EXPORT_PATH + "?_type=ExplanationOfBenefits").contentType(MediaType.APPLICATION_JSON))
+                .andReturn();
+
+        Job job = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
+        job.setStatus(JobStatus.FAILED);
+        LocalDateTime expireDate = LocalDateTime.now().plusDays(100);
+        job.setExpires(expireDate);
+
+        jobRepository.saveAndFlush(job);
+
+        this.mockMvc.perform(get("http://localhost" + API_PREFIX  + "/Job/BadId/$status").contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().is(404))
+                .andExpect(jsonPath("$.resourceType", Is.is("OperationOutcome")))
+                .andExpect(jsonPath("$.issue[0].severity", Is.is("error")))
+                .andExpect(jsonPath("$.issue[0].code", Is.is("invalid")))
+                .andExpect(jsonPath("$.issue[0].details.text", Is.is("ResourceNotFoundException: No job with jobID BadId was found")));
+    }
+
+    @Test
+    public void testGetStatusWithSpaceUrl() throws Exception {
+        this.mockMvc.perform(get(API_PREFIX + PATIENT_EXPORT_PATH + "?_type=ExplanationOfBenefits").contentType(MediaType.APPLICATION_JSON))
+                .andReturn();
+
+        Job job = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
+        job.setStatus(JobStatus.FAILED);
+        LocalDateTime expireDate = LocalDateTime.now().plusDays(100);
+        job.setExpires(expireDate);
+
+        jobRepository.saveAndFlush(job);
+
+        this.mockMvc.perform(get("http://localhost" + API_PREFIX  + "/Job/ /$status").contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().is(404))
+                .andExpect(jsonPath("$.resourceType", Is.is("OperationOutcome")))
+                .andExpect(jsonPath("$.issue[0].severity", Is.is("error")))
+                .andExpect(jsonPath("$.issue[0].code", Is.is("invalid")))
+                .andExpect(jsonPath("$.issue[0].details.text", Is.is("ResourceNotFoundException: No job with jobID   was found")));
+    }
+
+    @Test
+    public void testGetStatusWithBadUrl() throws Exception {
+        this.mockMvc.perform(get(API_PREFIX + PATIENT_EXPORT_PATH + "?_type=ExplanationOfBenefits").contentType(MediaType.APPLICATION_JSON))
+                .andReturn();
+
+        Job job = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
+        job.setStatus(JobStatus.FAILED);
+        LocalDateTime expireDate = LocalDateTime.now().plusDays(100);
+        job.setExpires(expireDate);
+
+        jobRepository.saveAndFlush(job);
+
+        this.mockMvc.perform(get("http://localhost" + API_PREFIX  + "/Job/$status").contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().is(404));
     }
 }
