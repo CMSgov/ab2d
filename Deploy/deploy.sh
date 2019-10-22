@@ -2,6 +2,16 @@
 set -e #Exit on first error
 set -x #Be verbose
 
+#
+# Configure
+#
+
+# Change to working directory
+cd "$(dirname "$0")"
+
+# Configure environment setting
+export AWS_PROFILE="sbdemo"
+export CMS_ENV="SBDEMO"
 
 #
 # Parse options
@@ -27,7 +37,6 @@ case $i in
 esac
 done
 
-
 #
 # Check vars are not empty before proceeding
 #
@@ -39,7 +48,6 @@ if [ -z "${ENVIRONMENT}" ]; then
   exit 1
 fi
 
-
 #
 # Set AMI_ID if it already exists for the deployment
 #
@@ -50,7 +58,6 @@ AMI_ID=$(aws --region us-east-1 ec2 describe-images \
   --filters "Name=tag:Name,Values=AB2D-$CMS_ENV-AMI" \
   --query "Images[*].[ImageId]" \
   --output text)
-
 
 #
 # If no AMI is specified then create a new one
@@ -70,7 +77,6 @@ if [ -z "${AMI_ID}" ]; then
     --tags "Key=Name,Value=AB2D-$CMS_ENV-AMI"
 fi
 
-
 #
 # Get current known good ECS task definitions
 #
@@ -83,7 +89,6 @@ else
   API_TASK_DEFINITION=$(aws --region us-east-1 ecs describe-services --services ab2d-api --cluster ab2d-$ENVIRONMENT | grep "taskDefinition" | head -1)
   API_TASK_DEFINITION=$(echo $API_TASK_DEFINITION | awk -F'": "' '{print $2}' | tr -d '"' | tr -d ',')
 fi
-
 
 #
 # Get ECS task counts before making any changes
@@ -109,14 +114,12 @@ else
   EXPECTED_API_COUNT="$OLD_API_TASK_COUNT*2"
 fi
 
-
 #
 # Switch context to terraform environment
 #
 
 echo "Switch context to terraform environment..."
 cd terraform/environments/cms-ab2d-$ENVIRONMENT
-
 
 #
 # Ensure Old Autoscaling Groups and containers are around to service requests
@@ -143,7 +146,6 @@ else
   OLD_API_CONTAINER_INSTANCES=$(aws --region us-east-1 ecs list-container-instances --cluster ab2d-$ENVIRONMENT|grep container-instance)
 fi
 
-
 #
 # Deploy new AMI out to AWS
 #
@@ -159,7 +161,6 @@ else
   terraform apply --var "ami_id=$AMI_ID" --var "current_task_definition_arn=$API_TASK_DEFINITION" --target module.worker --auto-approve
 fi
 
-
 #
 # Apply schedule autoscaling if applicable
 #
@@ -169,7 +170,6 @@ if [ -f ./autoscaling-schedule.tf ]; then
   terraform apply --auto-approve -var "ami_id=$AMI_ID" --var "current_task_definition_arn=$API_TASK_DEFINITION" -target=aws_autoscaling_schedule.morning
   terraform apply --auto-approve -var "ami_id=$AMI_ID" --var "current_task_definition_arn=$API_TASK_DEFINITION" -target=aws_autoscaling_schedule.night
 fi
-
 
 #
 # Push authorized_keys file to deployment_controller
@@ -184,7 +184,6 @@ else
   # Apply the changes without prompting
   terraform apply --auto-approve --var "ami_id=$AMI_ID" --var "current_task_definition_arn=$API_TASK_DEFINITION" -target=null_resource.authorized_keys_file
 fi
-
 
 #
 # Ensure new autoscaling group is running containers
