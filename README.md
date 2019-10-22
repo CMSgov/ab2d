@@ -61,7 +61,7 @@
 1. Start the container
 
    ```ShellSession
-   $ docker-compose up
+   $ docker-compose up --build
    ```
 
 1. Note that this starts up Postgres, and both API & Worker Spring Boot apps
