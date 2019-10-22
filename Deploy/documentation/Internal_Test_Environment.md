@@ -4,7 +4,7 @@
 
 1. [Create an AWS IAM user](#create-an-aws-iam-user)
 1. [Configure AWS CLI](#configure-aws-cli)
-1. [Configure base AWS environment](#configure-base-aws-environment)
+1. [Configure base AWS components](#configure-base-aws-components)
    * [Create AWS keypair](#create-aws-keypair)
    * [Create required S3 buckets](#create-required-s3-buckets)
    * [Create policies](#create-policies)
@@ -12,8 +12,8 @@
    * [Create instance profiles](#create-instance-profiles)
    * [Configure IAM user deployers](#configure-iam-user-deployers)
    * [Create AWS Elastic Container Registry repositories for images](#create-aws-elastic-container-registry-repositories-for-images)
-   * [Create base aws environment](#create-base-aws-environment)
 1. [Deploy to test environment](#deploy-to-test-environment)
+   * [Create base aws environment](#create-base-aws-environment)
    * [Configure terraform](#configure-terraform)
    * [Deploy AWS dependency modules](#deploy-aws-dependency-modules)
    * [Deploy AWS application modules](#deploy-aws-application-modules)
@@ -65,7 +65,7 @@
    $ cat ~/.aws/credentials
    ```
    
-## Configure base AWS environment
+## Configure base AWS components
 
 ### Create AWS keypair
 
@@ -423,6 +423,8 @@
    $ docker push 114601554524.dkr.ecr.us-east-1.amazonaws.com/ab2d_worker:latest
    ```
 
+## Deploy to test environment
+
 ### Create base aws environment
 
 1. Change to the environment directory
@@ -436,8 +438,6 @@
    ```ShellSession
    $ ./create-base-environment.sh
    ```
-
-## Deploy to test environment
 
 ### Configure terraform
 
@@ -594,7 +594,7 @@
    *Example:
    
    ```
-   fs-9c74a91d
+   fs-88f52a09
    ```
 
 1. Update "userdata.tpl" with the file system id
@@ -616,7 +616,7 @@
       *Example:*
       
       ```
-      echo 'fs-9c74a91d /mnt/efs efs _netdev,tls 0 0' | sudo tee -a /etc/fstab
+      echo 'fs-88f52a09 /mnt/efs efs _netdev,tls 0 0' | sudo tee -a /etc/fstab
       ```
 
    1. Save and close the file
@@ -663,13 +663,13 @@
    1. Change the subnet to the first public subnet
 
       ```
-      "subnet_id": "subnet-02acb784b8426f09c",
+      "subnet_id": "subnet-0eae69ece6af39929",
       ```
 
    1. Change the VPC ID
 
       ```
-      "vpc_id": "vpc-0dcdeaed64b1c0522",
+      "vpc_id": "vpc-0e8586607672b0d3f",
       ```
 
    1. Change the builders settings
@@ -684,12 +684,6 @@
    1. Save and close the file
 
 ### Deploy AWS application modules
-
-1. Set the AWS profile for the target environment
-
-   ```ShellSession
-   $ source ~/code/ab2d/Deploy/terraform/environments/cms-ab2d-sbdemo/set-aws-profile.sh
-   ```
    
 1. Change to the "Deploy" directory
 
