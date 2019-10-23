@@ -101,7 +101,6 @@ module "worker" {
   instance_type                 = var.ec2_instance_type
   ssh_key_name                  = var.ssh_key_name
   node_subnet_ids               = var.private_subnet_ids
-  logging_bucket                = var.nlb_logging_bucket_name
   iam_instance_profile          = var.ec2_iam_profile
   docker_repository_url         = "114601554524.dkr.ecr.us-east-1.amazonaws.com/ab2d_worker:latest"
   desired_instances             = var.ec2_desired_instance_count
