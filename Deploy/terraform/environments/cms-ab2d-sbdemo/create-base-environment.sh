@@ -25,7 +25,7 @@ if [ -z "${VPC_EXISTS}" ]; then
     --output text \
     --region us-east-1)
   echo "Creating VPC..."
-else # Exit shell script if VPN already exists
+else # Exit shell script if VPC already exists
   echo "Skipping network creation since VPC already exists."
   exit
 fi
@@ -449,4 +449,3 @@ echo 'private_subnet_ids = ["'$SUBNET_PRIVATE_1_ID'","'$SUBNET_PRIVATE_2_ID'","'
   >> $ENVIRONMENT.auto.tfvars
 echo 'deployment_controller_subnet_ids = ["'$SUBNET_PUBLIC_1_ID'","'$SUBNET_PUBLIC_2_ID'","'$SUBNET_PUBLIC_3_ID'"]' \
   >> $ENVIRONMENT.auto.tfvars
-

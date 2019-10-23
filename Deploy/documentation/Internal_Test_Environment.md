@@ -594,7 +594,7 @@
    *Example:
    
    ```
-   fs-88f52a09
+   fs-32aa74b3
    ```
 
 1. Update "userdata.tpl" with the file system id
@@ -616,7 +616,7 @@
       *Example:*
       
       ```
-      echo 'fs-88f52a09 /mnt/efs efs _netdev,tls 0 0' | sudo tee -a /etc/fstab
+      echo 'fs-32aa74b3 /mnt/efs efs _netdev,tls 0 0' | sudo tee -a /etc/fstab
       ```
 
    1. Save and close the file
@@ -655,7 +655,7 @@
    1. Change the gold disk AMI to the noted CentOS AMI
 
       *Example:*
-       
+      
       ```
       ami-02eac2c0129f6376b
       ```

@@ -5,7 +5,6 @@ echo "$(hostname -s).ab2d-${env}" > /tmp/hostname
 sudo mv /tmp/hostname /etc/hostname
 sudo hostname "$(hostname -s).ab2d-${env}"
 
- 
 #
 # Setup EFS realted items 
 #
@@ -36,9 +35,8 @@ sudo ln -s /usr/local/bin/stunnel /bin/stunnel
 # Configure running container instances to use an Amazon EFS file system
 sudo mkdir /mnt/efs
 sudo cp /etc/fstab /etc/fstab.bak
-echo 'fs-88f52a09 /mnt/efs efs _netdev,tls 0 0' | sudo tee -a /etc/fstab
+echo 'fs-32aa74b3 /mnt/efs efs _netdev,tls 0 0' | sudo tee -a /etc/fstab
 sudo mount -a
-
 
 #
 # Setup ECS realted items 
@@ -65,14 +63,14 @@ ECS_LOGLEVEL=info" > /etc/ecs/ecs.config'
 
 # Autostart the ecs client
 sudo docker run --name ecs-agent \
---detach=true \
---restart=on-failure:10 \
---volume=/var/run:/var/run \
---volume=/var/log/ecs/:/log \
---volume=/var/lib/ecs/data:/data \
---volume=/etc/ecs:/etc/ecs \
---net=host \
---env-file=/etc/ecs/ecs.config \
---privileged \
---env-file=/etc/ecs/ecs.config \
-amazon/amazon-ecs-agent:latest
+  --detach=true \
+  --restart=on-failure:10 \
+  --volume=/var/run:/var/run \
+  --volume=/var/log/ecs/:/log \
+  --volume=/var/lib/ecs/data:/data \
+  --volume=/etc/ecs:/etc/ecs \
+  --net=host \
+  --env-file=/etc/ecs/ecs.config \
+  --privileged \
+  --env-file=/etc/ecs/ecs.config \
+  amazon/amazon-ecs-agent:latest
