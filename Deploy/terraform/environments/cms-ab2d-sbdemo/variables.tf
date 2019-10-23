@@ -173,10 +173,6 @@ variable "logging_bucket_name" {
   default = "cms-ab2d-cloudtrail"
 }
 
-variable "nlb_logging_bucket_name" {
-  default = "cms-ab2d-cloudtrail-nlb"
-}
-
 variable "s3_username_whitelist" {
   default = ["lonnie.hanekamp@semanticbits.com"]
 }
