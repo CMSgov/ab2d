@@ -12,6 +12,8 @@ public final class Constants {
 
     public static final String OPERATION_OUTCOME = "OperationOutcome";
 
+    public static final String NDJSON_FIRE_CONTENT_TYPE = "application/fhir+ndjson";
+
     private Constants() {
     }
 

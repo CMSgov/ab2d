@@ -3,6 +3,7 @@ package gov.cms.ab2d.api.controller;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import gov.cms.ab2d.api.service.JobService;
+import gov.cms.ab2d.api.service.ResourceNotFoundException;
 import gov.cms.ab2d.api.util.Constants;
 import gov.cms.ab2d.api.util.DateUtil;
 import gov.cms.ab2d.domain.Job;
@@ -11,6 +12,7 @@ import org.hl7.fhir.dstu3.model.DateTimeType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -19,11 +21,14 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import javax.validation.constraints.NotBlank;
 import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import static gov.cms.ab2d.api.util.Constants.API_PREFIX;
+import static gov.cms.ab2d.api.util.Constants.NDJSON_FIRE_CONTENT_TYPE;
 import static gov.cms.ab2d.api.util.DateUtil.convertLocalDateTimeToDate;
 
 @Api(value = "Bulk Data Access API", description =
@@ -47,6 +52,9 @@ public class BulkDataAccessAPI {
 
     @Value("${api.retry-after.delay}")
     private int retryAfterDelay;
+
+    @Value("${api.file-download.path}")
+    private String fileDownloadPath;
 
     @Autowired
     private JobService jobService;
@@ -170,8 +178,15 @@ public class BulkDataAccessAPI {
     public ResponseEntity<Resource> downloadFile(
             @ApiParam(value = "A job identifier", required = true) @PathVariable @NotBlank String jobId,
             @ApiParam(value = "A file name", required = true) @PathVariable @NotBlank String filename) throws IOException {
-        HttpHeaders responseHeaders = new HttpHeaders();
-        responseHeaders.add("X-Progress", "0%");
-        return new ResponseEntity<>(null, responseHeaders, HttpStatus.ACCEPTED);
+        Path file = Paths.get(fileDownloadPath + filename);
+        Resource resource = new UrlResource(file.toUri());
+
+        if (!resource.exists()) {
+            throw new ResourceNotFoundException("Could not find the file: " + filename);
+        }
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.set(HttpHeaders.CONTENT_TYPE, NDJSON_FIRE_CONTENT_TYPE);
+        return new ResponseEntity<>(resource, headers, HttpStatus.OK);
     }
 }
