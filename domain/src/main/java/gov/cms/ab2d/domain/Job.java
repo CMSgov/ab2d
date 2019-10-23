@@ -7,6 +7,7 @@ import lombok.Setter;
 import javax.persistence.*;
 import javax.validation.constraints.Pattern;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -32,7 +33,7 @@ public class Job {
             orphanRemoval = true,
             fetch = FetchType.EAGER
     )
-    private List<JobOutput> jobOutput;
+    private List<JobOutput> jobOutput = new ArrayList<>();
     private LocalDateTime createdAt;
     private LocalDateTime completedAt;
     private String requestURL;

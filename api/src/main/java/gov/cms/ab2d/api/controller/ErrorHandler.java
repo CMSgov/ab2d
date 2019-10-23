@@ -31,7 +31,7 @@ class ErrorHandler extends ResponseEntityExceptionHandler {
     }
 
     // Most errors that are the fault of the client
-    @ExceptionHandler(IllegalArgumentException.class)
+    @ExceptionHandler({IllegalArgumentException.class, IllegalStateException.class})
     public ResponseEntity<JsonNode> assertionException(final Exception e) throws IOException {
         return generateFHIRError(e, HttpStatus.BAD_REQUEST);
     }

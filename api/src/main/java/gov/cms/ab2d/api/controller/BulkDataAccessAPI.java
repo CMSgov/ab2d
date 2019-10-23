@@ -17,7 +17,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
-import javax.persistence.EntityNotFoundException;
 import javax.validation.constraints.NotBlank;
 import java.io.IOException;
 import java.time.LocalDateTime;
@@ -109,11 +108,7 @@ public class BulkDataAccessAPI {
     public ResponseEntity<String> deleteRequest(
             @ApiParam(value = "A job identifier", required = true)
             @PathVariable @NotBlank String jobId) {
-        try {
-            jobService.cancelJob(jobId);
-        } catch (EntityNotFoundException e) {
-            return new ResponseEntity<>(JOB_NOT_FOUND_ERROR_MSG, null, HttpStatus.NOT_FOUND);
-        }
+        jobService.cancelJob(jobId);
 
         return new ResponseEntity<>(JOB_CANCELLED_MSG, null,
                 HttpStatus.ACCEPTED);

@@ -5,6 +5,7 @@ import gov.cms.ab2d.api.repository.JobRepository;
 import gov.cms.ab2d.domain.Job;
 import gov.cms.ab2d.domain.JobOutput;
 import gov.cms.ab2d.domain.JobStatus;
+import org.hibernate.collection.internal.PersistentBag;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -15,6 +16,7 @@ import org.springframework.transaction.TransactionSystemException;
 
 import javax.persistence.EntityNotFoundException;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 import static gov.cms.ab2d.api.service.JobServiceImpl.INITIAL_JOB_STATUS_MESSAGE;
@@ -44,7 +46,7 @@ public class JobServiceTest {
         assertEquals(job.getRequestURL(), "http://localhost:8080");
         assertEquals(job.getStatusMessage(), INITIAL_JOB_STATUS_MESSAGE);
         assertEquals(job.getStatus(), JobStatus.SUBMITTED);
-        assertEquals(job.getJobOutput(), null);
+        assertEquals(job.getJobOutput().size(), 0);
         assertEquals(job.getLastPollTime(), null);
         assertEquals(job.getExpires(), null);
         assertThat(job.getJobID()).matches("[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}");
@@ -70,11 +72,12 @@ public class JobServiceTest {
         assertEquals(JobStatus.CANCELLED, cancelledJob.getStatus());
     }
 
-    @Test(expected = EntityNotFoundException.class)
+    @Test(expected = ResourceNotFoundException.class)
     public void cancelNonExistingJob() {
         jobService.cancelJob("NonExistingJob");
     }
 
+    @Test
     public void getJob() {
         Job job = jobService.createJob("ExplanationOfBenefits", "http://localhost:8080");
 
@@ -86,6 +89,36 @@ public class JobServiceTest {
     @Test(expected = ResourceNotFoundException.class)
     public void getNonExistentJob() {
         jobService.getJobByJobID("NonExistent");
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testJobInSuccessfulState() {
+        Job job = jobService.createJob("ExplanationOfBenefits", "http://localhost:8080");
+
+        job.setStatus(JobStatus.SUCCESSFUL);
+        jobRepository.saveAndFlush(job);
+
+        jobService.cancelJob(job.getJobID());
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testJobInCancelledState() {
+        Job job = jobService.createJob("ExplanationOfBenefits", "http://localhost:8080");
+
+        job.setStatus(JobStatus.CANCELLED);
+        jobRepository.saveAndFlush(job);
+
+        jobService.cancelJob(job.getJobID());
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testJobInFailedState() {
+        Job job = jobService.createJob("ExplanationOfBenefits", "http://localhost:8080");
+
+        job.setStatus(JobStatus.FAILED);
+        jobRepository.saveAndFlush(job);
+
+        jobService.cancelJob(job.getJobID());
     }
 
     @Test

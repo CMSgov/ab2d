@@ -8,7 +8,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.persistence.EntityNotFoundException;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -38,13 +37,14 @@ public class JobServiceImpl implements JobService {
         return jobRepository.save(job);
     }
 
-    public void cancelJob(String jobId) {
-        Job job = jobRepository.findByJobID(jobId);
-        if (job == null) {
-            throw new EntityNotFoundException("No job with jobID " + jobId + "  was found");
+    public void cancelJob(String jobID) {
+        Job job = getJobByJobID(jobID);
+
+        if (job.getStatus() == JobStatus.CANCELLED || job.getStatus() == JobStatus.SUCCESSFUL || job.getStatus() == JobStatus.FAILED) {
+            throw new IllegalStateException("Job has a status of " + job.getStatus() + ", so it cannot be cancelled");
         }
 
-        jobRepository.cancelJobByJobID(jobId);
+        jobRepository.cancelJobByJobID(jobID);
     }
 
     public Job getJobByJobID(String jobID) {

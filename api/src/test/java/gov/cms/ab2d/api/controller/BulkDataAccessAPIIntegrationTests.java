@@ -114,8 +114,6 @@ public class BulkDataAccessAPIIntegrationTests {
         this.mockMvc.perform(get(API_PREFIX + PATIENT_EXPORT_PATH).contentType(MediaType.APPLICATION_JSON));
         Job job = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
 
-        System.out.println(job.getJobID());
-
         this.mockMvc.perform(delete(API_PREFIX + "/Job/" + job.getJobID() + "/$status"))
             .andExpect(status().is(202))
             .andExpect(content().string(JOB_CANCELLED_MSG));
@@ -128,7 +126,46 @@ public class BulkDataAccessAPIIntegrationTests {
     public void testDeleteNonExistentJob() throws Exception {
         this.mockMvc.perform(delete(API_PREFIX + "/Job/NonExistentJob/$status"))
                 .andExpect(status().is(404))
-                .andExpect(content().string(JOB_NOT_FOUND_ERROR_MSG));
+                .andExpect(jsonPath("$.resourceType", Is.is("OperationOutcome")))
+                .andExpect(jsonPath("$.issue[0].severity", Is.is("error")))
+                .andExpect(jsonPath("$.issue[0].code", Is.is("invalid")))
+                .andExpect(jsonPath("$.issue[0].details.text", Is.is("ResourceNotFoundException: No job with jobID NonExistentJob was found")));;
+    }
+
+    @Test
+    public void testDeleteJobsInInvalidState() throws Exception {
+        this.mockMvc.perform(get(API_PREFIX + PATIENT_EXPORT_PATH).contentType(MediaType.APPLICATION_JSON));
+        Job job = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
+
+        job.setStatus(JobStatus.FAILED);
+        jobRepository.saveAndFlush(job);
+
+        this.mockMvc.perform(delete(API_PREFIX + "/Job/" + job.getJobID() + "/$status"))
+                .andExpect(status().is(400))
+                .andExpect(jsonPath("$.resourceType", Is.is("OperationOutcome")))
+                .andExpect(jsonPath("$.issue[0].severity", Is.is("error")))
+                .andExpect(jsonPath("$.issue[0].code", Is.is("invalid")))
+                .andExpect(jsonPath("$.issue[0].details.text", Is.is("IllegalStateException: Job has a status of " + job.getStatus() + ", so it cannot be cancelled")));
+
+        job.setStatus(JobStatus.CANCELLED);
+        jobRepository.saveAndFlush(job);
+
+        this.mockMvc.perform(delete(API_PREFIX + "/Job/" + job.getJobID() + "/$status"))
+                .andExpect(status().is(400))
+                .andExpect(jsonPath("$.resourceType", Is.is("OperationOutcome")))
+                .andExpect(jsonPath("$.issue[0].severity", Is.is("error")))
+                .andExpect(jsonPath("$.issue[0].code", Is.is("invalid")))
+                .andExpect(jsonPath("$.issue[0].details.text", Is.is("IllegalStateException: Job has a status of " + job.getStatus() + ", so it cannot be cancelled")));
+
+        job.setStatus(JobStatus.SUCCESSFUL);
+        jobRepository.saveAndFlush(job);
+
+        this.mockMvc.perform(delete(API_PREFIX + "/Job/" + job.getJobID() + "/$status"))
+                .andExpect(status().is(400))
+                .andExpect(jsonPath("$.resourceType", Is.is("OperationOutcome")))
+                .andExpect(jsonPath("$.issue[0].severity", Is.is("error")))
+                .andExpect(jsonPath("$.issue[0].code", Is.is("invalid")))
+                .andExpect(jsonPath("$.issue[0].details.text", Is.is("IllegalStateException: Job has a status of " + job.getStatus() + ", so it cannot be cancelled")));
     }
 
     public void testGetStatusWhileInProgress() throws Exception {
