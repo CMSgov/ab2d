@@ -2,7 +2,7 @@ version: '3'
 
 services:
   db:
-    image: postgres
+    image: postgres:11
     environment:
       - POSTGRES_DB=ab2d
       - POSTGRES_USER=ab2d
