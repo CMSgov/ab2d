@@ -4,6 +4,7 @@
 
 1. [Create an AWS IAM user](#create-an-aws-iam-user)
 1. [Configure AWS CLI](#configure-aws-cli)
+1. [Configure Terraform logging](#configure-terraform-logging)
 1. [Configure base AWS components](#configure-base-aws-components)
    * [Create AWS keypair](#create-aws-keypair)
    * [Create required S3 buckets](#create-required-s3-buckets)
@@ -64,7 +65,30 @@
    ```ShellSession
    $ cat ~/.aws/credentials
    ```
-   
+
+## Configure Terraform logging
+
+1. Modify the SSH config file
+
+   1. Open the SSH config file
+
+      ```ShellSession
+      $ vim ~/.ssh/config
+      ```
+
+   2. Add or modify SSH config file to include the following line
+
+      ```
+      StrictHostKeyChecking no
+      ```
+
+1. Ensure terraform log directory exists
+
+   ```ShellSession
+   $ sudo mkdir -p /var/log/terraform
+   $ sudo chown -R "$(id -u)":"$(id -g -nr)" /var/log/terraform
+   ```
+
 ## Configure base AWS components
 
 ### Create AWS keypair
@@ -141,45 +165,6 @@
    ```ShellSession
    $ aws s3api put-public-access-block \
      --bucket cms-ab2d-dev \
-     --region us-east-1 \
-     --public-access-block-configuration BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true
-   ```
-
-1. Create S3 file bucket
-
-   ```ShellSession
-   $ aws s3api create-bucket --bucket cms-ab2d-cloudtrail --region us-east-1
-   ```
-
-1. Note that the "Elastic Load Balancing Account ID for us-east-1" is the following:
-
-   ```
-   127311923021
-   ```
-
-1. Note that the "Elastic Load Balancing Account ID" for other regions can be found here
-
-   > See https://docs.aws.amazon.com/elasticloadbalancing/latest/classic/enable-access-logs.html
-
-1. Change to the s3 bucket policies directory
-
-   ```ShellSession
-   $ cd ~/code/ab2d/Deploy/aws/s3-bucket-policies
-   ```
-   
-1. Add this bucket policy to the "cms-ab2d-cloudtrail" S3 bucket
-
-   ```ShellSession
-   $ aws s3api put-bucket-policy \
-     --bucket cms-ab2d-cloudtrail \
-     --policy file://cms-ab2d-cloudtrail-bucket-policy.json
-   ```
-   
-1. Block public access on bucket
-
-   ```ShellSession
-   $ aws s3api put-public-access-block \
-     --bucket cms-ab2d-cloudtrail \
      --region us-east-1 \
      --public-access-block-configuration BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true
    ```
@@ -436,64 +421,7 @@
 1. Create the AWS networking
 
    ```ShellSession
-   $ ./create-base-environment.sh
-   ```
-
-### Configure terraform
-
-1. Modify the SSH config file
-
-   1. Open the SSH config file
-
-      ```ShellSession
-      $ vim ~/.ssh/config
-      ```
-
-   2. Add or modify SSH config file to include the following line
-
-      ```
-      StrictHostKeyChecking no
-      ```
-
-1. Ensure terraform log directory exists
-
-   ```ShellSession
-   $ sudo mkdir -p /var/log/terraform
-   $ sudo chown -R "$(id -u)":"$(id -g -nr)" /var/log/terraform
-   ```
-
-1. Note the following terraform logging levels are available
-
-   - TRACE
-
-   - DEBUG
-
-   - INFO
-
-   - WARN
-
-   - ERROR
-   
-1. Turn on terraform logging
-
-   *Example of logging "WARN" and "ERROR":*
-   
-   ```ShellSession
-   $ export TF_LOG=WARN
-   $ export TF_LOG_PATH=/var/log/terraform/tf.log
-   ```
-
-   *Example of logging everything:*
-
-   ```ShellSession
-   $ export TF_LOG=TRACE
-   $ export TF_LOG_PATH=/var/log/terraform/tf.log
-   ```
-   
-1. Delete existing log file
-
-   ```ShelSession
-   $ rm -f /var/log/terraform/tf.log
+   $ ./create-base-environment.sh --environment=sbdemo
    ```
 
 ### Deploy AWS dependency modules
@@ -519,61 +447,12 @@
    ```ShellSession
    $ cd ~/code/ab2d/Deploy/terraform/environments/cms-ab2d-sbdemo
    ```
-
-1. Initialize terraform
-
-   ```ShellSession
-   $ terraform init
-   ```
-
-1. Validate terraform
-
-   ```ShellSession
-   $ terraform validate
-   ```
-
-1. Deploy KMS
-
-   ```ShellSession
-   $ terraform apply \
-     --target module.kms --auto-approve
-   ```
-
-1. Create S3 "cms-ab2d-cloudtrail" bucket
-
-   ```ShellSession
-   $ aws s3api create-bucket --bucket cms-ab2d-cloudtrail --region us-east-1
-   ```
-
-1. Block public access on bucket
-
-   ```ShellSession
-   $ aws s3api put-public-access-block \
-     --bucket cms-ab2d-cloudtrail \
-     --region us-east-1 \
-     --public-access-block-configuration BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true
-   ```
-
-1. Give "Write objects" and "Read bucket permissions" to the "S3 log delivery group" of the "cms-ab2d-cloudtrail" bucket
-
-   ```ShellSession
-   $ aws s3api put-bucket-acl \
-     --bucket cms-ab2d-cloudtrail \
-     --grant-write URI=http://acs.amazonaws.com/groups/s3/LogDelivery \
-     --grant-read-acp URI=http://acs.amazonaws.com/groups/s3/LogDelivery
-   ```
    
 1. Deploy additional S3 configuration
 
    ```ShellSession
    $ terraform apply \
      --target module.s3 --auto-approve
-   ```
-
-1. Add the bucket policy to the "cms-ab2d-cloudtrail" S3 bucket
-
-   ```ShellSession
-   $ aws s3api put-bucket-policy --bucket cms-ab2d-cloudtrail --policy file://cms-ab2d-cloudtrail-bucket-policy.json
    ```
    
 1. Deploy Elastic File System (EFS)
