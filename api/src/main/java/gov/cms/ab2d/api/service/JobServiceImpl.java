@@ -36,4 +36,17 @@ public class JobServiceImpl implements JobService {
 
         return jobRepository.save(job);
     }
+
+    public Job getJobByJobID(String jobID) {
+        Job job = jobRepository.findByJobID(jobID);
+        if (job == null) {
+            throw new ResourceNotFoundException("No job with jobID " +  jobID + " was found");
+        }
+
+        return job;
+    }
+
+    public Job updateJob(Job job) {
+        return jobRepository.save(job);
+    }
 }
