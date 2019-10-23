@@ -26,7 +26,7 @@ case $i in
   CMS_ENV=$(echo $ENVIRONMENT | tr '[:lower:]' '[:upper:]')
   shift # past argument=value
   ;;
-  --keep-network=*)
+  --keep-network)
   KEEP_NETWORK="true"
   shift # past argument=value
   ;;
@@ -107,14 +107,14 @@ terraform destroy \
 # Destroy the environment of the "kms" module
 #
 
-echo "Destroying KMS components..."
-
 # Rerun db destroy again to ensure that it is in correct state
 # - this is a workaround that prevents the kms module from raising an eror sporadically
+echo "Rerun module.db destroy to ensure proper state..."
 terraform destroy \
   --target module.db --auto-approve
 
 # Destroy the KMS module
+echo "Destroying KMS components..."
 terraform destroy \
   --target module.kms --auto-approve
 
@@ -169,6 +169,16 @@ else
 fi
 
 #
+# Exit if keeping the networking
+#
+
+if [ -n "$KEEP_NETWORK" ]; then
+    echo "Preserving networking..."
+    echo "Done"
+    exit
+fi
+
+#
 # Delete the NAT gateways
 #
 
@@ -180,6 +190,7 @@ NAT_GW_1_ID=$(aws --region us-east-1 ec2 describe-nat-gateways \
   --output text)
 
 if [ -n "${NAT_GW_1_ID}" ]; then
+  echo "Deleting first NAT gateway..."
   aws --region us-east-1 ec2 delete-nat-gateway \
     --nat-gateway-id $NAT_GW_1_ID
 fi
@@ -192,6 +203,7 @@ NAT_GW_2_ID=$(aws --region us-east-1 ec2 describe-nat-gateways \
   --output text)
 
 if [ -n "${NAT_GW_2_ID}" ]; then
+  echo "Deleting second NAT gateway..."
   aws --region us-east-1 ec2 delete-nat-gateway \
     --nat-gateway-id $NAT_GW_2_ID
 fi
@@ -204,6 +216,7 @@ NAT_GW_3_ID=$(aws --region us-east-1 ec2 describe-nat-gateways \
   --output text)
 
 if [ -n "${NAT_GW_3_ID}" ]; then
+  echo "Deleting third NAT gateway..."
   aws --region us-east-1 ec2 delete-nat-gateway \
     --nat-gateway-id $NAT_GW_3_ID
 fi
@@ -248,6 +261,7 @@ NGW_EIP_1_ALLOCATION_ID=$(aws --region us-east-1 ec2 describe-addresses \
   --output text)
 
 if [ -n "${NGW_EIP_1_ALLOCATION_ID}" ]; then
+  echo "Release first Elastic IP address..."
   aws --region us-east-1 ec2 release-address \
     --allocation-id $NGW_EIP_1_ALLOCATION_ID
 fi
@@ -260,6 +274,7 @@ NGW_EIP_2_ALLOCATION_ID=$(aws --region us-east-1 ec2 describe-addresses \
   --output text)
 
 if [ -n "${NGW_EIP_2_ALLOCATION_ID}" ]; then
+  echo "Release second Elastic IP address..."
   aws --region us-east-1 ec2 release-address \
     --allocation-id $NGW_EIP_2_ALLOCATION_ID
 fi
@@ -272,6 +287,7 @@ NGW_EIP_3_ALLOCATION_ID=$(aws --region us-east-1 ec2 describe-addresses \
   --output text)
 
 if [ -n "${NGW_EIP_3_ALLOCATION_ID}" ]; then
+  echo "Release third Elastic IP address..."
   aws --region us-east-1 ec2 release-address \
     --allocation-id $NGW_EIP_3_ALLOCATION_ID
 fi
@@ -288,6 +304,7 @@ NGW_RT_1_ASSOCIATION_ID=$(aws --region us-east-1 ec2 describe-route-tables \
   --output text)
 
 if [ -n "${NGW_RT_1_ASSOCIATION_ID}" ]; then
+  echo "Disassociating the first subnet from the first NAT Gateway route table..."
   aws --region us-east-1 ec2 disassociate-route-table \
     --association-id $NGW_RT_1_ASSOCIATION_ID
 fi
@@ -300,6 +317,7 @@ NGW_RT_2_ASSOCIATION_ID=$(aws --region us-east-1 ec2 describe-route-tables \
   --output text)
 
 if [ -n "${NGW_RT_2_ASSOCIATION_ID}" ]; then
+  echo "Disassociating the second subnet from the second NAT Gateway route table..."
   aws --region us-east-1 ec2 disassociate-route-table \
     --association-id $NGW_RT_2_ASSOCIATION_ID
 fi
@@ -312,6 +330,7 @@ NGW_RT_3_ASSOCIATION_ID=$(aws --region us-east-1 ec2 describe-route-tables \
   --output text)
 
 if [ -n "${NGW_RT_3_ASSOCIATION_ID}" ]; then
+  echo "Disassociating the third subnet from the third NAT Gateway route table..."
   aws --region us-east-1 ec2 disassociate-route-table \
     --association-id $NGW_RT_3_ASSOCIATION_ID
 fi
@@ -328,6 +347,7 @@ NGW_RT_1_ID=$(aws --region us-east-1 ec2 describe-route-tables \
   --output text)
 
 if [ -n "${NGW_RT_1_ID}" ]; then
+  echo "Deleting the first NAT Gateway route table for the first NAT gateway..."
   aws --region us-east-1 ec2 delete-route-table \
     --route-table-id $NGW_RT_1_ID
 fi
@@ -340,6 +360,7 @@ NGW_RT_2_ID=$(aws --region us-east-1 ec2 describe-route-tables \
   --output text)
 
 if [ -n "${NGW_RT_2_ID}" ]; then
+  echo "Deleting the second NAT Gateway route table for the second NAT gateway..."
   aws --region us-east-1 ec2 delete-route-table \
     --route-table-id $NGW_RT_2_ID
 fi
@@ -352,6 +373,7 @@ NGW_RT_3_ID=$(aws --region us-east-1 ec2 describe-route-tables \
   --output text)
 
 if [ -n "${NGW_RT_3_ID}" ]; then
+  echo "Deleting the third NAT Gateway route table for the third NAT gateway..."
   aws --region us-east-1 ec2 delete-route-table \
     --route-table-id $NGW_RT_3_ID
 fi
@@ -368,6 +390,7 @@ IGW_RT_ASSOCIATION_ID_3=$(aws --region us-east-1 ec2 describe-route-tables \
   --output text)
 
 if [ -n "${IGW_RT_ASSOCIATION_ID_3}" ]; then
+  echo "Disassociating the third subnet from the Internet Gateway route table..."
   aws --region us-east-1 ec2 disassociate-route-table \
     --association-id $IGW_RT_ASSOCIATION_ID_3
 fi
@@ -380,6 +403,7 @@ IGW_RT_ASSOCIATION_ID_2=$(aws --region us-east-1 ec2 describe-route-tables \
   --output text)
 
 if [ -n "${IGW_RT_ASSOCIATION_ID_2}" ]; then
+  echo "Disassociating the second subnet from the Internet Gateway route table..."
   aws --region us-east-1 ec2 disassociate-route-table \
     --association-id $IGW_RT_ASSOCIATION_ID_2
 fi
@@ -392,6 +416,7 @@ IGW_RT_ASSOCIATION_ID_1=$(aws --region us-east-1 ec2 describe-route-tables \
   --output text)
 
 if [ -n "${IGW_RT_ASSOCIATION_ID_1}" ]; then
+  echo "Disassociating the first subnet from the Internet Gateway route table..."
   aws --region us-east-1 ec2 disassociate-route-table \
     --association-id $IGW_RT_ASSOCIATION_ID_1
 fi
@@ -406,6 +431,7 @@ IGW_RT_ID=$(aws --region us-east-1 ec2 describe-route-tables \
   --output text)
 
 if [ -n "${IGW_RT_ID}" ]; then
+  echo "Deleting the Internet Gateway route table..."
   aws --region us-east-1 ec2 delete-route-table \
     --route-table-id $IGW_RT_ID
 fi
@@ -425,6 +451,7 @@ IGW_ID=$(aws --region us-east-1 ec2 describe-internet-gateways \
   --output text)
 
 if [ -n "${VPC_ID}" ] && [ -n "${IGW_ID}" ]; then
+  echo "Detaching Internet Gateway from VPC..."
   aws --region us-east-1 ec2 detach-internet-gateway \
     --vpc-id $VPC_ID \
     --internet-gateway-id $IGW_ID
@@ -435,6 +462,7 @@ fi
 #
 
 if [ -n "${IGW_ID}" ]; then
+  echo "Deleting Internet Gateway..."
   aws --region us-east-1 ec2 delete-internet-gateway \
     --internet-gateway-id $IGW_ID
 fi
@@ -451,6 +479,7 @@ SUBNET_PRIVATE_1_ID=$(aws --region us-east-1 ec2 describe-subnets \
   --output text)
 
 if [ -n "${SUBNET_PRIVATE_1_ID}" ]; then
+  echo "Deleting the first private subnet..."
   aws --region us-east-1 ec2 delete-subnet \
     --subnet-id $SUBNET_PRIVATE_1_ID
 fi
@@ -463,6 +492,7 @@ SUBNET_PRIVATE_2_ID=$(aws --region us-east-1 ec2 describe-subnets \
   --output text)
 
 if [ -n "${SUBNET_PRIVATE_2_ID}" ]; then
+  echo "Deleting the second private subnet..."
   aws --region us-east-1 ec2 delete-subnet \
     --subnet-id $SUBNET_PRIVATE_2_ID
 fi
@@ -475,6 +505,7 @@ SUBNET_PRIVATE_3_ID=$(aws --region us-east-1 ec2 describe-subnets \
   --output text)
 
 if [ -n "${SUBNET_PRIVATE_3_ID}" ]; then
+  echo "Deleting the third private subnet..."
   aws --region us-east-1 ec2 delete-subnet \
     --subnet-id $SUBNET_PRIVATE_3_ID
 fi
@@ -487,6 +518,7 @@ SUBNET_PUBLIC_1_ID=$(aws --region us-east-1 ec2 describe-subnets \
   --output text)
 
 if [ -n "${SUBNET_PUBLIC_1_ID}" ]; then
+  echo "Deleting the first public subnet..."
   aws --region us-east-1 ec2 delete-subnet \
     --subnet-id $SUBNET_PUBLIC_1_ID
 fi
@@ -499,6 +531,7 @@ SUBNET_PUBLIC_2_ID=$(aws --region us-east-1 ec2 describe-subnets \
   --output text)
 
 if [ -n "${SUBNET_PUBLIC_2_ID}" ]; then
+  echo "Deleting the second public subnet..."
   aws --region us-east-1 ec2 delete-subnet \
     --subnet-id $SUBNET_PUBLIC_2_ID
 fi
@@ -511,6 +544,7 @@ SUBNET_PUBLIC_3_ID=$(aws --region us-east-1 ec2 describe-subnets \
   --output text)
 
 if [ -n "${SUBNET_PUBLIC_3_ID}" ]; then
+  echo "Deleting the third public subnet..."
   aws --region us-east-1 ec2 delete-subnet \
     --subnet-id $SUBNET_PUBLIC_3_ID
 fi
@@ -520,6 +554,13 @@ fi
 #
 
 if [ -n "${VPC_ID}" ]; then
+  echo "Deleting the VPC..."
   aws --region us-east-1 ec2 delete-vpc \
     --vpc-id $VPC_ID
 fi
+
+#
+# Done
+#
+
+echo "Done"
