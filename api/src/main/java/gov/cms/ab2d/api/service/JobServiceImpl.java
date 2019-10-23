@@ -41,9 +41,22 @@ public class JobServiceImpl implements JobService {
     public void cancelJob(String jobId) {
         Job job = jobRepository.findByJobID(jobId);
         if (job == null) {
-            throw new EntityNotFoundException("No job with jobID " +  jobId + "  was found");
+            throw new EntityNotFoundException("No job with jobID " + jobId + "  was found");
         }
 
         jobRepository.cancelJobByJobID(jobId);
+    }
+
+    public Job getJobByJobID(String jobID) {
+        Job job = jobRepository.findByJobID(jobID);
+        if (job == null) {
+            throw new ResourceNotFoundException("No job with jobID " +  jobID + " was found");
+        }
+
+        return job;
+    }
+
+    public Job updateJob(Job job) {
+        return jobRepository.save(job);
     }
 }

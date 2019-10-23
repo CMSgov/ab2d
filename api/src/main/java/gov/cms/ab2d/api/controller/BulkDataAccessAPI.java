@@ -1,10 +1,15 @@
 package gov.cms.ab2d.api.controller;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import gov.cms.ab2d.api.service.JobService;
 import gov.cms.ab2d.api.util.Constants;
+import gov.cms.ab2d.api.util.DateUtil;
 import gov.cms.ab2d.domain.Job;
 import io.swagger.annotations.*;
+import org.hl7.fhir.dstu3.model.DateTimeType;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -15,9 +20,12 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import javax.persistence.EntityNotFoundException;
 import javax.validation.constraints.NotBlank;
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static gov.cms.ab2d.api.util.Constants.API_PREFIX;
+import static gov.cms.ab2d.api.util.DateUtil.convertLocalDateTimeToDate;
 
 @Api(value = "Bulk Data Access API", description =
         "API through which an authenticated and authorized PDP sponsor" +
@@ -41,6 +49,9 @@ public class BulkDataAccessAPI {
     public static final String JOB_NOT_FOUND_ERROR_MSG = "Job not found. " + Constants.GENERIC_FHIR_ERR_MSG;
 
     public static final String JOB_CANCELLED_MSG = "Job canceled";
+
+    @Value("${api.retry-after.delay}")
+    private int retryAfterDelay;
 
     @Autowired
     private JobService jobService;
@@ -119,11 +130,40 @@ public class BulkDataAccessAPI {
     )
     @GetMapping(value = "/Job/{jobId}/$status")
     @ResponseStatus(value = HttpStatus.OK)
-    public ResponseEntity<Void> getJobStatus(
-            @ApiParam(value = "A job identifier", required = true) @PathVariable @NotBlank String jobId) throws IOException {
+    public ResponseEntity<JsonNode> getJobStatus(
+            @ApiParam(value = "A job identifier", required = true) @PathVariable @NotBlank String jobId) {
+        Job job = jobService.getJobByJobID(jobId);
+
+        LocalDateTime now = LocalDateTime.now();
+
+        if (job.getLastPollTime() != null && job.getLastPollTime().plusSeconds(retryAfterDelay).isAfter(now)) {
+            throw new TooManyRequestsException("You are polling too frequently");
+        }
+
+        job.setLastPollTime(now);
+        jobService.updateJob(job);
+
         HttpHeaders responseHeaders = new HttpHeaders();
-        responseHeaders.add("X-Progress", "0%");
-        return new ResponseEntity<>(null, responseHeaders, HttpStatus.ACCEPTED);
+        switch (job.getStatus()) {
+            case SUCCESSFUL:
+                responseHeaders.add("Expires", DateUtil.formatLocalDateTimeAsUTC(job.getExpires()));
+                JobCompletedResponse resp = new JobCompletedResponse();
+                resp.setTransactionTime(new DateTimeType(convertLocalDateTimeToDate(job.getCompletedAt())).toHumanDisplay());
+                resp.setRequest(job.getRequestURL());
+                resp.setRequiresAccessToken(true);
+                resp.setOutput(job.getJobOutput().stream().filter(o -> !o.isError()).map(o -> new JobCompletedResponse.Output(o.getFhirResourceType(), o.getFilePath())).collect(Collectors.toList()));
+                resp.setError(job.getJobOutput().stream().filter(o -> o.isError()).map(o -> new JobCompletedResponse.Output(o.getFhirResourceType(), o.getFilePath())).collect(Collectors.toList()));
+                return new ResponseEntity<>(new ObjectMapper().valueToTree(resp), responseHeaders, HttpStatus.OK);
+            case SUBMITTED:
+                IN_PROGRESS:
+                responseHeaders.add("X-Progress", job.getProgress() + "% complete");
+                responseHeaders.add("Retry-After", Integer.toString(retryAfterDelay));
+                return new ResponseEntity<>(null, responseHeaders, HttpStatus.ACCEPTED);
+            case FAILED:
+                throw new JobProcessingException("Job failed while processing");
+            default:
+                throw new RuntimeException("Unknown status of job");
+        }
     }
 
     @ApiOperation(value = "Downloads a file produced by an export job.", response = String.class,

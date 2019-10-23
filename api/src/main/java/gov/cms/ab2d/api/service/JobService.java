@@ -7,4 +7,8 @@ public interface JobService {
     Job createJob(String resourceTypes, String url);
 
     void cancelJob(String jobId);
+
+    Job getJobByJobID(String jobId);
+
+    Job updateJob(Job job);
 }
