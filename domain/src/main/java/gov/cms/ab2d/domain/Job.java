@@ -24,6 +24,7 @@ public class Job {
     private String jobID;
 
     @ManyToOne
+    @JoinColumn(name = "user_id")
     private User user;
 
     @OneToMany(
