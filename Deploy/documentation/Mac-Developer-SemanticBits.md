@@ -15,7 +15,7 @@
 1. [Install and configure Java](#install-and-configure-java)
    * [Uninstall any existing versions of Java](#uninstall-any-existing-versions-of-java)
    * [Install or verify Java SE Development Kit 12 (JDK12)](#install-or-verify-java-se-development-kit-12-jdk12)
-   * [Configure JDK8](#configure-jdk8)
+   * [Configure JDK12](#configure-jdk12)
 1. [Install and configure terminal tools](#install-and-configure-terminal-tools)
    * [Install or update p7zip](#install-or-update-p7zip)
    * [Install or update pwgen](#install-or-update-pwgen)
@@ -378,7 +378,7 @@
    $ java -version
    ```
   
-### Configure JDK8
+### Configure JDK12
 
 1. Set java environment variable
   
