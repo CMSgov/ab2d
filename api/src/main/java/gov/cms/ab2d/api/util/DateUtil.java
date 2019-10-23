@@ -4,7 +4,9 @@ import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.util.Date;
 
-public class DateUtil {
+public final class DateUtil {
+
+    private DateUtil() { }
 
     // Since this is being sent to the client, return as UTC time
     public static String formatLocalDateTimeAsUTC(LocalDateTime localDateTime) {
