@@ -13,7 +13,8 @@
    * [Make python3 the default python](#make-python3-the-default-python)
    * [Configure pip3](#configure-pip3)
 1. [Install and configure Java](#install-and-configure-java)
-   * [Install or verify Java SE Development Kit 8 (JDK8)](#install-or-verify-java-se-development-kit-8-jdk8)
+   * [Uninstall any existing versions of Java](#uninstall-any-existing-versions-of-java)
+   * [Install or verify Java SE Development Kit 12 (JDK12)](#install-or-verify-java-se-development-kit-12-jdk12)
    * [Configure JDK8](#configure-jdk8)
 1. [Install and configure terminal tools](#install-and-configure-terminal-tools)
    * [Install or update p7zip](#install-or-update-p7zip)
@@ -318,91 +319,76 @@
 
 ## Install and configure Java
 
-### Install or verify Java SE Development Kit 8 (JDK8)
+### Uninstall any existing versions of Java
 
-1. Check for existing Java Development Kit (JDK) 8
+1. Note how you are currently setting the JAVA_HOME environment variable for your terminal shell
 
-   1. Enter the following
+   *Example of JAVA_HOME being set in .bash_profile, .zshrc, etc.:*
+   
+   ```
+   export JAVA_HOME="$(/usr/libexec/java_home)"
+   ```
 
-      ```ShellSession
-      $ java -version
-      ```
-
-   1. Verify that your first line of output looks like this
-
-      > Format:
-
-      ```
-      java version "1.8.0_{version}"
-      ```
-
-      > Example:
-
-      ```
-      java version "1.8.0_212"
-      ```
-
-1. If you already have JDK 8 installed, jump to the following section:
-
-   [Configure JDK8](#configure-jdk8)
-
-1. Open the following site:
-
-   > https://adoptopenjdk.net
-  
-1. Select the **OpenJDK 8 (LTS)** radio button under "Choose a version"
-
-1. Select the **Hotspot** radio button under "Choose a JVM"
-
-1. Select **Latest release**
-
-1. Wait for the download to complete
-
-1. Open the downloaded file
-
-   *Example:*
+1. If you currently setting the JAVA_HOME variable in a manner that differs from the above, change your existing JAVA_HOME line to match the following line
 
    ```
-   OpenJDK8U-jdk_x64_mac_hotspot_8u222b10.pkg
+   export JAVA_HOME="$(/usr/libexec/java_home)"
+   ```
+
+1. If you are currently not setting JAVA_HOME, there are directions to do so in a later section
+
+1. If uninstalling AdoptOpenJDK 8 that was installed as a Mac package, do the following:
+
+   ```ShellSession
+   $ sudo rm -rf /Library/Java/JavaVirtualMachines/adoptopenjdk-8.jdk
+   $ sudo rm -f /private/var/db/receipts/net.adoptopenjdk.8.jdk.*
    ```
    
-1. Select **Continue** on the *Introduction* window
+1. If uninstalling a different version of Java, determine the method to uninstall and uninstall it
 
-1. Select **Continue** on the *License* window
+1. Close open terminals
 
-1. Select **Agree**
+1. Open a terminal
 
-1. Select **Install**
-  
-1. Enter the PIN in the **PIN** textbox
-  
-1. Select **Install Software**
-  
-1. Wait for installation to complete
-  
-1. Select **Close** button on the *Summary* window
-  
-1. Select **Move to Trash**
+1. Ignore the following errors in the output
+
+   ```
+   Unable to find any JVMs matching version "(null)".
+   No Java runtime present, try --request to install.
+   ```
+
+### Install or verify Java SE Development Kit 12 (JDK12)
+
+1. Install Java SE Development Kit 12 (JDK12) using HomeBrew
+
+   ```ShellSession
+   $ brew tap AdoptOpenJDK/openjdk
+   $ brew cask install adoptopenjdk12
+   ```
+
+1. Close all open terminals
+
+1. Open a terminal
+
+1. Note that there is no longer a "JVMs" error message
+
+1. Verify Java by checking the version
+
+   ```ShellSession
+   $ java -version
+   ```
   
 ### Configure JDK8
 
-1. If you terminal window is open, close the terminal window
+1. Set java environment variable
   
-2. Reopen the terminal window
-
-   > This will ensure that **JAVA_HOME** environment variable has been updated (if it already existed).
-
-3. Set java environment variable
-
-   1. Open terminal (if not already open)
-  
-   2. Determine if you already have a "JAVA_HOME" variable
+   1. Determine if you already have a "JAVA_HOME" variable
 
       ```ShellSession
       $ echo $JAVA_HOME
       ```
 
-   3. If the output of the previous command was blank, do the following:
+   1. If the output of the previous command was blank, do the following:
 
       1. Create or open the profile file for your terminal shell
 
@@ -424,28 +410,28 @@
 
          > Open the profile file for your shell.
     
-      2. Add the following text at the end of your profile file:
+      1. Add the following text at the end of your profile file:
    
          ```
          # Set JAVA_HOME environment variable
          export JAVA_HOME="$(/usr/libexec/java_home)"
          ```  
   
-      3. Save and close the file
+      1. Save and close the file
     
-      4. Close the terminal window
+      1. Close the terminal window
 
-      5. Reopen the terminal window
+      1. Reopen the terminal window
   
          > The JAVA_HOME environment variable should now be set within the terminal.
 
-      6. Verify that the "JAVA_HOME" variable is now dispayed
+      1. Verify that the "JAVA_HOME" variable is now dispayed
 
          ```ShellSession
          $ echo $JAVA_HOME
          ```
 
-4. Check java version
+1. Check java version
 
    1. Enter the following
 
@@ -453,14 +439,14 @@
       $ java -version
       ```
 
-   2. Note the output
+   1. Note the output
 
       *Example:*
       
       ```
-      openjdk version "1.8.0_222"
-      OpenJDK Runtime Environment (AdoptOpenJDK)(build 1.8.0_222-b10)
-      OpenJDK 64-Bit Server VM (AdoptOpenJDK)(build 25.222-b10, mixed mode)
+      openjdk version "12.0.2" 2019-07-16
+      OpenJDK Runtime Environment AdoptOpenJDK (build 12.0.2+10)
+      OpenJDK 64-Bit Server VM AdoptOpenJDK (build 12.0.2+10, mixed mode, sharing)
       ```
 
 ## Install and configure terminal tools
