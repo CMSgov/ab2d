@@ -5,6 +5,7 @@
 1. [Appendix A: Destroy complete environment](#appendix-a-destroy-complete-environment)
 1. [Appendix B: Retest terraform using existing AMI](#appendix-b-retest-terraform-using-existing-ami)
 1. [Appendix C: Stop and restart the ECS cluster](#appendix-c-stop-and-restart-the-ecs-cluster)
+1. [Appendix D: Create an S3 bucket with AWS CLI](#appendix-d-create-an-s3-bucket-with-aws-cli)
 
 ## Appendix A: Destroy complete environment
 
@@ -31,13 +32,13 @@
    *Example to destroy the environment, but preserve the networking:*
    
    ```ShellSession
-   $ ./destroy-environment.sh --environment=sbdemo --keep-networking
+   $ ./destroy-environment.sh --environment=sbdemo --keep-network
    ```
 
    *Example to destroy the environment, but preserve both the AMIs and the networking:*
    
    ```ShellSession
-   $ ./destroy-environment.sh --environment=sbdemo --keep-ami --keep-networking
+   $ ./destroy-environment.sh --environment=sbdemo --keep-ami --keep-network
    ```
 
 ## Appendix B: Retest terraform using existing AMI
@@ -126,4 +127,54 @@
    ```ShellSession
    $ ssh centos@10.124.4.163 'docker start ecs-agent'
    $ ssh centos@10.124.5.89 'docker start ecs-agent'
+   ```
+
+## Appendix D: Create an S3 bucket with AWS CLI
+
+1. Create S3 file bucket
+
+   ```ShellSession
+   $ aws s3api create-bucket --bucket cms-ab2d-cloudtrail-demo --region us-east-1
+   ```
+
+1. Note that the "Elastic Load Balancing Account ID for us-east-1" is the following:
+
+   ```
+   127311923021
+   ```
+
+1. Note that the "Elastic Load Balancing Account ID" for other regions can be found here
+
+   > See https://docs.aws.amazon.com/elasticloadbalancing/latest/classic/enable-access-logs.html
+   
+1. Block public access on bucket
+
+   ```ShellSession
+   $ aws s3api put-public-access-block \
+     --bucket cms-ab2d-cloudtrail-demo \
+     --region us-east-1 \
+     --public-access-block-configuration BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true
+   ```
+
+1. Give "Write objects" and "Read bucket permissions" to the "S3 log delivery group" of the "cms-ab2d-cloudtrail-demo" bucket
+
+   ```ShellSession
+   $ aws s3api put-bucket-acl \
+     --bucket cms-ab2d-cloudtrail-demo \
+     --grant-write URI=http://acs.amazonaws.com/groups/s3/LogDelivery \
+     --grant-read-acp URI=http://acs.amazonaws.com/groups/s3/LogDelivery
+   ```
+
+1. Change to the s3 bucket policies directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d/Deploy/aws/s3-bucket-policies
+   ```
+   
+1. Add this bucket policy to the "cms-ab2d-cloudtrail-demo" S3 bucket
+
+   ```ShellSession
+   $ aws s3api put-bucket-policy \
+     --bucket cms-ab2d-cloudtrail-demo \
+     --policy file://cms-ab2d-cloudtrail-bucket-policy.json
    ```
