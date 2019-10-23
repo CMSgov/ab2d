@@ -5,7 +5,6 @@ variable "host_port" {default=8080}
 variable "controller_sec_group_id" {}
 variable "app_sec_group_id" {}
 variable "loadbalancer_subnet_ids" {type=list(string)}
-variable "logging_bucket" {}
 variable "ami_id" {}
 variable "gold_disk_name" {}
 variable "instance_type" {}
