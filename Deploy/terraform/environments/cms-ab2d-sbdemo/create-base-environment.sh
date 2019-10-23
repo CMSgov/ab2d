@@ -9,8 +9,39 @@ cd "$(dirname "$0")"
 
 # Set environment
 export AWS_PROFILE="sbdemo"
-export ENVIRONMENT="sbdemo"
-export CMS_ENV="SBDEMO"
+export DEBUG_LEVEL="WARN"
+
+#
+# Parse options
+#
+
+echo "Parse options..."
+for i in "$@"
+do
+case $i in
+  --environment=*)
+  ENVIRONMENT="${i#*=}"
+  CMS_ENV=$(echo $ENVIRONMENT | tr '[:lower:]' '[:upper:]')
+  shift # past argument=value
+  ;;
+  --debug-level=*)
+  DEBUG_LEVEL=$(echo ${i#*=} | tr '[:lower:]' '[:upper:]')
+  shift # past argument=value
+  ;;
+esac
+done
+
+#
+# Check vars are not empty before proceeding
+#
+
+echo "Check vars are not empty before proceeding..."
+if [ -z "${ENVIRONMENT}" ]; then
+  echo "Try running the script like one of these options:"
+  echo "./create-base-environment.sh --environment=sbdemo"
+  echo "./create-base-environment.sh --environment=sbdemo --debug-level={TRACE|DEBUG|INFO|WARN|ERROR}"
+  exit 1
+fi
 
 # Check if VPN already exists
 VPC_EXISTS=$(aws --region us-east-1 ec2 describe-vpcs --output text \
@@ -449,3 +480,62 @@ echo 'private_subnet_ids = ["'$SUBNET_PRIVATE_1_ID'","'$SUBNET_PRIVATE_2_ID'","'
   >> $ENVIRONMENT.auto.tfvars
 echo 'deployment_controller_subnet_ids = ["'$SUBNET_PUBLIC_1_ID'","'$SUBNET_PUBLIC_2_ID'","'$SUBNET_PUBLIC_3_ID'"]' \
   >> $ENVIRONMENT.auto.tfvars
+
+#
+# Configure terraform
+#
+
+echo "Setting terraform debug level to $DEBUG_LEVEL..."
+export TF_LOG=$DEBUG_LEVEL
+export TF_LOG_PATH=/var/log/terraform/tf.log
+rm -f /var/log/terraform/tf.log
+cd ~/code/ab2d/Deploy/terraform/environments/cms-ab2d-sbdemo
+terraform init
+terraform validate
+
+#
+# Deploy KMS
+#
+
+echo "Deploying KMS..."
+terraform apply \
+  --target module.kms --auto-approve
+
+#
+# Deploy S3
+#
+
+echo "Deploying S3..."
+
+aws s3api create-bucket --bucket cms-ab2d-cloudtrail --region us-east-1
+
+# Block public access on bucket
+
+aws s3api put-public-access-block \
+  --bucket cms-ab2d-cloudtrail \
+  --region us-east-1 \
+  --public-access-block-configuration BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true
+
+# Give "Write objects" and "Read bucket permissions" to the "S3 log delivery group" of the "cms-ab2d-cloudtrail" bucket
+
+aws s3api put-bucket-acl \
+  --bucket cms-ab2d-cloudtrail \
+  --grant-write URI=http://acs.amazonaws.com/groups/s3/LogDelivery \
+  --grant-read-acp URI=http://acs.amazonaws.com/groups/s3/LogDelivery
+
+# Add bucket policy to the "cms-ab2d-cloudtrail" S3 bucket
+
+cd ~/code/ab2d/Deploy/aws/s3-bucket-policies
+
+aws s3api put-bucket-policy \
+  --bucket cms-ab2d-cloudtrail \
+  --policy file://cms-ab2d-cloudtrail-bucket-policy.json
+
+cd ~/code/ab2d/Deploy/terraform/environments/cms-ab2d-sbdemo
+
+terraform apply \
+  --target module.s3 --auto-approve
+
+
+
+
