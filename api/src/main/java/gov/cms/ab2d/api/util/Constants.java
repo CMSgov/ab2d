@@ -10,6 +10,8 @@ public final class Constants {
 
     public static final String API_PREFIX = "/api/v1";
 
+    public static final String OPERATION_OUTCOME = "OperationOutcome";
+
     private Constants() {
     }
 
