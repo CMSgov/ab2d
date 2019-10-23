@@ -1,16 +1,26 @@
+env:
+  global:
+    # The CC_TEST_REPORTER_ID
+    - secure: OY3JWzy8JxPXXqT/YOnYcwFGm46DgQdGMV5dkhDjrBeKgfb2H7ohY6GkAStQv8vV6LE/yu3N6f+XGuPwH2q27Q3I8daYeNY2MtGMt+wokkqhkJWG/XdqQodr+RbkUYN7BHiYQC6ZQKdh9NIA4JIWsNdh8TKrc7cFxy4WM5ACGO9pf6y96GRVT1CHIlwaYzXna+dE0Khbg3EGSa0tcEwLUmYdPGwK+6hiMeX0wTbhDr4YEh5kdnIAFuDDfj+KKmT9FJeTJXywFc9I6YuuYLL+z1g4GMAWCV7PoZdBOLVZQXzP/A8IE1jN7bSNean2risBRXi+PBKohZuvjpLb4UbTTp1+HR5FzPCKpkNvkLmyHpqaDCbDXfXSzMEwWxbj/6vmDK+hO5fqZrI/iO0rNugixxOKEl/ZPXga2Zf1nVxEGzfI86BVNHMegSL1AfLJ5kI+P/0HGnUBbnSAD/kH8k8Rd7r/PHCqoN7VwUhuirI5C9Ulbd6iMm1C8sgq7lOogJvVoS939lP3IcrtNhqmS3Wyc2YsWUE3RlIiJizOQB4K925el41o8qQmDvxIbB8tiDaqfkas3OjDVCr+JjzczXHgjV6Uze5EQovIQ4SvgNidZkjNyei+piJ+lwHx/34jBAC4GNs7uFgkA+RTrNtZCyHK2f2lv7OyNNzWyC3XMRIyQsM=
+    - codeclimate: true
+
 dist: bionic
 language: java
 jdk:
-  - openjdk12
-
+- openjdk12
 cache:
   directories:
-    - $HOME/.m2
+  - "$HOME/.m2"
 
-# Skip built-in Maven install
 install: true
 
-# `mvn test` without `clean` is failing with an odd FindBugs issue.
+before_script:
+  - curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
+  - chmod +x ./cc-test-reporter
+  - ./cc-test-reporter before-build
 script:
   - mvn clean verify
-
+after_script:
+  - export JACOCO_SOURCE_PATH=./api/src/main/java; ./cc-test-reporter format-coverage ./api/target/site/jacoco/jacoco.xml --input-type jacoco -o codeclimate.api.json
+  - ./cc-test-reporter sum-coverage codeclimate.*.json -o coverage/codeclimate.json
+  - if [[ "$TRAVIS_TEST_RESULT" == 0 ]]; then ./cc-test-reporter upload-coverage; fi
