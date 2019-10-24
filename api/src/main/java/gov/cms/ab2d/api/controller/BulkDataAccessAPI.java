@@ -45,6 +45,10 @@ public class BulkDataAccessAPI {
 
     private static final String RESOURCE_TYPE_VALUE = "ExplanationOfBenefits";
 
+    public static final String JOB_NOT_FOUND_ERROR_MSG = "Job not found. " + Constants.GENERIC_FHIR_ERR_MSG;
+
+    public static final String JOB_CANCELLED_MSG = "Job canceled";
+
     @Value("${api.retry-after.delay}")
     private int retryAfterDelay;
 
@@ -77,10 +81,10 @@ public class BulkDataAccessAPI {
             @RequestParam(required = false, name = "_outputFormat") String outputFormat) {
 
         if (resourceTypes != null && !resourceTypes.equals(RESOURCE_TYPE_VALUE)) {
-            throw new IllegalArgumentException("_type must be " + RESOURCE_TYPE_VALUE);
+            throw new InvalidUserInputException("_type must be " + RESOURCE_TYPE_VALUE);
         }
         if (outputFormat != null && !ALLOWABLE_OUTPUT_FORMAT_SET.contains(outputFormat)) {
-            throw new IllegalArgumentException("An _outputFormat of " + outputFormat + " is not valid");
+            throw new InvalidUserInputException("An _outputFormat of " + outputFormat + " is not valid");
         }
 
         Job job = jobService.createJob(resourceTypes, ServletUriComponentsBuilder.fromCurrentRequest().toUriString());
@@ -96,16 +100,17 @@ public class BulkDataAccessAPI {
 
     @ApiOperation(value = "Cancel a pending export job")
     @ApiResponses(value = {
-            @ApiResponse(code = 202, message = "Job canceled"),
-            @ApiResponse(code = 404, message = "Job not found. " + Constants.GENERIC_FHIR_ERR_MSG)}
+            @ApiResponse(code = 202, message = JOB_CANCELLED_MSG),
+            @ApiResponse(code = 404, message = JOB_NOT_FOUND_ERROR_MSG)}
     )
     @DeleteMapping(value = "/Job/{jobId}/$status")
     @ResponseStatus(value = HttpStatus.ACCEPTED)
-    public ResponseEntity<Void> deleteRequest(
+    public ResponseEntity<String> deleteRequest(
             @ApiParam(value = "A job identifier", required = true)
-            @PathVariable @NotBlank String jobId) throws IOException {
-        //String encoded = FHIRUtil.outcomeToJSON(FHIRUtil.getSuccessfulOutcome("OK"));
-        return new ResponseEntity<>(null, null,
+            @PathVariable @NotBlank String jobId) {
+        jobService.cancelJob(jobId);
+
+        return new ResponseEntity<>(JOB_CANCELLED_MSG, null,
                 HttpStatus.ACCEPTED);
     }
 
