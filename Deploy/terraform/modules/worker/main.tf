@@ -138,7 +138,7 @@ resource "aws_launch_configuration" "launch_config" {
   iam_instance_profile = var.iam_instance_profile
   key_name = var.ssh_key_name
   security_groups = [aws_security_group.worker.id]
-  user_data = templatefile("${path.module}/userdata.tpl",{ env = var.env, cluster_name = "ab2d-worker-${var.env}" })
+  user_data = templatefile("${path.module}/userdata.tpl",{ env = var.env, cluster_name = "ab2d-worker-${var.env}", efs_id = var.efs_id })
   lifecycle { create_before_destroy = true }
 }
 
