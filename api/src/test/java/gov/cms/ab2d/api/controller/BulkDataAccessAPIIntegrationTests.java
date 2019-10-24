@@ -94,7 +94,7 @@ public class BulkDataAccessAPIIntegrationTests {
                 .andExpect(jsonPath("$.resourceType", Is.is("OperationOutcome")))
                 .andExpect(jsonPath("$.issue[0].severity", Is.is("error")))
                 .andExpect(jsonPath("$.issue[0].code", Is.is("invalid")))
-                .andExpect(jsonPath("$.issue[0].details.text", Is.is("IllegalArgumentException: _type must be ExplanationOfBenefits")));
+                .andExpect(jsonPath("$.issue[0].details.text", Is.is("InvalidUserInputException: _type must be ExplanationOfBenefits")));
     }
 
     @Test
@@ -106,7 +106,7 @@ public class BulkDataAccessAPIIntegrationTests {
                 .andExpect(jsonPath("$.resourceType", Is.is("OperationOutcome")))
                 .andExpect(jsonPath("$.issue[0].severity", Is.is("error")))
                 .andExpect(jsonPath("$.issue[0].code", Is.is("invalid")))
-                .andExpect(jsonPath("$.issue[0].details.text", Is.is("IllegalArgumentException: An _outputFormat of Invalid is not valid")));
+                .andExpect(jsonPath("$.issue[0].details.text", Is.is("InvalidUserInputException: An _outputFormat of Invalid is not valid")));
     }
 
     @Test
@@ -145,7 +145,7 @@ public class BulkDataAccessAPIIntegrationTests {
                 .andExpect(jsonPath("$.resourceType", Is.is("OperationOutcome")))
                 .andExpect(jsonPath("$.issue[0].severity", Is.is("error")))
                 .andExpect(jsonPath("$.issue[0].code", Is.is("invalid")))
-                .andExpect(jsonPath("$.issue[0].details.text", Is.is("IllegalStateException: Job has a status of " + job.getStatus() + ", so it cannot be cancelled")));
+                .andExpect(jsonPath("$.issue[0].details.text", Is.is("InvalidJobStateTransition: Job has a status of " + job.getStatus() + ", so it cannot be cancelled")));
 
         job.setStatus(JobStatus.CANCELLED);
         jobRepository.saveAndFlush(job);
@@ -155,7 +155,7 @@ public class BulkDataAccessAPIIntegrationTests {
                 .andExpect(jsonPath("$.resourceType", Is.is("OperationOutcome")))
                 .andExpect(jsonPath("$.issue[0].severity", Is.is("error")))
                 .andExpect(jsonPath("$.issue[0].code", Is.is("invalid")))
-                .andExpect(jsonPath("$.issue[0].details.text", Is.is("IllegalStateException: Job has a status of " + job.getStatus() + ", so it cannot be cancelled")));
+                .andExpect(jsonPath("$.issue[0].details.text", Is.is("InvalidJobStateTransition: Job has a status of " + job.getStatus() + ", so it cannot be cancelled")));
 
         job.setStatus(JobStatus.SUCCESSFUL);
         jobRepository.saveAndFlush(job);
@@ -165,7 +165,7 @@ public class BulkDataAccessAPIIntegrationTests {
                 .andExpect(jsonPath("$.resourceType", Is.is("OperationOutcome")))
                 .andExpect(jsonPath("$.issue[0].severity", Is.is("error")))
                 .andExpect(jsonPath("$.issue[0].code", Is.is("invalid")))
-                .andExpect(jsonPath("$.issue[0].details.text", Is.is("IllegalStateException: Job has a status of " + job.getStatus() + ", so it cannot be cancelled")));
+                .andExpect(jsonPath("$.issue[0].details.text", Is.is("InvalidJobStateTransition: Job has a status of " + job.getStatus() + ", so it cannot be cancelled")));
     }
 
     public void testGetStatusWhileInProgress() throws Exception {

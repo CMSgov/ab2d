@@ -40,8 +40,8 @@ public class JobServiceImpl implements JobService {
     public void cancelJob(String jobID) {
         Job job = getJobByJobID(jobID);
 
-        if (job.getStatus() == JobStatus.CANCELLED || job.getStatus() == JobStatus.SUCCESSFUL || job.getStatus() == JobStatus.FAILED) {
-            throw new IllegalStateException("Job has a status of " + job.getStatus() + ", so it cannot be cancelled");
+        if (!job.getStatus().isCancellable()) {
+            throw new InvalidJobStateTransition("Job has a status of " + job.getStatus() + ", so it cannot be cancelled");
         }
 
         jobRepository.cancelJobByJobID(jobID);

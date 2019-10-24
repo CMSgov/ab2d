@@ -81,10 +81,10 @@ public class BulkDataAccessAPI {
             @RequestParam(required = false, name = "_outputFormat") String outputFormat) {
 
         if (resourceTypes != null && !resourceTypes.equals(RESOURCE_TYPE_VALUE)) {
-            throw new IllegalArgumentException("_type must be " + RESOURCE_TYPE_VALUE);
+            throw new InvalidUserInputException("_type must be " + RESOURCE_TYPE_VALUE);
         }
         if (outputFormat != null && !ALLOWABLE_OUTPUT_FORMAT_SET.contains(outputFormat)) {
-            throw new IllegalArgumentException("An _outputFormat of " + outputFormat + " is not valid");
+            throw new InvalidUserInputException("An _outputFormat of " + outputFormat + " is not valid");
         }
 
         Job job = jobService.createJob(resourceTypes, ServletUriComponentsBuilder.fromCurrentRequest().toUriString());

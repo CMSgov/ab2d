@@ -2,6 +2,7 @@ package gov.cms.ab2d.api.controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import gov.cms.ab2d.api.service.InvalidJobStateTransition;
 import gov.cms.ab2d.api.service.ResourceNotFoundException;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.hl7.fhir.dstu3.model.OperationOutcome;
@@ -31,7 +32,7 @@ class ErrorHandler extends ResponseEntityExceptionHandler {
     }
 
     // Most errors that are the fault of the client
-    @ExceptionHandler({IllegalArgumentException.class, IllegalStateException.class})
+    @ExceptionHandler({InvalidUserInputException.class, InvalidJobStateTransition.class})
     public ResponseEntity<JsonNode> assertionException(final Exception e) throws IOException {
         return generateFHIRError(e, HttpStatus.BAD_REQUEST);
     }
