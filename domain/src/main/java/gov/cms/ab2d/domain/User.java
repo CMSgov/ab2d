@@ -25,5 +25,6 @@ public class User {
     private Boolean accountDisabled;
 
     @ManyToOne
+    @JoinColumn(name = "sponsor_id")
     private Sponsor sponsor;
 }
