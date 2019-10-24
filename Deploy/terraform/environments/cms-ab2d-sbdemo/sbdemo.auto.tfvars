@@ -1,3 +1,3 @@
-vpc_id = "vpc-0051364a1dffdd9a5"
-private_subnet_ids = ["subnet-07c3348545dcdebef","subnet-0076520f475301d7c","subnet-0c5fe7bc9d9c954ed"]
-deployment_controller_subnet_ids = ["subnet-033c37003fbe34d9b","subnet-07c40a50d04fa1371","subnet-0a0de9f02ed8d6ff0"]
+vpc_id = "vpc-098dfa5241343e7c1"
+private_subnet_ids = ["subnet-0352338658f29c744","subnet-021d5771ec14c6143","subnet-04ca105e1ec59b537"]
+deployment_controller_subnet_ids = ["subnet-098bbc1710dd5f1af","subnet-089fb86d2f1f8b45b","subnet-06ea053e97303797a"]
