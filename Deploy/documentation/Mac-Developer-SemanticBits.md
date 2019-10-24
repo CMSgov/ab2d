@@ -317,6 +317,12 @@
    $ pip3 install requests
    ```
 
+1. Install boto3
+
+   ```ShellSession
+   $ pip3 install boto3
+   ```
+
 ## Install and configure Java
 
 ### Uninstall any existing versions of Java
