@@ -4,9 +4,17 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 
-import javax.persistence.*;
+import javax.persistence.CascadeType;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
 import javax.validation.constraints.Pattern;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -35,14 +43,14 @@ public class Job {
             fetch = FetchType.EAGER
     )
     private List<JobOutput> jobOutput = new ArrayList<>();
-    private LocalDateTime createdAt;
-    private LocalDateTime completedAt;
+    private OffsetDateTime createdAt;
+    private OffsetDateTime completedAt;
     private String requestURL;
     private JobStatus status;
     private String statusMessage;
     private Integer progress;
-    private LocalDateTime lastPollTime;
-    private LocalDateTime expires;
+    private OffsetDateTime lastPollTime;
+    private OffsetDateTime expires;
 
     @Pattern(regexp = "ExplanationOfBenefits", message = "_type should be ExplanationOfBenefits")
     private String resourceTypes; // for now just limited to ExplanationOfBenefits

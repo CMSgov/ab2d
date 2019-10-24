@@ -6,7 +6,15 @@ import gov.cms.ab2d.api.service.JobService;
 import gov.cms.ab2d.api.util.Constants;
 import gov.cms.ab2d.api.util.DateUtil;
 import gov.cms.ab2d.domain.Job;
-import io.swagger.annotations.*;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiImplicitParam;
+import io.swagger.annotations.ApiImplicitParams;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
+import io.swagger.annotations.ResponseHeader;
+import lombok.extern.slf4j.Slf4j;
 import org.hl7.fhir.dstu3.model.DateTimeType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -14,18 +22,25 @@ import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import javax.validation.constraints.NotBlank;
 import java.io.IOException;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import static gov.cms.ab2d.api.util.Constants.API_PREFIX;
 import static gov.cms.ab2d.api.util.DateUtil.convertLocalDateTimeToDate;
 
+@Slf4j
 @Api(value = "Bulk Data Access API", description =
         "API through which an authenticated and authorized PDP sponsor" +
                 " may request a bulk-data export from a server, receive status information " +
@@ -129,7 +144,7 @@ public class BulkDataAccessAPI {
             @ApiParam(value = "A job identifier", required = true) @PathVariable @NotBlank String jobId) {
         Job job = jobService.getJobByJobID(jobId);
 
-        LocalDateTime now = LocalDateTime.now();
+        OffsetDateTime now = OffsetDateTime.now();
 
         if (job.getLastPollTime() != null && job.getLastPollTime().plusSeconds(retryAfterDelay).isAfter(now)) {
             throw new TooManyRequestsException("You are polling too frequently");
@@ -141,9 +156,15 @@ public class BulkDataAccessAPI {
         HttpHeaders responseHeaders = new HttpHeaders();
         switch (job.getStatus()) {
             case SUCCESSFUL:
-                responseHeaders.add("Expires", DateUtil.formatLocalDateTimeAsUTC(job.getExpires()));
+//                responseHeaders.add("Expires", DateUtil.formatLocalDateTimeAsUTC(job.getExpires());
+                final String ldtFormatted = DateUtil.formatLocalDateTimeAsUTC(job.getExpires().toLocalDateTime());
+                final String offsetDateTimeFormat = job.getExpires().toString();
+                responseHeaders.add("Expires", ldtFormatted);
                 JobCompletedResponse resp = new JobCompletedResponse();
-                resp.setTransactionTime(new DateTimeType(convertLocalDateTimeToDate(job.getCompletedAt())).toHumanDisplay());
+
+                final DateTimeType oldDT = new DateTimeType(convertLocalDateTimeToDate(job.getCompletedAt().toLocalDateTime()));
+                final DateTimeType newDT = new DateTimeType(job.getCompletedAt().toString());
+                resp.setTransactionTime(newDT.toHumanDisplay());
                 resp.setRequest(job.getRequestURL());
                 resp.setRequiresAccessToken(true);
                 resp.setOutput(job.getJobOutput().stream().filter(o -> !o.isError()).map(o -> new JobCompletedResponse.Output(o.getFhirResourceType(), o.getFilePath())).collect(Collectors.toList()));
