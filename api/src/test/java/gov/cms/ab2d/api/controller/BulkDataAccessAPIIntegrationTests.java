@@ -21,6 +21,9 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.ResultActions;
 
+import static gov.cms.ab2d.api.controller.BulkDataAccessAPI.JOB_CANCELLED_MSG;
+import static gov.cms.ab2d.api.controller.BulkDataAccessAPI.JOB_NOT_FOUND_ERROR_MSG;
+
 import java.time.LocalDateTime;
 
 import static gov.cms.ab2d.api.service.JobServiceImpl.INITIAL_JOB_STATUS_MESSAGE;
@@ -91,7 +94,7 @@ public class BulkDataAccessAPIIntegrationTests {
                 .andExpect(jsonPath("$.resourceType", Is.is("OperationOutcome")))
                 .andExpect(jsonPath("$.issue[0].severity", Is.is("error")))
                 .andExpect(jsonPath("$.issue[0].code", Is.is("invalid")))
-                .andExpect(jsonPath("$.issue[0].details.text", Is.is("IllegalArgumentException: _type must be ExplanationOfBenefits")));
+                .andExpect(jsonPath("$.issue[0].details.text", Is.is("InvalidUserInputException: _type must be ExplanationOfBenefits")));
     }
 
     @Test
@@ -103,10 +106,68 @@ public class BulkDataAccessAPIIntegrationTests {
                 .andExpect(jsonPath("$.resourceType", Is.is("OperationOutcome")))
                 .andExpect(jsonPath("$.issue[0].severity", Is.is("error")))
                 .andExpect(jsonPath("$.issue[0].code", Is.is("invalid")))
-                .andExpect(jsonPath("$.issue[0].details.text", Is.is("IllegalArgumentException: An _outputFormat of Invalid is not valid")));
+                .andExpect(jsonPath("$.issue[0].details.text", Is.is("InvalidUserInputException: An _outputFormat of Invalid is not valid")));
     }
 
     @Test
+    public void testDeleteJob() throws Exception {
+        this.mockMvc.perform(get(API_PREFIX + PATIENT_EXPORT_PATH).contentType(MediaType.APPLICATION_JSON));
+        Job job = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
+
+        this.mockMvc.perform(delete(API_PREFIX + "/Job/" + job.getJobID() + "/$status"))
+            .andExpect(status().is(202))
+            .andExpect(content().string(JOB_CANCELLED_MSG));
+
+        Job cancelledJob = jobRepository.findByJobID(job.getJobID());
+        Assert.assertEquals(JobStatus.CANCELLED, cancelledJob.getStatus());
+    }
+
+    @Test
+    public void testDeleteNonExistentJob() throws Exception {
+        this.mockMvc.perform(delete(API_PREFIX + "/Job/NonExistentJob/$status"))
+                .andExpect(status().is(404))
+                .andExpect(jsonPath("$.resourceType", Is.is("OperationOutcome")))
+                .andExpect(jsonPath("$.issue[0].severity", Is.is("error")))
+                .andExpect(jsonPath("$.issue[0].code", Is.is("invalid")))
+                .andExpect(jsonPath("$.issue[0].details.text", Is.is("ResourceNotFoundException: No job with jobID NonExistentJob was found")));;
+    }
+
+    @Test
+    public void testDeleteJobsInInvalidState() throws Exception {
+        this.mockMvc.perform(get(API_PREFIX + PATIENT_EXPORT_PATH).contentType(MediaType.APPLICATION_JSON));
+        Job job = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
+
+        job.setStatus(JobStatus.FAILED);
+        jobRepository.saveAndFlush(job);
+
+        this.mockMvc.perform(delete(API_PREFIX + "/Job/" + job.getJobID() + "/$status"))
+                .andExpect(status().is(400))
+                .andExpect(jsonPath("$.resourceType", Is.is("OperationOutcome")))
+                .andExpect(jsonPath("$.issue[0].severity", Is.is("error")))
+                .andExpect(jsonPath("$.issue[0].code", Is.is("invalid")))
+                .andExpect(jsonPath("$.issue[0].details.text", Is.is("InvalidJobStateTransition: Job has a status of " + job.getStatus() + ", so it cannot be cancelled")));
+
+        job.setStatus(JobStatus.CANCELLED);
+        jobRepository.saveAndFlush(job);
+
+        this.mockMvc.perform(delete(API_PREFIX + "/Job/" + job.getJobID() + "/$status"))
+                .andExpect(status().is(400))
+                .andExpect(jsonPath("$.resourceType", Is.is("OperationOutcome")))
+                .andExpect(jsonPath("$.issue[0].severity", Is.is("error")))
+                .andExpect(jsonPath("$.issue[0].code", Is.is("invalid")))
+                .andExpect(jsonPath("$.issue[0].details.text", Is.is("InvalidJobStateTransition: Job has a status of " + job.getStatus() + ", so it cannot be cancelled")));
+
+        job.setStatus(JobStatus.SUCCESSFUL);
+        jobRepository.saveAndFlush(job);
+
+        this.mockMvc.perform(delete(API_PREFIX + "/Job/" + job.getJobID() + "/$status"))
+                .andExpect(status().is(400))
+                .andExpect(jsonPath("$.resourceType", Is.is("OperationOutcome")))
+                .andExpect(jsonPath("$.issue[0].severity", Is.is("error")))
+                .andExpect(jsonPath("$.issue[0].code", Is.is("invalid")))
+                .andExpect(jsonPath("$.issue[0].details.text", Is.is("InvalidJobStateTransition: Job has a status of " + job.getStatus() + ", so it cannot be cancelled")));
+    }
+
     public void testGetStatusWhileInProgress() throws Exception {
         MvcResult mvcResult = this.mockMvc.perform(get(API_PREFIX + PATIENT_EXPORT_PATH).contentType(MediaType.APPLICATION_JSON))
             .andReturn();

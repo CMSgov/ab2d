@@ -37,6 +37,16 @@ public class JobServiceImpl implements JobService {
         return jobRepository.save(job);
     }
 
+    public void cancelJob(String jobID) {
+        Job job = getJobByJobID(jobID);
+
+        if (!job.getStatus().isCancellable()) {
+            throw new InvalidJobStateTransition("Job has a status of " + job.getStatus() + ", so it cannot be cancelled");
+        }
+
+        jobRepository.cancelJobByJobID(jobID);
+    }
+
     public Job getJobByJobID(String jobID) {
         Job job = jobRepository.findByJobID(jobID);
         if (job == null) {
