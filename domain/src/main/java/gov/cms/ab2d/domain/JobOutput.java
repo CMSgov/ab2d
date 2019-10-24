@@ -15,6 +15,7 @@ public class JobOutput {
     private Long id;
 
     @ManyToOne
+    @JoinColumn(name = "job_id")
     private Job job;
 
     @Column(columnDefinition = "text")
