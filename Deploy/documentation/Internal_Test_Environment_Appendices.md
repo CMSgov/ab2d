@@ -6,6 +6,7 @@
 1. [Appendix B: Retest terraform using existing AMI](#appendix-b-retest-terraform-using-existing-ami)
 1. [Appendix C: Stop and restart the ECS cluster](#appendix-c-stop-and-restart-the-ecs-cluster)
 1. [Appendix D: Create an S3 bucket with AWS CLI](#appendix-d-create-an-s3-bucket-with-aws-cli)
+1. [Appendix E: Verify EFS mounting on worker node](#appendix-e-verify-efs-mounting-on-worker-node)
 
 ## Appendix A: Destroy complete environment
 
@@ -178,3 +179,87 @@
      --bucket cms-ab2d-cloudtrail-demo \
      --policy file://cms-ab2d-cloudtrail-bucket-policy.json
    ```
+
+## Appendix E: Verify EFS mounting on worker node
+
+1. Set target profile
+
+   *Example for the "semanticbitsdemo" AWS account:*
+   
+   ```ShellSession
+   $ export AWS_PROFILE="sbdemo"
+   ```
+
+1. Get and note the file system id of EFS
+
+   1. Enter the following
+   
+      ```ShellSession
+      $ aws efs describe-file-systems | grep FileSystemId
+      ```
+
+   1. Note the output
+
+      *Format:*
+      
+      ```
+      "FileSystemId": "{efs file system id}",
+      ```
+
+      *Example:*
+      
+      ```
+      "FileSystemId": "fs-2a03d9ab",
+      ```
+
+1. Connect to deployment controller
+
+   *Format:*
+
+   ```ShellSession
+   $ ssh centos@{public ip of deployment controller}
+   ```
+
+   *Example:*
+   
+   ```ShellSession
+   $ ssh centos@3.233.33.144
+   ```
+   
+1. Connect to a worker node from the deployment controller
+
+   *Format:*
+
+   ```ShellSession
+   $ ssh centos@{private ip of a worker node}
+   ```
+   
+   *Example:*
+
+   ```ShellSession
+   $ ssh centos@10.124.4.104
+   ```
+   
+1. Examine the file system table
+
+   1. Enter the following
+   
+      ```ShellSession
+      $ cat /etc/fstab
+      ```
+
+   1. Examine the EFS line in the output
+
+      *Format:*
+      
+      ```
+      {efs file system id} /mnt/efs efs _netdev,tls 0 0
+      ```
+      
+      *Example:*
+      
+      ```
+      fs-2a03d9ab /mnt/efs efs _netdev,tls 0 0
+      ```
+
+   1. Verify that the file system id matches the deployed EFS
