@@ -12,6 +12,7 @@ cd "$(dirname "$0")"
 # Configure environment setting
 export AWS_PROFILE="sbdemo"
 export CMS_ENV="SBDEMO"
+export ENVIRONMENT_HELP="sbdemo"
 
 #
 # Parse options
@@ -44,10 +45,10 @@ done
 echo "Check vars are not empty before proceeding..."
 if [ -z "${ENVIRONMENT}" ]; then
   echo "Try running the script like one of these options:"
-  echo "./destroy-environment.sh --environment=sbdemo"
-  echo "./destroy-environment.sh --environment=sbdemo --keep-ami"
-  echo "./destroy-environment.sh --environment=sbdemo --keep-networking"
-  echo "./destroy-environment.sh --environment=sbdemo --keep-ami --keep-networking"
+  echo "./destroy-environment.sh --environment=$ENVIRONMENT_HELP"
+  echo "./destroy-environment.sh --environment=$ENVIRONMENT_HELP --keep-ami"
+  echo "./destroy-environment.sh --environment=$ENVIRONMENT_HELP --keep-networking"
+  echo "./destroy-environment.sh --environment=$ENVIRONMENT_HELP --keep-ami --keep-networking"
   exit 1
 fi
 
@@ -61,7 +62,7 @@ LOAD_BALANCERS_EXIST=$(aws --region us-east-1 elbv2 describe-load-balancers \
   --output text)
 if [ -n "${LOAD_BALANCERS_EXIST}" ]; then
   ALB_ARN=$(aws --region us-east-1 elbv2 describe-load-balancers \
-    --name=ab2d-sbdemo \
+    --name=ab2d-$ENVIRONMENT \
     --query 'LoadBalancers[*].[LoadBalancerArn]' \
     --output text)
 fi
@@ -85,7 +86,7 @@ terraform destroy \
   --target module.api --auto-approve
 
 #
-# Destroy db, efs, s3, and kms modules
+# Destroy db and efs modules
 #
 
 # Destroy the environment of the "db" module
@@ -98,13 +99,22 @@ echo "Destroying EFS components..."
 terraform destroy \
   --target module.efs --auto-approve
 
+#
+# Destroy all S3 buckets except for the "cms-ab2d-automation" bucket
+#
+
 # Destroy the environment of the "s3" module
+
 echo "Destroying S3 components..."
+
 terraform destroy \
   --target module.s3 --auto-approve
 
+aws s3 rm s3://cms-ab2d-cloudtrail/ab2d-$ENVIRONMENT \
+  --recursive
+
 #
-# Destroy the environment of the "kms" module
+# Disable "kms" key
 #
 
 # Rerun db destroy again to ensure that it is in correct state
@@ -114,9 +124,18 @@ terraform destroy \
   --target module.db --auto-approve
 
 # Destroy the KMS module
-echo "Destroying KMS components..."
-terraform destroy \
-  --target module.kms --auto-approve
+echo "Disabling KMS key..."
+KMS_KEY_ID=$(aws kms describe-key --key-id alias/KMS-AB2D-$CMS_ENV --query="KeyMetadata.KeyId")
+if [ -n "$KMS_KEY_ID" ]; then
+  ./disable-kms-key.py $KMS_KEY_ID
+fi
+
+#
+# Destroy tfstate environment in S3
+#
+
+aws s3 rm s3://cms-ab2d-automation/cms-ab2d-$ENVIRONMENT \
+  --recursive
 
 #
 # Deregister the application AMI
