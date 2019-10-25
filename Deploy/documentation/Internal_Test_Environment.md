@@ -13,7 +13,6 @@
    * [Create instance profiles](#create-instance-profiles)
    * [Configure IAM user deployers](#configure-iam-user-deployers)
    * [Create AWS Elastic Container Registry repositories for images](#create-aws-elastic-container-registry-repositories-for-images)
-   * [Create database secrets in AWS Secrets Manager](#create-database-secrets-in-aws-secrets-manager)
 1. [Deploy to test environment](#deploy-to-test-environment)
    * [Create base aws environment](#create-base-aws-environment)
    * [Configure terraform](#configure-terraform)
@@ -409,36 +408,6 @@
    $ docker push 114601554524.dkr.ecr.us-east-1.amazonaws.com/ab2d_worker:latest
    ```
 
-### Create database secrets in AWS Secrets Manager
-
-1. Set target profile
-
-   *Example for the "semanticbitsdemo" AWS account:*
-   
-   ```ShellSession
-   $ export AWS_PROFILE="sbdemo"
-   ```
-   
-1. Change to the environment directory
-
-   ```ShellSession
-   $ cd ~/code/ab2d/Deploy/terraform/environments/cms-ab2d-sbdemo
-   ```
-
-1. Get KMS key id
-
-   ```ShellSession
-   KMS_KEY_ID=$(aws kms describe-key --key-id=alias/KMS-AB2D-SBDEMO --query="KeyMetadata.KeyId")
-   ```
-   
-1. Create the database secrets in AWS Secrets Manager
-
-   1. Enter the following
-
-      ```ShellSession
-      $ ./create-database-secrets.py sbdemo $KMS_KEY_ID
-      ```
-
 ## Deploy to test environment
 
 ### Create base aws environment
@@ -452,13 +421,13 @@
 1. Create base AWS environment
 
    ```ShellSession
-   $ ./create-base-environment.sh --environment=sbdemo
+   $ ./create-base-environment.sh --environment=sbdemo --database-secret-datetime="2019-10-25-14-55-01"
    ```
 
 1. If you get a "Skipping network creation since VPC already exists" message, enter the following
 
    ```ShellSession
-   $ ./create-base-environment.sh --environment=sbdemo --skip-network
+   $ ./create-base-environment.sh --environment=sbdemo --database-secret-datetime="2019-10-25-14-55-01" --skip-network
    ```
 
 ### Deploy AWS dependency modules

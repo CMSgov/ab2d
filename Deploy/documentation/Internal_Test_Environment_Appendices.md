@@ -7,6 +7,7 @@
 1. [Appendix C: Stop and restart the ECS cluster](#appendix-c-stop-and-restart-the-ecs-cluster)
 1. [Appendix D: Create an S3 bucket with AWS CLI](#appendix-d-create-an-s3-bucket-with-aws-cli)
 1. [Appendix E: Verify EFS mounting on worker node](#appendix-e-verify-efs-mounting-on-worker-node)
+1. [Appendix F: Verify PostgreSQL](#appendix-f-verify-postgresql)
 
 ## Appendix A: Destroy complete environment
 
@@ -263,3 +264,37 @@
       ```
 
    1. Verify that the file system id matches the deployed EFS
+
+## Appendix F: Verify PostgreSQL
+
+1. Connect to the deployment controller instance
+
+   *Format:*
+
+   ```ShellSession
+   $ ssh centos@{public ip address of deployment controller}
+   ```
+   
+   *Example:*
+   
+   ```ShellSession
+   $ ssh centos@52.206.57.78
+   ```
+
+1. Get database endpoint
+
+   ```ShellSession
+   $ DB_ENDPOINT=$(aws rds describe-db-instances --db-instance-identifier cms-ab2d-sbdemo --query="DBInstances[0].Endpoint.Address")
+   ```
+   
+1. Test connecting to database
+
+   1. Enter the following
+   
+      *Format:*
+   
+      ```ShellSession
+      $ psql --host $DB_ENDPOINT --username={database username} --dbname=postgres
+      ```
+
+   1. Enter database password when prompted
