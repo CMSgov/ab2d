@@ -8,7 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.UUID;
 
 @Service
@@ -30,7 +30,7 @@ public class JobServiceImpl implements JobService {
         job.setRequestURL(url);
         job.setStatus(JobStatus.SUBMITTED);
         job.setStatusMessage(INITIAL_JOB_STATUS_MESSAGE);
-        job.setCreatedAt(LocalDateTime.now());
+        job.setCreatedAt(OffsetDateTime.now());
         job.setProgress(0);
         job.setUser(userService.getCurrentUser());
 
