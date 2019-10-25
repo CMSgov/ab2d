@@ -2,10 +2,10 @@ package gov.cms.ab2d.api.controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import gov.cms.ab2d.api.service.JobService;
+import gov.cms.ab2d.common.service.JobService;
 import gov.cms.ab2d.api.util.Constants;
-import gov.cms.ab2d.api.util.DateUtil;
-import gov.cms.ab2d.domain.Job;
+import gov.cms.ab2d.common.util.DateUtil;
+import gov.cms.ab2d.common.model.Job;
 import io.swagger.annotations.*;
 import org.hl7.fhir.dstu3.model.DateTimeType;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,7 +24,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import static gov.cms.ab2d.api.util.Constants.API_PREFIX;
-import static gov.cms.ab2d.api.util.DateUtil.convertLocalDateTimeToDate;
+import static gov.cms.ab2d.common.util.DateUtil.convertLocalDateTimeToDate;
 
 @Api(value = "Bulk Data Access API", description =
         "API through which an authenticated and authorized PDP sponsor" +

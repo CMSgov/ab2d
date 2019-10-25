@@ -1,6 +1,6 @@
 package gov.cms.ab2d.common.service;
 
-//import gov.cms.ab2d.api.SpringBootApp;
+import gov.cms.ab2d.common.SpringBootApp;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.JobOutput;
@@ -17,12 +17,12 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import static gov.cms.ab2d.common.service.JobServiceImpl.INITIAL_JOB_STATUS_MESSAGE;
-//import static gov.cms.ab2d.api.util.Constants.OPERATION_OUTCOME;
+import static gov.cms.ab2d.common.util.Constants.OPERATION_OUTCOME;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
 
 @RunWith(SpringRunner.class)
-//@SpringBootTest(classes = SpringBootApp.class)
+@SpringBootTest(classes = SpringBootApp.class)
 public class JobServiceTest {
 
     @Autowired
@@ -142,7 +142,7 @@ public class JobServiceTest {
 
         JobOutput errorJobOutput = new JobOutput();
         errorJobOutput.setError(true);
-        errorJobOutput.setFhirResourceType("");//Constants.OPERATION_OUTCOME);
+        errorJobOutput.setFhirResourceType(OPERATION_OUTCOME);
         errorJobOutput.setFilePath("http://localhost/path/error.ndjson");
         errorJobOutput.setJob(job);
 
@@ -168,7 +168,7 @@ public class JobServiceTest {
 
         JobOutput updatedErrorOutput = updatedJob.getJobOutput().get(1);
         Assert.assertEquals(true, updatedErrorOutput.isError());
-        Assert.assertEquals("", updatedErrorOutput.getFhirResourceType()); //op outcome
+        Assert.assertEquals(OPERATION_OUTCOME, updatedErrorOutput.getFhirResourceType());
         Assert.assertEquals("http://localhost/path/error.ndjson", updatedErrorOutput.getFilePath());
     }
 }

@@ -11,7 +11,7 @@ import org.springframework.stereotype.Repository;
 public interface JobRepository extends JpaRepository<Job, Long> {
 
     @Modifying
-    @Query("update Job j set j.status = gov.cms.ab2d.model.JobStatus.CANCELLED where j.jobID = :jobID")
+    @Query("update Job j set j.status = gov.cms.ab2d.common.model.JobStatus.CANCELLED where j.jobID = :jobID")
     void cancelJobByJobID(@Param("jobID") String jobID);
 
     Job findByJobID(String jobId);

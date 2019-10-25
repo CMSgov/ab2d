@@ -1,6 +1,6 @@
 package gov.cms.ab2d.common.service;
 
-//import gov.cms.ab2d.api.SpringBootApp;
+import gov.cms.ab2d.common.SpringBootApp;
 import gov.cms.ab2d.common.model.User;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -11,7 +11,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 import static org.junit.Assert.assertEquals;
 
 @RunWith(SpringRunner.class)
-//@SpringBootTest(classes = SpringBootApp.class)
+@SpringBootTest(classes = SpringBootApp.class)
 public class UserServiceTest {
 
     @Autowired
