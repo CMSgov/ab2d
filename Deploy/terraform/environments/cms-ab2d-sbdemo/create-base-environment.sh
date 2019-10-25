@@ -24,6 +24,10 @@ case $i in
   CMS_ENV=$(echo $ENVIRONMENT | tr '[:lower:]' '[:upper:]')
   shift # past argument=value
   ;;
+  --database-secret-datetime=*)
+  DATABASE_SECRET_DATETIME=$(echo ${i#*=})
+  shift # past argument=value
+  ;;  
   --debug-level=*)
   DEBUG_LEVEL=$(echo ${i#*=} | tr '[:lower:]' '[:upper:]')
   shift # past argument=value
@@ -40,12 +44,48 @@ done
 #
 
 echo "Check vars are not empty before proceeding..."
-if [ -z "${ENVIRONMENT}" ]; then
+if [ -z "${ENVIRONMENT}" ] || [ -z "${DATABASE_SECRET_DATETIME}" ]; then
   echo "Try running the script like one of these options:"
-  echo "./create-base-environment.sh --environment=sbdemo"
-  echo "./create-base-environment.sh --environment=sbdemo --debug-level={TRACE|DEBUG|INFO|WARN|ERROR}"
+  echo "./create-base-environment.sh --environment=sbdemo --database-secret-datetime={YYYY-MM-DD-HH-MM-SS}"
+  echo "./create-base-environment.sh --environment=sbdemo --database-secret-datetime={YYYY-MM-DD-HH-MM-SS} --skip-network"
+  echo "./create-base-environment.sh --environment=sbdemo --database-secret-datetime={YYYY-MM-DD-HH-MM-SS} --debug-level={TRACE|DEBUG|INFO|WARN|ERROR}"
   exit 1
 fi
+
+#
+# Get required user entry
+#
+
+# Get database user (if exists)
+DATABASE_USER=$(./get-database-secret.py $ENVIRONMENT database_user $DATABASE_SECRET_DATETIME)
+
+# Create database user secret (if doesn't exist)
+if [ -z "${DATABASE_USER}" ]; then
+  ./create-database-secret.py $ENVIRONMENT database_user $KMS_KEY_ID $DATABASE_SECRET_DATETIME
+  DATABASE_USER=$(./get-database-secret.py $ENVIRONMENT database_user $DATABASE_SECRET_DATETIME)
+fi
+
+# Get database password (if exists)
+DATABASE_PASSWORD=$(./get-database-secret.py $ENVIRONMENT database_password $DATABASE_SECRET_DATETIME)
+
+# Create database password secret (if doesn't exist)
+if [ -z "${DATABASE_PASSWORD}" ]; then
+  ./create-database-secret.py $ENVIRONMENT database_password $KMS_KEY_ID $DATABASE_SECRET_DATETIME
+  DATABASE_PASSWORD=$(./get-database-secret.py $ENVIRONMENT database_password $DATABASE_SECRET_DATETIME)
+fi
+
+# Get database name (if exists)
+DATABASE_NAME=$(./get-database-secret.py $ENVIRONMENT database_name $DATABASE_SECRET_DATETIME)
+
+# Create database name secret (if doesn't exist)
+if [ -z "${DATABASE_NAME}" ]; then
+  ./create-database-secret.py $ENVIRONMENT database_name $KMS_KEY_ID $DATABASE_SECRET_DATETIME
+  DATABASE_NAME=$(./get-database-secret.py $ENVIRONMENT database_name $DATABASE_SECRET_DATETIME)
+fi
+
+#
+# Create networking
+#
 
 # Check if VPN already exists
 VPC_EXISTS=$(aws --region us-east-1 ec2 describe-vpcs --output text \
@@ -63,9 +103,10 @@ if [ -z SKIP_NETWORK ] && [ -z "${VPC_EXISTS}" ]; then
 else
   if [ -z "${SKIP_NETWORK}" ]; then # Exit shell script if VPC already exists
     echo "Skipping network creation since VPC already exists."
+    echo "Do you want to add the \"--skip-network\" parameter?"
     exit
   else
-    echo "Skipping network creation since VPC already exists."
+      echo "Skipping network creation since VPC already exists."
   fi
 fi
 
@@ -683,3 +724,30 @@ terraform apply \
 terraform apply \
   --target module.efs --auto-approve
 
+#
+# Deploy db
+#
+
+terraform apply \
+  --var "db_username=${DATABASE_USER}" \
+  --var "db_password=${DATABASE_PASSWORD}" \
+  --var "db_name=${DATABASE_NAME}" \
+  --target module.db --auto-approve
+
+#
+# AMI Generation for application nodes
+#
+
+# *** TO DO ***
+
+#
+# AMI Generation for Jenkins node
+#
+
+# *** TO DO ***
+
+#
+# Deploy AWS application modules
+#
+
+# *** TO DO ***
