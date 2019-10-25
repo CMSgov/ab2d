@@ -47,8 +47,8 @@ if [ -z "${ENVIRONMENT}" ]; then
   echo "Try running the script like one of these options:"
   echo "./destroy-environment.sh --environment=$ENVIRONMENT_HELP"
   echo "./destroy-environment.sh --environment=$ENVIRONMENT_HELP --keep-ami"
-  echo "./destroy-environment.sh --environment=$ENVIRONMENT_HELP --keep-networking"
-  echo "./destroy-environment.sh --environment=$ENVIRONMENT_HELP --keep-ami --keep-networking"
+  echo "./destroy-environment.sh --environment=$ENVIRONMENT_HELP --keep-network"
+  echo "./destroy-environment.sh --environment=$ENVIRONMENT_HELP --keep-ami --keep-network"
   exit 1
 fi
 
