@@ -2,10 +2,10 @@ package gov.cms.ab2d.api.controller;
 
 import gov.cms.ab2d.api.SpringBootApp;
 import gov.cms.ab2d.common.repository.JobRepository;
-import gov.cms.ab2d.common.util.DateUtil;
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.JobOutput;
 import gov.cms.ab2d.common.model.JobStatus;
+
 import org.hamcrest.core.Is;
 import org.hl7.fhir.dstu3.model.DateTimeType;
 import org.junit.Assert;
@@ -23,14 +23,22 @@ import org.springframework.test.web.servlet.ResultActions;
 
 import static gov.cms.ab2d.api.controller.BulkDataAccessAPI.JOB_CANCELLED_MSG;
 
-import java.time.LocalDateTime;
-
 import static gov.cms.ab2d.common.service.JobServiceImpl.INITIAL_JOB_STATUS_MESSAGE;
 import static gov.cms.ab2d.api.util.Constants.API_PREFIX;
 import static gov.cms.ab2d.common.util.Constants.OPERATION_OUTCOME;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = SpringBootApp.class, webEnvironment = SpringBootTest.WebEnvironment.MOCK)
@@ -195,9 +203,9 @@ public class BulkDataAccessAPIIntegrationTests {
         Job job = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
         job.setStatus(JobStatus.SUCCESSFUL);
         job.setProgress(100);
-        LocalDateTime expireDate = LocalDateTime.now().plusDays(100);
+        OffsetDateTime expireDate = OffsetDateTime.now().plusDays(100);
         job.setExpires(expireDate);
-        LocalDateTime now = LocalDateTime.now();
+        OffsetDateTime now = OffsetDateTime.now();
         job.setCompletedAt(now);
 
         JobOutput jobOutput = new JobOutput();
@@ -215,10 +223,11 @@ public class BulkDataAccessAPIIntegrationTests {
 
         jobRepository.saveAndFlush(job);
 
+        final ZonedDateTime jobExpiresUTC = ZonedDateTime.ofInstant(job.getExpires().toInstant(), ZoneId.of("UTC"));
         this.mockMvc.perform(get(statusUrl).contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().is(200))
-                .andExpect(header().string("Expires", DateUtil.formatLocalDateTimeAsUTC(expireDate)))
-                .andExpect(jsonPath("$.transactionTime", Is.is(new DateTimeType(DateUtil.convertLocalDateTimeToDate(now)).toHumanDisplay())))
+                .andExpect(header().string("Expires", DateTimeFormatter.RFC_1123_DATE_TIME.format(jobExpiresUTC)))
+                .andExpect(jsonPath("$.transactionTime", Is.is(new DateTimeType(now.toString()).toHumanDisplay())))
                 .andExpect(jsonPath("$.request", Is.is(job.getRequestURL())))
                 .andExpect(jsonPath("$.requiresAccessToken", Is.is(true)))
                 .andExpect(jsonPath("$.output[0].type", Is.is("ExplanationOfBenefits")))
@@ -235,7 +244,7 @@ public class BulkDataAccessAPIIntegrationTests {
 
         Job job = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
         job.setStatus(JobStatus.FAILED);
-        LocalDateTime expireDate = LocalDateTime.now().plusDays(100);
+        OffsetDateTime expireDate = OffsetDateTime.now().plusDays(100);
         job.setExpires(expireDate);
 
         jobRepository.saveAndFlush(job);
@@ -255,7 +264,7 @@ public class BulkDataAccessAPIIntegrationTests {
 
         Job job = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
         job.setStatus(JobStatus.FAILED);
-        LocalDateTime expireDate = LocalDateTime.now().plusDays(100);
+        OffsetDateTime expireDate = OffsetDateTime.now().plusDays(100);
         job.setExpires(expireDate);
 
         jobRepository.saveAndFlush(job);
@@ -275,7 +284,7 @@ public class BulkDataAccessAPIIntegrationTests {
 
         Job job = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
         job.setStatus(JobStatus.FAILED);
-        LocalDateTime expireDate = LocalDateTime.now().plusDays(100);
+        OffsetDateTime expireDate = OffsetDateTime.now().plusDays(100);
         job.setExpires(expireDate);
 
         jobRepository.saveAndFlush(job);
@@ -295,7 +304,7 @@ public class BulkDataAccessAPIIntegrationTests {
 
         Job job = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
         job.setStatus(JobStatus.FAILED);
-        LocalDateTime expireDate = LocalDateTime.now().plusDays(100);
+        OffsetDateTime expireDate = OffsetDateTime.now().plusDays(100);
         job.setExpires(expireDate);
 
         jobRepository.saveAndFlush(job);

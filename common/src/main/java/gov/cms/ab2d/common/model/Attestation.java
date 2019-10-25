@@ -3,8 +3,13 @@ package gov.cms.ab2d.common.model;
 import lombok.Getter;
 import lombok.Setter;
 
-import javax.persistence.*;
-import java.time.LocalDateTime;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import java.time.OffsetDateTime;
 
 @Entity
 @Getter
@@ -26,7 +31,8 @@ public class Attestation {
     @JoinColumn(name = "contract_id")
     private Contract contract;
 
-    private LocalDateTime attestationDate;
+    @Column(columnDefinition = "TIMESTAMP WITH TIME ZONE")
+    private OffsetDateTime attestationDate;
 
 
 }
