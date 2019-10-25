@@ -42,6 +42,7 @@ module "db" {
   multi_az                = var.db_multi_az
   username                = var.db_username
   password                = var.db_password
+  name                    = var.db_name
   skip_final_snapshot     = var.db_skip_final_snapshot
 }
 
