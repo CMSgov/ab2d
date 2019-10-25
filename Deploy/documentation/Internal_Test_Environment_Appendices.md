@@ -267,6 +267,20 @@
 
 ## Appendix F: Verify PostgreSQL
 
+1. Get database endpoint
+
+   ```ShellSession
+   $ aws rds describe-db-instances --db-instance-identifier cms-ab2d-sbdemo --query="DBInstances[0].Endpoint.Address"
+   ```
+
+1. Note the output (this is the psql host)
+
+   *Example:*
+   
+   ```
+   cms-ab2d-sbdemo.cr0bialx3sap.us-east-1.rds.amazonaws.com
+   ```
+   
 1. Connect to the deployment controller instance
 
    *Format:*
@@ -280,12 +294,6 @@
    ```ShellSession
    $ ssh centos@52.206.57.78
    ```
-
-1. Get database endpoint
-
-   ```ShellSession
-   $ DB_ENDPOINT=$(aws rds describe-db-instances --db-instance-identifier cms-ab2d-sbdemo --query="DBInstances[0].Endpoint.Address")
-   ```
    
 1. Test connecting to database
 
@@ -294,7 +302,7 @@
       *Format:*
    
       ```ShellSession
-      $ psql --host $DB_ENDPOINT --username={database username} --dbname=postgres
+      $ psql --host {host} --username={database username} --dbname={database name}
       ```
 
    1. Enter database password when prompted
