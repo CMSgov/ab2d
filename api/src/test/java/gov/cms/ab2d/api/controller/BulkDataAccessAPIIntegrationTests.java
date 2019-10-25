@@ -2,14 +2,12 @@ package gov.cms.ab2d.api.controller;
 
 import gov.cms.ab2d.api.SpringBootApp;
 import gov.cms.ab2d.api.repository.JobRepository;
-import gov.cms.ab2d.api.util.DateUtil;
 import gov.cms.ab2d.domain.Job;
 import gov.cms.ab2d.domain.JobOutput;
 import gov.cms.ab2d.domain.JobStatus;
 import org.hamcrest.core.Is;
 import org.hl7.fhir.dstu3.model.DateTimeType;
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,6 +21,9 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.ResultActions;
 
 import java.time.OffsetDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 
 import static gov.cms.ab2d.api.controller.BulkDataAccessAPI.JOB_CANCELLED_MSG;
 import static gov.cms.ab2d.api.service.JobServiceImpl.INITIAL_JOB_STATUS_MESSAGE;
@@ -189,7 +190,6 @@ public class BulkDataAccessAPIIntegrationTests {
                 .andExpect(header().doesNotExist("X-Progress"));
     }
 
-    @Ignore
     @Test
     public void testGetStatusWhileFinished() throws Exception {
         MvcResult mvcResult = this.mockMvc.perform(get(API_PREFIX + PATIENT_EXPORT_PATH + "?_type=ExplanationOfBenefits").contentType(MediaType.APPLICATION_JSON))
@@ -219,10 +219,10 @@ public class BulkDataAccessAPIIntegrationTests {
 
         jobRepository.saveAndFlush(job);
 
+        final ZonedDateTime jobExpiresUTC = ZonedDateTime.ofInstant(job.getExpires().toInstant(), ZoneId.of("UTC"));
         this.mockMvc.perform(get(statusUrl).contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().is(200))
-//                .andExpect(header().string("Expires", expireDate.toString()))
-                .andExpect(header().string("Expires", DateUtil.formatLocalDateTimeAsUTC(expireDate.toZonedDateTime().toLocalDateTime())))
+                .andExpect(header().string("Expires", DateTimeFormatter.RFC_1123_DATE_TIME.format(jobExpiresUTC)))
                 .andExpect(jsonPath("$.transactionTime", Is.is(new DateTimeType(now.toString()).toHumanDisplay())))
                 .andExpect(jsonPath("$.request", Is.is(job.getRequestURL())))
                 .andExpect(jsonPath("$.requiresAccessToken", Is.is(true)))

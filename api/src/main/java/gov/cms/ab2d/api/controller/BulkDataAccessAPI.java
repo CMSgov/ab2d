@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import gov.cms.ab2d.api.service.JobService;
 import gov.cms.ab2d.api.util.Constants;
-import gov.cms.ab2d.api.util.DateUtil;
 import gov.cms.ab2d.domain.Job;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
@@ -34,11 +33,13 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import javax.validation.constraints.NotBlank;
 import java.io.IOException;
 import java.time.OffsetDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import static gov.cms.ab2d.api.util.Constants.API_PREFIX;
-import static gov.cms.ab2d.api.util.DateUtil.convertLocalDateTimeToDate;
 
 @Slf4j
 @Api(value = "Bulk Data Access API", description =
@@ -156,15 +157,13 @@ public class BulkDataAccessAPI {
         HttpHeaders responseHeaders = new HttpHeaders();
         switch (job.getStatus()) {
             case SUCCESSFUL:
-//                responseHeaders.add("Expires", DateUtil.formatLocalDateTimeAsUTC(job.getExpires());
-                final String ldtFormatted = DateUtil.formatLocalDateTimeAsUTC(job.getExpires().toLocalDateTime());
-                final String offsetDateTimeFormat = job.getExpires().toString();
-                responseHeaders.add("Expires", ldtFormatted);
-                JobCompletedResponse resp = new JobCompletedResponse();
+                final ZonedDateTime jobExpiresUTC = ZonedDateTime.ofInstant(job.getExpires().toInstant(), ZoneId.of("UTC"));
+                responseHeaders.add("Expires", DateTimeFormatter.RFC_1123_DATE_TIME.format(jobExpiresUTC));
 
-                final DateTimeType oldDT = new DateTimeType(convertLocalDateTimeToDate(job.getCompletedAt().toLocalDateTime()));
-                final DateTimeType newDT = new DateTimeType(job.getCompletedAt().toString());
-                resp.setTransactionTime(newDT.toHumanDisplay());
+                final DateTimeType jobCompletedAt = new DateTimeType(job.getCompletedAt().toString());
+
+                final JobCompletedResponse resp = new JobCompletedResponse();
+                resp.setTransactionTime(jobCompletedAt.toHumanDisplay());
                 resp.setRequest(job.getRequestURL());
                 resp.setRequiresAccessToken(true);
                 resp.setOutput(job.getJobOutput().stream().filter(o -> !o.isError()).map(o -> new JobCompletedResponse.Output(o.getFhirResourceType(), o.getFilePath())).collect(Collectors.toList()));

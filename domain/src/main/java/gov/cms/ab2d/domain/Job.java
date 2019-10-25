@@ -43,13 +43,22 @@ public class Job {
             fetch = FetchType.EAGER
     )
     private List<JobOutput> jobOutput = new ArrayList<>();
+
+    @Column(columnDefinition = "TIMESTAMP WITH TIME ZONE")
     private OffsetDateTime createdAt;
+
+    @Column(columnDefinition = "TIMESTAMP WITH TIME ZONE")
     private OffsetDateTime completedAt;
+
     private String requestURL;
     private JobStatus status;
     private String statusMessage;
     private Integer progress;
+
+    @Column(columnDefinition = "TIMESTAMP WITH TIME ZONE")
     private OffsetDateTime lastPollTime;
+
+    @Column(columnDefinition = "TIMESTAMP WITH TIME ZONE")
     private OffsetDateTime expires;
 
     @Pattern(regexp = "ExplanationOfBenefits", message = "_type should be ExplanationOfBenefits")
