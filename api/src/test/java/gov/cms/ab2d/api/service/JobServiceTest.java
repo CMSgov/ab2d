@@ -13,7 +13,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.transaction.TransactionSystemException;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.List;
 
 import static gov.cms.ab2d.api.service.JobServiceImpl.INITIAL_JOB_STATUS_MESSAGE;
@@ -121,8 +121,8 @@ public class JobServiceTest {
     @Test
     public void updateJob() {
         Job job = jobService.createJob("ExplanationOfBenefits", "http://localhost:8080");
-        LocalDateTime now = LocalDateTime.now();
-        LocalDateTime localDateTime = LocalDateTime.now();
+        OffsetDateTime now = OffsetDateTime.now();
+        OffsetDateTime localDateTime = OffsetDateTime.now();
         job.setProgress(100);
         job.setLastPollTime(now);
         job.setStatus(JobStatus.IN_PROGRESS);
