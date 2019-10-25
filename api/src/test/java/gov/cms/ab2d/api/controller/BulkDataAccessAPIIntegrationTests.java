@@ -167,6 +167,7 @@ public class BulkDataAccessAPIIntegrationTests {
                 .andExpect(jsonPath("$.issue[0].details.text", Is.is("InvalidJobStateTransition: Job has a status of " + job.getStatus() + ", so it cannot be cancelled")));
     }
 
+    @Test
     public void testGetStatusWhileInProgress() throws Exception {
         MvcResult mvcResult = this.mockMvc.perform(get(API_PREFIX + PATIENT_EXPORT_PATH).contentType(MediaType.APPLICATION_JSON))
             .andReturn();
