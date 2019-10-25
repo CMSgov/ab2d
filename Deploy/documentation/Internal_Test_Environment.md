@@ -453,18 +453,7 @@
    ```ShellSession
    $ cd ~/code/ab2d/Deploy/terraform/environments/cms-ab2d-sbdemo
    ```
-            
-1. Deploy database
-
-   *Format:*
    
-   ```ShellSession
-   $ terraform apply \
-     --var "db_username={db username}" \
-     --var "db_password={db password}" \
-     --target module.db --auto-approve
-   ```
-
 1. Determine and note the latest CentOS AMI
 
    ```ShellSession
