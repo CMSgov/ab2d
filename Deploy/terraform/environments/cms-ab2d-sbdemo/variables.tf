@@ -106,7 +106,7 @@ variable "db_allocated_storage_size" {
 }
 
 variable "postgres_engine_version" {
-  default = "10.6"
+  default = "11.5"
 }
 
 variable "db_instance_class" {
@@ -159,6 +159,11 @@ variable "db_username" {
 }
 
 variable "db_password" {
+  default     = ""
+  description = "Please pass this on command line and not as a value here"
+}
+
+variable "db_name" {
   default     = ""
   description = "Please pass this on command line and not as a value here"
 }
