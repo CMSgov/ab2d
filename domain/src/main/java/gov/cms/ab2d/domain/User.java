@@ -7,7 +7,7 @@ import lombok.Setter;
 import javax.persistence.*;
 
 @Entity
-@Table(name = "`user`")
+@Table(name = "user_account")
 @Getter
 @Setter
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
