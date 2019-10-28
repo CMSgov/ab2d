@@ -3,7 +3,7 @@
     "aws_profile": "{{env `AWS_PROFILE`}}",
     "my_ip_address": "",
     "git_commit_hash": "",
-    "gold_ami": "ami-02eac2c0129f6376b"
+    "gold_ami": "{{user `seed_ami`}}"
   },
   "builders": [
     {
@@ -13,8 +13,8 @@
       "iam_instance_profile": "Ab2dInstanceProfile",
       "region": "us-east-1",
       "instance_type": "c4.xlarge",
-      "subnet_id": "subnet-098bbc1710dd5f1af",
-      "vpc_id": "vpc-098dfa5241343e7c1",
+      "subnet_id": "{{user `subnet_public_1_id`}}",
+      "vpc_id": "{{user `vpc_id`}}",
       "ami_name": "ab2d-{{user `git_commit_hash`}}",
       "source_ami": "{{user `gold_ami`}}",
       "ami_virtualization_type": "hvm",
