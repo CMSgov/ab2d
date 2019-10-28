@@ -2,9 +2,9 @@ package gov.cms.ab2d.api.controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import gov.cms.ab2d.api.service.JobService;
+import gov.cms.ab2d.common.service.JobService;
 import gov.cms.ab2d.api.util.Constants;
-import gov.cms.ab2d.domain.Job;
+import gov.cms.ab2d.common.model.Job;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiImplicitParams;

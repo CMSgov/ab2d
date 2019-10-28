@@ -17,7 +17,7 @@
     <dependencies>
         <dependency>
             <groupId>gov.cms.ab2d</groupId>
-            <artifactId>domain</artifactId>
+            <artifactId>common</artifactId>
             <version>0.0.1-SNAPSHOT</version>
         </dependency>
         <dependency>
