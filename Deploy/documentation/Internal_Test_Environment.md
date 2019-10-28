@@ -15,8 +15,6 @@
    * [Create AWS Elastic Container Registry repositories for images](#create-aws-elastic-container-registry-repositories-for-images)
 1. [Deploy to test environment](#deploy-to-test-environment)
    * [Create base aws environment](#create-base-aws-environment)
-   * [Configure terraform](#configure-terraform)
-   * [Deploy AWS dependency modules](#deploy-aws-dependency-modules)
    * [Deploy AWS application modules](#deploy-aws-application-modules)
 1. [Deploy and configure Jenkins](#deploy-and-configure-jenkins)
 
@@ -421,89 +419,14 @@
 1. Create base AWS environment
 
    ```ShellSession
-   $ ./create-base-environment.sh --environment=sbdemo --database-secret-datetime="2019-10-25-14-55-01"
+   $ ./create-base-environment.sh --environment=sbdemo --seed-ami-product-code=aw0evgkw8e5c1q413zgy5pjce --database-secret-datetime=2019-10-25-14-55-02
    ```
 
 1. If you get a "Skipping network creation since VPC already exists" message, enter the following
 
    ```ShellSession
-   $ ./create-base-environment.sh --environment=sbdemo --database-secret-datetime="2019-10-25-14-55-01" --skip-network
+   $ ./create-base-environment.sh --environment=sbdemo --seed-ami-product-code=aw0evgkw8e5c1q413zgy5pjce --database-secret-datetime=2019-10-25-14-55-02 --skip-network
    ```
-
-### Deploy AWS dependency modules
-
-1. Set target profile
-
-   *Example for the "semanticbitsdemo" AWS account:*
-   
-   ```ShellSession
-   $ export AWS_PROFILE="sbdemo"
-   ```
-
-1. Set CMS environment
-
-   *Example for the "semanticbitsdemo" AWS account:*
-   
-   ```ShellSession
-   $ export CMS_ENV="SBDEMO"
-   ```
-   
-1. Change to the environment directory
-
-   ```ShellSession
-   $ cd ~/code/ab2d/Deploy/terraform/environments/cms-ab2d-sbdemo
-   ```
-   
-1. Determine and note the latest CentOS AMI
-
-   ```ShellSession
-   $ aws --region us-east-1 ec2 describe-images \
-     --owners aws-marketplace \
-     --filters Name=product-code,Values=aw0evgkw8e5c1q413zgy5pjce \
-     --query 'Images[*].[ImageId,CreationDate]' \
-     --output text \
-     | sort -k2 -r \
-     | head -n1
-   ```
-   
-1. Configure packer for the application
-
-   1. Open the "app.json" file
-
-      ```ShellSession
-      $ vim ~/code/ab2d/Deploy/packer/app/app.json
-      ```
-
-   1. Change the gold disk AMI to the noted CentOS AMI
-
-      *Example:*
-      
-      ```
-      ami-02eac2c0129f6376b
-      ```
-      
-   1. Change the subnet to the first public subnet
-
-      ```
-      "subnet_id": "subnet-0eae69ece6af39929",
-      ```
-
-   1. Change the VPC ID
-
-      ```
-      "vpc_id": "vpc-0e8586607672b0d3f",
-      ```
-
-   1. Change the builders settings
-   
-      *Example:*
-   
-      ```
-      "iam_instance_profile": "Ab2dInstanceProfile",
-      "ssh_username": "centos",
-      ```
-
-   1. Save and close the file
 
 ### Deploy AWS application modules
    
@@ -520,84 +443,6 @@
    ```
 
 ## Deploy and configure Jenkins
-
-1. Set target profile
-
-   *Example for the "semanticbitsdemo" AWS account:*
-   
-   ```ShellSession
-   $ export AWS_PROFILE="sbdemo"
-   ```
-
-1. Set CMS environment
-
-   *Example for the "semanticbitsdemo" AWS account:*
-   
-   ```ShellSession
-   $ export CMS_ENV="SBDEMO"
-   ```
-   
-1. Determine and note the latest CentOS AMI
-
-   ```ShellSession
-   $ aws --region us-east-1 ec2 describe-images \
-     --owners aws-marketplace \
-     --filters Name=product-code,Values=aw0evgkw8e5c1q413zgy5pjce \
-     --query 'Images[*].[ImageId,CreationDate]' \
-     --output text \
-     | sort -k2 -r \
-     | head -n1
-   ```
-   
-1. Configure packer for jenkins
-
-   1. Open the "app.json" file
-
-      ```ShellSession
-      $ vim ~/code/ab2d/Deploy/packer/jenkins/app.json
-      ```
-
-   1. Change the gold disk AMI to the noted CentOS AMI
-
-      *Example:*
-      
-      ```
-      ami-02eac2c0129f6376b
-      ```
-      
-   1. Change the subnet to the first public subnet
-
-      ```
-      "subnet_id": "subnet-077269e0fb659e953",
-      ```
-
-   1. Change the VPC ID
-
-      ```
-      "vpc_id": "vpc-00dcfaadb3fe8e3a2",
-      ```
-
-   1. Change the ssh_username
-   
-      *Example:*
-   
-      ```
-      "ssh_username": "centos",
-      ```
-
-   1. Save and close the file
-
-1. Change to the environment directory
-
-   ```ShellSession
-   $ cd ~/code/ab2d/Deploy/terraform/environments/cms-ab2d-sbdemo
-   ```
-
-1. Create Jenkins AMI
-
-   ```ShellSession
-   $ ./create-jenkins-ami.sh --environment=sbdemo
-   ```
 
 1. Launch an EC2 instance from the Jenkins AMI
 
