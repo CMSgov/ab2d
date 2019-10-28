@@ -1,5 +1,6 @@
 package gov.cms.ab2d.api.controller;
 
+import com.jayway.jsonpath.JsonPath;
 import gov.cms.ab2d.api.SpringBootApp;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.common.model.Job;
@@ -20,11 +21,13 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.ResultActions;
+import org.springframework.test.web.servlet.result.MockMvcResultHandlers;
 
 import static gov.cms.ab2d.api.controller.BulkDataAccessAPI.JOB_CANCELLED_MSG;
 
 import static gov.cms.ab2d.common.service.JobServiceImpl.INITIAL_JOB_STATUS_MESSAGE;
 import static gov.cms.ab2d.api.util.Constants.API_PREFIX;
+import static gov.cms.ab2d.common.util.Constants.NDJSON_FIRE_CONTENT_TYPE;
 import static gov.cms.ab2d.common.util.Constants.OPERATION_OUTCOME;
 
 import java.time.OffsetDateTime;
@@ -211,13 +214,13 @@ public class BulkDataAccessAPIIntegrationTests {
         JobOutput jobOutput = new JobOutput();
         jobOutput.setFhirResourceType("ExplanationOfBenefits");
         jobOutput.setJob(job);
-        jobOutput.setFilePath("http://localhost/some/path/file.ndjson");
+        jobOutput.setFilePath("file.ndjson");
         job.getJobOutput().add(jobOutput);
 
         JobOutput errorJobOutput = new JobOutput();
         errorJobOutput.setFhirResourceType(OPERATION_OUTCOME);
         errorJobOutput.setJob(job);
-        errorJobOutput.setFilePath("http://localhost/some/path/error.ndjson");
+        errorJobOutput.setFilePath("error.ndjson");
         errorJobOutput.setError(true);
         job.getJobOutput().add(errorJobOutput);
 
@@ -231,9 +234,9 @@ public class BulkDataAccessAPIIntegrationTests {
                 .andExpect(jsonPath("$.request", Is.is(job.getRequestURL())))
                 .andExpect(jsonPath("$.requiresAccessToken", Is.is(true)))
                 .andExpect(jsonPath("$.output[0].type", Is.is("ExplanationOfBenefits")))
-                .andExpect(jsonPath("$.output[0].url", Is.is("http://localhost/some/path/file.ndjson")))
+                .andExpect(jsonPath("$.output[0].url", Is.is("http://localhost" + API_PREFIX + "/Job/" + job.getJobID() + "/file/file.ndjson")))
                 .andExpect(jsonPath("$.error[0].type", Is.is(OPERATION_OUTCOME)))
-                .andExpect(jsonPath("$.error[0].url", Is.is("http://localhost/some/path/error.ndjson")));
+                .andExpect(jsonPath("$.error[0].url", Is.is("http://localhost" + API_PREFIX + "/Job/" + job.getJobID() + "/file/error.ndjson")));
     }
 
     @Test
@@ -311,5 +314,105 @@ public class BulkDataAccessAPIIntegrationTests {
 
         this.mockMvc.perform(get("http://localhost" + API_PREFIX  + "/Job/$status").contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().is(404));
+    }
+
+
+    @Test
+    public void testDownloadFile() throws Exception {
+        MvcResult mvcResult = this.mockMvc.perform(get(API_PREFIX + PATIENT_EXPORT_PATH + "?_type=ExplanationOfBenefits").contentType(MediaType.APPLICATION_JSON))
+                .andReturn();
+        String statusUrl = mvcResult.getResponse().getHeader("Content-Location");
+
+        Job job = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
+        job.setStatus(JobStatus.SUCCESSFUL);
+        job.setProgress(100);
+        OffsetDateTime expireDate = OffsetDateTime.now().plusDays(100);
+        job.setExpires(expireDate);
+        OffsetDateTime now = OffsetDateTime.now();
+        job.setCompletedAt(now);
+
+        JobOutput jobOutput = new JobOutput();
+        jobOutput.setFhirResourceType("ExplanationOfBenefits");
+        jobOutput.setJob(job);
+        jobOutput.setFilePath("test.ndjson");
+        job.getJobOutput().add(jobOutput);
+
+        jobRepository.saveAndFlush(job);
+
+        MvcResult mvcResultStatusCall = this.mockMvc.perform(get(statusUrl).contentType(MediaType.APPLICATION_JSON)).andReturn();
+        String downloadUrl = JsonPath.read(mvcResultStatusCall.getResponse().getContentAsString(), "$.output[0].url");
+        MvcResult downloadFileCall = this.mockMvc.perform(get(downloadUrl).contentType(MediaType.APPLICATION_JSON)).andExpect(status().is(200))
+                .andExpect(content().contentType(NDJSON_FIRE_CONTENT_TYPE))
+                .andDo(MockMvcResultHandlers.print()).andReturn();
+        String downloadedFile = downloadFileCall.getResponse().getContentAsString();
+        String testValue = JsonPath.read(downloadedFile, "$.test");
+        Assert.assertEquals("value", testValue);
+        String arrValue1 = JsonPath.read(downloadedFile, "$.array[0]");
+        Assert.assertEquals("val1", arrValue1);
+        String arrValue2 = JsonPath.read(downloadedFile, "$.array[1]");
+        Assert.assertEquals("val2", arrValue2);
+    }
+
+    @Test
+    public void testDownloadMissingFile() throws Exception {
+        MvcResult mvcResult = this.mockMvc.perform(get(API_PREFIX + PATIENT_EXPORT_PATH + "?_type=ExplanationOfBenefits").contentType(MediaType.APPLICATION_JSON))
+                .andReturn();
+        String statusUrl = mvcResult.getResponse().getHeader("Content-Location");
+
+        Job job = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
+        job.setStatus(JobStatus.SUCCESSFUL);
+        job.setProgress(100);
+        OffsetDateTime expireDate = OffsetDateTime.now().plusDays(100);
+        job.setExpires(expireDate);
+        OffsetDateTime now = OffsetDateTime.now();
+        job.setCompletedAt(now);
+
+        JobOutput jobOutput = new JobOutput();
+        jobOutput.setFhirResourceType("ExplanationOfBenefits");
+        jobOutput.setJob(job);
+        jobOutput.setFilePath("testmissing.ndjson");
+        job.getJobOutput().add(jobOutput);
+
+        jobRepository.saveAndFlush(job);
+
+        MvcResult mvcResultStatusCall = this.mockMvc.perform(get(statusUrl).contentType(MediaType.APPLICATION_JSON)).andReturn();
+        String downloadUrl = JsonPath.read(mvcResultStatusCall.getResponse().getContentAsString(), "$.output[0].url");
+        this.mockMvc.perform(get(downloadUrl).contentType(MediaType.APPLICATION_JSON)).andExpect(status().is(500))
+                .andExpect(jsonPath("$.resourceType", Is.is("OperationOutcome")))
+                .andExpect(jsonPath("$.issue[0].severity", Is.is("error")))
+                .andExpect(jsonPath("$.issue[0].code", Is.is("invalid")))
+                .andExpect(jsonPath("$.issue[0].details.text", Is.is("JobOutputMissingException: The job output exists in our records, but the file is not present on our " +
+                        "system: testmissing.ndjson")));
+    }
+
+    @Test
+    public void testDownloadBadParameterFile() throws Exception {
+        MvcResult mvcResult = this.mockMvc.perform(get(API_PREFIX + PATIENT_EXPORT_PATH + "?_type=ExplanationOfBenefits").contentType(MediaType.APPLICATION_JSON))
+                .andReturn();
+        String statusUrl = mvcResult.getResponse().getHeader("Content-Location");
+
+        Job job = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
+        job.setStatus(JobStatus.SUCCESSFUL);
+        job.setProgress(100);
+        OffsetDateTime expireDate = OffsetDateTime.now().plusDays(100);
+        job.setExpires(expireDate);
+        OffsetDateTime now = OffsetDateTime.now();
+        job.setCompletedAt(now);
+
+        JobOutput jobOutput = new JobOutput();
+        jobOutput.setFhirResourceType("ExplanationOfBenefits");
+        jobOutput.setJob(job);
+        jobOutput.setFilePath("test.ndjson");
+        job.getJobOutput().add(jobOutput);
+
+        jobRepository.saveAndFlush(job);
+
+        MvcResult mvcResultStatusCall = this.mockMvc.perform(get(statusUrl).contentType(MediaType.APPLICATION_JSON)).andReturn();
+        String downloadUrl = JsonPath.read(mvcResultStatusCall.getResponse().getContentAsString(), "$.output[0].url") + "badfilename";
+        this.mockMvc.perform(get(downloadUrl).contentType(MediaType.APPLICATION_JSON)).andExpect(status().is(404))
+                .andExpect(jsonPath("$.resourceType", Is.is("OperationOutcome")))
+                .andExpect(jsonPath("$.issue[0].severity", Is.is("error")))
+                .andExpect(jsonPath("$.issue[0].code", Is.is("invalid")))
+                .andExpect(jsonPath("$.issue[0].details.text", Is.is("ResourceNotFoundException: No Job Output with the file name test.ndjsonbadfilename exists in our records")));
     }
 }

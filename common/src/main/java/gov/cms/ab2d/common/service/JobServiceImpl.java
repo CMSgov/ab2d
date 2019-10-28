@@ -1,13 +1,20 @@
 package gov.cms.ab2d.common.service;
 
 
+import gov.cms.ab2d.common.model.JobOutput;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.JobStatus;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.net.MalformedURLException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
@@ -21,8 +28,12 @@ public class JobServiceImpl implements JobService {
     @Autowired
     private JobRepository jobRepository;
 
+    @Value("${efs.mount}")
+    private String fileDownloadPath;
+
     public static final String INITIAL_JOB_STATUS_MESSAGE = "0%";
 
+    @Override
     public Job createJob(String resourceTypes, String url) {
         Job job = new Job();
         job.setResourceTypes(resourceTypes);
@@ -37,6 +48,7 @@ public class JobServiceImpl implements JobService {
         return jobRepository.save(job);
     }
 
+    @Override
     public void cancelJob(String jobID) {
         Job job = getJobByJobID(jobID);
 
@@ -47,6 +59,7 @@ public class JobServiceImpl implements JobService {
         jobRepository.cancelJobByJobID(jobID);
     }
 
+    @Override
     public Job getJobByJobID(String jobID) {
         Job job = jobRepository.findByJobID(jobID);
         if (job == null) {
@@ -56,7 +69,37 @@ public class JobServiceImpl implements JobService {
         return job;
     }
 
+    @Override
     public Job updateJob(Job job) {
         return jobRepository.save(job);
     }
+
+    @Override
+    public Resource getResourceForJob(String jobID, String fileName) throws MalformedURLException {
+        Job job = getJobByJobID(jobID);
+
+        // Make sure that there is a path that matches a job output for the job they are requesting
+        boolean jobOutputMatchesPath = false;
+        for (JobOutput jobOutput : job.getJobOutput()) {
+            if (jobOutput.getFilePath().equals(fileName)) {
+                jobOutputMatchesPath = true;
+                break;
+            }
+        }
+
+        if (!jobOutputMatchesPath) {
+            throw new ResourceNotFoundException("No Job Output with the file name " + fileName + " exists in our records");
+        }
+
+        Path file = Paths.get(fileDownloadPath + fileName);
+        Resource resource = new UrlResource(file.toUri());
+
+        if (!resource.exists()) {
+            throw new JobOutputMissingException("The job output exists in our records, but the file is not present on our system: " + fileName);
+        }
+
+        return resource;
+    }
+
+
 }

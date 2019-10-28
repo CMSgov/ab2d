@@ -32,6 +32,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import javax.validation.constraints.NotBlank;
 import java.io.IOException;
+import java.net.UnknownHostException;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -40,6 +41,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import static gov.cms.ab2d.api.util.Constants.API_PREFIX;
+import static gov.cms.ab2d.common.util.Constants.NDJSON_FIRE_CONTENT_TYPE;
 
 @Slf4j
 @Api(value = "Bulk Data Access API", description =
@@ -142,7 +144,7 @@ public class BulkDataAccessAPI {
     @GetMapping(value = "/Job/{jobId}/$status")
     @ResponseStatus(value = HttpStatus.OK)
     public ResponseEntity<JsonNode> getJobStatus(
-            @ApiParam(value = "A job identifier", required = true) @PathVariable @NotBlank String jobId) {
+            @ApiParam(value = "A job identifier", required = true) @PathVariable @NotBlank String jobId) throws UnknownHostException {
         Job job = jobService.getJobByJobID(jobId);
 
         OffsetDateTime now = OffsetDateTime.now();
@@ -166,8 +168,12 @@ public class BulkDataAccessAPI {
                 resp.setTransactionTime(jobCompletedAt.toHumanDisplay());
                 resp.setRequest(job.getRequestURL());
                 resp.setRequiresAccessToken(true);
-                resp.setOutput(job.getJobOutput().stream().filter(o -> !o.isError()).map(o -> new JobCompletedResponse.Output(o.getFhirResourceType(), o.getFilePath())).collect(Collectors.toList()));
-                resp.setError(job.getJobOutput().stream().filter(o -> o.isError()).map(o -> new JobCompletedResponse.Output(o.getFhirResourceType(), o.getFilePath())).collect(Collectors.toList()));
+
+                String requestURIString = ServletUriComponentsBuilder.fromCurrentRequestUri().toUriString();
+                String urlPath = requestURIString.substring(0, requestURIString.indexOf(API_PREFIX)) + API_PREFIX + "/Job/" + job.getJobID() + "/file/";
+
+                resp.setOutput(job.getJobOutput().stream().filter(o -> !o.isError()).map(o -> new JobCompletedResponse.Output(o.getFhirResourceType(), urlPath + o.getFilePath())).collect(Collectors.toList()));
+                resp.setError(job.getJobOutput().stream().filter(o -> o.isError()).map(o -> new JobCompletedResponse.Output(o.getFhirResourceType(), urlPath + o.getFilePath())).collect(Collectors.toList()));
                 return new ResponseEntity<>(new ObjectMapper().valueToTree(resp), responseHeaders, HttpStatus.OK);
             case SUBMITTED:
                 IN_PROGRESS:
@@ -195,8 +201,9 @@ public class BulkDataAccessAPI {
     public ResponseEntity<Resource> downloadFile(
             @ApiParam(value = "A job identifier", required = true) @PathVariable @NotBlank String jobId,
             @ApiParam(value = "A file name", required = true) @PathVariable @NotBlank String filename) throws IOException {
-        HttpHeaders responseHeaders = new HttpHeaders();
-        responseHeaders.add("X-Progress", "0%");
-        return new ResponseEntity<>(null, responseHeaders, HttpStatus.ACCEPTED);
+        Resource downloadResource = jobService.getResourceForJob(jobId, filename);
+        HttpHeaders headers = new HttpHeaders();
+        headers.set(HttpHeaders.CONTENT_TYPE, NDJSON_FIRE_CONTENT_TYPE);
+        return new ResponseEntity<>(downloadResource, headers, HttpStatus.OK);
     }
 }
