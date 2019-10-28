@@ -1,4 +1,4 @@
-package gov.cms.ab2d.domain;
+package gov.cms.ab2d.common.model;
 
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -9,9 +9,6 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
-import javax.persistence.ManyToMany;
-import java.util.HashSet;
-import java.util.Set;
 
 @Entity
 @Getter
@@ -28,6 +25,4 @@ public class Role {
     @Column(nullable = false, unique = true)
     private String name;
 
-    @ManyToMany(mappedBy = "roles")
-    private Set<User> users = new HashSet<>();
 }
