@@ -49,35 +49,6 @@ if [ -z "${ENVIRONMENT}" ]; then
 fi
 
 #
-# Set AMI_ID if it already exists for the deployment
-#
-
-echo "Set AMI_ID if it already exists for the deployment..."
-AMI_ID=$(aws --region us-east-1 ec2 describe-images \
-  --owners self \
-  --filters "Name=tag:Name,Values=AB2D-$CMS_ENV-AMI" \
-  --query "Images[*].[ImageId]" \
-  --output text)
-
-#
-# If no AMI is specified then create a new one
-#
-
-echo "If no AMI is specified then create a new one..."
-if [ -z "${AMI_ID}" ]; then
-  cd packer/app/
-  IP=$(curl ipinfo.io/ip)
-  COMMIT=$(git rev-parse HEAD)
-  packer build --var my_ip_address=$IP --var git_commit_hash=$COMMIT app.json  2>&1 | tee output.txt
-  AMI_ID=$(cat output.txt | awk 'match($0, /ami-.*/) { print substr($0, RSTART, RLENGTH) }' | tail -1)
-  cd ../../
-  # Add name tag to AMI
-  aws --region us-east-1 ec2 create-tags \
-    --resources $AMI_ID \
-    --tags "Key=Name,Value=AB2D-$CMS_ENV-AMI"
-fi
-
-#
 # Get current known good ECS task definitions
 #
 
