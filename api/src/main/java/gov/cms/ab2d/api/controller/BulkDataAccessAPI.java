@@ -32,7 +32,6 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import javax.validation.constraints.NotBlank;
 import java.io.IOException;
-import java.net.UnknownHostException;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -144,7 +143,7 @@ public class BulkDataAccessAPI {
     @GetMapping(value = "/Job/{jobId}/$status")
     @ResponseStatus(value = HttpStatus.OK)
     public ResponseEntity<JsonNode> getJobStatus(
-            @ApiParam(value = "A job identifier", required = true) @PathVariable @NotBlank String jobId) throws UnknownHostException {
+            @ApiParam(value = "A job identifier", required = true) @PathVariable @NotBlank String jobId) {
         Job job = jobService.getJobByJobID(jobId);
 
         OffsetDateTime now = OffsetDateTime.now();
