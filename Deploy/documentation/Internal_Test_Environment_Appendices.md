@@ -8,6 +8,7 @@
 1. [Appendix D: Create an S3 bucket with AWS CLI](#appendix-d-create-an-s3-bucket-with-aws-cli)
 1. [Appendix E: Verify EFS mounting on worker node](#appendix-e-verify-efs-mounting-on-worker-node)
 1. [Appendix F: Verify PostgreSQL](#appendix-f-verify-postgresql)
+1. [Appendix G: Note the product code for CentOS 7 AMI](#appendix-g-note-the-product-code-for-centos-7-ami)
 
 ## Appendix A: Destroy complete environment
 
@@ -306,3 +307,21 @@
       ```
 
    1. Enter database password when prompted
+
+## Appendix G: Note the product code for CentOS 7 AMI
+
+1. Note that the CentOS 7 AMI is used for testing in the internal test environment
+
+1. Open Chrome
+
+1. Enter the following in the address bar
+
+   > https://wiki.centos.org/Cloud/AWS
+
+1. Scroll down to the **Images** section
+
+1. Note the product code for "CentOS-7 x86_64"
+
+   ```
+   aw0evgkw8e5c1q413zgy5pjce
+   ```
