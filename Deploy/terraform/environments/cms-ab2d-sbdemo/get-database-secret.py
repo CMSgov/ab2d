@@ -13,7 +13,7 @@ from botocore.exceptions import ClientError
 command_line_arguments_count = sys.argv.__len__() - 1
 if command_line_arguments_count != 3:
     print("Try running the script like so:")
-    print("./create-database-secrets.py {environment} {database_user|database_password} {date_time}")
+    print("./get-database-secret.py {environment} {database_user|database_password|database_name} {date_time}")
     exit(1)
 
 # Eliminate double quotes from command line arguments
