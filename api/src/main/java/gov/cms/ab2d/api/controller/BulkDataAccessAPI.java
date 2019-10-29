@@ -31,6 +31,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import javax.validation.constraints.NotBlank;
+import java.io.File;
 import java.io.IOException;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
@@ -167,12 +168,8 @@ public class BulkDataAccessAPI {
                 resp.setTransactionTime(jobCompletedAt.toHumanDisplay());
                 resp.setRequest(job.getRequestURL());
                 resp.setRequiresAccessToken(true);
-
-                String requestURIString = ServletUriComponentsBuilder.fromCurrentRequestUri().toUriString();
-                String urlPath = requestURIString.substring(0, requestURIString.indexOf(API_PREFIX)) + API_PREFIX + "/Job/" + job.getJobID() + "/file/";
-
-                resp.setOutput(job.getJobOutput().stream().filter(o -> !o.isError()).map(o -> new JobCompletedResponse.Output(o.getFhirResourceType(), urlPath + o.getFilePath())).collect(Collectors.toList()));
-                resp.setError(job.getJobOutput().stream().filter(o -> o.isError()).map(o -> new JobCompletedResponse.Output(o.getFhirResourceType(), urlPath + o.getFilePath())).collect(Collectors.toList()));
+                resp.setOutput(job.getJobOutput().stream().filter(o -> !o.isError()).map(o -> new JobCompletedResponse.Output(o.getFhirResourceType(), getUrlPath(job, o.getFilePath()))).collect(Collectors.toList()));
+                resp.setError(job.getJobOutput().stream().filter(o -> o.isError()).map(o -> new JobCompletedResponse.Output(o.getFhirResourceType(), getUrlPath(job, o.getFilePath()))).collect(Collectors.toList()));
                 return new ResponseEntity<>(new ObjectMapper().valueToTree(resp), responseHeaders, HttpStatus.OK);
             case SUBMITTED:
                 IN_PROGRESS:
@@ -184,6 +181,12 @@ public class BulkDataAccessAPI {
             default:
                 throw new RuntimeException("Unknown status of job");
         }
+    }
+
+    private String getUrlPath(Job job, String filePath) {
+        String requestURIString = ServletUriComponentsBuilder.fromCurrentRequestUri().toUriString();
+        return requestURIString.substring(0, requestURIString.indexOf(API_PREFIX)) + API_PREFIX + File.separator + "Job" +  File.separator +
+                job.getJobID() + File.separator + "file" + File.separator + filePath;
     }
 
     @ApiOperation(value = "Downloads a file produced by an export job.", response = String.class,

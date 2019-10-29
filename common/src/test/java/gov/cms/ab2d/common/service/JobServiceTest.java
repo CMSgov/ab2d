@@ -5,17 +5,24 @@ import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.JobOutput;
 import gov.cms.ab2d.common.model.JobStatus;
+import gov.cms.ab2d.common.util.FileUtil;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.core.io.Resource;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.transaction.TransactionSystemException;
 
+import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.time.OffsetDateTime;
 import java.util.List;
 
@@ -33,6 +40,9 @@ public class JobServiceTest {
 
     @Autowired
     JobRepository jobRepository;
+
+    @Value("${efs.mount}")
+    private String fileDownloadPath;
 
     // Be safe and make sure nothing from another test will impact current test
     @Before
@@ -183,6 +193,21 @@ public class JobServiceTest {
 
     @Test
     public void getFileDownloadUrl() throws IOException {
+        String testFile = "test.ndjson";
+        String errorFile = "error.ndjson";
+        Job job = createJobForFileDownloads(testFile, errorFile);
+
+        FileUtil.createTmpFileForDownload(job.getJobID(), testFile);
+        FileUtil.createTmpFileForDownload(job.getJobID(), errorFile);
+
+        Resource resource = jobService.getResourceForJob(job.getJobID(), testFile);
+        Assert.assertEquals(testFile, resource.getFilename());
+
+        Resource errorResource = jobService.getResourceForJob(job.getJobID(), errorFile);
+        Assert.assertEquals(errorFile, errorResource.getFilename());
+    }
+
+    private Job createJobForFileDownloads(String fileName, String errorFileName) {
         Job job = jobService.createJob("ExplanationOfBenefits", "http://localhost:8080");
         OffsetDateTime now = OffsetDateTime.now();
         OffsetDateTime localDateTime = OffsetDateTime.now();
@@ -191,7 +216,6 @@ public class JobServiceTest {
         job.setStatus(JobStatus.IN_PROGRESS);
         job.setCreatedAt(localDateTime);
         job.setCompletedAt(localDateTime);
-        job.setJobID("abc");
         job.setResourceTypes("ExplanationOfBenefits");
         job.setRequestURL("http://localhost");
         job.setStatusMessage("Pending");
@@ -200,93 +224,36 @@ public class JobServiceTest {
         JobOutput jobOutput = new JobOutput();
         jobOutput.setError(false);
         jobOutput.setFhirResourceType("ExplanationOfBenefits");
-        jobOutput.setFilePath("test.ndjson");
+        jobOutput.setFilePath(fileName);
         jobOutput.setJob(job);
 
         JobOutput errorJobOutput = new JobOutput();
         errorJobOutput.setError(true);
         errorJobOutput.setFhirResourceType(OPERATION_OUTCOME);
-        errorJobOutput.setFilePath("error.ndjson");
+        errorJobOutput.setFilePath(errorFileName);
         errorJobOutput.setJob(job);
 
         List output = List.of(jobOutput, errorJobOutput);
         job.setJobOutput(output);
 
-        Job updatedJob = jobService.updateJob(job);
-
-        Resource resource = jobService.getResourceForJob(updatedJob.getJobID(), "test.ndjson");
-        Assert.assertEquals("test.ndjson", resource.getFilename());
+        return jobService.updateJob(job);
     }
 
     @Test(expected = ResourceNotFoundException.class)
     public void getFileDownloadUrlWithWrongFilename() throws IOException {
-        Job job = jobService.createJob("ExplanationOfBenefits", "http://localhost:8080");
-        OffsetDateTime now = OffsetDateTime.now();
-        OffsetDateTime localDateTime = OffsetDateTime.now();
-        job.setProgress(100);
-        job.setLastPollTime(now);
-        job.setStatus(JobStatus.IN_PROGRESS);
-        job.setCreatedAt(localDateTime);
-        job.setCompletedAt(localDateTime);
-        job.setJobID("abc");
-        job.setResourceTypes("ExplanationOfBenefits");
-        job.setRequestURL("http://localhost");
-        job.setStatusMessage("Pending");
-        job.setExpires(now);
+        String testFile = "test.ndjson";
+        String errorFile = "error.ndjson";
+        Job job = createJobForFileDownloads(testFile, errorFile);
 
-        JobOutput jobOutput = new JobOutput();
-        jobOutput.setError(false);
-        jobOutput.setFhirResourceType("ExplanationOfBenefits");
-        jobOutput.setFilePath("file.ndjson");
-        jobOutput.setJob(job);
-
-        JobOutput errorJobOutput = new JobOutput();
-        errorJobOutput.setError(true);
-        errorJobOutput.setFhirResourceType(OPERATION_OUTCOME);
-        errorJobOutput.setFilePath("error.ndjson");
-        errorJobOutput.setJob(job);
-
-        List output = List.of(jobOutput, errorJobOutput);
-        job.setJobOutput(output);
-
-        Job updatedJob = jobService.updateJob(job);
-
-        jobService.getResourceForJob(updatedJob.getJobID(), "filenamewrong.ndjson");
+        jobService.getResourceForJob(job.getJobID(), "filenamewrong.ndjson");
     }
 
     @Test(expected = JobOutputMissingException.class)
     public void getFileDownloadUrlWitMissingOutput() throws IOException {
-        Job job = jobService.createJob("ExplanationOfBenefits", "http://localhost:8080");
-        OffsetDateTime now = OffsetDateTime.now();
-        OffsetDateTime localDateTime = OffsetDateTime.now();
-        job.setProgress(100);
-        job.setLastPollTime(now);
-        job.setStatus(JobStatus.IN_PROGRESS);
-        job.setCreatedAt(localDateTime);
-        job.setCompletedAt(localDateTime);
-        job.setJobID("abc");
-        job.setResourceTypes("ExplanationOfBenefits");
-        job.setRequestURL("http://localhost");
-        job.setStatusMessage("Pending");
-        job.setExpires(now);
+        String testFile = "outputmissing.ndjson";
+        String errorFile = "error.ndjson";
+        Job job = createJobForFileDownloads(testFile, errorFile);
 
-        JobOutput jobOutput = new JobOutput();
-        jobOutput.setError(false);
-        jobOutput.setFhirResourceType("ExplanationOfBenefits");
-        jobOutput.setFilePath("outputmissing.ndjson");
-        jobOutput.setJob(job);
-
-        JobOutput errorJobOutput = new JobOutput();
-        errorJobOutput.setError(true);
-        errorJobOutput.setFhirResourceType(OPERATION_OUTCOME);
-        errorJobOutput.setFilePath("error.ndjson");
-        errorJobOutput.setJob(job);
-
-        List output = List.of(jobOutput, errorJobOutput);
-        job.setJobOutput(output);
-
-        Job updatedJob = jobService.updateJob(job);
-
-        jobService.getResourceForJob(updatedJob.getJobID(), "outputmissing.ndjson");
+        jobService.getResourceForJob(job.getJobID(), "outputmissing.ndjson");
     }
 }

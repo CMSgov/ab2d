@@ -12,6 +12,7 @@ import org.springframework.core.io.UrlResource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.File;
 import java.net.MalformedURLException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -91,7 +92,7 @@ public class JobServiceImpl implements JobService {
             throw new ResourceNotFoundException("No Job Output with the file name " + fileName + " exists in our records");
         }
 
-        Path file = Paths.get(fileDownloadPath + fileName);
+        Path file = Paths.get(fileDownloadPath + job.getJobID() + File.separator +  fileName);
         Resource resource = new UrlResource(file.toUri());
 
         if (!resource.exists()) {
