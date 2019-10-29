@@ -117,7 +117,7 @@ fi
 
 VPC_ID=$(aws --region us-east-1 ec2 describe-vpcs \
   --filters "Name=tag:Name,Values=AB2D-$CMS_ENV-VPC" \
-  --query="Vpcs[0].VpcId" \
+  --query="Vpcs[*].VpcId" \
   --output text)
 
 # Continue process if VPC does not exist
