@@ -22,7 +22,7 @@ public class FileUtil {
                 "  ]",
                 "}");
 
-        String path = System.getProperty("java.io.tmpdir") + "jobdownloads" + File.separator + jobID;
+        String path = System.getProperty("java.io.tmpdir") + File.separator + "jobdownloads" + File.separator + jobID;
 
         Files.createDirectories(Paths.get(path));
 
