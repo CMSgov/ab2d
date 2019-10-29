@@ -11,18 +11,12 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.core.io.Resource;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.transaction.TransactionSystemException;
 
-import java.io.File;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
 import java.time.OffsetDateTime;
 import java.util.List;
 
@@ -41,8 +35,8 @@ public class JobServiceTest {
     @Autowired
     JobRepository jobRepository;
 
-    @Value("${efs.mount}")
-    private String fileDownloadPath;
+    @Autowired
+    FileUtil fileUtil;
 
     // Be safe and make sure nothing from another test will impact current test
     @Before
@@ -197,8 +191,8 @@ public class JobServiceTest {
         String errorFile = "error.ndjson";
         Job job = createJobForFileDownloads(testFile, errorFile);
 
-        FileUtil.createTmpFileForDownload(job.getJobID(), testFile);
-        FileUtil.createTmpFileForDownload(job.getJobID(), errorFile);
+        fileUtil.createTmpFileForDownload(job.getJobID(), testFile);
+        fileUtil.createTmpFileForDownload(job.getJobID(), errorFile);
 
         Resource resource = jobService.getResourceForJob(job.getJobID(), testFile);
         Assert.assertEquals(testFile, resource.getFilename());
