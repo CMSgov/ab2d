@@ -14,8 +14,8 @@
    * [Configure IAM user deployers](#configure-iam-user-deployers)
    * [Create AWS Elastic Container Registry repositories for images](#create-aws-elastic-container-registry-repositories-for-images)
 1. [Deploy to test environment](#deploy-to-test-environment)
-   * [Create base aws environment](#create-base-aws-environment)
-   * [Deploy AWS application modules](#deploy-aws-application-modules)
+1. [Create or update base aws environment](#create-or-update-base-aws-environment)
+1. [Update application](#update-application)
 1. [Deploy and configure Jenkins](#deploy-and-configure-jenkins)
 
 ## Create an AWS IAM user
@@ -406,9 +406,7 @@
    $ docker push 114601554524.dkr.ecr.us-east-1.amazonaws.com/ab2d_worker:latest
    ```
 
-## Deploy to test environment
-
-### Create base aws environment
+## Create or update base aws environment
 
 1. Change to the environment directory
 
@@ -428,8 +426,8 @@
    $ ./create-base-environment.sh --environment=sbdemo --seed-ami-product-code=aw0evgkw8e5c1q413zgy5pjce --database-secret-datetime=2019-10-25-14-55-02 --skip-network
    ```
 
-### Deploy AWS application modules
-   
+## Update application
+
 1. Change to the "Deploy" directory
 
    ```ShellSession
