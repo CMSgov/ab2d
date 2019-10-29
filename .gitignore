@@ -62,4 +62,3 @@ build/
 
 # Packer output manifest from builds
 **/packer/**/output.txt
-**/terraform/**/output.txt
