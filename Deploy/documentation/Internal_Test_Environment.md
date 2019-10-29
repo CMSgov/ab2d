@@ -416,13 +416,20 @@
 1. Create base AWS environment
 
    ```ShellSession
-   $ ./create-base-environment.sh --environment=sbdemo --seed-ami-product-code=aw0evgkw8e5c1q413zgy5pjce --database-secret-datetime=2019-10-25-14-55-02
+   $ ./create-base-environment.sh \
+     --environment=sbdemo \
+     --seed-ami-product-code=aw0evgkw8e5c1q413zgy5pjce \
+     --database-secret-datetime=2019-10-25-14-55-02
    ```
 
 1. If you get a "Skipping network creation since VPC already exists" message, enter the following
 
    ```ShellSession
-   $ ./create-base-environment.sh --environment=sbdemo --seed-ami-product-code=aw0evgkw8e5c1q413zgy5pjce --database-secret-datetime=2019-10-25-14-55-02 --skip-network
+   $ ./create-base-environment.sh \
+     --environment=sbdemo \
+     --seed-ami-product-code=aw0evgkw8e5c1q413zgy5pjce \
+     --database-secret-datetime=2019-10-25-14-55-02 \
+     --skip-network
    ```
 
 ## Update application
