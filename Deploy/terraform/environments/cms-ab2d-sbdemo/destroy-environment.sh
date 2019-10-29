@@ -110,7 +110,7 @@ echo "Destroying S3 components..."
 terraform destroy \
   --target module.s3 --auto-approve
 
-aws s3 rm s3://cms-ab2d-cloudtrail/ab2d-$ENVIRONMENT \
+aws s3 rm s3://cms-ab2d-cloudtrail/cms-ab2d-$ENVIRONMENT \
   --recursive
 
 #
