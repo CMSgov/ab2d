@@ -17,14 +17,6 @@ public final class FHIRUtil {
         return jsonParser.encodeResourceToString(operationOutcome);
     }
 
-    public static OperationOutcome getSuccessfulOutcome(String message) {
-        OperationOutcome operationOutcome = new OperationOutcome();
-        operationOutcome.addIssue().setSeverity(OperationOutcome.IssueSeverity.INFORMATION)
-                .setCode(OperationOutcome.IssueType.INFORMATIONAL)
-                .setDetails(new CodeableConcept().setText(message));
-        return operationOutcome;
-    }
-
     public static OperationOutcome getErrorOutcome(String msg) {
         OperationOutcome operationOutcome = new OperationOutcome();
         operationOutcome.addIssue()
