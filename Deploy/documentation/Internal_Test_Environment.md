@@ -422,7 +422,7 @@
      --database-secret-datetime=2019-10-25-14-55-02
    ```
 
-1. If you get a "Skipping network creation since VPC already exists" message, enter the following
+1. If you get a "Skipping network creation since VPC already exists" message, enter the following to create or update existing environment
 
    ```ShellSession
    $ ./create-base-environment.sh \
