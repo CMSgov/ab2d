@@ -1,16 +1,11 @@
 #!/bin/bash
 
 #
-# Create base AWS networking
+# Change to working directory
 #
 
-# Change to working directory
 START_DIR="$( cd "$(dirname "$0")" ; pwd -P )"
 cd "${START_DIR}"
-
-# Set environment
-export AWS_PROFILE="sbdemo"
-export DEBUG_LEVEL="WARN"
 
 #
 # Parse options
@@ -45,15 +40,22 @@ esac
 done
 
 #
+# Set environment
+#
+
+export AWS_PROFILE="${ENVIRONMENT}"
+export DEBUG_LEVEL="WARN"
+
+#
 # Check vars are not empty before proceeding
 #
 
 echo "Check vars are not empty before proceeding..."
 if [ -z "${ENVIRONMENT}" ] || [ -z "${SEED_AMI_PRODUCT_CODE}" ] || [ -z "${DATABASE_SECRET_DATETIME}" ]; then
   echo "Try running the script like one of these options:"
-  echo "./create-base-environment.sh --environment=sbdemo --seed-ami-product-code={aw0evgkw8e5c1q413zgy5pjce|gold disk product code} --database-secret-datetime={YYYY-MM-DD-HH-MM-SS}"
-  echo "./create-base-environment.sh --environment=sbdemo --seed-ami-product-code={aw0evgkw8e5c1q413zgy5pjce|gold disk product code} --database-secret-datetime={YYYY-MM-DD-HH-MM-SS} --skip-network"
-  echo "./create-base-environment.sh --environment=sbdemo --seed-ami-product-code={aw0evgkw8e5c1q413zgy5pjce|gold disk product code} --database-secret-datetime={YYYY-MM-DD-HH-MM-SS} --debug-level={TRACE|DEBUG|INFO|WARN|ERROR}"
+  echo "./create-base-environment.sh --environment=${ENVIRONMENT} --seed-ami-product-code={aw0evgkw8e5c1q413zgy5pjce|gold disk product code} --database-secret-datetime={YYYY-MM-DD-HH-MM-SS}"
+  echo "./create-base-environment.sh --environment=${ENVIRONMENT} --seed-ami-product-code={aw0evgkw8e5c1q413zgy5pjce|gold disk product code} --database-secret-datetime={YYYY-MM-DD-HH-MM-SS} --skip-network"
+  echo "./create-base-environment.sh --environment=${ENVIRONMENT} --seed-ami-product-code={aw0evgkw8e5c1q413zgy5pjce|gold disk product code} --database-secret-datetime={YYYY-MM-DD-HH-MM-SS} --debug-level={TRACE|DEBUG|INFO|WARN|ERROR}"
   exit 1
 fi
 
@@ -156,7 +158,7 @@ fi
 if [ -z "${SKIP_NETWORK}" ]; then
   aws --region us-east-1 ec2 create-tags \
     --resources $VPC_ID \
-    --tags "Key=Name,Value=AB2D-SBDEMO-VPC"
+    --tags "Key=Name,Value=AB2D-${CMS_ENV}-VPC"
 fi
 
 # Display public subnet stage
@@ -693,8 +695,8 @@ rm -f /var/log/terraform/tf.log
 
 # Destroy tfstate environment in S3, if first run
 
-if [ -z "${FIRST_RUN}" ]; then
-  aws s3 rm s3://cms-ab2d-automation/cms-ab2d-sbdemo \
+if [ -n "${FIRST_RUN}" ]; then
+  aws s3 rm s3://cms-ab2d-automation/cms-ab2d-${ENVIRONMENT} \
     --recursive
 fi
 
@@ -729,7 +731,8 @@ aws s3api put-bucket-acl \
 
 # Add bucket policy to the "cms-ab2d-cloudtrail" S3 bucket
 
-cd ~/code/ab2d/Deploy/aws/s3-bucket-policies
+cd "${START_DIR}"
+cd ../../../aws/s3-bucket-policies
 
 aws s3api put-bucket-policy \
   --bucket cms-ab2d-cloudtrail \
@@ -749,6 +752,7 @@ EFS_FS_ID=$(aws efs describe-file-systems --query="FileSystems[?CreationToken=='
 
 # Create file system (if doesn't exist)
 if [ -z "${EFS_FS_ID}" ]; then
+  echo "Creating EFS..."
   terraform apply \
     --target module.efs --auto-approve
 fi
@@ -757,8 +761,9 @@ fi
 # Deploy db
 #
 
-DB_ENDPOINT=$(aws rds describe-db-instances --query="DBInstances[?DBInstanceIdentifier=='cms-ab2d-sbdemo'].Endpoint.Address" --output=text)
+DB_ENDPOINT=$(aws rds describe-db-instances --query="DBInstances[?DBInstanceIdentifier=='cms-ab2d-${ENVIRONMENT}'].Endpoint.Address" --output=text)
 if [ -z "${DB_ENDPOINT}" ]; then
+  echo "Creating database..."
   terraform apply \
     --var "db_username=${DATABASE_USER}" \
     --var "db_password=${DATABASE_PASSWORD}" \
@@ -796,7 +801,7 @@ if [ -z "${AMI_ID}" ]; then
   
   # Get first public subnet
   SUBNET_PUBLIC_1_ID=$(aws --region us-east-1 ec2 describe-subnets \
-    --filters "Name=tag:Name,Values=AB2D-SBDEMO-PUBLIC-SUBNET-01" \
+    --filters "Name=tag:Name,Values=AB2D-${CMS_ENV}-PUBLIC-SUBNET-01" \
     --query "Subnets[0].SubnetId" \
     --output text)
   
@@ -844,7 +849,7 @@ if [ -z "${JENKINS_AMI_ID}" ]; then
 
   # Get first public subnet
   SUBNET_PUBLIC_1_ID=$(aws --region us-east-1 ec2 describe-subnets \
-    --filters "Name=tag:Name,Values=AB2D-SBDEMO-PUBLIC-SUBNET-01" \
+    --filters "Name=tag:Name,Values=AB2D-${CMS_ENV}-PUBLIC-SUBNET-01" \
     --query "Subnets[0].SubnetId" \
     --output text)
 
@@ -867,4 +872,5 @@ fi
 #
 
 cd "${START_DIR}"
-../../../deploy.sh --environment=sbdemo --ami=$AMI_ID --auto-approve
+cd ../../..
+./deploy.sh --environment="${ENVIRONMENT}" --ami="${AMI_ID}" --auto-approve
