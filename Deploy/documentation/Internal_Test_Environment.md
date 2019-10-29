@@ -13,7 +13,6 @@
    * [Create instance profiles](#create-instance-profiles)
    * [Configure IAM user deployers](#configure-iam-user-deployers)
    * [Create AWS Elastic Container Registry repositories for images](#create-aws-elastic-container-registry-repositories-for-images)
-1. [Deploy to test environment](#deploy-to-test-environment)
 1. [Create or update base aws environment](#create-or-update-base-aws-environment)
 1. [Update application](#update-application)
 1. [Deploy and configure Jenkins](#deploy-and-configure-jenkins)
