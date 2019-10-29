@@ -118,6 +118,7 @@ module "worker" {
   alpha                         = var.private_subnet_ids[0]
   beta                          = var.private_subnet_ids[1]
   gamma                         = var.private_subnet_ids[2]
+  ecs_cluster_id                = module.api.ecs_cluster_id
 }
 
 module "lonnie_access_controller" {

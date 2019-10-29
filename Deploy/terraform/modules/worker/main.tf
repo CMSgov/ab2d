@@ -79,9 +79,9 @@ resource "aws_efs_mount_target" "gamma" {
 # End EFS configuration
 #
 
-resource "aws_ecs_cluster" "ab2d-worker" {
-  name = "ab2d-worker-${var.env}"
-}
+# resource "aws_ecs_cluster" "ab2d-worker" {
+#   name = "ab2d-worker-${var.env}"
+# }
 
 resource "aws_ecs_task_definition" "api" {
   family = "worker"
@@ -118,10 +118,9 @@ JSON
   execution_role_arn = "arn:aws:iam::114601554524:role/Ab2dInstanceRole"
 }
 
-
 resource "aws_ecs_service" "worker" {
   name = "ab2d-worker"
-  cluster = aws_ecs_cluster.ab2d-worker.id
+  cluster = var.ecs_cluster_id
   task_definition = var.override_task_definition_arn != "" ? var.override_task_definition_arn : aws_ecs_task_definition.api.arn
   desired_count = 5
   launch_type = "EC2"

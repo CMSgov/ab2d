@@ -31,4 +31,5 @@ variable "efs_id" {}
 variable "alpha" {}
 variable "beta" {}
 variable "gamma" {}
+variable "ecs_cluster_id" {}
 # LSH END
