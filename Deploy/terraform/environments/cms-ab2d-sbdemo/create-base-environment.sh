@@ -5,7 +5,8 @@
 #
 
 # Change to working directory
-cd "$(dirname "$0")"
+START_DIR="$( cd "$(dirname "$0")" ; pwd -P )"
+cd "${START_DIR}"
 
 # Set environment
 export AWS_PROFILE="sbdemo"
@@ -697,7 +698,7 @@ if [ -z "${FIRST_RUN}" ]; then
     --recursive
 fi
 
-cd ~/code/ab2d/Deploy/terraform/environments/cms-ab2d-sbdemo
+cd "${START_DIR}"
 
 # Initialize and validate terraform
 
@@ -734,7 +735,7 @@ aws s3api put-bucket-policy \
   --bucket cms-ab2d-cloudtrail \
   --policy file://cms-ab2d-cloudtrail-bucket-policy.json
 
-cd ~/code/ab2d/Deploy/terraform/environments/cms-ab2d-sbdemo
+cd "${START_DIR}"
 
 terraform apply \
   --target module.s3 --auto-approve
@@ -744,7 +745,7 @@ terraform apply \
 #
 
 # Get files system id (if exists)
-EFS_FS_ID=$(aws efs describe-file-systems --query="FileSystems[?CreationToken=='cms-ab2d-${ENVIRONMENT}'].FileSystemId" --output=text)
+EFS_FS_ID=$(aws efs describe-file-systems --query="FileSystems[?CreationToken=='cms-ab2d'].FileSystemId" --output=text)
 
 # Create file system (if doesn't exist)
 if [ -z "${EFS_FS_ID}" ]; then
@@ -800,12 +801,12 @@ if [ -z "${AMI_ID}" ]; then
     --output text)
   
   # Create AMI for application nodes
-  cd ../../../packer/app/
+  cd "${START_DIR}"
+  cd ../../../packer/app
   IP=$(curl ipinfo.io/ip)
   COMMIT=$(git rev-parse HEAD)
   packer build --var seed_ami=$SEED_AMI --var vpc_id=$VPC_ID --var subnet_public_1_id=$SUBNET_PUBLIC_1_ID --var my_ip_address=$IP --var git_commit_hash=$COMMIT app.json  2>&1 | tee output.txt
   AMI_ID=$(cat output.txt | awk 'match($0, /ami-.*/) { print substr($0, RSTART, RLENGTH) }' | tail -1)
-  cd ../../
   
   # Add name tag to AMI
   aws --region us-east-1 ec2 create-tags \
@@ -848,12 +849,12 @@ if [ -z "${JENKINS_AMI_ID}" ]; then
     --output text)
 
   # Create AMI for Jenkins
+  cd "${START_DIR}"
   cd ../../../packer/jenkins
   IP=$(curl ipinfo.io/ip)
   COMMIT=$(git rev-parse HEAD)
   packer build --var seed_ami=$SEED_AMI --var vpc_id=$VPC_ID --var subnet_public_1_id=$SUBNET_PUBLIC_1_ID --var my_ip_address=$IP --var git_commit_hash=$COMMIT app.json  2>&1 | tee output.txt
   JENKINS_AMI_ID=$(cat output.txt | awk 'match($0, /ami-.*/) { print substr($0, RSTART, RLENGTH) }' | tail -1)
-  cd ../../
   
   # Add name tag to AMI
   aws --region us-east-1 ec2 create-tags \
@@ -865,4 +866,5 @@ fi
 # Deploy AWS application modules
 #
 
+cd "${START_DIR}"
 ../../../deploy.sh --environment=sbdemo --ami=$AMI_ID --auto-approve
