@@ -23,5 +23,5 @@ public class JobOutput {
 
     private String fhirResourceType;
 
-    private boolean isError;
+    private boolean error;
 }

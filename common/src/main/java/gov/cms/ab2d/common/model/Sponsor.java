@@ -16,7 +16,7 @@ public class Sponsor {
     private Long id;
 
     @Column(unique = true)
-    private Integer hpmsID;
+    private Integer hpmsId;
     private String orgName;
     private String legalName;
 

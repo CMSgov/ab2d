@@ -17,7 +17,7 @@ public class UserServiceImpl implements UserService {
 
     public User getCurrentUser() {
         Authentication auth =  null; //SecurityContextHolder.getContext().getAuthentication(); leave out for now, otherwise it will not be null, just an anonymous user
-        return auth != null ? userRepository.findByUserID(((org.springframework.security.core.userdetails.User) auth.getPrincipal()).getUsername()) : null;
+        return auth != null ? userRepository.findByUserName(((org.springframework.security.core.userdetails.User) auth.getPrincipal()).getUsername()) : null;
     }
 
 }

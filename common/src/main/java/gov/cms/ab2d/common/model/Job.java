@@ -33,7 +33,7 @@ public class Job {
     private String jobId;
 
     @ManyToOne
-    @JoinColumn(name = "user_id")
+    @JoinColumn(name = "user_account_id")
     private User user;
 
     @OneToMany(

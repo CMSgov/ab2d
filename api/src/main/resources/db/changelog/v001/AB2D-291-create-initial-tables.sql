@@ -83,14 +83,18 @@ ALTER TABLE attestation ADD CONSTRAINT "fk_attestation_to_contract" FOREIGN KEY 
 CREATE TABLE user_account
 (
     id                  BIGSERIAL,
+    user_name           VARCHAR(64)         NOT NULL,
     first_name          VARCHAR(64)         NOT NULL,
     last_name           VARCHAR(64)         NOT NULL,
     email               VARCHAR(255)        NOT NULL,
+    sponsor_id          BIGINT              NOT NULL,
     enabled             BOOLEAN             NOT NULL
 );
 
 ALTER TABLE user_account ADD CONSTRAINT "pk_user_account" PRIMARY KEY (id);
-ALTER TABLE user_account ADD CONSTRAINT "uc_suser_account_email" UNIQUE (email);
+ALTER TABLE user_account ADD CONSTRAINT "uc_user_account_user_name" UNIQUE (user_name);
+ALTER TABLE user_account ADD CONSTRAINT "uc_user_account_email" UNIQUE (email);
+ALTER TABLE user_account ADD CONSTRAINT "fk_user_account_to_sponsor"  FOREIGN KEY (sponsor_id) REFERENCES sponsor (id);
 
 
 --rollback DROP TABLE user_account;
@@ -151,8 +155,9 @@ CREATE TABLE job
     user_account_id     BIGINT              NOT NULL,
     created_at          TIMESTAMPTZ         NOT NULL,
     expires_at          TIMESTAMPTZ         NOT NULL,
-    resource_type       VARCHAR(255)        NOT NULL,
-    job_status_id       BIGINT              NOT NULL,
+    resource_types      VARCHAR(255)        NOT NULL,
+--  job_status_id       BIGINT              NOT NULL,
+    status              INT                 NOT NULL,
     status_message      TEXT,
     request_url         TEXT,
     progress            INT,
@@ -164,7 +169,7 @@ ALTER TABLE job ADD CONSTRAINT "pk_job" PRIMARY KEY (id);
 ALTER TABLE job ADD CONSTRAINT "uc_job_job_id" UNIQUE (job_id);
 
 ALTER TABLE job ADD CONSTRAINT "fk_job_to_user_account" FOREIGN KEY (user_account_id) REFERENCES user_account (id);
-ALTER TABLE job ADD CONSTRAINT "fk_job_to_job_status" FOREIGN KEY (job_status_id) REFERENCES job_status (id);
+--ALTER TABLE job ADD CONSTRAINT "fk_job_to_job_status" FOREIGN KEY (job_status_id) REFERENCES job_status (id);
 
 --rollback DROP TABLE job;
 --  -------------------------------------------------------------------------------------------------------------------
