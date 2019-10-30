@@ -12,7 +12,6 @@
 
     <properties>
         <project.root>${basedir}/..</project.root>
-        <springfox.version>2.9.2</springfox.version>
     </properties>
 
     <dependencies>
