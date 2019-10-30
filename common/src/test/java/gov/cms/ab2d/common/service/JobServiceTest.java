@@ -53,17 +53,17 @@ public class JobServiceTest {
         Job job = jobService.createJob("ExplanationOfBenefits", "http://localhost:8080");
         assertThat(job).isNotNull();
         assertThat(job.getId()).isNotNull();
-        assertThat(job.getJobID()).isNotNull();
+        assertThat(job.getJobId()).isNotNull();
         assertEquals(job.getProgress(), Integer.valueOf(0));
         assertEquals(job.getUser(), null); // null for now since no authentication
         assertEquals(job.getResourceTypes(), "ExplanationOfBenefits");
-        assertEquals(job.getRequestURL(), "http://localhost:8080");
+        assertEquals(job.getRequestUrl(), "http://localhost:8080");
         assertEquals(job.getStatusMessage(), INITIAL_JOB_STATUS_MESSAGE);
         assertEquals(job.getStatus(), JobStatus.SUBMITTED);
         assertEquals(job.getJobOutput().size(), 0);
         assertEquals(job.getLastPollTime(), null);
-        assertEquals(job.getExpires(), null);
-        assertThat(job.getJobID()).matches("[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}");
+        assertEquals(job.getExpiresAt(), null);
+        assertThat(job.getJobId()).matches("[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}");
 
         // Verify it actually got persisted in the DB
         assertThat(jobRepository.findById(job.getId())).get().isEqualTo(job);
@@ -78,10 +78,10 @@ public class JobServiceTest {
     public void cancelJob() {
         Job job = jobService.createJob("ExplanationOfBenefits", "http://localhost:8080");
 
-        jobService.cancelJob(job.getJobID());
+        jobService.cancelJob(job.getJobId());
 
         // Verify that it has the correct status
-        Job cancelledJob = jobRepository.findByJobID(job.getJobID());
+        Job cancelledJob = jobRepository.findByJobId(job.getJobId());
 
         assertEquals(JobStatus.CANCELLED, cancelledJob.getStatus());
     }
@@ -95,14 +95,14 @@ public class JobServiceTest {
     public void getJob() {
         Job job = jobService.createJob("ExplanationOfBenefits", "http://localhost:8080");
 
-        Job retrievedJob = jobService.getJobByJobID(job.getJobID());
+        Job retrievedJob = jobService.getJobByJobId(job.getJobId());
 
         assertEquals(job, retrievedJob);
     }
 
     @Test(expected = ResourceNotFoundException.class)
     public void getNonExistentJob() {
-        jobService.getJobByJobID("NonExistent");
+        jobService.getJobByJobId("NonExistent");
     }
 
     @Test(expected = InvalidJobStateTransition.class)
@@ -112,7 +112,7 @@ public class JobServiceTest {
         job.setStatus(JobStatus.SUCCESSFUL);
         jobRepository.saveAndFlush(job);
 
-        jobService.cancelJob(job.getJobID());
+        jobService.cancelJob(job.getJobId());
     }
 
     @Test(expected = InvalidJobStateTransition.class)
@@ -122,7 +122,7 @@ public class JobServiceTest {
         job.setStatus(JobStatus.CANCELLED);
         jobRepository.saveAndFlush(job);
 
-        jobService.cancelJob(job.getJobID());
+        jobService.cancelJob(job.getJobId());
     }
 
     @Test(expected = InvalidJobStateTransition.class)
@@ -132,7 +132,7 @@ public class JobServiceTest {
         job.setStatus(JobStatus.FAILED);
         jobRepository.saveAndFlush(job);
 
-        jobService.cancelJob(job.getJobID());
+        jobService.cancelJob(job.getJobId());
     }
 
     @Test
@@ -145,11 +145,11 @@ public class JobServiceTest {
         job.setStatus(JobStatus.IN_PROGRESS);
         job.setCreatedAt(localDateTime);
         job.setCompletedAt(localDateTime);
-        job.setJobID("abc");
+        job.setJobId("abc");
         job.setResourceTypes("ExplanationOfBenefits");
-        job.setRequestURL("http://localhost");
+        job.setRequestUrl("http://localhost");
         job.setStatusMessage("Pending");
-        job.setExpires(now);
+        job.setExpiresAt(now);
 
         JobOutput jobOutput = new JobOutput();
         jobOutput.setError(false);
@@ -172,11 +172,11 @@ public class JobServiceTest {
         Assert.assertEquals(JobStatus.IN_PROGRESS, updatedJob.getStatus());
         Assert.assertEquals(localDateTime, updatedJob.getCreatedAt());
         Assert.assertEquals(localDateTime, updatedJob.getCompletedAt());
-        Assert.assertEquals("abc", updatedJob.getJobID());
+        Assert.assertEquals("abc", updatedJob.getJobId());
         Assert.assertEquals("ExplanationOfBenefits", updatedJob.getResourceTypes());
-        Assert.assertEquals("http://localhost", updatedJob.getRequestURL());
+        Assert.assertEquals("http://localhost", updatedJob.getRequestUrl());
         Assert.assertEquals("Pending", updatedJob.getStatusMessage());
-        Assert.assertEquals(now, updatedJob.getExpires());
+        Assert.assertEquals(now, updatedJob.getExpiresAt());
 
         JobOutput updatedOutput = updatedJob.getJobOutput().get(0);
         Assert.assertEquals(false, updatedOutput.isError());

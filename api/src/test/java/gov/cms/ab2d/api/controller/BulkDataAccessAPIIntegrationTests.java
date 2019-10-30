@@ -2,10 +2,10 @@ package gov.cms.ab2d.api.controller;
 
 import com.jayway.jsonpath.JsonPath;
 import gov.cms.ab2d.api.SpringBootApp;
-import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.JobOutput;
 import gov.cms.ab2d.common.model.JobStatus;
+import gov.cms.ab2d.common.repository.JobRepository;
 
 import org.apache.commons.io.IOUtils;
 import org.hamcrest.core.Is;
@@ -73,7 +73,7 @@ public class BulkDataAccessAPIIntegrationTests {
                 .andDo(print());
         Job job = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
 
-        String statusUrl = "http://localhost" + API_PREFIX + "/Job/" + job.getJobID() + "/$status";
+        String statusUrl = "http://localhost" + API_PREFIX + "/Job/" + job.getJobId() + "/$status";
 
         resultActions.andExpect(status().isAccepted())
                 .andExpect(header().string("Content-Location", statusUrl));
@@ -81,7 +81,7 @@ public class BulkDataAccessAPIIntegrationTests {
         Assert.assertEquals(job.getStatus(), JobStatus.SUBMITTED);
         Assert.assertEquals(job.getStatusMessage(), INITIAL_JOB_STATUS_MESSAGE);
         Assert.assertEquals(job.getProgress(), Integer.valueOf(0));
-        Assert.assertEquals(job.getRequestURL(), "http://localhost" + API_PREFIX  + PATIENT_EXPORT_PATH);
+        Assert.assertEquals(job.getRequestUrl(), "http://localhost" + API_PREFIX  + PATIENT_EXPORT_PATH);
         Assert.assertEquals(job.getResourceTypes(), null);
         Assert.assertEquals(job.getUser(), null);
     }
@@ -93,7 +93,7 @@ public class BulkDataAccessAPIIntegrationTests {
                 .contentType(MediaType.APPLICATION_JSON)).andDo(print());
         Job job = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
 
-        String statusUrl = "http://localhost" + API_PREFIX + "/Job/" + job.getJobID() + "/$status";
+        String statusUrl = "http://localhost" + API_PREFIX + "/Job/" + job.getJobId() + "/$status";
 
         resultActions.andExpect(status().isAccepted())
                 .andExpect(header().string("Content-Location", statusUrl));
@@ -101,7 +101,7 @@ public class BulkDataAccessAPIIntegrationTests {
         Assert.assertEquals(job.getStatus(), JobStatus.SUBMITTED);
         Assert.assertEquals(job.getStatusMessage(), INITIAL_JOB_STATUS_MESSAGE);
         Assert.assertEquals(job.getProgress(), Integer.valueOf(0));
-        Assert.assertEquals(job.getRequestURL(), "http://localhost" + API_PREFIX + PATIENT_EXPORT_PATH + typeParams);
+        Assert.assertEquals(job.getRequestUrl(), "http://localhost" + API_PREFIX + PATIENT_EXPORT_PATH + typeParams);
         Assert.assertEquals(job.getResourceTypes(), "ExplanationOfBenefits");
         Assert.assertEquals(job.getUser(), null);
     }
@@ -135,11 +135,11 @@ public class BulkDataAccessAPIIntegrationTests {
         this.mockMvc.perform(get(API_PREFIX + PATIENT_EXPORT_PATH).contentType(MediaType.APPLICATION_JSON));
         Job job = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
 
-        this.mockMvc.perform(delete(API_PREFIX + "/Job/" + job.getJobID() + "/$status"))
+        this.mockMvc.perform(delete(API_PREFIX + "/Job/" + job.getJobId() + "/$status"))
             .andExpect(status().is(202))
             .andExpect(content().string(JOB_CANCELLED_MSG));
 
-        Job cancelledJob = jobRepository.findByJobID(job.getJobID());
+        Job cancelledJob = jobRepository.findByJobId(job.getJobId());
         Assert.assertEquals(JobStatus.CANCELLED, cancelledJob.getStatus());
     }
 
@@ -161,7 +161,7 @@ public class BulkDataAccessAPIIntegrationTests {
         job.setStatus(JobStatus.FAILED);
         jobRepository.saveAndFlush(job);
 
-        this.mockMvc.perform(delete(API_PREFIX + "/Job/" + job.getJobID() + "/$status"))
+        this.mockMvc.perform(delete(API_PREFIX + "/Job/" + job.getJobId() + "/$status"))
                 .andExpect(status().is(400))
                 .andExpect(jsonPath("$.resourceType", Is.is("OperationOutcome")))
                 .andExpect(jsonPath("$.issue[0].severity", Is.is("error")))
@@ -171,7 +171,7 @@ public class BulkDataAccessAPIIntegrationTests {
         job.setStatus(JobStatus.CANCELLED);
         jobRepository.saveAndFlush(job);
 
-        this.mockMvc.perform(delete(API_PREFIX + "/Job/" + job.getJobID() + "/$status"))
+        this.mockMvc.perform(delete(API_PREFIX + "/Job/" + job.getJobId() + "/$status"))
                 .andExpect(status().is(400))
                 .andExpect(jsonPath("$.resourceType", Is.is("OperationOutcome")))
                 .andExpect(jsonPath("$.issue[0].severity", Is.is("error")))
@@ -181,7 +181,7 @@ public class BulkDataAccessAPIIntegrationTests {
         job.setStatus(JobStatus.SUCCESSFUL);
         jobRepository.saveAndFlush(job);
 
-        this.mockMvc.perform(delete(API_PREFIX + "/Job/" + job.getJobID() + "/$status"))
+        this.mockMvc.perform(delete(API_PREFIX + "/Job/" + job.getJobId() + "/$status"))
                 .andExpect(status().is(400))
                 .andExpect(jsonPath("$.resourceType", Is.is("OperationOutcome")))
                 .andExpect(jsonPath("$.issue[0].severity", Is.is("error")))
@@ -218,7 +218,7 @@ public class BulkDataAccessAPIIntegrationTests {
         job.setStatus(JobStatus.SUCCESSFUL);
         job.setProgress(100);
         OffsetDateTime expireDate = OffsetDateTime.now().plusDays(100);
-        job.setExpires(expireDate);
+        job.setExpiresAt(expireDate);
         OffsetDateTime now = OffsetDateTime.now();
         job.setCompletedAt(now);
 
@@ -237,12 +237,12 @@ public class BulkDataAccessAPIIntegrationTests {
 
         jobRepository.saveAndFlush(job);
 
-        final ZonedDateTime jobExpiresUTC = ZonedDateTime.ofInstant(job.getExpires().toInstant(), ZoneId.of("UTC"));
+        final ZonedDateTime jobExpiresUTC = ZonedDateTime.ofInstant(job.getExpiresAt().toInstant(), ZoneId.of("UTC"));
         this.mockMvc.perform(get(statusUrl).contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().is(200))
                 .andExpect(header().string("Expires", DateTimeFormatter.RFC_1123_DATE_TIME.format(jobExpiresUTC)))
                 .andExpect(jsonPath("$.transactionTime", Is.is(new DateTimeType(now.toString()).toHumanDisplay())))
-                .andExpect(jsonPath("$.request", Is.is(job.getRequestURL())))
+                .andExpect(jsonPath("$.request", Is.is(job.getRequestUrl())))
                 .andExpect(jsonPath("$.requiresAccessToken", Is.is(true)))
                 .andExpect(jsonPath("$.output[0].type", Is.is("ExplanationOfBenefits")))
                 .andExpect(jsonPath("$.output[0].url", Is.is("http://localhost" + API_PREFIX + "/Job/" + job.getJobID() + "/file/file.ndjson")))
@@ -259,7 +259,7 @@ public class BulkDataAccessAPIIntegrationTests {
         Job job = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
         job.setStatus(JobStatus.FAILED);
         OffsetDateTime expireDate = OffsetDateTime.now().plusDays(100);
-        job.setExpires(expireDate);
+        job.setExpiresAt(expireDate);
 
         jobRepository.saveAndFlush(job);
 
@@ -279,7 +279,7 @@ public class BulkDataAccessAPIIntegrationTests {
         Job job = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
         job.setStatus(JobStatus.FAILED);
         OffsetDateTime expireDate = OffsetDateTime.now().plusDays(100);
-        job.setExpires(expireDate);
+        job.setExpiresAt(expireDate);
 
         jobRepository.saveAndFlush(job);
 
@@ -299,7 +299,7 @@ public class BulkDataAccessAPIIntegrationTests {
         Job job = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
         job.setStatus(JobStatus.FAILED);
         OffsetDateTime expireDate = OffsetDateTime.now().plusDays(100);
-        job.setExpires(expireDate);
+        job.setExpiresAt(expireDate);
 
         jobRepository.saveAndFlush(job);
 
@@ -319,7 +319,7 @@ public class BulkDataAccessAPIIntegrationTests {
         Job job = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
         job.setStatus(JobStatus.FAILED);
         OffsetDateTime expireDate = OffsetDateTime.now().plusDays(100);
-        job.setExpires(expireDate);
+        job.setExpiresAt(expireDate);
 
         jobRepository.saveAndFlush(job);
 

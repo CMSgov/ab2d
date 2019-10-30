@@ -30,7 +30,7 @@ public class Job {
     private Long id;
 
     @Column(unique = true)
-    private String jobID;
+    private String jobId;
 
     @ManyToOne
     @JoinColumn(name = "user_id")
@@ -50,7 +50,7 @@ public class Job {
     @Column(columnDefinition = "TIMESTAMP WITH TIME ZONE")
     private OffsetDateTime completedAt;
 
-    private String requestURL;
+    private String requestUrl;
     private JobStatus status;
     private String statusMessage;
     private Integer progress;
@@ -59,7 +59,7 @@ public class Job {
     private OffsetDateTime lastPollTime;
 
     @Column(columnDefinition = "TIMESTAMP WITH TIME ZONE")
-    private OffsetDateTime expires;
+    private OffsetDateTime expiresAt;
 
     @Pattern(regexp = "ExplanationOfBenefits", message = "_type should be ExplanationOfBenefits")
     private String resourceTypes; // for now just limited to ExplanationOfBenefits
