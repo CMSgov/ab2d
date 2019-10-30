@@ -5,6 +5,7 @@ import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.JobOutput;
 import gov.cms.ab2d.common.model.JobStatus;
+import org.apache.commons.io.IOUtils;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -16,8 +17,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.transaction.TransactionSystemException;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -196,17 +196,25 @@ public class JobServiceTest {
         Job job = createJobForFileDownloads(testFile, errorFile);
 
         String destinationStr = tmpJobLocation + job.getJobID();
-        String resourcesDir = "src" + File.separator + "test" + File.separator + "resources" + File.separator;
         Path destination = Paths.get(destinationStr);
         Files.createDirectories(destination);
-        Files.copy(Paths.get(resourcesDir + testFile), Paths.get(destinationStr + File.separator + testFile));
-        Files.copy(Paths.get(resourcesDir + errorFile), Paths.get(destinationStr + File.separator + errorFile));
+
+        createNDJSONFile(testFile, destinationStr);
+        createNDJSONFile(errorFile, destinationStr);
 
         Resource resource = jobService.getResourceForJob(job.getJobID(), testFile);
         Assert.assertEquals(testFile, resource.getFilename());
 
         Resource errorResource = jobService.getResourceForJob(job.getJobID(), errorFile);
         Assert.assertEquals(errorFile, errorResource.getFilename());
+    }
+
+    private void createNDJSONFile(String file, String destinationStr) throws IOException {
+        InputStream testFileStream = this.getClass().getResourceAsStream("/" + file);
+        String fileStr = IOUtils.toString(testFileStream, "UTF-8");
+        try (PrintWriter out = new PrintWriter(destinationStr + File.separator + file)) {
+            out.println(fileStr);
+        }
     }
 
     private Job createJobForFileDownloads(String fileName, String errorFileName) {

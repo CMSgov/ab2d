@@ -7,6 +7,7 @@ import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.JobOutput;
 import gov.cms.ab2d.common.model.JobStatus;
 
+import org.apache.commons.io.IOUtils;
 import org.hamcrest.core.Is;
 import org.hl7.fhir.dstu3.model.DateTimeType;
 import org.junit.Assert;
@@ -32,6 +33,8 @@ import static gov.cms.ab2d.common.util.Constants.NDJSON_FIRE_CONTENT_TYPE;
 import static gov.cms.ab2d.common.util.Constants.OPERATION_OUTCOME;
 
 import java.io.File;
+import java.io.InputStream;
+import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -348,11 +351,14 @@ public class BulkDataAccessAPIIntegrationTests {
         jobRepository.saveAndFlush(job);
 
         String testFile = "test.ndjson";
-        String resourcesDir = "src" + File.separator + "test" + File.separator + "resources" + File.separator;
         String destinationStr = tmpJobLocation + job.getJobID();
         Path destination = Paths.get(destinationStr);
         Files.createDirectories(destination);
-        Files.copy(Paths.get(resourcesDir + testFile), Paths.get(destinationStr + File.separator + testFile));
+        InputStream testFileStream = this.getClass().getResourceAsStream("/" + testFile);
+        String testFileStr = IOUtils.toString(testFileStream, "UTF-8");
+        try (PrintWriter out = new PrintWriter(destinationStr + File.separator + testFile)) {
+            out.println(testFileStr);
+        }
 
         MvcResult mvcResultStatusCall = this.mockMvc.perform(get(statusUrl).contentType(MediaType.APPLICATION_JSON)).andReturn();
         String downloadUrl = JsonPath.read(mvcResultStatusCall.getResponse().getContentAsString(), "$.output[0].url");
