@@ -40,6 +40,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import static gov.cms.ab2d.api.util.Constants.API_PREFIX;
+import static gov.cms.ab2d.common.util.Constants.NDJSON_FIRE_CONTENT_TYPE;
 
 @Slf4j
 @Api(value = "Bulk Data Access API", description =
@@ -166,8 +167,8 @@ public class BulkDataAccessAPI {
                 resp.setTransactionTime(jobCompletedAt.toHumanDisplay());
                 resp.setRequest(job.getRequestURL());
                 resp.setRequiresAccessToken(true);
-                resp.setOutput(job.getJobOutput().stream().filter(o -> !o.isError()).map(o -> new JobCompletedResponse.Output(o.getFhirResourceType(), o.getFilePath())).collect(Collectors.toList()));
-                resp.setError(job.getJobOutput().stream().filter(o -> o.isError()).map(o -> new JobCompletedResponse.Output(o.getFhirResourceType(), o.getFilePath())).collect(Collectors.toList()));
+                resp.setOutput(job.getJobOutput().stream().filter(o -> !o.isError()).map(o -> new JobCompletedResponse.Output(o.getFhirResourceType(), getUrlPath(job, o.getFilePath()))).collect(Collectors.toList()));
+                resp.setError(job.getJobOutput().stream().filter(o -> o.isError()).map(o -> new JobCompletedResponse.Output(o.getFhirResourceType(), getUrlPath(job, o.getFilePath()))).collect(Collectors.toList()));
                 return new ResponseEntity<>(new ObjectMapper().valueToTree(resp), responseHeaders, HttpStatus.OK);
             case SUBMITTED:
                 IN_PROGRESS:
@@ -179,6 +180,11 @@ public class BulkDataAccessAPI {
             default:
                 throw new RuntimeException("Unknown status of job");
         }
+    }
+
+    private String getUrlPath(Job job, String filePath) {
+        String requestURIString = ServletUriComponentsBuilder.fromCurrentRequestUri().replacePath(API_PREFIX + "/Job/" + job.getJobID()).toUriString();
+        return requestURIString + "/file/" + filePath;
     }
 
     @ApiOperation(value = "Downloads a file produced by an export job.", response = String.class,
@@ -195,8 +201,9 @@ public class BulkDataAccessAPI {
     public ResponseEntity<Resource> downloadFile(
             @ApiParam(value = "A job identifier", required = true) @PathVariable @NotBlank String jobId,
             @ApiParam(value = "A file name", required = true) @PathVariable @NotBlank String filename) throws IOException {
-        HttpHeaders responseHeaders = new HttpHeaders();
-        responseHeaders.add("X-Progress", "0%");
-        return new ResponseEntity<>(null, responseHeaders, HttpStatus.ACCEPTED);
+        Resource downloadResource = jobService.getResourceForJob(jobId, filename);
+        HttpHeaders headers = new HttpHeaders();
+        headers.set(HttpHeaders.CONTENT_TYPE, NDJSON_FIRE_CONTENT_TYPE);
+        return new ResponseEntity<>(downloadResource, headers, HttpStatus.OK);
     }
 }
