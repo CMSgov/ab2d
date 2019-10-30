@@ -11,7 +11,7 @@ provider "aws" {
 terraform {
   backend "s3" {
     bucket         = "cms-ab2d-automation"
-    key            = "cms-ab2d-dev/terraform/terraform.tfstate"
+    key            = "cms-ab2d-sbdemo/terraform/terraform.tfstate"
     region         = "us-east-1"
     encrypt = true
   }
@@ -42,6 +42,7 @@ module "db" {
   multi_az                = var.db_multi_az
   username                = var.db_username
   password                = var.db_password
+  name                    = var.db_name
   skip_final_snapshot     = var.db_skip_final_snapshot
 }
 
@@ -59,9 +60,6 @@ module "efs" {
   source              = "../../modules/efs"
   env                 = var.env
   encryption_key_arn  = module.kms.arn
-  alpha               = var.private_subnet_ids[0]
-  beta                = var.private_subnet_ids[1]
-  gamma               = var.private_subnet_ids[2]
 }
 
 # LSH SKIP FOR NOW BEGIN
@@ -104,7 +102,6 @@ module "worker" {
   instance_type                 = var.ec2_instance_type
   ssh_key_name                  = var.ssh_key_name
   node_subnet_ids               = var.private_subnet_ids
-  logging_bucket                = var.nlb_logging_bucket_name
   iam_instance_profile          = var.ec2_iam_profile
   docker_repository_url         = "114601554524.dkr.ecr.us-east-1.amazonaws.com/ab2d_worker:latest"
   desired_instances             = var.ec2_desired_instance_count
@@ -116,7 +113,12 @@ module "worker" {
   app_sec_group_id              = module.api.application_security_group_id
   controller_sec_group_id       = module.api.deployment_controller_sec_group_id
   loadbalancer_subnet_ids       = var.deployment_controller_subnet_ids
-  vpc_cidrs = ["10.124.1.0/24"]
+  vpc_cidrs                     = ["10.124.1.0/24"]
+  efs_id                        = module.efs.efs_id
+  alpha                         = var.private_subnet_ids[0]
+  beta                          = var.private_subnet_ids[1]
+  gamma                         = var.private_subnet_ids[2]
+  ecs_cluster_id                = module.api.ecs_cluster_id
 }
 
 module "lonnie_access_controller" {
