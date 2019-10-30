@@ -12,7 +12,7 @@ import java.util.Set;
 public class Beneficiary {
 
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(unique = true)
