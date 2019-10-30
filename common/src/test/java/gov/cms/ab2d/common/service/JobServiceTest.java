@@ -5,14 +5,22 @@ import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.JobOutput;
 import gov.cms.ab2d.common.model.JobStatus;
+import org.apache.commons.io.IOUtils;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.core.io.Resource;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.transaction.TransactionSystemException;
 
+import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.OffsetDateTime;
 import java.util.List;
 
@@ -30,6 +38,15 @@ public class JobServiceTest {
 
     @Autowired
     JobRepository jobRepository;
+
+    @Value("${efs.mount}")
+    private String tmpJobLocation;
+
+    // Be safe and make sure nothing from another test will impact current test
+    @Before
+    public void clearJobs() {
+        jobRepository.deleteAll();
+    }
 
     @Test
     public void createJob() {
@@ -137,13 +154,13 @@ public class JobServiceTest {
         JobOutput jobOutput = new JobOutput();
         jobOutput.setError(false);
         jobOutput.setFhirResourceType("ExplanationOfBenefits");
-        jobOutput.setFilePath("/output/file.ndjson");
+        jobOutput.setFilePath("file.ndjson");
         jobOutput.setJob(job);
 
         JobOutput errorJobOutput = new JobOutput();
         errorJobOutput.setError(true);
         errorJobOutput.setFhirResourceType(OPERATION_OUTCOME);
-        errorJobOutput.setFilePath("http://localhost/path/error.ndjson");
+        errorJobOutput.setFilePath("error.ndjson");
         errorJobOutput.setJob(job);
 
         List output = List.of(jobOutput, errorJobOutput);
@@ -164,11 +181,89 @@ public class JobServiceTest {
         JobOutput updatedOutput = updatedJob.getJobOutput().get(0);
         Assert.assertEquals(false, updatedOutput.isError());
         Assert.assertEquals("ExplanationOfBenefits", updatedOutput.getFhirResourceType());
-        Assert.assertEquals("/output/file.ndjson", updatedOutput.getFilePath());
+        Assert.assertEquals("file.ndjson", updatedOutput.getFilePath());
 
         JobOutput updatedErrorOutput = updatedJob.getJobOutput().get(1);
         Assert.assertEquals(true, updatedErrorOutput.isError());
         Assert.assertEquals(OPERATION_OUTCOME, updatedErrorOutput.getFhirResourceType());
-        Assert.assertEquals("http://localhost/path/error.ndjson", updatedErrorOutput.getFilePath());
+        Assert.assertEquals("error.ndjson", updatedErrorOutput.getFilePath());
+    }
+
+    @Test
+    public void getFileDownloadUrl() throws IOException {
+        String testFile = "test.ndjson";
+        String errorFile = "error.ndjson";
+        Job job = createJobForFileDownloads(testFile, errorFile);
+
+        String destinationStr = tmpJobLocation + job.getJobID();
+        Path destination = Paths.get(destinationStr);
+        Files.createDirectories(destination);
+
+        createNDJSONFile(testFile, destinationStr);
+        createNDJSONFile(errorFile, destinationStr);
+
+        Resource resource = jobService.getResourceForJob(job.getJobID(), testFile);
+        Assert.assertEquals(testFile, resource.getFilename());
+
+        Resource errorResource = jobService.getResourceForJob(job.getJobID(), errorFile);
+        Assert.assertEquals(errorFile, errorResource.getFilename());
+    }
+
+    private void createNDJSONFile(String file, String destinationStr) throws IOException {
+        InputStream testFileStream = this.getClass().getResourceAsStream("/" + file);
+        String fileStr = IOUtils.toString(testFileStream, "UTF-8");
+        try (PrintWriter out = new PrintWriter(destinationStr + File.separator + file)) {
+            out.println(fileStr);
+        }
+    }
+
+    private Job createJobForFileDownloads(String fileName, String errorFileName) {
+        Job job = jobService.createJob("ExplanationOfBenefits", "http://localhost:8080");
+        OffsetDateTime now = OffsetDateTime.now();
+        OffsetDateTime localDateTime = OffsetDateTime.now();
+        job.setProgress(100);
+        job.setLastPollTime(now);
+        job.setStatus(JobStatus.IN_PROGRESS);
+        job.setCreatedAt(localDateTime);
+        job.setCompletedAt(localDateTime);
+        job.setResourceTypes("ExplanationOfBenefits");
+        job.setRequestURL("http://localhost");
+        job.setStatusMessage("Pending");
+        job.setExpires(now);
+
+        JobOutput jobOutput = new JobOutput();
+        jobOutput.setError(false);
+        jobOutput.setFhirResourceType("ExplanationOfBenefits");
+        jobOutput.setFilePath(fileName);
+        jobOutput.setJob(job);
+
+        JobOutput errorJobOutput = new JobOutput();
+        errorJobOutput.setError(true);
+        errorJobOutput.setFhirResourceType(OPERATION_OUTCOME);
+        errorJobOutput.setFilePath(errorFileName);
+        errorJobOutput.setJob(job);
+
+        List output = List.of(jobOutput, errorJobOutput);
+        job.setJobOutput(output);
+
+        return jobService.updateJob(job);
+    }
+
+    @Test(expected = ResourceNotFoundException.class)
+    public void getFileDownloadUrlWithWrongFilename() throws IOException {
+        String testFile = "test.ndjson";
+        String errorFile = "error.ndjson";
+        Job job = createJobForFileDownloads(testFile, errorFile);
+
+        jobService.getResourceForJob(job.getJobID(), "filenamewrong.ndjson");
+    }
+
+    @Test(expected = JobOutputMissingException.class)
+    public void getFileDownloadUrlWitMissingOutput() throws IOException {
+        String testFile = "outputmissing.ndjson";
+        String errorFile = "error.ndjson";
+        Job job = createJobForFileDownloads(testFile, errorFile);
+
+        jobService.getResourceForJob(job.getJobID(), "outputmissing.ndjson");
     }
 }
