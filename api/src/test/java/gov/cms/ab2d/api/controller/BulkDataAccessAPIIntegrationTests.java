@@ -7,13 +7,13 @@ import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.JobOutput;
 import gov.cms.ab2d.common.model.JobStatus;
 
-import gov.cms.ab2d.common.util.FileUtil;
 import org.hamcrest.core.Is;
 import org.hl7.fhir.dstu3.model.DateTimeType;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.Sort;
@@ -31,6 +31,10 @@ import static gov.cms.ab2d.api.util.Constants.API_PREFIX;
 import static gov.cms.ab2d.common.util.Constants.NDJSON_FIRE_CONTENT_TYPE;
 import static gov.cms.ab2d.common.util.Constants.OPERATION_OUTCOME;
 
+import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -55,8 +59,8 @@ public class BulkDataAccessAPIIntegrationTests {
     @Autowired
     private JobRepository jobRepository;
 
-    @Autowired
-    private FileUtil fileUtil;
+    @Value ("${efs.mount}")
+    private String tmpJobLocation;
 
     private static final String PATIENT_EXPORT_PATH = "/Patient/$export";
 
@@ -343,7 +347,12 @@ public class BulkDataAccessAPIIntegrationTests {
 
         jobRepository.saveAndFlush(job);
 
-        fileUtil.createTmpFileForDownload(job.getJobID(), "test.ndjson");
+        String testFile = "test.ndjson";
+        String resourcesDir = "src" + File.separator + "test" + File.separator + "resources" + File.separator;
+        String destinationStr = tmpJobLocation + job.getJobID();
+        Path destination = Paths.get(destinationStr);
+        Files.createDirectories(destination);
+        Files.copy(Paths.get(resourcesDir + testFile), Paths.get(destinationStr + File.separator + testFile));
 
         MvcResult mvcResultStatusCall = this.mockMvc.perform(get(statusUrl).contentType(MediaType.APPLICATION_JSON)).andReturn();
         String downloadUrl = JsonPath.read(mvcResultStatusCall.getResponse().getContentAsString(), "$.output[0].url");

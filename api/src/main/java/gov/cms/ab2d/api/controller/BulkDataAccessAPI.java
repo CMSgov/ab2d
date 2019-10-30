@@ -31,7 +31,6 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import javax.validation.constraints.NotBlank;
-import java.io.File;
 import java.io.IOException;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
@@ -184,9 +183,8 @@ public class BulkDataAccessAPI {
     }
 
     private String getUrlPath(Job job, String filePath) {
-        String requestURIString = ServletUriComponentsBuilder.fromCurrentRequestUri().toUriString();
-        return requestURIString.substring(0, requestURIString.indexOf(API_PREFIX)) + API_PREFIX + File.separator + "Job" +  File.separator +
-                job.getJobID() + File.separator + "file" + File.separator + filePath;
+        String requestURIString = ServletUriComponentsBuilder.fromCurrentRequestUri().replacePath(API_PREFIX + "/Job/" + job.getJobID()).toUriString();
+        return requestURIString + "/file/" + filePath;
     }
 
     @ApiOperation(value = "Downloads a file produced by an export job.", response = String.class,

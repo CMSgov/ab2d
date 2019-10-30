@@ -5,18 +5,22 @@ import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.JobOutput;
 import gov.cms.ab2d.common.model.JobStatus;
-import gov.cms.ab2d.common.util.FileUtil;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.core.io.Resource;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.transaction.TransactionSystemException;
 
+import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.OffsetDateTime;
 import java.util.List;
 
@@ -35,8 +39,8 @@ public class JobServiceTest {
     @Autowired
     JobRepository jobRepository;
 
-    @Autowired
-    FileUtil fileUtil;
+    @Value("${efs.mount}")
+    private String tmpJobLocation;
 
     // Be safe and make sure nothing from another test will impact current test
     @Before
@@ -191,8 +195,12 @@ public class JobServiceTest {
         String errorFile = "error.ndjson";
         Job job = createJobForFileDownloads(testFile, errorFile);
 
-        fileUtil.createTmpFileForDownload(job.getJobID(), testFile);
-        fileUtil.createTmpFileForDownload(job.getJobID(), errorFile);
+        String destinationStr = tmpJobLocation + job.getJobID();
+        String resourcesDir = "src" + File.separator + "test" + File.separator + "resources" + File.separator;
+        Path destination = Paths.get(destinationStr);
+        Files.createDirectories(destination);
+        Files.copy(Paths.get(resourcesDir + testFile), Paths.get(destinationStr + File.separator + testFile));
+        Files.copy(Paths.get(resourcesDir + errorFile), Paths.get(destinationStr + File.separator + errorFile));
 
         Resource resource = jobService.getResourceForJob(job.getJobID(), testFile);
         Assert.assertEquals(testFile, resource.getFilename());
