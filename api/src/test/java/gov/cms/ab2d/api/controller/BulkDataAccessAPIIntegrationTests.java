@@ -6,7 +6,6 @@ import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.JobOutput;
 import gov.cms.ab2d.common.model.JobStatus;
 import gov.cms.ab2d.common.repository.JobRepository;
-
 import org.apache.commons.io.IOUtils;
 import org.hamcrest.core.Is;
 import org.hl7.fhir.dstu3.model.DateTimeType;
@@ -25,13 +24,6 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.result.MockMvcResultHandlers;
 
-import static gov.cms.ab2d.api.controller.BulkDataAccessAPI.JOB_CANCELLED_MSG;
-
-import static gov.cms.ab2d.common.service.JobServiceImpl.INITIAL_JOB_STATUS_MESSAGE;
-import static gov.cms.ab2d.api.util.Constants.API_PREFIX;
-import static gov.cms.ab2d.common.util.Constants.NDJSON_FIRE_CONTENT_TYPE;
-import static gov.cms.ab2d.common.util.Constants.OPERATION_OUTCOME;
-
 import java.io.File;
 import java.io.InputStream;
 import java.io.PrintWriter;
@@ -43,6 +35,11 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 
+import static gov.cms.ab2d.api.controller.BulkDataAccessAPI.JOB_CANCELLED_MSG;
+import static gov.cms.ab2d.api.util.Constants.API_PREFIX;
+import static gov.cms.ab2d.common.service.JobServiceImpl.INITIAL_JOB_STATUS_MESSAGE;
+import static gov.cms.ab2d.common.util.Constants.NDJSON_FIRE_CONTENT_TYPE;
+import static gov.cms.ab2d.common.util.Constants.OPERATION_OUTCOME;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
@@ -245,9 +242,9 @@ public class BulkDataAccessAPIIntegrationTests {
                 .andExpect(jsonPath("$.request", Is.is(job.getRequestUrl())))
                 .andExpect(jsonPath("$.requiresAccessToken", Is.is(true)))
                 .andExpect(jsonPath("$.output[0].type", Is.is("ExplanationOfBenefits")))
-                .andExpect(jsonPath("$.output[0].url", Is.is("http://localhost" + API_PREFIX + "/Job/" + job.getJobID() + "/file/file.ndjson")))
+                .andExpect(jsonPath("$.output[0].url", Is.is("http://localhost" + API_PREFIX + "/Job/" + job.getJobId() + "/file/file.ndjson")))
                 .andExpect(jsonPath("$.error[0].type", Is.is(OPERATION_OUTCOME)))
-                .andExpect(jsonPath("$.error[0].url", Is.is("http://localhost" + API_PREFIX + "/Job/" + job.getJobID() + "/file/error.ndjson")));
+                .andExpect(jsonPath("$.error[0].url", Is.is("http://localhost" + API_PREFIX + "/Job/" + job.getJobId() + "/file/error.ndjson")));
     }
 
     @Test
@@ -338,7 +335,7 @@ public class BulkDataAccessAPIIntegrationTests {
         job.setStatus(JobStatus.SUCCESSFUL);
         job.setProgress(100);
         OffsetDateTime expireDate = OffsetDateTime.now().plusDays(100);
-        job.setExpires(expireDate);
+        job.setExpiresAt(expireDate);
         OffsetDateTime now = OffsetDateTime.now();
         job.setCompletedAt(now);
 
@@ -351,7 +348,7 @@ public class BulkDataAccessAPIIntegrationTests {
         jobRepository.saveAndFlush(job);
 
         String testFile = "test.ndjson";
-        String destinationStr = tmpJobLocation + job.getJobID();
+        String destinationStr = tmpJobLocation + job.getJobId();
         Path destination = Paths.get(destinationStr);
         Files.createDirectories(destination);
         InputStream testFileStream = this.getClass().getResourceAsStream("/" + testFile);
@@ -384,7 +381,7 @@ public class BulkDataAccessAPIIntegrationTests {
         job.setStatus(JobStatus.SUCCESSFUL);
         job.setProgress(100);
         OffsetDateTime expireDate = OffsetDateTime.now().plusDays(100);
-        job.setExpires(expireDate);
+        job.setExpiresAt(expireDate);
         OffsetDateTime now = OffsetDateTime.now();
         job.setCompletedAt(now);
 
@@ -416,7 +413,7 @@ public class BulkDataAccessAPIIntegrationTests {
         job.setStatus(JobStatus.SUCCESSFUL);
         job.setProgress(100);
         OffsetDateTime expireDate = OffsetDateTime.now().plusDays(100);
-        job.setExpires(expireDate);
+        job.setExpiresAt(expireDate);
         OffsetDateTime now = OffsetDateTime.now();
         job.setCompletedAt(now);
 

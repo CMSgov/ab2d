@@ -183,7 +183,7 @@ public class BulkDataAccessAPI {
     }
 
     private String getUrlPath(Job job, String filePath) {
-        String requestURIString = ServletUriComponentsBuilder.fromCurrentRequestUri().replacePath(API_PREFIX + "/Job/" + job.getJobID()).toUriString();
+        String requestURIString = ServletUriComponentsBuilder.fromCurrentRequestUri().replacePath(API_PREFIX + "/Job/" + job.getJobId()).toUriString();
         return requestURIString + "/file/" + filePath;
     }
 

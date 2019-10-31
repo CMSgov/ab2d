@@ -196,17 +196,17 @@ public class JobServiceTest {
         String errorFile = "error.ndjson";
         Job job = createJobForFileDownloads(testFile, errorFile);
 
-        String destinationStr = tmpJobLocation + job.getJobID();
+        String destinationStr = tmpJobLocation + job.getJobId();
         Path destination = Paths.get(destinationStr);
         Files.createDirectories(destination);
 
         createNDJSONFile(testFile, destinationStr);
         createNDJSONFile(errorFile, destinationStr);
 
-        Resource resource = jobService.getResourceForJob(job.getJobID(), testFile);
+        Resource resource = jobService.getResourceForJob(job.getJobId(), testFile);
         Assert.assertEquals(testFile, resource.getFilename());
 
-        Resource errorResource = jobService.getResourceForJob(job.getJobID(), errorFile);
+        Resource errorResource = jobService.getResourceForJob(job.getJobId(), errorFile);
         Assert.assertEquals(errorFile, errorResource.getFilename());
     }
 
@@ -228,9 +228,9 @@ public class JobServiceTest {
         job.setCreatedAt(localDateTime);
         job.setCompletedAt(localDateTime);
         job.setResourceTypes("ExplanationOfBenefits");
-        job.setRequestURL("http://localhost");
+        job.setRequestUrl("http://localhost");
         job.setStatusMessage("Pending");
-        job.setExpires(now);
+        job.setExpiresAt(now);
 
         JobOutput jobOutput = new JobOutput();
         jobOutput.setError(false);
@@ -256,7 +256,7 @@ public class JobServiceTest {
         String errorFile = "error.ndjson";
         Job job = createJobForFileDownloads(testFile, errorFile);
 
-        jobService.getResourceForJob(job.getJobID(), "filenamewrong.ndjson");
+        jobService.getResourceForJob(job.getJobId(), "filenamewrong.ndjson");
     }
 
     @Test(expected = JobOutputMissingException.class)
@@ -265,6 +265,6 @@ public class JobServiceTest {
         String errorFile = "error.ndjson";
         Job job = createJobForFileDownloads(testFile, errorFile);
 
-        jobService.getResourceForJob(job.getJobID(), "outputmissing.ndjson");
+        jobService.getResourceForJob(job.getJobId(), "outputmissing.ndjson");
     }
 }
