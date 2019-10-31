@@ -1,5 +1,3 @@
 databaseChangeLog:
-#  - includeAll:
-#      path: db/changelog/v001/
   - include:
       file: db/changelog/v001/AB2D-291-create-initial-tables.sql
