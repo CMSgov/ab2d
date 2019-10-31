@@ -9,9 +9,6 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
-import javax.persistence.SequenceGenerator;
-
-import static javax.persistence.GenerationType.SEQUENCE;
 
 @Entity
 @Getter
@@ -20,8 +17,7 @@ import static javax.persistence.GenerationType.SEQUENCE;
 public class Role {
 
     @Id
-    @GeneratedValue(strategy = SEQUENCE, generator = "role_id_seq")
-    @SequenceGenerator(name = "role_id_seq", sequenceName = "role_id_seq", allocationSize = 1)
+    @GeneratedValue
     private Long id;
 
     @NaturalId

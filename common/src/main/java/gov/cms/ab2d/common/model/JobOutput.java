@@ -3,9 +3,12 @@ package gov.cms.ab2d.common.model;
 import lombok.Getter;
 import lombok.Setter;
 
-import javax.persistence.*;
-
-import static javax.persistence.GenerationType.SEQUENCE;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
 
 @Entity
 @Getter
@@ -13,8 +16,7 @@ import static javax.persistence.GenerationType.SEQUENCE;
 public class JobOutput {
 
     @Id
-    @GeneratedValue(strategy = SEQUENCE, generator = "job_output_id_seq")
-    @SequenceGenerator(name = "job_output_id_seq", sequenceName = "job_output_id_seq", allocationSize = 1)
+    @GeneratedValue
     private Long id;
 
     @ManyToOne

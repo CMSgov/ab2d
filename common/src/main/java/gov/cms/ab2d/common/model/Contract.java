@@ -4,10 +4,13 @@ package gov.cms.ab2d.common.model;
 import lombok.Getter;
 import lombok.Setter;
 
-import javax.persistence.*;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
+import javax.persistence.ManyToMany;
+import javax.persistence.OneToMany;
 import java.util.Set;
-
-import static javax.persistence.GenerationType.SEQUENCE;
 
 @Entity
 @Getter
@@ -15,8 +18,7 @@ import static javax.persistence.GenerationType.SEQUENCE;
 public class Contract {
 
     @Id
-    @GeneratedValue(strategy = SEQUENCE, generator = "contract_id_seq")
-    @SequenceGenerator(name = "contract_id_seq", sequenceName = "contract_id_seq", allocationSize = 1)
+    @GeneratedValue
     private Long id;
 
     @Column(unique = true)

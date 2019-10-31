@@ -1,6 +1,11 @@
 --liquibase formatted sql
 --  -------------------------------------------------------------------------------------------------------------------
 
+
+--changeset spathiyil:AB2D-291-CreateSequence-hibernate_sequence failOnError:true dbms:postgresql
+CREATE SEQUENCE hibernate_sequence START WITH 1 INCREMENT BY 1;
+
+
 --changeset spathiyil:AB2D-291-CreateTable-beneficiary failOnError:true dbms:postgresql
 CREATE TABLE beneficiary
 (
@@ -189,5 +194,4 @@ ALTER TABLE job_output ADD CONSTRAINT "pk_job_output" PRIMARY KEY (id);
 ALTER TABLE job_output ADD CONSTRAINT "fk_job_output_to_job" FOREIGN KEY (job_id) REFERENCES job (id);
 
 --rollback DROP TABLE job_output
-
 

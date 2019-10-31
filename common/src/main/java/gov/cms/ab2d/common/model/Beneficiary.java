@@ -3,10 +3,15 @@ package gov.cms.ab2d.common.model;
 import lombok.Getter;
 import lombok.Setter;
 
-import javax.persistence.*;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.JoinTable;
+import javax.persistence.ManyToMany;
 import java.util.Set;
-
-import static javax.persistence.GenerationType.SEQUENCE;
 
 @Entity
 @Getter
@@ -14,8 +19,7 @@ import static javax.persistence.GenerationType.SEQUENCE;
 public class Beneficiary {
 
     @Id
-    @GeneratedValue(strategy = SEQUENCE, generator = "beneficiary_id_seq")
-    @SequenceGenerator(name = "beneficiary_id_seq", sequenceName = "beneficiary_id_seq", allocationSize = 1)
+    @GeneratedValue
     private Long id;
 
     @Column(unique = true)
