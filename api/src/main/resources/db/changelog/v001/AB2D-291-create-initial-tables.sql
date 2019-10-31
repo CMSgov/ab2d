@@ -105,7 +105,7 @@ ALTER TABLE user_account ADD CONSTRAINT "fk_user_account_to_sponsor"  FOREIGN KE
 CREATE TABLE role
 (
     id                  BIGSERIAL,
-    name               VARCHAR(64)        	NOT NULL
+    name                VARCHAR(64)         NOT NULL
 );
 
 ALTER TABLE role ADD CONSTRAINT "pk_role" PRIMARY KEY (id);
