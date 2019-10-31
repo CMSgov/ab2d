@@ -18,8 +18,9 @@ terraform {
 }
 
 module "kms" {
-  source = "../../modules/kms"
-  env    = var.env
+  source             = "../../modules/kms"
+  env                = var.env
+  aws_account_number = var.aws_account_number
 }
 
 module "db" {
@@ -80,14 +81,15 @@ module "api" {
   logging_bucket                = var.logging_bucket_name
   healthcheck_url               = var.elb_healthcheck_url
   iam_instance_profile          = var.ec2_iam_profile
-  docker_repository_url         = "114601554524.dkr.ecr.us-east-1.amazonaws.com/ab2d_api:latest"
-  iam_role_arn                  = "arn:aws:iam::114601554524:role/Ab2dInstanceRole"
+  docker_repository_url         = "${var.aws_account_number}.dkr.ecr.us-east-1.amazonaws.com/ab2d_api:latest"
+  iam_role_arn                  = "arn:aws:iam::${var.aws_account_number}:role/Ab2dInstanceRole"
   desired_instances             = var.ec2_desired_instance_count
   min_instances                 = var.ec2_minimum_instance_count
   max_instances                 = var.ec2_maximum_instance_count
   autoscale_group_wait          = "0" #Change this later for 0 downtime deployment
   gold_disk_name                = var.gold_image_name
-  override_task_definition_arn  = var.current_task_definition_arn  
+  override_task_definition_arn  = var.current_task_definition_arn
+  aws_account_number            = var.aws_account_number
 }
 
 # LSH SKIP FOR NOW BEGIN
@@ -103,7 +105,7 @@ module "worker" {
   ssh_key_name                  = var.ssh_key_name
   node_subnet_ids               = var.private_subnet_ids
   iam_instance_profile          = var.ec2_iam_profile
-  docker_repository_url         = "114601554524.dkr.ecr.us-east-1.amazonaws.com/ab2d_worker:latest"
+  docker_repository_url         = "${var.aws_account_number}.dkr.ecr.us-east-1.amazonaws.com/ab2d_worker:latest"
   desired_instances             = var.ec2_desired_instance_count
   min_instances                 = var.ec2_minimum_instance_count
   max_instances                 = var.ec2_maximum_instance_count
@@ -119,6 +121,7 @@ module "worker" {
   beta                          = var.private_subnet_ids[1]
   gamma                         = var.private_subnet_ids[2]
   ecs_cluster_id                = module.api.ecs_cluster_id
+  aws_account_number            = var.aws_account_number
 }
 
 module "lonnie_access_controller" {

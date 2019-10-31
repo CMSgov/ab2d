@@ -1,3 +1,7 @@
+variable "aws_account_number" {
+  default = "114601554524"
+}
+
 variable "aws_profile" {
   default = "sbdemo"
 }

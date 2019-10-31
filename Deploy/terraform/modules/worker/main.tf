@@ -115,7 +115,7 @@ JSON
   network_mode = "bridge"
   cpu = 1024
   memory = 2048
-  execution_role_arn = "arn:aws:iam::114601554524:role/Ab2dInstanceRole"
+  execution_role_arn = "arn:aws:iam::${var.aws_account_number}:role/Ab2dInstanceRole"
 }
 
 resource "aws_ecs_service" "worker" {

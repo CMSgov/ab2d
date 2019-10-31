@@ -1,4 +1,5 @@
 variable "env" {}
+variable "aws_account_number" {}
 variable "vpc_id" {}
 variable "container_port" {default=8080}
 variable "host_port" {default=8080}

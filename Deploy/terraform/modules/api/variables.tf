@@ -1,4 +1,5 @@
 variable "env" {}
+variable "aws_account_number" {}
 variable "vpc_id" {}
 variable "db_sec_group_id" {}
 variable "controller_subnet_ids" {type=list(string)}
