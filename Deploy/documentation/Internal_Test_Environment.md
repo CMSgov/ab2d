@@ -36,9 +36,17 @@
 ## Configure AWS CLI
 
 1. Configure AWS CLI
+
+   *Example for SemanticBits demo environment:*
    
    ```ShellSession
    $ aws configure --profile=sbdemo
+   ```
+
+   *Example for testing Sandbox in SemanticBits demo environment:*
+
+   ```ShellSession
+   $ aws configure --profile=sbx
    ```
 
 1. Enter {your aws access key} at the **AWS Access Key ID** prompt
@@ -407,28 +415,50 @@
 
 ## Create or update base aws environment
 
-1. Change to the environment directory
+1. Change to the deploy directory
 
+   *Format:*
+   
    ```ShellSession
-   $ cd ~/code/ab2d/Deploy/terraform/environments/cms-ab2d-sbdemo
+   $ cd {code directory}/ab2d/Deploy
+   ```
+
+   *Example:*
+   
+   ```ShellSession
+   $ cd ~/code/ab2d/Deploy
    ```
 
 1. Create base AWS environment
 
+   *Example for SemanticBits demo environment:*
+   
    ```ShellSession
    $ ./create-base-environment.sh \
      --environment=sbdemo \
      --seed-ami-product-code=aw0evgkw8e5c1q413zgy5pjce \
-     --database-secret-datetime=2019-10-25-14-55-02
+     --database-secret-datetime=2019-10-25-14-55-03
+   ```
+
+   *Example for Sandbox testing within SemanticBits demo environment:*
+
+   ```ShellSession
+   $ ./create-base-environment.sh \
+     --environment=sbx \
+     --seed-ami-product-code=aw0evgkw8e5c1q413zgy5pjce \
+     --database-secret-datetime=2019-10-25-14-55-03 \
+     --vpc-exists
    ```
 
 1. If you get a "Skipping network creation since VPC already exists" message, enter the following to create or update existing environment
 
+   *Example for SemanticBits demo environment:*
+   
    ```ShellSession
    $ ./create-base-environment.sh \
      --environment=sbdemo \
      --seed-ami-product-code=aw0evgkw8e5c1q413zgy5pjce \
-     --database-secret-datetime=2019-10-25-14-55-02 \
+     --database-secret-datetime=2019-10-25-14-55-03 \
      --skip-network
    ```
 
