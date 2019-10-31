@@ -16,12 +16,12 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.core.io.Resource;
 import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.transaction.TransactionSystemException;
 
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import javax.validation.ConstraintViolationException;
 import java.time.OffsetDateTime;
 import java.util.List;
 
@@ -70,7 +70,7 @@ public class JobServiceTest {
         assertThat(jobRepository.findById(job.getId())).get().isEqualTo(job);
     }
 
-    @Test(expected = ConstraintViolationException.class)
+    @Test(expected = TransactionSystemException.class)
     public void failedValidation() {
         jobService.createJob("Patient,ExplanationOfBenefits,Coverage", "http://localhost:8080");
     }

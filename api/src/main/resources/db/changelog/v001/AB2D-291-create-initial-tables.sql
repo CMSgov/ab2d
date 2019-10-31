@@ -73,7 +73,7 @@ CREATE TABLE attestation
 
 ALTER TABLE attestation ADD CONSTRAINT "pk_attestation" PRIMARY KEY (id);
 ALTER TABLE attestation ADD CONSTRAINT "fk_attestation_to_sponsor"  FOREIGN KEY (sponsor_id) REFERENCES sponsor (id);
-ALTER TABLE attestation ADD CONSTRAINT "fk_attestation_to_contract" FOREIGN KEY (contract_id) REFERENCES sponsor (id);
+ALTER TABLE attestation ADD CONSTRAINT "fk_attestation_to_contract" FOREIGN KEY (contract_id) REFERENCES contract (id);
 
 --rollback DROP TABLE attestation;
 --  -------------------------------------------------------------------------------------------------------------------
@@ -189,3 +189,5 @@ ALTER TABLE job_output ADD CONSTRAINT "pk_job_output" PRIMARY KEY (id);
 ALTER TABLE job_output ADD CONSTRAINT "fk_job_output_to_job" FOREIGN KEY (job_id) REFERENCES job (id);
 
 --rollback DROP TABLE job_output
+
+

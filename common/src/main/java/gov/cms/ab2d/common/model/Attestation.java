@@ -6,11 +6,13 @@ import lombok.Setter;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
+import javax.persistence.SequenceGenerator;
 import java.time.OffsetDateTime;
+
+import static javax.persistence.GenerationType.SEQUENCE;
 
 @Entity
 @Getter
@@ -21,7 +23,8 @@ import java.time.OffsetDateTime;
 public class Attestation {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = SEQUENCE, generator = "attestation_id_seq")
+    @SequenceGenerator(name = "attestation_id_seq", sequenceName = "attestation_id_seq", allocationSize = 1)
     private Long id;
 
     @ManyToOne
