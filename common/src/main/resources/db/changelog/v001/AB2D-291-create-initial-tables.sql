@@ -9,7 +9,7 @@ CREATE SEQUENCE hibernate_sequence START WITH 1 INCREMENT BY 1;
 --changeset spathiyil:AB2D-291-CreateTable-beneficiary failOnError:true dbms:postgresql
 CREATE TABLE beneficiary
 (
-    id                  BIGSERIAL,
+    id                  BIGINT              NOT NULL,
     patient_id          VARCHAR(255)        NOT NULL
 );
 
@@ -23,7 +23,7 @@ ALTER TABLE beneficiary ADD CONSTRAINT "uc_beneficiary_patient_id" UNIQUE (patie
 --changeset spathiyil:AB2D-291-CreateTable-contract failOnError:true dbms:postgresql
 CREATE TABLE contract
 (
-    id                  BIGSERIAL,
+    id                  BIGINT              NOT NULL,
     contract_id         VARCHAR(255)        NOT NULL
 );
 
@@ -52,7 +52,7 @@ ALTER TABLE coverage ADD CONSTRAINT "uc_coverage_beneficiary_id_contract_id" UNI
 --changeset spathiyil:AB2D-291-CreateTable-sponsor failOnError:true dbms:postgresql
 CREATE TABLE sponsor
 (
-    id                  BIGSERIAL,
+    id                  BIGINT              NOT NULL,
     hpms_id             INTEGER             NOT NULL,
     legal_name          VARCHAR(255)        NOT NULL,
     org_name            VARCHAR(255)        NOT NULL,
@@ -70,7 +70,7 @@ ALTER TABLE sponsor ADD CONSTRAINT "fk_sponsor_to_sponsor_parent" FOREIGN KEY (p
 --changeset spathiyil:AB2D-291-CreateTable-attestation failOnError:true dbms:postgresql
 CREATE TABLE attestation
 (
-    id                  BIGSERIAL,
+    id                  BIGINT              NOT NULL,
     sponsor_id          BIGINT              NOT NULL,
     contract_id         BIGINT              NOT NULL,
     attested_on         TIMESTAMPTZ         NOT NULL
@@ -87,7 +87,7 @@ ALTER TABLE attestation ADD CONSTRAINT "fk_attestation_to_contract" FOREIGN KEY 
 --changeset spathiyil:AB2D-291-CreateTable-user_account failOnError:true dbms:postgresql
 CREATE TABLE user_account
 (
-    id                  BIGSERIAL,
+    id                  BIGINT              NOT NULL,
     user_name           VARCHAR(64)         NOT NULL,
     first_name          VARCHAR(64)         NOT NULL,
     last_name           VARCHAR(64)         NOT NULL,
@@ -109,7 +109,7 @@ ALTER TABLE user_account ADD CONSTRAINT "fk_user_account_to_sponsor"  FOREIGN KE
 --changeset spathiyil:AB2D-291-CreateTable-role failOnError:true dbms:postgresql
 CREATE TABLE role
 (
-    id                  BIGSERIAL,
+    id                  BIGINT              NOT NULL,
     name                VARCHAR(64)         NOT NULL
 );
 
@@ -140,8 +140,8 @@ ALTER TABLE user_role ADD CONSTRAINT "uc_user_role_user_account_id_role_id" UNIQ
 --changeset spathiyil:AB2D-291-CreateTable-job_status failOnError:true dbms:postgresql
 CREATE TABLE job_status
 (
-    id                  BIGSERIAL,
-    name                VARCHAR(64)        	NOT NULL
+    id                  BIGINT              NOT NULL,
+    name                VARCHAR(64)         NOT NULL
 );
 
 ALTER TABLE job_status ADD CONSTRAINT "pk_job_status" PRIMARY KEY (id);
@@ -155,7 +155,7 @@ ALTER TABLE job_status ADD CONSTRAINT "uc_job_status_name" UNIQUE (name);
 --changeset spathiyil:AB2D-291-CreateTable-job failOnError:true dbms:postgresql
 CREATE TABLE job
 (
-    id                  BIGSERIAL,
+    id                  BIGINT              NOT NULL,
     job_id              VARCHAR(255)        NOT NULL,
     user_account_id     BIGINT              NOT NULL,
     created_at          TIMESTAMPTZ         NOT NULL,
@@ -183,7 +183,7 @@ ALTER TABLE job ADD CONSTRAINT "fk_job_to_user_account" FOREIGN KEY (user_accoun
 --changeset spathiyil:AB2D-291-CreateTable-job_output failOnError:true dbms:postgresql
 CREATE TABLE job_output
 (
-    id                  BIGSERIAL,
+    id                  BIGINT              NOT NULL,
     job_id              BIGINT              NOT NULL,
     file_path           TEXT                NOT NULL,
     fhir_resource_type  VARCHAR(255)        NOT NULL,
