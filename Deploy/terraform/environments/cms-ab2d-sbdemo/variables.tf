@@ -7,20 +7,20 @@ variable "env" {
 }
 
 variable "vpc_id" {
-  default = "vpc-00dcfaadb3fe8e3a2"
+  default = ""
 }
 
 ## EC2 specific variables ########################################################################
 
 variable "private_subnet_ids" {
   type        = list(string)
-  default     = ["subnet-09fe6a03c783e0e8b", "subnet-0a06d6c59dead565e", "subnet-0f705fee369c49184"]
+  default     = []
   description = "App instances and DB go here"
 }
 
 variable "deployment_controller_subnet_ids" {
   type        = list(string)
-  default     = ["subnet-077269e0fb659e953", "subnet-0f36ecc59af6ee4f4", "subnet-09aca9941679c01a0"]
+  default     = []
   description = "Deployment controllers go here"
 }
 
@@ -106,7 +106,7 @@ variable "db_allocated_storage_size" {
 }
 
 variable "postgres_engine_version" {
-  default = "10.6"
+  default = "11.5"
 }
 
 variable "db_instance_class" {
@@ -122,7 +122,7 @@ variable "db_skip_final_snapshot" {
 }
 
 variable "db_subnet_group_name" {
-  default = "cms-ab2d-dev-rdssubnetgroup"
+  default = "cms-ab2d-sbdemo-rdssubnetgroup"
 }
 
 variable "db_backup_retention_period" {
@@ -146,7 +146,7 @@ variable "db_maintenance_window" {
 }
 
 variable "db_identifier" {
-  default = "cms-ab2d-dev"
+  default = "cms-ab2d-sbdemo"
 }
 
 variable "db_multi_az" {
@@ -163,18 +163,19 @@ variable "db_password" {
   description = "Please pass this on command line and not as a value here"
 }
 
+variable "db_name" {
+  default     = ""
+  description = "Please pass this on command line and not as a value here"
+}
+
 ## S3 specific variables #########################################################################
 
 variable "file_bucket_name" {
-  default = "cms-ab2d-dev"
+  default = "cms-ab2d-sbdemo"
 }
 
 variable "logging_bucket_name" {
   default = "cms-ab2d-cloudtrail"
-}
-
-variable "nlb_logging_bucket_name" {
-  default = "cms-ab2d-cloudtrail-nlb"
 }
 
 variable "s3_username_whitelist" {

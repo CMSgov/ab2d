@@ -27,7 +27,7 @@ public class Attestation {
     private Contract contract;
 
     @Column(columnDefinition = "TIMESTAMP WITH TIME ZONE")
-    private OffsetDateTime attestationDate;
+    private OffsetDateTime attestedOn;
 
 
 }

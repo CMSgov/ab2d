@@ -5,7 +5,6 @@ variable "host_port" {default=8080}
 variable "controller_sec_group_id" {}
 variable "app_sec_group_id" {}
 variable "loadbalancer_subnet_ids" {type=list(string)}
-variable "logging_bucket" {}
 variable "ami_id" {}
 variable "gold_disk_name" {}
 variable "instance_type" {}
@@ -28,4 +27,9 @@ variable "vpc_cidrs" {type=list(string)}
 
 # LSH BEGIN
 variable "docker_repository_url" {}
+variable "efs_id" {}
+variable "alpha" {}
+variable "beta" {}
+variable "gamma" {}
+variable "ecs_cluster_id" {}
 # LSH END

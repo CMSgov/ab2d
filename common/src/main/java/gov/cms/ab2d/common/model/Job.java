@@ -7,6 +7,7 @@ import lombok.Setter;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.Enumerated;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
@@ -17,6 +18,8 @@ import javax.validation.constraints.Pattern;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
+
+import static javax.persistence.EnumType.STRING;
 
 @Entity
 @Getter
@@ -30,10 +33,10 @@ public class Job {
     private Long id;
 
     @Column(unique = true)
-    private String jobID;
+    private String jobId;
 
     @ManyToOne
-    @JoinColumn(name = "user_id")
+    @JoinColumn(name = "user_account_id")
     private User user;
 
     @OneToMany(
@@ -50,7 +53,9 @@ public class Job {
     @Column(columnDefinition = "TIMESTAMP WITH TIME ZONE")
     private OffsetDateTime completedAt;
 
-    private String requestURL;
+    private String requestUrl;
+
+    @Enumerated(STRING)
     private JobStatus status;
     private String statusMessage;
     private Integer progress;
@@ -59,7 +64,7 @@ public class Job {
     private OffsetDateTime lastPollTime;
 
     @Column(columnDefinition = "TIMESTAMP WITH TIME ZONE")
-    private OffsetDateTime expires;
+    private OffsetDateTime expiresAt;
 
     @Pattern(regexp = "ExplanationOfBenefits", message = "_type should be ExplanationOfBenefits")
     private String resourceTypes; // for now just limited to ExplanationOfBenefits
