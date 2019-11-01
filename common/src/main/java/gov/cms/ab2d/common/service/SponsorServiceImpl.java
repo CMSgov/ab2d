@@ -16,7 +16,7 @@ public class SponsorServiceImpl implements SponsorService {
     private SponsorRepository sponsorRepository;
 
     public Optional<Sponsor> getSponsorByHpmsId(Integer hpmsId) {
-        return sponsorRepository.findByHpmsID(hpmsId);
+        return sponsorRepository.findByHpmsId(hpmsId);
     }
 
     public Sponsor saveSponsor(Sponsor sponsor) {

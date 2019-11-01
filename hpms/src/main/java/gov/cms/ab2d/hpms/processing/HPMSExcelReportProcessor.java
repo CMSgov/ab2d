@@ -62,13 +62,13 @@ public class HPMSExcelReportProcessor implements ExcelReportProcessor {
 
                     Sponsor sponsor = sponsorOptional.orElse(new Sponsor());
 
-                    sponsor.setHpmsID(sponsorHpmsId.intValue());
+                    sponsor.setHpmsId(sponsorHpmsId.intValue());
                     sponsor.setLegalName(sponsorName);
                     sponsor.setContractName(contractName);
 
                     Attestation attestation = new Attestation();
                     attestation.setSponsor(sponsor);
-                    attestation.setAttestationDate(OffsetDateTime.now());
+                    attestation.setAttestedOn(OffsetDateTime.now());
 
                     Contract contract = new Contract();
                     contract.setAttestations(Set.of(attestation));
@@ -81,7 +81,7 @@ public class HPMSExcelReportProcessor implements ExcelReportProcessor {
                         sponsor.setParent(parentSponsorOptional.get());
                     } else {
                         Sponsor parent = new Sponsor();
-                        parent.setHpmsID(sponsorParentHpmsId.intValue());
+                        parent.setHpmsId(sponsorParentHpmsId.intValue());
                         parent.setLegalName(sponsorParentName);
                         sponsor.setParent(parent);
                         sponsorService.saveSponsor(parent);
