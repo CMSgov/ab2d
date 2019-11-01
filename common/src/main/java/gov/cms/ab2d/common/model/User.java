@@ -32,10 +32,11 @@ public class User {
     private Long id;
 
     @Column(unique = true)
-    private String userID;
-    private String name;
+    private String userName;
+    private String firstName;
+    private String lastName;
     private String email;
-    private Boolean accountDisabled;
+    private Boolean enabled;
 
     @ManyToOne
     @JoinColumn(name = "sponsor_id")
