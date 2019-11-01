@@ -33,6 +33,10 @@
         </dependency>
     </dependencies>
 
+    <build>
+
+    </build>
+
     <repositories>
         <repository>
             <id>jcenter-snapshots</id>

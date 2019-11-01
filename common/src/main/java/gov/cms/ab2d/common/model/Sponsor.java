@@ -20,10 +20,12 @@ public class Sponsor {
     private String orgName;
     private String legalName;
 
+    private String contractName;
+
     @ManyToOne
     private Sponsor parent;
 
-    @OneToMany(mappedBy = "sponsor")
+    @OneToMany(mappedBy = "sponsor", cascade = CascadeType.ALL)
     private Set<Attestation> attestations;
 
 }

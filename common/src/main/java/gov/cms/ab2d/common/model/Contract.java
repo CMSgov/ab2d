@@ -19,7 +19,7 @@ public class Contract {
     @Column(unique = true)
     private String contractId;
 
-    @OneToMany(mappedBy = "contract")
+    @OneToMany(mappedBy = "contract", cascade = CascadeType.ALL)
     private Set<Attestation> attestations;
 
     @ManyToMany(mappedBy = "contracts")
