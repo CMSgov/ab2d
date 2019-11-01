@@ -137,7 +137,7 @@ VPC_ID=$(aws --region us-east-1 ec2 describe-vpcs \
 if [ -z "${SKIP_NETWORK}" ] && [ -z "${VPC_ID}" ]; then
 
   export FIRST_RUN=true
-    
+
   # Create VPC
   VPC_ID=$(aws ec2 create-vpc \
     --cidr-block 10.124.0.0/16 \
@@ -190,425 +190,518 @@ aws ec2 create-tags \
 
 # Tag default network ACL
 
-# *** TO DO ***
+DEFAULT_NETWORK_ACL_ID=$(aws ec2 describe-network-acls \
+  --query="NetworkAcls[?IsDefault].NetworkAclId" \
+  --output text)
+
+aws ec2 create-tags \
+  --resources $DEFAULT_NETWORK_ACL_ID \
+  --tags "Key=Name,Value=ab2d-default-nacl" \
+  --region us-east-1
 
 # Tag default security group
 
-# *** TO DO ***
+DEFAULT_SECURITY_GROUP_ID=$(aws ec2 describe-security-groups \
+  --query="SecurityGroups[?GroupName == 'default'].GroupId" \
+  --output text)
 
-# Display public subnet stage
+aws ec2 create-tags \
+  --resources $DEFAULT_SECURITY_GROUP_ID \
+  --tags "Key=Name,Value=ab2d-default-sg" \
+  --region us-east-1
 
-if [ -z "${SKIP_NETWORK}" ]; then
-  echo "Creating public subnets..."
-fi
-
+#
 # Create first public subnet
+#
 
-if [ -z "${SKIP_NETWORK}" ]; then
+cd "${START_DIR}"
+cd python3
+
+SUBNET_PUBLIC_1_ID=$(aws ec2 describe-subnets \
+  --filters "Name=tag:Name,Values=ab2d-$CMS_ENV-public-subnet-01" \
+  --query "Subnets[*].SubnetId" \
+  --output text)
+
+if [ -z "${SKIP_NETWORK}" ] && [ -z "${SUBNET_PUBLIC_1_ID}" ]; then
+
+  # Get next available CIDR block
+    
+  SUBNET_PUBLIC_1_CIDR_BLOCK=$(./get-new-cidr.py $CMS_ENV $VPC_ID)
+
+  # Create first public subnet
+
+  echo "Creating first public subnet..."
+
   SUBNET_PUBLIC_1_ID=$(aws ec2 create-subnet \
     --vpc-id $VPC_ID \
-    --cidr-block 10.124.1.0/24 \
+    --cidr-block $SUBNET_PUBLIC_1_CIDR_BLOCK \
     --availability-zone us-east-1a \
     --query 'Subnet.{SubnetId:SubnetId}' \
     --output text \
     --region us-east-1)
-fi
 
-# Add name tag to first public subnet
+  # Add name tag to first public subnet
 
-if [ -z "${SKIP_NETWORK}" ]; then
   aws ec2 create-tags \
     --resources $SUBNET_PUBLIC_1_ID \
     --tags "Key=Name,Value=ab2d-$CMS_ENV-public-subnet-01" \
     --region us-east-1
+
 fi
 
+#
 # Create second public subnet
+#
 
-if [ -z "${SKIP_NETWORK}" ]; then
+cd "${START_DIR}"
+cd python3
+
+SUBNET_PUBLIC_2_ID=$(aws ec2 describe-subnets \
+  --filters "Name=tag:Name,Values=ab2d-$CMS_ENV-public-subnet-02" \
+  --query "Subnets[*].SubnetId" \
+  --output text)
+
+if [ -z "${SKIP_NETWORK}" ] && [ -z "${SUBNET_PUBLIC_2_ID}" ]; then
+
+  # Get next available CIDR block
+    
+  SUBNET_PUBLIC_2_CIDR_BLOCK=$(./get-new-cidr.py $CMS_ENV $VPC_ID)
+
+  # Create second public subnet
+
+  echo "Creating second public subnet..."
+  
   SUBNET_PUBLIC_2_ID=$(aws ec2 create-subnet \
     --vpc-id $VPC_ID \
-    --cidr-block 10.124.2.0/24 \
+    --cidr-block $SUBNET_PUBLIC_2_CIDR_BLOCK \
     --availability-zone us-east-1b \
     --query 'Subnet.{SubnetId:SubnetId}' \
     --output text \
     --region us-east-1)
-fi
 
-# Add name tag to second public subnet
+  # Add name tag to first public subnet
 
-if [ -z "${SKIP_NETWORK}" ]; then
   aws ec2 create-tags \
     --resources $SUBNET_PUBLIC_2_ID \
     --tags "Key=Name,Value=ab2d-$CMS_ENV-public-subnet-02" \
     --region us-east-1
+
 fi
 
-# Display private subnet stage
-
-if [ -z "${SKIP_NETWORK}" ]; then
-  echo "Creating private subnets..."
-fi
-
+#
 # Create first private subnet
+#
 
-if [ -z "${SKIP_NETWORK}" ]; then
+cd "${START_DIR}"
+cd python3
+
+SUBNET_PRIVATE_1_ID=$(aws ec2 describe-subnets \
+  --filters "Name=tag:Name,Values=ab2d-$CMS_ENV-private-subnet-01" \
+  --query "Subnets[*].SubnetId" \
+  --output text)
+
+if [ -z "${SKIP_NETWORK}" ] && [ -z "${SUBNET_PRIVATE_1_ID}" ]; then
+
+  # Get next available CIDR block
+    
+  SUBNET_PRIVATE_1_CIDR_BLOCK=$(./get-new-cidr.py $CMS_ENV $VPC_ID)
+
+  # Create first private subnet
+
+  echo "Creating first private subnet..."
+
   SUBNET_PRIVATE_1_ID=$(aws ec2 create-subnet \
     --vpc-id $VPC_ID \
-    --cidr-block 10.124.4.0/24 \
+    --cidr-block $SUBNET_PRIVATE_1_CIDR_BLOCK \
     --availability-zone us-east-1a \
     --query 'Subnet.{SubnetId:SubnetId}' \
     --output text \
     --region us-east-1)
-fi
 
-# Add name tag to first private subnet
+  # Add name tag to first private subnet
 
-if [ -z "${SKIP_NETWORK}" ]; then
   aws ec2 create-tags \
     --resources $SUBNET_PRIVATE_1_ID \
     --tags "Key=Name,Value=ab2d-$CMS_ENV-private-subnet-01" \
     --region us-east-1
+
 fi
 
+#
 # Create second private subnet
+#
 
-if [ -z "${SKIP_NETWORK}" ]; then
+cd "${START_DIR}"
+cd python3
+
+SUBNET_PRIVATE_2_ID=$(aws ec2 describe-subnets \
+  --filters "Name=tag:Name,Values=ab2d-$CMS_ENV-private-subnet-02" \
+  --query "Subnets[*].SubnetId" \
+  --output text)
+
+if [ -z "${SKIP_NETWORK}" ] && [ -z "${SUBNET_PRIVATE_2_ID}" ]; then
+
+  # Get next available CIDR block
+    
+  SUBNET_PRIVATE_2_CIDR_BLOCK=$(./get-new-cidr.py $CMS_ENV $VPC_ID)
+
+  # Create second private subnet
+
+  echo "Creating second private subnet..."
+  
   SUBNET_PRIVATE_2_ID=$(aws ec2 create-subnet \
     --vpc-id $VPC_ID \
-    --cidr-block 10.124.5.0/24 \
+    --cidr-block $SUBNET_PRIVATE_2_CIDR_BLOCK \
     --availability-zone us-east-1b \
     --query 'Subnet.{SubnetId:SubnetId}' \
     --output text \
     --region us-east-1)
-fi
 
-# Add name tag to second private subnet
+  # Add name tag to first private subnet
 
-if [ -z "${SKIP_NETWORK}" ]; then
   aws ec2 create-tags \
     --resources $SUBNET_PRIVATE_2_ID \
     --tags "Key=Name,Value=ab2d-$CMS_ENV-private-subnet-02" \
     --region us-east-1
+
 fi
 
-# Display public subnet stage
-
-if [ -z "${SKIP_NETWORK}" ]; then
-  echo "Creating internet gateway..."
-fi
-
+#
 # Create internet gateway
+#
 
-if [ -z "${SKIP_NETWORK}" ]; then
+IGW_ID=$(aws ec2 describe-internet-gateways \
+  --filters "Name=tag:Name,Values=ab2d-igw" \
+  --query "InternetGateways[*].InternetGatewayId" \
+  --output text)
+
+if [ -z "${SKIP_NETWORK}" ] && [ -z "${IGW_ID}" ]; then
+    
+  # Create internet gateway
+
+  echo "Creating internet gateway..."
   IGW_ID=$(aws ec2 create-internet-gateway \
     --query 'InternetGateway.{InternetGatewayId:InternetGatewayId}' \
     --output text \
     --region us-east-1)
-fi
 
-# Add name tag to internet gateway
+  # Add name tag to internet gateway
 
-if [ -z "${SKIP_NETWORK}" ]; then
   aws ec2 create-tags \
     --resources $IGW_ID \
-    --tags "Key=Name,Value=ab2d-$CMS_ENV-igw" \
+    --tags "Key=Name,Value=ab2d-igw" \
     --region us-east-1
+
 fi
 
+#
 # Attach internet gateway to VPC
+#
 
-if [ -z "${SKIP_NETWORK}" ]; then
+IGW_ATTACHED=$(aws ec2 describe-internet-gateways \
+  --filters "Name=tag:Name,Values=ab2d-igw" \
+  --query "InternetGateways[*].Attachments" \
+  --output text)
+
+if [ -z "${SKIP_NETWORK}" ] && [ -z "${IGW_ATTACHED}" ]; then
+  echo "Attach internet gateway to VPC..."
   aws --region us-east-1 ec2 attach-internet-gateway \
     --internet-gateway-id $IGW_ID \
     --vpc-id $VPC_ID
 fi
 
-# Create a custom route table for internet gateway
 
-if [ -z "${SKIP_NETWORK}" ]; then
-  IGW_ROUTE_TABLE_ID=$(aws ec2 create-route-table \
-    --vpc-id $VPC_ID \
-    --query 'RouteTable.{RouteTableId:RouteTableId}' \
-    --output text \
-    --region us-east-1)
-fi
 
-# Add name tag to route table for internet gateway
 
-if [ -z "${SKIP_NETWORK}" ]; then
-  aws ec2 create-tags \
-    --resources $IGW_ROUTE_TABLE_ID \
-    --tags "Key=Name,Value=ab2d-$CMS_ENV-igw-rt" \
-    --region us-east-1
-fi
 
-# Add route for internet gateway to the custom route table for public subnets
+# # Create a custom route table for internet gateway
 
-if [ -z "${SKIP_NETWORK}" ]; then
-  aws --region us-east-1 ec2 create-route \
-    --destination-cidr-block 0.0.0.0/0 \
-    --gateway-id $IGW_ID \
-    --route-table-id $IGW_ROUTE_TABLE_ID
-fi
+# if [ -z "${SKIP_NETWORK}" ]; then
+#   IGW_ROUTE_TABLE_ID=$(aws ec2 create-route-table \
+#     --vpc-id $VPC_ID \
+#     --query 'RouteTable.{RouteTableId:RouteTableId}' \
+#     --output text \
+#     --region us-east-1)
+# fi
 
-# Associate the first public subnet with the custom route table for internet gateway
+# # Add name tag to route table for internet gateway
 
-if [ -z "${SKIP_NETWORK}" ]; then
-  aws ec2 associate-route-table  \
-    --subnet-id $SUBNET_PUBLIC_1_ID \
-    --route-table-id $IGW_ROUTE_TABLE_ID \
-    --region us-east-1
-fi
+# if [ -z "${SKIP_NETWORK}" ]; then
+#   aws ec2 create-tags \
+#     --resources $IGW_ROUTE_TABLE_ID \
+#     --tags "Key=Name,Value=ab2d-$CMS_ENV-igw-rt" \
+#     --region us-east-1
+# fi
 
-# Associate the second public subnet with the custom route table for internet gateway
+# # Add route for internet gateway to the custom route table for public subnets
 
-if [ -z "${SKIP_NETWORK}" ]; then
-  aws ec2 associate-route-table  \
-    --subnet-id $SUBNET_PUBLIC_2_ID \
-    --route-table-id $IGW_ROUTE_TABLE_ID \
-    --region us-east-1
-fi
+# if [ -z "${SKIP_NETWORK}" ]; then
+#   aws --region us-east-1 ec2 create-route \
+#     --destination-cidr-block 0.0.0.0/0 \
+#     --gateway-id $IGW_ID \
+#     --route-table-id $IGW_ROUTE_TABLE_ID
+# fi
 
-# Enable Auto-assign Public IP on the first public subnet
+# # Associate the first public subnet with the custom route table for internet gateway
 
-if [ -z "${SKIP_NETWORK}" ]; then
-  aws ec2 modify-subnet-attribute \
-    --subnet-id $SUBNET_PUBLIC_1_ID \
-    --map-public-ip-on-launch \
-    --region us-east-1
-fi
+# if [ -z "${SKIP_NETWORK}" ]; then
+#   aws ec2 associate-route-table  \
+#     --subnet-id $SUBNET_PUBLIC_1_ID \
+#     --route-table-id $IGW_ROUTE_TABLE_ID \
+#     --region us-east-1
+# fi
 
-# Enable Auto-assign Public IP on the second public subnet
+# # Associate the second public subnet with the custom route table for internet gateway
 
-if [ -z "${SKIP_NETWORK}" ]; then
-  aws ec2 modify-subnet-attribute \
-    --subnet-id $SUBNET_PUBLIC_2_ID \
-    --map-public-ip-on-launch \
-    --region us-east-1
-fi
+# if [ -z "${SKIP_NETWORK}" ]; then
+#   aws ec2 associate-route-table  \
+#     --subnet-id $SUBNET_PUBLIC_2_ID \
+#     --route-table-id $IGW_ROUTE_TABLE_ID \
+#     --region us-east-1
+# fi
 
-# Display NAT gatways stage
+# # Enable Auto-assign Public IP on the first public subnet
 
-if [ -z "${SKIP_NETWORK}" ]; then
-  echo "Creating NAT gateways..."
-fi
+# if [ -z "${SKIP_NETWORK}" ]; then
+#   aws ec2 modify-subnet-attribute \
+#     --subnet-id $SUBNET_PUBLIC_1_ID \
+#     --map-public-ip-on-launch \
+#     --region us-east-1
+# fi
 
-# Allocate Elastic IP Address for first NAT Gateway
+# # Enable Auto-assign Public IP on the second public subnet
 
-if [ -z "${SKIP_NETWORK}" ]; then
-  EIP_ALLOC_1_ID=$(aws ec2 allocate-address \
-    --domain vpc \
-    --query '{AllocationId:AllocationId}' \
-    --output text \
-    --region us-east-1)
-fi
+# if [ -z "${SKIP_NETWORK}" ]; then
+#   aws ec2 modify-subnet-attribute \
+#     --subnet-id $SUBNET_PUBLIC_2_ID \
+#     --map-public-ip-on-launch \
+#     --region us-east-1
+# fi
 
-# Add name tag to Elastic IP Address for first NAT Gateway
+# # Display NAT gatways stage
 
-if [ -z "${SKIP_NETWORK}" ]; then
-  aws ec2 create-tags \
-    --resources $EIP_ALLOC_1_ID \
-    --tags "Key=Name,Value=ab2d-$CMS_ENV-ngw-eip-1" \
-    --region us-east-1
-fi
+# if [ -z "${SKIP_NETWORK}" ]; then
+#   echo "Creating NAT gateways..."
+# fi
 
-# Create first NAT Gateway
+# # Allocate Elastic IP Address for first NAT Gateway
 
-if [ -z "${SKIP_NETWORK}" ]; then
-  NAT_GW_1_ID=$(aws ec2 create-nat-gateway \
-    --subnet-id $SUBNET_PUBLIC_1_ID \
-    --allocation-id $EIP_ALLOC_1_ID \
-    --query 'NatGateway.{NatGatewayId:NatGatewayId}' \
-    --output text \
-    --region us-east-1)
-fi
+# if [ -z "${SKIP_NETWORK}" ]; then
+#   EIP_ALLOC_1_ID=$(aws ec2 allocate-address \
+#     --domain vpc \
+#     --query '{AllocationId:AllocationId}' \
+#     --output text \
+#     --region us-east-1)
+# fi
 
-# Add name tag to first NAT Gateway
+# # Add name tag to Elastic IP Address for first NAT Gateway
 
-if [ -z "${SKIP_NETWORK}" ]; then
-  aws ec2 create-tags \
-    --resources $NAT_GW_1_ID \
-    --tags "Key=Name,Value=ab2d-$CMS_ENV-ngw-1" \
-    --region us-east-1
-fi
+# if [ -z "${SKIP_NETWORK}" ]; then
+#   aws ec2 create-tags \
+#     --resources $EIP_ALLOC_1_ID \
+#     --tags "Key=Name,Value=ab2d-$CMS_ENV-ngw-eip-1" \
+#     --region us-east-1
+# fi
 
-if [ -z "${SKIP_NETWORK}" ]; then
-  # Wait for first NAT Gateway to become available
-  SECONDS_COUNT=0
-  LAST_SECONDS_COUNT=0
-  WAIT_SECONDS=5
-  STATE='PENDING'
-  echo "Waiting for first NAT gateway to become available"
-  until [[ $STATE == 'AVAILABLE' ]]; do
-    INTERVAL=$[SECONDS_COUNT-LAST_SECONDS_COUNT]
-    echo $INTERVAL
-    if [[ $INTERVAL -ge $WAIT_SECONDS ]]; then
-      STATE=$(aws ec2 describe-nat-gateways \
-        --nat-gateway-ids $NAT_GW_1_ID \
-        --query 'NatGateways[*].{State:State}' \
-        --output text \
-        --region us-east-1)
-      STATE=$(echo $STATE | tr '[:lower:]' '[:upper:]')
-      echo "Waiting for first NAT gateway to become available"
-      LAST_SECONDS_COUNT=$SECONDS_COUNT
-    fi
-    SECONDS_COUNT=$[SECONDS_COUNT+1]
-    sleep 1
-  done
-fi
+# # Create first NAT Gateway
+
+# if [ -z "${SKIP_NETWORK}" ]; then
+#   NAT_GW_1_ID=$(aws ec2 create-nat-gateway \
+#     --subnet-id $SUBNET_PUBLIC_1_ID \
+#     --allocation-id $EIP_ALLOC_1_ID \
+#     --query 'NatGateway.{NatGatewayId:NatGatewayId}' \
+#     --output text \
+#     --region us-east-1)
+# fi
+
+# # Add name tag to first NAT Gateway
+
+# if [ -z "${SKIP_NETWORK}" ]; then
+#   aws ec2 create-tags \
+#     --resources $NAT_GW_1_ID \
+#     --tags "Key=Name,Value=ab2d-$CMS_ENV-ngw-1" \
+#     --region us-east-1
+# fi
+
+# if [ -z "${SKIP_NETWORK}" ]; then
+#   # Wait for first NAT Gateway to become available
+#   SECONDS_COUNT=0
+#   LAST_SECONDS_COUNT=0
+#   WAIT_SECONDS=5
+#   STATE='PENDING'
+#   echo "Waiting for first NAT gateway to become available"
+#   until [[ $STATE == 'AVAILABLE' ]]; do
+#     INTERVAL=$[SECONDS_COUNT-LAST_SECONDS_COUNT]
+#     echo $INTERVAL
+#     if [[ $INTERVAL -ge $WAIT_SECONDS ]]; then
+#       STATE=$(aws ec2 describe-nat-gateways \
+#         --nat-gateway-ids $NAT_GW_1_ID \
+#         --query 'NatGateways[*].{State:State}' \
+#         --output text \
+#         --region us-east-1)
+#       STATE=$(echo $STATE | tr '[:lower:]' '[:upper:]')
+#       echo "Waiting for first NAT gateway to become available"
+#       LAST_SECONDS_COUNT=$SECONDS_COUNT
+#     fi
+#     SECONDS_COUNT=$[SECONDS_COUNT+1]
+#     sleep 1
+#   done
+# fi
   
-# Create a custom route table for the first NAT Gateway
+# # Create a custom route table for the first NAT Gateway
 
-if [ -z "${SKIP_NETWORK}" ]; then
-  ROUTE_TABLE_FOR_NGW_1_ID=$(aws ec2 create-route-table \
-    --vpc-id $VPC_ID \
-    --query 'RouteTable.{RouteTableId:RouteTableId}' \
-    --output text \
-    --region us-east-1)
-fi
+# if [ -z "${SKIP_NETWORK}" ]; then
+#   ROUTE_TABLE_FOR_NGW_1_ID=$(aws ec2 create-route-table \
+#     --vpc-id $VPC_ID \
+#     --query 'RouteTable.{RouteTableId:RouteTableId}' \
+#     --output text \
+#     --region us-east-1)
+# fi
 
-# Add name tag for the custom route table for the first NAT Gateway
+# # Add name tag for the custom route table for the first NAT Gateway
 
-if [ -z "${SKIP_NETWORK}" ]; then
-  aws ec2 create-tags \
-    --resources $ROUTE_TABLE_FOR_NGW_1_ID \
-    --tags "Key=Name,Value=ab2d-$CMS_ENV-ngw-rt-1" \
-    --region us-east-1
-fi
+# if [ -z "${SKIP_NETWORK}" ]; then
+#   aws ec2 create-tags \
+#     --resources $ROUTE_TABLE_FOR_NGW_1_ID \
+#     --tags "Key=Name,Value=ab2d-$CMS_ENV-ngw-rt-1" \
+#     --region us-east-1
+# fi
 
-# Create route to the first NAT Gateway for the custom route table
+# # Create route to the first NAT Gateway for the custom route table
 
-if [ -z "${SKIP_NETWORK}" ]; then
-  aws ec2 create-route \
-    --route-table-id $ROUTE_TABLE_FOR_NGW_1_ID \
-    --destination-cidr-block 0.0.0.0/0 \
-    --gateway-id $NAT_GW_1_ID \
-    --region us-east-1
-fi
+# if [ -z "${SKIP_NETWORK}" ]; then
+#   aws ec2 create-route \
+#     --route-table-id $ROUTE_TABLE_FOR_NGW_1_ID \
+#     --destination-cidr-block 0.0.0.0/0 \
+#     --gateway-id $NAT_GW_1_ID \
+#     --region us-east-1
+# fi
 
-# Associate the first private subnet with the custom route table for the first NAT Gateway
+# # Associate the first private subnet with the custom route table for the first NAT Gateway
 
-if [ -z "${SKIP_NETWORK}" ]; then
-  aws ec2 associate-route-table  \
-    --subnet-id $SUBNET_PRIVATE_1_ID \
-    --route-table-id $ROUTE_TABLE_FOR_NGW_1_ID \
-    --region us-east-1
-fi
+# if [ -z "${SKIP_NETWORK}" ]; then
+#   aws ec2 associate-route-table  \
+#     --subnet-id $SUBNET_PRIVATE_1_ID \
+#     --route-table-id $ROUTE_TABLE_FOR_NGW_1_ID \
+#     --region us-east-1
+# fi
 
-# Allocate Elastic IP Address for second NAT Gateway
+# # Allocate Elastic IP Address for second NAT Gateway
 
-if [ -z "${SKIP_NETWORK}" ]; then
-  EIP_ALLOC_2_ID=$(aws ec2 allocate-address \
-    --domain vpc \
-    --query '{AllocationId:AllocationId}' \
-    --output text \
-    --region us-east-1)
-fi
+# if [ -z "${SKIP_NETWORK}" ]; then
+#   EIP_ALLOC_2_ID=$(aws ec2 allocate-address \
+#     --domain vpc \
+#     --query '{AllocationId:AllocationId}' \
+#     --output text \
+#     --region us-east-1)
+# fi
 
-# Add name tag to Elastic IP Address for second NAT Gateway
+# # Add name tag to Elastic IP Address for second NAT Gateway
 
-if [ -z "${SKIP_NETWORK}" ]; then
-  aws ec2 create-tags \
-    --resources $EIP_ALLOC_2_ID \
-    --tags "Key=Name,Value=ab2d-$CMS_ENV-ngw-eip-2" \
-    --region us-east-1
-fi
+# if [ -z "${SKIP_NETWORK}" ]; then
+#   aws ec2 create-tags \
+#     --resources $EIP_ALLOC_2_ID \
+#     --tags "Key=Name,Value=ab2d-$CMS_ENV-ngw-eip-2" \
+#     --region us-east-1
+# fi
 
-# Create second NAT Gateway
+# # Create second NAT Gateway
 
-if [ -z "${SKIP_NETWORK}" ]; then
-  NAT_GW_2_ID=$(aws ec2 create-nat-gateway \
-    --subnet-id $SUBNET_PUBLIC_2_ID \
-    --allocation-id $EIP_ALLOC_2_ID \
-    --query 'NatGateway.{NatGatewayId:NatGatewayId}' \
-    --output text \
-    --region us-east-1)
-fi
+# if [ -z "${SKIP_NETWORK}" ]; then
+#   NAT_GW_2_ID=$(aws ec2 create-nat-gateway \
+#     --subnet-id $SUBNET_PUBLIC_2_ID \
+#     --allocation-id $EIP_ALLOC_2_ID \
+#     --query 'NatGateway.{NatGatewayId:NatGatewayId}' \
+#     --output text \
+#     --region us-east-1)
+# fi
 
-# Add name tag to second NAT Gateway
+# # Add name tag to second NAT Gateway
 
-if [ -z "${SKIP_NETWORK}" ]; then
-  aws ec2 create-tags \
-    --resources $NAT_GW_2_ID \
-    --tags "Key=Name,Value=ab2d-$CMS_ENV-ngw-2" \
-    --region us-east-1
-fi
+# if [ -z "${SKIP_NETWORK}" ]; then
+#   aws ec2 create-tags \
+#     --resources $NAT_GW_2_ID \
+#     --tags "Key=Name,Value=ab2d-$CMS_ENV-ngw-2" \
+#     --region us-east-1
+# fi
 
-# Wait for second NAT Gateway to become available
+# # Wait for second NAT Gateway to become available
 
-if [ -z "${SKIP_NETWORK}" ]; then
-  SECONDS_COUNT=0
-  LAST_SECONDS_COUNT=0
-  WAIT_SECONDS=5
-  STATE='PENDING'
-  echo "Waiting for second NAT gateway to become available"
-  until [[ $STATE == 'AVAILABLE' ]]; do
-    INTERVAL=$[SECONDS_COUNT-LAST_SECONDS_COUNT]
-    echo $INTERVAL
-    if [[ $INTERVAL -ge $WAIT_SECONDS ]]; then
-      STATE=$(aws ec2 describe-nat-gateways \
-        --nat-gateway-ids $NAT_GW_2_ID \
-        --query 'NatGateways[*].{State:State}' \
-        --output text \
-        --region us-east-1)
-      STATE=$(echo $STATE | tr '[:lower:]' '[:upper:]')
-      echo "Waiting for second NAT gateway to become available"
-      LAST_SECONDS_COUNT=$SECONDS_COUNT
-    fi
-    SECONDS_COUNT=$[SECONDS_COUNT+1]
-    sleep 1
-  done
-fi
+# if [ -z "${SKIP_NETWORK}" ]; then
+#   SECONDS_COUNT=0
+#   LAST_SECONDS_COUNT=0
+#   WAIT_SECONDS=5
+#   STATE='PENDING'
+#   echo "Waiting for second NAT gateway to become available"
+#   until [[ $STATE == 'AVAILABLE' ]]; do
+#     INTERVAL=$[SECONDS_COUNT-LAST_SECONDS_COUNT]
+#     echo $INTERVAL
+#     if [[ $INTERVAL -ge $WAIT_SECONDS ]]; then
+#       STATE=$(aws ec2 describe-nat-gateways \
+#         --nat-gateway-ids $NAT_GW_2_ID \
+#         --query 'NatGateways[*].{State:State}' \
+#         --output text \
+#         --region us-east-1)
+#       STATE=$(echo $STATE | tr '[:lower:]' '[:upper:]')
+#       echo "Waiting for second NAT gateway to become available"
+#       LAST_SECONDS_COUNT=$SECONDS_COUNT
+#     fi
+#     SECONDS_COUNT=$[SECONDS_COUNT+1]
+#     sleep 1
+#   done
+# fi
 
-# Create a custom route table for the second NAT Gateway
+# # Create a custom route table for the second NAT Gateway
 
-if [ -z "${SKIP_NETWORK}" ]; then
-  ROUTE_TABLE_FOR_NGW_2_ID=$(aws ec2 create-route-table \
-    --vpc-id $VPC_ID \
-    --query 'RouteTable.{RouteTableId:RouteTableId}' \
-    --output text \
-    --region us-east-1)
-fi
+# if [ -z "${SKIP_NETWORK}" ]; then
+#   ROUTE_TABLE_FOR_NGW_2_ID=$(aws ec2 create-route-table \
+#     --vpc-id $VPC_ID \
+#     --query 'RouteTable.{RouteTableId:RouteTableId}' \
+#     --output text \
+#     --region us-east-1)
+# fi
 
-# Add name tag for the custom route table for the first NAT Gateway
+# # Add name tag for the custom route table for the first NAT Gateway
 
-if [ -z "${SKIP_NETWORK}" ]; then
-  aws ec2 create-tags \
-    --resources $ROUTE_TABLE_FOR_NGW_2_ID \
-    --tags "Key=Name,Value=ab2d-$CMS_ENV-ngw-rt-2" \
-    --region us-east-1
-fi
+# if [ -z "${SKIP_NETWORK}" ]; then
+#   aws ec2 create-tags \
+#     --resources $ROUTE_TABLE_FOR_NGW_2_ID \
+#     --tags "Key=Name,Value=ab2d-$CMS_ENV-ngw-rt-2" \
+#     --region us-east-1
+# fi
 
-# Create route to the second NAT Gateway for the custom route table
+# # Create route to the second NAT Gateway for the custom route table
 
-if [ -z "${SKIP_NETWORK}" ]; then
-  aws ec2 create-route \
-    --route-table-id $ROUTE_TABLE_FOR_NGW_2_ID \
-    --destination-cidr-block 0.0.0.0/0 \
-    --gateway-id $NAT_GW_2_ID \
-    --region us-east-1
-fi
+# if [ -z "${SKIP_NETWORK}" ]; then
+#   aws ec2 create-route \
+#     --route-table-id $ROUTE_TABLE_FOR_NGW_2_ID \
+#     --destination-cidr-block 0.0.0.0/0 \
+#     --gateway-id $NAT_GW_2_ID \
+#     --region us-east-1
+# fi
 
-# Associate the second private subnet with the custom route table for the second NAT Gateway
+# # Associate the second private subnet with the custom route table for the second NAT Gateway
 
-if [ -z "${SKIP_NETWORK}" ]; then
-  aws ec2 associate-route-table  \
-    --subnet-id $SUBNET_PRIVATE_2_ID \
-    --route-table-id $ROUTE_TABLE_FOR_NGW_2_ID \
-    --region us-east-1
-fi
+# if [ -z "${SKIP_NETWORK}" ]; then
+#   aws ec2 associate-route-table  \
+#     --subnet-id $SUBNET_PRIVATE_2_ID \
+#     --route-table-id $ROUTE_TABLE_FOR_NGW_2_ID \
+#     --region us-east-1
+# fi
 
-# Create ".auto.tfvars" file for network settings
+# # Create ".auto.tfvars" file for network settings
 
-if [ -z "${SKIP_NETWORK}" ]; then
-  echo 'vpc_id = "'$VPC_ID'"' \
-      > $ENVIRONMENT.auto.tfvars
-  echo 'private_subnet_ids = ["'$SUBNET_PRIVATE_1_ID'","'$SUBNET_PRIVATE_2_ID'"]' \
-    >> $ENVIRONMENT.auto.tfvars
-  echo 'deployment_controller_subnet_ids = ["'$SUBNET_PUBLIC_1_ID'","'$SUBNET_PUBLIC_2_ID'"]' \
-    >> $ENVIRONMENT.auto.tfvars
-fi
+# cd "${START_DIR}"
+# cd terraform/environments/cms-ab2d-$CMS_ENV
+
+# if [ -z "${SKIP_NETWORK}" ]; then
+#   echo 'vpc_id = "'$VPC_ID'"' \
+#       > $ENVIRONMENT.auto.tfvars
+#   echo 'private_subnet_ids = ["'$SUBNET_PRIVATE_1_ID'","'$SUBNET_PRIVATE_2_ID'"]' \
+#     >> $ENVIRONMENT.auto.tfvars
+#   echo 'deployment_controller_subnet_ids = ["'$SUBNET_PUBLIC_1_ID'","'$SUBNET_PUBLIC_2_ID'"]' \
+#     >> $ENVIRONMENT.auto.tfvars
+# fi
 
 # #
 # # Configure terraform
