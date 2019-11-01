@@ -54,8 +54,8 @@ CREATE TABLE sponsor
 (
     id                  BIGINT              NOT NULL,
     hpms_id             INTEGER             NOT NULL,
-    legal_name          VARCHAR(255)        NOT NULL,
     org_name            VARCHAR(255)        NOT NULL,
+    legal_name          VARCHAR(255),
     parent_id           BIGINT
 );
 
@@ -73,7 +73,7 @@ CREATE TABLE attestation
     id                  BIGINT              NOT NULL,
     sponsor_id          BIGINT              NOT NULL,
     contract_id         BIGINT              NOT NULL,
-    attested_on         TIMESTAMPTZ         NOT NULL
+    attested_on         TIMESTAMPTZ
 );
 
 ALTER TABLE attestation ADD CONSTRAINT "pk_attestation" PRIMARY KEY (id);
@@ -89,9 +89,9 @@ CREATE TABLE user_account
 (
     id                  BIGINT              NOT NULL,
     user_name           VARCHAR(64)         NOT NULL,
-    first_name          VARCHAR(64)         NOT NULL,
-    last_name           VARCHAR(64)         NOT NULL,
-    email               VARCHAR(255)        NOT NULL,
+    first_name          VARCHAR(64),
+    last_name           VARCHAR(64),
+    email               VARCHAR(255),
     sponsor_id          BIGINT              NOT NULL,
     enabled             BOOLEAN             NOT NULL
 );
@@ -137,21 +137,6 @@ ALTER TABLE user_role ADD CONSTRAINT "uc_user_role_user_account_id_role_id" UNIQ
 --  -------------------------------------------------------------------------------------------------------------------
 
 
---changeset spathiyil:AB2D-291-CreateTable-job_status failOnError:true dbms:postgresql
-CREATE TABLE job_status
-(
-    id                  BIGINT              NOT NULL,
-    name                VARCHAR(64)         NOT NULL
-);
-
-ALTER TABLE job_status ADD CONSTRAINT "pk_job_status" PRIMARY KEY (id);
-ALTER TABLE job_status ADD CONSTRAINT "uc_job_status_name" UNIQUE (name);
-
-
---rollback DROP TABLE job_status;
---  -------------------------------------------------------------------------------------------------------------------
-
-
 --changeset spathiyil:AB2D-291-CreateTable-job failOnError:true dbms:postgresql
 CREATE TABLE job
 (
@@ -161,8 +146,7 @@ CREATE TABLE job
     created_at          TIMESTAMPTZ         NOT NULL,
     expires_at          TIMESTAMPTZ         NOT NULL,
     resource_types      VARCHAR(255)        NOT NULL,
---  job_status_id       BIGINT              NOT NULL,
-    status              INT                 NOT NULL,
+    status              VARCHAR(32)         NOT NULL,
     status_message      TEXT,
     request_url         TEXT,
     progress            INT,
@@ -174,7 +158,6 @@ ALTER TABLE job ADD CONSTRAINT "pk_job" PRIMARY KEY (id);
 ALTER TABLE job ADD CONSTRAINT "uc_job_job_id" UNIQUE (job_id);
 
 ALTER TABLE job ADD CONSTRAINT "fk_job_to_user_account" FOREIGN KEY (user_account_id) REFERENCES user_account (id);
---ALTER TABLE job ADD CONSTRAINT "fk_job_to_job_status" FOREIGN KEY (job_status_id) REFERENCES job_status (id);
 
 --rollback DROP TABLE job;
 --  -------------------------------------------------------------------------------------------------------------------
@@ -193,5 +176,5 @@ CREATE TABLE job_output
 ALTER TABLE job_output ADD CONSTRAINT "pk_job_output" PRIMARY KEY (id);
 ALTER TABLE job_output ADD CONSTRAINT "fk_job_output_to_job" FOREIGN KEY (job_id) REFERENCES job (id);
 
---rollback DROP TABLE job_output
+--rollback DROP TABLE job_output;
 

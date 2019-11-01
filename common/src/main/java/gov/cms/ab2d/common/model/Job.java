@@ -7,6 +7,7 @@ import lombok.Setter;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.Enumerated;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
@@ -17,6 +18,8 @@ import javax.validation.constraints.Pattern;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
+
+import static javax.persistence.EnumType.STRING;
 
 @Entity
 @Getter
@@ -51,6 +54,8 @@ public class Job {
     private OffsetDateTime completedAt;
 
     private String requestUrl;
+
+    @Enumerated(STRING)
     private JobStatus status;
     private String statusMessage;
     private Integer progress;
