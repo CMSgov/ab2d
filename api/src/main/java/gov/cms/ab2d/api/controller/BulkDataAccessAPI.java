@@ -107,7 +107,7 @@ public class BulkDataAccessAPI {
         Job job = jobService.createJob(resourceTypes, ServletUriComponentsBuilder.fromCurrentRequest().toUriString());
 
         String statusURL = ServletUriComponentsBuilder.fromCurrentRequestUri().replacePath
-                (String.format(API_PREFIX + "/Job/%s/$status", job.getJobID())).toUriString();
+                (String.format(API_PREFIX + "/Job/%s/$status", job.getJobId())).toUriString();
         HttpHeaders responseHeaders = new HttpHeaders();
         responseHeaders.add("Content-Location", statusURL);
 
@@ -144,7 +144,7 @@ public class BulkDataAccessAPI {
     @ResponseStatus(value = HttpStatus.OK)
     public ResponseEntity<JsonNode> getJobStatus(
             @ApiParam(value = "A job identifier", required = true) @PathVariable @NotBlank String jobId) {
-        Job job = jobService.getJobByJobID(jobId);
+        Job job = jobService.getJobByJobId(jobId);
 
         OffsetDateTime now = OffsetDateTime.now();
 
@@ -158,14 +158,14 @@ public class BulkDataAccessAPI {
         HttpHeaders responseHeaders = new HttpHeaders();
         switch (job.getStatus()) {
             case SUCCESSFUL:
-                final ZonedDateTime jobExpiresUTC = ZonedDateTime.ofInstant(job.getExpires().toInstant(), ZoneId.of("UTC"));
+                final ZonedDateTime jobExpiresUTC = ZonedDateTime.ofInstant(job.getExpiresAt().toInstant(), ZoneId.of("UTC"));
                 responseHeaders.add("Expires", DateTimeFormatter.RFC_1123_DATE_TIME.format(jobExpiresUTC));
 
                 final DateTimeType jobCompletedAt = new DateTimeType(job.getCompletedAt().toString());
 
                 final JobCompletedResponse resp = new JobCompletedResponse();
                 resp.setTransactionTime(jobCompletedAt.toHumanDisplay());
-                resp.setRequest(job.getRequestURL());
+                resp.setRequest(job.getRequestUrl());
                 resp.setRequiresAccessToken(true);
                 resp.setOutput(job.getJobOutput().stream().filter(o -> !o.isError()).map(o -> new JobCompletedResponse.Output(o.getFhirResourceType(), getUrlPath(job, o.getFilePath()))).collect(Collectors.toList()));
                 resp.setError(job.getJobOutput().stream().filter(o -> o.isError()).map(o -> new JobCompletedResponse.Output(o.getFhirResourceType(), getUrlPath(job, o.getFilePath()))).collect(Collectors.toList()));
@@ -183,7 +183,7 @@ public class BulkDataAccessAPI {
     }
 
     private String getUrlPath(Job job, String filePath) {
-        String requestURIString = ServletUriComponentsBuilder.fromCurrentRequestUri().replacePath(API_PREFIX + "/Job/" + job.getJobID()).toUriString();
+        String requestURIString = ServletUriComponentsBuilder.fromCurrentRequestUri().replacePath(API_PREFIX + "/Job/" + job.getJobId()).toUriString();
         return requestURIString + "/file/" + filePath;
     }
 
