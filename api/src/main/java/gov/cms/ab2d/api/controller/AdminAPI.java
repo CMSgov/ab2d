@@ -1,6 +1,7 @@
 package gov.cms.ab2d.api.controller;
 
 import gov.cms.ab2d.hpms.processing.ExcelReportProcessor;
+import gov.cms.ab2d.hpms.processing.ExcelType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
@@ -23,7 +24,7 @@ public class AdminAPI {
     @ResponseStatus(value = HttpStatus.ACCEPTED)
     @PostMapping("/uploadHPMSFile")
     public ResponseEntity<Void> uploadHPMSFile(@RequestParam("file") MultipartFile hpmsFile) throws IOException {
-        hpmsExcelReportProcessor.processReport(hpmsFile.getInputStream());
+        hpmsExcelReportProcessor.processReport(hpmsFile.getInputStream(), ExcelType.fromFileType(hpmsFile.getOriginalFilename()));
 
         return new ResponseEntity<>(null, null,
                 HttpStatus.ACCEPTED);

@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import javax.persistence.*;
+import java.util.HashSet;
 import java.util.Set;
 
 @Entity
@@ -15,17 +16,23 @@ public class Sponsor {
     @GeneratedValue
     private Long id;
 
-    @Column(unique = true)
     private Integer hpmsId;
     private String orgName;
     private String legalName;
-
-    private String contractName;
 
     @ManyToOne
     private Sponsor parent;
 
     @OneToMany(mappedBy = "sponsor", cascade = CascadeType.ALL)
-    private Set<Attestation> attestations;
+    private Set<Attestation> attestations = new HashSet<>();
 
+    public boolean hasContract(String contractId) {
+        for (Attestation attestation : attestations) {
+            if (attestation.getContract().getContractId().equals(contractId)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
 }

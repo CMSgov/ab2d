@@ -1,0 +1,1 @@
+ALTER TABLE sponsor DROP CONSTRAINT "uc_sponsor_hpms_id";

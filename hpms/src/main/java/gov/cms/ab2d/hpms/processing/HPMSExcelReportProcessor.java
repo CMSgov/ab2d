@@ -3,9 +3,7 @@ package gov.cms.ab2d.hpms.processing;
 import gov.cms.ab2d.common.model.Attestation;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.Sponsor;
-//import gov.cms.ab2d.common.service.ContractService;
 import gov.cms.ab2d.common.service.SponsorService;
-import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 
 import org.apache.poi.ss.usermodel.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,7 +13,6 @@ import java.io.*;
 import java.time.OffsetDateTime;
 import java.util.Iterator;
 import java.util.Optional;
-import java.util.Set;
 
 @Service("hpmsExcelReportProcessor")
 public class HPMSExcelReportProcessor implements ExcelReportProcessor {
@@ -23,12 +20,9 @@ public class HPMSExcelReportProcessor implements ExcelReportProcessor {
     @Autowired
     private SponsorService sponsorService;
 
-    //@Autowired
-    //private ContractService contractService;
-
     @Override
-    public void processReport(InputStream xlsFile) throws IOException {
-        try (Workbook workbook = new HSSFWorkbook(xlsFile)) {
+    public void processReport(InputStream xlsInputStream, ExcelType excelType) throws IOException {
+        try (Workbook workbook = excelType.getWorkbookType(xlsInputStream)) {
             Sheet datatypeSheet = workbook.getSheetAt(0);
             Iterator<Row> iterator = datatypeSheet.iterator();
 
@@ -57,25 +51,30 @@ public class HPMSExcelReportProcessor implements ExcelReportProcessor {
                     Double sponsorHpmsId = currentRow.getCell(3).getNumericCellValue();
                     String contractName = currentRow.getCell(5).getStringCellValue();
 
-                    Optional<Sponsor> sponsorOptional = sponsorService.getSponsorByHpmsId(sponsorHpmsId.intValue());
-                    Optional<Sponsor> parentSponsorOptional = sponsorService.getSponsorByHpmsId(sponsorParentHpmsId.intValue());
+                    Optional<Sponsor> parentSponsorOptional = sponsorService.getSponsorByHpmsIdAndParent(sponsorParentHpmsId.intValue(),
+                            null);
+                    Optional<Sponsor> sponsorOptional = sponsorService.getSponsorByHpmsIdAndParent(sponsorHpmsId.intValue(),
+                            parentSponsorOptional.orElse(null));
 
                     Sponsor sponsor = sponsorOptional.orElse(new Sponsor());
 
                     sponsor.setHpmsId(sponsorHpmsId.intValue());
                     sponsor.setLegalName(sponsorName);
-                    sponsor.setContractName(contractName);
 
-                    Attestation attestation = new Attestation();
-                    attestation.setSponsor(sponsor);
-                    attestation.setAttestedOn(OffsetDateTime.now());
+                    if (!sponsor.hasContract(contractNumber)) {
+                        Attestation attestation = new Attestation();
+                        attestation.setSponsor(sponsor);
+                        attestation.setAttestedOn(OffsetDateTime.now());
 
-                    Contract contract = new Contract();
-                    contract.setAttestations(Set.of(attestation));
+                        Contract contract = new Contract();
+                        contract.getAttestations().add(attestation);
+                        contract.setContractName(contractName);
+                        contract.setContractId(contractNumber);
 
-                    attestation.setContract(contract);
+                        attestation.setContract(contract);
 
-                    sponsor.setAttestations(Set.of(attestation));
+                        sponsor.getAttestations().add(attestation);
+                    }
 
                     if (parentSponsorOptional.isPresent()) {
                         sponsor.setParent(parentSponsorOptional.get());
@@ -86,11 +85,6 @@ public class HPMSExcelReportProcessor implements ExcelReportProcessor {
                         sponsor.setParent(parent);
                         sponsorService.saveSponsor(parent);
                     }
-                    /*Sponsor parent = parentSponsorOptional.orElse(new Sponsor());
-                    parent.setHpmsID(sponsorParentHpmsId.intValue());
-                    parent.setLegalName(sponsorParentName);
-                    sponsor.setParent(parent);
-                    sponsorService.saveSponsor(parent);*/
 
                     sponsorService.saveSponsor(sponsor);
                 }

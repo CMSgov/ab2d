@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import javax.persistence.*;
+import java.util.HashSet;
 import java.util.Set;
 
 @Entity
@@ -19,8 +20,10 @@ public class Contract {
     @Column(unique = true)
     private String contractId;
 
+    private String contractName;
+
     @OneToMany(mappedBy = "contract", cascade = CascadeType.ALL)
-    private Set<Attestation> attestations;
+    private Set<Attestation> attestations = new HashSet<>();
 
     @ManyToMany(mappedBy = "contracts")
     private Set<Beneficiary> beneficiaries;

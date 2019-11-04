@@ -29,7 +29,7 @@ public class AdminAPITests {
     public void testUploadHPMSFile() throws Exception {
         // Simple test to test API, more detailed test is found in service test
         String fileName = "parent_org_and_legal_entity_20191031_111812.xls";
-        InputStream inputStream = this.getClass().getClassLoader().getResourceAsStream("/" + fileName);
+        InputStream inputStream = this.getClass().getResourceAsStream("/" + fileName);
 
         MockMultipartFile mockMultipartFile = new MockMultipartFile("file", fileName, "application/vnd.ms-excel", inputStream);
         this.mockMvc.perform(MockMvcRequestBuilders.multipart(API_PREFIX + "/uploadHPMSFile")

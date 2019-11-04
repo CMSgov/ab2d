@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Nullable;
 import java.util.Optional;
 
 @Transactional
@@ -15,8 +16,8 @@ public class SponsorServiceImpl implements SponsorService {
     @Autowired
     private SponsorRepository sponsorRepository;
 
-    public Optional<Sponsor> getSponsorByHpmsId(Integer hpmsId) {
-        return sponsorRepository.findByHpmsId(hpmsId);
+    public Optional<Sponsor> getSponsorByHpmsIdAndParent(Integer hpmsId, @Nullable Sponsor parent) {
+        return sponsorRepository.findByHpmsIdAndParent(hpmsId, parent);
     }
 
     public Sponsor saveSponsor(Sponsor sponsor) {
