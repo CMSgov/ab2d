@@ -9,5 +9,5 @@ import java.util.Optional;
 @Repository
 public interface SponsorRepository extends JpaRepository<Sponsor, Long> {
 
-    Optional<Sponsor> findByHpmsIdAndParent(Integer hpmsId, Sponsor parent);
+    Optional<Sponsor> findByHpmsIdAndParent(Integer hpmsId, Sponsor parentId);
 }

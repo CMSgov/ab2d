@@ -74,17 +74,18 @@ public class ExcelReportProcessorTests {
             put(558, new SponsorData(447, Set.of("S6506")));
             put(63, new SponsorData(310, Set.of("S5726")));
             put(70, new SponsorData(25, Set.of("S5584", "S5585")));
+            put(365, new SponsorData(25, Set.of("S5586")));
         }};
 
-        Assert.assertEquals(16, sponsors.size());
+        Assert.assertEquals(17, sponsors.size());
 
         List<Contract> contracts = contractRepository.findAll();
 
-        Assert.assertEquals(10, contracts.size());
+        Assert.assertEquals(11, contracts.size());
 
         List<Attestation> attestations = attestationRepository.findAll();
 
-        Assert.assertEquals(10, attestations.size());
+        Assert.assertEquals(11, attestations.size());
 
         for(Sponsor sponsor : sponsors) {
             if(sponsor.getParent() != null) {

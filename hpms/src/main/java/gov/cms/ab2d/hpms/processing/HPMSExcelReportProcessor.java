@@ -51,17 +51,26 @@ public class HPMSExcelReportProcessor implements ExcelReportProcessor {
                     Double sponsorHpmsId = currentRow.getCell(3).getNumericCellValue();
                     String contractName = currentRow.getCell(5).getStringCellValue();
 
-                    Optional<Sponsor> parentSponsorOptional = sponsorService.getSponsorByHpmsIdAndParent(sponsorParentHpmsId.intValue(),
-                            null);
-                    Optional<Sponsor> sponsorOptional = sponsorService.getSponsorByHpmsIdAndParent(sponsorHpmsId.intValue(),
-                            parentSponsorOptional.orElse(null));
+                    Optional<Sponsor> parentSponsorOptional = sponsorService.findByHpmsIdAndParent(sponsorParentHpmsId.intValue(), null);
+                    Sponsor parentId = null;
+                    if (parentSponsorOptional.isPresent()) {
+                        parentId = parentSponsorOptional.get();
+                    }
+                    Optional<Sponsor> sponsorOptional = sponsorService.findByHpmsIdAndParent(sponsorHpmsId.intValue(),
+                            parentId);
 
-                    Sponsor sponsor = sponsorOptional.orElse(new Sponsor());
+                    Sponsor sponsor;
+                    if (sponsorOptional.isPresent() && sponsorOptional.get().getAttestations().isEmpty() || !sponsorOptional.isPresent()) {
+                        sponsor = new Sponsor();
+                    } else {
+                        sponsor = sponsorOptional.get();
+                    }
 
                     sponsor.setHpmsId(sponsorHpmsId.intValue());
                     sponsor.setLegalName(sponsorName);
                     sponsor.setOrgName(sponsorName);
 
+                    // Only add the contract if it doesn't already exist
                     if (!sponsor.hasContract(contractNumber)) {
                         Attestation attestation = new Attestation();
                         attestation.setSponsor(sponsor);
