@@ -22,7 +22,7 @@ public class Attestation {
     @JoinColumn(name = "sponsor_id")
     private Sponsor sponsor;
 
-    @ManyToOne(cascade = CascadeType.ALL)
+    @ManyToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinColumn(name = "contract_id")
     private Contract contract;
 

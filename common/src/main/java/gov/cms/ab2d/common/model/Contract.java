@@ -22,7 +22,7 @@ public class Contract {
 
     private String contractName;
 
-    @OneToMany(mappedBy = "contract", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "contract")
     private Set<Attestation> attestations = new HashSet<>();
 
     @ManyToMany(mappedBy = "contracts")

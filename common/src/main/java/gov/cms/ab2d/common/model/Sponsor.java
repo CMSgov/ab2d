@@ -23,7 +23,7 @@ public class Sponsor {
     @ManyToOne
     private Sponsor parent;
 
-    @OneToMany(mappedBy = "sponsor", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "sponsor", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     private Set<Attestation> attestations = new HashSet<>();
 
     public boolean hasContract(String contractId) {
