@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import javax.persistence.*;
+import javax.validation.constraints.NotNull;
 import java.time.OffsetDateTime;
 
 @Entity
@@ -20,10 +21,12 @@ public class Attestation {
 
     @ManyToOne
     @JoinColumn(name = "sponsor_id")
+    @NotNull
     private Sponsor sponsor;
 
     @ManyToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinColumn(name = "contract_id")
+    @NotNull
     private Contract contract;
 
     @Column(columnDefinition = "TIMESTAMP WITH TIME ZONE")

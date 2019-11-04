@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import javax.persistence.*;
+import javax.validation.constraints.NotNull;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -18,6 +19,7 @@ public class Contract {
     private Long id;
 
     @Column(unique = true)
+    @NotNull
     private String contractId;
 
     private String contractName;
