@@ -37,5 +37,3 @@ response = client.create_secret(
     KmsKeyId=kms_string,
     SecretString=secret
 )
-
-print(secret)
