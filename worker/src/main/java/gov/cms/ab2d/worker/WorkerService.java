@@ -5,7 +5,6 @@ import gov.cms.ab2d.common.model.JobStatus;
 import gov.cms.ab2d.common.repository.JobRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
 
@@ -14,7 +13,6 @@ import java.io.IOException;
  */
 @Slf4j
 @Service
-@Transactional
 public class WorkerService {
 
     private final JobRepository jobRepository;
