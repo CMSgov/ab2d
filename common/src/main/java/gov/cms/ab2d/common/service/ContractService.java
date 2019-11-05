@@ -6,5 +6,5 @@ import java.util.Optional;
 
 public interface ContractService {
 
-    Optional<Contract> getContractByContractId(Long contractId);
+    Optional<Contract> getContractByContractId(String contractId);
 }

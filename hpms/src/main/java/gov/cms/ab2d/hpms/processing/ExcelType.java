@@ -21,7 +21,7 @@ public enum ExcelType {
     }
 
     public static ExcelType fromFileType(String file) {
-        if (file.endsWith(".xls")) {
+        if (file.toLowerCase().endsWith(".xls")) {
             return ExcelType.XLS;
         } else {
             return ExcelType.XLSX;

@@ -32,7 +32,7 @@ public class AdminAPITests {
         InputStream inputStream = this.getClass().getResourceAsStream("/" + fileName);
 
         MockMultipartFile mockMultipartFile = new MockMultipartFile("file", fileName, "application/vnd.ms-excel", inputStream);
-        this.mockMvc.perform(MockMvcRequestBuilders.multipart(API_PREFIX + "/uploadHPMSFile")
+        this.mockMvc.perform(MockMvcRequestBuilders.multipart(API_PREFIX + "/uploadOrgStructureReport")
                 .file(mockMultipartFile).contentType(MediaType.MULTIPART_FORM_DATA))
                 .andExpect(status().is(202));
     }

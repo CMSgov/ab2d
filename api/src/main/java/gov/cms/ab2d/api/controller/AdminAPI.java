@@ -22,7 +22,7 @@ public class AdminAPI {
     private ExcelReportProcessor hpmsExcelReportProcessor;
 
     @ResponseStatus(value = HttpStatus.ACCEPTED)
-    @PostMapping("/uploadHPMSFile")
+    @PostMapping("/uploadOrgStructureReport")
     public ResponseEntity<Void> uploadHPMSFile(@RequestParam("file") MultipartFile hpmsFile) throws IOException {
         hpmsExcelReportProcessor.processReport(hpmsFile.getInputStream(), ExcelType.fromFileType(hpmsFile.getOriginalFilename()));
 

@@ -44,7 +44,8 @@ public class ExcelReportProcessorTests {
     private class SponsorData {
 
         private final Integer parentId;
-        private final Set<String> contractIds;
+        private final Map<String, String> contractIdsToNames;
+        private final String orgName;
     }
 
     @Test
@@ -65,16 +66,17 @@ public class ExcelReportProcessorTests {
 
         // This should look like the relationships between a sponsor and the parent, and the sponsor's contract id
         Map<Integer, SponsorData> sponsorHpmsIdsToData = new HashMap<>() {{
-            put(927, new SponsorData(1, Set.of("S8182")));
-            put(39, new SponsorData(1, Set.of("S5596")));
-            put(462, new SponsorData(1, Set.of("S5960")));
-            put(60, new SponsorData(386, Set.of("S2893")));
-            put(774, new SponsorData(642, Set.of("S6986")));
-            put(521, new SponsorData(28, Set.of("S5743")));
-            put(558, new SponsorData(447, Set.of("S6506")));
-            put(63, new SponsorData(310, Set.of("S5726")));
-            put(70, new SponsorData(25, Set.of("S5584", "S5585")));
-            put(365, new SponsorData(25, Set.of("S5586")));
+            put(927, new SponsorData(1, Map.of("S8182", "AMERIGROUP INSURANCE COMPANY"), "AMERIGROUP INSURANCE COMPANY"));
+            put(39, new SponsorData(1, Map.of("S5596", "ANTHEM INSURANCE COMPANIES, INC."), "ANTHEM INSURANCE COMPANIES, INC."));
+            put(462, new SponsorData(1, Map.of("S5960", "UNICARE LIFE & HEALTH INSURANCE COMPANY"), "UNICARE LIFE & HEALTH INSURANCE COMPANY"));
+            put(60, new SponsorData(386, Map.of("S2893", "ANTHEM INSURANCE CO. & BCBSMA & BCBSRI & BCBSVT"), "ANTHEM INSURANCE CO. & BCBSMA & BCBSRI & BCBSVT"));
+            put(774, new SponsorData(642, Map.of("S6986", "MII LIFE INSURANCE, INCORPORATED"), "MII LIFE INSURANCE, INCORPORATED"));
+            put(521, new SponsorData(28, Map.of("S5743", "WELLMARK IA & SD, & BCBS MN, MT, NE, ND,& WY"), "WELLMARK IA & SD, & BCBS MN, MT, NE, ND,& WY"));
+            put(558, new SponsorData(447, Map.of("S6506", "BLUE CROSS AND BLUE SHIELD ARIZONA, INC."), "BLUE CROSS AND BLUE SHIELD ARIZONA, INC."));
+            put(63, new SponsorData(310, Map.of("S5726", "BLUE CROSS AND BLUE SHIELD OF KANSAS"), "BLUE CROSS AND BLUE SHIELD OF KANSAS"));
+            put(70, new SponsorData(25, Map.of("S5584", "BCBS OF MICHIGAN MUTUAL INSURANCE COMPANY",
+                    "S5585", "BCBS OF MICHIGAN MUTUAL INSURANCE COMPANY 2"), "BLUE CROSS BLUE SHIELD OF MICHIGAN MUTUAL INSURANCE COMPANY"));
+            put(365, new SponsorData(25, Map.of("S5586", "BCBS OF MICHIGAN MUTUAL INSURANCE COMPANY 3"), "BLUE CROSS BLUE SHIELD OF MICHIGAN MUTUAL INSURANCE COMPANY"));
         }};
 
         Assert.assertEquals(17, sponsors.size());
@@ -91,12 +93,13 @@ public class ExcelReportProcessorTests {
             if(sponsor.getParent() != null) {
                 SponsorData sponsorData = sponsorHpmsIdsToData.get(sponsor.getHpmsId());
                 Assert.assertEquals(sponsorData.getParentId(), sponsor.getParent().getHpmsId());
-                Set<String> usedContractIds = new HashSet<>();
+                Map<String, String> usedContractIdsToNames = new HashMap<>();
                 for(Attestation attestation : sponsor.getAttestations()) {
-                    String contractId = attestation.getContract().getContractId();
-                    usedContractIds.add(contractId);
+                    Contract contract = attestation.getContract();
+                    usedContractIdsToNames.put(contract.getContractId(), contract.getContractName());
                 }
-                Assert.assertEquals(sponsorData.getContractIds(), usedContractIds);
+                Assert.assertEquals(sponsorData.getContractIdsToNames(), usedContractIdsToNames);
+                Assert.assertEquals(sponsorData.getOrgName(), sponsor.getOrgName());
                 sponsorHpmsIdsToData.remove(sponsor.getHpmsId());
             }
         }
