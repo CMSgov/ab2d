@@ -69,12 +69,6 @@ resource "aws_efs_mount_target" "beta" {
   security_groups = [aws_security_group.efs.id]
 }
 
-resource "aws_efs_mount_target" "gamma" {
-  file_system_id = var.efs_id
-  subnet_id      = var.gamma
-  security_groups = [aws_security_group.efs.id]
-}
-
 #
 # End EFS configuration
 #

@@ -119,7 +119,6 @@ module "worker" {
   efs_id                        = module.efs.efs_id
   alpha                         = var.private_subnet_ids[0]
   beta                          = var.private_subnet_ids[1]
-  gamma                         = var.private_subnet_ids[2]
   ecs_cluster_id                = module.api.ecs_cluster_id
   aws_account_number            = var.aws_account_number
 }
