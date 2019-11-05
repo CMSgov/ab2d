@@ -1,7 +1,10 @@
 resource "aws_security_group" "deployment_controller" {
-  name        = "ab2d-deployment-controller-${var.env}"
+  name        = "ab2d-${lower(var.env)}-deployment-controller-sg"
   description = "Deployment Controller"
   vpc_id      = var.vpc_id
+  tags = {
+    Name = "ab2d-${lower(var.env)}-deployment-controller-sg"
+  }
 }
 
 resource "aws_security_group_rule" "node_access" {
@@ -36,9 +39,12 @@ resource "aws_security_group_rule" "egress_controller" {
 }
 
 resource "aws_security_group" "api" {
-  name        = "ab2d-api-${var.env}"
+  name        = "ab2d-${lower(var.env)}-api-sg"
   description = "API security group"
   vpc_id      = var.vpc_id
+  tags = {
+    Name = "ab2d-${lower(var.env)}-api-sg"
+  }
 }
 
 resource "aws_security_group_rule" "host_port" {
@@ -159,9 +165,9 @@ resource "aws_instance" "deployment_controller" {
   iam_instance_profile = var.iam_instance_profile
 
   tags = {
-    Name = "AB2D-${upper(var.env)}-DEPLOYMENT-CONTROLLER"
-    application = "AB2D"
-    stack = var.env
+    Name = "ab2d-${lower(var.env)}-deployment-controller"
+    application = "ab2d"
+    stack = "${lower(var.env)}"
     purpose = "ECS container instance"
     sensitivity = "Public"
     maintainer = "lonnie.hanekamp@semanticbits.com"
@@ -193,7 +199,7 @@ resource "null_resource" "list-api-instances-script" {
   triggers = {controller_id = aws_instance.deployment_controller.id}
 
   provisioner "local-exec" {
-    command = "scp -i ~/.ssh/${var.ssh_key_name}.pem ${path.cwd}/../../environments/cms-ab2d-${var.env}/list-api-instances.sh ${var.linux_user}@${aws_eip.deployment_controller.public_ip}:/home/${var.linux_user}"
+    command = "scp -i ~/.ssh/${var.ssh_key_name}.pem ${path.cwd}/../../environments/ab2d-${lower(var.env)}/list-api-instances.sh ${var.linux_user}@${aws_eip.deployment_controller.public_ip}:/home/${var.linux_user}"
   }
 
   provisioner "local-exec" {
@@ -206,7 +212,7 @@ resource "null_resource" "set-hostname" {
   triggers = {controller_id = aws_instance.deployment_controller.id}
 
   provisioner "local-exec" {
-    command = "ssh -tt -i ~/.ssh/${var.ssh_key_name}.pem ${var.linux_user}@${aws_eip.deployment_controller.public_ip} 'echo \"ab2d-${var.env}\" > /tmp/hostname && sudo mv /tmp/hostname /etc/hostname && sudo hostname \"ab2d-${var.env}\"'"
+    command = "ssh -tt -i ~/.ssh/${var.ssh_key_name}.pem ${var.linux_user}@${aws_eip.deployment_controller.public_ip} 'echo \"ab2d-${lower(var.env)}\" > /tmp/hostname && sudo mv /tmp/hostname /etc/hostname && sudo hostname \"ab2d-${lower(var.env)}\"'"
   }
 }
 
@@ -226,7 +232,7 @@ resource "null_resource" "ssh_client_config" {
   depends_on = ["null_resource.wait"]
   triggers = {controller_id = aws_instance.deployment_controller.id}
   provisioner "local-exec" {
-    command = "scp -i ~/.ssh/${var.ssh_key_name}.pem ../../environments/cms-ab2d-${var.env}/client_config ${var.linux_user}@${aws_eip.deployment_controller.public_ip}:/home/${var.linux_user}/.ssh/config"
+    command = "scp -i ~/.ssh/${var.ssh_key_name}.pem ../../environments/ab2d-${lower(var.env)}/client_config ${var.linux_user}@${aws_eip.deployment_controller.public_ip}:/home/${var.linux_user}/.ssh/config"
   }
 
   provisioner "local-exec" {
@@ -243,7 +249,7 @@ resource "null_resource" "remove_docker_from_controller" {
 }
 
 resource "aws_ecs_cluster" "ab2d" {
-  name = "ab2d-${var.env}"
+  name = "ab2d-${lower(var.env)}"
 }
 
 resource "aws_ecs_task_definition" "api" {
@@ -276,7 +282,7 @@ JSON
 }
 
 resource "aws_lb" "api" {
-  name = "ab2d-${var.env}"
+  name = "ab2d-${lower(var.env)}"
   internal = false
   load_balancer_type = "application"
   security_groups = [aws_security_group.api.id]
@@ -286,13 +292,13 @@ resource "aws_lb" "api" {
 
   access_logs {
     bucket = var.logging_bucket
-    prefix = "ab2d-${var.env}"
+    prefix = "ab2d-${lower(var.env)}"
     enabled = true
   }
 }
 
 resource "aws_lb_target_group" "api" {
-  name = "ab2d-api-${var.env}"
+  name = "ab2d-${lower(var.env)}-api-tg"
   port = var.host_port
   protocol = "HTTP"
   vpc_id = var.vpc_id
@@ -337,13 +343,13 @@ resource "aws_ecs_service" "api" {
 # security_groups = [aws_security_group.api.id,var.enterprise-tools-sec-group-id,var.vpn-private-sec-group-id]
 # LSH SKIP FOR NOW BEGIN
 resource "aws_launch_configuration" "launch_config" {
-  name_prefix = "ab2d-${var.env}-"
+  name_prefix = "ab2d-${lower(var.env)}-"
   image_id = var.ami_id
   instance_type = var.instance_type
   iam_instance_profile = var.iam_instance_profile
   key_name = var.ssh_key_name
   security_groups = [aws_security_group.api.id]  
-  user_data = templatefile("${path.module}/userdata.tpl",{ env = var.env, cluster_name = "ab2d-${var.env}" })
+  user_data = templatefile("${path.module}/userdata.tpl",{ env = "${lower(var.env)}", cluster_name = "ab2d-${lower(var.env)}" })
   lifecycle { create_before_destroy = true }
 }
 
@@ -365,17 +371,17 @@ resource "aws_autoscaling_group" "asg" {
   tags = [
     {
       key = "Name"
-      value = "AB2D-API-${upper(var.env)}"
+      value = "ab2d-${lower(var.env)}-api"
       propagate_at_launch = true
     },
     {
       key = "application"
-      value = "AB2D"
+      value = "ab2d"
       propagate_at_launch = true
     },
     {
       key = "stack"
-      value = var.env
+      value = "${lower(var.env)}"
       propagate_at_launch = true
     },
     {
