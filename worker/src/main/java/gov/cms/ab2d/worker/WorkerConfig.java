@@ -19,31 +19,23 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 import javax.sql.DataSource;
 
-@Slf4j
-@Configuration
-@EnableIntegration
 /**
  * Configures Spring Integration.
  * We are using Spring Integration, because it provides valuable features out of the box, such as
  * database polling, channels, and distributed lock implementation.
  */
+@Slf4j
+@Configuration
+@EnableIntegration
 public class WorkerConfig {
 
-//    @Autowired
-//    private DataSource dataSource;
-//
-//    @Autowired
-//    private JobHandler handler;
+    private final DataSource dataSource;
+    private final JobHandler handler;
 
-//    @Bean
-//    /**
-//     * In a Production system we would probably have a channel that feeds a pool of {@link java.util.concurrent.Executor}s,
-//     * but for the purposes of this excercise we are keeping things simple and using a {@link DirectChannel}.
-//     */
-//    public SubscribableChannel channel() {
-//        return new DirectChannel();
-//    }
-
+    public WorkerConfig(DataSource dataSource, JobHandler handler) {
+        this.dataSource = dataSource;
+        this.handler = handler;
+    }
 
     @Bean
     public ThreadPoolTaskExecutor threadPoolTaskExecutor() {
@@ -61,81 +53,29 @@ public class WorkerConfig {
     }
 
 
-
-//    private static final String query = "    SELECT * " +
-//            "      FROM job j                                                                                                                    " +
-//            "     WHERE j.status = 'SUBMITTED'  " +
-//            "       AND j.status_message ='0%' " +
-//            "       AND (SELECT count(lock_key) " +
-//            "            FROM int_lock l " +
-//            "           WHERE l.lock_key = j.job_id) = 0 " +
-//            "  ORDER BY j.created_at; ";
-//
-//    @Bean
-//    /**
-//     * The "request" table essentially becomes a queue of messages that get polled here.
-//     */
-//    public MessageSource<Object> jdbcMessageSource() {
-//        final JdbcPollingChannelAdapter adapter = new JdbcPollingChannelAdapter(dataSource, query);
-//        adapter.setMaxRows(1);
-//        adapter.setRowMapper(new RowMapper<Job>() {
-//            @Override
-//            public Job mapRow(ResultSet row, int rowNum) throws SQLException {
-//                Job job = new Job();
-//                job.setId(row.getLong("id"));
-//                job.setJobId(row.getString("job_id"));
-////                job.setCreatedAt(OffsetDateTime.parse(row.getString("created_at")));
-//                job.setCreatedAt(OffsetDateTime.now());
-//
-////                final String expires_at = String.valueOf(row.getString("expires_at"));
-//                job.setExpiresAt(OffsetDateTime.now());
-//
-//                job.setResourceTypes(row.getString("resource_types"));
-//
-////              job.setStatus(row.get("status"));
-//                job.setStatusMessage(row.getString("status_message"));
-//
-//                log.info(" ################################################################################");
-//                log.info(" ROW SEARIALIZED TO Job instance : {} ", job);
-//                log.info(" ################################################################################");
-//
-//                return job;
-//            }
-//        });
-//        return adapter;
-//    }
-
-
     @Bean
-    public MessageSource<Object> jdbcMessageSource(DataSource dataSource) {
+    public MessageSource<Object> jdbcMessageSource() {
         return new JobMessageSource(dataSource);
     }
 
     @Bean
-    public IntegrationFlow pollingFlow(DataSource dataSource) {
-        return IntegrationFlows.from(jdbcMessageSource(dataSource),
-                c -> c.poller(Pollers.fixedDelay(1000)))
-                .channel(channel())
-                .get();
+    public IntegrationFlow flow() {
+        return IntegrationFlows.from(jdbcMessageSource(), c -> c.poller(Pollers.fixedDelay(1000)))
+                            .channel(channel())
+                            .handle(handler)
+                            .get();
     }
 
     @Bean
-    public IntegrationFlow hanldingFlow(JobHandler handler) {
-        return IntegrationFlows.from("channel")
-                .handle(handler)
-                .get();
-    }
-
-    @Bean
-    public LockRepository lockRepository(DataSource dataSource) {
+    public LockRepository lockRepository() {
         return new DefaultLockRepository(dataSource);
     }
 
-    @Bean
     /**
      * Using {@link JdbcLockRegistry} is critical to avoid race condition among workers competing for requests.
      * Locks will auto-expire after one hour.
      */
+    @Bean
     public LockRegistry lockRegistry(LockRepository lockRepository) {
         final JdbcLockRegistry registry = new JdbcLockRegistry(lockRepository);
         registry.expireUnusedOlderThan(DateUtils.MILLIS_PER_HOUR);

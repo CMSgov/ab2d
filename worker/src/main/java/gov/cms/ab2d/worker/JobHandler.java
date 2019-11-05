@@ -1,6 +1,5 @@
 package gov.cms.ab2d.worker;
 
-import gov.cms.ab2d.common.model.Job;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.integration.support.locks.LockRegistry;
@@ -12,25 +11,28 @@ import org.springframework.stereotype.Component;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.locks.Lock;
 
-@Slf4j
-@Component
+
 /**
  * This class handles the bulk export requests that Spring Integration streams as messages from the channel.
  * It locks a particular request for processing via a database-centric lock and then kicks off a worker processing.
  */
+@Slf4j
+@Component
 public class JobHandler implements MessageHandler {
 
-    @Autowired
     /**
      * Export requests must be locked globally to avoid race conditions among workers,
      * which is important in a distributed deployments such as ours.
      */
+    @Autowired
     private LockRegistry lockRegistry;
 
     @Autowired
     private WorkerService workerService;
+
 
     @Override
     public void handleMessage(Message<?> message) throws MessagingException {
@@ -53,26 +55,9 @@ public class JobHandler implements MessageHandler {
     }
 
     private String getLockKey(Message<?> message) {
-        final Job job = getJob(message);
-
-        final String lockKeyId = String.valueOf(job.getId());
-        log.info("================================================================================");
-        log.info(" Lock Key based on Job Id from Payload : {} ", lockKeyId);
-        log.info("================================================================================");
-
-        return lockKeyId;
-    }
-
-    /**
-     * Since the jdbcMessageSource fetches only one row at a time,
-     * the message will always contain exactly 1 job instance
-     *
-     * @param message
-     * @return
-     */
-    private Job getJob(Message<?> message) {
-        final List<Job> payload = (List<Job>) message.getPayload();
-        return payload.get(0);
+        final List<Map<String, Long>> payload = (List<Map<String, Long>>) message.getPayload();
+        final Long jobId = payload.get(0).get("id");
+        return String.valueOf(jobId);
     }
 
 }

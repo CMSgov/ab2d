@@ -10,7 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.io.IOException;
 
 /**
- * This class is responsible for actually processing requests and preparing bulk downloads for users.
+ * This class is responsible for actually processing the job and preparing bulk downloads for users.
  */
 @Slf4j
 @Service
@@ -24,19 +24,18 @@ public class WorkerService {
     }
 
     public void process(String jobId) throws IOException {
-        log.info("inside process Request ...");
 
-        final Job job = getJob(jobId);
+        final Job job = jobRepository.findByJobId(jobId);
+
         putJobInProgress(job);
         doLongRunningWork();
         completeJob(job);
-
     }
 
     private void putJobInProgress(Job job) {
         job.setStatus(JobStatus.IN_PROGRESS);
-        log.info("Job [{}] is IN_PROGRESS status", job.getId());
-        jobRepository.saveAndFlush(job);
+        log.info("Job [{}] is IN_PROGRESS", job.getId());
+        jobRepository.save(job);
     }
 
     private void doLongRunningWork() {
@@ -46,24 +45,16 @@ public class WorkerService {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        log.info("Awake from sleep");
     }
 
     private void completeJob(Job job) {
         job.setStatus(JobStatus.SUCCESSFUL);
-
         job.setStatusMessage("100%");
         job.setExpiresAt(job.getCreatedAt().plusDays(1));
-        job.setResourceTypes("ExplanationOfBenefits");
 
-        log.info("Update current job as done : {} ", job.getId());
         jobRepository.save(job);
-
-        log.info("DONE. Request Processed Virtually. STOP.");
+        log.info("Job: [{}] is DONE", job.getId());
     }
 
-    private Job getJob(String jobId) {
-        return jobRepository.findByJobId(jobId);
-    }
 
 }
