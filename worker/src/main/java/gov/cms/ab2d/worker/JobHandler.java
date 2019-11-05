@@ -37,26 +37,30 @@ public class JobHandler implements MessageHandler {
     @Override
     public void handleMessage(Message<?> message) throws MessagingException {
 
-        final String lockKeyId = getLockKey(message);
+        final String jobId = getJobId(message);
 
-        final Lock lock = lockRegistry.obtain(lockKeyId);
+        final Lock lock = lockRegistry.obtain(jobId);
 
         // Inability to obtain a lock means other worker is already taking care of the request
         // in which case we do nothing and return.
         if (lock.tryLock()) {
             try {
-                workerService.process(lockKeyId);
+                workerService.process(jobId);
             } catch (IOException e) {
                 throw new UncheckedIOException(e);
             } finally {
                 lock.unlock();
             }
+        } else {
+            log.info("===============================================");
+            log.info("Could not get a lock for Job : [{}] ", jobId);
+            log.info("===============================================");
         }
     }
 
-    private String getLockKey(Message<?> message) {
+    private String getJobId(Message<?> message) {
         final List<Map<String, Long>> payload = (List<Map<String, Long>>) message.getPayload();
-        final Long jobId = payload.get(0).get("id");
+        long jobId = payload.get(0).get("id");
         return String.valueOf(jobId);
     }
 

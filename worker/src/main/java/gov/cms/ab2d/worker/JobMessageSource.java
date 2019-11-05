@@ -10,7 +10,6 @@ public class JobMessageSource extends JdbcPollingChannelAdapter {
                                     "    SELECT id                              " +
                                     "      FROM job                             " +
                                     "     WHERE status = 'SUBMITTED'            " +
-                                    "       AND status_message = '0%'           " +
                                     "       AND (SELECT count(lock_key)         " +
                                     "              FROM int_lock                " +
                                     "             WHERE lock_key = job_id) = 0  " +

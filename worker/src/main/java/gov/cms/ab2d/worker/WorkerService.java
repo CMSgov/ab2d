@@ -1,12 +1,14 @@
 package gov.cms.ab2d.worker;
 
 import gov.cms.ab2d.common.model.Job;
-import gov.cms.ab2d.common.model.JobStatus;
 import gov.cms.ab2d.common.repository.JobRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+
+import static gov.cms.ab2d.common.model.JobStatus.IN_PROGRESS;
+import static gov.cms.ab2d.common.model.JobStatus.SUCCESSFUL;
 
 /**
  * This class is responsible for actually processing the job and preparing bulk downloads for users.
@@ -31,7 +33,8 @@ public class WorkerService {
     }
 
     private void putJobInProgress(Job job) {
-        job.setStatus(JobStatus.IN_PROGRESS);
+        job.setStatus(IN_PROGRESS);
+
         log.info("Job [{}] is IN_PROGRESS", job.getId());
         jobRepository.save(job);
     }
@@ -46,7 +49,7 @@ public class WorkerService {
     }
 
     private void completeJob(Job job) {
-        job.setStatus(JobStatus.SUCCESSFUL);
+        job.setStatus(SUCCESSFUL);
         job.setStatusMessage("100%");
         job.setExpiresAt(job.getCreatedAt().plusDays(1));
 
