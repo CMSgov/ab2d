@@ -1,7 +1,10 @@
 resource "aws_security_group" "sg_database" {
-  name        = "cms-ab2d-${lower(var.env)}-DatabaseSecurityGroup"
+  name        = "ab2d-${lower(var.env)}-database-sg"
   description = "Database security group"
   vpc_id      = var.vpc_id
+  tags = {
+    Name = "ab2d-${lower(var.env)}-database-sg"
+  }
 }
 
 resource "aws_security_group_rule" "egress" {
@@ -20,7 +23,7 @@ resource "aws_db_subnet_group" "subnet_group" {
 }
 
 resource "aws_db_parameter_group" "default" {
-  name = "cms-ab2d-${var.env}-params"
+  name = "ab2d-${lower(var.env)}-params"
   family = "postgres11"
 
   parameter {
