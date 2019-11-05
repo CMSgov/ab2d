@@ -37,12 +37,6 @@
 
 1. Configure AWS CLI
 
-   *Example for SemanticBits demo environment:*
-   
-   ```ShellSession
-   $ aws configure --profile=sbdemo
-   ```
-
    *Example for testing Sandbox environment in SemanticBits demo environment:*
 
    ```ShellSession
@@ -106,16 +100,6 @@
 
 1. Create keypair
 
-   *Example for SemanticBits demo environment:*
-   
-   ```ShellSession
-   $ aws --region us-east-1 ec2 create-key-pair \
-     --key-name ab2d-sbdemo \
-     --query 'KeyMaterial' \
-     --output text \
-     > ~/.ssh/ab2d-sbdemo.pem
-   ```
-
    *Example for Dev environment testing within SemanticBits demo environment:*
 
    ```ShellSession
@@ -138,12 +122,6 @@
 
 1. Change permissions of the key
 
-   *Example for SemanticBits demo environment:*
-   
-   ```ShellSession
-   $ chmod 600 ~/.ssh/ab2d-sbdemo.pem
-   ```
-
    *Example for Dev environment testing within SemanticBits demo environment:*
    
    ```ShellSession
@@ -157,12 +135,6 @@
    ```
 
 1. Output the public key to the clipboard
-
-   *Example for SemanticBits demo environment:*
-   
-   ```ShellSession
-   $ ssh-keygen -y -f ~/.ssh/ab2d-sbdemo.pem | pbcopy
-   ```
 
    *Example for Dev environment testing within SemanticBits demo environment:*
 
@@ -181,7 +153,7 @@
    1. Open the "authorized_keys" file for the environment
    
       ```ShellSession
-      $ vim ~/code/ab2d/Deploy/terraform/environments/cms-ab2d-sbdemo/authorized_keys
+      $ vim ~/code/ab2d/Deploy/terraform/environments/ab2d-sbdemo-dev/authorized_keys
       ```
 
    1. Paste the public key under the "Keys included with CentOS image" section
@@ -195,20 +167,20 @@
    *Example for the "semanticbitsdemo" AWS account:*
    
    ```ShellSession
-   $ export AWS_PROFILE="sbdemo"
+   $ export AWS_PROFILE="sbdemo-dev"
    ```
 
 1. Create S3 bucket for automation
 
    ```ShellSession
-   $ aws s3api create-bucket --bucket cms-ab2d-automation --region us-east-1
+   $ aws s3api create-bucket --bucket ab2d-automation --region us-east-1
    ```
 
 1. Block public access on bucket
 
    ```ShellSession
    $ aws s3api put-public-access-block \
-     --bucket cms-ab2d-automation \
+     --bucket ab2d-automation \
      --region us-east-1 \
      --public-access-block-configuration BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true
    ```
@@ -216,14 +188,14 @@
 1. Create S3 file bucket
 
    ```ShellSession
-   $ aws s3api create-bucket --bucket cms-ab2d-dev --region us-east-1
+   $ aws s3api create-bucket --bucket ab2d-dev --region us-east-1
    ```
 
 1. Block public access on bucket
 
    ```ShellSession
    $ aws s3api put-public-access-block \
-     --bucket cms-ab2d-dev \
+     --bucket ab2d-dev \
      --region us-east-1 \
      --public-access-block-configuration BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true
    ```
@@ -232,10 +204,10 @@
 
 1. Set target profile
 
-   *Example for the "semanticbitsdemo" AWS account:*
+   *Example:
    
    ```ShellSession
-   $ export AWS_PROFILE="sbdemo"
+   $ export AWS_PROFILE="sbdemo-dev"
    ```
 
 1. Change to the "iam-policies" directory
@@ -284,10 +256,10 @@
 
 1. Set target profile
 
-   *Example for the "semanticbitsdemo" AWS account:*
+   *Example:*
    
    ```ShellSession
-   $ export AWS_PROFILE="sbdemo"
+   $ export AWS_PROFILE="sbdemo-dev"
    ```
 
 1. Change to the "iam-roles-trust-relationships" directory
@@ -358,10 +330,10 @@
 
 1. Set target profile
 
-   *Example for the "semanticbitsdemo" AWS account:*
+   *Example:*
    
    ```ShellSession
-   $ export AWS_PROFILE="sbdemo"
+   $ export AWS_PROFILE="sbdemo-dev"
    ```
 
 1. Authenticate Docker to default Registry
@@ -576,7 +548,7 @@
 1. Deploy application components
 
    ```ShellSession
-   $ ./deploy.sh --environment=sbdemo --auto-approve
+   $ ./deploy.sh --environment=sbdemo-dev --auto-approve
    ```
 
 ## Deploy and configure Jenkins
@@ -590,13 +562,13 @@
    *Format:*
    
    ```ShellSession
-   $ ssh -i ~/.ssh/ab2d-sbdemo.pem centos@54.208.238.51
+   $ ssh -i ~/.ssh/ab2d-{ environment }.pem centos@54.208.238.51
    ```
 
    *Example:*
    
    ```ShellSession
-   $ ssh -i ~/.ssh/ab2d-sbdemo.pem centos@54.208.238.51
+   $ ssh -i ~/.ssh/ab2d-sbdemo-dev.pem centos@54.208.238.51
    ```
 
 1. Install, enable, and start firewalld

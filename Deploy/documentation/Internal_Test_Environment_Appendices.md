@@ -93,7 +93,7 @@
 1. Set AWS profile
 
    ```ShellSession
-   $ export AWS_PROFILE="sbdemo"
+   $ export AWS_PROFILE="sbdemo-dev"
    ```
 
 1. Delete existing log file
@@ -111,7 +111,7 @@
 1. Deploy application components
 
    ```ShellSession
-   $ ./deploy.sh --environment=sbdemo --auto-approve
+   $ ./deploy.sh --environment=sbdemo-dev --auto-approve
    ```
 
 ## Appendix C: Stop and restart the ECS cluster
@@ -177,7 +177,7 @@
 1. Create S3 file bucket
 
    ```ShellSession
-   $ aws s3api create-bucket --bucket cms-ab2d-cloudtrail-demo --region us-east-1
+   $ aws s3api create-bucket --bucket ab2d-cloudtrail-demo --region us-east-1
    ```
 
 1. Note that the "Elastic Load Balancing Account ID for us-east-1" is the following:
@@ -194,16 +194,16 @@
 
    ```ShellSession
    $ aws s3api put-public-access-block \
-     --bucket cms-ab2d-cloudtrail-demo \
+     --bucket ab2d-cloudtrail-demo \
      --region us-east-1 \
      --public-access-block-configuration BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true
    ```
 
-1. Give "Write objects" and "Read bucket permissions" to the "S3 log delivery group" of the "cms-ab2d-cloudtrail-demo" bucket
+1. Give "Write objects" and "Read bucket permissions" to the "S3 log delivery group" of the "ab2d-cloudtrail-demo" bucket
 
    ```ShellSession
    $ aws s3api put-bucket-acl \
-     --bucket cms-ab2d-cloudtrail-demo \
+     --bucket ab2d-cloudtrail-demo \
      --grant-write URI=http://acs.amazonaws.com/groups/s3/LogDelivery \
      --grant-read-acp URI=http://acs.amazonaws.com/groups/s3/LogDelivery
    ```
@@ -214,22 +214,22 @@
    $ cd ~/code/ab2d/Deploy/aws/s3-bucket-policies
    ```
    
-1. Add this bucket policy to the "cms-ab2d-cloudtrail-demo" S3 bucket
+1. Add this bucket policy to the "ab2d-cloudtrail-demo" S3 bucket
 
    ```ShellSession
    $ aws s3api put-bucket-policy \
-     --bucket cms-ab2d-cloudtrail-demo \
-     --policy file://cms-ab2d-cloudtrail-bucket-policy.json
+     --bucket ab2d-cloudtrail-demo \
+     --policy file://ab2d-cloudtrail-bucket-policy.json
    ```
 
 ## Appendix E: Verify EFS mounting on worker node
 
 1. Set target profile
 
-   *Example for the "semanticbitsdemo" AWS account:*
+   *Example:*
    
    ```ShellSession
-   $ export AWS_PROFILE="sbdemo"
+   $ export AWS_PROFILE="sbdemo-dev"
    ```
 
 1. Get and note the file system id of EFS
@@ -311,7 +311,7 @@
 1. Get database endpoint
 
    ```ShellSession
-   $ aws rds describe-db-instances --db-instance-identifier cms-ab2d-sbdemo --query="DBInstances[0].Endpoint.Address"
+   $ aws rds describe-db-instances --db-instance-identifier ab2d --query="DBInstances[0].Endpoint.Address"
    ```
 
 1. Note the output (this is the psql host)
@@ -319,7 +319,7 @@
    *Example:*
    
    ```
-   cms-ab2d-sbdemo.cr0bialx3sap.us-east-1.rds.amazonaws.com
+   ab2d.cr0bialx3sap.us-east-1.rds.amazonaws.com
    ```
    
 1. Connect to the deployment controller instance
