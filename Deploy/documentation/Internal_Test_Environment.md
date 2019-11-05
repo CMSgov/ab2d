@@ -506,7 +506,7 @@
      --environment=sbdemo-dev \
      --vpc-id=$VPC_ID \
      --seed-ami-product-code=aw0evgkw8e5c1q413zgy5pjce \
-     --database-secret-datetime=2019-10-25-14-55-04
+     --database-secret-datetime=2019-10-25-14-55-05
    ```
 
    *Example for Sandbox environment testing within SemanticBits demo environment:*
@@ -516,7 +516,7 @@
      --environment=sbdemo-sbx \
      --vpc-id=$VPC_ID \
      --seed-ami-product-code=aw0evgkw8e5c1q413zgy5pjce \
-     --database-secret-datetime=2019-10-25-14-55-04
+     --database-secret-datetime=2019-10-25-14-55-05
    ```
 
 1. If prompted, enter database user at the "Enter desired database_user" prompt
@@ -525,17 +525,17 @@
 
 1. If prompted, enter database name at the "Enter desired database_name" prompt
 
-   *IMPORTANT: Since databases are sharinf the same database instance, the database names should be unique for each environment.*
+   *IMPORTANT: Since databases are sharing the same database instance, the database names should be unique for each environment and must contain only alphanumeric characters.*
    
    *Example database names:*
 
-   - unique-sbdemo-dev
+   - dev
 
-   - unique-sbdemo-sbx
+   - sbx
 
-   - unique-sbdemo-impl
+   - impl
 
-   - unique-sbdemo-prod
+   - prod
 
 ## Update application
 
