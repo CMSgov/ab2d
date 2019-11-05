@@ -12,32 +12,26 @@
 
 ## Appendix A: Destroy complete environment
 
-1. Change to the environment directory
+1. Change to the deploy directory
 
-   *Example for Dev environment testing within SemanticBits demo environment:*
+   *Format:*
    
    ```ShellSession
-   $ cd ~/code/ab2d/Deploy/terraform/environments/cms-ab2d-sbdemo-dev
+   $ cd {code directory}/ab2d/Deploy
    ```
 
-   *Example for Sandbox environment testing within SemanticBits demo environment:*
+   *Example:*
    
    ```ShellSession
-   $ cd ~/code/ab2d/Deploy/terraform/environments/cms-ab2d-sbdemo-sbx
+   $ cd ~/code/ab2d/Deploy
    ```
-
-1. Destroy the environment
+   
+1. Destroy the "sbdemo-dev" environment
 
    *Example for Dev environment testing within SemanticBits demo environment:*
    
    ```ShellSession
    $ ./destroy-environment.sh --environment=sbdemo-dev
-   ```
-
-   *Example for Sandbox environment testing within SemanticBits demo environment:*
-
-   ```ShellSession
-   $ ./destroy-environment.sh --environment=sbdemo-sbx
    ```
 
    *Example to destroy the environment, but preserve the AMIs:*
@@ -58,18 +52,30 @@
    $ ./destroy-environment.sh --environment=sbdemo-dev --keep-ami --keep-network
    ```
 
-1. Change to the deploy directory
+1. Destroy the "sbdemo-sbx" environment
 
-   *Format:*
-   
+   *Example for Sandbox environment testing within SemanticBits demo environment:*
+
    ```ShellSession
-   $ cd {code directory}/ab2d/Deploy
+   $ ./destroy-environment.sh --environment=sbdemo-sbx
    ```
 
-   *Example:*
+   *Example to destroy the environment, but preserve the AMIs:*
    
    ```ShellSession
-   $ cd ~/code/ab2d/Deploy
+   $ ./destroy-environment.sh --environment=sbdemo-sbx --keep-ami
+   ```
+
+   *Example to destroy the environment, but preserve the networking:*
+   
+   ```ShellSession
+   $ ./destroy-environment.sh --environment=sbdemo-sbx --keep-network
+   ```
+
+   *Example to destroy the environment, but preserve both the AMIs and the networking:*
+   
+   ```ShellSession
+   $ ./destroy-environment.sh --environment=sbdemo-sbx --keep-ami --keep-network
    ```
 
 1. Delete the VPC

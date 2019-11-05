@@ -527,16 +527,6 @@
    
 1. Create base AWS environment
 
-   *Example for SemanticBits demo environment:*
-   
-   ```ShellSession
-   $ ./create-base-environment.sh \
-     --environment=sbdemo \
-     --vpc-id=$VPC_ID \
-     --seed-ami-product-code=aw0evgkw8e5c1q413zgy5pjce \
-     --database-secret-datetime=2019-10-25-14-55-04
-   ```
-
    *Example for Dev environment testing within SemanticBits demo environment:*
 
    ```ShellSession
