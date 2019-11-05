@@ -98,7 +98,7 @@ fi
 #
 
 cd "${START_DIR}"
-cd terraform/environments/cms-ab2d-$CMS_ENV
+cd terraform/environments/ab2d-$CMS_ENV
 
 # Reset logging
 echo "Setting terraform debug level to $DEBUG_LEVEL..."
@@ -109,7 +109,7 @@ rm -f /var/log/terraform/tf.log
 # Destroy tfstate environment in S3, if first run
 
 if [ -z "${KMS_KEY_ID}" ] || [ "${KMS_KEY_STATE}" == "Disabled" ]; then
-  aws s3 rm s3://cms-ab2d-automation/cms-ab2d-${CMS_ENV} \
+  aws s3 rm s3://ab2d-automation/ab2d-${CMS_ENV} \
     --recursive
 fi
 
@@ -132,7 +132,7 @@ if [ -n "$KMS_KEY_ID" ]; then
 else
   echo "Deploying KMS..."
   cd "${START_DIR}"
-  cd terraform/environments/cms-ab2d-$CMS_ENV
+  cd terraform/environments/ab2d-$CMS_ENV
   terraform apply \
     --target module.kms --auto-approve
 fi
@@ -812,7 +812,7 @@ fi
 # Create ".auto.tfvars" file for network settings
 
 cd "${START_DIR}"
-cd terraform/environments/cms-ab2d-$CMS_ENV
+cd terraform/environments/ab2d-$CMS_ENV
 
 if [ -z "${SKIP_NETWORK}" ]; then
   echo 'vpc_id = "'$VPC_ID'"' \
@@ -823,69 +823,72 @@ if [ -z "${SKIP_NETWORK}" ]; then
     >> $ENVIRONMENT.auto.tfvars
 fi
 
-# #
-# # Deploy S3
-# #
+#
+# Deploy S3
+#
 
-# echo "Deploying S3..."
+echo "Deploying S3..."
 
-# aws s3api create-bucket --bucket cms-ab2d-cloudtrail --region us-east-1
+# Create "ab2d-cloudtrail" bucket
 
-# # Block public access on bucket
+aws s3api create-bucket --bucket ab2d-cloudtrail --region us-east-1
 
-# aws s3api put-public-access-block \
-#   --bucket cms-ab2d-cloudtrail \
-#   --region us-east-1 \
-#   --public-access-block-configuration BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true
+# Block public access on bucket
 
-# # Give "Write objects" and "Read bucket permissions" to the "S3 log delivery group" of the "cms-ab2d-cloudtrail" bucket
+aws s3api put-public-access-block \
+  --bucket ab2d-cloudtrail \
+  --region us-east-1 \
+  --public-access-block-configuration BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true
 
-# aws s3api put-bucket-acl \
-#   --bucket cms-ab2d-cloudtrail \
-#   --grant-write URI=http://acs.amazonaws.com/groups/s3/LogDelivery \
-#   --grant-read-acp URI=http://acs.amazonaws.com/groups/s3/LogDelivery
+# Give "Write objects" and "Read bucket permissions" to the "S3 log delivery group" of the "ab2d-cloudtrail" bucket
 
-# # Add bucket policy to the "cms-ab2d-cloudtrail" S3 bucket
+aws s3api put-bucket-acl \
+  --bucket ab2d-cloudtrail \
+  --grant-write URI=http://acs.amazonaws.com/groups/s3/LogDelivery \
+  --grant-read-acp URI=http://acs.amazonaws.com/groups/s3/LogDelivery
 
-# cd "${START_DIR}"
-# cd ../../../aws/s3-bucket-policies
+# Add bucket policy to the "ab2d-cloudtrail" S3 bucket
 
-# aws s3api put-bucket-policy \
-#   --bucket cms-ab2d-cloudtrail \
-#   --policy file://cms-ab2d-cloudtrail-bucket-policy.json
+cd "${START_DIR}"
+cd aws/s3-bucket-policies
 
-# cd "${START_DIR}"
+aws s3api put-bucket-policy \
+  --bucket ab2d-cloudtrail \
+  --policy file://ab2d-cloudtrail-bucket-policy.json
 
-# terraform apply \
-#   --target module.s3 --auto-approve
+cd "${START_DIR}"
+cd terraform/environments/ab2d-$CMS_ENV
 
-# #
-# # Deploy EFS
-# #
+terraform apply \
+  --target module.s3 --auto-approve
 
-# # Get files system id (if exists)
-# EFS_FS_ID=$(aws efs describe-file-systems --query="FileSystems[?CreationToken=='cms-ab2d'].FileSystemId" --output=text)
+#
+# Deploy EFS
+#
 
-# # Create file system (if doesn't exist)
-# if [ -z "${EFS_FS_ID}" ]; then
-#   echo "Creating EFS..."
-#   terraform apply \
-#     --target module.efs --auto-approve
-# fi
+# Get files system id (if exists)
+EFS_FS_ID=$(aws efs describe-file-systems --query="FileSystems[?CreationToken=='ab2d'].FileSystemId" --output=text)
 
-# #
-# # Deploy db
-# #
+# Create file system (if doesn't exist)
+if [ -z "${EFS_FS_ID}" ]; then
+  echo "Creating EFS..."
+  terraform apply \
+    --target module.efs --auto-approve
+fi
 
-# DB_ENDPOINT=$(aws rds describe-db-instances --query="DBInstances[?DBInstanceIdentifier=='cms-ab2d-${ENVIRONMENT}'].Endpoint.Address" --output=text)
-# if [ -z "${DB_ENDPOINT}" ]; then
-#   echo "Creating database..."
-#   terraform apply \
-#     --var "db_username=${DATABASE_USER}" \
-#     --var "db_password=${DATABASE_PASSWORD}" \
-#     --var "db_name=${DATABASE_NAME}" \
-#     --target module.db --auto-approve
-# fi
+#
+# Deploy db
+#
+
+DB_ENDPOINT=$(aws rds describe-db-instances --query="DBInstances[?DBInstanceIdentifier=='ab2d'].Endpoint.Address" --output=text)
+if [ -z "${DB_ENDPOINT}" ]; then
+  echo "Creating database..."
+  terraform apply \
+    --var "db_username=${DATABASE_USER}" \
+    --var "db_password=${DATABASE_PASSWORD}" \
+    --var "db_name=${DATABASE_NAME}" \
+    --target module.db --auto-approve
+fi
 
 # #
 # # AMI Generation for application nodes
@@ -896,7 +899,7 @@ fi
 # echo "Set AMI_ID if it already exists for the deployment..."
 # AMI_ID=$(aws --region us-east-1 ec2 describe-images \
 #   --owners self \
-#   --filters "Name=tag:Name,Values=AB2D-$CMS_ENV-AMI" \
+#   --filters "Name=tag:Name,Values=ab2d-$CMS_ENV-ami" \
 #   --query "Images[*].[ImageId]" \
 #   --output text)
 
@@ -917,13 +920,13 @@ fi
   
 #   # Get first public subnet
 #   SUBNET_PUBLIC_1_ID=$(aws --region us-east-1 ec2 describe-subnets \
-#     --filters "Name=tag:Name,Values=AB2D-${CMS_ENV}-PUBLIC-SUBNET-01" \
+#     --filters "Name=tag:Name,Values=ab2d-${CMS_ENV}-public-subnet-01" \
 #     --query "Subnets[0].SubnetId" \
 #     --output text)
   
 #   # Create AMI for application nodes
 #   cd "${START_DIR}"
-#   cd ../../../packer/app
+#   cd packer/app
 #   IP=$(curl ipinfo.io/ip)
 #   COMMIT=$(git rev-parse HEAD)
 #   packer build --var seed_ami=$SEED_AMI --var vpc_id=$VPC_ID --var subnet_public_1_id=$SUBNET_PUBLIC_1_ID --var my_ip_address=$IP --var git_commit_hash=$COMMIT app.json  2>&1 | tee output.txt
@@ -932,7 +935,7 @@ fi
 #   # Add name tag to AMI
 #   aws --region us-east-1 ec2 create-tags \
 #     --resources $AMI_ID \
-#     --tags "Key=Name,Value=AB2D-$CMS_ENV-AMI"
+#     --tags "Key=Name,Value=ab2d-$CMS_ENV-ami"
 # fi
 
 # #
@@ -944,7 +947,7 @@ fi
 # echo "Set JENKINS_AMI_ID if it already exists for the deployment..."
 # JENKINS_AMI_ID=$(aws --region us-east-1 ec2 describe-images \
 #   --owners self \
-#   --filters "Name=tag:Name,Values=AB2D-$CMS_ENV-JENKINS-AMI" \
+#   --filters "Name=tag:Name,Values=ab2d-$CMS_ENV-jenkins-ami" \
 #   --query "Images[*].[ImageId]" \
 #   --output text)
 
@@ -965,13 +968,13 @@ fi
 
 #   # Get first public subnet
 #   SUBNET_PUBLIC_1_ID=$(aws --region us-east-1 ec2 describe-subnets \
-#     --filters "Name=tag:Name,Values=AB2D-${CMS_ENV}-PUBLIC-SUBNET-01" \
+#     --filters "Name=tag:Name,Values=ab2d-${CMS_ENV}-public-subnet-01" \
 #     --query "Subnets[0].SubnetId" \
 #     --output text)
 
 #   # Create AMI for Jenkins
 #   cd "${START_DIR}"
-#   cd ../../../packer/jenkins
+#   cd packer/jenkins
 #   IP=$(curl ipinfo.io/ip)
 #   COMMIT=$(git rev-parse HEAD)
 #   packer build --var seed_ami=$SEED_AMI --var vpc_id=$VPC_ID --var subnet_public_1_id=$SUBNET_PUBLIC_1_ID --var my_ip_address=$IP --var git_commit_hash=$COMMIT app.json  2>&1 | tee output.txt
@@ -980,7 +983,7 @@ fi
 #   # Add name tag to AMI
 #   aws --region us-east-1 ec2 create-tags \
 #     --resources $JENKINS_AMI_ID \
-#     --tags "Key=Name,Value=AB2D-$CMS_ENV-JENKINS-AMI"
+#     --tags "Key=Name,Value=ab2d-$CMS_ENV-jenkins-ami"
 # fi
 
 # #
@@ -988,5 +991,4 @@ fi
 # #
 
 # cd "${START_DIR}"
-# cd ../../..
 # ./deploy.sh --environment="${ENVIRONMENT}" --ami="${AMI_ID}" --auto-approve
