@@ -14,36 +14,70 @@
 
 1. Change to the environment directory
 
+   *Example for Dev environment testing within SemanticBits demo environment:*
+   
    ```ShellSession
-   $ cd ~/code/ab2d/Deploy/terraform/environments/cms-ab2d-sbdemo
+   $ cd ~/code/ab2d/Deploy/terraform/environments/cms-ab2d-sbdemo-dev
+   ```
+
+   *Example for Sandbox environment testing within SemanticBits demo environment:*
+   
+   ```ShellSession
+   $ cd ~/code/ab2d/Deploy/terraform/environments/cms-ab2d-sbdemo-sbx
    ```
 
 1. Destroy the environment
 
-   *Example to destroy the complete environment:*
+   *Example for Dev environment testing within SemanticBits demo environment:*
    
    ```ShellSession
-   $ ./destroy-environment.sh --environment=sbdemo
+   $ ./destroy-environment.sh --environment=sbdemo-dev
+   ```
+
+   *Example for Sandbox environment testing within SemanticBits demo environment:*
+
+   ```ShellSession
+   $ ./destroy-environment.sh --environment=sbdemo-sbx
    ```
 
    *Example to destroy the environment, but preserve the AMIs:*
    
    ```ShellSession
-   $ ./destroy-environment.sh --environment=sbdemo --keep-ami
+   $ ./destroy-environment.sh --environment=sbdemo-dev --keep-ami
    ```
 
    *Example to destroy the environment, but preserve the networking:*
    
    ```ShellSession
-   $ ./destroy-environment.sh --environment=sbdemo --keep-network
+   $ ./destroy-environment.sh --environment=sbdemo-dev --keep-network
    ```
 
    *Example to destroy the environment, but preserve both the AMIs and the networking:*
    
    ```ShellSession
-   $ ./destroy-environment.sh --environment=sbdemo --keep-ami --keep-network
+   $ ./destroy-environment.sh --environment=sbdemo-dev --keep-ami --keep-network
    ```
 
+1. Change to the deploy directory
+
+   *Format:*
+   
+   ```ShellSession
+   $ cd {code directory}/ab2d/Deploy
+   ```
+
+   *Example:*
+   
+   ```ShellSession
+   $ cd ~/code/ab2d/Deploy
+   ```
+
+1. Delete the VPC
+
+   ```ShellSession
+   $ ./delete-vpc-for-sbdemo.sh
+   ```
+   
 ## Appendix B: Retest terraform using existing AMI
 
 1. If you haven't yet destroyed the existing API module, jump to the following section

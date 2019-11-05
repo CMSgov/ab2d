@@ -43,10 +43,16 @@
    $ aws configure --profile=sbdemo
    ```
 
-   *Example for testing Sandbox in SemanticBits demo environment:*
+   *Example for testing Sandbox environment in SemanticBits demo environment:*
 
    ```ShellSession
-   $ aws configure --profile=sbx
+   $ aws configure --profile=sbdemo-dev
+   ```
+
+   *Example for testing Sandbox environment in SemanticBits demo environment:*
+
+   ```ShellSession
+   $ aws configure --profile=sbdemo-sbx
    ```
 
 1. Enter {your aws access key} at the **AWS Access Key ID** prompt
@@ -99,6 +105,8 @@
 ### Create AWS keypair
 
 1. Create keypair
+
+   *Example for SemanticBits demo environment:*
    
    ```ShellSession
    $ aws --region us-east-1 ec2 create-key-pair \
@@ -108,18 +116,64 @@
      > ~/.ssh/ab2d-sbdemo.pem
    ```
 
+   *Example for Dev environment testing within SemanticBits demo environment:*
+
+   ```ShellSession
+   $ aws --region us-east-1 ec2 create-key-pair \
+     --key-name ab2d-sbdemo-dev \
+     --query 'KeyMaterial' \
+     --output text \
+     > ~/.ssh/ab2d-sbdemo-dev.pem
+   ```
+
+   *Example for Sandbox environment testing within SemanticBits demo environment:*
+
+   ```ShellSession
+   $ aws --region us-east-1 ec2 create-key-pair \
+     --key-name ab2d-sbdemo-sbx \
+     --query 'KeyMaterial' \
+     --output text \
+     > ~/.ssh/ab2d-sbdemo-sbx.pem
+   ```
+
 1. Change permissions of the key
 
-   *Example for test cluster:*
+   *Example for SemanticBits demo environment:*
    
    ```ShellSession
    $ chmod 600 ~/.ssh/ab2d-sbdemo.pem
    ```
 
-1. Output the public key to the clipboard
+   *Example for Dev environment testing within SemanticBits demo environment:*
+   
+   ```ShellSession
+   $ chmod 600 ~/.ssh/ab2d-sbdemo-dev.pem
+   ```
+   
+   *Example for Sandbox environment testing within SemanticBits demo environment:*
 
    ```ShellSession
+   $ chmod 600 ~/.ssh/ab2d-sbdemo-sbx.pem
+   ```
+
+1. Output the public key to the clipboard
+
+   *Example for SemanticBits demo environment:*
+   
+   ```ShellSession
    $ ssh-keygen -y -f ~/.ssh/ab2d-sbdemo.pem | pbcopy
+   ```
+
+   *Example for Dev environment testing within SemanticBits demo environment:*
+
+   ```ShellSession
+   $ ssh-keygen -y -f ~/.ssh/ab2d-sbdemo-dev.pem | pbcopy
+   ```
+
+   *Example for Sandbox environment testing within SemanticBits demo environment:*
+
+   ```ShellSession
+   $ ssh-keygen -y -f ~/.ssh/ab2d-sbdemo-sbx.pem | pbcopy
    ```
 
 1. Update the "authorized_keys" file for the environment
@@ -429,6 +483,48 @@
    $ cd ~/code/ab2d/Deploy
    ```
 
+1. If deploying to the SemanticBits demo environment, create the VPC
+
+   1. Create the VPC
+   
+      ```ShellSession
+      $ ./create-vpc-for-sbdemo.sh
+      ```
+
+   1. Note the output
+
+      *Format:*
+      
+      ```
+      Creating VPC...
+      The VPC ID is: {vpc id}
+      Done.
+      ```
+
+   1. Rerun the create when VPC already exists to see how the output changes
+   
+      ```ShellSession
+      $ ./create-vpc-for-sbdemo.sh
+      ```
+
+   1. Note the output
+
+      *Format:*
+      
+      ```
+      INFO: The VPC already exists.
+      The VPC ID is: {vpc id}
+      Done.
+      ```
+
+1. Set the target VPC ID
+
+   *Format:*
+   
+   ```ShellSession
+   $ export VPC_ID={vpc id}
+   ```
+   
 1. Create base AWS environment
 
    *Example for SemanticBits demo environment:*
@@ -436,31 +532,48 @@
    ```ShellSession
    $ ./create-base-environment.sh \
      --environment=sbdemo \
+     --vpc-id=$VPC_ID \
      --seed-ami-product-code=aw0evgkw8e5c1q413zgy5pjce \
-     --database-secret-datetime=2019-10-25-14-55-03
+     --database-secret-datetime=2019-10-25-14-55-04
    ```
 
-   *Example for Sandbox testing within SemanticBits demo environment:*
+   *Example for Dev environment testing within SemanticBits demo environment:*
 
    ```ShellSession
    $ ./create-base-environment.sh \
-     --environment=sbx \
+     --environment=sbdemo-dev \
+     --vpc-id=$VPC_ID \
      --seed-ami-product-code=aw0evgkw8e5c1q413zgy5pjce \
-     --database-secret-datetime=2019-10-25-14-55-03 \
-     --vpc-exists
+     --database-secret-datetime=2019-10-25-14-55-04
    ```
 
-1. If you get a "Skipping network creation since VPC already exists" message, enter the following to create or update existing environment
+   *Example for Sandbox environment testing within SemanticBits demo environment:*
 
-   *Example for SemanticBits demo environment:*
+   ```ShellSession
+   $ ./create-base-environment.sh \
+     --environment=sbdemo-sbx \
+     --vpc-id=$VPC_ID \
+     --seed-ami-product-code=aw0evgkw8e5c1q413zgy5pjce \
+     --database-secret-datetime=2019-10-25-14-55-04
+   ```
+
+1. If prompted, enter database user at the "Enter desired database_user" prompt
+
+1. If prompted, enter database password at the "Enter desired database_password" prompt
+
+1. If prompted, enter database name at the "Enter desired database_name" prompt
+
+   *IMPORTANT: Since databases are sharinf the same database instance, the database names should be unique for each environment.*
    
-   ```ShellSession
-   $ ./create-base-environment.sh \
-     --environment=sbdemo \
-     --seed-ami-product-code=aw0evgkw8e5c1q413zgy5pjce \
-     --database-secret-datetime=2019-10-25-14-55-03 \
-     --skip-network
-   ```
+   *Example database names:*
+
+   - unique-sbdemo-dev
+
+   - unique-sbdemo-sbx
+
+   - unique-sbdemo-impl
+
+   - unique-sbdemo-prod
 
 ## Update application
 
