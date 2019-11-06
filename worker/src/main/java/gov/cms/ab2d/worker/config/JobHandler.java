@@ -60,7 +60,7 @@ public class JobHandler implements MessageHandler {
     private String getJobId(Message<?> message) {
         final List<Map<String, Object>> payload = (List<Map<String, Object>>) message.getPayload();
         final Map<String, Object> row0 = payload.get(0);
-        return String.valueOf(row0.get("job_id"));
+        return String.valueOf(row0.get("job_uuid"));
     }
 
 }

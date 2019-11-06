@@ -25,7 +25,7 @@ public class WorkerService {
 
     public void process(String jobId) throws IOException {
 
-        final Job job = jobRepository.findByJobId(jobId);
+        final Job job = jobRepository.findByJobUuid(jobId);
         if (job == null) {
             log.warn("Job not found for job_id : {} ", jobId);
             return;

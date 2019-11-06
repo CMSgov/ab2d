@@ -14,6 +14,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 
 import java.time.OffsetDateTime;
 import java.util.Random;
+import java.util.UUID;
 
 import static gov.cms.ab2d.common.model.JobStatus.SUCCESSFUL;
 import static org.hamcrest.Matchers.equalTo;
@@ -40,7 +41,7 @@ public class WorkerServiceTest {
 
         Thread.sleep(6000L);
 
-        final Job processedJob = jobRepository.findByJobId(submittedJob.getJobId());
+        final Job processedJob = jobRepository.findByJobUuid(submittedJob.getJobUuid());
         checkResult(processedJob);
     }
 
@@ -56,10 +57,10 @@ public class WorkerServiceTest {
         // So if the result for two jobs comes before 10 seconds, it implies they were not processed sequentially
         Thread.sleep(8000L);
 
-        final Job processedJob1 = jobRepository.findByJobId(submittedJob1.getJobId());
+        final Job processedJob1 = jobRepository.findByJobUuid(submittedJob1.getJobUuid());
         checkResult(processedJob1);
 
-        final Job processedJob2 = jobRepository.findByJobId(submittedJob2.getJobId());
+        final Job processedJob2 = jobRepository.findByJobUuid(submittedJob2.getJobUuid());
         checkResult(processedJob2);
     }
 
@@ -68,7 +69,7 @@ public class WorkerServiceTest {
     private Job createJob(final User user) {
         Job job = new Job();
         job.setId((long) getIntRandom());
-        job.setJobId(String.valueOf(job.getId()));
+        job.setJobUuid(UUID.randomUUID().toString());
         job.setStatus(JobStatus.SUBMITTED);
         job.setStatusMessage("0%");
         job.setResourceTypes("ExplanationOfBenefits");
