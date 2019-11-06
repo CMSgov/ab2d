@@ -88,7 +88,7 @@ public class HPMSExcelReportProcessor implements ExcelReportProcessor {
                         Contract contract = new Contract();
                         contract.getAttestations().add(attestation);
                         contract.setContractName(contractName);
-                        contract.setContractId(contractNumber);
+                        contract.setContractNumber(contractNumber);
 
                         attestation.setContract(contract);
 
