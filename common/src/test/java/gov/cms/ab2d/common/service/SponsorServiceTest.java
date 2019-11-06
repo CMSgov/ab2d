@@ -13,6 +13,7 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import java.time.OffsetDateTime;
+import java.util.Optional;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = SpringBootApp.class)
@@ -24,6 +25,9 @@ public class SponsorServiceTest {
 
     @Autowired
     private AttestationService attestationService;
+
+    @Autowired
+    private ContractService contractService;
 
     @Test
     public void testSponsors() {
@@ -72,5 +76,10 @@ public class SponsorServiceTest {
         retrievedAttestation.setAttestedOn(pastDate);
         Attestation updatedAttestation = attestationService.saveAttestation(retrievedAttestation);
         Assert.assertEquals(updatedAttestation.getAttestedOn(), pastDate);
+
+        Optional<Contract> retrievedContractOptional = contractService.getContractByContractId("S1234");
+        Contract retrievedContract = retrievedContractOptional.get();
+        Assert.assertEquals(retrievedContract.getContractId(), contract.getContractId());
+        Assert.assertEquals(retrievedContract.getContractName(), contract.getContractName());
     }
 }
