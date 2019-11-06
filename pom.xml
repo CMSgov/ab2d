@@ -8,6 +8,7 @@
         <module>api</module>
         <module>worker</module>
         <module>hpms</module>
+        <module>bfd</module>
     </modules>
     <parent>
         <groupId>org.springframework.boot</groupId>
@@ -25,6 +26,7 @@
     <properties>
         <project.root>${basedir}</project.root>
         <java.version>12</java.version>
+        <hapi.version>4.0.3</hapi.version>
         <checkstyle.config>${project.root}/src/main/resources/checkstyle.xml</checkstyle.config>
     </properties>
 
