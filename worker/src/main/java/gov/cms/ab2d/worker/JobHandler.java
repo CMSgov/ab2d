@@ -16,8 +16,10 @@ import java.util.concurrent.locks.Lock;
 
 
 /**
- * This class handles the bulk export requests that Spring Integration streams as messages from the channel.
- * It locks a particular request for processing via a database-centric lock and then kicks off a worker processing.
+ * This handler gets triggered when a job is submitted into the job table.
+ * Spring Integration polls the jobs table in the database
+ * And when a new record is inserted into the jobs table, Spring Integration streams into the subscribable executor channel.
+ * It locks the job for processing via a database-centric lock and then delegates to a service for processing.
  */
 @Slf4j
 @Component
@@ -31,7 +33,7 @@ public class JobHandler implements MessageHandler {
     private LockRegistry lockRegistry;
 
     @Autowired
-    private WorkerService workerService;
+    private JobService jobService;
 
 
     @Override
@@ -45,7 +47,7 @@ public class JobHandler implements MessageHandler {
         // in which case we do nothing and return.
         if (lock.tryLock()) {
             try {
-                workerService.process(jobId);
+                jobService.process(jobId);
             } catch (IOException e) {
                 throw new UncheckedIOException(e);
             } finally {

@@ -4,6 +4,10 @@ import org.springframework.integration.jdbc.JdbcPollingChannelAdapter;
 
 import javax.sql.DataSource;
 
+/**
+ * Extends the JdbcPollingChannelAdapter to implement a Job table specific polling Adapter.
+ * The SQL query is specified as a static constant.
+ */
 public class JobMessageSource extends JdbcPollingChannelAdapter {
 
     private static final String QUERY_GET_NEXT_UNPROCESSED_JOB = "              " +

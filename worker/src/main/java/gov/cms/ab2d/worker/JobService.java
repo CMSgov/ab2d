@@ -15,11 +15,11 @@ import static gov.cms.ab2d.common.model.JobStatus.SUCCESSFUL;
  */
 @Slf4j
 @Service
-public class WorkerService {
+public class JobService {
 
     private final JobRepository jobRepository;
 
-    public WorkerService(JobRepository jobRepository) {
+    public JobService(JobRepository jobRepository) {
         this.jobRepository = jobRepository;
     }
 

@@ -21,10 +21,10 @@ import static org.junit.Assert.assertThat;
 
 
 /**
- * Tests to make sure that the worker gets triggered upon submitting a job into the Job table.
+ * Generic Tests to make sure that the worker gets triggered upon submitting a job into the Job table.
  */
 @SpringBootTest
-public class WorkerServiceIT {
+public class WorkerGenericTest {
     private final Random random = new Random();
 
     @Autowired private JobRepository jobRepository;
