@@ -15,8 +15,8 @@ import java.util.Iterator;
 import java.util.Optional;
 
 @Transactional
-@Service("hpmsExcelReportProcessor")
-public class HPMSExcelReportProcessor implements ExcelReportProcessor {
+@Service("orgStructureReportProcessor")
+public class OrgStructureReportProcessor implements ExcelReportProcessor {
 
     @Autowired
     private SponsorService sponsorService;

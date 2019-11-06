@@ -29,5 +29,4 @@ public class Contract {
 
     @ManyToMany(mappedBy = "contracts")
     private Set<Beneficiary> beneficiaries;
-
 }

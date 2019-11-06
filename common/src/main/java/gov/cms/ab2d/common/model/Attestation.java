@@ -13,7 +13,7 @@ import java.time.OffsetDateTime;
 /**
  * Links sponsors to contracts bounded by an attestation date.
  */
-public class Attestation {
+public class Attestation implements Comparable<Attestation> {
 
     @Id
     @GeneratedValue
@@ -32,5 +32,8 @@ public class Attestation {
     @Column(columnDefinition = "TIMESTAMP WITH TIME ZONE")
     private OffsetDateTime attestedOn;
 
-
+    @Override
+    public int compareTo(Attestation other) {
+        return this.getAttestedOn().compareTo(other.getAttestedOn());
+    }
 }

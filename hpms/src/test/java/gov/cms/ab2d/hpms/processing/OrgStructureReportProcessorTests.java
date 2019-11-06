@@ -25,10 +25,10 @@ import java.util.*;
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = SpringBootApp.class)
 @TestPropertySource(locations = "/hpms-it.properties")
-public class ExcelReportProcessorTests {
+public class OrgStructureReportProcessorTests {
 
     @Autowired
-    @Qualifier("hpmsExcelReportProcessor")
+    @Qualifier("orgStructureReportProcessor")
     private ExcelReportProcessor excelReportProcessor;
 
     @Autowired
