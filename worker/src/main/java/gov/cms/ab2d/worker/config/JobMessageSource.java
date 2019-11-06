@@ -1,4 +1,4 @@
-package gov.cms.ab2d.worker;
+package gov.cms.ab2d.worker.config;
 
 import org.springframework.integration.jdbc.JdbcPollingChannelAdapter;
 

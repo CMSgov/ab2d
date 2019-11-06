@@ -24,7 +24,7 @@ import static org.junit.Assert.assertThat;
  * Generic Tests to make sure that the worker gets triggered upon submitting a job into the Job table.
  */
 @SpringBootTest
-public class WorkerGenericTest {
+public class WorkerServiceTest {
     private final Random random = new Random();
 
     @Autowired private JobRepository jobRepository;

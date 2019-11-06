@@ -1,5 +1,6 @@
-package gov.cms.ab2d.worker;
+package gov.cms.ab2d.worker.config;
 
+import gov.cms.ab2d.worker.service.WorkerService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.integration.support.locks.LockRegistry;
@@ -33,7 +34,7 @@ public class JobHandler implements MessageHandler {
     private LockRegistry lockRegistry;
 
     @Autowired
-    private JobService jobService;
+    private WorkerService workerService;
 
 
     @Override
@@ -47,7 +48,7 @@ public class JobHandler implements MessageHandler {
         // in which case we do nothing and return.
         if (lock.tryLock()) {
             try {
-                jobService.process(jobId);
+                workerService.process(jobId);
             } catch (IOException e) {
                 throw new UncheckedIOException(e);
             } finally {
