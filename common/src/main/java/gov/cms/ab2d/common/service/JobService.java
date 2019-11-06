@@ -9,11 +9,11 @@ public interface JobService {
 
     Job createJob(String resourceTypes, String url);
 
-    void cancelJob(String jobId);
+    void cancelJob(String jobUuid);
 
-    Job getJobByJobId(String jobId);
+    Job getJobByJobUuid(String jobUuid);
 
     Job updateJob(Job job);
 
-    Resource getResourceForJob(String jobID, String fileName) throws MalformedURLException;
+    Resource getResourceForJob(String jobUuid, String fileName) throws MalformedURLException;
 }

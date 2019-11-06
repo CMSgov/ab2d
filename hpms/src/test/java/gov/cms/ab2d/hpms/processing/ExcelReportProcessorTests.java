@@ -44,7 +44,7 @@ public class ExcelReportProcessorTests {
     private class SponsorData {
 
         private final Integer parentId;
-        private final Map<String, String> contractIdsToNames;
+        private final Map<String, String> contractNumbersToNames;
         private final String orgName;
     }
 
@@ -93,12 +93,12 @@ public class ExcelReportProcessorTests {
             if(sponsor.getParent() != null) {
                 SponsorData sponsorData = sponsorHpmsIdsToData.get(sponsor.getHpmsId());
                 Assert.assertEquals(sponsorData.getParentId(), sponsor.getParent().getHpmsId());
-                Map<String, String> usedContractIdsToNames = new HashMap<>();
+                Map<String, String> usedContractNumbersToNames = new HashMap<>();
                 for(Attestation attestation : sponsor.getAttestations()) {
                     Contract contract = attestation.getContract();
-                    usedContractIdsToNames.put(contract.getContractId(), contract.getContractName());
+                    usedContractNumbersToNames.put(contract.getContractNumber(), contract.getContractName());
                 }
-                Assert.assertEquals(sponsorData.getContractIdsToNames(), usedContractIdsToNames);
+                Assert.assertEquals(sponsorData.getContractNumbersToNames(), usedContractNumbersToNames);
                 Assert.assertEquals(sponsorData.getOrgName(), sponsor.getOrgName());
                 sponsorHpmsIdsToData.remove(sponsor.getHpmsId());
             }
