@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
+import org.springframework.util.Assert;
 
 import javax.net.ssl.SSLContext;
 import java.io.IOException;
@@ -67,7 +68,10 @@ public class BFDClientConfiguration {
     public KeyStore bfdKeyStore() {
         // Will need to support key stores that could be both in classpath AND in an external file
         try (InputStream keyStoreStream = this.getClass().getResourceAsStream(keystorePath)) {
+            Assert.notNull(keyStoreStream, "Could not find and load the keystore");
             KeyStore keyStore = KeyStore.getInstance(JKS);
+
+            // keyStore.load will NOT throw an exception in case of a null keystore stream :shrug:
             keyStore.load(keyStoreStream, keystorePassword.toCharArray());
             return keyStore;
         } catch (IOException | KeyStoreException | NoSuchAlgorithmException | CertificateException ex) {
