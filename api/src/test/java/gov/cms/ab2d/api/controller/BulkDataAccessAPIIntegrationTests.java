@@ -70,7 +70,7 @@ public class BulkDataAccessAPIIntegrationTests {
                 .andDo(print());
         Job job = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
 
-        String statusUrl = "http://localhost" + API_PREFIX + "/Job/" + job.getJobId() + "/$status";
+        String statusUrl = "http://localhost" + API_PREFIX + "/Job/" + job.getJobUuid() + "/$status";
 
         resultActions.andExpect(status().isAccepted())
                 .andExpect(header().string("Content-Location", statusUrl));
@@ -90,7 +90,7 @@ public class BulkDataAccessAPIIntegrationTests {
                 .contentType(MediaType.APPLICATION_JSON)).andDo(print());
         Job job = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
 
-        String statusUrl = "http://localhost" + API_PREFIX + "/Job/" + job.getJobId() + "/$status";
+        String statusUrl = "http://localhost" + API_PREFIX + "/Job/" + job.getJobUuid() + "/$status";
 
         resultActions.andExpect(status().isAccepted())
                 .andExpect(header().string("Content-Location", statusUrl));
@@ -132,11 +132,11 @@ public class BulkDataAccessAPIIntegrationTests {
         this.mockMvc.perform(get(API_PREFIX + PATIENT_EXPORT_PATH).contentType(MediaType.APPLICATION_JSON));
         Job job = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
 
-        this.mockMvc.perform(delete(API_PREFIX + "/Job/" + job.getJobId() + "/$status"))
+        this.mockMvc.perform(delete(API_PREFIX + "/Job/" + job.getJobUuid() + "/$status"))
             .andExpect(status().is(202))
             .andExpect(content().string(JOB_CANCELLED_MSG));
 
-        Job cancelledJob = jobRepository.findByJobId(job.getJobId());
+        Job cancelledJob = jobRepository.findByJobUuid(job.getJobUuid());
         Assert.assertEquals(JobStatus.CANCELLED, cancelledJob.getStatus());
     }
 
@@ -147,7 +147,7 @@ public class BulkDataAccessAPIIntegrationTests {
                 .andExpect(jsonPath("$.resourceType", Is.is("OperationOutcome")))
                 .andExpect(jsonPath("$.issue[0].severity", Is.is("error")))
                 .andExpect(jsonPath("$.issue[0].code", Is.is("invalid")))
-                .andExpect(jsonPath("$.issue[0].details.text", Is.is("ResourceNotFoundException: No job with jobID NonExistentJob was found")));;
+                .andExpect(jsonPath("$.issue[0].details.text", Is.is("ResourceNotFoundException: No job with jobUuid NonExistentJob was found")));;
     }
 
     @Test
@@ -158,7 +158,7 @@ public class BulkDataAccessAPIIntegrationTests {
         job.setStatus(JobStatus.FAILED);
         jobRepository.saveAndFlush(job);
 
-        this.mockMvc.perform(delete(API_PREFIX + "/Job/" + job.getJobId() + "/$status"))
+        this.mockMvc.perform(delete(API_PREFIX + "/Job/" + job.getJobUuid() + "/$status"))
                 .andExpect(status().is(400))
                 .andExpect(jsonPath("$.resourceType", Is.is("OperationOutcome")))
                 .andExpect(jsonPath("$.issue[0].severity", Is.is("error")))
@@ -168,7 +168,7 @@ public class BulkDataAccessAPIIntegrationTests {
         job.setStatus(JobStatus.CANCELLED);
         jobRepository.saveAndFlush(job);
 
-        this.mockMvc.perform(delete(API_PREFIX + "/Job/" + job.getJobId() + "/$status"))
+        this.mockMvc.perform(delete(API_PREFIX + "/Job/" + job.getJobUuid() + "/$status"))
                 .andExpect(status().is(400))
                 .andExpect(jsonPath("$.resourceType", Is.is("OperationOutcome")))
                 .andExpect(jsonPath("$.issue[0].severity", Is.is("error")))
@@ -178,7 +178,7 @@ public class BulkDataAccessAPIIntegrationTests {
         job.setStatus(JobStatus.SUCCESSFUL);
         jobRepository.saveAndFlush(job);
 
-        this.mockMvc.perform(delete(API_PREFIX + "/Job/" + job.getJobId() + "/$status"))
+        this.mockMvc.perform(delete(API_PREFIX + "/Job/" + job.getJobUuid() + "/$status"))
                 .andExpect(status().is(400))
                 .andExpect(jsonPath("$.resourceType", Is.is("OperationOutcome")))
                 .andExpect(jsonPath("$.issue[0].severity", Is.is("error")))
@@ -242,9 +242,9 @@ public class BulkDataAccessAPIIntegrationTests {
                 .andExpect(jsonPath("$.request", Is.is(job.getRequestUrl())))
                 .andExpect(jsonPath("$.requiresAccessToken", Is.is(true)))
                 .andExpect(jsonPath("$.output[0].type", Is.is("ExplanationOfBenefits")))
-                .andExpect(jsonPath("$.output[0].url", Is.is("http://localhost" + API_PREFIX + "/Job/" + job.getJobId() + "/file/file.ndjson")))
+                .andExpect(jsonPath("$.output[0].url", Is.is("http://localhost" + API_PREFIX + "/Job/" + job.getJobUuid() + "/file/file.ndjson")))
                 .andExpect(jsonPath("$.error[0].type", Is.is(OPERATION_OUTCOME)))
-                .andExpect(jsonPath("$.error[0].url", Is.is("http://localhost" + API_PREFIX + "/Job/" + job.getJobId() + "/file/error.ndjson")));
+                .andExpect(jsonPath("$.error[0].url", Is.is("http://localhost" + API_PREFIX + "/Job/" + job.getJobUuid() + "/file/error.ndjson")));
     }
 
     @Test
@@ -285,7 +285,7 @@ public class BulkDataAccessAPIIntegrationTests {
                 .andExpect(jsonPath("$.resourceType", Is.is("OperationOutcome")))
                 .andExpect(jsonPath("$.issue[0].severity", Is.is("error")))
                 .andExpect(jsonPath("$.issue[0].code", Is.is("invalid")))
-                .andExpect(jsonPath("$.issue[0].details.text", Is.is("ResourceNotFoundException: No job with jobID BadId was found")));
+                .andExpect(jsonPath("$.issue[0].details.text", Is.is("ResourceNotFoundException: No job with jobUuid BadId was found")));
     }
 
     @Test
@@ -305,7 +305,7 @@ public class BulkDataAccessAPIIntegrationTests {
                 .andExpect(jsonPath("$.resourceType", Is.is("OperationOutcome")))
                 .andExpect(jsonPath("$.issue[0].severity", Is.is("error")))
                 .andExpect(jsonPath("$.issue[0].code", Is.is("invalid")))
-                .andExpect(jsonPath("$.issue[0].details.text", Is.is("ResourceNotFoundException: No job with jobID   was found")));
+                .andExpect(jsonPath("$.issue[0].details.text", Is.is("ResourceNotFoundException: No job with jobUuid   was found")));
     }
 
     @Test
@@ -348,7 +348,7 @@ public class BulkDataAccessAPIIntegrationTests {
         jobRepository.saveAndFlush(job);
 
         String testFile = "test.ndjson";
-        String destinationStr = tmpJobLocation + job.getJobId();
+        String destinationStr = tmpJobLocation + job.getJobUuid();
         Path destination = Paths.get(destinationStr);
         Files.createDirectories(destination);
         InputStream testFileStream = this.getClass().getResourceAsStream("/" + testFile);
