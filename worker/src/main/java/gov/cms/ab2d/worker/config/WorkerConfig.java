@@ -2,6 +2,7 @@ package gov.cms.ab2d.worker.config;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.time.DateUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.integration.channel.ExecutorChannel;
@@ -29,13 +30,12 @@ import javax.sql.DataSource;
 @EnableIntegration
 public class WorkerConfig {
 
-    private final DataSource dataSource;
-    private final JobHandler handler;
+    @Autowired
+    private DataSource dataSource;
 
-    public WorkerConfig(DataSource dataSource, JobHandler handler) {
-        this.dataSource = dataSource;
-        this.handler = handler;
-    }
+    @Autowired
+    private JobHandler handler;
+
 
     /**
      * sample values used for thread count and queue capacity. Review it later.
