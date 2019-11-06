@@ -13,6 +13,7 @@ import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
+import javax.validation.constraints.NotNull;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -32,14 +33,17 @@ public class User {
     private Long id;
 
     @Column(unique = true)
+    @NotNull
     private String userName;
     private String firstName;
     private String lastName;
     private String email;
+    @NotNull
     private Boolean enabled;
 
     @ManyToOne
     @JoinColumn(name = "sponsor_id")
+    @NotNull
     private Sponsor sponsor;
 
     @ManyToMany(cascade = { PERSIST, MERGE })
