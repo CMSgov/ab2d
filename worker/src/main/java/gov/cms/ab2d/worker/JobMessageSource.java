@@ -7,7 +7,7 @@ import javax.sql.DataSource;
 public class JobMessageSource extends JdbcPollingChannelAdapter {
 
     private static final String QUERY_GET_NEXT_UNPROCESSED_JOB = "              " +
-                                    "    SELECT id                              " +
+                                    "    SELECT id, job_id, status              " +
                                     "      FROM job                             " +
                                     "     WHERE status = 'SUBMITTED'            " +
                                     "       AND (SELECT count(lock_key)         " +

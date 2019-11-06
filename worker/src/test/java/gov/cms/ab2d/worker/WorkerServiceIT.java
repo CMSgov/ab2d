@@ -7,7 +7,6 @@ import gov.cms.ab2d.common.model.User;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.common.repository.SponsorRepository;
 import gov.cms.ab2d.common.repository.UserRepository;
-import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,39 +19,56 @@ import static gov.cms.ab2d.common.model.JobStatus.SUCCESSFUL;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.assertThat;
 
-@Slf4j
+
+/**
+ * Tests to make sure that the worker gets triggered upon submitting a job into the Job table.
+ */
 @SpringBootTest
 public class WorkerServiceIT {
+    private final Random random = new Random();
+
     @Autowired private JobRepository jobRepository;
     @Autowired private SponsorRepository sponsorRepository;
     @Autowired private UserRepository userRepository;
 
-    @Autowired private WorkerService cut;
-
-
     @Test
-    @DisplayName("When multiple jobs are submitted into the job table, they are processed in parallel by the worker")
-    void whenTwoJobsSubmittedWorkerProcessesBothInParallel() throws InterruptedException {
+    @DisplayName("When a job is submitted into the job table, a worker processes it")
+    void whenJobSubmittedWorkerGetsTriggered() throws InterruptedException {
 
         final User user = createUser();
-        Job submittedJob3 = createJob(3, user);
-        Job submittedJob4 = createJob(4, user);
+        Job submittedJob = createJob(user);
 
-        Thread.sleep(7500L);
+        Thread.sleep(6000L);
 
-        final Job processedJob3 = jobRepository.findByJobId(submittedJob3.getJobId());
-        final Job processedJob4 = jobRepository.findByJobId(submittedJob4.getJobId());
+        final Job processedJob = jobRepository.findByJobId(submittedJob.getJobId());
+        checkResult(processedJob);
+    }
 
-        verifyJobResult(processedJob3);
-        verifyJobResult(processedJob4);
+    @Test
+    @DisplayName("When multiple jobs are submitted into the job table, they are processed in parallel by the workers")
+    void whenTwoJobsSubmittedWorkerGetsTriggeredProcessesBothInParallel() throws InterruptedException {
+
+        final User user = createUser();
+        Job submittedJob1 = createJob(user);
+        Job submittedJob2 = createJob(user);
+
+        // There is a 5 second sleep in the WorkerService.
+        // So if the result for two jobs comes before 10 seconds, it implies they were not processed sequentially
+        Thread.sleep(8000L);
+
+        final Job processedJob1 = jobRepository.findByJobId(submittedJob1.getJobId());
+        checkResult(processedJob1);
+
+        final Job processedJob2 = jobRepository.findByJobId(submittedJob2.getJobId());
+        checkResult(processedJob2);
     }
 
 
 
-    private Job createJob(long id, final User user) {
+    private Job createJob(final User user) {
         Job job = new Job();
-        job.setId(id);
-        job.setJobId(String.valueOf(id));
+        job.setId((long) getIntRandom());
+        job.setJobId(String.valueOf(job.getId()));
         job.setStatus(JobStatus.SUBMITTED);
         job.setStatusMessage("0%");
         job.setResourceTypes("ExplanationOfBenefits");
@@ -63,8 +79,8 @@ public class WorkerServiceIT {
 
     private User createUser() {
         final User user = new User();
-        user.setUserName("testuser" + new Random().nextInt());
-        user.setFirstName("test");
+        user.setId((long) getIntRandom());
+        user.setUserName("testuser" + getIntRandom());
         user.setSponsor(createSponsor());
         user.setEnabled(true);
         return userRepository.save(user);
@@ -72,13 +88,18 @@ public class WorkerServiceIT {
 
     private Sponsor createSponsor() {
         final Sponsor sponsor = new Sponsor();
-        sponsor.setHpmsId(new Random().nextInt());
+        sponsor.setId((long) getIntRandom());
+        sponsor.setHpmsId(getIntRandom());
         sponsor.setOrgName("BCBS");
         return sponsorRepository.save(sponsor);
     }
 
+    private int getIntRandom() {
+        return random.nextInt(100);
+    }
 
-    private void verifyJobResult(Job processedJob) {
+
+    private void checkResult(Job processedJob) {
         assertThat(processedJob.getStatus(), equalTo(SUCCESSFUL));
         assertThat(processedJob.getStatusMessage(), equalTo("100%"));
     }

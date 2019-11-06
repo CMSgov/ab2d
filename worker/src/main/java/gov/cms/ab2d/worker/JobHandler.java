@@ -51,17 +51,13 @@ public class JobHandler implements MessageHandler {
             } finally {
                 lock.unlock();
             }
-        } else {
-            log.info("===============================================");
-            log.info("Could not get a lock for Job : [{}] ", jobId);
-            log.info("===============================================");
         }
     }
 
     private String getJobId(Message<?> message) {
-        final List<Map<String, Long>> payload = (List<Map<String, Long>>) message.getPayload();
-        long jobId = payload.get(0).get("id");
-        return String.valueOf(jobId);
+        final List<Map<String, Object>> payload = (List<Map<String, Object>>) message.getPayload();
+        final Map<String, Object> row0 = payload.get(0);
+        return String.valueOf(row0.get("job_id"));
     }
 
 }
