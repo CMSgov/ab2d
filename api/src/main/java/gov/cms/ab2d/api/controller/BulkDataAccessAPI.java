@@ -120,12 +120,12 @@ public class BulkDataAccessAPI {
             @ApiResponse(code = 202, message = JOB_CANCELLED_MSG),
             @ApiResponse(code = 404, message = JOB_NOT_FOUND_ERROR_MSG)}
     )
-    @DeleteMapping(value = "/Job/{jobId}/$status")
+    @DeleteMapping(value = "/Job/{jobUuid}/$status")
     @ResponseStatus(value = HttpStatus.ACCEPTED)
     public ResponseEntity<String> deleteRequest(
             @ApiParam(value = "A job identifier", required = true)
-            @PathVariable @NotBlank String jobId) {
-        jobService.cancelJob(jobId);
+            @PathVariable @NotBlank String jobUuid) {
+        jobService.cancelJob(jobUuid);
 
         return new ResponseEntity<>(JOB_CANCELLED_MSG, null,
                 HttpStatus.ACCEPTED);
@@ -140,11 +140,11 @@ public class BulkDataAccessAPI {
                     JobCompletedResponse.class),
             @ApiResponse(code = 404, message = "Job not found. " + Constants.GENERIC_FHIR_ERR_MSG)}
     )
-    @GetMapping(value = "/Job/{jobId}/$status")
+    @GetMapping(value = "/Job/{jobUuid}/$status")
     @ResponseStatus(value = HttpStatus.OK)
     public ResponseEntity<JsonNode> getJobStatus(
-            @ApiParam(value = "A job identifier", required = true) @PathVariable @NotBlank String jobId) {
-        Job job = jobService.getJobByJobUuid(jobId);
+            @ApiParam(value = "A job identifier", required = true) @PathVariable @NotBlank String jobUuid) {
+        Job job = jobService.getJobByJobUuid(jobUuid);
 
         OffsetDateTime now = OffsetDateTime.now();
 
@@ -197,11 +197,11 @@ public class BulkDataAccessAPI {
                     "Job or file not found. " + Constants.GENERIC_FHIR_ERR_MSG)}
     )
     @ResponseStatus(value = HttpStatus.OK)
-    @GetMapping(value = "/Job/{jobId}/file/{filename}")
+    @GetMapping(value = "/Job/{jobUuid}/file/{filename}")
     public ResponseEntity<Resource> downloadFile(
-            @ApiParam(value = "A job identifier", required = true) @PathVariable @NotBlank String jobId,
+            @ApiParam(value = "A job identifier", required = true) @PathVariable @NotBlank String jobUuid,
             @ApiParam(value = "A file name", required = true) @PathVariable @NotBlank String filename) throws IOException {
-        Resource downloadResource = jobService.getResourceForJob(jobId, filename);
+        Resource downloadResource = jobService.getResourceForJob(jobUuid, filename);
         HttpHeaders headers = new HttpHeaders();
         headers.set(HttpHeaders.CONTENT_TYPE, NDJSON_FIRE_CONTENT_TYPE);
         return new ResponseEntity<>(downloadResource, headers, HttpStatus.OK);
