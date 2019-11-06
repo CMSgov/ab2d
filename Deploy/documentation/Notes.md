@@ -221,6 +221,61 @@
 
 1. Open Chrome
 
+1. Review Docker compose file
+
+   1. Enter the following in the address bar
+
+      > https://github.com/CMSgov/ab2d/blob/feature/ab2d-292-automate-shared-components-for-sandbox/docker-compose.yml
+
+   1. Note the contents
+
+      *Example at time of writing:*
+
+      ```
+      version: '3'
+      
+      services:
+        db:
+          image: postgres:11
+          environment:
+            - POSTGRES_DB=ab2d
+            - POSTGRES_USER=ab2d
+            - POSTGRES_PASSWORD=ab2d
+          ports:
+            - "5432:5432"
+        build:
+          image: maven:3-jdk-12
+          working_dir: /usr/src/mymaven
+          command: mvn clean package
+          volumes:
+            - .:/usr/src/mymaven
+            - ${HOME}/.m2:/root/.m2
+        api:
+          build:
+            context: ./api
+          environment:
+            - AB2D_DB_HOST=db
+            - AB2D_DB_PORT=5432
+            - AB2D_DB_DATABASE=ab2d
+            - AB2D_DB_USER=ab2d
+            - AB2D_DB_PASSWORD=ab2d
+          ports:
+            - "8080:8080"
+          depends_on:
+            - db
+        worker:
+          build:
+            context: ./worker
+          environment:
+            - AB2D_DB_HOST=db
+            - AB2D_DB_PORT=5432
+            - AB2D_DB_DATABASE=ab2d
+            - AB2D_DB_USER=ab2d
+            - AB2D_DB_PASSWORD=ab2d
+          depends_on:
+            - db
+      ```
+
 1. Review API dockerfile
 
    1. Enter the following in the address bar
