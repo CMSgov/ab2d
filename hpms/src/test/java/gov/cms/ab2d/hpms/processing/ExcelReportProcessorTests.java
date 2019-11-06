@@ -96,7 +96,7 @@ public class ExcelReportProcessorTests {
                 Map<String, String> usedContractIdsToNames = new HashMap<>();
                 for(Attestation attestation : sponsor.getAttestations()) {
                     Contract contract = attestation.getContract();
-                    usedContractIdsToNames.put(contract.getContractId(), contract.getContractName());
+                    usedContractIdsToNames.put(contract.getContractNumber(), contract.getContractName());
                 }
                 Assert.assertEquals(sponsorData.getContractIdsToNames(), usedContractIdsToNames);
                 Assert.assertEquals(sponsorData.getOrgName(), sponsor.getOrgName());

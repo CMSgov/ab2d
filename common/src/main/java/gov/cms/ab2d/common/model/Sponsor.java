@@ -30,9 +30,9 @@ public class Sponsor {
     @OneToMany(mappedBy = "sponsor", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     private Set<Attestation> attestations = new HashSet<>();
 
-    public boolean hasContract(String contractId) {
+    public boolean hasContract(String contractNumber) {
         for (Attestation attestation : attestations) {
-            if (attestation.getContract().getContractId().equals(contractId)) {
+            if (attestation.getContract().getContractNumber().equals(contractNumber)) {
                 return true;
             }
         }

@@ -107,7 +107,7 @@ public class BulkDataAccessAPI {
         Job job = jobService.createJob(resourceTypes, ServletUriComponentsBuilder.fromCurrentRequest().toUriString());
 
         String statusURL = ServletUriComponentsBuilder.fromCurrentRequestUri().replacePath
-                (String.format(API_PREFIX + "/Job/%s/$status", job.getJobId())).toUriString();
+                (String.format(API_PREFIX + "/Job/%s/$status", job.getJobUuid())).toUriString();
         HttpHeaders responseHeaders = new HttpHeaders();
         responseHeaders.add("Content-Location", statusURL);
 
@@ -144,7 +144,7 @@ public class BulkDataAccessAPI {
     @ResponseStatus(value = HttpStatus.OK)
     public ResponseEntity<JsonNode> getJobStatus(
             @ApiParam(value = "A job identifier", required = true) @PathVariable @NotBlank String jobId) {
-        Job job = jobService.getJobByJobId(jobId);
+        Job job = jobService.getJobByJobUuid(jobId);
 
         OffsetDateTime now = OffsetDateTime.now();
 
@@ -183,7 +183,7 @@ public class BulkDataAccessAPI {
     }
 
     private String getUrlPath(Job job, String filePath) {
-        String requestURIString = ServletUriComponentsBuilder.fromCurrentRequestUri().replacePath(API_PREFIX + "/Job/" + job.getJobId()).toUriString();
+        String requestURIString = ServletUriComponentsBuilder.fromCurrentRequestUri().replacePath(API_PREFIX + "/Job/" + job.getJobUuid()).toUriString();
         return requestURIString + "/file/" + filePath;
     }
 
