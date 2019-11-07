@@ -143,11 +143,16 @@ if [ -n "$KMS_KEY_ID" ]; then
 fi
 
 #
-# Destroy tfstate environment in S3
+# Destroy terraform state information
 #
+
+cd "${START_DIR}"
+cd terraform/environments/ab2d-$CMS_ENV
 
 aws s3 rm s3://ab2d-automation/ab2d-$CMS_ENV \
   --recursive
+
+rm -rf .terraform
 
 #
 # Deregister the application AMI
