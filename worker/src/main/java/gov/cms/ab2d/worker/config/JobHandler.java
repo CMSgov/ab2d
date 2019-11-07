@@ -9,8 +9,6 @@ import org.springframework.messaging.MessageHandler;
 import org.springframework.messaging.MessagingException;
 import org.springframework.stereotype.Component;
 
-import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.locks.Lock;
@@ -49,8 +47,6 @@ public class JobHandler implements MessageHandler {
         if (lock.tryLock()) {
             try {
                 workerService.process(jobId);
-            } catch (IOException e) {
-                throw new UncheckedIOException(e);
             } finally {
                 lock.unlock();
             }

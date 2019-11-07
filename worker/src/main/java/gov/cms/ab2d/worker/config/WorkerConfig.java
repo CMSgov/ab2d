@@ -37,15 +37,12 @@ public class WorkerConfig {
     private JobHandler handler;
 
 
-    /**
-     * sample values used for thread count and queue capacity. Review it later.
-     */
     @Bean
     public ThreadPoolTaskExecutor threadPoolTaskExecutor() {
         final ThreadPoolTaskExecutor taskExecutor = new ThreadPoolTaskExecutor();
         taskExecutor.setCorePoolSize(5);
         taskExecutor.setMaxPoolSize(10);
-        taskExecutor.setQueueCapacity(50);
+        taskExecutor.setQueueCapacity(0);
         taskExecutor.setWaitForTasksToCompleteOnShutdown(true);
         taskExecutor.setAwaitTerminationSeconds(30);
         return taskExecutor;
