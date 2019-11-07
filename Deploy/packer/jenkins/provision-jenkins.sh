@@ -4,6 +4,21 @@
 set -x #Be verbose
 set -e #Exit on first error
 
+#
+# Parse options
+#
+
+echo "Parse options..."
+for i in "$@"
+do
+case $i in
+  --ssh-username=*)
+  SSH_USERNAME="${i#*=}"
+  shift # past argument=value
+  ;;
+esac
+done
+
 # LSH SKIP FOR NOW BEGIN
 # # Create a new partition from unallocated space
 # (
@@ -74,7 +89,8 @@ sudo yum -y install docker-ce-18.06.1.ce-3.el7
 
 # LSH Testing environment BEGIN
 # sudo usermod -aG docker ec2-user
-sudo usermod -aG docker centos
+# sudo usermod -aG docker centos
+sudo usermod -aG docker $SSH_USERNAME
 # LSH Testing environment END
 
 sudo systemctl enable docker
