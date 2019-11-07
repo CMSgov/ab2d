@@ -26,8 +26,16 @@ case $i in
   VPC_ID="${i#*=}"
   shift # past argument=value
   ;;
+  --ssh-username=*)
+  SSH_USERNAME="${i#*=}"
+  shift # past argument=value
+  ;;
   --seed-ami-product-code=*)
   SEED_AMI_PRODUCT_CODE="${i#*=}"
+  shift # past argument=value
+  ;;
+  --ec2-instance-type=*)
+  EC2_INSTANCE_TYPE="${i#*=}"
   shift # past argument=value
   ;;
   --database-secret-datetime=*)
@@ -36,10 +44,6 @@ case $i in
   ;;  
   --debug-level=*)
   DEBUG_LEVEL=$(echo ${i#*=} | tr '[:lower:]' '[:upper:]')
-  shift # past argument=value
-  ;;
-  --skip-network)
-  SKIP_NETWORK="true"
   shift # past argument=value
   ;;
 esac
@@ -53,7 +57,6 @@ echo "Check vars are not empty before proceeding..."
 if [ -z "${ENVIRONMENT}" ] || [ -z "${VPC_ID}" ] || [ -z "${SEED_AMI_PRODUCT_CODE}" ] || [ -z "${DATABASE_SECRET_DATETIME}" ]; then
   echo "Try running the script like one of these options:"
   echo "./create-base-environment.sh --environment=dev --vpc-id={vpc id} --seed-ami-product-code={aw0evgkw8e5c1q413zgy5pjce|gold disk product code} --database-secret-datetime={YYYY-MM-DD-HH-MM-SS}"
-  echo "./create-base-environment.sh --environment=dev --vpc-id={vpc id} --seed-ami-product-code={aw0evgkw8e5c1q413zgy5pjce|gold disk product code} --database-secret-datetime={YYYY-MM-DD-HH-MM-SS} --skip-network"
   echo "./create-base-environment.sh --environment=dev --vpc-id={vpc id} --seed-ami-product-code={aw0evgkw8e5c1q413zgy5pjce|gold disk product code} --database-secret-datetime={YYYY-MM-DD-HH-MM-SS} --debug-level={TRACE|DEBUG|INFO|WARN|ERROR}"
   exit 1
 fi
@@ -814,14 +817,12 @@ fi
 cd "${START_DIR}"
 cd terraform/environments/ab2d-$CMS_ENV
 
-if [ -z "${SKIP_NETWORK}" ]; then
-  echo 'vpc_id = "'$VPC_ID'"' \
-      > $ENVIRONMENT.auto.tfvars
-  echo 'private_subnet_ids = ["'$SUBNET_PRIVATE_1_ID'","'$SUBNET_PRIVATE_2_ID'"]' \
-    >> $ENVIRONMENT.auto.tfvars
-  echo 'deployment_controller_subnet_ids = ["'$SUBNET_PUBLIC_1_ID'","'$SUBNET_PUBLIC_2_ID'"]' \
-    >> $ENVIRONMENT.auto.tfvars
-fi
+echo 'vpc_id = "'$VPC_ID'"' \
+  > $ENVIRONMENT.auto.tfvars
+echo 'private_subnet_ids = ["'$SUBNET_PRIVATE_1_ID'","'$SUBNET_PRIVATE_2_ID'"]' \
+  >> $ENVIRONMENT.auto.tfvars
+echo 'deployment_controller_subnet_ids = ["'$SUBNET_PUBLIC_1_ID'","'$SUBNET_PUBLIC_2_ID'"]' \
+  >> $ENVIRONMENT.auto.tfvars
 
 #
 # Deploy S3
@@ -867,7 +868,7 @@ terraform apply \
 #
 
 # Get files system id (if exists)
-EFS_FS_ID=$(aws efs describe-file-systems --query="FileSystems[?CreationToken=='ab2d'].FileSystemId" --output=text)
+EFS_FS_ID=$(aws efs describe-file-systems --query="FileSystems[?CreationToken=='ab2d-${CMS_ENV}-efs'].FileSystemId" --output=text)
 
 # Create file system (if doesn't exist)
 if [ -z "${EFS_FS_ID}" ]; then
@@ -880,115 +881,125 @@ fi
 # Deploy db
 #
 
-DB_ENDPOINT=$(aws rds describe-db-instances --query="DBInstances[?DBInstanceIdentifier=='ab2d'].Endpoint.Address" --output=text)
+DB_ENDPOINT=$(aws --region us-east-1 rds describe-db-instances --query="DBInstances[?DBInstanceIdentifier=='ab2d'].Endpoint.Address" --output=text)
 if [ -z "${DB_ENDPOINT}" ]; then
   echo "Creating database..."
   terraform apply \
     --var "db_username=${DATABASE_USER}" \
     --var "db_password=${DATABASE_PASSWORD}" \
-    --var "db_name=${DATABASE_NAME}" \
     --target module.db --auto-approve
 fi
 
-# #
-# # AMI Generation for application nodes
-# #
+#
+# AMI Generation for application nodes
+#
 
-# # Set AMI_ID if it already exists for the deployment
+# Set AMI_ID if it already exists for the deployment
 
-# echo "Set AMI_ID if it already exists for the deployment..."
-# AMI_ID=$(aws --region us-east-1 ec2 describe-images \
-#   --owners self \
-#   --filters "Name=tag:Name,Values=ab2d-$CMS_ENV-ami" \
-#   --query "Images[*].[ImageId]" \
-#   --output text)
+echo "Set AMI_ID if it already exists for the deployment..."
+AMI_ID=$(aws --region us-east-1 ec2 describe-images \
+  --owners self \
+  --filters "Name=tag:Name,Values=ab2d-ami" \
+  --query "Images[*].[ImageId]" \
+  --output text)
 
-# # If no AMI is specified then create a new one
+# If no AMI is specified then create a new one
 
-# echo "If no AMI is specified then create a new one..."
-# if [ -z "${AMI_ID}" ]; then
+echo "If no AMI is specified then create a new one..."
+if [ -z "${AMI_ID}" ]; then
     
-#   # Get the latest seed AMI
-#   SEED_AMI=$(aws --region us-east-1 ec2 describe-images \
-#     --owners aws-marketplace \
-#     --filters "Name=product-code,Values=${SEED_AMI_PRODUCT_CODE}" \
-#     --query "Images[*].[ImageId,CreationDate]" \
-#     --output text \
-#     | sort -k2 -r \
-#     | head -n1 \
-#     | awk '{print $1}')
+  # Get the latest seed AMI
+  SEED_AMI=$(aws --region us-east-1 ec2 describe-images \
+    --owners aws-marketplace \
+    --filters "Name=product-code,Values=${SEED_AMI_PRODUCT_CODE}" \
+    --query "Images[*].[ImageId,CreationDate]" \
+    --output text \
+    | sort -k2 -r \
+    | head -n1 \
+    | awk '{print $1}')
   
-#   # Get first public subnet
-#   SUBNET_PUBLIC_1_ID=$(aws --region us-east-1 ec2 describe-subnets \
-#     --filters "Name=tag:Name,Values=ab2d-${CMS_ENV}-public-subnet-01" \
-#     --query "Subnets[0].SubnetId" \
-#     --output text)
+  # Get first public subnet
+  SUBNET_PUBLIC_1_ID=$(aws --region us-east-1 ec2 describe-subnets \
+    --filters "Name=tag:Name,Values=ab2d-${CMS_ENV}-public-subnet-01" \
+    --query "Subnets[0].SubnetId" \
+    --output text)
   
-#   # Create AMI for application nodes
-#   cd "${START_DIR}"
-#   cd packer/app
-#   IP=$(curl ipinfo.io/ip)
-#   COMMIT=$(git rev-parse HEAD)
-#   packer build --var seed_ami=$SEED_AMI --var vpc_id=$VPC_ID --var subnet_public_1_id=$SUBNET_PUBLIC_1_ID --var my_ip_address=$IP --var git_commit_hash=$COMMIT app.json  2>&1 | tee output.txt
-#   AMI_ID=$(cat output.txt | awk 'match($0, /ami-.*/) { print substr($0, RSTART, RLENGTH) }' | tail -1)
+  # Create AMI for application nodes
+  cd "${START_DIR}"
+  cd packer/app
+  IP=$(curl ipinfo.io/ip)
+  COMMIT=$(git rev-parse HEAD)
+  packer build \
+    --var seed_ami=$SEED_AMI \
+    --var ec2_instance_type=$EC2_INSTANCE_TYPE \
+    --var vpc_id=$VPC_ID \
+    --var subnet_public_1_id=$SUBNET_PUBLIC_1_ID \
+    --var my_ip_address=$IP \
+    --var ssh_username=$SSH_USERNAME \
+    --var git_commit_hash=$COMMIT \
+    app.json  2>&1 | tee output.txt
+  AMI_ID=$(cat output.txt | awk 'match($0, /ami-.*/) { print substr($0, RSTART, RLENGTH) }' | tail -1)
   
-#   # Add name tag to AMI
-#   aws --region us-east-1 ec2 create-tags \
-#     --resources $AMI_ID \
-#     --tags "Key=Name,Value=ab2d-$CMS_ENV-ami"
-# fi
+  # Add name tag to AMI
+  aws --region us-east-1 ec2 create-tags \
+    --resources $AMI_ID \
+    --tags "Key=Name,Value=ab2d-ami"
+fi
 
-# #
-# # AMI Generation for Jenkins node
-# #
+#
+# AMI Generation for Jenkins node
+#
 
-# # Set JENKINS_AMI_ID if it already exists for the deployment
+# Set JENKINS_AMI_ID if it already exists for the deployment
 
-# echo "Set JENKINS_AMI_ID if it already exists for the deployment..."
-# JENKINS_AMI_ID=$(aws --region us-east-1 ec2 describe-images \
-#   --owners self \
-#   --filters "Name=tag:Name,Values=ab2d-$CMS_ENV-jenkins-ami" \
-#   --query "Images[*].[ImageId]" \
-#   --output text)
+echo "Set JENKINS_AMI_ID if it already exists for the deployment..."
+JENKINS_AMI_ID=$(aws --region us-east-1 ec2 describe-images \
+  --owners self \
+  --filters "Name=tag:Name,Values=ab2d-jenkins-ami" \
+  --query "Images[*].[ImageId]" \
+  --output text)
 
-# # If no AMI is specified then create a new one
+# If no AMI is specified then create a new one
 
-# echo "If no AMI is specified then create a new one..."
-# if [ -z "${JENKINS_AMI_ID}" ]; then
+echo "If no AMI is specified then create a new one..."
+if [ -z "${JENKINS_AMI_ID}" ]; then
 
-#   # Get the latest seed AMI
-#   SEED_AMI=$(aws --region us-east-1 ec2 describe-images \
-#     --owners aws-marketplace \
-#     --filters "Name=product-code,Values=${SEED_AMI_PRODUCT_CODE}" \
-#     --query "Images[*].[ImageId,CreationDate]" \
-#     --output text \
-#     | sort -k2 -r \
-#     | head -n1 \
-#     | awk '{print $1}')
+  # Get the latest seed AMI
+  SEED_AMI=$(aws --region us-east-1 ec2 describe-images \
+    --owners aws-marketplace \
+    --filters "Name=product-code,Values=${SEED_AMI_PRODUCT_CODE}" \
+    --query "Images[*].[ImageId,CreationDate]" \
+    --output text \
+    | sort -k2 -r \
+    | head -n1 \
+    | awk '{print $1}')
 
-#   # Get first public subnet
-#   SUBNET_PUBLIC_1_ID=$(aws --region us-east-1 ec2 describe-subnets \
-#     --filters "Name=tag:Name,Values=ab2d-${CMS_ENV}-public-subnet-01" \
-#     --query "Subnets[0].SubnetId" \
-#     --output text)
+  # Get first public subnet
+  SUBNET_PUBLIC_1_ID=$(aws --region us-east-1 ec2 describe-subnets \
+    --filters "Name=tag:Name,Values=ab2d-${CMS_ENV}-public-subnet-01" \
+    --query "Subnets[0].SubnetId" \
+    --output text)
 
-#   # Create AMI for Jenkins
-#   cd "${START_DIR}"
-#   cd packer/jenkins
-#   IP=$(curl ipinfo.io/ip)
-#   COMMIT=$(git rev-parse HEAD)
-#   packer build --var seed_ami=$SEED_AMI --var vpc_id=$VPC_ID --var subnet_public_1_id=$SUBNET_PUBLIC_1_ID --var my_ip_address=$IP --var git_commit_hash=$COMMIT app.json  2>&1 | tee output.txt
-#   JENKINS_AMI_ID=$(cat output.txt | awk 'match($0, /ami-.*/) { print substr($0, RSTART, RLENGTH) }' | tail -1)
+  # Create AMI for Jenkins
+  cd "${START_DIR}"
+  cd packer/jenkins
+  IP=$(curl ipinfo.io/ip)
+  COMMIT=$(git rev-parse HEAD)
+  packer build --var seed_ami=$SEED_AMI --var vpc_id=$VPC_ID --var subnet_public_1_id=$SUBNET_PUBLIC_1_ID --var my_ip_address=$IP --var git_commit_hash=$COMMIT app.json  2>&1 | tee output.txt
+  JENKINS_AMI_ID=$(cat output.txt | awk 'match($0, /ami-.*/) { print substr($0, RSTART, RLENGTH) }' | tail -1)
   
-#   # Add name tag to AMI
-#   aws --region us-east-1 ec2 create-tags \
-#     --resources $JENKINS_AMI_ID \
-#     --tags "Key=Name,Value=ab2d-$CMS_ENV-jenkins-ami"
-# fi
+  # Add name tag to AMI
+  aws --region us-east-1 ec2 create-tags \
+    --resources $JENKINS_AMI_ID \
+    --tags "Key=Name,Value=ab2d-jenkins-ami"
+fi
 
-# #
-# # Deploy AWS application modules
-# #
+#
+# Deploy AWS application modules
+#
 
-# cd "${START_DIR}"
-# ./deploy.sh --environment="${ENVIRONMENT}" --ami="${AMI_ID}" --auto-approve
+cd "${START_DIR}"
+./deploy.sh \
+  --environment="${ENVIRONMENT}" \
+  --ami="${AMI_ID}" \
+  --auto-approve
