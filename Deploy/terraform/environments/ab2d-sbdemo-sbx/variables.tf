@@ -167,15 +167,10 @@ variable "db_password" {
   description = "Please pass this on command line and not as a value here"
 }
 
-variable "db_name" {
-  default     = ""
-  description = "Please pass this on command line and not as a value here"
-}
-
 ## S3 specific variables #########################################################################
 
 variable "file_bucket_name" {
-  default = "ab2d-sbdemo-sbx"
+  default = "ab2d-sbx"
 }
 
 variable "logging_bucket_name" {
