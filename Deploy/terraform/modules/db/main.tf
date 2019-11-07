@@ -1,9 +1,9 @@
 resource "aws_security_group" "sg_database" {
-  name        = "ab2d-${lower(var.env)}-database-sg"
+  name        = "ab2d-database-sg"
   description = "Database security group"
   vpc_id      = var.vpc_id
   tags = {
-    Name = "ab2d-${lower(var.env)}-database-sg"
+    Name = "ab2d-database-sg"
   }
 }
 
@@ -53,6 +53,5 @@ resource "aws_db_instance" "db" {
   vpc_security_group_ids  = [aws_security_group.sg_database.id]
   username                = var.username
   password                = var.password
-  name                    = var.name
   skip_final_snapshot     = var.skip_final_snapshot
 }
