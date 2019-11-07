@@ -15,7 +15,7 @@ public class ContractServiceImpl implements ContractService {
     @Autowired
     private ContractRepository contractRepository;
 
-    public Optional<Contract> getContractByContractId(String contractId) {
-        return contractRepository.findContractByContractId(contractId);
+    public Optional<Contract> getContractByContractNumber(String contractNumber) {
+        return contractRepository.findContractByContractNumber(contractNumber);
     }
 }
