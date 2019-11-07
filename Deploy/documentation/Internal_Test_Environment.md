@@ -185,26 +185,9 @@
      --public-access-block-configuration BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true
    ```
 
-1. Create S3 file bucket
-
-   ```ShellSession
-   $ aws s3api create-bucket --bucket ab2d-dev --region us-east-1
-   ```
-
-1. Block public access on bucket
-
-   ```ShellSession
-   $ aws s3api put-public-access-block \
-     --bucket ab2d-dev \
-     --region us-east-1 \
-     --public-access-block-configuration BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true
-   ```
-
 ### Create policies
 
 1. Set target profile
-
-   *Example:
    
    ```ShellSession
    $ export AWS_PROFILE="sbdemo-dev"
@@ -505,8 +488,10 @@
    $ ./create-base-environment.sh \
      --environment=sbdemo-dev \
      --vpc-id=$VPC_ID \
+     --ssh-username=centos \
      --seed-ami-product-code=aw0evgkw8e5c1q413zgy5pjce \
-     --database-secret-datetime=2019-10-25-14-55-05
+     --ec2-instance-type=m5.xlarge \
+     --database-secret-datetime=2019-10-25-14-55-06
    ```
 
    *Example for Sandbox environment testing within SemanticBits demo environment:*
@@ -515,8 +500,10 @@
    $ ./create-base-environment.sh \
      --environment=sbdemo-sbx \
      --vpc-id=$VPC_ID \
+     --ssh-username=centos \
      --seed-ami-product-code=aw0evgkw8e5c1q413zgy5pjce \
-     --database-secret-datetime=2019-10-25-14-55-05
+     --ec2-instance-type=m5.xlarge \
+     --database-secret-datetime=2019-10-25-14-55-06
    ```
 
 1. If prompted, enter database user at the "Enter desired database_user" prompt

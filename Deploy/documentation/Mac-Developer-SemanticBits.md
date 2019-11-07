@@ -30,6 +30,7 @@
    * [Install or upgrade lua](#install-or-upgrade-lua)
    * [Install or update Emacs](#install-or-update-emacs)
    * [Install or update Node.js](#install-or-update-nodejs)
+1. [Install PostgreSQL 11](#install-postgresql-11)
 1. [Install Packer](#install-packer)
 1. [Install Terraform](#install-terraform)
 1. [Install the AWS CLI using pip3](#install-the-aws-cli-using-pip3)
@@ -743,6 +744,33 @@
 
    ```ShellSession
    $ brew upgrade node
+   ```
+
+## Install PostgreSQL 11
+
+1. Install PostgreSQL 11
+
+   ```ShellSession
+   $ brew install postgresql@11
+   ```
+
+1. Note the following caveats
+
+   ```
+   ==> Caveats
+   To migrate existing data from a previous major version of PostgreSQL run:
+     brew postgresql-upgrade-database
+
+   To have launchd start postgresql now and restart at login:
+     brew services start postgresql
+   Or, if you don't want/need a background service you can just run:
+     pg_ctl -D /usr/local/var/postgres start
+   ```
+
+1. Start PostgreSQL service
+
+   ```ShellSession
+   $ brew services start postgresql
    ```
 
 ## Install Packer

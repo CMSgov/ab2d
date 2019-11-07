@@ -225,7 +225,7 @@
 
    1. Enter the following in the address bar
 
-      > https://github.com/CMSgov/ab2d/blob/feature/ab2d-292-automate-shared-components-for-sandbox/docker-compose.yml
+      > https://github.com/CMSgov/ab2d/blob/master/docker-compose.yml
 
    1. Note the contents
 
