@@ -11,7 +11,7 @@ provider "aws" {
 terraform {
   backend "s3" {
     bucket         = "ab2d-automation"
-    key            = "ab2d-sbedmo-sbx/terraform/terraform.tfstate"
+    key            = "ab2d-sbdemo-sbx/terraform/terraform.tfstate"
     region         = "us-east-1"
     encrypt = true
   }
@@ -43,7 +43,6 @@ module "db" {
   multi_az                = var.db_multi_az
   username                = var.db_username
   password                = var.db_password
-  name                    = var.db_name
   skip_final_snapshot     = var.db_skip_final_snapshot
 }
 
