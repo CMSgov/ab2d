@@ -27,6 +27,8 @@
         <project.root>${basedir}</project.root>
         <java.version>12</java.version>
         <hapi.version>4.0.3</hapi.version>
+        <mockserver.version>5.7.0</mockserver.version>
+        <jacoco.version>0.8.4</jacoco.version>
         <checkstyle.config>${project.root}/src/main/resources/checkstyle.xml</checkstyle.config>
     </properties>
 
