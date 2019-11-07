@@ -17,5 +17,4 @@ variable "identifier" {}
 variable "multi_az" {}
 variable "username" {}
 variable "password" {}
-variable "name" {}
 variable "skip_final_snapshot" {}
