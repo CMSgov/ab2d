@@ -531,3 +531,19 @@ fi
 #
 
 echo "Done"
+
+#
+# Delete any orphaned components using AWS CLI
+# - orphaned components may exist if their were automation issues with terraform
+#
+
+# Delete orphaned EFS (if exists)
+
+EFS_FS_ID=$(aws efs describe-file-systems \
+  --query="FileSystems[?CreationToken=='ab2d-${CMS_ENV}-efs'].FileSystemId" \
+  --output=text)
+
+if [ -n "${EFS_FS_ID}" ]; then
+  aws efs delete-file-system \
+    --file-system-id "${EFS_FS_ID}"
+fi
