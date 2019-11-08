@@ -37,7 +37,13 @@
 
 1. Configure AWS CLI
 
-   *Example for testing Sandbox environment in SemanticBits demo environment:*
+   *Example for testing Shared environment in SemanticBits demo environment:*
+
+   ```ShellSession
+   $ aws configure --profile=sbdemo-shared
+   ```
+
+   *Example for testing Dev environment in SemanticBits demo environment:*
 
    ```ShellSession
    $ aws configure --profile=sbdemo-dev
@@ -487,6 +493,7 @@
    ```ShellSession
    $ ./create-base-environment.sh \
      --environment=sbdemo-dev \
+     --shared-environment=sbdemo-shared \
      --vpc-id=$VPC_ID \
      --ssh-username=centos \
      --seed-ami-product-code=aw0evgkw8e5c1q413zgy5pjce \
@@ -499,6 +506,7 @@
    ```ShellSession
    $ ./create-base-environment.sh \
      --environment=sbdemo-sbx \
+     --shared-environment=sbdemo-shared \
      --vpc-id=$VPC_ID \
      --ssh-username=centos \
      --seed-ami-product-code=aw0evgkw8e5c1q413zgy5pjce \

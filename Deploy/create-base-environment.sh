@@ -22,6 +22,11 @@ case $i in
   CMS_ENV=$(echo $ENVIRONMENT | tr '[:upper:]' '[:lower:]')
   shift # past argument=value
   ;;
+  --shared-environment=*)
+  SHARED_ENVIRONMENT="${i#*=}"
+  CMS_SHARED_ENV=$(echo $SHARED_ENVIRONMENT | tr '[:upper:]' '[:lower:]')
+  shift # past argument=value
+  ;;
   --vpc-id=*)
   VPC_ID="${i#*=}"
   shift # past argument=value
@@ -54,9 +59,9 @@ done
 #
 
 echo "Check vars are not empty before proceeding..."
-if [ -z "${ENVIRONMENT}" ] || [ -z "${VPC_ID}" ] || [ -z "${SEED_AMI_PRODUCT_CODE}" ] || [ -z "${DATABASE_SECRET_DATETIME}" ]; then
+if [ -z "${ENVIRONMENT}" ] || [ -z "${SHARED_ENVIRONMENT}" ] || [ -z "${VPC_ID}" ] || [ -z "${SEED_AMI_PRODUCT_CODE}" ] || [ -z "${DATABASE_SECRET_DATETIME}" ]; then
   echo "Try running the script like one of these options:"
-  echo "./create-base-environment.sh --environment=dev --vpc-id={vpc id} --seed-ami-product-code={aw0evgkw8e5c1q413zgy5pjce|gold disk product code} --database-secret-datetime={YYYY-MM-DD-HH-MM-SS}"
+  echo "./create-base-environment.sh --environment=dev --shared-environment=sbdemo-shared --vpc-id={vpc id} --seed-ami-product-code={aw0evgkw8e5c1q413zgy5pjce|gold disk product code} --database-secret-datetime={YYYY-MM-DD-HH-MM-SS}"
   echo "./create-base-environment.sh --environment=dev --vpc-id={vpc id} --seed-ami-product-code={aw0evgkw8e5c1q413zgy5pjce|gold disk product code} --database-secret-datetime={YYYY-MM-DD-HH-MM-SS} --debug-level={TRACE|DEBUG|INFO|WARN|ERROR}"
   exit 1
 fi
@@ -65,7 +70,6 @@ fi
 # Set environment
 #
 
-export AWS_PROFILE="${CMS_ENV}"
 export DEBUG_LEVEL="WARN"
 
 # Verify that VPC ID exists
@@ -86,12 +90,12 @@ fi
 #
 
 KMS_KEY_ID=$(aws kms list-aliases \
-  --query="Aliases[?AliasName=='alias/ab2d-$CMS_ENV-kms'].TargetKeyId" \
+  --query="Aliases[?AliasName=='alias/ab2d-kms'].TargetKeyId" \
   --output text)
 
 if [ -n "${KMS_KEY_ID}" ]; then
   KMS_KEY_STATE=$(aws kms describe-key \
-    --key-id alias/ab2d-$CMS_ENV-kms \
+    --key-id alias/ab2d-kms \
     --query "KeyMetadata.KeyState" \
     --output text)
 fi
@@ -100,26 +104,58 @@ fi
 # Configure terraform
 #
 
-cd "${START_DIR}"
-cd terraform/environments/ab2d-$CMS_ENV
-
 # Reset logging
+
 echo "Setting terraform debug level to $DEBUG_LEVEL..."
 export TF_LOG=$DEBUG_LEVEL
 export TF_LOG_PATH=/var/log/terraform/tf.log
 rm -f /var/log/terraform/tf.log
 
+# Configure the directory where ".terraform" directory is maintained
+
+# export TF_DATA_DIR="${START_DIR}/terraform"
+
 # Destroy tfstate environment in S3, if first run
 
 if [ -z "${KMS_KEY_ID}" ] || [ "${KMS_KEY_STATE}" == "Disabled" ]; then
-  aws s3 rm s3://ab2d-automation/ab2d-${CMS_ENV} \
+  aws s3 rm s3://ab2d-automation \
     --recursive
+  rm -rf .terraform
 fi
 
+#
 # Initialize and validate terraform
+#
+
+# Initialize and validate terraform for the shared components
+
+echo "**************************************************************"
+echo "Initialize and validate terraform for the shared components..."
+echo "**************************************************************"
+
+export AWS_PROFILE="${CMS_SHARED_ENV}"
+
+cd "${START_DIR}"
+cd terraform/environments/ab2d-$CMS_SHARED_ENV
 
 terraform init
 terraform validate
+
+# Initialize and validate terraform for the target environment
+
+echo "***************************************************************"
+echo "Initialize and validate terraform for the target environment..."
+echo "***************************************************************"
+
+export AWS_PROFILE="${CMS_ENV}"
+
+cd "${START_DIR}"
+cd terraform/environments/ab2d-$CMS_ENV
+
+terraform init
+terraform validate
+
+exit
 
 #
 # Deploy or enable KMS
@@ -134,8 +170,9 @@ if [ -n "$KMS_KEY_ID" ]; then
   ./enable-kms-key.py $KMS_KEY_ID
 else
   echo "Deploying KMS..."
+  export AWS_PROFILE="${CMS_SHARED_ENV}"
   cd "${START_DIR}"
-  cd terraform/environments/ab2d-$CMS_ENV
+  cd terraform/environments/ab2d-$CMS_SHARED_ENV
   terraform apply \
     --target module.kms --auto-approve
 fi
@@ -812,113 +849,6 @@ if [ -z "${NGW_2_ROUTE_TABLE_ASSOCIATION_SUBNET_PRIVATE_2_ID}" ]; then
   
 fi
 
-# Create ".auto.tfvars" file for network settings
-
-cd "${START_DIR}"
-cd terraform/environments/ab2d-$CMS_ENV
-
-echo 'vpc_id = "'$VPC_ID'"' \
-  > $ENVIRONMENT.auto.tfvars
-echo 'private_subnet_ids = ["'$SUBNET_PRIVATE_1_ID'","'$SUBNET_PRIVATE_2_ID'"]' \
-  >> $ENVIRONMENT.auto.tfvars
-echo 'deployment_controller_subnet_ids = ["'$SUBNET_PUBLIC_1_ID'","'$SUBNET_PUBLIC_2_ID'"]' \
-  >> $ENVIRONMENT.auto.tfvars
-echo 'ec2_instance_type = "'$EC2_INSTANCE_TYPE'"' \
-  >> $ENVIRONMENT.auto.tfvars
-echo 'linux_user = "'$SSH_USERNAME'"' \
-  >> $ENVIRONMENT.auto.tfvars
-
-#
-# Deploy S3
-#
-
-echo "Deploying S3..."
-
-# Create "ab2d-cloudtrail" bucket
-
-aws s3api create-bucket --bucket ab2d-cloudtrail --region us-east-1
-
-# Block public access on bucket
-
-aws s3api put-public-access-block \
-  --bucket ab2d-cloudtrail \
-  --region us-east-1 \
-  --public-access-block-configuration BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true
-
-# Give "Write objects" and "Read bucket permissions" to the "S3 log delivery group" of the "ab2d-cloudtrail" bucket
-
-aws s3api put-bucket-acl \
-  --bucket ab2d-cloudtrail \
-  --grant-write URI=http://acs.amazonaws.com/groups/s3/LogDelivery \
-  --grant-read-acp URI=http://acs.amazonaws.com/groups/s3/LogDelivery
-
-# Add bucket policy to the "ab2d-cloudtrail" S3 bucket
-
-cd "${START_DIR}"
-cd aws/s3-bucket-policies
-
-aws s3api put-bucket-policy \
-  --bucket ab2d-cloudtrail \
-  --policy file://ab2d-cloudtrail-bucket-policy.json
-
-cd "${START_DIR}"
-cd terraform/environments/ab2d-$CMS_ENV
-
-terraform apply \
-  --target module.s3 --auto-approve
-
-#
-# Deploy EFS
-#
-
-cd "${START_DIR}"
-cd terraform/environments/ab2d-$CMS_ENV
-
-# Get files system id (if exists)
-
-EFS_FS_ID=$(aws efs describe-file-systems --query="FileSystems[?CreationToken=='ab2d-${CMS_ENV}-efs'].FileSystemId" --output=text)
-
-# Create file system (if doesn't exist)
-
-if [ -z "${EFS_FS_ID}" ]; then
-  echo "Creating EFS..."
-  terraform apply \
-    --target module.efs --auto-approve
-fi
-
-#
-# Deploy db
-#
-
-cd "${START_DIR}"
-cd terraform/environments/ab2d-$CMS_ENV
-
-# Get DB instance endpoint (if exists)
-
-DB_ENDPOINT=$(aws --region us-east-1 rds describe-db-instances --query="DBInstances[?DBInstanceIdentifier=='ab2d'].Endpoint.Address" --output=text)
-
-# Create DB instance (if doesn't exist)
-
-if [ -z "${DB_ENDPOINT}" ]; then
-  echo "Creating database instance..."
-  terraform apply \
-    --var "db_username=${DATABASE_USER}" \
-    --var "db_password=${DATABASE_PASSWORD}" \
-    --var "db_name=${DATABASE_NAME}" \
-    --target module.db --auto-approve
-  DB_ENDPOINT=$(aws --region us-east-1 rds describe-db-instances --query="DBInstances[?DBInstanceIdentifier=='ab2d'].Endpoint.Address" --output=text)
-  cd "${START_DIR}"
-  rm -f generated/.pgpass
-fi
-
-# Generate ".pgpass" file
-
-cd "${START_DIR}"
-cd terraform/environments/ab2d-$CMS_ENV
-mkdir -p generated
-echo "${DB_ENDPOINT}:5432:postgres:${DATABASE_USER}:${DATABASE_PASSWORD}" > generated/.pgpass
-echo "${DB_ENDPOINT}:5432:${DATABASE_NAME}:${DATABASE_USER}:${DATABASE_PASSWORD}" >> generated/.pgpass
-
 #
 # AMI Generation for application nodes
 #
@@ -1029,6 +959,160 @@ if [ -z "${JENKINS_AMI_ID}" ]; then
   aws --region us-east-1 ec2 create-tags \
     --resources $JENKINS_AMI_ID \
     --tags "Key=Name,Value=ab2d-jenkins-ami"
+fi
+
+#
+# Create "auto.tfvars" files
+#
+
+# Create "auto.tfvars" file for shared components
+
+cd "${START_DIR}"
+cd terraform/environments/ab2d-$CMS_SHARED_ENV
+
+echo 'vpc_id = "'$VPC_ID'"' \
+  > $ENVIRONMENT.auto.tfvars
+echo 'deployment_controller_subnet_ids = ["'$SUBNET_PUBLIC_1_ID'","'$SUBNET_PUBLIC_2_ID'"]' \
+  >> $ENVIRONMENT.auto.tfvars
+echo 'ec2_instance_type = "'$EC2_INSTANCE_TYPE'"' \
+  >> $ENVIRONMENT.auto.tfvars
+echo 'linux_user = "'$SSH_USERNAME'"' \
+  >> $ENVIRONMENT.auto.tfvars
+echo 'ami_id = "'$AMI_ID'"' \
+  >> $ENVIRONMENT.auto.tfvars
+
+# Create ".auto.tfvars" file for the target environment
+
+cd "${START_DIR}"
+cd terraform/environments/ab2d-$CMS_ENV
+
+echo 'vpc_id = "'$VPC_ID'"' \
+  > $ENVIRONMENT.auto.tfvars
+echo 'private_subnet_ids = ["'$SUBNET_PRIVATE_1_ID'","'$SUBNET_PRIVATE_2_ID'"]' \
+  >> $ENVIRONMENT.auto.tfvars
+echo 'deployment_controller_subnet_ids = ["'$SUBNET_PUBLIC_1_ID'","'$SUBNET_PUBLIC_2_ID'"]' \
+  >> $ENVIRONMENT.auto.tfvars
+echo 'ec2_instance_type = "'$EC2_INSTANCE_TYPE'"' \
+  >> $ENVIRONMENT.auto.tfvars
+echo 'linux_user = "'$SSH_USERNAME'"' \
+  >> $ENVIRONMENT.auto.tfvars
+
+##########################
+# Deploy shared components
+##########################
+
+#
+# Configure shared environment
+#
+
+export AWS_PROFILE="${CMS_SHARED_ENV}"
+
+cd "${START_DIR}"
+cd terraform/environments/ab2d-$CMS_SHARED_ENV
+
+#
+# Deploy controller
+#
+
+terraform apply \
+  --var "db_username=${DATABASE_USER}" \
+  --var "db_password=${DATABASE_PASSWORD}" \
+  --var "db_name=${DATABASE_NAME}" \
+  --target module.controller
+
+#
+# Deploy S3
+#
+
+echo "Deploying S3..."
+
+# Create "ab2d-cloudtrail" bucket
+
+aws s3api create-bucket --bucket ab2d-cloudtrail --region us-east-1
+
+# Block public access on bucket
+
+aws s3api put-public-access-block \
+  --bucket ab2d-cloudtrail \
+  --region us-east-1 \
+  --public-access-block-configuration BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true
+
+# Give "Write objects" and "Read bucket permissions" to the "S3 log delivery group" of the "ab2d-cloudtrail" bucket
+
+aws s3api put-bucket-acl \
+  --bucket ab2d-cloudtrail \
+  --grant-write URI=http://acs.amazonaws.com/groups/s3/LogDelivery \
+  --grant-read-acp URI=http://acs.amazonaws.com/groups/s3/LogDelivery
+
+# Add bucket policy to the "ab2d-cloudtrail" S3 bucket
+
+cd "${START_DIR}"
+cd aws/s3-bucket-policies
+
+aws s3api put-bucket-policy \
+  --bucket ab2d-cloudtrail \
+  --policy file://ab2d-cloudtrail-bucket-policy.json
+
+cd "${START_DIR}"
+cd terraform/environments/ab2d-$CMS_SHARED_ENV
+
+terraform apply \
+  --target module.s3 --auto-approve
+
+#
+# Deploy db
+#
+
+# Get DB instance endpoint (if exists)
+
+DB_ENDPOINT=$(aws --region us-east-1 rds describe-db-instances --query="DBInstances[?DBInstanceIdentifier=='ab2d'].Endpoint.Address" --output=text)
+
+# Create DB instance (if doesn't exist)
+
+if [ -z "${DB_ENDPOINT}" ]; then
+  echo "Creating database instance..."
+  terraform apply \
+    --var "db_username=${DATABASE_USER}" \
+    --var "db_password=${DATABASE_PASSWORD}" \
+    --var "db_name=${DATABASE_NAME}" \
+    --target module.db --auto-approve
+  DB_ENDPOINT=$(aws --region us-east-1 rds describe-db-instances --query="DBInstances[?DBInstanceIdentifier=='ab2d'].Endpoint.Address" --output=text)
+  cd "${START_DIR}"
+  cd terraform/environments/shared
+  rm -f generated/.pgpass
+fi
+
+# Generate ".pgpass" file
+
+cd "${START_DIR}"
+cd terraform/environments/shared
+mkdir -p generated
+echo "${DB_ENDPOINT}:5432:postgres:${DATABASE_USER}:${DATABASE_PASSWORD}" > generated/.pgpass
+echo "${DB_ENDPOINT}:5432:${DATABASE_NAME}:${DATABASE_USER}:${DATABASE_PASSWORD}" >> generated/.pgpass
+
+######################################
+# Deploy target environment components
+######################################
+
+export AWS_PROFILE="${CMS_ENV}"
+
+cd "${START_DIR}"
+cd terraform/environments/ab2d-$CMS_ENV
+
+#
+# Deploy EFS
+#
+
+# Get files system id (if exists)
+
+EFS_FS_ID=$(aws efs describe-file-systems --query="FileSystems[?CreationToken=='ab2d-${CMS_ENV}-efs'].FileSystemId" --output=text)
+
+# Create file system (if doesn't exist)
+
+if [ -z "${EFS_FS_ID}" ]; then
+  echo "Creating EFS..."
+  terraform apply \
+    --target module.efs --auto-approve
 fi
 
 #

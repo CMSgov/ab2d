@@ -152,18 +152,18 @@ echo "Deploy new AMI out to AWS..."
 if [ -z "${AUTOAPPROVE}" ]; then
     
   # Confirm with the caller prior to applying changes.
-    
-  terraform apply \
-    --var "ami_id=$AMI_ID" \
-    --var "current_task_definition_arn=$API_TASK_DEFINITION" \
-    --var "db_username=${DATABASE_USER}" \
-    --var "db_password=${DATABASE_PASSWORD}" \
-    --var "db_name=${DATABASE_NAME}" \
-    --target module.api
 
   #
   # TEMPORARILY COMMENTED OUT BEGIN
   #
+
+  # terraform apply \
+  #   --var "ami_id=$AMI_ID" \
+  #   --var "current_task_definition_arn=$API_TASK_DEFINITION" \
+  #   --var "db_username=${DATABASE_USER}" \
+  #   --var "db_password=${DATABASE_PASSWORD}" \
+  #   --var "db_name=${DATABASE_NAME}" \
+  #   --target module.api
   
   # terraform apply --var "ami_id=$AMI_ID" --var "current_task_definition_arn=$API_TASK_DEFINITION" --target module.worker
 
@@ -174,19 +174,19 @@ if [ -z "${AUTOAPPROVE}" ]; then
 else
     
   # Apply the changes without prompting
-    
-  terraform apply \
-    --var "ami_id=$AMI_ID" \
-    --var "current_task_definition_arn=$API_TASK_DEFINITION" \
-    --var "db_username=${DATABASE_USER}" \
-    --var "db_password=${DATABASE_PASSWORD}" \
-    --var "db_name=${DATABASE_NAME}" \
-    --target module.api \
-    --auto-approve
 
   #
   # TEMPORARILY COMMENTED OUT BEGIN
   #
+
+  # terraform apply \
+  #   --var "ami_id=$AMI_ID" \
+  #   --var "current_task_definition_arn=$API_TASK_DEFINITION" \
+  #   --var "db_username=${DATABASE_USER}" \
+  #   --var "db_password=${DATABASE_PASSWORD}" \
+  #   --var "db_name=${DATABASE_NAME}" \
+  #   --target module.api \
+  #   --auto-approve
 
   # terraform apply --var "ami_id=$AMI_ID" --var "current_task_definition_arn=$API_TASK_DEFINITION" --target module.worker --auto-approve
 

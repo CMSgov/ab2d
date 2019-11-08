@@ -149,7 +149,7 @@ fi
 cd "${START_DIR}"
 cd terraform/environments/ab2d-$CMS_ENV
 
-aws s3 rm s3://ab2d-automation/ab2d-$CMS_ENV \
+aws s3 rm s3://ab2d-automation \
   --recursive
 
 rm -rf .terraform
