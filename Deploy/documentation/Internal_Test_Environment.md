@@ -534,8 +534,24 @@
 
 1. Deploy application components
 
+   *Example for Dev environment testing within SemanticBits demo environment:*
+   
    ```ShellSession
-   $ ./deploy.sh --environment=sbdemo-dev --auto-approve
+   $ ./deploy.sh \
+     --environment=sbdemo-dev \
+     --ssh-username=centos \
+     --database-secret-datetime=2019-10-25-14-55-06 \
+     --auto-approve
+   ```
+
+   *Example for Sandbox environment testing within SemanticBits demo environment:*
+
+   ```ShellSession
+   $ ./deploy.sh \
+     --environment=sbdemo-sbx \
+     --ssh-username=centos \
+     --database-secret-datetime=2019-10-25-14-55-06 \
+     --auto-approve
    ```
 
 ## Deploy and configure Jenkins
