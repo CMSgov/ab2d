@@ -58,8 +58,8 @@
       "destination": "/tmp/provision-app-instance.sh"
     },
     {
-      "type": "shell",
-      "inline": [
+      "type": "shell","inline": [
+        "sudo chmod 755 /tmp/provision-app-instance.sh",
         "/tmp/provision-app-instance.sh --ssh-username={{user `ssh_username`}}"
       ]
     }

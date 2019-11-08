@@ -34,11 +34,11 @@ variable "ami_id" {
 }
 
 variable "ec2_instance_type" {
-  default = "c4.2xlarge"
+  default = ""
 }
 
 variable "linux_user" {
-  default = "centos"
+  default = ""
 }
 
 variable "ssh_key_name" {
@@ -163,6 +163,11 @@ variable "db_username" {
 }
 
 variable "db_password" {
+  default     = ""
+  description = "Please pass this on command line and not as a value here"
+}
+
+variable "db_name" {
   default     = ""
   description = "Please pass this on command line and not as a value here"
 }

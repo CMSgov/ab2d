@@ -70,6 +70,7 @@ cd python3
 # Get database secrets
 
 DATABASE_USER=$(./get-database-secret.py $CMS_ENV database_user $DATABASE_SECRET_DATETIME)
+DATABASE_PASSWORD=$(./get-database-secret.py $CMS_ENV database_password $DATABASE_SECRET_DATETIME)
 DATABASE_NAME=$(./get-database-secret.py $CMS_ENV database_name $DATABASE_SECRET_DATETIME)
 
 #
@@ -156,6 +157,7 @@ if [ -z "${AUTOAPPROVE}" ]; then
     --var "ami_id=$AMI_ID" \
     --var "current_task_definition_arn=$API_TASK_DEFINITION" \
     --var "db_username=${DATABASE_USER}" \
+    --var "db_password=${DATABASE_PASSWORD}" \
     --var "db_name=${DATABASE_NAME}" \
     --target module.api
 
@@ -177,6 +179,7 @@ else
     --var "ami_id=$AMI_ID" \
     --var "current_task_definition_arn=$API_TASK_DEFINITION" \
     --var "db_username=${DATABASE_USER}" \
+    --var "db_password=${DATABASE_PASSWORD}" \
     --var "db_name=${DATABASE_NAME}" \
     --target module.api \
     --auto-approve
@@ -197,11 +200,18 @@ fi
 # Create database
 #
 
-CONTROLLER_PUBLIC_IP=$(aws ec2 describe-instances --filters "Name=tag:Name,Values=ab2d-${CMS_ENV}-deployment-controller" --query="Reservations[*].Instances[?State.Name == 'running'].PublicIpAddress" --output text)
+# Connect to the "sbdemo-dev" controller for all environments
+# - *** TO DO ***: Eliminate controller instances of other environments
+
+CONTROLLER_PUBLIC_IP=$(aws ec2 describe-instances --filters "Name=tag:Name,Values=ab2d-sbdemo-dev-deployment-controller" --query="Reservations[*].Instances[?State.Name == 'running'].PublicIpAddress" --output text)
+
+# Get the DB_ENDPOINT of the shared database
 
 DB_ENDPOINT=$(aws --region us-east-1 rds describe-db-instances --query="DBInstances[?DBInstanceIdentifier=='ab2d'].Endpoint.Address" --output=text)
 
-DB_NAME_IF_EXISTS=$(ssh -tt -i "~/.ssh/ab2d-${CMS_ENV}.pem" \
+# Determine if the database for the environment exists
+
+DB_NAME_IF_EXISTS=$(ssh -tt -i "~/.ssh/ab2d-sbdemo-dev.pem" \
   "${SSH_USERNAME}@${CONTROLLER_PUBLIC_IP}" \
   "psql -t --host "${DB_ENDPOINT}" --username "${DATABASE_USER}" --dbname postgres --command='SELECT datname FROM pg_catalog.pg_database'" \
   | grep "${DATABASE_NAME}" \
@@ -210,9 +220,11 @@ DB_NAME_IF_EXISTS=$(ssh -tt -i "~/.ssh/ab2d-${CMS_ENV}.pem" \
   | xargs \
   | tr -d '\r')
 
+# Create the database for the environment if it doesn't exist
+
 if [ -n "${CONTROLLER_PUBLIC_IP}" ] && [ -n "${DB_ENDPOINT}" ] && [ "${DB_NAME_IF_EXISTS}" != "${DATABASE_NAME}" ]; then
   echo "Creating database..."
-  ssh -tt -i "~/.ssh/ab2d-${CMS_ENV}.pem" \
+  ssh -tt -i "~/.ssh/ab2d-sbdemo-dev.pem" \
     "${SSH_USERNAME}@${CONTROLLER_PUBLIC_IP}" \
     "createdb ${DATABASE_NAME} --host ${DB_ENDPOINT} --username ${DATABASE_USER}"
 fi

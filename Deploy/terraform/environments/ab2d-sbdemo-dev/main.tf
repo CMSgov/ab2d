@@ -89,6 +89,10 @@ module "api" {
   gold_disk_name                = var.gold_image_name
   override_task_definition_arn  = var.current_task_definition_arn
   aws_account_number            = var.aws_account_number
+  db_host                       = module.db.rds_hostname
+  db_username                   = var.db_username
+  db_password                   = var.db_password
+  db_name                       = var.db_name
 }
 
 # LSH SKIP FOR NOW BEGIN
@@ -118,7 +122,18 @@ module "worker" {
   efs_id                        = module.efs.efs_id
   alpha                         = var.private_subnet_ids[0]
   beta                          = var.private_subnet_ids[1]
-  ecs_cluster_id                = module.api.ecs_cluster_id
+
+  #
+  # TEMPORARILY COMMENTED OUT BEGIN
+  #
+
+  # ecs_cluster_id                = module.api.ecs_cluster_id
+  ecs_cluster_id                = ""
+
+  #
+  # TEMPORARILY COMMENTED OUT END
+  #
+
   aws_account_number            = var.aws_account_number
 }
 

@@ -51,6 +51,7 @@
     {
       "type": "shell",
       "inline": [
+        "sudo chmod 755 /tmp/provision-jenkins.sh",
         "/tmp/provision-jenkins.sh --ssh-username={{user `ssh_username`}}"
       ]
     }

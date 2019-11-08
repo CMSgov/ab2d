@@ -33,3 +33,8 @@ variable "override_task_definition_arn" {default=""}
 # LSH SKIP FOR NOW END
 
 variable "percent_capacity_increase" {default="20"}
+
+variable "db_host" {}
+variable "db_name" {}
+variable "db_username" {}
+variable "db_password" {}
