@@ -79,7 +79,6 @@ public class OrgStructureReportProcessor implements ExcelReportProcessor {
                     sponsor.setLegalName(sponsorName);
                     sponsor.setOrgName(sponsorName);
                     sponsor.setParent(parentSponsor);
-                    //parentSponsor.getChildren().add(sponsor);
 
                     // Only add the contract if it doesn't already exist
                     if (!sponsor.hasContract(contractNumber)) {
