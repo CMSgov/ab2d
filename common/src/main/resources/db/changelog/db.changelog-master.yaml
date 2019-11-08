@@ -6,5 +6,3 @@ databaseChangeLog:
       file: db/changelog/v001/AB2D-331-drop-constraint-add-column.sql
   - include:
       file: db/changelog/v001/AB2D-356-rename-columns.sql
-  - include:
-      file: db/changelog/v001/AB2D-333-add-constraint.sql

@@ -36,7 +36,7 @@ public class Sponsor {
 
     public boolean hasContract(String contractNum) {
         for (Contract contract : contracts) {
-            if (contractNum.equals(contract.getContractNumber())) {
+            if (contractNum.equalsIgnoreCase(contract.getContractNumber())) {
                 return true;
             }
         }

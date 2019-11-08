@@ -1,8 +1,6 @@
 package gov.cms.ab2d.hpms.processing;
 
-import gov.cms.ab2d.common.model.Attestation;
 import gov.cms.ab2d.common.model.Contract;
-import gov.cms.ab2d.common.service.AttestationService;
 import gov.cms.ab2d.common.service.ContractService;
 import gov.cms.ab2d.common.util.AttestationStatus;
 import gov.cms.ab2d.common.util.DateUtil;
@@ -19,7 +17,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Optional;
 
 
 @Service("attestationReportProcessor")
@@ -30,8 +31,6 @@ public class AttestationReportProcessor implements ExcelReportProcessor {
     @Autowired
     private ContractService contractService;
 
-    @Autowired
-    private AttestationService attestationService;
 
     private static final String ATTESTATION_OFFSET_DATE_TIME_PATTERN = "M/d/y h:m a Z";
 
@@ -48,7 +47,8 @@ public class AttestationReportProcessor implements ExcelReportProcessor {
             Sheet datatypeSheet = workbook.getSheetAt(0);
             Iterator<Row> iterator = datatypeSheet.iterator();
 
-            Map<String, AttestationReportData> contractsSeenToLatestAttestationData = new HashMap<>();
+            Map<String, AttestationReportData> contractsSeenToLatestAttestationData =
+                    new HashMap<>();
 
             // In this loop just gather the most recent attestation data
             while (iterator.hasNext()) {
@@ -64,42 +64,56 @@ public class AttestationReportProcessor implements ExcelReportProcessor {
                     continue;
                 }
 
-                Optional<Contract> contractOptional = contractService.getContractByContractNumber(contractNumber);
+                Optional<Contract> contractOptional =
+                        contractService.getContractByContractNumber(contractNumber);
                 if (contractOptional.isPresent()) {
                     Contract contract = contractOptional.get();
 
                     String attestetedDateTimeCell = currentRow.getCell(6).getStringCellValue();
                     // Set to Eastern time since that's where HPMS is
                     String offset = DateUtil.getESTOffset();
-                    OffsetDateTime offsetDateTime = OffsetDateTime.parse(attestetedDateTimeCell + " " + offset,
-                            DateTimeFormatter.ofPattern(ATTESTATION_OFFSET_DATE_TIME_PATTERN));
+                    OffsetDateTime offsetDateTime =
+                            OffsetDateTime.parse(attestetedDateTimeCell + " " + offset,
+                                    DateTimeFormatter
+                                            .ofPattern(ATTESTATION_OFFSET_DATE_TIME_PATTERN));
                     String attestationStatus = currentRow.getCell(2).getStringCellValue();
 
                     if (!contractsSeenToLatestAttestationData.containsKey(contractNumber)) {
-                        contractsSeenToLatestAttestationData.put(contractNumber, new AttestationReportData(contract, attestationStatus,
-                                offsetDateTime));
+                        contractsSeenToLatestAttestationData.put(contractNumber,
+                                new AttestationReportData(contract, attestationStatus,
+                                        offsetDateTime));
                     } else {
-                        AttestationReportData latestData = contractsSeenToLatestAttestationData.get(contractNumber);
+                        AttestationReportData latestData =
+                                contractsSeenToLatestAttestationData.get(contractNumber);
                         // Overwrite if we have a later date, we only care about the latest
                         if (offsetDateTime.isAfter(latestData.getAttestetedDateTime())) {
-                            contractsSeenToLatestAttestationData.put(contractNumber, new AttestationReportData(contract, attestationStatus, offsetDateTime));
+                            contractsSeenToLatestAttestationData.put(contractNumber,
+                                    new AttestationReportData(contract, attestationStatus,
+                                            offsetDateTime));
                         }
                     }
                 } else {
-                    log.warn("Contract ID {} was not found in the database during contract report processing", contractNumber);
-                    throw new ReportProcessingException("Contract ID " + contractNumber + " was not found in the database during contract report processing");
+                    log.warn(
+                            "Contract ID {} was not found in the database during contract report " +
+                                    "processing",
+                            contractNumber);
+                    throw new ReportProcessingException("Contract ID " + contractNumber +
+                            " was not found in the database during contract report processing");
                 }
             }
 
-            for (Map.Entry<String, AttestationReportData> entry : contractsSeenToLatestAttestationData.entrySet()) {
+            for (Map.Entry<String, AttestationReportData> entry :
+                    contractsSeenToLatestAttestationData
+                            .entrySet()) {
                 AttestationReportData attestationReportData = entry.getValue();
-                Attestation attestation = attestationService.getAttestationFromContract(attestationReportData.getContract());
+                var contract = attestationReportData.getContract();
 
                 String attestationStatus = attestationReportData.getAttestationStatus();
-
-                OffsetDateTime offsetDateTime = attestationStatus.toUpperCase().equals(AttestationStatus.ATTESTED.getValue().toUpperCase()) ?
+                OffsetDateTime offsetDateTime = attestationStatus.toUpperCase()
+                        .equals(AttestationStatus.ATTESTED.getValue().toUpperCase()) ?
                         attestationReportData.getAttestetedDateTime() : null;
-                attestationService.saveAttestation(attestation, offsetDateTime);
+                contract.setAttestedOn(offsetDateTime);
+                contractService.updateContract(contract);
             }
         }
     }

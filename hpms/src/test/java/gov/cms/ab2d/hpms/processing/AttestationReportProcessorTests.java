@@ -1,6 +1,5 @@
 package gov.cms.ab2d.hpms.processing;
 
-import gov.cms.ab2d.common.model.Attestation;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.Sponsor;
 import gov.cms.ab2d.common.repository.ContractRepository;
@@ -19,7 +18,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.io.IOException;
 import java.io.InputStream;
 import java.time.*;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = SpringBootApp.class)
@@ -47,11 +48,7 @@ public class AttestationReportProcessorTests {
         sponsor.setLegalName(sponsorName);
         sponsor.setOrgName(sponsorName);
 
-        Attestation attestation = new Attestation();
-        attestation.setAttestedOn(OffsetDateTime.of(LocalDateTime.of(2018, 10, 10, 9, 17), ZoneOffset.UTC));
-        attestation.setContract(contract);
-
-        contract.setAttestation(attestation);
+        contract.setAttestedOn(OffsetDateTime.of(LocalDateTime.of(2018, 10, 10, 9, 17), ZoneOffset.UTC));
 
         sponsor.getContracts().add(contract);
 
@@ -92,7 +89,7 @@ public class AttestationReportProcessorTests {
 
         for(Contract contract : contracts) {
             OffsetDateTime offsetDateTime = attestationData.get(contract.getContractNumber());
-            Assert.assertEquals(offsetDateTime, contract.getAttestation().getAttestedOn());
+            Assert.assertEquals(offsetDateTime, contract.getAttestedOn());
         }
     }
 }

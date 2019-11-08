@@ -1,7 +1,6 @@
 package gov.cms.ab2d.api.controller;
 
 import gov.cms.ab2d.api.SpringBootApp;
-import gov.cms.ab2d.common.model.Attestation;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.Sponsor;
 import gov.cms.ab2d.common.service.SponsorService;
@@ -67,18 +66,12 @@ public class AdminAPITests {
         Contract contract = new Contract();
         contract.setContractNumber(contractId);
         contract.setContractName(contractName);
+        contract.setAttestedOn(OffsetDateTime.of(LocalDateTime.of(2018, 10, 10, 9, 17), ZoneOffset.UTC));
 
         Sponsor sponsor = new Sponsor();
         sponsor.setHpmsId(hpmsId);
         sponsor.setLegalName(sponsorName);
         sponsor.setOrgName(sponsorName);
-
-        Attestation attestation = new Attestation();
-        attestation.setAttestedOn(OffsetDateTime.of(LocalDateTime.of(2018, 10, 10, 9, 17), ZoneOffset.UTC));
-        attestation.setContract(contract);
-
-        contract.setAttestation(attestation);
-
         sponsor.getContracts().add(contract);
 
         contract.setSponsor(sponsor);

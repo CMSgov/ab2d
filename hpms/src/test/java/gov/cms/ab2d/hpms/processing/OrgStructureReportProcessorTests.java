@@ -1,9 +1,7 @@
 package gov.cms.ab2d.hpms.processing;
 
-import gov.cms.ab2d.common.model.Attestation;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.Sponsor;
-import gov.cms.ab2d.common.repository.AttestationRepository;
 import gov.cms.ab2d.common.repository.ContractRepository;
 import gov.cms.ab2d.common.repository.SponsorRepository;
 import gov.cms.ab2d.hpms.SpringBootApp;
@@ -20,7 +18,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = SpringBootApp.class)
@@ -36,9 +36,6 @@ public class OrgStructureReportProcessorTests {
 
     @Autowired
     private ContractRepository contractRepository;
-
-    @Autowired
-    private AttestationRepository attestationRepository;
 
     @Value
     private class SponsorData {
@@ -85,16 +82,13 @@ public class OrgStructureReportProcessorTests {
 
         Assert.assertEquals(11, contracts.size());
 
-        List<Attestation> attestations = attestationRepository.findAll();
-
-        Assert.assertEquals(11, attestations.size());
-
         for(Sponsor sponsor : sponsors) {
             if(sponsor.getParent() != null) {
                 SponsorData sponsorData = sponsorHpmsIdsToData.get(sponsor.getHpmsId());
                 Assert.assertEquals(sponsorData.getParentId(), sponsor.getParent().getHpmsId());
                 Map<String, String> usedContractNumbersToNames = new HashMap<>();
                 for(Contract contract : sponsor.getContracts()) {
+                    Assert.assertNull(contract.getAttestedOn());
                     usedContractNumbersToNames.put(contract.getContractNumber(), contract.getContractName());
                 }
                 Assert.assertEquals(sponsorData.getContractNumbersToNames(), usedContractNumbersToNames);

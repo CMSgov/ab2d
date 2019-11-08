@@ -1,10 +1,8 @@
 package gov.cms.ab2d.common.service;
 
 import gov.cms.ab2d.common.SpringBootApp;
-import gov.cms.ab2d.common.model.Attestation;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.Sponsor;
-import gov.cms.ab2d.common.repository.AttestationRepository;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -24,14 +22,10 @@ public class SponsorServiceTest {
     @Autowired
     private SponsorService sponsorService;
 
-    @Autowired
-    private AttestationService attestationService;
 
     @Autowired
     private ContractService contractService;
 
-    @Autowired
-    private AttestationRepository attestationRepository;
 
     @Test
     public void testSponsors() {
@@ -49,15 +43,9 @@ public class SponsorServiceTest {
         Contract contract = new Contract();
         contract.setContractName("Health Ins. Agreement");
         contract.setContractNumber("S1234");
-
-        Attestation attestation = new Attestation();
-        attestation.setAttestedOn(OffsetDateTime.now());
-        attestation.setContract(contract);
-
-        contract.setAttestation(attestation);
+        contract.setAttestedOn(OffsetDateTime.now());
 
         sponsor.getContracts().add(contract);
-
         contract.setSponsor(sponsor);
 
         Sponsor savedSponsor = sponsorService.saveSponsor(sponsor);
@@ -70,15 +58,8 @@ public class SponsorServiceTest {
         Assert.assertEquals("Health Ins.", sponsor.getLegalName());
         Assert.assertEquals(Integer.valueOf(123), sponsor.getHpmsId());
 
-        Attestation retrievedAttestation = attestationService.getAttestationFromContract(contract);
-        Assert.assertEquals(attestation.getAttestedOn(), retrievedAttestation.getAttestedOn());
-
-        OffsetDateTime pastDate = OffsetDateTime.now().minusHours(36);
-        retrievedAttestation.setAttestedOn(pastDate);
-        Attestation updatedAttestation = attestationRepository.save(retrievedAttestation);
-        Assert.assertEquals(updatedAttestation.getAttestedOn(), pastDate);
-
-        Optional<Contract> retrievedContractOptional = contractService.getContractByContractNumber("S1234");
+        Optional<Contract> retrievedContractOptional =
+                contractService.getContractByContractNumber("S1234");
         Contract retrievedContract = retrievedContractOptional.get();
         Assert.assertEquals(retrievedContract.getContractNumber(), contract.getContractNumber());
         Assert.assertEquals(retrievedContract.getContractName(), contract.getContractName());

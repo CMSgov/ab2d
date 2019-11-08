@@ -18,4 +18,9 @@ public class ContractServiceImpl implements ContractService {
     public Optional<Contract> getContractByContractNumber(String contractNumber) {
         return contractRepository.findContractByContractNumber(contractNumber);
     }
+
+    @Override
+    public void updateContract(Contract contract) {
+        contractRepository.save(contract);
+    }
 }
