@@ -19,8 +19,7 @@ import java.util.stream.Collectors;
 @Component
 public class BeneficiaryAdapterStub implements BeneficiaryAdapter {
 
-    private static final String DASH_LINE = "-------------------------------------------------------------------------";
-    private static final String FAKEFILEPATH = "/test-stub-data/fake-bene-ids.csv";
+    private static final String FAKE_FILE_PATH = "/test-stub-data/fake-bene-ids.csv";
 
 
     @Override
@@ -30,8 +29,6 @@ public class BeneficiaryAdapterStub implements BeneficiaryAdapter {
 
         final int startOffset = contractSno * 100;
         final int endOffset = startOffset +  100;
-        log.info("OFFSETS:  startOffset: {} -  endOffset: {} ", startOffset, endOffset);
-        log.info(DASH_LINE);
 
         final List<String> sampleTestBenes = readBeneficiariesFromSampleFile();
         final List<String> patientsPerContract = sampleTestBenes.subList(startOffset, endOffset);
@@ -56,39 +53,22 @@ public class BeneficiaryAdapterStub implements BeneficiaryAdapter {
             throw new IllegalArgumentException(errMsg);
         }
 
-        log.info(DASH_LINE);
-        log.info("Contract Sno : {}", sno);
-
         return sno;
     }
 
-//    private List<String> readBeneficiariesFromSampleFile() {
-//
-//        try (InputStream inputStream = this.getClass().getResourceAsStream(FAKEFILEPATH);
-//             BufferedReader br =  new BufferedReader(new InputStreamReader(inputStream));
-//        ) {
-//            Assert.notNull(inputStream, "Could not find and load file :  " + FAKEFILEPATH);
-//            return br.lines().collect(Collectors.toList());
-//        } catch (Exception ex) {
-//            final String errMsg = "Error reading file : ";
-//            log.error("{} {} ", errMsg, FAKEFILEPATH, ex);
-//            throw new RuntimeException(errMsg + FAKEFILEPATH);
-//        }
-//    }
-
     private List<String> readBeneficiariesFromSampleFile() {
 
-        try (var inputStream = this.getClass().getResourceAsStream(FAKEFILEPATH)) {
-            Assert.notNull(inputStream, "error getting resource as stream :  " + FAKEFILEPATH);
+        try (var inputStream = this.getClass().getResourceAsStream(FAKE_FILE_PATH)) {
+            Assert.notNull(inputStream, "error getting resource as stream :  " + FAKE_FILE_PATH);
 
             try (var br =  new BufferedReader(new InputStreamReader(inputStream))) {
-                Assert.notNull(br, "Could not create buffered reader from input stream :  " + FAKEFILEPATH);
+                Assert.notNull(br, "Could not create buffered reader from input stream :  " + FAKE_FILE_PATH);
                 return br.lines().collect(Collectors.toList());
             }
         } catch (Exception ex) {
             final String errMsg = "Error reading file : ";
-            log.error("{} {} ", errMsg, FAKEFILEPATH, ex);
-            throw new RuntimeException(errMsg + FAKEFILEPATH);
+            log.error("{} {} ", errMsg, FAKE_FILE_PATH, ex);
+            throw new RuntimeException(errMsg + FAKE_FILE_PATH);
         }
     }
 
@@ -123,19 +103,5 @@ public class BeneficiaryAdapterStub implements BeneficiaryAdapter {
                 .collect(Collectors.toList());
     }
 
-
-//    /**
-//     * Test using the main method.
-//     *
-//     * @param args
-//     */
-    public static void main(String[] args) {
-        BeneficiaryAdapterStub stub = new BeneficiaryAdapterStub();
-        final var response = stub.getPatientsByContract("S0100");
-
-        log.info(DASH_LINE);
-        log.info("RESPONSE : {} ", response);
-        log.info(DASH_LINE);
-    }
 
 }
