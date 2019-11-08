@@ -6,7 +6,6 @@ import lombok.Setter;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
-import java.util.HashSet;
 import java.util.Set;
 
 @Entity
@@ -24,8 +23,13 @@ public class Contract {
 
     private String contractName;
 
-    @OneToMany(mappedBy = "contract")
-    private Set<Attestation> attestations = new HashSet<>();
+    @ManyToOne
+    @JoinColumn(name = "sponsor_id")
+    @NotNull
+    private Sponsor sponsor;
+
+    @OneToOne(mappedBy = "contract", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    private Attestation attestation;
 
     @ManyToMany(mappedBy = "contracts")
     private Set<Beneficiary> beneficiaries;

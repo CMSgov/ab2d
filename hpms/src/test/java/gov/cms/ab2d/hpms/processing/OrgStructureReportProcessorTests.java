@@ -94,8 +94,7 @@ public class OrgStructureReportProcessorTests {
                 SponsorData sponsorData = sponsorHpmsIdsToData.get(sponsor.getHpmsId());
                 Assert.assertEquals(sponsorData.getParentId(), sponsor.getParent().getHpmsId());
                 Map<String, String> usedContractIdsToNames = new HashMap<>();
-                for(Attestation attestation : sponsor.getAttestations()) {
-                    Contract contract = attestation.getContract();
+                for(Contract contract : sponsor.getContracts()) {
                     usedContractIdsToNames.put(contract.getContractId(), contract.getContractName());
                 }
                 Assert.assertEquals(sponsorData.getContractIdsToNames(), usedContractIdsToNames);

@@ -4,3 +4,5 @@ databaseChangeLog:
       file: db/changelog/v001/AB2D-291-create-initial-tables.sql
   - include:
       file: db/changelog/v001/AB2D-331-drop-constraint-add-column.sql
+  - include:
+      file: db/changelog/v001/AB2D-333-add-constraint.sql

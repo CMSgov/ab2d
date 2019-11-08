@@ -50,11 +50,12 @@ public class AttestationReportProcessorTests {
         Attestation attestation = new Attestation();
         attestation.setAttestedOn(OffsetDateTime.of(LocalDateTime.of(2018, 10, 10, 9, 17), ZoneOffset.UTC));
         attestation.setContract(contract);
-        attestation.setSponsor(sponsor);
 
-        contract.getAttestations().add(attestation);
+        contract.setAttestation(attestation);
 
-        sponsor.getAttestations().add(attestation);
+        sponsor.getContracts().add(contract);
+
+        contract.setSponsor(sponsor);
 
         sponsorService.saveSponsor(sponsor);
     }
@@ -91,7 +92,7 @@ public class AttestationReportProcessorTests {
 
         for(Contract contract : contracts) {
             OffsetDateTime offsetDateTime = attestationData.get(contract.getContractId());
-            Assert.assertEquals(offsetDateTime, contract.getAttestations().iterator().next().getAttestedOn());
+            Assert.assertEquals(offsetDateTime, contract.getAttestation().getAttestedOn());
         }
     }
 }

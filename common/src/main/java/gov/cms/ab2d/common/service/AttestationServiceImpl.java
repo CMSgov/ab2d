@@ -7,6 +7,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Nullable;
+import java.time.OffsetDateTime;
+
 @Service
 @Transactional
 public class AttestationServiceImpl implements AttestationService {
@@ -15,12 +18,14 @@ public class AttestationServiceImpl implements AttestationService {
     private AttestationRepository attestationRepository;
 
     @Override
-    public Attestation saveAttestation(Attestation attestation) {
+    public Attestation saveAttestation(Attestation attestation, @Nullable OffsetDateTime attestedOn) {
+        attestation.setAttestedOn(attestedOn);
+
         return attestationRepository.saveAndFlush(attestation);
     }
 
     @Override
-    public Attestation getMostRecentAttestationFromContract(Contract contract) {
-        return attestationRepository.findOneByContractOrderByAttestedOnDesc(contract);
+    public Attestation getAttestationFromContract(Contract contract) {
+        return attestationRepository.findOneByContract(contract);
     }
 }

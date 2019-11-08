@@ -4,6 +4,7 @@ import gov.cms.ab2d.common.SpringBootApp;
 import gov.cms.ab2d.common.model.Attestation;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.Sponsor;
+import gov.cms.ab2d.common.repository.AttestationRepository;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -29,6 +30,9 @@ public class SponsorServiceTest {
     @Autowired
     private ContractService contractService;
 
+    @Autowired
+    private AttestationRepository attestationRepository;
+
     @Test
     public void testSponsors() {
         Sponsor parent = new Sponsor();
@@ -36,13 +40,11 @@ public class SponsorServiceTest {
         parent.setOrgName("Parent Corp.");
         parent.setLegalName("Parent Corp.");
 
-        Sponsor savedParent = sponsorService.saveSponsor(parent);
-
         Sponsor sponsor = new Sponsor();
         sponsor.setHpmsId(123);
         sponsor.setOrgName("Health Ins.");
         sponsor.setLegalName("Health Ins.");
-        sponsor.setParent(savedParent);
+        sponsor.setParent(parent);
 
         Contract contract = new Contract();
         contract.setContractName("Health Ins. Agreement");
@@ -50,31 +52,30 @@ public class SponsorServiceTest {
 
         Attestation attestation = new Attestation();
         attestation.setAttestedOn(OffsetDateTime.now());
-        attestation.setSponsor(sponsor);
         attestation.setContract(contract);
 
-        contract.getAttestations().add(attestation);
+        contract.setAttestation(attestation);
 
-        sponsor.getAttestations().add(attestation);
+        sponsor.getContracts().add(contract);
+
+        contract.setSponsor(sponsor);
 
         Sponsor savedSponsor = sponsorService.saveSponsor(sponsor);
 
-        Assert.assertEquals(savedParent, savedSponsor.getParent());
+        Assert.assertEquals(parent, savedSponsor.getParent());
 
         Assert.assertTrue(savedSponsor.hasContract("S1234"));
-
-        Assert.assertEquals(contract, sponsor.getAttestations().iterator().next().getContract());
 
         Assert.assertEquals("Health Ins.", sponsor.getOrgName());
         Assert.assertEquals("Health Ins.", sponsor.getLegalName());
         Assert.assertEquals(Integer.valueOf(123), sponsor.getHpmsId());
 
-        Attestation retrievedAttestation = attestationService.getMostRecentAttestationFromContract(contract);
+        Attestation retrievedAttestation = attestationService.getAttestationFromContract(contract);
         Assert.assertEquals(attestation.getAttestedOn(), retrievedAttestation.getAttestedOn());
 
         OffsetDateTime pastDate = OffsetDateTime.now().minusHours(36);
         retrievedAttestation.setAttestedOn(pastDate);
-        Attestation updatedAttestation = attestationService.saveAttestation(retrievedAttestation);
+        Attestation updatedAttestation = attestationRepository.save(retrievedAttestation);
         Assert.assertEquals(updatedAttestation.getAttestedOn(), pastDate);
 
         Optional<Contract> retrievedContractOptional = contractService.getContractByContractId("S1234");

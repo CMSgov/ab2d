@@ -13,27 +13,17 @@ import java.time.OffsetDateTime;
 /**
  * Links sponsors to contracts bounded by an attestation date.
  */
-public class Attestation implements Comparable<Attestation> {
+public class Attestation {
 
     @Id
     @GeneratedValue
     private Long id;
 
-    @ManyToOne
-    @JoinColumn(name = "sponsor_id")
-    @NotNull
-    private Sponsor sponsor;
-
-    @ManyToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    @OneToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinColumn(name = "contract_id")
     @NotNull
     private Contract contract;
 
     @Column(columnDefinition = "TIMESTAMP WITH TIME ZONE")
     private OffsetDateTime attestedOn;
-
-    @Override
-    public int compareTo(Attestation other) {
-        return this.getAttestedOn().compareTo(other.getAttestedOn());
-    }
 }

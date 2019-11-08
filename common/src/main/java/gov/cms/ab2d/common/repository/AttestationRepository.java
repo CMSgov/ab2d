@@ -8,5 +8,5 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface AttestationRepository extends JpaRepository<Attestation, Long> {
 
-    Attestation findOneByContractOrderByAttestedOnDesc(Contract contract);
+    Attestation findOneByContract(Contract contract);
 }

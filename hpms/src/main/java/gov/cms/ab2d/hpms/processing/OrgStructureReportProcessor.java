@@ -79,20 +79,24 @@ public class OrgStructureReportProcessor implements ExcelReportProcessor {
                     sponsor.setLegalName(sponsorName);
                     sponsor.setOrgName(sponsorName);
                     sponsor.setParent(parentSponsor);
+                    //parentSponsor.getChildren().add(sponsor);
 
                     // Only add the contract if it doesn't already exist
                     if (!sponsor.hasContract(contractNumber)) {
                         Attestation attestation = new Attestation();
-                        attestation.setSponsor(sponsor);
 
                         Contract contract = new Contract();
-                        contract.getAttestations().add(attestation);
+                        contract.setAttestation(attestation);
                         contract.setContractName(contractName);
                         contract.setContractId(contractNumber);
 
                         attestation.setContract(contract);
 
-                        sponsor.getAttestations().add(attestation);
+                        contract.setAttestation(attestation);
+
+                        contract.setSponsor(sponsor);
+
+                        sponsor.getContracts().add(contract);
                     }
 
                     sponsorService.saveSponsor(sponsor);
