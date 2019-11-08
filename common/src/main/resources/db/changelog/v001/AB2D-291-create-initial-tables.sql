@@ -19,36 +19,6 @@ ALTER TABLE beneficiary ADD CONSTRAINT "uc_beneficiary_patient_id" UNIQUE (patie
 --rollback DROP TABLE beneficiary;
 --  -------------------------------------------------------------------------------------------------------------------
 
-
---changeset spathiyil:AB2D-291-CreateTable-contract failOnError:true dbms:postgresql
-CREATE TABLE contract
-(
-    id                  BIGINT              NOT NULL,
-    contract_id         VARCHAR(255)        NOT NULL
-);
-
-ALTER TABLE contract ADD CONSTRAINT "pk_contract" PRIMARY KEY (id);
-ALTER TABLE contract ADD CONSTRAINT "uc_contract_contract_id" UNIQUE (contract_id);
-
---rollback DROP TABLE contract;
---  -------------------------------------------------------------------------------------------------------------------
-
-
---changeset spathiyil:AB2D-291-CreateTable-coverage failOnError:true dbms:postgresql
-CREATE TABLE coverage
-(
-    beneficiary_id      BIGINT              NOT NULL,
-    contract_id         BIGINT              NOT NULL
-);
-
-ALTER TABLE coverage ADD CONSTRAINT "fk_coverage_to_beneficiary" FOREIGN KEY (beneficiary_id) REFERENCES beneficiary (id);
-ALTER TABLE coverage ADD CONSTRAINT "fk_coverage_to_contract" FOREIGN KEY (contract_id) REFERENCES contract (id);
-ALTER TABLE coverage ADD CONSTRAINT "uc_coverage_beneficiary_id_contract_id" UNIQUE (beneficiary_id, contract_id);
-
---rollback  DROP TABLE coverage;
---  -------------------------------------------------------------------------------------------------------------------
-
-
 --changeset spathiyil:AB2D-291-CreateTable-sponsor failOnError:true dbms:postgresql
 CREATE TABLE sponsor
 (
@@ -67,20 +37,36 @@ ALTER TABLE sponsor ADD CONSTRAINT "fk_sponsor_to_sponsor_parent" FOREIGN KEY (p
 --  -------------------------------------------------------------------------------------------------------------------
 
 
---changeset spathiyil:AB2D-291-CreateTable-attestation failOnError:true dbms:postgresql
-CREATE TABLE attestation
+
+--changeset spathiyil:AB2D-291-CreateTable-contract failOnError:true dbms:postgresql
+CREATE TABLE contract
 (
     id                  BIGINT              NOT NULL,
-    sponsor_id          BIGINT              NOT NULL,
-    contract_id         BIGINT              NOT NULL,
+    contract_id         VARCHAR(255)        NOT NULL,
+    sponsor_id          BIGINT NOT NULL,
     attested_on         TIMESTAMPTZ
 );
 
-ALTER TABLE attestation ADD CONSTRAINT "pk_attestation" PRIMARY KEY (id);
-ALTER TABLE attestation ADD CONSTRAINT "fk_attestation_to_sponsor"  FOREIGN KEY (sponsor_id) REFERENCES sponsor (id);
-ALTER TABLE attestation ADD CONSTRAINT "fk_attestation_to_contract" FOREIGN KEY (contract_id) REFERENCES contract (id);
+ALTER TABLE contract ADD CONSTRAINT "pk_contract" PRIMARY KEY (id);
+ALTER TABLE contract ADD CONSTRAINT "uc_contract_contract_id" UNIQUE (contract_id);
+ALTER TABLE contract ADD CONSTRAINT "fk_contract_to_sponsor" FOREIGN KEY (sponsor_id) REFERENCES sponsor (id);
 
---rollback DROP TABLE attestation;
+--rollback DROP TABLE contract;
+--  -------------------------------------------------------------------------------------------------------------------
+
+
+--changeset spathiyil:AB2D-291-CreateTable-coverage failOnError:true dbms:postgresql
+CREATE TABLE coverage
+(
+    beneficiary_id      BIGINT              NOT NULL,
+    contract_id         BIGINT              NOT NULL
+);
+
+ALTER TABLE coverage ADD CONSTRAINT "fk_coverage_to_beneficiary" FOREIGN KEY (beneficiary_id) REFERENCES beneficiary (id);
+ALTER TABLE coverage ADD CONSTRAINT "fk_coverage_to_contract" FOREIGN KEY (contract_id) REFERENCES contract (id);
+ALTER TABLE coverage ADD CONSTRAINT "uc_coverage_beneficiary_id_contract_id" UNIQUE (beneficiary_id, contract_id);
+
+--rollback  DROP TABLE coverage;
 --  -------------------------------------------------------------------------------------------------------------------
 
 

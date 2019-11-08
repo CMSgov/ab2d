@@ -1,22 +1,21 @@
 package gov.cms.ab2d.hpms.processing;
 
-import gov.cms.ab2d.common.model.Attestation;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.Sponsor;
 import gov.cms.ab2d.common.service.SponsorService;
-
 import org.apache.poi.ss.usermodel.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Iterator;
 import java.util.Optional;
 
 @Transactional
-@Service("hpmsExcelReportProcessor")
-public class HPMSExcelReportProcessor implements ExcelReportProcessor {
+@Service("orgStructureReportProcessor")
+public class OrgStructureReportProcessor implements ExcelReportProcessor {
 
     @Autowired
     private SponsorService sponsorService;
@@ -37,7 +36,8 @@ public class HPMSExcelReportProcessor implements ExcelReportProcessor {
                 if (contractNumberCell == null) {
                     continue;
                 }
-                // Contract number can occasionally be a numeric cell, so we need to account for that
+                // Contract number can occasionally be a numeric cell, so we need to account for
+                // that
                 if (contractNumberCell.getCellType() != CellType.STRING) {
                     continue;
                 }
@@ -45,14 +45,16 @@ public class HPMSExcelReportProcessor implements ExcelReportProcessor {
                 if (contractNumber == null) {
                     continue;
                 }
-                if (contractNumber.toUpperCase().startsWith("E") || contractNumber.toUpperCase().startsWith("S")) {
+                if (contractNumber.toUpperCase().startsWith("E") ||
+                        contractNumber.toUpperCase().startsWith("S")) {
                     String sponsorParentName = currentRow.getCell(0).getStringCellValue();
                     Double sponsorParentHpmsId = currentRow.getCell(1).getNumericCellValue();
                     String sponsorName = currentRow.getCell(2).getStringCellValue();
                     Double sponsorHpmsId = currentRow.getCell(3).getNumericCellValue();
                     String contractName = currentRow.getCell(5).getStringCellValue();
 
-                    Optional<Sponsor> parentSponsorOptional = sponsorService.findByHpmsIdAndParent(sponsorParentHpmsId.intValue(), null);
+                    Optional<Sponsor> parentSponsorOptional = sponsorService
+                            .findByHpmsIdAndParent(sponsorParentHpmsId.intValue(), null);
 
                     Sponsor parentSponsor;
                     if (parentSponsorOptional.isPresent()) {
@@ -65,8 +67,9 @@ public class HPMSExcelReportProcessor implements ExcelReportProcessor {
                         sponsorService.saveSponsor(parentSponsor);
                     }
 
-                    Optional<Sponsor> sponsorOptional = sponsorService.findByHpmsIdAndParent(sponsorHpmsId.intValue(),
-                            parentSponsor);
+                    Optional<Sponsor> sponsorOptional =
+                            sponsorService.findByHpmsIdAndParent(sponsorHpmsId.intValue(),
+                                    parentSponsor);
 
                     Sponsor sponsor;
                     if (!sponsorOptional.isPresent()) {
@@ -82,17 +85,12 @@ public class HPMSExcelReportProcessor implements ExcelReportProcessor {
 
                     // Only add the contract if it doesn't already exist
                     if (!sponsor.hasContract(contractNumber)) {
-                        Attestation attestation = new Attestation();
-                        attestation.setSponsor(sponsor);
-
                         Contract contract = new Contract();
-                        contract.getAttestations().add(attestation);
                         contract.setContractName(contractName);
                         contract.setContractNumber(contractNumber);
+                        contract.setSponsor(sponsor);
 
-                        attestation.setContract(contract);
-
-                        sponsor.getAttestations().add(attestation);
+                        sponsor.getContracts().add(contract);
                     }
 
                     sponsorService.saveSponsor(sponsor);
