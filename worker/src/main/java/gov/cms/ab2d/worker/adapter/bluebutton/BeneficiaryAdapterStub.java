@@ -2,11 +2,11 @@ package gov.cms.ab2d.worker.adapter.bluebutton;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import org.springframework.util.Assert;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.time.Month;
 import java.util.Arrays;
 import java.util.List;
@@ -20,8 +20,11 @@ import java.util.stream.Collectors;
 @Component
 public class BeneficiaryAdapterStub implements BeneficiaryAdapter {
 
-    private static final String FAKEFILEPATH = "worker/src/main/resources/test-stub-data/fake-bene-ids.csv";
+//    private static final String FAKEFILEPATH = "worker/src/main/resources/test-stub-data/fake-bene-ids.csv";
+    private static final String FAKEFILEPATH = "/test-stub-data/fake-bene-ids.csv";
+
     private static final String DASH_LINE = "-------------------------------------------------------------------------";
+//    private static final String FAKEFILEPATH = "test-stub-data/fake-bene-ids.csv";
 
 
     @Override
@@ -38,6 +41,7 @@ public class BeneficiaryAdapterStub implements BeneficiaryAdapter {
         log.info(DASH_LINE);
 
         final List<String> sampleTestBenes = readBeneficiariesFromSampleFile();
+//        log.info("Number of rows in test file : {} ", sampleTestBenes.size());
         final List<String> patientsPerContract = sampleTestBenes.subList(startOffset, endOffset);
 
         return toResponse(contractNumber, patientsPerContract);
@@ -66,16 +70,84 @@ public class BeneficiaryAdapterStub implements BeneficiaryAdapter {
         return sno;
     }
 
-    private List<String> readBeneficiariesFromSampleFile() {
-        final Path resourceDirectory = Paths.get(FAKEFILEPATH);
-        final String absolutePath = resourceDirectory.toFile().getAbsolutePath();
+//    private List<String> readBeneficiariesFromSampleFile() {
+//        final Path resourceDirectory = Paths.get(FAKEFILEPATH);
+//        final String absolutePath = resourceDirectory.toFile().getAbsolutePath();
+//
+//        try {
+//            return Files.readAllLines(resourceDirectory);
+//        } catch (IOException e) {
+//            final String errMsg = "Error reading file";
+//            log.error("{} :  {} ", errMsg, absolutePath);
+//            throw new RuntimeException(errMsg + resourceDirectory.getFileName());
+//        }
+//    }
 
-        try {
-            return Files.readAllLines(resourceDirectory);
-        } catch (IOException e) {
-            final String errMsg = String.format("Error reading file :  %s " + absolutePath);
-            throw new RuntimeException(errMsg);
+
+//    private List<String> readBeneficiariesFromSampleFile() {
+//
+//        final URL resource = getClass().getClassLoader().getResource(FAKEFILEPATH);
+//        if (resource == null) {
+//            final String errMsg = "Error reading file : ";
+//            log.error("{} {} ", errMsg, FAKEFILEPATH);
+//            throw new RuntimeException(errMsg + FAKEFILEPATH);
+//        }
+//
+//        Path path = null;
+//        try {
+//            path = Paths.get(resource.toURI());
+//            return Files.readAllLines(path);
+//        } catch (Exception e) {
+//            try {
+//                log.error("resource.toURI() : {}", resource.toURI());
+//                log.error("resource.toURI().getPath : {}", resource.toURI().getPath());
+//                log.error("resource.toURI().getRawPath : {}", resource.toURI().getRawPath());
+//            } catch (URISyntaxException ex) {
+//                ex.printStackTrace();
+//            }
+//            final String errMsg = "Error reading file";
+//            log.error("{} :  {} ", errMsg, path.toAbsolutePath(), e);
+//            throw new RuntimeException(errMsg + FAKEFILEPATH);
+//        }
+//    }
+
+
+    private List<String> readBeneficiariesFromSampleFile() {
+
+        try (InputStream inputStream = this.getClass().getResourceAsStream(FAKEFILEPATH);
+             BufferedReader br =  new BufferedReader(new InputStreamReader(inputStream));
+        ) {
+            Assert.notNull(inputStream, "Could not find and load file :  " + FAKEFILEPATH);
+            return br.lines().collect(Collectors.toList());
+        } catch (Exception ex) {
+            final String errMsg = "Error reading file : ";
+            log.error("{} {} ", errMsg, FAKEFILEPATH, ex);
+            throw new RuntimeException(errMsg + FAKEFILEPATH);
         }
+
+
+//        final URL resource = getClass().getClassLoader().getResource(FAKEFILEPATH);
+//        if (resource == null) {
+//            final String errMsg = "Error reading file : ";
+//            log.error("{} {} ", errMsg, FAKEFILEPATH);
+//            throw new RuntimeException(errMsg + FAKEFILEPATH);
+//        }
+//        Path path = null;
+//        try {
+//            path = Paths.get(resource.toURI());
+//            return Files.readAllLines(path);
+//        } catch (Exception e) {
+//            try {
+//                log.error("resource.toURI() : {}", resource.toURI());
+//                log.error("resource.toURI().getPath : {}", resource.toURI().getPath());
+//                log.error("resource.toURI().getRawPath : {}", resource.toURI().getRawPath());
+//            } catch (URISyntaxException ex) {
+//                ex.printStackTrace();
+//            }
+//            final String errMsg = "Error reading file";
+//            log.error("{} :  {} ", errMsg, path.toAbsolutePath(), e);
+//            throw new RuntimeException(errMsg + FAKEFILEPATH);
+//        }
     }
 
     private GetPatientsByContractResponse toResponse(String contractNumber, List<String> rows) {
