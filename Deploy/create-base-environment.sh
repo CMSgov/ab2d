@@ -823,6 +823,10 @@ echo 'private_subnet_ids = ["'$SUBNET_PRIVATE_1_ID'","'$SUBNET_PRIVATE_2_ID'"]' 
   >> $ENVIRONMENT.auto.tfvars
 echo 'deployment_controller_subnet_ids = ["'$SUBNET_PUBLIC_1_ID'","'$SUBNET_PUBLIC_2_ID'"]' \
   >> $ENVIRONMENT.auto.tfvars
+echo 'ec2_instance_type = "'$EC2_INSTANCE_TYPE'"' \
+  >> $ENVIRONMENT.auto.tfvars
+echo 'linux_user = "'$SSH_USERNAME'"' \
+  >> $ENVIRONMENT.auto.tfvars
 
 #
 # Deploy S3
@@ -867,10 +871,15 @@ terraform apply \
 # Deploy EFS
 #
 
+cd "${START_DIR}"
+cd terraform/environments/ab2d-$CMS_ENV
+
 # Get files system id (if exists)
+
 EFS_FS_ID=$(aws efs describe-file-systems --query="FileSystems[?CreationToken=='ab2d-${CMS_ENV}-efs'].FileSystemId" --output=text)
 
 # Create file system (if doesn't exist)
+
 if [ -z "${EFS_FS_ID}" ]; then
   echo "Creating EFS..."
   terraform apply \
@@ -881,14 +890,34 @@ fi
 # Deploy db
 #
 
+cd "${START_DIR}"
+cd terraform/environments/ab2d-$CMS_ENV
+
+# Get DB instance endpoint (if exists)
+
 DB_ENDPOINT=$(aws --region us-east-1 rds describe-db-instances --query="DBInstances[?DBInstanceIdentifier=='ab2d'].Endpoint.Address" --output=text)
+
+# Create DB instance (if doesn't exist)
+
 if [ -z "${DB_ENDPOINT}" ]; then
-  echo "Creating database..."
+  echo "Creating database instance..."
   terraform apply \
     --var "db_username=${DATABASE_USER}" \
     --var "db_password=${DATABASE_PASSWORD}" \
+    --var "db_name=${DATABASE_NAME}" \
     --target module.db --auto-approve
+  DB_ENDPOINT=$(aws --region us-east-1 rds describe-db-instances --query="DBInstances[?DBInstanceIdentifier=='ab2d'].Endpoint.Address" --output=text)
+  cd "${START_DIR}"
+  rm -f generated/.pgpass
 fi
+
+# Generate ".pgpass" file
+
+cd "${START_DIR}"
+cd terraform/environments/ab2d-$CMS_ENV
+mkdir -p generated
+echo "${DB_ENDPOINT}:5432:postgres:${DATABASE_USER}:${DATABASE_PASSWORD}" > generated/.pgpass
+echo "${DB_ENDPOINT}:5432:${DATABASE_NAME}:${DATABASE_USER}:${DATABASE_PASSWORD}" >> generated/.pgpass
 
 #
 # AMI Generation for application nodes
@@ -985,7 +1014,15 @@ if [ -z "${JENKINS_AMI_ID}" ]; then
   cd packer/jenkins
   IP=$(curl ipinfo.io/ip)
   COMMIT=$(git rev-parse HEAD)
-  packer build --var seed_ami=$SEED_AMI --var vpc_id=$VPC_ID --var subnet_public_1_id=$SUBNET_PUBLIC_1_ID --var my_ip_address=$IP --var git_commit_hash=$COMMIT app.json  2>&1 | tee output.txt
+  packer build \
+	 --var seed_ami=$SEED_AMI \
+	 --var ec2_instance_type=$EC2_INSTANCE_TYPE \
+	 --var vpc_id=$VPC_ID \
+	 --var subnet_public_1_id=$SUBNET_PUBLIC_1_ID \
+	 --var my_ip_address=$IP \
+	 --var ssh_username=$SSH_USERNAME \
+	 --var git_commit_hash=$COMMIT \
+	 app.json  2>&1 | tee output.txt
   JENKINS_AMI_ID=$(cat output.txt | awk 'match($0, /ami-.*/) { print substr($0, RSTART, RLENGTH) }' | tail -1)
   
   # Add name tag to AMI
@@ -1002,4 +1039,6 @@ cd "${START_DIR}"
 ./deploy.sh \
   --environment="${ENVIRONMENT}" \
   --ami="${AMI_ID}" \
+  --ssh-username="${SSH_USERNAME}" \
+  --database-secret-datetime="${DATABASE_SECRET_DATETIME}" \
   --auto-approve
