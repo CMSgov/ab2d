@@ -34,9 +34,9 @@ public class Sponsor {
             fetch = FetchType.EAGER)
     private Set<Contract> contracts = new HashSet<>();
 
-    public boolean hasContract(String contractId) {
+    public boolean hasContract(String contractNum) {
         for (Contract contract : contracts) {
-            if (contractId.equals(contract.getContractId())) {
+            if (contractNum.equals(contract.getContractNumber())) {
                 return true;
             }
         }

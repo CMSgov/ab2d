@@ -64,7 +64,7 @@ public class AttestationReportProcessor implements ExcelReportProcessor {
                     continue;
                 }
 
-                Optional<Contract> contractOptional = contractService.getContractByContractId(contractNumber);
+                Optional<Contract> contractOptional = contractService.getContractByContractNumber(contractNumber);
                 if (contractOptional.isPresent()) {
                     Contract contract = contractOptional.get();
 

@@ -48,7 +48,7 @@ public class SponsorServiceTest {
 
         Contract contract = new Contract();
         contract.setContractName("Health Ins. Agreement");
-        contract.setContractId("S1234");
+        contract.setContractNumber("S1234");
 
         Attestation attestation = new Attestation();
         attestation.setAttestedOn(OffsetDateTime.now());
@@ -78,9 +78,9 @@ public class SponsorServiceTest {
         Attestation updatedAttestation = attestationRepository.save(retrievedAttestation);
         Assert.assertEquals(updatedAttestation.getAttestedOn(), pastDate);
 
-        Optional<Contract> retrievedContractOptional = contractService.getContractByContractId("S1234");
+        Optional<Contract> retrievedContractOptional = contractService.getContractByContractNumber("S1234");
         Contract retrievedContract = retrievedContractOptional.get();
-        Assert.assertEquals(retrievedContract.getContractId(), contract.getContractId());
+        Assert.assertEquals(retrievedContract.getContractNumber(), contract.getContractNumber());
         Assert.assertEquals(retrievedContract.getContractName(), contract.getContractName());
     }
 }

@@ -65,7 +65,7 @@ public class AdminAPITests {
     // There has to be an existing contract in order for this report to be able to process data
     private void createData(String contractId, String contractName, String sponsorName, int hpmsId) {
         Contract contract = new Contract();
-        contract.setContractId(contractId);
+        contract.setContractNumber(contractId);
         contract.setContractName(contractName);
 
         Sponsor sponsor = new Sponsor();
