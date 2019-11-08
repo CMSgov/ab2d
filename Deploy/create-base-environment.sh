@@ -113,7 +113,7 @@ rm -f /var/log/terraform/tf.log
 
 # Configure the directory where ".terraform" directory is maintained
 
-# export TF_DATA_DIR="${START_DIR}/terraform"
+export TF_DATA_DIR="${START_DIR}/terraform/.terraform"
 
 # Destroy tfstate environment in S3, if first run
 

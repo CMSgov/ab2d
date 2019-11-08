@@ -116,7 +116,7 @@ module "worker" {
   gold_disk_name                = var.gold_image_name
   override_task_definition_arn  = var.current_task_definition_arn
   app_sec_group_id              = module.api.application_security_group_id
-  controller_sec_group_id       = module.api.deployment_controller_sec_group_id
+  controller_sec_group_id       = module.controller.deployment_controller_sec_group_id
   loadbalancer_subnet_ids       = var.deployment_controller_subnet_ids
   vpc_cidrs                     = ["10.124.1.0/24"]
   efs_id                        = module.efs.efs_id
@@ -141,7 +141,7 @@ module "lonnie_access_controller" {
   description  = "Lonnie"
   cidr_blocks  = ["152.208.13.223/32"]
   source       = "../../modules/access_controller"
-  sec_group_id = module.api.deployment_controller_sec_group_id
+  sec_group_id = module.controller.deployment_controller_sec_group_id
 }
 
 resource "null_resource" "authorized_keys_file" {
