@@ -8,6 +8,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.*;
 import java.util.Date;
+import java.util.TimeZone;
 
 public class DateUtilTest {
 
@@ -29,5 +30,12 @@ public class DateUtilTest {
         Date dateFromFormatParse = format.parse("2019-10-21");
 
         Assert.assertEquals(dateFromFormatParse, date);
+    }
+
+    @Test
+    public void testGetESTOffset() {
+        String expectedOffset = TimeZone.getTimeZone("America/New_York").inDaylightTime(new Date()) ? "-0400" : "-0500";
+        String offset = DateUtil.getESTOffset();
+        Assert.assertEquals(expectedOffset, offset);
     }
 }

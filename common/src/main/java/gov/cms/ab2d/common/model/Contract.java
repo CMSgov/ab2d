@@ -6,7 +6,7 @@ import lombok.Setter;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
-import java.util.HashSet;
+import java.time.OffsetDateTime;
 import java.util.Set;
 
 @Entity
@@ -24,10 +24,14 @@ public class Contract {
 
     private String contractName;
 
-    @OneToMany(mappedBy = "contract")
-    private Set<Attestation> attestations = new HashSet<>();
+    @ManyToOne
+    @JoinColumn(name = "sponsor_id")
+    @NotNull
+    private Sponsor sponsor;
+
+    @Column(columnDefinition = "TIMESTAMP WITH TIME ZONE")
+    private OffsetDateTime attestedOn;
 
     @ManyToMany(mappedBy = "contracts")
     private Set<Beneficiary> beneficiaries;
-
 }

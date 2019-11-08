@@ -24,15 +24,19 @@ public class Sponsor {
     private String orgName;
     private String legalName;
 
-    @ManyToOne
+    @ManyToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "parent_id")
     private Sponsor parent;
 
-    @OneToMany(mappedBy = "sponsor", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-    private Set<Attestation> attestations = new HashSet<>();
+    @OneToMany(cascade = CascadeType.ALL,
+            mappedBy = "sponsor",
+            orphanRemoval = true,
+            fetch = FetchType.EAGER)
+    private Set<Contract> contracts = new HashSet<>();
 
-    public boolean hasContract(String contractNumber) {
-        for (Attestation attestation : attestations) {
-            if (attestation.getContract().getContractNumber().equals(contractNumber)) {
+    public boolean hasContract(String contractNum) {
+        for (Contract contract : contracts) {
+            if (contractNum.equalsIgnoreCase(contract.getContractNumber())) {
                 return true;
             }
         }

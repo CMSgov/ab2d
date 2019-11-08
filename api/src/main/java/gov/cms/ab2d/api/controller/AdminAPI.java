@@ -18,13 +18,26 @@ import static gov.cms.ab2d.api.util.Constants.API_PREFIX;
 public class AdminAPI {
 
     @Autowired
-    @Qualifier("hpmsExcelReportProcessor")
-    private ExcelReportProcessor hpmsExcelReportProcessor;
+    @Qualifier("orgStructureReportProcessor")
+    private ExcelReportProcessor orgStructureReportProcessor;
+
+    @Autowired
+    @Qualifier("attestationReportProcessor")
+    private ExcelReportProcessor attestationReportProcessor;
 
     @ResponseStatus(value = HttpStatus.ACCEPTED)
     @PostMapping("/uploadOrgStructureReport")
-    public ResponseEntity<Void> uploadHPMSFile(@RequestParam("file") MultipartFile hpmsFile) throws IOException {
-        hpmsExcelReportProcessor.processReport(hpmsFile.getInputStream(), ExcelType.fromFileType(hpmsFile.getOriginalFilename()));
+    public ResponseEntity<Void> uploadOrgStructureReport(@RequestParam("file") MultipartFile hpmsFile) throws IOException {
+        orgStructureReportProcessor.processReport(hpmsFile.getInputStream(), ExcelType.fromFileType(hpmsFile.getOriginalFilename()));
+
+        return new ResponseEntity<>(null, null,
+                HttpStatus.ACCEPTED);
+    }
+
+    @ResponseStatus(value = HttpStatus.ACCEPTED)
+    @PostMapping("/uploadAttestationReport")
+    public ResponseEntity<Void> uploadAttestationReport(@RequestParam("file") MultipartFile hpmsFile) throws IOException {
+        attestationReportProcessor.processReport(hpmsFile.getInputStream(), ExcelType.fromFileType(hpmsFile.getOriginalFilename()));
 
         return new ResponseEntity<>(null, null,
                 HttpStatus.ACCEPTED);

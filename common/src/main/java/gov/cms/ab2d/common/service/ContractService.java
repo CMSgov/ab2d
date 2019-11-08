@@ -7,4 +7,6 @@ import java.util.Optional;
 public interface ContractService {
 
     Optional<Contract> getContractByContractNumber(String contractNumber);
+
+    void updateContract(Contract contract);
 }
