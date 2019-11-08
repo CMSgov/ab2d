@@ -87,7 +87,7 @@ public class OrgStructureReportProcessor implements ExcelReportProcessor {
                         Contract contract = new Contract();
                         contract.setAttestation(attestation);
                         contract.setContractName(contractName);
-                        contract.setContractId(contractNumber);
+                        contract.setContractNumber(contractNumber);
 
                         attestation.setContract(contract);
 

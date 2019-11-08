@@ -19,7 +19,7 @@ public class Contract {
 
     @Column(unique = true)
     @NotNull
-    private String contractId;
+    private String contractNumber;
 
     private String contractName;
 

@@ -44,7 +44,7 @@ public class OrgStructureReportProcessorTests {
     private class SponsorData {
 
         private final Integer parentId;
-        private final Map<String, String> contractIdsToNames;
+        private final Map<String, String> contractNumbersToNames;
         private final String orgName;
     }
 
@@ -93,11 +93,12 @@ public class OrgStructureReportProcessorTests {
             if(sponsor.getParent() != null) {
                 SponsorData sponsorData = sponsorHpmsIdsToData.get(sponsor.getHpmsId());
                 Assert.assertEquals(sponsorData.getParentId(), sponsor.getParent().getHpmsId());
-                Map<String, String> usedContractIdsToNames = new HashMap<>();
-                for(Contract contract : sponsor.getContracts()) {
-                    usedContractIdsToNames.put(contract.getContractId(), contract.getContractName());
+                Map<String, String> usedContractNumbersToNames = new HashMap<>();
+                for(Attestation attestation : sponsor.getAttestations()) {
+                    Contract contract = attestation.getContract();
+                    usedContractNumbersToNames.put(contract.getContractNumber(), contract.getContractName());
                 }
-                Assert.assertEquals(sponsorData.getContractIdsToNames(), usedContractIdsToNames);
+                Assert.assertEquals(sponsorData.getContractNumbersToNames(), usedContractNumbersToNames);
                 Assert.assertEquals(sponsorData.getOrgName(), sponsor.getOrgName());
                 sponsorHpmsIdsToData.remove(sponsor.getHpmsId());
             }

@@ -13,7 +13,7 @@ import static org.junit.Assert.assertEquals;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = SpringBootApp.class)
-@TestPropertySource(locations = "/common-it.properties")
+@TestPropertySource(locations = "/application.common.properties")
 public class UserServiceTest {
 
     @Autowired
