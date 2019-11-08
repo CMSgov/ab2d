@@ -60,5 +60,10 @@ build/
 ### VS Code ###
 .vscode/
 
+### Packer ###
 # Packer output manifest from builds
 **/packer/**/output.txt
+
+### Deploy ###
+# Generated files that shouldn't be checked in
+**/Deploy/**/generated
