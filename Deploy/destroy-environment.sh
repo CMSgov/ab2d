@@ -22,6 +22,11 @@ case $i in
   CMS_ENV=$(echo $ENVIRONMENT | tr '[:upper:]' '[:lower:]')
   shift # past argument=value
   ;;
+  --shared-environment=*)
+  SHARED_ENVIRONMENT="${i#*=}"
+  CMS_SHARED_ENV=$(echo $SHARED_ENVIRONMENT | tr '[:upper:]' '[:lower:]')
+  shift # past argument=value
+  ;;
   --keep-network)
   KEEP_NETWORK="true"
   shift # past argument=value
@@ -38,12 +43,12 @@ done
 #
 
 echo "Check vars are not empty before proceeding..."
-if [ -z "${ENVIRONMENT}" ]; then
+if [ -z "${ENVIRONMENT}" ] || [ -z "${SHARED_ENVIRONMENT}" ]; then
   echo "Try running the script like one of these options:"
-  echo "./destroy-environment.sh --environment=dev"
-  echo "./destroy-environment.sh --environment=dev --keep-ami"
-  echo "./destroy-environment.sh --environment=dev --keep-network"
-  echo "./destroy-environment.sh --environment=dev --keep-ami --keep-network"
+  echo "./destroy-environment.sh --environment=dev --shared-environment=shared"
+  echo "./destroy-environment.sh --environment=dev --shared-environment=shared --keep-ami"
+  echo "./destroy-environment.sh --environment=dev --shared-environment=shared --keep-network"
+  echo "./destroy-environment.sh --environment=dev --shared-environment=shared --keep-ami --keep-network"
   exit 1
 fi
 
@@ -55,10 +60,10 @@ export AWS_PROFILE="${CMS_ENV}"
 
 # Configure the directory where ".terraform" directory is maintained
 
-export TF_DATA_DIR="${START_DIR}/terraform/.terraform"
+# export TF_DATA_DIR="${START_DIR}/terraform/.terraform"
 
 #
-# Change to environment directory
+# Change to target environment directory
 #
 
 cd "${START_DIR}"
@@ -107,10 +112,17 @@ terraform destroy \
   --target module.efs --auto-approve
 
 #
+# Change to shared environment directory
+#
+
+cd "${START_DIR}"
+cd terraform/environments/ab2d-$CMS_SHARED_ENV
+
+#
 # Destroy controller module
 #
 
-echo "Create or update controller..."
+echo "Destroying controller..."
 terraform destroy \
   --target module.controller \
   --auto-approve
