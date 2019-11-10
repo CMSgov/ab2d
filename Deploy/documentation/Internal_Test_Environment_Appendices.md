@@ -31,25 +31,37 @@
    *Example for Dev environment testing within SemanticBits demo environment:*
    
    ```ShellSession
-   $ ./destroy-environment.sh --environment=sbdemo-dev
+   $ ./destroy-environment.sh \
+     --environment=sbdemo-dev \
+     --shared-environment=sbdemo-shared
    ```
 
    *Example to destroy the environment, but preserve the AMIs:*
    
    ```ShellSession
-   $ ./destroy-environment.sh --environment=sbdemo-dev --keep-ami
+   $ ./destroy-environment.sh \
+     --environment=sbdemo-dev \
+     --shared-environment=sbdemo-shared \
+     --keep-ami
    ```
 
    *Example to destroy the environment, but preserve the networking:*
    
    ```ShellSession
-   $ ./destroy-environment.sh --environment=sbdemo-dev --keep-network
+   $ ./destroy-environment.sh \
+     --environment=sbdemo-dev \
+     --shared-environment=sbdemo-shared \
+     --keep-network
    ```
 
    *Example to destroy the environment, but preserve both the AMIs and the networking:*
    
    ```ShellSession
-   $ ./destroy-environment.sh --environment=sbdemo-dev --keep-ami --keep-network
+   $ ./destroy-environment.sh \
+     --environment=sbdemo-dev \
+     --shared-environment=sbdemo-shared \
+     --keep-ami \
+     --keep-network
    ```
 
 1. Destroy the "sbdemo-sbx" environment
@@ -57,25 +69,37 @@
    *Example for Sandbox environment testing within SemanticBits demo environment:*
 
    ```ShellSession
-   $ ./destroy-environment.sh --environment=sbdemo-sbx
+   $ ./destroy-environment.sh \
+     --environment=sbdemo-sbx \
+     --shared-environment=sbdemo-shared
    ```
 
    *Example to destroy the environment, but preserve the AMIs:*
    
    ```ShellSession
-   $ ./destroy-environment.sh --environment=sbdemo-sbx --keep-ami
+   $ ./destroy-environment.sh \
+     --environment=sbdemo-sbx \
+     --shared-environment=sbdemo-shared \
+     --keep-ami
    ```
 
    *Example to destroy the environment, but preserve the networking:*
    
    ```ShellSession
-   $ ./destroy-environment.sh --environment=sbdemo-sbx --keep-network
+   $ ./destroy-environment.sh \
+     --environment=sbdemo-sbx \
+     --shared-environment=sbdemo-shared \
+     --keep-network
    ```
 
    *Example to destroy the environment, but preserve both the AMIs and the networking:*
    
    ```ShellSession
-   $ ./destroy-environment.sh --environment=sbdemo-sbx --keep-ami --keep-network
+   $ ./destroy-environment.sh \
+     --environment=sbdemo-sbx \
+     --shared-environment=sbdemo-shared \
+     --keep-ami \
+     --keep-network
    ```
 
 1. Delete the VPC
