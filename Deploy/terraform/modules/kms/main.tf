@@ -1,7 +1,7 @@
 resource "aws_kms_key" "a" {
-  description = "ab2d-${lower(var.env)}-kms"
+  description = "ab2d-kms"
   tags = {
-    Name = "ab2d-${lower(var.env)}-kms"
+    Name = "ab2d-kms"
   }
   policy =<<EOF
 {
@@ -27,6 +27,6 @@ EOF
 }
 
 resource "aws_kms_alias" "a" {
-  name = "alias/ab2d-${lower(var.env)}-kms"
+  name = "alias/ab2d-kms"
   target_key_id = aws_kms_key.a.key_id
 }

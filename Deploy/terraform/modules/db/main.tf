@@ -23,7 +23,7 @@ resource "aws_db_subnet_group" "subnet_group" {
 }
 
 resource "aws_db_parameter_group" "default" {
-  name = "ab2d-${lower(var.env)}-params"
+  name = var.parameter_group_name
   family = "postgres11"
 
   parameter {

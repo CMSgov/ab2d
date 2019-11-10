@@ -498,7 +498,7 @@
      --ssh-username=centos \
      --seed-ami-product-code=aw0evgkw8e5c1q413zgy5pjce \
      --ec2-instance-type=m5.xlarge \
-     --database-secret-datetime=2019-10-25-14-55-06
+     --database-secret-datetime=2019-10-25-14-55-07
    ```
 
    *Example for Sandbox environment testing within SemanticBits demo environment:*
@@ -511,7 +511,7 @@
      --ssh-username=centos \
      --seed-ami-product-code=aw0evgkw8e5c1q413zgy5pjce \
      --ec2-instance-type=m5.xlarge \
-     --database-secret-datetime=2019-10-25-14-55-06
+     --database-secret-datetime=2019-10-25-14-55-07
    ```
 
 1. If prompted, enter database user at the "Enter desired database_user" prompt

@@ -85,7 +85,7 @@ resource "null_resource" "list-api-instances-script" {
   triggers = {controller_id = aws_instance.deployment_controller.id}
 
   provisioner "local-exec" {
-    command = "scp -i ~/.ssh/${var.ssh_key_name}.pem ${path.cwd}/../../environments/shared/list-api-instances.sh ${var.linux_user}@${aws_eip.deployment_controller.public_ip}:/home/${var.linux_user}"
+    command = "scp -i ~/.ssh/${var.ssh_key_name}.pem ${path.cwd}/../../environments/ab2d-${var.env}/list-api-instances.sh ${var.linux_user}@${aws_eip.deployment_controller.public_ip}:/home/${var.linux_user}"
   }
 
   provisioner "local-exec" {
@@ -126,7 +126,7 @@ resource "null_resource" "ssh_client_config" {
   triggers = {controller_id = aws_instance.deployment_controller.id}
   
   provisioner "local-exec" {
-    command = "scp -i ~/.ssh/${var.ssh_key_name}.pem ../../environments/shared/client_config ${var.linux_user}@${aws_eip.deployment_controller.public_ip}:/home/${var.linux_user}/.ssh/config"
+    command = "scp -i ~/.ssh/${var.ssh_key_name}.pem ../../environments/ab2d-${var.env}/client_config ${var.linux_user}@${aws_eip.deployment_controller.public_ip}:/home/${var.linux_user}/.ssh/config"
   }
 
   provisioner "local-exec" {
@@ -152,7 +152,7 @@ resource "null_resource" "pgpass" {
   triggers = {controller_id = aws_instance.deployment_controller.id}
   
   provisioner "local-exec" {
-    command = "scp -i ~/.ssh/${var.ssh_key_name}.pem ../../environments/shared/generated/.pgpass ${var.linux_user}@${aws_eip.deployment_controller.public_ip}:/home/${var.linux_user}/.pgpass"
+    command = "scp -i ~/.ssh/${var.ssh_key_name}.pem ../../environments/ab2d-${var.env}/generated/.pgpass ${var.linux_user}@${aws_eip.deployment_controller.public_ip}:/home/${var.linux_user}/.pgpass"
   }
 
   provisioner "local-exec" {

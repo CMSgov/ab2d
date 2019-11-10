@@ -30,6 +30,7 @@ module "db" {
   instance_class          = var.db_instance_class
   snapshot_id             = var.db_snapshot_id
   subnet_group_name       = var.db_subnet_group_name
+  parameter_group_name    = var.db_parameter_group_name
   backup_retention_period = var.db_backup_retention_period
   backup_window           = var.db_backup_window
   copy_tags_to_snapshot   = var.db_copy_tags_to_snapshot
@@ -37,7 +38,6 @@ module "db" {
   kms_key_id              = module.kms.arn
   maintenance_window      = var.db_maintenance_window
   vpc_id                  = var.vpc_id
-  env                     = var.env
   db_instance_subnet_ids  = var.private_subnet_ids
   identifier              = var.db_identifier
   multi_az                = var.db_multi_az
@@ -62,6 +62,7 @@ module "s3" {
 # LSH SKIP FOR NOW END
 module "controller" {
   source                = "../../modules/controller"
+  env                   = var.env
   vpc_id                = var.vpc_id
   controller_subnet_ids = var.deployment_controller_subnet_ids
   ami_id                = var.ami_id

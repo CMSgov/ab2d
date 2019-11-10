@@ -1,3 +1,4 @@
+variable "env" {}
 variable "vpc_id" {}
 variable "controller_subnet_ids" {}
 variable "ami_id" {}

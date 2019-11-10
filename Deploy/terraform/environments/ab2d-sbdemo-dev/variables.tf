@@ -126,7 +126,11 @@ variable "db_skip_final_snapshot" {
 }
 
 variable "db_subnet_group_name" {
-  default = "ab2d-sbdemo-dev-rdssubnetgroup"
+  default = "ab2d-rds-subnet-group"
+}
+
+variable "db_parameter_group_name" {
+  default = "ab2d-rds-parameter-group"
 }
 
 variable "db_backup_retention_period" {

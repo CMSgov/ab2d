@@ -1,3 +1,20 @@
+# LSH SKIP FOR NOW BEGIN
+# vpn-private-sec-group-id      = var.vpn-private-sec-group-id
+# enterprise-tools-sec-group-id = var.enterprise-tools-sec-group-id
+# LSH SKIP FOR NOW END
+module "controller" {
+  source                = "../../modules/controller"
+  env                   = var.env
+  vpc_id                = var.vpc_id
+  controller_subnet_ids = var.controller_subnet_ids
+  ami_id                = var.ami_id
+  instance_type         = var.instance_type
+  linux_user            = var.linux_user
+  ssh_key_name          = var.ssh_key_name
+  iam_instance_profile  = var.iam_instance_profile
+  gold_disk_name        = var.gold_disk_name
+}
+
 resource "aws_security_group" "worker" {
   name        = "ab2d-${lower(var.env)}-worker-sg"
   description = "Worker security group"

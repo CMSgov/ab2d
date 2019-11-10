@@ -70,6 +70,7 @@ fi
 # Set environment
 #
 
+export AWS_PROFILE="${CMS_SHARED_ENV}"
 export DEBUG_LEVEL="WARN"
 
 # Verify that VPC ID exists
@@ -155,8 +156,6 @@ cd terraform/environments/ab2d-$CMS_ENV
 terraform init
 terraform validate
 
-exit
-
 #
 # Deploy or enable KMS
 #
@@ -180,7 +179,7 @@ fi
 # Get KMS key id
 
 KMS_KEY_ID=$(aws kms list-aliases \
-  --query="Aliases[?AliasName=='alias/ab2d-$CMS_ENV-kms'].TargetKeyId" \
+  --query="Aliases[?AliasName=='alias/ab2d-kms'].TargetKeyId" \
   --output text)
 
 #
@@ -249,7 +248,7 @@ cd "${START_DIR}"
 cd python3
 
 SUBNET_PUBLIC_1_ID=$(aws ec2 describe-subnets \
-  --filters "Name=tag:Name,Values=ab2d-$CMS_ENV-public-subnet-01" \
+  --filters "Name=tag:Name,Values=ab2d-public-subnet-01" \
   --query "Subnets[*].SubnetId" \
   --output text)
 
@@ -275,7 +274,7 @@ if [ -z "${SUBNET_PUBLIC_1_ID}" ]; then
 
   aws ec2 create-tags \
     --resources $SUBNET_PUBLIC_1_ID \
-    --tags "Key=Name,Value=ab2d-$CMS_ENV-public-subnet-01" \
+    --tags "Key=Name,Value=ab2d-public-subnet-01" \
     --region us-east-1
 
 fi
@@ -288,7 +287,7 @@ cd "${START_DIR}"
 cd python3
 
 SUBNET_PUBLIC_2_ID=$(aws ec2 describe-subnets \
-  --filters "Name=tag:Name,Values=ab2d-$CMS_ENV-public-subnet-02" \
+  --filters "Name=tag:Name,Values=ab2d-public-subnet-02" \
   --query "Subnets[*].SubnetId" \
   --output text)
 
@@ -314,7 +313,7 @@ if [ -z "${SUBNET_PUBLIC_2_ID}" ]; then
 
   aws ec2 create-tags \
     --resources $SUBNET_PUBLIC_2_ID \
-    --tags "Key=Name,Value=ab2d-$CMS_ENV-public-subnet-02" \
+    --tags "Key=Name,Value=ab2d-public-subnet-02" \
     --region us-east-1
 
 fi
@@ -970,16 +969,28 @@ fi
 cd "${START_DIR}"
 cd terraform/environments/ab2d-$CMS_SHARED_ENV
 
-echo 'vpc_id = "'$VPC_ID'"' \
-  > $ENVIRONMENT.auto.tfvars
-echo 'deployment_controller_subnet_ids = ["'$SUBNET_PUBLIC_1_ID'","'$SUBNET_PUBLIC_2_ID'"]' \
-  >> $ENVIRONMENT.auto.tfvars
-echo 'ec2_instance_type = "'$EC2_INSTANCE_TYPE'"' \
-  >> $ENVIRONMENT.auto.tfvars
-echo 'linux_user = "'$SSH_USERNAME'"' \
-  >> $ENVIRONMENT.auto.tfvars
-echo 'ami_id = "'$AMI_ID'"' \
-  >> $ENVIRONMENT.auto.tfvars
+DB_ENDPOINT=$(aws --region us-east-1 rds describe-db-instances --query="DBInstances[?DBInstanceIdentifier=='ab2d'].Endpoint.Address" --output=text)
+
+if [ -z "${DB_ENDPOINT}" ]; then
+  echo 'vpc_id = "'$VPC_ID'"' \
+    > $CMS_SHARED_ENV.auto.tfvars
+  echo 'private_subnet_ids = ["'$SUBNET_PRIVATE_1_ID'","'$SUBNET_PRIVATE_2_ID'"]' \
+    >> $CMS_SHARED_ENV.auto.tfvars
+  echo 'deployment_controller_subnet_ids = ["'$SUBNET_PUBLIC_1_ID'","'$SUBNET_PUBLIC_2_ID'"]' \
+    >> $CMS_SHARED_ENV.auto.tfvars
+  echo 'ec2_instance_type = "'$EC2_INSTANCE_TYPE'"' \
+    >> $CMS_SHARED_ENV.auto.tfvars
+  echo 'linux_user = "'$SSH_USERNAME'"' \
+    >> $CMS_SHARED_ENV.auto.tfvars
+  echo 'ami_id = "'$AMI_ID'"' \
+    >> $CMS_SHARED_ENV.auto.tfvars
+else
+  echo "*** TO DO ***"
+  echo "1. create a shared auto.tfvars file that adds all private subnets"
+  echo "2. get rid of this to do section and get rid of the exit that stops execution"
+  echo "NOTE: this should allow for the successful modification of a database so that it has all private subnets"
+  exit
+fi
 
 # Create ".auto.tfvars" file for the target environment
 
@@ -987,15 +998,15 @@ cd "${START_DIR}"
 cd terraform/environments/ab2d-$CMS_ENV
 
 echo 'vpc_id = "'$VPC_ID'"' \
-  > $ENVIRONMENT.auto.tfvars
+  > $CMS_ENV.auto.tfvars
 echo 'private_subnet_ids = ["'$SUBNET_PRIVATE_1_ID'","'$SUBNET_PRIVATE_2_ID'"]' \
-  >> $ENVIRONMENT.auto.tfvars
+  >> $CMS_ENV.auto.tfvars
 echo 'deployment_controller_subnet_ids = ["'$SUBNET_PUBLIC_1_ID'","'$SUBNET_PUBLIC_2_ID'"]' \
-  >> $ENVIRONMENT.auto.tfvars
+  >> $CMS_ENV.auto.tfvars
 echo 'ec2_instance_type = "'$EC2_INSTANCE_TYPE'"' \
-  >> $ENVIRONMENT.auto.tfvars
+  >> $CMS_ENV.auto.tfvars
 echo 'linux_user = "'$SSH_USERNAME'"' \
-  >> $ENVIRONMENT.auto.tfvars
+  >> $CMS_ENV.auto.tfvars
 
 ##########################
 # Deploy shared components
@@ -1009,16 +1020,6 @@ export AWS_PROFILE="${CMS_SHARED_ENV}"
 
 cd "${START_DIR}"
 cd terraform/environments/ab2d-$CMS_SHARED_ENV
-
-#
-# Deploy controller
-#
-
-terraform apply \
-  --var "db_username=${DATABASE_USER}" \
-  --var "db_password=${DATABASE_PASSWORD}" \
-  --var "db_name=${DATABASE_NAME}" \
-  --target module.controller
 
 #
 # Deploy S3
@@ -1057,38 +1058,49 @@ cd "${START_DIR}"
 cd terraform/environments/ab2d-$CMS_SHARED_ENV
 
 terraform apply \
-  --target module.s3 --auto-approve
+  --target module.s3 \
+  --auto-approve
 
 #
 # Deploy db
 #
 
-# Get DB instance endpoint (if exists)
-
-DB_ENDPOINT=$(aws --region us-east-1 rds describe-db-instances --query="DBInstances[?DBInstanceIdentifier=='ab2d'].Endpoint.Address" --output=text)
+echo "Create or update database instance..."
 
 # Create DB instance (if doesn't exist)
 
-if [ -z "${DB_ENDPOINT}" ]; then
-  echo "Creating database instance..."
-  terraform apply \
-    --var "db_username=${DATABASE_USER}" \
-    --var "db_password=${DATABASE_PASSWORD}" \
-    --var "db_name=${DATABASE_NAME}" \
-    --target module.db --auto-approve
-  DB_ENDPOINT=$(aws --region us-east-1 rds describe-db-instances --query="DBInstances[?DBInstanceIdentifier=='ab2d'].Endpoint.Address" --output=text)
-  cd "${START_DIR}"
-  cd terraform/environments/shared
-  rm -f generated/.pgpass
-fi
+terraform apply \
+  --var "db_username=${DATABASE_USER}" \
+  --var "db_password=${DATABASE_PASSWORD}" \
+  --var "db_name=${DATABASE_NAME}" \
+  --target module.db --auto-approve
+DB_ENDPOINT=$(aws --region us-east-1 rds describe-db-instances --query="DBInstances[?DBInstanceIdentifier=='ab2d'].Endpoint.Address" --output=text)
+cd "${START_DIR}"
+cd terraform/environments/ab2d-$CMS_SHARED_ENV
+rm -f generated/.pgpass
 
 # Generate ".pgpass" file
 
 cd "${START_DIR}"
-cd terraform/environments/shared
+cd terraform/environments/ab2d-$CMS_SHARED_ENV
 mkdir -p generated
 echo "${DB_ENDPOINT}:5432:postgres:${DATABASE_USER}:${DATABASE_PASSWORD}" > generated/.pgpass
 echo "${DB_ENDPOINT}:5432:${DATABASE_NAME}:${DATABASE_USER}:${DATABASE_PASSWORD}" >> generated/.pgpass
+
+#
+# Deploy controller
+#
+
+echo "Create or update controller..."
+
+terraform apply \
+  --var "db_username=${DATABASE_USER}" \
+  --var "db_password=${DATABASE_PASSWORD}" \
+  --var "db_name=${DATABASE_NAME}" \
+  --target module.controller \
+  --auto-approve
+
+exit
 
 ######################################
 # Deploy target environment components
