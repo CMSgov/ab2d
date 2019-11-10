@@ -98,18 +98,30 @@ terraform destroy \
   --target module.api --auto-approve
 
 #
-# Destroy db and efs modules
+# Destroy efs module
 #
-
-# Destroy the environment of the "db" module
-echo "Destroying DB components..."
-terraform destroy \
-  --target module.db --auto-approve
 
 # Destroy the environment of the "efs" module
 echo "Destroying EFS components..."
 terraform destroy \
   --target module.efs --auto-approve
+
+#
+# Destroy controller module
+#
+
+echo "Create or update controller..."
+terraform apply \
+  --target module.controller \
+  --auto-approve
+
+#
+# Destroy db module
+#
+
+echo "Destroying DB components..."
+terraform destroy \
+  --target module.db --auto-approve
 
 #
 # Destroy all S3 buckets except for the "ab2d-automation" bucket
