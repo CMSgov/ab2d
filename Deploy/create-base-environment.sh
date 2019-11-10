@@ -112,10 +112,6 @@ export TF_LOG=$DEBUG_LEVEL
 export TF_LOG_PATH=/var/log/terraform/tf.log
 rm -f /var/log/terraform/tf.log
 
-# Configure the directory where ".terraform" directory is maintained
-
-# export TF_DATA_DIR="${START_DIR}/terraform/.terraform"
-
 #
 # Destroy terraform state information (if first run)
 #

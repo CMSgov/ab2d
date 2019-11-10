@@ -58,10 +58,6 @@ fi
 
 export AWS_PROFILE="${CMS_ENV}"
 
-# Configure the directory where ".terraform" directory is maintained
-
-# export TF_DATA_DIR="${START_DIR}/terraform/.terraform"
-
 #
 # Change to target environment directory
 #
