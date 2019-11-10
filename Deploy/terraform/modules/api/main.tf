@@ -1,28 +1,31 @@
-# LSH SKIP FOR NOW BEGIN
-# vpn-private-sec-group-id      = var.vpn-private-sec-group-id
-# enterprise-tools-sec-group-id = var.enterprise-tools-sec-group-id
-# LSH SKIP FOR NOW END
-module "controller" {
-  source                = "../../modules/controller"
-  env                   = var.env
-  vpc_id                = var.vpc_id
-  controller_subnet_ids = var.controller_subnet_ids
-  ami_id                = var.ami_id
-  instance_type         = var.instance_type
-  linux_user            = var.linux_user
-  ssh_key_name          = var.ssh_key_name
-  iam_instance_profile  = var.iam_instance_profile
-  gold_disk_name        = var.gold_disk_name
-}
+#
+# TEMPORARILY COMMENTED OUT BEGIN
+#
 
-# BEGIN MOVED TO CONTROLLER MODULE
+# # LSH SKIP FOR NOW BEGIN
+# # vpn-private-sec-group-id      = var.vpn-private-sec-group-id
+# # enterprise-tools-sec-group-id = var.enterprise-tools-sec-group-id
+# # LSH SKIP FOR NOW END
+# module "controller" {
+#   source                = "../../modules/controller"
+#   env                   = var.env
+#   vpc_id                = var.vpc_id
+#   controller_subnet_ids = var.controller_subnet_ids
+#   db_sec_group_id       = module.db.aws_security_group_sg_database_id
+#   ami_id                = var.ami_id
+#   instance_type         = var.instance_type
+#   linux_user            = var.linux_user
+#   ssh_key_name          = var.ssh_key_name
+#   iam_instance_profile  = var.iam_instance_profile
+#   gold_disk_name        = var.gold_disk_name
+# }
 
-# resource "aws_security_group" "deployment_controller" {
-#   name        = "ab2d-${lower(var.env)}-deployment-controller-sg"
-#   description = "Deployment Controller"
+# resource "aws_security_group" "api" {
+#   name        = "ab2d-${lower(var.env)}-api-sg"
+#   description = "API security group"
 #   vpc_id      = var.vpc_id
 #   tags = {
-#     Name = "ab2d-${lower(var.env)}-deployment-controller-sg"
+#     Name = "ab2d-${lower(var.env)}-api-sg"
 #   }
 # }
 
@@ -33,289 +36,96 @@ module "controller" {
 #   to_port     = "-1"
 #   protocol    = "-1"
 #   source_security_group_id = aws_security_group.api.id
-#   security_group_id = aws_security_group.deployment_controller.id
+#   security_group_id = module.controller.deployment_controller_sec_group_id
 # }
 
-# # *** TO DO ***: eliminate this after VPN access is setup
-# resource "aws_security_group_rule" "whitelist_lonnie" {
+# resource "aws_security_group_rule" "host_port" {
 #   type        = "ingress"
-#   description = "Whitelist Lonnie"
-#   from_port   = "22"
-#   to_port     = "22"
-#   protocol    = "TCP"
-#   cidr_blocks = ["152.208.13.223/32"]
-#   security_group_id = aws_security_group.deployment_controller.id
+#   description = "Host Port"
+#   from_port   = var.host_port
+#   to_port     = var.host_port
+#   protocol    = "tcp"
+#   source_security_group_id = aws_security_group.api.id
+#   security_group_id = aws_security_group.api.id
 # }
 
-# resource "aws_security_group_rule" "egress_controller" {
+# resource "aws_security_group_rule" "controller_access" {
+#   type        = "ingress"
+#   description = "Controller Access"
+#   from_port   = "-1"
+#   to_port     = "-1"
+#   protocol    = "-1"
+#   source_security_group_id = module.controller.deployment_controller_sec_group_id
+#   security_group_id = aws_security_group.api.id
+# }
+
+# # LSH SKIP FOR NOW BEGIN
+# # resource "aws_security_group_rule" "vpn_http" {
+# #   type        = "ingress"
+# #   description = "VPN Access"
+# #   from_port   = var.host_port
+# #   to_port     = var.host_port
+# #   protocol    = "tcp"
+# #   cidr_blocks = ["10.252.0.0/16", "10.232.32.0/19", "10.251.0.0/16", "52.20.26.200/32", "34.196.35.156/32"]
+# #   security_group_id = aws_security_group.api.id
+# # }
+# # LSH SKIP FOR NOW END
+
+# # LSH SKIP FOR NOW BEGIN
+# # resource "aws_security_group_rule" "vpn_https" {
+# #   type        = "ingress"
+# #   description = "VPN Access"
+# #   from_port   = "443"
+# #   to_port     = "443"
+# #   protocol    = "tcp"
+# #   cidr_blocks = ["10.252.0.0/16", "10.232.32.0/19", "10.251.0.0/16", "52.20.26.200/32", "34.196.35.156/32"]
+# #   security_group_id = aws_security_group.api.id
+# # }
+# # LSH SKIP FOR NOW END
+
+# # LSH SKIP FOR NOW BEGIN
+# # resource "aws_security_group_rule" "kong_http" {
+# #   type        = "ingress"
+# #   description = "Kong"
+# #   from_port   = var.host_port
+# #   to_port     = var.host_port
+# #   protocol    = "tcp"
+# #   cidr_blocks = ["34.204.33.165/32","34.226.82.144/32","34.200.65.22/32","34.227.6.19/32"]
+# #   security_group_id = aws_security_group.api.id
+# # }
+# # LSH SKIP FOR NOW END
+
+# # LSH SKIP FOR NOW BEGIN
+# # resource "aws_security_group_rule" "kong_https" {
+# #   type        = "ingress"
+# #   description = "Kong"
+# #   from_port   = "443"
+# #   to_port     = "443"
+# #   protocol    = "tcp"
+# #   cidr_blocks = ["34.204.33.165/32","34.226.82.144/32","34.200.65.22/32","34.227.6.19/32"]
+# #   security_group_id = aws_security_group.api.id
+# # }
+# # LSH SKIP FOR NOW END
+
+# resource "aws_security_group_rule" "egress_api" {
 #   type        = "egress"
 #   description = "Allow all egress"
 #   from_port   = "0"
 #   to_port     = "0"
 #   protocol    = "-1"
 #   cidr_blocks = ["0.0.0.0/0"]
-#   security_group_id = aws_security_group.deployment_controller.id
-# }
-
-# END MOVED TO CONTROLLER MODULE
-
-resource "aws_security_group" "api" {
-  name        = "ab2d-${lower(var.env)}-api-sg"
-  description = "API security group"
-  vpc_id      = var.vpc_id
-  tags = {
-    Name = "ab2d-${lower(var.env)}-api-sg"
-  }
-}
-
-resource "aws_security_group_rule" "node_access" {
-  type        = "ingress"
-  description = "Node Access"
-  from_port   = "-1"
-  to_port     = "-1"
-  protocol    = "-1"
-  source_security_group_id = aws_security_group.api.id
-  security_group_id = module.controller.deployment_controller_sec_group_id
-}
-
-resource "aws_security_group_rule" "host_port" {
-  type        = "ingress"
-  description = "Host Port"
-  from_port   = var.host_port
-  to_port     = var.host_port
-  protocol    = "tcp"
-  source_security_group_id = aws_security_group.api.id
-  security_group_id = aws_security_group.api.id
-}
-
-resource "aws_security_group_rule" "controller_access" {
-  type        = "ingress"
-  description = "Controller Access"
-  from_port   = "-1"
-  to_port     = "-1"
-  protocol    = "-1"
-  source_security_group_id = module.controller.deployment_controller_sec_group_id
-  security_group_id = aws_security_group.api.id
-}
-
-# LSH SKIP FOR NOW BEGIN
-# resource "aws_security_group_rule" "vpn_http" {
-#   type        = "ingress"
-#   description = "VPN Access"
-#   from_port   = var.host_port
-#   to_port     = var.host_port
-#   protocol    = "tcp"
-#   cidr_blocks = ["10.252.0.0/16", "10.232.32.0/19", "10.251.0.0/16", "52.20.26.200/32", "34.196.35.156/32"]
 #   security_group_id = aws_security_group.api.id
 # }
-# LSH SKIP FOR NOW END
 
-# LSH SKIP FOR NOW BEGIN
-# resource "aws_security_group_rule" "vpn_https" {
+# resource "aws_security_group_rule" "db_access_api" {
 #   type        = "ingress"
-#   description = "VPN Access"
-#   from_port   = "443"
-#   to_port     = "443"
+#   description = "App connections"
+#   from_port   = "5432"
+#   to_port     = "5432"
 #   protocol    = "tcp"
-#   cidr_blocks = ["10.252.0.0/16", "10.232.32.0/19", "10.251.0.0/16", "52.20.26.200/32", "34.196.35.156/32"]
-#   security_group_id = aws_security_group.api.id
+#   source_security_group_id = aws_security_group.api.id
+#   security_group_id = var.db_sec_group_id
 # }
-# LSH SKIP FOR NOW END
-
-# LSH SKIP FOR NOW BEGIN
-# resource "aws_security_group_rule" "kong_http" {
-#   type        = "ingress"
-#   description = "Kong"
-#   from_port   = var.host_port
-#   to_port     = var.host_port
-#   protocol    = "tcp"
-#   cidr_blocks = ["34.204.33.165/32","34.226.82.144/32","34.200.65.22/32","34.227.6.19/32"]
-#   security_group_id = aws_security_group.api.id
-# }
-# LSH SKIP FOR NOW END
-
-# LSH SKIP FOR NOW BEGIN
-# resource "aws_security_group_rule" "kong_https" {
-#   type        = "ingress"
-#   description = "Kong"
-#   from_port   = "443"
-#   to_port     = "443"
-#   protocol    = "tcp"
-#   cidr_blocks = ["34.204.33.165/32","34.226.82.144/32","34.200.65.22/32","34.227.6.19/32"]
-#   security_group_id = aws_security_group.api.id
-# }
-# LSH SKIP FOR NOW END
-
-resource "aws_security_group_rule" "egress_api" {
-  type        = "egress"
-  description = "Allow all egress"
-  from_port   = "0"
-  to_port     = "0"
-  protocol    = "-1"
-  cidr_blocks = ["0.0.0.0/0"]
-  security_group_id = aws_security_group.api.id
-}
-
-resource "aws_security_group_rule" "db_access_api" {
-  type        = "ingress"
-  description = "App connections"
-  from_port   = "5432"
-  to_port     = "5432"
-  protocol    = "tcp"
-  source_security_group_id = aws_security_group.api.id
-  security_group_id = var.db_sec_group_id
-}
-
-resource "aws_security_group_rule" "db_access_from_controller" {
-  type        = "ingress"
-  description = "Deployment Controller"
-  from_port   = "5432"
-  to_port     = "5432"
-  protocol    = "tcp"
-  source_security_group_id = module.controller.deployment_controller_sec_group_id
-  security_group_id = var.db_sec_group_id
-}
-
-# BEGIN MOVED TO CONTROLLER MODULE
-
-# resource "random_shuffle" "public_subnets" {
-#   input = var.controller_subnet_ids
-#   result_count = 1
-# }
-
-# # LSH SKIP FOR NOW BEGIN
-# # vpc_security_group_ids = [module.controller.deployment_controller_sec_group_id,var.enterprise-tools-sec-group-id,var.vpn-private-sec-group-id]
-# # LSH SKIP FOR NOW END
-# resource "aws_instance" "deployment_controller" {
-#   ami = var.ami_id
-#   instance_type = var.instance_type
-#   vpc_security_group_ids = [module.controller.deployment_controller_sec_group_id]
-#   disable_api_termination = false
-#   key_name = var.ssh_key_name
-#   monitoring = true
-#   subnet_id = random_shuffle.public_subnets.result[0]
-#   associate_public_ip_address = true
-#   iam_instance_profile = var.iam_instance_profile
-  
-#   tags = {
-#     Name = "ab2d-${lower(var.env)}-deployment-controller"
-#     application = "ab2d"
-#     stack = "${lower(var.env)}"
-#     purpose = "ECS container instance"
-#     sensitivity = "Public"
-#     maintainer = "lonnie.hanekamp@semanticbits.com"
-#     cpm_backup = "NoBackup"
-#     purchase_type = "On-Demand"
-#     os_license = "Red Hat Enterprise Linux"
-#     gold_disk_name = var.gold_disk_name
-#     business = "CMS"
-#   }
-
-# }
-
-# resource "aws_eip" "deployment_controller" {
-#   instance = aws_instance.deployment_controller.id
-#   vpc = true
-# }
-
-# resource "null_resource" "wait" {
-
-#   depends_on = ["aws_instance.deployment_controller","aws_eip.deployment_controller"]
-#   triggers = {controller_id = aws_instance.deployment_controller.id}
-
-#   provisioner "local-exec" {
-#     command = "sleep 120"
-#   }
-  
-# }
-
-# resource "null_resource" "list-api-instances-script" {
-
-#   depends_on = ["null_resource.wait"]
-#   triggers = {controller_id = aws_instance.deployment_controller.id}
-
-#   provisioner "local-exec" {
-#     command = "scp -i ~/.ssh/${var.ssh_key_name}.pem ${path.cwd}/../../environments/ab2d-${lower(var.env)}/list-api-instances.sh ${var.linux_user}@${module.controller.deployment_controller_public_ip}:/home/${var.linux_user}"
-#   }
-
-#   provisioner "local-exec" {
-#     command = "ssh -i ~/.ssh/${var.ssh_key_name}.pem ${var.linux_user}@${module.controller.deployment_controller_public_ip} 'chmod +x /home/${var.linux_user}/list-api-instances.sh'"
-#   }
-  
-# }
-
-# resource "null_resource" "set-hostname" {
-
-#   depends_on = ["null_resource.wait"]
-#   triggers = {controller_id = aws_instance.deployment_controller.id}
-
-#   provisioner "local-exec" {
-#     command = "ssh -tt -i ~/.ssh/${var.ssh_key_name}.pem ${var.linux_user}@${module.controller.deployment_controller_public_ip} 'echo \"ab2d-${lower(var.env)}\" > /tmp/hostname && sudo mv /tmp/hostname /etc/hostname && sudo hostname \"ab2d-${lower(var.env)}\"'"
-#   }
-  
-# }
-
-# resource "null_resource" "deployment_contoller_private_key" {
-
-#   depends_on = ["null_resource.wait"]
-#   triggers = {controller_id = aws_instance.deployment_controller.id}
-  
-#   provisioner "local-exec" {
-#     command = "scp -i ~/.ssh/${var.ssh_key_name}.pem ~/.ssh/${var.ssh_key_name}.pem ${var.linux_user}@${module.controller.deployment_controller_public_ip}:/tmp/id.rsa"
-#   }
-
-#   provisioner "local-exec" {
-#     command = "ssh -i ~/.ssh/${var.ssh_key_name}.pem ${var.linux_user}@${module.controller.deployment_controller_public_ip} 'chmod 600 /tmp/id.rsa && mv /tmp/id.rsa ~/.ssh/'"
-#   }
-  
-# }
-
-# resource "null_resource" "ssh_client_config" {
-
-#   depends_on = ["null_resource.wait"]
-#   triggers = {controller_id = aws_instance.deployment_controller.id}
-  
-#   provisioner "local-exec" {
-#     command = "scp -i ~/.ssh/${var.ssh_key_name}.pem ../../environments/ab2d-${lower(var.env)}/client_config ${var.linux_user}@${module.controller.deployment_controller_public_ip}:/home/${var.linux_user}/.ssh/config"
-#   }
-
-#   provisioner "local-exec" {
-#     command = "ssh -i ~/.ssh/${var.ssh_key_name}.pem ${var.linux_user}@${module.controller.deployment_controller_public_ip} 'chmod 640 /home/${var.linux_user}/.ssh/config'"
-#   }
-  
-# }
-
-# resource "null_resource" "remove_docker_from_controller" {
-
-#   depends_on = ["null_resource.wait"]
-#   triggers = {controller_id = aws_instance.deployment_controller.id}
-  
-#   provisioner "local-exec" {
-#     command = "ssh -tt -i ~/.ssh/${var.ssh_key_name}.pem ${var.linux_user}@${module.controller.deployment_controller_public_ip} 'sudo yum -y remove docker-ce-*'"
-#   }
-  
-# }
-
-# resource "null_resource" "pgpass" {
-
-#   depends_on = ["null_resource.wait"]
-#   triggers = {controller_id = aws_instance.deployment_controller.id}
-  
-#   provisioner "local-exec" {
-#     command = "scp -i ~/.ssh/${var.ssh_key_name}.pem ../../environments/ab2d-${lower(var.env)}/generated/.pgpass ${var.linux_user}@${module.controller.deployment_controller_public_ip}:/home/${var.linux_user}/.pgpass"
-#   }
-
-#   provisioner "local-exec" {
-#     command = "ssh -i ~/.ssh/${var.ssh_key_name}.pem ${var.linux_user}@${module.controller.deployment_controller_public_ip} 'chmod 600 /home/${var.linux_user}/.pgpass'"
-#   }
-
-# }
-
-# END MOVED TO CONTROLLER MODULE
-
-#
-# TEMPORARILY COMMENTED OUT BEGIN
-#
 
 # resource "aws_ecs_cluster" "ab2d" {
 #   name = "ab2d-${lower(var.env)}"

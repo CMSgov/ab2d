@@ -106,6 +106,16 @@
 
 1. Create keypair
 
+   *Example for controllers within SemanticBits demo environment:*
+
+   ```ShellSession
+   $ aws --region us-east-1 ec2 create-key-pair \
+     --key-name ab2d-sbdemo-shared \
+     --query 'KeyMaterial' \
+     --output text \
+     > ~/.ssh/ab2d-sbdemo-shared.pem
+   ```
+
    *Example for Dev environment testing within SemanticBits demo environment:*
 
    ```ShellSession

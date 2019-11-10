@@ -114,15 +114,21 @@ rm -f /var/log/terraform/tf.log
 
 # Configure the directory where ".terraform" directory is maintained
 
-export TF_DATA_DIR="${START_DIR}/terraform/.terraform"
+# export TF_DATA_DIR="${START_DIR}/terraform/.terraform"
 
-# Destroy tfstate environment in S3, if first run
+#
+# Destroy terraform state information (if first run)
+#
 
-if [ -z "${KMS_KEY_ID}" ] || [ "${KMS_KEY_STATE}" == "Disabled" ]; then
-  aws s3 rm s3://ab2d-automation \
-    --recursive
-  rm -rf .terraform
-fi
+# *** TO DO ***: Need to ensure that this only occurs when there are no existing environments
+
+# cd "${START_DIR}"
+# cd terraform
+# if [ -z "${NO_EXISTING_ENVIRONMENT}" ]; then
+#   aws s3 rm s3://ab2d-automation \
+#     --recursive
+#   rm -rf .terraform
+# fi
 
 #
 # Initialize and validate terraform
@@ -445,7 +451,7 @@ fi
 #
 
 IGW_ROUTE_TABLE_ID=$(aws ec2 describe-route-tables \
-  --filters "Name=tag:Name,Values=ab2d-$CMS_ENV-igw-rt" \
+  --filters "Name=tag:Name,Values=ab2d-igw-rt" \
   --query "RouteTables[*].RouteTableId" \
   --output text)
 
@@ -461,7 +467,7 @@ if [ -z "${IGW_ROUTE_TABLE_ID}" ]; then
   
   aws ec2 create-tags \
     --resources $IGW_ROUTE_TABLE_ID \
-    --tags "Key=Name,Value=ab2d-$CMS_ENV-igw-rt" \
+    --tags "Key=Name,Value=ab2d-igw-rt" \
     --region us-east-1
   
 fi
@@ -469,7 +475,7 @@ fi
 # Add route for internet gateway to the custom route table for public subnets
 
 IGW_ROUTE_TABLE_IGW_ROUTE_TARGET=$(aws ec2 describe-route-tables \
-  --filters "Name=tag:Name,Values=ab2d-$CMS_ENV-igw-rt" \
+  --filters "Name=tag:Name,Values=ab2d-igw-rt" \
   --query "RouteTables[*].Routes[?GatewayId=='$IGW_ID'].GatewayId" \
   --output text)
 
@@ -487,7 +493,7 @@ fi
 # Associate the first public subnet with the custom route table for internet gateway
 
 IGW_ROUTE_TABLE_ASSOCIATION_SUBNET_PUBLIC_1_ID=$(aws ec2 describe-route-tables \
-  --filters "Name=tag:Name,Values=ab2d-$CMS_ENV-igw-rt" \
+  --filters "Name=tag:Name,Values=ab2d-igw-rt" \
   --query "RouteTables[*].Associations[?SubnetId=='${SUBNET_PUBLIC_1_ID}'].SubnetId" \
   --output text)
 
@@ -505,7 +511,7 @@ fi
 # Associate the second public subnet with the custom route table for internet gateway
 
 IGW_ROUTE_TABLE_ASSOCIATION_SUBNET_PUBLIC_2_ID=$(aws ec2 describe-route-tables \
-  --filters "Name=tag:Name,Values=ab2d-$CMS_ENV-igw-rt" \
+  --filters "Name=tag:Name,Values=ab2d-igw-rt" \
   --query "RouteTables[*].Associations[?SubnetId=='${SUBNET_PUBLIC_2_ID}'].SubnetId" \
   --output text)
 
@@ -567,7 +573,7 @@ fi
 # Allocate Elastic IP Address for first NAT Gateway
 
 EIP_ALLOC_1_ID=$(aws ec2 describe-addresses \
-  --filters "Name=tag:Name,Values=ab2d-$CMS_ENV-ngw-eip-1" \
+  --filters "Name=tag:Name,Values=ab2d-ngw-eip-1" \
   --query "Addresses[*].AllocationId" \
   --output text)
 
@@ -587,7 +593,7 @@ if [ -z "${EIP_ALLOC_1_ID}" ]; then
   
   aws ec2 create-tags \
     --resources $EIP_ALLOC_1_ID \
-    --tags "Key=Name,Value=ab2d-$CMS_ENV-ngw-eip-1" \
+    --tags "Key=Name,Value=ab2d-ngw-eip-1" \
     --region us-east-1
 
 fi
@@ -595,7 +601,7 @@ fi
 # Create first NAT Gateway
 
 NAT_GW_1_ID=$(aws ec2 describe-nat-gateways \
-  --filter "Name=tag:Name,Values=ab2d-$CMS_ENV-ngw-1" \
+  --filter "Name=tag:Name,Values=ab2d-ngw-1" \
   --query "NatGateways[*].NatGatewayId" \
   --output text)
 
@@ -614,7 +620,7 @@ if [ -z "${NAT_GW_1_ID}" ]; then
 
   aws ec2 create-tags \
     --resources $NAT_GW_1_ID \
-    --tags "Key=Name,Value=ab2d-$CMS_ENV-ngw-1" \
+    --tags "Key=Name,Value=ab2d-ngw-1" \
     --region us-east-1
 
   # Wait for first NAT Gateway to become available
@@ -646,7 +652,7 @@ fi
 # Create a custom route table for the first NAT Gateway
 
 ROUTE_TABLE_FOR_NGW_1_ID=$(aws ec2 describe-route-tables \
-  --filters "Name=tag:Name,Values=ab2d-$CMS_ENV-ngw-rt-1" \
+  --filters "Name=tag:Name,Values=ab2d-ngw-rt-1" \
   --query "RouteTables[*].RouteTableId" \
   --output text)
 
@@ -662,7 +668,7 @@ if [ -z "${ROUTE_TABLE_FOR_NGW_1_ID}" ]; then
 
   aws ec2 create-tags \
     --resources $ROUTE_TABLE_FOR_NGW_1_ID \
-    --tags "Key=Name,Value=ab2d-$CMS_ENV-ngw-rt-1" \
+    --tags "Key=Name,Value=ab2d-ngw-rt-1" \
     --region us-east-1
   
 fi
@@ -670,7 +676,7 @@ fi
 # Create route to the first NAT Gateway for the custom route table
 
 NGW_1_ROUTE_TABLE_NGW_1_ROUTE_TARGET=$(aws ec2 describe-route-tables \
-  --filters "Name=tag:Name,Values=ab2d-$CMS_ENV-ngw-rt-1" \
+  --filters "Name=tag:Name,Values=ab2d-ngw-rt-1" \
   --query "RouteTables[*].Routes[?NatGatewayId=='$NAT_GW_1_ID'].NatGatewayId" \
   --output text)
 
@@ -689,7 +695,7 @@ fi
 # Associate the first private subnet with the custom route table for the first NAT Gateway
 
 NGW_1_ROUTE_TABLE_ASSOCIATION_SUBNET_PRIVATE_1_ID=$(aws ec2 describe-route-tables \
-  --filters "Name=tag:Name,Values=ab2d-$CMS_ENV-ngw-rt-1" \
+  --filters "Name=tag:Name,Values=ab2d-ngw-rt-1" \
   --query "RouteTables[*].Associations[?SubnetId=='${SUBNET_PRIVATE_1_ID}'].SubnetId" \
   --output text)
 
@@ -711,7 +717,7 @@ fi
 # Allocate Elastic IP Address for first NAT Gateway
 
 EIP_ALLOC_2_ID=$(aws ec2 describe-addresses \
-  --filters "Name=tag:Name,Values=ab2d-$CMS_ENV-ngw-eip-2" \
+  --filters "Name=tag:Name,Values=ab2d-ngw-eip-2" \
   --query "Addresses[*].AllocationId" \
   --output text)
 
@@ -731,7 +737,7 @@ if [ -z "${EIP_ALLOC_2_ID}" ]; then
   
   aws ec2 create-tags \
     --resources $EIP_ALLOC_2_ID \
-    --tags "Key=Name,Value=ab2d-$CMS_ENV-ngw-eip-2" \
+    --tags "Key=Name,Value=ab2d-ngw-eip-2" \
     --region us-east-1
 
 fi
@@ -739,7 +745,7 @@ fi
 # Create second NAT Gateway
 
 NAT_GW_2_ID=$(aws ec2 describe-nat-gateways \
-  --filter "Name=tag:Name,Values=ab2d-$CMS_ENV-ngw-2" \
+  --filter "Name=tag:Name,Values=ab2d-ngw-2" \
   --query "NatGateways[*].NatGatewayId" \
   --output text)
 
@@ -758,7 +764,7 @@ if [ -z "${NAT_GW_2_ID}" ]; then
 
   aws ec2 create-tags \
     --resources $NAT_GW_2_ID \
-    --tags "Key=Name,Value=ab2d-$CMS_ENV-ngw-2" \
+    --tags "Key=Name,Value=ab2d-ngw-2" \
     --region us-east-1
 
   # Wait for second NAT Gateway to become available
@@ -790,7 +796,7 @@ fi
 # Create a custom route table for the second NAT Gateway
 
 ROUTE_TABLE_FOR_NGW_2_ID=$(aws ec2 describe-route-tables \
-  --filters "Name=tag:Name,Values=ab2d-$CMS_ENV-ngw-rt-2" \
+  --filters "Name=tag:Name,Values=ab2d-ngw-rt-2" \
   --query "RouteTables[*].RouteTableId" \
   --output text)
 
@@ -806,7 +812,7 @@ if [ -z "${ROUTE_TABLE_FOR_NGW_2_ID}" ]; then
 
   aws ec2 create-tags \
     --resources $ROUTE_TABLE_FOR_NGW_2_ID \
-    --tags "Key=Name,Value=ab2d-$CMS_ENV-ngw-rt-2" \
+    --tags "Key=Name,Value=ab2d-ngw-rt-2" \
     --region us-east-1
   
 fi
@@ -814,7 +820,7 @@ fi
 # Create route to the second NAT Gateway for the custom route table
 
 NGW_2_ROUTE_TABLE_NGW_2_ROUTE_TARGET=$(aws ec2 describe-route-tables \
-  --filters "Name=tag:Name,Values=ab2d-$CMS_ENV-ngw-rt-2" \
+  --filters "Name=tag:Name,Values=ab2d-ngw-rt-2" \
   --query "RouteTables[*].Routes[?NatGatewayId=='$NAT_GW_2_ID'].NatGatewayId" \
   --output text)
 
@@ -833,7 +839,7 @@ fi
 # Associate the second private subnet with the custom route table for the second NAT Gateway
 
 NGW_2_ROUTE_TABLE_ASSOCIATION_SUBNET_PRIVATE_2_ID=$(aws ec2 describe-route-tables \
-  --filters "Name=tag:Name,Values=ab2d-$CMS_ENV-ngw-rt-2" \
+  --filters "Name=tag:Name,Values=ab2d-ngw-rt-2" \
   --query "RouteTables[*].Associations[?SubnetId=='${SUBNET_PRIVATE_2_ID}'].SubnetId" \
   --output text)
 
@@ -985,11 +991,33 @@ if [ -z "${DB_ENDPOINT}" ]; then
   echo 'ami_id = "'$AMI_ID'"' \
     >> $CMS_SHARED_ENV.auto.tfvars
 else
-  echo "*** TO DO ***"
-  echo "1. create a shared auto.tfvars file that adds all private subnets"
-  echo "2. get rid of this to do section and get rid of the exit that stops execution"
-  echo "NOTE: this should allow for the successful modification of a database so that it has all private subnets"
-  exit
+  PRIVATE_SUBNETS_OUTPUT=$(aws ec2 describe-subnets --filters "Name=tag:Name,Values=ab2d-*-private-subnet-*" --query "Subnets[*].SubnetId" --output text)
+
+  IFS=$'\t' read -ra subnet_array <<< "$PRIVATE_SUBNETS_OUTPUT"
+  
+  COUNT=1
+  for i in "${subnet_array[@]}"
+  do
+    if [ $COUNT == 1 ]; then
+      PRIVATE_SUBNETS=\"$i\"
+    else
+      PRIVATE_SUBNETS=$PRIVATE_SUBNETS,\"$i\"
+    fi
+    COUNT=$COUNT+1
+  done
+
+  echo 'vpc_id = "'$VPC_ID'"' \
+    > $CMS_SHARED_ENV.auto.tfvars
+  echo "private_subnet_ids = [${PRIVATE_SUBNETS}]" \
+    >> $CMS_SHARED_ENV.auto.tfvars
+  echo 'deployment_controller_subnet_ids = ["'$SUBNET_PUBLIC_1_ID'","'$SUBNET_PUBLIC_2_ID'"]' \
+    >> $CMS_SHARED_ENV.auto.tfvars
+  echo 'ec2_instance_type = "'$EC2_INSTANCE_TYPE'"' \
+    >> $CMS_SHARED_ENV.auto.tfvars
+  echo 'linux_user = "'$SSH_USERNAME'"' \
+    >> $CMS_SHARED_ENV.auto.tfvars
+  echo 'ami_id = "'$AMI_ID'"' \
+    >> $CMS_SHARED_ENV.auto.tfvars
 fi
 
 # Create ".auto.tfvars" file for the target environment
@@ -1100,8 +1128,6 @@ terraform apply \
   --target module.controller \
   --auto-approve
 
-exit
-
 ######################################
 # Deploy target environment components
 ######################################
@@ -1133,7 +1159,8 @@ fi
 
 cd "${START_DIR}"
 ./deploy.sh \
-  --environment="${ENVIRONMENT}" \
+  --environment="${CMS_ENV}" \
+  --shared-environment="${CMS_SHARED_ENV}" \
   --ami="${AMI_ID}" \
   --ssh-username="${SSH_USERNAME}" \
   --database-secret-datetime="${DATABASE_SECRET_DATETIME}" \

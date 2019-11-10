@@ -6,17 +6,9 @@
 #   value = aws_autoscaling_group.asg.name
 # }
 
-#
-# TEMPORARILY COMMENTED OUT END
-#
-
-output "application_security_group_id" {
-  value = aws_security_group.api.id
-}
-
-#
-# TEMPORARILY COMMENTED OUT BEGIN
-#
+# output "application_security_group_id" {
+#   value = aws_security_group.api.id
+# }
 
 # output "aws_autoscaling_policy_percent_capacity_arn" {
 #   value = aws_autoscaling_policy.percent_capacity.arn

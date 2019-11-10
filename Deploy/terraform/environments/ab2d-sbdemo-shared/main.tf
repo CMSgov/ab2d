@@ -11,7 +11,7 @@ provider "aws" {
 terraform {
   backend "s3" {
     bucket         = "ab2d-automation"
-    key            = "terraform/terraform.tfstate"
+    key            = "ab2d-sbdemo-shared/terraform/terraform.tfstate"
     region         = "us-east-1"
     encrypt = true
   }
@@ -65,6 +65,7 @@ module "controller" {
   env                   = var.env
   vpc_id                = var.vpc_id
   controller_subnet_ids = var.deployment_controller_subnet_ids
+  db_sec_group_id       = module.db.aws_security_group_sg_database_id
   ami_id                = var.ami_id
   instance_type         = var.ec2_instance_type
   linux_user            = var.linux_user

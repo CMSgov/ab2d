@@ -22,6 +22,11 @@ case $i in
   CMS_ENV=$(echo $ENVIRONMENT | tr '[:upper:]' '[:lower:]')
   shift # past argument=value
   ;;
+  --shared-environment=*)
+  SHARED_ENVIRONMENT="${i#*=}"
+  CMS_SHARED_ENV=$(echo $SHARED_ENVIRONMENT | tr '[:upper:]' '[:lower:]')
+  shift # past argument=value
+  ;;
   --ami=*)
   AMI_ID="${i#*=}"
   shift # past argument=value
@@ -82,7 +87,7 @@ CLUSTER_ARNS=$(aws --region us-east-1 ecs list-clusters --query 'clusterArns' --
 if [ -z "${CLUSTER_ARNS}" ]; then
   echo "Skipping getting current ECS task definitions, since there are no existing clusters"
 else  
-  API_TASK_DEFINITION=$(aws --region us-east-1 ecs describe-services --services ab2d-api --cluster ab2d-$ENVIRONMENT | grep "taskDefinition" | head -1)
+  API_TASK_DEFINITION=$(aws --region us-east-1 ecs describe-services --services ab2d-api --cluster ab2d-$CMS_ENV | grep "taskDefinition" | head -1)
   API_TASK_DEFINITION=$(echo $API_TASK_DEFINITION | awk -F'": "' '{print $2}' | tr -d '"' | tr -d ',')
 fi
 
@@ -93,7 +98,7 @@ fi
 echo "Get ECS task counts before making any changes..."
 
 # Define api_task_count
-api_task_count() { aws --region us-east-1 ecs list-tasks --cluster ab2d-$ENVIRONMENT|grep "\:task\/"|wc -l|tr -d ' '; }
+api_task_count() { aws --region us-east-1 ecs list-tasks --cluster ab2d-$CMS_ENV|grep "\:task\/"|wc -l|tr -d ' '; }
 
 # Get old api task count (if exists)
 if [ -z "${CLUSTER_ARNS}" ]; then
@@ -117,7 +122,7 @@ fi
 echo "Switch context to terraform environment..."
 
 cd "${START_DIR}"
-cd terraform/environments/ab2d-$ENVIRONMENT
+cd terraform/environments/ab2d-$CMS_ENV
 
 #
 # Ensure Old Autoscaling Groups and containers are around to service requests
@@ -128,7 +133,7 @@ echo "Ensure Old Autoscaling Groups and containers are around to service request
 if [ -z "${CLUSTER_ARNS}" ]; then
   echo "Skipping setting OLD_API_ASG, since there are no existing clusters"
 else
-  OLD_API_ASG=$(terraform show|grep :autoScalingGroup:|awk -F" = " '{print $2}'|grep ab2d-$ENVIRONMENT)
+  OLD_API_ASG=$(terraform show|grep :autoScalingGroup:|awk -F" = " '{print $2}'|grep ab2d-$CMS_ENV)
 fi
 
 if [ -z "${CLUSTER_ARNS}" ]; then
@@ -141,73 +146,76 @@ fi
 if [ -z "${CLUSTER_ARNS}" ]; then
   echo "Skipping removing autosclaing group and launch configuration, since there are no existing clusters"
 else
-  OLD_API_CONTAINER_INSTANCES=$(aws --region us-east-1 ecs list-container-instances --cluster ab2d-$ENVIRONMENT|grep container-instance)
+  OLD_API_CONTAINER_INSTANCES=$(aws --region us-east-1 ecs list-container-instances --cluster ab2d-$CMS_ENV|grep container-instance)
 fi
 
 #
 # Deploy new AMI out to AWS
 #
 
-echo "Deploy new AMI out to AWS..."
-if [ -z "${AUTOAPPROVE}" ]; then
+#
+# TEMPORARILY COMMENTED OUT BEGIN
+#
+
+# echo "Deploy new AMI out to AWS..."
+# if [ -z "${AUTOAPPROVE}" ]; then
     
-  # Confirm with the caller prior to applying changes.
+#   # Confirm with the caller prior to applying changes.
 
-  #
-  # TEMPORARILY COMMENTED OUT BEGIN
-  #
-
-  # terraform apply \
-  #   --var "ami_id=$AMI_ID" \
-  #   --var "current_task_definition_arn=$API_TASK_DEFINITION" \
-  #   --var "db_username=${DATABASE_USER}" \
-  #   --var "db_password=${DATABASE_PASSWORD}" \
-  #   --var "db_name=${DATABASE_NAME}" \
-  #   --target module.api
+#   terraform apply \
+#     --var "ami_id=$AMI_ID" \
+#     --var "current_task_definition_arn=$API_TASK_DEFINITION" \
+#     --var "db_username=${DATABASE_USER}" \
+#     --var "db_password=${DATABASE_PASSWORD}" \
+#     --var "db_name=${DATABASE_NAME}" \
+#     --target module.api
   
-  # terraform apply --var "ami_id=$AMI_ID" --var "current_task_definition_arn=$API_TASK_DEFINITION" --target module.worker
+#   terraform apply \
+#     --var "ami_id=$AMI_ID" \
+#     --var "current_task_definition_arn=$API_TASK_DEFINITION" \
+#     --target module.worker
 
-  #
-  # TEMPORARILY COMMENTED OUT END
-  #
-
-else
+# else
     
-  # Apply the changes without prompting
+#   # Apply the changes without prompting
 
-  #
-  # TEMPORARILY COMMENTED OUT BEGIN
-  #
+#   terraform apply \
+#     --var "ami_id=$AMI_ID" \
+#     --var "current_task_definition_arn=$API_TASK_DEFINITION" \
+#     --var "db_username=${DATABASE_USER}" \
+#     --var "db_password=${DATABASE_PASSWORD}" \
+#     --var "db_name=${DATABASE_NAME}" \
+#     --target module.api \
+#     --auto-approve
 
-  # terraform apply \
-  #   --var "ami_id=$AMI_ID" \
-  #   --var "current_task_definition_arn=$API_TASK_DEFINITION" \
-  #   --var "db_username=${DATABASE_USER}" \
-  #   --var "db_password=${DATABASE_PASSWORD}" \
-  #   --var "db_name=${DATABASE_NAME}" \
-  #   --target module.api \
-  #   --auto-approve
+#   terraform apply \
+#     --var "ami_id=$AMI_ID" \
+#     --var "current_task_definition_arn=$API_TASK_DEFINITION" \
+#     --target module.worker \
+#     --auto-approve
 
-  # terraform apply --var "ami_id=$AMI_ID" --var "current_task_definition_arn=$API_TASK_DEFINITION" --target module.worker --auto-approve
+# fi
 
-  #
-  # TEMPORARILY COMMENTED OUT END
-  #
-
-fi
+#
+# TEMPORARILY COMMENTED OUT END
+#
 
 #
 # Create database
 #
 
-# Connect to the "sbdemo-dev" controller for all environments
-# - *** TO DO ***: Eliminate controller instances of other environments
+# Connect to the controller
 
-CONTROLLER_PUBLIC_IP=$(aws ec2 describe-instances --filters "Name=tag:Name,Values=ab2d-sbdemo-dev-deployment-controller" --query="Reservations[*].Instances[?State.Name == 'running'].PublicIpAddress" --output text)
+CONTROLLER_PUBLIC_IP=$(aws --region us-east-1 ec2 describe-instances \
+  --filters "Name=tag:Name,Values=ab2d-deployment-controller" \
+  --query="Reservations[*].Instances[?State.Name == 'running'].PublicIpAddress" \
+  --output text)
 
 # Get the DB_ENDPOINT of the shared database
 
-DB_ENDPOINT=$(aws --region us-east-1 rds describe-db-instances --query="DBInstances[?DBInstanceIdentifier=='ab2d'].Endpoint.Address" --output=text)
+DB_ENDPOINT=$(aws --region us-east-1 rds describe-db-instances \
+  --query="DBInstances[?DBInstanceIdentifier=='ab2d'].Endpoint.Address" \
+  --output=text)
 
 # Determine if the database for the environment exists
 
@@ -233,24 +241,44 @@ fi
 # Apply schedule autoscaling if applicable
 #
 
-echo "Apply schedule autoscaling if applicable..."
-if [ -f ./autoscaling-schedule.tf ]; then
-  terraform apply --auto-approve -var "ami_id=$AMI_ID" --var "current_task_definition_arn=$API_TASK_DEFINITION" -target=aws_autoscaling_schedule.morning
-  terraform apply --auto-approve -var "ami_id=$AMI_ID" --var "current_task_definition_arn=$API_TASK_DEFINITION" -target=aws_autoscaling_schedule.night
-fi
+#
+# TEMPORARILY COMMENTED OUT BEGIN
+#
+
+# echo "Apply schedule autoscaling if applicable..."
+# if [ -f ./autoscaling-schedule.tf ]; then
+#   terraform apply --auto-approve -var "ami_id=$AMI_ID" --var "current_task_definition_arn=$API_TASK_DEFINITION" -target=aws_autoscaling_schedule.morning
+#   terraform apply --auto-approve -var "ami_id=$AMI_ID" --var "current_task_definition_arn=$API_TASK_DEFINITION" -target=aws_autoscaling_schedule.night
+# fi
+
+#
+# TEMPORARILY COMMENTED OUT END
+#
 
 #
 # Push authorized_keys file to deployment_controller
 #
 
+export AWS_PROFILE="${CMS_SHARED_ENV}"
+
+cd "${START_DIR}"
+cd terraform/environments/ab2d-$CMS_SHARED_ENV
+
 echo "Push authorized_keys file to deployment_controller..."
 terraform taint -allow-missing null_resource.authorized_keys_file
 if [ -z "${AUTOAPPROVE}" ]; then
   # Confirm with the caller prior to applying changes.
-  terraform apply --var "ami_id=$AMI_ID" --var "current_task_definition_arn=$API_TASK_DEFINITION" -target=null_resource.authorized_keys_file
+  terraform apply \
+    --var "ami_id=$AMI_ID" \
+    --var "current_task_definition_arn=$API_TASK_DEFINITION" \
+    --target null_resource.authorized_keys_file
 else
   # Apply the changes without prompting
-  terraform apply --auto-approve --var "ami_id=$AMI_ID" --var "current_task_definition_arn=$API_TASK_DEFINITION" -target=null_resource.authorized_keys_file
+  terraform apply \
+    --var "ami_id=$AMI_ID" \
+    --var "current_task_definition_arn=$API_TASK_DEFINITION" \
+    --target null_resource.authorized_keys_file \
+    --auto-approve
 fi
 
 #

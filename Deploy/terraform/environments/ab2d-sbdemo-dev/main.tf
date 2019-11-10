@@ -11,7 +11,7 @@ provider "aws" {
 terraform {
   backend "s3" {
     bucket         = "ab2d-automation"
-    key            = "terraform/terraform.tfstate"
+    key            = "ab2d-sbdemo-dev/terraform/terraform.tfstate"
     region         = "us-east-1"
     encrypt = true
   }
@@ -71,6 +71,7 @@ module "controller" {
   env                   = var.env
   vpc_id                = var.vpc_id
   controller_subnet_ids = var.deployment_controller_subnet_ids
+  db_sec_group_id       = module.db.aws_security_group_sg_database_id
   ami_id                = var.ami_id
   instance_type         = var.ec2_instance_type
   linux_user            = var.linux_user
@@ -79,82 +80,90 @@ module "controller" {
   gold_disk_name        = var.gold_image_name
 }
 
-# LSH SKIP FOR NOW BEGIN
-# vpn-private-sec-group-id      = var.vpn-private-sec-group-id
-# enterprise-tools-sec-group-id = var.enterprise-tools-sec-group-id
-# LSH SKIP FOR NOW END
-module "api" {
-  source                        = "../../modules/api"
-  env                           = var.env
-  vpc_id                        = var.vpc_id
-  db_sec_group_id               = module.db.aws_security_group_sg_database_id
-  controller_subnet_ids         = var.deployment_controller_subnet_ids
-  ami_id                        = var.ami_id
-  instance_type                 = var.ec2_instance_type
-  linux_user                    = var.linux_user
-  ssh_key_name                  = var.ssh_key_name
-  node_subnet_ids               = var.private_subnet_ids
-  logging_bucket                = var.logging_bucket_name
-  healthcheck_url               = var.elb_healthcheck_url
-  iam_instance_profile          = var.ec2_iam_profile
-  docker_repository_url         = "${var.aws_account_number}.dkr.ecr.us-east-1.amazonaws.com/ab2d_api:latest"
-  iam_role_arn                  = "arn:aws:iam::${var.aws_account_number}:role/Ab2dInstanceRole"
-  desired_instances             = var.ec2_desired_instance_count
-  min_instances                 = var.ec2_minimum_instance_count
-  max_instances                 = var.ec2_maximum_instance_count
-  autoscale_group_wait          = "0" #Change this later for 0 downtime deployment
-  gold_disk_name                = var.gold_image_name
-  override_task_definition_arn  = var.current_task_definition_arn
-  aws_account_number            = var.aws_account_number
-  db_host                       = module.db.rds_hostname
-  db_username                   = var.db_username
-  db_password                   = var.db_password
-  db_name                       = var.db_name
-}
+#
+# TEMPORARILY COMMENTED OUT BEGIN
+#
 
-# LSH SKIP FOR NOW BEGIN
-# vpn-private-sec-group-id      = var.vpn-private-sec-group-id
-# enterprise-tools-sec-group-id = var.enterprise-tools-sec-group-id
-# LSH SKIP FOR NOW ENS
-module "worker" {
-  source                        = "../../modules/worker"
-  env                           = var.env
-  vpc_id                        = var.vpc_id
-  controller_subnet_ids         = var.deployment_controller_subnet_ids
-  ami_id                        = var.ami_id
-  instance_type                 = var.ec2_instance_type
-  linux_user                    = var.linux_user
-  ssh_key_name                  = var.ssh_key_name
-  node_subnet_ids               = var.private_subnet_ids
-  iam_instance_profile          = var.ec2_iam_profile
-  docker_repository_url         = "${var.aws_account_number}.dkr.ecr.us-east-1.amazonaws.com/ab2d_worker:latest"
-  desired_instances             = var.ec2_desired_instance_count
-  min_instances                 = var.ec2_minimum_instance_count
-  max_instances                 = var.ec2_maximum_instance_count
-  autoscale_group_wait          = "0" #Change this later for 0 downtime deployment
-  gold_disk_name                = var.gold_image_name
-  override_task_definition_arn  = var.current_task_definition_arn
-  app_sec_group_id              = module.api.application_security_group_id
-  controller_sec_group_id       = module.controller.deployment_controller_sec_group_id
-  loadbalancer_subnet_ids       = var.deployment_controller_subnet_ids
-  vpc_cidrs                     = ["10.124.1.0/24"]
-  efs_id                        = module.efs.efs_id
-  alpha                         = var.private_subnet_ids[0]
-  beta                          = var.private_subnet_ids[1]
+# # LSH SKIP FOR NOW BEGIN
+# # vpn-private-sec-group-id      = var.vpn-private-sec-group-id
+# # enterprise-tools-sec-group-id = var.enterprise-tools-sec-group-id
+# # LSH SKIP FOR NOW END
+# module "api" {
+#   source                        = "../../modules/api"
+#   env                           = var.env
+#   vpc_id                        = var.vpc_id
+#   db_sec_group_id               = module.db.aws_security_group_sg_database_id
+#   controller_subnet_ids         = var.deployment_controller_subnet_ids
+#   ami_id                        = var.ami_id
+#   instance_type                 = var.ec2_instance_type
+#   linux_user                    = var.linux_user
+#   ssh_key_name                  = var.ssh_key_name
+#   node_subnet_ids               = var.private_subnet_ids
+#   logging_bucket                = var.logging_bucket_name
+#   healthcheck_url               = var.elb_healthcheck_url
+#   iam_instance_profile          = var.ec2_iam_profile
+#   docker_repository_url         = "${var.aws_account_number}.dkr.ecr.us-east-1.amazonaws.com/ab2d_api:latest"
+#   iam_role_arn                  = "arn:aws:iam::${var.aws_account_number}:role/Ab2dInstanceRole"
+#   desired_instances             = var.ec2_desired_instance_count
+#   min_instances                 = var.ec2_minimum_instance_count
+#   max_instances                 = var.ec2_maximum_instance_count
+#   autoscale_group_wait          = "0" #Change this later for 0 downtime deployment
+#   gold_disk_name                = var.gold_image_name
+#   override_task_definition_arn  = var.current_task_definition_arn
+#   aws_account_number            = var.aws_account_number
+#   db_host                       = module.db.rds_hostname
+#   db_username                   = var.db_username
+#   db_password                   = var.db_password
+#   db_name                       = var.db_name
+# }
 
-  #
-  # TEMPORARILY COMMENTED OUT BEGIN
-  #
+# # LSH SKIP FOR NOW BEGIN
+# # vpn-private-sec-group-id      = var.vpn-private-sec-group-id
+# # enterprise-tools-sec-group-id = var.enterprise-tools-sec-group-id
+# # LSH SKIP FOR NOW ENS
+# module "worker" {
+#   source                        = "../../modules/worker"
+#   env                           = var.env
+#   vpc_id                        = var.vpc_id
+#   controller_subnet_ids         = var.deployment_controller_subnet_ids
+#   ami_id                        = var.ami_id
+#   instance_type                 = var.ec2_instance_type
+#   linux_user                    = var.linux_user
+#   ssh_key_name                  = var.ssh_key_name
+#   node_subnet_ids               = var.private_subnet_ids
+#   iam_instance_profile          = var.ec2_iam_profile
+#   docker_repository_url         = "${var.aws_account_number}.dkr.ecr.us-east-1.amazonaws.com/ab2d_worker:latest"
+#   desired_instances             = var.ec2_desired_instance_count
+#   min_instances                 = var.ec2_minimum_instance_count
+#   max_instances                 = var.ec2_maximum_instance_count
+#   autoscale_group_wait          = "0" #Change this later for 0 downtime deployment
+#   gold_disk_name                = var.gold_image_name
+#   override_task_definition_arn  = var.current_task_definition_arn
+#   app_sec_group_id              = module.api.application_security_group_id
+#   controller_sec_group_id       = module.controller.deployment_controller_sec_group_id
+#   loadbalancer_subnet_ids       = var.deployment_controller_subnet_ids
+#   vpc_cidrs                     = ["10.124.1.0/24"]
+#   efs_id                        = module.efs.efs_id
+#   alpha                         = var.private_subnet_ids[0]
+#   beta                          = var.private_subnet_ids[1]
 
-  # ecs_cluster_id                = module.api.ecs_cluster_id
-  ecs_cluster_id                = ""
+#   #
+#   # TEMPORARILY COMMENTED OUT BEGIN
+#   #
 
-  #
-  # TEMPORARILY COMMENTED OUT END
-  #
+#   # ecs_cluster_id                = module.api.ecs_cluster_id
+#   ecs_cluster_id                = ""
 
-  aws_account_number            = var.aws_account_number
-}
+#   #
+#   # TEMPORARILY COMMENTED OUT END
+#   #
+
+#   aws_account_number            = var.aws_account_number
+# }
+
+#
+# TEMPORARILY COMMENTED OUT END
+#
 
 module "lonnie_access_controller" {
   description  = "Lonnie"

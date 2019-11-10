@@ -28,6 +28,16 @@ resource "aws_security_group_rule" "egress_controller" {
   security_group_id = aws_security_group.deployment_controller.id
 }
 
+resource "aws_security_group_rule" "db_access_from_controller" {
+  type        = "ingress"
+  description = "Deployment Controller"
+  from_port   = "5432"
+  to_port     = "5432"
+  protocol    = "tcp"
+  source_security_group_id = aws_security_group.deployment_controller.id
+  security_group_id = var.db_sec_group_id
+}
+
 resource "random_shuffle" "public_subnets" {
   input = var.controller_subnet_ids
   result_count = 1

@@ -111,7 +111,7 @@ terraform destroy \
 #
 
 echo "Create or update controller..."
-terraform apply \
+terraform destroy \
   --target module.controller \
   --auto-approve
 
@@ -149,7 +149,7 @@ terraform destroy \
 
 # Destroy the KMS module
 echo "Disabling KMS key..."
-KMS_KEY_ID=$(aws kms describe-key --key-id alias/ab2d-$CMS_ENV-kms --query="KeyMetadata.KeyId")
+KMS_KEY_ID=$(aws kms describe-key --key-id alias/ab2d-kms --query="KeyMetadata.KeyId")
 if [ -n "$KMS_KEY_ID" ]; then
   cd "${START_DIR}"
   cd python3
@@ -162,13 +162,15 @@ fi
 # Destroy terraform state information
 #
 
-cd "${START_DIR}"
-cd terraform/environments/ab2d-$CMS_ENV
+# *** TO DO ***: Need to ensure that this only occurs when there are no existing environments
 
-aws s3 rm s3://ab2d-automation \
-  --recursive
-
-rm -rf .terraform
+# cd "${START_DIR}"
+# cd terraform
+# if [ -z "${NO_EXISTING_ENVIRONMENT}" ]; then
+#   aws s3 rm s3://ab2d-automation \
+#     --recursive
+#   rm -rf .terraform
+# fi
 
 #
 # Deregister the application AMI
@@ -177,7 +179,7 @@ rm -rf .terraform
 # Get application AMI ID (if exists)
 APPLICATION_AMI_ID=$(aws --region us-east-1 ec2 describe-images \
   --owners self \
-  --filters "Name=tag:Name,Values=ab2d-$CMS_ENV-ami" \
+  --filters "Name=tag:Name,Values=ab2d-ami" \
   --query "Images[*].[ImageId]" \
   --output text)
 
@@ -202,7 +204,7 @@ fi
 # Get application AMI ID (if exists)
 JENKINS_AMI_ID=$(aws --region us-east-1 ec2 describe-images \
   --owners self \
-  --filters "Name=tag:Name,Values=ab2d-$CMS_ENV-jenkins-ami" \
+  --filters "Name=tag:Name,Values=ab2d-jenkins-ami" \
   --query "Images[*].[ImageId]" \
   --output text)
 
@@ -237,7 +239,7 @@ fi
 # Delete first NAT gateway
 
 NAT_GW_1_ID=$(aws --region us-east-1 ec2 describe-nat-gateways \
-  --filter "Name=tag:Name,Values=ab2d-$CMS_ENV-ngw-1" "Name=state,Values=available" \
+  --filter "Name=tag:Name,Values=ab2d-ngw-1" "Name=state,Values=available" \
   --query 'NatGateways[*].{NatGatewayId:NatGatewayId}' \
   --output text)
 
@@ -262,7 +264,7 @@ fi
 # Delete second NAT gateway
 
 NAT_GW_2_ID=$(aws --region us-east-1 ec2 describe-nat-gateways \
-  --filter "Name=tag:Name,Values=ab2d-$CMS_ENV-ngw-2" "Name=state,Values=available" \
+  --filter "Name=tag:Name,Values=ab2d-ngw-2" "Name=state,Values=available" \
   --query 'NatGateways[*].{NatGatewayId:NatGatewayId}' \
   --output text)
 
@@ -320,7 +322,7 @@ done
 # Release first Elastic IP address
 
 NGW_EIP_1_ALLOCATION_ID=$(aws --region us-east-1 ec2 describe-addresses \
-  --filter "Name=tag:Name,Values=ab2d-$CMS_ENV-ngw-eip-1" \
+  --filter "Name=tag:Name,Values=ab2d-ngw-eip-1" \
   --query 'Addresses[*].[AllocationId]' \
   --output text)
 
@@ -333,7 +335,7 @@ fi
 # Release second Elastic IP address
 
 NGW_EIP_2_ALLOCATION_ID=$(aws --region us-east-1 ec2 describe-addresses \
-  --filter "Name=tag:Name,Values=ab2d-$CMS_ENV-ngw-eip-2" \
+  --filter "Name=tag:Name,Values=ab2d-ngw-eip-2" \
   --query 'Addresses[*].[AllocationId]' \
   --output text)
 
@@ -344,35 +346,61 @@ if [ -n "${NGW_EIP_2_ALLOCATION_ID}" ]; then
 fi
   
 #
-# Disassociate the subnet from the NAT Gateway route tables
+# Disassociate subnets from the NAT Gateway route tables
 #
 
-# Disassociate the first subnet from the first NAT Gateway route table
+# Disassociate subnets from the first NAT Gateway route table
 
 NGW_RT_1_ASSOCIATION_ID=$(aws --region us-east-1 ec2 describe-route-tables \
-  --filter "Name=tag:Name,Values=ab2d-$CMS_ENV-ngw-rt-1" \
+  --filter "Name=tag:Name,Values=ab2d-ngw-rt-1" \
   --query 'RouteTables[*].Associations[*].[RouteTableAssociationId]' \
   --output text)
 
-if [ -n "${NGW_RT_1_ASSOCIATION_ID}" ]; then
-  echo "Disassociating the first subnet from the first NAT Gateway route table..."
-  aws --region us-east-1 ec2 disassociate-route-table \
-    --association-id $NGW_RT_1_ASSOCIATION_ID
+IFS=$' ' read -ra NGW_RT_1_ASSOCIATION_ID <<< "$NGW_RT_1_ASSOCIATION_ID"
+
+while [ -n "${NGW_RT_1_ASSOCIATION_ID}" ]; do
+    
+  if [ -n "${NGW_RT_1_ASSOCIATION_ID}" ]; then
+    echo "Disassociating a subnet from the first NAT Gateway route table..."
+    aws --region us-east-1 ec2 disassociate-route-table \
+      --association-id $NGW_RT_1_ASSOCIATION_ID
+
+  NGW_RT_1_ASSOCIATION_ID=$(aws --region us-east-1 ec2 describe-route-tables \
+    --filter "Name=tag:Name,Values=ab2d-ngw-rt-1" \
+    --query 'RouteTables[*].Associations[*].[RouteTableAssociationId]' \
+    --output text)
+
+  IFS=$' ' read -ra NGW_RT_1_ASSOCIATION_ID <<< "$NGW_RT_1_ASSOCIATION_ID"
+
 fi
+
+done
 
 # Disassociate the second subnet from the second NAT Gateway route table
 
 NGW_RT_2_ASSOCIATION_ID=$(aws --region us-east-1 ec2 describe-route-tables \
-  --filter "Name=tag:Name,Values=ab2d-$CMS_ENV-ngw-rt-2" \
+  --filter "Name=tag:Name,Values=ab2d-ngw-rt-2" \
   --query 'RouteTables[*].Associations[*].[RouteTableAssociationId]' \
   --output text)
 
-if [ -n "${NGW_RT_2_ASSOCIATION_ID}" ]; then
-  echo "Disassociating the second subnet from the second NAT Gateway route table..."
-  aws --region us-east-1 ec2 disassociate-route-table \
-    --association-id $NGW_RT_2_ASSOCIATION_ID
-fi
+IFS=$' ' read -ra NGW_RT_2_ASSOCIATION_ID <<< "$NGW_RT_2_ASSOCIATION_ID"
 
+while [ -n "${NGW_RT_2_ASSOCIATION_ID}" ]; do
+    
+  if [ -n "${NGW_RT_2_ASSOCIATION_ID}" ]; then
+    echo "Disassociating a subnet from the second NAT Gateway route table..."
+    aws --region us-east-1 ec2 disassociate-route-table \
+      --association-id $NGW_RT_2_ASSOCIATION_ID
+  fi
+
+  NGW_RT_2_ASSOCIATION_ID=$(aws --region us-east-1 ec2 describe-route-tables \
+    --filter "Name=tag:Name,Values=ab2d-ngw-rt-2" \
+    --query 'RouteTables[*].Associations[*].[RouteTableAssociationId]' \
+    --output text)
+
+  IFS=$' ' read -ra NGW_RT_2_ASSOCIATION_ID <<< "$NGW_RT_2_ASSOCIATION_ID"
+
+done
 
 #
 # Delete route tables
@@ -381,7 +409,7 @@ fi
 # Delete the first NAT Gateway route table for the first NAT gateway
 
 NGW_RT_1_ID=$(aws --region us-east-1 ec2 describe-route-tables \
-  --filter "Name=tag:Name,Values=ab2d-$CMS_ENV-ngw-rt-1" \
+  --filter "Name=tag:Name,Values=ab2d-ngw-rt-1" \
   --query 'RouteTables[*].[RouteTableId]' \
   --output text)
 
@@ -394,7 +422,7 @@ fi
 # Delete the second NAT Gateway route table for the second NAT gateway
 
 NGW_RT_2_ID=$(aws --region us-east-1 ec2 describe-route-tables \
-  --filter "Name=tag:Name,Values=ab2d-$CMS_ENV-ngw-rt-2" \
+  --filter "Name=tag:Name,Values=ab2d-ngw-rt-2" \
   --query 'RouteTables[*].[RouteTableId]' \
   --output text)
 
@@ -411,7 +439,7 @@ fi
 # Disassociate the second subnet from the Internet Gateway route table
 
 IGW_RT_ASSOCIATION_ID_2=$(aws --region us-east-1 ec2 describe-route-tables \
-  --filter "Name=tag:Name,Values=ab2d-$CMS_ENV-igw-rt" \
+  --filter "Name=tag:Name,Values=ab2d-igw-rt" \
   --query 'RouteTables[*].Associations[1].[RouteTableAssociationId]' \
   --output text)
 
@@ -424,7 +452,7 @@ fi
 # Disassociate the first subnet from the Internet Gateway route table
 
 IGW_RT_ASSOCIATION_ID_1=$(aws --region us-east-1 ec2 describe-route-tables \
-  --filter "Name=tag:Name,Values=ab2d-$CMS_ENV-igw-rt" \
+  --filter "Name=tag:Name,Values=ab2d-igw-rt" \
   --query 'RouteTables[*].Associations[0].[RouteTableAssociationId]' \
   --output text)
 
@@ -439,7 +467,7 @@ fi
 #
 
 IGW_RT_ID=$(aws --region us-east-1 ec2 describe-route-tables \
-  --filter "Name=tag:Name,Values=ab2d-$CMS_ENV-igw-rt" \
+  --filter "Name=tag:Name,Values=ab2d-igw-rt" \
   --query 'RouteTables[*].[RouteTableId]' \
   --output text)
 
@@ -519,7 +547,7 @@ fi
 # Delete the first public subnet
 
 SUBNET_PUBLIC_1_ID=$(aws --region us-east-1 ec2 describe-subnets \
-  --filter "Name=tag:Name,Values=ab2d-$CMS_ENV-public-subnet-01" \
+  --filter "Name=tag:Name,Values=ab2d-public-subnet-01" \
   --query 'Subnets[*].[SubnetId]' \
   --output text)
 
@@ -532,7 +560,7 @@ fi
 # Delete the second public subnet
 
 SUBNET_PUBLIC_2_ID=$(aws --region us-east-1 ec2 describe-subnets \
-  --filter "Name=tag:Name,Values=ab2d-$CMS_ENV-public-subnet-02" \
+  --filter "Name=tag:Name,Values=ab2d-public-subnet-02" \
   --query 'Subnets[*].[SubnetId]' \
   --output text)
 
