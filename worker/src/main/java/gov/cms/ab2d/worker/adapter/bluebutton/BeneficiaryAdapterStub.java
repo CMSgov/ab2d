@@ -19,19 +19,16 @@ import java.util.stream.Collectors;
 @Component
 public class BeneficiaryAdapterStub implements BeneficiaryAdapter {
 
-    private static final String FAKE_FILE_PATH = "/test-stub-data/fake-bene-ids.csv";
+    private static final String BENE_ID_FILE = "/test-stub-data/test-bene-ids.csv";
 
 
     @Override
     public GetPatientsByContractResponse getPatientsByContract(String contractNumber) {
 
         final int contractSno = extractContractSno(contractNumber);
-
         final int startOffset = contractSno * 100;
-        final int endOffset = startOffset +  100;
 
-        final List<String> sampleTestBenes = readBeneficiariesFromSampleFile();
-        final List<String> patientsPerContract = sampleTestBenes.subList(startOffset, endOffset);
+        final var patientsPerContract = getFromSampleFile(startOffset);
 
         return toResponse(contractNumber, patientsPerContract);
     }
@@ -56,20 +53,28 @@ public class BeneficiaryAdapterStub implements BeneficiaryAdapter {
         return sno;
     }
 
-    private List<String> readBeneficiariesFromSampleFile() {
+    private List<String> getFromSampleFile(final int startOffset) {
 
-        try (var inputStream = this.getClass().getResourceAsStream(FAKE_FILE_PATH)) {
-            Assert.notNull(inputStream, "error getting resource as stream :  " + FAKE_FILE_PATH);
+        try (var inputStream = this.getClass().getResourceAsStream(BENE_ID_FILE)) {
+            Assert.notNull(inputStream, "error getting resource as stream :  " + BENE_ID_FILE);
 
             try (var br =  new BufferedReader(new InputStreamReader(inputStream))) {
-                Assert.notNull(br, "Could not create buffered reader from input stream :  " + FAKE_FILE_PATH);
-                return br.lines().collect(Collectors.toList());
+                Assert.notNull(br, "Could not create buffered reader from input stream :  " + BENE_ID_FILE);
+
+                return readLinesByOffset(br, startOffset);
             }
         } catch (Exception ex) {
             final String errMsg = "Error reading file : ";
-            log.error("{} {} ", errMsg, FAKE_FILE_PATH, ex);
-            throw new RuntimeException(errMsg + FAKE_FILE_PATH);
+            log.error("{} {} ", errMsg, BENE_ID_FILE, ex);
+            throw new RuntimeException(errMsg + BENE_ID_FILE);
         }
+    }
+
+    private List<String> readLinesByOffset(BufferedReader br, int startOffset) {
+        return br.lines()
+                .skip(startOffset)
+                .limit(100)
+                .collect(Collectors.toList());
     }
 
     private GetPatientsByContractResponse toResponse(String contractNumber, List<String> rows) {
