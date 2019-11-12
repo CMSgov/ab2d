@@ -358,43 +358,43 @@
 
 1. Note that the authentication is good for a 12 hour session
 
-1. Change to the repo directory
-
-   ```ShellSession
-   $ cd ~/code/ab2d
-   ```
-
 1. If you want to delete all images and containers in your local environment, do the following:
     
    1. Delete orphaned volumes (if any)
 
       ```ShellSession
-      $ sudo docker volume ls -qf dangling=true | xargs -I name sudo docker volume rm name
+      $ docker volume ls -qf dangling=true | xargs -I name docker volume rm name
       ```
 
    1. Delete all containers (if any)
       
       ```ShellSession
-      $ sudo docker ps -aq | xargs -I name sudo docker rm name
+      $ docker ps -aq | xargs -I name docker rm --force name
       ```
 
    1. Delete all images (if any)
 
       ```ShellSession
-      $ sudo docker images -q | xargs -I name sudo docker rmi --force name
+      $ docker images -q | xargs -I name docker rmi --force name
       ```
 
    1. Delete orphaned volumes again (if any)
 
       ```ShellSession
-      $ sudo docker volume ls -qf dangling=true | xargs -I name sudo docker volume rm name
+      $ docker volume ls -qf dangling=true | xargs -I name docker volume rm name
       ```
 
    1. Delete all images again (if any)
 
       ```ShellSession
-      $ sudo docker images -q | xargs -I name sudo docker rmi --force name
+      $ docker images -q | xargs -I name docker rmi --force name
       ```
+
+1. Change to the repo directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d
+   ```
 
 1. Build the docker images of API and Worker nodes
 
@@ -446,6 +446,18 @@
 
       - openjdk:12
 
+1. If you want to run the containers, do the following
+
+   ```ShellSession
+   $ docker-compose up
+   ```
+      
+1. If you want to connect to the running container, do the following
+
+   ```ShellSession
+   $ docker exec -it <container name> /bin/bash
+   ```
+   
 1. Create an AWS Elastic Container Registry (ECR) for "ab2d_api"
 
    ```ShellSession
