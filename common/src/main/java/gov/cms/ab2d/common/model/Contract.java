@@ -5,6 +5,8 @@ import lombok.Getter;
 import lombok.Setter;
 
 import javax.persistence.*;
+import javax.validation.constraints.NotNull;
+import java.time.OffsetDateTime;
 import java.util.Set;
 
 @Entity
@@ -17,12 +19,19 @@ public class Contract {
     private Long id;
 
     @Column(unique = true)
-    private String contractId;
+    @NotNull
+    private String contractNumber;
 
-    @OneToMany(mappedBy = "contract")
-    private Set<Attestation> attestations;
+    private String contractName;
+
+    @ManyToOne
+    @JoinColumn(name = "sponsor_id")
+    @NotNull
+    private Sponsor sponsor;
+
+    @Column(columnDefinition = "TIMESTAMP WITH TIME ZONE")
+    private OffsetDateTime attestedOn;
 
     @ManyToMany(mappedBy = "contracts")
     private Set<Beneficiary> beneficiaries;
-
 }

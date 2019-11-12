@@ -38,8 +38,8 @@ public class JobServiceImpl implements JobService {
     public Job createJob(String resourceTypes, String url) {
         Job job = new Job();
         job.setResourceTypes(resourceTypes);
-        job.setJobID(UUID.randomUUID().toString());
-        job.setRequestURL(url);
+        job.setJobUuid(UUID.randomUUID().toString());
+        job.setRequestUrl(url);
         job.setStatus(JobStatus.SUBMITTED);
         job.setStatusMessage(INITIAL_JOB_STATUS_MESSAGE);
         job.setCreatedAt(OffsetDateTime.now());
@@ -50,21 +50,22 @@ public class JobServiceImpl implements JobService {
     }
 
     @Override
-    public void cancelJob(String jobID) {
-        Job job = getJobByJobID(jobID);
+    public void cancelJob(String jobUuid) {
+        Job job = getJobByJobUuid(jobUuid);
 
         if (!job.getStatus().isCancellable()) {
             throw new InvalidJobStateTransition("Job has a status of " + job.getStatus() + ", so it cannot be cancelled");
         }
 
-        jobRepository.cancelJobByJobID(jobID);
+        jobRepository.cancelJobByJobUuid(jobUuid);
     }
 
     @Override
-    public Job getJobByJobID(String jobID) {
-        Job job = jobRepository.findByJobID(jobID);
+    public Job getJobByJobUuid(String jobUuid) {
+        Job job = jobRepository.findByJobUuid(jobUuid);
+
         if (job == null) {
-            throw new ResourceNotFoundException("No job with jobID " +  jobID + " was found");
+            throw new ResourceNotFoundException("No job with jobUuid " +  jobUuid + " was found");
         }
 
         return job;
@@ -76,8 +77,8 @@ public class JobServiceImpl implements JobService {
     }
 
     @Override
-    public Resource getResourceForJob(String jobID, String fileName) throws MalformedURLException {
-        Job job = getJobByJobID(jobID);
+    public Resource getResourceForJob(String jobUuid, String fileName) throws MalformedURLException {
+        Job job = getJobByJobUuid(jobUuid);
 
         // Make sure that there is a path that matches a job output for the job they are requesting
         boolean jobOutputMatchesPath = false;
@@ -92,7 +93,7 @@ public class JobServiceImpl implements JobService {
             throw new ResourceNotFoundException("No Job Output with the file name " + fileName + " exists in our records");
         }
 
-        Path file = Paths.get(fileDownloadPath + job.getJobID() + File.separator +  fileName);
+        Path file = Paths.get(fileDownloadPath + job.getJobUuid() + File.separator +  fileName);
         Resource resource = new UrlResource(file.toUri());
 
         if (!resource.exists()) {

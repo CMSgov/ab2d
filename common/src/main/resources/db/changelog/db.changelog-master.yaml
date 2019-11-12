@@ -1,0 +1,8 @@
+# May need to change this in future if there's another directory besides v001
+databaseChangeLog:
+  - include:
+      file: db/changelog/v001/AB2D-291-create-initial-tables.sql
+  - include:
+      file: db/changelog/v001/AB2D-331-drop-constraint-add-column.sql
+  - include:
+      file: db/changelog/v001/AB2D-356-rename-columns.sql

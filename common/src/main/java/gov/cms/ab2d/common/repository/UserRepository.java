@@ -9,5 +9,5 @@ import org.springframework.stereotype.Repository;
 public interface UserRepository extends JpaRepository<User, Long> {
 
     @Nullable
-    User findByUserID(@Nullable String userID);
+    User findByUserName(@Nullable String userName);
 }

@@ -1,10 +1,10 @@
 package gov.cms.ab2d.common.service;
 
 import gov.cms.ab2d.common.SpringBootApp;
-import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.JobOutput;
 import gov.cms.ab2d.common.model.JobStatus;
+import gov.cms.ab2d.common.repository.JobRepository;
 import org.apache.commons.io.IOUtils;
 import org.junit.Assert;
 import org.junit.Before;
@@ -14,10 +14,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.core.io.Resource;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.transaction.TransactionSystemException;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -31,6 +35,7 @@ import static org.junit.Assert.assertEquals;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = SpringBootApp.class)
+@TestPropertySource(locations = "/application.common.properties")
 public class JobServiceTest {
 
     @Autowired
@@ -53,17 +58,17 @@ public class JobServiceTest {
         Job job = jobService.createJob("ExplanationOfBenefits", "http://localhost:8080");
         assertThat(job).isNotNull();
         assertThat(job.getId()).isNotNull();
-        assertThat(job.getJobID()).isNotNull();
+        assertThat(job.getJobUuid()).isNotNull();
         assertEquals(job.getProgress(), Integer.valueOf(0));
         assertEquals(job.getUser(), null); // null for now since no authentication
         assertEquals(job.getResourceTypes(), "ExplanationOfBenefits");
-        assertEquals(job.getRequestURL(), "http://localhost:8080");
+        assertEquals(job.getRequestUrl(), "http://localhost:8080");
         assertEquals(job.getStatusMessage(), INITIAL_JOB_STATUS_MESSAGE);
         assertEquals(job.getStatus(), JobStatus.SUBMITTED);
         assertEquals(job.getJobOutput().size(), 0);
         assertEquals(job.getLastPollTime(), null);
-        assertEquals(job.getExpires(), null);
-        assertThat(job.getJobID()).matches("[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}");
+        assertEquals(job.getExpiresAt(), null);
+        assertThat(job.getJobUuid()).matches("[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}");
 
         // Verify it actually got persisted in the DB
         assertThat(jobRepository.findById(job.getId())).get().isEqualTo(job);
@@ -78,10 +83,10 @@ public class JobServiceTest {
     public void cancelJob() {
         Job job = jobService.createJob("ExplanationOfBenefits", "http://localhost:8080");
 
-        jobService.cancelJob(job.getJobID());
+        jobService.cancelJob(job.getJobUuid());
 
         // Verify that it has the correct status
-        Job cancelledJob = jobRepository.findByJobID(job.getJobID());
+        Job cancelledJob = jobRepository.findByJobUuid(job.getJobUuid());
 
         assertEquals(JobStatus.CANCELLED, cancelledJob.getStatus());
     }
@@ -95,14 +100,14 @@ public class JobServiceTest {
     public void getJob() {
         Job job = jobService.createJob("ExplanationOfBenefits", "http://localhost:8080");
 
-        Job retrievedJob = jobService.getJobByJobID(job.getJobID());
+        Job retrievedJob = jobService.getJobByJobUuid(job.getJobUuid());
 
         assertEquals(job, retrievedJob);
     }
 
     @Test(expected = ResourceNotFoundException.class)
     public void getNonExistentJob() {
-        jobService.getJobByJobID("NonExistent");
+        jobService.getJobByJobUuid("NonExistent");
     }
 
     @Test(expected = InvalidJobStateTransition.class)
@@ -112,7 +117,7 @@ public class JobServiceTest {
         job.setStatus(JobStatus.SUCCESSFUL);
         jobRepository.saveAndFlush(job);
 
-        jobService.cancelJob(job.getJobID());
+        jobService.cancelJob(job.getJobUuid());
     }
 
     @Test(expected = InvalidJobStateTransition.class)
@@ -122,7 +127,7 @@ public class JobServiceTest {
         job.setStatus(JobStatus.CANCELLED);
         jobRepository.saveAndFlush(job);
 
-        jobService.cancelJob(job.getJobID());
+        jobService.cancelJob(job.getJobUuid());
     }
 
     @Test(expected = InvalidJobStateTransition.class)
@@ -132,7 +137,7 @@ public class JobServiceTest {
         job.setStatus(JobStatus.FAILED);
         jobRepository.saveAndFlush(job);
 
-        jobService.cancelJob(job.getJobID());
+        jobService.cancelJob(job.getJobUuid());
     }
 
     @Test
@@ -145,11 +150,11 @@ public class JobServiceTest {
         job.setStatus(JobStatus.IN_PROGRESS);
         job.setCreatedAt(localDateTime);
         job.setCompletedAt(localDateTime);
-        job.setJobID("abc");
+        job.setJobUuid("abc");
         job.setResourceTypes("ExplanationOfBenefits");
-        job.setRequestURL("http://localhost");
+        job.setRequestUrl("http://localhost");
         job.setStatusMessage("Pending");
-        job.setExpires(now);
+        job.setExpiresAt(now);
 
         JobOutput jobOutput = new JobOutput();
         jobOutput.setError(false);
@@ -172,11 +177,11 @@ public class JobServiceTest {
         Assert.assertEquals(JobStatus.IN_PROGRESS, updatedJob.getStatus());
         Assert.assertEquals(localDateTime, updatedJob.getCreatedAt());
         Assert.assertEquals(localDateTime, updatedJob.getCompletedAt());
-        Assert.assertEquals("abc", updatedJob.getJobID());
+        Assert.assertEquals("abc", updatedJob.getJobUuid());
         Assert.assertEquals("ExplanationOfBenefits", updatedJob.getResourceTypes());
-        Assert.assertEquals("http://localhost", updatedJob.getRequestURL());
+        Assert.assertEquals("http://localhost", updatedJob.getRequestUrl());
         Assert.assertEquals("Pending", updatedJob.getStatusMessage());
-        Assert.assertEquals(now, updatedJob.getExpires());
+        Assert.assertEquals(now, updatedJob.getExpiresAt());
 
         JobOutput updatedOutput = updatedJob.getJobOutput().get(0);
         Assert.assertEquals(false, updatedOutput.isError());
@@ -195,17 +200,17 @@ public class JobServiceTest {
         String errorFile = "error.ndjson";
         Job job = createJobForFileDownloads(testFile, errorFile);
 
-        String destinationStr = tmpJobLocation + job.getJobID();
+        String destinationStr = tmpJobLocation + job.getJobUuid();
         Path destination = Paths.get(destinationStr);
         Files.createDirectories(destination);
 
         createNDJSONFile(testFile, destinationStr);
         createNDJSONFile(errorFile, destinationStr);
 
-        Resource resource = jobService.getResourceForJob(job.getJobID(), testFile);
+        Resource resource = jobService.getResourceForJob(job.getJobUuid(), testFile);
         Assert.assertEquals(testFile, resource.getFilename());
 
-        Resource errorResource = jobService.getResourceForJob(job.getJobID(), errorFile);
+        Resource errorResource = jobService.getResourceForJob(job.getJobUuid(), errorFile);
         Assert.assertEquals(errorFile, errorResource.getFilename());
     }
 
@@ -227,9 +232,9 @@ public class JobServiceTest {
         job.setCreatedAt(localDateTime);
         job.setCompletedAt(localDateTime);
         job.setResourceTypes("ExplanationOfBenefits");
-        job.setRequestURL("http://localhost");
+        job.setRequestUrl("http://localhost");
         job.setStatusMessage("Pending");
-        job.setExpires(now);
+        job.setExpiresAt(now);
 
         JobOutput jobOutput = new JobOutput();
         jobOutput.setError(false);
@@ -255,7 +260,7 @@ public class JobServiceTest {
         String errorFile = "error.ndjson";
         Job job = createJobForFileDownloads(testFile, errorFile);
 
-        jobService.getResourceForJob(job.getJobID(), "filenamewrong.ndjson");
+        jobService.getResourceForJob(job.getJobUuid(), "filenamewrong.ndjson");
     }
 
     @Test(expected = JobOutputMissingException.class)
@@ -264,6 +269,6 @@ public class JobServiceTest {
         String errorFile = "error.ndjson";
         Job job = createJobForFileDownloads(testFile, errorFile);
 
-        jobService.getResourceForJob(job.getJobID(), "outputmissing.ndjson");
+        jobService.getResourceForJob(job.getJobUuid(), "outputmissing.ndjson");
     }
 }

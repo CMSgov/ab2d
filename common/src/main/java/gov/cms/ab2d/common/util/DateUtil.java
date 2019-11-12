@@ -19,4 +19,8 @@ public final class DateUtil {
     public static Date convertLocalDateTimeToDate(LocalDateTime localDateTime) {
         return Date.from(localDateTime.atZone(ZoneId.systemDefault()).toInstant());
     }
+
+    public static String getESTOffset() {
+        return String.format("%tz", Instant.now().atZone(ZoneId.of("America/New_York")));
+    }
 }
