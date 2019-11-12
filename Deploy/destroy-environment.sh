@@ -69,7 +69,8 @@ cd terraform/environments/ab2d-$CMS_ENV
 # Destroy the api and worker modules
 #
 
-# Change to the environment directory
+# Get load balancer ARN (if exists)
+
 LOAD_BALANCERS_EXIST=$(aws --region us-east-1 elbv2 describe-load-balancers \
   --query 'LoadBalancers[*].[LoadBalancerArn]' \
   --output text)
@@ -81,6 +82,7 @@ if [ -n "${LOAD_BALANCERS_EXIST}" ]; then
 fi
 
 # Turn off "delete protection" for the application load balancer
+
 echo "Turn off 'delete protection' for the application load balancer..."
 if [ -n "${ALB_ARN}" ]; then
   aws --region us-east-1 elbv2 modify-load-balancer-attributes \
@@ -88,24 +90,46 @@ if [ -n "${ALB_ARN}" ]; then
     --attributes Key=deletion_protection.enabled,Value=false
 fi
 
+#
+# Determine the environment count (exluding the shared environment)
+#
+
+PRIVATE_SUBNETS_PER_ENVIRONMENT=2
+
+PRIVATE_SUBNET_COUNT=$(aws ec2 describe-subnets \
+  --filters "Name=tag:Name,Values=ab2d-*-private-subnet*" \
+  --query "Subnets[*].Tags[?Key == 'Name'].Value" \
+  --output json \
+  | jq '. | length')
+
+ENVIRONMENT_COUNT=$((PRIVATE_SUBNET_COUNT/PRIVATE_SUBNETS_PER_ENVIRONMENT))
+
 # Destroy the environment of the "worker" module
-echo "Destroying worker components..."
-terraform destroy \
-  --target module.worker --auto-approve
+
+if [ "$ENVIRONMENT_COUNT" -eq "1" ]; then
+  echo "Destroying worker components..."
+  terraform destroy \
+    --target module.worker --auto-approve
+fi
 
 # Destroy the environment of the "api" module
-echo "Destroying API components..."
-terraform destroy \
-  --target module.api --auto-approve
+
+if [ "$ENVIRONMENT_COUNT" -eq "1" ]; then
+  echo "Destroying API components..."
+  terraform destroy \
+    --target module.api --auto-approve
+fi
 
 #
 # Destroy efs module
 #
 
-# Destroy the environment of the "efs" module
-echo "Destroying EFS components..."
-terraform destroy \
-  --target module.efs --auto-approve
+if [ "$ENVIRONMENT_COUNT" -eq "1" ]; then
+  # Destroy the environment of the "efs" module
+  echo "Destroying EFS components..."
+  terraform destroy \
+    --target module.efs --auto-approve
+fi
 
 #
 # Change to shared environment directory
@@ -115,64 +139,79 @@ cd "${START_DIR}"
 cd terraform/environments/ab2d-$CMS_SHARED_ENV
 
 #
-# TEMPORARILY COMMENT OUT BEGIN
+# Destroy controller module
 #
 
-# #
-# # Destroy controller module
-# #
-
-# echo "Destroying controller..."
-# terraform destroy \
-#   --target module.controller \
-#   --auto-approve
-
-# #
-# # Destroy db module
-# #
-
-# echo "Destroying DB components..."
-# terraform destroy \
-#   --target module.db --auto-approve
-
-# #
-# # Destroy all S3 buckets except for the "ab2d-automation" bucket
-# #
-
-# # Destroy the environment of the "s3" module
-
-# echo "Destroying S3 components..."
-
-# terraform destroy \
-#   --target module.s3 --auto-approve
-
-# aws s3 rm s3://ab2d-cloudtrail/ab2d-$CMS_ENV \
-#   --recursive
-
-# #
-# # Disable "kms" key
-# #
-
-# # Rerun db destroy again to ensure that it is in correct state
-# # - this is a workaround that prevents the kms module from raising an eror sporadically
-# echo "Rerun module.db destroy to ensure proper state..."
-# terraform destroy \
-#   --target module.db --auto-approve
-
-# # Destroy the KMS module
-# echo "Disabling KMS key..."
-# KMS_KEY_ID=$(aws kms describe-key --key-id alias/ab2d-kms --query="KeyMetadata.KeyId")
-# if [ -n "$KMS_KEY_ID" ]; then
-#   cd "${START_DIR}"
-#   cd python3
-#   ./disable-kms-key.py $KMS_KEY_ID
-#   cd "${START_DIR}"
-#   cd terraform/environments/ab2d-$CMS_ENV
-# fi
+if [ "$ENVIRONMENT_COUNT" -eq "1" ]; then
+  echo "Destroying controller..."
+  terraform destroy \
+    --target module.controller \
+    --auto-approve
+else
+  echo "Skipping destroy of controller due to another existing environment..."
+fi
 
 #
-# TEMPORARILY COMMENT OUT END
+# Destroy db module
 #
+
+if [ "$ENVIRONMENT_COUNT" -eq "1" ]; then
+  echo "Destroying DB components..."
+  terraform destroy \
+    --target module.db \
+    --auto-approve
+else
+  echo "Skipping destroy of database due to another existing environment..."
+fi
+
+#
+# Destroy all S3 buckets except for the "ab2d-automation" bucket
+#
+
+# Destroy the environment of the "s3" module
+
+echo "Destroying S3 components..."
+
+if [ "$ENVIRONMENT_COUNT" -eq "1" ]; then
+   echo "Destroying S3 components..."
+  terraform destroy \
+    --target module.s3 --auto-approve
+else
+   echo "Skipping destroy of S3 due to another existing environment..."
+fi
+
+# Destroy environment specific cloudtrail S3 key
+
+aws s3 rm s3://ab2d-cloudtrail/ab2d-$CMS_ENV \
+  --recursive
+
+#
+# Disable "kms" key
+#
+
+# Rerun db destroy again to ensure that it is in correct state
+# - this is a workaround that prevents the kms module from raising an eror sporadically
+echo "Rerun module.db destroy to ensure proper state..."
+
+if [ "$ENVIRONMENT_COUNT" -eq "1" ]; then
+  terraform destroy \
+    --target module.db --auto-approve
+fi
+
+# Destroy the KMS module
+if [ "$ENVIRONMENT_COUNT" -eq "1" ]; then
+  echo "Disabling KMS key..."
+  KMS_KEY_ID=$(aws kms describe-key --key-id alias/ab2d-kms --query="KeyMetadata.KeyId")
+  if [ -n "$KMS_KEY_ID" ]; then
+    cd "${START_DIR}"
+    cd python3
+    ./disable-kms-key.py $KMS_KEY_ID
+    cd "${START_DIR}"
+    cd terraform/environments/ab2d-$CMS_ENV
+  fi
+else
+  echo "Skipping disabling KMS key due to another existing environment..."
+fi
 
 #
 # Destroy terraform state information
@@ -487,19 +526,31 @@ IGW_RT_ID=$(aws --region us-east-1 ec2 describe-route-tables \
   --query 'RouteTables[*].[RouteTableId]' \
   --output text)
 
-if [ -n "${IGW_RT_ID}" ]; then
+if [ -n "${IGW_RT_ID}" ] && [ "$ENVIRONMENT_COUNT" -le "1" ]; then
   echo "Deleting the Internet Gateway route table..."
   aws --region us-east-1 ec2 delete-route-table \
     --route-table-id $IGW_RT_ID
 fi
 
-# Determine if internet gateway is being used by a different environment
+#
+# Detach Internet Gateway from VPC
+#
 
-IGW_IN_USE_IN_OTHER_ENV=$(aws --region us-east-1 ec2 describe-route-tables \
-  --query "RouteTables[*].Routes[?GatewayId == '$IGW_ID'].GatewayId" \
+# Get VPC ID and IGW ID
+
+VPC_ID=$(aws --region us-east-1 ec2 describe-vpcs \
+  --filters "Name=tag:Name,Values=ab2d-vpc" \
+  --query 'Vpcs[*].[VpcId]' \
   --output text)
 
-if [ -n "${VPC_ID}" ] && [ -n "${IGW_ID}" ] && [ -z "$IGW_IN_USE_IN_OTHER_ENV" ]; then
+IGW_ID=$(aws --region us-east-1 ec2 describe-internet-gateways \
+  --filter "Name=tag:Name,Values=ab2d-igw" \
+  --query 'InternetGateways[*].[InternetGatewayId]' \
+  --output text)
+
+# Detach Internet Gateway from VPC
+
+if [ -n "${VPC_ID}" ] && [ -n "${IGW_ID}" ] && [ "$ENVIRONMENT_COUNT" -le "1" ]; then
   echo "Detaching Internet Gateway from VPC..."
   aws --region us-east-1 ec2 detach-internet-gateway \
     --vpc-id $VPC_ID \
@@ -507,28 +558,10 @@ if [ -n "${VPC_ID}" ] && [ -n "${IGW_ID}" ] && [ -z "$IGW_IN_USE_IN_OTHER_ENV" ]
 fi
 
 #
-# Detach Internet Gateway from VPC
-#
-
-if [ -n "${IGW_ID}" ] && [ -z "$IGW_IN_USE_IN_OTHER_ENV" ]; then
-    
-  VPC_ID=$(aws --region us-east-1 ec2 describe-vpcs \
-    --filters "Name=tag:Name,Values=ab2d-vpc" \
-    --query 'Vpcs[*].[VpcId]' \
-    --output text)
-
-  IGW_ID=$(aws --region us-east-1 ec2 describe-internet-gateways \
-    --filter "Name=tag:Name,Values=ab2d-igw" \
-    --query 'InternetGateways[*].[InternetGatewayId]' \
-    --output text)
-
-fi
-
-#
 # Delete Internet Gateway
 #
 
-if [ -n "${IGW_ID}" ] && [ -z "$IGW_IN_USE_IN_OTHER_ENV" ]; then
+if [ -n "${IGW_ID}" ] && [ "$ENVIRONMENT_COUNT" -le "1" ]; then
   echo "Deleting Internet Gateway..."
   aws --region us-east-1 ec2 delete-internet-gateway \
     --internet-gateway-id $IGW_ID
@@ -570,8 +603,8 @@ SUBNET_PUBLIC_1_ID=$(aws --region us-east-1 ec2 describe-subnets \
   --filter "Name=tag:Name,Values=ab2d-public-subnet-01" \
   --query 'Subnets[*].[SubnetId]' \
   --output text)
-
-if [ -n "${SUBNET_PUBLIC_1_ID}" ]; then
+    
+if [ -n "${SUBNET_PUBLIC_1_ID}" ] && [ "$ENVIRONMENT_COUNT" -le "1" ]; then
   echo "Deleting the first public subnet..."
   aws --region us-east-1 ec2 delete-subnet \
     --subnet-id $SUBNET_PUBLIC_1_ID
@@ -584,7 +617,7 @@ SUBNET_PUBLIC_2_ID=$(aws --region us-east-1 ec2 describe-subnets \
   --query 'Subnets[*].[SubnetId]' \
   --output text)
 
-if [ -n "${SUBNET_PUBLIC_2_ID}" ]; then
+if [ -n "${SUBNET_PUBLIC_2_ID}" ] && [ "$ENVIRONMENT_COUNT" -le "1" ]; then
   echo "Deleting the second public subnet..."
   aws --region us-east-1 ec2 delete-subnet \
     --subnet-id $SUBNET_PUBLIC_2_ID
