@@ -73,3 +73,22 @@ module "controller" {
   iam_instance_profile  = var.ec2_iam_profile
   gold_disk_name        = var.gold_image_name
 }
+
+module "lonnie_access_controller" {
+  description  = "Lonnie"
+  cidr_blocks  = ["152.208.13.223/32"]
+  source       = "../../modules/access_controller"
+  sec_group_id = module.controller.deployment_controller_sec_group_id
+}
+
+resource "null_resource" "authorized_keys_file" {
+  depends_on = [module.controller]
+
+  provisioner "local-exec" {
+    command = "scp -o StrictHostKeyChecking=no -i ~/.ssh/${var.ssh_key_name}.pem ./authorized_keys ${var.linux_user}@${module.controller.deployment_controller_public_ip}:/home/${var.linux_user}/.ssh"
+  }
+
+  provisioner "local-exec" {
+    command = "ssh -i ~/.ssh/${var.ssh_key_name}.pem ${var.linux_user}@${module.controller.deployment_controller_public_ip} 'chmod 600 ~/.ssh/authorized_keys'"
+  }
+}

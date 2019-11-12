@@ -138,6 +138,12 @@
 
 1. Change permissions of the key
 
+   *Example for controllers within SemanticBits demo environment:*
+
+   ```ShellSession
+   $ chmod 600 ~/.ssh/ab2d-sbdemo-shared.pem
+   ```
+
    *Example for Dev environment testing within SemanticBits demo environment:*
    
    ```ShellSession
@@ -151,6 +157,12 @@
    ```
 
 1. Output the public key to the clipboard
+
+   *Example for controllers within SemanticBits demo environment:*
+
+   ```ShellSession
+   $ ssh-keygen -y -f ~/.ssh/ab2d-sbdemo-shared.pem | pbcopy
+   ```
 
    *Example for Dev environment testing within SemanticBits demo environment:*
 
@@ -351,7 +363,39 @@
    ```ShellSession
    $ cd ~/code/ab2d
    ```
-   
+
+1. If you want to delete all images and containers in your local environment, do the following:
+    
+   1. Delete orphaned volumes (if any)
+
+      ```ShellSession
+      $ sudo docker volume ls -qf dangling=true | xargs -I name sudo docker volume rm name
+      ```
+
+   1. Delete all containers (if any)
+      
+      ```ShellSession
+      $ sudo docker ps -aq | xargs -I name sudo docker rm name
+      ```
+
+   1. Delete all images (if any)
+
+      ```ShellSession
+      $ sudo docker images -q | xargs -I name sudo docker rmi --force name
+      ```
+
+   1. Delete orphaned volumes again (if any)
+
+      ```ShellSession
+      $ sudo docker volume ls -qf dangling=true | xargs -I name sudo docker volume rm name
+      ```
+
+   1. Delete all images again (if any)
+
+      ```ShellSession
+      $ sudo docker images -q | xargs -I name sudo docker rmi --force name
+      ```
+
 1. Build the docker images of API and Worker nodes
 
    1. Build all docker images

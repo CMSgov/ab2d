@@ -644,7 +644,7 @@ if [ -z "${NAT_GW_1_ID}" ]; then
   done
 
 fi
- 
+
 # Create a custom route table for the first NAT Gateway
 
 ROUTE_TABLE_FOR_NGW_1_ID=$(aws ec2 describe-route-tables \
@@ -987,9 +987,13 @@ if [ -z "${DB_ENDPOINT}" ]; then
   echo 'ami_id = "'$AMI_ID'"' \
     >> $CMS_SHARED_ENV.auto.tfvars
 else
-  PRIVATE_SUBNETS_OUTPUT=$(aws ec2 describe-subnets --filters "Name=tag:Name,Values=ab2d-*-private-subnet-*" --query "Subnets[*].SubnetId" --output text)
+  PRIVATE_SUBNETS_OUTPUT=$(aws ec2 describe-subnets \
+    --filters "Name=tag:Name,Values=ab2d-*-private-subnet-*" \
+    --query "Subnets[*].SubnetId" \
+    --output text)
 
   IFS=$'\t' read -ra subnet_array <<< "$PRIVATE_SUBNETS_OUTPUT"
+  unset IFS
   
   COUNT=1
   for i in "${subnet_array[@]}"
@@ -1108,8 +1112,39 @@ rm -f generated/.pgpass
 cd "${START_DIR}"
 cd terraform/environments/ab2d-$CMS_SHARED_ENV
 mkdir -p generated
+
+# Add default database
+
 echo "${DB_ENDPOINT}:5432:postgres:${DATABASE_USER}:${DATABASE_PASSWORD}" > generated/.pgpass
-echo "${DB_ENDPOINT}:5432:${DATABASE_NAME}:${DATABASE_USER}:${DATABASE_PASSWORD}" >> generated/.pgpass
+
+# *** TO DO *** BEGIN: add all environments to the .pgpass file
+
+# Get the names of all deployed private subnets
+
+# PRIVATE_SUBNETS=$(aws ec2 describe-subnets \
+#   --filters "Name=tag:Name,Values=ab2d-*-private-subnet*" \
+#   --query "Subnets[*].Tags[?Key == 'Name'].Value" \
+#   --output text)
+
+# Determine all deployed environments by extracting unique environment name from private subnet names
+
+# IFS=$' ' UNIQUE_ENVS=($(uniq <<< $(sort <<<"${PRIVATE_SUBNETS[*]}" \
+#   | sed 's/\(^ab2d-\)\(.*\)\(-private-subnet.*\)/\2/'))); \
+#   unset IFS
+
+# echo "${DB_ENDPOINT}:5432:postgres:${DATABASE_USER}:${DATABASE_PASSWORD}" > generated/.pgpass
+# for i in "${UNIQUE_ENVS}"; do
+#   cd "${START_DIR}"
+#   cd python3
+#   DATABASE_USER=$(./get-database-secret.py "${i}" database_user $DATABASE_SECRET_DATETIME)
+#   DATABASE_PASSWORD=$(./get-database-secret.py "${i}" database_password $DATABASE_SECRET_DATETIME)
+#   DATABASE_NAME=$(./get-database-secret.py "${i}" database_name $DATABASE_SECRET_DATETIME)
+#   cd "${START_DIR}"
+#   cd terraform/environments/ab2d-$CMS_SHARED_ENV
+#   echo "${DB_ENDPOINT}:5432:${DATABASE_NAME}:${DATABASE_USER}:${DATABASE_PASSWORD}" >> generated/.pgpass
+# done
+
+# *** TO DO *** END: add all environments to the .pgpass file
 
 #
 # Deploy controller

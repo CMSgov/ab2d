@@ -219,7 +219,7 @@ DB_ENDPOINT=$(aws --region us-east-1 rds describe-db-instances \
 
 # Determine if the database for the environment exists
 
-DB_NAME_IF_EXISTS=$(ssh -tt -i "~/.ssh/ab2d-sbdemo-dev.pem" \
+DB_NAME_IF_EXISTS=$(ssh -tt -i "~/.ssh/ab2d-sbdemo-shared.pem" \
   "${SSH_USERNAME}@${CONTROLLER_PUBLIC_IP}" \
   "psql -t --host "${DB_ENDPOINT}" --username "${DATABASE_USER}" --dbname postgres --command='SELECT datname FROM pg_catalog.pg_database'" \
   | grep "${DATABASE_NAME}" \
@@ -232,7 +232,7 @@ DB_NAME_IF_EXISTS=$(ssh -tt -i "~/.ssh/ab2d-sbdemo-dev.pem" \
 
 if [ -n "${CONTROLLER_PUBLIC_IP}" ] && [ -n "${DB_ENDPOINT}" ] && [ "${DB_NAME_IF_EXISTS}" != "${DATABASE_NAME}" ]; then
   echo "Creating database..."
-  ssh -tt -i "~/.ssh/ab2d-sbdemo-dev.pem" \
+  ssh -tt -i "~/.ssh/ab2d-sbdemo-shared.pem" \
     "${SSH_USERNAME}@${CONTROLLER_PUBLIC_IP}" \
     "createdb ${DATABASE_NAME} --host ${DB_ENDPOINT} --username ${DATABASE_USER}"
 fi
@@ -265,7 +265,8 @@ cd "${START_DIR}"
 cd terraform/environments/ab2d-$CMS_SHARED_ENV
 
 echo "Push authorized_keys file to deployment_controller..."
-terraform taint -allow-missing null_resource.authorized_keys_file
+terraform taint \
+  --allow-missing null_resource.authorized_keys_file
 if [ -z "${AUTOAPPROVE}" ]; then
   # Confirm with the caller prior to applying changes.
   terraform apply \

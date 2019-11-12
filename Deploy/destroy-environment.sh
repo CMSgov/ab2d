@@ -373,14 +373,14 @@ while [ -n "${NGW_RT_1_ASSOCIATION_ID}" ]; do
     aws --region us-east-1 ec2 disassociate-route-table \
       --association-id $NGW_RT_1_ASSOCIATION_ID
 
-  NGW_RT_1_ASSOCIATION_ID=$(aws --region us-east-1 ec2 describe-route-tables \
-    --filter "Name=tag:Name,Values=ab2d-ngw-rt-1" \
-    --query 'RouteTables[*].Associations[*].[RouteTableAssociationId]' \
-    --output text)
+    NGW_RT_1_ASSOCIATION_ID=$(aws --region us-east-1 ec2 describe-route-tables \
+      --filter "Name=tag:Name,Values=ab2d-ngw-rt-1" \
+      --query 'RouteTables[*].Associations[*].[RouteTableAssociationId]' \
+      --output text)
 
-  IFS=$' ' read -ra NGW_RT_1_ASSOCIATION_ID <<< "$NGW_RT_1_ASSOCIATION_ID"
+    IFS=$' ' read -ra NGW_RT_1_ASSOCIATION_ID <<< "$NGW_RT_1_ASSOCIATION_ID"
 
-fi
+  fi
 
 done
 

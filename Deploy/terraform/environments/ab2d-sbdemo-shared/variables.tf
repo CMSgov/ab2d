@@ -42,7 +42,7 @@ variable "linux_user" {
 }
 
 variable "ssh_key_name" {
-  default = "ab2d-sbdemo-dev"
+  default = "ab2d-sbdemo-shared"
 }
 
 variable "max_ec2_instance_count" {
