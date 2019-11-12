@@ -4,10 +4,6 @@ provider "aws" {
   profile = var.aws_profile
 }
 
-#
-# LSH *** TO DO ***: consider "dynamodb_table" attribute
-#
-# https://www.terraform.io/docs/backends/types/s3.html
 terraform {
   backend "s3" {
     bucket         = "ab2d-automation"
