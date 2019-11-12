@@ -7,6 +7,7 @@ import org.springframework.util.Assert;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.time.Month;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -26,7 +27,7 @@ public class BeneficiaryAdapterStub implements BeneficiaryAdapter {
     public GetPatientsByContractResponse getPatientsByContract(String contractNumber) {
 
         final int contractSno = extractContractSno(contractNumber);
-        final int startOffset = contractSno * 100;
+        final int startOffset = (contractSno - 1) * 100;
 
         final var patientsPerContract = getFromSampleFile(startOffset);
 
@@ -41,19 +42,17 @@ public class BeneficiaryAdapterStub implements BeneficiaryAdapter {
         try {
             sno = Integer.valueOf(contractNumberSuffix);
         } catch (NumberFormatException e) {
-            final String errMsg1 = String.format("Invalid ContractNumber : %s.  ", contractNumber);
-            final String errMsg2 = "The rightmost 3 characters of the contract number must be numeric. ";
-            throw new IllegalArgumentException(errMsg1 + errMsg2);
-        }
-        if (sno < 0 || sno > 299) {
-            final String errMsg = "The rightmost 3 characters of the serial number must be between 0 and 299";
-            throw new IllegalArgumentException(errMsg);
+            log.warn("Invalid contractNumber : {} ", contractNumber);
+            return 0;
         }
 
         return sno;
     }
 
     private List<String> getFromSampleFile(final int startOffset) {
+        if (startOffset < 0) {
+            return new ArrayList<String>();
+        }
 
         try (var inputStream = this.getClass().getResourceAsStream(BENE_ID_FILE)) {
             Assert.notNull(inputStream, "error getting resource as stream :  " + BENE_ID_FILE);
