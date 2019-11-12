@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
 @Component
 public class BeneficiaryAdapterStub implements BeneficiaryAdapter {
 
-    private static final String BENE_ID_FILE = "/test-stub-data/test-bene-ids.csv";
+    private static final String BENE_ID_FILE = "/test-stub-data/synthetic-bene-ids.csv";
 
 
     @Override
