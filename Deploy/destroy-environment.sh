@@ -115,56 +115,64 @@ cd "${START_DIR}"
 cd terraform/environments/ab2d-$CMS_SHARED_ENV
 
 #
-# Destroy controller module
+# TEMPORARILY COMMENT OUT BEGIN
 #
 
-echo "Destroying controller..."
-terraform destroy \
-  --target module.controller \
-  --auto-approve
+# #
+# # Destroy controller module
+# #
+
+# echo "Destroying controller..."
+# terraform destroy \
+#   --target module.controller \
+#   --auto-approve
+
+# #
+# # Destroy db module
+# #
+
+# echo "Destroying DB components..."
+# terraform destroy \
+#   --target module.db --auto-approve
+
+# #
+# # Destroy all S3 buckets except for the "ab2d-automation" bucket
+# #
+
+# # Destroy the environment of the "s3" module
+
+# echo "Destroying S3 components..."
+
+# terraform destroy \
+#   --target module.s3 --auto-approve
+
+# aws s3 rm s3://ab2d-cloudtrail/ab2d-$CMS_ENV \
+#   --recursive
+
+# #
+# # Disable "kms" key
+# #
+
+# # Rerun db destroy again to ensure that it is in correct state
+# # - this is a workaround that prevents the kms module from raising an eror sporadically
+# echo "Rerun module.db destroy to ensure proper state..."
+# terraform destroy \
+#   --target module.db --auto-approve
+
+# # Destroy the KMS module
+# echo "Disabling KMS key..."
+# KMS_KEY_ID=$(aws kms describe-key --key-id alias/ab2d-kms --query="KeyMetadata.KeyId")
+# if [ -n "$KMS_KEY_ID" ]; then
+#   cd "${START_DIR}"
+#   cd python3
+#   ./disable-kms-key.py $KMS_KEY_ID
+#   cd "${START_DIR}"
+#   cd terraform/environments/ab2d-$CMS_ENV
+# fi
 
 #
-# Destroy db module
+# TEMPORARILY COMMENT OUT END
 #
-
-echo "Destroying DB components..."
-terraform destroy \
-  --target module.db --auto-approve
-
-#
-# Destroy all S3 buckets except for the "ab2d-automation" bucket
-#
-
-# Destroy the environment of the "s3" module
-
-echo "Destroying S3 components..."
-
-terraform destroy \
-  --target module.s3 --auto-approve
-
-aws s3 rm s3://ab2d-cloudtrail/ab2d-$CMS_ENV \
-  --recursive
-
-#
-# Disable "kms" key
-#
-
-# Rerun db destroy again to ensure that it is in correct state
-# - this is a workaround that prevents the kms module from raising an eror sporadically
-echo "Rerun module.db destroy to ensure proper state..."
-terraform destroy \
-  --target module.db --auto-approve
-
-# Destroy the KMS module
-echo "Disabling KMS key..."
-KMS_KEY_ID=$(aws kms describe-key --key-id alias/ab2d-kms --query="KeyMetadata.KeyId")
-if [ -n "$KMS_KEY_ID" ]; then
-  cd "${START_DIR}"
-  cd python3
-  ./disable-kms-key.py $KMS_KEY_ID
-  cd "${START_DIR}"
-  cd terraform/environments/ab2d-$CMS_ENV
-fi
 
 #
 # Destroy terraform state information
@@ -485,20 +493,6 @@ if [ -n "${IGW_RT_ID}" ]; then
     --route-table-id $IGW_RT_ID
 fi
 
-#
-# Detach Internet Gateway from VPC
-#
-
-VPC_ID=$(aws --region us-east-1 ec2 describe-vpcs \
-  --filters "Name=tag:Name,Values=ab2d-vpc" \
-  --query 'Vpcs[*].[VpcId]' \
-  --output text)
-
-IGW_ID=$(aws --region us-east-1 ec2 describe-internet-gateways \
-  --filter "Name=tag:Name,Values=ab2d-igw" \
-  --query 'InternetGateways[*].[InternetGatewayId]' \
-  --output text)
-
 # Determine if internet gateway is being used by a different environment
 
 IGW_IN_USE_IN_OTHER_ENV=$(aws --region us-east-1 ec2 describe-route-tables \
@@ -510,6 +504,24 @@ if [ -n "${VPC_ID}" ] && [ -n "${IGW_ID}" ] && [ -z "$IGW_IN_USE_IN_OTHER_ENV" ]
   aws --region us-east-1 ec2 detach-internet-gateway \
     --vpc-id $VPC_ID \
     --internet-gateway-id $IGW_ID
+fi
+
+#
+# Detach Internet Gateway from VPC
+#
+
+if [ -n "${IGW_ID}" ] && [ -z "$IGW_IN_USE_IN_OTHER_ENV" ]; then
+    
+  VPC_ID=$(aws --region us-east-1 ec2 describe-vpcs \
+    --filters "Name=tag:Name,Values=ab2d-vpc" \
+    --query 'Vpcs[*].[VpcId]' \
+    --output text)
+
+  IGW_ID=$(aws --region us-east-1 ec2 describe-internet-gateways \
+    --filter "Name=tag:Name,Values=ab2d-igw" \
+    --query 'InternetGateways[*].[InternetGatewayId]' \
+    --output text)
+
 fi
 
 #

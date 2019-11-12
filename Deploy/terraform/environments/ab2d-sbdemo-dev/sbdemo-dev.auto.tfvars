@@ -1,5 +1,5 @@
 vpc_id = "vpc-0bef134b44ae82407"
-private_subnet_ids = ["subnet-015c60cd126d7c223","subnet-04b555f50c8b329e5"]
-deployment_controller_subnet_ids = ["subnet-0273935f329c4f178","subnet-0f97660a739a5e2e1"]
+private_subnet_ids = ["subnet-0343600d2378a0e79","subnet-0b1352489201b9178"]
+deployment_controller_subnet_ids = ["subnet-0f4dc08f661611148","subnet-041f1b8043d1225d8"]
 ec2_instance_type = "m5.xlarge"
 linux_user = "centos"

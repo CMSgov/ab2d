@@ -880,7 +880,7 @@ if [ -z "${AMI_ID}" ]; then
   
   # Get first public subnet
   SUBNET_PUBLIC_1_ID=$(aws --region us-east-1 ec2 describe-subnets \
-    --filters "Name=tag:Name,Values=ab2d-${CMS_ENV}-public-subnet-01" \
+    --filters "Name=tag:Name,Values=ab2d-public-subnet-01" \
     --query "Subnets[0].SubnetId" \
     --output text)
   
@@ -910,6 +910,8 @@ fi
 # AMI Generation for Jenkins node
 #
 
+export AWS_PROFILE="${CMS_ENV}"
+
 # Set JENKINS_AMI_ID if it already exists for the deployment
 
 echo "Set JENKINS_AMI_ID if it already exists for the deployment..."
@@ -936,7 +938,7 @@ if [ -z "${JENKINS_AMI_ID}" ]; then
 
   # Get first public subnet
   SUBNET_PUBLIC_1_ID=$(aws --region us-east-1 ec2 describe-subnets \
-    --filters "Name=tag:Name,Values=ab2d-${CMS_ENV}-public-subnet-01" \
+    --filters "Name=tag:Name,Values=ab2d-public-subnet-01" \
     --query "Subnets[0].SubnetId" \
     --output text)
 
