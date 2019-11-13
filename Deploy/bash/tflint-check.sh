@@ -1,10 +1,15 @@
 #!/bin/bash
 
-# Do a linting pass on the script directory of the environment
-cd "$(dirname "$0")"/../../../../Deploy/terraform
+#
+# Change to working directory
+#
+
+START_DIR="$( cd "$(dirname "$0")" ; pwd -P )"
+cd "${START_DIR}"
+cd ../terraform
 
 #  Do a linting pass on each terraform file
-for tfile in $(find . -exec ls -dl \{\} \; | awk '{print $10}' | grep ".tf" | grep -v ".tfstate" | grep -v ".sh")
+for tfile in $(find . -exec ls -dl \{\} \; | awk '{print $10}' | grep ".tf" | grep -v ".tfstate" | grep -v ".sh" | grep -v ".tfvars")
 do
    echo "Checking file: $tfile"
    tflint $tfile
