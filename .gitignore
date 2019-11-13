@@ -67,3 +67,6 @@ build/
 ### Deploy ###
 # Generated files that shouldn't be checked in
 **/Deploy/**/generated
+
+### Terraform ###
+**/terraform/**/*.tfvars
