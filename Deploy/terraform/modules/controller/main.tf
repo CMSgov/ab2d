@@ -56,6 +56,10 @@ resource "aws_instance" "deployment_controller" {
   subnet_id = random_shuffle.public_subnets.result[0]
   associate_public_ip_address = true
   iam_instance_profile = var.iam_instance_profile
+
+  volume_tags = {
+    Name = "ab2d-deployment-controller-vol"
+  }
   
   tags = {
     Name = "ab2d-deployment-controller"
@@ -74,8 +78,12 @@ resource "aws_instance" "deployment_controller" {
 }
 
 resource "aws_eip" "deployment_controller" {
+  depends_on = ["aws_instance.deployment_controller"]
   instance = aws_instance.deployment_controller.id
   vpc = true
+  tags = {
+    Name = "ab2d-deployment-controller-eip"
+  }
 }
 
 resource "null_resource" "wait" {
