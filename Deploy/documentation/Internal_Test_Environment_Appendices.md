@@ -9,6 +9,7 @@
 1. [Appendix E: Verify EFS mounting on worker node](#appendix-e-verify-efs-mounting-on-worker-node)
 1. [Appendix F: Verify PostgreSQL](#appendix-f-verify-postgresql)
 1. [Appendix G: Note the product code for CentOS 7 AMI](#appendix-g-note-the-product-code-for-centos-7-ami)
+1. [Appendix H: Do a linting check of the terraform files](#appendix-h-do-a-linting-check-of-the-terraform-files)
 
 ## Appendix A: Destroy complete environment
 
@@ -389,3 +390,18 @@
    ```
    aw0evgkw8e5c1q413zgy5pjce
    ```
+
+## Appendix H: Do a linting check of the terraform files
+
+1. Change to the "Deploy" directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d/Deploy
+   ```
+
+1. Do a linting check
+
+   ```ShellSession
+   $ ./bash/tflint-check.sh
+   ```
+   
