@@ -10,6 +10,12 @@ START_DIR="$( cd "$(dirname "$0")" ; pwd -P )"
 cd "${START_DIR}"
 
 #
+# Set default values
+#
+
+export DEBUG_LEVEL="WARN"
+
+#
 # Parse options
 #
 
@@ -71,7 +77,6 @@ fi
 #
 
 export AWS_PROFILE="${CMS_SHARED_ENV}"
-export DEBUG_LEVEL="WARN"
 
 # Verify that VPC ID exists
 
@@ -111,20 +116,6 @@ echo "Setting terraform debug level to $DEBUG_LEVEL..."
 export TF_LOG=$DEBUG_LEVEL
 export TF_LOG_PATH=/var/log/terraform/tf.log
 rm -f /var/log/terraform/tf.log
-
-#
-# Destroy terraform state information (if first run)
-#
-
-# *** TO DO ***: Need to ensure that this only occurs when there are no existing environments
-
-# cd "${START_DIR}"
-# cd terraform
-# if [ -z "${NO_EXISTING_ENVIRONMENT}" ]; then
-#   aws s3 rm s3://ab2d-automation \
-#     --recursive
-#   rm -rf .terraform
-# fi
 
 #
 # Initialize and validate terraform
@@ -321,7 +312,7 @@ if [ -z "${SUBNET_PUBLIC_2_ID}" ]; then
 fi
 
 #
-# Create first private subnet
+# Create first private subnet for target environment
 #
 
 cd "${START_DIR}"
@@ -360,7 +351,7 @@ if [ -z "${SUBNET_PRIVATE_1_ID}" ]; then
 fi
 
 #
-# Create second private subnet
+# Create second private subnet for target environment
 #
 
 cd "${START_DIR}"
