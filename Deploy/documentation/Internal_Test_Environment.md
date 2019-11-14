@@ -498,6 +498,34 @@
       ----|-----|--------|----------|----------
       ab2d|ab2d |UTF8    |en_US.utf8|en_US.utf8
 
+   1. List tables
+   
+      ```ShellSession
+      \dt
+      ```
+
+   1. Note tables in the output
+
+       Schema |         Name          | Type  | Owner 
+      --------+-----------------------+-------+-------
+       public | beneficiary           | table | ab2d
+       public | contract              | table | ab2d
+       public | coverage              | table | ab2d
+       public | databasechangelog     | table | ab2d
+       public | databasechangeloglock | table | ab2d
+       public | int_channel_message   | table | ab2d
+       public | int_group_to_message  | table | ab2d
+       public | int_lock              | table | ab2d
+       public | int_message           | table | ab2d
+       public | int_message_group     | table | ab2d
+       public | int_metadata_store    | table | ab2d
+       public | job                   | table | ab2d
+       public | job_output            | table | ab2d
+       public | role                  | table | ab2d
+       public | sponsor               | table | ab2d
+       public | user_account          | table | ab2d
+       public | user_role             | table | ab2d
+ 
 1. If you want to connect to the running api container, do the following
 
    ```ShellSession
