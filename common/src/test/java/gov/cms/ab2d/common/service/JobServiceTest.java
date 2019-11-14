@@ -1,10 +1,10 @@
 package gov.cms.ab2d.common.service;
 
 import gov.cms.ab2d.common.SpringBootApp;
-import gov.cms.ab2d.common.model.Job;
-import gov.cms.ab2d.common.model.JobOutput;
-import gov.cms.ab2d.common.model.JobStatus;
+import gov.cms.ab2d.common.model.*;
 import gov.cms.ab2d.common.repository.JobRepository;
+import gov.cms.ab2d.common.repository.SponsorRepository;
+import gov.cms.ab2d.common.repository.UserRepository;
 import org.apache.commons.io.IOUtils;
 import org.junit.Assert;
 import org.junit.Before;
@@ -14,6 +14,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.core.io.Resource;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.transaction.TransactionSystemException;
@@ -26,6 +28,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 import static gov.cms.ab2d.common.service.JobServiceImpl.INITIAL_JOB_STATUS_MESSAGE;
@@ -44,13 +47,39 @@ public class JobServiceTest {
     @Autowired
     JobRepository jobRepository;
 
+    @Autowired
+    UserRepository userRepository;
+
+    @Autowired
+    SponsorRepository sponsorRepository;
+
     @Value("${efs.mount}")
     private String tmpJobLocation;
 
     // Be safe and make sure nothing from another test will impact current test
     @Before
-    public void clearJobs() {
+    public void setup() {
         jobRepository.deleteAll();
+        userRepository.deleteAll();
+        sponsorRepository.deleteAll();
+
+        Sponsor sponsor = new Sponsor();
+        sponsor.setHpmsId(574);
+        sponsor.setOrgName("CHA HMO, INC.");
+        sponsorRepository.save(sponsor);
+
+        User user = new User();
+        user.setEnabled(true);
+        user.setSponsor(sponsor);
+        user.setUserName("example@example.com");
+        userRepository.saveAndFlush(user);
+
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken(
+                        new org.springframework.security.core.userdetails.User("example@example.com",
+                                "test", new ArrayList<>()), "pass"));
+
+
     }
 
     @Test
@@ -60,7 +89,7 @@ public class JobServiceTest {
         assertThat(job.getId()).isNotNull();
         assertThat(job.getJobUuid()).isNotNull();
         assertEquals(job.getProgress(), Integer.valueOf(0));
-        assertEquals(job.getUser(), null); // null for now since no authentication
+        assertEquals(job.getUser(), userRepository.findByUserName("example@example.com")); // null for now since no authentication
         assertEquals(job.getResourceTypes(), "ExplanationOfBenefits");
         assertEquals(job.getRequestUrl(), "http://localhost:8080");
         assertEquals(job.getStatusMessage(), INITIAL_JOB_STATUS_MESSAGE);
@@ -68,7 +97,8 @@ public class JobServiceTest {
         assertEquals(job.getJobOutput().size(), 0);
         assertEquals(job.getLastPollTime(), null);
         assertEquals(job.getExpiresAt(), null);
-        assertThat(job.getJobUuid()).matches("[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}");
+        assertThat(job.getJobUuid()).matches(
+                "[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}");
 
         // Verify it actually got persisted in the DB
         assertThat(jobRepository.findById(job.getId())).get().isEqualTo(job);
