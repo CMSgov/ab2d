@@ -24,7 +24,7 @@ import java.util.Map;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = SpringBootApp.class)
-@TestPropertySource(locations = "/hpms-it.properties")
+@TestPropertySource(locations = "/application.hpms.properties")
 public class OrgStructureReportProcessorTests {
 
     @Autowired
