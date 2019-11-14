@@ -36,9 +36,23 @@
 ## Configure AWS CLI
 
 1. Configure AWS CLI
-   
+
+   *Example for testing Shared environment in SemanticBits demo environment:*
+
    ```ShellSession
-   $ aws configure --profile=sbdemo
+   $ aws configure --profile=sbdemo-shared
+   ```
+
+   *Example for testing Dev environment in SemanticBits demo environment:*
+
+   ```ShellSession
+   $ aws configure --profile=sbdemo-dev
+   ```
+
+   *Example for testing Sandbox environment in SemanticBits demo environment:*
+
+   ```ShellSession
+   $ aws configure --profile=sbdemo-sbx
    ```
 
 1. Enter {your aws access key} at the **AWS Access Key ID** prompt
@@ -91,27 +105,75 @@
 ### Create AWS keypair
 
 1. Create keypair
-   
+
+   *Example for controllers within SemanticBits demo environment:*
+
    ```ShellSession
    $ aws --region us-east-1 ec2 create-key-pair \
-     --key-name ab2d-sbdemo \
+     --key-name ab2d-sbdemo-shared \
      --query 'KeyMaterial' \
      --output text \
-     > ~/.ssh/ab2d-sbdemo.pem
+     > ~/.ssh/ab2d-sbdemo-shared.pem
+   ```
+
+   *Example for Dev environment testing within SemanticBits demo environment:*
+
+   ```ShellSession
+   $ aws --region us-east-1 ec2 create-key-pair \
+     --key-name ab2d-sbdemo-dev \
+     --query 'KeyMaterial' \
+     --output text \
+     > ~/.ssh/ab2d-sbdemo-dev.pem
+   ```
+
+   *Example for Sandbox environment testing within SemanticBits demo environment:*
+
+   ```ShellSession
+   $ aws --region us-east-1 ec2 create-key-pair \
+     --key-name ab2d-sbdemo-sbx \
+     --query 'KeyMaterial' \
+     --output text \
+     > ~/.ssh/ab2d-sbdemo-sbx.pem
    ```
 
 1. Change permissions of the key
 
-   *Example for test cluster:*
+   *Example for controllers within SemanticBits demo environment:*
+
+   ```ShellSession
+   $ chmod 600 ~/.ssh/ab2d-sbdemo-shared.pem
+   ```
+
+   *Example for Dev environment testing within SemanticBits demo environment:*
    
    ```ShellSession
-   $ chmod 600 ~/.ssh/ab2d-sbdemo.pem
+   $ chmod 600 ~/.ssh/ab2d-sbdemo-dev.pem
+   ```
+   
+   *Example for Sandbox environment testing within SemanticBits demo environment:*
+
+   ```ShellSession
+   $ chmod 600 ~/.ssh/ab2d-sbdemo-sbx.pem
    ```
 
 1. Output the public key to the clipboard
 
+   *Example for controllers within SemanticBits demo environment:*
+
    ```ShellSession
-   $ ssh-keygen -y -f ~/.ssh/ab2d-sbdemo.pem | pbcopy
+   $ ssh-keygen -y -f ~/.ssh/ab2d-sbdemo-shared.pem | pbcopy
+   ```
+
+   *Example for Dev environment testing within SemanticBits demo environment:*
+
+   ```ShellSession
+   $ ssh-keygen -y -f ~/.ssh/ab2d-sbdemo-dev.pem | pbcopy
+   ```
+
+   *Example for Sandbox environment testing within SemanticBits demo environment:*
+
+   ```ShellSession
+   $ ssh-keygen -y -f ~/.ssh/ab2d-sbdemo-sbx.pem | pbcopy
    ```
 
 1. Update the "authorized_keys" file for the environment
@@ -119,7 +181,7 @@
    1. Open the "authorized_keys" file for the environment
    
       ```ShellSession
-      $ vim ~/code/ab2d/Deploy/terraform/environments/cms-ab2d-sbdemo/authorized_keys
+      $ vim ~/code/ab2d/Deploy/terraform/environments/ab2d-sbdemo-dev/authorized_keys
       ```
 
    1. Paste the public key under the "Keys included with CentOS image" section
@@ -133,35 +195,20 @@
    *Example for the "semanticbitsdemo" AWS account:*
    
    ```ShellSession
-   $ export AWS_PROFILE="sbdemo"
+   $ export AWS_PROFILE="sbdemo-dev"
    ```
 
 1. Create S3 bucket for automation
 
    ```ShellSession
-   $ aws s3api create-bucket --bucket cms-ab2d-automation --region us-east-1
+   $ aws s3api create-bucket --bucket ab2d-automation --region us-east-1
    ```
 
 1. Block public access on bucket
 
    ```ShellSession
    $ aws s3api put-public-access-block \
-     --bucket cms-ab2d-automation \
-     --region us-east-1 \
-     --public-access-block-configuration BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true
-   ```
-
-1. Create S3 file bucket
-
-   ```ShellSession
-   $ aws s3api create-bucket --bucket cms-ab2d-dev --region us-east-1
-   ```
-
-1. Block public access on bucket
-
-   ```ShellSession
-   $ aws s3api put-public-access-block \
-     --bucket cms-ab2d-dev \
+     --bucket ab2d-automation \
      --region us-east-1 \
      --public-access-block-configuration BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true
    ```
@@ -169,11 +216,9 @@
 ### Create policies
 
 1. Set target profile
-
-   *Example for the "semanticbitsdemo" AWS account:*
    
    ```ShellSession
-   $ export AWS_PROFILE="sbdemo"
+   $ export AWS_PROFILE="sbdemo-dev"
    ```
 
 1. Change to the "iam-policies" directory
@@ -222,10 +267,10 @@
 
 1. Set target profile
 
-   *Example for the "semanticbitsdemo" AWS account:*
+   *Example:*
    
    ```ShellSession
-   $ export AWS_PROFILE="sbdemo"
+   $ export AWS_PROFILE="sbdemo-dev"
    ```
 
 1. Change to the "iam-roles-trust-relationships" directory
@@ -296,10 +341,10 @@
 
 1. Set target profile
 
-   *Example for the "semanticbitsdemo" AWS account:*
+   *Example:*
    
    ```ShellSession
-   $ export AWS_PROFILE="sbdemo"
+   $ export AWS_PROFILE="sbdemo-dev"
    ```
 
 1. Authenticate Docker to default Registry
@@ -313,12 +358,44 @@
 
 1. Note that the authentication is good for a 12 hour session
 
+1. If you want to delete all images and containers in your local environment, do the following:
+    
+   1. Delete orphaned volumes (if any)
+
+      ```ShellSession
+      $ docker volume ls -qf dangling=true | xargs -I name docker volume rm name
+      ```
+
+   1. Delete all containers (if any)
+      
+      ```ShellSession
+      $ docker ps -aq | xargs -I name docker rm --force name
+      ```
+
+   1. Delete all images (if any)
+
+      ```ShellSession
+      $ docker images -q | xargs -I name docker rmi --force name
+      ```
+
+   1. Delete orphaned volumes again (if any)
+
+      ```ShellSession
+      $ docker volume ls -qf dangling=true | xargs -I name docker volume rm name
+      ```
+
+   1. Delete all images again (if any)
+
+      ```ShellSession
+      $ docker images -q | xargs -I name docker rmi --force name
+      ```
+
 1. Change to the repo directory
 
    ```ShellSession
    $ cd ~/code/ab2d
    ```
-   
+
 1. Build the docker images of API and Worker nodes
 
    1. Build all docker images
@@ -369,6 +446,18 @@
 
       - openjdk:12
 
+1. If you want to run the containers, do the following
+
+   ```ShellSession
+   $ docker-compose up
+   ```
+      
+1. If you want to connect to the running container, do the following
+
+   ```ShellSession
+   $ docker exec -it <container name> /bin/bash
+   ```
+   
 1. Create an AWS Elastic Container Registry (ECR) for "ab2d_api"
 
    ```ShellSession
@@ -407,30 +496,107 @@
 
 ## Create or update base aws environment
 
-1. Change to the environment directory
+1. Change to the deploy directory
 
+   *Format:*
+   
    ```ShellSession
-   $ cd ~/code/ab2d/Deploy/terraform/environments/cms-ab2d-sbdemo
+   $ cd {code directory}/ab2d/Deploy
    ```
 
+   *Example:*
+   
+   ```ShellSession
+   $ cd ~/code/ab2d/Deploy
+   ```
+
+1. If deploying to the SemanticBits demo environment, create the VPC
+
+   1. Create the VPC
+   
+      ```ShellSession
+      $ ./create-vpc-for-sbdemo.sh
+      ```
+
+   1. Note the output
+
+      *Format:*
+      
+      ```
+      Creating VPC...
+      The VPC ID is: {vpc id}
+      Done.
+      ```
+
+   1. Rerun the create when VPC already exists to see how the output changes
+   
+      ```ShellSession
+      $ ./create-vpc-for-sbdemo.sh
+      ```
+
+   1. Note the output
+
+      *Format:*
+      
+      ```
+      INFO: The VPC already exists.
+      The VPC ID is: {vpc id}
+      Done.
+      ```
+
+1. Set the target VPC ID
+
+   *Format:*
+   
+   ```ShellSession
+   $ export VPC_ID={vpc id}
+   ```
+   
 1. Create base AWS environment
 
-   ```ShellSession
-   $ ./create-base-environment.sh \
-     --environment=sbdemo \
-     --seed-ami-product-code=aw0evgkw8e5c1q413zgy5pjce \
-     --database-secret-datetime=2019-10-25-14-55-02
-   ```
-
-1. If you get a "Skipping network creation since VPC already exists" message, enter the following to create or update existing environment
+   *Example for Dev environment testing within SemanticBits demo environment:*
 
    ```ShellSession
    $ ./create-base-environment.sh \
-     --environment=sbdemo \
+     --environment=sbdemo-dev \
+     --shared-environment=sbdemo-shared \
+     --vpc-id=$VPC_ID \
+     --ssh-username=centos \
      --seed-ami-product-code=aw0evgkw8e5c1q413zgy5pjce \
-     --database-secret-datetime=2019-10-25-14-55-02 \
-     --skip-network
+     --ec2-instance-type=m5.xlarge \
+     --database-secret-datetime=2019-10-25-14-55-07
    ```
+
+   *Example for Sandbox environment testing within SemanticBits demo environment:*
+
+   ```ShellSession
+   $ ./create-base-environment.sh \
+     --environment=sbdemo-sbx \
+     --shared-environment=sbdemo-shared \
+     --vpc-id=$VPC_ID \
+     --ssh-username=centos \
+     --seed-ami-product-code=aw0evgkw8e5c1q413zgy5pjce \
+     --ec2-instance-type=m5.xlarge \
+     --database-secret-datetime=2019-10-25-14-55-07
+   ```
+
+1. If prompted, enter database user at the "Enter desired database_user" prompt
+
+1. If prompted, enter database password at the "Enter desired database_password" prompt
+
+1. If prompted, enter database name at the "Enter desired database_name" prompt
+
+   *IMPORTANT: Since databases are sharing the same database instance, the database names should be unique for each environment and must contain only alphanumeric characters.*
+   
+   *Example database names:*
+
+   - dev
+
+   - sbx
+
+   - impl
+
+   - prod
 
 ## Update application
 
@@ -442,8 +608,24 @@
 
 1. Deploy application components
 
+   *Example for Dev environment testing within SemanticBits demo environment:*
+   
    ```ShellSession
-   $ ./deploy.sh --environment=sbdemo --auto-approve
+   $ ./deploy.sh \
+     --environment=sbdemo-dev \
+     --ssh-username=centos \
+     --database-secret-datetime=2019-10-25-14-55-06 \
+     --auto-approve
+   ```
+
+   *Example for Sandbox environment testing within SemanticBits demo environment:*
+
+   ```ShellSession
+   $ ./deploy.sh \
+     --environment=sbdemo-sbx \
+     --ssh-username=centos \
+     --database-secret-datetime=2019-10-25-14-55-06 \
+     --auto-approve
    ```
 
 ## Deploy and configure Jenkins
@@ -457,13 +639,13 @@
    *Format:*
    
    ```ShellSession
-   $ ssh -i ~/.ssh/ab2d-sbdemo.pem centos@54.208.238.51
+   $ ssh -i ~/.ssh/ab2d-{ environment }.pem centos@54.208.238.51
    ```
 
    *Example:*
    
    ```ShellSession
-   $ ssh -i ~/.ssh/ab2d-sbdemo.pem centos@54.208.238.51
+   $ ssh -i ~/.ssh/ab2d-sbdemo-dev.pem centos@54.208.238.51
    ```
 
 1. Install, enable, and start firewalld

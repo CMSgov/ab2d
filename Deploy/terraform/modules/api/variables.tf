@@ -1,6 +1,8 @@
 variable "env" {}
+variable "aws_account_number" {}
 variable "vpc_id" {}
 variable "db_sec_group_id" {}
+variable "controller_sec_group_id" {}
 variable "controller_subnet_ids" {type=list(string)}
 variable "ami_id" {}
 variable "instance_type" {}
@@ -32,3 +34,8 @@ variable "override_task_definition_arn" {default=""}
 # LSH SKIP FOR NOW END
 
 variable "percent_capacity_increase" {default="20"}
+
+variable "db_host" {}
+variable "db_name" {}
+variable "db_username" {}
+variable "db_password" {}

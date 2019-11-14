@@ -5,6 +5,21 @@ set -x #Be verbose
 set -e #Exit on first error
 export APP_DIR=$HOME/app/
 
+#
+# Parse options
+#
+
+echo "Parse options..."
+for i in "$@"
+do
+case $i in
+  --ssh-username=*)
+  SSH_USERNAME="${i#*=}"
+  shift # past argument=value
+  ;;
+esac
+done
+
 # Remove Nagios and Postfix
 sudo yum -y remove nagios-common
 sudo rpm -e postfix
@@ -22,11 +37,11 @@ sudo yum -y install \
 sudo yum -y install wget
 # LSH Testing environment END
 
-# Postgres 10
-wget https://download.postgresql.org/pub/repos/yum/RPM-GPG-KEY-PGDG-10
-sudo rpm --import RPM-GPG-KEY-PGDG-10
-sudo yum -y install https://download.postgresql.org/pub/repos/yum/10/redhat/rhel-7-x86_64/pgdg-redhat10-10-2.noarch.rpm
-sudo yum -y install postgresql10
+# Postgres 11
+wget https://download.postgresql.org/pub/repos/yum/RPM-GPG-KEY-PGDG-11
+sudo rpm --import RPM-GPG-KEY-PGDG-11
+sudo yum -y install https://download.postgresql.org/pub/repos/yum/11/redhat/rhel-7-x86_64/pgdg-redhat11-11-2.noarch.rpm
+sudo yum -y install postgresql11
 
 # Docker
 sudo yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
@@ -37,7 +52,8 @@ sudo yum -y install docker-ce-18.06.1.ce-3.el7
 
 # LSH Testing environment BEGIN
 # sudo usermod -aG docker ec2-user
-sudo usermod -aG docker centos
+# sudo usermod -aG docker centos
+sudo usermod -aG docker $SSH_USERNAME
 # LSH Testing environment END
 
 sudo systemctl enable docker
@@ -78,7 +94,7 @@ sudo sed -i '/SystemLogRateLimitBurst/c\$SystemLogRateLimitBurst 2000' /etc/rsys
 #
 # # Install newrelic infrastructure agent
 # cd /tmp
-# aws s3 cp s3://cms-ab2d-automation/encrypted-newrelic-infra.yml ./encrypted-newrelic-infra.yml
+# aws s3 cp s3://ab2d-automation/encrypted-newrelic-infra.yml ./encrypted-newrelic-infra.yml
 # aws kms --region us-east-1 decrypt --ciphertext-blob fileb://encrypted-newrelic-infra.yml --output text --query Plaintext | base64 --decode > newrelic-infra.yml
 # [ -s newrelic-infra.yml ] || (echo "NewRelic file decryption failed" && exit 1)
 # sudo mv newrelic-infra.yml /etc/newrelic-infra.yml

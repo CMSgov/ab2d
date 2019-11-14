@@ -15,4 +15,3 @@ resource "aws_autoscaling_schedule" "morning" {
   recurrence             = "00 12 * * 1-5" #Mon-Fri at 7AM EST
   autoscaling_group_name = module.api.aws_autoscaling_group_name
 }
-

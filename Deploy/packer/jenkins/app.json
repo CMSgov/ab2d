@@ -10,7 +10,7 @@
       "type": "amazon-ebs",
       "profile": "{{ user `aws_profile`}}",
       "region": "us-east-1",
-      "instance_type": "c4.xlarge",
+      "instance_type": "{{user `ec2_instance_type`}}",
       "subnet_id": "{{user `subnet_public_1_id`}}",
       "vpc_id": "{{user `vpc_id`}}",
       "ami_name": "ab2d-jenkins-{{isotime \"2006-01-02\"}}",
@@ -18,7 +18,7 @@
       "ami_virtualization_type": "hvm",
       "associate_public_ip_address": "true",
       "temporary_security_group_source_cidrs": ["{{user `my_ip_address`}}/32"],
-      "ssh_username": "centos",
+      "ssh_username": "{{user `ssh_username`}}",
       "ebs_optimized": true,
       "ami_description": "AB2D-JENKINS",
       "launch_block_device_mappings": [
@@ -44,8 +44,16 @@
       "destination": "/tmp/docker-daemon.json"
     },
     {
+      "type": "file",
+      "source": "./provision-jenkins.sh",
+      "destination": "/tmp/provision-jenkins.sh"
+    },
+    {
       "type": "shell",
-      "script": "./provision-jenkins.sh"
+      "inline": [
+        "sudo chmod 755 /tmp/provision-jenkins.sh",
+        "/tmp/provision-jenkins.sh --ssh-username={{user `ssh_username`}}"
+      ]
     }
   ]
 }

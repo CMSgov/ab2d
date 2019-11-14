@@ -30,6 +30,7 @@
    * [Install or upgrade lua](#install-or-upgrade-lua)
    * [Install or update Emacs](#install-or-update-emacs)
    * [Install or update Node.js](#install-or-update-nodejs)
+   * [Install or update jq](#install-or-update-jq)
 1. [Install Packer](#install-packer)
 1. [Install Terraform](#install-terraform)
 1. [Install the AWS CLI using pip3](#install-the-aws-cli-using-pip3)
@@ -745,6 +746,19 @@
    $ brew upgrade node
    ```
 
+## Install or update jq
+
+1. Install jq using HomeBrew
+
+   ```ShellSession
+   $ brew install jq
+   ```
+
+2. Verify the jq installation by checking the version of jq
+
+   ```ShellSession
+   $ jq --version
+   
 ## Install Packer
 
 1. Install Packer using HomeBrew

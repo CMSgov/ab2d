@@ -4,7 +4,7 @@ resource "aws_s3_bucket" "fileservices" {
   versioning {enabled = true}
   logging {
     target_bucket = var.logging_bucket_name
-    target_prefix = "cms-ab2d-${var.env}/server_access/"
+    target_prefix = "ab2d-${var.env}/server_access/"
   }
 
   server_side_encryption_configuration {

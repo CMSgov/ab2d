@@ -1,9 +1,13 @@
+variable "aws_account_number" {
+  default = "114601554524"
+}
+
 variable "aws_profile" {
-  default = "sbdemo"
+  default = "sbdemo-shared"
 }
 
 variable "env" {
-  default = "sbdemo"
+  default = "sbdemo-shared"
 }
 
 variable "vpc_id" {
@@ -30,15 +34,15 @@ variable "ami_id" {
 }
 
 variable "ec2_instance_type" {
-  default = "c4.2xlarge"
+  default = ""
 }
 
 variable "linux_user" {
-  default = "centos"
+  default = ""
 }
 
 variable "ssh_key_name" {
-  default = "ab2d-sbdemo"
+  default = "ab2d-sbdemo-shared"
 }
 
 variable "max_ec2_instance_count" {
@@ -122,7 +126,11 @@ variable "db_skip_final_snapshot" {
 }
 
 variable "db_subnet_group_name" {
-  default = "cms-ab2d-sbdemo-rdssubnetgroup"
+  default = "ab2d-rds-subnet-group"
+}
+
+variable "db_parameter_group_name" {
+  default = "ab2d-rds-parameter-group"
 }
 
 variable "db_backup_retention_period" {
@@ -146,7 +154,7 @@ variable "db_maintenance_window" {
 }
 
 variable "db_identifier" {
-  default = "cms-ab2d-sbdemo"
+  default = "ab2d"
 }
 
 variable "db_multi_az" {
@@ -171,11 +179,11 @@ variable "db_name" {
 ## S3 specific variables #########################################################################
 
 variable "file_bucket_name" {
-  default = "cms-ab2d-sbdemo"
+  default = "ab2d-dev"
 }
 
 variable "logging_bucket_name" {
-  default = "cms-ab2d-cloudtrail"
+  default = "ab2d-cloudtrail"
 }
 
 variable "s3_username_whitelist" {

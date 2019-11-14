@@ -1,7 +1,7 @@
 resource "aws_kms_key" "a" {
-  description = "KMS-AB2D-${upper(var.env)}"
+  description = "ab2d-kms"
   tags = {
-    Name = "KMS-AB2D-${upper(var.env)}"
+    Name = "ab2d-kms"
   }
   policy =<<EOF
 {
@@ -13,9 +13,9 @@ resource "aws_kms_key" "a" {
             "Effect": "Allow",
             "Principal": {
                 "AWS": [
-                    "arn:aws:iam::114601554524:root",
-                    "arn:aws:iam::114601554524:role/Ab2dInstanceRole",
-                    "arn:aws:iam::114601554524:user/lonnie.hanekamp@semanticbits.com"
+                    "arn:aws:iam::${var.aws_account_number}:root",
+                    "arn:aws:iam::${var.aws_account_number}:role/Ab2dInstanceRole",
+                    "arn:aws:iam::${var.aws_account_number}:user/lonnie.hanekamp@semanticbits.com"
                 ]
             },
             "Action": "kms:*",
@@ -27,6 +27,6 @@ EOF
 }
 
 resource "aws_kms_alias" "a" {
-  name = "alias/KMS-AB2D-${upper(var.env)}"
+  name = "alias/ab2d-kms"
   target_key_id = aws_kms_key.a.key_id
 }
