@@ -19,22 +19,10 @@ public class WorkerServiceImpl implements WorkerService {
 
     @Override
     public void process(String jobId) {
-        final Job job = jobService.putJobInProgress(jobId);
-        doLongRunningWork();
+        jobService.putJobInProgress(jobId);
+        final Job job = jobService.processJob(jobId);
         jobService.completeJob(job);
     }
-
-
-
-    private void doLongRunningWork() {
-        log.info("Sleeping for 5 seconds...");
-        try {
-            Thread.sleep(5000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-    }
-
 
 
 

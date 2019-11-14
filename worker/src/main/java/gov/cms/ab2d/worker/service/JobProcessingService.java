@@ -4,7 +4,9 @@ import gov.cms.ab2d.common.model.Job;
 
 public interface JobProcessingService {
 
-    Job putJobInProgress(String jobId);
+    void putJobInProgress(String jobId);
+
+    Job processJob(String jobId);
 
     void completeJob(Job job);
 }
