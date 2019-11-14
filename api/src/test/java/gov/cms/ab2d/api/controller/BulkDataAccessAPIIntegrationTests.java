@@ -2,14 +2,15 @@ package gov.cms.ab2d.api.controller;
 
 import com.jayway.jsonpath.JsonPath;
 import gov.cms.ab2d.api.SpringBootApp;
-import gov.cms.ab2d.common.model.Job;
-import gov.cms.ab2d.common.model.JobOutput;
-import gov.cms.ab2d.common.model.JobStatus;
+import gov.cms.ab2d.common.model.*;
 import gov.cms.ab2d.common.repository.JobRepository;
+import gov.cms.ab2d.common.repository.SponsorRepository;
+import gov.cms.ab2d.common.repository.UserRepository;
 import org.apache.commons.io.IOUtils;
 import org.hamcrest.core.Is;
 import org.hl7.fhir.dstu3.model.DateTimeType;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,10 +44,7 @@ import static gov.cms.ab2d.common.util.Constants.OPERATION_OUTCOME;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = SpringBootApp.class, webEnvironment = SpringBootTest.WebEnvironment.MOCK)
@@ -59,18 +57,47 @@ public class BulkDataAccessAPIIntegrationTests {
     @Autowired
     private JobRepository jobRepository;
 
-    @Value ("${efs.mount}")
+    @Autowired
+    UserRepository userRepository;
+
+    @Autowired
+    SponsorRepository sponsorRepository;
+
+    @Value("${efs.mount}")
     private String tmpJobLocation;
 
     private static final String PATIENT_EXPORT_PATH = "/Patient/$export";
 
+    @Before
+    public void setup() {
+        jobRepository.deleteAll();
+        userRepository.deleteAll();
+        sponsorRepository.deleteAll();
+
+        Sponsor sponsor = new Sponsor();
+        sponsor.setHpmsId(574);
+        sponsor.setOrgName("CHA HMO, INC.");
+        sponsorRepository.save(sponsor);
+
+        User user = new User();
+        user.setEnabled(true);
+        user.setSponsor(sponsor);
+        user.setUserName("anonymousUser");
+        userRepository.saveAndFlush(user);
+
+
+    }
+
+
     @Test
     public void testBasicPatientExport() throws Exception {
-        ResultActions resultActions = this.mockMvc.perform(get(API_PREFIX + PATIENT_EXPORT_PATH).contentType(MediaType.APPLICATION_JSON))
+        ResultActions resultActions = this.mockMvc.perform(
+                get(API_PREFIX + PATIENT_EXPORT_PATH).contentType(MediaType.APPLICATION_JSON))
                 .andDo(print());
         Job job = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
 
-        String statusUrl = "http://localhost" + API_PREFIX + "/Job/" + job.getJobUuid() + "/$status";
+        String statusUrl =
+                "http://localhost" + API_PREFIX + "/Job/" + job.getJobUuid() + "/$status";
 
         resultActions.andExpect(status().isAccepted())
                 .andExpect(header().string("Content-Location", statusUrl));
@@ -78,19 +105,23 @@ public class BulkDataAccessAPIIntegrationTests {
         Assert.assertEquals(job.getStatus(), JobStatus.SUBMITTED);
         Assert.assertEquals(job.getStatusMessage(), INITIAL_JOB_STATUS_MESSAGE);
         Assert.assertEquals(job.getProgress(), Integer.valueOf(0));
-        Assert.assertEquals(job.getRequestUrl(), "http://localhost" + API_PREFIX  + PATIENT_EXPORT_PATH);
+        Assert.assertEquals(job.getRequestUrl(),
+                "http://localhost" + API_PREFIX + PATIENT_EXPORT_PATH);
         Assert.assertEquals(job.getResourceTypes(), null);
-        Assert.assertEquals(job.getUser(), null);
+        Assert.assertEquals(job.getUser(), userRepository.findByUserName("anonymousUser"));
     }
 
     @Test
     public void testPatientExportWithParameters() throws Exception {
-        final String typeParams = "?_type=ExplanationOfBenefits&_outputFormat=application/fhir+ndjson&since=20191015";
-        ResultActions resultActions = this.mockMvc.perform(get(API_PREFIX + "/" + PATIENT_EXPORT_PATH + typeParams)
-                .contentType(MediaType.APPLICATION_JSON)).andDo(print());
+        final String typeParams =
+                "?_type=ExplanationOfBenefits&_outputFormat=application/fhir+ndjson&since=20191015";
+        ResultActions resultActions =
+                this.mockMvc.perform(get(API_PREFIX + "/" + PATIENT_EXPORT_PATH + typeParams)
+                        .contentType(MediaType.APPLICATION_JSON)).andDo(print());
         Job job = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
 
-        String statusUrl = "http://localhost" + API_PREFIX + "/Job/" + job.getJobUuid() + "/$status";
+        String statusUrl =
+                "http://localhost" + API_PREFIX + "/Job/" + job.getJobUuid() + "/$status";
 
         resultActions.andExpect(status().isAccepted())
                 .andExpect(header().string("Content-Location", statusUrl));
@@ -98,9 +129,10 @@ public class BulkDataAccessAPIIntegrationTests {
         Assert.assertEquals(job.getStatus(), JobStatus.SUBMITTED);
         Assert.assertEquals(job.getStatusMessage(), INITIAL_JOB_STATUS_MESSAGE);
         Assert.assertEquals(job.getProgress(), Integer.valueOf(0));
-        Assert.assertEquals(job.getRequestUrl(), "http://localhost" + API_PREFIX + PATIENT_EXPORT_PATH + typeParams);
+        Assert.assertEquals(job.getRequestUrl(),
+                "http://localhost" + API_PREFIX + PATIENT_EXPORT_PATH + typeParams);
         Assert.assertEquals(job.getResourceTypes(), "ExplanationOfBenefits");
-        Assert.assertEquals(job.getUser(), null);
+        Assert.assertEquals(job.getUser(), userRepository.findByUserName("anonymousUser"));
     }
 
     @Test
@@ -112,7 +144,8 @@ public class BulkDataAccessAPIIntegrationTests {
                 .andExpect(jsonPath("$.resourceType", Is.is("OperationOutcome")))
                 .andExpect(jsonPath("$.issue[0].severity", Is.is("error")))
                 .andExpect(jsonPath("$.issue[0].code", Is.is("invalid")))
-                .andExpect(jsonPath("$.issue[0].details.text", Is.is("InvalidUserInputException: _type must be ExplanationOfBenefits")));
+                .andExpect(jsonPath("$.issue[0].details.text",
+                        Is.is("InvalidUserInputException: _type must be ExplanationOfBenefits")));
     }
 
     @Test
@@ -124,17 +157,20 @@ public class BulkDataAccessAPIIntegrationTests {
                 .andExpect(jsonPath("$.resourceType", Is.is("OperationOutcome")))
                 .andExpect(jsonPath("$.issue[0].severity", Is.is("error")))
                 .andExpect(jsonPath("$.issue[0].code", Is.is("invalid")))
-                .andExpect(jsonPath("$.issue[0].details.text", Is.is("InvalidUserInputException: An _outputFormat of Invalid is not valid")));
+                .andExpect(jsonPath("$.issue[0].details.text",
+                        Is.is("InvalidUserInputException: An _outputFormat of Invalid is not " +
+                                "valid")));
     }
 
     @Test
     public void testDeleteJob() throws Exception {
-        this.mockMvc.perform(get(API_PREFIX + PATIENT_EXPORT_PATH).contentType(MediaType.APPLICATION_JSON));
+        this.mockMvc.perform(
+                get(API_PREFIX + PATIENT_EXPORT_PATH).contentType(MediaType.APPLICATION_JSON));
         Job job = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
 
         this.mockMvc.perform(delete(API_PREFIX + "/Job/" + job.getJobUuid() + "/$status"))
-            .andExpect(status().is(202))
-            .andExpect(content().string(JOB_CANCELLED_MSG));
+                .andExpect(status().is(202))
+                .andExpect(content().string(JOB_CANCELLED_MSG));
 
         Job cancelledJob = jobRepository.findByJobUuid(job.getJobUuid());
         Assert.assertEquals(JobStatus.CANCELLED, cancelledJob.getStatus());
@@ -147,12 +183,16 @@ public class BulkDataAccessAPIIntegrationTests {
                 .andExpect(jsonPath("$.resourceType", Is.is("OperationOutcome")))
                 .andExpect(jsonPath("$.issue[0].severity", Is.is("error")))
                 .andExpect(jsonPath("$.issue[0].code", Is.is("invalid")))
-                .andExpect(jsonPath("$.issue[0].details.text", Is.is("ResourceNotFoundException: No job with jobUuid NonExistentJob was found")));;
+                .andExpect(jsonPath("$.issue[0].details.text",
+                        Is.is("ResourceNotFoundException: No job with jobUuid NonExistentJob was " +
+                                "found")));
+        ;
     }
 
     @Test
     public void testDeleteJobsInInvalidState() throws Exception {
-        this.mockMvc.perform(get(API_PREFIX + PATIENT_EXPORT_PATH).contentType(MediaType.APPLICATION_JSON));
+        this.mockMvc.perform(
+                get(API_PREFIX + PATIENT_EXPORT_PATH).contentType(MediaType.APPLICATION_JSON));
         Job job = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
 
         job.setStatus(JobStatus.FAILED);
@@ -163,7 +203,9 @@ public class BulkDataAccessAPIIntegrationTests {
                 .andExpect(jsonPath("$.resourceType", Is.is("OperationOutcome")))
                 .andExpect(jsonPath("$.issue[0].severity", Is.is("error")))
                 .andExpect(jsonPath("$.issue[0].code", Is.is("invalid")))
-                .andExpect(jsonPath("$.issue[0].details.text", Is.is("InvalidJobStateTransition: Job has a status of " + job.getStatus() + ", so it cannot be cancelled")));
+                .andExpect(jsonPath("$.issue[0].details.text",
+                        Is.is("InvalidJobStateTransition: Job has a status of " + job.getStatus() +
+                                ", so it cannot be cancelled")));
 
         job.setStatus(JobStatus.CANCELLED);
         jobRepository.saveAndFlush(job);
@@ -173,7 +215,9 @@ public class BulkDataAccessAPIIntegrationTests {
                 .andExpect(jsonPath("$.resourceType", Is.is("OperationOutcome")))
                 .andExpect(jsonPath("$.issue[0].severity", Is.is("error")))
                 .andExpect(jsonPath("$.issue[0].code", Is.is("invalid")))
-                .andExpect(jsonPath("$.issue[0].details.text", Is.is("InvalidJobStateTransition: Job has a status of " + job.getStatus() + ", so it cannot be cancelled")));
+                .andExpect(jsonPath("$.issue[0].details.text",
+                        Is.is("InvalidJobStateTransition: Job has a status of " + job.getStatus() +
+                                ", so it cannot be cancelled")));
 
         job.setStatus(JobStatus.SUCCESSFUL);
         jobRepository.saveAndFlush(job);
@@ -183,19 +227,22 @@ public class BulkDataAccessAPIIntegrationTests {
                 .andExpect(jsonPath("$.resourceType", Is.is("OperationOutcome")))
                 .andExpect(jsonPath("$.issue[0].severity", Is.is("error")))
                 .andExpect(jsonPath("$.issue[0].code", Is.is("invalid")))
-                .andExpect(jsonPath("$.issue[0].details.text", Is.is("InvalidJobStateTransition: Job has a status of " + job.getStatus() + ", so it cannot be cancelled")));
+                .andExpect(jsonPath("$.issue[0].details.text",
+                        Is.is("InvalidJobStateTransition: Job has a status of " + job.getStatus() +
+                                ", so it cannot be cancelled")));
     }
 
     @Test
     public void testGetStatusWhileInProgress() throws Exception {
-        MvcResult mvcResult = this.mockMvc.perform(get(API_PREFIX + PATIENT_EXPORT_PATH).contentType(MediaType.APPLICATION_JSON))
-            .andReturn();
+        MvcResult mvcResult = this.mockMvc.perform(
+                get(API_PREFIX + PATIENT_EXPORT_PATH).contentType(MediaType.APPLICATION_JSON))
+                .andReturn();
         String statusUrl = mvcResult.getResponse().getHeader("Content-Location");
 
         this.mockMvc.perform(get(statusUrl).contentType(MediaType.APPLICATION_JSON))
-            .andExpect(status().is(202))
-            .andExpect(header().string("X-Progress", "0% complete"))
-            .andExpect(header().string("Retry-After", "30"));
+                .andExpect(status().is(202))
+                .andExpect(header().string("X-Progress", "0% complete"))
+                .andExpect(header().string("Retry-After", "30"));
 
         // Immediate repeat of status check should produce 429.
         this.mockMvc.perform(get(statusUrl)
@@ -207,7 +254,9 @@ public class BulkDataAccessAPIIntegrationTests {
 
     @Test
     public void testGetStatusWhileFinished() throws Exception {
-        MvcResult mvcResult = this.mockMvc.perform(get(API_PREFIX + PATIENT_EXPORT_PATH + "?_type=ExplanationOfBenefits").contentType(MediaType.APPLICATION_JSON))
+        MvcResult mvcResult = this.mockMvc.perform(
+                get(API_PREFIX + PATIENT_EXPORT_PATH + "?_type=ExplanationOfBenefits")
+                        .contentType(MediaType.APPLICATION_JSON))
                 .andReturn();
         String statusUrl = mvcResult.getResponse().getHeader("Content-Location");
 
@@ -234,22 +283,31 @@ public class BulkDataAccessAPIIntegrationTests {
 
         jobRepository.saveAndFlush(job);
 
-        final ZonedDateTime jobExpiresUTC = ZonedDateTime.ofInstant(job.getExpiresAt().toInstant(), ZoneId.of("UTC"));
+        final ZonedDateTime jobExpiresUTC =
+                ZonedDateTime.ofInstant(job.getExpiresAt().toInstant(), ZoneId.of("UTC"));
         this.mockMvc.perform(get(statusUrl).contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().is(200))
-                .andExpect(header().string("Expires", DateTimeFormatter.RFC_1123_DATE_TIME.format(jobExpiresUTC)))
-                .andExpect(jsonPath("$.transactionTime", Is.is(new DateTimeType(now.toString()).toHumanDisplay())))
+                .andExpect(header().string("Expires",
+                        DateTimeFormatter.RFC_1123_DATE_TIME.format(jobExpiresUTC)))
+                .andExpect(jsonPath("$.transactionTime",
+                        Is.is(new DateTimeType(now.toString()).toHumanDisplay())))
                 .andExpect(jsonPath("$.request", Is.is(job.getRequestUrl())))
                 .andExpect(jsonPath("$.requiresAccessToken", Is.is(true)))
                 .andExpect(jsonPath("$.output[0].type", Is.is("ExplanationOfBenefits")))
-                .andExpect(jsonPath("$.output[0].url", Is.is("http://localhost" + API_PREFIX + "/Job/" + job.getJobUuid() + "/file/file.ndjson")))
+                .andExpect(jsonPath("$.output[0].url",
+                        Is.is("http://localhost" + API_PREFIX + "/Job/" + job.getJobUuid() +
+                                "/file/file.ndjson")))
                 .andExpect(jsonPath("$.error[0].type", Is.is(OPERATION_OUTCOME)))
-                .andExpect(jsonPath("$.error[0].url", Is.is("http://localhost" + API_PREFIX + "/Job/" + job.getJobUuid() + "/file/error.ndjson")));
+                .andExpect(jsonPath("$.error[0].url",
+                        Is.is("http://localhost" + API_PREFIX + "/Job/" + job.getJobUuid() +
+                                "/file/error.ndjson")));
     }
 
     @Test
     public void testGetStatusWhileFailed() throws Exception {
-        MvcResult mvcResult = this.mockMvc.perform(get(API_PREFIX + PATIENT_EXPORT_PATH + "?_type=ExplanationOfBenefits").contentType(MediaType.APPLICATION_JSON))
+        MvcResult mvcResult = this.mockMvc.perform(
+                get(API_PREFIX + PATIENT_EXPORT_PATH + "?_type=ExplanationOfBenefits")
+                        .contentType(MediaType.APPLICATION_JSON))
                 .andReturn();
         String statusUrl = mvcResult.getResponse().getHeader("Content-Location");
 
@@ -265,12 +323,14 @@ public class BulkDataAccessAPIIntegrationTests {
                 .andExpect(jsonPath("$.resourceType", Is.is("OperationOutcome")))
                 .andExpect(jsonPath("$.issue[0].severity", Is.is("error")))
                 .andExpect(jsonPath("$.issue[0].code", Is.is("invalid")))
-                .andExpect(jsonPath("$.issue[0].details.text", Is.is("JobProcessingException: Job failed while processing")));
+                .andExpect(jsonPath("$.issue[0].details.text",
+                        Is.is("JobProcessingException: Job failed while processing")));
     }
 
     @Test
     public void testGetStatusWithJobNotFound() throws Exception {
-        this.mockMvc.perform(get(API_PREFIX + PATIENT_EXPORT_PATH + "?_type=ExplanationOfBenefits").contentType(MediaType.APPLICATION_JSON))
+        this.mockMvc.perform(get(API_PREFIX + PATIENT_EXPORT_PATH + "?_type=ExplanationOfBenefits")
+                .contentType(MediaType.APPLICATION_JSON))
                 .andReturn();
 
         Job job = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
@@ -280,17 +340,20 @@ public class BulkDataAccessAPIIntegrationTests {
 
         jobRepository.saveAndFlush(job);
 
-        this.mockMvc.perform(get("http://localhost" + API_PREFIX  + "/Job/BadId/$status").contentType(MediaType.APPLICATION_JSON))
+        this.mockMvc.perform(get("http://localhost" + API_PREFIX + "/Job/BadId/$status")
+                .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().is(404))
                 .andExpect(jsonPath("$.resourceType", Is.is("OperationOutcome")))
                 .andExpect(jsonPath("$.issue[0].severity", Is.is("error")))
                 .andExpect(jsonPath("$.issue[0].code", Is.is("invalid")))
-                .andExpect(jsonPath("$.issue[0].details.text", Is.is("ResourceNotFoundException: No job with jobUuid BadId was found")));
+                .andExpect(jsonPath("$.issue[0].details.text",
+                        Is.is("ResourceNotFoundException: No job with jobUuid BadId was found")));
     }
 
     @Test
     public void testGetStatusWithSpaceUrl() throws Exception {
-        this.mockMvc.perform(get(API_PREFIX + PATIENT_EXPORT_PATH + "?_type=ExplanationOfBenefits").contentType(MediaType.APPLICATION_JSON))
+        this.mockMvc.perform(get(API_PREFIX + PATIENT_EXPORT_PATH + "?_type=ExplanationOfBenefits")
+                .contentType(MediaType.APPLICATION_JSON))
                 .andReturn();
 
         Job job = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
@@ -300,17 +363,20 @@ public class BulkDataAccessAPIIntegrationTests {
 
         jobRepository.saveAndFlush(job);
 
-        this.mockMvc.perform(get("http://localhost" + API_PREFIX  + "/Job/ /$status").contentType(MediaType.APPLICATION_JSON))
+        this.mockMvc.perform(get("http://localhost" + API_PREFIX + "/Job/ /$status")
+                .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().is(404))
                 .andExpect(jsonPath("$.resourceType", Is.is("OperationOutcome")))
                 .andExpect(jsonPath("$.issue[0].severity", Is.is("error")))
                 .andExpect(jsonPath("$.issue[0].code", Is.is("invalid")))
-                .andExpect(jsonPath("$.issue[0].details.text", Is.is("ResourceNotFoundException: No job with jobUuid   was found")));
+                .andExpect(jsonPath("$.issue[0].details.text",
+                        Is.is("ResourceNotFoundException: No job with jobUuid   was found")));
     }
 
     @Test
     public void testGetStatusWithBadUrl() throws Exception {
-        this.mockMvc.perform(get(API_PREFIX + PATIENT_EXPORT_PATH + "?_type=ExplanationOfBenefits").contentType(MediaType.APPLICATION_JSON))
+        this.mockMvc.perform(get(API_PREFIX + PATIENT_EXPORT_PATH + "?_type=ExplanationOfBenefits")
+                .contentType(MediaType.APPLICATION_JSON))
                 .andReturn();
 
         Job job = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
@@ -320,14 +386,17 @@ public class BulkDataAccessAPIIntegrationTests {
 
         jobRepository.saveAndFlush(job);
 
-        this.mockMvc.perform(get("http://localhost" + API_PREFIX  + "/Job/$status").contentType(MediaType.APPLICATION_JSON))
+        this.mockMvc.perform(get("http://localhost" + API_PREFIX + "/Job/$status")
+                .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().is(404));
     }
 
 
     @Test
     public void testDownloadFile() throws Exception {
-        MvcResult mvcResult = this.mockMvc.perform(get(API_PREFIX + PATIENT_EXPORT_PATH + "?_type=ExplanationOfBenefits").contentType(MediaType.APPLICATION_JSON))
+        MvcResult mvcResult = this.mockMvc.perform(
+                get(API_PREFIX + PATIENT_EXPORT_PATH + "?_type=ExplanationOfBenefits")
+                        .contentType(MediaType.APPLICATION_JSON))
                 .andReturn();
         String statusUrl = mvcResult.getResponse().getHeader("Content-Location");
 
@@ -357,11 +426,16 @@ public class BulkDataAccessAPIIntegrationTests {
             out.println(testFileStr);
         }
 
-        MvcResult mvcResultStatusCall = this.mockMvc.perform(get(statusUrl).contentType(MediaType.APPLICATION_JSON)).andReturn();
-        String downloadUrl = JsonPath.read(mvcResultStatusCall.getResponse().getContentAsString(), "$.output[0].url");
-        MvcResult downloadFileCall = this.mockMvc.perform(get(downloadUrl).contentType(MediaType.APPLICATION_JSON)).andExpect(status().is(200))
-                .andExpect(content().contentType(NDJSON_FIRE_CONTENT_TYPE))
-                .andDo(MockMvcResultHandlers.print()).andReturn();
+        MvcResult mvcResultStatusCall =
+                this.mockMvc.perform(get(statusUrl).contentType(MediaType.APPLICATION_JSON))
+                        .andReturn();
+        String downloadUrl = JsonPath.read(mvcResultStatusCall.getResponse().getContentAsString(),
+                "$.output[0].url");
+        MvcResult downloadFileCall =
+                this.mockMvc.perform(get(downloadUrl).contentType(MediaType.APPLICATION_JSON))
+                        .andExpect(status().is(200))
+                        .andExpect(content().contentType(NDJSON_FIRE_CONTENT_TYPE))
+                        .andDo(MockMvcResultHandlers.print()).andReturn();
         String downloadedFile = downloadFileCall.getResponse().getContentAsString();
         String testValue = JsonPath.read(downloadedFile, "$.test");
         Assert.assertEquals("value", testValue);
@@ -373,7 +447,9 @@ public class BulkDataAccessAPIIntegrationTests {
 
     @Test
     public void testDownloadMissingFile() throws Exception {
-        MvcResult mvcResult = this.mockMvc.perform(get(API_PREFIX + PATIENT_EXPORT_PATH + "?_type=ExplanationOfBenefits").contentType(MediaType.APPLICATION_JSON))
+        MvcResult mvcResult = this.mockMvc.perform(
+                get(API_PREFIX + PATIENT_EXPORT_PATH + "?_type=ExplanationOfBenefits")
+                        .contentType(MediaType.APPLICATION_JSON))
                 .andReturn();
         String statusUrl = mvcResult.getResponse().getHeader("Content-Location");
 
@@ -393,19 +469,27 @@ public class BulkDataAccessAPIIntegrationTests {
 
         jobRepository.saveAndFlush(job);
 
-        MvcResult mvcResultStatusCall = this.mockMvc.perform(get(statusUrl).contentType(MediaType.APPLICATION_JSON)).andReturn();
-        String downloadUrl = JsonPath.read(mvcResultStatusCall.getResponse().getContentAsString(), "$.output[0].url");
-        this.mockMvc.perform(get(downloadUrl).contentType(MediaType.APPLICATION_JSON)).andExpect(status().is(500))
+        MvcResult mvcResultStatusCall =
+                this.mockMvc.perform(get(statusUrl).contentType(MediaType.APPLICATION_JSON))
+                        .andReturn();
+        String downloadUrl = JsonPath.read(mvcResultStatusCall.getResponse().getContentAsString(),
+                "$.output[0].url");
+        this.mockMvc.perform(get(downloadUrl).contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().is(500))
                 .andExpect(jsonPath("$.resourceType", Is.is("OperationOutcome")))
                 .andExpect(jsonPath("$.issue[0].severity", Is.is("error")))
                 .andExpect(jsonPath("$.issue[0].code", Is.is("invalid")))
-                .andExpect(jsonPath("$.issue[0].details.text", Is.is("JobOutputMissingException: The job output exists in our records, but the file is not present on our " +
-                        "system: testmissing.ndjson")));
+                .andExpect(jsonPath("$.issue[0].details.text",
+                        Is.is("JobOutputMissingException: The job output exists in our records, " +
+                                "but the file is not present on our " +
+                                "system: testmissing.ndjson")));
     }
 
     @Test
     public void testDownloadBadParameterFile() throws Exception {
-        MvcResult mvcResult = this.mockMvc.perform(get(API_PREFIX + PATIENT_EXPORT_PATH + "?_type=ExplanationOfBenefits").contentType(MediaType.APPLICATION_JSON))
+        MvcResult mvcResult = this.mockMvc.perform(
+                get(API_PREFIX + PATIENT_EXPORT_PATH + "?_type=ExplanationOfBenefits")
+                        .contentType(MediaType.APPLICATION_JSON))
                 .andReturn();
         String statusUrl = mvcResult.getResponse().getHeader("Content-Location");
 
@@ -425,12 +509,17 @@ public class BulkDataAccessAPIIntegrationTests {
 
         jobRepository.saveAndFlush(job);
 
-        MvcResult mvcResultStatusCall = this.mockMvc.perform(get(statusUrl).contentType(MediaType.APPLICATION_JSON)).andReturn();
-        String downloadUrl = JsonPath.read(mvcResultStatusCall.getResponse().getContentAsString(), "$.output[0].url") + "badfilename";
-        this.mockMvc.perform(get(downloadUrl).contentType(MediaType.APPLICATION_JSON)).andExpect(status().is(404))
+        MvcResult mvcResultStatusCall =
+                this.mockMvc.perform(get(statusUrl).contentType(MediaType.APPLICATION_JSON))
+                        .andReturn();
+        String downloadUrl = JsonPath.read(mvcResultStatusCall.getResponse().getContentAsString(),
+                "$.output[0].url") + "badfilename";
+        this.mockMvc.perform(get(downloadUrl).contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().is(404))
                 .andExpect(jsonPath("$.resourceType", Is.is("OperationOutcome")))
                 .andExpect(jsonPath("$.issue[0].severity", Is.is("error")))
                 .andExpect(jsonPath("$.issue[0].code", Is.is("invalid")))
-                .andExpect(jsonPath("$.issue[0].details.text", Is.is("ResourceNotFoundException: No Job Output with the file name test.ndjsonbadfilename exists in our records")));
+                .andExpect(jsonPath("$.issue[0].details.text",
+                        Is.is("ResourceNotFoundException: No Job Output with the file name test.ndjsonbadfilename exists in our records")));
     }
 }

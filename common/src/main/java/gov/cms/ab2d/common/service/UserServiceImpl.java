@@ -18,9 +18,12 @@ public class UserServiceImpl implements UserService {
 
     public User getCurrentUser() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        return auth != null ? userRepository.findByUserName(
-                ((org.springframework.security.core.userdetails.User) auth.getPrincipal())
-                        .getUsername()) : null;
+        return auth != null ? userRepository
+                .findByUserName(
+                        auth.getPrincipal() instanceof String ? (String) auth.getPrincipal() :
+                                ((org.springframework.security.core.userdetails.User) auth
+                                        .getPrincipal())
+                                        .getUsername()) : null;
     }
 
 }

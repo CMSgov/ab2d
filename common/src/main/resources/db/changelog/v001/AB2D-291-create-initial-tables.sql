@@ -131,7 +131,7 @@ CREATE TABLE job
     user_account_id     BIGINT              NOT NULL,
     created_at          TIMESTAMP WITH TIME ZONE         NOT NULL,
     expires_at          TIMESTAMP WITH TIME ZONE,
-    resource_types      VARCHAR(255)        NOT NULL,
+    resource_types      VARCHAR(255),
     status              VARCHAR(32)         NOT NULL,
     status_message      TEXT,
     request_url         TEXT,
