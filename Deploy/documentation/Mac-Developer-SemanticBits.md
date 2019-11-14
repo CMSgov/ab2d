@@ -748,13 +748,13 @@
 
 ## Install or update jq
 
-1. Install Packer using HomeBrew
+1. Install jq using HomeBrew
 
    ```ShellSession
    $ brew install jq
    ```
 
-2. Verify the packer installation by checking the version of packer
+2. Verify the jq installation by checking the version of jq
 
    ```ShellSession
    $ jq --version
