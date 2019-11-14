@@ -7,9 +7,9 @@ import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.worker.adapter.bluebutton.BeneficiaryAdapter;
 import gov.cms.ab2d.worker.adapter.bluebutton.BfdClientAdapter;
 import gov.cms.ab2d.worker.adapter.bluebutton.BfdClientAdapterImpl;
-import gov.cms.ab2d.worker.adapter.bluebutton.GetPatientsByContractResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -35,7 +36,11 @@ import static gov.cms.ab2d.common.model.JobStatus.SUCCESSFUL;
 @RequiredArgsConstructor
 public class JobProcessingServiceImpl implements JobProcessingService {
 
-    private final String fileshare = "/Users/satheesh.pathiyil/Code/CMS/ab2d/test-data-share/";
+    private static final String NDJSON_EXTENSION = ".ndjson";
+
+    @Value("${efs.mount}")
+    private String efsMount;
+
     private final JobRepository jobRepository;
     private final BeneficiaryAdapter beneficiaryAdapter;
     private final BfdClientAdapter  bfdClientAdapter;
@@ -50,20 +55,17 @@ public class JobProcessingServiceImpl implements JobProcessingService {
 
         // validate status is SUBMITTED
         if (!SUBMITTED.equals(job.getStatus())) {
-            final String errMsg = String.format("Job %s is not in %s status. Skipping job", jobId, SUBMITTED);
+            final String errMsg = String.format("Job %s is not in %s status.", jobId, SUBMITTED);
             throw new IllegalArgumentException(errMsg);
         }
 
         job.setStatus(IN_PROGRESS);
 
-        log.info("Job [{}] is now IN_PROGRESS", job.getId());
         jobRepository.save(job);
     }
 
     @Override
     public Job processJob(final String jobId) {
-
-        log.info("Entering doLongRunningWork() ... {} ", jobId);
 
         final Job job = jobRepository.findByJobUuid(jobId);
         log.info("Found job : {} - {} - {} ", job.getId(), job.getJobUuid(), job.getStatus());
@@ -74,83 +76,58 @@ public class JobProcessingServiceImpl implements JobProcessingService {
         final List<Contract> attestedContracts = sponsor.getAttestedContracts();
         log.info("number of attested contracts : {}", attestedContracts.size());
 
+        final Path outputDir = createJobOutputDirectory(job.getJobUuid());
         for (Contract contract : attestedContracts) {
             log.info("contract : {} ", contract.getContractName());
-            processContract(job, contract);
+            processContract(outputDir, contract);
         }
 
         return job;
     }
 
-//    private List<Contract> getAttestedContracts(Sponsor sponsor) {
-//        return sponsor.getContracts().stream()
-//                .filter(c -> c.getAttestedOn() != null)
-//                .collect(Collectors.toList());
-//    }
-
-
-    private void processContract(Job job, Contract contract) {
-//        final Path outputDir = createOutputDir(job, contract);
-        Path ndjson = createContractFile(job.getJobUuid(), contract);
-
-        var patientsByContract = beneficiaryAdapter.getPatientsByContract(contract.getContractNumber());
-        var patients = patientsByContract.getPatients();
-
-        List<Future<BfdClientAdapterImpl.EobBundleDTO>> eobBundles =  new ArrayList<Future<BfdClientAdapterImpl.EobBundleDTO>>();
-
-        int counter = 0;
-        for (GetPatientsByContractResponse.PatientDTO patient : patients) {
-            eobBundles.add(bfdClientAdapter.getEobBundle(patient.getPatientId()));
-
-            ++counter;
-            if (counter % 10 == 0) {
-                parseEobBundles(eobBundles, ndjson);
-            }
-        }
-    }
-
-
-
-//    private Path createOutputDir(Job job, Contract contract) {
-//        Path outputFilePath = Paths.get(fileshare, job.getJobUuid(), contract.getContractNumber());
-//        try {
-//            final Path outputDirectory = Files.createDirectories(outputFilePath);
-//            log.info("new output directory created : {} ", outputDirectory.toAbsolutePath());
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
-//        return outputFilePath;
-//    }
-//    private Path createOutputDir(Job job) {
-//        Path outputFilePath = Paths.get(fileshare, job.getJobUuid());
-//        try {
-//            final Path outputDirectory = Files.createDirectories(outputFilePath);
-//            log.info("new output directory created : {} ", outputDirectory.toAbsolutePath());
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
-//        return outputFilePath;
-//    }
-
-    private Path createContractFile(final String jobUuid, Contract contract) {
-        Path outputFilePath = Paths.get(fileshare, jobUuid);
+    private Path createJobOutputDirectory(String jobUuid) {
+        final Path outputDir = Paths.get(efsMount, jobUuid);
         try {
-            final Path outputDirectory = Files.createDirectories(outputFilePath);
+            final Path outputDirectory = Files.createDirectories(outputDir);
             log.info("OutputDir: {} ", outputDirectory.toAbsolutePath());
         } catch (IOException e1) {
             e1.printStackTrace();
         }
-        final Path outputDir = outputFilePath;
-        final Path ndjsonPath = Path.of(outputDir.toString(), contract.getContractNumber() + ".ndjson");
-        Path ndjson = null;
+        return outputDir;
+    }
+
+
+    private void processContract(final Path outputDir, Contract contract) {
+        final var ndJsonFile = createContractFile(outputDir, contract);
+
+        final var patientsByContract = beneficiaryAdapter.getPatientsByContract(contract.getContractNumber());
+
+        final var eobBundles =  new ArrayList<Future<BfdClientAdapterImpl.EobBundleDTO>>();
+
+        int counter = 0;
+        for (var patient : patientsByContract.getPatients()) {
+            eobBundles.add(bfdClientAdapter.getEobBundle(patient.getPatientId()));
+
+            ++counter;
+            if (counter % 10 == 0) {
+                parseEobBundles(eobBundles, ndJsonFile);
+            }
+        }
+    }
+
+    private Path createContractFile(final Path outputDir, Contract contract) {
+        final String filename = contract.getContractNumber() + NDJSON_EXTENSION;
+        final Path ndJsonPath = Path.of(outputDir.toString(), filename);
+        Path outputContractNdJsonFile = null;
         try {
-            ndjson = Files.createFile(ndjsonPath);
-            log.info("file: {} ", ndjson.toAbsolutePath());
+            outputContractNdJsonFile = Files.createFile(ndJsonPath);
+            log.info("file: {} ", outputContractNdJsonFile.toAbsolutePath());
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-        return ndjson;
+        return outputContractNdJsonFile;
     }
+
 
     private void parseEobBundles(List<Future<BfdClientAdapterImpl.EobBundleDTO>> eobBundles, Path ndjson) {
         final Iterator<Future<BfdClientAdapterImpl.EobBundleDTO>> iterator = eobBundles.iterator();
@@ -159,16 +136,10 @@ public class JobProcessingServiceImpl implements JobProcessingService {
 //            if (futureBundle.isDone()) {
                 try {
                     var bundleDTO = futureBundle.get();
-                    log.info(" EOB Bundles : {}. Will write to file next.", bundleDTO.getPatientId());
-                    // write to file next time
-                    Files.write(ndjson, bundleDTO.toString().getBytes());
-
-                    //                    log.info(" outputFile : {}", ndjson.toAbsolutePath());
-
-//                    Path file = Paths.get(outputDir, bundleDTO.getPatientId());
-//
-//                    final Path file1 = Files.createFile(outputDir, StandardOpenOption.WRITE, StandardOpenOption.APPEND);
-                    //write to ndjson file - single threaded
+//                    log.info("EOB Bundles : {}", bundleDTO.getPatientId());
+                    log.info("Write record into ndjson file");
+                    final String payload = bundleDTO.toString() + System.lineSeparator();
+                    Files.write(ndjson, payload.getBytes(), StandardOpenOption.APPEND);
                     iterator.remove();
                 } catch (InterruptedException e) {
                     e.printStackTrace();

@@ -31,7 +31,7 @@ public class BfdClientAdapterImpl implements BfdClientAdapter {
         final Bundle bundle1 = bfdClient.requestEOBFromServer(patientId);
         final List<Bundle.BundleEntryComponent> entries = bundle1.getEntry();
 
-        log.info("BundleId:{} - Total: {} - Entries: {} ", bundle1.getId(), bundle1.getTotal(), entries.size());
+        log.info("Bundle - Total: {} - Entries: {} ", bundle1.getTotal(), entries.size());
 
         final EobBundleDTO bundle = EobBundleDTO.builder().patientId(patientId).build();
         return new AsyncResult(bundle);
