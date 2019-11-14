@@ -1,10 +1,12 @@
 package gov.cms.ab2d.worker.config;
 
+import gov.cms.ab2d.bfd.client.BFDClientConfiguration;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.time.DateUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
 import org.springframework.integration.channel.ExecutorChannel;
 import org.springframework.integration.config.EnableIntegration;
 import org.springframework.integration.core.MessageSource;
@@ -28,6 +30,7 @@ import javax.sql.DataSource;
 @Slf4j
 @Configuration
 @EnableIntegration
+@Import(BFDClientConfiguration.class)
 public class WorkerConfig {
 
     @Autowired
