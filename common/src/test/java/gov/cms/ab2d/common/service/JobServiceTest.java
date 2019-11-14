@@ -89,7 +89,7 @@ public class JobServiceTest {
         assertThat(job.getId()).isNotNull();
         assertThat(job.getJobUuid()).isNotNull();
         assertEquals(job.getProgress(), Integer.valueOf(0));
-        assertEquals(job.getUser(), userRepository.findByUserName("example@example.com")); // null for now since no authentication
+        assertEquals(job.getUser(), userRepository.findByUserName("example@example.com"));
         assertEquals(job.getResourceTypes(), "ExplanationOfBenefits");
         assertEquals(job.getRequestUrl(), "http://localhost:8080");
         assertEquals(job.getStatusMessage(), INITIAL_JOB_STATUS_MESSAGE);
