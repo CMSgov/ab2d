@@ -507,7 +507,7 @@
    1. Note tables in the output
 
        Schema |         Name          | Type  | Owner 
-      --------+-----------------------+-------+-------
+      --------|-----------------------|-------|-------
        public | beneficiary           | table | ab2d
        public | contract              | table | ab2d
        public | coverage              | table | ab2d
