@@ -448,16 +448,64 @@
 
 1. If you want to run the containers, do the following
 
-   ```ShellSession
-   $ docker-compose up
-   ```
+   1. Enter the following
+   
+      ```ShellSession
+      $ docker-compose up
+      ```
+
+   1. Wait for the following to appear in the output
+
+      ```
+      ab2d_build_1 exited with code 0
+      ```
+
+1. If you want to verify that the application is running correctly, do the following
+
+   1. Open Chrome
+
+   2. Enter the following in the address bar
+
+      > http://localhost:8080/swagger-ui.html#/bulk-data-access-api
+
+   3. Verify that the "AB2D FHIR Bulk Data Access API" page is displayed
+
+1. If you want to connect to the running db container, do the following
+
+   1. Connect to the db container
+   
+      ```ShellSession
+      $ docker exec -it $(docker ps -aqf "name=^ab2d_db.*$") /bin/bash
+      ```
+
+   1. Launch the psql shell
+
+      *Format:*
       
-1. If you want to connect to the running container, do the following
+      ```ShellSession
+      $ psql --username=ab2d
+      ```
+
+   1. List databases
+
+      ```ShellSession
+      \l
+      ```
+
+   1. Note the database in the output
+
+      Name|Owner|Encoding|Collate   |Ctype
+      ----|-----|--------|----------|----------
+      ab2d|ab2d |UTF8    |en_US.utf8|en_US.utf8
+
+1. If you want to connect to the running api container, do the following
 
    ```ShellSession
-   $ docker exec -it <container name> /bin/bash
+   $ docker exec -it $(docker ps -aqf "name=^ab2d_api.*$") /bin/bash
    ```
-   
+
+
+
 1. Create an AWS Elastic Container Registry (ECR) for "ab2d_api"
 
    ```ShellSession
