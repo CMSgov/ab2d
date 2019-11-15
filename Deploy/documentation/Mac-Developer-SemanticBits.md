@@ -871,7 +871,7 @@
    *Example for "semanticbitsdemo" AWS account:*
    
    ```ShellSession
-   $ aws configure --profile=sbdemo
+   $ aws configure --profile=sbdemo-dev
    ```
 
 1. Enter {your aws access key} at the **AWS Access Key ID** prompt
