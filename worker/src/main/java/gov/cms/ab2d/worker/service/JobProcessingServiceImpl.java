@@ -1,5 +1,6 @@
 package gov.cms.ab2d.worker.service;
 
+import ca.uhn.fhir.context.FhirContext;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.Sponsor;
@@ -9,6 +10,7 @@ import gov.cms.ab2d.worker.adapter.bluebutton.BfdClientAdapter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.hl7.fhir.dstu3.model.Resource;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
@@ -41,6 +43,9 @@ public class JobProcessingServiceImpl implements JobProcessingService {
 
     @Value("${efs.mount}")
     private String efsMount;
+
+    @Autowired
+    private FhirContext fhirContext;
 
     private final JobRepository jobRepository;
     private final BeneficiaryAdapter beneficiaryAdapter;
@@ -108,7 +113,8 @@ public class JobProcessingServiceImpl implements JobProcessingService {
 
         int counter = 0;
         for (var patient : patientsByContract.getPatients()) {
-            futureResourcesHandles.add(bfdClientAdapter.getResources(patient.getPatientId()));
+            final var resources = bfdClientAdapter.getEobBundleResources(patient.getPatientId());
+            futureResourcesHandles.add(resources);
 
             ++counter;
             if (counter % 2 == 0) {
@@ -138,7 +144,6 @@ public class JobProcessingServiceImpl implements JobProcessingService {
         while (iterator.hasNext()) {
             final Future<List<Resource>> futureResources = iterator.next();
 
-//          if (futureResources.isDone()) {
             List<Resource> resources = null;
             try {
                 resources = futureResources.get();
@@ -148,18 +153,24 @@ public class JobProcessingServiceImpl implements JobProcessingService {
                 throw new RuntimeException(e);
             }
 
-            log.info("Number of resources : {} ", resources.size());
+            // IMPROVEMENT - should write all the resources in the list into a byteArrayOutputStream first.
+            // and write into the file in one shot.
+
+            int resourceCount = 0;
             try {
-                for (int i = 0; i < 10; i++) {
-                    final String payload = "Test : " + i  + System.lineSeparator();
+                final var jsonParser = fhirContext.newJsonParser();
+                for (var resource : resources) {
+                    ++resourceCount;
+                    final String payload = jsonParser.encodeResourceToString(resource) + System.lineSeparator();
                     Files.write(ndjson, payload.getBytes(StandardCharsets.UTF_8), StandardOpenOption.APPEND);
                 }
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
 
+            log.info("finished writing [{}] resources", resourceCount);
             iterator.remove();
-//          }
+
         }
 
     }

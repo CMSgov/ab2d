@@ -18,9 +18,12 @@ import org.springframework.integration.jdbc.lock.JdbcLockRegistry;
 import org.springframework.integration.jdbc.lock.LockRepository;
 import org.springframework.integration.support.locks.LockRegistry;
 import org.springframework.messaging.SubscribableChannel;
+import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 import javax.sql.DataSource;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ThreadPoolExecutor;
 
 /**
  * Configures Spring Integration.
@@ -29,6 +32,7 @@ import javax.sql.DataSource;
  */
 @Slf4j
 @Configuration
+@EnableAsync
 @EnableIntegration
 @Import(BFDClientConfiguration.class)
 public class WorkerConfig {
@@ -38,6 +42,19 @@ public class WorkerConfig {
 
     @Autowired
     private JobHandler handler;
+
+    @Bean("bfd-client")
+    public Executor bfdThreadPoolTaskExecutor() {
+        final ThreadPoolTaskExecutor taskExecutor = new ThreadPoolTaskExecutor();
+        taskExecutor.setCorePoolSize(2);
+        taskExecutor.setMaxPoolSize(3);
+        taskExecutor.setQueueCapacity(10);
+        taskExecutor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
+        taskExecutor.setThreadNamePrefix("bfd-client-");
+        taskExecutor.setWaitForTasksToCompleteOnShutdown(true);
+        taskExecutor.setAwaitTerminationSeconds(30);
+        return taskExecutor;
+    }
 
 
     @Bean

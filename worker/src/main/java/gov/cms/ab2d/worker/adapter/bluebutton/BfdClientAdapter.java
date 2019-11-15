@@ -7,6 +7,6 @@ import java.util.concurrent.Future;
 
 public interface BfdClientAdapter {
 
-    Future<List<Resource>> getResources(String patientId);
+    Future<List<Resource>> getEobBundleResources(String patientId);
 
 }
