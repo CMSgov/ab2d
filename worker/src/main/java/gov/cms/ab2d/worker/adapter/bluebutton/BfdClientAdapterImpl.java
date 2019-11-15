@@ -7,6 +7,7 @@ import org.hl7.fhir.dstu3.model.Bundle;
 import org.hl7.fhir.dstu3.model.Bundle.BundleEntryComponent;
 import org.hl7.fhir.dstu3.model.Resource;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.AsyncResult;
 import org.springframework.stereotype.Component;
 
@@ -22,6 +23,7 @@ public class BfdClientAdapterImpl implements BfdClientAdapter {
     @Autowired
     private BFDClient bfdClient;
 
+    @Async("bfd-client")
     @Override
     public Future<List<Resource>> getEobBundleResources(String patientId) {
 

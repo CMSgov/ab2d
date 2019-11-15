@@ -122,6 +122,7 @@ public class JobProcessingServiceImpl implements JobProcessingService {
             }
         }
 
+        processResources(futureResourcesHandles, ndJsonFile);
     }
 
     private Path createContractFile(final Path outputDir, Contract contract) {
@@ -138,7 +139,7 @@ public class JobProcessingServiceImpl implements JobProcessingService {
     }
 
     private void processResources(List<Future<List<Resource>>> futureHandles, Path ndjson) {
-        log.info("inside processResources(futureHandles) ...  waits for futureHandles and writes to file");
+        log.info("inside processResources() ...  waits for futures and writes to file");
 
         final Iterator<Future<List<Resource>>> iterator = futureHandles.iterator();
         while (iterator.hasNext()) {
