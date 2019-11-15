@@ -6,9 +6,9 @@ import gov.cms.ab2d.common.model.Sponsor;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.worker.adapter.bluebutton.BeneficiaryAdapter;
 import gov.cms.ab2d.worker.adapter.bluebutton.BfdClientAdapter;
-import gov.cms.ab2d.worker.adapter.bluebutton.BfdClientAdapterImpl.EobBundleDTO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.hl7.fhir.dstu3.model.Resource;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
@@ -17,11 +17,16 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 
 import static gov.cms.ab2d.common.model.JobStatus.IN_PROGRESS;
 import static gov.cms.ab2d.common.model.JobStatus.SUBMITTED;
@@ -74,7 +79,7 @@ public class JobProcessingServiceImpl implements JobProcessingService {
 
         final Path outputDir = createJobOutputDirectory(job.getJobUuid());
         for (Contract contract : attestedContracts) {
-            log.info("contract : {} ", contract.getContractName());
+            log.info("contract : {} ", contract.getContractNumber());
             processContract(outputDir, contract);
         }
 
@@ -83,25 +88,34 @@ public class JobProcessingServiceImpl implements JobProcessingService {
 
     private Path createJobOutputDirectory(String jobUuid) {
         final Path outputDir = Paths.get(efsMount, jobUuid);
+        Path outputDirectory = null;
         try {
-            final Path outputDirectory = Files.createDirectories(outputDir);
-            log.info("OutputDir: {} ", outputDirectory.toAbsolutePath());
-        } catch (IOException e1) {
-            e1.printStackTrace();
+            outputDirectory = Files.createDirectories(outputDir);
+        } catch (IOException e) {
+            final String errMsg = "Could not create output directory : ";
+            log.error("{} : {}", errMsg, outputDir.toAbsolutePath());
+            throw new RuntimeException(errMsg + outputDir.getFileName(), e);
         }
-        return outputDir;
+        return outputDirectory;
     }
-
 
     private void processContract(final Path outputDir, Contract contract) {
         final var ndJsonFile = createContractFile(outputDir, contract);
 
         final var patientsByContract = beneficiaryAdapter.getPatientsByContract(contract.getContractNumber());
 
+        final var futureResourcesHandles =  new ArrayList<Future<List<Resource>>>();
+
+        int counter = 0;
         for (var patient : patientsByContract.getPatients()) {
-            final EobBundleDTO eobBundle = bfdClientAdapter.getEobBundle(patient.getPatientId());
-            parseEobBundles(eobBundle, ndJsonFile);
+            futureResourcesHandles.add(bfdClientAdapter.getResources(patient.getPatientId()));
+
+            ++counter;
+            if (counter % 2 == 0) {
+                processResources(futureResourcesHandles, ndJsonFile);
+            }
         }
+
     }
 
     private Path createContractFile(final Path outputDir, Contract contract) {
@@ -117,15 +131,37 @@ public class JobProcessingServiceImpl implements JobProcessingService {
         return outputContractNdJsonFile;
     }
 
+    private void processResources(List<Future<List<Resource>>> futureHandles, Path ndjson) {
+        log.info("inside processResources(futureHandles) ...  waits for futureHandles and writes to file");
 
-    private void parseEobBundles(EobBundleDTO bundleDTO, Path ndjson) {
-        try {
-            final String payload = bundleDTO.toString() + System.lineSeparator();
-            Files.write(ndjson, payload.getBytes(), StandardOpenOption.APPEND);
-        } catch (IOException e) {
-            e.printStackTrace();
-            throw new RuntimeException(e);
+        final Iterator<Future<List<Resource>>> iterator = futureHandles.iterator();
+        while (iterator.hasNext()) {
+            final Future<List<Resource>> futureResources = iterator.next();
+
+//          if (futureResources.isDone()) {
+            List<Resource> resources = null;
+            try {
+                resources = futureResources.get();
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            } catch (ExecutionException e) {
+                throw new RuntimeException(e);
+            }
+
+            log.info("Number of resources : {} ", resources.size());
+            try {
+                for (int i = 0; i < 10; i++) {
+                    final String payload = "Test : " + i  + System.lineSeparator();
+                    Files.write(ndjson, payload.getBytes(StandardCharsets.UTF_8), StandardOpenOption.APPEND);
+                }
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+
+            iterator.remove();
+//          }
         }
+
     }
 
 
