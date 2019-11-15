@@ -525,14 +525,46 @@
        public | sponsor               | table | ab2d
        public | user_account          | table | ab2d
        public | user_role             | table | ab2d
- 
+
+   1. Quit the psql shell
+
+      ```ShellSession
+      \q
+      ```
+
+   1. Exit the container
+
+      ```ShellSession
+      exit
+      ```
+      
 1. If you want to connect to the running api container, do the following
 
-   ```ShellSession
-   $ docker exec -it $(docker ps -aqf "name=^ab2d_api.*$") /bin/bash
-   ```
+   1. Connect to the api container
+   
+      ```ShellSession
+      $ docker exec -it $(docker ps -aqf "name=^ab2d_api.*$") /bin/bash
+      ```
 
+   1. Exit the container
 
+      ```ShellSession
+      exit
+      ```
+
+1. If you want to connect to the running worker container, do the following
+
+   1. Connect to the worker container
+
+      ```ShellSession
+      $ docker exec -it $(docker ps -aqf "name=^ab2d_worker.*$") /bin/bash
+      ```
+
+   1. Exit the container
+
+      ```ShellSession
+      exit
+      ```
 
 1. Create an AWS Elastic Container Registry (ECR) for "ab2d_api"
 
@@ -689,8 +721,9 @@
    ```ShellSession
    $ ./deploy.sh \
      --environment=sbdemo-dev \
+     --shared-environment=sbdemo-shared \
      --ssh-username=centos \
-     --database-secret-datetime=2019-10-25-14-55-06 \
+     --database-secret-datetime=2019-10-25-14-55-07 \
      --auto-approve
    ```
 
@@ -699,8 +732,9 @@
    ```ShellSession
    $ ./deploy.sh \
      --environment=sbdemo-sbx \
+     --shared-environment=sbdemo-shared \
      --ssh-username=centos \
-     --database-secret-datetime=2019-10-25-14-55-06 \
+     --database-secret-datetime=2019-10-25-14-55-07 \
      --auto-approve
    ```
 
