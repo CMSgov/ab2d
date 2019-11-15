@@ -453,3 +453,7 @@
    **Reported Source:** Self Service
 
    **Requested Due Date:** {3 business days from today's date}
+
+1. Select **Create**
+
+1. Verify that you receive an email regarding the issue
