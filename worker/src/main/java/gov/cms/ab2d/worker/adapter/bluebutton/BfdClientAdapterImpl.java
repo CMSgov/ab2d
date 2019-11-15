@@ -9,12 +9,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.hl7.fhir.dstu3.model.Bundle;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.scheduling.annotation.Async;
-import org.springframework.scheduling.annotation.AsyncResult;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
-import java.util.concurrent.Future;
 
 @Slf4j
 @Component
@@ -26,15 +23,14 @@ public class BfdClientAdapterImpl implements BfdClientAdapter {
 
 
     @Override
-    @Async
-    public Future<EobBundleDTO> getEobBundle(String patientId) {
+    public EobBundleDTO getEobBundle(String patientId) {
         final Bundle bundle1 = bfdClient.requestEOBFromServer(patientId);
         final List<Bundle.BundleEntryComponent> entries = bundle1.getEntry();
 
         log.info("Bundle - Total: {} - Entries: {} ", bundle1.getTotal(), entries.size());
 
-        final EobBundleDTO bundle = EobBundleDTO.builder().patientId(patientId).build();
-        return new AsyncResult(bundle);
+        final EobBundleDTO bundle = EobBundleDTO.builder().build();
+        return bundle;
     }
 
 

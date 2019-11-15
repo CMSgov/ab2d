@@ -6,7 +6,7 @@ import gov.cms.ab2d.common.model.Sponsor;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.worker.adapter.bluebutton.BeneficiaryAdapter;
 import gov.cms.ab2d.worker.adapter.bluebutton.BfdClientAdapter;
-import gov.cms.ab2d.worker.adapter.bluebutton.BfdClientAdapterImpl;
+import gov.cms.ab2d.worker.adapter.bluebutton.BfdClientAdapterImpl.EobBundleDTO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -24,8 +24,6 @@ import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 
 import static gov.cms.ab2d.common.model.JobStatus.IN_PROGRESS;
 import static gov.cms.ab2d.common.model.JobStatus.SUBMITTED;
@@ -102,16 +100,11 @@ public class JobProcessingServiceImpl implements JobProcessingService {
 
         final var patientsByContract = beneficiaryAdapter.getPatientsByContract(contract.getContractNumber());
 
-        final var eobBundles =  new ArrayList<Future<BfdClientAdapterImpl.EobBundleDTO>>();
+        final var eobBundles =  new ArrayList<EobBundleDTO>();
 
-        int counter = 0;
         for (var patient : patientsByContract.getPatients()) {
             eobBundles.add(bfdClientAdapter.getEobBundle(patient.getPatientId()));
-
-            ++counter;
-            if (counter % 10 == 0) {
-                parseEobBundles(eobBundles, ndJsonFile);
-            }
+            parseEobBundles(eobBundles, ndJsonFile);
         }
     }
 
@@ -129,29 +122,18 @@ public class JobProcessingServiceImpl implements JobProcessingService {
     }
 
 
-    private void parseEobBundles(List<Future<BfdClientAdapterImpl.EobBundleDTO>> eobBundles, Path ndjson) {
-        final Iterator<Future<BfdClientAdapterImpl.EobBundleDTO>> iterator = eobBundles.iterator();
+    private void parseEobBundles(List<EobBundleDTO> eobBundles, Path ndjson) {
+        final Iterator<EobBundleDTO> iterator = eobBundles.iterator();
         while (iterator.hasNext()) {
-            final Future<BfdClientAdapterImpl.EobBundleDTO> futureBundle = iterator.next();
-//            if (futureBundle.isDone()) {
-                try {
-                    var bundleDTO = futureBundle.get();
-//                    log.info("EOB Bundles : {}", bundleDTO.getPatientId());
-                    log.info("Write record into ndjson file");
-                    final String payload = bundleDTO.toString() + System.lineSeparator();
-                    Files.write(ndjson, payload.getBytes(), StandardOpenOption.APPEND);
-                    iterator.remove();
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                    throw new RuntimeException(e);
-                } catch (ExecutionException e) {
-                    e.printStackTrace();
-                    throw new RuntimeException(e);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                    throw new RuntimeException(e);
-                }
-//            }
+            final EobBundleDTO bundleDTO = iterator.next();
+            try {
+                final String payload = bundleDTO.toString() + System.lineSeparator();
+                Files.write(ndjson, payload.getBytes(), StandardOpenOption.APPEND);
+                iterator.remove();
+            } catch (IOException e) {
+                e.printStackTrace();
+                throw new RuntimeException(e);
+            }
         }
     }
 
