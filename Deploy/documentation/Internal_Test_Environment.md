@@ -460,8 +460,10 @@
       \dt
       ```
 
-   1. Note tables in the output
+   1. Note the tables in the output
 
+      *Example:*
+      
        Schema |         Name          | Type  | Owner 
       --------|-----------------------|-------|-------
        public | beneficiary           | table | ab2d
