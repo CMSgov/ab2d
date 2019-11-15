@@ -18,6 +18,7 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -77,7 +78,6 @@ public class JobProcessingServiceImpl implements JobProcessingService {
         log.info("Found job : {} - {} - {} ", job.getId(), job.getJobUuid(), job.getStatus());
 
         final Sponsor sponsor = job.getUser().getSponsor();
-        log.info("Found Sponsor : {} - {} - {} ", sponsor.getId(), sponsor.getLegalName(), sponsor.getOrgName());
 
         final List<Contract> attestedContracts = sponsor.getAttestedContracts();
         log.info("number of attested contracts : {}", attestedContracts.size());
@@ -138,7 +138,7 @@ public class JobProcessingServiceImpl implements JobProcessingService {
         return outputContractNdJsonFile;
     }
 
-    private void processResources(List<Future<List<Resource>>> futureHandles, Path ndjson) {
+    private void processResources(List<Future<List<Resource>>> futureHandles, Path outputFile) {
         log.info("inside processResources() ...  waits for futures and writes to file");
 
         final Iterator<Future<List<Resource>>> iterator = futureHandles.iterator();
@@ -154,17 +154,19 @@ public class JobProcessingServiceImpl implements JobProcessingService {
                 throw new RuntimeException(e);
             }
 
-            // IMPROVEMENT - should write all the resources in the list into a byteArrayOutputStream first.
-            // and write into the file in one shot.
-
+            var jsonParser = fhirContext.newJsonParser();
             int resourceCount = 0;
+
             try {
-                final var jsonParser = fhirContext.newJsonParser();
+                var byteArrayOutputStream = new ByteArrayOutputStream();
                 for (var resource : resources) {
                     ++resourceCount;
                     final String payload = jsonParser.encodeResourceToString(resource) + System.lineSeparator();
-                    Files.write(ndjson, payload.getBytes(StandardCharsets.UTF_8), StandardOpenOption.APPEND);
+                    byteArrayOutputStream.write(payload.getBytes(StandardCharsets.UTF_8));
                 }
+
+                Files.write(outputFile, byteArrayOutputStream.toByteArray(), StandardOpenOption.APPEND);
+
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
