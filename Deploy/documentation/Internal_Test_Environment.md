@@ -116,26 +116,6 @@
      > ~/.ssh/ab2d-sbdemo-shared.pem
    ```
 
-   *Example for Dev environment testing within SemanticBits demo environment:*
-
-   ```ShellSession
-   $ aws --region us-east-1 ec2 create-key-pair \
-     --key-name ab2d-sbdemo-dev \
-     --query 'KeyMaterial' \
-     --output text \
-     > ~/.ssh/ab2d-sbdemo-dev.pem
-   ```
-
-   *Example for Sandbox environment testing within SemanticBits demo environment:*
-
-   ```ShellSession
-   $ aws --region us-east-1 ec2 create-key-pair \
-     --key-name ab2d-sbdemo-sbx \
-     --query 'KeyMaterial' \
-     --output text \
-     > ~/.ssh/ab2d-sbdemo-sbx.pem
-   ```
-
 1. Change permissions of the key
 
    *Example for controllers within SemanticBits demo environment:*
@@ -144,36 +124,12 @@
    $ chmod 600 ~/.ssh/ab2d-sbdemo-shared.pem
    ```
 
-   *Example for Dev environment testing within SemanticBits demo environment:*
-   
-   ```ShellSession
-   $ chmod 600 ~/.ssh/ab2d-sbdemo-dev.pem
-   ```
-   
-   *Example for Sandbox environment testing within SemanticBits demo environment:*
-
-   ```ShellSession
-   $ chmod 600 ~/.ssh/ab2d-sbdemo-sbx.pem
-   ```
-
 1. Output the public key to the clipboard
 
    *Example for controllers within SemanticBits demo environment:*
 
    ```ShellSession
    $ ssh-keygen -y -f ~/.ssh/ab2d-sbdemo-shared.pem | pbcopy
-   ```
-
-   *Example for Dev environment testing within SemanticBits demo environment:*
-
-   ```ShellSession
-   $ ssh-keygen -y -f ~/.ssh/ab2d-sbdemo-dev.pem | pbcopy
-   ```
-
-   *Example for Sandbox environment testing within SemanticBits demo environment:*
-
-   ```ShellSession
-   $ ssh-keygen -y -f ~/.ssh/ab2d-sbdemo-sbx.pem | pbcopy
    ```
 
 1. Update the "authorized_keys" file for the environment
@@ -746,16 +702,10 @@
 
 1. Connection to the Jenkins instance
 
-   *Format:*
-   
-   ```ShellSession
-   $ ssh -i ~/.ssh/ab2d-{ environment }.pem centos@54.208.238.51
-   ```
-
    *Example:*
    
    ```ShellSession
-   $ ssh -i ~/.ssh/ab2d-sbdemo-dev.pem centos@54.208.238.51
+   $ ssh -i ~/.ssh/ab2d-sbdemo-shared.pem centos@54.208.238.51
    ```
 
 1. Install, enable, and start firewalld
