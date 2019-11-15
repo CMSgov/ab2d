@@ -3,7 +3,7 @@ variable "aws_account_number" {
 }
 
 variable "aws_profile" {
-  default = "sbdemo-sbx"
+  default = "sbdemo-shared"
 }
 
 variable "env" {
@@ -42,7 +42,7 @@ variable "linux_user" {
 }
 
 variable "ssh_key_name" {
-  default = "ab2d-sbdemo-sbx"
+  default = "ab2d-sbdemo-shared"
 }
 
 variable "max_ec2_instance_count" {
