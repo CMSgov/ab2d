@@ -21,8 +21,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
-import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 import static gov.cms.ab2d.common.model.JobStatus.IN_PROGRESS;
@@ -100,11 +98,9 @@ public class JobProcessingServiceImpl implements JobProcessingService {
 
         final var patientsByContract = beneficiaryAdapter.getPatientsByContract(contract.getContractNumber());
 
-        final var eobBundles =  new ArrayList<EobBundleDTO>();
-
         for (var patient : patientsByContract.getPatients()) {
-            eobBundles.add(bfdClientAdapter.getEobBundle(patient.getPatientId()));
-            parseEobBundles(eobBundles, ndJsonFile);
+            final EobBundleDTO eobBundle = bfdClientAdapter.getEobBundle(patient.getPatientId());
+            parseEobBundles(eobBundle, ndJsonFile);
         }
     }
 
@@ -122,18 +118,13 @@ public class JobProcessingServiceImpl implements JobProcessingService {
     }
 
 
-    private void parseEobBundles(List<EobBundleDTO> eobBundles, Path ndjson) {
-        final Iterator<EobBundleDTO> iterator = eobBundles.iterator();
-        while (iterator.hasNext()) {
-            final EobBundleDTO bundleDTO = iterator.next();
-            try {
-                final String payload = bundleDTO.toString() + System.lineSeparator();
-                Files.write(ndjson, payload.getBytes(), StandardOpenOption.APPEND);
-                iterator.remove();
-            } catch (IOException e) {
-                e.printStackTrace();
-                throw new RuntimeException(e);
-            }
+    private void parseEobBundles(EobBundleDTO bundleDTO, Path ndjson) {
+        try {
+            final String payload = bundleDTO.toString() + System.lineSeparator();
+            Files.write(ndjson, payload.getBytes(), StandardOpenOption.APPEND);
+        } catch (IOException e) {
+            e.printStackTrace();
+            throw new RuntimeException(e);
         }
     }
 
