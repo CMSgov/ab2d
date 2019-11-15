@@ -175,7 +175,7 @@ resource "aws_autoscaling_group" "asg" {
     },
     {
       key = "maintainer"
-      value = "federico.rosario@semanticbits.com"
+      value = "lonnie.hanekamp@semanticbits.com"
       propagate_at_launch = true
     },
     {
