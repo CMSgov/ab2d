@@ -410,8 +410,10 @@
 
 1. Connect to the controller
 
+   *Format:*
+   
    ```ShellSession
-   $ ssh -i ~/.ssh/ab2d-sbdemo-shared.pem centos@34.203.8.2
+   $ ssh -i ~/.ssh/ab2d-sbdemo-shared.pem centos@{controller ip address}
    ```
 
 1. Configure AWS
@@ -604,14 +606,18 @@
 
 1. Verify that the application is running
 
-   > http://34.203.8.2:8080/swagger-ui.html#/bulk-data-access-api
+   *Format:*
+   
+   > http://{controller ip address}:8080/swagger-ui.html#/bulk-data-access-api
 
 1. Open a second terminal
 
 1. SSH into the controller again using the second terminal (while the application is still running in the first terminal)
 
+   *Format:*
+   
    ```ShellSession
-   $ ssh -i ~/.ssh/ab2d-sbdemo-shared.pem centos@34.203.8.2
+   $ ssh -i ~/.ssh/ab2d-sbdemo-shared.pem centos@{controller ip address}
    ```
 
 1. Connect to the psql shell for the RDS database instance
@@ -786,7 +792,9 @@
 
    1. Enter the following in the address bar
 
-      > http://34.203.8.2:8080
+      *Format:*
+      
+      > http://{controller ip address}:8080
 
    1. Verify that the "Welcome to nginx!" page is displayed
 
@@ -797,5 +805,5 @@
 1. Run the API container with "docker run"
 
    ```ShellSession
-   $ docker run -d -p 8080:8000 generated_api:latest
+   $ docker run -d -p 8080:8080 generated_api:latest
    ```
