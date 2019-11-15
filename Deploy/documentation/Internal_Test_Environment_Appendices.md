@@ -406,7 +406,7 @@
    $ ./bash/tflint-check.sh
    ```
 
-##
+## Appendix I: Create a Jira ticket for CMS VPN ticket access
 
 1. Open Chrome
 
