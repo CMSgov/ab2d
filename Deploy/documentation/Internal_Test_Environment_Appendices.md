@@ -10,6 +10,7 @@
 1. [Appendix F: Verify PostgreSQL](#appendix-f-verify-postgresql)
 1. [Appendix G: Note the product code for CentOS 7 AMI](#appendix-g-note-the-product-code-for-centos-7-ami)
 1. [Appendix H: Do a linting check of the terraform files](#appendix-h-do-a-linting-check-of-the-terraform-files)
+1. [Appendix I: Configure the controller to test docker containers](#appendix-i-configure-the-controller-to-test-docker-containers)
 
 ## Appendix A: Destroy complete environment
 
@@ -403,4 +404,398 @@
 
    ```ShellSession
    $ ./bash/tflint-check.sh
+   ```
+
+## Appendix I: Configure the controller to test docker containers
+
+1. Connect to the controller
+
+   ```ShellSession
+   $ ssh -i ~/.ssh/ab2d-sbdemo-shared.pem centos@34.203.8.2
+   ```
+
+1. Configure AWS
+
+   1. Configure AWS CLI
+
+      *Example for testing Shared environment in SemanticBits demo environment:*
+
+      ```ShellSession
+      $ aws configure --profile=sbdemo-shared
+      ```
+
+   1. Enter {your aws access key} at the **AWS Access Key ID** prompt
+   
+   1. Enter {your aws secret access key} at the AWS Secret Access Key prompt
+   
+   1. Enter the following at the **Default region name** prompt
+   
+      ```
+      us-east-1
+      ```
+   
+   1. Enter the following at the **Default output format** prompt
+   
+      ```
+      json
+      ```
+   
+   1. Examine the contents of your AWS credentials file
+   
+      ```ShellSession
+      $ cat ~/.aws/credentials
+      ```
+
+1. Install, configure, and start docker
+
+   ```ShellSession
+   $ sudo yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+   $ sudo rpm --import https://download.docker.com/linux/centos/gpg
+   $ sudo yum-config-manager --enable rhel-7-server-extras-rpms
+   $ sudo yum-config-manager --enable rhui-REGION-rhel-server-extras
+   $ sudo yum -y install docker-ce-18.06.1.ce-3.el7
+   $ sudo usermod -aG docker centos
+   $ sudo systemctl enable docker
+   $ sudo systemctl start docker
+   ```
+
+1. Install Git
+
+   ```ShellSession
+   $ sudo yum install git -y
+   ```
+
+1. Clone the AB2D repo
+
+   ```ShellSession
+   $ mkdir -p ~/code
+   $ cd ~/code
+   $ git clone https://github.com/CMSgov/ab2d
+   ```
+
+1. Upgrade to JDK 12
+
+   ```ShellSession
+   $ cd /tmp
+   $ curl -O https://download.java.net/java/GA/jdk12.0.1/69cfe15208a647278a19ef0990eea691/12/GPL/openjdk-12.0.1_linux-x64_bin.tar.gz
+   $ tar -xzf openjdk-12.0.1_linux-x64_bin.tar.gz
+   $ sudo mv jdk-12.0.1 /opt/
+   $ cat <<EOF | sudo tee /etc/profile.d/jdk12.sh
+   > export JAVA_HOME=/opt/jdk-12.0.1
+   > export PATH=\$PATH:\$JAVA_HOME/bin
+   > EOF
+   $ source /etc/profile.d/jdk12.sh
+   $ sudo rm -f /etc/alternatives/java
+   $ sudo ln -s /opt/jdk-12.0.1/bin/java /etc/alternatives/java
+   ```
+
+1. Install Maven
+
+   ```ShellSession
+   $ wget https://www-us.apache.org/dist/maven/maven-3/3.6.2/binaries/apache-maven-3.6.2-bin.tar.gz -P /tmp
+   $ sudo tar -xvf /tmp/apache-maven-3.6.2-bin.tar.gz -C /opt
+   $ sudo ln -s /opt/apache-maven-3.6.2 /opt/maven
+   $ sudo su
+   $ rm -f /etc/profile.d/maven.sh
+   $ echo "export M2_HOME=/opt/maven" > /etc/profile.d/maven.sh
+   $ echo "export MAVEN_HOME=/opt/maven" >> /etc/profile.d/maven.sh
+   $ echo "export PATH=${M2_HOME}/bin:${PATH}" >> /etc/profile.d/maven.sh
+   $ exit
+   $ source /etc/profile.d/maven.sh
+   ```
+
+1. Install python2 components
+
+   ```ShellSession
+   $ sudo pip install docker-compose
+   $ sudo yum upgrade python* -y
+   ```
+
+1. Install python3 components
+
+   ```ShellSession
+   $ sudo yum install centos-release-scl -y
+   $ sudo yum install rh-python36 -y
+   $ sudo chown -R centos:centos /opt/rh/rh-python36
+   $ sudo chmod -R 755 /opt/rh/rh-python36
+   $ cd /opt/rh/rh-python36/root/bin
+   $ ./pip3 install --upgrade pip
+   $ ./pip3 install boto3
+   ```
+
+1. Set the AWS profile
+
+   ```ShellSession
+   $ export AWS_PROFILE=sbdemo-shared
+   ```
+
+1. Temporarily modify the "get-database-secret.py" file
+
+   1. Change to the "python3" directory
+
+      ```ShellSession
+      $ cd ~/code/ab2d/Deploy/python3
+      ```
+
+   1. Open the "get-database-secret.py" file
+
+      ```ShellSession
+      $ vim get-database-secret.py
+      ```
+
+   1. Change the first line to look like this
+
+      ```
+      #!/usr/bin/env /opt/rh/rh-python36/root/bin/python3
+      ```
+
+   1. Save and close the file
+
+1. Get database secrets
+
+   ```ShellSession
+   export CMS_ENV=sbdemo-dev
+   export DATABASE_SECRET_DATETIME=2019-10-25-14-55-07
+   DATABASE_USER=$(./get-database-secret.py $CMS_ENV database_user $DATABASE_SECRET_DATETIME)
+   DATABASE_PASSWORD=$(./get-database-secret.py $CMS_ENV database_password $DATABASE_SECRET_DATETIME)
+   DATABASE_NAME=$(./get-database-secret.py $CMS_ENV database_name $DATABASE_SECRET_DATETIME)
+   DB_ENDPOINT=$(aws --region us-east-1 rds describe-db-instances \
+     --query="DBInstances[?DBInstanceIdentifier=='ab2d'].Endpoint.Address" \
+     --output=text)
+   ```
+
+1. Build the application
+
+   ```ShellSession
+   $ cd ~/code/ab2d/Deploy
+   $ rm -rf generated
+   $ mkdir -p generated
+   $ cp ../docker-compose.yml generated
+   $ cd generated
+   $ sed -i -- 's%context: ./api%context: ../../api%' docker-compose.yml
+   $ sed -i -- 's%context: ./worker%context: ../../worker%' docker-compose.yml
+   $ sed -i -- "s%AB2D_DB_HOST=db%AB2D_DB_HOST=$DB_ENDPOINT%" docker-compose.yml
+   $ sed -i -- "s%AB2D_DB_DATABASE=ab2d%AB2D_DB_DATABASE=$DATABASE_NAME%" docker-compose.yml
+   $ sed -i -- "s%AB2D_DB_USER=ab2d%AB2D_DB_USER=$DATABASE_USER%" docker-compose.yml
+   $ sed -i -- "s%AB2D_DB_PASSWORD=ab2d%AB2D_DB_PASSWORD=$DATABASE_PASSWORD%" docker-compose.yml
+   $ cd ../..
+   $ make docker-build
+   $ cd Deploy/generated
+   $ docker-compose build
+   ```
+
+1. Add the following rule to "ab2d-deployment-controller-sg"
+
+   - **Type:** Custom TCP Rule
+
+   - **Protocol:** TCP
+
+   - **Port Range:** 8080
+
+   - **Source:** {lonnie's ip address}/32
+
+   - **Description:** Whitelist Lonnie Application
+   
+1. Run the application using "docker-compose"
+
+   ```ShellSession
+   $ docker-compose up
+   ```
+
+1. Verify that the application is running
+
+   > http://34.203.8.2:8080/swagger-ui.html#/bulk-data-access-api
+
+1. Open a second terminal
+
+1. SSH into the controller again using the second terminal (while the application is still running in the first terminal)
+
+   ```ShellSession
+   $ ssh -i ~/.ssh/ab2d-sbdemo-shared.pem centos@34.203.8.2
+   ```
+
+1. Connect to the psql shell for the RDS database instance
+
+   ```ShellSession
+   $ psql --host ab2d.cr0bialx3sap.us-east-1.rds.amazonaws.com --dbname postgres --username cmsadmin
+   ```
+
+1. List databases by entering the following in the psql shell
+
+   ```ShellSession
+   \l
+   ```
+
+1. Connect to the target database by entering the following in the psql shell
+
+   *Format:*
+   
+   ```ShellSession
+   \connect dev
+   ```
+
+1. Verify that the tables were created in the target database
+
+   1. Enter the following in the psql shell
+
+      ```ShellSession
+      \dt
+      ```
+
+   1. Note the tables in the output
+    
+      *Example:*
+      
+       Schema |         Name          | Type  | Owner 
+      --------|-----------------------|-------|-------
+       public | beneficiary           | table | ab2d
+       public | contract              | table | ab2d
+       public | coverage              | table | ab2d
+       public | databasechangelog     | table | ab2d
+       public | databasechangeloglock | table | ab2d
+       public | int_channel_message   | table | ab2d
+       public | int_group_to_message  | table | ab2d
+       public | int_lock              | table | ab2d
+       public | int_message           | table | ab2d
+       public | int_message_group     | table | ab2d
+       public | int_metadata_store    | table | ab2d
+       public | job                   | table | ab2d
+       public | job_output            | table | ab2d
+       public | role                  | table | ab2d
+       public | sponsor               | table | ab2d
+       public | user_account          | table | ab2d
+       public | user_role             | table | ab2d
+
+   1. Exist the psql shell
+
+      ```ShellSession
+      \q
+      ```
+      
+1. List the running containers
+
+   1. Enter the following
+
+      ```ShellSession
+      $ docker ps
+      ```
+
+   1. Note the output
+
+      *Example showing only the key columns:*
+      
+      CONTAINER ID|IMAGE           |PORTS                 |NAMES
+      ------------|----------------|----------------------|---------------
+      85e5595b9e64|generated_api   |0.0.0.0:8080->8080/tcp|generated_api_1
+      01215a162bc2|generated_worker|                      |generated_worker_1
+      0ec7d4563567|postgres:11     |0.0.0.0:5432->5432/tcp|generated_db_1
+
+1. Examine the running api container
+
+   1. Connect to the running api container
+   
+      ```ShellSession
+      $ docker exec -it $(docker ps -aqf "name=generated_api_1") /bin/bash
+      ```
+
+   1. Verify the database host environmental setting
+
+      ```ShellSession
+      $ echo $AB2D_DB_HOST
+      ```
+
+   1. Verify the database user environment setting
+
+      ```ShellSession
+      $ echo $AB2D_DB_USER
+      ```
+
+   1. Verify the database password environment setting
+
+      ```ShellSession
+      $ echo $AB2D_DB_PASSWORD
+      ```
+
+   1. Verify the database name environment setting
+
+      ```ShellSession
+      $ echo $AB2D_DB_DATABASE
+      ```
+
+   1. Change to the application directory
+
+      ```ShellSession
+      $ cd /usr/src/ab2d-api
+      ```
+      
+   1. Exit the container
+
+      ```ShellSession
+      exit
+      ```
+
+1. Examine the running worker container
+
+   1. Connect to the running worker container
+
+      ```ShellSession
+      $ docker exec -it $(docker ps -aqf "name=^ab2d_worker.*$") /bin/bash
+      ```
+
+   1. Exit the container
+
+      ```ShellSession
+      exit
+      ```
+
+1. Delete all the containers
+
+   1. Delete orphaned volumes (if any)
+
+      ```ShellSession
+      $ docker volume ls -qf dangling=true | xargs -I name docker volume rm name
+      ```
+
+   1. Delete all containers (if any)
+      
+      ```ShellSession
+      $ docker ps -aq | xargs -I name docker rm --force name
+      ```
+
+   1. Delete orphaned volumes again (if any)
+
+      ```ShellSession
+      $ docker volume ls -qf dangling=true | xargs -I name docker volume rm name
+      ```
+
+1. Test an nginx container
+
+   1. Pull the nginx container from docker hub
+
+      ```ShellSession
+      $ docker pull nginx
+      ```
+
+   1. Run the nginx container with "docker run"
+
+      ```ShellSession
+      $ docker run -d -p 8080:80 nginx:latest
+      ```
+
+   1. Open Chrome
+
+   1. Enter the following in the address bar
+
+      > http://34.203.8.2:8080
+
+   1. Verify that the "Welcome to nginx!" page is displayed
+
+1. Modify the API dockerfile so that it can be run with "docker run" instead of "docker-compose"
+
+   > *** TO DO ***
+   
+1. Run the API container with "docker run"
+
+   ```ShellSession
+   $ docker run -d -p 8080:8000 generated_api:latest
    ```
