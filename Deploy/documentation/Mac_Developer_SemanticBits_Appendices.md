@@ -5,6 +5,7 @@
 1. [Appendix A: PostgrSQL 11](#appendix-a-postgresql-11)
    * [Install PostgreSQL 11](#install-postgresql-11)
    * [Uninstall PostgreSQL 11](#uninstall-postgresql-11)
+1. [Appendix B: Create a Jira ticket for CMS VPN ticket access](#appendix-b-create-a-jira-ticket-for-cms-vpn-ticket-access)
 
 ## Appendix A: PostgrSQL 11
 
@@ -60,3 +61,55 @@
    ```ShellSession
    $ netstat -an | grep 5432
    ```
+
+## Appendix B: Create a Jira ticket for CMS VPN ticket access
+
+1. Open Chrome
+
+1. Enter the following in the address bar
+
+   > https://jira.cms.gov/projects/CMSAWSOPS/issues/CMSAWSOPS-49590?filter=allopenissues
+
+1. Select **Create**
+
+1. Fill out the form as follows
+
+   **Issue Type:** Access
+
+   **Summary:** AWS VPN access for {your eua id}
+
+   **Project Name:** Project 012 BlueButton
+
+   **Account Alias:** None
+
+   **Types of Access/Resets:** Cisco AnyConnect Access
+
+   **Severity:** Minimal
+
+   **Urgency:** Medium
+
+   **Description:**
+
+   ```
+   I'm an engineer working on the {your project name} project at CMS. Can I have AWS VPN access?
+
+   User ID: {your eua id}
+
+   Cellphone: {your cellphone number}
+
+   Full name: {your first and last name}
+
+   Email: {your semanticbits email}
+
+   Thanks,
+
+   {your first name}
+   ```
+
+   **Reported Source:** Self Service
+
+   **Requested Due Date:** {3 business days from today's date}
+
+1. Select **Create**
+
+1. Verify that you receive an email regarding the issue

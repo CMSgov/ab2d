@@ -10,7 +10,6 @@
 1. [Appendix F: Verify PostgreSQL](#appendix-f-verify-postgresql)
 1. [Appendix G: Note the product code for CentOS 7 AMI](#appendix-g-note-the-product-code-for-centos-7-ami)
 1. [Appendix H: Do a linting check of the terraform files](#appendix-h-do-a-linting-check-of-the-terraform-files)
-1. [Appendix I: Create a Jira ticket for CMS VPN ticket access](#appendix-i-create-a-jira-ticket-for-cms-vpn-ticket-access)
 
 ## Appendix A: Destroy complete environment
 
@@ -405,55 +404,3 @@
    ```ShellSession
    $ ./bash/tflint-check.sh
    ```
-
-## Appendix I: Create a Jira ticket for CMS VPN ticket access
-
-1. Open Chrome
-
-1. Enter the following in the address bar
-
-   > https://jira.cms.gov/projects/CMSAWSOPS/issues/CMSAWSOPS-49590?filter=allopenissues
-
-1. Select **Create**
-
-1. Fill out the form as follows
-
-   **Issue Type:** Access
-
-   **Summary:** AWS VPN access for {your eua id}
-
-   **Project Name:** Project 012 BlueButton
-
-   **Account Alias:** None
-
-   **Types of Access/Resets:** Cisco AnyConnect Access
-
-   **Severity:** Minimal
-
-   **Urgency:** Medium
-
-   **Description:**
-
-   ```
-   I'm an engineer working on the {your project name} project at CMS. Can I have AWS VPN access?
-
-   User ID: {your eua id}
-
-   Cellphone: {your cellphone number}
-
-   Full name: {your first and last name}
-
-   Email: {your semanticbits email}
-
-   Thanks,
-
-   {your first name}
-   ```
-
-   **Reported Source:** Self Service
-
-   **Requested Due Date:** {3 business days from today's date}
-
-1. Select **Create**
-
-1. Verify that you receive an email regarding the issue
