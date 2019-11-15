@@ -51,7 +51,7 @@ done
 #
 
 echo "Check vars are not empty before proceeding..."
-if [ -z "${ENVIRONMENT}" ] || [ -z "${DATABASE_SECRET_DATETIME}" ] || [ -z "${SSH_USERNAME}" ]; then
+if [ -z "${ENVIRONMENT}" ] || [ -z "${SHARED_ENVIRONMENT}" ] || [ -z "${DATABASE_SECRET_DATETIME}" ] || [ -z "${SSH_USERNAME}" ]; then
   echo "Try running the script like so:"
   echo "./deploy.sh --environment=dev --database-secret-datetime={YYYY-MM-DD-HH-MM-SS}"
   exit 1
@@ -285,8 +285,19 @@ fi
 
 echo "Apply schedule autoscaling if applicable..."
 if [ -f ./autoscaling-schedule.tf ]; then
-  terraform apply --auto-approve -var "ami_id=$AMI_ID" --var "current_task_definition_arn=$API_TASK_DEFINITION" -target=aws_autoscaling_schedule.morning
-  terraform apply --auto-approve -var "ami_id=$AMI_ID" --var "current_task_definition_arn=$API_TASK_DEFINITION" -target=aws_autoscaling_schedule.night
+    
+  terraform apply \
+    --var "ami_id=$AMI_ID" \
+    --var "current_task_definition_arn=$API_TASK_DEFINITION" \
+    --target=aws_autoscaling_schedule.morning \
+    --auto-approve
+
+  terraform apply \
+    --var "ami_id=$AMI_ID" \
+    --var "current_task_definition_arn=$API_TASK_DEFINITION" \
+    --target=aws_autoscaling_schedule.night \
+    --auto-approve
+
 fi
 
 #
