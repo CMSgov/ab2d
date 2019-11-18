@@ -22,10 +22,7 @@ public class BeneficiaryAdapterStub implements BeneficiaryAdapter {
 
     private static final String BENE_ID_FILE = "/test-stub-data/synthetic-bene-ids.csv";
 
-    // reduce page size during development testing.
-    private static final int PAGE_SIZE = 3;
-//    private static final int PAGE_SIZE = 10;
-//    private static final int PAGE_SIZE = 100;
+    private static final int PAGE_SIZE = 100;
 
 
     @Override

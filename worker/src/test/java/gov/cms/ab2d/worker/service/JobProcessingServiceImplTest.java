@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 import java.util.concurrent.Future;
 
 import static java.lang.Boolean.TRUE;
@@ -36,12 +37,14 @@ import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @SpringBootTest
 @ExtendWith(MockitoExtension.class)
 class JobProcessingServiceImplTest {
+    private Random random = new Random();
 
     @Autowired
     private FhirContext fhirContext;
@@ -127,9 +130,8 @@ class JobProcessingServiceImplTest {
 
         verify(fileService).createDirectory(Mockito.any());
         verify(fileService).createFile(Mockito.any(), Mockito.any());
-        verify(fileService).appendToFile(Mockito.any(), Mockito.any());
+        verify(fileService, times(3)).appendToFile(Mockito.any(), Mockito.any());
     }
-
 
     private Sponsor createSponsor() {
         Sponsor sponsor = new Sponsor();
@@ -153,10 +155,11 @@ class JobProcessingServiceImplTest {
     }
 
     private Contract createContract(Sponsor sponsor) {
+        final int anInt = random.nextInt(64);
         Contract contract = new Contract();
-        contract.setId(1L);
-        contract.setContractName("CONTRACT_1");
-        contract.setContractNumber("1");
+        contract.setId(Long.valueOf(anInt));
+        contract.setContractName("CONTRACT_" + anInt);
+        contract.setContractNumber("" + anInt);
         contract.setAttestedOn(OffsetDateTime.now().minusDays(10));
         contract.setSponsor(sponsor);
 
@@ -177,13 +180,16 @@ class JobProcessingServiceImplTest {
         return GetPatientsByContractResponse.builder()
                 .contractNumber(contract.getContractNumber())
                 .patient(toPatientDTO())
+                .patient(toPatientDTO())
+                .patient(toPatientDTO())
                 .build();
     }
 
     private PatientDTO toPatientDTO() {
+        final int anInt = random.nextInt(11);
         return PatientDTO.builder()
-                .patientId("patient_1")
-                .monthUnderContract(1)
+                .patientId("patient_" + anInt)
+                .monthUnderContract(anInt)
                 .build();
     }
 
