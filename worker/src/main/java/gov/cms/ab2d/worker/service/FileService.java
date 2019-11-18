@@ -33,10 +33,11 @@ public class FileService {
         Path outputFile = null;
         try {
             outputFile = Files.createFile(filePath);
-            log.info("file: {} ", outputFile.toAbsolutePath());
+            log.info("Created file: {} ", outputFile.toAbsolutePath());
         } catch (IOException e) {
-            log.info("file: {} ", outputFile.toAbsolutePath());
-            throw new RuntimeException(e);
+            final String errMsg = "Could not create output file : ";
+            log.error("{} {} ", errMsg, filePath.toAbsolutePath(), e);
+            throw new RuntimeException(errMsg + filename, e);
         }
         return outputFile;
     }

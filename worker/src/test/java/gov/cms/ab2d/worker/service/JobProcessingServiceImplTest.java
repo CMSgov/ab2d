@@ -6,6 +6,7 @@ import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.JobStatus;
 import gov.cms.ab2d.common.model.Sponsor;
 import gov.cms.ab2d.common.model.User;
+import gov.cms.ab2d.common.repository.JobOutputRepository;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.worker.adapter.bluebutton.BeneficiaryAdapter;
 import gov.cms.ab2d.worker.adapter.bluebutton.BfdClientAdapter;
@@ -51,6 +52,7 @@ class JobProcessingServiceImplTest {
 
     @Mock FileService fileService;
     @Mock JobRepository jobRepository;
+    @Mock JobOutputRepository jobOutputRepository;
     @Mock BeneficiaryAdapter beneficiaryAdapter;
     @Mock BfdClientAdapter bfdClientAdapter;
 
@@ -66,6 +68,7 @@ class JobProcessingServiceImplTest {
                 fhirContext,
                 fileService,
                 jobRepository,
+                jobOutputRepository,
                 beneficiaryAdapter,
                 bfdClientAdapter);
 

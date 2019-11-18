@@ -46,9 +46,9 @@ public class WorkerConfig {
     @Bean("bfd-client")
     public Executor bfdThreadPoolTaskExecutor() {
         final ThreadPoolTaskExecutor taskExecutor = new ThreadPoolTaskExecutor();
-        taskExecutor.setCorePoolSize(2);
-        taskExecutor.setMaxPoolSize(3);
-        taskExecutor.setQueueCapacity(10);
+        taskExecutor.setCorePoolSize(5);
+        taskExecutor.setMaxPoolSize(10);
+        taskExecutor.setQueueCapacity(100);
         taskExecutor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
         taskExecutor.setThreadNamePrefix("bfd-client-");
         taskExecutor.setWaitForTasksToCompleteOnShutdown(true);

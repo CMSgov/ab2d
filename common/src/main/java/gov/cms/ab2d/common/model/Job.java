@@ -45,7 +45,7 @@ public class Job {
             orphanRemoval = true,
             fetch = FetchType.EAGER
     )
-    private List<JobOutput> jobOutput = new ArrayList<>();
+    private List<JobOutput> jobOutputs = new ArrayList<>();
 
     @Column(columnDefinition = "TIMESTAMP WITH TIME ZONE")
     private OffsetDateTime createdAt;
@@ -68,4 +68,10 @@ public class Job {
 
     @Pattern(regexp = "ExplanationOfBenefits", message = "_type should be ExplanationOfBenefits")
     private String resourceTypes; // for now just limited to ExplanationOfBenefits
+
+
+    public void addJobOutput(JobOutput jobOutput) {
+        jobOutputs.add(jobOutput);
+        jobOutput.setJob(this);
+    }
 }

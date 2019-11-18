@@ -3,7 +3,9 @@ package gov.cms.ab2d.worker.service;
 import ca.uhn.fhir.context.FhirContext;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.Job;
+import gov.cms.ab2d.common.model.JobOutput;
 import gov.cms.ab2d.common.model.Sponsor;
+import gov.cms.ab2d.common.repository.JobOutputRepository;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.worker.adapter.bluebutton.BeneficiaryAdapter;
 import gov.cms.ab2d.worker.adapter.bluebutton.BfdClientAdapter;
@@ -38,6 +40,7 @@ import static gov.cms.ab2d.common.model.JobStatus.SUCCESSFUL;
 @RequiredArgsConstructor
 public class JobProcessingServiceImpl implements JobProcessingService {
     private static final String NDJSON_EXTENSION = ".ndjson";
+    private static final int GROUP_SIZE = 5;
 
     @Value("${efs.mount}")
     private String efsMount;
@@ -45,6 +48,7 @@ public class JobProcessingServiceImpl implements JobProcessingService {
     private final FhirContext fhirContext;
     private final FileService fileService;
     private final JobRepository jobRepository;
+    private final JobOutputRepository jobOutputRepository;
     private final BeneficiaryAdapter beneficiaryAdapter;
     private final BfdClientAdapter  bfdClientAdapter;
 
@@ -83,12 +87,18 @@ public class JobProcessingServiceImpl implements JobProcessingService {
         final Path outputDir = fileService.createDirectory(outputDirPath);
         for (Contract contract : attestedContracts) {
             log.info("contract : {} ", contract.getContractNumber());
+
+            JobOutput jobOutput = null;
             try {
-                processContract(outputDir, contract);
+                jobOutput = processContract(outputDir, contract);
+                jobOutput.setError(false);
             } catch (Exception e) {
+                jobOutput.setError(true);
                 log.error("error processing contract : {} ", contract.getContractNumber(), e);
-                // should I continue with the remaining contracts? Or stop the job itself?
             }
+
+            job.addJobOutput(jobOutput);
+            jobOutputRepository.save(jobOutput);
         }
 
         completeJob(job);
@@ -96,7 +106,7 @@ public class JobProcessingServiceImpl implements JobProcessingService {
     }
 
 
-    private void processContract(final Path outputDir, Contract contract) {
+    private JobOutput processContract(final Path outputDir, Contract contract) {
         final String filename = contract.getContractNumber() + NDJSON_EXTENSION;
         final var ndJsonFile = fileService.createFile(outputDir, filename);
 
@@ -110,12 +120,24 @@ public class JobProcessingServiceImpl implements JobProcessingService {
             futureResourcesHandles.add(resources);
 
             ++counter;
-            if (counter % 2 == 0) {
+            if (counter % GROUP_SIZE == 0) {
                 processResources(futureResourcesHandles, ndJsonFile);
             }
         }
 
         processResources(futureResourcesHandles, ndJsonFile);
+
+        JobOutput jobOutput = new JobOutput();
+        jobOutput.setFilePath(getFilePath(ndJsonFile));
+        jobOutput.setFhirResourceType("ExplanationOfBenefits");
+
+        return jobOutput;
+    }
+
+    private String getFilePath(Path ndJsonFile) {
+        return ndJsonFile == null
+                ? null
+                : ndJsonFile.toAbsolutePath().toString();
     }
 
     private void processResources(List<Future<List<Resource>>> futureHandles, Path outputFile) {
