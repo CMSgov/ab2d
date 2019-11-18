@@ -94,6 +94,7 @@
                             <excludes>
                                 <!-- exclude the bluebutton package from coverage as it only has a stub -->
                                 <exclude>**/gov/cms/ab2d/worker/adapter/bluebutton/*</exclude>
+                                <exclude>**/gov/cms/ab2d/worker/service/FileService.java</exclude>
                             </excludes>
                         </configuration>
                     </execution>

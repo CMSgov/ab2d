@@ -1,6 +1,5 @@
 package gov.cms.ab2d.worker.service;
 
-import gov.cms.ab2d.common.model.Job;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -20,8 +19,7 @@ public class WorkerServiceImpl implements WorkerService {
     @Override
     public void process(String jobId) {
         jobService.putJobInProgress(jobId);
-        final Job job = jobService.processJob(jobId);
-        jobService.completeJob(job);
+        jobService.processJob(jobId);
     }
 
 

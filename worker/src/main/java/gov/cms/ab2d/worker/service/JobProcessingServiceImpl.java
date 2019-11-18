@@ -10,7 +10,6 @@ import gov.cms.ab2d.worker.adapter.bluebutton.BfdClientAdapter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.hl7.fhir.dstu3.model.Resource;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
@@ -21,10 +20,9 @@ import org.springframework.util.Assert;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -39,15 +37,13 @@ import static gov.cms.ab2d.common.model.JobStatus.SUCCESSFUL;
 @Service
 @RequiredArgsConstructor
 public class JobProcessingServiceImpl implements JobProcessingService {
-
     private static final String NDJSON_EXTENSION = ".ndjson";
 
     @Value("${efs.mount}")
     private String efsMount;
 
-    @Autowired
-    private FhirContext fhirContext;
-
+    private final FhirContext fhirContext;
+    private final FileService fileService;
     private final JobRepository jobRepository;
     private final BeneficiaryAdapter beneficiaryAdapter;
     private final BfdClientAdapter  bfdClientAdapter;
@@ -55,7 +51,7 @@ public class JobProcessingServiceImpl implements JobProcessingService {
 
     @Override
     @Transactional(propagation = Propagation.REQUIRES_NEW, isolation = Isolation.SERIALIZABLE)
-    public void putJobInProgress(String jobId) {
+    public Job putJobInProgress(String jobId) {
 
         final Job job = jobRepository.findByJobUuid(jobId);
         Assert.notNull(job, String.format("Job %s not found", jobId));
@@ -68,7 +64,7 @@ public class JobProcessingServiceImpl implements JobProcessingService {
 
         job.setStatus(IN_PROGRESS);
 
-        jobRepository.save(job);
+        return jobRepository.save(job);
     }
 
     @Override
@@ -82,30 +78,27 @@ public class JobProcessingServiceImpl implements JobProcessingService {
         final List<Contract> attestedContracts = sponsor.getAttestedContracts();
         log.info("number of attested contracts : {}", attestedContracts.size());
 
-        final Path outputDir = createJobOutputDirectory(job.getJobUuid());
+
+        final Path outputDirPath = Paths.get(efsMount, job.getJobUuid());
+        final Path outputDir = fileService.createDirectory(outputDirPath);
         for (Contract contract : attestedContracts) {
             log.info("contract : {} ", contract.getContractNumber());
-            processContract(outputDir, contract);
+            try {
+                processContract(outputDir, contract);
+            } catch (Exception e) {
+                log.error("error processing contract : {} ", contract.getContractNumber(), e);
+                // should I continue with the remaining contracts? Or stop the job itself?
+            }
         }
 
+        completeJob(job);
         return job;
     }
 
-    private Path createJobOutputDirectory(String jobUuid) {
-        final Path outputDir = Paths.get(efsMount, jobUuid);
-        Path outputDirectory = null;
-        try {
-            outputDirectory = Files.createDirectories(outputDir);
-        } catch (IOException e) {
-            final String errMsg = "Could not create output directory : ";
-            log.error("{} : {}", errMsg, outputDir.toAbsolutePath());
-            throw new RuntimeException(errMsg + outputDir.getFileName(), e);
-        }
-        return outputDirectory;
-    }
 
     private void processContract(final Path outputDir, Contract contract) {
-        final var ndJsonFile = createContractFile(outputDir, contract);
+        final String filename = contract.getContractNumber() + NDJSON_EXTENSION;
+        final var ndJsonFile = fileService.createFile(outputDir, filename);
 
         final var patientsByContract = beneficiaryAdapter.getPatientsByContract(contract.getContractNumber());
 
@@ -125,21 +118,7 @@ public class JobProcessingServiceImpl implements JobProcessingService {
         processResources(futureResourcesHandles, ndJsonFile);
     }
 
-    private Path createContractFile(final Path outputDir, Contract contract) {
-        final String filename = contract.getContractNumber() + NDJSON_EXTENSION;
-        final Path ndJsonPath = Path.of(outputDir.toString(), filename);
-        Path outputContractNdJsonFile = null;
-        try {
-            outputContractNdJsonFile = Files.createFile(ndJsonPath);
-            log.info("file: {} ", outputContractNdJsonFile.toAbsolutePath());
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-        return outputContractNdJsonFile;
-    }
-
     private void processResources(List<Future<List<Resource>>> futureHandles, Path outputFile) {
-        log.info("inside processResources() ...  waits for futures and writes to file");
 
         final Iterator<Future<List<Resource>>> iterator = futureHandles.iterator();
         while (iterator.hasNext()) {
@@ -165,7 +144,7 @@ public class JobProcessingServiceImpl implements JobProcessingService {
                     byteArrayOutputStream.write(payload.getBytes(StandardCharsets.UTF_8));
                 }
 
-                Files.write(outputFile, byteArrayOutputStream.toByteArray(), StandardOpenOption.APPEND);
+                fileService.appendToFile(outputFile, byteArrayOutputStream);
 
             } catch (IOException e) {
                 throw new RuntimeException(e);
@@ -179,13 +158,10 @@ public class JobProcessingServiceImpl implements JobProcessingService {
     }
 
 
-
-
-    @Override
-    public void completeJob(Job job) {
+    private void completeJob(Job job) {
         job.setStatus(SUCCESSFUL);
         job.setStatusMessage("100%");
-        job.setExpiresAt(job.getCreatedAt().plusDays(1));
+        job.setExpiresAt(OffsetDateTime.now().plusDays(1));
 
         jobRepository.save(job);
         log.info("Job: [{}] is DONE", job.getId());
