@@ -133,27 +133,31 @@ unset cmd[4] cmd[5]
 # Create a generated version of "docker-compose.yml"
 
 rm -rf generated
-mkdir -p generated
+mkdir -p generated/api
+mkdir -p generated/worker
 cp ../docker-compose.yml generated
-cd generated
+cp ./yaml/config.yml generated
+cp ../api/Dockerfile generated/api/Dockerfile.original
+cp -r ../api/target generated/api
+cp ../worker/Dockerfile generated/worker/Dockerfile.original
+cp -r ../worker/target generated/worker
+# sed -i '' 's%context: ./api%context: ../../api%' docker-compose.yml
+# sed -i '' 's%context: ./worker%context: ../../worker%' docker-compose.yml
+# sed -i '' "s%AB2D_DB_HOST=db%AB2D_DB_HOST=$DB_ENDPOINT%" docker-compose.yml
+# sed -i '' "s%AB2D_DB_DATABASE=ab2d%AB2D_DB_DATABASE=$DATABASE_NAME%" docker-compose.yml
+# sed -i '' "s%AB2D_DB_USER=ab2d%AB2D_DB_USER=$DATABASE_USER%" docker-compose.yml
+# sed -i '' "s%AB2D_DB_PASSWORD=ab2d%AB2D_DB_PASSWORD=$DATABASE_PASSWORD%" docker-compose.yml
 sleep 5
-sed -i '' 's%context: ./api%context: ../../api%' docker-compose.yml
-sed -i '' 's%context: ./worker%context: ../../worker%' docker-compose.yml
-sed -i '' "s%AB2D_DB_HOST=db%AB2D_DB_HOST=$DB_ENDPOINT%" docker-compose.yml
-sed -i '' "s%AB2D_DB_DATABASE=ab2d%AB2D_DB_DATABASE=$DATABASE_NAME%" docker-compose.yml
-sed -i '' "s%AB2D_DB_USER=ab2d%AB2D_DB_USER=$DATABASE_USER%" docker-compose.yml
-sed -i '' "s%AB2D_DB_PASSWORD=ab2d%AB2D_DB_PASSWORD=$DATABASE_PASSWORD%" docker-compose.yml
-sleep 5
-cd ../..
+cd ..
 make docker-build
 sleep 5
-cd Deploy/generated
-docker-compose build
-sleep 5
-docker tag generated_api:latest 114601554524.dkr.ecr.us-east-1.amazonaws.com/ab2d_api:latest
-docker push 114601554524.dkr.ecr.us-east-1.amazonaws.com/ab2d_api:latest
-docker tag generated_worker:latest 114601554524.dkr.ecr.us-east-1.amazonaws.com/ab2d_worker:latest
-docker push 114601554524.dkr.ecr.us-east-1.amazonaws.com/ab2d_worker:latest
+# cd Deploy/generated
+# docker-compose build
+# sleep 5
+docker tag generated_api:latest "114601554524.dkr.ecr.us-east-1.amazonaws.com/ab2d_$CMS_ENV_api:latest"
+docker push "114601554524.dkr.ecr.us-east-1.amazonaws.com/ab2d_$CMS_ENV_api:latest"
+docker tag generated_worker:latest "114601554524.dkr.ecr.us-east-1.amazonaws.com/ab2d_$CMS_ENV_worker:latest"
+docker push "114601554524.dkr.ecr.us-east-1.amazonaws.com/ab2d_$CMS_ENV_worker:latest"
 
 #
 # Switch context to terraform environment

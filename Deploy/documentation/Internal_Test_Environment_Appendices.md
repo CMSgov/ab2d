@@ -801,9 +801,83 @@
 1. Modify the API dockerfile so that it can be run with "docker run" instead of "docker-compose"
 
    > *** TO DO ***
+
+1. Change to the docker file's directory
+
+   ```ShelLSession
+   $ cd ~/code/ab2d/Deploy/generated
+   ```
    
+1. Create the docker image
+
+   *Format:*
+   
+   ```ShellSession
+   $ docker build \
+     --build-arg ab2d_db_host_arg={database instance host} \
+     --build-arg ab2d_db_port_arg={database instance port} \
+     --build-arg ab2d_db_database_arg={database instance db} \
+     --build-arg ab2d_db_user_arg={database instance user} \
+     --build-arg ab2d_db_password_arg={database instance passwordb} \
+     --tag generated_api:latest .
+   ```
+
+1. Verify that the docker image was created
+
+   1. Enter the following
+
+      ```ShellSession
+      $ docker images | grep generated_api
+      ```
+
+   1. Verify that the following appears in the output
+
+      *Example:*
+      
+      ```
+      generated_api       latest              04e90c9d1d9f        About a minute ago   555MB
+      ```
+
 1. Run the API container with "docker run"
 
    ```ShellSession
-   $ docker run -d -p 8080:8080 generated_api:latest
+   $ docker run -d --name ab2d_api -p 8080:8080 generated_api:latest
    ```
+
+1. Determine if the container is running
+
+   1. Wait 30 seconds
+   
+   1. Enter the following
+   
+      ```ShellSession
+      $ netstat -an | grep 8080
+      ```
+
+   1. If there is no output, the container is not running
+
+1. If the container is not running, do the following
+
+   1. View the stopped container
+   
+      ```Shell
+      $ docker ps -a | grep ab2d_api
+      ```
+
+   1. View the log of the stopped container
+
+      ```ShellSession
+      $ docker logs -t ab2d_api
+      ```
+
+1. If the container is running, do the following
+
+   1. Open Chrome
+
+   2. Enter the following in the address bar
+
+      *Example:*
+      
+      > http://34.203.8.2:8080/swagger-ui.html#/bulk-data-access-api
+
+   3. Verify that the "AB2D FHIR Bulk Data Access API" page is displayed
