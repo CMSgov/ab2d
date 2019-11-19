@@ -37,6 +37,16 @@ resource "aws_security_group_rule" "egress_worker" {
   security_group_id = aws_security_group.worker.id
 }
 
+resource "aws_security_group_rule" "db_access_worker" {
+  type        = "ingress"
+  description = "${lower(var.env)} worker connections"
+  from_port   = "5432"
+  to_port     = "5432"
+  protocol    = "tcp"
+  source_security_group_id = aws_security_group.worker.id
+  security_group_id = var.db_sec_group_id
+}
+
 #
 # Begin EFS configuration
 #
@@ -76,6 +86,10 @@ resource "aws_efs_mount_target" "beta" {
 # End EFS configuration
 #
 
+resource "aws_ecs_cluster" "ab2d_worker" {
+  name = "ab2d-${lower(var.env)}-worker"
+}
+
 resource "aws_ecs_task_definition" "api" {
   family = "worker"
   # LSH SKIP FOR NOW BEGIN
@@ -113,7 +127,7 @@ JSON
 
 resource "aws_ecs_service" "worker" {
   name = "ab2d-${lower(var.env)}-worker"
-  cluster = var.ecs_cluster_id
+  cluster = aws_ecs_cluster.ab2d_worker.id
   task_definition = var.override_task_definition_arn != "" ? var.override_task_definition_arn : aws_ecs_task_definition.api.arn
   desired_count = 5
   launch_type = "EC2"
@@ -130,7 +144,7 @@ resource "aws_launch_configuration" "launch_config" {
   iam_instance_profile = var.iam_instance_profile
   key_name = var.ssh_key_name
   security_groups = [aws_security_group.worker.id]
-  user_data = templatefile("${path.module}/userdata.tpl",{ env = "${lower(var.env)}", cluster_name = "ab2d-${lower(var.env)}", efs_id = var.efs_id })
+  user_data = templatefile("${path.module}/userdata.tpl",{ env = "${lower(var.env)}", cluster_name = "ab2d-${lower(var.env)}-worker", efs_id = var.efs_id })
   lifecycle { create_before_destroy = true }
 }
 

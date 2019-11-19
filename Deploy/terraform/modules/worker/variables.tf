@@ -1,6 +1,7 @@
 variable "env" {}
 variable "aws_account_number" {}
 variable "vpc_id" {}
+variable "db_sec_group_id" {}
 variable "container_port" {default=8080}
 variable "host_port" {default=8080}
 variable "controller_sec_group_id" {}

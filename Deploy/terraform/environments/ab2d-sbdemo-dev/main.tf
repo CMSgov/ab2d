@@ -90,6 +90,7 @@ module "worker" {
   source                        = "../../modules/worker"
   env                           = var.env
   vpc_id                        = var.vpc_id
+  db_sec_group_id               = "${data.aws_security_group.ab2d_database_sg.id}"
   controller_subnet_ids         = var.deployment_controller_subnet_ids
   ami_id                        = var.ami_id
   instance_type                 = var.ec2_instance_type
@@ -115,23 +116,21 @@ module "worker" {
   aws_account_number            = var.aws_account_number
 }
 
-#
-# TEMPORARILY COMMENTED OUT BEGIN
-#
+module "cloudwatch" {
+  source                  = "../../modules/cloudwatch"
+  env                     = var.env
+  autoscaling_arn         = module.api.aws_autoscaling_policy_percent_capacity_arn
+  # sns_arn                 = module.sns.aws_sns_topic_AB2D-Alarms_arn
+  autoscaling_name        = module.api.aws_autoscaling_group_name
+  controller_server_id    = "${data.aws_instance.ab2d_deployment_controller.instance_id}"
+  s3_bucket_name          = var.file_bucket_name
+  db_name                 = var.db_identifier
+  target_group_arn_suffix = module.api.alb_target_group_arn_suffix
+  loadbalancer_arn_suffix = module.api.alb_arn_suffix
+}
 
-# module "cloudwatch" {
-#   source                  = "../../modules/cloudwatch"
-#   env                     = var.env
-#   autoscaling_arn         = module.api.aws_autoscaling_policy_percent_capacity_arn
-#   # sns_arn                 = module.sns.aws_sns_topic_AB2D-Alarms_arn
-#   autoscaling_name        = module.api.aws_autoscaling_group_name
-#   controller_server_id    = "${data.aws_instance.ab2d_deployment_controller.instance_id}"
-#   s3_bucket_name          = var.file_bucket_name
-#   db_name                 = var.db_identifier
-#   target_group_arn_suffix = module.api.alb_target_group_arn_suffix
-#   loadbalancer_arn_suffix = module.api.alb_arn_suffix
-# }
-
-#
-# TEMPORARILY COMMENTED OUT END
-#
+module "waf" {
+  source  = "../../modules/waf"
+  env     = var.env
+  alb_arn = module.api.alb_arn
+}

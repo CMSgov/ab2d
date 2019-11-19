@@ -97,7 +97,7 @@ resource "aws_security_group_rule" "egress_api" {
 
 resource "aws_security_group_rule" "db_access_api" {
   type        = "ingress"
-  description = "App connections"
+  description = "${lower(var.env)} api connections"
   from_port   = "5432"
   to_port     = "5432"
   protocol    = "tcp"
@@ -105,8 +105,8 @@ resource "aws_security_group_rule" "db_access_api" {
   security_group_id = var.db_sec_group_id
 }
 
-resource "aws_ecs_cluster" "ab2d" {
-  name = "ab2d-${lower(var.env)}"
+resource "aws_ecs_cluster" "ab2d_api" {
+  name = "ab2d-${lower(var.env)}-api"
 }
 
 resource "aws_ecs_task_definition" "api" {
@@ -183,7 +183,7 @@ resource "aws_lb_listener" "api" {
 resource "aws_ecs_service" "api" {
   depends_on = ["aws_lb.api"]
   name = "ab2d-api"
-  cluster = aws_ecs_cluster.ab2d.id
+  cluster = aws_ecs_cluster.ab2d_api.id
   task_definition = var.override_task_definition_arn != "" ? var.override_task_definition_arn : aws_ecs_task_definition.api.arn
   desired_count = 5
   launch_type = "EC2"
@@ -206,7 +206,7 @@ resource "aws_launch_configuration" "launch_config" {
   iam_instance_profile = var.iam_instance_profile
   key_name = var.ssh_key_name
   security_groups = [aws_security_group.api.id]  
-  user_data = templatefile("${path.module}/userdata.tpl",{ env = "${lower(var.env)}", cluster_name = "ab2d-${lower(var.env)}" })
+  user_data = templatefile("${path.module}/userdata.tpl",{ env = "${lower(var.env)}", cluster_name = "ab2d-${lower(var.env)}-api" })
   lifecycle { create_before_destroy = true }
 }
 

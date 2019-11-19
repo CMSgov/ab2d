@@ -64,7 +64,7 @@ module "api" {
   logging_bucket                = var.logging_bucket_name
   healthcheck_url               = var.elb_healthcheck_url
   iam_instance_profile          = var.ec2_iam_profile
-  docker_repository_url         = "${var.aws_account_number}.dkr.ecr.us-east-1.amazonaws.com/ab2d_api:latest"
+  docker_repository_url         = "${var.aws_account_number}.dkr.ecr.us-east-1.amazonaws.com/ab2d_${var.env}_api:latest"
   iam_role_arn                  = "arn:aws:iam::${var.aws_account_number}:role/Ab2dInstanceRole"
   desired_instances             = var.ec2_desired_instance_count
   min_instances                 = var.ec2_minimum_instance_count
@@ -87,6 +87,7 @@ module "worker" {
   source                        = "../../modules/worker"
   env                           = var.env
   vpc_id                        = var.vpc_id
+  db_sec_group_id               = "${data.aws_security_group.ab2d_database_sg.id}"
   controller_subnet_ids         = var.deployment_controller_subnet_ids
   ami_id                        = var.ami_id
   instance_type                 = var.ec2_instance_type
@@ -94,7 +95,7 @@ module "worker" {
   ssh_key_name                  = var.ssh_key_name
   node_subnet_ids               = var.private_subnet_ids
   iam_instance_profile          = var.ec2_iam_profile
-  docker_repository_url         = "${var.aws_account_number}.dkr.ecr.us-east-1.amazonaws.com/ab2d_worker:latest"
+  docker_repository_url         = "${var.aws_account_number}.dkr.ecr.us-east-1.amazonaws.com/ab2d_${var.env}_worker:latest"
   desired_instances             = var.ec2_desired_instance_count
   min_instances                 = var.ec2_minimum_instance_count
   max_instances                 = var.ec2_maximum_instance_count
@@ -112,23 +113,15 @@ module "worker" {
   aws_account_number            = var.aws_account_number
 }
 
-#
-# TEMPORARILY COMMENTED OUT BEGIN
-#
-
-# module "cloudwatch" {
-#   source                  = "../../modules/cloudwatch"
-#   env                     = var.env
-#   autoscaling_arn         = module.api.aws_autoscaling_policy_percent_capacity_arn
-#   # sns_arn                 = module.sns.aws_sns_topic_CCXP-Alarms_arn
-#   autoscaling_name        = module.api.aws_autoscaling_group_name
-#   controller_server_id    = module.api.deployment_controller_id
-#   s3_bucket_name          = var.file_bucket_name
-#   db_name                 = var.db_identifier
-#   target_group_arn_suffix = module.api.alb_target_group_arn_suffix
-#   loadbalancer_arn_suffix = module.api.alb_arn_suffix
-# }
-
-#
-# TEMPORARILY COMMENTED OUT END
-#
+module "cloudwatch" {
+  source                  = "../../modules/cloudwatch"
+  env                     = var.env
+  autoscaling_arn         = module.api.aws_autoscaling_policy_percent_capacity_arn
+  # sns_arn                 = module.sns.aws_sns_topic_CCXP-Alarms_arn
+  autoscaling_name        = module.api.aws_autoscaling_group_name
+  controller_server_id    = module.api.deployment_controller_id
+  s3_bucket_name          = var.file_bucket_name
+  db_name                 = var.db_identifier
+  target_group_arn_suffix = module.api.alb_target_group_arn_suffix
+  loadbalancer_arn_suffix = module.api.alb_arn_suffix
+}
