@@ -4,6 +4,7 @@ import gov.cms.ab2d.api.SpringBootApp;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.Sponsor;
 import gov.cms.ab2d.common.service.SponsorService;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,10 +16,12 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
+import java.util.Map;
 
 import static gov.cms.ab2d.api.util.Constants.API_PREFIX;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -34,6 +37,16 @@ public class AdminAPITests {
     @Autowired
     private SponsorService sponsorService;
 
+    @Autowired
+    private TestUtil testUtil;
+
+    private Map<String, String> headerMap;
+
+    @Before
+    public void setup() throws IOException, InterruptedException {
+        headerMap = testUtil.setupToken();
+    }
+
     @Test
     public void testUploadOrgStructureFile() throws Exception {
         // Simple test to test API, more detailed test is found in service test
@@ -42,7 +55,8 @@ public class AdminAPITests {
 
         MockMultipartFile mockMultipartFile = new MockMultipartFile("file", fileName, "application/vnd.ms-excel", inputStream);
         this.mockMvc.perform(MockMvcRequestBuilders.multipart(API_PREFIX + "/uploadOrgStructureReport")
-                .file(mockMultipartFile).contentType(MediaType.MULTIPART_FORM_DATA))
+                .file(mockMultipartFile).contentType(MediaType.MULTIPART_FORM_DATA)
+                .header("Authorization", "Bearer " + headerMap.get("access_token")))
                 .andExpect(status().is(202));
     }
 
@@ -57,7 +71,8 @@ public class AdminAPITests {
 
         MockMultipartFile mockMultipartFile = new MockMultipartFile("file", fileName, "application/vnd.ms-excel", inputStream);
         this.mockMvc.perform(MockMvcRequestBuilders.multipart(API_PREFIX + "/uploadAttestationReport")
-                .file(mockMultipartFile).contentType(MediaType.MULTIPART_FORM_DATA))
+                .file(mockMultipartFile).contentType(MediaType.MULTIPART_FORM_DATA)
+                .header("Authorization", "Bearer " + headerMap.get("access_token")))
                 .andExpect(status().is(202));
     }
 

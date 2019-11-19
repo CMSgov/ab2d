@@ -13,6 +13,7 @@
     <properties>
         <project.root>${basedir}/..</project.root>
         <springfox.version>2.9.2</springfox.version>
+        <okta-jwt.version>0.4.0</okta-jwt.version>
     </properties>
 
     <dependencies>
@@ -47,6 +48,19 @@
             <groupId>io.springfox</groupId>
             <artifactId>springfox-swagger-ui</artifactId>
             <version>${springfox.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.okta.jwt</groupId>
+            <artifactId>okta-jwt-verifier</artifactId>
+            <version>${okta-jwt.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.okta.jwt</groupId>
+            <artifactId>okta-jwt-verifier-impl</artifactId>
+            <version>${okta-jwt.version}</version>
+            <scope>runtime</scope>
         </dependency>
 
         <dependency>
