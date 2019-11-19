@@ -31,10 +31,7 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
     @Autowired
     private UserService userService;
 
-    public JwtTokenAuthenticationFilter(JwtConfig jwtConfig, UserService userService) {
-        this.jwtConfig = jwtConfig;
-        this.userService = userService;
-
+    public JwtTokenAuthenticationFilter() {
         jwtVerifier = JwtVerifiers.accessTokenVerifierBuilder()
                 .setIssuer("https://dev-418212.okta.com/oauth2/default")
                 .setAudience("api://default")                // defaults to 'api://default'
