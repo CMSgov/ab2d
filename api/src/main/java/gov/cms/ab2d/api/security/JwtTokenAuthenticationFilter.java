@@ -79,7 +79,7 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
         if (username != null) {
             User user = userService.getUserByUsername(username);
             if (user == null) {
-                throw new UserNotFoundException("User: " + username + " is not present in our database");
+                throw new UserNotFoundException("User " + username + " is not present in our database");
             }
 
             if (!user.getEnabled()) {

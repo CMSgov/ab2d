@@ -42,13 +42,8 @@ class ErrorHandler extends ResponseEntityExceptionHandler {
         return generateFHIRError(e, HttpStatus.BAD_REQUEST);
     }
 
-    @ExceptionHandler({MissingTokenException.class})
+    @ExceptionHandler({MissingTokenException.class, InvalidAuthHeaderException.class})
     public ResponseEntity<JsonNode> handleUnauthorizedAccessExceptions(final RuntimeException e) throws IOException {
-        return generateFHIRError(e, HttpStatus.UNAUTHORIZED);
-    }
-
-    @ExceptionHandler(InvalidAuthHeaderException.class)
-    public ResponseEntity<JsonNode> handleInvalidHeaderExceptions(final InvalidAuthHeaderException e) throws IOException {
         return generateFHIRError(e, HttpStatus.UNAUTHORIZED);
     }
 
