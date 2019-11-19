@@ -130,8 +130,16 @@ pass="${cmd[5]}"
 unset cmd[4] cmd[5]
 "${cmd[@]}" --password-stdin <<< "$pass"
 
-# Create a generated version of "docker-compose.yml"
+# Build API and worker
 
+cd "${START_DIR}"
+cd ..
+make docker-build
+sleep 5
+
+# Create API and worker Dockerfiles for ECS
+
+cd "${START_DIR}"
 rm -rf generated
 mkdir -p generated/api
 mkdir -p generated/worker
@@ -141,23 +149,63 @@ cp ../api/Dockerfile generated/api/Dockerfile.original
 cp -r ../api/target generated/api
 cp ../worker/Dockerfile generated/worker/Dockerfile.original
 cp -r ../worker/target generated/worker
-# sed -i '' 's%context: ./api%context: ../../api%' docker-compose.yml
-# sed -i '' 's%context: ./worker%context: ../../worker%' docker-compose.yml
-# sed -i '' "s%AB2D_DB_HOST=db%AB2D_DB_HOST=$DB_ENDPOINT%" docker-compose.yml
-# sed -i '' "s%AB2D_DB_DATABASE=ab2d%AB2D_DB_DATABASE=$DATABASE_NAME%" docker-compose.yml
-# sed -i '' "s%AB2D_DB_USER=ab2d%AB2D_DB_USER=$DATABASE_USER%" docker-compose.yml
-# sed -i '' "s%AB2D_DB_PASSWORD=ab2d%AB2D_DB_PASSWORD=$DATABASE_PASSWORD%" docker-compose.yml
 sleep 5
-cd ..
-make docker-build
-sleep 5
-# cd Deploy/generated
-# docker-compose build
-# sleep 5
-docker tag generated_api:latest "114601554524.dkr.ecr.us-east-1.amazonaws.com/ab2d_$CMS_ENV_api:latest"
-docker push "114601554524.dkr.ecr.us-east-1.amazonaws.com/ab2d_$CMS_ENV_api:latest"
-docker tag generated_worker:latest "114601554524.dkr.ecr.us-east-1.amazonaws.com/ab2d_$CMS_ENV_worker:latest"
-docker push "114601554524.dkr.ecr.us-east-1.amazonaws.com/ab2d_$CMS_ENV_worker:latest"
+cd python3
+./create-dockerfilles-for-ecs.py
+
+# Build API docker image
+
+cd "${START_DIR}"
+cd generated/api
+docker build \
+  --build-arg ab2d_db_host_arg="${DB_ENDPOINT}" \
+  --build-arg ab2d_db_port_arg=5432 \
+  --build-arg ab2d_db_database_arg="${DATABASE_NAME}" \
+  --build-arg ab2d_db_user_arg="${DATABASE_USER}" \
+  --build-arg ab2d_db_password_arg="${DATABASE_PASSWORD}" \
+  --tag "ab2d_${CMS_ENV}_api:latest" .
+
+# Build worker docker image
+
+cd "${START_DIR}"
+cd generated/worker
+docker build \
+  --build-arg ab2d_db_host_arg="${DB_ENDPOINT}" \
+  --build-arg ab2d_db_port_arg=5432 \
+  --build-arg ab2d_db_database_arg="${DATABASE_NAME}" \
+  --build-arg ab2d_db_user_arg="${DATABASE_USER}" \
+  --build-arg ab2d_db_password_arg="${DATABASE_PASSWORD}" \
+  --tag "ab2d_${CMS_ENV}_worker:latest" .
+
+# Tag and push API docker image to ECR
+
+API_ECR_REPO_URI=$(aws --region us-east-1 ecr describe-repositories \
+  --query "repositories[?repositoryName == 'ab2d_${CMS_ENV}_api'].repositoryUri" \
+  --output text)
+if [ -z "${API_ECR_REPO_URI}" ]; then
+  aws --region us-east-1 ecr create-repository \
+      --repository-name "ab2d_${CMS_ENV}_api"
+  API_ECR_REPO_URI=$(aws --region us-east-1 ecr describe-repositories \
+    --query "repositories[?repositoryName == 'ab2d_${CMS_ENV}_api'].repositoryUri" \
+    --output text)
+fi
+docker tag "ab2d_${CMS_ENV}_api:latest" "${API_ECR_REPO_URI}:latest"
+docker push "${API_ECR_REPO_URI}:latest"
+
+# Tag and push worker docker image to ECR
+
+WORKER_ECR_REPO_URI=$(aws --region us-east-1 ecr describe-repositories \
+  --query "repositories[?repositoryName == 'ab2d_${CMS_ENV}_worker'].repositoryUri" \
+  --output text)
+if [ -z "${WORKER_ECR_REPO_URI}" ]; then
+  aws --region us-east-1 ecr create-repository \
+    --repository-name "ab2d_${CMS_ENV}_worker"
+  WORKER_ECR_REPO_URI=$(aws --region us-east-1 ecr describe-repositories \
+    --query "repositories[?repositoryName == 'ab2d_${CMS_ENV}_worker'].repositoryUri" \
+    --output text)
+fi
+docker tag "ab2d_${CMS_ENV}_worker:latest" "${WORKER_ECR_REPO_URI}:latest"
+docker push "${WORKER_ECR_REPO_URI}:latest"
 
 #
 # Switch context to terraform environment
@@ -212,7 +260,7 @@ if [ -z "${CLUSTER_ARNS}" ]; then
   echo "Skipping setting EXPECTED_API_COUNT, since there are no existing clusters"
   EXPECTED_API_COUNT="2"
 else
-  EXPECTED_API_COUNT="$OLD_API_TASK_COUNT*2"
+  EXPECTED_API_COUNT="$((OLD_API_TASK_COUNT*2))"
 fi
 
 #
@@ -353,3 +401,27 @@ while [ "$ACTUAL_API_COUNT" -lt "$EXPECTED_API_COUNT" ]; do
   fi
 done
 
+#
+# Deploy CloudWatch
+#
+
+cd "${START_DIR}"
+cd terraform/environments/ab2d-$CMS_ENV
+
+echo "Deploy CloudWatch..."
+if [ -z "${AUTOAPPROVE}" ]; then
+
+  terraform apply \
+    --var "ami_id=$AMI_ID" \
+    --target module.cloudwatch
+
+else
+    
+  # Apply the changes without prompting
+
+  terraform apply \
+    --target module.cloudwatch \
+    --var "ami_id=$AMI_ID" \
+    --auto-approve
+
+fi
