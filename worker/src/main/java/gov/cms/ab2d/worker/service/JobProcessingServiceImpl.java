@@ -72,6 +72,7 @@ public class JobProcessingServiceImpl implements JobProcessingService {
     }
 
     @Override
+    @Transactional(propagation = Propagation.NEVER)
     public Job processJob(final String jobId) {
 
         final Job job = jobRepository.findByJobUuid(jobId);
