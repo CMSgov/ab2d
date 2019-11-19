@@ -80,13 +80,13 @@ public class JobProcessingServiceImpl implements JobProcessingService {
         final Sponsor sponsor = job.getUser().getSponsor();
 
         final List<Contract> attestedContracts = sponsor.getAttestedContracts();
-        log.info("number of attested contracts : {}", attestedContracts.size());
+        log.info("Job [{}] has [{}] attested contracts", job.getJobUuid(), attestedContracts.size());
 
 
         final Path outputDirPath = Paths.get(efsMount, job.getJobUuid());
         final Path outputDir = fileService.createDirectory(outputDirPath);
         for (Contract contract : attestedContracts) {
-            log.info("contract : {} ", contract.getContractNumber());
+            log.info("Job [{}] - contract [{}] ", job.getJobUuid(), contract.getContractNumber());
 
             JobOutput jobOutput = null;
             try {

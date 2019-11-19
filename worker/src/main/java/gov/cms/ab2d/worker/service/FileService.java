@@ -5,6 +5,7 @@ import org.springframework.stereotype.Component;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
@@ -22,7 +23,7 @@ public class FileService {
         } catch (IOException e) {
             final String errMsg = "Could not create output directory : ";
             log.error("{} : {}", errMsg, outputDir.toAbsolutePath());
-            throw new RuntimeException(errMsg + outputDir.getFileName(), e);
+            throw new UncheckedIOException(errMsg + outputDir.getFileName(), e);
         }
         return outputDirectory;
     }
@@ -37,7 +38,7 @@ public class FileService {
         } catch (IOException e) {
             final String errMsg = "Could not create output file : ";
             log.error("{} {} ", errMsg, filePath.toAbsolutePath(), e);
-            throw new RuntimeException(errMsg + filename, e);
+            throw new UncheckedIOException(errMsg + filename, e);
         }
         return outputFile;
     }
