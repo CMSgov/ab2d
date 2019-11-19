@@ -2,6 +2,7 @@ package gov.cms.ab2d.api.controller;
 
 import gov.cms.ab2d.api.SpringBootApp;
 import gov.cms.ab2d.common.model.User;
+import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.common.repository.SponsorRepository;
 import gov.cms.ab2d.common.repository.UserRepository;
 import org.hamcrest.core.Is;
@@ -41,12 +42,16 @@ public class AuthenticationTests {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private JobRepository jobRepository;
+
     private Map<String, String> headerMap;
 
     @Before
     public void setup() throws IOException, InterruptedException {
-        sponsorRepository.deleteAll();
+        jobRepository.deleteAll();
         userRepository.deleteAll();
+        sponsorRepository.deleteAll();
 
         headerMap = testUtil.setupToken();
     }

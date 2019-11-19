@@ -166,7 +166,9 @@ public class BulkDataAccessAPIIntegrationTests {
     @Test
     public void testDeleteJob() throws Exception {
         this.mockMvc.perform(
-                get(API_PREFIX + PATIENT_EXPORT_PATH).contentType(MediaType.APPLICATION_JSON));
+                get(API_PREFIX + PATIENT_EXPORT_PATH)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .header("Authorization", "Bearer " + headerMap.get("access_token")));
         Job job = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
 
         this.mockMvc.perform(delete(API_PREFIX + "/Job/" + job.getJobUuid() + "/$status")
