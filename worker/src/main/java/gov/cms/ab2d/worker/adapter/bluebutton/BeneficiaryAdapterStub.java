@@ -1,6 +1,7 @@
 package gov.cms.ab2d.worker.adapter.bluebutton;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 
@@ -22,7 +23,8 @@ public class BeneficiaryAdapterStub implements BeneficiaryAdapter {
 
     private static final String BENE_ID_FILE = "/test-stub-data/synthetic-bene-ids.csv";
 
-    private static final int PAGE_SIZE = 100;
+    @Value("${bb-stub.page.size}")
+    private int pageSize;
 
 
     @Override
@@ -74,7 +76,7 @@ public class BeneficiaryAdapterStub implements BeneficiaryAdapter {
     private List<String> readLinesByOffset(BufferedReader br, int startOffset) {
         return br.lines()
                 .skip(startOffset)
-                .limit(PAGE_SIZE)
+                .limit(pageSize)
                 .collect(Collectors.toList());
     }
 
