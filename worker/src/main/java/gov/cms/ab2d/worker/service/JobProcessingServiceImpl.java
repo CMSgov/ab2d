@@ -21,6 +21,7 @@ import org.springframework.util.Assert;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -165,7 +166,7 @@ public class JobProcessingServiceImpl implements JobProcessingService {
                 fileService.appendToFile(outputFile, byteArrayOutputStream);
 
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                throw new UncheckedIOException(e);
             }
 
             log.info("finished writing [{}] resources", resourceCount);
