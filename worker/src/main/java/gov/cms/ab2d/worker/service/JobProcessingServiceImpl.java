@@ -129,17 +129,12 @@ public class JobProcessingServiceImpl implements JobProcessingService {
         processResources(futureResourcesHandles, ndJsonFile);
 
         JobOutput jobOutput = new JobOutput();
-        jobOutput.setFilePath(getFilePath(ndJsonFile));
+        jobOutput.setFilePath(ndJsonFile.toFile().getName());
         jobOutput.setFhirResourceType("ExplanationOfBenefits");
 
         return jobOutput;
     }
 
-    private String getFilePath(Path ndJsonFile) {
-        return ndJsonFile == null
-                ? null
-                : ndJsonFile.toAbsolutePath().toString();
-    }
 
     private void processResources(List<Future<List<Resource>>> futureHandles, Path outputFile) {
 
