@@ -42,7 +42,7 @@ public class BfdClientAdapterImpl implements BfdClientAdapter {
 
     @Async("bfd-client")
     public Future<Integer> processPatient(String patientId, Path outputFile, Path errorFile) {
-        final var resources = getEobBundleResources(patientId);
+        var resources = getEobBundleResources(patientId);
 
         var jsonParser = fhirContext.newJsonParser();
         int errorCount = 0;
@@ -75,7 +75,7 @@ public class BfdClientAdapterImpl implements BfdClientAdapter {
         log.info("finished writing [{}] resources", resourceCount);
 
         if (errorCount > 0) {
-            log.warn("There was atleast one error while processing the resource. Should create an error row in JobOutput table");
+            log.warn("[{}] error records. Should create an error row in JobOutput table", errorCount);
         }
 
         return new AsyncResult<>(errorCount);
@@ -94,7 +94,7 @@ public class BfdClientAdapterImpl implements BfdClientAdapter {
     }
 
     /**
-     * users re-entrant lock to lock the shared file resource
+     * uses re-entrant lock to lock the shared file resource
      * @param outputFile
      * @param byteArrayOutputStream
      * @throws IOException

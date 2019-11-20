@@ -37,7 +37,6 @@ import static gov.cms.ab2d.common.model.JobStatus.SUCCESSFUL;
 public class JobProcessingServiceImpl implements JobProcessingService {
     private static final String OUTPUT_FILE_SUFFIX = ".ndjson";
     private static final String ERROR_FILE_SUFFIX = "_error.ndjson";
-    private static final int GROUP_SIZE = 5;
 
     @Value("${efs.mount}")
     private String efsMount;
@@ -124,7 +123,7 @@ public class JobProcessingServiceImpl implements JobProcessingService {
             jobOutput.setError(false);
             jobOutputs.add(jobOutput);
         }
-        if (patientCount == 0 || errorCount > 0) {
+        if (errorCount > 0) {
             final JobOutput jobOutput = createPartialJobOutput(errorFile);
             jobOutput.setError(true);
             jobOutputs.add(jobOutput);
