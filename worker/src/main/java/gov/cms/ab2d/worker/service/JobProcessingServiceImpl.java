@@ -36,7 +36,8 @@ import static gov.cms.ab2d.common.model.JobStatus.SUCCESSFUL;
 @Service
 @RequiredArgsConstructor
 public class JobProcessingServiceImpl implements JobProcessingService {
-    private static final String NDJSON_EXTENSION = ".ndjson";
+    private static final String OUTPUT_FILE_SUFFIX = ".ndjson";
+    private static final String ERROR_FILE_SUFFIX = "_error.ndjson";
     private static final int GROUP_SIZE = 5;
 
     @Value("${efs.mount}")
@@ -99,15 +100,17 @@ public class JobProcessingServiceImpl implements JobProcessingService {
 
 
     private List<JobOutput> processContract(final Path outputDir, Contract contract) {
-        final String filename = contract.getContractNumber() + NDJSON_EXTENSION;
-        final var outputFile = fileService.createFile(outputDir, filename);
 
-        final var patientsByContract = beneficiaryAdapter.getPatientsByContract(contract.getContractNumber());
+        final var contractNumber = contract.getContractNumber();
+        final var outputFile = fileService.createFile(outputDir, contractNumber + OUTPUT_FILE_SUFFIX);
+        final var errorFile = fileService.createFile(outputDir, contractNumber + ERROR_FILE_SUFFIX);
+
+        final var patientsByContract = beneficiaryAdapter.getPatientsByContract(contractNumber);
         final var patients = patientsByContract.getPatients();
         final int patientCount = patients.size();
 
         var futureResourcesHandles = patients.stream()
-                .map(patient -> bfdClientAdapter.processPatient(patient.getPatientId(), outputFile))
+                .map(patient -> bfdClientAdapter.processPatient(patient.getPatientId(), outputFile, errorFile))
                 .collect(Collectors.toList());
 
         int errorCount = processHandles(futureResourcesHandles);
@@ -117,13 +120,13 @@ public class JobProcessingServiceImpl implements JobProcessingService {
         }
 
         final List<JobOutput> jobOutputs = new ArrayList<>();
-        if (patientCount > 0 && errorCount == 0) {
+        if (errorCount < patientCount) {
             final JobOutput jobOutput = createPartialJobOutput(outputFile);
             jobOutput.setError(false);
             jobOutputs.add(jobOutput);
         }
         if (patientCount == 0 || errorCount > 0) {
-            final JobOutput jobOutput = createPartialJobOutput(outputFile);
+            final JobOutput jobOutput = createPartialJobOutput(errorFile);
             jobOutput.setError(true);
             jobOutputs.add(jobOutput);
         }
@@ -144,7 +147,9 @@ public class JobProcessingServiceImpl implements JobProcessingService {
                     log.error("interrupted excception while processing patient ", e);
                 } catch (ExecutionException e) {
                     ++errorCount;
+                    log.error("-------------------------------------------------");
                     log.error("exception while processing patient ", e.getCause());
+                    log.error("-------------------------------------------------");
                 }
                 iterator.remove();
             }

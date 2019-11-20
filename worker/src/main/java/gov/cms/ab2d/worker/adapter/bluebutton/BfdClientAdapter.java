@@ -5,6 +5,6 @@ import java.util.concurrent.Future;
 
 public interface BfdClientAdapter {
 
-    Future<String> processPatient(String patientId, Path outputFile);
+    Future<String> processPatient(String patientId, Path outputFile, Path errorFile);
 
 }

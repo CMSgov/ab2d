@@ -1,4 +1,4 @@
-package gov.cms.ab2d.api.util;
+package gov.cms.ab2d.common.util;
 
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.IParser;
