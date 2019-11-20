@@ -9,7 +9,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.hl7.fhir.dstu3.model.Bundle;
 import org.hl7.fhir.dstu3.model.Bundle.BundleEntryComponent;
-import org.hl7.fhir.dstu3.model.OperationOutcome;
 import org.hl7.fhir.dstu3.model.Resource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
@@ -42,11 +41,11 @@ public class BfdClientAdapterImpl implements BfdClientAdapter {
     private FileService fileService;
 
     @Async("bfd-client")
-    public Future<String> processPatient(String patientId, Path outputFile, Path errorFile) {
-        boolean hasError = false;
+    public Future<Integer> processPatient(String patientId, Path outputFile, Path errorFile) {
         final var resources = getEobBundleResources(patientId);
 
         var jsonParser = fhirContext.newJsonParser();
+        int errorCount = 0;
         int resourceCount = 0;
         try {
             var byteArrayOutputStream = new ByteArrayOutputStream();
@@ -56,36 +55,40 @@ public class BfdClientAdapterImpl implements BfdClientAdapter {
                     final String payload = jsonParser.encodeResourceToString(resource) + System.lineSeparator();
                     byteArrayOutputStream.write(payload.getBytes(StandardCharsets.UTF_8));
                 } catch (Exception e) {
-                    hasError = true;
-                    handleException(errorFile, new ByteArrayOutputStream(), e);
+                    ++errorCount;
+                    handleException(errorFile, e);
                 }
             }
 
             appendToFile(outputFile, byteArrayOutputStream);
         } catch (Exception e) {
+            ++errorCount;
             try {
-                handleException(errorFile, new ByteArrayOutputStream(), e);
+                handleException(errorFile, e);
             } catch (IOException e1) {
-                //should not happen.
-                log.error("error during exception handling to wrote error record.");
-                //ignore. the original exception will be thrown
+                //should not happen - original exception will be thrown
+                log.error("error during exception handling to write error record");
             }
             throw new RuntimeException(e);
         }
 
-        if (hasError) {
-            throw new RuntimeException("At least one of the resources had an error. Need to create an error JobOutput");
-        }
         log.info("finished writing [{}] resources", resourceCount);
 
-        return new AsyncResult<>(patientId);
+        if (errorCount > 0) {
+            log.warn("There was atleast one error while processing the resource. Should create an error row in JobOutput table");
+        }
+
+        return new AsyncResult<>(errorCount);
     }
 
-    private void handleException(Path errorFile, ByteArrayOutputStream byteArrayOutputStream, Exception e) throws IOException {
-        String msg = ExceptionUtils.getRootCauseMessage(e);
-        OperationOutcome operationOutcome = FHIRUtil.getErrorOutcome(msg);
+    private void handleException(Path errorFile, Exception e) throws IOException {
+        var errMsg = ExceptionUtils.getRootCauseMessage(e);
+        var operationOutcome = FHIRUtil.getErrorOutcome(errMsg);
+
         var jsonParser = fhirContext.newJsonParser();
-        final String payload = jsonParser.encodeResourceToString(operationOutcome) + System.lineSeparator();
+        var payload = jsonParser.encodeResourceToString(operationOutcome) + System.lineSeparator();
+
+        var byteArrayOutputStream = new ByteArrayOutputStream();
         byteArrayOutputStream.write(payload.getBytes(StandardCharsets.UTF_8));
         appendToFile(errorFile, byteArrayOutputStream);
     }

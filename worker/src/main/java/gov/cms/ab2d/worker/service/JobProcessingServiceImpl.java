@@ -22,7 +22,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -101,13 +100,13 @@ public class JobProcessingServiceImpl implements JobProcessingService {
 
     private List<JobOutput> processContract(final Path outputDir, Contract contract) {
 
-        final var contractNumber = contract.getContractNumber();
-        final var outputFile = fileService.createFile(outputDir, contractNumber + OUTPUT_FILE_SUFFIX);
-        final var errorFile = fileService.createFile(outputDir, contractNumber + ERROR_FILE_SUFFIX);
+        var contractNumber = contract.getContractNumber();
+        var outputFile = fileService.createFile(outputDir, contractNumber + OUTPUT_FILE_SUFFIX);
+        var errorFile = fileService.createFile(outputDir, contractNumber + ERROR_FILE_SUFFIX);
 
-        final var patientsByContract = beneficiaryAdapter.getPatientsByContract(contractNumber);
-        final var patients = patientsByContract.getPatients();
-        final int patientCount = patients.size();
+        var patientsByContract = beneficiaryAdapter.getPatientsByContract(contractNumber);
+        var patients = patientsByContract.getPatients();
+        int patientCount = patients.size();
 
         var futureResourcesHandles = patients.stream()
                 .map(patient -> bfdClientAdapter.processPatient(patient.getPatientId(), outputFile, errorFile))
@@ -134,26 +133,29 @@ public class JobProcessingServiceImpl implements JobProcessingService {
         return jobOutputs;
     }
 
-    private int processHandles(List<Future<String>> futureResourcesHandles) {
+    private int processHandles(List<Future<Integer>> futureResourcesHandles) {
         int errorCount = 0;
-        final Iterator<Future<String>> iterator = futureResourcesHandles.iterator();
+
+        var iterator = futureResourcesHandles.iterator();
         while (iterator.hasNext()) {
-            final Future<String> future = iterator.next();
+            var future = iterator.next();
             if (future.isDone()) {
                 try {
-                    future.get();
+                    var responseCount = future.get();
+                    if (responseCount > 0) {
+                        errorCount += responseCount;
+                    }
                 } catch (InterruptedException  e) {
                     ++errorCount;
-                    log.error("interrupted excception while processing patient ", e);
+                    log.error("interrupted exception while processing patient ", e);
                 } catch (ExecutionException e) {
                     ++errorCount;
-                    log.error("-------------------------------------------------");
                     log.error("exception while processing patient ", e.getCause());
-                    log.error("-------------------------------------------------");
                 }
                 iterator.remove();
             }
         }
+
         return errorCount;
     }
 
