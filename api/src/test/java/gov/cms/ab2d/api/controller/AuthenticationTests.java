@@ -112,7 +112,7 @@ public class AuthenticationTests {
     }
 
     @Test
-    public void testUserDoesNotEnabled() throws Exception {
+    public void testUserIsNotEnabled() throws Exception {
         User user = userRepository.findByUserName(TEST_USER);
         user.setEnabled(false);
         userRepository.save(user);
@@ -126,5 +126,18 @@ public class AuthenticationTests {
                 .andExpect(jsonPath("$.issue[0].code", Is.is("invalid")))
                 .andExpect(jsonPath("$.issue[0].details.text",
                         Is.is("UserNotEnabledException: User " + TEST_USER + " is not enabled")));
+    }
+
+    @Test
+    public void testBadToken() throws Exception {
+        this.mockMvc.perform(get(API_PREFIX + "/Patient/$export")
+                .header("Authorization", "Bearer BadToken")
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().is(403))
+                .andExpect(jsonPath("$.resourceType", Is.is("OperationOutcome")))
+                .andExpect(jsonPath("$.issue[0].severity", Is.is("error")))
+                .andExpect(jsonPath("$.issue[0].code", Is.is("invalid")))
+                .andExpect(jsonPath("$.issue[0].details.text",
+                        Is.is("JwtVerificationException: Token did not contain signature")));
     }
 }
