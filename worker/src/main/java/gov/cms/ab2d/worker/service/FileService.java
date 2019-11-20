@@ -44,7 +44,7 @@ public class FileService {
     }
 
 
-    void appendToFile(Path outputFile, ByteArrayOutputStream byteArrayOutputStream) throws IOException {
+    public void appendToFile(Path outputFile, ByteArrayOutputStream byteArrayOutputStream) throws IOException {
         Files.write(outputFile, byteArrayOutputStream.toByteArray(), APPEND);
     }
 }

@@ -11,7 +11,6 @@ import gov.cms.ab2d.worker.adapter.bluebutton.BeneficiaryAdapter;
 import gov.cms.ab2d.worker.adapter.bluebutton.BfdClientAdapter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.hl7.fhir.dstu3.model.Resource;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
@@ -19,10 +18,6 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.UncheckedIOException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.OffsetDateTime;
@@ -31,6 +26,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.stream.Collectors;
 
 import static gov.cms.ab2d.common.model.JobStatus.IN_PROGRESS;
 import static gov.cms.ab2d.common.model.JobStatus.SUBMITTED;
@@ -87,20 +83,14 @@ public class JobProcessingServiceImpl implements JobProcessingService {
 
         final Path outputDirPath = Paths.get(efsMount, job.getJobUuid());
         final Path outputDir = fileService.createDirectory(outputDirPath);
+
         for (Contract contract : attestedContracts) {
             log.info("Job [{}] - contract [{}] ", job.getJobUuid(), contract.getContractNumber());
 
-            JobOutput jobOutput = null;
-            try {
-                jobOutput = processContract(outputDir, contract);
-                jobOutput.setError(false);
-            } catch (Exception e) {
-                jobOutput.setError(true);
-                log.error("error processing contract : {} ", contract.getContractNumber(), e);
-            }
+            var jobOutputs = processContract(outputDir, contract);
 
-            job.addJobOutput(jobOutput);
-            jobOutputRepository.save(jobOutput);
+            jobOutputs.forEach(jobOutput -> job.addJobOutput(jobOutput));
+            jobOutputRepository.saveAll(jobOutputs);
         }
 
         completeJob(job);
@@ -108,74 +98,66 @@ public class JobProcessingServiceImpl implements JobProcessingService {
     }
 
 
-    private JobOutput processContract(final Path outputDir, Contract contract) {
+    private List<JobOutput> processContract(final Path outputDir, Contract contract) {
         final String filename = contract.getContractNumber() + NDJSON_EXTENSION;
         final var outputFile = fileService.createFile(outputDir, filename);
 
         final var patientsByContract = beneficiaryAdapter.getPatientsByContract(contract.getContractNumber());
+        final var patients = patientsByContract.getPatients();
+        final int patientCount = patients.size();
 
-        final var futureResourcesHandles =  new ArrayList<Future<List<Resource>>>();
+        var futureResourcesHandles = patients.stream()
+                .map(patient -> bfdClientAdapter.processPatient(patient.getPatientId(), outputFile))
+                .collect(Collectors.toList());
 
-        int counter = 0;
-        for (var patient : patientsByContract.getPatients()) {
-            final var resources = bfdClientAdapter.getEobBundleResources(patient.getPatientId());
-            futureResourcesHandles.add(resources);
-
-            ++counter;
-            if (counter % GROUP_SIZE == 0) {
-                processResources(futureResourcesHandles, outputFile);
-            }
+        int errorCount = processHandles(futureResourcesHandles);
+        while (!futureResourcesHandles.isEmpty()) {
+            sleep();
+            errorCount += processHandles(futureResourcesHandles);
         }
 
-        processResources(futureResourcesHandles, outputFile);
+        final List<JobOutput> jobOutputs = new ArrayList<>();
+        if (patientCount > 0 && errorCount == 0) {
+            final JobOutput jobOutput = createPartialJobOutput(outputFile);
+            jobOutput.setError(false);
+            jobOutputs.add(jobOutput);
+        }
+        if (patientCount == 0 || errorCount > 0) {
+            final JobOutput jobOutput = createPartialJobOutput(outputFile);
+            jobOutput.setError(true);
+            jobOutputs.add(jobOutput);
+        }
 
+        return jobOutputs;
+    }
+
+    private int processHandles(List<Future<String>> futureResourcesHandles) {
+        int errorCount = 0;
+        final Iterator<Future<String>> iterator = futureResourcesHandles.iterator();
+        while (iterator.hasNext()) {
+            final Future<String> future = iterator.next();
+            if (future.isDone()) {
+                try {
+                    future.get();
+                } catch (InterruptedException  e) {
+                    ++errorCount;
+                    log.error("interrupted excception while processing patient ", e);
+                } catch (ExecutionException e) {
+                    ++errorCount;
+                    log.error("exception while processing patient ", e.getCause());
+                }
+                iterator.remove();
+            }
+        }
+        return errorCount;
+    }
+
+    private JobOutput createPartialJobOutput(Path outputFile) {
         JobOutput jobOutput = new JobOutput();
         jobOutput.setFilePath(getEfsMountPath().relativize(outputFile).toString());
         jobOutput.setFhirResourceType("ExplanationOfBenefits");
-
         return jobOutput;
     }
-
-
-    private void processResources(List<Future<List<Resource>>> futureHandles, Path outputFile) {
-
-        final Iterator<Future<List<Resource>>> iterator = futureHandles.iterator();
-        while (iterator.hasNext()) {
-            final Future<List<Resource>> futureResources = iterator.next();
-
-            List<Resource> resources = null;
-            try {
-                resources = futureResources.get();
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            } catch (ExecutionException e) {
-                throw new RuntimeException(e);
-            }
-
-            var jsonParser = fhirContext.newJsonParser();
-            int resourceCount = 0;
-
-            try {
-                var byteArrayOutputStream = new ByteArrayOutputStream();
-                for (var resource : resources) {
-                    ++resourceCount;
-                    final String payload = jsonParser.encodeResourceToString(resource) + System.lineSeparator();
-                    byteArrayOutputStream.write(payload.getBytes(StandardCharsets.UTF_8));
-                }
-
-                fileService.appendToFile(outputFile, byteArrayOutputStream);
-
-            } catch (IOException e) {
-                throw new UncheckedIOException(e);
-            }
-
-            log.info("finished writing [{}] resources", resourceCount);
-            iterator.remove();
-
-        }
-
-    }
-
 
     private void completeJob(Job job) {
         job.setStatus(SUCCESSFUL);
@@ -191,5 +173,12 @@ public class JobProcessingServiceImpl implements JobProcessingService {
         return Paths.get(efsMount);
     }
 
+    private void sleep() {
+        try {
+            Thread.sleep(100);
+        } catch (InterruptedException e) {
+            log.warn("interrupted exception in thread.sleep(). Ignoring");
+        }
+    }
 
 }
