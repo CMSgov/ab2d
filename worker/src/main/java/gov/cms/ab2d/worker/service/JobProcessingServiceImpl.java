@@ -110,7 +110,7 @@ public class JobProcessingServiceImpl implements JobProcessingService {
 
     private JobOutput processContract(final Path outputDir, Contract contract) {
         final String filename = contract.getContractNumber() + NDJSON_EXTENSION;
-        final var ndJsonFile = fileService.createFile(outputDir, filename);
+        final var outputFile = fileService.createFile(outputDir, filename);
 
         final var patientsByContract = beneficiaryAdapter.getPatientsByContract(contract.getContractNumber());
 
@@ -123,14 +123,14 @@ public class JobProcessingServiceImpl implements JobProcessingService {
 
             ++counter;
             if (counter % GROUP_SIZE == 0) {
-                processResources(futureResourcesHandles, ndJsonFile);
+                processResources(futureResourcesHandles, outputFile);
             }
         }
 
-        processResources(futureResourcesHandles, ndJsonFile);
+        processResources(futureResourcesHandles, outputFile);
 
         JobOutput jobOutput = new JobOutput();
-        jobOutput.setFilePath(ndJsonFile.toFile().getName());
+        jobOutput.setFilePath(getEfsMountPath().relativize(outputFile).toString());
         jobOutput.setFhirResourceType("ExplanationOfBenefits");
 
         return jobOutput;
@@ -187,6 +187,9 @@ public class JobProcessingServiceImpl implements JobProcessingService {
     }
 
 
+    private Path getEfsMountPath() {
+        return Paths.get(efsMount);
+    }
 
 
 }
