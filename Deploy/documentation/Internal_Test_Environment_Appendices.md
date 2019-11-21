@@ -1466,7 +1466,7 @@
 
    - **Password:** {your desired password}
 
-1. Select the [Apps](images/pager-duty-apps-icon.png) icon
+1. Select the ![Apps](images/pager-duty-apps-icon.png) icon
 
 1. Select **Integrations Directory**
 
