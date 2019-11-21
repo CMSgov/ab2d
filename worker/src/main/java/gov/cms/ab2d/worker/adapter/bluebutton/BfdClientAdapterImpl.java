@@ -29,8 +29,6 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class BfdClientAdapterImpl implements BfdClientAdapter {
 
-    private final ReentrantLock lock = new ReentrantLock();
-
     @Autowired
     private BFDClient bfdClient;
 
@@ -41,13 +39,15 @@ public class BfdClientAdapterImpl implements BfdClientAdapter {
     private FileService fileService;
 
     @Async("bfd-client")
-    public Future<Integer> processPatient(String patientId, Path outputFile, Path errorFile) {
-        var resources = getEobBundleResources(patientId);
-
-        var jsonParser = fhirContext.newJsonParser();
+    public Future<Integer> processPatient(String patientId, ReentrantLock lock, Path outputFile, Path errorFile) {
         int errorCount = 0;
         int resourceCount = 0;
+
         try {
+            var resources = getEobBundleResources(patientId);
+
+            var jsonParser = fhirContext.newJsonParser();
+
             var byteArrayOutputStream = new ByteArrayOutputStream();
             for (var resource : resources) {
                 ++resourceCount;
@@ -56,15 +56,15 @@ public class BfdClientAdapterImpl implements BfdClientAdapter {
                     byteArrayOutputStream.write(payload.getBytes(StandardCharsets.UTF_8));
                 } catch (Exception e) {
                     ++errorCount;
-                    handleException(errorFile, e);
+                    handleException(errorFile, e, lock);
                 }
             }
 
-            appendToFile(outputFile, byteArrayOutputStream);
+            appendToFile(outputFile, byteArrayOutputStream, lock);
         } catch (Exception e) {
             ++errorCount;
             try {
-                handleException(errorFile, e);
+                handleException(errorFile, e, lock);
             } catch (IOException e1) {
                 //should not happen - original exception will be thrown
                 log.error("error during exception handling to write error record");
@@ -81,7 +81,7 @@ public class BfdClientAdapterImpl implements BfdClientAdapter {
         return new AsyncResult<>(errorCount);
     }
 
-    private void handleException(Path errorFile, Exception e) throws IOException {
+    private void handleException(Path errorFile, Exception e, ReentrantLock lock) throws IOException {
         var errMsg = ExceptionUtils.getRootCauseMessage(e);
         var operationOutcome = FHIRUtil.getErrorOutcome(errMsg);
 
@@ -90,7 +90,7 @@ public class BfdClientAdapterImpl implements BfdClientAdapter {
 
         var byteArrayOutputStream = new ByteArrayOutputStream();
         byteArrayOutputStream.write(payload.getBytes(StandardCharsets.UTF_8));
-        appendToFile(errorFile, byteArrayOutputStream);
+        appendToFile(errorFile, byteArrayOutputStream, lock);
     }
 
     /**
@@ -99,7 +99,7 @@ public class BfdClientAdapterImpl implements BfdClientAdapter {
      * @param byteArrayOutputStream
      * @throws IOException
      */
-    private void appendToFile(Path outputFile, ByteArrayOutputStream byteArrayOutputStream) throws IOException {
+    private void appendToFile(Path outputFile, ByteArrayOutputStream byteArrayOutputStream, ReentrantLock lock) throws IOException {
         lock.lock();
         try {
             fileService.appendToFile(outputFile, byteArrayOutputStream);

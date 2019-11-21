@@ -1,6 +1,5 @@
 package gov.cms.ab2d.worker.service;
 
-import ca.uhn.fhir.context.FhirContext;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.JobOutput;
@@ -25,6 +24,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
 import static gov.cms.ab2d.common.model.JobStatus.IN_PROGRESS;
@@ -41,7 +41,6 @@ public class JobProcessingServiceImpl implements JobProcessingService {
     @Value("${efs.mount}")
     private String efsMount;
 
-    private final FhirContext fhirContext;
     private final FileService fileService;
     private final JobRepository jobRepository;
     private final JobOutputRepository jobOutputRepository;
@@ -107,8 +106,10 @@ public class JobProcessingServiceImpl implements JobProcessingService {
         var patients = patientsByContract.getPatients();
         int patientCount = patients.size();
 
+        // A mutex lock that all threads for a contract uses while writing into the shared files
+        var lock = new ReentrantLock();
         var futureResourcesHandles = patients.stream()
-                .map(patient -> bfdClientAdapter.processPatient(patient.getPatientId(), outputFile, errorFile))
+                .map(patient -> bfdClientAdapter.processPatient(patient.getPatientId(), lock, outputFile, errorFile))
                 .collect(Collectors.toList());
 
         int errorCount = processHandles(futureResourcesHandles);
