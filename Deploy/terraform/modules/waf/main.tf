@@ -69,7 +69,7 @@ resource "aws_wafregional_sql_injection_match_set" "sql_injection_match_set" {
 }
 
 resource "aws_wafregional_rule" "sql_injection" {
-  name        = "ab2d-${var.env}-sqlinjection"
+  name        = "ab2d-${lower(var.env)}-sqlinjection"
 
   # metric_name can contain only 1 to 128 alphanumeric characters (A-Z, a-z, 0-9)
   metric_name = "ab2d${replace(var.env, "-", "")}sqlinjection"
@@ -82,7 +82,7 @@ resource "aws_wafregional_rule" "sql_injection" {
 }
 
 resource "aws_wafregional_xss_match_set" "xss_match_set" {
-  name = "ab2d-${var.env}-xss-match-set"
+  name = "ab2d-${lower(var.env)}-xss-match-set"
 
   xss_match_tuple {
     text_transformation = "HTML_ENTITY_DECODE"
@@ -152,7 +152,7 @@ resource "aws_wafregional_xss_match_set" "xss_match_set" {
 }
 
 resource "aws_wafregional_rule" "xss" {
-  name        = "ab2d-${var.env}-xss"
+  name        = "ab2d-${lower(var.env)}-xss"
 
   # metric_name can contain only 1 to 128 alphanumeric characters (A-Z, a-z, 0-9)
   metric_name = "ab2d${replace(var.env, "-", "")}xss"
@@ -165,7 +165,7 @@ resource "aws_wafregional_rule" "xss" {
 }
 
 resource "aws_wafregional_web_acl" "web_acl" {
-  name        = "ab2d-${var.env}-web-acl"
+  name        = "ab2d-${lower(var.env)}-web-acl"
 
   # metric_name can contain only 1 to 128 alphanumeric characters (A-Z, a-z, 0-9)
   metric_name = "ab2d${replace(var.env, "-", "")}webacl"

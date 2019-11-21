@@ -171,12 +171,40 @@ if [ "$DELETE_ENVIRONMENT_COMPONENTS" == "YES" ]; then
   fi
 fi
 
+# Destroy the environment of the "shield" module
+
+if [ "$DELETE_ENVIRONMENT_COMPONENTS" == "YES" ]; then
+  echo "Destroying shield components..."
+  terraform destroy \
+    --target module.shield \
+    --auto-approve
+fi
+
+# Destroy the environment of the "WAF" module
+
+if [ "$DELETE_ENVIRONMENT_COMPONENTS" == "YES" ]; then
+  echo "Destroying WAF components..."
+  terraform destroy \
+    --target module.waf \
+    --auto-approve
+fi
+
+# Destroy the environment of the "CloudWatch" module
+
+if [ "$DELETE_ENVIRONMENT_COMPONENTS" == "YES" ]; then
+  echo "Destroying CloudWatch components..."
+  terraform destroy \
+    --target module.cloudwatch \
+    --auto-approve
+fi
+
 # Destroy the environment of the "worker" module
 
 if [ "$DELETE_ENVIRONMENT_COMPONENTS" == "YES" ]; then
   echo "Destroying worker components..."
   terraform destroy \
-    --target module.worker --auto-approve
+    --target module.worker \
+    --auto-approve
 fi
 
 # Destroy the environment of the "api" module

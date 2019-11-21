@@ -68,7 +68,7 @@ variable "autoscale_group_wait" {
 }
 
 variable "elb_healthcheck_url" {
-  default = "HTTP:3000/"
+  default = "HTTP:8080/"
 }
 
 variable "ec2_iam_profile" {

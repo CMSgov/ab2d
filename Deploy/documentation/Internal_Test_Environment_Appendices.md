@@ -12,6 +12,7 @@
 1. [Appendix H: Do a linting check of the terraform files](#appendix-h-do-a-linting-check-of-the-terraform-files)
 1. [Appendix I: Configure the controller to test docker containers](#appendix-i-configure-the-controller-to-test-docker-containers)
 1. [Appendix J: Manual create of AWS Elastic Container Registry repositories for images](#appendix-j-manual-create-of-aws-elastic-container-registry-repositories-for-images)
+1. [Appendix K: Manually create an ECS cluster](#appendix-k-manually-create-an-ecs-cluster)
 
 ## Appendix A: Destroy complete environment
 
@@ -1149,3 +1150,283 @@
    ```ShellSession
    $ docker push 114601554524.dkr.ecr.us-east-1.amazonaws.com/ab2d_worker:latest
    ```
+
+## Appendix K: Manually create an ECS cluster
+
+1. Set the AWS profile
+
+   ```ShellSession
+   $ export AWS_PROFILE=sbdemo-shared
+   ```
+      
+1. Create the ECS cluster using ECS CLI
+
+   ```ShellSession
+   $ ecs-cli up \
+     --cluster ab2d-dev-api-test \
+     --instance-role Ab2dInstanceRole \
+     --keypair ab2d-sbdemo-shared \
+     --size 2 \
+     --azs "us-east-1a, us-east-1b" \
+     --port 80 \
+     --instance-type m5.xlarge \
+     --image-id ami-07836bb8608f81187 \
+     --launch-type EC2 \
+     --region us-east-1
+   ```
+
+1. Change to the shared environment
+
+   ```ShellSession
+   $ cd ~/code/ab2d/Deploy/terraform/environments/ab2d-sbdemo-shared
+   ```
+
+1. Add the following rule to the security group associated with the first ecs instance
+
+   - **Type:** SSH
+
+   - **Protocol:** TCP
+
+   - **Port Range:** 22
+
+   - **Source:** Custom 152.208.13.223/32
+
+1. Select **Save**
+
+1. Configure ECS instances
+
+   1. Connect to an ECS instance
+   
+      *Format:*
+   
+      ```ShellSession
+      $ ssh -i ~/.ssh/ab2d-sbdemo-shared.pem centos@{public ip of first ecs instance}
+      ```
+   
+      *Example for a first ECS instance:*
+   
+      ```ShellSession
+      $ ssh -i ~/.ssh/ab2d-sbdemo-shared.pem centos@3.92.52.181
+      ```
+
+      *Example for a second ECS instance:*
+   
+      ```ShellSession
+      $ ssh -i ~/.ssh/ab2d-sbdemo-shared.pem centos@3.86.202.84
+      ```
+
+   1. Set more useful hostname
+   
+      ```ShellSession
+      $ export env=dev
+      $ echo "$(hostname -s).ab2d-${env}" > /tmp/hostname
+      $ sudo mv /tmp/hostname /etc/hostname
+      $ sudo hostname "$(hostname -s).ab2d-${env}"
+      ```
+   
+   1. Create ECS config file
+   
+      *IMPORTANT: Don't forget to change the ECS_CLUSTER value below with the cluster name.*
+      
+      ```ShellSession
+      $ sudo mkdir -p /etc/ecs
+      $ sudo sh -c 'echo "
+        ECS_DATADIR=/data
+        ECS_ENABLE_TASK_IAM_ROLE=true
+        ECS_ENABLE_TASK_IAM_ROLE_NETWORK_HOST=true
+        ECS_LOGFILE=/log/ecs-agent.log
+        ECS_AVAILABLE_LOGGING_DRIVERS=[\"json-file\",\"awslogs\",\"syslog\",\"none\"]
+        ECS_ENABLE_TASK_IAM_ROLE=true
+        ECS_UPDATE_DOWNLOAD_DIR=/var/cache/ecs
+        SSL_CERT_DIR=/etc/pki/tls/certs
+        ECS_ENABLE_AWSLOGS_EXECUTIONROLE_OVERRIDE=true
+        ECS_UPDATES_ENABLED=true
+        ECS_ENABLE_TASK_IAM_ROLE_NETWORK_HOST=true
+        ECS_LOGFILE=/log/ecs-agent.log
+        ECS_CLUSTER="ab2d-dev-api-test"
+        ECS_LOGLEVEL=info" > /etc/ecs/ecs.config'
+      ```
+   
+   1. Autostart the ecs client
+   
+      ```ShellSession
+      $ sudo docker run --name ecs-agent \
+        --detach=true \
+        --restart=on-failure:10 \
+        --volume=/var/run:/var/run \
+        --volume=/var/log/ecs/:/log \
+        --volume=/var/lib/ecs/data:/data \
+        --volume=/etc/ecs:/etc/ecs \
+        --net=host \
+        --env-file=/etc/ecs/ecs.config \
+        --privileged \
+        --env-file=/etc/ecs/ecs.config \
+        amazon/amazon-ecs-agent:latest
+      ```
+   
+   1. Log off the instance
+   
+      ```ShellSession
+      $ exit
+      ```
+   
+   1. Repeat this section for any other ECS instances
+   
+
+1. Create an application load balanacer
+
+   1. Select **EC2**
+
+   1. Select **Load Balanacers** in the leftmost panel
+
+   1. Select **Create Load Balancer**
+
+   1. Select **Create** under *Application Load Balancer*
+
+   1. Configure the "Basic Configuration" as follows
+
+      - **Name:** ab2d-dev-api-test-alb
+
+      - **Scheme:** internet-facing
+
+      - **IP address type:** ipv4
+
+   1. Configure "Listeners" as follows
+
+      - **Load Balancer Protocol:** HTTP
+
+      - **Load Balancer Port:** 80
+
+   1. Configure "Availability Zones" as follows
+
+      - **VPC:** {select the vpc where the ecs instances reside}
+
+      - **Availability Zones:**
+
+        - us-east-1a {checked with public subnet selected}
+
+        - us-east-1b {checked with public subnet selected}
+
+   1. Select **Next: Configure Security Settings**
+
+1. Select **Next: Configure Security Groups**
+
+1. Configure security groups
+
+   1. Select **Select an existing security group**
+
+   1. Select the security group associated with the ECS isntances
+
+   1. Select **Next: Configure Routing**
+
+1. Configure routing as follows
+
+   1. Configure "Target group"
+   
+      - **Target group:** New target group
+
+      - **Name:** ab2d-dev-api-test-tg
+
+      - **Target type:** Instance
+
+      - **Protocol:** HTTP
+
+      - **Port:** 80
+
+   1. Configure "Health checks"
+
+      - **Protocol:** HTTP
+
+      - **Path:** /
+
+    1. Select **Next: Register Targets**
+
+1. Select the ECS instances that participate in the cluster
+
+1. Select **Add to registered**
+
+1. Select **Next: Review**
+
+1. Select **Create**
+
+1. Select **Close**
+   
+1. Configure ECS
+
+   1. Select the ECS cluster
+
+      *Example:*
+
+      ```
+      ab2d-dev-api-test
+      ```
+
+   1. Select the **Services** tab
+
+   1. Select **Create**
+
+   1. Configure the service as follows
+
+      - **Launch type:** EC2
+
+      - **Task Definition:** api
+
+      - **Revision:** {number} (latest)
+
+      - **Cluster:** ab2d-dev-api-test
+
+      - **Service name:** api
+
+      - **Service type:** DAEMON
+
+      - **Number of tasks:** Automatic
+
+      - **Minimum healthy percent:** 0
+
+      - **Maximum percent:** 100
+
+   1. Keep remaining defaults
+
+   1. Select **Next step**
+
+   1. Configure "Load balancing" under "Configure network"
+
+      - **Load balancer type:** Application Load Balancer
+
+      - **Service IAM Role:** AWSServiceRoleForECS
+
+      - **Load balancer name:** ab2d-dev-api-test-alb
+
+   1. Configure "Container to load balance"
+
+      - **Container name : port:** ab2d-api:80:8080
+
+   1. Select **Add to load balanacer**
+
+   1. Configure "ad2d-api : 8080"
+
+      - **Production listener port:** 80:HTTP
+
+      - **Production listener protocol:** HTTP
+
+      - **Target group name:** create-new ab2d-dev-api-test-ecs-tg
+
+      - **Target group protocol:** HTTP
+
+      - **Target type:** instance
+
+      - **Pattern:** /\*
+
+      - **Evaluation order:** 1
+
+      - **Health check path:** /
+
+   1. Keep remaining defaults
+
+   1. Select **Next step** on the *Configure network* page
+
+   1. Select **Next step** on the *Set Auto Scaling* page
+
+   1. Select **Create Service**
+
+1. Select **View Service**

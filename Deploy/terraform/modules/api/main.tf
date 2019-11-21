@@ -105,6 +105,25 @@ resource "aws_security_group_rule" "db_access_api" {
   security_group_id = var.db_sec_group_id
 }
 
+resource "aws_security_group" "load_balancer" {
+  name        = "ab2d-${lower(var.env)}-load-balancer-sg"
+  description = "API security group"
+  vpc_id      = var.vpc_id
+  tags = {
+    Name = "ab2d-${lower(var.env)}-load-balancer-sg"
+  }
+}
+
+resource "aws_security_group_rule" "load_balancer_access" {
+  type        = "ingress"
+  description = "${lower(var.env)} website access"
+  from_port   = "80"
+  to_port     = "80"
+  protocol    = "tcp"
+  cidr_blocks = ["0.0.0.0/0"]
+  security_group_id = aws_security_group.load_balancer.id
+}
+
 resource "aws_ecs_cluster" "ab2d_api" {
   name = "ab2d-${lower(var.env)}-api"
 }
@@ -121,7 +140,7 @@ resource "aws_ecs_task_definition" "api" {
       "portMappings": [
         {
           "containerPort": ${var.container_port},
-          "hostPort": ${var.host_port}
+          "hostPort": ${var.ecs_task_definition_host_port}
         }
       ],
       "logConfiguration": {
@@ -142,7 +161,7 @@ resource "aws_lb" "api" {
   name = "ab2d-${lower(var.env)}"
   internal = false
   load_balancer_type = "application"
-  security_groups = [aws_security_group.api.id]
+  security_groups = [aws_security_group.api.id, aws_security_group.load_balancer.id]
   subnets = var.controller_subnet_ids
   enable_deletion_protection = true
   enable_cross_zone_load_balancing = true
@@ -164,7 +183,7 @@ resource "aws_lb_target_group" "api" {
     healthy_threshold = 5
     unhealthy_threshold = 2
     timeout = 2
-    path = "/api"
+    path = "/swagger-ui.html"
     interval = 5
   }
 }

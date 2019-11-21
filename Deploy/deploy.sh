@@ -224,7 +224,7 @@ echo "Get current known good ECS task definitions..."
 CLUSTER_ARNS=$(aws --region us-east-1 ecs list-clusters \
   --query 'clusterArns' \
   --output text \
-  | grep "/ab2d-${CMS_ENV}" \
+  | grep "/ab2d-${CMS_ENV}-api" \
   | xargs \
   | tr -d '\r')
 if [ -z "${CLUSTER_ARNS}" ]; then
@@ -233,7 +233,7 @@ else
   echo "TEST"
   API_TASK_DEFINITION=$(aws --region us-east-1 ecs describe-services \
     --services ab2d-api \
-    --cluster ab2d-$CMS_ENV \
+    --cluster "ab2d-${CMS_ENV}-api" \
     | grep "taskDefinition" \
     | head -1)
   API_TASK_DEFINITION=$(echo $API_TASK_DEFINITION | awk -F'": "' '{print $2}' | tr -d '"' | tr -d ',')
@@ -246,7 +246,7 @@ fi
 echo "Get ECS task counts before making any changes..."
 
 # Define api_task_count
-api_task_count() { aws --region us-east-1 ecs list-tasks --cluster ab2d-$CMS_ENV|grep "\:task\/"|wc -l|tr -d ' '; }
+api_task_count() { aws --region us-east-1 ecs list-tasks --cluster "ab2d-${CMS_ENV}-api" | grep "\:task\/"|wc -l|tr -d ' '; }
 
 # Get old api task count (if exists)
 if [ -z "${CLUSTER_ARNS}" ]; then
@@ -255,13 +255,16 @@ else
   OLD_API_TASK_COUNT=$(api_task_count)
 fi
 
-# Get expected api task count
-if [ -z "${CLUSTER_ARNS}" ]; then
-  echo "Skipping setting EXPECTED_API_COUNT, since there are no existing clusters"
-  EXPECTED_API_COUNT="2"
-else
-  EXPECTED_API_COUNT="$((OLD_API_TASK_COUNT*2))"
-fi
+# set expected api task count
+
+# LSH BEGIN 2019-11-20
+# if [ -z "${CLUSTER_ARNS}" ]; then
+#   EXPECTED_API_COUNT="2"
+# else
+#   EXPECTED_API_COUNT="$((OLD_API_TASK_COUNT*2))"
+# fi
+EXPECTED_API_COUNT="2"
+# LSH END 2019-11-20
 
 #
 # Ensure Old Autoscaling Groups and containers are around to service requests
@@ -272,7 +275,7 @@ echo "Ensure Old Autoscaling Groups and containers are around to service request
 if [ -z "${CLUSTER_ARNS}" ]; then
   echo "Skipping setting OLD_API_ASG, since there are no existing clusters"
 else
-  OLD_API_ASG=$(terraform show|grep :autoScalingGroup:|awk -F" = " '{print $2}'|grep ab2d-$CMS_ENV)
+  OLD_API_ASG=$(terraform show|grep :autoScalingGroup:|awk -F" = " '{print $2}' | grep ab2d-$CMS_ENV)
 fi
 
 if [ -z "${CLUSTER_ARNS}" ]; then
@@ -285,7 +288,7 @@ fi
 if [ -z "${CLUSTER_ARNS}" ]; then
   echo "Skipping removing autosclaing group and launch configuration, since there are no existing clusters"
 else
-  OLD_API_CONTAINER_INSTANCES=$(aws --region us-east-1 ecs list-container-instances --cluster ab2d-$CMS_ENV|grep container-instance)
+  OLD_API_CONTAINER_INSTANCES=$(aws --region us-east-1 ecs list-container-instances --cluster "ab2d-${CMS_ENV}-api" | grep container-instance)
 fi
 
 #
@@ -424,4 +427,45 @@ else
     --var "ami_id=$AMI_ID" \
     --auto-approve
 
+fi
+
+#
+# Deploy AWS WAF
+#
+
+if [ -z "${AUTOAPPROVE}" ]; then
+    
+  terraform apply \
+    --target module.waf
+  
+else
+
+  # Apply the changes without prompting
+    
+  terraform apply \
+    --target module.waf \
+    --auto-approve
+  
+fi
+
+#
+# Deploy AWS Shield standard to the application load balancer
+#
+
+# Note that no change is actually made since AWS shield standard is automatically applied to
+# the application load balancer.
+
+if [ -z "${AUTOAPPROVE}" ]; then
+    
+  terraform apply \
+    --target module.shield
+  
+else
+
+  # Apply the changes without prompting
+    
+  terraform apply \
+    --target module.shield \
+    --auto-approve
+  
 fi

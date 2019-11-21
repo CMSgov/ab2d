@@ -17,10 +17,12 @@ variable "iam_role_arn" {}
 
 # LSH BEGIN
 # variable "container_port" {default=3000}
+# variable "host_port" {default=80}
 variable "container_port" {default=8080}
+variable "ecs_task_definition_host_port" {default=80}
+variable "host_port" {default=80}
 # LSH END
 
-variable "host_port" {default=80}
 variable "desired_instances" {}
 variable "min_instances" {}
 variable "max_instances" {}
