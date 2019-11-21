@@ -449,11 +449,12 @@ else
 fi
 
 #
-# Deploy AWS Shield standard to the application load balancer
+# Apply AWS Shield standard to the application load balancer
 #
 
 # Note that no change is actually made since AWS shield standard is automatically applied to
-# the application load balancer.
+# the application load balancer. This section may be needed later if AWS Shield Advanced is
+# applied instead.
 
 if [ -z "${AUTOAPPROVE}" ]; then
     

@@ -171,7 +171,13 @@ if [ "$DELETE_ENVIRONMENT_COMPONENTS" == "YES" ]; then
   fi
 fi
 
-# Destroy the environment of the "shield" module
+#
+#  Detach AWS Shield standard from the application load balancer
+#
+
+# Note that no change is actually made since AWS shield standard remains applied to
+# the application load balancer until the load balancer itself is removed. This section
+# may be needed later if AWS Shield Advanced was applied instead.
 
 if [ "$DELETE_ENVIRONMENT_COMPONENTS" == "YES" ]; then
   echo "Destroying shield components..."
