@@ -13,6 +13,7 @@
 1. [Appendix I: Configure the controller to test docker containers](#appendix-i-configure-the-controller-to-test-docker-containers)
 1. [Appendix J: Manual create of AWS Elastic Container Registry repositories for images](#appendix-j-manual-create-of-aws-elastic-container-registry-repositories-for-images)
 1. [Appendix K: Manually create an ECS cluster](#appendix-k-manually-create-an-ecs-cluster)
+1. [Appendix L: Set up a PagerDuty free trial](#appendix-l-set-up-a-pagerduty-free-trial)
 
 ## Appendix A: Destroy complete environment
 
@@ -1430,3 +1431,52 @@
    1. Select **Create Service**
 
 1. Select **View Service**
+
+## Appendix L: Set up a PagerDuty free trial
+
+1. Open Chrome
+
+1. Enter the following in the address bar
+
+   > https://www.pagerduty.com/
+
+1. Select **TRY NOW**
+
+1. Enter the following on the "14 Day free trial" page
+
+   *Format:
+   
+   - **First Name:** {your first name}
+
+   - **Last Name:** {your last name)
+
+   - **Email:** {your semanticbits email)
+
+   - **Password:** {your desired "alphanumeric only" password}
+
+   - **Organization Name:** SemanticBits
+
+   - **Subdomain:** https://{lowercase first name}-{lowercase last name}.pagerduty.com
+
+1. Select **GET STARTED**
+
+1. Sign in with your new credentials
+
+   - **Email:** {your semanticbits email)
+
+   - **Password:** {your desired password}
+
+1. Select the [Apps](images/pager-duty-apps-icon.png) icon
+
+1. Select **Integrations Directory**
+
+1. Note that a new Chrome tab will automatically open
+
+1. Scroll down to the "Intergration Library" section
+
+1. Select **Amazon CloudWatch**
+
+1. Note that the following page will open
+
+   > https://support.pagerduty.com/docs/aws-cloudwatch-integration-guide
+
