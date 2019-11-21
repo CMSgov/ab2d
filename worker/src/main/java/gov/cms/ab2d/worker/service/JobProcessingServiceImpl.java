@@ -6,6 +6,7 @@ import gov.cms.ab2d.common.model.JobOutput;
 import gov.cms.ab2d.common.model.Sponsor;
 import gov.cms.ab2d.common.repository.JobOutputRepository;
 import gov.cms.ab2d.common.repository.JobRepository;
+import gov.cms.ab2d.common.repository.SponsorRepository;
 import gov.cms.ab2d.worker.adapter.bluebutton.BeneficiaryAdapter;
 import gov.cms.ab2d.worker.adapter.bluebutton.BfdClientAdapter;
 import lombok.RequiredArgsConstructor;
@@ -21,7 +22,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.locks.ReentrantLock;
@@ -43,6 +46,7 @@ public class JobProcessingServiceImpl implements JobProcessingService {
 
     private final FileService fileService;
     private final JobRepository jobRepository;
+    private final SponsorRepository sponsorRepository;
     private final JobOutputRepository jobOutputRepository;
     private final BeneficiaryAdapter beneficiaryAdapter;
     private final BfdClientAdapter  bfdClientAdapter;
@@ -71,11 +75,11 @@ public class JobProcessingServiceImpl implements JobProcessingService {
     public Job processJob(final String jobId) {
 
         final Job job = jobRepository.findByJobUuid(jobId);
-        log.info("Found job : {} - {} - {} ", job.getId(), job.getJobUuid(), job.getStatus());
+        log.info("Found job : {} - {}", job.getId(), job.getJobUuid());
 
         final Sponsor sponsor = job.getUser().getSponsor();
 
-        final List<Contract> attestedContracts = sponsor.getAttestedContracts();
+        final List<Contract> attestedContracts = getAggregatedAttestedContracts(sponsor);
         log.info("Job [{}] has [{}] attested contracts", job.getJobUuid(), attestedContracts.size());
 
 
@@ -93,6 +97,22 @@ public class JobProcessingServiceImpl implements JobProcessingService {
 
         completeJob(job);
         return job;
+    }
+
+    private List<Contract> getAggregatedAttestedContracts(Sponsor sponsor) {
+        return Optional.of(sponsor)
+                .filter(s -> s.getParent() == null)
+                .map(s -> getChildrenContractsOfParent(s))
+                .orElseGet(() -> sponsor.getAttestedContracts());
+    }
+
+
+    private List<Contract> getChildrenContractsOfParent(Sponsor sponsor) {
+        final List<Sponsor> childrenSponsors = sponsorRepository.findByParent(sponsor);
+        return childrenSponsors.stream()
+                .map(s -> s.getAttestedContracts())
+                .flatMap(Collection::stream)
+                .collect(Collectors.toList());
     }
 
 

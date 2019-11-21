@@ -92,6 +92,36 @@ class JobProcessingServiceTest {
         assertThat(processedJob.getExpiresAt(), notNullValue());
     }
 
+    @Test
+    @DisplayName("When a job is in submitted by the parent user, it process the contracts for the children")
+    void whenJobSubmittedByParentUser_ProcessAllContractsForChildrenSponsors() throws IOException {
+
+        // create parent sponsor
+        final Sponsor parentSponsor = createSponsor();
+        parentSponsor.setOrgName(parentSponsor.getOrgName() + " - PARENT");
+        parentSponsor.setLegalName(parentSponsor.getLegalName() + " - PARENT");
+
+        // associate the parent to the child
+        final Sponsor childSponsor = user.getSponsor();
+        childSponsor.setParent(parentSponsor);
+        sponsorRepository.save(childSponsor);
+
+        // switch the user to the parent sponsor
+        user.setSponsor(parentSponsor);
+        userRepository.save(user);
+
+
+        job.setStatus(JobStatus.IN_PROGRESS);
+        jobRepository.save(job);
+        var contract = createContract(this.sponsor);
+
+        var processedJob = cut.processJob("S001");
+
+        assertThat(processedJob.getStatus(), is(JobStatus.SUCCESSFUL));
+        assertThat(processedJob.getStatusMessage(), is("100%"));
+        assertThat(processedJob.getExpiresAt(), notNullValue());
+    }
+
     private Sponsor createSponsor() {
         Sponsor sponsor = new Sponsor();
         sponsor.setId(Long.valueOf(random.nextInt()));
