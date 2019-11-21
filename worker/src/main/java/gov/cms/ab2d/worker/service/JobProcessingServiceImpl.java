@@ -24,7 +24,6 @@ import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.locks.ReentrantLock;
@@ -99,15 +98,21 @@ public class JobProcessingServiceImpl implements JobProcessingService {
         return job;
     }
 
+
     private List<Contract> getAggregatedAttestedContracts(Sponsor sponsor) {
-        return Optional.of(sponsor)
-                .filter(s -> s.getParent() == null)
-                .map(s -> getChildrenContractsOfParent(s))
-                .orElseGet(() -> sponsor.getAttestedContracts());
+         if (sponsor.getParent() == null) {
+             // implies this sponsor is a parent sponsor. Parent sponsors do not have contracts.
+             // Hence, find all the children and process their contracts instead
+             log.info("Sponsor {} is a parent sponsor. Processing children sponsors", sponsor.getOrgName());
+
+             return getContractsOfChildrenSponsor(sponsor);
+         } else {
+            return sponsor.getAttestedContracts();
+         }
     }
 
 
-    private List<Contract> getChildrenContractsOfParent(Sponsor sponsor) {
+    private List<Contract> getContractsOfChildrenSponsor(Sponsor sponsor) {
         final List<Sponsor> childrenSponsors = sponsorRepository.findByParent(sponsor);
         return childrenSponsors.stream()
                 .map(s -> s.getAttestedContracts())
