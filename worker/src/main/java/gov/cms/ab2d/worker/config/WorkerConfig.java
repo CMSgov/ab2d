@@ -4,6 +4,7 @@ import gov.cms.ab2d.bfd.client.BFDClientConfiguration;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.time.DateUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
@@ -43,14 +44,23 @@ public class WorkerConfig {
     @Autowired
     private JobHandler handler;
 
+    @Value("${bfd-client.core.pool.size}")
+    private int corePoolSize;
+
+    @Value("${bfd-client.max.pool.size}")
+    private int maxPoolSize;
+
+    @Value("${bfd-client.queue.capacity}")
+    private int queueCapacity;
+
     @Bean("bfd-client")
     public Executor bfdThreadPoolTaskExecutor() {
         final ThreadPoolTaskExecutor taskExecutor = new ThreadPoolTaskExecutor();
-        taskExecutor.setCorePoolSize(5);
-        taskExecutor.setMaxPoolSize(10);
-        taskExecutor.setQueueCapacity(100);
+        taskExecutor.setCorePoolSize(corePoolSize);
+        taskExecutor.setMaxPoolSize(maxPoolSize);
+        taskExecutor.setQueueCapacity(queueCapacity);
         taskExecutor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
-        taskExecutor.setThreadNamePrefix("bfd-client-");
+        taskExecutor.setThreadNamePrefix("bfd-");
         taskExecutor.setWaitForTasksToCompleteOnShutdown(true);
         taskExecutor.setAwaitTerminationSeconds(30);
         return taskExecutor;
