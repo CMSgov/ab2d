@@ -84,4 +84,28 @@ public class RoleTests {
                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(403));
     }
+
+    @Test
+    public void testUserWithNoRolesAccessFhir() throws Exception {
+        token = testUtil.setupToken(List.of());
+
+        this.mockMvc.perform(get(API_PREFIX +  FHIR_PREFIX + "/Patient/$export")
+                .contentType(MediaType.APPLICATION_JSON)
+                .header("Authorization", "Bearer " + token))
+                .andExpect(status().is(403));
+    }
+
+    @Test
+    public void testUserWithNoRolesAccessAdmin() throws Exception {
+        token = testUtil.setupToken(List.of());
+
+        String fileName = "parent_org_and_legal_entity_20191031_111812.xls";
+        InputStream inputStream = this.getClass().getResourceAsStream("/" + fileName);
+
+        MockMultipartFile mockMultipartFile = new MockMultipartFile("file", fileName, "application/vnd.ms-excel", inputStream);
+        this.mockMvc.perform(MockMvcRequestBuilders.multipart(API_PREFIX + ADMIN_PREFIX + "/uploadOrgStructureReport")
+                .file(mockMultipartFile).contentType(MediaType.MULTIPART_FORM_DATA)
+                .header("Authorization", "Bearer " + token))
+                .andExpect(status().is(403));
+    }
 }

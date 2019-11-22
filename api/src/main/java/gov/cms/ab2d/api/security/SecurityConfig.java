@@ -6,7 +6,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -28,9 +27,6 @@ import static gov.cms.ab2d.api.util.Constants.API_PREFIX;
 @EnableWebSecurity
 @SuppressWarnings("PMD.TooManyStaticImports")
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
-
-    @Autowired
-    private JwtConfig jwtConfig;
 
     @Autowired
     private FilterChainExceptionHandler filterChainExceptionHandler;
@@ -61,7 +57,6 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
             // Add a filter to validate the tokens with every request. Since class is instantiated outside of DI, need to pass autowired, and value objects to it directly
             .addFilterAfter(jwtTokenAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
             .authorizeRequests()
-            .antMatchers(HttpMethod.POST, jwtConfig.getUri()).permitAll()
             .antMatchers(API_PREFIX + ADMIN_PREFIX + "/**").hasAuthority(ADMIN_ROLE)
             .antMatchers(API_PREFIX + FHIR_PREFIX + "/**").hasAuthority(SPONSOR_ROLE)
             .anyRequest().authenticated();

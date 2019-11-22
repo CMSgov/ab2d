@@ -2,6 +2,7 @@ package gov.cms.ab2d.api.controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.okta.jwt.JwtVerificationException;
 import gov.cms.ab2d.api.security.BadJWTTokenException;
 import gov.cms.ab2d.api.security.InvalidAuthHeaderException;
 import gov.cms.ab2d.api.security.MissingTokenException;
@@ -47,7 +48,8 @@ class ErrorHandler extends ResponseEntityExceptionHandler {
         return generateError(HttpStatus.UNAUTHORIZED);
     }
 
-    @ExceptionHandler({BadJWTTokenException.class, UsernameNotFoundException.class, UserNotEnabledException.class})
+    @ExceptionHandler({BadJWTTokenException.class, UsernameNotFoundException.class, UserNotEnabledException.class,
+            JwtVerificationException.class})
     public ResponseEntity<Void> handleForbiddenAccessExceptions() {
         return generateError(HttpStatus.FORBIDDEN);
     }

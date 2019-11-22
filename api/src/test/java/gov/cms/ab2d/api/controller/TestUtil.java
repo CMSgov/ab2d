@@ -56,11 +56,27 @@ public class TestUtil {
         when(mockAccessTokenVerifier.decode(anyString())).thenReturn(jwt);
     }
 
+    private void setupInvalidMock() throws JwtVerificationException {
+        when(mockAccessTokenVerifier.decode(anyString())).thenThrow(JwtVerificationException.class);
+    }
+
+    public String setupInvalidToken(List<String> userRoles) throws JwtVerificationException {
+        setupUser(userRoles);
+
+        setupInvalidMock();
+
+        return buildTokenStr();
+    }
+
     public String setupToken(List<String> userRoles) throws JwtVerificationException {
         setupUser(userRoles);
 
         setupMock();
 
+        return buildTokenStr();
+    }
+
+    private String buildTokenStr() {
         if(jwtStr != null) {
             return jwtStr;
         }
