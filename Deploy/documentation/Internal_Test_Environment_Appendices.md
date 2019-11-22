@@ -14,6 +14,11 @@
 1. [Appendix J: Manual create of AWS Elastic Container Registry repositories for images](#appendix-j-manual-create-of-aws-elastic-container-registry-repositories-for-images)
 1. [Appendix K: Manually create an ECS cluster](#appendix-k-manually-create-an-ecs-cluster)
 1. [Appendix L: Evaluate PagerDuty](#appendix-l-evaluate-pagerduty)
+   * [Set up a PagerDuty free trial](#set-up-a-pagerduty-free-trial)
+   * [Integrate PagerDuty with AWS CloudWatch](#integrate-pagerduty-with-aws-cloudwatch)
+     * [Integrating with Global Event Rules](#integrating-with-global-event-rules)
+     * [Integrating with a PagerDuty Service](#integrating-with-a-pagerduty-service)
+     * [Configure AWS for the PagerDuty integration](#configure-aws-for-the-pagerduty-integration)
 
 ## Appendix A: Destroy complete environment
 
@@ -1124,12 +1129,28 @@
 
 1. Tag the "ab2d_api" image for ECR
 
+   *Format:*
+   
+   ```ShellSession
+   $ docker tag ab2d_api:latest {aws account number}.dkr.ecr.us-east-1.amazonaws.com/ab2d_api:latest
+   ```
+
+   *Example:*
+   
    ```ShellSession
    $ docker tag ab2d_api:latest 114601554524.dkr.ecr.us-east-1.amazonaws.com/ab2d_api:latest
    ```
 
 1. Push the "ab2d_api" image to ECR
 
+   *Format:*
+   
+   ```ShellSession
+   $ docker push {aws account number}.dkr.ecr.us-east-1.amazonaws.com/ab2d_api:latest
+   ```
+
+   *Example:*
+   
    ```ShellSession
    $ docker push 114601554524.dkr.ecr.us-east-1.amazonaws.com/ab2d_api:latest
    ```
@@ -1142,12 +1163,28 @@
 
 1. Tag the "ab2d_worker" image for ECR
 
+   *Format:*
+   
+   ```ShellSession
+   $ docker tag ab2d_worker:latest {aws account number}.dkr.ecr.us-east-1.amazonaws.com/ab2d_worker:latest
+   ```
+
+   *Example:*
+   
    ```ShellSession
    $ docker tag ab2d_worker:latest 114601554524.dkr.ecr.us-east-1.amazonaws.com/ab2d_worker:latest
    ```
 
 1. Push the "ab2d_worker" image to ECR
 
+   *Format:*
+   
+   ```ShellSession
+   $ docker push {aws account number}.dkr.ecr.us-east-1.amazonaws.com/ab2d_worker:latest
+   ```
+
+   *Example:*
+   
    ```ShellSession
    $ docker push 114601554524.dkr.ecr.us-east-1.amazonaws.com/ab2d_worker:latest
    ```
@@ -1434,33 +1471,57 @@
 
 ## Appendix L: Evaluate PagerDuty
 
-1. Set up a PagerDuty free trial
+### Set up a PagerDuty free trial
 
-   1. Open Chrome
+1. Open Chrome
+
+1. Enter the following in the address bar
+
+   > https://www.pagerduty.com/
+
+1. Select **TRY NOW**
+
+1. Enter the following on the "14 Day free trial" page
+
+   *Format:
    
-   1. Enter the following in the address bar
+   - **First Name:** {your first name}
+
+   - **Last Name:** {your last name)
+
+   - **Email:** {your semanticbits email)
+
+   - **Password:** {your desired "alphanumeric only" password}
+
+   - **Organization Name:** SemanticBits
+
+   - **Subdomain:** https://{lowercase first name}-{lowercase last name}.pagerduty.com
+
+1. Select **GET STARTED**
    
-      > https://www.pagerduty.com/
+### Integrate PagerDuty with AWS CloudWatch
+
+1. Note PagerDuty's "Onboarding Goal #1"
+
+   ```
+   ONBOARDING GOAL #1
+
+   Finish Setting Up Your First Integration
    
-   1. Select **TRY NOW**
+   Let's finish your first integration! Once you click the service name below you will
+   be redirected to a service detail page.
    
-   1. Enter the following on the "14 Day free trial" page
+   Click on the integrations tab first, you'll need your 'Integration Key' so make sure
+   to copy it.
    
-      *Format:
-      
-      - **First Name:** {your first name}
+   Once you have the Integration Key copied you can see a step-by-step walk through by
+   clicking on the integration type to the right.
    
-      - **Last Name:** {your last name)
-   
-      - **Email:** {your semanticbits email)
-   
-      - **Password:** {your desired "alphanumeric only" password}
-   
-      - **Organization Name:** SemanticBits
-   
-      - **Subdomain:** https://{lowercase first name}-{lowercase last name}.pagerduty.com
-   
-   1. Select **GET STARTED**
+   Once you've configured this integration, your data should then be flowing into PagerDuty.
+   You can add multiple integrations to a single service. We recommend grouping integrations.
+   This allows you to better represent the actual entities you are monitoring, managing, and
+   operating.
+   ```
 
 1. View PagerDuty integration guide for CloudWatch
 
@@ -1483,4 +1544,180 @@
    1. Note that the following page will open
    
       > https://support.pagerduty.com/docs/aws-cloudwatch-integration-guide
+
+1. Note there are two ways to integrate CloudWatch with PagerDuty
+
+   - Integrating with Global Event Rules
+
+   - Integrating with a PagerDuty Service
+
+1. If you need to route alerts to different reponders based on the payload, jump to the following section:
+
+   [Integrating with Global Event Rules](#integrating-with-global-event-rules)
+
+1. If you don't need to route alerts to different reponders based on the payload, jump to the following section:
+
+   [Integrating with a PagerDuty Service](#integrating-with-a-pagerduty-service)
+
+#### Integrating with Global Event Rules
+
+> *** TO DO ***
+
+1. Jump to the following section
+
+   [Configure AWS for the PagerDuty integration](#configure-aws-for-the-pagerduty-integration)
+
+#### Integrating with a PagerDuty Service
+
+1. Create a "CloudWatch Dev" PagerDuty Service
+
+   1. Select the **Configuration** menu
    
+   1. Select **Services**
+   
+   1. Select **New Service**
+   
+   1. Configure "General Settings" as follows
+   
+      - **Name:** CloudWatch Dev
+
+   1. Configure "Integration Settings"
+   
+      - **Intergration Type:** Amazon CloudWatch
+   
+      - **Intergration Name:** Amazon CloudWatch
+   
+   1. Note the following about the integration
+   
+      ```
+      Amazon Web Services CloudWatch provides monitoring for AWS cloud resources and
+      customer-run applications.
+   
+      This integration supports alarms from CloudSearch, DynamoDB, EBS, EC2, ECS,
+      ElastiCache, ELB, ES, Kinesis, Lambda, ML, Redshift, RDS, Route53, SNS, SQS, S3,
+      SWF, StorageGateway
+      ```
+   
+   1. Configure "Incident Settings"
+   
+      - **Escalation Policy:** Default
+   
+   1. Select **Create alerts and incidents** under "Incident Behavior"
+   
+   1. Select **Intelligently based on the alert content and past groups** under "Alert Grouping"
+   
+   1. Select **Add Service**
+   
+   1. Note the following information
+   
+      - **Type:** Amazon CloudWatch
+   
+      - **Integration Key:** {integration key}
+   
+      - **Integration URL:** https://events.pagerduty.com/integration/{integration key}/enqueue
+   
+      - **Correlate events by:** Alarm Name
+   
+      - **Derive name from:** Default
+   
+   1. Copy and save the **Integration URL**
+
+1. Jump to the following section
+
+   [Configure AWS for the PagerDuty integration](#configure-aws-for-the-pagerduty-integration)
+
+#### Configure AWS for the PagerDuty integration
+
+1. Open Chrome
+
+1. Log on to the AWS console
+
+1. Select Simple Notification Service (SNS)
+
+1. Select **Topics** in the leftmost panel
+
+1. Select **Create topic**
+
+1. Configure the "Create topic" page as follows
+
+   - **Name:** ab2d-dev-cloudwatch
+
+   - **Dispaly Name:** ab2d-dev-cloudwatch
+
+1. Select **Create topic**
+
+1. Select **Subscriptions** in the leftmost panel
+
+1. Select **Create Subscription**
+
+1. Configure "Details" as follows
+
+   *Format:*
+   
+   - **Topic ARN:** arn:aws:sns:us-east-1:{aws account number}:ab2d-dev-cloudwatch
+
+   - **Protocol:** HTTPS
+
+   - **Endpoint:** https://events.pagerduty.com/integration/{encryption key}/enqueue
+
+   - **Enable raw message delivery:** unchecked
+
+   *Example:*
+   
+   - **Topic ARN:** arn:aws:sns:us-east-1:114601554524:ab2d-dev-cloudwatch
+
+   - **Protocol:** HTTPS
+
+   - **Endpoint:** https://events.pagerduty.com/integration/73fc28b6128a46999d90d6d119f9e8e5/enqueue
+
+   - **Enable raw message delivery:** unchecked
+
+1. Select **Create subscription**
+
+1. Note that the status dispays "Pending confirmation"
+
+1. Refresh the page
+
+1. Note that the status should now display "Confirmed"
+
+1. Select the **EC2** service
+
+1. Select one of the API EC2 instances
+
+1. Select **Actions**
+
+1. Select **CloudWatch Monitoring**
+
+1. Select **Add/Edit Alarms**
+
+1. Select **Create Alarm**
+
+1. Check **Send a notification to**
+
+1. Select the topic that you created from the **Send a notification to** dropdown
+
+   ```
+   ab2d-dev-cloudwatch
+   ```
+
+1. Configure the alarm as follows
+
+   - **Whenever:** Average of CPU Utilization
+
+   - **Is:** >= 90 Percent
+
+   - **For at least:** 2 consecutive period(s) of 5 minute(s)
+
+   - **Name of alarm:** ab2d-dev-api-cpu-alarm
+
+1. Select **Create Alarm**
+
+1. Select **view** under "More Options"
+
+1. Select **Edit**
+
+1. Select **Next** on the bottom of the page
+
+1. Note that if desired you can add additional notifications by select **Add notofication**
+
+1. If you made any changes, select **Update alarm**; otherwise, select **Cancel**
