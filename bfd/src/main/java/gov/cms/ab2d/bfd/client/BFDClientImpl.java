@@ -4,8 +4,7 @@ import ca.uhn.fhir.rest.client.api.IGenericClient;
 import ca.uhn.fhir.rest.gclient.ICriterion;
 import ca.uhn.fhir.rest.gclient.ReferenceClientParam;
 import ca.uhn.fhir.rest.server.exceptions.ResourceNotFoundException;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.hl7.fhir.dstu3.model.Bundle;
 import org.hl7.fhir.dstu3.model.ExplanationOfBenefit;
 import org.hl7.fhir.instance.model.api.IBaseResource;
@@ -21,12 +20,11 @@ import static java.lang.String.format;
  */
 @Component
 @PropertySource("classpath:application.bfd.properties")
+@Slf4j
 public class BFDClientImpl implements BFDClient {
 
     @Value("${bfd.pagesize}")
     private int pageSize;
-
-    private static final Log LOG = LogFactory.getLog(BFDClientImpl.class);
 
     private IGenericClient client;
 
@@ -59,7 +57,7 @@ public class BFDClientImpl implements BFDClient {
      */
     @Override
     public Bundle requestEOBFromServer(String patientID) {
-        LOG.debug(format("Attempting to fetch EOBs for patient ID %s from baseURL: %s", patientID,
+        log.debug(format("Attempting to fetch EOBs for patient ID %s from baseURL: %s", patientID,
                 client.getServerBase()));
         return
                 fetchBundle(ExplanationOfBenefit.class,
@@ -70,7 +68,7 @@ public class BFDClientImpl implements BFDClient {
     @Override
     public Bundle requestNextBundleFromServer(Bundle bundle) throws ResourceNotFoundException {
         var nextURL = bundle.getLink(Bundle.LINK_NEXT).getUrl();
-        LOG.debug(format("Attempting to fetch next bundle from url: %s", nextURL));
+        log.debug(format("Attempting to fetch next bundle from url: %s", nextURL));
         return client
                 .loadPage()
                 .next(bundle)
