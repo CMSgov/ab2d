@@ -1,11 +1,12 @@
 package gov.cms.ab2d.api.controller;
 
+import com.okta.jwt.JwtVerificationException;
 import gov.cms.ab2d.api.SpringBootApp;
 import gov.cms.ab2d.common.model.User;
 import gov.cms.ab2d.common.repository.JobRepository;
+import gov.cms.ab2d.common.repository.RoleRepository;
 import gov.cms.ab2d.common.repository.SponsorRepository;
 import gov.cms.ab2d.common.repository.UserRepository;
-import org.hamcrest.core.Is;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -16,13 +17,11 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.io.IOException;
-import java.util.Map;
+import java.util.List;
 
 import static gov.cms.ab2d.api.controller.TestUtil.TEST_USER;
-import static gov.cms.ab2d.api.util.Constants.API_PREFIX;
+import static gov.cms.ab2d.api.util.Constants.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @RunWith(SpringRunner.class)
@@ -43,101 +42,67 @@ public class AuthenticationTests {
     private UserRepository userRepository;
 
     @Autowired
+    private RoleRepository roleRepository;
+
+    @Autowired
     private JobRepository jobRepository;
 
-    private Map<String, String> headerMap;
+    private String token;
 
     @Before
-    public void setup() throws IOException, InterruptedException {
+    public void setup() throws JwtVerificationException {
         jobRepository.deleteAll();
         userRepository.deleteAll();
+        roleRepository.deleteAll();
         sponsorRepository.deleteAll();
 
-        headerMap = testUtil.setupToken();
+        token = testUtil.setupToken(List.of(SPONSOR_ROLE));
     }
 
     // Negative tests, successful auth tests are essentially done in other suites
     @Test
     public void testNoAuthHeader() throws Exception {
-        this.mockMvc.perform(get(API_PREFIX + "/Patient/$export")
+        this.mockMvc.perform(get(API_PREFIX + FHIR_PREFIX + "/Patient/$export")
                 .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().is(401))
-                .andExpect(jsonPath("$.resourceType", Is.is("OperationOutcome")))
-                .andExpect(jsonPath("$.issue[0].severity", Is.is("error")))
-                .andExpect(jsonPath("$.issue[0].code", Is.is("invalid")))
-                .andExpect(jsonPath("$.issue[0].details.text",
-                        Is.is("InvalidAuthHeaderException: Authorization header for token was not present")));
+                .andExpect(status().is(401));
     }
 
     @Test
     public void testBadStartToHeader() throws Exception {
-        this.mockMvc.perform(get(API_PREFIX + "/Patient/$export")
+        this.mockMvc.perform(get(API_PREFIX + FHIR_PREFIX + "/Patient/$export")
                 .header("Authorization", "NotBearer")
                 .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().is(401))
-                .andExpect(jsonPath("$.resourceType", Is.is("OperationOutcome")))
-                .andExpect(jsonPath("$.issue[0].severity", Is.is("error")))
-                .andExpect(jsonPath("$.issue[0].code", Is.is("invalid")))
-                .andExpect(jsonPath("$.issue[0].details.text",
-                        Is.is("InvalidAuthHeaderException: Authorization header must start with Bearer ")));
+                .andExpect(status().is(401));
     }
 
     @Test
     public void testNoTokenInHeader() throws Exception {
-        this.mockMvc.perform(get(API_PREFIX + "/Patient/$export")
+        this.mockMvc.perform(get(API_PREFIX + FHIR_PREFIX + "/Patient/$export")
                 .header("Authorization", "Bearer ")
                 .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().is(401))
-                .andExpect(jsonPath("$.resourceType", Is.is("OperationOutcome")))
-                .andExpect(jsonPath("$.issue[0].severity", Is.is("error")))
-                .andExpect(jsonPath("$.issue[0].code", Is.is("invalid")))
-                .andExpect(jsonPath("$.issue[0].details.text",
-                        Is.is("MissingTokenException: Token was not present")));
+                .andExpect(status().is(401));
     }
 
     @Test
     public void testUserDoesNotExist() throws Exception {
-        User user = userRepository.findByUserName(TEST_USER);
+        User user = userRepository.findByUsername(TEST_USER);
         userRepository.delete(user);
 
-        this.mockMvc.perform(get(API_PREFIX + "/Patient/$export")
-                .header("Authorization", "Bearer " + headerMap.get("access_token"))
+        this.mockMvc.perform(get(API_PREFIX + FHIR_PREFIX + "/Patient/$export")
+                .header("Authorization", "Bearer " + token)
                 .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().is(403))
-                .andExpect(jsonPath("$.resourceType", Is.is("OperationOutcome")))
-                .andExpect(jsonPath("$.issue[0].severity", Is.is("error")))
-                .andExpect(jsonPath("$.issue[0].code", Is.is("invalid")))
-                .andExpect(jsonPath("$.issue[0].details.text",
-                        Is.is("UserNotFoundException: User " + TEST_USER + " is not present in our database")));
+                .andExpect(status().is(403));
     }
 
     @Test
     public void testUserIsNotEnabled() throws Exception {
-        User user = userRepository.findByUserName(TEST_USER);
+        User user = userRepository.findByUsername(TEST_USER);
         user.setEnabled(false);
         userRepository.save(user);
 
-        this.mockMvc.perform(get(API_PREFIX + "/Patient/$export")
-                .header("Authorization", "Bearer " + headerMap.get("access_token"))
+        this.mockMvc.perform(get(API_PREFIX + FHIR_PREFIX + "/Patient/$export")
+                .header("Authorization", "Bearer " + token)
                 .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().is(403))
-                .andExpect(jsonPath("$.resourceType", Is.is("OperationOutcome")))
-                .andExpect(jsonPath("$.issue[0].severity", Is.is("error")))
-                .andExpect(jsonPath("$.issue[0].code", Is.is("invalid")))
-                .andExpect(jsonPath("$.issue[0].details.text",
-                        Is.is("UserNotEnabledException: User " + TEST_USER + " is not enabled")));
-    }
-
-    @Test
-    public void testBadToken() throws Exception {
-        this.mockMvc.perform(get(API_PREFIX + "/Patient/$export")
-                .header("Authorization", "Bearer BadToken")
-                .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().is(403))
-                .andExpect(jsonPath("$.resourceType", Is.is("OperationOutcome")))
-                .andExpect(jsonPath("$.issue[0].severity", Is.is("error")))
-                .andExpect(jsonPath("$.issue[0].code", Is.is("invalid")))
-                .andExpect(jsonPath("$.issue[0].details.text",
-                        Is.is("JwtVerificationException: Token did not contain signature")));
+                .andExpect(status().is(403));
     }
 }

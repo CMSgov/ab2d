@@ -4,12 +4,16 @@ import com.google.common.base.Strings;
 import com.okta.jwt.AccessTokenVerifier;
 import com.okta.jwt.Jwt;
 import com.okta.jwt.JwtVerificationException;
-import com.okta.jwt.JwtVerifiers;
+import gov.cms.ab2d.common.model.Role;
 import gov.cms.ab2d.common.model.User;
 import gov.cms.ab2d.common.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -18,27 +22,20 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
 
 @Component
 public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
 
-    private final AccessTokenVerifier jwtVerifier;
-
     @Autowired
-    private JwtConfig jwtConfig;
+    private AccessTokenVerifier jwtVerifier;
 
     @Autowired
     private UserService userService;
 
-    public JwtTokenAuthenticationFilter() {
-        jwtVerifier = JwtVerifiers.accessTokenVerifierBuilder()
-                .setIssuer("https://dev-418212.okta.com/oauth2/default")
-                .setAudience("api://default")                // defaults to 'api://default'
-                .setConnectionTimeout(Duration.ofSeconds(1)) // defaults to 1s
-                .setReadTimeout(Duration.ofSeconds(1))       // defaults to 1s
-                .build();
-    }
+    @Autowired
+    private JwtConfig jwtConfig;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
@@ -76,15 +73,20 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
         if (username != null) {
             User user = userService.getUserByUsername(username);
             if (user == null) {
-                throw new UserNotFoundException("User " + username + " is not present in our database");
+                throw new UsernameNotFoundException("User " + username + " is not present in our database");
             }
 
             if (!user.getEnabled()) {
                 throw new UserNotEnabledException("User " + username + " is not enabled");
             }
 
+            List<GrantedAuthority> authorities = new ArrayList<>();
+            for (Role role : user.getRoles()) {
+                authorities.add(new SimpleGrantedAuthority(role.getName()));
+            }
             UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
-                    username, null, null);
+                    username, null, authorities);
+            auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
             SecurityContextHolder.getContext().setAuthentication(auth);
         } else {
@@ -94,5 +96,4 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
         // go to the next filter in the filter chain
         chain.doFilter(request, response);
     }
-
 }

@@ -1,22 +1,33 @@
 package gov.cms.ab2d.api.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.okta.jwt.AccessTokenVerifier;
+import com.okta.jwt.Jwt;
+import com.okta.jwt.JwtVerificationException;
+import com.okta.jwt.impl.DefaultJwt;
+import gov.cms.ab2d.common.model.Role;
 import gov.cms.ab2d.common.model.Sponsor;
 import gov.cms.ab2d.common.model.User;
 import gov.cms.ab2d.common.repository.SponsorRepository;
 import gov.cms.ab2d.common.repository.UserRepository;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.stereotype.Component;
 
+import javax.crypto.SecretKey;
 import java.io.IOException;
-import java.net.URI;
 import java.net.URLEncoder;
-import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
-import java.util.Map;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.*;
+
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.when;
 
 @Component
 public class TestUtil {
@@ -29,60 +40,50 @@ public class TestUtil {
     @Autowired
     private SponsorRepository sponsorRepository;
 
-    private Map<String, String> headerMap;
+    @MockBean
+    AccessTokenVerifier mockAccessTokenVerifier;
 
-    // This will expire in 3600 seconds
-    public Map<String, String> setupToken() throws IOException, InterruptedException {
-        setupUser();
+    @Value("${api.okta-url}")
+    private String oktaUrl;
 
-        // Tests run 1 at a time, this may pose an issue if they ever run concurrently
-        if(headerMap != null) {
-            return headerMap;
-        }
+    private String jwtStr = null;
 
-        headerMap = new HashMap<>();
+    private void setupMock() throws JwtVerificationException {
+        // Token that expires in 2 hours that has the user we setup below
+        Map<String, Object> claims = Map.of("sub", TEST_USER);
+        Jwt jwt = new DefaultJwt("tokenValue", Instant.now(), Instant.now().plus(Duration.ofHours(2)), claims);
 
-        var values = new HashMap<String, String>() {{
-            put("grant_type", "password");
-            put("username", TEST_USER);
-            put("password", "Te$t2019");
-            put("scope", "openid");
-        }};
-
-        HttpClient client = HttpClient.newHttpClient();
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create("https://dev-418212.okta.com/oauth2/default/v1/token"))
-                .header("accept", "application/json")
-                .header("authorization", "Basic MG9hMXB4YXB6ZE9XaUhmOXUzNTc=")
-                .header("content-type", "application/x-www-form-urlencoded")
-                .POST(buildFormDataFromMap(values))
-                .build();
-
-        HttpResponse<String> response = client.send(request,
-                HttpResponse.BodyHandlers.ofString());
-
-        ObjectMapper mapper = new ObjectMapper();
-        headerMap = mapper.readValue(response.body(), Map.class);
-        return headerMap;
+        when(mockAccessTokenVerifier.decode(anyString())).thenReturn(jwt);
     }
 
-    // See https://www.mkyong.com/java/how-to-send-http-request-getpost-in-java/
-    private HttpRequest.BodyPublisher buildFormDataFromMap(Map<String, String> data) {
-        var builder = new StringBuilder();
-        for (Map.Entry<String, String> entry : data.entrySet()) {
-            if (builder.length() > 0) {
-                builder.append("&");
-            }
-            builder.append(URLEncoder.encode(entry.getKey(), StandardCharsets.UTF_8));
-            builder.append("=");
-            builder.append(URLEncoder.encode(entry.getValue(), StandardCharsets.UTF_8));
+    public String setupToken(List<String> userRoles) throws JwtVerificationException {
+        setupUser(userRoles);
+
+        setupMock();
+
+        if(jwtStr != null) {
+            return jwtStr;
         }
 
-        return HttpRequest.BodyPublishers.ofString(builder.toString());
+        String clientSecret = "wefikjweglkhjwelgkjweglkwegwegewg";
+        SecretKey sharedSecret = Keys.hmacShaKeyFor(clientSecret.getBytes(StandardCharsets.UTF_8));
+        Instant now = Instant.now();
+
+        jwtStr = Jwts.builder()
+                .setAudience(oktaUrl)
+                .setIssuedAt(Date.from(now))
+                .setExpiration(Date.from(now.plus(2L, ChronoUnit.HOURS)))
+                .setIssuer(TEST_USER)
+                .setSubject(TEST_USER)
+                .setId(UUID.randomUUID().toString())
+                .signWith(sharedSecret)
+                .compact();
+
+        return jwtStr;
     }
 
-    private void setupUser() {
-        User testUser = userRepository.findByUserName(TEST_USER);
+    private void setupUser(List<String> userRoles) {
+        User testUser = userRepository.findByUsername(TEST_USER);
         if(testUser != null) {
             return;
         }
@@ -103,9 +104,14 @@ public class TestUtil {
         user.setEmail(TEST_USER);
         user.setFirstName("Eileen");
         user.setLastName("Frierson");
-        user.setUserName(TEST_USER);
+        user.setUsername(TEST_USER);
         user.setSponsor(savedSponsor);
         user.setEnabled(true);
+        for(String userRole :  userRoles) {
+            Role role = new Role();
+            role.setName(userRole);
+            user.addRole(role);
+        }
         userRepository.save(user);
     }
 }

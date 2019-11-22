@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import gov.cms.ab2d.api.security.BadJWTTokenException;
 import gov.cms.ab2d.api.security.InvalidAuthHeaderException;
 import gov.cms.ab2d.api.security.MissingTokenException;
-import gov.cms.ab2d.api.security.UserNotFoundException;
 import gov.cms.ab2d.api.security.UserNotEnabledException;
 import gov.cms.ab2d.common.service.InvalidJobStateTransition;
 import gov.cms.ab2d.common.service.ResourceNotFoundException;
@@ -15,6 +14,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
@@ -43,13 +43,13 @@ class ErrorHandler extends ResponseEntityExceptionHandler {
     }
 
     @ExceptionHandler({MissingTokenException.class, InvalidAuthHeaderException.class})
-    public ResponseEntity<JsonNode> handleUnauthorizedAccessExceptions(final RuntimeException e) throws IOException {
-        return generateFHIRError(e, HttpStatus.UNAUTHORIZED);
+    public ResponseEntity<Void> handleUnauthorizedAccessExceptions() {
+        return generateError(HttpStatus.UNAUTHORIZED);
     }
 
-    @ExceptionHandler({BadJWTTokenException.class, UserNotFoundException.class, UserNotEnabledException.class})
-    public ResponseEntity<JsonNode> handleForbiddenAccessExceptions(final RuntimeException e) throws IOException {
-        return generateFHIRError(e, HttpStatus.FORBIDDEN);
+    @ExceptionHandler({BadJWTTokenException.class, UsernameNotFoundException.class, UserNotEnabledException.class})
+    public ResponseEntity<Void> handleForbiddenAccessExceptions() {
+        return generateError(HttpStatus.FORBIDDEN);
     }
 
     @ExceptionHandler(ResourceNotFoundException.class)
@@ -62,6 +62,10 @@ class ErrorHandler extends ResponseEntityExceptionHandler {
         HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.add("Retry-After", Integer.toString(retryAfterDelay));
         return generateFHIRError(e, HttpStatus.TOO_MANY_REQUESTS, httpHeaders);
+    }
+
+    private ResponseEntity<Void> generateError(HttpStatus httpStatus) {
+        return new ResponseEntity<>(null, null, httpStatus);
     }
 
     private ResponseEntity<JsonNode> generateFHIRError(Exception e, HttpStatus httpStatus) throws IOException {
