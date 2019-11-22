@@ -11,6 +11,7 @@ import org.hl7.fhir.dstu3.model.Bundle;
 import org.hl7.fhir.dstu3.model.Bundle.BundleEntryComponent;
 import org.hl7.fhir.dstu3.model.Resource;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.AsyncResult;
 import org.springframework.stereotype.Component;
@@ -23,6 +24,8 @@ import java.util.List;
 import java.util.concurrent.Future;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
+
+import static java.util.concurrent.TimeUnit.SECONDS;
 
 @Slf4j
 @Component
@@ -37,6 +40,9 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
 
     @Autowired
     private FileService fileService;
+
+    @Value("${file.try.lock.timeout}")
+    private int tryLockTimeout;
 
     @Async("bfd-client")
     public Future<Integer> process(String patientId, ReentrantLock lock, Path outputFile, Path errorFile) {
@@ -100,11 +106,26 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
      * @throws IOException
      */
     private void appendToFile(Path outputFile, ByteArrayOutputStream byteArrayOutputStream, ReentrantLock lock) throws IOException {
-        lock.lock();
+
+        tryLock(lock);
+
         try {
             fileService.appendToFile(outputFile, byteArrayOutputStream);
         } finally {
             lock.unlock();
+        }
+    }
+
+    private void tryLock(ReentrantLock lock) {
+        final String errMsg = "Terminate processing. Unable to acquire lock";
+        try {
+            final boolean lockAcquired = lock.tryLock(tryLockTimeout, SECONDS);
+            if (!lockAcquired) {
+                final String errMsg1 = errMsg + " after waiting " + tryLockTimeout + " seconds.";
+                throw new RuntimeException(errMsg1);
+            }
+        } catch (InterruptedException e) {
+            throw new RuntimeException(errMsg);
         }
     }
 
