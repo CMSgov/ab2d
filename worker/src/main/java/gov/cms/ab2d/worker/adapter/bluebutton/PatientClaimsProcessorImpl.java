@@ -27,7 +27,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class BfdClientAdapterImpl implements BfdClientAdapter {
+public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
 
     @Autowired
     private BFDClient bfdClient;
@@ -39,7 +39,7 @@ public class BfdClientAdapterImpl implements BfdClientAdapter {
     private FileService fileService;
 
     @Async("bfd-client")
-    public Future<Integer> processPatient(String patientId, ReentrantLock lock, Path outputFile, Path errorFile) {
+    public Future<Integer> process(String patientId, ReentrantLock lock, Path outputFile, Path errorFile) {
         int errorCount = 0;
         int resourceCount = 0;
 

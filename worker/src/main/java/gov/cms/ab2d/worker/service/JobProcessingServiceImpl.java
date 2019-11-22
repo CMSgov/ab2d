@@ -8,7 +8,7 @@ import gov.cms.ab2d.common.repository.JobOutputRepository;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.common.repository.SponsorRepository;
 import gov.cms.ab2d.worker.adapter.bluebutton.BeneficiaryAdapter;
-import gov.cms.ab2d.worker.adapter.bluebutton.BfdClientAdapter;
+import gov.cms.ab2d.worker.adapter.bluebutton.PatientClaimsProcessor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -48,7 +48,7 @@ public class JobProcessingServiceImpl implements JobProcessingService {
     private final SponsorRepository sponsorRepository;
     private final JobOutputRepository jobOutputRepository;
     private final BeneficiaryAdapter beneficiaryAdapter;
-    private final BfdClientAdapter  bfdClientAdapter;
+    private final PatientClaimsProcessor patientClaimsProcessor;
 
 
     @Override
@@ -134,7 +134,7 @@ public class JobProcessingServiceImpl implements JobProcessingService {
         // A mutex lock that all threads for a contract uses while writing into the shared files
         var lock = new ReentrantLock();
         var futureResourcesHandles = patients.stream()
-                .map(patient -> bfdClientAdapter.processPatient(patient.getPatientId(), lock, outputFile, errorFile))
+                .map(patient -> patientClaimsProcessor.process(patient.getPatientId(), lock, outputFile, errorFile))
                 .collect(Collectors.toList());
 
         int errorCount = processHandles(futureResourcesHandles);
