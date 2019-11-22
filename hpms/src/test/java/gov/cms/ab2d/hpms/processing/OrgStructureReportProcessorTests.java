@@ -4,9 +4,11 @@ import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.Sponsor;
 import gov.cms.ab2d.common.repository.ContractRepository;
 import gov.cms.ab2d.common.repository.SponsorRepository;
+import gov.cms.ab2d.common.repository.UserRepository;
 import gov.cms.ab2d.hpms.SpringBootApp;
 import lombok.Value;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,6 +37,9 @@ public class OrgStructureReportProcessorTests {
     private SponsorRepository sponsorRepository;
 
     @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
     private ContractRepository contractRepository;
 
     @Value
@@ -43,6 +48,13 @@ public class OrgStructureReportProcessorTests {
         private final Integer parentId;
         private final Map<String, String> contractNumbersToNames;
         private final String orgName;
+    }
+
+    @Before
+    public void setup() {
+        contractRepository.deleteAll();
+        userRepository.deleteAll();
+        sponsorRepository.deleteAll();
     }
 
     @Test
