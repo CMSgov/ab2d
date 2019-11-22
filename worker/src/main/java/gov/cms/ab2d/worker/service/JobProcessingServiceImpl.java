@@ -154,14 +154,10 @@ public class JobProcessingServiceImpl implements JobProcessingService {
 
         final List<JobOutput> jobOutputs = new ArrayList<>();
         if (errorCount < patientCount) {
-            final JobOutput jobOutput = createPartialJobOutput(outputFile);
-            jobOutput.setError(false);
-            jobOutputs.add(jobOutput);
+            jobOutputs.add(createJobOutput(outputFile, false));
         }
         if (errorCount > 0) {
-            final JobOutput jobOutput = createPartialJobOutput(errorFile);
-            jobOutput.setError(true);
-            jobOutputs.add(jobOutput);
+            jobOutputs.add(createJobOutput(errorFile, true));
         }
 
         return jobOutputs;
@@ -179,12 +175,12 @@ public class JobProcessingServiceImpl implements JobProcessingService {
                     if (responseCount > 0) {
                         errorCount += responseCount;
                     }
-                } catch (InterruptedException  e) {
-                    ++errorCount;
-                    log.error("interrupted exception while processing patient ", e);
+                } catch (InterruptedException e) {
+                    final String errMsg = "interrupted exception while processing patient ";
+                    throw new RuntimeException(errMsg, e);
                 } catch (ExecutionException e) {
-                    ++errorCount;
-                    log.error("exception while processing patient ", e.getCause());
+                    final String errMsg = "exception while processing patient ";
+                    throw new RuntimeException(errMsg, e.getCause());
                 }
                 iterator.remove();
             }
@@ -193,10 +189,11 @@ public class JobProcessingServiceImpl implements JobProcessingService {
         return errorCount;
     }
 
-    private JobOutput createPartialJobOutput(Path outputFile) {
+    private JobOutput createJobOutput(Path outputFile, boolean isError) {
         JobOutput jobOutput = new JobOutput();
         jobOutput.setFilePath(getEfsMountPath().relativize(outputFile).toString());
         jobOutput.setFhirResourceType("ExplanationOfBenefits");
+        jobOutput.setError(isError);
         return jobOutput;
     }
 

@@ -60,7 +60,7 @@ public class WorkerConfig {
         taskExecutor.setMaxPoolSize(maxPoolSize);
         taskExecutor.setQueueCapacity(queueCapacity);
         taskExecutor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
-        taskExecutor.setThreadNamePrefix("bfd-");
+        taskExecutor.setThreadNamePrefix("pcp-");
         taskExecutor.setWaitForTasksToCompleteOnShutdown(true);
         taskExecutor.setAwaitTerminationSeconds(30);
         return taskExecutor;
