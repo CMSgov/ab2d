@@ -83,7 +83,7 @@ class JobProcessingServiceTest {
 
         job.setStatus(JobStatus.IN_PROGRESS);
         jobRepository.save(job);
-        var contract = createContract(sponsor);
+        createContract(sponsor);
 
         var processedJob = cut.processJob("S001");
 
@@ -110,10 +110,10 @@ class JobProcessingServiceTest {
         user.setSponsor(parentSponsor);
         userRepository.save(user);
 
+        createContract(sponsor);
 
         job.setStatus(JobStatus.IN_PROGRESS);
         jobRepository.save(job);
-        var contract = createContract(this.sponsor);
 
         var processedJob = cut.processJob("S001");
 
@@ -124,7 +124,6 @@ class JobProcessingServiceTest {
 
     private Sponsor createSponsor() {
         Sponsor sponsor = new Sponsor();
-        sponsor.setId(Long.valueOf(random.nextInt()));
         sponsor.setOrgName("Hogwarts School of Wizardry");
         sponsor.setLegalName("Hogwarts School of Wizardry LLC");
         sponsor.setHpmsId(random.nextInt());
@@ -133,7 +132,6 @@ class JobProcessingServiceTest {
 
     private User createUser(Sponsor sponsor) {
         User user = new User();
-        user.setId(Long.valueOf(random.nextInt()));
         user.setUserName("Harry_Potter");
         user.setFirstName("Harry");
         user.setLastName("Potter");
@@ -146,7 +144,6 @@ class JobProcessingServiceTest {
     private Contract createContract(Sponsor sponsor) {
         final int anInt = random.nextInt(299);
         Contract contract = new Contract();
-        contract.setId(Long.valueOf(anInt));
         contract.setContractName("CONTRACT_0000" + anInt);
         contract.setContractNumber("CONTRACT_0000" + anInt);
         contract.setAttestedOn(OffsetDateTime.now().minusDays(10));
@@ -158,7 +155,6 @@ class JobProcessingServiceTest {
 
     private Job createJob(User user) {
         Job job = new Job();
-        job.setId(Long.valueOf(random.nextInt()));
         job.setJobUuid("S001");
         job.setStatus(JobStatus.SUBMITTED);
         job.setStatusMessage("0%");
