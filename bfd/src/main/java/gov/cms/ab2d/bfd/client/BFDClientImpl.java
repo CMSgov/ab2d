@@ -12,8 +12,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.stereotype.Component;
 
-import static java.lang.String.format;
-
 /**
  * Credits: most of the code in this class has been copied over from https://github
  * .com/CMSgov/dpc-app
