@@ -51,11 +51,4 @@
             <version>${mockserver.version}</version>
         </dependency>
     </dependencies>
-
-    <build>
-        <plugins>
-        </plugins>
-    </build>
-
-
 </project>

@@ -78,6 +78,10 @@
                 <version>${jacoco.version}</version>
                 <executions>
                     <execution>
+                        <id>jacoco-check</id>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
                         <configuration>
                             <excludes>
                                 <!-- These are reporting false positives that are already being tested elsewhere -->

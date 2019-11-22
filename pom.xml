@@ -134,10 +134,6 @@
                                     </limits>
                                 </rule>
                             </rules>
-                            <excludes>
-                                <!-- These are reporting false positives that are already being tested elsewhere -->
-                                <exclude>**/gov/cms/ab2d/api/SpringBootApp.java</exclude>
-                            </excludes>
                         </configuration>
                     </execution>
                 </executions>

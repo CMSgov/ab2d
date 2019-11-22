@@ -61,6 +61,10 @@
                 <version>${jacoco.version}</version>
                 <executions>
                     <execution>
+                        <id>jacoco-check</id>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
                         <configuration>
                             <excludes>
                                 <!-- exclude the bluebutton package from coverage as it only has a stub -->
@@ -72,6 +76,5 @@
             </plugin>
         </plugins>
     </build>
-
 
 </project>
