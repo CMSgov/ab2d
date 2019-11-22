@@ -55,7 +55,7 @@ public class WorkerServiceTest {
 
         // There is a 5 second sleep in the WorkerService.
         // So if the result for two jobs comes before 10 seconds, it implies they were not processed sequentially
-        Thread.sleep(8000L);
+        Thread.sleep(10000L);
 
         final Job processedJob1 = jobRepository.findByJobUuid(submittedJob1.getJobUuid());
         checkResult(processedJob1);
