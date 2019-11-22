@@ -3,6 +3,7 @@ package gov.cms.ab2d.worker.service;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.JobOutput;
+import gov.cms.ab2d.common.model.JobStatus;
 import gov.cms.ab2d.common.model.Sponsor;
 import gov.cms.ab2d.common.repository.JobOutputRepository;
 import gov.cms.ab2d.common.repository.JobRepository;
@@ -81,20 +82,28 @@ public class JobProcessingServiceImpl implements JobProcessingService {
         final List<Contract> attestedContracts = getAggregatedAttestedContracts(sponsor);
         log.info("Job [{}] has [{}] attested contracts", job.getJobUuid(), attestedContracts.size());
 
+        try {
+            final Path outputDirPath = Paths.get(efsMount, job.getJobUuid());
+            final Path outputDir = fileService.createDirectory(outputDirPath);
 
-        final Path outputDirPath = Paths.get(efsMount, job.getJobUuid());
-        final Path outputDir = fileService.createDirectory(outputDirPath);
+            for (Contract contract : attestedContracts) {
+                log.info("Job [{}] - contract [{}] ", job.getJobUuid(), contract.getContractNumber());
 
-        for (Contract contract : attestedContracts) {
-            log.info("Job [{}] - contract [{}] ", job.getJobUuid(), contract.getContractNumber());
+                var jobOutputs = processContract(outputDir, contract);
 
-            var jobOutputs = processContract(outputDir, contract);
+                jobOutputs.forEach(jobOutput -> job.addJobOutput(jobOutput));
+                jobOutputRepository.saveAll(jobOutputs);
+            }
 
-            jobOutputs.forEach(jobOutput -> job.addJobOutput(jobOutput));
-            jobOutputRepository.saveAll(jobOutputs);
+            completeJob(job);
+
+        } catch (Exception e) {
+            job.setStatus(JobStatus.FAILED);
+            job.setStatusMessage(e.getMessage());
+            jobRepository.save(job);
+            log.info("Job: [{}] FAILED", job.getId());
         }
 
-        completeJob(job);
         return job;
     }
 
