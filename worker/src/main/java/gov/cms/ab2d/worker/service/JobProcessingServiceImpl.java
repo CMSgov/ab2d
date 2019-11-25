@@ -75,7 +75,7 @@ public class JobProcessingServiceImpl implements JobProcessingService {
     public Job processJob(final String jobId) {
 
         final Job job = jobRepository.findByJobUuid(jobId);
-        log.info("Found job : {} - {}", job.getId(), job.getJobUuid());
+        log.info("Found job : {}", job.getJobUuid());
 
         final Sponsor sponsor = job.getUser().getSponsor();
 
@@ -100,8 +100,9 @@ public class JobProcessingServiceImpl implements JobProcessingService {
         } catch (Exception e) {
             job.setStatus(JobStatus.FAILED);
             job.setStatusMessage(e.getMessage());
+            job.setCompletedAt(OffsetDateTime.now());
             jobRepository.save(job);
-            log.info("Job: [{}] FAILED", job.getId());
+            log.info("Job: [{}] FAILED", job.getJobUuid());
         }
 
         return job;
@@ -201,9 +202,10 @@ public class JobProcessingServiceImpl implements JobProcessingService {
         job.setStatus(SUCCESSFUL);
         job.setStatusMessage("100%");
         job.setExpiresAt(OffsetDateTime.now().plusDays(1));
+        job.setCompletedAt(OffsetDateTime.now());
 
         jobRepository.save(job);
-        log.info("Job: [{}] is DONE", job.getId());
+        log.info("Job: [{}] is DONE", job.getJobUuid());
     }
 
     private void sleep() {

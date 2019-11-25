@@ -66,6 +66,18 @@
                             <goal>check</goal>
                         </goals>
                         <configuration>
+                            <rules>
+                                <rule>
+                                    <element>BUNDLE</element>
+                                    <limits>
+                                        <limit>
+                                            <counter>LINE</counter>
+                                            <value>COVEREDRATIO</value>
+                                            <minimum>83%</minimum>
+                                        </limit>
+                                    </limits>
+                                </rule>
+                            </rules>
                             <excludes>
                                 <exclude>**/gov/cms/ab2d/worker/SpringBootApp.java</exclude>
                                 <!-- exclude the bluebutton package from coverage as it only has a stub -->
