@@ -11,6 +11,7 @@ import org.hamcrest.core.Is;
 import org.hl7.fhir.dstu3.model.DateTimeType;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,6 +25,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.result.MockMvcResultHandlers;
+import org.testcontainers.containers.PostgreSQLContainer;
 
 import java.io.File;
 import java.io.InputStream;
@@ -66,6 +68,9 @@ public class BulkDataAccessAPIIntegrationTests {
     @Value("${efs.mount}")
     private String tmpJobLocation;
 
+    @ClassRule
+    public static PostgreSQLContainer postgreSQLContainer = AB2DPostgresqlContainer.getInstance();
+
     private static final String PATIENT_EXPORT_PATH = "/Patient/$export";
 
     @Before
@@ -84,8 +89,6 @@ public class BulkDataAccessAPIIntegrationTests {
         user.setSponsor(sponsor);
         user.setUserName("anonymousUser");
         userRepository.saveAndFlush(user);
-
-
     }
 
 
