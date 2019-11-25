@@ -479,7 +479,7 @@
       CREATE TABLE user_account
       (
           id                  BIGINT              NOT NULL,
-          user_name           VARCHAR(64)         NOT NULL,
+          username           VARCHAR(64)         NOT NULL,
           first_name          VARCHAR(64),
           last_name           VARCHAR(64),
           email               VARCHAR(255),
@@ -488,7 +488,7 @@
       );
       
       ALTER TABLE user_account ADD CONSTRAINT "pk_user_account" PRIMARY KEY (id);
-      ALTER TABLE user_account ADD CONSTRAINT "uc_user_account_user_name" UNIQUE (user_name);
+      ALTER TABLE user_account ADD CONSTRAINT "uc_user_account_username" UNIQUE (username);
       ALTER TABLE user_account ADD CONSTRAINT "uc_user_account_email" UNIQUE (email);
       ALTER TABLE user_account ADD CONSTRAINT "fk_user_account_to_sponsor"  FOREIGN KEY (sponsor_id) REFERENCES sponsor (id);
       

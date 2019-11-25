@@ -81,7 +81,7 @@ public class WorkerServiceTest {
     private User createUser() {
         final User user = new User();
         user.setId((long) getIntRandom());
-        user.setUserName("testuser" + getIntRandom());
+        user.setUsername("testuser" + getIntRandom());
         user.setSponsor(createSponsor());
         user.setEnabled(true);
         return userRepository.save(user);

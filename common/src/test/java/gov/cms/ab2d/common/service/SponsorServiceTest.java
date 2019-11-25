@@ -3,7 +3,10 @@ package gov.cms.ab2d.common.service;
 import gov.cms.ab2d.common.SpringBootApp;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.Sponsor;
+import gov.cms.ab2d.common.repository.SponsorRepository;
+import gov.cms.ab2d.common.repository.UserRepository;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,9 +25,20 @@ public class SponsorServiceTest {
     @Autowired
     private SponsorService sponsorService;
 
-
     @Autowired
     private ContractService contractService;
+
+    @Autowired
+    private SponsorRepository sponsorRepository;
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Before
+    public void cleanup() {
+        userRepository.deleteAll();
+        sponsorRepository.deleteAll();
+    }
 
 
     @Test
