@@ -122,6 +122,10 @@
                             <goal>check</goal>
                         </goals>
                         <configuration>
+                            <excludes combine.children="append">
+                                <!-- These are reporting false positives that are already being tested elsewhere -->
+                                <exclude>**/SpringBootApp.java</exclude>
+                            </excludes>
                             <rules>
                                 <rule>
                                     <element>BUNDLE</element>
