@@ -132,7 +132,7 @@ class JobProcessingServiceTest {
 
     private User createUser(Sponsor sponsor) {
         User user = new User();
-        user.setUserName("Harry_Potter");
+        user.setUsername("Harry_Potter");
         user.setFirstName("Harry");
         user.setLastName("Potter");
         user.setEmail("harry_potter@hogwarts.com");

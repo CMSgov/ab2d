@@ -11,10 +11,11 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 
+import static gov.cms.ab2d.api.util.Constants.ADMIN_PREFIX;
 import static gov.cms.ab2d.api.util.Constants.API_PREFIX;
 
 @RestController
-@RequestMapping(path = API_PREFIX, produces = "application/json")
+@RequestMapping(path = API_PREFIX + ADMIN_PREFIX, produces = "application/json")
 public class AdminAPI {
 
     @Autowired

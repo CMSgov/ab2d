@@ -71,7 +71,7 @@ public class JobServiceTest {
         User user = new User();
         user.setEnabled(true);
         user.setSponsor(sponsor);
-        user.setUserName("example@example.com");
+        user.setUsername("example@example.com");
         userRepository.saveAndFlush(user);
 
         SecurityContextHolder.getContext().setAuthentication(
@@ -89,7 +89,7 @@ public class JobServiceTest {
         assertThat(job.getId()).isNotNull();
         assertThat(job.getJobUuid()).isNotNull();
         assertEquals(job.getProgress(), Integer.valueOf(0));
-        assertEquals(job.getUser(), userRepository.findByUserName("example@example.com"));
+        assertEquals(job.getUser(), userRepository.findByUsername("example@example.com"));
         assertEquals(job.getResourceTypes(), "ExplanationOfBenefits");
         assertEquals(job.getRequestUrl(), "http://localhost:8080");
         assertEquals(job.getStatusMessage(), INITIAL_JOB_STATUS_MESSAGE);
