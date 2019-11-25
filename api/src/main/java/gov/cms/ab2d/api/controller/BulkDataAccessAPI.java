@@ -172,7 +172,7 @@ public class BulkDataAccessAPI {
                 resp.setError(job.getJobOutputs().stream().filter(o -> o.isError()).map(o -> new JobCompletedResponse.Output(o.getFhirResourceType(), getUrlPath(job, o.getFilePath()))).collect(Collectors.toList()));
                 return new ResponseEntity<>(new ObjectMapper().valueToTree(resp), responseHeaders, HttpStatus.OK);
             case SUBMITTED:
-                IN_PROGRESS:
+            case IN_PROGRESS:
                 responseHeaders.add("X-Progress", job.getProgress() + "% complete");
                 responseHeaders.add("Retry-After", Integer.toString(retryAfterDelay));
                 return new ResponseEntity<>(null, responseHeaders, HttpStatus.ACCEPTED);
