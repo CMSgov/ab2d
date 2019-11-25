@@ -19,6 +19,8 @@
      * [Integrating with Global Event Rules](#integrating-with-global-event-rules)
      * [Integrating with a PagerDuty Service](#integrating-with-a-pagerduty-service)
      * [Configure AWS for the PagerDuty integration](#configure-aws-for-the-pagerduty-integration)
+1. [Appendix M: Evaluate New Relic](#appendix-m-evaluate-new-relic)
+   * [Set up a New Relic free trial](#set-up-a-new-relic-free-trial)
 
 ## Appendix A: Destroy complete environment
 
@@ -1783,3 +1785,278 @@
 1. Note that if desired you can add additional notifications by select **Add notofication**
 
 1. If you made any changes, select **Update alarm**; otherwise, select **Cancel**
+
+## Appendix M: Evaluate New Relic
+
+### Set up a New Relic free trial
+
+1. Open Chrome
+
+1. Enter the following in the address bar
+
+   > https://newrelic.com
+
+1. Select **Sign Up**
+
+1. Enter the following information
+
+   - **First Name:** {your first name}
+
+   - **Last Name:** {your last name}
+
+   - **Your Business Email Address:** {your semanticbits email}
+
+   - **Retype Your Business Email Address:** {your semanticbits email}
+
+   - **Your Phone Number:** {your phone number}
+
+   - **Select Your Country:** {your country}
+
+   - **Select Your State:** {your state (if displayed)}
+
+   - **What's Your Postal Code:** {your postal code (if displayed)}
+
+   - **Where do you want your data house:** {United States|European Union}
+
+   - **Your company:** SemanticBits
+
+   - **Your role:** {your role}
+
+   - **Number of Employees:** 101-1,000
+
+   - **Number of App Servers:** 3-10 Servers
+
+   - **I'm not a robot:** checked
+
+   - **I agree to the Terms and Service:** checked
+
+1. Select **Sign Up for New Relic**
+
+1. Wait for email from New Relic
+
+1. Select **Verify your email** in the email from New Relic
+
+1. Set your password
+
+   - **Password:** {your password}
+
+   - **Password confirmation:** {your password}
+
+1. Select **Update**
+
+1. Log into New Relic
+
+   - **Email:** {your semanticbits email}
+
+   - **Password:** {your password}
+
+1. Select **Sign in**
+
+1. Select **New Relic Infrastructure**
+
+1. Select **Start my 30 day free trial**
+
+### Enable an integration with ECS
+
+1. Log on to New Relic
+
+1. Select the **Infrastructure** tab
+
+1. Select the **AWS** tab
+
+1. Select **Amazon Web Services**
+
+1. Note the AWS services that are included with a "New Relic Infrastructure" subscription
+
+   - API Gateway
+
+   - AppSync
+
+   - Athena
+
+   - AutoScaling
+
+   - Billing
+
+   - CloudFront
+
+   - CloudTrail
+
+   - Direct Connect
+
+   - DocumentDB
+
+   - DynamoDB
+
+   - EBS
+
+   - EC2
+
+   - ECS
+
+   - EFS
+
+   - Elastic Beanstalk
+
+   - ElastiCache
+
+   - Elasticsearch Service
+
+   - ELB
+
+   - ELB (Classic)
+
+   - EMR
+
+   - Glue
+
+   - Health
+
+   - IAM
+
+   - IoT
+
+   - Kinesis Firehose
+
+   - Kineses Streams
+
+   - Lambda
+
+   - Managed Kafka
+
+   - MQ
+
+   - QLDB
+
+   - RDS
+
+   - Redshift
+
+   - Route 53
+
+   - S3
+
+   - SES
+
+   - SNS
+
+   - SQS
+
+   - Step Functions
+
+   - Trusted Advisor
+
+   - VPC
+
+   - WAF
+
+1. Select **ECS**
+
+1. Create a role and establish trust
+
+   1. Note the  New Relic provided AWS account id
+
+   1. Log on to AWS
+
+   1. Select IAM
+
+   1. Select **Roles** in the leftmost panel
+
+   1. Select **Create role**
+
+   1. Select **Another AWS account**
+
+   1. Enter the New Relic provided "Account ID" in the **Account ID** text box
+
+   1. Check **Require external ID**
+
+   1. Enter the New Relic provided "External ID" in the **Account ID** text box
+
+   1. Select **Next: Permissions**
+
+   1. Return to New Relic
+
+   1. Select **Next** on the "Step 1: Create a role and establish trust" page
+
+ 1. Attach policy
+
+    1. Return to AWS
+
+    1. Type the following in the **Search** text box on the "Attach permissions policies" page
+
+       ```
+       ReadOnlyAccess
+       ```
+
+    1. Check **ReadOnlyAccess** from the search results
+
+    1. Select **Next: Tags**
+
+    1. Select **Next: Review**
+
+    1. Return to New Relic
+
+    1. Select **Next** on the "Step 2: Attach policy" page
+
+ 1. Set role name and review
+
+    1. Return to AWS
+
+    1. Type the following in the **Role name** text box
+
+       ```
+       Ab2dNewRelicInfrastructureIntegrations
+       ```
+
+    1. Select **Create role**
+
+    1. Select **Roles** in the leftmost panel
+
+    1. Find and select the newly created role
+
+       ```
+       Ab2dNewRelicInfrastructureIntegrations
+       ```
+
+    1. Copy the ARN for the role
+
+       *Format:*
+       
+       ```
+       arn:aws:iam::{your aws account}:role/Ab2dNewRelicInfrastructureIntegrations
+       ```
+
+    1. Return to New Relic
+
+    1. Select **Next** on the "Step 3: Set role name and review" page
+
+1. Select **Next** on the "Step 4: Configure Budgets policy" page
+
+1. Enter the following on the "Step 5: Add Account Details" page
+
+   *Example for sbdemo:*
+   
+   - **AWS Account Name:** semanticbitsdemo
+
+   - **ARN:** arn:aws:iam::{your aws account}:role/Ab2dNewRelicInfrastructureIntegrations
+
+1. Select **Next** on the "Step 5: Add Account Details" page
+
+1. Uncheck **Select all**
+
+1. Check **ECS**
+
+1. Select **Next** on the "Step 6: Select Services" page
+
+1. Note the following message is displayed
+
+   ```
+   We're setting up your integration
+
+   New Relic is retrieving monitoring data from AWS account semanticbitsdemo and
+   configuring AWS dashboards in New Relic Insights. This may take up to 5 minutes.
+   ```
+
+1. Select **OK** on the "We're setting up your integration" page
+
+1. Select **ECS dashboard**
