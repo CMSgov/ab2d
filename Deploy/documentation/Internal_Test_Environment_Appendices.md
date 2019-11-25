@@ -21,6 +21,9 @@
      * [Configure AWS for the PagerDuty integration](#configure-aws-for-the-pagerduty-integration)
 1. [Appendix M: Evaluate New Relic](#appendix-m-evaluate-new-relic)
    * [Set up a New Relic free trial](#set-up-a-new-relic-free-trial)
+   * [Enable an integration with ECS](#enable-an-integration-with-ecs)
+   * [Modify integration to include additional services](#modify-integration-to-include-additional-services)
+   * [Delete the integration from New Relic](#delete-the-integration-from-new-relic)
 
 ## Appendix A: Destroy complete environment
 
@@ -2060,3 +2063,75 @@
 1. Select **OK** on the "We're setting up your integration" page
 
 1. Select **ECS dashboard**
+
+### Modify integration to include additional services
+
+1. Log on to New Relic
+
+1. Select the **Infrastructure** tab
+
+1. Select the **AWS** tab
+
+1. Note the current services that are displayed
+
+   - ECS
+
+1. Select **Manage Services**
+
+1. Check additional desired services that are deployed
+
+   *Example:*
+
+   - AutoScaling
+   
+   - CloudTrail
+
+   - EBS
+   
+   - EC2
+
+   - EFS
+
+   - ELB
+
+   - IAM
+
+   - RDS
+
+   - S3
+
+   - VPC
+
+   - WAF
+
+1. Select **Save...**
+
+1. Select the **AWS** tab
+
+1. Note that each service now has a row with dashboards, etc.
+
+1. Configure a service to display information about only one region
+
+   1. Note that as an example whe will configure VPC
+
+   1. Select **Configure** within the "VPC" row
+
+   1. Switch **Limit to AWS regions** to "ON"
+
+   1. Check **us-east-1**
+
+   1. Select **Submit**
+
+### Delete the integration from New Relic
+
+1. Log on to New Relic
+
+1. Select the **Infrastructure** tab
+
+1. Select the **AWS** tab
+
+1. Select **Manage Services**
+
+1. Select **Unlink this account**
+
+1. Select **Unlink semanticbitsdemo**
