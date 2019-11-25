@@ -24,6 +24,9 @@
    * [Enable an integration with ECS](#enable-an-integration-with-ecs)
    * [Modify integration to include additional services](#modify-integration-to-include-additional-services)
    * [Delete the integration from New Relic](#delete-the-integration-from-new-relic)
+   * [Note CMS New Relic Confluence documentation](#note-cms-new-relic-confluence-documentation)
+1. [Appendix N: Evaluate Splunk](#appendix-n-evaluate-splunk)
+   * [Note CMS Splunk Confluence documentation](#note-cms-splunk-confluence-documentation)
 
 ## Appendix A: Destroy complete environment
 
@@ -2135,3 +2138,29 @@
 1. Select **Unlink this account**
 
 1. Select **Unlink semanticbitsdemo**
+
+## Note CMS New Relic Confluence documentation
+
+1. Note the "New Relic Home" CMS Confluence page
+
+   > https://confluence.cms.gov/display/NR/New+Relic+Home
+
+1. Note the "Need a New Relic account" CMS Confluence page
+
+   > https://confluence.cms.gov/pages/viewpage.action?pageId=124456202
+
+## Appendix N: Evaluate Splunk
+
+### Note CMS Splunk Confluence documentation
+
+1. Note the "Splunk Onboarding" CMS Confluence page
+
+   > https://confluence.cms.gov/display/MCM2/Splunk+Onboarding
+
+1. Note the "Splunk Knowledge Base" CMS Confluence page
+
+   > https://confluence.cms.gov/display/CETS/Splunk+Knowledge+Base
+
+1. Note the "CMS Splunk Topology" CMS Confluence page
+
+   > https://confluence.cms.gov/display/CETS/CMS+Splunk+Topology
