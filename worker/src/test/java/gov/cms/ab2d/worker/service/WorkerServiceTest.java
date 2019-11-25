@@ -88,10 +88,17 @@ public class WorkerServiceTest {
     }
 
     private Sponsor createSponsor() {
+        final Sponsor parentSponsor = new Sponsor();
+        parentSponsor.setId((long) getIntRandom());
+        parentSponsor.setHpmsId(getIntRandom());
+        parentSponsor.setOrgName("BCBS - PARENT");
+        sponsorRepository.save(parentSponsor);
+
         final Sponsor sponsor = new Sponsor();
         sponsor.setId((long) getIntRandom());
         sponsor.setHpmsId(getIntRandom());
         sponsor.setOrgName("BCBS");
+        sponsor.setParent(parentSponsor);
         return sponsorRepository.save(sponsor);
     }
 

@@ -16,8 +16,8 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 
 import java.io.IOException;
 
-import static gov.cms.ab2d.api.util.FHIRUtil.getErrorOutcome;
-import static gov.cms.ab2d.api.util.FHIRUtil.outcomeToJSON;
+import static gov.cms.ab2d.common.util.FHIRUtil.getErrorOutcome;
+import static gov.cms.ab2d.common.util.FHIRUtil.outcomeToJSON;
 
 @ControllerAdvice
 class ErrorHandler extends ResponseEntityExceptionHandler {

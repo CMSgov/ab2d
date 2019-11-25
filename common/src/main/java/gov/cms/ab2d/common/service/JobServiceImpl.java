@@ -82,7 +82,7 @@ public class JobServiceImpl implements JobService {
 
         // Make sure that there is a path that matches a job output for the job they are requesting
         boolean jobOutputMatchesPath = false;
-        for (JobOutput jobOutput : job.getJobOutput()) {
+        for (JobOutput jobOutput : job.getJobOutputs()) {
             if (jobOutput.getFilePath().equals(fileName)) {
                 jobOutputMatchesPath = true;
                 break;

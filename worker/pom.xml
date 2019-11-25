@@ -67,8 +67,9 @@
                         </goals>
                         <configuration>
                             <excludes>
+                                <exclude>**/gov/cms/ab2d/worker/SpringBootApp.java</exclude>
                                 <!-- exclude the bluebutton package from coverage as it only has a stub -->
-                                <exclude>**/gov/cms/ab2d/worker/adapter/bluebutton/*</exclude>
+                                <exclude>**/gov/cms/ab2d/worker/adapter/bluebutton/**</exclude>
                             </excludes>
                         </configuration>
                     </execution>
