@@ -206,11 +206,6 @@ public class JobProcessingServiceImpl implements JobProcessingService {
         log.info("Job: [{}] is DONE", job.getId());
     }
 
-
-    private Path getEfsMountPath() {
-        return Paths.get(efsMount);
-    }
-
     private void sleep() {
         try {
             Thread.sleep(100);
