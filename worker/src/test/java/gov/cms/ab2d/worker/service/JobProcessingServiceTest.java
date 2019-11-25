@@ -90,6 +90,7 @@ class JobProcessingServiceTest {
         assertThat(processedJob.getStatus(), is(JobStatus.SUCCESSFUL));
         assertThat(processedJob.getStatusMessage(), is("100%"));
         assertThat(processedJob.getExpiresAt(), notNullValue());
+        assertThat(processedJob.getCompletedAt(), notNullValue());
     }
 
     @Test
@@ -120,6 +121,7 @@ class JobProcessingServiceTest {
         assertThat(processedJob.getStatus(), is(JobStatus.SUCCESSFUL));
         assertThat(processedJob.getStatusMessage(), is("100%"));
         assertThat(processedJob.getExpiresAt(), notNullValue());
+        assertThat(processedJob.getCompletedAt(), notNullValue());
     }
 
     private Sponsor createSponsor() {
