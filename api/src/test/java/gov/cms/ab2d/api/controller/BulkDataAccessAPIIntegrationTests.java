@@ -250,10 +250,10 @@ public class BulkDataAccessAPIIntegrationTests {
     }
 
     @Test
-    public void testGetStatusWhileInProgress() throws Exception {
+    public void testGetStatusWhileSubmitted() throws Exception {
         MvcResult mvcResult = this.mockMvc.perform(
                 get(API_PREFIX + FHIR_PREFIX + PATIENT_EXPORT_PATH).contentType(MediaType.APPLICATION_JSON)
-                .header("Authorization", "Bearer " + token))
+                        .header("Authorization", "Bearer " + token))
                 .andReturn();
         String statusUrl = mvcResult.getResponse().getHeader("Content-Location");
 
@@ -261,6 +261,34 @@ public class BulkDataAccessAPIIntegrationTests {
                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(202))
                 .andExpect(header().string("X-Progress", "0% complete"))
+                .andExpect(header().string("Retry-After", "30"));
+
+        // Immediate repeat of status check should produce 429.
+        this.mockMvc.perform(get(statusUrl)
+                .contentType(MediaType.APPLICATION_JSON)
+                .header("Authorization", "Bearer " + token))
+                .andExpect(status().is(429))
+                .andExpect(header().string("Retry-After", "30"))
+                .andExpect(header().doesNotExist("X-Progress"));
+    }
+
+    @Test
+    public void testGetStatusWhileInProgress() throws Exception {
+        MvcResult mvcResult = this.mockMvc.perform(
+                get(API_PREFIX + FHIR_PREFIX + PATIENT_EXPORT_PATH).contentType(MediaType.APPLICATION_JSON)
+                .header("Authorization", "Bearer " + token))
+                .andReturn();
+        String statusUrl = mvcResult.getResponse().getHeader("Content-Location");
+
+        Job job = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
+        job.setProgress(30);
+        job.setStatus(JobStatus.IN_PROGRESS);
+        jobRepository.save(job);
+
+        this.mockMvc.perform(get(statusUrl).contentType(MediaType.APPLICATION_JSON)
+                .header("Authorization", "Bearer " + token))
+                .andExpect(status().is(202))
+                .andExpect(header().string("X-Progress", "30% complete"))
                 .andExpect(header().string("Retry-After", "30"));
 
         // Immediate repeat of status check should produce 429.
