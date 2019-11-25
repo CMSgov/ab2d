@@ -1523,13 +1523,23 @@
    operating.
    ```
 
-1. View PagerDuty integration guide for CloudWatch
+1. Log on to your PagerDuty account
 
-   1. Sign in with your new credentials
+   1. Open Chrome
+
+   1. Enter the following in the address bar
+
+      > https://{lowercase first name}-{lowercase last name}.pagerduty.com
+
+   1. Enter the following
    
       - **Email:** {your semanticbits email)
    
       - **Password:** {your desired password}
+
+   1. Select **Sign In**
+
+1. View PagerDuty integration guide for CloudWatch
    
    1. Select the ![Apps](images/pager-duty-apps-icon.png) icon
    
@@ -1561,13 +1571,59 @@
 
 #### Integrating with Global Event Rules
 
-> *** TO DO ***
+1. Log on to your PagerDuty account
+
+   1. Open Chrome
+
+   1. Enter the following in the address bar
+
+      > https://{lowercase first name}-{lowercase last name}.pagerduty.com
+
+   1. Enter the following
+   
+      - **Email:** {your semanticbits email)
+   
+      - **Password:** {your desired password}
+
+   1. Select **Sign In**
+
+1. Create "CloudWatch Dev" Global Event Rules
+
+   1. Select the **Configuration** menu
+
+   1. Select **Event Rules**
+
+   1. Note the following information
+
+      - **Integration Key:** {integration key}
+
+   1. Note that you will use the following "Integration URL" when configuring AWS
+
+      ```
+      https://events.pagerduty.com/x-ere/{integration key}
+      ```
 
 1. Jump to the following section
 
    [Configure AWS for the PagerDuty integration](#configure-aws-for-the-pagerduty-integration)
 
 #### Integrating with a PagerDuty Service
+
+1. Log on to your PagerDuty account
+
+   1. Open Chrome
+
+   1. Enter the following in the address bar
+
+      > https://{lowercase first name}-{lowercase last name}.pagerduty.com
+
+   1. Enter the following
+   
+      - **Email:** {your semanticbits email)
+   
+      - **Password:** {your desired password}
+
+   1. Select **Sign In**
 
 1. Create a "CloudWatch Dev" PagerDuty Service
 
@@ -1621,6 +1677,12 @@
       - **Derive name from:** Default
    
    1. Copy and save the **Integration URL**
+
+   1. Note that you will use the following "Integration URL" when configuring AWS
+
+      ```
+      https://events.pagerduty.com/integration/{integration key}/enqueue
+      ```
 
 1. Jump to the following section
 
