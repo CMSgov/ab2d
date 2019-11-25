@@ -191,7 +191,7 @@ public class JobProcessingServiceImpl implements JobProcessingService {
 
     private JobOutput createJobOutput(Path outputFile, boolean isError) {
         JobOutput jobOutput = new JobOutput();
-        jobOutput.setFilePath(getEfsMountPath().relativize(outputFile).toString());
+        jobOutput.setFilePath(outputFile.getFileName().toString());
         jobOutput.setFhirResourceType("ExplanationOfBenefits");
         jobOutput.setError(isError);
         return jobOutput;
