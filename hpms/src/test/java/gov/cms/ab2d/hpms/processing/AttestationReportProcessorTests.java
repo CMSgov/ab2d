@@ -5,6 +5,8 @@ import gov.cms.ab2d.common.model.Sponsor;
 import gov.cms.ab2d.common.repository.ContractRepository;
 import gov.cms.ab2d.common.repository.SponsorRepository;
 import gov.cms.ab2d.common.repository.UserRepository;
+import gov.cms.ab2d.common.repository.JobRepository;
+import gov.cms.ab2d.common.repository.RoleRepository;
 import gov.cms.ab2d.common.service.SponsorService;
 import gov.cms.ab2d.hpms.SpringBootApp;
 import org.junit.Assert;
@@ -38,13 +40,28 @@ public class AttestationReportProcessorTests {
     private ContractRepository contractRepository;
 
     @Autowired
-    private SponsorService sponsorService;
-
-    @Autowired
     private SponsorRepository sponsorRepository;
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private RoleRepository roleRepository;
+
+    @Autowired
+    private JobRepository jobRepository;
+
+    @Autowired
+    private SponsorService sponsorService;
+
+    @Before
+    public void cleanup() {
+        contractRepository.deleteAll();
+        jobRepository.deleteAll();
+        userRepository.deleteAll();
+        roleRepository.deleteAll();
+        sponsorRepository.deleteAll();
+    }
 
     // There has to be an existing contract in order for this report to be able to process data
     private void createData(String contractId, String contractName, String sponsorName, int hpmsId) {

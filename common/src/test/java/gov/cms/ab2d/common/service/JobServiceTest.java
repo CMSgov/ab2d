@@ -71,7 +71,7 @@ public class JobServiceTest {
         User user = new User();
         user.setEnabled(true);
         user.setSponsor(sponsor);
-        user.setUserName("example@example.com");
+        user.setUsername("example@example.com");
         userRepository.saveAndFlush(user);
 
         SecurityContextHolder.getContext().setAuthentication(
@@ -89,12 +89,12 @@ public class JobServiceTest {
         assertThat(job.getId()).isNotNull();
         assertThat(job.getJobUuid()).isNotNull();
         assertEquals(job.getProgress(), Integer.valueOf(0));
-        assertEquals(job.getUser(), userRepository.findByUserName("example@example.com"));
+        assertEquals(job.getUser(), userRepository.findByUsername("example@example.com"));
         assertEquals(job.getResourceTypes(), "ExplanationOfBenefits");
         assertEquals(job.getRequestUrl(), "http://localhost:8080");
         assertEquals(job.getStatusMessage(), INITIAL_JOB_STATUS_MESSAGE);
         assertEquals(job.getStatus(), JobStatus.SUBMITTED);
-        assertEquals(job.getJobOutput().size(), 0);
+        assertEquals(job.getJobOutputs().size(), 0);
         assertEquals(job.getLastPollTime(), null);
         assertEquals(job.getExpiresAt(), null);
         assertThat(job.getJobUuid()).matches(
@@ -199,7 +199,7 @@ public class JobServiceTest {
         errorJobOutput.setJob(job);
 
         List output = List.of(jobOutput, errorJobOutput);
-        job.setJobOutput(output);
+        job.setJobOutputs(output);
 
         Job updatedJob = jobService.updateJob(job);
         Assert.assertEquals(Integer.valueOf(100), updatedJob.getProgress());
@@ -213,12 +213,12 @@ public class JobServiceTest {
         Assert.assertEquals("Pending", updatedJob.getStatusMessage());
         Assert.assertEquals(now, updatedJob.getExpiresAt());
 
-        JobOutput updatedOutput = updatedJob.getJobOutput().get(0);
+        JobOutput updatedOutput = updatedJob.getJobOutputs().get(0);
         Assert.assertEquals(false, updatedOutput.isError());
         Assert.assertEquals("ExplanationOfBenefits", updatedOutput.getFhirResourceType());
         Assert.assertEquals("file.ndjson", updatedOutput.getFilePath());
 
-        JobOutput updatedErrorOutput = updatedJob.getJobOutput().get(1);
+        JobOutput updatedErrorOutput = updatedJob.getJobOutputs().get(1);
         Assert.assertEquals(true, updatedErrorOutput.isError());
         Assert.assertEquals(OPERATION_OUTCOME, updatedErrorOutput.getFhirResourceType());
         Assert.assertEquals("error.ndjson", updatedErrorOutput.getFilePath());
@@ -279,7 +279,7 @@ public class JobServiceTest {
         errorJobOutput.setJob(job);
 
         List output = List.of(jobOutput, errorJobOutput);
-        job.setJobOutput(output);
+        job.setJobOutputs(output);
 
         return jobService.updateJob(job);
     }

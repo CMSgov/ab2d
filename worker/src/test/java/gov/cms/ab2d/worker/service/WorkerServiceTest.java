@@ -81,17 +81,24 @@ public class WorkerServiceTest {
     private User createUser() {
         final User user = new User();
         user.setId((long) getIntRandom());
-        user.setUserName("testuser" + getIntRandom());
+        user.setUsername("testuser" + getIntRandom());
         user.setSponsor(createSponsor());
         user.setEnabled(true);
         return userRepository.save(user);
     }
 
     private Sponsor createSponsor() {
+        final Sponsor parentSponsor = new Sponsor();
+        parentSponsor.setId((long) getIntRandom());
+        parentSponsor.setHpmsId(getIntRandom());
+        parentSponsor.setOrgName("BCBS - PARENT");
+        sponsorRepository.save(parentSponsor);
+
         final Sponsor sponsor = new Sponsor();
         sponsor.setId((long) getIntRandom());
         sponsor.setHpmsId(getIntRandom());
         sponsor.setOrgName("BCBS");
+        sponsor.setParent(parentSponsor);
         return sponsorRepository.save(sponsor);
     }
 

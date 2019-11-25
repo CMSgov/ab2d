@@ -5,4 +5,6 @@ import gov.cms.ab2d.common.model.User;
 public interface UserService {
 
     User getCurrentUser();
+
+    User getUserByUsername(String username);
 }

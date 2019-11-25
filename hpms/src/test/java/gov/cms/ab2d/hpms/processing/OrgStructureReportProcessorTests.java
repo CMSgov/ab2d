@@ -5,6 +5,8 @@ import gov.cms.ab2d.common.model.Sponsor;
 import gov.cms.ab2d.common.repository.ContractRepository;
 import gov.cms.ab2d.common.repository.SponsorRepository;
 import gov.cms.ab2d.common.repository.UserRepository;
+import gov.cms.ab2d.common.repository.RoleRepository;
+import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.hpms.SpringBootApp;
 import lombok.Value;
 import org.junit.Assert;
@@ -34,13 +36,19 @@ public class OrgStructureReportProcessorTests {
     private ExcelReportProcessor excelReportProcessor;
 
     @Autowired
+    private ContractRepository contractRepository;
+
+    @Autowired
     private SponsorRepository sponsorRepository;
 
     @Autowired
     private UserRepository userRepository;
 
     @Autowired
-    private ContractRepository contractRepository;
+    private RoleRepository roleRepository;
+
+    @Autowired
+    private JobRepository jobRepository;
 
     @Value
     private class SponsorData {
@@ -51,9 +59,11 @@ public class OrgStructureReportProcessorTests {
     }
 
     @Before
-    public void setup() {
+    public void cleanup() {
         contractRepository.deleteAll();
+        jobRepository.deleteAll();
         userRepository.deleteAll();
+        roleRepository.deleteAll();
         sponsorRepository.deleteAll();
     }
 
