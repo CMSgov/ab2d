@@ -167,8 +167,8 @@ public class BulkDataAccessAPI {
                 resp.setTransactionTime(jobCompletedAt.toHumanDisplay());
                 resp.setRequest(job.getRequestUrl());
                 resp.setRequiresAccessToken(true);
-                resp.setOutput(job.getJobOutput().stream().filter(o -> !o.isError()).map(o -> new JobCompletedResponse.Output(o.getFhirResourceType(), getUrlPath(job, o.getFilePath()))).collect(Collectors.toList()));
-                resp.setError(job.getJobOutput().stream().filter(o -> o.isError()).map(o -> new JobCompletedResponse.Output(o.getFhirResourceType(), getUrlPath(job, o.getFilePath()))).collect(Collectors.toList()));
+                resp.setOutput(job.getJobOutputs().stream().filter(o -> !o.isError()).map(o -> new JobCompletedResponse.Output(o.getFhirResourceType(), getUrlPath(job, o.getFilePath()))).collect(Collectors.toList()));
+                resp.setError(job.getJobOutputs().stream().filter(o -> o.isError()).map(o -> new JobCompletedResponse.Output(o.getFhirResourceType(), getUrlPath(job, o.getFilePath()))).collect(Collectors.toList()));
                 return new ResponseEntity<>(new ObjectMapper().valueToTree(resp), responseHeaders, HttpStatus.OK);
             case SUBMITTED:
                 IN_PROGRESS:

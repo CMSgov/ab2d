@@ -6,5 +6,5 @@ public interface JobProcessingService {
 
     Job putJobInProgress(String jobId);
 
-    void completeJob(Job job);
+    Job processJob(String jobId);
 }
