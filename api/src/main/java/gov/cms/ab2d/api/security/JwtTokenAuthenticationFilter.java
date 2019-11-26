@@ -40,6 +40,13 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
             throws ServletException, IOException {
+        String requestUri = request.getRequestURI();
+        // These need to be here and in SecurityConfig, which uses the antMatchers with ** to do filtering
+        if (requestUri.startsWith("/swagger-ui") || requestUri.startsWith("/webjars") || requestUri.startsWith("/swagger-resources") ||
+            requestUri.startsWith("/v2/api-docs") || requestUri.startsWith("/configuration")) {
+            chain.doFilter(request, response);
+            return;
+        }
 
         String header = request.getHeader(jwtConfig.getHeader());
 

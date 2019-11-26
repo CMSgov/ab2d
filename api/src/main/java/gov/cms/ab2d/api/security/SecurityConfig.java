@@ -8,6 +8,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.builders.WebSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -47,6 +48,11 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     private int oktaReadTimeout;
 
     @Override
+    public void configure(WebSecurity web) {
+        web.ignoring().antMatchers("/swagger-ui.html", "/swagger-ui.html/**", "/configuration/**", "/swagger-resources/**", "/v2/api-docs", "/webjars/**");
+    }
+
+    @Override
     protected void configure(HttpSecurity security) throws Exception {
         security
             .csrf().disable()
@@ -54,7 +60,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
             .and()
             // Setup filter exception handling
             .addFilterBefore(filterChainExceptionHandler, LogoutFilter.class)
-            // Add a filter to validate the tokens with every request. Since class is instantiated outside of DI, need to pass autowired, and value objects to it directly
+            // Add a filter to validate the tokens with every request.
             .addFilterAfter(jwtTokenAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
             .authorizeRequests()
             .antMatchers(API_PREFIX + ADMIN_PREFIX + "/**").hasAuthority(ADMIN_ROLE)
