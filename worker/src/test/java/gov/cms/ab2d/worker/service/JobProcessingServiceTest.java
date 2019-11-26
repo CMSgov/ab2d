@@ -1,5 +1,6 @@
 package gov.cms.ab2d.worker.service;
 
+import gov.cms.ab2d.common.SpringBootApp;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.JobStatus;
@@ -14,8 +15,11 @@ import org.junit.ClassRule;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.junit4.SpringRunner;
 import org.testcontainers.containers.PostgreSQLContainer;
 
 import java.io.IOException;
@@ -28,7 +32,9 @@ import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-@SpringBootTest
+@RunWith(SpringRunner.class)
+@SpringBootTest(classes = SpringBootApp.class)
+@TestPropertySource(locations = "/application.properties")
 class JobProcessingServiceTest {
     private Random random = new Random();
 
