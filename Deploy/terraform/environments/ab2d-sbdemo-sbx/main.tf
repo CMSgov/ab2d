@@ -17,6 +17,13 @@ data "aws_db_instance" "ab2d" {
   db_instance_identifier = "ab2d"
 }
 
+data "aws_instance" "ab2d_deployment_controller" {
+  filter {
+    name   = "tag:Name"
+    values = ["ab2d-deployment-controller"]
+  }
+}
+
 data "aws_kms_key" "ab2d_kms" {
   key_id = "alias/ab2d-kms"
 }
@@ -40,10 +47,6 @@ module "efs" {
   env                 = var.env
   encryption_key_arn  = "${data.aws_kms_key.ab2d_kms.arn}"
 }
-
-#
-# TEMPORARILY COMMENTED OUT BEGIN
-#
 
 # LSH SKIP FOR NOW BEGIN
 # vpn-private-sec-group-id      = var.vpn-private-sec-group-id
@@ -119,9 +122,15 @@ module "cloudwatch" {
   autoscaling_arn         = module.api.aws_autoscaling_policy_percent_capacity_arn
   # sns_arn                 = module.sns.aws_sns_topic_CCXP-Alarms_arn
   autoscaling_name        = module.api.aws_autoscaling_group_name
-  controller_server_id    = module.api.deployment_controller_id
+  controller_server_id    = "${data.aws_instance.ab2d_deployment_controller.instance_id}"
   s3_bucket_name          = var.file_bucket_name
   db_name                 = var.db_identifier
   target_group_arn_suffix = module.api.alb_target_group_arn_suffix
   loadbalancer_arn_suffix = module.api.alb_arn_suffix
+}
+
+module "waf" {
+  source  = "../../modules/waf"
+  env     = var.env
+  alb_arn = module.api.alb_arn
 }
