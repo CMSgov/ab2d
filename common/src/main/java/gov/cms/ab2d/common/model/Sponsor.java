@@ -61,14 +61,14 @@ public class Sponsor {
 
     public List<Contract> getAggregatedAttestedContracts() {
         return parent == null
-                ? getContractsOfChildrenSponsor()
+                ? getAttestedContractsOfChildren()
                 : getAttestedContracts();
     }
 
 
-    private List<Contract> getContractsOfChildrenSponsor() {
+    private List<Contract> getAttestedContractsOfChildren() {
         return children.stream()
-                .map(child -> child.getContracts())
+                .map(child -> child.getAttestedContracts())
                 .flatMap(Collection::stream)
                 .collect(Collectors.toList());
     }
