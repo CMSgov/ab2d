@@ -7,6 +7,7 @@ import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.common.repository.RoleRepository;
 import gov.cms.ab2d.common.repository.SponsorRepository;
 import gov.cms.ab2d.common.repository.UserRepository;
+import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;

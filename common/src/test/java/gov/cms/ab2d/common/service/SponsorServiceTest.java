@@ -5,14 +5,17 @@ import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.Sponsor;
 import gov.cms.ab2d.common.repository.SponsorRepository;
 import gov.cms.ab2d.common.repository.UserRepository;
+import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
+import org.testcontainers.containers.PostgreSQLContainer;
 
 import java.time.OffsetDateTime;
 import java.util.Optional;
@@ -33,6 +36,9 @@ public class SponsorServiceTest {
 
     @Autowired
     private UserRepository userRepository;
+
+    @ClassRule
+    public static PostgreSQLContainer postgreSQLContainer = AB2DPostgresqlContainer.getInstance();
 
     @Before
     public void cleanup() {

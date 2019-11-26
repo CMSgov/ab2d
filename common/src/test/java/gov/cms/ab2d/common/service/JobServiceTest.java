@@ -5,9 +5,11 @@ import gov.cms.ab2d.common.model.*;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.common.repository.SponsorRepository;
 import gov.cms.ab2d.common.repository.UserRepository;
+import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import org.apache.commons.io.IOUtils;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,6 +21,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.transaction.TransactionSystemException;
+import org.testcontainers.containers.PostgreSQLContainer;
 
 import java.io.File;
 import java.io.IOException;
@@ -55,6 +58,9 @@ public class JobServiceTest {
 
     @Value("${efs.mount}")
     private String tmpJobLocation;
+
+    @ClassRule
+    public static PostgreSQLContainer postgreSQLContainer = AB2DPostgresqlContainer.getInstance();
 
     // Be safe and make sure nothing from another test will impact current test
     @Before

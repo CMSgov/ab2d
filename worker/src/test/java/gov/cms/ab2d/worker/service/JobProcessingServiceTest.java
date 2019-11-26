@@ -9,11 +9,14 @@ import gov.cms.ab2d.common.repository.ContractRepository;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.common.repository.SponsorRepository;
 import gov.cms.ab2d.common.repository.UserRepository;
+import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
+import org.junit.ClassRule;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.testcontainers.containers.PostgreSQLContainer;
 
 import java.io.IOException;
 import java.time.OffsetDateTime;
@@ -44,6 +47,9 @@ class JobProcessingServiceTest {
     private Sponsor sponsor;
     private User user;
     private Job job;
+
+    @ClassRule
+    public static PostgreSQLContainer postgreSQLContainer = AB2DPostgresqlContainer.getInstance();
 
     @BeforeEach
     void setUp() {

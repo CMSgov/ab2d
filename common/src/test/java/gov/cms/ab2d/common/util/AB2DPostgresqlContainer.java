@@ -3,7 +3,9 @@ package gov.cms.ab2d.common.util;
 import org.testcontainers.containers.PostgreSQLContainer;
 
 public class AB2DPostgresqlContainer extends PostgreSQLContainer<AB2DPostgresqlContainer> {
+
     private static final String IMAGE_VERSION = "postgres:11";
+
     private static AB2DPostgresqlContainer container;
 
     private AB2DPostgresqlContainer() {

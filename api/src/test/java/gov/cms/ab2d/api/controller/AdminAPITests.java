@@ -6,6 +6,7 @@ import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.Sponsor;
 import gov.cms.ab2d.common.repository.*;
 import gov.cms.ab2d.common.service.SponsorService;
+import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import org.junit.ClassRule;
 import org.junit.Before;
 import org.junit.Test;

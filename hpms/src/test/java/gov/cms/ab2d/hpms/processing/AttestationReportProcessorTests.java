@@ -8,9 +8,11 @@ import gov.cms.ab2d.common.repository.UserRepository;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.common.repository.RoleRepository;
 import gov.cms.ab2d.common.service.SponsorService;
+import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.hpms.SpringBootApp;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,6 +21,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.transaction.annotation.Transactional;
+import org.testcontainers.containers.PostgreSQLContainer;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -53,6 +56,9 @@ public class AttestationReportProcessorTests {
 
     @Autowired
     private SponsorService sponsorService;
+
+    @ClassRule
+    public static PostgreSQLContainer postgreSQLContainer = AB2DPostgresqlContainer.getInstance();
 
     @Before
     public void cleanup() {

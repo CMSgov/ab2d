@@ -5,6 +5,7 @@ import com.okta.jwt.JwtVerificationException;
 import gov.cms.ab2d.api.SpringBootApp;
 import gov.cms.ab2d.common.model.*;
 import gov.cms.ab2d.common.repository.*;
+import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import org.apache.commons.io.IOUtils;
 import org.hamcrest.core.Is;
 import org.hl7.fhir.dstu3.model.DateTimeType;

@@ -7,10 +7,13 @@ import gov.cms.ab2d.common.model.User;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.common.repository.SponsorRepository;
 import gov.cms.ab2d.common.repository.UserRepository;
+import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
+import org.junit.ClassRule;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.testcontainers.containers.PostgreSQLContainer;
 
 import java.time.OffsetDateTime;
 import java.util.Random;
@@ -31,6 +34,9 @@ public class WorkerServiceTest {
     @Autowired private JobRepository jobRepository;
     @Autowired private SponsorRepository sponsorRepository;
     @Autowired private UserRepository userRepository;
+
+    @ClassRule
+    public static PostgreSQLContainer postgreSQLContainer = AB2DPostgresqlContainer.getInstance();
 
     @Test
     @DisplayName("When a job is submitted into the job table, a worker processes it")
