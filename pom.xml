@@ -30,6 +30,7 @@
         <mockserver.version>5.7.0</mockserver.version>
         <jacoco.version>0.8.4</jacoco.version>
         <checkstyle.config>${project.root}/src/main/resources/checkstyle.xml</checkstyle.config>
+        <logback.version>5.2</logback.version>
     </properties>
 
     <dependencies>
