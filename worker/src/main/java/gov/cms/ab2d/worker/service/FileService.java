@@ -33,6 +33,10 @@ public class FileService {
         final Path filePath = Path.of(outputDir.toString(), filename);
         Path outputFile = null;
         try {
+            //Delete file from previous run - Allows for a job can be restarted on failure.
+            Files.deleteIfExists(filePath);
+
+            // create a brand new file for the current run.
             outputFile = Files.createFile(filePath);
             log.info("Created file: {} ", outputFile.toAbsolutePath());
         } catch (IOException e) {
