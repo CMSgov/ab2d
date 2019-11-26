@@ -40,6 +40,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import static gov.cms.ab2d.api.util.Constants.API_PREFIX;
+import static gov.cms.ab2d.api.util.Constants.FHIR_PREFIX;
 import static gov.cms.ab2d.common.util.Constants.NDJSON_FIRE_CONTENT_TYPE;
 
 @Slf4j
@@ -49,7 +50,7 @@ import static gov.cms.ab2d.common.util.Constants.NDJSON_FIRE_CONTENT_TYPE;
                 "regarding progress in the generation of the requested files, and retrieve these " +
                 "files")
 @RestController
-@RequestMapping(path = API_PREFIX, produces = "application/json")
+@RequestMapping(path = API_PREFIX + FHIR_PREFIX, produces = "application/json")
 /**
  * The sole REST controller for AB2D's implementation of the FHIR Bulk Data API specification.
  */
@@ -107,7 +108,7 @@ public class BulkDataAccessAPI {
         Job job = jobService.createJob(resourceTypes, ServletUriComponentsBuilder.fromCurrentRequest().toUriString());
 
         String statusURL = ServletUriComponentsBuilder.fromCurrentRequestUri().replacePath
-                (String.format(API_PREFIX + "/Job/%s/$status", job.getJobUuid())).toUriString();
+                (String.format(API_PREFIX + FHIR_PREFIX + "/Job/%s/$status", job.getJobUuid())).toUriString();
         HttpHeaders responseHeaders = new HttpHeaders();
         responseHeaders.add("Content-Location", statusURL);
 
@@ -167,11 +168,11 @@ public class BulkDataAccessAPI {
                 resp.setTransactionTime(jobCompletedAt.toHumanDisplay());
                 resp.setRequest(job.getRequestUrl());
                 resp.setRequiresAccessToken(true);
-                resp.setOutput(job.getJobOutput().stream().filter(o -> !o.isError()).map(o -> new JobCompletedResponse.Output(o.getFhirResourceType(), getUrlPath(job, o.getFilePath()))).collect(Collectors.toList()));
-                resp.setError(job.getJobOutput().stream().filter(o -> o.isError()).map(o -> new JobCompletedResponse.Output(o.getFhirResourceType(), getUrlPath(job, o.getFilePath()))).collect(Collectors.toList()));
+                resp.setOutput(job.getJobOutputs().stream().filter(o -> !o.isError()).map(o -> new JobCompletedResponse.Output(o.getFhirResourceType(), getUrlPath(job, o.getFilePath()))).collect(Collectors.toList()));
+                resp.setError(job.getJobOutputs().stream().filter(o -> o.isError()).map(o -> new JobCompletedResponse.Output(o.getFhirResourceType(), getUrlPath(job, o.getFilePath()))).collect(Collectors.toList()));
                 return new ResponseEntity<>(new ObjectMapper().valueToTree(resp), responseHeaders, HttpStatus.OK);
             case SUBMITTED:
-                IN_PROGRESS:
+            case IN_PROGRESS:
                 responseHeaders.add("X-Progress", job.getProgress() + "% complete");
                 responseHeaders.add("Retry-After", Integer.toString(retryAfterDelay));
                 return new ResponseEntity<>(null, responseHeaders, HttpStatus.ACCEPTED);
@@ -183,7 +184,7 @@ public class BulkDataAccessAPI {
     }
 
     private String getUrlPath(Job job, String filePath) {
-        String requestURIString = ServletUriComponentsBuilder.fromCurrentRequestUri().replacePath(API_PREFIX + "/Job/" + job.getJobUuid()).toUriString();
+        String requestURIString = ServletUriComponentsBuilder.fromCurrentRequestUri().replacePath(API_PREFIX + FHIR_PREFIX + "/Job/" + job.getJobUuid()).toUriString();
         return requestURIString + "/file/" + filePath;
     }
 

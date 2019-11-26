@@ -70,3 +70,7 @@ build/
 
 ### Terraform ###
 **/terraform/**/*.tfvars
+
+### .DS_Store in "src/main" ###
+### This is needed due to this .gitignore entry: "!**/src/main/**" ###
+src/main/.DS_Store

@@ -55,7 +55,7 @@ public class WorkerServiceTest {
 
         // There is a 5 second sleep in the WorkerService.
         // So if the result for two jobs comes before 10 seconds, it implies they were not processed sequentially
-        Thread.sleep(8000L);
+        Thread.sleep(10000L);
 
         final Job processedJob1 = jobRepository.findByJobUuid(submittedJob1.getJobUuid());
         checkResult(processedJob1);
@@ -81,17 +81,24 @@ public class WorkerServiceTest {
     private User createUser() {
         final User user = new User();
         user.setId((long) getIntRandom());
-        user.setUserName("testuser" + getIntRandom());
+        user.setUsername("testuser" + getIntRandom());
         user.setSponsor(createSponsor());
         user.setEnabled(true);
         return userRepository.save(user);
     }
 
     private Sponsor createSponsor() {
+        final Sponsor parentSponsor = new Sponsor();
+        parentSponsor.setId((long) getIntRandom());
+        parentSponsor.setHpmsId(getIntRandom());
+        parentSponsor.setOrgName("BCBS - PARENT");
+        sponsorRepository.save(parentSponsor);
+
         final Sponsor sponsor = new Sponsor();
         sponsor.setId((long) getIntRandom());
         sponsor.setHpmsId(getIntRandom());
         sponsor.setOrgName("BCBS");
+        sponsor.setParent(parentSponsor);
         return sponsorRepository.save(sponsor);
     }
 

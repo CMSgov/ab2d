@@ -61,19 +61,6 @@
                 <version>${jacoco.version}</version>
                 <executions>
                     <execution>
-                        <goals>
-                            <goal>prepare-agent</goal>
-                        </goals>
-                    </execution>
-                    <!-- attached to Maven test phase -->
-                    <execution>
-                        <id>report</id>
-                        <phase>test</phase>
-                        <goals>
-                            <goal>report</goal>
-                        </goals>
-                    </execution>
-                    <execution>
                         <id>jacoco-check</id>
                         <goals>
                             <goal>check</goal>
@@ -86,14 +73,15 @@
                                         <limit>
                                             <counter>LINE</counter>
                                             <value>COVEREDRATIO</value>
-                                            <minimum>85%</minimum>
+                                            <minimum>83%</minimum>
                                         </limit>
                                     </limits>
                                 </rule>
                             </rules>
                             <excludes>
+                                <exclude>**/gov/cms/ab2d/worker/SpringBootApp.java</exclude>
                                 <!-- exclude the bluebutton package from coverage as it only has a stub -->
-                                <exclude>**/gov/cms/ab2d/worker/adapter/bluebutton/*</exclude>
+                                <exclude>**/gov/cms/ab2d/worker/adapter/bluebutton/**</exclude>
                             </excludes>
                         </configuration>
                     </execution>
@@ -101,6 +89,5 @@
             </plugin>
         </plugins>
     </build>
-
 
 </project>

@@ -2,8 +2,7 @@ package gov.cms.ab2d.bfd.client;
 
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.rest.client.api.IGenericClient;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
@@ -24,13 +23,12 @@ import java.security.cert.CertificateException;
 
 @Configuration
 @PropertySource("classpath:application.bfd.properties")
+@Slf4j
 /**
  * Credits: most of the code in this class has been copied over from https://github
  * .com/CMSgov/dpc-app
  */
 public class BFDClientConfiguration {
-
-    private static final Log LOG = LogFactory.getLog(BFDClientConfiguration.class);
 
     public static final String JKS = "JKS";
 
@@ -75,7 +73,7 @@ public class BFDClientConfiguration {
             keyStore.load(keyStoreStream, keystorePassword.toCharArray());
             return keyStore;
         } catch (IOException | KeyStoreException | NoSuchAlgorithmException | CertificateException ex) {
-            LOG.error(ex.getMessage(), ex);
+            log.error(ex.getMessage(), ex);
             throw new BeanInstantiationException(KeyStore.class, ex.getMessage());
         }
     }
@@ -113,7 +111,7 @@ public class BFDClientConfiguration {
                     .build();
 
         } catch (KeyManagementException | NoSuchAlgorithmException | UnrecoverableKeyException | KeyStoreException ex) {
-            LOG.error(ex.getMessage());
+            log.error(ex.getMessage());
             throw new BeanInstantiationException(KeyStore.class, ex.getMessage());
         }
 

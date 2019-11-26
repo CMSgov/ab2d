@@ -396,6 +396,24 @@
 
    - prod
 
+1. If prompted, enter database user at the "Enter desired database_user" prompt
+
+1. If prompted, enter database password at the "Enter desired database_password" prompt
+
+1. If prompted, enter database name at the "Enter desired database_name" prompt
+
+   *IMPORTANT: Since databases are sharing the same database instance, the database names should be unique for each environment and must contain only alphanumeric characters.*
+   
+   *Example database names:*
+
+   - dev
+
+   - sbx
+
+   - impl
+
+   - prod
+
 ## Update application
 
 1. Change to the "Deploy" directory

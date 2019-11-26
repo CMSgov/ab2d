@@ -3,9 +3,14 @@ package gov.cms.ab2d.hpms.processing;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.Sponsor;
 import gov.cms.ab2d.common.repository.ContractRepository;
+import gov.cms.ab2d.common.repository.SponsorRepository;
+import gov.cms.ab2d.common.repository.UserRepository;
+import gov.cms.ab2d.common.repository.JobRepository;
+import gov.cms.ab2d.common.repository.RoleRepository;
 import gov.cms.ab2d.common.service.SponsorService;
 import gov.cms.ab2d.hpms.SpringBootApp;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,7 +40,28 @@ public class AttestationReportProcessorTests {
     private ContractRepository contractRepository;
 
     @Autowired
+    private SponsorRepository sponsorRepository;
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private RoleRepository roleRepository;
+
+    @Autowired
+    private JobRepository jobRepository;
+
+    @Autowired
     private SponsorService sponsorService;
+
+    @Before
+    public void cleanup() {
+        contractRepository.deleteAll();
+        jobRepository.deleteAll();
+        userRepository.deleteAll();
+        roleRepository.deleteAll();
+        sponsorRepository.deleteAll();
+    }
 
     // There has to be an existing contract in order for this report to be able to process data
     private void createData(String contractId, String contractName, String sponsorName, int hpmsId) {
@@ -55,6 +81,13 @@ public class AttestationReportProcessorTests {
         contract.setSponsor(sponsor);
 
         sponsorService.saveSponsor(sponsor);
+    }
+
+    @Before
+    public void setup() {
+        contractRepository.deleteAll();
+        userRepository.deleteAll();
+        sponsorRepository.deleteAll();
     }
 
     @Test
