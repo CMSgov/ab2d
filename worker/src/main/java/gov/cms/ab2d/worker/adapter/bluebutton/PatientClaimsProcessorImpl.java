@@ -138,8 +138,6 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
         final List<Resource> resources = extractResources(entries);
 
         while (eobBundle.getLink(Bundle.LINK_NEXT) != null) {
-            log.info("Fetching next page ... ");
-
             eobBundle = bfdClient.requestNextBundleFromServer(eobBundle);
             final List<BundleEntryComponent> nextEntries = eobBundle.getEntry();
             resources.addAll(extractResources(nextEntries));

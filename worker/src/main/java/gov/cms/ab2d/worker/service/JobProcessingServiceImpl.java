@@ -23,7 +23,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -79,7 +78,7 @@ public class JobProcessingServiceImpl implements JobProcessingService {
 
         final Sponsor sponsor = job.getUser().getSponsor();
 
-        final List<Contract> attestedContracts = getAggregatedAttestedContracts(sponsor);
+        final List<Contract> attestedContracts = sponsor.getAggregatedAttestedContracts();
         log.info("Job [{}] has [{}] attested contracts", job.getJobUuid(), attestedContracts.size());
 
         try {
@@ -107,29 +106,6 @@ public class JobProcessingServiceImpl implements JobProcessingService {
 
         return job;
     }
-
-
-    private List<Contract> getAggregatedAttestedContracts(Sponsor sponsor) {
-         if (sponsor.getParent() == null) {
-             // implies this sponsor is a parent sponsor. Parent sponsors do not have contracts.
-             // Hence, find all the children and process their contracts instead
-             log.info("Sponsor {} is a parent sponsor. Processing children sponsors", sponsor.getOrgName());
-
-             return getContractsOfChildrenSponsor(sponsor);
-         } else {
-            return sponsor.getAttestedContracts();
-         }
-    }
-
-
-    private List<Contract> getContractsOfChildrenSponsor(Sponsor sponsor) {
-        final List<Sponsor> childrenSponsors = sponsorRepository.findByParent(sponsor);
-        return childrenSponsors.stream()
-                .map(s -> s.getAttestedContracts())
-                .flatMap(Collection::stream)
-                .collect(Collectors.toList());
-    }
-
 
     private List<JobOutput> processContract(final Path outputDir, Contract contract) {
 
