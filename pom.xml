@@ -9,6 +9,7 @@
         <module>worker</module>
         <module>hpms</module>
         <module>bfd</module>
+        <module>optout</module>
     </modules>
     <parent>
         <groupId>org.springframework.boot</groupId>
