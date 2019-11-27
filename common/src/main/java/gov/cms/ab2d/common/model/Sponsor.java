@@ -12,6 +12,7 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.validation.constraints.NotNull;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -37,6 +38,9 @@ public class Sponsor {
     @JoinColumn(name = "parent_id")
     private Sponsor parent;
 
+    @OneToMany(mappedBy = "parent")
+    private Set<Sponsor> children = new HashSet<>();
+
     @OneToMany(cascade = CascadeType.ALL,
             mappedBy = "sponsor",
             orphanRemoval = true,
@@ -51,6 +55,22 @@ public class Sponsor {
         }
 
         return false;
+    }
+
+
+
+    public List<Contract> getAggregatedAttestedContracts() {
+        return parent == null
+                ? getAttestedContractsOfChildren()
+                : getAttestedContracts();
+    }
+
+
+    private List<Contract> getAttestedContractsOfChildren() {
+        return children.stream()
+                .map(child -> child.getAttestedContracts())
+                .flatMap(Collection::stream)
+                .collect(Collectors.toList());
     }
 
 
