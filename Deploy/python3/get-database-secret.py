@@ -23,7 +23,7 @@ date_time = sys.argv[3].replace('"', '')
 
 def get_secret(environment, secret_item, date_time):
 
-    secret_name = "ab2d/" + environment + "/module/db/" + secret_item + "/" + date_time
+    secret_name = "ab2d/" + environment + "/module/db/" + secret_item + "/" + date_time    
     region_name = "us-east-1"
     secret_not_found = bool(False);
 
@@ -69,12 +69,12 @@ def get_secret(environment, secret_item, date_time):
         # Depending on whether the secret is a string or binary, one of these fields will be populated.
         if 'SecretString' in get_secret_value_response:
             secret = get_secret_value_response['SecretString']
-        else:
-            decoded_binary_secret = base64.b64decode(get_secret_value_response['SecretBinary'])
+        # else:
+        #     decoded_binary_secret = base64.b64decode(get_secret_value_response['SecretBinary'])
 
     if secret_not_found:
         return ""
     else:
-        return get_secret_value_response['SecretString']
+        return secret
     
 print(get_secret(environment, secret_item, date_time))
