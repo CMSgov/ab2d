@@ -9,6 +9,7 @@
         <module>worker</module>
         <module>hpms</module>
         <module>bfd</module>
+        <module>filter</module>
     </modules>
     <parent>
         <groupId>org.springframework.boot</groupId>
