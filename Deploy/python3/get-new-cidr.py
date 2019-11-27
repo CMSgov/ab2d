@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
 
 import boto3
-import ipaddress
-import json
 import sys
 
 # Ensure command line arguments were passed
