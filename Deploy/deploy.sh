@@ -51,11 +51,7 @@ done
 #
 
 echo "Check vars are not empty before proceeding..."
-<<<<<<< HEAD
 if [ -z "${ENVIRONMENT}" ] || [ -z "${SHARED_ENVIRONMENT}" ] || [ -z "${DATABASE_SECRET_DATETIME}" ] || [ -z "${SSH_USERNAME}" ]; then
-=======
-if [ -z "${ENVIRONMENT}" ] || [ -z "${DATABASE_SECRET_DATETIME}" ] || [ -z "${SSH_USERNAME}" ]; then
->>>>>>> origin/master
   echo "Try running the script like so:"
   echo "./deploy.sh --environment=dev --database-secret-datetime={YYYY-MM-DD-HH-MM-SS}"
   exit 1
@@ -134,7 +130,6 @@ pass="${cmd[5]}"
 unset cmd[4] cmd[5]
 "${cmd[@]}" --password-stdin <<< "$pass"
 
-<<<<<<< HEAD
 # Build API and worker
 
 cd "${START_DIR}"
@@ -211,32 +206,6 @@ if [ -z "${WORKER_ECR_REPO_URI}" ]; then
 fi
 docker tag "ab2d_${CMS_ENV}_worker:latest" "${WORKER_ECR_REPO_URI}:latest"
 docker push "${WORKER_ECR_REPO_URI}:latest"
-=======
-# Create a generated version of "docker-compose.yml"
-
-rm -rf generated
-mkdir -p generated
-cp ../docker-compose.yml generated
-cd generated
-sleep 5
-sed -i '' 's%context: ./api%context: ../../api%' docker-compose.yml
-sed -i '' 's%context: ./worker%context: ../../worker%' docker-compose.yml
-sed -i '' "s%AB2D_DB_HOST=db%AB2D_DB_HOST=$DB_ENDPOINT%" docker-compose.yml
-sed -i '' "s%AB2D_DB_DATABASE=ab2d%AB2D_DB_DATABASE=$DATABASE_NAME%" docker-compose.yml
-sed -i '' "s%AB2D_DB_USER=ab2d%AB2D_DB_USER=$DATABASE_USER%" docker-compose.yml
-sed -i '' "s%AB2D_DB_PASSWORD=ab2d%AB2D_DB_PASSWORD=$DATABASE_PASSWORD%" docker-compose.yml
-sleep 5
-cd ../..
-make docker-build
-sleep 5
-cd Deploy/generated
-docker-compose build
-sleep 5
-docker tag generated_api:latest 114601554524.dkr.ecr.us-east-1.amazonaws.com/ab2d_api:latest
-docker push 114601554524.dkr.ecr.us-east-1.amazonaws.com/ab2d_api:latest
-docker tag generated_worker:latest 114601554524.dkr.ecr.us-east-1.amazonaws.com/ab2d_worker:latest
-docker push 114601554524.dkr.ecr.us-east-1.amazonaws.com/ab2d_worker:latest
->>>>>>> origin/master
 
 #
 # Switch context to terraform environment
