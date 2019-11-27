@@ -61,6 +61,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
                     final String payload = jsonParser.encodeResourceToString(resource) + System.lineSeparator();
                     byteArrayOutputStream.write(payload.getBytes(StandardCharsets.UTF_8));
                 } catch (Exception e) {
+                    log.warn("Encountered exception while processing job resources: {}", e.getMessage());
                     ++errorCount;
                     handleException(errorFile, e, lock);
                 }
@@ -110,6 +111,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
         tryLock(lock);
 
         try {
+            log.info("Attempting to append to file");
             fileService.appendToFile(outputFile, byteArrayOutputStream);
         } finally {
             lock.unlock();

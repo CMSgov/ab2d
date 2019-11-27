@@ -25,7 +25,6 @@ import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.result.MockMvcResultHandlers;
 
 import java.io.File;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
 import java.nio.file.Files;
@@ -36,7 +35,6 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.Map;
 
 import static gov.cms.ab2d.api.controller.BulkDataAccessAPI.JOB_CANCELLED_MSG;
 import static gov.cms.ab2d.api.controller.TestUtil.TEST_USER;
@@ -83,7 +81,7 @@ public class BulkDataAccessAPIIntegrationTests {
     private static final String PATIENT_EXPORT_PATH = "/Patient/$export";
 
     @Before
-    public void setup() throws IOException, InterruptedException, JwtVerificationException {
+    public void setup() throws JwtVerificationException {
         contractRepository.deleteAll();
         jobRepository.deleteAll();
         userRepository.deleteAll();

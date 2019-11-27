@@ -8,9 +8,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.hl7.fhir.dstu3.model.Bundle;
 import org.hl7.fhir.dstu3.model.ExplanationOfBenefit;
 import org.hl7.fhir.instance.model.api.IBaseResource;
+import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.stereotype.Component;
+
+import static gov.cms.ab2d.bfd.client.Constants.PATIENT_ID_LOG;
 
 /**
  * Credits: most of the code in this class has been copied over from https://github
@@ -55,7 +58,9 @@ public class BFDClientImpl implements BFDClient {
      */
     @Override
     public Bundle requestEOBFromServer(String patientID) {
-        log.debug("Attempting to fetch EOBs for patient ID {} from baseURL: {}", patientID,
+        MDC.put(PATIENT_ID_LOG, patientID);
+
+        log.info("Attempting to fetch EOBs from baseURL: {}",
                 client.getServerBase());
         return
                 fetchBundle(ExplanationOfBenefit.class,
@@ -66,7 +71,7 @@ public class BFDClientImpl implements BFDClient {
     @Override
     public Bundle requestNextBundleFromServer(Bundle bundle) throws ResourceNotFoundException {
         var nextURL = bundle.getLink(Bundle.LINK_NEXT).getUrl();
-        log.debug("Attempting to fetch next bundle from url: {}", nextURL);
+        log.info("Attempting to fetch next bundle from url: {}", nextURL);
         return client
                 .loadPage()
                 .next(bundle)
@@ -96,6 +101,7 @@ public class BFDClientImpl implements BFDClient {
 
         // Case where patientID does not exist at all
         if (!bundle.hasEntry()) {
+            log.error("No patient found when searching");
             throw new ResourceNotFoundException("No patient found with ID: " + patientID);
         }
         return bundle;

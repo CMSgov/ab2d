@@ -3,7 +3,6 @@ package gov.cms.ab2d.worker.adapter.bluebutton;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import org.springframework.util.Assert;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -33,6 +32,8 @@ public class BeneficiaryAdapterStub implements BeneficiaryAdapter {
         final int contractSno = extractContractSno(contractNumber);
         final int startOffset = (contractSno - 1) * 100;
 
+        log.info("Getting patients at offset {}", startOffset);
+
         final var patientsPerContract = getFromSampleFile(startOffset);
 
         return toResponse(contractNumber, patientsPerContract);
@@ -59,10 +60,18 @@ public class BeneficiaryAdapterStub implements BeneficiaryAdapter {
         }
 
         try (var inputStream = this.getClass().getResourceAsStream(BENE_ID_FILE)) {
-            Assert.notNull(inputStream, "error getting resource as stream :  " + BENE_ID_FILE);
+            if(inputStream == null) {
+                String errorMsg = "error getting resource as stream :  ";
+                log.error(errorMsg + "{}", BENE_ID_FILE);
+                throw new IllegalArgumentException(errorMsg + BENE_ID_FILE);
+            }
 
             try (var br =  new BufferedReader(new InputStreamReader(inputStream))) {
-                Assert.notNull(br, "Could not create buffered reader from input stream :  " + BENE_ID_FILE);
+                if(br == null) {
+                    String errorMsg = "Could not create buffered reader from input stream :  ";
+                    log.error(errorMsg + "{}", BENE_ID_FILE);
+                    throw new IllegalArgumentException(errorMsg + BENE_ID_FILE);
+                }
 
                 return readLinesByOffset(br, startOffset);
             }
