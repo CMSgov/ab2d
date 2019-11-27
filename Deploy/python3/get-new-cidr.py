@@ -84,7 +84,7 @@ def get_next_subnet_cidr_block_ip_address_position_3(ec2_client, vpc_id):
             existing_position_3_dict[position_3] = "used"
         for index in range(256):
             if index != 0:
-                if existing_position_3_dict.get(str(index)) == None:
+                if existing_position_3_dict.get(str(index)) is None:
                     subnet_cidr_block_ip_address_position_3 = str(index)
                     break
                 
