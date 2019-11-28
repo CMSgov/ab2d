@@ -53,7 +53,7 @@ done
 echo "Check vars are not empty before proceeding..."
 if [ -z "${ENVIRONMENT}" ] || [ -z "${SHARED_ENVIRONMENT}" ] || [ -z "${DATABASE_SECRET_DATETIME}" ] || [ -z "${SSH_USERNAME}" ]; then
   echo "Try running the script like so:"
-  echo "./deploy.sh --environment=dev --database-secret-datetime={YYYY-MM-DD-HH-MM-SS}"
+  echo "./deploy.sh --environment=dev --shared-environment=shared --database-secret-datetime={YYYY-MM-DD-HH-MM-SS} --ssh-username=ec2-user"
   exit 1
 fi
 
@@ -77,6 +77,15 @@ cd python3
 DATABASE_USER=$(./get-database-secret.py $CMS_ENV database_user $DATABASE_SECRET_DATETIME)
 DATABASE_PASSWORD=$(./get-database-secret.py $CMS_ENV database_password $DATABASE_SECRET_DATETIME)
 DATABASE_NAME=$(./get-database-secret.py $CMS_ENV database_name $DATABASE_SECRET_DATETIME)
+
+# If any databse secret produced an error, exit the script
+
+if [ "${DATABASE_USER}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
+  || [ "${DATABASE_PASSWORD}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
+  || [ "${DATABASE_NAME}" == "ERROR: Cannot get database secret because KMS key is disabled!" ]; then
+    echo "ERROR: Cannot get database secrets because KMS key is disabled!"
+    exit 1
+fi
 
 #
 # Create database
