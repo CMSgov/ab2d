@@ -5968,12 +5968,12 @@ header {
 
 .ds-c-badge {
     letter-spacing: 2px;
-    background-color: transparent;
+    background-color: white;
     border-style: solid;
     border-width: 2px;
     border-radius: 4px;
     border-color: #fff;
-    color: #fff;
+    color: #0071bc;
     font-weight: 700
 }
 
@@ -6038,21 +6038,33 @@ footer:before {
 Everything above is a direct copy from the BB css project
 BCDA changes below this line
 */
+
+article h1 {
+    position: relative;
+    display: inline-block;
+}
+
+article h1:after {
+    content:"";
+    position:absolute;
+    bottom:-8px;
+    left:0;
+    height:4px;
+    width:100%;
+    background:linear-gradient(30deg,#2a5cc9 10%,#5ef1e1 90%);
+}
+
 .api-pattern {
-    background-image: url(../img/iconsbcda.png);
-    background-size: contain;
-    background-repeat: no-repeat;
-    background-position: top right;
     width: 100%;
 }
 
-.blueberry-lime-gradient-background {
-background: linear-gradient(30deg, #339392, #339392 73%, #62C5C4);
+.gradient-background {
+    background: linear-gradient(.25turn, #0071bc 70%, #188ac4);
 }
 
 .solid-container {
     width: 60%;
-    background-color: #339392;
+    background-color: #0071bc;
 }
 
 article h2{
@@ -6076,11 +6088,11 @@ article h2::after {
 }
 
 .logo-link-container{
-  color: #0071BC
+  color: #323a45
 }
 
-.ds-c-desktop-nav .desktop-nav-items a, .mobile-nav-items a{
-  color: #0071BC
+.ds-c-desktop-nav .desktop-nav-items a, .mobile-nav-items a {
+  color: #323a45
 }
 
 .bcda_callout {
@@ -6135,7 +6147,7 @@ article h2::after {
     .solid-container {
         width: 80%;
     }
-    .blueberry-lime-gradient-background {
+    .gradient-background {
         background: linear-gradient(30deg, #339392, #339392 83%, #62C5C4);
     }
 
