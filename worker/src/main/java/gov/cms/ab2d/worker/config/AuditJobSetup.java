@@ -1,6 +1,7 @@
 package gov.cms.ab2d.worker.config;
 
 import gov.cms.ab2d.audit.FileDeletionJob;
+import lombok.extern.slf4j.Slf4j;
 import org.quartz.*;
 import org.quartz.impl.StdSchedulerFactory;
 
@@ -8,6 +9,7 @@ import static org.quartz.CronScheduleBuilder.cronSchedule;
 import static org.quartz.JobBuilder.newJob;
 import static org.quartz.TriggerBuilder.newTrigger;
 
+@Slf4j
 public class AuditJobSetup {
 
     public void setupAuditJob() {
