@@ -152,7 +152,7 @@
 
    *See the following appendix, if you don't know how to access the CMS AWS console:*
 
-   [AB2D Deploy](./AB2D_Deployment_Appendices.md#)
+   [Instructions for accessing the CMS AWS console](./AB2D_Deployment_Appendices.md#appendix-a-access-the-cms-aws-console)
    
 1. Request AWS administrator to create a user that has both console and programmatic access to the semanticbitsdemo AWS account
 
