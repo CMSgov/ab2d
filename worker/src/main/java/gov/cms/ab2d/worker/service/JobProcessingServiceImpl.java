@@ -55,7 +55,7 @@ public class JobProcessingServiceImpl implements JobProcessingService {
     public Job putJobInProgress(String jobId) {
 
         final Job job = jobRepository.findByJobUuid(jobId);
-        if(job == null) {
+        if (job == null) {
             log.error("Job was not found");
             throw new IllegalArgumentException("Job " + jobId + " was not found");
         }
