@@ -57,7 +57,7 @@ public class BFDClientImpl implements BFDClient {
     public Bundle requestEOBFromServer(String patientID) {
         return
                 fetchBundle(ExplanationOfBenefit.class,
-                        ExplanationOfBenefit.PATIENT.hasId(patientID), patientID);
+                        ExplanationOfBenefit.PATIENT.hasId(patientID));
     }
 
 
@@ -76,12 +76,10 @@ public class BFDClientImpl implements BFDClient {
      * @param resourceClass - FHIR Resource class
      * @param criterion     - For the resource class the correct criterion that matches the
      *                      patientID
-     * @param patientID     - id of patient
      * @return FHIR Bundle resource
      */
     private <T extends IBaseResource> Bundle fetchBundle(Class<T> resourceClass,
-                                                         ICriterion<ReferenceClientParam> criterion,
-                                                         String patientID) {
+                                                         ICriterion<ReferenceClientParam> criterion) {
         final Bundle bundle = client.search()
                 .forResource(resourceClass)
                 .where(criterion)
@@ -89,10 +87,11 @@ public class BFDClientImpl implements BFDClient {
                 .returnBundle(Bundle.class)
                 .execute();
 
-        // Case where patientID does not exist at all
+        // Case where patientID does not have any records
         if (!bundle.hasEntry()) {
-            log.error("No patient found when searching");
-            throw new ResourceNotFoundException("No patient found with ID: " + patientID);
+            String message = "Patient does not have any records";
+            log.error(message);
+            throw new ResourceNotFoundException(message);
         }
         return bundle;
     }
