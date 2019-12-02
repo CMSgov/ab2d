@@ -36,6 +36,7 @@ import static net.logstash.logback.argument.StructuredArguments.keyValue;
 @Slf4j
 @Service
 @RequiredArgsConstructor
+@SuppressWarnings("PMD.TooManyStaticImports")
 public class JobProcessingServiceImpl implements JobProcessingService {
     private static final String OUTPUT_FILE_SUFFIX = ".ndjson";
     private static final String ERROR_FILE_SUFFIX = "_error.ndjson";
