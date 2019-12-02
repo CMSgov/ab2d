@@ -25,7 +25,9 @@ import java.util.concurrent.Future;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
+import static gov.cms.ab2d.common.util.Constants.FILE_LOG;
 import static java.util.concurrent.TimeUnit.SECONDS;
+import static net.logstash.logback.argument.StructuredArguments.keyValue;
 
 @Slf4j
 @Component
@@ -111,7 +113,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
         tryLock(lock);
 
         try {
-            log.info("Attempting to append to file");
+            log.info("Attempting to append to file", keyValue(FILE_LOG, outputFile.getFileName()));
             fileService.appendToFile(outputFile, byteArrayOutputStream);
         } finally {
             lock.unlock();

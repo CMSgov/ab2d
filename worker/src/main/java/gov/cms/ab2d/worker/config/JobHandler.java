@@ -56,6 +56,8 @@ public class JobHandler implements MessageHandler {
                 lock.unlock();
             }
         }
+
+        MDC.remove(JOB_LOG);
     }
 
     private String getJobId(Message<?> message) {

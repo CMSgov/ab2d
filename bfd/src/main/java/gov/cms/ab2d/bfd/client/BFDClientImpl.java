@@ -58,10 +58,6 @@ public class BFDClientImpl implements BFDClient {
      */
     @Override
     public Bundle requestEOBFromServer(String patientID) {
-        MDC.put(PATIENT_ID_LOG, patientID);
-
-        log.info("Attempting to fetch EOBs from baseURL: {}",
-                client.getServerBase());
         return
                 fetchBundle(ExplanationOfBenefit.class,
                         ExplanationOfBenefit.PATIENT.hasId(patientID), patientID);
@@ -70,13 +66,10 @@ public class BFDClientImpl implements BFDClient {
 
     @Override
     public Bundle requestNextBundleFromServer(Bundle bundle) throws ResourceNotFoundException {
-        var nextURL = bundle.getLink(Bundle.LINK_NEXT).getUrl();
-        log.info("Attempting to fetch next bundle from url: {}", nextURL);
         return client
                 .loadPage()
                 .next(bundle)
                 .execute();
-
     }
 
 

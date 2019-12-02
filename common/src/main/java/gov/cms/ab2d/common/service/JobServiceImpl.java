@@ -6,6 +6,7 @@ import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.JobStatus;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
@@ -19,6 +20,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.OffsetDateTime;
 import java.util.UUID;
+
+import static gov.cms.ab2d.common.util.Constants.JOB_LOG;
 
 @Slf4j
 @Service
@@ -53,6 +56,8 @@ public class JobServiceImpl implements JobService {
 
     @Override
     public void cancelJob(String jobUuid) {
+        MDC.put(JOB_LOG, jobUuid);
+
         Job job = getJobByJobUuid(jobUuid);
 
         if (!job.getStatus().isCancellable()) {
@@ -82,6 +87,8 @@ public class JobServiceImpl implements JobService {
 
     @Override
     public Resource getResourceForJob(String jobUuid, String fileName) throws MalformedURLException {
+        MDC.put(JOB_LOG, jobUuid);
+
         Job job = getJobByJobUuid(jobUuid);
 
         // Make sure that there is a path that matches a job output for the job they are requesting
