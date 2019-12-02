@@ -214,6 +214,15 @@ if [ -z "${DATABASE_NAME}" ]; then
   DATABASE_NAME=$(./get-database-secret.py $CMS_ENV database_name $DATABASE_SECRET_DATETIME)
 fi
 
+# If any databse secret produced an error, exit the script
+
+if [ "${DATABASE_USER}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
+  || [ "${DATABASE_PASSWORD}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
+  || [ "${DATABASE_NAME}" == "ERROR: Cannot get database secret because KMS key is disabled!" ]; then
+    echo "ERROR: Cannot get database secrets because KMS key is disabled!"
+    exit 1
+fi
+
 #
 # Create networking
 #

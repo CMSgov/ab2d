@@ -39,6 +39,7 @@ def create_dockerfile(application, data_map, config_map, root_path):
         # Check to see if parameter is a known parameter
         try:
             test = config_parameters.index(environment_parameter)
+            print(test)
         except ValueError as exc:
             print("ERROR: there is a new unknown parameter in the docker-compose.yml file!")
         target_file = open(generated_dockerfile, 'w')

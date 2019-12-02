@@ -802,7 +802,23 @@
    ```ShellSession
    $ tflint --version
    ```
-   
+
+## Install flake8
+
+1. Note that "flake8" is a Python linter focused on possible errors, best practices, etc.
+
+1. Install tflint
+
+   ```ShellSession
+   $ brew install flake8
+   ```
+
+1. Check the flake8 version
+
+   ```ShellSession
+   $ flake8 --version
+   ```
+
 ## Install the AWS CLI using pip3
 
 1. Install the AWS CLI using pip3

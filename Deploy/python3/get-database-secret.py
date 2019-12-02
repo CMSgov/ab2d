@@ -4,8 +4,8 @@
 # If you need more information about configurations or implementing the sample code, visit the AWS docs:   
 # https://aws.amazon.com/developers/getting-started/python/
 
+# import base64
 import boto3
-import base64
 import sys
 from botocore.exceptions import ClientError
 
@@ -22,9 +22,16 @@ secret_item = sys.argv[2].replace('"', '')
 date_time = sys.argv[3].replace('"', '')
 
 def get_secret(environment, secret_item, date_time):
-
-    secret_name = "ab2d/" + environment + "/module/db/" + secret_item + "/" + date_time    
+    
     region_name = "us-east-1"
+    kms_key_id = "alias/ab2d-kms"
+
+    kms_key_status = get_kms_status(region_name, kms_key_id)
+    if kms_key_status == 'Disabled':
+        print('ERROR: Cannot get database secret because KMS key is disabled!')
+        return ""
+    
+    secret_name = "ab2d/" + environment + "/module/db/" + secret_item + "/" + date_time    
     secret_not_found = bool(False);
 
     # Create a Secrets Manager client
@@ -76,5 +83,19 @@ def get_secret(environment, secret_item, date_time):
         return ""
     else:
         return secret
+
+def get_kms_status(region_name, kms_key_id):
+
+    session = boto3.session.Session()
+    kms_client = session.client(
+        service_name='kms',
+        region_name=region_name
+    )
     
+    response = kms_client.describe_key(
+        KeyId=kms_key_id
+    )
+
+    return response['KeyMetadata']['KeyState']
+
 print(get_secret(environment, secret_item, date_time))
