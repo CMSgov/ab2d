@@ -9,7 +9,7 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>optout</artifactId>
+    <artifactId>audit</artifactId>
 
     <properties>
         <project.root>${basedir}/..</project.root>
