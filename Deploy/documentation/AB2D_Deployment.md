@@ -361,7 +361,7 @@
 1. Set automation bucket name
 
    ```ShellSession
-   $ export S3_AUTOMATION_BUCKET=ab2d-shared-automation
+   $ export S3_AUTOMATION_BUCKET=cms-ab2d-automation
    ```
    
 1. Create S3 bucket for automation
@@ -382,10 +382,10 @@
 
 ### Create policies
 
-1. Set target profile
+1. Set target AWS profile
    
    ```ShellSession
-   $ export AWS_PROFILE="sbdemo-dev"
+   $ export AWS_PROFILE=ab2d-shared
    ```
 
 1. Change to the "iam-policies" directory
@@ -403,13 +403,7 @@
 1. Create "Ab2dAssumePolicy"
 
    ```ShellSession
-   $ aws iam create-policy --policy-name Ab2dAssumePolicy --policy-document file://ab2d-assume-policy.json
-   ```
-
-1. Create "Ab2dInitPolicy"
-
-   ```ShellSession
-   $ aws iam create-policy --policy-name Ab2dInitPolicy --policy-document file://ab2d-init-policy.json
+   $ aws iam create-policy --policy-name Ab2dAssumePolicy --policy-document file://cms-ab2d-s3-access-policy.json
    ```
 
 1. Create "Ab2dPackerPolicy"
@@ -421,16 +415,18 @@
 1. Create "Ab2dS3AccessPolicy"
 
    ```ShellSession
-   $ aws iam create-policy --policy-name Ab2dS3AccessPolicy --policy-document file://ab2d-s3-access-policy.json
+   $ aws iam create-policy --policy-name Ab2dS3AccessPolicy --policy-document file://cms-ab2d-s3-access-policy.json
    ```
 
 1. Create "Ab2dPermissionToPassRolesPolicy"
 
    ```ShellSession
-   $ aws iam create-policy --policy-name Ab2dPermissionToPassRolesPolicy --policy-document file://ab2d-permission-to-pass-roles-policy.json
+   $ aws iam create-policy --policy-name Ab2dPermissionToPassRolesPolicy --policy-document file://cms-ab2d-permission-to-pass-roles-policy.json
    ```
 
 ### Create roles
+
+> *** STOPPING POINT ***
 
 1. Set target profile
 
