@@ -87,8 +87,6 @@ public class JobServiceImpl implements JobService {
 
     @Override
     public Resource getResourceForJob(String jobUuid, String fileName) throws MalformedURLException {
-        MDC.put(JOB_LOG, jobUuid);
-
         Job job = getJobByJobUuid(jobUuid);
 
         // Make sure that there is a path that matches a job output for the job they are requesting
