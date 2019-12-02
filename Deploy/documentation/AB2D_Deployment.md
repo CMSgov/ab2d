@@ -5,6 +5,7 @@
 1. [Note the starting state of the customer AWS account](#note-the-starting-state-of-the-customer-aws-account)
    * [Note dev and sbx components](#note-dev-and-sbx-components)
    * [Note ignored components](#note-ignored-components)
+1. [Create an Administrators IAM group](#create-an-administrators-iam-group)
 1. [Create an AWS IAM user](#create-an-aws-iam-user)
 1. [Configure AWS CLI](#configure-aws-cli)
 1. [Configure Terraform logging](#configure-terraform-logging)
@@ -146,6 +147,40 @@
    ----|-----------
    None|sg-778f2822
 
+## Create an Administrators IAM group
+
+1. Access the CMS AWS console
+
+   *See the following appendix, if you don't know how to access the CMS AWS console:*
+
+   [Instructions for accessing the CMS AWS console](./AB2D_Deployment_Appendices.md#appendix-a-access-the-cms-aws-console)
+
+1. Select **IAM**
+
+1. Select **Groups** in the leftmost panel
+
+1. Select **Create New Group**
+
+1. Type the following in the **Group Name** text box
+
+   ```
+   Administrators
+   ```
+
+1. Select **Next Step** on the "Set Group Name" page
+
+1. Type the following in the **Search** text box
+
+   ```
+   AdministratorAccess
+   ```
+
+1. Check the checkbox beside **AdministratorAccess**
+
+1. Select **Next Step** on the "Attach Policy" page
+
+1. Select **Create Group**
+
 ## Create an AWS IAM user
 
 1. Access the CMS AWS console
@@ -154,7 +189,23 @@
 
    [Instructions for accessing the CMS AWS console](./AB2D_Deployment_Appendices.md#appendix-a-access-the-cms-aws-console)
    
-1. Request AWS administrator to create a user that has both console and programmatic access to the semanticbitsdemo AWS account
+1. Select **IAM**
+
+1. Select **Users** in the leftmost panel
+
+1. Select **Add user**
+
+1. Configure the user as follows
+
+   - **User name:** {semanticbits email}
+
+   - **Programmatic access:** checked
+
+   - **AWS Management Console access:** unchecked
+
+1. Select **Next: Permissions**
+
+
 
 1. Note that the administrator will provide you with a "credentials.csv" file that will include the following information
    
