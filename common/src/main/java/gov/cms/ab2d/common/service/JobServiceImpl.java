@@ -6,7 +6,6 @@ import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.JobStatus;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
@@ -20,8 +19,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.OffsetDateTime;
 import java.util.UUID;
-
-import static gov.cms.ab2d.common.util.Constants.JOB_LOG;
 
 @Slf4j
 @Service
