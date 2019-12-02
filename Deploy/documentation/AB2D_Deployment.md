@@ -1,4 +1,4 @@
-# Internal Test Environment
+# AB2D Deployment
 
 ## Table of Contents
 
@@ -148,6 +148,12 @@
 
 ## Create an AWS IAM user
 
+1. Access the CMS AWS console
+
+   *See the following appendix, if you don't know how to access the CMS AWS console:*
+
+   [AB2D Deploy](./AB2D_Deployment_Appendices.md#)
+   
 1. Request AWS administrator to create a user that has both console and programmatic access to the semanticbitsdemo AWS account
 
 1. Note that the administrator will provide you with a "credentials.csv" file that will include the following information
