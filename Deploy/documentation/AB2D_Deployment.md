@@ -3,6 +3,8 @@
 ## Table of Contents
 
 1. [Note the starting state of the customer AWS account](#note-the-starting-state-of-the-customer-aws-account)
+   * [Note dev and sbx components](#note-dev-and-sbx-components)
+   * [Note ignored components](#note-ignored-components)
 1. [Create an AWS IAM user](#create-an-aws-iam-user)
 1. [Configure AWS CLI](#configure-aws-cli)
 1. [Configure Terraform logging](#configure-terraform-logging)
@@ -23,28 +25,82 @@
 
 1. Note the dev and sbx VPC
 
-   Tag     |ID                   |IPv4 CIDR Count|IPv4 CIDR #1  |IPv4 CIDR #2   
+   Tag     |VPC ID               |IPv4 CIDR Count|IPv4 CIDR #1  |IPv4 CIDR #2   
    --------|---------------------|---------------|--------------|---------------
    ab2d-dev|vpc-0c6413ec40c5fdac3|2              |10.242.26.0/24|10.242.5.128/26
 
 1. Note the dev and sbx subnets
 
-   Tag               |ID                      |IPv4 CIDR       |Availability Zone
+   Tag               |Subnet ID               |IPv4 CIDR       |Availability Zone
    ------------------|------------------------|----------------|-----------------
    ab2d-dev-private-a|subnet-03d5b59872d950c7d|10.242.26.0/25  |us-east-1a
    ab2d-dev-private-b|subnet-0118d0d6af946bd66|10.242.26.128/25|us-east-1b
    ab2d-dev-public-a |subnet-0044ee15d254fe18b|10.242.5.128/27 |us-east-1a
    ab2d-dev-public-b |subnet-05c149659e3061ef6|10.242.5.160/27 |us-east-1b
 
-1. Note the dev and sbx route table subnets
+1. Note the dev and sbx route tables
 
-   Tag               |ID                   |Main|Associated Subnet Count|Associalted Subnet #1   |Associalted Subnet #2
+   Tag               |Route Table ID       |Main|Associated Subnet Count|Associalted Subnet #1   |Associalted Subnet #2
    ------------------|---------------------|----|-----------------------|------------------------|------------------------
    None              |rtb-0950b57584f20d93b|Yes |0                      |                        |
    ab2d-dev-private-a|rtb-0c55acf18e7d3cd87|No  |1                      |subnet-03d5b59872d950c7d|
    ab2d-dev-private-b|rtb-09c40213a10ea6406|No  |1                      |subnet-0118d0d6af946bd66|
    ab2d-dev-public   |rtb-090372c9ee83aa450|No  |2                      |subnet-05c149659e3061ef6|subnet-0044ee15d254fe18b
 
+1. Note the dev and sbx internet gateway
+
+   Tag     |ID                   
+   --------|---------------------
+   ab2d-dev|igw-0014bff62a3c1211d
+
+1. Note the dev and sbx Elastic IPs
+
+   Tag                   |Allocation ID             |Elastic IP   |Private IP  |Network Interface Availability Zone
+   ----------------------|--------------------------|-------------|------------|-----------------------------------
+   ab2d-dev-nat-gateway-a|eipalloc-0048cd31435409e20|54.208.106.70|10.242.5.158|us-east-1a
+   ab2d-dev-nat-gateway-b|eipalloc-0fc6dbdc2a1e412ff|3.218.184.81 |10.242.5.187|us-east-1b
+
+1. Note the dev and sbx NAT gateways
+
+   Tag       |NAT Gateway ID       |Elastic IP Address|Private IP  |Network Interface Availability Zone
+   ----------|---------------------|------------------|------------|-----------------------------------
+   ab2d-dev-a|nat-060fbd5ddb57a2f18|54.208.106.70     |10.242.5.158|us-east-1a
+   ab2d-dev-b|nat-0f4d22a3e997d73c2|3.218.184.81      |10.242.5.187|us-east-1b
+
+1. Note the Network ACLs
+
+   Tag |Network ACL ID       |Associated Subnet Count
+   ----|---------------------|-----------------------
+   None|acl-0eb267c6c0801f8c9|4
+
+
+1. Note the Security Groups
+
+   Tag |Group ID            
+   ----|--------------------
+   None|sg-05752fb69a1a89f86
+
+1. Note the Transit Gateways
+
+   Tag |Transit Gateway ID   |Owner account ID
+   ----|---------------------|---------------------
+   None|tgw-080644ad8f49ecafa|921617238787 (shared)
+
+1. Note the Transit Gateway Attachments
+
+   Tag                        |Transit Gateway attachment ID|Transit Gateway owner ID|Resource owner account ID
+   ---------------------------|-----------------------------|------------------------|-------------------------
+   ab2d-dev-InterVPC-East-Prod|tgw-attach-06bf47fa39e5d1578 |921617238787 (shared)   |349849222861
+
+1. Note the Network Interfaces
+
+   Tag |Network interface ID |IPv4 Public IP|Primary private IPv4 IP|Availability Zone|Description
+   ----|---------------------|--------------|-----------------------|-----------------|-----------------------------------------------
+   None|eni-01f9447520f6efa28|54.208.106.70 |10.242.5.158           |us-east-1a       |Interface for NAT Gateway nat-060fbd5ddb57a2f18
+   None|eni-045fc3c9aa02b671c|3.218.184.81  |10.242.5.187           |us-east-1b       |Interface for NAT Gateway nat-0f4d22a3e997d73c2
+   None|eni-0e8baa25388577d46|N/A           |10.242.26.60           |us-east-1a       |Network Interface for Transit Gateway Attachment tgw-attach-06bf47fa39e5d1578
+   None|eni-0c4ed76f356525098|N/A           |10.242.26.148          |us-east-1b       |Network Interface for Transit Gateway Attachment tgw-attach-06bf47fa39e5d1578
+   
 ### Note ignored components
 
 1. Note that Stephen Walter said that he doesn't know why these components were created
@@ -65,7 +121,31 @@
    None|subnet-0214ee0c|172.31.48.0/20|us-east-1f
    None|subnet-77eeba49|172.31.64.0/20|us-east-1e
    None|subnet-fea7a8d0|172.31.80.0/20|us-east-1d
-   
+
+1. Note the ignored route tables
+
+   Tag               |ID          |Main|Associated Subnet Count|Associalted Subnet #1   |Associalted Subnet #2
+   ------------------|------------|----|-----------------------|------------------------|------------------------
+   None              |rtb-e9d60d97|Yes |0                      |                        |
+
+1. Note the ignored internet gateway
+
+   Tag     |ID                   
+   --------|---------------------
+   ab2d-dev|igw-0fd15274
+
+1. Note the Network ACLs
+
+   Tag |Network ACL ID       |Associated Subnet Count
+   ----|---------------------|-----------------------
+   None|acl-6a9e1917         |6
+
+1. Note the Security Groups
+
+   Tag |Group ID            
+   ----|-----------
+   None|sg-778f2822
+
 ## Create an AWS IAM user
 
 1. Request AWS administrator to create a user that has both console and programmatic access to the semanticbitsdemo AWS account
