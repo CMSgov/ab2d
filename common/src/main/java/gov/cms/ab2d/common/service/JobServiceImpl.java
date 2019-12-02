@@ -56,8 +56,6 @@ public class JobServiceImpl implements JobService {
 
     @Override
     public void cancelJob(String jobUuid) {
-        MDC.put(JOB_LOG, jobUuid);
-
         Job job = getJobByJobUuid(jobUuid);
 
         if (!job.getStatus().isCancellable()) {
