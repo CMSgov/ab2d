@@ -19,11 +19,19 @@
             <groupId>gov.cms.ab2d</groupId>
             <artifactId>common</artifactId>
             <version>0.0.1-SNAPSHOT</version>
+            <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>gov.cms.ab2d</groupId>
             <artifactId>bfd</artifactId>
             <version>0.0.1-SNAPSHOT</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>gov.cms.ab2d</groupId>
+            <artifactId>audit</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+            <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
