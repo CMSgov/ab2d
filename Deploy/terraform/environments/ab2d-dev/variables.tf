@@ -179,11 +179,11 @@ variable "db_name" {
 ## S3 specific variables #########################################################################
 
 variable "file_bucket_name" {
-  default = "ab2d-dev"
+  default = "cms-ab2d-dev"
 }
 
 variable "logging_bucket_name" {
-  default = "ab2d-cloudtrail"
+  default = "cms-ab2d-cloudtrail"
 }
 
 variable "s3_username_whitelist" {
