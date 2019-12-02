@@ -205,19 +205,31 @@
 
 1. Select **Next: Permissions**
 
+1. Check the checkbox beside **Administrators**
 
+1. Select **Next: Tags**
 
-1. Note that the administrator will provide you with a "credentials.csv" file that will include the following information
+1. Select **Next: Review**
+
+1. Select **Create user**
+
+1. Select **Download .csv**
+
+1. Select **Close**
+
+1. Note that the following can be found in the "credentials.csv" file that you downloaded
    
-   - User name
+   - **User name:** {your semanticbits email}
 
-   - Password
+   - **Password:** {blank because you did not set AWS console access}
 
-   - Access key ID
+   - **Access key ID:** {your access key}
 
-   - Secret access key
+   - **Secret access key:** {your secret access key}
 
-   - Console login link
+   - **Console login link:** https://aws-hhs-cms-oeda-ab2d.signin.aws.amazon.com/console
+
+1. Save these credentials someone safe like a personal slack channel
 
 ## Configure AWS CLI
 
@@ -276,67 +288,94 @@
 
 ### Create AWS keypair
 
+1. Set target AWS profile
+   
+   ```ShellSession
+   $ export AWS_PROFILE=ab2d-shared
+   ```
+
 1. Create keypair
 
-   *Example for controllers within SemanticBits demo environment:*
+   1. Set the key name
 
-   ```ShellSession
-   $ aws --region us-east-1 ec2 create-key-pair \
-     --key-name ab2d-sbdemo-shared \
-     --query 'KeyMaterial' \
-     --output text \
-     > ~/.ssh/ab2d-sbdemo-shared.pem
-   ```
+      ```ShellSession
+      $ export KEY_NAME=ab2d-shared
+      ```
+
+   1. Create the keypair
+   
+      ```ShellSession
+      $ aws --region us-east-1 ec2 create-key-pair \
+        --key-name ${KEY_NAME} \
+        --query 'KeyMaterial' \
+        --output text \
+        > ~/.ssh/${KEY_NAME}.pem
+      ```
 
 1. Change permissions of the key
 
-   *Example for controllers within SemanticBits demo environment:*
-
    ```ShellSession
-   $ chmod 600 ~/.ssh/ab2d-sbdemo-shared.pem
+   $ chmod 600 ~/.ssh/${KEY_NAME}.pem
    ```
 
 1. Output the public key to the clipboard
 
-   *Example for controllers within SemanticBits demo environment:*
+   *Used for accessing controller instance(s):*
 
    ```ShellSession
-   $ ssh-keygen -y -f ~/.ssh/ab2d-sbdemo-shared.pem | pbcopy
+   $ ssh-keygen -y -f ~/.ssh/${KEY_NAME}.pem | pbcopy
    ```
 
-1. Update the "authorized_keys" file for the environment
+1. Update the "authorized_keys" file for the "ab2d-dev" environment
 
    1. Open the "authorized_keys" file for the environment
    
       ```ShellSession
-      $ vim ~/code/ab2d/Deploy/terraform/environments/ab2d-sbdemo-dev/authorized_keys
+      $ vim ~/code/ab2d/Deploy/terraform/environments/ab2d-dev/authorized_keys
       ```
 
-   1. Paste the public key under the "Keys included with CentOS image" section
+   1. Paste the public key under the "Keys included with gold image" section
+   
+   1. Save and close the file
 
+1. Update the "authorized_keys" file for the "ab2d-sbx" environment
+
+   1. Open the "authorized_keys" file for the environment
+   
+      ```ShellSession
+      $ vim ~/code/ab2d/Deploy/terraform/environments/ab2d-sbx/authorized_keys
+      ```
+
+   1. Paste the public key under the "Keys included with gold image" section
+   
    1. Save and close the file
 
 ### Create required S3 buckets
 
-1. Set target profile
-
-   *Example for the "semanticbitsdemo" AWS account:*
+1. Set target AWS profile
    
    ```ShellSession
-   $ export AWS_PROFILE="sbdemo-dev"
+   $ export AWS_PROFILE=ab2d-shared
    ```
 
+1. Set automation bucket name
+
+   ```ShellSession
+   $ export S3_AUTOMATION_BUCKET=ab2d-shared-automation
+   ```
+   
 1. Create S3 bucket for automation
 
    ```ShellSession
-   $ aws s3api create-bucket --bucket ab2d-automation --region us-east-1
+   $ aws --region us-east-1 s3api create-bucket \
+     --bucket ${S3_AUTOMATION_BUCKET}
    ```
 
 1. Block public access on bucket
 
    ```ShellSession
    $ aws s3api put-public-access-block \
-     --bucket ab2d-automation \
+     --bucket ${S3_AUTOMATION_BUCKET} \
      --region us-east-1 \
      --public-access-block-configuration BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true
    ```
