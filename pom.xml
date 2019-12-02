@@ -34,6 +34,7 @@
         <checkstyle.config>${project.root}/src/main/resources/checkstyle.xml</checkstyle.config>
         <logback.version>1.2.3</logback.version>
         <logback-encoder.version>6.2</logback-encoder.version>
+        <quartz.version>2.3.2</quartz.version>
     </properties>
 
     <dependencies>
