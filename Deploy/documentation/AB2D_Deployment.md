@@ -426,14 +426,10 @@
 
 ### Create roles
 
-> *** STOPPING POINT ***
-
-1. Set target profile
-
-   *Example:*
+1. Set target AWS profile
    
    ```ShellSession
-   $ export AWS_PROFILE="sbdemo-dev"
+   $ export AWS_PROFILE=ab2d-shared
    ```
 
 1. Change to the "iam-roles-trust-relationships" directory
@@ -451,10 +447,9 @@
 1. Attach required policies to the "Ab2dInstanceRole" role
 
    ```ShellSession
-   $ aws iam attach-role-policy --role-name Ab2dInstanceRole --policy-arn arn:aws:iam::114601554524:policy/Ab2dAssumePolicy
-   $ aws iam attach-role-policy --role-name Ab2dInstanceRole --policy-arn arn:aws:iam::114601554524:policy/Ab2dPackerPolicy
-   $ aws iam attach-role-policy --role-name Ab2dInstanceRole --policy-arn arn:aws:iam::114601554524:policy/Ab2dS3AccessPolicy
-   $ aws iam attach-role-policy --role-name Ab2dInstanceRole --policy-arn arn:aws:iam::114601554524:policy/Ab2dInitPolicy
+   $ aws iam attach-role-policy --role-name Ab2dInstanceRole --policy-arn arn:aws:iam::349849222861:policy/Ab2dAssumePolicy
+   $ aws iam attach-role-policy --role-name Ab2dInstanceRole --policy-arn arn:aws:iam::349849222861:policy/Ab2dPackerPolicy
+   $ aws iam attach-role-policy --role-name Ab2dInstanceRole --policy-arn arn:aws:iam::349849222861:policy/Ab2dS3AccessPolicy
    $ aws iam attach-role-policy --role-name Ab2dInstanceRole --policy-arn arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role
    ```
 
@@ -467,7 +462,7 @@
 1. Attach required policies to the "Ab2dManagedRole" role
 
    ```ShellSession
-   $ aws iam attach-role-policy --role-name Ab2dManagedRole --policy-arn arn:aws:iam::114601554524:policy/Ab2dAccessPolicy
+   $ aws iam attach-role-policy --role-name Ab2dManagedRole --policy-arn arn:aws:iam::349849222861:policy/Ab2dAccessPolicy
    ```
 
 ### Create instance profiles
@@ -494,13 +489,15 @@
    
    ```ShellSession
    $ aws iam attach-user-policy \
-     --policy-arn arn:aws:iam::114601554524:policy/Ab2dPermissionToPassRolesPolicy \
+     --policy-arn arn:aws:iam::349849222861:policy/Ab2dPermissionToPassRolesPolicy \
      --user-name lonnie.hanekamp@semanticbits.com
    ```
 
 2. Repeat this step for all users
 
 ## Create or update base aws environment
+
+> *** STOPPING POINT ***
 
 1. Change to the deploy directory
 
