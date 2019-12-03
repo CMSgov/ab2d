@@ -7,7 +7,6 @@
 		<groupId>gov.cms.ab2d</groupId>
 		<version>0.0.1-SNAPSHOT</version>
 	</parent>
-	<groupId>gov.cms.ab2d</groupId>
 	<artifactId>filter</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>filter</name>

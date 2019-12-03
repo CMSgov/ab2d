@@ -1,11 +1,7 @@
 package gov.cms.ab2d.api.controller;
 
-import com.okta.jwt.AccessTokenVerifier;
-import com.okta.jwt.Jwt;
 import com.okta.jwt.JwtVerificationException;
-import com.okta.jwt.impl.DefaultJwt;
 import gov.cms.ab2d.api.SpringBootApp;
-import gov.cms.ab2d.api.security.JwtTokenAuthenticationFilter;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.Sponsor;
 import gov.cms.ab2d.common.repository.*;
@@ -13,29 +9,20 @@ import gov.cms.ab2d.common.service.SponsorService;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.time.*;
 import java.util.List;
-import java.util.Map;
 
-import static gov.cms.ab2d.api.controller.TestUtil.TEST_USER;
 import static gov.cms.ab2d.api.util.Constants.*;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @RunWith(SpringRunner.class)
@@ -70,7 +57,7 @@ public class AdminAPITests {
     private String token;
 
     @Before
-    public void setup() throws IOException, InterruptedException, JwtVerificationException {
+    public void setup() throws JwtVerificationException {
         contractRepository.deleteAll();
         jobRepository.deleteAll();
         userRepository.deleteAll();
