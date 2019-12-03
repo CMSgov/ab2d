@@ -10,6 +10,7 @@
         <module>hpms</module>
         <module>bfd</module>
         <module>optout</module>
+        <module>audit</module>
     </modules>
     <parent>
         <groupId>org.springframework.boot</groupId>
