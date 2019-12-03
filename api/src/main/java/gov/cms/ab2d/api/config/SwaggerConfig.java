@@ -18,6 +18,9 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import static gov.cms.ab2d.api.util.Constants.API_PREFIX;
+import static gov.cms.ab2d.api.util.Constants.FHIR_PREFIX;
+
 @Configuration
 @EnableSwagger2
 public class SwaggerConfig {
@@ -26,7 +29,7 @@ public class SwaggerConfig {
         return new Docket(DocumentationType.SWAGGER_2)
                 .select()
                 .apis(RequestHandlerSelectors.basePackage("gov.cms.ab2d.api.controller"))
-                .paths(PathSelectors.any())
+                .paths(PathSelectors.ant(API_PREFIX + FHIR_PREFIX+"/**"))
                 .build()
                 .directModelSubstitute(Resource.class, String.class)
                 .useDefaultResponseMessages(false)
