@@ -9,15 +9,15 @@ import java.util.List;
 @Data
 @Accessors(chain = true)
 public class AB2DExplanationOfBenefit {
-    Reference patient;
-    CodeableConcept type;
-    ResourceType resourceType;
-    List<ExplanationOfBenefit.DiagnosisComponent> diagnosis;
-    List<ExplanationOfBenefit.ProcedureComponent> procedure;
-    List<AB2DItemComponent> item;
-    Reference provider;
-    Reference organization;
-    Reference facility;
-    List<ExplanationOfBenefit.CareTeamComponent> careTeam;
-    List<Identifier> identifier;
+    private Reference patient;
+    private CodeableConcept type;
+    private ResourceType resourceType;
+    private List<ExplanationOfBenefit.DiagnosisComponent> diagnosis;
+    private List<ExplanationOfBenefit.ProcedureComponent> procedure;
+    private List<AB2DItemComponent> item;
+    private Reference provider;
+    private Reference organization;
+    private Reference facility;
+    private List<ExplanationOfBenefit.CareTeamComponent> careTeam;
+    private List<Identifier> identifier;
 }

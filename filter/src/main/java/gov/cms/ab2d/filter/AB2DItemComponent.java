@@ -13,10 +13,10 @@ import java.util.List;
 @Data
 @Accessors(chain = true)
 public class AB2DItemComponent {
-    CodeableConcept service;
-    SimpleQuantity quantity;
-    Period servicedPeriod;
-    Type location;
-    List<PositiveIntType> careTeamLinkId;
-    PositiveIntType sequence;
+    private CodeableConcept service;
+    private SimpleQuantity quantity;
+    private Period servicedPeriod;
+    private Type location;
+    private List<PositiveIntType> careTeamLinkId;
+    private PositiveIntType sequence;
 }
