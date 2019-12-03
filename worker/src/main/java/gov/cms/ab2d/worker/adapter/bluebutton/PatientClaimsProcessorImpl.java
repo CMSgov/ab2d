@@ -25,7 +25,9 @@ import java.util.concurrent.Future;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
+import static gov.cms.ab2d.common.util.Constants.FILE_LOG;
 import static java.util.concurrent.TimeUnit.SECONDS;
+import static net.logstash.logback.argument.StructuredArguments.keyValue;
 
 @Slf4j
 @Component
@@ -61,6 +63,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
                     final String payload = jsonParser.encodeResourceToString(resource) + System.lineSeparator();
                     byteArrayOutputStream.write(payload.getBytes(StandardCharsets.UTF_8));
                 } catch (Exception e) {
+                    log.warn("Encountered exception while processing job resources: {}", e.getMessage());
                     ++errorCount;
                     handleException(errorFile, e, lock);
                 }
@@ -110,6 +113,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
         tryLock(lock);
 
         try {
+            log.info("Attempting to append to file", keyValue(FILE_LOG, outputFile.getFileName()));
             fileService.appendToFile(outputFile, byteArrayOutputStream);
         } finally {
             lock.unlock();
