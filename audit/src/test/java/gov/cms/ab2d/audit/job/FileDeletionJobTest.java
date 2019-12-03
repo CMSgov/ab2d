@@ -1,6 +1,7 @@
 package gov.cms.ab2d.audit.job;
 
 import gov.cms.ab2d.audit.SpringBootApp;
+import org.apache.commons.lang3.SystemUtils;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -75,7 +76,12 @@ public class FileDeletionJobTest {
 
         changeFileCreationDate(destinationNoPermissions);
 
-        Runtime.getRuntime().exec("chflags uchg " + destinationNoPermissions);
+        String os = SystemUtils.OS_NAME;
+        String command = "chattr +i ";
+        if(os.toLowerCase().indexOf("mac") != -1) {
+            command = "chflags uchg ";
+        }
+        Runtime.getRuntime().exec(command + destinationNoPermissions);
 
         File dir = new File(efsMount + TEST_DIRECTORY);
         if (!dir.exists()) dir.mkdirs();
