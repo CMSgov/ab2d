@@ -4,9 +4,13 @@ import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.IParser;
 import ca.uhn.fhir.rest.api.EncodingEnum;
 import ca.uhn.fhir.rest.server.exceptions.ResourceNotFoundException;
+import org.apache.commons.lang3.StringUtils;
 import org.hl7.fhir.dstu3.model.ExplanationOfBenefit;
 
+import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.Reader;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -54,24 +58,67 @@ public class EOBToAB2DEOB {
      *             Explanation of Benefit data retrieved from Blue
      * @return the AB2D object
      */
-    public static AB2DExplanationOfBenefit fromFile(String path) {
-        System.out.println("Loading file " + path);
-        ExplanationOfBenefit retVal = getEOB(path);
+    public static AB2DExplanationOfBenefit fromFileInClasspath(String path) {
+        ExplanationOfBenefit retVal = getEOBFromFileInClassPath(path);
         return EOBToAB2DEOB.from(retVal);
     }
 
     /**
-     * Parse and return the ExplanationOfBenefit file from a JOSN file
-     * @param path - the file name and path in the classpath containing the
+     * Load the AB2dExplanationOfBenefit object from a reader
+     *
+     * @param reader - the reader with the Explanation of Benefit data retrieved from Blue
+     * @return the AB2D object
+     * @throws IOException if there is issue reading the file
+     */
+    public static AB2DExplanationOfBenefit fromReader(Reader reader) throws IOException {
+        if (reader == null) {
+            return null;
+        }
+        ExplanationOfBenefit retVal = getEOBFromReader(reader);
+        return EOBToAB2DEOB.from(retVal);
+    }
+
+    /**
+     * Parse and return the ExplanationOfBenefit file from a JOSN file in the classpath
+     * @param fileInClassPath - the file name and path in the classpath containing the
      *             Explanation of Benefit data retrieved from Blue
      * @return the ExplanationOfBenefit object
      */
-    public static ExplanationOfBenefit getEOB(String path) {
+    public static ExplanationOfBenefit getEOBFromFileInClassPath(String fileInClassPath) {
+        if (StringUtils.isBlank(fileInClassPath)) {
+            return null;
+        }
         ClassLoader classLoader = EOBToAB2DEOB.class.getClassLoader();
-        InputStream inputStream = classLoader.getResourceAsStream(path);
+        InputStream inputStream = classLoader.getResourceAsStream(fileInClassPath);
+        return getParser().parseResource(ExplanationOfBenefit.class, inputStream);
+    }
 
+    /**
+     * Retrieve the Explanation of Benefit object data from a Reader object
+     * @param reader - the reader
+     * @return the Explanation of Benefit object
+     * @throws IOException if the file is invalid or unreadable
+     */
+    public static ExplanationOfBenefit getEOBFromReader(Reader reader) throws IOException {
+        if (reader == null) {
+            return null;
+        }
+        String inputStr;
+        StringBuilder responseStrBuilder = new StringBuilder();
+        BufferedReader bf = new BufferedReader(reader);
+        while ((inputStr = bf.readLine()) != null) {
+            responseStrBuilder.append(inputStr);
+        }
+        return getParser().parseResource(ExplanationOfBenefit.class, responseStrBuilder.toString());
+    }
+
+    /**
+     * Convenience method to create the parser for any method that needs it.
+     *
+     * @return the parser
+     */
+    private static IParser getParser() {
         EncodingEnum respType = EncodingEnum.forContentType(EncodingEnum.JSON_PLAIN_STRING);
-        IParser parser = respType.newParser(FhirContext.forDstu3());
-        return parser.parseResource(ExplanationOfBenefit.class, inputStream);
+        return respType.newParser(FhirContext.forDstu3());
     }
 }

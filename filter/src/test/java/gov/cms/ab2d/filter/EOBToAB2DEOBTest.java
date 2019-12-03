@@ -2,10 +2,12 @@ package gov.cms.ab2d.filter;
 
 import ca.uhn.fhir.rest.server.exceptions.ResourceNotFoundException;
 import org.hl7.fhir.dstu3.model.*;
-import org.junit.Before;
 import org.junit.jupiter.api.Test;
 
+import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.Reader;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -17,8 +19,8 @@ class EOBToAB2DEOBTest {
     static AB2DExplanationOfBenefit eobCarrier = null;
     static AB2DExplanationOfBenefit eobSNF = null;
     static {
-        eobCarrier = EOBToAB2DEOB.fromFile("eobdata/EOB-for-Carrier-Claims.json");;
-        eobSNF = EOBToAB2DEOB.fromFile("eobdata/EOB-for-SNF-Claims.json");
+        eobCarrier = EOBToAB2DEOB.fromFileInClasspath("eobdata/EOB-for-Carrier-Claims.json");;
+        eobSNF = EOBToAB2DEOB.fromFileInClasspath("eobdata/EOB-for-SNF-Claims.json");
     }
 
     @Test
@@ -34,7 +36,9 @@ class EOBToAB2DEOBTest {
 
     @Test
     public void testLoadFromFilePatient() {
-        ExplanationOfBenefit eob = EOBToAB2DEOB.getEOB("eobdata/EOB-for-Carrier-Claims.json");
+        assertNull(EOBToAB2DEOB.getEOBFromFileInClassPath(""));
+        assertNull(EOBToAB2DEOB.getEOBFromFileInClassPath(null));
+        ExplanationOfBenefit eob = EOBToAB2DEOB.getEOBFromFileInClassPath("eobdata/EOB-for-Carrier-Claims.json");
         assertNotNull(eob);
         assertEquals(eob.getPatient().getReference(), "Patient/567834");
     }
@@ -160,5 +164,28 @@ class EOBToAB2DEOBTest {
         List<AB2DItemComponent> components2 = eobSNF.getItem();
         Address location2 = (Address) components2.get(0).getLocation();
         assertEquals(location2.getState(), "FL");
+    }
+
+    @Test
+    void testReaderEOB() throws IOException {
+        ClassLoader classLoader = EOBToAB2DEOB.class.getClassLoader();
+        InputStream inputStream = classLoader.getResourceAsStream("eobdata/EOB-for-Carrier-Claims.json");
+        Reader reader = new java.io.InputStreamReader(inputStream);
+        assertNull(EOBToAB2DEOB.getEOBFromReader(null));
+        ExplanationOfBenefit benefit = EOBToAB2DEOB.getEOBFromReader(reader);
+        assertNotNull(benefit);
+        assertEquals(benefit.getPatient().getReference(), "Patient/567834");
+    }
+
+    @Test
+    void testReaderAB2DObj() throws IOException {
+        Reader nullReader = null;
+        assertNull(EOBToAB2DEOB.fromReader(nullReader));
+        ClassLoader classLoader = EOBToAB2DEOB.class.getClassLoader();
+        InputStream inputStream = classLoader.getResourceAsStream("eobdata/EOB-for-Carrier-Claims.json");
+        Reader reader = new java.io.InputStreamReader(inputStream);
+        AB2DExplanationOfBenefit benefit = EOBToAB2DEOB.fromReader(reader);
+        assertNotNull(benefit);
+        assertEquals(benefit.getPatient().getReference(), "Patient/567834");
     }
 }
