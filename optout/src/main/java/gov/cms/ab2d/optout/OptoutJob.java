@@ -16,10 +16,8 @@ public class OptoutJob extends QuartzJobBean {
 
     @Override
     protected void executeInternal(JobExecutionContext context) throws JobExecutionException {
-        log.info("##########################################################################");
-        log.info("OptOutJob triggered. Run : [{}]", ++runCount);
-        log.info("##########################################################################");
 
         processor.process();
+
     }
 }
