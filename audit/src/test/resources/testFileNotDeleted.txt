@@ -1,1 +1,1 @@
-Some text
+This file will be ignored

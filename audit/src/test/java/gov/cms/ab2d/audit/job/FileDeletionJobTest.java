@@ -40,6 +40,8 @@ public class FileDeletionJobTest {
 
     private static final String TEST_FILE_NOT_DELETED = "testFileNotDeleted.txt";
 
+    private static final String TEST_FILE_NO_PERMISSIONS = "testFileNoPermissions.txt";
+
     private static final String TEST_DIRECTORY = "testDirectory";
 
     private static final String TEST_FILE_NESTED = TEST_DIRECTORY + "/testFileInDirectory.txt";
@@ -53,7 +55,7 @@ public class FileDeletionJobTest {
 
     @Test
     public void checkToEnsureFilesDeleted() throws IOException, URISyntaxException {
-        // Don't change the creation date on this file, but do so on the next two
+        // Don't change the creation date on this file, but do so on the next 3
         Path destinationNotDeleted = Paths.get(efsMount, TEST_FILE_NOT_DELETED);
         URL urlNotDeletedFile = this.getClass().getResource("/" + TEST_FILE_NOT_DELETED);
         Path sourceNotDeleted = Paths.get(urlNotDeletedFile.toURI());
@@ -65,6 +67,15 @@ public class FileDeletionJobTest {
         Files.move(source, destination, StandardCopyOption.REPLACE_EXISTING);
 
         changeFileCreationDate(destination);
+
+        Path destinationNoPermissions = Paths.get(efsMount, TEST_FILE_NO_PERMISSIONS);
+        URL urlNoPermissions = this.getClass().getResource("/" + TEST_FILE_NO_PERMISSIONS);
+        Path sourceNoPermissions = Paths.get(urlNoPermissions.toURI());
+        Files.move(sourceNoPermissions, destinationNoPermissions, StandardCopyOption.REPLACE_EXISTING);
+
+        changeFileCreationDate(destinationNoPermissions);
+
+        Runtime.getRuntime().exec("chflags uchg " + destinationNoPermissions);
 
         File dir = new File(efsMount + TEST_DIRECTORY);
         if (!dir.exists()) dir.mkdirs();
@@ -98,5 +109,7 @@ public class FileDeletionJobTest {
         Assert.assertTrue(Files.notExists(nestedFileDestination));
 
         Assert.assertTrue(Files.exists(destinationNotDeleted));
+
+        Assert.assertTrue(Files.exists(destinationNoPermissions));
     }
 }
