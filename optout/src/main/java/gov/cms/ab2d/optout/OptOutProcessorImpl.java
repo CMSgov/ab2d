@@ -1,7 +1,6 @@
 package gov.cms.ab2d.optout;
 
 
-import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -16,7 +15,6 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 
 @Slf4j
-@Setter
 @Component
 public class OptOutProcessorImpl implements OptOutProcessor {
 

@@ -1,11 +1,12 @@
 package gov.cms.ab2d.optout.setup;
 
 import gov.cms.ab2d.optout.OptoutJob;
+import org.quartz.CronScheduleBuilder;
 import org.quartz.JobBuilder;
 import org.quartz.JobDetail;
-import org.quartz.SimpleScheduleBuilder;
 import org.quartz.Trigger;
 import org.quartz.TriggerBuilder;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
@@ -13,6 +14,9 @@ import org.springframework.context.annotation.PropertySource;
 @Configuration
 @PropertySource("classpath:application.optout.properties")
 public class QuartzSetup {
+
+    @Value("${cron.schedule}")
+    private String schedule;
 
     @Bean
     JobDetail optoutJobDetail() {
@@ -28,7 +32,7 @@ public class QuartzSetup {
         return TriggerBuilder.newTrigger()
                 .forJob(optoutJobDetail)
                 .withIdentity("output_job_trigger")
-                .withSchedule(SimpleScheduleBuilder.repeatHourlyForever())
+                .withSchedule(CronScheduleBuilder.cronSchedule(schedule))
                 .build();
     }
 

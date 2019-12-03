@@ -10,8 +10,6 @@ import org.springframework.scheduling.quartz.QuartzJobBean;
 @RequiredArgsConstructor
 public class OptoutJob extends QuartzJobBean {
 
-    private static int runCount = 0;
-
     private final OptOutProcessor processor;
 
     @Override
