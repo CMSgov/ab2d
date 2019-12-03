@@ -36,7 +36,7 @@ public class FileDeletionJob implements Job {
                         log.info("Deleted file {}", path);
                     }
                 } catch (IOException e) {
-                    log.error("Encountered exception trying to delete a file, moving onto next one", e);
+                    log.error("Encountered exception trying to delete a file {}, moving onto next one", path, e);
                 }
             });
 

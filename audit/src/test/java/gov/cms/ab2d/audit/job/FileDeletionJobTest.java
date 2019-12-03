@@ -41,7 +41,9 @@ public class FileDeletionJobTest {
 
     private static final String TEST_FILE_NOT_DELETED = "testFileNotDeleted.txt";
 
-    private static final String TEST_FILE_NO_PERMISSIONS = "testFileNoPermissions.txt";
+    private static final String TEST_DIRECTORY_NO_PERMISSIONS = "testDirectoryNoPermissions";
+
+    private static final String TEST_FILE_NO_PERMISSIONS = TEST_DIRECTORY_NO_PERMISSIONS + "/testFileNoPermissions.txt";
 
     private static final String TEST_DIRECTORY = "testDirectory";
 
@@ -69,19 +71,17 @@ public class FileDeletionJobTest {
 
         changeFileCreationDate(destination);
 
-        Path destinationNoPermissions = Paths.get(efsMount, TEST_FILE_NO_PERMISSIONS);
-        URL urlNoPermissions = this.getClass().getResource("/" + TEST_FILE_NO_PERMISSIONS);
-        Path sourceNoPermissions = Paths.get(urlNoPermissions.toURI());
-        Files.move(sourceNoPermissions, destinationNoPermissions, StandardCopyOption.REPLACE_EXISTING);
+        File noPermissionsDir = new File(efsMount + TEST_DIRECTORY_NO_PERMISSIONS);
+        if (!noPermissionsDir.exists()) noPermissionsDir.mkdirs();
 
-        changeFileCreationDate(destinationNoPermissions);
+        Path noPermissionsFileDestination = Paths.get(efsMount, TEST_FILE_NO_PERMISSIONS);
+        URL noPermissionsFileUrl = this.getClass().getResource("/" + TEST_FILE_NO_PERMISSIONS);
+        Path noPermissionsFileSource = Paths.get(noPermissionsFileUrl.toURI());
+        Files.move(noPermissionsFileSource, noPermissionsFileDestination, StandardCopyOption.REPLACE_EXISTING);
 
-        String os = SystemUtils.OS_NAME;
-        String command = "chattr +i ";
-        if(os.toLowerCase().indexOf("mac") != -1) {
-            command = "chflags uchg ";
-        }
-        Runtime.getRuntime().exec(command + destinationNoPermissions);
+        changeFileCreationDate(noPermissionsFileDestination);
+
+        noPermissionsDir.setWritable(false);
 
         File dir = new File(efsMount + TEST_DIRECTORY);
         if (!dir.exists()) dir.mkdirs();
@@ -116,6 +116,6 @@ public class FileDeletionJobTest {
 
         Assert.assertTrue(Files.exists(destinationNotDeleted));
 
-        Assert.assertTrue(Files.exists(destinationNoPermissions));
+        Assert.assertTrue(Files.exists(noPermissionsFileDestination));
     }
 }
