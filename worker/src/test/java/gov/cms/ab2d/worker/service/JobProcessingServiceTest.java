@@ -65,6 +65,14 @@ class JobProcessingServiceTest {
     }
 
     @Test
+    @DisplayName("When a job is in submitted status, it can be put into progress upon starting processing")
+    void putNonExistentJobInProgress() {
+        var exceptionThrown = assertThrows(IllegalArgumentException.class,() ->
+                cut.putJobInProgress("NonExistent"));
+        assertThat(exceptionThrown.getMessage(), is("Job NonExistent was not found"));
+    }
+
+    @Test
     @DisplayName("When a job is not already in a submitted status, it cannot be put into progress")
     void whenJobIsNotInSubmittedStatus_ThenJobShouldNotBePutInProgress() {
         job.setStatus(JobStatus.IN_PROGRESS);
