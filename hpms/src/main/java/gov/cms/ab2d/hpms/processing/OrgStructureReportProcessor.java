@@ -3,6 +3,7 @@ package gov.cms.ab2d.hpms.processing;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.Sponsor;
 import gov.cms.ab2d.common.service.SponsorService;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.usermodel.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -13,6 +14,10 @@ import java.io.InputStream;
 import java.util.Iterator;
 import java.util.Optional;
 
+import static gov.cms.ab2d.common.util.Constants.SPONSOR_LOG;
+import static net.logstash.logback.argument.StructuredArguments.keyValue;
+
+@Slf4j
 @Transactional
 @Service("orgStructureReportProcessor")
 public class OrgStructureReportProcessor implements ExcelReportProcessor {
@@ -25,6 +30,8 @@ public class OrgStructureReportProcessor implements ExcelReportProcessor {
         try (Workbook workbook = excelType.getWorkbookType(xlsInputStream)) {
             Sheet datatypeSheet = workbook.getSheetAt(0);
             Iterator<Row> iterator = datatypeSheet.iterator();
+
+            log.info("Beginning processing a total of {} rows", datatypeSheet.getPhysicalNumberOfRows());
 
             while (iterator.hasNext()) {
 
@@ -78,6 +85,8 @@ public class OrgStructureReportProcessor implements ExcelReportProcessor {
                         sponsor = sponsorOptional.get();
                     }
 
+                    log.info("Starting processing for sponsor {}", keyValue(SPONSOR_LOG, sponsorHpmsId));
+
                     sponsor.setHpmsId(sponsorHpmsId.intValue());
                     sponsor.setLegalName(sponsorName);
                     sponsor.setOrgName(sponsorName);
@@ -94,6 +103,8 @@ public class OrgStructureReportProcessor implements ExcelReportProcessor {
                     }
 
                     sponsorService.saveSponsor(sponsor);
+
+                    log.info("Sponsor saved {}", keyValue(SPONSOR_LOG, sponsorHpmsId));
                 }
             }
         }

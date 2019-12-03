@@ -1,6 +1,5 @@
 package gov.cms.ab2d.bfd.client;
 
-import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.rest.client.exceptions.FhirClientConnectionException;
 import ca.uhn.fhir.rest.server.exceptions.ResourceNotFoundException;
 import org.apache.commons.lang3.StringUtils;
@@ -49,6 +48,7 @@ public class BlueButtonClientTest {
     // A patient id that should not exist in bluebutton
     private static final String TEST_NONEXISTENT_PATIENT_ID = "31337";
     private static final String TEST_SLOW_PATIENT_ID = "20010000001111";
+    private static final String TEST_NO_RECORD_PATIENT_ID = "20010000001115";
 
     // Paths to test resources
     private static final String METADATA_PATH = "bb-test-data/meta.xml";
@@ -59,9 +59,6 @@ public class BlueButtonClientTest {
 
     @Autowired
     private BFDClient bbc;
-
-    @Autowired
-    private FhirContext fhirContext;
 
     private static int mockServerPort = 8083;
 
@@ -111,6 +108,20 @@ public class BlueButtonClientTest {
             );
         }
 
+        // Patient that exists, but has no records
+        createMockServerExpectation(
+                "/v1/fhir/Patient/" + TEST_NO_RECORD_PATIENT_ID,
+                HttpStatus.OK_200,
+                getRawXML(SAMPLE_PATIENT_PATH_PREFIX + TEST_NO_RECORD_PATIENT_ID + ".xml"),
+                List.of()
+        );
+        createMockServerExpectation(
+                "/v1/fhir/ExplanationOfBenefit",
+                HttpStatus.OK_200,
+                getRawXML(SAMPLE_EOB_PATH_PREFIX + TEST_NO_RECORD_PATIENT_ID + ".xml"),
+                Collections.singletonList(Parameter.param("patient", TEST_NO_RECORD_PATIENT_ID))
+        );
+
         // Create mocks for pages of the results
         for (String startIndex : List.of("10", "20", "30")) {
             createMockServerExpectation(
@@ -146,6 +157,13 @@ public class BlueButtonClientTest {
 
         assertNotNull(response, "The demo patient should have a non-null EOB bundle");
         assertEquals(32, response.getTotal(), "The demo patient should have exactly 32 EOBs");
+    }
+
+    @Test
+    public void shouldGetEOBPatientNoRecords() {
+        thrown.expect(ResourceNotFoundException.class);
+        thrown.expectMessage("Patient does not have any records");
+        bbc.requestEOBFromServer(TEST_NO_RECORD_PATIENT_ID);
     }
 
     @Test

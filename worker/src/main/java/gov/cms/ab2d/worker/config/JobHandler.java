@@ -2,6 +2,7 @@ package gov.cms.ab2d.worker.config;
 
 import gov.cms.ab2d.worker.service.WorkerService;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.integration.support.locks.LockRegistry;
 import org.springframework.messaging.Message;
@@ -12,6 +13,8 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.locks.Lock;
+
+import static gov.cms.ab2d.common.util.Constants.JOB_LOG;
 
 
 /**
@@ -40,6 +43,8 @@ public class JobHandler implements MessageHandler {
 
         final String jobId = getJobId(message);
 
+        MDC.put(JOB_LOG, jobId);
+
         final Lock lock = lockRegistry.obtain(jobId);
 
         // Inability to obtain a lock means other worker is already taking care of the request
@@ -51,6 +56,8 @@ public class JobHandler implements MessageHandler {
                 lock.unlock();
             }
         }
+
+        MDC.remove(JOB_LOG);
     }
 
     private String getJobId(Message<?> message) {
