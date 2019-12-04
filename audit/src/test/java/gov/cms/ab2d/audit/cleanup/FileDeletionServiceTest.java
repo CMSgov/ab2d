@@ -3,6 +3,9 @@ package gov.cms.ab2d.audit.cleanup;
 import gov.cms.ab2d.audit.SpringBootApp;
 import org.junit.Assert;
 import org.junit.Test;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Order;
+import org.junit.jupiter.api.TestMethodOrder;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -60,6 +63,9 @@ public class FileDeletionServiceTest {
 
     @Test
     public void checkToEnsureFilesDeleted() throws IOException, URISyntaxException {
+        // other tests set this value, so set it to the correct one, JUnit ordering annotations don't seem to be respected
+        ReflectionTestUtils.setField(fileDeletionService, "efsMount", efsMount);
+
         // Don't change the creation date on this file, but do so on the next ones
         Path destinationNotDeleted = Paths.get(efsMount, TEST_FILE_NOT_DELETED);
         URL urlNotDeletedFile = this.getClass().getResource("/" + TEST_FILE_NOT_DELETED);
