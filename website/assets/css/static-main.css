@@ -3,6 +3,9 @@
 /*! normalize.css v7.0.0 | MIT License | github.com/necolas/normalize.css */
 
 @import url(https://fonts.googleapis.com/css?family=Roboto:400,700);
+@import url(https://fonts.googleapis.com/css?family=Open+Sans:400,700|Roboto:400,700&display=swap);
+@import url(https://fonts.googleapis.com/css?family=Open+Sans:400,700|Roboto:400,700&display=swap);
+@import url(https://fonts.googleapis.com/css?family=Open+Sans:400,700|Roboto:400,700&display=swap);
 html {
     line-height: 1.15;
     -ms-text-size-adjust: 100%;
@@ -297,8 +300,8 @@ template {
 
 .ds-base,
 .ds-base--inverse {
-    font-family: Roboto, sans-serif;
-    font-size: 18px;
+    font-family: "Open Sans", Helvetica, sans-serif;
+    font-size: 16px;
     line-height: 1.5
 }
 
@@ -606,7 +609,7 @@ a:active {
     cursor: pointer;
     display: inline-block;
     font-family: "Open Sans", Helvetica, sans-serif;
-    font-size: 20px;
+    font-size: 16px;
     font-weight: 700;
     line-height: 1.3;
     padding: 8px 24px;
@@ -1926,7 +1929,7 @@ a.ds-c-vertical-nav__label:hover {
 }
 
 .ds-u-fill--white {
-    background-color: #fff!important
+    background-color: #f1f1f1!important
 }
 
 .ds-u-fill--background {
@@ -5447,7 +5450,7 @@ header {
 }
 
 .ds-c-desktop-nav {
-    background: #ffffff;
+    background: #f1f1f1;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -5967,7 +5970,8 @@ header {
 }
 
 .ds-c-badge {
-    letter-spacing: 2px;
+    letter-spacing: 0 !important;
+    padding: .5rem .6rem;
     background-color: white;
     border-style: solid;
     border-width: 2px;
@@ -6039,6 +6043,10 @@ Everything above is a direct copy from the BB css project
 BCDA changes below this line
 */
 
+body {
+    background-color: #f1f1f1;
+}
+
 article h1 {
     position: relative;
     display: inline-block;
@@ -6051,7 +6059,7 @@ article h1:after {
     left:0;
     height:4px;
     width:100%;
-    background:linear-gradient(30deg,#2a5cc9 10%,#5ef1e1 90%);
+    background:linear-gradient(30deg,#323a44 10%,#e1f3f8 90%);
 }
 
 .api-pattern {
@@ -6059,17 +6067,17 @@ article h1:after {
 }
 
 .gradient-background {
-    background: linear-gradient(.25turn, #0071bc 70%, #188ac4);
+    background: linear-gradient(.25turn, #112e51 70%, #205493);
 }
 
 .solid-container {
     width: 60%;
-    background-color: #0071bc;
+    background-color: #112e51;
 }
 
 article h2{
-  display: inline-block;
-  position: relative;
+    display: inline-block;
+    position: relative;
 }
 
 article h2::after {
@@ -6079,20 +6087,20 @@ article h2::after {
     left: 0;
     height: 4px;
     width: 100%;
-    background: linear-gradient(30deg, #087BAE 10%, #34EFA4 90%);
+    background: linear-gradient(30deg,#323a44 10%,#e1f3f8 90%);
 }
 .subnav .blueberry-lime-link:active:before,
 .subnav .blueberry-lime-link:focus:before,
 .subnav .blueberry-lime-link:hover:before {
-    background: linear-gradient(30deg, #34EFA4 10%, #087BAE 90%)
+    background: linear-gradient(30deg, #323a44 10%, #e1f3f8 90%)
 }
 
 .logo-link-container{
-  color: #323a45
+    color: #323a45
 }
 
 .ds-c-desktop-nav .desktop-nav-items a, .mobile-nav-items a {
-  color: #323a45
+    color: #323a45
 }
 
 .bcda_callout {
@@ -6101,24 +6109,24 @@ article h2::after {
 }
 
 .no_list{
-  list-style: none;
+    list-style: none;
 }
 
 .button p{
-  text-align: center;
-  width:100%;
-  margin: auto;
+    text-align: center;
+    width:100%;
+    margin: auto;
 }
 
 .button p a{
-  color:white;
-  text-decoration: none;
-  width:60%;
-  border-radius:3px;
-  padding: 10px;
-  background-color: #0071BC;
-  display:block;
-  margin:auto;
+    color:white;
+    text-decoration: none;
+    width:60%;
+    border-radius:3px;
+    padding: 10px;
+    background-color: #0071BC;
+    display:block;
+    margin:auto;
 }
 
 #google_logo {
@@ -6126,20 +6134,20 @@ article h2::after {
     float: right;
     margin-top: -15px;
     padding-bottom: 25px;
-  }
+}
 
 .ds-text--lead {
-    font-size: 24px;
+    font-size: 1.1rem;
 }
 
 @media only screen and (max-width: 1090px){
-  .api-pattern {
-    background:none;
-    background-color: #339392;
-  }
-  .solid-container {
-      width: 100%;
-  }
+    .api-pattern {
+        background:none;
+        background-color: #339392;
+    }
+    .solid-container {
+        width: 100%;
+    }
 
 }
 
