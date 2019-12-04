@@ -9,6 +9,7 @@
    * [Delete instance profiles](#delete-instance-profiles)
    * [Delete roles](#delete-roles)
    * [Delete policies not used by IAM users](#delete-policies-not-used-by-iam-users)
+1. [Appendix E: Interacting with policy versions](#appendix-e-interacting-with-policy-versions)
 
 ## Appendix A: Access the CMS AWS console
 
@@ -286,3 +287,48 @@
    $ aws iam delete-policy \
      --policy-arn arn:aws:iam::349849222861:policy/Ab2dS3AccessPolicy
    ```
+
+## Appendix E: Interacting with policy versions
+
+1. List policy versions
+
+   1. Enter the following
+   
+      *Example of listing policy versions of the "Ab2dAssumePolicy" policy:*
+   
+      ```ShellSession
+      $ aws iam list-policy-versions \
+        --policy-arn arn:aws:iam::114601554524:policy/Ab2dAssumePolicy
+      ```
+
+   1. Examine the output
+
+      *Example of listing policy versions of the "Ab2dAssumePolicy" policy:*
+      
+      ```
+      {
+          "Versions": [
+              {
+                  "VersionId": "v2",
+                  "IsDefaultVersion": true,
+                  "CreateDate": "2019-10-11T23:23:54Z"
+              },
+              {
+                  "VersionId": "v1",
+                  "IsDefaultVersion": false,
+                  "CreateDate": "2019-10-04T19:11:21Z"
+              }
+          ]
+      }
+      ```
+   
+1. Delete a policy version
+
+   *Example of deleting "v1" of the "Ab2dAssumePolicy" policy:*
+
+   ```ShellSession
+   $ aws iam delete-policy-version \
+     --policy-arn arn:aws:iam::114601554524:policy/Ab2dAssumePolicy \
+     --version-id v1
+   ```
+   

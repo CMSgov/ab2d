@@ -173,101 +173,123 @@
 1. Set target profile
    
    ```ShellSession
-   $ export AWS_PROFILE="sbdemo-dev"
+   $ export AWS_PROFILE="sbdemo-shared"
    ```
 
-1. Change to the "iam-policies" directory
+1. Change to the "ab2d-sbdemo-shared" environment directory
 
    ```ShellSession
-   $ cd ~/code/ab2d/Deploy/aws/iam-policies
+   $ cd ~/code/ab2d/Deploy/terraform/environments/ab2d-sbdemo-shared
    ```
 
 1. Create "Ab2dAccessPolicy"
 
    ```ShellSession
-   $ aws iam create-policy --policy-name Ab2dAccessPolicy --policy-document file://ab2d-access-policy.json
+   $ aws iam create-policy \
+     --policy-name Ab2dAccessPolicy \
+     --policy-document file://ab2d-access-policy.json
    ```
 
 1. Create "Ab2dAssumePolicy"
 
    ```ShellSession
-   $ aws iam create-policy --policy-name Ab2dAssumePolicy --policy-document file://ab2d-assume-policy.json
-   ```
-
-1. Create "Ab2dInitPolicy"
-
-   ```ShellSession
-   $ aws iam create-policy --policy-name Ab2dInitPolicy --policy-document file://ab2d-init-policy.json
+   $ aws iam create-policy \
+     --policy-name Ab2dAssumePolicy \
+     --policy-document file://ab2d-assume-policy.json
    ```
 
 1. Create "Ab2dPackerPolicy"
 
    ```ShellSession
-   $ aws iam create-policy --policy-name Ab2dPackerPolicy --policy-document file://ab2d-packer-policy.json
+   $ aws iam create-policy \
+     --policy-name Ab2dPackerPolicy \
+     --policy-document file://ab2d-packer-policy.json
    ```
 
 1. Create "Ab2dS3AccessPolicy"
 
    ```ShellSession
-   $ aws iam create-policy --policy-name Ab2dS3AccessPolicy --policy-document file://ab2d-s3-access-policy.json
+   $ aws iam create-policy \
+     --policy-name Ab2dS3AccessPolicy \
+     --policy-document file://ab2d-s3-access-policy.json
    ```
 
 1. Create "Ab2dPermissionToPassRolesPolicy"
 
    ```ShellSession
-   $ aws iam create-policy --policy-name Ab2dPermissionToPassRolesPolicy --policy-document file://ab2d-permission-to-pass-roles-policy.json
+   $ aws iam create-policy \
+     --policy-name Ab2dPermissionToPassRolesPolicy \
+     --policy-document file://ab2d-permission-to-pass-roles-policy.json
    ```
 
 ### Create roles
 
 1. Set target profile
-
-   *Example:*
    
    ```ShellSession
-   $ export AWS_PROFILE="sbdemo-dev"
+   $ export AWS_PROFILE="sbdemo-shared"
    ```
 
-1. Change to the "iam-roles-trust-relationships" directory
+1. Change to the "ab2d-sbdemo-shared" environment directory
 
    ```ShellSession
-   $ cd ~/code/ab2d/Deploy/aws/iam-roles-trust-relationships
+   $ cd ~/code/ab2d/Deploy/terraform/environments/ab2d-sbdemo-shared
    ```
 
 1. Create "Ab2dInstanceRole" role
 
    ```ShelSession
-   $ aws iam create-role --role-name Ab2dInstanceRole --assume-role-policy-document file://ab2d-instance-role.json
+   $ aws iam create-role \
+     --role-name Ab2dInstanceRole \
+     --assume-role-policy-document file://ab2d-instance-role-trust-relationship.json
    ```
 
 1. Attach required policies to the "Ab2dInstanceRole" role
 
    ```ShellSession
-   $ aws iam attach-role-policy --role-name Ab2dInstanceRole --policy-arn arn:aws:iam::114601554524:policy/Ab2dAssumePolicy
-   $ aws iam attach-role-policy --role-name Ab2dInstanceRole --policy-arn arn:aws:iam::114601554524:policy/Ab2dPackerPolicy
-   $ aws iam attach-role-policy --role-name Ab2dInstanceRole --policy-arn arn:aws:iam::114601554524:policy/Ab2dS3AccessPolicy
-   $ aws iam attach-role-policy --role-name Ab2dInstanceRole --policy-arn arn:aws:iam::114601554524:policy/Ab2dInitPolicy
-   $ aws iam attach-role-policy --role-name Ab2dInstanceRole --policy-arn arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role
+   $ aws iam attach-role-policy \
+     --role-name Ab2dInstanceRole \
+     --policy-arn arn:aws:iam::114601554524:policy/Ab2dAssumePolicy
+   $ aws iam attach-role-policy \
+     --role-name Ab2dInstanceRole \
+     --policy-arn arn:aws:iam::114601554524:policy/Ab2dPackerPolicy
+   $ aws iam attach-role-policy \
+     --role-name Ab2dInstanceRole \
+     --policy-arn arn:aws:iam::114601554524:policy/Ab2dS3AccessPolicy
+   $ aws iam attach-role-policy \
+     --role-name Ab2dInstanceRole \
+     --policy-arn arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role
    ```
 
 1. Create "Ab2dManagedRole" role
 
    ```ShelSession
-   $ aws iam create-role --role-name Ab2dManagedRole --assume-role-policy-document file://ab2d-managed-role.json
+   $ aws iam create-role \
+     --role-name Ab2dManagedRole \
+     --assume-role-policy-document file://ab2d-managed-role-trust-relationship.json
    ```
 
 1. Attach required policies to the "Ab2dManagedRole" role
 
    ```ShellSession
-   $ aws iam attach-role-policy --role-name Ab2dManagedRole --policy-arn arn:aws:iam::114601554524:policy/Ab2dAccessPolicy
+   $ aws iam attach-role-policy \
+     --role-name Ab2dManagedRole \
+     --policy-arn arn:aws:iam::114601554524:policy/Ab2dAccessPolicy
    ```
 
 ### Create instance profiles
 
+1. Set target AWS profile
+   
+   ```ShellSession
+   $ export AWS_PROFILE="sbdemo-shared"
+   ```
+
 1. Create instance profile
 
    ```ShellSession
-   $ aws iam create-instance-profile --instance-profile-name Ab2dInstanceProfile
+   $ aws iam create-instance-profile \
+     --instance-profile-name Ab2dInstanceProfile
    ```
 
 1. Attach "Ab2dInstanceRole" to "Ab2dInstanceProfile"
@@ -280,6 +302,12 @@
 
 ### Configure IAM user deployers
 
+1. Set target AWS profile
+   
+   ```ShellSession
+   $ export AWS_PROFILE="sbdemo-shared"
+   ```
+   
 1. Attach the Ab2dPermissionToPassRolesPolicy to an IAM user that runs the automation
 
    *Example for lonnie.hanekamp@semanticbits.com:*
