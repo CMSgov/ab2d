@@ -4,10 +4,11 @@ provider "aws" {
   profile = var.aws_profile
 }
 
+# Had to hardcode the key since terraform says "Variables may not be used here"
 terraform {
   backend "s3" {
     bucket         = "cms-ab2d-automation"
-    key            = "ab2d-sbdemo-shared/terraform/terraform.tfstate"
+    key            = "ab2d-shared/terraform/terraform.tfstate"
     region         = "us-east-1"
     encrypt = true
   }

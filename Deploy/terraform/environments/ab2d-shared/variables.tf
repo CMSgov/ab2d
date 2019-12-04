@@ -1,5 +1,5 @@
 variable "aws_account_number" {
-  default = "114601554524"
+  default = "349849222861"
 }
 
 variable "aws_profile" {
@@ -88,7 +88,7 @@ variable "ec2_maximum_instance_count" {
 }
 
 variable "gold_image_name" {
-  default = "EAST-RH 7-6 Gold Image V.1.09 (HVM) 06-26-19"
+  default = "EAST-RH 7-7 Gold Image V.1.03 (HVM) 11-20-19"
 }
 
 # LSH SKIP FOR NOW BEGIN
