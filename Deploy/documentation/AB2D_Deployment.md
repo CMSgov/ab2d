@@ -30,6 +30,14 @@
    --------|---------------------|---------------|--------------|---------------
    ab2d-dev|vpc-0c6413ec40c5fdac3|2              |10.242.26.0/24|10.242.5.128/26
 
+1. Note the dev and sbx VPC attributes
+
+   Attribute       |Value
+   ----------------|-------------
+   DHCP options set|dopt-90a65fea
+   DNS resolution  |enable
+   DNS hostnames   |disable
+   
 1. Note the dev and sbx subnets
 
    Tag               |Subnet ID               |IPv4 CIDR       |Availability Zone
@@ -39,6 +47,13 @@
    ab2d-dev-public-a |subnet-0044ee15d254fe18b|10.242.5.128/27 |us-east-1a
    ab2d-dev-public-b |subnet-05c149659e3061ef6|10.242.5.160/27 |us-east-1b
 
+1. Note the dev and sbx public subnet attributes
+
+   Public Subnet    |Attribute       |Value
+   -----------------|----------------|--------
+   ab2d-dev-public-a|Auto-assign IPv4|disabled
+   ab2d-dev-public-b|Auto-assign IPv4|disabled
+
 1. Note the dev and sbx route tables
 
    Tag               |Route Table ID       |Main|Associated Subnet Count|Associalted Subnet #1   |Associalted Subnet #2
@@ -47,6 +62,42 @@
    ab2d-dev-private-a|rtb-0c55acf18e7d3cd87|No  |1                      |subnet-03d5b59872d950c7d|
    ab2d-dev-private-b|rtb-09c40213a10ea6406|No  |1                      |subnet-0118d0d6af946bd66|
    ab2d-dev-public   |rtb-090372c9ee83aa450|No  |2                      |subnet-05c149659e3061ef6|subnet-0044ee15d254fe18b
+
+1. Note the dev and sbx routes for "ab2d-dev-private-a"
+
+   Destination      |Target
+   -----------------|-------------
+   10.242.5.128/26  |local
+   10.242.26.0/24   |local
+   0.0.0.0/0        |nat-060fbd5ddb57a2f18
+   10.223.120.0/22  |tgw-080644ad8f49ecafa
+   10.223.126.0/23  |tgw-080644ad8f49ecafa
+   10.232.32.0/19   |tgw-080644ad8f49ecafa
+   10.242.7.192/26  |tgw-080644ad8f49ecafa
+   10.242.193.192/26|tgw-080644ad8f49ecafa
+   10.244.96.0/19   |tgw-080644ad8f49ecafa
+
+1. Note the dev and sbx routes for "ab2d-dev-private-b"
+
+   Destination      |Target
+   -----------------|-------------
+   10.242.5.128/26  |local
+   10.242.26.0/24   |local
+   0.0.0.0/0        |nat-060fbd5ddb57a2f18
+   10.223.120.0/22  |tgw-080644ad8f49ecafa
+   10.223.126.0/23  |tgw-080644ad8f49ecafa
+   10.232.32.0/19   |tgw-080644ad8f49ecafa
+   10.242.7.192/26  |tgw-080644ad8f49ecafa
+   10.242.193.192/26|tgw-080644ad8f49ecafa
+   10.244.96.0/19   |tgw-080644ad8f49ecafa
+
+1. Note the dev and sbx routes for "ab2d-dev-public"
+
+   Destination      |Target
+   -----------------|-------------
+   10.242.5.128/26  |local
+   10.242.26.0/24   |local
+   0.0.0.0/0        |igw-0014bff62a3c1211d
 
 1. Note the dev and sbx internet gateway
 
@@ -456,7 +507,7 @@
 1. Create "Ab2dManagedRole" role
 
    ```ShelSession
-   $ aws iam create-role --role-name Ab2dManagedRole --assume-role-policy-document file://ab2d-managed-role.json
+   $ aws iam create-role --role-name Ab2dManagedRole --assume-role-policy-document file://cms-ab2d-managed-role.json
    ```
 
 1. Attach required policies to the "Ab2dManagedRole" role
@@ -497,8 +548,6 @@
 
 ## Create or update base aws environment
 
-> *** STOPPING POINT ***
-
 1. Change to the deploy directory
 
    *Format:*
@@ -513,40 +562,6 @@
    $ cd ~/code/ab2d/Deploy
    ```
 
-1. If deploying to the SemanticBits demo environment, create the VPC
-
-   1. Create the VPC
-   
-      ```ShellSession
-      $ ./create-vpc-for-sbdemo.sh
-      ```
-
-   1. Note the output
-
-      *Format:*
-      
-      ```
-      Creating VPC...
-      The VPC ID is: {vpc id}
-      Done.
-      ```
-
-   1. Rerun the create when VPC already exists to see how the output changes
-   
-      ```ShellSession
-      $ ./create-vpc-for-sbdemo.sh
-      ```
-
-   1. Note the output
-
-      *Format:*
-      
-      ```
-      INFO: The VPC already exists.
-      The VPC ID is: {vpc id}
-      Done.
-      ```
-
 1. Set the target VPC ID
 
    *Format:*
@@ -557,30 +572,30 @@
    
 1. Create base AWS environment
 
-   *Example for Dev environment testing within SemanticBits demo environment:*
+   *Example for Dev environment:*
 
    ```ShellSession
-   $ ./create-base-environment.sh \
-     --environment=sbdemo-dev \
-     --shared-environment=sbdemo-shared \
-     --vpc-id=$VPC_ID \
-     --ssh-username=centos \
-     --seed-ami-product-code=aw0evgkw8e5c1q413zgy5pjce \
+   $ ./ab2d-deploy.sh \
+     --environment=dev \
+     --shared-environment=shared \
+     --vpc-id=vpc-0c6413ec40c5fdac3 \
+     --ssh-username=ec2-user \
+     --owner=842420567215 \
      --ec2-instance-type=m5.xlarge \
-     --database-secret-datetime=2019-10-25-14-55-07
+     --database-secret-datetime=2019-12-03-15-19-01
    ```
 
-   *Example for Sandbox environment testing within SemanticBits demo environment:*
+   *Example for Sandbox environment:*
 
    ```ShellSession
-   $ ./create-base-environment.sh \
-     --environment=sbdemo-sbx \
-     --shared-environment=sbdemo-shared \
-     --vpc-id=$VPC_ID \
-     --ssh-username=centos \
-     --seed-ami-product-code=aw0evgkw8e5c1q413zgy5pjce \
+   $ ./ab2d-deploy.sh \
+     --environment=sbx \
+     --shared-environment=shared \
+     --vpc-id=vpc-0c6413ec40c5fdac3 \
+     --ssh-username=ec2-user \
+     --owner=842420567215 \
      --ec2-instance-type=m5.xlarge \
-     --database-secret-datetime=2019-10-25-14-55-07
+     --database-secret-datetime=2019-12-03-15-19-01
    ```
 
 1. If prompted, enter database user at the "Enter desired database_user" prompt

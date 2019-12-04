@@ -3,6 +3,8 @@
 ## Table of Contents
 
 1. [Appendix A: Access the CMS AWS console](#appendix-a-access-the-cms-aws-console)
+1. [Appendix B: View the current gold disk images](#appendix-b-view-the-current-gold-disk-images)
+1. [Appendix C: Interact with the developer S3 bucket](#appendix-c-interact-with-the-developer-s3-bucket)
 
 ## Appendix A: Access the CMS AWS console
 
@@ -96,3 +98,81 @@
 1. Select **Web Access**
 
 1. Note that the AWS console for the AB2D project should now appear
+
+## Appendix B: View the current gold disk images
+
+1. Open Chrome
+
+1. Enter the following in the address bar
+
+   > https://github.cms.gov/CCSVDC/gold-image/blob/master/ami_latest.txt
+
+## Appendix C: Interact with the developer S3 bucket
+
+1. Set target AWS profile
+   
+   ```ShellSession
+   $ export AWS_PROFILE=ab2d-shared
+   ```
+
+1. Verify that the "cms-ab2d-dev" bucket exists
+
+   ```ShellSession
+   $ aws --region us-east-1 s3api list-buckets \
+     --query "Buckets[?Name=='cms-ab2d-dev'].Name" \
+     --output text
+   ```
+
+1. Create a text file as an example (optional)
+
+   ```ShellSession
+   $ echo "test" > opt-out.txt
+   ```
+   
+1. Put a file in the root of the bucket
+
+   *Example using a file named opt-out.txt exists in the current directory:*
+   
+   ```ShellSession
+   $ aws --region us-east-1 s3api put-object \
+     --bucket cms-ab2d-dev \
+     --key opt-out.txt \
+     --body ./opt-out.txt
+   ```
+
+1. List objects in the root of the bucket
+
+   ```ShellSession
+   $ aws --region us-east-1 s3api list-objects \
+     --bucket cms-ab2d-dev \
+     --query 'Contents[].Key' \
+     --output text
+   ```
+
+1. Get a file from the root of the bucket
+
+   ```ShellSession
+   $ aws --region us-east-1 s3api get-object \
+     --bucket cms-ab2d-dev \
+     --key opt-out.txt \
+     ./opt-out-copy.txt
+   ```
+
+1. Delete a file from the root of the bucket
+
+   ```ShellSession
+   $ aws --region us-east-1 s3api delete-object \
+     --bucket cms-ab2d-dev \
+     --key opt-out.txt
+   ```
+
+1. Verify that the object is gone by listing objects in the root of the bucket again
+
+   ```ShellSession
+   $ aws --region us-east-1 s3api list-objects \
+     --bucket cms-ab2d-dev \
+     --query 'Contents[].Key' \
+     --output text
+   ```
+
+
