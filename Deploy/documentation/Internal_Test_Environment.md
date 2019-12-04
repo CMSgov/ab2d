@@ -13,7 +13,7 @@
    * [Create instance profiles](#create-instance-profiles)
    * [Configure IAM user deployers](#configure-iam-user-deployers)
 1. [Create or update base aws environment](#create-or-update-base-aws-environment)
-1. [Update application](#update-application)
+1. [Update existing environment](#update-existing-environment)
 1. [Deploy and configure Jenkins](#deploy-and-configure-jenkins)
 
 ## Create an AWS IAM user
@@ -378,9 +378,9 @@
    $ export VPC_ID={vpc id}
    ```
    
-1. Create base AWS environment
+1. If creating the AWS environment for Dev, do one of the following
 
-   *Example for Dev environment testing within SemanticBits demo environment:*
+   *Deploy Dev by creating new api and worker images:*
 
    ```ShellSession
    $ ./create-base-environment.sh \
@@ -390,10 +390,27 @@
      --ssh-username=centos \
      --seed-ami-product-code=aw0evgkw8e5c1q413zgy5pjce \
      --ec2-instance-type=m5.xlarge \
-     --database-secret-datetime=2019-10-25-14-55-07
+     --database-secret-datetime=2019-10-25-14-55-07 \
+     --build-new-images
    ```
 
-   *Example for Sandbox environment testing within SemanticBits demo environment:*
+   *Deploy Dev by using the latest existing api and worker images:*
+
+   ```ShellSession
+   $ ./create-base-environment.sh \
+     --environment=sbdemo-dev \
+     --shared-environment=sbdemo-shared \
+     --vpc-id=$VPC_ID \
+     --ssh-username=centos \
+     --seed-ami-product-code=aw0evgkw8e5c1q413zgy5pjce \
+     --ec2-instance-type=m5.xlarge \
+     --database-secret-datetime=2019-10-25-14-55-07 \
+     --use-existing-images
+   ```
+
+1. If creating the AWS environment for Sandbox, do one of the following
+
+   *Deploy Sandbox by creating new api and worker images:*
 
    ```ShellSession
    $ ./create-base-environment.sh \
@@ -403,7 +420,22 @@
      --ssh-username=centos \
      --seed-ami-product-code=aw0evgkw8e5c1q413zgy5pjce \
      --ec2-instance-type=m5.xlarge \
-     --database-secret-datetime=2019-10-25-14-55-07
+     --database-secret-datetime=2019-10-25-14-55-07 \
+     --build-new-images
+   ```
+
+   *Deploy Dev by using the latest existing api and worker images:*
+
+   ```ShellSession
+   $ ./create-base-environment.sh \
+     --environment=sbdemo-sbx \
+     --shared-environment=sbdemo-shared \
+     --vpc-id=$VPC_ID \
+     --ssh-username=centos \
+     --seed-ami-product-code=aw0evgkw8e5c1q413zgy5pjce \
+     --ec2-instance-type=m5.xlarge \
+     --database-secret-datetime=2019-10-25-14-55-07 \
+     --use-existing-images
    ```
 
 1. If prompted, enter database user at the "Enter desired database_user" prompt
@@ -442,7 +474,7 @@
 
    - prod
 
-## Update application
+## Update existing environment
 
 1. Change to the "Deploy" directory
 
@@ -450,9 +482,9 @@
    $ cd ~/code/ab2d/Deploy
    ```
 
-1. Deploy application components
+1. If updating the Dev environment, do one of the following
 
-   *Example for Dev environment testing within SemanticBits demo environment:*
+   *Update Dev by creating new api and worker images:*
    
    ```ShellSession
    $ ./deploy.sh \
@@ -460,10 +492,25 @@
      --shared-environment=sbdemo-shared \
      --ssh-username=centos \
      --database-secret-datetime=2019-10-25-14-55-07 \
+     --build-new-images \
      --auto-approve
    ```
 
-   *Example for Sandbox environment testing within SemanticBits demo environment:*
+   *Update Dev by using the latest existing api and worker images:*
+
+   ```ShellSession
+   $ ./deploy.sh \
+     --environment=sbdemo-dev \
+     --shared-environment=sbdemo-shared \
+     --ssh-username=centos \
+     --database-secret-datetime=2019-10-25-14-55-07 \
+     --use-existing-images \
+     --auto-approve
+   ```
+
+1. If updating the Sandbox environment, do one of the following
+
+   *Update Sandbox by creating new api and worker images:*
 
    ```ShellSession
    $ ./deploy.sh \
@@ -471,6 +518,19 @@
      --shared-environment=sbdemo-shared \
      --ssh-username=centos \
      --database-secret-datetime=2019-10-25-14-55-07 \
+     --build-new-images \
+     --auto-approve
+   ```
+
+   *Update Sandbox by using the latest existing api and worker images:*
+
+   ```ShellSession
+   $ ./deploy.sh \
+     --environment=sbdemo-sbx \
+     --shared-environment=sbdemo-shared \
+     --ssh-username=centos \
+     --database-secret-datetime=2019-10-25-14-55-07 \
+     --use-existing-images \
      --auto-approve
    ```
 

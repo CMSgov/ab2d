@@ -27,16 +27,20 @@ case $i in
   CMS_SHARED_ENV=$(echo $SHARED_ENVIRONMENT | tr '[:upper:]' '[:lower:]')
   shift # past argument=value
   ;;
-  --ami=*)
-  AMI_ID="${i#*=}"
-  shift # past argument=value
-  ;;
   --ssh-username=*)
   SSH_USERNAME="${i#*=}"
   shift # past argument=value
   ;;
   --database-secret-datetime=*)
   DATABASE_SECRET_DATETIME=$(echo ${i#*=})
+  shift # past argument=value
+  ;;
+  --build-new-images)
+  BUILD_NEW_IMAGES="true"
+  shift # past argument=value
+  ;;
+  --use-existing-images)
+  USE_EXISTING_IMAGES="true"
   shift # past argument=value
   ;;
   --auto-approve)
@@ -53,8 +57,55 @@ done
 echo "Check vars are not empty before proceeding..."
 if [ -z "${ENVIRONMENT}" ] || [ -z "${SHARED_ENVIRONMENT}" ] || [ -z "${DATABASE_SECRET_DATETIME}" ] || [ -z "${SSH_USERNAME}" ]; then
   echo "Try running the script like so:"
-  echo "./deploy.sh --environment=dev --shared-environment=shared --database-secret-datetime={YYYY-MM-DD-HH-MM-SS} --ssh-username=ec2-user"
+  echo "./deploy.sh --environment=dev --shared-environment=shared --database-secret-datetime={YYYY-MM-DD-HH-MM-SS} --ssh-username=centos --build-new-images"
+  echo "./deploy.sh --environment=dev --shared-environment=shared --database-secret-datetime={YYYY-MM-DD-HH-MM-SS} --ssh-username=centos --use-existing-images"
   exit 1
+fi
+
+#
+# Verify that one and only one of the following parameters are included
+# --build-new-images
+# --use-existing-images
+#
+
+if [ -n "${BUILD_NEW_IMAGES}" ] && [ -n "${USE_EXISTING_IMAGES}" ]; then
+
+  echo "ERROR: you can't include both '--build-new-images' and '--use-existing-images'"
+  exit 1
+
+elif [ -n "${BUILD_NEW_IMAGES}" ]; then
+
+  echo "New images for API and Worker will be built during this process..."
+
+elif [ -n "${USE_EXISTING_IMAGES}" ]; then
+
+  echo "The latest existing images for API and Worker will be used during this process..."
+
+else
+
+  echo "ERROR: you must include one of the following parameters:"
+  echo "--build-new-images"
+  echo "--use-existing-images"  
+  exit 1
+
+fi
+
+#
+# Get existing AMI ID
+#
+
+echo "Get existing AMI_ID..."
+AMI_ID=$(aws --region us-east-1 ec2 describe-images \
+  --owners self \
+  --filters "Name=tag:Name,Values=ab2d-ami" \
+  --query "Images[*].[ImageId]" \
+  --output text)
+
+if [ -z "${AMI_ID}" ]; then
+
+  echo "ERROR: the 'ab2d-ami' AMI must already exist!"
+  exit 1
+
 fi
 
 #
@@ -134,87 +185,115 @@ cd "${START_DIR}"
 
 # Log on to ECR
 
-read -sra cmd < <(aws ecr get-login --no-include-email)
-pass="${cmd[5]}"
-unset cmd[4] cmd[5]
-"${cmd[@]}" --password-stdin <<< "$pass"
+if [ -n "${BUILD_NEW_IMAGES}" ]; then
 
-# Build API and worker
+  read -sra cmd < <(aws ecr get-login --no-include-email)
+  pass="${cmd[5]}"
+  unset cmd[4] cmd[5]
+  "${cmd[@]}" --password-stdin <<< "$pass"
 
-cd "${START_DIR}"
-cd ..
-make docker-build
-sleep 5
+fi
+
+# Build API and worker (if creating a new image)
+
+if [ -n "${BUILD_NEW_IMAGES}" ]; then
+	 
+  cd "${START_DIR}"
+  cd ..
+  make docker-build
+  sleep 5
+
+fi
 
 # Create API and worker Dockerfiles for ECS
 
-cd "${START_DIR}"
-rm -rf generated
-mkdir -p generated/api
-mkdir -p generated/worker
-cp ../docker-compose.yml generated
-cp ./yaml/config.yml generated
-cp ../api/Dockerfile generated/api/Dockerfile.original
-cp -r ../api/target generated/api
-cp ../worker/Dockerfile generated/worker/Dockerfile.original
-cp -r ../worker/target generated/worker
-sleep 5
-cd python3
-./create-dockerfilles-for-ecs.py
+if [ -n "${BUILD_NEW_IMAGES}" ]; then
+    
+  cd "${START_DIR}"
+  rm -rf generated
+  mkdir -p generated/api
+  mkdir -p generated/worker
+  cp ../docker-compose.yml generated
+  cp ./yaml/config.yml generated
+  cp ../api/Dockerfile generated/api/Dockerfile.original
+  cp -r ../api/target generated/api
+  cp ../worker/Dockerfile generated/worker/Dockerfile.original
+  cp -r ../worker/target generated/worker
+  sleep 5
+  cd python3
+  ./create-dockerfilles-for-ecs.py
+
+fi
 
 # Build API docker image
 
-cd "${START_DIR}"
-cd generated/api
-docker build \
-  --build-arg ab2d_db_host_arg="${DB_ENDPOINT}" \
-  --build-arg ab2d_db_port_arg=5432 \
-  --build-arg ab2d_db_database_arg="${DATABASE_NAME}" \
-  --build-arg ab2d_db_user_arg="${DATABASE_USER}" \
-  --build-arg ab2d_db_password_arg="${DATABASE_PASSWORD}" \
-  --tag "ab2d_${CMS_ENV}_api:latest" .
+if [ -n "${BUILD_NEW_IMAGES}" ]; then
+
+  cd "${START_DIR}"
+  cd generated/api
+  docker build \
+    --build-arg ab2d_db_host_arg="${DB_ENDPOINT}" \
+    --build-arg ab2d_db_port_arg=5432 \
+    --build-arg ab2d_db_database_arg="${DATABASE_NAME}" \
+    --build-arg ab2d_db_user_arg="${DATABASE_USER}" \
+    --build-arg ab2d_db_password_arg="${DATABASE_PASSWORD}" \
+    --tag "ab2d_${CMS_ENV}_api:latest" .
+
+fi
 
 # Build worker docker image
 
-cd "${START_DIR}"
-cd generated/worker
-docker build \
-  --build-arg ab2d_db_host_arg="${DB_ENDPOINT}" \
-  --build-arg ab2d_db_port_arg=5432 \
-  --build-arg ab2d_db_database_arg="${DATABASE_NAME}" \
-  --build-arg ab2d_db_user_arg="${DATABASE_USER}" \
-  --build-arg ab2d_db_password_arg="${DATABASE_PASSWORD}" \
-  --tag "ab2d_${CMS_ENV}_worker:latest" .
+if [ -n "${BUILD_NEW_IMAGES}" ]; then
+    
+  cd "${START_DIR}"
+  cd generated/worker
+  docker build \
+    --build-arg ab2d_db_host_arg="${DB_ENDPOINT}" \
+    --build-arg ab2d_db_port_arg=5432 \
+    --build-arg ab2d_db_database_arg="${DATABASE_NAME}" \
+    --build-arg ab2d_db_user_arg="${DATABASE_USER}" \
+    --build-arg ab2d_db_password_arg="${DATABASE_PASSWORD}" \
+    --tag "ab2d_${CMS_ENV}_worker:latest" .
+
+fi
 
 # Tag and push API docker image to ECR
 
-API_ECR_REPO_URI=$(aws --region us-east-1 ecr describe-repositories \
-  --query "repositories[?repositoryName == 'ab2d_${CMS_ENV}_api'].repositoryUri" \
-  --output text)
-if [ -z "${API_ECR_REPO_URI}" ]; then
-  aws --region us-east-1 ecr create-repository \
-      --repository-name "ab2d_${CMS_ENV}_api"
+if [ -n "${BUILD_NEW_IMAGES}" ]; then
+
   API_ECR_REPO_URI=$(aws --region us-east-1 ecr describe-repositories \
     --query "repositories[?repositoryName == 'ab2d_${CMS_ENV}_api'].repositoryUri" \
     --output text)
+  if [ -z "${API_ECR_REPO_URI}" ]; then
+    aws --region us-east-1 ecr create-repository \
+        --repository-name "ab2d_${CMS_ENV}_api"
+    API_ECR_REPO_URI=$(aws --region us-east-1 ecr describe-repositories \
+      --query "repositories[?repositoryName == 'ab2d_${CMS_ENV}_api'].repositoryUri" \
+      --output text)
+  fi
+  docker tag "ab2d_${CMS_ENV}_api:latest" "${API_ECR_REPO_URI}:latest"
+  docker push "${API_ECR_REPO_URI}:latest"
+
 fi
-docker tag "ab2d_${CMS_ENV}_api:latest" "${API_ECR_REPO_URI}:latest"
-docker push "${API_ECR_REPO_URI}:latest"
 
 # Tag and push worker docker image to ECR
 
-WORKER_ECR_REPO_URI=$(aws --region us-east-1 ecr describe-repositories \
-  --query "repositories[?repositoryName == 'ab2d_${CMS_ENV}_worker'].repositoryUri" \
-  --output text)
-if [ -z "${WORKER_ECR_REPO_URI}" ]; then
-  aws --region us-east-1 ecr create-repository \
-    --repository-name "ab2d_${CMS_ENV}_worker"
+if [ -n "${BUILD_NEW_IMAGES}" ]; then
+    
   WORKER_ECR_REPO_URI=$(aws --region us-east-1 ecr describe-repositories \
     --query "repositories[?repositoryName == 'ab2d_${CMS_ENV}_worker'].repositoryUri" \
     --output text)
+  if [ -z "${WORKER_ECR_REPO_URI}" ]; then
+    aws --region us-east-1 ecr create-repository \
+      --repository-name "ab2d_${CMS_ENV}_worker"
+    WORKER_ECR_REPO_URI=$(aws --region us-east-1 ecr describe-repositories \
+      --query "repositories[?repositoryName == 'ab2d_${CMS_ENV}_worker'].repositoryUri" \
+      --output text)
+  fi
+  docker tag "ab2d_${CMS_ENV}_worker:latest" "${WORKER_ECR_REPO_URI}:latest"
+  docker push "${WORKER_ECR_REPO_URI}:latest"
+
 fi
-docker tag "ab2d_${CMS_ENV}_worker:latest" "${WORKER_ECR_REPO_URI}:latest"
-docker push "${WORKER_ECR_REPO_URI}:latest"
 
 #
 # Switch context to terraform environment
@@ -301,10 +380,10 @@ else
 fi
 
 #
-# Deploy new AMI out to AWS
+# Deploy API and Worker
 #
 
-echo "Deploy new AMI out to AWS..."
+echo "Deploy API and Worker..."
 if [ -z "${AUTOAPPROVE}" ]; then
     
   # Confirm with the caller prior to applying changes.

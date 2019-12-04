@@ -57,6 +57,14 @@ case $i in
   DEBUG_LEVEL=$(echo ${i#*=} | tr '[:lower:]' '[:upper:]')
   shift # past argument=value
   ;;
+  --build-new-images)
+  BUILD_NEW_IMAGES="true"
+  shift # past argument=value
+  ;;
+  --use-existing-images)
+  USE_EXISTING_IMAGES="true"
+  shift # past argument=value
+  ;;
 esac
 done
 
@@ -70,6 +78,34 @@ if [ -z "${ENVIRONMENT}" ] || [ -z "${SHARED_ENVIRONMENT}" ] || [ -z "${VPC_ID}"
   echo "./create-base-environment.sh --environment=dev --shared-environment=sbdemo-shared --vpc-id={vpc id} --seed-ami-product-code={aw0evgkw8e5c1q413zgy5pjce|gold disk product code} --database-secret-datetime={YYYY-MM-DD-HH-MM-SS}"
   echo "./create-base-environment.sh --environment=dev --vpc-id={vpc id} --seed-ami-product-code={aw0evgkw8e5c1q413zgy5pjce|gold disk product code} --database-secret-datetime={YYYY-MM-DD-HH-MM-SS} --debug-level={TRACE|DEBUG|INFO|WARN|ERROR}"
   exit 1
+fi
+
+#
+# Verify that one and only one of the following parameters are included
+# --build-new-images
+# --use-existing-images
+#
+
+if [ -n "${BUILD_NEW_IMAGES}" ] && [ -n "${USE_EXISTING_IMAGES}" ]; then
+
+  echo "ERROR: you can't include both '--build-new-images' and '--use-existing-images'"
+  exit 1
+
+elif [ -n "${BUILD_NEW_IMAGES}" ]; then
+
+  echo "New images for API and Worker will be built during this process..."
+
+elif [ -n "${USE_EXISTING_IMAGES}" ]; then
+
+  echo "The latest existing images for API and Worker will be used during this process..."
+
+else
+
+  echo "ERROR: you must include one of the following parameters:"
+  echo "--build-new-images"
+  echo "--use-existing-images"  
+  exit 1
+
 fi
 
 #
@@ -1191,10 +1227,27 @@ fi
 #
 
 cd "${START_DIR}"
-./deploy.sh \
-  --environment="${CMS_ENV}" \
-  --shared-environment="${CMS_SHARED_ENV}" \
-  --ami="${AMI_ID}" \
-  --ssh-username="${SSH_USERNAME}" \
-  --database-secret-datetime="${DATABASE_SECRET_DATETIME}" \
-  --auto-approve
+
+if [ -n "${BUILD_NEW_IMAGES}" ]; then
+    
+  ./deploy.sh \
+    --environment="${CMS_ENV}" \
+    --shared-environment="${CMS_SHARED_ENV}" \
+    --ami="${AMI_ID}" \
+    --ssh-username="${SSH_USERNAME}" \
+    --database-secret-datetime="${DATABASE_SECRET_DATETIME}" \
+    --build-new-images \
+    --auto-approve
+
+else # use existing images
+
+  ./deploy.sh \
+    --environment="${CMS_ENV}" \
+    --shared-environment="${CMS_SHARED_ENV}" \
+    --ami="${AMI_ID}" \
+    --ssh-username="${SSH_USERNAME}" \
+    --database-secret-datetime="${DATABASE_SECRET_DATETIME}" \
+    --use-existing-images \
+    --auto-approve
+
+fi
