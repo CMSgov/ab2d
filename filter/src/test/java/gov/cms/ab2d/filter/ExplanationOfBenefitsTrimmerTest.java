@@ -34,6 +34,7 @@ class ExplanationOfBenefitsTrimmerTest {
 
     @Test
     public void validateEmpty() {
+        assertNull(ExplanationOfBenefitsTrimmer.getBenefit(null));
         // Since getting a patient target creates a new one, make sure the object is empty
         assertTrue(eobCarrier.getPatientTarget().getIdentifier().isEmpty());
         assertNull(eobCarrier.getPatientTarget().getId());
