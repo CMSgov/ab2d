@@ -1,8 +1,7 @@
 #!/bin/bash
 # Script to list api instances in the environment
 
-# Note that the same values are used for both sbdemo and CMS AWS accounts
-export CMS_ENV="dev" #Examples: dev, sbx, impl, prod
+export CMS_ENV="dev" #Examples: dev, sbx, impl, prod, sbdemo
 
 echo "*******************************************"
 echo "API instances in $CMS_ENV environment"

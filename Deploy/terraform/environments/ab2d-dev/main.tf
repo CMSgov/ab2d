@@ -4,10 +4,11 @@ provider "aws" {
   profile = var.aws_profile
 }
 
+# Had to hardcode the key since terraform says "Variables may not be used here"
 terraform {
   backend "s3" {
-    bucket         = "ab2d-automation"
-    key            = "ab2d-${var.env}/terraform/terraform.tfstate"
+    bucket         = "cms-ab2d-automation"
+    key            = "ab2d-dev/terraform/terraform.tfstate"
     region         = "us-east-1"
     encrypt = true
   }
@@ -112,7 +113,7 @@ module "worker" {
   efs_id                        = module.efs.efs_id
   alpha                         = var.private_subnet_ids[0]
   beta                          = var.private_subnet_ids[1]
-  ecs_cluster_id                = module.api.ecs_cluster_id  
+  ecs_cluster_id                = module.api.ecs_cluster_id
   aws_account_number            = var.aws_account_number
 }
 
@@ -120,7 +121,7 @@ module "cloudwatch" {
   source                  = "../../modules/cloudwatch"
   env                     = var.env
   autoscaling_arn         = module.api.aws_autoscaling_policy_percent_capacity_arn
-  # sns_arn                 = module.sns.aws_sns_topic_CCXP-Alarms_arn
+  # sns_arn                 = module.sns.aws_sns_topic_AB2D-Alarms_arn
   autoscaling_name        = module.api.aws_autoscaling_group_name
   controller_server_id    = "${data.aws_instance.ab2d_deployment_controller.instance_id}"
   s3_bucket_name          = var.file_bucket_name
