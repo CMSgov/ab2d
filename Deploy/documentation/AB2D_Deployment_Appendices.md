@@ -9,7 +9,8 @@
    * [Delete instance profiles](#delete-instance-profiles)
    * [Delete roles](#delete-roles)
    * [Delete policies not used by IAM users](#delete-policies-not-used-by-iam-users)
-1. [Appendix E: Interacting with policy versions](#appendix-e-interacting-with-policy-versions)
+1. [Appendix E: Interacting with IAM policy versions](#appendix-e-interacting-with-iam-policy-versions)
+1. [Appendix F: Interacting with Elastic Container Repository](#appendix-f-interacting-with-elastic-container-repository)
 
 ## Appendix A: Access the CMS AWS console
 
@@ -288,7 +289,7 @@
      --policy-arn arn:aws:iam::349849222861:policy/Ab2dS3AccessPolicy
    ```
 
-## Appendix E: Interacting with policy versions
+## Appendix E: Interacting with IAM policy versions
 
 1. List policy versions
 
@@ -330,5 +331,25 @@
    $ aws iam delete-policy-version \
      --policy-arn arn:aws:iam::114601554524:policy/Ab2dAssumePolicy \
      --version-id v1
+   ```
+
+## Appendix F: Interacting with Elastic Container Repository
+
+1. List ECR repositories
+
+   ```ShellSession
+   $ aws --region us-east-1 ecr describe-repositories \
+     --query "repositories[*].repositoryName" \
+     --output text
+   ```
+
+1. Delete an ECR repository
+
+   *Example deleting a repository named "ab2d_sbdemo-dev_api":*
+   
+   ```ShellSession
+   $ aws --region us-east-1 ecr delete-repository \
+     --repository-name ab2d_sbdemo-dev_api \
+     --force
    ```
    
