@@ -1,7 +1,11 @@
-# Internal Test Environment
+# AB2D Deployment
 
 ## Table of Contents
 
+1. [Note the starting state of the customer AWS account](#note-the-starting-state-of-the-customer-aws-account)
+   * [Note dev and sbx components](#note-dev-and-sbx-components)
+   * [Note ignored components](#note-ignored-components)
+1. [Create an Administrators IAM group](#create-an-administrators-iam-group)
 1. [Create an AWS IAM user](#create-an-aws-iam-user)
 1. [Configure AWS CLI](#configure-aws-cli)
 1. [Configure Terraform logging](#configure-terraform-logging)
@@ -16,42 +20,274 @@
 1. [Update application](#update-application)
 1. [Deploy and configure Jenkins](#deploy-and-configure-jenkins)
 
+## Note the starting state of the customer AWS account
+
+### Note dev and sbx components
+
+1. Note the dev and sbx VPC
+
+   Tag     |VPC ID               |IPv4 CIDR Count|IPv4 CIDR #1  |IPv4 CIDR #2   
+   --------|---------------------|---------------|--------------|---------------
+   ab2d-dev|vpc-0c6413ec40c5fdac3|2              |10.242.26.0/24|10.242.5.128/26
+
+1. Note the dev and sbx VPC attributes
+
+   Attribute       |Value
+   ----------------|-------------
+   DHCP options set|dopt-90a65fea
+   DNS resolution  |enable
+   DNS hostnames   |disable
+   
+1. Note the dev and sbx subnets
+
+   Tag               |Subnet ID               |IPv4 CIDR       |Availability Zone
+   ------------------|------------------------|----------------|-----------------
+   ab2d-dev-private-a|subnet-03d5b59872d950c7d|10.242.26.0/25  |us-east-1a
+   ab2d-dev-private-b|subnet-0118d0d6af946bd66|10.242.26.128/25|us-east-1b
+   ab2d-dev-public-a |subnet-0044ee15d254fe18b|10.242.5.128/27 |us-east-1a
+   ab2d-dev-public-b |subnet-05c149659e3061ef6|10.242.5.160/27 |us-east-1b
+
+1. Note the dev and sbx public subnet attributes
+
+   Public Subnet    |Attribute       |Value
+   -----------------|----------------|--------
+   ab2d-dev-public-a|Auto-assign IPv4|disabled
+   ab2d-dev-public-b|Auto-assign IPv4|disabled
+
+1. Note the dev and sbx route tables
+
+   Tag               |Route Table ID       |Main|Associated Subnet Count|Associalted Subnet #1   |Associalted Subnet #2
+   ------------------|---------------------|----|-----------------------|------------------------|------------------------
+   None              |rtb-0950b57584f20d93b|Yes |0                      |                        |
+   ab2d-dev-private-a|rtb-0c55acf18e7d3cd87|No  |1                      |subnet-03d5b59872d950c7d|
+   ab2d-dev-private-b|rtb-09c40213a10ea6406|No  |1                      |subnet-0118d0d6af946bd66|
+   ab2d-dev-public   |rtb-090372c9ee83aa450|No  |2                      |subnet-05c149659e3061ef6|subnet-0044ee15d254fe18b
+
+1. Note the dev and sbx routes for "ab2d-dev-private-a"
+
+   Destination      |Target
+   -----------------|-------------
+   10.242.5.128/26  |local
+   10.242.26.0/24   |local
+   0.0.0.0/0        |nat-060fbd5ddb57a2f18
+   10.223.120.0/22  |tgw-080644ad8f49ecafa
+   10.223.126.0/23  |tgw-080644ad8f49ecafa
+   10.232.32.0/19   |tgw-080644ad8f49ecafa
+   10.242.7.192/26  |tgw-080644ad8f49ecafa
+   10.242.193.192/26|tgw-080644ad8f49ecafa
+   10.244.96.0/19   |tgw-080644ad8f49ecafa
+
+1. Note the dev and sbx routes for "ab2d-dev-private-b"
+
+   Destination      |Target
+   -----------------|-------------
+   10.242.5.128/26  |local
+   10.242.26.0/24   |local
+   0.0.0.0/0        |nat-060fbd5ddb57a2f18
+   10.223.120.0/22  |tgw-080644ad8f49ecafa
+   10.223.126.0/23  |tgw-080644ad8f49ecafa
+   10.232.32.0/19   |tgw-080644ad8f49ecafa
+   10.242.7.192/26  |tgw-080644ad8f49ecafa
+   10.242.193.192/26|tgw-080644ad8f49ecafa
+   10.244.96.0/19   |tgw-080644ad8f49ecafa
+
+1. Note the dev and sbx routes for "ab2d-dev-public"
+
+   Destination      |Target
+   -----------------|-------------
+   10.242.5.128/26  |local
+   10.242.26.0/24   |local
+   0.0.0.0/0        |igw-0014bff62a3c1211d
+
+1. Note the dev and sbx internet gateway
+
+   Tag     |ID                   
+   --------|---------------------
+   ab2d-dev|igw-0014bff62a3c1211d
+
+1. Note the dev and sbx Elastic IPs
+
+   Tag                   |Allocation ID             |Elastic IP   |Private IP  |Network Interface Availability Zone
+   ----------------------|--------------------------|-------------|------------|-----------------------------------
+   ab2d-dev-nat-gateway-a|eipalloc-0048cd31435409e20|54.208.106.70|10.242.5.158|us-east-1a
+   ab2d-dev-nat-gateway-b|eipalloc-0fc6dbdc2a1e412ff|3.218.184.81 |10.242.5.187|us-east-1b
+
+1. Note the dev and sbx NAT gateways
+
+   Tag       |NAT Gateway ID       |Elastic IP Address|Private IP  |Network Interface Availability Zone
+   ----------|---------------------|------------------|------------|-----------------------------------
+   ab2d-dev-a|nat-060fbd5ddb57a2f18|54.208.106.70     |10.242.5.158|us-east-1a
+   ab2d-dev-b|nat-0f4d22a3e997d73c2|3.218.184.81      |10.242.5.187|us-east-1b
+
+1. Note the Network ACLs
+
+   Tag |Network ACL ID       |Associated Subnet Count
+   ----|---------------------|-----------------------
+   None|acl-0eb267c6c0801f8c9|4
+
+
+1. Note the Security Groups
+
+   Tag |Group ID            
+   ----|--------------------
+   None|sg-05752fb69a1a89f86
+
+1. Note the Transit Gateways
+
+   Tag |Transit Gateway ID   |Owner account ID
+   ----|---------------------|---------------------
+   None|tgw-080644ad8f49ecafa|921617238787 (shared)
+
+1. Note the Transit Gateway Attachments
+
+   Tag                        |Transit Gateway attachment ID|Transit Gateway owner ID|Resource owner account ID
+   ---------------------------|-----------------------------|------------------------|-------------------------
+   ab2d-dev-InterVPC-East-Prod|tgw-attach-06bf47fa39e5d1578 |921617238787 (shared)   |349849222861
+
+1. Note the Network Interfaces
+
+   Tag |Network interface ID |IPv4 Public IP|Primary private IPv4 IP|Availability Zone|Description
+   ----|---------------------|--------------|-----------------------|-----------------|-----------------------------------------------
+   None|eni-01f9447520f6efa28|54.208.106.70 |10.242.5.158           |us-east-1a       |Interface for NAT Gateway nat-060fbd5ddb57a2f18
+   None|eni-045fc3c9aa02b671c|3.218.184.81  |10.242.5.187           |us-east-1b       |Interface for NAT Gateway nat-0f4d22a3e997d73c2
+   None|eni-0e8baa25388577d46|N/A           |10.242.26.60           |us-east-1a       |Network Interface for Transit Gateway Attachment tgw-attach-06bf47fa39e5d1578
+   None|eni-0c4ed76f356525098|N/A           |10.242.26.148          |us-east-1b       |Network Interface for Transit Gateway Attachment tgw-attach-06bf47fa39e5d1578
+   
+### Note ignored components
+
+1. Note that Stephen Walter said that he doesn't know why these components were created
+
+1. Note the ignored VPC
+
+   Tag |ID          |IPv4 CIDR Count|IPv4 CIDR  
+   ----|------------|---------------|-------------
+   None|vpc-85520eff|1              |172.31.0.0/16
+
+1. Note the ignored subnets
+
+   Tag |ID             |IPv4 CIDR     |Availability Zone
+   ----|---------------|--------------|-----------------
+   None|subnet-23212144|172.31.0.0/20 |us-east-1c
+   None|subnet-5d2fff10|172.31.16.0/20|us-east-1a
+   None|subnet-c9909d95|172.31.32.0/20|us-east-1b
+   None|subnet-0214ee0c|172.31.48.0/20|us-east-1f
+   None|subnet-77eeba49|172.31.64.0/20|us-east-1e
+   None|subnet-fea7a8d0|172.31.80.0/20|us-east-1d
+
+1. Note the ignored route tables
+
+   Tag               |ID          |Main|Associated Subnet Count|Associalted Subnet #1   |Associalted Subnet #2
+   ------------------|------------|----|-----------------------|------------------------|------------------------
+   None              |rtb-e9d60d97|Yes |0                      |                        |
+
+1. Note the ignored internet gateway
+
+   Tag     |ID                   
+   --------|---------------------
+   ab2d-dev|igw-0fd15274
+
+1. Note the Network ACLs
+
+   Tag |Network ACL ID       |Associated Subnet Count
+   ----|---------------------|-----------------------
+   None|acl-6a9e1917         |6
+
+1. Note the Security Groups
+
+   Tag |Group ID            
+   ----|-----------
+   None|sg-778f2822
+
+## Create an Administrators IAM group
+
+1. Access the CMS AWS console
+
+   *See the following appendix, if you don't know how to access the CMS AWS console:*
+
+   [Instructions for accessing the CMS AWS console](./AB2D_Deployment_Appendices.md#appendix-a-access-the-cms-aws-console)
+
+1. Select **IAM**
+
+1. Select **Groups** in the leftmost panel
+
+1. Select **Create New Group**
+
+1. Type the following in the **Group Name** text box
+
+   ```
+   Administrators
+   ```
+
+1. Select **Next Step** on the "Set Group Name" page
+
+1. Type the following in the **Search** text box
+
+   ```
+   AdministratorAccess
+   ```
+
+1. Check the checkbox beside **AdministratorAccess**
+
+1. Select **Next Step** on the "Attach Policy" page
+
+1. Select **Create Group**
+
 ## Create an AWS IAM user
 
-1. Request AWS administrator to create a user that has both console and programmatic access to the semanticbitsdemo AWS account
+1. Access the CMS AWS console
 
-1. Note that the administrator will provide you with a "credentials.csv" file that will include the following information
+   *See the following appendix, if you don't know how to access the CMS AWS console:*
+
+   [Instructions for accessing the CMS AWS console](./AB2D_Deployment_Appendices.md#appendix-a-access-the-cms-aws-console)
    
-   - User name
+1. Select **IAM**
 
-   - Password
+1. Select **Users** in the leftmost panel
 
-   - Access key ID
+1. Select **Add user**
 
-   - Secret access key
+1. Configure the user as follows
 
-   - Console login link
+   - **User name:** {semanticbits email}
+
+   - **Programmatic access:** checked
+
+   - **AWS Management Console access:** unchecked
+
+1. Select **Next: Permissions**
+
+1. Check the checkbox beside **Administrators**
+
+1. Select **Next: Tags**
+
+1. Select **Next: Review**
+
+1. Select **Create user**
+
+1. Select **Download .csv**
+
+1. Select **Close**
+
+1. Note that the following can be found in the "credentials.csv" file that you downloaded
+   
+   - **User name:** {your semanticbits email}
+
+   - **Password:** {blank because you did not set AWS console access}
+
+   - **Access key ID:** {your access key}
+
+   - **Secret access key:** {your secret access key}
+
+   - **Console login link:** https://aws-hhs-cms-oeda-ab2d.signin.aws.amazon.com/console
+
+1. Save these credentials someone safe like a personal slack channel
 
 ## Configure AWS CLI
 
 1. Configure AWS CLI
 
-   *Example for testing Shared environment in SemanticBits demo environment:*
-
    ```ShellSession
-   $ aws configure --profile=sbdemo-shared
-   ```
-
-   *Example for testing Dev environment in SemanticBits demo environment:*
-
-   ```ShellSession
-   $ aws configure --profile=sbdemo-dev
-   ```
-
-   *Example for testing Sandbox environment in SemanticBits demo environment:*
-
-   ```ShellSession
-   $ aws configure --profile=sbdemo-sbx
+   $ aws configure --profile=ab2d-shared
    ```
 
 1. Enter {your aws access key} at the **AWS Access Key ID** prompt
@@ -103,83 +339,110 @@
 
 ### Create AWS keypair
 
+1. Set target AWS profile
+   
+   ```ShellSession
+   $ export AWS_PROFILE=ab2d-shared
+   ```
+
 1. Create keypair
 
-   *Example for controllers within SemanticBits demo environment:*
+   1. Set the key name
 
-   ```ShellSession
-   $ aws --region us-east-1 ec2 create-key-pair \
-     --key-name ab2d-sbdemo-shared \
-     --query 'KeyMaterial' \
-     --output text \
-     > ~/.ssh/ab2d-sbdemo-shared.pem
-   ```
+      ```ShellSession
+      $ export KEY_NAME=ab2d-shared
+      ```
+
+   1. Create the keypair
+   
+      ```ShellSession
+      $ aws --region us-east-1 ec2 create-key-pair \
+        --key-name ${KEY_NAME} \
+        --query 'KeyMaterial' \
+        --output text \
+        > ~/.ssh/${KEY_NAME}.pem
+      ```
 
 1. Change permissions of the key
 
-   *Example for controllers within SemanticBits demo environment:*
-
    ```ShellSession
-   $ chmod 600 ~/.ssh/ab2d-sbdemo-shared.pem
+   $ chmod 600 ~/.ssh/${KEY_NAME}.pem
    ```
 
 1. Output the public key to the clipboard
 
-   *Example for controllers within SemanticBits demo environment:*
+   *Used for accessing controller instance(s):*
 
    ```ShellSession
-   $ ssh-keygen -y -f ~/.ssh/ab2d-sbdemo-shared.pem | pbcopy
+   $ ssh-keygen -y -f ~/.ssh/${KEY_NAME}.pem | pbcopy
    ```
 
-1. Update the "authorized_keys" file for the environment
+1. Update the "authorized_keys" file for the "ab2d-dev" environment
 
    1. Open the "authorized_keys" file for the environment
    
       ```ShellSession
-      $ vim ~/code/ab2d/Deploy/terraform/environments/ab2d-sbdemo-dev/authorized_keys
+      $ vim ~/code/ab2d/Deploy/terraform/environments/ab2d-dev/authorized_keys
       ```
 
-   1. Paste the public key under the "Keys included with CentOS image" section
+   1. Paste the public key under the "Keys included with gold image" section
+   
+   1. Save and close the file
 
+1. Update the "authorized_keys" file for the "ab2d-sbx" environment
+
+   1. Open the "authorized_keys" file for the environment
+   
+      ```ShellSession
+      $ vim ~/code/ab2d/Deploy/terraform/environments/ab2d-sbx/authorized_keys
+      ```
+
+   1. Paste the public key under the "Keys included with gold image" section
+   
    1. Save and close the file
 
 ### Create required S3 buckets
 
-1. Set target profile
-
-   *Example for the "semanticbitsdemo" AWS account:*
+1. Set target AWS profile
    
    ```ShellSession
-   $ export AWS_PROFILE="sbdemo-dev"
+   $ export AWS_PROFILE=ab2d-shared
    ```
 
+1. Set automation bucket name
+
+   ```ShellSession
+   $ export S3_AUTOMATION_BUCKET=cms-ab2d-automation
+   ```
+   
 1. Create S3 bucket for automation
 
    ```ShellSession
-   $ aws s3api create-bucket --bucket ab2d-automation --region us-east-1
+   $ aws --region us-east-1 s3api create-bucket \
+     --bucket ${S3_AUTOMATION_BUCKET}
    ```
 
 1. Block public access on bucket
 
    ```ShellSession
    $ aws s3api put-public-access-block \
-     --bucket ab2d-automation \
+     --bucket ${S3_AUTOMATION_BUCKET} \
      --region us-east-1 \
      --public-access-block-configuration BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true
    ```
 
 ### Create policies
 
-1. Set target profile
+1. Set target AWS profile
    
    ```ShellSession
-   $ export AWS_PROFILE="sbdemo-shared"
+   $ export AWS_PROFILE=ab2d-shared
    ```
 
-1. Change to the "ab2d-sbdemo-shared" environment directory
+1. Change to the "ab2d-shared" environment directory
 
    ```ShellSession
-   $ cd ~/code/ab2d/Deploy/terraform/environments/ab2d-sbdemo-shared
+   $ cd ~/code/ab2d/Deploy/terraform/environments/ab2d-shared
    ```
 
 1. Create "Ab2dAccessPolicy"
@@ -224,16 +487,16 @@
 
 ### Create roles
 
-1. Set target profile
+1. Set target AWS profile
    
    ```ShellSession
-   $ export AWS_PROFILE="sbdemo-shared"
+   $ export AWS_PROFILE=ab2d-shared
    ```
 
-1. Change to the "ab2d-sbdemo-shared" environment directory
+1. Change to the "ab2d-shared" environment directory
 
    ```ShellSession
-   $ cd ~/code/ab2d/Deploy/terraform/environments/ab2d-sbdemo-shared
+   $ cd ~/code/ab2d/Deploy/terraform/environments/ab2d-shared
    ```
 
 1. Create "Ab2dInstanceRole" role
@@ -249,13 +512,13 @@
    ```ShellSession
    $ aws iam attach-role-policy \
      --role-name Ab2dInstanceRole \
-     --policy-arn arn:aws:iam::114601554524:policy/Ab2dAssumePolicy
+     --policy-arn arn:aws:iam::349849222861:policy/Ab2dAssumePolicy
    $ aws iam attach-role-policy \
      --role-name Ab2dInstanceRole \
-     --policy-arn arn:aws:iam::114601554524:policy/Ab2dPackerPolicy
+     --policy-arn arn:aws:iam::349849222861:policy/Ab2dPackerPolicy
    $ aws iam attach-role-policy \
      --role-name Ab2dInstanceRole \
-     --policy-arn arn:aws:iam::114601554524:policy/Ab2dS3AccessPolicy
+     --policy-arn arn:aws:iam::349849222861:policy/Ab2dS3AccessPolicy
    $ aws iam attach-role-policy \
      --role-name Ab2dInstanceRole \
      --policy-arn arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role
@@ -274,7 +537,7 @@
    ```ShellSession
    $ aws iam attach-role-policy \
      --role-name Ab2dManagedRole \
-     --policy-arn arn:aws:iam::114601554524:policy/Ab2dAccessPolicy
+     --policy-arn arn:aws:iam::349849222861:policy/Ab2dAccessPolicy
    ```
 
 ### Create instance profiles
@@ -282,9 +545,9 @@
 1. Set target AWS profile
    
    ```ShellSession
-   $ export AWS_PROFILE="sbdemo-shared"
+   $ export AWS_PROFILE=ab2d-shared
    ```
-
+   
 1. Create instance profile
 
    ```ShellSession
@@ -305,7 +568,7 @@
 1. Set target AWS profile
    
    ```ShellSession
-   $ export AWS_PROFILE="sbdemo-shared"
+   $ export AWS_PROFILE=ab2d-shared
    ```
    
 1. Attach the Ab2dPermissionToPassRolesPolicy to an IAM user that runs the automation
@@ -314,7 +577,7 @@
    
    ```ShellSession
    $ aws iam attach-user-policy \
-     --policy-arn arn:aws:iam::114601554524:policy/Ab2dPermissionToPassRolesPolicy \
+     --policy-arn arn:aws:iam::349849222861:policy/Ab2dPermissionToPassRolesPolicy \
      --user-name lonnie.hanekamp@semanticbits.com
    ```
 
@@ -336,40 +599,6 @@
    $ cd ~/code/ab2d/Deploy
    ```
 
-1. If deploying to the SemanticBits demo environment, create the VPC
-
-   1. Create the VPC
-   
-      ```ShellSession
-      $ ./create-vpc-for-sbdemo.sh
-      ```
-
-   1. Note the output
-
-      *Format:*
-      
-      ```
-      Creating VPC...
-      The VPC ID is: {vpc id}
-      Done.
-      ```
-
-   1. Rerun the create when VPC already exists to see how the output changes
-   
-      ```ShellSession
-      $ ./create-vpc-for-sbdemo.sh
-      ```
-
-   1. Note the output
-
-      *Format:*
-      
-      ```
-      INFO: The VPC already exists.
-      The VPC ID is: {vpc id}
-      Done.
-      ```
-
 1. Set the target VPC ID
 
    *Format:*
@@ -380,30 +609,30 @@
    
 1. Create base AWS environment
 
-   *Example for Dev environment testing within SemanticBits demo environment:*
+   *Example for Dev environment:*
 
    ```ShellSession
-   $ ./create-base-environment.sh \
-     --environment=sbdemo-dev \
-     --shared-environment=sbdemo-shared \
-     --vpc-id=$VPC_ID \
-     --ssh-username=centos \
-     --seed-ami-product-code=aw0evgkw8e5c1q413zgy5pjce \
+   $ ./ab2d-deploy.sh \
+     --environment=dev \
+     --shared-environment=shared \
+     --vpc-id=vpc-0c6413ec40c5fdac3 \
+     --ssh-username=ec2-user \
+     --owner=842420567215 \
      --ec2-instance-type=m5.xlarge \
-     --database-secret-datetime=2019-10-25-14-55-07
+     --database-secret-datetime=2019-12-03-15-19-01
    ```
 
-   *Example for Sandbox environment testing within SemanticBits demo environment:*
+   *Example for Sandbox environment:*
 
    ```ShellSession
-   $ ./create-base-environment.sh \
-     --environment=sbdemo-sbx \
-     --shared-environment=sbdemo-shared \
-     --vpc-id=$VPC_ID \
-     --ssh-username=centos \
-     --seed-ami-product-code=aw0evgkw8e5c1q413zgy5pjce \
+   $ ./ab2d-deploy.sh \
+     --environment=sbx \
+     --shared-environment=shared \
+     --vpc-id=vpc-0c6413ec40c5fdac3 \
+     --ssh-username=ec2-user \
+     --owner=842420567215 \
      --ec2-instance-type=m5.xlarge \
-     --database-secret-datetime=2019-10-25-14-55-07
+     --database-secret-datetime=2019-12-03-15-19-01
    ```
 
 1. If prompted, enter database user at the "Enter desired database_user" prompt

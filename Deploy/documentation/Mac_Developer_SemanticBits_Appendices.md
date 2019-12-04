@@ -6,9 +6,9 @@
    * [Install PostgreSQL 11](#install-postgresql-11)
    * [Uninstall PostgreSQL 11](#uninstall-postgresql-11)
 1. [Appendix B: CMS VPN access](#appendix-b-cms-vpn-access)
-   * [Create a Jira ticket for CMS VPN ticket access](#appendix-b-create-a-jira-ticket-for-cms-vpn-ticket-access)
+   * [Create a Jira ticket for CMS VPN ticket access](#create-a-jira-ticket-for-cms-vpn-ticket-access)
    * [Install and configure Google Authenticator](#install-and-configure-google-authenticator)
-   * [Install and configure Cisco AnyConnect VPN](#appendix-c-install-and-configure-cisco-anyconnect-vpn)
+   * [Install and configure Cisco AnyConnect VPN](#install-and-configure-cisco-anyconnect-vpn)
    * [Log into Cisco AnyConnect client](#log-into-cisco-anyconnect-client)
    * [Disconnect from the Cisco AnyConnect client](#disconnect-from-the-cisco-anyconnect-client)
 
@@ -210,15 +210,7 @@
 
 1. Select **Install Password**
 
-1. If a "manifesttool is not optimized for your Mac and needs to be updated" message appears, do the following
-
-   1. Note the following information
-
-      ```
-      *** TO DO ***
-      ```
-
-   1. Select **OK**
+1. If a "manifesttool is not optimized for your Mac and needs to be updated" message appears, do the following, select **OK**
 
 1. Select **Close** on the "Summary" page
 
@@ -231,12 +223,6 @@
 1. Select **Cisco AnyConnect Secure Mobility Client**
 
 1. If a "Cisco AnyConnect Secure Mobility Client is not optimized for your Mac and needs to be updated" message appears, do the following:
-
-   1. Note the following
-
-      ```
-      *** TO DO ***
-      ```
 
    1. Select **OK**
 
@@ -265,12 +251,6 @@
 1. Select **Accept**
 
 1. If a "vpndownloader is not optimized for your Mac and needs to be updated" message appears, do the following:
-
-   1. Note the following
-
-      ```
-      *** TO DO ***
-      ```
 
    1. Select **OK**
 

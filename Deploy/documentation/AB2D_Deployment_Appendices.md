@@ -1,0 +1,334 @@
+# AB2D Deployment Appendices
+
+## Table of Contents
+
+1. [Appendix A: Access the CMS AWS console](#appendix-a-access-the-cms-aws-console)
+1. [Appendix B: View the current gold disk images](#appendix-b-view-the-current-gold-disk-images)
+1. [Appendix C: Interact with the developer S3 bucket](#appendix-c-interact-with-the-developer-s3-bucket)
+1. [Appendix D: Delete and recreate IAM instance profiles, roles, and policies](#appendix-d-delete-and-recreate-iam-instance-profiles-roles-and-policies)
+   * [Delete instance profiles](#delete-instance-profiles)
+   * [Delete roles](#delete-roles)
+   * [Delete policies not used by IAM users](#delete-policies-not-used-by-iam-users)
+1. [Appendix E: Interacting with policy versions](#appendix-e-interacting-with-policy-versions)
+
+## Appendix A: Access the CMS AWS console
+
+1. Log into Cisco AnyConnect client
+
+   1. Select **Launchpad**
+   
+   1. Select **Cisco AnyConnect Secure Mobility Client**
+   
+   1. If a "Cisco AnyConnect Secure Mobility Client is not optimized for your Mac and needs to be updated" message appears, do the following:
+      
+      1. Select **OK**
+   
+      1. See the following for more information
+   
+         > https://support.apple.com/en-us/HT208436
+   
+   1. Enter the following in the **VPN** dropdown
+   
+      ```
+      cloudvpn.cms.gov
+      ```
+   
+   1. Select **Connect**
+   
+   1. Enter the following on the "Please enter your username and password" window
+   
+      - **USERNAME:** {your eua id}
+   
+      - **PASSWORD:** {password for CloudTamer and Cloud VPN}
+   
+      - **2nd Password:** {latest 6 number from the google authentication app on mobile phone}
+   
+   1. Select **OK**
+   
+   1. Select **Accept**
+   
+   1. If a "vpndownloader is not optimized for your Mac and needs to be updated" message appears, do the following:
+      
+      1. Select **OK**
+   
+      1. See the following for more information
+   
+         > https://support.apple.com/en-us/HT208436
+   
+   1. Verify that the VPN successfully connects
+
+1. Log on to CloudTamer
+
+   1. Open Chrome
+
+   1. Enter the following in the address bar
+
+      > https://cloudtamer.cms.gov
+
+   1. Enter the following on the CloudTamer logon page
+
+      - **Username:** {your eua id}
+
+      - **Password:** {password for CloudTamer and Cloud VPN}
+
+      - **Dropdown:** CMS Cloud Services
+
+   1. Select **Log In**
+
+1. Select **Projects** from the leftmost panel
+
+1. Select **Filters**
+
+1. Type the following in the **By Keyword** text box
+
+   ab2d
+
+1. Select **Apply Filters**
+
+1. Select **Account Access** beside "Project AB2D"
+
+1. Select the account
+   
+   ```
+   aws-cms-oit-iusg-acct66 (349849222861)
+   ```
+
+1. Select the cloud access role
+
+   
+   ```
+   West-AB2D
+   ```
+
+1. Select **Web Access**
+
+1. Note that the AWS console for the AB2D project should now appear
+
+## Appendix B: View the current gold disk images
+
+1. Open Chrome
+
+1. Enter the following in the address bar
+
+   > https://github.cms.gov/CCSVDC/gold-image/blob/master/ami_latest.txt
+
+## Appendix C: Interact with the developer S3 bucket
+
+1. Set target AWS profile
+   
+   ```ShellSession
+   $ export AWS_PROFILE=ab2d-shared
+   ```
+
+1. Verify that the "cms-ab2d-dev" bucket exists
+
+   ```ShellSession
+   $ aws --region us-east-1 s3api list-buckets \
+     --query "Buckets[?Name=='cms-ab2d-dev'].Name" \
+     --output text
+   ```
+
+1. Create a text file as an example (optional)
+
+   ```ShellSession
+   $ echo "test" > opt-out.txt
+   ```
+   
+1. Put a file in the root of the bucket
+
+   *Example using a file named opt-out.txt exists in the current directory:*
+   
+   ```ShellSession
+   $ aws --region us-east-1 s3api put-object \
+     --bucket cms-ab2d-dev \
+     --key opt-out.txt \
+     --body ./opt-out.txt
+   ```
+
+1. List objects in the root of the bucket
+
+   ```ShellSession
+   $ aws --region us-east-1 s3api list-objects \
+     --bucket cms-ab2d-dev \
+     --query 'Contents[].Key' \
+     --output text
+   ```
+
+1. Get a file from the root of the bucket
+
+   ```ShellSession
+   $ aws --region us-east-1 s3api get-object \
+     --bucket cms-ab2d-dev \
+     --key opt-out.txt \
+     ./opt-out-copy.txt
+   ```
+
+1. Delete a file from the root of the bucket
+
+   ```ShellSession
+   $ aws --region us-east-1 s3api delete-object \
+     --bucket cms-ab2d-dev \
+     --key opt-out.txt
+   ```
+
+1. Verify that the object is gone by listing objects in the root of the bucket again
+
+   ```ShellSession
+   $ aws --region us-east-1 s3api list-objects \
+     --bucket cms-ab2d-dev \
+     --query 'Contents[].Key' \
+     --output text
+   ```
+
+## Appendix D: Delete and recreate IAM instance profiles, roles, and policies
+
+### Delete instance profiles
+
+1. Set target AWS profile
+   
+   ```ShellSession
+   $ export AWS_PROFILE=ab2d-shared
+   ```
+
+1. Detach "Ab2dInstanceRole" from "Ab2dInstanceProfile"
+
+   ```ShellSession
+   $ aws iam remove-role-from-instance-profile \
+     --role-name Ab2dInstanceRole \
+     --instance-profile-name Ab2dInstanceProfile
+   ```
+
+1. Delete instance profile
+
+   ```ShellSession
+   $ aws iam delete-instance-profile \
+     --instance-profile-name Ab2dInstanceProfile
+   ```
+
+### Delete roles
+
+1. Set target AWS profile
+   
+   ```ShellSession
+   $ export AWS_PROFILE=ab2d-shared
+   ```
+
+1. Detach policies from the "Ab2dManagedRole" role
+
+   ```ShellSession
+   $ aws iam detach-role-policy \
+     --role-name Ab2dManagedRole \
+     --policy-arn arn:aws:iam::349849222861:policy/Ab2dAccessPolicy
+   ```
+
+1. Delete "Ab2dManagedRole" role
+
+   ```ShelSession
+   $ aws iam delete-role \
+     --role-name Ab2dManagedRole
+   ```
+
+1. Detach policies from the "Ab2dInstanceRole" role
+
+   ```ShellSession
+   $ aws iam detach-role-policy \
+     --role-name Ab2dInstanceRole \
+     --policy-arn arn:aws:iam::349849222861:policy/Ab2dAssumePolicy
+   $ aws iam detach-role-policy \
+     --role-name Ab2dInstanceRole \
+     --policy-arn arn:aws:iam::349849222861:policy/Ab2dPackerPolicy
+   $ aws iam detach-role-policy \
+     --role-name Ab2dInstanceRole \
+     --policy-arn arn:aws:iam::349849222861:policy/Ab2dS3AccessPolicy
+   $ aws iam detach-role-policy \
+     --role-name Ab2dInstanceRole \
+     --policy-arn arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role
+   ```
+
+1. Delete "Ab2dInstanceRole" role
+
+   ```ShelSession
+   $ aws iam delete-role \
+     --role-name Ab2dInstanceRole
+   ```
+
+### Delete policies not used by IAM users
+
+1. Set target AWS profile
+   
+   ```ShellSession
+   $ export AWS_PROFILE=ab2d-shared
+   ```
+
+1. Delete "Ab2dAccessPolicy"
+
+   ```ShellSession
+   $ aws iam delete-policy \
+     --policy-arn arn:aws:iam::349849222861:policy/Ab2dAccessPolicy
+   ```
+
+1. Delete "Ab2dAssumePolicy"
+
+   ```ShellSession
+   $ aws iam delete-policy \
+     --policy-arn arn:aws:iam::349849222861:policy/Ab2dAssumePolicy
+   ```
+
+1. Delete "Ab2dPackerPolicy"
+
+   ```ShellSession
+   $ aws iam delete-policy \
+     --policy-arn arn:aws:iam::349849222861:policy/Ab2dPackerPolicy
+   ```
+
+1. Delete "Ab2dS3AccessPolicy"
+
+   ```ShellSession
+   $ aws iam delete-policy \
+     --policy-arn arn:aws:iam::349849222861:policy/Ab2dS3AccessPolicy
+   ```
+
+## Appendix E: Interacting with policy versions
+
+1. List policy versions
+
+   1. Enter the following
+   
+      *Example of listing policy versions of the "Ab2dAssumePolicy" policy:*
+   
+      ```ShellSession
+      $ aws iam list-policy-versions \
+        --policy-arn arn:aws:iam::114601554524:policy/Ab2dAssumePolicy
+      ```
+
+   1. Examine the output
+
+      *Example of listing policy versions of the "Ab2dAssumePolicy" policy:*
+      
+      ```
+      {
+          "Versions": [
+              {
+                  "VersionId": "v2",
+                  "IsDefaultVersion": true,
+                  "CreateDate": "2019-10-11T23:23:54Z"
+              },
+              {
+                  "VersionId": "v1",
+                  "IsDefaultVersion": false,
+                  "CreateDate": "2019-10-04T19:11:21Z"
+              }
+          ]
+      }
+      ```
+   
+1. Delete a policy version
+
+   *Example of deleting "v1" of the "Ab2dAssumePolicy" policy:*
+
+   ```ShellSession
+   $ aws iam delete-policy-version \
+     --policy-arn arn:aws:iam::114601554524:policy/Ab2dAssumePolicy \
+     --version-id v1
+   ```
+   
