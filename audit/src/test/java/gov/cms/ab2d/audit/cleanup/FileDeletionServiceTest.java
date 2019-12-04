@@ -1,15 +1,11 @@
-package gov.cms.ab2d.audit.job;
+package gov.cms.ab2d.audit.cleanup;
 
 import gov.cms.ab2d.audit.SpringBootApp;
-import org.apache.commons.lang3.SystemUtils;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.Mockito;
 import org.quartz.*;
-import org.quartz.impl.JobExecutionContextImpl;
-import org.quartz.spi.OperableTrigger;
-import org.quartz.spi.TriggerFiredBundle;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.TestPropertySource;
@@ -25,29 +21,28 @@ import java.nio.file.attribute.FileTime;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 
-import static gov.cms.ab2d.audit.job.FileDeletionJob.AUDIT_FILES_TTL_HOURS;
-import static gov.cms.ab2d.audit.job.FileDeletionJob.EFS_MOUNT;
-import static org.mockito.Mockito.when;
-
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = SpringBootApp.class)
 @TestPropertySource(locations = "/application.common.properties")
-public class FileDeletionJobTest {
+public class FileDeletionServiceTest {
 
     @Value("${efs.mount}")
     private String efsMount;
 
-    private static final String TEST_FILE = "testFile.txt";
+    @Autowired
+    private FileDeletionService fileDeletionService;
 
-    private static final String TEST_FILE_NOT_DELETED = "testFileNotDeleted.txt";
+    private static final String TEST_FILE = "testFile.ndjson";
+
+    private static final String TEST_FILE_NOT_DELETED = "testFileNotDeleted.ndjson";
 
     private static final String TEST_DIRECTORY_NO_PERMISSIONS = "testDirectoryNoPermissions";
 
-    private static final String TEST_FILE_NO_PERMISSIONS = TEST_DIRECTORY_NO_PERMISSIONS + "/testFileNoPermissions.txt";
+    private static final String TEST_FILE_NO_PERMISSIONS = TEST_DIRECTORY_NO_PERMISSIONS + "/testFileNoPermissions.ndjson";
 
     private static final String TEST_DIRECTORY = "testDirectory";
 
-    private static final String TEST_FILE_NESTED = TEST_DIRECTORY + "/testFileInDirectory.txt";
+    private static final String TEST_FILE_NESTED = TEST_DIRECTORY + "/testFileInDirectory.ndjson";
 
     // Change the creation time so that the file will be eligible for deletion
     private void changeFileCreationDate(Path path) throws IOException {
@@ -58,7 +53,7 @@ public class FileDeletionJobTest {
 
     @Test
     public void checkToEnsureFilesDeleted() throws IOException, URISyntaxException {
-        // Don't change the creation date on this file, but do so on the next 3
+        // Don't change the creation date on this file, but do so on the next ones
         Path destinationNotDeleted = Paths.get(efsMount, TEST_FILE_NOT_DELETED);
         URL urlNotDeletedFile = this.getClass().getResource("/" + TEST_FILE_NOT_DELETED);
         Path sourceNotDeleted = Paths.get(urlNotDeletedFile.toURI());
@@ -93,22 +88,7 @@ public class FileDeletionJobTest {
 
         changeFileCreationDate(nestedFileDestination);
 
-        FileDeletionJob fileDeletionJob = new FileDeletionJob();
-        Scheduler scheduler = Mockito.mock(Scheduler.class);
-        TriggerFiredBundle triggerFiredBundle = Mockito.mock(TriggerFiredBundle.class);
-
-        JobDataMap jobDataMap = new JobDataMap();
-        jobDataMap.put(EFS_MOUNT, efsMount);
-        jobDataMap.put(AUDIT_FILES_TTL_HOURS, 24);
-        OperableTrigger operableTrigger = Mockito.mock(OperableTrigger.class);
-        when(operableTrigger.getJobDataMap()).thenReturn(jobDataMap);
-        when(triggerFiredBundle.getTrigger()).thenReturn(operableTrigger);
-        JobDetail jobDetail = Mockito.mock(JobDetail.class);
-        when(jobDetail.getJobDataMap()).thenReturn(jobDataMap);
-        when(triggerFiredBundle.getJobDetail()).thenReturn(jobDetail);
-        JobExecutionContext jobExecutionContext = new JobExecutionContextImpl(scheduler, triggerFiredBundle, fileDeletionJob);
-
-        fileDeletionJob.execute(jobExecutionContext);
+        fileDeletionService.deleteFiles();
 
         Assert.assertTrue(Files.notExists(destination));
 
