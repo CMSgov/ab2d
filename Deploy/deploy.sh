@@ -207,54 +207,76 @@ fi
 
 # Create API and worker Dockerfiles for ECS
 
-if [ -n "${BUILD_NEW_IMAGES}" ]; then
-    
-  cd "${START_DIR}"
-  rm -rf generated
-  mkdir -p generated/api
-  mkdir -p generated/worker
-  cp ../docker-compose.yml generated
-  cp ./yaml/config.yml generated
-  cp ../api/Dockerfile generated/api/Dockerfile.original
-  cp -r ../api/target generated/api
-  cp ../worker/Dockerfile generated/worker/Dockerfile.original
-  cp -r ../worker/target generated/worker
-  sleep 5
-  cd python3
-  ./create-dockerfilles-for-ecs.py
+# LSH 2019-12-04 BEGIN
 
-fi
+# if [ -n "${BUILD_NEW_IMAGES}" ]; then
+    
+#   cd "${START_DIR}"
+#   rm -rf generated
+#   mkdir -p generated/api
+#   mkdir -p generated/worker
+#   cp ../docker-compose.yml generated
+#   cp ./yaml/config.yml generated
+#   cp ../api/Dockerfile generated/api/Dockerfile.original
+#   cp -r ../api/target generated/api
+#   cp ../worker/Dockerfile generated/worker/Dockerfile.original
+#   cp -r ../worker/target generated/worker
+#   sleep 5
+#   cd python3
+#   ./create-dockerfilles-for-ecs.py
+
+# fi
+
+# LSH 2019-12-04 END
 
 # Build API docker image
 
 if [ -n "${BUILD_NEW_IMAGES}" ]; then
 
-  cd "${START_DIR}"
-  cd generated/api
-  docker build \
-    --build-arg ab2d_db_host_arg="${DB_ENDPOINT}" \
-    --build-arg ab2d_db_port_arg=5432 \
-    --build-arg ab2d_db_database_arg="${DATABASE_NAME}" \
-    --build-arg ab2d_db_user_arg="${DATABASE_USER}" \
-    --build-arg ab2d_db_password_arg="${DATABASE_PASSWORD}" \
-    --tag "ab2d_${CMS_ENV}_api:latest" .
+  # LSH 2019-12-04 BEGIN
+   
+  # cd "${START_DIR}"
+  # cd generated/api
+  # docker build \
+  #   --build-arg ab2d_db_host_arg="${DB_ENDPOINT}" \
+  #   --build-arg ab2d_db_port_arg=5432 \
+  #   --build-arg ab2d_db_database_arg="${DATABASE_NAME}" \
+  #   --build-arg ab2d_db_user_arg="${DATABASE_USER}" \
+  #   --build-arg ab2d_db_password_arg="${DATABASE_PASSWORD}" \
+  #   --tag "ab2d_${CMS_ENV}_api:latest" .
 
+  cd "${START_DIR}"
+  cd ../api
+  docker build \
+    --tag "ab2d_api:latest" .
+  
+  # LSH 2019-12-04 END
+  
 fi
 
 # Build worker docker image
 
 if [ -n "${BUILD_NEW_IMAGES}" ]; then
-    
-  cd "${START_DIR}"
-  cd generated/worker
-  docker build \
-    --build-arg ab2d_db_host_arg="${DB_ENDPOINT}" \
-    --build-arg ab2d_db_port_arg=5432 \
-    --build-arg ab2d_db_database_arg="${DATABASE_NAME}" \
-    --build-arg ab2d_db_user_arg="${DATABASE_USER}" \
-    --build-arg ab2d_db_password_arg="${DATABASE_PASSWORD}" \
-    --tag "ab2d_${CMS_ENV}_worker:latest" .
 
+  # LSH 2019-12-04 BEGIN
+    
+  # cd "${START_DIR}"
+  # cd generated/worker
+  # docker build \
+  #   --build-arg ab2d_db_host_arg="${DB_ENDPOINT}" \
+  #   --build-arg ab2d_db_port_arg=5432 \
+  #   --build-arg ab2d_db_database_arg="${DATABASE_NAME}" \
+  #   --build-arg ab2d_db_user_arg="${DATABASE_USER}" \
+  #   --build-arg ab2d_db_password_arg="${DATABASE_PASSWORD}" \
+  #   --tag "ab2d_${CMS_ENV}_worker:latest" .
+
+  cd "${START_DIR}"
+  cd ../worker
+  docker build \
+    --tag "ab2d_worker:latest" .
+
+  # LSH 2019-12-04 END
+  
 fi
 
 # Tag and push API docker image to ECR
