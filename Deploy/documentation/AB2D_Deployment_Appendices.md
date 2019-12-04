@@ -5,6 +5,10 @@
 1. [Appendix A: Access the CMS AWS console](#appendix-a-access-the-cms-aws-console)
 1. [Appendix B: View the current gold disk images](#appendix-b-view-the-current-gold-disk-images)
 1. [Appendix C: Interact with the developer S3 bucket](#appendix-c-interact-with-the-developer-s3-bucket)
+1. [Appendix D: Delete and recreate IAM instance profiles, roles, and policies](#appendix-d-delete-and-recreate-iam-instance-profiles-roles-and-policies)
+   * [Delete instance profiles](#delete-instance-profiles)
+   * [Delete roles](#delete-roles)
+   * [Delete policies not used by IAM users](#delete-policies-not-used-by-iam-users)
 
 ## Appendix A: Access the CMS AWS console
 
@@ -175,4 +179,110 @@
      --output text
    ```
 
+## Appendix D: Delete and recreate IAM instance profiles, roles, and policies
 
+### Delete instance profiles
+
+1. Set target AWS profile
+   
+   ```ShellSession
+   $ export AWS_PROFILE=ab2d-shared
+   ```
+
+1. Detach "Ab2dInstanceRole" from "Ab2dInstanceProfile"
+
+   ```ShellSession
+   $ aws iam remove-role-from-instance-profile \
+     --role-name Ab2dInstanceRole \
+     --instance-profile-name Ab2dInstanceProfile
+   ```
+
+1. Delete instance profile
+
+   ```ShellSession
+   $ aws iam delete-instance-profile \
+     --instance-profile-name Ab2dInstanceProfile
+   ```
+
+### Delete roles
+
+1. Set target AWS profile
+   
+   ```ShellSession
+   $ export AWS_PROFILE=ab2d-shared
+   ```
+
+1. Detach policies from the "Ab2dManagedRole" role
+
+   ```ShellSession
+   $ aws iam detach-role-policy \
+     --role-name Ab2dManagedRole \
+     --policy-arn arn:aws:iam::349849222861:policy/Ab2dAccessPolicy
+   ```
+
+1. Delete "Ab2dManagedRole" role
+
+   ```ShelSession
+   $ aws iam delete-role \
+     --role-name Ab2dManagedRole
+   ```
+
+1. Detach policies from the "Ab2dInstanceRole" role
+
+   ```ShellSession
+   $ aws iam detach-role-policy \
+     --role-name Ab2dInstanceRole \
+     --policy-arn arn:aws:iam::349849222861:policy/Ab2dAssumePolicy
+   $ aws iam detach-role-policy \
+     --role-name Ab2dInstanceRole \
+     --policy-arn arn:aws:iam::349849222861:policy/Ab2dPackerPolicy
+   $ aws iam detach-role-policy \
+     --role-name Ab2dInstanceRole \
+     --policy-arn arn:aws:iam::349849222861:policy/Ab2dS3AccessPolicy
+   $ aws iam detach-role-policy \
+     --role-name Ab2dInstanceRole \
+     --policy-arn arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role
+   ```
+
+1. Delete "Ab2dInstanceRole" role
+
+   ```ShelSession
+   $ aws iam delete-role \
+     --role-name Ab2dInstanceRole
+   ```
+
+### Delete policies not used by IAM users
+
+1. Set target AWS profile
+   
+   ```ShellSession
+   $ export AWS_PROFILE=ab2d-shared
+   ```
+
+1. Delete "Ab2dAccessPolicy"
+
+   ```ShellSession
+   $ aws iam delete-policy \
+     --policy-arn arn:aws:iam::349849222861:policy/Ab2dAccessPolicy
+   ```
+
+1. Delete "Ab2dAssumePolicy"
+
+   ```ShellSession
+   $ aws iam delete-policy \
+     --policy-arn arn:aws:iam::349849222861:policy/Ab2dAssumePolicy
+   ```
+
+1. Delete "Ab2dPackerPolicy"
+
+   ```ShellSession
+   $ aws iam delete-policy \
+     --policy-arn arn:aws:iam::349849222861:policy/Ab2dPackerPolicy
+   ```
+
+1. Delete "Ab2dS3AccessPolicy"
+
+   ```ShellSession
+   $ aws iam delete-policy \
+     --policy-arn arn:aws:iam::349849222861:policy/Ab2dS3AccessPolicy
+   ```
