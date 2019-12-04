@@ -21,7 +21,6 @@ public class QuartzSetup {
                 .build();
     }
 
-
     @Bean
     Trigger fileDeletionJobTrigger(JobDetail optoutJobDetail) {
         return TriggerBuilder.newTrigger()

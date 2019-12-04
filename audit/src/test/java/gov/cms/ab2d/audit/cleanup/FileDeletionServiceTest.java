@@ -4,12 +4,13 @@ import gov.cms.ab2d.audit.SpringBootApp;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.quartz.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.util.FileSystemUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -20,6 +21,10 @@ import java.nio.file.attribute.BasicFileAttributeView;
 import java.nio.file.attribute.FileTime;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
+
+import static org.hamcrest.CoreMatchers.is;
+import static org.junit.Assert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = SpringBootApp.class)
@@ -43,6 +48,8 @@ public class FileDeletionServiceTest {
     private static final String TEST_DIRECTORY = "testDirectory";
 
     private static final String TEST_FILE_NESTED = TEST_DIRECTORY + "/testFileInDirectory.ndjson";
+
+    private static final String REGULAR_FILE = "regularFile.txt";
 
     // Change the creation time so that the file will be eligible for deletion
     private void changeFileCreationDate(Path path) throws IOException {
@@ -88,6 +95,13 @@ public class FileDeletionServiceTest {
 
         changeFileCreationDate(nestedFileDestination);
 
+        Path regularFileDestination = Paths.get(efsMount, REGULAR_FILE);
+        URL regularFileUrl = this.getClass().getResource("/" + REGULAR_FILE);
+        Path regularFileSource = Paths.get(regularFileUrl.toURI());
+        Files.move(regularFileSource, regularFileDestination, StandardCopyOption.REPLACE_EXISTING);
+
+        changeFileCreationDate(regularFileDestination);
+
         fileDeletionService.deleteFiles();
 
         Assert.assertTrue(Files.notExists(destination));
@@ -97,5 +111,44 @@ public class FileDeletionServiceTest {
         Assert.assertTrue(Files.exists(destinationNotDeleted));
 
         Assert.assertTrue(Files.exists(noPermissionsFileDestination));
+
+        Assert.assertTrue(Files.exists(regularFileDestination));
+
+        // Cleanup
+        Files.delete(destinationNotDeleted);
+
+        noPermissionsDir.setWritable(true);
+        FileSystemUtils.deleteRecursively(noPermissionsDir);
+
+        FileSystemUtils.deleteRecursively(dir);
+
+        Files.delete(regularFileDestination);
+    }
+
+    @Test
+    public void testEFSMountSlash() {
+        ReflectionTestUtils.setField(fileDeletionService, "efsMount", "~/UsersDir");
+
+        var exceptionThrown = assertThrows(EFSMountFormatException.class,() ->
+            fileDeletionService.deleteFiles());
+        assertThat(exceptionThrown.getMessage(), is("EFS Mount must be start with a /"));
+    }
+
+    @Test
+    public void testEFSMountDirectorySize() {
+        ReflectionTestUtils.setField(fileDeletionService, "efsMount", "/a");
+
+        var exceptionThrown = assertThrows(EFSMountFormatException.class,() ->
+                fileDeletionService.deleteFiles());
+        assertThat(exceptionThrown.getMessage(), is("EFS mount must be at least 5 characters"));
+    }
+
+    @Test
+    public void testEFSMountDirectoryBlacklist() {
+        ReflectionTestUtils.setField(fileDeletionService, "efsMount", "/usr/baddirectory");
+
+        var exceptionThrown = assertThrows(EFSMountFormatException.class,() ->
+                fileDeletionService.deleteFiles());
+        assertThat(exceptionThrown.getMessage(), is("EFS mount must not start with a directory that contains important files"));
     }
 }

@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
+import java.nio.file.FileVisitOption;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -48,12 +49,12 @@ public class FileDeletionServiceImpl implements FileDeletionService {
             }
         }
 
-        try (Stream<Path> walk = Files.walk(Paths.get(efsMount))) {
+        try (Stream<Path> walk = Files.walk(Paths.get(efsMount), FileVisitOption.FOLLOW_LINKS)) {
             walk.filter(Files::isRegularFile).forEach(path -> {
                 try {
                     FileTime creationTime = (FileTime) Files.getAttribute(path, "creationTime");
                     if (creationTime.toInstant().isBefore(Instant.now().minus(auditFilesTTLHours, ChronoUnit.HOURS)) &&
-                        path.endsWith(FILE_EXTENSION.toLowerCase())) {
+                        path.toString().endsWith(FILE_EXTENSION.toLowerCase())) {
                         Files.delete(path);
                         log.info("Deleted file {}", path);
                     }
