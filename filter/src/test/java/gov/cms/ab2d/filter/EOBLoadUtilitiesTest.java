@@ -1,10 +1,9 @@
 package gov.cms.ab2d.filter;
 
-import ca.uhn.fhir.rest.server.exceptions.ResourceNotFoundException;
+import ca.uhn.fhir.context.FhirContext;
 import org.hl7.fhir.dstu3.model.*;
 import org.junit.jupiter.api.Test;
 
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
@@ -15,18 +14,14 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class EOBToAB2DEOBTest {
-    static AB2DExplanationOfBenefit eobCarrier = null;
-    static AB2DExplanationOfBenefit eobSNF = null;
-    static {
-        eobCarrier = EOBToAB2DEOB.fromFileInClasspath("eobdata/EOB-for-Carrier-Claims.json");;
-        eobSNF = EOBToAB2DEOB.fromFileInClasspath("eobdata/EOB-for-SNF-Claims.json");
-    }
+class EOBLoadUtilitiesTest {
+    static ExplanationOfBenefit eobCarrier = null;
+    static ExplanationOfBenefit eobSNF = null;
+    static FhirContext context = FhirContext.forDstu3();
 
-    @Test
-    public void testNull() {
-        assertThrows(ResourceNotFoundException.class, () ->
-            EOBToAB2DEOB.from(null));
+    static {
+        eobCarrier = ExplanationOfBenefitsTrimmer.getBenefit(EOBLoadUtilities.getEOBFromFileInClassPath("eobdata/EOB-for-Carrier-Claims.json", context));
+        eobSNF = ExplanationOfBenefitsTrimmer.getBenefit(EOBLoadUtilities.getEOBFromFileInClassPath("eobdata/EOB-for-SNF-Claims.json", context));
     }
 
     @Test
@@ -36,9 +31,9 @@ class EOBToAB2DEOBTest {
 
     @Test
     public void testLoadFromFilePatient() {
-        assertNull(EOBToAB2DEOB.getEOBFromFileInClassPath(""));
-        assertNull(EOBToAB2DEOB.getEOBFromFileInClassPath(null));
-        ExplanationOfBenefit eob = EOBToAB2DEOB.getEOBFromFileInClassPath("eobdata/EOB-for-Carrier-Claims.json");
+        assertNull(EOBLoadUtilities.getEOBFromFileInClassPath("", context));
+        assertNull(EOBLoadUtilities.getEOBFromFileInClassPath(null, context));
+        ExplanationOfBenefit eob = EOBLoadUtilities.getEOBFromFileInClassPath("eobdata/EOB-for-Carrier-Claims.json", context);
         assertNotNull(eob);
         assertEquals(eob.getPatient().getReference(), "Patient/567834");
     }
@@ -142,50 +137,49 @@ class EOBToAB2DEOBTest {
 
     @Test
     public void testItems() throws ParseException {
-        List<AB2DItemComponent> components = eobCarrier.getItem();
+        List<ExplanationOfBenefit.ItemComponent> components = eobCarrier.getItem();
         assertNotNull(components);
         assertEquals(components.size(), 1);
         assertEquals(components.get(0).getCareTeamLinkId().get(0).getValue(), 2);
         assertEquals(components.get(0).getQuantity().getValue().toString(), "1");
-        assertEquals(components.get(0).getSequence().getValue(), 6);
+        assertEquals(components.get(0).getSequence(), 6);
         assertEquals(components.get(0).getService().getCoding().get(0).getSystem(), "https://bluebutton.cms.gov/resources/codesystem/hcpcs");
         assertEquals(components.get(0).getService().getCoding().get(0).getVersion(), "5");
         assertEquals(components.get(0).getService().getCoding().get(0).getCode(), "92999");
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
         Date d = sdf.parse("1999-10-27");
-        assertEquals(components.get(0).getServicedPeriod().getStart().getTime(), d.getTime());
-        assertEquals(components.get(0).getServicedPeriod().getEnd().getTime(), d.getTime());
+        Period period = (Period) components.get(0).getServiced();
+        assertEquals(period.getStart().getTime(), d.getTime());
+        assertEquals(period.getEnd().getTime(), d.getTime());
 
         CodeableConcept location = (CodeableConcept) components.get(0).getLocation();
         assertEquals(location.getCoding().get(0).getSystem(), "https://bluebutton.cms.gov/resources/variables/line_place_of_srvc_cd");
         assertEquals(location.getCoding().get(0).getCode(), "11");
         assertEquals(location.getCoding().get(0).getDisplay(), "Office. Location, other than a hospital, skilled nursing facility (SNF), military treatment facility, community health center, State or local public health clinic, or intermediate care facility (ICF), where the health professional routinely provides health examinations, diagnosis, and treatment of illness or injury on an ambulatory basis.");
 
-        List<AB2DItemComponent> components2 = eobSNF.getItem();
+        List<ExplanationOfBenefit.ItemComponent> components2 = eobSNF.getItem();
         Address location2 = (Address) components2.get(0).getLocation();
         assertEquals(location2.getState(), "FL");
     }
 
     @Test
     void testReaderEOB() throws IOException {
-        ClassLoader classLoader = EOBToAB2DEOB.class.getClassLoader();
+        ClassLoader classLoader = EOBLoadUtilities.class.getClassLoader();
         InputStream inputStream = classLoader.getResourceAsStream("eobdata/EOB-for-Carrier-Claims.json");
         Reader reader = new java.io.InputStreamReader(inputStream);
-        assertNull(EOBToAB2DEOB.getEOBFromReader(null));
-        ExplanationOfBenefit benefit = EOBToAB2DEOB.getEOBFromReader(reader);
+        assertNull(EOBLoadUtilities.getEOBFromReader(null, context));
+        ExplanationOfBenefit benefit = EOBLoadUtilities.getEOBFromReader(reader, context);
         assertNotNull(benefit);
         assertEquals(benefit.getPatient().getReference(), "Patient/567834");
     }
 
     @Test
-    void testReaderAB2DObj() throws IOException {
-        Reader nullReader = null;
-        assertNull(EOBToAB2DEOB.fromReader(nullReader));
-        ClassLoader classLoader = EOBToAB2DEOB.class.getClassLoader();
-        InputStream inputStream = classLoader.getResourceAsStream("eobdata/EOB-for-Carrier-Claims.json");
-        Reader reader = new java.io.InputStreamReader(inputStream);
-        AB2DExplanationOfBenefit benefit = EOBToAB2DEOB.fromReader(reader);
-        assertNotNull(benefit);
-        assertEquals(benefit.getPatient().getReference(), "Patient/567834");
+    void testToJson() {
+        var jsonParser = context.newJsonParser();
+        ExplanationOfBenefit eob = EOBLoadUtilities.getEOBFromFileInClassPath("eobdata/EOB-for-Carrier-Claims.json", context);
+        ExplanationOfBenefit eobNew = ExplanationOfBenefitsTrimmer.getBenefit(eob);
+        String payload = jsonParser.encodeResourceToString(eobNew) + System.lineSeparator();
+        assertNotNull(payload);
+        System.out.println(payload);
     }
 }
