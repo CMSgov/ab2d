@@ -22,6 +22,9 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Optional;
 
+import static gov.cms.ab2d.common.util.Constants.CONTRACT_LOG;
+import static net.logstash.logback.argument.StructuredArguments.keyValue;
+
 
 @Service("attestationReportProcessor")
 @Transactional
@@ -49,6 +52,8 @@ public class AttestationReportProcessor implements ExcelReportProcessor {
 
             Map<String, AttestationReportData> contractsSeenToLatestAttestationData =
                     new HashMap<>();
+
+            log.info("Beginning processing a total of {} rows", datatypeSheet.getPhysicalNumberOfRows());
 
             // In this loop just gather the most recent attestation data
             while (iterator.hasNext()) {
@@ -93,7 +98,7 @@ public class AttestationReportProcessor implements ExcelReportProcessor {
                         }
                     }
                 } else {
-                    log.warn(
+                    log.error(
                             "Contract ID {} was not found in the database during contract report " +
                                     "processing",
                             contractNumber);
@@ -114,6 +119,8 @@ public class AttestationReportProcessor implements ExcelReportProcessor {
                         attestationReportData.getAttestetedDateTime() : null;
                 contract.setAttestedOn(offsetDateTime);
                 contractService.updateContract(contract);
+
+                log.info("Updated contract {}", keyValue(CONTRACT_LOG, contract.getContractName()));
             }
         }
     }

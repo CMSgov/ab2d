@@ -7,7 +7,6 @@ import gov.cms.ab2d.common.model.JobStatus;
 import gov.cms.ab2d.common.model.Sponsor;
 import gov.cms.ab2d.common.repository.JobOutputRepository;
 import gov.cms.ab2d.common.repository.JobRepository;
-import gov.cms.ab2d.common.repository.SponsorRepository;
 import gov.cms.ab2d.worker.adapter.bluebutton.BeneficiaryAdapter;
 import gov.cms.ab2d.worker.adapter.bluebutton.PatientClaimsProcessor;
 import lombok.RequiredArgsConstructor;
@@ -17,7 +16,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.Assert;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -32,10 +30,13 @@ import java.util.stream.Collectors;
 import static gov.cms.ab2d.common.model.JobStatus.IN_PROGRESS;
 import static gov.cms.ab2d.common.model.JobStatus.SUBMITTED;
 import static gov.cms.ab2d.common.model.JobStatus.SUCCESSFUL;
+import static gov.cms.ab2d.common.util.Constants.CONTRACT_LOG;
+import static net.logstash.logback.argument.StructuredArguments.keyValue;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
+@SuppressWarnings("PMD.TooManyStaticImports")
 public class JobProcessingServiceImpl implements JobProcessingService {
     private static final String OUTPUT_FILE_SUFFIX = ".ndjson";
     private static final String ERROR_FILE_SUFFIX = "_error.ndjson";
@@ -45,7 +46,6 @@ public class JobProcessingServiceImpl implements JobProcessingService {
 
     private final FileService fileService;
     private final JobRepository jobRepository;
-    private final SponsorRepository sponsorRepository;
     private final JobOutputRepository jobOutputRepository;
     private final BeneficiaryAdapter beneficiaryAdapter;
     private final PatientClaimsProcessor patientClaimsProcessor;
@@ -56,11 +56,15 @@ public class JobProcessingServiceImpl implements JobProcessingService {
     public Job putJobInProgress(String jobId) {
 
         final Job job = jobRepository.findByJobUuid(jobId);
-        Assert.notNull(job, String.format("Job %s not found", jobId));
+        if (job == null) {
+            log.error("Job was not found");
+            throw new IllegalArgumentException("Job " + jobId + " was not found");
+        }
 
         // validate status is SUBMITTED
         if (!SUBMITTED.equals(job.getStatus())) {
             final String errMsg = String.format("Job %s is not in %s status.", jobId, SUBMITTED);
+            log.error("Job is not in submitted status");
             throw new IllegalArgumentException(errMsg);
         }
 
@@ -108,7 +112,7 @@ public class JobProcessingServiceImpl implements JobProcessingService {
     }
 
     private List<JobOutput> processContract(final Path outputDir, Contract contract) {
-
+        log.info("Beginning to process contract {}", keyValue(CONTRACT_LOG, contract.getContractName()));
         var contractNumber = contract.getContractNumber();
         var outputFile = fileService.createFile(outputDir, contractNumber + OUTPUT_FILE_SUFFIX);
         var errorFile = fileService.createFile(outputDir, contractNumber + ERROR_FILE_SUFFIX);
@@ -134,6 +138,8 @@ public class JobProcessingServiceImpl implements JobProcessingService {
             jobOutputs.add(createJobOutput(outputFile, false));
         }
         if (errorCount > 0) {
+            log.warn("Encountered {} errors during job processing", errorCount);
+
             jobOutputs.add(createJobOutput(errorFile, true));
         }
 
@@ -154,9 +160,11 @@ public class JobProcessingServiceImpl implements JobProcessingService {
                     }
                 } catch (InterruptedException e) {
                     final String errMsg = "interrupted exception while processing patient ";
+                    log.error(errMsg);
                     throw new RuntimeException(errMsg, e);
                 } catch (ExecutionException e) {
                     final String errMsg = "exception while processing patient ";
+                    log.error(errMsg);
                     throw new RuntimeException(errMsg, e.getCause());
                 }
                 iterator.remove();
