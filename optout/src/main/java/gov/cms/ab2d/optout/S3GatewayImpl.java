@@ -12,12 +12,13 @@ import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 
 import java.io.InputStreamReader;
+import java.util.regex.Pattern;
 
 @Slf4j
 @Component
 public class S3GatewayImpl implements S3Gateway {
 
-    //    private static final Pattern FILENAME_PATTERN = Pattern.compile("(P|T)#EFT\\.ON\\.ACO\\.NGD1800\\.DPRF\\.D\\d{6}\\.T\\d{7}");
+    private static final Pattern FILENAME_PATTERN = Pattern.compile("(P|T)#EFT\\.ON\\.ACO\\.NGD1800\\.DPRF\\.D\\d{6}\\.T\\d{7}");
 
     @Value("${s3.region}")
     private String s3Region;
@@ -30,6 +31,8 @@ public class S3GatewayImpl implements S3Gateway {
 
     @Override
     public InputStreamReader getS3Object() {
+
+        validateFileName();
         //set region
         final Region region = Region.of(s3Region);
 
@@ -55,5 +58,14 @@ public class S3GatewayImpl implements S3Gateway {
             throw e;
         }
 
+    }
+
+
+    private void validateFileName() {
+        if (!FILENAME_PATTERN.matcher(s3Filename).matches()) {
+            final String errMsg = "Filename is invalid ";
+            log.error("{} : {} ", errMsg, s3Filename);
+            throw new RuntimeException(errMsg);
+        }
     }
 }

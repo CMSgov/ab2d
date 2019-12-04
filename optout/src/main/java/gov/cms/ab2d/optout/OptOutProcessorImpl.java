@@ -20,77 +20,48 @@ import java.util.Optional;
 public class OptOutProcessorImpl implements OptOutProcessor {
 
     @Autowired
+    private S3Gateway s3Gateway;
+
+    @Autowired
     private ConsentRepository consentRepository;
 
     @Autowired
     private ConsentConverterService  consentConverterService;
 
-    @Autowired
-    private S3Gateway s3Gateway;
 
     @Override
     @Transactional
     public void process() {
 
-//        //set region
-//        final Region region = Region.of(s3Region);
-//
-//
-//        // build S3 client
-//        final S3Client s3Client =  S3Client.builder().region(region).build();
-//
-//
-//        // build GetObjectRequest
-//        final GetObjectRequest getObjectRequest = GetObjectRequest.builder()
-//                .bucket(s3Bucket)
-//                .key(s3Filename)
-//                .build();
-//
-//
-//
-//        long linesReadCount = 0;
-//        ResponseInputStream<GetObjectResponse> responseInputStream = null;
-//        try {
-//            responseInputStream = s3Client.getObject(getObjectRequest);
-//        } catch (SdkServiceException e) {
-//            log.error("Server error upon calling AWS  : ", e);
-//            throw e;
-//        } catch (SdkClientException e) {
-//            log.error("Client exception on attempting to call AWS : ", e);
-//            throw e;
-//        }
-
-//        ResponseInputStream<GetObjectResponse> responseInputStream = s3Gateway.getS3Object();
-//        InputStreamReader inputStreamReader = new InputStreamReader(responseInputStream);
-
         final InputStreamReader inputStreamReader = s3Gateway.getS3Object();
 
         try (var bufferedReader = new BufferedReader(inputStreamReader)) {
-            processReader(bufferedReader);
+            importConsentRecords(bufferedReader);
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
 
     }
 
-    private void processReader(BufferedReader bufferedReader) {
-        var lineIter = IOUtils.lineIterator(bufferedReader);
-        int lineNum = 0;
+    private void importConsentRecords(BufferedReader bufferedReader) {
+        var iterator = IOUtils.lineIterator(bufferedReader);
 
-        while (lineIter.hasNext()) {
+        int lineNum = 0;
+        while (iterator.hasNext()) {
             lineNum++;
 
             try {
-                Optional<Consent> optConsent = consentConverterService.convert(lineIter.nextLine(), "s3Filename", lineNum);
+                Optional<Consent> optConsent = consentConverterService.convert(iterator.nextLine(), "s3Filename", lineNum);
                 if (optConsent.isPresent()) {
                     consentRepository.save(optConsent.get());
                 }
             } catch (Exception e) {
-                log.error("Invalid opt out record ", e);
-
+                log.error("Invalid opt out record {}", lineNum, e);
             }
-        }
 
+            log.info("[{}] rows parsed from file", lineNum);
+            log.info("[{}] rows inserted into consent table", lineNum - 2);
+        }
     }
 
 

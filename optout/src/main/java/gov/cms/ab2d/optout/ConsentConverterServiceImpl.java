@@ -91,10 +91,10 @@ public class ConsentConverterServiceImpl implements ConsentConverterService {
     }
 
     private String parseHealthInsuranceClaimNumber(String line, String filename, int lineNum) {
-        var hicn = line.substring(HEALTH_INSURANCE_CLAIM_NUMBER_START, HEALTH_INSURANCE_CLAIM_NUMBER_END).trim();
-        if (!HEALTH_INSURANCE_CLAIM_NUMBER_PATTERN.matcher(hicn).matches()) {
+        var claimNumber = line.substring(HEALTH_INSURANCE_CLAIM_NUMBER_START, HEALTH_INSURANCE_CLAIM_NUMBER_END).trim();
+        if (!HEALTH_INSURANCE_CLAIM_NUMBER_PATTERN.matcher(claimNumber).matches()) {
             throw new RuntimeException("HICN does not match expected format" +  filename +  lineNum);
         }
-        return hicn;
+        return claimNumber;
     }
 }
