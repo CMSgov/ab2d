@@ -5428,7 +5428,8 @@ a.ds-c-vertical-nav__label:hover {
 }
 
 p.ds-text--lead {
-    color: #fff
+    color: #fff;
+    font-family: "Open Sans",Roboto,Helvetica,sans-serif;
 }
 
 h1.ds-display {
