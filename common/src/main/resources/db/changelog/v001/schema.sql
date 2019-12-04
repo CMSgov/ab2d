@@ -164,3 +164,23 @@ ALTER TABLE job_output ADD CONSTRAINT "fk_job_output_to_job" FOREIGN KEY (job_id
 
 --rollback DROP TABLE job_output;
 
+--  -------------------------------------------------------------------------------------------------------------------
+
+
+--changeset spathiyil:AB2D-514-CreateTable-consent failOnError:true
+CREATE TABLE consent
+(
+    id                  BIGINT                      NOT NULL,
+    hicn                VARCHAR(64)                 NOT NULL,
+    effective_date      TIMESTAMP WITH TIME ZONE    NOT NULL,
+    policy_code         VARCHAR(255)                NOT NULL,
+    purpose_code        VARCHAR(255)                NOT NULL,
+    lo_inc_code         VARCHAR(255)                NOT NULL,
+    scope_code          VARCHAR(255)                NOT NULL
+);
+
+ALTER TABLE consent ADD CONSTRAINT "pk_consent" PRIMARY KEY (id);
+
+CREATE INDEX "ix_consent_hicn" ON consent (hicn);
+
+--rollback DROP TABLE consent;
