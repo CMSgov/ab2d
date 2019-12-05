@@ -1,4 +1,4 @@
-package gov.cms.ab2d.optout;
+package gov.cms.ab2d.optout.gateway;
 
 import java.io.InputStreamReader;
 

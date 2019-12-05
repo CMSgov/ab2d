@@ -3,6 +3,7 @@ package gov.cms.ab2d.optout;
 
 import gov.cms.ab2d.common.model.Consent;
 import gov.cms.ab2d.common.repository.ConsentRepository;
+import gov.cms.ab2d.optout.gateway.S3Gateway;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
