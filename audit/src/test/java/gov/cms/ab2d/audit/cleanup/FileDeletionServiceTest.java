@@ -137,7 +137,7 @@ public class FileDeletionServiceTest {
 
         var exceptionThrown = assertThrows(EFSMountFormatException.class,() ->
             fileDeletionService.deleteFiles());
-        assertThat(exceptionThrown.getMessage(), is("EFS Mount must be start with a /"));
+        assertThat(exceptionThrown.getMessage(), is("EFS Mount must start with a /"));
     }
 
     @Test

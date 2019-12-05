@@ -36,7 +36,7 @@ public class FileDeletionServiceImpl implements FileDeletionService {
     @Override
     public void deleteFiles() {
         if (!efsMount.startsWith("/")) {
-            throw new EFSMountFormatException("EFS Mount must be start with a /");
+            throw new EFSMountFormatException("EFS Mount must start with a /");
         }
 
         if (efsMount.length() < 5) {
