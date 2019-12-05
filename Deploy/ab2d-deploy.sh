@@ -956,6 +956,21 @@ exit 0
 # Deploy AWS application modules
 #
 
+DATABASE_USER_ARN=$(aws secretsmanager describe-secret \
+  --secret-id "ab2d/${CMS_ENV}/module/db/database_user/${DATABASE_SECRET_DATETIME}" \
+  --query "ARN" \
+  --output text)
+
+DATABASE_PASSWORD_ARN=$(aws secretsmanager describe-secret \
+  --secret-id "ab2d/${CMS_ENV}/module/db/database_password/${DATABASE_SECRET_DATETIME}" \
+  --query "ARN" \
+  --output text)
+
+DATABASE_NAME_ARN=$(aws secretsmanager describe-secret \
+  --secret-id "ab2d/${CMS_ENV}/module/db/database_name/${DATABASE_SECRET_DATETIME}" \
+  --query "ARN" \
+  --output text)
+
 cd "${START_DIR}"
 ./deploy.sh \
   --environment="${CMS_ENV}" \

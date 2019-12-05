@@ -406,6 +406,40 @@ fi
 #
 
 echo "Deploy API and Worker..."
+
+# Create or get database host secret
+
+DATABASE_HOST=$(./get-database-secret.py $CMS_ENV database_host $DATABASE_SECRET_DATETIME)
+if [ -z "${DATABASE_HOST}" ]; then
+  aws secretsmanager create-secret \
+    --name "ab2d/${CMS_ENV}/module/db/database_host/${DATABASE_SECRET_DATETIME}" \
+    --secret-string "${DB_ENDPOINT}"
+fi
+
+# Create or get database port secret
+
+DATABASE_HOST=$(./get-database-secret.py $CMS_ENV database_host $DATABASE_SECRET_DATETIME)
+if [ -z "${DATABASE_HOST}" ]; then
+  aws secretsmanager create-secret \
+    --name "ab2d/${CMS_ENV}/module/db/database_host/${DATABASE_SECRET_DATETIME}" \
+    --secret-string "${DB_ENDPOINT}"
+fi
+
+DATABASE_USER_ARN=$(aws secretsmanager describe-secret \
+  --secret-id "ab2d/${CMS_ENV}/module/db/database_user/${DATABASE_SECRET_DATETIME}" \
+  --query "ARN" \
+  --output text)
+
+DATABASE_PASSWORD_ARN=$(aws secretsmanager describe-secret \
+  --secret-id "ab2d/${CMS_ENV}/module/db/database_password/${DATABASE_SECRET_DATETIME}" \
+  --query "ARN" \
+  --output text)
+
+DATABASE_NAME_ARN=$(aws secretsmanager describe-secret \
+  --secret-id "ab2d/${CMS_ENV}/module/db/database_name/${DATABASE_SECRET_DATETIME}" \
+  --query "ARN" \
+  --output text)
+
 if [ -z "${AUTOAPPROVE}" ]; then
     
   # Confirm with the caller prior to applying changes.

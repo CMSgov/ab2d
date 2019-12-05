@@ -7,7 +7,7 @@ provider "aws" {
 terraform {
   backend "s3" {
     bucket         = "ab2d-automation"
-    key            = "ab2d-${var.env}/terraform/terraform.tfstate"
+    key            = "ab2d-sbdemo-sbx/terraform/terraform.tfstate"
     region         = "us-east-1"
     encrypt = true
   }
@@ -76,10 +76,18 @@ module "api" {
   gold_disk_name                = var.gold_image_name
   override_task_definition_arn  = var.current_task_definition_arn
   aws_account_number            = var.aws_account_number
-  db_host                       = "${data.aws_db_instance.ab2d.endpoint}"
-  db_username                   = var.db_username
-  db_password                   = var.db_password
-  db_name                       = var.db_name
+
+  # db_host                       = "${data.aws_db_instance.ab2d.endpoint}"
+  # db_username                   = var.db_username
+  # db_password                   = var.db_password
+  # db_name                       = var.db_name
+
+  db_host_secret_arn              = var.db_host_secret_arn
+  db_port_secret_arn              = var.db_port_secret_arn
+  db_user_secret_arn              = var.db_user_secret_arn
+  db_password_secret_arn          = var.db_password_secret_arn
+  db_name_secret_arn              = var.db_name_secret_arn
+
 }
 
 # LSH SKIP FOR NOW BEGIN

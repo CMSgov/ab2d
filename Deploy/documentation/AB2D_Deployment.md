@@ -485,6 +485,14 @@
      --policy-document file://ab2d-permission-to-pass-roles-policy.json
    ```
 
+1. Create "Ab2dSecretsPolicy"
+
+   ```ShellSession
+   $ aws iam create-policy \
+     --policy-name Ab2dPermissionToPassRolesPolicy \
+     --policy-document file://ab2d-permission-to-pass-roles-policy.json
+   ```
+
 ### Create roles
 
 1. Set target AWS profile
@@ -519,6 +527,9 @@
    $ aws iam attach-role-policy \
      --role-name Ab2dInstanceRole \
      --policy-arn arn:aws:iam::349849222861:policy/Ab2dS3AccessPolicy
+   $ aws iam attach-role-policy \
+     --role-name Ab2dInstanceRole \
+     --policy-arn arn:aws:iam::349849222861:policy/Ab2dSecretsPolicy
    $ aws iam attach-role-policy \
      --role-name Ab2dInstanceRole \
      --policy-arn arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role

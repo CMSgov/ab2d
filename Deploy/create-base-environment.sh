@@ -1114,11 +1114,13 @@ aws s3api put-bucket-acl \
 # Add bucket policy to the "ab2d-cloudtrail" S3 bucket
 
 cd "${START_DIR}"
-cd aws/s3-bucket-policies
+cd terraform/environments/ab2d-$CMS_SHARED_ENV
 
 aws s3api put-bucket-policy \
   --bucket ab2d-cloudtrail \
   --policy file://ab2d-cloudtrail-bucket-policy.json
+
+# Create dev bucket
 
 cd "${START_DIR}"
 cd terraform/environments/ab2d-$CMS_SHARED_ENV
@@ -1140,7 +1142,11 @@ terraform apply \
   --var "db_password=${DATABASE_PASSWORD}" \
   --var "db_name=${DATABASE_NAME}" \
   --target module.db --auto-approve
-DB_ENDPOINT=$(aws --region us-east-1 rds describe-db-instances --query="DBInstances[?DBInstanceIdentifier=='ab2d'].Endpoint.Address" --output=text)
+
+DB_ENDPOINT=$(aws --region us-east-1 rds describe-db-instances \
+  --query="DBInstances[?DBInstanceIdentifier=='ab2d'].Endpoint.Address" \
+  --output=text)
+
 cd "${START_DIR}"
 cd terraform/environments/ab2d-$CMS_SHARED_ENV
 rm -f generated/.pgpass
@@ -1190,10 +1196,13 @@ echo "${DB_ENDPOINT}:5432:postgres:${DATABASE_USER}:${DATABASE_PASSWORD}" > gene
 
 echo "Create or update controller..."
 
+DEPLOYER_IP_ADDRESS=$(curl ipinfo.io/ip)
+
 terraform apply \
   --var "db_username=${DATABASE_USER}" \
   --var "db_password=${DATABASE_PASSWORD}" \
   --var "db_name=${DATABASE_NAME}" \
+  --var "deployer_ip_address=${DEPLOYER_IP_ADDRESS}" \
   --target module.controller \
   --auto-approve
 

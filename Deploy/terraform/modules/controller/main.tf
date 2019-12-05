@@ -14,7 +14,7 @@ resource "aws_security_group_rule" "whitelist_lonnie" {
   from_port   = "22"
   to_port     = "22"
   protocol    = "TCP"
-  cidr_blocks = ["34.196.35.156/32"]
+  cidr_blocks = ["${var.deployer_ip_address}/32"]
   security_group_id = aws_security_group.deployment_controller.id
 }
 

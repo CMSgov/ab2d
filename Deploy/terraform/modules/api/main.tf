@@ -146,6 +146,20 @@ resource "aws_ecs_task_definition" "api" {
       "logConfiguration": {
         "logDriver": "syslog"
       },
+      "secretOptions": [
+        {
+          "name": "AB2D_DB_USER",
+          "valueFrom": "arn:aws:ssm:region:aws_account_id:parameter:parameter_name"
+        },
+        {
+          "name": "AB2D_DB_PASSWORD",
+          "valueFrom": "arn:aws:ssm:region:aws_account_id:parameter:parameter_name"
+        },
+        {
+          "name": "AB2D_DB_DATABASE",
+          "valueFrom": "arn:aws:ssm:region:aws_account_id:parameter:parameter_name"
+        }
+      ],
       "healthCheck": null
     }
   ]

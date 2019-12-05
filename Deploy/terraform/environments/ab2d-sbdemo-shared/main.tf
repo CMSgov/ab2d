@@ -68,6 +68,7 @@ module "controller" {
   ssh_key_name          = var.ssh_key_name
   iam_instance_profile  = var.ec2_iam_profile
   gold_disk_name        = var.gold_image_name
+  deployer_ip_address   = var.deployer_ip_address
 }
 
 module "lonnie_access_controller" {
