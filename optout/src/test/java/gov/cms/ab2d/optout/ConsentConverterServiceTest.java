@@ -2,6 +2,7 @@ package gov.cms.ab2d.optout;
 
 import gov.cms.ab2d.common.model.Consent;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.io.BufferedReader;
@@ -28,6 +29,7 @@ class ConsentConverterServiceTest {
 
 
     @Test
+    @DisplayName("when header, should skip line and not create a consent record")
     void whenHeader_shouldNotCreateConsent() {
         final Optional<Consent> optConsent = cut.convert("HDR_BENEDATASHR20191029", 1);
         assertTrue(optConsent.isEmpty());
@@ -35,12 +37,14 @@ class ConsentConverterServiceTest {
 
 
     @Test
+    @DisplayName("when trailer, should skip line and not create a consent record")
     void whenTrailer_shouldNotCreateConsent() {
         final Optional<Consent> optConsent = cut.convert("TRL_BENEDATASHR2019102930", 1);
         assertTrue(optConsent.isEmpty());
     }
 
     @Test
+    @DisplayName("when source-code is blank, should skip line and not create a consent record")
     void whenSourceCodeisBlank_shouldNotCreateConsent() {
         final String line = getLinesFromFile().skip(1).limit(1).collect(Collectors.toList()).get(0);
 
@@ -49,6 +53,7 @@ class ConsentConverterServiceTest {
     }
 
     @Test
+    @DisplayName("when preference-indicator is not opt-out, should skip line and not create a consent record")
     void whenPreferenceIndicatorIsNotOptOut_shouldNotCreateConsent() {
         final String line = getLinesFromFile().skip(7).limit(1).collect(Collectors.toList()).get(0);
 
@@ -57,6 +62,7 @@ class ConsentConverterServiceTest {
     }
 
     @Test
+    @DisplayName("when source-code is invalid, should throw an exception")
     void whenSourceCodeIsInvalid_shouldThrowException() {
 
         // Valid source code is 1800. Replacing it with 1888 for this test case.
@@ -72,6 +78,7 @@ class ConsentConverterServiceTest {
     }
 
     @Test
+    @DisplayName("when effective date has invalid value, should throw an exception")
     void whenEffectiveDateValueIsInvalid_shouldThrowException() {
 
         // replace effective date with an invalid date for this test case
@@ -87,6 +94,7 @@ class ConsentConverterServiceTest {
     }
 
     @Test
+    @DisplayName("when HICN is invalid, should throw an exception")
     void whenHicnIsInvalid_shouldThrowException() {
         final String line = getLinesFromFile().skip(6).limit(1).collect(Collectors.toList()).get(0);
 
@@ -100,6 +108,7 @@ class ConsentConverterServiceTest {
     }
 
     @Test
+    @DisplayName("given line with valid data, should create a consent record")
     void whenValidData_shouldCreateConsentRecord() {
         final String line = getLinesFromFile().skip(6).limit(1).collect(Collectors.toList()).get(0);
 

@@ -59,9 +59,6 @@ public class OptOutProcessorImpl implements OptOutProcessor {
                 if (optConsent.isPresent()) {
                     consentRepository.save(optConsent.get());
                     ++insertedRowCount;
-//                } else {
-//                    ++skippedRowCount;
-//                    log.info("line not used : {} : row : {} ", line, linesRead);
                 }
             } catch (Exception e) {
                 log.error("Invalid opt out record {}", linesRead, e);

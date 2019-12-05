@@ -20,8 +20,8 @@ public class ConsentConverterServiceImpl implements ConsentConverterService {
     private static final int HEALTH_INSURANCE_CLAIM_NUMBER_START = 0;
     private static final int HEALTH_INSURANCE_CLAIM_NUMBER_END = 11;
     private static final int EFFECTIVE_DATE_START = 354;
-    private static final int EFFECTIVE_DATE_END = 362;      // ASK Denis - the column number seems to be same
-    private static final int SOURCE_CODE_START = 362;       // ASK Denis - the column number seems to be same. Is that okay?
+    private static final int EFFECTIVE_DATE_END = 362;
+    private static final int SOURCE_CODE_START = 362;
     private static final int SOURCE_CODE_END = 367;
     private static final int PREF_INDICATOR_START = 368;
     private static final int PREF_INDICATOR_END = 369;
@@ -78,10 +78,6 @@ public class ConsentConverterServiceImpl implements ConsentConverterService {
     }
 
     /**
-     * TODO : LocalDate vs OffsetDateTime - Check with Denis on how to proceed.
-     * Either the column in the table needs to be changed to LocalDate
-     * Or, we need to know the logic to convert the LocalDate into OffsetDate
-     *
      * @param line
      * @param lineNum
      * @return
