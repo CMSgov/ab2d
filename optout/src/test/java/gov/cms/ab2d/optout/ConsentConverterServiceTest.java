@@ -1,0 +1,120 @@
+package gov.cms.ab2d.optout;
+
+import gov.cms.ab2d.common.model.Consent;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import static org.hamcrest.CoreMatchers.startsWith;
+import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
+class ConsentConverterServiceTest {
+
+    private ConsentConverterService cut;
+
+
+    @BeforeEach
+    void setUp() {
+        cut = new ConsentConverterServiceImpl();
+    }
+
+
+    @Test
+    void whenHeader_shouldNotCreateConsent() {
+        final Optional<Consent> optConsent = cut.convert("HDR_BENEDATASHR20191029", 1);
+        assertTrue(optConsent.isEmpty());
+    }
+
+
+    @Test
+    void whenTrailer_shouldNotCreateConsent() {
+        final Optional<Consent> optConsent = cut.convert("TRL_BENEDATASHR2019102930", 1);
+        assertTrue(optConsent.isEmpty());
+    }
+
+    @Test
+    void whenSourceCodeisBlank_shouldNotCreateConsent() {
+        final String line = getLinesFromFile().skip(1).limit(1).collect(Collectors.toList()).get(0);
+
+        final Optional<Consent> optConsent = cut.convert(line, 2);
+        assertTrue(optConsent.isEmpty());
+    }
+
+    @Test
+    void whenPreferenceIndicatorIsNotOptOut_shouldNotCreateConsent() {
+        final String line = getLinesFromFile().skip(7).limit(1).collect(Collectors.toList()).get(0);
+
+        final Optional<Consent> optConsent = cut.convert(line, 8);
+        assertTrue(optConsent.isEmpty());
+    }
+
+    @Test
+    void whenSourceCodeIsInvalid_shouldThrowException() {
+
+        // Valid source code is 1800. Replacing it with 1888 for this test case.
+        final String badSourceCode = "1888";
+
+        final String goodLine = getLinesFromFile().skip(6).limit(1).collect(Collectors.toList()).get(0);
+        final String lineWithInvalidSourceCode = goodLine.substring(0, 362) + badSourceCode + goodLine.substring(366);
+
+        var exceptionThrown = assertThrows(RuntimeException.class,
+                () -> cut.convert(lineWithInvalidSourceCode, 8));
+
+        assertThat(exceptionThrown.getMessage(), startsWith("Unexpected beneficiary data sharing source code"));
+    }
+
+    @Test
+    void whenEffectiveDateValueIsInvalid_shouldThrowException() {
+
+        // replace effective date with an invalid date for this test case
+        final String badDate = "20192054";
+
+        final String goodLine = getLinesFromFile().skip(6).limit(1).collect(Collectors.toList()).get(0);
+        final String lineWithInvalidDate = goodLine.substring(0, 354) + badDate + goodLine.substring(362);
+
+        var exceptionThrown = assertThrows(RuntimeException.class,
+                () -> cut.convert(lineWithInvalidDate, 7));
+
+        assertThat(exceptionThrown.getMessage(), startsWith("Invalid Date"));
+    }
+
+    @Test
+    void whenHicnIsInvalid_shouldThrowException() {
+        final String line = getLinesFromFile().skip(6).limit(1).collect(Collectors.toList()).get(0);
+
+        //The first 9 characters of HICN must be numeric. Replacing 1st character with an alphabet for this test case.
+        final String lineWithInvalidHicn = "A" + line.substring(1);
+
+        var exceptionThrown = assertThrows(RuntimeException.class,
+                () -> cut.convert(lineWithInvalidHicn, 7));
+
+        assertThat(exceptionThrown.getMessage(), startsWith("HICN does not match expected format"));
+    }
+
+    @Test
+    void whenValidData_shouldCreateConsentRecord() {
+        final String line = getLinesFromFile().skip(6).limit(1).collect(Collectors.toList()).get(0);
+
+        final Optional<Consent> optConsent = cut.convert(line, 7);
+        assertTrue(optConsent.isPresent());
+    }
+
+
+    private Stream<String> getLinesFromFile() {
+        final String testInputFile = "test-data/test-data.txt";
+        final InputStream inputStream = getClass().getResourceAsStream("/" + testInputFile);
+        final InputStreamReader isr = new InputStreamReader(inputStream);
+        final BufferedReader bufferedReader = new BufferedReader(isr);
+        return bufferedReader.lines();
+    }
+
+
+}
