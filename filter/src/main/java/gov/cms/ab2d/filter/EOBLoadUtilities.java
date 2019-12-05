@@ -7,7 +7,6 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.hl7.fhir.dstu3.model.ExplanationOfBenefit;
 
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
