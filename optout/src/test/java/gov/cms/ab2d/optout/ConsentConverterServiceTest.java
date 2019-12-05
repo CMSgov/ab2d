@@ -31,7 +31,7 @@ class ConsentConverterServiceTest {
     @Test
     @DisplayName("when header, should skip line and not create a consent record")
     void whenHeader_shouldNotCreateConsent() {
-        final Optional<Consent> optConsent = cut.convert("HDR_BENEDATASHR20191029", 1);
+        final Optional<Consent> optConsent = cut.convert("HDR_BENEDATASHR20191029");
         assertTrue(optConsent.isEmpty());
     }
 
@@ -39,16 +39,7 @@ class ConsentConverterServiceTest {
     @Test
     @DisplayName("when trailer, should skip line and not create a consent record")
     void whenTrailer_shouldNotCreateConsent() {
-        final Optional<Consent> optConsent = cut.convert("TRL_BENEDATASHR2019102930", 1);
-        assertTrue(optConsent.isEmpty());
-    }
-
-    @Test
-    @DisplayName("when source-code is blank, should skip line and not create a consent record")
-    void whenSourceCodeisBlank_shouldNotCreateConsent() {
-        final String line = getLinesFromFile().skip(1).limit(1).collect(Collectors.toList()).get(0);
-
-        final Optional<Consent> optConsent = cut.convert(line, 2);
+        final Optional<Consent> optConsent = cut.convert("TRL_BENEDATASHR2019102930");
         assertTrue(optConsent.isEmpty());
     }
 
@@ -57,7 +48,16 @@ class ConsentConverterServiceTest {
     void whenPreferenceIndicatorIsNotOptOut_shouldNotCreateConsent() {
         final String line = getLinesFromFile().skip(7).limit(1).collect(Collectors.toList()).get(0);
 
-        final Optional<Consent> optConsent = cut.convert(line, 8);
+        final Optional<Consent> optConsent = cut.convert(line);
+        assertTrue(optConsent.isEmpty());
+    }
+
+    @Test
+    @DisplayName("when source-code is blank, should skip line and not create a consent record")
+    void whenSourceCodeisBlank_shouldNotCreateConsent() {
+        final String line = getLinesFromFile().skip(1).limit(1).collect(Collectors.toList()).get(0);
+
+        final Optional<Consent> optConsent = cut.convert(line);
         assertTrue(optConsent.isEmpty());
     }
 
@@ -72,9 +72,9 @@ class ConsentConverterServiceTest {
         final String lineWithInvalidSourceCode = goodLine.substring(0, 362) + badSourceCode + goodLine.substring(366);
 
         var exceptionThrown = assertThrows(RuntimeException.class,
-                () -> cut.convert(lineWithInvalidSourceCode, 8));
+                () -> cut.convert(lineWithInvalidSourceCode));
 
-        assertThat(exceptionThrown.getMessage(), startsWith("Unexpected beneficiary data sharing source code"));
+        assertThat(exceptionThrown.getMessage(), startsWith("Invalid data sharing source code"));
     }
 
     @Test
@@ -88,7 +88,7 @@ class ConsentConverterServiceTest {
         final String lineWithInvalidDate = goodLine.substring(0, 354) + badDate + goodLine.substring(362);
 
         var exceptionThrown = assertThrows(RuntimeException.class,
-                () -> cut.convert(lineWithInvalidDate, 7));
+                () -> cut.convert(lineWithInvalidDate));
 
         assertThat(exceptionThrown.getMessage(), startsWith("Invalid Date"));
     }
@@ -102,7 +102,7 @@ class ConsentConverterServiceTest {
         final String lineWithInvalidHicn = "A" + line.substring(1);
 
         var exceptionThrown = assertThrows(RuntimeException.class,
-                () -> cut.convert(lineWithInvalidHicn, 7));
+                () -> cut.convert(lineWithInvalidHicn));
 
         assertThat(exceptionThrown.getMessage(), startsWith("HICN does not match expected format"));
     }
@@ -112,7 +112,7 @@ class ConsentConverterServiceTest {
     void whenValidData_shouldCreateConsentRecord() {
         final String line = getLinesFromFile().skip(6).limit(1).collect(Collectors.toList()).get(0);
 
-        final Optional<Consent> optConsent = cut.convert(line, 7);
+        final Optional<Consent> optConsent = cut.convert(line);
         assertTrue(optConsent.isPresent());
     }
 

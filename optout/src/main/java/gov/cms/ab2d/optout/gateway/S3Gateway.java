@@ -4,6 +4,6 @@ import java.io.InputStreamReader;
 
 public interface S3Gateway {
 
-    InputStreamReader getS3Object();
+    InputStreamReader getOptOutFile();
 
 }

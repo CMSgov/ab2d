@@ -30,9 +30,10 @@ public class S3GatewayImpl implements S3Gateway {
     private String s3Filename;
 
     @Override
-    public InputStreamReader getS3Object() {
+    public InputStreamReader getOptOutFile() {
 
         validateFileName();
+
         //set region
         final Region region = Region.of(s3Region);
 

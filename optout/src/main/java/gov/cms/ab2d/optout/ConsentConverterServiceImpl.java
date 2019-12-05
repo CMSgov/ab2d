@@ -29,7 +29,7 @@ public class ConsentConverterServiceImpl implements ConsentConverterService {
     private static final String OPT_OUT_INDICATOR = "N";
 
     @Override
-    public Optional<Consent> convert(String line, int lineNum) {
+    public Optional<Consent> convert(String line) {
         if (isHeader(line)) {
             log.warn("Skipping Header row");
             return Optional.empty();
@@ -42,18 +42,17 @@ public class ConsentConverterServiceImpl implements ConsentConverterService {
 
         var sourceCode = line.substring(SOURCE_CODE_START, SOURCE_CODE_END);
         if (StringUtils.isBlank(sourceCode)) {
-            log.warn("SourceCode is blank. Skipping row : {}", lineNum);
+            log.warn("SourceCode is blank. Skipping row");
             return Optional.empty();
         }
         if (!sourceCode.trim().matches("1-?800")) {
-            log.warn("Invalid SourceCode: {}. Skipping row : {}", sourceCode, lineNum);
-            throw new RuntimeException("Unexpected beneficiary data sharing source code in row : "  + lineNum);
+            throw new RuntimeException("Invalid data sharing source code : " + sourceCode);
         }
 
         var prefIndicator = line.substring(PREF_INDICATOR_START, PREF_INDICATOR_END);
         if (!OPT_OUT_INDICATOR.equalsIgnoreCase(prefIndicator)) {
             // we only care about opt-out records
-            log.info("Preference Indicator is NOT opt-out. It was : {}, Skipping row : {}", prefIndicator, lineNum);
+            log.warn("Preference Indicator is NOT opt-out. It was : {}, Skipping row", prefIndicator);
             return Optional.empty();
         }
 
@@ -63,8 +62,8 @@ public class ConsentConverterServiceImpl implements ConsentConverterService {
         consent.setLoIncCode("64292-6");
         consent.setScopeCode("patient-privacy");
 
-        consent.setEffectiveDate(parseEffectiveDate(line, lineNum));
-        consent.setHicn(parseHealthInsuranceClaimNumber(line, lineNum));
+        consent.setEffectiveDate(parseEffectiveDate(line));
+        consent.setHicn(parseHealthInsuranceClaimNumber(line));
 
         return Optional.of(consent);
     }
@@ -79,25 +78,27 @@ public class ConsentConverterServiceImpl implements ConsentConverterService {
 
     /**
      * @param line
-     * @param lineNum
      * @return
      */
-    private LocalDate parseEffectiveDate(String line, int lineNum) {
+    private LocalDate parseEffectiveDate(String line) {
         var effectiveDateStr = line.substring(EFFECTIVE_DATE_START, EFFECTIVE_DATE_END);
         try {
             var effectiveDate = LocalDate.parse(effectiveDateStr, DateTimeFormatter.ofPattern("yyyyMMdd"));
             return effectiveDate;
         } catch (DateTimeParseException e) {
-            final String errMsg = "Invalid Date : " + effectiveDateStr + " Row : " + lineNum;
-            log.error("{}", errMsg);
-            throw new RuntimeException(errMsg, e);
+            throw new RuntimeException("Invalid Date : " + effectiveDateStr, e);
         }
     }
 
-    private String parseHealthInsuranceClaimNumber(String line, int lineNum) {
+    /**
+     *
+     * @param line
+     * @return
+     */
+    private String parseHealthInsuranceClaimNumber(String line) {
         var claimNumber = line.substring(HEALTH_INSURANCE_CLAIM_NUMBER_START, HEALTH_INSURANCE_CLAIM_NUMBER_END).trim();
         if (!HEALTH_INSURANCE_CLAIM_NUMBER_PATTERN.matcher(claimNumber).matches()) {
-            throw new RuntimeException("HICN does not match expected format. Row : " +  lineNum);
+            throw new RuntimeException("HICN does not match expected format");
         }
         return claimNumber;
     }

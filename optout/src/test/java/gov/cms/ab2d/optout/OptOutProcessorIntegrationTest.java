@@ -4,8 +4,6 @@ import gov.cms.ab2d.common.model.Consent;
 import gov.cms.ab2d.common.repository.ConsentRepository;
 import gov.cms.ab2d.optout.gateway.S3Gateway;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.Assert;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -35,13 +33,9 @@ class OptOutProcessorIntegrationTest {
     @Autowired
     private ConsentConverterService consentConverterSvc;
 
+    @Autowired
     private OptOutProcessor cut;
 
-
-    @BeforeEach
-    void setUp() {
-        cut = new OptOutProcessorImpl(mockS3Gateway, consentRepo, consentConverterSvc);
-    }
 
     @Test
     void process_shouldInsertRowsIntoConsentTable()  {
@@ -50,7 +44,7 @@ class OptOutProcessorIntegrationTest {
         final InputStream inputStream = getClass().getResourceAsStream("/" + testInputFile);
         final InputStreamReader isr = new InputStreamReader(inputStream);
 
-        when(mockS3Gateway.getS3Object()).thenReturn(isr);
+        when(mockS3Gateway.getOptOutFile()).thenReturn(isr);
 
         final List<Consent> consentRowsBeforeProcessing = consentRepo.findAll();
         cut.process();
@@ -59,7 +53,7 @@ class OptOutProcessorIntegrationTest {
         assertThat(consentRowsBeforeProcessing, is(empty()));
         assertThat(consentRowsAfterProcessing, is(not(empty())));
         assertThat(consentRowsAfterProcessing.size(), is(9));
-        verify(mockS3Gateway).getS3Object();
+        verify(mockS3Gateway).getOptOutFile();
     }
 
 

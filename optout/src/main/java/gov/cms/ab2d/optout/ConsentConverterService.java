@@ -8,12 +8,11 @@ public interface ConsentConverterService {
 
     /**
      * Given a line from a file, and its corresponding line number,
-     * converts the string into a Consent onject that can be persisted in the database.
+     * converts the string into a Consent object that can be persisted in the database.
      *
      * @param line
-     * @param lineNum
      *
      * @return (optional) Consent
      */
-    Optional<Consent> convert(String line, int lineNum);
+    Optional<Consent> convert(String line);
 }

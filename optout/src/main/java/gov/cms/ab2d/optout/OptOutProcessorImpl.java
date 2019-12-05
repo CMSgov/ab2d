@@ -32,7 +32,7 @@ public class OptOutProcessorImpl implements OptOutProcessor {
     @Transactional
     public void process() {
 
-        final InputStreamReader inputStreamReader = s3Gateway.getS3Object();
+        final InputStreamReader inputStreamReader = s3Gateway.getOptOutFile();
 
         try (var bufferedReader = new BufferedReader(inputStreamReader)) {
             importConsentRecords(bufferedReader);
@@ -48,26 +48,24 @@ public class OptOutProcessorImpl implements OptOutProcessor {
 
         int linesRead = 0;
         int insertedRowCount = 0;
-        int skippedRowCount = 0;
         while (iterator.hasNext()) {
             ++linesRead;
 
             try {
                 final String line = iterator.nextLine();
 
-                Optional<Consent> optConsent = consentConverterService.convert(line, linesRead);
+                Optional<Consent> optConsent = consentConverterService.convert(line);
                 if (optConsent.isPresent()) {
                     consentRepository.save(optConsent.get());
                     ++insertedRowCount;
                 }
             } catch (Exception e) {
-                log.error("Invalid opt out record {}", linesRead, e);
+                log.error("Invalid opt out record - line number :[{}]", linesRead, e);
             }
 
         }
 
         log.info("[{}] rows parsed from file", linesRead);
-        log.info("[{}] lines skipped", skippedRowCount);
         log.info("[{}] rows inserted into consent table", insertedRowCount);
     }
 
