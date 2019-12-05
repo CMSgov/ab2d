@@ -239,7 +239,7 @@ public class BulkDataAccessAPI {
                             response = String.class)}, response =
                     String.class),
             @ApiResponse(code = 404, message =
-                    "Job or file not found. " + GENERIC_FHIR_ERR_MSG,response =
+                    "Job or file not found. " + GENERIC_FHIR_ERR_MSG, response =
                     SwaggerConfig.OperationOutcome.class)}
     )
     @ResponseStatus(value = HttpStatus.OK)
