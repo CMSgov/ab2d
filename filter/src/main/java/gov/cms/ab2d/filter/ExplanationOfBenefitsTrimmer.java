@@ -22,11 +22,11 @@ public class ExplanationOfBenefitsTrimmer {
             return null;
         }
         // Copy it so we don't destroy the original
-        ExplanationOfBenefit newBenfit = benefit.copy();
-        // Remove the unauthorized ata
-        cleanOutUnNeededData(newBenfit);
+        ExplanationOfBenefit newBenefit = benefit.copy();
+        // Remove the unauthorized data
+        cleanOutUnNeededData(newBenefit);
         // Return the sanitized data
-        return newBenfit;
+        return newBenefit;
     }
 
     /**

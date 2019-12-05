@@ -3,6 +3,7 @@ package gov.cms.ab2d.filter;
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.IParser;
 import ca.uhn.fhir.rest.api.EncodingEnum;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.hl7.fhir.dstu3.model.ExplanationOfBenefit;
 
@@ -40,13 +41,8 @@ public class EOBLoadUtilities {
         if (reader == null) {
             return null;
         }
-        String inputStr;
-        StringBuilder responseStrBuilder = new StringBuilder();
-        BufferedReader bf = new BufferedReader(reader);
-        while ((inputStr = bf.readLine()) != null) {
-            responseStrBuilder.append(inputStr);
-        }
-        return getParser(context).parseResource(ExplanationOfBenefit.class, responseStrBuilder.toString());
+        String response = IOUtils.toString(reader);
+        return getParser(context).parseResource(ExplanationOfBenefit.class, response);
     }
 
     /**
