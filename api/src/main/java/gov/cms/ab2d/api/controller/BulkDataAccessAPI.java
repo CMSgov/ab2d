@@ -229,7 +229,7 @@ public class BulkDataAccessAPI {
     )
     @ResponseStatus(value = HttpStatus.OK)
     @GetMapping(value = "/Job/{jobUuid}/file/{filename}")
-    public void downloadFile(
+    public ResponseEntity<Void> downloadFile(
             @ApiParam(value = "A job identifier", required = true) @PathVariable @NotBlank String jobUuid,
             @ApiParam(value = "A file name", required = true) @PathVariable @NotBlank String filename) throws IOException {
         MDC.put(JOB_LOG, jobUuid);
@@ -237,18 +237,21 @@ public class BulkDataAccessAPI {
         log.info("Request submitted to download file");
 
         Resource downloadResource = jobService.getResourceForJob(jobUuid, filename);
+
         RequestAttributes requestAttributes = RequestContextHolder.getRequestAttributes();
         HttpServletResponse response = ((ServletRequestAttributes) requestAttributes).getResponse();
-        response.setContentType(NDJSON_FIRE_CONTENT_TYPE);
-        OutputStream out = response.getOutputStream();
-        FileInputStream in = new FileInputStream(downloadResource.getFile());
 
-        IOUtils.copy(in, out);
+        HttpHeaders headers = new HttpHeaders();
+        headers.set(HttpHeaders.CONTENT_TYPE, NDJSON_FIRE_CONTENT_TYPE);
 
         log.info("Sending file to client");
 
-        out.close();
-        in.close();
-        downloadResource.getFile().delete();
+        try (OutputStream out = response.getOutputStream(); FileInputStream in = new FileInputStream(downloadResource.getFile())) {
+            IOUtils.copy(in, out);
+
+            jobService.deleteFileForJob(downloadResource.getFile());
+
+            return new ResponseEntity<>(null, headers, HttpStatus.OK);
+        }
     }
 }
