@@ -284,16 +284,16 @@ fi
 if [ -n "${BUILD_NEW_IMAGES}" ]; then
 
   API_ECR_REPO_URI=$(aws --region us-east-1 ecr describe-repositories \
-    --query "repositories[?repositoryName == 'ab2d_${CMS_ENV}_api'].repositoryUri" \
+    --query "repositories[?repositoryName == 'ab2d_api'].repositoryUri" \
     --output text)
   if [ -z "${API_ECR_REPO_URI}" ]; then
     aws --region us-east-1 ecr create-repository \
-        --repository-name "ab2d_${CMS_ENV}_api"
+        --repository-name "ab2d_api"
     API_ECR_REPO_URI=$(aws --region us-east-1 ecr describe-repositories \
-      --query "repositories[?repositoryName == 'ab2d_${CMS_ENV}_api'].repositoryUri" \
+      --query "repositories[?repositoryName == 'ab2d_api'].repositoryUri" \
       --output text)
   fi
-  docker tag "ab2d_${CMS_ENV}_api:latest" "${API_ECR_REPO_URI}:latest"
+  docker tag "ab2d_api:latest" "${API_ECR_REPO_URI}:latest"
   docker push "${API_ECR_REPO_URI}:latest"
 
 fi
@@ -303,16 +303,16 @@ fi
 if [ -n "${BUILD_NEW_IMAGES}" ]; then
     
   WORKER_ECR_REPO_URI=$(aws --region us-east-1 ecr describe-repositories \
-    --query "repositories[?repositoryName == 'ab2d_${CMS_ENV}_worker'].repositoryUri" \
+    --query "repositories[?repositoryName == 'ab2d_worker'].repositoryUri" \
     --output text)
   if [ -z "${WORKER_ECR_REPO_URI}" ]; then
     aws --region us-east-1 ecr create-repository \
-      --repository-name "ab2d_${CMS_ENV}_worker"
+      --repository-name "ab2d_worker"
     WORKER_ECR_REPO_URI=$(aws --region us-east-1 ecr describe-repositories \
-      --query "repositories[?repositoryName == 'ab2d_${CMS_ENV}_worker'].repositoryUri" \
+      --query "repositories[?repositoryName == 'ab2d_worker'].repositoryUri" \
       --output text)
   fi
-  docker tag "ab2d_${CMS_ENV}_worker:latest" "${WORKER_ECR_REPO_URI}:latest"
+  docker tag "ab2d_worker:latest" "${WORKER_ECR_REPO_URI}:latest"
   docker push "${WORKER_ECR_REPO_URI}:latest"
 
 fi
@@ -334,7 +334,7 @@ echo "Get current known good ECS task definitions..."
 CLUSTER_ARNS=$(aws --region us-east-1 ecs list-clusters \
   --query 'clusterArns' \
   --output text \
-  | grep "/ab2d-${CMS_ENV}-api" \
+  | grep "/ab2d-api" \
   | xargs \
   | tr -d '\r')
 if [ -z "${CLUSTER_ARNS}" ]; then
@@ -343,7 +343,7 @@ else
   echo "TEST"
   API_TASK_DEFINITION=$(aws --region us-east-1 ecs describe-services \
     --services ab2d-api \
-    --cluster "ab2d-${CMS_ENV}-api" \
+    --cluster "ab2d-api" \
     | grep "taskDefinition" \
     | head -1)
   API_TASK_DEFINITION=$(echo $API_TASK_DEFINITION | awk -F'": "' '{print $2}' | tr -d '"' | tr -d ',')
@@ -356,7 +356,7 @@ fi
 echo "Get ECS task counts before making any changes..."
 
 # Define api_task_count
-api_task_count() { aws --region us-east-1 ecs list-tasks --cluster "ab2d-${CMS_ENV}-api" | grep "\:task\/"|wc -l|tr -d ' '; }
+api_task_count() { aws --region us-east-1 ecs list-tasks --cluster "ab2d-api" | grep "\:task\/"|wc -l|tr -d ' '; }
 
 # Get old api task count (if exists)
 if [ -z "${CLUSTER_ARNS}" ]; then

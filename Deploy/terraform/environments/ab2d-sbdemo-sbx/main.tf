@@ -67,7 +67,7 @@ module "api" {
   logging_bucket                = var.logging_bucket_name
   healthcheck_url               = var.elb_healthcheck_url
   iam_instance_profile          = var.ec2_iam_profile
-  docker_repository_url         = "${var.aws_account_number}.dkr.ecr.us-east-1.amazonaws.com/ab2d_${var.env}_api:latest"
+  docker_repository_url         = "${var.aws_account_number}.dkr.ecr.us-east-1.amazonaws.com/ab2d_api:latest"
   iam_role_arn                  = "arn:aws:iam::${var.aws_account_number}:role/Ab2dInstanceRole"
   desired_instances             = var.ec2_desired_instance_count
   min_instances                 = var.ec2_minimum_instance_count
@@ -98,7 +98,7 @@ module "worker" {
   ssh_key_name                  = var.ssh_key_name
   node_subnet_ids               = var.private_subnet_ids
   iam_instance_profile          = var.ec2_iam_profile
-  docker_repository_url         = "${var.aws_account_number}.dkr.ecr.us-east-1.amazonaws.com/ab2d_${var.env}_worker:latest"
+  docker_repository_url         = "${var.aws_account_number}.dkr.ecr.us-east-1.amazonaws.com/ab2d_worker:latest"
   desired_instances             = var.ec2_desired_instance_count
   min_instances                 = var.ec2_minimum_instance_count
   max_instances                 = var.ec2_maximum_instance_count
