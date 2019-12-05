@@ -73,4 +73,5 @@ build/
 
 ### .DS_Store in "src/main" ###
 ### This is needed due to this .gitignore entry: "!**/src/main/**" ###
+api/src/main/.DS_Store
 src/main/.DS_Store
