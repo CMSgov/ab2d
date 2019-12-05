@@ -8,9 +8,11 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.time.LocalDate;
 import java.util.List;
 
 import static org.hamcrest.CoreMatchers.is;
@@ -38,6 +40,7 @@ class OptOutProcessorIntegrationTest {
 
 
     @Test
+    @Transactional
     void process_shouldInsertRowsIntoConsentTable()  {
 
         final String testInputFile = "test-data/test-data.txt";
@@ -53,6 +56,14 @@ class OptOutProcessorIntegrationTest {
         assertThat(consentRowsBeforeProcessing, is(empty()));
         assertThat(consentRowsAfterProcessing, is(not(empty())));
         assertThat(consentRowsAfterProcessing.size(), is(9));
+
+        final Consent consent = consentRepo.findByHicn("1000011403").get(0);
+        assertThat(consent.getPolicyCode(), is("OPTOUT"));
+        assertThat(consent.getPurposeCode(), is("TREAT"));
+        assertThat(consent.getScopeCode(), is("patient-privacy"));
+        assertThat(consent.getLoIncCode(), is("64292-6"));
+        assertThat(consent.getEffectiveDate(), is(LocalDate.of(2019,10,24)));
+
         verify(mockS3Gateway).getOptOutFile();
     }
 
