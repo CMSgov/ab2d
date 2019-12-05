@@ -13,6 +13,7 @@ import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import io.swagger.annotations.ResponseHeader;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.IOUtils;
 import org.hl7.fhir.dstu3.model.DateTimeType;
 import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,10 +29,16 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.context.request.RequestAttributes;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import javax.servlet.http.HttpServletResponse;
 import javax.validation.constraints.NotBlank;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -222,7 +229,7 @@ public class BulkDataAccessAPI {
     )
     @ResponseStatus(value = HttpStatus.OK)
     @GetMapping(value = "/Job/{jobUuid}/file/{filename}")
-    public ResponseEntity<Resource> downloadFile(
+    public void downloadFile(
             @ApiParam(value = "A job identifier", required = true) @PathVariable @NotBlank String jobUuid,
             @ApiParam(value = "A file name", required = true) @PathVariable @NotBlank String filename) throws IOException {
         MDC.put(JOB_LOG, jobUuid);
@@ -230,11 +237,18 @@ public class BulkDataAccessAPI {
         log.info("Request submitted to download file");
 
         Resource downloadResource = jobService.getResourceForJob(jobUuid, filename);
-        HttpHeaders headers = new HttpHeaders();
-        headers.set(HttpHeaders.CONTENT_TYPE, NDJSON_FIRE_CONTENT_TYPE);
+        RequestAttributes requestAttributes = RequestContextHolder.getRequestAttributes();
+        HttpServletResponse response = ((ServletRequestAttributes) requestAttributes).getResponse();
+        response.setContentType(NDJSON_FIRE_CONTENT_TYPE);
+        OutputStream out = response.getOutputStream();
+        FileInputStream in = new FileInputStream(downloadResource.getFile());
+
+        IOUtils.copy(in, out);
 
         log.info("Sending file to client");
 
-        return new ResponseEntity<>(downloadResource, headers, HttpStatus.OK);
+        out.close();
+        in.close();
+        downloadResource.getFile().delete();
     }
 }
