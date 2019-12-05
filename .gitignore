@@ -70,3 +70,7 @@ build/
 
 ### Terraform ###
 **/terraform/**/*.tfvars
+
+### Jekyll ###
+/website/_site/
+/website/.sass-cache/
