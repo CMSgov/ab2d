@@ -2,8 +2,8 @@ package gov.cms.ab2d.api.controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import gov.cms.ab2d.api.config.SwaggerConfig;
 import gov.cms.ab2d.common.service.JobService;
-import gov.cms.ab2d.api.util.Constants;
 import gov.cms.ab2d.common.model.Job;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
@@ -15,6 +15,7 @@ import io.swagger.annotations.ApiResponses;
 import io.swagger.annotations.ResponseHeader;
 import lombok.extern.slf4j.Slf4j;
 import org.hl7.fhir.dstu3.model.DateTimeType;
+import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
@@ -39,9 +40,10 @@ import java.time.format.DateTimeFormatter;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static gov.cms.ab2d.api.util.Constants.GENERIC_FHIR_ERR_MSG;
 import static gov.cms.ab2d.api.util.Constants.API_PREFIX;
 import static gov.cms.ab2d.api.util.Constants.FHIR_PREFIX;
-import static gov.cms.ab2d.common.util.Constants.NDJSON_FIRE_CONTENT_TYPE;
+import static gov.cms.ab2d.common.util.Constants.*;
 
 @Slf4j
 @Api(value = "Bulk Data Access API", description =
@@ -63,7 +65,7 @@ public class BulkDataAccessAPI {
 
     private static final String RESOURCE_TYPE_VALUE = "ExplanationOfBenefits";
 
-    public static final String JOB_NOT_FOUND_ERROR_MSG = "Job not found. " + Constants.GENERIC_FHIR_ERR_MSG;
+    public static final String JOB_NOT_FOUND_ERROR_MSG = "Job not found. " + GENERIC_FHIR_ERR_MSG;
 
     public static final String JOB_CANCELLED_MSG = "Job canceled";
 
@@ -74,12 +76,16 @@ public class BulkDataAccessAPI {
     private JobService jobService;
 
     @ApiOperation(value = "Initiate Part A & B bulk claim export job")
-    @ApiImplicitParams(
+    @ApiImplicitParams(value = {
+            @ApiImplicitParam(name = "Accept", required = true, paramType = "header", value =
+                    "application/fhir+json"),
             @ApiImplicitParam(name = "Prefer", required = true, paramType = "header", value =
-                    "respond-async"))
+                    "respond-async")}
+    )
     @ApiResponses(
             @ApiResponse(code = 202, message = "Export request has started", responseHeaders =
-            @ResponseHeader(name = "Content-Location", description = "URL to query job status",
+            @ResponseHeader(name = "Content-Location", description = "Absolute URL of an endpoint" +
+                    " for subsequent status requests (polling location)",
                     response = String.class))
     )
     @ResponseStatus(value = HttpStatus.ACCEPTED)
@@ -89,23 +95,26 @@ public class BulkDataAccessAPI {
                     "the specified resource types(s) SHALL be included in the response.",
                     allowableValues = RESOURCE_TYPE_VALUE)
             @RequestParam(required = false, name = "_type") String resourceTypes,
-            @ApiParam(value = "A FHIR instant. Resources will be included in the response if " +
-                    "their state has changed after the supplied time.")
-            @RequestParam(required = false, name = "_since") String since,
             @ApiParam(value = "The format for the requested bulk data files to be generated.",
                     allowableValues = ALLOWABLE_OUTPUT_FORMATS, defaultValue = "application/fhir" +
                     "+ndjson"
             )
             @RequestParam(required = false, name = "_outputFormat") String outputFormat) {
+        log.info("Received request to export");
 
         if (resourceTypes != null && !resourceTypes.equals(RESOURCE_TYPE_VALUE)) {
+            log.error("Received invalid resourceTypes of {}", resourceTypes);
             throw new InvalidUserInputException("_type must be " + RESOURCE_TYPE_VALUE);
         }
         if (outputFormat != null && !ALLOWABLE_OUTPUT_FORMAT_SET.contains(outputFormat)) {
+            log.error("Received _outputFormat {}, which is not valid", outputFormat);
             throw new InvalidUserInputException("An _outputFormat of " + outputFormat + " is not valid");
         }
 
         Job job = jobService.createJob(resourceTypes, ServletUriComponentsBuilder.fromCurrentRequest().toUriString());
+
+        MDC.put(JOB_LOG, job.getJobUuid());
+        log.info("Successfully created job");
 
         String statusURL = ServletUriComponentsBuilder.fromCurrentRequestUri().replacePath
                 (String.format(API_PREFIX + FHIR_PREFIX + "/Job/%s/$status", job.getJobUuid())).toUriString();
@@ -119,37 +128,57 @@ public class BulkDataAccessAPI {
     @ApiOperation(value = "Cancel a pending export job")
     @ApiResponses(value = {
             @ApiResponse(code = 202, message = JOB_CANCELLED_MSG),
-            @ApiResponse(code = 404, message = JOB_NOT_FOUND_ERROR_MSG)}
+            @ApiResponse(code = 404, message = JOB_NOT_FOUND_ERROR_MSG, response =
+                    SwaggerConfig.OperationOutcome.class)}
     )
     @DeleteMapping(value = "/Job/{jobUuid}/$status")
     @ResponseStatus(value = HttpStatus.ACCEPTED)
-    public ResponseEntity<String> deleteRequest(
+    public ResponseEntity<Void> deleteRequest(
             @ApiParam(value = "A job identifier", required = true)
             @PathVariable @NotBlank String jobUuid) {
+        MDC.put(JOB_LOG, jobUuid);
+        log.info("Request submitted to cancel job");
+
         jobService.cancelJob(jobUuid);
 
-        return new ResponseEntity<>(JOB_CANCELLED_MSG, null,
+        log.info("Job successfully cancelled");
+
+        return new ResponseEntity<>(null, null,
                 HttpStatus.ACCEPTED);
     }
 
     @ApiOperation(value = "Returns a status of an export job.")
     @ApiResponses(value = {
-            @ApiResponse(code = 202, message = "The job is still in progress.", responseHeaders =
-            @ResponseHeader(name = "X-Progress", description = "Completion percentage, such as 50%",
-                    response = String.class), response = Void.class),
-            @ApiResponse(code = 200, message = "The job is completed.", response =
+            @ApiResponse(code = 202, message = "The job is still in progress.", responseHeaders = {
+                    @ResponseHeader(name = "X-Progress", description = "Completion percentage, " +
+                            "such as 50%",
+                            response = String.class),
+                    @ResponseHeader(name = "Retry-After", description =
+                            "A delay time in seconds before another status request will be " +
+                                    "accepted.",
+                            response = Integer.class)}, response = Void.class),
+            @ApiResponse(code = 200, message = "The job is completed.", responseHeaders = {
+                    @ResponseHeader(name = "Expires", description =
+                            "Indicates when (an HTTP-date timestamp) the files " +
+                                    "listed will no longer be available for access.",
+                            response = String.class)}, response =
                     JobCompletedResponse.class),
-            @ApiResponse(code = 404, message = "Job not found. " + Constants.GENERIC_FHIR_ERR_MSG)}
+            @ApiResponse(code = 404, message = "Job not found. " + GENERIC_FHIR_ERR_MSG, response =
+                    SwaggerConfig.OperationOutcome.class)}
     )
     @GetMapping(value = "/Job/{jobUuid}/$status")
     @ResponseStatus(value = HttpStatus.OK)
     public ResponseEntity<JsonNode> getJobStatus(
             @ApiParam(value = "A job identifier", required = true) @PathVariable @NotBlank String jobUuid) {
+        MDC.put(JOB_LOG, jobUuid);
+        log.info("Request submitted to get job status");
+
         Job job = jobService.getJobByJobUuid(jobUuid);
 
         OffsetDateTime now = OffsetDateTime.now();
 
         if (job.getLastPollTime() != null && job.getLastPollTime().plusSeconds(retryAfterDelay).isAfter(now)) {
+            log.error("User was polling too frequently");
             throw new TooManyRequestsException("You are polling too frequently");
         }
 
@@ -170,6 +199,9 @@ public class BulkDataAccessAPI {
                 resp.setRequiresAccessToken(true);
                 resp.setOutput(job.getJobOutputs().stream().filter(o -> !o.isError()).map(o -> new JobCompletedResponse.Output(o.getFhirResourceType(), getUrlPath(job, o.getFilePath()))).collect(Collectors.toList()));
                 resp.setError(job.getJobOutputs().stream().filter(o -> o.isError()).map(o -> new JobCompletedResponse.Output(o.getFhirResourceType(), getUrlPath(job, o.getFilePath()))).collect(Collectors.toList()));
+
+                log.info("Job status completed successfully");
+
                 return new ResponseEntity<>(new ObjectMapper().valueToTree(resp), responseHeaders, HttpStatus.OK);
             case SUBMITTED:
             case IN_PROGRESS:
@@ -177,9 +209,13 @@ public class BulkDataAccessAPI {
                 responseHeaders.add("Retry-After", Integer.toString(retryAfterDelay));
                 return new ResponseEntity<>(null, responseHeaders, HttpStatus.ACCEPTED);
             case FAILED:
-                throw new JobProcessingException("Job failed while processing");
+                String jobFailedMessage = "Job failed while processing";
+                log.error(jobFailedMessage);
+                throw new JobProcessingException(jobFailedMessage);
             default:
-                throw new RuntimeException("Unknown status of job");
+                String unknownErrorMsg = "Unknown status of job";
+                log.error(unknownErrorMsg);
+                throw new RuntimeException(unknownErrorMsg);
         }
     }
 
@@ -190,21 +226,37 @@ public class BulkDataAccessAPI {
 
     @ApiOperation(value = "Downloads a file produced by an export job.", response = String.class,
             produces = "application/fhir+ndjson")
+    @ApiImplicitParams(value = {
+            @ApiImplicitParam(name = "Accept", required = false, paramType = "header", value =
+                    "application/fhir+json")}
+    )
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Returns the requested file as " +
-                    "application/fhir+ndjson.", response =
+                    "application/fhir+ndjson.", responseHeaders = {
+                    @ResponseHeader(name = "Content-Type", description =
+                            "Content-Type header that matches the file format being delivered: " +
+                                    "application/fhir+ndjson",
+                            response = String.class)}, response =
                     String.class),
             @ApiResponse(code = 404, message =
-                    "Job or file not found. " + Constants.GENERIC_FHIR_ERR_MSG)}
+                    "Job or file not found. " + GENERIC_FHIR_ERR_MSG, response =
+                    SwaggerConfig.OperationOutcome.class)}
     )
     @ResponseStatus(value = HttpStatus.OK)
     @GetMapping(value = "/Job/{jobUuid}/file/{filename}")
     public ResponseEntity<Resource> downloadFile(
             @ApiParam(value = "A job identifier", required = true) @PathVariable @NotBlank String jobUuid,
             @ApiParam(value = "A file name", required = true) @PathVariable @NotBlank String filename) throws IOException {
+        MDC.put(JOB_LOG, jobUuid);
+        MDC.put(FILE_LOG, filename);
+        log.info("Request submitted to download file");
+
         Resource downloadResource = jobService.getResourceForJob(jobUuid, filename);
         HttpHeaders headers = new HttpHeaders();
         headers.set(HttpHeaders.CONTENT_TYPE, NDJSON_FIRE_CONTENT_TYPE);
+
+        log.info("Sending file to client");
+
         return new ResponseEntity<>(downloadResource, headers, HttpStatus.OK);
     }
 }

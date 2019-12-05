@@ -3,13 +3,16 @@ package gov.cms.ab2d.worker.adapter.bluebutton;
 import ca.uhn.fhir.context.FhirContext;
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.util.FHIRUtil;
+import gov.cms.ab2d.filter.ExplanationOfBenefitsTrimmer;
 import gov.cms.ab2d.worker.service.FileService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.hl7.fhir.dstu3.model.Bundle;
 import org.hl7.fhir.dstu3.model.Bundle.BundleEntryComponent;
+import org.hl7.fhir.dstu3.model.ExplanationOfBenefit;
 import org.hl7.fhir.dstu3.model.Resource;
+import org.hl7.fhir.dstu3.model.ResourceType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
@@ -21,11 +24,14 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.Future;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
+import static gov.cms.ab2d.common.util.Constants.FILE_LOG;
 import static java.util.concurrent.TimeUnit.SECONDS;
+import static net.logstash.logback.argument.StructuredArguments.keyValue;
 
 @Slf4j
 @Component
@@ -61,6 +67,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
                     final String payload = jsonParser.encodeResourceToString(resource) + System.lineSeparator();
                     byteArrayOutputStream.write(payload.getBytes(StandardCharsets.UTF_8));
                 } catch (Exception e) {
+                    log.warn("Encountered exception while processing job resources: {}", e.getMessage());
                     ++errorCount;
                     handleException(errorFile, e, lock);
                 }
@@ -110,6 +117,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
         tryLock(lock);
 
         try {
+            log.info("Attempting to append to file", keyValue(FILE_LOG, outputFile.getFileName()));
             fileService.appendToFile(outputFile, byteArrayOutputStream);
         } finally {
             lock.unlock();
@@ -138,8 +146,6 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
         final List<Resource> resources = extractResources(entries);
 
         while (eobBundle.getLink(Bundle.LINK_NEXT) != null) {
-            log.info("Fetching next page ... ");
-
             eobBundle = bfdClient.requestNextBundleFromServer(eobBundle);
             final List<BundleEntryComponent> nextEntries = eobBundle.getEntry();
             resources.addAll(extractResources(nextEntries));
@@ -151,13 +157,15 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
 
     private List<Resource> extractResources(List<BundleEntryComponent> entries) {
         return entries.stream()
-                .map(entry -> entry.getResource())
-                .filter(resource -> resource != null)
+                // Get the resource
+                .map(BundleEntryComponent::getResource)
+                // Get only the explanation of benefits
+                .filter(resource -> resource.getResourceType() == ResourceType.ExplanationOfBenefit)
+                // filter it
+                .map(resource -> ExplanationOfBenefitsTrimmer.getBenefit((ExplanationOfBenefit) resource))
+                // Remove any empty values
+                .filter(Objects::nonNull)
+                // compile the list
                 .collect(Collectors.toList());
     }
-
-
-
-
-
 }

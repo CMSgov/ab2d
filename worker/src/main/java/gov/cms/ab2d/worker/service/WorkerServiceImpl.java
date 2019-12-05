@@ -19,7 +19,9 @@ public class WorkerServiceImpl implements WorkerService {
     @Override
     public void process(String jobId) {
         jobService.putJobInProgress(jobId);
+        log.info("Job was put in progress");
         jobService.processJob(jobId);
+        log.info("Job was processed");
     }
 
 

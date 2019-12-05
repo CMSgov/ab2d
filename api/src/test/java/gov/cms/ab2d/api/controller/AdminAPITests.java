@@ -21,7 +21,6 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.testcontainers.containers.PostgreSQLContainer;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.time.*;
 import java.util.List;
@@ -64,7 +63,7 @@ public class AdminAPITests {
     private String token;
 
     @Before
-    public void setup() throws IOException, InterruptedException, JwtVerificationException {
+    public void setup() throws JwtVerificationException {
         contractRepository.deleteAll();
         jobRepository.deleteAll();
         userRepository.deleteAll();

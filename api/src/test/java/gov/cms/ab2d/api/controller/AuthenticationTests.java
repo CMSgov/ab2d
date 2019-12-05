@@ -111,4 +111,10 @@ public class AuthenticationTests {
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().is(403));
     }
+
+    @Test
+    public void testSwaggerUrlWorks() throws Exception {
+        this.mockMvc.perform(get("/swagger-ui.html"))
+                .andExpect(status().is(200));
+    }
 }

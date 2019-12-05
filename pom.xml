@@ -9,6 +9,8 @@
         <module>worker</module>
         <module>hpms</module>
         <module>bfd</module>
+        <module>filter</module>
+        <module>optout</module>
     </modules>
     <parent>
         <groupId>org.springframework.boot</groupId>
@@ -28,8 +30,11 @@
         <java.version>12</java.version>
         <hapi.version>4.0.3</hapi.version>
         <mockserver.version>5.7.0</mockserver.version>
-        <jacoco.version>0.8.4</jacoco.version>
+        <jacoco.version>0.8.5</jacoco.version>
         <checkstyle.config>${project.root}/src/main/resources/checkstyle.xml</checkstyle.config>
+        <logback.version>1.2.3</logback.version>
+        <logback-encoder.version>6.2</logback-encoder.version>
+        <quartz.version>2.3.2</quartz.version>
     </properties>
 
     <dependencies>
