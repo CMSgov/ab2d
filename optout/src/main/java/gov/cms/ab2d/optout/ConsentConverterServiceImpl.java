@@ -1,18 +1,17 @@
 package gov.cms.ab2d.optout;
 
 import gov.cms.ab2d.common.model.Consent;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
-import java.time.LocalTime;
-import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.Optional;
 import java.util.regex.Pattern;
 
+@Slf4j
 @Component
 public class ConsentConverterServiceImpl implements ConsentConverterService {
 
@@ -30,24 +29,31 @@ public class ConsentConverterServiceImpl implements ConsentConverterService {
     private static final String OPT_OUT_INDICATOR = "N";
 
     @Override
-    public Optional<Consent> convert(String line, String filename, int lineNum) {
-        if (isHeader(line) || isTrailer(line)) {
-            // Ignore Header and Trailer rows
+    public Optional<Consent> convert(String line, int lineNum) {
+        if (isHeader(line)) {
+            log.warn("Skipping Header row");
+            return Optional.empty();
+        }
+
+        if (isTrailer(line)) {
+            log.warn("Skipping Trailer row");
             return Optional.empty();
         }
 
         var sourceCode = line.substring(SOURCE_CODE_START, SOURCE_CODE_END);
         if (StringUtils.isBlank(sourceCode)) {
+            log.warn("SourceCode is blank. Skipping row : {}", lineNum);
             return Optional.empty();
         }
         if (!sourceCode.trim().matches("1-?800")) {
-            // If the source is blank, ignore this record
-            throw new RuntimeException("Unexpected beneficiary data sharing source code" +  filename +  lineNum);
+            log.warn("Invalid SourceCode: {}. Skipping row : {}", sourceCode, lineNum);
+            throw new RuntimeException("Unexpected beneficiary data sharing source code in row : "  + lineNum);
         }
 
         var prefIndicator = line.substring(PREF_INDICATOR_START, PREF_INDICATOR_END);
         if (!OPT_OUT_INDICATOR.equalsIgnoreCase(prefIndicator)) {
             // we only care about opt-out records
+            log.info("Preference Indicator is NOT opt-out. It was : {}, Skipping row : {}", prefIndicator, lineNum);
             return Optional.empty();
         }
 
@@ -57,8 +63,8 @@ public class ConsentConverterServiceImpl implements ConsentConverterService {
         consent.setLoIncCode("64292-6");
         consent.setScopeCode("patient-privacy");
 
-        consent.setEffectiveDate(parseEffectiveDate(line, filename, lineNum));
-        consent.setHicn(parseHealthInsuranceClaimNumber(line, filename, lineNum));
+        consent.setEffectiveDate(parseEffectiveDate(line, lineNum));
+        consent.setHicn(parseHealthInsuranceClaimNumber(line, lineNum));
 
         return Optional.of(consent);
     }
@@ -80,20 +86,22 @@ public class ConsentConverterServiceImpl implements ConsentConverterService {
      * @param lineNum
      * @return
      */
-    private OffsetDateTime parseEffectiveDate(String line, String filename, int lineNum) {
+    private LocalDate parseEffectiveDate(String line, int lineNum) {
         var effectiveDateStr = line.substring(EFFECTIVE_DATE_START, EFFECTIVE_DATE_END);
-        var effectiveDate = LocalDate.parse(effectiveDateStr, DateTimeFormatter.ofPattern("yyyyMMdd"));
         try {
-            return OffsetDateTime.of(effectiveDate, LocalTime.of(0, 0), ZoneOffset.UTC);
+            var effectiveDate = LocalDate.parse(effectiveDateStr, DateTimeFormatter.ofPattern("yyyyMMdd"));
+            return effectiveDate;
         } catch (DateTimeParseException e) {
-            throw new RuntimeException("Cannot parse date from suppression record" +  filename +  lineNum);
+            final String errMsg = "Invalid Date : " + effectiveDateStr + " Row : " + lineNum;
+            log.error("{}", errMsg);
+            throw new RuntimeException(errMsg, e);
         }
     }
 
-    private String parseHealthInsuranceClaimNumber(String line, String filename, int lineNum) {
+    private String parseHealthInsuranceClaimNumber(String line, int lineNum) {
         var claimNumber = line.substring(HEALTH_INSURANCE_CLAIM_NUMBER_START, HEALTH_INSURANCE_CLAIM_NUMBER_END).trim();
         if (!HEALTH_INSURANCE_CLAIM_NUMBER_PATTERN.matcher(claimNumber).matches()) {
-            throw new RuntimeException("HICN does not match expected format" +  filename +  lineNum);
+            throw new RuntimeException("HICN does not match expected format. Row : " +  lineNum);
         }
         return claimNumber;
     }

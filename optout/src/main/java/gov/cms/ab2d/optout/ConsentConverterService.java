@@ -11,9 +11,9 @@ public interface ConsentConverterService {
      * converts the string into a Consent onject that can be persisted in the database.
      *
      * @param line
-     * @param filename
      * @param lineNum
-     * @return
+     *
+     * @return (optional) Consent
      */
-    Optional<Consent> convert(String line, String filename, int lineNum);
+    Optional<Consent> convert(String line, int lineNum);
 }

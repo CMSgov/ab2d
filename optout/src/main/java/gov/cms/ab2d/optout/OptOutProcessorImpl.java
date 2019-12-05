@@ -3,9 +3,9 @@ package gov.cms.ab2d.optout;
 
 import gov.cms.ab2d.common.model.Consent;
 import gov.cms.ab2d.common.repository.ConsentRepository;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,18 +15,16 @@ import java.io.InputStreamReader;
 import java.io.UncheckedIOException;
 import java.util.Optional;
 
+
 @Slf4j
 @Component
+@RequiredArgsConstructor
 public class OptOutProcessorImpl implements OptOutProcessor {
 
-    @Autowired
-    private S3Gateway s3Gateway;
+    private final S3Gateway s3Gateway;
+    private final ConsentRepository consentRepository;
+    private final ConsentConverterService  consentConverterService;
 
-    @Autowired
-    private ConsentRepository consentRepository;
-
-    @Autowired
-    private ConsentConverterService  consentConverterService;
 
 
     @Override
@@ -43,26 +41,40 @@ public class OptOutProcessorImpl implements OptOutProcessor {
 
     }
 
+
     private void importConsentRecords(BufferedReader bufferedReader) {
         var iterator = IOUtils.lineIterator(bufferedReader);
 
-        int lineNum = 0;
+        int linesRead = 0;
+        int insertedRowCount = 0;
+        int skippedRowCount = 0;
         while (iterator.hasNext()) {
-            lineNum++;
+            ++linesRead;
 
             try {
-                Optional<Consent> optConsent = consentConverterService.convert(iterator.nextLine(), "s3Filename", lineNum);
+                final String line = iterator.nextLine();
+
+                Optional<Consent> optConsent = consentConverterService.convert(line, linesRead);
                 if (optConsent.isPresent()) {
                     consentRepository.save(optConsent.get());
+                    ++insertedRowCount;
+//                } else {
+//                    ++skippedRowCount;
+//                    log.info("line not used : {} : row : {} ", line, linesRead);
                 }
             } catch (Exception e) {
-                log.error("Invalid opt out record {}", lineNum, e);
+                log.error("Invalid opt out record {}", linesRead, e);
             }
 
-            log.info("[{}] rows parsed from file", lineNum);
-            log.info("[{}] rows inserted into consent table", lineNum - 2);
         }
+
+        log.info("[{}] rows parsed from file", linesRead);
+        log.info("[{}] lines skipped", skippedRowCount);
+        log.info("[{}] rows inserted into consent table", insertedRowCount);
     }
+
+
+
 
 
 }
