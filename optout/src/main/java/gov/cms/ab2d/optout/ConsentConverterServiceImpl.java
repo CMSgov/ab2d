@@ -83,8 +83,7 @@ public class ConsentConverterServiceImpl implements ConsentConverterService {
     private LocalDate parseEffectiveDate(String line) {
         var effectiveDateStr = line.substring(EFFECTIVE_DATE_START, EFFECTIVE_DATE_END);
         try {
-            var effectiveDate = LocalDate.parse(effectiveDateStr, DateTimeFormatter.ofPattern("yyyyMMdd"));
-            return effectiveDate;
+            return LocalDate.parse(effectiveDateStr, DateTimeFormatter.ofPattern("yyyyMMdd"));
         } catch (DateTimeParseException e) {
             throw new RuntimeException("Invalid Date : " + effectiveDateStr, e);
         }
