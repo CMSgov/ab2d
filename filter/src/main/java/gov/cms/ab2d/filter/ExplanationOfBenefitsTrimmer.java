@@ -46,8 +46,10 @@ public class ExplanationOfBenefitsTrimmer {
               procedure;
               item - Clear out required data
 
-           Inherited - Identifier, resourceType, type, extension?
+           Inherited - Identifier, resourceType, type
          */
+        benefit.setStatus(null);
+        benefit.setExtension(null);
         benefit.setPatientTarget(null);
         benefit.setBillablePeriod(null);
         benefit.setCreated(null);
