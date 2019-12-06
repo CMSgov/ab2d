@@ -11,6 +11,7 @@
         <module>bfd</module>
         <module>filter</module>
         <module>optout</module>
+        <module>audit</module>
     </modules>
     <parent>
         <groupId>org.springframework.boot</groupId>
@@ -34,7 +35,6 @@
         <checkstyle.config>${project.root}/src/main/resources/checkstyle.xml</checkstyle.config>
         <logback.version>1.2.3</logback.version>
         <logback-encoder.version>6.2</logback-encoder.version>
-        <quartz.version>2.3.2</quartz.version>
     </properties>
 
     <dependencies>

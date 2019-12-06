@@ -504,6 +504,8 @@ public class BulkDataAccessAPIIntegrationTests {
         Assert.assertEquals("val1", arrValue1);
         String arrValue2 = JsonPath.read(downloadedFile, "$.array[1]");
         Assert.assertEquals("val2", arrValue2);
+
+        Assert.assertTrue(!Files.exists(Paths.get(destinationStr + File.separator + testFile)));
     }
 
     @Test
