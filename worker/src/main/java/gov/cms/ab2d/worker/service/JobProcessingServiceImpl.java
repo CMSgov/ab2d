@@ -1,13 +1,16 @@
 package gov.cms.ab2d.worker.service;
 
+import gov.cms.ab2d.common.model.Consent;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.JobOutput;
 import gov.cms.ab2d.common.model.JobStatus;
 import gov.cms.ab2d.common.model.Sponsor;
+import gov.cms.ab2d.common.repository.ConsentRepository;
 import gov.cms.ab2d.common.repository.JobOutputRepository;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.worker.adapter.bluebutton.BeneficiaryAdapter;
+import gov.cms.ab2d.worker.adapter.bluebutton.GetPatientsByContractResponse.PatientDTO;
 import gov.cms.ab2d.worker.adapter.bluebutton.PatientClaimsProcessor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,7 +28,6 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.stream.Collectors;
 
 import static gov.cms.ab2d.common.model.JobStatus.IN_PROGRESS;
 import static gov.cms.ab2d.common.model.JobStatus.SUBMITTED;
@@ -49,6 +51,7 @@ public class JobProcessingServiceImpl implements JobProcessingService {
     private final JobOutputRepository jobOutputRepository;
     private final BeneficiaryAdapter beneficiaryAdapter;
     private final PatientClaimsProcessor patientClaimsProcessor;
+    private final ConsentRepository consentRepository;
 
 
     @Override
@@ -123,9 +126,18 @@ public class JobProcessingServiceImpl implements JobProcessingService {
 
         // A mutex lock that all threads for a contract uses while writing into the shared files
         var lock = new ReentrantLock();
-        var futureResourcesHandles = patients.stream()
-                .map(patient -> patientClaimsProcessor.process(patient.getPatientId(), lock, outputFile, errorFile))
-                .collect(Collectors.toList());
+
+        var futureResourcesHandles = new ArrayList<Future<Integer>>();
+        for (PatientDTO patient : patients) {
+            var patientId = patient.getPatientId();
+
+            if (isOptOutPatient(patientId)) {
+                // This patient has opted out. Skip this patient and process the next record.
+                continue;
+            }
+
+            futureResourcesHandles.add(patientClaimsProcessor.process(patientId, lock, outputFile, errorFile));
+        }
 
         int errorCount = processHandles(futureResourcesHandles);
         while (!futureResourcesHandles.isEmpty()) {
@@ -144,6 +156,18 @@ public class JobProcessingServiceImpl implements JobProcessingService {
         }
 
         return jobOutputs;
+    }
+
+    private boolean isOptOutPatient(String patientId) {
+
+        final List<Consent> consents = consentRepository.findByHicn(patientId);
+        if (consents.isEmpty()) {
+            // No opt-out record found for this patient - Opt-In by default.
+            return false;
+        }
+
+        // found at least one opt-out record for this patient. This patient has opted-out
+        return true;
     }
 
     private int processHandles(List<Future<Integer>> futureResourcesHandles) {

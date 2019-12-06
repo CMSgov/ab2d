@@ -13,9 +13,15 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 
+import java.io.File;
+import java.io.FilenameFilter;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.OffsetDateTime;
 import java.util.Random;
 
@@ -26,8 +32,11 @@ import static org.junit.Assert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @SpringBootTest
-class JobProcessingServiceTest {
+class JobProcessingServiceIntegrationTest {
     private Random random = new Random();
+
+    @Value("${efs.mount}")
+    private String efsMount;
 
     @Autowired
     private JobProcessingService cut;
@@ -93,6 +102,9 @@ class JobProcessingServiceTest {
         jobRepository.save(job);
         createContract(sponsor);
 
+        final Path outputDirPath = Paths.get(efsMount, job.getJobUuid());
+        deleteExistingOutputDir(outputDirPath);
+
         var processedJob = cut.processJob("S001");
 
         assertThat(processedJob.getStatus(), is(JobStatus.SUCCESSFUL));
@@ -124,12 +136,28 @@ class JobProcessingServiceTest {
         job.setStatus(JobStatus.IN_PROGRESS);
         jobRepository.save(job);
 
+        final Path outputDirPath = Paths.get(efsMount, job.getJobUuid());
+        deleteExistingOutputDir(outputDirPath);
+
         var processedJob = cut.processJob("S001");
 
         assertThat(processedJob.getStatus(), is(JobStatus.SUCCESSFUL));
         assertThat(processedJob.getStatusMessage(), is("100%"));
         assertThat(processedJob.getExpiresAt(), notNullValue());
         assertThat(processedJob.getCompletedAt(), notNullValue());
+    }
+
+    private void deleteExistingOutputDir(Path outputDirPath) throws IOException {
+        if (Files.exists(outputDirPath)) {
+            final File outputDir = outputDirPath.toFile();
+            if (outputDir.isDirectory()) {
+                final File[] ndjsonFiles = outputDir.listFiles((FilenameFilter) (dir, name) -> name.toLowerCase().endsWith(".ndjson"));
+                for (File ndjsonFile : ndjsonFiles) {
+                    Files.deleteIfExists(ndjsonFile.toPath());
+                }
+            }
+        }
+        Files.deleteIfExists(outputDirPath);
     }
 
     private Sponsor createSponsor() {
