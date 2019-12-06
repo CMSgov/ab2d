@@ -1,5 +1,6 @@
-package gov.cms.ab2d.optout;
+package gov.cms.ab2d.optout.job;
 
+import gov.cms.ab2d.optout.OptOutProcessor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.quartz.JobExecutionContext;
