@@ -7,7 +7,7 @@ jobs:
 
     runs-on: ubuntu-latest
     env:
-      REMOTE_EXCLUDES_URL: https://raw.githubusercontent.com/CMSgov/ab2d/trufflehog-excludes.txt
+      REMOTE_EXCLUDES_URL: https://raw.githubusercontent.com/CMSgov/ab2d/master/trufflehog-excludes.txt
     steps:
     - name: Execute Trufflehog
       run: |
