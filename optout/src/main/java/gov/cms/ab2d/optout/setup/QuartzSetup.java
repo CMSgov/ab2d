@@ -1,6 +1,6 @@
 package gov.cms.ab2d.optout.setup;
 
-import gov.cms.ab2d.optout.OptoutJob;
+import gov.cms.ab2d.optout.job.OptoutJob;
 import org.quartz.CronScheduleBuilder;
 import org.quartz.JobBuilder;
 import org.quartz.JobDetail;
