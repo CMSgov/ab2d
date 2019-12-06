@@ -109,5 +109,11 @@ public class JobServiceImpl implements JobService {
         return resource;
     }
 
-
+    @Override
+    public void deleteFileForJob(File file) {
+        boolean deleted = file.delete();
+        if (!deleted) {
+            log.error("Was not able to delete the file {}", file.getName());
+        }
+    }
 }
