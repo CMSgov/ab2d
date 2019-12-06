@@ -172,7 +172,7 @@ CREATE TABLE consent
 (
     id                  BIGINT                      NOT NULL,
     hicn                VARCHAR(64)                 NOT NULL,
-    effective_date      TIMESTAMP WITH TIME ZONE    NOT NULL,
+    effective_date      DATE                        NOT NULL,
     policy_code         VARCHAR(255)                NOT NULL,
     purpose_code        VARCHAR(255)                NOT NULL,
     lo_inc_code         VARCHAR(255)                NOT NULL,
