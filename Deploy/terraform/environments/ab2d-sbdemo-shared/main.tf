@@ -73,7 +73,7 @@ module "controller" {
 
 module "lonnie_access_controller" {
   description  = "Lonnie"
-  cidr_blocks  = ["152.208.13.223/32"]
+  cidr_blocks  = ["${var.deployer_ip_address}/32"]
   source       = "../../modules/access_controller"
   sec_group_id = module.controller.deployment_controller_sec_group_id
 }
