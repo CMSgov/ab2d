@@ -20,6 +20,7 @@
 1. [Update application](#update-application)
 1. [Deploy and configure Jenkins](#deploy-and-configure-jenkins)
 1. [Deploy AB2D static site](#deploy-ab2d-static-site)
+   * [Generate and test the website](#generate-and-test-the-website)
    * [Create static website in S3](#create-static-website-in-s3)
 
 ## Note the starting state of the customer AWS account
@@ -1166,9 +1167,7 @@
 
 ## Deploy AB2D static site
 
-### Create static website in S3
-
-1. Note that this process will create an S3 website endpoint as the origin within CloudFront
+### Generate and test the website
 
 1. Change to the "website" directory
 
@@ -1176,7 +1175,7 @@
    $ cd ~/code/ab2d/website
    ```
 
-1. Test the website
+1. Generate and test the website
 
    1. Ensure required gems are installed
 
@@ -1184,7 +1183,7 @@
       $ bundle install
       ```
 
-   1. Serve website on the jekyll server
+   1. Generate and serve website on the jekyll server
 
       ```ShellSession
      $ bundle exec jekyll serve
@@ -1209,7 +1208,7 @@
    1. List the contents of the directory
 
       ```ShellSession
-       $ ls _site
+      $ ls _site
       ```
     
    1. Note the following two files that will be used in S3 website hosting configuration
@@ -1217,6 +1216,10 @@
       - index.html
 
       - 404.html
+
+### Create static website in S3
+
+1. Note that this process will create an S3 website endpoint as the origin within CloudFront
       
 1. Configure the S3 website
 

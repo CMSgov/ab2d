@@ -11,6 +11,7 @@
    * [Delete policies not used by IAM users](#delete-policies-not-used-by-iam-users)
 1. [Appendix E: Interacting with IAM policy versions](#appendix-e-interacting-with-iam-policy-versions)
 1. [Appendix F: Interacting with Elastic Container Repository](#appendix-f-interacting-with-elastic-container-repository)
+1. [Appendix G: Generate and test the AB2D website](#appendix-g-generate-and-test-the-ab2d-website)
 
 ## Appendix A: Access the CMS AWS console
 
@@ -352,4 +353,53 @@
      --repository-name ab2d_sbdemo-dev_api \
      --force
    ```
+
+## Appendix G: Generate and test the AB2D website
+
+1. Change to the "website" directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d/website
+   ```
+
+1. Generate and test the website
+
+   1. Ensure required gems are installed
+
+      ```ShellSession
+      $ bundle install
+      ```
+
+   1. Generate and serve website on the jekyll server
+
+      ```ShellSession
+     $ bundle exec jekyll serve
+     ```
+     
+   1. Open Chrome
+
+   1. Enter the following in the address bar
    
+      > http://127.0.0.1:4000
+      
+   1. Verify that the website comes up
+
+   1. Return to the terminal where the jekyll server is running
+   
+   1. Press **control+c** on the keyboard to stop the Jekyll server
+
+1. Verify the generated site
+
+   1. Note that a "_site" directory was automatically generated when you ran "bundle exec jekyll serve"
+   
+   1. List the contents of the directory
+
+      ```ShellSession
+      $ ls _site
+      ```
+    
+   1. Note that the following two files are used as part of configuring the website within S3
+
+      - index.html
+
+      - 404.html
