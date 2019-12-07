@@ -1088,14 +1088,13 @@ cd "${START_DIR}"
 cd terraform/environments/ab2d-$CMS_SHARED_ENV
 
 #
-# Deploy S3
+# Create "cms-ab2d-cloudtrail" bucket
 #
 
-echo "Deploying S3..."
+echo "Creating "ab2d-cloudtrail" bucket..."
 
-# Create "ab2d-cloudtrail" bucket
-
-aws s3api create-bucket --bucket ab2d-cloudtrail --region us-east-1
+aws --region us-east-1 s3api create-bucket \
+  --bucket ab2d-cloudtrail
 
 # Block public access on bucket
 
@@ -1120,7 +1119,29 @@ aws s3api put-bucket-policy \
   --bucket ab2d-cloudtrail \
   --policy file://ab2d-cloudtrail-bucket-policy.json
 
-# Create dev bucket
+#
+# Create "sbdemo-ab2d-website" bucket
+#
+
+echo "Creating "sbdemo-ab2d-website" bucket..."
+
+aws --region us-east-1 s3api create-bucket \
+  --bucket sbdemo-ab2d-website
+
+# Add bucket policy to the "ab2d-website" S3 bucket
+
+cd "${START_DIR}"
+cd terraform/environments/ab2d-$CMS_SHARED_ENV
+
+aws --region us-east-1 s3api put-bucket-policy \
+  --bucket sbdemo-ab2d-website \
+  --policy file://ab2d-website-bucket-policy.json
+
+#
+# Create dev S3 bucket
+#
+
+echo "Deploying dev S3 bucket..."
 
 cd "${START_DIR}"
 cd terraform/environments/ab2d-$CMS_SHARED_ENV
@@ -1230,6 +1251,12 @@ if [ -z "${EFS_FS_ID}" ]; then
   terraform apply \
     --target module.efs --auto-approve
 fi
+
+#
+# Temporarily stop here
+#
+
+exit 0
 
 #
 # Deploy AWS application modules

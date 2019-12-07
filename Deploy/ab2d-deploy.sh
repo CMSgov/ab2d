@@ -810,12 +810,10 @@ cd "${START_DIR}"
 cd terraform/environments/ab2d-$CMS_SHARED_ENV
 
 #
-# Deploy S3
+# Create "cms-ab2d-cloudtrail" bucket
 #
 
-echo "Deploying S3..."
-
-# Create "cms-ab2d-cloudtrail" bucket
+echo "Creating "cms-ab2d-cloudtrail" bucket..."
 
 aws --region us-east-1 s3api create-bucket \
   --bucket cms-ab2d-cloudtrail
@@ -836,11 +834,35 @@ aws --region us-east-1 s3api put-bucket-acl \
 # Add bucket policy to the "cms-ab2d-cloudtrail" S3 bucket
 
 cd "${START_DIR}"
-cd aws/s3-bucket-policies
+cd terraform/environments/ab2d-$CMS_SHARED_ENV
 
 aws --region us-east-1 s3api put-bucket-policy \
   --bucket cms-ab2d-cloudtrail \
-  --policy file://cms-ab2d-cloudtrail-bucket-policy.json
+  --policy file://ab2d-cloudtrail-bucket-policy.json
+
+#
+# Create "cms-ab2d-website" bucket
+#
+
+echo "Creating "cms-ab2d-website" bucket..."
+
+aws --region us-east-1 s3api create-bucket \
+  --bucket cms-ab2d-website
+
+# Add bucket policy to the "cms-ab2d-website" S3 bucket
+
+cd "${START_DIR}"
+cd terraform/environments/ab2d-$CMS_SHARED_ENV
+
+aws --region us-east-1 s3api put-bucket-policy \
+  --bucket cms-ab2d-website \
+  --policy file://ab2d-website-bucket-policy.json
+
+#
+# Create dev S3 bucket
+#
+
+echo "Deploying dev S3 bucket..."
 
 cd "${START_DIR}"
 cd terraform/environments/ab2d-$CMS_SHARED_ENV
