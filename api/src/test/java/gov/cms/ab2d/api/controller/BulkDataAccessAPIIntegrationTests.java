@@ -3,9 +3,12 @@ package gov.cms.ab2d.api.controller;
 import com.jayway.jsonpath.JsonPath;
 import com.okta.jwt.JwtVerificationException;
 import gov.cms.ab2d.api.SpringBootApp;
-import gov.cms.ab2d.common.model.*;
+import gov.cms.ab2d.common.model.Job;
+import gov.cms.ab2d.common.model.JobOutput;
+import gov.cms.ab2d.common.model.JobStatus;
 import gov.cms.ab2d.common.repository.*;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.hamcrest.core.Is;
 import org.hl7.fhir.dstu3.model.DateTimeType;
 import org.junit.Assert;
@@ -36,7 +39,6 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
-import static gov.cms.ab2d.api.controller.BulkDataAccessAPI.JOB_CANCELLED_MSG;
 import static gov.cms.ab2d.api.controller.TestUtil.TEST_USER;
 import static gov.cms.ab2d.api.util.Constants.*;
 import static gov.cms.ab2d.common.service.JobServiceImpl.INITIAL_JOB_STATUS_MESSAGE;
@@ -179,7 +181,7 @@ public class BulkDataAccessAPIIntegrationTests {
         this.mockMvc.perform(delete(API_PREFIX + FHIR_PREFIX + "/Job/" + job.getJobUuid() + "/$status")
                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(202))
-                .andExpect(content().string(JOB_CANCELLED_MSG));
+                .andExpect(content().string(StringUtils.EMPTY));
 
         Job cancelledJob = jobRepository.findByJobUuid(job.getJobUuid());
         Assert.assertEquals(JobStatus.CANCELLED, cancelledJob.getStatus());
@@ -502,6 +504,8 @@ public class BulkDataAccessAPIIntegrationTests {
         Assert.assertEquals("val1", arrValue1);
         String arrValue2 = JsonPath.read(downloadedFile, "$.array[1]");
         Assert.assertEquals("val2", arrValue2);
+
+        Assert.assertTrue(!Files.exists(Paths.get(destinationStr + File.separator + testFile)));
     }
 
     @Test
