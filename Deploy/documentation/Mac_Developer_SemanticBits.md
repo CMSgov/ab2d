@@ -41,6 +41,7 @@
 1. [Install MesiterTask](#install-mesitertask)
 1. [Install ECS CLI](#install-ecs-cli)
 1. [Install Xcode](#install-xcode)
+1. [Install and configure Ruby](#install-and-configure-ruby)
 
 ## Install Slack
 
