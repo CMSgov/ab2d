@@ -11,14 +11,16 @@
 1. [Configure Terraform logging](#configure-terraform-logging)
 1. [Configure base AWS components](#configure-base-aws-components)
    * [Create AWS keypair](#create-aws-keypair)
-   * [Create required S3 buckets](#create-required-s3-buckets)
    * [Create policies](#create-policies)
    * [Create roles](#create-roles)
    * [Create instance profiles](#create-instance-profiles)
    * [Configure IAM user deployers](#configure-iam-user-deployers)
+   * [Create required S3 buckets](#create-required-s3-buckets)
 1. [Create or update base aws environment](#create-or-update-base-aws-environment)
 1. [Update application](#update-application)
 1. [Deploy and configure Jenkins](#deploy-and-configure-jenkins)
+1. [Deploy AB2D static site](#deploy-ab2d-static-site)
+   * [Create static website in S3](#create-static-website-in-s3)
 
 ## Note the starting state of the customer AWS account
 
@@ -400,37 +402,7 @@
    1. Paste the public key under the "Keys included with gold image" section
    
    1. Save and close the file
-
-### Create required S3 buckets
-
-1. Set target AWS profile
    
-   ```ShellSession
-   $ export AWS_PROFILE=ab2d-shared
-   ```
-
-1. Set automation bucket name
-
-   ```ShellSession
-   $ export S3_AUTOMATION_BUCKET=cms-ab2d-automation
-   ```
-   
-1. Create S3 bucket for automation
-
-   ```ShellSession
-   $ aws --region us-east-1 s3api create-bucket \
-     --bucket ${S3_AUTOMATION_BUCKET}
-   ```
-
-1. Block public access on bucket
-
-   ```ShellSession
-   $ aws s3api put-public-access-block \
-     --bucket ${S3_AUTOMATION_BUCKET} \
-     --region us-east-1 \
-     --public-access-block-configuration BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true
-   ```
-
 ### Create policies
 
 1. Set target AWS profile
@@ -593,6 +565,36 @@
    ```
 
 2. Repeat this step for all users
+
+### Create required S3 buckets
+
+1. Set target AWS profile
+   
+   ```ShellSession
+   $ export AWS_PROFILE=ab2d-shared
+   ```
+
+1. Set automation bucket name
+
+   ```ShellSession
+   $ export S3_AUTOMATION_BUCKET=cms-ab2d-automation
+   ```
+   
+1. Create S3 bucket for automation
+
+   ```ShellSession
+   $ aws --region us-east-1 s3api create-bucket \
+     --bucket ${S3_AUTOMATION_BUCKET}
+   ```
+
+1. Block public access on bucket
+
+   ```ShellSession
+   $ aws s3api put-public-access-block \
+     --bucket ${S3_AUTOMATION_BUCKET} \
+     --region us-east-1 \
+     --public-access-block-configuration BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true
+   ```
 
 ## Create or update base aws environment
 
@@ -1161,3 +1163,125 @@
     1. Note that the above setting for the jenkins user is not ideal since it means that the jenkins user will be able to do "sudo" on all commands
 
     1. Note that it would be better to lock down the jenkins user so that it can only do "sudo" on a certain subset of commands based on the requirements
+
+## Deploy AB2D static site
+
+### Create static website in S3
+
+1. Note that this process will create an S3 website endpoint as the origin within CloudFront
+
+1. Change to the "website" directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d/website
+   ```
+
+1. Test the website
+
+   1. Ensure required gems are installed
+
+      ```ShellSession
+      $ bundle install
+      ```
+
+   1. Serve website on the jekyll server
+
+      ```ShellSession
+     $ bundle exec jekyll serve
+     ```
+     
+   1. Open Chrome
+
+   1. Enter the following in the address bar
+   
+      > http://127.0.0.1:4000
+      
+   1. Verify that the website comes up
+
+   1. Return to the terminal where the jekyll server is running
+   
+   1. Press **control+c** on the keyboard to stop the Jekyll server
+
+1. Verify the generated site
+
+   1. Note that a "_site" directory was automatically generated when you ran "bundle exec jekyll serve"
+   
+   1. List the contents of the directory
+
+      ```ShellSession
+       $ ls _site
+      ```
+    
+   1. Note the following two files that will be used in S3 website hosting configuration
+
+      - index.html
+
+      - 404.html
+      
+1. Configure the S3 website
+
+   1. Set the target AWS profile
+
+      ```ShellSession
+      $ export AWS_PROFILE=ab2d-shared
+      ```
+
+   1. Copy the website to the "cms-ab2d-website" S3 bucket
+
+      ```ShellSession
+      $ aws s3 cp --recursive _site/ s3://cms-ab2d-website/
+      ```
+
+   1. Configure static website hosting for the bucket
+
+      ```ShellSession
+      $ aws --region us-east-1 s3 website s3://cms-ab2d-website/ \
+        --index-document index.html \
+	--error-document 404.html
+      ```
+
+1. Note the static website endpoint
+
+   ```
+   sbdemo-ab2d-website.s3-website-us-east-1.amazonaws.com
+   ```
+
+### Create CloudFront distribution
+
+1. Open Chrome
+
+1. Log on to AWS
+
+1. Navigate to CloudFront
+
+1. Select **Create Distribution**
+
+1. Select **Get Started** under the *Web* section
+
+1. Note the following very important information before configuring the "Origin Settings"
+
+   1. Note that there are two "Origin Domain Name" values that can be used for doing a distribution for an S3 website
+
+      - S3 API Endpoint
+
+      - S3 Website Endpoint <-- this is the method that we want to use
+
+   1. Note that it is important that you do not select the S3 API endpoint for the website that appears in the list for the text box
+
+   1. Note that you want to copy and paste the noted static website endpoint instead
+
+   1. Note that the "Origin ID" will automatically fill-in based on the "Origin Domain Name", so if your settings do not match what you see in the next step that may mean that you select the API endpoint by mistake
+   
+1. Configure "Origin Settings" as follows:
+
+   - **Origin Domain Name:** sbdemo-ab2d-website.s3-website-us-east-1.amazonaws.com
+
+   - **Origin ID:** S3-Website-sbdemo-ab2d-website.s3-website-us-east-1.amazonaws.com
+
+1. Configure "Default Cache Behavior Settings" as follows
+
+   - **Viewer Protocol Policy:** Redirect HTTP to HTTPS
+
+1. Configure "Distribution Settings" as follows
+
+   > *** TO DO ***

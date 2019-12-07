@@ -31,6 +31,10 @@
    * [Delete instance profiles](#delete-instance-profiles)
    * [Delete roles](#delete-roles)
    * [Delete policies not used by IAM users](#delete-policies-not-used-by-iam-users)
+1. [Appendix P: Use Amazon CloudFront to serve a static website hosted in S3](#appendix-p-use-amazon-cloudfront-to-serve-a-static-website-hosted-in-s3)
+   * [Read before trying to do this section](#read-before-trying-to-do-this-section)
+   * [Request a public certificate from Certificate Manager](#request-a-public-certificate-from-certificate-manager)
+   * [Create an alias record in Route 53 to integrate your domain with services hosted in AWS](#create-an-alias-record-in-route-53-to-integrate-your-domain-with-services-hosted-in-aws)
 
 ## Appendix A: Destroy complete environment
 
@@ -2276,3 +2280,102 @@
    $ aws iam delete-policy \
      --policy-arn arn:aws:iam::114601554524:policy/Ab2dS3AccessPolicy
    ```
+
+## Appendix P: Use Amazon CloudFront to serve a static website hosted in S3
+
+### Read before trying to do this section
+
+- Note that CMS manages their own Route 53 and provides the required domains and keys
+
+- Note that in order to do these directions you will have to have access to a domain that you can personally administer in Route 53
+
+- Note that these directions are only used to test the end-to-end process for creation of a temporary static website
+
+### Request a public certificate from Certificate Manager
+
+1. Set the target AWS profile
+
+   *Format:*
+   
+   ```ShellSession
+   $ export AWS_PROFILE={target aws profile}
+   ```
+   
+1. Create a certificate for a specific subdomain
+
+   *Format:*
+   
+   ```ShellSession
+   $ aws --region us-east-1 acm request-certificate \
+     --domain-name ab2d.{domain} \
+     --validation-method DNS \
+     --idempotency-token 1234 \
+     --options CertificateTransparencyLoggingPreference=DISABLED
+   ```
+
+1. Open Chrome
+
+1. Log on to AWS
+
+1. Navigate to Certificate Manager
+
+1. Expand the row for the requested cerificate
+
+   *Format:*
+   
+   ```
+   ab2d.{domain}
+   ```
+
+1. Expand the domain under the "Domain" section
+
+   *Format:*
+   
+   ```
+   ab2d.{domain}
+   ```
+
+1. Select **Create record in Route 53**
+
+1. Select **Create**
+
+1. Note that a message like the following should appear
+
+   ```
+   Success
+   The DNS record was written to your Route 53 hosted zone. It can take 30 minutes or longer
+   for the changed to propagate and for AWS to validate the domain and issue the certificate.
+   ```
+   
+### Create an alias record in Route 53 to integrate your domain with services hosted in AWS
+
+> *** TO DO ***:
+
+
+1. Open Chrome
+
+1. Log on to AWS
+
+1. Navigate to Route 53
+
+1. Select **Hosted Zones** in the leftmost panel
+
+1. Select the desired domain from the list of domains
+
+1. Select **Create Record Set**
+
+1. Configure the record set as follows
+
+   - **Name:** {your desired subdomain}
+
+   - **Type:** CNAME - Canonical Name
+
+   - **Alias:** No
+
+   - **TTL (Seconds):** 300
+
+   - **Value:**
+   
+1. Select the following from the **Type** dropdown
+
+1. 

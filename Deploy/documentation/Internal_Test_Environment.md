@@ -15,6 +15,7 @@
 1. [Create or update base aws environment](#create-or-update-base-aws-environment)
 1. [Update existing environment](#update-existing-environment)
 1. [Deploy and configure Jenkins](#deploy-and-configure-jenkins)
+1. [Deploy AB2D static site](#deploy-ab2d-static-site)
 
 ## Create an AWS IAM user
 
@@ -992,3 +993,97 @@
     1. Note that the above setting for the jenkins user is not ideal since it means that the jenkins user will be able to do "sudo" on all commands
 
     1. Note that it would be better to lock down the jenkins user so that it can only do "sudo" on a certain subset of commands based on the requirements
+
+## Deploy AB2D static site
+
+1. Note that this process will create an S3 website endpoint as the origin within CloudFront
+
+1. Generate the website
+
+   1. Install Bundler
+   
+      ```ShellSession
+      $ gem install bundler
+      ```
+
+   1. Update Ruby Gems
+   
+      ```ShellSession
+      $ gem update --system
+      ```
+      
+   1. Install Jekyll
+   
+      ```ShellSession
+      $ gem install jekyll
+      ```
+
+1. Change to the "website" directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d/website
+   ```
+
+1. Test the website
+
+   1. Ensure required gems are installed
+
+      ```ShellSession
+      $ bundle install
+      ```
+
+   1. Serve website on the jekyll server
+
+      ```ShellSession
+     $ bundle exec jekyll serve
+     ```
+     
+   1. Open Chrome
+
+   1. Enter the following in the address bar
+   
+      > http://127.0.0.1:4000
+      
+   1. Verify that the website comes up
+
+   1. Return to the terminal where the jekyll server is running
+   
+   1. Press **control+c** on the keyboard to stop the Jekyll server
+
+1. Verify the generated site
+
+   1. Note that a "_site" directory was automatically generated when you ran "bundle exec jekyll serve"
+   
+   1. List the contents of the directory
+
+      ```ShellSession
+       $ ls _site
+      ```
+    
+   1. Note the following two files that will be used in S3 website hosting configuration
+
+      - index.html
+
+      - 404.html
+      
+1. Configure the S3 website
+
+   1. Set the target AWS profile
+
+      ```ShellSession
+      $ export AWS_PROFILE="sbdemo-shared"
+      ```
+
+   1. Copy the website to the "ab2d-website" S3 bucket
+
+      ```ShellSession
+      $ aws s3 cp --recursive _site/ s3://sbdemo-ab2d-website/
+      ```
+
+   1. Configure static website hosting for the bucket
+
+      ```ShellSession
+      $ aws --region us-east-1 s3 website s3://sbdemo-ab2d-website/ \
+        --index-document index.html \
+	--error-document 404.html
+      ```

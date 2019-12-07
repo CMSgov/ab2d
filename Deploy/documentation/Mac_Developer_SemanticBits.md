@@ -40,6 +40,7 @@
 1. [Install Docker Desktop on Mac](#install-docker-desktop-on-mac)
 1. [Install MesiterTask](#install-mesitertask)
 1. [Install ECS CLI](#install-ecs-cli)
+1. [Install Xcode](#install-xcode)
 
 ## Install Slack
 
@@ -998,4 +999,153 @@
 
    ```ShellSession
    $ ecs-cli --version
+   ```
+
+## Install Xcode
+
+1. Note that this installation can take a while
+
+1. Select **Launchpad**
+
+1. Select **App Store**
+
+1. Enter the following in the **Search** text box
+
+   ```
+   xcode
+   ```
+
+1. Install Xcode
+
+1. Wait for the Xcode installation to complete
+
+1. Agree to Xcode license by doing the following:
+
+   1. Select the **Launchpad** icon
+  
+   1. Select **Xcode**
+  
+   1. Select **Agree**
+  
+   1. Enter you machine password
+  
+   1. Wait for installation to complete
+
+   1. Select the **Xcode** menu
+
+   1. Select **Preferences**
+   
+   1. Select **Locations**
+
+   1. Select the following from the **Command Line Tools** dropdown
+
+      *Format:*
+
+      ```
+      Xcode {version}
+      ```
+
+   1. Enter you machine password
+  
+   1. Close Xcode
+
+## Install and configure Ruby
+
+1. Install rbenv
+
+   ```ShellSession
+   $ brew install rbenv
+   ```
+
+1. Note that the following dependencies are automatically installed
+
+   - autoconf
+
+   - ruby-build
+
+1. Note the following caveats
+
+   ```
+   ==> autoconf
+   Emacs Lisp files have been installed to:
+     /usr/local/share/emacs/site-lisp/autoconf
+   ```
+
+1. Note that you can the determine that latest stable version of Ruby available via rbenv by doing the following
+
+   ```ShellSession
+   $ rbenv install -l | grep -v - | tail -1
+   ```
+
+1. Note that the latest stable version at the time of this writing was the following
+
+   ```
+   2.6.5
+   ```
+
+1. Install desired version of Ruby
+
+   *Example installing Ruby 2.6.5:*
+   
+   ```ShellSession
+   $ rbenv install 2.6.5
+   ```
+
+1. Wait for the installation to complete
+
+   *Note that the installation will take a while. Be patient.*
+   
+1. Set the global version of Ruby
+
+   *Example setting global version to Ruby 2.6.5:*
+
+   ```ShellSession
+   $ rbenv global 2.6.5
+   ```
+
+1. Open a shell environment script that is loaded before your terminal is loaded
+
+   *Example if you are using the bash shell:*
+
+   ```ShellSession
+   $ vim ~/.bash_profile
+   ```
+
+1. Add the following to the end of the file
+
+   ```
+   # Setup rbenv
+   if [[ -n `type rbenv | grep -v 'not found'` ]]; then
+     eval "$(rbenv init -)"
+   fi
+   ```
+
+1. Save and close the file
+
+1. Close all open terminals
+
+1. Reopen the terminal
+
+1. Verify the Ruby version
+
+   ```ShellSession
+   $ ruby --version
+   ```
+
+1. Install Bundler
+
+   ```ShellSession
+   $ gem install bundler
+   ```
+
+1. Update Ruby Gems
+
+   ```ShellSession
+   $ gem update --system
+   ```
+
+1. Install Jekyll
+
+   ```ShellSession
+   $ gem install jekyll
    ```
