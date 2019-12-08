@@ -2534,6 +2534,12 @@
 
 1. Note that the uploaded website will be used to create an S3 API endpoint as the origin within CloudFront
 
+1. Change to the "website" directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d/website
+   ```
+
 1. Set the target AWS profile
 
    *Format:*

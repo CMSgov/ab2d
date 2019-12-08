@@ -20,9 +20,10 @@
 1. [Update application](#update-application)
 1. [Deploy and configure Jenkins](#deploy-and-configure-jenkins)
 1. [Deploy AB2D static site](#deploy-ab2d-static-site)
-   * [Download PEM certificate bundle and get private key from CMS](#download-pem-certificate-bundle-and-get-private-key-from-cms)
+   * [Download the AB2D domain certificates and get private key from CMS](#download-the-ab2d-domain-certificates-and-get-private-key-from-cms)
    * [Import the certificate into certificate manager](#import-the-certificate-into-certificate-manager)
    * [Generate and test the website](#generate-and-test-the-website)
+   * [Create an S3 bucket for the website](#create-an-s3-bucket-for-the-website)
    * [Upload website to S3](#upload-website-to-s3)
    * [Create CloudFront distribution](#create-cloudfront-distribution)
    * [Ask CMS to add Route 53 record that points to the CloudFront distribution](#ask-cms-to-add-route-53-record-that-points-to-the-cloudfront-distribution)
@@ -1171,7 +1172,7 @@
 
 ## Deploy AB2D static site
 
-### Download PEM certificate bundle and get private key from CMS
+### Download the AB2D domain certificates and get private key from CMS
 
 1. Note that CMS will request a domain certificate from Entrust for the following domain
 
@@ -1188,8 +1189,6 @@
 1. Select the link under "Use the following URL to pick up and install your certificate" in the forwarded Entrust email
 
 1. Select "Other" from the "...server type" dropdown
-
-1. Note that we select Tomcat so that we will get a bundled PEM certificate
 
 1. Select **Next** on the "Select Server Type" page
 
@@ -1231,17 +1230,27 @@
 
 1. Open a terminal
 
-1. Copy the contents of "CertificateBundle1.pem" to the clipboard
+1. Copy the contents of "ServerCertificate.crt" to the clipboard
 
    ```ShellSession
-   $ cat ~/Downloads/CertificateBundle1.pem | pbcopy
+   $ cat ~/Downloads/ServerCertificate.crt | pbcopy
    ```
 
 1. Return to the "Import a Certificate" page in Chrome
 
-1. Paste the contents of the "CertificateBundle1.pem" into the **Certificate body** text box
+1. Paste the contents of the "ServerCertificate.crt" into the **Certificate body** text box
 
 1. Paste the contents of the the private key that was provided separately by CMS into the **Certificate private key** text box
+
+1. Return to the terminal
+
+1. Copy the certificate key chain (Intermediate.crt + Root.crt) to the clipboard
+
+   ```ShellSession
+   $ echo -ne "$(cat ~/Downloads/Intermediate.crt)\n$(cat ~/Downloads/Root.crt)" | pbcopy
+   ```
+
+1. Paste the combined intermediate and root certificates into the **Certificate chain** text box
 
 1. Select **Next** on the "Import certificate" page
 
@@ -1311,9 +1320,59 @@
 
       - 404.html
 
+### Create an S3 bucket for the website
+
+1. Set the target AWS profile
+
+   *Format:*
+   
+   ```ShellSession
+   $ export AWS_PROFILE={target aws profile}
+   ```
+
+   *Example for CMS:*
+   
+   ```ShellSession
+   $ export AWS_PROFILE=ab2d-shared
+   ```
+
+1. Create S3 bucket for the website
+
+   *Format:*
+   
+   ```ShellSession
+   $ aws --region us-east-1 s3api create-bucket \
+     --bucket {unique id}-ab2d-website
+   ```
+
+   *Example for CMS:*
+   
+   ```ShellSession
+   $ aws --region us-east-1 s3api create-bucket \
+     --bucket cms-ab2d-website
+   ```
+
+1. Block public access on the bucket
+
+   *Format:*
+   
+   ```ShellSession
+   $ aws --region us-east-1 s3api put-public-access-block \
+      --bucket {unique id}-ab2d-website \
+      --public-access-block-configuration BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true
+   ```
+
+   *Example for CMS:*
+   
+   ```ShellSession
+   $ aws --region us-east-1 s3api put-public-access-block \
+      --bucket cms-ab2d-website \
+      --public-access-block-configuration BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true
+   ```
+
 ### Upload website to S3
 
-1. Note that this process will create an S3 website endpoint as the origin within CloudFront
+1. Note that the uploaded website will be used to create an S3 API endpoint as the origin within CloudFront
 
 1. Change to the "website" directory
 
@@ -1321,19 +1380,33 @@
    $ cd ~/code/ab2d/website
    ```
 
+1. Set the target AWS profile
+
+   *Format:*
+   
+   ```ShellSession
+   $ export AWS_PROFILE={target aws profile}
+   ```
+
+   *Example for CMS:*
+   
+   ```ShellSession
+   $ export AWS_PROFILE=ab2d-shared
+   ```
+
 1. Upload website to S3
 
-   1. Set the target AWS profile
+   *Format:*
+   
+   ```ShellSession
+   $ aws s3 cp --recursive _site/ s3://{unique id}-ab2d-website/
+   ```
 
-      ```ShellSession
-      $ export AWS_PROFILE=ab2d-shared
-      ```
-
-   1. Copy the website to the "cms-ab2d-website" S3 bucket
-
-      ```ShellSession
-      $ aws s3 cp --recursive _site/ s3://cms-ab2d-website/
-      ```
+   *Example for CMS:*
+   
+   ```ShellSession
+   $ aws s3 cp --recursive _site/ s3://cms-ab2d-website/
+   ```
 
 ### Create CloudFront distribution
 
