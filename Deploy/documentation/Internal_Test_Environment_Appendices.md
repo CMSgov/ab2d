@@ -32,13 +32,14 @@
    * [Delete roles](#delete-roles)
    * [Delete policies not used by IAM users](#delete-policies-not-used-by-iam-users)
 1. [Appendix P: Use Amazon CloudFront to serve a static website hosted in S3](#appendix-p-use-amazon-cloudfront-to-serve-a-static-website-hosted-in-s3)
-   * [Read before trying to do this section](#read-before-trying-to-do-this-section)
+   * [Determine your starting point](#determine-your-starting-point)
    * [Request a public certificate from Certificate Manager](#request-a-public-certificate-from-certificate-manager)
    * [Generate and test the website](#generate-and-test-the-website)
-   * [Create static website in S3](#create-static-website-in-s3)
+   * [Create an S3 bucket for the website](#create-an-s3-bucket-for-the-website)
+   * [Upload website to S3](#upload-website-to-s3)
    * [Create CloudFront distribution](#create-cloudfront-distribution)
    * [Update Route 53 DNS record to point custom CNAME to the CloudFront distribution](#update-route-53-dns-record-to-point-custom-cname-to-the-cloudfront-distribution)
-   * [Test the domain](#test-the-domain)
+   * [Test the CloudFront distribution](#test-the-cloudfront-distribution)
 
 ## Appendix A: Destroy complete environment
 
@@ -2287,15 +2288,23 @@
 
 ## Appendix P: Use Amazon CloudFront to serve a static website hosted in S3
 
-### Read before trying to do this section
+### Determine your starting point
 
-- Note that CMS manages their own Route 53 and provides the required domains and keys
+1. Note that CMS manages their own Route 53 and provides the required domains and keys
 
-- Note that in order to do these directions you will have to have access to a domain that you can personally administer in Route 53
+1. If you have access to a domain that you can personally administer in Route 53 and want to do a test setup, jump to the following section:
 
-- Note that these directions are only used to test the end-to-end process for creation of a temporary static website
+   [Request a public certificate from Certificate Manager](#request-a-public-certificate-from-certificate-manager)
 
+1. If you just want to test setting up an S3 website with a CloudFront distribution, jump to the following section:
+
+   [Generate and test the website](#generate-and-test-the-website)
+   
 ### Request a public certificate from Certificate Manager
+
+1. If you already have a wildcard certificate, jump to the following section:
+
+   [Generate and test the website](#generate-and-test-the-website)
 
 1. Set the target AWS profile
 
@@ -2315,7 +2324,7 @@
      --subject-alternative-names "{domain}" \
      --validation-method DNS \
      --idempotency-token 1234 \
-     --options CertificateTransparencyLoggingPreference=DISABLED
+     --options CertificateTransparencyLoggingPreference=ENABLED
    ```
 
    *Example:*
@@ -2326,8 +2335,10 @@
      --subject-alternative-names "example.com" \
      --validation-method DNS \
      --idempotency-token 1234 \
-     --options CertificateTransparencyLoggingPreference=DISABLED
+     --options CertificateTransparencyLoggingPreference=ENABLED
    ```
+
+1. Note that if "CertificateTransparencyLoggingPreference" is not enabled, Google Chrome will not display the web page
 
 1. Open Chrome
 
@@ -2463,42 +2474,92 @@
       $ ls _site
       ```
     
-   1. Note the following two files that will be used in S3 website hosting configuration
+   1. Note the following two files that will be used in CloudFront distribution configuration
 
       - index.html
 
       - 404.html
 
-### Create static website in S3
+### Create an S3 bucket for the website
 
-1. Note that this process will create an S3 website endpoint as the origin within CloudFront
-      
-1. Configure the S3 website
+1. Set the target AWS profile
 
-   1. Set the target AWS profile
-
-      ```ShellSession
-      $ export AWS_PROFILE=ab2d-shared
-      ```
-
-   1. Copy the website to the "cms-ab2d-website" S3 bucket
-
-      ```ShellSession
-      $ aws s3 cp --recursive _site/ s3://cms-ab2d-website/
-      ```
-
-   1. Configure static website hosting for the bucket
-
-      ```ShellSession
-      $ aws --region us-east-1 s3 website s3://cms-ab2d-website/ \
-        --index-document index.html \
-	--error-document 404.html
-      ```
-
-1. Note the static website endpoint
-
+   *Format:*
+   
+   ```ShellSession
+   $ export AWS_PROFILE={target aws profile}
    ```
-   sbdemo-ab2d-website.s3-website-us-east-1.amazonaws.com
+
+   *Example for semanticbitsdemo:*
+   
+   ```ShellSession
+   $ export AWS_PROFILE=sbdemo-shared
+   ```
+
+1. Create S3 bucket for the website
+
+   *Format:*
+   
+   ```ShellSession
+   $ aws --region us-east-1 s3api create-bucket \
+     --bucket {unique id}-ab2d-website
+   ```
+
+   *Example for semanticbitsdemo:*
+   
+   ```ShellSession
+   $ aws --region us-east-1 s3api create-bucket \
+     --bucket sbdemo-ab2d-website
+   ```
+
+1. Block public access on the bucket
+
+   *Format:*
+   
+   ```ShellSession
+   $ aws --region us-east-1 s3api put-public-access-block \
+      --bucket {unique id}-ab2d-website \
+      --public-access-block-configuration BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true
+   ```
+
+   *Example for semanticbitsdemo:*
+   
+   ```ShellSession
+   $ aws --region us-east-1 s3api put-public-access-block \
+      --bucket sbdemo-ab2d-website \
+      --public-access-block-configuration BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true
+   ```
+   
+### Upload website to S3
+
+1. Note that the uploaded website will be used to create an S3 API endpoint as the origin within CloudFront
+
+1. Set the target AWS profile
+
+   *Format:*
+   
+   ```ShellSession
+   $ export AWS_PROFILE={target aws profile}
+   ```
+
+   *Example for semanticbitsdemo:*
+   
+   ```ShellSession
+   $ export AWS_PROFILE=sbdemo-shared
+   ```
+
+1. Upload website to S3
+
+   *Format:*
+   
+   ```ShellSession
+   $ aws s3 cp --recursive _site/ s3://{unique id}-ab2d-website/
+   ```
+
+   *Example for semanticbitsdemo:*
+   
+   ```ShellSession
+   $ aws s3 cp --recursive _site/ s3://sbdemo-ab2d-website/
    ```
 
 ### Create CloudFront distribution
@@ -2517,45 +2578,81 @@
 
    1. Note that there are two "Origin Domain Name" values that can be used for doing a distribution for an S3 website
 
-      - S3 API Endpoint
+      - S3 API Endpoint <-- this is the method that we want to use
 
-      - S3 Website Endpoint <-- this is the method that we want to use
+      - S3 Website Endpoint
 
-   1. Note that it is important that you do not select the S3 API endpoint for the website that appears in the list for the text box
-
-   1. Note that you want to copy and paste the noted static website endpoint instead
-
-   1. Note that the "Origin ID" will automatically fill-in based on the "Origin Domain Name", so if your settings do not match what you see in the next step that may mean that you select the API endpoint by mistake
+   1. Note that the "Origin ID" will automatically fill-in based on the "Origin Domain Name"
    
 1. Configure "Origin Settings" as follows:
 
-   - **Origin Domain Name:** sbdemo-ab2d-website.s3-website-us-east-1.amazonaws.com
+   *Format:*
+   
+   - **Origin Domain Name:** {unique id}-ab2d-website.s3.amazonaws.com
 
-   - **Origin ID:** S3-Website-sbdemo-ab2d-website.s3-website-us-east-1.amazonaws.com
+   - **Origin ID:** S3-{unique id}-ab2d-website
+
+   - **Restrict Bucket Access:** Yes
+
+   - **Origin Access Identity:** Create a New Identity
+
+   - **Comment:** access-identity-{unique id}-ab2d-website.s3.amazonaws.com
+
+   - **Grant Read Permissions on Bucket:** Yes, Update Bucket Policy
+
+   *Example for semanticbitsdemo:*
+   
+   - **Origin Domain Name:** sbdemo-ab2d-website.s3.amazonaws.com
+   
+   - **Origin ID:** S3-sbdemo-ab2d-website
+
+   - **Restrict Bucket Access:** Yes
+
+   - **Origin Access Identity:** Create a New Identity
+
+   - **Comment:** access-identity-sbdemo-ab2d-website.s3.amazonaws.com
+
+   - **Grant Read Permissions on Bucket:** Yes, Update Bucket Policy
 
 1. Configure "Default Cache Behavior Settings" as follows
 
    - **Viewer Protocol Policy:** Redirect HTTP to HTTPS
 
-1. Configure "Distribution Settings" as follows
+1. If you are NOT using a custom SSL certificate, configure "Distribution Settings" as follows
+
+   *Example for semanticbitsdemo:*
+   
+   **Alternate Domain Names (CNAMES):** {blank}
+
+   **SSL Certificate:** Default CloudFront Certificate
+
+   **Default Root Object:** index.html
+
+1. If you are using a custom SSL certificate, configure "Distribution Settings" as follows
 
    *Format:*
    
-   **Alternate Domain Names (CNAMES):** ab2d.{domain}
+   **Alternate Domain Names (CNAMES):** {blank}
+
+   **SSL Certificate:** Custom SSL Certificate
 
    **Custom SSL Certificate:** ab2d.{domain}
 
+   **Default Root Object:** index.html
+
 1. Select **Create Distribution**
+
+1. Select **Distributions** in the leftmost panel
 
 1. Note the distribution row that was created
 
+   *Format:*
+   
    - **Delivery Method:** Web
 
    - **Domain Name:** {unique id}.cloudfront.net
 
-   - **Origin:** sbdemo-ab2d-website.s3-website-us-east-1.amazonaws.com
-
-   - **CNAMEs:** ab2d.{domain}
+   - **Origin:** sbdemo-ab2d-website.s3.amazonaws.com
 
 1. Note that it will take about 30 minutes for the CloudFront distribution to complete
 
@@ -2565,6 +2662,14 @@
    Deployed
    ```
 
+1. If you have access to a domain that you can personally administer in Route 53 and want to complete the test setup, jump to the following section:
+
+   [Update Route 53 DNS record to point custom CNAME to the CloudFront distribution](#update-route-53-dns-record-to-point-custom-cname-to-the-cloudfront-distribution)
+
+1. If you just want to test setting up an S3 website with a CloudFront distribution, jump to the following section:
+
+   [Test the CloudFront distribution](#test-the-cloudfront-distribution)
+   
 ### Update Route 53 DNS record to point custom CNAME to the CloudFront distribution
 
 1. Open Chrome
@@ -2591,12 +2696,32 @@
 
 1. Select **Create**
 
-### Test the domain
+### Test the CloudFront distribution
 
-1. Note that you may have to wait some time until to allow DNS to propagate
+1. Note the CloudFront domain for the CloudFront distribution
+
+   *Format:*
+   
+   ```
+   {unique id}.cloudfront.net
+   ```
 
 1. Open Chrome
 
-1. Test the DNS with HTTPS
+1. Test the CloudFront domain
 
-   > https://ab2d.criterionbuff.com
+   *Format:*
+   
+   > https://{unique id}.cloudfront.net
+
+1. Verify that the website from S3 is displayed
+
+1. If you used a custom SSL certificate, do the following
+
+   1. Note that you may have to wait some time until to allow DNS to propagate
+
+   1. Open Chrome
+
+   1. Test the DNS with HTTPS
+
+      > https://ab2d.{domain}

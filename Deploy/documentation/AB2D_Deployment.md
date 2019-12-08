@@ -20,10 +20,10 @@
 1. [Update application](#update-application)
 1. [Deploy and configure Jenkins](#deploy-and-configure-jenkins)
 1. [Deploy AB2D static site](#deploy-ab2d-static-site)
-   * [Download PEM certificate bundle](#download-pem-certificate-bundle)
+   * [Download PEM certificate bundle and get private key from CMS](#download-pem-certificate-bundle-and-get-private-key-from-cms)
    * [Import the certificate into certificate manager](#import-the-certificate-into-certificate-manager)
    * [Generate and test the website](#generate-and-test-the-website)
-   * [Create static website in S3](#create-static-website-in-s3)
+   * [Upload website to S3](#upload-website-to-s3)
    * [Create CloudFront distribution](#create-cloudfront-distribution)
    * [Ask CMS to add Route 53 record that points to the CloudFront distribution](#ask-cms-to-add-route-53-record-that-points-to-the-cloudfront-distribution)
 
@@ -1171,7 +1171,7 @@
 
 ## Deploy AB2D static site
 
-### Download PEM certificate bundle
+### Download PEM certificate bundle and get private key from CMS
 
 1. Note that CMS will request a domain certificate from Entrust for the following domain
 
@@ -1187,7 +1187,7 @@
 
 1. Select the link under "Use the following URL to pick up and install your certificate" in the forwarded Entrust email
 
-1. Select "Tomcat" from the "...server type" dropdown
+1. Select "Other" from the "...server type" dropdown
 
 1. Note that we select Tomcat so that we will get a bundled PEM certificate
 
@@ -1200,14 +1200,66 @@
 1. Note the following file has been downloaded
 
    ```
-   CertificateBundle1.pem
+   entrust.zip
    ```
 
-1, Note that this PEM certificate bundle includes a signed SSL/TLS certificate and the combined certificate chain
+1. Open a terminal
+
+1. Change to the downloads directory
+
+   ```ShellSession
+   $ cd ~/Downloads
+   ```
+   
+1. Unzip "entrust.zip"
+
+   ```ShellSession
+   $ 7z x entrust.zip
+   ```
 
 ### Import the certificate into certificate manager
 
-> *** TO DO ***
+1. Open Chrome
+
+1. Log on to AWS
+
+1. Navigate to Certificate Manager
+
+1. Select **Get Started**
+
+1. Select **Import a certificate**
+
+1. Open a terminal
+
+1. Copy the contents of "CertificateBundle1.pem" to the clipboard
+
+   ```ShellSession
+   $ cat ~/Downloads/CertificateBundle1.pem | pbcopy
+   ```
+
+1. Return to the "Import a Certificate" page in Chrome
+
+1. Paste the contents of the "CertificateBundle1.pem" into the **Certificate body** text box
+
+1. Paste the contents of the the private key that was provided separately by CMS into the **Certificate private key** text box
+
+1. Select **Next** on the "Import certificate" page
+
+1. Select **Review and import**
+
+1. Note that the following information should be displayed
+
+   *Format:*
+
+   **Domains:** ab2d.cms.gov
+
+   **Expires in:** {number} Days
+
+   **Public key info:** RSA-2048
+
+   **Signature algorithm:** SHA256WITHRSA
+   
+1. Select **Import**
 
 ### Generate and test the website
 
@@ -1253,13 +1305,13 @@
       $ ls _site
       ```
     
-   1. Note the following two files that will be used in S3 website hosting configuration
+   1. Note the following two files that will be used in CloudFront distribution configuration
 
       - index.html
 
       - 404.html
 
-### Create static website in S3
+### Upload website to S3
 
 1. Note that this process will create an S3 website endpoint as the origin within CloudFront
 
