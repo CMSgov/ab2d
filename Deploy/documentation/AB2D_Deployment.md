@@ -1289,8 +1289,8 @@
    1. Generate and serve website on the jekyll server
 
       ```ShellSession
-     $ bundle exec jekyll serve
-     ```
+      $ bundle exec jekyll serve
+      ```
      
    1. Open Chrome
 
