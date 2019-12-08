@@ -26,7 +26,7 @@
    * [Create an S3 bucket for the website](#create-an-s3-bucket-for-the-website)
    * [Upload website to S3](#upload-website-to-s3)
    * [Create CloudFront distribution](#create-cloudfront-distribution)
-   * [Ask CMS to add Route 53 record that points to the CloudFront distribution](#ask-cms-to-add-route-53-record-that-points-to-the-cloudfront-distribution)
+   * [Determine how to integrate cms.gov Route 53 with AB2D CloudFront distribution](#determine-how-to-integrate-cmsgov-route-53-with-ab2d-cloudfront-distribution)
 
 ## Note the starting state of the customer AWS account
 
@@ -1410,8 +1410,6 @@
 
 ### Create CloudFront distribution
 
-> *** TO DO ***
-
 1. Open Chrome
 
 1. Log on to AWS
@@ -1426,21 +1424,41 @@
 
    1. Note that there are two "Origin Domain Name" values that can be used for doing a distribution for an S3 website
 
-      - S3 API Endpoint
+      - S3 API Endpoint <-- this is the method that we want to use
 
-      - S3 Website Endpoint <-- this is the method that we want to use
+      - S3 Website Endpoint
 
-   1. Note that it is important that you do not select the S3 API endpoint for the website that appears in the list for the text box
-
-   1. Note that you want to copy and paste the noted static website endpoint instead
-
-   1. Note that the "Origin ID" will automatically fill-in based on the "Origin Domain Name", so if your settings do not match what you see in the next step that may mean that you select the API endpoint by mistake
+   1. Note that the "Origin ID" will automatically fill-in based on the "Origin Domain Name"
    
 1. Configure "Origin Settings" as follows:
 
-   - **Origin Domain Name:** ab2d.cms.gov.s3-website-us-east-1.amazonaws.com
+   *Format:*
+   
+   - **Origin Domain Name:** {unique id}-ab2d-website.s3.amazonaws.com
 
-   - **Origin ID:** S3-Website-ab2d.cms.gov.s3-website-us-east-1.amazonaws.com
+   - **Origin ID:** S3-{unique id}-ab2d-website
+
+   - **Restrict Bucket Access:** Yes
+
+   - **Origin Access Identity:** Create a New Identity
+
+   - **Comment:** access-identity-{unique id}-ab2d-website.s3.amazonaws.com
+
+   - **Grant Read Permissions on Bucket:** Yes, Update Bucket Policy
+
+   *Example for semanticbitsdemo:*
+   
+   - **Origin Domain Name:** cms-ab2d-website.s3.amazonaws.com
+   
+   - **Origin ID:** S3-cms-ab2d-website
+
+   - **Restrict Bucket Access:** Yes
+
+   - **Origin Access Identity:** Create a New Identity
+
+   - **Comment:** access-identity-cms-ab2d-website.s3.amazonaws.com
+
+   - **Grant Read Permissions on Bucket:** Yes, Update Bucket Policy
 
 1. Configure "Default Cache Behavior Settings" as follows
 
@@ -1452,17 +1470,25 @@
    
    **Alternate Domain Names (CNAMES):** ab2d.cms.gov
 
+   **SSL Certificate:** Custom SSL Certificate
+
    **Custom SSL Certificate:** ab2d.cms.gov
+
+   **Default Root Object:** index.html
 
 1. Select **Create Distribution**
 
+1. Select **Distributions** in the leftmost panel
+
 1. Note the distribution row that was created
 
+   *Format:*
+   
    - **Delivery Method:** Web
 
    - **Domain Name:** {unique id}.cloudfront.net
 
-   - **Origin:** ab2d.cms.gov.s3-website-us-east-1.amazonaws.com
+   - **Origin:** cms-ab2d-website.s3.amazonaws.com
 
    - **CNAMEs:** ab2d.cms.gov
 
@@ -1474,8 +1500,7 @@
    Deployed
    ```
 
-### Ask CMS to add Route 53 record that points to the CloudFront distribution
+### Determine how to integrate cms.gov Route 53 with AB2D CloudFront distribution
 
-1. Provide the following information to CMS
-
-   > *** TO DO ***
+> *** TO DO ***
+   

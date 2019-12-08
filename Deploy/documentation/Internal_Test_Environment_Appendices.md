@@ -2638,7 +2638,7 @@
 
    *Format:*
    
-   **Alternate Domain Names (CNAMES):** {blank}
+   **Alternate Domain Names (CNAMES):** ab2d.{domain}
 
    **SSL Certificate:** Custom SSL Certificate
 
