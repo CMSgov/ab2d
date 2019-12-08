@@ -844,19 +844,16 @@ aws --region us-east-1 s3api put-bucket-policy \
 # Create "cms-ab2d-website" bucket
 #
 
-echo "Creating "cms-ab2d-website" bucket..."
+echo "Creating 'cms-ab2d-website' bucket..."
 
 aws --region us-east-1 s3api create-bucket \
   --bucket cms-ab2d-website
 
-# Add bucket policy to the "cms-ab2d-website" S3 bucket
+# Block public access on bucket
 
-cd "${START_DIR}"
-cd terraform/environments/ab2d-$CMS_SHARED_ENV
-
-aws --region us-east-1 s3api put-bucket-policy \
+aws --region us-east-1 s3api put-public-access-block \
   --bucket cms-ab2d-website \
-  --policy file://ab2d-website-bucket-policy.json
+  --public-access-block-configuration BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true
 
 #
 # Create dev S3 bucket
