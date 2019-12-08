@@ -34,7 +34,11 @@
 1. [Appendix P: Use Amazon CloudFront to serve a static website hosted in S3](#appendix-p-use-amazon-cloudfront-to-serve-a-static-website-hosted-in-s3)
    * [Read before trying to do this section](#read-before-trying-to-do-this-section)
    * [Request a public certificate from Certificate Manager](#request-a-public-certificate-from-certificate-manager)
-   * [Create an alias record in Route 53 to integrate your domain with services hosted in AWS](#create-an-alias-record-in-route-53-to-integrate-your-domain-with-services-hosted-in-aws)
+   * [Generate and test the website](#generate-and-test-the-website)
+   * [Create static website in S3](#create-static-website-in-s3)
+   * [Create CloudFront distribution](#create-cloudfront-distribution)
+   * [Update Route 53 DNS record to point custom CNAME to the CloudFront distribution](#update-route-53-dns-record-to-point-custom-cname-to-the-cloudfront-distribution)
+   * [Test the domain](#test-the-domain)
 
 ## Appendix A: Destroy complete environment
 
@@ -2307,7 +2311,19 @@
    
    ```ShellSession
    $ aws --region us-east-1 acm request-certificate \
-     --domain-name ab2d.{domain} \
+     --domain-name "*.{domain}" \
+     --subject-alternative-names "{domain}" \
+     --validation-method DNS \
+     --idempotency-token 1234 \
+     --options CertificateTransparencyLoggingPreference=DISABLED
+   ```
+
+   *Example:*
+   
+   ```ShellSession
+   $ aws --region us-east-1 acm request-certificate \
+     --domain-name "*.example.com" \
+     --subject-alternative-names "example.com" \
      --validation-method DNS \
      --idempotency-token 1234 \
      --options CertificateTransparencyLoggingPreference=DISABLED
@@ -2324,33 +2340,232 @@
    *Format:*
    
    ```
-   ab2d.{domain}
+   *.{domain}
    ```
 
-1. Expand the domain under the "Domain" section
+   *Example:*
+
+   ```
+   *.example.com
+   ```
+
+1. Validate the wildcard domain
+
+   1. Expand the wildcard domain under the "Domain" section
+   
+      *Format:*
+      
+      ```
+      *.{domain}
+      ```
+   
+      *Example:*
+   
+      ```
+      *.example.com
+      ```
+   
+   1. Select **Create record in Route 53**
+   
+   1. Select **Create**
+   
+   1. Note that a message like the following should appear
+   
+      ```
+      Success
+      The DNS record was written to your Route 53 hosted zone. It can take 30 minutes or longer
+      for the changed to propagate and for AWS to validate the domain and issue the certificate.
+      ```
+
+1. Validate the root domain
+
+   1. Expand the wildcard domain under the "Domain" section
+   
+      *Format:*
+      
+      ```
+      {domain}
+      ```
+   
+      *Example:*
+   
+      ```
+      example.com
+      ```
+   
+   1. Select **Create record in Route 53**
+   
+   1. Select **Create**
+   
+   1. Note that a message like the following should appear
+   
+      ```
+      Success
+      The DNS record was written to your Route 53 hosted zone. It can take 30 minutes or longer
+      for the changed to propagate and for AWS to validate the domain and issue the certificate.
+      ```
+
+1. Wait for an hour or so
+
+1. Open Chrome
+
+1. Log on to AWS
+
+1. Navigate to Certificate Manager
+
+1. Verify that the "Status" displays the following
+
+   ```
+   Issued
+   ```
+
+### Generate and test the website
+
+1. Change to the "website" directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d/website
+   ```
+
+1. Generate and test the website
+
+   1. Ensure required gems are installed
+
+      ```ShellSession
+      $ bundle install
+      ```
+
+   1. Generate and serve website on the jekyll server
+
+      ```ShellSession
+     $ bundle exec jekyll serve
+     ```
+     
+   1. Open Chrome
+
+   1. Enter the following in the address bar
+   
+      > http://127.0.0.1:4000
+      
+   1. Verify that the website comes up
+
+   1. Return to the terminal where the jekyll server is running
+   
+   1. Press **control+c** on the keyboard to stop the Jekyll server
+
+1. Verify the generated site
+
+   1. Note that a "_site" directory was automatically generated when you ran "bundle exec jekyll serve"
+   
+   1. List the contents of the directory
+
+      ```ShellSession
+      $ ls _site
+      ```
+    
+   1. Note the following two files that will be used in S3 website hosting configuration
+
+      - index.html
+
+      - 404.html
+
+### Create static website in S3
+
+1. Note that this process will create an S3 website endpoint as the origin within CloudFront
+      
+1. Configure the S3 website
+
+   1. Set the target AWS profile
+
+      ```ShellSession
+      $ export AWS_PROFILE=ab2d-shared
+      ```
+
+   1. Copy the website to the "cms-ab2d-website" S3 bucket
+
+      ```ShellSession
+      $ aws s3 cp --recursive _site/ s3://cms-ab2d-website/
+      ```
+
+   1. Configure static website hosting for the bucket
+
+      ```ShellSession
+      $ aws --region us-east-1 s3 website s3://cms-ab2d-website/ \
+        --index-document index.html \
+	--error-document 404.html
+      ```
+
+1. Note the static website endpoint
+
+   ```
+   sbdemo-ab2d-website.s3-website-us-east-1.amazonaws.com
+   ```
+
+### Create CloudFront distribution
+
+1. Open Chrome
+
+1. Log on to AWS
+
+1. Navigate to CloudFront
+
+1. Select **Create Distribution**
+
+1. Select **Get Started** under the *Web* section
+
+1. Note the following very important information before configuring the "Origin Settings"
+
+   1. Note that there are two "Origin Domain Name" values that can be used for doing a distribution for an S3 website
+
+      - S3 API Endpoint
+
+      - S3 Website Endpoint <-- this is the method that we want to use
+
+   1. Note that it is important that you do not select the S3 API endpoint for the website that appears in the list for the text box
+
+   1. Note that you want to copy and paste the noted static website endpoint instead
+
+   1. Note that the "Origin ID" will automatically fill-in based on the "Origin Domain Name", so if your settings do not match what you see in the next step that may mean that you select the API endpoint by mistake
+   
+1. Configure "Origin Settings" as follows:
+
+   - **Origin Domain Name:** sbdemo-ab2d-website.s3-website-us-east-1.amazonaws.com
+
+   - **Origin ID:** S3-Website-sbdemo-ab2d-website.s3-website-us-east-1.amazonaws.com
+
+1. Configure "Default Cache Behavior Settings" as follows
+
+   - **Viewer Protocol Policy:** Redirect HTTP to HTTPS
+
+1. Configure "Distribution Settings" as follows
 
    *Format:*
    
+   **Alternate Domain Names (CNAMES):** ab2d.{domain}
+
+   **Custom SSL Certificate:** ab2d.{domain}
+
+1. Select **Create Distribution**
+
+1. Note the distribution row that was created
+
+   - **Delivery Method:** Web
+
+   - **Domain Name:** {unique id}.cloudfront.net
+
+   - **Origin:** sbdemo-ab2d-website.s3-website-us-east-1.amazonaws.com
+
+   - **CNAMEs:** ab2d.{domain}
+
+1. Note that it will take about 30 minutes for the CloudFront distribution to complete
+
+1. Wait for the "Status" to change to the following
+
    ```
-   ab2d.{domain}
+   Deployed
    ```
 
-1. Select **Create record in Route 53**
-
-1. Select **Create**
-
-1. Note that a message like the following should appear
-
-   ```
-   Success
-   The DNS record was written to your Route 53 hosted zone. It can take 30 minutes or longer
-   for the changed to propagate and for AWS to validate the domain and issue the certificate.
-   ```
-   
-### Create an alias record in Route 53 to integrate your domain with services hosted in AWS
-
-> *** TO DO ***:
-
+### Update Route 53 DNS record to point custom CNAME to the CloudFront distribution
 
 1. Open Chrome
 
@@ -2366,16 +2581,22 @@
 
 1. Configure the record set as follows
 
-   - **Name:** {your desired subdomain}
+   - **Name:** ab2d
 
-   - **Type:** CNAME - Canonical Name
+   - **Type:** A - IpV4 address
 
-   - **Alias:** No
+   - **Alias:** Yes
 
-   - **TTL (Seconds):** 300
+   - **Alias Target:** ab2d.{domain}. ({unique id}.cloudfront.net)
 
-   - **Value:**
-   
-1. Select the following from the **Type** dropdown
+1. Select **Create**
 
-1. 
+### Test the domain
+
+1. Note that you may have to wait some time until to allow DNS to propagate
+
+1. Open Chrome
+
+1. Test the DNS with HTTPS
+
+   > https://ab2d.criterionbuff.com

@@ -20,8 +20,12 @@
 1. [Update application](#update-application)
 1. [Deploy and configure Jenkins](#deploy-and-configure-jenkins)
 1. [Deploy AB2D static site](#deploy-ab2d-static-site)
+   * [Download PEM certificate bundle](#download-pem-certificate-bundle)
+   * [Import the certificate into certificate manager](#import-the-certificate-into-certificate-manager)
    * [Generate and test the website](#generate-and-test-the-website)
    * [Create static website in S3](#create-static-website-in-s3)
+   * [Create CloudFront distribution](#create-cloudfront-distribution)
+   * [Ask CMS to add Route 53 record that points to the CloudFront distribution](#ask-cms-to-add-route-53-record-that-points-to-the-cloudfront-distribution)
 
 ## Note the starting state of the customer AWS account
 
@@ -1167,6 +1171,44 @@
 
 ## Deploy AB2D static site
 
+### Download PEM certificate bundle
+
+1. Note that CMS will request a domain certificate from Entrust for the following domain
+
+   ```
+   ab2d.cms.gov
+   ```
+
+1. Wait for CMS to provide the following
+
+   - private key used to make the domain certificate request
+
+   - forwarded email from Entrust to download the certificate
+
+1. Select the link under "Use the following URL to pick up and install your certificate" in the forwarded Entrust email
+
+1. Select "Tomcat" from the "...server type" dropdown
+
+1. Note that we select Tomcat so that we will get a bundled PEM certificate
+
+1. Select **Next** on the "Select Server Type" page
+
+1. Select **Download Certificates**
+
+1. Wait for the download to complete
+
+1. Note the following file has been downloaded
+
+   ```
+   CertificateBundle1.pem
+   ```
+
+1, Note that this PEM certificate bundle includes a signed SSL/TLS certificate and the combined certificate chain
+
+### Import the certificate into certificate manager
+
+> *** TO DO ***
+
 ### Generate and test the website
 
 1. Change to the "website" directory
@@ -1220,8 +1262,14 @@
 ### Create static website in S3
 
 1. Note that this process will create an S3 website endpoint as the origin within CloudFront
-      
-1. Configure the S3 website
+
+1. Change to the "website" directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d/website
+   ```
+
+1. Upload website to S3
 
    1. Set the target AWS profile
 
@@ -1235,21 +1283,9 @@
       $ aws s3 cp --recursive _site/ s3://cms-ab2d-website/
       ```
 
-   1. Configure static website hosting for the bucket
-
-      ```ShellSession
-      $ aws --region us-east-1 s3 website s3://cms-ab2d-website/ \
-        --index-document index.html \
-	--error-document 404.html
-      ```
-
-1. Note the static website endpoint
-
-   ```
-   sbdemo-ab2d-website.s3-website-us-east-1.amazonaws.com
-   ```
-
 ### Create CloudFront distribution
+
+> *** TO DO ***
 
 1. Open Chrome
 
@@ -1277,14 +1313,44 @@
    
 1. Configure "Origin Settings" as follows:
 
-   - **Origin Domain Name:** sbdemo-ab2d-website.s3-website-us-east-1.amazonaws.com
+   - **Origin Domain Name:** ab2d.cms.gov.s3-website-us-east-1.amazonaws.com
 
-   - **Origin ID:** S3-Website-sbdemo-ab2d-website.s3-website-us-east-1.amazonaws.com
+   - **Origin ID:** S3-Website-ab2d.cms.gov.s3-website-us-east-1.amazonaws.com
 
 1. Configure "Default Cache Behavior Settings" as follows
 
    - **Viewer Protocol Policy:** Redirect HTTP to HTTPS
 
 1. Configure "Distribution Settings" as follows
+
+   *Format:*
+   
+   **Alternate Domain Names (CNAMES):** ab2d.cms.gov
+
+   **Custom SSL Certificate:** ab2d.cms.gov
+
+1. Select **Create Distribution**
+
+1. Note the distribution row that was created
+
+   - **Delivery Method:** Web
+
+   - **Domain Name:** {unique id}.cloudfront.net
+
+   - **Origin:** ab2d.cms.gov.s3-website-us-east-1.amazonaws.com
+
+   - **CNAMEs:** ab2d.cms.gov
+
+1. Note that it will take about 30 minutes for the CloudFront distribution to complete
+
+1. Wait for the "Status" to change to the following
+
+   ```
+   Deployed
+   ```
+
+### Ask CMS to add Route 53 record that points to the CloudFront distribution
+
+1. Provide the following information to CMS
 
    > *** TO DO ***
