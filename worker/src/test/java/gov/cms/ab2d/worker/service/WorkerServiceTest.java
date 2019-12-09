@@ -9,14 +9,11 @@ import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.common.repository.SponsorRepository;
 import gov.cms.ab2d.common.repository.UserRepository;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
-import org.junit.ClassRule;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.junit4.SpringRunner;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -33,7 +30,6 @@ import static org.junit.Assert.assertThat;
 /**
  * Generic Tests to make sure that the worker gets triggered upon submitting a job into the Job table.
  */
-@RunWith(SpringRunner.class)
 @SpringBootTest(classes = SpringBootApp.class)
 @TestPropertySource(locations = "/application.properties")
 @Testcontainers
