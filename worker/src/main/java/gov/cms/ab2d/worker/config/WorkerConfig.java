@@ -1,7 +1,6 @@
 package gov.cms.ab2d.worker.config;
 
 import gov.cms.ab2d.bfd.client.BFDClientConfiguration;
-import gov.cms.ab2d.optout.setup.QuartzSetup;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.time.DateUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,7 +35,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 @Configuration
 @EnableAsync
 @EnableIntegration
-@Import({BFDClientConfiguration.class, QuartzSetup.class})
+@Import(BFDClientConfiguration.class)
 public class WorkerConfig {
 
     @Autowired
