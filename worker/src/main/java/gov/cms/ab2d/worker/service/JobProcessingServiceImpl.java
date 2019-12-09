@@ -164,8 +164,9 @@ public class JobProcessingServiceImpl implements JobProcessingService {
 
         // opt-out record has an effective date.
         // if any of the opt-out records for a patient is effective as of today or earlier, the patient has opted-out
+        final LocalDate tomorrow = LocalDate.now().plusDays(1);
         return consents.stream()
-                .anyMatch(consent ->  consent.getEffectiveDate().isBefore(LocalDate.now()));
+                .anyMatch(consent -> consent.getEffectiveDate().isBefore(tomorrow));
     }
 
     private int processHandles(List<Future<Integer>> futureResourcesHandles) {
