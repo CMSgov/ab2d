@@ -11,6 +11,7 @@
         <module>bfd</module>
         <module>filter</module>
         <module>optout</module>
+        <module>audit</module>
     </modules>
     <parent>
         <groupId>org.springframework.boot</groupId>

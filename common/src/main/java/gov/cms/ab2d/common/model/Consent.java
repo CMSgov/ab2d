@@ -6,7 +6,7 @@ import lombok.Setter;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
-import java.time.OffsetDateTime;
+import java.time.LocalDate;
 
 @Entity
 @Getter
@@ -19,7 +19,7 @@ public class Consent {
 
     private String hicn;
 
-    private OffsetDateTime effectiveDate;
+    private LocalDate effectiveDate;
 
     private String policyCode;
 
