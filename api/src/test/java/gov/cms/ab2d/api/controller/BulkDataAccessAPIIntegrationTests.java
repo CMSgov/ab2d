@@ -13,10 +13,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.hamcrest.core.Is;
 import org.hl7.fhir.dstu3.model.DateTimeType;
 import org.junit.Assert;
-import org.junit.Before;
-import org.junit.ClassRule;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -29,6 +27,8 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.result.MockMvcResultHandlers;
 import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.io.File;
 import java.io.InputStream;
@@ -52,9 +52,9 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@RunWith(SpringRunner.class)
 @SpringBootTest(classes = SpringBootApp.class, webEnvironment = SpringBootTest.WebEnvironment.MOCK)
 @AutoConfigureMockMvc
+@Testcontainers
 public class BulkDataAccessAPIIntegrationTests {
 
     @Autowired
@@ -78,7 +78,7 @@ public class BulkDataAccessAPIIntegrationTests {
     @Value("${efs.mount}")
     private String tmpJobLocation;
 
-    @ClassRule
+    @Container
     public static PostgreSQLContainer postgreSQLContainer = AB2DPostgresqlContainer.getInstance();
 
     @Autowired
@@ -88,7 +88,7 @@ public class BulkDataAccessAPIIntegrationTests {
 
     private static final String PATIENT_EXPORT_PATH = "/Patient/$export";
 
-    @Before
+    @BeforeEach
     public void setup() throws JwtVerificationException {
         contractRepository.deleteAll();
         jobRepository.deleteAll();

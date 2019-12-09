@@ -1,6 +1,5 @@
 package gov.cms.ab2d.worker.service;
 
-import gov.cms.ab2d.common.SpringBootApp;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.JobStatus;
@@ -11,16 +10,15 @@ import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.common.repository.SponsorRepository;
 import gov.cms.ab2d.common.repository.UserRepository;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
-import org.junit.ClassRule;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.junit4.SpringRunner;
+
 import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.io.IOException;
 import java.time.OffsetDateTime;
@@ -32,14 +30,13 @@ import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-@RunWith(SpringRunner.class)
-@SpringBootTest(classes = SpringBootApp.class)
-@TestPropertySource(locations = "/application.properties")
+@SpringBootTest
+@Testcontainers
 class JobProcessingServiceTest {
     private Random random = new Random();
 
     @Autowired
-    private JobProcessingService cut;
+    private JobProcessingService jobProcessingService;
 
     @Autowired
     private JobRepository jobRepository;
@@ -54,7 +51,7 @@ class JobProcessingServiceTest {
     private User user;
     private Job job;
 
-    @ClassRule
+    @Container
     public static PostgreSQLContainer postgreSQLContainer = AB2DPostgresqlContainer.getInstance();
 
     @BeforeEach
@@ -72,7 +69,7 @@ class JobProcessingServiceTest {
     @Test
     @DisplayName("When a job is in submitted status, it can be put into progress upon starting processing")
     void whenJobIsInSubmittedStatus_ThenJobShouldBePutInProgress() {
-        var processedJob = cut.putJobInProgress("S001");
+        var processedJob = jobProcessingService.putJobInProgress("S001");
         assertThat(processedJob.getStatus(), is(JobStatus.IN_PROGRESS));
     }
 
@@ -80,7 +77,7 @@ class JobProcessingServiceTest {
     @DisplayName("When a job is in submitted status, it can be put into progress upon starting processing")
     void putNonExistentJobInProgress() {
         var exceptionThrown = assertThrows(IllegalArgumentException.class,() ->
-                cut.putJobInProgress("NonExistent"));
+                jobProcessingService.putJobInProgress("NonExistent"));
         assertThat(exceptionThrown.getMessage(), is("Job NonExistent was not found"));
     }
 
@@ -91,7 +88,7 @@ class JobProcessingServiceTest {
         jobRepository.save(job);
 
         var exceptionThrown = assertThrows(IllegalArgumentException.class,
-                () -> cut.putJobInProgress("S001"));
+                () -> jobProcessingService.putJobInProgress("S001"));
 
         assertThat(exceptionThrown.getMessage(), is("Job S001 is not in SUBMITTED status."));
     }
@@ -99,13 +96,13 @@ class JobProcessingServiceTest {
 
     @Test
     @DisplayName("When a job is in submitted status, it can be processed")
-    void processJob() throws IOException {
+    void processJob() {
 
         job.setStatus(JobStatus.IN_PROGRESS);
         jobRepository.save(job);
         createContract(sponsor);
 
-        var processedJob = cut.processJob("S001");
+        var processedJob = jobProcessingService.processJob("S001");
 
         assertThat(processedJob.getStatus(), is(JobStatus.SUCCESSFUL));
         assertThat(processedJob.getStatusMessage(), is("100%"));
@@ -136,7 +133,7 @@ class JobProcessingServiceTest {
         job.setStatus(JobStatus.IN_PROGRESS);
         jobRepository.save(job);
 
-        var processedJob = cut.processJob("S001");
+        var processedJob = jobProcessingService.processJob("S001");
 
         assertThat(processedJob.getStatus(), is(JobStatus.SUCCESSFUL));
         assertThat(processedJob.getStatusMessage(), is("100%"));
@@ -184,6 +181,4 @@ class JobProcessingServiceTest {
         job.setCreatedAt(OffsetDateTime.now());
         return jobRepository.save(job);
     }
-
-
 }

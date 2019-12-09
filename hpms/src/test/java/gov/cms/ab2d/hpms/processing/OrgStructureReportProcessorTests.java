@@ -11,17 +11,16 @@ import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.hpms.SpringBootApp;
 import lombok.Value;
 import org.junit.Assert;
-import org.junit.Before;
-import org.junit.ClassRule;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.transaction.annotation.Transactional;
 import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -29,9 +28,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-@RunWith(SpringRunner.class)
 @SpringBootTest(classes = SpringBootApp.class)
 @TestPropertySource(locations = "/application.hpms.properties")
+@Testcontainers
 public class OrgStructureReportProcessorTests {
 
     @Autowired
@@ -53,7 +52,7 @@ public class OrgStructureReportProcessorTests {
     @Autowired
     private JobRepository jobRepository;
 
-    @ClassRule
+    @Container
     public static PostgreSQLContainer postgreSQLContainer = AB2DPostgresqlContainer.getInstance();
 
     @Value
@@ -64,7 +63,7 @@ public class OrgStructureReportProcessorTests {
         private final String orgName;
     }
 
-    @Before
+    @BeforeEach
     public void cleanup() {
         contractRepository.deleteAll();
         jobRepository.deleteAll();

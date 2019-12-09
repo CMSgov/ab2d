@@ -11,17 +11,16 @@ import gov.cms.ab2d.common.service.SponsorService;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.hpms.SpringBootApp;
 import org.junit.Assert;
-import org.junit.Before;
-import org.junit.ClassRule;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.transaction.annotation.Transactional;
 import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -30,9 +29,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-@RunWith(SpringRunner.class)
 @SpringBootTest(classes = SpringBootApp.class)
 @TestPropertySource(locations = "/application.hpms.properties")
+@Testcontainers
 public class AttestationReportProcessorTests {
 
     @Autowired
@@ -57,10 +56,10 @@ public class AttestationReportProcessorTests {
     @Autowired
     private SponsorService sponsorService;
 
-    @ClassRule
+    @Container
     public static PostgreSQLContainer postgreSQLContainer = AB2DPostgresqlContainer.getInstance();
 
-    @Before
+    @BeforeEach
     public void cleanup() {
         contractRepository.deleteAll();
         jobRepository.deleteAll();
@@ -87,13 +86,6 @@ public class AttestationReportProcessorTests {
         contract.setSponsor(sponsor);
 
         sponsorService.saveSponsor(sponsor);
-    }
-
-    @Before
-    public void setup() {
-        contractRepository.deleteAll();
-        userRepository.deleteAll();
-        sponsorRepository.deleteAll();
     }
 
     @Test

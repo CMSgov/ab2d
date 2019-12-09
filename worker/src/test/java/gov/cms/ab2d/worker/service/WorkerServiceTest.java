@@ -18,6 +18,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.time.OffsetDateTime;
 import java.util.Random;
@@ -34,6 +36,7 @@ import static org.junit.Assert.assertThat;
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = SpringBootApp.class)
 @TestPropertySource(locations = "/application.properties")
+@Testcontainers
 public class WorkerServiceTest {
     private final Random random = new Random();
 
@@ -41,7 +44,7 @@ public class WorkerServiceTest {
     @Autowired private SponsorRepository sponsorRepository;
     @Autowired private UserRepository userRepository;
 
-    @ClassRule
+    @Container
     public static PostgreSQLContainer postgreSQLContainer = AB2DPostgresqlContainer.getInstance();
 
     @Test

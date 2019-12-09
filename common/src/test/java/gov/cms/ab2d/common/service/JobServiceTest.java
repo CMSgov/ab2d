@@ -8,9 +8,9 @@ import gov.cms.ab2d.common.repository.UserRepository;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import org.apache.commons.io.IOUtils;
 import org.junit.Assert;
-import org.junit.Before;
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -22,6 +22,8 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.transaction.TransactionSystemException;
 import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.io.File;
 import java.io.IOException;
@@ -42,6 +44,7 @@ import static org.junit.Assert.assertEquals;
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = SpringBootApp.class)
 @TestPropertySource(locations = "/application.common.properties")
+@Testcontainers
 public class JobServiceTest {
 
     @Autowired
@@ -59,11 +62,11 @@ public class JobServiceTest {
     @Value("${efs.mount}")
     private String tmpJobLocation;
 
-    @ClassRule
+    @Container
     public static PostgreSQLContainer postgreSQLContainer = AB2DPostgresqlContainer.getInstance();
 
     // Be safe and make sure nothing from another test will impact current test
-    @Before
+    @BeforeEach
     public void setup() {
         jobRepository.deleteAll();
         userRepository.deleteAll();
@@ -110,9 +113,11 @@ public class JobServiceTest {
         assertThat(jobRepository.findById(job.getId())).get().isEqualTo(job);
     }
 
-    @Test(expected = TransactionSystemException.class)
+    @Test
     public void failedValidation() {
-        jobService.createJob("Patient,ExplanationOfBenefits,Coverage", "http://localhost:8080");
+        Assertions.assertThrows(TransactionSystemException.class, () -> {
+            jobService.createJob("Patient,ExplanationOfBenefits,Coverage", "http://localhost:8080");
+        });
     }
 
     @Test
@@ -127,9 +132,11 @@ public class JobServiceTest {
         assertEquals(JobStatus.CANCELLED, cancelledJob.getStatus());
     }
 
-    @Test(expected = ResourceNotFoundException.class)
+    @Test
     public void cancelNonExistingJob() {
-        jobService.cancelJob("NonExistingJob");
+        Assertions.assertThrows(ResourceNotFoundException.class, () -> {
+            jobService.cancelJob("NonExistingJob");
+        });
     }
 
     @Test
@@ -141,39 +148,49 @@ public class JobServiceTest {
         assertEquals(job, retrievedJob);
     }
 
-    @Test(expected = ResourceNotFoundException.class)
+    @Test
     public void getNonExistentJob() {
-        jobService.getJobByJobUuid("NonExistent");
+        Assertions.assertThrows(ResourceNotFoundException.class, () -> {
+            jobService.getJobByJobUuid("NonExistent");
+        });
     }
 
-    @Test(expected = InvalidJobStateTransition.class)
+    @Test
     public void testJobInSuccessfulState() {
         Job job = jobService.createJob("ExplanationOfBenefits", "http://localhost:8080");
 
         job.setStatus(JobStatus.SUCCESSFUL);
         jobRepository.saveAndFlush(job);
 
-        jobService.cancelJob(job.getJobUuid());
+        Assertions.assertThrows(InvalidJobStateTransition.class, () -> {
+            jobService.cancelJob(job.getJobUuid());
+        });
     }
 
-    @Test(expected = InvalidJobStateTransition.class)
+    @Test
     public void testJobInCancelledState() {
         Job job = jobService.createJob("ExplanationOfBenefits", "http://localhost:8080");
 
         job.setStatus(JobStatus.CANCELLED);
         jobRepository.saveAndFlush(job);
 
-        jobService.cancelJob(job.getJobUuid());
+        Assertions.assertThrows(InvalidJobStateTransition.class, () -> {
+            jobService.cancelJob(job.getJobUuid());
+        });
+
     }
 
-    @Test(expected = InvalidJobStateTransition.class)
+    @Test
     public void testJobInFailedState() {
         Job job = jobService.createJob("ExplanationOfBenefits", "http://localhost:8080");
 
         job.setStatus(JobStatus.FAILED);
         jobRepository.saveAndFlush(job);
 
-        jobService.cancelJob(job.getJobUuid());
+        Assertions.assertThrows(InvalidJobStateTransition.class, () -> {
+            jobService.cancelJob(job.getJobUuid());
+        });
+
     }
 
     @Test
@@ -290,21 +307,26 @@ public class JobServiceTest {
         return jobService.updateJob(job);
     }
 
-    @Test(expected = ResourceNotFoundException.class)
+    @Test
     public void getFileDownloadUrlWithWrongFilename() throws IOException {
         String testFile = "test.ndjson";
         String errorFile = "error.ndjson";
         Job job = createJobForFileDownloads(testFile, errorFile);
 
-        jobService.getResourceForJob(job.getJobUuid(), "filenamewrong.ndjson");
+        Assertions.assertThrows(ResourceNotFoundException.class, () -> {
+            jobService.getResourceForJob(job.getJobUuid(), "filenamewrong.ndjson");
+        });
+
     }
 
-    @Test(expected = JobOutputMissingException.class)
+    @Test
     public void getFileDownloadUrlWitMissingOutput() throws IOException {
         String testFile = "outputmissing.ndjson";
         String errorFile = "error.ndjson";
         Job job = createJobForFileDownloads(testFile, errorFile);
 
-        jobService.getResourceForJob(job.getJobUuid(), "outputmissing.ndjson");
+        Assertions.assertThrows(JobOutputMissingException.class, () -> {
+            jobService.getResourceForJob(job.getJobUuid(), "outputmissing.ndjson");
+        });
     }
 }
