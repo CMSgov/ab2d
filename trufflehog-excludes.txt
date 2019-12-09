@@ -7,4 +7,5 @@ Deploy/terraform/environments/ab2d-sbdemo-sbx/authorized_keys
 Deploy/terraform/environments/ab2d-sbdemo-shared/authorized_keys
 Deploy/terraform/environments/ab2d-sbx/authorized_keys
 bfd/src/test/resources/bb-test-data/(.*/)?
+optout/src/test/resources/test-data/(.*/)?
 website/_layouts/default.html
