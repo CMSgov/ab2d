@@ -13,7 +13,7 @@ import org.springframework.context.annotation.PropertySource;
 
 @Configuration
 @PropertySource("classpath:application.optout.properties")
-public class QuartzSetup {
+public class OptOutQuartzSetup {
 
     @Value("${cron.schedule}")
     private String schedule;
