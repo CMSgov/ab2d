@@ -34,7 +34,7 @@ import static gov.cms.ab2d.common.util.Constants.CONTRACT_LOG;
 import static net.logstash.logback.argument.StructuredArguments.keyValue;
 
 @Slf4j
-@Service()
+@Service
 @RequiredArgsConstructor
 @SuppressWarnings("PMD.TooManyStaticImports")
 public class JobProcessingServiceImpl implements JobProcessingService {

@@ -57,7 +57,7 @@ public class AttestationReportProcessorTests {
     private SponsorService sponsorService;
 
     @Container
-    public static PostgreSQLContainer postgreSQLContainer = AB2DPostgresqlContainer.getInstance();
+    public static PostgreSQLContainer postgreSQLContainer = new AB2DPostgresqlContainer();
 
     @BeforeEach
     public void cleanup() {

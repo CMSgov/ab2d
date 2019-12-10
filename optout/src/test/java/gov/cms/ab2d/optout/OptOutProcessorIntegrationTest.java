@@ -38,13 +38,10 @@ class OptOutProcessorIntegrationTest {
     private ConsentRepository consentRepo;
 
     @Autowired
-    private ConsentConverterService consentConverterSvc;
-
-    @Autowired
     private OptOutProcessor cut;
 
     @Container
-    public static PostgreSQLContainer postgreSQLContainer = AB2DPostgresqlContainer.getInstance();
+    public static PostgreSQLContainer postgreSQLContainer = new AB2DPostgresqlContainer();
 
     @Test
     @Transactional

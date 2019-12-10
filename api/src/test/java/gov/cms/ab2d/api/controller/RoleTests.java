@@ -50,7 +50,7 @@ public class RoleTests {
     private JobRepository jobRepository;
 
     @Container
-    public static PostgreSQLContainer postgreSQLContainer = AB2DPostgresqlContainer.getInstance();
+    public static PostgreSQLContainer postgreSQLContainer = new AB2DPostgresqlContainer();
 
     private String token;
 

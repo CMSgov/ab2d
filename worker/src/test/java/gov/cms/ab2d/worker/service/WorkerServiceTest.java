@@ -41,7 +41,7 @@ public class WorkerServiceTest {
     @Autowired private UserRepository userRepository;
 
     @Container
-    public static PostgreSQLContainer postgreSQLContainer = AB2DPostgresqlContainer.getInstance();
+    public static PostgreSQLContainer postgreSQLContainer = new AB2DPostgresqlContainer();
 
     @Test
     @DisplayName("When a job is submitted into the job table, a worker processes it")

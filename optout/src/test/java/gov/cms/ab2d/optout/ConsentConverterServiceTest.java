@@ -27,7 +27,7 @@ class ConsentConverterServiceTest {
     private ConsentConverterService cut;
 
     @Container
-    public static PostgreSQLContainer postgreSQLContainer = AB2DPostgresqlContainer.getInstance();
+    public static PostgreSQLContainer postgreSQLContainer = new AB2DPostgresqlContainer();
 
     @BeforeEach
     void setUp() {

@@ -52,7 +52,7 @@ class JobProcessingServiceTest {
     private Job job;
 
     @Container
-    public static PostgreSQLContainer postgreSQLContainer = AB2DPostgresqlContainer.getInstance();
+    public static PostgreSQLContainer postgreSQLContainer = new AB2DPostgresqlContainer();
 
     @BeforeEach
     void setUp() {
