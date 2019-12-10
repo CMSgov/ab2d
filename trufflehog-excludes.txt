@@ -1,5 +1,5 @@
 .travis.yml
-(.*/)?/authorized_keys
+(.*/)?authorized_keys
 Deploy/documentation/Internal_Test_Environment_Appendices.md
 bfd/src/test/resources/bb-test-data/(.*/)?
 optout/src/test/resources/test-data/(.*/)?
