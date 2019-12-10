@@ -7,6 +7,7 @@ import gov.cms.ab2d.optout.gateway.S3Gateway;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -46,13 +47,17 @@ public class OptOutProcessorImpl implements OptOutProcessor {
     private void importConsentRecords(BufferedReader bufferedReader) {
         var iterator = IOUtils.lineIterator(bufferedReader);
 
-        int linesRead = 0;
+        int linesReadCount = 0;
         int insertedRowCount = 0;
         while (iterator.hasNext()) {
-            ++linesRead;
+            ++linesReadCount;
 
             try {
                 final String line = iterator.nextLine();
+                if (StringUtils.isBlank(line)) {
+                    log.warn("Blank line in file. Skipping.");
+                    continue;
+                }
 
                 Optional<Consent> optConsent = consentConverterService.convert(line);
                 if (optConsent.isPresent()) {
@@ -60,12 +65,12 @@ public class OptOutProcessorImpl implements OptOutProcessor {
                     ++insertedRowCount;
                 }
             } catch (Exception e) {
-                log.error("Invalid opt out record - line number :[{}]", linesRead, e);
+                log.error("Invalid opt out record - line number :[{}]", linesReadCount, e);
             }
 
         }
 
-        log.info("[{}] rows parsed from file", linesRead);
+        log.info("[{}] rows read from file", linesReadCount);
         log.info("[{}] rows inserted into consent table", insertedRowCount);
     }
 

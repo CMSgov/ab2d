@@ -32,7 +32,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @SpringBootTest
 @Testcontainers
-class JobProcessingServiceTest {
+class JobProcessingServiceIntegrationTest {
     private Random random = new Random();
 
     @Autowired
@@ -140,6 +140,8 @@ class JobProcessingServiceTest {
         assertThat(processedJob.getExpiresAt(), notNullValue());
         assertThat(processedJob.getCompletedAt(), notNullValue());
     }
+
+
 
     private Sponsor createSponsor() {
         Sponsor sponsor = new Sponsor();
