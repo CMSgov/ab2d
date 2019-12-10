@@ -27,6 +27,7 @@
    * [Upload website to S3](#upload-website-to-s3)
    * [Create CloudFront distribution](#create-cloudfront-distribution)
    * [Determine how to integrate cms.gov Route 53 with AB2D CloudFront distribution](#determine-how-to-integrate-cmsgov-route-53-with-ab2d-cloudfront-distribution)
+   * [Submit an "Internet DNS Change Request Form" to product owner](#submit-an-internet-dns-change-request-form-to-product-owner)
 
 ## Note the starting state of the customer AWS account
 
@@ -626,9 +627,9 @@
    $ export VPC_ID={vpc id}
    ```
    
-1. Create base AWS environment
+1. If creating the AWS environment for Dev, do one of the following
 
-   *Example for Dev environment:*
+   *Deploy Dev by creating new api and worker images:*
 
    ```ShellSession
    $ ./ab2d-deploy.sh \
@@ -638,10 +639,29 @@
      --ssh-username=ec2-user \
      --owner=842420567215 \
      --ec2-instance-type=m5.xlarge \
-     --database-secret-datetime=2019-12-03-15-19-01
+     --database-secret-datetime=2019-12-03-15-19-01 \
+     --build-new-images \
+     --auto-approve
    ```
 
-   *Example for Sandbox environment:*
+   *Deploy Dev by using the latest existing api and worker images:*
+
+   ```ShellSession
+   $ ./ab2d-deploy.sh \
+     --environment=dev \
+     --shared-environment=shared \
+     --vpc-id=vpc-0c6413ec40c5fdac3 \
+     --ssh-username=ec2-user \
+     --owner=842420567215 \
+     --ec2-instance-type=m5.xlarge \
+     --database-secret-datetime=2019-12-03-15-19-01 \
+     --use-existing-images \
+     --auto-approve
+   ```
+
+1. If creating the AWS environment for Sandbox, do one of the following
+
+   *Deploy Sandbox by creating new api and worker images:*
 
    ```ShellSession
    $ ./ab2d-deploy.sh \
@@ -651,7 +671,24 @@
      --ssh-username=ec2-user \
      --owner=842420567215 \
      --ec2-instance-type=m5.xlarge \
-     --database-secret-datetime=2019-12-03-15-19-01
+     --database-secret-datetime=2019-12-03-15-19-01 \
+     --build-new-images \
+     --auto-approve     
+   ```
+
+   *Deploy Sandbox by using the latest existing api and worker images:*
+
+   ```ShellSession
+   $ ./ab2d-deploy.sh \
+     --environment=sbx \
+     --shared-environment=shared \
+     --vpc-id=vpc-0c6413ec40c5fdac3 \
+     --ssh-username=ec2-user \
+     --owner=842420567215 \
+     --ec2-instance-type=m5.xlarge \
+     --database-secret-datetime=2019-12-03-15-19-01 \
+     --use-existing-images \
+     --auto-approve     
    ```
 
 1. If prompted, enter database user at the "Enter desired database_user" prompt
@@ -1224,7 +1261,7 @@
 
 1. Navigate to Certificate Manager
 
-1. Select **Get Started**
+1. Select **Get Started** under "Provision certificates"
 
 1. Select **Import a certificate**
 
@@ -1240,6 +1277,12 @@
 
 1. Paste the contents of the "ServerCertificate.crt" into the **Certificate body** text box
 
+1. Copy the contents of the private key to the clipboard
+
+   ```ShellSession
+   $ cat ~/Downloads/ab2d_cms_gov.key | pbcopy
+   ```
+   
 1. Paste the contents of the the private key that was provided separately by CMS into the **Certificate private key** text box
 
 1. Return to the terminal
@@ -1465,8 +1508,6 @@
    - **Viewer Protocol Policy:** Redirect HTTP to HTTPS
 
 1. Configure "Distribution Settings" as follows
-
-   *Format:*
    
    **Alternate Domain Names (CNAMES):** ab2d.cms.gov
 
@@ -1500,7 +1541,22 @@
    Deployed
    ```
 
-### Determine how to integrate cms.gov Route 53 with AB2D CloudFront distribution
+### Submit an "Internet DNS Change Request Form" to product owner
+
+1. Open Chrome
+
+1. Enter the following in the address bar
+
+   > https://confluence.cms.gov/pages/viewpage.action?pageId=138595233
+
+1. If the Confluence logon page appears, log on to Confluence
+
+1. Note that the "CNAME/DNS Change Requests" page should be displayed
+
+1. Select the **DNS change request form** link under the "Process" section
+
+1. Select the **Download** icon in the top right of the page
+
+1. Wait for the download to complete
 
 > *** TO DO ***
-   

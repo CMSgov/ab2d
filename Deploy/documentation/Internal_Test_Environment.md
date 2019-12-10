@@ -403,7 +403,8 @@
      --seed-ami-product-code=aw0evgkw8e5c1q413zgy5pjce \
      --ec2-instance-type=m5.xlarge \
      --database-secret-datetime=2019-10-25-14-55-07 \
-     --build-new-images
+     --build-new-images \
+     --auto-approve
    ```
 
    *Deploy Dev by using the latest existing api and worker images:*
@@ -417,7 +418,8 @@
      --seed-ami-product-code=aw0evgkw8e5c1q413zgy5pjce \
      --ec2-instance-type=m5.xlarge \
      --database-secret-datetime=2019-10-25-14-55-07 \
-     --use-existing-images
+     --use-existing-images \
+     --auto-approve
    ```
 
 1. If creating the AWS environment for Sandbox, do one of the following
@@ -433,10 +435,11 @@
      --seed-ami-product-code=aw0evgkw8e5c1q413zgy5pjce \
      --ec2-instance-type=m5.xlarge \
      --database-secret-datetime=2019-10-25-14-55-07 \
-     --build-new-images
+     --build-new-images \
+     --auto-approve
    ```
 
-   *Deploy Dev by using the latest existing api and worker images:*
+   *Deploy Sandbox by using the latest existing api and worker images:*
 
    ```ShellSession
    $ ./create-base-environment.sh \
@@ -447,7 +450,8 @@
      --seed-ami-product-code=aw0evgkw8e5c1q413zgy5pjce \
      --ec2-instance-type=m5.xlarge \
      --database-secret-datetime=2019-10-25-14-55-07 \
-     --use-existing-images
+     --use-existing-images \
+     --auto-approve
    ```
 
 1. If prompted, enter database user at the "Enter desired database_user" prompt

@@ -42,6 +42,7 @@
 1. [Install ECS CLI](#install-ecs-cli)
 1. [Install Xcode](#install-xcode)
 1. [Install and configure Ruby](#install-and-configure-ruby)
+1. [Install Keybase](#install-keybase)
 
 ## Install Slack
 
@@ -1150,3 +1151,80 @@
    ```ShellSession
    $ gem install jekyll
    ```
+
+## Install Keybase
+
+1. Open Chrome
+
+1. Enter the following in the address bar
+
+   > https://keybase.io
+
+1. Select **Install**
+
+1. Select **macOS** from the leftmost panel
+
+1. Select **Download and open Keybase.dmg** within the "Keybase on macOS" page
+
+1. Wait for the download to complete
+
+1. Open the downloaded file
+
+   ```
+   Keybase.dmg
+   ```
+
+1. Drag the **Keybase** icon label to the **Applications** icon when the "Keybase App" page appears
+
+1. Wait for Keybase to finish copying
+
+1. Open Launchpad
+
+1. Selet **Keybase**
+
+1. Select **Open** on the "Keybase is an app downloaded from the internet" warning dialog
+
+1. If you are new to Keybase, do the following:
+
+   1. Select **Create an account** and complete the account setup process
+
+   1. Jump to the following section
+
+      [Next step](#next-step)
+
+1. If you already have a Keybase account, do the following:
+
+   1. Select **Login**
+
+   1. Select an existing device that you previously registered with Keybase to use as authorization for your work Mac
+   
+   1. Select a device name like the following
+   
+      *Note that device name should be between 3 and 64 characters and use only a-Z, 0-9, space, undersore, dash, and apostrophe*
+   
+      *Example:*
+      
+      ```
+      Work SemanticBits MacBook Pro Retina 15-inch Mid 2015
+      ```
+   
+   1. Select **Continue**
+
+   1. Notice that an 8-word secret will be displayed
+   
+   1. Open Keybase on the device that you are using for authorization
+   
+   1. Select the **Devices** icon in the leftmost panel
+
+   1. Select **Add a device or paper key**
+
+   1. Select **Add a computer**
+
+   1. Type the 8-word secret in the "Type the 8-word secret code" text box
+
+   1. Select **Continue**
+
+## Next step
+
+> *** TO DO ***
+
