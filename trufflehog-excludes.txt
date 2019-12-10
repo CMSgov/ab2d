@@ -1,11 +1,6 @@
 .travis.yml
-Deploy/terraform/environments/ab2d-dev/authorized_keys
-Deploy/terraform/environments/ab2d-impl/authorized_keys
-Deploy/terraform/environments/ab2d-prod/authorized_keys
-Deploy/terraform/environments/ab2d-sbdemo-dev/authorized_keys
-Deploy/terraform/environments/ab2d-sbdemo-sbx/authorized_keys
-Deploy/terraform/environments/ab2d-sbdemo-shared/authorized_keys
-Deploy/terraform/environments/ab2d-sbx/authorized_keys
+(.*/)?authorized_keys
+Deploy/documentation/Internal_Test_Environment_Appendices.md
 bfd/src/test/resources/bb-test-data/(.*/)?
 optout/src/test/resources/test-data/(.*/)?
 website/_layouts/default.html
