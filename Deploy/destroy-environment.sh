@@ -218,7 +218,8 @@ fi
 if [ "$DELETE_ENVIRONMENT_COMPONENTS" == "YES" ]; then
   echo "Destroying API components..."
   terraform destroy \
-    --target module.api --auto-approve
+    --target module.api \
+    --auto-approve
 fi
 
 #
