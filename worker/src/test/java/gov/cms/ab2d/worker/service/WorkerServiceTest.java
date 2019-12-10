@@ -30,8 +30,7 @@ import static org.junit.Assert.assertThat;
 /**
  * Generic Tests to make sure that the worker gets triggered upon submitting a job into the Job table.
  */
-@SpringBootTest(classes = SpringBootApp.class)
-@TestPropertySource(locations = "/application.properties")
+@SpringBootTest
 @Testcontainers
 public class WorkerServiceTest {
     private final Random random = new Random();
@@ -41,7 +40,7 @@ public class WorkerServiceTest {
     @Autowired private UserRepository userRepository;
 
     @Container
-    public static PostgreSQLContainer postgreSQLContainer = new AB2DPostgresqlContainer();
+    private static final PostgreSQLContainer postgreSQLContainer= new AB2DPostgresqlContainer();
 
     @Test
     @DisplayName("When a job is submitted into the job table, a worker processes it")

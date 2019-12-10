@@ -50,7 +50,7 @@ public class AuthenticationTests {
     private JobRepository jobRepository;
 
     @Container
-    public static PostgreSQLContainer postgreSQLContainer = new AB2DPostgresqlContainer();
+    private static final PostgreSQLContainer postgreSQLContainer= new AB2DPostgresqlContainer();
 
     private String token;
 

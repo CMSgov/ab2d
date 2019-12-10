@@ -60,7 +60,7 @@ public class JobServiceTest {
     private String tmpJobLocation;
 
     @Container
-    public static PostgreSQLContainer postgreSQLContainer = new AB2DPostgresqlContainer();
+    private static final PostgreSQLContainer postgreSQLContainer= new AB2DPostgresqlContainer();
 
     // Be safe and make sure nothing from another test will impact current test
     @BeforeEach

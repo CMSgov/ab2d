@@ -38,7 +38,7 @@ public class SponsorServiceTest {
     private UserRepository userRepository;
 
     @Container
-    public static PostgreSQLContainer postgreSQLContainer = new AB2DPostgresqlContainer();
+    private static final PostgreSQLContainer postgreSQLContainer= new AB2DPostgresqlContainer();
 
     @BeforeEach
     public void cleanup() {

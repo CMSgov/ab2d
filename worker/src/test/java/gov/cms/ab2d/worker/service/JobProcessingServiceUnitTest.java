@@ -61,7 +61,7 @@ class JobProcessingServiceUnitTest {
     @Mock PatientClaimsProcessor patientClaimsProcessor;
 
     @Container
-    public static PostgreSQLContainer postgreSQLContainer = new AB2DPostgresqlContainer();
+    private static final PostgreSQLContainer postgreSQLContainer= new AB2DPostgresqlContainer();
 
     private Sponsor sponsor;
     private User user;

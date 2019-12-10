@@ -41,7 +41,7 @@ class OptOutProcessorIntegrationTest {
     private OptOutProcessor cut;
 
     @Container
-    public static PostgreSQLContainer postgreSQLContainer = new AB2DPostgresqlContainer();
+    private static final PostgreSQLContainer postgreSQLContainer= new AB2DPostgresqlContainer();
 
     @Test
     @Transactional
