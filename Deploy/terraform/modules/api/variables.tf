@@ -39,10 +39,11 @@ variable "percent_capacity_increase" {default="20"}
 
 # LSH BEGIN 12/05/2019
 
-# variable "db_host" {}
-# variable "db_name" {}
-# variable "db_username" {}
-# variable "db_password" {}
+variable "db_host" {}
+variable "db_port" {}
+variable "db_name" {}
+variable "db_username" {}
+variable "db_password" {}
 
 variable "db_host_secret_arn" {}
 variable "db_port_secret_arn" {}

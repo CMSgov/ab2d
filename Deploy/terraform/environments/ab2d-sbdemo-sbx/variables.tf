@@ -161,6 +161,16 @@ variable "db_multi_az" {
   default = "false"
 }
 
+variable "db_host" {
+  default     = ""
+  description = "Please pass this on command line and not as a value here"
+}
+
+variable "db_port" {
+  default     = ""
+  description = "Please pass this on command line and not as a value here"
+}
+
 variable "db_username" {
   default     = ""
   description = "Please pass this on command line and not as a value here"

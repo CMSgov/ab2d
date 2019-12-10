@@ -7,16 +7,6 @@ resource "aws_security_group" "worker" {
   }
 }
 
-resource "aws_security_group_rule" "api_container_access" {
-  type        = "ingress"
-  description = "API container access"
-  from_port   = var.host_port
-  to_port     = var.host_port
-  protocol    = "tcp"
-  cidr_blocks = var.vpc_cidrs
-  security_group_id = aws_security_group.worker.id
-}
-
 resource "aws_security_group_rule" "controller_access" {
   type        = "ingress"
   description = "Controller Access"
@@ -90,7 +80,7 @@ resource "aws_ecs_cluster" "ab2d_worker" {
   name = "ab2d-${lower(var.env)}-worker"
 }
 
-resource "aws_ecs_task_definition" "api" {
+resource "aws_ecs_task_definition" "worker" {
   family = "worker"
   # LSH SKIP FOR NOW BEGIN
   # volume {
@@ -105,11 +95,27 @@ resource "aws_ecs_task_definition" "api" {
       "image": "${var.docker_repository_url}",
       "essential": true,
       "memory": 2048,
-      "portMappings": [
+      "environment" : [
         {
-          "containerPort": ${var.container_port},
-          "hostPort": ${var.host_port}
-        }
+	  "name" : "AB2D_DB_HOST",
+	  "value" : "${var.db_host}"
+	},
+        {
+	  "name" : "AB2D_DB_PORT",
+	  "value" : "${var.db_port}"
+	},
+	{
+	  "name" : "AB2D_DB_USER",
+	  "value" : "${var.db_username}"
+	},
+	{
+	  "name" : "AB2D_DB_PASSWORD",
+	  "value" : "${var.db_password}"
+	},
+	{
+	  "name" : "AB2D_DB_DATABASE",
+	  "value" : "${var.db_name}"
+	}
       ],
       "logConfiguration": {
         "logDriver": "syslog"
@@ -128,7 +134,7 @@ JSON
 resource "aws_ecs_service" "worker" {
   name = "ab2d-${lower(var.env)}-worker"
   cluster = aws_ecs_cluster.ab2d_worker.id
-  task_definition = var.override_task_definition_arn != "" ? var.override_task_definition_arn : aws_ecs_task_definition.api.arn
+  task_definition = var.override_task_definition_arn != "" ? var.override_task_definition_arn : aws_ecs_task_definition.worker.arn
   desired_count = 5
   launch_type = "EC2"
   scheduling_strategy = "DAEMON"

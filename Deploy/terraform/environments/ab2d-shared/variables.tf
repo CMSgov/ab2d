@@ -176,6 +176,31 @@ variable "db_name" {
   description = "Please pass this on command line and not as a value here"
 }
 
+variable "db_host_secret_arn" {
+  default     = ""
+  description = "Please pass this on command line and not as a value here"
+}
+
+variable "db_port_secret_arn" {
+  default     = ""
+  description = "Please pass this on command line and not as a value here"
+}
+
+variable "db_user_secret_arn" {
+  default     = ""
+  description = "Please pass this on command line and not as a value here"
+}
+
+variable "db_password_secret_arn" {
+  default     = ""
+  description = "Please pass this on command line and not as a value here"
+}
+
+variable "db_name_secret_arn" {
+  default     = ""
+  description = "Please pass this on command line and not as a value here"
+}
+
 ## S3 specific variables #########################################################################
 
 variable "file_bucket_name" {
@@ -205,4 +230,9 @@ variable "alert_email_address" {
 
 variable "victorops_url_endpoint" {
   default = ""
+}
+
+variable "deployer_ip_address" {
+  default = ""
+  description = "Programmatically determined and passed in at the command line"
 }

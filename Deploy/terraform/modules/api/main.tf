@@ -143,23 +143,31 @@ resource "aws_ecs_task_definition" "api" {
           "hostPort": ${var.ecs_task_definition_host_port}
         }
       ],
+      "environment" : [
+        {
+	  "name" : "AB2D_DB_HOST",
+	  "value" : "${var.db_host}"
+	},
+        {
+	  "name" : "AB2D_DB_PORT",
+	  "value" : "${var.db_port}"
+	},
+	{
+	  "name" : "AB2D_DB_USER",
+	  "value" : "${var.db_username}"
+	},
+	{
+	  "name" : "AB2D_DB_PASSWORD",
+	  "value" : "${var.db_password}"
+	},
+	{
+	  "name" : "AB2D_DB_DATABASE",
+	  "value" : "${var.db_name}"
+	}
+      ],
       "logConfiguration": {
         "logDriver": "syslog"
       },
-      "secretOptions": [
-        {
-          "name": "AB2D_DB_USER",
-          "valueFrom": "arn:aws:ssm:region:aws_account_id:parameter:parameter_name"
-        },
-        {
-          "name": "AB2D_DB_PASSWORD",
-          "valueFrom": "arn:aws:ssm:region:aws_account_id:parameter:parameter_name"
-        },
-        {
-          "name": "AB2D_DB_DATABASE",
-          "valueFrom": "arn:aws:ssm:region:aws_account_id:parameter:parameter_name"
-        }
-      ],
       "healthCheck": null
     }
   ]

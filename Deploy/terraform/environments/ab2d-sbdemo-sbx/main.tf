@@ -76,18 +76,17 @@ module "api" {
   gold_disk_name                = var.gold_image_name
   override_task_definition_arn  = var.current_task_definition_arn
   aws_account_number            = var.aws_account_number
-
-  # db_host                       = "${data.aws_db_instance.ab2d.endpoint}"
-  # db_username                   = var.db_username
-  # db_password                   = var.db_password
-  # db_name                       = var.db_name
-
-  db_host_secret_arn              = var.db_host_secret_arn
-  db_port_secret_arn              = var.db_port_secret_arn
-  db_user_secret_arn              = var.db_user_secret_arn
-  db_password_secret_arn          = var.db_password_secret_arn
-  db_name_secret_arn              = var.db_name_secret_arn
-
+  db_host                       = var.db_host
+  db_port                       = var.db_port
+  db_name                       = var.db_name
+  db_username                   = var.db_username
+  db_password                   = var.db_password  
+  db_host_secret_arn            = var.db_host_secret_arn
+  db_port_secret_arn            = var.db_port_secret_arn
+  db_user_secret_arn            = var.db_user_secret_arn
+  db_password_secret_arn        = var.db_password_secret_arn
+  db_name_secret_arn            = var.db_name_secret_arn
+  deployer_ip_address           = var.deployer_ip_address
 }
 
 # LSH SKIP FOR NOW BEGIN
@@ -122,6 +121,16 @@ module "worker" {
   beta                          = var.private_subnet_ids[1]
   ecs_cluster_id                = module.api.ecs_cluster_id  
   aws_account_number            = var.aws_account_number
+  db_host                       = var.db_host
+  db_port                       = var.db_port
+  db_name                       = var.db_name
+  db_username                   = var.db_username
+  db_password                   = var.db_password
+  db_host_secret_arn            = var.db_host_secret_arn
+  db_port_secret_arn            = var.db_port_secret_arn
+  db_user_secret_arn            = var.db_user_secret_arn
+  db_password_secret_arn        = var.db_password_secret_arn
+  db_name_secret_arn            = var.db_name_secret_arn
 }
 
 module "cloudwatch" {

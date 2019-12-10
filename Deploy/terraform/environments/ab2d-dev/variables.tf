@@ -161,6 +161,16 @@ variable "db_multi_az" {
   default = "false"
 }
 
+variable "db_host" {
+  default     = ""
+  description = "Please pass this on command line and not as a value here"
+}
+
+variable "db_port" {
+  default     = ""
+  description = "Please pass this on command line and not as a value here"
+}
+
 variable "db_username" {
   default     = ""
   description = "Please pass this on command line and not as a value here"
@@ -172,6 +182,31 @@ variable "db_password" {
 }
 
 variable "db_name" {
+  default     = ""
+  description = "Please pass this on command line and not as a value here"
+}
+
+variable "db_host_secret_arn" {
+  default     = ""
+  description = "Please pass this on command line and not as a value here"
+}
+
+variable "db_port_secret_arn" {
+  default     = ""
+  description = "Please pass this on command line and not as a value here"
+}
+
+variable "db_user_secret_arn" {
+  default     = ""
+  description = "Please pass this on command line and not as a value here"
+}
+
+variable "db_password_secret_arn" {
+  default     = ""
+  description = "Please pass this on command line and not as a value here"
+}
+
+variable "db_name_secret_arn" {
   default     = ""
   description = "Please pass this on command line and not as a value here"
 }
@@ -205,4 +240,9 @@ variable "alert_email_address" {
 
 variable "victorops_url_endpoint" {
   default = ""
+}
+
+variable "deployer_ip_address" {
+  default = ""
+  description = "Programmatically determined and passed in at the command line"
 }
