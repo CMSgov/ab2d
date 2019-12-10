@@ -7,7 +7,7 @@ import java.util.Optional;
 public interface ConsentConverterService {
 
     /**
-     * Given a line from a file, and its corresponding line number,
+     * Given a line from a file,
      * converts the string into a Consent object that can be persisted in the database.
      *
      * @param line

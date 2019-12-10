@@ -26,8 +26,9 @@ import static org.junit.Assert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @SpringBootTest
-class JobProcessingServiceTest {
+class JobProcessingServiceIntegrationTest {
     private Random random = new Random();
+
 
     @Autowired
     private JobProcessingService cut;
@@ -124,6 +125,7 @@ class JobProcessingServiceTest {
         job.setStatus(JobStatus.IN_PROGRESS);
         jobRepository.save(job);
 
+
         var processedJob = cut.processJob("S001");
 
         assertThat(processedJob.getStatus(), is(JobStatus.SUCCESSFUL));
@@ -131,6 +133,8 @@ class JobProcessingServiceTest {
         assertThat(processedJob.getExpiresAt(), notNullValue());
         assertThat(processedJob.getCompletedAt(), notNullValue());
     }
+
+
 
     private Sponsor createSponsor() {
         Sponsor sponsor = new Sponsor();
