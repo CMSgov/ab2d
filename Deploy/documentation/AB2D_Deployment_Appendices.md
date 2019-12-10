@@ -12,6 +12,8 @@
 1. [Appendix E: Interacting with IAM policy versions](#appendix-e-interacting-with-iam-policy-versions)
 1. [Appendix F: Interacting with Elastic Container Repository](#appendix-f-interacting-with-elastic-container-repository)
 1. [Appendix G: Generate and test the AB2D website](#appendix-g-generate-and-test-the-ab2d-website)
+1. [Appendix H: Get log file from an API container](#appendix-h-get-log-file-from-an-api-container)
+1. [Appendix I: Get log file from a worker container](#appendix-h-get-log-file-from-a-worker-container)
 
 ## Appendix A: Access the CMS AWS console
 
@@ -403,3 +405,84 @@
       - index.html
 
       - 404.html
+
+## Appendix H: Get log file from an API container
+
+> *** TO DO ***
+
+## Appendix I: Get log file from a worker container
+
+1. Set controller access variables
+
+   *Example for CMS development environment:*
+   
+   ```ShellSession
+   $ export TARGET_ENVIRONMENT=ab2d-shared
+   $ export CONTROLLER_PUBLIC_IP=3.225.165.219
+   $ export SSH_USER_NAME=ec2-user
+   ```
+   
+1. Connect to the controller
+
+   *Format:*
+   
+   ```ShellSession
+   $ ssh -i ~/.ssh/${TARGET_ENVIRONMENT}.pem ${SSH_USER_NAME}@${CONTROLLER_PUBLIC_IP}
+   ```
+
+1. Set worker variables
+
+   *Example for CMS development environment:*
+   
+   ```ShellSession
+   $ export TARGET_ENVIRONMENT=ab2d-shared
+   $ export WORKER_PRIVATE_IP=10.242.26.229
+   $ export SSH_USER_NAME=ec2-user
+   ```
+   
+1. Connect to a worker node
+
+   *Format:*
+
+   ```ShellSession
+   $ ssh -i ~/.ssh/${TARGET_ENVIRONMENT}.pem ${SSH_USER_NAME}@${WORKER_PRIVATE_IP}
+   ```
+
+1. Copy "messages" log to ec2-user home directory
+
+   ```ShellSession
+   $ sudo su
+   $ cp /var/log/messages /home/ec2-user
+   $ chown ec2-user:ec2-user /home/ec2-user/messages
+   $ exit
+   ```
+
+1. Log off worker node
+
+   ```ShellSession
+   $ logout
+   ```
+
+1. Copy messages file to the controller
+
+   ```ShellSession
+   $ scp -i ~/.ssh/${TARGET_ENVIRONMENT}.pem ${SSH_USER_NAME}@${WORKER_PRIVATE_IP}:~/messages .
+   ```
+
+1. Log off controller
+
+   ```ShellSession
+   $ logout
+   ```
+
+1. Copy messages file to development machine
+
+   ```ShellSession
+   $ scp -i ~/.ssh/${TARGET_ENVIRONMENT}.pem ${SSH_USER_NAME}@${CONTROLLER_PUBLIC_IP}:~/messages ~/Downloads
+   ```
+
+1. Note that the messages file from the remote node can now be found here
+
+   ```
+   ~/Downloads/messages
+   ```

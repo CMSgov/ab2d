@@ -3,7 +3,7 @@
 ## Table of Contents
 
 1. [Note the starting state of the customer AWS account](#note-the-starting-state-of-the-customer-aws-account)
-   * [Note dev and sbx components](#note-dev-and-sbx-components)
+   * [Note dev components](#note-dev-components)
    * [Note ignored components](#note-ignored-components)
 1. [Create an Administrators IAM group](#create-an-administrators-iam-group)
 1. [Create an AWS IAM user](#create-an-aws-iam-user)
@@ -31,9 +31,9 @@
 
 ## Note the starting state of the customer AWS account
 
-### Note dev and sbx components
+### Note dev components
 
-1. Note the dev and sbx VPC
+1. Note the dev VPC
 
    Tag     |VPC ID               |IPv4 CIDR Count|IPv4 CIDR #1  |IPv4 CIDR #2   
    --------|---------------------|---------------|--------------|---------------
@@ -47,7 +47,7 @@
    DNS resolution  |enable
    DNS hostnames   |disable
    
-1. Note the dev and sbx subnets
+1. Note the dev subnets
 
    Tag               |Subnet ID               |IPv4 CIDR       |Availability Zone
    ------------------|------------------------|----------------|-----------------
@@ -56,14 +56,14 @@
    ab2d-dev-public-a |subnet-0044ee15d254fe18b|10.242.5.128/27 |us-east-1a
    ab2d-dev-public-b |subnet-05c149659e3061ef6|10.242.5.160/27 |us-east-1b
 
-1. Note the dev and sbx public subnet attributes
+1. Note the dev public subnet attributes
 
    Public Subnet    |Attribute       |Value
    -----------------|----------------|--------
    ab2d-dev-public-a|Auto-assign IPv4|disabled
    ab2d-dev-public-b|Auto-assign IPv4|disabled
 
-1. Note the dev and sbx route tables
+1. Note the dev route tables
 
    Tag               |Route Table ID       |Main|Associated Subnet Count|Associalted Subnet #1   |Associalted Subnet #2
    ------------------|---------------------|----|-----------------------|------------------------|------------------------
@@ -72,7 +72,7 @@
    ab2d-dev-private-b|rtb-09c40213a10ea6406|No  |1                      |subnet-0118d0d6af946bd66|
    ab2d-dev-public   |rtb-090372c9ee83aa450|No  |2                      |subnet-05c149659e3061ef6|subnet-0044ee15d254fe18b
 
-1. Note the dev and sbx routes for "ab2d-dev-private-a"
+1. Note the dev routes for "ab2d-dev-private-a"
 
    Destination      |Target
    -----------------|-------------
@@ -86,7 +86,7 @@
    10.242.193.192/26|tgw-080644ad8f49ecafa
    10.244.96.0/19   |tgw-080644ad8f49ecafa
 
-1. Note the dev and sbx routes for "ab2d-dev-private-b"
+1. Note the dev routes for "ab2d-dev-private-b"
 
    Destination      |Target
    -----------------|-------------
@@ -100,7 +100,7 @@
    10.242.193.192/26|tgw-080644ad8f49ecafa
    10.244.96.0/19   |tgw-080644ad8f49ecafa
 
-1. Note the dev and sbx routes for "ab2d-dev-public"
+1. Note the dev routes for "ab2d-dev-public"
 
    Destination      |Target
    -----------------|-------------
@@ -108,52 +108,52 @@
    10.242.26.0/24   |local
    0.0.0.0/0        |igw-0014bff62a3c1211d
 
-1. Note the dev and sbx internet gateway
+1. Note the dev internet gateway
 
    Tag     |ID                   
    --------|---------------------
    ab2d-dev|igw-0014bff62a3c1211d
 
-1. Note the dev and sbx Elastic IPs
+1. Note the dev Elastic IPs
 
    Tag                   |Allocation ID             |Elastic IP   |Private IP  |Network Interface Availability Zone
    ----------------------|--------------------------|-------------|------------|-----------------------------------
    ab2d-dev-nat-gateway-a|eipalloc-0048cd31435409e20|54.208.106.70|10.242.5.158|us-east-1a
    ab2d-dev-nat-gateway-b|eipalloc-0fc6dbdc2a1e412ff|3.218.184.81 |10.242.5.187|us-east-1b
 
-1. Note the dev and sbx NAT gateways
+1. Note the dev NAT gateways
 
    Tag       |NAT Gateway ID       |Elastic IP Address|Private IP  |Network Interface Availability Zone
    ----------|---------------------|------------------|------------|-----------------------------------
    ab2d-dev-a|nat-060fbd5ddb57a2f18|54.208.106.70     |10.242.5.158|us-east-1a
    ab2d-dev-b|nat-0f4d22a3e997d73c2|3.218.184.81      |10.242.5.187|us-east-1b
 
-1. Note the Network ACLs
+1. Note the dev Network ACLs
 
    Tag |Network ACL ID       |Associated Subnet Count
    ----|---------------------|-----------------------
    None|acl-0eb267c6c0801f8c9|4
 
 
-1. Note the Security Groups
+1. Note the dev Security Groups
 
    Tag |Group ID            
    ----|--------------------
    None|sg-05752fb69a1a89f86
 
-1. Note the Transit Gateways
+1. Note the dev Transit Gateways
 
    Tag |Transit Gateway ID   |Owner account ID
    ----|---------------------|---------------------
    None|tgw-080644ad8f49ecafa|921617238787 (shared)
 
-1. Note the Transit Gateway Attachments
+1. Note the dev Transit Gateway Attachments
 
    Tag                        |Transit Gateway attachment ID|Transit Gateway owner ID|Resource owner account ID
    ---------------------------|-----------------------------|------------------------|-------------------------
    ab2d-dev-InterVPC-East-Prod|tgw-attach-06bf47fa39e5d1578 |921617238787 (shared)   |349849222861
 
-1. Note the Network Interfaces
+1. Note the dev Network Interfaces
 
    Tag |Network interface ID |IPv4 Public IP|Primary private IPv4 IP|Availability Zone|Description
    ----|---------------------|--------------|-----------------------|-----------------|-----------------------------------------------
