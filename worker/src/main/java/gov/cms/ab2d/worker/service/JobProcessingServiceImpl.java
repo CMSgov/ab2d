@@ -1,10 +1,12 @@
 package gov.cms.ab2d.worker.service;
 
+import gov.cms.ab2d.common.model.Consent;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.JobOutput;
 import gov.cms.ab2d.common.model.JobStatus;
 import gov.cms.ab2d.common.model.Sponsor;
+import gov.cms.ab2d.common.repository.ConsentRepository;
 import gov.cms.ab2d.common.repository.JobOutputRepository;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.worker.adapter.bluebutton.BeneficiaryAdapter;
@@ -19,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -49,6 +52,7 @@ public class JobProcessingServiceImpl implements JobProcessingService {
     private final JobOutputRepository jobOutputRepository;
     private final BeneficiaryAdapter beneficiaryAdapter;
     private final PatientClaimsProcessor patientClaimsProcessor;
+    private final ConsentRepository consentRepository;
 
 
     @Override
@@ -123,9 +127,13 @@ public class JobProcessingServiceImpl implements JobProcessingService {
 
         // A mutex lock that all threads for a contract uses while writing into the shared files
         var lock = new ReentrantLock();
-        var futureResourcesHandles = patients.stream()
-                .map(patient -> patientClaimsProcessor.process(patient.getPatientId(), lock, outputFile, errorFile))
+
+        final List<Future<Integer>> futureResourcesHandles = patients.stream()
+                .map(patient -> patient.getPatientId())
+                .filter(patientId -> !isOptOutPatient(patientId))
+                .map(patientId -> patientClaimsProcessor.process(patientId, lock, outputFile, errorFile))
                 .collect(Collectors.toList());
+
 
         int errorCount = processHandles(futureResourcesHandles);
         while (!futureResourcesHandles.isEmpty()) {
@@ -144,6 +152,21 @@ public class JobProcessingServiceImpl implements JobProcessingService {
         }
 
         return jobOutputs;
+    }
+
+    private boolean isOptOutPatient(String patientId) {
+
+        final List<Consent> consents = consentRepository.findByHicn(patientId);
+        if (consents.isEmpty()) {
+            // No opt-out record found for this patient - Opt-In by default.
+            return false;
+        }
+
+        // opt-out record has an effective date.
+        // if any of the opt-out records for a patient is effective as of today or earlier, the patient has opted-out
+        final LocalDate tomorrow = LocalDate.now().plusDays(1);
+        return consents.stream()
+                .anyMatch(consent -> consent.getEffectiveDate().isBefore(tomorrow));
     }
 
     private int processHandles(List<Future<Integer>> futureResourcesHandles) {
