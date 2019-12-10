@@ -1,9 +1,5 @@
 .travis.yml
-<<<<<<< HEAD
 (.*/)?authorized_keys
-=======
-(.*/)?/authorized_keys
->>>>>>> ab2d-498-regex-secrets-filter
 Deploy/documentation/Internal_Test_Environment_Appendices.md
 bfd/src/test/resources/bb-test-data/(.*/)?
 optout/src/test/resources/test-data/(.*/)?
