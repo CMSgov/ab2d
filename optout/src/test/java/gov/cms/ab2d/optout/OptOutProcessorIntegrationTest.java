@@ -2,6 +2,7 @@ package gov.cms.ab2d.optout;
 
 import gov.cms.ab2d.common.model.Consent;
 import gov.cms.ab2d.common.repository.ConsentRepository;
+import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.optout.gateway.S3Gateway;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
@@ -9,6 +10,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.transaction.annotation.Transactional;
+import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -24,6 +28,7 @@ import static org.mockito.Mockito.when;
 
 @Slf4j
 @SpringBootTest
+@Testcontainers
 class OptOutProcessorIntegrationTest {
 
     @MockBean
@@ -38,6 +43,8 @@ class OptOutProcessorIntegrationTest {
     @Autowired
     private OptOutProcessor cut;
 
+    @Container
+    public static PostgreSQLContainer postgreSQLContainer = AB2DPostgresqlContainer.getInstance();
 
     @Test
     @Transactional

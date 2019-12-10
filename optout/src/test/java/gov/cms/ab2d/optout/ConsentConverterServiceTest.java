@@ -1,9 +1,13 @@
 package gov.cms.ab2d.optout;
 
 import gov.cms.ab2d.common.model.Consent;
+import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.io.BufferedReader;
 import java.io.InputStream;
@@ -17,10 +21,13 @@ import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+@Testcontainers
 class ConsentConverterServiceTest {
 
     private ConsentConverterService cut;
 
+    @Container
+    public static PostgreSQLContainer postgreSQLContainer = AB2DPostgresqlContainer.getInstance();
 
     @BeforeEach
     void setUp() {
