@@ -20,6 +20,6 @@ public class AB2DPostgresqlContainer extends PostgreSQLContainer<AB2DPostgresqlC
 
     @Override
     public void stop() {
-        //super.stop();
+        // Don't call stop between shutdown for now
     }
 }
