@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 
 # Use this code snippet in your app.
-# If you need more information about configurations or implementing the sample code, visit the AWS docs:   
+# If you need more information about configurations or implementing the
+#   sample code, visit the AWS docs:
 # https://aws.amazon.com/developers/getting-started/python/
 
 # import base64
@@ -13,7 +14,8 @@ from botocore.exceptions import ClientError
 command_line_arguments_count = sys.argv.__len__() - 1
 if command_line_arguments_count != 3:
     print("Try running the script like so:")
-    print("./get-database-secret.py {environment} {database_user|database_password|database_name} {date_time}")
+    print("./get-database-secret.py {environment}"
+          + "{database_user|database_password|database_name} {date_time}")
     exit(1)
 
 # Eliminate double quotes from command line arguments
@@ -21,8 +23,9 @@ environment = sys.argv[1].replace('"', '')
 secret_item = sys.argv[2].replace('"', '')
 date_time = sys.argv[3].replace('"', '')
 
+
 def get_secret(environment, secret_item, date_time):
-    
+
     region_name = "us-east-1"
     kms_key_id = "alias/ab2d-kms"
 
@@ -30,9 +33,10 @@ def get_secret(environment, secret_item, date_time):
     if kms_key_status == 'Disabled':
         print('ERROR: Cannot get database secret because KMS key is disabled!')
         return ""
-    
-    secret_name = "ab2d/" + environment + "/module/db/" + secret_item + "/" + date_time    
-    secret_not_found = bool(False);
+
+    secret_name = "ab2d/" + environment + "/module/db/" \
+        + secret_item + "/" + date_time
+    secret_not_found = bool(False)
 
     # Create a Secrets Manager client
     session = boto3.session.Session()
@@ -41,8 +45,9 @@ def get_secret(environment, secret_item, date_time):
         region_name=region_name
     )
 
-    # In this sample we only handle the specific exceptions for the 'GetSecretValue' API.
-    # See https://docs.aws.amazon.com/secretsmanager/latest/apireference/API_GetSecretValue.html
+    # In this sample we only handle the specific exceptions for
+    #  the 'GetSecretValue' API.
+    # See https://tinyurl.com/yddkpedh
     # We rethrow the exception by default.
 
     try:
@@ -51,7 +56,8 @@ def get_secret(environment, secret_item, date_time):
         )
     except ClientError as e:
         if e.response['Error']['Code'] == 'DecryptionFailureException':
-            # Secrets Manager can't decrypt the protected secret text using the provided KMS key.
+            # Secrets Manager can't decrypt the protected secret text using
+            #   the provided KMS key.
             # Deal with the exception here, and/or rethrow at your discretion.
             raise e
         elif e.response['Error']['Code'] == 'InternalServiceErrorException':
@@ -63,7 +69,8 @@ def get_secret(environment, secret_item, date_time):
             # Deal with the exception here, and/or rethrow at your discretion.
             raise e
         elif e.response['Error']['Code'] == 'InvalidRequestException':
-            # You provided a parameter value that is not valid for the current state of the resource.
+            # You provided a parameter value that is not valid for the current
+            #   state of the resource.
             # Deal with the exception here, and/or rethrow at your discretion.
             raise e
         elif e.response['Error']['Code'] == 'ResourceNotFoundException':
@@ -73,16 +80,19 @@ def get_secret(environment, secret_item, date_time):
             secret_not_found = bool(True)
     else:
         # Decrypts secret using the associated KMS CMK.
-        # Depending on whether the secret is a string or binary, one of these fields will be populated.
+        # Depending on whether the secret is a string or binary, one of these
+        #   fields will be populated.
         if 'SecretString' in get_secret_value_response:
             secret = get_secret_value_response['SecretString']
         # else:
-        #     decoded_binary_secret = base64.b64decode(get_secret_value_response['SecretBinary'])
+        #     decoded_binary_secret \
+        #     = base64.b64decode(get_secret_value_response['SecretBinary'])
 
     if secret_not_found:
         return ""
     else:
         return secret
+
 
 def get_kms_status(region_name, kms_key_id):
 
@@ -91,11 +101,12 @@ def get_kms_status(region_name, kms_key_id):
         service_name='kms',
         region_name=region_name
     )
-    
+
     response = kms_client.describe_key(
         KeyId=kms_key_id
     )
 
     return response['KeyMetadata']['KeyState']
+
 
 print(get_secret(environment, secret_item, date_time))

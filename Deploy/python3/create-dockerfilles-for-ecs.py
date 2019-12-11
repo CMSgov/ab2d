@@ -3,6 +3,7 @@
 import yaml
 from pathlib import Path
 
+
 def create_dockerfile_for_ecs():
 
     root_path = Path('../generated')
@@ -29,6 +30,7 @@ def create_dockerfile_for_ecs():
     else:
         print('ERROR: docker-compose.xml file is missing!')
 
+
 def create_dockerfile(application, data_map, config_map, root_path):
     original_dockerfile = root_path / application / 'Dockerfile.original'
     generated_dockerfile = root_path / application / 'Dockerfile'
@@ -40,8 +42,9 @@ def create_dockerfile(application, data_map, config_map, root_path):
         try:
             test = config_parameters.index(environment_parameter)
             print(test)
-        except ValueError as exc:
-            print("ERROR: there is a new unknown parameter in the docker-compose.yml file!")
+        except ValueError:
+            print("ERROR: there is a new unknown parameter "
+                  + "in the docker-compose.yml file!")
         target_file = open(generated_dockerfile, 'w')
     with open(original_dockerfile) as source_file:
         count = 1
@@ -52,11 +55,13 @@ def create_dockerfile(application, data_map, config_map, root_path):
                 for i in config_parameters:
                     target_file.write('ARG ' + i.lower() + '_arg\n')
                 for i in config_parameters:
-                    target_file.write('ENV ' + i + '=$' + i.lower() + '_arg\n')                
+                    target_file.write('ENV ' + i + '=$'
+                                      + i.lower() + '_arg\n')
             else:
                 target_file.write(line)
             count += 1
     target_file.close()
     source_file.close()
-    
+
+
 create_dockerfile_for_ecs()
