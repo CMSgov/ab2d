@@ -9,7 +9,6 @@
 1. [Appendix E: Verify EFS mounting on worker node](#appendix-e-verify-efs-mounting-on-worker-node)
 1. [Appendix F: Verify PostgreSQL](#appendix-f-verify-postgresql)
 1. [Appendix G: Note the product code for CentOS 7 AMI](#appendix-g-note-the-product-code-for-centos-7-ami)
-1. [Appendix H: Do a linting check of the terraform files](#appendix-h-do-a-linting-check-of-the-terraform-files)
 1. [Appendix I: Configure the controller to test docker containers](#appendix-i-configure-the-controller-to-test-docker-containers)
 1. [Appendix J: Manual create of AWS Elastic Container Registry repositories for images](#appendix-j-manual-create-of-aws-elastic-container-registry-repositories-for-images)
 1. [Appendix K: Manually create an ECS cluster](#appendix-k-manually-create-an-ecs-cluster)
@@ -419,20 +418,6 @@
 
    ```
    aw0evgkw8e5c1q413zgy5pjce
-   ```
-
-## Appendix H: Do a linting check of the terraform files
-
-1. Change to the "Deploy" directory
-
-   ```ShellSession
-   $ cd ~/code/ab2d/Deploy
-   ```
-
-1. Do a linting check
-
-   ```ShellSession
-   $ ./bash/tflint-check.sh
    ```
    
 ## Appendix I: Configure the controller to test docker containers

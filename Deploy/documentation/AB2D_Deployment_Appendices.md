@@ -15,6 +15,9 @@
 1. [Appendix H: Get log file from an API container](#appendix-h-get-log-file-from-an-api-container)
 1. [Appendix I: Get log file from a worker container](#appendix-h-get-log-file-from-a-worker-container)
 1. [Appendix J: Delete and recreate database](#appendix-j-delete-and-recreate-database)
+1. [Appendix K: Complete DevOps linting checks](#appendix-k-complete-devops-linting-checks)
+   * [Complete terraform linting](#complete-terraform-linting)
+   * [Complete python linting](#complete-python-linting)
 
 ## Appendix A: Access the CMS AWS console
 
@@ -556,4 +559,40 @@
 
    ```ShellSession
    $ createdb ${TARGET_DB_NAME} --host ${DB_HOST} --username ${DB_USER}
+   ```
+
+## Appendix K: Complete DevOps linting checks
+
+### Complete terraform linting
+
+1. Change to the "Deploy" directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d/Deploy
+   ```
+
+1. Do a linting check
+
+   ```ShellSession
+   $ ./bash/tflint-check.sh
+   ```
+
+### Complete python linting
+
+1. Change to the "Deploy" directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d/Deploy
+   ```
+
+1. Do a linting check
+
+   ```ShellSession
+   $ flake8 ./python3 > ~/Downloads/python3-linting.txt
+   ```
+
+1. Open the "python3-linting.txt" file and resolve any issues listed
+
+   ```ShellSession
+   $ vim ~/Downloads/python3-linting.txt
    ```
