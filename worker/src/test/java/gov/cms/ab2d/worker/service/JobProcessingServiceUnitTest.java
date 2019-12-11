@@ -9,6 +9,7 @@ import gov.cms.ab2d.common.model.User;
 import gov.cms.ab2d.common.repository.ConsentRepository;
 import gov.cms.ab2d.common.repository.JobOutputRepository;
 import gov.cms.ab2d.common.repository.JobRepository;
+import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.worker.adapter.bluebutton.BeneficiaryAdapter;
 import gov.cms.ab2d.worker.adapter.bluebutton.GetPatientsByContractResponse;
 import gov.cms.ab2d.worker.adapter.bluebutton.GetPatientsByContractResponse.PatientDTO;
@@ -22,6 +23,9 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.scheduling.annotation.AsyncResult;
+import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -45,6 +49,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
+@Testcontainers
 class JobProcessingServiceUnitTest {
     private Random random = new Random();
 
@@ -54,6 +59,9 @@ class JobProcessingServiceUnitTest {
     @Mock JobOutputRepository jobOutputRepository;
     @Mock BeneficiaryAdapter beneficiaryAdapter;
     @Mock PatientClaimsProcessor patientClaimsProcessor;
+
+    @Container
+    private static final PostgreSQLContainer postgreSQLContainer= new AB2DPostgresqlContainer();
 
     private Sponsor sponsor;
     private User user;

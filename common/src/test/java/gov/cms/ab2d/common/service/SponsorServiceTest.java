@@ -5,21 +5,24 @@ import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.Sponsor;
 import gov.cms.ab2d.common.repository.SponsorRepository;
 import gov.cms.ab2d.common.repository.UserRepository;
+import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
+import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.time.OffsetDateTime;
 import java.util.Optional;
 
-@RunWith(SpringRunner.class)
 @SpringBootTest(classes = SpringBootApp.class)
 @TestPropertySource(locations = "/application.common.properties")
+@Testcontainers
 public class SponsorServiceTest {
 
     @Autowired
@@ -34,7 +37,10 @@ public class SponsorServiceTest {
     @Autowired
     private UserRepository userRepository;
 
-    @Before
+    @Container
+    private static final PostgreSQLContainer postgreSQLContainer= new AB2DPostgresqlContainer();
+
+    @BeforeEach
     public void cleanup() {
         userRepository.deleteAll();
         sponsorRepository.deleteAll();
