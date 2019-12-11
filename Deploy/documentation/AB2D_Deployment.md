@@ -618,21 +618,13 @@
    ```ShellSession
    $ cd ~/code/ab2d/Deploy
    ```
-
-1. Set the target VPC ID
-
-   *Format:*
-   
-   ```ShellSession
-   $ export VPC_ID={vpc id}
-   ```
    
 1. If creating the AWS environment for Dev, do one of the following
 
    *Deploy Dev by creating new api and worker images:*
 
    ```ShellSession
-   $ ./ab2d-deploy.sh \
+   $ ./deploy-ab2d-to-cms.sh \
      --environment=dev \
      --shared-environment=shared \
      --vpc-id=vpc-0c6413ec40c5fdac3 \
@@ -647,7 +639,7 @@
    *Deploy Dev by using the latest existing api and worker images:*
 
    ```ShellSession
-   $ ./ab2d-deploy.sh \
+   $ ./deploy-ab2d-to-cms.sh \
      --environment=dev \
      --shared-environment=shared \
      --vpc-id=vpc-0c6413ec40c5fdac3 \
@@ -664,7 +656,7 @@
    *Deploy Sandbox by creating new api and worker images:*
 
    ```ShellSession
-   $ ./ab2d-deploy.sh \
+   $ ./deploy-ab2d-to-cms.sh \
      --environment=sbx \
      --shared-environment=shared \
      --vpc-id=vpc-0c6413ec40c5fdac3 \
@@ -679,7 +671,7 @@
    *Deploy Sandbox by using the latest existing api and worker images:*
 
    ```ShellSession
-   $ ./ab2d-deploy.sh \
+   $ ./deploy-ab2d-to-cms.sh \
      --environment=sbx \
      --shared-environment=shared \
      --vpc-id=vpc-0c6413ec40c5fdac3 \
