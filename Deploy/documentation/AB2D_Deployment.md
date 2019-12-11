@@ -1551,4 +1551,48 @@
 
 1. Wait for the download to complete
 
-> *** TO DO ***
+1. Open the downloaded form
+
+   ```
+   Internet DNS Change Request (2).pdf
+   ```
+
+1. Fill out the form as follows
+
+   *Requestor Information:*
+
+   - **Name:** {product owner first name} {product owner last name}
+
+   - **Organization:** {product owner organization}
+
+   - **Email:** {product owner email}
+
+   - **Phone:** {product owner phone}
+
+   *CMS Business Owner Information*
+
+   - **Name:** {business owner first name} {business owner last name}
+
+   - **Organization:** {business owner organization}
+
+   - **Email:** {business owner email}
+
+   - **Phone:** {business owner phone}
+
+   - **Reason:** To support data sharing with PDP sponsor.  This static webpage will provide information for the PDP sponsors.
+
+   *DNS Change Information*
+
+   - **DNS Zone:** cms.gov
+
+   - **Type of change:** CNAME
+
+   - **Actual Change:** ab2d.cms.gov CNAME {unique id}.cloudfront.net
+
+   - **Change Date & Time:** ASAP
+
+   - **Purpose of the change:** Initial launch of new informational page for AB2D API
+
+1. Submit the completed for to the product owner
+
+1. Note that the product owner will complete the process
