@@ -28,6 +28,9 @@
    * [Create CloudFront distribution](#create-cloudfront-distribution)
    * [Determine how to integrate cms.gov Route 53 with AB2D CloudFront distribution](#determine-how-to-integrate-cmsgov-route-53-with-ab2d-cloudfront-distribution)
    * [Submit an "Internet DNS Change Request Form" to product owner](#submit-an-internet-dns-change-request-form-to-product-owner)
+1. [Configure New Relic](#configure-new-relic)
+   * [Inventory the New Relic installation included with Gold Disk](#inventory-the-new-relic-installation-included-with-gold-disk)
+   * [Configure the New Relic Infrastructure agent](#configure-the-new-relic-infrastructure-agent)
 
 ## Note the starting state of the customer AWS account
 
@@ -1596,3 +1599,139 @@
 1. Submit the completed for to the product owner
 
 1. Note that the product owner will complete the process
+
+## Configure New Relic
+
+### Inventory the New Relic installation included with Gold Disk
+
+1. Inventory New Relic files
+
+   *New Relic configuration file*
+   
+   ```
+   /etc/newrelic-infra.yml <--- need to configure license
+   ```
+   
+   *New Relic infrastrucure agent*
+   
+   ```
+   /etc/systemd/system/newrelic-infra.service
+   /etc/systemd/system/multi-user.target.wants/newrelic-infra.service
+   /usr/bin/newrelic-infra
+   /usr/bin/newrelic-infra-ctl
+   /usr/bin/newrelic-infra-service
+   ```
+   
+   *New Relic user*
+   
+   ```
+   /home/newrelic <--- empty directory
+   /var/spool/mail/newrelic
+   ```
+   
+   *New Relic opt directory*
+   
+   ```
+   /opt/newrelic <--- empty directory
+   ```
+   
+   *New Relic log directory*
+   
+   ```
+   /var/log/newrelic-infra <--- empty directory
+   ```
+   
+   *New Relic integrations*
+   
+   ```
+   /etc/newrelic-infra/integrations.d
+   /var/db/newrelic-infra/LICENSE.txt
+   /var/db/newrelic-infra/custom-integrations
+   /var/db/newrelic-infra/integrations.d
+   /var/db/newrelic-infra/newrelic-integrations
+   ```
+   
+   *New Relic yum repo, cache, and gpg*
+   
+   ```
+   /etc/yum.repos.d/newrelic-infra.repo
+   /var/cache/yum/x86_64/7Server/newrelic-infra
+   /var/cache/yum/x86_64/7Server/newrelic-infra/cachecookie
+   /var/cache/yum/x86_64/7Server/newrelic-infra/gen
+   /var/cache/yum/x86_64/7Server/newrelic-infra/packages
+   /var/cache/yum/x86_64/7Server/newrelic-infra/primary.sqlite.bz2
+   /var/cache/yum/x86_64/7Server/newrelic-infra/repomd.xml
+   /var/cache/yum/x86_64/7Server/newrelic-infra/repomd.xml.asc
+   /var/cache/yum/x86_64/7Server/newrelic-infra/gen/filelists_db.sqlite
+   /var/cache/yum/x86_64/7Server/newrelic-infra/gen/other_db.sqlite
+   /var/cache/yum/x86_64/7Server/newrelic-infra/gen/primary_db.sqlite
+   /var/lib/yum/repos/x86_64/7Server/newrelic-infra
+   /var/lib/yum/repos/x86_64/7Server/newrelic-infra/gpgdir
+   /var/lib/yum/repos/x86_64/7Server/newrelic-infra/gpgdir-ro
+   /var/lib/yum/repos/x86_64/7Server/newrelic-infra/gpgdir/gpg.conf
+   /var/lib/yum/repos/x86_64/7Server/newrelic-infra/gpgdir/pubring.gpg
+   /var/lib/yum/repos/x86_64/7Server/newrelic-infra/gpgdir/pubring.gpg~
+   /var/lib/yum/repos/x86_64/7Server/newrelic-infra/gpgdir/secring.gpg
+   /var/lib/yum/repos/x86_64/7Server/newrelic-infra/gpgdir/trustdb.gpg
+   /var/lib/yum/repos/x86_64/7Server/newrelic-infra/gpgdir-ro/gpg.conf
+   /var/lib/yum/repos/x86_64/7Server/newrelic-infra/gpgdir-ro/pubring.gpg
+   /var/lib/yum/repos/x86_64/7Server/newrelic-infra/gpgdir-ro/pubring.gpg~
+   /var/lib/yum/repos/x86_64/7Server/newrelic-infra/gpgdir-ro/secring.gpg
+   /var/lib/yum/repos/x86_64/7Server/newrelic-infra/gpgdir-ro/trustdb.gpg
+   ```
+
+1. Note the initial state of New Relic
+
+   1. Check the status of the New Relic infrastructure agent
+
+      ```ShellSession
+      $ sudo systemctl status newrelic-infra
+      ```
+
+   1. Note the output
+
+      ```
+      newrelic-infra.service - New Relic Infrastructure Agent
+       Loaded: loaded (/etc/systemd/system/newrelic-infra.service; enabled; vendor preset: disabled)
+       Active: activating (auto-restart) (Result: exit-code) since Wed 2019-12-11 17:48:28 EST; 3s ago
+       Process: 11823 ExecStart=/usr/bin/newrelic-infra-service (code=exited, status=2)
+      Main PID: 11823 (code=exited, status=2)
+      ```
+
+   1. Note the following from the system log "/var/log/messages"
+
+      ```
+      Dec 11 17:53:52 ip-10-242-26-192 newrelic-infra-service: time="2019-12-11T17:53:52-05:00" level=error
+      msg="can't load configuration file" component="New Relic Infrastructure Agent" error="no license key,
+      please add it to agent's config file or NRIA_LICENSE_KEY environment variable"
+      ```
+   
+   1. Note that New Relic keeps stopping and starting because there is no license key configured
+      
+### Configure the New Relic Infrastructure agent
+
+> *** TO DO ***
+
+1. Check the status of the New Relic infrastructure agent
+
+   ```ShellSession
+   $ sudo systemctl status newrelic-infra
+   ```
+
+1. Stop the New Relic infrastructure agent
+
+   ```ShellSession
+   $ sudo systemctl stop newrelic-infra
+   ```
+
+1. Start the New Relic infrastructure agent
+
+   ```ShellSession
+   $ sudo systemctl start newrelic-infra
+   ```
+
+1. Restart the New Relic infrastructure agent
+
+   ```ShellSession
+   $ sudo systemctl restart newrelic-infra
+   ```
