@@ -9,11 +9,16 @@ import gov.cms.ab2d.common.repository.ContractRepository;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.common.repository.SponsorRepository;
 import gov.cms.ab2d.common.repository.UserRepository;
+import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+
+import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.io.IOException;
 import java.time.OffsetDateTime;
@@ -26,11 +31,12 @@ import static org.junit.Assert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @SpringBootTest
-class JobProcessingServiceTest {
+@Testcontainers
+class JobProcessingServiceIntegrationTest {
     private Random random = new Random();
 
     @Autowired
-    private JobProcessingService cut;
+    private JobProcessingService jobProcessingService;
 
     @Autowired
     private JobRepository jobRepository;
@@ -44,6 +50,9 @@ class JobProcessingServiceTest {
     private Sponsor sponsor;
     private User user;
     private Job job;
+
+    @Container
+    private static final PostgreSQLContainer postgreSQLContainer= new AB2DPostgresqlContainer();
 
     @BeforeEach
     void setUp() {
@@ -60,7 +69,7 @@ class JobProcessingServiceTest {
     @Test
     @DisplayName("When a job is in submitted status, it can be put into progress upon starting processing")
     void whenJobIsInSubmittedStatus_ThenJobShouldBePutInProgress() {
-        var processedJob = cut.putJobInProgress("S001");
+        var processedJob = jobProcessingService.putJobInProgress("S001");
         assertThat(processedJob.getStatus(), is(JobStatus.IN_PROGRESS));
     }
 
@@ -68,7 +77,7 @@ class JobProcessingServiceTest {
     @DisplayName("When a job is in submitted status, it can be put into progress upon starting processing")
     void putNonExistentJobInProgress() {
         var exceptionThrown = assertThrows(IllegalArgumentException.class,() ->
-                cut.putJobInProgress("NonExistent"));
+                jobProcessingService.putJobInProgress("NonExistent"));
         assertThat(exceptionThrown.getMessage(), is("Job NonExistent was not found"));
     }
 
@@ -79,7 +88,7 @@ class JobProcessingServiceTest {
         jobRepository.save(job);
 
         var exceptionThrown = assertThrows(IllegalArgumentException.class,
-                () -> cut.putJobInProgress("S001"));
+                () -> jobProcessingService.putJobInProgress("S001"));
 
         assertThat(exceptionThrown.getMessage(), is("Job S001 is not in SUBMITTED status."));
     }
@@ -87,13 +96,13 @@ class JobProcessingServiceTest {
 
     @Test
     @DisplayName("When a job is in submitted status, it can be processed")
-    void processJob() throws IOException {
+    void processJob() {
 
         job.setStatus(JobStatus.IN_PROGRESS);
         jobRepository.save(job);
         createContract(sponsor);
 
-        var processedJob = cut.processJob("S001");
+        var processedJob = jobProcessingService.processJob("S001");
 
         assertThat(processedJob.getStatus(), is(JobStatus.SUCCESSFUL));
         assertThat(processedJob.getStatusMessage(), is("100%"));
@@ -124,13 +133,15 @@ class JobProcessingServiceTest {
         job.setStatus(JobStatus.IN_PROGRESS);
         jobRepository.save(job);
 
-        var processedJob = cut.processJob("S001");
+        var processedJob = jobProcessingService.processJob("S001");
 
         assertThat(processedJob.getStatus(), is(JobStatus.SUCCESSFUL));
         assertThat(processedJob.getStatusMessage(), is("100%"));
         assertThat(processedJob.getExpiresAt(), notNullValue());
         assertThat(processedJob.getCompletedAt(), notNullValue());
     }
+
+
 
     private Sponsor createSponsor() {
         Sponsor sponsor = new Sponsor();
@@ -172,6 +183,4 @@ class JobProcessingServiceTest {
         job.setCreatedAt(OffsetDateTime.now());
         return jobRepository.save(job);
     }
-
-
 }
