@@ -14,6 +14,7 @@
 1. [Appendix G: Generate and test the AB2D website](#appendix-g-generate-and-test-the-ab2d-website)
 1. [Appendix H: Get log file from an API container](#appendix-h-get-log-file-from-an-api-container)
 1. [Appendix I: Get log file from a worker container](#appendix-h-get-log-file-from-a-worker-container)
+1. [Appendix J: Delete and recreate database](#appendix-j-delete-and-recreate-database)
 
 ## Appendix A: Access the CMS AWS console
 
@@ -412,6 +413,12 @@
 
 ## Appendix I: Get log file from a worker container
 
+1. Set the target AWS profile
+
+   ```ShellSession
+   $ export AWS_PROFILE=ab2d-shared
+   ```
+   
 1. Set controller access variables
 
    *Example for CMS development environment:*
@@ -485,4 +492,68 @@
 
    ```
    ~/Downloads/messages
+   ```
+
+## Appendix J: Delete and recreate database
+
+1. Set the target AWS profile
+
+   ```ShellSession
+   $ export AWS_PROFILE=ab2d-shared
+   ```
+
+1. Set controller access variables
+
+   *Example for CMS development environment:*
+   
+   ```ShellSession
+   $ export TARGET_ENVIRONMENT=ab2d-shared
+   $ CONTROLLER_PUBLIC_IP=$(aws --region us-east-1 ec2 describe-instances \
+     --filters "Name=tag:Name,Values=ab2d-deployment-controller" \
+     --query="Reservations[*].Instances[?State.Name == 'running'].PublicIpAddress" \
+     --output text)
+   $ export SSH_USER_NAME=ec2-user
+   ```
+   
+1. Connect to the controller
+
+   *Format:*
+   
+   ```ShellSession
+   $ ssh -i ~/.ssh/${TARGET_ENVIRONMENT}.pem ${SSH_USER_NAME}@${CONTROLLER_PUBLIC_IP}
+   ```
+
+1. Set target DB environment variables
+
+   *Format:*
+   
+   ```ShellSession
+   $ export MAIN_DB_NAME=postgres
+   $ export TARGET_DB_NAME={target database name}
+   $ export DB_HOST={database host}
+   $ export DB_USER={database user}
+   ```
+
+1. Terminate all connections
+
+   ```ShellSession
+   $ psql --host  "${DB_HOST}" \
+       --username "${DB_USER}" \
+       --dbname "${MAIN_DB_NAME}" \
+       --command "SELECT pg_terminate_backend(pg_stat_activity.pid) \
+         FROM pg_stat_activity \
+         WHERE pg_stat_activity.datname = '${TARGET_DB_NAME}' \
+         AND pid <> pg_backend_pid();"
+   ```
+
+1. Delete the database
+
+   ```ShellSession
+   $ dropdb ${TARGET_DB_NAME} --host ${DB_HOST} --username ${DB_USER}
+   ```
+
+1. Create database
+
+   ```ShellSession
+   $ createdb ${TARGET_DB_NAME} --host ${DB_HOST} --username ${DB_USER}
    ```
