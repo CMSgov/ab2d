@@ -13,7 +13,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.UncheckedIOException;
 import java.util.Optional;
 
@@ -33,9 +32,9 @@ public class OptOutProcessorImpl implements OptOutProcessor {
     @Transactional
     public void process() {
 
-        final InputStreamReader inputStreamReader = s3Gateway.getOptOutFile();
-
-        try (var bufferedReader = new BufferedReader(inputStreamReader)) {
+        try (var inputStreamReader = s3Gateway.getOptOutFile();
+             var bufferedReader = new BufferedReader(inputStreamReader)
+        ) {
             importOptOutRecords(bufferedReader);
         } catch (IOException e) {
             throw new UncheckedIOException(e);
