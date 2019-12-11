@@ -1,12 +1,12 @@
 package gov.cms.ab2d.worker.service;
 
-import gov.cms.ab2d.common.model.Consent;
+import gov.cms.ab2d.common.model.OptOut;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.JobOutput;
 import gov.cms.ab2d.common.model.JobStatus;
 import gov.cms.ab2d.common.model.Sponsor;
-import gov.cms.ab2d.common.repository.ConsentRepository;
+import gov.cms.ab2d.common.repository.OptOutRepository;
 import gov.cms.ab2d.common.repository.JobOutputRepository;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.worker.adapter.bluebutton.BeneficiaryAdapter;
@@ -52,7 +52,7 @@ public class JobProcessingServiceImpl implements JobProcessingService {
     private final JobOutputRepository jobOutputRepository;
     private final BeneficiaryAdapter beneficiaryAdapter;
     private final PatientClaimsProcessor patientClaimsProcessor;
-    private final ConsentRepository consentRepository;
+    private final OptOutRepository optOutRepository;
 
 
     @Override
@@ -156,8 +156,8 @@ public class JobProcessingServiceImpl implements JobProcessingService {
 
     private boolean isOptOutPatient(String patientId) {
 
-        final List<Consent> consents = consentRepository.findByHicn(patientId);
-        if (consents.isEmpty()) {
+        final List<OptOut> optOuts = optOutRepository.findByHicn(patientId);
+        if (optOuts.isEmpty()) {
             // No opt-out record found for this patient - Opt-In by default.
             return false;
         }
@@ -165,7 +165,7 @@ public class JobProcessingServiceImpl implements JobProcessingService {
         // opt-out record has an effective date.
         // if any of the opt-out records for a patient is effective as of today or earlier, the patient has opted-out
         final LocalDate tomorrow = LocalDate.now().plusDays(1);
-        return consents.stream()
+        return optOuts.stream()
                 .anyMatch(consent -> consent.getEffectiveDate().isBefore(tomorrow));
     }
 

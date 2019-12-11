@@ -1,12 +1,12 @@
 package gov.cms.ab2d.worker.service;
 
-import gov.cms.ab2d.common.model.Consent;
+import gov.cms.ab2d.common.model.OptOut;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.JobStatus;
 import gov.cms.ab2d.common.model.Sponsor;
 import gov.cms.ab2d.common.model.User;
-import gov.cms.ab2d.common.repository.ConsentRepository;
+import gov.cms.ab2d.common.repository.OptOutRepository;
 import gov.cms.ab2d.common.repository.JobOutputRepository;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
@@ -55,7 +55,8 @@ class JobProcessingServiceUnitTest {
 
     @Mock FileService fileService;
     @Mock JobRepository jobRepository;
-    @Mock ConsentRepository consentRepository;
+    @Mock
+    OptOutRepository optOutRepository;
     @Mock JobOutputRepository jobOutputRepository;
     @Mock BeneficiaryAdapter beneficiaryAdapter;
     @Mock PatientClaimsProcessor patientClaimsProcessor;
@@ -77,7 +78,7 @@ class JobProcessingServiceUnitTest {
                 jobOutputRepository,
                 beneficiaryAdapter,
                 patientClaimsProcessor,
-                consentRepository
+                optOutRepository
         );
 
         sponsor = createSponsor();
@@ -195,11 +196,11 @@ class JobProcessingServiceUnitTest {
                 .thenReturn(efsMountTmpDir)
                 .thenReturn(efsMountTmpDir);
 
-        final List<Consent> consents = getConsents(patientsByContract);
-        when(consentRepository.findByHicn(anyString()))
-                .thenReturn(Arrays.asList(consents.get(0)))
-                .thenReturn(Arrays.asList(consents.get(1)))
-                .thenReturn(Arrays.asList(consents.get(2)));
+        final List<OptOut> optOuts = getConsents(patientsByContract);
+        when(optOutRepository.findByHicn(anyString()))
+                .thenReturn(Arrays.asList(optOuts.get(0)))
+                .thenReturn(Arrays.asList(optOuts.get(1)))
+                .thenReturn(Arrays.asList(optOuts.get(2)));
 
         var processedJob = cut.processJob("S001");
 
@@ -212,18 +213,18 @@ class JobProcessingServiceUnitTest {
         verify(patientClaimsProcessor, never()).process(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any());
     }
 
-    private List<Consent> getConsents(GetPatientsByContractResponse patientsByContract) {
+    private List<OptOut> getConsents(GetPatientsByContractResponse patientsByContract) {
         return patientsByContract.getPatients()
                 .stream().map(p -> p.getPatientId())
                 .map(patientId ->  createConsent(patientId))
                 .collect(Collectors.toList());
     }
 
-    private Consent createConsent(String p) {
-        Consent consent = new Consent();
-        consent.setHicn(p);
-        consent.setEffectiveDate(LocalDate.now().minusDays(10));
-        return consent;
+    private OptOut createConsent(String p) {
+        OptOut optOut = new OptOut();
+        optOut.setHicn(p);
+        optOut.setEffectiveDate(LocalDate.now().minusDays(10));
+        return optOut;
     }
 
 

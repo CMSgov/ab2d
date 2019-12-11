@@ -1,14 +1,14 @@
 package gov.cms.ab2d.common.repository;
 
 
-import gov.cms.ab2d.common.model.Consent;
+import gov.cms.ab2d.common.model.OptOut;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
 @Repository
-public interface ConsentRepository extends JpaRepository<Consent, Long> {
+public interface OptOutRepository extends JpaRepository<OptOut, Long> {
 
-    List<Consent> findByHicn(String hicn);
+    List<OptOut> findByHicn(String hicn);
 }

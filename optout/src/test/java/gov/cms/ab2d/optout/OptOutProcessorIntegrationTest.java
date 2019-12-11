@@ -1,8 +1,8 @@
 package gov.cms.ab2d.optout;
 
-import gov.cms.ab2d.common.model.Consent;
-import gov.cms.ab2d.common.repository.ConsentRepository;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
+import gov.cms.ab2d.common.model.OptOut;
+import gov.cms.ab2d.common.repository.OptOutRepository;
 import gov.cms.ab2d.optout.gateway.S3Gateway;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
@@ -35,7 +35,10 @@ class OptOutProcessorIntegrationTest {
     private S3Gateway mockS3Gateway;
 
     @Autowired
-    private ConsentRepository consentRepo;
+    private OptOutRepository consentRepo;
+
+    @Autowired
+    private OptOutConverterService consentConverterSvc;
 
     @Autowired
     private OptOutProcessor cut;
@@ -53,20 +56,20 @@ class OptOutProcessorIntegrationTest {
 
         when(mockS3Gateway.getOptOutFile()).thenReturn(isr);
 
-        final List<Consent> consentRowsBeforeProcessing = consentRepo.findAll();
+        final List<OptOut> optOutRowsBeforeProcessing = consentRepo.findAll();
         cut.process();
-        final List<Consent> consentRowsAfterProcessing = consentRepo.findAll();
+        final List<OptOut> optOutRowsAfterProcessing = consentRepo.findAll();
 
-        assertThat(consentRowsBeforeProcessing, is(empty()));
-        assertThat(consentRowsAfterProcessing, is(not(empty())));
-        assertThat(consentRowsAfterProcessing.size(), is(9));
+        assertThat(optOutRowsBeforeProcessing, is(empty()));
+        assertThat(optOutRowsAfterProcessing, is(not(empty())));
+        assertThat(optOutRowsAfterProcessing.size(), is(9));
 
-        final Consent consent = consentRepo.findByHicn("1000011403").get(0);
-        assertThat(consent.getPolicyCode(), is("OPTOUT"));
-        assertThat(consent.getPurposeCode(), is("TREAT"));
-        assertThat(consent.getScopeCode(), is("patient-privacy"));
-        assertThat(consent.getLoIncCode(), is("64292-6"));
-        assertThat(consent.getEffectiveDate(), is(LocalDate.of(2019,10,24)));
+        final OptOut optOut = consentRepo.findByHicn("1000011403").get(0);
+        assertThat(optOut.getPolicyCode(), is("OPTOUT"));
+        assertThat(optOut.getPurposeCode(), is("TREAT"));
+        assertThat(optOut.getScopeCode(), is("patient-privacy"));
+        assertThat(optOut.getLoIncCode(), is("64292-6"));
+        assertThat(optOut.getEffectiveDate(), is(LocalDate.of(2019,10,24)));
 
         verify(mockS3Gateway).getOptOutFile();
     }

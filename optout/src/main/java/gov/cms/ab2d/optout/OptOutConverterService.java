@@ -1,10 +1,10 @@
 package gov.cms.ab2d.optout;
 
-import gov.cms.ab2d.common.model.Consent;
+import gov.cms.ab2d.common.model.OptOut;
 
 import java.util.Optional;
 
-public interface ConsentConverterService {
+public interface OptOutConverterService {
 
     /**
      * Given a line from a file,
@@ -14,5 +14,5 @@ public interface ConsentConverterService {
      *
      * @return (optional) Consent
      */
-    Optional<Consent> convert(String line);
+    Optional<OptOut> convert(String line);
 }

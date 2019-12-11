@@ -1,7 +1,7 @@
 package gov.cms.ab2d.optout;
 
-import gov.cms.ab2d.common.model.Consent;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
+import gov.cms.ab2d.common.model.OptOut;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -22,23 +22,23 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @Testcontainers
-class ConsentConverterServiceTest {
+class OptOutConverterServiceTest {
 
-    private ConsentConverterService cut;
+    private OptOutConverterService cut;
 
     @Container
     private static final PostgreSQLContainer postgreSQLContainer= new AB2DPostgresqlContainer();
 
     @BeforeEach
     void setUp() {
-        cut = new ConsentConverterServiceImpl();
+        cut = new OptOutConverterServiceImpl();
     }
 
 
     @Test
     @DisplayName("when header, should skip line and not create a consent record")
     void whenHeader_shouldNotCreateConsent() {
-        final Optional<Consent> optConsent = cut.convert("HDR_BENEDATASHR20191029");
+        final Optional<OptOut> optConsent = cut.convert("HDR_BENEDATASHR20191029");
         assertTrue(optConsent.isEmpty());
     }
 
@@ -46,7 +46,7 @@ class ConsentConverterServiceTest {
     @Test
     @DisplayName("when trailer, should skip line and not create a consent record")
     void whenTrailer_shouldNotCreateConsent() {
-        final Optional<Consent> optConsent = cut.convert("TRL_BENEDATASHR2019102930");
+        final Optional<OptOut> optConsent = cut.convert("TRL_BENEDATASHR2019102930");
         assertTrue(optConsent.isEmpty());
     }
 
@@ -55,7 +55,7 @@ class ConsentConverterServiceTest {
     void whenPreferenceIndicatorIsNotOptOut_shouldNotCreateConsent() {
         final String line = getLinesFromFile().skip(7).limit(1).collect(Collectors.toList()).get(0);
 
-        final Optional<Consent> optConsent = cut.convert(line);
+        final Optional<OptOut> optConsent = cut.convert(line);
         assertTrue(optConsent.isEmpty());
     }
 
@@ -64,7 +64,7 @@ class ConsentConverterServiceTest {
     void whenSourceCodeisBlank_shouldNotCreateConsent() {
         final String line = getLinesFromFile().skip(1).limit(1).collect(Collectors.toList()).get(0);
 
-        final Optional<Consent> optConsent = cut.convert(line);
+        final Optional<OptOut> optConsent = cut.convert(line);
         assertTrue(optConsent.isEmpty());
     }
 
@@ -119,7 +119,7 @@ class ConsentConverterServiceTest {
     void whenValidData_shouldCreateConsentRecord() {
         final String line = getLinesFromFile().skip(6).limit(1).collect(Collectors.toList()).get(0);
 
-        final Optional<Consent> optConsent = cut.convert(line);
+        final Optional<OptOut> optConsent = cut.convert(line);
         assertTrue(optConsent.isPresent());
     }
 
