@@ -10,6 +10,8 @@ public interface JobService {
 
     Job createJob(String resourceTypes, String url);
 
+    Job createJob(String resourceTypes, String url, String contractNumber);
+
     void cancelJob(String jobUuid);
 
     Job getJobByJobUuid(String jobUuid);

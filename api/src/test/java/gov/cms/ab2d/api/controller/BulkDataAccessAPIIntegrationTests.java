@@ -3,11 +3,13 @@ package gov.cms.ab2d.api.controller;
 import com.jayway.jsonpath.JsonPath;
 import com.okta.jwt.JwtVerificationException;
 import gov.cms.ab2d.api.SpringBootApp;
+import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.JobOutput;
 import gov.cms.ab2d.common.model.JobStatus;
 import gov.cms.ab2d.common.repository.*;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
+import gov.cms.ab2d.common.util.DataSetup;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.hamcrest.core.Is;
@@ -21,7 +23,6 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.ResultActions;
@@ -42,11 +43,11 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
-import static gov.cms.ab2d.api.controller.TestUtil.TEST_USER;
 import static gov.cms.ab2d.api.util.Constants.*;
 import static gov.cms.ab2d.common.service.JobServiceImpl.INITIAL_JOB_STATUS_MESSAGE;
 import static gov.cms.ab2d.common.util.Constants.NDJSON_FIRE_CONTENT_TYPE;
 import static gov.cms.ab2d.common.util.Constants.OPERATION_OUTCOME;
+import static gov.cms.ab2d.common.util.DataSetup.TEST_USER;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
@@ -83,6 +84,9 @@ public class BulkDataAccessAPIIntegrationTests {
 
     @Autowired
     private TestUtil testUtil;
+
+    @Autowired
+    private DataSetup dataSetup;
 
     private String token;
 
@@ -596,5 +600,99 @@ public class BulkDataAccessAPIIntegrationTests {
                 .andExpect(jsonPath("$.issue[0].code", Is.is("invalid")))
                 .andExpect(jsonPath("$.issue[0].details.text",
                         Is.is("ResourceNotFoundException: No Job Output with the file name test.ndjsonbadfilename exists in our records")));
+    }
+
+    @Test
+    public void testBasicPatientExportWithContract() throws Exception {
+        Contract contract = dataSetup.createContract();
+        ResultActions resultActions = this.mockMvc.perform(
+                get(API_PREFIX + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export").contentType(MediaType.APPLICATION_JSON)
+                        .header("Authorization", "Bearer " + token))
+                .andDo(print());
+        Job job = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
+
+        String statusUrl =
+                "http://localhost" + API_PREFIX + FHIR_PREFIX + "/Job/" + job.getJobUuid() + "/$status";
+
+        resultActions.andExpect(status().isAccepted())
+                .andExpect(header().string("Content-Location", statusUrl));
+
+        Assert.assertEquals(job.getStatus(), JobStatus.SUBMITTED);
+        Assert.assertEquals(job.getStatusMessage(), INITIAL_JOB_STATUS_MESSAGE);
+        Assert.assertEquals(job.getProgress(), Integer.valueOf(0));
+        Assert.assertEquals(job.getRequestUrl(),
+                "http://localhost" + API_PREFIX + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export");
+        Assert.assertEquals(job.getResourceTypes(), null);
+        Assert.assertEquals(job.getUser(), userRepository.findByUsername(TEST_USER));
+    }
+
+    @Test
+    public void testPatientExportWithParametersWithContract() throws Exception {
+        Contract contract = dataSetup.createContract();
+        final String typeParams =
+                "?_type=ExplanationOfBenefits&_outputFormat=application/fhir+ndjson&since=20191015";
+        ResultActions resultActions =
+                this.mockMvc.perform(get(API_PREFIX + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export" + typeParams)
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)).andDo(print());
+        Job job = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
+
+        String statusUrl =
+                "http://localhost" + API_PREFIX + FHIR_PREFIX + "/Job/" + job.getJobUuid() + "/$status";
+
+        resultActions.andExpect(status().isAccepted())
+                .andExpect(header().string("Content-Location", statusUrl));
+
+        Assert.assertEquals(job.getStatus(), JobStatus.SUBMITTED);
+        Assert.assertEquals(job.getStatusMessage(), INITIAL_JOB_STATUS_MESSAGE);
+        Assert.assertEquals(job.getProgress(), Integer.valueOf(0));
+        Assert.assertEquals(job.getRequestUrl(),
+                "http://localhost" + API_PREFIX + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export" + typeParams);
+        Assert.assertEquals(job.getResourceTypes(), "ExplanationOfBenefits");
+        Assert.assertEquals(job.getUser(), userRepository.findByUsername(TEST_USER));
+    }
+
+    @Test
+    public void testPatientExportWithInvalidTypeWithContract() throws Exception {
+        Contract contract = dataSetup.createContract();
+        final String typeParams = "?_type=PatientInvalid,ExplanationOfBenefits";
+        this.mockMvc.perform(get(API_PREFIX +  FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export" + typeParams)
+                .contentType(MediaType.APPLICATION_JSON)
+                .header("Authorization", "Bearer " + token))
+                .andExpect(status().is(400))
+                .andExpect(jsonPath("$.resourceType", Is.is("OperationOutcome")))
+                .andExpect(jsonPath("$.issue[0].severity", Is.is("error")))
+                .andExpect(jsonPath("$.issue[0].code", Is.is("invalid")))
+                .andExpect(jsonPath("$.issue[0].details.text",
+                        Is.is("InvalidUserInputException: _type must be ExplanationOfBenefits")));
+    }
+
+    @Test
+    public void testPatientExportWithInvalidOutputFormatWithContract() throws Exception {
+        Contract contract = dataSetup.createContract();
+        final String typeParams = "?_outputFormat=Invalid";
+        this.mockMvc.perform(get(API_PREFIX + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export" + typeParams)
+                .contentType(MediaType.APPLICATION_JSON)
+                .header("Authorization", "Bearer " + token))
+                .andExpect(status().is(400))
+                .andExpect(jsonPath("$.resourceType", Is.is("OperationOutcome")))
+                .andExpect(jsonPath("$.issue[0].severity", Is.is("error")))
+                .andExpect(jsonPath("$.issue[0].code", Is.is("invalid")))
+                .andExpect(jsonPath("$.issue[0].details.text",
+                        Is.is("InvalidUserInputException: An _outputFormat of Invalid is not " +
+                                "valid")));
+    }
+
+    @Test
+    public void testPatientExportWithInvalidContract() throws Exception {
+        this.mockMvc.perform(get(API_PREFIX + FHIR_PREFIX + "/Group/" + "badContract" + "/$export")
+                .contentType(MediaType.APPLICATION_JSON)
+                .header("Authorization", "Bearer " + token))
+                .andExpect(status().is(404))
+                .andExpect(jsonPath("$.resourceType", Is.is("OperationOutcome")))
+                .andExpect(jsonPath("$.issue[0].severity", Is.is("error")))
+                .andExpect(jsonPath("$.issue[0].code", Is.is("invalid")))
+                .andExpect(jsonPath("$.issue[0].details.text",
+                        Is.is("ResourceNotFoundException: Contract badContract was not found")));
     }
 }

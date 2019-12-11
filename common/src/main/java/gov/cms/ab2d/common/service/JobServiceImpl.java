@@ -2,6 +2,7 @@ package gov.cms.ab2d.common.service;
 
 
 import gov.cms.ab2d.common.model.JobOutput;
+import gov.cms.ab2d.common.repository.ContractRepository;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.JobStatus;
@@ -31,6 +32,9 @@ public class JobServiceImpl implements JobService {
     @Autowired
     private JobRepository jobRepository;
 
+    @Autowired
+    private ContractRepository contractRepository;
+
     @Value("${efs.mount}")
     private String fileDownloadPath;
 
@@ -38,6 +42,11 @@ public class JobServiceImpl implements JobService {
 
     @Override
     public Job createJob(String resourceTypes, String url) {
+        return createJob(resourceTypes, url, null);
+    }
+
+    @Override
+    public Job createJob(String resourceTypes, String url, String contractNumber) {
         Job job = new Job();
         job.setResourceTypes(resourceTypes);
         job.setJobUuid(UUID.randomUUID().toString());
@@ -47,6 +56,14 @@ public class JobServiceImpl implements JobService {
         job.setCreatedAt(OffsetDateTime.now());
         job.setProgress(0);
         job.setUser(userService.getCurrentUser());
+
+        if (contractNumber != null) {
+            contractRepository.findContractByContractNumber(contractNumber).ifPresentOrElse(contractFound -> {
+                job.setContract(contractFound);
+            }, () -> {
+                throw new ResourceNotFoundException("Contract " + contractNumber + " was not found");
+            });
+        }
 
         return jobRepository.save(job);
     }

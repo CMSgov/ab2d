@@ -6,6 +6,7 @@ import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.common.repository.SponsorRepository;
 import gov.cms.ab2d.common.repository.UserRepository;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
+import gov.cms.ab2d.common.util.DataSetup;
 import org.apache.commons.io.IOUtils;
 import org.junit.Assert;
 import org.junit.jupiter.api.Assertions;
@@ -56,6 +57,9 @@ public class JobServiceTest {
     @Autowired
     SponsorRepository sponsorRepository;
 
+    @Autowired
+    DataSetup dataSetup;
+
     @Value("${efs.mount}")
     private String tmpJobLocation;
 
@@ -84,8 +88,6 @@ public class JobServiceTest {
                 new UsernamePasswordAuthenticationToken(
                         new org.springframework.security.core.userdetails.User("example@example.com",
                                 "test", new ArrayList<>()), "pass"));
-
-
     }
 
     @Test
@@ -108,6 +110,37 @@ public class JobServiceTest {
 
         // Verify it actually got persisted in the DB
         assertThat(jobRepository.findById(job.getId())).get().isEqualTo(job);
+    }
+
+    @Test
+    public void createJobWithContract() {
+        Contract contract = dataSetup.createContract();
+        Job job = jobService.createJob("ExplanationOfBenefits", "http://localhost:8080", contract.getContractNumber());
+        assertThat(job).isNotNull();
+        assertThat(job.getId()).isNotNull();
+        assertThat(job.getJobUuid()).isNotNull();
+        assertEquals(job.getProgress(), Integer.valueOf(0));
+        assertEquals(job.getUser(), userRepository.findByUsername("example@example.com"));
+        assertEquals(job.getResourceTypes(), "ExplanationOfBenefits");
+        assertEquals(job.getRequestUrl(), "http://localhost:8080");
+        assertEquals(job.getStatusMessage(), INITIAL_JOB_STATUS_MESSAGE);
+        assertEquals(job.getStatus(), JobStatus.SUBMITTED);
+        assertEquals(job.getJobOutputs().size(), 0);
+        assertEquals(job.getLastPollTime(), null);
+        assertEquals(job.getExpiresAt(), null);
+        assertThat(job.getJobUuid()).matches(
+                "[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}");
+        assertEquals(job.getContract().getContractNumber(), contract.getContractNumber());
+
+        // Verify it actually got persisted in the DB
+        assertThat(jobRepository.findById(job.getId())).get().isEqualTo(job);
+    }
+
+    @Test
+    public void createJobWithBadContract() {
+        Assertions.assertThrows(ResourceNotFoundException.class, () -> {
+            jobService.createJob("ExplanationOfBenefits", "http://localhost:8080", "BadContract");
+        });
     }
 
     @Test
