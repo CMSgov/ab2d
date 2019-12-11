@@ -35,10 +35,10 @@ class OptOutProcessorIntegrationTest {
     private S3Gateway mockS3Gateway;
 
     @Autowired
-    private OptOutRepository consentRepo;
+    private OptOutRepository optOutRepo;
 
     @Autowired
-    private OptOutConverterService consentConverterSvc;
+    private OptOutConverterService optOutConverterSvc;
 
     @Autowired
     private OptOutProcessor cut;
@@ -48,7 +48,7 @@ class OptOutProcessorIntegrationTest {
 
     @Test
     @Transactional
-    void process_shouldInsertRowsIntoConsentTable()  {
+    void process_shouldInsertRowsIntoOptOutTable()  {
 
         final String testInputFile = "test-data/test-data.txt";
         final InputStream inputStream = getClass().getResourceAsStream("/" + testInputFile);
@@ -56,15 +56,15 @@ class OptOutProcessorIntegrationTest {
 
         when(mockS3Gateway.getOptOutFile()).thenReturn(isr);
 
-        final List<OptOut> optOutRowsBeforeProcessing = consentRepo.findAll();
+        final List<OptOut> optOutRowsBeforeProcessing = optOutRepo.findAll();
         cut.process();
-        final List<OptOut> optOutRowsAfterProcessing = consentRepo.findAll();
+        final List<OptOut> optOutRowsAfterProcessing = optOutRepo.findAll();
 
         assertThat(optOutRowsBeforeProcessing, is(empty()));
         assertThat(optOutRowsAfterProcessing, is(not(empty())));
         assertThat(optOutRowsAfterProcessing.size(), is(9));
 
-        final OptOut optOut = consentRepo.findByHicn("1000011403").get(0);
+        final OptOut optOut = optOutRepo.findByHicn("1000011403").get(0);
         assertThat(optOut.getPolicyCode(), is("OPTOUT"));
         assertThat(optOut.getPurposeCode(), is("TREAT"));
         assertThat(optOut.getScopeCode(), is("patient-privacy"));

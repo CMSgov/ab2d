@@ -8,11 +8,11 @@ public interface OptOutConverterService {
 
     /**
      * Given a line from a file,
-     * converts the string into a Consent object that can be persisted in the database.
+     * converts the string into a OptOut object that can be persisted in the database.
      *
      * @param line
      *
-     * @return (optional) Consent
+     * @return (optional) OptOut
      */
     Optional<OptOut> convert(String line);
 }

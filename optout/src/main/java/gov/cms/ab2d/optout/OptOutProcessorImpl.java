@@ -36,7 +36,7 @@ public class OptOutProcessorImpl implements OptOutProcessor {
         final InputStreamReader inputStreamReader = s3Gateway.getOptOutFile();
 
         try (var bufferedReader = new BufferedReader(inputStreamReader)) {
-            importConsentRecords(bufferedReader);
+            importOptOutRecords(bufferedReader);
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
@@ -44,7 +44,7 @@ public class OptOutProcessorImpl implements OptOutProcessor {
     }
 
 
-    private void importConsentRecords(BufferedReader bufferedReader) {
+    private void importOptOutRecords(BufferedReader bufferedReader) {
         var iterator = IOUtils.lineIterator(bufferedReader);
 
         int linesReadCount = 0;
@@ -71,7 +71,7 @@ public class OptOutProcessorImpl implements OptOutProcessor {
         }
 
         log.info("[{}] rows read from file", linesReadCount);
-        log.info("[{}] rows inserted into consent table", insertedRowCount);
+        log.info("[{}] rows inserted into opt_out table", insertedRowCount);
     }
 
 

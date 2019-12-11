@@ -196,7 +196,7 @@ class JobProcessingServiceUnitTest {
                 .thenReturn(efsMountTmpDir)
                 .thenReturn(efsMountTmpDir);
 
-        final List<OptOut> optOuts = getConsents(patientsByContract);
+        final List<OptOut> optOuts = getOptOutRows(patientsByContract);
         when(optOutRepository.findByHicn(anyString()))
                 .thenReturn(Arrays.asList(optOuts.get(0)))
                 .thenReturn(Arrays.asList(optOuts.get(1)))
@@ -213,14 +213,14 @@ class JobProcessingServiceUnitTest {
         verify(patientClaimsProcessor, never()).process(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any());
     }
 
-    private List<OptOut> getConsents(GetPatientsByContractResponse patientsByContract) {
+    private List<OptOut> getOptOutRows(GetPatientsByContractResponse patientsByContract) {
         return patientsByContract.getPatients()
                 .stream().map(p -> p.getPatientId())
-                .map(patientId ->  createConsent(patientId))
+                .map(patientId ->  createOptOut(patientId))
                 .collect(Collectors.toList());
     }
 
-    private OptOut createConsent(String p) {
+    private OptOut createOptOut(String p) {
         OptOut optOut = new OptOut();
         optOut.setHicn(p);
         optOut.setEffectiveDate(LocalDate.now().minusDays(10));
