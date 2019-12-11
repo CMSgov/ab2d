@@ -18,6 +18,8 @@
 1. [Appendix K: Complete DevOps linting checks](#appendix-k-complete-devops-linting-checks)
    * [Complete terraform linting](#complete-terraform-linting)
    * [Complete python linting](#complete-python-linting)
+1. [Appendix L: Configure New Relic](#appendix-l-configure-new-relic)
+   * [Interact with New Relic Infrastructure agent](#appendix-l-interact-with-new-relic-infrastructure-agent)
 
 ## Appendix A: Access the CMS AWS console
 
@@ -412,7 +414,86 @@
 
 ## Appendix H: Get log file from an API container
 
-> *** TO DO ***
+1. Set the target AWS profile
+
+   ```ShellSession
+   $ export AWS_PROFILE=ab2d-shared
+   ```
+   
+1. Set controller access variables
+
+   *Example for CMS development environment:*
+   
+   ```ShellSession
+   $ export TARGET_ENVIRONMENT=ab2d-shared
+   $ export CONTROLLER_PUBLIC_IP=3.225.165.219
+   $ export SSH_USER_NAME=ec2-user
+   ```
+   
+1. Connect to the controller
+
+   *Format:*
+   
+   ```ShellSession
+   $ ssh -i ~/.ssh/${TARGET_ENVIRONMENT}.pem ${SSH_USER_NAME}@${CONTROLLER_PUBLIC_IP}
+   ```
+
+1. Set worker variables
+
+   *Example for CMS development environment:*
+   
+   ```ShellSession
+   $ export TARGET_ENVIRONMENT=ab2d-shared
+   $ export WORKER_PRIVATE_IP=10.242.26.229
+   $ export SSH_USER_NAME=ec2-user
+   ```
+   
+1. Connect to a worker node
+
+   *Format:*
+
+   ```ShellSession
+   $ ssh -i ~/.ssh/${TARGET_ENVIRONMENT}.pem ${SSH_USER_NAME}@${WORKER_PRIVATE_IP}
+   ```
+
+1. Copy "messages" log to ec2-user home directory
+
+   ```ShellSession
+   $ sudo su
+   $ cp /var/log/messages /home/ec2-user
+   $ chown ec2-user:ec2-user /home/ec2-user/messages
+   $ exit
+   ```
+
+1. Log off worker node
+
+   ```ShellSession
+   $ logout
+   ```
+
+1. Copy messages file to the controller
+
+   ```ShellSession
+   $ scp -i ~/.ssh/${TARGET_ENVIRONMENT}.pem ${SSH_USER_NAME}@${WORKER_PRIVATE_IP}:~/messages .
+   ```
+
+1. Log off controller
+
+   ```ShellSession
+   $ logout
+   ```
+
+1. Copy messages file to development machine
+
+   ```ShellSession
+   $ scp -i ~/.ssh/${TARGET_ENVIRONMENT}.pem ${SSH_USER_NAME}@${CONTROLLER_PUBLIC_IP}:~/messages ~/Downloads
+   ```
+
+1. Note that the messages file from the remote node can now be found here
+
+   ```
+   ~/Downloads/messages
+   ```
 
 ## Appendix I: Get log file from a worker container
 
@@ -596,3 +677,139 @@
    ```ShellSession
    $ vim ~/Downloads/python3-linting.txt
    ```
+
+## Appendix L: Configure New Relic
+
+### Inventory the New Relic installation included with Gold Disk
+
+1. Inventory New Relic files
+
+   *New Relic configuration file*
+   
+   ```
+   /etc/newrelic-infra.yml <--- need to configure license
+   ```
+   
+   *New Relic infrastrucure agent*
+   
+   ```
+   /etc/systemd/system/newrelic-infra.service
+   /etc/systemd/system/multi-user.target.wants/newrelic-infra.service
+   /usr/bin/newrelic-infra
+   /usr/bin/newrelic-infra-ctl
+   /usr/bin/newrelic-infra-service
+   ```
+   
+   *New Relic user*
+   
+   ```
+   /home/newrelic <--- empty directory
+   /var/spool/mail/newrelic
+   ```
+   
+   *New Relic opt directory*
+   
+   ```
+   /opt/newrelic <--- empty directory
+   ```
+   
+   *New Relic log directory*
+   
+   ```
+   /var/log/newrelic-infra <--- empty directory
+   ```
+   
+   *New Relic integrations*
+   
+   ```
+   /etc/newrelic-infra/integrations.d
+   /var/db/newrelic-infra/LICENSE.txt
+   /var/db/newrelic-infra/custom-integrations
+   /var/db/newrelic-infra/integrations.d
+   /var/db/newrelic-infra/newrelic-integrations
+   ```
+   
+   *New Relic yum repo, cache, and gpg*
+   
+   ```
+   /etc/yum.repos.d/newrelic-infra.repo
+   /var/cache/yum/x86_64/7Server/newrelic-infra
+   /var/cache/yum/x86_64/7Server/newrelic-infra/cachecookie
+   /var/cache/yum/x86_64/7Server/newrelic-infra/gen
+   /var/cache/yum/x86_64/7Server/newrelic-infra/packages
+   /var/cache/yum/x86_64/7Server/newrelic-infra/primary.sqlite.bz2
+   /var/cache/yum/x86_64/7Server/newrelic-infra/repomd.xml
+   /var/cache/yum/x86_64/7Server/newrelic-infra/repomd.xml.asc
+   /var/cache/yum/x86_64/7Server/newrelic-infra/gen/filelists_db.sqlite
+   /var/cache/yum/x86_64/7Server/newrelic-infra/gen/other_db.sqlite
+   /var/cache/yum/x86_64/7Server/newrelic-infra/gen/primary_db.sqlite
+   /var/lib/yum/repos/x86_64/7Server/newrelic-infra
+   /var/lib/yum/repos/x86_64/7Server/newrelic-infra/gpgdir
+   /var/lib/yum/repos/x86_64/7Server/newrelic-infra/gpgdir-ro
+   /var/lib/yum/repos/x86_64/7Server/newrelic-infra/gpgdir/gpg.conf
+   /var/lib/yum/repos/x86_64/7Server/newrelic-infra/gpgdir/pubring.gpg
+   /var/lib/yum/repos/x86_64/7Server/newrelic-infra/gpgdir/pubring.gpg~
+   /var/lib/yum/repos/x86_64/7Server/newrelic-infra/gpgdir/secring.gpg
+   /var/lib/yum/repos/x86_64/7Server/newrelic-infra/gpgdir/trustdb.gpg
+   /var/lib/yum/repos/x86_64/7Server/newrelic-infra/gpgdir-ro/gpg.conf
+   /var/lib/yum/repos/x86_64/7Server/newrelic-infra/gpgdir-ro/pubring.gpg
+   /var/lib/yum/repos/x86_64/7Server/newrelic-infra/gpgdir-ro/pubring.gpg~
+   /var/lib/yum/repos/x86_64/7Server/newrelic-infra/gpgdir-ro/secring.gpg
+   /var/lib/yum/repos/x86_64/7Server/newrelic-infra/gpgdir-ro/trustdb.gpg
+   ```
+
+1. Note the initial state of New Relic
+
+   1. Check the status of the New Relic infrastructure agent
+
+      ```ShellSession
+      $ sudo systemctl status newrelic-infra
+      ```
+
+   1. Note the output
+
+      ```
+      newrelic-infra.service - New Relic Infrastructure Agent
+       Loaded: loaded (/etc/systemd/system/newrelic-infra.service; enabled; vendor preset: disabled)
+       Active: activating (auto-restart) (Result: exit-code) since Wed 2019-12-11 17:48:28 EST; 3s ago
+       Process: 11823 ExecStart=/usr/bin/newrelic-infra-service (code=exited, status=2)
+      Main PID: 11823 (code=exited, status=2)
+      ```
+
+   1. Note the following from the system log "/var/log/messages"
+
+      ```
+      Dec 11 17:53:52 ip-10-242-26-192 newrelic-infra-service: time="2019-12-11T17:53:52-05:00" level=error
+      msg="can't load configuration file" component="New Relic Infrastructure Agent" error="no license key,
+      please add it to agent's config file or NRIA_LICENSE_KEY environment variable"
+      ```
+   
+   1. Note that New Relic keeps stopping and starting because there is no license key configured
+      
+### Interact with New Relic Infrastructure agent
+
+1. Check the status of the New Relic infrastructure agent
+
+   ```ShellSession
+   $ sudo systemctl status newrelic-infra
+   ```
+
+1. Stop the New Relic infrastructure agent
+
+   ```ShellSession
+   $ sudo systemctl stop newrelic-infra
+   ```
+
+1. Start the New Relic infrastructure agent
+
+   ```ShellSession
+   $ sudo systemctl start newrelic-infra
+   ```
+
+1. Restart the New Relic infrastructure agent
+
+   ```ShellSession
+   $ sudo systemctl restart newrelic-infra
+   ```
+
+
