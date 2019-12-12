@@ -11,7 +11,7 @@ import java.time.LocalDate;
 @Entity
 @Getter
 @Setter
-public class Consent {
+public class OptOut {
 
     @Id
     @GeneratedValue

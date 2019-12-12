@@ -1,6 +1,6 @@
 package gov.cms.ab2d.optout;
 
-import gov.cms.ab2d.common.model.Consent;
+import gov.cms.ab2d.common.model.OptOut;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
@@ -13,7 +13,7 @@ import java.util.regex.Pattern;
 
 @Slf4j
 @Component
-public class ConsentConverterServiceImpl implements ConsentConverterService {
+public class OptOutConverterServiceImpl implements OptOutConverterService {
 
     private static final Pattern HEALTH_INSURANCE_CLAIM_NUMBER_PATTERN = Pattern.compile("\\d{9}[A-Za-z0-9]{0,2}");
 
@@ -29,20 +29,20 @@ public class ConsentConverterServiceImpl implements ConsentConverterService {
     private static final String OPT_OUT_INDICATOR = "N";
 
     @Override
-    public Optional<Consent> convert(String line) {
+    public Optional<OptOut> convert(String line) {
         if (isHeader(line)) {
-            log.warn("Skipping Header row");
+            log.debug("Skipping Header row");
             return Optional.empty();
         }
 
         if (isTrailer(line)) {
-            log.warn("Skipping Trailer row");
+            log.debug("Skipping Trailer row");
             return Optional.empty();
         }
 
         var sourceCode = line.substring(SOURCE_CODE_START, SOURCE_CODE_END);
         if (StringUtils.isBlank(sourceCode)) {
-            log.warn("SourceCode is blank. Skipping row");
+            log.debug("SourceCode is blank. Skipping row");
             return Optional.empty();
         }
         if (!sourceCode.trim().matches("1-?800")) {
@@ -52,20 +52,20 @@ public class ConsentConverterServiceImpl implements ConsentConverterService {
         var prefIndicator = line.substring(PREF_INDICATOR_START, PREF_INDICATOR_END);
         if (!OPT_OUT_INDICATOR.equalsIgnoreCase(prefIndicator)) {
             // we only care about opt-out records
-            log.warn("Preference Indicator is NOT opt-out. It was : {}, Skipping row", prefIndicator);
+            log.debug("Preference Indicator is NOT opt-out. It was : {}, Skipping row", prefIndicator);
             return Optional.empty();
         }
 
-        Consent consent = new Consent();
-        consent.setPolicyCode("OPTOUT");
-        consent.setPurposeCode("TREAT");
-        consent.setLoIncCode("64292-6");
-        consent.setScopeCode("patient-privacy");
+        OptOut optOut = new OptOut();
+        optOut.setPolicyCode("OPTOUT");
+        optOut.setPurposeCode("TREAT");
+        optOut.setLoIncCode("64292-6");
+        optOut.setScopeCode("patient-privacy");
 
-        consent.setEffectiveDate(parseEffectiveDate(line));
-        consent.setHicn(parseHealthInsuranceClaimNumber(line));
+        optOut.setEffectiveDate(parseEffectiveDate(line));
+        optOut.setHicn(parseHealthInsuranceClaimNumber(line));
 
-        return Optional.of(consent);
+        return Optional.of(optOut);
     }
 
     private boolean isHeader(String line) {
