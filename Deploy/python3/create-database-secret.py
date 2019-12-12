@@ -8,7 +8,9 @@ import sys
 command_line_arguments_count = sys.argv.__len__() - 1
 if command_line_arguments_count != 4:
     print("Try running the script like so:")
-    print("./create-database-secrets.py {environment} {database_user|database_password|database_name} {kms key id} {date time}")
+    print("./create-database-secrets.py {environment} "
+          + "{database_user|database_password|database_name} "
+          + "{kms key id} {date time}")
     exit(1)
 
 # Eliminate double quotes from command line arguments
@@ -24,7 +26,8 @@ client = boto3.client('secretsmanager')
 
 # Create sercret name
 
-secret_name = 'ab2d/' + environment + '/module/db/' + secret_item + '/' + date_time
+secret_name = 'ab2d/' + environment + '/module/db/' \
+    + secret_item + '/' + date_time
 
 # Prompt for secret
 

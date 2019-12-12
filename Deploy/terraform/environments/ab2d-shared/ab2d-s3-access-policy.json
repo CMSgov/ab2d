@@ -1,0 +1,17 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": "s3:*",
+            "Resource": [
+		"arn:aws:s3:::cms-ab2d-automation",
+		"arn:aws:s3:::cms-ab2d-cloudtrail",
+		"arn:aws:s3:::cms-ab2d-dev",
+		"arn:aws:s3:::cms-ab2d-sbx",
+		"arn:aws:s3:::cms-ab2d-impl",
+		"arn:aws:s3:::cms-ab2d-prod"
+            ]
+        }
+    ]
+}

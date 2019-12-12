@@ -1,0 +1,4 @@
+resource "aws_shield_protection" "api_shield" {
+  name         = "ab2d-${lower(var.env)}-api-shield"
+  resource_arn = "${var.alb_arn}"
+}

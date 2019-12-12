@@ -3,7 +3,7 @@ variable "aws_account_number" {
 }
 
 variable "aws_profile" {
-  default = "sbdemo-sbx"
+  default = "sbdemo-shared"
 }
 
 variable "env" {
@@ -42,7 +42,7 @@ variable "linux_user" {
 }
 
 variable "ssh_key_name" {
-  default = "ab2d-sbdemo-sbx"
+  default = "ab2d-sbdemo-shared"
 }
 
 variable "max_ec2_instance_count" {
@@ -68,7 +68,7 @@ variable "autoscale_group_wait" {
 }
 
 variable "elb_healthcheck_url" {
-  default = "HTTP:3000/"
+  default = "HTTP:8080/"
 }
 
 variable "ec2_iam_profile" {
@@ -159,6 +159,16 @@ variable "db_identifier" {
 
 variable "db_multi_az" {
   default = "false"
+}
+
+variable "db_host" {
+  default     = ""
+  description = "Please pass this on command line and not as a value here"
+}
+
+variable "db_port" {
+  default     = ""
+  description = "Please pass this on command line and not as a value here"
 }
 
 variable "db_username" {

@@ -18,6 +18,10 @@ output "alb_target_group_arn_suffix" {
   value = aws_lb_target_group.api.arn_suffix
 }
 
+output "alb_arn" {
+  value = aws_lb.api.arn
+}
+
 output "alb_arn_suffix" {
   value = aws_lb.api.arn_suffix
 }
@@ -27,7 +31,7 @@ output "userdata" {
 }
 
 output "ecs_cluster_id" {
-  value = aws_ecs_cluster.ab2d.id
+  value = aws_ecs_cluster.ab2d_api.id
 }
 
 output "launch_config_name" {
