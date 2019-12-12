@@ -7,16 +7,6 @@ resource "aws_security_group" "worker" {
   }
 }
 
-resource "aws_security_group_rule" "api_container_access" {
-  type        = "ingress"
-  description = "API container access"
-  from_port   = var.host_port
-  to_port     = var.host_port
-  protocol    = "tcp"
-  cidr_blocks = var.vpc_cidrs
-  security_group_id = aws_security_group.worker.id
-}
-
 resource "aws_security_group_rule" "controller_access" {
   type        = "ingress"
   description = "Controller Access"
@@ -35,6 +25,16 @@ resource "aws_security_group_rule" "egress_worker" {
   protocol    = "-1"
   cidr_blocks = ["0.0.0.0/0"]
   security_group_id = aws_security_group.worker.id
+}
+
+resource "aws_security_group_rule" "db_access_worker" {
+  type        = "ingress"
+  description = "${lower(var.env)} worker connections"
+  from_port   = "5432"
+  to_port     = "5432"
+  protocol    = "tcp"
+  source_security_group_id = aws_security_group.worker.id
+  security_group_id = var.db_sec_group_id
 }
 
 #
@@ -76,7 +76,11 @@ resource "aws_efs_mount_target" "beta" {
 # End EFS configuration
 #
 
-resource "aws_ecs_task_definition" "api" {
+resource "aws_ecs_cluster" "ab2d_worker" {
+  name = "ab2d-${lower(var.env)}-worker"
+}
+
+resource "aws_ecs_task_definition" "worker" {
   family = "worker"
   # LSH SKIP FOR NOW BEGIN
   # volume {
@@ -91,11 +95,27 @@ resource "aws_ecs_task_definition" "api" {
       "image": "${var.docker_repository_url}",
       "essential": true,
       "memory": 2048,
-      "portMappings": [
+      "environment" : [
         {
-          "containerPort": ${var.container_port},
-          "hostPort": ${var.host_port}
-        }
+	  "name" : "AB2D_DB_HOST",
+	  "value" : "${var.db_host}"
+	},
+        {
+	  "name" : "AB2D_DB_PORT",
+	  "value" : "${var.db_port}"
+	},
+	{
+	  "name" : "AB2D_DB_USER",
+	  "value" : "${var.db_username}"
+	},
+	{
+	  "name" : "AB2D_DB_PASSWORD",
+	  "value" : "${var.db_password}"
+	},
+	{
+	  "name" : "AB2D_DB_DATABASE",
+	  "value" : "${var.db_name}"
+	}
       ],
       "logConfiguration": {
         "logDriver": "syslog"
@@ -113,8 +133,8 @@ JSON
 
 resource "aws_ecs_service" "worker" {
   name = "ab2d-${lower(var.env)}-worker"
-  cluster = var.ecs_cluster_id
-  task_definition = var.override_task_definition_arn != "" ? var.override_task_definition_arn : aws_ecs_task_definition.api.arn
+  cluster = aws_ecs_cluster.ab2d_worker.id
+  task_definition = var.override_task_definition_arn != "" ? var.override_task_definition_arn : aws_ecs_task_definition.worker.arn
   desired_count = 5
   launch_type = "EC2"
   scheduling_strategy = "DAEMON"
@@ -130,7 +150,7 @@ resource "aws_launch_configuration" "launch_config" {
   iam_instance_profile = var.iam_instance_profile
   key_name = var.ssh_key_name
   security_groups = [aws_security_group.worker.id]
-  user_data = templatefile("${path.module}/userdata.tpl",{ env = "${lower(var.env)}", cluster_name = "ab2d-${lower(var.env)}", efs_id = var.efs_id })
+  user_data = templatefile("${path.module}/userdata.tpl",{ env = "${lower(var.env)}", cluster_name = "ab2d-${lower(var.env)}-worker", efs_id = var.efs_id })
   lifecycle { create_before_destroy = true }
 }
 
@@ -175,7 +195,7 @@ resource "aws_autoscaling_group" "asg" {
     },
     {
       key = "maintainer"
-      value = "federico.rosario@semanticbits.com"
+      value = "lonnie.hanekamp@semanticbits.com"
       propagate_at_launch = true
     },
     {

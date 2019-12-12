@@ -12,10 +12,10 @@
    * [Create roles](#create-roles)
    * [Create instance profiles](#create-instance-profiles)
    * [Configure IAM user deployers](#configure-iam-user-deployers)
-   * [Create AWS Elastic Container Registry repositories for images](#create-aws-elastic-container-registry-repositories-for-images)
 1. [Create or update base aws environment](#create-or-update-base-aws-environment)
-1. [Update application](#update-application)
+1. [Update existing environment](#update-existing-environment)
 1. [Deploy and configure Jenkins](#deploy-and-configure-jenkins)
+1. [Deploy AB2D static site](#deploy-ab2d-static-site)
 
 ## Create an AWS IAM user
 
@@ -116,26 +116,6 @@
      > ~/.ssh/ab2d-sbdemo-shared.pem
    ```
 
-   *Example for Dev environment testing within SemanticBits demo environment:*
-
-   ```ShellSession
-   $ aws --region us-east-1 ec2 create-key-pair \
-     --key-name ab2d-sbdemo-dev \
-     --query 'KeyMaterial' \
-     --output text \
-     > ~/.ssh/ab2d-sbdemo-dev.pem
-   ```
-
-   *Example for Sandbox environment testing within SemanticBits demo environment:*
-
-   ```ShellSession
-   $ aws --region us-east-1 ec2 create-key-pair \
-     --key-name ab2d-sbdemo-sbx \
-     --query 'KeyMaterial' \
-     --output text \
-     > ~/.ssh/ab2d-sbdemo-sbx.pem
-   ```
-
 1. Change permissions of the key
 
    *Example for controllers within SemanticBits demo environment:*
@@ -144,36 +124,12 @@
    $ chmod 600 ~/.ssh/ab2d-sbdemo-shared.pem
    ```
 
-   *Example for Dev environment testing within SemanticBits demo environment:*
-   
-   ```ShellSession
-   $ chmod 600 ~/.ssh/ab2d-sbdemo-dev.pem
-   ```
-   
-   *Example for Sandbox environment testing within SemanticBits demo environment:*
-
-   ```ShellSession
-   $ chmod 600 ~/.ssh/ab2d-sbdemo-sbx.pem
-   ```
-
 1. Output the public key to the clipboard
 
    *Example for controllers within SemanticBits demo environment:*
 
    ```ShellSession
    $ ssh-keygen -y -f ~/.ssh/ab2d-sbdemo-shared.pem | pbcopy
-   ```
-
-   *Example for Dev environment testing within SemanticBits demo environment:*
-
-   ```ShellSession
-   $ ssh-keygen -y -f ~/.ssh/ab2d-sbdemo-dev.pem | pbcopy
-   ```
-
-   *Example for Sandbox environment testing within SemanticBits demo environment:*
-
-   ```ShellSession
-   $ ssh-keygen -y -f ~/.ssh/ab2d-sbdemo-sbx.pem | pbcopy
    ```
 
 1. Update the "authorized_keys" file for the environment
@@ -218,101 +174,134 @@
 1. Set target profile
    
    ```ShellSession
-   $ export AWS_PROFILE="sbdemo-dev"
+   $ export AWS_PROFILE="sbdemo-shared"
    ```
 
-1. Change to the "iam-policies" directory
+1. Change to the "ab2d-sbdemo-shared" environment directory
 
    ```ShellSession
-   $ cd ~/code/ab2d/Deploy/aws/iam-policies
+   $ cd ~/code/ab2d/Deploy/terraform/environments/ab2d-sbdemo-shared
    ```
 
 1. Create "Ab2dAccessPolicy"
 
    ```ShellSession
-   $ aws iam create-policy --policy-name Ab2dAccessPolicy --policy-document file://ab2d-access-policy.json
+   $ aws iam create-policy \
+     --policy-name Ab2dAccessPolicy \
+     --policy-document file://ab2d-access-policy.json
    ```
 
 1. Create "Ab2dAssumePolicy"
 
    ```ShellSession
-   $ aws iam create-policy --policy-name Ab2dAssumePolicy --policy-document file://ab2d-assume-policy.json
-   ```
-
-1. Create "Ab2dInitPolicy"
-
-   ```ShellSession
-   $ aws iam create-policy --policy-name Ab2dInitPolicy --policy-document file://ab2d-init-policy.json
+   $ aws iam create-policy \
+     --policy-name Ab2dAssumePolicy \
+     --policy-document file://ab2d-assume-policy.json
    ```
 
 1. Create "Ab2dPackerPolicy"
 
    ```ShellSession
-   $ aws iam create-policy --policy-name Ab2dPackerPolicy --policy-document file://ab2d-packer-policy.json
+   $ aws iam create-policy \
+     --policy-name Ab2dPackerPolicy \
+     --policy-document file://ab2d-packer-policy.json
    ```
 
 1. Create "Ab2dS3AccessPolicy"
 
    ```ShellSession
-   $ aws iam create-policy --policy-name Ab2dS3AccessPolicy --policy-document file://ab2d-s3-access-policy.json
+   $ aws iam create-policy \
+     --policy-name Ab2dS3AccessPolicy \
+     --policy-document file://ab2d-s3-access-policy.json
    ```
 
 1. Create "Ab2dPermissionToPassRolesPolicy"
 
    ```ShellSession
-   $ aws iam create-policy --policy-name Ab2dPermissionToPassRolesPolicy --policy-document file://ab2d-permission-to-pass-roles-policy.json
+   $ aws iam create-policy \
+     --policy-name Ab2dPermissionToPassRolesPolicy \
+     --policy-document file://ab2d-permission-to-pass-roles-policy.json
+   ```
+
+1. Create "Ab2dSecretsPolicy"
+
+   ```ShellSession
+   $ aws iam create-policy \
+     --policy-name Ab2dSecretsPolicy \
+     --policy-document file://ab2d-secrets-policy.json
    ```
 
 ### Create roles
 
 1. Set target profile
-
-   *Example:*
    
    ```ShellSession
-   $ export AWS_PROFILE="sbdemo-dev"
+   $ export AWS_PROFILE="sbdemo-shared"
    ```
 
-1. Change to the "iam-roles-trust-relationships" directory
+1. Change to the "ab2d-sbdemo-shared" environment directory
 
    ```ShellSession
-   $ cd ~/code/ab2d/Deploy/aws/iam-roles-trust-relationships
+   $ cd ~/code/ab2d/Deploy/terraform/environments/ab2d-sbdemo-shared
    ```
 
 1. Create "Ab2dInstanceRole" role
 
    ```ShelSession
-   $ aws iam create-role --role-name Ab2dInstanceRole --assume-role-policy-document file://ab2d-instance-role.json
+   $ aws iam create-role \
+     --role-name Ab2dInstanceRole \
+     --assume-role-policy-document file://ab2d-instance-role-trust-relationship.json
    ```
 
 1. Attach required policies to the "Ab2dInstanceRole" role
 
    ```ShellSession
-   $ aws iam attach-role-policy --role-name Ab2dInstanceRole --policy-arn arn:aws:iam::114601554524:policy/Ab2dAssumePolicy
-   $ aws iam attach-role-policy --role-name Ab2dInstanceRole --policy-arn arn:aws:iam::114601554524:policy/Ab2dPackerPolicy
-   $ aws iam attach-role-policy --role-name Ab2dInstanceRole --policy-arn arn:aws:iam::114601554524:policy/Ab2dS3AccessPolicy
-   $ aws iam attach-role-policy --role-name Ab2dInstanceRole --policy-arn arn:aws:iam::114601554524:policy/Ab2dInitPolicy
-   $ aws iam attach-role-policy --role-name Ab2dInstanceRole --policy-arn arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role
+   $ aws iam attach-role-policy \
+     --role-name Ab2dInstanceRole \
+     --policy-arn arn:aws:iam::114601554524:policy/Ab2dAssumePolicy
+   $ aws iam attach-role-policy \
+     --role-name Ab2dInstanceRole \
+     --policy-arn arn:aws:iam::114601554524:policy/Ab2dPackerPolicy
+   $ aws iam attach-role-policy \
+     --role-name Ab2dInstanceRole \
+     --policy-arn arn:aws:iam::114601554524:policy/Ab2dS3AccessPolicy
+   $ aws iam attach-role-policy \
+     --role-name Ab2dInstanceRole \
+     --policy-arn arn:aws:iam::114601554524:policy/Ab2dSecretsPolicy
+   $ aws iam attach-role-policy \
+     --role-name Ab2dInstanceRole \
+     --policy-arn arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role     
    ```
 
 1. Create "Ab2dManagedRole" role
 
    ```ShelSession
-   $ aws iam create-role --role-name Ab2dManagedRole --assume-role-policy-document file://ab2d-managed-role.json
+   $ aws iam create-role \
+     --role-name Ab2dManagedRole \
+     --assume-role-policy-document file://ab2d-managed-role-trust-relationship.json
    ```
 
 1. Attach required policies to the "Ab2dManagedRole" role
 
    ```ShellSession
-   $ aws iam attach-role-policy --role-name Ab2dManagedRole --policy-arn arn:aws:iam::114601554524:policy/Ab2dAccessPolicy
+   $ aws iam attach-role-policy \
+     --role-name Ab2dManagedRole \
+     --policy-arn arn:aws:iam::114601554524:policy/Ab2dAccessPolicy
    ```
 
 ### Create instance profiles
 
+1. Set target AWS profile
+   
+   ```ShellSession
+   $ export AWS_PROFILE="sbdemo-shared"
+   ```
+
 1. Create instance profile
 
    ```ShellSession
-   $ aws iam create-instance-profile --instance-profile-name Ab2dInstanceProfile
+   $ aws iam create-instance-profile \
+     --instance-profile-name Ab2dInstanceProfile
    ```
 
 1. Attach "Ab2dInstanceRole" to "Ab2dInstanceProfile"
@@ -325,6 +314,12 @@
 
 ### Configure IAM user deployers
 
+1. Set target AWS profile
+   
+   ```ShellSession
+   $ export AWS_PROFILE="sbdemo-shared"
+   ```
+   
 1. Attach the Ab2dPermissionToPassRolesPolicy to an IAM user that runs the automation
 
    *Example for lonnie.hanekamp@semanticbits.com:*
@@ -336,163 +331,6 @@
    ```
 
 2. Repeat this step for all users
-
-### Create AWS Elastic Container Registry repositories for images
-
-1. Set target profile
-
-   *Example:*
-   
-   ```ShellSession
-   $ export AWS_PROFILE="sbdemo-dev"
-   ```
-
-1. Authenticate Docker to default Registry
-   
-   ```ShellSession
-   $ read -sra cmd < <(aws ecr get-login --no-include-email)
-   $ pass="${cmd[5]}"
-   $ unset cmd[4] cmd[5]
-   $ "${cmd[@]}" --password-stdin <<< "$pass"
-   ```
-
-1. Note that the authentication is good for a 12 hour session
-
-1. If you want to delete all images and containers in your local environment, do the following:
-    
-   1. Delete orphaned volumes (if any)
-
-      ```ShellSession
-      $ docker volume ls -qf dangling=true | xargs -I name docker volume rm name
-      ```
-
-   1. Delete all containers (if any)
-      
-      ```ShellSession
-      $ docker ps -aq | xargs -I name docker rm --force name
-      ```
-
-   1. Delete all images (if any)
-
-      ```ShellSession
-      $ docker images -q | xargs -I name docker rmi --force name
-      ```
-
-   1. Delete orphaned volumes again (if any)
-
-      ```ShellSession
-      $ docker volume ls -qf dangling=true | xargs -I name docker volume rm name
-      ```
-
-   1. Delete all images again (if any)
-
-      ```ShellSession
-      $ docker images -q | xargs -I name docker rmi --force name
-      ```
-
-1. Change to the repo directory
-
-   ```ShellSession
-   $ cd ~/code/ab2d
-   ```
-
-1. Build the docker images of API and Worker nodes
-
-   1. Build all docker images
-
-      ```ShellSession
-      $ make docker-build
-      ```
-
-   1. Check the docker images
-
-      ```ShellSession
-      $ docker image ls
-      ```
-
-   1. Note the output only includes the following
-
-      *Format:*
-
-      ```
-      {repository}:{tag}
-      ```
-
-      *Example:*
-
-      ```
-      maven:3-jdk-12
-      ```
-      
-   1. Build with "docker-compose"
-
-      ```ShellSession
-      $ docker-compose build
-      ```
-      
-   1. Check the docker images
-
-      ```ShellSession
-      $ docker image ls
-      ```
-
-   1. Note the output includes the following
-
-      - ab2d_worker:latest
-
-      - ab2d_api:latest
-
-      - maven:3-jdk-12
-
-      - openjdk:12
-
-1. If you want to run the containers, do the following
-
-   ```ShellSession
-   $ docker-compose up
-   ```
-      
-1. If you want to connect to the running container, do the following
-
-   ```ShellSession
-   $ docker exec -it <container name> /bin/bash
-   ```
-   
-1. Create an AWS Elastic Container Registry (ECR) for "ab2d_api"
-
-   ```ShellSession
-   $ aws ecr create-repository --repository-name ab2d_api
-   ```
-
-1. Tag the "ab2d_api" image for ECR
-
-   ```ShellSession
-   $ docker tag ab2d_api:latest 114601554524.dkr.ecr.us-east-1.amazonaws.com/ab2d_api:latest
-   ```
-
-1. Push the "ab2d_api" image to ECR
-
-   ```ShellSession
-   $ docker push 114601554524.dkr.ecr.us-east-1.amazonaws.com/ab2d_api:latest
-   ```
-
-1. Create an AWS Elastic Container Registry (ECR) for "ab2d_worker"
-
-   ```ShellSession
-   $ aws ecr create-repository --repository-name ab2d_worker
-   ```
-
-1. Tag the "ab2d_worker" image for ECR
-
-   ```ShellSession
-   $ docker tag ab2d_worker:latest 114601554524.dkr.ecr.us-east-1.amazonaws.com/ab2d_worker:latest
-   ```
-
-1. Push the "ab2d_worker" image to ECR
-
-   ```ShellSession
-   $ docker push 114601554524.dkr.ecr.us-east-1.amazonaws.com/ab2d_worker:latest
-   ```
 
 ## Create or update base aws environment
 
@@ -552,9 +390,9 @@
    $ export VPC_ID={vpc id}
    ```
    
-1. Create base AWS environment
+1. If creating the AWS environment for Dev, do one of the following
 
-   *Example for Dev environment testing within SemanticBits demo environment:*
+   *Deploy Dev by creating new api and worker images:*
 
    ```ShellSession
    $ ./create-base-environment.sh \
@@ -564,10 +402,29 @@
      --ssh-username=centos \
      --seed-ami-product-code=aw0evgkw8e5c1q413zgy5pjce \
      --ec2-instance-type=m5.xlarge \
-     --database-secret-datetime=2019-10-25-14-55-07
+     --database-secret-datetime=2019-10-25-14-55-07 \
+     --build-new-images \
+     --auto-approve
    ```
 
-   *Example for Sandbox environment testing within SemanticBits demo environment:*
+   *Deploy Dev by using the latest existing api and worker images:*
+
+   ```ShellSession
+   $ ./create-base-environment.sh \
+     --environment=sbdemo-dev \
+     --shared-environment=sbdemo-shared \
+     --vpc-id=$VPC_ID \
+     --ssh-username=centos \
+     --seed-ami-product-code=aw0evgkw8e5c1q413zgy5pjce \
+     --ec2-instance-type=m5.xlarge \
+     --database-secret-datetime=2019-10-25-14-55-07 \
+     --use-existing-images \
+     --auto-approve
+   ```
+
+1. If creating the AWS environment for Sandbox, do one of the following
+
+   *Deploy Sandbox by creating new api and worker images:*
 
    ```ShellSession
    $ ./create-base-environment.sh \
@@ -577,7 +434,24 @@
      --ssh-username=centos \
      --seed-ami-product-code=aw0evgkw8e5c1q413zgy5pjce \
      --ec2-instance-type=m5.xlarge \
-     --database-secret-datetime=2019-10-25-14-55-07
+     --database-secret-datetime=2019-10-25-14-55-07 \
+     --build-new-images \
+     --auto-approve
+   ```
+
+   *Deploy Sandbox by using the latest existing api and worker images:*
+
+   ```ShellSession
+   $ ./create-base-environment.sh \
+     --environment=sbdemo-sbx \
+     --shared-environment=sbdemo-shared \
+     --vpc-id=$VPC_ID \
+     --ssh-username=centos \
+     --seed-ami-product-code=aw0evgkw8e5c1q413zgy5pjce \
+     --ec2-instance-type=m5.xlarge \
+     --database-secret-datetime=2019-10-25-14-55-07 \
+     --use-existing-images \
+     --auto-approve
    ```
 
 1. If prompted, enter database user at the "Enter desired database_user" prompt
@@ -598,7 +472,25 @@
 
    - prod
 
-## Update application
+1. If prompted, enter database user at the "Enter desired database_user" prompt
+
+1. If prompted, enter database password at the "Enter desired database_password" prompt
+
+1. If prompted, enter database name at the "Enter desired database_name" prompt
+
+   *IMPORTANT: Since databases are sharing the same database instance, the database names should be unique for each environment and must contain only alphanumeric characters.*
+   
+   *Example database names:*
+
+   - dev
+
+   - sbx
+
+   - impl
+
+   - prod
+
+## Update existing environment
 
 1. Change to the "Deploy" directory
 
@@ -606,25 +498,55 @@
    $ cd ~/code/ab2d/Deploy
    ```
 
-1. Deploy application components
+1. If updating the Dev environment, do one of the following
 
-   *Example for Dev environment testing within SemanticBits demo environment:*
+   *Update Dev by creating new api and worker images:*
    
    ```ShellSession
    $ ./deploy.sh \
      --environment=sbdemo-dev \
+     --shared-environment=sbdemo-shared \
      --ssh-username=centos \
-     --database-secret-datetime=2019-10-25-14-55-06 \
+     --database-secret-datetime=2019-10-25-14-55-07 \
+     --build-new-images \
      --auto-approve
    ```
 
-   *Example for Sandbox environment testing within SemanticBits demo environment:*
+   *Update Dev by using the latest existing api and worker images:*
+
+   ```ShellSession
+   $ ./deploy.sh \
+     --environment=sbdemo-dev \
+     --shared-environment=sbdemo-shared \
+     --ssh-username=centos \
+     --database-secret-datetime=2019-10-25-14-55-07 \
+     --use-existing-images \
+     --auto-approve
+   ```
+
+1. If updating the Sandbox environment, do one of the following
+
+   *Update Sandbox by creating new api and worker images:*
 
    ```ShellSession
    $ ./deploy.sh \
      --environment=sbdemo-sbx \
+     --shared-environment=sbdemo-shared \
      --ssh-username=centos \
-     --database-secret-datetime=2019-10-25-14-55-06 \
+     --database-secret-datetime=2019-10-25-14-55-07 \
+     --build-new-images \
+     --auto-approve
+   ```
+
+   *Update Sandbox by using the latest existing api and worker images:*
+
+   ```ShellSession
+   $ ./deploy.sh \
+     --environment=sbdemo-sbx \
+     --shared-environment=sbdemo-shared \
+     --ssh-username=centos \
+     --database-secret-datetime=2019-10-25-14-55-07 \
+     --use-existing-images \
      --auto-approve
    ```
 
@@ -636,16 +558,10 @@
 
 1. Connection to the Jenkins instance
 
-   *Format:*
-   
-   ```ShellSession
-   $ ssh -i ~/.ssh/ab2d-{ environment }.pem centos@54.208.238.51
-   ```
-
    *Example:*
    
    ```ShellSession
-   $ ssh -i ~/.ssh/ab2d-sbdemo-dev.pem centos@54.208.238.51
+   $ ssh -i ~/.ssh/ab2d-sbdemo-shared.pem centos@54.208.238.51
    ```
 
 1. Install, enable, and start firewalld
@@ -1081,3 +997,97 @@
     1. Note that the above setting for the jenkins user is not ideal since it means that the jenkins user will be able to do "sudo" on all commands
 
     1. Note that it would be better to lock down the jenkins user so that it can only do "sudo" on a certain subset of commands based on the requirements
+
+## Deploy AB2D static site
+
+1. Note that this process will create an S3 website endpoint as the origin within CloudFront
+
+1. Generate the website
+
+   1. Install Bundler
+   
+      ```ShellSession
+      $ gem install bundler
+      ```
+
+   1. Update Ruby Gems
+   
+      ```ShellSession
+      $ gem update --system
+      ```
+      
+   1. Install Jekyll
+   
+      ```ShellSession
+      $ gem install jekyll
+      ```
+
+1. Change to the "website" directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d/website
+   ```
+
+1. Test the website
+
+   1. Ensure required gems are installed
+
+      ```ShellSession
+      $ bundle install
+      ```
+
+   1. Serve website on the jekyll server
+
+      ```ShellSession
+     $ bundle exec jekyll serve
+     ```
+     
+   1. Open Chrome
+
+   1. Enter the following in the address bar
+   
+      > http://127.0.0.1:4000
+      
+   1. Verify that the website comes up
+
+   1. Return to the terminal where the jekyll server is running
+   
+   1. Press **control+c** on the keyboard to stop the Jekyll server
+
+1. Verify the generated site
+
+   1. Note that a "_site" directory was automatically generated when you ran "bundle exec jekyll serve"
+   
+   1. List the contents of the directory
+
+      ```ShellSession
+       $ ls _site
+      ```
+    
+   1. Note the following two files that will be used in S3 website hosting configuration
+
+      - index.html
+
+      - 404.html
+      
+1. Configure the S3 website
+
+   1. Set the target AWS profile
+
+      ```ShellSession
+      $ export AWS_PROFILE="sbdemo-shared"
+      ```
+
+   1. Copy the website to the "ab2d-website" S3 bucket
+
+      ```ShellSession
+      $ aws s3 cp --recursive _site/ s3://sbdemo-ab2d-website/
+      ```
+
+   1. Configure static website hosting for the bucket
+
+      ```ShellSession
+      $ aws --region us-east-1 s3 website s3://sbdemo-ab2d-website/ \
+        --index-document index.html \
+	--error-document 404.html
+      ```
