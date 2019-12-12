@@ -73,6 +73,14 @@ public class TestUtil {
         return buildTokenStr();
     }
 
+    public String setupContractSponsorForParentUserData(List<String> userRoles) throws JwtVerificationException {
+        dataSetup.setupContractSponsorForParentUserData(userRoles);
+
+        setupMock();
+
+        return buildTokenStr();
+    }
+
     public String setupToken(List<String> userRoles) throws JwtVerificationException {
         dataSetup.setupUser(userRoles);
 

@@ -6,6 +6,7 @@ import gov.cms.ab2d.common.model.JobOutput;
 import gov.cms.ab2d.common.model.JobStatus;
 import gov.cms.ab2d.common.model.Sponsor;
 import gov.cms.ab2d.common.model.User;
+import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.repository.ContractRepository;
 import gov.cms.ab2d.common.repository.JobRepository;
 import lombok.extern.slf4j.Slf4j;
@@ -21,6 +22,7 @@ import java.net.MalformedURLException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.OffsetDateTime;
+import java.util.List;
 import java.util.UUID;
 
 @Slf4j
@@ -63,15 +65,12 @@ public class JobServiceImpl implements JobService {
             contractRepository.findContractByContractNumber(contractNumber).ifPresentOrElse(contractFound -> {
                 User user = userService.getCurrentUser();
                 Sponsor userSponsor = user.getSponsor();
-                Sponsor contractSponsor = contractFound.getSponsor();
-                if (!userSponsor.getHpmsId().equals(contractSponsor.getHpmsId())) {
-                    log.error("User {} does not have permissions for contract {}", user.getUsername(), contractFound.getContractNumber());
-                    throw new UserPermissionsException("User " + user.getUsername() + " does not have permissions for contract " + contractFound.getContractNumber());
-                }
 
-                if (contractFound.getAttestedOn() == null) {
-                    log.error("Contract {} has not been attested for", contractFound.getContractNumber());
-                    throw new ContractHasNotBeenAttestedException("Contract " + contractFound.getContractNumber() + " has not been attested for");
+                List<Contract> contracts = userSponsor.getAggregatedAttestedContracts();
+                if (!contracts.contains(contractFound)) {
+                    log.error("No attested contract with contract number {} found for the user", contractFound.getContractNumber());
+                    throw new InvalidContractException("No attested contract with contract number " + contractFound.getContractNumber() +
+                        " found for the user");
                 }
 
                 job.setContract(contractFound);

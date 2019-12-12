@@ -67,9 +67,6 @@ public class JobServiceTest {
     @Autowired
     DataSetup dataSetup;
 
-    //@MockBean
-    //UserService userService;
-
     @Value("${efs.mount}")
     private String tmpJobLocation;
 

@@ -70,6 +70,26 @@ public class DataSetup {
         contractRepository.saveAndFlush(contract);
     }
 
+    public void setupContractSponsorForParentUserData(List<String> userRoles) {
+        Sponsor savedSponsor = createSponsor("Parent Corp.", 456, "Test", 123);
+
+        setupContract(savedSponsor, "ABC123");
+
+        User user = new User();
+        user.setEmail(TEST_USER);
+        user.setFirstName("Eileen");
+        user.setLastName("Frierson");
+        user.setUsername(TEST_USER);
+        user.setSponsor(savedSponsor.getParent());
+        user.setEnabled(true);
+        for(String userRole :  userRoles) {
+            Role role = new Role();
+            role.setName(userRole);
+            user.addRole(role);
+        }
+        userRepository.save(user);
+    }
+
     public void setupUserBadSponsorData(List<String> userRoles) {
         Sponsor savedSponsor = createSponsor("Parent Corp.", 456, "Test", 123);
 

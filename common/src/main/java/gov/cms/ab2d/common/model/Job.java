@@ -3,8 +3,6 @@ package gov.cms.ab2d.common.model;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
-import org.springframework.beans.factory.annotation.Autowire;
-import org.springframework.beans.factory.annotation.Configurable;
 
 import javax.annotation.Nullable;
 import javax.persistence.*;
@@ -19,7 +17,6 @@ import static javax.persistence.EnumType.STRING;
 @Getter
 @Setter
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
-@Configurable(autowire = Autowire.BY_TYPE)
 public class Job {
 
     @Id
@@ -64,8 +61,8 @@ public class Job {
     @Pattern(regexp = "ExplanationOfBenefits", message = "_type should be ExplanationOfBenefits")
     private String resourceTypes; // for now just limited to ExplanationOfBenefits
 
-    @OneToOne()
-    @JoinColumn(name = "id")
+    @ManyToOne
+    @JoinColumn(name = "contract_id")
     @Nullable
     private Contract contract;
 
