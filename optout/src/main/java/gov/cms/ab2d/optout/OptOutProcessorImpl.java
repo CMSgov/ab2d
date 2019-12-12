@@ -31,12 +31,16 @@ public class OptOutProcessorImpl implements OptOutProcessor {
     @Override
     @Transactional
     public void process() {
+        log.info("import opt-out data - start ...");
 
         try (var inputStreamReader = s3Gateway.getOptOutFile();
              var bufferedReader = new BufferedReader(inputStreamReader)
         ) {
             importOptOutRecords(bufferedReader);
+
+            log.info("import opt-out data - DONE.");
         } catch (IOException e) {
+            log.info("import opt-out data - FAILED.");
             throw new UncheckedIOException(e);
         }
 

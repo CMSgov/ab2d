@@ -55,8 +55,7 @@ class JobProcessingServiceUnitTest {
 
     @Mock FileService fileService;
     @Mock JobRepository jobRepository;
-    @Mock
-    OptOutRepository optOutRepository;
+    @Mock OptOutRepository optOutRepository;
     @Mock JobOutputRepository jobOutputRepository;
     @Mock BeneficiaryAdapter beneficiaryAdapter;
     @Mock PatientClaimsProcessor patientClaimsProcessor;

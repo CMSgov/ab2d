@@ -31,18 +31,18 @@ public class OptOutConverterServiceImpl implements OptOutConverterService {
     @Override
     public Optional<OptOut> convert(String line) {
         if (isHeader(line)) {
-            log.warn("Skipping Header row");
+            log.debug("Skipping Header row");
             return Optional.empty();
         }
 
         if (isTrailer(line)) {
-            log.warn("Skipping Trailer row");
+            log.debug("Skipping Trailer row");
             return Optional.empty();
         }
 
         var sourceCode = line.substring(SOURCE_CODE_START, SOURCE_CODE_END);
         if (StringUtils.isBlank(sourceCode)) {
-            log.warn("SourceCode is blank. Skipping row");
+            log.debug("SourceCode is blank. Skipping row");
             return Optional.empty();
         }
         if (!sourceCode.trim().matches("1-?800")) {
@@ -52,7 +52,7 @@ public class OptOutConverterServiceImpl implements OptOutConverterService {
         var prefIndicator = line.substring(PREF_INDICATOR_START, PREF_INDICATOR_END);
         if (!OPT_OUT_INDICATOR.equalsIgnoreCase(prefIndicator)) {
             // we only care about opt-out records
-            log.warn("Preference Indicator is NOT opt-out. It was : {}, Skipping row", prefIndicator);
+            log.debug("Preference Indicator is NOT opt-out. It was : {}, Skipping row", prefIndicator);
             return Optional.empty();
         }
 
