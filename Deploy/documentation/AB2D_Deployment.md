@@ -1710,8 +1710,6 @@
       
 ### Configure the New Relic Infrastructure agent
 
-> *** TO DO ***
-
 1. Check the status of the New Relic infrastructure agent
 
    ```ShellSession
