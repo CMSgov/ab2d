@@ -9,7 +9,6 @@ import gov.cms.ab2d.common.model.JobOutput;
 import gov.cms.ab2d.common.model.JobStatus;
 import gov.cms.ab2d.common.repository.*;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
-import gov.cms.ab2d.common.util.DataSetup;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.hamcrest.core.Is;
@@ -42,12 +41,13 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Optional;
 
 import static gov.cms.ab2d.api.util.Constants.*;
 import static gov.cms.ab2d.common.service.JobServiceImpl.INITIAL_JOB_STATUS_MESSAGE;
 import static gov.cms.ab2d.common.util.Constants.NDJSON_FIRE_CONTENT_TYPE;
 import static gov.cms.ab2d.common.util.Constants.OPERATION_OUTCOME;
-import static gov.cms.ab2d.common.util.DataSetup.TEST_USER;
+import static gov.cms.ab2d.common.util.DataSetup.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
@@ -84,9 +84,6 @@ public class BulkDataAccessAPIIntegrationTests {
 
     @Autowired
     private TestUtil testUtil;
-
-    @Autowired
-    private DataSetup dataSetup;
 
     private String token;
 
@@ -604,7 +601,8 @@ public class BulkDataAccessAPIIntegrationTests {
 
     @Test
     public void testBasicPatientExportWithContract() throws Exception {
-        Contract contract = dataSetup.createContract();
+        Optional<Contract> contractOptional = contractRepository.findContractByContractNumber(VALID_CONTRACT_NUMBER);
+        Contract contract = contractOptional.get();
         ResultActions resultActions = this.mockMvc.perform(
                 get(API_PREFIX + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export").contentType(MediaType.APPLICATION_JSON)
                         .header("Authorization", "Bearer " + token))
@@ -628,7 +626,8 @@ public class BulkDataAccessAPIIntegrationTests {
 
     @Test
     public void testPatientExportWithParametersWithContract() throws Exception {
-        Contract contract = dataSetup.createContract();
+        Optional<Contract> contractOptional = contractRepository.findContractByContractNumber(VALID_CONTRACT_NUMBER);
+        Contract contract = contractOptional.get();
         final String typeParams =
                 "?_type=ExplanationOfBenefits&_outputFormat=application/fhir+ndjson&since=20191015";
         ResultActions resultActions =
@@ -654,7 +653,8 @@ public class BulkDataAccessAPIIntegrationTests {
 
     @Test
     public void testPatientExportWithInvalidTypeWithContract() throws Exception {
-        Contract contract = dataSetup.createContract();
+        Optional<Contract> contractOptional = contractRepository.findContractByContractNumber(VALID_CONTRACT_NUMBER);
+        Contract contract = contractOptional.get();
         final String typeParams = "?_type=PatientInvalid,ExplanationOfBenefits";
         this.mockMvc.perform(get(API_PREFIX +  FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export" + typeParams)
                 .contentType(MediaType.APPLICATION_JSON)
@@ -669,7 +669,8 @@ public class BulkDataAccessAPIIntegrationTests {
 
     @Test
     public void testPatientExportWithInvalidOutputFormatWithContract() throws Exception {
-        Contract contract = dataSetup.createContract();
+        Optional<Contract> contractOptional = contractRepository.findContractByContractNumber(VALID_CONTRACT_NUMBER);
+        Contract contract = contractOptional.get();
         final String typeParams = "?_outputFormat=Invalid";
         this.mockMvc.perform(get(API_PREFIX + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export" + typeParams)
                 .contentType(MediaType.APPLICATION_JSON)

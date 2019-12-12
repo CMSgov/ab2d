@@ -57,6 +57,22 @@ public class TestUtil {
         return buildTokenStr();
     }
 
+    public String setupBadSponsorUserData(List<String> userRoles) throws JwtVerificationException {
+        dataSetup.setupUserBadSponsorData(userRoles);
+
+        setupMock();
+
+        return buildTokenStr();
+    }
+
+    public String setupContractWithNoAttestation(List<String> userRoles) throws JwtVerificationException {
+        dataSetup.setupContractWithNoAttestation(userRoles);
+
+        setupMock();
+
+        return buildTokenStr();
+    }
+
     public String setupToken(List<String> userRoles) throws JwtVerificationException {
         dataSetup.setupUser(userRoles);
 

@@ -1,11 +1,13 @@
 package gov.cms.ab2d.common.service;
 
 
+import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.JobOutput;
+import gov.cms.ab2d.common.model.JobStatus;
+import gov.cms.ab2d.common.model.Sponsor;
+import gov.cms.ab2d.common.model.User;
 import gov.cms.ab2d.common.repository.ContractRepository;
 import gov.cms.ab2d.common.repository.JobRepository;
-import gov.cms.ab2d.common.model.Job;
-import gov.cms.ab2d.common.model.JobStatus;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -59,8 +61,22 @@ public class JobServiceImpl implements JobService {
 
         if (contractNumber != null) {
             contractRepository.findContractByContractNumber(contractNumber).ifPresentOrElse(contractFound -> {
+                User user = userService.getCurrentUser();
+                Sponsor userSponsor = user.getSponsor();
+                Sponsor contractSponsor = contractFound.getSponsor();
+                if (!userSponsor.getHpmsId().equals(contractSponsor.getHpmsId())) {
+                    log.error("User {} does not have permissions for contract {}", user.getUsername(), contractFound.getContractNumber());
+                    throw new UserPermissionsException("User " + user.getUsername() + " does not have permissions for contract " + contractFound.getContractNumber());
+                }
+
+                if (contractFound.getAttestedOn() == null) {
+                    log.error("Contract {} has not been attested for", contractFound.getContractNumber());
+                    throw new ContractHasNotBeenAttestedException("Contract " + contractFound.getContractNumber() + " has not been attested for");
+                }
+
                 job.setContract(contractFound);
             }, () -> {
+                log.error("Contract {} was not found", contractNumber);
                 throw new ResourceNotFoundException("Contract " + contractNumber + " was not found");
             });
         }
