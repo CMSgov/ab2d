@@ -40,6 +40,9 @@
 1. [Install Docker Desktop on Mac](#install-docker-desktop-on-mac)
 1. [Install MesiterTask](#install-mesitertask)
 1. [Install ECS CLI](#install-ecs-cli)
+1. [Install Xcode](#install-xcode)
+1. [Install and configure Ruby](#install-and-configure-ruby)
+1. [Install Keybase](#install-keybase)
 
 ## Install Slack
 
@@ -802,7 +805,23 @@
    ```ShellSession
    $ tflint --version
    ```
-   
+
+## Install flake8
+
+1. Note that "flake8" is a Python linter focused on possible errors, best practices, etc.
+
+1. Install tflint
+
+   ```ShellSession
+   $ brew install flake8
+   ```
+
+1. Check the flake8 version
+
+   ```ShellSession
+   $ flake8 --version
+   ```
+
 ## Install the AWS CLI using pip3
 
 1. Install the AWS CLI using pip3
@@ -871,7 +890,7 @@
    *Example for "semanticbitsdemo" AWS account:*
    
    ```ShellSession
-   $ aws configure --profile=sbdemo
+   $ aws configure --profile=sbdemo-dev
    ```
 
 1. Enter {your aws access key} at the **AWS Access Key ID** prompt
@@ -983,3 +1002,229 @@
    ```ShellSession
    $ ecs-cli --version
    ```
+
+## Install Xcode
+
+1. Note that this installation can take a while
+
+1. Select **Launchpad**
+
+1. Select **App Store**
+
+1. Enter the following in the **Search** text box
+
+   ```
+   xcode
+   ```
+
+1. Install Xcode
+
+1. Wait for the Xcode installation to complete
+
+1. Agree to Xcode license by doing the following:
+
+   1. Select the **Launchpad** icon
+  
+   1. Select **Xcode**
+  
+   1. Select **Agree**
+  
+   1. Enter you machine password
+  
+   1. Wait for installation to complete
+
+   1. Select the **Xcode** menu
+
+   1. Select **Preferences**
+   
+   1. Select **Locations**
+
+   1. Select the following from the **Command Line Tools** dropdown
+
+      *Format:*
+
+      ```
+      Xcode {version}
+      ```
+
+   1. Enter you machine password
+  
+   1. Close Xcode
+
+## Install and configure Ruby
+
+1. Install rbenv
+
+   ```ShellSession
+   $ brew install rbenv
+   ```
+
+1. Note that the following dependencies are automatically installed
+
+   - autoconf
+
+   - ruby-build
+
+1. Note the following caveats
+
+   ```
+   ==> autoconf
+   Emacs Lisp files have been installed to:
+     /usr/local/share/emacs/site-lisp/autoconf
+   ```
+
+1. Note that you can the determine that latest stable version of Ruby available via rbenv by doing the following
+
+   ```ShellSession
+   $ rbenv install -l | grep -v - | tail -1
+   ```
+
+1. Note that the latest stable version at the time of this writing was the following
+
+   ```
+   2.6.5
+   ```
+
+1. Install desired version of Ruby
+
+   *Example installing Ruby 2.6.5:*
+   
+   ```ShellSession
+   $ rbenv install 2.6.5
+   ```
+
+1. Wait for the installation to complete
+
+   *Note that the installation will take a while. Be patient.*
+   
+1. Set the global version of Ruby
+
+   *Example setting global version to Ruby 2.6.5:*
+
+   ```ShellSession
+   $ rbenv global 2.6.5
+   ```
+
+1. Open a shell environment script that is loaded before your terminal is loaded
+
+   *Example if you are using the bash shell:*
+
+   ```ShellSession
+   $ vim ~/.bash_profile
+   ```
+
+1. Add the following to the end of the file
+
+   ```
+   # Setup rbenv
+   if [[ -n `type rbenv | grep -v 'not found'` ]]; then
+     eval "$(rbenv init -)"
+   fi
+   ```
+
+1. Save and close the file
+
+1. Close all open terminals
+
+1. Reopen the terminal
+
+1. Verify the Ruby version
+
+   ```ShellSession
+   $ ruby --version
+   ```
+
+1. Install Bundler
+
+   ```ShellSession
+   $ gem install bundler
+   ```
+
+1. Update Ruby Gems
+
+   ```ShellSession
+   $ gem update --system
+   ```
+
+1. Install Jekyll
+
+   ```ShellSession
+   $ gem install jekyll
+   ```
+
+## Install Keybase
+
+1. Open Chrome
+
+1. Enter the following in the address bar
+
+   > https://keybase.io
+
+1. Select **Install**
+
+1. Select **macOS** from the leftmost panel
+
+1. Select **Download and open Keybase.dmg** within the "Keybase on macOS" page
+
+1. Wait for the download to complete
+
+1. Open the downloaded file
+
+   ```
+   Keybase.dmg
+   ```
+
+1. Drag the **Keybase** icon label to the **Applications** icon when the "Keybase App" page appears
+
+1. Wait for Keybase to finish copying
+
+1. Open Launchpad
+
+1. Selet **Keybase**
+
+1. Select **Open** on the "Keybase is an app downloaded from the internet" warning dialog
+
+1. If you are new to Keybase, do the following:
+
+   1. Select **Create an account** and complete the account setup process
+
+   1. Jump to the following section
+
+      [Next step](#next-step)
+
+1. If you already have a Keybase account, do the following:
+
+   1. Select **Login**
+
+   1. Select an existing device that you previously registered with Keybase to use as authorization for your work Mac
+   
+   1. Select a device name like the following
+   
+      *Note that device name should be between 3 and 64 characters and use only a-Z, 0-9, space, undersore, dash, and apostrophe*
+   
+      *Example:*
+      
+      ```
+      Work SemanticBits MacBook Pro Retina 15-inch Mid 2015
+      ```
+   
+   1. Select **Continue**
+
+   1. Notice that an 8-word secret will be displayed
+   
+   1. Open Keybase on the device that you are using for authorization
+   
+   1. Select the **Devices** icon in the leftmost panel
+
+   1. Select **Add a device or paper key**
+
+   1. Select **Add a computer**
+
+   1. Type the 8-word secret in the "Type the 8-word secret code" text box
+
+   1. Select **Continue**
+
+## Next step
+
+> *** TO DO ***
+
