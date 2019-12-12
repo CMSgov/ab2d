@@ -442,11 +442,11 @@
    
    ```ShellSession
    $ export TARGET_ENVIRONMENT=ab2d-shared
-   $ export API_PRIVATE_IP=10.242.26.192
+   $ export API_PRIVATE_IP=10.242.26.25
    $ export SSH_USER_NAME=ec2-user
    ```
    
-1. Connect to a worker node
+1. Connect to an API node
 
    *Format:*
 
