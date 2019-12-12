@@ -17,6 +17,13 @@ data "aws_db_instance" "ab2d" {
   db_instance_identifier = "ab2d"
 }
 
+data "aws_instance" "ab2d_deployment_controller" {
+  filter {
+    name   = "tag:Name"
+    values = ["ab2d-deployment-controller"]
+  }
+}
+
 data "aws_kms_key" "ab2d_kms" {
   key_id = "alias/ab2d-kms"
 }
@@ -40,10 +47,6 @@ module "efs" {
   env                 = var.env
   encryption_key_arn  = "${data.aws_kms_key.ab2d_kms.arn}"
 }
-
-#
-# TEMPORARILY COMMENTED OUT BEGIN
-#
 
 # LSH SKIP FOR NOW BEGIN
 # vpn-private-sec-group-id      = var.vpn-private-sec-group-id
@@ -73,10 +76,17 @@ module "api" {
   gold_disk_name                = var.gold_image_name
   override_task_definition_arn  = var.current_task_definition_arn
   aws_account_number            = var.aws_account_number
-  db_host                       = "${data.aws_db_instance.ab2d.endpoint}"
-  db_username                   = var.db_username
-  db_password                   = var.db_password
+  db_host                       = var.db_host
+  db_port                       = var.db_port
   db_name                       = var.db_name
+  db_username                   = var.db_username
+  db_password                   = var.db_password  
+  db_host_secret_arn            = var.db_host_secret_arn
+  db_port_secret_arn            = var.db_port_secret_arn
+  db_user_secret_arn            = var.db_user_secret_arn
+  db_password_secret_arn        = var.db_password_secret_arn
+  db_name_secret_arn            = var.db_name_secret_arn
+  deployer_ip_address           = var.deployer_ip_address
 }
 
 # LSH SKIP FOR NOW BEGIN
@@ -87,6 +97,7 @@ module "worker" {
   source                        = "../../modules/worker"
   env                           = var.env
   vpc_id                        = var.vpc_id
+  db_sec_group_id               = "${data.aws_security_group.ab2d_database_sg.id}"
   controller_subnet_ids         = var.deployment_controller_subnet_ids
   ami_id                        = var.ami_id
   instance_type                 = var.ec2_instance_type
@@ -110,25 +121,33 @@ module "worker" {
   beta                          = var.private_subnet_ids[1]
   ecs_cluster_id                = module.api.ecs_cluster_id  
   aws_account_number            = var.aws_account_number
+  db_host                       = var.db_host
+  db_port                       = var.db_port
+  db_name                       = var.db_name
+  db_username                   = var.db_username
+  db_password                   = var.db_password
+  db_host_secret_arn            = var.db_host_secret_arn
+  db_port_secret_arn            = var.db_port_secret_arn
+  db_user_secret_arn            = var.db_user_secret_arn
+  db_password_secret_arn        = var.db_password_secret_arn
+  db_name_secret_arn            = var.db_name_secret_arn
 }
 
-#
-# TEMPORARILY COMMENTED OUT BEGIN
-#
+module "cloudwatch" {
+  source                  = "../../modules/cloudwatch"
+  env                     = var.env
+  autoscaling_arn         = module.api.aws_autoscaling_policy_percent_capacity_arn
+  # sns_arn                 = module.sns.aws_sns_topic_CCXP-Alarms_arn
+  autoscaling_name        = module.api.aws_autoscaling_group_name
+  controller_server_id    = "${data.aws_instance.ab2d_deployment_controller.instance_id}"
+  s3_bucket_name          = var.file_bucket_name
+  db_name                 = var.db_identifier
+  target_group_arn_suffix = module.api.alb_target_group_arn_suffix
+  loadbalancer_arn_suffix = module.api.alb_arn_suffix
+}
 
-# module "cloudwatch" {
-#   source                  = "../../modules/cloudwatch"
-#   env                     = var.env
-#   autoscaling_arn         = module.api.aws_autoscaling_policy_percent_capacity_arn
-#   # sns_arn                 = module.sns.aws_sns_topic_CCXP-Alarms_arn
-#   autoscaling_name        = module.api.aws_autoscaling_group_name
-#   controller_server_id    = module.api.deployment_controller_id
-#   s3_bucket_name          = var.file_bucket_name
-#   db_name                 = var.db_identifier
-#   target_group_arn_suffix = module.api.alb_target_group_arn_suffix
-#   loadbalancer_arn_suffix = module.api.alb_arn_suffix
-# }
-
-#
-# TEMPORARILY COMMENTED OUT END
-#
+module "waf" {
+  source  = "../../modules/waf"
+  env     = var.env
+  alb_arn = module.api.alb_arn
+}

@@ -10,4 +10,4 @@ response = client.enable_key(
     KeyId=kms_string
 )
 
-print("KMS",kms_string,"enabled...")
+print("KMS", kms_string, "enabled...")

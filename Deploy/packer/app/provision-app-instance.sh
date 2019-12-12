@@ -94,7 +94,7 @@ sudo sed -i '/SystemLogRateLimitBurst/c\$SystemLogRateLimitBurst 2000' /etc/rsys
 #
 # # Install newrelic infrastructure agent
 # cd /tmp
-# aws s3 cp s3://ab2d-automation/encrypted-newrelic-infra.yml ./encrypted-newrelic-infra.yml
+# aws s3 cp s3://cms-ab2d-automation/encrypted-newrelic-infra.yml ./encrypted-newrelic-infra.yml
 # aws kms --region us-east-1 decrypt --ciphertext-blob fileb://encrypted-newrelic-infra.yml --output text --query Plaintext | base64 --decode > newrelic-infra.yml
 # [ -s newrelic-infra.yml ] || (echo "NewRelic file decryption failed" && exit 1)
 # sudo mv newrelic-infra.yml /etc/newrelic-infra.yml

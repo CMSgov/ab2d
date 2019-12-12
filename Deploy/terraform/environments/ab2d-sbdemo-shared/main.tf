@@ -68,11 +68,12 @@ module "controller" {
   ssh_key_name          = var.ssh_key_name
   iam_instance_profile  = var.ec2_iam_profile
   gold_disk_name        = var.gold_image_name
+  deployer_ip_address   = var.deployer_ip_address
 }
 
 module "lonnie_access_controller" {
   description  = "Lonnie"
-  cidr_blocks  = ["152.208.13.223/32"]
+  cidr_blocks  = ["${var.deployer_ip_address}/32"]
   source       = "../../modules/access_controller"
   sec_group_id = module.controller.deployment_controller_sec_group_id
 }

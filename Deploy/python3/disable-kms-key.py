@@ -10,4 +10,4 @@ response = client.disable_key(
     KeyId=kms_string
 )
 
-print("KMS",kms_string,"disabled...")
+print("KMS", kms_string, "disabled...")
