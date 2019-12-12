@@ -5,4 +5,4 @@ databaseChangeLog:
   - include:
       file: db/changelog/v001/seed_data.sql
   - include:
-      file: db/changelog/v001/ab2d-599.sql
+      file: db/changelog/v001/ab2d-599-rename-consent.sql
