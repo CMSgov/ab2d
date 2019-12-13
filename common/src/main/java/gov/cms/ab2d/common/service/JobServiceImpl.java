@@ -162,7 +162,7 @@ public class JobServiceImpl implements JobService {
         Contract contract = contractRepository.findContractByContractNumber(contractNumber)
             .orElseThrow(() -> {
                 log.error("Contract number {} }was not found", contractNumber);
-                return new ResourceNotFoundException("Contract number " + contractNumber + "was not found");
+                return new ResourceNotFoundException("Contract number " + contractNumber + " was not found");
             });
         List<Job> jobs = jobRepository.findActiveJobsByUserAndContract(user, contract);
         return jobs.size() > 0;
