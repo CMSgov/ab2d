@@ -28,8 +28,8 @@ public class LoggingConfig {
     public void init() {
         String jsonLogging = env.getProperty("json-logging");
 
-        // Developers must add the json-logging env variable to their configuration and set it to true
-        if(jsonLogging != null && jsonLogging.equals("true")) {
+        // Developers must add the json-logging env variable to their configuration and set it to false
+        if(jsonLogging != null && jsonLogging.equals("false")) {
             // First remove the old loggers, including access logs
             LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
             ch.qos.logback.classic.Logger rootLogger = loggerContext.getLogger(ch.qos.logback.classic.Logger.ROOT_LOGGER_NAME);
