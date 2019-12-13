@@ -2,10 +2,12 @@ package gov.cms.ab2d.common.service;
 
 import gov.cms.ab2d.common.SpringBootApp;
 import gov.cms.ab2d.common.model.*;
+import gov.cms.ab2d.common.repository.ContractRepository;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.common.repository.SponsorRepository;
 import gov.cms.ab2d.common.repository.UserRepository;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
+import gov.cms.ab2d.common.util.DataSetup;
 import org.apache.commons.io.IOUtils;
 import org.junit.Assert;
 import org.junit.jupiter.api.Assertions;
@@ -14,7 +16,9 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.core.io.Resource;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.TestPropertySource;
@@ -36,6 +40,7 @@ import java.util.List;
 
 import static gov.cms.ab2d.common.service.JobServiceImpl.INITIAL_JOB_STATUS_MESSAGE;
 import static gov.cms.ab2d.common.util.Constants.OPERATION_OUTCOME;
+import static gov.cms.ab2d.common.util.DataSetup.TEST_USER;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
 
@@ -56,6 +61,12 @@ public class JobServiceTest {
     @Autowired
     SponsorRepository sponsorRepository;
 
+    @Autowired
+    ContractRepository contractRepository;
+
+    @Autowired
+    DataSetup dataSetup;
+
     @Value("${efs.mount}")
     private String tmpJobLocation;
 
@@ -65,27 +76,17 @@ public class JobServiceTest {
     // Be safe and make sure nothing from another test will impact current test
     @BeforeEach
     public void setup() {
+        contractRepository.deleteAll();
         jobRepository.deleteAll();
         userRepository.deleteAll();
         sponsorRepository.deleteAll();
 
-        Sponsor sponsor = new Sponsor();
-        sponsor.setHpmsId(574);
-        sponsor.setOrgName("CHA HMO, INC.");
-        sponsorRepository.save(sponsor);
-
-        User user = new User();
-        user.setEnabled(true);
-        user.setSponsor(sponsor);
-        user.setUsername("example@example.com");
-        userRepository.saveAndFlush(user);
+        dataSetup.setupUser(List.of());
 
         SecurityContextHolder.getContext().setAuthentication(
                 new UsernamePasswordAuthenticationToken(
-                        new org.springframework.security.core.userdetails.User("example@example.com",
+                        new org.springframework.security.core.userdetails.User(TEST_USER,
                                 "test", new ArrayList<>()), "pass"));
-
-
     }
 
     @Test
@@ -95,7 +96,7 @@ public class JobServiceTest {
         assertThat(job.getId()).isNotNull();
         assertThat(job.getJobUuid()).isNotNull();
         assertEquals(job.getProgress(), Integer.valueOf(0));
-        assertEquals(job.getUser(), userRepository.findByUsername("example@example.com"));
+        assertEquals(job.getUser(), userRepository.findByUsername(TEST_USER));
         assertEquals(job.getResourceTypes(), "ExplanationOfBenefits");
         assertEquals(job.getRequestUrl(), "http://localhost:8080");
         assertEquals(job.getStatusMessage(), INITIAL_JOB_STATUS_MESSAGE);
@@ -108,6 +109,38 @@ public class JobServiceTest {
 
         // Verify it actually got persisted in the DB
         assertThat(jobRepository.findById(job.getId())).get().isEqualTo(job);
+    }
+
+    @Test
+    public void createJobWithContract() {
+        Contract contract = contractRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
+
+        Job job = jobService.createJob("ExplanationOfBenefits", "http://localhost:8080", contract.getContractNumber());
+        assertThat(job).isNotNull();
+        assertThat(job.getId()).isNotNull();
+        assertThat(job.getJobUuid()).isNotNull();
+        assertEquals(job.getProgress(), Integer.valueOf(0));
+        assertEquals(job.getUser(), userRepository.findByUsername(TEST_USER));
+        assertEquals(job.getResourceTypes(), "ExplanationOfBenefits");
+        assertEquals(job.getRequestUrl(), "http://localhost:8080");
+        assertEquals(job.getStatusMessage(), INITIAL_JOB_STATUS_MESSAGE);
+        assertEquals(job.getStatus(), JobStatus.SUBMITTED);
+        assertEquals(job.getJobOutputs().size(), 0);
+        assertEquals(job.getLastPollTime(), null);
+        assertEquals(job.getExpiresAt(), null);
+        assertThat(job.getJobUuid()).matches(
+                "[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}");
+        assertEquals(job.getContract().getContractNumber(), contract.getContractNumber());
+
+        // Verify it actually got persisted in the DB
+        assertThat(jobRepository.findById(job.getId())).get().isEqualTo(job);
+    }
+
+    @Test
+    public void createJobWithBadContract() {
+        Assertions.assertThrows(ResourceNotFoundException.class, () -> {
+            jobService.createJob("ExplanationOfBenefits", "http://localhost:8080", "BadContract");
+        });
     }
 
     @Test
@@ -218,7 +251,7 @@ public class JobServiceTest {
         errorJobOutput.setFilePath("error.ndjson");
         errorJobOutput.setJob(job);
 
-        List output = List.of(jobOutput, errorJobOutput);
+        List<JobOutput> output = List.of(jobOutput, errorJobOutput);
         job.setJobOutputs(output);
 
         Job updatedJob = jobService.updateJob(job);
@@ -298,7 +331,7 @@ public class JobServiceTest {
         errorJobOutput.setFilePath(errorFileName);
         errorJobOutput.setJob(job);
 
-        List output = List.of(jobOutput, errorJobOutput);
+        List<JobOutput> output = List.of(jobOutput, errorJobOutput);
         job.setJobOutputs(output);
 
         return jobService.updateJob(job);

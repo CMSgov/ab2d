@@ -12,6 +12,8 @@ public interface JobService {
 
     Job createJob(String resourceTypes, String url);
 
+    Job createJob(String resourceTypes, String url, String contractNumber);
+
     void cancelJob(String jobUuid);
 
     Job getJobByJobUuid(String jobUuid);
@@ -22,5 +24,7 @@ public interface JobService {
 
     void deleteFileForJob(File file);
 
-    boolean checkIfCurrentUserHasSubmittedOrActiveJob();
+    boolean checkIfCurrentUserHasActiveJob();
+
+    boolean checkIfCurrentUserHasActiveJobForContractNumber(String contractNumber);
 }

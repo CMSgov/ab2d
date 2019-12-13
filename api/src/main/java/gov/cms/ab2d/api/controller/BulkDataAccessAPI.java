@@ -109,10 +109,22 @@ public class BulkDataAccessAPI {
             @RequestParam(required = false, name = "_outputFormat") String outputFormat) {
         log.info("Received request to export");
 
-        if(jobService.checkIfCurrentUserHasSubmittedOrActiveJob()) {
-            throw new TooManyRequestsException("User already has an active or submitted job");
+        if(jobService.checkIfCurrentUserHasActiveJob()) {
+            String errorMsg = "User already has an active or submitted job";
+            log.error(errorMsg);
+            throw new TooManyRequestsException(errorMsg);
         }
 
+        checkResourceTypesAndOutputFormat(resourceTypes, outputFormat);
+
+        Job job = jobService.createJob(resourceTypes, ServletUriComponentsBuilder.fromCurrentRequest().toUriString());
+
+        logSuccessfulJobCreation(job);
+
+        return returnStatusForJobCreation(job);
+    }
+
+    private void checkResourceTypesAndOutputFormat(String resourceTypes, String outputFormat) {
         if (resourceTypes != null && !resourceTypes.equals(RESOURCE_TYPE_VALUE)) {
             log.error("Received invalid resourceTypes of {}", resourceTypes);
             throw new InvalidUserInputException("_type must be " + RESOURCE_TYPE_VALUE);
@@ -121,12 +133,14 @@ public class BulkDataAccessAPI {
             log.error("Received _outputFormat {}, which is not valid", outputFormat);
             throw new InvalidUserInputException("An _outputFormat of " + outputFormat + " is not valid");
         }
+    }
 
-        Job job = jobService.createJob(resourceTypes, ServletUriComponentsBuilder.fromCurrentRequest().toUriString());
-
+    private void logSuccessfulJobCreation(Job job) {
         MDC.put(JOB_LOG, job.getJobUuid());
         log.info("Successfully created job");
+    }
 
+    private ResponseEntity<Void> returnStatusForJobCreation(Job job) {
         String statusURL = ServletUriComponentsBuilder.fromCurrentRequestUri().replacePath
                 (String.format(API_PREFIX + FHIR_PREFIX + "/Job/%s/$status", job.getJobUuid())).toUriString();
         HttpHeaders responseHeaders = new HttpHeaders();
@@ -134,6 +148,49 @@ public class BulkDataAccessAPI {
 
         return new ResponseEntity<>(null, responseHeaders,
                 HttpStatus.ACCEPTED);
+    }
+
+    @ApiOperation(value = "Initiate Part A & B bulk claim export job for a given contract number")
+    @ApiImplicitParams(value = {
+            @ApiImplicitParam(name = "Accept", required = true, paramType = "header", value =
+                    "application/fhir+json"),
+            @ApiImplicitParam(name = "Prefer", required = true, paramType = "header", value =
+                    "respond-async")}
+    )
+    @ApiResponses(
+            @ApiResponse(code = 202, message = "Export request has started", responseHeaders =
+            @ResponseHeader(name = "Content-Location", description = "Absolute URL of an endpoint" +
+                    " for subsequent status requests (polling location)",
+                    response = String.class))
+    )
+    @ResponseStatus(value = HttpStatus.ACCEPTED)
+    @GetMapping("/Group/{contractNumber}/$export")
+    public ResponseEntity<Void> exportPatientsWithContract(@ApiParam(value = "A contract number", required = true)
+            @PathVariable @NotBlank String contractNumber,
+            @ApiParam(value = "String of comma-delimited FHIR resource types. Only resources of " +
+                    "the specified resource types(s) SHALL be included in the response.",
+                    allowableValues = RESOURCE_TYPE_VALUE)
+            @RequestParam(required = false, name = "_type") String resourceTypes,
+            @ApiParam(value = "The format for the requested bulk data files to be generated.",
+                    allowableValues = ALLOWABLE_OUTPUT_FORMATS, defaultValue = "application/fhir" +
+                    "+ndjson"
+            )
+            @RequestParam(required = false, name = "_outputFormat") String outputFormat) {
+        MDC.put(CONTRACT_LOG, contractNumber);
+        log.info("Received request to export by contractNumber");
+
+        if(jobService.checkIfCurrentUserHasActiveJobForContractNumber(contractNumber)) {
+            log.error("User already has an active or submitted job for the contract number {}", contractNumber);
+            throw new TooManyRequestsException("User already has an active or submitted job for the contract number " + contractNumber);
+        }
+
+        checkResourceTypesAndOutputFormat(resourceTypes, outputFormat);
+
+        Job job = jobService.createJob(resourceTypes, ServletUriComponentsBuilder.fromCurrentRequest().toUriString(), contractNumber);
+
+        logSuccessfulJobCreation(job);
+
+        return returnStatusForJobCreation(job);
     }
 
     @ApiOperation(value = "Cancel a pending export job")

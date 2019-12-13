@@ -1,11 +1,14 @@
 package gov.cms.ab2d.common.service;
 
-
 import gov.cms.ab2d.common.model.JobOutput;
 import gov.cms.ab2d.common.model.User;
 import gov.cms.ab2d.common.repository.JobRepository;
+
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.JobStatus;
+import gov.cms.ab2d.common.model.Sponsor;
+import gov.cms.ab2d.common.model.Contract;
+import gov.cms.ab2d.common.repository.ContractRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -20,6 +23,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Slf4j
@@ -33,6 +37,9 @@ public class JobServiceImpl implements JobService {
     @Autowired
     private JobRepository jobRepository;
 
+    @Autowired
+    private ContractRepository contractRepository;
+
     @Value("${efs.mount}")
     private String fileDownloadPath;
 
@@ -40,6 +47,11 @@ public class JobServiceImpl implements JobService {
 
     @Override
     public Job createJob(String resourceTypes, String url) {
+        return createJob(resourceTypes, url, null);
+    }
+
+    @Override
+    public Job createJob(String resourceTypes, String url, String contractNumber) {
         Job job = new Job();
         job.setResourceTypes(resourceTypes);
         job.setJobUuid(UUID.randomUUID().toString());
@@ -49,6 +61,25 @@ public class JobServiceImpl implements JobService {
         job.setCreatedAt(OffsetDateTime.now());
         job.setProgress(0);
         job.setUser(userService.getCurrentUser());
+
+        if (contractNumber != null) {
+            contractRepository.findContractByContractNumber(contractNumber).ifPresentOrElse(contractFound -> {
+                User user = userService.getCurrentUser();
+                Sponsor userSponsor = user.getSponsor();
+
+                List<Contract> contracts = userSponsor.getAggregatedAttestedContracts();
+                if (!contracts.contains(contractFound)) {
+                    log.error("No attested contract with contract number {} found for the user", contractFound.getContractNumber());
+                    throw new InvalidContractException("No attested contract with contract number " + contractFound.getContractNumber() +
+                        " found for the user");
+                }
+
+                job.setContract(contractFound);
+            }, () -> {
+                log.error("Contract {} was not found", contractNumber);
+                throw new ResourceNotFoundException("Contract " + contractNumber + " was not found");
+            });
+        }
 
         return jobRepository.save(job);
     }
@@ -120,15 +151,21 @@ public class JobServiceImpl implements JobService {
     }
 
     @Override
-    public boolean checkIfCurrentUserHasSubmittedOrActiveJob() {
+    public boolean checkIfCurrentUserHasActiveJob() {
         User user = userService.getCurrentUser();
-        List<Job> jobs = jobRepository.findJobsByUser(user);
-        for(Job job : jobs) {
-            if (job.getStatus().isCancellable()) {
-                return true;
-            }
-        }
+        List<Job> jobs = jobRepository.findActiveJobsByUser(user);
+        return jobs.size() > 0;
+    }
 
-        return false;
+    @Override
+    public boolean checkIfCurrentUserHasActiveJobForContractNumber(String contractNumber) {
+        User user = userService.getCurrentUser();
+        Contract contract = contractRepository.findContractByContractNumber(contractNumber)
+            .orElseThrow(() -> {
+                log.error("Contract number {} }was not found", contractNumber);
+                return new ResourceNotFoundException("Contract number " + contractNumber + "was not found");
+            });
+        List<Job> jobs = jobRepository.findActiveJobsByUserAndContract(user, contract);
+        return jobs.size() > 0;
     }
 }
