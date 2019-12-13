@@ -263,9 +263,6 @@ public class BulkDataAccessAPI {
         RequestAttributes requestAttributes = RequestContextHolder.getRequestAttributes();
         HttpServletResponse response = ((ServletRequestAttributes) requestAttributes).getResponse();
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.set(HttpHeaders.CONTENT_TYPE, NDJSON_FIRE_CONTENT_TYPE);
-
         log.info("Sending file to client");
 
         try (OutputStream out = response.getOutputStream(); FileInputStream in = new FileInputStream(downloadResource.getFile())) {
@@ -273,7 +270,9 @@ public class BulkDataAccessAPI {
 
             jobService.deleteFileForJob(downloadResource.getFile());
 
-            return new ResponseEntity<>(null, headers, HttpStatus.OK);
+            response.setHeader(HttpHeaders.CONTENT_TYPE, NDJSON_FIRE_CONTENT_TYPE);
+
+            return new ResponseEntity<>(null, null, HttpStatus.OK);
         }
     }
 }
