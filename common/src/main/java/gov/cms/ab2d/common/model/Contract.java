@@ -1,6 +1,7 @@
 package gov.cms.ab2d.common.model;
 
 
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -12,10 +13,12 @@ import java.util.Set;
 @Entity
 @Getter
 @Setter
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class Contract {
 
     @Id
     @GeneratedValue
+    @EqualsAndHashCode.Include
     private Long id;
 
     @Column(unique = true)
