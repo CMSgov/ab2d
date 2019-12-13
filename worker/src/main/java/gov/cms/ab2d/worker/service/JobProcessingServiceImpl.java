@@ -10,6 +10,7 @@ import gov.cms.ab2d.common.repository.OptOutRepository;
 import gov.cms.ab2d.common.repository.JobOutputRepository;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.worker.adapter.bluebutton.BeneficiaryAdapter;
+import gov.cms.ab2d.worker.adapter.bluebutton.GetPatientsByContractResponse;
 import gov.cms.ab2d.worker.adapter.bluebutton.PatientClaimsProcessor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,8 +29,8 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.stream.Collectors;
 
+import static gov.cms.ab2d.common.model.JobStatus.CANCELLED;
 import static gov.cms.ab2d.common.model.JobStatus.IN_PROGRESS;
 import static gov.cms.ab2d.common.model.JobStatus.SUBMITTED;
 import static gov.cms.ab2d.common.model.JobStatus.SUCCESSFUL;
@@ -43,6 +44,7 @@ import static net.logstash.logback.argument.StructuredArguments.keyValue;
 public class JobProcessingServiceImpl implements JobProcessingService {
     private static final String OUTPUT_FILE_SUFFIX = ".ndjson";
     private static final String ERROR_FILE_SUFFIX = "_error.ndjson";
+    private static final int PERIODIC_CHECK_FREQUENCY = 10;
 
     @Value("${efs.mount}")
     private String efsMount;
@@ -79,24 +81,24 @@ public class JobProcessingServiceImpl implements JobProcessingService {
 
     @Override
     @Transactional(propagation = Propagation.NEVER)
-    public Job processJob(final String jobId) {
+    public Job processJob(final String jobUuid) {
 
-        final Job job = jobRepository.findByJobUuid(jobId);
-        log.info("Found job : {}", job.getJobUuid());
+        final Job job = jobRepository.findByJobUuid(jobUuid);
+        log.info("Found job : {}", jobUuid);
 
         final Sponsor sponsor = job.getUser().getSponsor();
 
         final List<Contract> attestedContracts = sponsor.getAggregatedAttestedContracts();
-        log.info("Job [{}] has [{}] attested contracts", job.getJobUuid(), attestedContracts.size());
+        log.info("Job [{}] has [{}] attested contracts", jobUuid, attestedContracts.size());
 
         try {
-            final Path outputDirPath = Paths.get(efsMount, job.getJobUuid());
+            final Path outputDirPath = Paths.get(efsMount, jobUuid);
             final Path outputDir = fileService.createDirectory(outputDirPath);
 
             for (Contract contract : attestedContracts) {
-                log.info("Job [{}] - contract [{}] ", job.getJobUuid(), contract.getContractNumber());
+                log.info("Job [{}] - contract [{}] ", jobUuid, contract.getContractNumber());
 
-                var jobOutputs = processContract(outputDir, contract);
+                var jobOutputs = processContract(outputDir, contract, jobUuid);
 
                 jobOutputs.forEach(jobOutput -> job.addJobOutput(jobOutput));
                 jobOutputRepository.saveAll(jobOutputs);
@@ -109,14 +111,15 @@ public class JobProcessingServiceImpl implements JobProcessingService {
             job.setStatusMessage(e.getMessage());
             job.setCompletedAt(OffsetDateTime.now());
             jobRepository.save(job);
-            log.info("Job: [{}] FAILED", job.getJobUuid());
+            log.info("Job: [{}] FAILED", jobUuid);
         }
 
         return job;
     }
 
-    private List<JobOutput> processContract(final Path outputDir, Contract contract) {
+    private List<JobOutput> processContract(final Path outputDir, Contract contract, String jobUuid) {
         log.info("Beginning to process contract {}", keyValue(CONTRACT_LOG, contract.getContractName()));
+
         var contractNumber = contract.getContractNumber();
         var outputFile = fileService.createFile(outputDir, contractNumber + OUTPUT_FILE_SUFFIX);
         var errorFile = fileService.createFile(outputDir, contractNumber + ERROR_FILE_SUFFIX);
@@ -128,14 +131,40 @@ public class JobProcessingServiceImpl implements JobProcessingService {
         // A mutex lock that all threads for a contract uses while writing into the shared files
         var lock = new ReentrantLock();
 
-        final List<Future<Integer>> futureResourcesHandles = patients.stream()
-                .map(patient -> patient.getPatientId())
-                .filter(patientId -> !isOptOutPatient(patientId))
-                .map(patientId -> patientClaimsProcessor.process(patientId, lock, outputFile, errorFile))
-                .collect(Collectors.toList());
+        int errorCount = 0;
+        JobStatus jobStatus = null;
+
+        int recordsProcessedCount = 0;
+        final List<Future<Integer>> futureResourcesHandles = new ArrayList<>();
+        for (GetPatientsByContractResponse.PatientDTO patient : patients) {
+            ++recordsProcessedCount;
+
+            final String patientId = patient.getPatientId();
+
+            if (isOptOutPatient(patientId)) {
+                // this patient has opted out. skip patient record.
+                continue;
+            }
+
+            futureResourcesHandles.add(patientClaimsProcessor.process(patientId, lock, outputFile, errorFile));
+
+            if (recordsProcessedCount % PERIODIC_CHECK_FREQUENCY == 0) {
+                errorCount += processHandles(futureResourcesHandles);
+
+                // A Job could run for a long time perhaps hours.
+                // While the job is in progress, the job could be cancelled.
+                // So the worker needs to periodically check the job status to ensure it has not been cancelled.
+
+                jobStatus = jobRepository.findJobStatus(jobUuid);
+                if (jobHasBeenCancelled(jobStatus)) {
+                    log.warn("Job has been cancelled. Attempting to stop processing the job shortly ... ");
+                    break;
+                }
+
+            }
+        }
 
 
-        int errorCount = processHandles(futureResourcesHandles);
         while (!futureResourcesHandles.isEmpty()) {
             sleep();
             errorCount += processHandles(futureResourcesHandles);
@@ -151,7 +180,17 @@ public class JobProcessingServiceImpl implements JobProcessingService {
             jobOutputs.add(createJobOutput(errorFile, true));
         }
 
+        if (jobHasBeenCancelled(jobStatus)) {
+            final String errMsg = "Job was cancelled while it was being processed";
+            log.warn("{} - JobUuid :[{}]", errMsg, jobUuid);
+            throw new RuntimeException(errMsg);
+        }
+
         return jobOutputs;
+    }
+
+    private boolean jobHasBeenCancelled(JobStatus jobStatus) {
+        return CANCELLED.equals(jobStatus);
     }
 
     private boolean isOptOutPatient(String patientId) {
