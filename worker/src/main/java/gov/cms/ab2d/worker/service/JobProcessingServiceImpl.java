@@ -106,6 +106,10 @@ public class JobProcessingServiceImpl implements JobProcessingService {
 
             completeJob(job);
 
+        } catch (JobCancelledException e) {
+            job.setStatusMessage(e.getMessage());
+            jobRepository.save(job);
+            log.warn("Job: [{}] CANCELLED", jobUuid);
         } catch (Exception e) {
             job.setStatus(JobStatus.FAILED);
             job.setStatusMessage(e.getMessage());
@@ -157,7 +161,7 @@ public class JobProcessingServiceImpl implements JobProcessingService {
 
                 jobStatus = jobRepository.findJobStatus(jobUuid);
                 if (jobHasBeenCancelled(jobStatus)) {
-                    log.warn("Job has been cancelled. Attempting to stop processing the job shortly ... ");
+                    log.warn("Job [{}] has been cancelled. Attempting to stop processing the job shortly ... ", jobUuid);
                     break;
                 }
 
@@ -170,6 +174,13 @@ public class JobProcessingServiceImpl implements JobProcessingService {
             errorCount += processHandles(futureResourcesHandles);
         }
 
+        if (jobHasBeenCancelled(jobStatus)) {
+            final String errMsg = "Job was cancelled while it was being processed";
+            log.warn("{} - JobUuid :[{}]", errMsg, jobUuid);
+            throw new JobCancelledException(errMsg);
+        }
+
+
         final List<JobOutput> jobOutputs = new ArrayList<>();
         if (errorCount < patientCount) {
             jobOutputs.add(createJobOutput(outputFile, false));
@@ -178,12 +189,6 @@ public class JobProcessingServiceImpl implements JobProcessingService {
             log.warn("Encountered {} errors during job processing", errorCount);
 
             jobOutputs.add(createJobOutput(errorFile, true));
-        }
-
-        if (jobHasBeenCancelled(jobStatus)) {
-            final String errMsg = "Job was cancelled while it was being processed";
-            log.warn("{} - JobUuid :[{}]", errMsg, jobUuid);
-            throw new RuntimeException(errMsg);
         }
 
         return jobOutputs;
