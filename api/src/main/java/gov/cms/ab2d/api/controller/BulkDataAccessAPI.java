@@ -109,6 +109,10 @@ public class BulkDataAccessAPI {
             @RequestParam(required = false, name = "_outputFormat") String outputFormat) {
         log.info("Received request to export");
 
+        if(jobService.checkIfCurrentUserHasSubmittedOrActiveJob()) {
+            throw new TooManyRequestsException("User already has an active or submitted job");
+        }
+
         if (resourceTypes != null && !resourceTypes.equals(RESOURCE_TYPE_VALUE)) {
             log.error("Received invalid resourceTypes of {}", resourceTypes);
             throw new InvalidUserInputException("_type must be " + RESOURCE_TYPE_VALUE);

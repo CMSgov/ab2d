@@ -2,6 +2,7 @@ package gov.cms.ab2d.common.service;
 
 
 import gov.cms.ab2d.common.model.JobOutput;
+import gov.cms.ab2d.common.model.User;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.JobStatus;
@@ -18,6 +19,7 @@ import java.net.MalformedURLException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.OffsetDateTime;
+import java.util.List;
 import java.util.UUID;
 
 @Slf4j
@@ -115,5 +117,18 @@ public class JobServiceImpl implements JobService {
         if (!deleted) {
             log.error("Was not able to delete the file {}", file.getName());
         }
+    }
+
+    @Override
+    public boolean checkIfCurrentUserHasSubmittedOrActiveJob() {
+        User user = userService.getCurrentUser();
+        List<Job> jobs = jobRepository.findJobsByUser(user);
+        for(Job job : jobs) {
+            if (job.getStatus().isCancellable()) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }
