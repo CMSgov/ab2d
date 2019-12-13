@@ -44,7 +44,9 @@ import static net.logstash.logback.argument.StructuredArguments.keyValue;
 public class JobProcessingServiceImpl implements JobProcessingService {
     private static final String OUTPUT_FILE_SUFFIX = ".ndjson";
     private static final String ERROR_FILE_SUFFIX = "_error.ndjson";
-    private static final int PERIODIC_CHECK_FREQUENCY = 10;
+
+    @Value("${cancellation.check.frequency:10}")
+    private int cancellationCheckFrequency;
 
     @Value("${efs.mount}")
     private String efsMount;
@@ -107,7 +109,9 @@ public class JobProcessingServiceImpl implements JobProcessingService {
             completeJob(job);
 
         } catch (JobCancelledException e) {
+            job.setStatus(CANCELLED);
             job.setStatusMessage(e.getMessage());
+            job.setExpiresAt(OffsetDateTime.now().plusDays(1));
             jobRepository.save(job);
             log.warn("Job: [{}] CANCELLED", jobUuid);
         } catch (Exception e) {
@@ -152,7 +156,7 @@ public class JobProcessingServiceImpl implements JobProcessingService {
 
             futureResourcesHandles.add(patientClaimsProcessor.process(patientId, lock, outputFile, errorFile));
 
-            if (recordsProcessedCount % PERIODIC_CHECK_FREQUENCY == 0) {
+            if (recordsProcessedCount % cancellationCheckFrequency == 0) {
                 errorCount += processHandles(futureResourcesHandles);
 
                 // A Job could run for a long time perhaps hours.
