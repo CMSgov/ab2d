@@ -353,7 +353,8 @@
    1. Create the VPC
    
       ```ShellSession
-      $ ./create-vpc-for-sbdemo.sh
+      $ ./create-vpc-for-sbdemo.sh \
+        --environment=dev
       ```
 
    1. Note the output
@@ -369,7 +370,8 @@
    1. Rerun the create when VPC already exists to see how the output changes
    
       ```ShellSession
-      $ ./create-vpc-for-sbdemo.sh
+      $ ./create-vpc-for-sbdemo.sh \
+        --environment=dev
       ```
 
    1. Note the output

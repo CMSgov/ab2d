@@ -11,7 +11,7 @@ cd "${START_DIR}"
 # Set environment
 #
 
-export AWS_PROFILE="sbdemo-dev"
+export AWS_PROFILE="sbdemo-shared"
 
 # Get VPC ID (if exists)
 
