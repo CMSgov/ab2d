@@ -766,7 +766,7 @@ public class BulkDataAccessAPIIntegrationTests {
                 .andExpect(jsonPath("$.issue[0].severity", Is.is("error")))
                 .andExpect(jsonPath("$.issue[0].code", Is.is("invalid")))
                 .andExpect(jsonPath("$.issue[0].details.text",
-                        Is.is("ResourceNotFoundException: Contract badContract was not found")));
+                        Is.is("ResourceNotFoundException: Contract number badContract was not found")));
     }
 
     @Test
