@@ -1,14 +1,14 @@
 package gov.cms.ab2d.worker.service;
 
-import gov.cms.ab2d.common.model.OptOut;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.JobOutput;
 import gov.cms.ab2d.common.model.JobStatus;
+import gov.cms.ab2d.common.model.OptOut;
 import gov.cms.ab2d.common.model.Sponsor;
-import gov.cms.ab2d.common.repository.OptOutRepository;
 import gov.cms.ab2d.common.repository.JobOutputRepository;
 import gov.cms.ab2d.common.repository.JobRepository;
+import gov.cms.ab2d.common.repository.OptOutRepository;
 import gov.cms.ab2d.worker.adapter.bluebutton.BeneficiaryAdapter;
 import gov.cms.ab2d.worker.adapter.bluebutton.GetPatientsByContractResponse;
 import gov.cms.ab2d.worker.adapter.bluebutton.PatientClaimsProcessor;
@@ -109,10 +109,6 @@ public class JobProcessingServiceImpl implements JobProcessingService {
             completeJob(job);
 
         } catch (JobCancelledException e) {
-            job.setStatus(CANCELLED);
-            job.setStatusMessage(e.getMessage());
-            job.setExpiresAt(OffsetDateTime.now().plusDays(1));
-            jobRepository.save(job);
             log.warn("Job: [{}] CANCELLED", jobUuid);
         } catch (Exception e) {
             job.setStatus(JobStatus.FAILED);
@@ -159,7 +155,7 @@ public class JobProcessingServiceImpl implements JobProcessingService {
             if (recordsProcessedCount % cancellationCheckFrequency == 0) {
                 errorCount += processHandles(futureResourcesHandles);
 
-                // A Job could run for a long time perhaps hours.
+                // A Job could run for a long time, perhaps hours.
                 // While the job is in progress, the job could be cancelled.
                 // So the worker needs to periodically check the job status to ensure it has not been cancelled.
 
@@ -172,18 +168,24 @@ public class JobProcessingServiceImpl implements JobProcessingService {
             }
         }
 
+        if (jobHasBeenCancelled(jobStatus)) {
+            final String errMsg = "Job was cancelled while it was being processed";
+            log.warn("{} - JobUuid :[{}]", errMsg, jobUuid);
+
+            // cancel any outstanding futures that have not started processing.
+            futureResourcesHandles.parallelStream().forEach(future -> future.cancel(false));
+
+            //At this point, there may be a few futures that are already in progress.
+            //But all the futures that are not yet in progress would be cancelled.
+
+            throw new JobCancelledException(errMsg);
+        }
+
 
         while (!futureResourcesHandles.isEmpty()) {
             sleep();
             errorCount += processHandles(futureResourcesHandles);
         }
-
-        if (jobHasBeenCancelled(jobStatus)) {
-            final String errMsg = "Job was cancelled while it was being processed";
-            log.warn("{} - JobUuid :[{}]", errMsg, jobUuid);
-            throw new JobCancelledException(errMsg);
-        }
-
 
         final List<JobOutput> jobOutputs = new ArrayList<>();
         if (errorCount < patientCount) {
@@ -244,6 +246,7 @@ public class JobProcessingServiceImpl implements JobProcessingService {
 
         return errorCount;
     }
+
 
     private JobOutput createJobOutput(Path outputFile, boolean isError) {
         JobOutput jobOutput = new JobOutput();

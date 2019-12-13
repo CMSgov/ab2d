@@ -40,6 +40,7 @@ import java.util.stream.Collectors;
 
 import static java.lang.Boolean.TRUE;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertThat;
@@ -260,10 +261,8 @@ class JobProcessingServiceUnitTest {
 
         var processedJob = cut.processJob("S001");
 
-        assertThat(processedJob.getStatus(), is(JobStatus.CANCELLED));
-        assertThat(processedJob.getStatusMessage(), is("Job was cancelled while it was being processed"));
+        assertThat(processedJob.getStatus(), is(not(JobStatus.SUCCESSFUL)));
         assertThat(processedJob.getCompletedAt(), nullValue());
-        assertThat(processedJob.getExpiresAt(), notNullValue());
 
         verify(fileService).createDirectory(Mockito.any());
         verify(beneficiaryAdapter).getPatientsByContract(anyString());
