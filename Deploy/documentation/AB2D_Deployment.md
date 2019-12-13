@@ -31,6 +31,11 @@
 1. [Configure New Relic](#configure-new-relic)
    * [Inventory the New Relic installation included with Gold Disk](#inventory-the-new-relic-installation-included-with-gold-disk)
    * [Configure the New Relic Infrastructure agent](#configure-the-new-relic-infrastructure-agent)
+   * [Configure a solution for using New Relic with ECS](#configure-a-solution-for-using-new-relic-with-ecs)
+1. [Configure Splunk](#configure-splunk)
+   * [Inventory the Splunk installation included with Gold Disk](#inventory-the-splunk-installation-included-with-gold-disk)
+   * [Configure Splunk forwarder](#configure-splunk-forwarder)
+1. [Configure New Relic and Splunk within the deployment AMI](#configure-new-relic-and-splunk-within-the-deployment-ami)
 
 ## Note the starting state of the customer AWS account
 
@@ -1733,3 +1738,171 @@
    ```ShellSession
    $ sudo systemctl restart newrelic-infra
    ```
+### Configure a solution for using New Relic with ECS
+
+> *** TO DO ***
+
+*See the following:*
+
+> https://confluence.cms.gov/display/BEDAP/New+Relic
+
+## Configure Splunk
+
+### Inventory the Splunk installation included with Gold Disk
+
+1. Inventory Splunk files
+
+   *Splunk indexer service:*
+
+   ```
+   /etc/rc.d/init.d/splunk
+   /etc/rc.d/rc0.d/K60splunk
+   /etc/rc.d/rc1.d/K60splunk
+   /etc/rc.d/rc2.d/S90splunk
+   /etc/rc.d/rc3.d/S90splunk
+   /etc/rc.d/rc4.d/S90splunk
+   /etc/rc.d/rc5.d/S90splunk
+   /etc/rc.d/rc6.d/K60splunk
+   ```
+
+   *Splunk Forwarder:*
+   
+   ```
+   /opt/splunkforwarder/*
+   /opt/splunkforwarder/README-splunk.txt
+   /opt/splunkforwarder/bin/*
+   /opt/splunkforwarder/etc/*
+   /opt/splunkforwarder/etc/system/local/README
+   /opt/splunkforwarder/etc/system/local/inputs.conf
+   /opt/splunkforwarder/etc/system/local/server.conf
+   /opt/splunkforwarder/etc/apps/ccs_all_deploymentclients/local/deploymentclient.conf
+   /opt/splunkforwarder/include/*
+   /opt/splunkforwarder/lib/*
+   /opt/splunkforwarder/openssl/*
+   /opt/splunkforwarder/share/*
+   /opt/splunkforwarder/var/*
+   ```
+   
+1. Note the initial state of New Relic
+
+   1. Check the status of the New Relic infrastructure agent
+
+      ```ShellSession
+      $ systemctl status splunk
+      ```
+
+   1. Note the output
+
+      ```
+      splunk.service - SYSV: Splunk indexer service
+       Loaded: loaded (/etc/rc.d/init.d/splunk; bad; vendor preset: disabled)
+       Active: active (running) since Tue 2019-12-03 18:52:02 EST; 1 weeks 1 days ago
+         Docs: man:systemd-sysv-generator(8)
+       Memory: 166.6M
+       CGroup: /system.slice/splunk.service
+               ├─2547 splunkd -p 8089 start
+               └─2549 [splunkd pid=2547] splunkd -p 8089 start [process-runner]
+
+      Warning: Journal has been rotated since unit was started. Log output is incomplete or unavailable.
+      ```
+
+### Configure Splunk forwarder
+
+1. Note that the controller cannot connect to the splunk server
+
+1. Note that the API and worker nodes can connect to the splunk server
+
+1. Connect to an API or worker node from the controller
+
+1. Change to the root user
+
+   ```ShellSession
+   sudo su
+   ```
+   
+1. Check the status of the Splunk indexer service
+
+   ```ShellSession
+   $ systemctl status splunk
+   ```
+
+1. Note the IP addess and port for the splunk server
+
+   1. View the contents of the "deploymentclient.conf" that is included with Gold Disk
+
+      ```ShellSession
+      $ cat /opt/splunkforwarder/etc/apps/ccs_all_deploymentclients/local/deploymentclient.conf
+      ```
+
+   1. Note the output
+
+      ```
+      [deployment-client]
+
+      [target-broker:deploymentServer]
+      targetUri = 10.244.112.51:8089
+      ```
+
+   1. Note the target URI
+
+      ```
+      10.244.112.51:8089
+      ```
+
+1. Verify that you can connect to the target URI via telnet
+
+   1. Enter the following
+   
+      ```ShellSession
+      $ telnet 10.244.112.51 8089
+      ```
+
+   1. Verify that the following output is displayed
+
+      ```
+      Trying 10.244.112.51...
+      Connected to 10.244.112.51.
+      Escape character is '^]'.
+      ```
+
+   1. Press **control+c** on the keyboard to return to the terminal
+
+1. Configure "deploymentclient.conf" file in the "ab2d" repo
+
+   1. Enter the following
+   
+      ```ShellSession
+      $ vim ~/code/ab2d/Deploy/packer/app/splunk-deploymentclient.conf
+      ```
+
+   1. Modify the file as follows
+
+      > *** TO DO ***: verify that these settings are correct after Splunk on-boarding complete
+            
+      ```
+      [deployment-client]
+      clientName = cms-ab2d
+
+      [target-broker:deployment-server]
+      targetUri = 10.244.112.51:8089
+      ```
+
+## Configure New Relic and Splunk within the deployment AMI
+
+> *** TO DO ***
+
+1. Change to the "app" directory under packer
+
+   ```ShellSession
+   $ cd ~/code/ab2d/Deploy/packer/app
+   ```
+
+1. Open the "provision-app-instance.sh" file
+
+   ```ShellSession
+   $ vim provision-app-instance.sh
+   ```
+
+1. Modify splunk and new relic code so that it deploys Splunk and New Relic configuration with the AMI
+
+1. Save and close the file

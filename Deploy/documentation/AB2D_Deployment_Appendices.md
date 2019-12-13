@@ -18,6 +18,7 @@
 1. [Appendix K: Complete DevOps linting checks](#appendix-k-complete-devops-linting-checks)
    * [Complete terraform linting](#complete-terraform-linting)
    * [Complete python linting](#complete-python-linting)
+1. [Appendix L: View existing EUA job codes](#appendix-l-view-all-existing-eua-job-codes)
 
 ## Appendix A: Access the CMS AWS console
 
@@ -675,3 +676,29 @@
    ```ShellSession
    $ vim ~/Downloads/python3-linting.txt
    ```
+
+## Appendix L: View existing EUA job codes
+
+1. Open Chrome
+
+1. Enter the following in the address bar
+
+   > https://eua.cms.gov/iam/im/pri/
+   
+1. Log on to EUA
+
+   *Note that you should use the same username and password as you use for Jira and Confluence.*
+
+1. Expand **EUA Info** in the leftmost panel
+
+1. Select **Job Code Listing**
+
+1. Select the following in the **Search for a group** section
+
+   *Example searching for job codes with "SPLUNK" in the name:*
+   
+   ```
+   where  Job Code  = *SPLUNK*	
+   ```
+
+1. Select **Search**
