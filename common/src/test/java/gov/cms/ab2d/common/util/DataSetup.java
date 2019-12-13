@@ -46,7 +46,7 @@ public class DataSetup {
         return sponsorRepository.save(sponsor);
     }
 
-    private Contract setupContract(Sponsor sponsor, String contractNumber) {
+    public Contract setupContract(Sponsor sponsor, String contractNumber) {
         Contract contract = new Contract();
         contract.setAttestedOn(OffsetDateTime.now());
         contract.setContractName("Test Contract");
