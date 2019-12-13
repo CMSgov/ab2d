@@ -4,16 +4,8 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 
-import javax.persistence.CascadeType;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Enumerated;
-import javax.persistence.FetchType;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
-import javax.persistence.OneToMany;
+import javax.annotation.Nullable;
+import javax.persistence.*;
 import javax.validation.constraints.Pattern;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
@@ -69,6 +61,10 @@ public class Job {
     @Pattern(regexp = "ExplanationOfBenefits", message = "_type should be ExplanationOfBenefits")
     private String resourceTypes; // for now just limited to ExplanationOfBenefits
 
+    @ManyToOne
+    @JoinColumn(name = "contract_id")
+    @Nullable
+    private Contract contract;
 
     public void addJobOutput(JobOutput jobOutput) {
         jobOutputs.add(jobOutput);
