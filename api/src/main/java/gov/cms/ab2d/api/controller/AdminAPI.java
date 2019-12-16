@@ -1,8 +1,12 @@
 package gov.cms.ab2d.api.controller;
 
+import gov.cms.ab2d.common.dto.UserDTO;
+import gov.cms.ab2d.common.model.User;
+import gov.cms.ab2d.common.service.UserService;
 import gov.cms.ab2d.hpms.processing.ExcelReportProcessor;
 import gov.cms.ab2d.hpms.processing.ExcelType;
 import lombok.extern.slf4j.Slf4j;
+import org.modelmapper.ModelMapper;
 import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -30,6 +34,9 @@ public class AdminAPI {
     @Qualifier("attestationReportProcessor")
     private ExcelReportProcessor attestationReportProcessor;
 
+    @Autowired
+    private UserService userService;
+
     @ResponseStatus(value = HttpStatus.ACCEPTED)
     @PostMapping("/uploadOrgStructureReport")
     public ResponseEntity<Void> uploadOrgStructureReport(@RequestParam("file") MultipartFile hpmsFile) throws IOException {
@@ -56,5 +63,14 @@ public class AdminAPI {
 
         return new ResponseEntity<>(null, null,
                 HttpStatus.ACCEPTED);
+    }
+
+    @ResponseStatus(value = HttpStatus.CREATED)
+    @PostMapping("/createUser")
+    public ResponseEntity<UserDTO> createUser(@RequestBody UserDTO userDTO) {
+        User user = userService.createUser(userDTO);
+        ModelMapper modelMapper = new ModelMapper();
+        UserDTO createdUser = modelMapper.map(user, UserDTO.class);
+        return new ResponseEntity<>(createdUser, null, HttpStatus.CREATED);
     }
 }

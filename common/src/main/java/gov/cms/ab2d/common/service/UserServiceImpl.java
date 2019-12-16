@@ -1,7 +1,9 @@
 package gov.cms.ab2d.common.service;
 
+import gov.cms.ab2d.common.dto.UserDTO;
 import gov.cms.ab2d.common.model.User;
 import gov.cms.ab2d.common.repository.UserRepository;
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -16,6 +18,7 @@ public class UserServiceImpl implements UserService {
     @Autowired
     private UserRepository userRepository;
 
+    @Override
     public User getCurrentUser() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         return auth != null ? userRepository
@@ -26,8 +29,15 @@ public class UserServiceImpl implements UserService {
                                         .getUsername()) : null;
     }
 
+    @Override
     public User getUserByUsername(String username) {
         return userRepository.findByUsername(username);
     }
 
+    @Override
+    public User createUser(UserDTO userDTO) {
+        ModelMapper modelMapper = new ModelMapper();
+        User user = modelMapper.map(userDTO, User.class);
+        return userRepository.saveAndFlush(user);
+    }
 }
