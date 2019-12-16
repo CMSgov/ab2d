@@ -82,7 +82,7 @@
                             <excludes>
                                 <!-- These are reporting false positives that are already being tested elsewhere -->
                                 <exclude>**/gov/cms/ab2d/common/model/**</exclude>
-                                <exclude>**/gov/cms/ab2d/common/config/LoggingConfig.java</exclude>
+                                <exclude>**/gov/cms/ab2d/common/config/**</exclude>
                             </excludes>
                         </configuration>
                     </execution>
