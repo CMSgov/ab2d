@@ -126,47 +126,11 @@ class ExplanationOfBenefitsTrimmerTest {
     }
 
     @Test
-    void demo2() {
-        printItOut("eobdata/EOB-for-DME-Claims.json");
-    }
-
-    @Test
-    void demo3() {
-        printItOut("eobdata/EOB-for-HHA-Claims.json");
-    }
-
-    @Test
-    void demo4() {
-        printItOut("eobdata/EOB-for-Hospice-Claims.json");
-    }
-
-    @Test
-    void demo5() {
-        printItOut("eobdata/EOB-for-Inpatient-Claims.json");
-    }
-
-    @Test
-    void demo6() {
-        printItOut("eobdata/EOB-for-Outpatient-Claims.json");
-    }
-
-    @Test
-    void demo7() {
-        printItOut("eobdata/EOB-for-Part-D-Claims.json");
-    }
-
-    @Test
-    void demo8() {
-        printItOut("eobdata/EOB-for-SNF-Claims.json");
-    }
-
-    @Test
-    void isPlanB() {
+    void isPlanD() {
         ExplanationOfBenefit ePlanD = ExplanationOfBenefitsTrimmer.getBenefit(
                 EOBLoadUtilities.getEOBFromFileInClassPath("eobdata/EOB-for-Part-D-Claims.json", context));
         assertTrue(EOBLoadUtilities.isPlanD(ePlanD));
         assertFalse(EOBLoadUtilities.isPlanD(eobCarrier));
         assertFalse(EOBLoadUtilities.isPlanD(null));
-
     }
 }
