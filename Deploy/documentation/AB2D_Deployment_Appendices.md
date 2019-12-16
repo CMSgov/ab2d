@@ -701,4 +701,111 @@
    where  Job Code  = *SPLUNK*	
    ```
 
-1. Select **Search**
+## Appendix M: Make AB2D static website unavailable
+
+### Delete the contents of the websites S3 bucket
+
+1. Set target AWS profile
+   
+   ```ShellSession
+   $ export AWS_PROFILE=ab2d-shared
+   ```
+
+1. Delete all files from the "cms-ab2d-website" S3 bucket
+
+   ```ShellSession
+   $ aws --region us-east-1 s3 rm s3://cms-ab2d-website \
+     --recursive
+   ```
+
+### Delete the cached website files from the CloudFront edge caches before they expire
+
+1. Set target AWS profile
+   
+   ```ShellSession
+   $ export AWS_PROFILE=ab2d-shared
+   ```
+
+1. Invalidate the cloud distribution
+
+   *Format:*
+   
+   ```ShellSession
+   $ aws --region us-east-1 cloudfront create-invalidation \
+     --distribution-id {cloudfront distribution id} \
+     --paths "/*
+   ```
+
+   *Example:*
+   
+   ```ShellSession
+   $ aws --region us-east-1 cloudfront create-invalidation \
+     --distribution-id E8P2KHG7IH0TG \
+     --paths "/*
+   ```
+
+1. Note the output
+
+   *Format:*
+   
+   ```
+   {
+       "Location": "https://cloudfront.amazonaws.com/2019-03-26/distribution/{distribution id}/invalidation/{invalidation id}",
+       "Invalidation": {
+           "Id": "IKBNBOOJNM5OL",
+           "Status": "InProgress",
+           "CreateTime": "2019-12-16T15:22:16.488Z",
+           "InvalidationBatch": {
+               "Paths": {
+                   "Quantity": 1,
+                   "Items": [
+                       "/*"
+                   ]
+               },
+               "CallerReference": "cli-{caller reference id}"
+           }
+       }
+   }
+   ```
+
+1. Note that the status says "InProgress"
+
+1. Wait a few minutes to all the invalidation process to complete
+
+1. Verify that the invalidation has completed
+
+   1. Enter the following
+
+      *Format:*
+      
+      ```ShellSession
+      $ aws --region us-east-1 cloudfront list-invalidations \
+        --distribution-id {cloudfront distribution id}
+      ```
+
+      *Example:*
+      
+      ```ShellSession
+      $ aws --region us-east-1 cloudfront list-invalidations \
+        --distribution-id E8P2KHG7IH0TG
+      ```
+
+   1. Verify that "Status" is "Completed"
+
+      *Example:*
+      
+      ```
+      {
+          "InvalidationList": {
+              "Items": [
+                  {
+                      "Id": "IKBNBOOJNM5OL",
+                      "CreateTime": "2019-12-16T15:22:16.488Z",
+                      "Status": "Completed"
+                  }
+              ]
+          }
+      }
+      ```
+
+1. Note that the invalidation will remain under the "Invalidations" tab for auditing purposes even if you redeploy the website
