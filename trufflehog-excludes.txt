@@ -4,4 +4,3 @@ Deploy/documentation/Internal_Test_Environment_Appendices.md
 bfd/src/test/resources/bb-test-data/(.*/)?
 optout/src/test/resources/test-data/(.*/)?
 website/_layouts/default.html
-(.*cloudfront.amazonaws.com\/)\d{4}-\d{2}-\d{2}\/distribution\/.*\/invalidation\/.*".*
