@@ -308,6 +308,8 @@ class JobProcessingServiceUnitTest {
                 Mockito.any()
         )).thenReturn(futureResources);
 
+        ReflectionTestUtils.setField(cut, "cancellationCheckFrequency", 2);
+
         var processedJob = cut.processJob("S001");
 
         assertThat(processedJob.getStatus(), is(JobStatus.SUCCESSFUL));
