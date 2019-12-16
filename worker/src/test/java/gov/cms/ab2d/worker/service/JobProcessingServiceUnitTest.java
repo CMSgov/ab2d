@@ -46,10 +46,7 @@ import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.atLeast;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 @Testcontainers
@@ -269,6 +266,62 @@ class JobProcessingServiceUnitTest {
         verify(patientClaimsProcessor, atLeast(1)).process(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any());
     }
 
+    @Test
+    @DisplayName("When a job is submitted for a specific contract, process the export file for that contract only")
+    void whenJobIsSubmittedForSpecificContract_processOnlyThatContract(@TempDir Path efsMountTmpDir) throws IOException {
+
+        job.setStatus(JobStatus.IN_PROGRESS);
+
+        // create parent sponsor
+        final Sponsor parentSponsor = createSponsor();
+        parentSponsor.setOrgName(parentSponsor.getOrgName() + " - PARENT");
+        parentSponsor.setLegalName(parentSponsor.getLegalName() + " - PARENT");
+
+        // associate the parent to the child
+        final Sponsor childSponsor = user.getSponsor();
+        childSponsor.setParent(parentSponsor);
+        parentSponsor.getChildren().add(childSponsor);
+
+        // switch the user to the parent sponsor
+        user.setSponsor(parentSponsor);
+
+        // create 3 contract for the sponsor. But associate the submitted job with 1 specific contract.
+        createContract(sponsor);
+        createContract(sponsor);
+        var contract = createContract(sponsor);
+        job.setContract(contract);
+        when(jobRepository.findByJobUuid(anyString())).thenReturn(job);
+
+        var patientsByContract = createPatientsByContractResponse(contract);
+        Mockito.when(beneficiaryAdapter.getPatientsByContract(anyString())).thenReturn(patientsByContract);
+
+        when(fileService.createDirectory(Mockito.any(Path.class))).thenReturn(efsMountTmpDir);
+        when(fileService.createFile(Mockito.any(Path.class), anyString()))
+                .thenReturn(efsMountTmpDir)
+                .thenReturn(efsMountTmpDir);
+
+        Future<Integer> futureResources = new AsyncResult(0);
+        Mockito.when(patientClaimsProcessor.process(
+                Mockito.any(),
+                Mockito.any(),
+                Mockito.any(),
+                Mockito.any()
+        )).thenReturn(futureResources);
+
+        ReflectionTestUtils.setField(cut, "cancellationCheckFrequency", 2);
+
+        var processedJob = cut.processJob("S001");
+
+        assertThat(processedJob.getStatus(), is(JobStatus.SUCCESSFUL));
+        assertThat(processedJob.getStatusMessage(), is("100%"));
+        assertThat(processedJob.getExpiresAt(), notNullValue());
+
+        verify(fileService).createDirectory(Mockito.any());
+        verify(fileService, times(2)).createFile(Mockito.any(Path.class), anyString());
+        verify(beneficiaryAdapter).getPatientsByContract(anyString());
+        verify(patientClaimsProcessor, atLeast(1)).process(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any());
+    }
+
 
     private List<OptOut> getOptOutRows(GetPatientsByContractResponse patientsByContract) {
         return patientsByContract.getPatients()
@@ -277,9 +330,9 @@ class JobProcessingServiceUnitTest {
                 .collect(Collectors.toList());
     }
 
-    private OptOut createOptOut(String p) {
+    private OptOut createOptOut(String patientId) {
         OptOut optOut = new OptOut();
-        optOut.setHicn(p);
+        optOut.setHicn(patientId);
         optOut.setEffectiveDate(LocalDate.now().minusDays(10));
         return optOut;
     }

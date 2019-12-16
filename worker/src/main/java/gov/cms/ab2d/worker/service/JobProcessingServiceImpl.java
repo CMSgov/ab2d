@@ -25,6 +25,7 @@ import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -88,9 +89,7 @@ public class JobProcessingServiceImpl implements JobProcessingService {
         final Job job = jobRepository.findByJobUuid(jobUuid);
         log.info("Found job : {}", jobUuid);
 
-        final Sponsor sponsor = job.getUser().getSponsor();
-
-        final List<Contract> attestedContracts = sponsor.getAggregatedAttestedContracts();
+        final List<Contract> attestedContracts = getAttestedContracts(job);
         log.info("Job [{}] has [{}] attested contracts", jobUuid, attestedContracts.size());
 
         try {
@@ -119,6 +118,24 @@ public class JobProcessingServiceImpl implements JobProcessingService {
         }
 
         return job;
+    }
+
+    private List<Contract> getAttestedContracts(Job job) {
+
+        // when the job is submitted for a specific contract, process the export for only that contract.
+        final Contract jobSpecificContract = job.getContract();
+        if (jobSpecificContract != null && jobSpecificContract.getAttestedOn() != null) {
+            log.info("Job [{}] submitted for a specific attested contract [{}] ", jobSpecificContract.getContractNumber());
+            return Collections.singletonList(jobSpecificContract);
+        }
+
+        //Job does not specify a contract.
+        //Get the aggregated attested Contracts for the sponsor & process all of them
+        final Sponsor sponsor = job.getUser().getSponsor();
+        final List<Contract> attestedContracts = sponsor.getAggregatedAttestedContracts();
+
+        log.info("Job [{}] has [{}] attested contracts", job.getJobUuid(), attestedContracts.size());
+        return attestedContracts;
     }
 
     private List<JobOutput> processContract(final Path outputDir, Contract contract, String jobUuid) {
