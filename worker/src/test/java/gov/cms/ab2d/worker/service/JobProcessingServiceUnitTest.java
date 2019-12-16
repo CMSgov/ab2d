@@ -23,6 +23,7 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.scheduling.annotation.AsyncResult;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -39,7 +40,9 @@ import java.util.stream.Collectors;
 
 import static java.lang.Boolean.TRUE;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -151,6 +154,8 @@ class JobProcessingServiceUnitTest {
                 Mockito.any()
         )).thenReturn(futureResources);
 
+        ReflectionTestUtils.setField(cut, "cancellationCheckFrequency", 2);
+
         var processedJob = cut.processJob("S001");
 
         assertThat(processedJob.getStatus(), is(JobStatus.SUCCESSFUL));
@@ -211,6 +216,57 @@ class JobProcessingServiceUnitTest {
 
 
     @Test
+    @DisplayName("When a job is cancelled while it is being processed, then attempt to stop the job gracefully without completing it")
+    void whenJobIsCancelledWhileItIsBeingProcessed_ThenAttemptToStopTheJob(@TempDir Path efsMountTmpDir) throws IOException {
+
+        job.setStatus(JobStatus.IN_PROGRESS);
+
+        // create parent sponsor
+        final Sponsor parentSponsor = createSponsor();
+        parentSponsor.setOrgName(parentSponsor.getOrgName() + " - PARENT");
+        parentSponsor.setLegalName(parentSponsor.getLegalName() + " - PARENT");
+
+        // associate the parent to the child
+        final Sponsor childSponsor = user.getSponsor();
+        childSponsor.setParent(parentSponsor);
+        parentSponsor.getChildren().add(childSponsor);
+
+        // switch the user to the parent sponsor
+        user.setSponsor(parentSponsor);
+
+        var contract = createContract(sponsor);
+        when(jobRepository.findByJobUuid(anyString())).thenReturn(job);
+
+        var patientsByContract = createPatientsByContractResponse(contract);
+        Mockito.when(beneficiaryAdapter.getPatientsByContract(anyString())).thenReturn(patientsByContract);
+
+        when(fileService.createDirectory(Mockito.any(Path.class))).thenReturn(efsMountTmpDir);
+        when(fileService.createFile(Mockito.any(Path.class), anyString()))
+                .thenReturn(efsMountTmpDir)
+                .thenReturn(efsMountTmpDir);
+
+        Future<Integer> futureResources = new AsyncResult(0);
+        Mockito.when(patientClaimsProcessor.process(
+                Mockito.any(),
+                Mockito.any(),
+                Mockito.any(),
+                Mockito.any()
+        )).thenReturn(futureResources);
+
+        ReflectionTestUtils.setField(cut, "cancellationCheckFrequency", 2);
+        when(jobRepository.findJobStatus(anyString())).thenReturn(JobStatus.CANCELLED);
+
+        var processedJob = cut.processJob("S001");
+
+        assertThat(processedJob.getStatus(), is(not(JobStatus.SUCCESSFUL)));
+        assertThat(processedJob.getCompletedAt(), nullValue());
+
+        verify(fileService).createDirectory(Mockito.any());
+        verify(beneficiaryAdapter).getPatientsByContract(anyString());
+        verify(patientClaimsProcessor, atLeast(1)).process(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any());
+    }
+
+    @Test
     @DisplayName("When a job is submitted for a specific contract, process the export file for that contract only")
     void whenJobIsSubmittedForSpecificContract_processOnlyThatContract(@TempDir Path efsMountTmpDir) throws IOException {
 
@@ -265,7 +321,6 @@ class JobProcessingServiceUnitTest {
     }
 
 
-
     private List<OptOut> getOptOutRows(GetPatientsByContractResponse patientsByContract) {
         return patientsByContract.getPatients()
                 .stream().map(p -> p.getPatientId())
@@ -273,9 +328,9 @@ class JobProcessingServiceUnitTest {
                 .collect(Collectors.toList());
     }
 
-    private OptOut createOptOut(String p) {
+    private OptOut createOptOut(String patientId) {
         OptOut optOut = new OptOut();
-        optOut.setHicn(p);
+        optOut.setHicn(patientId);
         optOut.setEffectiveDate(LocalDate.now().minusDays(10));
         return optOut;
     }
