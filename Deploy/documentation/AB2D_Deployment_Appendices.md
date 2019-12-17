@@ -18,7 +18,10 @@
 1. [Appendix K: Complete DevOps linting checks](#appendix-k-complete-devops-linting-checks)
    * [Complete terraform linting](#complete-terraform-linting)
    * [Complete python linting](#complete-python-linting)
-1. [Appendix L: View existing EUA job codes](#appendix-l-view-all-existing-eua-job-codes)
+1. [Appendix L: View existing EUA job codes](#appendix-l-view-existing-eua-job-codes)
+1. [Appendix M: Make AB2D static website unavailable](#appendix-m-make-ab2d-static-website-unavailable)
+   * [Delete the contents of the websites S3 bucket](#delete-the-contents-of-the-websites-s3-bucket)
+   * [Delete the cached website files from the CloudFront edge caches before they expire](#delete-the-cached-website-files-from-the-cloudfront-edge-caches-before-they-expire)
 
 ## Appendix A: Access the CMS AWS console
 
