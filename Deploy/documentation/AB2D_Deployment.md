@@ -34,6 +34,9 @@
    * [Configure a solution for using New Relic with ECS](#configure-a-solution-for-using-new-relic-with-ecs)
 1. [Configure Splunk](#configure-splunk)
    * [Inventory the Splunk installation included with Gold Disk](#inventory-the-splunk-installation-included-with-gold-disk)
+   * [Request that the CMS technical contact add a new job code for Splunk](#request-that-the-cms-technical-contact-add-a-new-job-code-for-splunk)
+   * [Request job code for your EUA ID user](#request-job-code-for-your-eua-id-user)
+   * [Create a Jira ticket to connect job code to Splunk website](#create-a-jira-ticket-to-connect-job-code-to-splunk-website)
    * [Configure Splunk forwarder](#configure-splunk-forwarder)
 1. [Configure New Relic and Splunk within the deployment AMI](#configure-new-relic-and-splunk-within-the-deployment-ami)
 
@@ -1738,6 +1741,33 @@
    ```ShellSession
    $ sudo systemctl restart newrelic-infra
    ```
+
+### Request access to New Relic
+
+1. Open Chrome
+
+1. Enter the following in the address bar
+
+   > https://jira.cms.gov/servicedesk/customer/portal/1/create/355
+
+1. Complele the form as follows
+
+   *Format:*
+   
+   - **Summary:** New Relic Access
+
+   - **Organization:** CMS
+
+   - **Phone Number:** {your mobile phone number}
+
+   - **OC Tool:** New Relic
+
+   - **Description:**
+
+     ```
+     I need access to New Relic. I am a DevOps Engineer working on the AB2D project which falls under BCDA.
+     ```
+     
 ### Configure a solution for using New Relic with ECS
 
 > *** TO DO ***
@@ -1805,6 +1835,116 @@
 
       Warning: Journal has been rotated since unit was started. Log output is incomplete or unavailable.
       ```
+
+### Request that the CMS technical contact add a new job code for Splunk
+
+1. Ask a CMS technical contact to add a new job for Splunk
+
+1. Note that the new job code will like look like this
+
+   *Format:*
+   
+   ```
+   AWS_{project}_SPLUNK
+   ```
+
+   *Example:*
+   
+   ```
+   AWS_AB2D_SPLUNK
+   ```
+
+### Request job code for your EUA ID user
+
+1. Open Chrome
+
+1. Log on to the EUA site
+
+   > https://eua.cms.gov/iam/im/pri/
+
+1. Expand **Home** in the leftmost panel
+
+1. Select **Modify My Job Codes**
+
+1. Select **Add a Job Code**
+
+1. Select the following in the **Search for a group** section
+
+   *Example searching for job codes with "SPLUNK" in the name:*
+   
+   ```
+   where  Job Code  = AWS_AB2D_SPLUNK
+   ```
+
+1. Select **Search**
+
+1. Check the checkbox beside the following
+
+   ```
+   AWS_AB2D_SPLUNK
+   ```
+
+1. Select **Select**
+
+1. Select **Next** on the "My Job Codes" page
+
+1. Type the following in the **Justification Reason** checkbox
+
+   ```
+   I am a DevOps engineer working on the AB2D project.
+   ```
+
+1. Select the "No" radio button beside **Is Job Code Temporary**
+
+1. Select **Finish**
+
+1. Note that two users should request and be approved for to the Splunk Job code before proceeding to the next section
+
+### Create a Jira ticket to connect job code to Splunk website
+
+1. Open Chrome
+
+1. Enter the following in the address bar
+
+   > https://jira.cms.gov/projects/CMSAWSOPS/issues/CMSAWSOPS-49590?filter=allopenissues
+
+1. Select **Create**
+
+1. Fill out the form as follows
+
+   **Issue Type:** Task
+
+   **Summary:** Request "AWS_AB2D_SPLUNK" job code to be plumbed to Splunk website
+
+   **Project Name:** Project 058 BCDA
+
+   **Account Alias:** None
+
+   **Service Category:** Access Management
+
+   **Task:** None
+
+   **Severity:** Minimal
+
+   **Urgency:** Medium
+
+   **Description:**
+
+   ```
+   We need the new "AWS_AB2D_SPLUNK" job code to be plumbed to the Splunk website, so that anyone that that has been approved for the "AWS_AB2D_SPLUNK" job code can access the Splunk website:
+
+   https://splunk.aws.healthcare.gov/en-US
+
+   This is for the AB2D project that falls under the BCDA project.
+
+   Thanks for your consideration.
+   ```
+
+   **Reported Source:** Self Service
+
+1. Select **Create**
+
+1. Verify that you receive an email regarding the issue
 
 ### Configure Splunk forwarder
 
