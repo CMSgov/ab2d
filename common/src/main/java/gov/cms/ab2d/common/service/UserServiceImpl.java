@@ -4,7 +4,6 @@ import gov.cms.ab2d.common.dto.Mapping;
 import gov.cms.ab2d.common.dto.UserDTO;
 import gov.cms.ab2d.common.model.User;
 import gov.cms.ab2d.common.repository.UserRepository;
-import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -18,6 +17,9 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private Mapping mapping;
 
     @Override
     public User getCurrentUser() {
@@ -37,8 +39,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public User createUser(UserDTO userDTO) {
-        ModelMapper modelMapper = Mapping.getModelMapper();
-        User user = modelMapper.map(userDTO, User.class);
+        User user = mapping.getModelMapper().map(userDTO, User.class);
         return userRepository.saveAndFlush(user);
     }
 }

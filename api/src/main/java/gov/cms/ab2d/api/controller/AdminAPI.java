@@ -7,7 +7,6 @@ import gov.cms.ab2d.common.service.UserService;
 import gov.cms.ab2d.hpms.processing.ExcelReportProcessor;
 import gov.cms.ab2d.hpms.processing.ExcelType;
 import lombok.extern.slf4j.Slf4j;
-import org.modelmapper.ModelMapper;
 import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -37,6 +36,9 @@ public class AdminAPI {
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private Mapping mapping;
 
     @ResponseStatus(value = HttpStatus.ACCEPTED)
     @PostMapping("/uploadOrgStructureReport")
@@ -70,8 +72,7 @@ public class AdminAPI {
     @PostMapping("/createUser")
     public ResponseEntity<UserDTO> createUser(@RequestBody UserDTO userDTO) {
         User user = userService.createUser(userDTO);
-        ModelMapper modelMapper = Mapping.getModelMapper();
-        UserDTO createdUser = modelMapper.map(user, UserDTO.class);
+        UserDTO createdUser = mapping.getModelMapper().map(user, UserDTO.class);
         return new ResponseEntity<>(createdUser, null, HttpStatus.CREATED);
     }
 }

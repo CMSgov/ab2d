@@ -22,4 +22,10 @@ public class SponsorServiceImpl implements SponsorService {
     public Sponsor saveSponsor(Sponsor sponsor) {
         return sponsorRepository.saveAndFlush(sponsor);
     }
+
+    public Sponsor findSponsorById(Long id) {
+        return sponsorRepository.findById(id).orElseThrow(() -> {
+            return new ResourceNotFoundException("No sponsor found with ID " + id);
+        });
+    }
 }
