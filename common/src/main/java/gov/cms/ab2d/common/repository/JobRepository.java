@@ -1,6 +1,7 @@
 package gov.cms.ab2d.common.repository;
 
 import gov.cms.ab2d.common.model.Job;
+import gov.cms.ab2d.common.model.JobStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -15,4 +16,10 @@ public interface JobRepository extends JpaRepository<Job, Long> {
     void cancelJobByJobUuid(@Param("jobUuid") String jobUuid);
 
     Job findByJobUuid(String jobUuid);
+
+
+    @Query("SELECT j.status FROM Job j WHERE j.jobUuid = :jobUuid ")
+    JobStatus findJobStatus(String jobUuid);
+
+
 }
