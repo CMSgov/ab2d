@@ -1,5 +1,6 @@
 package gov.cms.ab2d.api.controller;
 
+import gov.cms.ab2d.common.dto.Mapping;
 import gov.cms.ab2d.common.dto.UserDTO;
 import gov.cms.ab2d.common.model.User;
 import gov.cms.ab2d.common.service.UserService;
@@ -69,7 +70,7 @@ public class AdminAPI {
     @PostMapping("/createUser")
     public ResponseEntity<UserDTO> createUser(@RequestBody UserDTO userDTO) {
         User user = userService.createUser(userDTO);
-        ModelMapper modelMapper = new ModelMapper();
+        ModelMapper modelMapper = Mapping.getModelMapper();
         UserDTO createdUser = modelMapper.map(user, UserDTO.class);
         return new ResponseEntity<>(createdUser, null, HttpStatus.CREATED);
     }

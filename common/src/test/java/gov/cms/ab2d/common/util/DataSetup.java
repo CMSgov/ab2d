@@ -32,7 +32,7 @@ public class DataSetup {
 
     public static final String VALID_CONTRACT_NUMBER = "ABC123";
 
-    private Sponsor createSponsor(String parentName, int parentHpmsId, String childName, int childHpmsId) {
+    public Sponsor createSponsor(String parentName, int parentHpmsId, String childName, int childHpmsId) {
         Sponsor parent = new Sponsor();
         parent.setOrgName(parentName);
         parent.setHpmsId(parentHpmsId);

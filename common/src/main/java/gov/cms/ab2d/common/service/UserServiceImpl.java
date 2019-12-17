@@ -1,5 +1,6 @@
 package gov.cms.ab2d.common.service;
 
+import gov.cms.ab2d.common.dto.Mapping;
 import gov.cms.ab2d.common.dto.UserDTO;
 import gov.cms.ab2d.common.model.User;
 import gov.cms.ab2d.common.repository.UserRepository;
@@ -36,7 +37,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public User createUser(UserDTO userDTO) {
-        ModelMapper modelMapper = new ModelMapper();
+        ModelMapper modelMapper = Mapping.getModelMapper();
         User user = modelMapper.map(userDTO, User.class);
         return userRepository.saveAndFlush(user);
     }

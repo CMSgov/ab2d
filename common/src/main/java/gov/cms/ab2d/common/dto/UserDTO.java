@@ -1,17 +1,30 @@
 package gov.cms.ab2d.common.dto;
 
-import lombok.Getter;
-import lombok.Setter;
+import lombok.Data;
 
-@Getter
-@Setter
+import javax.validation.constraints.NotNull;
+import java.util.Set;
+
+@Data
 public class UserDTO {
 
+    @NotNull
     private String username;
-    private String firstName;
-    private String lastName;
-    private String email;
-    private boolean enabled;
 
-    private String sponsorId;
+    @NotNull
+    private String firstName;
+
+    @NotNull
+    private String lastName;
+
+    @NotNull
+    private String email;
+
+    @NotNull
+    private Boolean enabled;
+
+    @NotNull
+    private Long sponsorId;
+
+    private Set<RoleDTO> roles;
 }
