@@ -22,6 +22,7 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import javax.validation.ConstraintViolationException;
 import java.util.Set;
 
 import static gov.cms.ab2d.common.util.Constants.SPONSOR_ROLE;
@@ -133,5 +134,24 @@ public class UserServiceTest {
             userService.createUser(user);
         });
         assertThat(exceptionThrown.getMessage(), is("could not execute statement; SQL [n/a]; constraint [uc_user_account_email]; nested exception is org.hibernate.exception.ConstraintViolationException: could not execute statement"));
+    }
+
+    @Test
+    public void testCreateUserBadSponsor() {
+        UserDTO user = new UserDTO();
+        user.setEmail("test@test.com");
+        user.setUsername("test@test.com");
+        user.setFirstName("Test");
+        user.setLastName("User");
+        user.setEnabled(true);
+        RoleDTO roleDTO = new RoleDTO();
+        Role role = roleService.findRoleByName(SPONSOR_ROLE);
+        roleDTO.setId(role.getId());
+        user.setRoles(Set.of(roleDTO));
+
+        var exceptionThrown = Assertions.assertThrows(ConstraintViolationException.class, () -> {
+            userService.createUser(user);
+        });
+        assertThat(exceptionThrown.getMessage(), is("Validation failed for classes [gov.cms.ab2d.common.model.User] during persist time for groups [javax.validation.groups.Default, ]\nList of constraint violations:[\n\tConstraintViolationImpl{interpolatedMessage='must not be null', propertyPath=sponsor, rootBeanClass=class gov.cms.ab2d.common.model.User, messageTemplate='{javax.validation.constraints.NotNull.message}'}\n]"));
     }
 }
