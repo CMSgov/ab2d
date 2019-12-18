@@ -1,6 +1,7 @@
 package gov.cms.ab2d.filter;
 
 import ca.uhn.fhir.context.FhirContext;
+import ca.uhn.fhir.parser.IParser;
 import org.apache.commons.lang3.StringUtils;
 import org.hl7.fhir.dstu3.model.ExplanationOfBenefit;
 import org.junit.jupiter.api.Test;
@@ -107,5 +108,29 @@ class ExplanationOfBenefitsTrimmerTest {
 
     private boolean isNullOrEmpty(List<?> items) {
         return items == null || items.isEmpty();
+    }
+
+    private void printItOut(String file) {
+        IParser jsonParser = context.newJsonParser().setPrettyPrint(true);
+
+        ExplanationOfBenefit eCarrier = ExplanationOfBenefitsTrimmer.getBenefit(
+                EOBLoadUtilities.getEOBFromFileInClassPath(file, context));
+
+        String result = jsonParser.encodeResourceToString(eCarrier);
+        System.out.println(result);
+    }
+
+    @Test
+    void demo1() {
+        printItOut("eobdata/EOB-for-Carrier-Claims.json");
+    }
+
+    @Test
+    void isPlanD() {
+        ExplanationOfBenefit ePlanD = ExplanationOfBenefitsTrimmer.getBenefit(
+                EOBLoadUtilities.getEOBFromFileInClassPath("eobdata/EOB-for-Part-D-Claims.json", context));
+        assertTrue(EOBLoadUtilities.isPlanD(ePlanD));
+        assertFalse(EOBLoadUtilities.isPlanD(eobCarrier));
+        assertFalse(EOBLoadUtilities.isPlanD(null));
     }
 }
