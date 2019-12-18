@@ -1,7 +1,6 @@
 package gov.cms.ab2d.api;
 
 import gov.cms.ab2d.api.config.MDCFilter;
-import gov.cms.ab2d.common.dto.Mapping;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
@@ -26,10 +25,5 @@ public class SpringBootApp {
         // Spring security is -100, so run before it
         reg.setOrder(-101);
         return reg;
-    }
-
-    @Bean
-    public Mapping mapping() {
-        return new Mapping();
     }
 }

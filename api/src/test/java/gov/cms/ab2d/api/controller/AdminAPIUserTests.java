@@ -5,8 +5,10 @@ import com.okta.jwt.JwtVerificationException;
 import gov.cms.ab2d.api.SpringBootApp;
 import gov.cms.ab2d.common.dto.RoleDTO;
 import gov.cms.ab2d.common.dto.UserDTO;
+import gov.cms.ab2d.common.model.Role;
 import gov.cms.ab2d.common.model.Sponsor;
 import gov.cms.ab2d.common.repository.*;
+import gov.cms.ab2d.common.service.RoleService;
 import gov.cms.ab2d.common.service.SponsorService;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import org.hamcrest.core.Is;
@@ -66,6 +68,9 @@ public class AdminAPIUserTests {
     @Autowired
     private TestUtil testUtil;
 
+    @Autowired
+    private RoleService roleService;
+
     private String token;
 
     private static final String CREATE_USER_URL = "/createUser";
@@ -92,7 +97,8 @@ public class AdminAPIUserTests {
         Sponsor sponsor = sponsorRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
         userDTO.setSponsorId(sponsor.getId());
         RoleDTO roleDTO = new RoleDTO();
-        roleDTO.setName(SPONSOR_ROLE);
+        Role role = roleService.findRoleByName(ADMIN_ROLE);
+        roleDTO.setId(role.getId());
         Set<RoleDTO> roles = Set.of(roleDTO);
         userDTO.setRoles(roles);
 
@@ -114,7 +120,6 @@ public class AdminAPIUserTests {
         Assert.assertEquals(createdUserDTO.getLastName(), userDTO.getLastName());
         Assert.assertEquals(createdUserDTO.getEnabled(), userDTO.getEnabled());
         Assert.assertEquals(createdUserDTO.getSponsorId(), userDTO.getSponsorId());
-        Assert.assertEquals(createdUserDTO.getRoles().iterator().next().getName(), userDTO.getRoles().iterator().next().getName());
     }
 
     @Test
@@ -128,7 +133,8 @@ public class AdminAPIUserTests {
         Sponsor sponsor = sponsorRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
         userDTO.setSponsorId(sponsor.getId());
         RoleDTO roleDTO = new RoleDTO();
-        roleDTO.setName(SPONSOR_ROLE);
+        Role role = roleService.findRoleByName(ADMIN_ROLE);
+        roleDTO.setId(role.getId());
         Set<RoleDTO> roles = Set.of(roleDTO);
         userDTO.setRoles(roles);
 

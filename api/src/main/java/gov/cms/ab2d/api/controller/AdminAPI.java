@@ -37,9 +37,6 @@ public class AdminAPI {
     @Autowired
     private UserService userService;
 
-    @Autowired
-    private Mapping mapping;
-
     @ResponseStatus(value = HttpStatus.ACCEPTED)
     @PostMapping("/uploadOrgStructureReport")
     public ResponseEntity<Void> uploadOrgStructureReport(@RequestParam("file") MultipartFile hpmsFile) throws IOException {
@@ -72,7 +69,7 @@ public class AdminAPI {
     @PostMapping("/createUser")
     public ResponseEntity<UserDTO> createUser(@RequestBody UserDTO userDTO) {
         User user = userService.createUser(userDTO);
-        UserDTO createdUser = mapping.getModelMapper().map(user, UserDTO.class);
+        UserDTO createdUser = Mapping.getModelMapper().map(user, UserDTO.class);
         return new ResponseEntity<>(createdUser, null, HttpStatus.CREATED);
     }
 }

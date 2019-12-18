@@ -12,13 +12,11 @@ import gov.cms.ab2d.common.util.DataSetup;
 import org.junit.Assert;
 import org.junit.jupiter.api.Assertions;
 import gov.cms.ab2d.common.repository.UserRepository;
-import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.postgresql.util.PSQLException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.data.domain.Sort;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.test.context.TestPropertySource;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
@@ -40,10 +38,10 @@ public class UserServiceTest {
     private UserService userService;
 
     @Autowired
-    private RoleRepository roleRepository;
+    private UserRepository userRepository;
 
     @Autowired
-    private UserRepository userRepository;
+    private RoleService roleService;
 
     @Container
     private static final PostgreSQLContainer postgreSQLContainer= new AB2DPostgresqlContainer();
@@ -75,7 +73,8 @@ public class UserServiceTest {
         user.setEnabled(true);
         user.setSponsorId(sponsor.getId());
         RoleDTO roleDTO = new RoleDTO();
-        roleDTO.setName(SPONSOR_ROLE);
+        Role role = roleService.findRoleByName(SPONSOR_ROLE);
+        roleDTO.setId(role.getId());
         user.setRoles(Set.of(roleDTO));
 
         User createdUser = userService.createUser(user);
@@ -100,13 +99,39 @@ public class UserServiceTest {
         user.setEnabled(true);
         user.setSponsorId(sponsor.getId());
         RoleDTO roleDTO = new RoleDTO();
-        roleDTO.setName(SPONSOR_ROLE);
+        Role role = roleService.findRoleByName(SPONSOR_ROLE);
+        roleDTO.setId(role.getId());
         user.setRoles(Set.of(roleDTO));
 
         userService.createUser(user);
-        var exceptionThrown = Assertions.assertThrows(PSQLException.class, () -> {
+        var exceptionThrown = Assertions.assertThrows(DataIntegrityViolationException.class, () -> {
             userService.createUser(user);
         });
-        assertThat(exceptionThrown.getMessage(), is("PSQLException: ERROR: duplicate key value violates unique constraint \"uc_user_account_username\"\n  Detail: Key (username)=(test@test.com) already exists."));
+        assertThat(exceptionThrown.getMessage(), is("could not execute statement; SQL [n/a]; constraint [uc_user_account_username]; nested exception is org.hibernate.exception.ConstraintViolationException: could not execute statement"));
+    }
+
+    @Test
+    public void testCreateDuplicateUserByEmail() {
+        Sponsor sponsor = dataSetup.createSponsor("Parent Corp.", 456, "Test", 123);
+
+        UserDTO user = new UserDTO();
+        user.setEmail("test@test.com");
+        user.setUsername("test@test.com");
+        user.setFirstName("Test");
+        user.setLastName("User");
+        user.setEnabled(true);
+        user.setSponsorId(sponsor.getId());
+        RoleDTO roleDTO = new RoleDTO();
+        Role role = roleService.findRoleByName(SPONSOR_ROLE);
+        roleDTO.setId(role.getId());
+        user.setRoles(Set.of(roleDTO));
+
+        userService.createUser(user);
+
+        user.setUsername("something_different");
+        var exceptionThrown = Assertions.assertThrows(DataIntegrityViolationException.class, () -> {
+            userService.createUser(user);
+        });
+        assertThat(exceptionThrown.getMessage(), is("could not execute statement; SQL [n/a]; constraint [uc_user_account_email]; nested exception is org.hibernate.exception.ConstraintViolationException: could not execute statement"));
     }
 }

@@ -8,8 +8,5 @@ import javax.validation.constraints.NotNull;
 public class RoleDTO {
 
     @NotNull
-    private Integer id;
-
-    @NotNull
-    private String name;
+    private Long id;
 }

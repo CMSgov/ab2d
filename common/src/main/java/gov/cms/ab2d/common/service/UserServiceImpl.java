@@ -18,9 +18,6 @@ public class UserServiceImpl implements UserService {
     @Autowired
     private UserRepository userRepository;
 
-    @Autowired
-    private Mapping mapping;
-
     @Override
     public User getCurrentUser() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
@@ -39,7 +36,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public User createUser(UserDTO userDTO) {
-        User user = mapping.getModelMapper().map(userDTO, User.class);
+        User user = Mapping.getModelMapper().map(userDTO, User.class);
         return userRepository.saveAndFlush(user);
     }
 }
