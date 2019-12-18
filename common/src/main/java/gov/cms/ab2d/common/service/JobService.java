@@ -21,4 +21,8 @@ public interface JobService {
     Resource getResourceForJob(String jobUuid, String fileName) throws MalformedURLException;
 
     void deleteFileForJob(File file);
+
+    boolean checkIfCurrentUserHasActiveJob();
+
+    boolean checkIfCurrentUserHasActiveJobForContractNumber(String contractNumber);
 }
