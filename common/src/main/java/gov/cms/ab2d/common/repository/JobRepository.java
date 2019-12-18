@@ -3,6 +3,7 @@ package gov.cms.ab2d.common.repository;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.User;
+import gov.cms.ab2d.common.model.JobStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -25,4 +26,7 @@ public interface JobRepository extends JpaRepository<Job, Long> {
 
     @Query("select j from Job j where j.user = :user and j.contract = :contract and (j.status = 'IN_PROGRESS' or j.status = 'SUBMITTED')")
     List<Job> findActiveJobsByUserAndContract(User user, Contract contract);
+
+    @Query("SELECT j.status FROM Job j WHERE j.jobUuid = :jobUuid ")
+    JobStatus findJobStatus(String jobUuid);
 }
