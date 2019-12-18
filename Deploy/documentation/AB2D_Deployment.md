@@ -29,8 +29,11 @@
    * [Determine how to integrate cms.gov Route 53 with AB2D CloudFront distribution](#determine-how-to-integrate-cmsgov-route-53-with-ab2d-cloudfront-distribution)
    * [Submit an "Internet DNS Change Request Form" to product owner](#submit-an-internet-dns-change-request-form-to-product-owner)
 1. [Configure New Relic](#configure-new-relic)
+   * [Set up a New Relic free trial](#set-up-a-new-relic-free-trial)
    * [Inventory the New Relic installation included with Gold Disk](#inventory-the-new-relic-installation-included-with-gold-disk)
    * [Configure the New Relic Infrastructure agent](#configure-the-new-relic-infrastructure-agent)
+   * [Request access to the project's New Relic subaccount](#request-access-to-the-projects-new-relic-subaccount)
+   * [Access the project's New Relic subaccount](#access-the-projects-new-relic-subaccount)
    * [Configure a solution for using New Relic with ECS](#configure-a-solution-for-using-new-relic-with-ecs)
 1. [Configure Splunk](#configure-splunk)
    * [Inventory the Splunk installation included with Gold Disk](#inventory-the-splunk-installation-included-with-gold-disk)
@@ -1610,6 +1613,84 @@
 
 ## Configure New Relic
 
+### Set up a New Relic free trial
+
+1. Open Chrome
+
+1. Enter the following in the address bar
+
+   > https://newrelic.com
+
+1. Select **Sign Up**
+
+1. Enter the following information
+
+   - **First Name:** {your first name}
+
+   - **Last Name:** {your last name}
+
+   - **Your Business Email Address:** {your semanticbits email}
+
+   - **Retype Your Business Email Address:** {your semanticbits email}
+
+   - **Your Phone Number:** {your phone number}
+
+   - **Select Your Country:** {your country}
+
+   - **Select Your State:** {your state (if displayed)}
+
+   - **What's Your Postal Code:** {your postal code (if displayed)}
+
+   - **Where do you want your data house:** {United States|European Union}
+
+   - **Your company:** SemanticBits
+
+   - **Your role:** {your role}
+
+   - **Number of Employees:** 101-1,000
+
+   - **Number of App Servers:** 3-10 Servers
+
+   - **I'm not a robot:** checked
+
+   - **I agree to the Terms and Service:** checked
+
+1. Select **Sign Up for New Relic**
+
+1. Wait for email from New Relic
+
+1. Select **Verify your email** in the email from New Relic
+
+1. Set your password
+
+   - **Password:** {your password}
+
+   - **Password confirmation:** {your password}
+
+1. Select **Update**
+
+1. Log into New Relic
+
+   - **Email:** {your semanticbits email}
+
+   - **Password:** {your password}
+
+1. Select **Sign in**
+
+1. Select **New Relic Infrastructure**
+
+1. Select **Start my 30 day free trial**
+
+1. Note that you have a New Relic subaccount for your trial
+
+   *Example:*
+
+   ```
+   SemanticBits_16
+   ```
+   
+1. Note that you will receive access to a New Relic subaccount for your project that you can switch to later
+
 ### Inventory the New Relic installation included with Gold Disk
 
 1. Inventory New Relic files
@@ -1742,7 +1823,7 @@
    $ sudo systemctl restart newrelic-infra
    ```
 
-### Request access to New Relic
+### Request access to the project's New Relic subaccount
 
 1. Open Chrome
 
@@ -1750,7 +1831,7 @@
 
    > https://jira.cms.gov/servicedesk/customer/portal/1/create/355
 
-1. Complele the form as follows
+1. Complete the form as follows
 
    *Format:*
    
@@ -1767,7 +1848,37 @@
      ```
      I need access to New Relic. I am a DevOps Engineer working on the AB2D project which falls under BCDA.
      ```
-     
+
+1. Wait for access to be provided
+
+### Access the project's New Relic subaccount
+
+1. Open Chrome
+
+1. Enter the following in the address bar
+
+   > http://newrelic.com
+
+1. Select **Log In**
+
+1. Log in to New Relic
+
+   - **Email:** {your semanticbits email}
+
+   - **Password:** {your password for New Relic}
+
+1. Select the subaccount dropdown in the upper right of the page
+
+1. Select **Switch account**
+
+1. Select your project's account
+
+   *Example:*
+
+   ```
+   AWS BlueButton
+   ```
+
 ### Configure a solution for using New Relic with ECS
 
 > *** TO DO ***
