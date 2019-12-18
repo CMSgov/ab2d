@@ -91,6 +91,7 @@ public class ExplanationOfBenefitsTrimmer {
         benefit.setTotalBenefit(null);
         benefit.setPayment(null);
         benefit.setForm(null);
+        benefit.setContained(null);
         clearOutList(benefit.getProcessNote());
         clearOutList(benefit.getBenefitBalance());
     }
