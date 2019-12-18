@@ -3,12 +3,10 @@ package gov.cms.ab2d.api.controller;
 import com.jayway.jsonpath.JsonPath;
 import com.okta.jwt.JwtVerificationException;
 import gov.cms.ab2d.api.SpringBootApp;
-import gov.cms.ab2d.common.model.Contract;
-import gov.cms.ab2d.common.model.Job;
-import gov.cms.ab2d.common.model.JobOutput;
-import gov.cms.ab2d.common.model.JobStatus;
+import gov.cms.ab2d.common.model.*;
 import gov.cms.ab2d.common.repository.*;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
+import gov.cms.ab2d.common.util.DataSetup;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.hamcrest.core.Is;
@@ -85,6 +83,9 @@ public class BulkDataAccessAPIIntegrationTests {
     @Autowired
     private TestUtil testUtil;
 
+    @Autowired
+    private DataSetup dataSetup;
+
     private String token;
 
     private static final String PATIENT_EXPORT_PATH = "/Patient/$export";
@@ -121,6 +122,77 @@ public class BulkDataAccessAPIIntegrationTests {
                 "http://localhost" + API_PREFIX + FHIR_PREFIX + PATIENT_EXPORT_PATH);
         Assert.assertEquals(job.getResourceTypes(), null);
         Assert.assertEquals(job.getUser(), userRepository.findByUsername(TEST_USER));
+    }
+
+    @Test
+    public void testPatientExportDuplicateSubmission() throws Exception {
+        this.mockMvc.perform(
+                get(API_PREFIX + FHIR_PREFIX + PATIENT_EXPORT_PATH).contentType(MediaType.APPLICATION_JSON)
+                        .header("Authorization", "Bearer " + token));
+
+        this.mockMvc.perform(
+                get(API_PREFIX + FHIR_PREFIX + PATIENT_EXPORT_PATH).contentType(MediaType.APPLICATION_JSON)
+                        .header("Authorization", "Bearer " + token))
+                        .andExpect(status().is(429))
+                        .andExpect(header().string("Retry-After", "30"))
+                        .andExpect(header().doesNotExist("X-Progress"));
+    }
+
+    @Test
+    public void testPatientExportDuplicateSubmissionWithCancelledStatus() throws Exception {
+        this.mockMvc.perform(
+                get(API_PREFIX + FHIR_PREFIX + PATIENT_EXPORT_PATH).contentType(MediaType.APPLICATION_JSON)
+                        .header("Authorization", "Bearer " + token));
+
+        Job job = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
+        job.setStatus(JobStatus.CANCELLED);
+        jobRepository.saveAndFlush(job);
+
+        this.mockMvc.perform(
+                get(API_PREFIX + FHIR_PREFIX + PATIENT_EXPORT_PATH).contentType(MediaType.APPLICATION_JSON)
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().is(202));
+    }
+
+    @Test
+    public void testPatientExportDuplicateSubmissionWithInProgressStatus() throws Exception {
+        this.mockMvc.perform(
+                get(API_PREFIX + FHIR_PREFIX + PATIENT_EXPORT_PATH).contentType(MediaType.APPLICATION_JSON)
+                        .header("Authorization", "Bearer " + token));
+
+        Job job = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
+        job.setStatus(JobStatus.IN_PROGRESS);
+        jobRepository.saveAndFlush(job);
+
+        this.mockMvc.perform(
+                get(API_PREFIX + FHIR_PREFIX + PATIENT_EXPORT_PATH).contentType(MediaType.APPLICATION_JSON)
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().is(429))
+                .andExpect(header().string("Retry-After", "30"))
+                .andExpect(header().doesNotExist("X-Progress"));
+    }
+
+    @Test
+    public void testPatientExportDuplicateSubmissionWithDifferentUser() throws Exception {
+        this.mockMvc.perform(
+                get(API_PREFIX + FHIR_PREFIX + PATIENT_EXPORT_PATH).contentType(MediaType.APPLICATION_JSON)
+                        .header("Authorization", "Bearer " + token));
+
+        Job job = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
+        User user = new User();
+        Sponsor sponsor = dataSetup.createSponsor("Parent Spons", 4441, "Child Spons", 1114);
+        user.setSponsor(sponsor);
+        user.setEnabled(true);
+        user.setUsername("test");
+        user.setEmail("test@test.com");
+        userRepository.saveAndFlush(user);
+        job.setUser(user);
+        jobRepository.saveAndFlush(job);
+
+        this.mockMvc.perform(
+                get(API_PREFIX + FHIR_PREFIX + PATIENT_EXPORT_PATH).contentType(MediaType.APPLICATION_JSON)
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().is(202));
     }
 
     @Test
@@ -694,6 +766,105 @@ public class BulkDataAccessAPIIntegrationTests {
                 .andExpect(jsonPath("$.issue[0].severity", Is.is("error")))
                 .andExpect(jsonPath("$.issue[0].code", Is.is("invalid")))
                 .andExpect(jsonPath("$.issue[0].details.text",
-                        Is.is("ResourceNotFoundException: Contract badContract was not found")));
+                        Is.is("ResourceNotFoundException: Contract number badContract was not found")));
+    }
+
+    @Test
+    public void testPatientExportWithContractDuplicateSubmission() throws Exception {
+        Optional<Contract> contractOptional = contractRepository.findContractByContractNumber(VALID_CONTRACT_NUMBER);
+        Contract contract = contractOptional.get();
+        this.mockMvc.perform(
+                get(API_PREFIX + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export").contentType(MediaType.APPLICATION_JSON)
+                        .header("Authorization", "Bearer " + token));
+
+        this.mockMvc.perform(
+                get(API_PREFIX + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export").contentType(MediaType.APPLICATION_JSON)
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().is(429))
+                .andExpect(header().string("Retry-After", "30"))
+                .andExpect(header().doesNotExist("X-Progress"));
+    }
+
+    @Test
+    public void testPatientExportWithContractDuplicateSubmissionInProgress() throws Exception {
+        Optional<Contract> contractOptional = contractRepository.findContractByContractNumber(VALID_CONTRACT_NUMBER);
+        Contract contract = contractOptional.get();
+        this.mockMvc.perform(
+                get(API_PREFIX + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export").contentType(MediaType.APPLICATION_JSON)
+                        .header("Authorization", "Bearer " + token));
+
+        Job job = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
+        job.setStatus(JobStatus.IN_PROGRESS);
+        jobRepository.saveAndFlush(job);
+
+        this.mockMvc.perform(
+                get(API_PREFIX + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export").contentType(MediaType.APPLICATION_JSON)
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().is(429))
+                .andExpect(header().string("Retry-After", "30"))
+                .andExpect(header().doesNotExist("X-Progress"));
+    }
+
+    @Test
+    public void testPatientExportWithContractDuplicateSubmissionCancelled() throws Exception {
+        Optional<Contract> contractOptional = contractRepository.findContractByContractNumber(VALID_CONTRACT_NUMBER);
+        Contract contract = contractOptional.get();
+        this.mockMvc.perform(
+                get(API_PREFIX + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export").contentType(MediaType.APPLICATION_JSON)
+                        .header("Authorization", "Bearer " + token));
+
+        Job job = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
+        job.setStatus(JobStatus.CANCELLED);
+        jobRepository.saveAndFlush(job);
+
+        this.mockMvc.perform(
+                get(API_PREFIX + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export").contentType(MediaType.APPLICATION_JSON)
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().is(202));
+    }
+
+    @Test
+    public void testPatientExportWithContractDuplicateSubmissionDifferentContract() throws Exception {
+        Optional<Contract> contractOptional = contractRepository.findContractByContractNumber(VALID_CONTRACT_NUMBER);
+        Contract contract = contractOptional.get();
+        this.mockMvc.perform(
+                get(API_PREFIX + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export").contentType(MediaType.APPLICATION_JSON)
+                        .header("Authorization", "Bearer " + token));
+
+        Sponsor sponsor = dataSetup.createSponsor("Parent Spons", 4441, "Child Spons", 1114);
+        User user = userRepository.findByUsername(TEST_USER);
+        user.setSponsor(sponsor);
+        userRepository.saveAndFlush(user);
+        Contract contractNew = dataSetup.setupContract(sponsor, "New Contract");
+
+        this.mockMvc.perform(
+                get(API_PREFIX + FHIR_PREFIX + "/Group/" + contractNew.getContractNumber() + "/$export").contentType(MediaType.APPLICATION_JSON)
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().is(202));
+    }
+
+    @Test
+    public void testPatientExportWithContractDuplicateSubmissionDifferentUser() throws Exception {
+        Optional<Contract> contractOptional = contractRepository.findContractByContractNumber(VALID_CONTRACT_NUMBER);
+        Contract contract = contractOptional.get();
+        this.mockMvc.perform(
+                get(API_PREFIX + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export").contentType(MediaType.APPLICATION_JSON)
+                        .header("Authorization", "Bearer " + token));
+
+        Job job = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
+        User user = new User();
+        Sponsor sponsor = dataSetup.createSponsor("Parent Spons", 4441, "Child Spons", 1114);
+        user.setSponsor(sponsor);
+        user.setEnabled(true);
+        user.setUsername("test");
+        user.setEmail("test@test.com");
+        userRepository.saveAndFlush(user);
+        job.setUser(user);
+        jobRepository.saveAndFlush(job);
+
+        this.mockMvc.perform(
+                get(API_PREFIX + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export").contentType(MediaType.APPLICATION_JSON)
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().is(202));
     }
 }
