@@ -1,20 +1,26 @@
 package gov.cms.ab2d.worker.service;
 
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.List;
 
+import static org.hamcrest.CoreMatchers.startsWith;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertLinesMatch;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class FileServiceIntegrationTest {
 
@@ -22,7 +28,7 @@ public class FileServiceIntegrationTest {
 
 
     @TempDir
-    File tmpDir;
+    File tmpEfsMountDir;
 
     @BeforeEach
     void setup() {
@@ -32,7 +38,7 @@ public class FileServiceIntegrationTest {
 
     @Test
     void createFile_shouldRecreateNewFile_whenFileAlreadyExists() throws IOException {
-        final Path path = tmpDir.toPath();
+        final Path path = tmpEfsMountDir.toPath();
         final String output_filename = "contract_name.ndjson";
 
         // pre-create file & write some text into file
@@ -55,6 +61,54 @@ public class FileServiceIntegrationTest {
                 () -> assertTrue(Files.readAllLines(outputfile2).isEmpty()),
                 () -> assertThat(outputfile1, equalTo(outputfile2))
         );
+    }
+
+
+    @Test
+    void testCreateDirectory() throws IOException {
+        Files.deleteIfExists(tmpEfsMountDir.toPath());
+        final Path directory = cut.createDirectory(tmpEfsMountDir.toPath());
+        Assertions.assertTrue(directory.toFile().isDirectory());
+    }
+
+
+    @Test
+    void testCreateFile() throws IOException {
+        Files.deleteIfExists(tmpEfsMountDir.toPath());
+        cut.createDirectory(tmpEfsMountDir.toPath());
+
+        var path = Paths.get(tmpEfsMountDir.getPath());
+        var file = cut.createFile(path, "filename.ndjson");
+        Assertions.assertTrue(file.toFile().isFile());
+    }
+
+    @Test
+    void testCreateFile_WhenDirectoryDoesNotExist_ThrowsIOException() throws IOException {
+        var path = Paths.get(tmpEfsMountDir.getPath(), "non-existent-directory");
+
+        var exceptionThrown = assertThrows(RuntimeException.class,
+                () -> cut.createFile(path, "filename.ndjson"));
+
+        assertThat(exceptionThrown.getMessage(), startsWith("Could not create output file"));
+    }
+
+    @Test
+    void testAppendToFile() throws IOException {
+        Files.deleteIfExists(tmpEfsMountDir.toPath());
+        cut.createDirectory(tmpEfsMountDir.toPath());
+
+        var path = Paths.get(tmpEfsMountDir.getPath());
+        var file = cut.createFile(path, "filename.ndjson");
+        Assertions.assertTrue(file.toFile().isFile());
+
+        List<String> lines = Arrays.asList("One", "Two", "Three");
+        var bytes = String.join(System.lineSeparator(), lines).getBytes();
+
+        var byteArrayOutputStream = new ByteArrayOutputStream();
+        byteArrayOutputStream.writeBytes(bytes);
+
+        cut.appendToFile(file, byteArrayOutputStream);
+        assertLinesMatch(lines, Files.readAllLines(file));
     }
 
 

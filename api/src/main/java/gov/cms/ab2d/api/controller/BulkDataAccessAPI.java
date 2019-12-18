@@ -14,6 +14,7 @@ import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import io.swagger.annotations.ResponseHeader;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.IOUtils;
 import org.hl7.fhir.dstu3.model.DateTimeType;
 import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,10 +30,16 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.context.request.RequestAttributes;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import javax.servlet.http.HttpServletResponse;
 import javax.validation.constraints.NotBlank;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -102,6 +109,22 @@ public class BulkDataAccessAPI {
             @RequestParam(required = false, name = "_outputFormat") String outputFormat) {
         log.info("Received request to export");
 
+        if (jobService.checkIfCurrentUserHasActiveJob()) {
+            String errorMsg = "User already has an active or submitted job";
+            log.error(errorMsg);
+            throw new TooManyRequestsException(errorMsg);
+        }
+
+        checkResourceTypesAndOutputFormat(resourceTypes, outputFormat);
+
+        Job job = jobService.createJob(resourceTypes, ServletUriComponentsBuilder.fromCurrentRequest().toUriString());
+
+        logSuccessfulJobCreation(job);
+
+        return returnStatusForJobCreation(job);
+    }
+
+    private void checkResourceTypesAndOutputFormat(String resourceTypes, String outputFormat) {
         if (resourceTypes != null && !resourceTypes.equals(RESOURCE_TYPE_VALUE)) {
             log.error("Received invalid resourceTypes of {}", resourceTypes);
             throw new InvalidUserInputException("_type must be " + RESOURCE_TYPE_VALUE);
@@ -110,12 +133,14 @@ public class BulkDataAccessAPI {
             log.error("Received _outputFormat {}, which is not valid", outputFormat);
             throw new InvalidUserInputException("An _outputFormat of " + outputFormat + " is not valid");
         }
+    }
 
-        Job job = jobService.createJob(resourceTypes, ServletUriComponentsBuilder.fromCurrentRequest().toUriString());
-
+    private void logSuccessfulJobCreation(Job job) {
         MDC.put(JOB_LOG, job.getJobUuid());
         log.info("Successfully created job");
+    }
 
+    private ResponseEntity<Void> returnStatusForJobCreation(Job job) {
         String statusURL = ServletUriComponentsBuilder.fromCurrentRequestUri().replacePath
                 (String.format(API_PREFIX + FHIR_PREFIX + "/Job/%s/$status", job.getJobUuid())).toUriString();
         HttpHeaders responseHeaders = new HttpHeaders();
@@ -123,6 +148,49 @@ public class BulkDataAccessAPI {
 
         return new ResponseEntity<>(null, responseHeaders,
                 HttpStatus.ACCEPTED);
+    }
+
+    @ApiOperation(value = "Initiate Part A & B bulk claim export job for a given contract number")
+    @ApiImplicitParams(value = {
+            @ApiImplicitParam(name = "Accept", required = true, paramType = "header", value =
+                    "application/fhir+json"),
+            @ApiImplicitParam(name = "Prefer", required = true, paramType = "header", value =
+                    "respond-async")}
+    )
+    @ApiResponses(
+            @ApiResponse(code = 202, message = "Export request has started", responseHeaders =
+            @ResponseHeader(name = "Content-Location", description = "Absolute URL of an endpoint" +
+                    " for subsequent status requests (polling location)",
+                    response = String.class))
+    )
+    @ResponseStatus(value = HttpStatus.ACCEPTED)
+    @GetMapping("/Group/{contractNumber}/$export")
+    public ResponseEntity<Void> exportPatientsWithContract(@ApiParam(value = "A contract number", required = true)
+            @PathVariable @NotBlank String contractNumber,
+            @ApiParam(value = "String of comma-delimited FHIR resource types. Only resources of " +
+                    "the specified resource types(s) SHALL be included in the response.",
+                    allowableValues = RESOURCE_TYPE_VALUE)
+            @RequestParam(required = false, name = "_type") String resourceTypes,
+            @ApiParam(value = "The format for the requested bulk data files to be generated.",
+                    allowableValues = ALLOWABLE_OUTPUT_FORMATS, defaultValue = "application/fhir" +
+                    "+ndjson"
+            )
+            @RequestParam(required = false, name = "_outputFormat") String outputFormat) {
+        MDC.put(CONTRACT_LOG, contractNumber);
+        log.info("Received request to export by contractNumber");
+
+        if (jobService.checkIfCurrentUserHasActiveJobForContractNumber(contractNumber)) {
+            log.error("User already has an active or submitted job for the contract number {}", contractNumber);
+            throw new TooManyRequestsException("User already has an active or submitted job for the contract number " + contractNumber);
+        }
+
+        checkResourceTypesAndOutputFormat(resourceTypes, outputFormat);
+
+        Job job = jobService.createJob(resourceTypes, ServletUriComponentsBuilder.fromCurrentRequest().toUriString(), contractNumber);
+
+        logSuccessfulJobCreation(job);
+
+        return returnStatusForJobCreation(job);
     }
 
     @ApiOperation(value = "Cancel a pending export job")
@@ -244,7 +312,7 @@ public class BulkDataAccessAPI {
     )
     @ResponseStatus(value = HttpStatus.OK)
     @GetMapping(value = "/Job/{jobUuid}/file/{filename}")
-    public ResponseEntity<Resource> downloadFile(
+    public ResponseEntity<Void> downloadFile(
             @ApiParam(value = "A job identifier", required = true) @PathVariable @NotBlank String jobUuid,
             @ApiParam(value = "A file name", required = true) @PathVariable @NotBlank String filename) throws IOException {
         MDC.put(JOB_LOG, jobUuid);
@@ -252,11 +320,20 @@ public class BulkDataAccessAPI {
         log.info("Request submitted to download file");
 
         Resource downloadResource = jobService.getResourceForJob(jobUuid, filename);
-        HttpHeaders headers = new HttpHeaders();
-        headers.set(HttpHeaders.CONTENT_TYPE, NDJSON_FIRE_CONTENT_TYPE);
+
+        RequestAttributes requestAttributes = RequestContextHolder.getRequestAttributes();
+        HttpServletResponse response = ((ServletRequestAttributes) requestAttributes).getResponse();
 
         log.info("Sending file to client");
 
-        return new ResponseEntity<>(downloadResource, headers, HttpStatus.OK);
+        try (OutputStream out = response.getOutputStream(); FileInputStream in = new FileInputStream(downloadResource.getFile())) {
+            IOUtils.copy(in, out);
+
+            jobService.deleteFileForJob(downloadResource.getFile());
+
+            response.setHeader(HttpHeaders.CONTENT_TYPE, NDJSON_FIRE_CONTENT_TYPE);
+
+            return new ResponseEntity<>(null, null, HttpStatus.OK);
+        }
     }
 }

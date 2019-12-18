@@ -7,6 +7,7 @@ import gov.cms.ab2d.api.security.BadJWTTokenException;
 import gov.cms.ab2d.api.security.InvalidAuthHeaderException;
 import gov.cms.ab2d.api.security.MissingTokenException;
 import gov.cms.ab2d.api.security.UserNotEnabledException;
+import gov.cms.ab2d.common.service.InvalidContractException;
 import gov.cms.ab2d.common.service.InvalidJobStateTransition;
 import gov.cms.ab2d.common.service.ResourceNotFoundException;
 import org.apache.commons.lang3.exception.ExceptionUtils;
@@ -49,7 +50,7 @@ class ErrorHandler extends ResponseEntityExceptionHandler {
     }
 
     @ExceptionHandler({BadJWTTokenException.class, UsernameNotFoundException.class, UserNotEnabledException.class,
-            JwtVerificationException.class})
+            JwtVerificationException.class, InvalidContractException.class})
     public ResponseEntity<Void> handleForbiddenAccessExceptions() {
         return generateError(HttpStatus.FORBIDDEN);
     }

@@ -4,3 +4,7 @@ databaseChangeLog:
       file: db/changelog/v001/schema.sql
   - include:
       file: db/changelog/v001/seed_data.sql
+  - include:
+      file: db/changelog/v001/ab2d-599-rename-consent.sql
+  - include:
+      file: db/changelog/v001/add_contract_number_to_job.sql

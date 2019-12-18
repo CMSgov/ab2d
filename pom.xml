@@ -11,6 +11,7 @@
         <module>bfd</module>
         <module>filter</module>
         <module>optout</module>
+        <module>audit</module>
     </modules>
     <parent>
         <groupId>org.springframework.boot</groupId>
@@ -34,7 +35,7 @@
         <checkstyle.config>${project.root}/src/main/resources/checkstyle.xml</checkstyle.config>
         <logback.version>1.2.3</logback.version>
         <logback-encoder.version>6.2</logback-encoder.version>
-        <quartz.version>2.3.2</quartz.version>
+        <testcontainers.version>1.12.4</testcontainers.version>
     </properties>
 
     <dependencies>
@@ -42,6 +43,25 @@
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>testcontainers</artifactId>
+            <version>${testcontainers.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>postgresql</artifactId>
+            <version>${testcontainers.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>${testcontainers.version}</version>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 

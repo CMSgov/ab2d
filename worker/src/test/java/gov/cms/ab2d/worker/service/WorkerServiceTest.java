@@ -1,5 +1,6 @@
 package gov.cms.ab2d.worker.service;
 
+import gov.cms.ab2d.common.SpringBootApp;
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.JobStatus;
 import gov.cms.ab2d.common.model.Sponsor;
@@ -7,10 +8,15 @@ import gov.cms.ab2d.common.model.User;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.common.repository.SponsorRepository;
 import gov.cms.ab2d.common.repository.UserRepository;
+import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.TestPropertySource;
+import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.time.OffsetDateTime;
 import java.util.Random;
@@ -25,12 +31,16 @@ import static org.junit.Assert.assertThat;
  * Generic Tests to make sure that the worker gets triggered upon submitting a job into the Job table.
  */
 @SpringBootTest
+@Testcontainers
 public class WorkerServiceTest {
     private final Random random = new Random();
 
     @Autowired private JobRepository jobRepository;
     @Autowired private SponsorRepository sponsorRepository;
     @Autowired private UserRepository userRepository;
+
+    @Container
+    private static final PostgreSQLContainer postgreSQLContainer= new AB2DPostgresqlContainer();
 
     @Test
     @DisplayName("When a job is submitted into the job table, a worker processes it")
