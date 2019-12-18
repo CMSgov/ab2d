@@ -41,8 +41,11 @@ import java.util.List;
 import static gov.cms.ab2d.common.service.JobServiceImpl.INITIAL_JOB_STATUS_MESSAGE;
 import static gov.cms.ab2d.common.util.Constants.OPERATION_OUTCOME;
 import static gov.cms.ab2d.common.util.DataSetup.TEST_USER;
+import static gov.cms.ab2d.common.util.DataSetup.VALID_CONTRACT_NUMBER;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @SpringBootTest(classes = SpringBootApp.class)
 @TestPropertySource(locations = "/application.common.properties")
@@ -358,5 +361,34 @@ public class JobServiceTest {
         Assertions.assertThrows(JobOutputMissingException.class, () -> {
             jobService.getResourceForJob(job.getJobUuid(), "outputmissing.ndjson");
         });
+    }
+
+    @Test
+    public void checkIfUserHasActiveJobTest() {
+        boolean result = jobService.checkIfCurrentUserHasActiveJob();
+        Assert.assertFalse(result);
+    }
+
+    @Test
+    public void checkIfUserHasActiveJobTrueTest() {
+        jobService.createJob("ExplanationOfBenefits", "http://localhost:8080");
+
+        boolean result = jobService.checkIfCurrentUserHasActiveJob();
+        Assert.assertTrue(result);
+    }
+
+    @Test
+    public void checkIfUserHasActiveJobWithBadContractTest() {
+        var exceptionThrown = assertThrows(ResourceNotFoundException.class,
+                () -> jobService.checkIfCurrentUserHasActiveJobForContractNumber("S001"));
+        Assert.assertThat(exceptionThrown.getMessage(), is("Contract number S001 was not found"));
+    }
+
+    @Test
+    public void checkIfUserHasActiveJobWithContractTest() {
+        jobService.createJob("ExplanationOfBenefits", "http://localhost:8080", VALID_CONTRACT_NUMBER);
+
+        boolean result = jobService.checkIfCurrentUserHasActiveJobForContractNumber(VALID_CONTRACT_NUMBER);
+        Assert.assertTrue(result);
     }
 }
