@@ -1,14 +1,14 @@
 package gov.cms.ab2d.common.service;
 
+import gov.cms.ab2d.common.model.JobOutput;
+import gov.cms.ab2d.common.model.User;
+import gov.cms.ab2d.common.repository.JobRepository;
 
 import gov.cms.ab2d.common.model.Job;
-import gov.cms.ab2d.common.model.JobOutput;
 import gov.cms.ab2d.common.model.JobStatus;
 import gov.cms.ab2d.common.model.Sponsor;
-import gov.cms.ab2d.common.model.User;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.repository.ContractRepository;
-import gov.cms.ab2d.common.repository.JobRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -147,5 +147,24 @@ public class JobServiceImpl implements JobService {
         if (!deleted) {
             log.error("Was not able to delete the file {}", file.getName());
         }
+    }
+
+    @Override
+    public boolean checkIfCurrentUserHasActiveJob() {
+        User user = userService.getCurrentUser();
+        List<Job> jobs = jobRepository.findActiveJobsByUser(user);
+        return jobs.size() > 0;
+    }
+
+    @Override
+    public boolean checkIfCurrentUserHasActiveJobForContractNumber(String contractNumber) {
+        User user = userService.getCurrentUser();
+        Contract contract = contractRepository.findContractByContractNumber(contractNumber)
+            .orElseThrow(() -> {
+                log.error("Contract number {} }was not found", contractNumber);
+                return new ResourceNotFoundException("Contract number " + contractNumber + " was not found");
+            });
+        List<Job> jobs = jobRepository.findActiveJobsByUserAndContract(user, contract);
+        return jobs.size() > 0;
     }
 }
