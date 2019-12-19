@@ -66,7 +66,7 @@ public class AdminAPI {
     }
 
     @ResponseStatus(value = HttpStatus.CREATED)
-    @PostMapping("/createUser")
+    @PostMapping("/user")
     public ResponseEntity<UserDTO> createUser(@RequestBody UserDTO userDTO) {
         User user = userService.createUser(userDTO);
         UserDTO createdUser = Mapping.getModelMapper().map(user, UserDTO.class);

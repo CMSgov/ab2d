@@ -73,7 +73,7 @@ public class AdminAPIUserTests {
 
     private String token;
 
-    private static final String CREATE_USER_URL = "/createUser";
+    private static final String USER_URL = "/user";
 
     @BeforeEach
     public void setup() throws JwtVerificationException {
@@ -105,7 +105,7 @@ public class AdminAPIUserTests {
         ObjectMapper mapper = new ObjectMapper();
 
         MvcResult mvcResult = this.mockMvc.perform(
-                post(API_PREFIX + ADMIN_PREFIX + CREATE_USER_URL)
+                post(API_PREFIX + ADMIN_PREFIX + USER_URL)
                         .contentType(MediaType.APPLICATION_JSON).content(mapper.writeValueAsString(userDTO))
                         .header("Authorization", "Bearer " + token))
                 .andReturn();
@@ -141,12 +141,12 @@ public class AdminAPIUserTests {
         ObjectMapper mapper = new ObjectMapper();
 
         this.mockMvc.perform(
-                post(API_PREFIX + ADMIN_PREFIX + CREATE_USER_URL)
+                post(API_PREFIX + ADMIN_PREFIX + USER_URL)
                         .contentType(MediaType.APPLICATION_JSON).content(mapper.writeValueAsString(userDTO))
                         .header("Authorization", "Bearer " + token));
 
         this.mockMvc.perform(
-                post(API_PREFIX + ADMIN_PREFIX + CREATE_USER_URL)
+                post(API_PREFIX + ADMIN_PREFIX + USER_URL)
                         .contentType(MediaType.APPLICATION_JSON).content(mapper.writeValueAsString(userDTO))
                         .header("Authorization", "Bearer " + token))
                         .andExpect(status().is(500))
