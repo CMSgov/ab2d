@@ -353,6 +353,7 @@
    ```ShellSession
    $ ./create-vpc-for-sbdemo.sh \
      --environment=dev \
+     --region=us-east-2 \
      --vpc-cidr-block-1=10.242.26.0/24 \
      --vpc-cidr-block-2=10.242.5.128/26 \
      --subnet-public-1-cidr-block=10.242.5.128/27 \
@@ -368,6 +369,7 @@
    ```ShellSession
    $ ./create-vpc-for-sbdemo.sh \
      --environment=sbx \
+     --region=us-east-2 \
      --vpc-cidr-block-1=10.242.27.0/24 \
      --vpc-cidr-block-2=10.242.6.128/26 \
      --subnet-public-1-cidr-block=10.242.6.128/27 \

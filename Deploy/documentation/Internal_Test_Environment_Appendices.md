@@ -39,6 +39,7 @@
    * [Create CloudFront distribution](#create-cloudfront-distribution)
    * [Update Route 53 DNS record to point custom CNAME to the CloudFront distribution](#update-route-53-dns-record-to-point-custom-cname-to-the-cloudfront-distribution)
    * [Test the CloudFront distribution](#test-the-cloudfront-distribution)
+1. [Appendix Q: Create a VPC network peering test](#appendix-q-create-a-vpc-network-peering-test)
 
 ## Appendix A: Destroy complete environment
 
@@ -2716,3 +2717,108 @@
    1. Test the DNS with HTTPS
 
       > https://ab2d.{domain}
+
+## Appendix Q: Create a VPC network peering test
+
+1. Set the AWS profile
+
+   ```ShellSession
+   $ export AWS_PROFILE=sbdemo-shared
+   ```
+
+1. Create keypair
+
+   *Example for controllers within SemanticBits demo environment:*
+
+   ```ShellSession
+   $ aws --region us-east-2 ec2 create-key-pair \
+     --key-name vpc-peering-test \
+     --query 'KeyMaterial' \
+     --output text \
+     > ~/.ssh/vpc-peering-test.pem
+   ```
+
+1. Change permissions of the key
+
+   *Example for controllers within SemanticBits demo environment:*
+
+   ```ShellSession
+   $ chmod 600 ~/.ssh/vpc-peering-test.pem
+   ```
+
+1. Output the public key to the clipboard
+
+   *Example for controllers within SemanticBits demo environment:*
+
+   ```ShellSession
+   $ ssh-keygen -y -f ~/.ssh/vpc-peering-test.pem | pbcopy
+   ```
+
+1. Update the "authorized_keys" file for the environment
+
+   1. Open the "authorized_keys" file for the environment
+   
+      ```ShellSession
+      $ vim ~/code/ab2d/Deploy/terraform/environments/vpc-peering-test/authorized_keys
+      ```
+
+   1. Paste the public key under the "Keys included with CentOS image" section
+
+   1. Save and close the file
+
+1. Change to the deploy directory
+
+   *Format:*
+   
+   ```ShellSession
+   $ cd {code directory}/ab2d/Deploy
+   ```
+
+   *Example:*
+   
+   ```ShellSession
+   $ cd ~/code/ab2d/Deploy
+   ```
+
+1. Create the VPC for the dev environment
+   
+   ```ShellSession
+   $ ./create-vpc-for-sbdemo.sh \
+     --environment=dev \
+     --region=us-east-2 \
+     --vpc-cidr-block-1=10.242.26.0/24 \
+     --vpc-cidr-block-2=10.242.5.128/26 \
+     --subnet-public-1-cidr-block=10.242.5.128/27 \
+     --subnet-public-2-cidr-block=10.242.5.160/27 \
+     --subnet-private-1-cidr-block=10.242.26.0/25 \
+     --subnet-private-2-cidr-block=10.242.26.128/25
+   ```
+
+1. Create the VPC for the sbx environment
+
+   > *** TO DO ***: Change CIDR values to match assigned values from CMS AWS account
+   
+   ```ShellSession
+   $ ./create-vpc-for-sbdemo.sh \
+     --environment=sbx \
+     --region=us-east-2 \
+     --vpc-cidr-block-1=10.242.27.0/24 \
+     --vpc-cidr-block-2=10.242.6.128/26 \
+     --subnet-public-1-cidr-block=10.242.6.128/27 \
+     --subnet-public-2-cidr-block=10.242.6.160/27 \
+     --subnet-private-1-cidr-block=10.242.27.0/25 \
+     --subnet-private-2-cidr-block=10.242.27.128/25
+   ```
+
+1. Deploy components for VPC peering test
+
+   ```ShellSession
+   $ ./bash/vpc-peering-test.sh \
+     --environment-1=dev \
+     --region-1=us-east-2 \
+     --environment-2=sbx \
+     --region-2=us-east-2 \
+     --seed-ami-product-code=aw0evgkw8e5c1q413zgy5pjce \
+     --ssh-username=centos \
+     --ec2-instance-type=m5.xlarge
+   ```

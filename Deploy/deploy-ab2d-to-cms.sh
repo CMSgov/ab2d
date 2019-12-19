@@ -654,6 +654,7 @@ if [ -z "${AMI_ID}" ]; then
   COMMIT=$(git rev-parse HEAD)
   packer build \
     --var seed_ami=$SEED_AMI \
+    --var region=us-east-1 \
     --var ec2_instance_type=$EC2_INSTANCE_TYPE \
     --var vpc_id=$VPC_ID \
     --var subnet_public_1_id=$SUBNET_PUBLIC_1_ID \
@@ -709,14 +710,15 @@ if [ -z "${JENKINS_AMI_ID}" ]; then
   IP=$(curl ipinfo.io/ip)
   COMMIT=$(git rev-parse HEAD)
   packer build \
-	 --var seed_ami=$SEED_AMI \
-	 --var ec2_instance_type=$EC2_INSTANCE_TYPE \
-	 --var vpc_id=$VPC_ID \
-	 --var subnet_public_1_id=$SUBNET_PUBLIC_1_ID \
-	 --var my_ip_address=$IP \
-	 --var ssh_username=$SSH_USERNAME \
-	 --var git_commit_hash=$COMMIT \
-	 app.json  2>&1 | tee output.txt
+    --var seed_ami=$SEED_AMI \
+    --var region=us-east-1 \
+    --var ec2_instance_type=$EC2_INSTANCE_TYPE \
+    --var vpc_id=$VPC_ID \
+    --var subnet_public_1_id=$SUBNET_PUBLIC_1_ID \
+    --var my_ip_address=$IP \
+    --var ssh_username=$SSH_USERNAME \
+    --var git_commit_hash=$COMMIT \
+    app.json  2>&1 | tee output.txt
   JENKINS_AMI_ID=$(cat output.txt | awk 'match($0, /ami-.*/) { print substr($0, RSTART, RLENGTH) }' | tail -1)
   
   # Add name tag to AMI
