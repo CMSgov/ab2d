@@ -11,4 +11,6 @@ public interface SponsorService {
     Sponsor saveSponsor(Sponsor sponsor);
 
     Sponsor findSponsorById(Long id);
+
+    Sponsor findByHpmsIdAndOrgName(Integer hpmsId, String orgName);
 }

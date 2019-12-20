@@ -1,12 +1,11 @@
 package gov.cms.ab2d.common.service;
 
 import gov.cms.ab2d.common.SpringBootApp;
-import gov.cms.ab2d.common.dto.RoleDTO;
+import gov.cms.ab2d.common.dto.SponsorDTO;
 import gov.cms.ab2d.common.dto.UserDTO;
 import gov.cms.ab2d.common.model.Role;
 import gov.cms.ab2d.common.model.Sponsor;
 import gov.cms.ab2d.common.model.User;
-import gov.cms.ab2d.common.repository.RoleRepository;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.DataSetup;
 import org.junit.Assert;
@@ -23,7 +22,6 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import javax.validation.ConstraintViolationException;
-import java.util.Set;
 
 import static gov.cms.ab2d.common.util.Constants.SPONSOR_ROLE;
 import static org.hamcrest.CoreMatchers.is;
@@ -72,11 +70,10 @@ public class UserServiceTest {
         user.setFirstName("Test");
         user.setLastName("User");
         user.setEnabled(true);
-        user.setSponsorId(sponsor.getId());
-        RoleDTO roleDTO = new RoleDTO();
+        SponsorDTO sponsorDTO = new SponsorDTO(sponsor.getHpmsId(), sponsor.getOrgName());
+        user.setSponsor(sponsorDTO);
         Role role = roleService.findRoleByName(SPONSOR_ROLE);
-        roleDTO.setId(role.getId());
-        user.setRoles(Set.of(roleDTO));
+        user.setRole(role.getName());
 
         User createdUser = userService.createUser(user);
         Assert.assertEquals(createdUser.getUsername(), user.getUsername());
@@ -98,11 +95,10 @@ public class UserServiceTest {
         user.setFirstName("Test");
         user.setLastName("User");
         user.setEnabled(true);
-        user.setSponsorId(sponsor.getId());
-        RoleDTO roleDTO = new RoleDTO();
+        SponsorDTO sponsorDTO = new SponsorDTO(sponsor.getHpmsId(), sponsor.getOrgName());
+        user.setSponsor(sponsorDTO);
         Role role = roleService.findRoleByName(SPONSOR_ROLE);
-        roleDTO.setId(role.getId());
-        user.setRoles(Set.of(roleDTO));
+        user.setRole(role.getName());
 
         userService.createUser(user);
         var exceptionThrown = Assertions.assertThrows(DataIntegrityViolationException.class, () -> {
@@ -121,11 +117,10 @@ public class UserServiceTest {
         user.setFirstName("Test");
         user.setLastName("User");
         user.setEnabled(true);
-        user.setSponsorId(sponsor.getId());
-        RoleDTO roleDTO = new RoleDTO();
+        SponsorDTO sponsorDTO = new SponsorDTO(sponsor.getHpmsId(), sponsor.getOrgName());
+        user.setSponsor(sponsorDTO);
         Role role = roleService.findRoleByName(SPONSOR_ROLE);
-        roleDTO.setId(role.getId());
-        user.setRoles(Set.of(roleDTO));
+        user.setRole(role.getName());
 
         userService.createUser(user);
 
@@ -144,10 +139,8 @@ public class UserServiceTest {
         user.setFirstName("Test");
         user.setLastName("User");
         user.setEnabled(true);
-        RoleDTO roleDTO = new RoleDTO();
         Role role = roleService.findRoleByName(SPONSOR_ROLE);
-        roleDTO.setId(role.getId());
-        user.setRoles(Set.of(roleDTO));
+        user.setRole(role.getName());
 
         var exceptionThrown = Assertions.assertThrows(ConstraintViolationException.class, () -> {
             userService.createUser(user);

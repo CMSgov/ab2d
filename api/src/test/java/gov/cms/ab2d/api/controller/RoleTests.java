@@ -24,6 +24,7 @@ import java.util.List;
 
 import static gov.cms.ab2d.api.util.Constants.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest(classes = SpringBootApp.class, webEnvironment = SpringBootTest.WebEnvironment.MOCK)
@@ -108,6 +109,16 @@ public class RoleTests {
         MockMultipartFile mockMultipartFile = new MockMultipartFile("file", fileName, "application/vnd.ms-excel", inputStream);
         this.mockMvc.perform(MockMvcRequestBuilders.multipart(API_PREFIX + ADMIN_PREFIX + "/uploadOrgStructureReport")
                 .file(mockMultipartFile).contentType(MediaType.MULTIPART_FORM_DATA)
+                .header("Authorization", "Bearer " + token))
+                .andExpect(status().is(403));
+    }
+
+    @Test
+    public void testWrongRoleUserCreate() throws Exception {
+        token = testUtil.setupToken(List.of(SPONSOR_ROLE));
+
+        this.mockMvc.perform(post(API_PREFIX +  ADMIN_PREFIX + "/user")
+                .contentType(MediaType.APPLICATION_JSON)
                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(403));
     }

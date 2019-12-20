@@ -13,4 +13,6 @@ public interface SponsorRepository extends JpaRepository<Sponsor, Long> {
     Optional<Sponsor> findByHpmsIdAndParent(Integer hpmsId, Sponsor parentId);
 
     List<Sponsor> findByParent(Sponsor parentId);
+
+    Optional<Sponsor> findByHpmsIdAndOrgName(Integer hpmsId, String orgName);
 }

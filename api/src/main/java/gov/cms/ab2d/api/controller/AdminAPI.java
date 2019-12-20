@@ -1,6 +1,6 @@
 package gov.cms.ab2d.api.controller;
 
-import gov.cms.ab2d.common.dto.Mapping;
+import gov.cms.ab2d.common.config.Mapping;
 import gov.cms.ab2d.common.dto.UserDTO;
 import gov.cms.ab2d.common.model.User;
 import gov.cms.ab2d.common.service.UserService;
@@ -37,6 +37,9 @@ public class AdminAPI {
     @Autowired
     private UserService userService;
 
+    @Autowired
+    private Mapping mapping;
+
     @ResponseStatus(value = HttpStatus.ACCEPTED)
     @PostMapping("/uploadOrgStructureReport")
     public ResponseEntity<Void> uploadOrgStructureReport(@RequestParam("file") MultipartFile hpmsFile) throws IOException {
@@ -69,7 +72,7 @@ public class AdminAPI {
     @PostMapping("/user")
     public ResponseEntity<UserDTO> createUser(@RequestBody UserDTO userDTO) {
         User user = userService.createUser(userDTO);
-        UserDTO createdUser = Mapping.getModelMapper().map(user, UserDTO.class);
+        UserDTO createdUser = mapping.getModelMapper().map(user, UserDTO.class);
         return new ResponseEntity<>(createdUser, null, HttpStatus.CREATED);
     }
 }

@@ -3,13 +3,12 @@ package gov.cms.ab2d.api.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.okta.jwt.JwtVerificationException;
 import gov.cms.ab2d.api.SpringBootApp;
-import gov.cms.ab2d.common.dto.RoleDTO;
+import gov.cms.ab2d.common.dto.SponsorDTO;
 import gov.cms.ab2d.common.dto.UserDTO;
 import gov.cms.ab2d.common.model.Role;
 import gov.cms.ab2d.common.model.Sponsor;
 import gov.cms.ab2d.common.repository.*;
 import gov.cms.ab2d.common.service.RoleService;
-import gov.cms.ab2d.common.service.SponsorService;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import org.hamcrest.core.Is;
 import org.junit.Assert;
@@ -27,10 +26,8 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.util.List;
-import java.util.Set;
 
 import static gov.cms.ab2d.api.util.Constants.*;
-import static gov.cms.ab2d.common.util.Constants.SPONSOR_ROLE;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -43,9 +40,6 @@ public class AdminAPIUserTests {
 
     @Autowired
     private MockMvc mockMvc;
-
-    @Autowired
-    private SponsorService sponsorService;
 
     @Container
     private static final PostgreSQLContainer postgreSQLContainer= new AB2DPostgresqlContainer();
@@ -95,12 +89,9 @@ public class AdminAPIUserTests {
         userDTO.setFirstName("Test");
         userDTO.setLastName("User");
         Sponsor sponsor = sponsorRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
-        userDTO.setSponsorId(sponsor.getId());
-        RoleDTO roleDTO = new RoleDTO();
+        userDTO.setSponsor(new SponsorDTO(sponsor.getHpmsId(), sponsor.getOrgName()));
         Role role = roleService.findRoleByName(ADMIN_ROLE);
-        roleDTO.setId(role.getId());
-        Set<RoleDTO> roles = Set.of(roleDTO);
-        userDTO.setRoles(roles);
+        userDTO.setRole(role.getName());
 
         ObjectMapper mapper = new ObjectMapper();
 
@@ -119,7 +110,9 @@ public class AdminAPIUserTests {
         Assert.assertEquals(createdUserDTO.getFirstName(), userDTO.getFirstName());
         Assert.assertEquals(createdUserDTO.getLastName(), userDTO.getLastName());
         Assert.assertEquals(createdUserDTO.getEnabled(), userDTO.getEnabled());
-        Assert.assertEquals(createdUserDTO.getSponsorId(), userDTO.getSponsorId());
+        Assert.assertEquals(createdUserDTO.getSponsor().getHpmsId(), userDTO.getSponsor().getHpmsId());
+        Assert.assertEquals(createdUserDTO.getSponsor().getOrgName(), userDTO.getSponsor().getOrgName());
+        Assert.assertEquals(createdUserDTO.getRole(), userDTO.getRole());
     }
 
     @Test
@@ -131,12 +124,9 @@ public class AdminAPIUserTests {
         userDTO.setFirstName("Test");
         userDTO.setLastName("User");
         Sponsor sponsor = sponsorRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
-        userDTO.setSponsorId(sponsor.getId());
-        RoleDTO roleDTO = new RoleDTO();
+        userDTO.setSponsor(new SponsorDTO(sponsor.getHpmsId(), sponsor.getOrgName()));
         Role role = roleService.findRoleByName(ADMIN_ROLE);
-        roleDTO.setId(role.getId());
-        Set<RoleDTO> roles = Set.of(roleDTO);
-        userDTO.setRoles(roles);
+        userDTO.setRole(role.getName());
 
         ObjectMapper mapper = new ObjectMapper();
 

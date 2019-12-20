@@ -3,7 +3,6 @@ package gov.cms.ab2d.common.dto;
 import lombok.Data;
 
 import javax.validation.constraints.NotNull;
-import java.util.Set;
 
 @Data
 public class UserDTO {
@@ -17,14 +16,13 @@ public class UserDTO {
     @NotNull
     private String lastName;
 
-    @NotNull
     private String email;
 
     @NotNull
     private Boolean enabled;
 
     @NotNull
-    private Long sponsorId;
+    private SponsorDTO sponsor;
 
-    private Set<RoleDTO> roles;
+    private String role;
 }

@@ -31,4 +31,11 @@ public class SponsorServiceImpl implements SponsorService {
             return new ResourceNotFoundException("No sponsor found with ID " + id);
         });
     }
+
+    public Sponsor findByHpmsIdAndOrgName(Integer hpmsId, String orgName) {
+        return sponsorRepository.findByHpmsIdAndOrgName(hpmsId, orgName).orElseThrow(() -> {
+            log.error("No sponsor found with hpms ID {} and org name {}", hpmsId, orgName);
+            return new ResourceNotFoundException("No sponsor found with hpms ID " +  hpmsId + " and org name " + orgName);
+        });
+    }
 }
