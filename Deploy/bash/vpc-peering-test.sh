@@ -280,6 +280,115 @@ if [ -z "${SUBNET_PRIVATE_2_ID_ENV_2}" ]; then
 fi
 
 #
+# Create VPC peering from VPC #1 to VPC #2
+#
+
+# Determine if a VPC peering connection exists ("pending-acceptance" or "active")
+
+# Get VPC peering connection that is either "pending-acceptance" or "active" (if exists)
+
+VPC_PEERING_CONNECTION_ID=$(aws --region "${REGION_1}" ec2 describe-vpc-peering-connections \
+  --filters "Name=status-code,Values=pending-acceptance,active" \
+	    "Name=requester-vpc-info.vpc-id,Values=${VPC_ID_1}" \
+	    "Name=accepter-vpc-info.vpc-id,Values=${VPC_ID_2}" \
+  --query "VpcPeeringConnections[*].VpcPeeringConnectionId" \
+  --output text)
+
+if [ -z "${VPC_PEERING_CONNECTION_ID}" ]; then
+    
+  # VPC #1 requests a peering connection to VPC #2
+
+  aws --region "${REGION_1}" ec2 create-vpc-peering-connection \
+    --vpc-id "${VPC_ID_1}" \
+    --peer-vpc-id "${VPC_ID_2}"
+
+  # Get VPC peering connection that is "pending-acceptance"
+
+  VPC_PEERING_CONNECTION_ID=$(aws --region "${REGION_1}" ec2 describe-vpc-peering-connections \
+    --filters "Name=status-code,Values=pending-acceptance" \
+	      "Name=requester-vpc-info.vpc-id,Values=${VPC_ID_1}" \
+	      "Name=accepter-vpc-info.vpc-id,Values=${VPC_ID_2}" \
+    --query "VpcPeeringConnections[*].VpcPeeringConnectionId" \
+    --output text)
+  
+fi
+
+# Get status of VPC peering connection ("pending-acceptance" or "active")
+
+VPC_PEERING_CONNECTION_STATUS=$(aws --region "${REGION_1}" ec2 describe-vpc-peering-connections \
+  --filters "Name=status-code,Values=pending-acceptance,active" \
+	    "Name=requester-vpc-info.vpc-id,Values=${VPC_ID_1}" \
+	    "Name=accepter-vpc-info.vpc-id,Values=${VPC_ID_2}" \
+  --query "VpcPeeringConnections[?VpcPeeringConnectionId=='${VPC_PEERING_CONNECTION_ID}'].Status.Code" \
+  --output text)
+VPC_PEERING_CONNECTION_STATUS=$(echo $VPC_PEERING_CONNECTION_STATUS | tr '[:lower:]' '[:upper:]')
+
+# Make VPC peering connection active
+
+if [ "${VPC_PEERING_CONNECTION_STATUS}" != "ACTIVE" ]; then
+
+  # Get VPC peering connection id
+    
+  VPC_PEERING_CONNECTION_ID=$(aws --region "${REGION_1}" ec2 describe-vpc-peering-connections \
+    --filters "Name=status-code,Values=pending-acceptance" \
+              "Name=requester-vpc-info.vpc-id,Values=${VPC_ID_1}" \
+              "Name=accepter-vpc-info.vpc-id,Values=${VPC_ID_2}" \
+    --query "VpcPeeringConnections[*].VpcPeeringConnectionId" \
+    --output text)
+
+  # VPC #2 accepts the peering connection request from VPC #1
+
+  aws --region "${REGION_2}" ec2 accept-vpc-peering-connection \
+    --vpc-peering-connection-id "${VPC_PEERING_CONNECTION_ID}"
+
+  # Wait for peering connection to become active
+  
+  SECONDS_COUNT=0
+  LAST_SECONDS_COUNT=0
+  WAIT_SECONDS=5
+  echo "Waiting for VPC peering connection to become active..."
+  until [[ "${VPC_PEERING_CONNECTION_STATUS}" == "ACTIVE" ]]; do
+    INTERVAL=$[SECONDS_COUNT-LAST_SECONDS_COUNT]
+    echo $INTERVAL
+    if [[ $INTERVAL -ge $WAIT_SECONDS ]]; then
+      VPC_PEERING_CONNECTION_STATUS=$(aws --region "ca-central-1" ec2 describe-vpc-peering-connections \
+        --query "VpcPeeringConnections[?VpcPeeringConnectionId=='${VPC_PEERING_CONNECTION_ID}'].Status.Code" \
+        --output text)
+      VPC_PEERING_CONNECTION_STATUS=$(echo $VPC_PEERING_CONNECTION_STATUS | tr '[:lower:]' '[:upper:]')
+      echo "Waiting for VPC peering connection to become active..."
+      LAST_SECONDS_COUNT=$SECONDS_COUNT
+    fi
+    SECONDS_COUNT=$[SECONDS_COUNT+1]
+    sleep 1
+  done
+
+else
+  echo "VPC peering connection verified..."
+fi
+
+# Tag VPC peering connection
+
+VPC_PEERING_CONNECTION_ID=$(aws --region "${REGION_2}" ec2 describe-vpc-peering-connections \
+  --filters "Name=status-code,Values=active" \
+  --query "VpcPeeringConnections[*].VpcPeeringConnectionId" \
+  --output text)
+
+VPC_PEERING_CONNECTION_TAG_EXISTS=$(aws --region "${REGION_2}" ec2 describe-vpc-peering-connections \
+  --filters "Name=vpc-peering-connection-id,Values=${VPC_PEERING_CONNECTION_ID}" \
+	    "Name=tag:Name,Values=ab2d-${CMS_ENV_1}-${CMS_ENV_2}-pcx" \
+  --query "VpcPeeringConnections[*].VpcPeeringConnectionId" \
+  --output text)
+
+if [ -z "${VPC_PEERING_CONNECTION_TAG_EXISTS}" ]; then
+  echo "Setting tag for vpc peering connection..."
+  aws --region "${REGION_2}" ec2 create-tags \
+    --resources "${VPC_PEERING_CONNECTION_ID}" \
+    --tags "Key=Name,Value=ab2d-${CMS_ENV_1}-${CMS_ENV_2}-pcx"
+else
+  echo "VPC peering connection tag verified..."
+fi
+
+#
 # AMI Generation for EC2 instances
 #
 
@@ -346,14 +455,19 @@ echo 'vpc_id_1 = "'$VPC_ID_1'"' \
   > vpc-peering-test.auto.tfvars
 echo 'vpc_id_2 = "'$VPC_ID_2'"' \
   >> vpc-peering-test.auto.tfvars
-echo 'private_subnet_ids_env_1 = ["'$SUBNET_PRIVATE_1_ID_ENV_1'","'$SUBNET_PRIVATE_2_ID_ENV_1'"]' \
-  >> vpc-peering-test.auto.tfvars
+
+# echo 'private_subnet_ids_env_1 = ["'$SUBNET_PRIVATE_1_ID_ENV_1'","'$SUBNET_PRIVATE_2_ID_ENV_1'"]' \
+#   >> vpc-peering-test.auto.tfvars
+
 echo 'public_subnet_ids_env_1 = ["'$SUBNET_PUBLIC_1_ID_ENV_1'","'$SUBNET_PUBLIC_2_ID_ENV_1'"]' \
   >> vpc-peering-test.auto.tfvars
+
 echo 'private_subnet_ids_env_2 = ["'$SUBNET_PRIVATE_1_ID_ENV_2'","'$SUBNET_PRIVATE_2_ID_ENV_2'"]' \
   >> vpc-peering-test.auto.tfvars
-echo 'public_subnet_ids_env_2 = ["'$SUBNET_PUBLIC_1_ID_ENV_2'","'$SUBNET_PUBLIC_2_ID_ENV_2'"]' \
-  >> vpc-peering-test.auto.tfvars
+
+# echo 'public_subnet_ids_env_2 = ["'$SUBNET_PUBLIC_1_ID_ENV_2'","'$SUBNET_PUBLIC_2_ID_ENV_2'"]' \
+#   >> vpc-peering-test.auto.tfvars
+
 echo 'ec2_instance_type = "'$EC2_INSTANCE_TYPE'"' \
   >> vpc-peering-test.auto.tfvars
 echo 'linux_user = "'$SSH_USERNAME'"' \
@@ -378,4 +492,11 @@ echo "Creating or updating test controller..."
 terraform apply \
   --var "deployer_ip_address=${DEPLOYER_IP_ADDRESS}" \
   --target module.test_controller \
+  --auto-approve
+
+# Create or update test node
+
+echo "Creating or updating test node..."
+terraform apply \
+  --target module.test_node \
   --auto-approve

@@ -1,6 +1,6 @@
 resource "aws_security_group" "test_controller" {
   name        = "ab2d-test-controller-sg"
-  description = "Deployment Controller"
+  description = "Test Controller"
   vpc_id      = var.vpc_id
   tags = {
     Name = "ab2d-test-controller-sg"
@@ -109,7 +109,7 @@ resource "null_resource" "set-hostname" {
   
 }
 
-resource "null_resource" "deployment_contoller_private_key" {
+resource "null_resource" "test_contoller_private_key" {
 
   depends_on = ["null_resource.wait"]
   triggers = {controller_id = aws_instance.test_controller.id}
@@ -148,19 +148,4 @@ resource "null_resource" "remove_docker_from_controller" {
     command = "ssh -tt -i ~/.ssh/${var.ssh_key_name}.pem ${var.linux_user}@${aws_eip.test_controller.public_ip} 'sudo yum -y remove docker-ce-*'"
   }
   
-}
-
-resource "null_resource" "pgpass" {
-
-  depends_on = ["null_resource.wait"]
-  triggers = {controller_id = aws_instance.test_controller.id}
-  
-  provisioner "local-exec" {
-    command = "scp -i ~/.ssh/${var.ssh_key_name}.pem ../../environments/ab2d-${var.env}/generated/.pgpass ${var.linux_user}@${aws_eip.test_controller.public_ip}:/home/${var.linux_user}/.pgpass"
-  }
-
-  provisioner "local-exec" {
-    command = "ssh -i ~/.ssh/${var.ssh_key_name}.pem ${var.linux_user}@${aws_eip.test_controller.public_ip} 'chmod 600 /home/${var.linux_user}/.pgpass'"
-  }
-
 }

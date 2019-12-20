@@ -1,14 +1,14 @@
 provider "aws" {
-  region  = "us-east-2"
+  region  = "ca-central-1"
   version = "~> 2.21"
   profile = var.aws_profile
 }
 
 terraform {
   backend "s3" {
-    bucket         = "ab2d-automation-us-east-2"
+    bucket         = "ab2d-automation-ca-central-1"
     key            = "vpc-peering-test/terraform/terraform.tfstate"
-    region         = "us-east-2"
+    region         = "ca-central-1"
     encrypt = true
   }
 }
@@ -44,4 +44,18 @@ resource "null_resource" "authorized_keys_file" {
   provisioner "local-exec" {
     command = "ssh -i ~/.ssh/${var.ssh_key_name}.pem ${var.linux_user}@${module.test_controller.test_controller_public_ip} 'chmod 600 ~/.ssh/authorized_keys'"
   }
+}
+
+module "test_node" {
+  source                       = "../../modules/ec2_private_instance"
+  env                          = var.env
+  vpc_id                       = var.vpc_id_2
+  private_subnet_ids           = var.private_subnet_ids_env_2
+  test_controller_sec_group_id = module.test_controller.test_controller_sec_group_id
+  ami_id                       = var.ami_id
+  instance_type                = var.ec2_instance_type
+  linux_user                   = var.linux_user
+  ssh_key_name                 = var.ssh_key_name
+  iam_instance_profile         = var.ec2_iam_profile
+  gold_disk_name               = var.gold_image_name
 }

@@ -14,18 +14,22 @@ variable "vpc_id_1" {
   default = ""
 }
 
-## EC2 specific variables ########################################################################
-
-variable "private_subnet_ids" {
-  type        = list(string)
-  default     = []
-  description = "App instances and DB go here"
+variable "vpc_id_2" {
+  default = ""
 }
+
+## EC2 specific variables ########################################################################
 
 variable "public_subnet_ids_env_1" {
   type        = list(string)
   default     = []
-  description = "Deployment controllers go here"
+  description = "Public instances go here"
+}
+
+variable "private_subnet_ids_env_2" {
+  type        = list(string)
+  default     = []
+  description = "Private instances go here"
 }
 
 variable "ami_id" {

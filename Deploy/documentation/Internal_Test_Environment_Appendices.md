@@ -2731,7 +2731,7 @@
    *Example for controllers within SemanticBits demo environment:*
 
    ```ShellSession
-   $ aws --region us-east-2 ec2 create-key-pair \
+   $ aws --region ca-central-1 ec2 create-key-pair \
      --key-name vpc-peering-test \
      --query 'KeyMaterial' \
      --output text \
@@ -2785,7 +2785,7 @@
    ```ShellSession
    $ ./create-vpc-for-sbdemo.sh \
      --environment=dev \
-     --region=us-east-2 \
+     --region=ca-central-1 \
      --vpc-cidr-block-1=10.242.26.0/24 \
      --vpc-cidr-block-2=10.242.5.128/26 \
      --subnet-public-1-cidr-block=10.242.5.128/27 \
@@ -2801,7 +2801,7 @@
    ```ShellSession
    $ ./create-vpc-for-sbdemo.sh \
      --environment=sbx \
-     --region=us-east-2 \
+     --region=ca-central-1 \
      --vpc-cidr-block-1=10.242.27.0/24 \
      --vpc-cidr-block-2=10.242.6.128/26 \
      --subnet-public-1-cidr-block=10.242.6.128/27 \
@@ -2815,9 +2815,9 @@
    ```ShellSession
    $ ./bash/vpc-peering-test.sh \
      --environment-1=dev \
-     --region-1=us-east-2 \
+     --region-1=ca-central-1 \
      --environment-2=sbx \
-     --region-2=us-east-2 \
+     --region-2=ca-central-1 \
      --seed-ami-product-code=aw0evgkw8e5c1q413zgy5pjce \
      --ssh-username=centos \
      --ec2-instance-type=m5.xlarge
