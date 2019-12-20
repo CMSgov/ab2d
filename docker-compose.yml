@@ -25,6 +25,7 @@ services:
       - AB2D_DB_DATABASE=ab2d
       - AB2D_DB_USER=ab2d
       - AB2D_DB_PASSWORD=ab2d
+      - AB2D_EFS_MOUNT=/tmp/ab2d_efs_mount
     ports:
       - "8080:8080"
     depends_on:
@@ -38,5 +39,6 @@ services:
       - AB2D_DB_DATABASE=ab2d
       - AB2D_DB_USER=ab2d
       - AB2D_DB_PASSWORD=ab2d
+      - AB2D_EFS_MOUNT=/tmp/ab2d_efs_mount
     depends_on:
       - db
