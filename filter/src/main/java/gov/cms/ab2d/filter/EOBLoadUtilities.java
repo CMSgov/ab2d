@@ -60,7 +60,13 @@ public class EOBLoadUtilities {
         return respType.newParser(context);
     }
 
-    public static boolean isPlanD(Resource resource) {
+    /**
+     * Returns if a resource is a part D explanation of benefit
+     *
+     * @param resource - resource to test
+     * @return true if it's a part D explanation of benefit
+     */
+    public static boolean isPartD(Resource resource) {
         if (resource == null || resource.getResourceType() == null || resource.getResourceType() != ResourceType.ExplanationOfBenefit) {
             return false;
         }
