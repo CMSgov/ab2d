@@ -6,6 +6,7 @@ import gov.cms.ab2d.common.dto.UserDTO;
 import gov.cms.ab2d.common.model.Role;
 import gov.cms.ab2d.common.model.Sponsor;
 import gov.cms.ab2d.common.model.User;
+import gov.cms.ab2d.common.repository.SponsorRepository;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.DataSetup;
 import org.junit.Assert;
@@ -21,8 +22,6 @@ import org.springframework.test.context.TestPropertySource;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
-
-import javax.validation.ConstraintViolationException;
 
 import static gov.cms.ab2d.common.util.Constants.SPONSOR_ROLE;
 import static org.hamcrest.CoreMatchers.is;
@@ -41,6 +40,9 @@ public class UserServiceTest {
     private UserRepository userRepository;
 
     @Autowired
+    private SponsorRepository sponsorRepository;
+
+    @Autowired
     private RoleService roleService;
 
     @Container
@@ -52,6 +54,7 @@ public class UserServiceTest {
     @BeforeEach
     public void init() {
         userRepository.deleteAll();
+        sponsorRepository.deleteAll();
     }
 
     @Test
