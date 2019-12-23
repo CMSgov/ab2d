@@ -126,10 +126,10 @@ class ExplanationOfBenefitsTrimmerTest {
     }
 
     @Test
-    void isPlanD() {
-        ExplanationOfBenefit ePlanD = ExplanationOfBenefitsTrimmer.getBenefit(
+    void isPartD() {
+        ExplanationOfBenefit ePartD = ExplanationOfBenefitsTrimmer.getBenefit(
                 EOBLoadUtilities.getEOBFromFileInClassPath("eobdata/EOB-for-Part-D-Claims.json", context));
-        assertTrue(EOBLoadUtilities.isPartD(ePlanD));
+        assertTrue(EOBLoadUtilities.isPartD(ePartD));
         assertFalse(EOBLoadUtilities.isPartD(eobCarrier));
         assertFalse(EOBLoadUtilities.isPartD(null));
     }
