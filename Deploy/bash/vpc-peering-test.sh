@@ -351,7 +351,7 @@ if [ "${VPC_PEERING_CONNECTION_STATUS}" != "ACTIVE" ]; then
     INTERVAL=$[SECONDS_COUNT-LAST_SECONDS_COUNT]
     echo $INTERVAL
     if [[ $INTERVAL -ge $WAIT_SECONDS ]]; then
-      VPC_PEERING_CONNECTION_STATUS=$(aws --region "ca-central-1" ec2 describe-vpc-peering-connections \
+      VPC_PEERING_CONNECTION_STATUS=$(aws --region "${REGION_2}" ec2 describe-vpc-peering-connections \
         --query "VpcPeeringConnections[?VpcPeeringConnectionId=='${VPC_PEERING_CONNECTION_ID}'].Status.Code" \
         --output text)
       VPC_PEERING_CONNECTION_STATUS=$(echo $VPC_PEERING_CONNECTION_STATUS | tr '[:lower:]' '[:upper:]')
@@ -370,6 +370,8 @@ fi
 
 VPC_PEERING_CONNECTION_ID=$(aws --region "${REGION_2}" ec2 describe-vpc-peering-connections \
   --filters "Name=status-code,Values=active" \
+            "Name=requester-vpc-info.vpc-id,Values=${VPC_ID_1}" \
+            "Name=accepter-vpc-info.vpc-id,Values=${VPC_ID_2}" \
   --query "VpcPeeringConnections[*].VpcPeeringConnectionId" \
   --output text)
 
@@ -386,6 +388,134 @@ if [ -z "${VPC_PEERING_CONNECTION_TAG_EXISTS}" ]; then
     --tags "Key=Name,Value=ab2d-${CMS_ENV_1}-${CMS_ENV_2}-pcx"
 else
   echo "VPC peering connection tag verified..."
+fi
+
+# Add VPC peering routes between VPC #1 and VPC #2
+
+IGW_ROUTE_TABLE_ENV_1_ROUTE_COUNT=$(aws --region "${REGION_1}" ec2 describe-route-tables \
+  --filters "Name=vpc-id,Values=${VPC_ID_1}" \
+            "Name=tag:Name,Values=ab2d-${CMS_ENV_1}-public" \
+  --query "RouteTables[*].Routes[*]" \
+  --output text \
+  | wc -l)
+
+COUNTER=0
+until [ $COUNTER -lt $IGW_ROUTE_TABLE_ENV_1_ROUTE_COUNT ]; do
+  IGW_ROUTE_TABLE_ENV_1_IGW_ROUTE_TARGET=$(aws --region "${REGION_1}" ec2 describe-route-tables \
+    --filters "Name=vpc-id,Values=${VPC_ID}" \
+              "Name=tag:Name,Values=ab2d-${CMS_ENV_1}-public" \
+    --query "RouteTables[*].Routes[${COUNTER}].DestinationCidrBlock" \
+    --output text)
+  echo "${IGW_ROUTE_TABLE_ENV_1_IGW_ROUTE_TARGET}"
+  let COUNTER+=1
+done
+
+#
+# Create VPC peering routes
+#
+
+# Get public route table for environment #1
+
+PUBLIC_ROUTE_TABLE_ID_ENV_1=$(aws --region "${REGION_1}" ec2 describe-route-tables \
+  --filters "Name=vpc-id,Values=${VPC_ID_1}" \
+            "Name=tag:Name,Values=ab2d-${CMS_ENV_1}-public" \
+  --query "RouteTables[*].RouteTableId" \
+  --output text)
+
+# Get public route table for environment #2
+
+PUBLIC_ROUTE_TABLE_ID_ENV_2=$(aws --region "${REGION_2}" ec2 describe-route-tables \
+  --filters "Name=vpc-id,Values=${VPC_ID_2}" \
+            "Name=tag:Name,Values=ab2d-${CMS_ENV_2}-public" \
+  --query "RouteTables[*].RouteTableId" \
+  --output text)
+
+# Get local route count for environment #2
+
+IGW_ROUTE_TABLE_ENV_2_ROUTE_COUNT=$(aws --region "${REGION_2}" ec2 describe-route-tables \
+  --filters "Name=vpc-id,Values=${VPC_ID_2}" \
+            "Name=tag:Name,Values=ab2d-${CMS_ENV_2}-public" \
+  --query "RouteTables[*].Routes[*].[Origin,DestinationCidrBlock]" \
+  --output text \
+  | grep 'CreateRouteTable' \
+  | wc -l)
+
+# Get peering connection route count for environment #1
+
+IGW_ROUTE_TABLE_ENV_1_PCX_ROUTE_COUNT=$(aws --region "${REGION_1}" ec2 describe-route-tables \
+  --filters "Name=vpc-id,Values=${VPC_ID_1}" \
+            "Name=tag:Name,Values=ab2d-${CMS_ENV_1}-public" \
+  --query "RouteTables[*].Routes[*].[Origin,DestinationCidrBlock, VpcPeeringConnectionId]" \
+  --output text \
+  | grep "pcx-" \
+  | wc -l)
+
+# If the peering connection route count for environment #1 is not equal to the local route count for environment #2, add peering connection routes to environment #1 that allows communication with instances in environment #2
+
+if [ "${IGW_ROUTE_TABLE_ENV_2_ROUTE_COUNT}" == "${IGW_ROUTE_TABLE_ENV_1_PCX_ROUTE_COUNT}" ]; then
+  echo "VPC peering routes already exist for ${CMS_ENV_1} environment..."
+else
+  let COUNTER=1
+  until [ $COUNTER -gt $IGW_ROUTE_TABLE_ENV_2_ROUTE_COUNT ]; do
+    IGW_ROUTE_TABLE_ENV_2_IGW_ROUTE_TARGET=$(aws --region "${REGION_2}" ec2 describe-route-tables \
+      --filters "Name=vpc-id,Values=${VPC_ID_2}" \
+                "Name=tag:Name,Values=ab2d-${CMS_ENV_2}-public" \
+      --query "RouteTables[*].Routes[*].[Origin,DestinationCidrBlock]" \
+      --output text \
+      | grep 'CreateRouteTable' \
+      | awk '{print $2}' \
+      | head -n $COUNTER \
+      | tail -n 1)
+    aws --region "${REGION_1}" ec2 create-route \
+      --destination-cidr-block $IGW_ROUTE_TABLE_ENV_2_IGW_ROUTE_TARGET \
+      --gateway-id $VPC_PEERING_CONNECTION_ID \
+      --route-table-id $PUBLIC_ROUTE_TABLE_ID_ENV_1
+    let COUNTER+=1
+  done
+fi
+
+# Get local route count for environment #1
+
+IGW_ROUTE_TABLE_ENV_1_ROUTE_COUNT=$(aws --region "${REGION_1}" ec2 describe-route-tables \
+  --filters "Name=vpc-id,Values=${VPC_ID_1}" \
+            "Name=tag:Name,Values=ab2d-${CMS_ENV_1}-public" \
+  --query "RouteTables[*].Routes[*].[Origin,DestinationCidrBlock]" \
+  --output text \
+  | grep 'CreateRouteTable' \
+  | wc -l)
+
+# Get peering connection route count for environment #2
+
+IGW_ROUTE_TABLE_ENV_2_PCX_ROUTE_COUNT=$(aws --region "${REGION_2}" ec2 describe-route-tables \
+  --filters "Name=vpc-id,Values=${VPC_ID_2}" \
+            "Name=tag:Name,Values=ab2d-${CMS_ENV_2}-public" \
+  --query "RouteTables[*].Routes[*].[Origin,DestinationCidrBlock, VpcPeeringConnectionId]" \
+  --output text \
+  | grep "pcx-" \
+  | wc -l)
+
+# If the peering connection route count for environment #2 is not equal to the local route count for environment #1, add peering connection routes to environment #2 that allows communication with instances in environment #1
+
+if [ "${IGW_ROUTE_TABLE_ENV_1_ROUTE_COUNT}" == "${IGW_ROUTE_TABLE_ENV_2_PCX_ROUTE_COUNT}" ]; then
+  echo "VPC peering routes already exist for ${CMS_ENV_2} environment..."
+else
+  let COUNTER=1
+  until [ $COUNTER -gt $IGW_ROUTE_TABLE_ENV_1_ROUTE_COUNT ]; do
+    IGW_ROUTE_TABLE_ENV_1_IGW_ROUTE_TARGET=$(aws --region "${REGION_1}" ec2 describe-route-tables \
+      --filters "Name=vpc-id,Values=${VPC_ID_1}" \
+                "Name=tag:Name,Values=ab2d-${CMS_ENV_1}-public" \
+      --query "RouteTables[*].Routes[*].[Origin,DestinationCidrBlock]" \
+      --output text \
+      | grep 'CreateRouteTable' \
+      | awk '{print $2}' \
+      | head -n $COUNTER \
+      | tail -n 1)
+    aws --region "${REGION_2}" ec2 create-route \
+      --destination-cidr-block $IGW_ROUTE_TABLE_ENV_1_IGW_ROUTE_TARGET \
+      --gateway-id $VPC_PEERING_CONNECTION_ID \
+      --route-table-id $PUBLIC_ROUTE_TABLE_ID_ENV_2
+    let COUNTER+=1
+  done  
 fi
 
 #

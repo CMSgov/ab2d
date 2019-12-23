@@ -582,11 +582,10 @@ if [ -z "${NAT_GW_1_ID}" ]; then
     INTERVAL=$[SECONDS_COUNT-LAST_SECONDS_COUNT]
     echo $INTERVAL
     if [[ $INTERVAL -ge $WAIT_SECONDS ]]; then
-      STATE=$(aws ec2 describe-nat-gateways \
+      STATE=$(aws --region "${REGION}" ec2 describe-nat-gateways \
         --nat-gateway-ids $NAT_GW_1_ID \
         --query 'NatGateways[*].{State:State}' \
-        --output text \
-        --region "${REGION}")
+        --output text)
       STATE=$(echo $STATE | tr '[:lower:]' '[:upper:]')
       echo "Waiting for first NAT gateway to become available"
       LAST_SECONDS_COUNT=$SECONDS_COUNT
@@ -637,7 +636,7 @@ fi
 
 # Associate the first private subnet with the custom route table for the first NAT Gateway
 
-NGW_1_ROUTE_TABLE_ASSOCIATION_SUBNET_PRIVATE_1_ID=$(aws ec2 describe-route-tables \
+NGW_1_ROUTE_TABLE_ASSOCIATION_SUBNET_PRIVATE_1_ID=$(aws --region "${REGION}" ec2 describe-route-tables \
   --filters "Name=tag:Name,Values=ab2d-${CMS_ENV}-private-a" \
   --query "RouteTables[*].Associations[?SubnetId=='${SUBNET_PRIVATE_1_ID}'].SubnetId" \
   --output text)
@@ -760,7 +759,7 @@ fi
 
 # Associate the second private subnet with the custom route table for the second NAT Gateway
 
-NGW_2_ROUTE_TABLE_ASSOCIATION_SUBNET_PRIVATE_2_ID=$(aws ec2 describe-route-tables \
+NGW_2_ROUTE_TABLE_ASSOCIATION_SUBNET_PRIVATE_2_ID=$(aws --region "${REGION}" ec2 describe-route-tables \
   --filters "Name=tag:Name,Values=ab2d-${CMS_ENV}-private-b" \
   --query "RouteTables[*].Associations[?SubnetId=='${SUBNET_PRIVATE_2_ID}'].SubnetId" \
   --output text)
