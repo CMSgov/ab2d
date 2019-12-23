@@ -15,7 +15,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -28,15 +27,14 @@ import static java.lang.Boolean.TRUE;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @SpringBootTest
 @Testcontainers
-class JobProcessingServiceIntegrationTest {
+class JobProcessorIntegrationTest {
     private Random random = new Random();
 
     @Autowired
-    private JobProcessingService jobProcessingService;
+    private JobProcessor cut;       // class under test
 
     @Autowired
     private JobRepository jobRepository;
@@ -67,34 +65,6 @@ class JobProcessingServiceIntegrationTest {
 
 
     @Test
-    @DisplayName("When a job is in submitted status, it can be put into progress upon starting processing")
-    void whenJobIsInSubmittedStatus_ThenJobShouldBePutInProgress() {
-        var processedJob = jobProcessingService.putJobInProgress("S001");
-        assertThat(processedJob.getStatus(), is(JobStatus.IN_PROGRESS));
-    }
-
-    @Test
-    @DisplayName("When a job is in submitted status, it can be put into progress upon starting processing")
-    void putNonExistentJobInProgress() {
-        var exceptionThrown = assertThrows(IllegalArgumentException.class,() ->
-                jobProcessingService.putJobInProgress("NonExistent"));
-        assertThat(exceptionThrown.getMessage(), is("Job NonExistent was not found"));
-    }
-
-    @Test
-    @DisplayName("When a job is not already in a submitted status, it cannot be put into progress")
-    void whenJobIsNotInSubmittedStatus_ThenJobShouldNotBePutInProgress() {
-        job.setStatus(JobStatus.IN_PROGRESS);
-        jobRepository.save(job);
-
-        var exceptionThrown = assertThrows(IllegalArgumentException.class,
-                () -> jobProcessingService.putJobInProgress("S001"));
-
-        assertThat(exceptionThrown.getMessage(), is("Job S001 is not in SUBMITTED status."));
-    }
-
-
-    @Test
     @DisplayName("When a job is in submitted status, it can be processed")
     void processJob() {
 
@@ -102,7 +72,7 @@ class JobProcessingServiceIntegrationTest {
         jobRepository.save(job);
         createContract(sponsor);
 
-        var processedJob = jobProcessingService.processJob("S001");
+        var processedJob = cut.process("S001");
 
         assertThat(processedJob.getStatus(), is(JobStatus.SUCCESSFUL));
         assertThat(processedJob.getStatusMessage(), is("100%"));
@@ -133,7 +103,7 @@ class JobProcessingServiceIntegrationTest {
         job.setStatus(JobStatus.IN_PROGRESS);
         jobRepository.save(job);
 
-        var processedJob = jobProcessingService.processJob("S001");
+        var processedJob = cut.process("S001");
 
         assertThat(processedJob.getStatus(), is(JobStatus.SUCCESSFUL));
         assertThat(processedJob.getStatusMessage(), is("100%"));
