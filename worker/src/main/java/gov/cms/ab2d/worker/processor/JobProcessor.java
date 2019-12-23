@@ -1,4 +1,4 @@
-package gov.cms.ab2d.worker.service;
+package gov.cms.ab2d.worker.processor;
 
 import gov.cms.ab2d.common.model.Job;
 
