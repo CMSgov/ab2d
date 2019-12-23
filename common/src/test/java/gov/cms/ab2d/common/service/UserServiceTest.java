@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Assertions;
 import gov.cms.ab2d.common.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.modelmapper.MappingException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -142,9 +143,9 @@ public class UserServiceTest {
         Role role = roleService.findRoleByName(SPONSOR_ROLE);
         user.setRole(role.getName());
 
-        var exceptionThrown = Assertions.assertThrows(ConstraintViolationException.class, () -> {
+        var exceptionThrown = Assertions.assertThrows(MappingException.class, () -> {
             userService.createUser(user);
         });
-        assertThat(exceptionThrown.getMessage(), is("Validation failed for classes [gov.cms.ab2d.common.model.User] during persist time for groups [javax.validation.groups.Default, ]\nList of constraint violations:[\n\tConstraintViolationImpl{interpolatedMessage='must not be null', propertyPath=sponsor, rootBeanClass=class gov.cms.ab2d.common.model.User, messageTemplate='{javax.validation.constraints.NotNull.message}'}\n]"));
+        assertThat(exceptionThrown.getMessage(), is("ModelMapper mapping errors:\n\n1) Converter Converter<class gov.cms.ab2d.common.dto.SponsorDTO, class gov.cms.ab2d.common.model.Sponsor> failed to convert gov.cms.ab2d.common.dto.SponsorDTO to gov.cms.ab2d.common.model.Sponsor.\n\n1 error"));
     }
 }
