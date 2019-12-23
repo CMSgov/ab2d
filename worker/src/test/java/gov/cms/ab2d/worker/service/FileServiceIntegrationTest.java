@@ -32,7 +32,7 @@ public class FileServiceIntegrationTest {
 
     @BeforeEach
     void setup() {
-        cut = new FileService();
+        cut = new FileServiceImpl();
     }
 
 
