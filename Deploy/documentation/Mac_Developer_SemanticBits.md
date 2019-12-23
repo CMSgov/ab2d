@@ -14,8 +14,8 @@
    * [Configure pip3](#configure-pip3)
 1. [Install and configure Java](#install-and-configure-java)
    * [Uninstall any existing versions of Java](#uninstall-any-existing-versions-of-java)
-   * [Install or verify Java SE Development Kit 12 (JDK12)](#install-or-verify-java-se-development-kit-12-jdk12)
-   * [Configure JDK12](#configure-jdk12)
+   * [Install or verify Java SE Development Kit 13 (JDK13)](#install-or-verify-java-se-development-kit-13-jdk13)
+   * [Configure JDK13](#configure-jdk13)
 1. [Install and configure terminal tools](#install-and-configure-terminal-tools)
    * [Install or update p7zip](#install-or-update-p7zip)
    * [Install or update pwgen](#install-or-update-pwgen)
@@ -367,13 +367,13 @@
    No Java runtime present, try --request to install.
    ```
 
-### Install or verify Java SE Development Kit 12 (JDK12)
+### Install or verify Java SE Development Kit 13 (JDK13)
 
-1. Install Java SE Development Kit 12 (JDK12) using HomeBrew
+1. Install Java SE Development Kit 13 (JDK13) using HomeBrew
 
    ```ShellSession
    $ brew tap AdoptOpenJDK/openjdk
-   $ brew cask install adoptopenjdk12
+   $ brew cask install adoptopenjdk13
    ```
 
 1. Close all open terminals
@@ -388,7 +388,7 @@
    $ java -version
    ```
   
-### Configure JDK12
+### Configure JDK13
 
 1. Set java environment variable
   
@@ -454,9 +454,9 @@
       *Example:*
       
       ```
-      openjdk version "12.0.2" 2019-07-16
-      OpenJDK Runtime Environment AdoptOpenJDK (build 12.0.2+10)
-      OpenJDK 64-Bit Server VM AdoptOpenJDK (build 12.0.2+10, mixed mode, sharing)
+      openjdk version "13.0.1" 2019-07-16
+      OpenJDK Runtime Environment AdoptOpenJDK (build 13.0.1+10)
+      OpenJDK 64-Bit Server VM AdoptOpenJDK (build 13.0.1+10, mixed mode, sharing)
       ```
 
 ## Install and configure terminal tools
