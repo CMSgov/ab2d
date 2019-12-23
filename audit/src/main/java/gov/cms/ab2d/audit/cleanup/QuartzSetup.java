@@ -22,9 +22,9 @@ public class QuartzSetup {
     }
 
     @Bean
-    Trigger fileDeletionJobTrigger(JobDetail optoutJobDetail) {
+    Trigger fileDeletionJobTrigger(JobDetail fileDeletionJobDetail) {
         return TriggerBuilder.newTrigger()
-                .forJob(optoutJobDetail)
+                .forJob(fileDeletionJobDetail)
                 .withIdentity("fileDeletionTrigger")
                 .withSchedule(CronScheduleBuilder.cronSchedule(schedule))
                 .build();
