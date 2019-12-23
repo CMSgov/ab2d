@@ -1,6 +1,7 @@
 package gov.cms.ab2d.common.service;
 
 import gov.cms.ab2d.common.SpringBootApp;
+import gov.cms.ab2d.common.config.Mapping;
 import gov.cms.ab2d.common.dto.SponsorDTO;
 import gov.cms.ab2d.common.dto.UserDTO;
 import gov.cms.ab2d.common.model.Role;
@@ -21,8 +22,10 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import javax.annotation.Nullable;
 import javax.validation.ConstraintViolationException;
 
+import static gov.cms.ab2d.common.util.Constants.ADMIN_ROLE;
 import static gov.cms.ab2d.common.util.Constants.SPONSOR_ROLE;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertEquals;
@@ -48,6 +51,9 @@ public class UserServiceTest {
     @Autowired
     private DataSetup dataSetup;
 
+    @Autowired
+    private Mapping mapping;
+
     @BeforeEach
     public void init() {
         userRepository.deleteAll();
@@ -64,16 +70,7 @@ public class UserServiceTest {
     public void testCreateUser() {
         Sponsor sponsor = dataSetup.createSponsor("Parent Corp.", 456, "Test", 123);
 
-        UserDTO user = new UserDTO();
-        user.setEmail("test@test.com");
-        user.setUsername("test@test.com");
-        user.setFirstName("Test");
-        user.setLastName("User");
-        user.setEnabled(true);
-        SponsorDTO sponsorDTO = new SponsorDTO(sponsor.getHpmsId(), sponsor.getOrgName());
-        user.setSponsor(sponsorDTO);
-        Role role = roleService.findRoleByName(SPONSOR_ROLE);
-        user.setRole(role.getName());
+        UserDTO user = createUser(sponsor, SPONSOR_ROLE);
 
         User createdUser = userService.createUser(user);
         Assert.assertEquals(createdUser.getUsername(), user.getUsername());
@@ -89,16 +86,7 @@ public class UserServiceTest {
     public void testCreateDuplicateUser() {
         Sponsor sponsor = dataSetup.createSponsor("Parent Corp.", 456, "Test", 123);
 
-        UserDTO user = new UserDTO();
-        user.setEmail("test@test.com");
-        user.setUsername("test@test.com");
-        user.setFirstName("Test");
-        user.setLastName("User");
-        user.setEnabled(true);
-        SponsorDTO sponsorDTO = new SponsorDTO(sponsor.getHpmsId(), sponsor.getOrgName());
-        user.setSponsor(sponsorDTO);
-        Role role = roleService.findRoleByName(SPONSOR_ROLE);
-        user.setRole(role.getName());
+        UserDTO user = createUser(sponsor, SPONSOR_ROLE);
 
         userService.createUser(user);
         var exceptionThrown = Assertions.assertThrows(DataIntegrityViolationException.class, () -> {
@@ -111,16 +99,7 @@ public class UserServiceTest {
     public void testCreateDuplicateUserByEmail() {
         Sponsor sponsor = dataSetup.createSponsor("Parent Corp.", 456, "Test", 123);
 
-        UserDTO user = new UserDTO();
-        user.setEmail("test@test.com");
-        user.setUsername("test@test.com");
-        user.setFirstName("Test");
-        user.setLastName("User");
-        user.setEnabled(true);
-        SponsorDTO sponsorDTO = new SponsorDTO(sponsor.getHpmsId(), sponsor.getOrgName());
-        user.setSponsor(sponsorDTO);
-        Role role = roleService.findRoleByName(SPONSOR_ROLE);
-        user.setRole(role.getName());
+        UserDTO user = createUser(sponsor, SPONSOR_ROLE);
 
         userService.createUser(user);
 
@@ -146,5 +125,83 @@ public class UserServiceTest {
             userService.createUser(user);
         });
         assertThat(exceptionThrown.getMessage(), is("Validation failed for classes [gov.cms.ab2d.common.model.User] during persist time for groups [javax.validation.groups.Default, ]\nList of constraint violations:[\n\tConstraintViolationImpl{interpolatedMessage='must not be null', propertyPath=sponsor, rootBeanClass=class gov.cms.ab2d.common.model.User, messageTemplate='{javax.validation.constraints.NotNull.message}'}\n]"));
+    }
+
+    private UserDTO createUser(Sponsor sponsor, @Nullable String roleName) {
+        UserDTO user = new UserDTO();
+        user.setEmail("test@test.com");
+        user.setUsername("test@test.com");
+        user.setFirstName("Test");
+        user.setLastName("User");
+        user.setEnabled(true);
+        SponsorDTO sponsorDTO = new SponsorDTO(sponsor.getHpmsId(), sponsor.getOrgName());
+        user.setSponsor(sponsorDTO);
+        if(roleName != null) {
+            Role role = roleService.findRoleByName(roleName);
+            user.setRole(role.getName());
+        }
+
+        return user;
+    }
+
+    @Test
+    public void testUpdateUser() {
+        Sponsor sponsor = dataSetup.createSponsor("Parent Corp.", 456, "Test", 123);
+
+        UserDTO user = createUser(sponsor, SPONSOR_ROLE);
+
+        User createdUser = userService.createUser(user);
+
+        UserDTO createdUserDTO = mapping.getModelMapper().map(createdUser, UserDTO.class);
+
+        createdUserDTO.setEmail("newTest@test.com");
+        createdUserDTO.setFirstName("New");
+        createdUserDTO.setLastName("User");
+        createdUserDTO.setEnabled(false);
+        SponsorDTO sponsorDTOUpdate = new SponsorDTO(sponsor.getParent().getHpmsId(), sponsor.getParent().getOrgName());
+        createdUserDTO.setSponsor(sponsorDTOUpdate);
+        Role roleUpdate = roleService.findRoleByName(ADMIN_ROLE);
+        createdUserDTO.setRole(roleUpdate.getName());
+
+        User updatedUser = userService.updateUser(createdUserDTO);
+
+        UserDTO updatedUserDTO = mapping.getModelMapper().map(updatedUser, UserDTO.class);
+
+        Assert.assertEquals(updatedUserDTO.getUsername(), createdUserDTO.getUsername());
+        Assert.assertEquals(updatedUserDTO.getEmail(), createdUserDTO.getEmail());
+        Assert.assertEquals(updatedUserDTO.getFirstName(), createdUserDTO.getFirstName());
+        Assert.assertEquals(updatedUserDTO.getLastName(), createdUserDTO.getLastName());
+        Assert.assertEquals(updatedUserDTO.getEnabled(), createdUserDTO.getEnabled());
+        Assert.assertEquals(updatedUserDTO.getSponsor().getOrgName(), createdUserDTO.getSponsor().getOrgName());
+        Assert.assertEquals(updatedUserDTO.getSponsor().getHpmsId(), createdUserDTO.getSponsor().getHpmsId());
+        Assert.assertEquals(updatedUserDTO.getRole(), createdUserDTO.getRole());
+    }
+
+    @Test
+    public void testUpdateUserAddRole() {
+        Sponsor sponsor = dataSetup.createSponsor("Parent Corp.", 456, "Test", 123);
+
+        UserDTO user = createUser(sponsor, null);
+
+        Assert.assertNull(user.getRole());
+
+        User createdUser = userService.createUser(user);
+
+        UserDTO createdUserDTO = mapping.getModelMapper().map(createdUser, UserDTO.class);
+
+        createdUserDTO.setEmail("newTest@test.com");
+        createdUserDTO.setFirstName("New");
+        createdUserDTO.setLastName("User");
+        createdUserDTO.setEnabled(false);
+        SponsorDTO sponsorDTOUpdate = new SponsorDTO(sponsor.getParent().getHpmsId(), sponsor.getParent().getOrgName());
+        createdUserDTO.setSponsor(sponsorDTOUpdate);
+        Role roleUpdate = roleService.findRoleByName(SPONSOR_ROLE);
+        createdUserDTO.setRole(roleUpdate.getName());
+
+        User updatedUser = userService.updateUser(createdUserDTO);
+
+        UserDTO updatedUserDTO = mapping.getModelMapper().map(updatedUser, UserDTO.class);
+
+        Assert.assertEquals(updatedUserDTO.getRole(), createdUserDTO.getRole());
     }
 }
