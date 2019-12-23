@@ -30,7 +30,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
 import static gov.cms.ab2d.common.util.Constants.FILE_LOG;
-import static gov.cms.ab2d.filter.EOBLoadUtilities.isPlanD;
+import static gov.cms.ab2d.filter.EOBLoadUtilities.isPartD;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static net.logstash.logback.argument.StructuredArguments.keyValue;
 
@@ -167,7 +167,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
                 // Remove any empty values
                 .filter(Objects::nonNull)
                 // Remove Plan D
-                .filter(resource -> !isPlanD(resource))
+                .filter(resource -> !isPartD(resource))
                 // compile the list
                 .collect(Collectors.toList());
     }
