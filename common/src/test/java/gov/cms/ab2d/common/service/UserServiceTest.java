@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Assertions;
 import gov.cms.ab2d.common.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.modelmapper.MappingException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -160,8 +161,7 @@ public class UserServiceTest {
         createdUserDTO.setEnabled(false);
         SponsorDTO sponsorDTOUpdate = new SponsorDTO(sponsor.getParent().getHpmsId(), sponsor.getParent().getOrgName());
         createdUserDTO.setSponsor(sponsorDTOUpdate);
-        Role roleUpdate = roleService.findRoleByName(ADMIN_ROLE);
-        createdUserDTO.setRole(roleUpdate.getName());
+        createdUserDTO.setRole(SPONSOR_ROLE);
 
         User updatedUser = userService.updateUser(createdUserDTO);
 
@@ -189,19 +189,52 @@ public class UserServiceTest {
 
         UserDTO createdUserDTO = mapping.getModelMapper().map(createdUser, UserDTO.class);
 
-        createdUserDTO.setEmail("newTest@test.com");
-        createdUserDTO.setFirstName("New");
-        createdUserDTO.setLastName("User");
-        createdUserDTO.setEnabled(false);
-        SponsorDTO sponsorDTOUpdate = new SponsorDTO(sponsor.getParent().getHpmsId(), sponsor.getParent().getOrgName());
-        createdUserDTO.setSponsor(sponsorDTOUpdate);
-        Role roleUpdate = roleService.findRoleByName(SPONSOR_ROLE);
-        createdUserDTO.setRole(roleUpdate.getName());
+        createdUserDTO.setRole(SPONSOR_ROLE);
 
         User updatedUser = userService.updateUser(createdUserDTO);
 
         UserDTO updatedUserDTO = mapping.getModelMapper().map(updatedUser, UserDTO.class);
 
         Assert.assertEquals(updatedUserDTO.getRole(), createdUserDTO.getRole());
+    }
+
+    @Test
+    public void testUpdateUserRemoveRole() {
+        Sponsor sponsor = dataSetup.createSponsor("Parent Corp.", 456, "Test", 123);
+
+        UserDTO user = createUser(sponsor, SPONSOR_ROLE);
+
+        Assert.assertEquals(user.getRole(), SPONSOR_ROLE);
+
+        User createdUser = userService.createUser(user);
+
+        UserDTO createdUserDTO = mapping.getModelMapper().map(createdUser, UserDTO.class);
+
+        createdUserDTO.setRole(null);
+
+        User updatedUser = userService.updateUser(createdUserDTO);
+
+        UserDTO updatedUserDTO = mapping.getModelMapper().map(updatedUser, UserDTO.class);
+
+        Assert.assertNull(updatedUserDTO.getRole());
+    }
+
+    @Test
+    public void testUpdateUserRemoveSponsor() {
+        Sponsor sponsor = dataSetup.createSponsor("Parent Corp.", 456, "Test", 123);
+
+        UserDTO user = createUser(sponsor, SPONSOR_ROLE);
+
+        User createdUser = userService.createUser(user);
+
+        UserDTO createdUserDTO = mapping.getModelMapper().map(createdUser, UserDTO.class);
+
+        createdUserDTO.setSponsor(null);
+
+        var exceptionThrown = Assertions.assertThrows(MappingException.class, () -> {
+            userService.updateUser(createdUserDTO);
+        });
+        assertThat(exceptionThrown.getMessage(), is("ModelMapper mapping errors:\n\n1) Converter Converter<class gov.cms.ab2d.common.dto.SponsorDTO, class gov.cms.ab2d.common.model.Sponsor> failed to convert gov.cms.ab2d.common.dto.SponsorDTO to gov.cms.ab2d.common.model.Sponsor.\n\n1 error"
+));
     }
 }
