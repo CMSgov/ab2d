@@ -5,10 +5,8 @@ import com.okta.jwt.JwtVerificationException;
 import gov.cms.ab2d.api.SpringBootApp;
 import gov.cms.ab2d.common.dto.SponsorDTO;
 import gov.cms.ab2d.common.dto.UserDTO;
-import gov.cms.ab2d.common.model.Role;
 import gov.cms.ab2d.common.model.Sponsor;
 import gov.cms.ab2d.common.repository.*;
-import gov.cms.ab2d.common.service.RoleService;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import org.hamcrest.core.Is;
 import org.junit.Assert;
@@ -28,8 +26,8 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import java.util.List;
 
 import static gov.cms.ab2d.api.util.Constants.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -62,9 +60,6 @@ public class AdminAPIUserTests {
     @Autowired
     private TestUtil testUtil;
 
-    @Autowired
-    private RoleService roleService;
-
     private String token;
 
     private static final String USER_URL = "/user";
@@ -77,7 +72,7 @@ public class AdminAPIUserTests {
         roleRepository.deleteAll();
         sponsorRepository.deleteAll();
 
-        token = testUtil.setupToken(List.of(ADMIN_ROLE));
+        token = testUtil.setupToken(List.of(ADMIN_ROLE, SPONSOR_ROLE));
     }
 
     @Test
@@ -90,8 +85,7 @@ public class AdminAPIUserTests {
         userDTO.setLastName("User");
         Sponsor sponsor = sponsorRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
         userDTO.setSponsor(new SponsorDTO(sponsor.getHpmsId(), sponsor.getOrgName()));
-        Role role = roleService.findRoleByName(ADMIN_ROLE);
-        userDTO.setRole(role.getName());
+        userDTO.setRole(ADMIN_ROLE);
 
         ObjectMapper mapper = new ObjectMapper();
 
@@ -125,8 +119,7 @@ public class AdminAPIUserTests {
         userDTO.setLastName("User");
         Sponsor sponsor = sponsorRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
         userDTO.setSponsor(new SponsorDTO(sponsor.getHpmsId(), sponsor.getOrgName()));
-        Role role = roleService.findRoleByName(ADMIN_ROLE);
-        userDTO.setRole(role.getName());
+        userDTO.setRole(ADMIN_ROLE);
 
         ObjectMapper mapper = new ObjectMapper();
 
@@ -145,5 +138,77 @@ public class AdminAPIUserTests {
                         .andExpect(jsonPath("$.issue[0].code", Is.is("invalid")))
                         .andExpect(jsonPath("$.issue[0].details.text",
                             Is.is("PSQLException: ERROR: duplicate key value violates unique constraint \"uc_user_account_username\"\n  Detail: Key (username)=(test@test.com) already exists.")));
+    }
+
+    @Test
+    public void testUpdateUser() throws Exception {
+        UserDTO userDTO = new UserDTO();
+        userDTO.setUsername("test@test.com");
+        userDTO.setEmail("test@test.com");
+        userDTO.setEnabled(true);
+        userDTO.setFirstName("Test");
+        userDTO.setLastName("User");
+        Sponsor sponsor = sponsorRepository.findByHpmsIdAndOrgName(123, "Test").get();
+        userDTO.setSponsor(new SponsorDTO(sponsor.getHpmsId(), sponsor.getOrgName()));
+        userDTO.setRole(ADMIN_ROLE);
+
+        ObjectMapper mapper = new ObjectMapper();
+
+        MvcResult mvcResult = this.mockMvc.perform(
+                post(API_PREFIX + ADMIN_PREFIX + USER_URL)
+                        .contentType(MediaType.APPLICATION_JSON).content(mapper.writeValueAsString(userDTO))
+                        .header("Authorization", "Bearer " + token))
+                .andReturn();
+
+        String result = mvcResult.getResponse().getContentAsString();
+        UserDTO createdUserDTO = mapper.readValue(result, UserDTO.class);
+
+        createdUserDTO.setRole("SPONSOR");
+        createdUserDTO.setEmail("updated@test.com");
+        createdUserDTO.setEnabled(false);
+        createdUserDTO.setFirstName("Updated");
+        createdUserDTO.setLastName("Username");
+        createdUserDTO.getSponsor().setHpmsId(sponsor.getParent().getHpmsId());
+        createdUserDTO.getSponsor().setOrgName(sponsor.getParent().getOrgName());
+        createdUserDTO.setRole(SPONSOR_ROLE);
+
+        MvcResult updateMvcResult = this.mockMvc.perform(
+                put(API_PREFIX + ADMIN_PREFIX + USER_URL)
+                        .contentType(MediaType.APPLICATION_JSON).content(mapper.writeValueAsString(createdUserDTO))
+                        .header("Authorization", "Bearer " + token))
+                .andReturn();
+
+        String updateResult = updateMvcResult.getResponse().getContentAsString();
+        UserDTO updatedUserDTO = mapper.readValue(updateResult, UserDTO.class);
+
+        Assert.assertEquals(updatedUserDTO.getEmail(), createdUserDTO.getEmail());
+        Assert.assertEquals(updatedUserDTO.getUsername(), createdUserDTO.getUsername());
+        Assert.assertEquals(updatedUserDTO.getFirstName(), createdUserDTO.getFirstName());
+        Assert.assertEquals(updatedUserDTO.getLastName(), createdUserDTO.getLastName());
+        Assert.assertEquals(updatedUserDTO.getEnabled(), createdUserDTO.getEnabled());
+        Assert.assertEquals(updatedUserDTO.getSponsor().getHpmsId(), createdUserDTO.getSponsor().getHpmsId());
+        Assert.assertEquals(updatedUserDTO.getSponsor().getOrgName(), createdUserDTO.getSponsor().getOrgName());
+        Assert.assertEquals(updatedUserDTO.getRole(), createdUserDTO.getRole());
+    }
+
+    @Test
+    public void testUpdateNonExistentUser() throws Exception {
+        UserDTO userDTO = new UserDTO();
+        userDTO.setUsername("test@test.com");
+        userDTO.setEmail("test@test.com");
+        userDTO.setEnabled(true);
+        userDTO.setFirstName("Test");
+        userDTO.setLastName("User");
+        Sponsor sponsor = sponsorRepository.findByHpmsIdAndOrgName(123, "Test").get();
+        userDTO.setSponsor(new SponsorDTO(sponsor.getHpmsId(), sponsor.getOrgName()));
+        userDTO.setRole(ADMIN_ROLE);
+
+        ObjectMapper mapper = new ObjectMapper();
+
+        this.mockMvc.perform(
+                put(API_PREFIX + ADMIN_PREFIX + USER_URL)
+                        .contentType(MediaType.APPLICATION_JSON).content(mapper.writeValueAsString(userDTO))
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().is(404));
     }
 }

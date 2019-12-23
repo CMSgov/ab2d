@@ -92,11 +92,6 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
         if (username != null) {
             MDC.put("username", username);
             User user = userService.getUserByUsername(username);
-            if (user == null) {
-                String userNotPresentMsg = "User is not present in our database";
-                log.error(userNotPresentMsg);
-                throw new UsernameNotFoundException(userNotPresentMsg);
-            }
 
             if (!user.getEnabled()) {
                 log.error("User is not enabled");
