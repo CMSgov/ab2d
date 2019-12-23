@@ -129,8 +129,8 @@ class ExplanationOfBenefitsTrimmerTest {
     void isPlanD() {
         ExplanationOfBenefit ePlanD = ExplanationOfBenefitsTrimmer.getBenefit(
                 EOBLoadUtilities.getEOBFromFileInClassPath("eobdata/EOB-for-Part-D-Claims.json", context));
-        assertTrue(EOBLoadUtilities.isPlanD(ePlanD));
-        assertFalse(EOBLoadUtilities.isPlanD(eobCarrier));
-        assertFalse(EOBLoadUtilities.isPlanD(null));
+        assertTrue(EOBLoadUtilities.isPartD(ePlanD));
+        assertFalse(EOBLoadUtilities.isPartD(eobCarrier));
+        assertFalse(EOBLoadUtilities.isPartD(null));
     }
 }
