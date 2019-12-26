@@ -1,6 +1,7 @@
 #!/bin/bash
+
 set -e #Exit on first error
-# set -x #Be verbose
+set -x #Be verbose
 
 #
 # Change to working directory
