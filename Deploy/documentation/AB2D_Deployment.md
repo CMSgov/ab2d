@@ -4,7 +4,9 @@
 
 1. [Note the starting state of the customer AWS account](#note-the-starting-state-of-the-customer-aws-account)
    * [Note dev components](#note-dev-components)
-   * [Note ignored components](#note-ignored-components)
+   * [Note ignored components under the dev AWS account](#note-ignored-components-under-the-dev-aws-account)
+   * [Note sbx components](#note-sbx-components)
+   * [Note ignored components under the sbx AWS account](#note-ignored-components-under-the-sbx-aws-account)
 1. [Create an Administrators IAM group](#create-an-administrators-iam-group)
 1. [Create an AWS IAM user](#create-an-aws-iam-user)
 1. [Configure AWS CLI](#configure-aws-cli)
@@ -53,7 +55,7 @@
    --------|---------------------|---------------|--------------|---------------
    ab2d-dev|vpc-0c6413ec40c5fdac3|2              |10.242.26.0/24|10.242.5.128/26
 
-1. Note the dev and sbx VPC attributes
+1. Note the dev VPC attributes
 
    Attribute       |Value
    ----------------|-------------
@@ -128,6 +130,12 @@
    --------|---------------------
    ab2d-dev|igw-0014bff62a3c1211d
 
+1. Note the dev DHCP options sets
+
+   Tag |ID           |Owner       |Options
+   ----|-------------|------------|--------------------------------------------------------------------
+   None|dopt-90a65fea|349849222861|domain-name = ec2.internal; domain-name-servers = AmazonProvidedDNS;
+   
 1. Note the dev Elastic IPs
 
    Tag                   |Allocation ID             |Elastic IP   |Private IP  |Network Interface Availability Zone
@@ -205,9 +213,9 @@
 
 1. Note the ignored internet gateway
 
-   Tag     |ID                   
-   --------|---------------------
-   ab2d-dev|igw-0fd15274
+   Tag |ID                   
+   ----|---------------------
+   None|igw-0fd15274
 
 1. Note the Network ACLs
 
@@ -220,6 +228,189 @@
    Tag |Group ID            
    ----|-----------
    None|sg-778f2822
+
+### Note sbx components
+
+1. Note the sbx VPC
+
+   Tag             |VPC ID               |IPv4 CIDR Count|IPv4 CIDR #1  |IPv4 CIDR #2   
+   ----------------|---------------------|---------------|--------------|---------------
+   ab2d-sbx-sandbox|vpc-08dbf3fa96684151c|2              |10.242.31.0/24|10.242.36.0/26
+
+1. Note the sbx VPC attributes
+
+   Attribute       |Value
+   ----------------|-------------
+   DHCP options set|dopt-c105c4bb
+   DNS resolution  |enable
+   DNS hostnames   |disable
+   
+1. Note the sbx subnets
+
+   Tag                       |Subnet ID               |IPv4 CIDR       |Availability Zone
+   --------------------------|------------------------|----------------|-----------------
+   ab2d-sbx-sandbox-private-a|subnet-0002caeb5751aec0d|10.242.31.0/25  |us-east-1a
+   ab2d-sbx-sandbox-private-b|subnet-01dca7e0c3f93f55a|10.242.31.128/25|us-east-1b
+   ab2d-sbx-sandbox-public-a |subnet-0e9f505bc63649211|10.242.36.0/27  |us-east-1a
+   ab2d-sbx-sandbox-public-b |subnet-0c0b9e44faab73ba3|10.242.36.32/27 |us-east-1b
+
+1. Note the sbx public subnet attributes
+
+   Public Subnet    |Attribute       |Value
+   -----------------|----------------|--------
+   ab2d-dev-public-a|Auto-assign IPv4|disabled
+   ab2d-dev-public-b|Auto-assign IPv4|disabled
+
+1. Note the sbx route tables
+
+   Tag                       |Route Table ID       |Main|Associated Subnet Count|Associalted Subnet #1   |Associalted Subnet #2
+   --------------------------|---------------------|----|-----------------------|------------------------|------------------------
+   None                      |rtb-0d09f616686be1dfb|Yes |0                      |                        |
+   ab2d-sbx-sandbox-private-a|rtb-0b182cb712cb4481b|No  |1                      |subnet-0002caeb5751aec0d|
+   ab2d-sbx-sandbox-private-b|rtb-0c1733bdc06688f19|No  |1                      |subnet-01dca7e0c3f93f55a|
+   ab2d-sbx-sandbox-public   |rtb-0b9e43e78ed265975|No  |2                      |subnet-0c0b9e44faab73ba3|subnet-0e9f505bc63649211
+
+1. Note the sbx routes for "ab2d-dev-private-a"
+
+   Destination      |Target
+   -----------------|-------------
+   10.242.36.0/26   |local
+   10.242.31.0/24   |local
+   0.0.0.0/0        |nat-0b7abeab3b574cc67
+   10.223.120.0/22  |tgw-080644ad8f49ecafa
+   10.223.126.0/23  |tgw-080644ad8f49ecafa
+   10.232.32.0/19   |tgw-080644ad8f49ecafa
+   10.242.7.192/26  |tgw-080644ad8f49ecafa
+   10.242.193.192/26|tgw-080644ad8f49ecafa
+   10.244.96.0/19   |tgw-080644ad8f49ecafa
+
+1. Note the sbx routes for "ab2d-dev-private-b"
+
+   Destination      |Target
+   -----------------|-------------
+   10.242.36.0/26   |local
+   10.242.31.0/24   |local
+   0.0.0.0/0        |nat-055a7d8b4b86987b3
+   10.223.120.0/22  |tgw-080644ad8f49ecafa
+   10.223.126.0/23  |tgw-080644ad8f49ecafa
+   10.232.32.0/19   |tgw-080644ad8f49ecafa
+   10.242.7.192/26  |tgw-080644ad8f49ecafa
+   10.242.193.192/26|tgw-080644ad8f49ecafa
+   10.244.96.0/19   |tgw-080644ad8f49ecafa
+
+1. Note the sbx routes for "ab2d-dev-public"
+
+   Destination      |Target
+   -----------------|-------------
+   10.242.36.0/26   |local
+   10.242.31.0/24   |local
+   0.0.0.0/0        |igw-0cb6e5264d08610a0
+
+1. Note the sbx internet gateway
+
+   Tag             |ID                   
+   ----------------|---------------------
+   ab2d-sbx-sandbox|igw-0cb6e5264d08610a0
+
+1. Note the sbx DHCP options sets
+
+   Tag |ID           |Owner       |Options
+   ----|-------------|------------|--------------------------------------------------------------------
+   None|dopt-c105c4bb|777200079629|domain-name = ec2.internal; domain-name-servers = AmazonProvidedDNS;
+
+1. Note the sbx Elastic IPs
+
+   Tag                           |Allocation ID             |Elastic IP  |Private IP  |Network Interface Availability Zone
+   ------------------------------|--------------------------|------------|------------|-----------------------------------
+   ab2d-sbx-sandbox-nat-gateway-a|eipalloc-07133bdf5781c46cd|52.23.57.49 |10.242.36.30|us-east-1a
+   ab2d-sbx-sandbox-nat-gateway-b|eipalloc-0688fab939ab8fcd7|52.0.216.183|10.242.36.38|us-east-1b
+
+1. Note the sbx NAT gateways
+
+   Tag               |NAT Gateway ID       |Elastic IP Address|Private IP  |Network Interface Availability Zone
+   ------------------|---------------------|------------------|------------|-----------------------------------
+   ab2d-sbx-sandbox-a|nat-0b7abeab3b574cc67|52.23.57.49       |10.242.36.30|us-east-1a
+   ab2d-sbx-sandbox-b|nat-055a7d8b4b86987b3|52.0.216.183      |10.242.36.38|us-east-1b
+
+1. Note the sbx Network ACLs
+
+   Tag |Network ACL ID       |Associated Subnet Count
+   ----|---------------------|-----------------------
+   None|acl-002d000b5cf05cc55|4
+
+
+1. Note the sbx Security Groups
+
+   Tag       |Group ID            |Group Name
+   ----------|--------------------|----------
+   None      |sg-03bfe80b30b7b302b|default
+   VPN access|sg-08448aec3f4c1bf3d|VPN access
+
+1. Note the sbx Transit Gateways
+
+   Tag |Transit Gateway ID   |Owner account ID
+   ----|---------------------|---------------------
+   None|tgw-080644ad8f49ecafa|921617238787 (shared)
+
+1. Note the sbx Transit Gateway Attachments
+
+   Tag                                |Transit Gateway attachment ID|Transit Gateway owner ID|Resource owner account ID
+   -----------------------------------|-----------------------------|------------------------|-------------------------
+   ab2d-sbx-sandbox-InterVPC-East-Prod|tgw-attach-0878b16d2bf55e7ad |921617238787 (shared)   |777200079629
+
+1. Note the sbx Network Interfaces
+
+   Tag |Network interface ID |IPv4 Public IP|Primary private IPv4 IP|Availability Zone|Description
+   ----|---------------------|--------------|-----------------------|-----------------|-----------------------------------------------
+   None|eni-01f9447520f6efa28|52.23.57.49   |10.242.36.30           |us-east-1a       |Interface for NAT Gateway nat-0b7abeab3b574cc67
+   None|eni-045fc3c9aa02b671c|52.0.216.183  |10.242.36.38           |us-east-1b       |Interface for NAT Gateway nat-055a7d8b4b86987b3
+   None|eni-0e8baa25388577d46|N/A           |10.242.31.78           |us-east-1a       |Network Interface for Transit Gateway Attachment tgw-attach-0878b16d2bf55e7ad
+   None|eni-0c4ed76f356525098|N/A           |10.242.31.205          |us-east-1b       |Network Interface for Transit Gateway Attachment tgw-attach-0878b16d2bf55e7ad
+
+### Note ignored components under the sbx AWS account
+
+1. Note that Stephen Walter said that he doesn't know why these components were created
+
+1. Note the ignored VPC
+
+   Tag |ID          |IPv4 CIDR Count|IPv4 CIDR  
+   ----|------------|---------------|-------------
+   None|vpc-daceeaa0|1              |172.31.0.0/16
+
+1. Note the ignored subnets
+
+   Tag |ID             |IPv4 CIDR     |Availability Zone
+   ----|---------------|--------------|-----------------
+   None|subnet-b8fef6df|172.31.0.0/20 |us-east-1b
+   None|subnet-af865de2|172.31.16.0/20|us-east-1d
+   None|subnet-5a7b6f06|172.31.32.0/20|us-east-1a
+   None|subnet-be4d1280|172.31.48.0/20|us-east-1e
+   None|subnet-0489440a|172.31.64.0/20|us-east-1f
+   None|subnet-59180e77|172.31.80.0/20|us-east-1c
+
+1. Note the ignored route tables
+
+   Tag               |ID          |Main|Associated Subnet Count|Associalted Subnet #1   |Associalted Subnet #2
+   ------------------|------------|----|-----------------------|------------------------|------------------------
+   None              |rtb-5647e428|Yes |0                      |                        |
+
+1. Note the ignored internet gateway
+
+   Tag |ID                   
+   ----|---------------------
+   None|igw-39a82342
+
+1. Note the Network ACLs
+
+   Tag |Network ACL ID       |Associated Subnet Count
+   ----|---------------------|-----------------------
+   None|acl-5a7df227         |6
+
+1. Note the Security Groups
+
+   Tag |Group ID            
+   ----|-----------
+   None|sg-dcadb488
 
 ## Create an Administrators IAM group
 
@@ -673,7 +864,7 @@
    $ ./deploy-ab2d-to-cms.sh \
      --environment=sbx \
      --shared-environment=shared \
-     --vpc-id=vpc-0c6413ec40c5fdac3 \
+     --vpc-id=vpc-08dbf3fa96684151c \
      --ssh-username=ec2-user \
      --owner=842420567215 \
      --ec2-instance-type=m5.xlarge \
@@ -688,7 +879,7 @@
    $ ./deploy-ab2d-to-cms.sh \
      --environment=sbx \
      --shared-environment=shared \
-     --vpc-id=vpc-0c6413ec40c5fdac3 \
+     --vpc-id=vpc-08dbf3fa96684151c \
      --ssh-username=ec2-user \
      --owner=842420567215 \
      --ec2-instance-type=m5.xlarge \
