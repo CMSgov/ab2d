@@ -22,6 +22,7 @@
 1. [Appendix M: Make AB2D static website unavailable](#appendix-m-make-ab2d-static-website-unavailable)
    * [Delete the contents of the websites S3 bucket](#delete-the-contents-of-the-websites-s3-bucket)
    * [Delete the cached website files from the CloudFront edge caches before they expire](#delete-the-cached-website-files-from-the-cloudfront-edge-caches-before-they-expire)
+1. [Appendix N: Destroy and redploy API nodes](#appendix-n-destroy-and-redploy-api-nodes)
 
 ## Appendix A: Access the CMS AWS console
 
@@ -812,3 +813,32 @@
       ```
 
 1. Note that the invalidation will remain under the "Invalidations" tab for auditing purposes even if you redeploy the website
+
+## Appendix N: Destroy and redploy API and Worker nodes
+
+1. Set target AWS profile
+   
+   ```ShellSession
+   $ export AWS_PROFILE=ab2d-shared
+   ```
+
+1. Change to the "Deploy" directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d/Deploy
+   ```
+
+1. Destroy and redploy API and Worker nodes
+
+   *Example for "Dev" environment:*
+   
+   ```ShellSession
+   $ ./bash/redeploy-api-and-worker-nodes.sh \
+     --profile=ab2d-shared \
+     --environment=dev \
+     --vpc-id=vpc-0c6413ec40c5fdac3 \
+     --ssh-username=ec2-user \
+     --owner=842420567215 \
+     --ec2-instance-type=m5.xlarge \
+     --debug-level=WARN
+   ```
