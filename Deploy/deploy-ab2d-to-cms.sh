@@ -1,4 +1,5 @@
 #!/bin/bash
+
 set -e #Exit on first error
 set -x #Be verbose
 
