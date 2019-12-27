@@ -14,7 +14,9 @@ import springfox.documentation.builders.RequestHandlerSelectors;
 import springfox.documentation.builders.ResponseMessageBuilder;
 import springfox.documentation.schema.ModelRef;
 import springfox.documentation.service.ApiInfo;
+import springfox.documentation.service.ApiKey;
 import springfox.documentation.service.ResponseMessage;
+import springfox.documentation.service.SecurityScheme;
 import springfox.documentation.spi.DocumentationType;
 import springfox.documentation.spring.web.plugins.Docket;
 import springfox.documentation.swagger2.annotations.EnableSwagger2;
@@ -33,6 +35,7 @@ public class SwaggerConfig {
 
     @Bean
     public Docket api() {
+        List<SecurityScheme> auth = List.of(apiKey());
         return new Docket(DocumentationType.SWAGGER_2)
                 .select()
                 .apis(RequestHandlerSelectors.basePackage("gov.cms.ab2d.api.controller"))
@@ -41,6 +44,7 @@ public class SwaggerConfig {
                 .directModelSubstitute(Resource.class, String.class)
                 .directModelSubstitute(JsonNode.class, Void.class)
                 .useDefaultResponseMessages(false)
+                .securitySchemes(auth)
                 .globalResponseMessage(RequestMethod.GET,
                         globalResponseMessages())
                 .globalResponseMessage(RequestMethod.DELETE,
@@ -73,7 +77,8 @@ public class SwaggerConfig {
     private ApiInfo apiInfo() {
         return new ApiInfo(
                 "AB2D FHIR Bulk Data Access API",
-                "Provides Part A & B claim data to PDP sponsors.",
+                "This API Provides Part A (Hospital Insurance) & B (Medical Insurance) claim data to Part " +
+                        "D (Prescription Drug Benefit) sponsors.",
                 "1.0",
                 null,
                 null,
@@ -236,4 +241,7 @@ public class SwaggerConfig {
 
     }
 
+    private ApiKey apiKey() {
+        return new ApiKey("Authorization", "Authorization", "header");
+    }
 }
