@@ -22,7 +22,7 @@
 1. [Appendix M: Make AB2D static website unavailable](#appendix-m-make-ab2d-static-website-unavailable)
    * [Delete the contents of the websites S3 bucket](#delete-the-contents-of-the-websites-s3-bucket)
    * [Delete the cached website files from the CloudFront edge caches before they expire](#delete-the-cached-website-files-from-the-cloudfront-edge-caches-before-they-expire)
-1. [Appendix N: Destroy and redploy API nodes](#appendix-n-destroy-and-redploy-api-nodes)
+1. [Appendix N: Destroy and redploy API and Worker nodes](#appendix-n-destroy-and-redploy-api-and-worker-nodes)
 
 ## Appendix A: Access the CMS AWS console
 
@@ -817,9 +817,17 @@
 ## Appendix N: Destroy and redploy API and Worker nodes
 
 1. Set target AWS profile
-   
+
+   *Example for "Dev" environment:*
+
    ```ShellSession
-   $ export AWS_PROFILE=ab2d-shared
+   $ export AWS_PROFILE=ab2d-dev
+   ```
+
+   *Example for "Sbx" environment:*
+
+   ```ShellSession
+   $ export AWS_PROFILE=ab2d-sbx-sandbox
    ```
 
 1. Change to the "Deploy" directory
@@ -834,9 +842,22 @@
    
    ```ShellSession
    $ ./bash/redeploy-api-and-worker-nodes.sh \
-     --profile=ab2d-shared \
+     --profile=ab2d-dev \
      --environment=dev \
      --vpc-id=vpc-0c6413ec40c5fdac3 \
+     --ssh-username=ec2-user \
+     --owner=842420567215 \
+     --ec2-instance-type=m5.xlarge \
+     --debug-level=WARN
+   ```
+
+   *Example for "Sbx" environment:*
+   
+   ```ShellSession
+   $ ./bash/redeploy-api-and-worker-nodes.sh \
+     --profile=ab2d-sbx-sandbox \
+     --environment=sbx-sandbox \
+     --vpc-id=vpc-08dbf3fa96684151c \
      --ssh-username=ec2-user \
      --owner=842420567215 \
      --ec2-instance-type=m5.xlarge \

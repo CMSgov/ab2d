@@ -1,13 +1,13 @@
 variable "aws_account_number" {
-  default = "349849222861"
+  default = "777200079629"
 }
 
 variable "aws_profile" {
-  default = "ab2d-shared"
+  default = "ab2d-sbx-sandbox"
 }
 
 variable "env" {
-  default = "sbx"
+  default = "sbx-sandbox"
 }
 
 variable "vpc_id" {
@@ -42,7 +42,7 @@ variable "linux_user" {
 }
 
 variable "ssh_key_name" {
-  default = "ab2d-shared"
+  default = "ab2d-sbx-sandbox"
 }
 
 variable "max_ec2_instance_count" {
@@ -214,11 +214,11 @@ variable "db_name_secret_arn" {
 ## S3 specific variables #########################################################################
 
 variable "file_bucket_name" {
-  default = "cms-ab2d-dev"
+  default = "ab2d-sbx-sandbox"
 }
 
 variable "logging_bucket_name" {
-  default = "cms-ab2d-cloudtrail"
+  default = "ab2d-sbx-sandbox-shared-cloudtrail"
 }
 
 variable "s3_username_whitelist" {

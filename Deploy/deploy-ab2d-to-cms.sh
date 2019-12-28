@@ -89,7 +89,7 @@ fi
 # Set environment
 #
 
-export AWS_PROFILE="ab2d-${CMS_SHARED_ENV}"
+export AWS_PROFILE="ab2d-${CMS_ENV}"
 
 # Verify that VPC ID exists
 
@@ -143,7 +143,12 @@ echo "**************************************************************"
 cd "${START_DIR}"
 cd terraform/environments/ab2d-$CMS_SHARED_ENV
 
-terraform init
+terraform init \
+    -backend-config="bucket=ab2d-${CMS_ENV}-automation" \
+    -backend-config="key=ab2d-shared/terraform/terraform.tfstate" \
+    -backend-config="region=us-east-1" \
+    -backend-config="encrypt=true"
+
 terraform validate
 
 # Initialize and validate terraform for the target environment
@@ -155,7 +160,12 @@ echo "***************************************************************"
 cd "${START_DIR}"
 cd terraform/environments/ab2d-$CMS_ENV
 
-terraform init
+terraform init \
+    -backend-config="bucket=ab2d-${CMS_ENV}-automation" \
+    -backend-config="key=ab2d-${CMS_ENV}/terraform/terraform.tfstate" \
+    -backend-config="region=us-east-1" \
+    -backend-config="encrypt=true"
+
 terraform validate
 
 #
@@ -641,13 +651,7 @@ if [ -z "${AMI_ID}" ]; then
     | sort -k2 -r \
     | head -n1 \
     | awk '{print $1}')
-  
-  # Get first public subnet
-  SUBNET_PUBLIC_1_ID=$(aws --region us-east-1 ec2 describe-subnets \
-    --filters "Name=tag:Name,Values=ab2d-dev-public-a" \
-    --query "Subnets[0].SubnetId" \
-    --output text)
-  
+    
   # Create AMI for application nodes
   cd "${START_DIR}"
   cd packer/app
@@ -698,12 +702,6 @@ if [ -z "${JENKINS_AMI_ID}" ]; then
     | sort -k2 -r \
     | head -n1 \
     | awk '{print $1}')
-
-  # Get first public subnet
-  SUBNET_PUBLIC_1_ID=$(aws --region us-east-1 ec2 describe-subnets \
-    --filters "Name=tag:Name,Values=ab2d-dev-public-a" \
-    --query "Subnets[0].SubnetId" \
-    --output text)
 
   # Create AMI for Jenkins
   cd "${START_DIR}"
@@ -826,24 +824,24 @@ cd "${START_DIR}"
 cd terraform/environments/ab2d-$CMS_SHARED_ENV
 
 #
-# Create "cms-ab2d-cloudtrail" bucket
+# Create cloudtrail bucket
 #
 
-echo "Creating "cms-ab2d-cloudtrail" bucket..."
+echo "Creating "ab2d-${CMS_SHARED_ENV}-cloudtrail" bucket..."
 
 aws --region us-east-1 s3api create-bucket \
-  --bucket cms-ab2d-cloudtrail
+  --bucket "ab2d-${CMS_SHARED_ENV}-cloudtrail"
 
 # Block public access on bucket
 
 aws --region us-east-1 s3api put-public-access-block \
-  --bucket cms-ab2d-cloudtrail \
+  --bucket "ab2d-${CMS_SHARED_ENV}-cloudtrail" \
   --public-access-block-configuration BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true
 
 # Give "Write objects" and "Read bucket permissions" to the "S3 log delivery group" of the "cms-ab2d-cloudtrail" bucket
 
 aws --region us-east-1 s3api put-bucket-acl \
-  --bucket cms-ab2d-cloudtrail \
+  --bucket "ab2d-${CMS_SHARED_ENV}-cloudtrail" \
   --grant-write URI=http://acs.amazonaws.com/groups/s3/LogDelivery \
   --grant-read-acp URI=http://acs.amazonaws.com/groups/s3/LogDelivery
 
@@ -853,7 +851,7 @@ cd "${START_DIR}"
 cd terraform/environments/ab2d-$CMS_SHARED_ENV
 
 aws --region us-east-1 s3api put-bucket-policy \
-  --bucket cms-ab2d-cloudtrail \
+  --bucket "ab2d-${CMS_SHARED_ENV}-cloudtrail" \
   --policy file://ab2d-cloudtrail-bucket-policy.json
 
 #
@@ -983,7 +981,7 @@ CONTROLLER_PUBLIC_IP=$(aws --region us-east-1 ec2 describe-instances \
 
 # Determine if the database for the environment exists
 
-DB_NAME_IF_EXISTS=$(ssh -tt -i "~/.ssh/ab2d-${CMS_SHARED_ENV}.pem" \
+DB_NAME_IF_EXISTS=$(ssh -tt -i "~/.ssh/ab2d-${CMS_ENV}.pem" \
   "${SSH_USERNAME}@${CONTROLLER_PUBLIC_IP}" \
   "psql -t --host "${DB_ENDPOINT}" --username "${DATABASE_USER}" --dbname postgres --command='SELECT datname FROM pg_catalog.pg_database'" \
   | grep "${DATABASE_NAME}" \
@@ -996,7 +994,7 @@ DB_NAME_IF_EXISTS=$(ssh -tt -i "~/.ssh/ab2d-${CMS_SHARED_ENV}.pem" \
 
 if [ -n "${CONTROLLER_PUBLIC_IP}" ] && [ -n "${DB_ENDPOINT}" ] && [ "${DB_NAME_IF_EXISTS}" != "${DATABASE_NAME}" ]; then
   echo "Creating database..."
-  ssh -tt -i "~/.ssh/ab2d-${CMS_SHARED_ENV}.pem" \
+  ssh -tt -i "~/.ssh/ab2d-${CMS_ENV}.pem" \
     "${SSH_USERNAME}@${CONTROLLER_PUBLIC_IP}" \
     "createdb ${DATABASE_NAME} --host ${DB_ENDPOINT} --username ${DATABASE_USER}"
 fi
@@ -1098,7 +1096,6 @@ CLUSTER_ARNS=$(aws --region us-east-1 ecs list-clusters \
 if [ -z "${CLUSTER_ARNS}" ]; then
   echo "Skipping getting current ECS task definitions, since there are no existing clusters"
 else
-  echo "TEST"
   API_TASK_DEFINITION=$(aws --region us-east-1 ecs describe-services \
     --services "ab2d-${CMS_ENV}-api" \
     --cluster "ab2d-${CMS_ENV}-api" \

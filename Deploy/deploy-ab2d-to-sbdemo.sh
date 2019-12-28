@@ -1369,7 +1369,6 @@ CLUSTER_ARNS=$(aws --region us-east-1 ecs list-clusters \
 if [ -z "${CLUSTER_ARNS}" ]; then
   echo "Skipping getting current ECS task definitions, since there are no existing clusters"
 else
-  echo "TEST"
   API_TASK_DEFINITION=$(aws --region us-east-1 ecs describe-services \
     --services "ab2d-${CMS_ENV}-api" \
     --cluster "ab2d-${CMS_ENV}-api" \

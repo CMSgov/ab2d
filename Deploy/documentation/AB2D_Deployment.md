@@ -466,7 +466,11 @@
 
    - **Programmatic access:** checked
 
-   - **AWS Management Console access:** unchecked
+   - **AWS Management Console access:** checked
+
+   - **Console password:** {desired password}
+
+   - **Require password reset:** {unchecked}
 
 1. Select **Next: Permissions**
 
@@ -483,25 +487,103 @@
 1. Select **Close**
 
 1. Note that the following can be found in the "credentials.csv" file that you downloaded
+
+   *Format:*
    
    - **User name:** {your semanticbits email}
 
-   - **Password:** {blank because you did not set AWS console access}
+   - **Password:** {blank because you did custom password}
 
    - **Access key ID:** {your access key}
 
    - **Secret access key:** {your secret access key}
 
-   - **Console login link:** https://aws-hhs-cms-oeda-ab2d.signin.aws.amazon.com/console
+   - **Console login link:** https://{aws account number}.signin.aws.amazon.com/console
 
 1. Save these credentials someone safe like a personal slack channel
 
+1. Note that if you want AWS console access with your IAM user, you will need to enable multi-factor authentication (MFA)
+
+1. Note that there are three ways to enable MFA
+
+   - Virtual MFA device (Authenticator app installed on your mobile device or computer)
+
+   - U2F security key (YubiKey or any other compliant U2F device)
+
+   - Other hardware MFA device (Gemalto token)
+
+1. If you can't do any of those three options, disable console access for your user and access the AWS Console via CloudTamer instead
+
+1. If you have a SemanticBits YubiKey, set up MFA
+
+   1. Select your newly created user from the IAM Users list
+
+   1. Select the **Security credentials** tab
+
+   1. Select **Manage** beside "Assigned MFA device"
+
+   1. Select **U2F security key**
+
+   1. Select **Continue** on the "Choose the type of MFA device to assign" page
+
+   1. When prompted, tap your YubiKey with your fingers
+
+   1. If a "console.aws.amazon.com wants to 'See the make and model of your Security Key'" prompt appears within Chrome, select **Allow**
+
+   1. Select **Close** on the "Set up U2F security key" page
+
+   1. Note the following now appears beside "Assigned MFA device":
+
+      *Format:*
+      
+      ```
+      arn:aws:iam::{aws account number}:u2f/user/{iam user}/{u2f security key} (U2F security key) 
+      ```
+
+1. Verify MFA login
+
+   1.Sign out of the current AWS console session
+
+   1. Enter the following in the address bar
+
+      *Format:*
+      
+      > https://{aws account number or alias}.signin.aws.amazon.com/console
+
+   1. Enter the following on the console logon page
+
+      *Format:*
+      
+      - **Account ID or alias:** {aws account number}
+
+      - **IAM user name:** {your semanticbits email}
+
+      - **Password:** {your password}
+
+   1. When prompted, touch the SemanticBits YubiKey to complete the logon process
+
+   1. Verify that you were able to successfully log on to the AWS console
+   
 ## Configure AWS CLI
 
 1. Configure AWS CLI
 
+   *Format:*
+
    ```ShellSession
-   $ aws configure --profile=ab2d-shared
+   $ aws configure --profile={vpc tag}
+   ```
+
+   *Example for "Dev" environment:*
+   
+   ```ShellSession
+   $ aws configure --profile=ab2d-dev
+   ```
+
+   *Example for "Sbx" environment:*
+   
+   ```ShellSession
+   $ aws configure --profile=ab2d-sbx-sandbox
    ```
 
 1. Enter {your aws access key} at the **AWS Access Key ID** prompt
@@ -554,17 +636,33 @@
 ### Create AWS keypair
 
 1. Set target AWS profile
-   
+
+   *Example for "Dev" environment:*
+
    ```ShellSession
-   $ export AWS_PROFILE=ab2d-shared
+   $ export AWS_PROFILE=ab2d-dev
+   ```
+
+   *Example for "Sbx" environment:*
+
+   ```ShellSession
+   $ export AWS_PROFILE=ab2d-sbx-sandbox
    ```
 
 1. Create keypair
 
    1. Set the key name
 
+      *Example for "Dev" environment:*
+      
       ```ShellSession
-      $ export KEY_NAME=ab2d-shared
+      $ export KEY_NAME=ab2d-dev
+      ```
+
+      *Example for "Sbx" environment:*
+
+      ```ShellSession
+      $ export KEY_NAME=ab2d-sbx-sandbox
       ```
 
    1. Create the keypair
@@ -583,44 +681,54 @@
    $ chmod 600 ~/.ssh/${KEY_NAME}.pem
    ```
 
-1. Output the public key to the clipboard
-
-   *Used for accessing controller instance(s):*
-
-   ```ShellSession
-   $ ssh-keygen -y -f ~/.ssh/${KEY_NAME}.pem | pbcopy
-   ```
-
 1. Update the "authorized_keys" file for the "ab2d-dev" environment
 
-   1. Open the "authorized_keys" file for the environment
+   1. Open a second terminal
    
+   1. Open the "authorized_keys" file for the environment
+
+      *Example for "Dev" environment:*
+      
       ```ShellSession
-      $ vim ~/code/ab2d/Deploy/terraform/environments/ab2d-dev/authorized_keys
+      $ vim ~/code/ab2d/Deploy/terraform/environments/ab2d-dev-shared/authorized_keys
       ```
 
+      *Example for "Sbx" environment:*
+
+      ```ShellSession
+      $ vim ~/code/ab2d/Deploy/terraform/environments/ab2d-sbx-sandbox-shared/authorized_keys
+      ```
+
+   1. Return to the first terminal
+   
+   1. Output the public key to the clipboard
+
+      *Used for accessing controller instance(s):*
+
+      ```ShellSession
+      $ ssh-keygen -y -f ~/.ssh/${KEY_NAME}.pem | pbcopy
+      ```
+
+   1. Return to the second terminal
+   
    1. Paste the public key under the "Keys included with gold image" section
    
    1. Save and close the file
 
-1. Update the "authorized_keys" file for the "ab2d-sbx" environment
-
-   1. Open the "authorized_keys" file for the environment
-   
-      ```ShellSession
-      $ vim ~/code/ab2d/Deploy/terraform/environments/ab2d-sbx/authorized_keys
-      ```
-
-   1. Paste the public key under the "Keys included with gold image" section
-   
-   1. Save and close the file
-   
 ### Create policies
 
 1. Set target AWS profile
-   
+
+   *Example for "Dev" environment:*
+
    ```ShellSession
-   $ export AWS_PROFILE=ab2d-shared
+   $ export AWS_PROFILE=ab2d-dev
+   ```
+
+   *Example for "Sbx" environment:*
+
+   ```ShellSession
+   $ export AWS_PROFILE=ab2d-sbx-sandbox
    ```
 
 1. Change to the "ab2d-shared" environment directory
@@ -635,14 +743,6 @@
    $ aws iam create-policy \
      --policy-name Ab2dAccessPolicy \
      --policy-document file://ab2d-access-policy.json
-   ```
-
-1. Create "Ab2dAssumePolicy"
-
-   ```ShellSession
-   $ aws iam create-policy \
-     --policy-name Ab2dAssumePolicy \
-     --policy-document file://ab2d-assume-policy.json
    ```
 
 1. Create "Ab2dPackerPolicy"
@@ -661,6 +761,28 @@
      --policy-document file://ab2d-s3-access-policy.json
    ```
 
+1. Change to the environment-specific directory
+
+   *Example for "Dev" environment:*
+   
+   ```ShellSession
+   $ cd ~/code/ab2d/Deploy/terraform/environments/ab2d-dev
+   ```
+
+   *Example for "Sbx" environment:*
+   
+   ```ShellSession
+   $ cd ~/code/ab2d/Deploy/terraform/environments/ab2d-sbx-sandbox
+   ```
+
+1. Create "Ab2dAssumePolicy"
+
+   ```ShellSession
+   $ aws iam create-policy \
+     --policy-name Ab2dAssumePolicy \
+     --policy-document file://ab2d-assume-policy.json
+   ```
+
 1. Create "Ab2dPermissionToPassRolesPolicy"
 
    ```ShellSession
@@ -671,18 +793,28 @@
 
 1. Create "Ab2dSecretsPolicy"
 
+   > *** TO DO ***: Create process to implement this
+   
    ```ShellSession
    $ aws iam create-policy \
-     --policy-name Ab2dPermissionToPassRolesPolicy \
-     --policy-document file://ab2d-permission-to-pass-roles-policy.json
+     --policy-name Ab2dSecretsPolicy \
+     --policy-document file://ab2d-secrets-policy.json
    ```
 
 ### Create roles
 
 1. Set target AWS profile
-   
+
+   *Example for "Dev" environment:*
+
    ```ShellSession
-   $ export AWS_PROFILE=ab2d-shared
+   $ export AWS_PROFILE=ab2d-dev
+   ```
+
+   *Example for "Sbx" environment:*
+
+   ```ShellSession
+   $ export AWS_PROFILE=ab2d-sbx-sandbox
    ```
 
 1. Change to the "ab2d-shared" environment directory
@@ -699,24 +831,59 @@
      --assume-role-policy-document file://ab2d-instance-role-trust-relationship.json
    ```
 
+1. Set AWS account number
+
+   *Example for "Dev" environment:*
+
+   ```ShellSession
+   $ export AWS_ACCOUNT_NUMBER=349849222861
+   ```
+
+   *Example for "Sbx" environment:*
+
+   ```ShellSession
+   $ export AWS_ACCOUNT_NUMBER=777200079629
+   ```
+
 1. Attach required policies to the "Ab2dInstanceRole" role
 
    ```ShellSession
    $ aws iam attach-role-policy \
      --role-name Ab2dInstanceRole \
-     --policy-arn arn:aws:iam::349849222861:policy/Ab2dAssumePolicy
+     --policy-arn "arn:aws:iam::${AWS_ACCOUNT_NUMBER}:policy/Ab2dAssumePolicy"
    $ aws iam attach-role-policy \
      --role-name Ab2dInstanceRole \
-     --policy-arn arn:aws:iam::349849222861:policy/Ab2dPackerPolicy
+     --policy-arn "arn:aws:iam::${AWS_ACCOUNT_NUMBER}:policy/Ab2dPackerPolicy"
    $ aws iam attach-role-policy \
      --role-name Ab2dInstanceRole \
-     --policy-arn arn:aws:iam::349849222861:policy/Ab2dS3AccessPolicy
+     --policy-arn "arn:aws:iam::${AWS_ACCOUNT_NUMBER}:policy/Ab2dS3AccessPolicy"
    $ aws iam attach-role-policy \
      --role-name Ab2dInstanceRole \
-     --policy-arn arn:aws:iam::349849222861:policy/Ab2dSecretsPolicy
+     --policy-arn "arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role"
+   ```
+
+1. Attach secrets policy to the "Ab2dInstanceRole" role
+
+   > *** TO DO ***: Create process to implement this
+   
+   ```ShellSession
    $ aws iam attach-role-policy \
      --role-name Ab2dInstanceRole \
-     --policy-arn arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role
+     --policy-arn "arn:aws:iam::${AWS_ACCOUNT_NUMBER}:policy/Ab2dSecretsPolicy"
+   ```
+
+1. Change to the environment-specific directory
+
+   *Example for "Dev" environment:*
+   
+   ```ShellSession
+   $ cd ~/code/ab2d/Deploy/terraform/environments/ab2d-dev
+   ```
+
+   *Example for "Sbx" environment:*
+   
+   ```ShellSession
+   $ cd ~/code/ab2d/Deploy/terraform/environments/ab2d-sbx-sandbox
    ```
 
 1. Create "Ab2dManagedRole" role
@@ -732,15 +899,23 @@
    ```ShellSession
    $ aws iam attach-role-policy \
      --role-name Ab2dManagedRole \
-     --policy-arn arn:aws:iam::349849222861:policy/Ab2dAccessPolicy
+     --policy-arn arn:aws:iam::${AWS_ACCOUNT_NUMBER}:policy/Ab2dAccessPolicy
    ```
 
 ### Create instance profiles
 
 1. Set target AWS profile
-   
+
+   *Example for "Dev" environment:*
+
    ```ShellSession
-   $ export AWS_PROFILE=ab2d-shared
+   $ export AWS_PROFILE=ab2d-dev
+   ```
+
+   *Example for "Sbx" environment:*
+
+   ```ShellSession
+   $ export AWS_PROFILE=ab2d-sbx-sandbox
    ```
    
 1. Create instance profile
@@ -761,18 +936,40 @@
 ### Configure IAM user deployers
 
 1. Set target AWS profile
-   
+
+   *Example for "Dev" environment:*
+
    ```ShellSession
-   $ export AWS_PROFILE=ab2d-shared
+   $ export AWS_PROFILE=ab2d-dev
    ```
-   
+
+   *Example for "Sbx" environment:*
+
+   ```ShellSession
+   $ export AWS_PROFILE=ab2d-sbx-sandbox
+   ```
+
+1. Set AWS account number
+
+   *Example for "Dev" environment:*
+
+   ```ShellSession
+   $ export AWS_ACCOUNT_NUMBER=349849222861
+   ```
+
+   *Example for "Sbx" environment:*
+
+   ```ShellSession
+   $ export AWS_ACCOUNT_NUMBER=777200079629
+   ```
+
 1. Attach the Ab2dPermissionToPassRolesPolicy to an IAM user that runs the automation
 
    *Example for lonnie.hanekamp@semanticbits.com:*
    
    ```ShellSession
    $ aws iam attach-user-policy \
-     --policy-arn arn:aws:iam::349849222861:policy/Ab2dPermissionToPassRolesPolicy \
+     --policy-arn arn:aws:iam::${AWS_ACCOUNT_NUMBER}:policy/Ab2dPermissionToPassRolesPolicy \
      --user-name lonnie.hanekamp@semanticbits.com
    ```
 
@@ -781,17 +978,33 @@
 ### Create required S3 buckets
 
 1. Set target AWS profile
-   
+
+   *Example for "Dev" environment:*
+
    ```ShellSession
-   $ export AWS_PROFILE=ab2d-shared
+   $ export AWS_PROFILE=ab2d-dev
+   ```
+
+   *Example for "Sbx" environment:*
+
+   ```ShellSession
+   $ export AWS_PROFILE=ab2d-sbx-sandbox
    ```
 
 1. Set automation bucket name
 
-   ```ShellSession
-   $ export S3_AUTOMATION_BUCKET=cms-ab2d-automation
-   ```
+   *Example for "Dev" environment:*
    
+   ```ShellSession
+   $ export S3_AUTOMATION_BUCKET=ab2d-dev-automation
+   ```
+
+   *Example for "Sbx" environment:*
+   
+   ```ShellSession
+   $ export S3_AUTOMATION_BUCKET=ab2d-sbx-sandbox-automation
+   ```
+
 1. Create S3 bucket for automation
 
    ```ShellSession
@@ -831,7 +1044,7 @@
    ```ShellSession
    $ ./deploy-ab2d-to-cms.sh \
      --environment=dev \
-     --shared-environment=shared \
+     --shared-environment=dev-shared \
      --vpc-id=vpc-0c6413ec40c5fdac3 \
      --ssh-username=ec2-user \
      --owner=842420567215 \
@@ -846,7 +1059,7 @@
    ```ShellSession
    $ ./deploy-ab2d-to-cms.sh \
      --environment=dev \
-     --shared-environment=shared \
+     --shared-environment=dev-shared \
      --vpc-id=vpc-0c6413ec40c5fdac3 \
      --ssh-username=ec2-user \
      --owner=842420567215 \
@@ -862,30 +1075,30 @@
 
    ```ShellSession
    $ ./deploy-ab2d-to-cms.sh \
-     --environment=sbx \
-     --shared-environment=shared \
+     --environment=sbx-sandbox \
+     --shared-environment=sbx-sandbox-shared \
      --vpc-id=vpc-08dbf3fa96684151c \
      --ssh-username=ec2-user \
      --owner=842420567215 \
      --ec2-instance-type=m5.xlarge \
      --database-secret-datetime=2019-12-03-15-19-01 \
      --build-new-images \
-     --auto-approve     
+     --auto-approve
    ```
 
    *Deploy Sandbox by using the latest existing api and worker images:*
 
    ```ShellSession
    $ ./deploy-ab2d-to-cms.sh \
-     --environment=sbx \
-     --shared-environment=shared \
+     --environment=sbx-sandbox \
+     --shared-environment=sbx-sandbox-shared \
      --vpc-id=vpc-08dbf3fa96684151c \
      --ssh-username=ec2-user \
      --owner=842420567215 \
      --ec2-instance-type=m5.xlarge \
      --database-secret-datetime=2019-12-03-15-19-01 \
      --use-existing-images \
-     --auto-approve     
+     --auto-approve
    ```
 
 1. If prompted, enter database user at the "Enter desired database_user" prompt
