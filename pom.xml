@@ -28,7 +28,7 @@
 
     <properties>
         <project.root>${basedir}</project.root>
-        <java.version>12</java.version>
+        <java.version>13</java.version>
         <hapi.version>4.0.3</hapi.version>
         <mockserver.version>5.7.0</mockserver.version>
         <jacoco.version>0.8.5</jacoco.version>
@@ -89,7 +89,9 @@
                     </execution>
                 </executions>
             </plugin>
-            <plugin>
+            <!--
+            https://maven.apache.org/plugins/maven-pmd-plugin/pmd-mojo.html#targetJdk
+            This plugin only goes up to 3.12, java 13 not supported yet <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-pmd-plugin</artifactId>
                 <version>3.12.0</version>
@@ -102,7 +104,7 @@
                         </goals>
                     </execution>
                 </executions>
-            </plugin>
+            </plugin>-->
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>findbugs-maven-plugin</artifactId>
