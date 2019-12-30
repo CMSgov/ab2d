@@ -277,7 +277,7 @@ class JobProcessorUnitTest {
 
         var errMsg = "Directory already exists";
         var uncheckedIOE = new UncheckedIOException(errMsg, new IOException(errMsg));
-        Mockito.lenient().when(fileService.createDirectory(any()))
+        Mockito.when(fileService.createDirectory(any()))
                 .thenThrow(uncheckedIOE)
                 .thenReturn(efsMountTmpDir);
 
@@ -307,10 +307,7 @@ class JobProcessorUnitTest {
         var errMsg = "Directory already exists";
         var uncheckedIOE = new UncheckedIOException(errMsg, new IOException(errMsg));
 
-        Mockito.lenient().when(fileService.createDirectory(any()))
-                .thenThrow(uncheckedIOE)
-                .thenReturn(efsMountTmpDir);
-
+        Mockito.when(fileService.createDirectory(any())).thenThrow(uncheckedIOE);
         Mockito.lenient().when(beneficiaryAdapter.getPatientsByContract(anyString())).thenReturn(patientsByContract);
 
         var processedJob = cut.process(jobUuid);
