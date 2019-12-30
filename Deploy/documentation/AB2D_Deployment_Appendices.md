@@ -23,6 +23,7 @@
    * [Delete the contents of the websites S3 bucket](#delete-the-contents-of-the-websites-s3-bucket)
    * [Delete the cached website files from the CloudFront edge caches before they expire](#delete-the-cached-website-files-from-the-cloudfront-edge-caches-before-they-expire)
 1. [Appendix N: Destroy and redploy API and Worker nodes](#appendix-n-destroy-and-redploy-api-and-worker-nodes)
+1. [Appendix O: Destroy complete environment](#appendix-o-destroy-complete-environment)
 
 ## Appendix A: Access the CMS AWS console
 
@@ -862,4 +863,58 @@
      --owner=842420567215 \
      --ec2-instance-type=m5.xlarge \
      --debug-level=WARN
+   ```
+
+## Appendix O: Destroy complete environment
+
+1. Change to the deploy directory
+
+   *Format:*
+   
+   ```ShellSession
+   $ cd {code directory}/ab2d/Deploy
+   ```
+
+   *Example:*
+   
+   ```ShellSession
+   $ cd ~/code/ab2d/Deploy
+   ```
+   
+1. Destroy the "dev" environment
+
+   *Example for Dev environment testing within SemanticBits demo environment:*
+   
+   ```ShellSession
+   $ ./bash/destroy-environment.sh \
+     --environment=ab2d-dev \
+     --shared-environment=ab2d-dev-shared
+   ```
+
+   *Example to destroy the environment, but preserve the AMIs:*
+   
+   ```ShellSession
+   $ ./bash/destroy-environment.sh \
+     --environment=ab2d-dev \
+     --shared-environment=ab2d-dev-shared \
+     --keep-ami
+   ```
+
+1. Destroy the "sbdemo-sbx" environment
+
+   *Example for Sandbox environment testing within SemanticBits demo environment:*
+
+   ```ShellSession
+   $ ./bash/destroy-environment.sh \
+     --environment=ab2d-sbx-sandbox \
+     --shared-environment=ab2d-sbx-sandbox-shared
+   ```
+
+   *Example to destroy the environment, but preserve the AMIs:*
+   
+   ```ShellSession
+   $ ./bash/destroy-environment.sh \
+     --environment=ab2d-sbx-sandbox \
+     --shared-environment=ab2d-sbx-sandbox-shared \
+     --keep-ami
    ```

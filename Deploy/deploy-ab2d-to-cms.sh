@@ -145,7 +145,7 @@ cd terraform/environments/ab2d-$CMS_SHARED_ENV
 
 terraform init \
     -backend-config="bucket=ab2d-${CMS_ENV}-automation" \
-    -backend-config="key=ab2d-shared/terraform/terraform.tfstate" \
+    -backend-config="key=${CMS_SHARED_ENV}/terraform/terraform.tfstate" \
     -backend-config="region=us-east-1" \
     -backend-config="encrypt=true"
 
@@ -162,7 +162,7 @@ cd terraform/environments/ab2d-$CMS_ENV
 
 terraform init \
     -backend-config="bucket=ab2d-${CMS_ENV}-automation" \
-    -backend-config="key=ab2d-${CMS_ENV}/terraform/terraform.tfstate" \
+    -backend-config="key=${CMS_ENV}/terraform/terraform.tfstate" \
     -backend-config="region=us-east-1" \
     -backend-config="encrypt=true"
 
@@ -827,31 +827,31 @@ cd terraform/environments/ab2d-$CMS_SHARED_ENV
 # Create cloudtrail bucket
 #
 
-echo "Creating "ab2d-${CMS_SHARED_ENV}-cloudtrail" bucket..."
+echo "Creating "ab2d-${CMS_ENV}-cloudtrail" bucket..."
 
 aws --region us-east-1 s3api create-bucket \
-  --bucket "ab2d-${CMS_SHARED_ENV}-cloudtrail"
+  --bucket "ab2d-${CMS_ENV}-cloudtrail"
 
 # Block public access on bucket
 
 aws --region us-east-1 s3api put-public-access-block \
-  --bucket "ab2d-${CMS_SHARED_ENV}-cloudtrail" \
+  --bucket "ab2d-${CMS_ENV}-cloudtrail" \
   --public-access-block-configuration BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true
 
-# Give "Write objects" and "Read bucket permissions" to the "S3 log delivery group" of the "cms-ab2d-cloudtrail" bucket
+# Give "Write objects" and "Read bucket permissions" to the "S3 log delivery group" of the "cloudtrail" bucket
 
 aws --region us-east-1 s3api put-bucket-acl \
-  --bucket "ab2d-${CMS_SHARED_ENV}-cloudtrail" \
+  --bucket "ab2d-${CMS_ENV}-cloudtrail" \
   --grant-write URI=http://acs.amazonaws.com/groups/s3/LogDelivery \
   --grant-read-acp URI=http://acs.amazonaws.com/groups/s3/LogDelivery
 
-# Add bucket policy to the "cms-ab2d-cloudtrail" S3 bucket
+# Add bucket policy to the "cloudtrail" S3 bucket
 
 cd "${START_DIR}"
 cd terraform/environments/ab2d-$CMS_SHARED_ENV
 
 aws --region us-east-1 s3api put-bucket-policy \
-  --bucket "ab2d-${CMS_SHARED_ENV}-cloudtrail" \
+  --bucket "ab2d-${CMS_ENV}-cloudtrail" \
   --policy file://ab2d-cloudtrail-bucket-policy.json
 
 #
