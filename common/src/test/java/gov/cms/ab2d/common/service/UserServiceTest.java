@@ -2,7 +2,9 @@ package gov.cms.ab2d.common.service;
 
 import gov.cms.ab2d.common.SpringBootApp;
 import gov.cms.ab2d.common.model.User;
+import gov.cms.ab2d.common.repository.UserRepository;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -21,8 +23,16 @@ public class UserServiceTest {
     @Autowired
     private UserService userService;
 
+    @Autowired
+    private UserRepository userRepository;
+
     @Container
     private static final PostgreSQLContainer postgreSQLContainer= new AB2DPostgresqlContainer();
+
+    @BeforeEach
+    public void init() {
+        userRepository.deleteAll();
+    }
 
     @Test
     public void testUser() {

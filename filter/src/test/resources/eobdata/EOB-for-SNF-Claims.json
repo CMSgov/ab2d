@@ -649,6 +649,22 @@
 			"locationAddress": {
 				"state": "FL"
 			},
+			"servicedPeriod": {
+				"start": "2000-10-01",
+				"end": "2000-10-01"
+			},
+			"category": {
+				"coding": [
+					{
+						"system": "https://bluebutton.cms.gov/resources/variables/line_cms_type_srvc_cd",
+						"code": "2",
+						"display": "Surgery"
+					}
+				]
+			},
+			"diagnosisLinkId": [
+				2
+			],
 			"quantity": {
 				"value": 477
 			},

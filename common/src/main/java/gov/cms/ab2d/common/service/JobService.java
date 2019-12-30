@@ -10,6 +10,8 @@ public interface JobService {
 
     Job createJob(String resourceTypes, String url);
 
+    Job createJob(String resourceTypes, String url, String contractNumber);
+
     void cancelJob(String jobUuid);
 
     Job getJobByJobUuid(String jobUuid);
@@ -19,4 +21,8 @@ public interface JobService {
     Resource getResourceForJob(String jobUuid, String fileName) throws MalformedURLException;
 
     void deleteFileForJob(File file);
+
+    boolean checkIfCurrentUserHasActiveJob();
+
+    boolean checkIfCurrentUserHasActiveJobForContractNumber(String contractNumber);
 }

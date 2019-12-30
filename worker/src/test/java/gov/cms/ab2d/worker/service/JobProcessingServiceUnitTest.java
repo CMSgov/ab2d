@@ -1,12 +1,12 @@
 package gov.cms.ab2d.worker.service;
 
-import gov.cms.ab2d.common.model.Consent;
+import gov.cms.ab2d.common.model.OptOut;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.JobStatus;
 import gov.cms.ab2d.common.model.Sponsor;
 import gov.cms.ab2d.common.model.User;
-import gov.cms.ab2d.common.repository.ConsentRepository;
+import gov.cms.ab2d.common.repository.OptOutRepository;
 import gov.cms.ab2d.common.repository.JobOutputRepository;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
@@ -23,6 +23,7 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.scheduling.annotation.AsyncResult;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -39,14 +40,13 @@ import java.util.stream.Collectors;
 
 import static java.lang.Boolean.TRUE;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.atLeast;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 @Testcontainers
@@ -55,7 +55,7 @@ class JobProcessingServiceUnitTest {
 
     @Mock FileService fileService;
     @Mock JobRepository jobRepository;
-    @Mock ConsentRepository consentRepository;
+    @Mock OptOutRepository optOutRepository;
     @Mock JobOutputRepository jobOutputRepository;
     @Mock BeneficiaryAdapter beneficiaryAdapter;
     @Mock PatientClaimsProcessor patientClaimsProcessor;
@@ -77,7 +77,7 @@ class JobProcessingServiceUnitTest {
                 jobOutputRepository,
                 beneficiaryAdapter,
                 patientClaimsProcessor,
-                consentRepository
+                optOutRepository
         );
 
         sponsor = createSponsor();
@@ -154,6 +154,8 @@ class JobProcessingServiceUnitTest {
                 Mockito.any()
         )).thenReturn(futureResources);
 
+        ReflectionTestUtils.setField(cut, "cancellationCheckFrequency", 2);
+
         var processedJob = cut.processJob("S001");
 
         assertThat(processedJob.getStatus(), is(JobStatus.SUCCESSFUL));
@@ -195,11 +197,11 @@ class JobProcessingServiceUnitTest {
                 .thenReturn(efsMountTmpDir)
                 .thenReturn(efsMountTmpDir);
 
-        final List<Consent> consents = getConsents(patientsByContract);
-        when(consentRepository.findByHicn(anyString()))
-                .thenReturn(Arrays.asList(consents.get(0)))
-                .thenReturn(Arrays.asList(consents.get(1)))
-                .thenReturn(Arrays.asList(consents.get(2)));
+        final List<OptOut> optOuts = getOptOutRows(patientsByContract);
+        when(optOutRepository.findByHicn(anyString()))
+                .thenReturn(Arrays.asList(optOuts.get(0)))
+                .thenReturn(Arrays.asList(optOuts.get(1)))
+                .thenReturn(Arrays.asList(optOuts.get(2)));
 
         var processedJob = cut.processJob("S001");
 
@@ -212,18 +214,127 @@ class JobProcessingServiceUnitTest {
         verify(patientClaimsProcessor, never()).process(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any());
     }
 
-    private List<Consent> getConsents(GetPatientsByContractResponse patientsByContract) {
+
+    @Test
+    @DisplayName("When a job is cancelled while it is being processed, then attempt to stop the job gracefully without completing it")
+    void whenJobIsCancelledWhileItIsBeingProcessed_ThenAttemptToStopTheJob(@TempDir Path efsMountTmpDir) throws IOException {
+
+        job.setStatus(JobStatus.IN_PROGRESS);
+
+        // create parent sponsor
+        final Sponsor parentSponsor = createSponsor();
+        parentSponsor.setOrgName(parentSponsor.getOrgName() + " - PARENT");
+        parentSponsor.setLegalName(parentSponsor.getLegalName() + " - PARENT");
+
+        // associate the parent to the child
+        final Sponsor childSponsor = user.getSponsor();
+        childSponsor.setParent(parentSponsor);
+        parentSponsor.getChildren().add(childSponsor);
+
+        // switch the user to the parent sponsor
+        user.setSponsor(parentSponsor);
+
+        var contract = createContract(sponsor);
+        when(jobRepository.findByJobUuid(anyString())).thenReturn(job);
+
+        var patientsByContract = createPatientsByContractResponse(contract);
+        Mockito.when(beneficiaryAdapter.getPatientsByContract(anyString())).thenReturn(patientsByContract);
+
+        when(fileService.createDirectory(Mockito.any(Path.class))).thenReturn(efsMountTmpDir);
+        when(fileService.createFile(Mockito.any(Path.class), anyString()))
+                .thenReturn(efsMountTmpDir)
+                .thenReturn(efsMountTmpDir);
+
+        Future<Integer> futureResources = new AsyncResult(0);
+        Mockito.when(patientClaimsProcessor.process(
+                Mockito.any(),
+                Mockito.any(),
+                Mockito.any(),
+                Mockito.any()
+        )).thenReturn(futureResources);
+
+        ReflectionTestUtils.setField(cut, "cancellationCheckFrequency", 2);
+        when(jobRepository.findJobStatus(anyString())).thenReturn(JobStatus.CANCELLED);
+
+        var processedJob = cut.processJob("S001");
+
+        assertThat(processedJob.getStatus(), is(not(JobStatus.SUCCESSFUL)));
+        assertThat(processedJob.getCompletedAt(), nullValue());
+
+        verify(fileService).createDirectory(Mockito.any());
+        verify(beneficiaryAdapter).getPatientsByContract(anyString());
+        verify(patientClaimsProcessor, atLeast(1)).process(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any());
+    }
+
+    @Test
+    @DisplayName("When a job is submitted for a specific contract, process the export file for that contract only")
+    void whenJobIsSubmittedForSpecificContract_processOnlyThatContract(@TempDir Path efsMountTmpDir) throws IOException {
+
+        job.setStatus(JobStatus.IN_PROGRESS);
+
+        // create parent sponsor
+        final Sponsor parentSponsor = createSponsor();
+        parentSponsor.setOrgName(parentSponsor.getOrgName() + " - PARENT");
+        parentSponsor.setLegalName(parentSponsor.getLegalName() + " - PARENT");
+
+        // associate the parent to the child
+        final Sponsor childSponsor = user.getSponsor();
+        childSponsor.setParent(parentSponsor);
+        parentSponsor.getChildren().add(childSponsor);
+
+        // switch the user to the parent sponsor
+        user.setSponsor(parentSponsor);
+
+        // create 3 contract for the sponsor. But associate the submitted job with 1 specific contract.
+        createContract(sponsor);
+        createContract(sponsor);
+        var contract = createContract(sponsor);
+        job.setContract(contract);
+        when(jobRepository.findByJobUuid(anyString())).thenReturn(job);
+
+        var patientsByContract = createPatientsByContractResponse(contract);
+        Mockito.when(beneficiaryAdapter.getPatientsByContract(anyString())).thenReturn(patientsByContract);
+
+        when(fileService.createDirectory(Mockito.any(Path.class))).thenReturn(efsMountTmpDir);
+        when(fileService.createFile(Mockito.any(Path.class), anyString()))
+                .thenReturn(efsMountTmpDir)
+                .thenReturn(efsMountTmpDir);
+
+        Future<Integer> futureResources = new AsyncResult(0);
+        Mockito.when(patientClaimsProcessor.process(
+                Mockito.any(),
+                Mockito.any(),
+                Mockito.any(),
+                Mockito.any()
+        )).thenReturn(futureResources);
+
+        ReflectionTestUtils.setField(cut, "cancellationCheckFrequency", 2);
+
+        var processedJob = cut.processJob("S001");
+
+        assertThat(processedJob.getStatus(), is(JobStatus.SUCCESSFUL));
+        assertThat(processedJob.getStatusMessage(), is("100%"));
+        assertThat(processedJob.getExpiresAt(), notNullValue());
+
+        verify(fileService).createDirectory(Mockito.any());
+        verify(fileService, times(2)).createFile(Mockito.any(Path.class), anyString());
+        verify(beneficiaryAdapter).getPatientsByContract(anyString());
+        verify(patientClaimsProcessor, atLeast(1)).process(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any());
+    }
+
+
+    private List<OptOut> getOptOutRows(GetPatientsByContractResponse patientsByContract) {
         return patientsByContract.getPatients()
                 .stream().map(p -> p.getPatientId())
-                .map(patientId ->  createConsent(patientId))
+                .map(patientId ->  createOptOut(patientId))
                 .collect(Collectors.toList());
     }
 
-    private Consent createConsent(String p) {
-        Consent consent = new Consent();
-        consent.setHicn(p);
-        consent.setEffectiveDate(LocalDate.now().minusDays(10));
-        return consent;
+    private OptOut createOptOut(String patientId) {
+        OptOut optOut = new OptOut();
+        optOut.setHicn(patientId);
+        optOut.setEffectiveDate(LocalDate.now().minusDays(10));
+        return optOut;
     }
 
 
