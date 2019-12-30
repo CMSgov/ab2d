@@ -8,7 +8,7 @@ public interface FileService {
 
     Path createDirectory(Path outputDir);
 
-    Path createFile(Path outputDir, String filename);
+    Path createOrReplaceFile(Path outputDir, String filename);
 
     void appendToFile(Path outputFile, ByteArrayOutputStream byteArrayOutputStream) throws IOException;
 }

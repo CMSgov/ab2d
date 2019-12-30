@@ -54,7 +54,7 @@ public class FileServiceIntegrationTest {
         );
 
         //createFile method will delete and recreate a new empty file with the same name.
-        final Path outputfile2 = cut.createFile(path, output_filename);
+        final Path outputfile2 = cut.createOrReplaceFile(path, output_filename);
 
         assertAll(
                 () -> assertTrue(Files.exists(outputfile2)),
@@ -78,7 +78,7 @@ public class FileServiceIntegrationTest {
         cut.createDirectory(tmpEfsMountDir.toPath());
 
         var path = Paths.get(tmpEfsMountDir.getPath());
-        var file = cut.createFile(path, "filename.ndjson");
+        var file = cut.createOrReplaceFile(path, "filename.ndjson");
         Assertions.assertTrue(file.toFile().isFile());
     }
 
@@ -87,7 +87,7 @@ public class FileServiceIntegrationTest {
         var path = Paths.get(tmpEfsMountDir.getPath(), "non-existent-directory");
 
         var exceptionThrown = assertThrows(RuntimeException.class,
-                () -> cut.createFile(path, "filename.ndjson"));
+                () -> cut.createOrReplaceFile(path, "filename.ndjson"));
 
         assertThat(exceptionThrown.getMessage(), startsWith("Could not create output file"));
     }
@@ -98,7 +98,7 @@ public class FileServiceIntegrationTest {
         cut.createDirectory(tmpEfsMountDir.toPath());
 
         var path = Paths.get(tmpEfsMountDir.getPath());
-        var file = cut.createFile(path, "filename.ndjson");
+        var file = cut.createOrReplaceFile(path, "filename.ndjson");
         Assertions.assertTrue(file.toFile().isFile());
 
         List<String> lines = Arrays.asList("One", "Two", "Three");

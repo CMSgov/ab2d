@@ -31,7 +31,7 @@ public class FileServiceImpl implements FileService {
 
 
     @Override
-    public Path createFile(final Path outputDir, final String filename) {
+    public Path createOrReplaceFile(final Path outputDir, final String filename) {
         final Path filePath = Path.of(outputDir.toString(), filename);
         Path outputFile = null;
         try {

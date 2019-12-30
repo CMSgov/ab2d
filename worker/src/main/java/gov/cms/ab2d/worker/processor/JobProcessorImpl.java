@@ -119,8 +119,8 @@ public class JobProcessorImpl implements JobProcessor {
         log.info("Beginning to process contract {}", keyValue(CONTRACT_LOG, contract.getContractName()));
 
         var contractNumber = contract.getContractNumber();
-        var outputFile = fileService.createFile(outputDir, contractNumber + OUTPUT_FILE_SUFFIX);
-        var errorFile = fileService.createFile(outputDir, contractNumber + ERROR_FILE_SUFFIX);
+        var outputFile = fileService.createOrReplaceFile(outputDir, contractNumber + OUTPUT_FILE_SUFFIX);
+        var errorFile = fileService.createOrReplaceFile(outputDir, contractNumber + ERROR_FILE_SUFFIX);
 
         var patientsByContract = beneficiaryAdapter.getPatientsByContract(contractNumber);
         var patients = patientsByContract.getPatients();

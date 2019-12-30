@@ -13,8 +13,6 @@ import gov.cms.ab2d.worker.adapter.bluebutton.BeneficiaryAdapter;
 import gov.cms.ab2d.worker.adapter.bluebutton.GetPatientsByContractResponse;
 import gov.cms.ab2d.worker.adapter.bluebutton.GetPatientsByContractResponse.PatientDTO;
 import gov.cms.ab2d.worker.adapter.bluebutton.PatientClaimsProcessor;
-import gov.cms.ab2d.worker.processor.JobProcessor;
-import gov.cms.ab2d.worker.processor.JobProcessorImpl;
 import gov.cms.ab2d.worker.service.FileService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -95,7 +93,7 @@ class JobProcessorUnitTest {
         Mockito.when(beneficiaryAdapter.getPatientsByContract(anyString())).thenReturn(patientsByContract);
 
         when(fileService.createDirectory(Mockito.any(Path.class))).thenReturn(efsMountTmpDir);
-        when(fileService.createFile(Mockito.any(Path.class), anyString()))
+        when(fileService.createOrReplaceFile(Mockito.any(Path.class), anyString()))
                 .thenReturn(efsMountTmpDir)
                 .thenReturn(efsMountTmpDir);
 
@@ -176,7 +174,7 @@ class JobProcessorUnitTest {
         assertThat(processedJob.getStatusMessage(), is("100%"));
         assertThat(processedJob.getExpiresAt(), notNullValue());
         doVerify();
-        verify(fileService, times(2)).createFile(Mockito.any(Path.class), anyString());
+        verify(fileService, times(2)).createOrReplaceFile(Mockito.any(Path.class), anyString());
     }
 
     private void doVerify() {
