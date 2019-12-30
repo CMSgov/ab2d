@@ -321,6 +321,27 @@ class JobProcessorUnitTest {
         verify(fileService, never()).createOrReplaceFile(Mockito.any(Path.class), anyString());
     }
 
+    @Test
+    @DisplayName("When output directory creation fails due to unknown IOException, job fails gracefully")
+    void whenOutputDirectoryCreationFailsDueToUnknownReason_JobFailsGracefully() throws IOException {
+
+        var errMsg = "Could not create output directory";
+        var uncheckedIOE = new UncheckedIOException(errMsg, new IOException(errMsg));
+
+        Mockito.when(fileService.createDirectory(any())).thenThrow(uncheckedIOE);
+        Mockito.lenient().when(beneficiaryAdapter.getPatientsByContract(anyString())).thenReturn(patientsByContract);
+
+        var processedJob = cut.process(jobUuid);
+
+        assertThat(processedJob.getStatus(), is(JobStatus.FAILED));
+        assertThat(processedJob.getStatusMessage(), CoreMatchers.startsWith("Could not create output directory"));
+        assertThat(processedJob.getExpiresAt(), nullValue());
+
+        verify(fileService).createDirectory(Mockito.any());
+        verify(beneficiaryAdapter, never()).getPatientsByContract(anyString());
+        verify(fileService, never()).createOrReplaceFile(Mockito.any(Path.class), anyString());
+    }
+
 
     private List<OptOut> getOptOutRows(GetPatientsByContractResponse patientsByContract) {
         return patientsByContract.getPatients()

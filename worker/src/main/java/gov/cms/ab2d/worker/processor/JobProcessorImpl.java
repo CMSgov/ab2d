@@ -109,6 +109,8 @@ public class JobProcessorImpl implements JobProcessor {
                 log.warn("Directory already exists. Delete and create afresh ...");
                 deleteExistingDirectory(outputDirPath);
                 directory = fileService.createDirectory(outputDirPath);
+            } else {
+                throw e;
             }
         }
         return directory;
