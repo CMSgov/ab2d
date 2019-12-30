@@ -20,6 +20,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDate;
@@ -66,13 +70,11 @@ public class JobProcessorImpl implements JobProcessor {
         final Job job = jobRepository.findByJobUuid(jobUuid);
         log.info("Found job");
 
-        final List<Contract> attestedContracts = getAttestedContracts(job);
-        log.info("Job [{}] has [{}] attested contracts", jobUuid, attestedContracts.size());
-
         try {
             final Path outputDirPath = Paths.get(efsMount, jobUuid);
-            final Path outputDir = fileService.createDirectory(outputDirPath);
+            final Path outputDir = createOutputDirectory(outputDirPath);
 
+            final List<Contract> attestedContracts = getAttestedContracts(job);
             for (Contract contract : attestedContracts) {
                 log.info("Job [{}] - contract [{}] ", jobUuid, contract.getContractNumber());
 
@@ -95,6 +97,53 @@ public class JobProcessorImpl implements JobProcessor {
         }
 
         return job;
+    }
+
+    private Path createOutputDirectory(Path outputDirPath) {
+        Path directory = null;
+        try {
+            directory = fileService.createDirectory(outputDirPath);
+        } catch (UncheckedIOException e) {
+            final IOException cause = e.getCause();
+            if (cause != null && cause.getMessage().equalsIgnoreCase("Directory already exists")) {
+                log.warn("Directory already exists. Delete and create afresh ...");
+                deleteExistingDirectory(outputDirPath);
+                directory = fileService.createDirectory(outputDirPath);
+            }
+        }
+        return directory;
+    }
+
+    private void deleteExistingDirectory(Path outputDirPath) {
+        final File[] files = outputDirPath.toFile()
+                .listFiles((dir, name) -> name.toLowerCase().endsWith(OUTPUT_FILE_SUFFIX));
+
+        for (File file : files) {
+            final Path filePath = file.toPath();
+            if (file.isDirectory() || Files.isSymbolicLink(filePath)) {
+                var errMsg = "File is not a regular file";
+                log.error("{} - isDirectory: {}", errMsg, file.isDirectory());
+                continue;
+            }
+
+            if (Files.isRegularFile(filePath)) {
+                try {
+                    Files.delete(filePath);
+                } catch (IOException ex) {
+                    var errMsg = "Could not delete file ";
+                    log.error("{} : {}", errMsg, filePath.toAbsolutePath());
+                    throw new UncheckedIOException(errMsg + filePath.toFile().getName(), ex);
+                }
+            }
+        }
+
+        try {
+            Files.delete(outputDirPath);
+        } catch (IOException ex) {
+            var errMsg = "Could not delete directory ";
+            log.error("{} : {} ", errMsg, outputDirPath.toAbsolutePath());
+            throw new UncheckedIOException(errMsg + outputDirPath.toFile().getName(), ex);
+        }
     }
 
     private List<Contract> getAttestedContracts(Job job) {

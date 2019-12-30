@@ -14,6 +14,7 @@ import gov.cms.ab2d.worker.adapter.bluebutton.GetPatientsByContractResponse;
 import gov.cms.ab2d.worker.adapter.bluebutton.GetPatientsByContractResponse.PatientDTO;
 import gov.cms.ab2d.worker.adapter.bluebutton.PatientClaimsProcessor;
 import gov.cms.ab2d.worker.service.FileService;
+import org.hamcrest.CoreMatchers;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -25,7 +26,11 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.scheduling.annotation.AsyncResult;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.Arrays;
@@ -92,8 +97,8 @@ class JobProcessorUnitTest {
         patientsByContract = createPatientsByContractResponse(contract);
         Mockito.when(beneficiaryAdapter.getPatientsByContract(anyString())).thenReturn(patientsByContract);
 
-        when(fileService.createDirectory(Mockito.any(Path.class))).thenReturn(efsMountTmpDir);
-        when(fileService.createOrReplaceFile(Mockito.any(Path.class), anyString()))
+        Mockito.lenient().when(fileService.createDirectory(Mockito.any(Path.class))).thenReturn(efsMountTmpDir);
+        Mockito.lenient().when(fileService.createOrReplaceFile(Mockito.any(Path.class), anyString()))
                 .thenReturn(efsMountTmpDir)
                 .thenReturn(efsMountTmpDir);
 
@@ -255,6 +260,69 @@ class JobProcessorUnitTest {
         doVerify();
     }
 
+    @Test
+    @DisplayName("When output directory for the job already exists, delete it and create it afresh")
+    void whenOutputDirectoryAlreadyExist_DeleteItAndCreateItAfresh() throws IOException {
+
+        //create output dir, so it already exists
+        final Path outputDir = Paths.get(efsMountTmpDir.toString(), jobUuid);
+        Files.createDirectories(outputDir);
+
+        //create files inside the directory.
+        final Path filePath1 = Path.of(outputDir.toString(), "FILE_1.ndjson");
+        Files.createFile(filePath1);
+
+        final Path filePath2 = Path.of(outputDir.toString(), "FILE_2.ndjson");
+        Files.createFile(filePath2);
+
+        var errMsg = "Directory already exists";
+        var uncheckedIOE = new UncheckedIOException(errMsg, new IOException(errMsg));
+        Mockito.lenient().when(fileService.createDirectory(any()))
+                .thenThrow(uncheckedIOE)
+                .thenReturn(efsMountTmpDir);
+
+        var processedJob = cut.process(jobUuid);
+
+        assertThat(processedJob.getStatus(), is(JobStatus.SUCCESSFUL));
+        assertThat(processedJob.getStatusMessage(), is("100%"));
+        assertThat(processedJob.getExpiresAt(), notNullValue());
+
+        verify(fileService, times(2)).createDirectory(Mockito.any());
+        verify(beneficiaryAdapter).getPatientsByContract(anyString());
+        verify(patientClaimsProcessor, atLeast(1)).process(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any());
+    }
+
+
+    @Test
+    @DisplayName("When existing output directory has a file which is not a regular file, job fails gracefully")
+    void whenExistingOutputDirectoryHasSubDirectory_JobFailsGracefully() throws IOException {
+
+        //create output dir, so it already exists
+        final Path outputDir = Paths.get(efsMountTmpDir.toString(), jobUuid);
+        Files.createDirectories(outputDir);
+
+        //add a file in the directory which is NOT a regular file, but a directory
+        final Path aDirPath = Path.of(outputDir.toString(), "DIR_1.ndjson");
+        Files.createDirectories(aDirPath);
+        var errMsg = "Directory already exists";
+        var uncheckedIOE = new UncheckedIOException(errMsg, new IOException(errMsg));
+
+        Mockito.lenient().when(fileService.createDirectory(any()))
+                .thenThrow(uncheckedIOE)
+                .thenReturn(efsMountTmpDir);
+
+        Mockito.lenient().when(beneficiaryAdapter.getPatientsByContract(anyString())).thenReturn(patientsByContract);
+
+        var processedJob = cut.process(jobUuid);
+
+        assertThat(processedJob.getStatus(), is(JobStatus.FAILED));
+        assertThat(processedJob.getStatusMessage(), CoreMatchers.startsWith("Could not delete directory"));
+        assertThat(processedJob.getExpiresAt(), nullValue());
+
+        verify(fileService).createDirectory(Mockito.any());
+        verify(beneficiaryAdapter, never()).getPatientsByContract(anyString());
+        verify(fileService, never()).createOrReplaceFile(Mockito.any(Path.class), anyString());
+    }
 
 
     private List<OptOut> getOptOutRows(GetPatientsByContractResponse patientsByContract) {
