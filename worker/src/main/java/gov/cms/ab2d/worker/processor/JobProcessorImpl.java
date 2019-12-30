@@ -64,7 +64,7 @@ public class JobProcessorImpl implements JobProcessor {
     public Job process(final String jobUuid) {
 
         final Job job = jobRepository.findByJobUuid(jobUuid);
-        log.info("Found job : {}", jobUuid);
+        log.info("Found job");
 
         final List<Contract> attestedContracts = getAttestedContracts(job);
         log.info("Job [{}] has [{}] attested contracts", jobUuid, attestedContracts.size());
