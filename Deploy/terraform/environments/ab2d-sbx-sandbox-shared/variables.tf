@@ -7,7 +7,7 @@ variable "aws_profile" {
 }
 
 variable "env" {
-  default = "sbx-sandbox-shared"
+  default = "ab2d-sbx-sandbox-shared"
 }
 
 variable "vpc_id" {
@@ -208,7 +208,7 @@ variable "file_bucket_name" {
 }
 
 variable "logging_bucket_name" {
-  default = "ab2d-sbx-sandbox-shared-cloudtrail"
+  default = "ab2d-sbx-sandbox-cloudtrail"
 }
 
 variable "s3_username_whitelist" {

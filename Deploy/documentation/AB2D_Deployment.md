@@ -731,12 +731,20 @@
    $ export AWS_PROFILE=ab2d-sbx-sandbox
    ```
 
-1. Change to the "ab2d-shared" environment directory
+1. Change to the shared environment directory
 
+   *Example for "Dev" environment:*
+   
    ```ShellSession
-   $ cd ~/code/ab2d/Deploy/terraform/environments/ab2d-shared
+   $ cd ~/code/ab2d/Deploy/terraform/environments/ab2d-dev-shared
    ```
-
+   
+   *Example for "Sbx" environment:*
+   
+   ```ShellSession
+   $ cd ~/code/ab2d/Deploy/terraform/environments/ab2d-sbx-sandbox-shared
+   ```
+   
 1. Create "Ab2dAccessPolicy"
 
    ```ShellSession
@@ -817,10 +825,18 @@
    $ export AWS_PROFILE=ab2d-sbx-sandbox
    ```
 
-1. Change to the "ab2d-shared" environment directory
+1. Change to the shared environment directory
 
+   *Example for "Dev" environment:*
+   
    ```ShellSession
-   $ cd ~/code/ab2d/Deploy/terraform/environments/ab2d-shared
+   $ cd ~/code/ab2d/Deploy/terraform/environments/ab2d-dev-shared
+   ```
+   
+   *Example for "Sbx" environment:*
+   
+   ```ShellSession
+   $ cd ~/code/ab2d/Deploy/terraform/environments/ab2d-sbx-sandbox-shared
    ```
 
 1. Create "Ab2dInstanceRole" role
@@ -1043,8 +1059,9 @@
 
    ```ShellSession
    $ ./deploy-ab2d-to-cms.sh \
-     --environment=dev \
-     --shared-environment=dev-shared \
+     --environment=ab2d-dev \
+     --shared-environment=ab2d-dev-shared \
+     --region=us-east-1 \
      --vpc-id=vpc-0c6413ec40c5fdac3 \
      --ssh-username=ec2-user \
      --owner=842420567215 \
@@ -1058,8 +1075,9 @@
 
    ```ShellSession
    $ ./deploy-ab2d-to-cms.sh \
-     --environment=dev \
-     --shared-environment=dev-shared \
+     --environment=ab2d-dev \
+     --shared-environment=ab2d-dev-shared \
+     --region=us-east-1 \
      --vpc-id=vpc-0c6413ec40c5fdac3 \
      --ssh-username=ec2-user \
      --owner=842420567215 \
@@ -1075,8 +1093,9 @@
 
    ```ShellSession
    $ ./deploy-ab2d-to-cms.sh \
-     --environment=sbx-sandbox \
-     --shared-environment=sbx-sandbox-shared \
+     --environment=ab2d-sbx-sandbox \
+     --shared-environment=ab2d-sbx-sandbox-shared \
+     --region=us-east-1 \
      --vpc-id=vpc-08dbf3fa96684151c \
      --ssh-username=ec2-user \
      --owner=842420567215 \
@@ -1090,8 +1109,9 @@
 
    ```ShellSession
    $ ./deploy-ab2d-to-cms.sh \
-     --environment=sbx-sandbox \
-     --shared-environment=sbx-sandbox-shared \
+     --environment=ab2d-sbx-sandbox \
+     --shared-environment=ab2d-sbx-sandbox-shared \
+     --region=us-east-1 \
      --vpc-id=vpc-08dbf3fa96684151c \
      --ssh-username=ec2-user \
      --owner=842420567215 \

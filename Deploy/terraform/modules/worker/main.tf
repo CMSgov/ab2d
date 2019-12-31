@@ -1,9 +1,9 @@
 resource "aws_security_group" "worker" {
-  name        = "ab2d-${lower(var.env)}-worker-sg"
+  name        = "${lower(var.env)}-worker-sg"
   description = "Worker security group"
   vpc_id      = var.vpc_id
   tags = {
-    Name = "ab2d-${lower(var.env)}-worker-sg"
+    Name = "${lower(var.env)}-worker-sg"
   }
 }
 
@@ -42,11 +42,11 @@ resource "aws_security_group_rule" "db_access_worker" {
 #
 
 resource "aws_security_group" "efs" {
-  name        = "ab2d-${lower(var.env)}-efs-sg"
+  name        = "${lower(var.env)}-efs-sg"
   description = "EFS"
   vpc_id      = var.vpc_id
   tags = {
-    Name = "ab2d-${lower(var.env)}-efs-sg"
+    Name = "${lower(var.env)}-efs-sg"
   }
 }
 
@@ -77,7 +77,7 @@ resource "aws_efs_mount_target" "beta" {
 #
 
 resource "aws_ecs_cluster" "ab2d_worker" {
-  name = "ab2d-${lower(var.env)}-worker"
+  name = "${lower(var.env)}-worker"
 }
 
 resource "aws_ecs_task_definition" "worker" {
@@ -91,7 +91,7 @@ resource "aws_ecs_task_definition" "worker" {
   container_definitions = <<JSON
   [
     {
-      "name": "ab2d-${lower(var.env)}-worker",
+      "name": "${lower(var.env)}-worker",
       "image": "${var.docker_repository_url}",
       "essential": true,
       "memory": 2048,
@@ -132,7 +132,7 @@ JSON
 }
 
 resource "aws_ecs_service" "worker" {
-  name = "ab2d-${lower(var.env)}-worker"
+  name = "${lower(var.env)}-worker"
   cluster = aws_ecs_cluster.ab2d_worker.id
   task_definition = var.override_task_definition_arn != "" ? var.override_task_definition_arn : aws_ecs_task_definition.worker.arn
   desired_count = 5
@@ -144,13 +144,13 @@ resource "aws_ecs_service" "worker" {
 # security_groups = [aws_security_group.worker.id,var.enterprise-tools-sec-group-id,var.vpn-private-sec-group-id]
 # LSH SKIP FOR NOW END
 resource "aws_launch_configuration" "launch_config" {
-  name_prefix = "ab2d-${lower(var.env)}-worker-"
+  name_prefix = "${lower(var.env)}-worker-"
   image_id = var.ami_id
   instance_type = var.instance_type
   iam_instance_profile = var.iam_instance_profile
   key_name = var.ssh_key_name
   security_groups = [aws_security_group.worker.id]
-  user_data = templatefile("${path.module}/userdata.tpl",{ env = "${lower(var.env)}", cluster_name = "ab2d-${lower(var.env)}-worker", efs_id = var.efs_id })
+  user_data = templatefile("${path.module}/userdata.tpl",{ env = "${lower(var.env)}", cluster_name = "${lower(var.env)}-worker", efs_id = var.efs_id })
   lifecycle { create_before_destroy = true }
 }
 
@@ -170,7 +170,7 @@ resource "aws_autoscaling_group" "asg" {
   tags = [
     {
       key = "Name"
-      value = "ab2d-${lower(var.env)}-worker"
+      value = "${lower(var.env)}-worker"
       propagate_at_launch = true
     },
     {

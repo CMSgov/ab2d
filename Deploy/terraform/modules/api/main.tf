@@ -1,9 +1,9 @@
 resource "aws_security_group" "api" {
-  name        = "ab2d-${lower(var.env)}-api-sg"
+  name        = "${lower(var.env)}-api-sg"
   description = "API security group"
   vpc_id      = var.vpc_id
   tags = {
-    Name = "ab2d-${lower(var.env)}-api-sg"
+    Name = "${lower(var.env)}-api-sg"
   }
 }
 
@@ -106,11 +106,11 @@ resource "aws_security_group_rule" "db_access_api" {
 }
 
 resource "aws_security_group" "load_balancer" {
-  name        = "ab2d-${lower(var.env)}-load-balancer-sg"
+  name        = "${lower(var.env)}-load-balancer-sg"
   description = "API security group"
   vpc_id      = var.vpc_id
   tags = {
-    Name = "ab2d-${lower(var.env)}-load-balancer-sg"
+    Name = "${lower(var.env)}-load-balancer-sg"
   }
 }
 
@@ -125,7 +125,7 @@ resource "aws_security_group_rule" "load_balancer_access" {
 }
 
 resource "aws_ecs_cluster" "ab2d_api" {
-  name = "ab2d-${lower(var.env)}-api"
+  name = "${lower(var.env)}-api"
 }
 
 resource "aws_ecs_task_definition" "api" {
@@ -180,7 +180,7 @@ JSON
 }
 
 resource "aws_lb" "api" {
-  name = "ab2d-${lower(var.env)}"
+  name = "${lower(var.env)}"
   internal = false
   load_balancer_type = "application"
   security_groups = [aws_security_group.api.id, aws_security_group.load_balancer.id]
@@ -190,13 +190,13 @@ resource "aws_lb" "api" {
 
   access_logs {
     bucket = var.logging_bucket
-    prefix = "ab2d-${lower(var.env)}"
+    prefix = "${lower(var.env)}"
     enabled = true
   }
 }
 
 resource "aws_lb_target_group" "api" {
-  name = "ab2d-${lower(var.env)}-api-tg"
+  name = "${lower(var.env)}-api-tg"
   port = var.host_port
   protocol = "HTTP"
   vpc_id = var.vpc_id
@@ -241,13 +241,13 @@ resource "aws_ecs_service" "api" {
 # security_groups = [aws_security_group.api.id,var.enterprise-tools-sec-group-id,var.vpn-private-sec-group-id]
 # LSH SKIP FOR NOW BEGIN
 resource "aws_launch_configuration" "launch_config" {
-  name_prefix = "ab2d-${lower(var.env)}-"
+  name_prefix = "${lower(var.env)}-"
   image_id = var.ami_id
   instance_type = var.instance_type
   iam_instance_profile = var.iam_instance_profile
   key_name = var.ssh_key_name
   security_groups = [aws_security_group.api.id]  
-  user_data = templatefile("${path.module}/userdata.tpl",{ env = "${lower(var.env)}", cluster_name = "ab2d-${lower(var.env)}-api" })
+  user_data = templatefile("${path.module}/userdata.tpl",{ env = "${lower(var.env)}", cluster_name = "${lower(var.env)}-api" })
   lifecycle { create_before_destroy = true }
 }
 
@@ -269,7 +269,7 @@ resource "aws_autoscaling_group" "asg" {
   tags = [
     {
       key = "Name"
-      value = "ab2d-${lower(var.env)}-api"
+      value = "${lower(var.env)}-api"
       propagate_at_launch = true
     },
     {
