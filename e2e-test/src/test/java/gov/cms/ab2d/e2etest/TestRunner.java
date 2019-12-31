@@ -263,8 +263,6 @@ public class TestRunner {
 
         String jobUUid = getJobUuid();
 
-        System.out.println("\n\n\n**************" + jobUUid + "\n\n\n");
-
         HttpResponse<String> deleteResponse = cancelJobRequest(jobUUid);
         Assert.assertEquals(202, deleteResponse.statusCode());
 
