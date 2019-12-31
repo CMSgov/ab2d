@@ -883,7 +883,7 @@
    
 1. Destroy the "dev" environment
 
-   *Example for Dev environment testing within SemanticBits demo environment:*
+   *Example to destroy the Dev environment:*
    
    ```ShellSession
    $ ./bash/destroy-environment.sh \
@@ -891,7 +891,7 @@
      --shared-environment=ab2d-dev-shared
    ```
 
-   *Example to destroy the environment, but preserve the AMIs:*
+   *Example to destroy the Dev environment, but preserve the AMIs:*
    
    ```ShellSession
    $ ./bash/destroy-environment.sh \
@@ -900,9 +900,9 @@
      --keep-ami
    ```
 
-1. Destroy the "sbdemo-sbx" environment
+1. Destroy the "sbx" environment
 
-   *Example for Sandbox environment testing within SemanticBits demo environment:*
+   *Example to destroy the Sbx environment:*
 
    ```ShellSession
    $ ./bash/destroy-environment.sh \
@@ -910,7 +910,7 @@
      --shared-environment=ab2d-sbx-sandbox-shared
    ```
 
-   *Example to destroy the environment, but preserve the AMIs:*
+   *Example to destroy the Sbx environment, but preserve the AMIs:*
    
    ```ShellSession
    $ ./bash/destroy-environment.sh \

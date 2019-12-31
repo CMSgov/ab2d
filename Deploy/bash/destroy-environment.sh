@@ -87,18 +87,11 @@ echo "**************************************************************"
 cd "${START_DIR}"
 cd ../terraform/environments/$CMS_SHARED_ENV
 
-# LSH Temporary BEGIN
-# terraform init \
-#   -backend-config="bucket=ab2d-${CMS_ENV}-automation" \
-#   -backend-config="key=${CMS_SHARED_ENV}/terraform/terraform.tfstate" \
-#   -backend-config="region=us-east-1" \
-#   -backend-config="encrypt=true"
 terraform init \
-  -backend-config="bucket=cms-ab2d-automation" \
-  -backend-config="key=ab2d-shared/terraform/terraform.tfstate" \
+  -backend-config="bucket=${CMS_ENV}-automation" \
+  -backend-config="key=${CMS_SHARED_ENV}/terraform/terraform.tfstate" \
   -backend-config="region=us-east-1" \
   -backend-config="encrypt=true"
-# LSH Temporary END
 
 terraform validate
 
@@ -111,18 +104,11 @@ echo "***************************************************************"
 cd "${START_DIR}"
 cd ../terraform/environments/$CMS_ENV
 
-# LSH Temporary BEGIN
-# terraform init \
-#   -backend-config="bucket=ab2d-${CMS_ENV}-automation" \
-#   -backend-config="key=${CMS_ENV}/terraform/terraform.tfstate" \
-#   -backend-config="region=us-east-1" \
-#   -backend-config="encrypt=true"
 terraform init \
-  -backend-config="bucket=cms-ab2d-automation" \
-  -backend-config="key=ab2d-dev/terraform/terraform.tfstate" \
+  -backend-config="bucket=${CMS_ENV}-automation" \
+  -backend-config="key=${CMS_ENV}/terraform/terraform.tfstate" \
   -backend-config="region=us-east-1" \
   -backend-config="encrypt=true"
-# LSH Temporary END
 
 terraform validate
 
