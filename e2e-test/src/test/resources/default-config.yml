@@ -1,0 +1,5 @@
+okta-url: 'https://dev-418212.okta.com/oauth2/default/v1/token'
+username: 'EileenCFrierson@example.com'
+password: 'Te$t2019'
+ab2d-api-url: 'http://localhost:8080/api/v1/fhir/'
+ab2d-admin-url: 'http://localhost:8080/api/v1/admin/'

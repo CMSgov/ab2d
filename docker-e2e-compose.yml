@@ -25,12 +25,14 @@ services:
       - AB2D_DB_DATABASE=ab2d
       - AB2D_DB_USER=ab2d
       - AB2D_DB_PASSWORD=ab2d
-      - AB2D_EFS_MOUNT=/tmp/ab2d_efs_mount
-      - SPRING_PROFILE=prod
+      - AB2D_EFS_MOUNT=/tmp/ab2d_efs_mount/jobdownloads
+      - SPRING_PROFILE=e2e
     ports:
       - "8080:8080"
     depends_on:
       - db
+    volumes:
+      - tmp-volume:/tmp/ab2d_efs_mount/jobdownloads
   worker:
     build:
       context: ./worker
@@ -40,7 +42,12 @@ services:
       - AB2D_DB_DATABASE=ab2d
       - AB2D_DB_USER=ab2d
       - AB2D_DB_PASSWORD=ab2d
-      - AB2D_EFS_MOUNT=/tmp/ab2d_efs_mount
-      - SPRING_PROFILE=prod
+      - AB2D_EFS_MOUNT=/tmp/ab2d_efs_mount/jobdownloads
+      - SPRING_PROFILE=e2e
     depends_on:
       - db
+    volumes:
+      - tmp-volume:/tmp/ab2d_efs_mount/jobdownloads
+
+volumes:
+  tmp-volume:
