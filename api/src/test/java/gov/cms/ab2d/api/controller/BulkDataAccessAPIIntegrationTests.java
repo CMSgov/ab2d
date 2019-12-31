@@ -1,5 +1,6 @@
 package gov.cms.ab2d.api.controller;
 
+import com.google.gson.Gson;
 import com.jayway.jsonpath.JsonPath;
 import com.okta.jwt.JwtVerificationException;
 import gov.cms.ab2d.api.SpringBootApp;
@@ -866,5 +867,16 @@ public class BulkDataAccessAPIIntegrationTests {
                 get(API_PREFIX + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export").contentType(MediaType.APPLICATION_JSON)
                         .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(202));
+    }
+
+    @Test
+    public void testCapabilityStatement() throws Exception {
+        MvcResult mvcResult = this.mockMvc.perform(
+                get(API_PREFIX + FHIR_PREFIX + "/metadata").contentType(MediaType.APPLICATION_JSON)
+                        .header("Authorization", "Bearer " + token)).andReturn();
+
+        String body = mvcResult.getResponse().getContentAsString();
+
+        Assert.assertEquals(body, new Gson().toJson(new CapabilityStatement()));
     }
 }
