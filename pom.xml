@@ -7,11 +7,11 @@
         <module>common</module>
         <module>api</module>
         <module>worker</module>
-        <module>hpms</module>
         <module>bfd</module>
         <module>filter</module>
         <module>optout</module>
         <module>audit</module>
+        <module>hpms</module>
     </modules>
     <parent>
         <groupId>org.springframework.boot</groupId>
