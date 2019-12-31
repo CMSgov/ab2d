@@ -661,24 +661,21 @@ else
   echo "VPN access tag verified..."
 fi
 
-# Add ingress rule for VPN
+# Add or verify ingress rule for VPN
 
-IP_PERMISSIONS=$(echo "'IpProtocol=all," \
-		      "FromPort=0,ToPort=65535," \
-		      "IpRanges=[{" \
-		      "  CidrIp=10.232.32.0/19," \
-		      "  Description=\"ingress from VPN\" \
-                      "}]'" \
-	      )
+VPN_ACCESS_SECURITY_GROUP_INGRESS_RULE_EXISTS=$(aws --region "${REGION}" ec2 describe-security-groups \
+  --filters "Name=group-id,Values=${VPN_ACCESS_SECURITY_GROUP_ID}" \
+  --query "SecurityGroups[*].IpPermissions[*].IpRanges[?Description == 'ingress from VPN']".Description \
+  --output text)
 
-aws --region "${REGION}" ec2 authorize-security-group-ingress \
-  --group-id "${VPN_ACCESS_SECURITY_GROUP_ID}" \
-  --ip-permissions 'IpProtocol=all, \
-    FromPort=0,ToPort=65535, \
-    IpRanges=[{ \
-      CidrIp=10.232.32.0/19, \
-      Description="ingress from VPN" \
-    }]'
+if [ -z "${VPN_ACCESS_SECURITY_GROUP_INGRESS_RULE_EXISTS}" ]; then
+  echo "Adding ingress rule for VPN..."
+  aws --region "${REGION}" ec2 authorize-security-group-ingress \
+    --group-id "${VPN_ACCESS_SECURITY_GROUP_ID}" \
+    --ip-permissions IpProtocol=-1,IpRanges='[{CidrIp=10.232.32.0/19,Description="ingress from VPN"}]'
+else
+  echo "Ingress rule for VPN verified..."
+fi
 
 #
 # AMI Generation for application nodes
