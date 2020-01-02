@@ -15,6 +15,8 @@
 
 ## Configure local repo with "git-secrets" protection
 
+*This must be done each time you clone a new copy of the repo*
+
 1. Install git-secrets (on MacOS with brew simply run: `brew install git-secrets`)
     - See the README.md for "git-secrets" for more info or to install on other platforms:
 
