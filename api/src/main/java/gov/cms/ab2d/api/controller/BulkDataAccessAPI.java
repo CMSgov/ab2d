@@ -351,27 +351,15 @@ public class BulkDataAccessAPI {
         }
     }
 
-    @ApiOperation(value = "Downloads a file produced by an export job.", response = String.class,
-            produces = "application/fhir+ndjson",
+    @ApiOperation(value = "A request for the FHIR capability statement", response = String.class,
+            produces = "application/json",
             authorizations = {
                     @Authorization(value = "Authorization", scopes = {
-                            @AuthorizationScope(description = "Downloads Export File", scope = "Authorization") })
+                            @AuthorizationScope(description = "Returns the FHIR capability statement", scope = "Authorization") })
             })
-    @ApiImplicitParams(value = {
-            @ApiImplicitParam(name = "Accept", required = false, paramType = "header", value =
-                    "application/fhir+json")}
-    )
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Returns the requested file as " +
-                    "application/fhir+ndjson.", responseHeaders = {
-                    @ResponseHeader(name = "Content-Type", description =
-                            "Content-Type header that matches the file format being delivered: " +
-                                    "application/fhir+ndjson",
-                            response = String.class)}, response =
-                    String.class),
-            @ApiResponse(code = 404, message =
-                    "Job or file not found. " + GENERIC_FHIR_ERR_MSG, response =
-                    SwaggerConfig.OperationOutcome.class)}
+            @ApiResponse(code = 200, message = "Returns the FHIR capability statement", response =
+                    String.class)}
     )
     @ResponseStatus(value = HttpStatus.OK)
     @GetMapping(value = "/metadata")
