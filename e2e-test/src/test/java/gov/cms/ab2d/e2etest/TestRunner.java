@@ -34,7 +34,7 @@ public class TestRunner {
     public static DockerComposeContainer container = new DockerComposeContainer(
             new File("../docker-e2e-compose.yml"))
             .withExposedService("db", 5432)
-            .withExposedService("api", 8080);
+            .withExposedService("api", 8080).withPull(false);
 
     private static HttpClient httpClient;
 
