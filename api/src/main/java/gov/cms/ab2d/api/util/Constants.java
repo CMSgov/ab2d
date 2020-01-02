@@ -18,9 +18,9 @@ public final class Constants {
 
     public static final String ADMIN_ROLE = "ADMIN";
 
-    public static final String BASE_URL = "https://sandbox.ab2d.cms.gov";
+    public static final String BASE_SANDBOX_URL = "https://sandbox.ab2d.cms.gov";
 
-    public static final String FHIR_URL = BASE_URL + API_PREFIX + FHIR_PREFIX;
+    public static final String FHIR_SANDBOX_URL = BASE_SANDBOX_URL + API_PREFIX + FHIR_PREFIX;
 
     private Constants() {
     }

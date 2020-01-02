@@ -43,7 +43,7 @@ class CapabilityStatement {
 
     private final class Implementation {
 
-        private final String url = BASE_URL;
+        private final String url = BASE_SANDBOX_URL;
     }
 
     private final class Rest {
@@ -57,17 +57,17 @@ class CapabilityStatement {
         private final List<Operation> operation = new ArrayList<>();
 
         Rest() {
-            Operation exportOperation = new Operation("export", new Definition(FHIR_URL + "/Patient/$export"));
+            Operation exportOperation = new Operation("export", new Definition(FHIR_SANDBOX_URL + "/Patient/$export"));
             operation.add(exportOperation);
-            Operation exportContractOperation = new Operation("export by contract", new Definition(FHIR_URL + "Group/{contractNumber}/$export"));
+            Operation exportContractOperation = new Operation("export by contract", new Definition(FHIR_SANDBOX_URL + "Group/{contractNumber}/$export"));
             operation.add(exportContractOperation);
-            Operation cancelOperation = new Operation("cancel", new Definition(FHIR_URL + "/Job/{jobUuid}/$status"));
+            Operation cancelOperation = new Operation("cancel", new Definition(FHIR_SANDBOX_URL + "/Job/{jobUuid}/$status"));
             operation.add(cancelOperation);
-            Operation statusOperation = new Operation("status", new Definition(FHIR_URL + "/Job/{jobUuid}/$status"));
+            Operation statusOperation = new Operation("status", new Definition(FHIR_SANDBOX_URL + "/Job/{jobUuid}/$status"));
             operation.add(statusOperation);
-            Operation downloadOperation = new Operation("download", new Definition(FHIR_URL + "/Job/{jobUuid}/file/{filename}"));
+            Operation downloadOperation = new Operation("download", new Definition(FHIR_SANDBOX_URL + "/Job/{jobUuid}/file/{filename}"));
             operation.add(downloadOperation);
-            Operation capabilityOperation = new Operation("capability", new Definition(FHIR_URL + "/metadata"));
+            Operation capabilityOperation = new Operation("capability", new Definition(FHIR_SANDBOX_URL + "/metadata"));
             operation.add(capabilityOperation);
 
             Interaction interactionRead = new Interaction("read");
