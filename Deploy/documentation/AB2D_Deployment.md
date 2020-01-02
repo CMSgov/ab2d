@@ -1066,7 +1066,7 @@
      --ssh-username=ec2-user \
      --owner=842420567215 \
      --ec2-instance-type=m5.xlarge \
-     --database-secret-datetime=2019-12-03-15-19-01 \
+     --database-secret-datetime=2020-01-02-09-15-01 \
      --build-new-images \
      --auto-approve
    ```
@@ -1082,7 +1082,7 @@
      --ssh-username=ec2-user \
      --owner=842420567215 \
      --ec2-instance-type=m5.xlarge \
-     --database-secret-datetime=2019-12-03-15-19-01 \
+     --database-secret-datetime=2020-01-02-09-15-01 \
      --use-existing-images \
      --auto-approve
    ```
@@ -1100,7 +1100,7 @@
      --ssh-username=ec2-user \
      --owner=842420567215 \
      --ec2-instance-type=m5.xlarge \
-     --database-secret-datetime=2019-12-03-15-19-01 \
+     --database-secret-datetime=2020-01-02-09-15-01 \
      --build-new-images \
      --auto-approve
    ```
@@ -1116,7 +1116,7 @@
      --ssh-username=ec2-user \
      --owner=842420567215 \
      --ec2-instance-type=m5.xlarge \
-     --database-secret-datetime=2019-12-03-15-19-01 \
+     --database-secret-datetime=2020-01-02-09-15-01 \
      --use-existing-images \
      --auto-approve
    ```
