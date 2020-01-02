@@ -400,6 +400,7 @@ public class BulkDataAccessAPIIntegrationTests {
         jobOutput.setFhirResourceType("ExplanationOfBenefits");
         jobOutput.setJob(job);
         jobOutput.setFilePath("file.ndjson");
+        jobOutput.setError(false);
         job.getJobOutputs().add(jobOutput);
 
         JobOutput errorJobOutput = new JobOutput();
@@ -550,6 +551,7 @@ public class BulkDataAccessAPIIntegrationTests {
         jobOutput.setFhirResourceType("ExplanationOfBenefits");
         jobOutput.setJob(job);
         jobOutput.setFilePath("test.ndjson");
+        jobOutput.setError(false);
         job.getJobOutputs().add(jobOutput);
 
         jobRepository.saveAndFlush(job);
@@ -608,6 +610,7 @@ public class BulkDataAccessAPIIntegrationTests {
         jobOutput.setFhirResourceType("ExplanationOfBenefits");
         jobOutput.setJob(job);
         jobOutput.setFilePath("testmissing.ndjson");
+        jobOutput.setError(false);
         job.getJobOutputs().add(jobOutput);
 
         jobRepository.saveAndFlush(job);
@@ -651,6 +654,7 @@ public class BulkDataAccessAPIIntegrationTests {
         jobOutput.setFhirResourceType("ExplanationOfBenefits");
         jobOutput.setJob(job);
         jobOutput.setFilePath("test.ndjson");
+        jobOutput.setError(false);
         job.getJobOutputs().add(jobOutput);
 
         jobRepository.saveAndFlush(job);
