@@ -297,6 +297,9 @@ public class TestRunner {
         HttpResponse<String> downloadResponse = fileDownloadRequest(jobUUid, "S0001.ndjson");
         Assert.assertEquals(200, downloadResponse.statusCode());
         String fileContent = downloadResponse.body();
+
+        // Some of the data that is returned will be variable and will change from request to request, so not every
+        // JSON object can be verified
         final JSONObject fileJson = new JSONObject(fileContent);
         Assert.assertEquals(8, fileJson.length());
         Assert.assertEquals("ExplanationOfBenefit", fileJson.getString("resourceType"));
@@ -389,6 +392,9 @@ public class TestRunner {
         HttpResponse<String> downloadResponse = fileDownloadRequest(jobUUid, "S0001.ndjson");
         Assert.assertEquals(200, downloadResponse.statusCode());
         String fileContent = downloadResponse.body();
+
+        // Some of the data that is returned will be variable and will change from request to request, so not every
+        // JSON object can be verified
         final JSONObject fileJson = new JSONObject(fileContent);
         Assert.assertEquals(8, fileJson.length());
         Assert.assertEquals("ExplanationOfBenefit", fileJson.getString("resourceType"));
