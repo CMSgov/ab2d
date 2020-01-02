@@ -1,5 +1,8 @@
 package gov.cms.ab2d.worker.service;
 
+import gov.cms.ab2d.worker.processor.JobPreProcessor;
+import gov.cms.ab2d.worker.processor.JobProcessor;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -9,19 +12,17 @@ import org.springframework.stereotype.Service;
  */
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class WorkerServiceImpl implements WorkerService {
 
-    private final JobProcessingService jobService;
+    private final JobPreProcessor jobPreprocessor;
+    private final JobProcessor jobProcessor;
 
     @Value("${delay-processing}")
     private String delayProcessing;
 
-    public WorkerServiceImpl(JobProcessingService jobService) {
-        this.jobService = jobService;
-    }
-
     @Override
-    public void process(String jobId) {
+    public void process(String jobUuid) {
         // This exists for the e2e tests so that when a status request comes in after the export, there is enough time
         // so that the job doesn't get processed and finishes. This way incomplete statuses can be tested. This should never
         // run in any other environment
@@ -33,12 +34,10 @@ public class WorkerServiceImpl implements WorkerService {
             }
         }
 
-        jobService.putJobInProgress(jobId);
+        jobPreprocessor.preprocess(jobUuid);
         log.info("Job was put in progress");
-        jobService.processJob(jobId);
+
+        jobProcessor.process(jobUuid);
         log.info("Job was processed");
     }
-
-
-
 }

@@ -1,4 +1,4 @@
-package gov.cms.ab2d.worker.service;
+package gov.cms.ab2d.worker.processor;
 
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.Job;
@@ -12,14 +12,18 @@ import gov.cms.ab2d.common.repository.OptOutRepository;
 import gov.cms.ab2d.worker.adapter.bluebutton.BeneficiaryAdapter;
 import gov.cms.ab2d.worker.adapter.bluebutton.GetPatientsByContractResponse;
 import gov.cms.ab2d.worker.adapter.bluebutton.PatientClaimsProcessor;
+import gov.cms.ab2d.worker.service.FileService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDate;
@@ -27,13 +31,12 @@ import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.locks.ReentrantLock;
 
 import static gov.cms.ab2d.common.model.JobStatus.CANCELLED;
-import static gov.cms.ab2d.common.model.JobStatus.IN_PROGRESS;
-import static gov.cms.ab2d.common.model.JobStatus.SUBMITTED;
 import static gov.cms.ab2d.common.model.JobStatus.SUCCESSFUL;
 import static gov.cms.ab2d.common.util.Constants.CONTRACT_LOG;
 import static net.logstash.logback.argument.StructuredArguments.keyValue;
@@ -42,7 +45,7 @@ import static net.logstash.logback.argument.StructuredArguments.keyValue;
 @Service
 @RequiredArgsConstructor
 @SuppressWarnings("PMD.TooManyStaticImports")
-public class JobProcessingServiceImpl implements JobProcessingService {
+public class JobProcessorImpl implements JobProcessor {
     private static final String OUTPUT_FILE_SUFFIX = ".ndjson";
     private static final String ERROR_FILE_SUFFIX = "_error.ndjson";
 
@@ -61,41 +64,17 @@ public class JobProcessingServiceImpl implements JobProcessingService {
 
 
     @Override
-    @Transactional(propagation = Propagation.REQUIRES_NEW, isolation = Isolation.SERIALIZABLE)
-    public Job putJobInProgress(String jobId) {
-
-        final Job job = jobRepository.findByJobUuid(jobId);
-        if (job == null) {
-            log.error("Job was not found");
-            throw new IllegalArgumentException("Job " + jobId + " was not found");
-        }
-
-        // validate status is SUBMITTED
-        if (!SUBMITTED.equals(job.getStatus())) {
-            final String errMsg = String.format("Job %s is not in %s status.", jobId, SUBMITTED);
-            log.error("Job is not in submitted status");
-            throw new IllegalArgumentException(errMsg);
-        }
-
-        job.setStatus(IN_PROGRESS);
-
-        return jobRepository.save(job);
-    }
-
-    @Override
     @Transactional(propagation = Propagation.NEVER)
-    public Job processJob(final String jobUuid) {
+    public Job process(final String jobUuid) {
 
         final Job job = jobRepository.findByJobUuid(jobUuid);
-        log.info("Found job : {}", jobUuid);
-
-        final List<Contract> attestedContracts = getAttestedContracts(job);
-        log.info("Job [{}] has [{}] attested contracts", jobUuid, attestedContracts.size());
+        log.info("Found job");
 
         try {
             final Path outputDirPath = Paths.get(efsMount, jobUuid);
-            final Path outputDir = fileService.createDirectory(outputDirPath);
+            final Path outputDir = createOutputDirectory(outputDirPath);
 
+            final List<Contract> attestedContracts = getAttestedContracts(job);
             for (Contract contract : attestedContracts) {
                 log.info("Job [{}] - contract [{}] ", jobUuid, contract.getContractNumber());
 
@@ -120,6 +99,55 @@ public class JobProcessingServiceImpl implements JobProcessingService {
         return job;
     }
 
+    private Path createOutputDirectory(Path outputDirPath) {
+        Path directory = null;
+        try {
+            directory = fileService.createDirectory(outputDirPath);
+        } catch (UncheckedIOException e) {
+            final IOException cause = e.getCause();
+            if (cause != null && cause.getMessage().equalsIgnoreCase("Directory already exists")) {
+                log.warn("Directory already exists. Delete and create afresh ...");
+                deleteExistingDirectory(outputDirPath);
+                directory = fileService.createDirectory(outputDirPath);
+            } else {
+                throw e;
+            }
+        }
+        return directory;
+    }
+
+    private void deleteExistingDirectory(Path outputDirPath) {
+        final File[] files = outputDirPath.toFile()
+                .listFiles((dir, name) -> name.toLowerCase().endsWith(OUTPUT_FILE_SUFFIX));
+
+        for (File file : files) {
+            final Path filePath = file.toPath();
+            if (file.isDirectory() || Files.isSymbolicLink(filePath)) {
+                var errMsg = "File is not a regular file";
+                log.error("{} - isDirectory: {}", errMsg, file.isDirectory());
+                continue;
+            }
+
+            if (Files.isRegularFile(filePath)) {
+                try {
+                    Files.delete(filePath);
+                } catch (IOException ex) {
+                    var errMsg = "Could not delete file ";
+                    log.error("{} : {}", errMsg, filePath.toAbsolutePath());
+                    throw new UncheckedIOException(errMsg + filePath.toFile().getName(), ex);
+                }
+            }
+        }
+
+        try {
+            Files.delete(outputDirPath);
+        } catch (IOException ex) {
+            var errMsg = "Could not delete directory ";
+            log.error("{} : {} ", errMsg, outputDirPath.toAbsolutePath());
+            throw new UncheckedIOException(errMsg + outputDirPath.toFile().getName(), ex);
+        }
+    }
+
     private List<Contract> getAttestedContracts(Job job) {
 
         // when the job is submitted for a specific contract, process the export for only that contract.
@@ -142,8 +170,8 @@ public class JobProcessingServiceImpl implements JobProcessingService {
         log.info("Beginning to process contract {}", keyValue(CONTRACT_LOG, contract.getContractName()));
 
         var contractNumber = contract.getContractNumber();
-        var outputFile = fileService.createFile(outputDir, contractNumber + OUTPUT_FILE_SUFFIX);
-        var errorFile = fileService.createFile(outputDir, contractNumber + ERROR_FILE_SUFFIX);
+        var outputFile = fileService.createOrReplaceFile(outputDir, contractNumber + OUTPUT_FILE_SUFFIX);
+        var errorFile = fileService.createOrReplaceFile(outputDir, contractNumber + ERROR_FILE_SUFFIX);
 
         var patientsByContract = beneficiaryAdapter.getPatientsByContract(contractNumber);
         var patients = patientsByContract.getPatients();
@@ -156,7 +184,7 @@ public class JobProcessingServiceImpl implements JobProcessingService {
         JobStatus jobStatus = null;
 
         int recordsProcessedCount = 0;
-        final List<Future<Integer>> futureResourcesHandles = new ArrayList<>();
+        final List<Future<Integer>> futureHandles = new ArrayList<>();
         for (GetPatientsByContractResponse.PatientDTO patient : patients) {
             ++recordsProcessedCount;
 
@@ -167,10 +195,10 @@ public class JobProcessingServiceImpl implements JobProcessingService {
                 continue;
             }
 
-            futureResourcesHandles.add(patientClaimsProcessor.process(patientId, lock, outputFile, errorFile));
+            futureHandles.add(patientClaimsProcessor.process(patientId, lock, outputFile, errorFile));
 
             if (recordsProcessedCount % cancellationCheckFrequency == 0) {
-                errorCount += processHandles(futureResourcesHandles);
+                errorCount += processHandles(futureHandles);
 
                 // A Job could run for a long time, perhaps hours.
                 // While the job is in progress, the job could be cancelled.
@@ -181,7 +209,6 @@ public class JobProcessingServiceImpl implements JobProcessingService {
                     log.warn("Job [{}] has been cancelled. Attempting to stop processing the job shortly ... ", jobUuid);
                     break;
                 }
-
             }
         }
 
@@ -190,7 +217,7 @@ public class JobProcessingServiceImpl implements JobProcessingService {
             log.warn("{} - JobUuid :[{}]", errMsg, jobUuid);
 
             // cancel any outstanding futures that have not started processing.
-            futureResourcesHandles.parallelStream().forEach(future -> future.cancel(false));
+            futureHandles.parallelStream().forEach(future -> future.cancel(false));
 
             //At this point, there may be a few futures that are already in progress.
             //But all the futures that are not yet in progress would be cancelled.
@@ -198,11 +225,11 @@ public class JobProcessingServiceImpl implements JobProcessingService {
             throw new JobCancelledException(errMsg);
         }
 
-
-        while (!futureResourcesHandles.isEmpty()) {
+        while (!futureHandles.isEmpty()) {
             sleep();
-            errorCount += processHandles(futureResourcesHandles);
+            errorCount += processHandles(futureHandles);
         }
+
 
         final List<JobOutput> jobOutputs = new ArrayList<>();
         if (errorCount < patientCount) {
@@ -222,6 +249,7 @@ public class JobProcessingServiceImpl implements JobProcessingService {
         return CANCELLED.equals(jobStatus);
     }
 
+
     private boolean isOptOutPatient(String patientId) {
 
         final List<OptOut> optOuts = optOutRepository.findByHicn(patientId);
@@ -237,10 +265,10 @@ public class JobProcessingServiceImpl implements JobProcessingService {
                 .anyMatch(optOut -> optOut.getEffectiveDate().isBefore(tomorrow));
     }
 
-    private int processHandles(List<Future<Integer>> futureResourcesHandles) {
+    private int processHandles(List<Future<Integer>> futureHandles) {
         int errorCount = 0;
 
-        var iterator = futureResourcesHandles.iterator();
+        var iterator = futureHandles.iterator();
         while (iterator.hasNext()) {
             var future = iterator.next();
             if (future.isDone()) {
@@ -257,6 +285,11 @@ public class JobProcessingServiceImpl implements JobProcessingService {
                     final String errMsg = "exception while processing patient ";
                     log.error(errMsg);
                     throw new RuntimeException(errMsg, e.getCause());
+                } catch (CancellationException e) {
+                    // This could happen in the rare event that a job was cancelled mid-process.
+                    // due to which the futures in the queue (that were not yet in progress) were cancelled.
+                    // Nothing to be done here
+                    log.warn("CancellationException while calling Future.get() - Job may have been cancelled");
                 }
                 iterator.remove();
             }
