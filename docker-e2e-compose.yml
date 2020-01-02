@@ -49,5 +49,6 @@ services:
     volumes:
       - tmp-volume:/tmp/ab2d_efs_mount/jobdownloads
 
+# This needs a shared volume so that both the API and worker module can access the ndjson files being generated
 volumes:
   tmp-volume:
