@@ -1075,7 +1075,10 @@ if [ -n "${BUILD_NEW_IMAGES}" ]; then
 
   cd "${START_DIR}"
   cd ..
-  make docker-build
+
+  # Note that I can't build with "make docker-build" because test containers
+  # try to run inside the docker container. Using "mvn clean package" instead.
+  mvn clean package
   sleep 5
 
   # Build API docker image
