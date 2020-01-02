@@ -3,6 +3,7 @@ env:
     # The CC_TEST_REPORTER_ID
     - secure: OY3JWzy8JxPXXqT/YOnYcwFGm46DgQdGMV5dkhDjrBeKgfb2H7ohY6GkAStQv8vV6LE/yu3N6f+XGuPwH2q27Q3I8daYeNY2MtGMt+wokkqhkJWG/XdqQodr+RbkUYN7BHiYQC6ZQKdh9NIA4JIWsNdh8TKrc7cFxy4WM5ACGO9pf6y96GRVT1CHIlwaYzXna+dE0Khbg3EGSa0tcEwLUmYdPGwK+6hiMeX0wTbhDr4YEh5kdnIAFuDDfj+KKmT9FJeTJXywFc9I6YuuYLL+z1g4GMAWCV7PoZdBOLVZQXzP/A8IE1jN7bSNean2risBRXi+PBKohZuvjpLb4UbTTp1+HR5FzPCKpkNvkLmyHpqaDCbDXfXSzMEwWxbj/6vmDK+hO5fqZrI/iO0rNugixxOKEl/ZPXga2Zf1nVxEGzfI86BVNHMegSL1AfLJ5kI+P/0HGnUBbnSAD/kH8k8Rd7r/PHCqoN7VwUhuirI5C9Ulbd6iMm1C8sgq7lOogJvVoS939lP3IcrtNhqmS3Wyc2YsWUE3RlIiJizOQB4K925el41o8qQmDvxIbB8tiDaqfkas3OjDVCr+JjzczXHgjV6Uze5EQovIQ4SvgNidZkjNyei+piJ+lwHx/34jBAC4GNs7uFgkA+RTrNtZCyHK2f2lv7OyNNzWyC3XMRIyQsM=
     - codeclimate: true
+    - DOCKER_COMPOSE_VERSION: 1.24.1
 
 dist: bionic
 language: java
@@ -17,6 +18,10 @@ before_install:
   - sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
   - sudo apt-get update
   - sudo apt-get -y -o Dpkg::Options::="--force-confnew" install docker-ce
+  - sudo rm /usr/local/bin/docker-compose
+  - curl -L https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION}/docker-compose-`uname -s`-`uname -m` > docker-compose
+  - chmod +x docker-compose
+  - sudo mv docker-compose /usr/local/bin
   - docker-compose version
 
 install: true
