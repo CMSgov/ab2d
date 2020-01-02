@@ -93,7 +93,7 @@ class CapabilityStatement {
 
         private final String text;
 
-        public Service(String text) {
+        Service(String text) {
             Coding codingObj = new Coding("http://hl7.org/fhir/ValueSet/restful-security-service", "OAuth", "OAuth");
             coding.add(codingObj);
 
