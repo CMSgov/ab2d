@@ -15,6 +15,14 @@
 
 ## Configure local repo with "git-secrets" protection
 
+*This must be done each time you clone a new copy of the repo*
+
+1. Install git-secrets (on MacOS with brew simply run: `brew install git-secrets`)
+    - See the README.md for "git-secrets" for more info or to install on other platforms:
+
+       > https://github.com/awslabs/git-secrets
+
+
 1. Change to the repo directory
 
    *Format:*
@@ -32,7 +40,7 @@
 1. Install "git-secrets" for the repo
 
    ```ShellSession
-   $ git secrets --install
+   $ git-secrets --install
    ```
 
 1. Note the output
@@ -46,12 +54,8 @@
 1. Register AWS
 
    ```ShellSession
-   $ git secrets --register-aws
+   $ git-secrets --register-aws
    ```
-
-1. See the README.md for "git-secrets" for more info
-
-   > https://github.com/awslabs/git-secrets
 
 ## Running in Docker
 
