@@ -20,6 +20,10 @@ public class FileServiceImpl implements FileService {
     public Path createDirectory(Path outputDir) {
         Path outputDirectory = null;
         try {
+            if (Files.exists(outputDir)) {
+                throw new IOException("Directory already exists");
+            }
+
             outputDirectory = Files.createDirectories(outputDir);
         } catch (IOException e) {
             final String errMsg = "Could not create output directory : ";

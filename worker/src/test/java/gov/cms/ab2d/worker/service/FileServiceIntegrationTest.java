@@ -93,6 +93,18 @@ public class FileServiceIntegrationTest {
     }
 
     @Test
+    void testCreateDirectoryWhenDirectoryAlreadyExist_ThrowsException() throws IOException {
+        Files.deleteIfExists(tmpEfsMountDir.toPath());
+        final Path directory = cut.createDirectory(tmpEfsMountDir.toPath());
+        Assertions.assertTrue(directory.toFile().isDirectory());
+
+        var exceptionThrown = assertThrows(RuntimeException.class,
+                () -> cut.createDirectory(tmpEfsMountDir.toPath()));
+
+        assertThat(exceptionThrown.getMessage(), startsWith("Could not create output directory"));
+    }
+
+    @Test
     void testAppendToFile() throws IOException {
         Files.deleteIfExists(tmpEfsMountDir.toPath());
         cut.createDirectory(tmpEfsMountDir.toPath());
