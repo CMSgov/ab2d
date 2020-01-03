@@ -2,6 +2,7 @@ package gov.cms.ab2d.api.controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.Gson;
 import gov.cms.ab2d.api.config.SwaggerConfig;
 import gov.cms.ab2d.common.service.JobService;
 import gov.cms.ab2d.common.model.Job;
@@ -348,5 +349,23 @@ public class BulkDataAccessAPI {
 
             return new ResponseEntity<>(null, null, HttpStatus.OK);
         }
+    }
+
+    @ApiOperation(value = "A request for the FHIR capability statement", response = String.class,
+            produces = "application/json",
+            authorizations = {
+                    @Authorization(value = "Authorization", scopes = {
+                            @AuthorizationScope(description = "Returns the FHIR capability statement", scope = "Authorization") })
+            })
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Returns the FHIR capability statement", response =
+                    String.class)}
+    )
+    @ResponseStatus(value = HttpStatus.OK)
+    @GetMapping(value = "/metadata")
+    public ResponseEntity<String> capabilityStatement() {
+        CapabilityStatement capabilityStatement = new CapabilityStatement();
+        String json = new Gson().toJson(capabilityStatement);
+        return new ResponseEntity<>(json, null, HttpStatus.OK);
     }
 }
