@@ -221,7 +221,7 @@ public class JobProcessorImpl implements JobProcessor {
 
         if (isCancelled) {
             final String errMsg = "Job was cancelled while it was being processed";
-            log.warn("{} - JobUuid :[{}]", errMsg, jobUuid);
+            log.warn("{}", errMsg);
             throw new JobCancelledException(errMsg);
         }
 
