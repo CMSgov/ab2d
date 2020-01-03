@@ -34,6 +34,11 @@ case $i in
   CMS_SHARED_ENV=$(echo $SHARED_ENVIRONMENT | tr '[:upper:]' '[:lower:]')
   shift # past argument=value
   ;;
+  --ecr-repo-environment=*)
+  ECR_REPO_ENVIRONMENT="${i#*=}"
+  CMS_ECR_REPO_ENV=$(echo $ECR_REPO_ENVIRONMENT | tr '[:upper:]' '[:lower:]')
+  shift # past argument=value
+  ;;
   --region=*)
   REGION="${i#*=}"
   shift # past argument=value
@@ -147,6 +152,8 @@ echo "**************************************************************"
 cd "${START_DIR}"
 cd terraform/environments/$CMS_SHARED_ENV
 
+rm -f *.tfvars
+
 terraform init \
     -backend-config="bucket=${CMS_ENV}-automation" \
     -backend-config="key=${CMS_SHARED_ENV}/terraform/terraform.tfstate" \
@@ -163,6 +170,8 @@ echo "***************************************************************"
 
 cd "${START_DIR}"
 cd terraform/environments/$CMS_ENV
+
+rm -f *.tfvars
 
 terraform init \
     -backend-config="bucket=${CMS_ENV}-automation" \
@@ -1058,6 +1067,33 @@ fi
 # Deploy AWS application modules
 #
 
+# Set environment to the AWS account where the shared ECR repository is maintained
+    
+export AWS_PROFILE="${CMS_ECR_REPO_ENV}"
+
+cd "${START_DIR}"
+cd terraform/environments/$CMS_ECR_REPO_ENV
+
+# Get ecr repo aws account
+
+ECR_REPO_AWS_ACCOUNT=$(aws --region "${REGION}" sts get-caller-identity \
+  --query Account \
+  --output text)
+
+# Apply ecr repo policy to the "ab2d_api" repo
+
+aws --region "${REGION}" ecr set-repository-policy \
+  --repository-name ab2d_api \
+  --policy-text file://ab2d-ecr-policy.json
+
+# Apply ecr repo policy to the "ab2d_worker" repo
+
+aws --region "${REGION}" ecr set-repository-policy \
+  --repository-name ab2d_worker \
+  --policy-text file://ab2d-ecr-policy.json
+
+# Build new images or use existing images
+
 if [ -n "${BUILD_NEW_IMAGES}" ]; then
 
   # Build and push API and worker to ECR
@@ -1081,19 +1117,23 @@ if [ -n "${BUILD_NEW_IMAGES}" ]; then
   mvn clean package
   sleep 5
 
+  # Create an image version using the seven character git commit id
+
+  IMAGE_VERSION=$(git rev-parse HEAD | cut -c1-7)
+  
   # Build API docker image
 
   cd "${START_DIR}"
   cd ../api
   docker build \
-    --tag "ab2d_api:latest" .
+    --tag "ab2d_api:${IMAGE_VERSION}" .
 
   # Build worker docker image
 
   cd "${START_DIR}"
   cd ../worker
   docker build \
-    --tag "ab2d_worker:latest" .
+    --tag "ab2d_worker:${IMAGE_VERSION}" .
 
   # Tag and push API docker image to ECR
 
@@ -1107,8 +1147,8 @@ if [ -n "${BUILD_NEW_IMAGES}" ]; then
       --query "repositories[?repositoryName == 'ab2d_api'].repositoryUri" \
       --output text)
   fi
-  docker tag "ab2d_api:latest" "${API_ECR_REPO_URI}:latest"
-  docker push "${API_ECR_REPO_URI}:latest"
+  docker tag "ab2d_api:${IMAGE_VERSION}" "${API_ECR_REPO_URI}:${IMAGE_VERSION}"
+  docker push "${API_ECR_REPO_URI}:${IMAGE_VERSION}"
 
   # Tag and push worker docker image to ECR
 
@@ -1122,14 +1162,45 @@ if [ -n "${BUILD_NEW_IMAGES}" ]; then
       --query "repositories[?repositoryName == 'ab2d_worker'].repositoryUri" \
       --output text)
   fi
-  docker tag "ab2d_worker:latest" "${WORKER_ECR_REPO_URI}:latest"
-  docker push "${WORKER_ECR_REPO_URI}:latest"
-   
+  docker tag "ab2d_worker:${IMAGE_VERSION}" "${WORKER_ECR_REPO_URI}:${IMAGE_VERSION}"
+  docker push "${WORKER_ECR_REPO_URI}:${IMAGE_VERSION}"
+
 else # use existing images
 
   echo "Using existing images..."
 
+  IMAGE_VERSION=$(aws --region "${REGION}" ecr describe-images \
+    --repository-name ab2d_api \
+    --query 'sort_by(imageDetails,& imagePushedAt)[-1].imageTags[0]')
+  
 fi
+
+# Verify that the image versions of API and Worker are the same
+
+IMAGE_VERSION_API=$(aws --region "${REGION}" ecr describe-images \
+  --repository-name ab2d_api \
+  --query 'sort_by(imageDetails,& imagePushedAt)[-1].imageTags[0]')
+
+IMAGE_VERSION_WORKER=$(aws --region "${REGION}" ecr describe-images \
+  --repository-name ab2d_worker \
+  --query 'sort_by(imageDetails,& imagePushedAt)[-1].imageTags[0]')
+
+if [ "${IMAGE_VERSION_API}" != "${IMAGE_VERSION_WORKER}" ]; then
+  echo "ERROR: The ECR image versions for ab2d_api and ab2d_worker must be the same!"
+  exit 0
+else
+  echo "The ECR image versions for ab2d_api and ab2d_worker were verified to be the same..."
+fi
+
+echo "Using image version '${IMAGE_VERSION}' for ab2d_api and ab2d_worker..."
+
+# Reset to the target environment
+    
+export AWS_PROFILE="${CMS_ENV}"
+
+cd "${START_DIR}"
+cd terraform/environments/$CMS_ENV
+
 
 #
 # Switch context to terraform environment
@@ -1198,14 +1269,14 @@ echo "Ensure Old Autoscaling Groups and containers are around to service request
 if [ -z "${CLUSTER_ARNS}" ]; then
   echo "Skipping setting OLD_API_ASG, since there are no existing clusters"
 else
-  OLD_API_ASG=$(terraform show|grep :autoScalingGroup:|awk -F" = " '{print $2}' | grep $CMS_ENV)
+  OLD_API_ASG=$(terraform show|grep :autoScalingGroup:|awk -F" = " '{print $2}' | grep $CMS_ENV |tr -d '"')
 fi
 
 if [ -z "${CLUSTER_ARNS}" ]; then
   echo "Skipping removing autosclaing group and launch configuration, since there are no existing clusters"
 else
-  terraform state rm module.app.aws_autoscaling_group.asg
-  terraform state rm module.app.aws_launch_configuration.launch_config
+  terraform state rm module.api.aws_autoscaling_group.asg
+  terraform state rm module.api.aws_launch_configuration.launch_config
 fi
 
 if [ -z "${CLUSTER_ARNS}" ]; then
@@ -1299,6 +1370,8 @@ if [ -z "${AUTOAPPROVE}" ]; then
     --var "db_password_secret_arn=$DATABASE_PASSWORD_SECRET_ARN" \
     --var "db_name_secret_arn=$DATABASE_NAME_SECRET_ARN" \
     --var "deployer_ip_address=$DEPLOYER_IP_ADDRESS" \
+    --var "ecr_repo_aws_account=$ECR_REPO_AWS_ACCOUNT" \
+    --var "image_version=$IMAGE_VERSION" \
     --target module.api
   
   terraform apply \
@@ -1314,6 +1387,8 @@ if [ -z "${AUTOAPPROVE}" ]; then
     --var "db_user_secret_arn=$DATABASE_USER_SECRET_ARN" \
     --var "db_password_secret_arn=$DATABASE_PASSWORD_SECRET_ARN" \
     --var "db_name_secret_arn=$DATABASE_NAME_SECRET_ARN" \
+    --var "ecr_repo_aws_account=$ECR_REPO_AWS_ACCOUNT" \
+    --var "image_version=$IMAGE_VERSION" \
     --target module.worker
 
 else

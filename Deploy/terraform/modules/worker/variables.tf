@@ -30,7 +30,7 @@ variable "override_task_definition_arn" {default=""}
 variable "vpc_cidrs" {type=list(string)}
 
 # LSH BEGIN
-variable "docker_repository_url" {}
+# variable "docker_repository_url" {}
 variable "efs_id" {}
 variable "alpha" {}
 variable "beta" {}
@@ -52,3 +52,6 @@ variable "db_password_secret_arn" {}
 variable "db_name_secret_arn" {}
 
 # LSH END 12/05/2019
+
+variable "ecr_repo_aws_account" {}
+variable "image_version" {}

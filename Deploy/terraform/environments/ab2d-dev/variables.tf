@@ -246,3 +246,13 @@ variable "deployer_ip_address" {
   default = ""
   description = "Programmatically determined and passed in at the command line"
 }
+
+variable "ecr_repo_aws_account" {
+  default = ""
+  description = "Programmatically determined and passed in at the command line"
+}
+
+variable "image_version" {
+  default = ""
+  description = "Programmatically determined and passed in at the command line"
+}

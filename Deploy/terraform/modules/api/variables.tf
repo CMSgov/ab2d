@@ -12,7 +12,6 @@ variable "node_subnet_ids" {type=list(string)}
 variable "logging_bucket" {}
 variable "healthcheck_url" {}
 variable "iam_instance_profile" {}
-variable "docker_repository_url" {}
 variable "iam_role_arn" {}
 
 # LSH BEGIN
@@ -54,3 +53,5 @@ variable "db_name_secret_arn" {}
 # LSH END 12/05/2019
 
 variable "deployer_ip_address" {}
+variable "ecr_repo_aws_account" {}
+variable "image_version" {}
