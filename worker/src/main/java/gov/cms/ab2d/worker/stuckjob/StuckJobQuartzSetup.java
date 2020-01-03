@@ -1,12 +1,11 @@
 package gov.cms.ab2d.worker.stuckjob;
 
-//import org.quartz.CronScheduleBuilder;
+import org.quartz.CronScheduleBuilder;
 import org.quartz.JobBuilder;
 import org.quartz.JobDetail;
-import org.quartz.SimpleScheduleBuilder;
 import org.quartz.Trigger;
 import org.quartz.TriggerBuilder;
-//import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
@@ -15,8 +14,8 @@ import org.springframework.context.annotation.PropertySource;
 @PropertySource("classpath:application.audit.properties")
 public class StuckJobQuartzSetup {
 
-//    @Value("${cron.schedule}")
-//    private String schedule;
+    @Value("${stuck.job.cron.schedule}")
+    private String stuckJobCronSchedule;
 
 
     @Bean
@@ -33,8 +32,7 @@ public class StuckJobQuartzSetup {
         return TriggerBuilder.newTrigger()
                 .forJob(cancelStuckJobDetail)
                 .withIdentity("cancel_stuck_job_trigger")
-                .withSchedule(SimpleScheduleBuilder.repeatMinutelyForTotalCount(25, 2))
-//                .withSchedule(CronScheduleBuilder.cronSchedule(schedule))
+                .withSchedule(CronScheduleBuilder.cronSchedule(stuckJobCronSchedule))
                 .build();
     }
 
