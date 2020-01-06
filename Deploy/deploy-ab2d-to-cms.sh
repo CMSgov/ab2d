@@ -1169,9 +1169,15 @@ else # use existing images
 
   echo "Using existing images..."
 
+  # Get current image version
+  
   IMAGE_VERSION=$(aws --region "${REGION}" ecr describe-images \
     --repository-name ab2d_api \
     --query 'sort_by(imageDetails,& imagePushedAt)[-1].imageTags[0]')
+
+  # Remove double quotes
+  
+  IMAGE_VERSION=$(echo $IMAGE_VERSION | tr -d '"')
   
 fi
 
@@ -1409,6 +1415,8 @@ else
     --var "db_password_secret_arn=$DATABASE_PASSWORD_SECRET_ARN" \
     --var "db_name_secret_arn=$DATABASE_NAME_SECRET_ARN" \
     --var "deployer_ip_address=$DEPLOYER_IP_ADDRESS" \
+    --var "ecr_repo_aws_account=$ECR_REPO_AWS_ACCOUNT" \
+    --var "image_version=$IMAGE_VERSION" \
     --target module.api \
     --auto-approve
 
@@ -1425,6 +1433,8 @@ else
     --var "db_user_secret_arn=$DATABASE_USER_SECRET_ARN" \
     --var "db_password_secret_arn=$DATABASE_PASSWORD_SECRET_ARN" \
     --var "db_name_secret_arn=$DATABASE_NAME_SECRET_ARN" \
+    --var "ecr_repo_aws_account=$ECR_REPO_AWS_ACCOUNT" \
+    --var "image_version=$IMAGE_VERSION" \
     --target module.worker \
     --auto-approve
 
