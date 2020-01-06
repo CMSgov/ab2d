@@ -23,7 +23,12 @@ import java.io.InputStream;
 import java.util.List;
 
 import static gov.cms.ab2d.api.util.Constants.*;
+<<<<<<< HEAD
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+=======
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+>>>>>>> master
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest(classes = SpringBootApp.class, webEnvironment = SpringBootTest.WebEnvironment.MOCK)
@@ -121,6 +126,7 @@ public class RoleTests {
                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(403));
     }
+<<<<<<< HEAD
 
     @Test
     public void testWrongRoleUserUpdate() throws Exception {
@@ -131,4 +137,6 @@ public class RoleTests {
                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(403));
     }
+=======
+>>>>>>> master
 }

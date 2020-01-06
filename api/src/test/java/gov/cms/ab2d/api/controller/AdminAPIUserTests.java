@@ -7,6 +7,8 @@ import gov.cms.ab2d.common.dto.SponsorDTO;
 import gov.cms.ab2d.common.dto.UserDTO;
 import gov.cms.ab2d.common.model.Sponsor;
 import gov.cms.ab2d.common.repository.*;
+import gov.cms.ab2d.common.model.Role;
+import gov.cms.ab2d.common.service.RoleService;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import org.hamcrest.core.Is;
 import org.junit.Assert;
@@ -60,6 +62,9 @@ public class AdminAPIUserTests {
     @Autowired
     private TestUtil testUtil;
 
+    @Autowired
+    private RoleService roleService;
+
     private String token;
 
     private static final String USER_URL = "/user";
@@ -72,7 +77,7 @@ public class AdminAPIUserTests {
         roleRepository.deleteAll();
         sponsorRepository.deleteAll();
 
-        token = testUtil.setupToken(List.of(ADMIN_ROLE, SPONSOR_ROLE));
+        token = testUtil.setupToken(List.of(ADMIN_ROLE));
     }
 
     @Test
@@ -86,6 +91,8 @@ public class AdminAPIUserTests {
         Sponsor sponsor = sponsorRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
         userDTO.setSponsor(new SponsorDTO(sponsor.getHpmsId(), sponsor.getOrgName()));
         userDTO.setRole(ADMIN_ROLE);
+        Role role = roleService.findRoleByName(ADMIN_ROLE);
+        userDTO.setRole(role.getName());
 
         ObjectMapper mapper = new ObjectMapper();
 
@@ -120,6 +127,8 @@ public class AdminAPIUserTests {
         Sponsor sponsor = sponsorRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
         userDTO.setSponsor(new SponsorDTO(sponsor.getHpmsId(), sponsor.getOrgName()));
         userDTO.setRole(ADMIN_ROLE);
+        Role role = roleService.findRoleByName(ADMIN_ROLE);
+        userDTO.setRole(role.getName());
 
         ObjectMapper mapper = new ObjectMapper();
 

@@ -14,8 +14,8 @@
    * [Configure pip3](#configure-pip3)
 1. [Install and configure Java](#install-and-configure-java)
    * [Uninstall any existing versions of Java](#uninstall-any-existing-versions-of-java)
-   * [Install or verify Java SE Development Kit 12 (JDK12)](#install-or-verify-java-se-development-kit-12-jdk12)
-   * [Configure JDK12](#configure-jdk12)
+   * [Install or verify Java SE Development Kit 13 (JDK13)](#install-or-verify-java-se-development-kit-13-jdk13)
+   * [Configure JDK13](#configure-jdk13)
 1. [Install and configure terminal tools](#install-and-configure-terminal-tools)
    * [Install or update p7zip](#install-or-update-p7zip)
    * [Install or update pwgen](#install-or-update-pwgen)
@@ -347,13 +347,54 @@
 
 1. If you are currently not setting JAVA_HOME, there are directions to do so in a later section
 
-1. If uninstalling AdoptOpenJDK 8 that was installed as a Mac package, do the following:
+1. Determine if the current version of Java was installed with HomeBrew
 
+   ```ShellSession
+   $ brew cask list | grep adoptopenjdk
+   ```
+
+1. Note the output (if any)
+
+   *Example:*
+   
+   ```
+   adoptopenjdk12
+   ```
+   
+1. If there was output, uninstall AdoptOpenJDK using HomeBrew
+
+   *Format:*
+   
+   ```ShellSession
+   $ brew cask remove adoptopenjdk{version}
+   ```
+
+   *Example:*
+   
+   ```ShellSession
+   $ brew cask remove adoptopenjdk12
+   ```
+
+1. If you uninstalled the previous version of Java using HomeBrew, jump to the following section:
+
+   [Install or verify Java SE Development Kit 13 (JDK13)](#install-or-verify-java-se-development-kit-13-jdk13)
+   
+1. If uninstalling an AdoptOpenJDK version that was installed as a Mac package, do the following:
+
+   *Example for AdoptOpenJDK 8:*
+   
    ```ShellSession
    $ sudo rm -rf /Library/Java/JavaVirtualMachines/adoptopenjdk-8.jdk
    $ sudo rm -f /private/var/db/receipts/net.adoptopenjdk.8.jdk.*
    ```
+
+   *Example for AdoptOpenJDK 12:*
    
+   ```ShellSession
+   $ sudo rm -rf /Library/Java/JavaVirtualMachines/adoptopenjdk-12.jdk
+   $ sudo rm -f /private/var/db/receipts/net.adoptopenjdk.12.jdk.*
+   ```
+
 1. If uninstalling a different version of Java, determine the method to uninstall and uninstall it
 
 1. Close open terminals
@@ -367,13 +408,13 @@
    No Java runtime present, try --request to install.
    ```
 
-### Install or verify Java SE Development Kit 12 (JDK12)
+### Install or verify Java SE Development Kit 13 (JDK13)
 
-1. Install Java SE Development Kit 12 (JDK12) using HomeBrew
+1. Install Java SE Development Kit 13 (JDK13) using HomeBrew
 
    ```ShellSession
    $ brew tap AdoptOpenJDK/openjdk
-   $ brew cask install adoptopenjdk12
+   $ brew cask install adoptopenjdk13
    ```
 
 1. Close all open terminals
@@ -388,7 +429,7 @@
    $ java -version
    ```
   
-### Configure JDK12
+### Configure JDK13
 
 1. Set java environment variable
   
@@ -454,9 +495,9 @@
       *Example:*
       
       ```
-      openjdk version "12.0.2" 2019-07-16
-      OpenJDK Runtime Environment AdoptOpenJDK (build 12.0.2+10)
-      OpenJDK 64-Bit Server VM AdoptOpenJDK (build 12.0.2+10, mixed mode, sharing)
+      openjdk version "13.0.1" 2019-07-16
+      OpenJDK Runtime Environment AdoptOpenJDK (build 13.0.1+10)
+      OpenJDK 64-Bit Server VM AdoptOpenJDK (build 13.0.1+10, mixed mode, sharing)
       ```
 
 ## Install and configure terminal tools

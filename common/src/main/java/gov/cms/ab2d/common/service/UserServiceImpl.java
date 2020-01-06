@@ -38,7 +38,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public User getUserByUsername(String username) {
         User user = userRepository.findByUsername(username);
-        if(user == null) {
+        if (user == null) {
             String userNotPresentMsg = "User is not present in our database";
             log.error(userNotPresentMsg);
             throw new UsernameNotFoundException(userNotPresentMsg);

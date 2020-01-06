@@ -1,4 +1,9 @@
 extraction:
   java:
     index:
-      java_version: 12
+      java_version: 13
+      maven:
+        version: 3.6.3
+      build_command:
+      - "java -version"
+      - "mvn -version"
