@@ -15,4 +15,8 @@ public final class Constants {
     public static final String CONTRACT_LOG = "contract";
 
     public static final String SPONSOR_LOG = "hpmsId";
+
+    public static final String SPONSOR_ROLE = "SPONSOR";
+
+    public static final String ADMIN_ROLE = "ADMIN";
 }

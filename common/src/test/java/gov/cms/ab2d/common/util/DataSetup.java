@@ -5,6 +5,7 @@ import gov.cms.ab2d.common.model.Role;
 import gov.cms.ab2d.common.model.Sponsor;
 import gov.cms.ab2d.common.model.User;
 import gov.cms.ab2d.common.repository.ContractRepository;
+import gov.cms.ab2d.common.repository.RoleRepository;
 import gov.cms.ab2d.common.repository.SponsorRepository;
 import gov.cms.ab2d.common.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,6 +23,9 @@ public class DataSetup {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private RoleRepository roleRepository;
 
     @Autowired
     private SponsorRepository sponsorRepository;
@@ -75,19 +79,7 @@ public class DataSetup {
 
         setupContract(savedSponsor, "ABC123");
 
-        User user = new User();
-        user.setEmail(TEST_USER);
-        user.setFirstName("Eileen");
-        user.setLastName("Frierson");
-        user.setUsername(TEST_USER);
-        user.setSponsor(savedSponsor.getParent());
-        user.setEnabled(true);
-        for(String userRole :  userRoles) {
-            Role role = new Role();
-            role.setName(userRole);
-            user.addRole(role);
-        }
-        userRepository.save(user);
+        saveUser(savedSponsor.getParent(), userRoles);
     }
 
     public void setupUserBadSponsorData(List<String> userRoles) {
@@ -99,21 +91,24 @@ public class DataSetup {
 
         setupContract(savedBadSponsor, BAD_CONTRACT_NUMBER);
 
+        saveUser(savedSponsor, userRoles);
+    }
+
+    private void saveUser(Sponsor sponsor, List<String> userRoles) {
         User user = new User();
         user.setEmail(TEST_USER);
         user.setFirstName("Eileen");
         user.setLastName("Frierson");
         user.setUsername(TEST_USER);
-        user.setSponsor(savedSponsor);
+        user.setSponsor(sponsor);
         user.setEnabled(true);
         for(String userRole :  userRoles) {
             Role role = new Role();
             role.setName(userRole);
+            roleRepository.save(role);
             user.addRole(role);
         }
         userRepository.save(user);
-
-
     }
 
     public void setupUser(List<String> userRoles) {
@@ -126,18 +121,6 @@ public class DataSetup {
 
         setupContract(savedSponsor, VALID_CONTRACT_NUMBER);
 
-        User user = new User();
-        user.setEmail(TEST_USER);
-        user.setFirstName("Eileen");
-        user.setLastName("Frierson");
-        user.setUsername(TEST_USER);
-        user.setSponsor(savedSponsor);
-        user.setEnabled(true);
-        for(String userRole :  userRoles) {
-            Role role = new Role();
-            role.setName(userRole);
-            user.addRole(role);
-        }
-        userRepository.save(user);
+        saveUser(savedSponsor, userRoles);
     }
 }
