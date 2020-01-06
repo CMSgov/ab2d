@@ -30,8 +30,23 @@ public class Mapping {
     @PostConstruct
     public void init() {
         modelMapper = new ModelMapper();
-        Converter<String, Role> roleDTOToRoleConverter = context -> roleService.findRoleByName(context.getSource());
-        Converter<Set<Role>, String> roleToRoleDTOConverter = context -> context.getSource().iterator().next().getName();
+        modelMapper.getConfiguration().setSkipNullEnabled(true);
+
+        Converter<String, Role> roleDTOToRoleConverter = context -> {
+            if (context.getSource() == null) {
+                return null;
+            } else {
+                return roleService.findRoleByName(context.getSource());
+            }
+        };
+        Converter<Set<Role>, String> roleToRoleDTOConverter = context -> {
+            if (context.getSource() == null || context.getSource().isEmpty()) {
+                return null;
+            } else {
+                return context.getSource().iterator().next().getName();
+            }
+        };
+
         Converter<Sponsor, SponsorDTO> sponsorSponsorDTOConverter = context -> new SponsorDTO(context.getSource().getHpmsId(), context.getSource().getOrgName());
         Converter<SponsorDTO, Sponsor> sponsorDTOSponsorConverter = new AbstractConverter<>() {
             protected Sponsor convert(SponsorDTO source) {

@@ -6,6 +6,7 @@ import com.okta.jwt.Jwt;
 import com.okta.jwt.JwtVerificationException;
 import gov.cms.ab2d.common.model.Role;
 import gov.cms.ab2d.common.model.User;
+import gov.cms.ab2d.common.service.ResourceNotFoundException;
 import gov.cms.ab2d.common.service.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
@@ -91,11 +92,11 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
 
         if (username != null) {
             MDC.put("username", username);
-            User user = userService.getUserByUsername(username);
-            if (user == null) {
-                String userNotPresentMsg = "User is not present in our database";
-                log.error(userNotPresentMsg);
-                throw new UsernameNotFoundException(userNotPresentMsg);
+            User user;
+            try {
+                user = userService.getUserByUsername(username);
+            } catch (ResourceNotFoundException exception) {
+                throw new UsernameNotFoundException("User was not found");
             }
 
             if (!user.getEnabled()) {
