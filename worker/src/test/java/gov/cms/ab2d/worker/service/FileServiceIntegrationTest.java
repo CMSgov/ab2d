@@ -32,7 +32,7 @@ public class FileServiceIntegrationTest {
 
     @BeforeEach
     void setup() {
-        cut = new FileService();
+        cut = new FileServiceImpl();
     }
 
 
@@ -54,7 +54,7 @@ public class FileServiceIntegrationTest {
         );
 
         //createFile method will delete and recreate a new empty file with the same name.
-        final Path outputfile2 = cut.createFile(path, output_filename);
+        final Path outputfile2 = cut.createOrReplaceFile(path, output_filename);
 
         assertAll(
                 () -> assertTrue(Files.exists(outputfile2)),
@@ -78,7 +78,7 @@ public class FileServiceIntegrationTest {
         cut.createDirectory(tmpEfsMountDir.toPath());
 
         var path = Paths.get(tmpEfsMountDir.getPath());
-        var file = cut.createFile(path, "filename.ndjson");
+        var file = cut.createOrReplaceFile(path, "filename.ndjson");
         Assertions.assertTrue(file.toFile().isFile());
     }
 
@@ -87,9 +87,21 @@ public class FileServiceIntegrationTest {
         var path = Paths.get(tmpEfsMountDir.getPath(), "non-existent-directory");
 
         var exceptionThrown = assertThrows(RuntimeException.class,
-                () -> cut.createFile(path, "filename.ndjson"));
+                () -> cut.createOrReplaceFile(path, "filename.ndjson"));
 
         assertThat(exceptionThrown.getMessage(), startsWith("Could not create output file"));
+    }
+
+    @Test
+    void testCreateDirectoryWhenDirectoryAlreadyExist_ThrowsException() throws IOException {
+        Files.deleteIfExists(tmpEfsMountDir.toPath());
+        final Path directory = cut.createDirectory(tmpEfsMountDir.toPath());
+        Assertions.assertTrue(directory.toFile().isDirectory());
+
+        var exceptionThrown = assertThrows(RuntimeException.class,
+                () -> cut.createDirectory(tmpEfsMountDir.toPath()));
+
+        assertThat(exceptionThrown.getMessage(), startsWith("Could not create output directory"));
     }
 
     @Test
@@ -98,7 +110,7 @@ public class FileServiceIntegrationTest {
         cut.createDirectory(tmpEfsMountDir.toPath());
 
         var path = Paths.get(tmpEfsMountDir.getPath());
-        var file = cut.createFile(path, "filename.ndjson");
+        var file = cut.createOrReplaceFile(path, "filename.ndjson");
         Assertions.assertTrue(file.toFile().isFile());
 
         List<String> lines = Arrays.asList("One", "Two", "Three");

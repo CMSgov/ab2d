@@ -2,17 +2,11 @@ package gov.cms.ab2d.api.controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.Gson;
 import gov.cms.ab2d.api.config.SwaggerConfig;
 import gov.cms.ab2d.common.service.JobService;
 import gov.cms.ab2d.common.model.Job;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiImplicitParam;
-import io.swagger.annotations.ApiImplicitParams;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
-import io.swagger.annotations.ResponseHeader;
+import io.swagger.annotations.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.hl7.fhir.dstu3.model.DateTimeType;
@@ -82,7 +76,11 @@ public class BulkDataAccessAPI {
     @Autowired
     private JobService jobService;
 
-    @ApiOperation(value = "Initiate Part A & B bulk claim export job")
+    @ApiOperation(value = "Initiate Part A & B bulk claim export job",
+        authorizations = {
+            @Authorization(value = "Authorization", scopes = {
+                    @AuthorizationScope(description = "Export Patient Information", scope = "Authorization") })
+        })
     @ApiImplicitParams(value = {
             @ApiImplicitParam(name = "Accept", required = true, paramType = "header", value =
                     "application/fhir+json"),
@@ -150,7 +148,11 @@ public class BulkDataAccessAPI {
                 HttpStatus.ACCEPTED);
     }
 
-    @ApiOperation(value = "Initiate Part A & B bulk claim export job for a given contract number")
+    @ApiOperation(value = "Initiate Part A & B bulk claim export job for a given contract number",
+            authorizations = {
+                    @Authorization(value = "Authorization", scopes = {
+                            @AuthorizationScope(description = "Export Claim Data", scope = "Authorization") })
+            })
     @ApiImplicitParams(value = {
             @ApiImplicitParam(name = "Accept", required = true, paramType = "header", value =
                     "application/fhir+json"),
@@ -193,7 +195,11 @@ public class BulkDataAccessAPI {
         return returnStatusForJobCreation(job);
     }
 
-    @ApiOperation(value = "Cancel a pending export job")
+    @ApiOperation(value = "Cancel a pending export job",
+            authorizations = {
+                    @Authorization(value = "Authorization", scopes = {
+                            @AuthorizationScope(description = "Cancel Export Job", scope = "Authorization") })
+            })
     @ApiResponses(value = {
             @ApiResponse(code = 202, message = JOB_CANCELLED_MSG),
             @ApiResponse(code = 404, message = JOB_NOT_FOUND_ERROR_MSG, response =
@@ -215,7 +221,11 @@ public class BulkDataAccessAPI {
                 HttpStatus.ACCEPTED);
     }
 
-    @ApiOperation(value = "Returns a status of an export job.")
+    @ApiOperation(value = "Returns a status of an export job.",
+            authorizations = {
+                    @Authorization(value = "Authorization", scopes = {
+                            @AuthorizationScope(description = "Status of export job", scope = "Authorization") })
+            })
     @ApiResponses(value = {
             @ApiResponse(code = 202, message = "The job is still in progress.", responseHeaders = {
                     @ResponseHeader(name = "X-Progress", description = "Completion percentage, " +
@@ -293,7 +303,11 @@ public class BulkDataAccessAPI {
     }
 
     @ApiOperation(value = "Downloads a file produced by an export job.", response = String.class,
-            produces = "application/fhir+ndjson")
+            produces = "application/fhir+ndjson",
+            authorizations = {
+                    @Authorization(value = "Authorization", scopes = {
+                            @AuthorizationScope(description = "Downloads Export File", scope = "Authorization") })
+            })
     @ApiImplicitParams(value = {
             @ApiImplicitParam(name = "Accept", required = false, paramType = "header", value =
                     "application/fhir+json")}
@@ -335,5 +349,23 @@ public class BulkDataAccessAPI {
 
             return new ResponseEntity<>(null, null, HttpStatus.OK);
         }
+    }
+
+    @ApiOperation(value = "A request for the FHIR capability statement", response = String.class,
+            produces = "application/json",
+            authorizations = {
+                    @Authorization(value = "Authorization", scopes = {
+                            @AuthorizationScope(description = "Returns the FHIR capability statement", scope = "Authorization") })
+            })
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Returns the FHIR capability statement", response =
+                    String.class)}
+    )
+    @ResponseStatus(value = HttpStatus.OK)
+    @GetMapping(value = "/metadata")
+    public ResponseEntity<String> capabilityStatement() {
+        CapabilityStatement capabilityStatement = new CapabilityStatement();
+        String json = new Gson().toJson(capabilityStatement);
+        return new ResponseEntity<>(json, null, HttpStatus.OK);
     }
 }
