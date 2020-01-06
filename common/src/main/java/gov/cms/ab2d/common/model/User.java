@@ -11,9 +11,6 @@ import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import java.util.*;
 
-import static javax.persistence.CascadeType.MERGE;
-import static javax.persistence.CascadeType.PERSIST;
-
 @Entity
 @Table(name = "user_account")
 @Getter
@@ -31,7 +28,10 @@ public class User implements UserDetails {
     private String username;
     private String firstName;
     private String lastName;
+
+    @Column(unique = true)
     private String email;
+
     @NotNull
     private Boolean enabled;
 
@@ -40,7 +40,7 @@ public class User implements UserDetails {
     @NotNull
     private Sponsor sponsor;
 
-    @ManyToMany(cascade = { PERSIST, MERGE }, fetch = FetchType.EAGER)
+    @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name = "user_role",
             joinColumns = @JoinColumn(name = "user_account_id"),

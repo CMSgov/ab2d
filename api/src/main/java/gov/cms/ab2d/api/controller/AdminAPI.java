@@ -1,5 +1,9 @@
 package gov.cms.ab2d.api.controller;
 
+import gov.cms.ab2d.common.config.Mapping;
+import gov.cms.ab2d.common.dto.UserDTO;
+import gov.cms.ab2d.common.model.User;
+import gov.cms.ab2d.common.service.UserService;
 import gov.cms.ab2d.hpms.processing.ExcelReportProcessor;
 import gov.cms.ab2d.hpms.processing.ExcelType;
 import lombok.extern.slf4j.Slf4j;
@@ -30,6 +34,12 @@ public class AdminAPI {
     @Qualifier("attestationReportProcessor")
     private ExcelReportProcessor attestationReportProcessor;
 
+    @Autowired
+    private UserService userService;
+
+    @Autowired
+    private Mapping mapping;
+
     @ResponseStatus(value = HttpStatus.ACCEPTED)
     @PostMapping("/uploadOrgStructureReport")
     public ResponseEntity<Void> uploadOrgStructureReport(@RequestParam("file") MultipartFile hpmsFile) throws IOException {
@@ -56,5 +66,13 @@ public class AdminAPI {
 
         return new ResponseEntity<>(null, null,
                 HttpStatus.ACCEPTED);
+    }
+
+    @ResponseStatus(value = HttpStatus.CREATED)
+    @PostMapping("/user")
+    public ResponseEntity<UserDTO> createUser(@RequestBody UserDTO userDTO) {
+        User user = userService.createUser(userDTO);
+        UserDTO createdUser = mapping.getModelMapper().map(user, UserDTO.class);
+        return new ResponseEntity<>(createdUser, null, HttpStatus.CREATED);
     }
 }
