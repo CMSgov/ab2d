@@ -57,8 +57,8 @@ public class BFDClientImpl implements BFDClient {
      */
     @Override
     @Retryable(
-            maxAttempts = 3,
-            backoff = @Backoff(delay = 100L, multiplier = 2),
+            maxAttemptsExpression = "${bfd.retry.maxAttempts:3}",
+            backoff = @Backoff(delayExpression = "${bfd.retry.backoffDelay:250}", multiplier = 2),
             exclude = { ResourceNotFoundException.class }
     )
     public Bundle requestEOBFromServer(String patientID) {
@@ -70,8 +70,8 @@ public class BFDClientImpl implements BFDClient {
 
     @Override
     @Retryable(
-            maxAttempts = 3,
-            backoff = @Backoff(delay = 100L, multiplier = 2),
+            maxAttemptsExpression = "${bfd.retry.maxAttempts:3}",
+            backoff = @Backoff(delayExpression = "${bfd.retry.backoffDelay:250}", multiplier = 2),
             exclude = { ResourceNotFoundException.class }
     )
     public Bundle requestNextBundleFromServer(Bundle bundle) throws ResourceNotFoundException {
