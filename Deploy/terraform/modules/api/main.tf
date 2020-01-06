@@ -124,12 +124,36 @@ resource "aws_security_group_rule" "load_balancer_access" {
   security_group_id = aws_security_group.load_balancer.id
 }
 
+resource "aws_security_group_rule" "efs_ingress" {
+  type        = "ingress"
+  description = "NFS"
+  from_port   = "2049"
+  to_port     = "2049"
+  protocol    = "tcp"
+  source_security_group_id = aws_security_group.api.id
+  security_group_id = var.efs_security_group_id
+}
+
 resource "aws_ecs_cluster" "ab2d_api" {
   name = "${lower(var.env)}-api"
 }
 
 resource "aws_ecs_task_definition" "api" {
   family = "api"
+  volume {
+    name      = "efs"
+    host_path = "/mnt/efs"
+    docker_volume_configuration {
+      autoprovision = true
+      scope         = "shared"
+      driver        = "local"
+      driver_opts   = {
+        type   = "nfs",
+	device = ":/",
+	o      = "addr=${var.efs_dns_name},nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2,noresvport"
+      }
+    }
+  }
   container_definitions = <<JSON
   [
     {
@@ -142,6 +166,12 @@ resource "aws_ecs_task_definition" "api" {
           "containerPort": ${var.container_port},
           "hostPort": ${var.ecs_task_definition_host_port}
         }
+      ],
+      "mountPoints": [
+        {
+	  "containerPath": "/tmp/efs",
+	  "sourceVolume": "efs"
+	}
       ],
       "environment" : [
         {
@@ -163,6 +193,10 @@ resource "aws_ecs_task_definition" "api" {
 	{
 	  "name" : "AB2D_DB_DATABASE",
 	  "value" : "${var.db_name}"
+	},
+        {
+	  "name" : "AB2D_EFS_MOUNT",
+	  "value" : "/tmp/efs"
 	}
       ],
       "logConfiguration": {

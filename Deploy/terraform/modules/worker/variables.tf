@@ -27,13 +27,9 @@ variable "autoscale_group_wait" {}
 variable "node_subnet_ids" {type=list(string)}
 variable "percent_capacity_increase" {default="20"}
 variable "override_task_definition_arn" {default=""}
-variable "vpc_cidrs" {type=list(string)}
 
 # LSH BEGIN
 # variable "docker_repository_url" {}
-variable "efs_id" {}
-variable "alpha" {}
-variable "beta" {}
 variable "ecs_cluster_id" {}
 # LSH END
 
@@ -55,3 +51,7 @@ variable "db_name_secret_arn" {}
 
 variable "ecr_repo_aws_account" {}
 variable "image_version" {}
+
+variable "efs_id" {}
+variable "efs_security_group_id" {}
+variable "efs_dns_name" {}

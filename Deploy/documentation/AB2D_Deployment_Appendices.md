@@ -418,20 +418,47 @@
 
 ## Appendix H: Get log file from an API container
 
-1. Set the target AWS profile
+1. Set target AWS profile
+
+   *Example for "Dev" environment:*
 
    ```ShellSession
-   $ export AWS_PROFILE=ab2d-shared
+   $ export AWS_PROFILE=ab2d-dev
    ```
-   
+
+   *Example for "Sbx" environment:*
+
+   ```ShellSession
+   $ export AWS_PROFILE=ab2d-sbx-sandbox
+   ```
+
+1. Set target environment
+
+   *Example for "Dev" environment:*
+
+   ```ShellSession
+   $ export TARGET_ENVIRONMENT=ab2d-dev
+   ```
+
+   *Example for "Sbx" environment:*
+
+   ```ShellSession
+   $ export TARGET_ENVIRONMENT=ab2d-sbx-sandbox
+   ```
+
 1. Set controller access variables
 
-   *Example for CMS development environment:*
+   *Example for "Dev" environment:*
    
    ```ShellSession
-   $ export TARGET_ENVIRONMENT=ab2d-shared
-   $ export CONTROLLER_PUBLIC_IP=3.225.165.219
+   $ export CONTROLLER_PUBLIC_IP=52.7.241.208
    $ export SSH_USER_NAME=ec2-user
+   ```
+
+1. Copy the key to the controller
+
+   ```ShellSession
+   $ scp -i ~/.ssh/${TARGET_ENVIRONMENT}.pem ~/.ssh/${TARGET_ENVIRONMENT}.pem ${SSH_USER_NAME}@${CONTROLLER_PUBLIC_IP}:~/.ssh
    ```
    
 1. Connect to the controller
@@ -442,24 +469,33 @@
    $ ssh -i ~/.ssh/${TARGET_ENVIRONMENT}.pem ${SSH_USER_NAME}@${CONTROLLER_PUBLIC_IP}
    ```
 
-1. Set worker variables
+1. Set node variables
 
-   *Example for CMS development environment:*
+   *Example for "Dev" environment:*
    
    ```ShellSession
-   $ export TARGET_ENVIRONMENT=ab2d-shared
-   $ export API_PRIVATE_IP=10.242.26.25
+   $ export TARGET_ENVIRONMENT=ab2d-dev
+   $ export NODE_PRIVATE_IP=10.242.26.114
    $ export SSH_USER_NAME=ec2-user
    ```
    
-1. Connect to an API node
+1. Connect to a node
 
    *Format:*
 
    ```ShellSession
-   $ ssh -i ~/.ssh/${TARGET_ENVIRONMENT}.pem ${SSH_USER_NAME}@${API_PRIVATE_IP}
+   $ ssh -i ~/.ssh/${TARGET_ENVIRONMENT}.pem ${SSH_USER_NAME}@${NODE_PRIVATE_IP}
    ```
 
+1. Connect to the running container
+
+   *Format:*
+
+   ```ShellSession
+   $ docker exec -it $(docker ps -aqf "name=349849222861.dkr.ecr.us-east-1.amazonaws.com/ab2d_worker:latest") /bin/bash
+   $ docker exec -it $(docker ps -aqf "name=ecs-worker-5-ab2d-dev-*") /bin/bash
+   ```
+   
 1. Copy "messages" log to ec2-user home directory
 
    ```ShellSession

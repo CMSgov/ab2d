@@ -55,3 +55,7 @@ variable "db_name_secret_arn" {}
 variable "deployer_ip_address" {}
 variable "ecr_repo_aws_account" {}
 variable "image_version" {}
+
+variable "efs_id" {}
+variable "efs_security_group_id" {}
+variable "efs_dns_name" {}

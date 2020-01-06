@@ -115,7 +115,6 @@ module "worker" {
   app_sec_group_id              = module.api.application_security_group_id
   controller_sec_group_id       = "${data.aws_security_group.ab2d_deployment_controller_sg.id}"
   loadbalancer_subnet_ids       = var.deployment_controller_subnet_ids
-  vpc_cidrs                     = ["10.124.1.0/24"]
   efs_id                        = module.efs.efs_id
   alpha                         = var.private_subnet_ids[0]
   beta                          = var.private_subnet_ids[1]

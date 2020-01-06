@@ -43,7 +43,10 @@ data "aws_security_group" "ab2d_deployment_controller_sg" {
 module "efs" {
   source              = "../../modules/efs"
   env                 = var.env
+  vpc_id              = var.vpc_id
   encryption_key_arn  = "${data.aws_kms_key.ab2d_kms.arn}"
+  alpha               = var.private_subnet_ids[0]
+  beta                = var.private_subnet_ids[1]
 }
 
 # LSH SKIP FOR NOW BEGIN
@@ -62,6 +65,9 @@ module "api" {
   linux_user                    = var.linux_user
   ssh_key_name                  = var.ssh_key_name
   node_subnet_ids               = var.private_subnet_ids
+  efs_id                        = module.efs.efs_id
+  efs_security_group_id         = module.efs.efs_security_group_id
+  efs_dns_name                  = module.efs.efs_dns_name
   logging_bucket                = var.logging_bucket_name
   healthcheck_url               = var.elb_healthcheck_url
   iam_instance_profile          = var.ec2_iam_profile
@@ -113,10 +119,9 @@ module "worker" {
   app_sec_group_id              = module.api.application_security_group_id
   controller_sec_group_id       = "${data.aws_security_group.ab2d_deployment_controller_sg.id}"
   loadbalancer_subnet_ids       = var.deployment_controller_subnet_ids
-  vpc_cidrs                     = ["10.124.1.0/24"]
   efs_id                        = module.efs.efs_id
-  alpha                         = var.private_subnet_ids[0]
-  beta                          = var.private_subnet_ids[1]
+  efs_security_group_id         = module.efs.efs_security_group_id
+  efs_dns_name                  = module.efs.efs_dns_name
   ecs_cluster_id                = module.api.ecs_cluster_id
   aws_account_number            = var.aws_account_number
   db_host                       = var.db_host

@@ -1810,7 +1810,7 @@
    *Example for CMS:*
    
    ```ShellSession
-   $ export AWS_PROFILE=ab2d-shared
+   $ export AWS_PROFILE=ab2d-dev
    ```
 
 1. Create S3 bucket for the website
@@ -1868,7 +1868,7 @@
    *Example for CMS:*
    
    ```ShellSession
-   $ export AWS_PROFILE=ab2d-shared
+   $ export AWS_PROFILE=ab2d-dev
    ```
 
 1. Upload website to S3

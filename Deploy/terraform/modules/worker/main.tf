@@ -37,19 +37,6 @@ resource "aws_security_group_rule" "db_access_worker" {
   security_group_id = var.db_sec_group_id
 }
 
-#
-# Begin EFS configuration
-#
-
-resource "aws_security_group" "efs" {
-  name        = "${lower(var.env)}-efs-sg"
-  description = "EFS"
-  vpc_id      = var.vpc_id
-  tags = {
-    Name = "${lower(var.env)}-efs-sg"
-  }
-}
-
 resource "aws_security_group_rule" "efs_ingress" {
   type        = "ingress"
   description = "NFS"
@@ -57,24 +44,8 @@ resource "aws_security_group_rule" "efs_ingress" {
   to_port     = "2049"
   protocol    = "tcp"
   source_security_group_id = aws_security_group.worker.id
-  security_group_id = aws_security_group.efs.id
+  security_group_id = var.efs_security_group_id
 }
-
-resource "aws_efs_mount_target" "alpha" {
-  file_system_id  = var.efs_id
-  subnet_id       = var.alpha
-  security_groups = [aws_security_group.efs.id]
-}
-
-resource "aws_efs_mount_target" "beta" {
-  file_system_id = var.efs_id
-  subnet_id      = var.beta
-  security_groups = [aws_security_group.efs.id]
-}
-
-#
-# End EFS configuration
-#
 
 resource "aws_ecs_cluster" "ab2d_worker" {
   name = "${lower(var.env)}-worker"
@@ -82,12 +53,20 @@ resource "aws_ecs_cluster" "ab2d_worker" {
 
 resource "aws_ecs_task_definition" "worker" {
   family = "worker"
-  # LSH SKIP FOR NOW BEGIN
-  # volume {
-  #   name      = "main"
-  #   host_path = "/mnt/efs"
-  # }
-  # LSH SKIP FOR NOW END
+  volume {
+    name      = "efs"
+    host_path = "/mnt/efs"
+    docker_volume_configuration {
+      autoprovision = true
+      scope         = "shared"
+      driver        = "local"
+      driver_opts   = {
+        type   = "nfs",
+	device = ":/",
+	o      = "addr=${var.efs_dns_name},nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2,noresvport"
+      }
+    }
+  }
   container_definitions = <<JSON
   [
     {
@@ -95,7 +74,13 @@ resource "aws_ecs_task_definition" "worker" {
       "image": "${var.ecr_repo_aws_account}.dkr.ecr.us-east-1.amazonaws.com/ab2d_worker:${var.image_version}",
       "essential": true,
       "memory": 2048,
-      "environment" : [
+      "mountPoints": [
+        {
+	  "containerPath": "/tmp/efs",
+	  "sourceVolume": "efs"
+	}
+      ],
+      "environment": [
         {
 	  "name" : "AB2D_DB_HOST",
 	  "value" : "${var.db_host}"
@@ -115,6 +100,10 @@ resource "aws_ecs_task_definition" "worker" {
 	{
 	  "name" : "AB2D_DB_DATABASE",
 	  "value" : "${var.db_name}"
+	},
+        {
+	  "name" : "AB2D_EFS_MOUNT",
+	  "value" : "/tmp/efs"
 	}
       ],
       "logConfiguration": {

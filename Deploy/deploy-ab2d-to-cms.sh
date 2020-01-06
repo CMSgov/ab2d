@@ -1142,7 +1142,7 @@ if [ -n "${BUILD_NEW_IMAGES}" ]; then
     --output text)
   if [ -z "${API_ECR_REPO_URI}" ]; then
     aws --region "${REGION}" ecr create-repository \
-        --repository-name "ab2d_api"
+      --repository-name "ab2d_api"
     API_ECR_REPO_URI=$(aws --region "${REGION}" ecr describe-repositories \
       --query "repositories[?repositoryName == 'ab2d_api'].repositoryUri" \
       --output text)
