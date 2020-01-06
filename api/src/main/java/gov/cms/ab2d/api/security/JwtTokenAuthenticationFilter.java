@@ -92,9 +92,9 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
 
         if (username != null) {
             MDC.put("username", username);
-            User user = null;
+            User user;
             try {
-                userService.getUserByUsername(username);
+                user = userService.getUserByUsername(username);
             } catch (ResourceNotFoundException exception) {
                 throw new UsernameNotFoundException("User was not found");
             }

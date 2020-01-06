@@ -77,7 +77,7 @@ public class AdminAPIUserTests {
         roleRepository.deleteAll();
         sponsorRepository.deleteAll();
 
-        token = testUtil.setupToken(List.of(ADMIN_ROLE));
+        token = testUtil.setupToken(List.of(ADMIN_ROLE, SPONSOR_ROLE));
     }
 
     @Test

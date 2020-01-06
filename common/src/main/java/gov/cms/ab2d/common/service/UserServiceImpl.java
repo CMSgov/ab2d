@@ -8,7 +8,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -41,7 +40,7 @@ public class UserServiceImpl implements UserService {
         if (user == null) {
             String userNotPresentMsg = "User is not present in our database";
             log.error(userNotPresentMsg);
-            throw new UsernameNotFoundException(userNotPresentMsg);
+            throw new ResourceNotFoundException(userNotPresentMsg);
         } else {
             return user;
         }
