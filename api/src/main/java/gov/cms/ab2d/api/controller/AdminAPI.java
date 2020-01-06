@@ -1,8 +1,6 @@
 package gov.cms.ab2d.api.controller;
 
-import gov.cms.ab2d.common.config.Mapping;
 import gov.cms.ab2d.common.dto.UserDTO;
-import gov.cms.ab2d.common.model.User;
 import gov.cms.ab2d.common.service.UserService;
 import gov.cms.ab2d.hpms.processing.ExcelReportProcessor;
 import gov.cms.ab2d.hpms.processing.ExcelType;
@@ -36,9 +34,6 @@ public class AdminAPI {
 
     @Autowired
     private UserService userService;
-
-    @Autowired
-    private Mapping mapping;
 
     @ResponseStatus(value = HttpStatus.ACCEPTED)
     @PostMapping("/uploadOrgStructureReport")
