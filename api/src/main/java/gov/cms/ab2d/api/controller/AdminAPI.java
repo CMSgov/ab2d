@@ -71,16 +71,14 @@ public class AdminAPI {
     @ResponseStatus(value = HttpStatus.CREATED)
     @PostMapping("/user")
     public ResponseEntity<UserDTO> createUser(@RequestBody UserDTO userDTO) {
-        User user = userService.createUser(userDTO);
-        UserDTO createdUser = mapping.getModelMapper().map(user, UserDTO.class);
-        return new ResponseEntity<>(createdUser, null, HttpStatus.CREATED);
+        UserDTO user = userService.createUser(userDTO);
+        return new ResponseEntity<>(user, null, HttpStatus.CREATED);
     }
 
     @ResponseStatus(value = HttpStatus.OK)
     @PutMapping("/user")
     public ResponseEntity<UserDTO> updateUser(@RequestBody UserDTO userDTO) {
-        User user = userService.updateUser(userDTO);
-        UserDTO updatedUser = mapping.getModelMapper().map(user, UserDTO.class);
-        return new ResponseEntity<>(updatedUser, null, HttpStatus.OK);
+        UserDTO user = userService.updateUser(userDTO);
+        return new ResponseEntity<>(user, null, HttpStatus.OK);
     }
 }

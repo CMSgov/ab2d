@@ -48,17 +48,19 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public User createUser(UserDTO userDTO) {
+    public UserDTO createUser(UserDTO userDTO) {
         User user = mapping.getModelMapper().map(userDTO, User.class);
-        return userRepository.saveAndFlush(user);
+        User createdUser = userRepository.saveAndFlush(user);
+        return mapping.getModelMapper().map(createdUser, UserDTO.class);
     }
 
     @Override
-    public User updateUser(UserDTO userDTO) {
+    public UserDTO updateUser(UserDTO userDTO) {
         // When updating there needs to be verification that the user exists
         User user = getUserByUsername(userDTO.getUsername());
         userDTO.setId(user.getId());
         User mappedUser = mapping.getModelMapper().map(userDTO, User.class);
-        return userRepository.saveAndFlush(mappedUser);
+        User updatedUser = userRepository.saveAndFlush(mappedUser);
+        return mapping.getModelMapper().map(updatedUser, UserDTO.class);
     }
 }
