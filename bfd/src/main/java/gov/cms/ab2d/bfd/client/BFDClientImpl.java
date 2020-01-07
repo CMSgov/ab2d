@@ -10,6 +10,8 @@ import org.hl7.fhir.dstu3.model.ExplanationOfBenefit;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.PropertySource;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Component;
 
 /**
@@ -54,6 +56,11 @@ public class BFDClientImpl implements BFDClient {
      * @throws ResourceNotFoundException when the requested patient does not exist
      */
     @Override
+    @Retryable(
+            maxAttemptsExpression = "${bfd.retry.maxAttempts:3}",
+            backoff = @Backoff(delayExpression = "${bfd.retry.backoffDelay:250}", multiplier = 2),
+            exclude = { ResourceNotFoundException.class }
+    )
     public Bundle requestEOBFromServer(String patientID) {
         return
                 fetchBundle(ExplanationOfBenefit.class,
@@ -62,6 +69,11 @@ public class BFDClientImpl implements BFDClient {
 
 
     @Override
+    @Retryable(
+            maxAttemptsExpression = "${bfd.retry.maxAttempts:3}",
+            backoff = @Backoff(delayExpression = "${bfd.retry.backoffDelay:250}", multiplier = 2),
+            exclude = { ResourceNotFoundException.class }
+    )
     public Bundle requestNextBundleFromServer(Bundle bundle) throws ResourceNotFoundException {
         return client
                 .loadPage()
