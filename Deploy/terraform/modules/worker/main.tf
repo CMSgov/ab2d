@@ -56,16 +56,6 @@ resource "aws_ecs_task_definition" "worker" {
   volume {
     name      = "efs"
     host_path = "/mnt/efs"
-    docker_volume_configuration {
-      autoprovision = true
-      scope         = "shared"
-      driver        = "local"
-      driver_opts   = {
-        type   = "nfs",
-	device = ":/",
-	o      = "addr=${var.efs_dns_name},nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2,noresvport"
-      }
-    }
   }
   container_definitions = <<JSON
   [

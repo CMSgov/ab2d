@@ -1,6 +1,9 @@
 #!/bin/bash
 
+#
 # Set more useful hostname
+#
+
 echo "$(hostname -s).ab2d-${env}" > /tmp/hostname
 sudo mv /tmp/hostname /etc/hostname
 sudo hostname "$(hostname -s).ab2d-${env}"

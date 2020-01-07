@@ -1207,7 +1207,6 @@ export AWS_PROFILE="${CMS_ENV}"
 cd "${START_DIR}"
 cd terraform/environments/$CMS_ENV
 
-
 #
 # Switch context to terraform environment
 #
@@ -1231,12 +1230,21 @@ CLUSTER_ARNS=$(aws --region "${REGION}" ecs list-clusters \
 if [ -z "${CLUSTER_ARNS}" ]; then
   echo "Skipping getting current ECS task definitions, since there are no existing clusters"
 else
+    
   API_TASK_DEFINITION=$(aws --region "${REGION}" ecs describe-services \
     --services "${CMS_ENV}-api" \
     --cluster "${CMS_ENV}-api" \
     | grep "taskDefinition" \
     | head -1)
   API_TASK_DEFINITION=$(echo $API_TASK_DEFINITION | awk -F'": "' '{print $2}' | tr -d '"' | tr -d ',')
+  
+  WORKER_TASK_DEFINITION=$(aws --region "${REGION}" ecs describe-services \
+    --services "${CMS_ENV}-worker" \
+    --cluster "${CMS_ENV}-worker" \
+    | grep "taskDefinition" \
+    | head -1)
+  WORKER_TASK_DEFINITION=$(echo $WORKER_TASK_DEFINITION | awk -F'": "' '{print $2}' | tr -d '"' | tr -d ',')
+
 fi
 
 #
@@ -1245,26 +1253,29 @@ fi
 
 echo "Get ECS task counts before making any changes..."
 
-# Define api_task_count
+# Define task count functions
+
 api_task_count() { aws --region "${REGION}" ecs list-tasks --cluster "${CMS_ENV}-api" | grep "\:task\/"|wc -l|tr -d ' '; }
+worker_task_count() { aws --region "${REGION}" ecs list-tasks --cluster "${CMS_ENV}-worker" | grep "\:task\/"|wc -l|tr -d ' '; }
 
 # Get old api task count (if exists)
+
 if [ -z "${CLUSTER_ARNS}" ]; then
   echo "Skipping setting OLD_API_TASK_COUNT, since there are no existing clusters"
 else
   OLD_API_TASK_COUNT=$(api_task_count)
+  OLD_WORKER_TASK_COUNT=$(worker_task_count)
 fi
 
 # set expected api task count
 
-# LSH BEGIN 2019-11-20
-# if [ -z "${CLUSTER_ARNS}" ]; then
-#   EXPECTED_API_COUNT="2"
-# else
-#   EXPECTED_API_COUNT="$((OLD_API_TASK_COUNT*2))"
-# fi
-EXPECTED_API_COUNT="2"
-# LSH END 2019-11-20
+if [ -z "${CLUSTER_ARNS}" ]; then
+  EXPECTED_API_COUNT="2"
+  EXPECTED_WORKER_COUNT="2"
+else
+  let EXPECTED_API_COUNT="$OLD_API_TASK_COUNT*2"
+  let EXPECTED_WORKER_COUNT="$OLD_WORKER_TASK_COUNT*2"
+fi
 
 #
 # Ensure Old Autoscaling Groups and containers are around to service requests
@@ -1275,7 +1286,8 @@ echo "Ensure Old Autoscaling Groups and containers are around to service request
 if [ -z "${CLUSTER_ARNS}" ]; then
   echo "Skipping setting OLD_API_ASG, since there are no existing clusters"
 else
-  OLD_API_ASG=$(terraform show|grep :autoScalingGroup:|awk -F" = " '{print $2}' | grep $CMS_ENV |tr -d '"')
+  OLD_API_ASG=$(terraform show|grep :autoScalingGroup:|awk -F" = " '{print $2}' | grep $CMS_ENV | tr -d '"')
+  OLD_WORKER_ASG=$(terraform show|grep :autoScalingGroup:|awk -F" = " '{print $2}' | grep $CMS_ENV-worker | tr -d '"')
 fi
 
 if [ -z "${CLUSTER_ARNS}" ]; then
@@ -1283,6 +1295,8 @@ if [ -z "${CLUSTER_ARNS}" ]; then
 else
   terraform state rm module.api.aws_autoscaling_group.asg
   terraform state rm module.api.aws_launch_configuration.launch_config
+  terraform state rm module.worker.aws_autoscaling_group.asg
+  terraform state rm module.worker.aws_launch_configuration.launch_config
 fi
 
 if [ -z "${CLUSTER_ARNS}" ]; then
@@ -1290,6 +1304,9 @@ if [ -z "${CLUSTER_ARNS}" ]; then
 else
   OLD_API_CONTAINER_INSTANCES=$(aws --region "${REGION}" ecs list-container-instances \
     --cluster "${CMS_ENV}-api" \
+    | grep container-instance)
+  OLD_WORKER_CONTAINER_INSTANCES=$(aws --region "${REGION}" ecs list-container-instances \
+    --cluster "${CMS_ENV}-worker" \
     | grep container-instance)
 fi
 
@@ -1382,7 +1399,7 @@ if [ -z "${AUTOAPPROVE}" ]; then
   
   terraform apply \
     --var "ami_id=$AMI_ID" \
-    --var "current_task_definition_arn=$API_TASK_DEFINITION" \
+    --var "current_task_definition_arn=$WORKER_TASK_DEFINITION" \
     --var "db_host=$DATABASE_HOST" \
     --var "db_port=$DATABASE_PORT" \
     --var "db_username=$DATABASE_USER" \
@@ -1422,7 +1439,7 @@ else
 
   terraform apply \
     --var "ami_id=$AMI_ID" \
-    --var "current_task_definition_arn=$API_TASK_DEFINITION" \
+    --var "current_task_definition_arn=$WORKER_TASK_DEFINITION" \
     --var "db_host=$DATABASE_HOST" \
     --var "db_port=$DATABASE_PORT" \
     --var "db_username=$DATABASE_USER" \
@@ -1507,6 +1524,56 @@ while [ "$ACTUAL_API_COUNT" -lt "$EXPECTED_API_COUNT" ]; do
     exit 1
   fi
 done
+
+ACTUAL_WORKER_COUNT=0
+RETRIES_WORKER=0
+
+while [ "$ACTUAL_WORKER_COUNT" -lt "$EXPECTED_WORKER_COUNT" ]; do
+  ACTUAL_WORKER_COUNT=$(worker_task_count)
+  echo "Running WORKER Tasks: $ACTUAL_WORKER_COUNT, Expected: $EXPECTED_WORKER_COUNT"
+  if [ "$RETRIES_WORKER" != "15" ]; then
+    echo "Retry in 60 seconds..."
+    sleep 60
+    RETRIES_WORKER=$(expr $RETRIES_WORKER + 1)
+  else
+    echo "Max retries reached. Exiting..."
+    exit 1
+  fi
+done
+
+# Drain old container instances
+
+if [ -z "${CLUSTER_ARNS}" ]; then
+  echo "Skipping draining old container instances, since there are no existing clusters"
+else
+  OLD_API_INSTANCE_LIST=$(echo $OLD_API_CONTAINER_INSTANCES | tr -d ' ' | tr "\n" " " | tr -d "," | tr '""' ' ' | tr -d '"')
+  OLD_WORKER_INSTANCE_LIST=$(echo $OLD_WORKER_CONTAINER_INSTANCES | tr -d ' ' | tr "\n" " " | tr -d "," | tr '""' ' ' | tr -d '"')
+  aws --region "${REGION}" ecs update-container-instances-state \
+    --cluster "${CMS_ENV}-api" \
+    --status DRAINING \
+    --container-instances $OLD_API_INSTANCE_LIST
+  aws --region "${REGION}" ecs update-container-instances-state \
+    --cluster "${CMS_ENV}-worker" \
+    --status DRAINING \
+    --container-instances $OLD_WORKER_INSTANCE_LIST
+  echo "Allowing all instances to drain for 60 seconds before proceeding..."
+  sleep 60
+fi
+
+# Remove old Autoscaling groups
+
+if [ -z "${CLUSTER_ARNS}" ]; then
+  echo "Skipping removing old autoscaling groups, since there are no existing clusters"
+else
+  OLD_API_ASG=$(echo $OLD_API_ASG | awk -F"/" '{print $2}')
+  OLD_WORKER_ASG=$(echo $OLD_WORKER_ASG | awk -F"/" '{print $2}')
+  aws --region "${REGION}" autoscaling delete-auto-scaling-group \
+    --auto-scaling-group-name $OLD_API_ASG \
+    --force-delete || true
+  aws --region "${REGION}" autoscaling delete-auto-scaling-group \
+    --auto-scaling-group-name $OLD_WORKER_ASG \
+    --force-delete || true
+fi
 
 #
 # Deploy CloudWatch

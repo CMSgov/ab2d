@@ -143,16 +143,6 @@ resource "aws_ecs_task_definition" "api" {
   volume {
     name      = "efs"
     host_path = "/mnt/efs"
-    docker_volume_configuration {
-      autoprovision = true
-      scope         = "shared"
-      driver        = "local"
-      driver_opts   = {
-        type   = "nfs",
-	device = ":/",
-	o      = "addr=${var.efs_dns_name},nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2,noresvport"
-      }
-    }
   }
   container_definitions = <<JSON
   [
@@ -281,7 +271,7 @@ resource "aws_launch_configuration" "launch_config" {
   iam_instance_profile = var.iam_instance_profile
   key_name = var.ssh_key_name
   security_groups = [aws_security_group.api.id]  
-  user_data = templatefile("${path.module}/userdata.tpl",{ env = "${lower(var.env)}", cluster_name = "${lower(var.env)}-api" })
+  user_data = templatefile("${path.module}/userdata.tpl",{ env = "${lower(var.env)}", cluster_name = "${lower(var.env)}-api", efs_id = var.efs_id })
   lifecycle { create_before_destroy = true }
 }
 

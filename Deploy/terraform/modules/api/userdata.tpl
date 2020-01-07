@@ -1,9 +1,49 @@
 #!/bin/bash
 
+#
 # Set more useful hostname
- echo "$(hostname -s).ab2d-${env}" > /tmp/hostname
- sudo mv /tmp/hostname /etc/hostname
- sudo hostname "$(hostname -s).ab2d-${env}"
+#
+
+echo "$(hostname -s).ab2d-${env}" > /tmp/hostname
+sudo mv /tmp/hostname /etc/hostname
+sudo hostname "$(hostname -s).ab2d-${env}"
+
+#
+# Setup EFS realted items 
+#
+ 
+# Build and install amazon-efs-utils as an RPM package
+sudo yum -y install git
+sudo yum -y install rpm-build
+cd /tmp
+git clone https://github.com/aws/efs-utils
+cd efs-utils
+sudo make rpm
+sudo yum -y install ./build/amazon-efs-utils*rpm
+
+# Upgrade stunnel for using EFS mount helper with TLS
+# - by default, it enforces certificate hostname checking
+sudo yum install gcc openssl-devel tcp_wrappers-devel -y
+cd /tmp
+curl -o stunnel-5.55.tar.gz https://www.stunnel.org/downloads/stunnel-5.55.tar.gz
+tar xvfz stunnel-5.55.tar.gz
+cd stunnel-5.55
+sudo ./configure
+sudo make
+sudo rm -f /bin/stunnel
+sudo make install
+if [[ -f /bin/stunnel ]]; then sudo mv /bin/stunnel /root; fi
+sudo ln -s /usr/local/bin/stunnel /bin/stunnel
+
+# Configure running container instances to use an Amazon EFS file system
+sudo mkdir /mnt/efs
+sudo cp /etc/fstab /etc/fstab.bak
+echo '${efs_id} /mnt/efs efs _netdev,tls 0 0' | sudo tee -a /etc/fstab
+sudo mount -a
+
+#
+# Setup ECS realted items 
+#
 
 # ECS config file
 # https://github.com/aws/amazon-ecs-agent
