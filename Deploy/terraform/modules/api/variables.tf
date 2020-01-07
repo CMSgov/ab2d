@@ -59,3 +59,5 @@ variable "image_version" {}
 variable "efs_id" {}
 variable "efs_security_group_id" {}
 variable "efs_dns_name" {}
+variable "alpha" {}
+variable "beta" {}

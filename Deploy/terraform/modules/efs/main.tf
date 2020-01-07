@@ -15,15 +15,3 @@ resource "aws_security_group" "efs" {
     Name = "${lower(var.env)}-efs-sg"
   }
 }
-
-resource "aws_efs_mount_target" "alpha" {
-  file_system_id  = aws_efs_file_system.efs.id
-  subnet_id       = var.alpha
-  security_groups = [aws_security_group.efs.id]
-}
-
-resource "aws_efs_mount_target" "beta" {
-  file_system_id = aws_efs_file_system.efs.id
-  subnet_id      = var.beta
-  security_groups = [aws_security_group.efs.id]
-}

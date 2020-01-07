@@ -12,8 +12,8 @@
 1. [Appendix E: Interacting with IAM policy versions](#appendix-e-interacting-with-iam-policy-versions)
 1. [Appendix F: Interacting with Elastic Container Repository](#appendix-f-interacting-with-elastic-container-repository)
 1. [Appendix G: Generate and test the AB2D website](#appendix-g-generate-and-test-the-ab2d-website)
-1. [Appendix H: Get log file from an API container](#appendix-h-get-log-file-from-an-api-container)
-1. [Appendix I: Get log file from a worker container](#appendix-h-get-log-file-from-a-worker-container)
+1. [Appendix H: Get log file from a node](#appendix-h-get-log-file-from-a-node)
+1. [Appendix I: Connect to a running container](#appendix-i-connect-to-a-running-container)
 1. [Appendix J: Delete and recreate database](#appendix-j-delete-and-recreate-database)
 1. [Appendix K: Complete DevOps linting checks](#appendix-k-complete-devops-linting-checks)
    * [Complete terraform linting](#complete-terraform-linting)
@@ -416,7 +416,7 @@
 
       - 404.html
 
-## Appendix H: Get log file from an API container
+## Appendix H: Get log file from a node
 
 1. Set target AWS profile
 
@@ -475,7 +475,7 @@
    
    ```ShellSession
    $ export TARGET_ENVIRONMENT=ab2d-dev
-   $ export NODE_PRIVATE_IP=10.242.26.114
+   $ export NODE_PRIVATE_IP=10.242.26.231
    $ export SSH_USER_NAME=ec2-user
    ```
    
@@ -485,15 +485,6 @@
 
    ```ShellSession
    $ ssh -i ~/.ssh/${TARGET_ENVIRONMENT}.pem ${SSH_USER_NAME}@${NODE_PRIVATE_IP}
-   ```
-
-1. Connect to the running container
-
-   *Format:*
-
-   ```ShellSession
-   $ docker exec -it $(docker ps -aqf "name=349849222861.dkr.ecr.us-east-1.amazonaws.com/ab2d_worker:latest") /bin/bash
-   $ docker exec -it $(docker ps -aqf "name=ecs-worker-5-ab2d-dev-*") /bin/bash
    ```
    
 1. Copy "messages" log to ec2-user home directory
@@ -505,7 +496,7 @@
    $ exit
    ```
 
-1. Log off worker node
+1. Log off node
 
    ```ShellSession
    $ logout
@@ -535,22 +526,49 @@
    ~/Downloads/messages
    ```
 
-## Appendix I: Get log file from a worker container
+## Appendix I: Connect to a running container
 
-1. Set the target AWS profile
+1. Set target AWS profile
+
+   *Example for "Dev" environment:*
 
    ```ShellSession
-   $ export AWS_PROFILE=ab2d-shared
+   $ export AWS_PROFILE=ab2d-dev
    ```
-   
+
+   *Example for "Sbx" environment:*
+
+   ```ShellSession
+   $ export AWS_PROFILE=ab2d-sbx-sandbox
+   ```
+
+1. Set target environment
+
+   *Example for "Dev" environment:*
+
+   ```ShellSession
+   $ export TARGET_ENVIRONMENT=ab2d-dev
+   ```
+
+   *Example for "Sbx" environment:*
+
+   ```ShellSession
+   $ export TARGET_ENVIRONMENT=ab2d-sbx-sandbox
+   ```
+
 1. Set controller access variables
 
-   *Example for CMS development environment:*
+   *Example for "Dev" environment:*
    
    ```ShellSession
-   $ export TARGET_ENVIRONMENT=ab2d-shared
-   $ export CONTROLLER_PUBLIC_IP=3.225.165.219
+   $ export CONTROLLER_PUBLIC_IP=52.7.241.208
    $ export SSH_USER_NAME=ec2-user
+   ```
+
+1. Copy the key to the controller
+
+   ```ShellSession
+   $ scp -i ~/.ssh/${TARGET_ENVIRONMENT}.pem ~/.ssh/${TARGET_ENVIRONMENT}.pem ${SSH_USER_NAME}@${CONTROLLER_PUBLIC_IP}:~/.ssh
    ```
    
 1. Connect to the controller
@@ -561,61 +579,36 @@
    $ ssh -i ~/.ssh/${TARGET_ENVIRONMENT}.pem ${SSH_USER_NAME}@${CONTROLLER_PUBLIC_IP}
    ```
 
-1. Set worker variables
+1. Set node variables
 
-   *Example for CMS development environment:*
+   *Example for "Dev" environment:*
    
    ```ShellSession
-   $ export TARGET_ENVIRONMENT=ab2d-shared
-   $ export WORKER_PRIVATE_IP=10.242.26.229
+   $ export TARGET_ENVIRONMENT=ab2d-dev
+   $ export NODE_PRIVATE_IP=10.242.26.231
    $ export SSH_USER_NAME=ec2-user
    ```
    
-1. Connect to a worker node
+1. Connect to a node
 
    *Format:*
 
    ```ShellSession
-   $ ssh -i ~/.ssh/${TARGET_ENVIRONMENT}.pem ${SSH_USER_NAME}@${WORKER_PRIVATE_IP}
+   $ ssh -i ~/.ssh/${TARGET_ENVIRONMENT}.pem ${SSH_USER_NAME}@${NODE_PRIVATE_IP}
    ```
 
-1. Copy "messages" log to ec2-user home directory
+1. Connect to a running container
+
+   *Example for connecting to an API container:*
 
    ```ShellSession
-   $ sudo su
-   $ cp /var/log/messages /home/ec2-user
-   $ chown ec2-user:ec2-user /home/ec2-user/messages
-   $ exit
+   $ docker exec -it $(docker ps -aqf "name=ecs-api-*") /bin/bash
    ```
 
-1. Log off worker node
+   *Example for connecting to a worker container:*
 
    ```ShellSession
-   $ logout
-   ```
-
-1. Copy messages file to the controller
-
-   ```ShellSession
-   $ scp -i ~/.ssh/${TARGET_ENVIRONMENT}.pem ${SSH_USER_NAME}@${WORKER_PRIVATE_IP}:~/messages .
-   ```
-
-1. Log off controller
-
-   ```ShellSession
-   $ logout
-   ```
-
-1. Copy messages file to development machine
-
-   ```ShellSession
-   $ scp -i ~/.ssh/${TARGET_ENVIRONMENT}.pem ${SSH_USER_NAME}@${CONTROLLER_PUBLIC_IP}:~/messages ~/Downloads
-   ```
-
-1. Note that the messages file from the remote node can now be found here
-
-   ```
-   ~/Downloads/messages
+   $ docker exec -it $(docker ps -aqf "name=ecs-worker-*") /bin/bash
    ```
 
 ## Appendix J: Delete and recreate database

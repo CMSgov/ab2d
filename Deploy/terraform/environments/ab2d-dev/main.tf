@@ -45,8 +45,6 @@ module "efs" {
   env                 = var.env
   vpc_id              = var.vpc_id
   encryption_key_arn  = "${data.aws_kms_key.ab2d_kms.arn}"
-  alpha               = var.private_subnet_ids[0]
-  beta                = var.private_subnet_ids[1]
 }
 
 # LSH SKIP FOR NOW BEGIN
@@ -68,6 +66,8 @@ module "api" {
   efs_id                        = module.efs.efs_id
   efs_security_group_id         = module.efs.efs_security_group_id
   efs_dns_name                  = module.efs.efs_dns_name
+  alpha                         = var.private_subnet_ids[0]
+  beta                          = var.private_subnet_ids[1]
   logging_bucket                = var.logging_bucket_name
   healthcheck_url               = var.elb_healthcheck_url
   iam_instance_profile          = var.ec2_iam_profile

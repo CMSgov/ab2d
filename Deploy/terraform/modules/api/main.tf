@@ -134,6 +134,18 @@ resource "aws_security_group_rule" "efs_ingress" {
   security_group_id = var.efs_security_group_id
 }
 
+resource "aws_efs_mount_target" "alpha" {
+  file_system_id  = var.efs_id
+  subnet_id       = var.alpha
+  security_groups = [var.efs_security_group_id]
+}
+
+resource "aws_efs_mount_target" "beta" {
+  file_system_id  = var.efs_id
+  subnet_id      =  var.beta
+  security_groups = [var.efs_security_group_id]
+}
+
 resource "aws_ecs_cluster" "ab2d_api" {
   name = "${lower(var.env)}-api"
 }
