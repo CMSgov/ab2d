@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.OffsetDateTime;
 import java.util.List;
 
 @Repository
@@ -29,4 +30,9 @@ public interface JobRepository extends JpaRepository<Job, Long> {
 
     @Query("SELECT j.status FROM Job j WHERE j.jobUuid = :jobUuid ")
     JobStatus findJobStatus(String jobUuid);
+
+    @Query("FROM Job j WHERE j.createdAt < :createdAt AND j.status = 'IN_PROGRESS' AND j.completedAt IS NULL ")
+    List<Job> findStuckJobs(OffsetDateTime createdAt);
+
+
 }
