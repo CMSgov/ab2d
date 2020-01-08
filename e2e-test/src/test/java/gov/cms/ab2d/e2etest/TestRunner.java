@@ -21,6 +21,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
+import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -37,7 +38,7 @@ public class TestRunner {
     @Container
     public static DockerComposeContainer container = new DockerComposeContainer(
             new File("../docker-e2e-compose.yml"))
-            //.withScaledService("api", 2)
+            //.withScaledService("api", 2) // failing now since it's not changing ports
             //.withScaledService("worker", 2)
             .withExposedService("db", 5432)
             .withExposedService("api", 8080);
@@ -45,7 +46,6 @@ public class TestRunner {
     private static HttpClient httpClient;
 
     private static DriverManagerDataSource dataSource;
-    //private static HikariDataSource dataSource;
 
     private static String AB2D_API_URL = "http://localhost:8080/api/v1/fhir/";
 
@@ -58,6 +58,8 @@ public class TestRunner {
     private static String TEST_USER;
 
     private static final long DEFAULT_TIMEOUT = 30;
+
+    private static final int THREAD_DELAY = 20000;
 
     private Integer sponsorId = null;
 
@@ -106,20 +108,6 @@ public class TestRunner {
         dataSource.setUrl("jdbc:postgresql://localhost:5432/ab2d");
         dataSource.setUsername("ab2d");
         dataSource.setPassword("ab2d");
-        //dataSource.getConnectionProperties().setProperty()
-
-        /*(Properties props = new Properties();
-        props.setProperty("dataSourceClassName", "org.postgresql.ds.PGSimpleDataSource");
-        props.setProperty("dataSource.user", "ab2d");
-        props.setProperty("dataSource.password", "ab2d");
-        props.setProperty("dataSource.databaseName", "ab2d");
-        props.put("dataSource.logWriter", new PrintWriter(System.out));
-
-        HikariConfig config = new HikariConfig(props);
-        config.setLeakDetectionThreshold(60 * 1000);
-        config.setMaximumPoolSize(20);
-        config.setConnectionTimeout(300000);
-        dataSource = new HikariDataSource(config);*/
 
         uploadOrgStructureReport();
         uploadAttestationReport();
@@ -127,10 +115,10 @@ public class TestRunner {
 
     @BeforeEach
     public void initEach() throws SQLException {
-        try(Statement statement = dataSource.getConnection().createStatement()) {
+        try (Connection connection = dataSource.getConnection(); Statement statement = connection.createStatement()) {
             statement.execute("DELETE FROM job_output");
         }
-        try(Statement statement = dataSource.getConnection().createStatement()) {
+        try (Connection connection = dataSource.getConnection(); Statement statement = connection.createStatement()) {
             statement.execute("DELETE FROM job");
         }
     }
@@ -251,7 +239,7 @@ public class TestRunner {
     private String getJobUuid() throws SQLException {
         String uuid = null;
         int i = 0;
-        try(Statement statement = dataSource.getConnection().createStatement()) {
+        try (Connection connection = dataSource.getConnection(); Statement statement = connection.createStatement()) {
             ResultSet resultSet = statement.executeQuery("SELECT job_uuid FROM job");
             while (resultSet.next()) {
                 if(i > 0) {
@@ -268,7 +256,7 @@ public class TestRunner {
     private Set<String> getAllJobUuids() throws SQLException {
         Set<String> uuids = new HashSet<>();
 
-        try(Statement statement = dataSource.getConnection().createStatement()) {
+        try (Connection connection = dataSource.getConnection(); Statement statement = connection.createStatement()) {
             ResultSet resultSet = statement.executeQuery("SELECT job_uuid FROM job");
             while (resultSet.next()) {
                 uuids.add(resultSet.getString("job_uuid"));
@@ -280,8 +268,7 @@ public class TestRunner {
 
     private Map<String, Object> getJobWithOutput() throws SQLException {
         Map<String, Object> jobData = new HashMap<>();
-        try(Statement statement = dataSource.getConnection().createStatement()) {
-
+        try (Connection connection = dataSource.getConnection(); Statement statement = connection.createStatement()) {
             ResultSet resultSet = statement.executeQuery("SELECT j.job_uuid, j.status, " +
                     "j.status_message, j.resource_types, j.progress, j.contract_id, jo.fhir_resource_type FROM job j, job_output jo where j.id = jo.job_id and jo.error = false");
             while (resultSet.next()) {
@@ -300,7 +287,7 @@ public class TestRunner {
 
     private void createContract(String contractNumber) throws SQLException {
         if(sponsorId == null) {
-            try (Statement statement = dataSource.getConnection().createStatement()) {
+            try (Connection connection = dataSource.getConnection(); Statement statement = connection.createStatement()) {
                 ResultSet resultSet = statement.executeQuery("SELECT id FROM sponsor WHERE hpms_id = 999");
                 resultSet.next();
                 sponsorId = resultSet.getInt("id");
@@ -308,7 +295,7 @@ public class TestRunner {
         }
 
         OffsetDateTime attestationDateTime = OffsetDateTime.now();
-        try(Statement statement = dataSource.getConnection().createStatement()) {
+        try (Connection connection = dataSource.getConnection(); Statement statement = connection.createStatement()) {
             statement.execute("INSERT INTO contract(contract_number, contract_name, " +
                     "sponsor_id, attested_on) VALUES('" + contractNumber + "', '" + contractNumber + "', " + sponsorId + ", '" +
                     attestationDateTime + "')");
@@ -349,7 +336,7 @@ public class TestRunner {
         Assert.assertEquals(202, exportResponseSecondTry.statusCode());
         List<String> contentLocationListSecondTry = exportResponseSecondTry.headers().map().get("content-location");
 
-        Thread.sleep(11000);
+        Thread.sleep(THREAD_DELAY);
 
         HttpResponse<String> statusResponseAgain = statusRequest(contentLocationListSecondTry.iterator().next());
 
@@ -444,7 +431,7 @@ public class TestRunner {
         Assert.assertEquals(202, exportResponseSecondTry.statusCode());
         List<String> contentLocationListSecondTry = exportResponseSecondTry.headers().map().get("content-location");
 
-        Thread.sleep(11000);
+        Thread.sleep(THREAD_DELAY);
 
         HttpResponse<String> statusResponseAgain = statusRequest(contentLocationListSecondTry.iterator().next());
 
@@ -509,7 +496,7 @@ public class TestRunner {
     // came back with a successful response
     @Test
     public void stressTest() throws SQLException, InterruptedException {
-        final int threshold = 75;
+        final int threshold = 100;
 
         List<String> contracts = new ArrayList<>();
         for(int i = 2; i < threshold; i++) {
