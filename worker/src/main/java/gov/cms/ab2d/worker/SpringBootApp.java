@@ -8,6 +8,7 @@ import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
+import org.springframework.retry.annotation.EnableRetry;
 
 
 @SpringBootApplication(scanBasePackages = {
@@ -19,6 +20,7 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 })
 @EntityScan(basePackages = {"gov.cms.ab2d.common.model"})
 @EnableJpaRepositories("gov.cms.ab2d.common.repository")
+@EnableRetry
 @PropertySource("classpath:application.common.properties")
 @Import({OptOutQuartzSetup.class, StuckJobQuartzSetup.class})
 public class SpringBootApp {

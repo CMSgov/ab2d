@@ -293,7 +293,7 @@ public class JobProcessorImpl implements JobProcessor {
                     throw new RuntimeException(errMsg, e);
                 } catch (ExecutionException e) {
                     final String errMsg = "exception while processing patient ";
-                    log.error(errMsg);
+                    log.error(errMsg, e);
                     throw new RuntimeException(errMsg, e.getCause());
                 } catch (CancellationException e) {
                     // This could happen in the rare event that a job was cancelled mid-process.
