@@ -23,13 +23,13 @@ public class WorkerServiceImpl implements WorkerService {
     private final JobProcessor jobProcessor;
     private final ShutDownService shutDownService;
 
-    private static List<String> jobsInProgres = Collections.synchronizedList(new ArrayList<>());
+    private static List<String> activeJobs = Collections.synchronizedList(new ArrayList<>());
 
 
     @Override
     public void process(String jobUuid) {
 
-        jobsInProgres.add(jobUuid);
+        activeJobs.add(jobUuid);
 
         jobPreprocessor.preprocess(jobUuid);
         log.info("Job was put in progress");
@@ -37,7 +37,7 @@ public class WorkerServiceImpl implements WorkerService {
         jobProcessor.process(jobUuid);
         log.info("Job was processed");
 
-        jobsInProgres.remove(jobUuid);
+        activeJobs.remove(jobUuid);
     }
 
 
@@ -46,8 +46,8 @@ public class WorkerServiceImpl implements WorkerService {
     public void resetInProgressJobs() {
         log.info("Shutdown in progress ... Do house cleaning ...");
 
-        if (!jobsInProgres.isEmpty()) {
-            shutDownService.resetInProgressJobs(jobsInProgres);
+        if (!activeJobs.isEmpty()) {
+            shutDownService.resetInProgressJobs(activeJobs);
         }
 
         log.info("House cleaning done - Shutting down");

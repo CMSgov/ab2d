@@ -17,10 +17,10 @@ public class ShutDownServiceImpl implements ShutDownService {
 
     @Override
     @Transactional
-    public void resetInProgressJobs(List<String> jobsInProgress) {
-        log.info("Reset jobs : {} to SUBMITTED status", jobsInProgress);
+    public void resetInProgressJobs(List<String> activeJobs) {
+        log.info("Reset jobs : {} to SUBMITTED status", activeJobs);
         try {
-            jobRepository.resetJobsToSubmittedStatus(jobsInProgress);
+            jobRepository.resetJobsToSubmittedStatus(activeJobs);
         } catch (Exception e) {
             log.error("Error while doing house cleaning during shutdown ", e);
             // do nothing
