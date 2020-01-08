@@ -40,14 +40,14 @@ ALTER TABLE sponsor ADD CONSTRAINT "fk_sponsor_to_sponsor_parent" FOREIGN KEY (p
 --changeset spathiyil:AB2D-291-CreateTable-contract failOnError:true 
 CREATE TABLE contract
 (
-    id                  BIGINT              NOT NULL,
+    id                  BIGSERIAL              NOT NULL,
     contract_number     VARCHAR(255)        NOT NULL,
     contract_name       VARCHAR(255)        NOT NULL,
     sponsor_id          BIGINT NOT NULL,
     attested_on         TIMESTAMP WITH TIME ZONE
 );
 
-ALTER TABLE contract ADD CONSTRAINT "pk_contract" PRIMARY KEY (id);
+ALTER TABLE contract ADD CONSTRAINT "pk_contract" UNIQUE (id);
 ALTER TABLE contract ADD CONSTRAINT "uc_contract_contract_number" UNIQUE (contract_number);
 ALTER TABLE contract ADD CONSTRAINT "fk_contract_to_sponsor" FOREIGN KEY (sponsor_id) REFERENCES sponsor (id);
 

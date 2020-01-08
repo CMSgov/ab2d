@@ -8,6 +8,7 @@ import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.common.repository.SponsorRepository;
 import gov.cms.ab2d.common.repository.UserRepository;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,6 +40,13 @@ public class WorkerServiceTest {
 
     @Container
     private static final PostgreSQLContainer postgreSQLContainer= new AB2DPostgresqlContainer();
+
+    @BeforeEach
+    public void init() {
+        jobRepository.deleteAll();
+        userRepository.deleteAll();
+        sponsorRepository.deleteAll();
+    }
 
     @Test
     @DisplayName("When a job is submitted into the job table, a worker processes it")

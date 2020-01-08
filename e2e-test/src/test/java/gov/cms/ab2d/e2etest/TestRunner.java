@@ -23,8 +23,12 @@ import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.time.Duration;
+import java.time.OffsetDateTime;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
 
 @Testcontainers
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -33,12 +37,15 @@ public class TestRunner {
     @Container
     public static DockerComposeContainer container = new DockerComposeContainer(
             new File("../docker-e2e-compose.yml"))
+            //.withScaledService("api", 2)
+            //.withScaledService("worker", 2)
             .withExposedService("db", 5432)
             .withExposedService("api", 8080);
 
     private static HttpClient httpClient;
 
     private static DriverManagerDataSource dataSource;
+    //private static HikariDataSource dataSource;
 
     private static String AB2D_API_URL = "http://localhost:8080/api/v1/fhir/";
 
@@ -51,6 +58,8 @@ public class TestRunner {
     private static String TEST_USER;
 
     private static final long DEFAULT_TIMEOUT = 30;
+
+    private Integer sponsorId = null;
 
 
     @BeforeAll
@@ -97,6 +106,20 @@ public class TestRunner {
         dataSource.setUrl("jdbc:postgresql://localhost:5432/ab2d");
         dataSource.setUsername("ab2d");
         dataSource.setPassword("ab2d");
+        //dataSource.getConnectionProperties().setProperty()
+
+        /*(Properties props = new Properties();
+        props.setProperty("dataSourceClassName", "org.postgresql.ds.PGSimpleDataSource");
+        props.setProperty("dataSource.user", "ab2d");
+        props.setProperty("dataSource.password", "ab2d");
+        props.setProperty("dataSource.databaseName", "ab2d");
+        props.put("dataSource.logWriter", new PrintWriter(System.out));
+
+        HikariConfig config = new HikariConfig(props);
+        config.setLeakDetectionThreshold(60 * 1000);
+        config.setMaximumPoolSize(20);
+        config.setConnectionTimeout(300000);
+        dataSource = new HikariDataSource(config);*/
 
         uploadOrgStructureReport();
         uploadAttestationReport();
@@ -104,8 +127,12 @@ public class TestRunner {
 
     @BeforeEach
     public void initEach() throws SQLException {
-        dataSource.getConnection().createStatement().execute("DELETE FROM job_output");
-        dataSource.getConnection().createStatement().execute("DELETE FROM job");
+        try(Statement statement = dataSource.getConnection().createStatement()) {
+            statement.execute("DELETE FROM job_output");
+        }
+        try(Statement statement = dataSource.getConnection().createStatement()) {
+            statement.execute("DELETE FROM job");
+        }
     }
 
     private HttpRequest.BodyPublisher buildFormDataFromMap(Map<Object, Object> data) {
@@ -163,15 +190,25 @@ public class TestRunner {
     }
 
     private HttpResponse<String> exportByContractRequest(String contractNumber) throws IOException, InterruptedException {
-        HttpRequest exportRequest = HttpRequest.newBuilder()
+        HttpRequest exportRequest = buildExportByContractRequest(contractNumber);
+
+        return httpClient.send(exportRequest, HttpResponse.BodyHandlers.ofString());
+    }
+
+    private HttpRequest buildExportByContractRequest(String contractNumber) {
+        return HttpRequest.newBuilder()
                 .uri(URI.create(AB2D_API_URL + "Group/" + contractNumber + "/$export"))
                 .timeout(Duration.ofSeconds(DEFAULT_TIMEOUT))
                 .header("Content-Type", "application/json")
                 .header("Authorization", "Bearer " + jwtStr)
                 .GET()
                 .build();
+    }
 
-        return httpClient.send(exportRequest, HttpResponse.BodyHandlers.ofString());
+    private CompletableFuture<HttpResponse<String>> exportByContractRequestAsync(String contractNumber) {
+        HttpRequest exportRequest = buildExportByContractRequest(contractNumber);
+
+        return httpClient.sendAsync(exportRequest, HttpResponse.BodyHandlers.ofString());
     }
 
     private HttpResponse<String> statusRequest(String url) throws IOException, InterruptedException {
@@ -210,31 +247,72 @@ public class TestRunner {
         return httpClient.send(fileDownloadRequest, HttpResponse.BodyHandlers.ofString());
     }
 
+    // Used after a job is created when there were no previous jobs in the db, will verify that there is only one job present.
     private String getJobUuid() throws SQLException {
         String uuid = null;
-        ResultSet resultSet = dataSource.getConnection().createStatement().executeQuery("SELECT job_uuid FROM job");
-        while(resultSet.next()) {
-            uuid = resultSet.getString("job_uuid");
+        int i = 0;
+        try(Statement statement = dataSource.getConnection().createStatement()) {
+            ResultSet resultSet = statement.executeQuery("SELECT job_uuid FROM job");
+            while (resultSet.next()) {
+                if(i > 0) {
+                    throw new IllegalStateException("Retrieved more than one job when there should only be 1");
+                }
+                uuid = resultSet.getString("job_uuid");
+                i++;
+            }
         }
 
         return uuid;
     }
 
+    private Set<String> getAllJobUuids() throws SQLException {
+        Set<String> uuids = new HashSet<>();
+
+        try(Statement statement = dataSource.getConnection().createStatement()) {
+            ResultSet resultSet = statement.executeQuery("SELECT job_uuid FROM job");
+            while (resultSet.next()) {
+                uuids.add(resultSet.getString("job_uuid"));
+            }
+        }
+
+        return uuids;
+    }
+
     private Map<String, Object> getJobWithOutput() throws SQLException {
         Map<String, Object> jobData = new HashMap<>();
-        ResultSet resultSet = dataSource.getConnection().createStatement().executeQuery("SELECT j.job_uuid, j.status, " +
-                "j.status_message, j.resource_types, j.progress, j.contract_id, jo.fhir_resource_type FROM job j, job_output jo where j.id = jo.job_id and jo.error = false");
-        while(resultSet.next()) {
-            jobData.put("job_uuid", resultSet.getString("job_uuid"));
-            jobData.put("status", resultSet.getString("status"));
-            jobData.put("status_message", resultSet.getString("status_message"));
-            jobData.put("progress", resultSet.getInt("progress"));
-            jobData.put("resource_types", resultSet.getString("resource_types"));
-            jobData.put("fhir_resource_type", resultSet.getString("fhir_resource_type"));
-            jobData.put("contract_id", resultSet.getInt("contract_id"));
+        try(Statement statement = dataSource.getConnection().createStatement()) {
+
+            ResultSet resultSet = statement.executeQuery("SELECT j.job_uuid, j.status, " +
+                    "j.status_message, j.resource_types, j.progress, j.contract_id, jo.fhir_resource_type FROM job j, job_output jo where j.id = jo.job_id and jo.error = false");
+            while (resultSet.next()) {
+                jobData.put("job_uuid", resultSet.getString("job_uuid"));
+                jobData.put("status", resultSet.getString("status"));
+                jobData.put("status_message", resultSet.getString("status_message"));
+                jobData.put("progress", resultSet.getInt("progress"));
+                jobData.put("resource_types", resultSet.getString("resource_types"));
+                jobData.put("fhir_resource_type", resultSet.getString("fhir_resource_type"));
+                jobData.put("contract_id", resultSet.getInt("contract_id"));
+            }
         }
 
         return jobData;
+    }
+
+    private void createContract(String contractNumber) throws SQLException {
+        if(sponsorId == null) {
+            try (Statement statement = dataSource.getConnection().createStatement()) {
+                ResultSet resultSet = statement.executeQuery("SELECT id FROM sponsor WHERE hpms_id = 999");
+                resultSet.next();
+                sponsorId = resultSet.getInt("id");
+            }
+        }
+
+        OffsetDateTime attestationDateTime = OffsetDateTime.now();
+        try(Statement statement = dataSource.getConnection().createStatement()) {
+            statement.execute("INSERT INTO contract(contract_number, contract_name, " +
+                    "sponsor_id, attested_on) VALUES('" + contractNumber + "', '" + contractNumber + "', " + sponsorId + ", '" +
+                    attestationDateTime + "')");
+        }
     }
 
     @Test
@@ -425,6 +503,47 @@ public class TestRunner {
         Assert.assertEquals(null, jobData.get("resource_types"));
         Assert.assertEquals(null, jobData.get("fhir_resource_type"));
         Assert.assertNotNull(jobData.get("contract_id"));
+    }
+
+    // Used to test when there are a lot of requests sent to the server in parallel. We will verify that all the requests
+    // came back with a successful response
+    @Test
+    public void stressTest() throws SQLException, InterruptedException {
+        final int threshold = 50;
+
+        List<String> contracts = new ArrayList<>();
+        for(int i = 2; i < threshold; i++) {
+            String contractNumber = "S000" + i;
+            createContract(contractNumber);
+            contracts.add(contractNumber);
+        }
+
+        List<HttpResponse<String>> responses = new ArrayList<>();
+        CountDownLatch countDownLatch = new CountDownLatch(contracts.size());
+        // Execute HTTP Requests async and gather responses, continue when all are complete
+        for(String contract : contracts) {
+            exportByContractRequestAsync(contract).thenAcceptAsync((stringHttpResponse -> {
+                System.out.println("Executing on thread: " + Thread.currentThread().getName());
+                responses.add(stringHttpResponse);
+                countDownLatch.countDown();
+            }));
+        }
+
+        countDownLatch.await();
+
+        Set<String> jobIds = getAllJobUuids();
+
+        for(HttpResponse<String> httpResponse : responses) {
+            Assert.assertEquals(202, httpResponse.statusCode());
+            List<String> contentLocationList = httpResponse.headers().map().get("content-location");
+            String url = contentLocationList.iterator().next();
+            String jobUuid = url.substring(url.indexOf("/Job/") + 5, url.indexOf("/$status"));
+            if(!jobIds.contains(jobUuid)) {
+                Assert.fail("Job UUID " + jobUuid + " was not found from HTTP Response");
+            }
+
+            jobIds.remove(jobUuid);
+        }
     }
 
     @AfterAll
