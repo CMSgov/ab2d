@@ -39,6 +39,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import static gov.cms.ab2d.common.model.JobStatus.CANCELLED;
 import static gov.cms.ab2d.common.model.JobStatus.SUCCESSFUL;
 import static gov.cms.ab2d.common.util.Constants.CONTRACT_LOG;
+import static gov.cms.ab2d.common.util.Constants.EOB;
 import static net.logstash.logback.argument.StructuredArguments.keyValue;
 
 @Slf4j
@@ -312,7 +313,7 @@ public class JobProcessorImpl implements JobProcessor {
     private JobOutput createJobOutput(Path outputFile, boolean isError) {
         JobOutput jobOutput = new JobOutput();
         jobOutput.setFilePath(outputFile.getFileName().toString());
-        jobOutput.setFhirResourceType("ExplanationOfBenefits");
+        jobOutput.setFhirResourceType(EOB);
         jobOutput.setError(isError);
         return jobOutput;
     }

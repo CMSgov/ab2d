@@ -3,7 +3,7 @@ package gov.cms.ab2d.worker.adapter.bluebutton;
 import ca.uhn.fhir.context.FhirContext;
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.util.FHIRUtil;
-import gov.cms.ab2d.filter.ExplanationOfBenefitsTrimmer;
+import gov.cms.ab2d.filter.ExplanationOfBenefitTrimmer;
 import gov.cms.ab2d.worker.service.FileService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -163,7 +163,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
                 // Get only the explanation of benefits
                 .filter(resource -> resource.getResourceType() == ResourceType.ExplanationOfBenefit)
                 // filter it
-                .map(resource -> ExplanationOfBenefitsTrimmer.getBenefit((ExplanationOfBenefit) resource))
+                .map(resource -> ExplanationOfBenefitTrimmer.getBenefit((ExplanationOfBenefit) resource))
                 // Remove any empty values
                 .filter(Objects::nonNull)
                 // Remove Plan D
