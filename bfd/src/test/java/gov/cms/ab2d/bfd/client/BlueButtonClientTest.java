@@ -161,9 +161,8 @@ public class BlueButtonClientTest {
 
     @Test
     public void shouldGetEOBPatientNoRecords() {
-        thrown.expect(ResourceNotFoundException.class);
-        thrown.expectMessage("Patient does not have any records");
-        bbc.requestEOBFromServer(TEST_NO_RECORD_PATIENT_ID);
+        Bundle response = bbc.requestEOBFromServer(TEST_NO_RECORD_PATIENT_ID);
+        assertFalse(response.hasEntry());
     }
 
     @Test

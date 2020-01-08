@@ -70,8 +70,9 @@ public class JobProcessorImpl implements JobProcessor {
         final Job job = jobRepository.findByJobUuid(jobUuid);
         log.info("Found job");
 
+        Path outputDirPath = null;
         try {
-            final Path outputDirPath = Paths.get(efsMount, jobUuid);
+            outputDirPath = Paths.get(efsMount, jobUuid);
             final Path outputDir = createOutputDirectory(outputDirPath);
 
             final List<Contract> attestedContracts = getAttestedContracts(job);
@@ -88,6 +89,10 @@ public class JobProcessorImpl implements JobProcessor {
 
         } catch (JobCancelledException e) {
             log.warn("Job: [{}] CANCELLED", jobUuid);
+
+            log.info("Deleting output directory : {} ", outputDirPath.toAbsolutePath());
+            deleteExistingDirectory(outputDirPath);
+
         } catch (Exception e) {
             job.setStatus(JobStatus.FAILED);
             job.setStatusMessage(e.getMessage());
@@ -181,7 +186,7 @@ public class JobProcessorImpl implements JobProcessor {
         var lock = new ReentrantLock();
 
         int errorCount = 0;
-        JobStatus jobStatus = null;
+        boolean isCancelled = false;
 
         int recordsProcessedCount = 0;
         final List<Future<Integer>> futureHandles = new ArrayList<>();
@@ -200,29 +205,13 @@ public class JobProcessorImpl implements JobProcessor {
             if (recordsProcessedCount % cancellationCheckFrequency == 0) {
                 errorCount += processHandles(futureHandles);
 
-                // A Job could run for a long time, perhaps hours.
-                // While the job is in progress, the job could be cancelled.
-                // So the worker needs to periodically check the job status to ensure it has not been cancelled.
-
-                jobStatus = jobRepository.findJobStatus(jobUuid);
-                if (jobHasBeenCancelled(jobStatus)) {
+                isCancelled = hasJobBeenCancelled(jobUuid);
+                if (isCancelled) {
                     log.warn("Job [{}] has been cancelled. Attempting to stop processing the job shortly ... ", jobUuid);
+                    cancelFuturesInQueue(futureHandles);
                     break;
                 }
             }
-        }
-
-        if (jobHasBeenCancelled(jobStatus)) {
-            final String errMsg = "Job was cancelled while it was being processed";
-            log.warn("{} - JobUuid :[{}]", errMsg, jobUuid);
-
-            // cancel any outstanding futures that have not started processing.
-            futureHandles.parallelStream().forEach(future -> future.cancel(false));
-
-            //At this point, there may be a few futures that are already in progress.
-            //But all the futures that are not yet in progress would be cancelled.
-
-            throw new JobCancelledException(errMsg);
         }
 
         while (!futureHandles.isEmpty()) {
@@ -230,6 +219,11 @@ public class JobProcessorImpl implements JobProcessor {
             errorCount += processHandles(futureHandles);
         }
 
+        if (isCancelled) {
+            final String errMsg = "Job was cancelled while it was being processed";
+            log.warn("{}", errMsg);
+            throw new JobCancelledException(errMsg);
+        }
 
         final List<JobOutput> jobOutputs = new ArrayList<>();
         if (errorCount < patientCount) {
@@ -245,7 +239,25 @@ public class JobProcessorImpl implements JobProcessor {
         return jobOutputs;
     }
 
-    private boolean jobHasBeenCancelled(JobStatus jobStatus) {
+    private void cancelFuturesInQueue(List<Future<Integer>> futureHandles) {
+
+        // cancel any futures that have not started processing and are waiting in the queue.
+        futureHandles.parallelStream().forEach(future -> future.cancel(false));
+
+        //At this point, there may be a few futures that are already in progress.
+        //But all the futures that are not yet in progress would be cancelled.
+    }
+
+    /**
+     * A Job could run for a long time, perhaps hours.
+     * While the job is in progress, the job could be cancelled.
+     * So the worker needs to periodically check the job status to ensure it has not been cancelled.
+     *
+     * @param jobUuid
+     * @return
+     */
+    private boolean hasJobBeenCancelled(String jobUuid) {
+        final JobStatus jobStatus = jobRepository.findJobStatus(jobUuid);
         return CANCELLED.equals(jobStatus);
     }
 
@@ -283,7 +295,7 @@ public class JobProcessorImpl implements JobProcessor {
                     throw new RuntimeException(errMsg, e);
                 } catch (ExecutionException e) {
                     final String errMsg = "exception while processing patient ";
-                    log.error(errMsg);
+                    log.error(errMsg, e);
                     throw new RuntimeException(errMsg, e.getCause());
                 } catch (CancellationException e) {
                     // This could happen in the rare event that a job was cancelled mid-process.

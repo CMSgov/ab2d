@@ -10,6 +10,7 @@ import gov.cms.ab2d.api.security.UserNotEnabledException;
 import gov.cms.ab2d.common.service.InvalidContractException;
 import gov.cms.ab2d.common.service.InvalidJobStateTransition;
 import gov.cms.ab2d.common.service.ResourceNotFoundException;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.hl7.fhir.dstu3.model.OperationOutcome;
 import org.springframework.beans.factory.annotation.Value;
@@ -27,6 +28,7 @@ import static gov.cms.ab2d.common.util.FHIRUtil.getErrorOutcome;
 import static gov.cms.ab2d.common.util.FHIRUtil.outcomeToJSON;
 
 @ControllerAdvice
+@Slf4j
 class ErrorHandler extends ResponseEntityExceptionHandler {
 
     @Value("${api.retry-after.delay}")
@@ -35,6 +37,7 @@ class ErrorHandler extends ResponseEntityExceptionHandler {
     // All errors that are not the fault of the client
     @ExceptionHandler(Exception.class)
     public ResponseEntity<JsonNode> serverException(final Exception e) throws IOException {
+        log.error("Encountered exception: ", e);
         return generateFHIRError(e, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
