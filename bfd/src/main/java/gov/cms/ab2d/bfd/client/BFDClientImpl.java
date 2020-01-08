@@ -74,7 +74,7 @@ public class BFDClientImpl implements BFDClient {
             backoff = @Backoff(delayExpression = "${bfd.retry.backoffDelay:250}", multiplier = 2),
             exclude = { ResourceNotFoundException.class }
     )
-    public Bundle requestNextBundleFromServer(Bundle bundle) throws ResourceNotFoundException {
+    public Bundle requestNextBundleFromServer(Bundle bundle) {
         return client
                 .loadPage()
                 .next(bundle)
@@ -92,20 +92,13 @@ public class BFDClientImpl implements BFDClient {
      */
     private <T extends IBaseResource> Bundle fetchBundle(Class<T> resourceClass,
                                                          ICriterion<ReferenceClientParam> criterion) {
-        final Bundle bundle = client.search()
+        return client.search()
                 .forResource(resourceClass)
                 .where(criterion)
                 .count(pageSize)
                 .returnBundle(Bundle.class)
                 .execute();
 
-        // Case where patientID does not have any records
-        if (!bundle.hasEntry()) {
-            String message = "Patient does not have any records";
-            log.error(message);
-            throw new ResourceNotFoundException(message);
-        }
-        return bundle;
     }
 
 }
