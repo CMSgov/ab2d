@@ -73,7 +73,7 @@ class JobProcessorUnitTest {
 
 
     @BeforeEach
-    void setUp() {
+    void setUp() throws IOException {
         cut = new JobProcessorImpl(
                 fileService,
                 jobRepository,
@@ -97,10 +97,12 @@ class JobProcessorUnitTest {
         patientsByContract = createPatientsByContractResponse(contract);
         Mockito.when(beneficiaryAdapter.getPatientsByContract(anyString())).thenReturn(patientsByContract);
 
-        Mockito.lenient().when(fileService.createDirectory(Mockito.any(Path.class))).thenReturn(efsMountTmpDir);
+        final Path outputDirPath = Paths.get(efsMountTmpDir.toString(), jobUuid);
+        final Path outputDir = Files.createDirectories(outputDirPath);
+        Mockito.lenient().when(fileService.createDirectory(Mockito.any(Path.class))).thenReturn(outputDir);
         Mockito.lenient().when(fileService.createOrReplaceFile(Mockito.any(Path.class), anyString()))
-                .thenReturn(efsMountTmpDir)
-                .thenReturn(efsMountTmpDir);
+                .thenReturn(this.efsMountTmpDir)
+                .thenReturn(this.efsMountTmpDir);
 
         Future<Integer> futureResources = new AsyncResult(0);
         Mockito.lenient().when(patientClaimsProcessor.process(
