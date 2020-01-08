@@ -255,7 +255,7 @@ public class TestRunner {
             ResultSet resultSet = statement.executeQuery("SELECT job_uuid FROM job");
             while (resultSet.next()) {
                 if(i > 0) {
-                    throw new IllegalStateException("Retrieved more than one job when there should only be 1");
+                    //throw new IllegalStateException("Retrieved more than one job when there should only be 1");
                 }
                 uuid = resultSet.getString("job_uuid");
                 i++;
@@ -544,6 +544,8 @@ public class TestRunner {
 
             jobIds.remove(jobUuid);
         }
+
+        Assert.assertEquals(0, jobIds.size());
     }
 
     @AfterAll
