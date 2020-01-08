@@ -509,7 +509,7 @@ public class TestRunner {
     // came back with a successful response
     @Test
     public void stressTest() throws SQLException, InterruptedException {
-        final int threshold = 50;
+        final int threshold = 75;
 
         List<String> contracts = new ArrayList<>();
         for(int i = 2; i < threshold; i++) {
@@ -520,7 +520,8 @@ public class TestRunner {
 
         List<HttpResponse<String>> responses = new ArrayList<>();
         CountDownLatch countDownLatch = new CountDownLatch(contracts.size());
-        // Execute HTTP Requests async and gather responses, continue when all are complete
+        // Execute HTTP Requests async and gather responses, continue when all are complete, by default these will
+        // execute on the ForkJoin common pool
         for(String contract : contracts) {
             exportByContractRequestAsync(contract).thenAcceptAsync((stringHttpResponse -> {
                 System.out.println("Executing on thread: " + Thread.currentThread().getName());
