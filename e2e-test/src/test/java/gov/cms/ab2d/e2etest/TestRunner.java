@@ -200,15 +200,25 @@ public class TestRunner {
     }
 
     private HttpResponse<String> statusRequest(String url) throws IOException, InterruptedException {
-        HttpRequest statusRequest = HttpRequest.newBuilder()
+        HttpRequest statusRequest = buildStatusRequest(url);
+
+        return httpClient.send(statusRequest, HttpResponse.BodyHandlers.ofString());
+    }
+
+    private HttpRequest buildStatusRequest(String url) {
+        return HttpRequest.newBuilder()
                 .uri(URI.create(url))
                 .timeout(Duration.ofSeconds(DEFAULT_TIMEOUT))
                 .header("Content-Type", "application/json")
                 .header("Authorization", "Bearer " + jwtStr)
                 .GET()
                 .build();
+    }
 
-        return httpClient.send(statusRequest, HttpResponse.BodyHandlers.ofString());
+    private CompletableFuture<HttpResponse<String>> statusRequestAsync(String url) {
+        HttpRequest statusRequest = buildStatusRequest(url);
+
+        return httpClient.sendAsync(statusRequest, HttpResponse.BodyHandlers.ofString());
     }
 
     private HttpResponse<String> cancelJobRequest(String jobId) throws IOException, InterruptedException {
@@ -235,18 +245,12 @@ public class TestRunner {
         return httpClient.send(fileDownloadRequest, HttpResponse.BodyHandlers.ofString());
     }
 
-    // Used after a job is created when there were no previous jobs in the db, will verify that there is only one job present.
     private String getJobUuid() throws SQLException {
         String uuid = null;
-        int i = 0;
         try (Connection connection = dataSource.getConnection(); Statement statement = connection.createStatement()) {
-            ResultSet resultSet = statement.executeQuery("SELECT job_uuid FROM job");
+            ResultSet resultSet = statement.executeQuery("SELECT job_uuid FROM job WHERE job_status != 'CANCELLED'");
             while (resultSet.next()) {
-                if(i > 0) {
-                    //throw new IllegalStateException("Retrieved more than one job when there should only be 1");
-                }
                 uuid = resultSet.getString("job_uuid");
-                i++;
             }
         }
 
@@ -495,7 +499,7 @@ public class TestRunner {
     // Used to test when there are a lot of requests sent to the server in parallel. We will verify that all the requests
     // came back with a successful response
     @Test
-    public void stressTest() throws SQLException, InterruptedException {
+    public void stressTest() throws SQLException, InterruptedException, JSONException {
         final int threshold = 100;
 
         List<String> contracts = new ArrayList<>();
@@ -505,35 +509,59 @@ public class TestRunner {
             contracts.add(contractNumber);
         }
 
-        List<HttpResponse<String>> responses = new ArrayList<>();
-        CountDownLatch countDownLatch = new CountDownLatch(contracts.size());
+        List<HttpResponse<String>> exportResponses = new ArrayList<>();
+        CountDownLatch exportCountDownLatch = new CountDownLatch(contracts.size());
         // Execute HTTP Requests async and gather responses, continue when all are complete, by default these will
         // execute on the ForkJoin common pool
         for(String contract : contracts) {
-            exportByContractRequestAsync(contract).thenAcceptAsync((stringHttpResponse -> {
+            exportByContractRequestAsync(contract).thenAcceptAsync(stringHttpResponse -> {
                 System.out.println("Executing on thread: " + Thread.currentThread().getName());
-                responses.add(stringHttpResponse);
-                countDownLatch.countDown();
-            }));
+                exportResponses.add(stringHttpResponse);
+                exportCountDownLatch.countDown();
+            });
         }
 
-        countDownLatch.await();
+        exportCountDownLatch.await();
 
         Set<String> jobIds = getAllJobUuids();
+        Set<String> statusUrls = new HashSet<>();
 
-        for(HttpResponse<String> httpResponse : responses) {
+        for(HttpResponse<String> httpResponse : exportResponses) {
             Assert.assertEquals(202, httpResponse.statusCode());
             List<String> contentLocationList = httpResponse.headers().map().get("content-location");
             String url = contentLocationList.iterator().next();
+            statusUrls.add(url);
             String jobUuid = url.substring(url.indexOf("/Job/") + 5, url.indexOf("/$status"));
             if(!jobIds.contains(jobUuid)) {
                 Assert.fail("Job UUID " + jobUuid + " was not found from HTTP Response");
             }
-
-            jobIds.remove(jobUuid);
         }
 
-        Assert.assertEquals(0, jobIds.size());
+        CountDownLatch statusCountdownLatch = new CountDownLatch(contracts.size());
+
+        List<HttpResponse<String>> statusResponses = new ArrayList<>();
+        for(String statusUrl : statusUrls) {
+            statusRequestAsync(statusUrl).thenAcceptAsync(stringHttpResponse -> {
+                statusResponses.add(stringHttpResponse);
+                statusCountdownLatch.countDown();
+            });
+        }
+
+        statusCountdownLatch.await();
+
+        Set<String> downloadUrls = new HashSet<>(contracts.size());
+
+        for(HttpResponse<String> statusResponse : statusResponses) {
+            Assert.assertEquals(200, statusResponse.statusCode());
+
+            final JSONObject json = new JSONObject(statusResponse.body());
+            JSONArray output = json.getJSONArray("output");
+            JSONObject outputObject = output.getJSONObject(0);
+            String url = outputObject.getString("url");
+            downloadUrls.add(url);
+        }
+
+
     }
 
     @AfterAll
