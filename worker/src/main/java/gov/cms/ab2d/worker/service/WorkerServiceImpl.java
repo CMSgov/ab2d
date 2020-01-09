@@ -23,21 +23,23 @@ public class WorkerServiceImpl implements WorkerService {
     private final JobProcessor jobProcessor;
     private final ShutDownService shutDownService;
 
-    private static List<String> activeJobs = Collections.synchronizedList(new ArrayList<>());
+    private List<String> activeJobs = Collections.synchronizedList(new ArrayList<>());
 
 
     @Override
     public void process(String jobUuid) {
 
         activeJobs.add(jobUuid);
+        try {
+            jobPreprocessor.preprocess(jobUuid);
+            log.info("Job was put in progress");
 
-        jobPreprocessor.preprocess(jobUuid);
-        log.info("Job was put in progress");
+            jobProcessor.process(jobUuid);
+            log.info("Job was processed");
 
-        jobProcessor.process(jobUuid);
-        log.info("Job was processed");
-
-        activeJobs.remove(jobUuid);
+        } finally {
+            activeJobs.remove(jobUuid);
+        }
     }
 
 
