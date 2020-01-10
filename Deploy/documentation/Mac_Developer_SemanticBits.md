@@ -43,6 +43,7 @@
 1. [Install Xcode](#install-xcode)
 1. [Install and configure Ruby](#install-and-configure-ruby)
 1. [Install Keybase](#install-keybase)
+1. [Install Postman](#install-postman)
 
 ## Install Slack
 
@@ -1231,7 +1232,7 @@
 
    1. Jump to the following section
 
-      [Next step](#next-step)
+      [Install Postman](#install-postman)
 
 1. If you already have a Keybase account, do the following:
 
@@ -1265,7 +1266,30 @@
 
    1. Select **Continue**
 
-## Next step
+## Install Postman
 
-> *** TO DO ***
+1. Open Chrome
 
+1. Enter the following in the address bar
+
+   > https://www.getpostman.com/downloads
+
+1. Select **Download**
+
+1. Wait fo the download to complete
+
+1. Open a terminal
+
+1. Enter the following
+
+   ```ShellSession
+   $ cd ~/Downloads
+   $ 7z x Postman-osx-*.zip
+   $ mv Postman.app /Applications
+   ```
+
+1. Select **Launchpad**
+
+1. Select **Postman**
+
+1. Verify that "Postman" opens
