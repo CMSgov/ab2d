@@ -34,5 +34,8 @@ public interface JobRepository extends JpaRepository<Job, Long> {
     @Query("FROM Job j WHERE j.createdAt < :createdAt AND j.status = 'IN_PROGRESS' AND j.completedAt IS NULL ")
     List<Job> findStuckJobs(OffsetDateTime createdAt);
 
+    @Modifying
+    @Query("UPDATE Job j SET j.status = 'SUBMITTED' WHERE j.jobUuid IN :jobUuids ")
+    void resetJobsToSubmittedStatus(List<String> jobUuids);
 
 }
