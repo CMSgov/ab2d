@@ -2,7 +2,6 @@ package gov.cms.ab2d.worker.config;
 
 import gov.cms.ab2d.bfd.client.BFDClientConfiguration;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.time.DateUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -101,17 +100,16 @@ public class WorkerConfig {
 
     @Bean
     public LockRepository lockRepository() {
-        return new DefaultLockRepository(dataSource);
+        final DefaultLockRepository defaultLockRepository = new DefaultLockRepository(dataSource);
+        defaultLockRepository.setTimeToLive(60_000);        // 60 seconds
+        return defaultLockRepository;
     }
 
     /**
      * Using {@link JdbcLockRegistry} is critical to avoid race condition among workers competing for requests.
-     * Locks will auto-expire after one hour.
      */
     @Bean
     public LockRegistry lockRegistry(LockRepository lockRepository) {
-        final JdbcLockRegistry registry = new JdbcLockRegistry(lockRepository);
-        registry.expireUnusedOlderThan(DateUtils.MILLIS_PER_HOUR);
-        return registry;
+        return new JdbcLockRegistry(lockRepository);
     }
 }
