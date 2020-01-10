@@ -34,5 +34,5 @@ improve health outcomes, among other benefits.
 PDP sponsors may request Medicare claims data via the Claim Data Attestation module in
 the Health Plan Management System (HPMS). This attestation process ensures that PDP sponsors are aware of how 
 they may or may not use the Medicare claims data, including the limitations associated with the reuse and redisclosure 
-of the data. Visit HPMS
+of the data. Visit [HPMS](https://hpms.cms.gov)
 
