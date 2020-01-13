@@ -13,7 +13,6 @@ import org.hl7.fhir.dstu3.model.Bundle.BundleEntryComponent;
 import org.hl7.fhir.dstu3.model.ExplanationOfBenefit;
 import org.hl7.fhir.dstu3.model.Resource;
 import org.hl7.fhir.dstu3.model.ResourceType;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.AsyncResult;
@@ -39,14 +38,9 @@ import static net.logstash.logback.argument.StructuredArguments.keyValue;
 @RequiredArgsConstructor
 public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
 
-    @Autowired
-    private BFDClient bfdClient;
-
-    @Autowired
-    private FhirContext fhirContext;
-
-    @Autowired
-    private FileService fileService;
+    private final BFDClient bfdClient;
+    private final FhirContext fhirContext;
+    private final FileService fileService;
 
     @Value("${file.try.lock.timeout}")
     private int tryLockTimeout;
