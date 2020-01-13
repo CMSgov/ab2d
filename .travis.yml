@@ -19,8 +19,6 @@ before_script:
   - chmod +x ./cc-test-reporter
   - ./cc-test-reporter before-build
 script:
-  - docker version
-  - docker-compose version
   - mvn clean verify
 after_script:
   - export JACOCO_SOURCE_PATH=./api/src/main/java; ./cc-test-reporter format-coverage ./api/target/site/jacoco/jacoco.xml --input-type jacoco -o codeclimate.api.json
