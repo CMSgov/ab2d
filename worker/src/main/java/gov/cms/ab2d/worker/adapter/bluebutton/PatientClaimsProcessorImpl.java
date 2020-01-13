@@ -69,7 +69,9 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
                 }
             }
 
-            appendToFile(outputFile, byteArrayOutputStream, lock);
+            if (byteArrayOutputStream.size() > 0) {
+                appendToFile(outputFile, byteArrayOutputStream, lock);
+            }
         } catch (Exception e) {
             ++errorCount;
             try {

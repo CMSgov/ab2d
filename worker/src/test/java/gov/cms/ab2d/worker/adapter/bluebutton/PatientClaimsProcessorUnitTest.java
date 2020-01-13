@@ -116,6 +116,18 @@ public class PatientClaimsProcessorUnitTest {
         verify(mockFileService).appendToFile(any(), any());
     }
 
+    @Test
+    void process_whenPatientHasNoEOBClaimsData() throws IOException, ExecutionException, InterruptedException {
+        Bundle bundle1 = new Bundle();
+        when(mockBfdClient.requestEOBFromServer(patientId)).thenReturn(bundle1);
+
+        cut.process(patientId, new ReentrantLock(), outputFile, errorFile).get();
+
+        verify(mockBfdClient).requestEOBFromServer(patientId);
+        verify(mockBfdClient, never()).requestNextBundleFromServer(bundle1);
+        verify(mockFileService, never()).appendToFile(any(), any());
+    }
+
 
     private void createEOB() {
         final String testInputFile = "test-data/EOB-for-Carrier-Claims.json";
