@@ -25,7 +25,7 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.Future;
-import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.locks.Lock;
 import java.util.stream.Collectors;
 
 import static gov.cms.ab2d.common.util.Constants.FILE_LOG;
@@ -46,7 +46,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
     private int tryLockTimeout;
 
     @Async("bfd-client")
-    public Future<Integer> process(String patientId, ReentrantLock lock, Path outputFile, Path errorFile) {
+    public Future<Integer> process(String patientId, Lock lock, Path outputFile, Path errorFile) {
         int errorCount = 0;
         int resourceCount = 0;
 
@@ -89,7 +89,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
         return new AsyncResult<>(errorCount);
     }
 
-    private void handleException(Path errorFile, Exception e, ReentrantLock lock) throws IOException {
+    private void handleException(Path errorFile, Exception e, Lock lock) throws IOException {
         var errMsg = ExceptionUtils.getRootCauseMessage(e);
         var operationOutcome = FHIRUtil.getErrorOutcome(errMsg);
 
@@ -107,7 +107,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
      * @param byteArrayOutputStream
      * @throws IOException
      */
-    private void appendToFile(Path outputFile, ByteArrayOutputStream byteArrayOutputStream, ReentrantLock lock) throws IOException {
+    private void appendToFile(Path outputFile, ByteArrayOutputStream byteArrayOutputStream, Lock lock) throws IOException {
 
         tryLock(lock);
 
@@ -119,7 +119,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
         }
     }
 
-    private void tryLock(ReentrantLock lock) {
+    private void tryLock(Lock lock) {
         final String errMsg = "Terminate processing. Unable to acquire lock";
         try {
             final boolean lockAcquired = lock.tryLock(tryLockTimeout, SECONDS);
