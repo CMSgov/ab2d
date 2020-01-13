@@ -45,7 +45,8 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
     @Value("${file.try.lock.timeout}")
     private int tryLockTimeout;
 
-    @Async("bfd-client")
+
+    @Async("pcpThreadPool")
     public Future<Integer> process(String patientId, Lock lock, Path outputFile, Path errorFile) {
         int errorCount = 0;
         int resourceCount = 0;

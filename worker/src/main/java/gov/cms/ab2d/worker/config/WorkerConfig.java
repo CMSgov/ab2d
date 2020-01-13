@@ -52,8 +52,8 @@ public class WorkerConfig {
     @Value("${bfd-client.queue.capacity}")
     private int queueCapacity;
 
-    @Bean("bfd-client")
-    public Executor bfdThreadPoolTaskExecutor() {
+    @Bean
+    public Executor pcpThreadPool() {
         final ThreadPoolTaskExecutor taskExecutor = new ThreadPoolTaskExecutor();
         taskExecutor.setCorePoolSize(corePoolSize);
         taskExecutor.setMaxPoolSize(maxPoolSize);
