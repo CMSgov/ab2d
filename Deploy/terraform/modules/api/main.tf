@@ -277,7 +277,7 @@ resource "aws_ecs_service" "api" {
 # security_groups = [aws_security_group.api.id,var.enterprise-tools-sec-group-id,var.vpn-private-sec-group-id]
 # LSH SKIP FOR NOW BEGIN
 resource "aws_launch_configuration" "launch_config" {
-  name_prefix = "${lower(var.env)}-"
+  name_prefix = "${lower(var.env)}-api-"
   image_id = var.ami_id
   instance_type = var.instance_type
   iam_instance_profile = var.iam_instance_profile
