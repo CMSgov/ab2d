@@ -24,6 +24,7 @@
    * [Delete the cached website files from the CloudFront edge caches before they expire](#delete-the-cached-website-files-from-the-cloudfront-edge-caches-before-they-expire)
 1. [Appendix N: Destroy and redploy API and Worker nodes](#appendix-n-destroy-and-redploy-api-and-worker-nodes)
 1. [Appendix O: Destroy complete environment](#appendix-o-destroy-complete-environment)
+1. [Appendix P: Display disk space](#appendix-p-display-disk-space)
 
 ## Appendix A: Access the CMS AWS console
 
@@ -505,7 +506,7 @@
 1. Copy messages file to the controller
 
    ```ShellSession
-   $ scp -i ~/.ssh/${TARGET_ENVIRONMENT}.pem ${SSH_USER_NAME}@${API_PRIVATE_IP}:~/messages .
+   $ scp -i ~/.ssh/${TARGET_ENVIRONMENT}.pem ${SSH_USER_NAME}@${NODE_PRIVATE_IP}:~/messages .
    ```
 
 1. Log off controller
@@ -947,3 +948,101 @@
      --shared-environment=ab2d-sbx-sandbox-shared \
      --keep-ami
    ```
+
+## Appendix P: Display disk space
+
+1. Set target AWS profile
+
+   *Example for "Dev" environment:*
+
+   ```ShellSession
+   $ export AWS_PROFILE=ab2d-dev
+   ```
+
+   *Example for "Sbx" environment:*
+
+   ```ShellSession
+   $ export AWS_PROFILE=ab2d-sbx-sandbox
+   ```
+
+1. Set target environment
+
+   *Example for "Dev" environment:*
+
+   ```ShellSession
+   $ export TARGET_ENVIRONMENT=ab2d-dev
+   ```
+
+   *Example for "Sbx" environment:*
+
+   ```ShellSession
+   $ export TARGET_ENVIRONMENT=ab2d-sbx-sandbox
+   ```
+
+1. Set controller access variables
+
+   *Example for "Dev" environment:*
+   
+   ```ShellSession
+   $ export CONTROLLER_PUBLIC_IP=52.7.241.208
+   $ export SSH_USER_NAME=ec2-user
+   ```
+
+1. Copy the key to the controller
+
+   ```ShellSession
+   $ scp -i ~/.ssh/${TARGET_ENVIRONMENT}.pem ~/.ssh/${TARGET_ENVIRONMENT}.pem ${SSH_USER_NAME}@${CONTROLLER_PUBLIC_IP}:~/.ssh
+   ```
+   
+1. Connect to the controller
+   
+   ```ShellSession
+   $ ssh -i ~/.ssh/${TARGET_ENVIRONMENT}.pem ${SSH_USER_NAME}@${CONTROLLER_PUBLIC_IP}
+   ```
+
+1. Set node variables
+
+   *Example for "Dev" environment:*
+   
+   ```ShellSession
+   $ export TARGET_ENVIRONMENT=ab2d-dev
+   $ export NODE_PRIVATE_IP=10.242.26.108
+   $ export SSH_USER_NAME=ec2-user
+   ```
+   
+1. Connect to node
+
+   ```ShellSession
+   $ ssh -i ~/.ssh/${TARGET_ENVIRONMENT}.pem ${SSH_USER_NAME}@${NODE_PRIVATE_IP}
+   ```
+
+1. Display the amount of disk space available on each file system in a human readable manner
+
+   1. Enter the following
+
+      ```ShellSession
+      $ sudo df -h
+      ```
+
+   1. Note the output
+
+      ```
+      Filesystem                        Size  Used Avail Use% Mounted on
+      devtmpfs                          7.6G     0  7.6G   0% /dev
+      tmpfs                             7.6G   16K  7.6G   1% /dev/shm
+      tmpfs                             7.6G   57M  7.5G   1% /run
+      tmpfs                             7.6G     0  7.6G   0% /sys/fs/cgroup
+      /dev/mapper/VolGroup00-rootVol     10G  2.4G  7.7G  24% /
+      /dev/nvme0n1p1                   1014M  275M  740M  28% /boot
+      /dev/mapper/VolGroup00-homeVol    3.0G   33M  3.0G   2% /home
+      /dev/mapper/VolGroup00-tmpVol    1014M   34M  981M   4% /tmp
+      /dev/mapper/VolGroup00-varVol     6.0G  1.8G  4.3G  30% /var
+      /dev/mapper/VolGroup00-vartmpVol 1014M   33M  982M   4% /var/tmp
+      /dev/mapper/VolGroup00-logVol     4.0G   43M  4.0G   2% /var/log
+      /dev/mapper/VolGroup00-auditVol   4.0G   53M  4.0G   2% /var/log/audit
+      overlay                           6.0G  1.8G  4.3G  30% /var/lib/docker/overlay2/806c002b8d5a7e51925854155c7f40808d6501908f17e58560a78e8e70a7d521/merged
+      shm                                64M     0   64M   0% /var/lib/docker/containers/831e3b41737ee1174af0a93aa991543831565f3a523f62c35e026661d818bf7d/mounts/shm
+      overlay                           6.0G  1.8G  4.3G  30% /var/lib/docker/overlay2/a608f39b66941b6333aaf7b6b1e0346f42f5f1c160a26528a4382da2b4fcb774/merged
+      shm                                64M     0   64M   0% /var/lib/docker/containers/617e4a4ec4195e1f47d8e6e4c4e743eeb2d60c26309e42598d318fc53da9dd08/mounts/shm
+      tmpfs                             1.6G     0  1.6G   0% /run/user/1000
+      ```
