@@ -1,7 +1,6 @@
 package gov.cms.ab2d.worker.adapter.bluebutton;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 
@@ -22,27 +21,24 @@ import java.util.stream.Collectors;
 public class BeneficiaryAdapterStub implements BeneficiaryAdapter {
 
     private static final String BENE_ID_FILE = "/test-stub-data/synthetic-bene-ids.csv";
-
-    @Value("${bb-stub.page.size}")
-    private int pageSize;
-
+    private static final int MAX_ROWS = 30_000;
 
     @Override
     public GetPatientsByContractResponse getPatientsByContract(String contractNumber) {
 
         final int contractSno = extractContractSno(contractNumber);
-        final int startOffset = (contractSno - 1) * 100;
 
-        final var patientsPerContract = getFromSampleFile(startOffset);
+        final var patientsPerContract = getFromSampleFile(contractSno);
 
         return toResponse(contractNumber, patientsPerContract);
     }
 
 
     private Integer extractContractSno(String contractNumber) {
-        final String contractNumberSuffix = contractNumber.substring(contractNumber.length() - 3);
+        //valid range from 0000 - 9999
+        final String contractNumberSuffix = contractNumber.substring(contractNumber.length() - 4);
 
-        final Integer sno;
+        Integer sno = null;
         try {
             sno = Integer.valueOf(contractNumberSuffix);
         } catch (NumberFormatException e) {
@@ -50,33 +46,70 @@ public class BeneficiaryAdapterStub implements BeneficiaryAdapter {
             return 0;
         }
 
+        if (sno == 0) {
+            try {
+                final String cnoSfx = contractNumber.substring(contractNumber.length() - 5);
+                sno = Integer.valueOf(cnoSfx);
+            } catch (NumberFormatException e) {
+                log.warn("Invalid contractNumber : {} ", contractNumber);
+                // do nothing as this was a check to make sure if the sno > 9999.
+            }
+        }
+
         return sno;
     }
 
-    private List<String> getFromSampleFile(final int startOffset) {
-        if (startOffset < 0) {
+    private List<String> getFromSampleFile(final int contractSno) {
+        if (contractSno < 0 || contractSno > 9_999) {
             return new ArrayList<String>();
         }
 
+        int numberOfRows = contractSno * 1000;
+        int rowsToRetrieve = numberOfRows < MAX_ROWS ? numberOfRows : MAX_ROWS;
+
+        var patientIdRows = new ArrayList<String>();
         try (var inputStream = this.getClass().getResourceAsStream(BENE_ID_FILE)) {
             Assert.notNull(inputStream, "error getting resource as stream :  " + BENE_ID_FILE);
 
             try (var br =  new BufferedReader(new InputStreamReader(inputStream))) {
                 Assert.notNull(br, "Could not create buffered reader from input stream :  " + BENE_ID_FILE);
 
-                return readLinesByOffset(br, startOffset);
+                patientIdRows.addAll(readLines(br, rowsToRetrieve));
             }
         } catch (Exception ex) {
             final String errMsg = "Error reading file : ";
             log.error("{} {} ", errMsg, BENE_ID_FILE, ex);
             throw new RuntimeException(errMsg + BENE_ID_FILE);
         }
+
+        final List<String> allRows = new ArrayList<>();
+        allRows.addAll(patientIdRows);
+
+        if (numberOfRows > MAX_ROWS) {
+            allRows.addAll(createMoreRows(numberOfRows, rowsToRetrieve, patientIdRows));
+        }
+
+        return allRows;
     }
 
-    private List<String> readLinesByOffset(BufferedReader br, int startOffset) {
+    private List<String> createMoreRows(int numberOfRows, int rowsToRetrieve, ArrayList<String> patientIdRows) {
+        final int diff = numberOfRows - rowsToRetrieve;
+        if (diff < MAX_ROWS) {
+            return patientIdRows.stream().limit(diff).collect(Collectors.toList());
+        } else {
+            List<String> accumulator = new ArrayList<>();
+            accumulator.addAll(patientIdRows);
+
+            final List<String> moreRows = createMoreRows(diff, rowsToRetrieve, patientIdRows);
+            accumulator.addAll(moreRows);
+
+            return accumulator;
+        }
+    }
+
+    private List<String> readLines(BufferedReader br, int rowsToRetrieve) {
         return br.lines()
-                .skip(startOffset)
-                .limit(pageSize)
+                .limit(rowsToRetrieve)
                 .collect(Collectors.toList());
     }
 
