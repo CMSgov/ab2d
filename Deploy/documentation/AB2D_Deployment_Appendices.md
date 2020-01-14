@@ -1190,7 +1190,13 @@
 
    1. Select **Authorize**
 
-   1. Paste the JWT access token value in the **Value** text box
+   1. Paste the JWT access token value in the **Value** text box using the following format
+
+      *Format:*
+
+      ```
+      Bearer {jwt access token}
+      ```
 
    1. Select **Authorize**
 
@@ -1199,6 +1205,8 @@
    1. Select **Close**
 
    1. Verify that all the lock icons are now displayed as locked
+
+   1. Note that locked icons does not mean that you typed in the authorization token correctly
 
 1. Test the "/api/v1/fhir/Patient/$export" API
 
