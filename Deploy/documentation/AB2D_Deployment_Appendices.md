@@ -25,6 +25,7 @@
 1. [Appendix N: Destroy and redploy API and Worker nodes](#appendix-n-destroy-and-redploy-api-and-worker-nodes)
 1. [Appendix O: Destroy complete environment](#appendix-o-destroy-complete-environment)
 1. [Appendix P: Display disk space](#appendix-p-display-disk-space)
+1. [Appendix Q: Test API using swagger](#appendix-q-test-api-using-swagger)
 
 ## Appendix A: Access the CMS AWS console
 
@@ -456,6 +457,13 @@
    $ export SSH_USER_NAME=ec2-user
    ```
 
+   *Example for "Sbx" environment:*
+   
+   ```ShellSession
+   $ export CONTROLLER_PUBLIC_IP=3.93.125.65
+   $ export SSH_USER_NAME=ec2-user
+   ```
+
 1. Copy the key to the controller
 
    ```ShellSession
@@ -479,7 +487,23 @@
    $ export NODE_PRIVATE_IP=10.242.26.231
    $ export SSH_USER_NAME=ec2-user
    ```
+
+   *Example for "Sbx" environment (node 1):*
    
+   ```ShellSession
+   $ export TARGET_ENVIRONMENT=ab2d-sbx-sandbox
+   $ export NODE_PRIVATE_IP=10.242.31.196
+   $ export SSH_USER_NAME=ec2-user
+   ```
+
+   *Example for "Sbx" environment (node 2):*
+   
+   ```ShellSession
+   $ export TARGET_ENVIRONMENT=ab2d-sbx-sandbox
+   $ export NODE_PRIVATE_IP=10.242.31.120
+   $ export SSH_USER_NAME=ec2-user
+   ```
+
 1. Connect to a node
 
    *Format:*
@@ -988,6 +1012,13 @@
    $ export SSH_USER_NAME=ec2-user
    ```
 
+   *Example for "Sbx" environment:*
+   
+   ```ShellSession
+   $ export CONTROLLER_PUBLIC_IP=3.93.125.65
+   $ export SSH_USER_NAME=ec2-user
+   ```
+
 1. Copy the key to the controller
 
    ```ShellSession
@@ -1006,7 +1037,7 @@
    
    ```ShellSession
    $ export TARGET_ENVIRONMENT=ab2d-dev
-   $ export NODE_PRIVATE_IP=10.242.26.108
+   $ export NODE_PRIVATE_IP=10.242.31.196
    $ export SSH_USER_NAME=ec2-user
    ```
    
@@ -1046,3 +1077,206 @@
       shm                                64M     0   64M   0% /var/lib/docker/containers/617e4a4ec4195e1f47d8e6e4c4e743eeb2d60c26309e42598d318fc53da9dd08/mounts/shm
       tmpfs                             1.6G     0  1.6G   0% /run/user/1000
       ```
+
+## Appendix Q: Test API using swagger
+
+1. Open Chrome
+
+1. Enter the following in the address bar
+
+   > https://confluence.cms.gov/display/AB2D/Step+By+Step+Tutorial
+
+1. Note the following information from this document
+
+   - Client Id
+
+   - Client Password
+
+   - username
+
+   - password
+
+   - OKTA server URL
+   
+1. Open Postman
+
+1. Create an "ab2d" collection
+
+   1. Select "New"
+
+   1. Select "Collection"
+
+   1. Enter the following on the "CREATE A NEW COLLECTION" page
+
+      - **Name:** ab2d
+
+   1. Select "Create"
+
+1. Add an "retrieve-a-token" request to the "ab2d" collection
+
+   1. Select **...** beside the "ab2d" collection
+
+   1. Select **Add Request**
+
+   1. Enter the following on the "SAVE REQUEST" page
+
+      - **Request name:** retreive-a-token
+
+   1. Select **Save to ab2d**
+
+1. Configure the "retreive-a-token" request
+
+   1. Expand the "ab2d" collection node
+
+   1. Select the following
+
+      ```
+      GET retreive-a-token
+      ```
+
+   1. Change "GET" to "POST"
+
+   1. Enter the noted OKTA server URL in the "Enter request URL" text box
+
+   1. Select the **Params** tab
+
+   1. Add the following key value pairs
+
+      Key       |Value
+      ----------|----------
+      grant_type|password
+      scope     |openid
+      username  |{noted username}
+      password  |{noted password}
+
+   1. Note that add parameters now appear as part of the OKTA server URL
+
+   1. Select the **Headers** tab
+
+   1. Add the following key value pairs
+
+      Key         |Value
+      ------------|----------
+      Content-Type|application/x-www-form-urlencoded
+      Accept      |application/json
+   
+   1. Select the **Authorization** tab
+
+   1. Select "Basic Auth" from the "TYPE" dropdown
+
+   1. Configure the "Authorization" page
+
+      - **Username:** {noted username}
+
+      - **Password:** {noted password}
+
+   1. Select **Send**
+
+   1. Verify that you get an "access_token" within the JSON response
+
+   1. Note the "access_token"
+
+   1. Note that this "access_token" is the JWT access token that you will use within the swagger-ui)
+
+1. Open Chrome
+
+1. Enter the "swagger-ui.html" URL for the target environment in the address bar
+
+1. Select **bulk-data-access-api**
+
+1. Note the list of API endpoints that are displayed
+
+1. Authorize the endpoints using the JWT access token
+
+   1. Select **Authorize**
+
+   1. Paste the JWT access token value in the **Value** text box
+
+   1. Select **Authorize**
+
+   1. Verify that "Authorized" is displayed under "Authorization (apiKey)"
+
+   1. Select **Close**
+
+   1. Verify that all the lock icons are now displayed as locked
+
+1. Test the "/api/v1/fhir/Patient/$export" API
+
+   1. Select **GET** beside the "/api/v1/fhir/Patient/$export" API
+
+   1. Note the information about "Parameters" and "Responses"
+
+   1. Select **Try it out**
+
+   1. Configure the "Parameters" as follows
+
+      - **Accept:** application/fhir+json
+      
+      - **Prefer:** respond-async
+      
+      - **_outputFormat:** application/fhir_ndjson
+      
+      - **_type:** ExplanationOfBenefits
+
+   1. Select **Execute**
+
+   1. Note the 202 response which means the export request has started
+
+   1. Note the response
+
+      *Example:*
+      
+      ```
+      cache-control: no-cache, no-store, max-age=0, must-revalidate 
+      connection: keep-alive 
+      content-length: 0 
+      content-location: http://{alb domain}/api/v1/fhir/Job/{job id}/$status 
+      date: Tue, 14 Jan 2020 21:09:35 GMT 
+      expires: 0 
+      pragma: no-cache 
+      x-content-type-options: nosniff 
+      x-frame-options: DENY 
+      x-xss-protection: 1; mode=block 
+      ```
+
+   1. Note the job id in the response
+
+1. Test the "/api/v1/fhir/Job/{jobUuid}/$status" API
+
+   1. Select **GET** beside the "/api/v1/fhir/Job/{jobUuid}/$status" API
+
+   1. Select **Try it out**
+
+   1. Configure the "Parameters" as follows
+
+      - **jobUuid:** {noted job id from the patient export api response}
+
+   1. Select **Execute**
+   
+   1. Note the 200 response which means the job has completed
+
+   1. Note the following attribute in the output
+
+      ```
+      "url": "http://ab2d-sbx-sandbox-200688312.us-east-1.elb.amazonaws.com/api/v1/fhir/Job/0861ba9d-fb8c-4a0c-8604-f64ecc5d434e/file/{ndjson file}"
+      ```
+
+   1. Note the name of the ndjson file in the output
+
+1. Test the "/api/v1/fhir/Job/{jobUuid}/file/{filename}" API
+
+   1. Select **GET** beside the "/api/v1/fhir/Job/{jobUuid}/file/{filename}" API
+
+   1. Select **Try it out**
+
+   1. Configure the "Parameters" as follows
+
+      - **Accept:** application/fhir+json
+
+      - **filename:** {noted ndjson file}
+
+      - **jobUuid:** {noted job id from the patient export api response}
+
+   1. Select **Execute**
+
+      > *** TO DO ***: determine why it isn't working
