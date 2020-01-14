@@ -1,0 +1,7 @@
+okta-url: 'https://dev-418212.okta.com/oauth2/default/v1/token'
+username: 'EileenCFrierson@example.com'
+password: 'Te$t2019'
+ab2d-api-url: 'http://ab2d-dev-204191066.us-east-1.elb.amazonaws.com/api/v1/fhir/'
+ab2d-admin-url: 'http://ab2d-dev-204191066.us-east-1.elb.amazonaws.com/api/v1/admin/'
+okta-client-id: '0oa1pxapzdOWiHf9u357'
+okta-password: 'Xb1BzCoY-KF8gQaL_I2esVllvJYges_guA5Ge9ii'

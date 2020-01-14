@@ -15,6 +15,6 @@ INSERT INTO user_account (id, username, first_name, last_name, email, sponsor_id
 INSERT INTO user_role (user_account_id, role_id) VALUES ((SELECT id FROM user_account WHERE username='EileenCFrierson@example.com'),
                                                          (SELECT id FROM role WHERE name='SPONSOR'));
 
-INSERT INTO contract (contract_number, contract_name, sponsor_id, attested_on) VALUES ('S0001', 'S0001',
+INSERT INTO contract (id, contract_number, contract_name, sponsor_id, attested_on) VALUES ((select nextval('hibernate_sequence')),'S0001', 'S0001',
                                                                                            (select id from sponsor where hpms_id=999), '2019-11-01');
 

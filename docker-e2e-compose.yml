@@ -26,7 +26,6 @@ services:
       - AB2D_DB_USER=ab2d
       - AB2D_DB_PASSWORD=ab2d
       - AB2D_EFS_MOUNT=/tmp/ab2d_efs_mount/jobdownloads
-      - SPRING_PROFILE=e2e
     ports:
       - "8080:8080"
     depends_on:
@@ -43,7 +42,6 @@ services:
       - AB2D_DB_USER=ab2d
       - AB2D_DB_PASSWORD=ab2d
       - AB2D_EFS_MOUNT=/tmp/ab2d_efs_mount/jobdownloads
-      - SPRING_PROFILE=e2e
     depends_on:
       - db
     volumes:
