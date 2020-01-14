@@ -70,7 +70,7 @@ public class BulkDataAccessAPI {
     @Autowired
     private JobService jobService;
 
-    @ApiOperation(value =BULK_EXPORT,
+    @ApiOperation(value = BULK_EXPORT,
         authorizations = {
             @Authorization(value = "Authorization", scopes = {
                     @AuthorizationScope(description = "Export Patient Information", scope = "Authorization") })

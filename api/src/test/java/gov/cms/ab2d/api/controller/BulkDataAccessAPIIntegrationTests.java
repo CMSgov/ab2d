@@ -120,7 +120,7 @@ public class BulkDataAccessAPIIntegrationTests {
         Assert.assertEquals(job.getProgress(), Integer.valueOf(0));
         Assert.assertEquals(job.getRequestUrl(),
                 "http://localhost" + API_PREFIX + FHIR_PREFIX + PATIENT_EXPORT_PATH);
-        Assert.assertEquals(job.getResourceTypes(), null);
+        Assert.assertEquals(job.getResourceTypes(), EOB);
         Assert.assertEquals(job.getUser(), userRepository.findByUsername(TEST_USER));
     }
 
