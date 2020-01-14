@@ -1258,7 +1258,7 @@
    1. Note the following attribute in the output
 
       ```
-      "url": "http://ab2d-sbx-sandbox-200688312.us-east-1.elb.amazonaws.com/api/v1/fhir/Job/0861ba9d-fb8c-4a0c-8604-f64ecc5d434e/file/{ndjson file}"
+      "url": "http://{alb domain}/api/v1/fhir/Job/0861ba9d-fb8c-4a0c-8604-f64ecc5d434e/file/{ndjson file}"
       ```
 
    1. Note the name of the ndjson file in the output
