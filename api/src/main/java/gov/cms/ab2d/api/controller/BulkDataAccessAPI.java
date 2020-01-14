@@ -1,7 +1,5 @@
 package gov.cms.ab2d.api.controller;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 import gov.cms.ab2d.api.config.SwaggerConfig;
 import gov.cms.ab2d.common.service.JobService;
@@ -246,7 +244,7 @@ public class BulkDataAccessAPI {
     )
     @GetMapping(value = "/Job/{jobUuid}/$status")
     @ResponseStatus(value = HttpStatus.OK)
-    public ResponseEntity<JsonNode> getJobStatus(
+    public ResponseEntity<JobCompletedResponse> getJobStatus(
             @ApiParam(value = "A job identifier", required = true) @PathVariable @NotBlank String jobUuid) {
         MDC.put(JOB_LOG, jobUuid);
         log.info("Request submitted to get job status");
@@ -284,7 +282,7 @@ public class BulkDataAccessAPI {
 
                 log.info("Job status completed successfully");
 
-                return new ResponseEntity<>(new ObjectMapper().valueToTree(resp), responseHeaders, HttpStatus.OK);
+                return new ResponseEntity<>(resp, responseHeaders, HttpStatus.OK);
             case SUBMITTED:
             case IN_PROGRESS:
                 responseHeaders.add("X-Progress", job.getProgress() + "% complete");
