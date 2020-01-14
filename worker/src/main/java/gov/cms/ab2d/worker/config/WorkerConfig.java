@@ -43,21 +43,21 @@ public class WorkerConfig {
     @Autowired
     private JobHandler handler;
 
-    @Value("${bfd-client.core.pool.size}")
-    private int corePoolSize;
+    @Value("${pcp.core.pool.size}")
+    private int pcpCorePoolSize;
 
-    @Value("${bfd-client.max.pool.size}")
-    private int maxPoolSize;
+    @Value("${pcp.max.pool.size}")
+    private int pcpMaxPoolSize;
 
-    @Value("${bfd-client.queue.capacity}")
-    private int queueCapacity;
+    @Value("${pcp.queue.capacity}")
+    private int pcpQueueCapacity;
 
-    @Bean("bfd-client")
-    public Executor bfdThreadPoolTaskExecutor() {
+    @Bean
+    public Executor pcpThreadPool() {
         final ThreadPoolTaskExecutor taskExecutor = new ThreadPoolTaskExecutor();
-        taskExecutor.setCorePoolSize(corePoolSize);
-        taskExecutor.setMaxPoolSize(maxPoolSize);
-        taskExecutor.setQueueCapacity(queueCapacity);
+        taskExecutor.setCorePoolSize(pcpCorePoolSize);
+        taskExecutor.setMaxPoolSize(pcpMaxPoolSize);
+        taskExecutor.setQueueCapacity(pcpQueueCapacity);
         taskExecutor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
         taskExecutor.setThreadNamePrefix("pcp-");
         taskExecutor.setWaitForTasksToCompleteOnShutdown(true);
