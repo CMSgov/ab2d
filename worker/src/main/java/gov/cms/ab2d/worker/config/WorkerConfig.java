@@ -2,7 +2,6 @@ package gov.cms.ab2d.worker.config;
 
 import gov.cms.ab2d.bfd.client.BFDClientConfiguration;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.time.DateUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -44,21 +43,21 @@ public class WorkerConfig {
     @Autowired
     private JobHandler handler;
 
-    @Value("${bfd-client.core.pool.size}")
-    private int corePoolSize;
+    @Value("${pcp.core.pool.size}")
+    private int pcpCorePoolSize;
 
-    @Value("${bfd-client.max.pool.size}")
-    private int maxPoolSize;
+    @Value("${pcp.max.pool.size}")
+    private int pcpMaxPoolSize;
 
-    @Value("${bfd-client.queue.capacity}")
-    private int queueCapacity;
+    @Value("${pcp.queue.capacity}")
+    private int pcpQueueCapacity;
 
-    @Bean("bfd-client")
-    public Executor bfdThreadPoolTaskExecutor() {
+    @Bean
+    public Executor pcpThreadPool() {
         final ThreadPoolTaskExecutor taskExecutor = new ThreadPoolTaskExecutor();
-        taskExecutor.setCorePoolSize(corePoolSize);
-        taskExecutor.setMaxPoolSize(maxPoolSize);
-        taskExecutor.setQueueCapacity(queueCapacity);
+        taskExecutor.setCorePoolSize(pcpCorePoolSize);
+        taskExecutor.setMaxPoolSize(pcpMaxPoolSize);
+        taskExecutor.setQueueCapacity(pcpQueueCapacity);
         taskExecutor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
         taskExecutor.setThreadNamePrefix("pcp-");
         taskExecutor.setWaitForTasksToCompleteOnShutdown(true);
@@ -101,17 +100,16 @@ public class WorkerConfig {
 
     @Bean
     public LockRepository lockRepository() {
-        return new DefaultLockRepository(dataSource);
+        final DefaultLockRepository defaultLockRepository = new DefaultLockRepository(dataSource);
+        defaultLockRepository.setTimeToLive(60_000);        // 60 seconds
+        return defaultLockRepository;
     }
 
     /**
      * Using {@link JdbcLockRegistry} is critical to avoid race condition among workers competing for requests.
-     * Locks will auto-expire after one hour.
      */
     @Bean
     public LockRegistry lockRegistry(LockRepository lockRepository) {
-        final JdbcLockRegistry registry = new JdbcLockRegistry(lockRepository);
-        registry.expireUnusedOlderThan(DateUtils.MILLIS_PER_HOUR);
-        return registry;
+        return new JdbcLockRegistry(lockRepository);
     }
 }

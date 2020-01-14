@@ -83,7 +83,6 @@ public class SwaggerConfig {
                null, null, Collections.emptyList());
     }
 
-
     // FHIR's OperationOutcome won't play nice with Swagger. Having to redefine it here
     // to get the Swagger API spec looking right.
     @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -119,7 +118,6 @@ public class SwaggerConfig {
 
     }
 
-
     @JsonInclude(JsonInclude.Include.NON_NULL)
     @JsonPropertyOrder({
             "severity",
@@ -127,7 +125,6 @@ public class SwaggerConfig {
             "details"
     })
     class Issue {
-
         @JsonProperty("severity")
         private String severity;
         @JsonProperty("code")
@@ -176,9 +173,7 @@ public class SwaggerConfig {
         public void setAdditionalProperty(String name, Object value) {
             this.additionalProperties.put(name, value);
         }
-
     }
-
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     @JsonPropertyOrder({
@@ -187,13 +182,15 @@ public class SwaggerConfig {
             "issue"
     })
     public class OperationOutcome {
-
         @JsonProperty("resourceType")
         private String resourceType;
+
         @JsonProperty("id")
         private String id;
+
         @JsonProperty("issue")
         private List<Issue> issue = null;
+
         @JsonIgnore
         private Map<String, Object> additionalProperties = new HashMap<String, Object>();
 
