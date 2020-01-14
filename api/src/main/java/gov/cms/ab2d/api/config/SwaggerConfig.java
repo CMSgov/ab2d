@@ -2,7 +2,6 @@ package gov.cms.ab2d.api.config;
 
 import com.fasterxml.classmate.TypeResolver;
 import com.fasterxml.jackson.annotation.*;
-import com.fasterxml.jackson.databind.JsonNode;
 import gov.cms.ab2d.api.util.Constants;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -43,7 +42,6 @@ public class SwaggerConfig {
                 .paths(PathSelectors.ant(API_PREFIX + FHIR_PREFIX + "/**"))
                 .build()
                 .directModelSubstitute(Resource.class, String.class)
-                .directModelSubstitute(JsonNode.class, Void.class)
                 .useDefaultResponseMessages(false)
                 .securitySchemes(auth)
                 .globalResponseMessage(RequestMethod.GET,

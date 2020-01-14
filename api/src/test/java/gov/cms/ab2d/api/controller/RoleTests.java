@@ -23,6 +23,7 @@ import java.io.InputStream;
 import java.util.List;
 
 import static gov.cms.ab2d.api.util.Constants.*;
+import static gov.cms.ab2d.common.util.Constants.SPONSOR_ROLE;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 

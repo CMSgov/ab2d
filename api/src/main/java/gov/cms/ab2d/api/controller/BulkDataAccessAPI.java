@@ -1,7 +1,5 @@
 package gov.cms.ab2d.api.controller;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 import gov.cms.ab2d.api.config.SwaggerConfig;
 import gov.cms.ab2d.api.util.SwaggerConstants;
@@ -163,7 +161,7 @@ public class BulkDataAccessAPI {
     @GetMapping("/Group/{contractNumber}/$export")
     public ResponseEntity<Void> exportPatientsWithContract(@ApiParam(value = "A contract number", required = true)
             @PathVariable @NotBlank String contractNumber,
-            @ApiParam(value = BULK_EXPORT_TYPE, allowableValues = EOB)
+            @ApiParam(value = BULK_EXPORT_TYPE, allowableValues = EOB, defaultValue = EOB)
             @RequestParam(required = false, name = "_type") String resourceTypes,
             @ApiParam(value = BULK_OUTPUT_FORMAT,
                     allowableValues = ALLOWABLE_OUTPUT_FORMATS, defaultValue = "application/fhir" +
@@ -238,7 +236,7 @@ public class BulkDataAccessAPI {
     )
     @GetMapping(value = "/Job/{jobUuid}/$status")
     @ResponseStatus(value = HttpStatus.OK)
-    public ResponseEntity<JsonNode> getJobStatus(
+    public ResponseEntity<JobCompletedResponse> getJobStatus(
             @ApiParam(value = "A job identifier", required = true) @PathVariable @NotBlank String jobUuid) {
         MDC.put(JOB_LOG, jobUuid);
         log.info("Request submitted to get job status");
@@ -272,7 +270,7 @@ public class BulkDataAccessAPI {
 
                 log.info("Job status completed successfully");
 
-                return new ResponseEntity<>(new ObjectMapper().valueToTree(resp), responseHeaders, HttpStatus.OK);
+                return new ResponseEntity<>(resp, responseHeaders, HttpStatus.OK);
             case SUBMITTED:
             case IN_PROGRESS:
                 responseHeaders.add("X-Progress", job.getProgress() + "% complete");
@@ -302,7 +300,7 @@ public class BulkDataAccessAPI {
             })
     @ApiImplicitParams(value = {
             @ApiImplicitParam(name = "Accept", required = false, paramType = "header", value =
-                    "application/fhir+json")}
+                    "application/fhir+json", defaultValue = "application/fhir+json")}
     )
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Returns the requested file as " +
