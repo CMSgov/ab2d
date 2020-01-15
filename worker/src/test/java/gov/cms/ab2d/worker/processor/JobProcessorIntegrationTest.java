@@ -85,7 +85,7 @@ class JobProcessorIntegrationTest {
         var patientsByContract = createPatientsByContractResponse(contract);
         Mockito.when(contractAdapter.getPatients(anyString())).thenReturn(patientsByContract);
 
-        var processedJob = cut.process("S000");
+        var processedJob = cut.process("S00000");
 
         assertThat(processedJob.getStatus(), is(JobStatus.SUCCESSFUL));
         assertThat(processedJob.getStatusMessage(), is("100%"));
@@ -120,7 +120,7 @@ class JobProcessorIntegrationTest {
         var patientsByContract = createPatientsByContractResponse(contract);
         Mockito.when(contractAdapter.getPatients(anyString())).thenReturn(patientsByContract);
 
-        var processedJob = cut.process("S000");
+        var processedJob = cut.process("S00000");
 
         assertThat(processedJob.getStatus(), is(JobStatus.SUCCESSFUL));
         assertThat(processedJob.getStatusMessage(), is("100%"));
@@ -163,7 +163,7 @@ class JobProcessorIntegrationTest {
 
     private Job createJob(User user) {
         Job job = new Job();
-        job.setJobUuid("S000");
+        job.setJobUuid("S00000");
         job.setStatus(JobStatus.SUBMITTED);
         job.setStatusMessage("0%");
         job.setUser(user);

@@ -81,27 +81,15 @@ public class ContractAdapterStub implements ContractAdapter {
 
     private int determineNumberOfRows(int contractSno) {
         if (contractSno == 0) {
-//            return 500;   // temporary change till BFD calls mocked
+//            return 100;   // temporary change till BFD calls mocked
             return 10;
-        } else if (contractSno == 1) {
-            return 10;      // temporary change till BFD calls mocked
         } else {
             return contractSno * 1000;
         }
     }
 
     private int determineRowsToRetrieve(int numberOfRows) {
-        int rowsToRetrieve = 0;
-//        if (numberOfRows == 0) {
-//            rowsToRetrieve = 500;
-//        } else if (numberOfRows < MAX_ROWS) {
-        if (numberOfRows < MAX_ROWS) {
-            rowsToRetrieve =  numberOfRows;
-        } else {
-            rowsToRetrieve =  MAX_ROWS;
-        }
-
-        return rowsToRetrieve;
+        return numberOfRows < MAX_ROWS ? numberOfRows : MAX_ROWS;
     }
 
     private List<String> getFromSampleFile(int rowsToRetrieve) {
