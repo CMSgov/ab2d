@@ -20,12 +20,10 @@ class ContractAdapterStubTest {
 
 
     @Test
-    @DisplayName("when contractNumber is 0, returns 10 patient records till BFD calls are mocked")
-//    @DisplayName("when contractNumber is 0, returns 100 patient records")
+    @DisplayName("when contractNumber is 0, returns 100 patient records")
     void when_0000_returns_000() {
         var patients = cut.getPatients("S0000").getPatients();
-//        assertThat(patients.size(), is(100));
-        assertThat(patients.size(), is(10));
+        assertThat(patients.size(), is(100));
     }
 
     @Test

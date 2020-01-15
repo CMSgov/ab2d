@@ -81,8 +81,7 @@ public class ContractAdapterStub implements ContractAdapter {
 
     private int determineNumberOfRows(int contractSno) {
         if (contractSno == 0) {
-//            return 100;   // temporary change till BFD calls mocked
-            return 10;
+            return 100;
         } else {
             return contractSno * 1000;
         }
