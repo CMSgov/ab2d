@@ -61,7 +61,7 @@ class JobPreProcessorIntegrationTest {
     @Test
     @DisplayName("When a job is in submitted status, it can be put into progress upon starting processing")
     void whenJobIsInSubmittedStatus_ThenJobShouldBePutInProgress() {
-        var processedJob = cut.preprocess("S00000");
+        var processedJob = cut.preprocess("S0000");
         assertThat(processedJob.getStatus(), is(JobStatus.IN_PROGRESS));
     }
 
@@ -82,9 +82,9 @@ class JobPreProcessorIntegrationTest {
 
         var exceptionThrown = assertThrows(
                 IllegalArgumentException.class,
-                () -> cut.preprocess("S00000"));
+                () -> cut.preprocess("S0000"));
 
-        assertThat(exceptionThrown.getMessage(), is("Job S00000 is not in SUBMITTED status"));
+        assertThat(exceptionThrown.getMessage(), is("Job S0000 is not in SUBMITTED status"));
     }
 
 
@@ -109,7 +109,7 @@ class JobPreProcessorIntegrationTest {
 
     private Job createJob(User user) {
         Job job = new Job();
-        job.setJobUuid("S00000");
+        job.setJobUuid("S0000");
         job.setStatus(JobStatus.SUBMITTED);
         job.setStatusMessage("0%");
         job.setUser(user);

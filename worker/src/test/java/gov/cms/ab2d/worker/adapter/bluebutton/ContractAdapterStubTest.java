@@ -56,12 +56,4 @@ class ContractAdapterStubTest {
     }
 
 
-
-    @Test
-    @Disabled("Takes too long to run. But could be run locally as needed")
-    @DisplayName("when contractNumber is greater than 9999, returns 9999000 patient records")
-    void when_S9999_returns_9999000() {
-        var patients = cut.getPatients("S9999").getPatients();
-        assertThat(patients.size(), is(9999000));
-    }
 }

@@ -406,7 +406,7 @@ class JobProcessorUnitTest {
     private Job createJob(User user) {
         Job job = new Job();
         job.setId(1L);
-        job.setJobUuid("S00000");
+        job.setJobUuid("S0000");
         job.setStatusMessage("0%");
         job.setStatus(JobStatus.IN_PROGRESS);
         job.setUser(user);
