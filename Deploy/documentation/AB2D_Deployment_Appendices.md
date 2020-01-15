@@ -26,6 +26,7 @@
 1. [Appendix O: Destroy complete environment](#appendix-o-destroy-complete-environment)
 1. [Appendix P: Display disk space](#appendix-p-display-disk-space)
 1. [Appendix Q: Test API using swagger](#appendix-q-test-api-using-swagger)
+1. [Appendix R: Update userdata for auto scaling groups](#appendix-r-update-userdata-for-auto-scaling-groups)
 
 ## Appendix A: Access the CMS AWS console
 
@@ -488,15 +489,15 @@
    $ export SSH_USER_NAME=ec2-user
    ```
 
-   *Example for "Sbx" environment (node 1):*
+   *Example for "Sbx" environment (worker node 1):*
    
    ```ShellSession
    $ export TARGET_ENVIRONMENT=ab2d-sbx-sandbox
-   $ export NODE_PRIVATE_IP=10.242.31.196
+   $ export NODE_PRIVATE_IP=10.242.31.144
    $ export SSH_USER_NAME=ec2-user
    ```
 
-   *Example for "Sbx" environment (node 2):*
+   *Example for "Sbx" environment (worker node 2):*
    
    ```ShellSession
    $ export TARGET_ENVIRONMENT=ab2d-sbx-sandbox
@@ -1178,6 +1179,14 @@
 
    1. Note that this "access_token" is the JWT access token that you will use within the swagger-ui)
 
+   1. Note that you can get a cURL version of the request by doing the following
+
+      1. Select **Code** to the far right of the tabbed options (Params, Authorization, etc.)
+
+      1. Select **cURL** from the leftmost panel of the "GENERATE CODE SNIPPETS" page
+
+      1. Note the "cURL" statement
+
 1. Open Chrome
 
 1. Enter the "swagger-ui.html" URL for the target environment in the address bar
@@ -1290,3 +1299,169 @@
    1. Select **Execute**
 
       > *** TO DO ***: determine why it isn't working
+
+## Appendix R: Update userdata for auto scaling groups
+
+1. Log on to AWS
+
+1. Select **EC2**
+
+1. Select **Launch Configurations** under "AUTO SCALING" in the leftmost panel
+
+1. Modify the API launch configuration
+
+   1. Select the API launch configuration
+
+      *Format:*
+
+      ```
+      {environment}-api-{timestamp}
+      ```
+
+   1. Select **Copy launch configuarion**
+
+   1. Select **Configure details**
+
+   1. Expand **Advanced Details**
+
+   1. Modify **User data** edit box as desired
+
+   1. Select **Skip to review**
+
+   1. Select **Create launch configuration**
+
+   1. Note that the following is already filled out
+
+      *Format:*
+   
+      - **First dropdown:** Choose an existing key pair
+
+      - **Select a key pair:** {environment key pair}
+
+   1. Check **I acknowledge...**
+
+   1. Select **Create launch configuration**
+
+   1. Select **Close**
+
+1. Modify the worker launch configuration
+
+   1. Select the worker launch configuration
+
+      *Format:*
+
+      ```
+      {environment}-worker-{timestamp}
+      ```
+
+   1. Select **Copy launch configuarion**
+
+   1. Select **Configure details**
+
+   1. Expand **Advanced Details**
+
+   1. Modify **User data** edit box as desired
+
+   1. Select **Skip to review**
+
+   1. Select **Create launch configuration**
+
+   1. Note that the following is already filled out
+
+      *Format:*
+   
+      - **First dropdown:** Choose an existing key pair
+
+      - **Select a key pair:** {environment key pair}
+
+   1. Check **I acknowledge...**
+
+   1. Select **Create launch configuration**
+
+   1. Select **Close**
+
+1. Select **Auto Scaling Groups** under "AUTO SCALING" in the leftmost panel
+
+1. Modify the API auto scaling group
+
+   1. Select the API auto scaling group
+
+      *Format:*
+
+      ```
+      {environment}-api-{timestamp}
+      ```
+
+   1. Select **Actions**
+
+   1. Select **Edit**
+
+   1. Select the newly created API launch configuration with "Copy" at the end of its name from the **Launch Configuration** dropdown
+
+      *Format:*
+
+      ```
+      {environment}-api-{timestamp}Copy
+      ```
+
+   1. Select **Save**
+
+1. Modify the worker auto scaling group
+
+   1. Select the worker auto scaling group
+
+      *Format:*
+
+      ```
+      {environment}-worker-{timestamp}
+      ```
+
+   1. Select **Actions**
+
+   1. Select **Edit**
+
+   1. Select the newly created worker launch configuration with "Copy" at the end of its name from the **Launch Configuration** dropdown
+
+      *Format:*
+
+      ```
+      {environment}-worker-{timestamp}Copy
+      ```
+
+   1. Select **Save**
+
+1. Terminate the instances that were created by the old launch configuration
+
+1. Wait for the new launch configurations to create new API and worker instances
+
+1. Verify that the API instances received the userdata change
+
+   1. Select **Instances** in the leftmost panel
+
+   1. Select one of the newly created API instances
+
+   1. Select **Actions**
+
+   1. Select **Instance Settings**
+
+   1. Select **View/Change User Data**
+
+   1. Verify the userdata changes that you made are in the **User data** edit box
+
+   1. Select **Cancel**
+
+1. Verify that the worker instances received the userdata change
+
+   1. Select **Instances** in the leftmost panel
+
+   1. Select one of the newly created worker instances
+
+   1. Select **Actions**
+
+   1. Select **Instance Settings**
+
+   1. Select **View/Change User Data**
+
+   1. Verify the userdata changes that you made are in the **User data** edit box
+
+   1. Select **Cancel**
