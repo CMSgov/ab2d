@@ -4,13 +4,12 @@ import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.IParser;
 import ca.uhn.fhir.rest.api.EncodingEnum;
 import gov.cms.ab2d.bfd.client.BFDClient;
-import gov.cms.ab2d.filter.ExplanationOfBenefitsTrimmer;
+import gov.cms.ab2d.filter.ExplanationOfBenefitTrimmer;
 import gov.cms.ab2d.worker.service.FileService;
 import lombok.extern.slf4j.Slf4j;
 import org.hl7.fhir.dstu3.model.Bundle;
 import org.hl7.fhir.dstu3.model.ExplanationOfBenefit;
 import org.hl7.fhir.dstu3.model.Resource;
-import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -27,7 +26,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 import java.util.concurrent.locks.ReentrantLock;
 
 import static org.hamcrest.CoreMatchers.startsWith;
@@ -136,7 +134,7 @@ public class PatientClaimsProcessorUnitTest {
         final EncodingEnum respType = EncodingEnum.forContentType(EncodingEnum.JSON_PLAIN_STRING);
         final IParser parser = respType.newParser(FhirContext.forDstu3());
         final ExplanationOfBenefit explanationOfBenefit = parser.parseResource(ExplanationOfBenefit.class, inputStream);
-        eob = ExplanationOfBenefitsTrimmer.getBenefit(explanationOfBenefit);
+        eob = ExplanationOfBenefitTrimmer.getBenefit(explanationOfBenefit);
     }
 
     private void createOutputFiles() throws IOException {
