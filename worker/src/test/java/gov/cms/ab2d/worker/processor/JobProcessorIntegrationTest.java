@@ -52,9 +52,6 @@ class JobProcessorIntegrationTest {
     @Autowired
     private ContractRepository contractRepository;
 
-    @Mock
-    private ContractAdapter contractAdapter;
-
     private Sponsor sponsor;
     private User user;
     private Job job;
@@ -80,10 +77,7 @@ class JobProcessorIntegrationTest {
 
         job.setStatus(JobStatus.IN_PROGRESS);
         jobRepository.save(job);
-        final Contract contract = createContract(sponsor);
-
-        var patientsByContract = createPatientsByContractResponse(contract);
-        Mockito.when(contractAdapter.getPatients(anyString())).thenReturn(patientsByContract);
+        createContract(sponsor);
 
         var processedJob = cut.process("S00000");
 
@@ -112,13 +106,10 @@ class JobProcessorIntegrationTest {
         user.setSponsor(parentSponsor);
         userRepository.save(user);
 
-        final Contract contract = createContract(sponsor);
+        createContract(sponsor);
 
         job.setStatus(JobStatus.IN_PROGRESS);
         jobRepository.save(job);
-
-        var patientsByContract = createPatientsByContractResponse(contract);
-        Mockito.when(contractAdapter.getPatients(anyString())).thenReturn(patientsByContract);
 
         var processedJob = cut.process("S00000");
 
@@ -171,20 +162,4 @@ class JobProcessorIntegrationTest {
         return jobRepository.save(job);
     }
 
-    private GetPatientsByContractResponse createPatientsByContractResponse(Contract contract) {
-        return GetPatientsByContractResponse.builder()
-                .contractNumber(contract.getContractNumber())
-                .patient(toPatientDTO())
-                .patient(toPatientDTO())
-                .patient(toPatientDTO())
-                .build();
-    }
-
-    private PatientDTO toPatientDTO() {
-        final int anInt = random.nextInt(11);
-        return PatientDTO.builder()
-                .patientId("patient_" + anInt)
-                .monthUnderContract(anInt)
-                .build();
-    }
 }
