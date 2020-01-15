@@ -46,6 +46,7 @@ public class ContractAdapterStub implements ContractAdapter {
             return 0;
         }
 
+        // simple check for contractNumber with 5 digits instead of 4
         try {
             final String tmpContractNo = contractNumber.substring(contractNumber.length() - 5);
             int contractNo = Integer.valueOf(tmpContractNo);
@@ -53,8 +54,7 @@ public class ContractAdapterStub implements ContractAdapter {
                 sno = -1;
             }
         } catch (NumberFormatException e) {
-            log.warn("Invalid contractNumber : {} ", contractNumber);
-            // do nothing as this was a check to see if the contractNumber > 9999
+            //ignore - this check is to see if the contractNumber has 5 digits instead of 4 making it > 9999
         }
 
         return sno;
