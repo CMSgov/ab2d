@@ -115,7 +115,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
         tryLock(lock);
 
         try {
-            log.info("Attempting to append to file", keyValue(FILE_LOG, outputFile.getFileName()));
+            log.info("Attempting to append to file", keyValue(FILE_LOG, outputFile.toFile().getName()));
             fileService.appendToFile(outputFile, byteArrayOutputStream);
         } finally {
             lock.unlock();
