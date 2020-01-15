@@ -9,7 +9,7 @@ import gov.cms.ab2d.common.model.User;
 import gov.cms.ab2d.common.repository.JobOutputRepository;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.common.repository.OptOutRepository;
-import gov.cms.ab2d.worker.adapter.bluebutton.BeneficiaryAdapter;
+import gov.cms.ab2d.worker.adapter.bluebutton.ContractAdapter;
 import gov.cms.ab2d.worker.adapter.bluebutton.GetPatientsByContractResponse;
 import gov.cms.ab2d.worker.adapter.bluebutton.GetPatientsByContractResponse.PatientDTO;
 import gov.cms.ab2d.worker.adapter.bluebutton.PatientClaimsProcessor;
@@ -65,7 +65,7 @@ class JobProcessorUnitTest {
     @Mock private JobRepository jobRepository;
     @Mock private JobOutputRepository jobOutputRepository;
     @Mock private OptOutRepository optOutRepository;
-    @Mock private BeneficiaryAdapter beneficiaryAdapter;
+    @Mock private ContractAdapter contractAdapter;
     @Mock private PatientClaimsProcessor patientClaimsProcessor;
 
     private Job job;
@@ -78,7 +78,7 @@ class JobProcessorUnitTest {
                 fileService,
                 jobRepository,
                 jobOutputRepository,
-                beneficiaryAdapter,
+                contractAdapter,
                 patientClaimsProcessor,
                 optOutRepository
         );
@@ -95,7 +95,7 @@ class JobProcessorUnitTest {
         when(jobRepository.findByJobUuid(anyString())).thenReturn(job);
 
         patientsByContract = createPatientsByContractResponse(contract);
-        Mockito.when(beneficiaryAdapter.getPatientsByContract(anyString())).thenReturn(patientsByContract);
+        Mockito.when(contractAdapter.getPatients(anyString())).thenReturn(patientsByContract);
 
         final Path outputDirPath = Paths.get(efsMountTmpDir.toString(), jobUuid);
         final Path outputDir = Files.createDirectories(outputDirPath);
@@ -186,7 +186,7 @@ class JobProcessorUnitTest {
 
     private void doVerify() {
         verify(fileService).createDirectory(Mockito.any());
-        verify(beneficiaryAdapter).getPatientsByContract(anyString());
+        verify(contractAdapter).getPatients(anyString());
         verify(patientClaimsProcessor, atLeast(1)).process(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any());
     }
 
@@ -210,7 +210,7 @@ class JobProcessorUnitTest {
         assertThat(processedJob.getExpiresAt(), notNullValue());
 
         verify(fileService).createDirectory(Mockito.any());
-        verify(beneficiaryAdapter).getPatientsByContract(anyString());
+        verify(contractAdapter).getPatients(anyString());
         verify(patientClaimsProcessor, never()).process(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any());
     }
 
@@ -290,7 +290,7 @@ class JobProcessorUnitTest {
         assertThat(processedJob.getExpiresAt(), notNullValue());
 
         verify(fileService, times(2)).createDirectory(Mockito.any());
-        verify(beneficiaryAdapter).getPatientsByContract(anyString());
+        verify(contractAdapter).getPatients(anyString());
         verify(patientClaimsProcessor, atLeast(1)).process(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any());
     }
 
@@ -310,7 +310,7 @@ class JobProcessorUnitTest {
         var uncheckedIOE = new UncheckedIOException(errMsg, new IOException(errMsg));
 
         Mockito.when(fileService.createDirectory(any())).thenThrow(uncheckedIOE);
-        Mockito.lenient().when(beneficiaryAdapter.getPatientsByContract(anyString())).thenReturn(patientsByContract);
+        Mockito.lenient().when(contractAdapter.getPatients(anyString())).thenReturn(patientsByContract);
 
         var processedJob = cut.process(jobUuid);
 
@@ -319,7 +319,7 @@ class JobProcessorUnitTest {
         assertThat(processedJob.getExpiresAt(), nullValue());
 
         verify(fileService).createDirectory(Mockito.any());
-        verify(beneficiaryAdapter, never()).getPatientsByContract(anyString());
+        verify(contractAdapter, never()).getPatients(anyString());
         verify(fileService, never()).createOrReplaceFile(Mockito.any(Path.class), anyString());
     }
 
@@ -331,7 +331,7 @@ class JobProcessorUnitTest {
         var uncheckedIOE = new UncheckedIOException(errMsg, new IOException(errMsg));
 
         Mockito.when(fileService.createDirectory(any())).thenThrow(uncheckedIOE);
-        Mockito.lenient().when(beneficiaryAdapter.getPatientsByContract(anyString())).thenReturn(patientsByContract);
+        Mockito.lenient().when(contractAdapter.getPatients(anyString())).thenReturn(patientsByContract);
 
         var processedJob = cut.process(jobUuid);
 
@@ -340,7 +340,7 @@ class JobProcessorUnitTest {
         assertThat(processedJob.getExpiresAt(), nullValue());
 
         verify(fileService).createDirectory(Mockito.any());
-        verify(beneficiaryAdapter, never()).getPatientsByContract(anyString());
+        verify(contractAdapter, never()).getPatients(anyString());
         verify(fileService, never()).createOrReplaceFile(Mockito.any(Path.class), anyString());
     }
 

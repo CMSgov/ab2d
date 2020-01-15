@@ -18,17 +18,17 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 @Component
-public class BeneficiaryAdapterStub implements BeneficiaryAdapter {
+public class ContractAdapterStub implements ContractAdapter {
 
     private static final String BENE_ID_FILE = "/test-stub-data/synthetic-bene-ids.csv";
     private static final int MAX_ROWS = 30_000;
 
     @Override
-    public GetPatientsByContractResponse getPatientsByContract(String contractNumber) {
+    public GetPatientsByContractResponse getPatients(String contractNumber) {
 
         final int contractSno = extractContractSno(contractNumber);
 
-        final var patientsPerContract = getFromSampleFile(contractSno);
+        final var patientsPerContract = fetchPatientRecords(contractSno);
 
         return toResponse(contractNumber, patientsPerContract);
     }
@@ -46,42 +46,29 @@ public class BeneficiaryAdapterStub implements BeneficiaryAdapter {
             return 0;
         }
 
-        if (sno == 0) {
-            try {
-                final String cnoSfx = contractNumber.substring(contractNumber.length() - 5);
-                sno = Integer.valueOf(cnoSfx);
-            } catch (NumberFormatException e) {
-                log.warn("Invalid contractNumber : {} ", contractNumber);
-                // do nothing as this was a check to make sure if the sno > 9999.
+        try {
+            final String tmpContractNo = contractNumber.substring(contractNumber.length() - 5);
+            int contractNo = Integer.valueOf(tmpContractNo);
+            if (sno != contractNo) {
+                sno = -1;
             }
+        } catch (NumberFormatException e) {
+            log.warn("Invalid contractNumber : {} ", contractNumber);
+            // do nothing as this was a check to see if the contractNumber > 9999
         }
 
         return sno;
     }
 
-    private List<String> getFromSampleFile(final int contractSno) {
-        if (contractSno < 0 || contractSno > 9_999) {
+    private List<String> fetchPatientRecords(final int contractSno) {
+        if (contractSno < 0) {
             return new ArrayList<String>();
         }
 
-        int numberOfRows = contractSno * 1000;
-        int rowsToRetrieve = numberOfRows < MAX_ROWS ? numberOfRows : MAX_ROWS;
+        int numberOfRows = determineNumberOfRows(contractSno);
+        int rowsToRetrieve = determineRowsToRetrieve(numberOfRows);
 
-        var patientIdRows = new ArrayList<String>();
-        try (var inputStream = this.getClass().getResourceAsStream(BENE_ID_FILE)) {
-            Assert.notNull(inputStream, "error getting resource as stream :  " + BENE_ID_FILE);
-
-            try (var br =  new BufferedReader(new InputStreamReader(inputStream))) {
-                Assert.notNull(br, "Could not create buffered reader from input stream :  " + BENE_ID_FILE);
-
-                patientIdRows.addAll(readLines(br, rowsToRetrieve));
-            }
-        } catch (Exception ex) {
-            final String errMsg = "Error reading file : ";
-            log.error("{} {} ", errMsg, BENE_ID_FILE, ex);
-            throw new RuntimeException(errMsg + BENE_ID_FILE);
-        }
-
+        var patientIdRows = getFromSampleFile(rowsToRetrieve);
         final List<String> allRows = new ArrayList<>();
         allRows.addAll(patientIdRows);
 
@@ -92,7 +79,56 @@ public class BeneficiaryAdapterStub implements BeneficiaryAdapter {
         return allRows;
     }
 
-    private List<String> createMoreRows(int numberOfRows, int rowsToRetrieve, ArrayList<String> patientIdRows) {
+    private int determineNumberOfRows(int contractSno) {
+        if (contractSno == 0) {
+//            return 500;   // temporary change till BFD calls mocked
+            return 10;
+        } else if (contractSno == 1) {
+            return 10;      // temporary change till BFD calls mocked
+        } else {
+            return contractSno * 1000;
+        }
+    }
+
+    private int determineRowsToRetrieve(int numberOfRows) {
+        int rowsToRetrieve = 0;
+//        if (numberOfRows == 0) {
+//            rowsToRetrieve = 500;
+//        } else if (numberOfRows < MAX_ROWS) {
+        if (numberOfRows < MAX_ROWS) {
+            rowsToRetrieve =  numberOfRows;
+        } else {
+            rowsToRetrieve =  MAX_ROWS;
+        }
+
+        return rowsToRetrieve;
+    }
+
+    private List<String> getFromSampleFile(int rowsToRetrieve) {
+        var patientIdRows = new ArrayList<String>();
+
+        try (var inputStream = this.getClass().getResourceAsStream(BENE_ID_FILE)) {
+            Assert.notNull(inputStream, "error getting resource as stream :  " + BENE_ID_FILE);
+
+            try (var br =  new BufferedReader(new InputStreamReader(inputStream))) {
+                Assert.notNull(br, "Could not create buffered reader from input stream :  " + BENE_ID_FILE);
+
+                final List<String> rows = br.lines()
+                        .limit(rowsToRetrieve)
+                        .collect(Collectors.toList());
+
+                patientIdRows.addAll(rows);
+            }
+        } catch (Exception ex) {
+            final String errMsg = "Error reading file : ";
+            log.error("{} {} ", errMsg, BENE_ID_FILE, ex);
+            throw new RuntimeException(errMsg + BENE_ID_FILE);
+        }
+
+        return patientIdRows;
+    }
+
+    private List<String> createMoreRows(int numberOfRows, int rowsToRetrieve, List<String> patientIdRows) {
         final int diff = numberOfRows - rowsToRetrieve;
         if (diff < MAX_ROWS) {
             return patientIdRows.stream().limit(diff).collect(Collectors.toList());
@@ -105,12 +141,6 @@ public class BeneficiaryAdapterStub implements BeneficiaryAdapter {
 
             return accumulator;
         }
-    }
-
-    private List<String> readLines(BufferedReader br, int rowsToRetrieve) {
-        return br.lines()
-                .limit(rowsToRetrieve)
-                .collect(Collectors.toList());
     }
 
     private GetPatientsByContractResponse toResponse(String contractNumber, List<String> rows) {

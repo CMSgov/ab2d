@@ -10,10 +10,15 @@ import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.common.repository.SponsorRepository;
 import gov.cms.ab2d.common.repository.UserRepository;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
-import gov.cms.ab2d.worker.processor.JobProcessor;
+import gov.cms.ab2d.worker.adapter.bluebutton.ContractAdapter;
+import gov.cms.ab2d.worker.adapter.bluebutton.GetPatientsByContractResponse;
+import gov.cms.ab2d.worker.adapter.bluebutton.GetPatientsByContractResponse.PatientDTO;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.testcontainers.containers.PostgreSQLContainer;
@@ -28,6 +33,7 @@ import static java.lang.Boolean.TRUE;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.assertThat;
+import static org.mockito.ArgumentMatchers.anyString;
 
 @SpringBootTest
 @Testcontainers
@@ -45,6 +51,9 @@ class JobProcessorIntegrationTest {
     private UserRepository userRepository;
     @Autowired
     private ContractRepository contractRepository;
+
+    @Mock
+    private ContractAdapter contractAdapter;
 
     private Sponsor sponsor;
     private User user;
@@ -71,9 +80,12 @@ class JobProcessorIntegrationTest {
 
         job.setStatus(JobStatus.IN_PROGRESS);
         jobRepository.save(job);
-        createContract(sponsor);
+        final Contract contract = createContract(sponsor);
 
-        var processedJob = cut.process("S001");
+        var patientsByContract = createPatientsByContractResponse(contract);
+        Mockito.when(contractAdapter.getPatients(anyString())).thenReturn(patientsByContract);
+
+        var processedJob = cut.process("S000");
 
         assertThat(processedJob.getStatus(), is(JobStatus.SUCCESSFUL));
         assertThat(processedJob.getStatusMessage(), is("100%"));
@@ -99,12 +111,15 @@ class JobProcessorIntegrationTest {
         user.setSponsor(parentSponsor);
         userRepository.save(user);
 
-        createContract(sponsor);
+        final Contract contract = createContract(sponsor);
 
         job.setStatus(JobStatus.IN_PROGRESS);
         jobRepository.save(job);
 
-        var processedJob = cut.process("S001");
+        var patientsByContract = createPatientsByContractResponse(contract);
+        Mockito.when(contractAdapter.getPatients(anyString())).thenReturn(patientsByContract);
+
+        var processedJob = cut.process("S000");
 
         assertThat(processedJob.getStatus(), is(JobStatus.SUCCESSFUL));
         assertThat(processedJob.getStatusMessage(), is("100%"));
@@ -147,11 +162,28 @@ class JobProcessorIntegrationTest {
 
     private Job createJob(User user) {
         Job job = new Job();
-        job.setJobUuid("S001");
+        job.setJobUuid("S000");
         job.setStatus(JobStatus.SUBMITTED);
         job.setStatusMessage("0%");
         job.setUser(user);
         job.setCreatedAt(OffsetDateTime.now());
         return jobRepository.save(job);
+    }
+
+    private GetPatientsByContractResponse createPatientsByContractResponse(Contract contract) {
+        return GetPatientsByContractResponse.builder()
+                .contractNumber(contract.getContractNumber())
+                .patient(toPatientDTO())
+                .patient(toPatientDTO())
+                .patient(toPatientDTO())
+                .build();
+    }
+
+    private PatientDTO toPatientDTO() {
+        final int anInt = random.nextInt(11);
+        return PatientDTO.builder()
+                .patientId("patient_" + anInt)
+                .monthUnderContract(anInt)
+                .build();
     }
 }

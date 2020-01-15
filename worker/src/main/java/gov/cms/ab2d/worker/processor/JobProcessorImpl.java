@@ -9,7 +9,7 @@ import gov.cms.ab2d.common.model.Sponsor;
 import gov.cms.ab2d.common.repository.JobOutputRepository;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.common.repository.OptOutRepository;
-import gov.cms.ab2d.worker.adapter.bluebutton.BeneficiaryAdapter;
+import gov.cms.ab2d.worker.adapter.bluebutton.ContractAdapter;
 import gov.cms.ab2d.worker.adapter.bluebutton.GetPatientsByContractResponse;
 import gov.cms.ab2d.worker.adapter.bluebutton.PatientClaimsProcessor;
 import gov.cms.ab2d.worker.service.FileService;
@@ -58,7 +58,7 @@ public class JobProcessorImpl implements JobProcessor {
     private final FileService fileService;
     private final JobRepository jobRepository;
     private final JobOutputRepository jobOutputRepository;
-    private final BeneficiaryAdapter beneficiaryAdapter;
+    private final ContractAdapter contractAdapter;
     private final PatientClaimsProcessor patientClaimsProcessor;
     private final OptOutRepository optOutRepository;
 
@@ -178,7 +178,7 @@ public class JobProcessorImpl implements JobProcessor {
         var outputFile = fileService.createOrReplaceFile(outputDir, contractNumber + OUTPUT_FILE_SUFFIX);
         var errorFile = fileService.createOrReplaceFile(outputDir, contractNumber + ERROR_FILE_SUFFIX);
 
-        var patientsByContract = beneficiaryAdapter.getPatientsByContract(contractNumber);
+        var patientsByContract = contractAdapter.getPatients(contractNumber);
         var patients = patientsByContract.getPatients();
         int patientCount = patients.size();
 
