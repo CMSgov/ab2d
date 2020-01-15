@@ -93,6 +93,7 @@ class JobProcessorIntegrationTest {
         assertThat(processedJob.getCompletedAt(), notNullValue());
     }
 
+    @Disabled("disable till the BFD calls are mocked out.")
     @Test
     @DisplayName("When a job is in submitted by the parent user, it process the contracts for the children")
     void whenJobSubmittedByParentUser_ProcessAllContractsForChildrenSponsors() throws IOException {
