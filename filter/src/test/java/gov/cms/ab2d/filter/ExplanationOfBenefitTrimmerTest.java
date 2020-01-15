@@ -11,29 +11,29 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class ExplanationOfBenefitsTrimmerTest {
+class ExplanationOfBenefitTrimmerTest {
     private static ExplanationOfBenefit eobCarrier = null;
     private static FhirContext context = FhirContext.forDstu3();
 
     static {
-        eobCarrier = ExplanationOfBenefitsTrimmer.getBenefit(EOBLoadUtilities.getEOBFromFileInClassPath("eobdata/EOB-for-Carrier-Claims.json", context));
+        eobCarrier = ExplanationOfBenefitTrimmer.getBenefit(EOBLoadUtilities.getEOBFromFileInClassPath("eobdata/EOB-for-Carrier-Claims.json", context));
     }
 
     @Test
     public void testEmptyList() {
-        ExplanationOfBenefitsTrimmer.clearOutList(null);
+        ExplanationOfBenefitTrimmer.clearOutList(null);
         List<Integer> list = new ArrayList<>();
-        ExplanationOfBenefitsTrimmer.clearOutList(list);
+        ExplanationOfBenefitTrimmer.clearOutList(list);
         assertTrue(list.isEmpty());
         list.add(5);
         assertFalse(list.isEmpty());
-        ExplanationOfBenefitsTrimmer.clearOutList(list);
+        ExplanationOfBenefitTrimmer.clearOutList(list);
         assertTrue(list.isEmpty());
     }
 
     @Test
     public void validateEmpty() {
-        assertNull(ExplanationOfBenefitsTrimmer.getBenefit(null));
+        assertNull(ExplanationOfBenefitTrimmer.getBenefit(null));
         // Since getting a patient target creates a new one, make sure the object is empty
         assertTrue(eobCarrier.getPatientTarget().getIdentifier().isEmpty());
         assertNull(eobCarrier.getPatientTarget().getId());
@@ -113,7 +113,7 @@ class ExplanationOfBenefitsTrimmerTest {
     private void printItOut(String file) {
         IParser jsonParser = context.newJsonParser().setPrettyPrint(true);
 
-        ExplanationOfBenefit eCarrier = ExplanationOfBenefitsTrimmer.getBenefit(
+        ExplanationOfBenefit eCarrier = ExplanationOfBenefitTrimmer.getBenefit(
                 EOBLoadUtilities.getEOBFromFileInClassPath(file, context));
 
         String result = jsonParser.encodeResourceToString(eCarrier);
@@ -127,7 +127,7 @@ class ExplanationOfBenefitsTrimmerTest {
 
     @Test
     void isPartD() {
-        ExplanationOfBenefit ePartD = ExplanationOfBenefitsTrimmer.getBenefit(
+        ExplanationOfBenefit ePartD = ExplanationOfBenefitTrimmer.getBenefit(
                 EOBLoadUtilities.getEOBFromFileInClassPath("eobdata/EOB-for-Part-D-Claims.json", context));
         assertTrue(EOBLoadUtilities.isPartD(ePartD));
         assertFalse(EOBLoadUtilities.isPartD(eobCarrier));

@@ -24,6 +24,7 @@ import java.util.*;
 
 import static gov.cms.ab2d.api.util.Constants.API_PREFIX;
 import static gov.cms.ab2d.api.util.Constants.FHIR_PREFIX;
+import static gov.cms.ab2d.api.util.SwaggerConstants.MAIN;
 
 @Configuration
 @EnableSwagger2
@@ -74,13 +75,12 @@ public class SwaggerConfig {
 
     private ApiInfo apiInfo() {
         return new ApiInfo(
-                "AB2D FHIR Bulk Data Access API",
-                "This API Provides Part A (Hospital Insurance) & B (Medical Insurance) claim data to Part " +
-                        "D (Prescription Drug Benefit) sponsors.",
-                "1.0",
-                null,
-                null,
-                null, null, Collections.emptyList());
+               "AB2D FHIR Bulk Data Access API",
+                MAIN,
+               "1.0",
+               null,
+               null,
+               null, null, Collections.emptyList());
     }
 
     // FHIR's OperationOutcome won't play nice with Swagger. Having to redefine it here

@@ -11,6 +11,7 @@ import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import static gov.cms.ab2d.common.util.Constants.EOB;
 import static javax.persistence.EnumType.STRING;
 
 @Entity
@@ -58,8 +59,8 @@ public class Job {
     @Column(columnDefinition = "TIMESTAMP WITH TIME ZONE")
     private OffsetDateTime expiresAt;
 
-    @Pattern(regexp = "ExplanationOfBenefits", message = "_type should be ExplanationOfBenefits")
-    private String resourceTypes; // for now just limited to ExplanationOfBenefits
+    @Pattern(regexp = EOB, message = "_type should be ExplanationOfBenefit")
+    private String resourceTypes; // for now just limited to ExplanationOfBenefit
 
     @ManyToOne
     @JoinColumn(name = "contract_id")
