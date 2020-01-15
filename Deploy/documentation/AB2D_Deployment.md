@@ -44,6 +44,8 @@
    * [Create a Jira ticket to connect job code to Splunk website](#create-a-jira-ticket-to-connect-job-code-to-splunk-website)
    * [Configure Splunk forwarder](#configure-splunk-forwarder)
 1. [Configure New Relic and Splunk within the deployment AMI](#configure-new-relic-and-splunk-within-the-deployment-ami)
+1. [Request an Entrust certificate for sandbox.ab2d.cms.gov](#request-an-entrust-certificate-for-sandboxab2dcmsgov)
+1. [Submit an "Internet DNS Change Request Form" to product owner for the sandbox application load balancer](#submit-an-internet-dns-change-request-form-to-product-owner-for-the-sandbox-application-load-balancer)
 
 ## Note the starting state of the customer AWS account
 
@@ -1999,6 +2001,8 @@
    Internet DNS Change Request (2).pdf
    ```
 
+1. Note that Lonnie Hanekamp has product owner and business owner information saved in his "stakeholders" private slack channel
+
 1. Fill out the form as follows
 
    *Requestor Information:*
@@ -2585,3 +2589,73 @@
 1. Modify splunk and new relic code so that it deploys Splunk and New Relic configuration with the AMI
 
 1. Save and close the file
+
+## Request an Entrust certificate for sandbox.ab2d.cms.gov
+
+> *** TO DO ***
+
+## Submit an "Internet DNS Change Request Form" to product owner for the sandbox application load balancer
+
+> *** TO DO ***
+
+1. Open Chrome
+
+1. Enter the following in the address bar
+
+   > https://confluence.cms.gov/pages/viewpage.action?pageId=138595233
+
+1. If the Confluence logon page appears, log on to Confluence
+
+1. Note that the "CNAME/DNS Change Requests" page should be displayed
+
+1. Select the **DNS change request form** link under the "Process" section
+
+1. Select the **Download** icon in the top right of the page
+
+1. Wait for the download to complete
+
+1. Open the downloaded form
+
+   ```
+   Internet DNS Change Request (2).pdf
+   ```
+
+1. Fill out the form as follows
+
+   *Requestor Information:*
+
+   - **Name:** {product owner first name} {product owner last name}
+
+   - **Organization:** {product owner organization}
+
+   - **Email:** {product owner email}
+
+   - **Phone:** {product owner phone}
+
+   *CMS Business Owner Information*
+
+   - **Name:** {business owner first name} {business owner last name}
+
+   - **Organization:** {business owner organization}
+
+   - **Email:** {business owner email}
+
+   - **Phone:** {business owner phone}
+
+   - **Reason:** To support data sharing with PDP sponsor.  This static webpage will provide information for the PDP sponsors.
+
+   *DNS Change Information*
+
+   - **DNS Zone:** cms.gov
+
+   - **Type of change:** CNAME
+
+   - **Actual Change:** ab2d.cms.gov CNAME {unique id}.cloudfront.net
+
+   - **Change Date & Time:** ASAP
+
+   - **Purpose of the change:** Initial launch of new informational page for AB2D API
+
+1. Submit the completed for to the product owner
+
+1. Note that the product owner will complete the process
