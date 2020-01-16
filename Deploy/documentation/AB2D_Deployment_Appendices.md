@@ -26,7 +26,7 @@
 1. [Appendix O: Destroy complete environment](#appendix-o-destroy-complete-environment)
 1. [Appendix P: Display disk space](#appendix-p-display-disk-space)
 1. [Appendix Q: Test API using swagger](#appendix-q-test-api-using-swagger)
-1. [Appendix R: Update userdata for auto scaling groups](#appendix-r-update-userdata-for-auto-scaling-groups)
+1. [Appendix R: Update userdata for auto scaling groups through the AWS console](#appendix-r-update-userdata-for-auto-scaling-groups-through-the-aws-console)
 
 ## Appendix A: Access the CMS AWS console
 
@@ -489,11 +489,27 @@
    $ export SSH_USER_NAME=ec2-user
    ```
 
+   *Example for "Sbx" environment (api node 1):*
+   
+   ```ShellSession
+   $ export TARGET_ENVIRONMENT=ab2d-sbx-sandbox
+   $ export NODE_PRIVATE_IP=10.242.31.151
+   $ export SSH_USER_NAME=ec2-user
+   ```
+
+   *Example for "Sbx" environment (api node 2):*
+   
+   ```ShellSession
+   $ export TARGET_ENVIRONMENT=ab2d-sbx-sandbox
+   $ export NODE_PRIVATE_IP=10.242.31.120
+   $ export SSH_USER_NAME=ec2-user
+   ```
+
    *Example for "Sbx" environment (worker node 1):*
    
    ```ShellSession
    $ export TARGET_ENVIRONMENT=ab2d-sbx-sandbox
-   $ export NODE_PRIVATE_IP=10.242.31.144
+   $ export NODE_PRIVATE_IP=10.242.31.153
    $ export SSH_USER_NAME=ec2-user
    ```
 
@@ -501,7 +517,7 @@
    
    ```ShellSession
    $ export TARGET_ENVIRONMENT=ab2d-sbx-sandbox
-   $ export NODE_PRIVATE_IP=10.242.31.120
+   $ export NODE_PRIVATE_IP=10.242.31.25
    $ export SSH_USER_NAME=ec2-user
    ```
 
@@ -628,13 +644,13 @@
    *Example for connecting to an API container:*
 
    ```ShellSession
-   $ docker exec -it $(docker ps -aqf "name=ecs-api-*") /bin/bash
+   $ docker exec -it $(docker ps -aqf "name=ecs-api-*" --filter "status=running") /bin/bash
    ```
 
    *Example for connecting to a worker container:*
 
    ```ShellSession
-   $ docker exec -it $(docker ps -aqf "name=ecs-worker-*") /bin/bash
+   $ docker exec -it $(docker ps -aqf "name=ecs-worker-*" --filter "status=running") /bin/bash
    ```
 
 ## Appendix J: Delete and recreate database
@@ -1300,7 +1316,7 @@
 
       > *** TO DO ***: determine why it isn't working
 
-## Appendix R: Update userdata for auto scaling groups
+## Appendix R: Update userdata for auto scaling groups through the AWS console
 
 1. Log on to AWS
 
@@ -1465,3 +1481,115 @@
    1. Verify the userdata changes that you made are in the **User data** edit box
 
    1. Select **Cancel**
+
+1. Delete the original API launch configuration
+
+   1. Select **Lauch Configurations** under the "AUTO SCALING" section in the leftmost panel
+
+   1. Select the original API launch configuration
+
+      *Format:*
+
+      ```
+      {environment}-api-{timestamp}
+      ```
+
+   1. Select **Actions**
+
+   1. Select **Delete launch configuration**
+
+   1. Select **Yes, Delete**
+
+1. Delete the original worker launch configuration
+
+   1. Select **Lauch Configurations** under the "AUTO SCALING" section in the leftmost panel
+
+   1. Select the original API launch configuration
+
+      *Format:*
+
+      ```
+      {environment}-worker-{timestamp}
+      ```
+
+   1. Select **Actions**
+
+   1. Select **Delete launch configuration**
+
+   1. Select **Yes, Delete**
+
+1. Update "tfstate" file
+
+   1. Select **S3**
+
+   1. Navigate to automation bucket path of the changed environment
+
+      *Example for "Dev" environment:*
+
+      ```
+      ab2d-dev-automation/ab2d-dev/terraform
+      ```
+      
+      *Example for "Sbx" environment:*
+
+      ```
+      ab2d-sbx-sandbox-automation/ab2d-sbx-sandbox/terraform
+      ```
+
+   1. Download the "tfstate" file
+
+   1. Note the downloaded file's name changed to the following
+
+      ```
+      terraform.json
+      ```
+
+   1. Rename the "tfstate" file in S3 to the following
+
+      ```
+      terraform.tfstate.backup
+      ```
+
+   1. Open the "terraform.json" file
+
+      ```ShellSession
+      $ vim ~/Downloads/terraform.json
+      ```
+
+   1. Change the API "launch_configuration" line as follows
+
+      ```
+      "launch_configuration": "{environment}-api-{timestamp}Copy",     
+      ```
+
+   1. Change the worker "launch_configuration" line as follows
+
+      ```
+      "launch_configuration": "{environment}-worker-{timestamp}Copy",     
+      ```
+
+   1. Save and close the file
+
+   1. Select **S3**
+
+   1. Navigate to automation bucket path of the changed environment
+
+      *Example for "Dev" environment:*
+
+      ```
+      ab2d-dev-automation/ab2d-dev/terraform
+      ```
+      
+      *Example for "Sbx" environment:*
+
+      ```
+      ab2d-sbx-sandbox-automation/ab2d-sbx-sandbox/terraform
+      ```
+
+   1. Upload the modified "terraform.json" to S3
+
+   1. Rename "terraform.json" in S3 to the following
+
+      ```
+      terraform.tfstate
+      ```
