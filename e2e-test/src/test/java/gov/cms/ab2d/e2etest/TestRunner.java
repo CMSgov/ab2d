@@ -25,6 +25,8 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 
+import static org.hamcrest.Matchers.matchesPattern;
+
 // Unit tests here can be run from the IDE and will use LOCAL as the default, they can also be run from the TestLauncher
 // class to specify a custom environment
 @Testcontainers
@@ -52,7 +54,7 @@ public class TestRunner {
 
     private Environment environment;
 
-    public void runTests() throws InterruptedException, SQLException, JSONException, IOException {
+    public void runTests() throws InterruptedException, JSONException, IOException {
         runSystemWideExport();
         runContractNumberExport();
         testDelete();
@@ -67,9 +69,9 @@ public class TestRunner {
     public void init() throws IOException, InterruptedException, JSONException {
         if(environment.isUsesDockerCompose()) {
             DockerComposeContainer container = new DockerComposeContainer(
-                    new File("../docker-e2e-compose.yml"))
+                    new File("../docker-compose.yml"))
                     //.withScaledService("api", 2) // failing now since it's not changing ports
-                    //.withScaledService("worker", 2)
+                    .withScaledService("worker", 2)
                     .withExposedService("db", 5432)
                     .withExposedService("api", 8080);
             container.start();
@@ -353,7 +355,6 @@ public class TestRunner {
 
     @Test
     public void runSystemWideExport() throws IOException, InterruptedException, JSONException {
-        String contractNumber = "S0001";
         HttpResponse<String> exportResponse = exportRequest();
 
         Assert.assertEquals(202, exportResponse.statusCode());
@@ -362,13 +363,18 @@ public class TestRunner {
         HttpResponse<String> secondExportResponse = exportRequest();
         Assert.assertEquals(429, secondExportResponse.statusCode());
 
+        performStatusRequestsAndVerifyDownloads(contentLocationList, false, "S0001");
+    }
+
+    private void performStatusRequestsAndVerifyDownloads(List<String> contentLocationList, boolean isContract,
+                                                         String contractNumber) throws JSONException, IOException, InterruptedException {
         HttpResponse<String> statusResponse = statusRequest(contentLocationList.iterator().next());
 
         Assert.assertEquals(202, statusResponse.statusCode());
         List<String> retryAfterList = statusResponse.headers().map().get("retry-after");
         Assert.assertEquals(retryAfterList.iterator().next(), String.valueOf(DELAY));
         List<String> xProgressList = statusResponse.headers().map().get("x-progress");
-        Assert.assertEquals(xProgressList.iterator().next(), "0% complete");
+        Assert.assertThat(xProgressList.iterator().next(), matchesPattern("\\d+\\% complete"));
 
         HttpResponse<String> retryStatusResponse = statusRequest(contentLocationList.iterator().next());
 
@@ -382,7 +388,7 @@ public class TestRunner {
 
         Assert.assertEquals(200, statusResponseAgain.statusCode());
 
-        verifyJsonFromStatusResponse(statusResponseAgain, jobUuid, null);
+        verifyJsonFromStatusResponse(statusResponseAgain, jobUuid, isContract ? contractNumber : null);
 
         HttpResponse<String> downloadResponse = fileDownloadRequest(jobUuid, contractNumber + ".ndjson");
         Assert.assertEquals(200, downloadResponse.statusCode());
@@ -402,33 +408,7 @@ public class TestRunner {
         HttpResponse<String> secondExportResponse = exportByContractRequest(contractNumber);
         Assert.assertEquals(429, secondExportResponse.statusCode());
 
-        HttpResponse<String> statusResponse = statusRequest(contentLocationList.iterator().next());
-
-        Assert.assertEquals(202, statusResponse.statusCode());
-        List<String> retryAfterList = statusResponse.headers().map().get("retry-after");
-        Assert.assertEquals(retryAfterList.iterator().next(), String.valueOf(DELAY));
-        List<String> xProgressList = statusResponse.headers().map().get("x-progress");
-        Assert.assertEquals(xProgressList.iterator().next(), "0% complete");
-
-        HttpResponse<String> retryStatusResponse = statusRequest(contentLocationList.iterator().next());
-
-        Assert.assertEquals(429, retryStatusResponse.statusCode());
-        List<String> retryAfterListRepeat = retryStatusResponse.headers().map().get("retry-after");
-        Assert.assertEquals(retryAfterListRepeat.iterator().next(), String.valueOf(DELAY));
-
-        HttpResponse<String> statusResponseAgain = pollForStatusResponse(contentLocationList.iterator().next());
-
-        String jobUuid = getJobUuid(contentLocationList.iterator().next());
-
-        Assert.assertEquals(200, statusResponseAgain.statusCode());
-
-        verifyJsonFromStatusResponse(statusResponseAgain, jobUuid, contractNumber);
-
-        HttpResponse<String> downloadResponse = fileDownloadRequest(jobUuid, contractNumber + ".ndjson");
-        Assert.assertEquals(200, downloadResponse.statusCode());
-        String fileContent = downloadResponse.body();
-
-        verifyJsonFromfileDownload(fileContent);
+        performStatusRequestsAndVerifyDownloads(contentLocationList, true, contractNumber);
     }
 
     @Test
