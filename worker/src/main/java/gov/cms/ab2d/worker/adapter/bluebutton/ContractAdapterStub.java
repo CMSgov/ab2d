@@ -69,22 +69,21 @@ public class ContractAdapterStub implements ContractAdapter {
         int rowsToRetrieve = determineRowsToRetrieve(numberOfRows);
 
         var patientIdRows = getFromSampleFile(rowsToRetrieve);
-        final List<String> allRows = new ArrayList<>();
-        allRows.addAll(patientIdRows);
 
-        if (numberOfRows > MAX_ROWS) {
-            allRows.addAll(createMoreRows(numberOfRows, rowsToRetrieve, patientIdRows));
+        int remainingRows = numberOfRows;
+        List<String> accumulator = new ArrayList<>();
+        while (remainingRows > MAX_ROWS) {
+            accumulator.addAll(patientIdRows);
+            remainingRows -= MAX_ROWS;
         }
 
-        return allRows;
+        accumulator.addAll(patientIdRows.stream().limit(remainingRows).collect(Collectors.toList()));
+
+        return accumulator;
     }
 
     private int determineNumberOfRows(int contractSno) {
-        if (contractSno == 0) {
-            return 100;
-        } else {
-            return contractSno * 1000;
-        }
+        return contractSno == 0 ? 100 : (contractSno * 1000);
     }
 
     private int determineRowsToRetrieve(int numberOfRows) {
@@ -115,20 +114,6 @@ public class ContractAdapterStub implements ContractAdapter {
         return patientIdRows;
     }
 
-    private List<String> createMoreRows(int numberOfRows, int rowsToRetrieve, List<String> patientIdRows) {
-        final int diff = numberOfRows - rowsToRetrieve;
-        if (diff < MAX_ROWS) {
-            return patientIdRows.stream().limit(diff).collect(Collectors.toList());
-        } else {
-            List<String> accumulator = new ArrayList<>();
-            accumulator.addAll(patientIdRows);
-
-            final List<String> moreRows = createMoreRows(diff, rowsToRetrieve, patientIdRows);
-            accumulator.addAll(moreRows);
-
-            return accumulator;
-        }
-    }
 
     private GetPatientsByContractResponse toResponse(String contractNumber, List<String> rows) {
         return GetPatientsByContractResponse.builder()

@@ -33,6 +33,12 @@ class ContractAdapterStubTest {
         assertThat(patients.size(), is(0));
     }
 
+    @Test
+    @DisplayName("when contractNumber is 9999, returns 9_999_000 patient records")
+    void when_S9999_returns_9999000() {
+        var patients = cut.getPatients("S9999").getPatients();
+        assertThat(patients.size(), is(9999000));
+    }
 
 
     @DisplayName("Given ContractNumber, returns varying number of patient records")
