@@ -138,6 +138,8 @@ public class AdminAPIUserTests {
                         .contentType(MediaType.APPLICATION_JSON).content(mapper.writeValueAsString(userDTO))
                         .header("Authorization", "Bearer " + token));
 
+        userDTO.setEmail("anotherEmail@test.com");
+
         this.mockMvc.perform(
                 post(API_PREFIX + ADMIN_PREFIX + USER_URL)
                         .contentType(MediaType.APPLICATION_JSON).content(mapper.writeValueAsString(userDTO))
