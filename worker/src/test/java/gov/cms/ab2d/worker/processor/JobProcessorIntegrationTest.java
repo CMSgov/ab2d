@@ -119,19 +119,8 @@ class JobProcessorIntegrationTest {
     @Test
     @DisplayName("When a job is in submitted by the parent user, it process the contracts for the children")
     void whenJobSubmittedByParentUser_ProcessAllContractsForChildrenSponsors() {
-
-        // create parent sponsor
-        final Sponsor parentSponsor = createSponsor();
-        parentSponsor.setOrgName(parentSponsor.getOrgName() + " - PARENT");
-        parentSponsor.setLegalName(parentSponsor.getLegalName() + " - PARENT");
-
-        // associate the parent to the child
-        final Sponsor childSponsor = user.getSponsor();
-        childSponsor.setParent(parentSponsor);
-        sponsorRepository.save(childSponsor);
-
         // switch the user to the parent sponsor
-        user.setSponsor(parentSponsor);
+        user.setSponsor(sponsor.getParent());
         userRepository.save(user);
 
         createContract(sponsor);
@@ -148,10 +137,16 @@ class JobProcessorIntegrationTest {
     }
 
     private Sponsor createSponsor() {
+        Sponsor parent = new Sponsor();
+        parent.setOrgName("Parent");
+        parent.setLegalName("Parent");
+        parent.setHpmsId(350);
+
         Sponsor sponsor = new Sponsor();
         sponsor.setOrgName("Hogwarts School of Wizardry");
         sponsor.setLegalName("Hogwarts School of Wizardry LLC");
         sponsor.setHpmsId(random.nextInt());
+        sponsor.setParent(parent);
         return sponsorRepository.save(sponsor);
     }
 
