@@ -28,6 +28,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import java.util.List;
 
 import static gov.cms.ab2d.api.util.Constants.*;
+import static gov.cms.ab2d.common.util.Constants.SPONSOR_ROLE;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -136,6 +137,8 @@ public class AdminAPIUserTests {
                 post(API_PREFIX + ADMIN_PREFIX + USER_URL)
                         .contentType(MediaType.APPLICATION_JSON).content(mapper.writeValueAsString(userDTO))
                         .header("Authorization", "Bearer " + token));
+
+        userDTO.setEmail("anotherEmail@test.com");
 
         this.mockMvc.perform(
                 post(API_PREFIX + ADMIN_PREFIX + USER_URL)

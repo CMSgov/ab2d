@@ -2,7 +2,6 @@ package gov.cms.ab2d.api.config;
 
 import com.fasterxml.classmate.TypeResolver;
 import com.fasterxml.jackson.annotation.*;
-import com.fasterxml.jackson.databind.JsonNode;
 import gov.cms.ab2d.api.util.Constants;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -25,6 +24,7 @@ import java.util.*;
 
 import static gov.cms.ab2d.api.util.Constants.API_PREFIX;
 import static gov.cms.ab2d.api.util.Constants.FHIR_PREFIX;
+import static gov.cms.ab2d.api.util.SwaggerConstants.MAIN;
 
 @Configuration
 @EnableSwagger2
@@ -42,7 +42,6 @@ public class SwaggerConfig {
                 .paths(PathSelectors.ant(API_PREFIX + FHIR_PREFIX + "/**"))
                 .build()
                 .directModelSubstitute(Resource.class, String.class)
-                .directModelSubstitute(JsonNode.class, Void.class)
                 .useDefaultResponseMessages(false)
                 .securitySchemes(auth)
                 .globalResponseMessage(RequestMethod.GET,
@@ -76,15 +75,13 @@ public class SwaggerConfig {
 
     private ApiInfo apiInfo() {
         return new ApiInfo(
-                "AB2D FHIR Bulk Data Access API",
-                "This API Provides Part A (Hospital Insurance) & B (Medical Insurance) claim data to Part " +
-                        "D (Prescription Drug Benefit) sponsors.",
-                "1.0",
-                null,
-                null,
-                null, null, Collections.emptyList());
+               "AB2D FHIR Bulk Data Access API",
+                MAIN,
+               "1.0",
+               null,
+               null,
+               null, null, Collections.emptyList());
     }
-
 
     // FHIR's OperationOutcome won't play nice with Swagger. Having to redefine it here
     // to get the Swagger API spec looking right.
@@ -121,7 +118,6 @@ public class SwaggerConfig {
 
     }
 
-
     @JsonInclude(JsonInclude.Include.NON_NULL)
     @JsonPropertyOrder({
             "severity",
@@ -129,7 +125,6 @@ public class SwaggerConfig {
             "details"
     })
     class Issue {
-
         @JsonProperty("severity")
         private String severity;
         @JsonProperty("code")
@@ -178,9 +173,7 @@ public class SwaggerConfig {
         public void setAdditionalProperty(String name, Object value) {
             this.additionalProperties.put(name, value);
         }
-
     }
-
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     @JsonPropertyOrder({
@@ -189,13 +182,15 @@ public class SwaggerConfig {
             "issue"
     })
     public class OperationOutcome {
-
         @JsonProperty("resourceType")
         private String resourceType;
+
         @JsonProperty("id")
         private String id;
+
         @JsonProperty("issue")
         private List<Issue> issue = null;
+
         @JsonIgnore
         private Map<String, Object> additionalProperties = new HashMap<String, Object>();
 

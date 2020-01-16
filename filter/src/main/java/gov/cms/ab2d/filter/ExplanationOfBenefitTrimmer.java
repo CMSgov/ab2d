@@ -9,7 +9,7 @@ import java.util.stream.Collectors;
  * Cleans out data from a copy of an ExplanationOfBenefit object that we don't want
  * to forward to Part D providers
  */
-public class ExplanationOfBenefitsTrimmer {
+public class ExplanationOfBenefitTrimmer {
 
     /**
      * Pass in an ExplanationOfBenefit, return the copy without the data
@@ -82,7 +82,7 @@ public class ExplanationOfBenefitsTrimmer {
         benefit.setHospitalization(null);
         if (benefit.getItem() != null) {
             benefit.setItem(benefit.getItem().stream()
-                    .map(ExplanationOfBenefitsTrimmer::cleanOutItemComponent)
+                    .map(ExplanationOfBenefitTrimmer::cleanOutItemComponent)
                     .collect(Collectors.toList()));
         }
         clearOutList(benefit.getAddItem());

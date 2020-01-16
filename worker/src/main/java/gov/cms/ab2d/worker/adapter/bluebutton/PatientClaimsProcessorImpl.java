@@ -3,7 +3,7 @@ package gov.cms.ab2d.worker.adapter.bluebutton;
 import ca.uhn.fhir.context.FhirContext;
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.util.FHIRUtil;
-import gov.cms.ab2d.filter.ExplanationOfBenefitsTrimmer;
+import gov.cms.ab2d.filter.ExplanationOfBenefitTrimmer;
 import gov.cms.ab2d.worker.service.FileService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -13,7 +13,6 @@ import org.hl7.fhir.dstu3.model.Bundle.BundleEntryComponent;
 import org.hl7.fhir.dstu3.model.ExplanationOfBenefit;
 import org.hl7.fhir.dstu3.model.Resource;
 import org.hl7.fhir.dstu3.model.ResourceType;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.AsyncResult;
@@ -26,7 +25,7 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.Future;
-import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.locks.Lock;
 import java.util.stream.Collectors;
 
 import static gov.cms.ab2d.common.util.Constants.FILE_LOG;
@@ -39,20 +38,16 @@ import static net.logstash.logback.argument.StructuredArguments.keyValue;
 @RequiredArgsConstructor
 public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
 
-    @Autowired
-    private BFDClient bfdClient;
-
-    @Autowired
-    private FhirContext fhirContext;
-
-    @Autowired
-    private FileService fileService;
+    private final BFDClient bfdClient;
+    private final FhirContext fhirContext;
+    private final FileService fileService;
 
     @Value("${file.try.lock.timeout}")
     private int tryLockTimeout;
 
-    @Async("bfd-client")
-    public Future<Integer> process(String patientId, ReentrantLock lock, Path outputFile, Path errorFile) {
+
+    @Async("pcpThreadPool")
+    public Future<Integer> process(String patientId, Lock lock, Path outputFile, Path errorFile) {
         int errorCount = 0;
         int resourceCount = 0;
 
@@ -74,7 +69,9 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
                 }
             }
 
-            appendToFile(outputFile, byteArrayOutputStream, lock);
+            if (byteArrayOutputStream.size() > 0) {
+                appendToFile(outputFile, byteArrayOutputStream, lock);
+            }
         } catch (Exception e) {
             ++errorCount;
             try {
@@ -95,7 +92,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
         return new AsyncResult<>(errorCount);
     }
 
-    private void handleException(Path errorFile, Exception e, ReentrantLock lock) throws IOException {
+    private void handleException(Path errorFile, Exception e, Lock lock) throws IOException {
         var errMsg = ExceptionUtils.getRootCauseMessage(e);
         var operationOutcome = FHIRUtil.getErrorOutcome(errMsg);
 
@@ -113,7 +110,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
      * @param byteArrayOutputStream
      * @throws IOException
      */
-    private void appendToFile(Path outputFile, ByteArrayOutputStream byteArrayOutputStream, ReentrantLock lock) throws IOException {
+    private void appendToFile(Path outputFile, ByteArrayOutputStream byteArrayOutputStream, Lock lock) throws IOException {
 
         tryLock(lock);
 
@@ -125,7 +122,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
         }
     }
 
-    private void tryLock(ReentrantLock lock) {
+    private void tryLock(Lock lock) {
         final String errMsg = "Terminate processing. Unable to acquire lock";
         try {
             final boolean lockAcquired = lock.tryLock(tryLockTimeout, SECONDS);
@@ -163,7 +160,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
                 // Get only the explanation of benefits
                 .filter(resource -> resource.getResourceType() == ResourceType.ExplanationOfBenefit)
                 // filter it
-                .map(resource -> ExplanationOfBenefitsTrimmer.getBenefit((ExplanationOfBenefit) resource))
+                .map(resource -> ExplanationOfBenefitTrimmer.getBenefit((ExplanationOfBenefit) resource))
                 // Remove any empty values
                 .filter(Objects::nonNull)
                 // Remove Plan D
