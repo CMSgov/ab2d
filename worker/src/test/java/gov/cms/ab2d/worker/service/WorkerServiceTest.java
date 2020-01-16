@@ -21,6 +21,7 @@ import java.util.Random;
 import java.util.UUID;
 
 import static gov.cms.ab2d.common.model.JobStatus.SUCCESSFUL;
+import static gov.cms.ab2d.common.util.Constants.EOB;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.assertThat;
 
@@ -72,15 +73,13 @@ public class WorkerServiceTest {
         checkResult(processedJob2);
     }
 
-
-
     private Job createJob(final User user) {
         Job job = new Job();
         job.setId((long) getIntRandom());
         job.setJobUuid(UUID.randomUUID().toString());
         job.setStatus(JobStatus.SUBMITTED);
         job.setStatusMessage("0%");
-        job.setResourceTypes("ExplanationOfBenefits");
+        job.setResourceTypes(EOB);
         job.setCreatedAt(OffsetDateTime.now());
         job.setUser(user);
         return jobRepository.save(job);

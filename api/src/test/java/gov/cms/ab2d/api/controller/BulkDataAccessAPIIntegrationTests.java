@@ -44,8 +44,7 @@ import java.util.Optional;
 
 import static gov.cms.ab2d.api.util.Constants.*;
 import static gov.cms.ab2d.common.service.JobServiceImpl.INITIAL_JOB_STATUS_MESSAGE;
-import static gov.cms.ab2d.common.util.Constants.NDJSON_FIRE_CONTENT_TYPE;
-import static gov.cms.ab2d.common.util.Constants.OPERATION_OUTCOME;
+import static gov.cms.ab2d.common.util.Constants.*;
 import static gov.cms.ab2d.common.util.DataSetup.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -121,7 +120,7 @@ public class BulkDataAccessAPIIntegrationTests {
         Assert.assertEquals(job.getProgress(), Integer.valueOf(0));
         Assert.assertEquals(job.getRequestUrl(),
                 "http://localhost" + API_PREFIX + FHIR_PREFIX + PATIENT_EXPORT_PATH);
-        Assert.assertEquals(job.getResourceTypes(), null);
+        Assert.assertEquals(job.getResourceTypes(), EOB);
         Assert.assertEquals(job.getUser(), userRepository.findByUsername(TEST_USER));
     }
 
@@ -199,7 +198,7 @@ public class BulkDataAccessAPIIntegrationTests {
     @Test
     public void testPatientExportWithParameters() throws Exception {
         final String typeParams =
-                "?_type=ExplanationOfBenefits&_outputFormat=application/fhir+ndjson&since=20191015";
+                "?_type=ExplanationOfBenefit&_outputFormat=application/fhir+ndjson&since=20191015";
         ResultActions resultActions =
                 this.mockMvc.perform(get(API_PREFIX + FHIR_PREFIX + "/" + PATIENT_EXPORT_PATH + typeParams)
                         .header("Authorization", "Bearer " + token)
@@ -217,13 +216,13 @@ public class BulkDataAccessAPIIntegrationTests {
         Assert.assertEquals(job.getProgress(), Integer.valueOf(0));
         Assert.assertEquals(job.getRequestUrl(),
                 "http://localhost" + API_PREFIX + FHIR_PREFIX + PATIENT_EXPORT_PATH + typeParams);
-        Assert.assertEquals(job.getResourceTypes(), "ExplanationOfBenefits");
+        Assert.assertEquals(job.getResourceTypes(), EOB);
         Assert.assertEquals(job.getUser(), userRepository.findByUsername(TEST_USER));
     }
 
     @Test
     public void testPatientExportWithInvalidType() throws Exception {
-        final String typeParams = "?_type=PatientInvalid,ExplanationOfBenefits";
+        final String typeParams = "?_type=PatientInvalid,ExplanationOfBenefit";
         this.mockMvc.perform(get(API_PREFIX +  FHIR_PREFIX + "/" + PATIENT_EXPORT_PATH + typeParams)
                 .contentType(MediaType.APPLICATION_JSON)
                 .header("Authorization", "Bearer " + token))
@@ -232,7 +231,7 @@ public class BulkDataAccessAPIIntegrationTests {
                 .andExpect(jsonPath("$.issue[0].severity", Is.is("error")))
                 .andExpect(jsonPath("$.issue[0].code", Is.is("invalid")))
                 .andExpect(jsonPath("$.issue[0].details.text",
-                        Is.is("InvalidUserInputException: _type must be ExplanationOfBenefits")));
+                        Is.is("InvalidUserInputException: _type must be ExplanationOfBenefit")));
     }
 
     @Test
@@ -383,7 +382,7 @@ public class BulkDataAccessAPIIntegrationTests {
     @Test
     public void testGetStatusWhileFinished() throws Exception {
         MvcResult mvcResult = this.mockMvc.perform(
-                get(API_PREFIX + FHIR_PREFIX + PATIENT_EXPORT_PATH + "?_type=ExplanationOfBenefits")
+                get(API_PREFIX + FHIR_PREFIX + PATIENT_EXPORT_PATH + "?_type=ExplanationOfBenefit")
                 .header("Authorization", "Bearer " + token)
                 .contentType(MediaType.APPLICATION_JSON))
                 .andReturn();
@@ -398,7 +397,7 @@ public class BulkDataAccessAPIIntegrationTests {
         job.setCompletedAt(now);
 
         JobOutput jobOutput = new JobOutput();
-        jobOutput.setFhirResourceType("ExplanationOfBenefits");
+        jobOutput.setFhirResourceType(EOB);
         jobOutput.setJob(job);
         jobOutput.setFilePath("file.ndjson");
         job.getJobOutputs().add(jobOutput);
@@ -423,7 +422,7 @@ public class BulkDataAccessAPIIntegrationTests {
                         Is.is(new DateTimeType(now.toString()).toHumanDisplay())))
                 .andExpect(jsonPath("$.request", Is.is(job.getRequestUrl())))
                 .andExpect(jsonPath("$.requiresAccessToken", Is.is(true)))
-                .andExpect(jsonPath("$.output[0].type", Is.is("ExplanationOfBenefits")))
+                .andExpect(jsonPath("$.output[0].type", Is.is(EOB)))
                 .andExpect(jsonPath("$.output[0].url",
                         Is.is("http://localhost" + API_PREFIX + FHIR_PREFIX + "/Job/" + job.getJobUuid() +
                                 "/file/file.ndjson")))
@@ -436,7 +435,7 @@ public class BulkDataAccessAPIIntegrationTests {
     @Test
     public void testGetStatusWhileFailed() throws Exception {
         MvcResult mvcResult = this.mockMvc.perform(
-                get(API_PREFIX + FHIR_PREFIX + PATIENT_EXPORT_PATH + "?_type=ExplanationOfBenefits")
+                get(API_PREFIX + FHIR_PREFIX + PATIENT_EXPORT_PATH + "?_type=ExplanationOfBenefit")
                         .contentType(MediaType.APPLICATION_JSON)
                         .header("Authorization", "Bearer " + token))
                 .andReturn();
@@ -461,7 +460,7 @@ public class BulkDataAccessAPIIntegrationTests {
 
     @Test
     public void testGetStatusWithJobNotFound() throws Exception {
-        this.mockMvc.perform(get(API_PREFIX + FHIR_PREFIX + PATIENT_EXPORT_PATH + "?_type=ExplanationOfBenefits")
+        this.mockMvc.perform(get(API_PREFIX + FHIR_PREFIX + PATIENT_EXPORT_PATH + "?_type=ExplanationOfBenefit")
                 .contentType(MediaType.APPLICATION_JSON)
                 .header("Authorization", "Bearer " + token))
                 .andReturn();
@@ -486,7 +485,7 @@ public class BulkDataAccessAPIIntegrationTests {
 
     @Test
     public void testGetStatusWithSpaceUrl() throws Exception {
-        this.mockMvc.perform(get(API_PREFIX + FHIR_PREFIX + PATIENT_EXPORT_PATH + "?_type=ExplanationOfBenefits")
+        this.mockMvc.perform(get(API_PREFIX + FHIR_PREFIX + PATIENT_EXPORT_PATH + "?_type=ExplanationOfBenefit")
                 .header("Authorization", "Bearer " + token)
                 .contentType(MediaType.APPLICATION_JSON))
                 .andReturn();
@@ -511,7 +510,7 @@ public class BulkDataAccessAPIIntegrationTests {
 
     @Test
     public void testGetStatusWithBadUrl() throws Exception {
-        this.mockMvc.perform(get(API_PREFIX + FHIR_PREFIX + PATIENT_EXPORT_PATH + "?_type=ExplanationOfBenefits")
+        this.mockMvc.perform(get(API_PREFIX + FHIR_PREFIX + PATIENT_EXPORT_PATH + "?_type=ExplanationOfBenefit")
                 .contentType(MediaType.APPLICATION_JSON)
                 .header("Authorization", "Bearer " + token))
                 .andReturn();
@@ -533,7 +532,7 @@ public class BulkDataAccessAPIIntegrationTests {
     @Test
     public void testDownloadFile() throws Exception {
         MvcResult mvcResult = this.mockMvc.perform(
-                get(API_PREFIX + FHIR_PREFIX + PATIENT_EXPORT_PATH + "?_type=ExplanationOfBenefits")
+                get(API_PREFIX + FHIR_PREFIX + PATIENT_EXPORT_PATH + "?_type=ExplanationOfBenefit")
                         .contentType(MediaType.APPLICATION_JSON)
                         .header("Authorization", "Bearer " + token))
                 .andReturn();
@@ -548,7 +547,7 @@ public class BulkDataAccessAPIIntegrationTests {
         job.setCompletedAt(now);
 
         JobOutput jobOutput = new JobOutput();
-        jobOutput.setFhirResourceType("ExplanationOfBenefits");
+        jobOutput.setFhirResourceType(EOB);
         jobOutput.setJob(job);
         jobOutput.setFilePath("test.ndjson");
         job.getJobOutputs().add(jobOutput);
@@ -591,7 +590,7 @@ public class BulkDataAccessAPIIntegrationTests {
     @Test
     public void testDownloadMissingFile() throws Exception {
         MvcResult mvcResult = this.mockMvc.perform(
-                get(API_PREFIX + FHIR_PREFIX + PATIENT_EXPORT_PATH + "?_type=ExplanationOfBenefits")
+                get(API_PREFIX + FHIR_PREFIX + PATIENT_EXPORT_PATH + "?_type=ExplanationOfBenefit")
                         .contentType(MediaType.APPLICATION_JSON)
                         .header("Authorization", "Bearer " + token))
                 .andReturn();
@@ -606,7 +605,7 @@ public class BulkDataAccessAPIIntegrationTests {
         job.setCompletedAt(now);
 
         JobOutput jobOutput = new JobOutput();
-        jobOutput.setFhirResourceType("ExplanationOfBenefits");
+        jobOutput.setFhirResourceType(EOB);
         jobOutput.setJob(job);
         jobOutput.setFilePath("testmissing.ndjson");
         job.getJobOutputs().add(jobOutput);
@@ -634,7 +633,7 @@ public class BulkDataAccessAPIIntegrationTests {
     @Test
     public void testDownloadBadParameterFile() throws Exception {
         MvcResult mvcResult = this.mockMvc.perform(
-                get(API_PREFIX + FHIR_PREFIX + PATIENT_EXPORT_PATH + "?_type=ExplanationOfBenefits")
+                get(API_PREFIX + FHIR_PREFIX + PATIENT_EXPORT_PATH + "?_type=ExplanationOfBenefit")
                         .contentType(MediaType.APPLICATION_JSON)
                         .header("Authorization", "Bearer " + token))
                 .andReturn();
@@ -649,7 +648,7 @@ public class BulkDataAccessAPIIntegrationTests {
         job.setCompletedAt(now);
 
         JobOutput jobOutput = new JobOutput();
-        jobOutput.setFhirResourceType("ExplanationOfBenefits");
+        jobOutput.setFhirResourceType(EOB);
         jobOutput.setJob(job);
         jobOutput.setFilePath("test.ndjson");
         job.getJobOutputs().add(jobOutput);
@@ -702,7 +701,7 @@ public class BulkDataAccessAPIIntegrationTests {
         Optional<Contract> contractOptional = contractRepository.findContractByContractNumber(VALID_CONTRACT_NUMBER);
         Contract contract = contractOptional.get();
         final String typeParams =
-                "?_type=ExplanationOfBenefits&_outputFormat=application/fhir+ndjson&since=20191015";
+                "?_type=ExplanationOfBenefit&_outputFormat=application/fhir+ndjson&since=20191015";
         ResultActions resultActions =
                 this.mockMvc.perform(get(API_PREFIX + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export" + typeParams)
                         .header("Authorization", "Bearer " + token)
@@ -720,7 +719,7 @@ public class BulkDataAccessAPIIntegrationTests {
         Assert.assertEquals(job.getProgress(), Integer.valueOf(0));
         Assert.assertEquals(job.getRequestUrl(),
                 "http://localhost" + API_PREFIX + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export" + typeParams);
-        Assert.assertEquals(job.getResourceTypes(), "ExplanationOfBenefits");
+        Assert.assertEquals(job.getResourceTypes(), EOB);
         Assert.assertEquals(job.getUser(), userRepository.findByUsername(TEST_USER));
     }
 
@@ -728,7 +727,7 @@ public class BulkDataAccessAPIIntegrationTests {
     public void testPatientExportWithInvalidTypeWithContract() throws Exception {
         Optional<Contract> contractOptional = contractRepository.findContractByContractNumber(VALID_CONTRACT_NUMBER);
         Contract contract = contractOptional.get();
-        final String typeParams = "?_type=PatientInvalid,ExplanationOfBenefits";
+        final String typeParams = "?_type=PatientInvalid,ExplanationOfBenefit";
         this.mockMvc.perform(get(API_PREFIX +  FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export" + typeParams)
                 .contentType(MediaType.APPLICATION_JSON)
                 .header("Authorization", "Bearer " + token))
@@ -737,7 +736,7 @@ public class BulkDataAccessAPIIntegrationTests {
                 .andExpect(jsonPath("$.issue[0].severity", Is.is("error")))
                 .andExpect(jsonPath("$.issue[0].code", Is.is("invalid")))
                 .andExpect(jsonPath("$.issue[0].details.text",
-                        Is.is("InvalidUserInputException: _type must be ExplanationOfBenefits")));
+                        Is.is("InvalidUserInputException: _type must be ExplanationOfBenefit")));
     }
 
     @Test
