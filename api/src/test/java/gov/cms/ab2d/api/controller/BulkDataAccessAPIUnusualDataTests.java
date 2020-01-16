@@ -25,6 +25,7 @@ import java.util.Optional;
 
 import static gov.cms.ab2d.api.util.Constants.*;
 import static gov.cms.ab2d.common.service.JobServiceImpl.INITIAL_JOB_STATUS_MESSAGE;
+import static gov.cms.ab2d.common.util.Constants.SPONSOR_ROLE;
 import static gov.cms.ab2d.common.util.DataSetup.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;

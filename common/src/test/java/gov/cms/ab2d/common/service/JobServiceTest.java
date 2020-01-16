@@ -39,6 +39,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static gov.cms.ab2d.common.service.JobServiceImpl.INITIAL_JOB_STATUS_MESSAGE;
+import static gov.cms.ab2d.common.util.Constants.EOB;
 import static gov.cms.ab2d.common.util.Constants.OPERATION_OUTCOME;
 import static gov.cms.ab2d.common.util.DataSetup.TEST_USER;
 import static gov.cms.ab2d.common.util.DataSetup.VALID_CONTRACT_NUMBER;
@@ -94,13 +95,13 @@ public class JobServiceTest {
 
     @Test
     public void createJob() {
-        Job job = jobService.createJob("ExplanationOfBenefits", "http://localhost:8080");
+        Job job = jobService.createJob(EOB, "http://localhost:8080");
         assertThat(job).isNotNull();
         assertThat(job.getId()).isNotNull();
         assertThat(job.getJobUuid()).isNotNull();
         assertEquals(job.getProgress(), Integer.valueOf(0));
         assertEquals(job.getUser(), userRepository.findByUsername(TEST_USER));
-        assertEquals(job.getResourceTypes(), "ExplanationOfBenefits");
+        assertEquals(job.getResourceTypes(), EOB);
         assertEquals(job.getRequestUrl(), "http://localhost:8080");
         assertEquals(job.getStatusMessage(), INITIAL_JOB_STATUS_MESSAGE);
         assertEquals(job.getStatus(), JobStatus.SUBMITTED);
@@ -118,13 +119,13 @@ public class JobServiceTest {
     public void createJobWithContract() {
         Contract contract = contractRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
 
-        Job job = jobService.createJob("ExplanationOfBenefits", "http://localhost:8080", contract.getContractNumber());
+        Job job = jobService.createJob(EOB, "http://localhost:8080", contract.getContractNumber());
         assertThat(job).isNotNull();
         assertThat(job.getId()).isNotNull();
         assertThat(job.getJobUuid()).isNotNull();
         assertEquals(job.getProgress(), Integer.valueOf(0));
         assertEquals(job.getUser(), userRepository.findByUsername(TEST_USER));
-        assertEquals(job.getResourceTypes(), "ExplanationOfBenefits");
+        assertEquals(job.getResourceTypes(), EOB);
         assertEquals(job.getRequestUrl(), "http://localhost:8080");
         assertEquals(job.getStatusMessage(), INITIAL_JOB_STATUS_MESSAGE);
         assertEquals(job.getStatus(), JobStatus.SUBMITTED);
@@ -142,20 +143,20 @@ public class JobServiceTest {
     @Test
     public void createJobWithBadContract() {
         Assertions.assertThrows(ResourceNotFoundException.class, () -> {
-            jobService.createJob("ExplanationOfBenefits", "http://localhost:8080", "BadContract");
+            jobService.createJob(EOB, "http://localhost:8080", "BadContract");
         });
     }
 
     @Test
     public void failedValidation() {
         Assertions.assertThrows(TransactionSystemException.class, () -> {
-            jobService.createJob("Patient,ExplanationOfBenefits,Coverage", "http://localhost:8080");
+            jobService.createJob("Patient,ExplanationOfBenefit,Coverage", "http://localhost:8080");
         });
     }
 
     @Test
     public void cancelJob() {
-        Job job = jobService.createJob("ExplanationOfBenefits", "http://localhost:8080");
+        Job job = jobService.createJob(EOB, "http://localhost:8080");
 
         jobService.cancelJob(job.getJobUuid());
 
@@ -174,7 +175,7 @@ public class JobServiceTest {
 
     @Test
     public void getJob() {
-        Job job = jobService.createJob("ExplanationOfBenefits", "http://localhost:8080");
+        Job job = jobService.createJob(EOB, "http://localhost:8080");
 
         Job retrievedJob = jobService.getJobByJobUuid(job.getJobUuid());
 
@@ -190,7 +191,7 @@ public class JobServiceTest {
 
     @Test
     public void testJobInSuccessfulState() {
-        Job job = jobService.createJob("ExplanationOfBenefits", "http://localhost:8080");
+        Job job = jobService.createJob(EOB, "http://localhost:8080");
 
         job.setStatus(JobStatus.SUCCESSFUL);
         jobRepository.saveAndFlush(job);
@@ -202,7 +203,7 @@ public class JobServiceTest {
 
     @Test
     public void testJobInCancelledState() {
-        Job job = jobService.createJob("ExplanationOfBenefits", "http://localhost:8080");
+        Job job = jobService.createJob(EOB, "http://localhost:8080");
 
         job.setStatus(JobStatus.CANCELLED);
         jobRepository.saveAndFlush(job);
@@ -215,7 +216,7 @@ public class JobServiceTest {
 
     @Test
     public void testJobInFailedState() {
-        Job job = jobService.createJob("ExplanationOfBenefits", "http://localhost:8080");
+        Job job = jobService.createJob(EOB, "http://localhost:8080");
 
         job.setStatus(JobStatus.FAILED);
         jobRepository.saveAndFlush(job);
@@ -228,7 +229,7 @@ public class JobServiceTest {
 
     @Test
     public void updateJob() {
-        Job job = jobService.createJob("ExplanationOfBenefits", "http://localhost:8080");
+        Job job = jobService.createJob(EOB, "http://localhost:8080");
         OffsetDateTime now = OffsetDateTime.now();
         OffsetDateTime localDateTime = OffsetDateTime.now();
         job.setProgress(100);
@@ -237,14 +238,14 @@ public class JobServiceTest {
         job.setCreatedAt(localDateTime);
         job.setCompletedAt(localDateTime);
         job.setJobUuid("abc");
-        job.setResourceTypes("ExplanationOfBenefits");
+        job.setResourceTypes(EOB);
         job.setRequestUrl("http://localhost");
         job.setStatusMessage("Pending");
         job.setExpiresAt(now);
 
         JobOutput jobOutput = new JobOutput();
         jobOutput.setError(false);
-        jobOutput.setFhirResourceType("ExplanationOfBenefits");
+        jobOutput.setFhirResourceType(EOB);
         jobOutput.setFilePath("file.ndjson");
         jobOutput.setJob(job);
 
@@ -264,14 +265,14 @@ public class JobServiceTest {
         Assert.assertEquals(localDateTime, updatedJob.getCreatedAt());
         Assert.assertEquals(localDateTime, updatedJob.getCompletedAt());
         Assert.assertEquals("abc", updatedJob.getJobUuid());
-        Assert.assertEquals("ExplanationOfBenefits", updatedJob.getResourceTypes());
+        Assert.assertEquals(EOB, updatedJob.getResourceTypes());
         Assert.assertEquals("http://localhost", updatedJob.getRequestUrl());
         Assert.assertEquals("Pending", updatedJob.getStatusMessage());
         Assert.assertEquals(now, updatedJob.getExpiresAt());
 
         JobOutput updatedOutput = updatedJob.getJobOutputs().get(0);
         Assert.assertEquals(false, updatedOutput.isError());
-        Assert.assertEquals("ExplanationOfBenefits", updatedOutput.getFhirResourceType());
+        Assert.assertEquals(EOB, updatedOutput.getFhirResourceType());
         Assert.assertEquals("file.ndjson", updatedOutput.getFilePath());
 
         JobOutput updatedErrorOutput = updatedJob.getJobOutputs().get(1);
@@ -309,7 +310,7 @@ public class JobServiceTest {
     }
 
     private Job createJobForFileDownloads(String fileName, String errorFileName) {
-        Job job = jobService.createJob("ExplanationOfBenefits", "http://localhost:8080");
+        Job job = jobService.createJob(EOB, "http://localhost:8080");
         OffsetDateTime now = OffsetDateTime.now();
         OffsetDateTime localDateTime = OffsetDateTime.now();
         job.setProgress(100);
@@ -317,14 +318,14 @@ public class JobServiceTest {
         job.setStatus(JobStatus.IN_PROGRESS);
         job.setCreatedAt(localDateTime);
         job.setCompletedAt(localDateTime);
-        job.setResourceTypes("ExplanationOfBenefits");
+        job.setResourceTypes(EOB);
         job.setRequestUrl("http://localhost");
         job.setStatusMessage("Pending");
         job.setExpiresAt(now);
 
         JobOutput jobOutput = new JobOutput();
         jobOutput.setError(false);
-        jobOutput.setFhirResourceType("ExplanationOfBenefits");
+        jobOutput.setFhirResourceType(EOB);
         jobOutput.setFilePath(fileName);
         jobOutput.setJob(job);
 
@@ -371,7 +372,7 @@ public class JobServiceTest {
 
     @Test
     public void checkIfUserHasActiveJobTrueTest() {
-        jobService.createJob("ExplanationOfBenefits", "http://localhost:8080");
+        jobService.createJob(EOB, "http://localhost:8080");
 
         boolean result = jobService.checkIfCurrentUserHasActiveJob();
         Assert.assertTrue(result);
@@ -386,7 +387,7 @@ public class JobServiceTest {
 
     @Test
     public void checkIfUserHasActiveJobWithContractTest() {
-        jobService.createJob("ExplanationOfBenefits", "http://localhost:8080", VALID_CONTRACT_NUMBER);
+        jobService.createJob(EOB, "http://localhost:8080", VALID_CONTRACT_NUMBER);
 
         boolean result = jobService.checkIfCurrentUserHasActiveJobForContractNumber(VALID_CONTRACT_NUMBER);
         Assert.assertTrue(result);
