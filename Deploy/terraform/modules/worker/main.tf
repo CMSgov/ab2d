@@ -66,7 +66,7 @@ resource "aws_ecs_task_definition" "worker" {
       "memory": 2048,
       "mountPoints": [
         {
-	  "containerPath": "/tmp/efs",
+	  "containerPath": "/mnt/efs",
 	  "sourceVolume": "efs"
 	}
       ],
@@ -93,7 +93,7 @@ resource "aws_ecs_task_definition" "worker" {
 	},
         {
 	  "name" : "AB2D_EFS_MOUNT",
-	  "value" : "/tmp/efs"
+	  "value" : "/mnt/efs"
 	}
       ],
       "logConfiguration": {

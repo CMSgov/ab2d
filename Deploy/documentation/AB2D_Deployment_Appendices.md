@@ -25,6 +25,8 @@
 1. [Appendix N: Destroy and redploy API and Worker nodes](#appendix-n-destroy-and-redploy-api-and-worker-nodes)
 1. [Appendix O: Destroy complete environment](#appendix-o-destroy-complete-environment)
 1. [Appendix P: Display disk space](#appendix-p-display-disk-space)
+1. [Appendix Q: Test API using swagger](#appendix-q-test-api-using-swagger)
+1. [Appendix R: Update userdata for auto scaling groups through the AWS console](#appendix-r-update-userdata-for-auto-scaling-groups-through-the-aws-console)
 
 ## Appendix A: Access the CMS AWS console
 
@@ -456,6 +458,13 @@
    $ export SSH_USER_NAME=ec2-user
    ```
 
+   *Example for "Sbx" environment:*
+   
+   ```ShellSession
+   $ export CONTROLLER_PUBLIC_IP=3.93.125.65
+   $ export SSH_USER_NAME=ec2-user
+   ```
+
 1. Copy the key to the controller
 
    ```ShellSession
@@ -479,7 +488,39 @@
    $ export NODE_PRIVATE_IP=10.242.26.231
    $ export SSH_USER_NAME=ec2-user
    ```
+
+   *Example for "Sbx" environment (api node 1):*
    
+   ```ShellSession
+   $ export TARGET_ENVIRONMENT=ab2d-sbx-sandbox
+   $ export NODE_PRIVATE_IP=10.242.31.151
+   $ export SSH_USER_NAME=ec2-user
+   ```
+
+   *Example for "Sbx" environment (api node 2):*
+   
+   ```ShellSession
+   $ export TARGET_ENVIRONMENT=ab2d-sbx-sandbox
+   $ export NODE_PRIVATE_IP=10.242.31.120
+   $ export SSH_USER_NAME=ec2-user
+   ```
+
+   *Example for "Sbx" environment (worker node 1):*
+   
+   ```ShellSession
+   $ export TARGET_ENVIRONMENT=ab2d-sbx-sandbox
+   $ export NODE_PRIVATE_IP=10.242.31.153
+   $ export SSH_USER_NAME=ec2-user
+   ```
+
+   *Example for "Sbx" environment (worker node 2):*
+   
+   ```ShellSession
+   $ export TARGET_ENVIRONMENT=ab2d-sbx-sandbox
+   $ export NODE_PRIVATE_IP=10.242.31.25
+   $ export SSH_USER_NAME=ec2-user
+   ```
+
 1. Connect to a node
 
    *Format:*
@@ -603,13 +644,13 @@
    *Example for connecting to an API container:*
 
    ```ShellSession
-   $ docker exec -it $(docker ps -aqf "name=ecs-api-*") /bin/bash
+   $ docker exec -it $(docker ps -aqf "name=ecs-api-*" --filter "status=running") /bin/bash
    ```
 
    *Example for connecting to a worker container:*
 
    ```ShellSession
-   $ docker exec -it $(docker ps -aqf "name=ecs-worker-*") /bin/bash
+   $ docker exec -it $(docker ps -aqf "name=ecs-worker-*" --filter "status=running") /bin/bash
    ```
 
 ## Appendix J: Delete and recreate database
@@ -988,6 +1029,13 @@
    $ export SSH_USER_NAME=ec2-user
    ```
 
+   *Example for "Sbx" environment:*
+   
+   ```ShellSession
+   $ export CONTROLLER_PUBLIC_IP=3.93.125.65
+   $ export SSH_USER_NAME=ec2-user
+   ```
+
 1. Copy the key to the controller
 
    ```ShellSession
@@ -1006,7 +1054,7 @@
    
    ```ShellSession
    $ export TARGET_ENVIRONMENT=ab2d-dev
-   $ export NODE_PRIVATE_IP=10.242.26.108
+   $ export NODE_PRIVATE_IP=10.242.31.196
    $ export SSH_USER_NAME=ec2-user
    ```
    
@@ -1045,4 +1093,503 @@
       overlay                           6.0G  1.8G  4.3G  30% /var/lib/docker/overlay2/a608f39b66941b6333aaf7b6b1e0346f42f5f1c160a26528a4382da2b4fcb774/merged
       shm                                64M     0   64M   0% /var/lib/docker/containers/617e4a4ec4195e1f47d8e6e4c4e743eeb2d60c26309e42598d318fc53da9dd08/mounts/shm
       tmpfs                             1.6G     0  1.6G   0% /run/user/1000
+      ```
+
+## Appendix Q: Test API using swagger
+
+1. Open Chrome
+
+1. Enter the following in the address bar
+
+   > https://confluence.cms.gov/display/AB2D/Step+By+Step+Tutorial
+
+1. Note the following information from this document
+
+   - Client Id
+
+   - Client Password
+
+   - username
+
+   - password
+
+   - OKTA server URL
+   
+1. Open Postman
+
+1. Create an "ab2d" collection
+
+   1. Select "New"
+
+   1. Select "Collection"
+
+   1. Enter the following on the "CREATE A NEW COLLECTION" page
+
+      - **Name:** ab2d
+
+   1. Select "Create"
+
+1. Add an "retrieve-a-token" request to the "ab2d" collection
+
+   1. Select **...** beside the "ab2d" collection
+
+   1. Select **Add Request**
+
+   1. Enter the following on the "SAVE REQUEST" page
+
+      - **Request name:** retreive-a-token
+
+   1. Select **Save to ab2d**
+
+1. Configure the "retreive-a-token" request
+
+   1. Expand the "ab2d" collection node
+
+   1. Select the following
+
+      ```
+      GET retreive-a-token
+      ```
+
+   1. Change "GET" to "POST"
+
+   1. Enter the noted OKTA server URL in the "Enter request URL" text box
+
+   1. Select the **Params** tab
+
+   1. Add the following key value pairs
+
+      Key       |Value
+      ----------|----------
+      grant_type|password
+      scope     |openid
+      username  |{noted username}
+      password  |{noted password}
+
+   1. Note that add parameters now appear as part of the OKTA server URL
+
+   1. Select the **Headers** tab
+
+   1. Add the following key value pairs
+
+      Key         |Value
+      ------------|----------
+      Content-Type|application/x-www-form-urlencoded
+      Accept      |application/json
+   
+   1. Select the **Authorization** tab
+
+   1. Select "Basic Auth" from the "TYPE" dropdown
+
+   1. Configure the "Authorization" page
+
+      - **Username:** {noted username}
+
+      - **Password:** {noted password}
+
+   1. Select **Send**
+
+   1. Verify that you get an "access_token" within the JSON response
+
+   1. Note the "access_token"
+
+   1. Note that this "access_token" is the JWT access token that you will use within the swagger-ui)
+
+   1. Note that you can get a cURL version of the request by doing the following
+
+      1. Select **Code** to the far right of the tabbed options (Params, Authorization, etc.)
+
+      1. Select **cURL** from the leftmost panel of the "GENERATE CODE SNIPPETS" page
+
+      1. Note the "cURL" statement
+
+1. Open Chrome
+
+1. Enter the "swagger-ui.html" URL for the target environment in the address bar
+
+1. Select **bulk-data-access-api**
+
+1. Note the list of API endpoints that are displayed
+
+1. Authorize the endpoints using the JWT access token
+
+   1. Select **Authorize**
+
+   1. Paste the JWT access token value in the **Value** text box using the following format
+
+      *Format:*
+
+      ```
+      Bearer {jwt access token}
+      ```
+
+   1. Select **Authorize**
+
+   1. Verify that "Authorized" is displayed under "Authorization (apiKey)"
+
+   1. Select **Close**
+
+   1. Verify that all the lock icons are now displayed as locked
+
+   1. Note that locked icons does not mean that you typed in the authorization token correctly
+
+1. Test the "/api/v1/fhir/Patient/$export" API
+
+   1. Select **GET** beside the "/api/v1/fhir/Patient/$export" API
+
+   1. Note the information about "Parameters" and "Responses"
+
+   1. Select **Try it out**
+
+   1. Configure the "Parameters" as follows
+
+      - **Accept:** application/fhir+json
+      
+      - **Prefer:** respond-async
+      
+      - **_outputFormat:** application/fhir_ndjson
+      
+      - **_type:** ExplanationOfBenefits
+
+   1. Select **Execute**
+
+   1. Note the 202 response which means the export request has started
+
+   1. Note the response
+
+      *Example:*
+      
+      ```
+      cache-control: no-cache, no-store, max-age=0, must-revalidate 
+      connection: keep-alive 
+      content-length: 0 
+      content-location: http://{alb domain}/api/v1/fhir/Job/{job id}/$status 
+      date: Tue, 14 Jan 2020 21:09:35 GMT 
+      expires: 0 
+      pragma: no-cache 
+      x-content-type-options: nosniff 
+      x-frame-options: DENY 
+      x-xss-protection: 1; mode=block 
+      ```
+
+   1. Note the job id in the response
+
+1. Test the "/api/v1/fhir/Job/{jobUuid}/$status" API
+
+   1. Select **GET** beside the "/api/v1/fhir/Job/{jobUuid}/$status" API
+
+   1. Select **Try it out**
+
+   1. Configure the "Parameters" as follows
+
+      - **jobUuid:** {noted job id from the patient export api response}
+
+   1. Select **Execute**
+   
+   1. Note the 200 response which means the job has completed
+
+   1. Note the following attribute in the output
+
+      *Format:*
+      
+      ```
+      "url": "http://{alb domain}/api/v1/fhir/Job/{jobUuid}/file/{ndjson file}"
+      ```
+
+   1. Note the name of the ndjson file in the output
+
+1. Test the "/api/v1/fhir/Job/{jobUuid}/file/{filename}" API
+
+   1. Select **GET** beside the "/api/v1/fhir/Job/{jobUuid}/file/{filename}" API
+
+   1. Select **Try it out**
+
+   1. Configure the "Parameters" as follows
+
+      - **Accept:** application/fhir+json
+
+      - **filename:** {noted ndjson file}
+
+      - **jobUuid:** {noted job id from the patient export api response}
+
+   1. Select **Execute**
+
+      > *** TO DO ***: determine why it isn't working
+
+## Appendix R: Update userdata for auto scaling groups through the AWS console
+
+1. Log on to AWS
+
+1. Select **EC2**
+
+1. Select **Launch Configurations** under "AUTO SCALING" in the leftmost panel
+
+1. Modify the API launch configuration
+
+   1. Select the API launch configuration
+
+      *Format:*
+
+      ```
+      {environment}-api-{timestamp}
+      ```
+
+   1. Select **Copy launch configuarion**
+
+   1. Select **Configure details**
+
+   1. Expand **Advanced Details**
+
+   1. Modify **User data** edit box as desired
+
+   1. Select **Skip to review**
+
+   1. Select **Create launch configuration**
+
+   1. Note that the following is already filled out
+
+      *Format:*
+   
+      - **First dropdown:** Choose an existing key pair
+
+      - **Select a key pair:** {environment key pair}
+
+   1. Check **I acknowledge...**
+
+   1. Select **Create launch configuration**
+
+   1. Select **Close**
+
+1. Modify the worker launch configuration
+
+   1. Select the worker launch configuration
+
+      *Format:*
+
+      ```
+      {environment}-worker-{timestamp}
+      ```
+
+   1. Select **Copy launch configuarion**
+
+   1. Select **Configure details**
+
+   1. Expand **Advanced Details**
+
+   1. Modify **User data** edit box as desired
+
+   1. Select **Skip to review**
+
+   1. Select **Create launch configuration**
+
+   1. Note that the following is already filled out
+
+      *Format:*
+   
+      - **First dropdown:** Choose an existing key pair
+
+      - **Select a key pair:** {environment key pair}
+
+   1. Check **I acknowledge...**
+
+   1. Select **Create launch configuration**
+
+   1. Select **Close**
+
+1. Select **Auto Scaling Groups** under "AUTO SCALING" in the leftmost panel
+
+1. Modify the API auto scaling group
+
+   1. Select the API auto scaling group
+
+      *Format:*
+
+      ```
+      {environment}-api-{timestamp}
+      ```
+
+   1. Select **Actions**
+
+   1. Select **Edit**
+
+   1. Select the newly created API launch configuration with "Copy" at the end of its name from the **Launch Configuration** dropdown
+
+      *Format:*
+
+      ```
+      {environment}-api-{timestamp}Copy
+      ```
+
+   1. Select **Save**
+
+1. Modify the worker auto scaling group
+
+   1. Select the worker auto scaling group
+
+      *Format:*
+
+      ```
+      {environment}-worker-{timestamp}
+      ```
+
+   1. Select **Actions**
+
+   1. Select **Edit**
+
+   1. Select the newly created worker launch configuration with "Copy" at the end of its name from the **Launch Configuration** dropdown
+
+      *Format:*
+
+      ```
+      {environment}-worker-{timestamp}Copy
+      ```
+
+   1. Select **Save**
+
+1. Terminate the instances that were created by the old launch configuration
+
+1. Wait for the new launch configurations to create new API and worker instances
+
+1. Verify that the API instances received the userdata change
+
+   1. Select **Instances** in the leftmost panel
+
+   1. Select one of the newly created API instances
+
+   1. Select **Actions**
+
+   1. Select **Instance Settings**
+
+   1. Select **View/Change User Data**
+
+   1. Verify the userdata changes that you made are in the **User data** edit box
+
+   1. Select **Cancel**
+
+1. Verify that the worker instances received the userdata change
+
+   1. Select **Instances** in the leftmost panel
+
+   1. Select one of the newly created worker instances
+
+   1. Select **Actions**
+
+   1. Select **Instance Settings**
+
+   1. Select **View/Change User Data**
+
+   1. Verify the userdata changes that you made are in the **User data** edit box
+
+   1. Select **Cancel**
+
+1. Delete the original API launch configuration
+
+   1. Select **Lauch Configurations** under the "AUTO SCALING" section in the leftmost panel
+
+   1. Select the original API launch configuration
+
+      *Format:*
+
+      ```
+      {environment}-api-{timestamp}
+      ```
+
+   1. Select **Actions**
+
+   1. Select **Delete launch configuration**
+
+   1. Select **Yes, Delete**
+
+1. Delete the original worker launch configuration
+
+   1. Select **Lauch Configurations** under the "AUTO SCALING" section in the leftmost panel
+
+   1. Select the original API launch configuration
+
+      *Format:*
+
+      ```
+      {environment}-worker-{timestamp}
+      ```
+
+   1. Select **Actions**
+
+   1. Select **Delete launch configuration**
+
+   1. Select **Yes, Delete**
+
+1. Update "tfstate" file
+
+   1. Select **S3**
+
+   1. Navigate to automation bucket path of the changed environment
+
+      *Example for "Dev" environment:*
+
+      ```
+      ab2d-dev-automation/ab2d-dev/terraform
+      ```
+      
+      *Example for "Sbx" environment:*
+
+      ```
+      ab2d-sbx-sandbox-automation/ab2d-sbx-sandbox/terraform
+      ```
+
+   1. Download the "tfstate" file
+
+   1. Note the downloaded file's name changed to the following
+
+      ```
+      terraform.json
+      ```
+
+   1. Rename the "tfstate" file in S3 to the following
+
+      ```
+      terraform.tfstate.backup
+      ```
+
+   1. Open the "terraform.json" file
+
+      ```ShellSession
+      $ vim ~/Downloads/terraform.json
+      ```
+
+   1. Change the API "launch_configuration" line as follows
+
+      ```
+      "launch_configuration": "{environment}-api-{timestamp}Copy",     
+      ```
+
+   1. Change the worker "launch_configuration" line as follows
+
+      ```
+      "launch_configuration": "{environment}-worker-{timestamp}Copy",     
+      ```
+
+   1. Save and close the file
+
+   1. Select **S3**
+
+   1. Navigate to automation bucket path of the changed environment
+
+      *Example for "Dev" environment:*
+
+      ```
+      ab2d-dev-automation/ab2d-dev/terraform
+      ```
+      
+      *Example for "Sbx" environment:*
+
+      ```
+      ab2d-sbx-sandbox-automation/ab2d-sbx-sandbox/terraform
+      ```
+
+   1. Upload the modified "terraform.json" to S3
+
+   1. Rename "terraform.json" in S3 to the following
+
+      ```
+      terraform.tfstate
       ```

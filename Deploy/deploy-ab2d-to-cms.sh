@@ -1575,6 +1575,39 @@ else
     --force-delete || true
 fi
 
+# Remove old launch configurations
+
+if [ -z "${CLUSTER_ARNS}" ]; then
+  echo "Skipping removing old launch configurations, since there are no existing clusters"
+else
+    
+  LAUNCH_CONFIGURATION_EXPECTED_COUNT=2
+  LAUNCH_CONFIGURATION_ACTUAL_COUNT=$(aws --region "${REGION}" autoscaling describe-launch-configurations \
+    --query "LaunchConfigurations[*].[LaunchConfigurationName,CreatedTime]" \
+    | jq '. | length')
+  
+  while [ "$LAUNCH_CONFIGURATION_ACTUAL_COUNT" -gt "$LAUNCH_CONFIGURATION_EXPECTED_COUNT" ]; do
+  
+    OLD_LAUNCH_CONFIGURATION=$(aws --region "${REGION}" autoscaling describe-launch-configurations \
+      --query "LaunchConfigurations[*].[LaunchConfigurationName,CreatedTime]" \
+      --output text \
+      | sort -k2 \
+      | head -n1 \
+      | awk '{print $1}')
+  
+    aws --region "${REGION}" autoscaling delete-launch-configuration \
+      --launch-configuration-name "${OLD_LAUNCH_CONFIGURATION}"
+  
+    sleep 5
+    
+    LAUNCH_CONFIGURATION_ACTUAL_COUNT=$(aws --region "${REGION}" autoscaling describe-launch-configurations \
+      --query "LaunchConfigurations[*].[LaunchConfigurationName,CreatedTime]" \
+      | jq '. | length')
+  
+  done
+  
+fi
+
 #
 # Deploy CloudWatch
 #

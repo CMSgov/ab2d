@@ -1293,3 +1293,7 @@
 1. Select **Postman**
 
 1. Verify that "Postman" opens
+
+1. Select **Skip signing in and take me straight to the app** at the bottom of the page
+
+1. Close **Postman**
