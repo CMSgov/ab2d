@@ -130,7 +130,7 @@ public class JobServiceImpl implements JobService {
             throw new ResourceNotFoundException("No Job Output with the file name " + fileName + " exists in our records");
         }
 
-        Path file = Paths.get(fileDownloadPath + job.getJobUuid() + File.separator +  fileName);
+        Path file = Paths.get(fileDownloadPath, job.getJobUuid(), fileName);
         Resource resource = new UrlResource(file.toUri());
 
         if (!resource.exists()) {
