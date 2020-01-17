@@ -1274,6 +1274,8 @@
 
    1. Note the job id in the response
 
+   1. Select **GET** again beside the "/api/v1/fhir/Patient/$export" API to collapse the section
+
 1. Test the "/api/v1/fhir/Job/{jobUuid}/$status" API
 
    1. Select **GET** beside the "/api/v1/fhir/Job/{jobUuid}/$status" API
@@ -1298,6 +1300,8 @@
 
    1. Note the name of the ndjson file in the output
 
+   1. Select **GET** again beside the "/api/v1/fhir/Job/{jobUuid}/$status" API to collapse the section
+
 1. Test the "/api/v1/fhir/Job/{jobUuid}/file/{filename}" API
 
    1. Select **GET** beside the "/api/v1/fhir/Job/{jobUuid}/file/{filename}" API
@@ -1315,6 +1319,188 @@
    1. Select **Execute**
 
       > *** TO DO ***: determine why it isn't working
+
+1. Verify EFS is working
+   
+   1. Set target AWS profile
+   
+      *Example for "Dev" environment:*
+   
+      ```ShellSession
+      $ export AWS_PROFILE=ab2d-dev
+      ```
+   
+      *Example for "Sbx" environment:*
+   
+      ```ShellSession
+      $ export AWS_PROFILE=ab2d-sbx-sandbox
+      ```
+   
+   1. Set target environment
+   
+      *Example for "Dev" environment:*
+   
+      ```ShellSession
+      $ export TARGET_ENVIRONMENT=ab2d-dev
+      ```
+   
+      *Example for "Sbx" environment:*
+   
+      ```ShellSession
+      $ export TARGET_ENVIRONMENT=ab2d-sbx-sandbox
+      ```
+   
+   1. Set controller access variables
+   
+      *Example for "Dev" environment:*
+      
+      ```ShellSession
+      $ export CONTROLLER_PUBLIC_IP=52.7.241.208
+      $ export SSH_USER_NAME=ec2-user
+      ```
+   
+      *Example for "Sbx" environment:*
+      
+      ```ShellSession
+      $ export CONTROLLER_PUBLIC_IP=3.93.125.65
+      $ export SSH_USER_NAME=ec2-user
+      ```
+   
+   1. Copy the key to the controller
+   
+      ```ShellSession
+      $ scp -i ~/.ssh/${TARGET_ENVIRONMENT}.pem ~/.ssh/${TARGET_ENVIRONMENT}.pem ${SSH_USER_NAME}@${CONTROLLER_PUBLIC_IP}:~/.ssh
+      ```
+      
+   1. Connect to the controller
+   
+      *Format:*
+      
+      ```ShellSession
+      $ ssh -i ~/.ssh/${TARGET_ENVIRONMENT}.pem ${SSH_USER_NAME}@${CONTROLLER_PUBLIC_IP}
+      ```
+
+1. Connect to each host node and docker container
+
+   1. Note that you will want to repeat this section for api nodes 1-2 and worker nodes 1-2
+
+   1. Set node variables
+   
+      *Example for "Dev" environment (api node 1):*
+      
+      ```ShellSession
+      $ export TARGET_ENVIRONMENT=ab2d-dev
+      $ export NODE_PRIVATE_IP=10.242.26.201
+      $ export SSH_USER_NAME=ec2-user
+      ```
+
+      *Example for "Dev" environment (api node 2):*
+      
+      ```ShellSession
+      $ export TARGET_ENVIRONMENT=ab2d-dev
+      $ export NODE_PRIVATE_IP=10.242.26.34
+      $ export SSH_USER_NAME=ec2-user
+      ```
+
+      *Example for "Dev" environment (worker node 1):*
+      
+      ```ShellSession
+      $ export TARGET_ENVIRONMENT=ab2d-dev
+      $ export NODE_PRIVATE_IP=10.242.26.4
+      $ export SSH_USER_NAME=ec2-user
+      ```
+
+      *Example for "Dev" environment (worker node 2):*
+      
+      ```ShellSession
+      $ export TARGET_ENVIRONMENT=ab2d-dev
+      $ export NODE_PRIVATE_IP=10.242.26.196
+      $ export SSH_USER_NAME=ec2-user
+      ```
+
+      *Example for "Sbx" environment (api node 1):*
+      
+      ```ShellSession
+      $ export TARGET_ENVIRONMENT=ab2d-sbx-sandbox
+      $ export NODE_PRIVATE_IP=10.242.31.151
+      $ export SSH_USER_NAME=ec2-user
+      ```
+   
+      *Example for "Sbx" environment (api node 2):*
+      
+      ```ShellSession
+      $ export TARGET_ENVIRONMENT=ab2d-sbx-sandbox
+      $ export NODE_PRIVATE_IP=10.242.31.120
+      $ export SSH_USER_NAME=ec2-user
+      ```
+   
+      *Example for "Sbx" environment (worker node 1):*
+      
+      ```ShellSession
+      $ export TARGET_ENVIRONMENT=ab2d-sbx-sandbox
+      $ export NODE_PRIVATE_IP=10.242.31.153
+      $ export SSH_USER_NAME=ec2-user
+      ```
+   
+      *Example for "Sbx" environment (worker node 2):*
+      
+      ```ShellSession
+      $ export TARGET_ENVIRONMENT=ab2d-sbx-sandbox
+      $ export NODE_PRIVATE_IP=10.242.31.25
+      $ export SSH_USER_NAME=ec2-user
+      ```
+   
+   1. Connect to a node
+   
+      *Format:*
+   
+      ```ShellSession
+      $ ssh -i ~/.ssh/${TARGET_ENVIRONMENT}.pem ${SSH_USER_NAME}@${NODE_PRIVATE_IP}
+      ```
+
+   1. Verify the ndjson file for the job under the mounted EFS on the EC2 host
+
+      *Format:*
+      
+      ```ShellSession
+      $ cat /mnt/efs/{job id}/{ndjson file}
+      ```
+
+   1. Connect to a running container
+   
+      *Example for connecting to an API container:*
+   
+      ```ShellSession
+      $ docker exec -it $(docker ps -aqf "name=ecs-api-*" --filter "status=running") /bin/bash
+      ```
+   
+      *Example for connecting to a worker container:*
+   
+      ```ShellSession
+      $ docker exec -it $(docker ps -aqf "name=ecs-worker-*" --filter "status=running") /bin/bash
+      ```
+
+   1. Verify the ndjson file for the job under the mounted EFS in the docker container
+
+      *Format:*
+      
+      ```ShellSession
+      $ cat /mnt/efs/{job id}/{ndjson file}
+      ```
+
+   1. Exit the docker container
+
+      ```ShellSession
+      $ exit
+      ```
+
+   1. Exit the EC2 host node
+
+      ```ShellSession
+      $ exit
+      ```
+
+   1. Make sure that you repeat this section for all host nodes and docker containers
 
 ## Appendix R: Update userdata for auto scaling groups through the AWS console
 
