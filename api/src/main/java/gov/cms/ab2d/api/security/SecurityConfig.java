@@ -41,6 +41,9 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     @Value("${api.okta-jwt-issuer}")
     private String oktaJwtIssuer;
 
+    @Value("${api.okta-jwt-audience}")
+    private String oktaJwtAudience;
+
     @Value("${api.okta-connection-timeout}")
     private int oktaConnectionTimeout;
 
@@ -78,7 +81,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     public AccessTokenVerifier accessTokenVerifier() {
         AccessTokenVerifier jwtVerifier = JwtVerifiers.accessTokenVerifierBuilder()
                 .setIssuer(oktaJwtIssuer)
-                .setAudience("AB2D")
+                .setAudience(oktaJwtAudience)
                 .setConnectionTimeout(Duration.ofSeconds(oktaConnectionTimeout))
                 .setReadTimeout(Duration.ofSeconds(oktaReadTimeout))
                 .build();
