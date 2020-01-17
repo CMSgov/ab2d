@@ -1,9 +1,11 @@
-INSERT INTO sponsor (id, hpms_id, org_name, legal_name, parent_id) VALUES ((select nextval('hibernate_sequence')), 2, 'PDP-100', null, null);
-INSERT INTO sponsor (id, hpms_id, org_name, legal_name, parent_id) VALUES ((select nextval('hibernate_sequence')), 3, 'PDP-1000', null, null);
-INSERT INTO sponsor (id, hpms_id, org_name, legal_name, parent_id) VALUES ((select nextval('hibernate_sequence')), 4, 'PDP-2000', null, null);
-INSERT INTO sponsor (id, hpms_id, org_name, legal_name, parent_id) VALUES ((select nextval('hibernate_sequence')), 5, 'PDP-5000', null, null);
-INSERT INTO sponsor (id, hpms_id, org_name, legal_name, parent_id) VALUES ((select nextval('hibernate_sequence')), 6, 'PDP-10000', null, null);
-INSERT INTO sponsor (id, hpms_id, org_name, legal_name, parent_id) VALUES ((select nextval('hibernate_sequence')), 7, 'PDP-30000', null, null);
+INSERT INTO sponsor (id, hpms_id, org_name, legal_name, parent_id) VALUES ((select nextval('hibernate_sequence')), 8, 'PDP-SBX', null, null);
+
+INSERT INTO sponsor (id, hpms_id, org_name, legal_name, parent_id) VALUES ((select nextval('hibernate_sequence')), 2, 'PDP-100', null, (select id from sponsor where hpms_id=8));
+INSERT INTO sponsor (id, hpms_id, org_name, legal_name, parent_id) VALUES ((select nextval('hibernate_sequence')), 3, 'PDP-1000', null, (select id from sponsor where hpms_id=8));
+INSERT INTO sponsor (id, hpms_id, org_name, legal_name, parent_id) VALUES ((select nextval('hibernate_sequence')), 4, 'PDP-2000', null, (select id from sponsor where hpms_id=8));
+INSERT INTO sponsor (id, hpms_id, org_name, legal_name, parent_id) VALUES ((select nextval('hibernate_sequence')), 5, 'PDP-5000', null, (select id from sponsor where hpms_id=8));
+INSERT INTO sponsor (id, hpms_id, org_name, legal_name, parent_id) VALUES ((select nextval('hibernate_sequence')), 6, 'PDP-10000', null, (select id from sponsor where hpms_id=8));
+INSERT INTO sponsor (id, hpms_id, org_name, legal_name, parent_id) VALUES ((select nextval('hibernate_sequence')), 7, 'PDP-30000', null, (select id from sponsor where hpms_id=8));
 
 UPDATE user_account SET enabled = false WHERE username = 'EileenCFrierson@example.com';
 
