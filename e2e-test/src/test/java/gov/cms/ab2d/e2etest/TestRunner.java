@@ -44,8 +44,6 @@ public class TestRunner {
 
     private static String jwtStr = null;
 
-    private static String TEST_USER;
-
     private static final long DEFAULT_TIMEOUT = 30;
 
     private static final int DELAY = 30;
@@ -81,35 +79,61 @@ public class TestRunner {
         InputStream inputStream = getClass().getResourceAsStream("/" + environment.getConfigName());
         Map<String, String> yamlMap = yaml.load(inputStream);
         String oktaUrl = yamlMap.get("okta-url");
-        TEST_USER = yamlMap.get("username");
-        String password = yamlMap.get("password");
+
         AB2D_API_URL = yamlMap.get("ab2d-api-url");
         AB2D_ADMIN_URL = yamlMap.get("ab2d-admin-url");
 
-        String oktaClientId = yamlMap.get("okta-client-id");
-        String oktaPassword = yamlMap.get("okta-password");
-        String authEncoded = Base64.getEncoder().encodeToString((oktaClientId + ":" + oktaPassword).getBytes());
+        HttpRequest jwtRequest = null;
+
+        if(environment.isUsesDockerCompose()) {
+            String oktaClientId = yamlMap.get("okta-client-id");
+            String oktaPassword = yamlMap.get("okta-password");
+            String authEncoded = Base64.getEncoder().encodeToString((oktaClientId + ":" + oktaPassword).getBytes());
+
+            String testUser = yamlMap.get("username");
+            String password = yamlMap.get("password");
+
+            var jwtRequestParms = new HashMap<>() {{
+                put("grant_type", "password");
+                put("username", testUser);
+                put("password", password);
+                put("scope", "openid");
+            }};
+
+            jwtRequest = HttpRequest.newBuilder()
+                    .uri(URI.create(oktaUrl))
+                    .timeout(Duration.ofSeconds(DEFAULT_TIMEOUT))
+                    .header("Content-Type", "application/x-www-form-urlencoded")
+                    .header("Accept", "application/json")
+                    .header("Authorization", "Basic " + authEncoded)
+                    .POST(buildFormDataFromMap(jwtRequestParms))
+                    .build();
+        } else {
+            var jwtRequestParms = new HashMap<>() {{
+                put("grant_type", "client_credentials");
+                put("scope", "clientCreds");
+            }};
+
+            String oktaClientId = System.getenv(environment.name() + "_OKTA_CLIENT_ID");
+            String oktaPassword = System.getenv(environment.name() + "_OKTA_CLIENT_PASSWORD");
+            String authEncoded = Base64.getEncoder().encodeToString((oktaClientId + ":" + oktaPassword).getBytes());
+
+            jwtRequest = HttpRequest.newBuilder()
+                    .uri(URI.create(oktaUrl))
+                    .timeout(Duration.ofSeconds(DEFAULT_TIMEOUT))
+                    .header("Content-Type", "application/x-www-form-urlencoded")
+                    .header("Accept", "application/json")
+                    .header("Authorization", "Basic " + authEncoded)
+                    .POST(buildFormDataFromMap(jwtRequestParms))
+                    .build();
+        }
 
         httpClient = HttpClient.newBuilder()
                 .version(HttpClient.Version.HTTP_1_1)
                 .followRedirects(HttpClient.Redirect.NORMAL)
                 .build();
 
-        var jwtRequestParms = new HashMap<>() {{
-            put("grant_type", "password");
-            put("username", TEST_USER);
-            put("password", password);
-            put("scope", "openid");
-        }};
 
-        HttpRequest jwtRequest = HttpRequest.newBuilder()
-                .uri(URI.create(oktaUrl))
-                .timeout(Duration.ofSeconds(DEFAULT_TIMEOUT))
-                .header("Content-Type", "application/x-www-form-urlencoded")
-                .header("Accept", "application/json")
-                .header("Authorization", "Basic " + authEncoded)
-                .POST(buildFormDataFromMap(jwtRequestParms))
-                .build();
 
         HttpResponse<String> jwtResponse = httpClient.send(jwtRequest, HttpResponse.BodyHandlers.ofString());
         String responseJwtString = jwtResponse.body();
