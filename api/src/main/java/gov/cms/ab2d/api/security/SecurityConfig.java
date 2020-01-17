@@ -38,8 +38,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     @Autowired
     private CustomUserDetailsService customUserDetailsService;
 
-    @Value("${api.okta-url}")
-    private String oktaUrl;
+    @Value("${api.okta-jwt-issuer}")
+    private String oktaJwtIssuer;
 
     @Value("${api.okta-connection-timeout}")
     private int oktaConnectionTimeout;
@@ -77,8 +77,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     @Bean
     public AccessTokenVerifier accessTokenVerifier() {
         AccessTokenVerifier jwtVerifier = JwtVerifiers.accessTokenVerifierBuilder()
-                .setIssuer(oktaUrl)
-                .setAudience("api://default")
+                .setIssuer(oktaJwtIssuer)
+                .setAudience("AB2D")
                 .setConnectionTimeout(Duration.ofSeconds(oktaConnectionTimeout))
                 .setReadTimeout(Duration.ofSeconds(oktaReadTimeout))
                 .build();
