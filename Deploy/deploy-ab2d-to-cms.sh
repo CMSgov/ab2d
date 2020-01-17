@@ -1230,21 +1230,26 @@ CLUSTER_ARNS=$(aws --region "${REGION}" ecs list-clusters \
 if [ -z "${CLUSTER_ARNS}" ]; then
   echo "Skipping getting current ECS task definitions, since there are no existing clusters"
 else
-    
-  API_TASK_DEFINITION=$(aws --region "${REGION}" ecs describe-services \
-    --services "${CMS_ENV}-api" \
-    --cluster "${CMS_ENV}-api" \
-    | grep "taskDefinition" \
-    | head -1)
-  API_TASK_DEFINITION=$(echo $API_TASK_DEFINITION | awk -F'": "' '{print $2}' | tr -d '"' | tr -d ',')
-  
-  WORKER_TASK_DEFINITION=$(aws --region "${REGION}" ecs describe-services \
-    --services "${CMS_ENV}-worker" \
-    --cluster "${CMS_ENV}-worker" \
-    | grep "taskDefinition" \
-    | head -1)
-  WORKER_TASK_DEFINITION=$(echo $WORKER_TASK_DEFINITION | awk -F'": "' '{print $2}' | tr -d '"' | tr -d ',')
 
+  #####
+  # LSH Commented out because it was using old task definitions for ECS tasks instead of the latest task definitions
+    
+  # API_TASK_DEFINITION=$(aws --region "${REGION}" ecs describe-services \
+  #   --services "${CMS_ENV}-api" \
+  #   --cluster "${CMS_ENV}-api" \
+  #   | grep "taskDefinition" \
+  #   | head -1)
+  # API_TASK_DEFINITION=$(echo $API_TASK_DEFINITION | awk -F'": "' '{print $2}' | tr -d '"' | tr -d ',')
+  
+  # WORKER_TASK_DEFINITION=$(aws --region "${REGION}" ecs describe-services \
+  #   --services "${CMS_ENV}-worker" \
+  #   --cluster "${CMS_ENV}-worker" \
+  #   | grep "taskDefinition" \
+  #   | head -1)
+  # WORKER_TASK_DEFINITION=$(echo $WORKER_TASK_DEFINITION | awk -F'": "' '{print $2}' | tr -d '"' | tr -d ',')
+  echo "No longer using old ECS task definitions."
+  #####
+  
 fi
 
 #
