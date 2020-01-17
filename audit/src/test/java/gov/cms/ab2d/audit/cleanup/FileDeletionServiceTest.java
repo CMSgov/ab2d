@@ -2,13 +2,11 @@ package gov.cms.ab2d.audit.cleanup;
 
 import gov.cms.ab2d.audit.SpringBootApp;
 import org.junit.Assert;
+import org.junit.Rule;
 import org.junit.Test;
-import org.junit.jupiter.api.MethodOrderer;
-import org.junit.jupiter.api.Order;
-import org.junit.jupiter.api.TestMethodOrder;
+import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
@@ -19,7 +17,10 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.nio.file.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributeView;
 import java.nio.file.attribute.FileTime;
 import java.time.LocalDate;
@@ -34,8 +35,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 @TestPropertySource(locations = "/application.common.properties")
 public class FileDeletionServiceTest {
 
-    @Value("${efs.mount}")
-    private String efsMount;
+    @Rule
+    public TemporaryFolder tmpDirFolder = new TemporaryFolder();
 
     @Autowired
     private FileDeletionService fileDeletionService;
@@ -63,6 +64,8 @@ public class FileDeletionServiceTest {
 
     @Test
     public void checkToEnsureFilesDeleted() throws IOException, URISyntaxException {
+        String efsMount = tmpDirFolder.getRoot().toString();
+
         // other tests set this value, so set it to the correct one, JUnit ordering annotations don't seem to be respected
         ReflectionTestUtils.setField(fileDeletionService, "efsMount", efsMount);
 
@@ -70,41 +73,43 @@ public class FileDeletionServiceTest {
         Path destinationNotDeleted = Paths.get(efsMount, TEST_FILE_NOT_DELETED);
         URL urlNotDeletedFile = this.getClass().getResource("/" + TEST_FILE_NOT_DELETED);
         Path sourceNotDeleted = Paths.get(urlNotDeletedFile.toURI());
-        Files.move(sourceNotDeleted, destinationNotDeleted, StandardCopyOption.REPLACE_EXISTING);
+        Files.copy(sourceNotDeleted, destinationNotDeleted, StandardCopyOption.REPLACE_EXISTING);
 
         Path destination = Paths.get(efsMount, TEST_FILE);
         URL url = this.getClass().getResource("/" + TEST_FILE);
         Path source = Paths.get(url.toURI());
-        Files.move(source, destination, StandardCopyOption.REPLACE_EXISTING);
+        Files.copy(source, destination, StandardCopyOption.REPLACE_EXISTING);
 
         changeFileCreationDate(destination);
 
-        File noPermissionsDir = new File(efsMount + TEST_DIRECTORY_NO_PERMISSIONS);
+        final Path noPermissionsDirPath = Paths.get(efsMount, TEST_DIRECTORY_NO_PERMISSIONS);
+        File noPermissionsDir = new File(noPermissionsDirPath.toString());
         if (!noPermissionsDir.exists()) noPermissionsDir.mkdirs();
 
         Path noPermissionsFileDestination = Paths.get(efsMount, TEST_FILE_NO_PERMISSIONS);
         URL noPermissionsFileUrl = this.getClass().getResource("/" + TEST_FILE_NO_PERMISSIONS);
         Path noPermissionsFileSource = Paths.get(noPermissionsFileUrl.toURI());
-        Files.move(noPermissionsFileSource, noPermissionsFileDestination, StandardCopyOption.REPLACE_EXISTING);
+        Files.copy(noPermissionsFileSource, noPermissionsFileDestination, StandardCopyOption.REPLACE_EXISTING);
 
         changeFileCreationDate(noPermissionsFileDestination);
 
         noPermissionsDir.setWritable(false);
 
-        File dir = new File(efsMount + TEST_DIRECTORY);
+        final Path dirPath = Paths.get(efsMount, TEST_DIRECTORY);
+        File dir = new File(dirPath.toString());
         if (!dir.exists()) dir.mkdirs();
 
         Path nestedFileDestination = Paths.get(efsMount, TEST_FILE_NESTED);
         URL nestedFileUrl = this.getClass().getResource("/" + TEST_FILE_NESTED);
         Path nestedFileSource = Paths.get(nestedFileUrl.toURI());
-        Files.move(nestedFileSource, nestedFileDestination, StandardCopyOption.REPLACE_EXISTING);
+        Files.copy(nestedFileSource, nestedFileDestination, StandardCopyOption.REPLACE_EXISTING);
 
         changeFileCreationDate(nestedFileDestination);
 
         Path regularFileDestination = Paths.get(efsMount, REGULAR_FILE);
         URL regularFileUrl = this.getClass().getResource("/" + REGULAR_FILE);
         Path regularFileSource = Paths.get(regularFileUrl.toURI());
-        Files.move(regularFileSource, regularFileDestination, StandardCopyOption.REPLACE_EXISTING);
+        Files.copy(regularFileSource, regularFileDestination, StandardCopyOption.REPLACE_EXISTING);
 
         changeFileCreationDate(regularFileDestination);
 
