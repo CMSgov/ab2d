@@ -1,15 +1,11 @@
 package gov.cms.ab2d.audit.cleanup;
 
 import gov.cms.ab2d.audit.SpringBootApp;
-import org.junit.Assert;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.util.FileSystemUtils;
 
@@ -27,16 +23,16 @@ import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 
 import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-@RunWith(SpringRunner.class)
 @SpringBootTest(classes = SpringBootApp.class)
 @TestPropertySource(locations = "/application.common.properties")
 public class FileDeletionServiceTest {
 
-    @Rule
-    public TemporaryFolder tmpDirFolder = new TemporaryFolder();
+    @TempDir
+    File tmpDirFolder;
 
     @Autowired
     private FileDeletionService fileDeletionService;
@@ -64,7 +60,7 @@ public class FileDeletionServiceTest {
 
     @Test
     public void checkToEnsureFilesDeleted() throws IOException, URISyntaxException {
-        String efsMount = tmpDirFolder.getRoot().toString();
+        String efsMount = tmpDirFolder.toPath().toString();
 
         // other tests set this value, so set it to the correct one, JUnit ordering annotations don't seem to be respected
         ReflectionTestUtils.setField(fileDeletionService, "efsMount", efsMount);
@@ -115,15 +111,15 @@ public class FileDeletionServiceTest {
 
         fileDeletionService.deleteFiles();
 
-        Assert.assertTrue(Files.notExists(destination));
+        assertTrue(Files.notExists(destination));
 
-        Assert.assertTrue(Files.notExists(nestedFileDestination));
+        assertTrue(Files.notExists(nestedFileDestination));
 
-        Assert.assertTrue(Files.exists(destinationNotDeleted));
+        assertTrue(Files.exists(destinationNotDeleted));
 
-        Assert.assertTrue(Files.exists(noPermissionsFileDestination));
+        assertTrue(Files.exists(noPermissionsFileDestination));
 
-        Assert.assertTrue(Files.exists(regularFileDestination));
+        assertTrue(Files.exists(regularFileDestination));
 
         // Cleanup
         Files.delete(destinationNotDeleted);
