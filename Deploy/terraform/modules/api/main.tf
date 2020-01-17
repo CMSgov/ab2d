@@ -259,7 +259,7 @@ resource "aws_lb_listener" "api" {
 
 resource "aws_ecs_service" "api" {
   depends_on = ["aws_lb.api"]
-  name = "ab2d-api"
+  name = "${lower(var.env)}-api"
   cluster = aws_ecs_cluster.ab2d_api.id
   task_definition = var.override_task_definition_arn != "" ? var.override_task_definition_arn : aws_ecs_task_definition.api.arn
   desired_count = 5
