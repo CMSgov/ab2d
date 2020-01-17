@@ -1,7 +1,6 @@
 package gov.cms.ab2d.worker.adapter.bluebutton;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 
@@ -19,30 +18,27 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 @Component
-public class BeneficiaryAdapterStub implements BeneficiaryAdapter {
+public class ContractAdapterStub implements ContractAdapter {
 
     private static final String BENE_ID_FILE = "/test-stub-data/synthetic-bene-ids.csv";
-
-    @Value("${bb-stub.page.size}")
-    private int pageSize;
-
+    private static final int MAX_ROWS = 30_000;
 
     @Override
-    public GetPatientsByContractResponse getPatientsByContract(String contractNumber) {
+    public GetPatientsByContractResponse getPatients(String contractNumber) {
 
         final int contractSno = extractContractSno(contractNumber);
-        final int startOffset = (contractSno - 1) * 100;
 
-        final var patientsPerContract = getFromSampleFile(startOffset);
+        final var patientsPerContract = fetchPatientRecords(contractSno);
 
         return toResponse(contractNumber, patientsPerContract);
     }
 
 
     private Integer extractContractSno(String contractNumber) {
-        final String contractNumberSuffix = contractNumber.substring(contractNumber.length() - 3);
+        //valid range from 0000 - 9999
+        final String contractNumberSuffix = contractNumber.substring(contractNumber.length() - 4);
 
-        final Integer sno;
+        Integer sno = null;
         try {
             sno = Integer.valueOf(contractNumberSuffix);
         } catch (NumberFormatException e) {
@@ -50,13 +46,52 @@ public class BeneficiaryAdapterStub implements BeneficiaryAdapter {
             return 0;
         }
 
+        // simple check for contractNumber with 5 digits instead of 4
+        try {
+            final String tmpContractNo = contractNumber.substring(contractNumber.length() - 5);
+            int contractNo = Integer.valueOf(tmpContractNo);
+            if (sno != contractNo) {
+                sno = -1;
+            }
+        } catch (NumberFormatException e) {
+            //ignore - this check is to see if the contractNumber has 5 digits instead of 4 making it > 9999
+        }
+
         return sno;
     }
 
-    private List<String> getFromSampleFile(final int startOffset) {
-        if (startOffset < 0) {
+    private List<String> fetchPatientRecords(final int contractSno) {
+        if (contractSno < 0) {
             return new ArrayList<String>();
         }
+
+        int numberOfRows = determineNumberOfRows(contractSno);
+        int rowsToRetrieve = determineRowsToRetrieve(numberOfRows);
+
+        var patientIdRows = getFromSampleFile(rowsToRetrieve);
+
+        int remainingRows = numberOfRows;
+        List<String> accumulator = new ArrayList<>();
+        while (remainingRows > MAX_ROWS) {
+            accumulator.addAll(patientIdRows);
+            remainingRows -= MAX_ROWS;
+        }
+
+        accumulator.addAll(patientIdRows.stream().limit(remainingRows).collect(Collectors.toList()));
+
+        return accumulator;
+    }
+
+    private int determineNumberOfRows(int contractSno) {
+        return contractSno == 0 ? 100 : (contractSno * 1000);
+    }
+
+    private int determineRowsToRetrieve(int numberOfRows) {
+        return numberOfRows < MAX_ROWS ? numberOfRows : MAX_ROWS;
+    }
+
+    private List<String> getFromSampleFile(int rowsToRetrieve) {
+        var patientIdRows = new ArrayList<String>();
 
         try (var inputStream = this.getClass().getResourceAsStream(BENE_ID_FILE)) {
             Assert.notNull(inputStream, "error getting resource as stream :  " + BENE_ID_FILE);
@@ -64,21 +99,21 @@ public class BeneficiaryAdapterStub implements BeneficiaryAdapter {
             try (var br =  new BufferedReader(new InputStreamReader(inputStream))) {
                 Assert.notNull(br, "Could not create buffered reader from input stream :  " + BENE_ID_FILE);
 
-                return readLinesByOffset(br, startOffset);
+                final List<String> rows = br.lines()
+                        .limit(rowsToRetrieve)
+                        .collect(Collectors.toList());
+
+                patientIdRows.addAll(rows);
             }
         } catch (Exception ex) {
             final String errMsg = "Error reading file : ";
             log.error("{} {} ", errMsg, BENE_ID_FILE, ex);
             throw new RuntimeException(errMsg + BENE_ID_FILE);
         }
+
+        return patientIdRows;
     }
 
-    private List<String> readLinesByOffset(BufferedReader br, int startOffset) {
-        return br.lines()
-                .skip(startOffset)
-                .limit(pageSize)
-                .collect(Collectors.toList());
-    }
 
     private GetPatientsByContractResponse toResponse(String contractNumber, List<String> rows) {
         return GetPatientsByContractResponse.builder()
