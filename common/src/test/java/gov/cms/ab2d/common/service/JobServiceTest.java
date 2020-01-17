@@ -287,8 +287,8 @@ public class JobServiceTest {
         String errorFile = "error.ndjson";
         Job job = createJobForFileDownloads(testFile, errorFile);
 
-        String destinationStr = tmpJobLocation + job.getJobUuid();
-        Path destination = Paths.get(destinationStr);
+        Path destination = Paths.get(tmpJobLocation, job.getJobUuid());
+        String destinationStr = destination.toString();
         Files.createDirectories(destination);
 
         createNDJSONFile(testFile, destinationStr);
