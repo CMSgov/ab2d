@@ -10,8 +10,10 @@ import gov.cms.ab2d.common.repository.JobOutputRepository;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.common.repository.OptOutRepository;
 import gov.cms.ab2d.worker.adapter.bluebutton.ContractAdapter;
-import gov.cms.ab2d.worker.adapter.bluebutton.GetPatientsByContractResponse;
+import gov.cms.ab2d.worker.adapter.bluebutton.GetPatientsByContractResponse.PatientDTO;
 import gov.cms.ab2d.worker.adapter.bluebutton.PatientClaimsProcessor;
+import gov.cms.ab2d.worker.processor.domainmodel.ContractData;
+import gov.cms.ab2d.worker.processor.domainmodel.WorkInProgress;
 import gov.cms.ab2d.worker.service.FileService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -35,6 +37,7 @@ import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.stream.Collectors;
 
 import static gov.cms.ab2d.common.model.JobStatus.CANCELLED;
 import static gov.cms.ab2d.common.model.JobStatus.SUCCESSFUL;
@@ -77,10 +80,20 @@ public class JobProcessorImpl implements JobProcessor {
             final Path outputDir = createOutputDirectory(outputDirPath);
 
             final List<Contract> attestedContracts = getAttestedContracts(job);
+
+            final List<WorkInProgress> workInProgressList = createWorkInProgressList(attestedContracts);
+
             for (Contract contract : attestedContracts) {
                 log.info("Job [{}] - contract [{}] ", jobUuid, contract.getContractNumber());
 
-                var jobOutputs = processContract(outputDir, contract, jobUuid);
+                var contractData = new ContractData(
+                                    outputDir,
+                                    contract,
+                                    jobUuid,
+                                    workInProgressList
+                                );
+
+                var jobOutputs = processContract(contractData);
 
                 jobOutputs.forEach(jobOutput -> job.addJobOutput(jobOutput));
                 jobOutputRepository.saveAll(jobOutputs);
@@ -172,14 +185,48 @@ public class JobProcessorImpl implements JobProcessor {
         return attestedContracts;
     }
 
-    private List<JobOutput> processContract(final Path outputDir, Contract contract, String jobUuid) {
+
+    /**
+     * iterates through each contract,
+     * calls the contract Adapter
+     * to make a list of patients to process for each contract.
+     *
+     * @param attestedContracts
+     * @return
+     */
+    private List<WorkInProgress> createWorkInProgressList(List<Contract> attestedContracts) {
+        return attestedContracts
+                .stream()
+                .map(contract -> contract.getContractNumber())
+                .map(this::createWorkInProgress)
+                .collect(Collectors.toList());
+    }
+
+
+    private WorkInProgress createWorkInProgress(String contractNumber) {
+        var response = contractAdapter.getPatients(contractNumber);
+        log.info("Contract: {} has : {} response", contractNumber, response.getPatients());
+        return WorkInProgress.builder()
+                .contractNumber(contractNumber)
+                .patients(response.getPatients())
+                .build();
+    }
+
+
+    private List<JobOutput> processContract(ContractData contractData) {
+        var contract = contractData.getContract();
         log.info("Beginning to process contract {}", keyValue(CONTRACT_LOG, contract.getContractName()));
 
         var contractNumber = contract.getContractNumber();
+
+        var outputDir = contractData.getOutputDir();
         var outputFile = fileService.createOrReplaceFile(outputDir, contractNumber + OUTPUT_FILE_SUFFIX);
         var errorFile = fileService.createOrReplaceFile(outputDir, contractNumber + ERROR_FILE_SUFFIX);
 
-        var patientsByContract = contractAdapter.getPatients(contractNumber);
+        var workInProgressList = contractData.getWorkInProgressList();
+        int totalCount = getTotalCount(workInProgressList);
+
+        var patientsByContract = getPatientsByContract(contractNumber, workInProgressList);
         var patients = patientsByContract.getPatients();
         int patientCount = patients.size();
 
@@ -190,8 +237,8 @@ public class JobProcessorImpl implements JobProcessor {
         boolean isCancelled = false;
 
         int recordsProcessedCount = 0;
-        final List<Future<Integer>> futureHandles = new ArrayList<>();
-        for (GetPatientsByContractResponse.PatientDTO patient : patients) {
+        var futureHandles = new ArrayList<Future<Integer>>();
+        for (PatientDTO patient : patients) {
             ++recordsProcessedCount;
 
             final String patientId = patient.getPatientId();
@@ -204,20 +251,22 @@ public class JobProcessorImpl implements JobProcessor {
             futureHandles.add(patientClaimsProcessor.process(patientId, lock, outputFile, errorFile));
 
             if (recordsProcessedCount % cancellationCheckFrequency == 0) {
-                errorCount += processHandles(futureHandles);
+                errorCount += processHandles(futureHandles, patientsByContract);
 
-                isCancelled = hasJobBeenCancelled(jobUuid);
+                isCancelled = hasJobBeenCancelled(contractData.getJobUuid());
                 if (isCancelled) {
-                    log.warn("Job [{}] has been cancelled. Attempting to stop processing the job shortly ... ", jobUuid);
+                    log.warn("Job [{}] has been cancelled. Attempting to stop processing the job shortly ... ", contractData.getJobUuid());
                     cancelFuturesInQueue(futureHandles);
                     break;
                 }
+
+                updateProgress(contractData.getJobUuid(), totalCount, patientsByContract);
             }
         }
 
         while (!futureHandles.isEmpty()) {
             sleep();
-            errorCount += processHandles(futureHandles);
+            errorCount += processHandles(futureHandles, patientsByContract);
         }
 
         if (isCancelled) {
@@ -237,6 +286,37 @@ public class JobProcessorImpl implements JobProcessor {
 
         return jobOutputs;
     }
+
+    private int getTotalCount(List<WorkInProgress> workInProgressList) {
+        return workInProgressList.stream()
+                .mapToInt(w -> w.getPatients().size())
+                .sum();
+    }
+
+
+    private WorkInProgress getPatientsByContract(String contractNumber, List<WorkInProgress> workInProgresses) {
+        return workInProgresses
+                .stream()
+                .filter(wip -> wip.getContractNumber().equals(contractNumber))
+                .findFirst()
+                .get();
+    }
+
+    /**
+     * @param jobUuid
+     * @param totalCount
+     * @param patientsByContract
+     */
+    private void updateProgress(String jobUuid, int totalCount, WorkInProgress patientsByContract) {
+        final int processedCount = patientsByContract.getProcessedCount();
+        final int progressPercentage = (processedCount / totalCount) * 100;
+
+        final Job job = jobRepository.findByJobUuid(jobUuid);
+        job.setProgress(progressPercentage);
+        job.setStatusMessage(progressPercentage + "% completed");
+        jobRepository.saveAndFlush(job);
+    }
+
 
     private void cancelFuturesInQueue(List<Future<Integer>> futureHandles) {
 
@@ -276,7 +356,7 @@ public class JobProcessorImpl implements JobProcessor {
                 .anyMatch(optOut -> optOut.getEffectiveDate().isBefore(tomorrow));
     }
 
-    private int processHandles(List<Future<Integer>> futureHandles) {
+    private int processHandles(List<Future<Integer>> futureHandles, WorkInProgress patientsByContract) {
         int errorCount = 0;
 
         var iterator = futureHandles.iterator();
@@ -288,6 +368,7 @@ public class JobProcessorImpl implements JobProcessor {
                     if (responseCount > 0) {
                         errorCount += responseCount;
                     }
+                    patientsByContract.incrementProcessedCount();
                 } catch (InterruptedException e) {
                     final String errMsg = "interrupted exception while processing patient ";
                     log.error(errMsg);
