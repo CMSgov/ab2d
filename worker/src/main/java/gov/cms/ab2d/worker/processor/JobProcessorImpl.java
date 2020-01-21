@@ -10,6 +10,7 @@ import gov.cms.ab2d.common.repository.JobOutputRepository;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.common.repository.OptOutRepository;
 import gov.cms.ab2d.worker.adapter.bluebutton.ContractAdapter;
+import gov.cms.ab2d.worker.adapter.bluebutton.GetPatientsByContractResponse;
 import gov.cms.ab2d.worker.adapter.bluebutton.GetPatientsByContractResponse.PatientDTO;
 import gov.cms.ab2d.worker.adapter.bluebutton.PatientClaimsProcessor;
 import gov.cms.ab2d.worker.processor.domainmodel.ContractData;
@@ -81,7 +82,7 @@ public class JobProcessorImpl implements JobProcessor {
 
             final List<Contract> attestedContracts = getAttestedContracts(job);
 
-            final List<WorkInProgress> workInProgressList = createWorkInProgressList(attestedContracts);
+            final WorkInProgress workInProgress = createWorkInProgress(attestedContracts);
 
             for (Contract contract : attestedContracts) {
                 log.info("Job [{}] - contract [{}] ", jobUuid, contract.getContractNumber());
@@ -90,7 +91,7 @@ public class JobProcessorImpl implements JobProcessor {
                                     outputDir,
                                     contract,
                                     jobUuid,
-                                    workInProgressList
+                                    workInProgress
                                 );
 
                 var jobOutputs = processContract(contractData);
@@ -189,27 +190,23 @@ public class JobProcessorImpl implements JobProcessor {
     /**
      * iterates through each contract,
      * calls the contract Adapter
-     * to make a list of patients to process for each contract.
+     * to make a list of contracts to process.
      *
      * @param attestedContracts
      * @return
      */
-    private List<WorkInProgress> createWorkInProgressList(List<Contract> attestedContracts) {
+    private WorkInProgress createWorkInProgress(List<Contract> attestedContracts) {
+        return WorkInProgress.builder()
+                .patientsByContracts(fetchPatientsForAllContracts(attestedContracts))
+                .build();
+    }
+
+    private List<GetPatientsByContractResponse> fetchPatientsForAllContracts(List<Contract> attestedContracts) {
         return attestedContracts
                 .stream()
                 .map(contract -> contract.getContractNumber())
-                .map(this::createWorkInProgress)
+                .map(contractNumber -> contractAdapter.getPatients(contractNumber))
                 .collect(Collectors.toList());
-    }
-
-
-    private WorkInProgress createWorkInProgress(String contractNumber) {
-        var response = contractAdapter.getPatients(contractNumber);
-        log.info("Contract: {} has : {} response", contractNumber, response.getPatients());
-        return WorkInProgress.builder()
-                .contractNumber(contractNumber)
-                .patients(response.getPatients())
-                .build();
     }
 
 
@@ -223,10 +220,10 @@ public class JobProcessorImpl implements JobProcessor {
         var outputFile = fileService.createOrReplaceFile(outputDir, contractNumber + OUTPUT_FILE_SUFFIX);
         var errorFile = fileService.createOrReplaceFile(outputDir, contractNumber + ERROR_FILE_SUFFIX);
 
-        var workInProgressList = contractData.getWorkInProgressList();
-        int totalCount = getTotalCount(workInProgressList);
+        var workInProgress = contractData.getWorkInProgress();
+        int totalCount = getTotalCount(workInProgress);
 
-        var patientsByContract = getPatientsByContract(contractNumber, workInProgressList);
+        var patientsByContract = getPatientsByContract(contractNumber, workInProgress);
         var patients = patientsByContract.getPatients();
         int patientCount = patients.size();
 
@@ -251,7 +248,7 @@ public class JobProcessorImpl implements JobProcessor {
             futureHandles.add(patientClaimsProcessor.process(patientId, lock, outputFile, errorFile));
 
             if (recordsProcessedCount % cancellationCheckFrequency == 0) {
-                errorCount += processHandles(futureHandles, patientsByContract);
+                errorCount += processHandles(futureHandles, workInProgress);
 
                 isCancelled = hasJobBeenCancelled(contractData.getJobUuid());
                 if (isCancelled) {
@@ -260,13 +257,13 @@ public class JobProcessorImpl implements JobProcessor {
                     break;
                 }
 
-                updateProgress(contractData.getJobUuid(), totalCount, patientsByContract);
+                updateProgress(contractData.getJobUuid(), totalCount, workInProgress);
             }
         }
 
         while (!futureHandles.isEmpty()) {
             sleep();
-            errorCount += processHandles(futureHandles, patientsByContract);
+            errorCount += processHandles(futureHandles, workInProgress);
         }
 
         if (isCancelled) {
@@ -287,17 +284,17 @@ public class JobProcessorImpl implements JobProcessor {
         return jobOutputs;
     }
 
-    private int getTotalCount(List<WorkInProgress> workInProgressList) {
-        return workInProgressList.stream()
-                .mapToInt(w -> w.getPatients().size())
+    private int getTotalCount(WorkInProgress workInProgress) {
+        return workInProgress.getPatientsByContracts().stream()
+                .mapToInt(byContract -> byContract.getPatients().size())
                 .sum();
     }
 
 
-    private WorkInProgress getPatientsByContract(String contractNumber, List<WorkInProgress> workInProgresses) {
-        return workInProgresses
+    private GetPatientsByContractResponse getPatientsByContract(String contractNumber, WorkInProgress workInProgress) {
+        return workInProgress.getPatientsByContracts()
                 .stream()
-                .filter(wip -> wip.getContractNumber().equals(contractNumber))
+                .filter(byContract -> byContract.getContractNumber().equals(contractNumber))
                 .findFirst()
                 .get();
     }

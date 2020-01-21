@@ -166,12 +166,14 @@ class JobProcessorUnitTest {
     void whenJobIsSubmittedForSpecificContract_processOnlyThatContract() {
 
         final Sponsor sponsor = job.getUser().getSponsor();
+        final Contract contract = sponsor.getAttestedContracts().get(0);
 
-        // create 3 contract for the sponsor. But associate the submitted job with 1 specific contract.
+        // create 3 additional contracts for the sponsor.
+        // But associate the submitted job with the (original) contract for which PatientsByContractResponse test data was setup
         final Contract contract1 = createContract(sponsor);
         final Contract contract2 = createContract(sponsor);
         final Contract contract3 = createContract(sponsor);
-        job.setContract(contract3);
+        job.setContract(contract);
 
         when(jobRepository.findByJobUuid(anyString())).thenReturn(job);
 

@@ -1,8 +1,9 @@
 package gov.cms.ab2d.worker.processor.domainmodel;
 
-import gov.cms.ab2d.worker.adapter.bluebutton.GetPatientsByContractResponse.PatientDTO;
+import gov.cms.ab2d.worker.adapter.bluebutton.GetPatientsByContractResponse;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.Singular;
 
 import java.util.List;
 
@@ -10,14 +11,13 @@ import java.util.List;
 @Builder
 public class WorkInProgress {
 
-    // Need to extract another inner DTO
-//    private final List<ContractPatientsDTO> contractsWithPatients;
-    private final String contractNumber;
-    private final List<PatientDTO> patients;
+    @Singular
+    private final List<GetPatientsByContractResponse> patientsByContracts;
     private int processedCount;
 
     public void incrementProcessedCount() {
         ++processedCount;
     }
+
 
 }
