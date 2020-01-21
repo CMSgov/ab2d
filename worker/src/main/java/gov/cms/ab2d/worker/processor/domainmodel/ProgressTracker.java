@@ -3,6 +3,7 @@ package gov.cms.ab2d.worker.processor.domainmodel;
 import gov.cms.ab2d.worker.adapter.bluebutton.GetPatientsByContractResponse;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.Setter;
 import lombok.Singular;
 
 import java.util.List;
@@ -15,8 +16,11 @@ public class ProgressTracker {
 
     @Singular
     private final List<GetPatientsByContractResponse> patientsByContracts;
-    private int processedCount;
     private int totalCount;
+    private int processedCount;
+
+    @Setter
+    private int lastUpdatedCount;
 
     public void incrementProcessedCount() {
         ++processedCount;

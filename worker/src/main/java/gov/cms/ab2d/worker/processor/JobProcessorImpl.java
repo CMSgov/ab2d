@@ -53,10 +53,13 @@ import static net.logstash.logback.argument.StructuredArguments.keyValue;
 public class JobProcessorImpl implements JobProcessor {
     private static final String OUTPUT_FILE_SUFFIX = ".ndjson";
     private static final String ERROR_FILE_SUFFIX = "_error.ndjson";
-    private static final int SLEEP_DURATION = 5_000;
+    private static final int SLEEP_DURATION = 1_000;                    // 1 second
 
     @Value("${cancellation.check.frequency:10}")
     private int cancellationCheckFrequency;
+
+    @Value("${report.progress.frequency:100}")
+    private int reportProgressFrequency;
 
     @Value("${efs.mount}")
     private String efsMount;
@@ -367,22 +370,24 @@ public class JobProcessorImpl implements JobProcessor {
             }
         }
 
-        updateProgress(progressTracker);
+        trackProgress(progressTracker);
 
         return errorCount;
     }
 
 
-    private void updateProgress(ProgressTracker progressTracker) {
+    private void trackProgress(ProgressTracker progressTracker) {
         var jobUuid = progressTracker.getJobUuid();
         var processedCount = progressTracker.getProcessedCount();
         var totalCount = progressTracker.getTotalCount();
 
         final int percentageCompleted = (processedCount * 100) / totalCount;
 
-        jobRepository.updatePercentageCompleted(jobUuid, percentageCompleted);
-        log.info("[{}/{}] records processed = [{}% completed]", processedCount, totalCount, percentageCompleted);
-
+        if (processedCount - progressTracker.getLastUpdatedCount() >= reportProgressFrequency) {
+            progressTracker.setLastUpdatedCount(processedCount);
+            jobRepository.updatePercentageCompleted(jobUuid, percentageCompleted);
+            log.info("[{}/{}] records processed = [{}% completed]", processedCount, totalCount, percentageCompleted);
+        }
     }
 
 
