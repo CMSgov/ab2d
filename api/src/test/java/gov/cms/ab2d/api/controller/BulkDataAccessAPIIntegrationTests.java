@@ -555,8 +555,8 @@ public class BulkDataAccessAPIIntegrationTests {
         jobRepository.saveAndFlush(job);
 
         String testFile = "test.ndjson";
-        String destinationStr = tmpJobLocation + job.getJobUuid();
-        Path destination = Paths.get(destinationStr);
+        Path destination = Paths.get(tmpJobLocation, job.getJobUuid());
+        String destinationStr = destination.toString();
         Files.createDirectories(destination);
         InputStream testFileStream = this.getClass().getResourceAsStream("/" + testFile);
         String testFileStr = IOUtils.toString(testFileStream, "UTF-8");

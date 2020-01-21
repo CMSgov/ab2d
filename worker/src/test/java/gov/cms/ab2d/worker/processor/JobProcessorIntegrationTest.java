@@ -9,7 +9,7 @@ import gov.cms.ab2d.common.model.Sponsor;
 import gov.cms.ab2d.common.model.User;
 import gov.cms.ab2d.common.repository.*;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
-import gov.cms.ab2d.worker.adapter.bluebutton.BeneficiaryAdapter;
+import gov.cms.ab2d.worker.adapter.bluebutton.ContractAdapter;
 import gov.cms.ab2d.worker.adapter.bluebutton.PatientClaimsProcessor;
 import gov.cms.ab2d.worker.adapter.bluebutton.PatientClaimsProcessorImpl;
 import gov.cms.ab2d.worker.service.FileService;
@@ -61,7 +61,7 @@ class JobProcessorIntegrationTest {
     @Autowired
     private JobOutputRepository jobOutputRepository;
     @Autowired
-    private BeneficiaryAdapter beneficiaryAdapter;
+    private ContractAdapter contractAdapter;
     @Autowired
     private OptOutRepository optOutRepository;
 
@@ -94,7 +94,7 @@ class JobProcessorIntegrationTest {
         FhirContext fhirContext = new FhirContext();
         PatientClaimsProcessor patientClaimsProcessor = new PatientClaimsProcessorImpl(mockBfdClient, fhirContext, fileService);
 
-        cut = new JobProcessorImpl(fileService, jobRepository, jobOutputRepository, beneficiaryAdapter, patientClaimsProcessor,
+        cut = new JobProcessorImpl(fileService, jobRepository, jobOutputRepository, contractAdapter, patientClaimsProcessor,
                 optOutRepository);
         ReflectionTestUtils.setField(cut, "cancellationCheckFrequency", 10);
         ReflectionTestUtils.setField(cut, "efsMount", tmpEfsMountDir.toString());
@@ -108,7 +108,7 @@ class JobProcessorIntegrationTest {
         jobRepository.save(job);
         createContract(sponsor);
 
-        var processedJob = cut.process("S001");
+        var processedJob = cut.process("S0000");
 
         assertThat(processedJob.getStatus(), is(JobStatus.SUCCESSFUL));
         assertThat(processedJob.getStatusMessage(), is("100%"));
@@ -128,7 +128,7 @@ class JobProcessorIntegrationTest {
         job.setStatus(JobStatus.IN_PROGRESS);
         jobRepository.save(job);
 
-        var processedJob = cut.process("S001");
+        var processedJob = cut.process("S0000");
 
         assertThat(processedJob.getStatus(), is(JobStatus.SUCCESSFUL));
         assertThat(processedJob.getStatusMessage(), is("100%"));
@@ -162,10 +162,9 @@ class JobProcessorIntegrationTest {
     }
 
     private Contract createContract(Sponsor sponsor) {
-        final int anInt = random.nextInt(299);
         Contract contract = new Contract();
-        contract.setContractName("CONTRACT_0000" + anInt);
-        contract.setContractNumber("CONTRACT_0000" + anInt);
+        contract.setContractName("CONTRACT_0000");
+        contract.setContractNumber("CONTRACT_0000");
         contract.setAttestedOn(OffsetDateTime.now().minusDays(10));
         contract.setSponsor(sponsor);
 
@@ -175,11 +174,12 @@ class JobProcessorIntegrationTest {
 
     private Job createJob(User user) {
         Job job = new Job();
-        job.setJobUuid("S001");
+        job.setJobUuid("S0000");
         job.setStatus(JobStatus.SUBMITTED);
         job.setStatusMessage("0%");
         job.setUser(user);
         job.setCreatedAt(OffsetDateTime.now());
         return jobRepository.save(job);
     }
+
 }
