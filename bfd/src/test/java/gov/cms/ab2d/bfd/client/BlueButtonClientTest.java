@@ -108,6 +108,13 @@ public class BlueButtonClientTest {
             );
         }
 
+        createMockServerExpectation(
+                "/v1/fhir/Patient",
+                HttpStatus.OK_200,
+                getRawXML(SAMPLE_PATIENT_PATH_PREFIX + "/bundle/patientbundle.xml"),
+                List.of()
+        );
+
         // Patient that exists, but has no records
         createMockServerExpectation(
                 "/v1/fhir/Patient/" + TEST_NO_RECORD_PATIENT_ID,
@@ -196,6 +203,13 @@ public class BlueButtonClientTest {
                 ResourceType.ExplanationOfBenefit,
                 "EOB bundles returned by the BlueButton client should only contain EOB objects"
         ));
+    }
+
+    @Test
+    public void testPersonIds() {
+        Bundle response = bbc.requestPatientFromServer("11111");
+        assertNotNull(response);
+        assertEquals(response.getEntry().size(), 2);
     }
 
     @Test

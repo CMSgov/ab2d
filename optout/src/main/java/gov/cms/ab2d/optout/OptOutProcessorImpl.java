@@ -1,6 +1,5 @@
 package gov.cms.ab2d.optout;
 
-
 import gov.cms.ab2d.common.model.OptOut;
 import gov.cms.ab2d.common.repository.OptOutRepository;
 import gov.cms.ab2d.optout.gateway.S3Gateway;
@@ -14,8 +13,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.util.List;
 import java.util.Optional;
-
 
 @Slf4j
 @Component
@@ -25,8 +24,6 @@ public class OptOutProcessorImpl implements OptOutProcessor {
     private final S3Gateway s3Gateway;
     private final OptOutRepository optOutRepository;
     private final OptOutConverterService optOutConverterService;
-
-
 
     @Override
     @Transactional
@@ -43,9 +40,7 @@ public class OptOutProcessorImpl implements OptOutProcessor {
             log.info("import opt-out data - FAILED.");
             throw new UncheckedIOException(e);
         }
-
     }
-
 
     private void importOptOutRecords(BufferedReader bufferedReader) {
         var iterator = IOUtils.lineIterator(bufferedReader);
@@ -62,23 +57,19 @@ public class OptOutProcessorImpl implements OptOutProcessor {
                     continue;
                 }
 
-                Optional<OptOut> optionalOptOut = optOutConverterService.convert(line);
-                if (optionalOptOut.isPresent()) {
-                    optOutRepository.save(optionalOptOut.get());
-                    ++insertedRowCount;
+                List<OptOut> optOuts = optOutConverterService.convert(line);
+                if (optOuts.size() > 1) {
+                    log.info("Multiple({}) Patients for HICN {}", optOuts.size(), optOuts.get(0).getHicn());
                 }
+
+                optOuts.forEach(o -> optOutRepository.save(o));
+                insertedRowCount = insertedRowCount + optOuts.size();
             } catch (Exception e) {
                 log.error("Invalid opt out record - line number :[{}]", linesReadCount, e);
             }
-
         }
 
         log.info("[{}] rows read from file", linesReadCount);
         log.info("[{}] rows inserted into opt_out table", insertedRowCount);
     }
-
-
-
-
-
 }
