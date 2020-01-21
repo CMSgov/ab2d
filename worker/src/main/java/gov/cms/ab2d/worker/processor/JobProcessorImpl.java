@@ -53,6 +53,7 @@ import static net.logstash.logback.argument.StructuredArguments.keyValue;
 public class JobProcessorImpl implements JobProcessor {
     private static final String OUTPUT_FILE_SUFFIX = ".ndjson";
     private static final String ERROR_FILE_SUFFIX = "_error.ndjson";
+    private static final int SLEEP_DURATION = 5_000;
 
     @Value("${cancellation.check.frequency:10}")
     private int cancellationCheckFrequency;
@@ -109,6 +110,7 @@ public class JobProcessorImpl implements JobProcessor {
             deleteExistingDirectory(outputDirPath);
 
         } catch (Exception e) {
+            log.error("Unexpected expection ", e);
             job.setStatus(JobStatus.FAILED);
             job.setStatusMessage(e.getMessage());
             job.setCompletedAt(OffsetDateTime.now());
@@ -196,14 +198,10 @@ public class JobProcessorImpl implements JobProcessor {
      * @return
      */
     private WorkInProgress createWorkInProgress(String jobUuid, List<Contract> attestedContracts) {
-        final WorkInProgress workInProgress = WorkInProgress.builder()
+        return WorkInProgress.builder()
                 .jobUuid(jobUuid)
                 .patientsByContracts(fetchPatientsForAllContracts(attestedContracts))
                 .build();
-
-        workInProgress.calculateTotalCount();
-
-        return workInProgress;
     }
 
     private List<GetPatientsByContractResponse> fetchPatientsForAllContracts(List<Contract> attestedContracts) {
@@ -230,6 +228,8 @@ public class JobProcessorImpl implements JobProcessor {
         var patientsByContract = getPatientsByContract(contractNumber, workInProgress);
         var patients = patientsByContract.getPatients();
         int patientCount = patients.size();
+        log.info("Contract [{}] has [{}] Patients", contractNumber, patientsByContract.getPatients().size());
+
 
         // A mutex lock that all threads for a contract uses while writing into the shared files
         var lock = new ReentrantLock();
@@ -253,9 +253,10 @@ public class JobProcessorImpl implements JobProcessor {
 
             if (recordsProcessedCount % cancellationCheckFrequency == 0) {
 
-                isCancelled = hasJobBeenCancelled(contractData.getJobUuid());
+                var jobUuid = contractData.getJobUuid();
+                isCancelled = hasJobBeenCancelled(jobUuid);
                 if (isCancelled) {
-                    log.warn("Job [{}] has been cancelled. Attempting to stop processing the job shortly ... ", contractData.getJobUuid());
+                    log.warn("Job [{}] has been cancelled. Attempting to stop processing the job shortly ... ", jobUuid);
                     cancelFuturesInQueue(futureHandles);
                     break;
                 }
@@ -335,7 +336,7 @@ public class JobProcessorImpl implements JobProcessor {
                 .anyMatch(optOut -> optOut.getEffectiveDate().isBefore(tomorrow));
     }
 
-    private int processHandles(List<Future<Integer>> futureHandles, WorkInProgress patientsByContract) {
+    private int processHandles(List<Future<Integer>> futureHandles, WorkInProgress workInProgress) {
         int errorCount = 0;
 
         var iterator = futureHandles.iterator();
@@ -347,7 +348,7 @@ public class JobProcessorImpl implements JobProcessor {
                     if (responseCount > 0) {
                         errorCount += responseCount;
                     }
-                    patientsByContract.incrementProcessedCount();
+                    workInProgress.incrementProcessedCount();
                 } catch (InterruptedException e) {
                     final String errMsg = "interrupted exception while processing patient ";
                     log.error(errMsg);
@@ -366,7 +367,7 @@ public class JobProcessorImpl implements JobProcessor {
             }
         }
 
-        updateProgress(patientsByContract);
+        updateProgress(workInProgress);
 
         return errorCount;
     }
@@ -379,10 +380,9 @@ public class JobProcessorImpl implements JobProcessor {
 
         final int percentageCompleted = (processedCount * 100) / totalCount;
 
-        log.info("##################################################################################################");
-        log.info("Saving Percentage Completed ... : [{}] ", percentageCompleted);
-        log.info("##################################################################################################");
         jobRepository.updatePercentageCompleted(jobUuid, percentageCompleted);
+        log.info("[{}/{}] records processed = [{}% completed]", processedCount, totalCount, percentageCompleted);
+
     }
 
 
@@ -397,6 +397,7 @@ public class JobProcessorImpl implements JobProcessor {
     private void completeJob(Job job) {
         job.setStatus(SUCCESSFUL);
         job.setStatusMessage("100%");
+        job.setProgress(100);
         job.setExpiresAt(OffsetDateTime.now().plusDays(1));
         job.setCompletedAt(OffsetDateTime.now());
 
@@ -406,7 +407,7 @@ public class JobProcessorImpl implements JobProcessor {
 
     private void sleep() {
         try {
-            Thread.sleep(100);
+            Thread.sleep(SLEEP_DURATION);
         } catch (InterruptedException e) {
             log.warn("interrupted exception in thread.sleep(). Ignoring");
         }

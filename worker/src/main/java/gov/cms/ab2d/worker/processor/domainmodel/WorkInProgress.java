@@ -23,10 +23,14 @@ public class WorkInProgress {
     }
 
 
-    public void calculateTotalCount() {
-        totalCount = patientsByContracts.stream()
-                .mapToInt(patientsByContract -> patientsByContract.getPatients().size())
-                .sum();
+    public int getTotalCount() {
+        if (totalCount == 0) {
+            totalCount = patientsByContracts.stream()
+                    .mapToInt(patientsByContract -> patientsByContract.getPatients().size())
+                    .sum();
+        }
+
+        return totalCount;
     }
 
 
