@@ -3,7 +3,7 @@ package gov.cms.ab2d.worker.adapter.bluebutton;
 import ca.uhn.fhir.context.FhirContext;
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.util.FHIRUtil;
-import gov.cms.ab2d.filter.ExplanationOfBenefitsTrimmer;
+import gov.cms.ab2d.filter.ExplanationOfBenefitTrimmer;
 import gov.cms.ab2d.worker.service.FileService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -83,7 +83,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
             throw new RuntimeException(e);
         }
 
-        log.info("finished writing [{}] resources", resourceCount);
+        log.debug("finished writing [{}] resources", resourceCount);
 
         if (errorCount > 0) {
             log.warn("[{}] error records. Should create an error row in JobOutput table", errorCount);
@@ -115,7 +115,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
         tryLock(lock);
 
         try {
-            log.info("Attempting to append to file", keyValue(FILE_LOG, outputFile.getFileName()));
+            log.debug("Attempting to append to file", keyValue(FILE_LOG, outputFile.toFile().getName()));
             fileService.appendToFile(outputFile, byteArrayOutputStream);
         } finally {
             lock.unlock();
@@ -149,7 +149,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
             resources.addAll(extractResources(nextEntries));
         }
 
-        log.info("Bundle - Total: {} - Entries: {} ", eobBundle.getTotal(), entries.size());
+        log.debug("Bundle - Total: {} - Entries: {} ", eobBundle.getTotal(), entries.size());
         return resources;
     }
 
@@ -160,7 +160,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
                 // Get only the explanation of benefits
                 .filter(resource -> resource.getResourceType() == ResourceType.ExplanationOfBenefit)
                 // filter it
-                .map(resource -> ExplanationOfBenefitsTrimmer.getBenefit((ExplanationOfBenefit) resource))
+                .map(resource -> ExplanationOfBenefitTrimmer.getBenefit((ExplanationOfBenefit) resource))
                 // Remove any empty values
                 .filter(Objects::nonNull)
                 // Remove Plan D

@@ -2,6 +2,7 @@ package gov.cms.ab2d.api.controller;
 
 import com.google.gson.Gson;
 import gov.cms.ab2d.api.config.SwaggerConfig;
+import gov.cms.ab2d.api.util.SwaggerConstants;
 import gov.cms.ab2d.common.service.JobService;
 import gov.cms.ab2d.common.model.Job;
 import io.swagger.annotations.*;
@@ -42,14 +43,11 @@ import java.util.stream.Collectors;
 import static gov.cms.ab2d.api.util.Constants.GENERIC_FHIR_ERR_MSG;
 import static gov.cms.ab2d.api.util.Constants.API_PREFIX;
 import static gov.cms.ab2d.api.util.Constants.FHIR_PREFIX;
+import static gov.cms.ab2d.api.util.SwaggerConstants.*;
 import static gov.cms.ab2d.common.util.Constants.*;
 
 @Slf4j
-@Api(value = "Bulk Data Access API", description =
-        "API through which an authenticated and authorized PDP sponsor" +
-                " may request a bulk-data export from a server, receive status information " +
-                "regarding progress in the generation of the requested files, and retrieve these " +
-                "files")
+@Api(value = "Bulk Data Access API", description = SwaggerConstants.BULK_MAIN)
 @RestController
 @RequestMapping(path = API_PREFIX + FHIR_PREFIX, produces = "application/json")
 /**
@@ -62,8 +60,6 @@ public class BulkDataAccessAPI {
 
     private static final Set<String> ALLOWABLE_OUTPUT_FORMAT_SET = Set.of(ALLOWABLE_OUTPUT_FORMATS.split(","));
 
-    private static final String RESOURCE_TYPE_VALUE = "ExplanationOfBenefits";
-
     public static final String JOB_NOT_FOUND_ERROR_MSG = "Job not found. " + GENERIC_FHIR_ERR_MSG;
 
     public static final String JOB_CANCELLED_MSG = "Job canceled";
@@ -74,16 +70,16 @@ public class BulkDataAccessAPI {
     @Autowired
     private JobService jobService;
 
-    @ApiOperation(value = "Initiate Part A & B bulk claim export job",
+    @ApiOperation(value = BULK_EXPORT,
         authorizations = {
             @Authorization(value = "Authorization", scopes = {
                     @AuthorizationScope(description = "Export Patient Information", scope = "Authorization") })
         })
     @ApiImplicitParams(value = {
             @ApiImplicitParam(name = "Accept", required = true, paramType = "header", value =
-                    "application/fhir+json"),
+                    BULK_ACCEPT, defaultValue = "application/fhir+json"),
             @ApiImplicitParam(name = "Prefer", required = true, paramType = "header", value =
-                    "respond-async")}
+                    BULK_PREFER, defaultValue = "respond-async")}
     )
     @ApiResponses(
             @ApiResponse(code = 202, message = "Export request has started", responseHeaders =
@@ -94,11 +90,9 @@ public class BulkDataAccessAPI {
     @ResponseStatus(value = HttpStatus.ACCEPTED)
     @GetMapping("/Patient/$export")
     public ResponseEntity<Void> exportAllPatients(
-            @ApiParam(value = "String of comma-delimited FHIR resource types. Only resources of " +
-                    "the specified resource types(s) SHALL be included in the response.",
-                    allowableValues = RESOURCE_TYPE_VALUE)
-            @RequestParam(required = false, name = "_type") String resourceTypes,
-            @ApiParam(value = "The format for the requested bulk data files to be generated.",
+            @ApiParam(value = BULK_EXPORT_TYPE, allowableValues = EOB, defaultValue = EOB)
+            @RequestParam(required = false, name = "_type", defaultValue = EOB) String resourceTypes,
+            @ApiParam(value = BULK_OUTPUT_FORMAT,
                     allowableValues = ALLOWABLE_OUTPUT_FORMATS, defaultValue = "application/fhir" +
                     "+ndjson"
             )
@@ -121,9 +115,9 @@ public class BulkDataAccessAPI {
     }
 
     private void checkResourceTypesAndOutputFormat(String resourceTypes, String outputFormat) {
-        if (resourceTypes != null && !resourceTypes.equals(RESOURCE_TYPE_VALUE)) {
+        if (resourceTypes != null && !resourceTypes.equals(EOB)) {
             log.error("Received invalid resourceTypes of {}", resourceTypes);
-            throw new InvalidUserInputException("_type must be " + RESOURCE_TYPE_VALUE);
+            throw new InvalidUserInputException("_type must be " + EOB);
         }
         if (outputFormat != null && !ALLOWABLE_OUTPUT_FORMAT_SET.contains(outputFormat)) {
             log.error("Received _outputFormat {}, which is not valid", outputFormat);
@@ -146,16 +140,16 @@ public class BulkDataAccessAPI {
                 HttpStatus.ACCEPTED);
     }
 
-    @ApiOperation(value = "Initiate Part A & B bulk claim export job for a given contract number",
+    @ApiOperation(value = BULK_CONTRACT_EXPORT,
             authorizations = {
                     @Authorization(value = "Authorization", scopes = {
                             @AuthorizationScope(description = "Export Claim Data", scope = "Authorization") })
             })
     @ApiImplicitParams(value = {
             @ApiImplicitParam(name = "Accept", required = true, paramType = "header", value =
-                    "application/fhir+json"),
+                    BULK_ACCEPT, defaultValue = "application/fhir+json"),
             @ApiImplicitParam(name = "Prefer", required = true, paramType = "header", value =
-                    "respond-async")}
+                    BULK_PREFER, defaultValue = "respond-async")}
     )
     @ApiResponses(
             @ApiResponse(code = 202, message = "Export request has started", responseHeaders =
@@ -167,11 +161,9 @@ public class BulkDataAccessAPI {
     @GetMapping("/Group/{contractNumber}/$export")
     public ResponseEntity<Void> exportPatientsWithContract(@ApiParam(value = "A contract number", required = true)
             @PathVariable @NotBlank String contractNumber,
-            @ApiParam(value = "String of comma-delimited FHIR resource types. Only resources of " +
-                    "the specified resource types(s) SHALL be included in the response.",
-                    allowableValues = RESOURCE_TYPE_VALUE)
+            @ApiParam(value = BULK_EXPORT_TYPE, allowableValues = EOB, defaultValue = EOB)
             @RequestParam(required = false, name = "_type") String resourceTypes,
-            @ApiParam(value = "The format for the requested bulk data files to be generated.",
+            @ApiParam(value = BULK_OUTPUT_FORMAT,
                     allowableValues = ALLOWABLE_OUTPUT_FORMATS, defaultValue = "application/fhir" +
                     "+ndjson"
             )
@@ -193,7 +185,7 @@ public class BulkDataAccessAPI {
         return returnStatusForJobCreation(job);
     }
 
-    @ApiOperation(value = "Cancel a pending export job",
+    @ApiOperation(value = BULK_CANCEL,
             authorizations = {
                     @Authorization(value = "Authorization", scopes = {
                             @AuthorizationScope(description = "Cancel Export Job", scope = "Authorization") })
@@ -312,7 +304,7 @@ public class BulkDataAccessAPI {
             })
     @ApiImplicitParams(value = {
             @ApiImplicitParam(name = "Accept", required = false, paramType = "header", value =
-                    "application/fhir+json")}
+                    "application/fhir+json", defaultValue = "application/fhir+json")}
     )
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Returns the requested file as " +

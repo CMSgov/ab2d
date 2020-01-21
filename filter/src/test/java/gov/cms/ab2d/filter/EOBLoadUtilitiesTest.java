@@ -20,8 +20,8 @@ class EOBLoadUtilitiesTest {
     static FhirContext context = FhirContext.forDstu3();
 
     static {
-        eobCarrier = ExplanationOfBenefitsTrimmer.getBenefit(EOBLoadUtilities.getEOBFromFileInClassPath("eobdata/EOB-for-Carrier-Claims.json", context));
-        eobSNF = ExplanationOfBenefitsTrimmer.getBenefit(EOBLoadUtilities.getEOBFromFileInClassPath("eobdata/EOB-for-SNF-Claims.json", context));
+        eobCarrier = ExplanationOfBenefitTrimmer.getBenefit(EOBLoadUtilities.getEOBFromFileInClassPath("eobdata/EOB-for-Carrier-Claims.json", context));
+        eobSNF = ExplanationOfBenefitTrimmer.getBenefit(EOBLoadUtilities.getEOBFromFileInClassPath("eobdata/EOB-for-SNF-Claims.json", context));
     }
 
     @Test
@@ -177,7 +177,7 @@ class EOBLoadUtilitiesTest {
     void testToJson() {
         var jsonParser = context.newJsonParser();
         ExplanationOfBenefit eob = EOBLoadUtilities.getEOBFromFileInClassPath("eobdata/EOB-for-Carrier-Claims.json", context);
-        ExplanationOfBenefit eobNew = ExplanationOfBenefitsTrimmer.getBenefit(eob);
+        ExplanationOfBenefit eobNew = ExplanationOfBenefitTrimmer.getBenefit(eob);
         String payload = jsonParser.encodeResourceToString(eobNew) + System.lineSeparator();
         assertNotNull(payload);
         System.out.println(payload);
