@@ -91,12 +91,7 @@ public class JobProcessorImpl implements JobProcessor {
             for (Contract contract : attestedContracts) {
                 log.info("Job [{}] - contract [{}] ", jobUuid, contract.getContractNumber());
 
-                var contractData = new ContractData(
-                                    outputDir,
-                                    contract,
-                                    jobUuid,
-                                    progressTracker
-                                );
+                var contractData = new ContractData(outputDir, contract, progressTracker);
 
                 var jobOutputs = processContract(contractData);
 
@@ -256,7 +251,7 @@ public class JobProcessorImpl implements JobProcessor {
 
             if (recordsProcessedCount % cancellationCheckFrequency == 0) {
 
-                var jobUuid = contractData.getJobUuid();
+                var jobUuid = contractData.getProgressTracker().getJobUuid();
                 isCancelled = hasJobBeenCancelled(jobUuid);
                 if (isCancelled) {
                     log.warn("Job [{}] has been cancelled. Attempting to stop processing the job shortly ... ", jobUuid);
