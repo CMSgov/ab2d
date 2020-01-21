@@ -1,9 +1,11 @@
 package gov.cms.ab2d.optout;
 
 import gov.cms.ab2d.common.model.OptOut;
+import gov.cms.ab2d.common.repository.OptOutRepository;
 import org.apache.http.HttpStatus;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
+
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.runner.RunWith;
 import org.mockserver.client.MockServerClient;
@@ -34,6 +36,8 @@ import static org.junit.jupiter.api.Assertions.*;
 class OptOutClientServiceTest {
     @Autowired
     private OptOutConverterService cut;
+    @Autowired
+    private OptOutRepository optOutRepository;
 
     private static int mockServerPort = 8083;
 
@@ -41,7 +45,7 @@ class OptOutClientServiceTest {
 
     private static final String TEST_DIR = "test-data/";
 
-    @BeforeClass
+    @BeforeAll
     public static void setupBFDClient() throws IOException {
         mockServer = ClientAndServer.startClientAndServer(mockServerPort);
 
@@ -58,7 +62,7 @@ class OptOutClientServiceTest {
         );
     }
 
-    @AfterClass
+    @AfterAll
     public static void tearDown() {
         mockServer.stop();
     }
@@ -70,6 +74,7 @@ class OptOutClientServiceTest {
         assertNotNull(optOut);
         assertEquals(2, optOut.size());
         assertEquals("20010000001115", optOut.get(0).getCcwId());
+        optOut.forEach(o -> optOutRepository.save(o));
     }
 
     private Stream<String> getLinesFromFile() {
