@@ -7,6 +7,8 @@ import org.junit.Assert;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.testcontainers.containers.DockerComposeContainer;
+import org.testcontainers.containers.wait.strategy.HostPortWaitStrategy;
+import org.testcontainers.containers.wait.strategy.WaitStrategy;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.yaml.snakeyaml.Yaml;
 
@@ -25,6 +27,7 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 
+import static java.time.temporal.ChronoUnit.SECONDS;
 import static org.hamcrest.Matchers.matchesPattern;
 
 // Unit tests here can be run from the IDE and will use LOCAL as the default, they can also be run from the TestLauncher
@@ -70,7 +73,8 @@ public class TestRunner {
                     //.withScaledService("api", 2) // failing now since it's not changing ports
                     .withScaledService("worker", 2)
                     .withExposedService("db", 5432)
-                    .withExposedService("api", 8080);
+                    .withExposedService("api", 8080, new HostPortWaitStrategy()
+                            .withStartupTimeout(Duration.of(120, SECONDS)));
             container.start();
         }
 
