@@ -38,4 +38,8 @@ public interface JobRepository extends JpaRepository<Job, Long> {
     @Query("UPDATE Job j SET j.status = 'SUBMITTED' WHERE j.jobUuid IN :jobUuids ")
     void resetJobsToSubmittedStatus(List<String> jobUuids);
 
+    @Modifying
+    @Query("UPDATE Job j SET j.progress = :percentageCompleted WHERE j.jobUuid = :jobUuid ")
+    void updatePercentageCompleted(String jobUuid, int percentageCompleted);
+
 }

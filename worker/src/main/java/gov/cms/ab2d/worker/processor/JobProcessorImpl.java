@@ -82,7 +82,7 @@ public class JobProcessorImpl implements JobProcessor {
 
             final List<Contract> attestedContracts = getAttestedContracts(job);
 
-            final WorkInProgress workInProgress = createWorkInProgress(attestedContracts);
+            final WorkInProgress workInProgress = createWorkInProgress(jobUuid, attestedContracts);
 
             for (Contract contract : attestedContracts) {
                 log.info("Job [{}] - contract [{}] ", jobUuid, contract.getContractNumber());
@@ -195,10 +195,15 @@ public class JobProcessorImpl implements JobProcessor {
      * @param attestedContracts
      * @return
      */
-    private WorkInProgress createWorkInProgress(List<Contract> attestedContracts) {
-        return WorkInProgress.builder()
+    private WorkInProgress createWorkInProgress(String jobUuid, List<Contract> attestedContracts) {
+        final WorkInProgress workInProgress = WorkInProgress.builder()
+                .jobUuid(jobUuid)
                 .patientsByContracts(fetchPatientsForAllContracts(attestedContracts))
                 .build();
+
+        workInProgress.calculateTotalCount();
+
+        return workInProgress;
     }
 
     private List<GetPatientsByContractResponse> fetchPatientsForAllContracts(List<Contract> attestedContracts) {
@@ -221,7 +226,6 @@ public class JobProcessorImpl implements JobProcessor {
         var errorFile = fileService.createOrReplaceFile(outputDir, contractNumber + ERROR_FILE_SUFFIX);
 
         var workInProgress = contractData.getWorkInProgress();
-        int totalCount = getTotalCount(workInProgress);
 
         var patientsByContract = getPatientsByContract(contractNumber, workInProgress);
         var patients = patientsByContract.getPatients();
@@ -248,7 +252,6 @@ public class JobProcessorImpl implements JobProcessor {
             futureHandles.add(patientClaimsProcessor.process(patientId, lock, outputFile, errorFile));
 
             if (recordsProcessedCount % cancellationCheckFrequency == 0) {
-                errorCount += processHandles(futureHandles, workInProgress);
 
                 isCancelled = hasJobBeenCancelled(contractData.getJobUuid());
                 if (isCancelled) {
@@ -257,7 +260,7 @@ public class JobProcessorImpl implements JobProcessor {
                     break;
                 }
 
-                updateProgress(contractData.getJobUuid(), totalCount, workInProgress);
+                errorCount += processHandles(futureHandles, workInProgress);
             }
         }
 
@@ -284,12 +287,6 @@ public class JobProcessorImpl implements JobProcessor {
         return jobOutputs;
     }
 
-    private int getTotalCount(WorkInProgress workInProgress) {
-        return workInProgress.getPatientsByContracts().stream()
-                .mapToInt(byContract -> byContract.getPatients().size())
-                .sum();
-    }
-
 
     private GetPatientsByContractResponse getPatientsByContract(String contractNumber, WorkInProgress workInProgress) {
         return workInProgress.getPatientsByContracts()
@@ -297,21 +294,6 @@ public class JobProcessorImpl implements JobProcessor {
                 .filter(byContract -> byContract.getContractNumber().equals(contractNumber))
                 .findFirst()
                 .get();
-    }
-
-    /**
-     * @param jobUuid
-     * @param totalCount
-     * @param patientsByContract
-     */
-    private void updateProgress(String jobUuid, int totalCount, WorkInProgress patientsByContract) {
-        final int processedCount = patientsByContract.getProcessedCount();
-        final int progressPercentage = (processedCount / totalCount) * 100;
-
-        final Job job = jobRepository.findByJobUuid(jobUuid);
-        job.setProgress(progressPercentage);
-        job.setStatusMessage(progressPercentage + "% completed");
-        jobRepository.saveAndFlush(job);
     }
 
 
@@ -384,7 +366,23 @@ public class JobProcessorImpl implements JobProcessor {
             }
         }
 
+        updateProgress(patientsByContract);
+
         return errorCount;
+    }
+
+
+    private void updateProgress(WorkInProgress workInProgress) {
+        var jobUuid = workInProgress.getJobUuid();
+        var processedCount = workInProgress.getProcessedCount();
+        var totalCount = workInProgress.getTotalCount();
+
+        final int percentageCompleted = (processedCount * 100) / totalCount;
+
+        log.info("##################################################################################################");
+        log.info("Saving Percentage Completed ... : [{}] ", percentageCompleted);
+        log.info("##################################################################################################");
+        jobRepository.updatePercentageCompleted(jobUuid, percentageCompleted);
     }
 
 
