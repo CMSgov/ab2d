@@ -56,7 +56,6 @@ public class TestRunner {
         runSystemWideExport();
         runContractNumberExport();
         testDelete();
-        //stressTest();
     }
 
     public TestRunner(Environment environment) throws IOException, InterruptedException, JSONException {
@@ -83,57 +82,29 @@ public class TestRunner {
         AB2D_API_URL = yamlMap.get("ab2d-api-url");
         AB2D_ADMIN_URL = yamlMap.get("ab2d-admin-url");
 
-        HttpRequest jwtRequest = null;
+        var jwtRequestParms = new HashMap<>() {{
+            put("grant_type", "client_credentials");
+            put("scope", "clientCreds");
+        }};
 
-        if(environment.isUsesDockerCompose()) {
-            String oktaClientId = yamlMap.get("okta-client-id");
-            String oktaPassword = yamlMap.get("okta-password");
-            String authEncoded = Base64.getEncoder().encodeToString((oktaClientId + ":" + oktaPassword).getBytes());
+        String oktaClientId = System.getenv(environment.name() + "_OKTA_CLIENT_ID");
+        String oktaPassword = System.getenv(environment.name() + "_OKTA_CLIENT_PASSWORD");
 
-            String testUser = yamlMap.get("username");
-            String password = yamlMap.get("password");
+        String authEncoded = Base64.getEncoder().encodeToString((oktaClientId + ":" + oktaPassword).getBytes());
 
-            var jwtRequestParms = new HashMap<>() {{
-                put("grant_type", "password");
-                put("username", testUser);
-                put("password", password);
-                put("scope", "openid");
-            }};
-
-            jwtRequest = HttpRequest.newBuilder()
-                    .uri(URI.create(oktaUrl))
-                    .timeout(Duration.ofSeconds(DEFAULT_TIMEOUT))
-                    .header("Content-Type", "application/x-www-form-urlencoded")
-                    .header("Accept", "application/json")
-                    .header("Authorization", "Basic " + authEncoded)
-                    .POST(buildFormDataFromMap(jwtRequestParms))
-                    .build();
-        } else {
-            var jwtRequestParms = new HashMap<>() {{
-                put("grant_type", "client_credentials");
-                put("scope", "clientCreds");
-            }};
-
-            String oktaClientId = System.getenv(environment.name() + "_OKTA_CLIENT_ID");
-            String oktaPassword = System.getenv(environment.name() + "_OKTA_CLIENT_PASSWORD");
-            String authEncoded = Base64.getEncoder().encodeToString((oktaClientId + ":" + oktaPassword).getBytes());
-
-            jwtRequest = HttpRequest.newBuilder()
-                    .uri(URI.create(oktaUrl))
-                    .timeout(Duration.ofSeconds(DEFAULT_TIMEOUT))
-                    .header("Content-Type", "application/x-www-form-urlencoded")
-                    .header("Accept", "application/json")
-                    .header("Authorization", "Basic " + authEncoded)
-                    .POST(buildFormDataFromMap(jwtRequestParms))
-                    .build();
-        }
+        HttpRequest jwtRequest = HttpRequest.newBuilder()
+                .uri(URI.create(oktaUrl))
+                .timeout(Duration.ofSeconds(DEFAULT_TIMEOUT))
+                .header("Content-Type", "application/x-www-form-urlencoded")
+                .header("Accept", "application/json")
+                .header("Authorization", "Basic " + authEncoded)
+                .POST(buildFormDataFromMap(jwtRequestParms))
+                .build();
 
         httpClient = HttpClient.newBuilder()
                 .version(HttpClient.Version.HTTP_1_1)
                 .followRedirects(HttpClient.Redirect.NORMAL)
                 .build();
-
-
 
         HttpResponse<String> jwtResponse = httpClient.send(jwtRequest, HttpResponse.BodyHandlers.ofString());
         String responseJwtString = jwtResponse.body();
@@ -346,9 +317,9 @@ public class TestRunner {
         JSONArray output = json.getJSONArray("output");
         JSONObject outputObject = output.getJSONObject(0);
         String url = outputObject.getString("url");
-        Assert.assertEquals(url, AB2D_API_URL + "Job/" + jobUuid + "/file/S0001.ndjson");
+        Assert.assertEquals(url, AB2D_API_URL + "Job/" + jobUuid + "/file/S0000.ndjson");
         String type = outputObject.getString("type");
-        Assert.assertEquals(type, "null");
+        Assert.assertEquals(type, "ExplanationOfBenefit");
     }
 
     private void verifyJsonFromfileDownload(String fileContent) throws JSONException {
@@ -387,7 +358,7 @@ public class TestRunner {
         HttpResponse<String> secondExportResponse = exportRequest();
         Assert.assertEquals(429, secondExportResponse.statusCode());
 
-        performStatusRequestsAndVerifyDownloads(contentLocationList, false, "S0001");
+        performStatusRequestsAndVerifyDownloads(contentLocationList, false, "S0000");
     }
 
     private void performStatusRequestsAndVerifyDownloads(List<String> contentLocationList, boolean isContract,
@@ -423,7 +394,7 @@ public class TestRunner {
 
     @Test
     public void runContractNumberExport() throws IOException, InterruptedException, JSONException {
-        String contractNumber = "S0001";
+        String contractNumber = "S0000";
         HttpResponse<String> exportResponse = exportByContractRequest(contractNumber);
 
         Assert.assertEquals(202, exportResponse.statusCode());

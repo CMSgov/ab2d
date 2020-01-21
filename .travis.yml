@@ -23,6 +23,8 @@ before_install:
   - chmod +x docker-compose
   - sudo mv docker-compose /usr/local/bin
   - docker-compose version
+  - export LOCAL_OKTA_CLIENT_ID=0oa2t0lsrdZw5uWRx297
+  - export LOCAL_OKTA_CLIENT_PASSWORD=HHduWG6LogIvDIQuWgp3Zlo9OYMValTtH5OBcuHw
 
 install: true
 
