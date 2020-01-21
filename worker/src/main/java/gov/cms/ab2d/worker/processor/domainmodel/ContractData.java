@@ -13,6 +13,6 @@ public class ContractData {
     private final Path outputDir;
     private final Contract contract;
     private final String jobUuid;
-    private final WorkInProgress workInProgress;
+    private final ProgressTracker progressTracker;
 
 }

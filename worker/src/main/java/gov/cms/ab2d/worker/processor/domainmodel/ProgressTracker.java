@@ -9,7 +9,7 @@ import java.util.List;
 
 @Getter
 @Builder
-public class WorkInProgress {
+public class ProgressTracker {
 
     private final String jobUuid;
 

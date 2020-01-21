@@ -14,7 +14,7 @@ import gov.cms.ab2d.worker.adapter.bluebutton.GetPatientsByContractResponse;
 import gov.cms.ab2d.worker.adapter.bluebutton.GetPatientsByContractResponse.PatientDTO;
 import gov.cms.ab2d.worker.adapter.bluebutton.PatientClaimsProcessor;
 import gov.cms.ab2d.worker.processor.domainmodel.ContractData;
-import gov.cms.ab2d.worker.processor.domainmodel.WorkInProgress;
+import gov.cms.ab2d.worker.processor.domainmodel.ProgressTracker;
 import gov.cms.ab2d.worker.service.FileService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -83,7 +83,7 @@ public class JobProcessorImpl implements JobProcessor {
 
             final List<Contract> attestedContracts = getAttestedContracts(job);
 
-            final WorkInProgress workInProgress = createWorkInProgress(jobUuid, attestedContracts);
+            final ProgressTracker progressTracker = initializeProgressTracker(jobUuid, attestedContracts);
 
             for (Contract contract : attestedContracts) {
                 log.info("Job [{}] - contract [{}] ", jobUuid, contract.getContractNumber());
@@ -92,7 +92,7 @@ public class JobProcessorImpl implements JobProcessor {
                                     outputDir,
                                     contract,
                                     jobUuid,
-                                    workInProgress
+                                    progressTracker
                                 );
 
                 var jobOutputs = processContract(contractData);
@@ -197,8 +197,8 @@ public class JobProcessorImpl implements JobProcessor {
      * @param attestedContracts
      * @return
      */
-    private WorkInProgress createWorkInProgress(String jobUuid, List<Contract> attestedContracts) {
-        return WorkInProgress.builder()
+    private ProgressTracker initializeProgressTracker(String jobUuid, List<Contract> attestedContracts) {
+        return ProgressTracker.builder()
                 .jobUuid(jobUuid)
                 .patientsByContracts(fetchPatientsForAllContracts(attestedContracts))
                 .build();
@@ -223,12 +223,12 @@ public class JobProcessorImpl implements JobProcessor {
         var outputFile = fileService.createOrReplaceFile(outputDir, contractNumber + OUTPUT_FILE_SUFFIX);
         var errorFile = fileService.createOrReplaceFile(outputDir, contractNumber + ERROR_FILE_SUFFIX);
 
-        var workInProgress = contractData.getWorkInProgress();
+        var progressTracker = contractData.getProgressTracker();
 
-        var patientsByContract = getPatientsByContract(contractNumber, workInProgress);
+        var patientsByContract = getPatientsByContract(contractNumber, progressTracker);
         var patients = patientsByContract.getPatients();
         int patientCount = patients.size();
-        log.info("Contract [{}] has [{}] Patients", contractNumber, patientsByContract.getPatients().size());
+        log.info("Contract [{}] has [{}] Patients", contractNumber, patientCount);
 
 
         // A mutex lock that all threads for a contract uses while writing into the shared files
@@ -261,13 +261,13 @@ public class JobProcessorImpl implements JobProcessor {
                     break;
                 }
 
-                errorCount += processHandles(futureHandles, workInProgress);
+                errorCount += processHandles(futureHandles, progressTracker);
             }
         }
 
         while (!futureHandles.isEmpty()) {
             sleep();
-            errorCount += processHandles(futureHandles, workInProgress);
+            errorCount += processHandles(futureHandles, progressTracker);
         }
 
         if (isCancelled) {
@@ -289,8 +289,8 @@ public class JobProcessorImpl implements JobProcessor {
     }
 
 
-    private GetPatientsByContractResponse getPatientsByContract(String contractNumber, WorkInProgress workInProgress) {
-        return workInProgress.getPatientsByContracts()
+    private GetPatientsByContractResponse getPatientsByContract(String contractNumber, ProgressTracker progressTracker) {
+        return progressTracker.getPatientsByContracts()
                 .stream()
                 .filter(byContract -> byContract.getContractNumber().equals(contractNumber))
                 .findFirst()
@@ -336,7 +336,7 @@ public class JobProcessorImpl implements JobProcessor {
                 .anyMatch(optOut -> optOut.getEffectiveDate().isBefore(tomorrow));
     }
 
-    private int processHandles(List<Future<Integer>> futureHandles, WorkInProgress workInProgress) {
+    private int processHandles(List<Future<Integer>> futureHandles, ProgressTracker progressTracker) {
         int errorCount = 0;
 
         var iterator = futureHandles.iterator();
@@ -348,7 +348,7 @@ public class JobProcessorImpl implements JobProcessor {
                     if (responseCount > 0) {
                         errorCount += responseCount;
                     }
-                    workInProgress.incrementProcessedCount();
+                    progressTracker.incrementProcessedCount();
                 } catch (InterruptedException e) {
                     final String errMsg = "interrupted exception while processing patient ";
                     log.error(errMsg);
@@ -367,16 +367,16 @@ public class JobProcessorImpl implements JobProcessor {
             }
         }
 
-        updateProgress(workInProgress);
+        updateProgress(progressTracker);
 
         return errorCount;
     }
 
 
-    private void updateProgress(WorkInProgress workInProgress) {
-        var jobUuid = workInProgress.getJobUuid();
-        var processedCount = workInProgress.getProcessedCount();
-        var totalCount = workInProgress.getTotalCount();
+    private void updateProgress(ProgressTracker progressTracker) {
+        var jobUuid = progressTracker.getJobUuid();
+        var processedCount = progressTracker.getProcessedCount();
+        var totalCount = progressTracker.getTotalCount();
 
         final int percentageCompleted = (processedCount * 100) / totalCount;
 
