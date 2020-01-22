@@ -69,16 +69,13 @@ public class TestRunner {
 
     public void init() throws IOException, InterruptedException, JSONException {
         if(environment.isUsesDockerCompose()) {
-            WaitStrategy waitForHttp = new HttpWaitStrategy()
-                    .forPort(8080)
-                    .forStatusCodeMatching(response -> response == 401);
-
             DockerComposeContainer container = new DockerComposeContainer(
                     new File("../docker-compose.yml"))
                     //.withScaledService("api", 2) // failing now since it's not changing ports
                     .withScaledService("worker", 2)
                     .withExposedService("db", 5432)
-                    .withExposedService("api", 8080, waitForHttp);
+                    .withExposedService("api", 8080, new HostPortWaitStrategy()
+                            .withStartupTimeout(Duration.of(150, SECONDS)));
             container.start();
         }
 
