@@ -1,9 +1,9 @@
 resource "aws_security_group" "api" {
-  name        = "ab2d-${lower(var.env)}-api-sg"
+  name        = "${lower(var.env)}-api-sg"
   description = "API security group"
   vpc_id      = var.vpc_id
   tags = {
-    Name = "ab2d-${lower(var.env)}-api-sg"
+    Name = "${lower(var.env)}-api-sg"
   }
 }
 
@@ -106,11 +106,11 @@ resource "aws_security_group_rule" "db_access_api" {
 }
 
 resource "aws_security_group" "load_balancer" {
-  name        = "ab2d-${lower(var.env)}-load-balancer-sg"
+  name        = "${lower(var.env)}-load-balancer-sg"
   description = "API security group"
   vpc_id      = var.vpc_id
   tags = {
-    Name = "ab2d-${lower(var.env)}-load-balancer-sg"
+    Name = "${lower(var.env)}-load-balancer-sg"
   }
 }
 
@@ -124,17 +124,43 @@ resource "aws_security_group_rule" "load_balancer_access" {
   security_group_id = aws_security_group.load_balancer.id
 }
 
+resource "aws_security_group_rule" "efs_ingress" {
+  type        = "ingress"
+  description = "NFS"
+  from_port   = "2049"
+  to_port     = "2049"
+  protocol    = "tcp"
+  source_security_group_id = aws_security_group.api.id
+  security_group_id = var.efs_security_group_id
+}
+
+resource "aws_efs_mount_target" "alpha" {
+  file_system_id  = var.efs_id
+  subnet_id       = var.alpha
+  security_groups = [var.efs_security_group_id]
+}
+
+resource "aws_efs_mount_target" "beta" {
+  file_system_id  = var.efs_id
+  subnet_id      =  var.beta
+  security_groups = [var.efs_security_group_id]
+}
+
 resource "aws_ecs_cluster" "ab2d_api" {
-  name = "ab2d-${lower(var.env)}-api"
+  name = "${lower(var.env)}-api"
 }
 
 resource "aws_ecs_task_definition" "api" {
   family = "api"
+  volume {
+    name      = "efs"
+    host_path = "/mnt/efs"
+  }
   container_definitions = <<JSON
   [
     {
       "name": "ab2d-api",
-      "image": "${var.docker_repository_url}",
+      "image": "${var.ecr_repo_aws_account}.dkr.ecr.us-east-1.amazonaws.com/ab2d_api:${var.image_version}",
       "essential": true,
       "memory": 2048,
       "portMappings": [
@@ -142,6 +168,12 @@ resource "aws_ecs_task_definition" "api" {
           "containerPort": ${var.container_port},
           "hostPort": ${var.ecs_task_definition_host_port}
         }
+      ],
+      "mountPoints": [
+        {
+	  "containerPath": "/mnt/efs",
+	  "sourceVolume": "efs"
+	}
       ],
       "environment" : [
         {
@@ -163,6 +195,10 @@ resource "aws_ecs_task_definition" "api" {
 	{
 	  "name" : "AB2D_DB_DATABASE",
 	  "value" : "${var.db_name}"
+	},
+        {
+	  "name" : "AB2D_EFS_MOUNT",
+	  "value" : "/mnt/efs"
 	}
       ],
       "logConfiguration": {
@@ -180,7 +216,7 @@ JSON
 }
 
 resource "aws_lb" "api" {
-  name = "ab2d-${lower(var.env)}"
+  name = "${lower(var.env)}"
   internal = false
   load_balancer_type = "application"
   security_groups = [aws_security_group.api.id, aws_security_group.load_balancer.id]
@@ -190,13 +226,13 @@ resource "aws_lb" "api" {
 
   access_logs {
     bucket = var.logging_bucket
-    prefix = "ab2d-${lower(var.env)}"
+    prefix = "${lower(var.env)}"
     enabled = true
   }
 }
 
 resource "aws_lb_target_group" "api" {
-  name = "ab2d-${lower(var.env)}-api-tg"
+  name = "${lower(var.env)}-api-tg"
   port = var.host_port
   protocol = "HTTP"
   vpc_id = var.vpc_id
@@ -223,7 +259,7 @@ resource "aws_lb_listener" "api" {
 
 resource "aws_ecs_service" "api" {
   depends_on = ["aws_lb.api"]
-  name = "ab2d-api"
+  name = "${lower(var.env)}-api"
   cluster = aws_ecs_cluster.ab2d_api.id
   task_definition = var.override_task_definition_arn != "" ? var.override_task_definition_arn : aws_ecs_task_definition.api.arn
   desired_count = 5
@@ -241,13 +277,13 @@ resource "aws_ecs_service" "api" {
 # security_groups = [aws_security_group.api.id,var.enterprise-tools-sec-group-id,var.vpn-private-sec-group-id]
 # LSH SKIP FOR NOW BEGIN
 resource "aws_launch_configuration" "launch_config" {
-  name_prefix = "ab2d-${lower(var.env)}-"
+  name_prefix = "${lower(var.env)}-api-"
   image_id = var.ami_id
   instance_type = var.instance_type
   iam_instance_profile = var.iam_instance_profile
   key_name = var.ssh_key_name
   security_groups = [aws_security_group.api.id]  
-  user_data = templatefile("${path.module}/userdata.tpl",{ env = "${lower(var.env)}", cluster_name = "ab2d-${lower(var.env)}-api" })
+  user_data = templatefile("${path.module}/userdata.tpl",{ env = "${lower(var.env)}", cluster_name = "${lower(var.env)}-api", efs_id = var.efs_id })
   lifecycle { create_before_destroy = true }
 }
 
@@ -269,7 +305,7 @@ resource "aws_autoscaling_group" "asg" {
   tags = [
     {
       key = "Name"
-      value = "ab2d-${lower(var.env)}-api"
+      value = "${lower(var.env)}-api"
       propagate_at_launch = true
     },
     {
