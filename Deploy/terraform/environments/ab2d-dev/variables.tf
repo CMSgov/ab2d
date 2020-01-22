@@ -3,11 +3,11 @@ variable "aws_account_number" {
 }
 
 variable "aws_profile" {
-  default = "ab2d-shared"
+  default = "ab2d-dev"
 }
 
 variable "env" {
-  default = "dev"
+  default = "ab2d-dev"
 }
 
 variable "vpc_id" {
@@ -42,7 +42,7 @@ variable "linux_user" {
 }
 
 variable "ssh_key_name" {
-  default = "ab2d-shared"
+  default = "ab2d-dev"
 }
 
 variable "max_ec2_instance_count" {
@@ -214,11 +214,11 @@ variable "db_name_secret_arn" {
 ## S3 specific variables #########################################################################
 
 variable "file_bucket_name" {
-  default = "cms-ab2d-dev"
+  default = "ab2d-dev"
 }
 
 variable "logging_bucket_name" {
-  default = "cms-ab2d-cloudtrail"
+  default = "ab2d-dev-cloudtrail"
 }
 
 variable "s3_username_whitelist" {
@@ -243,6 +243,16 @@ variable "victorops_url_endpoint" {
 }
 
 variable "deployer_ip_address" {
+  default = ""
+  description = "Programmatically determined and passed in at the command line"
+}
+
+variable "ecr_repo_aws_account" {
+  default = ""
+  description = "Programmatically determined and passed in at the command line"
+}
+
+variable "image_version" {
   default = ""
   description = "Programmatically determined and passed in at the command line"
 }
