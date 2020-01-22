@@ -348,48 +348,36 @@
    $ cd ~/code/ab2d/Deploy
    ```
 
-1. If deploying to the SemanticBits demo environment, create the VPC
-
-   1. Create the VPC
-   
-      ```ShellSession
-      $ ./create-vpc-for-sbdemo.sh
-      ```
-
-   1. Note the output
-
-      *Format:*
-      
-      ```
-      Creating VPC...
-      The VPC ID is: {vpc id}
-      Done.
-      ```
-
-   1. Rerun the create when VPC already exists to see how the output changes
-   
-      ```ShellSession
-      $ ./create-vpc-for-sbdemo.sh
-      ```
-
-   1. Note the output
-
-      *Format:*
-      
-      ```
-      INFO: The VPC already exists.
-      The VPC ID is: {vpc id}
-      Done.
-      ```
-
-1. Set the target VPC ID
-
-   *Format:*
+1. Create the VPC for the dev environment
    
    ```ShellSession
-   $ export VPC_ID={vpc id}
+   $ ./create-vpc-for-sbdemo.sh \
+     --environment=dev \
+     --region=us-east-2 \
+     --vpc-cidr-block-1=10.242.26.0/24 \
+     --vpc-cidr-block-2=10.242.5.128/26 \
+     --subnet-public-1-cidr-block=10.242.5.128/27 \
+     --subnet-public-2-cidr-block=10.242.5.160/27 \
+     --subnet-private-1-cidr-block=10.242.26.0/25 \
+     --subnet-private-2-cidr-block=10.242.26.128/25
    ```
+
+1. Create the VPC for the sbx environment
+
+   > *** TO DO ***: Change CIDR values to match assigned values from CMS AWS account
    
+   ```ShellSession
+   $ ./create-vpc-for-sbdemo.sh \
+     --environment=sbx \
+     --region=us-east-2 \
+     --vpc-cidr-block-1=10.242.27.0/24 \
+     --vpc-cidr-block-2=10.242.6.128/26 \
+     --subnet-public-1-cidr-block=10.242.6.128/27 \
+     --subnet-public-2-cidr-block=10.242.6.160/27 \
+     --subnet-private-1-cidr-block=10.242.27.0/25 \
+     --subnet-private-2-cidr-block=10.242.27.128/25
+   ```
+
 1. If creating the AWS environment for Dev, do one of the following
 
    *Deploy Dev by creating new api and worker images:*

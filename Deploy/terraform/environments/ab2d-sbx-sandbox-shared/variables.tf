@@ -1,13 +1,13 @@
 variable "aws_account_number" {
-  default = "349849222861"
+  default = "777200079629"
 }
 
 variable "aws_profile" {
-  default = "ab2d-dev"
+  default = "ab2d-sbx-sandbox"
 }
 
 variable "env" {
-  default = "ab2d-dev"
+  default = "ab2d-sbx-sandbox-shared"
 }
 
 variable "vpc_id" {
@@ -42,7 +42,7 @@ variable "linux_user" {
 }
 
 variable "ssh_key_name" {
-  default = "ab2d-dev"
+  default = "ab2d-sbx-sandbox"
 }
 
 variable "max_ec2_instance_count" {
@@ -161,16 +161,6 @@ variable "db_multi_az" {
   default = "false"
 }
 
-variable "db_host" {
-  default     = ""
-  description = "Please pass this on command line and not as a value here"
-}
-
-variable "db_port" {
-  default     = ""
-  description = "Please pass this on command line and not as a value here"
-}
-
 variable "db_username" {
   default     = ""
   description = "Please pass this on command line and not as a value here"
@@ -214,11 +204,11 @@ variable "db_name_secret_arn" {
 ## S3 specific variables #########################################################################
 
 variable "file_bucket_name" {
-  default = "ab2d-dev"
+  default = "ab2d-sbx-sandbox"
 }
 
 variable "logging_bucket_name" {
-  default = "ab2d-dev-cloudtrail"
+  default = "ab2d-sbx-sandbox-cloudtrail"
 }
 
 variable "s3_username_whitelist" {
@@ -243,16 +233,6 @@ variable "victorops_url_endpoint" {
 }
 
 variable "deployer_ip_address" {
-  default = ""
-  description = "Programmatically determined and passed in at the command line"
-}
-
-variable "ecr_repo_aws_account" {
-  default = ""
-  description = "Programmatically determined and passed in at the command line"
-}
-
-variable "image_version" {
   default = ""
   description = "Programmatically determined and passed in at the command line"
 }

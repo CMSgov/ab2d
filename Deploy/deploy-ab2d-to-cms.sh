@@ -1,4 +1,5 @@
 #!/bin/bash
+
 set -e #Exit on first error
 set -x #Be verbose
 
@@ -31,6 +32,15 @@ case $i in
   --shared-environment=*)
   SHARED_ENVIRONMENT="${i#*=}"
   CMS_SHARED_ENV=$(echo $SHARED_ENVIRONMENT | tr '[:upper:]' '[:lower:]')
+  shift # past argument=value
+  ;;
+  --ecr-repo-environment=*)
+  ECR_REPO_ENVIRONMENT="${i#*=}"
+  CMS_ECR_REPO_ENV=$(echo $ECR_REPO_ENVIRONMENT | tr '[:upper:]' '[:lower:]')
+  shift # past argument=value
+  ;;
+  --region=*)
+  REGION="${i#*=}"
   shift # past argument=value
   ;;
   --vpc-id=*)
@@ -88,11 +98,11 @@ fi
 # Set environment
 #
 
-export AWS_PROFILE="ab2d-${CMS_SHARED_ENV}"
+export AWS_PROFILE="${CMS_ENV}"
 
 # Verify that VPC ID exists
 
-VPC_EXISTS=$(aws --region us-east-1 ec2 describe-vpcs \
+VPC_EXISTS=$(aws --region "${REGION}" ec2 describe-vpcs \
   --query "Vpcs[?VpcId=='$VPC_ID'].VpcId" \
   --output text)
 
@@ -107,12 +117,12 @@ fi
 # Get KMS key id (if exists)
 #
 
-KMS_KEY_ID=$(aws kms list-aliases \
+KMS_KEY_ID=$(aws --region "${REGION}" kms list-aliases \
   --query="Aliases[?AliasName=='alias/ab2d-kms'].TargetKeyId" \
   --output text)
 
 if [ -n "${KMS_KEY_ID}" ]; then
-  KMS_KEY_STATE=$(aws kms describe-key \
+  KMS_KEY_STATE=$(aws --region "${REGION}" kms describe-key \
     --key-id alias/ab2d-kms \
     --query "KeyMetadata.KeyState" \
     --output text)
@@ -140,9 +150,16 @@ echo "Initialize and validate terraform for the shared components..."
 echo "**************************************************************"
 
 cd "${START_DIR}"
-cd terraform/environments/ab2d-$CMS_SHARED_ENV
+cd terraform/environments/$CMS_SHARED_ENV
 
-terraform init
+rm -f *.tfvars
+
+terraform init \
+    -backend-config="bucket=${CMS_ENV}-automation" \
+    -backend-config="key=${CMS_SHARED_ENV}/terraform/terraform.tfstate" \
+    -backend-config="region=${REGION}" \
+    -backend-config="encrypt=true"
+
 terraform validate
 
 # Initialize and validate terraform for the target environment
@@ -152,9 +169,16 @@ echo "Initialize and validate terraform for the target environment..."
 echo "***************************************************************"
 
 cd "${START_DIR}"
-cd terraform/environments/ab2d-$CMS_ENV
+cd terraform/environments/$CMS_ENV
 
-terraform init
+rm -f *.tfvars
+
+terraform init \
+    -backend-config="bucket=${CMS_ENV}-automation" \
+    -backend-config="key=${CMS_ENV}/terraform/terraform.tfstate" \
+    -backend-config="region=${REGION}" \
+    -backend-config="encrypt=true"
+
 terraform validate
 
 #
@@ -171,14 +195,14 @@ if [ -n "$KMS_KEY_ID" ]; then
 else
   echo "Deploying KMS..."
   cd "${START_DIR}"
-  cd terraform/environments/ab2d-$CMS_SHARED_ENV
+  cd terraform/environments/$CMS_SHARED_ENV
   terraform apply \
     --target module.kms --auto-approve
 fi
 
 # Get KMS key id
 
-KMS_KEY_ID=$(aws kms list-aliases \
+KMS_KEY_ID=$(aws --region "${REGION}" kms list-aliases \
   --query="Aliases[?AliasName=='alias/ab2d-kms'].TargetKeyId" \
   --output text)
 
@@ -236,7 +260,7 @@ fi
 
 # Enable DNS hostname on VPC
 
-VPC_ENABLE_DNS_HOSTNAMES=$(aws ec2 describe-vpc-attribute \
+VPC_ENABLE_DNS_HOSTNAMES=$(aws --region "${REGION}" ec2 describe-vpc-attribute \
   --vpc-id $VPC_ID \
   --attribute enableDnsHostnames \
   --query "EnableDnsHostnames.Value" \
@@ -255,8 +279,8 @@ fi
 
 echo "Getting first public subnet id..."
 
-SUBNET_PUBLIC_1_ID=$(aws ec2 describe-subnets \
-  --filters "Name=tag:Name,Values=ab2d-${CMS_ENV}-public-a" \
+SUBNET_PUBLIC_1_ID=$(aws --region "${REGION}" ec2 describe-subnets \
+  --filters "Name=tag:Name,Values=${CMS_ENV}-public-a" \
   --query "Subnets[*].SubnetId" \
   --output text)
 
@@ -273,8 +297,8 @@ fi
 
 echo "Getting second public subnet id..."
 
-SUBNET_PUBLIC_2_ID=$(aws ec2 describe-subnets \
-  --filters "Name=tag:Name,Values=ab2d-${CMS_ENV}-public-b" \
+SUBNET_PUBLIC_2_ID=$(aws --region "${REGION}" ec2 describe-subnets \
+  --filters "Name=tag:Name,Values=${CMS_ENV}-public-b" \
   --query "Subnets[*].SubnetId" \
   --output text)
 
@@ -291,8 +315,8 @@ fi
 
 echo "Getting first private subnet id..."
 
-SUBNET_PRIVATE_1_ID=$(aws ec2 describe-subnets \
-  --filters "Name=tag:Name,Values=ab2d-${CMS_ENV}-private-a" \
+SUBNET_PRIVATE_1_ID=$(aws --region "${REGION}" ec2 describe-subnets \
+  --filters "Name=tag:Name,Values=${CMS_ENV}-private-a" \
   --query "Subnets[*].SubnetId" \
   --output text)
 
@@ -309,8 +333,8 @@ fi
 
 echo "Getting second private subnet id..."
 
-SUBNET_PRIVATE_2_ID=$(aws ec2 describe-subnets \
-  --filters "Name=tag:Name,Values=ab2d-${CMS_ENV}-private-b" \
+SUBNET_PRIVATE_2_ID=$(aws --region "${REGION}" ec2 describe-subnets \
+  --filters "Name=tag:Name,Values=${CMS_ENV}-private-b" \
   --query "Subnets[*].SubnetId" \
   --output text)
 
@@ -327,8 +351,8 @@ fi
 
 echo "Getting internet gateway id..."
 
-IGW_ID=$(aws ec2 describe-internet-gateways \
-  --filters "Name=tag:Name,Values=ab2d-${CMS_ENV}" \
+IGW_ID=$(aws --region "${REGION}" ec2 describe-internet-gateways \
+  --filters "Name=tag:Name,Values=${CMS_ENV}" \
   --query "InternetGateways[*].InternetGatewayId" \
   --output text)
 
@@ -345,8 +369,8 @@ fi
 
 echo "Getting custom route table id for internet gateway..."
 
-IGW_ROUTE_TABLE_ID=$(aws ec2 describe-route-tables \
-  --filters "Name=tag:Name,Values=ab2d-${CMS_ENV}-public" \
+IGW_ROUTE_TABLE_ID=$(aws --region "${REGION}" ec2 describe-route-tables \
+  --filters "Name=tag:Name,Values=${CMS_ENV}-public" \
   --query "RouteTables[*].RouteTableId" \
   --output text)
 
@@ -361,8 +385,8 @@ fi
 
 echo "Verifying internet gateway route is present in the custom route table for internet gateway..."
 
-IGW_ROUTE_TABLE_IGW_ROUTE_TARGET=$(aws ec2 describe-route-tables \
-  --filters "Name=tag:Name,Values=ab2d-${CMS_ENV}-public" \
+IGW_ROUTE_TABLE_IGW_ROUTE_TARGET=$(aws --region "${REGION}" ec2 describe-route-tables \
+  --filters "Name=tag:Name,Values=${CMS_ENV}-public" \
   --query "RouteTables[*].Routes[?GatewayId=='$IGW_ID'].GatewayId" \
   --output text)
 
@@ -377,8 +401,8 @@ fi
 
 echo "Verifying the association of the first public subnet with the custom route table for internet gateway..."
 
-IGW_ROUTE_TABLE_ASSOCIATION_SUBNET_PUBLIC_1_ID=$(aws ec2 describe-route-tables \
-  --filters "Name=tag:Name,Values=ab2d-${CMS_ENV}-public" \
+IGW_ROUTE_TABLE_ASSOCIATION_SUBNET_PUBLIC_1_ID=$(aws --region "${REGION}" ec2 describe-route-tables \
+  --filters "Name=tag:Name,Values=${CMS_ENV}-public" \
   --query "RouteTables[*].Associations[?SubnetId=='${SUBNET_PUBLIC_1_ID}'].SubnetId" \
   --output text)
 
@@ -393,8 +417,8 @@ fi
 
 echo "Verifying the association of the second public subnet with the custom route table for internet gateway..."
 
-IGW_ROUTE_TABLE_ASSOCIATION_SUBNET_PUBLIC_2_ID=$(aws ec2 describe-route-tables \
-  --filters "Name=tag:Name,Values=ab2d-${CMS_ENV}-public" \
+IGW_ROUTE_TABLE_ASSOCIATION_SUBNET_PUBLIC_2_ID=$(aws --region "${REGION}" ec2 describe-route-tables \
+  --filters "Name=tag:Name,Values=${CMS_ENV}-public" \
   --query "RouteTables[*].Associations[?SubnetId=='${SUBNET_PUBLIC_2_ID}'].SubnetId" \
   --output text)
 
@@ -411,8 +435,8 @@ fi
 
 # Enable Auto-assign Public IP on the first public subnet
 
-SUBNET_PUBLIC_1_MAP_PUBLIC_IP_ON_LAUNCH=$(aws ec2 describe-subnets \
-  --filters "Name=tag:Name,Values=ab2d-${CMS_ENV}-public-a" \
+SUBNET_PUBLIC_1_MAP_PUBLIC_IP_ON_LAUNCH=$(aws --region "${REGION}" ec2 describe-subnets \
+  --filters "Name=tag:Name,Values=${CMS_ENV}-public-a" \
   --query "Subnets[?MapPublicIpOnLaunch].MapPublicIpOnLaunch" \
   --output text)
 
@@ -423,14 +447,14 @@ if [ -z "${SUBNET_PUBLIC_1_MAP_PUBLIC_IP_ON_LAUNCH}" ]; then
   aws ec2 modify-subnet-attribute \
     --subnet-id $SUBNET_PUBLIC_1_ID \
     --map-public-ip-on-launch \
-    --region us-east-1
+    --region "${REGION}"
 
 fi
 
 # Enable Auto-assign Public IP on the second public subnet
 
-SUBNET_PUBLIC_2_MAP_PUBLIC_IP_ON_LAUNCH=$(aws ec2 describe-subnets \
-  --filters "Name=tag:Name,Values=ab2d-${CMS_ENV}-public-b" \
+SUBNET_PUBLIC_2_MAP_PUBLIC_IP_ON_LAUNCH=$(aws --region "${REGION}" ec2 describe-subnets \
+  --filters "Name=tag:Name,Values=${CMS_ENV}-public-b" \
   --query "Subnets[?MapPublicIpOnLaunch].MapPublicIpOnLaunch" \
   --output text)
 
@@ -441,7 +465,7 @@ if [ -z "${SUBNET_PUBLIC_2_MAP_PUBLIC_IP_ON_LAUNCH}" ]; then
   aws ec2 modify-subnet-attribute \
     --subnet-id $SUBNET_PUBLIC_2_ID \
     --map-public-ip-on-launch \
-    --region us-east-1
+    --region "${REGION}"
   
 fi
 
@@ -453,8 +477,8 @@ fi
 
 echo "Verifying Elastic IP for first NAT Gateway..."
 
-EIP_ALLOC_1_ID=$(aws ec2 describe-addresses \
-  --filters "Name=tag:Name,Values=ab2d-${CMS_ENV}-nat-gateway-a" \
+EIP_ALLOC_1_ID=$(aws --region "${REGION}" ec2 describe-addresses \
+  --filters "Name=tag:Name,Values=${CMS_ENV}-nat-gateway-a" \
   --query "Addresses[*].AllocationId" \
   --output text)
 
@@ -469,8 +493,8 @@ fi
 
 echo "Verifying first NAT Gateway..."
 
-NAT_GW_1_ID=$(aws ec2 describe-nat-gateways \
-  --filter "Name=tag:Name,Values=ab2d-${CMS_ENV}-a" \
+NAT_GW_1_ID=$(aws --region "${REGION}" ec2 describe-nat-gateways \
+  --filter "Name=tag:Name,Values=${CMS_ENV}-a" \
   --query "NatGateways[*].NatGatewayId" \
   --output text)
 
@@ -485,8 +509,8 @@ fi
 
 echo "Verifying the custom route table for the first NAT Gateway..."
 
-ROUTE_TABLE_FOR_NGW_1_ID=$(aws ec2 describe-route-tables \
-  --filters "Name=tag:Name,Values=ab2d-${CMS_ENV}-private-a" \
+ROUTE_TABLE_FOR_NGW_1_ID=$(aws --region "${REGION}" ec2 describe-route-tables \
+  --filters "Name=tag:Name,Values=${CMS_ENV}-private-a" \
   --query "RouteTables[*].RouteTableId" \
   --output text)
 
@@ -501,8 +525,8 @@ fi
 
 echo "Verifying first NAT gateway route is present in the custom route table for the first NAT gateway..."
 
-NGW_1_ROUTE_TABLE_NGW_1_ROUTE_TARGET=$(aws ec2 describe-route-tables \
-  --filters "Name=tag:Name,Values=ab2d-${CMS_ENV}-private-a" \
+NGW_1_ROUTE_TABLE_NGW_1_ROUTE_TARGET=$(aws --region "${REGION}" ec2 describe-route-tables \
+  --filters "Name=tag:Name,Values=${CMS_ENV}-private-a" \
   --query "RouteTables[*].Routes[?NatGatewayId=='$NAT_GW_1_ID'].NatGatewayId" \
   --output text)
 
@@ -517,8 +541,8 @@ fi
 
 echo "Verifying that association of the first private subnet with the custom route table for the first NAT Gateway..."
 
-NGW_1_ROUTE_TABLE_ASSOCIATION_SUBNET_PRIVATE_1_ID=$(aws ec2 describe-route-tables \
-  --filters "Name=tag:Name,Values=ab2d-${CMS_ENV}-private-a" \
+NGW_1_ROUTE_TABLE_ASSOCIATION_SUBNET_PRIVATE_1_ID=$(aws --region "${REGION}" ec2 describe-route-tables \
+  --filters "Name=tag:Name,Values=${CMS_ENV}-private-a" \
   --query "RouteTables[*].Associations[?SubnetId=='${SUBNET_PRIVATE_1_ID}'].SubnetId" \
   --output text)
 
@@ -537,8 +561,8 @@ fi
 
 echo "Verifying Elastic IP for second NAT Gateway..."
 
-EIP_ALLOC_2_ID=$(aws ec2 describe-addresses \
-  --filters "Name=tag:Name,Values=ab2d-${CMS_ENV}-nat-gateway-b" \
+EIP_ALLOC_2_ID=$(aws --region "${REGION}" ec2 describe-addresses \
+  --filters "Name=tag:Name,Values=${CMS_ENV}-nat-gateway-b" \
   --query "Addresses[*].AllocationId" \
   --output text)
 
@@ -553,8 +577,8 @@ fi
 
 echo "Verifying second NAT Gateway..."
 
-NAT_GW_2_ID=$(aws ec2 describe-nat-gateways \
-  --filter "Name=tag:Name,Values=ab2d-${CMS_ENV}-b" \
+NAT_GW_2_ID=$(aws --region "${REGION}" ec2 describe-nat-gateways \
+  --filter "Name=tag:Name,Values=${CMS_ENV}-b" \
   --query "NatGateways[*].NatGatewayId" \
   --output text)
 
@@ -569,8 +593,8 @@ fi
 
 echo "Verifying the custom route table for the second NAT Gateway..."
 
-ROUTE_TABLE_FOR_NGW_2_ID=$(aws ec2 describe-route-tables \
-  --filters "Name=tag:Name,Values=ab2d-${CMS_ENV}-private-b" \
+ROUTE_TABLE_FOR_NGW_2_ID=$(aws --region "${REGION}" ec2 describe-route-tables \
+  --filters "Name=tag:Name,Values=${CMS_ENV}-private-b" \
   --query "RouteTables[*].RouteTableId" \
   --output text)
 
@@ -585,8 +609,8 @@ fi
 
 echo "Verifying second NAT gateway route is present in the custom route table for the second NAT gateway..."
 
-NGW_2_ROUTE_TABLE_NGW_2_ROUTE_TARGET=$(aws ec2 describe-route-tables \
-  --filters "Name=tag:Name,Values=ab2d-${CMS_ENV}-private-b" \
+NGW_2_ROUTE_TABLE_NGW_2_ROUTE_TARGET=$(aws --region "${REGION}" ec2 describe-route-tables \
+  --filters "Name=tag:Name,Values=${CMS_ENV}-private-b" \
   --query "RouteTables[*].Routes[?NatGatewayId=='$NAT_GW_2_ID'].NatGatewayId" \
   --output text)
 
@@ -601,8 +625,8 @@ fi
 
 echo "Verifying that association of the second private subnet with the custom route table for the second NAT Gateway..."
 
-NGW_2_ROUTE_TABLE_ASSOCIATION_SUBNET_PRIVATE_2_ID=$(aws ec2 describe-route-tables \
-  --filters "Name=tag:Name,Values=ab2d-${CMS_ENV}-private-b" \
+NGW_2_ROUTE_TABLE_ASSOCIATION_SUBNET_PRIVATE_2_ID=$(aws --region "${REGION}" ec2 describe-route-tables \
+  --filters "Name=tag:Name,Values=${CMS_ENV}-private-b" \
   --query "RouteTables[*].Associations[?SubnetId=='${SUBNET_PRIVATE_2_ID}'].SubnetId" \
   --output text)
 
@@ -613,6 +637,55 @@ if [ -z "${NGW_2_ROUTE_TABLE_ASSOCIATION_SUBNET_PRIVATE_2_ID}" ]; then
   
 fi
 
+# Create or verify the VPN access security group
+
+echo "Verifying VPN access security group..."
+
+VPN_ACCESS_SECURITY_GROUP_ID=$(aws --region "${REGION}" ec2 describe-security-groups \
+  --filters "Name=tag:Name,Values=VPN access" \
+  --query "SecurityGroups[*].GroupId" \
+  --output text)
+
+if [ -z "${VPN_ACCESS_SECURITY_GROUP_ID}" ]; then
+  echo "Creating VPN access security group..."
+  VPN_ACCESS_SECURITY_GROUP_ID=$(aws --region "${REGION}" ec2 create-security-group \
+    --description "VPN access" \
+    --group-name "VPN access" \
+    | jq --raw-output ".GroupId")
+fi
+
+# Apply or verify tag for VPN access security group
+
+VPN_ACCESS_TAG_EXISTS=$(aws --region "${REGION}" ec2 describe-security-groups \
+  --filters "Name=tag:Name,Values=VPN access" \
+  --query "SecurityGroups[*].GroupId" \
+  --output text)
+
+if [ -z "${VPN_ACCESS_TAG_EXISTS}" ]; then
+  echo "Setting tag for vpc..."
+  aws --region "${REGION}" ec2 create-tags \
+    --resources $VPN_ACCESS_SECURITY_GROUP_ID \
+    --tags "Key=Name,Value=VPN access"
+else
+  echo "VPN access tag verified..."
+fi
+
+# Add or verify ingress rule for VPN
+
+VPN_ACCESS_SECURITY_GROUP_INGRESS_RULE_EXISTS=$(aws --region "${REGION}" ec2 describe-security-groups \
+  --filters "Name=group-id,Values=${VPN_ACCESS_SECURITY_GROUP_ID}" \
+  --query "SecurityGroups[*].IpPermissions[*].IpRanges[?Description == 'ingress from VPN']".Description \
+  --output text)
+
+if [ -z "${VPN_ACCESS_SECURITY_GROUP_INGRESS_RULE_EXISTS}" ]; then
+  echo "Adding ingress rule for VPN..."
+  aws --region "${REGION}" ec2 authorize-security-group-ingress \
+    --group-id "${VPN_ACCESS_SECURITY_GROUP_ID}" \
+    --ip-permissions IpProtocol=-1,IpRanges='[{CidrIp=10.232.32.0/19,Description="ingress from VPN"}]'
+else
+  echo "Ingress rule for VPN verified..."
+fi
+
 #
 # AMI Generation for application nodes
 #
@@ -620,7 +693,7 @@ fi
 # Set AMI_ID if it already exists for the deployment
 
 echo "Set AMI_ID if it already exists for the deployment..."
-AMI_ID=$(aws --region us-east-1 ec2 describe-images \
+AMI_ID=$(aws --region "${REGION}" ec2 describe-images \
   --owners self \
   --filters "Name=tag:Name,Values=ab2d-ami" \
   --query "Images[*].[ImageId]" \
@@ -632,7 +705,7 @@ echo "If no AMI is specified then create a new one..."
 if [ -z "${AMI_ID}" ]; then
     
   # Get the latest seed AMI
-  SEED_AMI=$(aws --region us-east-1 ec2 describe-images \
+  SEED_AMI=$(aws --region "${REGION}" ec2 describe-images \
     --owners "${OWNER}" \
     --filters "Name=name,Values=EAST-RH 7*" \
     --query "Images[*].[ImageId,CreationDate]" \
@@ -640,13 +713,7 @@ if [ -z "${AMI_ID}" ]; then
     | sort -k2 -r \
     | head -n1 \
     | awk '{print $1}')
-  
-  # Get first public subnet
-  SUBNET_PUBLIC_1_ID=$(aws --region us-east-1 ec2 describe-subnets \
-    --filters "Name=tag:Name,Values=ab2d-dev-public-a" \
-    --query "Subnets[0].SubnetId" \
-    --output text)
-  
+    
   # Create AMI for application nodes
   cd "${START_DIR}"
   cd packer/app
@@ -654,6 +721,7 @@ if [ -z "${AMI_ID}" ]; then
   COMMIT=$(git rev-parse HEAD)
   packer build \
     --var seed_ami=$SEED_AMI \
+    --var region="${REGION}" \
     --var ec2_instance_type=$EC2_INSTANCE_TYPE \
     --var vpc_id=$VPC_ID \
     --var subnet_public_1_id=$SUBNET_PUBLIC_1_ID \
@@ -664,7 +732,7 @@ if [ -z "${AMI_ID}" ]; then
   AMI_ID=$(cat output.txt | awk 'match($0, /ami-.*/) { print substr($0, RSTART, RLENGTH) }' | tail -1)
   
   # Add name tag to AMI
-  aws --region us-east-1 ec2 create-tags \
+  aws --region "${REGION}" ec2 create-tags \
     --resources $AMI_ID \
     --tags "Key=Name,Value=ab2d-ami"
 fi
@@ -676,7 +744,7 @@ fi
 # Set JENKINS_AMI_ID if it already exists for the deployment
 
 echo "Set JENKINS_AMI_ID if it already exists for the deployment..."
-JENKINS_AMI_ID=$(aws --region us-east-1 ec2 describe-images \
+JENKINS_AMI_ID=$(aws --region "${REGION}" ec2 describe-images \
   --owners self \
   --filters "Name=tag:Name,Values=ab2d-jenkins-ami" \
   --query "Images[*].[ImageId]" \
@@ -688,7 +756,7 @@ echo "If no AMI is specified then create a new one..."
 if [ -z "${JENKINS_AMI_ID}" ]; then
 
   # Get the latest seed AMI
-  SEED_AMI=$(aws --region us-east-1 ec2 describe-images \
+  SEED_AMI=$(aws --region "${REGION}" ec2 describe-images \
     --owners "${OWNER}" \
     --filters "Name=name,Values=EAST-RH 7*" \
     --query "Images[*].[ImageId,CreationDate]" \
@@ -697,30 +765,25 @@ if [ -z "${JENKINS_AMI_ID}" ]; then
     | head -n1 \
     | awk '{print $1}')
 
-  # Get first public subnet
-  SUBNET_PUBLIC_1_ID=$(aws --region us-east-1 ec2 describe-subnets \
-    --filters "Name=tag:Name,Values=ab2d-dev-public-a" \
-    --query "Subnets[0].SubnetId" \
-    --output text)
-
   # Create AMI for Jenkins
   cd "${START_DIR}"
   cd packer/jenkins
   IP=$(curl ipinfo.io/ip)
   COMMIT=$(git rev-parse HEAD)
   packer build \
-	 --var seed_ami=$SEED_AMI \
-	 --var ec2_instance_type=$EC2_INSTANCE_TYPE \
-	 --var vpc_id=$VPC_ID \
-	 --var subnet_public_1_id=$SUBNET_PUBLIC_1_ID \
-	 --var my_ip_address=$IP \
-	 --var ssh_username=$SSH_USERNAME \
-	 --var git_commit_hash=$COMMIT \
-	 app.json  2>&1 | tee output.txt
+    --var seed_ami=$SEED_AMI \
+    --var region="${REGION}" \
+    --var ec2_instance_type=$EC2_INSTANCE_TYPE \
+    --var vpc_id=$VPC_ID \
+    --var subnet_public_1_id=$SUBNET_PUBLIC_1_ID \
+    --var my_ip_address=$IP \
+    --var ssh_username=$SSH_USERNAME \
+    --var git_commit_hash=$COMMIT \
+    app.json  2>&1 | tee output.txt
   JENKINS_AMI_ID=$(cat output.txt | awk 'match($0, /ami-.*/) { print substr($0, RSTART, RLENGTH) }' | tail -1)
   
   # Add name tag to AMI
-  aws --region us-east-1 ec2 create-tags \
+  aws --region "${REGION}" ec2 create-tags \
     --resources $JENKINS_AMI_ID \
     --tags "Key=Name,Value=ab2d-jenkins-ami"
 fi
@@ -736,9 +799,9 @@ DEPLOYER_IP_ADDRESS=$(curl ipinfo.io/ip)
 # Create "auto.tfvars" file for shared components
 
 cd "${START_DIR}"
-cd terraform/environments/ab2d-$CMS_SHARED_ENV
+cd terraform/environments/$CMS_SHARED_ENV
 
-DB_ENDPOINT=$(aws --region us-east-1 rds describe-db-instances \
+DB_ENDPOINT=$(aws --region "${REGION}" rds describe-db-instances \
   --query="DBInstances[?DBInstanceIdentifier=='ab2d'].Endpoint.Address" \
   --output=text)
 
@@ -758,8 +821,8 @@ if [ -z "${DB_ENDPOINT}" ]; then
   echo 'deployer_ip_address = "'$DEPLOYER_IP_ADDRESS'"' \
     >> $CMS_SHARED_ENV.auto.tfvars
 else
-  PRIVATE_SUBNETS_OUTPUT=$(aws ec2 describe-subnets \
-    --filters "Name=tag:Name,Values=ab2d-*-private-*" \
+  PRIVATE_SUBNETS_OUTPUT=$(aws --region "${REGION}" ec2 describe-subnets \
+    --filters "Name=tag:Name,Values=*-private-*" \
     --query "Subnets[*].SubnetId" \
     --output text)
 
@@ -796,7 +859,7 @@ fi
 # Create ".auto.tfvars" file for the target environment
 
 cd "${START_DIR}"
-cd terraform/environments/ab2d-$CMS_ENV
+cd terraform/environments/$CMS_ENV
 
 echo 'vpc_id = "'$VPC_ID'"' \
   > $CMS_ENV.auto.tfvars
@@ -820,37 +883,37 @@ echo 'deployer_ip_address = "'$DEPLOYER_IP_ADDRESS'"' \
 #
 
 cd "${START_DIR}"
-cd terraform/environments/ab2d-$CMS_SHARED_ENV
+cd terraform/environments/$CMS_SHARED_ENV
 
 #
-# Create "cms-ab2d-cloudtrail" bucket
+# Create cloudtrail bucket
 #
 
-echo "Creating "cms-ab2d-cloudtrail" bucket..."
+echo "Creating "${CMS_ENV}-cloudtrail" bucket..."
 
-aws --region us-east-1 s3api create-bucket \
-  --bucket cms-ab2d-cloudtrail
+aws --region "${REGION}" s3api create-bucket \
+  --bucket "${CMS_ENV}-cloudtrail"
 
 # Block public access on bucket
 
-aws --region us-east-1 s3api put-public-access-block \
-  --bucket cms-ab2d-cloudtrail \
+aws --region "${REGION}" s3api put-public-access-block \
+  --bucket "${CMS_ENV}-cloudtrail" \
   --public-access-block-configuration BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true
 
-# Give "Write objects" and "Read bucket permissions" to the "S3 log delivery group" of the "cms-ab2d-cloudtrail" bucket
+# Give "Write objects" and "Read bucket permissions" to the "S3 log delivery group" of the "cloudtrail" bucket
 
-aws --region us-east-1 s3api put-bucket-acl \
-  --bucket cms-ab2d-cloudtrail \
+aws --region "${REGION}" s3api put-bucket-acl \
+  --bucket "${CMS_ENV}-cloudtrail" \
   --grant-write URI=http://acs.amazonaws.com/groups/s3/LogDelivery \
   --grant-read-acp URI=http://acs.amazonaws.com/groups/s3/LogDelivery
 
-# Add bucket policy to the "cms-ab2d-cloudtrail" S3 bucket
+# Add bucket policy to the "cloudtrail" S3 bucket
 
 cd "${START_DIR}"
-cd terraform/environments/ab2d-$CMS_SHARED_ENV
+cd terraform/environments/$CMS_SHARED_ENV
 
-aws --region us-east-1 s3api put-bucket-policy \
-  --bucket cms-ab2d-cloudtrail \
+aws --region "${REGION}" s3api put-bucket-policy \
+  --bucket "${CMS_ENV}-cloudtrail" \
   --policy file://ab2d-cloudtrail-bucket-policy.json
 
 #
@@ -860,7 +923,7 @@ aws --region us-east-1 s3api put-bucket-policy \
 echo "Deploying dev S3 bucket..."
 
 cd "${START_DIR}"
-cd terraform/environments/ab2d-$CMS_SHARED_ENV
+cd terraform/environments/$CMS_SHARED_ENV
 
 terraform apply \
   --target module.s3 \
@@ -880,18 +943,18 @@ terraform apply \
   --var "db_name=${DATABASE_NAME}" \
   --target module.db --auto-approve
 
-DB_ENDPOINT=$(aws --region us-east-1 rds describe-db-instances \
+DB_ENDPOINT=$(aws --region "${REGION}" rds describe-db-instances \
   --query="DBInstances[?DBInstanceIdentifier=='ab2d'].Endpoint.Address" \
   --output=text)
 
 cd "${START_DIR}"
-cd terraform/environments/ab2d-$CMS_SHARED_ENV
+cd terraform/environments/$CMS_SHARED_ENV
 rm -f generated/.pgpass
 
 # Generate ".pgpass" file
 
 cd "${START_DIR}"
-cd terraform/environments/ab2d-$CMS_SHARED_ENV
+cd terraform/environments/$CMS_SHARED_ENV
 mkdir -p generated
 
 # Add default database
@@ -902,8 +965,8 @@ echo "${DB_ENDPOINT}:5432:postgres:${DATABASE_USER}:${DATABASE_PASSWORD}" > gene
 
 # Get the names of all deployed private subnets
 
-# PRIVATE_SUBNETS=$(aws ec2 describe-subnets \
-#   --filters "Name=tag:Name,Values=ab2d-*-private-subnet*" \
+# PRIVATE_SUBNETS=$(aws --region "${REGION}" ec2 describe-subnets \
+#   --filters "Name=tag:Name,Values=*-private-subnet*" \
 #   --query "Subnets[*].Tags[?Key == 'Name'].Value" \
 #   --output text)
 
@@ -921,7 +984,7 @@ echo "${DB_ENDPOINT}:5432:postgres:${DATABASE_USER}:${DATABASE_PASSWORD}" > gene
 #   DATABASE_PASSWORD=$(./get-database-secret.py "${i}" database_password $DATABASE_SECRET_DATETIME)
 #   DATABASE_NAME=$(./get-database-secret.py "${i}" database_name $DATABASE_SECRET_DATETIME)
 #   cd "${START_DIR}"
-#   cd terraform/environments/ab2d-$CMS_SHARED_ENV
+#   cd terraform/environments/$CMS_SHARED_ENV
 #   echo "${DB_ENDPOINT}:5432:${DATABASE_NAME}:${DATABASE_USER}:${DATABASE_PASSWORD}" >> generated/.pgpass
 # done
 
@@ -946,7 +1009,7 @@ terraform apply \
 ######################################
 
 cd "${START_DIR}"
-cd terraform/environments/ab2d-$CMS_ENV
+cd terraform/environments/$CMS_ENV
 
 #
 # Deploy EFS
@@ -954,7 +1017,9 @@ cd terraform/environments/ab2d-$CMS_ENV
 
 # Get files system id (if exists)
 
-EFS_FS_ID=$(aws efs describe-file-systems --query="FileSystems[?CreationToken=='ab2d-${CMS_ENV}-efs'].FileSystemId" --output=text)
+EFS_FS_ID=$(aws --region "${REGION}" efs describe-file-systems \
+  --query="FileSystems[?CreationToken=='${CMS_ENV}-efs'].FileSystemId" \
+  --output=text)
 
 # Create file system (if doesn't exist)
 
@@ -973,14 +1038,14 @@ cd "${START_DIR}"
 
 # Get the public ip address of the controller
 
-CONTROLLER_PUBLIC_IP=$(aws --region us-east-1 ec2 describe-instances \
+CONTROLLER_PUBLIC_IP=$(aws --region "${REGION}" ec2 describe-instances \
   --filters "Name=tag:Name,Values=ab2d-deployment-controller" \
   --query="Reservations[*].Instances[?State.Name == 'running'].PublicIpAddress" \
   --output text)
 
 # Determine if the database for the environment exists
 
-DB_NAME_IF_EXISTS=$(ssh -tt -i "~/.ssh/ab2d-${CMS_SHARED_ENV}.pem" \
+DB_NAME_IF_EXISTS=$(ssh -tt -i "~/.ssh/${CMS_ENV}.pem" \
   "${SSH_USERNAME}@${CONTROLLER_PUBLIC_IP}" \
   "psql -t --host "${DB_ENDPOINT}" --username "${DATABASE_USER}" --dbname postgres --command='SELECT datname FROM pg_catalog.pg_database'" \
   | grep "${DATABASE_NAME}" \
@@ -993,7 +1058,7 @@ DB_NAME_IF_EXISTS=$(ssh -tt -i "~/.ssh/ab2d-${CMS_SHARED_ENV}.pem" \
 
 if [ -n "${CONTROLLER_PUBLIC_IP}" ] && [ -n "${DB_ENDPOINT}" ] && [ "${DB_NAME_IF_EXISTS}" != "${DATABASE_NAME}" ]; then
   echo "Creating database..."
-  ssh -tt -i "~/.ssh/ab2d-${CMS_SHARED_ENV}.pem" \
+  ssh -tt -i "~/.ssh/${CMS_ENV}.pem" \
     "${SSH_USERNAME}@${CONTROLLER_PUBLIC_IP}" \
     "createdb ${DATABASE_NAME} --host ${DB_ENDPOINT} --username ${DATABASE_USER}"
 fi
@@ -1001,6 +1066,33 @@ fi
 #
 # Deploy AWS application modules
 #
+
+# Set environment to the AWS account where the shared ECR repository is maintained
+    
+export AWS_PROFILE="${CMS_ECR_REPO_ENV}"
+
+cd "${START_DIR}"
+cd terraform/environments/$CMS_ECR_REPO_ENV
+
+# Get ecr repo aws account
+
+ECR_REPO_AWS_ACCOUNT=$(aws --region "${REGION}" sts get-caller-identity \
+  --query Account \
+  --output text)
+
+# Apply ecr repo policy to the "ab2d_api" repo
+
+aws --region "${REGION}" ecr set-repository-policy \
+  --repository-name ab2d_api \
+  --policy-text file://ab2d-ecr-policy.json
+
+# Apply ecr repo policy to the "ab2d_worker" repo
+
+aws --region "${REGION}" ecr set-repository-policy \
+  --repository-name ab2d_worker \
+  --policy-text file://ab2d-ecr-policy.json
+
+# Build new images or use existing images
 
 if [ -n "${BUILD_NEW_IMAGES}" ]; then
 
@@ -1019,58 +1111,101 @@ if [ -n "${BUILD_NEW_IMAGES}" ]; then
 
   cd "${START_DIR}"
   cd ..
-  make docker-build
+
+  # Note that I can't build with "make docker-build" because test containers
+  # try to run inside the docker container. Using "mvn clean package" instead.
+  mvn clean package
   sleep 5
 
+  # Create an image version using the seven character git commit id
+
+  IMAGE_VERSION=$(git rev-parse HEAD | cut -c1-7)
+  
   # Build API docker image
 
   cd "${START_DIR}"
   cd ../api
   docker build \
-    --tag "ab2d_api:latest" .
+    --tag "ab2d_api:${IMAGE_VERSION}" .
 
   # Build worker docker image
 
   cd "${START_DIR}"
   cd ../worker
   docker build \
-    --tag "ab2d_worker:latest" .
+    --tag "ab2d_worker:${IMAGE_VERSION}" .
 
   # Tag and push API docker image to ECR
 
-  API_ECR_REPO_URI=$(aws --region us-east-1 ecr describe-repositories \
+  API_ECR_REPO_URI=$(aws --region "${REGION}" ecr describe-repositories \
     --query "repositories[?repositoryName == 'ab2d_api'].repositoryUri" \
     --output text)
   if [ -z "${API_ECR_REPO_URI}" ]; then
-    aws --region us-east-1 ecr create-repository \
-        --repository-name "ab2d_api"
-    API_ECR_REPO_URI=$(aws --region us-east-1 ecr describe-repositories \
+    aws --region "${REGION}" ecr create-repository \
+      --repository-name "ab2d_api"
+    API_ECR_REPO_URI=$(aws --region "${REGION}" ecr describe-repositories \
       --query "repositories[?repositoryName == 'ab2d_api'].repositoryUri" \
       --output text)
   fi
-  docker tag "ab2d_api:latest" "${API_ECR_REPO_URI}:latest"
-  docker push "${API_ECR_REPO_URI}:latest"
+  docker tag "ab2d_api:${IMAGE_VERSION}" "${API_ECR_REPO_URI}:${IMAGE_VERSION}"
+  docker push "${API_ECR_REPO_URI}:${IMAGE_VERSION}"
 
   # Tag and push worker docker image to ECR
 
-  WORKER_ECR_REPO_URI=$(aws --region us-east-1 ecr describe-repositories \
+  WORKER_ECR_REPO_URI=$(aws --region "${REGION}" ecr describe-repositories \
     --query "repositories[?repositoryName == 'ab2d_worker'].repositoryUri" \
     --output text)
   if [ -z "${WORKER_ECR_REPO_URI}" ]; then
-    aws --region us-east-1 ecr create-repository \
+    aws --region "${REGION}" ecr create-repository \
       --repository-name "ab2d_worker"
-    WORKER_ECR_REPO_URI=$(aws --region us-east-1 ecr describe-repositories \
+    WORKER_ECR_REPO_URI=$(aws --region "${REGION}" ecr describe-repositories \
       --query "repositories[?repositoryName == 'ab2d_worker'].repositoryUri" \
       --output text)
   fi
-  docker tag "ab2d_worker:latest" "${WORKER_ECR_REPO_URI}:latest"
-  docker push "${WORKER_ECR_REPO_URI}:latest"
-   
+  docker tag "ab2d_worker:${IMAGE_VERSION}" "${WORKER_ECR_REPO_URI}:${IMAGE_VERSION}"
+  docker push "${WORKER_ECR_REPO_URI}:${IMAGE_VERSION}"
+
 else # use existing images
 
   echo "Using existing images..."
 
+  # Get current image version
+  
+  IMAGE_VERSION=$(aws --region "${REGION}" ecr describe-images \
+    --repository-name ab2d_api \
+    --query 'sort_by(imageDetails,& imagePushedAt)[-1].imageTags[0]')
+
+  # Remove double quotes
+  
+  IMAGE_VERSION=$(echo $IMAGE_VERSION | tr -d '"')
+  
 fi
+
+# Verify that the image versions of API and Worker are the same
+
+IMAGE_VERSION_API=$(aws --region "${REGION}" ecr describe-images \
+  --repository-name ab2d_api \
+  --query 'sort_by(imageDetails,& imagePushedAt)[-1].imageTags[0]')
+
+IMAGE_VERSION_WORKER=$(aws --region "${REGION}" ecr describe-images \
+  --repository-name ab2d_worker \
+  --query 'sort_by(imageDetails,& imagePushedAt)[-1].imageTags[0]')
+
+if [ "${IMAGE_VERSION_API}" != "${IMAGE_VERSION_WORKER}" ]; then
+  echo "ERROR: The ECR image versions for ab2d_api and ab2d_worker must be the same!"
+  exit 0
+else
+  echo "The ECR image versions for ab2d_api and ab2d_worker were verified to be the same..."
+fi
+
+echo "Using image version '${IMAGE_VERSION}' for ab2d_api and ab2d_worker..."
+
+# Reset to the target environment
+    
+export AWS_PROFILE="${CMS_ENV}"
+
+cd "${START_DIR}"
+cd terraform/environments/$CMS_ENV
 
 #
 # Switch context to terraform environment
@@ -1079,29 +1214,39 @@ fi
 echo "Switch context to terraform environment..."
 
 cd "${START_DIR}"
-cd terraform/environments/ab2d-$CMS_ENV
+cd terraform/environments/$CMS_ENV
 
 #
 # Get current known good ECS task definitions
 #
 
 echo "Get current known good ECS task definitions..."
-CLUSTER_ARNS=$(aws --region us-east-1 ecs list-clusters \
+
+CLUSTER_ARNS=$(aws --region "${REGION}" ecs list-clusters \
   --query 'clusterArns' \
   --output text \
-  | grep "/ab2d-${CMS_ENV}-api" \
+  | grep "/${CMS_ENV}-api" \
   | xargs \
   | tr -d '\r')
+
 if [ -z "${CLUSTER_ARNS}" ]; then
   echo "Skipping getting current ECS task definitions, since there are no existing clusters"
 else
-  echo "TEST"
-  API_TASK_DEFINITION=$(aws --region us-east-1 ecs describe-services \
-    --services "ab2d-${CMS_ENV}-api" \
-    --cluster "ab2d-${CMS_ENV}-api" \
+    
+  API_TASK_DEFINITION=$(aws --region "${REGION}" ecs describe-services \
+    --services "${CMS_ENV}-api" \
+    --cluster "${CMS_ENV}-api" \
     | grep "taskDefinition" \
     | head -1)
   API_TASK_DEFINITION=$(echo $API_TASK_DEFINITION | awk -F'": "' '{print $2}' | tr -d '"' | tr -d ',')
+  
+  WORKER_TASK_DEFINITION=$(aws --region "${REGION}" ecs describe-services \
+    --services "${CMS_ENV}-worker" \
+    --cluster "${CMS_ENV}-worker" \
+    | grep "taskDefinition" \
+    | head -1)
+  WORKER_TASK_DEFINITION=$(echo $WORKER_TASK_DEFINITION | awk -F'": "' '{print $2}' | tr -d '"' | tr -d ',')
+  
 fi
 
 #
@@ -1110,26 +1255,29 @@ fi
 
 echo "Get ECS task counts before making any changes..."
 
-# Define api_task_count
-api_task_count() { aws --region us-east-1 ecs list-tasks --cluster "ab2d-${CMS_ENV}-api" | grep "\:task\/"|wc -l|tr -d ' '; }
+# Define task count functions
+
+api_task_count() { aws --region "${REGION}" ecs list-tasks --cluster "${CMS_ENV}-api" | grep "\:task\/"|wc -l|tr -d ' '; }
+worker_task_count() { aws --region "${REGION}" ecs list-tasks --cluster "${CMS_ENV}-worker" | grep "\:task\/"|wc -l|tr -d ' '; }
 
 # Get old api task count (if exists)
+
 if [ -z "${CLUSTER_ARNS}" ]; then
   echo "Skipping setting OLD_API_TASK_COUNT, since there are no existing clusters"
 else
   OLD_API_TASK_COUNT=$(api_task_count)
+  OLD_WORKER_TASK_COUNT=$(worker_task_count)
 fi
 
 # set expected api task count
 
-# LSH BEGIN 2019-11-20
-# if [ -z "${CLUSTER_ARNS}" ]; then
-#   EXPECTED_API_COUNT="2"
-# else
-#   EXPECTED_API_COUNT="$((OLD_API_TASK_COUNT*2))"
-# fi
-EXPECTED_API_COUNT="2"
-# LSH END 2019-11-20
+if [ -z "${CLUSTER_ARNS}" ]; then
+  EXPECTED_API_COUNT="2"
+  EXPECTED_WORKER_COUNT="2"
+else
+  let EXPECTED_API_COUNT="$OLD_API_TASK_COUNT*2"
+  let EXPECTED_WORKER_COUNT="$OLD_WORKER_TASK_COUNT*2"
+fi
 
 #
 # Ensure Old Autoscaling Groups and containers are around to service requests
@@ -1140,21 +1288,27 @@ echo "Ensure Old Autoscaling Groups and containers are around to service request
 if [ -z "${CLUSTER_ARNS}" ]; then
   echo "Skipping setting OLD_API_ASG, since there are no existing clusters"
 else
-  OLD_API_ASG=$(terraform show|grep :autoScalingGroup:|awk -F" = " '{print $2}' | grep ab2d-$CMS_ENV)
+  OLD_API_ASG=$(terraform show|grep :autoScalingGroup:|awk -F" = " '{print $2}' | grep $CMS_ENV-api | tr -d '"')
+  OLD_WORKER_ASG=$(terraform show|grep :autoScalingGroup:|awk -F" = " '{print $2}' | grep $CMS_ENV-worker | tr -d '"')
 fi
 
 if [ -z "${CLUSTER_ARNS}" ]; then
   echo "Skipping removing autosclaing group and launch configuration, since there are no existing clusters"
 else
-  terraform state rm module.app.aws_autoscaling_group.asg
-  terraform state rm module.app.aws_launch_configuration.launch_config
+  terraform state rm module.api.aws_autoscaling_group.asg
+  terraform state rm module.api.aws_launch_configuration.launch_config
+  terraform state rm module.worker.aws_autoscaling_group.asg
+  terraform state rm module.worker.aws_launch_configuration.launch_config
 fi
 
 if [ -z "${CLUSTER_ARNS}" ]; then
   echo "Skipping removing autosclaing group and launch configuration, since there are no existing clusters"
 else
-  OLD_API_CONTAINER_INSTANCES=$(aws --region us-east-1 ecs list-container-instances \
-    --cluster "ab2d-${CMS_ENV}-api" \
+  OLD_API_CONTAINER_INSTANCES=$(aws --region "${REGION}" ecs list-container-instances \
+    --cluster "${CMS_ENV}-api" \
+    | grep container-instance)
+  OLD_WORKER_CONTAINER_INSTANCES=$(aws --region "${REGION}" ecs list-container-instances \
+    --cluster "${CMS_ENV}-worker" \
     | grep container-instance)
 fi
 
@@ -1180,7 +1334,7 @@ fi
 
 # Create or get database port secret
 
-DB_PORT=$(aws --region us-east-1 rds describe-db-instances \
+DB_PORT=$(aws --region "${REGION}" rds describe-db-instances \
   --query="DBInstances[?DBInstanceIdentifier=='ab2d'].Endpoint.Port" \
   --output=text)
 
@@ -1193,27 +1347,27 @@ fi
 
 # Get database secret manager ARNs
 
-DATABASE_HOST_SECRET_ARN=$(aws secretsmanager describe-secret \
+DATABASE_HOST_SECRET_ARN=$(aws --region "${REGION}" secretsmanager describe-secret \
   --secret-id "ab2d/${CMS_ENV}/module/db/database_host/${DATABASE_SECRET_DATETIME}" \
   --query "ARN" \
   --output text)
 
-DATABASE_PORT_SECRET_ARN=$(aws secretsmanager describe-secret \
+DATABASE_PORT_SECRET_ARN=$(aws --region "${REGION}" secretsmanager describe-secret \
   --secret-id "ab2d/${CMS_ENV}/module/db/database_port/${DATABASE_SECRET_DATETIME}" \
   --query "ARN" \
   --output text)
 
-DATABASE_USER_SECRET_ARN=$(aws secretsmanager describe-secret \
+DATABASE_USER_SECRET_ARN=$(aws --region "${REGION}" secretsmanager describe-secret \
   --secret-id "ab2d/${CMS_ENV}/module/db/database_user/${DATABASE_SECRET_DATETIME}" \
   --query "ARN" \
   --output text)
 
-DATABASE_PASSWORD_SECRET_ARN=$(aws secretsmanager describe-secret \
+DATABASE_PASSWORD_SECRET_ARN=$(aws --region "${REGION}" secretsmanager describe-secret \
   --secret-id "ab2d/${CMS_ENV}/module/db/database_password/${DATABASE_SECRET_DATETIME}" \
   --query "ARN" \
   --output text)
 
-DATABASE_NAME_SECRET_ARN=$(aws secretsmanager describe-secret \
+DATABASE_NAME_SECRET_ARN=$(aws --region "${REGION}" secretsmanager describe-secret \
   --secret-id "ab2d/${CMS_ENV}/module/db/database_name/${DATABASE_SECRET_DATETIME}" \
   --query "ARN" \
   --output text)
@@ -1221,7 +1375,7 @@ DATABASE_NAME_SECRET_ARN=$(aws secretsmanager describe-secret \
 # Change to the target terraform environment
 
 cd "${START_DIR}"
-cd terraform/environments/ab2d-$CMS_ENV
+cd terraform/environments/$CMS_ENV
 
 if [ -z "${AUTOAPPROVE}" ]; then
     
@@ -1241,11 +1395,13 @@ if [ -z "${AUTOAPPROVE}" ]; then
     --var "db_password_secret_arn=$DATABASE_PASSWORD_SECRET_ARN" \
     --var "db_name_secret_arn=$DATABASE_NAME_SECRET_ARN" \
     --var "deployer_ip_address=$DEPLOYER_IP_ADDRESS" \
+    --var "ecr_repo_aws_account=$ECR_REPO_AWS_ACCOUNT" \
+    --var "image_version=$IMAGE_VERSION" \
     --target module.api
   
   terraform apply \
     --var "ami_id=$AMI_ID" \
-    --var "current_task_definition_arn=$API_TASK_DEFINITION" \
+    --var "current_task_definition_arn=$WORKER_TASK_DEFINITION" \
     --var "db_host=$DATABASE_HOST" \
     --var "db_port=$DATABASE_PORT" \
     --var "db_username=$DATABASE_USER" \
@@ -1256,6 +1412,8 @@ if [ -z "${AUTOAPPROVE}" ]; then
     --var "db_user_secret_arn=$DATABASE_USER_SECRET_ARN" \
     --var "db_password_secret_arn=$DATABASE_PASSWORD_SECRET_ARN" \
     --var "db_name_secret_arn=$DATABASE_NAME_SECRET_ARN" \
+    --var "ecr_repo_aws_account=$ECR_REPO_AWS_ACCOUNT" \
+    --var "image_version=$IMAGE_VERSION" \
     --target module.worker
 
 else
@@ -1276,12 +1434,14 @@ else
     --var "db_password_secret_arn=$DATABASE_PASSWORD_SECRET_ARN" \
     --var "db_name_secret_arn=$DATABASE_NAME_SECRET_ARN" \
     --var "deployer_ip_address=$DEPLOYER_IP_ADDRESS" \
+    --var "ecr_repo_aws_account=$ECR_REPO_AWS_ACCOUNT" \
+    --var "image_version=$IMAGE_VERSION" \
     --target module.api \
     --auto-approve
 
   terraform apply \
     --var "ami_id=$AMI_ID" \
-    --var "current_task_definition_arn=$API_TASK_DEFINITION" \
+    --var "current_task_definition_arn=$WORKER_TASK_DEFINITION" \
     --var "db_host=$DATABASE_HOST" \
     --var "db_port=$DATABASE_PORT" \
     --var "db_username=$DATABASE_USER" \
@@ -1292,6 +1452,8 @@ else
     --var "db_user_secret_arn=$DATABASE_USER_SECRET_ARN" \
     --var "db_password_secret_arn=$DATABASE_PASSWORD_SECRET_ARN" \
     --var "db_name_secret_arn=$DATABASE_NAME_SECRET_ARN" \
+    --var "ecr_repo_aws_account=$ECR_REPO_AWS_ACCOUNT" \
+    --var "image_version=$IMAGE_VERSION" \
     --target module.worker \
     --auto-approve
 
@@ -1323,7 +1485,7 @@ fi
 #
 
 cd "${START_DIR}"
-cd terraform/environments/ab2d-$CMS_SHARED_ENV
+cd terraform/environments/$CMS_SHARED_ENV
 
 echo "Push authorized_keys file to deployment_controller..."
 terraform taint \
@@ -1365,12 +1527,95 @@ while [ "$ACTUAL_API_COUNT" -lt "$EXPECTED_API_COUNT" ]; do
   fi
 done
 
+ACTUAL_WORKER_COUNT=0
+RETRIES_WORKER=0
+
+while [ "$ACTUAL_WORKER_COUNT" -lt "$EXPECTED_WORKER_COUNT" ]; do
+  ACTUAL_WORKER_COUNT=$(worker_task_count)
+  echo "Running WORKER Tasks: $ACTUAL_WORKER_COUNT, Expected: $EXPECTED_WORKER_COUNT"
+  if [ "$RETRIES_WORKER" != "15" ]; then
+    echo "Retry in 60 seconds..."
+    sleep 60
+    RETRIES_WORKER=$(expr $RETRIES_WORKER + 1)
+  else
+    echo "Max retries reached. Exiting..."
+    exit 1
+  fi
+done
+
+# Drain old container instances
+
+if [ -z "${CLUSTER_ARNS}" ]; then
+  echo "Skipping draining old container instances, since there are no existing clusters"
+else
+  OLD_API_INSTANCE_LIST=$(echo $OLD_API_CONTAINER_INSTANCES | tr -d ' ' | tr "\n" " " | tr -d "," | tr '""' ' ' | tr -d '"')
+  OLD_WORKER_INSTANCE_LIST=$(echo $OLD_WORKER_CONTAINER_INSTANCES | tr -d ' ' | tr "\n" " " | tr -d "," | tr '""' ' ' | tr -d '"')
+  aws --region "${REGION}" ecs update-container-instances-state \
+    --cluster "${CMS_ENV}-api" \
+    --status DRAINING \
+    --container-instances $OLD_API_INSTANCE_LIST
+  aws --region "${REGION}" ecs update-container-instances-state \
+    --cluster "${CMS_ENV}-worker" \
+    --status DRAINING \
+    --container-instances $OLD_WORKER_INSTANCE_LIST
+  echo "Allowing all instances to drain for 60 seconds before proceeding..."
+  sleep 60
+fi
+
+# Remove old Autoscaling groups
+
+if [ -z "${CLUSTER_ARNS}" ]; then
+  echo "Skipping removing old autoscaling groups, since there are no existing clusters"
+else
+  OLD_API_ASG=$(echo $OLD_API_ASG | awk -F"/" '{print $2}')
+  OLD_WORKER_ASG=$(echo $OLD_WORKER_ASG | awk -F"/" '{print $2}')
+  aws --region "${REGION}" autoscaling delete-auto-scaling-group \
+    --auto-scaling-group-name $OLD_API_ASG \
+    --force-delete || true
+  aws --region "${REGION}" autoscaling delete-auto-scaling-group \
+    --auto-scaling-group-name $OLD_WORKER_ASG \
+    --force-delete || true
+fi
+
+# Remove old launch configurations
+
+if [ -z "${CLUSTER_ARNS}" ]; then
+  echo "Skipping removing old launch configurations, since there are no existing clusters"
+else
+    
+  LAUNCH_CONFIGURATION_EXPECTED_COUNT=2
+  LAUNCH_CONFIGURATION_ACTUAL_COUNT=$(aws --region "${REGION}" autoscaling describe-launch-configurations \
+    --query "LaunchConfigurations[*].[LaunchConfigurationName,CreatedTime]" \
+    | jq '. | length')
+  
+  while [ "$LAUNCH_CONFIGURATION_ACTUAL_COUNT" -gt "$LAUNCH_CONFIGURATION_EXPECTED_COUNT" ]; do
+  
+    OLD_LAUNCH_CONFIGURATION=$(aws --region "${REGION}" autoscaling describe-launch-configurations \
+      --query "LaunchConfigurations[*].[LaunchConfigurationName,CreatedTime]" \
+      --output text \
+      | sort -k2 \
+      | head -n1 \
+      | awk '{print $1}')
+  
+    aws --region "${REGION}" autoscaling delete-launch-configuration \
+      --launch-configuration-name "${OLD_LAUNCH_CONFIGURATION}"
+  
+    sleep 5
+    
+    LAUNCH_CONFIGURATION_ACTUAL_COUNT=$(aws --region "${REGION}" autoscaling describe-launch-configurations \
+      --query "LaunchConfigurations[*].[LaunchConfigurationName,CreatedTime]" \
+      | jq '. | length')
+  
+  done
+  
+fi
+
 #
 # Deploy CloudWatch
 #
 
 cd "${START_DIR}"
-cd terraform/environments/ab2d-$CMS_ENV
+cd terraform/environments/$CMS_ENV
 
 echo "Deploy CloudWatch..."
 if [ -z "${AUTOAPPROVE}" ]; then

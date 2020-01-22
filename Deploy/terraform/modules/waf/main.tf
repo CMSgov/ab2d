@@ -1,5 +1,5 @@
 resource "aws_wafregional_sql_injection_match_set" "sql_injection_match_set" {
-  name = "ab2d-${var.env}-sql-injection-match-set"
+  name = "${var.env}-sql-injection-match-set"
 
   sql_injection_match_tuple {
     text_transformation = "HTML_ENTITY_DECODE"
@@ -69,10 +69,10 @@ resource "aws_wafregional_sql_injection_match_set" "sql_injection_match_set" {
 }
 
 resource "aws_wafregional_rule" "sql_injection" {
-  name        = "ab2d-${lower(var.env)}-sqlinjection"
+  name        = "${lower(var.env)}-sqlinjection"
 
   # metric_name can contain only 1 to 128 alphanumeric characters (A-Z, a-z, 0-9)
-  metric_name = "ab2d${replace(var.env, "-", "")}sqlinjection"
+  metric_name = "${replace(var.env, "-", "")}sqlinjection"
 
   predicate {
     data_id = "${aws_wafregional_sql_injection_match_set.sql_injection_match_set.id}"
@@ -82,7 +82,7 @@ resource "aws_wafregional_rule" "sql_injection" {
 }
 
 resource "aws_wafregional_xss_match_set" "xss_match_set" {
-  name = "ab2d-${lower(var.env)}-xss-match-set"
+  name = "${lower(var.env)}-xss-match-set"
 
   xss_match_tuple {
     text_transformation = "HTML_ENTITY_DECODE"
@@ -152,10 +152,10 @@ resource "aws_wafregional_xss_match_set" "xss_match_set" {
 }
 
 resource "aws_wafregional_rule" "xss" {
-  name        = "ab2d-${lower(var.env)}-xss"
+  name        = "${lower(var.env)}-xss"
 
   # metric_name can contain only 1 to 128 alphanumeric characters (A-Z, a-z, 0-9)
-  metric_name = "ab2d${replace(var.env, "-", "")}xss"
+  metric_name = "${replace(var.env, "-", "")}xss"
 
   predicate {
     data_id = "${aws_wafregional_xss_match_set.xss_match_set.id}"
@@ -165,10 +165,10 @@ resource "aws_wafregional_rule" "xss" {
 }
 
 resource "aws_wafregional_web_acl" "web_acl" {
-  name        = "ab2d-${lower(var.env)}-web-acl"
+  name        = "${lower(var.env)}-web-acl"
 
   # metric_name can contain only 1 to 128 alphanumeric characters (A-Z, a-z, 0-9)
-  metric_name = "ab2d${replace(var.env, "-", "")}webacl"
+  metric_name = "${replace(var.env, "-", "")}webacl"
 
   default_action {
     type = "ALLOW"
