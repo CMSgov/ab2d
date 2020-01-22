@@ -58,8 +58,11 @@ public class JobProcessorImpl implements JobProcessor {
     @Value("${cancellation.check.frequency:10}")
     private int cancellationCheckFrequency;
 
-    @Value("${report.progress.frequency:100}")
-    private int reportProgressFrequency;
+    @Value("${report.progress.db.frequency:100}")
+    private int reportProgressDbFrequency;
+
+    @Value("${report.progress.log.frequency:100}")
+    private int reportProgressLogFrequency;
 
     @Value("${efs.mount}")
     private String efsMount;
@@ -82,24 +85,7 @@ public class JobProcessorImpl implements JobProcessor {
         Path outputDirPath = null;
         try {
             outputDirPath = Paths.get(efsMount, jobUuid);
-            final Path outputDir = createOutputDirectory(outputDirPath);
-
-            final List<Contract> attestedContracts = getAttestedContracts(job);
-
-            final ProgressTracker progressTracker = initializeProgressTracker(jobUuid, attestedContracts);
-
-            for (Contract contract : attestedContracts) {
-                log.info("Job [{}] - contract [{}] ", jobUuid, contract.getContractNumber());
-
-                var contractData = new ContractData(outputDir, contract, progressTracker);
-
-                var jobOutputs = processContract(contractData);
-
-                jobOutputs.forEach(jobOutput -> job.addJobOutput(jobOutput));
-                jobOutputRepository.saveAll(jobOutputs);
-            }
-
-            completeJob(job);
+            processJob(job, outputDirPath);
 
         } catch (JobCancelledException e) {
             log.warn("Job: [{}] CANCELLED", jobUuid);
@@ -118,6 +104,27 @@ public class JobProcessorImpl implements JobProcessor {
 
         return job;
     }
+
+    private void processJob(Job job, Path outputDirPath) {
+        var outputDir = createOutputDirectory(outputDirPath);
+
+        var attestedContracts = getAttestedContracts(job);
+        var jobUuid = job.getJobUuid();
+        var progressTracker = initializeProgressTracker(jobUuid, attestedContracts);
+
+        for (Contract contract : attestedContracts) {
+            log.info("Job [{}] - contract [{}] ", jobUuid, contract.getContractNumber());
+
+            var contractData = new ContractData(outputDir, contract, progressTracker);
+
+            var jobOutputs = processContract(contractData);
+            jobOutputs.forEach(jobOutput -> job.addJobOutput(jobOutput));
+            jobOutputRepository.saveAll(jobOutputs);
+        }
+
+        completeJob(job);
+    }
+
 
     private Path createOutputDirectory(Path outputDirPath) {
         Path directory = null;
@@ -372,15 +379,21 @@ public class JobProcessorImpl implements JobProcessor {
 
 
     private void trackProgress(ProgressTracker progressTracker) {
-        var jobUuid = progressTracker.getJobUuid();
+        if (progressTracker.isTimeToUpdateDatabase(reportProgressDbFrequency)) {
+            final int percentageCompleted = progressTracker.getPercentageCompleted();
+
+            if (percentageCompleted > progressTracker.getLastUpdatedPercentage()) {
+                jobRepository.updatePercentageCompleted(progressTracker.getJobUuid(), percentageCompleted);
+                progressTracker.setLastUpdatedPercentage(percentageCompleted);
+            }
+        }
+
         var processedCount = progressTracker.getProcessedCount();
-        var totalCount = progressTracker.getTotalCount();
+        if (progressTracker.isTimeToLog(reportProgressLogFrequency)) {
+            progressTracker.setLastLogUpdateCount(processedCount);
 
-        final int percentageCompleted = (processedCount * 100) / totalCount;
-
-        if (processedCount - progressTracker.getLastUpdatedCount() >= reportProgressFrequency) {
-            progressTracker.setLastUpdatedCount(processedCount);
-            jobRepository.updatePercentageCompleted(jobUuid, percentageCompleted);
+            var totalCount = progressTracker.getTotalCount();
+            var percentageCompleted = progressTracker.getPercentageCompleted();
             log.info("[{}/{}] records processed = [{}% completed]", processedCount, totalCount, percentageCompleted);
         }
     }

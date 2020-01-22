@@ -20,7 +20,13 @@ public class ProgressTracker {
     private int processedCount;
 
     @Setter
-    private int lastUpdatedCount;
+    private int lastDbUpdateCount;
+
+    @Setter
+    private int lastLogUpdateCount;
+
+    @Setter
+    private int lastUpdatedPercentage;
 
     public void incrementProcessedCount() {
         ++processedCount;
@@ -35,6 +41,20 @@ public class ProgressTracker {
         }
 
         return totalCount;
+    }
+
+    public boolean isTimeToUpdateDatabase(int reportProgressFrequency) {
+        return processedCount - lastDbUpdateCount >= reportProgressFrequency;
+    }
+
+    public boolean isTimeToLog(int reportProgressLogFrequency) {
+        return processedCount - lastLogUpdateCount >= reportProgressLogFrequency;
+    }
+
+    public int getPercentageCompleted() {
+        final int percentCompleted = (processedCount * 100) / getTotalCount();
+        lastDbUpdateCount = processedCount;
+        return percentCompleted;
     }
 
 
