@@ -32,7 +32,7 @@ public class TestUtil {
     @MockBean
     AccessTokenVerifier mockAccessTokenVerifier;
 
-    @Value("${api.okta-url}")
+    @Value("${api.okta-jwt-audience}")
     private String oktaUrl;
 
     private String jwtStr = null;
