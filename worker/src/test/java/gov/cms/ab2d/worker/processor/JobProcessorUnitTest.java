@@ -231,7 +231,7 @@ class JobProcessorUnitTest {
 
         var errorJobOutputs = processedJob.getJobOutputs()
                 .stream()
-                .filter(jobOutput -> jobOutput.isError())
+                .filter(jobOutput -> jobOutput.getError())
                 .collect(Collectors.toList());
 
         assertThat(processedJob.getStatus(), is(JobStatus.SUCCESSFUL));

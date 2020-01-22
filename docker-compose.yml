@@ -30,6 +30,8 @@ services:
       - "8080:8080"
     depends_on:
       - db
+    volumes:
+      - tmp-volume:/tmp/ab2d_efs_mount
   worker:
     build:
       context: ./worker
@@ -42,3 +44,9 @@ services:
       - AB2D_EFS_MOUNT=/tmp/ab2d_efs_mount
     depends_on:
       - db
+    volumes:
+      - tmp-volume:/tmp/ab2d_efs_mount
+
+# This needs a shared volume so that both the API and worker module can access the ndjson files being generated
+volumes:
+  tmp-volume:

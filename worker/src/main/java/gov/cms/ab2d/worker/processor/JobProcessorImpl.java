@@ -228,11 +228,13 @@ public class JobProcessorImpl implements JobProcessor {
 
         final List<JobOutput> jobOutputs = new ArrayList<>();
         if (errorCount < patientCount) {
-            jobOutputs.add(createJobOutput(outputFile, false));
+            Job job = jobRepository.findByJobUuid(jobUuid);
+            jobOutputs.add(createJobOutput(outputFile, false, job));
         }
         if (errorCount > 0) {
             log.warn("Encountered {} errors during job processing", errorCount);
-            jobOutputs.add(createJobOutput(errorFile, true));
+            Job job = jobRepository.findByJobUuid(jobUuid);
+            jobOutputs.add(createJobOutput(errorFile, true, job));
         }
 
         return jobOutputs;
@@ -310,7 +312,7 @@ public class JobProcessorImpl implements JobProcessor {
     }
 
 
-    private JobOutput createJobOutput(Path outputFile, boolean isError) {
+    private JobOutput createJobOutput(Path outputFile, boolean isError, Job job) {
         JobOutput jobOutput = new JobOutput();
         jobOutput.setFilePath(outputFile.getFileName().toString());
         jobOutput.setFhirResourceType(EOB);
@@ -321,6 +323,7 @@ public class JobProcessorImpl implements JobProcessor {
     private void completeJob(Job job) {
         job.setStatus(SUCCESSFUL);
         job.setStatusMessage("100%");
+        job.setProgress(100);
         job.setExpiresAt(OffsetDateTime.now().plusDays(1));
         job.setCompletedAt(OffsetDateTime.now());
 
