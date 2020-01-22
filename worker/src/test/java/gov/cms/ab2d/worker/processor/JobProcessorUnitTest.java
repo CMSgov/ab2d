@@ -33,6 +33,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
@@ -47,6 +48,7 @@ import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
@@ -84,6 +86,8 @@ class JobProcessorUnitTest {
         );
 
         ReflectionTestUtils.setField(cut, "cancellationCheckFrequency", 2);
+        ReflectionTestUtils.setField(cut, "reportProgressDbFrequency", 2);
+        ReflectionTestUtils.setField(cut, "reportProgressLogFrequency", 3);
         ReflectionTestUtils.setField(cut, "efsMount", efsMountTmpDir.toString());
 
         final Sponsor parentSponsor = createParentSponsor();
@@ -124,6 +128,7 @@ class JobProcessorUnitTest {
         assertThat(processedJob.getStatus(), is(JobStatus.SUCCESSFUL));
         assertThat(processedJob.getStatusMessage(), is("100%"));
         assertThat(processedJob.getExpiresAt(), notNullValue());
+        verify(jobRepository, atLeastOnce()).updatePercentageCompleted(anyString(), anyInt());
         doVerify();
     }
 
@@ -145,6 +150,7 @@ class JobProcessorUnitTest {
         assertThat(processedJob.getExpiresAt(), notNullValue());
         assertThat(processedJob.getJobOutputs().size(), equalTo(childSponsor.getAttestedContracts().size()));
         doVerify();
+        verify(jobRepository, atLeastOnce()).updatePercentageCompleted(anyString(), anyInt());
     }
 
 
@@ -159,6 +165,7 @@ class JobProcessorUnitTest {
         assertThat(processedJob.getStatus(), is(not(JobStatus.SUCCESSFUL)));
         assertThat(processedJob.getCompletedAt(), nullValue());
         doVerify();
+        verify(jobRepository, atLeastOnce()).updatePercentageCompleted(anyString(), anyInt());
     }
 
     @Test
@@ -184,6 +191,7 @@ class JobProcessorUnitTest {
         assertThat(processedJob.getExpiresAt(), notNullValue());
         doVerify();
         verify(fileService, times(2)).createOrReplaceFile(Mockito.any(Path.class), anyString());
+        verify(jobRepository, atLeastOnce()).updatePercentageCompleted(anyString(), anyInt());
     }
 
     private void doVerify() {
@@ -240,6 +248,7 @@ class JobProcessorUnitTest {
         assertFalse(errorJobOutputs.isEmpty());
         assertThat(processedJob.getCompletedAt(), notNullValue());
         doVerify();
+        verify(jobRepository, atLeastOnce()).updatePercentageCompleted(anyString(), anyInt());
     }
 
     @Test
@@ -294,6 +303,7 @@ class JobProcessorUnitTest {
         verify(fileService, times(2)).createDirectory(Mockito.any());
         verify(contractAdapter).getPatients(anyString());
         verify(patientClaimsProcessor, atLeast(1)).process(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any());
+        verify(jobRepository, atLeastOnce()).updatePercentageCompleted(anyString(), anyInt());
     }
 
 
@@ -344,6 +354,30 @@ class JobProcessorUnitTest {
         verify(fileService).createDirectory(Mockito.any());
         verify(contractAdapter, never()).getPatients(anyString());
         verify(fileService, never()).createOrReplaceFile(Mockito.any(Path.class), anyString());
+    }
+
+
+    @Test
+    @DisplayName("When many patientId are present, 'PercentageCompleted' should be updated many times")
+    void whenManyPatientIdsAreProcessed_shouldUpdatePercentageCompletedMultipleTimes() {
+
+        var contract = job.getUser().getSponsor().getContracts().iterator().next();
+        var patients = createPatientsByContractResponse(contract).getPatients();
+        var manyPatientIds = new ArrayList<PatientDTO>();
+        manyPatientIds.addAll(patients);
+        manyPatientIds.addAll(patients);
+        manyPatientIds.addAll(patients);
+        manyPatientIds.addAll(patients);
+        manyPatientIds.addAll(patients);
+        manyPatientIds.addAll(patients);
+        patientsByContract.setPatients(manyPatientIds);
+        var processedJob = cut.process(jobUuid);
+
+        assertThat(processedJob.getStatus(), is(JobStatus.SUCCESSFUL));
+        assertThat(processedJob.getStatusMessage(), is("100%"));
+        assertThat(processedJob.getExpiresAt(), notNullValue());
+        verify(jobRepository, times(9)).updatePercentageCompleted(anyString(), anyInt());
+        doVerify();
     }
 
 
