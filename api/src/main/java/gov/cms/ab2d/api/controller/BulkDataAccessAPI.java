@@ -265,8 +265,12 @@ public class BulkDataAccessAPI {
                 resp.setTransactionTime(jobCompletedAt.toHumanDisplay());
                 resp.setRequest(job.getRequestUrl());
                 resp.setRequiresAccessToken(true);
-                resp.setOutput(job.getJobOutputs().stream().filter(o -> !o.isError()).map(o -> new JobCompletedResponse.Output(o.getFhirResourceType(), getUrlPath(job, o.getFilePath()))).collect(Collectors.toList()));
-                resp.setError(job.getJobOutputs().stream().filter(o -> o.isError()).map(o -> new JobCompletedResponse.Output(o.getFhirResourceType(), getUrlPath(job, o.getFilePath()))).collect(Collectors.toList()));
+                resp.setOutput(job.getJobOutputs().stream().filter(o ->
+                    !o .getError()).map(o ->
+                        new JobCompletedResponse.Output(o.getFhirResourceType(), getUrlPath(job, o.getFilePath()))).collect(Collectors.toList()));
+                resp.setError(job.getJobOutputs().stream().filter(o ->
+                    o.getError()).map(o ->
+                        new JobCompletedResponse.Output(o.getFhirResourceType(), getUrlPath(job, o.getFilePath()))).collect(Collectors.toList()));
 
                 log.info("Job status completed successfully");
 
