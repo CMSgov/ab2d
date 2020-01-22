@@ -43,6 +43,6 @@ public interface JobRepository extends JpaRepository<Job, Long> {
 
     @Modifying
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    @Query(nativeQuery = true, value = "UPDATE job SET progress = :percentageCompleted WHERE job_uuid = :jobUuid ")
+    @Query("UPDATE Job j SET j.progress = :percentageCompleted WHERE j.jobUuid = :jobUuid ")
     int updatePercentageCompleted(String jobUuid, int percentageCompleted);
 }
