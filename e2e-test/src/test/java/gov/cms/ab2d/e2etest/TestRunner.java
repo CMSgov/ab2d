@@ -91,8 +91,8 @@ public class TestRunner {
             put("scope", "clientCreds");
         }};
 
-        String oktaClientId = System.getenv(environment.name() + "_OKTA_CLIENT_ID");
-        String oktaPassword = System.getenv(environment.name() + "_OKTA_CLIENT_PASSWORD");
+        String oktaClientId = System.getenv("OKTA_CLIENT_ID");
+        String oktaPassword = System.getenv("OKTA_CLIENT_PASSWORD");
 
         String authEncoded = Base64.getEncoder().encodeToString((oktaClientId + ":" + oktaPassword).getBytes());
 
