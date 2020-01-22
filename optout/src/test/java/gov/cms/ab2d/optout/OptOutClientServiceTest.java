@@ -40,26 +40,16 @@ class OptOutClientServiceTest {
     private OptOutRepository optOutRepository;
 
     private static int mockServerPort = 8083;
-
     private static ClientAndServer mockServer;
-
     private static final String TEST_DIR = "test-data/";
 
     @BeforeAll
     public static void setupBFDClient() throws IOException {
         mockServer = ClientAndServer.startClientAndServer(mockServerPort);
 
-        createMockServerExpectation("/v1/fhir/metadata",
-                200,
-                getRawXML("test-data/meta.xml"),
-                List.of());
-
-        createMockServerExpectation(
-                "/v1/fhir/Patient",
-                HttpStatus.SC_OK,
-                getRawXML(TEST_DIR + "patientbundle.xml"),
-                List.of()
-        );
+        MockBfdServiceUtils.createMockServerMetaExpectation("test-data/meta.xml", mockServerPort);
+        MockBfdServiceUtils.createMockServerPatientExpectation( TEST_DIR + "patientbundle.xml",
+                mockServerPort, List.of());
     }
 
     @AfterAll
@@ -83,42 +73,5 @@ class OptOutClientServiceTest {
         final InputStreamReader isr = new InputStreamReader(inputStream);
         final BufferedReader bufferedReader = new BufferedReader(isr);
         return bufferedReader.lines();
-    }
-
-    private static void createMockServerExpectation(String path, int respCode, String payload,
-                                                    List<Parameter> qStringParams) {
-        var delay = 100;
-        createMockServerExpectation(path, respCode, payload, qStringParams, delay);
-    }
-
-    private static void createMockServerExpectation(String path, int respCode, String payload,
-                                                    List<Parameter> qStringParams, int delayMs) {
-        new MockServerClient("localhost", mockServerPort)
-                .when(
-                        HttpRequest.request()
-                                .withMethod("GET")
-                                .withPath(path)
-                                .withQueryStringParameters(qStringParams),
-                        Times.unlimited()
-                )
-                .respond(
-                        org.mockserver.model.HttpResponse.response()
-                                .withStatusCode(respCode)
-                                .withHeader(
-                                        new Header("Content-Type",
-                                                "application/fhir+xml;charset=UTF-8")
-                                )
-                                .withBody(payload)
-                                .withDelay(TimeUnit.MILLISECONDS, delayMs)
-                );
-    }
-
-    private static String getRawXML(String path) throws IOException {
-        InputStream sampleData = OptOutClientServiceTest.class.getClassLoader().getResourceAsStream(path);
-        if (sampleData == null) {
-            throw new MissingResourceException("Cannot find sample requests",
-                    OptOutClientServiceTest.class.getName(), path);
-        }
-        return new String(sampleData.readAllBytes(), StandardCharsets.UTF_8);
     }
 }
