@@ -7,7 +7,7 @@ variable "aws_profile" {
 }
 
 variable "env" {
-  default = "ab2d-dev"
+  default = "ab2d-dev-shared"
 }
 
 variable "vpc_id" {
@@ -161,16 +161,6 @@ variable "db_multi_az" {
   default = "false"
 }
 
-variable "db_host" {
-  default     = ""
-  description = "Please pass this on command line and not as a value here"
-}
-
-variable "db_port" {
-  default     = ""
-  description = "Please pass this on command line and not as a value here"
-}
-
 variable "db_username" {
   default     = ""
   description = "Please pass this on command line and not as a value here"
@@ -243,16 +233,6 @@ variable "victorops_url_endpoint" {
 }
 
 variable "deployer_ip_address" {
-  default = ""
-  description = "Programmatically determined and passed in at the command line"
-}
-
-variable "ecr_repo_aws_account" {
-  default = ""
-  description = "Programmatically determined and passed in at the command line"
-}
-
-variable "image_version" {
   default = ""
   description = "Programmatically determined and passed in at the command line"
 }
