@@ -169,9 +169,9 @@
 
 1. If deploying to the "semantbitsdemo" AWS account, jump to the following document
 
-   [Internal Test Environment](documentation/Internal_Test_Environment.md)
+   [SemanticBits Demo Deployment](documentation/Internal_Test_Environment.md)
 
 1. If deploying to the customer's AWS account, jump to the following document
 
-   > *** TO DO ***
+   [CMS Deployment](documentation/AB2D_Deployment.md)
    
