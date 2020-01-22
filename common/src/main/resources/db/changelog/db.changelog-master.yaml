@@ -14,3 +14,5 @@ databaseChangeLog:
       file: db/changelog/v001/ab2d-828-increase-username-column-length.sql
   - include:
       file: db/changelog/v001/add_sbx_accounts.sql
+  - include:
+      file: db/changelog/v001/add_multicontract_data.sql
