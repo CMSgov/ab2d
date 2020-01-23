@@ -9,6 +9,7 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
+import javax.validation.constraints.NotNull;
 
 @Entity
 @Getter
@@ -21,12 +22,15 @@ public class JobOutput {
 
     @ManyToOne
     @JoinColumn(name = "job_id")
+    @NotNull
     private Job job;
 
     @Column(columnDefinition = "text")
+    @NotNull
     private String filePath;
 
     private String fhirResourceType;
 
-    private boolean error;
+    @NotNull
+    private Boolean error;
 }

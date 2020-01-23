@@ -33,7 +33,7 @@ import java.util.List;
 public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
 
     @Autowired
-    private AccessTokenVerifier jwtVerifier;
+    private AccessTokenVerifier accessTokenVerifier;
 
     @Autowired
     private UserService userService;
@@ -76,7 +76,7 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
 
         Jwt jwt;
         try {
-            jwt = jwtVerifier.decode(token);
+            jwt = accessTokenVerifier.decode(token);
         } catch (JwtVerificationException e) {
             log.error("Unable to decode JWT token {}", e.getMessage());
             throw new BadJWTTokenException("Unable to decode JWT token", e);
