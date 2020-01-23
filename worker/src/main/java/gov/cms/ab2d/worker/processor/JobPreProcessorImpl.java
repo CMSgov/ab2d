@@ -37,6 +37,7 @@ public class JobPreProcessorImpl implements JobPreProcessor {
         }
 
         job.setStatus(IN_PROGRESS);
+        job.setStatusMessage(null);
 
         return jobRepository.save(job);
     }

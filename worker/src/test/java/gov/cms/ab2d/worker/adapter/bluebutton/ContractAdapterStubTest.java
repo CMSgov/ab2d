@@ -21,14 +21,14 @@ class ContractAdapterStubTest {
 
     @Test
     @DisplayName("when contractNumber is 0, returns 100 patient records")
-    void when_0000_returns_000() {
+    void when_0000_returns_100() {
         var patients = cut.getPatients("S0000").getPatients();
         assertThat(patients.size(), is(100));
     }
 
     @Test
     @DisplayName("when contractNumber is greater than 9999, returns empty list")
-    void when_19999_returns_000() {
+    void whenGreaterThan_9999_returns_000() {
         var patients = cut.getPatients("S19999").getPatients();
         assertThat(patients.size(), is(0));
     }
