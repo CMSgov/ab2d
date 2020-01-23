@@ -154,6 +154,12 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
     }
 
     private List<Resource> extractResources(List<BundleEntryComponent> entries) {
+        /**
+         * To filter out by date: (with params List<Integer> validMonths, year, attestationDate
+         *
+         *    List<FilterOutByDate> dateRanges = FilterOutByDate.getDateRanges(validMonths, year);
+         *    List<ExplanationOfBenefit> benefits = FilterOutByDate.filterByDate(resources, attestationDate, dateRanges);
+         */
         return entries.stream()
                 // Get the resource
                 .map(BundleEntryComponent::getResource)

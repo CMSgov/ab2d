@@ -2,6 +2,7 @@ package gov.cms.ab2d.filter;
 
 import org.hl7.fhir.dstu3.model.ExplanationOfBenefit;
 import org.hl7.fhir.dstu3.model.Period;
+import org.hl7.fhir.dstu3.model.Resource;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -81,7 +82,7 @@ public class FilterOutByDate {
      * @return the list of date ranges
      * @throws ParseException if a date manipulation error occurs
      */
-    static List<DateRange> getDateRanges(List<Integer> months, int year) throws ParseException {
+    public static List<DateRange> getDateRanges(List<Integer> months, int year) throws ParseException {
         List<DateRange> ranges = new ArrayList<>();
         if (months == null || months.isEmpty() || year == 0) {
             return ranges;
@@ -204,15 +205,16 @@ public class FilterOutByDate {
      * @return - the list of objects done after the attestation date and in the date ranges
      * @throws ParseException - if there is an issue parsing the dates
      */
-    public static List<ExplanationOfBenefit> filterByDate(List<ExplanationOfBenefit> benes,
-                                                          Date attestationDate,
-                                                          List<DateRange> dateRanges) throws ParseException {
+    public static List<ExplanationOfBenefit> filterByDate(List<Resource> benes,
+                                              Date attestationDate,
+                                              List<DateRange> dateRanges) throws ParseException {
         if (benes == null || benes.isEmpty()) {
             return new ArrayList<>();
         }
         List<ExplanationOfBenefit> validBenes = new ArrayList<>();
 
-        for (ExplanationOfBenefit b : benes) {
+        for (int i=0; i<benes.size(); i++) {
+            ExplanationOfBenefit b = (ExplanationOfBenefit) benes.get(i);
             boolean inRange = false;
             for (DateRange r : dateRanges) {
                 if (withinDateRange(b, r) && afterAttestation(attestationDate, b)) {
