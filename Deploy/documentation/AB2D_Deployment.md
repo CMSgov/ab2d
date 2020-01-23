@@ -46,6 +46,9 @@
 1. [Configure New Relic and Splunk within the deployment AMI](#configure-new-relic-and-splunk-within-the-deployment-ami)
 1. [Request an Entrust certificate for sandbox.ab2d.cms.gov](#request-an-entrust-certificate-for-sandboxab2dcmsgov)
 1. [Submit an "Internet DNS Change Request Form" to product owner for the sandbox application load balancer](#submit-an-internet-dns-change-request-form-to-product-owner-for-the-sandbox-application-load-balancer)
+1. [Create an ab2d vault in 1Password](#create-an-ab2d-vault-in-1password)
+1. [Add an entrust certificate to the ab2d vault in 1Password](#add-an-entrust-certificate-to-the-ab2d-vault-in-1password)
+1. [Add a private key to the ab2d vault in 1Password](#add-a-private-key-to-the-ab2d-vault-in-1password)
 
 ## Note the starting state of the customer AWS account
 
@@ -2659,3 +2662,167 @@
 1. Submit the completed for to the product owner
 
 1. Note that the product owner will complete the process
+
+## Create an ab2d vault in 1Password
+
+1. Open Chrome
+
+1. Enter the following in the address bar
+
+   > https://my.1password.com/signin?l=en
+
+1. Log on to 1Password
+
+1. Select **New Vault**
+
+1. Type the following in the **Vault Title** text box
+
+   ```
+   ab2d
+   ```
+
+1. Keep **Let administrators manage this vault** checked
+
+1. Select **Create Vault**
+
+1. Note the newly created "ab2d" vault
+
+1. Select the gear icon within the "ab2d" vault
+
+1. Select **Manage** beside "People"
+
+1. Add team members
+
+   1. Type a team member's name in the search box
+
+   1. Check the checkbox beside the team member in the search results
+
+   1. Clear the search box
+
+   1. Repeat this step for all team members
+
+1. Note that the person creating the vault already has full access
+
+1. Select **Update Team Members**
+
+1. Note that added team members default to "View & Edit"
+
+1. Grant full acess to desired users
+
+   1. Note that the following people will be granted full access
+
+      - Business Analyst
+
+      - DevOps Engineer
+      
+      - Lead Engineer
+      
+      - Project Manager
+
+      - Scrum Master
+
+      - Security Engineer
+
+      - SemanticBits Systems Architect
+      
+   1. Select the gear icon beside the user to get full access
+
+   1. Select **Allow Managing**
+
+   1. Note that a checkmark icon now appears beside "Allow Managing"
+
+## Add an entrust certificate to the ab2d vault in 1Password
+
+> *** TO DO ***: Move this section elsewhere within the document
+
+1. Open Chrome
+
+1. Enter the following in the address bar
+
+   > https://my.1password.com/signin?l=en
+
+1. Log on to 1Password
+
+1. Select the gear icon within the "ab2d" vault
+
+1. Select **Open Vault** from the left side of the page
+
+1. Select the "+" icon at the bottom middle of the page
+
+1. Select **Document**
+
+1. Type the domain name related to the certificate that will be uploaded in the **Title** text box
+
+   *Example:*
+
+   ```
+   ab2d.cms.gov certificate chain
+   ```
+
+1. Select **Drag File to Upload**
+
+1. Navigate to the zip file of the downloaded certificates
+
+   *Example:*
+   
+   ```
+   ~/Downloads/entrust.zip
+   ```
+
+1. Select **Open**
+
+1. Create the following labels
+
+   label           |new field
+   ----------------|---------
+   certificate type|entrust
+
+1. Select **Save**
+
+## Add a private key to the ab2d vault in 1Password
+
+> *** TO DO ***: Move this section elsewhere within the document
+
+1. Open Chrome
+
+1. Enter the following in the address bar
+
+   > https://my.1password.com/signin?l=en
+
+1. Log on to 1Password
+
+1. Select the gear icon within the "ab2d" vault
+
+1. Select **Open Vault** from the left side of the page
+
+1. Select the "+" icon at the bottom middle of the page
+
+1. Select **Document**
+
+1. Type the domain name related to the certificate that will be uploaded in the **Title** text box
+
+   *Example:*
+
+   ```
+   ab2d dev private key
+   ```
+
+1. Select **Drag File to Upload**
+
+1. Navigate to the zip file of the downloaded certificates
+
+   *Example:*
+   
+   ```
+   ~/Downloads/ab2d-dev.pem
+   ```
+
+1. Select **Open**
+
+1. Create the following labels
+
+   label   |new field
+   --------|---------
+   key type|pem file
+
+1. Select **Save**
