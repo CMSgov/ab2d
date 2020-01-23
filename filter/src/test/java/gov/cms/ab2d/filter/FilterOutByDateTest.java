@@ -105,7 +105,7 @@ class FilterOutByDateTest {
     @Test
     void testGetDateRange() throws ParseException {
         Date realStart = sdf.parse("02/01/2000");
-        Date realEnd = sdf.parse("02/28/2000");
+        Date realEnd = sdf.parse("02/29/2000");
         FilterOutByDate.DateRange range = FilterOutByDate.getDateRange(2, 2000);
         assertEquals(sdf.format(range.getStart().getTime()), sdf.format(realStart.getTime()));
         assertEquals(sdf.format(range.getEnd().getTime()), sdf.format(realEnd.getTime()));
