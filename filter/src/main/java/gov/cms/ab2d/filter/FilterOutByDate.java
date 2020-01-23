@@ -1,5 +1,6 @@
 package gov.cms.ab2d.filter;
 
+import lombok.Data;
 import org.hl7.fhir.dstu3.model.ExplanationOfBenefit;
 import org.hl7.fhir.dstu3.model.Period;
 import org.hl7.fhir.dstu3.model.Resource;
@@ -15,7 +16,7 @@ import java.util.*;
  * explanation of benefit object billing dates periods are in dates. For consistency
  * and to minimize time zone issues, we kept everything as Date objects.
  */
-public class FilterOutByDate {
+public final class FilterOutByDate {
     private static SimpleDateFormat sdf = new SimpleDateFormat("MM/dd/yyyy");
     private static SimpleDateFormat fullDateFormat = new SimpleDateFormat("MM/dd/yyyy HH:mm:ss");
 
@@ -25,9 +26,10 @@ public class FilterOutByDate {
      * the range is 10/01/2020 00:00:00 - 10/02/2020 23:59:59. If the start date is after the end date
      * nothing will resolve to being in that range
      */
+    @Data
     public static class DateRange {
-        Date start;
-        Date end;
+        private Date start;
+        private Date end;
 
         /**
          * Populate the date range
@@ -88,10 +90,10 @@ public class FilterOutByDate {
             return ranges;
         }
         List<Integer> monthList = new ArrayList<>(12);
-        for (int i=0; i<12; i++) {
+        for (int i = 0; i < 12; i++) {
             monthList.add(0);
         }
-        for (int i=0; i<months.size(); i++) {
+        for (int i = 0; i < months.size(); i++) {
             int m = months.get(i);
             monthList.set(m - 1, 1);
         }
@@ -99,7 +101,7 @@ public class FilterOutByDate {
         int startVal = -1;
         int endVal = -1;
         boolean in = false;
-        for (int i=0; i<monthList.size(); i++) {
+        for (int i = 0; i < monthList.size(); i++) {
             if (monthList.get(i) == 1) {
                 if (!in) {
                     startVal = i;
@@ -107,7 +109,7 @@ public class FilterOutByDate {
                 in = true;
             } else {
                 if (in) {
-                    endVal = i-1;
+                    endVal = i - 1;
                     ranges.add(getDateRange(startVal + 1, year, endVal + 1, year));
                 }
                in = false;
@@ -213,7 +215,7 @@ public class FilterOutByDate {
         }
         List<ExplanationOfBenefit> validBenes = new ArrayList<>();
 
-        for (int i=0; i<benes.size(); i++) {
+        for (int i = 0; i < benes.size(); i++) {
             ExplanationOfBenefit b = (ExplanationOfBenefit) benes.get(i);
             boolean inRange = false;
             for (DateRange r : dateRanges) {
@@ -246,7 +248,6 @@ public class FilterOutByDate {
         }
         Date attToUse = fullDateFormat.parse(sdf.format(attestation) + " 00:00:00");
         Period p = ben.getBillablePeriod();
-        Date start = p.getStart();
         Date end = p.getEnd();
         if (end != null && end.getTime() >= attToUse.getTime()) {
             return true;

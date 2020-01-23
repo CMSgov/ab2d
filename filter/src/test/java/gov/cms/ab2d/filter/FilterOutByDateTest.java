@@ -2,6 +2,7 @@ package gov.cms.ab2d.filter;
 
 import org.hl7.fhir.dstu3.model.ExplanationOfBenefit;
 import org.hl7.fhir.dstu3.model.Period;
+import org.hl7.fhir.dstu3.model.Resource;
 import org.junit.jupiter.api.Test;
 
 import java.text.ParseException;
@@ -12,7 +13,7 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 
 class FilterOutByDateTest {
-    SimpleDateFormat sdf = new SimpleDateFormat("MM/dd/yyyy");
+    private SimpleDateFormat sdf = new SimpleDateFormat("MM/dd/yyyy");
 
     @Test
     void filterByDate() throws ParseException {
@@ -23,7 +24,7 @@ class FilterOutByDateTest {
                 FilterOutByDate.getDateRange(10, 18, 1, 19),
                 FilterOutByDate.getDateRange(9, 15),
                 FilterOutByDate.getDateRange(10, 12, 5, 15));
-        List<ExplanationOfBenefit> list = List.of(
+        List<Resource> list = List.of(
                 createEOB("10/01/2020", "10/02/2020"), // In
                 createEOB("08/05/2020", "08/06/2020"), // In
                 createEOB("11/07/2020", "11/07/2020"), // Out
@@ -106,20 +107,20 @@ class FilterOutByDateTest {
         Date realStart = sdf.parse("02/01/2000");
         Date realEnd = sdf.parse("02/28/2000");
         FilterOutByDate.DateRange range = FilterOutByDate.getDateRange(2, 2000);
-        assertEquals(sdf.format(range.start.getTime()), sdf.format(realStart.getTime()));
-        assertEquals(sdf.format(range.end.getTime()), sdf.format(realEnd.getTime()));
+        assertEquals(sdf.format(range.getStart().getTime()), sdf.format(realStart.getTime()));
+        assertEquals(sdf.format(range.getEnd().getTime()), sdf.format(realEnd.getTime()));
 
         realStart = sdf.parse("02/01/2002");
         realEnd = sdf.parse("02/28/2002");
         range = FilterOutByDate.getDateRange(2, 2002);
-        assertEquals(sdf.format(range.start.getTime()), sdf.format(realStart.getTime()));
-        assertEquals(sdf.format(range.end.getTime()), sdf.format(realEnd.getTime()));
+        assertEquals(sdf.format(range.getStart().getTime()), sdf.format(realStart.getTime()));
+        assertEquals(sdf.format(range.getEnd().getTime()), sdf.format(realEnd.getTime()));
 
         realStart = sdf.parse("02/01/2002");
         realEnd = sdf.parse("04/30/2002");
         range = FilterOutByDate.getDateRange(2, 2002, 4, 2002);
-        assertEquals(sdf.format(range.start.getTime()), sdf.format(realStart.getTime()));
-        assertEquals(sdf.format(range.end.getTime()), sdf.format(realEnd.getTime()));
+        assertEquals(sdf.format(range.getStart().getTime()), sdf.format(realStart.getTime()));
+        assertEquals(sdf.format(range.getEnd().getTime()), sdf.format(realEnd.getTime()));
     }
 
     @Test
@@ -127,20 +128,20 @@ class FilterOutByDateTest {
         List<Integer> months = List.of(1);
         List<FilterOutByDate.DateRange> ranges = FilterOutByDate.getDateRanges(months, 2020);
         assertEquals(1, ranges.size());
-        assertEquals("01/01/2020", sdf.format(ranges.get(0).start));
-        assertEquals("01/31/2020", sdf.format(ranges.get(0).end));
+        assertEquals("01/01/2020", sdf.format(ranges.get(0).getStart()));
+        assertEquals("01/31/2020", sdf.format(ranges.get(0).getEnd()));
 
         months = List.of(1, 2);
         ranges = FilterOutByDate.getDateRanges(months, 2020);
         assertEquals(1, ranges.size());
-        assertEquals("01/01/2020", sdf.format(ranges.get(0).start));
-        assertEquals("02/29/2020", sdf.format(ranges.get(0).end));
+        assertEquals("01/01/2020", sdf.format(ranges.get(0).getStart()));
+        assertEquals("02/29/2020", sdf.format(ranges.get(0).getEnd()));
 
         months = List.of(11, 12);
         ranges = FilterOutByDate.getDateRanges(months, 2020);
         assertEquals(1, ranges.size());
-        assertEquals("11/01/2020", sdf.format(ranges.get(0).start));
-        assertEquals("12/31/2020", sdf.format(ranges.get(0).end));
+        assertEquals("11/01/2020", sdf.format(ranges.get(0).getStart()));
+        assertEquals("12/31/2020", sdf.format(ranges.get(0).getEnd()));
 
         months = List.of();
         ranges = FilterOutByDate.getDateRanges(months, 2020);
@@ -149,18 +150,18 @@ class FilterOutByDateTest {
         months = List.of(5, 7, 8);
         ranges = FilterOutByDate.getDateRanges(months, 2020);
         assertEquals(2, ranges.size());
-        assertEquals("05/01/2020", sdf.format(ranges.get(0).start));
-        assertEquals("05/31/2020", sdf.format(ranges.get(0).end));
-        assertEquals("07/01/2020", sdf.format(ranges.get(1).start));
-        assertEquals("08/31/2020", sdf.format(ranges.get(1).end));
+        assertEquals("05/01/2020", sdf.format(ranges.get(0).getStart()));
+        assertEquals("05/31/2020", sdf.format(ranges.get(0).getEnd()));
+        assertEquals("07/01/2020", sdf.format(ranges.get(1).getStart()));
+        assertEquals("08/31/2020", sdf.format(ranges.get(1).getEnd()));
 
         months = List.of(1, 2, 3, 4, 5, 9);
         ranges = FilterOutByDate.getDateRanges(months, 2020);
         assertEquals(2, ranges.size());
-        assertEquals("01/01/2020", sdf.format(ranges.get(0).start));
-        assertEquals("05/31/2020", sdf.format(ranges.get(0).end));
-        assertEquals("09/01/2020", sdf.format(ranges.get(1).start));
-        assertEquals("09/30/2020", sdf.format(ranges.get(1).end));
+        assertEquals("01/01/2020", sdf.format(ranges.get(0).getStart()));
+        assertEquals("05/31/2020", sdf.format(ranges.get(0).getEnd()));
+        assertEquals("09/01/2020", sdf.format(ranges.get(1).getStart()));
+        assertEquals("09/30/2020", sdf.format(ranges.get(1).getEnd()));
     }
 
     private ExplanationOfBenefit createEOB(String startDate, String endDate) throws ParseException {
