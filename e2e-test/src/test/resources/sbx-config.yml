@@ -1,0 +1,3 @@
+okta-url: 'https://test.idp.idm.cms.gov/oauth2/aus2r7y3gdaFMKBol297/v1/token'
+ab2d-api-url: 'http://ab2d-sbx-sandbox-200688312.us-east-1.elb.amazonaws.com/api/v1/fhir/'
+ab2d-admin-url: 'http://ab2d-sbx-sandbox-200688312.us-east-1.elb.amazonaws.com/api/v1/admin/'

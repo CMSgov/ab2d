@@ -25,7 +25,6 @@ public class WorkerServiceImpl implements WorkerService {
 
     private List<String> activeJobs = Collections.synchronizedList(new ArrayList<>());
 
-
     @Override
     public void process(String jobUuid) {
 
@@ -42,8 +41,6 @@ public class WorkerServiceImpl implements WorkerService {
         }
     }
 
-
-
     @PreDestroy
     public void resetInProgressJobs() {
         log.info("Shutdown in progress ... Do house cleaning ...");
@@ -54,6 +51,4 @@ public class WorkerServiceImpl implements WorkerService {
 
         log.info("House cleaning done - Shutting down");
     }
-
-
 }
