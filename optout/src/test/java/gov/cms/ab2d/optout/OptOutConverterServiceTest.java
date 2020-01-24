@@ -1,10 +1,16 @@
 package gov.cms.ab2d.optout;
 
+import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.model.OptOut;
+import org.hl7.fhir.dstu3.model.Bundle;
+import org.hl7.fhir.dstu3.model.Patient;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -20,18 +26,32 @@ import static org.hamcrest.CoreMatchers.startsWith;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.when;
 
 @Testcontainers
 class OptOutConverterServiceTest {
 
+    @InjectMocks
     private OptOutConverterService cut;
+
+    @Mock
+    private BFDClient client;
 
     @Container
     private static final PostgreSQLContainer postgreSQLContainer= new AB2DPostgresqlContainer();
 
     @BeforeEach
     void setUp() {
+        Bundle fakeBundle = new Bundle();
+        Patient patient = new Patient();
+        Bundle.BundleEntryComponent component = new Bundle.BundleEntryComponent();
+        component.setResource(patient);
+        // Creates new list;
+        List<Bundle.BundleEntryComponent> entry = fakeBundle.getEntry();
+        entry.add(component);
         cut = new OptOutConverterServiceImpl();
+        MockitoAnnotations.initMocks(this);
+        when(client.requestPatientFromServer("1000011403")).thenReturn(fakeBundle);
     }
 
     @Test
