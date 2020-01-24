@@ -113,6 +113,7 @@ class JobProcessorUnitTest {
                 Mockito.any(),
                 Mockito.any(),
                 Mockito.any(),
+                Mockito.any(),
                 Mockito.any()
         )).thenReturn(futureResources);
     }
@@ -197,7 +198,7 @@ class JobProcessorUnitTest {
     private void doVerify() {
         verify(fileService).createDirectory(Mockito.any());
         verify(contractAdapter).getPatients(anyString());
-        verify(patientClaimsProcessor, atLeast(1)).process(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any());
+        verify(patientClaimsProcessor, atLeast(1)).process(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any());
     }
 
 
@@ -221,7 +222,7 @@ class JobProcessorUnitTest {
 
         verify(fileService).createDirectory(Mockito.any());
         verify(contractAdapter).getPatients(anyString());
-        verify(patientClaimsProcessor, never()).process(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any());
+        verify(patientClaimsProcessor, never()).process(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any());
     }
 
 
@@ -231,6 +232,7 @@ class JobProcessorUnitTest {
 
         Future<Integer> futureResources = new AsyncResult(1);
         Mockito.lenient().when(patientClaimsProcessor.process(
+                Mockito.any(),
                 Mockito.any(),
                 Mockito.any(),
                 Mockito.any(),
@@ -258,6 +260,7 @@ class JobProcessorUnitTest {
         final String errMsg = "error during exception handling to write error record";
         final RuntimeException runtimeException = new RuntimeException(errMsg);
         Mockito.when(patientClaimsProcessor.process(
+                Mockito.any(),
                 Mockito.any(),
                 Mockito.any(),
                 Mockito.any(),
@@ -302,7 +305,8 @@ class JobProcessorUnitTest {
 
         verify(fileService, times(2)).createDirectory(Mockito.any());
         verify(contractAdapter).getPatients(anyString());
-        verify(patientClaimsProcessor, atLeast(1)).process(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any());
+        verify(patientClaimsProcessor, atLeast(1)).process(
+                Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any());
         verify(jobRepository, atLeastOnce()).updatePercentageCompleted(anyString(), anyInt());
     }
 
@@ -383,8 +387,8 @@ class JobProcessorUnitTest {
 
     private List<OptOut> getOptOutRows(GetPatientsByContractResponse patientsByContract) {
         return patientsByContract.getPatients()
-                .stream().map(p -> p.getPatientId())
-                .map(patientId ->  createOptOut(patientId))
+                .stream().map(PatientDTO::getPatientId)
+                .map(this::createOptOut)
                 .collect(Collectors.toList());
     }
 

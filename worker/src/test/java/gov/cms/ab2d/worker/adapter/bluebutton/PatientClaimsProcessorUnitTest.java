@@ -24,6 +24,9 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.locks.ReentrantLock;
@@ -53,6 +56,9 @@ public class PatientClaimsProcessorUnitTest {
     private Path errorFile;
     private String patientId = "1234567890";
 
+    private List<Integer> allMonths = List.of(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12);
+    private OffsetDateTime earlyAttDate = OffsetDateTime.of(1970, 1, 1, 0, 0, 0, 0, ZoneOffset.UTC);
+    private GetPatientsByContractResponse.PatientDTO patientDTO;
 
     @BeforeEach
     void setUp() throws IOException {
@@ -66,6 +72,9 @@ public class PatientClaimsProcessorUnitTest {
 
         createEOB();
         createOutputFiles();
+        patientDTO = new GetPatientsByContractResponse.PatientDTO();
+        patientDTO.setPatientId(patientId);
+        patientDTO.setMonthsUnderContract(allMonths);
     }
 
 
@@ -74,7 +83,7 @@ public class PatientClaimsProcessorUnitTest {
         Bundle bundle1 = createBundle(eob.copy());
         when(mockBfdClient.requestEOBFromServer(patientId)).thenReturn(bundle1);
 
-        cut.process(patientId, new ReentrantLock(), outputFile, errorFile).get();
+        cut.process(patientDTO, new ReentrantLock(), outputFile, errorFile, earlyAttDate).get();
 
         verify(mockBfdClient).requestEOBFromServer(patientId);
         verify(mockBfdClient, never()).requestNextBundleFromServer(bundle1);
@@ -91,7 +100,7 @@ public class PatientClaimsProcessorUnitTest {
         when(mockBfdClient.requestEOBFromServer(patientId)).thenReturn(bundle1);
         when(mockBfdClient.requestNextBundleFromServer(bundle1)).thenReturn(bundle2);
 
-        cut.process(patientId, new ReentrantLock(), outputFile, errorFile).get();
+        cut.process(patientDTO, new ReentrantLock(), outputFile, errorFile, earlyAttDate).get();
 
         verify(mockBfdClient).requestEOBFromServer(patientId);
         verify(mockBfdClient).requestNextBundleFromServer(bundle1);
@@ -105,7 +114,7 @@ public class PatientClaimsProcessorUnitTest {
         when(mockBfdClient.requestEOBFromServer(patientId)).thenThrow(new RuntimeException("Test Exception"));
 
         var exceptionThrown = assertThrows(RuntimeException.class,
-                () -> cut.process(patientId, new ReentrantLock(), outputFile, errorFile).get());
+                () -> cut.process(patientDTO, new ReentrantLock(), outputFile, errorFile, earlyAttDate).get());
 
         assertThat(exceptionThrown.getCause().getMessage(), startsWith("Test Exception"));
 
@@ -119,7 +128,7 @@ public class PatientClaimsProcessorUnitTest {
         Bundle bundle1 = new Bundle();
         when(mockBfdClient.requestEOBFromServer(patientId)).thenReturn(bundle1);
 
-        cut.process(patientId, new ReentrantLock(), outputFile, errorFile).get();
+        cut.process(patientDTO, new ReentrantLock(), outputFile, errorFile, earlyAttDate).get();
 
         verify(mockBfdClient).requestEOBFromServer(patientId);
         verify(mockBfdClient, never()).requestNextBundleFromServer(bundle1);
