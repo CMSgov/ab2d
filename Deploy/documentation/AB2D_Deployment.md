@@ -1909,10 +1909,16 @@
    $ export AWS_PROFILE={target aws profile}
    ```
 
-   *Example for CMS:*
+   *Example for "Dev" environment:*
    
    ```ShellSession
    $ export AWS_PROFILE=ab2d-dev
+   ```
+
+   *Example for "Impl" environment:*
+   
+   ```ShellSession
+   $ export AWS_PROFILE=ab2d-east-impl
    ```
 
 1. Create S3 bucket for the website
@@ -1924,28 +1930,35 @@
      --bucket {unique id}-ab2d-website
    ```
 
-   *Example for CMS:*
+   *Example for "Dev" environment:*
    
    ```ShellSession
    $ aws --region us-east-1 s3api create-bucket \
      --bucket cms-ab2d-website
    ```
 
-1. Block public access on the bucket
-
-   *Format:*
+   *Example for "Impl" environment:*
    
    ```ShellSession
-   $ aws --region us-east-1 s3api put-public-access-block \
-      --bucket {unique id}-ab2d-website \
-      --public-access-block-configuration BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true
+   $ aws --region us-east-1 s3api create-bucket \
+     --bucket ab2d-east-impl-website
    ```
 
-   *Example for CMS:*
+1. Block public access on the bucket
+
+   *Example for "Dev" environment:*
    
    ```ShellSession
    $ aws --region us-east-1 s3api put-public-access-block \
       --bucket cms-ab2d-website \
+      --public-access-block-configuration BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true
+   ```
+
+   *Example for "Impl" environment:*
+
+   ```ShellSession
+   $ aws --region us-east-1 s3api put-public-access-block \
+      --bucket ab2d-east-impl-website \
       --public-access-block-configuration BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true
    ```
 
@@ -1967,24 +1980,30 @@
    $ export AWS_PROFILE={target aws profile}
    ```
 
-   *Example for CMS:*
+   *Example for "Dev" environment:*
    
    ```ShellSession
    $ export AWS_PROFILE=ab2d-dev
    ```
 
-1. Upload website to S3
-
-   *Format:*
+   *Example for "Impl" environment:*
    
    ```ShellSession
-   $ aws s3 cp --recursive _site/ s3://{unique id}-ab2d-website/
+   $ export AWS_PROFILE=ab2d-east-impl
    ```
 
-   *Example for CMS:*
+1. Upload website to S3
+
+   *Example for "Dev" environment:*
    
    ```ShellSession
    $ aws s3 cp --recursive _site/ s3://cms-ab2d-website/
+   ```
+
+   *Example for "Impl" environment:*
+   
+   ```ShellSession
+   $ aws s3 cp --recursive _site/ s3://ab2d-east-impl-website/
    ```
 
 ### Create CloudFront distribution
@@ -2011,25 +2030,25 @@
    
 1. Configure "Origin Settings" as follows:
 
-   *Format:*
+   *Example for "Dev" environment:*
    
-   - **Origin Domain Name:** {unique id}-ab2d-website.s3.amazonaws.com
-
-   - **Origin ID:** S3-{unique id}-ab2d-website
+   - **Origin Domain Name:** cms-ab2d-website.s3.amazonaws.com
+   
+   - **Origin ID:** S3-cms-ab2d-website
 
    - **Restrict Bucket Access:** Yes
 
    - **Origin Access Identity:** Create a New Identity
 
-   - **Comment:** access-identity-{unique id}-ab2d-website.s3.amazonaws.com
+   - **Comment:** access-identity-cms-ab2d-website.s3.amazonaws.com
 
    - **Grant Read Permissions on Bucket:** Yes, Update Bucket Policy
 
-   *Example for semanticbitsdemo:*
+   *Example for "Impl" environment:*
    
-   - **Origin Domain Name:** cms-ab2d-website.s3.amazonaws.com
+   - **Origin Domain Name:** ab2d-east-impl-website.s3.amazonaws.com
    
-   - **Origin ID:** S3-cms-ab2d-website
+   - **Origin ID:** S3-ab2d-east-impl-website
 
    - **Restrict Bucket Access:** Yes
 
@@ -2044,7 +2063,29 @@
    - **Viewer Protocol Policy:** Redirect HTTP to HTTPS
 
 1. Configure "Distribution Settings" as follows
+
+   *Example for "Dev" environment:*
+
+   > *** TO DO ***: Migrate certificate to prod and eliminate certificate here
    
+   **Alternate Domain Names (CNAMES):** ab2d.cms.gov
+
+   **SSL Certificate:** Custom SSL Certificate
+
+   **Custom SSL Certificate:** ab2d.cms.gov
+
+   **Default Root Object:** index.html
+
+   *Example for "Impl" environment:*
+   
+   **SSL Certificate:** Default CloudFront Certificate
+
+   **Default Root Object:** index.html
+
+   *Example for "Prod" environment:*
+
+   > *** TO DO ***
+    
    **Alternate Domain Names (CNAMES):** ab2d.cms.gov
 
    **SSL Certificate:** Custom SSL Certificate
@@ -2059,7 +2100,29 @@
 
 1. Note the distribution row that was created
 
-   *Format:*
+   *Example for "Dev" environment:*
+
+   > *** TO DO ***: Migrate cname to prod and eliminate cname here
+   
+   - **Delivery Method:** Web
+
+   - **Domain Name:** {unique id}.cloudfront.net
+
+   - **Origin:** cms-ab2d-website.s3.amazonaws.com
+
+   - **CNAMEs:** ab2d.cms.gov
+
+   *Example for "Impl" environment:*
+   
+   - **Delivery Method:** Web
+
+   - **Domain Name:** {unique id}.cloudfront.net
+
+   - **Origin:** ab2d-east-impl-website.s3.amazonaws.com
+
+   *Example for "Prod" environment:*
+
+   > *** TO DO ***
    
    - **Delivery Method:** Web
 
