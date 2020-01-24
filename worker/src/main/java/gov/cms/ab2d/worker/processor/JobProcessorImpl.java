@@ -18,6 +18,7 @@ import gov.cms.ab2d.worker.processor.domainmodel.ProgressTracker;
 import gov.cms.ab2d.worker.service.FileService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
@@ -356,21 +357,17 @@ public class JobProcessorImpl implements JobProcessor {
                     progressTracker.incrementProcessedCount();
                 } catch (InterruptedException e) {
                     cancelFuturesInQueue(futureHandles);
-                    final String errMsg = "interrupted exception while processing patient ";
-                    log.error(errMsg);
-                    throw new RuntimeException(errMsg, e);
+                    log.error("interrupted exception while processing patient", e);
+
+                    final String errMsg = ExceptionUtils.getRootCauseMessage(e);
+                    throw new RuntimeException(errMsg, ExceptionUtils.getRootCause(e));
 
                 } catch (ExecutionException e) {
                     cancelFuturesInQueue(futureHandles);
                     log.error("exception while processing patient ", e);
 
-                    final String errMsg;
-                    if (e.getCause() != null) {
-                        errMsg = e.getCause().getMessage();
-                    } else {
-                        errMsg = e.getMessage();
-                    }
-                    throw new RuntimeException(errMsg, e.getCause());
+                    final String errMsg = ExceptionUtils.getRootCauseMessage(e);
+                    throw new RuntimeException(errMsg, ExceptionUtils.getRootCause(e));
 
                 } catch (CancellationException e) {
                     // This could happen in the rare event that a job was cancelled mid-process.
