@@ -217,15 +217,17 @@ public final class FilterOutByDate {
 
         for (int i = 0; i < benes.size(); i++) {
             ExplanationOfBenefit b = (ExplanationOfBenefit) benes.get(i);
-            boolean inRange = false;
-            for (DateRange r : dateRanges) {
-                if (withinDateRange(b, r) && afterAttestation(attestationDate, b)) {
-                    inRange = true;
-                    break;
+            if (afterAttestation(attestationDate, b)) {
+                boolean inRange = false;
+                for (DateRange r : dateRanges) {
+                    if (withinDateRange(b, r)) {
+                        inRange = true;
+                        break;
+                    }
                 }
-            }
-            if (inRange) {
-                validBenes.add(b);
+                if (inRange) {
+                    validBenes.add(b);
+                }
             }
         }
         return validBenes;
