@@ -52,36 +52,43 @@ public class WorkerConfig {
     @Value("${pcp.queue.capacity}")
     private int pcpQueueCapacity;
 
+    @Value("${job.core.pool.size}")
+    private int jobCorePoolSize;
+
+    @Value("${job.max.pool.size}")
+    private int jobMaxPoolSize;
+
+    @Value("${job.queue.capacity}")
+    private int jobQueueCapacity;
+
+
     @Bean
-    public Executor pcpThreadPool() {
+    public Executor patientProcessorThreadPool() {
         final ThreadPoolTaskExecutor taskExecutor = new ThreadPoolTaskExecutor();
         taskExecutor.setCorePoolSize(pcpCorePoolSize);
         taskExecutor.setMaxPoolSize(pcpMaxPoolSize);
         taskExecutor.setQueueCapacity(pcpQueueCapacity);
         taskExecutor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
         taskExecutor.setThreadNamePrefix("pcp-");
-        taskExecutor.setWaitForTasksToCompleteOnShutdown(true);
-        taskExecutor.setAwaitTerminationSeconds(30);
         return taskExecutor;
     }
 
 
     @Bean
-    public ThreadPoolTaskExecutor threadPoolTaskExecutor() {
+    public Executor mainJobProcessingPool() {
         final ThreadPoolTaskExecutor taskExecutor = new ThreadPoolTaskExecutor();
-        taskExecutor.setCorePoolSize(5);
-        taskExecutor.setMaxPoolSize(10);
-        taskExecutor.setQueueCapacity(0);
+        taskExecutor.setCorePoolSize(jobCorePoolSize);
+        taskExecutor.setMaxPoolSize(jobMaxPoolSize);
+        taskExecutor.setQueueCapacity(jobQueueCapacity);
+        taskExecutor.setRejectedExecutionHandler(new ThreadPoolExecutor.DiscardPolicy());
         taskExecutor.setThreadNamePrefix("jp-");
-        taskExecutor.setWaitForTasksToCompleteOnShutdown(true);
-        taskExecutor.setAwaitTerminationSeconds(30);
         return taskExecutor;
     }
 
 
     @Bean
     public SubscribableChannel channel() {
-        return new ExecutorChannel(threadPoolTaskExecutor());
+        return new ExecutorChannel(mainJobProcessingPool());
     }
 
 
