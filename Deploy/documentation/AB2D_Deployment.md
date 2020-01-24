@@ -592,6 +592,12 @@
    $ aws configure --profile=ab2d-sbx-sandbox
    ```
 
+   *Example for "Impl" environment:*
+   
+   ```ShellSession
+   $ aws configure --profile=ab2d-east-impl
+   ```
+
 1. Enter {your aws access key} at the **AWS Access Key ID** prompt
 
 1. Enter {your aws secret access key} at the AWS Secret Access Key prompt
@@ -655,6 +661,12 @@
    $ export AWS_PROFILE=ab2d-sbx-sandbox
    ```
 
+   *Example for "Impl" environment:*
+
+   ```ShellSession
+   $ export AWS_PROFILE=ab2d-east-impl
+   ```
+
 1. Create keypair
 
    1. Set the key name
@@ -669,6 +681,12 @@
 
       ```ShellSession
       $ export KEY_NAME=ab2d-sbx-sandbox
+      ```
+
+      *Example for "Impl" environment:*
+
+      ```ShellSession
+      $ export KEY_NAME=ab2d-east-impl
       ```
 
    1. Create the keypair
@@ -687,7 +705,7 @@
    $ chmod 600 ~/.ssh/${KEY_NAME}.pem
    ```
 
-1. Update the "authorized_keys" file for the "ab2d-dev" environment
+1. Update the "authorized_keys" file for the environment
 
    1. Open a second terminal
    
@@ -703,6 +721,12 @@
 
       ```ShellSession
       $ vim ~/code/ab2d/Deploy/terraform/environments/ab2d-sbx-sandbox-shared/authorized_keys
+      ```
+
+      *Example for "Impl" environment:*
+
+      ```ShellSession
+      $ vim ~/code/ab2d/Deploy/terraform/environments/ab2d-east-impl-shared/authorized_keys
       ```
 
    1. Return to the first terminal
@@ -737,6 +761,12 @@
    $ export AWS_PROFILE=ab2d-sbx-sandbox
    ```
 
+   *Example for "Impl" environment:*
+
+   ```ShellSession
+   $ export AWS_PROFILE=ab2d-east-impl
+   ```
+
 1. Change to the shared environment directory
 
    *Example for "Dev" environment:*
@@ -750,7 +780,13 @@
    ```ShellSession
    $ cd ~/code/ab2d/Deploy/terraform/environments/ab2d-sbx-sandbox-shared
    ```
+
+   *Example for "Impl" environment:*
    
+   ```ShellSession
+   $ cd ~/code/ab2d/Deploy/terraform/environments/ab2d-east-impl-shared
+   ```
+
 1. Create "Ab2dAccessPolicy"
 
    ```ShellSession
@@ -787,6 +823,12 @@
    
    ```ShellSession
    $ cd ~/code/ab2d/Deploy/terraform/environments/ab2d-sbx-sandbox
+   ```
+
+   *Example for "Impl" environment:*
+   
+   ```ShellSession
+   $ cd ~/code/ab2d/Deploy/terraform/environments/ab2d-east-impl
    ```
 
 1. Create "Ab2dAssumePolicy"
@@ -831,6 +873,12 @@
    $ export AWS_PROFILE=ab2d-sbx-sandbox
    ```
 
+   *Example for "Impl" environment:*
+
+   ```ShellSession
+   $ export AWS_PROFILE=ab2d-east-impl
+   ```
+
 1. Change to the shared environment directory
 
    *Example for "Dev" environment:*
@@ -843,6 +891,12 @@
    
    ```ShellSession
    $ cd ~/code/ab2d/Deploy/terraform/environments/ab2d-sbx-sandbox-shared
+   ```
+
+   *Example for "Impl" environment:*
+   
+   ```ShellSession
+   $ cd ~/code/ab2d/Deploy/terraform/environments/ab2d-east-impl-shared
    ```
 
 1. Create "Ab2dInstanceRole" role
@@ -865,6 +919,12 @@
 
    ```ShellSession
    $ export AWS_ACCOUNT_NUMBER=777200079629
+   ```
+
+   *Example for "Impl" environment:*
+
+   ```ShellSession
+   $ export AWS_ACCOUNT_NUMBER=330810004472
    ```
 
 1. Attach required policies to the "Ab2dInstanceRole" role
@@ -908,6 +968,12 @@
    $ cd ~/code/ab2d/Deploy/terraform/environments/ab2d-sbx-sandbox
    ```
 
+   *Example for "Impl" environment:*
+   
+   ```ShellSession
+   $ cd ~/code/ab2d/Deploy/terraform/environments/ab2d-east-impl
+   ```
+
 1. Create "Ab2dManagedRole" role
 
    ```ShelSession
@@ -939,7 +1005,13 @@
    ```ShellSession
    $ export AWS_PROFILE=ab2d-sbx-sandbox
    ```
-   
+
+   *Example for "Impl" environment:*
+
+   ```ShellSession
+   $ export AWS_PROFILE=ab2d-east-impl
+   ```
+
 1. Create instance profile
 
    ```ShellSession
@@ -971,6 +1043,12 @@
    $ export AWS_PROFILE=ab2d-sbx-sandbox
    ```
 
+   *Example for "Impl" environment:*
+
+   ```ShellSession
+   $ export AWS_PROFILE=ab2d-east-impl
+   ```
+
 1. Set AWS account number
 
    *Example for "Dev" environment:*
@@ -983,6 +1061,12 @@
 
    ```ShellSession
    $ export AWS_ACCOUNT_NUMBER=777200079629
+   ```
+
+   *Example for "Impl" environment:*
+
+   ```ShellSession
+   $ export AWS_ACCOUNT_NUMBER=330810004472
    ```
 
 1. Attach the Ab2dPermissionToPassRolesPolicy to an IAM user that runs the automation
@@ -1013,6 +1097,12 @@
    $ export AWS_PROFILE=ab2d-sbx-sandbox
    ```
 
+   *Example for "Impl" environment:*
+
+   ```ShellSession
+   $ export AWS_PROFILE=ab2d-east-impl
+   ```
+
 1. Set automation bucket name
 
    *Example for "Dev" environment:*
@@ -1025,6 +1115,12 @@
    
    ```ShellSession
    $ export S3_AUTOMATION_BUCKET=ab2d-sbx-sandbox-automation
+   ```
+
+   *Example for "Impl" environment:*
+   
+   ```ShellSession
+   $ export S3_AUTOMATION_BUCKET=ab2d-east-impl-automation
    ```
 
 1. Create S3 bucket for automation
