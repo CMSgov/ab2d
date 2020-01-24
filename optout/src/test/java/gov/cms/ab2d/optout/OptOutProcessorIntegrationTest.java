@@ -5,7 +5,7 @@ import gov.cms.ab2d.common.model.OptOut;
 import gov.cms.ab2d.common.repository.OptOutRepository;
 import gov.cms.ab2d.optout.gateway.S3Gateway;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.http.HttpStatus;
+import org.junit.Before;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -64,6 +64,11 @@ class OptOutProcessorIntegrationTest {
                 mockServerPort, List.of());
     }
 
+    @Before
+    public void clearDB() {
+        optOutRepo.deleteAll();
+    }
+
     @AfterAll
     public static void tearDown() {
         mockServer.stop();
@@ -94,9 +99,8 @@ class OptOutProcessorIntegrationTest {
         assertThat(optOut.getScopeCode(), is("patient-privacy"));
         assertThat(optOut.getLoIncCode(), is("64292-6"));
         assertThat(optOut.getEffectiveDate(), is(LocalDate.of(2019,10,24)));
+        assertThat(optOut.getCcwId(), is("20010000001115"));
 
         verify(mockS3Gateway).getOptOutFile();
     }
-
-
 }

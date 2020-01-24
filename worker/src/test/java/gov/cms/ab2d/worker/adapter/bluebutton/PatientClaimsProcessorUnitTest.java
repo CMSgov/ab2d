@@ -68,7 +68,6 @@ public class PatientClaimsProcessorUnitTest {
         createOutputFiles();
     }
 
-
     @Test
     void process_whenPatientHasSinglePageOfClaimsData() throws IOException, ExecutionException, InterruptedException {
         Bundle bundle1 = createBundle(eob.copy());
@@ -98,7 +97,6 @@ public class PatientClaimsProcessorUnitTest {
         verify(mockFileService).appendToFile(any(), any());
     }
 
-
     @Test
     void process_whenBfdClientThrowsException() throws IOException {
         Bundle bundle1 = createBundle(eob.copy());
@@ -125,7 +123,6 @@ public class PatientClaimsProcessorUnitTest {
         verify(mockBfdClient, never()).requestNextBundleFromServer(bundle1);
         verify(mockFileService, never()).appendToFile(any(), any());
     }
-
 
     private void createEOB() {
         final String testInputFile = "test-data/EOB-for-Carrier-Claims.json";
@@ -162,12 +159,9 @@ public class PatientClaimsProcessorUnitTest {
         return bundleEntryComponent;
     }
 
-
     private Bundle.BundleLinkComponent addNextLink() {
         Bundle.BundleLinkComponent linkComponent = new Bundle.BundleLinkComponent();
         linkComponent.setRelation(Bundle.LINK_NEXT);
         return linkComponent;
     }
-
-
 }
