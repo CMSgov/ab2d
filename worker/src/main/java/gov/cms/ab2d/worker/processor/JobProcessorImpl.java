@@ -53,7 +53,7 @@ import static net.logstash.logback.argument.StructuredArguments.keyValue;
 public class JobProcessorImpl implements JobProcessor {
     private static final String OUTPUT_FILE_SUFFIX = ".ndjson";
     private static final String ERROR_FILE_SUFFIX = "_error.ndjson";
-    private static final int SLEEP_DURATION = 1_000;                    // 1 second
+    private static final int SLEEP_DURATION = 250;
 
     @Value("${cancellation.check.frequency:10}")
     private int cancellationCheckFrequency;
@@ -267,6 +267,8 @@ public class JobProcessorImpl implements JobProcessor {
                 }
 
                 errorCount += processHandles(futureHandles, progressTracker);
+
+                sleep();
             }
         }
 
@@ -359,8 +361,25 @@ public class JobProcessorImpl implements JobProcessor {
                     log.error(errMsg);
                     throw new RuntimeException(errMsg, e);
                 } catch (ExecutionException e) {
-                    final String errMsg = "exception while processing patient ";
-                    log.error(errMsg, e);
+                    log.info("###############################################################################");
+                    log.info("AM HERE .... !!!!!   processHandles(List<Future<Integer>> futureHandles)  ==== ");
+                    log.info("###############################################################################");
+
+                    log.error("exception while processing patient ", e);
+
+                    log.info("###############################################################################");
+                    log.info("cancelFuturesInQueue() ....");
+                    log.info("###############################################################################");
+
+                    cancelFuturesInQueue(futureHandles);
+
+                    final String errMsg;
+                    if (e.getCause() != null) {
+                        errMsg = e.getCause().getMessage();
+                    } else {
+                        errMsg = e.getMessage();
+                    }
+
                     throw new RuntimeException(errMsg, e.getCause());
                 } catch (CancellationException e) {
                     // This could happen in the rare event that a job was cancelled mid-process.
