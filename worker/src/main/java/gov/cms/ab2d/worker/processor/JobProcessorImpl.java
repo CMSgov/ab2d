@@ -12,7 +12,6 @@ import gov.cms.ab2d.common.repository.OptOutRepository;
 import gov.cms.ab2d.worker.adapter.bluebutton.ContractAdapter;
 import gov.cms.ab2d.worker.adapter.bluebutton.GetPatientsByContractResponse;
 import gov.cms.ab2d.worker.adapter.bluebutton.GetPatientsByContractResponse.PatientDTO;
-import gov.cms.ab2d.worker.adapter.bluebutton.PatientClaimsProcessor;
 import gov.cms.ab2d.worker.processor.domainmodel.ContractData;
 import gov.cms.ab2d.worker.processor.domainmodel.ProgressTracker;
 import gov.cms.ab2d.worker.service.FileService;

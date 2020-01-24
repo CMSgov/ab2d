@@ -10,8 +10,6 @@ import gov.cms.ab2d.common.model.User;
 import gov.cms.ab2d.common.repository.*;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.worker.adapter.bluebutton.ContractAdapter;
-import gov.cms.ab2d.worker.adapter.bluebutton.PatientClaimsProcessor;
-import gov.cms.ab2d.worker.adapter.bluebutton.PatientClaimsProcessorImpl;
 import gov.cms.ab2d.worker.service.FileService;
 import org.hl7.fhir.dstu3.model.Bundle;
 import org.junit.jupiter.api.BeforeEach;
