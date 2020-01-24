@@ -1,6 +1,9 @@
 #!/bin/bash
 
+#
 # Set more useful hostname
+#
+
 echo "$(hostname -s).ab2d-${env}" > /tmp/hostname
 sudo mv /tmp/hostname /etc/hostname
 sudo hostname "$(hostname -s).ab2d-${env}"
@@ -35,8 +38,14 @@ sudo ln -s /usr/local/bin/stunnel /bin/stunnel
 # Configure running container instances to use an Amazon EFS file system
 sudo mkdir /mnt/efs
 sudo cp /etc/fstab /etc/fstab.bak
-echo '${efs_id} /mnt/efs efs _netdev,tls 0 0' | sudo tee -a /etc/fstab
+
+#####
+# *** TO DO ***: resolve TLS issue
+# echo '${efs_id} /mnt/efs efs _netdev,tls 0 0' | sudo tee -a /etc/fstab
+# sudo mount -a
+echo '${efs_id}:/ /mnt/efs efs _netdev 0 0' | sudo tee -a /etc/fstab
 sudo mount -a
+#####
 
 #
 # Setup ECS realted items 
