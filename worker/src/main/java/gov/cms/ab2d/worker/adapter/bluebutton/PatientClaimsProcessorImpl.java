@@ -20,7 +20,6 @@ import org.springframework.stereotype.Component;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.List;
@@ -38,8 +37,6 @@ import static net.logstash.logback.argument.StructuredArguments.keyValue;
 @Component
 @RequiredArgsConstructor
 public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
-
-    private static int stopBatchErrorCounter = 0;
 
     private final BFDClient bfdClient;
     private final FhirContext fhirContext;
@@ -61,14 +58,6 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
 
             var byteArrayOutputStream = new ByteArrayOutputStream();
             for (var resource : resources) {
-                ++stopBatchErrorCounter;
-                if (stopBatchErrorCounter % 7 == 0) {
-                    // simulate a random execption to see how the batch behaves.
-                    log.info("###############################################################################");
-                    log.info("STOP BATCH - Counter: [{}]", stopBatchErrorCounter);
-                    log.info("###############################################################################");
-                    throw new UncheckedIOException(new IOException("DOES BATCH STOP RIGHTAWAY?"));
-                }
                 ++resourceCount;
                 try {
                     final String payload = jsonParser.encodeResourceToString(resource) + System.lineSeparator();

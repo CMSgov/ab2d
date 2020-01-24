@@ -267,8 +267,6 @@ public class JobProcessorImpl implements JobProcessor {
                 }
 
                 errorCount += processHandles(futureHandles, progressTracker);
-
-                sleep();
             }
         }
 
@@ -357,21 +355,14 @@ public class JobProcessorImpl implements JobProcessor {
                     }
                     progressTracker.incrementProcessedCount();
                 } catch (InterruptedException e) {
+                    cancelFuturesInQueue(futureHandles);
                     final String errMsg = "interrupted exception while processing patient ";
                     log.error(errMsg);
                     throw new RuntimeException(errMsg, e);
+
                 } catch (ExecutionException e) {
-                    log.info("###############################################################################");
-                    log.info("AM HERE .... !!!!!   processHandles(List<Future<Integer>> futureHandles)  ==== ");
-                    log.info("###############################################################################");
-
-                    log.error("exception while processing patient ", e);
-
-                    log.info("###############################################################################");
-                    log.info("cancelFuturesInQueue() ....");
-                    log.info("###############################################################################");
-
                     cancelFuturesInQueue(futureHandles);
+                    log.error("exception while processing patient ", e);
 
                     final String errMsg;
                     if (e.getCause() != null) {
@@ -379,8 +370,8 @@ public class JobProcessorImpl implements JobProcessor {
                     } else {
                         errMsg = e.getMessage();
                     }
-
                     throw new RuntimeException(errMsg, e.getCause());
+
                 } catch (CancellationException e) {
                     // This could happen in the rare event that a job was cancelled mid-process.
                     // due to which the futures in the queue (that were not yet in progress) were cancelled.
