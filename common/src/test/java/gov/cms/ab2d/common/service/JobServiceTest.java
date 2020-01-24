@@ -271,12 +271,12 @@ public class JobServiceTest {
         Assert.assertEquals(now, updatedJob.getExpiresAt());
 
         JobOutput updatedOutput = updatedJob.getJobOutputs().get(0);
-        Assert.assertEquals(false, updatedOutput.isError());
+        Assert.assertEquals(false, updatedOutput.getError());
         Assert.assertEquals(EOB, updatedOutput.getFhirResourceType());
         Assert.assertEquals("file.ndjson", updatedOutput.getFilePath());
 
         JobOutput updatedErrorOutput = updatedJob.getJobOutputs().get(1);
-        Assert.assertEquals(true, updatedErrorOutput.isError());
+        Assert.assertEquals(true, updatedErrorOutput.getError());
         Assert.assertEquals(OPERATION_OUTCOME, updatedErrorOutput.getFhirResourceType());
         Assert.assertEquals("error.ndjson", updatedErrorOutput.getFilePath());
     }

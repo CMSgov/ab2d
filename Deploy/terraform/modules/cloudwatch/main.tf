@@ -1,5 +1,5 @@
 resource "aws_cloudwatch_metric_alarm" "app_cpu_alarm" {
-  alarm_name = "ab2d-${var.env}-app-cpu-alarm"
+  alarm_name = "${var.env}-app-cpu-alarm"
   comparison_operator = "GreaterThanOrEqualToThreshold"
   evaluation_periods = "2"
   metric_name = "CPUUtilization"
@@ -14,7 +14,7 @@ resource "aws_cloudwatch_metric_alarm" "app_cpu_alarm" {
 }
 
 resource "aws_cloudwatch_metric_alarm" "target_response_time" {
-  alarm_name = "ab2d-${var.env}-target-response-time"
+  alarm_name = "${var.env}-target-response-time"
   comparison_operator = "GreaterThanOrEqualToThreshold"
   evaluation_periods = "1"
   metric_name = "TargetResponseTime"
@@ -30,7 +30,7 @@ resource "aws_cloudwatch_metric_alarm" "target_response_time" {
 }
 
 resource "aws_cloudwatch_metric_alarm" "healthy_host_count" {
-  alarm_name = "ab2d-${var.env}-healthy-host-count"
+  alarm_name = "${var.env}-healthy-host-count"
   comparison_operator = "LessThanThreshold"
   evaluation_periods = "1"
   metric_name = "HealthyHostCount"
@@ -46,7 +46,7 @@ resource "aws_cloudwatch_metric_alarm" "healthy_host_count" {
 }
 
 resource "aws_cloudwatch_metric_alarm" "app_status_check_alarm" {
-  alarm_name = "ab2d-${var.env}-app-status-check-alarm"
+  alarm_name = "${var.env}-app-status-check-alarm"
   comparison_operator = "GreaterThanOrEqualToThreshold"
   evaluation_periods = "1"
   metric_name = "StatusCheckFailed"
@@ -61,7 +61,7 @@ resource "aws_cloudwatch_metric_alarm" "app_status_check_alarm" {
 }
 
 resource "aws_cloudwatch_metric_alarm" "controller_cpu_alarm" {
-  alarm_name = "ab2d-${var.env}-deployment-controller-cpu-alarm"
+  alarm_name = "${var.env}-deployment-controller-cpu-alarm"
   comparison_operator = "GreaterThanOrEqualToThreshold"
   evaluation_periods = "2"
   metric_name = "CPUUtilization"
@@ -76,7 +76,7 @@ resource "aws_cloudwatch_metric_alarm" "controller_cpu_alarm" {
 }
 
 resource "aws_cloudwatch_metric_alarm" "controller_status_check_alarm" {
-  alarm_name = "ab2d-${var.env}-deployment-controller-status-check-alarm"
+  alarm_name = "${var.env}-deployment-controller-status-check-alarm"
   comparison_operator = "GreaterThanOrEqualToThreshold"
   evaluation_periods = "1"
   metric_name = "StatusCheckFailed"
@@ -226,7 +226,7 @@ resource "aws_cloudwatch_metric_alarm" "db_high_write_throughput" {
 }
 
 resource "aws_cloudwatch_metric_alarm" "app_elb_http_code_elb_4xx_count" {
-  alarm_name = "ab2d-${var.env}-app-elb-http-code-elb_4xx_count"
+  alarm_name = "${var.env}-app-elb-http-code-elb_4xx_count"
   comparison_operator = "GreaterThanOrEqualToThreshold"
   evaluation_periods = "1"
   metric_name = "HTTPCode_ELB_4XX_Count"
@@ -241,7 +241,7 @@ resource "aws_cloudwatch_metric_alarm" "app_elb_http_code_elb_4xx_count" {
 }
 
 resource "aws_cloudwatch_metric_alarm" "http_code_elb_5xx_count" {
-  alarm_name = "ab2d-${var.env}-app-elb-http-code_elb-5xx_count"
+  alarm_name = "${var.env}-app-elb-http-code_elb-5xx_count"
   comparison_operator = "GreaterThanOrEqualToThreshold"
   evaluation_periods = "2"
   metric_name = "HTTPCode_ELB_5XX_Count"

@@ -11,7 +11,10 @@ import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.common.repository.OptOutRepository;
 import gov.cms.ab2d.worker.adapter.bluebutton.ContractAdapter;
 import gov.cms.ab2d.worker.adapter.bluebutton.GetPatientsByContractResponse;
+import gov.cms.ab2d.worker.adapter.bluebutton.GetPatientsByContractResponse.PatientDTO;
 import gov.cms.ab2d.worker.adapter.bluebutton.PatientClaimsProcessor;
+import gov.cms.ab2d.worker.processor.domainmodel.ContractData;
+import gov.cms.ab2d.worker.processor.domainmodel.ProgressTracker;
 import gov.cms.ab2d.worker.service.FileService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -35,6 +38,7 @@ import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.stream.Collectors;
 
 import static gov.cms.ab2d.common.model.JobStatus.CANCELLED;
 import static gov.cms.ab2d.common.model.JobStatus.SUCCESSFUL;
@@ -49,9 +53,16 @@ import static net.logstash.logback.argument.StructuredArguments.keyValue;
 public class JobProcessorImpl implements JobProcessor {
     private static final String OUTPUT_FILE_SUFFIX = ".ndjson";
     private static final String ERROR_FILE_SUFFIX = "_error.ndjson";
+    private static final int SLEEP_DURATION = 1_000;                    // 1 second
 
     @Value("${cancellation.check.frequency:10}")
     private int cancellationCheckFrequency;
+
+    @Value("${report.progress.db.frequency:100}")
+    private int reportProgressDbFrequency;
+
+    @Value("${report.progress.log.frequency:100}")
+    private int reportProgressLogFrequency;
 
     @Value("${efs.mount}")
     private String efsMount;
@@ -74,19 +85,7 @@ public class JobProcessorImpl implements JobProcessor {
         Path outputDirPath = null;
         try {
             outputDirPath = Paths.get(efsMount, jobUuid);
-            final Path outputDir = createOutputDirectory(outputDirPath);
-
-            final List<Contract> attestedContracts = getAttestedContracts(job);
-            for (Contract contract : attestedContracts) {
-                log.info("Job [{}] - contract [{}] ", jobUuid, contract.getContractNumber());
-
-                var jobOutputs = processContract(outputDir, contract, jobUuid);
-
-                jobOutputs.forEach(jobOutput -> job.addJobOutput(jobOutput));
-                jobOutputRepository.saveAll(jobOutputs);
-            }
-
-            completeJob(job);
+            processJob(job, outputDirPath);
 
         } catch (JobCancelledException e) {
             log.warn("Job: [{}] CANCELLED", jobUuid);
@@ -95,6 +94,7 @@ public class JobProcessorImpl implements JobProcessor {
             deleteExistingDirectory(outputDirPath);
 
         } catch (Exception e) {
+            log.error("Unexpected expection ", e);
             job.setStatus(JobStatus.FAILED);
             job.setStatusMessage(e.getMessage());
             job.setCompletedAt(OffsetDateTime.now());
@@ -104,6 +104,27 @@ public class JobProcessorImpl implements JobProcessor {
 
         return job;
     }
+
+    private void processJob(Job job, Path outputDirPath) {
+        var outputDir = createOutputDirectory(outputDirPath);
+
+        var attestedContracts = getAttestedContracts(job);
+        var jobUuid = job.getJobUuid();
+        var progressTracker = initializeProgressTracker(jobUuid, attestedContracts);
+
+        for (Contract contract : attestedContracts) {
+            log.info("Job [{}] - contract [{}] ", jobUuid, contract.getContractNumber());
+
+            var contractData = new ContractData(outputDir, contract, progressTracker);
+
+            var jobOutputs = processContract(contractData);
+            jobOutputs.forEach(jobOutput -> job.addJobOutput(jobOutput));
+            jobOutputRepository.saveAll(jobOutputs);
+        }
+
+        completeJob(job);
+    }
+
 
     private Path createOutputDirectory(Path outputDirPath) {
         Path directory = null;
@@ -172,16 +193,48 @@ public class JobProcessorImpl implements JobProcessor {
         return attestedContracts;
     }
 
-    private List<JobOutput> processContract(final Path outputDir, Contract contract, String jobUuid) {
+
+    /**
+     * iterates through each contract,
+     * calls the contract Adapter
+     * to make a list of contracts to process.
+     *
+     * @param attestedContracts
+     * @return
+     */
+    private ProgressTracker initializeProgressTracker(String jobUuid, List<Contract> attestedContracts) {
+        return ProgressTracker.builder()
+                .jobUuid(jobUuid)
+                .patientsByContracts(fetchPatientsForAllContracts(attestedContracts))
+                .build();
+    }
+
+    private List<GetPatientsByContractResponse> fetchPatientsForAllContracts(List<Contract> attestedContracts) {
+        return attestedContracts
+                .stream()
+                .map(contract -> contract.getContractNumber())
+                .map(contractNumber -> contractAdapter.getPatients(contractNumber))
+                .collect(Collectors.toList());
+    }
+
+
+    private List<JobOutput> processContract(ContractData contractData) {
+        var contract = contractData.getContract();
         log.info("Beginning to process contract {}", keyValue(CONTRACT_LOG, contract.getContractName()));
 
         var contractNumber = contract.getContractNumber();
+
+        var outputDir = contractData.getOutputDir();
         var outputFile = fileService.createOrReplaceFile(outputDir, contractNumber + OUTPUT_FILE_SUFFIX);
         var errorFile = fileService.createOrReplaceFile(outputDir, contractNumber + ERROR_FILE_SUFFIX);
 
-        var patientsByContract = contractAdapter.getPatients(contractNumber);
+        var progressTracker = contractData.getProgressTracker();
+
+        var patientsByContract = getPatientsByContract(contractNumber, progressTracker);
         var patients = patientsByContract.getPatients();
         int patientCount = patients.size();
+        log.info("Contract [{}] has [{}] Patients", contractNumber, patientCount);
+
 
         // A mutex lock that all threads for a contract uses while writing into the shared files
         var lock = new ReentrantLock();
@@ -190,8 +243,8 @@ public class JobProcessorImpl implements JobProcessor {
         boolean isCancelled = false;
 
         int recordsProcessedCount = 0;
-        final List<Future<Integer>> futureHandles = new ArrayList<>();
-        for (GetPatientsByContractResponse.PatientDTO patient : patients) {
+        var futureHandles = new ArrayList<Future<Integer>>();
+        for (PatientDTO patient : patients) {
             ++recordsProcessedCount;
 
             final String patientId = patient.getPatientId();
@@ -204,20 +257,22 @@ public class JobProcessorImpl implements JobProcessor {
             futureHandles.add(patientClaimsProcessor.process(patientId, lock, outputFile, errorFile));
 
             if (recordsProcessedCount % cancellationCheckFrequency == 0) {
-                errorCount += processHandles(futureHandles);
 
+                var jobUuid = contractData.getProgressTracker().getJobUuid();
                 isCancelled = hasJobBeenCancelled(jobUuid);
                 if (isCancelled) {
                     log.warn("Job [{}] has been cancelled. Attempting to stop processing the job shortly ... ", jobUuid);
                     cancelFuturesInQueue(futureHandles);
                     break;
                 }
+
+                errorCount += processHandles(futureHandles, progressTracker);
             }
         }
 
         while (!futureHandles.isEmpty()) {
             sleep();
-            errorCount += processHandles(futureHandles);
+            errorCount += processHandles(futureHandles, progressTracker);
         }
 
         if (isCancelled) {
@@ -237,6 +292,16 @@ public class JobProcessorImpl implements JobProcessor {
 
         return jobOutputs;
     }
+
+
+    private GetPatientsByContractResponse getPatientsByContract(String contractNumber, ProgressTracker progressTracker) {
+        return progressTracker.getPatientsByContracts()
+                .stream()
+                .filter(byContract -> byContract.getContractNumber().equals(contractNumber))
+                .findFirst()
+                .get();
+    }
+
 
     private void cancelFuturesInQueue(List<Future<Integer>> futureHandles) {
 
@@ -276,7 +341,7 @@ public class JobProcessorImpl implements JobProcessor {
                 .anyMatch(optOut -> optOut.getEffectiveDate().isBefore(tomorrow));
     }
 
-    private int processHandles(List<Future<Integer>> futureHandles) {
+    private int processHandles(List<Future<Integer>> futureHandles, ProgressTracker progressTracker) {
         int errorCount = 0;
 
         var iterator = futureHandles.iterator();
@@ -288,6 +353,7 @@ public class JobProcessorImpl implements JobProcessor {
                     if (responseCount > 0) {
                         errorCount += responseCount;
                     }
+                    progressTracker.incrementProcessedCount();
                 } catch (InterruptedException e) {
                     final String errMsg = "interrupted exception while processing patient ";
                     log.error(errMsg);
@@ -306,7 +372,30 @@ public class JobProcessorImpl implements JobProcessor {
             }
         }
 
+        trackProgress(progressTracker);
+
         return errorCount;
+    }
+
+
+    private void trackProgress(ProgressTracker progressTracker) {
+        if (progressTracker.isTimeToUpdateDatabase(reportProgressDbFrequency)) {
+            final int percentageCompleted = progressTracker.getPercentageCompleted();
+
+            if (percentageCompleted > progressTracker.getLastUpdatedPercentage()) {
+                jobRepository.updatePercentageCompleted(progressTracker.getJobUuid(), percentageCompleted);
+                progressTracker.setLastUpdatedPercentage(percentageCompleted);
+            }
+        }
+
+        var processedCount = progressTracker.getProcessedCount();
+        if (progressTracker.isTimeToLog(reportProgressLogFrequency)) {
+            progressTracker.setLastLogUpdateCount(processedCount);
+
+            var totalCount = progressTracker.getTotalCount();
+            var percentageCompleted = progressTracker.getPercentageCompleted();
+            log.info("[{}/{}] records processed = [{}% completed]", processedCount, totalCount, percentageCompleted);
+        }
     }
 
 
@@ -321,6 +410,7 @@ public class JobProcessorImpl implements JobProcessor {
     private void completeJob(Job job) {
         job.setStatus(SUCCESSFUL);
         job.setStatusMessage("100%");
+        job.setProgress(100);
         job.setExpiresAt(OffsetDateTime.now().plusDays(1));
         job.setCompletedAt(OffsetDateTime.now());
 
@@ -330,7 +420,7 @@ public class JobProcessorImpl implements JobProcessor {
 
     private void sleep() {
         try {
-            Thread.sleep(100);
+            Thread.sleep(SLEEP_DURATION);
         } catch (InterruptedException e) {
             log.warn("interrupted exception in thread.sleep(). Ignoring");
         }
