@@ -175,12 +175,12 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
                 .map(BundleEntryComponent::getResource)
                 // Get only the explanation of benefits
                 .filter(resource -> resource.getResourceType() == ResourceType.ExplanationOfBenefit)
+                // Filter by date
+                .filter(resource -> FilterOutByDate.valid((ExplanationOfBenefit) resource, attDate, ranges))
                 // filter it
                 .map(resource -> ExplanationOfBenefitTrimmer.getBenefit((ExplanationOfBenefit) resource))
                 // Remove any empty values
                 .filter(Objects::nonNull)
-                // Filter by date
-                .filter(resource -> FilterOutByDate.valid(resource, attDate, ranges))
                 // Remove Plan D
                 .filter(resource -> !isPartD(resource))
                 // compile the list

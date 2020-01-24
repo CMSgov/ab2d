@@ -9,6 +9,7 @@ import gov.cms.ab2d.worker.service.FileService;
 import lombok.extern.slf4j.Slf4j;
 import org.hl7.fhir.dstu3.model.Bundle;
 import org.hl7.fhir.dstu3.model.ExplanationOfBenefit;
+import org.hl7.fhir.dstu3.model.Period;
 import org.hl7.fhir.dstu3.model.Resource;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -24,6 +25,7 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.text.SimpleDateFormat;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
@@ -137,6 +139,7 @@ public class PatientClaimsProcessorUnitTest {
 
 
     private void createEOB() {
+        SimpleDateFormat sdf = new SimpleDateFormat("MM/dd/yyyy");
         final String testInputFile = "test-data/EOB-for-Carrier-Claims.json";
         final InputStream inputStream = getClass().getResourceAsStream("/" + testInputFile);
 
@@ -144,6 +147,12 @@ public class PatientClaimsProcessorUnitTest {
         final IParser parser = respType.newParser(FhirContext.forDstu3());
         final ExplanationOfBenefit explanationOfBenefit = parser.parseResource(ExplanationOfBenefit.class, inputStream);
         eob = ExplanationOfBenefitTrimmer.getBenefit(explanationOfBenefit);
+        Period billingPeriod = new Period();
+        try {
+            billingPeriod.setStart(sdf.parse("01/02/2020"));
+            billingPeriod.setEnd(sdf.parse("01/03/2020"));
+        } catch (Exception ex) {}
+        eob.setBillablePeriod(billingPeriod);
     }
 
     private void createOutputFiles() throws IOException {

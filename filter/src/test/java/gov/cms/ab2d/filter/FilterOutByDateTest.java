@@ -162,6 +162,12 @@ class FilterOutByDateTest {
         assertEquals("05/31/2020", sdf.format(ranges.get(0).getEnd()));
         assertEquals("09/01/2020", sdf.format(ranges.get(1).getStart()));
         assertEquals("09/30/2020", sdf.format(ranges.get(1).getEnd()));
+
+        months = List.of(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12);
+        ranges = FilterOutByDate.getDateRanges(months, 2020);
+        assertEquals(1, ranges.size());
+        assertEquals("01/01/2020", sdf.format(ranges.get(0).getStart()));
+        assertEquals("12/31/2020", sdf.format(ranges.get(0).getEnd()));
     }
 
     private ExplanationOfBenefit createEOB(String startDate, String endDate) throws ParseException {
