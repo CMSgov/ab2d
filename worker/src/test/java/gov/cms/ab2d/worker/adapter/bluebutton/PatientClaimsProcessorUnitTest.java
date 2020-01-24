@@ -5,6 +5,8 @@ import ca.uhn.fhir.parser.IParser;
 import ca.uhn.fhir.rest.api.EncodingEnum;
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.filter.ExplanationOfBenefitTrimmer;
+import gov.cms.ab2d.worker.processor.PatientClaimsProcessor;
+import gov.cms.ab2d.worker.processor.PatientClaimsProcessorImpl;
 import gov.cms.ab2d.worker.service.FileService;
 import lombok.extern.slf4j.Slf4j;
 import org.hl7.fhir.dstu3.model.Bundle;

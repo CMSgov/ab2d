@@ -1,4 +1,4 @@
-package gov.cms.ab2d.worker.adapter.bluebutton;
+package gov.cms.ab2d.worker.processor;
 
 import java.nio.file.Path;
 import java.util.concurrent.Future;
