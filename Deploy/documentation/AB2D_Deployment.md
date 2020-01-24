@@ -49,6 +49,7 @@
 1. [Create an ab2d vault in 1Password](#create-an-ab2d-vault-in-1password)
 1. [Add an entrust certificate to the ab2d vault in 1Password](#add-an-entrust-certificate-to-the-ab2d-vault-in-1password)
 1. [Add a private key to the ab2d vault in 1Password](#add-a-private-key-to-the-ab2d-vault-in-1password)
+1. [Peer AB2D Dev, Sandbox, Impl environments with the BFD Sbx VPC and peer AB2D Prod with BFD Prod VPC](#peer-ab2d-dev-sandbox-impl-environments-with-the-bfd-sbx-vpc-and-peer-ab2d-prod-with-bfd-prod-vpc)
 
 ## Note the starting state of the customer AWS account
 
@@ -191,7 +192,7 @@
    
 ### Note ignored components
 
-1. Note that Stephen Walter said that he doesn't know why these components were created
+1. Note that Stephen said that he doesn't know why these components were created
 
 1. Note the ignored VPC
 
@@ -374,7 +375,7 @@
 
 ### Note ignored components under the sbx AWS account
 
-1. Note that Stephen Walter said that he doesn't know why these components were created
+1. Note that Stephen said that he doesn't know why these components were created
 
 1. Note the ignored VPC
 
@@ -2826,3 +2827,11 @@
    key type|pem file
 
 1. Select **Save**
+
+## Peer AB2D Dev, Sandbox, Impl environments with the BFD Sbx VPC and peer AB2D Prod with BFD Prod VPC
+
+1. Note that CCS usually likes to handle the peering between project environments and BFD and then the ADO teams can authorize access
+
+1. Request that CMS technical contact (e.g. Stephen) create a ticket like the following
+
+   > https://jira.cms.gov/browse/CMSAWSOPS-53861
