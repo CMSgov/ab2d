@@ -24,7 +24,7 @@ class FilterOutByDateTest {
                 FilterOutByDate.getDateRange(10, 18, 1, 19),
                 FilterOutByDate.getDateRange(9, 15),
                 FilterOutByDate.getDateRange(10, 12, 5, 15));
-        List<Resource> list = List.of(
+        List<ExplanationOfBenefit> list = List.of(
                 createEOB("10/01/2020", "10/02/2020"), // In
                 createEOB("08/05/2020", "08/06/2020"), // In
                 createEOB("11/07/2020", "11/07/2020"), // Out

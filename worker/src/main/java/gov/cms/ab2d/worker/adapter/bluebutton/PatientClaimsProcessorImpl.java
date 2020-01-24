@@ -4,6 +4,7 @@ import ca.uhn.fhir.context.FhirContext;
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.util.FHIRUtil;
 import gov.cms.ab2d.filter.ExplanationOfBenefitTrimmer;
+import gov.cms.ab2d.filter.FilterOutByDate;
 import gov.cms.ab2d.worker.service.FileService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,8 +23,9 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
-import java.util.List;
-import java.util.Objects;
+import java.text.ParseException;
+import java.time.OffsetDateTime;
+import java.util.*;
 import java.util.concurrent.Future;
 import java.util.concurrent.locks.Lock;
 import java.util.stream.Collectors;
@@ -47,12 +49,13 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
 
 
     @Async("pcpThreadPool")
-    public Future<Integer> process(String patientId, Lock lock, Path outputFile, Path errorFile) {
+    public Future<Integer> process(GetPatientsByContractResponse.PatientDTO patient, Lock lock, Path outputFile,
+                                   Path errorFile, OffsetDateTime attTime) {
         int errorCount = 0;
         int resourceCount = 0;
 
         try {
-            var resources = getEobBundleResources(patientId);
+            var resources = getEobBundleResources(patient, attTime);
 
             var jsonParser = fhirContext.newJsonParser();
 
@@ -135,31 +138,38 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
         }
     }
 
+    private List<Resource> getEobBundleResources(GetPatientsByContractResponse.PatientDTO patient, OffsetDateTime attTime) {
 
-    private List<Resource> getEobBundleResources(String patientId) {
-
-        Bundle eobBundle = bfdClient.requestEOBFromServer(patientId);
+        Bundle eobBundle = bfdClient.requestEOBFromServer(patient.getPatientId());
 
         final List<BundleEntryComponent> entries = eobBundle.getEntry();
-        final List<Resource> resources = extractResources(entries);
+        final List<Resource> resources = extractResources(entries, patient.getMonthsUnderContract(), attTime);
 
         while (eobBundle.getLink(Bundle.LINK_NEXT) != null) {
             eobBundle = bfdClient.requestNextBundleFromServer(eobBundle);
             final List<BundleEntryComponent> nextEntries = eobBundle.getEntry();
-            resources.addAll(extractResources(nextEntries));
+            resources.addAll(extractResources(nextEntries, patient.getMonthsUnderContract(), attTime));
         }
 
         log.debug("Bundle - Total: {} - Entries: {} ", eobBundle.getTotal(), entries.size());
         return resources;
     }
 
-    private List<Resource> extractResources(List<BundleEntryComponent> entries) {
-        /**
-         * To filter out by date: (with params List<Integer> validMonths, year, attestationDate
-         *
-         *    List<FilterOutByDate> dateRanges = FilterOutByDate.getDateRanges(validMonths, year);
-         *    List<ExplanationOfBenefit> benefits = FilterOutByDate.filterByDate(resources, attestationDate, dateRanges);
-         */
+    private List<Resource> extractResources(List<BundleEntryComponent> entries, List<Integer> monthsUnderContract,
+                                            OffsetDateTime attTime) {
+        if (attTime == null) {
+            return new ArrayList<>();
+        }
+        long epochMilli = attTime.toInstant().toEpochMilli();
+        Date attDate = new Date(epochMilli);
+        int year = Calendar.getInstance().get(Calendar.YEAR);
+        List<FilterOutByDate.DateRange> dateRanges = new ArrayList<>();
+        try {
+            dateRanges = FilterOutByDate.getDateRanges(monthsUnderContract, year);
+        } catch (ParseException ex) {
+            log.error("Unable to determine date ranges", ex);
+        }
+        final List<FilterOutByDate.DateRange> ranges = dateRanges;
         return entries.stream()
                 // Get the resource
                 .map(BundleEntryComponent::getResource)
@@ -169,6 +179,8 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
                 .map(resource -> ExplanationOfBenefitTrimmer.getBenefit((ExplanationOfBenefit) resource))
                 // Remove any empty values
                 .filter(Objects::nonNull)
+                // Filter by date
+                .filter(resource -> FilterOutByDate.valid(resource, attDate, ranges))
                 // Remove Plan D
                 .filter(resource -> !isPartD(resource))
                 // compile the list

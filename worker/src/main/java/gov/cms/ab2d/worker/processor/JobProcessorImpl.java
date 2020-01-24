@@ -74,7 +74,6 @@ public class JobProcessorImpl implements JobProcessor {
     private final PatientClaimsProcessor patientClaimsProcessor;
     private final OptOutRepository optOutRepository;
 
-
     @Override
     @Transactional(propagation = Propagation.NEVER)
     public Job process(final String jobUuid) {
@@ -115,7 +114,7 @@ public class JobProcessorImpl implements JobProcessor {
         for (Contract contract : attestedContracts) {
             log.info("Job [{}] - contract [{}] ", jobUuid, contract.getContractNumber());
 
-            var contractData = new ContractData(outputDir, contract, progressTracker);
+            var contractData = new ContractData(outputDir, contract, progressTracker, contract.getAttestedOn());
 
             var jobOutputs = processContract(contractData);
             jobOutputs.forEach(jobOutput -> job.addJobOutput(jobOutput));
@@ -124,7 +123,6 @@ public class JobProcessorImpl implements JobProcessor {
 
         completeJob(job);
     }
-
 
     private Path createOutputDirectory(Path outputDirPath) {
         Path directory = null;
@@ -254,7 +252,7 @@ public class JobProcessorImpl implements JobProcessor {
                 continue;
             }
 
-            futureHandles.add(patientClaimsProcessor.process(patientId, lock, outputFile, errorFile));
+            futureHandles.add(patientClaimsProcessor.process(patient, lock, outputFile, errorFile, contract.getAttestedOn()));
 
             if (recordsProcessedCount % cancellationCheckFrequency == 0) {
 

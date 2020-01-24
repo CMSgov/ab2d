@@ -3,11 +3,11 @@ package gov.cms.ab2d.filter;
 import lombok.Data;
 import org.hl7.fhir.dstu3.model.ExplanationOfBenefit;
 import org.hl7.fhir.dstu3.model.Period;
-import org.hl7.fhir.dstu3.model.Resource;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Utility class to take different subscription ranges and attestation dates and
@@ -207,30 +207,31 @@ public final class FilterOutByDate {
      * @return - the list of objects done after the attestation date and in the date ranges
      * @throws ParseException - if there is an issue parsing the dates
      */
-    public static List<ExplanationOfBenefit> filterByDate(List<Resource> benes,
+    public static List<ExplanationOfBenefit> filterByDate(List<ExplanationOfBenefit> benes,
                                               Date attestationDate,
                                               List<DateRange> dateRanges) throws ParseException {
         if (benes == null || benes.isEmpty()) {
             return new ArrayList<>();
         }
-        List<ExplanationOfBenefit> validBenes = new ArrayList<>();
+        return benes.stream().filter(b -> valid(b, attestationDate, dateRanges)).collect(Collectors.toList());
+    }
 
-        for (int i = 0; i < benes.size(); i++) {
-            ExplanationOfBenefit b = (ExplanationOfBenefit) benes.get(i);
-            if (afterAttestation(attestationDate, b)) {
-                boolean inRange = false;
+    public static boolean valid(ExplanationOfBenefit bene, Date attestationDate, List<DateRange> dateRanges) {
+        if (bene == null) {
+            return false;
+        }
+        try {
+            if (afterAttestation(attestationDate, bene)) {
                 for (DateRange r : dateRanges) {
-                    if (withinDateRange(b, r)) {
-                        inRange = true;
-                        break;
+                    if (withinDateRange(bene, r)) {
+                        return true;
                     }
                 }
-                if (inRange) {
-                    validBenes.add(b);
-                }
             }
+        } catch (Exception ex) {
+            return false;
         }
-        return validBenes;
+        return false;
     }
 
     /**
