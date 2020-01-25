@@ -214,11 +214,12 @@ public class JobProcessorImpl implements JobProcessor {
         try {
             allFutures.get();
         } catch (InterruptedException e) {
-            log.info("InterruptedException at CompletionFuture (allFutures).get() ");
-            e.printStackTrace();
+            //should not happen
+            throw new RuntimeException(e);
         } catch (ExecutionException e) {
-            log.info("ExecutionException at CompletionFuture (allFutures).get() ");
-            e.printStackTrace();
+            //should not happen
+            log.error("ExecutionException ", e);
+            throw new RuntimeException(e.getCause());
         }
 
         log.info("allFutures.get() is DONE.");
@@ -246,7 +247,7 @@ public class JobProcessorImpl implements JobProcessor {
         job.setExpiresAt(OffsetDateTime.now().plusDays(1));
         job.setCompletedAt(OffsetDateTime.now());
 
-        jobRepository.save(job);
+        jobRepository.saveAndFlush(job);
         log.info("Job: [{}] is DONE", job.getJobUuid());
     }
 

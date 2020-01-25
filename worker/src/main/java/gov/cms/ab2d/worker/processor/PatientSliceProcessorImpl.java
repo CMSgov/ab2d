@@ -95,8 +95,11 @@ public class PatientSliceProcessorImpl implements PatientSliceProcessor {
             var job = jobRepository.findByJobUuid(jobUuid);
             jobOutputs.forEach(jobOutput -> job.addJobOutput(jobOutput));
             jobOutputRepository.saveAll(jobOutputs);
+
         } catch (RuntimeException e) {
-            log.error("Unexpected exception - update job_status to FAILED", e);
+            var errMsg = "Update job [%s] to FAILED status";
+            log.error(String.format(errMsg, jobUuid), e);
+
             var failureMessage = ExceptionUtils.getRootCauseMessage(e);
             jobRepository.saveJobFailure(jobUuid, failureMessage);
         }
@@ -152,14 +155,6 @@ public class PatientSliceProcessorImpl implements PatientSliceProcessor {
             errorCount += patientClaimsProcessor.processSync(patientId, new ReentrantLock(), dataFile, errorFile);
         }
 
-
-//        final int percentCompleted = (recordsProcessedCount * 100) / totalCountInSlice;
-//        if (percentCompleted > lastPercentCompleted) {
-//            log.info("processed:[{}] - percentCompleted:[{}] - lastPercentCompleted:[{}] ", recordsProcessedCount, percentCompleted, lastPercentCompleted);
-//            jobProgress.setProgress(percentCompleted);
-//            jobProgressRepository.saveAndFlush(jobProgress);
-//            lastPercentCompleted = percentCompleted;
-//        }
         updateProgressInDb(jobProgress, totalCountInSlice, recordsProcessedCount, lastPercentCompleted);
         return errorCount;
     }
@@ -167,7 +162,7 @@ public class PatientSliceProcessorImpl implements PatientSliceProcessor {
     private int updateProgressInDb(JobProgress jobProgress, int totalCountInSlice, int recordsProcessedCount, int lastPercentCompleted) {
         final int percentCompleted = (recordsProcessedCount * 100) / totalCountInSlice;
         if (percentCompleted > lastPercentCompleted) {
-            log.info("processed:[{}] - percentCompleted:[{}] - lastPercentCompleted:[{}] ", recordsProcessedCount, percentCompleted, lastPercentCompleted);
+//            log.info("processed:[{}] - percentCompleted:[{}] - lastPercentCompleted:[{}] ", recordsProcessedCount, percentCompleted, lastPercentCompleted);
             jobProgress.setProgress(percentCompleted);
             jobProgressRepository.saveAndFlush(jobProgress);
             lastPercentCompleted = percentCompleted;
@@ -183,60 +178,10 @@ public class PatientSliceProcessorImpl implements PatientSliceProcessor {
             return true;
         }
 
-        var errMsg = "Job %s is no longer in progress. It is in %s status. Stopping processing";
+        var errMsg = "Job [%s] is no longer in progress. It is in [%s] status. Stopping processing";
         log.warn("{}", String.format(errMsg, jobUuid, jobStatus));
-//        if (CANCELLED.equals(jobStatus)) {
-////            var errMsg = "Job %s is in cancelled status. Stopping processing";
-//            log.warn("{}", String.format(errMsg, jobUuid, jobStatus));
-//        } else if (FAILED.equals(jobStatus)) {
-////            var errMsg = "Job is in failed status. Stopping processing";
-//            log.warn("{}", String.format(errMsg, jobUuid, jobStatus));
-//        } else {
-//            var mesg = "Job [" + jobUuid + "] is ";
-//            log.warn("{}. It is in [{}] status", mesg, jobStatus);
-//        }
-
         return false;
     }
-
-    // Not ready
-//    private void updateProgress(ProgressTracker progressTracker) {
-//        if (progressTracker.isTimeToUpdateDatabase(reportProgressDbFrequency)) {
-//            final int percentageCompleted = progressTracker.getPercentageCompleted();
-//
-//            if (percentageCompleted > progressTracker.getLastUpdatedPercentage()) {
-//                jobRepository.updatePercentageCompleted(progressTracker.getJobUuid(), percentageCompleted);
-//                progressTracker.setLastUpdatedPercentage(percentageCompleted);
-//            }
-//        }
-//
-//        var processedCount = progressTracker.getProcessedCount();
-//        if (progressTracker.isTimeToLog(reportProgressLogFrequency)) {
-//            progressTracker.setLastLogUpdateCount(processedCount);
-//
-//            var totalCount = progressTracker.getTotalCount();
-//            var percentageCompleted = progressTracker.getPercentageCompleted();
-//            log.info("[{}/{}] records processed = [{}% completed]", processedCount, totalCount, percentageCompleted);
-//        }
-//    }
-
-
-//    private int updateProgress(String jobUuid, int recordsProcessedInSlice, int totalCountInSlice, int lastPercentCompleted) {
-//
-//        final int percentCompleted = (recordsProcessedInSlice * 100) / totalCountInSlice;
-//        if (recordsProcessedInSlice % reportProgressDbFrequency == 0) {
-//            if (percentCompleted > lastPercentCompleted) {
-//                jobRepository.updatePercentageCompleted(jobUuid, percentCompleted);
-//            }
-//        }
-//
-//        if (recordsProcessedInSlice % reportProgressLogFrequency == 0) {
-//            log.info("[{}/{}] records processed = [{}% completed]", recordsProcessedInSlice, totalCountInSlice, percentCompleted);
-//        }
-//
-//        return percentCompleted;
-//    }
-
 
     private boolean isOptOutPatient(String patientId) {
 
