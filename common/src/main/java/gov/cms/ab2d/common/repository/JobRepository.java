@@ -41,10 +41,10 @@ public interface JobRepository extends JpaRepository<Job, Long> {
     void resetJobsToSubmittedStatus(List<String> jobUuids);
 
 
-    @Modifying
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
-    @Query("UPDATE Job j SET j.progress = :percentageCompleted WHERE j.jobUuid = :jobUuid ")
-    int updatePercentageCompleted(String jobUuid, int percentageCompleted);
+//    @Modifying
+//    @Transactional(propagation = Propagation.REQUIRES_NEW)
+//    @Query("UPDATE Job j SET j.progress = :percentageCompleted WHERE j.jobUuid = :jobUuid ")
+//    int updatePercentageCompleted(String jobUuid, int percentageCompleted);
 
 
     @Modifying

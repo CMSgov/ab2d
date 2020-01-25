@@ -1,8 +1,10 @@
 package gov.cms.ab2d.worker.processor;
 
 import gov.cms.ab2d.common.model.JobOutput;
+import gov.cms.ab2d.common.model.JobProgress;
 import gov.cms.ab2d.common.model.OptOut;
 import gov.cms.ab2d.common.repository.JobOutputRepository;
+import gov.cms.ab2d.common.repository.JobProgressRepository;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.common.repository.OptOutRepository;
 import gov.cms.ab2d.worker.adapter.bluebutton.GetPatientsByContractResponse.PatientDTO;
@@ -26,8 +28,6 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.locks.ReentrantLock;
 
-import static gov.cms.ab2d.common.model.JobStatus.CANCELLED;
-import static gov.cms.ab2d.common.model.JobStatus.FAILED;
 import static gov.cms.ab2d.common.model.JobStatus.IN_PROGRESS;
 import static gov.cms.ab2d.common.util.Constants.EOB;
 
@@ -35,7 +35,7 @@ import static gov.cms.ab2d.common.util.Constants.EOB;
 @Component
 @RequiredArgsConstructor
 public class PatientSliceProcessorImpl implements PatientSliceProcessor {
-    private static final String OUTPUT_FILE_SUFFIX = ".ndjson";
+    private static final String DATA_FILE_SUFFIX = ".ndjson";
     private static final String ERROR_FILE_SUFFIX = "_error.ndjson";
 
     @Value("${cancellation.check.frequency:10}")
@@ -49,58 +49,79 @@ public class PatientSliceProcessorImpl implements PatientSliceProcessor {
 
     private final FileService fileService;
     private final JobRepository jobRepository;
+    private final JobProgressRepository jobProgressRepository;
     private final JobOutputRepository jobOutputRepository;
     private final OptOutRepository optOutRepository;
     private final PatientClaimsProcessor patientClaimsProcessor;
 
     @Override
-    @Async("pcpThreadPool")
+    @Async("patientProcessorThreadPool")
     public CompletableFuture<Void> process(Map.Entry<Integer, List<PatientDTO>> slice, ContractData contractData) {
-        log.info("Slice [{}] has [{}] patients ", slice.getKey(), slice.getValue().size());
+        final boolean isJobStillInProgress = isJobStillInProgress(contractData);
+        if (!isJobStillInProgress) {
+            return CompletableFuture.completedFuture(null);
+        }
+
         var startedAt = Instant.now();
+        log.info("Slice [{}] has [{}] patients ", slice.getKey(), slice.getValue().size());
 
-        var key = slice.getKey();
-
+        var sliceSno = slice.getKey();
         var contractNumber = contractData.getContract().getContractNumber();
-        var outputFilename = createFileName(contractNumber, key, OUTPUT_FILE_SUFFIX);
-        var errorFileName = createFileName(contractNumber, key, ERROR_FILE_SUFFIX);
+
+        // create output data and error file
+        var dataFilename = createFileName(contractNumber, sliceSno, DATA_FILE_SUFFIX);
+        var errorFileName = createFileName(contractNumber, sliceSno, ERROR_FILE_SUFFIX);
 
         var outputDir = contractData.getOutputDir();
-        var outputFile = fileService.createOrReplaceFile(outputDir, outputFilename);
+        var dataFile = fileService.createOrReplaceFile(outputDir, dataFilename);
         var errorFile = fileService.createOrReplaceFile(outputDir, errorFileName);
 
-        final List<PatientDTO> patientsSlice = slice.getValue();
+        var jobUuid = contractData.getProgressTracker().getJobUuid();
+        var jobProgress = createJobProgress(contractData, sliceSno, jobUuid);
+
+        var patientsSlice = slice.getValue();
         try {
-            int errorCount = processPatients(contractData, outputFile, errorFile, patientsSlice);
+            int errorCount = processPatients(contractData, dataFile, errorFile, patientsSlice, jobProgress);
 
             var jobOutputs = new ArrayList<JobOutput>();
             if (errorCount < patientsSlice.size()) {
-                jobOutputs.add(createJobOutput(outputFile, false));
+                jobOutputs.add(createJobOutput(dataFile, false));
             }
             if (errorCount > 0) {
                 log.warn("Encountered {} errors during job processing", errorCount);
                 jobOutputs.add(createJobOutput(errorFile, true));
             }
 
-            var jobUuid = contractData.getProgressTracker().getJobUuid();
             var job = jobRepository.findByJobUuid(jobUuid);
             jobOutputs.forEach(jobOutput -> job.addJobOutput(jobOutput));
             jobOutputRepository.saveAll(jobOutputs);
         } catch (RuntimeException e) {
-            log.error("Unexpected exception ", e);
-            var jobUuid = contractData.getProgressTracker().getJobUuid();
+            log.error("Unexpected exception - update job_status to FAILED", e);
             var failureMessage = ExceptionUtils.getRootCauseMessage(e);
             jobRepository.saveJobFailure(jobUuid, failureMessage);
-//            jobRepository.saveJobFailure(jobUuid, failureMessage, OffsetDateTime.now());
         }
 
         logTimeTaken(slice.getKey(), startedAt);
         return CompletableFuture.completedFuture(null);
     }
 
-    private int processPatients(ContractData contractData, Path outputFile, Path errorFile, List<PatientDTO> patientsSlice) {
+
+    private JobProgress createJobProgress(ContractData contractData, Integer key, String jobUuid) {
+        JobProgress jobProgress = new JobProgress();
+        jobProgress.setJob(jobRepository.findByJobUuid(jobUuid));
+        jobProgress.setContract(contractData.getContract());
+        jobProgress.setSliceNumber(key);
+        jobProgress.setProgress(0);
+        jobProgressRepository.save(jobProgress);
+        return jobProgress;
+    }
+
+    private int processPatients(ContractData contractData, Path dataFile, Path errorFile, List<PatientDTO> patientsSlice, JobProgress jobProgress) {
+        int totalCountInSlice = patientsSlice.size();
+
         int errorCount = 0;
         int recordsProcessedCount = 0;
+        int lastPercentCompleted = 0;
 
         for (PatientDTO patient : patientsSlice) {
             ++recordsProcessedCount;
@@ -110,9 +131,15 @@ public class PatientSliceProcessorImpl implements PatientSliceProcessor {
                 if (!isJobStillInProgress) {
                     break;
                 }
+            }
 
-                // Needs more work
-//                updateProgress(contractData.getProgressTracker());
+            if (recordsProcessedCount % reportProgressDbFrequency == 0) {
+                lastPercentCompleted = updateProgressInDb(jobProgress, totalCountInSlice, recordsProcessedCount, lastPercentCompleted);
+            }
+
+            if (recordsProcessedCount % reportProgressLogFrequency == 0) {
+                final int percentCompleted = (recordsProcessedCount * 100) / totalCountInSlice;
+                log.info("[{}/{}] records processed = [{}% completed]", recordsProcessedCount, totalCountInSlice, percentCompleted);
             }
 
             var patientId = patient.getPatientId();
@@ -122,12 +149,31 @@ public class PatientSliceProcessorImpl implements PatientSliceProcessor {
                 continue;
             }
 
-            errorCount += patientClaimsProcessor.processSync(patientId, new ReentrantLock(), outputFile, errorFile);
+            errorCount += patientClaimsProcessor.processSync(patientId, new ReentrantLock(), dataFile, errorFile);
         }
 
+
+//        final int percentCompleted = (recordsProcessedCount * 100) / totalCountInSlice;
+//        if (percentCompleted > lastPercentCompleted) {
+//            log.info("processed:[{}] - percentCompleted:[{}] - lastPercentCompleted:[{}] ", recordsProcessedCount, percentCompleted, lastPercentCompleted);
+//            jobProgress.setProgress(percentCompleted);
+//            jobProgressRepository.saveAndFlush(jobProgress);
+//            lastPercentCompleted = percentCompleted;
+//        }
+        updateProgressInDb(jobProgress, totalCountInSlice, recordsProcessedCount, lastPercentCompleted);
         return errorCount;
     }
 
+    private int updateProgressInDb(JobProgress jobProgress, int totalCountInSlice, int recordsProcessedCount, int lastPercentCompleted) {
+        final int percentCompleted = (recordsProcessedCount * 100) / totalCountInSlice;
+        if (percentCompleted > lastPercentCompleted) {
+            log.info("processed:[{}] - percentCompleted:[{}] - lastPercentCompleted:[{}] ", recordsProcessedCount, percentCompleted, lastPercentCompleted);
+            jobProgress.setProgress(percentCompleted);
+            jobProgressRepository.saveAndFlush(jobProgress);
+            lastPercentCompleted = percentCompleted;
+        }
+        return lastPercentCompleted;
+    }
 
 
     private boolean isJobStillInProgress(ContractData contractData) {
@@ -137,16 +183,18 @@ public class PatientSliceProcessorImpl implements PatientSliceProcessor {
             return true;
         }
 
-        var mesg = "Job [" + jobUuid + "] is no longer in progress";
-        log.warn("{}. It is in [{}] status", mesg, jobStatus);
-
-        if (CANCELLED.equals(jobStatus)) {
-            var errMsg = "Job is in cancelled status. Stopping processing";
-            log.warn("{}", errMsg);
-        } else if (FAILED.equals(jobStatus)) {
-            var errMsg = "Job is in failed status. Stopping processing";
-            log.warn("{}", errMsg);
-        }
+        var errMsg = "Job %s is no longer in progress. It is in %s status. Stopping processing";
+        log.warn("{}", String.format(errMsg, jobUuid, jobStatus));
+//        if (CANCELLED.equals(jobStatus)) {
+////            var errMsg = "Job %s is in cancelled status. Stopping processing";
+//            log.warn("{}", String.format(errMsg, jobUuid, jobStatus));
+//        } else if (FAILED.equals(jobStatus)) {
+////            var errMsg = "Job is in failed status. Stopping processing";
+//            log.warn("{}", String.format(errMsg, jobUuid, jobStatus));
+//        } else {
+//            var mesg = "Job [" + jobUuid + "] is ";
+//            log.warn("{}. It is in [{}] status", mesg, jobStatus);
+//        }
 
         return false;
     }
@@ -172,6 +220,22 @@ public class PatientSliceProcessorImpl implements PatientSliceProcessor {
 //        }
 //    }
 
+
+//    private int updateProgress(String jobUuid, int recordsProcessedInSlice, int totalCountInSlice, int lastPercentCompleted) {
+//
+//        final int percentCompleted = (recordsProcessedInSlice * 100) / totalCountInSlice;
+//        if (recordsProcessedInSlice % reportProgressDbFrequency == 0) {
+//            if (percentCompleted > lastPercentCompleted) {
+//                jobRepository.updatePercentageCompleted(jobUuid, percentCompleted);
+//            }
+//        }
+//
+//        if (recordsProcessedInSlice % reportProgressLogFrequency == 0) {
+//            log.info("[{}/{}] records processed = [{}% completed]", recordsProcessedInSlice, totalCountInSlice, percentCompleted);
+//        }
+//
+//        return percentCompleted;
+//    }
 
 
     private boolean isOptOutPatient(String patientId) {
