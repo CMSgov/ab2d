@@ -8,6 +8,7 @@ CREATE TABLE job_progress
     job_id              BIGINT              NOT NULL,
     contract_id         BIGINT              NOT NULL,
     slice_number        INTEGER             NOT NULL,
+    record_count        INTEGER             NOT NULL,
     progress            INTEGER
 );
 

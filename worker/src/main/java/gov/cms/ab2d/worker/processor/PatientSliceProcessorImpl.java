@@ -77,14 +77,14 @@ public class PatientSliceProcessorImpl implements PatientSliceProcessor {
         var errorFile = fileService.createOrReplaceFile(outputDir, errorFileName);
 
         var jobUuid = contractData.getProgressTracker().getJobUuid();
-        var jobProgress = createJobProgress(contractData, sliceSno, jobUuid);
-
-        var patientsSlice = slice.getValue();
+        var patientsInSlice = slice.getValue();
+        final int patientCountInSlice = patientsInSlice.size();
+        var jobProgress = createJobProgress(contractData, jobUuid, sliceSno, patientCountInSlice);
         try {
-            int errorCount = processPatients(contractData, dataFile, errorFile, patientsSlice, jobProgress);
+            int errorCount = processPatients(contractData, dataFile, errorFile, patientsInSlice, jobProgress);
 
             var jobOutputs = new ArrayList<JobOutput>();
-            if (errorCount < patientsSlice.size()) {
+            if (errorCount < patientCountInSlice) {
                 jobOutputs.add(createJobOutput(dataFile, false));
             }
             if (errorCount > 0) {
@@ -109,11 +109,12 @@ public class PatientSliceProcessorImpl implements PatientSliceProcessor {
     }
 
 
-    private JobProgress createJobProgress(ContractData contractData, Integer key, String jobUuid) {
+    private JobProgress createJobProgress(ContractData contractData, String jobUuid, Integer key, int patientCount) {
         JobProgress jobProgress = new JobProgress();
         jobProgress.setJob(jobRepository.findByJobUuid(jobUuid));
         jobProgress.setContract(contractData.getContract());
         jobProgress.setSliceNumber(key);
+        jobProgress.setRecordCount(patientCount);
         jobProgress.setProgress(0);
         jobProgressRepository.save(jobProgress);
         return jobProgress;

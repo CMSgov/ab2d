@@ -194,6 +194,10 @@ public class JobProcessorImpl implements JobProcessor {
 
     private void processContract(ContractData contractData) {
         var startedAt = Instant.now();
+        final boolean isJobStillInProgress = isJobStillInProgress(contractData);
+        if (!isJobStillInProgress) {
+            return;
+        }
 
         var contractNumber = contractData.getContract().getContractNumber();
         var progressTracker = contractData.getProgressTracker();
@@ -224,6 +228,18 @@ public class JobProcessorImpl implements JobProcessor {
 
         log.info("allFutures.get() is DONE.");
         logTimeTaken(contractNumber, startedAt);
+    }
+
+    private boolean isJobStillInProgress(ContractData contractData) {
+        var jobUuid = contractData.getProgressTracker().getJobUuid();
+        var jobStatus = jobRepository.findJobStatus(jobUuid);
+        if (IN_PROGRESS.equals(jobStatus)) {
+            return true;
+        }
+
+        var errMsg = "Job [%s] is no longer in progress. It is in [%s] status. Stopping processing";
+        log.warn("{}", String.format(errMsg, jobUuid, jobStatus));
+        return false;
     }
 
     private GetPatientsByContractResponse getPatientsByContract(String contractNumber, ProgressTracker progressTracker) {
