@@ -35,17 +35,14 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
+import static gov.cms.ab2d.common.model.JobStatus.CANCELLED;
+import static gov.cms.ab2d.common.model.JobStatus.IN_PROGRESS;
 import static gov.cms.ab2d.common.model.JobStatus.SUCCESSFUL;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
-@SuppressWarnings("PMD.TooManyStaticImports")
 public class JobProcessorImpl implements JobProcessor {
-    private static final String OUTPUT_FILE_SUFFIX = ".ndjson";
-//    private static final String ERROR_FILE_SUFFIX = "_error.ndjson";
-    private static final int SLEEP_DURATION = 250;
-
 
     @Value("${efs.mount}")
     private String efsMount;
@@ -62,21 +59,13 @@ public class JobProcessorImpl implements JobProcessor {
     public Job process(final String jobUuid) {
 
         final Job job = jobRepository.findByJobUuid(jobUuid);
-        log.info("Found job");
+        log.info("Found job [{}]", jobUuid);
 
-        Path outputDirPath = null;
         try {
-            outputDirPath = Paths.get(efsMount, jobUuid);
+            Path outputDirPath = Paths.get(efsMount, jobUuid);
             processJob(job, outputDirPath);
-
-        } catch (JobCancelledException e) {
-            log.warn("Job: [{}] CANCELLED", jobUuid);
-
-            log.info("Deleting output directory : {} ", outputDirPath.toAbsolutePath());
-            deleteExistingDirectory(outputDirPath);
-
         } catch (Exception e) {
-            log.error("Unexpected expection ", e);
+            log.error("Unexpected exception ", e);
             job.setStatus(JobStatus.FAILED);
             job.setStatusMessage(e.getMessage());
             job.setCompletedAt(OffsetDateTime.now());
@@ -100,7 +89,14 @@ public class JobProcessorImpl implements JobProcessor {
             processContract(contractData);
         }
 
-        completeJob(job);
+        final JobStatus jobStatus = jobRepository.findJobStatus(jobUuid);
+        if (IN_PROGRESS.equals(jobStatus)) {
+            completeJob(job);
+        } else if (CANCELLED.equals(jobStatus)) {
+            log.warn("Job: [{}] CANCELLED", jobUuid);
+            log.info("Deleting output directory : {} ", outputDirPath.toAbsolutePath());
+            deleteExistingDirectory(outputDirPath);
+        }
     }
 
 
@@ -123,7 +119,7 @@ public class JobProcessorImpl implements JobProcessor {
 
     private void deleteExistingDirectory(Path outputDirPath) {
         final File[] files = outputDirPath.toFile()
-                .listFiles((dir, name) -> name.toLowerCase().endsWith(OUTPUT_FILE_SUFFIX));
+                .listFiles((dir, name) -> name.toLowerCase().endsWith(".ndjson"));
 
         for (File file : files) {
             final Path filePath = file.toPath();
@@ -237,39 +233,6 @@ public class JobProcessorImpl implements JobProcessor {
                 .get();
     }
 
-
-//    private void cancelFuturesInQueue(List<Future<Integer>> futureHandles) {
-//
-//        // cancel any futures that have not started processing and are waiting in the queue.
-//        futureHandles.parallelStream().forEach(future -> future.cancel(false));
-//
-//        //At this point, there may be a few futures that are already in progress.
-//        //But all the futures that are not yet in progress would be cancelled.
-//    }
-
-
-
-//    private void trackProgress(ProgressTracker progressTracker) {
-//        if (progressTracker.isTimeToUpdateDatabase(reportProgressDbFrequency)) {
-//            final int percentageCompleted = progressTracker.getPercentageCompleted();
-//
-//            if (percentageCompleted > progressTracker.getLastUpdatedPercentage()) {
-//                jobRepository.updatePercentageCompleted(progressTracker.getJobUuid(), percentageCompleted);
-//                progressTracker.setLastUpdatedPercentage(percentageCompleted);
-//            }
-//        }
-//
-//        var processedCount = progressTracker.getProcessedCount();
-//        if (progressTracker.isTimeToLog(reportProgressLogFrequency)) {
-//            progressTracker.setLastLogUpdateCount(processedCount);
-//
-//            var totalCount = progressTracker.getTotalCount();
-//            var percentageCompleted = progressTracker.getPercentageCompleted();
-//            log.info("[{}/{}] records processed = [{}% completed]", processedCount, totalCount, percentageCompleted);
-//        }
-//    }
-
-
     private void logTimeTaken(String contractNumber, Instant start) {
         var timeTaken = Duration.between(start, Instant.now()).toSeconds();
         log.info("Processed contract[{}] in [{}] seconds", contractNumber, timeTaken);
@@ -287,12 +250,5 @@ public class JobProcessorImpl implements JobProcessor {
         log.info("Job: [{}] is DONE", job.getJobUuid());
     }
 
-    private void sleep() {
-        try {
-            Thread.sleep(SLEEP_DURATION);
-        } catch (InterruptedException e) {
-            log.warn("interrupted exception in thread.sleep(). Ignoring");
-        }
-    }
 
 }

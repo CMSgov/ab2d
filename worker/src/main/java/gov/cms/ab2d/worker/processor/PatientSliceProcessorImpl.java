@@ -6,12 +6,12 @@ import gov.cms.ab2d.common.repository.JobOutputRepository;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.common.repository.OptOutRepository;
 import gov.cms.ab2d.worker.adapter.bluebutton.GetPatientsByContractResponse.PatientDTO;
-import gov.cms.ab2d.worker.adapter.bluebutton.PatientClaimsProcessor;
 import gov.cms.ab2d.worker.processor.domainmodel.ContractData;
 import gov.cms.ab2d.worker.service.FileService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
@@ -70,22 +70,29 @@ public class PatientSliceProcessorImpl implements PatientSliceProcessor {
         var errorFile = fileService.createOrReplaceFile(outputDir, errorFileName);
 
         final List<PatientDTO> patientsSlice = slice.getValue();
+        try {
+            int errorCount = processPatients(contractData, outputFile, errorFile, patientsSlice);
 
-        int errorCount = processPatients(contractData, outputFile, errorFile, patientsSlice);
+            var jobOutputs = new ArrayList<JobOutput>();
+            if (errorCount < patientsSlice.size()) {
+                jobOutputs.add(createJobOutput(outputFile, false));
+            }
+            if (errorCount > 0) {
+                log.warn("Encountered {} errors during job processing", errorCount);
+                jobOutputs.add(createJobOutput(errorFile, true));
+            }
 
-        var jobOutputs = new ArrayList<JobOutput>();
-        if (errorCount < patientsSlice.size()) {
-            jobOutputs.add(createJobOutput(outputFile, false));
+            var jobUuid = contractData.getProgressTracker().getJobUuid();
+            var job = jobRepository.findByJobUuid(jobUuid);
+            jobOutputs.forEach(jobOutput -> job.addJobOutput(jobOutput));
+            jobOutputRepository.saveAll(jobOutputs);
+        } catch (RuntimeException e) {
+            log.error("Unexpected exception ", e);
+            var jobUuid = contractData.getProgressTracker().getJobUuid();
+            var failureMessage = ExceptionUtils.getRootCauseMessage(e);
+            jobRepository.saveJobFailure(jobUuid, failureMessage);
+//            jobRepository.saveJobFailure(jobUuid, failureMessage, OffsetDateTime.now());
         }
-        if (errorCount > 0) {
-            log.warn("Encountered {} errors during job processing", errorCount);
-            jobOutputs.add(createJobOutput(errorFile, true));
-        }
-
-        var jobUuid = contractData.getProgressTracker().getJobUuid();
-        var job = jobRepository.findByJobUuid(jobUuid);
-        jobOutputs.forEach(jobOutput -> job.addJobOutput(jobOutput));
-        jobOutputRepository.saveAll(jobOutputs);
 
         logTimeTaken(slice.getKey(), startedAt);
         return CompletableFuture.completedFuture(null);
@@ -99,7 +106,13 @@ public class PatientSliceProcessorImpl implements PatientSliceProcessor {
             ++recordsProcessedCount;
 
             if (recordsProcessedCount % cancellationCheckFrequency == 0) {
-                checkStatusOfJob(contractData);
+                final boolean isJobStillInProgress = isJobStillInProgress(contractData);
+                if (!isJobStillInProgress) {
+                    break;
+                }
+
+                // Needs more work
+//                updateProgress(contractData.getProgressTracker());
             }
 
             var patientId = patient.getPatientId();
@@ -116,6 +129,51 @@ public class PatientSliceProcessorImpl implements PatientSliceProcessor {
     }
 
 
+
+    private boolean isJobStillInProgress(ContractData contractData) {
+        var jobUuid = contractData.getProgressTracker().getJobUuid();
+        var jobStatus = jobRepository.findJobStatus(jobUuid);
+        if (IN_PROGRESS.equals(jobStatus)) {
+            return true;
+        }
+
+        var mesg = "Job [" + jobUuid + "] is no longer in progress";
+        log.warn("{}. It is in [{}] status", mesg, jobStatus);
+
+        if (CANCELLED.equals(jobStatus)) {
+            var errMsg = "Job is in cancelled status. Stopping processing";
+            log.warn("{}", errMsg);
+        } else if (FAILED.equals(jobStatus)) {
+            var errMsg = "Job is in failed status. Stopping processing";
+            log.warn("{}", errMsg);
+        }
+
+        return false;
+    }
+
+    // Not ready
+//    private void updateProgress(ProgressTracker progressTracker) {
+//        if (progressTracker.isTimeToUpdateDatabase(reportProgressDbFrequency)) {
+//            final int percentageCompleted = progressTracker.getPercentageCompleted();
+//
+//            if (percentageCompleted > progressTracker.getLastUpdatedPercentage()) {
+//                jobRepository.updatePercentageCompleted(progressTracker.getJobUuid(), percentageCompleted);
+//                progressTracker.setLastUpdatedPercentage(percentageCompleted);
+//            }
+//        }
+//
+//        var processedCount = progressTracker.getProcessedCount();
+//        if (progressTracker.isTimeToLog(reportProgressLogFrequency)) {
+//            progressTracker.setLastLogUpdateCount(processedCount);
+//
+//            var totalCount = progressTracker.getTotalCount();
+//            var percentageCompleted = progressTracker.getPercentageCompleted();
+//            log.info("[{}/{}] records processed = [{}% completed]", processedCount, totalCount, percentageCompleted);
+//        }
+//    }
+
+
+
     private boolean isOptOutPatient(String patientId) {
 
         final List<OptOut> optOuts = optOutRepository.findByHicn(patientId);
@@ -130,27 +188,6 @@ public class PatientSliceProcessorImpl implements PatientSliceProcessor {
         return optOuts.stream()
                 .anyMatch(optOut -> optOut.getEffectiveDate().isBefore(tomorrow));
     }
-
-    private void checkStatusOfJob(ContractData contractData) {
-        var jobUuid = contractData.getProgressTracker().getJobUuid();
-        var jobStatus = jobRepository.findJobStatus(jobUuid);
-        if (!IN_PROGRESS.equals(jobStatus)) {
-            var mesg = "Job is no longer in progress";
-            log.warn("[{}] {}. It is in [{}] status", jobUuid, mesg, jobStatus);
-            // should I delete the 2 files here?
-            if (CANCELLED.equals(jobStatus)) {
-                var errMsg = "Job was cancelled while it was being processed";
-                log.warn("{}", errMsg);
-                throw new JobCancelledException(errMsg);
-            } else if (FAILED.equals(jobStatus)) {
-                var errMsg = "Job is in failed status. Stopping processing";
-                log.warn("{}", errMsg);
-                throw new RuntimeException(errMsg);
-            }
-            throw new RuntimeException(mesg);
-        }
-    }
-
 
     private String createFileName(String contractNumber, Integer key, String outputFileSuffix) {
         return new StringBuilder()

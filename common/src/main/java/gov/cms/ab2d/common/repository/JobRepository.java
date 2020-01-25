@@ -45,4 +45,10 @@ public interface JobRepository extends JpaRepository<Job, Long> {
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     @Query("UPDATE Job j SET j.progress = :percentageCompleted WHERE j.jobUuid = :jobUuid ")
     int updatePercentageCompleted(String jobUuid, int percentageCompleted);
+
+
+    @Modifying
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @Query("UPDATE Job j SET j.status = 'FAILED', statusMessage = :failureMessage, completedAt = now() WHERE j.jobUuid = :jobUuid ")
+    int saveJobFailure(String jobUuid, String failureMessage);
 }
