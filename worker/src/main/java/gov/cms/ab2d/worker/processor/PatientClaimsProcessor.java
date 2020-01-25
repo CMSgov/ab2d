@@ -8,4 +8,6 @@ public interface PatientClaimsProcessor {
 
     Future<Integer> process(String patientId, Lock lock, Path outputFile, Path errorFile);
 
+    int processSync(String patientId, Lock lock, Path outputFile, Path errorFile);
+
 }

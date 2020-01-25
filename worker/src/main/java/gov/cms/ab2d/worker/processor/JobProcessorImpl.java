@@ -2,22 +2,18 @@ package gov.cms.ab2d.worker.processor;
 
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.Job;
-import gov.cms.ab2d.common.model.JobOutput;
 import gov.cms.ab2d.common.model.JobStatus;
-import gov.cms.ab2d.common.model.OptOut;
 import gov.cms.ab2d.common.model.Sponsor;
-import gov.cms.ab2d.common.repository.JobOutputRepository;
 import gov.cms.ab2d.common.repository.JobRepository;
-import gov.cms.ab2d.common.repository.OptOutRepository;
 import gov.cms.ab2d.worker.adapter.bluebutton.ContractAdapter;
 import gov.cms.ab2d.worker.adapter.bluebutton.GetPatientsByContractResponse;
 import gov.cms.ab2d.worker.adapter.bluebutton.GetPatientsByContractResponse.PatientDTO;
 import gov.cms.ab2d.worker.processor.domainmodel.ContractData;
 import gov.cms.ab2d.worker.processor.domainmodel.ProgressTracker;
 import gov.cms.ab2d.worker.service.FileService;
+import gov.cms.ab2d.worker.slice.PatientSliceCreator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
@@ -29,22 +25,17 @@ import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.time.LocalDate;
+import java.time.Duration;
+import java.time.Instant;
 import java.time.OffsetDateTime;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.CancellationException;
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
-import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
-import static gov.cms.ab2d.common.model.JobStatus.CANCELLED;
 import static gov.cms.ab2d.common.model.JobStatus.SUCCESSFUL;
-import static gov.cms.ab2d.common.util.Constants.CONTRACT_LOG;
-import static gov.cms.ab2d.common.util.Constants.EOB;
-import static net.logstash.logback.argument.StructuredArguments.keyValue;
 
 @Slf4j
 @Service
@@ -52,27 +43,18 @@ import static net.logstash.logback.argument.StructuredArguments.keyValue;
 @SuppressWarnings("PMD.TooManyStaticImports")
 public class JobProcessorImpl implements JobProcessor {
     private static final String OUTPUT_FILE_SUFFIX = ".ndjson";
-    private static final String ERROR_FILE_SUFFIX = "_error.ndjson";
+//    private static final String ERROR_FILE_SUFFIX = "_error.ndjson";
     private static final int SLEEP_DURATION = 250;
 
-    @Value("${cancellation.check.frequency:10}")
-    private int cancellationCheckFrequency;
-
-    @Value("${report.progress.db.frequency:100}")
-    private int reportProgressDbFrequency;
-
-    @Value("${report.progress.log.frequency:100}")
-    private int reportProgressLogFrequency;
 
     @Value("${efs.mount}")
     private String efsMount;
 
     private final FileService fileService;
     private final JobRepository jobRepository;
-    private final JobOutputRepository jobOutputRepository;
     private final ContractAdapter contractAdapter;
-    private final PatientClaimsProcessor patientClaimsProcessor;
-    private final OptOutRepository optOutRepository;
+    private final PatientSliceCreator sliceCreator;
+    private final PatientSliceProcessor patientSliceProcessor;
 
 
     @Override
@@ -114,12 +96,8 @@ public class JobProcessorImpl implements JobProcessor {
 
         for (Contract contract : attestedContracts) {
             log.info("Job [{}] - contract [{}] ", jobUuid, contract.getContractNumber());
-
             var contractData = new ContractData(outputDir, contract, progressTracker);
-
-            var jobOutputs = processContract(contractData);
-            jobOutputs.forEach(jobOutput -> job.addJobOutput(jobOutput));
-            jobOutputRepository.saveAll(jobOutputs);
+            processContract(contractData);
         }
 
         completeJob(job);
@@ -218,81 +196,38 @@ public class JobProcessorImpl implements JobProcessor {
     }
 
 
-    private List<JobOutput> processContract(ContractData contractData) {
-        var contract = contractData.getContract();
-        log.info("Beginning to process contract {}", keyValue(CONTRACT_LOG, contract.getContractName()));
+    private void processContract(ContractData contractData) {
+        var startedAt = Instant.now();
 
-        var contractNumber = contract.getContractNumber();
-
-        var outputDir = contractData.getOutputDir();
-        var outputFile = fileService.createOrReplaceFile(outputDir, contractNumber + OUTPUT_FILE_SUFFIX);
-        var errorFile = fileService.createOrReplaceFile(outputDir, contractNumber + ERROR_FILE_SUFFIX);
-
+        var contractNumber = contractData.getContract().getContractNumber();
         var progressTracker = contractData.getProgressTracker();
 
         var patientsByContract = getPatientsByContract(contractNumber, progressTracker);
         var patients = patientsByContract.getPatients();
-        int patientCount = patients.size();
-        log.info("Contract [{}] has [{}] Patients", contractNumber, patientCount);
 
+        final Map<Integer, List<PatientDTO>> slices = sliceCreator.createSlices(patients);
+        log.info("Contract [{}] with [{}] has been sliced into [{}] slices", contractNumber, patients.size(), slices.size());
 
-        // A mutex lock that all threads for a contract uses while writing into the shared files
-        var lock = new ReentrantLock();
+        var futureHandles = slices.entrySet().stream()
+                .map(slice -> patientSliceProcessor.process(slice, contractData))
+                .collect(Collectors.toList());
 
-        int errorCount = 0;
-        boolean isCancelled = false;
+        var allFutures = CompletableFuture.allOf(futureHandles.toArray(new CompletableFuture[futureHandles.size()]));
 
-        int recordsProcessedCount = 0;
-        var futureHandles = new ArrayList<Future<Integer>>();
-        for (PatientDTO patient : patients) {
-            ++recordsProcessedCount;
-
-            final String patientId = patient.getPatientId();
-
-            if (isOptOutPatient(patientId)) {
-                // this patient has opted out. skip patient record.
-                continue;
-            }
-
-            futureHandles.add(patientClaimsProcessor.process(patientId, lock, outputFile, errorFile));
-
-            if (recordsProcessedCount % cancellationCheckFrequency == 0) {
-
-                var jobUuid = contractData.getProgressTracker().getJobUuid();
-                isCancelled = hasJobBeenCancelled(jobUuid);
-                if (isCancelled) {
-                    log.warn("Job [{}] has been cancelled. Attempting to stop processing the job shortly ... ", jobUuid);
-                    cancelFuturesInQueue(futureHandles);
-                    break;
-                }
-
-                errorCount += processHandles(futureHandles, progressTracker);
-            }
+        log.info("Waiting on allFutures to complete . .. ... ");
+        try {
+            allFutures.get();
+        } catch (InterruptedException e) {
+            log.info("InterruptedException at CompletionFuture (allFutures).get() ");
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            log.info("ExecutionException at CompletionFuture (allFutures).get() ");
+            e.printStackTrace();
         }
 
-        while (!futureHandles.isEmpty()) {
-            sleep();
-            errorCount += processHandles(futureHandles, progressTracker);
-        }
-
-        if (isCancelled) {
-            final String errMsg = "Job was cancelled while it was being processed";
-            log.warn("{}", errMsg);
-            throw new JobCancelledException(errMsg);
-        }
-
-        final List<JobOutput> jobOutputs = new ArrayList<>();
-        if (errorCount < patientCount) {
-            jobOutputs.add(createJobOutput(outputFile, false));
-        }
-        if (errorCount > 0) {
-            log.warn("Encountered {} errors during job processing", errorCount);
-            jobOutputs.add(createJobOutput(errorFile, true));
-        }
-
-        return jobOutputs;
+        log.info("allFutures.get() is DONE.");
+        logTimeTaken(contractNumber, startedAt);
     }
-
 
     private GetPatientsByContractResponse getPatientsByContract(String contractNumber, ProgressTracker progressTracker) {
         return progressTracker.getPatientsByContracts()
@@ -303,115 +238,43 @@ public class JobProcessorImpl implements JobProcessor {
     }
 
 
-    private void cancelFuturesInQueue(List<Future<Integer>> futureHandles) {
+//    private void cancelFuturesInQueue(List<Future<Integer>> futureHandles) {
+//
+//        // cancel any futures that have not started processing and are waiting in the queue.
+//        futureHandles.parallelStream().forEach(future -> future.cancel(false));
+//
+//        //At this point, there may be a few futures that are already in progress.
+//        //But all the futures that are not yet in progress would be cancelled.
+//    }
 
-        // cancel any futures that have not started processing and are waiting in the queue.
-        futureHandles.parallelStream().forEach(future -> future.cancel(false));
 
-        //At this point, there may be a few futures that are already in progress.
-        //But all the futures that are not yet in progress would be cancelled.
+
+//    private void trackProgress(ProgressTracker progressTracker) {
+//        if (progressTracker.isTimeToUpdateDatabase(reportProgressDbFrequency)) {
+//            final int percentageCompleted = progressTracker.getPercentageCompleted();
+//
+//            if (percentageCompleted > progressTracker.getLastUpdatedPercentage()) {
+//                jobRepository.updatePercentageCompleted(progressTracker.getJobUuid(), percentageCompleted);
+//                progressTracker.setLastUpdatedPercentage(percentageCompleted);
+//            }
+//        }
+//
+//        var processedCount = progressTracker.getProcessedCount();
+//        if (progressTracker.isTimeToLog(reportProgressLogFrequency)) {
+//            progressTracker.setLastLogUpdateCount(processedCount);
+//
+//            var totalCount = progressTracker.getTotalCount();
+//            var percentageCompleted = progressTracker.getPercentageCompleted();
+//            log.info("[{}/{}] records processed = [{}% completed]", processedCount, totalCount, percentageCompleted);
+//        }
+//    }
+
+
+    private void logTimeTaken(String contractNumber, Instant start) {
+        var timeTaken = Duration.between(start, Instant.now()).toSeconds();
+        log.info("Processed contract[{}] in [{}] seconds", contractNumber, timeTaken);
     }
 
-    /**
-     * A Job could run for a long time, perhaps hours.
-     * While the job is in progress, the job could be cancelled.
-     * So the worker needs to periodically check the job status to ensure it has not been cancelled.
-     *
-     * @param jobUuid
-     * @return
-     */
-    private boolean hasJobBeenCancelled(String jobUuid) {
-        final JobStatus jobStatus = jobRepository.findJobStatus(jobUuid);
-        return CANCELLED.equals(jobStatus);
-    }
-
-
-    private boolean isOptOutPatient(String patientId) {
-
-        final List<OptOut> optOuts = optOutRepository.findByHicn(patientId);
-        if (optOuts.isEmpty()) {
-            // No opt-out record found for this patient - Opt-In by default.
-            return false;
-        }
-
-        // opt-out record has an effective date.
-        // if any of the opt-out records for a patient is effective as of today or earlier, the patient has opted-out
-        final LocalDate tomorrow = LocalDate.now().plusDays(1);
-        return optOuts.stream()
-                .anyMatch(optOut -> optOut.getEffectiveDate().isBefore(tomorrow));
-    }
-
-    private int processHandles(List<Future<Integer>> futureHandles, ProgressTracker progressTracker) {
-        int errorCount = 0;
-
-        var iterator = futureHandles.iterator();
-        while (iterator.hasNext()) {
-            var future = iterator.next();
-            if (future.isDone()) {
-                try {
-                    var responseCount = future.get();
-                    if (responseCount > 0) {
-                        errorCount += responseCount;
-                    }
-                    progressTracker.incrementProcessedCount();
-                } catch (InterruptedException e) {
-                    cancelFuturesInQueue(futureHandles);
-                    log.error("interrupted exception while processing patient", e);
-
-                    final String errMsg = ExceptionUtils.getRootCauseMessage(e);
-                    throw new RuntimeException(errMsg, ExceptionUtils.getRootCause(e));
-
-                } catch (ExecutionException e) {
-                    cancelFuturesInQueue(futureHandles);
-                    log.error("exception while processing patient ", e);
-
-                    final String errMsg = ExceptionUtils.getRootCauseMessage(e);
-                    throw new RuntimeException(errMsg, ExceptionUtils.getRootCause(e));
-
-                } catch (CancellationException e) {
-                    // This could happen in the rare event that a job was cancelled mid-process.
-                    // due to which the futures in the queue (that were not yet in progress) were cancelled.
-                    // Nothing to be done here
-                    log.warn("CancellationException while calling Future.get() - Job may have been cancelled");
-                }
-                iterator.remove();
-            }
-        }
-
-        trackProgress(progressTracker);
-
-        return errorCount;
-    }
-
-
-    private void trackProgress(ProgressTracker progressTracker) {
-        if (progressTracker.isTimeToUpdateDatabase(reportProgressDbFrequency)) {
-            final int percentageCompleted = progressTracker.getPercentageCompleted();
-
-            if (percentageCompleted > progressTracker.getLastUpdatedPercentage()) {
-                jobRepository.updatePercentageCompleted(progressTracker.getJobUuid(), percentageCompleted);
-                progressTracker.setLastUpdatedPercentage(percentageCompleted);
-            }
-        }
-
-        var processedCount = progressTracker.getProcessedCount();
-        if (progressTracker.isTimeToLog(reportProgressLogFrequency)) {
-            progressTracker.setLastLogUpdateCount(processedCount);
-
-            var totalCount = progressTracker.getTotalCount();
-            var percentageCompleted = progressTracker.getPercentageCompleted();
-            log.info("[{}/{}] records processed = [{}% completed]", processedCount, totalCount, percentageCompleted);
-        }
-    }
-
-
-    private JobOutput createJobOutput(Path outputFile, boolean isError) {
-        JobOutput jobOutput = new JobOutput();
-        jobOutput.setFilePath(outputFile.getFileName().toString());
-        jobOutput.setFhirResourceType(EOB);
-        jobOutput.setError(isError);
-        return jobOutput;
-    }
 
     private void completeJob(Job job) {
         job.setStatus(SUCCESSFUL);

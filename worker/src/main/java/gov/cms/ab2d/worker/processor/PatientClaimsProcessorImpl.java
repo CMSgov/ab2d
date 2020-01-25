@@ -48,6 +48,11 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
 
     @Async("patientProcessorThreadPool")
     public Future<Integer> process(String patientId, Lock lock, Path outputFile, Path errorFile) {
+        int errorCount = processSync(patientId, lock, outputFile, errorFile);
+        return new AsyncResult<>(errorCount);
+    }
+
+    public int processSync(String patientId, Lock lock, Path outputFile, Path errorFile) {
         int errorCount = 0;
         int resourceCount = 0;
 
@@ -88,8 +93,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
         if (errorCount > 0) {
             log.warn("[{}] error records. Should create an error row in JobOutput table", errorCount);
         }
-
-        return new AsyncResult<>(errorCount);
+        return errorCount;
     }
 
     private void handleException(Path errorFile, Exception e, Lock lock) throws IOException {

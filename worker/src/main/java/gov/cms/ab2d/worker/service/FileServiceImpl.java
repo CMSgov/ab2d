@@ -26,7 +26,7 @@ public class FileServiceImpl implements FileService {
 
             outputDirectory = Files.createDirectories(outputDir);
         } catch (IOException e) {
-            final String errMsg = "Could not create output directory : ";
+            final String errMsg = "Could not create output directory";
             log.error("{} : {}", errMsg, outputDir.toAbsolutePath());
             throw new UncheckedIOException(errMsg + outputDir.getFileName(), e);
         }
