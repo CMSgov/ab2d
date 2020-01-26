@@ -19,8 +19,6 @@ public class GetPatientsByContractResponse {
     @Singular
     private List<PatientDTO> patients;
 
-
-
     @Data
     @Builder
     @NoArgsConstructor
