@@ -8,12 +8,15 @@ import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.worker.adapter.bluebutton.ContractAdapter;
 import gov.cms.ab2d.worker.adapter.bluebutton.GetPatientsByContractResponse;
 import gov.cms.ab2d.worker.adapter.bluebutton.GetPatientsByContractResponse.PatientDTO;
+import gov.cms.ab2d.worker.processor.contract.ContractSliceCreator;
+import gov.cms.ab2d.worker.processor.contract.ContractSliceProcessor;
 import gov.cms.ab2d.worker.processor.domainmodel.ContractData;
 import gov.cms.ab2d.worker.processor.domainmodel.ProgressTracker;
+import gov.cms.ab2d.worker.processor.domainmodel.ProgressTracker.ContractDM;
 import gov.cms.ab2d.worker.service.FileService;
-import gov.cms.ab2d.worker.slice.PatientSliceCreator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
@@ -32,7 +35,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 import static gov.cms.ab2d.common.model.JobStatus.CANCELLED;
@@ -50,8 +52,8 @@ public class JobProcessorImpl implements JobProcessor {
     private final FileService fileService;
     private final JobRepository jobRepository;
     private final ContractAdapter contractAdapter;
-    private final PatientSliceCreator sliceCreator;
-    private final PatientSliceProcessor patientSliceProcessor;
+    private final ContractSliceCreator sliceCreator;
+    private final ContractSliceProcessor sliceProcessor;
 
 
     @Override
@@ -67,7 +69,7 @@ public class JobProcessorImpl implements JobProcessor {
         } catch (Exception e) {
             log.error("Unexpected exception ", e);
             job.setStatus(JobStatus.FAILED);
-            job.setStatusMessage(e.getMessage());
+            job.setStatusMessage(ExceptionUtils.getRootCauseMessage(e));
             job.setCompletedAt(OffsetDateTime.now());
             jobRepository.save(job);
             log.info("Job: [{}] FAILED", jobUuid);
@@ -117,6 +119,7 @@ public class JobProcessorImpl implements JobProcessor {
         return directory;
     }
 
+
     private void deleteExistingDirectory(Path outputDirPath) {
         final File[] files = outputDirPath.toFile()
                 .listFiles((dir, name) -> name.toLowerCase().endsWith(".ndjson"));
@@ -149,6 +152,7 @@ public class JobProcessorImpl implements JobProcessor {
         }
     }
 
+
     private List<Contract> getAttestedContracts(Job job) {
 
         // when the job is submitted for a specific contract, process the export for only that contract.
@@ -179,16 +183,36 @@ public class JobProcessorImpl implements JobProcessor {
     private ProgressTracker initializeProgressTracker(String jobUuid, List<Contract> attestedContracts) {
         return ProgressTracker.builder()
                 .jobUuid(jobUuid)
-                .patientsByContracts(fetchPatientsForAllContracts(attestedContracts))
+                .contracts(buildContractDomainModels(attestedContracts))
                 .build();
     }
 
-    private List<GetPatientsByContractResponse> fetchPatientsForAllContracts(List<Contract> attestedContracts) {
+
+    private List<ContractDM> buildContractDomainModels(List<Contract> attestedContracts) {
         return attestedContracts
                 .stream()
-                .map(contract -> contract.getContractNumber())
-                .map(contractNumber -> contractAdapter.getPatients(contractNumber))
+                .map(contract -> fetchContractInfo(contract))
                 .collect(Collectors.toList());
+    }
+
+
+    private ContractDM fetchContractInfo(Contract contract) {
+        final String contractNumber = contract.getContractNumber();
+        final GetPatientsByContractResponse response = contractAdapter.getPatients(contractNumber);
+        final Map<Integer, List<PatientDTO>> slices = sliceCreator.createSlices(response.getPatients());
+
+        // should I INSERT the rows into the job_progress table for each of the contracts /slices
+        // so that it is available for percentage calculation later on.
+        return toContractDomainModel(contract, contractNumber, slices);
+    }
+
+
+    private ContractDM toContractDomainModel(Contract contract, String contractNumber, Map<Integer, List<PatientDTO>> slices) {
+        return ContractDM.builder()
+                .contractId(contract.getId())
+                .contractNumber(contractNumber)
+                .slices(slices)
+                .build();
     }
 
 
@@ -201,34 +225,21 @@ public class JobProcessorImpl implements JobProcessor {
 
         var contractNumber = contractData.getContract().getContractNumber();
         var progressTracker = contractData.getProgressTracker();
+        var contractDM = getContractDomainModel(contractNumber, progressTracker);
+        logContractInfo(contractDM);
 
-        var patientsByContract = getPatientsByContract(contractNumber, progressTracker);
-        var patients = patientsByContract.getPatients();
-
-        final Map<Integer, List<PatientDTO>> slices = sliceCreator.createSlices(patients);
-        log.info("Contract [{}] with [{}] has been sliced into [{}] slices", contractNumber, patients.size(), slices.size());
-
-        var futureHandles = slices.entrySet().stream()
-                .map(slice -> patientSliceProcessor.process(slice, contractData))
+        var futures = contractDM.getSlices().entrySet().stream()
+                .map(slice -> sliceProcessor.process(slice, contractData))
                 .collect(Collectors.toList());
 
-        var allFutures = CompletableFuture.allOf(futureHandles.toArray(new CompletableFuture[futureHandles.size()]));
+        CompletableFuture
+                .allOf(futures.toArray(new CompletableFuture[futures.size()]))
+                .join();
 
-        log.info("Waiting on allFutures to complete . .. ... ");
-        try {
-            allFutures.get();
-        } catch (InterruptedException e) {
-            //should not happen
-            throw new RuntimeException(e);
-        } catch (ExecutionException e) {
-            //should not happen
-            log.error("ExecutionException ", e);
-            throw new RuntimeException(e.getCause());
-        }
-
-        log.info("allFutures.get() is DONE.");
+        log.info("allFutures.join() is DONE.");
         logTimeTaken(contractNumber, startedAt);
     }
+
 
     private boolean isJobStillInProgress(ContractData contractData) {
         var jobUuid = contractData.getProgressTracker().getJobUuid();
@@ -242,17 +253,34 @@ public class JobProcessorImpl implements JobProcessor {
         return false;
     }
 
-    private GetPatientsByContractResponse getPatientsByContract(String contractNumber, ProgressTracker progressTracker) {
-        return progressTracker.getPatientsByContracts()
-                .stream()
-                .filter(byContract -> byContract.getContractNumber().equals(contractNumber))
+
+    private ContractDM getContractDomainModel(String contractNumber, ProgressTracker progressTracker) {
+        return progressTracker.getContracts().stream()
+                .filter(cs -> cs.getContractNumber().equals(contractNumber))
                 .findFirst()
                 .get();
     }
 
+
+    private void logContractInfo(ContractDM contractDM) {
+        final long patientCountPerContract = getPatientCountPerContract(contractDM);
+        final int sliceCount = contractDM.getSlices().size();
+
+        log.info("Contract [{}] with [{}] has been sliced into [{}] slices", contractDM.getContractNumber(), patientCountPerContract, sliceCount);
+    }
+
+
+    private long getPatientCountPerContract(ContractDM contractDM) {
+        return contractDM.getSlices().entrySet().stream()
+                .map(e -> e.getValue())
+                .mapToInt(e -> e.size())
+                .sum();
+    }
+
+
     private void logTimeTaken(String contractNumber, Instant start) {
         var timeTaken = Duration.between(start, Instant.now()).toSeconds();
-        log.info("Processed contract[{}] in [{}] seconds", contractNumber, timeTaken);
+        log.info("Processed contract [{}] in [{}] seconds", contractNumber, timeTaken);
     }
 
 

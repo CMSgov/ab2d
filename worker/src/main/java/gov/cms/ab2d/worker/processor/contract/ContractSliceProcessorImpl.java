@@ -1,4 +1,4 @@
-package gov.cms.ab2d.worker.processor;
+package gov.cms.ab2d.worker.processor.contract;
 
 import gov.cms.ab2d.common.model.JobOutput;
 import gov.cms.ab2d.common.model.JobProgress;
@@ -8,6 +8,7 @@ import gov.cms.ab2d.common.repository.JobProgressRepository;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.common.repository.OptOutRepository;
 import gov.cms.ab2d.worker.adapter.bluebutton.GetPatientsByContractResponse.PatientDTO;
+import gov.cms.ab2d.worker.processor.PatientClaimsProcessor;
 import gov.cms.ab2d.worker.processor.domainmodel.ContractData;
 import gov.cms.ab2d.worker.service.FileService;
 import lombok.RequiredArgsConstructor;
@@ -34,7 +35,7 @@ import static gov.cms.ab2d.common.util.Constants.EOB;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class PatientSliceProcessorImpl implements PatientSliceProcessor {
+public class ContractSliceProcessorImpl implements ContractSliceProcessor {
     private static final String DATA_FILE_SUFFIX = ".ndjson";
     private static final String ERROR_FILE_SUFFIX = "_error.ndjson";
 
@@ -163,12 +164,10 @@ public class PatientSliceProcessorImpl implements PatientSliceProcessor {
     private int updateProgressInDb(JobProgress jobProgress, int totalCountInSlice, int recordsProcessedCount, int lastPercentCompleted) {
         final int percentCompleted = (recordsProcessedCount * 100) / totalCountInSlice;
         if (percentCompleted > lastPercentCompleted) {
-//            log.info("processed:[{}] - percentCompleted:[{}] - lastPercentCompleted:[{}] ", recordsProcessedCount, percentCompleted, lastPercentCompleted);
             jobProgress.setProgress(percentCompleted);
             jobProgressRepository.saveAndFlush(jobProgress);
-            lastPercentCompleted = percentCompleted;
         }
-        return lastPercentCompleted;
+        return percentCompleted;
     }
 
 

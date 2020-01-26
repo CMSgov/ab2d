@@ -1,4 +1,4 @@
-package gov.cms.ab2d.worker.slice;
+package gov.cms.ab2d.worker.processor.contract;
 
 import gov.cms.ab2d.worker.adapter.bluebutton.GetPatientsByContractResponse.PatientDTO;
 import lombok.extern.slf4j.Slf4j;
@@ -12,7 +12,7 @@ import java.util.stream.Collectors;
 
 @Slf4j
 @Component
-public class PatientSliceCreatorImpl implements PatientSliceCreator {
+public class ContractSliceCreatorImpl implements ContractSliceCreator {
 
     @Value("${patients.per.file.limit:10000}")
     private int patientsPerFileLimit;

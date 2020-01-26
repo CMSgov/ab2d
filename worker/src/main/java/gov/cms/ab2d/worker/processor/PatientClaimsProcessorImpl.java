@@ -47,12 +47,12 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
 
 
     @Async("patientProcessorThreadPool")
-    public Future<Integer> process(String patientId, Lock lock, Path outputFile, Path errorFile) {
-        int errorCount = processSync(patientId, lock, outputFile, errorFile);
+    public Future<Integer> process(String patientId, Lock lock, Path dataFile, Path errorFile) {
+        int errorCount = processSync(patientId, lock, dataFile, errorFile);
         return new AsyncResult<>(errorCount);
     }
 
-    public int processSync(String patientId, Lock lock, Path outputFile, Path errorFile) {
+    public int processSync(String patientId, Lock lock, Path dataFile, Path errorFile) {
         int errorCount = 0;
         int resourceCount = 0;
 
@@ -75,7 +75,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
             }
 
             if (byteArrayOutputStream.size() > 0) {
-                appendToFile(outputFile, byteArrayOutputStream, lock);
+                appendToFile(dataFile, byteArrayOutputStream, lock);
             }
         } catch (Exception e) {
             ++errorCount;

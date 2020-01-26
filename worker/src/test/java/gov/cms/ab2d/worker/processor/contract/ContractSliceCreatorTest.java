@@ -1,6 +1,8 @@
-package gov.cms.ab2d.worker.slice;
+package gov.cms.ab2d.worker.processor.contract;
 
 import gov.cms.ab2d.worker.adapter.bluebutton.GetPatientsByContractResponse.PatientDTO;
+import gov.cms.ab2d.worker.processor.contract.ContractSliceCreator;
+import gov.cms.ab2d.worker.processor.contract.ContractSliceCreatorImpl;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -23,14 +25,14 @@ import static org.hamcrest.MatcherAssert.assertThat;
 
 
 @Slf4j
-class PatientSliceCreatorTest {
+class ContractSliceCreatorTest {
 
 
-    private PatientSliceCreator cut;
+    private ContractSliceCreator cut;
 
     @BeforeEach
     void setup() {
-        cut = new PatientSliceCreatorImpl();
+        cut = new ContractSliceCreatorImpl();
         ReflectionTestUtils.setField(cut, "patientsPerFileLimit", 100);
         ReflectionTestUtils.setField(cut, "bdfConcurrencyLimit", 5);
     }
