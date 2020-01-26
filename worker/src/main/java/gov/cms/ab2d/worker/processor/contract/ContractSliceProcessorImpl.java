@@ -77,10 +77,10 @@ public class ContractSliceProcessorImpl implements ContractSliceProcessor {
         var dataFile = fileService.createOrReplaceFile(outputDir, dataFilename);
         var errorFile = fileService.createOrReplaceFile(outputDir, errorFileName);
 
-        var jobUuid = contractData.getProgressTracker().getJobUuid();
+        var jobUuid = contractData.getJobDM().getJobUuid();
         var patientsInSlice = slice.getValue();
-        final int patientCountInSlice = patientsInSlice.size();
-        var jobProgress = createJobProgress(contractData, jobUuid, sliceSno, patientCountInSlice);
+        var patientCountInSlice = patientsInSlice.size();
+        var jobProgress = findJobProgress(contractData, sliceSno);
         try {
             int errorCount = processPatients(contractData, dataFile, errorFile, patientsInSlice, jobProgress);
 
@@ -110,16 +110,12 @@ public class ContractSliceProcessorImpl implements ContractSliceProcessor {
     }
 
 
-    private JobProgress createJobProgress(ContractData contractData, String jobUuid, Integer key, int patientCount) {
-        JobProgress jobProgress = new JobProgress();
-        jobProgress.setJob(jobRepository.findByJobUuid(jobUuid));
-        jobProgress.setContract(contractData.getContract());
-        jobProgress.setSliceNumber(key);
-        jobProgress.setRecordCount(patientCount);
-        jobProgress.setProgress(0);
-        jobProgressRepository.save(jobProgress);
-        return jobProgress;
+    private JobProgress findJobProgress(ContractData contractData, Integer sliceSno) {
+        var jobId = contractData.getJobDM().getJobId();
+        var contractId = contractData.getContract().getId();
+        return jobProgressRepository.findOne(jobId, contractId, sliceSno);
     }
+
 
     private int processPatients(ContractData contractData, Path dataFile, Path errorFile, List<PatientDTO> patientsSlice, JobProgress jobProgress) {
         int totalCountInSlice = patientsSlice.size();
@@ -161,10 +157,12 @@ public class ContractSliceProcessorImpl implements ContractSliceProcessor {
         return errorCount;
     }
 
+
     private int updateProgressInDb(JobProgress jobProgress, int totalCountInSlice, int recordsProcessedCount, int lastPercentCompleted) {
         final int percentCompleted = (recordsProcessedCount * 100) / totalCountInSlice;
         if (percentCompleted > lastPercentCompleted) {
-            jobProgress.setProgress(percentCompleted);
+            jobProgress.setRecordsProcessed(recordsProcessedCount);
+            jobProgress.setPercentageComplete(percentCompleted);
             jobProgressRepository.saveAndFlush(jobProgress);
         }
         return percentCompleted;
@@ -172,7 +170,7 @@ public class ContractSliceProcessorImpl implements ContractSliceProcessor {
 
 
     private boolean isJobStillInProgress(ContractData contractData) {
-        var jobUuid = contractData.getProgressTracker().getJobUuid();
+        var jobUuid = contractData.getJobDM().getJobUuid();
         var jobStatus = jobRepository.findJobStatus(jobUuid);
         if (IN_PROGRESS.equals(jobStatus)) {
             return true;
@@ -182,6 +180,7 @@ public class ContractSliceProcessorImpl implements ContractSliceProcessor {
         log.warn("{}", String.format(errMsg, jobUuid, jobStatus));
         return false;
     }
+
 
     private boolean isOptOutPatient(String patientId) {
 
@@ -198,6 +197,7 @@ public class ContractSliceProcessorImpl implements ContractSliceProcessor {
                 .anyMatch(optOut -> optOut.getEffectiveDate().isBefore(tomorrow));
     }
 
+
     private String createFileName(String contractNumber, Integer key, String outputFileSuffix) {
         return new StringBuilder()
                 .append(contractNumber)
@@ -207,6 +207,7 @@ public class ContractSliceProcessorImpl implements ContractSliceProcessor {
                 .toString();
     }
 
+
     private JobOutput createJobOutput(Path outputFile, boolean isError) {
         JobOutput jobOutput = new JobOutput();
         jobOutput.setFilePath(outputFile.getFileName().toString());
@@ -215,8 +216,11 @@ public class ContractSliceProcessorImpl implements ContractSliceProcessor {
         return jobOutput;
     }
 
+
     private void logTimeTaken(int sliceSno, Instant start) {
         var timeTaken = Duration.between(start, Instant.now()).toSeconds();
         log.info("Slice [{}] completed in [{}] seconds", sliceSno, timeTaken);
     }
+
+
 }

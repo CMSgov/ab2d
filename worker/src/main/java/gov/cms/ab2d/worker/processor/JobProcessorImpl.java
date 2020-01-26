@@ -2,8 +2,10 @@ package gov.cms.ab2d.worker.processor;
 
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.Job;
+import gov.cms.ab2d.common.model.JobProgress;
 import gov.cms.ab2d.common.model.JobStatus;
 import gov.cms.ab2d.common.model.Sponsor;
+import gov.cms.ab2d.common.repository.JobProgressRepository;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.worker.adapter.bluebutton.ContractAdapter;
 import gov.cms.ab2d.worker.adapter.bluebutton.GetPatientsByContractResponse;
@@ -11,8 +13,8 @@ import gov.cms.ab2d.worker.adapter.bluebutton.GetPatientsByContractResponse.Pati
 import gov.cms.ab2d.worker.processor.contract.ContractSliceCreator;
 import gov.cms.ab2d.worker.processor.contract.ContractSliceProcessor;
 import gov.cms.ab2d.worker.processor.domainmodel.ContractData;
-import gov.cms.ab2d.worker.processor.domainmodel.ProgressTracker;
-import gov.cms.ab2d.worker.processor.domainmodel.ProgressTracker.ContractDM;
+import gov.cms.ab2d.worker.processor.domainmodel.JobDM;
+import gov.cms.ab2d.worker.processor.domainmodel.JobDM.ContractDM;
 import gov.cms.ab2d.worker.service.FileService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -51,6 +53,7 @@ public class JobProcessorImpl implements JobProcessor {
 
     private final FileService fileService;
     private final JobRepository jobRepository;
+    private final JobProgressRepository jobProgressRepository;
     private final ContractAdapter contractAdapter;
     private final ContractSliceCreator sliceCreator;
     private final ContractSliceProcessor sliceProcessor;
@@ -83,11 +86,11 @@ public class JobProcessorImpl implements JobProcessor {
 
         var attestedContracts = getAttestedContracts(job);
         var jobUuid = job.getJobUuid();
-        var progressTracker = initializeProgressTracker(jobUuid, attestedContracts);
+        var jobDM = createJobDomainModel(job, attestedContracts);
 
         for (Contract contract : attestedContracts) {
             log.info("Job [{}] - contract [{}] ", jobUuid, contract.getContractNumber());
-            var contractData = new ContractData(outputDir, contract, progressTracker);
+            var contractData = new ContractData(outputDir, contract, jobDM);
             processContract(contractData);
         }
 
@@ -172,38 +175,46 @@ public class JobProcessorImpl implements JobProcessor {
     }
 
 
-    /**
-     * iterates through each contract,
-     * calls the contract Adapter
-     * to make a list of contracts to process.
-     *
-     * @param attestedContracts
-     * @return
-     */
-    private ProgressTracker initializeProgressTracker(String jobUuid, List<Contract> attestedContracts) {
-        return ProgressTracker.builder()
-                .jobUuid(jobUuid)
-                .contracts(buildContractDomainModels(attestedContracts))
+    private JobDM createJobDomainModel(Job job, List<Contract> attestedContracts) {
+        return JobDM.builder()
+                .jobId(job.getId())
+                .jobUuid(job.getJobUuid())
+                .contracts(buildContractDomainModels(job, attestedContracts))
                 .build();
     }
 
 
-    private List<ContractDM> buildContractDomainModels(List<Contract> attestedContracts) {
+    private List<ContractDM> buildContractDomainModels(Job job, List<Contract> attestedContracts) {
         return attestedContracts
                 .stream()
-                .map(contract -> fetchContractInfo(contract))
+                .map(contract -> fetchContractInfo(job, contract))
                 .collect(Collectors.toList());
     }
 
 
-    private ContractDM fetchContractInfo(Contract contract) {
+    private ContractDM fetchContractInfo(Job job, Contract contract) {
         final String contractNumber = contract.getContractNumber();
         final GetPatientsByContractResponse response = contractAdapter.getPatients(contractNumber);
-        final Map<Integer, List<PatientDTO>> slices = sliceCreator.createSlices(response.getPatients());
 
-        // should I INSERT the rows into the job_progress table for each of the contracts /slices
-        // so that it is available for percentage calculation later on.
+        final Map<Integer, List<PatientDTO>> slices = sliceCreator.createSlices(response.getPatients());
+        for (var slice : slices.entrySet()) {
+            createJobProgress(job, contract, slice);
+        }
+
         return toContractDomainModel(contract, contractNumber, slices);
+    }
+
+
+    private void createJobProgress(Job job, Contract contract, Map.Entry<Integer, List<PatientDTO>> slice) {
+        JobProgress jobProgress = new JobProgress();
+        jobProgress.setJob(job);
+        jobProgress.setContract(contract);
+        jobProgress.setSliceNumber(slice.getKey());
+        jobProgress.setSliceTotal(slice.getValue().size());
+        jobProgress.setRecordsProcessed(0);
+        jobProgress.setPercentageComplete(0);
+
+        jobProgressRepository.saveAndFlush(jobProgress);
     }
 
 
@@ -224,8 +235,8 @@ public class JobProcessorImpl implements JobProcessor {
         }
 
         var contractNumber = contractData.getContract().getContractNumber();
-        var progressTracker = contractData.getProgressTracker();
-        var contractDM = getContractDomainModel(contractNumber, progressTracker);
+        var jobDM = contractData.getJobDM();
+        var contractDM = getContractDomainModel(contractNumber, jobDM);
         logContractInfo(contractDM);
 
         var futures = contractDM.getSlices().entrySet().stream()
@@ -242,7 +253,7 @@ public class JobProcessorImpl implements JobProcessor {
 
 
     private boolean isJobStillInProgress(ContractData contractData) {
-        var jobUuid = contractData.getProgressTracker().getJobUuid();
+        var jobUuid = contractData.getJobDM().getJobUuid();
         var jobStatus = jobRepository.findJobStatus(jobUuid);
         if (IN_PROGRESS.equals(jobStatus)) {
             return true;
@@ -254,8 +265,8 @@ public class JobProcessorImpl implements JobProcessor {
     }
 
 
-    private ContractDM getContractDomainModel(String contractNumber, ProgressTracker progressTracker) {
-        return progressTracker.getContracts().stream()
+    private ContractDM getContractDomainModel(String contractNumber, JobDM jobDM) {
+        return jobDM.getContracts().stream()
                 .filter(cs -> cs.getContractNumber().equals(contractNumber))
                 .findFirst()
                 .get();

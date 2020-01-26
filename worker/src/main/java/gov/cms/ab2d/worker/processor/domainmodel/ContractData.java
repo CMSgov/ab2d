@@ -12,6 +12,6 @@ public class ContractData {
 
     private final Path outputDir;
     private final Contract contract;
-    private final ProgressTracker progressTracker;
+    private final JobDM jobDM;
 
 }

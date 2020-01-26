@@ -4,12 +4,13 @@
 --changeset spathiyil:AB2D-753-CreateTable-job_progress failOnError:true
 CREATE TABLE job_progress
 (
-    id                  BIGINT              NOT NULL,
-    job_id              BIGINT              NOT NULL,
-    contract_id         BIGINT              NOT NULL,
-    slice_number        INTEGER             NOT NULL,
-    record_count        INTEGER             NOT NULL,
-    progress            INTEGER
+    id                      BIGINT              NOT NULL,
+    job_id                  BIGINT              NOT NULL,
+    contract_id             BIGINT              NOT NULL,
+    slice_number            INTEGER             NOT NULL,
+    records_processed       INTEGER                     ,
+    slice_total             INTEGER             NOT NULL,
+    percentage_complete     INTEGER
 );
 
 ALTER TABLE job_progress ADD CONSTRAINT "pk_job_progress" PRIMARY KEY (id);

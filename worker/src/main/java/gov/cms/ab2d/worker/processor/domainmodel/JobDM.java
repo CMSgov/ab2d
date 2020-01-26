@@ -12,9 +12,10 @@ import java.util.Map;
 @Slf4j
 @Getter
 @Builder
-public class ProgressTracker {
+public class JobDM {
 
     private final String jobUuid;
+    private final Long jobId;
 
     @Singular
     private final List<ContractDM> contracts;

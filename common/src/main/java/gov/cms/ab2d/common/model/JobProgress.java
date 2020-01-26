@@ -33,7 +33,7 @@ public class JobProgress {
     @EqualsAndHashCode.Include
     private Integer sliceNumber;
 
-    private Integer recordCount;
-
-    private Integer progress;
+    private Integer recordsProcessed;
+    private Integer sliceTotal;
+    private Integer percentageComplete;
 }
