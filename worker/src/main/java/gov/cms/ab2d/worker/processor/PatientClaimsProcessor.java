@@ -1,4 +1,6 @@
-package gov.cms.ab2d.worker.adapter.bluebutton;
+package gov.cms.ab2d.worker.processor;
+
+import gov.cms.ab2d.worker.adapter.bluebutton.GetPatientsByContractResponse;
 
 import java.nio.file.Path;
 import java.time.OffsetDateTime;
@@ -9,5 +11,4 @@ public interface PatientClaimsProcessor {
 
     Future<Integer> process(GetPatientsByContractResponse.PatientDTO patientId, Lock lock, Path outputFile,
                             Path errorFile, OffsetDateTime attTime);
-
 }

@@ -1,10 +1,11 @@
-package gov.cms.ab2d.worker.adapter.bluebutton;
+package gov.cms.ab2d.worker.processor;
 
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.IParser;
 import ca.uhn.fhir.rest.api.EncodingEnum;
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.filter.ExplanationOfBenefitTrimmer;
+import gov.cms.ab2d.worker.adapter.bluebutton.GetPatientsByContractResponse;
 import gov.cms.ab2d.worker.service.FileService;
 import lombok.extern.slf4j.Slf4j;
 import org.hl7.fhir.dstu3.model.Bundle;
@@ -37,9 +38,7 @@ import static org.hamcrest.CoreMatchers.startsWith;
 import static org.junit.Assert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @Slf4j
 @ExtendWith(MockitoExtension.class)
@@ -79,7 +78,6 @@ public class PatientClaimsProcessorUnitTest {
         patientDTO.setMonthsUnderContract(allMonths);
     }
 
-
     @Test
     void process_whenPatientHasSinglePageOfClaimsData() throws IOException, ExecutionException, InterruptedException {
         Bundle bundle1 = createBundle(eob.copy());
@@ -109,7 +107,6 @@ public class PatientClaimsProcessorUnitTest {
         verify(mockFileService).appendToFile(any(), any());
     }
 
-
     @Test
     void process_whenBfdClientThrowsException() throws IOException {
         Bundle bundle1 = createBundle(eob.copy());
@@ -136,7 +133,6 @@ public class PatientClaimsProcessorUnitTest {
         verify(mockBfdClient, never()).requestNextBundleFromServer(bundle1);
         verify(mockFileService, never()).appendToFile(any(), any());
     }
-
 
     private void createEOB() {
         SimpleDateFormat sdf = new SimpleDateFormat("MM/dd/yyyy");
@@ -180,12 +176,9 @@ public class PatientClaimsProcessorUnitTest {
         return bundleEntryComponent;
     }
 
-
     private Bundle.BundleLinkComponent addNextLink() {
         Bundle.BundleLinkComponent linkComponent = new Bundle.BundleLinkComponent();
         linkComponent.setRelation(Bundle.LINK_NEXT);
         return linkComponent;
     }
-
-
 }

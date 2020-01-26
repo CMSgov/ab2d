@@ -1,10 +1,11 @@
-package gov.cms.ab2d.worker.adapter.bluebutton;
+package gov.cms.ab2d.worker.processor;
 
 import ca.uhn.fhir.context.FhirContext;
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.util.FHIRUtil;
 import gov.cms.ab2d.filter.ExplanationOfBenefitTrimmer;
 import gov.cms.ab2d.filter.FilterOutByDate;
+import gov.cms.ab2d.worker.adapter.bluebutton.GetPatientsByContractResponse;
 import gov.cms.ab2d.worker.service.FileService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -47,8 +48,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
     @Value("${file.try.lock.timeout}")
     private int tryLockTimeout;
 
-
-    @Async("pcpThreadPool")
+    @Async("patientProcessorThreadPool")
     public Future<Integer> process(GetPatientsByContractResponse.PatientDTO patient, Lock lock, Path outputFile,
                                    Path errorFile, OffsetDateTime attTime) {
         int errorCount = 0;
