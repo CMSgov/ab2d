@@ -77,6 +77,7 @@ class OptOutProcessorIntegrationTest {
     @Test
     @Transactional
     void process_shouldInsertRowsIntoOptOutTable()  {
+        optOutRepo.deleteAll();
 
         final String testInputFile = "test-data/test-data.txt";
         final InputStream inputStream = getClass().getResourceAsStream("/" + testInputFile);
