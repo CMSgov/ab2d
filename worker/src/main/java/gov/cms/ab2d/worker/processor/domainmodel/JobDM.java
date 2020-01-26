@@ -12,8 +12,8 @@ import java.util.Map;
 @Builder
 public class JobDM {
 
-    private final String jobUuid;
     private final Long jobId;
+    private final String jobUuid;
 
     @Singular
     private final List<ContractDM> contracts;

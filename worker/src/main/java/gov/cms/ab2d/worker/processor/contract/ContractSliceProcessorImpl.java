@@ -58,24 +58,17 @@ public class ContractSliceProcessorImpl implements ContractSliceProcessor {
     @Override
     @Async("patientProcessorThreadPool")
     public CompletableFuture<Void> process(Map.Entry<Integer, List<PatientDTO>> slice, ContractData contractData) {
-        final boolean isJobStillInProgress = isJobStillInProgress(contractData);
-        if (!isJobStillInProgress) {
+        if (!isJobStillInProgress(contractData)) {
             return CompletableFuture.completedFuture(null);
         }
 
         var startedAt = Instant.now();
-        log.info("Slice [{}] has [{}] patients ", slice.getKey(), slice.getValue().size());
-
         var sliceSno = slice.getKey();
-        var contractNumber = contractData.getContract().getContractNumber();
+        log.info("Slice [{}] has [{}] patients ", sliceSno, slice.getValue().size());
 
         // create output data and error file
-        var dataFilename = createFileName(contractNumber, sliceSno, DATA_FILE_SUFFIX);
-        var errorFileName = createFileName(contractNumber, sliceSno, ERROR_FILE_SUFFIX);
-
-        var outputDir = contractData.getOutputDir();
-        var dataFile = fileService.createOrReplaceFile(outputDir, dataFilename);
-        var errorFile = fileService.createOrReplaceFile(outputDir, errorFileName);
+        Path dataFile = getOutputFile(contractData, sliceSno, DATA_FILE_SUFFIX);
+        Path errorFile = getOutputFile(contractData, sliceSno, ERROR_FILE_SUFFIX);
 
         var jobUuid = contractData.getJobDM().getJobUuid();
         var patientsInSlice = slice.getValue();
@@ -83,20 +76,7 @@ public class ContractSliceProcessorImpl implements ContractSliceProcessor {
         var jobProgress = findJobProgress(contractData, sliceSno);
         try {
             int errorCount = processPatients(contractData, dataFile, errorFile, patientsInSlice, jobProgress);
-
-            var jobOutputs = new ArrayList<JobOutput>();
-            if (errorCount < patientCountInSlice) {
-                jobOutputs.add(createJobOutput(dataFile, false));
-            }
-            if (errorCount > 0) {
-                log.warn("Encountered {} errors during job processing", errorCount);
-                jobOutputs.add(createJobOutput(errorFile, true));
-            }
-
-            var job = jobRepository.findByJobUuid(jobUuid);
-            jobOutputs.forEach(jobOutput -> job.addJobOutput(jobOutput));
-            jobOutputRepository.saveAll(jobOutputs);
-
+            createJobOutputs(dataFile, errorFile, jobUuid, patientCountInSlice, errorCount);
         } catch (RuntimeException e) {
             var errMsg = "Update job [%s] to FAILED status";
             log.error(String.format(errMsg, jobUuid), e);
@@ -110,6 +90,27 @@ public class ContractSliceProcessorImpl implements ContractSliceProcessor {
     }
 
 
+    private boolean isJobStillInProgress(ContractData contractData) {
+        var jobUuid = contractData.getJobDM().getJobUuid();
+        var jobStatus = jobRepository.findJobStatus(jobUuid);
+        if (IN_PROGRESS.equals(jobStatus)) {
+            return true;
+        }
+
+        var errMsg = "Job [%s] is no longer in progress. It is in [%s] status. Stopping processing";
+        log.warn("{}", String.format(errMsg, jobUuid, jobStatus));
+        return false;
+    }
+
+
+    private Path getOutputFile(ContractData contractData, Integer sliceSno, String suffix) {
+        var outputDir = contractData.getOutputDir();
+        var contractNumber = contractData.getContract().getContractNumber();
+        var dataFilename = createFileName(contractNumber, sliceSno, suffix);
+        return fileService.createOrReplaceFile(outputDir, dataFilename);
+    }
+
+
     private JobProgress findJobProgress(ContractData contractData, Integer sliceSno) {
         var jobId = contractData.getJobDM().getJobId();
         var contractId = contractData.getContract().getId();
@@ -119,17 +120,14 @@ public class ContractSliceProcessorImpl implements ContractSliceProcessor {
 
     private int processPatients(ContractData contractData, Path dataFile, Path errorFile, List<PatientDTO> patientsSlice, JobProgress jobProgress) {
         int totalCountInSlice = patientsSlice.size();
-
         int errorCount = 0;
         int recordsProcessedCount = 0;
         int lastPercentCompleted = 0;
-
         for (PatientDTO patient : patientsSlice) {
             ++recordsProcessedCount;
 
             if (recordsProcessedCount % cancellationCheckFrequency == 0) {
-                final boolean isJobStillInProgress = isJobStillInProgress(contractData);
-                if (!isJobStillInProgress) {
+                if (!isJobStillInProgress(contractData)) {
                     break;
                 }
             }
@@ -144,10 +142,8 @@ public class ContractSliceProcessorImpl implements ContractSliceProcessor {
             }
 
             var patientId = patient.getPatientId();
-
             if (isOptOutPatient(patientId)) {
-                // this patient has opted out. skip patient record.
-                continue;
+                continue;       // this patient has opted out. skip patient record.
             }
 
             errorCount += patientClaimsProcessor.processSync(patientId, new ReentrantLock(), dataFile, errorFile);
@@ -165,19 +161,6 @@ public class ContractSliceProcessorImpl implements ContractSliceProcessor {
             jobProgressRepository.saveAndFlush(jobProgress);
         }
         return percentCompleted;
-    }
-
-
-    private boolean isJobStillInProgress(ContractData contractData) {
-        var jobUuid = contractData.getJobDM().getJobUuid();
-        var jobStatus = jobRepository.findJobStatus(jobUuid);
-        if (IN_PROGRESS.equals(jobStatus)) {
-            return true;
-        }
-
-        var errMsg = "Job [%s] is no longer in progress. It is in [%s] status. Stopping processing";
-        log.warn("{}", String.format(errMsg, jobUuid, jobStatus));
-        return false;
     }
 
 
@@ -204,6 +187,22 @@ public class ContractSliceProcessorImpl implements ContractSliceProcessor {
                 .append(StringUtils.leftPad(key.toString(), 5, '0'))
                 .append(outputFileSuffix)
                 .toString();
+    }
+
+
+    private void createJobOutputs(Path dataFile, Path errorFile, String jobUuid, int patientCountInSlice, int errorCount) {
+        var jobOutputs = new ArrayList<JobOutput>();
+        if (errorCount < patientCountInSlice) {
+            jobOutputs.add(createJobOutput(dataFile, false));
+        }
+        if (errorCount > 0) {
+            log.warn("Encountered {} errors during job processing", errorCount);
+            jobOutputs.add(createJobOutput(errorFile, true));
+        }
+
+        var job = jobRepository.findByJobUuid(jobUuid);
+        jobOutputs.forEach(jobOutput -> job.addJobOutput(jobOutput));
+        jobOutputRepository.saveAll(jobOutputs);
     }
 
 
