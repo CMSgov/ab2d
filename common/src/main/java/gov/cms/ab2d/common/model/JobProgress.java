@@ -35,5 +35,5 @@ public class JobProgress {
 
     private Integer recordsProcessed;
     private Integer sliceTotal;
-    private Integer percentageComplete;
+
 }

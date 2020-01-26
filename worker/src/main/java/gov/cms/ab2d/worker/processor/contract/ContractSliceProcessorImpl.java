@@ -162,7 +162,6 @@ public class ContractSliceProcessorImpl implements ContractSliceProcessor {
         final int percentCompleted = (recordsProcessedCount * 100) / totalCountInSlice;
         if (percentCompleted > lastPercentCompleted) {
             jobProgress.setRecordsProcessed(recordsProcessedCount);
-            jobProgress.setPercentageComplete(percentCompleted);
             jobProgressRepository.saveAndFlush(jobProgress);
         }
         return percentCompleted;

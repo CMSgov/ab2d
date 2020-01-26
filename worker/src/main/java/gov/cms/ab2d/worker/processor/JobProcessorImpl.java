@@ -4,11 +4,9 @@ import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.JobProgress;
 import gov.cms.ab2d.common.model.JobStatus;
-import gov.cms.ab2d.common.model.Sponsor;
 import gov.cms.ab2d.common.repository.JobProgressRepository;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.worker.adapter.bluebutton.ContractAdapter;
-import gov.cms.ab2d.worker.adapter.bluebutton.GetPatientsByContractResponse;
 import gov.cms.ab2d.worker.adapter.bluebutton.GetPatientsByContractResponse.PatientDTO;
 import gov.cms.ab2d.worker.processor.contract.ContractSliceCreator;
 import gov.cms.ab2d.worker.processor.contract.ContractSliceProcessor;
@@ -63,11 +61,11 @@ public class JobProcessorImpl implements JobProcessor {
     @Transactional(propagation = Propagation.NEVER)
     public Job process(final String jobUuid) {
 
-        final Job job = jobRepository.findByJobUuid(jobUuid);
+        var job = jobRepository.findByJobUuid(jobUuid);
         log.info("Found job [{}]", jobUuid);
 
         try {
-            Path outputDirPath = Paths.get(efsMount, jobUuid);
+            var outputDirPath = Paths.get(efsMount, jobUuid);
             processJob(job, outputDirPath);
         } catch (Exception e) {
             log.error("Unexpected exception ", e);
@@ -94,7 +92,7 @@ public class JobProcessorImpl implements JobProcessor {
             processContract(contractData);
         }
 
-        final JobStatus jobStatus = jobRepository.findJobStatus(jobUuid);
+        var jobStatus = jobRepository.findJobStatus(jobUuid);
         if (IN_PROGRESS.equals(jobStatus)) {
             completeJob(job);
         } else if (CANCELLED.equals(jobStatus)) {
@@ -110,7 +108,7 @@ public class JobProcessorImpl implements JobProcessor {
         try {
             directory = fileService.createDirectory(outputDirPath);
         } catch (UncheckedIOException e) {
-            final IOException cause = e.getCause();
+            var cause = e.getCause();
             if (cause != null && cause.getMessage().equalsIgnoreCase("Directory already exists")) {
                 log.warn("Directory already exists. Delete and create afresh ...");
                 deleteExistingDirectory(outputDirPath);
@@ -128,7 +126,7 @@ public class JobProcessorImpl implements JobProcessor {
                 .listFiles((dir, name) -> name.toLowerCase().endsWith(".ndjson"));
 
         for (File file : files) {
-            final Path filePath = file.toPath();
+            var filePath = file.toPath();
             if (file.isDirectory() || Files.isSymbolicLink(filePath)) {
                 var errMsg = "File is not a regular file";
                 log.error("{} - isDirectory: {}", errMsg, file.isDirectory());
@@ -159,7 +157,7 @@ public class JobProcessorImpl implements JobProcessor {
     private List<Contract> getAttestedContracts(Job job) {
 
         // when the job is submitted for a specific contract, process the export for only that contract.
-        final Contract jobSpecificContract = job.getContract();
+        var jobSpecificContract = job.getContract();
         if (jobSpecificContract != null && jobSpecificContract.getAttestedOn() != null) {
             log.info("Job [{}] submitted for a specific attested contract [{}] ", jobSpecificContract.getContractNumber());
             return Collections.singletonList(jobSpecificContract);
@@ -167,8 +165,8 @@ public class JobProcessorImpl implements JobProcessor {
 
         //Job does not specify a contract.
         //Get the aggregated attested Contracts for the sponsor & process all of them
-        final Sponsor sponsor = job.getUser().getSponsor();
-        final List<Contract> attestedContracts = sponsor.getAggregatedAttestedContracts();
+        var sponsor = job.getUser().getSponsor();
+        var attestedContracts = sponsor.getAggregatedAttestedContracts();
 
         log.info("Job [{}] has [{}] attested contracts", job.getJobUuid(), attestedContracts.size());
         return attestedContracts;
@@ -193,10 +191,10 @@ public class JobProcessorImpl implements JobProcessor {
 
 
     private ContractDM fetchContractInfo(Job job, Contract contract) {
-        final String contractNumber = contract.getContractNumber();
-        final GetPatientsByContractResponse response = contractAdapter.getPatients(contractNumber);
+        var contractNumber = contract.getContractNumber();
+        var response = contractAdapter.getPatients(contractNumber);
 
-        final Map<Integer, List<PatientDTO>> slices = sliceCreator.createSlices(response.getPatients());
+        var slices = sliceCreator.createSlices(response.getPatients());
         for (var slice : slices.entrySet()) {
             createJobProgress(job, contract, slice);
         }
@@ -206,13 +204,12 @@ public class JobProcessorImpl implements JobProcessor {
 
 
     private void createJobProgress(Job job, Contract contract, Map.Entry<Integer, List<PatientDTO>> slice) {
-        JobProgress jobProgress = new JobProgress();
+        final JobProgress jobProgress = new JobProgress();
         jobProgress.setJob(job);
         jobProgress.setContract(contract);
         jobProgress.setSliceNumber(slice.getKey());
         jobProgress.setSliceTotal(slice.getValue().size());
         jobProgress.setRecordsProcessed(0);
-        jobProgress.setPercentageComplete(0);
 
         jobProgressRepository.saveAndFlush(jobProgress);
     }
@@ -229,7 +226,7 @@ public class JobProcessorImpl implements JobProcessor {
 
     private void processContract(ContractData contractData) {
         var startedAt = Instant.now();
-        final boolean isJobStillInProgress = isJobStillInProgress(contractData);
+        var isJobStillInProgress = isJobStillInProgress(contractData);
         if (!isJobStillInProgress) {
             return;
         }
@@ -274,8 +271,8 @@ public class JobProcessorImpl implements JobProcessor {
 
 
     private void logContractInfo(ContractDM contractDM) {
-        final long patientCountPerContract = getPatientCountPerContract(contractDM);
-        final int sliceCount = contractDM.getSlices().size();
+        var patientCountPerContract = getPatientCountPerContract(contractDM);
+        var sliceCount = contractDM.getSlices().size();
 
         log.info("Contract [{}] with [{}] has been sliced into [{}] slices", contractDM.getContractNumber(), patientCountPerContract, sliceCount);
     }

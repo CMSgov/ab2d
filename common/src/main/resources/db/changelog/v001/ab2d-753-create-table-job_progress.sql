@@ -9,8 +9,7 @@ CREATE TABLE job_progress
     contract_id             BIGINT              NOT NULL,
     slice_number            INTEGER             NOT NULL,
     records_processed       INTEGER                     ,
-    slice_total             INTEGER             NOT NULL,
-    percentage_complete     INTEGER
+    slice_total             INTEGER             NOT NULL
 );
 
 ALTER TABLE job_progress ADD CONSTRAINT "pk_job_progress" PRIMARY KEY (id);
