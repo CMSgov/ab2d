@@ -6,12 +6,13 @@ import gov.cms.ab2d.common.model.JobStatus;
 import gov.cms.ab2d.common.model.OptOut;
 import gov.cms.ab2d.common.model.Sponsor;
 import gov.cms.ab2d.common.model.User;
-import gov.cms.ab2d.common.repository.JobOutputRepository;
+import gov.cms.ab2d.common.repository.JobProgressRepository;
 import gov.cms.ab2d.common.repository.JobRepository;
-import gov.cms.ab2d.common.repository.OptOutRepository;
 import gov.cms.ab2d.worker.adapter.bluebutton.ContractAdapter;
 import gov.cms.ab2d.worker.adapter.bluebutton.GetPatientsByContractResponse;
 import gov.cms.ab2d.worker.adapter.bluebutton.GetPatientsByContractResponse.PatientDTO;
+import gov.cms.ab2d.worker.processor.contract.ContractSliceCreator;
+import gov.cms.ab2d.worker.processor.contract.ContractSliceProcessor;
 import gov.cms.ab2d.worker.service.FileService;
 import org.hamcrest.CoreMatchers;
 import org.junit.jupiter.api.BeforeEach;
@@ -34,8 +35,10 @@ import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
@@ -64,10 +67,11 @@ class JobProcessorUnitTest {
 
     @Mock private FileService fileService;
     @Mock private JobRepository jobRepository;
-    @Mock private JobOutputRepository jobOutputRepository;
-    @Mock private OptOutRepository optOutRepository;
+
+    @Mock private JobProgressRepository jobProgresRepository;
     @Mock private ContractAdapter contractAdapter;
-    @Mock private PatientClaimsProcessor patientClaimsProcessor;
+    @Mock private ContractSliceCreator sliceCreator;
+    @Mock private ContractSliceProcessor sliceProcessor;
 
     private Job job;
     private GetPatientsByContractResponse patientsByContract;
@@ -78,15 +82,12 @@ class JobProcessorUnitTest {
         cut = new JobProcessorImpl(
                 fileService,
                 jobRepository,
-                jobOutputRepository,
+                jobProgresRepository,
                 contractAdapter,
-                patientClaimsProcessor,
-                optOutRepository
+                sliceCreator,
+                sliceProcessor
         );
 
-        ReflectionTestUtils.setField(cut, "cancellationCheckFrequency", 2);
-        ReflectionTestUtils.setField(cut, "reportProgressDbFrequency", 2);
-        ReflectionTestUtils.setField(cut, "reportProgressLogFrequency", 3);
         ReflectionTestUtils.setField(cut, "efsMount", efsMountTmpDir.toString());
 
         final Sponsor parentSponsor = createParentSponsor();
@@ -107,13 +108,9 @@ class JobProcessorUnitTest {
                 .thenReturn(this.efsMountTmpDir)
                 .thenReturn(this.efsMountTmpDir);
 
-        Future<Integer> futureResources = new AsyncResult(0);
-        Mockito.lenient().when(patientClaimsProcessor.process(
-                Mockito.any(),
-                Mockito.any(),
-                Mockito.any(),
-                Mockito.any()
-        )).thenReturn(futureResources);
+//        when(jobProgresRepository.save(Mockito.any())).thenReturn(new JobProgress());
+        when(sliceCreator.createSlices(Mockito.anyList())).thenReturn(new HashMap<>());
+        when(sliceProcessor.process(Mockito.any(), Mockito.any())).thenReturn(new CompletableFuture());
     }
 
 
@@ -127,7 +124,7 @@ class JobProcessorUnitTest {
         assertThat(processedJob.getStatus(), is(JobStatus.SUCCESSFUL));
         assertThat(processedJob.getStatusMessage(), is("100%"));
         assertThat(processedJob.getExpiresAt(), notNullValue());
-        verify(jobRepository, atLeastOnce()).updatePercentageCompleted(anyString(), anyInt());
+        verify(jobProgresRepository, atLeastOnce()).save(Mockito.any());
         doVerify();
     }
 
@@ -149,7 +146,7 @@ class JobProcessorUnitTest {
         assertThat(processedJob.getExpiresAt(), notNullValue());
         assertThat(processedJob.getJobOutputs().size(), equalTo(childSponsor.getAttestedContracts().size()));
         doVerify();
-        verify(jobRepository, atLeastOnce()).updatePercentageCompleted(anyString(), anyInt());
+        verify(jobProgresRepository, atLeastOnce()).save(Mockito.any());
     }
 
 
@@ -164,7 +161,7 @@ class JobProcessorUnitTest {
         assertThat(processedJob.getStatus(), is(not(JobStatus.SUCCESSFUL)));
         assertThat(processedJob.getCompletedAt(), nullValue());
         doVerify();
-        verify(jobRepository, atLeastOnce()).updatePercentageCompleted(anyString(), anyInt());
+        verify(jobProgresRepository, atLeastOnce()).save(Mockito.any());
     }
 
     @Test
@@ -190,13 +187,13 @@ class JobProcessorUnitTest {
         assertThat(processedJob.getExpiresAt(), notNullValue());
         doVerify();
         verify(fileService, times(2)).createOrReplaceFile(Mockito.any(Path.class), anyString());
-        verify(jobRepository, atLeastOnce()).updatePercentageCompleted(anyString(), anyInt());
+        verify(jobProgresRepository, atLeastOnce()).save(Mockito.any());
     }
 
     private void doVerify() {
         verify(fileService).createDirectory(Mockito.any());
         verify(contractAdapter).getPatients(anyString());
-        verify(patientClaimsProcessor, atLeast(1)).process(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any());
+//        verify(patientClaimsProcessor, atLeast(1)).process(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any());
     }
 
 
@@ -205,10 +202,10 @@ class JobProcessorUnitTest {
     void processJob_whenPatientHasOptedOut_ShouldSkipPatientRecord() {
 
         final List<OptOut> optOuts = getOptOutRows(patientsByContract);
-        when(optOutRepository.findByHicn(anyString()))
-                .thenReturn(Arrays.asList(optOuts.get(0)))
-                .thenReturn(Arrays.asList(optOuts.get(1)))
-                .thenReturn(Arrays.asList(optOuts.get(2)));
+//        when(optOutRepository.findByHicn(anyString()))
+//                .thenReturn(Arrays.asList(optOuts.get(0)))
+//                .thenReturn(Arrays.asList(optOuts.get(1)))
+//                .thenReturn(Arrays.asList(optOuts.get(2)));
 
         // Test data has 3 patientIds  each of whom has opted out.
         // So the patientsClaimsProcessor should never be called.
@@ -220,7 +217,7 @@ class JobProcessorUnitTest {
 
         verify(fileService).createDirectory(Mockito.any());
         verify(contractAdapter).getPatients(anyString());
-        verify(patientClaimsProcessor, never()).process(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any());
+//        verify(patientClaimsProcessor, never()).process(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any());
     }
 
 
@@ -229,12 +226,12 @@ class JobProcessorUnitTest {
     void whenErrorCountIsGreaterThanZero_AJobOutputForErrorFileIsCreated() {
 
         Future<Integer> futureResources = new AsyncResult(1);
-        Mockito.lenient().when(patientClaimsProcessor.process(
-                Mockito.any(),
-                Mockito.any(),
-                Mockito.any(),
-                Mockito.any()
-        )).thenReturn(futureResources);
+//        Mockito.lenient().when(patientClaimsProcessor.process(
+//                Mockito.any(),
+//                Mockito.any(),
+//                Mockito.any(),
+//                Mockito.any()
+//        )).thenReturn(futureResources);
 
         var processedJob = cut.process(jobUuid);
 
@@ -247,7 +244,7 @@ class JobProcessorUnitTest {
         assertFalse(errorJobOutputs.isEmpty());
         assertThat(processedJob.getCompletedAt(), notNullValue());
         doVerify();
-        verify(jobRepository, atLeastOnce()).updatePercentageCompleted(anyString(), anyInt());
+        verify(jobProgresRepository, atLeastOnce()).save(Mockito.any());
     }
 
     @Test
@@ -256,12 +253,12 @@ class JobProcessorUnitTest {
 
         final String errMsg = "error during exception handling to write error record";
         final RuntimeException runtimeException = new RuntimeException(errMsg);
-        Mockito.when(patientClaimsProcessor.process(
-                Mockito.any(),
-                Mockito.any(),
-                Mockito.any(),
-                Mockito.any()
-        )).thenThrow(runtimeException);
+//        Mockito.when(patientClaimsProcessor.process(
+//                Mockito.any(),
+//                Mockito.any(),
+//                Mockito.any(),
+//                Mockito.any()
+//        )).thenThrow(runtimeException);
 
 
         var processedJob = cut.process(jobUuid);
@@ -301,8 +298,8 @@ class JobProcessorUnitTest {
 
         verify(fileService, times(2)).createDirectory(Mockito.any());
         verify(contractAdapter).getPatients(anyString());
-        verify(patientClaimsProcessor, atLeast(1)).process(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any());
-        verify(jobRepository, atLeastOnce()).updatePercentageCompleted(anyString(), anyInt());
+//        verify(patientClaimsProcessor, atLeast(1)).process(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any());
+        verify(jobProgresRepository, atLeastOnce()).save(Mockito.any());
     }
 
 
@@ -375,7 +372,7 @@ class JobProcessorUnitTest {
         assertThat(processedJob.getStatus(), is(JobStatus.SUCCESSFUL));
         assertThat(processedJob.getStatusMessage(), is("100%"));
         assertThat(processedJob.getExpiresAt(), notNullValue());
-        verify(jobRepository, times(9)).updatePercentageCompleted(anyString(), anyInt());
+//        verify(jobRepository, times(9)).updatePercentageCompleted(anyString(), anyInt());
         doVerify();
     }
 
@@ -466,3 +463,4 @@ class JobProcessorUnitTest {
     }
 
 }
+

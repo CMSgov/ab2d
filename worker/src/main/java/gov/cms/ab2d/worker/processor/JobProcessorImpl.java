@@ -3,7 +3,6 @@ package gov.cms.ab2d.worker.processor;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.JobProgress;
-import gov.cms.ab2d.common.model.JobStatus;
 import gov.cms.ab2d.common.repository.JobProgressRepository;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.worker.adapter.bluebutton.ContractAdapter;
@@ -68,11 +67,11 @@ public class JobProcessorImpl implements JobProcessor {
             var outputDirPath = Paths.get(efsMount, jobUuid);
             processJob(job, outputDirPath);
         } catch (Exception e) {
-            log.error("Unexpected exception ", e);
-            job.setStatus(JobStatus.FAILED);
-            job.setStatusMessage(ExceptionUtils.getRootCauseMessage(e));
-            job.setCompletedAt(OffsetDateTime.now());
-            jobRepository.save(job);
+            var errMsg = "Update job [%s] to FAILED status";
+            log.error("Unexpected exception ", String.format(errMsg, jobUuid), e);
+
+            var failureMessage = ExceptionUtils.getRootCauseMessage(e);
+            jobRepository.saveJobFailure(jobUuid, failureMessage);
             log.info("Job: [{}] FAILED", jobUuid);
         }
 

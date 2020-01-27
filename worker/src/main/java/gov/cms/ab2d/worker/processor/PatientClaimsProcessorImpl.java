@@ -14,8 +14,6 @@ import org.hl7.fhir.dstu3.model.ExplanationOfBenefit;
 import org.hl7.fhir.dstu3.model.Resource;
 import org.hl7.fhir.dstu3.model.ResourceType;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.scheduling.annotation.Async;
-import org.springframework.scheduling.annotation.AsyncResult;
 import org.springframework.stereotype.Component;
 
 import java.io.ByteArrayOutputStream;
@@ -24,7 +22,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.Future;
 import java.util.concurrent.locks.Lock;
 import java.util.stream.Collectors;
 
@@ -46,13 +43,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
     private int tryLockTimeout;
 
 
-    @Async("patientProcessorThreadPool")
-    public Future<Integer> process(String patientId, Lock lock, Path dataFile, Path errorFile) {
-        int errorCount = processSync(patientId, lock, dataFile, errorFile);
-        return new AsyncResult<>(errorCount);
-    }
-
-    public int processSync(String patientId, Lock lock, Path dataFile, Path errorFile) {
+    public int process(String patientId, Lock lock, Path dataFile, Path errorFile) {
         int errorCount = 0;
         int resourceCount = 0;
 

@@ -146,7 +146,7 @@ public class ContractSliceProcessorImpl implements ContractSliceProcessor {
                 continue;       // this patient has opted out. skip patient record.
             }
 
-            errorCount += patientClaimsProcessor.processSync(patientId, new ReentrantLock(), dataFile, errorFile);
+            errorCount += patientClaimsProcessor.process(patientId, new ReentrantLock(), dataFile, errorFile);
         }
 
         updateProgressInDb(jobProgress, totalCountInSlice, recordsProcessedCount, lastPercentCompleted);

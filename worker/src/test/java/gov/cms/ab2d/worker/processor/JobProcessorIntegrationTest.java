@@ -7,9 +7,15 @@ import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.JobStatus;
 import gov.cms.ab2d.common.model.Sponsor;
 import gov.cms.ab2d.common.model.User;
-import gov.cms.ab2d.common.repository.*;
+import gov.cms.ab2d.common.repository.ContractRepository;
+import gov.cms.ab2d.common.repository.JobProgressRepository;
+import gov.cms.ab2d.common.repository.JobRepository;
+import gov.cms.ab2d.common.repository.SponsorRepository;
+import gov.cms.ab2d.common.repository.UserRepository;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.worker.adapter.bluebutton.ContractAdapter;
+import gov.cms.ab2d.worker.processor.contract.ContractSliceCreator;
+import gov.cms.ab2d.worker.processor.contract.ContractSliceProcessor;
 import gov.cms.ab2d.worker.service.FileService;
 import org.hl7.fhir.dstu3.model.Bundle;
 import org.junit.jupiter.api.BeforeEach;
@@ -19,6 +25,7 @@ import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.integration.test.context.SpringIntegrationTest;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.testcontainers.containers.PostgreSQLContainer;
@@ -57,13 +64,16 @@ class JobProcessorIntegrationTest {
     @Autowired
     private ContractRepository contractRepository;
     @Autowired
-    private JobOutputRepository jobOutputRepository;
-    @Autowired
     private ContractAdapter contractAdapter;
     @Autowired
-    private OptOutRepository optOutRepository;
+    private JobProgressRepository jobProgressRepository;
+    @Autowired
+    private ContractSliceCreator sliceCreator;
+    @Autowired
+    private ContractSliceProcessor sliceProcessor;
 
-    @Mock
+//    @Mock - should this be @MockBean ???
+    @MockBean
     private BFDClient mockBfdClient;
 
     @TempDir
@@ -90,11 +100,18 @@ class JobProcessorIntegrationTest {
         when(mockBfdClient.requestEOBFromServer(anyString())).thenReturn(bundle1);
 
         FhirContext fhirContext = new FhirContext();
+
+        //TODO: FIX THIS.
         PatientClaimsProcessor patientClaimsProcessor = new PatientClaimsProcessorImpl(mockBfdClient, fhirContext, fileService);
 
-        cut = new JobProcessorImpl(fileService, jobRepository, jobOutputRepository, contractAdapter, patientClaimsProcessor,
-                optOutRepository);
-        ReflectionTestUtils.setField(cut, "cancellationCheckFrequency", 10);
+        cut = new JobProcessorImpl(fileService,
+                jobRepository,
+                jobProgressRepository,
+                contractAdapter,
+                sliceCreator,
+                sliceProcessor
+        );
+
         ReflectionTestUtils.setField(cut, "efsMount", tmpEfsMountDir.toString());
     }
 
@@ -181,3 +198,4 @@ class JobProcessorIntegrationTest {
     }
 
 }
+

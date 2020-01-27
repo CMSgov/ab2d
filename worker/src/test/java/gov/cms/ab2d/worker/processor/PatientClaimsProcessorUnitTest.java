@@ -72,7 +72,7 @@ public class PatientClaimsProcessorUnitTest {
         Bundle bundle1 = createBundle(eob.copy());
         when(mockBfdClient.requestEOBFromServer(patientId)).thenReturn(bundle1);
 
-        cut.process(patientId, new ReentrantLock(), outputFile, errorFile).get();
+        cut.process(patientId, new ReentrantLock(), outputFile, errorFile);
 
         verify(mockBfdClient).requestEOBFromServer(patientId);
         verify(mockBfdClient, never()).requestNextBundleFromServer(bundle1);
@@ -89,7 +89,7 @@ public class PatientClaimsProcessorUnitTest {
         when(mockBfdClient.requestEOBFromServer(patientId)).thenReturn(bundle1);
         when(mockBfdClient.requestNextBundleFromServer(bundle1)).thenReturn(bundle2);
 
-        cut.process(patientId, new ReentrantLock(), outputFile, errorFile).get();
+        cut.process(patientId, new ReentrantLock(), outputFile, errorFile);
 
         verify(mockBfdClient).requestEOBFromServer(patientId);
         verify(mockBfdClient).requestNextBundleFromServer(bundle1);
@@ -103,7 +103,7 @@ public class PatientClaimsProcessorUnitTest {
         when(mockBfdClient.requestEOBFromServer(patientId)).thenThrow(new RuntimeException("Test Exception"));
 
         var exceptionThrown = assertThrows(RuntimeException.class,
-                () -> cut.process(patientId, new ReentrantLock(), outputFile, errorFile).get());
+                () -> cut.process(patientId, new ReentrantLock(), outputFile, errorFile));
 
         assertThat(exceptionThrown.getCause().getMessage(), startsWith("Test Exception"));
 
@@ -117,7 +117,7 @@ public class PatientClaimsProcessorUnitTest {
         Bundle bundle1 = new Bundle();
         when(mockBfdClient.requestEOBFromServer(patientId)).thenReturn(bundle1);
 
-        cut.process(patientId, new ReentrantLock(), outputFile, errorFile).get();
+        cut.process(patientId, new ReentrantLock(), outputFile, errorFile);
 
         verify(mockBfdClient).requestEOBFromServer(patientId);
         verify(mockBfdClient, never()).requestNextBundleFromServer(bundle1);
