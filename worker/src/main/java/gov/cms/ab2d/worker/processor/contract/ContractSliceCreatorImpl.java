@@ -17,7 +17,7 @@ public class ContractSliceCreatorImpl implements ContractSliceCreator {
     @Value("${patients.per.file.limit:10000}")
     private int patientsPerFileLimit;
 
-    @Value("${bfd.concurrency.limit:5}")
+    @Value("${pcp.max.pool.size}")
     private int bdfConcurrencyLimit;
 
 
