@@ -224,15 +224,15 @@ public class JobProcessorImpl implements JobProcessor {
 
 
     private void processContract(ContractData contractData) {
-        var startedAt = Instant.now();
-        var isJobStillInProgress = isJobStillInProgress(contractData);
-        if (!isJobStillInProgress) {
+        if (!isJobStillInProgress(contractData)) {
             return;
         }
 
+        var startedAt = Instant.now();
+
         var contractNumber = contractData.getContract().getContractNumber();
         var jobDM = contractData.getJobDM();
-        var contractDM = getContractDomainModel(contractNumber, jobDM);
+        var contractDM = jobDM.getContractDM(contractNumber);
         logContractInfo(contractDM);
 
         var futures = contractDM.getSlices().entrySet().stream()
@@ -261,27 +261,12 @@ public class JobProcessorImpl implements JobProcessor {
     }
 
 
-    private ContractDM getContractDomainModel(String contractNumber, JobDM jobDM) {
-        return jobDM.getContracts().stream()
-                .filter(cs -> cs.getContractNumber().equals(contractNumber))
-                .findFirst()
-                .get();
-    }
-
-
     private void logContractInfo(ContractDM contractDM) {
-        var patientCountPerContract = getPatientCountPerContract(contractDM);
+        var contractNumber = contractDM.getContractNumber();
         var sliceCount = contractDM.getSlices().size();
+        var patientCount = contractDM.getPatientCountInContract();
 
-        log.info("Contract [{}] with [{}] has been sliced into [{}] slices", contractDM.getContractNumber(), patientCountPerContract, sliceCount);
-    }
-
-
-    private long getPatientCountPerContract(ContractDM contractDM) {
-        return contractDM.getSlices().entrySet().stream()
-                .map(e -> e.getValue())
-                .mapToInt(e -> e.size())
-                .sum();
+        log.info("Contract [{}] with [{}] has been sliced into [{}] slices", contractNumber, patientCount, sliceCount);
     }
 
 

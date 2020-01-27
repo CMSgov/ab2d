@@ -26,6 +26,22 @@ public class JobDM {
         private final String contractNumber;
         private Map<Integer, List<PatientDTO>> slices;
 
+
+        public long getPatientCountInContract() {
+            return getSlices().entrySet().stream()
+                    .map(e -> e.getValue())
+                    .mapToInt(e -> e.size())
+                    .sum();
+        }
+
+    }
+
+
+    public ContractDM getContractDM(String contractNumber) {
+        return getContracts().stream()
+                .filter(cs -> cs.getContractNumber().equals(contractNumber))
+                .findFirst()
+                .get();
     }
 
 
