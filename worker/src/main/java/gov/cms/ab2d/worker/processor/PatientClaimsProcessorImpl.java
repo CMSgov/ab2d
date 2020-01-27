@@ -1,4 +1,4 @@
-package gov.cms.ab2d.worker.adapter.bluebutton;
+package gov.cms.ab2d.worker.processor;
 
 import ca.uhn.fhir.context.FhirContext;
 import gov.cms.ab2d.bfd.client.BFDClient;
@@ -46,7 +46,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
     private int tryLockTimeout;
 
 
-    @Async("pcpThreadPool")
+    @Async("patientProcessorThreadPool")
     public Future<Integer> process(String patientId, Lock lock, Path outputFile, Path errorFile) {
         int errorCount = 0;
         int resourceCount = 0;
