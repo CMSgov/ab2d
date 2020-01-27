@@ -143,40 +143,32 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
         Bundle eobBundle = bfdClient.requestEOBFromServer(patient.getPatientId());
 
         final List<BundleEntryComponent> entries = eobBundle.getEntry();
-        final List<Resource> resources = extractResources(entries, patient.getMonthsUnderContract(), attTime);
+        final List<Resource> resources = extractResources(entries, patient.getDatesUnderContract(), attTime);
 
         while (eobBundle.getLink(Bundle.LINK_NEXT) != null) {
             eobBundle = bfdClient.requestNextBundleFromServer(eobBundle);
             final List<BundleEntryComponent> nextEntries = eobBundle.getEntry();
-            resources.addAll(extractResources(nextEntries, patient.getMonthsUnderContract(), attTime));
+            resources.addAll(extractResources(nextEntries, patient.getDatesUnderContract(), attTime));
         }
 
         log.debug("Bundle - Total: {} - Entries: {} ", eobBundle.getTotal(), entries.size());
         return resources;
     }
 
-    private List<Resource> extractResources(List<BundleEntryComponent> entries, List<Integer> monthsUnderContract,
+    private List<Resource> extractResources(List<BundleEntryComponent> entries, final List<FilterOutByDate.DateRange> dateRanges,
                                             OffsetDateTime attTime) {
         if (attTime == null) {
             return new ArrayList<>();
         }
         long epochMilli = attTime.toInstant().toEpochMilli();
         Date attDate = new Date(epochMilli);
-        int year = Calendar.getInstance().get(Calendar.YEAR);
-        List<FilterOutByDate.DateRange> dateRanges = new ArrayList<>();
-        try {
-            dateRanges = FilterOutByDate.getDateRanges(monthsUnderContract, year);
-        } catch (ParseException ex) {
-            log.error("Unable to determine date ranges", ex);
-        }
-        final List<FilterOutByDate.DateRange> ranges = dateRanges;
         return entries.stream()
                 // Get the resource
                 .map(BundleEntryComponent::getResource)
                 // Get only the explanation of benefits
                 .filter(resource -> resource.getResourceType() == ResourceType.ExplanationOfBenefit)
                 // Filter by date
-                .filter(resource -> FilterOutByDate.valid((ExplanationOfBenefit) resource, attDate, ranges))
+                .filter(resource -> FilterOutByDate.valid((ExplanationOfBenefit) resource, attDate, dateRanges))
                 // filter it
                 .map(resource -> ExplanationOfBenefitTrimmer.getBenefit((ExplanationOfBenefit) resource))
                 // Remove any empty values

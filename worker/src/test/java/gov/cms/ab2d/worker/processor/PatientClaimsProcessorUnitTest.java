@@ -5,6 +5,7 @@ import ca.uhn.fhir.parser.IParser;
 import ca.uhn.fhir.rest.api.EncodingEnum;
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.filter.ExplanationOfBenefitTrimmer;
+import gov.cms.ab2d.filter.FilterOutByDate;
 import gov.cms.ab2d.worker.adapter.bluebutton.GetPatientsByContractResponse;
 import gov.cms.ab2d.worker.service.FileService;
 import lombok.extern.slf4j.Slf4j;
@@ -29,6 +30,7 @@ import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
+import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
@@ -62,7 +64,7 @@ public class PatientClaimsProcessorUnitTest {
     private GetPatientsByContractResponse.PatientDTO patientDTO;
 
     @BeforeEach
-    void setUp() throws IOException {
+    void setUp() throws Exception {
         FhirContext fhirContext = ca.uhn.fhir.context.FhirContext.forDstu3();
         cut = new PatientClaimsProcessorImpl(
                 mockBfdClient,
@@ -75,7 +77,7 @@ public class PatientClaimsProcessorUnitTest {
         createOutputFiles();
         patientDTO = new GetPatientsByContractResponse.PatientDTO();
         patientDTO.setPatientId(patientId);
-        patientDTO.setMonthsUnderContract(allMonths);
+        patientDTO.setDatesUnderContract(List.of(new FilterOutByDate.DateRange(new Date(0), new Date())));
     }
 
     @Test
