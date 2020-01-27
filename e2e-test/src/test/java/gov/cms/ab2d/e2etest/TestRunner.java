@@ -1,6 +1,7 @@
 package gov.cms.ab2d.e2etest;
 
 import gov.cms.ab2d.common.httpclient.APIClient;
+import gov.cms.ab2d.common.util.JobUtil;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -86,10 +87,6 @@ public class TestRunner {
         // add in later
         //uploadOrgStructureReport();
         //uploadAttestationReport();
-    }
-
-    private String getJobUuid(String url) {
-        return url.substring(url.indexOf("/Job/") + 5, url.indexOf("/$status"));
     }
 
     /*private HttpResponse<String> uploadOrgStructureReport() throws IOException, InterruptedException {
@@ -257,7 +254,7 @@ public class TestRunner {
 
         HttpResponse<String> statusResponseAgain = pollForStatusResponse(contentLocationList.iterator().next());
 
-        String jobUuid = getJobUuid(contentLocationList.iterator().next());
+        String jobUuid = JobUtil.getJobUuid(contentLocationList.iterator().next());
 
         Assert.assertEquals(200, statusResponseAgain.statusCode());
 
@@ -291,7 +288,7 @@ public class TestRunner {
         Assert.assertEquals(202, exportResponse.statusCode());
         List<String> contentLocationList = exportResponse.headers().map().get("content-location");
 
-        String jobUUid = getJobUuid(contentLocationList.iterator().next());
+        String jobUUid = JobUtil.getJobUuid(contentLocationList.iterator().next());
 
         HttpResponse<String> deleteResponse = apiClient.cancelJobRequest(jobUUid);
         Assert.assertEquals(202, deleteResponse.statusCode());
