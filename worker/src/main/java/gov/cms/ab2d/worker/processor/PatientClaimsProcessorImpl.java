@@ -21,17 +21,12 @@ import org.springframework.stereotype.Component;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Path;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.Future;
-import java.util.concurrent.locks.Lock;
 import java.util.stream.Collectors;
 
-import static gov.cms.ab2d.common.util.Constants.FILE_LOG;
 import static gov.cms.ab2d.filter.EOBLoadUtilities.isPartD;
-import static java.util.concurrent.TimeUnit.SECONDS;
-import static net.logstash.logback.argument.StructuredArguments.keyValue;
 
 @Slf4j
 @Component
@@ -47,7 +42,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
 
 
     @Async("patientProcessorThreadPool")
-    public Future<Integer> process(String patientId, Lock lock, Path outputFile, Path errorFile) {
+    public Future<Integer> process(String patientId, final JobDataWriter writer) {
         int errorCount = 0;
         int resourceCount = 0;
 
@@ -65,17 +60,18 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
                 } catch (Exception e) {
                     log.warn("Encountered exception while processing job resources: {}", e.getMessage());
                     ++errorCount;
-                    handleException(errorFile, e, lock);
+                    handleException(writer, e);
                 }
             }
 
             if (byteArrayOutputStream.size() > 0) {
-                appendToFile(outputFile, byteArrayOutputStream, lock);
+                writer.addDataEntry(byteArrayOutputStream.toByteArray());
+                //appendToFile(outputFile, byteArrayOutputStream, lock);
             }
         } catch (Exception e) {
             ++errorCount;
             try {
-                handleException(errorFile, e, lock);
+                handleException(writer, e);
             } catch (IOException e1) {
                 //should not happen - original exception will be thrown
                 log.error("error during exception handling to write error record");
@@ -92,7 +88,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
         return new AsyncResult<>(errorCount);
     }
 
-    private void handleException(Path errorFile, Exception e, Lock lock) throws IOException {
+    private void handleException(JobDataWriter writer, Exception e) throws IOException {
         var errMsg = ExceptionUtils.getRootCauseMessage(e);
         var operationOutcome = FHIRUtil.getErrorOutcome(errMsg);
 
@@ -101,16 +97,18 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
 
         var byteArrayOutputStream = new ByteArrayOutputStream();
         byteArrayOutputStream.write(payload.getBytes(StandardCharsets.UTF_8));
-        appendToFile(errorFile, byteArrayOutputStream, lock);
+        writer.addErrorEntry(byteArrayOutputStream.toByteArray());
+        //appendToFile(errorFile, byteArrayOutputStream, lock);
     }
 
+    // This logic now goes to JobDataWriterImpl
     /**
      * uses re-entrant lock to lock the shared file resource
      * @param outputFile
      * @param byteArrayOutputStream
      * @throws IOException
      */
-    private void appendToFile(Path outputFile, ByteArrayOutputStream byteArrayOutputStream, Lock lock) throws IOException {
+    /**private void appendToFile(Path outputFile, ByteArrayOutputStream byteArrayOutputStream, Lock lock) throws IOException {
 
         tryLock(lock);
 
@@ -120,9 +118,9 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
         } finally {
             lock.unlock();
         }
-    }
+    } **/
 
-    private void tryLock(Lock lock) {
+    /**private void tryLock(Lock lock) {
         final String errMsg = "Terminate processing. Unable to acquire lock";
         try {
             final boolean lockAcquired = lock.tryLock(tryLockTimeout, SECONDS);
@@ -133,7 +131,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
         } catch (InterruptedException e) {
             throw new RuntimeException(errMsg);
         }
-    }
+    } **/
 
 
     private List<Resource> getEobBundleResources(String patientId) {
