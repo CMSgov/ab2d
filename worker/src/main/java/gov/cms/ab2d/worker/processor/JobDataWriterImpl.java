@@ -35,11 +35,11 @@ public class JobDataWriterImpl implements JobDataWriter {
 
     private Path errorFile;
     private Path dataFile;
-    private long currentDataFileSize;
-
     private List<Path> dataFiles = new ArrayList<>();
     private List<Path> errorFiles = new ArrayList<>();
-    private int partitionCounter;
+
+    private volatile int partitionCounter;
+    private volatile long currentDataFileSize;
 
 
     public JobDataWriterImpl(Path outputDir, Contract contract, int tryLockTimeout, long fileSizeRollOverThresholdInMegabytes) {
@@ -84,7 +84,7 @@ public class JobDataWriterImpl implements JobDataWriter {
         ++partitionCounter;
 
         var partName = Integer.toString(partitionCounter);
-        var paddedPartitionNo = StringUtils.leftPad(partName, 5, '0');
+        var paddedPartitionNo = StringUtils.leftPad(partName, 4, '0');
 
         var fileName = new StringBuilder()
                 .append(contract.getContractNumber())
