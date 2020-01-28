@@ -27,6 +27,7 @@
 1. [Appendix P: Display disk space](#appendix-p-display-disk-space)
 1. [Appendix Q: Test API using swagger](#appendix-q-test-api-using-swagger)
 1. [Appendix R: Update userdata for auto scaling groups through the AWS console](#appendix-r-update-userdata-for-auto-scaling-groups-through-the-aws-console)
+1. [Appendix S: Install Ruby on RedHat linux](#appendix-s-install-ruby-on-redhat-linux)
 
 ## Appendix A: Access the CMS AWS console
 
@@ -1779,3 +1780,98 @@
       ```
       terraform.tfstate
       ```
+
+## Appendix S: Install Ruby on RedHat linux
+
+1. Install rbenv dependencies
+
+   ```ShellSession
+   $ sudo yum install -y git-core zlib zlib-devel gcc-c++ patch readline \
+     readline-devel libyaml-devel libffi-devel openssl-devel make bzip2 \
+     autoconf automake libtool bison curl sqlite-devel
+   ```
+
+1. Install rbenv and ruby-build
+
+   ```ShellSession
+   $ curl -sL https://github.com/rbenv/rbenv-installer/raw/master/bin/rbenv-installer | bash -
+   ```
+
+1. Note that will see output that looks similar to this
+
+   ```
+   Running doctor script to verify installation...
+   Checking for `rbenv' in PATH: which: no rbenv in (/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/opt/puppetlabs/bin:/home/ec2-user/.local/bin:/home/ec2-user/bin)
+   not found
+     You seem to have rbenv installed in `/home/ec2-user/.rbenv/bin', but that
+     directory is not present in PATH. Please add it to PATH by configuring
+     your `~/.bashrc', `~/.zshrc', or `~/.config/fish/config.fish'.
+   ```
+
+1. Add rbenv to path
+
+   ```ShellSession
+   $ echo 'export PATH="$HOME/.rbenv/bin:$PATH"' >> ~/.bashrc
+   $ echo 'eval "$(rbenv init -)"' >> ~/.bashrc
+   $ source ~/.bashrc
+   ```
+
+1. Note that you can the determine that latest stable version of Ruby available via rbenv by doing the following
+
+   ```ShellSession
+   $ rbenv install -l | grep -v - | tail -1
+   ```
+
+1. Note the current pinned version of Ruby on your development machine
+
+   1. Open a new terminal
+   
+   1. Enter the following on your Mac
+   
+      ```ShellSession
+      $ ruby --version
+      ```
+
+   1. Note the base ruby version
+
+      ```
+      2.6.5
+      ```
+
+   1. Note that you will to use the same version on RedHat because that is the version that was used to test ruby scripts
+
+1. Return to the RedHat node terminal session tab
+
+1. Install the noted version of Ruby
+
+   ```ShellSession
+   $ rbenv install 2.6.5
+   ```
+
+1. Wait for the installation to complete
+
+   *Note that the installation will take a while. Be patient.*
+   
+1. Set the global version of Ruby 
+   
+   ```ShellSession
+   $ rbenv global 2.6.5
+   ```
+
+1. Verify the Ruby version
+
+   ```ShellSession
+   $ ruby --version
+   ```
+
+1. Install bundler
+
+   ```ShellSession
+   $ gem install bundler
+   ```
+
+1. Update Ruby Gems
+
+   ```ShellSession
+   $ gem update --system
+   ```
