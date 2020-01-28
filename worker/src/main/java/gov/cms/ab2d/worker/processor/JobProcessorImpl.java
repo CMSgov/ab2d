@@ -1,6 +1,11 @@
 package gov.cms.ab2d.worker.processor;
 
-import gov.cms.ab2d.common.model.*;
+import gov.cms.ab2d.common.model.Contract;
+import gov.cms.ab2d.common.model.Job;
+import gov.cms.ab2d.common.model.JobOutput;
+import gov.cms.ab2d.common.model.JobStatus;
+import gov.cms.ab2d.common.model.OptOut;
+import gov.cms.ab2d.common.model.Sponsor;
 import gov.cms.ab2d.common.repository.JobOutputRepository;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.common.repository.OptOutRepository;
@@ -50,6 +55,7 @@ public class JobProcessorImpl implements JobProcessor {
     private static final int SLEEP_DURATION = 250;
     private static final long ROLL_OVER_THRESHOLD = 200; // 200 MB
 
+
     @Value("${cancellation.check.frequency:10}")
     private int cancellationCheckFrequency;
 
@@ -58,6 +64,9 @@ public class JobProcessorImpl implements JobProcessor {
 
     @Value("${report.progress.log.frequency:100}")
     private int reportProgressLogFrequency;
+
+    @Value("${file.try.lock.timeout}")
+    private int tryLockTimeout;
 
     @Value("${efs.mount}")
     private String efsMount;
@@ -110,7 +119,7 @@ public class JobProcessorImpl implements JobProcessor {
         for (Contract contract : attestedContracts) {
             log.info("Job [{}] - contract [{}] ", jobUuid, contract.getContractNumber());
 
-            JobDataWriter writer = new JobDataWriterImpl(outputDir, contract, ROLL_OVER_THRESHOLD);
+            JobDataWriter writer = new JobDataWriterImpl(outputDir, contract, tryLockTimeout, ROLL_OVER_THRESHOLD);
             var contractData = new ContractData(writer, contract, progressTracker);
 
             var jobOutputs = processContract(contractData);
@@ -220,22 +229,12 @@ public class JobProcessorImpl implements JobProcessor {
 
         var contractNumber = contract.getContractNumber();
 
-        // JobDataWriter now responsible for that.
-        //var outputDir = contractData.getOutputDir();
-        //var outputFile = fileService.createOrReplaceFile(outputDir, contractNumber + OUTPUT_FILE_SUFFIX);
-        //var errorFile = fileService.createOrReplaceFile(outputDir, contractNumber + ERROR_FILE_SUFFIX);
-
         var progressTracker = contractData.getProgressTracker();
 
         var patientsByContract = getPatientsByContract(contractNumber, progressTracker);
         var patients = patientsByContract.getPatients();
         int patientCount = patients.size();
         log.info("Contract [{}] has [{}] Patients", contractNumber, patientCount);
-
-
-        // The Writer will not manage the LOCK.
-        // A mutex lock that all threads for a contract uses while writing into the shared files
-        // var lock = new ReentrantLock();
 
         int errorCount = 0;
         boolean isCancelled = false;
@@ -279,16 +278,21 @@ public class JobProcessorImpl implements JobProcessor {
             throw new JobCancelledException(errMsg);
         }
 
+        final JobDataWriter jobDataWriter = contractData.getWriter();
         final List<JobOutput> jobOutputs = new ArrayList<>();
         if (errorCount < patientCount) {
-            // See JobDataWriter's method to determine job outputs: JobDataWriter.getDataFiles()
-            // Create entry for each.
-            // jobOutputs.add(createJobOutput(outputFile, false));
+            final List<JobOutput> dataJobOutputs = jobDataWriter.getDataFiles().stream()
+                    .map(dataFile -> createJobOutput(dataFile, false))
+                    .collect(Collectors.toList());
+            jobOutputs.addAll(dataJobOutputs);
         }
+
         if (errorCount > 0) {
             log.warn("Encountered {} errors during job processing", errorCount);
-            // See JobDataWriter's method to determine job error outputs
-            // jobOutputs.add(createJobOutput(errorFile, true));
+            final List<JobOutput> errorJobOutputs = jobDataWriter.getErrorFiles().stream()
+                    .map(errorFile -> createJobOutput(errorFile, true))
+                    .collect(Collectors.toList());
+            jobOutputs.addAll(errorJobOutputs);
         }
 
         return jobOutputs;

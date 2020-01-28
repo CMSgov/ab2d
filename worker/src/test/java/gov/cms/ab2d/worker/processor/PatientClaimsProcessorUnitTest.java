@@ -4,8 +4,8 @@ import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.IParser;
 import ca.uhn.fhir.rest.api.EncodingEnum;
 import gov.cms.ab2d.bfd.client.BFDClient;
+import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.filter.ExplanationOfBenefitTrimmer;
-import gov.cms.ab2d.worker.service.FileService;
 import lombok.extern.slf4j.Slf4j;
 import org.hl7.fhir.dstu3.model.Bundle;
 import org.hl7.fhir.dstu3.model.ExplanationOfBenefit;
@@ -26,13 +26,13 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.locks.ReentrantLock;
 
 import static org.hamcrest.CoreMatchers.startsWith;
 import static org.junit.Assert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @Slf4j
 @ExtendWith(MockitoExtension.class)
@@ -41,7 +41,6 @@ public class PatientClaimsProcessorUnitTest {
     private PatientClaimsProcessor cut;
 
     @Mock private BFDClient mockBfdClient;
-    @Mock private FileService mockFileService;
 
     @TempDir
     File tmpEfsMountDir;
@@ -50,6 +49,7 @@ public class PatientClaimsProcessorUnitTest {
     private Path outputFile;
     private Path errorFile;
     private String patientId = "1234567890";
+    private JobDataWriter jobDataWriter;
 
 
     @BeforeEach
@@ -57,13 +57,14 @@ public class PatientClaimsProcessorUnitTest {
         FhirContext fhirContext = ca.uhn.fhir.context.FhirContext.forDstu3();
         cut = new PatientClaimsProcessorImpl(
                 mockBfdClient,
-                fhirContext,
-                mockFileService
+                fhirContext
         );
-        ReflectionTestUtils.setField(cut, "tryLockTimeout", 30);
 
         createEOB();
         createOutputFiles();
+
+        Contract contract = new Contract();
+        jobDataWriter = new JobDataWriterImpl(tmpEfsMountDir.toPath(), contract, 30, 120);
     }
 
 
@@ -72,11 +73,10 @@ public class PatientClaimsProcessorUnitTest {
         Bundle bundle1 = createBundle(eob.copy());
         when(mockBfdClient.requestEOBFromServer(patientId)).thenReturn(bundle1);
 
-        cut.process(patientId, new ReentrantLock(), outputFile, errorFile).get();
+        cut.process(patientId, jobDataWriter).get();
 
         verify(mockBfdClient).requestEOBFromServer(patientId);
         verify(mockBfdClient, never()).requestNextBundleFromServer(bundle1);
-        verify(mockFileService).appendToFile(any(), any());
     }
 
     @Test
@@ -89,11 +89,10 @@ public class PatientClaimsProcessorUnitTest {
         when(mockBfdClient.requestEOBFromServer(patientId)).thenReturn(bundle1);
         when(mockBfdClient.requestNextBundleFromServer(bundle1)).thenReturn(bundle2);
 
-        cut.process(patientId, new ReentrantLock(), outputFile, errorFile).get();
+        cut.process(patientId, jobDataWriter).get();
 
         verify(mockBfdClient).requestEOBFromServer(patientId);
         verify(mockBfdClient).requestNextBundleFromServer(bundle1);
-        verify(mockFileService).appendToFile(any(), any());
     }
 
 
@@ -103,13 +102,12 @@ public class PatientClaimsProcessorUnitTest {
         when(mockBfdClient.requestEOBFromServer(patientId)).thenThrow(new RuntimeException("Test Exception"));
 
         var exceptionThrown = assertThrows(RuntimeException.class,
-                () -> cut.process(patientId, new ReentrantLock(), outputFile, errorFile).get());
+                () -> cut.process(patientId, jobDataWriter).get());
 
         assertThat(exceptionThrown.getCause().getMessage(), startsWith("Test Exception"));
 
         verify(mockBfdClient).requestEOBFromServer(patientId);
         verify(mockBfdClient, never()).requestNextBundleFromServer(bundle1);
-        verify(mockFileService).appendToFile(any(), any());
     }
 
     @Test
@@ -117,11 +115,10 @@ public class PatientClaimsProcessorUnitTest {
         Bundle bundle1 = new Bundle();
         when(mockBfdClient.requestEOBFromServer(patientId)).thenReturn(bundle1);
 
-        cut.process(patientId, new ReentrantLock(), outputFile, errorFile).get();
+        cut.process(patientId, jobDataWriter).get();
 
         verify(mockBfdClient).requestEOBFromServer(patientId);
         verify(mockBfdClient, never()).requestNextBundleFromServer(bundle1);
-        verify(mockFileService, never()).appendToFile(any(), any());
     }
 
 

@@ -4,7 +4,6 @@ import ca.uhn.fhir.context.FhirContext;
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.util.FHIRUtil;
 import gov.cms.ab2d.filter.ExplanationOfBenefitTrimmer;
-import gov.cms.ab2d.worker.service.FileService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
@@ -13,7 +12,6 @@ import org.hl7.fhir.dstu3.model.Bundle.BundleEntryComponent;
 import org.hl7.fhir.dstu3.model.ExplanationOfBenefit;
 import org.hl7.fhir.dstu3.model.Resource;
 import org.hl7.fhir.dstu3.model.ResourceType;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.AsyncResult;
 import org.springframework.stereotype.Component;
@@ -35,10 +33,6 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
 
     private final BFDClient bfdClient;
     private final FhirContext fhirContext;
-    private final FileService fileService;
-
-    @Value("${file.try.lock.timeout}")
-    private int tryLockTimeout;
 
 
     @Async("patientProcessorThreadPool")
@@ -66,7 +60,6 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
 
             if (byteArrayOutputStream.size() > 0) {
                 writer.addDataEntry(byteArrayOutputStream.toByteArray());
-                //appendToFile(outputFile, byteArrayOutputStream, lock);
             }
         } catch (Exception e) {
             ++errorCount;
@@ -98,40 +91,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
         var byteArrayOutputStream = new ByteArrayOutputStream();
         byteArrayOutputStream.write(payload.getBytes(StandardCharsets.UTF_8));
         writer.addErrorEntry(byteArrayOutputStream.toByteArray());
-        //appendToFile(errorFile, byteArrayOutputStream, lock);
     }
-
-    // This logic now goes to JobDataWriterImpl
-    /**
-     * uses re-entrant lock to lock the shared file resource
-     * @param outputFile
-     * @param byteArrayOutputStream
-     * @throws IOException
-     */
-    /**private void appendToFile(Path outputFile, ByteArrayOutputStream byteArrayOutputStream, Lock lock) throws IOException {
-
-        tryLock(lock);
-
-        try {
-            log.debug("Attempting to append to file", keyValue(FILE_LOG, outputFile.toFile().getName()));
-            fileService.appendToFile(outputFile, byteArrayOutputStream);
-        } finally {
-            lock.unlock();
-        }
-    } **/
-
-    /**private void tryLock(Lock lock) {
-        final String errMsg = "Terminate processing. Unable to acquire lock";
-        try {
-            final boolean lockAcquired = lock.tryLock(tryLockTimeout, SECONDS);
-            if (!lockAcquired) {
-                final String errMsg1 = errMsg + " after waiting " + tryLockTimeout + " seconds.";
-                throw new RuntimeException(errMsg1);
-            }
-        } catch (InterruptedException e) {
-            throw new RuntimeException(errMsg);
-        }
-    } **/
 
 
     private List<Resource> getEobBundleResources(String patientId) {
