@@ -50,6 +50,7 @@
 1. [Add an entrust certificate to the ab2d vault in 1Password](#add-an-entrust-certificate-to-the-ab2d-vault-in-1password)
 1. [Add a private key to the ab2d vault in 1Password](#add-a-private-key-to-the-ab2d-vault-in-1password)
 1. [Peer AB2D Dev, Sandbox, Impl environments with the BFD Sbx VPC and peer AB2D Prod with BFD Prod VPC](#peer-ab2d-dev-sandbox-impl-environments-with-the-bfd-sbx-vpc-and-peer-ab2d-prod-with-bfd-prod-vpc)
+1. [Encrypt BFD keystore and put in S3](#encrypt-bfd-keystore-and-put-in-s3)
 
 ## Note the starting state of the customer AWS account
 
@@ -2994,3 +2995,101 @@
 1. Request that CMS technical contact (e.g. Stephen) create a ticket like the following
 
    > https://jira.cms.gov/browse/CMSAWSOPS-53861
+
+## Encrypt BFD keystore and put in S3
+
+1. Set target AWS profile
+
+   *Example for "Dev" environment:*
+
+   ```ShellSession
+   $ export AWS_PROFILE=ab2d-dev
+   ```
+
+   *Example for "Sbx" environment:*
+
+   ```ShellSession
+   $ export AWS_PROFILE=ab2d-sbx-sandbox
+   ```
+
+   *Example for "Impl" environment:*
+
+   > *** TO DO ***: Run this after deploying to IMPL
+   
+   ```ShellSession
+   $ export AWS_PROFILE=ab2d-east-impl
+   ```
+   
+1. Change to the ruby script directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d/Deploy/ruby
+   ```
+
+1. Ensure required gems are installed
+
+   ```ShellSession
+   $ bundle install
+   ```
+   
+1. Encrypt keystore and put it in S3
+
+   > *** TO DO ***: Need to replace './test-file.txt' files with the keystore name
+
+   *Example for "Dev" environment:*
+   
+   ```ShellSession
+   $ bundle exec rake encrypt_and_put_file_into_s3['./test-file.txt','ab2d-dev-automation']
+   ```
+
+   *Example for "Sbx" environment:*
+   
+   ```ShellSession
+   $ bundle exec rake encrypt_and_put_file_into_s3['./test-file.txt','ab2d-sbx-sandbox-automation']
+   ```
+
+   *Example for "Impl" environment:*
+
+   > *** TO DO ***: Run this after deploying to IMPL
+   
+   ```ShellSession
+   $ bundle exec rake encrypt_and_put_file_into_s3['./test-file.txt','ab2d-east-impl-automation']
+   ```
+
+1. Verify that you can get the encrypted keystore from S3 and decrypt it
+
+   > *** TO DO ***: Need to replace './test-file.txt' files with the keystore name
+   
+   1. Remove existing keyfile from the "/tmp" directory (if exists)
+
+      ```ShellSession
+      $ rm -f /tmp/test-file.txt
+      ```
+   
+   1. Get keystore from S3 and decrypt it
+
+      *Example for "Dev" environment:*
+      
+      ```ShellSession
+      $ bundle exec rake get_file_from_s3_and_decrypt['./test-file.txt','ab2d-dev-automation']
+      ```
+
+      *Example for "Sbx" environment:*
+
+      ```ShellSession
+      $ bundle exec rake get_file_from_s3_and_decrypt['./test-file.txt','ab2d-sbx-sandbox-automation']
+      ```
+
+      *Example for "Impl" environment:*
+
+      > *** TO DO ***: Run this after deploying to IMPL
+
+      ```ShellSession
+      $ bundle exec rake get_file_from_s3_and_decrypt['./test-file.txt','ab2d-east-impl-automation']
+      ```
+
+   1. Verify that decrypted file is in the "/tmp" directory
+
+      ```ShellSession
+      $ ls /tmp/test-file.txt
+      ```
