@@ -58,6 +58,16 @@
       "destination": "/tmp/provision-app-instance.sh"
     },
     {
+      "type": "file",
+      "source": "../../ruby/Gemfile",
+      "destination": "/tmp/Gemfile"
+    },
+    {
+      "type": "file",
+      "source": "../../ruby/Rakefile",
+      "destination": "/tmp/Rakefile"
+    },
+    {
       "type": "shell","inline": [
         "sudo chmod 755 /tmp/provision-app-instance.sh",
         "/tmp/provision-app-instance.sh --ssh-username={{user `ssh_username`}}"
