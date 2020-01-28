@@ -73,8 +73,6 @@ public class TestRunner extends AbstractJavaSamplerClient {
 
         String contracts = context.getParameter("contracts");
         contractArr = contracts.split(",(\\s)*");
-
-        System.out.println("here");
     }
 
     @Override
@@ -173,13 +171,15 @@ public class TestRunner extends AbstractJavaSamplerClient {
                         downloadResult.setResponseMessage(downloadResponse.body());
                         downloadResult.sampleEnd();
                         addSubResultToSampleResult(mainResult, downloadResult);
-                        throw new RuntimeException("Received error when trying to download file for contract " + contractNumber);
+                        throw new RuntimeException("Received error when trying to download file for contract " + contractNumber + " - " +
+                                downloadResponse.body());
                     }
                 } else {
                     statusResult.setResponseMessage(statusResponse.body());
                     statusResult.sampleEnd();
                     addSubResultToSampleResult(mainResult, statusResult);
-                    throw new RuntimeException("Received error from server when checking status for contract " + contractNumber);
+                    throw new RuntimeException("Received error from server when checking status for contract " + contractNumber + " - " +
+                            statusResponse.body());
                 }
 
             } catch (Exception e) {

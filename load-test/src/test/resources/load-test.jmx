@@ -25,7 +25,7 @@
           </elementProp>
         </collectionProp>
       </elementProp>
-      <stringProp name="TestPlan.user_define_classpath">/Users/andy.daykin/code/ab2d/load-test/target/load-test-0.0.1-SNAPSHOT.jar</stringProp>
+      <stringProp name="TestPlan.user_define_classpath">/Users/andy.daykin/code/ab2d/load-test/target/load-test-0.0.1-SNAPSHOT-tests.jar</stringProp>
     </TestPlan>
     <hashTree>
       <ThreadGroup guiclass="ThreadGroupGui" testclass="ThreadGroup" testname="Thread Group" enabled="true">
