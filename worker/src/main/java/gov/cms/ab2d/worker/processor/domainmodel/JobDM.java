@@ -29,8 +29,8 @@ public class JobDM {
 
         public long getPatientCountInContract() {
             return getSlices().entrySet().stream()
-                    .map(e -> e.getValue())
-                    .mapToInt(e -> e.size())
+                    .map(entry -> entry.getValue())
+                    .mapToInt(patients -> patients.size())
                     .sum();
         }
 
@@ -39,7 +39,7 @@ public class JobDM {
 
     public ContractDM getContractDM(String contractNumber) {
         return getContracts().stream()
-                .filter(cs -> cs.getContractNumber().equals(contractNumber))
+                .filter(contractDM -> contractDM.getContractNumber().equals(contractNumber))
                 .findFirst()
                 .get();
     }

@@ -3,7 +3,6 @@ package gov.cms.ab2d.worker.processor;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.JobStatus;
-import gov.cms.ab2d.common.model.OptOut;
 import gov.cms.ab2d.common.model.Sponsor;
 import gov.cms.ab2d.common.model.User;
 import gov.cms.ab2d.common.repository.JobProgressRepository;
@@ -13,6 +12,7 @@ import gov.cms.ab2d.worker.adapter.bluebutton.GetPatientsByContractResponse;
 import gov.cms.ab2d.worker.adapter.bluebutton.GetPatientsByContractResponse.PatientDTO;
 import gov.cms.ab2d.worker.processor.contract.ContractSliceCreator;
 import gov.cms.ab2d.worker.processor.contract.ContractSliceProcessor;
+import gov.cms.ab2d.worker.processor.contract.SliceCreatorTestUtil;
 import gov.cms.ab2d.worker.service.FileService;
 import org.hamcrest.CoreMatchers;
 import org.junit.jupiter.api.BeforeEach;
@@ -23,7 +23,6 @@ import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.scheduling.annotation.AsyncResult;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.io.IOException;
@@ -31,26 +30,19 @@ import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.time.LocalDate;
 import java.time.OffsetDateTime;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Future;
-import java.util.stream.Collectors;
 
 import static java.lang.Boolean.TRUE;
-import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertThat;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
@@ -59,6 +51,7 @@ class JobProcessorUnitTest {
     // class under test
     private JobProcessor cut;
 
+    private static final int PATIENT_COUNT_IN_SLICE = 10;
     private String jobUuid = "6d08bf08-f926-4e19-8d89-ad67ef89f17e";
 
     private Random random = new Random();
@@ -68,7 +61,7 @@ class JobProcessorUnitTest {
     @Mock private FileService fileService;
     @Mock private JobRepository jobRepository;
 
-    @Mock private JobProgressRepository jobProgresRepository;
+    @Mock private JobProgressRepository jobProgressRepo;
     @Mock private ContractAdapter contractAdapter;
     @Mock private ContractSliceCreator sliceCreator;
     @Mock private ContractSliceProcessor sliceProcessor;
@@ -82,7 +75,7 @@ class JobProcessorUnitTest {
         cut = new JobProcessorImpl(
                 fileService,
                 jobRepository,
-                jobProgresRepository,
+                jobProgressRepo,
                 contractAdapter,
                 sliceCreator,
                 sliceProcessor
@@ -97,22 +90,22 @@ class JobProcessorUnitTest {
 
         var contract = createContract(childSponsor);
         when(jobRepository.findByJobUuid(anyString())).thenReturn(job);
+        Mockito.lenient().when(jobRepository.findJobStatus(any())).thenReturn(JobStatus.IN_PROGRESS);
 
         patientsByContract = createPatientsByContractResponse(contract);
         Mockito.when(contractAdapter.getPatients(anyString())).thenReturn(patientsByContract);
 
         final Path outputDirPath = Paths.get(efsMountTmpDir.toString(), jobUuid);
         final Path outputDir = Files.createDirectories(outputDirPath);
-        Mockito.lenient().when(fileService.createDirectory(Mockito.any(Path.class))).thenReturn(outputDir);
-        Mockito.lenient().when(fileService.createOrReplaceFile(Mockito.any(Path.class), anyString()))
+        Mockito.lenient().when(fileService.createDirectory(any(Path.class))).thenReturn(outputDir);
+        Mockito.lenient().when(fileService.createOrReplaceFile(any(Path.class), anyString()))
                 .thenReturn(this.efsMountTmpDir)
                 .thenReturn(this.efsMountTmpDir);
-
-//        when(jobProgresRepository.save(Mockito.any())).thenReturn(new JobProgress());
-        when(sliceCreator.createSlices(Mockito.anyList())).thenReturn(new HashMap<>());
-        when(sliceProcessor.process(Mockito.any(), Mockito.any())).thenReturn(new CompletableFuture());
+        var slices = new HashMap<Integer, List<PatientDTO>>();
+        slices.put(1, createPatients(PATIENT_COUNT_IN_SLICE));
+        Mockito.lenient().when(sliceCreator.createSlices(Mockito.anyList())).thenReturn(slices);
+        Mockito.lenient().when(sliceProcessor.process(any(), any())).thenReturn(CompletableFuture.completedFuture(null));
     }
-
 
 
     @Test
@@ -124,7 +117,11 @@ class JobProcessorUnitTest {
         assertThat(processedJob.getStatus(), is(JobStatus.SUCCESSFUL));
         assertThat(processedJob.getStatusMessage(), is("100%"));
         assertThat(processedJob.getExpiresAt(), notNullValue());
-        verify(jobProgresRepository, atLeastOnce()).save(Mockito.any());
+
+        verify(jobProgressRepo, atLeastOnce()).saveAndFlush(any());
+        verify(jobRepository, atLeastOnce()).findByJobUuid(any());
+        verify(jobRepository, atLeastOnce()).findJobStatus(any());
+        verify(sliceProcessor, atLeastOnce()).process(any(), any());
         doVerify();
     }
 
@@ -144,9 +141,9 @@ class JobProcessorUnitTest {
         assertThat(processedJob.getStatus(), is(JobStatus.SUCCESSFUL));
         assertThat(processedJob.getStatusMessage(), is("100%"));
         assertThat(processedJob.getExpiresAt(), notNullValue());
-        assertThat(processedJob.getJobOutputs().size(), equalTo(childSponsor.getAttestedContracts().size()));
+        verify(jobProgressRepo, atLeastOnce()).saveAndFlush(any());
+        verify(sliceProcessor, atLeastOnce()).process(any(), any());
         doVerify();
-        verify(jobProgresRepository, atLeastOnce()).save(Mockito.any());
     }
 
 
@@ -160,9 +157,11 @@ class JobProcessorUnitTest {
 
         assertThat(processedJob.getStatus(), is(not(JobStatus.SUCCESSFUL)));
         assertThat(processedJob.getCompletedAt(), nullValue());
+        verify(jobProgressRepo, atLeastOnce()).saveAndFlush(any());
+        verify(sliceProcessor, never()).process(any(), any());
         doVerify();
-        verify(jobProgresRepository, atLeastOnce()).save(Mockito.any());
     }
+
 
     @Test
     @DisplayName("When a job is submitted for a specific contract, process the export file for that contract only")
@@ -185,89 +184,37 @@ class JobProcessorUnitTest {
         assertThat(processedJob.getStatus(), is(JobStatus.SUCCESSFUL));
         assertThat(processedJob.getStatusMessage(), is("100%"));
         assertThat(processedJob.getExpiresAt(), notNullValue());
+        verify(jobProgressRepo, atLeastOnce()).saveAndFlush(any());
+        verify(sliceProcessor, atLeastOnce()).process(any(), any());
         doVerify();
-        verify(fileService, times(2)).createOrReplaceFile(Mockito.any(Path.class), anyString());
-        verify(jobProgresRepository, atLeastOnce()).save(Mockito.any());
     }
 
     private void doVerify() {
-        verify(fileService).createDirectory(Mockito.any());
+        verify(fileService).createDirectory(any());
         verify(contractAdapter).getPatients(anyString());
-//        verify(patientClaimsProcessor, atLeast(1)).process(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any());
+        verify(sliceCreator).createSlices(any());
     }
 
-
-    @Test
-    @DisplayName("When patient has opted out, their record will be skipped.")
-    void processJob_whenPatientHasOptedOut_ShouldSkipPatientRecord() {
-
-        final List<OptOut> optOuts = getOptOutRows(patientsByContract);
-//        when(optOutRepository.findByHicn(anyString()))
-//                .thenReturn(Arrays.asList(optOuts.get(0)))
-//                .thenReturn(Arrays.asList(optOuts.get(1)))
-//                .thenReturn(Arrays.asList(optOuts.get(2)));
-
-        // Test data has 3 patientIds  each of whom has opted out.
-        // So the patientsClaimsProcessor should never be called.
-        var processedJob = cut.process(jobUuid);
-
-        assertThat(processedJob.getStatus(), is(JobStatus.SUCCESSFUL));
-        assertThat(processedJob.getStatusMessage(), is("100%"));
-        assertThat(processedJob.getExpiresAt(), notNullValue());
-
-        verify(fileService).createDirectory(Mockito.any());
-        verify(contractAdapter).getPatients(anyString());
-//        verify(patientClaimsProcessor, never()).process(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any());
-    }
-
-
-    @Test
-    @DisplayName("When error counter for the patient claims is > 0, an extra job_output is created for the error file")
-    void whenErrorCountIsGreaterThanZero_AJobOutputForErrorFileIsCreated() {
-
-        Future<Integer> futureResources = new AsyncResult(1);
-//        Mockito.lenient().when(patientClaimsProcessor.process(
-//                Mockito.any(),
-//                Mockito.any(),
-//                Mockito.any(),
-//                Mockito.any()
-//        )).thenReturn(futureResources);
-
-        var processedJob = cut.process(jobUuid);
-
-        var errorJobOutputs = processedJob.getJobOutputs()
-                .stream()
-                .filter(jobOutput -> jobOutput.getError())
-                .collect(Collectors.toList());
-
-        assertThat(processedJob.getStatus(), is(JobStatus.SUCCESSFUL));
-        assertFalse(errorJobOutputs.isEmpty());
-        assertThat(processedJob.getCompletedAt(), notNullValue());
-        doVerify();
-        verify(jobProgresRepository, atLeastOnce()).save(Mockito.any());
-    }
 
     @Test
     @DisplayName("When patientClaimsProcessor throws an exception, the job status becomes FAILED")
     void whenPatientClaimsProcessorThrowsException_jobFailsWithErrorMessage() {
 
-        final String errMsg = "error during exception handling to write error record";
-        final RuntimeException runtimeException = new RuntimeException(errMsg);
-//        Mockito.when(patientClaimsProcessor.process(
-//                Mockito.any(),
-//                Mockito.any(),
-//                Mockito.any(),
-//                Mockito.any()
-//        )).thenThrow(runtimeException);
+        final String errMsg = "TEST ERROR";
+        CompletableFuture<Void> cf = new CompletableFuture<>();
+        cf.completeExceptionally(new RuntimeException(errMsg));
 
+        when(sliceProcessor.process(any(), any())).thenReturn(cf);
 
         var processedJob = cut.process(jobUuid);
 
         assertThat(processedJob.getStatus(), is(JobStatus.FAILED));
-        assertThat(processedJob.getStatusMessage(), is(errMsg));
-        assertThat(processedJob.getCompletedAt(), notNullValue());
+        assertThat(processedJob.getStatusMessage(), CoreMatchers.containsString(errMsg));
+        verify(jobRepository).saveJobFailure(any(), any());
+        verify(sliceProcessor, atLeastOnce()).process(any(), any());
         doVerify();
     }
+
 
     @Test
     @DisplayName("When output directory for the job already exists, delete it and create it afresh")
@@ -296,10 +243,10 @@ class JobProcessorUnitTest {
         assertThat(processedJob.getStatusMessage(), is("100%"));
         assertThat(processedJob.getExpiresAt(), notNullValue());
 
-        verify(fileService, times(2)).createDirectory(Mockito.any());
+        verify(fileService, times(2)).createDirectory(any());
         verify(contractAdapter).getPatients(anyString());
-//        verify(patientClaimsProcessor, atLeast(1)).process(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any());
-        verify(jobProgresRepository, atLeastOnce()).save(Mockito.any());
+        verify(jobProgressRepo, atLeastOnce()).saveAndFlush(any());
+        verify(sliceProcessor, atLeastOnce()).process(any(), any());
     }
 
 
@@ -323,13 +270,15 @@ class JobProcessorUnitTest {
         var processedJob = cut.process(jobUuid);
 
         assertThat(processedJob.getStatus(), is(JobStatus.FAILED));
-        assertThat(processedJob.getStatusMessage(), CoreMatchers.startsWith("Could not delete directory"));
+        assertThat(processedJob.getStatusMessage(), CoreMatchers.startsWith("DirectoryNotEmptyException"));
         assertThat(processedJob.getExpiresAt(), nullValue());
 
-        verify(fileService).createDirectory(Mockito.any());
+        verify(fileService).createDirectory(any());
         verify(contractAdapter, never()).getPatients(anyString());
-        verify(fileService, never()).createOrReplaceFile(Mockito.any(Path.class), anyString());
+        verify(fileService, never()).createOrReplaceFile(any(Path.class), anyString());
+        verify(sliceProcessor, never()).process(any(), any());
     }
+
 
     @Test
     @DisplayName("When output directory creation fails due to unknown IOException, job fails gracefully")
@@ -344,51 +293,13 @@ class JobProcessorUnitTest {
         var processedJob = cut.process(jobUuid);
 
         assertThat(processedJob.getStatus(), is(JobStatus.FAILED));
-        assertThat(processedJob.getStatusMessage(), CoreMatchers.startsWith("Could not create output directory"));
+        assertThat(processedJob.getStatusMessage(), CoreMatchers.containsString("Could not create output directory"));
         assertThat(processedJob.getExpiresAt(), nullValue());
 
-        verify(fileService).createDirectory(Mockito.any());
+        verify(fileService).createDirectory(any());
         verify(contractAdapter, never()).getPatients(anyString());
-        verify(fileService, never()).createOrReplaceFile(Mockito.any(Path.class), anyString());
-    }
-
-
-    @Test
-    @DisplayName("When many patientId are present, 'PercentageCompleted' should be updated many times")
-    void whenManyPatientIdsAreProcessed_shouldUpdatePercentageCompletedMultipleTimes() {
-
-        var contract = job.getUser().getSponsor().getContracts().iterator().next();
-        var patients = createPatientsByContractResponse(contract).getPatients();
-        var manyPatientIds = new ArrayList<PatientDTO>();
-        manyPatientIds.addAll(patients);
-        manyPatientIds.addAll(patients);
-        manyPatientIds.addAll(patients);
-        manyPatientIds.addAll(patients);
-        manyPatientIds.addAll(patients);
-        manyPatientIds.addAll(patients);
-        patientsByContract.setPatients(manyPatientIds);
-        var processedJob = cut.process(jobUuid);
-
-        assertThat(processedJob.getStatus(), is(JobStatus.SUCCESSFUL));
-        assertThat(processedJob.getStatusMessage(), is("100%"));
-        assertThat(processedJob.getExpiresAt(), notNullValue());
-//        verify(jobRepository, times(9)).updatePercentageCompleted(anyString(), anyInt());
-        doVerify();
-    }
-
-
-    private List<OptOut> getOptOutRows(GetPatientsByContractResponse patientsByContract) {
-        return patientsByContract.getPatients()
-                .stream().map(p -> p.getPatientId())
-                .map(patientId ->  createOptOut(patientId))
-                .collect(Collectors.toList());
-    }
-
-    private OptOut createOptOut(String patientId) {
-        OptOut optOut = new OptOut();
-        optOut.setHicn(patientId);
-        optOut.setEffectiveDate(LocalDate.now().minusDays(10));
-        return optOut;
+        verify(fileService, never()).createOrReplaceFile(any(Path.class), anyString());
+        verify(sliceProcessor, never()).process(any(), any());
     }
 
 
@@ -461,6 +372,11 @@ class JobProcessorUnitTest {
                 .monthUnderContract(anInt)
                 .build();
     }
+
+    private List<PatientDTO> createPatients(int maxVal) {
+        return SliceCreatorTestUtil.createPatients(maxVal);
+    }
+
 
 }
 

@@ -37,6 +37,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import static gov.cms.ab2d.common.model.JobStatus.CANCELLED;
+import static gov.cms.ab2d.common.model.JobStatus.FAILED;
 import static gov.cms.ab2d.common.model.JobStatus.IN_PROGRESS;
 import static gov.cms.ab2d.common.model.JobStatus.SUCCESSFUL;
 
@@ -67,12 +68,7 @@ public class JobProcessorImpl implements JobProcessor {
             var outputDirPath = Paths.get(efsMount, jobUuid);
             processJob(job, outputDirPath);
         } catch (Exception e) {
-            var errMsg = "Update job [%s] to FAILED status";
-            log.error("Unexpected exception ", String.format(errMsg, jobUuid), e);
-
-            var failureMessage = ExceptionUtils.getRootCauseMessage(e);
-            jobRepository.saveJobFailure(jobUuid, failureMessage);
-            log.info("Job: [{}] FAILED", jobUuid);
+            failJob(job, e);
         }
 
         return job;
@@ -285,6 +281,19 @@ public class JobProcessorImpl implements JobProcessor {
 
         jobRepository.saveAndFlush(job);
         log.info("Job: [{}] is DONE", job.getJobUuid());
+    }
+
+    private void failJob(Job job, Exception e) {
+        var jobUuid = job.getJobUuid();
+        var errMsg = "Update job [%s] to FAILED status";
+        log.error("Unexpected exception ", String.format(errMsg, jobUuid), e);
+
+        var failureMessage = ExceptionUtils.getRootCauseMessage(e);
+        job.setStatus(FAILED);
+        job.setStatusMessage(failureMessage);
+        job.setCompletedAt(OffsetDateTime.now());
+        jobRepository.saveJobFailure(jobUuid, failureMessage);
+        log.info("Job: [{}] FAILED", jobUuid);
     }
 
 
