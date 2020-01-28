@@ -117,6 +117,7 @@ public class ExplanationOfBenefitTrimmer {
         clearOutList(component.getDiagnosisLinkId());
         clearOutList(component.getProcedureLinkId());
         clearOutList(component.getInformationLinkId());
+        component.setExtension(null);
         component.setRevenue(null);
         component.setCategory(null);
         clearOutList(component.getModifier());

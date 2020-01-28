@@ -1,14 +1,15 @@
 package gov.cms.ab2d.worker.adapter.bluebutton;
 
+import gov.cms.ab2d.filter.FilterOutByDate;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
-import java.time.Month;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -132,7 +133,7 @@ public class ContractAdapterStub implements ContractAdapter {
     private GetPatientsByContractResponse.PatientDTO toPatientDTO(String row) {
         return GetPatientsByContractResponse.PatientDTO.builder()
                 .patientId(row)
-                .monthsUnderContract(toMonthsUnderContract())
+                .datesUnderContract(toMonthsUnderContract())
                 .build();
     }
 
@@ -140,11 +141,11 @@ public class ContractAdapterStub implements ContractAdapter {
      * returns all 12 months in the list.
      * @return
      */
-    private List<Integer> toMonthsUnderContract() {
-        return Arrays.asList(Month.values()).stream()
-                .map(m -> m.getValue())
-                .collect(Collectors.toList());
+    private List<FilterOutByDate.DateRange> toMonthsUnderContract() {
+        try {
+            return Arrays.asList(new FilterOutByDate.DateRange(new Date(0), new Date()));
+        } catch (Exception ex) {
+            return new ArrayList<>();
+        }
     }
-
-
 }
