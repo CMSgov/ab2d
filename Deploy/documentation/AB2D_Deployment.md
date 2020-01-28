@@ -812,6 +812,14 @@
      --policy-document file://ab2d-s3-access-policy.json
    ```
 
+1. Create "Ab2dKmsPolicy"
+
+   ```ShellSession
+   $ aws iam create-policy \
+     --policy-name Ab2dKmsPolicy \
+     --policy-document file://ab2d-kms-policy.json
+   ```
+
 1. Change to the environment-specific directory
 
    *Example for "Dev" environment:*
@@ -3093,3 +3101,38 @@
       ```ShellSession
       $ ls /tmp/test-file.txt
       ```
+
+## Create a service-linked role for EC2
+
+> *** TO DO ***: Determine the correct way to create service-linked role for EC2
+
+1. Open Chrome
+
+1. Log on to AWS
+
+1. Select **IAM**
+
+1. Select **Roles**
+
+1. Select **Create Role**
+
+1. Select **AWS Service**
+
+1. Select **EC2**
+
+1. Select **Next: Permissions**
+
+1. Check the following
+
+   - Ab2dKmsPolicy
+
+1. Select **Next: Tags**
+
+1. Select **Next: Review**
+
+1. Configure the role as follows
+
+   **Role Name:** Ab2dEc2ServiceRole
+
+1. Select **Create role**
+
