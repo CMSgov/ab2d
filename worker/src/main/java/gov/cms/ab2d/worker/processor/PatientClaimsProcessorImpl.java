@@ -4,6 +4,8 @@ import ca.uhn.fhir.context.FhirContext;
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.util.FHIRUtil;
 import gov.cms.ab2d.filter.ExplanationOfBenefitTrimmer;
+import gov.cms.ab2d.filter.FilterOutByDate;
+import gov.cms.ab2d.worker.adapter.bluebutton.GetPatientsByContractResponse;
 import gov.cms.ab2d.worker.service.FileService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,8 +24,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
-import java.util.List;
-import java.util.Objects;
+import java.time.OffsetDateTime;
+import java.util.*;
 import java.util.concurrent.Future;
 import java.util.concurrent.locks.Lock;
 import java.util.stream.Collectors;
@@ -45,14 +47,14 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
     @Value("${file.try.lock.timeout}")
     private int tryLockTimeout;
 
-
     @Async("patientProcessorThreadPool")
-    public Future<Integer> process(String patientId, Lock lock, Path outputFile, Path errorFile) {
+    public Future<Integer> process(GetPatientsByContractResponse.PatientDTO patient, Lock lock, Path outputFile,
+                                   Path errorFile, OffsetDateTime attTime) {
         int errorCount = 0;
         int resourceCount = 0;
 
         try {
-            var resources = getEobBundleResources(patientId);
+            var resources = getEobBundleResources(patient, attTime);
 
             var jsonParser = fhirContext.newJsonParser();
 
@@ -135,30 +137,37 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
         }
     }
 
+    private List<Resource> getEobBundleResources(GetPatientsByContractResponse.PatientDTO patient, OffsetDateTime attTime) {
 
-    private List<Resource> getEobBundleResources(String patientId) {
-
-        Bundle eobBundle = bfdClient.requestEOBFromServer(patientId);
+        Bundle eobBundle = bfdClient.requestEOBFromServer(patient.getPatientId());
 
         final List<BundleEntryComponent> entries = eobBundle.getEntry();
-        final List<Resource> resources = extractResources(entries);
+        final List<Resource> resources = extractResources(entries, patient.getDatesUnderContract(), attTime);
 
         while (eobBundle.getLink(Bundle.LINK_NEXT) != null) {
             eobBundle = bfdClient.requestNextBundleFromServer(eobBundle);
             final List<BundleEntryComponent> nextEntries = eobBundle.getEntry();
-            resources.addAll(extractResources(nextEntries));
+            resources.addAll(extractResources(nextEntries, patient.getDatesUnderContract(), attTime));
         }
 
         log.debug("Bundle - Total: {} - Entries: {} ", eobBundle.getTotal(), entries.size());
         return resources;
     }
 
-    private List<Resource> extractResources(List<BundleEntryComponent> entries) {
+    private List<Resource> extractResources(List<BundleEntryComponent> entries, final List<FilterOutByDate.DateRange> dateRanges,
+                                            OffsetDateTime attTime) {
+        if (attTime == null) {
+            return new ArrayList<>();
+        }
+        long epochMilli = attTime.toInstant().toEpochMilli();
+        Date attDate = new Date(epochMilli);
         return entries.stream()
                 // Get the resource
                 .map(BundleEntryComponent::getResource)
                 // Get only the explanation of benefits
                 .filter(resource -> resource.getResourceType() == ResourceType.ExplanationOfBenefit)
+                // Filter by date
+                .filter(resource -> FilterOutByDate.valid((ExplanationOfBenefit) resource, attDate, dateRanges))
                 // filter it
                 .map(resource -> ExplanationOfBenefitTrimmer.getBenefit((ExplanationOfBenefit) resource))
                 // Remove any empty values
