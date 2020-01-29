@@ -28,6 +28,7 @@
 1. [Appendix Q: Test API using swagger](#appendix-q-test-api-using-swagger)
 1. [Appendix R: Update userdata for auto scaling groups through the AWS console](#appendix-r-update-userdata-for-auto-scaling-groups-through-the-aws-console)
 1. [Appendix S: Install Ruby on RedHat linux](#appendix-s-install-ruby-on-redhat-linux)
+1. [Appendix T: Test getting and decrypting a file from S3](#appendix-t-test-getting-and-decrypting-a-file-from-s3)
 
 ## Appendix A: Access the CMS AWS console
 
@@ -1874,4 +1875,211 @@
 
    ```ShellSession
    $ gem update --system
+   ```
+   
+## Appendix T: Test getting and decrypting a file from S3
+
+1. Copy Gemfile and Rakefile to the controller
+
+   *Example for "Dev" environment:*
+   
+   ```ShellSession
+   $ scp -i ~/.ssh/ab2d-dev.pem ruby/Gemfile ec2-user@52.7.241.208:/tmp
+   $ scp -i ~/.ssh/ab2d-dev.pem ruby/Rakefile ec2-user@52.7.241.208:/tmp
+   ```
+
+   *Example for "Sbx" environment:*
+   
+   ```ShellSession
+   $ scp -i ~/.ssh/ab2d-sbx-sandbox.pem ruby/Gemfile ec2-user@3.93.125.65:/tmp
+   $ scp -i ~/.ssh/ab2d-sbx-sandbox.pem ruby/Rakefile ec2-user@3.93.125.65:/tmp
+   ```
+
+1. Connect to the controller
+
+   *Example for "Dev" environment:*
+   
+   ```ShellSession
+   $ ssh -i ~/.ssh/ab2d-dev.pem ec2-user@52.7.241.208
+   ```
+
+   *Example for "Sbx" environment:*
+
+   ```ShellSession
+   $ ssh -i ~/.ssh/ab2d-sbx-sandbox.pem ec2-user@3.93.125.65
+   ```
+
+1. Copy Gemfile and Rakefile to a worker node
+
+   *Example for "Dev" environment:*
+   
+   ```ShellSession
+   $ scp -i ~/.ssh/ab2d-dev.pem /tmp/Gemfile ec2-user@10.242.26.207:/tmp
+   $ scp -i ~/.ssh/ab2d-dev.pem /tmp/Rakefile ec2-user@10.242.26.207:/tmp
+   ```
+
+   *Example for "Sbx" environment:*
+   
+   ```ShellSession
+   $ scp -i ~/.ssh/ab2d-sbx-sandbox.pem /tmp/Gemfile ec2-user@10.242.31.4:/tmp
+   $ scp -i ~/.ssh/ab2d-sbx-sandbox.pem /tmp/Rakefile ec2-user@10.242.31.4:/tmp
+   ```
+
+1. Connect to the worker node where the Gemfile and Rakefile were copied
+
+   *Example for "Dev" environment:*
+   
+   ```ShellSession
+   $ ssh -i ~/.ssh/ab2d-dev.pem ec2-user@10.242.26.207
+   ```
+
+   *Example for "Sbx" environment:*
+   
+   ```ShellSession
+   $ ssh -i ~/.ssh/ab2d-sbx-sandbox.pem ec2-user@10.242.31.4
+   ```
+
+1. Install rbenv dependencies
+
+   ```ShellSession
+   $ sudo yum install -y git-core zlib zlib-devel gcc-c++ patch readline \
+     readline-devel libyaml-devel libffi-devel openssl-devel make bzip2 \
+     autoconf automake libtool bison curl sqlite-devel
+   ```
+
+1. Install rbenv and ruby-build
+
+   ```ShellSession
+   $ curl -sL https://github.com/rbenv/rbenv-installer/raw/master/bin/rbenv-installer | bash -
+   ```
+
+1. Note that will see output that looks similar to this
+
+   ```
+   Running doctor script to verify installation...
+   Checking for `rbenv' in PATH: which: no rbenv in (/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/opt/puppetlabs/bin:/home/ec2-user/.local/bin:/home/ec2-user/bin)
+   not found
+     You seem to have rbenv installed in `/home/ec2-user/.rbenv/bin', but that
+     directory is not present in PATH. Please add it to PATH by configuring
+     your `~/.bashrc', `~/.zshrc', or `~/.config/fish/config.fish'.
+   ```
+
+1. Add rbenv to path
+
+   ```ShellSession
+   $ echo 'export PATH="$HOME/.rbenv/bin:$PATH"' >> ~/.bashrc
+   $ echo 'eval "$(rbenv init -)"' >> ~/.bashrc
+   $ source ~/.bashrc
+   ```
+
+1. Note that you can the determine that latest stable version of Ruby available via rbenv by doing the following
+
+   ```ShellSession
+   $ rbenv install -l | grep -v - | tail -1
+   ```
+
+1. Note the current pinned version of Ruby on your development machine
+
+   1. Open a new terminal
+   
+   1. Enter the following on your Mac
+   
+      ```ShellSession
+      $ ruby --version
+      ```
+
+   1. Note the base ruby version
+
+      ```
+      2.6.5
+      ```
+
+   1. Note that you will to use the same version on RedHat because that is the version that was used to test ruby scripts
+
+1. Return to the RedHat node terminal session tab
+
+1. Install the noted version of Ruby
+
+   ```ShellSession
+   $ rbenv install 2.6.5
+   ```
+
+1. Wait for the installation to complete
+
+   *Note that the installation will take a while. Be patient.*
+   
+1. Set the global version of Ruby 
+   
+   ```ShellSession
+   $ rbenv global 2.6.5
+   ```
+
+1. Verify the Ruby version
+
+   ```ShellSession
+   $ ruby --version
+   ```
+
+1. Install bundler
+
+   ```ShellSession
+   $ gem install bundler
+   ```
+
+1. Update Ruby Gems
+
+   ```ShellSession
+   $ gem update --system
+   ```
+
+1. Change to the "/tmp"
+
+   ```ShellSession
+   $ cd /tmp
+   ```
+
+1. Ensure required gems are installed
+
+   ```ShellSession
+   $ bundle install
+   ```
+   
+1. Get keystore from S3 and decrypt it
+
+   *Example for "Dev" environment:*
+   
+   ```ShellSession
+   $ bundle exec rake get_file_from_s3_and_decrypt['./test-file.txt','ab2d-dev-automation']
+   ```
+
+   *Example for "Sbx" environment:*
+
+   ```ShellSession
+   $ bundle exec rake get_file_from_s3_and_decrypt['./test-file.txt','ab2d-sbx-sandbox-automation']
+   ```
+
+   *Example for "Impl" environment:*
+
+   > *** TO DO ***: Run this after deploying to IMPL
+
+   ```ShellSession
+   $ bundle exec rake get_file_from_s3_and_decrypt['./test-file.txt','ab2d-east-impl-automation']
+   ```
+
+1. Verify that decrypted file is in the "/tmp" directory
+
+   ```ShellSession
+   $ cat /tmp/test-file.txt
+   ```
+
+1. Create a "bfd-keystore" directory under EFS (if doesn't exist)
+
+   ```ShellSession
+   $ sudo mkdir -p /mnt/efs/bfd-keystore
+   ```
+
+1. Move file to the "bfd-keystore" directory
+
+   ```ShellSession
+   $ sudo mv /tmp/test-file.txt /mnt/efs/bfd-keystore
    ```
