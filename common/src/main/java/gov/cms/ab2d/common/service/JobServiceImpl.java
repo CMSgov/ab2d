@@ -134,8 +134,9 @@ public class JobServiceImpl implements JobService {
         Resource resource = new UrlResource(file.toUri());
 
         if (!resource.exists()) {
-            log.error("The job output exists in our records, but the file is not present on our system: {}", fileName);
-            throw new JobOutputMissingException("The job output exists in our records, but the file is not present on our system: " + fileName);
+            String errorMsg = "The file is not present as it is either expired, been downloaded, or an error occurred. Please resubmit the job.";
+            log.error(errorMsg);
+            throw new JobOutputMissingException(errorMsg);
         }
 
         return resource;
