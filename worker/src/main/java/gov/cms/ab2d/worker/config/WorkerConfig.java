@@ -61,7 +61,6 @@ public class WorkerConfig {
     @Value("${job.queue.capacity}")
     private int jobQueueCapacity;
 
-
     @Bean
     public Executor patientProcessorThreadPool() {
         final ThreadPoolTaskExecutor taskExecutor = new ThreadPoolTaskExecutor();
@@ -85,12 +84,10 @@ public class WorkerConfig {
         return taskExecutor;
     }
 
-
     @Bean
     public SubscribableChannel channel() {
         return new ExecutorChannel(mainJobProcessingPool());
     }
-
 
     @Bean
     public MessageSource<Object> jdbcMessageSource() {

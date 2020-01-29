@@ -35,7 +35,6 @@ class JobPreProcessorUnitTest {
     @Mock
     private JobRepository jobRepository;
 
-
     private Job job;
 
     @BeforeEach
@@ -43,7 +42,6 @@ class JobPreProcessorUnitTest {
         cut = new JobPreProcessorImpl(jobRepository);
         job = createJob();
     }
-
 
     @Test
     @DisplayName("Throws exception when given a JobUuid for which a job that does not exist")
@@ -54,7 +52,6 @@ class JobPreProcessorUnitTest {
 
         assertThat(exceptionThrown.getMessage(), equalTo(String.format("Job %s was not found", jobUuid)));
     }
-
 
     @Test
     @DisplayName("Throws exception when the job for the given JobUuid is not in submitted status")
@@ -67,7 +64,6 @@ class JobPreProcessorUnitTest {
 
         assertThat(exceptionThrown.getMessage(), equalTo(String.format("Job %s is not in SUBMITTED status", jobUuid)));
     }
-
 
     @Test
     @DisplayName("When a job is in submitted status, it will be moved to IN_PROGRESS status during pre-processing")
@@ -84,13 +80,10 @@ class JobPreProcessorUnitTest {
         verify(jobRepository).save(Mockito.any());
     }
 
-
     private Job createJob() {
         Job job = new Job();
         job.setJobUuid(jobUuid);
         job.setStatusMessage("0%");
         return job;
     }
-
-
 }

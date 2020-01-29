@@ -1,19 +1,26 @@
 package gov.cms.ab2d.optout;
 
+import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.model.OptOut;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.hl7.fhir.dstu3.model.*;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
-import java.util.Optional;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Component
 public class OptOutConverterServiceImpl implements OptOutConverterService {
+    @Autowired
+    private BFDClient bfdClient;
 
     private static final Pattern HEALTH_INSURANCE_CLAIM_NUMBER_PATTERN = Pattern.compile("\\d{9}[A-Za-z0-9]{0,2}");
 
@@ -28,22 +35,32 @@ public class OptOutConverterServiceImpl implements OptOutConverterService {
 
     private static final String OPT_OUT_INDICATOR = "N";
 
+    /**
+     * Convert a line to a list of OptOut values. Over 99% of the time, this list will contain 1 OptOut object.
+     * In the rare occasion where the HICN resolves to more than 1 patient, the list will contain all of those
+     * patient objects.
+     *
+     * @param line - line in the file
+     *
+     * @return the list of OptOut objects that match the HICN value
+     */
     @Override
-    public Optional<OptOut> convert(String line) {
+    public List<OptOut> convert(String line) {
+        List<OptOut> optOuts = new ArrayList<>();
         if (isHeader(line)) {
             log.debug("Skipping Header row");
-            return Optional.empty();
+            return optOuts;
         }
 
         if (isTrailer(line)) {
             log.debug("Skipping Trailer row");
-            return Optional.empty();
+            return optOuts;
         }
 
         var sourceCode = line.substring(SOURCE_CODE_START, SOURCE_CODE_END);
         if (StringUtils.isBlank(sourceCode)) {
             log.debug("SourceCode is blank. Skipping row");
-            return Optional.empty();
+            return optOuts;
         }
         if (!sourceCode.trim().matches("1-?800")) {
             throw new RuntimeException("Invalid data sharing source code : " + sourceCode);
@@ -53,32 +70,113 @@ public class OptOutConverterServiceImpl implements OptOutConverterService {
         if (!OPT_OUT_INDICATOR.equalsIgnoreCase(prefIndicator)) {
             // we only care about opt-out records
             log.debug("Preference Indicator is NOT opt-out. It was : {}, Skipping row", prefIndicator);
-            return Optional.empty();
+            return optOuts;
         }
 
-        OptOut optOut = new OptOut();
-        optOut.setPolicyCode("OPTOUT");
-        optOut.setPurposeCode("TREAT");
-        optOut.setLoIncCode("64292-6");
-        optOut.setScopeCode("patient-privacy");
-
-        optOut.setEffectiveDate(parseEffectiveDate(line));
-        optOut.setHicn(parseHealthInsuranceClaimNumber(line));
-
-        return Optional.of(optOut);
+        // Find the HICN ID
+        String hicn = parseHealthInsuranceClaimNumber(line);
+        // From BB, receive the list of patients with that HICN Id and create OptOut objects
+        List<Patient> patients = getPatientInfo(hicn);
+        for (Patient patient : patients) {
+            OptOut optOut = new OptOut();
+            optOut.setPolicyCode("OPTOUT");
+            optOut.setPurposeCode("TREAT");
+            optOut.setLoIncCode("64292-6");
+            optOut.setScopeCode("patient-privacy");
+            optOut.setEffectiveDate(parseEffectiveDate(line));
+            optOut.setHicn(hicn);
+            optOut.setCcwId(getCcwId(patient));
+            optOut.setMbi(getMbi(patient));
+            optOuts.add(optOut);
+        }
+        return optOuts;
     }
 
+    /**
+     * Retrieve the list of patients with an HICN Id from BB. The will be contained within a Bundle which will have
+     * a list of Resources (of type Patient) that match the ID
+     *
+     * @param hicn - The HICN Id
+     * @return - the list of Patient Resource objects with that ID
+     */
+    private List<Patient> getPatientInfo(String hicn) {
+        Bundle bundle = bfdClient.requestPatientFromServer(hicn);
+        if (bundle != null) {
+            List<Bundle.BundleEntryComponent> entries = bundle.getEntry();
+            return entries.stream()
+                    // Get the resource
+                    .map(Bundle.BundleEntryComponent::getResource)
+                    // Get only the Patients (although that's all that should be present
+                    .filter(resource -> resource.getResourceType() == ResourceType.Patient)
+                    .map(resource -> (Patient) resource)
+                    .collect(Collectors.toList());
+        }
+        return new ArrayList<>();
+    }
+
+    /**
+     * From the Patient object, find the id that is the Beneficiary Id
+     *
+     * @param patient - the patient object
+     * @return the Beneficiary Id
+     */
+    private static String getCcwId(Patient patient) {
+        return getIdVal(patient, "bene_id");
+    }
+
+    /**
+     * From the Patient object, find the Id that is the MBI Id
+     *
+     * @param patient - the patient object
+     * @return the MBI Id
+     */
+    private static String getMbi(Patient patient) {
+        return getIdVal(patient, "us-mbi");
+    }
+
+    /**
+     * Convenience method for retrieving a type of identifier code. It system variable, describing the type
+     * of id you want needs only be the end part of the value of enough length that it is identifiable. It doesn't
+     * have to be the entire URL
+     *
+     * @param patient - the patient object
+     * @param system - the type of id you are looking for
+     * @return - the id value
+     */
+    private static String getIdVal(Patient patient, String system) {
+        if (patient == null || system == null) {
+            return null;
+        }
+        return patient.getIdentifier().stream()
+                .filter(c -> c.getSystem().toLowerCase().endsWith(system.toLowerCase())).map(Identifier::getValue)
+                .findFirst().orElse(null);
+    }
+
+    /**
+     * If the line is a header line
+     *
+     * @param line - the line to check for header information
+     * @return true if it is a header line
+     */
     private boolean isHeader(String line) {
         return line.startsWith("HDR_BENEDATASHR");
     }
 
+    /**
+     * If the line is a trailer line
+     *
+     * @param line - the line to check for trailer information
+     * @return true if it is a trailer line
+     */
     private boolean isTrailer(String line) {
         return line.startsWith("TRL_BENEDATASHR");
     }
 
     /**
-     * @param line
-     * @return
+     * Parse the effective date from a string in the file
+     *
+     * @param line - the line containing the date
+     * @return the date as a LocalDate (day only)
      */
     private LocalDate parseEffectiveDate(String line) {
         var effectiveDateStr = line.substring(EFFECTIVE_DATE_START, EFFECTIVE_DATE_END);
@@ -90,9 +188,10 @@ public class OptOutConverterServiceImpl implements OptOutConverterService {
     }
 
     /**
+     * Parse the HICN id from the line
      *
-     * @param line
-     * @return
+     * @param line - the line containing the HICN
+     * @return the value of the HICN Id
      */
     private String parseHealthInsuranceClaimNumber(String line) {
         var claimNumber = line.substring(HEALTH_INSURANCE_CLAIM_NUMBER_START, HEALTH_INSURANCE_CLAIM_NUMBER_END).trim();
