@@ -5,10 +5,6 @@
     	    "Sid": "Stmt1580251602001",
             "Effect": "Allow",
             "Action": [
-                "kms:ReEncrypt*",
-                "kms:GenerateDataKey*",
-                "kms:Encrypt",
-                "kms:DescribeKey",
                 "kms:Decrypt"
             ],
             "Resource": "arn:aws:kms:us-east-1:349849222861:key/af6c5c2c-9a96-48ae-ab53-43f9ade2841f"
