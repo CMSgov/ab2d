@@ -54,6 +54,7 @@ public class JobProcessorImpl implements JobProcessor {
     private static final String ERROR_FILE_SUFFIX = "_error.ndjson";
     private static final int SLEEP_DURATION = 250;
     private static final long ROLL_OVER_THRESHOLD = 200; // 200 MB
+    private static final int ONE_MEGA_BYTE = 1024 * 1024;
 
 
     @Value("${cancellation.check.frequency:10}")
@@ -119,7 +120,7 @@ public class JobProcessorImpl implements JobProcessor {
         for (Contract contract : attestedContracts) {
             log.info("Job [{}] - contract [{}] ", jobUuid, contract.getContractNumber());
 
-            JobDataWriter writer = new JobDataWriterImpl(outputDir, contract, tryLockTimeout, ROLL_OVER_THRESHOLD);
+            JobDataWriter writer = new JobDataWriterImpl(outputDir, contract, tryLockTimeout, getRollOverThreshold());
             var contractData = new ContractData(writer, contract, progressTracker);
 
             var jobOutputs = processContract(contractData);
@@ -129,7 +130,6 @@ public class JobProcessorImpl implements JobProcessor {
 
         completeJob(job);
     }
-
 
     private Path createOutputDirectory(Path outputDirPath) {
         Path directory = null;
@@ -222,6 +222,9 @@ public class JobProcessorImpl implements JobProcessor {
                 .collect(Collectors.toList());
     }
 
+    private long getRollOverThreshold() {
+        return ROLL_OVER_THRESHOLD * ONE_MEGA_BYTE;
+    }
 
     private List<JobOutput> processContract(ContractData contractData) {
         var contract = contractData.getContract();
@@ -278,24 +281,7 @@ public class JobProcessorImpl implements JobProcessor {
             throw new JobCancelledException(errMsg);
         }
 
-        final JobDataWriter jobDataWriter = contractData.getWriter();
-        final List<JobOutput> jobOutputs = new ArrayList<>();
-        if (errorCount < patientCount) {
-            final List<JobOutput> dataJobOutputs = jobDataWriter.getDataFiles().stream()
-                    .map(dataFile -> createJobOutput(dataFile, false))
-                    .collect(Collectors.toList());
-            jobOutputs.addAll(dataJobOutputs);
-        }
-
-        if (errorCount > 0) {
-            log.warn("Encountered {} errors during job processing", errorCount);
-            final List<JobOutput> errorJobOutputs = jobDataWriter.getErrorFiles().stream()
-                    .map(errorFile -> createJobOutput(errorFile, true))
-                    .collect(Collectors.toList());
-            jobOutputs.addAll(errorJobOutputs);
-        }
-
-        return jobOutputs;
+        return createJobOutputs(contractData.getWriter());
     }
 
 
@@ -407,6 +393,25 @@ public class JobProcessorImpl implements JobProcessor {
             var percentageCompleted = progressTracker.getPercentageCompleted();
             log.info("[{}/{}] records processed = [{}% completed]", processedCount, totalCount, percentageCompleted);
         }
+    }
+
+
+    private List<JobOutput> createJobOutputs(final JobDataWriter jobDataWriter) {
+        final List<JobOutput> jobOutputs = new ArrayList<>();
+
+        // create Job Output records for data files
+        final List<JobOutput> dataJobOutputs = jobDataWriter.getDataFiles().stream()
+                .map(dataFile -> createJobOutput(dataFile, false))
+                .collect(Collectors.toList());
+        jobOutputs.addAll(dataJobOutputs);
+
+        // create Job Output record for error file
+        final List<JobOutput> errorJobOutputs = jobDataWriter.getErrorFiles().stream()
+                .map(errorFile -> createJobOutput(errorFile, true))
+                .collect(Collectors.toList());
+        jobOutputs.addAll(errorJobOutputs);
+
+        return jobOutputs;
     }
 
 

@@ -24,7 +24,6 @@ import static java.nio.file.StandardOpenOption.APPEND;
 public class JobDataWriterImpl implements JobDataWriter {
     private static final String OUTPUT_FILE_SUFFIX = ".ndjson";
     private static final String ERROR_FILE_SUFFIX = "_error.ndjson";
-    private static final int ONE_MEGA_BYTE = 1024 * 1024;
 
     private final Path outputDir;
     private final Contract contract;
@@ -42,11 +41,11 @@ public class JobDataWriterImpl implements JobDataWriter {
     private volatile long currentDataFileSize;
 
 
-    public JobDataWriterImpl(Path outputDir, Contract contract, int tryLockTimeout, long fileSizeRollOverThresholdInMegabytes) {
+    public JobDataWriterImpl(Path outputDir, Contract contract, int tryLockTimeout, long maxFileSize) {
         this.outputDir = outputDir;
         this.contract = contract;
         this.tryLockTimeout = tryLockTimeout;
-        this.maxFileSize = fileSizeRollOverThresholdInMegabytes * ONE_MEGA_BYTE;
+        this.maxFileSize = maxFileSize;
     }
 
 
@@ -188,8 +187,7 @@ public class JobDataWriterImpl implements JobDataWriter {
      */
     @Override
     public void close() {
-        // Files.write closes automatically
-        // Should I change from Files.write to BufferedWriter???
+        // Files.write closes the file automatically
     }
 
     /**
