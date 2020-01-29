@@ -30,12 +30,12 @@ public class JobDataWriterImpl implements JobDataWriter {
     private final long maxFileSize;
     private final int tryLockTimeout;
 
-    private Lock lock = new ReentrantLock();
+    private final Lock lock = new ReentrantLock();
 
     private Path errorFile;
     private Path dataFile;
-    private List<Path> dataFiles = new ArrayList<>();
-    private List<Path> errorFiles = new ArrayList<>();
+    private final List<Path> dataFiles = new ArrayList<>();
+    private final List<Path> errorFiles = new ArrayList<>();
 
     private volatile int partitionCounter;
     private volatile long currentDataFileSize;
