@@ -5,6 +5,7 @@ import ca.uhn.fhir.rest.server.exceptions.ResourceNotFoundException;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jetty.http.HttpStatus;
 import org.hl7.fhir.dstu3.model.Bundle;
+import org.hl7.fhir.dstu3.model.Patient;
 import org.hl7.fhir.dstu3.model.ResourceType;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -26,6 +27,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.SocketTimeoutException;
 import java.nio.charset.StandardCharsets;
+import java.text.SimpleDateFormat;
 import java.util.Collections;
 import java.util.List;
 import java.util.MissingResourceException;
@@ -107,6 +109,13 @@ public class BlueButtonClientTest {
                             .singletonList(Parameter.param("beneficiary", "Patient/" + patientId))
             );
         }
+
+        createMockServerExpectation(
+                "/v1/fhir/Patient",
+                HttpStatus.OK_200,
+                getRawXML(SAMPLE_PATIENT_PATH_PREFIX + "/bundle/patientbundle.xml"),
+                List.of()
+        );
 
         // Patient that exists, but has no records
         createMockServerExpectation(
@@ -196,6 +205,20 @@ public class BlueButtonClientTest {
                 ResourceType.ExplanationOfBenefit,
                 "EOB bundles returned by the BlueButton client should only contain EOB objects"
         ));
+    }
+
+    @Test
+    public void testPersonIds() {
+        Bundle response = bbc.requestPatientFromServer("11111");
+        assertNotNull(response);
+        assertEquals(response.getEntry().size(), 2);
+        Patient p1 = (Patient) response.getEntry().get(0).getResource();
+        Patient p2 = (Patient) response.getEntry().get(0).getResource();
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+        assertTrue(sdf.format(p1.getBirthDate()).equalsIgnoreCase("2014-06-01")
+                && sdf.format(p2.getBirthDate()).equalsIgnoreCase("2014-06-01"));
+        assertTrue(p1.getName().get(0).getFamily().equalsIgnoreCase("Doe")
+                && p2.getName().get(0).getFamily().equalsIgnoreCase("Doe"));
     }
 
     @Test
