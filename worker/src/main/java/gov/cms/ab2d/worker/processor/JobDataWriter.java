@@ -24,11 +24,6 @@ public interface JobDataWriter {
      */
     void addErrorEntry(byte[] data);
 
-    /**
-     * Once the job is all done, call this method to tell the Writer that no more output is expected so that
-     * files could be closed, buffers flushed as needed, etc.
-     */
-    void close();
 
     /**
      * Once the job is all done, we call this method to find out what output files have been created.

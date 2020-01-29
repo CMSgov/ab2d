@@ -30,15 +30,15 @@ public class JobDataWriterImpl implements JobDataWriter {
     private final long maxFileSize;
     private final int tryLockTimeout;
 
-    private final Lock lock = new ReentrantLock();
+    private final Lock dataFileLock  = new ReentrantLock();
+    private final Lock errorFileLock = new ReentrantLock();
 
     private Path errorFile;
-    private Path dataFile;
-    private final List<Path> dataFiles = new ArrayList<>();
+    private volatile Path dataFile;
+    private final List<Path> dataFiles  = new ArrayList<>();
     private final List<Path> errorFiles = new ArrayList<>();
 
     private volatile int partitionCounter;
-    private volatile long currentDataFileSize;
 
 
     public JobDataWriterImpl(Path outputDir, Contract contract, int tryLockTimeout, long maxFileSize) {
@@ -59,20 +59,19 @@ public class JobDataWriterImpl implements JobDataWriter {
      */
     @Override
     public void addDataEntry(byte[] data) {
-        tryLock(lock);
+        tryLock(dataFileLock);
         try {
             if (dataFile == null) {
                 createNewDataFile();
             }
 
-            if (currentDataFileSize + data.length > maxFileSize) {
+            if (dataFile.toFile().length() + data.length > maxFileSize) {
                 createNewDataFile();
             }
 
             appendToFile(dataFile, data);
-            currentDataFileSize += data.length;
         } finally {
-            lock.unlock();
+            dataFileLock.unlock();
         }
 
     }
@@ -94,7 +93,6 @@ public class JobDataWriterImpl implements JobDataWriter {
         final Path dataFilePath = Path.of(outputDir.toString(), fileName);
         try {
             dataFile = Files.createFile(dataFilePath);
-            currentDataFileSize = 0;
         } catch (IOException e) {
             var errMsg = "Could not create output data file : ";
             log.error("{} {} ", errMsg, dataFilePath.toAbsolutePath(), e);
@@ -115,7 +113,7 @@ public class JobDataWriterImpl implements JobDataWriter {
      */
     @Override
     public void addErrorEntry(byte[] data) {
-        tryLock(lock);
+        tryLock(errorFileLock);
         try {
             if (errorFile == null) {
                 createErrorFile();
@@ -123,7 +121,7 @@ public class JobDataWriterImpl implements JobDataWriter {
 
             appendToFile(errorFile, data);
         } finally {
-            lock.unlock();
+            errorFileLock.unlock();
         }
 
     }
@@ -162,7 +160,7 @@ public class JobDataWriterImpl implements JobDataWriter {
 
     private void validateOutputDir() {
         if (outputDir == null) {
-            throw new IllegalArgumentException("output director must not be null");
+            throw new IllegalArgumentException("output directory must not be null");
         }
     }
 
@@ -177,16 +175,6 @@ public class JobDataWriterImpl implements JobDataWriter {
         }
     }
 
-
-    /**
-     * Once the job is all done, call this method to tell the Writer that no more output is
-     * expected so that
-     * files could be closed, buffers flushed as needed, etc.
-     */
-    @Override
-    public void close() {
-        // Files.write closes the file automatically
-    }
 
     /**
      * Once the job is all done, we call this method to find out what output files have been
