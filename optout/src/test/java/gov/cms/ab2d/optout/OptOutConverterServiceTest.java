@@ -1,10 +1,16 @@
 package gov.cms.ab2d.optout;
 
+import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.model.OptOut;
+import org.hl7.fhir.dstu3.model.Bundle;
+import org.hl7.fhir.dstu3.model.Patient;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -12,41 +18,53 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.util.Optional;
+import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.hamcrest.CoreMatchers.startsWith;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.when;
 
 @Testcontainers
 class OptOutConverterServiceTest {
 
+    @InjectMocks
     private OptOutConverterService cut;
+
+    @Mock
+    private BFDClient client;
 
     @Container
     private static final PostgreSQLContainer postgreSQLContainer= new AB2DPostgresqlContainer();
 
     @BeforeEach
     void setUp() {
+        Bundle fakeBundle = new Bundle();
+        Patient patient = new Patient();
+        Bundle.BundleEntryComponent component = new Bundle.BundleEntryComponent();
+        component.setResource(patient);
+        // Creates new list;
+        List<Bundle.BundleEntryComponent> entry = fakeBundle.getEntry();
+        entry.add(component);
         cut = new OptOutConverterServiceImpl();
+        MockitoAnnotations.initMocks(this);
+        when(client.requestPatientFromServer("1000011403")).thenReturn(fakeBundle);
     }
-
 
     @Test
     @DisplayName("when header, should skip line and not create a opt_out record")
     void whenHeader_shouldNotCreateOptOut() {
-        final Optional<OptOut> optionalOptOut = cut.convert("HDR_BENEDATASHR20191029");
+        final List<OptOut> optionalOptOut = cut.convert("HDR_BENEDATASHR20191029");
         assertTrue(optionalOptOut.isEmpty());
     }
-
 
     @Test
     @DisplayName("when trailer, should skip line and not create a opt_out record")
     void whenTrailer_shouldNotCreateOptOut() {
-        final Optional<OptOut> optionalOptOut = cut.convert("TRL_BENEDATASHR2019102930");
+        final List<OptOut> optionalOptOut = cut.convert("TRL_BENEDATASHR2019102930");
         assertTrue(optionalOptOut.isEmpty());
     }
 
@@ -55,7 +73,7 @@ class OptOutConverterServiceTest {
     void whenPreferenceIndicatorIsNotOptOut_shouldNotCreateOptOut() {
         final String line = getLinesFromFile().skip(7).limit(1).collect(Collectors.toList()).get(0);
 
-        final Optional<OptOut> optionalOptOut = cut.convert(line);
+        final List<OptOut> optionalOptOut = cut.convert(line);
         assertTrue(optionalOptOut.isEmpty());
     }
 
@@ -64,7 +82,7 @@ class OptOutConverterServiceTest {
     void whenSourceCodeisBlank_shouldNotCreateOptOut() {
         final String line = getLinesFromFile().skip(1).limit(1).collect(Collectors.toList()).get(0);
 
-        final Optional<OptOut> optionalOptOut = cut.convert(line);
+        final List<OptOut> optionalOptOut = cut.convert(line);
         assertTrue(optionalOptOut.isEmpty());
     }
 
@@ -119,10 +137,9 @@ class OptOutConverterServiceTest {
     void whenValidData_shouldCreateOptOutRecord() {
         final String line = getLinesFromFile().skip(6).limit(1).collect(Collectors.toList()).get(0);
 
-        final Optional<OptOut> optionalOptOut = cut.convert(line);
-        assertTrue(optionalOptOut.isPresent());
+        final List<OptOut> optionalOptOut = cut.convert(line);
+        assertFalse(optionalOptOut.isEmpty());
     }
-
 
     private Stream<String> getLinesFromFile() {
         final String testInputFile = "test-data/test-data.txt";
@@ -131,6 +148,4 @@ class OptOutConverterServiceTest {
         final BufferedReader bufferedReader = new BufferedReader(isr);
         return bufferedReader.lines();
     }
-
-
 }
