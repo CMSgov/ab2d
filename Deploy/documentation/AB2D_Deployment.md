@@ -951,6 +951,9 @@
    $ aws iam attach-role-policy \
      --role-name Ab2dInstanceRole \
      --policy-arn "arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role"
+   $ aws iam attach-role-policy \
+     --role-name Ab2dInstanceRole \
+     --policy-arn "arn:aws:iam::${AWS_ACCOUNT_NUMBER}:policy/Ab2dKmsPolicy"
    ```
 
 1. Attach secrets policy to the "Ab2dInstanceRole" role
