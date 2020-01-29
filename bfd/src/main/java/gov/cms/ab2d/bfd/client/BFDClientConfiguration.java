@@ -50,6 +50,12 @@ public class BFDClientConfiguration {
     @Value("${bfd.serverBaseUrl}")
     private String serverBaseUrl;
 
+    @Value("${bfd.http.maxConnPerRoute}")
+    private int maxConnPerRoute;
+
+    @Value("${bfd.http.maxConnTotal}")
+    private int maxConnTotal;
+
     @Bean
     public IGenericClient bfdFhirRestClient(FhirContext fhirContext, HttpClient httpClient) {
         fhirContext.getRestfulClientFactory().setHttpClient(httpClient);
@@ -123,6 +129,8 @@ public class BFDClientConfiguration {
                 .build();
 
         return HttpClients.custom()
+                .setMaxConnPerRoute(maxConnPerRoute)
+                .setMaxConnTotal(maxConnTotal)
                 .setDefaultRequestConfig(requestConfig)
                 .setSSLContext(sslContext)
                 .build();
