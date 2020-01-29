@@ -1,7 +1,5 @@
 package gov.cms.ab2d.e2etest;
 
-import gov.cms.ab2d.common.httpclient.APIClient;
-import gov.cms.ab2d.common.util.JobUtil;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -16,14 +14,9 @@ import org.yaml.snakeyaml.Yaml;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URI;
-import java.net.URLEncoder;
-import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
 
 import static java.time.temporal.ChronoUnit.SECONDS;
 import static org.hamcrest.Matchers.matchesPattern;

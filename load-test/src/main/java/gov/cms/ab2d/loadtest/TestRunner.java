@@ -1,7 +1,7 @@
 package gov.cms.ab2d.loadtest;
 
 import gov.cms.ab2d.e2etest.APIClient;
-import gov.cms.ab2d.common.util.JobUtil;
+import gov.cms.ab2d.e2etest.JobUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.jmeter.config.Arguments;
 import org.apache.jmeter.protocol.java.sampler.AbstractJavaSamplerClient;
@@ -18,8 +18,6 @@ import java.util.concurrent.CountDownLatch;
 public class TestRunner extends AbstractJavaSamplerClient {
 
     private String[] contractArr;
-
-    private static final int TRIES_BEFORE_BACKOFF = 100000;
 
     private APIClient apiClient;
 
@@ -135,23 +133,15 @@ public class TestRunner extends AbstractJavaSamplerClient {
                 statusResult.setThreadName("Status check for contract " + contractNumber);
                 statusResult.sampleStart();
 
-                // Eventually back off, otherwise the server will infinitely send a 429
-                int i = 0;
-                int delay = 50;
                 boolean finishedStatus = false;
                 while (!finishedStatus) {
-                    Thread.sleep(delay);
+                    Thread.sleep(50);
                     statusResponse = apiClient.statusRequest(url);
                     status = statusResponse.statusCode();
 
                     if (status == 200 || status == 500) {
                         finishedStatus = true;
                     }
-
-                    if (i > TRIES_BEFORE_BACKOFF) {
-                        delay = 31000;
-                    }
-                    i++;
                 }
 
                 statusResult.sampleEnd();
