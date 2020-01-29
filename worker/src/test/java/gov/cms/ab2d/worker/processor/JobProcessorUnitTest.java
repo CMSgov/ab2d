@@ -70,7 +70,6 @@ class JobProcessorUnitTest {
     private Job job;
     private GetPatientsByContractResponse patientsByContract;
 
-
     @BeforeEach
     void setUp() throws Exception {
         cut = new JobProcessorImpl(
@@ -107,8 +106,6 @@ class JobProcessorUnitTest {
         Mockito.lenient().when(patientClaimsProcessor.process(any(), any(), any())).thenReturn(futureResources);
     }
 
-
-
     @Test
     @DisplayName("When a job is in submitted status, it can be processed")
     void processJob_happyPath() {
@@ -121,7 +118,6 @@ class JobProcessorUnitTest {
         verify(jobRepository, atLeastOnce()).updatePercentageCompleted(anyString(), anyInt());
         doVerify();
     }
-
 
     @Test
     @DisplayName("When user belongs to a parent sponsor, contracts for the children sponsors are processed")
@@ -141,7 +137,6 @@ class JobProcessorUnitTest {
         verify(jobRepository, atLeastOnce()).updatePercentageCompleted(anyString(), anyInt());
         doVerify();
     }
-
 
     @Test
     @DisplayName("When a job is cancelled while it is being processed, then attempt to stop the job gracefully without completing it")
@@ -188,7 +183,6 @@ class JobProcessorUnitTest {
         verify(patientClaimsProcessor, atLeast(1)).process(any(), any(), any());
     }
 
-
     @Test
     @DisplayName("When patient has opted out, their record will be skipped.")
     void processJob_whenPatientHasOptedOut_ShouldSkipPatientRecord() {
@@ -220,7 +214,6 @@ class JobProcessorUnitTest {
         final String errMsg = "error during exception handling to write error record";
         final RuntimeException runtimeException = new RuntimeException(errMsg);
         Mockito.when(patientClaimsProcessor.process(any(), any(), any())).thenThrow(runtimeException);
-
 
         var processedJob = cut.process(jobUuid);
 
@@ -262,7 +255,6 @@ class JobProcessorUnitTest {
         verify(patientClaimsProcessor, atLeast(1)).process(any(), any(), any());
         verify(jobRepository, atLeastOnce()).updatePercentageCompleted(anyString(), anyInt());
     }
-
 
     @Test
     @DisplayName("When existing output directory has a file which is not a regular file, job fails gracefully")
@@ -311,7 +303,6 @@ class JobProcessorUnitTest {
         verify(contractAdapter, never()).getPatients(anyString());
     }
 
-
     @Test
     @DisplayName("When many patientId are present, 'PercentageCompleted' should be updated many times")
     void whenManyPatientIdsAreProcessed_shouldUpdatePercentageCompletedMultipleTimes() throws ParseException {
@@ -335,7 +326,6 @@ class JobProcessorUnitTest {
         doVerify();
     }
 
-
     private List<OptOut> getOptOutRows(GetPatientsByContractResponse patientsByContract) {
         return patientsByContract.getPatients()
                 .stream().map(PatientDTO::getPatientId)
@@ -349,7 +339,6 @@ class JobProcessorUnitTest {
         optOut.setEffectiveDate(LocalDate.now().minusDays(10));
         return optOut;
     }
-
 
     private Sponsor createParentSponsor() {
         Sponsor parentSponsor = new Sponsor();
@@ -420,5 +409,4 @@ class JobProcessorUnitTest {
                 .datesUnderContract(new FilterOutByDate.DateRange(new Date(0), new Date()))
                 .build();
     }
-
 }
