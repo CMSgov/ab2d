@@ -391,6 +391,10 @@ public class TestRunner {
         String fileContent = downloadResponse.body();
 
         verifyJsonFromfileDownload(fileContent);
+
+        // Cleanup
+        HttpResponse<String> deleteResponse = cancelJobRequest(jobUuid);
+        Assert.assertEquals(202, deleteResponse.statusCode());
     }
 
     @Test
