@@ -18,7 +18,7 @@ class JobDataWriterTest {
     @TempDir Path tempDir;
 
     private JobDataWriter cut;
-    byte[] rhyme = "Twinkle Twinkle Little Star".getBytes();
+    byte[] line;
 
 
     @BeforeEach
@@ -29,59 +29,62 @@ class JobDataWriterTest {
         var OutputDirPath = Paths.get(tempDir.toString(), contract.getContractName());
         var outputDir = Files.createDirectory(OutputDirPath);
         cut = new JobDataWriterImpl(outputDir, contract, 30, 50);
+
+        var poem = "Twinkle Twinkle Little Star";
+        line = poem.getBytes();
     }
 
     @Test
     void addOneDataEntry_createsOneDataFile() {
 
-        cut.addDataEntry(rhyme);
+        cut.addDataEntry(line);
 
         var dataFiles = cut.getDataFiles();
         assertThat(dataFiles.size(), is(1));
 
         var size = dataFiles.iterator().next().toFile().length();
-        assertThat(size, is(Long.valueOf(rhyme.length)));
+        assertThat(size, is(Long.valueOf(line.length)));
     }
 
     @Test
     void addTwoEntriesThatCrossesMaxFileSize_shouldCreateMultipleFiles() {
-        cut.addDataEntry(rhyme);
-        cut.addDataEntry(rhyme);
+        cut.addDataEntry(line);
+        cut.addDataEntry(line);
 
         var dataFiles = cut.getDataFiles();
         assertThat(dataFiles.size(), is(2));
         dataFiles.forEach(file -> {
             var size = file.toFile().length();
-            assertThat(size, is(Long.valueOf(rhyme.length)));
+            assertThat(size, is(Long.valueOf(line.length)));
         });
     }
 
     @Test
     void addThreeEntriesThatCrossesMaxFileSize_shouldCreateMultipleFiles() {
-        cut.addDataEntry(rhyme);
-        cut.addDataEntry(rhyme);
-        cut.addDataEntry(rhyme);
+        cut.addDataEntry(line);
+        cut.addDataEntry(line);
+        cut.addDataEntry(line);
 
         var dataFiles = cut.getDataFiles();
         assertThat(dataFiles.size(), is(3));
         dataFiles.forEach(file -> {
             var size = file.toFile().length();
-            assertThat(size, is(Long.valueOf(rhyme.length)));
+            assertThat(size, is(Long.valueOf(line.length)));
         });
     }
 
     @Test
     void addOneErrorEntry_createsOneErrorFile() {
-        cut.addErrorEntry(rhyme);
+        cut.addErrorEntry(line);
         var errorFiles = cut.getErrorFiles();
         assertThat(errorFiles.size(), is(1));
     }
 
     @Test
     void addMultipleErrorEntries_createsOneErrorFile() {
-        cut.addErrorEntry(rhyme);
-        cut.addErrorEntry(rhyme);
-        cut.addErrorEntry(rhyme);
+        cut.addErrorEntry(line);
+        cut.addErrorEntry(line);
+        cut.addErrorEntry(line);
         var errorFiles = cut.getErrorFiles();
         assertThat(errorFiles.size(), is(1));
     }
