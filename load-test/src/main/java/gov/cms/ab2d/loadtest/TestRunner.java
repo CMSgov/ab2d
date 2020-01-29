@@ -1,6 +1,6 @@
 package gov.cms.ab2d.loadtest;
 
-import gov.cms.ab2d.common.httpclient.APIClient;
+import gov.cms.ab2d.e2etest.APIClient;
 import gov.cms.ab2d.common.util.JobUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.jmeter.config.Arguments;

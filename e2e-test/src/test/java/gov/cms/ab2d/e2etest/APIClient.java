@@ -1,4 +1,4 @@
-package gov.cms.ab2d.common.httpclient;
+package gov.cms.ab2d.e2etest;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -17,7 +17,6 @@ import java.time.Duration;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
 
 @Slf4j
 public class APIClient {
@@ -105,12 +104,6 @@ public class APIClient {
                 .build();
     }
 
-    public CompletableFuture<HttpResponse<String>> exportByContractRequestAsync(String contractNumber) {
-        HttpRequest exportRequest = buildExportByContractRequest(contractNumber);
-
-        return httpClient.sendAsync(exportRequest, HttpResponse.BodyHandlers.ofString());
-    }
-
     public HttpResponse<String> statusRequest(String url) throws IOException, InterruptedException {
         HttpRequest statusRequest = buildStatusRequest(url);
 
@@ -125,12 +118,6 @@ public class APIClient {
                 .header("Authorization", "Bearer " + jwtStr)
                 .GET()
                 .build();
-    }
-
-    public CompletableFuture<HttpResponse<String>> statusRequestAsync(String url) {
-        HttpRequest statusRequest = buildStatusRequest(url);
-
-        return httpClient.sendAsync(statusRequest, HttpResponse.BodyHandlers.ofString());
     }
 
     public HttpResponse<String> cancelJobRequest(String jobId) throws IOException, InterruptedException {
@@ -171,3 +158,4 @@ public class APIClient {
         return HttpRequest.BodyPublishers.ofString(builder.toString());
     }
 }
+
