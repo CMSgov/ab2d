@@ -99,11 +99,7 @@ public class BulkDataAccessAPI {
             @RequestParam(required = false, name = "_outputFormat") String outputFormat) {
         log.info("Received request to export");
 
-        if (jobService.checkIfCurrentUserHasActiveJob()) {
-            String errorMsg = "User already has an active or submitted job";
-            log.error(errorMsg);
-            throw new TooManyRequestsException(errorMsg);
-        }
+        checkIfCurrentUserCanAddJob();
 
         checkResourceTypesAndOutputFormat(resourceTypes, outputFormat);
 
@@ -112,6 +108,14 @@ public class BulkDataAccessAPI {
         logSuccessfulJobCreation(job);
 
         return returnStatusForJobCreation(job);
+    }
+
+    private void checkIfCurrentUserCanAddJob() {
+        if (!jobService.checkIfCurrentUserCanAddJob()) {
+            String errorMsg = "User already has enough active or submitted jobs for their limit";
+            log.error(errorMsg);
+            throw new TooManyRequestsException(errorMsg);
+        }
     }
 
     private void checkResourceTypesAndOutputFormat(String resourceTypes, String outputFormat) {
@@ -171,10 +175,7 @@ public class BulkDataAccessAPI {
         MDC.put(CONTRACT_LOG, contractNumber);
         log.info("Received request to export by contractNumber");
 
-        if (jobService.checkIfCurrentUserHasActiveJobForContractNumber(contractNumber)) {
-            log.error("User already has an active or submitted job for the contract number {}", contractNumber);
-            throw new TooManyRequestsException("User already has an active or submitted job for the contract number " + contractNumber);
-        }
+        checkIfCurrentUserCanAddJob();
 
         checkResourceTypesAndOutputFormat(resourceTypes, outputFormat);
 
