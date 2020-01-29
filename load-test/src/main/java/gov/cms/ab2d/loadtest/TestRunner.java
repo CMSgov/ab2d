@@ -2,6 +2,7 @@ package gov.cms.ab2d.loadtest;
 
 import gov.cms.ab2d.common.httpclient.APIClient;
 import gov.cms.ab2d.common.util.JobUtil;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.jmeter.config.Arguments;
 import org.apache.jmeter.protocol.java.sampler.AbstractJavaSamplerClient;
 import org.apache.jmeter.protocol.java.sampler.JavaSamplerContext;
@@ -13,16 +14,19 @@ import java.net.http.HttpResponse;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
+@Slf4j
 public class TestRunner extends AbstractJavaSamplerClient {
 
     private String[] contractArr;
 
     private static final int TRIES_BEFORE_BACKOFF = 100000;
 
+    private APIClient apiClient;
+
     @Override
     public Arguments getDefaultParameters() {
         final Arguments arguments = new Arguments();
-        arguments.addArgument("contracts", "S0000");
+        arguments.addArgument("contracts", "S0003");
         arguments.addArgument("api-url", "http://localhost:8080/api/v1/fhir/");
         arguments.addArgument("okta-url", "https://test.idp.idm.cms.gov/oauth2/aus2r7y3gdaFMKBol297/v1/token");
 
@@ -31,6 +35,16 @@ public class TestRunner extends AbstractJavaSamplerClient {
 
     @Override
     public SampleResult runTest(JavaSamplerContext javaSamplerContext) {
+        String apiUrl = javaSamplerContext.getParameter("api-url");
+        String oktaUrl = javaSamplerContext.getParameter("okta-url");
+        String oktaClientId = System.getenv("AB2D_OKTA_CLIENT_ID");
+        String oktaClientPassword = System.getenv("AB2D_OKTA_CLIENT_PASSWORD");
+        try {
+            apiClient = new APIClient(apiUrl, oktaUrl, oktaClientId, oktaClientPassword);
+        } catch (IOException | InterruptedException | JSONException e) {
+            throw new RuntimeException(e);
+        }
+
         final SampleResult sampleResult = new SampleResult();
         sampleResult.setSampleLabel("Load Test");
         sampleResult.setSuccessful(false);
@@ -38,18 +52,7 @@ public class TestRunner extends AbstractJavaSamplerClient {
 
         CountDownLatch countDownLatch = new CountDownLatch(contractArr.length);
         for (String contract : contractArr) {
-            String apiUrl = javaSamplerContext.getParameter("api-url");
-            String oktaUrl = javaSamplerContext.getParameter("okta-url");
-            String oktaClientId = System.getenv("AB2D_OKTA_CLIENT_ID");
-            String oktaClientPassword = System.getenv("AB2D_OKTA_CLIENT_PASSWORD");
-
-            APIClient apiClient = null;
-            try {
-                apiClient = new APIClient(apiUrl, oktaUrl, oktaClientId, oktaClientPassword);
-            } catch (IOException | InterruptedException | JSONException e) {
-                throw new RuntimeException(e);
-            }
-            WorkflowWorker workflowWorker = new WorkflowWorker(contract, countDownLatch, apiClient, sampleResult);
+            WorkflowWorker workflowWorker = new WorkflowWorker(contract, countDownLatch, sampleResult);
             workflowWorker.start();
         }
 
@@ -86,35 +89,37 @@ public class TestRunner extends AbstractJavaSamplerClient {
 
         private final CountDownLatch countDownLatch;
 
-        private final APIClient apiClient;
-
         private final SampleResult mainResult;
 
-        WorkflowWorker(String contractNumber, CountDownLatch countDownLatch, APIClient apiClient, SampleResult mainResult) {
+        WorkflowWorker(String contractNumber, CountDownLatch countDownLatch, SampleResult mainResult) {
             this.contractNumber = contractNumber;
             this.countDownLatch = countDownLatch;
-            this.apiClient = apiClient;
             this.mainResult = mainResult;
         }
 
         @Override
         public void run() {
+            SampleResult contractResult = new SampleResult();
+            addSubResultToSampleResult(mainResult, contractResult);
+            contractResult.sampleStart();
+            contractResult.setThreadName("Contract " + contractNumber);
+
             SampleResult exportResult = new SampleResult();
+            contractResult.addSubResult(exportResult);
             exportResult.setSuccessful(false);
+            exportResult.setThreadName("Export for contract " + contractNumber);
             exportResult.sampleStart();
-            exportResult.setSampleLabel("Export for contract " + contractNumber);
 
             try {
                 HttpResponse<String> exportResponse = apiClient.exportByContractRequest(contractNumber);
 
-                if(exportResponse.statusCode() == 202) {
+                exportResult.sampleEnd();
+                exportResult.setResponseCode(String.valueOf(exportResponse.statusCode()));
+                exportResult.setResponseMessage(exportResponse.body());
+
+                if (exportResponse.statusCode() == 202) {
                     exportResult.setSuccessful(true);
-                    exportResult.sampleEnd();
-                    addSubResultToSampleResult(mainResult, exportResult);
                 } else {
-                    exportResult.setResponseMessage(exportResponse.body());
-                    exportResult.sampleEnd();
-                    addSubResultToSampleResult(mainResult, exportResult);
                     throw new RuntimeException("Encountered error when exporting for contract " + contractNumber);
                 }
 
@@ -125,66 +130,67 @@ public class TestRunner extends AbstractJavaSamplerClient {
                 HttpResponse<String> statusResponse = null;
 
                 SampleResult statusResult = new SampleResult();
+                contractResult.addSubResult(statusResult);
                 statusResult.setSuccessful(false);
+                statusResult.setThreadName("Status check for contract " + contractNumber);
                 statusResult.sampleStart();
-                statusResult.setSampleLabel("Status check for contract " + contractNumber);
 
                 // Eventually back off, otherwise the server will infinitely send a 429
                 int i = 0;
                 int delay = 50;
                 boolean finishedStatus = false;
-                while(!finishedStatus) {
+                while (!finishedStatus) {
                     Thread.sleep(delay);
                     statusResponse = apiClient.statusRequest(url);
                     status = statusResponse.statusCode();
 
-                    if(status == 200 || status == 500) {
+                    if (status == 200 || status == 500) {
                         finishedStatus = true;
                     }
 
-                    if(i > TRIES_BEFORE_BACKOFF) {
+                    if (i > TRIES_BEFORE_BACKOFF) {
                         delay = 31000;
                     }
                     i++;
                 }
 
+                statusResult.sampleEnd();
+                statusResult.setResponseCode(String.valueOf(statusResponse.statusCode()));
+                statusResult.setResponseMessage(statusResponse.body());
 
-                System.out.println(contractNumber + " -- Finishing with job " + contentLocationList.iterator().next());
-                if(status == 200) {
+                if (status == 200) {
                     statusResult.setSuccessful(true);
-                    statusResult.sampleEnd();
-                    addSubResultToSampleResult(mainResult, statusResult);
 
                     String jobUuid = JobUtil.getJobUuid(contentLocationList.iterator().next());
 
                     SampleResult downloadResult = new SampleResult();
+                    contractResult.addSubResult(downloadResult);
                     downloadResult.setSuccessful(false);
                     downloadResult.sampleStart();
-                    downloadResult.setSampleLabel("Download for contract " + contractNumber);
+                    downloadResult.setThreadName("Download for contract " + contractNumber);
 
                     HttpResponse<String> downloadResponse = apiClient.fileDownloadRequest(jobUuid, contractNumber + ".ndjson");
-                    if(downloadResponse.statusCode() == 200) {
+
+                    downloadResult.sampleEnd();
+                    downloadResult.setResponseCode(String.valueOf(downloadResponse.statusCode()));
+                    downloadResult.setBodySize((long) downloadResponse.body().length());
+
+                    if (downloadResponse.statusCode() == 200) {
                         downloadResult.setSuccessful(true);
-                        downloadResult.sampleEnd();
-                        addSubResultToSampleResult(mainResult, downloadResult);
                     } else {
-                        downloadResult.setResponseMessage(downloadResponse.body());
-                        downloadResult.sampleEnd();
-                        addSubResultToSampleResult(mainResult, downloadResult);
                         throw new RuntimeException("Received error when trying to download file for contract " + contractNumber + " - " +
                                 downloadResponse.body());
                     }
                 } else {
-                    statusResult.setResponseMessage(statusResponse.body());
-                    statusResult.sampleEnd();
-                    addSubResultToSampleResult(mainResult, statusResult);
                     throw new RuntimeException("Received error from server when checking status for contract " + contractNumber + " - " +
                             statusResponse.body());
                 }
 
+                contractResult.setSuccessful(true);
             } catch (Exception e) {
-                throw new RuntimeException(e);
+                log.error("Exception occurred during execution of worker", e);
             } finally {
+                contractResult.sampleEnd();
                 countDownLatch.countDown();
             }
         }

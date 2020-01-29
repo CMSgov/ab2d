@@ -2,10 +2,10 @@ package gov.cms.ab2d.common.httpclient;
 
 import lombok.Getter;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import javax.annotation.concurrent.NotThreadSafe;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URLEncoder;
@@ -19,7 +19,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
-@NotThreadSafe
+@Slf4j
 public class APIClient {
 
     @Getter
@@ -70,6 +70,9 @@ public class APIClient {
 
         HttpResponse<String> jwtResponse = httpClient.send(jwtRequest, HttpResponse.BodyHandlers.ofString());
         String responseJwtString = jwtResponse.body();
+
+        log.debug("Received JWT response {}", responseJwtString);
+
         JSONObject responseJsonObject = new JSONObject(responseJwtString);
         jwtStr = responseJsonObject.getString("access_token");
     }
