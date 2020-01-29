@@ -59,8 +59,6 @@ public class JobDataWriterImpl implements JobDataWriter {
      */
     @Override
     public void addDataEntry(byte[] data) {
-        validateOutputDir();
-
         tryLock(lock);
         try {
             if (dataFile == null) {
@@ -92,6 +90,7 @@ public class JobDataWriterImpl implements JobDataWriter {
                 .append(OUTPUT_FILE_SUFFIX)
                 .toString();
 
+        validateOutputDir();
         final Path dataFilePath = Path.of(outputDir.toString(), fileName);
         try {
             dataFile = Files.createFile(dataFilePath);
@@ -116,8 +115,6 @@ public class JobDataWriterImpl implements JobDataWriter {
      */
     @Override
     public void addErrorEntry(byte[] data) {
-        validateOutputDir();
-
         tryLock(lock);
         try {
             if (errorFile == null) {
@@ -137,6 +134,7 @@ public class JobDataWriterImpl implements JobDataWriter {
                 .append(ERROR_FILE_SUFFIX)
                 .toString();
 
+        validateOutputDir();
         final Path errorFilePath = Path.of(outputDir.toString(), fileName);
         try {
             errorFile = Files.createFile(errorFilePath);
