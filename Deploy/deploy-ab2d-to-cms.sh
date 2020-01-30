@@ -245,15 +245,6 @@ if [ -z "${DATABASE_NAME}" ]; then
   DATABASE_NAME=$(./get-database-secret.py $CMS_ENV database_name $DATABASE_SECRET_DATETIME)
 fi
 
-# If any databse secret produced an error, exit the script
-
-if [ "${DATABASE_USER}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
-  || [ "${DATABASE_PASSWORD}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
-  || [ "${DATABASE_NAME}" == "ERROR: Cannot get database secret because KMS key is disabled!" ]; then
-    echo "ERROR: Cannot get database secrets because KMS key is disabled!"
-    exit 1
-fi
-
 # Create or get bfd url secret (if doesn't exist)
 
 BFD_URL=$(./get-database-secret.py $CMS_ENV bfd_url $DATABASE_SECRET_DATETIME)
@@ -282,6 +273,18 @@ if [ -z "${BFD_KEYSTORE_PASSWORD}" ]; then
   ./create-database-secret.py $CMS_ENV bfd_keystore_password $KMS_KEY_ID $DATABASE_SECRET_DATETIME
   echo "*********************************************************"
   BFD_KEYSTORE_PASSWORD=$(./get-database-secret.py $CMS_ENV bfd_keystore_password $DATABASE_SECRET_DATETIME)
+fi
+
+# If any databse secret produced an error, exit the script
+
+if [ "${DATABASE_USER}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
+  || [ "${DATABASE_PASSWORD}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
+  || [ "${DATABASE_NAME}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
+  || [ "${BFD_URL}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
+  || [ "${BFD_KEYSTORE_LOCATION}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
+  || [ "${BFD_KEYSTORE_PASSWORD}" == "ERROR: Cannot get database secret because KMS key is disabled!" ]; then
+    echo "ERROR: Cannot get database secrets because KMS key is disabled!"
+    exit 1
 fi
 
 #
