@@ -256,3 +256,20 @@ variable "image_version" {
   default = ""
   description = "Programmatically determined and passed in at the command line"
 }
+
+## BFD specific variables #########################################################################
+
+variable "bfd_url" {
+  default     = ""
+  description = "Please pass this on command line and not as a value here"
+}
+
+variable "bfd_keystore_location" {
+  default     = ""
+  description = "Please pass this on command line and not as a value here"
+}
+
+variable "bfd_keystore_password" {
+  default     = ""
+  description = "Please pass this on command line and not as a value here"
+}
