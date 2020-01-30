@@ -112,7 +112,7 @@ public class BulkDataAccessAPI {
 
     private void checkIfCurrentUserCanAddJob() {
         if (!jobService.checkIfCurrentUserCanAddJob()) {
-            String errorMsg = "User already has enough active or submitted jobs for their limit";
+            String errorMsg = "You already have active export requests in progress. Please wait until they complete before submitting a new one.";
             log.error(errorMsg);
             throw new TooManyRequestsException(errorMsg);
         }

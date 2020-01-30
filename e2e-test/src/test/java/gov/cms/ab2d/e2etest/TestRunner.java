@@ -50,6 +50,8 @@ public class TestRunner {
 
     private static final int JOB_TIMEOUT = 300;
 
+    private static final int MAX_USER_JOBS = 3;
+
     private Environment environment;
 
     public void runTests() throws InterruptedException, JSONException, IOException {
@@ -351,13 +353,15 @@ public class TestRunner {
 
     @Test
     public void runSystemWideExport() throws IOException, InterruptedException, JSONException {
-        HttpResponse<String> exportResponse = exportRequest();
+        List<String> contentLocationList = null;
+        for(int i = 0; i < MAX_USER_JOBS; i++) {
+            HttpResponse<String> exportResponse = exportRequest();
+            Assert.assertEquals(202, exportResponse.statusCode());
+            contentLocationList = exportResponse.headers().map().get("content-location");
+        }
 
-        Assert.assertEquals(202, exportResponse.statusCode());
-        List<String> contentLocationList = exportResponse.headers().map().get("content-location");
-
-        HttpResponse<String> secondExportResponse = exportRequest();
-        Assert.assertEquals(429, secondExportResponse.statusCode());
+        HttpResponse<String> nextExportResponse = exportRequest();
+        Assert.assertEquals(429, nextExportResponse.statusCode());
 
         performStatusRequestsAndVerifyDownloads(contentLocationList, false, "S0000");
     }
@@ -391,22 +395,21 @@ public class TestRunner {
         String fileContent = downloadResponse.body();
 
         verifyJsonFromfileDownload(fileContent);
-
-        // Cleanup
-        HttpResponse<String> deleteResponse = cancelJobRequest(jobUuid);
-        Assert.assertEquals(202, deleteResponse.statusCode());
     }
 
     @Test
     public void runContractNumberExport() throws IOException, InterruptedException, JSONException {
         String contractNumber = "S0000";
-        HttpResponse<String> exportResponse = exportByContractRequest(contractNumber);
+        List<String> contentLocationList = null;
 
-        Assert.assertEquals(202, exportResponse.statusCode());
-        List<String> contentLocationList = exportResponse.headers().map().get("content-location");
+        for(int i = 0; i < MAX_USER_JOBS; i++) {
+            HttpResponse<String> exportResponse = exportByContractRequest(contractNumber);
+            Assert.assertEquals(202, exportResponse.statusCode());
+            contentLocationList = exportResponse.headers().map().get("content-location");
+        }
 
-        HttpResponse<String> secondExportResponse = exportByContractRequest(contractNumber);
-        Assert.assertEquals(429, secondExportResponse.statusCode());
+        HttpResponse<String> nextExportResponse = exportByContractRequest(contractNumber);
+        Assert.assertEquals(429, nextExportResponse.statusCode());
 
         performStatusRequestsAndVerifyDownloads(contentLocationList, true, contractNumber);
     }
