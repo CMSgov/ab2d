@@ -188,7 +188,7 @@ class JobProcessorUnitTest {
     void processJob_whenPatientHasOptedOut_ShouldSkipPatientRecord() {
 
         final List<OptOut> optOuts = getOptOutRows(patientsByContract);
-        when(optOutRepository.findByHicn(anyString()))
+        when(optOutRepository.findByCcwId(anyString()))
                 .thenReturn(Arrays.asList(optOuts.get(0)))
                 .thenReturn(Arrays.asList(optOuts.get(1)))
                 .thenReturn(Arrays.asList(optOuts.get(2)));

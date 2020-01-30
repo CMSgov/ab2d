@@ -638,9 +638,8 @@ public class BulkDataAccessAPIIntegrationTests {
                 .andExpect(jsonPath("$.issue[0].severity", Is.is("error")))
                 .andExpect(jsonPath("$.issue[0].code", Is.is("invalid")))
                 .andExpect(jsonPath("$.issue[0].details.text",
-                        Is.is("JobOutputMissingException: The job output exists in our records, " +
-                                "but the file is not present on our " +
-                                "system: testmissing.ndjson")));
+                        Is.is("JobOutputMissingException: The file is not present as it is either expired, been " +
+                                "downloaded, or an error occurred. Please resubmit the job.")));
     }
 
     @Test
