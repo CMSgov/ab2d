@@ -81,7 +81,7 @@ gem install bundler
 gem update --system
 
 # Place BFD keystore in shared EFS directory (if doesn't already exist)
-if [[ -d /mnt/efs/bfd-keystore ]] && [[ -f /mnt/efs/bfd-keystore/ab2d_sbx_keystore ]]; then
+if [[ -d "/mnt/efs/bfd-keystore/${env}" ]] && [[ -f "/mnt/efs/bfd-keystore/${env}/ab2d_sbx_keystore" ]]; then
 
   # Change to the "/tmp" directory
   cd /tmp
@@ -93,10 +93,10 @@ if [[ -d /mnt/efs/bfd-keystore ]] && [[ -f /mnt/efs/bfd-keystore/ab2d_sbx_keysto
   bundle exec rake get_file_from_s3_and_decrypt['./ab2d_sbx_keystore',"${env}-automation"]
 
   # Create a "bfd-keystore" directory under EFS (if doesn't exist)
-  sudo mkdir -p /mnt/efs/bfd-keystore
+  sudo mkdir -p "/mnt/efs/bfd-keystore/${env}"
 
   # Move the BFD keystore to the "bfd-keystore" directory
-  sudo mv /tmp/ab2d_sbx_keystore /mnt/efs/bfd-keystore
+  sudo mv /tmp/ab2d_sbx_keystore "/mnt/efs/bfd-keystore/${env}"
 
 fi
 
