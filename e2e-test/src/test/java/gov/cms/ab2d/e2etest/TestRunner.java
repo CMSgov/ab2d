@@ -50,6 +50,8 @@ public class TestRunner {
 
     private static final int JOB_TIMEOUT = 300;
 
+    private static final int MAX_USER_JOBS = 3;
+
     private Environment environment;
 
     public void runTests() throws InterruptedException, JSONException, IOException {
@@ -318,7 +320,7 @@ public class TestRunner {
         JSONArray output = json.getJSONArray("output");
         JSONObject outputObject = output.getJSONObject(0);
         String url = outputObject.getString("url");
-        Assert.assertEquals(url, AB2D_API_URL + "Job/" + jobUuid + "/file/S0000.ndjson");
+        Assert.assertEquals(url, AB2D_API_URL + "Job/" + jobUuid + "/file/S0000_0001.ndjson");
         String type = outputObject.getString("type");
         Assert.assertEquals(type, "ExplanationOfBenefit");
     }
@@ -351,13 +353,15 @@ public class TestRunner {
 
     @Test
     public void runSystemWideExport() throws IOException, InterruptedException, JSONException {
-        HttpResponse<String> exportResponse = exportRequest();
+        List<String> contentLocationList = null;
+        for(int i = 0; i < MAX_USER_JOBS; i++) {
+            HttpResponse<String> exportResponse = exportRequest();
+            Assert.assertEquals(202, exportResponse.statusCode());
+            contentLocationList = exportResponse.headers().map().get("content-location");
+        }
 
-        Assert.assertEquals(202, exportResponse.statusCode());
-        List<String> contentLocationList = exportResponse.headers().map().get("content-location");
-
-        HttpResponse<String> secondExportResponse = exportRequest();
-        Assert.assertEquals(429, secondExportResponse.statusCode());
+        HttpResponse<String> nextExportResponse = exportRequest();
+        Assert.assertEquals(429, nextExportResponse.statusCode());
 
         performStatusRequestsAndVerifyDownloads(contentLocationList, false, "S0000");
     }
@@ -386,7 +390,7 @@ public class TestRunner {
 
         verifyJsonFromStatusResponse(statusResponseAgain, jobUuid, isContract ? contractNumber : null);
 
-        HttpResponse<String> downloadResponse = fileDownloadRequest(jobUuid, contractNumber + ".ndjson");
+        HttpResponse<String> downloadResponse = fileDownloadRequest(jobUuid, contractNumber + "_0001.ndjson");
         Assert.assertEquals(200, downloadResponse.statusCode());
         String fileContent = downloadResponse.body();
 
@@ -396,13 +400,16 @@ public class TestRunner {
     @Test
     public void runContractNumberExport() throws IOException, InterruptedException, JSONException {
         String contractNumber = "S0000";
-        HttpResponse<String> exportResponse = exportByContractRequest(contractNumber);
+        List<String> contentLocationList = null;
 
-        Assert.assertEquals(202, exportResponse.statusCode());
-        List<String> contentLocationList = exportResponse.headers().map().get("content-location");
+        for(int i = 0; i < MAX_USER_JOBS; i++) {
+            HttpResponse<String> exportResponse = exportByContractRequest(contractNumber);
+            Assert.assertEquals(202, exportResponse.statusCode());
+            contentLocationList = exportResponse.headers().map().get("content-location");
+        }
 
-        HttpResponse<String> secondExportResponse = exportByContractRequest(contractNumber);
-        Assert.assertEquals(429, secondExportResponse.statusCode());
+        HttpResponse<String> nextExportResponse = exportByContractRequest(contractNumber);
+        Assert.assertEquals(429, nextExportResponse.statusCode());
 
         performStatusRequestsAndVerifyDownloads(contentLocationList, true, contractNumber);
     }

@@ -90,6 +90,8 @@ public class BulkDataAccessAPIIntegrationTests {
 
     private static final String PATIENT_EXPORT_PATH = "/Patient/$export";
 
+    private static final int MAX_JOBS_PER_USER = 3;
+
     @BeforeEach
     public void setup() throws JwtVerificationException {
         contractRepository.deleteAll();
@@ -99,6 +101,15 @@ public class BulkDataAccessAPIIntegrationTests {
         sponsorRepository.deleteAll();
 
         token = testUtil.setupToken(List.of(SPONSOR_ROLE));
+    }
+
+    private void createMaxJobs() throws Exception {
+        for(int i = 0; i < MAX_JOBS_PER_USER; i++) {
+            this.mockMvc.perform(
+                    get(API_PREFIX + FHIR_PREFIX + PATIENT_EXPORT_PATH).contentType(MediaType.APPLICATION_JSON)
+                            .header("Authorization", "Bearer " + token))
+                    .andExpect(status().is(202));
+        }
     }
 
     @Test
@@ -126,9 +137,7 @@ public class BulkDataAccessAPIIntegrationTests {
 
     @Test
     public void testPatientExportDuplicateSubmission() throws Exception {
-        this.mockMvc.perform(
-                get(API_PREFIX + FHIR_PREFIX + PATIENT_EXPORT_PATH).contentType(MediaType.APPLICATION_JSON)
-                        .header("Authorization", "Bearer " + token));
+        createMaxJobs();
 
         this.mockMvc.perform(
                 get(API_PREFIX + FHIR_PREFIX + PATIENT_EXPORT_PATH).contentType(MediaType.APPLICATION_JSON)
@@ -140,13 +149,13 @@ public class BulkDataAccessAPIIntegrationTests {
 
     @Test
     public void testPatientExportDuplicateSubmissionWithCancelledStatus() throws Exception {
-        this.mockMvc.perform(
-                get(API_PREFIX + FHIR_PREFIX + PATIENT_EXPORT_PATH).contentType(MediaType.APPLICATION_JSON)
-                        .header("Authorization", "Bearer " + token));
+        createMaxJobs();
 
-        Job job = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
-        job.setStatus(JobStatus.CANCELLED);
-        jobRepository.saveAndFlush(job);
+        List<Job> jobs = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id"));
+        for(Job job : jobs) {
+            job.setStatus(JobStatus.CANCELLED);
+            jobRepository.saveAndFlush(job);
+        }
 
         this.mockMvc.perform(
                 get(API_PREFIX + FHIR_PREFIX + PATIENT_EXPORT_PATH).contentType(MediaType.APPLICATION_JSON)
@@ -156,13 +165,13 @@ public class BulkDataAccessAPIIntegrationTests {
 
     @Test
     public void testPatientExportDuplicateSubmissionWithInProgressStatus() throws Exception {
-        this.mockMvc.perform(
-                get(API_PREFIX + FHIR_PREFIX + PATIENT_EXPORT_PATH).contentType(MediaType.APPLICATION_JSON)
-                        .header("Authorization", "Bearer " + token));
+        createMaxJobs();
 
-        Job job = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
-        job.setStatus(JobStatus.IN_PROGRESS);
-        jobRepository.saveAndFlush(job);
+        List<Job> jobs = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id"));
+        for(Job job : jobs) {
+            job.setStatus(JobStatus.IN_PROGRESS);
+            jobRepository.saveAndFlush(job);
+        }
 
         this.mockMvc.perform(
                 get(API_PREFIX + FHIR_PREFIX + PATIENT_EXPORT_PATH).contentType(MediaType.APPLICATION_JSON)
@@ -174,11 +183,9 @@ public class BulkDataAccessAPIIntegrationTests {
 
     @Test
     public void testPatientExportDuplicateSubmissionWithDifferentUser() throws Exception {
-        this.mockMvc.perform(
-                get(API_PREFIX + FHIR_PREFIX + PATIENT_EXPORT_PATH).contentType(MediaType.APPLICATION_JSON)
-                        .header("Authorization", "Bearer " + token));
+        createMaxJobs();
 
-        Job job = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
+        List<Job> jobs = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id"));
         User user = new User();
         Sponsor sponsor = dataSetup.createSponsor("Parent Spons", 4441, "Child Spons", 1114);
         user.setSponsor(sponsor);
@@ -186,8 +193,11 @@ public class BulkDataAccessAPIIntegrationTests {
         user.setUsername("test");
         user.setEmail("test@test.com");
         userRepository.saveAndFlush(user);
-        job.setUser(user);
-        jobRepository.saveAndFlush(job);
+
+        for(Job job : jobs) {
+            job.setUser(user);
+            jobRepository.saveAndFlush(job);
+        }
 
         this.mockMvc.perform(
                 get(API_PREFIX + FHIR_PREFIX + PATIENT_EXPORT_PATH).contentType(MediaType.APPLICATION_JSON)
@@ -769,16 +779,23 @@ public class BulkDataAccessAPIIntegrationTests {
                 .andExpect(jsonPath("$.issue[0].severity", Is.is("error")))
                 .andExpect(jsonPath("$.issue[0].code", Is.is("invalid")))
                 .andExpect(jsonPath("$.issue[0].details.text",
-                        Is.is("ResourceNotFoundException: Contract number badContract was not found")));
+                        Is.is("ResourceNotFoundException: Contract badContract was not found")));
+    }
+
+    private void createMaxJobsWithContract(Contract contract) throws Exception {
+        for(int i = 0; i < MAX_JOBS_PER_USER; i++) {
+            this.mockMvc.perform(
+                    get(API_PREFIX + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export").contentType(MediaType.APPLICATION_JSON)
+                            .header("Authorization", "Bearer " + token))
+                            .andExpect(status().is(202));
+        }
     }
 
     @Test
     public void testPatientExportWithContractDuplicateSubmission() throws Exception {
         Optional<Contract> contractOptional = contractRepository.findContractByContractNumber(VALID_CONTRACT_NUMBER);
         Contract contract = contractOptional.get();
-        this.mockMvc.perform(
-                get(API_PREFIX + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export").contentType(MediaType.APPLICATION_JSON)
-                        .header("Authorization", "Bearer " + token));
+        createMaxJobsWithContract(contract);
 
         this.mockMvc.perform(
                 get(API_PREFIX + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export").contentType(MediaType.APPLICATION_JSON)
@@ -792,13 +809,13 @@ public class BulkDataAccessAPIIntegrationTests {
     public void testPatientExportWithContractDuplicateSubmissionInProgress() throws Exception {
         Optional<Contract> contractOptional = contractRepository.findContractByContractNumber(VALID_CONTRACT_NUMBER);
         Contract contract = contractOptional.get();
-        this.mockMvc.perform(
-                get(API_PREFIX + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export").contentType(MediaType.APPLICATION_JSON)
-                        .header("Authorization", "Bearer " + token));
+        createMaxJobsWithContract(contract);
 
-        Job job = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
-        job.setStatus(JobStatus.IN_PROGRESS);
-        jobRepository.saveAndFlush(job);
+        List<Job> jobs = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id"));
+        for(Job job : jobs) {
+            job.setStatus(JobStatus.IN_PROGRESS);
+            jobRepository.saveAndFlush(job);
+        }
 
         this.mockMvc.perform(
                 get(API_PREFIX + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export").contentType(MediaType.APPLICATION_JSON)
@@ -812,13 +829,17 @@ public class BulkDataAccessAPIIntegrationTests {
     public void testPatientExportWithContractDuplicateSubmissionCancelled() throws Exception {
         Optional<Contract> contractOptional = contractRepository.findContractByContractNumber(VALID_CONTRACT_NUMBER);
         Contract contract = contractOptional.get();
+        createMaxJobsWithContract(contract);
+
         this.mockMvc.perform(
                 get(API_PREFIX + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export").contentType(MediaType.APPLICATION_JSON)
                         .header("Authorization", "Bearer " + token));
 
-        Job job = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
-        job.setStatus(JobStatus.CANCELLED);
-        jobRepository.saveAndFlush(job);
+        List<Job> jobs = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id"));
+        for(Job job : jobs) {
+            job.setStatus(JobStatus.CANCELLED);
+            jobRepository.saveAndFlush(job);
+        }
 
         this.mockMvc.perform(
                 get(API_PREFIX + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export").contentType(MediaType.APPLICATION_JSON)
@@ -830,9 +851,13 @@ public class BulkDataAccessAPIIntegrationTests {
     public void testPatientExportWithContractDuplicateSubmissionDifferentContract() throws Exception {
         Optional<Contract> contractOptional = contractRepository.findContractByContractNumber(VALID_CONTRACT_NUMBER);
         Contract contract = contractOptional.get();
-        this.mockMvc.perform(
-                get(API_PREFIX + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export").contentType(MediaType.APPLICATION_JSON)
-                        .header("Authorization", "Bearer " + token));
+
+        for(int i = 0; i < MAX_JOBS_PER_USER - 1; i++) {
+            this.mockMvc.perform(
+                    get(API_PREFIX + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export").contentType(MediaType.APPLICATION_JSON)
+                            .header("Authorization", "Bearer " + token))
+                    .andExpect(status().is(202));
+        }
 
         Sponsor sponsor = dataSetup.createSponsor("Parent Spons", 4441, "Child Spons", 1114);
         User user = userRepository.findByUsername(TEST_USER);
@@ -850,11 +875,8 @@ public class BulkDataAccessAPIIntegrationTests {
     public void testPatientExportWithContractDuplicateSubmissionDifferentUser() throws Exception {
         Optional<Contract> contractOptional = contractRepository.findContractByContractNumber(VALID_CONTRACT_NUMBER);
         Contract contract = contractOptional.get();
-        this.mockMvc.perform(
-                get(API_PREFIX + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export").contentType(MediaType.APPLICATION_JSON)
-                        .header("Authorization", "Bearer " + token));
+        createMaxJobsWithContract(contract);
 
-        Job job = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
         User user = new User();
         Sponsor sponsor = dataSetup.createSponsor("Parent Spons", 4441, "Child Spons", 1114);
         user.setSponsor(sponsor);
@@ -862,8 +884,12 @@ public class BulkDataAccessAPIIntegrationTests {
         user.setUsername("test");
         user.setEmail("test@test.com");
         userRepository.saveAndFlush(user);
-        job.setUser(user);
-        jobRepository.saveAndFlush(job);
+
+        List<Job> jobs = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id"));
+        for(Job job : jobs) {
+            job.setUser(user);
+            jobRepository.saveAndFlush(job);
+        }
 
         this.mockMvc.perform(
                 get(API_PREFIX + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export").contentType(MediaType.APPLICATION_JSON)
