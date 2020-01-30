@@ -83,7 +83,7 @@ module "api" {
   db_port                       = var.db_port
   db_name                       = var.db_name
   db_username                   = var.db_username
-  db_password                   = var.db_password  
+  db_password                   = var.db_password
   db_host_secret_arn            = var.db_host_secret_arn
   db_port_secret_arn            = var.db_port_secret_arn
   db_user_secret_arn            = var.db_user_secret_arn
@@ -97,7 +97,7 @@ module "api" {
 # LSH SKIP FOR NOW BEGIN
 # vpn-private-sec-group-id      = var.vpn-private-sec-group-id
 # enterprise-tools-sec-group-id = var.enterprise-tools-sec-group-id
-# LSH SKIP FOR NOW ENS
+# LSH SKIP FOR NOW END
 module "worker" {
   source                        = "../../modules/worker"
   env                           = var.env
@@ -128,7 +128,7 @@ module "worker" {
   db_port                       = var.db_port
   db_name                       = var.db_name
   db_username                   = var.db_username
-  db_password                   = var.db_password  
+  db_password                   = var.db_password
   db_host_secret_arn            = var.db_host_secret_arn
   db_port_secret_arn            = var.db_port_secret_arn
   db_user_secret_arn            = var.db_user_secret_arn
@@ -136,6 +136,9 @@ module "worker" {
   db_name_secret_arn            = var.db_name_secret_arn
   ecr_repo_aws_account          = var.ecr_repo_aws_account
   image_version                 = var.image_version
+  bfd_url                       = var.bfd_url
+  bfd_keystore_location         = var.bfd_keystore_location
+  bfd_keystore_password         = var.bfd_keystore_password
 }
 
 module "cloudwatch" {
