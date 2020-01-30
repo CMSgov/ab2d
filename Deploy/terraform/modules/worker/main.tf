@@ -94,6 +94,18 @@ resource "aws_ecs_task_definition" "worker" {
         {
 	  "name" : "AB2D_EFS_MOUNT",
 	  "value" : "/mnt/efs"
+	},
+	{
+	  "name" : "AB2D_BFD_URL",
+	  "value" : "${var.bfd_url}"
+	},
+	{
+	  "name" : "AB2D_BFD_KEYSTORE_LOCATION",
+	  "value" : "${var.bfd_keystore_location}"
+	},
+	{
+	  "name" : "AB2D_BFD_KEYSTORE_PASSWORD",
+	  "value" : "${var.bfd_keystore_password}"
 	}
       ],
       "logConfiguration": {
