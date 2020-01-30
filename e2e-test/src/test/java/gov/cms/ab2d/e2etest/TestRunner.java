@@ -4,8 +4,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.Assert;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.testcontainers.containers.DockerComposeContainer;
 import org.testcontainers.containers.wait.strategy.HostPortWaitStrategy;
@@ -22,10 +21,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
-import java.util.Base64;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
 import static java.time.temporal.ChronoUnit.SECONDS;
@@ -322,7 +318,7 @@ public class TestRunner {
         JSONArray output = json.getJSONArray("output");
         JSONObject outputObject = output.getJSONObject(0);
         String url = outputObject.getString("url");
-        Assert.assertEquals(url, AB2D_API_URL + "Job/" + jobUuid + "/file/S0000.ndjson");
+        Assert.assertEquals(url, AB2D_API_URL + "Job/" + jobUuid + "/file/S0000_0001.ndjson");
         String type = outputObject.getString("type");
         Assert.assertEquals(type, "ExplanationOfBenefit");
     }
@@ -390,7 +386,7 @@ public class TestRunner {
 
         verifyJsonFromStatusResponse(statusResponseAgain, jobUuid, isContract ? contractNumber : null);
 
-        HttpResponse<String> downloadResponse = fileDownloadRequest(jobUuid, contractNumber + ".ndjson");
+        HttpResponse<String> downloadResponse = fileDownloadRequest(jobUuid, contractNumber + "_0001.ndjson");
         Assert.assertEquals(200, downloadResponse.statusCode());
         String fileContent = downloadResponse.body();
 

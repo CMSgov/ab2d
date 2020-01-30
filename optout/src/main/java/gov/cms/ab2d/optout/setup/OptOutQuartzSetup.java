@@ -26,7 +26,6 @@ public class OptOutQuartzSetup {
                 .build();
     }
 
-
     @Bean
     Trigger outputJobTrigger(JobDetail optoutJobDetail) {
         return TriggerBuilder.newTrigger()
@@ -35,6 +34,4 @@ public class OptOutQuartzSetup {
                 .withSchedule(CronScheduleBuilder.cronSchedule(schedule))
                 .build();
     }
-
-
 }

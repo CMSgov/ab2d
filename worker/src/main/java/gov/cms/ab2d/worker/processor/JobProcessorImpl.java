@@ -37,7 +37,6 @@ import java.util.List;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
-import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
 import static gov.cms.ab2d.common.model.JobStatus.CANCELLED;
@@ -54,6 +53,9 @@ public class JobProcessorImpl implements JobProcessor {
     private static final String OUTPUT_FILE_SUFFIX = ".ndjson";
     private static final String ERROR_FILE_SUFFIX = "_error.ndjson";
     private static final int SLEEP_DURATION = 250;
+    private static final long ROLL_OVER_THRESHOLD = 200; // 200 MB
+    private static final int ONE_MEGA_BYTE = 1024 * 1024;
+
 
     @Value("${cancellation.check.frequency:10}")
     private int cancellationCheckFrequency;
@@ -63,6 +65,9 @@ public class JobProcessorImpl implements JobProcessor {
 
     @Value("${report.progress.log.frequency:100}")
     private int reportProgressLogFrequency;
+
+    @Value("${file.try.lock.timeout}")
+    private int tryLockTimeout;
 
     @Value("${efs.mount}")
     private String efsMount;
@@ -114,7 +119,8 @@ public class JobProcessorImpl implements JobProcessor {
         for (Contract contract : attestedContracts) {
             log.info("Job [{}] - contract [{}] ", jobUuid, contract.getContractNumber());
 
-            var contractData = new ContractData(outputDir, contract, progressTracker, contract.getAttestedOn());
+            JobDataWriter writer = new JobDataWriterImpl(outputDir, contract, tryLockTimeout, getRollOverThreshold());
+            var contractData = new ContractData(writer, contract, progressTracker, contract.getAttestedOn());
 
             var jobOutputs = processContract(contractData);
             jobOutputs.forEach(jobOutput -> job.addJobOutput(jobOutput));
@@ -215,6 +221,9 @@ public class JobProcessorImpl implements JobProcessor {
                 .collect(Collectors.toList());
     }
 
+    private long getRollOverThreshold() {
+        return ROLL_OVER_THRESHOLD * ONE_MEGA_BYTE;
+    }
 
     private List<JobOutput> processContract(ContractData contractData) {
         var contract = contractData.getContract();
@@ -222,20 +231,12 @@ public class JobProcessorImpl implements JobProcessor {
 
         var contractNumber = contract.getContractNumber();
 
-        var outputDir = contractData.getOutputDir();
-        var outputFile = fileService.createOrReplaceFile(outputDir, contractNumber + OUTPUT_FILE_SUFFIX);
-        var errorFile = fileService.createOrReplaceFile(outputDir, contractNumber + ERROR_FILE_SUFFIX);
-
         var progressTracker = contractData.getProgressTracker();
 
         var patientsByContract = getPatientsByContract(contractNumber, progressTracker);
         var patients = patientsByContract.getPatients();
         int patientCount = patients.size();
         log.info("Contract [{}] has [{}] Patients", contractNumber, patientCount);
-
-
-        // A mutex lock that all threads for a contract uses while writing into the shared files
-        var lock = new ReentrantLock();
 
         int errorCount = 0;
         boolean isCancelled = false;
@@ -252,7 +253,7 @@ public class JobProcessorImpl implements JobProcessor {
                 continue;
             }
 
-            futureHandles.add(patientClaimsProcessor.process(patient, lock, outputFile, errorFile, contract.getAttestedOn()));
+            futureHandles.add(patientClaimsProcessor.process(patient, contractData.getWriter(), contract.getAttestedOn()));
 
             if (recordsProcessedCount % cancellationCheckFrequency == 0) {
 
@@ -279,16 +280,7 @@ public class JobProcessorImpl implements JobProcessor {
             throw new JobCancelledException(errMsg);
         }
 
-        final List<JobOutput> jobOutputs = new ArrayList<>();
-        if (errorCount < patientCount) {
-            jobOutputs.add(createJobOutput(outputFile, false));
-        }
-        if (errorCount > 0) {
-            log.warn("Encountered {} errors during job processing", errorCount);
-            jobOutputs.add(createJobOutput(errorFile, true));
-        }
-
-        return jobOutputs;
+        return createJobOutputs(contractData.getWriter());
     }
 
 
@@ -400,6 +392,25 @@ public class JobProcessorImpl implements JobProcessor {
             var percentageCompleted = progressTracker.getPercentageCompleted();
             log.info("[{}/{}] records processed = [{}% completed]", processedCount, totalCount, percentageCompleted);
         }
+    }
+
+
+    private List<JobOutput> createJobOutputs(final JobDataWriter jobDataWriter) {
+        final List<JobOutput> jobOutputs = new ArrayList<>();
+
+        // create Job Output records for data files
+        final List<JobOutput> dataJobOutputs = jobDataWriter.getDataFiles().stream()
+                .map(dataFile -> createJobOutput(dataFile, false))
+                .collect(Collectors.toList());
+        jobOutputs.addAll(dataJobOutputs);
+
+        // create Job Output record for error file
+        final List<JobOutput> errorJobOutputs = jobDataWriter.getErrorFiles().stream()
+                .map(errorFile -> createJobOutput(errorFile, true))
+                .collect(Collectors.toList());
+        jobOutputs.addAll(errorJobOutputs);
+
+        return jobOutputs;
     }
 
 

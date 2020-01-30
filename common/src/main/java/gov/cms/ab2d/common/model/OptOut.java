@@ -16,16 +16,12 @@ public class OptOut {
     @Id
     @GeneratedValue
     private Long id;
-
     private String hicn;
-
     private LocalDate effectiveDate;
-
     private String policyCode;
-
     private String purposeCode;
-
     private String loIncCode;
-
     private String scopeCode;
+    private String mbi;
+    private String ccwId;
 }
