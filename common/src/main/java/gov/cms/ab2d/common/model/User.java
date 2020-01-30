@@ -56,6 +56,9 @@ public class User implements UserDetails {
         roles.remove(role);
     }
 
+    @NotNull
+    private Integer maxParallelJobs = 1;
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         List<GrantedAuthority> authorities = new ArrayList<>();
