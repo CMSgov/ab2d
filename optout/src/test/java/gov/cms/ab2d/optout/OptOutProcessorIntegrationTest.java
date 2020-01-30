@@ -94,7 +94,7 @@ class OptOutProcessorIntegrationTest {
         // Each search in our test comes back with two patients (reusing mock result from other test)
         assertThat(optOutRowsAfterProcessing.size(), is(18));
 
-        final OptOut optOut = optOutRepo.findByHicn("1000011403").get(0);
+        final OptOut optOut = optOutRepo.findByCcwId("20010000001115").get(0);
         assertThat(optOut.getPolicyCode(), is("OPTOUT"));
         assertThat(optOut.getPurposeCode(), is("TREAT"));
         assertThat(optOut.getScopeCode(), is("patient-privacy"));
