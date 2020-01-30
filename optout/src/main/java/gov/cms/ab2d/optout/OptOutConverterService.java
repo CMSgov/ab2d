@@ -2,17 +2,16 @@ package gov.cms.ab2d.optout;
 
 import gov.cms.ab2d.common.model.OptOut;
 
-import java.util.Optional;
+import java.util.List;
 
 public interface OptOutConverterService {
-
     /**
      * Given a line from a file,
      * converts the string into a OptOut object that can be persisted in the database.
      *
-     * @param line
+     * @param line - line in the file
      *
-     * @return (optional) OptOut
+     * @return the list of discovered opted out patients
      */
-    Optional<OptOut> convert(String line);
+    List<OptOut> convert(String line);
 }

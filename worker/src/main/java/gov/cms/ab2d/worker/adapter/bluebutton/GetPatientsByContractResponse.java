@@ -1,5 +1,6 @@
 package gov.cms.ab2d.worker.adapter.bluebutton;
 
+import gov.cms.ab2d.filter.FilterOutByDate;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -19,8 +20,6 @@ public class GetPatientsByContractResponse {
     @Singular
     private List<PatientDTO> patients;
 
-
-
     @Data
     @Builder
     @NoArgsConstructor
@@ -28,7 +27,7 @@ public class GetPatientsByContractResponse {
     public static class PatientDTO {
         private String patientId;
 
-        @Singular("monthUnderContract")
-        private List<Integer> monthsUnderContract;
+        @Singular("datesUnderContract")
+        private List<FilterOutByDate.DateRange> datesUnderContract;
     }
 }

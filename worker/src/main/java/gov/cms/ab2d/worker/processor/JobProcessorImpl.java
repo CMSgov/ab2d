@@ -12,12 +12,12 @@ import gov.cms.ab2d.common.repository.OptOutRepository;
 import gov.cms.ab2d.worker.adapter.bluebutton.ContractAdapter;
 import gov.cms.ab2d.worker.adapter.bluebutton.GetPatientsByContractResponse;
 import gov.cms.ab2d.worker.adapter.bluebutton.GetPatientsByContractResponse.PatientDTO;
-import gov.cms.ab2d.worker.adapter.bluebutton.PatientClaimsProcessor;
 import gov.cms.ab2d.worker.processor.domainmodel.ContractData;
 import gov.cms.ab2d.worker.processor.domainmodel.ProgressTracker;
 import gov.cms.ab2d.worker.service.FileService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
@@ -53,7 +53,7 @@ import static net.logstash.logback.argument.StructuredArguments.keyValue;
 public class JobProcessorImpl implements JobProcessor {
     private static final String OUTPUT_FILE_SUFFIX = ".ndjson";
     private static final String ERROR_FILE_SUFFIX = "_error.ndjson";
-    private static final int SLEEP_DURATION = 1_000;                    // 1 second
+    private static final int SLEEP_DURATION = 250;
 
     @Value("${cancellation.check.frequency:10}")
     private int cancellationCheckFrequency;
@@ -73,7 +73,6 @@ public class JobProcessorImpl implements JobProcessor {
     private final ContractAdapter contractAdapter;
     private final PatientClaimsProcessor patientClaimsProcessor;
     private final OptOutRepository optOutRepository;
-
 
     @Override
     @Transactional(propagation = Propagation.NEVER)
@@ -115,7 +114,7 @@ public class JobProcessorImpl implements JobProcessor {
         for (Contract contract : attestedContracts) {
             log.info("Job [{}] - contract [{}] ", jobUuid, contract.getContractNumber());
 
-            var contractData = new ContractData(outputDir, contract, progressTracker);
+            var contractData = new ContractData(outputDir, contract, progressTracker, contract.getAttestedOn());
 
             var jobOutputs = processContract(contractData);
             jobOutputs.forEach(jobOutput -> job.addJobOutput(jobOutput));
@@ -124,7 +123,6 @@ public class JobProcessorImpl implements JobProcessor {
 
         completeJob(job);
     }
-
 
     private Path createOutputDirectory(Path outputDirPath) {
         Path directory = null;
@@ -254,7 +252,7 @@ public class JobProcessorImpl implements JobProcessor {
                 continue;
             }
 
-            futureHandles.add(patientClaimsProcessor.process(patientId, lock, outputFile, errorFile));
+            futureHandles.add(patientClaimsProcessor.process(patient, lock, outputFile, errorFile, contract.getAttestedOn()));
 
             if (recordsProcessedCount % cancellationCheckFrequency == 0) {
 
@@ -355,13 +353,19 @@ public class JobProcessorImpl implements JobProcessor {
                     }
                     progressTracker.incrementProcessedCount();
                 } catch (InterruptedException e) {
-                    final String errMsg = "interrupted exception while processing patient ";
-                    log.error(errMsg);
-                    throw new RuntimeException(errMsg, e);
+                    cancelFuturesInQueue(futureHandles);
+                    log.error("interrupted exception while processing patient", e);
+
+                    final String errMsg = ExceptionUtils.getRootCauseMessage(e);
+                    throw new RuntimeException(errMsg, ExceptionUtils.getRootCause(e));
+
                 } catch (ExecutionException e) {
-                    final String errMsg = "exception while processing patient ";
-                    log.error(errMsg, e);
-                    throw new RuntimeException(errMsg, e.getCause());
+                    cancelFuturesInQueue(futureHandles);
+                    log.error("exception while processing patient ", e);
+
+                    final String errMsg = ExceptionUtils.getRootCauseMessage(e);
+                    throw new RuntimeException(errMsg, ExceptionUtils.getRootCause(e));
+
                 } catch (CancellationException e) {
                     // This could happen in the rare event that a job was cancelled mid-process.
                     // due to which the futures in the queue (that were not yet in progress) were cancelled.

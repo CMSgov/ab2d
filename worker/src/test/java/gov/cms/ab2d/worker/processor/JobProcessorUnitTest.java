@@ -9,10 +9,10 @@ import gov.cms.ab2d.common.model.User;
 import gov.cms.ab2d.common.repository.JobOutputRepository;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.common.repository.OptOutRepository;
+import gov.cms.ab2d.filter.FilterOutByDate;
 import gov.cms.ab2d.worker.adapter.bluebutton.ContractAdapter;
 import gov.cms.ab2d.worker.adapter.bluebutton.GetPatientsByContractResponse;
 import gov.cms.ab2d.worker.adapter.bluebutton.GetPatientsByContractResponse.PatientDTO;
-import gov.cms.ab2d.worker.adapter.bluebutton.PatientClaimsProcessor;
 import gov.cms.ab2d.worker.service.FileService;
 import org.hamcrest.CoreMatchers;
 import org.junit.jupiter.api.BeforeEach;
@@ -31,12 +31,10 @@ import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.text.ParseException;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
@@ -73,9 +71,8 @@ class JobProcessorUnitTest {
     private Job job;
     private GetPatientsByContractResponse patientsByContract;
 
-
     @BeforeEach
-    void setUp() throws IOException {
+    void setUp() throws Exception {
         cut = new JobProcessorImpl(
                 fileService,
                 jobRepository,
@@ -113,11 +110,10 @@ class JobProcessorUnitTest {
                 Mockito.any(),
                 Mockito.any(),
                 Mockito.any(),
+                Mockito.any(),
                 Mockito.any()
         )).thenReturn(futureResources);
     }
-
-
 
     @Test
     @DisplayName("When a job is in submitted status, it can be processed")
@@ -131,7 +127,6 @@ class JobProcessorUnitTest {
         verify(jobRepository, atLeastOnce()).updatePercentageCompleted(anyString(), anyInt());
         doVerify();
     }
-
 
     @Test
     @DisplayName("When user belongs to a parent sponsor, contracts for the children sponsors are processed")
@@ -152,7 +147,6 @@ class JobProcessorUnitTest {
         doVerify();
         verify(jobRepository, atLeastOnce()).updatePercentageCompleted(anyString(), anyInt());
     }
-
 
     @Test
     @DisplayName("When a job is cancelled while it is being processed, then attempt to stop the job gracefully without completing it")
@@ -197,9 +191,8 @@ class JobProcessorUnitTest {
     private void doVerify() {
         verify(fileService).createDirectory(Mockito.any());
         verify(contractAdapter).getPatients(anyString());
-        verify(patientClaimsProcessor, atLeast(1)).process(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any());
+        verify(patientClaimsProcessor, atLeast(1)).process(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any());
     }
-
 
     @Test
     @DisplayName("When patient has opted out, their record will be skipped.")
@@ -221,7 +214,7 @@ class JobProcessorUnitTest {
 
         verify(fileService).createDirectory(Mockito.any());
         verify(contractAdapter).getPatients(anyString());
-        verify(patientClaimsProcessor, never()).process(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any());
+        verify(patientClaimsProcessor, never()).process(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any());
     }
 
 
@@ -231,6 +224,7 @@ class JobProcessorUnitTest {
 
         Future<Integer> futureResources = new AsyncResult(1);
         Mockito.lenient().when(patientClaimsProcessor.process(
+                Mockito.any(),
                 Mockito.any(),
                 Mockito.any(),
                 Mockito.any(),
@@ -261,9 +255,9 @@ class JobProcessorUnitTest {
                 Mockito.any(),
                 Mockito.any(),
                 Mockito.any(),
+                Mockito.any(),
                 Mockito.any()
         )).thenThrow(runtimeException);
-
 
         var processedJob = cut.process(jobUuid);
 
@@ -302,10 +296,10 @@ class JobProcessorUnitTest {
 
         verify(fileService, times(2)).createDirectory(Mockito.any());
         verify(contractAdapter).getPatients(anyString());
-        verify(patientClaimsProcessor, atLeast(1)).process(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any());
+        verify(patientClaimsProcessor, atLeast(1)).process(
+                Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any());
         verify(jobRepository, atLeastOnce()).updatePercentageCompleted(anyString(), anyInt());
     }
-
 
     @Test
     @DisplayName("When existing output directory has a file which is not a regular file, job fails gracefully")
@@ -356,10 +350,9 @@ class JobProcessorUnitTest {
         verify(fileService, never()).createOrReplaceFile(Mockito.any(Path.class), anyString());
     }
 
-
     @Test
     @DisplayName("When many patientId are present, 'PercentageCompleted' should be updated many times")
-    void whenManyPatientIdsAreProcessed_shouldUpdatePercentageCompletedMultipleTimes() {
+    void whenManyPatientIdsAreProcessed_shouldUpdatePercentageCompletedMultipleTimes() throws ParseException {
 
         var contract = job.getUser().getSponsor().getContracts().iterator().next();
         var patients = createPatientsByContractResponse(contract).getPatients();
@@ -380,11 +373,10 @@ class JobProcessorUnitTest {
         doVerify();
     }
 
-
     private List<OptOut> getOptOutRows(GetPatientsByContractResponse patientsByContract) {
         return patientsByContract.getPatients()
-                .stream().map(p -> p.getPatientId())
-                .map(patientId ->  createOptOut(patientId))
+                .stream().map(PatientDTO::getPatientId)
+                .map(this::createOptOut)
                 .collect(Collectors.toList());
     }
 
@@ -394,7 +386,6 @@ class JobProcessorUnitTest {
         optOut.setEffectiveDate(LocalDate.now().minusDays(10));
         return optOut;
     }
-
 
     private Sponsor createParentSponsor() {
         Sponsor parentSponsor = new Sponsor();
@@ -449,7 +440,7 @@ class JobProcessorUnitTest {
         return job;
     }
 
-    private GetPatientsByContractResponse createPatientsByContractResponse(Contract contract) {
+    private GetPatientsByContractResponse createPatientsByContractResponse(Contract contract) throws ParseException {
         return GetPatientsByContractResponse.builder()
                 .contractNumber(contract.getContractNumber())
                 .patient(toPatientDTO())
@@ -458,12 +449,11 @@ class JobProcessorUnitTest {
                 .build();
     }
 
-    private PatientDTO toPatientDTO() {
+    private PatientDTO toPatientDTO() throws ParseException {
         final int anInt = random.nextInt(11);
         return PatientDTO.builder()
                 .patientId("patient_" + anInt)
-                .monthUnderContract(anInt)
+                .datesUnderContract(new FilterOutByDate.DateRange(new Date(0), new Date()))
                 .build();
     }
-
 }
