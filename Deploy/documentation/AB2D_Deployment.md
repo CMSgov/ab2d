@@ -1275,6 +1275,12 @@
 
    - prod
 
+1. If prompted, enter bfd url at the "Enter desired bfd_url" prompt
+
+1. If prompted, enter bfd keystore location at the "Enter desired bfd_keystore_location" prompt
+
+1. If prompted, enter bfd keystore password at the "Enter desired bfd_keystore_password" prompt
+
 ## Update application
 
 1. Change to the "Deploy" directory
@@ -3045,18 +3051,18 @@
    
 1. Encrypt keystore and put it in S3
 
-   > *** TO DO ***: Need to replace './test-file.txt' files with the keystore name
+   > *** TO DO ***: Need to replace './ab2d_sbx_keystore' files with the keystore name
 
    *Example for "Dev" environment:*
    
    ```ShellSession
-   $ bundle exec rake encrypt_and_put_file_into_s3['./test-file.txt','ab2d-dev-automation']
+   $ bundle exec rake encrypt_and_put_file_into_s3['./ab2d_sbx_keystore','ab2d-dev-automation']
    ```
 
    *Example for "Sbx" environment:*
    
    ```ShellSession
-   $ bundle exec rake encrypt_and_put_file_into_s3['./test-file.txt','ab2d-sbx-sandbox-automation']
+   $ bundle exec rake encrypt_and_put_file_into_s3['./ab2d_sbx_keystore','ab2d-sbx-sandbox-automation']
    ```
 
    *Example for "Impl" environment:*
@@ -3064,17 +3070,17 @@
    > *** TO DO ***: Run this after deploying to IMPL
    
    ```ShellSession
-   $ bundle exec rake encrypt_and_put_file_into_s3['./test-file.txt','ab2d-east-impl-automation']
+   $ bundle exec rake encrypt_and_put_file_into_s3['./ab2d_sbx_keystore','ab2d-east-impl-automation']
    ```
 
 1. Verify that you can get the encrypted keystore from S3 and decrypt it
 
-   > *** TO DO ***: Need to replace './test-file.txt' files with the keystore name
+   > *** TO DO ***: Need to replace './ab2d_sbx_keystore' files with the keystore name
    
    1. Remove existing keyfile from the "/tmp" directory (if exists)
 
       ```ShellSession
-      $ rm -f /tmp/test-file.txt
+      $ rm -f /tmp/ab2d_sbx_keystore
       ```
    
    1. Get keystore from S3 and decrypt it
@@ -3082,13 +3088,13 @@
       *Example for "Dev" environment:*
       
       ```ShellSession
-      $ bundle exec rake get_file_from_s3_and_decrypt['./test-file.txt','ab2d-dev-automation']
+      $ bundle exec rake get_file_from_s3_and_decrypt['./ab2d_sbx_keystore','ab2d-dev-automation']
       ```
 
       *Example for "Sbx" environment:*
 
       ```ShellSession
-      $ bundle exec rake get_file_from_s3_and_decrypt['./test-file.txt','ab2d-sbx-sandbox-automation']
+      $ bundle exec rake get_file_from_s3_and_decrypt['./ab2d_sbx_keystore','ab2d-sbx-sandbox-automation']
       ```
 
       *Example for "Impl" environment:*
@@ -3096,13 +3102,13 @@
       > *** TO DO ***: Run this after deploying to IMPL
 
       ```ShellSession
-      $ bundle exec rake get_file_from_s3_and_decrypt['./test-file.txt','ab2d-east-impl-automation']
+      $ bundle exec rake get_file_from_s3_and_decrypt['./ab2d_sbx_keystore','ab2d-east-impl-automation']
       ```
 
    1. Verify that decrypted file is in the "/tmp" directory
 
       ```ShellSession
-      $ ls /tmp/test-file.txt
+      $ ls /tmp/ab2d_sbx_keystore
       ```
 
 ## Create a service-linked role for EC2

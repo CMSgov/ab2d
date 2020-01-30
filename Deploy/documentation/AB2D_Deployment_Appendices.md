@@ -917,7 +917,7 @@
    ```ShellSession
    $ ./bash/redeploy-api-and-worker-nodes.sh \
      --profile=ab2d-dev \
-     --environment=dev \
+     --environment=ab2d-dev \
      --vpc-id=vpc-0c6413ec40c5fdac3 \
      --ssh-username=ec2-user \
      --owner=842420567215 \
@@ -930,7 +930,7 @@
    ```ShellSession
    $ ./bash/redeploy-api-and-worker-nodes.sh \
      --profile=ab2d-sbx-sandbox \
-     --environment=sbx-sandbox \
+     --environment=ab2d-sbx-sandbox \
      --vpc-id=vpc-08dbf3fa96684151c \
      --ssh-username=ec2-user \
      --owner=842420567215 \
@@ -2032,7 +2032,7 @@
    $ gem update --system
    ```
 
-1. Change to the "/tmp"
+1. Change to the "/tmp" directory
 
    ```ShellSession
    $ cd /tmp
