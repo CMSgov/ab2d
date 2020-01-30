@@ -4,6 +4,7 @@ import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.IParser;
 import ca.uhn.fhir.rest.api.EncodingEnum;
 import gov.cms.ab2d.bfd.client.BFDClient;
+import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.filter.ExplanationOfBenefitTrimmer;
 import gov.cms.ab2d.filter.FilterOutByDate;
 import gov.cms.ab2d.worker.adapter.bluebutton.GetPatientsByContractResponse;
@@ -34,13 +35,13 @@ import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.locks.ReentrantLock;
 
 import static org.hamcrest.CoreMatchers.startsWith;
 import static org.junit.Assert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @Slf4j
 @ExtendWith(MockitoExtension.class)
@@ -49,7 +50,6 @@ public class PatientClaimsProcessorUnitTest {
     private PatientClaimsProcessor cut;
 
     @Mock private BFDClient mockBfdClient;
-    @Mock private FileService mockFileService;
 
     @TempDir
     File tmpEfsMountDir;
@@ -58,6 +58,7 @@ public class PatientClaimsProcessorUnitTest {
     private Path outputFile;
     private Path errorFile;
     private String patientId = "1234567890";
+    private JobDataWriter jobDataWriter;
 
     private List<Integer> allMonths = List.of(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12);
     private OffsetDateTime earlyAttDate = OffsetDateTime.of(1970, 1, 1, 0, 0, 0, 0, ZoneOffset.UTC);
@@ -68,16 +69,17 @@ public class PatientClaimsProcessorUnitTest {
         FhirContext fhirContext = ca.uhn.fhir.context.FhirContext.forDstu3();
         cut = new PatientClaimsProcessorImpl(
                 mockBfdClient,
-                fhirContext,
-                mockFileService
+                fhirContext
         );
-        ReflectionTestUtils.setField(cut, "tryLockTimeout", 30);
 
         createEOB();
         createOutputFiles();
         patientDTO = new GetPatientsByContractResponse.PatientDTO();
         patientDTO.setPatientId(patientId);
         patientDTO.setDatesUnderContract(List.of(new FilterOutByDate.DateRange(new Date(0), new Date())));
+
+        Contract contract = new Contract();
+        jobDataWriter = new JobDataWriterImpl(tmpEfsMountDir.toPath(), contract, 30, 120);
     }
 
     @Test
@@ -85,11 +87,10 @@ public class PatientClaimsProcessorUnitTest {
         Bundle bundle1 = createBundle(eob.copy());
         when(mockBfdClient.requestEOBFromServer(patientId)).thenReturn(bundle1);
 
-        cut.process(patientDTO, new ReentrantLock(), outputFile, errorFile, earlyAttDate).get();
+        cut.process(patientDTO, jobDataWriter, earlyAttDate).get();
 
         verify(mockBfdClient).requestEOBFromServer(patientId);
         verify(mockBfdClient, never()).requestNextBundleFromServer(bundle1);
-        verify(mockFileService).appendToFile(any(), any());
     }
 
     @Test
@@ -102,11 +103,10 @@ public class PatientClaimsProcessorUnitTest {
         when(mockBfdClient.requestEOBFromServer(patientId)).thenReturn(bundle1);
         when(mockBfdClient.requestNextBundleFromServer(bundle1)).thenReturn(bundle2);
 
-        cut.process(patientDTO, new ReentrantLock(), outputFile, errorFile, earlyAttDate).get();
+        cut.process(patientDTO, jobDataWriter, earlyAttDate).get();
 
         verify(mockBfdClient).requestEOBFromServer(patientId);
         verify(mockBfdClient).requestNextBundleFromServer(bundle1);
-        verify(mockFileService).appendToFile(any(), any());
     }
 
     @Test
@@ -115,13 +115,12 @@ public class PatientClaimsProcessorUnitTest {
         when(mockBfdClient.requestEOBFromServer(patientId)).thenThrow(new RuntimeException("Test Exception"));
 
         var exceptionThrown = assertThrows(RuntimeException.class,
-                () -> cut.process(patientDTO, new ReentrantLock(), outputFile, errorFile, earlyAttDate).get());
+                () -> cut.process(patientDTO, jobDataWriter, earlyAttDate).get());
 
         assertThat(exceptionThrown.getCause().getMessage(), startsWith("Test Exception"));
 
         verify(mockBfdClient).requestEOBFromServer(patientId);
         verify(mockBfdClient, never()).requestNextBundleFromServer(bundle1);
-        verify(mockFileService).appendToFile(any(), any());
     }
 
     @Test
@@ -129,11 +128,10 @@ public class PatientClaimsProcessorUnitTest {
         Bundle bundle1 = new Bundle();
         when(mockBfdClient.requestEOBFromServer(patientId)).thenReturn(bundle1);
 
-        cut.process(patientDTO, new ReentrantLock(), outputFile, errorFile, earlyAttDate).get();
+        cut.process(patientDTO, jobDataWriter, earlyAttDate).get();
 
         verify(mockBfdClient).requestEOBFromServer(patientId);
         verify(mockBfdClient, never()).requestNextBundleFromServer(bundle1);
-        verify(mockFileService, never()).appendToFile(any(), any());
     }
 
     private void createEOB() {
