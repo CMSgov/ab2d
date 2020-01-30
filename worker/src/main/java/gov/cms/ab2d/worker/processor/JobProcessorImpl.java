@@ -238,11 +238,10 @@ public class JobProcessorImpl implements JobProcessor {
         int patientCount = patients.size();
         log.info("Contract [{}] has [{}] Patients", contractNumber, patientCount);
 
-        int errorCount = 0;
         boolean isCancelled = false;
 
         int recordsProcessedCount = 0;
-        var futureHandles = new ArrayList<Future<Integer>>();
+        var futureHandles = new ArrayList<Future<Void>>();
         for (PatientDTO patient : patients) {
             ++recordsProcessedCount;
 
@@ -265,13 +264,13 @@ public class JobProcessorImpl implements JobProcessor {
                     break;
                 }
 
-                errorCount += processHandles(futureHandles, progressTracker);
+                processHandles(futureHandles, progressTracker);
             }
         }
 
         while (!futureHandles.isEmpty()) {
             sleep();
-            errorCount += processHandles(futureHandles, progressTracker);
+            processHandles(futureHandles, progressTracker);
         }
 
         if (isCancelled) {
@@ -293,7 +292,7 @@ public class JobProcessorImpl implements JobProcessor {
     }
 
 
-    private void cancelFuturesInQueue(List<Future<Integer>> futureHandles) {
+    private void cancelFuturesInQueue(List<Future<Void>> futureHandles) {
 
         // cancel any futures that have not started processing and are waiting in the queue.
         futureHandles.parallelStream().forEach(future -> future.cancel(false));
@@ -331,18 +330,13 @@ public class JobProcessorImpl implements JobProcessor {
                 .anyMatch(optOut -> optOut.getEffectiveDate().isBefore(tomorrow));
     }
 
-    private int processHandles(List<Future<Integer>> futureHandles, ProgressTracker progressTracker) {
-        int errorCount = 0;
-
+    private void processHandles(List<Future<Void>> futureHandles, ProgressTracker progressTracker) {
         var iterator = futureHandles.iterator();
         while (iterator.hasNext()) {
             var future = iterator.next();
             if (future.isDone()) {
                 try {
-                    var responseCount = future.get();
-                    if (responseCount > 0) {
-                        errorCount += responseCount;
-                    }
+                    future.get();
                     progressTracker.incrementProcessedCount();
                 } catch (InterruptedException e) {
                     cancelFuturesInQueue(futureHandles);
@@ -369,8 +363,6 @@ public class JobProcessorImpl implements JobProcessor {
         }
 
         trackProgress(progressTracker);
-
-        return errorCount;
     }
 
 
