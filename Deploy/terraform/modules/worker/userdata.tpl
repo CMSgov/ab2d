@@ -4,9 +4,9 @@
 # Set more useful hostname
 #
 
-echo "$(hostname -s).ab2d-${env}" > /tmp/hostname
+echo "$(hostname -s).${env}" > /tmp/hostname
 sudo mv /tmp/hostname /etc/hostname
-sudo hostname "$(hostname -s).ab2d-${env}"
+sudo hostname "$(hostname -s).${env}"
 
 #
 # Setup EFS realted items 
@@ -46,6 +46,59 @@ sudo cp /etc/fstab /etc/fstab.bak
 echo '${efs_id}:/ /mnt/efs efs _netdev 0 0' | sudo tee -a /etc/fstab
 sudo mount -a
 #####
+
+#
+# Setup Ruby environment
+#
+
+# Install rbenv dependencies
+sudo yum install -y git-core zlib zlib-devel gcc-c++ patch readline \
+  readline-devel libyaml-devel libffi-devel openssl-devel make bzip2 \
+  autoconf automake libtool bison curl sqlite-devel
+
+# Install rbenv and ruby-build
+curl -sL https://github.com/rbenv/rbenv-installer/raw/master/bin/rbenv-installer | bash -
+echo "*********************************************************"
+echo "NOTE: Ignore the 'not found' message in the above output."
+echo "*********************************************************"
+
+# Add rbenv to path
+echo 'export PATH="$HOME/.rbenv/bin:$PATH"' >> ~/.bashrc
+echo 'eval "$(rbenv init -)"' >> ~/.bashrc
+source ~/.bashrc
+
+# Install Ruby 2.6.5
+echo "NOTE: the ruby install takes a while..."
+rbenv install 2.6.5
+
+# Set the global version of Ruby
+rbenv global 2.6.5
+
+# Install bundler
+gem install bundler
+
+# Update Ruby Gems
+gem update --system
+
+# Place BFD keystore in shared EFS directory (if doesn't already exist)
+if [[ -d /mnt/efs/bfd-keystore ]] && [[ -f /mnt/efs/bfd-keystore/ab2d_sbx_keystore ]]; then
+
+  # Change to the "/tmp" directory
+  cd /tmp
+
+  # Ensure required gems are installed
+  bundle install
+
+  # Get keystore from S3 and decrypt it
+  bundle exec rake get_file_from_s3_and_decrypt['./ab2d_sbx_keystore',"${env}-automation"]
+
+  # Create a "bfd-keystore" directory under EFS (if doesn't exist)
+  sudo mkdir -p /mnt/efs/bfd-keystore
+
+  # Move the BFD keystore to the "bfd-keystore" directory
+  sudo mv /tmp/ab2d_sbx_keystore /mnt/efs/bfd-keystore
+
+fi
 
 #
 # Setup ECS realted items 
