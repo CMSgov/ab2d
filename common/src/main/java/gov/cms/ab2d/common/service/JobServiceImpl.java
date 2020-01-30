@@ -134,8 +134,9 @@ public class JobServiceImpl implements JobService {
         Resource resource = new UrlResource(file.toUri());
 
         if (!resource.exists()) {
-            log.error("The job output exists in our records, but the file is not present on our system: {}", fileName);
-            throw new JobOutputMissingException("The job output exists in our records, but the file is not present on our system: " + fileName);
+            String errorMsg = "The file is not present as it is either expired, been downloaded, or an error occurred. Please resubmit the job.";
+            log.error(errorMsg);
+            throw new JobOutputMissingException(errorMsg);
         }
 
         return resource;
@@ -150,21 +151,9 @@ public class JobServiceImpl implements JobService {
     }
 
     @Override
-    public boolean checkIfCurrentUserHasActiveJob() {
+    public boolean checkIfCurrentUserCanAddJob() {
         User user = userService.getCurrentUser();
         List<Job> jobs = jobRepository.findActiveJobsByUser(user);
-        return jobs.size() > 0;
-    }
-
-    @Override
-    public boolean checkIfCurrentUserHasActiveJobForContractNumber(String contractNumber) {
-        User user = userService.getCurrentUser();
-        Contract contract = contractRepository.findContractByContractNumber(contractNumber)
-            .orElseThrow(() -> {
-                log.error("Contract number {} }was not found", contractNumber);
-                return new ResourceNotFoundException("Contract number " + contractNumber + " was not found");
-            });
-        List<Job> jobs = jobRepository.findActiveJobsByUserAndContract(user, contract);
-        return jobs.size() > 0;
+        return jobs.size() < user.getMaxParallelJobs();
     }
 }
