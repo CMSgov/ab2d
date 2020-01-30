@@ -1,13 +1,14 @@
 package gov.cms.ab2d.loadtest;
 
 import gov.cms.ab2d.e2etest.APIClient;
-import gov.cms.ab2d.e2etest.JobUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.jmeter.config.Arguments;
 import org.apache.jmeter.protocol.java.sampler.AbstractJavaSamplerClient;
 import org.apache.jmeter.protocol.java.sampler.JavaSamplerContext;
 import org.apache.jmeter.samplers.SampleResult;
+import org.json.JSONArray;
 import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.IOException;
 import java.net.http.HttpResponse;
@@ -130,18 +131,32 @@ public class TestRunner extends AbstractJavaSamplerClient {
                 SampleResult statusResult = new SampleResult();
                 contractResult.addSubResult(statusResult);
                 statusResult.setSuccessful(false);
-                statusResult.setThreadName("Status check for contract " + contractNumber);
+                statusResult.setThreadName("Status checks for contract " + contractNumber);
                 statusResult.sampleStart();
 
                 boolean finishedStatus = false;
+                int i = 1;
                 while (!finishedStatus) {
                     Thread.sleep(50);
+
+                    SampleResult statusResultCall = new SampleResult();
+                    statusResult.addSubResult(statusResultCall);
+                    statusResultCall.setSuccessful(false);
+                    statusResultCall.setThreadName("Status call " + i + " for contract " + contractNumber);
+                    statusResultCall.sampleStart();
+
                     statusResponse = apiClient.statusRequest(url);
                     status = statusResponse.statusCode();
+
+                    statusResultCall.sampleEnd();
+                    statusResultCall.setSuccessful(true);
+                    statusResultCall.setResponseCode(String.valueOf(status));
 
                     if (status == 200 || status == 500) {
                         finishedStatus = true;
                     }
+
+                    i++;
                 }
 
                 statusResult.sampleEnd();
@@ -151,26 +166,39 @@ public class TestRunner extends AbstractJavaSamplerClient {
                 if (status == 200) {
                     statusResult.setSuccessful(true);
 
-                    String jobUuid = JobUtil.getJobUuid(contentLocationList.iterator().next());
+                    SampleResult downloadGroupResult = new SampleResult();
+                    contractResult.addSubResult(downloadGroupResult);
+                    downloadGroupResult.setSuccessful(false);
+                    downloadGroupResult.sampleStart();
 
-                    SampleResult downloadResult = new SampleResult();
-                    contractResult.addSubResult(downloadResult);
-                    downloadResult.setSuccessful(false);
-                    downloadResult.sampleStart();
-                    downloadResult.setThreadName("Download for contract " + contractNumber);
+                    JSONObject json = new JSONObject(statusResponse.body());
+                    JSONArray output = json.getJSONArray("output");
+                    for (int j = 0; j < output.length(); j++) {
+                        JSONObject outputObject = output.getJSONObject(j);
+                        String downloadUrl = outputObject.getString("url");
 
-                    HttpResponse<String> downloadResponse = apiClient.fileDownloadRequest(jobUuid, contractNumber + ".ndjson");
+                        SampleResult downloadResult = new SampleResult();
+                        downloadGroupResult.addSubResult(downloadResult);
+                        downloadResult.setSuccessful(false);
+                        downloadResult.sampleStart();
+                        downloadResult.setThreadName("Download for contract " + contractNumber + " with URL " + downloadUrl);
 
-                    downloadResult.sampleEnd();
-                    downloadResult.setResponseCode(String.valueOf(downloadResponse.statusCode()));
-                    downloadResult.setBodySize((long) downloadResponse.body().length());
+                        HttpResponse<String> downloadResponse = apiClient.fileDownloadRequest(downloadUrl);
 
-                    if (downloadResponse.statusCode() == 200) {
-                        downloadResult.setSuccessful(true);
-                    } else {
-                        throw new RuntimeException("Received error when trying to download file for contract " + contractNumber + " - " +
-                                downloadResponse.body());
+                        downloadResult.sampleEnd();
+                        downloadResult.setResponseCode(String.valueOf(downloadResponse.statusCode()));
+                        downloadResult.setBodySize((long) downloadResponse.body().length());
+
+                        if (downloadResponse.statusCode() == 200) {
+                            downloadResult.setSuccessful(true);
+                        } else {
+                            throw new RuntimeException("Received error when trying to download file for contract " + contractNumber + " - " +
+                                    downloadResponse.body());
+                        }
                     }
+
+                    downloadGroupResult.sampleEnd();
+                    downloadGroupResult.setSuccessful(true);
                 } else {
                     throw new RuntimeException("Received error from server when checking status for contract " + contractNumber + " - " +
                             statusResponse.body());

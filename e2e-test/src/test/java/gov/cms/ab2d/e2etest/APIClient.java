@@ -132,9 +132,9 @@ public class APIClient {
         return httpClient.send(cancelRequest, HttpResponse.BodyHandlers.ofString());
     }
 
-    public HttpResponse<String> fileDownloadRequest(String jobId, String fileName) throws IOException, InterruptedException {
+    public HttpResponse<String> fileDownloadRequest(String url) throws IOException, InterruptedException {
         HttpRequest fileDownloadRequest = HttpRequest.newBuilder()
-                .uri(URI.create(ab2dApiUrl + "Job/" + jobId + "/file/" + fileName))
+                .uri(URI.create(url))
                 .timeout(Duration.ofSeconds(defaultTimeout))
                 .header("Content-Type", "application/json")
                 .header("Authorization", "Bearer " + jwtStr)

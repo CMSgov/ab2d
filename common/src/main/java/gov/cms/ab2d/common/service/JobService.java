@@ -22,7 +22,5 @@ public interface JobService {
 
     void deleteFileForJob(File file);
 
-    boolean checkIfCurrentUserHasActiveJob();
-
-    boolean checkIfCurrentUserHasActiveJobForContractNumber(String contractNumber);
+    boolean checkIfCurrentUserCanAddJob();
 }
