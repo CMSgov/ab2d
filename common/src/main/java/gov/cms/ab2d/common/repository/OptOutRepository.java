@@ -10,5 +10,5 @@ import java.util.List;
 @Repository
 public interface OptOutRepository extends JpaRepository<OptOut, Long> {
 
-    List<OptOut> findByHicn(String hicn);
+    List<OptOut> findByCcwId(String ccwId);
 }
