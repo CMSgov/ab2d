@@ -254,6 +254,36 @@ if [ "${DATABASE_USER}" == "ERROR: Cannot get database secret because KMS key is
     exit 1
 fi
 
+# Create or get bfd url secret (if doesn't exist)
+
+BFD_URL=$(./get-database-secret.py $CMS_ENV bfd_url $DATABASE_SECRET_DATETIME)
+if [ -z "${BFD_URL}" ]; then
+  echo "*********************************************************"
+  ./create-database-secret.py $CMS_ENV bfd_url $KMS_KEY_ID $DATABASE_SECRET_DATETIME
+  echo "*********************************************************"
+  BFD_URL=$(./get-database-secret.py $CMS_ENV bfd_url $DATABASE_SECRET_DATETIME)
+fi
+
+# Create or get bfd keystore location secret (if doesn't exist)
+
+BFD_KEYSTORE_LOCATION=$(./get-database-secret.py $CMS_ENV bfd_keystore_location $DATABASE_SECRET_DATETIME)
+if [ -z "${BFD_KEYSTORE_LOCATION}" ]; then
+  echo "*********************************************************"
+  ./create-database-secret.py $CMS_ENV bfd_keystore_location $KMS_KEY_ID $DATABASE_SECRET_DATETIME
+  echo "*********************************************************"
+  BFD_KEYSTORE_LOCATION=$(./get-database-secret.py $CMS_ENV bfd_keystore_location $DATABASE_SECRET_DATETIME)
+fi
+
+# Create or get bfd keystore password secret (if doesn't exist)
+
+BFD_KEYSTORE_PASSWORD=$(./get-database-secret.py $CMS_ENV bfd_keystore_password $DATABASE_SECRET_DATETIME)
+if [ -z "${BFD_KEYSTORE_PASSWORD}" ]; then
+  echo "*********************************************************"
+  ./create-database-secret.py $CMS_ENV bfd_keystore_password $KMS_KEY_ID $DATABASE_SECRET_DATETIME
+  echo "*********************************************************"
+  BFD_KEYSTORE_PASSWORD=$(./get-database-secret.py $CMS_ENV bfd_keystore_password $DATABASE_SECRET_DATETIME)
+fi
+
 #
 # Configure networking and get network attributes
 #
@@ -1232,21 +1262,24 @@ CLUSTER_ARNS=$(aws --region "${REGION}" ecs list-clusters \
 if [ -z "${CLUSTER_ARNS}" ]; then
   echo "Skipping getting current ECS task definitions, since there are no existing clusters"
 else
+  if [ -n "${BUILD_NEW_IMAGES}" ]; then
+    echo "Using newly created ECS task definitions..."
+  else
+    echo "Using existing ECS task definitions..."
+    API_TASK_DEFINITION=$(aws --region "${REGION}" ecs describe-services \
+      --services "${CMS_ENV}-api" \
+      --cluster "${CMS_ENV}-api" \
+      | grep "taskDefinition" \
+      | head -1)
+    API_TASK_DEFINITION=$(echo $API_TASK_DEFINITION | awk -F'": "' '{print $2}' | tr -d '"' | tr -d ',')
     
-  API_TASK_DEFINITION=$(aws --region "${REGION}" ecs describe-services \
-    --services "${CMS_ENV}-api" \
-    --cluster "${CMS_ENV}-api" \
-    | grep "taskDefinition" \
-    | head -1)
-  API_TASK_DEFINITION=$(echo $API_TASK_DEFINITION | awk -F'": "' '{print $2}' | tr -d '"' | tr -d ',')
-  
-  WORKER_TASK_DEFINITION=$(aws --region "${REGION}" ecs describe-services \
-    --services "${CMS_ENV}-worker" \
-    --cluster "${CMS_ENV}-worker" \
-    | grep "taskDefinition" \
-    | head -1)
-  WORKER_TASK_DEFINITION=$(echo $WORKER_TASK_DEFINITION | awk -F'": "' '{print $2}' | tr -d '"' | tr -d ',')
-  
+    WORKER_TASK_DEFINITION=$(aws --region "${REGION}" ecs describe-services \
+      --services "${CMS_ENV}-worker" \
+      --cluster "${CMS_ENV}-worker" \
+      | grep "taskDefinition" \
+      | head -1)
+    WORKER_TASK_DEFINITION=$(echo $WORKER_TASK_DEFINITION | awk -F'": "' '{print $2}' | tr -d '"' | tr -d ',')
+  fi
 fi
 
 #
@@ -1414,6 +1447,9 @@ if [ -z "${AUTOAPPROVE}" ]; then
     --var "db_name_secret_arn=$DATABASE_NAME_SECRET_ARN" \
     --var "ecr_repo_aws_account=$ECR_REPO_AWS_ACCOUNT" \
     --var "image_version=$IMAGE_VERSION" \
+    --var "bfd_url=${BFD_URL}" \
+    --var "bfd_keystore_location=${BFD_KEYSTORE_LOCATION}" \
+    --var "bfd_keystore_password=${BFD_KEYSTORE_PASSWORD}" \
     --target module.worker
 
 else
