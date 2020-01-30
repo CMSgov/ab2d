@@ -20,3 +20,5 @@ databaseChangeLog:
       file: db/changelog/v001/add_multicontract_data.sql
   - include:
       file: db/changelog/v001/update_attestation_date.sql
+  - include:
+      file: db/changelog/v001/add_concurrent_job_column.sql
