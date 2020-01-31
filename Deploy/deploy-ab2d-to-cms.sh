@@ -1452,9 +1452,9 @@ if [ -z "${AUTOAPPROVE}" ]; then
     --var "db_name_secret_arn=$DATABASE_NAME_SECRET_ARN" \
     --var "ecr_repo_aws_account=$ECR_REPO_AWS_ACCOUNT" \
     --var "image_version=$IMAGE_VERSION" \
-    --var "bfd_url=${BFD_URL}" \
-    --var "bfd_keystore_location=${BFD_KEYSTORE_LOCATION}" \
-    --var "bfd_keystore_password=${BFD_KEYSTORE_PASSWORD}" \
+    --var "bfd_url=$BFD_URL" \
+    --var "bfd_keystore_location=$BFD_KEYSTORE_LOCATION" \
+    --var "bfd_keystore_password=$BFD_KEYSTORE_PASSWORD" \
     --target module.worker
 
 else
