@@ -116,6 +116,13 @@ public class JobServiceImpl implements JobService {
     public Resource getResourceForJob(String jobUuid, String fileName) throws MalformedURLException {
         Job job = getJobByJobUuid(jobUuid);
 
+        User user = userService.getCurrentUser();
+        if(!user.equals(job.getUser())) {
+            log.error("User attempted to download a file where they had a valid UUID, but was not logged in as the " +
+                    "user that created the job");
+            throw new InvalidJobAccessException("You don't have permissions to access the job " + jobUuid);
+        }
+
         // Make sure that there is a path that matches a job output for the job they are requesting
         boolean jobOutputMatchesPath = false;
         for (JobOutput jobOutput : job.getJobOutputs()) {

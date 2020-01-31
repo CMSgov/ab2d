@@ -1,5 +1,6 @@
 package gov.cms.ab2d.e2etest;
 
+import org.assertj.core.util.Sets;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -289,14 +290,25 @@ public class TestRunner {
         HttpResponse<String> statusResponse = null;
         long start = System.currentTimeMillis();
         int status = 0;
+        Set<Integer> statusesBetween0And100 = Sets.newHashSet();
         while(status != 200) {
             Thread.sleep(DELAY * 1000);
             statusResponse = statusRequest(statusUrl);
             status = statusResponse.statusCode();
 
+            String xProgress = statusResponse.headers().map().get("X-Progress").iterator().next();
+            int xProgressValue = Integer.valueOf(xProgress.substring(0, xProgress.indexOf('%')));
+            if(xProgressValue > 0 && xProgressValue < 100) {
+                statusesBetween0And100.add(xProgressValue);
+            }
+
             if(System.currentTimeMillis() - start > (JOB_TIMEOUT * 1000)) {
                 break;
             }
+        }
+
+        if(statusesBetween0And100.size() < 2) {
+            Assert.fail("Did not receive more than 1 distinct progress values between 0 and 100");
         }
 
         if(status == 200) {
