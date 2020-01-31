@@ -1,5 +1,7 @@
 package gov.cms.ab2d.e2etest;
 
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.security.Keys;
 import org.assertj.core.util.Sets;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -12,6 +14,7 @@ import org.testcontainers.containers.wait.strategy.HostPortWaitStrategy;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.yaml.snakeyaml.Yaml;
 
+import javax.crypto.SecretKey;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -22,6 +25,8 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
@@ -246,46 +251,6 @@ public class TestRunner {
         return httpClient.send(fileDownloadRequest, HttpResponse.BodyHandlers.ofString());
     }
 
-    /*private Map<String, Object> getJobWithOutput() throws SQLException {
-        Map<String, Object> jobData = new HashMap<>();
-        try (Connection connection = dataSource.getConnection(); Statement statement = connection.createStatement()) {
-            ResultSet resultSet = statement.executeQuery("SELECT j.job_uuid, j.status, " +
-                    "j.status_message, j.resource_types, j.progress, j.contract_id, jo.fhir_resource_type FROM job j, job_output jo where j.id = jo.job_id and jo.error = false");
-            while (resultSet.next()) {
-                jobData.put("job_uuid", resultSet.getString("job_uuid"));
-                jobData.put("status", resultSet.getString("status"));
-                jobData.put("status_message", resultSet.getString("status_message"));
-                jobData.put("progress", resultSet.getInt("progress"));
-                jobData.put("resource_types", resultSet.getString("resource_types"));
-                jobData.put("fhir_resource_type", resultSet.getString("fhir_resource_type"));
-                jobData.put("contract_id", resultSet.getInt("contract_id"));
-            }
-        }
-
-        return jobData;
-    }
-
-    private void createContract(String contractNumber) throws SQLException {
-        if(sponsorId == null) {
-            try (Connection connection = dataSource.getConnection(); Statement statement = connection.createStatement()) {
-                ResultSet resultSet = statement.executeQuery("SELECT id FROM sponsor WHERE hpms_id = 999");
-                resultSet.next();
-                sponsorId = resultSet.getInt("id");
-            }
-        }
-
-        OffsetDateTime attestationDateTime = OffsetDateTime.now();
-        try (Connection connection = dataSource.getConnection(); Statement statement = connection.createStatement()) {
-            statement.execute("INSERT INTO contract(contract_number, contract_name, " +
-                    "sponsor_id, attested_on) VALUES('" + contractNumber + "', '" + contractNumber + "', " + sponsorId + ", '" +
-                    attestationDateTime + "')");
-        }
-    }
-
-    private void createContract(String contractNumber) {
-
-    }*/
-
     private HttpResponse<String> pollForStatusResponse(String statusUrl) throws InterruptedException, IOException {
         HttpResponse<String> statusResponse = null;
         long start = System.currentTimeMillis();
@@ -296,12 +261,14 @@ public class TestRunner {
             statusResponse = statusRequest(statusUrl);
             status = statusResponse.statusCode();
 
-            String xProgress = statusResponse.headers().map().get("X-Progress").iterator().next();
-            int xProgressValue = Integer.valueOf(xProgress.substring(0, xProgress.indexOf('%')));
-            if(xProgressValue > 0 && xProgressValue < 100) {
-                statusesBetween0And100.add(xProgressValue);
+            List<String> xProgressList = statusResponse.headers().map().get("x-progress");
+            if(xProgressList != null && !xProgressList.isEmpty()) {
+                String xProgress = xProgressList.iterator().next();
+                int xProgressValue = Integer.valueOf(xProgress.substring(0, xProgress.indexOf('%')));
+                if (xProgressValue > 0 && xProgressValue < 100) {
+                    statusesBetween0And100.add(xProgressValue);
+                }
             }
-
             if(System.currentTimeMillis() - start > (JOB_TIMEOUT * 1000)) {
                 break;
             }
@@ -439,69 +406,68 @@ public class TestRunner {
         Assert.assertEquals(202, deleteResponse.statusCode());
     }
 
-    // Used to test when there are a lot of requests sent to the server in parallel. We will verify that all the requests
-    // came back with a successful response. Could benchmark to see how it trends over time
-    /*@Test
-    public void stressTest() throws InterruptedException, JSONException {
-        final int threshold = 100;
+    @Test
+    public void testUserCannotDownloadOtherUsersJob() throws IOException, InterruptedException {
+        HttpResponse<String> exportResponse = exportRequest();
 
-        List<String> contracts = new ArrayList<>();
-        for(int i = 2; i < threshold; i++) {
-            String contractNumber = "S000" + i;
-            createContract(contractNumber);
-            contracts.add(contractNumber);
-        }
+        Assert.assertEquals(202, exportResponse.statusCode());
+        List<String> contentLocationList = exportResponse.headers().map().get("content-location");
+    }
 
-        List<HttpResponse<String>> exportResponses = new ArrayList<>();
-        CountDownLatch exportCountDownLatch = new CountDownLatch(contracts.size());
-        // Execute HTTP Requests async and gather responses, continue when all are complete, by default these will
-        // execute on the ForkJoin common pool
-        for(String contract : contracts) {
-            exportByContractRequestAsync(contract).thenAcceptAsync(stringHttpResponse -> {
-                System.out.println("Executing on thread: " + Thread.currentThread().getName());
-                exportResponses.add(stringHttpResponse);
-                exportCountDownLatch.countDown();
-            });
-        }
+    @Test
+    public void testUserCannotMakeRequestWithoutToken() throws IOException, InterruptedException {
+        HttpRequest exportRequest = HttpRequest.newBuilder()
+                .uri(URI.create(AB2D_API_URL + PATIENT_EXPORT_PATH))
+                .timeout(Duration.ofSeconds(DEFAULT_TIMEOUT))
+                .header("Content-Type", "application/json")
+                .GET()
+                .build();
 
-        exportCountDownLatch.await();
+        HttpResponse<String> response = httpClient.send(exportRequest, HttpResponse.BodyHandlers.ofString());
 
-        //Set<String> jobIds = getAllJobUuids();
-        Set<String> statusUrls = new HashSet<>();
+        Assert.assertEquals(401, response.statusCode());
+    }
 
-        for(HttpResponse<String> httpResponse : exportResponses) {
-            Assert.assertEquals(202, httpResponse.statusCode());
-            List<String> contentLocationList = httpResponse.headers().map().get("content-location");
-            String url = contentLocationList.iterator().next();
-            statusUrls.add(url);
-            String jobUuid = getJobUuid(url);
-            //if(!jobIds.contains(jobUuid)) {
-                //Assert.fail("Job UUID " + jobUuid + " was not found from HTTP Response");
-            //}
-        }
+    @Test
+    public void testUserCannotMakeRequestWithSelfSignedToken() throws IOException, InterruptedException, JSONException {
+        String clientSecret = "wefikjweglkhjwelgkjweglkwegwegewg";
+        SecretKey sharedSecret = Keys.hmacShaKeyFor(clientSecret.getBytes(StandardCharsets.UTF_8));
+        Instant now = Instant.now();
 
-        CountDownLatch statusCountdownLatch = new CountDownLatch(contracts.size());
+        jwtStr = Jwts.builder()
+                .setAudience(System.getenv("AB2D_OKTA_JWT_AUDIENCE"))
+                .setIssuedAt(Date.from(now))
+                .setExpiration(Date.from(now.plus(2L, ChronoUnit.HOURS)))
+                .setIssuer(System.getenv("AB2D_OKTA_JWT_ISSUER"))
+                .setId(UUID.randomUUID().toString())
+                .signWith(sharedSecret)
+                .compact();
 
-        List<HttpResponse<String>> statusResponses = new ArrayList<>();
-        for(String statusUrl : statusUrls) {
-            statusRequestAsync(statusUrl).thenAcceptAsync(stringHttpResponse -> {
-                statusResponses.add(stringHttpResponse);
-                statusCountdownLatch.countDown();
-            });
-        }
+        HttpRequest exportRequest = HttpRequest.newBuilder()
+                .uri(URI.create(AB2D_API_URL + PATIENT_EXPORT_PATH))
+                .timeout(Duration.ofSeconds(DEFAULT_TIMEOUT))
+                .header("Content-Type", "application/json")
+                .header("Authorization", "Bearer " + jwtStr)
+                .GET()
+                .build();
 
-        statusCountdownLatch.await();
+        HttpResponse<String> response = httpClient.send(exportRequest, HttpResponse.BodyHandlers.ofString());
 
-        Set<String> downloadUrls = new HashSet<>(contracts.size());
+        Assert.assertEquals(500, response.statusCode());
 
-        for(HttpResponse<String> statusResponse : statusResponses) {
-            Assert.assertEquals(200, statusResponse.statusCode());
+        final JSONObject json = new JSONObject(response.body());
+        JSONArray issueJsonArr = json.getJSONArray("issue");
+        JSONObject issueJson = issueJsonArr.getJSONObject(0);
+        JSONObject detailsJson = issueJson.getJSONObject("details");
+        String text = detailsJson.getString("text");
 
-            final JSONObject json = new JSONObject(statusResponse.body());
-            JSONArray output = json.getJSONArray("output");
-            JSONObject outputObject = output.getJSONObject(0);
-            String url = outputObject.getString("url");
-            downloadUrls.add(url);
-        }
-    }*/
+        Assert.assertEquals(text, "IllegalArgumentException: A signing key must be specified if the specified JWT is digitally signed.");
+    }
+
+    @Test
+    public void testBadQueryParameters() throws IOException, InterruptedException {
+        HttpResponse<String> exportResponse = exportRequest(); //TODO add string for method param to support parameters
+
+        Assert.assertEquals(400, exportResponse.statusCode());
+    }
 }
