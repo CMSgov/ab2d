@@ -659,16 +659,35 @@
 
 1. Set the target AWS profile
 
+   *Example for "Dev" environment:*
+
    ```ShellSession
-   $ export AWS_PROFILE=ab2d-shared
+   $ export AWS_PROFILE=ab2d-dev
+   ```
+
+   *Example for "Sbx" environment:*
+
+   ```ShellSession
+   $ export AWS_PROFILE=ab2d-sbx-sandbox
+   ```
+
+1. Set target environment
+
+   *Example for "Dev" environment:*
+
+   ```ShellSession
+   $ export TARGET_ENVIRONMENT=ab2d-dev
+   ```
+
+   *Example for "Sbx" environment:*
+
+   ```ShellSession
+   $ export TARGET_ENVIRONMENT=ab2d-sbx-sandbox
    ```
 
 1. Set controller access variables
-
-   *Example for CMS development environment:*
    
    ```ShellSession
-   $ export TARGET_ENVIRONMENT=ab2d-shared
    $ CONTROLLER_PUBLIC_IP=$(aws --region us-east-1 ec2 describe-instances \
      --filters "Name=tag:Name,Values=ab2d-deployment-controller" \
      --query="Reservations[*].Instances[?State.Name == 'running'].PublicIpAddress" \
@@ -1921,8 +1940,8 @@
    *Example for "Sbx" environment:*
    
    ```ShellSession
-   $ scp -i ~/.ssh/ab2d-sbx-sandbox.pem /tmp/Gemfile ec2-user@10.242.31.4:/tmp
-   $ scp -i ~/.ssh/ab2d-sbx-sandbox.pem /tmp/Rakefile ec2-user@10.242.31.4:/tmp
+   $ scp -i ~/.ssh/ab2d-sbx-sandbox.pem /tmp/Gemfile ec2-user@10.242.31.50:/tmp
+   $ scp -i ~/.ssh/ab2d-sbx-sandbox.pem /tmp/Rakefile ec2-user@10.242.31.50:/tmp
    ```
 
 1. Connect to the worker node where the Gemfile and Rakefile were copied
@@ -1936,7 +1955,7 @@
    *Example for "Sbx" environment:*
    
    ```ShellSession
-   $ ssh -i ~/.ssh/ab2d-sbx-sandbox.pem ec2-user@10.242.31.4
+   $ ssh -i ~/.ssh/ab2d-sbx-sandbox.pem ec2-user@10.242.31.50
    ```
 
 1. Install rbenv dependencies
