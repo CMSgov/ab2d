@@ -39,13 +39,12 @@ import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
 import static java.lang.Boolean.TRUE;
-import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertThat;
-import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
@@ -85,6 +84,7 @@ class JobProcessorUnitTest {
         ReflectionTestUtils.setField(cut, "cancellationCheckFrequency", 2);
         ReflectionTestUtils.setField(cut, "reportProgressDbFrequency", 2);
         ReflectionTestUtils.setField(cut, "reportProgressLogFrequency", 3);
+        ReflectionTestUtils.setField(cut, "tryLockTimeout", 30);
         ReflectionTestUtils.setField(cut, "efsMount", efsMountTmpDir.toString());
 
         final Sponsor parentSponsor = createParentSponsor();
@@ -100,19 +100,10 @@ class JobProcessorUnitTest {
 
         final Path outputDirPath = Paths.get(efsMountTmpDir.toString(), jobUuid);
         final Path outputDir = Files.createDirectories(outputDirPath);
-        Mockito.lenient().when(fileService.createDirectory(Mockito.any(Path.class))).thenReturn(outputDir);
-        Mockito.lenient().when(fileService.createOrReplaceFile(Mockito.any(Path.class), anyString()))
-                .thenReturn(this.efsMountTmpDir)
-                .thenReturn(this.efsMountTmpDir);
+        Mockito.lenient().when(fileService.createDirectory(any(Path.class))).thenReturn(outputDir);
 
         Future<Integer> futureResources = new AsyncResult(0);
-        Mockito.lenient().when(patientClaimsProcessor.process(
-                Mockito.any(),
-                Mockito.any(),
-                Mockito.any(),
-                Mockito.any(),
-                Mockito.any()
-        )).thenReturn(futureResources);
+        Mockito.lenient().when(patientClaimsProcessor.process(any(), any(), any())).thenReturn(futureResources);
     }
 
     @Test
@@ -143,9 +134,8 @@ class JobProcessorUnitTest {
         assertThat(processedJob.getStatus(), is(JobStatus.SUCCESSFUL));
         assertThat(processedJob.getStatusMessage(), is("100%"));
         assertThat(processedJob.getExpiresAt(), notNullValue());
-        assertThat(processedJob.getJobOutputs().size(), equalTo(childSponsor.getAttestedContracts().size()));
-        doVerify();
         verify(jobRepository, atLeastOnce()).updatePercentageCompleted(anyString(), anyInt());
+        doVerify();
     }
 
     @Test
@@ -184,14 +174,13 @@ class JobProcessorUnitTest {
         assertThat(processedJob.getStatusMessage(), is("100%"));
         assertThat(processedJob.getExpiresAt(), notNullValue());
         doVerify();
-        verify(fileService, times(2)).createOrReplaceFile(Mockito.any(Path.class), anyString());
         verify(jobRepository, atLeastOnce()).updatePercentageCompleted(anyString(), anyInt());
     }
 
     private void doVerify() {
-        verify(fileService).createDirectory(Mockito.any());
+        verify(fileService).createDirectory(any());
         verify(contractAdapter).getPatients(anyString());
-        verify(patientClaimsProcessor, atLeast(1)).process(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any());
+        verify(patientClaimsProcessor, atLeast(1)).process(any(), any(), any());
     }
 
     @Test
@@ -199,7 +188,7 @@ class JobProcessorUnitTest {
     void processJob_whenPatientHasOptedOut_ShouldSkipPatientRecord() {
 
         final List<OptOut> optOuts = getOptOutRows(patientsByContract);
-        when(optOutRepository.findByHicn(anyString()))
+        when(optOutRepository.findByCcwId(anyString()))
                 .thenReturn(Arrays.asList(optOuts.get(0)))
                 .thenReturn(Arrays.asList(optOuts.get(1)))
                 .thenReturn(Arrays.asList(optOuts.get(2)));
@@ -212,38 +201,11 @@ class JobProcessorUnitTest {
         assertThat(processedJob.getStatusMessage(), is("100%"));
         assertThat(processedJob.getExpiresAt(), notNullValue());
 
-        verify(fileService).createDirectory(Mockito.any());
+        verify(fileService).createDirectory(any());
         verify(contractAdapter).getPatients(anyString());
-        verify(patientClaimsProcessor, never()).process(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any());
+        verify(patientClaimsProcessor, never()).process(any(), any(), any());
     }
 
-
-    @Test
-    @DisplayName("When error counter for the patient claims is > 0, an extra job_output is created for the error file")
-    void whenErrorCountIsGreaterThanZero_AJobOutputForErrorFileIsCreated() {
-
-        Future<Integer> futureResources = new AsyncResult(1);
-        Mockito.lenient().when(patientClaimsProcessor.process(
-                Mockito.any(),
-                Mockito.any(),
-                Mockito.any(),
-                Mockito.any(),
-                Mockito.any()
-        )).thenReturn(futureResources);
-
-        var processedJob = cut.process(jobUuid);
-
-        var errorJobOutputs = processedJob.getJobOutputs()
-                .stream()
-                .filter(jobOutput -> jobOutput.getError())
-                .collect(Collectors.toList());
-
-        assertThat(processedJob.getStatus(), is(JobStatus.SUCCESSFUL));
-        assertFalse(errorJobOutputs.isEmpty());
-        assertThat(processedJob.getCompletedAt(), notNullValue());
-        doVerify();
-        verify(jobRepository, atLeastOnce()).updatePercentageCompleted(anyString(), anyInt());
-    }
 
     @Test
     @DisplayName("When patientClaimsProcessor throws an exception, the job status becomes FAILED")
@@ -251,13 +213,7 @@ class JobProcessorUnitTest {
 
         final String errMsg = "error during exception handling to write error record";
         final RuntimeException runtimeException = new RuntimeException(errMsg);
-        Mockito.when(patientClaimsProcessor.process(
-                Mockito.any(),
-                Mockito.any(),
-                Mockito.any(),
-                Mockito.any(),
-                Mockito.any()
-        )).thenThrow(runtimeException);
+        Mockito.when(patientClaimsProcessor.process(any(), any(), any())).thenThrow(runtimeException);
 
         var processedJob = cut.process(jobUuid);
 
@@ -294,10 +250,9 @@ class JobProcessorUnitTest {
         assertThat(processedJob.getStatusMessage(), is("100%"));
         assertThat(processedJob.getExpiresAt(), notNullValue());
 
-        verify(fileService, times(2)).createDirectory(Mockito.any());
+        verify(fileService, times(2)).createDirectory(any());
         verify(contractAdapter).getPatients(anyString());
-        verify(patientClaimsProcessor, atLeast(1)).process(
-                Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any());
+        verify(patientClaimsProcessor, atLeast(1)).process(any(), any(), any());
         verify(jobRepository, atLeastOnce()).updatePercentageCompleted(anyString(), anyInt());
     }
 
@@ -324,9 +279,8 @@ class JobProcessorUnitTest {
         assertThat(processedJob.getStatusMessage(), CoreMatchers.startsWith("Could not delete directory"));
         assertThat(processedJob.getExpiresAt(), nullValue());
 
-        verify(fileService).createDirectory(Mockito.any());
+        verify(fileService).createDirectory(any());
         verify(contractAdapter, never()).getPatients(anyString());
-        verify(fileService, never()).createOrReplaceFile(Mockito.any(Path.class), anyString());
     }
 
     @Test
@@ -345,9 +299,8 @@ class JobProcessorUnitTest {
         assertThat(processedJob.getStatusMessage(), CoreMatchers.startsWith("Could not create output directory"));
         assertThat(processedJob.getExpiresAt(), nullValue());
 
-        verify(fileService).createDirectory(Mockito.any());
+        verify(fileService).createDirectory(any());
         verify(contractAdapter, never()).getPatients(anyString());
-        verify(fileService, never()).createOrReplaceFile(Mockito.any(Path.class), anyString());
     }
 
     @Test

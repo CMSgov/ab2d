@@ -365,31 +365,26 @@ public class JobServiceTest {
     }
 
     @Test
-    public void checkIfUserHasActiveJobTest() {
-        boolean result = jobService.checkIfCurrentUserHasActiveJob();
-        Assert.assertFalse(result);
+    public void checkIfUserCanAddJobTest() {
+        boolean result = jobService.checkIfCurrentUserCanAddJob();
+        Assert.assertTrue(result);
     }
 
     @Test
-    public void checkIfUserHasActiveJobTrueTest() {
+    public void checkIfUserCanAddJobTrueTest() {
         jobService.createJob(EOB, "http://localhost:8080");
 
-        boolean result = jobService.checkIfCurrentUserHasActiveJob();
+        boolean result = jobService.checkIfCurrentUserCanAddJob();
         Assert.assertTrue(result);
     }
 
     @Test
-    public void checkIfUserHasActiveJobWithBadContractTest() {
-        var exceptionThrown = assertThrows(ResourceNotFoundException.class,
-                () -> jobService.checkIfCurrentUserHasActiveJobForContractNumber("S001"));
-        Assert.assertThat(exceptionThrown.getMessage(), is("Contract number S001 was not found"));
-    }
+    public void checkIfUserCanAddJobPastLimitTest() {
+        jobService.createJob(EOB, "http://localhost:8080");
+        jobService.createJob(EOB, "http://localhost:8080");
+        jobService.createJob(EOB, "http://localhost:8080");
 
-    @Test
-    public void checkIfUserHasActiveJobWithContractTest() {
-        jobService.createJob(EOB, "http://localhost:8080", VALID_CONTRACT_NUMBER);
-
-        boolean result = jobService.checkIfCurrentUserHasActiveJobForContractNumber(VALID_CONTRACT_NUMBER);
-        Assert.assertTrue(result);
+        boolean result = jobService.checkIfCurrentUserCanAddJob();
+        Assert.assertFalse(result);
     }
 }

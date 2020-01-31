@@ -47,11 +47,11 @@ public class OptOutTest {
         oo.setPurposeCode("Purpose COde");
         oo.setScopeCode("Scope COde");
 
-        List<OptOut> noopts = optOutRepository.findByHicn("HICN");
+        List<OptOut> noopts = optOutRepository.findByCcwId("CCW ID");
         assertEquals(0, noopts.size());
 
         optOutRepository.save(oo);
-        List<OptOut> noopts2 = optOutRepository.findByHicn("HICN");
+        List<OptOut> noopts2 = optOutRepository.findByCcwId("CCW ID");
         assertEquals(1, noopts2.size());
 
         assertEquals(oo.getMbi(), "MBI");

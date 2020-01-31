@@ -102,6 +102,7 @@ public class DataSetup {
         user.setUsername(TEST_USER);
         user.setSponsor(sponsor);
         user.setEnabled(true);
+        user.setMaxParallelJobs(3);
         for(String userRole :  userRoles) {
             Role role = new Role();
             role.setName(userRole);
