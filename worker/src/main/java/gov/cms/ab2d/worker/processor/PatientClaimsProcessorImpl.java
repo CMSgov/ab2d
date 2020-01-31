@@ -5,7 +5,7 @@ import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.util.FHIRUtil;
 import gov.cms.ab2d.filter.ExplanationOfBenefitTrimmer;
 import gov.cms.ab2d.filter.FilterOutByDate;
-import gov.cms.ab2d.worker.adapter.bluebutton.GetPatientsByContractResponse;
+import gov.cms.ab2d.worker.adapter.bluebutton.GetPatientsByContractResponse.PatientDTO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
@@ -40,12 +40,11 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
     private final FhirContext fhirContext;
 
     @Async("patientProcessorThreadPool")
-    public Future<Integer> process(GetPatientsByContractResponse.PatientDTO patient, final JobDataWriter writer, OffsetDateTime attTime) {
-        int errorCount = 0;
+    public Future<Void> process(PatientDTO patientDTO, final JobDataWriter writer, OffsetDateTime attTime) {
         int resourceCount = 0;
 
         try {
-            var resources = getEobBundleResources(patient, attTime);
+            var resources = getEobBundleResources(patientDTO, attTime);
 
             var jsonParser = fhirContext.newJsonParser();
 
@@ -57,7 +56,6 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
                     byteArrayOutputStream.write(payload.getBytes(StandardCharsets.UTF_8));
                 } catch (Exception e) {
                     log.warn("Encountered exception while processing job resources: {}", e.getMessage());
-                    ++errorCount;
                     handleException(writer, e);
                 }
             }
@@ -66,7 +64,6 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
                 writer.addDataEntry(byteArrayOutputStream.toByteArray());
             }
         } catch (Exception e) {
-            ++errorCount;
             try {
                 handleException(writer, e);
             } catch (IOException e1) {
@@ -78,11 +75,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
 
         log.debug("finished writing [{}] resources", resourceCount);
 
-        if (errorCount > 0) {
-            log.warn("[{}] error records. Should create an error row in JobOutput table", errorCount);
-        }
-
-        return new AsyncResult<>(errorCount);
+        return new AsyncResult<>(null);
     }
 
     private void handleException(JobDataWriter writer, Exception e) throws IOException {
@@ -97,7 +90,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
         writer.addErrorEntry(byteArrayOutputStream.toByteArray());
     }
 
-    private List<Resource> getEobBundleResources(GetPatientsByContractResponse.PatientDTO patient, OffsetDateTime attTime) {
+    private List<Resource> getEobBundleResources(PatientDTO patient, OffsetDateTime attTime) {
 
         Bundle eobBundle = bfdClient.requestEOBFromServer(patient.getPatientId());
 
