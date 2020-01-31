@@ -3051,8 +3051,6 @@
    
 1. Encrypt keystore and put it in S3
 
-   > *** TO DO ***: Need to replace './ab2d_sbx_keystore' files with the keystore name
-
    *Example for "Dev" environment:*
    
    ```ShellSession
@@ -3110,38 +3108,4 @@
       ```ShellSession
       $ ls /tmp/ab2d_sbx_keystore
       ```
-
-## Create a service-linked role for EC2
-
-> *** TO DO ***: Determine the correct way to create service-linked role for EC2
-
-1. Open Chrome
-
-1. Log on to AWS
-
-1. Select **IAM**
-
-1. Select **Roles**
-
-1. Select **Create Role**
-
-1. Select **AWS Service**
-
-1. Select **EC2**
-
-1. Select **Next: Permissions**
-
-1. Check the following
-
-   - Ab2dKmsPolicy
-
-1. Select **Next: Tags**
-
-1. Select **Next: Review**
-
-1. Configure the role as follows
-
-   **Role Name:** Ab2dEc2ServiceRole
-
-1. Select **Create role**
 
