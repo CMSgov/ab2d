@@ -530,13 +530,38 @@
    ```ShellSession
    $ ssh -i ~/.ssh/${TARGET_ENVIRONMENT}.pem ${SSH_USER_NAME}@${NODE_PRIVATE_IP}
    ```
+
+1. Switch to root
+
+   ```ShellSession
+   $ sudo su
+   ```
+
+1. If you want to clear the log to get fresh logging, do the following:
+
+   1. Clear the log
+
+      ```ShellSession
+      $ sudo cat /dev/null > /var/log/messages
+      ```
+
+   2. Wait a few minutes to get the fresh logging
    
 1. Copy "messages" log to ec2-user home directory
 
    ```ShellSession
-   $ sudo su
    $ cp /var/log/messages /home/ec2-user
+   ```
+
+1. Change the ownership on the file
+
+   ```ShellSession
    $ chown ec2-user:ec2-user /home/ec2-user/messages
+   ```
+
+1. Exit the root user
+
+   ```ShellSession
    $ exit
    ```
 
