@@ -59,3 +59,6 @@ variable "efs_dns_name" {}
 variable "bfd_url" {}
 variable "bfd_keystore_location" {}
 variable "bfd_keystore_password" {}
+
+variable "hicn_hash_pepper" {}
+variable "hicn_hash_iter" {}

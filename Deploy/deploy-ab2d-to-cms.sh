@@ -235,7 +235,7 @@ if [ -z "${DATABASE_PASSWORD}" ]; then
   DATABASE_PASSWORD=$(./get-database-secret.py $CMS_ENV database_password $DATABASE_SECRET_DATETIME)
 fi
 
-# Create or get database name secret (if doesn't exist)
+# Create or get database name secret
 
 DATABASE_NAME=$(./get-database-secret.py $CMS_ENV database_name $DATABASE_SECRET_DATETIME)
 if [ -z "${DATABASE_NAME}" ]; then
@@ -245,7 +245,7 @@ if [ -z "${DATABASE_NAME}" ]; then
   DATABASE_NAME=$(./get-database-secret.py $CMS_ENV database_name $DATABASE_SECRET_DATETIME)
 fi
 
-# Create or get bfd url secret (if doesn't exist)
+# Create or get bfd url secret
 
 BFD_URL=$(./get-database-secret.py $CMS_ENV bfd_url $DATABASE_SECRET_DATETIME)
 if [ -z "${BFD_URL}" ]; then
@@ -255,7 +255,7 @@ if [ -z "${BFD_URL}" ]; then
   BFD_URL=$(./get-database-secret.py $CMS_ENV bfd_url $DATABASE_SECRET_DATETIME)
 fi
 
-# Create or get bfd keystore location secret (if doesn't exist)
+# Create or get bfd keystore location secret
 
 BFD_KEYSTORE_LOCATION=$(./get-database-secret.py $CMS_ENV bfd_keystore_location $DATABASE_SECRET_DATETIME)
 if [ -z "${BFD_KEYSTORE_LOCATION}" ]; then
@@ -265,7 +265,7 @@ if [ -z "${BFD_KEYSTORE_LOCATION}" ]; then
   BFD_KEYSTORE_LOCATION=$(./get-database-secret.py $CMS_ENV bfd_keystore_location $DATABASE_SECRET_DATETIME)
 fi
 
-# Create or get bfd keystore password secret (if doesn't exist)
+# Create or get bfd keystore password secret
 
 BFD_KEYSTORE_PASSWORD=$(./get-database-secret.py $CMS_ENV bfd_keystore_password $DATABASE_SECRET_DATETIME)
 if [ -z "${BFD_KEYSTORE_PASSWORD}" ]; then
@@ -275,6 +275,26 @@ if [ -z "${BFD_KEYSTORE_PASSWORD}" ]; then
   BFD_KEYSTORE_PASSWORD=$(./get-database-secret.py $CMS_ENV bfd_keystore_password $DATABASE_SECRET_DATETIME)
 fi
 
+# Create or get hicn hash pepper secret
+
+HICN_HASH_PEPPER=$(./get-database-secret.py $CMS_ENV hicn_hash_pepper $DATABASE_SECRET_DATETIME)
+if [ -z "${HICN_HASH_PEPPER}" ]; then
+  echo "*********************************************************"
+  ./create-database-secret.py $CMS_ENV hicn_hash_pepper $KMS_KEY_ID $DATABASE_SECRET_DATETIME
+  echo "*********************************************************"
+  HICN_HASH_PEPPER=$(./get-database-secret.py $CMS_ENV hicn_hash_pepper $DATABASE_SECRET_DATETIME)
+fi
+
+# Create or get hicn hash iter secret
+
+HICN_HASH_ITER=$(./get-database-secret.py $CMS_ENV hicn_hash_iter $DATABASE_SECRET_DATETIME)
+if [ -z "${HICN_HASH_ITER}" ]; then
+  echo "*********************************************************"
+  ./create-database-secret.py $CMS_ENV hicn_hash_iter $KMS_KEY_ID $DATABASE_SECRET_DATETIME
+  echo "*********************************************************"
+  HICN_HASH_ITER=$(./get-database-secret.py $CMS_ENV hicn_hash_iter $DATABASE_SECRET_DATETIME)
+fi
+
 # If any databse secret produced an error, exit the script
 
 if [ "${DATABASE_USER}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
@@ -282,8 +302,10 @@ if [ "${DATABASE_USER}" == "ERROR: Cannot get database secret because KMS key is
   || [ "${DATABASE_NAME}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
   || [ "${BFD_URL}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
   || [ "${BFD_KEYSTORE_LOCATION}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
-  || [ "${BFD_KEYSTORE_PASSWORD}" == "ERROR: Cannot get database secret because KMS key is disabled!" ]; then
-    echo "ERROR: Cannot get database secrets because KMS key is disabled!"
+  || [ "${BFD_KEYSTORE_PASSWORD}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
+  || [ "${HICN_HASH_PEPPER}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
+  || [ "${HICN_HASH_ITER}" == "ERROR: Cannot get database secret because KMS key is disabled!" ]; then
+    echo "ERROR: Cannot get secrets because KMS key is disabled!"
     exit 1
 fi
 
@@ -1455,6 +1477,8 @@ if [ -z "${AUTOAPPROVE}" ]; then
     --var "bfd_url=$BFD_URL" \
     --var "bfd_keystore_location=$BFD_KEYSTORE_LOCATION" \
     --var "bfd_keystore_password=$BFD_KEYSTORE_PASSWORD" \
+    --var "hicn_hash_pepper=$HICN_HASH_PEPPER" \
+    --var "hicn_hash_iter=$HICN_HASH_ITER" \
     --target module.worker
 
 else
@@ -1498,6 +1522,8 @@ else
     --var "bfd_url=$BFD_URL" \
     --var "bfd_keystore_location=$BFD_KEYSTORE_LOCATION" \
     --var "bfd_keystore_password=$BFD_KEYSTORE_PASSWORD" \
+    --var "hicn_hash_pepper=$HICN_HASH_PEPPER" \
+    --var "hicn_hash_iter=$HICN_HASH_ITER" \
     --target module.worker \
     --auto-approve
 

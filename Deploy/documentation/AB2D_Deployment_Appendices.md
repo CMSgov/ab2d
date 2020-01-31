@@ -495,7 +495,7 @@
    
    ```ShellSession
    $ export TARGET_ENVIRONMENT=ab2d-sbx-sandbox
-   $ export NODE_PRIVATE_IP=10.242.31.151
+   $ export NODE_PRIVATE_IP=10.242.31.64
    $ export SSH_USER_NAME=ec2-user
    ```
 
@@ -519,7 +519,7 @@
    
    ```ShellSession
    $ export TARGET_ENVIRONMENT=ab2d-sbx-sandbox
-   $ export NODE_PRIVATE_IP=10.242.31.25
+   $ export NODE_PRIVATE_IP=10.242.31.162
    $ export SSH_USER_NAME=ec2-user
    ```
 

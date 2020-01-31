@@ -139,6 +139,8 @@ module "worker" {
   bfd_url                       = var.bfd_url
   bfd_keystore_location         = var.bfd_keystore_location
   bfd_keystore_password         = var.bfd_keystore_password
+  hicn_hash_pepper              = var.hicn_hash_pepper
+  hicn_hash_iter                = var.hicn_hash_iter
 }
 
 module "cloudwatch" {

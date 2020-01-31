@@ -1281,6 +1281,10 @@
 
 1. If prompted, enter bfd keystore password at the "Enter desired bfd_keystore_password" prompt
 
+1. If prompted, enter bfd keystore password at the "Enter desired hicn_hash_pepper" prompt
+
+1. If prompted, enter bfd keystore password at the "Enter desired hicn_hash_iter" prompt
+
 ## Update application
 
 1. Change to the "Deploy" directory

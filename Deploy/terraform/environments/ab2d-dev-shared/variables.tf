@@ -253,3 +253,13 @@ variable "bfd_keystore_password" {
   default     = ""
   description = "Please pass this on command line and not as a value here"
 }
+
+variable "hicn_hash_pepper" {
+  default     = ""
+  description = "Please pass this on command line and not as a value here"
+}
+
+variable "hicn_hash_iter" {
+  default     = ""
+  description = "Please pass this on command line and not as a value here"
+}
