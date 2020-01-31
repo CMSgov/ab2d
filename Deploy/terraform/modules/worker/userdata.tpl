@@ -96,6 +96,10 @@ sudo mount -a
 # Place BFD keystore in shared EFS directory (if doesn't already exist)
 if [[ -d "/mnt/efs/bfd-keystore/${env}" ]] && [[ -f "/mnt/efs/bfd-keystore/${env}/ab2d_sbx_keystore" ]]; then
 
+  echo "NOTE: BFD keystore already exists in EFS."
+
+else
+
   ##############################################################
   # Moved "provision-app-instance.sh" under packer END
   ##############################################################
