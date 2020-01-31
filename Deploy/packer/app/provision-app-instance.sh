@@ -1,8 +1,8 @@
 #!/bin/bash
 # Purpose: Shell script to provision image for app instances
 
-set -x #Be verbose
-set -e #Exit on first error
+set -x # Be verbose
+set -e # Exit on first error
 export APP_DIR=$HOME/app/
 
 #
@@ -110,7 +110,54 @@ sudo sed -i '/SystemLogRateLimitBurst/c\$SystemLogRateLimitBurst 2000' /etc/rsys
 # sudo /opt/splunkforwarder/bin/splunk clone-prep-clear-config
 # sudo /opt/splunkforwarder/bin/splunk start
 
+#
+# Setup Ruby environment
+#
+
+# Install rbenv dependencies
+sudo yum install -y git-core zlib zlib-devel gcc-c++ patch readline \
+  readline-devel libyaml-devel libffi-devel openssl-devel make bzip2 \
+  autoconf automake libtool bison curl sqlite-devel
+
+# Install rbenv and ruby-build
+set +e # Ignore errors
+curl -sL https://github.com/rbenv/rbenv-installer/raw/master/bin/rbenv-installer | bash -
+set -e # Exit on next error
+echo "*********************************************************"
+echo "NOTE: Ignore the 'not found' message in the above output."
+echo "*********************************************************"
+
+# Add rbenv initialization to "bashrc"
+echo 'export PATH="$HOME/.rbenv/bin:$PATH"' >> ~/.bashrc
+echo 'eval "$(rbenv init -)"' >> ~/.bashrc
+
+# Initialize rbenv for the current session
+export PATH="$HOME/.rbenv/bin:$PATH"
+eval "$(rbenv init -)"
+
+# Install Ruby 2.6.5
+echo "NOTE: the ruby install takes a while..."
+rbenv install 2.6.5
+
+# Set the global version of Ruby
+rbenv global 2.6.5
+
+# Install bundler
+gem install bundler
+
+# Update Ruby Gems
+gem update --system
+
+# Change to the "/tmp" directory
+cd /tmp
+
+# Ensure required gems are installed
+bundle install
+
+#
 # Make sure ec2 userdata is enabled
+#
+
 sudo touch /var/tmp/initial
 
 # ECS agent
