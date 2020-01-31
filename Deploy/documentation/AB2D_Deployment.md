@@ -3005,13 +3005,72 @@
 
 1. Select **Save**
 
+## Initiate BFD integration process
+
+> *** TO DO ***: Complete this section
+
+1. Change to the "Downloads" directory
+
+   ```ShellSession
+   $ cd ~/Downloads
+   ```
+
+1. Send output from "prod-sbx.bfdcloud.net" that includes only the certificate to a file
+
+   ```ShellSession
+   $ openssl s_client -connect prod-sbx.bfdcloud.net:443 \
+       2>/dev/null | openssl x509 -text \
+       | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' \
+       > prod-sbx.bfdcloud.crt
+   ```
+
+1. Note that there is a "bfd-users" slack channel for cmsgov with BFD engineers
+
+1. Create a self-signed SSL certificate
+
+   *Example for "Dev" environment:*
+
+   > *** TO DO ***: Document this
+
+   *Example for "Sbx" environment:*
+
+   > *** TO DO ***: Document this
+
+   *Example for "Impl" environment:*
+
+   > *** TO DO ***: Document this
+
+1. Save the private key associated with the self-signed SSL certificate in 1Password
+
+   *Example for "Dev" environment:*
+
+   > *** TO DO ***: Document this
+
+   *Example for "Sbx" environment:*
+
+   > *** TO DO ***: Document this
+
+   *Example for "Impl" environment:*
+
+   > *** TO DO ***: Document this
+
+1. Give the public key associated with the self-signed SSL certificate to a BFD engineer that you find on the "bfd-users" slack channel
+
 ## Peer AB2D Dev, Sandbox, Impl environments with the BFD Sbx VPC and peer AB2D Prod with BFD Prod VPC
 
+1. Note that peering is no longer needed for using the BFD Sbx (AKA prod-sbx.bfdcloud.net)
+
+1. *** TO DO *** Determine what will need to be done for BFD Prod
+
 1. Note that CCS usually likes to handle the peering between project environments and BFD and then the ADO teams can authorize access
+
+   > *** TO DO ***: Determine if this step needed for BFD Prod?
 
 1. Request that CMS technical contact (e.g. Stephen) create a ticket like the following
 
    > https://jira.cms.gov/browse/CMSAWSOPS-53861
+
+   > *** TO DO ***: Determine if this step needed for BFD Prod?
 
 ## Encrypt BFD keystore and put in S3
 
