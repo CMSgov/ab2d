@@ -2,6 +2,7 @@ package gov.cms.ab2d.worker.adapter.bluebutton;
 
 import gov.cms.ab2d.filter.FilterOutByDate;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 
@@ -13,6 +14,8 @@ import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static org.apache.commons.lang3.StringUtils.contains;
+
 /**
  * This is a stub implementation that we can use till the BFD API becomes available.
  * The rightmost 3 characters of the contractNumber being passed in must be numeric.
@@ -20,6 +23,9 @@ import java.util.stream.Collectors;
 @Slf4j
 @Component
 public class ContractAdapterStub implements ContractAdapter {
+
+    @Value("${bfd.serverBaseUrl}")
+    private String serverBaseUrl;
 
     private static final String BENE_ID_FILE = "/test-stub-data/synthetic-bene-ids.csv";
     private static final int MAX_ROWS = 30_000;
@@ -102,6 +108,11 @@ public class ContractAdapterStub implements ContractAdapter {
 
                 final List<String> rows = br.lines()
                         .limit(rowsToRetrieve)
+                        // This is kind of a hack, I know, but this is a mock,
+                        // and it's not going to be around for much longer anyway.
+                        .map(row -> contains(serverBaseUrl,
+                                "hhsdevcloud") ? row : "-"
+                                .concat(row))
                         .collect(Collectors.toList());
 
                 patientIdRows.addAll(rows);
