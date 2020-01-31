@@ -318,7 +318,7 @@ public class JobProcessorImpl implements JobProcessor {
 
     private boolean isOptOutPatient(String patientId) {
 
-        final List<OptOut> optOuts = optOutRepository.findByHicn(patientId);
+        final List<OptOut> optOuts = optOutRepository.findByCcwId(patientId);
         if (optOuts.isEmpty()) {
             // No opt-out record found for this patient - Opt-In by default.
             return false;
