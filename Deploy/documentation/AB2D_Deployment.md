@@ -3013,28 +3013,52 @@
 
 > *** TO DO ***: Complete this section
 
-1. Change to the "Downloads" directory
+1. Note that there is a "bfd-users" slack channel for cmsgov with BFD engineers
+
+1. Create a temporary directory
 
    ```ShellSession
-   $ cd ~/Downloads
+   $ mkdir -p ~/Downloads/bfd-integration
+   ```
+
+1. Change to the temporary directory
+
+   ```ShellSession
+   $ cd ~/Downloads/bfd-integration
    ```
 
 1. Send output from "prod-sbx.bfdcloud.net" that includes only the certificate to a file
 
    ```ShellSession
    $ openssl s_client -connect prod-sbx.bfdcloud.net:443 \
-       2>/dev/null | openssl x509 -text \
-       | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' \
-       > prod-sbx.bfdcloud.crt
+     2>/dev/null | openssl x509 -text \
+     | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' \
+     > prod-sbx.bfdcloud.pem
    ```
-
-1. Note that there is a "bfd-users" slack channel for cmsgov with BFD engineers
 
 1. Create a self-signed SSL certificate
 
    *Example for "Dev" environment:*
 
-   > *** TO DO ***: Document this
+   ```ShellSession
+   $ keytool -genkey \
+     -alias client_data_server_ab2d_sbx_certificate_xxx \
+     -dname "CN=ab2d-sbx-client-xxx" \
+     -keyalg RSA \
+     -sigalg SHA256withRSA \
+     -ext v1 \
+     -keystore ab2d_sbx_keystore_xxx \
+     -storetype PKCS12 \
+     -storepass password \
+     -validity 1825 \
+     -keysize 4096
+   ```
+
+   1. Configure the keystore as follows
+
+      - **What is your first and last name:** ab2d-sbx-client
+
+      - **What is the name of your organizational unit:** ab2d
 
    *Example for "Sbx" environment:*
 
