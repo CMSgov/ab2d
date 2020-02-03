@@ -3123,7 +3123,7 @@
    $ openssl pkcs12 -export \
      -in client_data_server_ab2d_imp_certificate.pem \
      -inkey client_data_server_ab2d_imp_certificate.key \
-     -out ab2d_sbx_keystore \
+     -out ab2d_imp_keystore \
      -name client_data_server_ab2d_imp_certificate
    ```
    
