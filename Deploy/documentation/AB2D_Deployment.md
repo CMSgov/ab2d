@@ -3119,7 +3119,13 @@
 
    *Example for "Impl" environment:*
 
-   > *** TO DO ***: Document this
+   ```ShellSession
+   $ openssl pkcs12 -export \
+     -in client_data_server_ab2d_imp_certificate.pem \
+     -inkey client_data_server_ab2d_imp_certificate.key \
+     -out ab2d_sbx_keystore \
+     -name client_data_server_ab2d_imp_certificate
+   ```
    
 1. Enter the desired export password at the "Enter Export Password" prompt
 
