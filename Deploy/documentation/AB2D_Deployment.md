@@ -3290,7 +3290,7 @@
    yes
    ```
 
-1. Verify that both client and
+1. Verify that both the bfd sandbox and client certificates are present
 
    *Example for "Dev" environment:*
    
