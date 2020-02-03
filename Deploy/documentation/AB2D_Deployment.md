@@ -3047,7 +3047,7 @@
      -days 1825 \
      -newkey rsa:4096 \
      -keyout client_data_server_ab2d_dev_certificate.key \
-     -subj "/CN=ab2d-sbx-client" \
+     -subj "/CN=ab2d-dev-client" \
      -out client_data_server_ab2d_dev_certificate.pem
    ```
    
@@ -3071,7 +3071,7 @@
      -days 1825 \
      -newkey rsa:4096 \
      -keyout client_data_server_ab2d_imp_certificate.key \
-     -subj "/CN=ab2d-sbx-client" \
+     -subj "/CN=ab2d-imp-client" \
      -out client_data_server_ab2d_imp_certificate.pem
    ```
 
