@@ -581,6 +581,12 @@
    $ aws configure --profile={vpc tag}
    ```
 
+   *Example for "Mgmt" environment:*
+   
+   ```ShellSession
+   $ aws configure --profile=ab2d-mgmt-east-dev
+   ```
+
    *Example for "Dev" environment:*
    
    ```ShellSession
@@ -3011,9 +3017,13 @@
 
 ## Initiate BFD integration process
 
-> *** TO DO ***: Complete this section
-
 1. Note that there is a "bfd-users" slack channel for cmsgov with BFD engineers
+
+1. Remove temporary directory (if exists)
+
+   ```ShellSession
+   $ rm -rf ~/Downloads/bfd-integration
+   ```
 
 1. Create a temporary directory
 
@@ -3027,6 +3037,188 @@
    $ cd ~/Downloads/bfd-integration
    ```
 
+1. Create a self-signed SSL certificate for AB2D client to BFD sandbox
+
+   *Example for "Dev" environment:*
+
+   ```ShellSession
+   $ openssl req \
+     -nodes -x509 \
+     -days 1825 \
+     -newkey rsa:4096 \
+     -keyout client_data_server_ab2d_dev_certificate.key \
+     -subj "/CN=ab2d-sbx-client" \
+     -out client_data_server_ab2d_dev_certificate.pem
+   ```
+   
+   *Example for "Sbx" environment:*
+
+   ```ShellSession
+   $ openssl req \
+     -nodes -x509 \
+     -days 1825 \
+     -newkey rsa:4096 \
+     -keyout client_data_server_ab2d_sbx_certificate.key \
+     -subj "/CN=ab2d-sbx-client" \
+     -out client_data_server_ab2d_sbx_certificate.pem
+   ```
+
+   *Example for "Impl" environment:*
+
+   ```ShellSession
+   $ openssl req \
+     -nodes -x509 \
+     -days 1825 \
+     -newkey rsa:4096 \
+     -keyout client_data_server_ab2d_imp_certificate.key \
+     -subj "/CN=ab2d-sbx-client" \
+     -out client_data_server_ab2d_imp_certificate.pem
+   ```
+
+1. Note that the following two files were created
+
+   *Example for "Dev" environment:*
+
+   - client_data_server_ab2d_dev_certificate.key (private key)
+
+   - client_data_server_ab2d_dev_certificate.pem (self-signed crtificate)
+
+   *Example for "Sbx" environment:*
+
+   - client_data_server_ab2d_sbx_certificate.key (private key)
+
+   - client_data_server_ab2d_sbx_certificate.pem (self-signed crtificate)
+
+   *Example for "Impl" environment:*
+
+   - client_data_server_ab2d_imp_certificate.key (private key)
+
+   - client_data_server_ab2d_imp_certificate.pem (self-signed crtificate)
+
+1. Create a keystore that includes the self-signed SSL certificate for AB2D client to BFD sandbox
+
+   *Example for "Dev" environment:*
+
+   ```ShellSession
+   $ openssl pkcs12 -export \
+     -in client_data_server_ab2d_dev_certificate.pem \
+     -inkey client_data_server_ab2d_dev_certificate.key \
+     -out ab2d_dev_keystore \
+     -name client_data_server_ab2d_dev_certificate
+   ```
+
+   *Example for "Sbx" environment:*
+
+   ```ShellSession
+   $ openssl pkcs12 -export \
+     -in client_data_server_ab2d_sbx_certificate.pem \
+     -inkey client_data_server_ab2d_sbx_certificate.key \
+     -out ab2d_sbx_keystore \
+     -name client_data_server_ab2d_sbx_certificate
+   ```
+
+   *Example for "Impl" environment:*
+
+   > *** TO DO ***: Document this
+   
+1. Enter the desired export password at the "Enter Export Password" prompt
+
+1. Re-enter the desired export password at the "Verifying - Enter Export Password" prompt
+
+1. Note that the following file has been created
+
+   *Example for "Dev" environment:*
+
+   - ab2d_dev_keystore (keystore)
+
+   *Example for "Sbx" environment:*
+
+   - ab2d_sbx_keystore (keystore)
+
+   *Example for "Impl" environment:*
+
+   - ab2d_imp_keystore (keystore)
+
+1. Save the private key, self-signed certificate, keystore, and keystore password in the "ab2d" vault of 1Password
+
+   *Example for "Dev" environment:*
+
+   Label                                      |File
+   -------------------------------------------|-------------------------------------------
+   AB2D Keystore for Dev                      |ab2d_dev_keystore
+   client_data_server_ab2d_dev_certificate.key|client_data_server_ab2d_dev_certificate.key
+   client_data_server_ab2d_dev_certificate.pem|client_data_server_ab2d_dev_certificate.pem
+
+   Label                          |Value
+   -------------------------------|-----------------------------------------------
+   AB2D Keystore for Dev: Password|{password for the 'ab2d_dev_keystore' keystore}
+
+   *Example for "Sbx" environment:*
+
+   Label                                      |File
+   -------------------------------------------|-------------------------------------------
+   AB2D Keystore for Sandbox                  |ab2d_sbx_keystore
+   client_data_server_ab2d_sbx_certificate.key|client_data_server_ab2d_sbx_certificate.key
+   client_data_server_ab2d_sbx_certificate.pem|client_data_server_ab2d_sbx_certificate.pem
+
+   Label                              |Value
+   -----------------------------------|-----------------------------------------------
+   AB2D Keystore for Sandbox: Password|{password for the 'ab2d_sbx_keystore' keystore}
+
+   *Example for "Impl" environment:*
+
+   Label                                      |File
+   -------------------------------------------|-------------------------------------------
+   AB2D Keystore for Impl                     |ab2d_imp_keystore
+   client_data_server_ab2d_imp_certificate.key|client_data_server_ab2d_imp_certificate.key
+   client_data_server_ab2d_imp_certificate.pem|client_data_server_ab2d_imp_certificate.pem
+
+   Label                           |Value
+   --------------------------------|-----------------------------------------------
+   AB2D Keystore for Impl: Password|{password for the 'ab2d_imp_keystore' keystore}
+
+1. Export the public key from the self-signed SSL certificate for AB2D client to BFD sandbox
+
+   *Example for "Dev" environment:*
+
+   ```ShellSession
+   $ openssl x509 -pubkey -noout \
+     -in client_data_server_ab2d_dev_certificate.pem \
+     > client_data_server_ab2d_dev_certificate.pub
+   ```
+
+   *Example for "Sbx" environment:*
+   
+   ```ShellSession
+   $ openssl x509 -pubkey -noout \
+     -in client_data_server_ab2d_sbx_certificate.pem \
+     > client_data_server_ab2d_sbx_certificate.pub
+   ```
+
+   *Example for "Impl" environment:*
+
+   ```ShellSession
+   $ openssl x509 -pubkey -noout \
+     -in client_data_server_ab2d_imp_certificate.pem \
+     > client_data_server_ab2d_imp_certificate.pub
+   ```
+
+1. Note that the following file has been created
+
+   *Example for "Dev" environment:*
+   
+   - client_data_server_ab2d_dev_certificate.pub (public key)
+
+   *Example for "Sbx" environment:*
+   
+   - client_data_server_ab2d_sbx_certificate.pub (public key)
+
+   *Example for "Impl" environment:*
+
+   - client_data_server_ab2d_imp_certificate.pub (public key)
+
+1. Give the public key associated with the self-signed SSL certificate to a BFD engineer that you find on the "bfd-users" slack channel
+
 1. Send output from "prod-sbx.bfdcloud.net" that includes only the certificate to a file
 
    ```ShellSession
@@ -3036,53 +3228,91 @@
      > prod-sbx.bfdcloud.pem
    ```
 
-1. Create a self-signed SSL certificate
+1. Note that the following file has been created
+
+   - prod-sbx.bfdcloud.pem (certificate from the bfd sandbox server)
+
+1. Import "prod-sbx.bfdcloud.net" certificate into the keystore
 
    *Example for "Dev" environment:*
-
+   
    ```ShellSession
-   $ keytool -genkey \
-     -alias client_data_server_ab2d_sbx_certificate_xxx \
-     -dname "CN=ab2d-sbx-client-xxx" \
-     -keyalg RSA \
-     -sigalg SHA256withRSA \
-     -ext v1 \
-     -keystore ab2d_sbx_keystore_xxx \
+   $ keytool -import \
+     -alias bfd-prod-sbx-selfsigned \
+     -file prod-sbx.bfdcloud.pem \
      -storetype PKCS12 \
-     -storepass password \
-     -validity 1825 \
-     -keysize 4096
+     -keystore ab2d_dev_keystore
    ```
 
-   1. Configure the keystore as follows
-
-      - **What is your first and last name:** ab2d-sbx-client
-
-      - **What is the name of your organizational unit:** ab2d
-
    *Example for "Sbx" environment:*
-
-   > *** TO DO ***: Document this
+   
+   ```ShellSession
+   $ keytool -import \
+     -alias bfd-prod-sbx-selfsigned \
+     -file prod-sbx.bfdcloud.pem \
+     -storetype PKCS12 \
+     -keystore ab2d_sbx_keystore
+   ```
 
    *Example for "Impl" environment:*
+   
+   ```ShellSession
+   $ keytool -import \
+     -alias bfd-prod-sbx-selfsigned \
+     -file prod-sbx.bfdcloud.pem \
+     -storetype PKCS12 \
+     -keystore ab2d_imp_keystore
+   ```
 
-   > *** TO DO ***: Document this
+1. Enter the keystore password at the "Enter keystore password" prompt
 
-1. Save the private key associated with the self-signed SSL certificate in 1Password
+1. Enter the following at the "Trust this certificate" prompt
+
+   ```
+   yes
+   ```
+
+1. Verify that both client and
 
    *Example for "Dev" environment:*
-
-   > *** TO DO ***: Document this
+   
+   ```ShellSession
+   $ keytool -list -v -keystore ab2d_dev_keystore
+   ```
 
    *Example for "Sbx" environment:*
-
-   > *** TO DO ***: Document this
+   
+   ```ShellSession
+   $ keytool -list -v -keystore ab2d_sbx_keystore
+   ```
 
    *Example for "Impl" environment:*
+   
+   ```ShellSession
+   $ keytool -list -v -keystore ab2d_imp_keystore
+   ```
 
-   > *** TO DO ***: Document this
+1. Enter the keystore password at the "Enter keystore password" prompt
 
-1. Give the public key associated with the self-signed SSL certificate to a BFD engineer that you find on the "bfd-users" slack channel
+1. Verify that there are sections for the following two aliases in the keystore list output
+
+   *Example for "Dev" environment:*
+   
+   - Alias name: bfd-prod-sbx-selfsigned
+
+   - Alias name: client_data_server_ab2d_dev_certificate
+
+   *Example for "Sbx" environment:*
+   
+   - Alias name: bfd-prod-sbx-selfsigned
+
+   - Alias name: client_data_server_ab2d_sbx_certificate
+
+   *Example for "Impl" environment:*
+   
+   - Alias name: bfd-prod-sbx-selfsigned
+
+   - Alias name: client_data_server_ab2d_imp_certificate
 
 ## Peer AB2D Dev, Sandbox, Impl environments with the BFD Sbx VPC and peer AB2D Prod with BFD Prod VPC
 
