@@ -3146,44 +3146,6 @@
 
    - ab2d_imp_keystore (keystore)
 
-1. Save the private key, self-signed certificate, keystore, and keystore password in the "ab2d" vault of 1Password
-
-   *Example for "Dev" environment:*
-
-   Label                                      |File
-   -------------------------------------------|-------------------------------------------
-   AB2D Keystore for Dev                      |ab2d_dev_keystore
-   client_data_server_ab2d_dev_certificate.key|client_data_server_ab2d_dev_certificate.key
-   client_data_server_ab2d_dev_certificate.pem|client_data_server_ab2d_dev_certificate.pem
-
-   Label                          |Value
-   -------------------------------|-----------------------------------------------
-   AB2D Keystore for Dev: Password|{password for the 'ab2d_dev_keystore' keystore}
-
-   *Example for "Sbx" environment:*
-
-   Label                                      |File
-   -------------------------------------------|-------------------------------------------
-   AB2D Keystore for Sandbox                  |ab2d_sbx_keystore
-   client_data_server_ab2d_sbx_certificate.key|client_data_server_ab2d_sbx_certificate.key
-   client_data_server_ab2d_sbx_certificate.pem|client_data_server_ab2d_sbx_certificate.pem
-
-   Label                              |Value
-   -----------------------------------|-----------------------------------------------
-   AB2D Keystore for Sandbox: Password|{password for the 'ab2d_sbx_keystore' keystore}
-
-   *Example for "Impl" environment:*
-
-   Label                                      |File
-   -------------------------------------------|-------------------------------------------
-   AB2D Keystore for Impl                     |ab2d_imp_keystore
-   client_data_server_ab2d_imp_certificate.key|client_data_server_ab2d_imp_certificate.key
-   client_data_server_ab2d_imp_certificate.pem|client_data_server_ab2d_imp_certificate.pem
-
-   Label                           |Value
-   --------------------------------|-----------------------------------------------
-   AB2D Keystore for Impl: Password|{password for the 'ab2d_imp_keystore' keystore}
-
 1. Export the public key from the self-signed SSL certificate for AB2D client to BFD sandbox
 
    *Example for "Dev" environment:*
@@ -3333,6 +3295,44 @@
 
    - Alias name: client_data_server_ab2d_imp_certificate
 
+1. Save the private key, self-signed certificate, keystore, and keystore password in the "ab2d" vault of 1Password
+
+   *Example for "Dev" environment:*
+
+   Label                                      |File
+   -------------------------------------------|-------------------------------------------
+   AB2D Keystore for Dev                      |ab2d_dev_keystore
+   client_data_server_ab2d_dev_certificate.key|client_data_server_ab2d_dev_certificate.key
+   client_data_server_ab2d_dev_certificate.pem|client_data_server_ab2d_dev_certificate.pem
+
+   Label                          |Value
+   -------------------------------|-----------------------------------------------
+   AB2D Keystore for Dev: Password|{password for the 'ab2d_dev_keystore' keystore}
+
+   *Example for "Sbx" environment:*
+
+   Label                                      |File
+   -------------------------------------------|-------------------------------------------
+   AB2D Keystore for Sandbox                  |ab2d_sbx_keystore
+   client_data_server_ab2d_sbx_certificate.key|client_data_server_ab2d_sbx_certificate.key
+   client_data_server_ab2d_sbx_certificate.pem|client_data_server_ab2d_sbx_certificate.pem
+
+   Label                              |Value
+   -----------------------------------|-----------------------------------------------
+   AB2D Keystore for Sandbox: Password|{password for the 'ab2d_sbx_keystore' keystore}
+
+   *Example for "Impl" environment:*
+
+   Label                                      |File
+   -------------------------------------------|-------------------------------------------
+   AB2D Keystore for Impl                     |ab2d_imp_keystore
+   client_data_server_ab2d_imp_certificate.key|client_data_server_ab2d_imp_certificate.key
+   client_data_server_ab2d_imp_certificate.pem|client_data_server_ab2d_imp_certificate.pem
+
+   Label                           |Value
+   --------------------------------|-----------------------------------------------
+   AB2D Keystore for Impl: Password|{password for the 'ab2d_imp_keystore' keystore}
+
 ## Peer AB2D Dev, Sandbox, Impl environments with the BFD Sbx VPC and peer AB2D Prod with BFD Prod VPC
 
 1. Note that peering is no longer needed for using the BFD Sbx (AKA prod-sbx.bfdcloud.net)
@@ -3350,6 +3350,26 @@
    > *** TO DO ***: Determine if this step needed for BFD Prod?
 
 ## Encrypt BFD keystore and put in S3
+
+1. Get the keystore from 1Password and copy it to the "/tmp" directory
+
+   *Example for "Dev" environment:*
+
+   ```
+   /tmp/ab2d_dev_keystore
+   ```
+
+   *Example for "Sbx" environment:*
+
+   ```
+   /tmp/ab2d_sbx_keystore
+   ```
+
+   *Example for "Impl" environment:*
+
+   ```
+   /tmp/ab2d_imp_keystore
+   ```
 
 1. Set target AWS profile
 
@@ -3390,13 +3410,13 @@
    *Example for "Dev" environment:*
    
    ```ShellSession
-   $ bundle exec rake encrypt_and_put_file_into_s3['./ab2d_sbx_keystore','ab2d-dev-automation']
+   $ bundle exec rake encrypt_and_put_file_into_s3['/tmp/ab2d_dev_keystore','ab2d-dev-automation']
    ```
 
    *Example for "Sbx" environment:*
    
    ```ShellSession
-   $ bundle exec rake encrypt_and_put_file_into_s3['./ab2d_sbx_keystore','ab2d-sbx-sandbox-automation']
+   $ bundle exec rake encrypt_and_put_file_into_s3['/tmp/ab2d_sbx_keystore','ab2d-sbx-sandbox-automation']
    ```
 
    *Example for "Impl" environment:*
@@ -3404,7 +3424,7 @@
    > *** TO DO ***: Run this after deploying to IMPL
    
    ```ShellSession
-   $ bundle exec rake encrypt_and_put_file_into_s3['./ab2d_sbx_keystore','ab2d-east-impl-automation']
+   $ bundle exec rake encrypt_and_put_file_into_s3['/tmp/ab2d_imp_keystore','ab2d-east-impl-automation']
    ```
 
 1. Verify that you can get the encrypted keystore from S3 and decrypt it
@@ -3413,22 +3433,36 @@
    
    1. Remove existing keyfile from the "/tmp" directory (if exists)
 
-      ```ShellSession
-      $ rm -f /tmp/ab2d_sbx_keystore
-      ```
-   
-   1. Get keystore from S3 and decrypt it
-
       *Example for "Dev" environment:*
-      
+
       ```ShellSession
-      $ bundle exec rake get_file_from_s3_and_decrypt['./ab2d_sbx_keystore','ab2d-dev-automation']
+      $ rm -f /tmp/ab2d_dev_keystore
       ```
 
       *Example for "Sbx" environment:*
 
       ```ShellSession
-      $ bundle exec rake get_file_from_s3_and_decrypt['./ab2d_sbx_keystore','ab2d-sbx-sandbox-automation']
+      $ rm -f /tmp/ab2d_sbx_keystore
+      ```
+
+      *Example for "Impl" environment:*
+
+      ```ShellSession
+      $ rm -f /tmp/ab2d_impl_keystore
+      ```
+
+   1. Get keystore from S3 and decrypt it
+
+      *Example for "Dev" environment:*
+      
+      ```ShellSession
+      $ bundle exec rake get_file_from_s3_and_decrypt['/tmp/ab2d_dev_keystore','ab2d-dev-automation']
+      ```
+
+      *Example for "Sbx" environment:*
+
+      ```ShellSession
+      $ bundle exec rake get_file_from_s3_and_decrypt['/tmp/ab2d_sbx_keystore','ab2d-sbx-sandbox-automation']
       ```
 
       *Example for "Impl" environment:*
@@ -3436,12 +3470,47 @@
       > *** TO DO ***: Run this after deploying to IMPL
 
       ```ShellSession
-      $ bundle exec rake get_file_from_s3_and_decrypt['./ab2d_sbx_keystore','ab2d-east-impl-automation']
+      $ bundle exec rake get_file_from_s3_and_decrypt['/tmp/ab2d_imp_keystore','ab2d-east-impl-automation']
       ```
 
-   1. Verify that decrypted file is in the "/tmp" directory
+   1. Verify that both the bfd sandbox and client certificates are present
+
+      *Example for "Dev" environment:*
 
       ```ShellSession
-      $ ls /tmp/ab2d_sbx_keystore
+      $ keytool -list -v -keystore /tmp/ab2d_dev_keystore
       ```
 
+      *Example for "Sbx" environment:*
+
+      ```ShellSession
+      $ keytool -list -v -keystore /tmp/ab2d_sbx_keystore
+      ```
+
+      *Example for "Impl" environment:*
+
+      ```ShellSession
+      $ keytool -list -v -keystore /tmp/ab2d_imp_keystore
+      ```
+
+   1. Enter the keystore password at the "Enter keystore password" prompt
+
+   1. Verify that there are sections for the following two aliases in the keystore list output
+
+      *Example for "Dev" environment:*
+
+      - Alias name: bfd-prod-sbx-selfsigned
+
+      - Alias name: client_data_server_ab2d_dev_certificate
+
+      *Example for "Sbx" environment:*
+
+      - Alias name: bfd-prod-sbx-selfsigned
+
+      - Alias name: client_data_server_ab2d_sbx_certificate
+
+      *Example for "Impl" environment:*
+
+      - Alias name: bfd-prod-sbx-selfsigned
+
+      - Alias name: client_data_server_ab2d_imp_certificate
