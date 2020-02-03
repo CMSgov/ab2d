@@ -35,6 +35,7 @@ public class FileDeletionServiceImpl implements FileDeletionService {
      */
     @Override
     public void deleteFiles() {
+        log.info("File deletion serviced kicked off");
         if (!efsMount.startsWith("/")) {
             throw new EFSMountFormatException("EFS Mount must start with a /");
         }
