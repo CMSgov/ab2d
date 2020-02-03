@@ -3225,6 +3225,18 @@
 
 1. Give the public key associated with the self-signed SSL certificate to a BFD engineer that you find on the "bfd-users" slack channel
 
+   *Example for "Dev" environment:*
+   
+   - client_data_server_ab2d_dev_certificate.pub
+
+   *Example for "Sbx" environment:*
+   
+   - client_data_server_ab2d_sbx_certificate.pub
+
+   *Example for "Impl" environment:*
+
+   - client_data_server_ab2d_imp_certificate.pub
+
 1. Send output from "prod-sbx.bfdcloud.net" that includes only the certificate to a file
 
    ```ShellSession
