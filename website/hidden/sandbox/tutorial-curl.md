@@ -163,7 +163,7 @@ The JSON (formated here for readability) will contain the location of the files 
 To download the content of the file (for each file that is specified):
 
 ```
-curl "https://sandbox.ab2d.cms.gov/api/v1/fhir/Job/5298026c-e503-4d93-9974-c7732f56a0f8/file/S0000.ndjson" \
+curl "https://sandbox.ab2d.cms.gov/api/v1/fhir/Job/${JOB}/file/S0000.ndjson" \
     -H "accept: application/json" \
     -H "Accept: application/fhir+json" \
     -H "Authorization: Bearer ${BEARER_TOKEN}"
