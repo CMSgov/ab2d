@@ -49,7 +49,7 @@
 1. [Create an ab2d vault in 1Password](#create-an-ab2d-vault-in-1password)
 1. [Add an entrust certificate to the ab2d vault in 1Password](#add-an-entrust-certificate-to-the-ab2d-vault-in-1password)
 1. [Add a private key to the ab2d vault in 1Password](#add-a-private-key-to-the-ab2d-vault-in-1password)
-1. [Initiate BFD integration process](#initiate-bfd-integration-process
+1. [Initiate BFD integration process](#initiate-bfd-integration-process)
 1. [Peer AB2D Dev, Sandbox, Impl environments with the BFD Sbx VPC and peer AB2D Prod with BFD Prod VPC](#peer-ab2d-dev-sandbox-impl-environments-with-the-bfd-sbx-vpc-and-peer-ab2d-prod-with-bfd-prod-vpc)
 1. [Encrypt BFD keystore and put in S3](#encrypt-bfd-keystore-and-put-in-s3)
 
