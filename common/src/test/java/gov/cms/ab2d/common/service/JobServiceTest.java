@@ -2,10 +2,7 @@ package gov.cms.ab2d.common.service;
 
 import gov.cms.ab2d.common.SpringBootApp;
 import gov.cms.ab2d.common.model.*;
-import gov.cms.ab2d.common.repository.ContractRepository;
-import gov.cms.ab2d.common.repository.JobRepository;
-import gov.cms.ab2d.common.repository.SponsorRepository;
-import gov.cms.ab2d.common.repository.UserRepository;
+import gov.cms.ab2d.common.repository.*;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.DataSetup;
 import org.apache.commons.io.IOUtils;
@@ -20,7 +17,10 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.transaction.TransactionSystemException;
 import org.testcontainers.containers.PostgreSQLContainer;
@@ -37,6 +37,7 @@ import java.nio.file.Paths;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import static gov.cms.ab2d.common.service.JobServiceImpl.INITIAL_JOB_STATUS_MESSAGE;
 import static gov.cms.ab2d.common.util.Constants.EOB;
@@ -54,25 +55,31 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 public class JobServiceTest {
 
     @Autowired
-    JobService jobService;
+    private JobService jobService;
 
     @Autowired
-    JobRepository jobRepository;
+    private JobRepository jobRepository;
 
     @Autowired
-    UserRepository userRepository;
+    private UserRepository userRepository;
 
     @Autowired
-    SponsorRepository sponsorRepository;
+    private SponsorRepository sponsorRepository;
 
     @Autowired
-    ContractRepository contractRepository;
+    private ContractRepository contractRepository;
 
     @Autowired
-    DataSetup dataSetup;
+    private DataSetup dataSetup;
+
+    @Autowired
+    private UserService userService;
 
     @Value("${efs.mount}")
     private String tmpJobLocation;
+
+    @Autowired
+    private RoleService roleService;
 
     @Container
     private static final PostgreSQLContainer postgreSQLContainer= new AB2DPostgresqlContainer();
@@ -301,6 +308,44 @@ public class JobServiceTest {
         Assert.assertEquals(errorFile, errorResource.getFilename());
     }
 
+    /*@Test
+    public void getJobOutputFromDifferentUser() throws IOException {
+        String testFile = "test.ndjson";
+        String errorFile = "error.ndjson";
+        Job job = createJobForFileDownloads(testFile, errorFile);
+
+        Path destination = Paths.get(tmpJobLocation, job.getJobUuid());
+        String destinationStr = destination.toString();
+        Files.createDirectories(destination);
+
+        createNDJSONFile(testFile, destinationStr);
+        createNDJSONFile(errorFile, destinationStr);
+
+        User user = new User();
+        Role role = roleService.findRoleByName("SPONSOR");
+        user.setRoles(Set.of(role));
+        user.setUsername("BadUser");
+        user.setEnabled(true);
+        User savedUser = userRepository.save(user);
+
+        /*List<GrantedAuthority> authorities = new ArrayList<>();
+        for (Role role : savedUser.getRoles()) {
+            authorities.add(new SimpleGrantedAuthority(role.getName()));
+        }
+        UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
+                username, null, authorities);
+        auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+
+        log.info("Successfully logged in");
+        SecurityContextHolder.getContext().setAuthentication(auth);*/
+
+        /*Resource resource = jobService.getResourceForJob(job.getJobUuid(), testFile);
+        Assert.assertEquals(testFile, resource.getFilename());
+
+        Resource errorResource = jobService.getResourceForJob(job.getJobUuid(), errorFile);
+        Assert.assertEquals(errorFile, errorResource.getFilename());
+    }*/
+
     private void createNDJSONFile(String file, String destinationStr) throws IOException {
         InputStream testFileStream = this.getClass().getResourceAsStream("/" + file);
         String fileStr = IOUtils.toString(testFileStream, "UTF-8");
@@ -322,6 +367,7 @@ public class JobServiceTest {
         job.setRequestUrl("http://localhost");
         job.setStatusMessage("Pending");
         job.setExpiresAt(now);
+        job.setUser(userService.getCurrentUser());
 
         JobOutput jobOutput = new JobOutput();
         jobOutput.setError(false);

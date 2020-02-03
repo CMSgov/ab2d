@@ -117,7 +117,7 @@ public class JobServiceImpl implements JobService {
         Job job = getJobByJobUuid(jobUuid);
 
         User user = userService.getCurrentUser();
-        if(!user.equals(job.getUser())) {
+        if (!user.equals(job.getUser())) {
             log.error("User attempted to download a file where they had a valid UUID, but was not logged in as the " +
                     "user that created the job");
             throw new InvalidJobAccessException("You don't have permissions to access the job " + jobUuid);
