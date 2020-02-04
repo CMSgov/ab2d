@@ -1284,8 +1284,11 @@ if [ -n "${BUILD_NEW_IMAGES}" ]; then
     --repository-name ab2d_api \
     --query "imageDetails[*].{imageTag:imageTags[0],imagePushedAt:imagePushedAt}" \
     --output json \
-    | jq 'sort_by(.imagePushedAt) | reverse | del(.[0,1])' \
-    | jq '.[] | select(.imageTag | startswith("${CMS_ENV}-latest"))' \
+    | jq 'sort_by(.imagePushedAt) | reverse' \
+    | jq ".[] | select(.imageTag | startswith(\"${CMS_ENV}-latest\"))" \
+    | jq --slurp '.' \
+    | jq 'del(.[0,1])' \
+    | jq '.[] | select(.imageTag)' \
     | jq '.imageTag' \
     | tr -d '"' \
     | head -1)
@@ -1340,8 +1343,11 @@ if [ -n "${BUILD_NEW_IMAGES}" ]; then
     --repository-name ab2d_worker \
     --query "imageDetails[*].{imageTag:imageTags[0],imagePushedAt:imagePushedAt}" \
     --output json \
-    | jq 'sort_by(.imagePushedAt) | reverse | del(.[0,1])' \
-    | jq '.[] | select(.imageTag | startswith("${CMS_ENV}-latest"))' \
+    | jq 'sort_by(.imagePushedAt) | reverse' \
+    | jq ".[] | select(.imageTag | startswith(\"${CMS_ENV}-latest\"))" \
+    | jq --slurp '.' \
+    | jq 'del(.[0,1])' \
+    | jq '.[] | select(.imageTag)' \
     | jq '.imageTag' \
     | tr -d '"' \
     | head -1)
