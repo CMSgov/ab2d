@@ -1,13 +1,13 @@
 variable "aws_account_number" {
-  default = "777200079629"
+  default = "330810004472"
 }
 
 variable "aws_profile" {
-  default = "ab2d-sbx-sandbox"
+  default = "ab2d-east-impl"
 }
 
 variable "env" {
-  default = "ab2d-sbx-sandbox"
+  default = "ab2d-east-impl"
 }
 
 variable "vpc_id" {
@@ -42,7 +42,7 @@ variable "linux_user" {
 }
 
 variable "ssh_key_name" {
-  default = "ab2d-sbx-sandbox"
+  default = "ab2d-east-impl"
 }
 
 variable "max_ec2_instance_count" {
@@ -214,11 +214,11 @@ variable "db_name_secret_arn" {
 ## S3 specific variables #########################################################################
 
 variable "file_bucket_name" {
-  default = "ab2d-sbx-sandbox"
+  default = "ab2d-east-impl"
 }
 
 variable "logging_bucket_name" {
-  default = "ab2d-sbx-sandbox-cloudtrail"
+  default = "ab2d-east-impl-cloudtrail"
 }
 
 variable "s3_username_whitelist" {
@@ -280,6 +280,11 @@ variable "hicn_hash_pepper" {
 }
 
 variable "hicn_hash_iter" {
+  default     = ""
+  description = "Please pass this on command line and not as a value here"
+}
+
+variable "bfd_keystore_file_name" {
   default     = ""
   description = "Please pass this on command line and not as a value here"
 }

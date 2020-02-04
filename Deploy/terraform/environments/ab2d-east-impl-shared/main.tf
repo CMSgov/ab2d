@@ -87,3 +87,4 @@ resource "null_resource" "authorized_keys_file" {
     command = "ssh -i ~/.ssh/${var.ssh_key_name}.pem ${var.linux_user}@${module.controller.deployment_controller_public_ip} 'chmod 600 ~/.ssh/authorized_keys'"
   }
 }
+
