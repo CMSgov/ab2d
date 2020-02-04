@@ -1129,24 +1129,6 @@ export AWS_PROFILE="${CMS_ECR_REPO_ENV}"
 cd "${START_DIR}"
 cd terraform/environments/$CMS_ECR_REPO_ENV
 
-# Get ecr repo aws account
-
-ECR_REPO_AWS_ACCOUNT=$(aws --region "${REGION}" sts get-caller-identity \
-  --query Account \
-  --output text)
-
-# Apply ecr repo policy to the "ab2d_api" repo
-
-aws --region "${REGION}" ecr set-repository-policy \
-  --repository-name ab2d_api \
-  --policy-text file://ab2d-ecr-policy.json
-
-# Apply ecr repo policy to the "ab2d_worker" repo
-
-aws --region "${REGION}" ecr set-repository-policy \
-  --repository-name ab2d_worker \
-  --policy-text file://ab2d-ecr-policy.json
-
 # Build new images or use existing images
 
 if [ -n "${BUILD_NEW_IMAGES}" ]; then
@@ -1179,32 +1161,42 @@ if [ -n "${BUILD_NEW_IMAGES}" ]; then
   BRANCH=$(git rev-parse --abbrev-ref HEAD)
 
   # Create an image version using the seven character git commit id
-
+  
   if [ "${BRANCH}" == "master" ]; then
     echo "Using commit number of master branch as the image version."
-    IMAGE_VERSION=$(git rev-parse HEAD | cut -c1-7)
+    COMMIT_NUMBER=$(git rev-parse HEAD | cut -c1-7)
+    IMAGE_VERSION="${CMS_ENV}-latest-${COMMIT_NUMBER}"
   else # assume it is a devops branch and get the latest merge from master into the branch
     echo "NOTE: Assuming this is a DevOps branch that has only DevOps changes."
     echo "Using commit number of latest merge from branch into the current branch as the image version."
-    IMAGE_VERSION=$(git log --merges | head -n 2 | tail -n 1 | cut -d" " -f 3)
+    COMMIT_NUMBER=$(git log --merges | head -n 2 | tail -n 1 | cut -d" " -f 3)
+    IMAGE_VERSION="${CMS_ENV}-latest-${COMMIT_NUMBER}"
   fi
-  
-  # Build API docker image
+
+  # Build API docker images
 
   cd "${START_DIR}"
   cd ../api
   docker build \
+    --no-cache \
     --tag "ab2d_api:${IMAGE_VERSION}" .
+  docker build \
+    --no-cache \
+    --tag "ab2d_api:${CMS_ENV}-latest" .
 
   # Build worker docker image
 
   cd "${START_DIR}"
   cd ../worker
   docker build \
+    --no-cache \
     --tag "ab2d_worker:${IMAGE_VERSION}" .
+  docker build \
+    --no-cache \
+    --tag "ab2d_worker:${CMS_ENV}-latest" .
 
-  # Tag and push API docker image to ECR
-
+  # Get or create api repo
+  
   API_ECR_REPO_URI=$(aws --region "${REGION}" ecr describe-repositories \
     --query "repositories[?repositoryName == 'ab2d_api'].repositoryUri" \
     --output text)
@@ -1215,10 +1207,32 @@ if [ -n "${BUILD_NEW_IMAGES}" ]; then
       --query "repositories[?repositoryName == 'ab2d_api'].repositoryUri" \
       --output text)
   fi
+
+  # Get ecr repo aws account
+
+  ECR_REPO_AWS_ACCOUNT=$(aws --region "${REGION}" sts get-caller-identity \
+    --query Account \
+    --output text)
+  
+  # Apply ecr repo policy to the "ab2d_api" repo
+
+  cd "${START_DIR}"
+  cd terraform/environments/$CMS_ECR_REPO_ENV
+  aws --region "${REGION}" ecr set-repository-policy \
+    --repository-name ab2d_api \
+    --policy-text file://ab2d-ecr-policy.json
+
+  # Tag and push two copies (image version and latest version) of API docker image to ECR
+  # - image version keeps track of the master commit number (e.g. ab2d-dev-latest-3d0905b)
+  # - latest version is the same image but without the commit number (e.g. ab2d-dev-latest)
+  # - NOTE: the latest version is used by the ecs task definition so that it can remain static for zero downtime
+
   docker tag "ab2d_api:${IMAGE_VERSION}" "${API_ECR_REPO_URI}:${IMAGE_VERSION}"
   docker push "${API_ECR_REPO_URI}:${IMAGE_VERSION}"
+  docker tag "ab2d_api:${CMS_ENV}-latest" "${API_ECR_REPO_URI}:${CMS_ENV}-latest"
+  docker push "${API_ECR_REPO_URI}:${CMS_ENV}-latest"
 
-  # Tag and push worker docker image to ECR
+  # Get or create api repo
 
   WORKER_ECR_REPO_URI=$(aws --region "${REGION}" ecr describe-repositories \
     --query "repositories[?repositoryName == 'ab2d_worker'].repositoryUri" \
@@ -1230,9 +1244,137 @@ if [ -n "${BUILD_NEW_IMAGES}" ]; then
       --query "repositories[?repositoryName == 'ab2d_worker'].repositoryUri" \
       --output text)
   fi
+
+  # Apply ecr repo policy to the "ab2d_worker" repo
+
+  cd "${START_DIR}"
+  cd terraform/environments/$CMS_ECR_REPO_ENV
+  aws --region "${REGION}" ecr set-repository-policy \
+    --repository-name ab2d_worker \
+    --policy-text file://ab2d-ecr-policy.json
+
+  # Tag and push two copies (image version and latest version) of worker docker image to ECR
+  # - image version keeps track of the master commit number (e.g. ab2d-dev-latest-3d0905b)
+  # - latest version is the same image but without the commit number (e.g. ab2d-dev-latest)
+  # - NOTE: the latest version is used by the ecs task definition so that it can remain static for zero downtime
+
   docker tag "ab2d_worker:${IMAGE_VERSION}" "${WORKER_ECR_REPO_URI}:${IMAGE_VERSION}"
   docker push "${WORKER_ECR_REPO_URI}:${IMAGE_VERSION}"
+  docker tag "ab2d_worker:${CMS_ENV}-latest" "${WORKER_ECR_REPO_URI}:${CMS_ENV}-latest"
+  docker push "${WORKER_ECR_REPO_URI}:${CMS_ENV}-latest"
 
+  # Get list of untagged images in the api repository
+
+  IMAGES_TO_DELETE=$(aws --region "${REGION}" ecr list-images \
+    --repository-name ab2d_api \
+    --filter "tagStatus=UNTAGGED" \
+    --query 'imageIds[*]' \
+    --output json)
+
+  # Delete untagged images in the api repository
+  
+  aws --region "${REGION}" ecr batch-delete-image \
+    --repository-name ab2d_api \
+    --image-ids "$IMAGES_TO_DELETE" \
+    || true
+
+  # Get old 'latest-commit' api tag
+  
+  API_OLD_LATEST_COMMIT_TAG=$(aws --region "${REGION}" ecr describe-images \
+    --repository-name ab2d_api \
+    --query "imageDetails[*].{imageTag:imageTags[0],imagePushedAt:imagePushedAt}" \
+    --output json \
+    | jq 'sort_by(.imagePushedAt) | reverse | del(.[0,1])' \
+    | jq '.[] | select(.imageTag | startswith("ab2d-dev-latest"))' \
+    | jq '.imageTag' \
+    | tr -d '"' \
+    | head -1)
+
+  if [ -n "${API_OLD_LATEST_COMMIT_TAG}" ]; then
+      
+    # Rename 'latest-commit' api tag
+
+    RENAME_API_OLD_LATEST_COMMIT_TAG=$(echo "${API_OLD_LATEST_COMMIT_TAG/-latest-/-}")
+
+    # Get manifest of tag to rename
+    
+    MANIFEST=$(aws --region "${REGION}" ecr batch-get-image \
+      --repository-name ab2d_api \
+      --image-ids imageTag="${API_OLD_LATEST_COMMIT_TAG}" \
+      --query 'images[].imageManifest' \
+      --output text)
+
+    # Add renamed api tag
+    
+    aws --region "${REGION}" ecr put-image \
+      --repository-name ab2d_api \
+      --image-tag "${RENAME_API_OLD_LATEST_COMMIT_TAG}" \
+      --image-manifest "${MANIFEST}"
+
+    # Remove old api tag
+  
+    aws --region "${REGION}" ecr batch-delete-image \
+      --repository-name ab2d_api \
+      --image-ids imageTag="${API_OLD_LATEST_COMMIT_TAG}"
+
+  fi
+  
+  # Get list of untagged images in the worker repository
+    
+  IMAGES_TO_DELETE=$(aws --region "${REGION}" ecr list-images \
+    --repository-name ab2d_worker \
+    --filter "tagStatus=UNTAGGED" \
+    --query 'imageIds[*]' \
+    --output json)
+
+  # Delete untagged images in the worker repository
+  
+  aws --region "${REGION}" ecr batch-delete-image \
+    --repository-name ab2d_worker \
+    --image-ids "$IMAGES_TO_DELETE" \
+    || true
+
+  # Get old 'latest-commit' worker tag
+  
+  WORKER_OLD_LATEST_COMMIT_TAG=$(aws --region "${REGION}" ecr describe-images \
+    --repository-name ab2d_worker \
+    --query "imageDetails[*].{imageTag:imageTags[0],imagePushedAt:imagePushedAt}" \
+    --output json \
+    | jq 'sort_by(.imagePushedAt) | reverse | del(.[0,1])' \
+    | jq '.[] | select(.imageTag | startswith("ab2d-dev-latest"))' \
+    | jq '.imageTag' \
+    | tr -d '"' \
+    | head -1)
+
+  if [ -n "${WORKER_OLD_LATEST_COMMIT_TAG}" ]; then
+      
+    # Rename 'latest-commit' worker tag
+
+    RENAME_WORKER_OLD_LATEST_COMMIT_TAG=$(echo "${WORKER_OLD_LATEST_COMMIT_TAG/-latest-/-}")
+
+    # Get manifest of tag to rename
+    
+    MANIFEST=$(aws --region "${REGION}" ecr batch-get-image \
+      --repository-name ab2d_worker \
+      --image-ids imageTag="${WORKER_OLD_LATEST_COMMIT_TAG}" \
+      --query 'images[].imageManifest' \
+      --output text)
+
+    # Add renamed tag
+
+    aws --region "${REGION}" ecr put-image \
+      --repository-name ab2d_worker \
+      --image-tag "${RENAME_WORKER_OLD_LATEST_COMMIT_TAG}" \
+      --image-manifest "${MANIFEST}"
+
+    # Remove old tag
+  
+    aws --region "${REGION}" ecr batch-delete-image \
+      --repository-name ab2d_worker \
+      --image-ids imageTag="${WORKER_OLD_LATEST_COMMIT_TAG}"
+
+  fi
+  
 else # use existing images
 
   echo "Using existing images..."
@@ -1266,7 +1408,7 @@ else
   echo "The ECR image versions for ab2d_api and ab2d_worker were verified to be the same..."
 fi
 
-echo "Using image version '${IMAGE_VERSION}' for ab2d_api and ab2d_worker..."
+echo "Using master branch commit number '${COMMIT_NUMBER}' for ab2d_api and ab2d_worker..."
 
 # Reset to the target environment
     
@@ -1448,6 +1590,12 @@ DATABASE_NAME_SECRET_ARN=$(aws --region "${REGION}" secretsmanager describe-secr
 cd "${START_DIR}"
 cd terraform/environments/$CMS_ENV
 
+# Get the BFD keystore file name
+
+BFD_KEYSTORE_FILE_NAME=$(echo $BFD_KEYSTORE_LOCATION | cut -d"/" -f 6)
+
+# Run automation for API and worker based on auto approve parameter
+
 if [ -z "${AUTOAPPROVE}" ]; then
     
   # Confirm with the caller prior to applying changes.
@@ -1490,6 +1638,7 @@ if [ -z "${AUTOAPPROVE}" ]; then
     --var "bfd_keystore_password=$BFD_KEYSTORE_PASSWORD" \
     --var "hicn_hash_pepper=$HICN_HASH_PEPPER" \
     --var "hicn_hash_iter=$HICN_HASH_ITER" \
+    --var "bfd_keystore_file_name=$BFD_KEYSTORE_FILE_NAME" \
     --target module.worker
 
 else
@@ -1535,6 +1684,7 @@ else
     --var "bfd_keystore_password=$BFD_KEYSTORE_PASSWORD" \
     --var "hicn_hash_pepper=$HICN_HASH_PEPPER" \
     --var "hicn_hash_iter=$HICN_HASH_ITER" \
+    --var "bfd_keystore_file_name=$BFD_KEYSTORE_FILE_NAME" \
     --target module.worker \
     --auto-approve
 
