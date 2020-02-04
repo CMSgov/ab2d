@@ -149,14 +149,16 @@ Date: Wed, 29 Jan 2020 16:04:47 GMT
     "output":[
         {
             "type":"ExplanationOfBenefit",
-            "url":"https://sandbox.ab2d.cms.gov/api/v1/fhir/Job/5298026c-e503-4d93-9974-c7732f56a0f8/file/S0000.ndjson"
+            "url":"https://sandbox.ab2d.cms.gov/api/v1/fhir/Job/5298026c-e503-4d93-9974-c7732f56a0f8/file/S0000_0001.ndjson"
         }
     ],
     "error":[]
 }
 ```
 
-The JSON (formated here for readability) will contain the location of the files in the .output[].url values.
+The JSON (formated here for readability) will contain the location of the files in the .output[].url values. 
+S0001 indicates the contract number, 0001 indicates the file for that contract number. If the contract is big enough 
+that breaking it into parts is warranted, you might see S0001_00002.ndjson, for example.
 
 ## Download Data
 

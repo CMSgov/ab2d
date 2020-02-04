@@ -168,10 +168,12 @@ There are several possible responses. If the job is still in progress, it will r
 In our situation, the location of the file is:
  
 ```
-https://sandbox.ab2d.cms.gov/api/v1/fhir/Job/9ad207d2-11ff-45b8-9c6c-2d59b86ea45c/file/S0001.ndjson
+https://sandbox.ab2d.cms.gov/api/v1/fhir/Job/9ad207d2-11ff-45b8-9c6c-2d59b86ea45c/file/S0001_0001.ndjson
 ```
 
-There could be one or more files listed. Use the endpoint:
+There could be one or more files listed. S0001 indicates the contract number, 0001 indicates the file for that
+contract number. If the contract is big enough that breaking it into parts is warranted, you might see S0001_00002.ndjson, for example. 
+Use the endpoint:
 
 ```
 GET /api/v1/fhir/Job/{jobUuid}/file/{filename}
