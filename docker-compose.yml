@@ -23,6 +23,7 @@ services:
       - AB2D_DB_HOST=db
       - AB2D_DB_PORT=5432
       - AB2D_DB_DATABASE=ab2d
+      - AB2D_DB_SSL_MODE=allow
       - AB2D_DB_USER=ab2d
       - AB2D_DB_PASSWORD=ab2d
       - AB2D_EFS_MOUNT=/tmp/ab2d_efs_mount
@@ -39,6 +40,7 @@ services:
       - AB2D_DB_HOST=db
       - AB2D_DB_PORT=5432
       - AB2D_DB_DATABASE=ab2d
+      - AB2D_DB_SSL_MODE=allow
       - AB2D_DB_USER=ab2d
       - AB2D_DB_PASSWORD=ab2d
       - AB2D_EFS_MOUNT=/tmp/ab2d_efs_mount

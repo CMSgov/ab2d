@@ -13,6 +13,7 @@
         <module>audit</module>
         <module>hpms</module>
         <module>e2e-test</module>
+        <module>load-test</module>
     </modules>
     <parent>
         <groupId>org.springframework.boot</groupId>
