@@ -141,6 +141,7 @@ module "worker" {
   bfd_keystore_password         = var.bfd_keystore_password
   hicn_hash_pepper              = var.hicn_hash_pepper
   hicn_hash_iter                = var.hicn_hash_iter
+  bfd_keystore_file_name        = var.bfd_keystore_file_name
 }
 
 module "cloudwatch" {

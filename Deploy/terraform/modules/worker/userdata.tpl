@@ -92,9 +92,8 @@ sudo mount -a
 # Moved "provision-app-instance.sh" under packer END
 ##############################################################
 
-
 # Place BFD keystore in shared EFS directory (if doesn't already exist)
-if [[ -d "/mnt/efs/bfd-keystore/${env}" ]] && [[ -f "/mnt/efs/bfd-keystore/${env}/ab2d_sbx_keystore" ]]; then
+if [[ -d "/mnt/efs/bfd-keystore/${env}" ]] && [[ -f "/mnt/efs/bfd-keystore/${env}/${bfd_keystore_file_name}" ]]; then
 
   echo "NOTE: BFD keystore already exists in EFS."
 
@@ -124,18 +123,18 @@ else
   # Commented out because packer installs ruby under ec2_user, while user data runs as root
   #
   # Get keystore from S3 and decrypt it
-  # bundle exec rake get_file_from_s3_and_decrypt['./ab2d_sbx_keystore',"${env}-automation"]
+  # bundle exec rake get_file_from_s3_and_decrypt["./${bfd_keystore_file_name}","${env}-automation"]
   #
   # Get keystore from S3 and decrypt it
   export RUBY_BIN="/home/ec2-user/.rbenv/versions/2.6.5/bin"
   sudo "$RUBY_BIN/bundle" exec "$RUBY_BIN/rake" \
-    get_file_from_s3_and_decrypt['./ab2d_sbx_keystore',"${env}-automation"]
+    get_file_from_s3_and_decrypt["./${bfd_keystore_file_name}","${env}-automation"]
   
   # Create a "bfd-keystore" directory under EFS (if doesn't exist)
   sudo mkdir -p "/mnt/efs/bfd-keystore/${env}"
 
   # Move the BFD keystore to the "bfd-keystore" directory
-  sudo mv /tmp/ab2d_sbx_keystore "/mnt/efs/bfd-keystore/${env}"
+  sudo mv "/tmp/${bfd_keystore_file_name}" "/mnt/efs/bfd-keystore/${env}"
 
 fi
 

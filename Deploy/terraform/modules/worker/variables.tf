@@ -62,3 +62,6 @@ variable "bfd_keystore_password" {}
 
 variable "hicn_hash_pepper" {}
 variable "hicn_hash_iter" {}
+
+# Used in userdata.tpl
+variable "bfd_keystore_file_name" {}
