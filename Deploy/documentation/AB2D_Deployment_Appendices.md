@@ -487,7 +487,7 @@
    
    ```ShellSession
    $ export TARGET_ENVIRONMENT=ab2d-dev
-   $ export NODE_PRIVATE_IP=10.242.26.231
+   $ export NODE_PRIVATE_IP=10.242.26.83
    $ export SSH_USER_NAME=ec2-user
    ```
 
