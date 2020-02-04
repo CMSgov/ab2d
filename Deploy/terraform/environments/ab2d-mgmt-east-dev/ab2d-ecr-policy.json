@@ -6,6 +6,7 @@
             "Effect": "Allow",
             "Principal": {
                 "AWS": [
+		    "arn:aws:iam::349849222861:root",
 		    "arn:aws:iam::777200079629:root"
 		]
             },
