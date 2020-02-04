@@ -1958,8 +1958,8 @@
    *Example for "Dev" environment:*
    
    ```ShellSession
-   $ scp -i ~/.ssh/ab2d-dev.pem /tmp/Gemfile ec2-user@10.242.26.207:/tmp
-   $ scp -i ~/.ssh/ab2d-dev.pem /tmp/Rakefile ec2-user@10.242.26.207:/tmp
+   $ scp -i ~/.ssh/ab2d-dev.pem /tmp/Gemfile ec2-user@10.242.26.249:/tmp
+   $ scp -i ~/.ssh/ab2d-dev.pem /tmp/Rakefile ec2-user@10.242.26.249:/tmp
    ```
 
    *Example for "Sbx" environment:*
@@ -1974,7 +1974,7 @@
    *Example for "Dev" environment:*
    
    ```ShellSession
-   $ ssh -i ~/.ssh/ab2d-dev.pem ec2-user@10.242.26.207
+   $ ssh -i ~/.ssh/ab2d-dev.pem ec2-user@10.242.26.249
    ```
 
    *Example for "Sbx" environment:*
