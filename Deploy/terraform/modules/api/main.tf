@@ -160,7 +160,7 @@ resource "aws_ecs_task_definition" "api" {
   [
     {
       "name": "ab2d-api",
-      "image": "${var.ecr_repo_aws_account}.dkr.ecr.us-east-1.amazonaws.com/ab2d_api:${var.image_version}",
+      "image": "${var.ecr_repo_aws_account}.dkr.ecr.us-east-1.amazonaws.com/ab2d_api:${lower(var.env)}-latest",
       "essential": true,
       "memory": 2048,
       "portMappings": [
