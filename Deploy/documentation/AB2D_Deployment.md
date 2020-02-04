@@ -1182,7 +1182,7 @@
    $ ./deploy-ab2d-to-cms.sh \
      --environment=ab2d-dev \
      --shared-environment=ab2d-dev-shared \
-     --ecr-repo-environment=ab2d-dev \
+     --ecr-repo-environment=ab2d-mgmt-east-dev \
      --region=us-east-1 \
      --vpc-id=vpc-0c6413ec40c5fdac3 \
      --ssh-username=ec2-user \
@@ -1199,7 +1199,7 @@
    $ ./deploy-ab2d-to-cms.sh \
      --environment=ab2d-dev \
      --shared-environment=ab2d-dev-shared \
-     --ecr-repo-environment=ab2d-dev \
+     --ecr-repo-environment=ab2d-mgmt-east-dev \
      --region=us-east-1 \
      --vpc-id=vpc-0c6413ec40c5fdac3 \
      --ssh-username=ec2-user \
@@ -1218,7 +1218,7 @@
    $ ./deploy-ab2d-to-cms.sh \
      --environment=ab2d-sbx-sandbox \
      --shared-environment=ab2d-sbx-sandbox-shared \
-     --ecr-repo-environment=ab2d-dev \
+     --ecr-repo-environment=ab2d-mgmt-east-dev \
      --region=us-east-1 \
      --vpc-id=vpc-08dbf3fa96684151c \
      --ssh-username=ec2-user \
@@ -1235,7 +1235,7 @@
    $ ./deploy-ab2d-to-cms.sh \
      --environment=ab2d-sbx-sandbox \
      --shared-environment=ab2d-sbx-sandbox-shared \
-     --ecr-repo-environment=ab2d-dev \
+     --ecr-repo-environment=ab2d-mgmt-east-dev \
      --region=us-east-1 \
      --vpc-id=vpc-08dbf3fa96684151c \
      --ssh-username=ec2-user \
