@@ -102,7 +102,7 @@ class JobProcessorUnitTest {
         final Path outputDir = Files.createDirectories(outputDirPath);
         Mockito.lenient().when(fileService.createDirectory(any(Path.class))).thenReturn(outputDir);
 
-        Future<Integer> futureResources = new AsyncResult(0);
+        Future<Void> futureResources = new AsyncResult<>(null);
         Mockito.lenient().when(patientClaimsProcessor.process(any(), any(), any())).thenReturn(futureResources);
     }
 
