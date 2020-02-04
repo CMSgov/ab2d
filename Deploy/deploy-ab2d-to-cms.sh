@@ -1174,9 +1174,20 @@ if [ -n "${BUILD_NEW_IMAGES}" ]; then
   mvn clean package -DskipTests
   sleep 5
 
+  # Get branch name
+
+  BRANCH=$(git rev-parse --abbrev-ref HEAD)
+
   # Create an image version using the seven character git commit id
 
-  IMAGE_VERSION=$(git rev-parse HEAD | cut -c1-7)
+  if [ "${BRANCH}" == "master" ]; then
+    echo "Using commit number of master branch as the image version."
+    IMAGE_VERSION=$(git rev-parse HEAD | cut -c1-7)
+  else # assume it is a devops branch and get the latest merge from master into the branch
+    echo "NOTE: Assuming this is a DevOps branch that has only DevOps changes."
+    echo "Using commit number of latest merge from branch into the current branch as the image version."
+    IMAGE_VERSION=$(git log --merges | head -n 2 | tail -n 1 | cut -d" " -f 3)
+  fi
   
   # Build API docker image
 
