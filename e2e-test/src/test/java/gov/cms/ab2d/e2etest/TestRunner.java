@@ -14,15 +14,9 @@ import org.yaml.snakeyaml.Yaml;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URI;
-import java.net.URLEncoder;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
 
 import static java.time.temporal.ChronoUnit.SECONDS;
 import static org.hamcrest.Matchers.matchesPattern;
@@ -34,17 +28,9 @@ import static org.hamcrest.Matchers.matchesPattern;
 @ExtendWith(TestRunnerParameterResolver.class)
 public class TestRunner {
 
-    private static HttpClient httpClient;
+    private static APIClient apiClient;
 
     private static String AB2D_API_URL;
-
-    private static String AB2D_ADMIN_URL;
-
-    private static final String PATIENT_EXPORT_PATH = "Patient/$export";
-
-    private static String jwtStr = null;
-
-    private static final long DEFAULT_TIMEOUT = 30;
 
     private static final int DELAY = 5;
 
@@ -83,58 +69,15 @@ public class TestRunner {
         String oktaUrl = yamlMap.get("okta-url");
 
         AB2D_API_URL = yamlMap.get("ab2d-api-url");
-        AB2D_ADMIN_URL = yamlMap.get("ab2d-admin-url");
-
-        var jwtRequestParms = new HashMap<>() {{
-            put("grant_type", "client_credentials");
-            put("scope", "clientCreds");
-        }};
 
         String oktaClientId = System.getenv("OKTA_CLIENT_ID");
         String oktaPassword = System.getenv("OKTA_CLIENT_PASSWORD");
 
-        String authEncoded = Base64.getEncoder().encodeToString((oktaClientId + ":" + oktaPassword).getBytes());
-
-        HttpRequest jwtRequest = HttpRequest.newBuilder()
-                .uri(URI.create(oktaUrl))
-                .timeout(Duration.ofSeconds(DEFAULT_TIMEOUT))
-                .header("Content-Type", "application/x-www-form-urlencoded")
-                .header("Accept", "application/json")
-                .header("Authorization", "Basic " + authEncoded)
-                .POST(buildFormDataFromMap(jwtRequestParms))
-                .build();
-
-        httpClient = HttpClient.newBuilder()
-                .version(HttpClient.Version.HTTP_1_1)
-                .followRedirects(HttpClient.Redirect.NORMAL)
-                .build();
-
-        HttpResponse<String> jwtResponse = httpClient.send(jwtRequest, HttpResponse.BodyHandlers.ofString());
-        String responseJwtString = jwtResponse.body();
-        JSONObject responseJsonObject = new JSONObject(responseJwtString);
-        jwtStr = responseJsonObject.getString("access_token");
+        apiClient = new APIClient(AB2D_API_URL, oktaUrl, oktaClientId, oktaPassword);
 
         // add in later
         //uploadOrgStructureReport();
         //uploadAttestationReport();
-    }
-
-    private String getJobUuid(String url) {
-        return url.substring(url.indexOf("/Job/") + 5, url.indexOf("/$status"));
-    }
-
-    private HttpRequest.BodyPublisher buildFormDataFromMap(Map<Object, Object> data) {
-        var builder = new StringBuilder();
-        for (Map.Entry<Object, Object> entry : data.entrySet()) {
-            if (builder.length() > 0) {
-                builder.append("&");
-            }
-            builder.append(URLEncoder.encode(entry.getKey().toString(), StandardCharsets.UTF_8));
-            builder.append("=");
-            builder.append(URLEncoder.encode(entry.getValue().toString(), StandardCharsets.UTF_8));
-        }
-
-        return HttpRequest.BodyPublishers.ofString(builder.toString());
     }
 
     /*private HttpResponse<String> uploadOrgStructureReport() throws IOException, InterruptedException {
@@ -164,86 +107,6 @@ public class TestRunner {
 
         return httpClient.send(uploadRequest, HttpResponse.BodyHandlers.ofString());
     }*/
-
-    private HttpResponse<String> exportRequest() throws IOException, InterruptedException {
-        HttpRequest exportRequest = HttpRequest.newBuilder()
-                .uri(URI.create(AB2D_API_URL + PATIENT_EXPORT_PATH))
-                .timeout(Duration.ofSeconds(DEFAULT_TIMEOUT))
-                .header("Content-Type", "application/json")
-                .header("Authorization", "Bearer " + jwtStr)
-                .GET()
-                .build();
-
-        return httpClient.send(exportRequest, HttpResponse.BodyHandlers.ofString());
-    }
-
-    private HttpResponse<String> exportByContractRequest(String contractNumber) throws IOException, InterruptedException {
-        HttpRequest exportRequest = buildExportByContractRequest(contractNumber);
-
-        return httpClient.send(exportRequest, HttpResponse.BodyHandlers.ofString());
-    }
-
-    private HttpRequest buildExportByContractRequest(String contractNumber) {
-        return HttpRequest.newBuilder()
-                .uri(URI.create(AB2D_API_URL + "Group/" + contractNumber + "/$export"))
-                .timeout(Duration.ofSeconds(DEFAULT_TIMEOUT))
-                .header("Content-Type", "application/json")
-                .header("Authorization", "Bearer " + jwtStr)
-                .GET()
-                .build();
-    }
-
-    private CompletableFuture<HttpResponse<String>> exportByContractRequestAsync(String contractNumber) {
-        HttpRequest exportRequest = buildExportByContractRequest(contractNumber);
-
-        return httpClient.sendAsync(exportRequest, HttpResponse.BodyHandlers.ofString());
-    }
-
-    private HttpResponse<String> statusRequest(String url) throws IOException, InterruptedException {
-        HttpRequest statusRequest = buildStatusRequest(url);
-
-        return httpClient.send(statusRequest, HttpResponse.BodyHandlers.ofString());
-    }
-
-    private HttpRequest buildStatusRequest(String url) {
-        return HttpRequest.newBuilder()
-                .uri(URI.create(url))
-                .timeout(Duration.ofSeconds(DEFAULT_TIMEOUT))
-                .header("Content-Type", "application/json")
-                .header("Authorization", "Bearer " + jwtStr)
-                .GET()
-                .build();
-    }
-
-    private CompletableFuture<HttpResponse<String>> statusRequestAsync(String url) {
-        HttpRequest statusRequest = buildStatusRequest(url);
-
-        return httpClient.sendAsync(statusRequest, HttpResponse.BodyHandlers.ofString());
-    }
-
-    private HttpResponse<String> cancelJobRequest(String jobId) throws IOException, InterruptedException {
-        HttpRequest cancelRequest = HttpRequest.newBuilder()
-                .uri(URI.create(AB2D_API_URL + "Job/" + jobId + "/$status"))
-                .timeout(Duration.ofSeconds(DEFAULT_TIMEOUT))
-                .header("Content-Type", "application/json")
-                .header("Authorization", "Bearer " + jwtStr)
-                .DELETE()
-                .build();
-
-        return httpClient.send(cancelRequest, HttpResponse.BodyHandlers.ofString());
-    }
-
-    private HttpResponse<String> fileDownloadRequest(String jobId, String fileName) throws IOException, InterruptedException {
-        HttpRequest fileDownloadRequest = HttpRequest.newBuilder()
-                .uri(URI.create(AB2D_API_URL + "Job/" + jobId + "/file/" + fileName))
-                .timeout(Duration.ofSeconds(DEFAULT_TIMEOUT))
-                .header("Content-Type", "application/json")
-                .header("Authorization", "Bearer " + jwtStr)
-                .GET()
-                .build();
-
-        return httpClient.send(fileDownloadRequest, HttpResponse.BodyHandlers.ofString());
-    }
 
     /*private Map<String, Object> getJobWithOutput() throws SQLException {
         Map<String, Object> jobData = new HashMap<>();
@@ -291,7 +154,7 @@ public class TestRunner {
         int status = 0;
         while(status != 200) {
             Thread.sleep(DELAY * 1000);
-            statusResponse = statusRequest(statusUrl);
+            statusResponse = apiClient.statusRequest(statusUrl);
             status = statusResponse.statusCode();
 
             if(System.currentTimeMillis() - start > (JOB_TIMEOUT * 1000)) {
@@ -307,7 +170,7 @@ public class TestRunner {
         }
     }
 
-    private void verifyJsonFromStatusResponse(HttpResponse<String> statusResponse, String jobUuid, String contractNumber) throws JSONException {
+    private String verifyJsonFromStatusResponse(HttpResponse<String> statusResponse, String jobUuid, String contractNumber) throws JSONException {
         final JSONObject json = new JSONObject(statusResponse.body());
         Boolean requiresAccessToken = json.getBoolean("requiresAccessToken");
         Assert.assertEquals(true, requiresAccessToken);
@@ -323,6 +186,8 @@ public class TestRunner {
         Assert.assertEquals(url, AB2D_API_URL + "Job/" + jobUuid + "/file/S0000_0001.ndjson");
         String type = outputObject.getString("type");
         Assert.assertEquals(type, "ExplanationOfBenefit");
+
+        return url;
     }
 
     private void verifyJsonFromfileDownload(String fileContent) throws JSONException {
@@ -355,12 +220,12 @@ public class TestRunner {
     public void runSystemWideExport() throws IOException, InterruptedException, JSONException {
         List<String> contentLocationList = null;
         for(int i = 0; i < MAX_USER_JOBS; i++) {
-            HttpResponse<String> exportResponse = exportRequest();
+            HttpResponse<String> exportResponse = apiClient.exportRequest();
             Assert.assertEquals(202, exportResponse.statusCode());
             contentLocationList = exportResponse.headers().map().get("content-location");
         }
 
-        HttpResponse<String> nextExportResponse = exportRequest();
+        HttpResponse<String> nextExportResponse = apiClient.exportRequest();
         Assert.assertEquals(429, nextExportResponse.statusCode());
 
         performStatusRequestsAndVerifyDownloads(contentLocationList, false, "S0000");
@@ -368,7 +233,7 @@ public class TestRunner {
 
     private void performStatusRequestsAndVerifyDownloads(List<String> contentLocationList, boolean isContract,
                                                          String contractNumber) throws JSONException, IOException, InterruptedException {
-        HttpResponse<String> statusResponse = statusRequest(contentLocationList.iterator().next());
+        HttpResponse<String> statusResponse = apiClient.statusRequest(contentLocationList.iterator().next());
 
         Assert.assertEquals(202, statusResponse.statusCode());
         List<String> retryAfterList = statusResponse.headers().map().get("retry-after");
@@ -376,7 +241,7 @@ public class TestRunner {
         List<String> xProgressList = statusResponse.headers().map().get("x-progress");
         Assert.assertThat(xProgressList.iterator().next(), matchesPattern("\\d+\\% complete"));
 
-        HttpResponse<String> retryStatusResponse = statusRequest(contentLocationList.iterator().next());
+        HttpResponse<String> retryStatusResponse = apiClient.statusRequest(contentLocationList.iterator().next());
 
         Assert.assertEquals(429, retryStatusResponse.statusCode());
         List<String> retryAfterListRepeat = retryStatusResponse.headers().map().get("retry-after");
@@ -384,13 +249,14 @@ public class TestRunner {
 
         HttpResponse<String> statusResponseAgain = pollForStatusResponse(contentLocationList.iterator().next());
 
-        String jobUuid = getJobUuid(contentLocationList.iterator().next());
+        String jobUuid = JobUtil.getJobUuid(contentLocationList.iterator().next());
 
         Assert.assertEquals(200, statusResponseAgain.statusCode());
 
-        verifyJsonFromStatusResponse(statusResponseAgain, jobUuid, isContract ? contractNumber : null);
+        String url = verifyJsonFromStatusResponse(statusResponseAgain, jobUuid, isContract ? contractNumber : null);
 
-        HttpResponse<String> downloadResponse = fileDownloadRequest(jobUuid, contractNumber + "_0001.ndjson");
+        HttpResponse<String> downloadResponse = apiClient.fileDownloadRequest(url);
+
         Assert.assertEquals(200, downloadResponse.statusCode());
         String fileContent = downloadResponse.body();
 
@@ -403,27 +269,27 @@ public class TestRunner {
         List<String> contentLocationList = null;
 
         for(int i = 0; i < MAX_USER_JOBS; i++) {
-            HttpResponse<String> exportResponse = exportByContractRequest(contractNumber);
+            HttpResponse<String> exportResponse = apiClient.exportByContractRequest(contractNumber);
             Assert.assertEquals(202, exportResponse.statusCode());
             contentLocationList = exportResponse.headers().map().get("content-location");
         }
 
-        HttpResponse<String> nextExportResponse = exportByContractRequest(contractNumber);
-        Assert.assertEquals(429, nextExportResponse.statusCode());
+        HttpResponse<String> secondExportResponse = apiClient.exportByContractRequest(contractNumber);
+        Assert.assertEquals(429, secondExportResponse.statusCode());
 
         performStatusRequestsAndVerifyDownloads(contentLocationList, true, contractNumber);
     }
 
     @Test
     public void testDelete() throws IOException, InterruptedException {
-        HttpResponse<String> exportResponse = exportRequest();
+        HttpResponse<String> exportResponse = apiClient.exportRequest();
 
         Assert.assertEquals(202, exportResponse.statusCode());
         List<String> contentLocationList = exportResponse.headers().map().get("content-location");
 
-        String jobUUid = getJobUuid(contentLocationList.iterator().next());
+        String jobUUid = JobUtil.getJobUuid(contentLocationList.iterator().next());
 
-        HttpResponse<String> deleteResponse = cancelJobRequest(jobUUid);
+        HttpResponse<String> deleteResponse = apiClient.cancelJobRequest(jobUUid);
         Assert.assertEquals(202, deleteResponse.statusCode());
     }
 
