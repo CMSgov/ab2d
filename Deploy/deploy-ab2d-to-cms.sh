@@ -1285,7 +1285,7 @@ if [ -n "${BUILD_NEW_IMAGES}" ]; then
     --query "imageDetails[*].{imageTag:imageTags[0],imagePushedAt:imagePushedAt}" \
     --output json \
     | jq 'sort_by(.imagePushedAt) | reverse | del(.[0,1])' \
-    | jq '.[] | select(.imageTag | startswith("ab2d-dev-latest"))' \
+    | jq '.[] | select(.imageTag | startswith("${CMS_ENV}-latest"))' \
     | jq '.imageTag' \
     | tr -d '"' \
     | head -1)
@@ -1341,7 +1341,7 @@ if [ -n "${BUILD_NEW_IMAGES}" ]; then
     --query "imageDetails[*].{imageTag:imageTags[0],imagePushedAt:imagePushedAt}" \
     --output json \
     | jq 'sort_by(.imagePushedAt) | reverse | del(.[0,1])' \
-    | jq '.[] | select(.imageTag | startswith("ab2d-dev-latest"))' \
+    | jq '.[] | select(.imageTag | startswith("${CMS_ENV}-latest"))' \
     | jq '.imageTag' \
     | tr -d '"' \
     | head -1)
