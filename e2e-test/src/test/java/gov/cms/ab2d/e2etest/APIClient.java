@@ -147,8 +147,8 @@ public class APIClient {
         HttpRequest fileDownloadRequest = HttpRequest.newBuilder()
                 .uri(URI.create(url))
                 .timeout(Duration.ofSeconds(defaultTimeout))
-                .header("Content-Type", "application/json")
                 .header("Authorization", "Bearer " + jwtStr)
+                .header("Accept-Encoding", "gzip, deflate, br")
                 .GET()
                 .build();
 

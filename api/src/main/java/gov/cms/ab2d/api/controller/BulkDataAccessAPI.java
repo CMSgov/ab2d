@@ -23,13 +23,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.context.request.RequestAttributes;
-import org.springframework.web.context.request.RequestContextHolder;
-import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
-import javax.servlet.http.HttpServletResponse;
 import javax.validation.constraints.NotBlank;
+import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -298,21 +295,21 @@ public class BulkDataAccessAPI {
     }
 
     @ApiOperation(value = "Downloads a file produced by an export job.", response = String.class,
-            produces = "application/fhir+ndjson",
+            produces = NDJSON_FIRE_CONTENT_TYPE,
             authorizations = {
                     @Authorization(value = "Authorization", scopes = {
                             @AuthorizationScope(description = "Downloads Export File", scope = "Authorization") })
             })
     @ApiImplicitParams(value = {
             @ApiImplicitParam(name = "Accept", required = false, paramType = "header", value =
-                    "application/fhir+json", defaultValue = "application/fhir+json")}
+                    NDJSON_FIRE_CONTENT_TYPE, defaultValue = NDJSON_FIRE_CONTENT_TYPE)}
     )
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Returns the requested file as " +
-                    "application/fhir+ndjson.", responseHeaders = {
+                    "application/json.", responseHeaders = {
                     @ResponseHeader(name = "Content-Type", description =
                             "Content-Type header that matches the file format being delivered: " +
-                                    "application/fhir+ndjson",
+                                    NDJSON_FIRE_CONTENT_TYPE,
                             response = String.class)}, response =
                     String.class),
             @ApiResponse(code = 404, message =
@@ -321,7 +318,7 @@ public class BulkDataAccessAPI {
     )
     @ResponseStatus(value = HttpStatus.OK)
     @GetMapping(value = "/Job/{jobUuid}/file/{filename}")
-    public ResponseEntity<Void> downloadFile(
+    public ResponseEntity<String> downloadFile(
             @ApiParam(value = "A job identifier", required = true) @PathVariable @NotBlank String jobUuid,
             @ApiParam(value = "A file name", required = true) @PathVariable @NotBlank String filename) throws IOException {
         MDC.put(JOB_LOG, jobUuid);
@@ -330,19 +327,17 @@ public class BulkDataAccessAPI {
 
         Resource downloadResource = jobService.getResourceForJob(jobUuid, filename);
 
-        RequestAttributes requestAttributes = RequestContextHolder.getRequestAttributes();
-        HttpServletResponse response = ((ServletRequestAttributes) requestAttributes).getResponse();
-
         log.info("Sending file to client");
 
-        try (OutputStream out = response.getOutputStream(); FileInputStream in = new FileInputStream(downloadResource.getFile())) {
+        try (OutputStream out = new ByteArrayOutputStream(); FileInputStream in = new FileInputStream(downloadResource.getFile())) {
             IOUtils.copy(in, out);
 
             jobService.deleteFileForJob(downloadResource.getFile());
 
-            response.setHeader(HttpHeaders.CONTENT_TYPE, NDJSON_FIRE_CONTENT_TYPE);
+            HttpHeaders httpHeaders = new HttpHeaders();
+            //httpHeaders.add("Content-Type", NDJSON_FIRE_CONTENT_TYPE);
 
-            return new ResponseEntity<>(null, null, HttpStatus.OK);
+            return new ResponseEntity<>(out.toString(), httpHeaders, HttpStatus.OK);
         }
     }
 

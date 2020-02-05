@@ -51,6 +51,8 @@ public class TestRunner {
 
     private static final int MAX_USER_JOBS = 3;
 
+    private Map<String, String> yamlMap;
+
     private Environment environment;
 
     public void runTests() throws InterruptedException, JSONException, IOException {
@@ -78,7 +80,7 @@ public class TestRunner {
 
         Yaml yaml = new Yaml();
         InputStream inputStream = getClass().getResourceAsStream("/" + environment.getConfigName());
-        Map<String, String> yamlMap = yaml.load(inputStream);
+        yamlMap = yaml.load(inputStream);
         String oktaUrl = yamlMap.get("okta-url");
 
         AB2D_API_URL = yamlMap.get("ab2d-api-url");
@@ -338,7 +340,15 @@ public class TestRunner {
 
         String downloadUrl = performStatusRequests(contentLocationList, true, contractNumber);
 
-        //APIClient secondUserAPIClient = new APIClient();;
+        String oktaUrl = yamlMap.get("okta-url");
+
+        String oktaClientId = System.getenv("SECONDARY_USER_OKTA_CLIENT_ID");
+        String oktaPassword = System.getenv("SECONDARY_USER_OKTA_CLIENT_PASSWORD");
+
+        APIClient secondUserAPIClient = new APIClient(AB2D_API_URL, oktaUrl, oktaClientId, oktaPassword);
+
+        HttpResponse<InputStream> downloadResponse = secondUserAPIClient.fileDownloadRequest(downloadUrl);
+        Assert.assertEquals(downloadResponse.statusCode(), 403);
     }
 
     @Test

@@ -45,6 +45,7 @@ import static gov.cms.ab2d.common.util.Constants.OPERATION_OUTCOME;
 import static gov.cms.ab2d.common.util.DataSetup.TEST_USER;
 import static gov.cms.ab2d.common.util.DataSetup.VALID_CONTRACT_NUMBER;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -308,7 +309,7 @@ public class JobServiceTest {
         Assert.assertEquals(errorFile, errorResource.getFilename());
     }
 
-    /*@Test
+    @Test
     public void getJobOutputFromDifferentUser() throws IOException {
         String testFile = "test.ndjson";
         String errorFile = "error.ndjson";
@@ -326,25 +327,25 @@ public class JobServiceTest {
         user.setRoles(Set.of(role));
         user.setUsername("BadUser");
         user.setEnabled(true);
+
+        Sponsor savedSponsor = dataSetup.createSponsor("Parent Corp. #2", 12345, "Test #2", 6789);
+
+        dataSetup.setupContract(savedSponsor, "New Contract");
+
+        user.setSponsor(savedSponsor);
         User savedUser = userRepository.save(user);
 
-        /*List<GrantedAuthority> authorities = new ArrayList<>();
-        for (Role role : savedUser.getRoles()) {
-            authorities.add(new SimpleGrantedAuthority(role.getName()));
-        }
-        UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
-                username, null, authorities);
-        auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken(
+                        new org.springframework.security.core.userdetails.User(savedUser.getUsername(),
+                                "test", new ArrayList<>()), "pass"));
 
-        log.info("Successfully logged in");
-        SecurityContextHolder.getContext().setAuthentication(auth);*/
+        var exceptionThrown = assertThrows(
+                InvalidJobAccessException.class,
+                () -> jobService.getResourceForJob(job.getJobUuid(), testFile));
 
-        /*Resource resource = jobService.getResourceForJob(job.getJobUuid(), testFile);
-        Assert.assertEquals(testFile, resource.getFilename());
-
-        Resource errorResource = jobService.getResourceForJob(job.getJobUuid(), errorFile);
-        Assert.assertEquals(errorFile, errorResource.getFilename());
-    }*/
+        Assert.assertEquals(exceptionThrown.getMessage(), "You don't have permissions to access the job " + job.getJobUuid());
+    }
 
     private void createNDJSONFile(String file, String destinationStr) throws IOException {
         InputStream testFileStream = this.getClass().getResourceAsStream("/" + file);
