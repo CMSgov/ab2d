@@ -1,5 +1,9 @@
 package gov.cms.ab2d.worker.processor;
 
+import ca.uhn.fhir.context.FhirContext;
+import ca.uhn.fhir.parser.IParser;
+import ca.uhn.fhir.rest.api.EncodingEnum;
+import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.JobStatus;
@@ -9,12 +13,17 @@ import gov.cms.ab2d.common.model.User;
 import gov.cms.ab2d.common.repository.JobOutputRepository;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.common.repository.OptOutRepository;
+import gov.cms.ab2d.filter.ExplanationOfBenefitTrimmer;
 import gov.cms.ab2d.filter.FilterOutByDate;
 import gov.cms.ab2d.worker.adapter.bluebutton.ContractAdapter;
 import gov.cms.ab2d.worker.adapter.bluebutton.GetPatientsByContractResponse;
 import gov.cms.ab2d.worker.adapter.bluebutton.GetPatientsByContractResponse.PatientDTO;
 import gov.cms.ab2d.worker.service.FileService;
 import org.hamcrest.CoreMatchers;
+import org.hl7.fhir.dstu3.model.Bundle;
+import org.hl7.fhir.dstu3.model.ExplanationOfBenefit;
+import org.hl7.fhir.dstu3.model.Period;
+import org.hl7.fhir.dstu3.model.Resource;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -23,19 +32,25 @@ import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.scheduling.annotation.AsyncResult;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
-import java.util.*;
-import java.util.concurrent.Future;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
+import java.util.Random;
 import java.util.stream.Collectors;
 
 import static java.lang.Boolean.TRUE;
@@ -65,13 +80,21 @@ class JobProcessorUnitTest {
     @Mock private JobOutputRepository jobOutputRepository;
     @Mock private OptOutRepository optOutRepository;
     @Mock private ContractAdapter contractAdapter;
-    @Mock private PatientClaimsProcessor patientClaimsProcessor;
+    @Mock private BFDClient mockBfdClient;
 
     private Job job;
     private GetPatientsByContractResponse patientsByContract;
+    private ExplanationOfBenefit eob;
 
     @BeforeEach
     void setUp() throws Exception {
+        createEOB();
+        Bundle bundle1 = createBundle(eob.copy());
+        Mockito.lenient().when(mockBfdClient.requestEOBFromServer(anyString())).thenReturn(bundle1);
+
+        FhirContext fhirContext = new FhirContext();
+        PatientClaimsProcessor patientClaimsProcessor = new PatientClaimsProcessorImpl(mockBfdClient, fhirContext);
+
         cut = new JobProcessorImpl(
                 fileService,
                 jobRepository,
@@ -101,9 +124,6 @@ class JobProcessorUnitTest {
         final Path outputDirPath = Paths.get(efsMountTmpDir.toString(), jobUuid);
         final Path outputDir = Files.createDirectories(outputDirPath);
         Mockito.lenient().when(fileService.createDirectory(any(Path.class))).thenReturn(outputDir);
-
-        Future<Void> futureResources = new AsyncResult<>(null);
-        Mockito.lenient().when(patientClaimsProcessor.process(any(), any(), any())).thenReturn(futureResources);
     }
 
     @Test
@@ -180,16 +200,15 @@ class JobProcessorUnitTest {
     private void doVerify() {
         verify(fileService).createDirectory(any());
         verify(contractAdapter).getPatients(anyString());
-        verify(patientClaimsProcessor, atLeast(1)).process(any(), any(), any());
     }
 
     @Test
     @DisplayName("When patient has opted out, their record will be skipped.")
-    void processJob_whenPatientHasOptedOut_ShouldSkipPatientRecord() {
+    void processJob_whenSomePatientHasOptedOut_ShouldSkipThatPatientRecord() {
 
         final List<OptOut> optOuts = getOptOutRows(patientsByContract);
         when(optOutRepository.findByCcwId(anyString()))
-                .thenReturn(Arrays.asList(optOuts.get(0)))
+                .thenReturn(new ArrayList<>())
                 .thenReturn(Arrays.asList(optOuts.get(1)))
                 .thenReturn(Arrays.asList(optOuts.get(2)));
 
@@ -203,25 +222,45 @@ class JobProcessorUnitTest {
 
         verify(fileService).createDirectory(any());
         verify(contractAdapter).getPatients(anyString());
-        verify(patientClaimsProcessor, never()).process(any(), any(), any());
     }
 
-
     @Test
-    @DisplayName("When patientClaimsProcessor throws an exception, the job status becomes FAILED")
-    void whenPatientClaimsProcessorThrowsException_jobFailsWithErrorMessage() {
+    @DisplayName("When all patient has opted out, their record will be skipped and job FAILS as no jobOutput rows were created")
+    void processJob_whenAllPatientHasOptedOut_jobFailsAsNoJobOutputRowsCreated() {
 
-        final String errMsg = "error during exception handling to write error record";
-        final RuntimeException runtimeException = new RuntimeException(errMsg);
-        Mockito.when(patientClaimsProcessor.process(any(), any(), any())).thenThrow(runtimeException);
+        final List<OptOut> optOuts = getOptOutRows(patientsByContract);
+        when(optOutRepository.findByCcwId(anyString()))
+                .thenReturn(Arrays.asList(optOuts.get(0)))
+                .thenReturn(Arrays.asList(optOuts.get(1)))
+                .thenReturn(Arrays.asList(optOuts.get(2)));
 
+        // Test data has 3 patientIds  each of whom has opted out.
+        // So the patientsClaimsProcessor should never be called.
         var processedJob = cut.process(jobUuid);
 
         assertThat(processedJob.getStatus(), is(JobStatus.FAILED));
-        assertThat(processedJob.getStatusMessage(), is(errMsg));
-        assertThat(processedJob.getCompletedAt(), notNullValue());
-        doVerify();
+        assertThat(processedJob.getStatusMessage(), is("No JobOutput records were created."));
+
+        verify(fileService).createDirectory(any());
+        verify(contractAdapter).getPatients(anyString());
     }
+
+
+//    @Test
+//    @DisplayName("When patientClaimsProcessor throws an exception, the job status becomes FAILED")
+//    void whenPatientClaimsProcessorThrowsException_jobFailsWithErrorMessage() {
+//
+//        final String errMsg = "error during exception handling to write error record";
+//        final RuntimeException runtimeException = new RuntimeException(errMsg);
+////        Mockito.when(patientClaimsProcessor.process(any(), any(), any())).thenThrow(runtimeException);
+//
+//        var processedJob = cut.process(jobUuid);
+//
+//        assertThat(processedJob.getStatus(), is(JobStatus.FAILED));
+//        assertThat(processedJob.getStatusMessage(), is(errMsg));
+//        assertThat(processedJob.getCompletedAt(), notNullValue());
+//        doVerify();
+//    }
 
     @Test
     @DisplayName("When output directory for the job already exists, delete it and create it afresh")
@@ -252,7 +291,6 @@ class JobProcessorUnitTest {
 
         verify(fileService, times(2)).createDirectory(any());
         verify(contractAdapter).getPatients(anyString());
-        verify(patientClaimsProcessor, atLeast(1)).process(any(), any(), any());
         verify(jobRepository, atLeastOnce()).updatePercentageCompleted(anyString(), anyInt());
     }
 
@@ -360,7 +398,6 @@ class JobProcessorUnitTest {
 
     private User createUser(Sponsor sponsor) {
         User user = new User();
-        user.setId(1L);
         user.setUsername("Harry_Potter");
         user.setFirstName("Harry");
         user.setLastName("Potter");
@@ -371,11 +408,9 @@ class JobProcessorUnitTest {
     }
 
     private Contract createContract(Sponsor sponsor) {
-        final int anInt = random.nextInt(64);
         Contract contract = new Contract();
-        contract.setId(Long.valueOf(anInt));
-        contract.setContractName("CONTRACT_" + anInt);
-        contract.setContractNumber("" + anInt);
+        contract.setContractName("CONTRACT_NM_00000");
+        contract.setContractNumber("CONTRACT_00000");
         contract.setAttestedOn(OffsetDateTime.now().minusDays(10));
         contract.setSponsor(sponsor);
 
@@ -385,7 +420,6 @@ class JobProcessorUnitTest {
 
     private Job createJob(User user) {
         Job job = new Job();
-        job.setId(1L);
         job.setJobUuid("S0000");
         job.setStatusMessage("0%");
         job.setStatus(JobStatus.IN_PROGRESS);
@@ -409,4 +443,38 @@ class JobProcessorUnitTest {
                 .datesUnderContract(new FilterOutByDate.DateRange(new Date(0), new Date()))
                 .build();
     }
+
+
+    private void createEOB() {
+        SimpleDateFormat sdf = new SimpleDateFormat("MM/dd/yyyy");
+        final String testInputFile = "test-data/EOB-for-Carrier-Claims.json";
+        final InputStream inputStream = getClass().getResourceAsStream("/" + testInputFile);
+
+        final EncodingEnum respType = EncodingEnum.forContentType(EncodingEnum.JSON_PLAIN_STRING);
+        final IParser parser = respType.newParser(FhirContext.forDstu3());
+        final ExplanationOfBenefit explanationOfBenefit = parser.parseResource(ExplanationOfBenefit.class, inputStream);
+        eob = ExplanationOfBenefitTrimmer.getBenefit(explanationOfBenefit);
+        Period billingPeriod = new Period();
+        try {
+            billingPeriod.setStart(sdf.parse("01/02/2020"));
+            final LocalDate now = LocalDate.now();
+            final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM/dd/yyyy");
+            final String nowFormatted = now.format(formatter);
+            billingPeriod.setEnd(sdf.parse(nowFormatted));
+        } catch (Exception ex) {}
+        eob.setBillablePeriod(billingPeriod);
+    }
+
+    private Bundle createBundle(Resource resource) {
+        final Bundle bundle = new Bundle();
+        bundle.addEntry(addEntry(resource));
+        return bundle;
+    }
+
+    private Bundle.BundleEntryComponent addEntry(Resource resource) {
+        final Bundle.BundleEntryComponent bundleEntryComponent = new Bundle.BundleEntryComponent();
+        bundleEntryComponent.setResource(resource);
+        return bundleEntryComponent;
+    }
+
 }
