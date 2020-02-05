@@ -1,6 +1,5 @@
 package gov.cms.ab2d.e2etest;
 
-import com.google.common.collect.Maps;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -86,6 +85,7 @@ public class APIClient {
         }
         HttpRequest exportRequest = HttpRequest.newBuilder()
                 .uri(URI.create(ab2dApiUrl + PATIENT_EXPORT_PATH + paramString))
+
                 .timeout(Duration.ofSeconds(defaultTimeout))
                 .header("Content-Type", "application/json")
                 .header("Authorization", "Bearer " + jwtStr)
