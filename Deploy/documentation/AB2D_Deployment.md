@@ -1246,6 +1246,42 @@
      --auto-approve
    ```
 
+1. If creating the AWS environment for Impl, do one of the following
+
+   *Deploy Impl by creating new api and worker images:*
+
+   ```ShellSession
+   $ ./deploy-ab2d-to-cms.sh \
+     --environment=ab2d-east-impl \
+     --shared-environment=ab2d-east-impl-shared \
+     --ecr-repo-environment=ab2d-mgmt-east-dev \
+     --region=us-east-1 \
+     --vpc-id=vpc-0e5d2e88de7f9cad4 \
+     --ssh-username=ec2-user \
+     --owner=842420567215 \
+     --ec2-instance-type=m5.xlarge \
+     --database-secret-datetime=2020-01-02-09-15-01 \
+     --build-new-images \
+     --auto-approve
+   ```
+
+   *Deploy Impl by using the latest existing api and worker images:*
+
+   ```ShellSession
+   $ ./deploy-ab2d-to-cms.sh \
+     --environment=ab2d-east-impl \
+     --shared-environment=ab2d-east-impl-shared \
+     --ecr-repo-environment=ab2d-mgmt-east-dev \
+     --region=us-east-1 \
+     --vpc-id=vpc-0e5d2e88de7f9cad4 \
+     --ssh-username=ec2-user \
+     --owner=842420567215 \
+     --ec2-instance-type=m5.xlarge \
+     --database-secret-datetime=2020-01-02-09-15-01 \
+     --use-existing-images \
+     --auto-approve
+   ```
+
 1. If prompted, enter database user at the "Enter desired database_user" prompt
 
 1. If prompted, enter database password at the "Enter desired database_password" prompt
@@ -3386,8 +3422,6 @@
    ```
 
    *Example for "Impl" environment:*
-
-   > *** TO DO ***: Run this after deploying to IMPL
    
    ```ShellSession
    $ export AWS_PROFILE=ab2d-east-impl
@@ -3420,16 +3454,12 @@
    ```
 
    *Example for "Impl" environment:*
-
-   > *** TO DO ***: Run this after deploying to IMPL
    
    ```ShellSession
    $ bundle exec rake encrypt_and_put_file_into_s3['/tmp/ab2d_imp_keystore','ab2d-east-impl-automation']
    ```
 
 1. Verify that you can get the encrypted keystore from S3 and decrypt it
-
-   > *** TO DO ***: Need to replace './ab2d_sbx_keystore' files with the keystore name
    
    1. Remove existing keyfile from the "/tmp" directory (if exists)
 
@@ -3466,8 +3496,6 @@
       ```
 
       *Example for "Impl" environment:*
-
-      > *** TO DO ***: Run this after deploying to IMPL
 
       ```ShellSession
       $ bundle exec rake get_file_from_s3_and_decrypt['/tmp/ab2d_imp_keystore','ab2d-east-impl-automation']
