@@ -4,6 +4,7 @@ import ca.uhn.fhir.context.FhirContext;
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.Job;
+import gov.cms.ab2d.common.model.JobOutput;
 import gov.cms.ab2d.common.model.JobStatus;
 import gov.cms.ab2d.common.model.Sponsor;
 import gov.cms.ab2d.common.model.User;
@@ -34,11 +35,13 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import javax.transaction.Transactional;
 import java.io.File;
 import java.time.OffsetDateTime;
+import java.util.List;
 import java.util.Random;
 
 import static java.lang.Boolean.TRUE;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.Matchers.notNullValue;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
@@ -96,7 +99,7 @@ class JobProcessorIntegrationTest {
         Bundle bundle1 = EobTestDataUtil.createBundle(eob.copy());
         when(mockBfdClient.requestEOBFromServer(anyString())).thenReturn(bundle1);
 
-        FhirContext fhirContext = new FhirContext();
+        FhirContext fhirContext = FhirContext.forDstu3();
         PatientClaimsProcessor patientClaimsProcessor = new PatientClaimsProcessorImpl(mockBfdClient, fhirContext);
 
         cut = new JobProcessorImpl(fileService, jobRepository, jobOutputRepository, contractAdapter, patientClaimsProcessor,
@@ -119,6 +122,9 @@ class JobProcessorIntegrationTest {
         assertThat(processedJob.getStatusMessage(), is("100%"));
         assertThat(processedJob.getExpiresAt(), notNullValue());
         assertThat(processedJob.getCompletedAt(), notNullValue());
+
+        final List<JobOutput> jobOutputs = job.getJobOutputs();
+        assertFalse(jobOutputs.isEmpty());
     }
 
     @Test
@@ -139,6 +145,9 @@ class JobProcessorIntegrationTest {
         assertThat(processedJob.getStatusMessage(), is("100%"));
         assertThat(processedJob.getExpiresAt(), notNullValue());
         assertThat(processedJob.getCompletedAt(), notNullValue());
+
+        final List<JobOutput> jobOutputs = job.getJobOutputs();
+        assertFalse(jobOutputs.isEmpty());
     }
 
     private Sponsor createSponsor() {
