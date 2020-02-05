@@ -52,6 +52,8 @@
 1. [Initiate BFD integration process](#initiate-bfd-integration-process)
 1. [Peer AB2D Dev, Sandbox, Impl environments with the BFD Sbx VPC and peer AB2D Prod with BFD Prod VPC](#peer-ab2d-dev-sandbox-impl-environments-with-the-bfd-sbx-vpc-and-peer-ab2d-prod-with-bfd-prod-vpc)
 1. [Encrypt BFD keystore and put in S3](#encrypt-bfd-keystore-and-put-in-s3)
+1. [Configure New Relic infrastructure](#configure-new-relic-infrastructure)
+1. [Configure New Relic users](#configure-new-elic-users)
 
 ## Note the starting state of the customer AWS account
 
@@ -3542,3 +3544,228 @@
       - Alias name: bfd-prod-sbx-selfsigned
 
       - Alias name: client_data_server_ab2d_imp_certificate
+
+## Configure New Relic infrastructure
+
+1. Open Chrome
+
+1. Enter the following in the address bar
+
+   > https://rpm.newrelic.com/accounts/2597286/setup
+
+1. Select the account icon dropdown in the upper right of the page
+
+1. Select **Account settings**
+
+1. Note the license key
+
+1. Connnect to controller
+
+1. Open New Relic congliguration file
+
+   ```ShellSession
+   $ sudo vim /etc/newrelic-infra.yml
+   ```
+
+1. Uncomment and configure this line with the license key
+
+   ```
+   license_key: {noted license key}
+   ```
+
+1. Select the **APM** tab to return to the setup page
+
+1. Select **Infrastructure**
+
+1. Select the **AWS** tab
+
+1. Select **ELB**
+
+1. Note the instructions that are displayed
+
+   - Select the following role type: "Another AWS account".
+
+   - Enter {new relic aws account} for the "Account ID".
+
+   - Check the box in order to "Require external ID".
+
+   - Enter {new relic external id} for the "External ID".
+
+   - Click "Next: Permissions".
+
+1. Note and save the "new relic aws account" and "new relic external id"
+
+1. Configure the "AB2D Dev" environment
+
+   1. Log on to AWS account for AB2D Dev
+      
+   1. Select **IAM**
+   
+   1. Select **Roles** from the leftmost panel
+   
+   1. Select **Create role**
+   
+   1. Select **Another AWS account**
+   
+   1. Configure the role as follows
+   
+      - **Account ID:** {new relic aws account}
+   
+      - **Require external ID:** checked
+   
+      - **External ID:** {new relic external id}
+   
+   1. Select **Next: Permissions**
+   
+   1. Return to the new relic web page
+   
+   1. Select **Next** on the "Step 1: Create a role and establish trust" page
+   
+   1. Return to the AWS account
+   
+   1. Enter the following in the **Search** text box
+   
+      ```
+      ReadOnlyAccess
+      ```
+   
+   1. Check **ReadOnlyAccess**
+   
+   1. Select **Next: Tags**
+   
+   1. Select **Next: Review**
+   
+   1. Return to the new relic web page
+   
+   1. Select **Next** on the "Step 2: Attach policy" page
+   
+   1. Return to the AWS account
+   
+   1. Configure the "Create role" page as follows
+   
+      - **Role name:** NewRelicInfrastructure-Integrations
+   
+   1. Select **Create Role**
+   
+   1. Select the **NewRelicInfrastructure-Integrations** role
+   
+   1. Copy and save the **Role ARN**
+   
+   1. Return to the new relic web page
+   
+   1. Select **Next** on the "Step 3: Set role name and review" page
+   
+   1. Note that we won't be creating a budgets policy, since no budgets are defined in the AWS account
+   
+   1. Select **Next** on the "Step 4: Configure Budgets policy" page
+   
+   1. Return to the AWS account
+   
+   1. Configure the "Step 5: Add Account Details" page as follows
+         
+      - **AWS Account name:** AB2D Dev
+   
+      - **ARN:** {noted NewRelicInfrastructure-Integrations role ARN}
+   
+   1. Select **Next** on the "Step 5: Add Account Details" page
+   
+   1. Uncheck **Select all**
+   
+   1. Check the following services
+   
+      *Example for "Dev" environment:*
+   
+      - AutoScaling
+      
+      - CloudFront
+   
+      - CloudTrail
+   
+      - EBS
+   
+      - EC2
+   
+      - ECS
+   
+      - EFS
+   
+      - ELB
+   
+      - RDS
+   
+      - VPC
+   
+   1. Select **Next** on the "Step 6: Select Services" page
+   
+   1. Note the following is displayed
+   
+      ```
+      We're setting up your integration
+   
+      New Relic is retrieving monitoring data from AWS account AB2D Dev and configuring
+      AWS dashboards in New Relic Insights.
+   
+      This may take up to 5 minutes.
+      ```
+   
+   1. Select **OK** on the "We're setting up your integration" page
+
+1. Note that the "AB2D Sbx" environment is already under a different New Relic account
+
+   1. Open a new page in Chrome
+
+   1. Log on to AWS account for AB2D Sbx
+      
+   1. Select **IAM**
+   
+   1. Select **Roles** from the leftmost panel
+   
+   1. Type the following in the **Search** text box
+
+      ```
+      NewRelic
+      ```
+
+   1. Note that the following role was already created by someone else
+
+      ```
+      NewRelicInfrastructure-Integrations
+      ```
+
+   1. Select **NewRelicInfrastructure-Integrations**
+
+   1. Copy and save the **Role ARN**
+
+   1. Select the **Trust relationships** tab
+
+   1. Note and save the new relic account under "Trusted entities"
+
+   1. Note and save the new relic external id under "Conditions"
+
+1. Configure the "AB2D Impl" environment
+
+   > *** TO DO ***
+
+## Configure New Relic users
+
+1. Open Chrome
+
+1. Enter the following in the address bar
+
+   > https://rpm.newrelic.com/accounts/2597286
+
+1. Select the account icon dropdown in the upper right of the page
+
+1. Select **User preferences**
+
+1. Configure the user as follows
+
+   - **Default account:** aws-hhs-cms-oeda-ab2d
+
+   - **Time zone:** (GMT-05:00) Eastern Time (US & Canada)
+
+1. Select **Save user preferences**
+
+1. Add addition users
+
+   > *** TO DO ***
