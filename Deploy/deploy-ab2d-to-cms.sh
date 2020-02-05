@@ -1549,6 +1549,7 @@ if [ -z "${DATABASE_HOST}" ]; then
   aws secretsmanager create-secret \
     --name "ab2d/${CMS_ENV}/module/db/database_host/${DATABASE_SECRET_DATETIME}" \
     --secret-string "${DB_ENDPOINT}"
+  DATABASE_HOST=$(./get-database-secret.py $CMS_ENV database_host $DATABASE_SECRET_DATETIME)
 fi
 
 # Create or get database port secret
@@ -1562,6 +1563,7 @@ if [ -z "${DATABASE_PORT}" ]; then
   aws secretsmanager create-secret \
     --name "ab2d/${CMS_ENV}/module/db/database_port/${DATABASE_SECRET_DATETIME}" \
     --secret-string "${DB_PORT}"
+  DATABASE_PORT=$(./get-database-secret.py $CMS_ENV database_port $DATABASE_SECRET_DATETIME)
 fi
 
 # Get database secret manager ARNs
