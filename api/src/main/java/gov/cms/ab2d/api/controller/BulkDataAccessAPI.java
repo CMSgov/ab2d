@@ -46,7 +46,7 @@ import static gov.cms.ab2d.common.util.Constants.*;
 @Slf4j
 @Api(value = "Bulk Data Access API", description = SwaggerConstants.BULK_MAIN)
 @RestController
-@RequestMapping(path = API_PREFIX + FHIR_PREFIX, produces = "application/json")
+@RequestMapping(path = API_PREFIX + FHIR_PREFIX, produces = {"application/json", NDJSON_FIRE_CONTENT_TYPE})
 /**
  * The sole REST controller for AB2D's implementation of the FHIR Bulk Data API specification.
  */
@@ -335,7 +335,7 @@ public class BulkDataAccessAPI {
             jobService.deleteFileForJob(downloadResource.getFile());
 
             HttpHeaders httpHeaders = new HttpHeaders();
-            //httpHeaders.add("Content-Type", NDJSON_FIRE_CONTENT_TYPE);
+            httpHeaders.add("Content-Type", NDJSON_FIRE_CONTENT_TYPE);
 
             return new ResponseEntity<>(out.toString(), httpHeaders, HttpStatus.OK);
         }

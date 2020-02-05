@@ -584,10 +584,10 @@ public class BulkDataAccessAPIIntegrationTests {
                 "$.output[0].url");
         MvcResult downloadFileCall =
                 this.mockMvc.perform(get(downloadUrl).contentType(MediaType.APPLICATION_JSON)
-                        .header("Authorization", "Bearer " + token))
+                        .header("Authorization", "Bearer " + token)
+                        .header("Accept-Encoding", "gzip, deflate, br"))
                         .andExpect(status().is(200))
                         .andExpect(content().contentType(NDJSON_FIRE_CONTENT_TYPE))
-                        .andExpect(header().string("Content-Encoding", "gzip"))
                         .andDo(MockMvcResultHandlers.print()).andReturn();
         String downloadedFile = downloadFileCall.getResponse().getContentAsString();
         String testValue = JsonPath.read(downloadedFile, "$.test");
