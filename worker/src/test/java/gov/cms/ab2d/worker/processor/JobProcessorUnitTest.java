@@ -1,8 +1,6 @@
 package gov.cms.ab2d.worker.processor;
 
 import ca.uhn.fhir.context.FhirContext;
-import ca.uhn.fhir.parser.IParser;
-import ca.uhn.fhir.rest.api.EncodingEnum;
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.Job;
@@ -13,7 +11,6 @@ import gov.cms.ab2d.common.model.User;
 import gov.cms.ab2d.common.repository.JobOutputRepository;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.common.repository.OptOutRepository;
-import gov.cms.ab2d.filter.ExplanationOfBenefitTrimmer;
 import gov.cms.ab2d.filter.FilterOutByDate;
 import gov.cms.ab2d.worker.adapter.bluebutton.ContractAdapter;
 import gov.cms.ab2d.worker.adapter.bluebutton.GetPatientsByContractResponse;
@@ -22,8 +19,6 @@ import gov.cms.ab2d.worker.service.FileService;
 import org.hamcrest.CoreMatchers;
 import org.hl7.fhir.dstu3.model.Bundle;
 import org.hl7.fhir.dstu3.model.ExplanationOfBenefit;
-import org.hl7.fhir.dstu3.model.Period;
-import org.hl7.fhir.dstu3.model.Resource;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -35,17 +30,13 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.time.Instant;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -84,12 +75,11 @@ class JobProcessorUnitTest {
 
     private Job job;
     private GetPatientsByContractResponse patientsByContract;
-    private ExplanationOfBenefit eob;
 
     @BeforeEach
     void setUp() throws Exception {
-        createEOB();
-        Bundle bundle1 = createBundle(eob.copy());
+        ExplanationOfBenefit eob = EobTestDataUtil.createEOB();
+        Bundle bundle1 = EobTestDataUtil.createBundle(eob.copy());
         Mockito.lenient().when(mockBfdClient.requestEOBFromServer(anyString())).thenReturn(bundle1);
 
         FhirContext fhirContext = new FhirContext();
@@ -225,8 +215,8 @@ class JobProcessorUnitTest {
     }
 
     @Test
-    @DisplayName("When all patient has opted out, their record will be skipped and job FAILS as no jobOutput rows were created")
-    void processJob_whenAllPatientHasOptedOut_jobFailsAsNoJobOutputRowsCreated() {
+    @DisplayName("When all patients have opted out, their record will be skipped and job FAILS as no jobOutput rows were created")
+    void processJob_whenAllPatientsHaveOptedOut_SkipTheirRecordsAndfailJobAsNoJobOutputRowsCreated() {
 
         final List<OptOut> optOuts = getOptOutRows(patientsByContract);
         when(optOutRepository.findByCcwId(anyString()))
@@ -445,36 +435,5 @@ class JobProcessorUnitTest {
     }
 
 
-    private void createEOB() {
-        SimpleDateFormat sdf = new SimpleDateFormat("MM/dd/yyyy");
-        final String testInputFile = "test-data/EOB-for-Carrier-Claims.json";
-        final InputStream inputStream = getClass().getResourceAsStream("/" + testInputFile);
-
-        final EncodingEnum respType = EncodingEnum.forContentType(EncodingEnum.JSON_PLAIN_STRING);
-        final IParser parser = respType.newParser(FhirContext.forDstu3());
-        final ExplanationOfBenefit explanationOfBenefit = parser.parseResource(ExplanationOfBenefit.class, inputStream);
-        eob = ExplanationOfBenefitTrimmer.getBenefit(explanationOfBenefit);
-        Period billingPeriod = new Period();
-        try {
-            billingPeriod.setStart(sdf.parse("01/02/2020"));
-            final LocalDate now = LocalDate.now();
-            final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM/dd/yyyy");
-            final String nowFormatted = now.format(formatter);
-            billingPeriod.setEnd(sdf.parse(nowFormatted));
-        } catch (Exception ex) {}
-        eob.setBillablePeriod(billingPeriod);
-    }
-
-    private Bundle createBundle(Resource resource) {
-        final Bundle bundle = new Bundle();
-        bundle.addEntry(addEntry(resource));
-        return bundle;
-    }
-
-    private Bundle.BundleEntryComponent addEntry(Resource resource) {
-        final Bundle.BundleEntryComponent bundleEntryComponent = new Bundle.BundleEntryComponent();
-        bundleEntryComponent.setResource(resource);
-        return bundleEntryComponent;
-    }
 
 }

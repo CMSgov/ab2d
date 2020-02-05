@@ -1,34 +1,25 @@
 package gov.cms.ab2d.worker.processor;
 
 import ca.uhn.fhir.context.FhirContext;
-import ca.uhn.fhir.parser.IParser;
-import ca.uhn.fhir.rest.api.EncodingEnum;
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.model.Contract;
-import gov.cms.ab2d.filter.ExplanationOfBenefitTrimmer;
 import gov.cms.ab2d.filter.FilterOutByDate;
 import gov.cms.ab2d.worker.adapter.bluebutton.GetPatientsByContractResponse;
-import gov.cms.ab2d.worker.service.FileService;
 import lombok.extern.slf4j.Slf4j;
 import org.hl7.fhir.dstu3.model.Bundle;
 import org.hl7.fhir.dstu3.model.ExplanationOfBenefit;
-import org.hl7.fhir.dstu3.model.Period;
-import org.hl7.fhir.dstu3.model.Resource;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.text.SimpleDateFormat;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.Date;
@@ -60,7 +51,6 @@ public class PatientClaimsProcessorUnitTest {
     private String patientId = "1234567890";
     private JobDataWriter jobDataWriter;
 
-    private List<Integer> allMonths = List.of(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12);
     private OffsetDateTime earlyAttDate = OffsetDateTime.of(1970, 1, 1, 0, 0, 0, 0, ZoneOffset.UTC);
     private GetPatientsByContractResponse.PatientDTO patientDTO;
 
@@ -72,7 +62,7 @@ public class PatientClaimsProcessorUnitTest {
                 fhirContext
         );
 
-        createEOB();
+        eob = EobTestDataUtil.createEOB();
         createOutputFiles();
         patientDTO = new GetPatientsByContractResponse.PatientDTO();
         patientDTO.setPatientId(patientId);
@@ -84,7 +74,7 @@ public class PatientClaimsProcessorUnitTest {
 
     @Test
     void process_whenPatientHasSinglePageOfClaimsData() throws IOException, ExecutionException, InterruptedException {
-        Bundle bundle1 = createBundle(eob.copy());
+        Bundle bundle1 = EobTestDataUtil.createBundle(eob.copy());
         when(mockBfdClient.requestEOBFromServer(patientId)).thenReturn(bundle1);
 
         cut.process(patientDTO, jobDataWriter, earlyAttDate).get();
@@ -95,10 +85,10 @@ public class PatientClaimsProcessorUnitTest {
 
     @Test
     void process_whenPatientHasMultiplePagesOfClaimsData() throws IOException, ExecutionException, InterruptedException {
-        Bundle bundle1 = createBundle(eob.copy());
-        bundle1.addLink(addNextLink());
+        Bundle bundle1 = EobTestDataUtil.createBundle(eob.copy());
+        bundle1.addLink(EobTestDataUtil.addNextLink());
 
-        Bundle bundle2 = createBundle(eob.copy());
+        Bundle bundle2 = EobTestDataUtil.createBundle(eob.copy());
 
         when(mockBfdClient.requestEOBFromServer(patientId)).thenReturn(bundle1);
         when(mockBfdClient.requestNextBundleFromServer(bundle1)).thenReturn(bundle2);
@@ -111,7 +101,7 @@ public class PatientClaimsProcessorUnitTest {
 
     @Test
     void process_whenBfdClientThrowsException() throws IOException {
-        Bundle bundle1 = createBundle(eob.copy());
+        Bundle bundle1 = EobTestDataUtil.createBundle(eob.copy());
         when(mockBfdClient.requestEOBFromServer(patientId)).thenThrow(new RuntimeException("Test Exception"));
 
         var exceptionThrown = assertThrows(RuntimeException.class,
@@ -134,22 +124,6 @@ public class PatientClaimsProcessorUnitTest {
         verify(mockBfdClient, never()).requestNextBundleFromServer(bundle1);
     }
 
-    private void createEOB() {
-        SimpleDateFormat sdf = new SimpleDateFormat("MM/dd/yyyy");
-        final String testInputFile = "test-data/EOB-for-Carrier-Claims.json";
-        final InputStream inputStream = getClass().getResourceAsStream("/" + testInputFile);
-
-        final EncodingEnum respType = EncodingEnum.forContentType(EncodingEnum.JSON_PLAIN_STRING);
-        final IParser parser = respType.newParser(FhirContext.forDstu3());
-        final ExplanationOfBenefit explanationOfBenefit = parser.parseResource(ExplanationOfBenefit.class, inputStream);
-        eob = ExplanationOfBenefitTrimmer.getBenefit(explanationOfBenefit);
-        Period billingPeriod = new Period();
-        try {
-            billingPeriod.setStart(sdf.parse("01/02/2020"));
-            billingPeriod.setEnd(sdf.parse("01/03/2020"));
-        } catch (Exception ex) {}
-        eob.setBillablePeriod(billingPeriod);
-    }
 
     private void createOutputFiles() throws IOException {
         final Path outputDirPath = Paths.get(tmpEfsMountDir.toPath().toString(), UUID.randomUUID().toString());
@@ -164,21 +138,5 @@ public class PatientClaimsProcessorUnitTest {
         return Files.createFile(outputFilePath);
     }
 
-    private Bundle createBundle(Resource resource) {
-        final Bundle bundle = new Bundle();
-        bundle.addEntry(addEntry(resource));
-        return bundle;
-    }
 
-    private Bundle.BundleEntryComponent addEntry(Resource resource) {
-        final Bundle.BundleEntryComponent bundleEntryComponent = new Bundle.BundleEntryComponent();
-        bundleEntryComponent.setResource(resource);
-        return bundleEntryComponent;
-    }
-
-    private Bundle.BundleLinkComponent addNextLink() {
-        Bundle.BundleLinkComponent linkComponent = new Bundle.BundleLinkComponent();
-        linkComponent.setRelation(Bundle.LINK_NEXT);
-        return linkComponent;
-    }
 }

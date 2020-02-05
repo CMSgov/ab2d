@@ -1,8 +1,6 @@
 package gov.cms.ab2d.worker.processor;
 
 import ca.uhn.fhir.context.FhirContext;
-import ca.uhn.fhir.parser.IParser;
-import ca.uhn.fhir.rest.api.EncodingEnum;
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.Job;
@@ -16,13 +14,10 @@ import gov.cms.ab2d.common.repository.OptOutRepository;
 import gov.cms.ab2d.common.repository.SponsorRepository;
 import gov.cms.ab2d.common.repository.UserRepository;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
-import gov.cms.ab2d.filter.ExplanationOfBenefitTrimmer;
 import gov.cms.ab2d.worker.adapter.bluebutton.ContractAdapter;
 import gov.cms.ab2d.worker.service.FileService;
 import org.hl7.fhir.dstu3.model.Bundle;
 import org.hl7.fhir.dstu3.model.ExplanationOfBenefit;
-import org.hl7.fhir.dstu3.model.Period;
-import org.hl7.fhir.dstu3.model.Resource;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -38,11 +33,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 import javax.transaction.Transactional;
 import java.io.File;
-import java.io.InputStream;
-import java.text.SimpleDateFormat;
-import java.time.LocalDate;
 import java.time.OffsetDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.Random;
 
 import static java.lang.Boolean.TRUE;
@@ -87,7 +78,6 @@ class JobProcessorIntegrationTest {
     private Sponsor sponsor;
     private User user;
     private Job job;
-    private ExplanationOfBenefit eob;
 
     @Container
     private static final PostgreSQLContainer postgreSQLContainer = new AB2DPostgresqlContainer();
@@ -102,8 +92,8 @@ class JobProcessorIntegrationTest {
         user = createUser(sponsor);
         job = createJob(user);
 
-        createEOB();
-        Bundle bundle1 = createBundle(eob.copy());
+        ExplanationOfBenefit eob = EobTestDataUtil.createEOB();
+        Bundle bundle1 = EobTestDataUtil.createBundle(eob.copy());
         when(mockBfdClient.requestEOBFromServer(anyString())).thenReturn(bundle1);
 
         FhirContext fhirContext = new FhirContext();
@@ -199,36 +189,5 @@ class JobProcessorIntegrationTest {
     }
 
 
-    private void createEOB() {
-        SimpleDateFormat sdf = new SimpleDateFormat("MM/dd/yyyy");
-        final String testInputFile = "test-data/EOB-for-Carrier-Claims.json";
-        final InputStream inputStream = getClass().getResourceAsStream("/" + testInputFile);
-
-        final EncodingEnum respType = EncodingEnum.forContentType(EncodingEnum.JSON_PLAIN_STRING);
-        final IParser parser = respType.newParser(FhirContext.forDstu3());
-        final ExplanationOfBenefit explanationOfBenefit = parser.parseResource(ExplanationOfBenefit.class, inputStream);
-        eob = ExplanationOfBenefitTrimmer.getBenefit(explanationOfBenefit);
-        Period billingPeriod = new Period();
-        try {
-            billingPeriod.setStart(sdf.parse("01/02/2020"));
-            final LocalDate now = LocalDate.now();
-            final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM/dd/yyyy");
-            final String nowFormatted = now.format(formatter);
-            billingPeriod.setEnd(sdf.parse(nowFormatted));
-        } catch (Exception ex) {}
-        eob.setBillablePeriod(billingPeriod);
-    }
-
-    private Bundle createBundle(Resource resource) {
-        final Bundle bundle = new Bundle();
-        bundle.addEntry(addEntry(resource));
-        return bundle;
-    }
-
-    private Bundle.BundleEntryComponent addEntry(Resource resource) {
-        final Bundle.BundleEntryComponent bundleEntryComponent = new Bundle.BundleEntryComponent();
-        bundleEntryComponent.setResource(resource);
-        return bundleEntryComponent;
-    }
 
 }
