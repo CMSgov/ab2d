@@ -405,7 +405,7 @@ public class JobProcessorImpl implements JobProcessor {
         jobOutputs.addAll(errorJobOutputs);
 
         if (jobOutputs.isEmpty()) {
-            var errMsg = "No JobOutput records were created.";
+            var errMsg = "The export process has produced no results";
             throw new RuntimeException(errMsg);
         }
 
