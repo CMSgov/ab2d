@@ -17,8 +17,8 @@ import java.util.stream.Collectors;
  * and to minimize time zone issues, we kept everything as Date objects.
  */
 public final class FilterOutByDate {
-    private static String SHORT_DATE_FORMAT_STRING = "MM/dd/yyyy";
-    private static String FULL_DATE_FORMAT_STRING = "MM/dd/yyyy HH:mm:ss";
+    private static final String SHORT = "MM/dd/yyyy";
+    private static final String FULL = "MM/dd/yyyy HH:mm:ss";
 
     /**
      * Date range class used to define a from and to date for a subscribers membership.
@@ -39,8 +39,8 @@ public final class FilterOutByDate {
          * @throws ParseException if there was an error constructing the Date objects
          */
         public DateRange(Date start, Date end) throws ParseException {
-            SimpleDateFormat fullDateFormat = new SimpleDateFormat(FULL_DATE_FORMAT_STRING);
-            SimpleDateFormat shortDateFormat = new SimpleDateFormat(SHORT_DATE_FORMAT_STRING);
+            SimpleDateFormat fullDateFormat = new SimpleDateFormat(FULL);
+            SimpleDateFormat shortDateFormat = new SimpleDateFormat(SHORT);
             if (start != null) {
                 // we're only dealing with dates, not times, so 0 out time
                 this.start = shortDateFormat.parse(shortDateFormat.format(start));
@@ -248,8 +248,8 @@ public final class FilterOutByDate {
      * @throws ParseException - if there is an issue parsing the dates
      */
     static boolean afterAttestation(Date attestation, ExplanationOfBenefit ben) throws ParseException {
-        SimpleDateFormat fullDateFormat = new SimpleDateFormat(FULL_DATE_FORMAT_STRING);
-        SimpleDateFormat shortDateFormat = new SimpleDateFormat(SHORT_DATE_FORMAT_STRING);
+        SimpleDateFormat fullDateFormat = new SimpleDateFormat(FULL);
+        SimpleDateFormat shortDateFormat = new SimpleDateFormat(SHORT);
         if (ben == null || ben.getBillablePeriod() == null || attestation == null) {
             return false;
         }
