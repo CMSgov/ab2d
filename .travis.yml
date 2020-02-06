@@ -25,7 +25,7 @@ before_install:
   - docker-compose version
   - export OKTA_CLIENT_ID=0oa2t0lsrdZw5uWRx297
   - export OKTA_CLIENT_PASSWORD=HHduWG6LogIvDIQuWgp3Zlo9OYMValTtH5OBcuHw
-  - export SECONDARY_USER_OKTA_CLIENT_ID=0oa2t0lsrdZw5uWRx297
+  - export SECONDARY_USER_OKTA_CLIENT_ID=0oa2t0lc65ErV8OmY297
   - export SECONDARY_USER_OKTA_CLIENT_PASSWORD=1Bl3HGO6eglkXUDtjVjto3L-3C0offzTMk2qlz9r
   -
 install: true
