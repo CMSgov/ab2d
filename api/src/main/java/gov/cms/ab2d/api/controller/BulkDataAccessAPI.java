@@ -306,7 +306,7 @@ public class BulkDataAccessAPI {
     )
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Returns the requested file as " +
-                    "application/json.", responseHeaders = {
+                    NDJSON_FIRE_CONTENT_TYPE, responseHeaders = {
                     @ResponseHeader(name = "Content-Type", description =
                             "Content-Type header that matches the file format being delivered: " +
                                     NDJSON_FIRE_CONTENT_TYPE,

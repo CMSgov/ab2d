@@ -124,46 +124,6 @@ public class TestRunner {
         return httpClient.send(uploadRequest, HttpResponse.BodyHandlers.ofString());
     }*/
 
-    /*private Map<String, Object> getJobWithOutput() throws SQLException {
-        Map<String, Object> jobData = new HashMap<>();
-        try (Connection connection = dataSource.getConnection(); Statement statement = connection.createStatement()) {
-            ResultSet resultSet = statement.executeQuery("SELECT j.job_uuid, j.status, " +
-                    "j.status_message, j.resource_types, j.progress, j.contract_id, jo.fhir_resource_type FROM job j, job_output jo where j.id = jo.job_id and jo.error = false");
-            while (resultSet.next()) {
-                jobData.put("job_uuid", resultSet.getString("job_uuid"));
-                jobData.put("status", resultSet.getString("status"));
-                jobData.put("status_message", resultSet.getString("status_message"));
-                jobData.put("progress", resultSet.getInt("progress"));
-                jobData.put("resource_types", resultSet.getString("resource_types"));
-                jobData.put("fhir_resource_type", resultSet.getString("fhir_resource_type"));
-                jobData.put("contract_id", resultSet.getInt("contract_id"));
-            }
-        }
-
-        return jobData;
-    }
-
-    private void createContract(String contractNumber) throws SQLException {
-        if(sponsorId == null) {
-            try (Connection connection = dataSource.getConnection(); Statement statement = connection.createStatement()) {
-                ResultSet resultSet = statement.executeQuery("SELECT id FROM sponsor WHERE hpms_id = 999");
-                resultSet.next();
-                sponsorId = resultSet.getInt("id");
-            }
-        }
-
-        OffsetDateTime attestationDateTime = OffsetDateTime.now();
-        try (Connection connection = dataSource.getConnection(); Statement statement = connection.createStatement()) {
-            statement.execute("INSERT INTO contract(contract_number, contract_name, " +
-                    "sponsor_id, attested_on) VALUES('" + contractNumber + "', '" + contractNumber + "', " + sponsorId + ", '" +
-                    attestationDateTime + "')");
-        }
-    }
-
-    private void createContract(String contractNumber) {
-
-    }*/
-
     private HttpResponse<String> pollForStatusResponse(String statusUrl) throws InterruptedException, IOException {
         HttpResponse<String> statusResponse = null;
         long start = System.currentTimeMillis();
@@ -188,6 +148,7 @@ public class TestRunner {
         }
 
         if(statusesBetween0And100.size() < 2) {
+            // Currently failing, add back when jobs take longer
             //Assert.fail("Did not receive more than 1 distinct progress values between 0 and 100");
         }
 
@@ -292,6 +253,7 @@ public class TestRunner {
             HttpResponse<String> exportResponse = apiClient.exportRequest();
             Assert.assertEquals(202, exportResponse.statusCode());
             contentLocationList = exportResponse.headers().map().get("content-location");
+            Thread.sleep(1000);
         }
 
         HttpResponse<String> nextExportResponse = apiClient.exportRequest();
@@ -310,6 +272,7 @@ public class TestRunner {
             HttpResponse<String> exportResponse = apiClient.exportByContractRequest(contractNumber);
             Assert.assertEquals(202, exportResponse.statusCode());
             contentLocationList = exportResponse.headers().map().get("content-location");
+            Thread.sleep(1000);
         }
 
         HttpResponse<String> secondExportResponse = apiClient.exportByContractRequest(contractNumber);
