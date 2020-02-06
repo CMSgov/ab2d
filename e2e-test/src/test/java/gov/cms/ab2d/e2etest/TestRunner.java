@@ -304,15 +304,34 @@ public class TestRunner {
 
         String downloadUrl = performStatusRequests(contentLocationList, true, contractNumber);
 
+        APIClient secondUserAPIClient = createSecondUser();
+
+        HttpResponse<InputStream> downloadResponse = secondUserAPIClient.fileDownloadRequest(downloadUrl);
+        Assert.assertEquals(downloadResponse.statusCode(), 403);
+    }
+
+    @Test
+    public void testUserCannotDeleteOtherUsersJob() throws IOException, InterruptedException, JSONException {
+        HttpResponse<String> exportResponse = apiClient.exportRequest();
+
+        Assert.assertEquals(202, exportResponse.statusCode());
+        List<String> contentLocationList = exportResponse.headers().map().get("content-location");
+
+        String jobUUid = JobUtil.getJobUuid(contentLocationList.iterator().next());
+
+        APIClient secondUserAPIClient = createSecondUser();
+
+        HttpResponse<String> deleteResponse = secondUserAPIClient.cancelJobRequest(jobUUid);
+        Assert.assertEquals(deleteResponse.statusCode(), 403);
+    }
+
+    private APIClient createSecondUser() throws InterruptedException, JSONException, IOException {
         String oktaUrl = yamlMap.get("okta-url");
 
         String oktaClientId = System.getenv("SECONDARY_USER_OKTA_CLIENT_ID");
         String oktaPassword = System.getenv("SECONDARY_USER_OKTA_CLIENT_PASSWORD");
 
-        APIClient secondUserAPIClient = new APIClient(AB2D_API_URL, oktaUrl, oktaClientId, oktaPassword);
-
-        HttpResponse<InputStream> downloadResponse = secondUserAPIClient.fileDownloadRequest(downloadUrl);
-        Assert.assertEquals(downloadResponse.statusCode(), 403);
+        return new APIClient(AB2D_API_URL, oktaUrl, oktaClientId, oktaPassword);
     }
 
     @Test

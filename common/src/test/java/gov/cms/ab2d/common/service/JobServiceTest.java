@@ -185,7 +185,7 @@ public class JobServiceTest {
     public void getJob() {
         Job job = jobService.createJob(EOB, "http://localhost:8080");
 
-        Job retrievedJob = jobService.getJobByJobUuid(job.getJobUuid());
+        Job retrievedJob = jobService.getAuthorizedJobByJobUuid(job.getJobUuid());
 
         assertEquals(job, retrievedJob);
     }
@@ -193,7 +193,7 @@ public class JobServiceTest {
     @Test
     public void getNonExistentJob() {
         Assertions.assertThrows(ResourceNotFoundException.class, () -> {
-            jobService.getJobByJobUuid("NonExistent");
+            jobService.getAuthorizedJobByJobUuid("NonExistent");
         });
     }
 
@@ -344,7 +344,7 @@ public class JobServiceTest {
                 InvalidJobAccessException.class,
                 () -> jobService.getResourceForJob(job.getJobUuid(), testFile));
 
-        Assert.assertEquals(exceptionThrown.getMessage(), "You don't have permissions to access the job " + job.getJobUuid());
+        Assert.assertEquals(exceptionThrown.getMessage(), "Unauthorized");
     }
 
     private void createNDJSONFile(String file, String destinationStr) throws IOException {

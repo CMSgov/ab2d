@@ -23,10 +23,13 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.context.request.RequestAttributes;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import javax.servlet.http.HttpServletResponse;
 import javax.validation.constraints.NotBlank;
-import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -239,7 +242,7 @@ public class BulkDataAccessAPI {
         MDC.put(JOB_LOG, jobUuid);
         log.info("Request submitted to get job status");
 
-        Job job = jobService.getJobByJobUuid(jobUuid);
+        Job job = jobService.getAuthorizedJobByJobUuid(jobUuid);
 
         OffsetDateTime now = OffsetDateTime.now();
 
@@ -318,7 +321,7 @@ public class BulkDataAccessAPI {
     )
     @ResponseStatus(value = HttpStatus.OK)
     @GetMapping(value = "/Job/{jobUuid}/file/{filename}")
-    public ResponseEntity<String> downloadFile(
+    public ResponseEntity<Void> downloadFile(
             @ApiParam(value = "A job identifier", required = true) @PathVariable @NotBlank String jobUuid,
             @ApiParam(value = "A file name", required = true) @PathVariable @NotBlank String filename) throws IOException {
         MDC.put(JOB_LOG, jobUuid);
@@ -327,17 +330,19 @@ public class BulkDataAccessAPI {
 
         Resource downloadResource = jobService.getResourceForJob(jobUuid, filename);
 
+        RequestAttributes requestAttributes = RequestContextHolder.getRequestAttributes();
+        HttpServletResponse response = ((ServletRequestAttributes) requestAttributes).getResponse();
+
         log.info("Sending file to client");
 
-        try (OutputStream out = new ByteArrayOutputStream(); FileInputStream in = new FileInputStream(downloadResource.getFile())) {
+        response.setHeader(HttpHeaders.CONTENT_TYPE, NDJSON_FIRE_CONTENT_TYPE);
+
+        try (OutputStream out = response.getOutputStream(); FileInputStream in = new FileInputStream(downloadResource.getFile())) {
             IOUtils.copy(in, out);
 
             jobService.deleteFileForJob(downloadResource.getFile());
 
-            HttpHeaders httpHeaders = new HttpHeaders();
-            httpHeaders.add("Content-Type", NDJSON_FIRE_CONTENT_TYPE);
-
-            return new ResponseEntity<>(out.toString(), httpHeaders, HttpStatus.OK);
+            return new ResponseEntity<>(null, null, HttpStatus.OK);
         }
     }
 
