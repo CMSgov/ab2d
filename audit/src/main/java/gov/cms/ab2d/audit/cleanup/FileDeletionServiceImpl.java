@@ -69,14 +69,14 @@ public class FileDeletionServiceImpl implements FileDeletionService {
                         // just move on since there was no job connected to this directory
                     }
                     Instant deleteCheckTime = null;
-                    if(job != null && job.getStatus().isFinished()) {
+                    if (job != null && job.getStatus().isFinished()) {
                         deleteCheckTime = job.getCompletedAt().toInstant();
-                    } else if(job == null) {
+                    } else if (job == null) {
                         FileTime creationTime = (FileTime) Files.getAttribute(path, "creationTime");
                         deleteCheckTime = creationTime.toInstant();
                     }
 
-                    if(deleteCheckTime != null) {
+                    if (deleteCheckTime != null) {
                         if (deleteCheckTime.isBefore(Instant.now().minus(auditFilesTTLHours, ChronoUnit.HOURS)) &&
                                 path.toString().endsWith(FILE_EXTENSION.toLowerCase())) {
                             Files.delete(path);
