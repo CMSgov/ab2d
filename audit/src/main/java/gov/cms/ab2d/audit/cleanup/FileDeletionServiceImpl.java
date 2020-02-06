@@ -1,9 +1,14 @@
 package gov.cms.ab2d.audit.cleanup;
 
+import gov.cms.ab2d.common.model.Job;
+import gov.cms.ab2d.common.service.JobService;
+import gov.cms.ab2d.common.service.ResourceNotFoundException;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.FileVisitOption;
 import java.nio.file.Files;
@@ -24,6 +29,9 @@ public class FileDeletionServiceImpl implements FileDeletionService {
 
     @Value("${audit.files.ttl.hours}")
     private int auditFilesTTLHours;
+
+    @Autowired
+    private JobService jobService;
 
     private static final String FILE_EXTENSION = ".ndjson";
 
@@ -53,11 +61,31 @@ public class FileDeletionServiceImpl implements FileDeletionService {
         try (Stream<Path> walk = Files.walk(Paths.get(efsMount), FileVisitOption.FOLLOW_LINKS)) {
             walk.filter(Files::isRegularFile).forEach(path -> {
                 try {
-                    FileTime creationTime = (FileTime) Files.getAttribute(path, "creationTime");
-                    if (creationTime.toInstant().isBefore(Instant.now().minus(auditFilesTTLHours, ChronoUnit.HOURS)) &&
-                        path.toString().endsWith(FILE_EXTENSION.toLowerCase())) {
-                        Files.delete(path);
-                        log.info("Deleted file {}", path);
+                    String jobUuid = new File(path.toUri()).getParentFile().getName();
+                    Job job = null;
+                    try {
+                        job = jobService.getJobByJobUuid(jobUuid);
+                    } catch (ResourceNotFoundException e) {
+                        // just move on since there was no job connected to this directory
+                    }
+                    Instant deleteCheckTime = null;
+                    if(job != null && job.getStatus().isFinished()) {
+                        deleteCheckTime = job.getCompletedAt().toInstant();
+                    } else if(job == null) {
+                        FileTime creationTime = (FileTime) Files.getAttribute(path, "creationTime");
+                        deleteCheckTime = creationTime.toInstant();
+                    }
+
+                    if(deleteCheckTime != null) {
+                        if (deleteCheckTime.isBefore(Instant.now().minus(auditFilesTTLHours, ChronoUnit.HOURS)) &&
+                                path.toString().endsWith(FILE_EXTENSION.toLowerCase())) {
+                            Files.delete(path);
+                            log.info("Deleted file {}", path);
+                        } else {
+                            logFileNotEligibleForDeletion(path);
+                        }
+                    } else {
+                        logFileNotEligibleForDeletion(path);
                     }
                 } catch (IOException e) {
                     log.error("Encountered exception trying to delete a file {}, moving onto next one", path, e);
@@ -67,5 +95,9 @@ public class FileDeletionServiceImpl implements FileDeletionService {
         } catch (IOException e) {
             log.error("Encountered exception while trying to gather the list of files to delete", e);
         }
+    }
+
+    private void logFileNotEligibleForDeletion(Path path) {
+        log.info("File not eligible for deletion {}", path);
     }
 }
