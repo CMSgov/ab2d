@@ -85,6 +85,7 @@ public class BFDClientImpl implements BFDClient {
                 .where(ExplanationOfBenefit.PATIENT.hasId(patientID))
                 .count(pageSize)
                 .returnBundle(Bundle.class)
+                .encodedJson()
                 .execute();
     }
 
@@ -109,6 +110,7 @@ public class BFDClientImpl implements BFDClient {
                 .where(hicnHashEquals)
                 .withAdditionalHeader("IncludeIdentifiers", "true")
                 .returnBundle(Bundle.class)
+                .encodedJson()
                 .execute();
     }
 
@@ -141,6 +143,7 @@ public class BFDClientImpl implements BFDClient {
         return client
                 .loadPage()
                 .next(bundle)
+                .encodedJson()
                 .execute();
     }
 }
