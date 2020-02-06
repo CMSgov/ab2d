@@ -1,7 +1,5 @@
 package gov.cms.ab2d.worker.processor;
 
-import ca.uhn.fhir.context.FhirContext;
-import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.JobStatus;
@@ -18,8 +16,6 @@ import gov.cms.ab2d.worker.adapter.bluebutton.GetPatientsByContractResponse.Pati
 import gov.cms.ab2d.worker.processor.stub.PatientClaimsProcessorStub;
 import gov.cms.ab2d.worker.service.FileService;
 import org.hamcrest.CoreMatchers;
-import org.hl7.fhir.dstu3.model.Bundle;
-import org.hl7.fhir.dstu3.model.ExplanationOfBenefit;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -72,7 +68,7 @@ class JobProcessorUnitTest {
     @Mock private JobOutputRepository jobOutputRepository;
     @Mock private OptOutRepository optOutRepository;
     @Mock private ContractAdapter contractAdapter;
-    private PatientClaimsProcessor patientClaimsProcessor = spy(new PatientClaimsProcessorStub());
+    private PatientClaimsProcessor patientClaimsProcessor = spy(PatientClaimsProcessorStub.class);
 
     private Job job;
     private GetPatientsByContractResponse patientsByContract;
