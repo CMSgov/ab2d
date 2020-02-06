@@ -13,6 +13,7 @@ import gov.cms.ab2d.filter.FilterOutByDate;
 import gov.cms.ab2d.worker.adapter.bluebutton.ContractAdapter;
 import gov.cms.ab2d.worker.adapter.bluebutton.GetPatientsByContractResponse;
 import gov.cms.ab2d.worker.adapter.bluebutton.GetPatientsByContractResponse.PatientDTO;
+import gov.cms.ab2d.worker.processor.stub.PatientClaimsProcessorStub;
 import gov.cms.ab2d.worker.service.FileService;
 import org.hamcrest.CoreMatchers;
 import org.junit.jupiter.api.BeforeEach;
@@ -23,7 +24,6 @@ import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.scheduling.annotation.AsyncResult;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.io.IOException;
@@ -34,8 +34,11 @@ import java.nio.file.Paths;
 import java.text.ParseException;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
-import java.util.*;
-import java.util.concurrent.Future;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
+import java.util.Random;
 import java.util.stream.Collectors;
 
 import static java.lang.Boolean.TRUE;
@@ -65,7 +68,7 @@ class JobProcessorUnitTest {
     @Mock private JobOutputRepository jobOutputRepository;
     @Mock private OptOutRepository optOutRepository;
     @Mock private ContractAdapter contractAdapter;
-    @Mock private PatientClaimsProcessor patientClaimsProcessor;
+    private PatientClaimsProcessor patientClaimsProcessor = spy(PatientClaimsProcessorStub.class);
 
     private Job job;
     private GetPatientsByContractResponse patientsByContract;
@@ -101,9 +104,6 @@ class JobProcessorUnitTest {
         final Path outputDirPath = Paths.get(efsMountTmpDir.toString(), jobUuid);
         final Path outputDir = Files.createDirectories(outputDirPath);
         Mockito.lenient().when(fileService.createDirectory(any(Path.class))).thenReturn(outputDir);
-
-        Future<Void> futureResources = new AsyncResult<>(null);
-        Mockito.lenient().when(patientClaimsProcessor.process(any(), any(), any())).thenReturn(futureResources);
     }
 
     @Test
@@ -185,11 +185,11 @@ class JobProcessorUnitTest {
 
     @Test
     @DisplayName("When patient has opted out, their record will be skipped.")
-    void processJob_whenPatientHasOptedOut_ShouldSkipPatientRecord() {
+    void processJob_whenSomePatientHasOptedOut_ShouldSkipThatPatientRecord() {
 
         final List<OptOut> optOuts = getOptOutRows(patientsByContract);
         when(optOutRepository.findByCcwId(anyString()))
-                .thenReturn(Arrays.asList(optOuts.get(0)))
+                .thenReturn(new ArrayList<>())
                 .thenReturn(Arrays.asList(optOuts.get(1)))
                 .thenReturn(Arrays.asList(optOuts.get(2)));
 
@@ -203,6 +203,27 @@ class JobProcessorUnitTest {
 
         verify(fileService).createDirectory(any());
         verify(contractAdapter).getPatients(anyString());
+    }
+
+    @Test
+    @DisplayName("When all patients have opted out, their record will be skipped and job FAILS as no jobOutput rows were created")
+    void processJob_whenAllPatientsHaveOptedOut_SkipTheirRecordsAndfailJobAsNoJobOutputRowsCreated() {
+
+        final List<OptOut> optOuts = getOptOutRows(patientsByContract);
+        when(optOutRepository.findByCcwId(anyString()))
+                .thenReturn(Arrays.asList(optOuts.get(0)))
+                .thenReturn(Arrays.asList(optOuts.get(1)))
+                .thenReturn(Arrays.asList(optOuts.get(2)));
+
+        // Test data has 3 patientIds  each of whom has opted out.
+        // So the patientsClaimsProcessor should never be called.
+        var processedJob = cut.process(jobUuid);
+
+        assertThat(processedJob.getStatus(), is(JobStatus.FAILED));
+        assertThat(processedJob.getStatusMessage(), is("The export process has produced no results"));
+
+        verify(fileService).createDirectory(any());
+        verify(contractAdapter).getPatients(anyString());
         verify(patientClaimsProcessor, never()).process(any(), any(), any());
     }
 
@@ -213,7 +234,7 @@ class JobProcessorUnitTest {
 
         final String errMsg = "error during exception handling to write error record";
         final RuntimeException runtimeException = new RuntimeException(errMsg);
-        Mockito.when(patientClaimsProcessor.process(any(), any(), any())).thenThrow(runtimeException);
+        Mockito.doThrow(runtimeException).when(patientClaimsProcessor).process(any(), any(), any());
 
         var processedJob = cut.process(jobUuid);
 
@@ -360,7 +381,6 @@ class JobProcessorUnitTest {
 
     private User createUser(Sponsor sponsor) {
         User user = new User();
-        user.setId(1L);
         user.setUsername("Harry_Potter");
         user.setFirstName("Harry");
         user.setLastName("Potter");
@@ -371,11 +391,9 @@ class JobProcessorUnitTest {
     }
 
     private Contract createContract(Sponsor sponsor) {
-        final int anInt = random.nextInt(64);
         Contract contract = new Contract();
-        contract.setId(Long.valueOf(anInt));
-        contract.setContractName("CONTRACT_" + anInt);
-        contract.setContractNumber("" + anInt);
+        contract.setContractName("CONTRACT_NM_00000");
+        contract.setContractNumber("CONTRACT_00000");
         contract.setAttestedOn(OffsetDateTime.now().minusDays(10));
         contract.setSponsor(sponsor);
 
@@ -385,7 +403,6 @@ class JobProcessorUnitTest {
 
     private Job createJob(User user) {
         Job job = new Job();
-        job.setId(1L);
         job.setJobUuid("S0000");
         job.setStatusMessage("0%");
         job.setStatus(JobStatus.IN_PROGRESS);
@@ -409,4 +426,7 @@ class JobProcessorUnitTest {
                 .datesUnderContract(new FilterOutByDate.DateRange(new Date(0), new Date()))
                 .build();
     }
+
+
+
 }
