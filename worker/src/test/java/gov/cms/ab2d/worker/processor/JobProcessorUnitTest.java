@@ -220,7 +220,7 @@ class JobProcessorUnitTest {
         var processedJob = cut.process(jobUuid);
 
         assertThat(processedJob.getStatus(), is(JobStatus.FAILED));
-        assertThat(processedJob.getStatusMessage(), is("No JobOutput records were created."));
+        assertThat(processedJob.getStatusMessage(), is("The export process has produced no results"));
 
         verify(fileService).createDirectory(any());
         verify(contractAdapter).getPatients(anyString());
