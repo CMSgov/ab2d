@@ -10,7 +10,6 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.http.HttpResponse;
@@ -189,7 +188,7 @@ public class TestRunner extends AbstractJavaSamplerClient {
 
                         downloadResult.sampleEnd();
                         downloadResult.setResponseCode(String.valueOf(downloadResponse.statusCode()));
-                        downloadResult.setBodySize((long)downloadResponse.body().readAllBytes().length);
+                        downloadResult.setBodySize((long) downloadResponse.body().readAllBytes().length);
 
                         if (downloadResponse.statusCode() == 200) {
                             downloadResult.setSuccessful(true);
