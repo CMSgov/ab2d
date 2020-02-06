@@ -1,6 +1,7 @@
 package gov.cms.ab2d.bfd.client;
 
 import ca.uhn.fhir.context.FhirContext;
+import ca.uhn.fhir.rest.api.RequestFormatParamStyleEnum;
 import ca.uhn.fhir.rest.client.api.IGenericClient;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.client.HttpClient;
@@ -59,8 +60,9 @@ public class BFDClientConfiguration {
     @Bean
     public IGenericClient bfdFhirRestClient(FhirContext fhirContext, HttpClient httpClient) {
         fhirContext.getRestfulClientFactory().setHttpClient(httpClient);
-
-        return fhirContext.newRestfulGenericClient(serverBaseUrl);
+        IGenericClient client = fhirContext.newRestfulGenericClient(serverBaseUrl);
+        client.setFormatParamStyle(RequestFormatParamStyleEnum.SHORT);
+        return client;
     }
 
     @Bean
