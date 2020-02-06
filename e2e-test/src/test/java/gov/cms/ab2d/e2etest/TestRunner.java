@@ -248,16 +248,9 @@ public class TestRunner {
 
     @Test
     public void runSystemWideExport() throws IOException, InterruptedException, JSONException {
-        List<String> contentLocationList = null;
-        for(int i = 0; i < MAX_USER_JOBS; i++) {
-            HttpResponse<String> exportResponse = apiClient.exportRequest();
-            Assert.assertEquals(202, exportResponse.statusCode());
-            contentLocationList = exportResponse.headers().map().get("content-location");
-            Thread.sleep(1000);
-        }
-
-        HttpResponse<String> nextExportResponse = apiClient.exportRequest();
-        Assert.assertEquals(429, nextExportResponse.statusCode());
+        HttpResponse<String> exportResponse = apiClient.exportRequest();
+        Assert.assertEquals(202, exportResponse.statusCode());
+        List<String> contentLocationList = exportResponse.headers().map().get("content-location");
 
         String downloadUrl = performStatusRequests(contentLocationList, false, "S0000");
         downloadFile(downloadUrl);
@@ -266,19 +259,11 @@ public class TestRunner {
     @Test
     public void runContractNumberExport() throws IOException, InterruptedException, JSONException {
         String contractNumber = "S0000";
-        List<String> contentLocationList = null;
+        HttpResponse<String> exportResponse = apiClient.exportByContractRequest(contractNumber);
+        Assert.assertEquals(202, exportResponse.statusCode());
+        List<String> contentLocationList = exportResponse.headers().map().get("content-location");
 
-        for(int i = 0; i < MAX_USER_JOBS; i++) {
-            HttpResponse<String> exportResponse = apiClient.exportByContractRequest(contractNumber);
-            Assert.assertEquals(202, exportResponse.statusCode());
-            contentLocationList = exportResponse.headers().map().get("content-location");
-            Thread.sleep(1000);
-        }
-
-        HttpResponse<String> secondExportResponse = apiClient.exportByContractRequest(contractNumber);
-        Assert.assertEquals(429, secondExportResponse.statusCode());
-
-        String downloadUrl = performStatusRequests(contentLocationList, true, "S0000");
+        String downloadUrl = performStatusRequests(contentLocationList, true, contractNumber);
         downloadFile(downloadUrl);
     }
 
@@ -304,7 +289,7 @@ public class TestRunner {
 
         String downloadUrl = performStatusRequests(contentLocationList, true, contractNumber);
 
-        APIClient secondUserAPIClient = createSecondUser();
+        APIClient secondUserAPIClient = createSecondUserClient();
 
         HttpResponse<InputStream> downloadResponse = secondUserAPIClient.fileDownloadRequest(downloadUrl);
         Assert.assertEquals(downloadResponse.statusCode(), 403);
@@ -319,13 +304,26 @@ public class TestRunner {
 
         String jobUUid = JobUtil.getJobUuid(contentLocationList.iterator().next());
 
-        APIClient secondUserAPIClient = createSecondUser();
+        APIClient secondUserAPIClient = createSecondUserClient();
 
         HttpResponse<String> deleteResponse = secondUserAPIClient.cancelJobRequest(jobUUid);
         Assert.assertEquals(deleteResponse.statusCode(), 403);
     }
 
-    private APIClient createSecondUser() throws InterruptedException, JSONException, IOException {
+    @Test
+    public void testUserCannotCheckStatusOtherUsersJob() throws IOException, InterruptedException, JSONException {
+        HttpResponse<String> exportResponse = apiClient.exportRequest();
+
+        Assert.assertEquals(202, exportResponse.statusCode());
+        List<String> contentLocationList = exportResponse.headers().map().get("content-location");
+
+        APIClient secondUserAPIClient = createSecondUserClient();
+
+        HttpResponse<String> statusResponse = secondUserAPIClient.statusRequest(contentLocationList.iterator().next());
+        Assert.assertEquals(statusResponse.statusCode(), 403);
+    }
+
+    private APIClient createSecondUserClient() throws InterruptedException, JSONException, IOException {
         String oktaUrl = yamlMap.get("okta-url");
 
         String oktaClientId = System.getenv("SECONDARY_USER_OKTA_CLIENT_ID");

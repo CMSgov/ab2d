@@ -72,7 +72,7 @@ public class APIClient {
         HttpResponse<String> jwtResponse = httpClient.send(jwtRequest, HttpResponse.BodyHandlers.ofString());
         String responseJwtString = jwtResponse.body();
 
-        log.debug("Received JWT response {}", responseJwtString);
+        log.debug("Received JWT response");
 
         JSONObject responseJsonObject = new JSONObject(responseJwtString);
         jwtStr = responseJsonObject.getString("access_token");
