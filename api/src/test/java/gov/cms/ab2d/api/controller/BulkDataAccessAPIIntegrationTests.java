@@ -241,7 +241,7 @@ public class BulkDataAccessAPIIntegrationTests {
                 .andExpect(jsonPath("$.issue[0].severity", Is.is("error")))
                 .andExpect(jsonPath("$.issue[0].code", Is.is("invalid")))
                 .andExpect(jsonPath("$.issue[0].details.text",
-                        Is.is("InvalidUserInputException: _type must be ExplanationOfBenefit")));
+                        Is.is("_type must be ExplanationOfBenefit")));
     }
 
     @Test
@@ -255,7 +255,7 @@ public class BulkDataAccessAPIIntegrationTests {
                 .andExpect(jsonPath("$.issue[0].severity", Is.is("error")))
                 .andExpect(jsonPath("$.issue[0].code", Is.is("invalid")))
                 .andExpect(jsonPath("$.issue[0].details.text",
-                        Is.is("InvalidUserInputException: An _outputFormat of Invalid is not " +
+                        Is.is("An _outputFormat of Invalid is not " +
                                 "valid")));
     }
 
@@ -285,7 +285,7 @@ public class BulkDataAccessAPIIntegrationTests {
                 .andExpect(jsonPath("$.issue[0].severity", Is.is("error")))
                 .andExpect(jsonPath("$.issue[0].code", Is.is("invalid")))
                 .andExpect(jsonPath("$.issue[0].details.text",
-                        Is.is("ResourceNotFoundException: No job with jobUuid NonExistentJob was " +
+                        Is.is("No job with jobUuid NonExistentJob was " +
                                 "found")));
         ;
     }
@@ -308,7 +308,7 @@ public class BulkDataAccessAPIIntegrationTests {
                 .andExpect(jsonPath("$.issue[0].severity", Is.is("error")))
                 .andExpect(jsonPath("$.issue[0].code", Is.is("invalid")))
                 .andExpect(jsonPath("$.issue[0].details.text",
-                        Is.is("InvalidJobStateTransition: Job has a status of " + job.getStatus() +
+                        Is.is("Job has a status of " + job.getStatus() +
                                 ", so it cannot be cancelled")));
 
         job.setStatus(JobStatus.CANCELLED);
@@ -321,7 +321,7 @@ public class BulkDataAccessAPIIntegrationTests {
                 .andExpect(jsonPath("$.issue[0].severity", Is.is("error")))
                 .andExpect(jsonPath("$.issue[0].code", Is.is("invalid")))
                 .andExpect(jsonPath("$.issue[0].details.text",
-                        Is.is("InvalidJobStateTransition: Job has a status of " + job.getStatus() +
+                        Is.is("Job has a status of " + job.getStatus() +
                                 ", so it cannot be cancelled")));
 
         job.setStatus(JobStatus.SUCCESSFUL);
@@ -334,7 +334,7 @@ public class BulkDataAccessAPIIntegrationTests {
                 .andExpect(jsonPath("$.issue[0].severity", Is.is("error")))
                 .andExpect(jsonPath("$.issue[0].code", Is.is("invalid")))
                 .andExpect(jsonPath("$.issue[0].details.text",
-                        Is.is("InvalidJobStateTransition: Job has a status of " + job.getStatus() +
+                        Is.is("Job has a status of " + job.getStatus() +
                                 ", so it cannot be cancelled")));
     }
 
@@ -466,7 +466,7 @@ public class BulkDataAccessAPIIntegrationTests {
                 .andExpect(jsonPath("$.issue[0].severity", Is.is("error")))
                 .andExpect(jsonPath("$.issue[0].code", Is.is("invalid")))
                 .andExpect(jsonPath("$.issue[0].details.text",
-                        Is.is("JobProcessingException: Job failed while processing")));
+                        Is.is("Job failed while processing")));
     }
 
     @Test
@@ -491,7 +491,7 @@ public class BulkDataAccessAPIIntegrationTests {
                 .andExpect(jsonPath("$.issue[0].severity", Is.is("error")))
                 .andExpect(jsonPath("$.issue[0].code", Is.is("invalid")))
                 .andExpect(jsonPath("$.issue[0].details.text",
-                        Is.is("ResourceNotFoundException: No job with jobUuid BadId was found")));
+                        Is.is("No job with jobUuid BadId was found")));
     }
 
     @Test
@@ -516,7 +516,7 @@ public class BulkDataAccessAPIIntegrationTests {
                 .andExpect(jsonPath("$.issue[0].severity", Is.is("error")))
                 .andExpect(jsonPath("$.issue[0].code", Is.is("invalid")))
                 .andExpect(jsonPath("$.issue[0].details.text",
-                        Is.is("ResourceNotFoundException: No job with jobUuid   was found")));
+                        Is.is("No job with jobUuid   was found")));
     }
 
     @Test
@@ -639,7 +639,7 @@ public class BulkDataAccessAPIIntegrationTests {
                 .andExpect(jsonPath("$.issue[0].severity", Is.is("error")))
                 .andExpect(jsonPath("$.issue[0].code", Is.is("invalid")))
                 .andExpect(jsonPath("$.issue[0].details.text",
-                        Is.is("JobOutputMissingException: The file is not present as it is either expired, been " +
+                        Is.is("The file is not present as it is either expired, been " +
                                 "downloaded, or an error occurred. Please resubmit the job.")));
     }
 
@@ -682,7 +682,7 @@ public class BulkDataAccessAPIIntegrationTests {
                 .andExpect(jsonPath("$.issue[0].severity", Is.is("error")))
                 .andExpect(jsonPath("$.issue[0].code", Is.is("invalid")))
                 .andExpect(jsonPath("$.issue[0].details.text",
-                        Is.is("ResourceNotFoundException: No Job Output with the file name test.ndjsonbadfilename exists in our records")));
+                        Is.is("No Job Output with the file name test.ndjsonbadfilename exists in our records")));
     }
 
     @Test
@@ -750,7 +750,7 @@ public class BulkDataAccessAPIIntegrationTests {
                 .andExpect(jsonPath("$.issue[0].severity", Is.is("error")))
                 .andExpect(jsonPath("$.issue[0].code", Is.is("invalid")))
                 .andExpect(jsonPath("$.issue[0].details.text",
-                        Is.is("InvalidUserInputException: _type must be ExplanationOfBenefit")));
+                        Is.is("_type must be ExplanationOfBenefit")));
     }
 
     @Test
@@ -766,7 +766,7 @@ public class BulkDataAccessAPIIntegrationTests {
                 .andExpect(jsonPath("$.issue[0].severity", Is.is("error")))
                 .andExpect(jsonPath("$.issue[0].code", Is.is("invalid")))
                 .andExpect(jsonPath("$.issue[0].details.text",
-                        Is.is("InvalidUserInputException: An _outputFormat of Invalid is not " +
+                        Is.is("An _outputFormat of Invalid is not " +
                                 "valid")));
     }
 
@@ -780,7 +780,7 @@ public class BulkDataAccessAPIIntegrationTests {
                 .andExpect(jsonPath("$.issue[0].severity", Is.is("error")))
                 .andExpect(jsonPath("$.issue[0].code", Is.is("invalid")))
                 .andExpect(jsonPath("$.issue[0].details.text",
-                        Is.is("ResourceNotFoundException: Contract badContract was not found")));
+                        Is.is("Contract badContract was not found")));
     }
 
     private void createMaxJobsWithContract(Contract contract) throws Exception {

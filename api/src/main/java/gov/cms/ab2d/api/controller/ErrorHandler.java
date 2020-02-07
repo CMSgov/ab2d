@@ -80,7 +80,18 @@ class ErrorHandler extends ResponseEntityExceptionHandler {
     }
 
     private ResponseEntity<JsonNode> generateFHIRError(Exception e, HttpStatus httpStatus, HttpHeaders httpHeaders) throws IOException {
-        String msg = ExceptionUtils.getRootCauseMessage(e);
+        Throwable rootCause = ExceptionUtils.getRootCause(e);
+        String msg = "";
+
+        // This exception did not come from us, so don't use the message since we didn't set the text, otherwise it could potentially reveal
+        // internals, e.g. a message from a database error
+        if (!rootCause.getClass().getName().matches("^gov\\.cms\\.ab2d.*")) {
+            msg = "An internal error occurred";
+        } else {
+            msg = rootCause.getMessage();
+            msg = msg.replaceFirst("^(.*Exception: )", "");
+        }
+
         OperationOutcome operationOutcome = getErrorOutcome(msg);
         String encoded = outcomeToJSON(operationOutcome);
         return new ResponseEntity<>(new ObjectMapper().readTree(encoded), httpHeaders, httpStatus);
