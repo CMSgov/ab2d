@@ -12,6 +12,7 @@ class FileSystemCheckTest {
 
     @Test
     void canWriteFile() throws IOException {
+        assertFalse(FileSystemCheck.canWriteFile(null, false));
         assertTrue(FileSystemCheck.canWriteFile("/tmp", false));
         assertTrue(FileSystemCheck.canWriteFile(".", false));
         assertFalse(FileSystemCheck.canWriteFile("/notarealdir", false));

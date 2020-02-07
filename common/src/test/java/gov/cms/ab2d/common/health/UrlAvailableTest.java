@@ -9,6 +9,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class UrlAvailableTest {
     @Test
     public void testAvailable() {
+        assertFalse(UrlAvailable.available("www.google.com"));
         assertTrue(UrlAvailable.available("http://www.google.com"));
         assertTrue(UrlAvailable.available("http://www.google.com:80"));
         assertFalse(UrlAvailable.available("http://www.bogusurllaila1234.com"));
