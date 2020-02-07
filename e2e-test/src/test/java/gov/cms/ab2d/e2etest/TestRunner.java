@@ -379,7 +379,7 @@ public class TestRunner {
         JSONObject detailsJson = issueJson.getJSONObject("details");
         String text = detailsJson.getString("text");
 
-        Assert.assertEquals(text, "IllegalArgumentException: A signing key must be specified if the specified JWT is digitally signed.");
+        Assert.assertEquals(text, "A signing key must be specified if the specified JWT is digitally signed.");
     }
 
     @Test
