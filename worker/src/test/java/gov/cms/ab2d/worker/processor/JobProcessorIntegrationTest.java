@@ -106,6 +106,7 @@ class JobProcessorIntegrationTest {
                 optOutRepository);
         ReflectionTestUtils.setField(cut, "cancellationCheckFrequency", 10);
         ReflectionTestUtils.setField(cut, "efsMount", tmpEfsMountDir.toString());
+        ReflectionTestUtils.setField(cut, "failureThreshold", 10);
     }
 
 
