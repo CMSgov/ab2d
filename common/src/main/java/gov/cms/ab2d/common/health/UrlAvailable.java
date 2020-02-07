@@ -24,6 +24,7 @@ public class UrlAvailable {
             URL url = new URL(testUrl);
             int port = url.getPort() == -1 ? url.getDefaultPort() : url.getPort();
             try (Socket socket = new Socket(url.getHost(), port)) {
+                log.debug("Socket opened to " + testUrl + " and is connected: " + socket.isConnected());
             } catch (IOException e) {
                 log.info("Unable to open socket to " + testUrl);
                 return false;

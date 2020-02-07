@@ -31,7 +31,7 @@ public class FileSystemCheck {
         if (Files.notExists(dirPath)) {
             if (createDir) {
                 File directory = new File(dir);
-                if (! directory.exists()){
+                if (!directory.exists()) {
                     directory.mkdirs();
                 }
             } else {
