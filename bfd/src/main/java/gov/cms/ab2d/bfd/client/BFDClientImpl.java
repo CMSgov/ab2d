@@ -80,9 +80,11 @@ public class BFDClientImpl implements BFDClient {
             exclude = { ResourceNotFoundException.class }
     )
     public Bundle requestEOBFromServer(String patientID) {
+        var excludeSAMHSA = new TokenClientParam("excludeSAMHSA").exactly().code("true");
         return client.search()
                 .forResource(ExplanationOfBenefit.class)
                 .where(ExplanationOfBenefit.PATIENT.hasId(patientID))
+                .and(excludeSAMHSA)
                 .count(pageSize)
                 .returnBundle(Bundle.class)
                 .encodedJson()
