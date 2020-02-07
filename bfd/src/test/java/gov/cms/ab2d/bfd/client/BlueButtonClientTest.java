@@ -98,7 +98,8 @@ public class BlueButtonClientTest {
                     "/v1/fhir/ExplanationOfBenefit",
                     HttpStatus.OK_200,
                     getRawXML(SAMPLE_EOB_PATH_PREFIX + patientId + ".xml"),
-                    Collections.singletonList(Parameter.param("patient", patientId))
+                    List.of(Parameter.param("patient", patientId),
+                            Parameter.param("excludeSAMHSA", "true"))
             );
 
             createMockServerExpectation(
@@ -128,7 +129,8 @@ public class BlueButtonClientTest {
                 "/v1/fhir/ExplanationOfBenefit",
                 HttpStatus.OK_200,
                 getRawXML(SAMPLE_EOB_PATH_PREFIX + TEST_NO_RECORD_PATIENT_ID + ".xml"),
-                Collections.singletonList(Parameter.param("patient", TEST_NO_RECORD_PATIENT_ID))
+                List.of(Parameter.param("patient", TEST_NO_RECORD_PATIENT_ID),
+                        Parameter.param("excludeSAMHSA", "true"))
         );
 
         // Create mocks for pages of the results
@@ -139,7 +141,8 @@ public class BlueButtonClientTest {
                     getRawXML(SAMPLE_EOB_PATH_PREFIX + TEST_PATIENT_ID + "_" + startIndex + ".xml"),
                     List.of(Parameter.param("patient", TEST_PATIENT_ID),
                             Parameter.param("count", "10"),
-                            Parameter.param("startIndex", startIndex))
+                            Parameter.param("startIndex", startIndex),
+                            Parameter.param("excludeSAMHSA", "true"))
             );
         }
     }
