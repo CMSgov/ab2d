@@ -600,7 +600,7 @@ public class BulkDataAccessAPIIntegrationTests {
     }
 
     @Test
-    public void testDownloadMissingFile() throws Exception {
+    public void testDownloadMissingFileGenericError() throws Exception {
         MvcResult mvcResult = this.mockMvc.perform(
                 get(API_PREFIX + FHIR_PREFIX + PATIENT_EXPORT_PATH + "?_type=ExplanationOfBenefit")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -638,8 +638,7 @@ public class BulkDataAccessAPIIntegrationTests {
                 .andExpect(jsonPath("$.issue[0].severity", Is.is("error")))
                 .andExpect(jsonPath("$.issue[0].code", Is.is("invalid")))
                 .andExpect(jsonPath("$.issue[0].details.text",
-                        Is.is("JobOutputMissingException: The file is not present as it is either expired, been " +
-                                "downloaded, or an error occurred. Please resubmit the job.")));
+                        Is.is("The file is not present as there was an error. Please resubmit the job.")));
     }
 
     @Test
@@ -681,7 +680,93 @@ public class BulkDataAccessAPIIntegrationTests {
                 .andExpect(jsonPath("$.issue[0].severity", Is.is("error")))
                 .andExpect(jsonPath("$.issue[0].code", Is.is("invalid")))
                 .andExpect(jsonPath("$.issue[0].details.text",
-                        Is.is("ResourceNotFoundException: No Job Output with the file name test.ndjsonbadfilename exists in our records")));
+                        Is.is("The file is not present as there was an error. Please resubmit the job.")));
+    }
+
+    @Test
+    public void testDownloadFileAlreadyDownloaded() throws Exception {
+        MvcResult mvcResult = this.mockMvc.perform(
+                get(API_PREFIX + FHIR_PREFIX + PATIENT_EXPORT_PATH + "?_type=ExplanationOfBenefit")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header("Authorization", "Bearer " + token))
+                .andReturn();
+        String statusUrl = mvcResult.getResponse().getHeader("Content-Location");
+
+        Job job = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
+        job.setStatus(JobStatus.SUCCESSFUL);
+        job.setProgress(100);
+        OffsetDateTime expireDate = OffsetDateTime.now().plusDays(100);
+        job.setExpiresAt(expireDate);
+        OffsetDateTime now = OffsetDateTime.now();
+        job.setCompletedAt(now);
+
+        JobOutput jobOutput = new JobOutput();
+        jobOutput.setFhirResourceType(EOB);
+        jobOutput.setJob(job);
+        jobOutput.setFilePath("test.ndjson");
+        jobOutput.setError(false);
+        jobOutput.setDownloaded(true);
+        job.getJobOutputs().add(jobOutput);
+
+        jobRepository.saveAndFlush(job);
+
+        MvcResult mvcResultStatusCall =
+                this.mockMvc.perform(get(statusUrl).contentType(MediaType.APPLICATION_JSON)
+                        .header("Authorization", "Bearer " + token))
+                        .andReturn();
+        String downloadUrl = JsonPath.read(mvcResultStatusCall.getResponse().getContentAsString(),
+                "$.output[0].url");
+        this.mockMvc.perform(get(downloadUrl).contentType(MediaType.APPLICATION_JSON)
+                .header("Authorization", "Bearer " + token))
+                .andExpect(status().is(404))
+                .andExpect(jsonPath("$.resourceType", Is.is("OperationOutcome")))
+                .andExpect(jsonPath("$.issue[0].severity", Is.is("error")))
+                .andExpect(jsonPath("$.issue[0].code", Is.is("invalid")))
+                .andExpect(jsonPath("$.issue[0].details.text",
+                        Is.is("The file is not present as it has already been downloaded. Please resubmit the job.")));
+    }
+
+    @Test
+    public void testDownloadFileExpired() throws Exception {
+        MvcResult mvcResult = this.mockMvc.perform(
+                get(API_PREFIX + FHIR_PREFIX + PATIENT_EXPORT_PATH + "?_type=ExplanationOfBenefit")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header("Authorization", "Bearer " + token))
+                .andReturn();
+        String statusUrl = mvcResult.getResponse().getHeader("Content-Location");
+
+        Job job = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
+        job.setStatus(JobStatus.SUCCESSFUL);
+        job.setProgress(100);
+        OffsetDateTime expireDate = OffsetDateTime.now().plusDays(100);
+        job.setExpiresAt(expireDate);
+        OffsetDateTime now = OffsetDateTime.now();
+        job.setCompletedAt(now);
+
+        JobOutput jobOutput = new JobOutput();
+        jobOutput.setFhirResourceType(EOB);
+        jobOutput.setJob(job);
+        jobOutput.setFilePath("test.ndjson");
+        jobOutput.setError(false);
+        jobOutput.setDownloaded(true);
+        job.getJobOutputs().add(jobOutput);
+
+        jobRepository.saveAndFlush(job);
+
+        MvcResult mvcResultStatusCall =
+                this.mockMvc.perform(get(statusUrl).contentType(MediaType.APPLICATION_JSON)
+                        .header("Authorization", "Bearer " + token))
+                        .andReturn();
+        String downloadUrl = JsonPath.read(mvcResultStatusCall.getResponse().getContentAsString(),
+                "$.output[0].url");
+        this.mockMvc.perform(get(downloadUrl).contentType(MediaType.APPLICATION_JSON)
+                .header("Authorization", "Bearer " + token))
+                .andExpect(status().is(404))
+                .andExpect(jsonPath("$.resourceType", Is.is("OperationOutcome")))
+                .andExpect(jsonPath("$.issue[0].severity", Is.is("error")))
+                .andExpect(jsonPath("$.issue[0].code", Is.is("invalid")))
+                .andExpect(jsonPath("$.issue[0].details.text",
+                        Is.is("The file is not present as it has expired. Please resubmit the job.")));
     }
 
     @Test

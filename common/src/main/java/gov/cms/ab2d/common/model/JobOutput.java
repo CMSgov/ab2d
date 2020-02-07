@@ -33,4 +33,7 @@ public class JobOutput {
 
     @NotNull
     private Boolean error;
+
+    @NotNull
+    private Boolean downloaded = false;
 }

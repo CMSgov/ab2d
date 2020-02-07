@@ -1,0 +1,1 @@
+ALTER TABLE job_output ADD COLUMN downloaded boolean NOT NULL DEFAULT false;

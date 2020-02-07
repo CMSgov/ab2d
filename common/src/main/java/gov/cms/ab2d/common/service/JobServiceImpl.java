@@ -39,6 +39,9 @@ public class JobServiceImpl implements JobService {
     @Autowired
     private ContractRepository contractRepository;
 
+    @Autowired
+    private JobOutputService jobOutputService;
+
     @Value("${efs.mount}")
     private String fileDownloadPath;
 
@@ -118,9 +121,11 @@ public class JobServiceImpl implements JobService {
 
         // Make sure that there is a path that matches a job output for the job they are requesting
         boolean jobOutputMatchesPath = false;
+        JobOutput foundJobOutput = null;
         for (JobOutput jobOutput : job.getJobOutputs()) {
             if (jobOutput.getFilePath().equals(fileName)) {
                 jobOutputMatchesPath = true;
+                foundJobOutput = jobOutput;
                 break;
             }
         }
@@ -134,7 +139,14 @@ public class JobServiceImpl implements JobService {
         Resource resource = new UrlResource(file.toUri());
 
         if (!resource.exists()) {
-            String errorMsg = "The file is not present as it is either expired, been downloaded, or an error occurred. Please resubmit the job.";
+            String errorMsg;
+            if(foundJobOutput.getDownloaded()) {
+                errorMsg = "The file is not present as it has already been downloaded. Please resubmit the job.";
+            } else if(job.getExpiresAt().isBefore(OffsetDateTime.now())) {
+                errorMsg = "The file is not present as it has expired. Please resubmit the job.";
+            } else {
+                errorMsg = "The file is not present as there was an error. Please resubmit the job.";
+            }
             log.error(errorMsg);
             throw new JobOutputMissingException(errorMsg);
         }
@@ -148,6 +160,11 @@ public class JobServiceImpl implements JobService {
         if (!deleted) {
             log.error("Was not able to delete the file {}", file.getName());
         }
+
+        String fileName = file.getName();
+        JobOutput jobOutput = jobOutputService.findByFilePath(fileName);
+        jobOutput.setDownloaded(true);
+        jobOutputService.updateJobOutput(jobOutput);
     }
 
     @Override
