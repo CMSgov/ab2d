@@ -38,6 +38,7 @@ import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Random;
 
+import static gov.cms.ab2d.common.util.Constants.NDJSON_FIRE_CONTENT_TYPE;
 import static java.lang.Boolean.TRUE;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.Matchers.notNullValue;
@@ -193,6 +194,7 @@ class JobProcessorIntegrationTest {
         job.setStatus(JobStatus.SUBMITTED);
         job.setStatusMessage("0%");
         job.setUser(user);
+        job.setOutputFormat(NDJSON_FIRE_CONTENT_TYPE);
         job.setCreatedAt(OffsetDateTime.now());
         return jobRepository.save(job);
     }

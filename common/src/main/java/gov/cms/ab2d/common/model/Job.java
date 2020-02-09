@@ -51,6 +51,7 @@ public class Job {
     @Enumerated(STRING)
     private JobStatus status;
     private String statusMessage;
+    private String outputFormat;
     private Integer progress;
 
     @Column(columnDefinition = "TIMESTAMP WITH TIME ZONE")

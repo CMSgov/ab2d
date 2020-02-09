@@ -284,7 +284,6 @@ public class JobProcessorImpl implements JobProcessor {
         return createJobOutputs(contractData.getWriter());
     }
 
-
     private GetPatientsByContractResponse getPatientsByContract(String contractNumber, ProgressTracker progressTracker) {
         return progressTracker.getPatientsByContracts()
                 .stream()
@@ -292,7 +291,6 @@ public class JobProcessorImpl implements JobProcessor {
                 .findFirst()
                 .get();
     }
-
 
     private void cancelFuturesInQueue(List<Future<Void>> futureHandles) {
 
@@ -315,7 +313,6 @@ public class JobProcessorImpl implements JobProcessor {
         final JobStatus jobStatus = jobRepository.findJobStatus(jobUuid);
         return CANCELLED.equals(jobStatus);
     }
-
 
     private boolean isOptOutPatient(String patientId) {
 
@@ -367,7 +364,6 @@ public class JobProcessorImpl implements JobProcessor {
         trackProgress(progressTracker);
     }
 
-
     private void trackProgress(ProgressTracker progressTracker) {
         if (progressTracker.isTimeToUpdateDatabase(reportProgressDbFrequency)) {
             final int percentageCompleted = progressTracker.getPercentageCompleted();
@@ -387,7 +383,6 @@ public class JobProcessorImpl implements JobProcessor {
             log.info("[{}/{}] records processed = [{}% completed]", processedCount, totalCount, percentageCompleted);
         }
     }
-
 
     private List<JobOutput> createJobOutputs(final JobDataWriter jobDataWriter) {
         final List<JobOutput> jobOutputs = new ArrayList<>();
@@ -411,7 +406,6 @@ public class JobProcessorImpl implements JobProcessor {
 
         return jobOutputs;
     }
-
 
     private JobOutput createJobOutput(Path outputFile, boolean isError) {
         JobOutput jobOutput = new JobOutput();
@@ -439,5 +433,4 @@ public class JobProcessorImpl implements JobProcessor {
             log.warn("interrupted exception in thread.sleep(). Ignoring");
         }
     }
-
 }

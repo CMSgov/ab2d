@@ -29,6 +29,7 @@ import java.util.UUID;
 @Service
 @Transactional
 public class JobServiceImpl implements JobService {
+    public static final String ZIPFORMAT = "application/zip";
 
     @Autowired
     private UserService userService;
@@ -45,12 +46,12 @@ public class JobServiceImpl implements JobService {
     public static final String INITIAL_JOB_STATUS_MESSAGE = "0%";
 
     @Override
-    public Job createJob(String resourceTypes, String url) {
-        return createJob(resourceTypes, url, null);
+    public Job createJob(String resourceTypes, String url, String outputFormat) {
+        return createJob(resourceTypes, url, null, outputFormat);
     }
 
     @Override
-    public Job createJob(String resourceTypes, String url, String contractNumber) {
+    public Job createJob(String resourceTypes, String url, String contractNumber, String outputFormat) {
         Job job = new Job();
         job.setResourceTypes(resourceTypes);
         job.setJobUuid(UUID.randomUUID().toString());
@@ -58,6 +59,7 @@ public class JobServiceImpl implements JobService {
         job.setStatus(JobStatus.SUBMITTED);
         job.setStatusMessage(INITIAL_JOB_STATUS_MESSAGE);
         job.setCreatedAt(OffsetDateTime.now());
+        job.setOutputFormat(outputFormat);
         job.setProgress(0);
         job.setUser(userService.getCurrentUser());
 

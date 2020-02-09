@@ -44,6 +44,7 @@ import static gov.cms.ab2d.api.util.Constants.GENERIC_FHIR_ERR_MSG;
 import static gov.cms.ab2d.api.util.Constants.API_PREFIX;
 import static gov.cms.ab2d.api.util.Constants.FHIR_PREFIX;
 import static gov.cms.ab2d.api.util.SwaggerConstants.*;
+import static gov.cms.ab2d.common.service.JobServiceImpl.ZIPFORMAT;
 import static gov.cms.ab2d.common.util.Constants.*;
 
 @Slf4j
@@ -56,7 +57,8 @@ import static gov.cms.ab2d.common.util.Constants.*;
 public class BulkDataAccessAPI {
 
     // Since this is used in an annotation, it can't be derived from the Set, otherwise it will be an error
-    private static final String ALLOWABLE_OUTPUT_FORMATS = "application/fhir+ndjson,application/ndjson,ndjson";
+    private static final String ALLOWABLE_OUTPUT_FORMATS =
+            "application/fhir+ndjson,application/ndjson,ndjson," + ZIPFORMAT;
 
     private static final Set<String> ALLOWABLE_OUTPUT_FORMAT_SET = Set.of(ALLOWABLE_OUTPUT_FORMATS.split(","));
 
@@ -103,7 +105,8 @@ public class BulkDataAccessAPI {
 
         checkResourceTypesAndOutputFormat(resourceTypes, outputFormat);
 
-        Job job = jobService.createJob(resourceTypes, ServletUriComponentsBuilder.fromCurrentRequest().toUriString());
+        Job job = jobService.createJob(resourceTypes, ServletUriComponentsBuilder.fromCurrentRequest().toUriString(),
+                outputFormat);
 
         logSuccessfulJobCreation(job);
 
@@ -179,7 +182,8 @@ public class BulkDataAccessAPI {
 
         checkResourceTypesAndOutputFormat(resourceTypes, outputFormat);
 
-        Job job = jobService.createJob(resourceTypes, ServletUriComponentsBuilder.fromCurrentRequest().toUriString(), contractNumber);
+        Job job = jobService.createJob(resourceTypes, ServletUriComponentsBuilder.fromCurrentRequest().toUriString(),
+                contractNumber, outputFormat);
 
         logSuccessfulJobCreation(job);
 

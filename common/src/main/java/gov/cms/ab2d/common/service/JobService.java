@@ -8,9 +8,9 @@ import java.net.MalformedURLException;
 
 public interface JobService {
 
-    Job createJob(String resourceTypes, String url);
+    Job createJob(String resourceTypes, String url, String outputFormat);
 
-    Job createJob(String resourceTypes, String url, String contractNumber);
+    Job createJob(String resourceTypes, String url, String contractNumber, String outputFormat);
 
     void cancelJob(String jobUuid);
 
