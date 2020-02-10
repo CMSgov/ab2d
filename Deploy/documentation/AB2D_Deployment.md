@@ -2802,8 +2802,6 @@
 
 ## Configure New Relic and Splunk within the deployment AMI
 
-> *** TO DO ***
-
 1. Change to the "app" directory under packer
 
    ```ShellSession
@@ -3553,27 +3551,7 @@
 
    > https://rpm.newrelic.com/accounts/2597286/setup
 
-1. Select the account icon dropdown in the upper right of the page
-
-1. Select **Account settings**
-
-1. Note the license key
-
-1. Connnect to controller
-
-1. Open New Relic congliguration file
-
-   ```ShellSession
-   $ sudo vim /etc/newrelic-infra.yml
-   ```
-
-1. Uncomment and configure this line with the license key
-
-   ```
-   license_key: {noted license key}
-   ```
-
-1. Select the **APM** tab to return to the setup page
+1. Log on to New Relic
 
 1. Select **Infrastructure**
 
@@ -3769,3 +3747,173 @@
 1. Add addition users
 
    > *** TO DO ***
+
+## Configure New Relic configuration file
+
+1. Note these directions assume that you have done a first time deployment for a specific environment
+
+1. Open Chrome
+
+1. Enter the following in the address bar
+
+   > https://rpm.newrelic.com/accounts/2597286/setup
+
+1. Select the account icon dropdown in the upper right of the page
+
+1. Select **Account settings**
+
+1. Note the license key
+
+1. Change to the "Downloads" directory
+
+   ```ShellSession
+   $ cd ~/Downloads
+   ```
+
+1. Get the default New Relic configuration file from the development environment's controller
+
+   *Example for "Dev" environment:*
+
+   ```ShellSession
+   $ scp -i ~/.ssh/ab2d-dev.pem ec2-user@52.7.241.208:/etc/newrelic-infra.yml .
+   ```
+
+   *Example for "Sbx" environment:*
+
+   ```ShellSession
+   $ scp -i ~/.ssh/ab2d-sbx-sandbox.pem ec2-user@3.93.125.65:/etc/newrelic-infra.yml .
+   ```
+
+   *Example for "Impl" environment:*
+
+   ```ShellSession
+   $ scp -i ~/.ssh/ab2d-east-impl.pem ec2-user@3.234.127.171:/etc/newrelic-infra.yml .
+   ```
+
+1. Open New Relic congliguration file
+
+   ```ShellSession
+   $ vim ~/Downloads/newrelic-infra.yml
+   ```
+
+1. Uncomment and configure this line with the license key
+
+   ```
+   license_key: {noted license key}
+   ```
+
+1. Save and close the file
+
+1. Set target AWS profile
+
+   *Example for "Dev" environment:*
+
+   ```ShellSession
+   $ export AWS_PROFILE=ab2d-dev
+   ```
+
+   *Example for "Sbx" environment:*
+
+   ```ShellSession
+   $ export AWS_PROFILE=ab2d-sbx-sandbox
+   ```
+
+   *Example for "Impl" environment:*
+
+   ```ShellSession
+   $ export AWS_PROFILE=ab2d-east-impl
+   ```
+
+1. Set region
+
+   ```ShellSession
+   $ export REGION=us-east-1
+   ```
+
+1. Get KMS key ID
+
+   ```ShellSession
+   $ KMS_KEY_ID=$(aws --region "${REGION}" kms list-aliases \
+     --query="Aliases[?AliasName=='alias/ab2d-kms'].TargetKeyId" \
+     --output text)
+   ```
+
+1. Encrypt "newrelic-infra.yml" as "newrelic-infra.yml.encrypted"
+
+   ```ShellSession
+   $ aws kms --region "${REGION}" encrypt \
+     --key-id ${KMS_KEY_ID} \
+     --plaintext fileb://newrelic-infra.yml \
+     --query CiphertextBlob \
+     --output text \
+     | base64 --decode \
+     > newrelic-infra.yml.encrypted
+   ```
+
+1. Copy "newrelic-infra.yml.encrypted" to S3
+
+   *Example for "Dev" environment:*
+
+   ```ShellSession
+   $ aws s3 --region "${REGION}" cp \
+     ./newrelic-infra.yml.encrypted \
+     s3://ab2d-dev-automation/encrypted-files/
+   ```
+
+   *Example for "Sbx" environment:*
+
+   ```ShellSession
+   $ aws s3 --region "${REGION}" cp \
+     ./newrelic-infra.yml.encrypted \
+     s3://ab2d-sbx-sandbox-automation/encrypted-files/
+   ```
+
+   *Example for "Impl" environment:*
+
+   ```ShellSession
+   $ aws s3 --region "${REGION}" cp \
+     ./newrelic-infra.yml.encrypted \
+     s3://ab2d-east-impl-automation/encrypted-files/
+   ```
+
+1. Change to the "/tmp" directory
+
+   ```ShellSession
+   $ cd /tmp
+   ```
+
+1. Get "newrelic-infra.yml.encrypted" from S3
+
+   *Example for "Dev" environment:*
+
+   ```ShellSession
+   $ aws s3 --region "${REGION}" cp \
+     s3://ab2d-dev-automation/encrypted-files/newrelic-infra.yml.encrypted \
+     .
+   ```
+
+   *Example for "Sbx" environment:*
+
+   ```ShellSession
+   $ aws s3 --region "${REGION}" cp \
+     s3://ab2d-sbx-sandbox-automation/encrypted-files/newrelic-infra.yml.encrypted \
+     .
+   ```
+
+   *Example for "Impl" environment:*
+
+   ```ShellSession
+   $ aws s3 --region "${REGION}" cp \
+     s3://ab2d-east-impl-automation/encrypted-files/newrelic-infra.yml.encrypted \
+     .
+   ```
+
+1. Test decryption of the new relic configuration file
+
+   ```ShellSession
+   $ aws kms --region "${REGION}" decrypt \
+     --ciphertext-blob fileb://newrelic-infra.yml.encrypted \
+     --output text --query Plaintext \
+     | base64 --decode \
+     > /tmp/newrelic-infra.yml
+   ```
