@@ -18,6 +18,17 @@ resource "aws_security_group_rule" "whitelist_lonnie" {
   security_group_id = aws_security_group.deployment_controller.id
 }
 
+# *** TO DO ***: eliminate this after VPN access is setup
+resource "aws_security_group_rule" "whitelist_denis" {
+  type        = "ingress"
+  description = "Whitelist Denis"
+  from_port   = "22"
+  to_port     = "22"
+  protocol    = "TCP"
+  cidr_blocks = ["104.37.31.3/32"]
+  security_group_id = aws_security_group.deployment_controller.id
+}
+
 resource "aws_security_group_rule" "egress_controller" {
   type        = "egress"
   description = "Allow all egress"
