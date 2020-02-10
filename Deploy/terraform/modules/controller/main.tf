@@ -112,6 +112,21 @@ resource "null_resource" "list-api-instances-script" {
   
 }
 
+resource "null_resource" "list-worker-instances-script" {
+
+  depends_on = ["null_resource.wait"]
+  triggers = {controller_id = aws_instance.deployment_controller.id}
+
+  provisioner "local-exec" {
+    command = "scp -i ~/.ssh/${var.ssh_key_name}.pem ${path.cwd}/../../environments/${var.env}/list-worker-instances.sh ${var.linux_user}@${aws_eip.deployment_controller.public_ip}:/home/${var.linux_user}"
+  }
+
+  provisioner "local-exec" {
+    command = "ssh -i ~/.ssh/${var.ssh_key_name}.pem ${var.linux_user}@${aws_eip.deployment_controller.public_ip} 'chmod +x /home/${var.linux_user}/list-worker-instances.sh'"
+  }
+
+}
+
 resource "null_resource" "set-hostname" {
 
   depends_on = ["null_resource.wait"]
