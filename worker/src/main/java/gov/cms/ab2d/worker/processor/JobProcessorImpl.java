@@ -147,6 +147,8 @@ public class JobProcessorImpl implements JobProcessor {
                 throw e;
             }
         }
+
+        log.info("Created job output directory: {}", directory.toAbsolutePath());
         return directory;
     }
 
@@ -404,6 +406,11 @@ public class JobProcessorImpl implements JobProcessor {
                 .map(errorFile -> createJobOutput(errorFile, true))
                 .collect(Collectors.toList());
         jobOutputs.addAll(errorJobOutputs);
+
+        if (jobOutputs.isEmpty()) {
+            var errMsg = "The export process has produced no results";
+            throw new RuntimeException(errMsg);
+        }
 
         return jobOutputs;
     }

@@ -8,6 +8,7 @@ import gov.cms.ab2d.api.security.InvalidAuthHeaderException;
 import gov.cms.ab2d.api.security.MissingTokenException;
 import gov.cms.ab2d.api.security.UserNotEnabledException;
 import gov.cms.ab2d.common.service.InvalidContractException;
+import gov.cms.ab2d.common.service.InvalidJobAccessException;
 import gov.cms.ab2d.common.service.InvalidJobStateTransition;
 import gov.cms.ab2d.common.service.ResourceNotFoundException;
 import lombok.extern.slf4j.Slf4j;
@@ -53,7 +54,7 @@ class ErrorHandler extends ResponseEntityExceptionHandler {
     }
 
     @ExceptionHandler({BadJWTTokenException.class, UsernameNotFoundException.class, UserNotEnabledException.class,
-            JwtVerificationException.class, InvalidContractException.class})
+            JwtVerificationException.class, InvalidContractException.class, InvalidJobAccessException.class})
     public ResponseEntity<Void> handleForbiddenAccessExceptions() {
         return generateError(HttpStatus.FORBIDDEN);
     }
@@ -79,7 +80,18 @@ class ErrorHandler extends ResponseEntityExceptionHandler {
     }
 
     private ResponseEntity<JsonNode> generateFHIRError(Exception e, HttpStatus httpStatus, HttpHeaders httpHeaders) throws IOException {
-        String msg = ExceptionUtils.getRootCauseMessage(e);
+        Throwable rootCause = ExceptionUtils.getRootCause(e);
+        String msg = "";
+
+        // This exception did not come from us, so don't use the message since we didn't set the text, otherwise it could potentially reveal
+        // internals, e.g. a message from a database error
+        if (!rootCause.getClass().getName().matches("^gov\\.cms\\.ab2d.*")) {
+            msg = "An internal error occurred";
+        } else {
+            msg = rootCause.getMessage();
+            msg = msg.replaceFirst("^(.*Exception: )", "");
+        }
+
         OperationOutcome operationOutcome = getErrorOutcome(msg);
         String encoded = outcomeToJSON(operationOutcome);
         return new ResponseEntity<>(new ObjectMapper().readTree(encoded), httpHeaders, httpStatus);

@@ -149,7 +149,7 @@ public class AdminAPIUserTests {
                         .andExpect(jsonPath("$.issue[0].severity", Is.is("error")))
                         .andExpect(jsonPath("$.issue[0].code", Is.is("invalid")))
                         .andExpect(jsonPath("$.issue[0].details.text",
-                            Is.is("PSQLException: ERROR: duplicate key value violates unique constraint \"uc_user_account_username\"\n  Detail: Key (username)=(test@test.com) already exists.")));
+                            Is.is("An internal error occurred")));
     }
 
     @Test
