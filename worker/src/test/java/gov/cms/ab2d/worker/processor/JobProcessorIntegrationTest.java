@@ -41,8 +41,10 @@ import java.util.Random;
 import static java.lang.Boolean.TRUE;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
@@ -149,6 +151,74 @@ class JobProcessorIntegrationTest {
 
         final List<JobOutput> jobOutputs = job.getJobOutputs();
         assertFalse(jobOutputs.isEmpty());
+    }
+
+    @Test
+    @DisplayName("When the error count is below threshold, job does not fail")
+    void when_errorCount_is_below_threshold_do_not_fail_job() {
+        job.setStatus(JobStatus.IN_PROGRESS);
+        jobRepository.save(job);
+        createContract(sponsor);
+
+        ExplanationOfBenefit eob = EobTestDataUtil.createEOB();
+        Bundle bundle1 = EobTestDataUtil.createBundle(eob.copy());
+        when(mockBfdClient.requestEOBFromServer(anyString()))
+                .thenReturn(bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1)
+                .thenReturn(bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1)
+                .thenReturn(bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1)
+                .thenReturn(bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1)
+                .thenReturn(bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1)
+                .thenReturn(bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1)
+                .thenReturn(bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1)
+                .thenReturn(bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1)
+                .thenReturn(bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1)
+                .thenReturn(bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1)
+                .thenThrow(new RuntimeException("TEST EXCEPTION"))
+                ;
+
+        var processedJob = cut.process("S0000");
+
+        assertThat(processedJob.getStatus(), is(JobStatus.SUCCESSFUL));
+        assertThat(processedJob.getStatusMessage(), is("100%"));
+        assertThat(processedJob.getExpiresAt(), notNullValue());
+        assertThat(processedJob.getCompletedAt(), notNullValue());
+
+        final List<JobOutput> jobOutputs = job.getJobOutputs();
+        assertFalse(jobOutputs.isEmpty());
+    }
+
+    @Test
+    @DisplayName("When the error count is greater than or equal to threshold, job should fail")
+    void when_errorCount_is_not_below_threshold_fail_job() {
+        job.setStatus(JobStatus.IN_PROGRESS);
+        jobRepository.save(job);
+        createContract(sponsor);
+
+        ExplanationOfBenefit eob = EobTestDataUtil.createEOB();
+        Bundle bundle1 = EobTestDataUtil.createBundle(eob.copy());
+        final RuntimeException fail = new RuntimeException("TEST EXCEPTION");
+        when(mockBfdClient.requestEOBFromServer(anyString()))
+                .thenReturn(bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1)
+                .thenReturn(bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1)
+                .thenReturn(bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1)
+                .thenReturn(bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1)
+                .thenReturn(bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1)
+                .thenReturn(bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1)
+                .thenReturn(bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1)
+                .thenReturn(bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1)
+                .thenReturn(bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1)
+                .thenThrow(fail, fail, fail, fail, fail, fail, fail, fail, fail, fail)
+        ;
+
+        var processedJob = cut.process("S0000");
+
+        assertThat(processedJob.getStatus(), is(JobStatus.FAILED));
+        assertThat(processedJob.getStatusMessage(), is("Too many patient records in the job had failures"));
+        assertThat(processedJob.getExpiresAt(), nullValue());
+        assertThat(processedJob.getCompletedAt(), notNullValue());
+
+        final List<JobOutput> jobOutputs = job.getJobOutputs();
+        assertTrue(jobOutputs.isEmpty());
     }
 
     private Sponsor createSponsor() {

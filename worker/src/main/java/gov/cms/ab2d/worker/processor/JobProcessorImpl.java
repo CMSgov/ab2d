@@ -370,6 +370,7 @@ public class JobProcessorImpl implements JobProcessor {
             // log exception, but continue processing job as errorCount is below threshold
         } else {
             cancelFuturesInQueue(futureHandles);
+            log.error("{} out of {} records failed. Stopping job", progressTracker.getFailureCount(), progressTracker.getProcessedCount());
             throw new RuntimeException("Too many patient records in the job had failures");
         }
     }
