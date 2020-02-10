@@ -776,6 +776,7 @@ if [ -z "${AMI_ID}" ]; then
   COMMIT=$(git rev-parse HEAD)
   packer build \
     --var seed_ami=$SEED_AMI \
+    --var environment="${CMS_ENV}" \
     --var region="${REGION}" \
     --var ec2_instance_type=$EC2_INSTANCE_TYPE \
     --var vpc_id=$VPC_ID \
