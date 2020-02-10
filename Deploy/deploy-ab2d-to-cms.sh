@@ -1436,8 +1436,6 @@ cd terraform/environments/$CMS_ENV
 # Get current known good ECS task definitions
 #
 
-echo "Get current known good ECS task definitions..."
-
 CLUSTER_ARNS=$(aws --region "${REGION}" ecs list-clusters \
   --query 'clusterArns' \
   --output text \
@@ -1449,9 +1447,12 @@ if [ -z "${CLUSTER_ARNS}" ]; then
   echo "Skipping getting current ECS task definitions, since there are no existing clusters"
 else
   if [ -n "${BUILD_NEW_IMAGES}" ]; then
-    echo "Using newly created ECS task definitions..."
-  else
     echo "Using existing ECS task definitions..."
+  else
+    echo "Using newly created ECS task definitions..."
+
+    echo "Get current known good ECS task definitions..."
+
     API_TASK_DEFINITION=$(aws --region "${REGION}" ecs describe-services \
       --services "${CMS_ENV}-api" \
       --cluster "${CMS_ENV}-api" \
@@ -1465,6 +1466,7 @@ else
       | grep "taskDefinition" \
       | head -1)
     WORKER_TASK_DEFINITION=$(echo $WORKER_TASK_DEFINITION | awk -F'": "' '{print $2}' | tr -d '"' | tr -d ',')
+
   fi
 fi
 
