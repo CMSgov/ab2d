@@ -363,6 +363,7 @@ public class JobProcessorImpl implements JobProcessor {
 
     private void analyzeException(List<Future<Void>> futureHandles, ProgressTracker progressTracker, Exception e) {
         progressTracker.incrementFailureCount();
+        progressTracker.incrementProcessedCount();
         if (progressTracker.failJob()) {
             cancelFuturesInQueue(futureHandles);
 
