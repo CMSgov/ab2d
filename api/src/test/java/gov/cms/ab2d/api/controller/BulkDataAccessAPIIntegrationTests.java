@@ -680,7 +680,7 @@ public class BulkDataAccessAPIIntegrationTests {
                 .andExpect(jsonPath("$.issue[0].severity", Is.is("error")))
                 .andExpect(jsonPath("$.issue[0].code", Is.is("invalid")))
                 .andExpect(jsonPath("$.issue[0].details.text",
-                        Is.is("The file is not present as there was an error. Please resubmit the job.")));
+                        Is.is("No Job Output with the file name test.ndjsonbadfilename exists in our records")));
     }
 
     @Test
@@ -718,7 +718,7 @@ public class BulkDataAccessAPIIntegrationTests {
                 "$.output[0].url");
         this.mockMvc.perform(get(downloadUrl).contentType(MediaType.APPLICATION_JSON)
                 .header("Authorization", "Bearer " + token))
-                .andExpect(status().is(404))
+                .andExpect(status().is(500))
                 .andExpect(jsonPath("$.resourceType", Is.is("OperationOutcome")))
                 .andExpect(jsonPath("$.issue[0].severity", Is.is("error")))
                 .andExpect(jsonPath("$.issue[0].code", Is.is("invalid")))
@@ -738,7 +738,7 @@ public class BulkDataAccessAPIIntegrationTests {
         Job job = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
         job.setStatus(JobStatus.SUCCESSFUL);
         job.setProgress(100);
-        OffsetDateTime expireDate = OffsetDateTime.now().plusDays(100);
+        OffsetDateTime expireDate = OffsetDateTime.now().minusDays(2);
         job.setExpiresAt(expireDate);
         OffsetDateTime now = OffsetDateTime.now();
         job.setCompletedAt(now);
@@ -748,7 +748,6 @@ public class BulkDataAccessAPIIntegrationTests {
         jobOutput.setJob(job);
         jobOutput.setFilePath("test.ndjson");
         jobOutput.setError(false);
-        jobOutput.setDownloaded(true);
         job.getJobOutputs().add(jobOutput);
 
         jobRepository.saveAndFlush(job);
@@ -761,7 +760,7 @@ public class BulkDataAccessAPIIntegrationTests {
                 "$.output[0].url");
         this.mockMvc.perform(get(downloadUrl).contentType(MediaType.APPLICATION_JSON)
                 .header("Authorization", "Bearer " + token))
-                .andExpect(status().is(404))
+                .andExpect(status().is(500))
                 .andExpect(jsonPath("$.resourceType", Is.is("OperationOutcome")))
                 .andExpect(jsonPath("$.issue[0].severity", Is.is("error")))
                 .andExpect(jsonPath("$.issue[0].code", Is.is("invalid")))

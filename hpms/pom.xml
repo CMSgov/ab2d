@@ -44,6 +44,11 @@
             <artifactId>logstash-logback-encoder</artifactId>
             <version>${logback-encoder.version}</version>
         </dependency>
+
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+        </dependency>
     </dependencies>
 
     <repositories>

@@ -1,5 +1,6 @@
 package gov.cms.ab2d.common.service;
 
+import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.JobOutput;
 import gov.cms.ab2d.common.repository.JobOutputRepository;
 import lombok.extern.slf4j.Slf4j;
@@ -19,10 +20,11 @@ public class JobOutputServiceImpl implements JobOutputService {
         return jobOutputRepository.save(jobOutput);
     }
 
-    public JobOutput findByFilePath(String fileName) {
-        return jobOutputRepository.findByFilePath(fileName).orElseThrow(() -> {
-            log.error("JobOutput with fileName {} was not able to be found", fileName);
-            throw new ResourceNotFoundException("JobOutput with fileName " + fileName + " was not able to be found");
+    public JobOutput findByFilePathAndJob(String fileName, Job job) {
+        return jobOutputRepository.findByFilePathAndJob(fileName, job).orElseThrow(() -> {
+            log.error("JobOutput with fileName {} was not able to be found for job {}", fileName, job.getJobUuid());
+            throw new ResourceNotFoundException("JobOutput with fileName " + fileName + " was not able to be found" +
+                    " for job " + job.getJobUuid());
         });
     }
 }

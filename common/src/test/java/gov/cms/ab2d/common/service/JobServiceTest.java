@@ -2,10 +2,7 @@ package gov.cms.ab2d.common.service;
 
 import gov.cms.ab2d.common.SpringBootApp;
 import gov.cms.ab2d.common.model.*;
-import gov.cms.ab2d.common.repository.ContractRepository;
-import gov.cms.ab2d.common.repository.JobRepository;
-import gov.cms.ab2d.common.repository.SponsorRepository;
-import gov.cms.ab2d.common.repository.UserRepository;
+import gov.cms.ab2d.common.repository.*;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.DataSetup;
 import org.apache.commons.io.IOUtils;
@@ -67,6 +64,9 @@ public class JobServiceTest {
 
     @Autowired
     ContractRepository contractRepository;
+
+    @Autowired
+    JobOutputRepository jobOutputRepository;
 
     @Autowired
     DataSetup dataSetup;
@@ -342,7 +342,7 @@ public class JobServiceTest {
     }
 
     @Test
-    public void getFileDownloadUrlWithWrongFilename() throws IOException {
+    public void getFileDownloadUrlWithWrongFilename() {
         String testFile = "test.ndjson";
         String errorFile = "error.ndjson";
         Job job = createJobForFileDownloads(testFile, errorFile);
@@ -354,7 +354,7 @@ public class JobServiceTest {
     }
 
     @Test
-    public void getFileDownloadUrlWitMissingOutput() throws IOException {
+    public void getFileDownloadUrlWitMissingOutput() {
         String testFile = "outputmissing.ndjson";
         String errorFile = "error.ndjson";
         Job job = createJobForFileDownloads(testFile, errorFile);
@@ -362,6 +362,37 @@ public class JobServiceTest {
         Assertions.assertThrows(JobOutputMissingException.class, () -> {
             jobService.getResourceForJob(job.getJobUuid(), "outputmissing.ndjson");
         });
+    }
+
+    @Test
+    public void getFileDownloadAlreadyDownloaded() {
+        String testFile = "test.ndjson";
+        String errorFile = "error.ndjson";
+        Job job = createJobForFileDownloads(testFile, errorFile);
+        JobOutput jobOutput = job.getJobOutputs().iterator().next();
+        jobOutput.setDownloaded(true);
+        jobOutputRepository.save(jobOutput);
+
+
+        var exception = Assertions.assertThrows(JobOutputMissingException.class, () -> {
+            jobService.getResourceForJob(job.getJobUuid(), "test.ndjson");
+        });
+        Assert.assertThat(exception.getMessage(), is("The file is not present as it has already been downloaded. Please resubmit the job."));
+    }
+
+    @Test
+    public void getFileDownloadExpired() {
+        String testFile = "test.ndjson";
+        String errorFile = "error.ndjson";
+        Job job = createJobForFileDownloads(testFile, errorFile);
+        job.setExpiresAt(OffsetDateTime.now().minusDays(2));
+        jobRepository.save(job);
+
+
+        var exception = Assertions.assertThrows(JobOutputMissingException.class, () -> {
+            jobService.getResourceForJob(job.getJobUuid(), "test.ndjson");
+        });
+        Assert.assertThat(exception.getMessage(), is("The file is not present as it has expired. Please resubmit the job."));
     }
 
     @Test
@@ -386,5 +417,13 @@ public class JobServiceTest {
 
         boolean result = jobService.checkIfCurrentUserCanAddJob();
         Assert.assertFalse(result);
+    }
+
+    @Test
+    public void deleteFileForJobTest() {
+        String testFile = "test.ndjson";
+        String errorFile = "error.ndjson";
+        Job job = createJobForFileDownloads(testFile, errorFile);
+        jobService.deleteFileForJob(new File(testFile), job.getJobUuid());
     }
 }
