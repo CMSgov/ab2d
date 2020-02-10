@@ -64,8 +64,8 @@ public class ProgressTracker {
         return percentCompleted;
     }
 
-    public boolean failJob() {
-        return (failureCount * 100) / processedCount >= failureThreshold;
+    public boolean isErrorCountBelowThreshold() {
+        return (failureCount * 100) / processedCount < failureThreshold;
     }
 
 

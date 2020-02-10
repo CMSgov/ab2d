@@ -364,12 +364,13 @@ public class JobProcessorImpl implements JobProcessor {
     private void analyzeException(List<Future<Void>> futureHandles, ProgressTracker progressTracker, Exception e) {
         progressTracker.incrementFailureCount();
         progressTracker.incrementProcessedCount();
-        if (progressTracker.failJob()) {
-            cancelFuturesInQueue(futureHandles);
-
+        if (progressTracker.isErrorCountBelowThreshold()) {
             final Throwable rootCause = ExceptionUtils.getRootCause(e);
-            log.error("exception while processing patient {}", rootCause.getMessage());
-            throw new RuntimeException(rootCause.getMessage(), rootCause);
+            log.error("exception while processing patient {}", rootCause.getMessage(), rootCause);
+            // log exception, but continue processing job as errorCount is below threshold
+        } else {
+            cancelFuturesInQueue(futureHandles);
+            throw new RuntimeException("Too many patient records in the job had failures");
         }
     }
 
