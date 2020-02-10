@@ -216,9 +216,6 @@ class JobProcessorIntegrationTest {
         assertThat(processedJob.getStatusMessage(), is("Too many patient records in the job had failures"));
         assertThat(processedJob.getExpiresAt(), nullValue());
         assertThat(processedJob.getCompletedAt(), notNullValue());
-
-        final List<JobOutput> jobOutputs = job.getJobOutputs();
-        assertTrue(jobOutputs.isEmpty());
     }
 
     private Sponsor createSponsor() {
