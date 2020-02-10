@@ -85,7 +85,7 @@ public class JobServiceImpl implements JobService {
 
     @Override
     public void cancelJob(String jobUuid) {
-        Job job = getJobByJobUuid(jobUuid);
+        Job job = getAuthorizedJobByJobUuid(jobUuid);
 
         if (!job.getStatus().isCancellable()) {
             log.error("Job had a status of {} so it was not able to be cancelled", job.getStatus());
@@ -96,12 +96,19 @@ public class JobServiceImpl implements JobService {
     }
 
     @Override
-    public Job getJobByJobUuid(String jobUuid) {
+    public Job getAuthorizedJobByJobUuid(String jobUuid) {
         Job job = jobRepository.findByJobUuid(jobUuid);
 
         if (job == null) {
             log.error("Job was searched for and was not found");
             throw new ResourceNotFoundException("No job with jobUuid " +  jobUuid + " was found");
+        }
+
+        User user = userService.getCurrentUser();
+        if (!user.equals(job.getUser())) {
+            log.error("User attempted to download a file where they had a valid UUID, but was not logged in as the " +
+                    "user that created the job");
+            throw new InvalidJobAccessException("Unauthorized");
         }
 
         return job;
@@ -114,7 +121,7 @@ public class JobServiceImpl implements JobService {
 
     @Override
     public Resource getResourceForJob(String jobUuid, String fileName) throws MalformedURLException {
-        Job job = getJobByJobUuid(jobUuid);
+        Job job = getAuthorizedJobByJobUuid(jobUuid);
 
         // Make sure that there is a path that matches a job output for the job they are requesting
         boolean jobOutputMatchesPath = false;

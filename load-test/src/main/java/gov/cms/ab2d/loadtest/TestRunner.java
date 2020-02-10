@@ -11,6 +11,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.http.HttpResponse;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -183,11 +184,11 @@ public class TestRunner extends AbstractJavaSamplerClient {
                         downloadResult.sampleStart();
                         downloadResult.setThreadName("Download for contract " + contractNumber + " with URL " + downloadUrl);
 
-                        HttpResponse<String> downloadResponse = apiClient.fileDownloadRequest(downloadUrl);
+                        HttpResponse<InputStream> downloadResponse = apiClient.fileDownloadRequest(downloadUrl);
 
                         downloadResult.sampleEnd();
                         downloadResult.setResponseCode(String.valueOf(downloadResponse.statusCode()));
-                        downloadResult.setBodySize((long) downloadResponse.body().length());
+                        downloadResult.setBodySize((long) downloadResponse.body().readAllBytes().length);
 
                         if (downloadResponse.statusCode() == 200) {
                             downloadResult.setSuccessful(true);
