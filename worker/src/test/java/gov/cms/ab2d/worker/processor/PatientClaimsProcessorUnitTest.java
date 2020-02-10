@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 
+import static gov.cms.ab2d.worker.processor.JobDataWriterImpl.OUTPUT_FILE_SUFFIX;
 import static org.hamcrest.CoreMatchers.startsWith;
 import static org.junit.Assert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -69,7 +70,8 @@ public class PatientClaimsProcessorUnitTest {
         patientDTO.setDatesUnderContract(List.of(new FilterOutByDate.DateRange(new Date(0), new Date())));
 
         Contract contract = new Contract();
-        jobDataWriter = new JobDataWriterImpl(tmpEfsMountDir.toPath(), contract, 30, 120);
+        jobDataWriter = new JobDataWriterImpl(tmpEfsMountDir.toPath(), contract, 30, 120,
+                OUTPUT_FILE_SUFFIX);
     }
 
     @Test

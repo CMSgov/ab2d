@@ -5,11 +5,15 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
+import static gov.cms.ab2d.worker.processor.JobDataWriterImpl.OUTPUT_FILE_SUFFIX;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
@@ -28,7 +32,7 @@ class JobDataWriterTest {
         contract.setContractName("CONTRACT_NAME");
         var OutputDirPath = Paths.get(tempDir.toString(), contract.getContractName());
         var outputDir = Files.createDirectory(OutputDirPath);
-        cut = new JobDataWriterImpl(outputDir, contract, 30, 50);
+        cut = new JobDataWriterImpl(outputDir, contract, 30, 50, OUTPUT_FILE_SUFFIX);
 
         var poem = "Twinkle Twinkle Little Star";
         line = poem.getBytes();
@@ -89,5 +93,17 @@ class JobDataWriterTest {
         assertThat(errorFiles.size(), is(1));
     }
 
+    @Test
+    void writeToZipFile() throws IOException {
+        String zipFile = "out.zip";
+        byte[] line = "Hello World".getBytes("UTF-8");
+
+        try (FileOutputStream fos = new FileOutputStream(zipFile)) {
+            try (ZipOutputStream zos = new ZipOutputStream(fos)) {
+                zos.putNextEntry(new ZipEntry("in.txt"));
+                zos.write(line);
+            }
+        }
+    }
 
 }

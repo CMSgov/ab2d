@@ -119,7 +119,8 @@ public class JobProcessorImpl implements JobProcessor {
         for (Contract contract : attestedContracts) {
             log.info("Job [{}] - contract [{}] ", jobUuid, contract.getContractNumber());
 
-            JobDataWriter writer = new JobDataWriterImpl(outputDir, contract, tryLockTimeout, getRollOverThreshold());
+            JobDataWriter writer = new JobDataWriterImpl(outputDir, contract, tryLockTimeout, getRollOverThreshold(),
+                    job.getOutputFormat() == null ? OUTPUT_FILE_SUFFIX : job.getOutputFormat());
             var contractData = new ContractData(writer, contract, progressTracker, contract.getAttestedOn());
 
             var jobOutputs = processContract(contractData);

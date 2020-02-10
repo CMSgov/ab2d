@@ -22,13 +22,15 @@ import static java.nio.file.StandardOpenOption.APPEND;
  */
 @Slf4j
 public class JobDataWriterImpl implements JobDataWriter {
-    private static final String OUTPUT_FILE_SUFFIX = ".ndjson";
+    static final String OUTPUT_FILE_SUFFIX = ".ndjson";
+    private static final String ZIP_FILE_SUFFIX = ".zip";
     private static final String ERROR_FILE_SUFFIX = "_error.ndjson";
 
     private final Path outputDir;
     private final Contract contract;
     private final long maxFileSize;
     private final int tryLockTimeout;
+    private final String fileSuffix;
 
     private final Lock dataFileLock  = new ReentrantLock();
     private final Lock errorFileLock = new ReentrantLock();
@@ -41,11 +43,13 @@ public class JobDataWriterImpl implements JobDataWriter {
     private volatile int partitionCounter;
 
 
-    public JobDataWriterImpl(Path outputDir, Contract contract, int tryLockTimeout, long maxFileSize) {
+    public JobDataWriterImpl(Path outputDir, Contract contract, int tryLockTimeout, long maxFileSize,
+                             String fileSuffix) {
         this.outputDir = outputDir;
         this.contract = contract;
         this.tryLockTimeout = tryLockTimeout;
         this.maxFileSize = maxFileSize;
+        this.fileSuffix = fileSuffix;
     }
 
 
