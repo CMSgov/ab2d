@@ -35,7 +35,6 @@ import static org.mockito.Mockito.when;
 @Slf4j
 @SpringBootTest
 @Testcontainers
-@TestPropertySource(locations = "/application.optout.properties")
 class OptOutProcessorIntegrationTest {
 
     @MockBean

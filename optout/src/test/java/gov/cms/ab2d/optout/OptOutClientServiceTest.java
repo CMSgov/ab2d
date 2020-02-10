@@ -29,7 +29,6 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = SpringBootApp.class)
-@TestPropertySource(locations = "/application.optout.properties")
 @Testcontainers
 class OptOutClientServiceTest {
     @Autowired
