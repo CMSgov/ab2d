@@ -16,9 +16,12 @@ public class DatabaseAvailable {
      */
     public static boolean isDbAvailable(DataSource datasource) {
         try (Connection conn = datasource.getConnection()) {
-            Statement stmt = conn.createStatement();
-            stmt.execute("SELECT 1");
-            return true;
+            try (Statement stmt = conn.createStatement()) {
+                stmt.execute("SELECT 1");
+                return true;
+            } catch (Exception ex) {
+                return false;
+            }
         } catch (Exception ex) {
             return false;
         }

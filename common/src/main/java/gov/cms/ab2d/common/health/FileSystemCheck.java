@@ -1,6 +1,7 @@
 package gov.cms.ab2d.common.health;
 
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.RandomStringUtils;
 
 import java.io.File;
 import java.nio.file.Files;
@@ -57,20 +58,19 @@ public class FileSystemCheck {
     }
 
     /**
-     * Generate a random file of a certain length and extension type. The file name only contains characters A-Z & a-z.
-     * and is appended by the "." + the extension.
+     * Generate a random file of a certain length and extension type. The file name only contains alphanumerics
+     * with the exception of the first letter, which is aphabetic. The file is also
+     * appended by the "." + the extension. If the length = 0, .ext is returned.
      *
      * @param length - The length of the file to generate
      * @param ext - the extension, such as "txt"
      * @return - the generated file
      */
     public static String getRandomFileName(int length, String ext) {
-        String alphas = "ABCDEFGHIJKLMNOPQRSTUVWXYabcdefghijklmnopqrstuvwxyz";
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < length; i++) {
-            int index = (int) (alphas.length() * Math.random());
-            sb.append(alphas.charAt(index));
+        if (length == 0) {
+            return "." + ext;
         }
-        return sb.toString() + "." + ext;
+        return RandomStringUtils.randomAlphabetic(1) +
+                RandomStringUtils.randomAlphanumeric(length - 1) + "." + ext;
     }
 }
