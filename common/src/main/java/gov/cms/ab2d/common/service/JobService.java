@@ -14,7 +14,7 @@ public interface JobService {
 
     void cancelJob(String jobUuid);
 
-    Job getJobByJobUuid(String jobUuid);
+    Job getAuthorizedJobByJobUuid(String jobUuid);
 
     Job updateJob(Job job);
 
