@@ -12,7 +12,15 @@ export APP_DIR=$HOME/app/
 echo "Parse options..."
 for i in "$@"
 do
-case $i in
+  case $i in
+  --environment=*)
+  ENVIRONMENT="${i#*=}"
+  shift # past argument=value
+  ;;
+  --region=*)
+  REGION="${i#*=}"
+  shift # past argument=value
+  ;;
   --ssh-username=*)
   SSH_USERNAME="${i#*=}"
   shift # past argument=value
@@ -89,18 +97,28 @@ sudo sed -i '/SystemLogRateLimitBurst/c\$SystemLogRateLimitBurst 2000' /etc/rsys
 # sudo chown splunk:splunk /tmp/splunk-deploymentclient.conf
 # sudo mv -f /tmp/splunk-deploymentclient.conf /opt/splunkforwarder/etc/system/local/deploymentclient.conf
 
-#
-# LSH *** TO DO ***: Need to implement S3 with "encrypted-newrelic-infra.yml" file
-#
-# # Install newrelic infrastructure agent
-# cd /tmp
-# aws s3 cp s3://cms-ab2d-automation/encrypted-newrelic-infra.yml ./encrypted-newrelic-infra.yml
-# aws kms --region us-east-1 decrypt --ciphertext-blob fileb://encrypted-newrelic-infra.yml --output text --query Plaintext | base64 --decode > newrelic-infra.yml
-# [ -s newrelic-infra.yml ] || (echo "NewRelic file decryption failed" && exit 1)
-# sudo mv newrelic-infra.yml /etc/newrelic-infra.yml
+# Configure New Relic infrastructure agent
+
+cd /tmp
+aws s3 cp "s3://${ENVIRONMENT}-automation/encrypted-files/newrelic-infra.yml.encrypted" ./newrelic-infra.yml.encrypted
+aws kms --region "${REGION}" decrypt \
+  --ciphertext-blob fileb://newrelic-infra.yml.encrypted \
+  --output text \
+  --query Plaintext \
+  | base64 --decode \
+  > newrelic-infra.yml
+[ -s newrelic-infra.yml ] || (echo "NewRelic file decryption failed" && exit 1)
+sudo mv newrelic-infra.yml /etc/newrelic-infra.yml
+
+# Install New Relic infrastructure agent (skipped, since it is now pre-installed on gold disk)
+
 # sudo curl -o /etc/yum.repos.d/newrelic-infra.repo https://download.newrelic.com/infrastructure_agent/linux/yum/el/7/x86_64/newrelic-infra.repo
 # sudo yum -q makecache -y --disablerepo='*' --enablerepo='newrelic-infra'
 # sudo yum install newrelic-infra -y
+
+# Restart New Relic infrastructure agent
+
+sudo systemctl restart newrelic-infra
 
 #
 # LSH Comment out gold disk related section
