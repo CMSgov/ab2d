@@ -69,6 +69,10 @@ public class JobProcessorImpl implements JobProcessor {
     @Value("${file.try.lock.timeout}")
     private int tryLockTimeout;
 
+    /** Failure threshold an integer expressed as a percentage of failure tolerated in a batch **/
+    @Value("${failure.threshold}")
+    private int failureThreshold;
+
     @Value("${efs.mount}")
     private String efsMount;
 
@@ -214,6 +218,7 @@ public class JobProcessorImpl implements JobProcessor {
     private ProgressTracker initializeProgressTracker(String jobUuid, List<Contract> attestedContracts) {
         return ProgressTracker.builder()
                 .jobUuid(jobUuid)
+                .failureThreshold(failureThreshold)
                 .patientsByContracts(fetchPatientsForAllContracts(attestedContracts))
                 .build();
     }
@@ -340,22 +345,11 @@ public class JobProcessorImpl implements JobProcessor {
         while (iterator.hasNext()) {
             var future = iterator.next();
             if (future.isDone()) {
+                progressTracker.incrementProcessedCount();
                 try {
                     future.get();
-                    progressTracker.incrementProcessedCount();
-                } catch (InterruptedException e) {
-                    cancelFuturesInQueue(futureHandles);
-                    log.error("interrupted exception while processing patient", e);
-
-                    final String errMsg = ExceptionUtils.getRootCauseMessage(e);
-                    throw new RuntimeException(errMsg, ExceptionUtils.getRootCause(e));
-
-                } catch (ExecutionException e) {
-                    cancelFuturesInQueue(futureHandles);
-                    log.error("exception while processing patient ", e);
-
-                    final String errMsg = ExceptionUtils.getRootCauseMessage(e);
-                    throw new RuntimeException(errMsg, ExceptionUtils.getRootCause(e));
+                } catch (InterruptedException | ExecutionException e) {
+                    analyzeException(futureHandles, progressTracker, e);
 
                 } catch (CancellationException e) {
                     // This could happen in the rare event that a job was cancelled mid-process.
@@ -368,6 +362,20 @@ public class JobProcessorImpl implements JobProcessor {
         }
 
         trackProgress(progressTracker);
+    }
+
+    private void analyzeException(List<Future<Void>> futureHandles, ProgressTracker progressTracker, Exception e) {
+        progressTracker.incrementFailureCount();
+
+        if (progressTracker.isErrorCountBelowThreshold()) {
+            final Throwable rootCause = ExceptionUtils.getRootCause(e);
+            log.error("exception while processing patient {}", rootCause.getMessage(), rootCause);
+            // log exception, but continue processing job as errorCount is below threshold
+        } else {
+            cancelFuturesInQueue(futureHandles);
+            log.error("{} out of {} records failed. Stopping job", progressTracker.getFailureCount(), progressTracker.getTotalCount());
+            throw new RuntimeException("Too many patient records in the job had failures");
+        }
     }
 
 
