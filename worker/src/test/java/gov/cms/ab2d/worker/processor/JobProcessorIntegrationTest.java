@@ -44,7 +44,6 @@ import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
@@ -86,6 +85,9 @@ class JobProcessorIntegrationTest {
 
     @Container
     private static final PostgreSQLContainer postgreSQLContainer = new AB2DPostgresqlContainer();
+    private Bundle bundle1;
+    private Bundle[] bundles;
+    private RuntimeException fail;
 
     @BeforeEach
     void setUp() {
@@ -97,9 +99,16 @@ class JobProcessorIntegrationTest {
         user = createUser(sponsor);
         job = createJob(user);
 
+        job.setStatus(JobStatus.IN_PROGRESS);
+        jobRepository.save(job);
+        createContract(sponsor);
+
         ExplanationOfBenefit eob = EobTestDataUtil.createEOB();
-        Bundle bundle1 = EobTestDataUtil.createBundle(eob.copy());
+        bundle1 = EobTestDataUtil.createBundle(eob.copy());
+        bundles = getBundles();
         when(mockBfdClient.requestEOBFromServer(anyString())).thenReturn(bundle1);
+
+        fail = new RuntimeException("TEST EXCEPTION");
 
         FhirContext fhirContext = FhirContext.forDstu3();
         PatientClaimsProcessor patientClaimsProcessor = new PatientClaimsProcessorImpl(mockBfdClient, fhirContext);
@@ -115,10 +124,6 @@ class JobProcessorIntegrationTest {
     @Test
     @DisplayName("When a job is in submitted status, it can be processed")
     void processJob() {
-        job.setStatus(JobStatus.IN_PROGRESS);
-        jobRepository.save(job);
-        createContract(sponsor);
-
         var processedJob = cut.process("S0000");
 
         assertThat(processedJob.getStatus(), is(JobStatus.SUCCESSFUL));
@@ -137,11 +142,6 @@ class JobProcessorIntegrationTest {
         user.setSponsor(sponsor.getParent());
         userRepository.save(user);
 
-        createContract(sponsor);
-
-        job.setStatus(JobStatus.IN_PROGRESS);
-        jobRepository.save(job);
-
         var processedJob = cut.process("S0000");
 
         assertThat(processedJob.getStatus(), is(JobStatus.SUCCESSFUL));
@@ -156,16 +156,6 @@ class JobProcessorIntegrationTest {
     @Test
     @DisplayName("When the error count is below threshold, job does not fail")
     void when_errorCount_is_below_threshold_do_not_fail_job() {
-        job.setStatus(JobStatus.IN_PROGRESS);
-        jobRepository.save(job);
-        createContract(sponsor);
-
-        ExplanationOfBenefit eob = EobTestDataUtil.createEOB();
-        Bundle bundle1 = EobTestDataUtil.createBundle(eob.copy());
-        final Bundle[] bundles = {bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1};
-
-        final RuntimeException fail = new RuntimeException("TEST EXCEPTION");
-        final Throwable[] failures = {fail, fail, fail, fail, fail, fail, fail, fail, fail};
         when(mockBfdClient.requestEOBFromServer(anyString()))
                 .thenReturn(bundle1, bundles)
                 .thenReturn(bundle1, bundles)
@@ -177,7 +167,7 @@ class JobProcessorIntegrationTest {
                 .thenReturn(bundle1, bundles)
                 .thenReturn(bundle1, bundles)
                 .thenReturn(bundle1)
-                .thenThrow(failures)
+                .thenThrow(fail, fail, fail, fail, fail, fail, fail, fail, fail)
                 ;
 
         var processedJob = cut.process("S0000");
@@ -194,21 +184,10 @@ class JobProcessorIntegrationTest {
     @Test
     @DisplayName("When the error count is greater than or equal to threshold, job should fail")
     void when_errorCount_is_not_below_threshold_fail_job() {
-        job.setStatus(JobStatus.IN_PROGRESS);
-        jobRepository.save(job);
-        createContract(sponsor);
-
-        ExplanationOfBenefit eob = EobTestDataUtil.createEOB();
-        final Bundle bundle1 = EobTestDataUtil.createBundle(eob.copy());
-        final Bundle[] bundles = {bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1};
-
-        final RuntimeException fail = new RuntimeException("TEST EXCEPTION");
-        final Throwable[] failures = {fail, fail, fail};
-
         when(mockBfdClient.requestEOBFromServer(anyString()))
                 .thenReturn(bundle1, bundles)
                 .thenReturn(bundle1, bundles)
-                .thenThrow(failures)
+                .thenThrow(fail, fail, fail)
                 .thenReturn(bundle1, bundles)
         ;
 
@@ -218,6 +197,10 @@ class JobProcessorIntegrationTest {
         assertThat(processedJob.getStatusMessage(), is("Too many patient records in the job had failures"));
         assertThat(processedJob.getExpiresAt(), nullValue());
         assertThat(processedJob.getCompletedAt(), notNullValue());
+    }
+
+    private Bundle[] getBundles() {
+        return new Bundle[]{bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1};
     }
 
     private Sponsor createSponsor() {
