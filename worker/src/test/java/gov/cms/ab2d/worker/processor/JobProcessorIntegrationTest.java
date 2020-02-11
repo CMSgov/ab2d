@@ -162,18 +162,22 @@ class JobProcessorIntegrationTest {
 
         ExplanationOfBenefit eob = EobTestDataUtil.createEOB();
         Bundle bundle1 = EobTestDataUtil.createBundle(eob.copy());
+        final Bundle[] bundles = {bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1};
+
+        final RuntimeException fail = new RuntimeException("TEST EXCEPTION");
+        final Throwable[] failures = {fail, fail, fail, fail, fail, fail, fail, fail, fail};
         when(mockBfdClient.requestEOBFromServer(anyString()))
-                .thenReturn(bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1)
-                .thenReturn(bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1)
-                .thenReturn(bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1)
-                .thenReturn(bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1)
-                .thenReturn(bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1)
-                .thenReturn(bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1)
-                .thenReturn(bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1)
-                .thenReturn(bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1)
-                .thenReturn(bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1)
-                .thenReturn(bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1)
-                .thenThrow(new RuntimeException("TEST EXCEPTION"))
+                .thenReturn(bundle1, bundles)
+                .thenReturn(bundle1, bundles)
+                .thenReturn(bundle1, bundles)
+                .thenReturn(bundle1, bundles)
+                .thenReturn(bundle1, bundles)
+                .thenReturn(bundle1, bundles)
+                .thenReturn(bundle1, bundles)
+                .thenReturn(bundle1, bundles)
+                .thenReturn(bundle1, bundles)
+                .thenReturn(bundle1)
+                .thenThrow(failures)
                 ;
 
         var processedJob = cut.process("S0000");
@@ -195,19 +199,17 @@ class JobProcessorIntegrationTest {
         createContract(sponsor);
 
         ExplanationOfBenefit eob = EobTestDataUtil.createEOB();
-        Bundle bundle1 = EobTestDataUtil.createBundle(eob.copy());
+        final Bundle bundle1 = EobTestDataUtil.createBundle(eob.copy());
+        final Bundle[] bundles = {bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1};
+
         final RuntimeException fail = new RuntimeException("TEST EXCEPTION");
+        final Throwable[] failures = {fail, fail, fail};
+
         when(mockBfdClient.requestEOBFromServer(anyString()))
-                .thenReturn(bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1)
-                .thenReturn(bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1)
-                .thenReturn(bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1)
-                .thenReturn(bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1)
-                .thenReturn(bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1)
-                .thenReturn(bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1)
-                .thenReturn(bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1)
-                .thenReturn(bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1)
-                .thenReturn(bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1)
-                .thenThrow(fail, fail, fail, fail, fail, fail, fail, fail, fail, fail)
+                .thenReturn(bundle1, bundles)
+                .thenReturn(bundle1, bundles)
+                .thenThrow(failures)
+                .thenReturn(bundle1, bundles)
         ;
 
         var processedJob = cut.process("S0000");
