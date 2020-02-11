@@ -11,7 +11,6 @@ import org.junit.runner.RunWith;
 import org.mockserver.integration.ClientAndServer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
@@ -62,8 +61,8 @@ class OptOutClientServiceTest {
         final String line = getLinesFromFile().skip(6).limit(1).collect(Collectors.toList()).get(0);
         final List<OptOut> optOut = cut.convert(line);
         assertNotNull(optOut);
-        assertEquals(1, optOut.size());
-        assertEquals("19990000000157", optOut.get(0).getCcwId());
+        assertEquals(2, optOut.size());
+        assertEquals("20010000001115", optOut.get(0).getCcwId());
         optOut.forEach(o -> optOutRepository.save(o));
     }
 

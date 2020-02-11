@@ -13,7 +13,6 @@ import org.mockserver.integration.ClientAndServer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.test.context.TestPropertySource;
 import org.springframework.transaction.annotation.Transactional;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
@@ -33,7 +32,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @Slf4j
-@SpringBootTest
+@SpringBootTest(classes = SpringBootApp.class)
 @Testcontainers
 class OptOutProcessorIntegrationTest {
 
@@ -90,15 +89,15 @@ class OptOutProcessorIntegrationTest {
         assertThat(optOutRowsBeforeProcessing, is(empty()));
         assertThat(optOutRowsAfterProcessing, is(not(empty())));
         // Each search in our test comes back with two patients (reusing mock result from other test)
-        assertThat(optOutRowsAfterProcessing.size(), is(9));
+        assertThat(optOutRowsAfterProcessing.size(), is(18));
 
-        final OptOut optOut = optOutRepo.findByCcwId("19990000000157").get(0);
+        final OptOut optOut = optOutRepo.findByCcwId("20010000001115").get(0);
         assertThat(optOut.getPolicyCode(), is("OPTOUT"));
         assertThat(optOut.getPurposeCode(), is("TREAT"));
         assertThat(optOut.getScopeCode(), is("patient-privacy"));
         assertThat(optOut.getLoIncCode(), is("64292-6"));
         assertThat(optOut.getEffectiveDate(), is(LocalDate.of(2019,10,24)));
-        assertThat(optOut.getCcwId(), is("19990000000157"));
+        assertThat(optOut.getCcwId(), is("20010000001115"));
 
         verify(mockS3Gateway).getOptOutFile();
     }

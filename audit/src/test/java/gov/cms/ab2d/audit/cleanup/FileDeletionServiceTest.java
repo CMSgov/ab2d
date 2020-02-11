@@ -32,7 +32,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SpringBootTest(classes = SpringBootApp.class)
-@TestPropertySource(locations = "/application.common.properties")
+@TestPropertySource(locations = "/application.audit.properties")
 @Testcontainers
 public class FileDeletionServiceTest {
 
