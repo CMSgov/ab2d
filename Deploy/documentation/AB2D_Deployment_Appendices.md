@@ -29,6 +29,8 @@
 1. [Appendix R: Update userdata for auto scaling groups through the AWS console](#appendix-r-update-userdata-for-auto-scaling-groups-through-the-aws-console)
 1. [Appendix S: Install Ruby on RedHat linux](#appendix-s-install-ruby-on-redhat-linux)
 1. [Appendix T: Test getting and decrypting a file from S3](#appendix-t-test-getting-and-decrypting-a-file-from-s3)
+1. [Appendix U: Interact with the New Relic infrastructure agent](#appendix-u-interact-with-the-new-relic-infrastructure-agent)
+1. [Appendix V: Add a new environment variable for ECS docker containers](#appendix-v-add-a-new-environment-variable-for-ecs-docker-containers)
 
 ## Appendix A: Access the CMS AWS console
 
@@ -2127,3 +2129,130 @@
    ```ShellSession
    $ sudo mv /tmp/test-file.txt /mnt/efs/bfd-keystore
    ```
+
+## Appendix U: Interact with the New Relic infrastructure agent
+
+1. Connect to any EC2 instance
+
+1. Check the status of the New Relic infrastructure agent
+
+   ```ShellSession
+   $ sudo systemctl status newrelic-infra
+   ```
+
+1. If New Relic infrastructure agent is stopped, you can start it by running the following command
+
+   ```ShellSession
+   $ sudo systemctl start newrelic-infra
+   ```
+
+1. If New Relic infrastructure agent is started, you can stop it by running the following command
+
+   ```ShellSession
+   $ sudo systemctl stop newrelic-infra
+   ```
+
+1. If New Relic infrastructure agent is started, you can stop and restart it by running the following command
+
+   ```ShellSession
+   $ sudo systemctl restart newrelic-infra
+   ```
+
+## Appendix V: Add a new environment variable for ECS docker containers
+
+1. In order to add a new environment variable for api ECS docker containers, the following files should be changed
+
+   - ~/code/ab2d/Deploy/deploy-ab2d-to-cms.sh
+
+     - add "Create or get '???' secret" section
+
+     - add an error check for a failue to retireve the secret
+
+     - add to "not auto-approved" module.api call
+
+     - add to "auto-approved" module.api call
+
+   - ~/code/ab2d/Deploy/documentation/AB2D_Deployment.md
+
+     - add data entry for '???' secret
+   
+   - ~/code/ab2d/Deploy/terraform/modules/api/main.tf
+
+     - modify aws_ecs_task_definition
+
+   - ~/code/ab2d/Deploy/terraform/modules/api/variables.tf
+
+     - add variable
+
+   - ~/code/ab2d/Deploy/terraform/environments/ab2d-east-impl/main.tf
+
+     - add variable to the api call
+
+   - ~/code/ab2d/Deploy/terraform/environments/ab2d-east-impl/variables.tf
+
+     - add variable
+
+   - ~/code/ab2d/Deploy/terraform/environments/ab2d-dev/main.tf
+
+     - add variable to the api call
+   
+   - ~/code/ab2d/Deploy/terraform/environments/ab2d-dev/variables.tf
+
+     - add variable
+   
+   - ~/code/ab2d/Deploy/terraform/environments/ab2d-sbx-sandbox/main.tf
+
+     - add variable to the api call
+
+   - ~/code/ab2d/Deploy/terraform/environments/ab2d-sbx-sandbox/variables.tf
+
+     - add variable
+
+1. In order to add a new environment variable for worker ECS docker containers, the following files should be changed
+
+   - ~/code/ab2d/Deploy/deploy-ab2d-to-cms.sh
+
+     - add "Create or get '???' secret" section
+
+     - add an error check for a failue to retireve the secret
+
+     - add to "not auto-approved" module.worker call
+
+     - add to "auto-approved" module.worker call
+
+   - ~/code/ab2d/Deploy/documentation/AB2D_Deployment.md
+
+     - add data entry for '???' secret
+   
+   - ~/code/ab2d/Deploy/terraform/modules/worker/main.tf
+
+     - modify aws_ecs_task_definition
+
+   - ~/code/ab2d/Deploy/terraform/modules/worker/variables.tf
+
+     - add variable
+
+   - ~/code/ab2d/Deploy/terraform/environments/ab2d-east-impl/main.tf
+
+     - add variable to the worker call
+
+   - ~/code/ab2d/Deploy/terraform/environments/ab2d-east-impl/variables.tf
+
+     - add variable
+
+   - ~/code/ab2d/Deploy/terraform/environments/ab2d-dev/main.tf
+
+     - add variable to the worker call
+   
+   - ~/code/ab2d/Deploy/terraform/environments/ab2d-dev/variables.tf
+
+     - add variable
+   
+   - ~/code/ab2d/Deploy/terraform/environments/ab2d-sbx-sandbox/main.tf
+
+     - add variable to the worker call
+
+   - ~/code/ab2d/Deploy/terraform/environments/ab2d-sbx-sandbox/variables.tf
+
+     - add variable
+
