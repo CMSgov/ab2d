@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.security.*;
 import java.security.cert.CertificateException;
+import java.util.concurrent.TimeUnit;
 
 @Configuration
 @PropertySource("classpath:application.bfd.properties")
@@ -56,6 +57,9 @@ public class BFDClientConfiguration {
 
     @Value("${bfd.http.maxConnTotal}")
     private int maxConnTotal;
+
+    @Value("${bfd.http.connTTL}")
+    private int connectionTTL;
 
     @Bean
     public IGenericClient bfdFhirRestClient(FhirContext fhirContext, HttpClient httpClient) {
@@ -133,6 +137,7 @@ public class BFDClientConfiguration {
         return HttpClients.custom()
                 .setMaxConnPerRoute(maxConnPerRoute)
                 .setMaxConnTotal(maxConnTotal)
+                .setConnectionTimeToLive(connectionTTL, TimeUnit.MILLISECONDS)
                 .setDefaultRequestConfig(requestConfig)
                 .setSSLContext(sslContext)
                 .build();
