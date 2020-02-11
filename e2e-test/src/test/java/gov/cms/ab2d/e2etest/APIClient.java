@@ -165,7 +165,6 @@ public class APIClient {
         HttpRequest healthCheckRequest = HttpRequest.newBuilder()
                 .uri(URI.create(ab2dUrl + "/health"))
                 .timeout(Duration.ofSeconds(defaultTimeout))
-                .header("Authorization", "Bearer " + jwtStr)
                 .GET()
                 .build();
 
