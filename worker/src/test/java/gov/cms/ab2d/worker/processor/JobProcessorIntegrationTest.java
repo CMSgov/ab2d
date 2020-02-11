@@ -166,8 +166,8 @@ class JobProcessorIntegrationTest {
                 .thenReturn(bundle1, bundles)
                 .thenReturn(bundle1, bundles)
                 .thenReturn(bundle1, bundles)
-                .thenReturn(bundle1)
-                .thenThrow(fail, fail, fail, fail, fail, fail, fail, fail, fail)
+                .thenReturn(bundle1, bundle1, bundle1, bundle1, bundle1)
+                .thenThrow(fail, fail, fail, fail, fail)
                 ;
 
         var processedJob = cut.process("S0000");
@@ -187,7 +187,7 @@ class JobProcessorIntegrationTest {
         when(mockBfdClient.requestEOBFromServer(anyString()))
                 .thenReturn(bundle1, bundles)
                 .thenReturn(bundle1, bundles)
-                .thenThrow(fail, fail, fail)
+                .thenThrow(fail, fail, fail, fail, fail, fail, fail, fail, fail, fail)
                 .thenReturn(bundle1, bundles)
         ;
 

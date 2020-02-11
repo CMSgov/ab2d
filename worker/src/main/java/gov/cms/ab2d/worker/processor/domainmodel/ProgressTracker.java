@@ -65,7 +65,7 @@ public class ProgressTracker {
     }
 
     public boolean isErrorCountBelowThreshold() {
-        return (failureCount * 100) / processedCount < failureThreshold;
+        return (failureCount * 100) / getTotalCount() < failureThreshold;
     }
 
 
