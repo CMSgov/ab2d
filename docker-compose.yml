@@ -13,7 +13,7 @@ services:
   build:
     image: maven:3-jdk-13
     working_dir: /usr/src/mymaven
-    command: mvn clean package
+    command: mvn clean package -DskipTests
     volumes:
       - .:/usr/src/mymaven
       - ${HOME}/.m2:/root/.m2
@@ -28,6 +28,8 @@ services:
       - AB2D_DB_USER=ab2d
       - AB2D_DB_PASSWORD=ab2d
       - AB2D_EFS_MOUNT=/tmp/ab2d_efs_mount
+      - NEW_RELIC_LICENSE_KEY="${NEW_RELIC_LICENSE_KEY}"
+      - NEW_RELIC_APP_NAME="${NEW_RELIC_APP_NAME}"
     ports:
       - "8080:8080"
     depends_on:
