@@ -20,11 +20,16 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+import static gov.cms.ab2d.common.util.Constants.API_PREFIX;
+import static gov.cms.ab2d.common.util.Constants.FHIR_PREFIX;
+
 @Slf4j
 public class APIClient {
 
     @Getter
     private final HttpClient httpClient;
+
+    private final String ab2dUrl;
 
     private final String ab2dApiUrl;
 
@@ -39,14 +44,15 @@ public class APIClient {
 
     public static final String PATIENT_EXPORT_PATH = "Patient/$export";
 
-    public APIClient(String ab2dApiUrl, String oktaUrl, String oktaClientId, String oktaPassword)
+    public APIClient(String ab2dUrl, String oktaUrl, String oktaClientId, String oktaPassword)
             throws IOException, InterruptedException, JSONException {
         httpClient = HttpClient.newBuilder()
                 .version(HttpClient.Version.HTTP_1_1)
                 .followRedirects(HttpClient.Redirect.NORMAL)
                 .build();
 
-        this.ab2dApiUrl = ab2dApiUrl;
+        this.ab2dUrl = ab2dUrl;
+        this.ab2dApiUrl = buildAB2DAPIUrl(ab2dUrl);
         this.oktaUrl = oktaUrl;
         authEncoded = Base64.getEncoder().encodeToString((oktaClientId + ":" + oktaPassword).getBytes());
 
@@ -155,6 +161,17 @@ public class APIClient {
         return httpClient.send(fileDownloadRequest, HttpResponse.BodyHandlers.ofInputStream());
     }
 
+    public HttpResponse<String> healthCheck() throws IOException, InterruptedException {
+        HttpRequest healthCheckRequest = HttpRequest.newBuilder()
+                .uri(URI.create(ab2dUrl + "/health"))
+                .timeout(Duration.ofSeconds(defaultTimeout))
+                .header("Authorization", "Bearer " + jwtStr)
+                .GET()
+                .build();
+
+        return httpClient.send(healthCheckRequest, HttpResponse.BodyHandlers.ofString());
+    }
+
     private String buildParameterString(Map<Object, Object> data) {
         var builder = new StringBuilder();
         for (Map.Entry<Object, Object> entry : data.entrySet()) {
@@ -173,6 +190,10 @@ public class APIClient {
         String paramString = buildParameterString(data);
 
         return HttpRequest.BodyPublishers.ofString(paramString);
+    }
+
+    public static String buildAB2DAPIUrl(String baseUrl) {
+        return baseUrl + API_PREFIX + FHIR_PREFIX + "/";
     }
 }
 
