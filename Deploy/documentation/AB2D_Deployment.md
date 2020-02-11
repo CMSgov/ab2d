@@ -53,7 +53,7 @@
 1. [Peer AB2D Dev, Sandbox, Impl environments with the BFD Sbx VPC and peer AB2D Prod with BFD Prod VPC](#peer-ab2d-dev-sandbox-impl-environments-with-the-bfd-sbx-vpc-and-peer-ab2d-prod-with-bfd-prod-vpc)
 1. [Encrypt BFD keystore and put in S3](#encrypt-bfd-keystore-and-put-in-s3)
 1. [Configure New Relic infrastructure](#configure-new-relic-infrastructure)
-1. [Configure New Relic users](#configure-new-elic-users)
+1. [Configure New Relic users](#configure-new-relic-users)
 
 ## Note the starting state of the customer AWS account
 
