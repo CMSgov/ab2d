@@ -342,9 +342,9 @@ public class JobProcessorImpl implements JobProcessor {
         while (iterator.hasNext()) {
             var future = iterator.next();
             if (future.isDone()) {
+                progressTracker.incrementProcessedCount();
                 try {
                     future.get();
-                    progressTracker.incrementProcessedCount();
                 } catch (InterruptedException | ExecutionException e) {
                     analyzeException(futureHandles, progressTracker, e);
 
@@ -363,14 +363,14 @@ public class JobProcessorImpl implements JobProcessor {
 
     private void analyzeException(List<Future<Void>> futureHandles, ProgressTracker progressTracker, Exception e) {
         progressTracker.incrementFailureCount();
-        progressTracker.incrementProcessedCount();
+
         if (progressTracker.isErrorCountBelowThreshold()) {
             final Throwable rootCause = ExceptionUtils.getRootCause(e);
             log.error("exception while processing patient {}", rootCause.getMessage(), rootCause);
             // log exception, but continue processing job as errorCount is below threshold
         } else {
             cancelFuturesInQueue(futureHandles);
-            log.error("{} out of {} records failed. Stopping job", progressTracker.getFailureCount(), progressTracker.getProcessedCount());
+            log.error("{} out of {} records failed. Stopping job", progressTracker.getFailureCount(), progressTracker.getTotalCount());
             throw new RuntimeException("Too many patient records in the job had failures");
         }
     }
