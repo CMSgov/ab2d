@@ -35,6 +35,9 @@ public class BFDClientImpl implements BFDClient {
     @Value("${bfd.eob.pagesize}")
     private int pageSize;
 
+    @Value("${bfd.contract.to.bene.pagesize}")
+    private int contractToBenePageSize;
+
     private IGenericClient client;
 
     @Value("${bfd.hicn.hash}")
@@ -147,5 +150,33 @@ public class BFDClientImpl implements BFDClient {
                 .next(bundle)
                 .encodedJson()
                 .execute();
+    }
+
+
+    @Override
+    @Retryable(
+            maxAttemptsExpression = "${bfd.retry.maxAttempts:3}",
+            backoff = @Backoff(delayExpression = "${bfd.retry.backoffDelay:250}", multiplier = 2),
+            exclude = { ResourceNotFoundException.class }
+    )
+    public Bundle requestPartDEnrolleesFromServer(String contractNum) {
+        final ICriterion<TokenClientParam> theCriterion = new TokenClientParam("_has:Coverage.extension")
+                .exactly()
+                .identifier(contractNum);
+
+        // do we need to pass a parameter for months? ptdcntrct01 - ptdcntrct12.
+        // I do not think we will have this. So I am probably mistaken. Need to check with Denis
+
+//                .systemAndIdentifier("https://bluebutton.cms.gov/resources/variables/ptdcntrct01", contractNum);
+
+        return client.search()
+                .forResource(Patient.class)
+                .where(theCriterion)
+                .count(contractToBenePageSize)
+                .withAdditionalHeader("IncludeIdentifiers", "true")
+                .returnBundle(Bundle.class)
+                .encodedJson()
+                .execute();
+
     }
 }
