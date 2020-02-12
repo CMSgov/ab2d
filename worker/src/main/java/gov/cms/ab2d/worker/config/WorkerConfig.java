@@ -19,6 +19,7 @@ import org.springframework.integration.jdbc.lock.LockRepository;
 import org.springframework.integration.support.locks.LockRegistry;
 import org.springframework.messaging.SubscribableChannel;
 import org.springframework.scheduling.annotation.EnableAsync;
+import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 import javax.sql.DataSource;
@@ -34,6 +35,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 @Configuration
 @EnableAsync
 @EnableIntegration
+@EnableScheduling
 @Import(BFDClientConfiguration.class)
 public class WorkerConfig {
 
@@ -65,7 +67,9 @@ public class WorkerConfig {
     public Executor patientProcessorThreadPool() {
         final ThreadPoolTaskExecutor taskExecutor = new ThreadPoolTaskExecutor();
         taskExecutor.setCorePoolSize(pcpCorePoolSize);
-        taskExecutor.setMaxPoolSize(pcpMaxPoolSize);
+        // Initially we lock the pool at the minimum size; auto-scaling is done
+        // by a separate service.
+        taskExecutor.setMaxPoolSize(pcpCorePoolSize);
         taskExecutor.setQueueCapacity(pcpQueueCapacity);
         taskExecutor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
         taskExecutor.setThreadNamePrefix("pcp-");
