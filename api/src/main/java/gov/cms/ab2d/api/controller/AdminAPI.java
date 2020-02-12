@@ -15,9 +15,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 
-import static gov.cms.ab2d.api.util.Constants.ADMIN_PREFIX;
-import static gov.cms.ab2d.api.util.Constants.API_PREFIX;
-import static gov.cms.ab2d.common.util.Constants.FILE_LOG;
+import static gov.cms.ab2d.common.util.Constants.*;
 
 @Slf4j
 @RestController

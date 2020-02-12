@@ -32,7 +32,7 @@ import java.security.spec.KeySpec;
 @Slf4j
 public class BFDClientImpl implements BFDClient {
 
-    @Value("${bfd.pagesize}")
+    @Value("${bfd.eob.pagesize}")
     private int pageSize;
 
     private IGenericClient client;
