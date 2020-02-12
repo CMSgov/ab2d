@@ -16,6 +16,8 @@ public interface JobService {
 
     Job getAuthorizedJobByJobUuid(String jobUuid);
 
+    Job getJobByJobUuid(String jobUuid);
+
     Job updateJob(Job job);
 
     Resource getResourceForJob(String jobUuid, String fileName) throws MalformedURLException;

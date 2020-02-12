@@ -2,6 +2,11 @@ package gov.cms.ab2d.audit.cleanup;
 
 import gov.cms.ab2d.audit.SpringBootApp;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
+import gov.cms.ab2d.common.model.Job;
+import gov.cms.ab2d.common.model.JobStatus;
+import gov.cms.ab2d.common.model.User;
+import gov.cms.ab2d.common.service.JobService;
+import gov.cms.ab2d.common.util.DataSetup;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,8 +29,12 @@ import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributeView;
 import java.nio.file.attribute.FileTime;
 import java.time.LocalDate;
+import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
+import java.util.UUID;
 
+import static gov.cms.ab2d.common.util.Constants.EOB;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -44,6 +53,12 @@ public class FileDeletionServiceTest {
 
     @Container
     private static final PostgreSQLContainer postgreSQLContainer= new AB2DPostgresqlContainer();
+
+    @Autowired
+    private JobService jobService;
+
+    @Autowired
+    private DataSetup dataSetup;
 
     private static final String TEST_FILE = "testFile.ndjson";
 
@@ -79,6 +94,7 @@ public class FileDeletionServiceTest {
         Path sourceNotDeleted = Paths.get(urlNotDeletedFile.toURI());
         Files.copy(sourceNotDeleted, destinationNotDeleted, StandardCopyOption.REPLACE_EXISTING);
 
+        // Not connected to a job
         Path destination = Paths.get(efsMount, TEST_FILE);
         URL url = this.getClass().getResource("/" + TEST_FILE);
         Path source = Paths.get(url.toURI());
@@ -86,6 +102,62 @@ public class FileDeletionServiceTest {
 
         changeFileCreationDate(destination);
 
+        User user = dataSetup.setupUser(List.of());
+
+        // Connected to a job that is finished and has expired
+        Job job = new Job();
+        job.setStatus(JobStatus.SUCCESSFUL);
+        job.setJobUuid(UUID.randomUUID().toString());
+        job.setCreatedAt(OffsetDateTime.now().minusDays(3));
+        job.setCompletedAt(OffsetDateTime.now().minusDays(2));
+        job.setExpiresAt(OffsetDateTime.now().minusDays(1));
+        job.setUser(user);
+        jobService.updateJob(job);
+        Path jobPath = Paths.get(efsMount, job.getJobUuid());
+        File jobDir = new File(jobPath.toString());
+        if (!jobDir.exists()) jobDir.mkdirs();
+        Path destinationJobConnection = Paths.get(jobPath.toString(), "S0000_0001.ndjson");
+        URL urlJobConnection = this.getClass().getResource("/" + TEST_FILE);
+        Path sourceJobConnection = Paths.get(urlJobConnection.toURI());
+        Files.copy(sourceJobConnection, destinationJobConnection, StandardCopyOption.REPLACE_EXISTING);
+
+        changeFileCreationDate(destinationJobConnection);
+
+        // Connected to a job, but in progress
+        Job jobInProgress = new Job();
+        jobInProgress.setStatus(JobStatus.IN_PROGRESS);
+        jobInProgress.setJobUuid(UUID.randomUUID().toString());
+        jobInProgress.setCreatedAt(OffsetDateTime.now().minusHours(1));
+        jobInProgress.setUser(user);
+        jobService.updateJob(jobInProgress);
+        Path jobInProgressPath = Paths.get(efsMount, jobInProgress.getJobUuid());
+        File jobInProgressDir = new File(jobInProgressPath.toString());
+        if (!jobInProgressDir.exists()) jobInProgressDir.mkdirs();
+        Path destinationJobInProgressConnection = Paths.get(jobInProgressPath.toString(), "S0000_0001.ndjson");
+        URL urlJobInProgressConnection = this.getClass().getResource("/" + TEST_FILE);
+        Path sourceJobInProgressConnection = Paths.get(urlJobInProgressConnection.toURI());
+        Files.copy(sourceJobInProgressConnection, destinationJobInProgressConnection, StandardCopyOption.REPLACE_EXISTING);
+
+        changeFileCreationDate(destinationJobInProgressConnection);
+
+        // Connected to a job that is finished where the file has yet to expire
+        Job jobNotExpiredYet = new Job();
+        jobNotExpiredYet.setStatus(JobStatus.SUCCESSFUL);
+        jobNotExpiredYet.setJobUuid(UUID.randomUUID().toString());
+        jobNotExpiredYet.setCreatedAt(OffsetDateTime.now().minusHours(10));
+        jobNotExpiredYet.setCompletedAt(OffsetDateTime.now().minusHours(5));
+        jobNotExpiredYet.setExpiresAt(OffsetDateTime.now().plusHours(19));
+        jobNotExpiredYet.setUser(user);
+        jobService.updateJob(jobNotExpiredYet);
+        Path jobNotExpiredYetPath = Paths.get(efsMount, jobNotExpiredYet.getJobUuid());
+        File jobNotExpiredYetDir = new File(jobNotExpiredYetPath.toString());
+        if (!jobNotExpiredYetDir.exists()) jobNotExpiredYetDir.mkdirs();
+        Path destinationJobNotExpiredYetConnection = Paths.get(jobNotExpiredYetPath.toString(), "S0000_0001.ndjson");
+        URL urlJobNotExpiredYetConnection = this.getClass().getResource("/" + TEST_FILE);
+        Path sourceJobNotExpiredYetConnection = Paths.get(urlJobNotExpiredYetConnection.toURI());
+        Files.copy(sourceJobNotExpiredYetConnection, destinationJobNotExpiredYetConnection, StandardCopyOption.REPLACE_EXISTING);
+
+        // A directory with no permissions that isn't going to be deleted
         final Path noPermissionsDirPath = Paths.get(efsMount, TEST_DIRECTORY_NO_PERMISSIONS);
         File noPermissionsDir = new File(noPermissionsDirPath.toString());
         if (!noPermissionsDir.exists()) noPermissionsDir.mkdirs();
@@ -122,6 +194,12 @@ public class FileDeletionServiceTest {
         assertTrue(Files.notExists(destination));
 
         assertTrue(Files.notExists(nestedFileDestination));
+
+        assertTrue(Files.notExists(destinationJobConnection));
+
+        assertTrue(Files.exists(destinationJobInProgressConnection));
+
+        assertTrue(Files.exists(destinationJobNotExpiredYetConnection));
 
         assertTrue(Files.exists(destinationNotDeleted));
 

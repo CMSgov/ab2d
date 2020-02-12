@@ -25,6 +25,8 @@ import java.time.*;
 import java.util.List;
 
 import static gov.cms.ab2d.api.util.Constants.*;
+import static gov.cms.ab2d.common.util.Constants.ADMIN_PREFIX;
+import static gov.cms.ab2d.common.util.Constants.API_PREFIX;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest(classes = SpringBootApp.class, webEnvironment = SpringBootTest.WebEnvironment.MOCK)

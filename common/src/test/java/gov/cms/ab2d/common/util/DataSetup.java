@@ -94,7 +94,7 @@ public class DataSetup {
         saveUser(savedSponsor, userRoles);
     }
 
-    private void saveUser(Sponsor sponsor, List<String> userRoles) {
+    private User saveUser(Sponsor sponsor, List<String> userRoles) {
         User user = new User();
         user.setEmail(TEST_USER);
         user.setFirstName("Eileen");
@@ -109,19 +109,20 @@ public class DataSetup {
             roleRepository.save(role);
             user.addRole(role);
         }
-        userRepository.save(user);
+
+        return userRepository.save(user);
     }
 
-    public void setupUser(List<String> userRoles) {
+    public User setupUser(List<String> userRoles) {
         User testUser = userRepository.findByUsername(TEST_USER);
         if(testUser != null) {
-            return;
+            return testUser;
         }
 
         Sponsor savedSponsor = createSponsor("Parent Corp.", 456, "Test", 123);
 
         setupContract(savedSponsor, VALID_CONTRACT_NUMBER);
 
-        saveUser(savedSponsor, userRoles);
+        return saveUser(savedSponsor, userRoles);
     }
 }

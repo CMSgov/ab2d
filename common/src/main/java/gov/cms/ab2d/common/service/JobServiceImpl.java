@@ -100,18 +100,25 @@ public class JobServiceImpl implements JobService {
 
     @Override
     public Job getAuthorizedJobByJobUuid(String jobUuid) {
-        Job job = jobRepository.findByJobUuid(jobUuid);
-
-        if (job == null) {
-            log.error("Job was searched for and was not found");
-            throw new ResourceNotFoundException("No job with jobUuid " +  jobUuid + " was found");
-        }
+        Job job = getJobByJobUuid(jobUuid);
 
         User user = userService.getCurrentUser();
         if (!user.equals(job.getUser())) {
             log.error("User attempted to download a file where they had a valid UUID, but was not logged in as the " +
                     "user that created the job");
             throw new InvalidJobAccessException("Unauthorized");
+        }
+
+        return job;
+    }
+
+    @Override
+    public Job getJobByJobUuid(String jobUuid) {
+        Job job = jobRepository.findByJobUuid(jobUuid);
+
+        if (job == null) {
+            log.error("Job was searched for and was not found");
+            throw new ResourceNotFoundException("No job with jobUuid " +  jobUuid + " was found");
         }
 
         return job;

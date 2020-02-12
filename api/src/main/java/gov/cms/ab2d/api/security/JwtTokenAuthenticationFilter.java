@@ -53,6 +53,12 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
             return;
         }
 
+        if (requestUri.startsWith("/health")) {
+            log.info("Health requested");
+            chain.doFilter(request, response);
+            return;
+        }
+
         String header = request.getHeader(jwtConfig.getHeader());
 
         if (header == null) {
