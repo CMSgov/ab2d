@@ -258,10 +258,12 @@ public class BlueButtonClientTest {
 
     @Test
     public void shouldGetPatientBundleFromPartDEnrolleeRequest() {
-        Bundle response = bbc.requestPartDEnrolleesFromServer(CONTRACT, 1);
+        for(int i = 1; i <= 12; i++) {
+            Bundle response = bbc.requestPartDEnrolleesFromServer(CONTRACT, i);
 
-        assertNotNull(response, "There should be a non null patient bundle");
-        assertEquals(2, response.getTotal(), "The bundle has 2 patients");
+            assertNotNull(response, "There should be a non null patient bundle");
+            assertEquals(2, response.getEntry().size(), "The bundle has 2 patients");
+        }
     }
 
     /**
