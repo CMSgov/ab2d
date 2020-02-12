@@ -1,3 +1,2 @@
 okta-url: 'https://test.idp.idm.cms.gov/oauth2/aus2r7y3gdaFMKBol297/v1/token'
-ab2d-api-url: 'http://localhost:8080/api/v1/fhir/'
-ab2d-admin-url: 'http://localhost:8080/api/v1/admin/'
+base-url: 'http://localhost:8080'
