@@ -76,6 +76,9 @@ public class JobProcessorImpl implements JobProcessor {
     @Value("${efs.mount}")
     private String efsMount;
 
+    @Value("${audit.files.ttl.hours}")
+    private int auditFilesTTLHours;
+
     private final FileService fileService;
     private final JobRepository jobRepository;
     private final JobOutputRepository jobOutputRepository;
@@ -433,7 +436,7 @@ public class JobProcessorImpl implements JobProcessor {
         job.setStatus(SUCCESSFUL);
         job.setStatusMessage("100%");
         job.setProgress(100);
-        job.setExpiresAt(OffsetDateTime.now().plusDays(1));
+        job.setExpiresAt(OffsetDateTime.now().plusHours(auditFilesTTLHours));
         job.setCompletedAt(OffsetDateTime.now());
 
         jobRepository.save(job);
