@@ -56,7 +56,7 @@ public class AutoScalingServiceImpl implements AutoScalingService {
 
 
     @Override
-    @Scheduled(fixedDelay = 1000)
+    @Scheduled(fixedDelay = 5000)
     public void autoscale() {
         int activeCount = executor.getActiveCount();
         if (activeCount == 0) {
