@@ -5,15 +5,18 @@ import lombok.Getter;
 @Getter
 public enum JobStatus {
 
-    SUBMITTED(true),
-    IN_PROGRESS(true),
-    FAILED(false),
-    SUCCESSFUL(false),
-    CANCELLED(false);
+    SUBMITTED(true, false),
+    IN_PROGRESS(true, false),
+    FAILED(false, true),
+    SUCCESSFUL(false, true),
+    CANCELLED(false, true);
 
     private final boolean isCancellable;
 
-    JobStatus(boolean isCancellable) {
+    private final boolean isFinished;
+
+    JobStatus(boolean isCancellable, boolean isFinished) {
         this.isCancellable = isCancellable;
+        this.isFinished = isFinished;
     }
 }
