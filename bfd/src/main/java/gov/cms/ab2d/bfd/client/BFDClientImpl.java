@@ -5,6 +5,7 @@ import ca.uhn.fhir.rest.gclient.ICriterion;
 import ca.uhn.fhir.rest.gclient.TokenClientParam;
 import ca.uhn.fhir.rest.server.exceptions.ResourceNotFoundException;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.bouncycastle.util.encoders.Hex;
 import org.hl7.fhir.dstu3.model.Bundle;
 import org.hl7.fhir.dstu3.model.ExplanationOfBenefit;
@@ -159,15 +160,11 @@ public class BFDClientImpl implements BFDClient {
             backoff = @Backoff(delayExpression = "${bfd.retry.backoffDelay:250}", multiplier = 2),
             exclude = { ResourceNotFoundException.class }
     )
-    public Bundle requestPartDEnrolleesFromServer(String contractNum) {
-        final ICriterion<TokenClientParam> theCriterion = new TokenClientParam("_has:Coverage.extension")
+    public Bundle requestPartDEnrolleesFromServer(String contractNum, int month) {
+        var monthParameter = createMonthParameter(month);
+        var theCriterion = new TokenClientParam("_has:Coverage.extension")
                 .exactly()
-                .identifier(contractNum);
-
-        // do we need to pass a parameter for months? ptdcntrct01 - ptdcntrct12.
-        // I do not think we will have this. So I am probably mistaken. Need to check with Denis
-
-//                .systemAndIdentifier("https://bluebutton.cms.gov/resources/variables/ptdcntrct01", contractNum);
+                .systemAndIdentifier(monthParameter, contractNum);
 
         return client.search()
                 .forResource(Patient.class)
@@ -177,6 +174,9 @@ public class BFDClientImpl implements BFDClient {
                 .returnBundle(Bundle.class)
                 .encodedJson()
                 .execute();
+    }
 
+    private String createMonthParameter(int month) {
+        return "https://bluebutton.cms.gov/resources/variables/ptdcntrct" + StringUtils.leftPad("" + month, 2, '0');
     }
 }

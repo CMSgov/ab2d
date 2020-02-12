@@ -9,6 +9,6 @@ public interface BFDClient {
     Bundle requestNextBundleFromServer(Bundle bundle);
     Bundle requestPatientFromServer(String patientId);
 
-    Bundle requestPartDEnrolleesFromServer(String contractNum);
+    Bundle requestPartDEnrolleesFromServer(String contractNum, int month);
 }
 
