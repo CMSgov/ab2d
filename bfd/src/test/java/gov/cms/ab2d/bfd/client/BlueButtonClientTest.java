@@ -59,6 +59,11 @@ public class BlueButtonClientTest {
     private static final String SAMPLE_PATIENT_PATH_PREFIX = "bb-test-data/patient/";
     private static final String[] TEST_PATIENT_IDS = {"20140000008325", "20140000009893"};
 
+    private static final String [] CONTRACT_MONTHS = {"ptdcntrct01", "ptdcntrct02", "ptdcntrct03", "ptdcntrct04",
+            "ptdcntrct05", "ptdcntrct06", "ptdcntrct07", "ptdcntrct08", "ptdcntrct09", "ptdcntrct10",
+            "ptdcntrct11", "ptdcntrct12"
+    };
+
     @Autowired
     private BFDClient bbc;
 
@@ -143,6 +148,15 @@ public class BlueButtonClientTest {
                             Parameter.param("count", "10"),
                             Parameter.param("startIndex", startIndex),
                             Parameter.param("excludeSAMHSA", "true"))
+            );
+        }
+
+        for(String month : CONTRACT_MONTHS) {
+            createMockServerExpectation(
+                    "/v1/fhir/Patient",
+                    HttpStatus.OK_200,
+                    StringUtils.EMPTY,
+                    List.of(Parameter.param("_has:Coverage.extension", "https://bluebutton.cms.gov/resources/variables/" + month))
             );
         }
     }
