@@ -68,7 +68,7 @@
 
    1. Backup the file that you use for setting up your shell's environment
 
-      *Example for bash:*
+      *Example for bash shell:*
 
       ```ShellSession
       $ cp ~/.bash_profile ~/.bash_profile_backup
