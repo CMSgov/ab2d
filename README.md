@@ -92,7 +92,7 @@
 
       *NOTE: Be sure to change the the new relic license key in the command below.*
 
-      *Format:*
+      *Format example for bash shell:*
 
       ```ShellSession
       $ printf "\nexport NEW_RELIC_LICENSE_KEY='{your new relic license key}'" >> ~/.bash_profile
