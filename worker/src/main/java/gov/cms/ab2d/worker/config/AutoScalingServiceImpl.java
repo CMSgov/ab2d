@@ -76,7 +76,7 @@ public class AutoScalingServiceImpl implements AutoScalingService {
             kickOffTime = Instant.now();
             log.info("Auto-scaling: kicked off at {}", kickOffTime);
         } else if (mode == SCALING_UP) {
-            // Auto-scaling is in progress. Increase the pool size if it's time. 
+            // Auto-scaling is in progress. Increase the pool size if it's time.
             kickItUpANotch();
         }
     }
