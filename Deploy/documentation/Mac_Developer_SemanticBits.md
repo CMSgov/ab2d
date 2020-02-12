@@ -879,8 +879,8 @@
    $ aws --version
    ```
 
-1. Backup existing profile shell script
-   
+1. Backup the file that you use for setting up your shell's environment
+
    *Example for bash:*
 
    ```ShellSession
@@ -1148,7 +1148,15 @@
    $ rbenv global 2.6.5
    ```
 
-1. Open a shell environment script that is loaded before your terminal is loaded
+1. Backup the file that you use for setting up your shell's environment
+
+   *Example for bash:*
+
+   ```ShellSession
+   $ cp ~/.bash_profile ~/.bash_profile_backup
+   ```
+
+1. Open the file that you use for setting up your shell's environment
 
    *Example if you are using the bash shell:*
 
@@ -1333,7 +1341,15 @@
    $ sudo ln -s /opt/apache-jmeter/bin/jmeter /usr/local/bin/jmeter
    ```
 
-1. Add jmeter path to your interactive shell script
+1. Backup the file that you use for setting up your shell's environment
+
+   *Example for bash:*
+
+   ```ShellSession
+   $ cp ~/.bash_profile ~/.bash_profile_backup
+   ```
+
+1. Add jmeter path to the file that you use for setting up your shell's environment
 
    *Example for bash:*
 
@@ -1342,7 +1358,7 @@
    $ printf '\nexport AB2D_JMETER_HOME="/opt/apache-jmeter"' >> ~/.bash_profile
    ```
    
-1. Add jmeter path to your interactive shell script
+1. Add jmeter path to the file that you use for setting up your shell's environment
 
    *Example for bash:*
    
