@@ -33,6 +33,8 @@ import java.security.spec.KeySpec;
 @Slf4j
 public class BFDClientImpl implements BFDClient {
 
+    public static final String PTDCNTRCT_URL_PREFIX = "https://bluebutton.cms.gov/resources/variables/ptdcntrct";
+
     @Value("${bfd.eob.pagesize}")
     private int pageSize;
 
@@ -177,6 +179,10 @@ public class BFDClientImpl implements BFDClient {
     }
 
     private String createMonthParameter(int month) {
-        return "https://bluebutton.cms.gov/resources/variables/ptdcntrct" + StringUtils.leftPad("" + month, 2, '0');
+        final String zeroPaddedMonth = StringUtils.leftPad("" + month, 2, '0');
+        return new StringBuilder()
+                .append(PTDCNTRCT_URL_PREFIX)
+                .append(zeroPaddedMonth)
+                .toString();
     }
 }
