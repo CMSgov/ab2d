@@ -76,13 +76,15 @@
 
    1. Add section heading for New Relic environment variables
 
+      *Example for bash shell:*
+      
       ```ShellSession
       $ printf '\n# Set New Relic environment variables' >> ~/.bash_profile
       ```
 
    1. Configure the New Relic application name for development
 
-      *Example using your username for bash shell:*
+      *Example using your username as part of application name for bash shell:*
 
       ```ShellSession
       $ printf "\nexport NEW_RELIC_APP_NAME='AB2D for $USER'" >> ~/.bash_profile
