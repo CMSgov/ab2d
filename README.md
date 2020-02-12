@@ -66,6 +66,8 @@
 
 1. Configure New Relic environment variables
 
+   1. Get and note the "AB2D New Relic license key" from the "ab2d" vault in 1Password
+
    1. Backup the file that you use for setting up your shell's environment
 
       *Example for bash shell:*
@@ -92,7 +94,7 @@
 
    1. Configure the New Relic license key for development
 
-      *NOTE: Be sure to change the the new relic license key in the command below.*
+      *NOTE: Be sure to change "{your new relic license key}" below to the key that you retreived from 1Password.*
 
       *Format example for bash shell:*
 
