@@ -1,4 +1,4 @@
 FROM openjdk:13
 WORKDIR /usr/src/ab2d-worker
 ADD target /usr/src/ab2d-worker
-CMD java -jar worker-*-SNAPSHOT.jar
+CMD java -javaagent:/usr/src/ab2d-worker/newrelic/newrelic.jar -jar worker-*-SNAPSHOT.jar
