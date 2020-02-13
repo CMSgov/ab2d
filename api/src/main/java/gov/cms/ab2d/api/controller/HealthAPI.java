@@ -15,7 +15,7 @@ public class HealthAPI {
     @GetMapping("/health")
     public ResponseEntity<Void> getHealth() {
         if (healthCheck.healthy()) {
-            return new ResponseEntity<Void>(HttpStatus.OK);
+            return new ResponseEntity<>(HttpStatus.OK);
         } else {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
