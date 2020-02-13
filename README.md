@@ -10,6 +10,7 @@
 ## Table of Contents
 
 1. [Configure local repo with "git-secrets" protection](#configure-local-repo-with-git-secrets-protection)
+1. [Configure New Relic](#configure-new-relic)
 1. [Running in Docker](#running-in-docker)
 1. [Deploying the solution](#deploying-the-solution)
 
@@ -56,6 +57,58 @@
    ```ShellSession
    $ git-secrets --register-aws
    ```
+
+## Configure New Relic
+
+1. If you do not have a New Relic account, jump to the following section:
+
+   [Running in Docker](#running-in-docker)
+
+1. Configure New Relic environment variables
+
+   1. Get and note the "AB2D New Relic license key" from the "ab2d" vault in 1Password
+
+   1. Backup the file that you use for setting up your shell's environment
+
+      *Example for bash shell:*
+
+      ```ShellSession
+      $ cp ~/.bash_profile ~/.bash_profile_backup
+      ```
+
+   1. Add section heading for New Relic environment variables
+
+      *Example for bash shell:*
+      
+      ```ShellSession
+      $ printf '\n# Set New Relic environment variables' >> ~/.bash_profile
+      ```
+
+   1. Configure the New Relic application name for development
+
+      *Example using your username as part of application name for bash shell:*
+
+      ```ShellSession
+      $ printf "\nexport NEW_RELIC_APP_NAME='AB2D for $USER'" >> ~/.bash_profile
+      ```
+
+   1. Configure the New Relic license key for development
+
+      *NOTE: Be sure to change "{your new relic license key}" below to the key that you retreived from 1Password.*
+
+      *Format example for bash shell:*
+
+      ```ShellSession
+      $ printf "\nexport NEW_RELIC_LICENSE_KEY='{your new relic license key}'" >> ~/.bash_profile
+      ```
+
+   1. Apply changes to current terminal session
+
+      *Example for bash shell:*
+
+      ```ShellSession
+      $ source ~/.bash_profile
+      ```
 
 ## Running in Docker
 
