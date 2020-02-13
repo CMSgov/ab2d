@@ -295,6 +295,26 @@ if [ -z "${HICN_HASH_ITER}" ]; then
   HICN_HASH_ITER=$(./get-database-secret.py $CMS_ENV hicn_hash_iter $DATABASE_SECRET_DATETIME)
 fi
 
+# Create or get new relic app name secret
+
+NEW_RELIC_APP_NAME=$(./get-database-secret.py $CMS_ENV new_relic_app_name $DATABASE_SECRET_DATETIME)
+if [ -z "${NEW_RELIC_APP_NAME}" ]; then
+  echo "*********************************************************"
+  ./create-database-secret.py $CMS_ENV new_relic_app_name $KMS_KEY_ID $DATABASE_SECRET_DATETIME
+  echo "*********************************************************"
+  NEW_RELIC_APP_NAME=$(./get-database-secret.py $CMS_ENV new_relic_app_name $DATABASE_SECRET_DATETIME)
+fi
+
+# Create or get new relic license key secret
+
+NEW_RELIC_LICENSE_KEY=$(./get-database-secret.py $CMS_ENV new_relic_license_key $DATABASE_SECRET_DATETIME)
+if [ -z "${NEW_RELIC_LICENSE_KEY}" ]; then
+  echo "*********************************************************"
+  ./create-database-secret.py $CMS_ENV new_relic_license_key $KMS_KEY_ID $DATABASE_SECRET_DATETIME
+  echo "*********************************************************"
+  NEW_RELIC_LICENSE_KEY=$(./get-database-secret.py $CMS_ENV new_relic_license_key $DATABASE_SECRET_DATETIME)
+fi
+
 # If any databse secret produced an error, exit the script
 
 if [ "${DATABASE_USER}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
@@ -304,7 +324,9 @@ if [ "${DATABASE_USER}" == "ERROR: Cannot get database secret because KMS key is
   || [ "${BFD_KEYSTORE_LOCATION}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
   || [ "${BFD_KEYSTORE_PASSWORD}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
   || [ "${HICN_HASH_PEPPER}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
-  || [ "${HICN_HASH_ITER}" == "ERROR: Cannot get database secret because KMS key is disabled!" ]; then
+  || [ "${HICN_HASH_ITER}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
+  || [ "${NEW_RELIC_APP_NAME}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
+  || [ "${NEW_RELIC_LICENSE_KEY}" == "ERROR: Cannot get database secret because KMS key is disabled!" ]; then
     echo "ERROR: Cannot get secrets because KMS key is disabled!"
     exit 1
 fi
@@ -1627,6 +1649,8 @@ if [ -z "${AUTOAPPROVE}" ]; then
     --var "deployer_ip_address=$DEPLOYER_IP_ADDRESS" \
     --var "ecr_repo_aws_account=$ECR_REPO_AWS_ACCOUNT" \
     --var "image_version=$IMAGE_VERSION" \
+    --var "new_relic_app_name=$NEW_RELIC_APP_NAME" \
+    --var "new_relic_license_key=$NEW_RELIC_LICENSE_KEY" \
     --target module.api
   
   terraform apply \
@@ -1650,6 +1674,8 @@ if [ -z "${AUTOAPPROVE}" ]; then
     --var "hicn_hash_pepper=$HICN_HASH_PEPPER" \
     --var "hicn_hash_iter=$HICN_HASH_ITER" \
     --var "bfd_keystore_file_name=$BFD_KEYSTORE_FILE_NAME" \
+    --var "new_relic_app_name=$NEW_RELIC_APP_NAME" \
+    --var "new_relic_license_key=$NEW_RELIC_LICENSE_KEY" \
     --target module.worker
 
 else
@@ -1672,6 +1698,8 @@ else
     --var "deployer_ip_address=$DEPLOYER_IP_ADDRESS" \
     --var "ecr_repo_aws_account=$ECR_REPO_AWS_ACCOUNT" \
     --var "image_version=$IMAGE_VERSION" \
+    --var "new_relic_app_name=$NEW_RELIC_APP_NAME" \
+    --var "new_relic_license_key=$NEW_RELIC_LICENSE_KEY" \
     --target module.api \
     --auto-approve
 
@@ -1696,6 +1724,8 @@ else
     --var "hicn_hash_pepper=$HICN_HASH_PEPPER" \
     --var "hicn_hash_iter=$HICN_HASH_ITER" \
     --var "bfd_keystore_file_name=$BFD_KEYSTORE_FILE_NAME" \
+    --var "new_relic_app_name=$NEW_RELIC_APP_NAME" \
+    --var "new_relic_license_key=$NEW_RELIC_LICENSE_KEY" \
     --target module.worker \
     --auto-approve
 

@@ -1326,9 +1326,13 @@
 
 1. If prompted, enter bfd keystore password at the "Enter desired bfd_keystore_password" prompt
 
-1. If prompted, enter bfd keystore password at the "Enter desired hicn_hash_pepper" prompt
+1. If prompted, enter hicn hash pepper at the "Enter desired hicn_hash_pepper" prompt
 
-1. If prompted, enter bfd keystore password at the "Enter desired hicn_hash_iter" prompt
+1. If prompted, enter hicn hash iter at the "Enter desired hicn_hash_iter" prompt
+
+1. If prompted, enter new relic app name at the "Enter desired new_relic_app_name" prompt
+
+1. If prompted, enter new relic license key at the "Enter desired new_relic_license_key" prompt
 
 ## Update application
 

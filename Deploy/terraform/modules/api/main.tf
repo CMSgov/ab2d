@@ -199,6 +199,14 @@ resource "aws_ecs_task_definition" "api" {
         {
 	  "name" : "AB2D_EFS_MOUNT",
 	  "value" : "/mnt/efs"
+	},
+        {
+	  "name" : "NEW_RELIC_APP_NAME",
+	  "value" : "${var.new_relic_app_name}"
+	},
+        {
+	  "name" : "NEW_RELIC_LICENSE_KEY",
+	  "value" : "${var.new_relic_license_key}"
 	}
       ],
       "logConfiguration": {

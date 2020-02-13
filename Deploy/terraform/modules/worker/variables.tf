@@ -65,3 +65,6 @@ variable "hicn_hash_iter" {}
 
 # Used in userdata.tpl
 variable "bfd_keystore_file_name" {}
+
+variable "new_relic_app_name" {}
+variable "new_relic_license_key" {}

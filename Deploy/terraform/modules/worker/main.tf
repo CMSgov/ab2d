@@ -114,6 +114,14 @@ resource "aws_ecs_task_definition" "worker" {
 	{
 	  "name" : "AB2D_HICN_HASH_ITER",
 	  "value" : "${var.hicn_hash_iter}"
+	},
+        {
+	  "name" : "NEW_RELIC_APP_NAME",
+	  "value" : "${var.new_relic_app_name}"
+	},
+        {
+	  "name" : "NEW_RELIC_LICENSE_KEY",
+	  "value" : "${var.new_relic_license_key}"
 	}
       ],
       "logConfiguration": {

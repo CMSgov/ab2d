@@ -288,3 +288,13 @@ variable "bfd_keystore_file_name" {
   default     = ""
   description = "Please pass this on command line and not as a value here"
 }
+
+variable "new_relic_app_name" {
+  default     = ""
+  description = "Please pass this on command line and not as a value here"
+}
+
+variable "new_relic_license_key" {
+  default     = ""
+  description = "Please pass this on command line and not as a value here"
+}

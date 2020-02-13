@@ -92,6 +92,8 @@ module "api" {
   deployer_ip_address           = var.deployer_ip_address
   ecr_repo_aws_account          = var.ecr_repo_aws_account
   image_version                 = var.image_version
+  new_relic_app_name            = var.new_relic_app_name
+  new_relic_license_key         = var.new_relic_license_key
 }
 
 # LSH SKIP FOR NOW BEGIN
@@ -142,6 +144,8 @@ module "worker" {
   hicn_hash_pepper              = var.hicn_hash_pepper
   hicn_hash_iter                = var.hicn_hash_iter
   bfd_keystore_file_name        = var.bfd_keystore_file_name
+  new_relic_app_name            = var.new_relic_app_name
+  new_relic_license_key         = var.new_relic_license_key
 }
 
 module "cloudwatch" {
