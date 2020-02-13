@@ -1,0 +1,11 @@
+# Use https://dependabot.com/docs/config-file/validator/ to verify changes made to this
+version: 1
+update_configs:
+  - package_manager: "java:maven"
+    directory: "/"
+    update_schedule: "daily"
+    default_reviewers:
+      - "dkrylovsb"
+      - "adaykin"
+      - "lailasharshar"
+      - "spathiyil"
