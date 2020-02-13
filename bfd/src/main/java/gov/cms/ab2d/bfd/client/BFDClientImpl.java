@@ -3,6 +3,7 @@ package gov.cms.ab2d.bfd.client;
 import ca.uhn.fhir.rest.client.api.IGenericClient;
 import ca.uhn.fhir.rest.gclient.ICriterion;
 import ca.uhn.fhir.rest.gclient.TokenClientParam;
+import ca.uhn.fhir.rest.server.exceptions.InvalidRequestException;
 import ca.uhn.fhir.rest.server.exceptions.ResourceNotFoundException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -160,7 +161,7 @@ public class BFDClientImpl implements BFDClient {
     @Retryable(
             maxAttemptsExpression = "${bfd.retry.maxAttempts:3}",
             backoff = @Backoff(delayExpression = "${bfd.retry.backoffDelay:250}", multiplier = 2),
-            exclude = { ResourceNotFoundException.class }
+            exclude = { ResourceNotFoundException.class, InvalidRequestException.class }
     )
     public Bundle requestPartDEnrolleesFromServer(String contractNum, int month) {
         var monthParameter = createMonthParameter(month);
