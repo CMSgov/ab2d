@@ -12,6 +12,7 @@
 
     <properties>
         <project.root>${basedir}/..</project.root>
+        <newrelic.version>5.10.0</newrelic.version>
     </properties>
 
     <dependencies>
@@ -83,13 +84,20 @@
             <artifactId>jackson-module-jaxb-annotations</artifactId>
         </dependency>
 
-	<dependency>
+        <dependency>
             <groupId>com.newrelic.agent.java</groupId>
             <artifactId>newrelic-java</artifactId>
-            <version>5.10.0</version>
+            <version>${newrelic.version}</version>
             <scope>provided</scope>
             <type>zip</type>
-	</dependency>
+        </dependency>
+
+        <dependency>
+            <groupId>com.newrelic.agent.java</groupId>
+            <artifactId>newrelic-api</artifactId>
+            <version>${newrelic.version}</version>
+        </dependency>
+
 
     </dependencies>
     <build>
