@@ -1116,15 +1116,15 @@ cd "${START_DIR}"
 
 # Get the public ip address of the controller
 
-CONTROLLER_PUBLIC_IP=$(aws --region "${REGION}" ec2 describe-instances \
+CONTROLLER_PRIVATE_IP=$(aws --region "${REGION}" ec2 describe-instances \
   --filters "Name=tag:Name,Values=ab2d-deployment-controller" \
-  --query="Reservations[*].Instances[?State.Name == 'running'].PublicIpAddress" \
+  --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
   --output text)
 
 # Determine if the database for the environment exists
 
 DB_NAME_IF_EXISTS=$(ssh -tt -i "~/.ssh/${CMS_ENV}.pem" \
-  "${SSH_USERNAME}@${CONTROLLER_PUBLIC_IP}" \
+  "${SSH_USERNAME}@${CONTROLLER_PRIVATE_IP}" \
   "psql -t --host "${DB_ENDPOINT}" --username "${DATABASE_USER}" --dbname postgres --command='SELECT datname FROM pg_catalog.pg_database'" \
   | grep "${DATABASE_NAME}" \
   | sort \
@@ -1134,10 +1134,10 @@ DB_NAME_IF_EXISTS=$(ssh -tt -i "~/.ssh/${CMS_ENV}.pem" \
 
 # Create the database for the environment if it doesn't exist
 
-if [ -n "${CONTROLLER_PUBLIC_IP}" ] && [ -n "${DB_ENDPOINT}" ] && [ "${DB_NAME_IF_EXISTS}" != "${DATABASE_NAME}" ]; then
+if [ -n "${CONTROLLER_PRIVATE_IP}" ] && [ -n "${DB_ENDPOINT}" ] && [ "${DB_NAME_IF_EXISTS}" != "${DATABASE_NAME}" ]; then
   echo "Creating database..."
   ssh -tt -i "~/.ssh/${CMS_ENV}.pem" \
-    "${SSH_USERNAME}@${CONTROLLER_PUBLIC_IP}" \
+    "${SSH_USERNAME}@${CONTROLLER_PRIVATE_IP}" \
     "createdb ${DATABASE_NAME} --host ${DB_ENDPOINT} --username ${DATABASE_USER}"
 fi
 
