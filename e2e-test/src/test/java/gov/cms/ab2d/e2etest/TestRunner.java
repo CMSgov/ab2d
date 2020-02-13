@@ -31,6 +31,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.zip.GZIPInputStream;
 
+import static gov.cms.ab2d.common.util.Constants.API_PREFIX;
 import static gov.cms.ab2d.e2etest.APIClient.PATIENT_EXPORT_PATH;
 import static java.time.temporal.ChronoUnit.SECONDS;
 import static org.hamcrest.Matchers.matchesPattern;
@@ -83,13 +84,13 @@ public class TestRunner {
         InputStream inputStream = getClass().getResourceAsStream("/" + environment.getConfigName());
         yamlMap = yaml.load(inputStream);
         String oktaUrl = yamlMap.get("okta-url");
-
-        AB2D_API_URL = yamlMap.get("ab2d-api-url");
+        String baseUrl = yamlMap.get("base-url");
+        AB2D_API_URL = APIClient.buildAB2DAPIUrl(baseUrl);
 
         String oktaClientId = System.getenv("OKTA_CLIENT_ID");
         String oktaPassword = System.getenv("OKTA_CLIENT_PASSWORD");
 
-        apiClient = new APIClient(AB2D_API_URL, oktaUrl, oktaClientId, oktaPassword);
+        apiClient = new APIClient(baseUrl, oktaUrl, oktaClientId, oktaPassword);
 
         // add in later
         //uploadOrgStructureReport();
@@ -400,5 +401,12 @@ public class TestRunner {
         HttpResponse<String> exportResponse = apiClient.exportRequest(params);
 
         Assert.assertEquals(400, exportResponse.statusCode());
+    }
+
+    @Test
+    public void testHealthEndPoint() throws IOException, InterruptedException {
+        HttpResponse<String> healthCheckResponse = apiClient.healthCheck();
+
+        Assert.assertEquals(200, healthCheckResponse.statusCode());
     }
 }

@@ -22,9 +22,9 @@ import springfox.documentation.swagger2.annotations.EnableSwagger2;
 
 import java.util.*;
 
-import static gov.cms.ab2d.api.util.Constants.API_PREFIX;
-import static gov.cms.ab2d.api.util.Constants.FHIR_PREFIX;
 import static gov.cms.ab2d.api.util.SwaggerConstants.MAIN;
+import static gov.cms.ab2d.common.util.Constants.API_PREFIX;
+import static gov.cms.ab2d.common.util.Constants.FHIR_PREFIX;
 
 @Configuration
 @EnableSwagger2
