@@ -14,13 +14,15 @@ public interface JobService {
 
     void cancelJob(String jobUuid);
 
+    Job getAuthorizedJobByJobUuid(String jobUuid);
+
     Job getJobByJobUuid(String jobUuid);
 
     Job updateJob(Job job);
 
     Resource getResourceForJob(String jobUuid, String fileName) throws MalformedURLException;
 
-    void deleteFileForJob(File file);
+    void deleteFileForJob(File file, String jobUuid);
 
     boolean checkIfCurrentUserCanAddJob();
 }

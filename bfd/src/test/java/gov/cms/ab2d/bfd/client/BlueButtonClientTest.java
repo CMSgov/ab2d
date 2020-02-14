@@ -3,16 +3,15 @@ package gov.cms.ab2d.bfd.client;
 import ca.uhn.fhir.rest.client.exceptions.FhirClientConnectionException;
 import ca.uhn.fhir.rest.server.exceptions.ResourceNotFoundException;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.eclipse.jetty.http.HttpStatus;
 import org.hl7.fhir.dstu3.model.Bundle;
 import org.hl7.fhir.dstu3.model.Patient;
 import org.hl7.fhir.dstu3.model.ResourceType;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockserver.client.MockServerClient;
 import org.mockserver.integration.ClientAndServer;
 import org.mockserver.matchers.Times;
@@ -21,7 +20,7 @@ import org.mockserver.model.HttpRequest;
 import org.mockserver.model.Parameter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -33,11 +32,14 @@ import java.util.List;
 import java.util.MissingResourceException;
 import java.util.concurrent.TimeUnit;
 
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.junit.Assert.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 
+import org.junit.jupiter.api.Test;
 
-@RunWith(SpringRunner.class)
+
+@ExtendWith(SpringExtension.class)
 @SpringBootTest(classes = SpringBootApp.class)
 /**
  * Credits: most of the code in this class has been adopted from https://github.com/CMSgov/dpc-app
@@ -59,6 +61,12 @@ public class BlueButtonClientTest {
     private static final String SAMPLE_PATIENT_PATH_PREFIX = "bb-test-data/patient/";
     private static final String[] TEST_PATIENT_IDS = {"20140000008325", "20140000009893"};
 
+    private static final String [] CONTRACT_MONTHS = {"ptdcntrct01", "ptdcntrct02", "ptdcntrct03", "ptdcntrct04",
+            "ptdcntrct05", "ptdcntrct06", "ptdcntrct07", "ptdcntrct08", "ptdcntrct09", "ptdcntrct10",
+            "ptdcntrct11", "ptdcntrct12"
+    };
+    private static final String CONTRACT = "S00001";
+
     @Autowired
     private BFDClient bbc;
 
@@ -66,11 +74,8 @@ public class BlueButtonClientTest {
 
     private static ClientAndServer mockServer;
 
-    @Rule
-    public ExpectedException thrown = ExpectedException.none();
 
-
-    @BeforeClass
+    @BeforeAll
     public static void setupBFDClient() throws IOException {
         mockServer = ClientAndServer.startClientAndServer(mockServerPort);
         createMockServerExpectation("/v1/fhir/metadata", HttpStatus.OK_200,
@@ -98,7 +103,8 @@ public class BlueButtonClientTest {
                     "/v1/fhir/ExplanationOfBenefit",
                     HttpStatus.OK_200,
                     getRawXML(SAMPLE_EOB_PATH_PREFIX + patientId + ".xml"),
-                    Collections.singletonList(Parameter.param("patient", patientId))
+                    List.of(Parameter.param("patient", patientId),
+                            Parameter.param("excludeSAMHSA", "true"))
             );
 
             createMockServerExpectation(
@@ -128,7 +134,8 @@ public class BlueButtonClientTest {
                 "/v1/fhir/ExplanationOfBenefit",
                 HttpStatus.OK_200,
                 getRawXML(SAMPLE_EOB_PATH_PREFIX + TEST_NO_RECORD_PATIENT_ID + ".xml"),
-                Collections.singletonList(Parameter.param("patient", TEST_NO_RECORD_PATIENT_ID))
+                List.of(Parameter.param("patient", TEST_NO_RECORD_PATIENT_ID),
+                        Parameter.param("excludeSAMHSA", "true"))
         );
 
         // Create mocks for pages of the results
@@ -139,25 +146,37 @@ public class BlueButtonClientTest {
                     getRawXML(SAMPLE_EOB_PATH_PREFIX + TEST_PATIENT_ID + "_" + startIndex + ".xml"),
                     List.of(Parameter.param("patient", TEST_PATIENT_ID),
                             Parameter.param("count", "10"),
-                            Parameter.param("startIndex", startIndex))
+                            Parameter.param("startIndex", startIndex),
+                            Parameter.param("excludeSAMHSA", "true"))
+            );
+        }
+
+        for(String month : CONTRACT_MONTHS) {
+            createMockServerExpectation(
+                    "/v1/fhir/Patient",
+                    HttpStatus.OK_200,
+                    getRawXML(SAMPLE_PATIENT_PATH_PREFIX + "/bundle/patientbundle.xml"),
+                    List.of(Parameter.param("_has:Coverage.extension",
+                            "https://bluebutton.cms.gov/resources/variables/" + month + "|" + CONTRACT))
             );
         }
     }
 
-    @AfterClass
+    @AfterAll
     public static void tearDown() {
         mockServer.stop();
     }
 
     @Test
     public void shouldGetTimedOutOnSlowResponse() {
-        thrown.expect(FhirClientConnectionException.class);
-        thrown.expectCause(allOf(
-                instanceOf(SocketTimeoutException.class),
-                hasProperty("message", is("Read timed out"))
-        ));
+        var exception = Assertions.assertThrows(FhirClientConnectionException.class, () -> {
+            bbc.requestEOBFromServer(TEST_SLOW_PATIENT_ID);
+        });
 
-        Bundle response = bbc.requestEOBFromServer(TEST_SLOW_PATIENT_ID);
+        var rootCause = ExceptionUtils.getRootCause(exception);
+        assertTrue(rootCause instanceof SocketTimeoutException);
+        assertThat(rootCause.getMessage(), equalTo("Read timed out"));
+
     }
 
     @Test
@@ -235,6 +254,16 @@ public class BlueButtonClientTest {
                 "BlueButton client should throw exceptions when asked to retrieve EOBs for a " +
                         "non-existent patient"
         );
+    }
+
+    @Test
+    public void shouldGetPatientBundleFromPartDEnrolleeRequest() {
+        for(int i = 1; i <= 12; i++) {
+            Bundle response = bbc.requestPartDEnrolleesFromServer(CONTRACT, i);
+
+            assertNotNull(response, "There should be a non null patient bundle");
+            assertEquals(2, response.getEntry().size(), "The bundle has 2 patients");
+        }
     }
 
     /**

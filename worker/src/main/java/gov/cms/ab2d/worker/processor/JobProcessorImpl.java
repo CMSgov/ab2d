@@ -45,6 +45,8 @@ import static gov.cms.ab2d.common.util.Constants.CONTRACT_LOG;
 import static gov.cms.ab2d.common.util.Constants.EOB;
 import static net.logstash.logback.argument.StructuredArguments.keyValue;
 
+import com.newrelic.api.agent.Trace;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -69,8 +71,15 @@ public class JobProcessorImpl implements JobProcessor {
     @Value("${file.try.lock.timeout}")
     private int tryLockTimeout;
 
+    /** Failure threshold an integer expressed as a percentage of failure tolerated in a batch **/
+    @Value("${failure.threshold}")
+    private int failureThreshold;
+
     @Value("${efs.mount}")
     private String efsMount;
+
+    @Value("${audit.files.ttl.hours}")
+    private int auditFilesTTLHours;
 
     private final FileService fileService;
     private final JobRepository jobRepository;
@@ -81,6 +90,7 @@ public class JobProcessorImpl implements JobProcessor {
 
     @Override
     @Transactional(propagation = Propagation.NEVER)
+    @Trace(metricName = "Job Processing", dispatcher = true)
     public Job process(final String jobUuid) {
 
         final Job job = jobRepository.findByJobUuid(jobUuid);
@@ -144,6 +154,8 @@ public class JobProcessorImpl implements JobProcessor {
                 throw e;
             }
         }
+
+        log.info("Created job output directory: {}", directory.toAbsolutePath());
         return directory;
     }
 
@@ -209,6 +221,7 @@ public class JobProcessorImpl implements JobProcessor {
     private ProgressTracker initializeProgressTracker(String jobUuid, List<Contract> attestedContracts) {
         return ProgressTracker.builder()
                 .jobUuid(jobUuid)
+                .failureThreshold(failureThreshold)
                 .patientsByContracts(fetchPatientsForAllContracts(attestedContracts))
                 .build();
     }
@@ -335,22 +348,11 @@ public class JobProcessorImpl implements JobProcessor {
         while (iterator.hasNext()) {
             var future = iterator.next();
             if (future.isDone()) {
+                progressTracker.incrementProcessedCount();
                 try {
                     future.get();
-                    progressTracker.incrementProcessedCount();
-                } catch (InterruptedException e) {
-                    cancelFuturesInQueue(futureHandles);
-                    log.error("interrupted exception while processing patient", e);
-
-                    final String errMsg = ExceptionUtils.getRootCauseMessage(e);
-                    throw new RuntimeException(errMsg, ExceptionUtils.getRootCause(e));
-
-                } catch (ExecutionException e) {
-                    cancelFuturesInQueue(futureHandles);
-                    log.error("exception while processing patient ", e);
-
-                    final String errMsg = ExceptionUtils.getRootCauseMessage(e);
-                    throw new RuntimeException(errMsg, ExceptionUtils.getRootCause(e));
+                } catch (InterruptedException | ExecutionException e) {
+                    analyzeException(futureHandles, progressTracker, e);
 
                 } catch (CancellationException e) {
                     // This could happen in the rare event that a job was cancelled mid-process.
@@ -363,6 +365,20 @@ public class JobProcessorImpl implements JobProcessor {
         }
 
         trackProgress(progressTracker);
+    }
+
+    private void analyzeException(List<Future<Void>> futureHandles, ProgressTracker progressTracker, Exception e) {
+        progressTracker.incrementFailureCount();
+
+        if (progressTracker.isErrorCountBelowThreshold()) {
+            final Throwable rootCause = ExceptionUtils.getRootCause(e);
+            log.error("exception while processing patient {}", rootCause.getMessage(), rootCause);
+            // log exception, but continue processing job as errorCount is below threshold
+        } else {
+            cancelFuturesInQueue(futureHandles);
+            log.error("{} out of {} records failed. Stopping job", progressTracker.getFailureCount(), progressTracker.getTotalCount());
+            throw new RuntimeException("Too many patient records in the job had failures");
+        }
     }
 
 
@@ -402,6 +418,11 @@ public class JobProcessorImpl implements JobProcessor {
                 .collect(Collectors.toList());
         jobOutputs.addAll(errorJobOutputs);
 
+        if (jobOutputs.isEmpty()) {
+            var errMsg = "The export process has produced no results";
+            throw new RuntimeException(errMsg);
+        }
+
         return jobOutputs;
     }
 
@@ -418,7 +439,7 @@ public class JobProcessorImpl implements JobProcessor {
         job.setStatus(SUCCESSFUL);
         job.setStatusMessage("100%");
         job.setProgress(100);
-        job.setExpiresAt(OffsetDateTime.now().plusDays(1));
+        job.setExpiresAt(OffsetDateTime.now().plusHours(auditFilesTTLHours));
         job.setCompletedAt(OffsetDateTime.now());
 
         jobRepository.save(job);

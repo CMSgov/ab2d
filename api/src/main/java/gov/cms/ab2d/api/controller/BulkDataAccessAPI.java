@@ -41,15 +41,13 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import static gov.cms.ab2d.api.util.Constants.GENERIC_FHIR_ERR_MSG;
-import static gov.cms.ab2d.api.util.Constants.API_PREFIX;
-import static gov.cms.ab2d.api.util.Constants.FHIR_PREFIX;
 import static gov.cms.ab2d.api.util.SwaggerConstants.*;
 import static gov.cms.ab2d.common.util.Constants.*;
 
 @Slf4j
 @Api(value = "Bulk Data Access API", description = SwaggerConstants.BULK_MAIN)
 @RestController
-@RequestMapping(path = API_PREFIX + FHIR_PREFIX, produces = "application/json")
+@RequestMapping(path = API_PREFIX + FHIR_PREFIX, produces = {"application/json", NDJSON_FIRE_CONTENT_TYPE})
 /**
  * The sole REST controller for AB2D's implementation of the FHIR Bulk Data API specification.
  */
@@ -242,7 +240,7 @@ public class BulkDataAccessAPI {
         MDC.put(JOB_LOG, jobUuid);
         log.info("Request submitted to get job status");
 
-        Job job = jobService.getJobByJobUuid(jobUuid);
+        Job job = jobService.getAuthorizedJobByJobUuid(jobUuid);
 
         OffsetDateTime now = OffsetDateTime.now();
 
@@ -298,21 +296,21 @@ public class BulkDataAccessAPI {
     }
 
     @ApiOperation(value = "Downloads a file produced by an export job.", response = String.class,
-            produces = "application/fhir+ndjson",
+            produces = NDJSON_FIRE_CONTENT_TYPE,
             authorizations = {
                     @Authorization(value = "Authorization", scopes = {
                             @AuthorizationScope(description = "Downloads Export File", scope = "Authorization") })
             })
     @ApiImplicitParams(value = {
             @ApiImplicitParam(name = "Accept", required = false, paramType = "header", value =
-                    "application/fhir+json", defaultValue = "application/fhir+json")}
+                    NDJSON_FIRE_CONTENT_TYPE, defaultValue = NDJSON_FIRE_CONTENT_TYPE)}
     )
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Returns the requested file as " +
-                    "application/fhir+ndjson.", responseHeaders = {
+                    NDJSON_FIRE_CONTENT_TYPE, responseHeaders = {
                     @ResponseHeader(name = "Content-Type", description =
                             "Content-Type header that matches the file format being delivered: " +
-                                    "application/fhir+ndjson",
+                                    NDJSON_FIRE_CONTENT_TYPE,
                             response = String.class)}, response =
                     String.class),
             @ApiResponse(code = 404, message =
@@ -335,12 +333,12 @@ public class BulkDataAccessAPI {
 
         log.info("Sending file to client");
 
+        response.setHeader(HttpHeaders.CONTENT_TYPE, NDJSON_FIRE_CONTENT_TYPE);
+
         try (OutputStream out = response.getOutputStream(); FileInputStream in = new FileInputStream(downloadResource.getFile())) {
             IOUtils.copy(in, out);
 
-            jobService.deleteFileForJob(downloadResource.getFile());
-
-            response.setHeader(HttpHeaders.CONTENT_TYPE, NDJSON_FIRE_CONTENT_TYPE);
+            jobService.deleteFileForJob(downloadResource.getFile(), jobUuid);
 
             return new ResponseEntity<>(null, null, HttpStatus.OK);
         }

@@ -1,6 +1,7 @@
 package gov.cms.ab2d.bfd.client;
 
 import ca.uhn.fhir.context.FhirContext;
+import ca.uhn.fhir.rest.api.RequestFormatParamStyleEnum;
 import ca.uhn.fhir.rest.client.api.IGenericClient;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.client.HttpClient;
@@ -20,6 +21,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.security.*;
 import java.security.cert.CertificateException;
+import java.util.concurrent.TimeUnit;
 
 @Configuration
 @PropertySource("classpath:application.bfd.properties")
@@ -56,11 +58,15 @@ public class BFDClientConfiguration {
     @Value("${bfd.http.maxConnTotal}")
     private int maxConnTotal;
 
+    @Value("${bfd.http.connTTL}")
+    private int connectionTTL;
+
     @Bean
     public IGenericClient bfdFhirRestClient(FhirContext fhirContext, HttpClient httpClient) {
         fhirContext.getRestfulClientFactory().setHttpClient(httpClient);
-
-        return fhirContext.newRestfulGenericClient(serverBaseUrl);
+        IGenericClient client = fhirContext.newRestfulGenericClient(serverBaseUrl);
+        client.setFormatParamStyle(RequestFormatParamStyleEnum.SHORT);
+        return client;
     }
 
     @Bean
@@ -131,6 +137,7 @@ public class BFDClientConfiguration {
         return HttpClients.custom()
                 .setMaxConnPerRoute(maxConnPerRoute)
                 .setMaxConnTotal(maxConnTotal)
+                .setConnectionTimeToLive(connectionTTL, TimeUnit.MILLISECONDS)
                 .setDefaultRequestConfig(requestConfig)
                 .setSSLContext(sslContext)
                 .build();
