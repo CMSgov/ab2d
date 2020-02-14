@@ -3,13 +3,13 @@ package gov.cms.ab2d.worker.adapter.bluebutton;
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.filter.FilterOutByDate;
 import gov.cms.ab2d.worker.adapter.bluebutton.GetPatientsByContractResponse.PatientDTO;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.hl7.fhir.dstu3.model.Bundle;
 import org.hl7.fhir.dstu3.model.Identifier;
 import org.hl7.fhir.dstu3.model.Patient;
 import org.hl7.fhir.dstu3.model.ResourceType;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.text.ParseException;
@@ -20,17 +20,16 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-/**
- * This is a stub implementation that we can use till the BFD API becomes available.
- * The rightmost 3 characters of the contractNumber being passed in must be numeric.
- */
+
 @Slf4j
 //@Primary  - once the BFD API starts returning data, change this to primary bean so spring injects this instead of the stub.
 @Component
+@RequiredArgsConstructor
 public class ContractAdapterImpl implements ContractAdapter {
 
-    @Autowired
-    private BFDClient bfdClient;
+    private final BFDClient bfdClient;
+
+
 
     @Override
     public GetPatientsByContractResponse getPatients(String contractNumber) {

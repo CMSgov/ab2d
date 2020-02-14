@@ -1,45 +1,58 @@
 package gov.cms.ab2d.worker.adapter.bluebutton;
 
-import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
-import lombok.extern.slf4j.Slf4j;
+import gov.cms.ab2d.bfd.client.BFDClient;
+import org.hl7.fhir.dstu3.model.Bundle;
+import org.hl7.fhir.dstu3.model.Patient;
+import org.junit.Assert;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.util.List;
 
 import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.when;
 
 
-@Slf4j
-@SpringBootTest
-@Testcontainers
+@ExtendWith(MockitoExtension.class)
 class ContractAdapterTest {
 
-    @Container
-    private static final PostgreSQLContainer postgreSQLContainer = new AB2DPostgresqlContainer();
+    @Mock
+    private BFDClient client;
 
-
-    @Autowired
     private ContractAdapter cut;
 
-//    @BeforeEach
-//    void setup() {
-//        cut = new ContractAdapterImpl();
-//    }
 
+    @BeforeEach
+    void setUp() {
+        cut = new ContractAdapterImpl(client);
+
+        Bundle fakeBundle = new Bundle();
+        Patient patient = new Patient();
+        Bundle.BundleEntryComponent component = new Bundle.BundleEntryComponent();
+        component.setResource(patient);
+        // Creates new list;
+        List<Bundle.BundleEntryComponent> entry = fakeBundle.getEntry();
+        entry.add(component);
+
+        when(client.requestPartDEnrolleesFromServer(anyString(), anyInt()))
+                .thenReturn(fakeBundle);
+    }
 
     @Test
     @DisplayName("given contractNumber, get patients from BFD API")
-    void getPatients() {
-        if (cut == null) {
-            log.error("cut is NULL");
-        }
-        var patients = cut.getPatients("S0000").getPatients();
-        assertThat(patients.size(), is(100));
+    void GivenContractNumber_ShouldReturnPatients() {
+        final String contractNumber = "S0000";
+        final GetPatientsByContractResponse response = cut.getPatients(contractNumber);
+
+        Assert.assertThat(response, notNullValue());
+        Assert.assertThat(response.getContractNumber(), is(contractNumber));
     }
 
 
