@@ -16,6 +16,8 @@ import java.text.ParseException;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -23,6 +25,7 @@ import java.util.stream.Collectors;
  * The rightmost 3 characters of the contractNumber being passed in must be numeric.
  */
 @Slf4j
+//@Primary  - once the BFD API starts returning data, change this to primary bean so spring injects this instead of the stub.
 @Component
 public class ContractAdapterImpl implements ContractAdapter {
 
@@ -38,9 +41,29 @@ public class ContractAdapterImpl implements ContractAdapter {
         var patientDTOs = new ArrayList<PatientDTO>();
 
         for (var month = 1; month <= currentMonth; month++) {
-            var patientsIds = getPatientIdsForMonth(contractNumber, month);
+            var bfdPatientsIds = getPatientIdsForMonth(contractNumber, month);
 
-            processPatientIDs(patientDTOs, month, patientsIds);
+            for (String bfdPatientId : bfdPatientsIds) {
+                var optPatient = findPatient(patientDTOs, bfdPatientId);
+
+                if (optPatient.isPresent()) {
+                    // patient id was already active on this contract in previous month(s)
+                    // So just add this month to the patient's datesUnderContract
+                    var patientDTO = optPatient.get();
+                    patientDTO.getDatesUnderContract().add(toDateRange(month));
+
+                } else {
+                    // new patient id.
+                    // Create a new PatientDTO for this patient
+                    // And then add this month to the patient's datesUnderContract
+                    var patientDTO = PatientDTO.builder()
+                            .patientId(bfdPatientId)
+                            .datesUnderContract(toDateRange(month))
+                            .build();
+
+                    patientDTOs.add(patientDTO);
+                }
+            }
         }
 
         return GetPatientsByContractResponse.builder()
@@ -50,6 +73,15 @@ public class ContractAdapterImpl implements ContractAdapter {
     }
 
 
+    /**
+     * Given a contractNumber and month,
+     * calls BFD api to get a bundle of resources from which the patientIDs are extracted.
+     * If there are multiple pages available, fetches all pages.
+     *
+     * @param contractNumber
+     * @param month
+     * @return a list of PatientIds
+     */
     private List<String> getPatientIdsForMonth(String contractNumber, Integer month) {
         Bundle bundle = getBundle(contractNumber, month);
         final List<String> patientIDs = extractPatientIDs(bundle);
@@ -62,22 +94,13 @@ public class ContractAdapterImpl implements ContractAdapter {
         return patientIDs;
     }
 
-    private List<String> extractPatientIDs(Bundle bundle) {
-        return bundle.getEntry().stream()
-                .map(Bundle.BundleEntryComponent::getResource)
-                .filter(resource -> resource.getResourceType() == ResourceType.Patient)
-                .map(resource -> (Patient) resource)
-                .map(patient -> extractPatientId(patient))
-                .collect(Collectors.toList());
-    }
 
-    private String extractPatientId(Patient patient) {
-        return patient.getIdentifier().stream()
-                .filter(c -> c.getSystem().toLowerCase().endsWith("bene_id"))
-                .map(Identifier::getValue)
-                .findFirst().orElse(null);
-    }
-
+    /**
+     * given a contractNumber & a month, calls BFD API to find all patients active in the contract during the month
+     * @param contractNumber
+     * @param month
+     * @return a FHIR bundle of resources containing active patients
+     */
     private Bundle getBundle(String contractNumber, int month) {
         try {
             final Bundle bundle = bfdClient.requestPartDEnrolleesFromServer(contractNumber, month);
@@ -90,43 +113,69 @@ public class ContractAdapterImpl implements ContractAdapter {
         }
     }
 
-
-    private void processPatientIDs(List<PatientDTO> patientDTOs, int month, List<String> patientsIds) {
-        for (String patientId : patientsIds) {
-            if (patientId == null) {
-                continue;
-            }
-
-            var optPatient = patientDTOs.stream()
-                    .filter(p -> p.getPatientId().equals(patientId))
-                    .findAny();
-
-            if (optPatient.isPresent()) {
-                var patientDTO = optPatient.get();
-                addDateRange(patientDTO, month);
-            } else {
-                var patientDTO = createPatientDTO();
-                addDateRange(patientDTO, month);
-                patientDTOs.add(patientDTO);
-            }
-        }
+    /**
+     * Given a Bundle, filters resources of type Patient and returns a list of patientIds
+     * @param bundle
+     * @return a list of patientIds
+     */
+    private List<String> extractPatientIDs(Bundle bundle) {
+        return bundle.getEntry().stream()
+                .map(Bundle.BundleEntryComponent::getResource)
+                .filter(resource -> resource.getResourceType() == ResourceType.Patient)
+                .map(resource -> (Patient) resource)
+                .map(patient -> extractPatientId(patient))
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
     }
 
-    private PatientDTO createPatientDTO() {
-        return PatientDTO
-                .builder()
-                .patientId("patientId")
-                .build();
+    /**
+     * Given a patient, extract the patientId
+     * @param patient
+     * @return patientId if present, null otherwise
+     */
+    private String extractPatientId(Patient patient) {
+        return patient.getIdentifier().stream()
+                .filter(identifier -> isBeneficiaryId(identifier))
+                .map(Identifier::getValue)
+                .findFirst().orElse(null);
     }
 
-    private void addDateRange(PatientDTO patientDTO, int month) {
+    private boolean isBeneficiaryId(Identifier identifier) {
+        return identifier.getSystem().toLowerCase().endsWith("bene_id");
+    }
+
+
+
+    /**
+     * returns the PatientDTO, if the bfdPatientId was present in previous month(s)
+     *
+     * @param allPatientDTOsInContract
+     * @param bfdPatientId
+     * @return PatientDTO is the same patientId was active on the contract in a previous month
+     */
+    private Optional<PatientDTO> findPatient(List<PatientDTO> allPatientDTOsInContract, String bfdPatientId) {
+        return allPatientDTOsInContract.stream()
+                .filter(patientDTO -> patientDTO.getPatientId().equals(bfdPatientId))
+                .findAny();
+    }
+
+    /**
+     * Given the ordinal for a month,
+     * creates a date range from the start of the month to the end of the month for the current year
+     * @param month
+     * @return a DateRange
+     */
+    private FilterOutByDate.DateRange toDateRange(int month) {
+        FilterOutByDate.DateRange dateRange = null;
         try {
-            var dateRange = FilterOutByDate.getDateRange(month, LocalDate.now().getYear());
-            patientDTO.getDatesUnderContract().add(dateRange);
+            dateRange = FilterOutByDate.getDateRange(month, LocalDate.now().getYear());
         } catch (ParseException e) {
-            e.printStackTrace();
-            // should I do something here???
+            log.error("unable to create Date Range ", e);
+            //should I do something here???
+            //ignore for now.
         }
+
+        return dateRange;
     }
 
 }
