@@ -71,7 +71,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
                 //should not happen - original exception will be thrown
                 log.error("error during exception handling to write error record");
             }
-            throw new RuntimeException(e);
+            return AsyncResult.forExecutionException(e);
         }
 
         log.debug("finished writing [{}] resources", resourceCount);

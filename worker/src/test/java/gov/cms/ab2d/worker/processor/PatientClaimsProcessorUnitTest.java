@@ -100,7 +100,7 @@ public class PatientClaimsProcessorUnitTest {
     }
 
     @Test
-    void process_whenBfdClientThrowsException() throws IOException {
+    void process_whenBfdClientThrowsException() {
         Bundle bundle1 = EobTestDataUtil.createBundle(eob.copy());
         when(mockBfdClient.requestEOBFromServer(patientId)).thenThrow(new RuntimeException("Test Exception"));
 
@@ -114,7 +114,7 @@ public class PatientClaimsProcessorUnitTest {
     }
 
     @Test
-    void process_whenPatientHasNoEOBClaimsData() throws IOException, ExecutionException, InterruptedException {
+    void process_whenPatientHasNoEOBClaimsData() throws ExecutionException, InterruptedException {
         Bundle bundle1 = new Bundle();
         when(mockBfdClient.requestEOBFromServer(patientId)).thenReturn(bundle1);
 

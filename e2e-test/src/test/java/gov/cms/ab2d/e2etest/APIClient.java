@@ -7,6 +7,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.net.URLEncoder;
 import java.net.http.HttpClient;
@@ -15,14 +16,20 @@ import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Base64;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+
+import static gov.cms.ab2d.common.util.Constants.API_PREFIX;
+import static gov.cms.ab2d.common.util.Constants.FHIR_PREFIX;
 
 @Slf4j
 public class APIClient {
 
     @Getter
     private final HttpClient httpClient;
+
+    private final String ab2dUrl;
 
     private final String ab2dApiUrl;
 
@@ -35,16 +42,17 @@ public class APIClient {
 
     private String jwtStr;
 
-    private static final String PATIENT_EXPORT_PATH = "Patient/$export";
+    public static final String PATIENT_EXPORT_PATH = "Patient/$export";
 
-    public APIClient(String ab2dApiUrl, String oktaUrl, String oktaClientId, String oktaPassword)
+    public APIClient(String ab2dUrl, String oktaUrl, String oktaClientId, String oktaPassword)
             throws IOException, InterruptedException, JSONException {
         httpClient = HttpClient.newBuilder()
                 .version(HttpClient.Version.HTTP_1_1)
                 .followRedirects(HttpClient.Redirect.NORMAL)
                 .build();
 
-        this.ab2dApiUrl = ab2dApiUrl;
+        this.ab2dUrl = ab2dUrl;
+        this.ab2dApiUrl = buildAB2DAPIUrl(ab2dUrl);
         this.oktaUrl = oktaUrl;
         authEncoded = Base64.getEncoder().encodeToString((oktaClientId + ":" + oktaPassword).getBytes());
 
@@ -70,15 +78,20 @@ public class APIClient {
         HttpResponse<String> jwtResponse = httpClient.send(jwtRequest, HttpResponse.BodyHandlers.ofString());
         String responseJwtString = jwtResponse.body();
 
-        log.debug("Received JWT response {}", responseJwtString);
+        log.debug("Received JWT response");
 
         JSONObject responseJsonObject = new JSONObject(responseJwtString);
         jwtStr = responseJsonObject.getString("access_token");
     }
 
-    public HttpResponse<String> exportRequest() throws IOException, InterruptedException {
+    public HttpResponse<String> exportRequest(Map<Object, Object> params) throws IOException, InterruptedException {
+        String paramString = buildParameterString(params);
+        if(!paramString.equals("")) {
+            paramString = "?" + paramString;
+        }
         HttpRequest exportRequest = HttpRequest.newBuilder()
-                .uri(URI.create(ab2dApiUrl + PATIENT_EXPORT_PATH))
+                .uri(URI.create(ab2dApiUrl + PATIENT_EXPORT_PATH + paramString))
+
                 .timeout(Duration.ofSeconds(defaultTimeout))
                 .header("Content-Type", "application/json")
                 .header("Authorization", "Bearer " + jwtStr)
@@ -86,6 +99,10 @@ public class APIClient {
                 .build();
 
         return httpClient.send(exportRequest, HttpResponse.BodyHandlers.ofString());
+    }
+
+    public HttpResponse<String> exportRequest() throws IOException, InterruptedException {
+        return exportRequest(Collections.emptyMap());
     }
 
     public HttpResponse<String> exportByContractRequest(String contractNumber) throws IOException, InterruptedException {
@@ -132,19 +149,29 @@ public class APIClient {
         return httpClient.send(cancelRequest, HttpResponse.BodyHandlers.ofString());
     }
 
-    public HttpResponse<String> fileDownloadRequest(String url) throws IOException, InterruptedException {
+    public HttpResponse<InputStream> fileDownloadRequest(String url) throws IOException, InterruptedException {
         HttpRequest fileDownloadRequest = HttpRequest.newBuilder()
                 .uri(URI.create(url))
                 .timeout(Duration.ofSeconds(defaultTimeout))
-                .header("Content-Type", "application/json")
                 .header("Authorization", "Bearer " + jwtStr)
+                .header("Accept-Encoding", "gzip, deflate, br")
                 .GET()
                 .build();
 
-        return httpClient.send(fileDownloadRequest, HttpResponse.BodyHandlers.ofString());
+        return httpClient.send(fileDownloadRequest, HttpResponse.BodyHandlers.ofInputStream());
     }
 
-    private HttpRequest.BodyPublisher buildFormDataFromMap(Map<Object, Object> data) {
+    public HttpResponse<String> healthCheck() throws IOException, InterruptedException {
+        HttpRequest healthCheckRequest = HttpRequest.newBuilder()
+                .uri(URI.create(ab2dUrl + "/health"))
+                .timeout(Duration.ofSeconds(defaultTimeout))
+                .GET()
+                .build();
+
+        return httpClient.send(healthCheckRequest, HttpResponse.BodyHandlers.ofString());
+    }
+
+    private String buildParameterString(Map<Object, Object> data) {
         var builder = new StringBuilder();
         for (Map.Entry<Object, Object> entry : data.entrySet()) {
             if (builder.length() > 0) {
@@ -155,7 +182,17 @@ public class APIClient {
             builder.append(URLEncoder.encode(entry.getValue().toString(), StandardCharsets.UTF_8));
         }
 
-        return HttpRequest.BodyPublishers.ofString(builder.toString());
+        return builder.toString();
+    }
+
+    private HttpRequest.BodyPublisher buildFormDataFromMap(Map<Object, Object> data) {
+        String paramString = buildParameterString(data);
+
+        return HttpRequest.BodyPublishers.ofString(paramString);
+    }
+
+    public static String buildAB2DAPIUrl(String baseUrl) {
+        return baseUrl + API_PREFIX + FHIR_PREFIX + "/";
     }
 }
 

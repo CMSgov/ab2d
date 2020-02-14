@@ -228,22 +228,6 @@ class JobProcessorUnitTest {
     }
 
     @Test
-    @DisplayName("When patientClaimsProcessor throws an exception, the job status becomes FAILED")
-    void whenPatientClaimsProcessorThrowsException_jobFailsWithErrorMessage() {
-
-        final String errMsg = "error during exception handling to write error record";
-        final RuntimeException runtimeException = new RuntimeException(errMsg);
-        Mockito.doThrow(runtimeException).when(patientClaimsProcessor).process(any(), any(), any());
-
-        var processedJob = cut.process(jobUuid);
-
-        assertThat(processedJob.getStatus(), is(JobStatus.FAILED));
-        assertThat(processedJob.getStatusMessage(), is(errMsg));
-        assertThat(processedJob.getCompletedAt(), notNullValue());
-        doVerify();
-    }
-
-    @Test
     @DisplayName("When output directory for the job already exists, delete it and create it afresh")
     void whenOutputDirectoryAlreadyExist_DeleteItAndCreateItAfresh() throws IOException {
 
@@ -425,7 +409,4 @@ class JobProcessorUnitTest {
                 .datesUnderContract(new FilterOutByDate.DateRange(new Date(0), new Date()))
                 .build();
     }
-
-
-
 }

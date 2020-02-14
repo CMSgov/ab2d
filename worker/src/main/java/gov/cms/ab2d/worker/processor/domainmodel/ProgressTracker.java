@@ -19,6 +19,9 @@ public class ProgressTracker {
     private int totalCount;
     private int processedCount;
 
+    private final int failureThreshold;
+    private int failureCount;
+
     @Setter
     private int lastDbUpdateCount;
 
@@ -33,6 +36,10 @@ public class ProgressTracker {
      */
     public void incrementProcessedCount() {
         ++processedCount;
+    }
+
+    public void incrementFailureCount() {
+        ++failureCount;
     }
 
     /**
@@ -80,5 +87,9 @@ public class ProgressTracker {
         final int percentCompleted = (processedCount * 100) / getTotalCount();
         lastDbUpdateCount = processedCount;
         return percentCompleted;
+    }
+
+    public boolean isErrorCountBelowThreshold() {
+        return (failureCount * 100) / getTotalCount() < failureThreshold;
     }
 }

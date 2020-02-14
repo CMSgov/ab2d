@@ -24,3 +24,5 @@ databaseChangeLog:
       file: db/changelog/v001/add_concurrent_job_column.sql
   - include:
       file: db/changelog/v001/ab2d-934-allow-for-zip-downloads.sql
+  - include:
+      file: db/changelog/v001/add_downloaded_to_job_output.sql

@@ -6,6 +6,7 @@ import lombok.Setter;
 
 import javax.annotation.Nullable;
 import javax.persistence.*;
+import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
@@ -26,9 +27,11 @@ public class Job {
     private Long id;
 
     @Column(unique = true)
+    @NotNull
     private String jobUuid;
 
     @ManyToOne
+    @NotNull
     @JoinColumn(name = "user_account_id")
     private User user;
 
@@ -41,6 +44,7 @@ public class Job {
     private List<JobOutput> jobOutputs = new ArrayList<>();
 
     @Column(columnDefinition = "TIMESTAMP WITH TIME ZONE")
+    @NotNull
     private OffsetDateTime createdAt;
 
     @Column(columnDefinition = "TIMESTAMP WITH TIME ZONE")
@@ -49,6 +53,7 @@ public class Job {
     private String requestUrl;
 
     @Enumerated(STRING)
+    @NotNull
     private JobStatus status;
     private String statusMessage;
     private String outputFormat;

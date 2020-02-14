@@ -42,6 +42,7 @@ import static gov.cms.ab2d.common.util.Constants.NDJSON_FIRE_CONTENT_TYPE;
 import static java.lang.Boolean.TRUE;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -85,6 +86,9 @@ class JobProcessorIntegrationTest {
 
     @Container
     private static final PostgreSQLContainer postgreSQLContainer = new AB2DPostgresqlContainer();
+    private Bundle bundle1;
+    private Bundle[] bundles;
+    private RuntimeException fail;
 
     @BeforeEach
     void setUp() {
@@ -96,9 +100,16 @@ class JobProcessorIntegrationTest {
         user = createUser(sponsor);
         job = createJob(user);
 
+        job.setStatus(JobStatus.IN_PROGRESS);
+        jobRepository.save(job);
+        createContract(sponsor);
+
         ExplanationOfBenefit eob = EobTestDataUtil.createEOB();
-        Bundle bundle1 = EobTestDataUtil.createBundle(eob.copy());
+        bundle1 = EobTestDataUtil.createBundle(eob.copy());
+        bundles = getBundles();
         when(mockBfdClient.requestEOBFromServer(anyString())).thenReturn(bundle1);
+
+        fail = new RuntimeException("TEST EXCEPTION");
 
         FhirContext fhirContext = FhirContext.forDstu3();
         PatientClaimsProcessor patientClaimsProcessor = new PatientClaimsProcessorImpl(mockBfdClient, fhirContext);
@@ -107,15 +118,12 @@ class JobProcessorIntegrationTest {
                 optOutRepository);
         ReflectionTestUtils.setField(cut, "cancellationCheckFrequency", 10);
         ReflectionTestUtils.setField(cut, "efsMount", tmpEfsMountDir.toString());
+        ReflectionTestUtils.setField(cut, "failureThreshold", 10);
     }
 
     @Test
     @DisplayName("When a job is in submitted status, it can be processed")
     void processJob() {
-        job.setStatus(JobStatus.IN_PROGRESS);
-        jobRepository.save(job);
-        createContract(sponsor);
-
         var processedJob = cut.process("S0000");
 
         assertThat(processedJob.getStatus(), is(JobStatus.SUCCESSFUL));
@@ -134,10 +142,33 @@ class JobProcessorIntegrationTest {
         user.setSponsor(sponsor.getParent());
         userRepository.save(user);
 
-        createContract(sponsor);
+        var processedJob = cut.process("S0000");
 
-        job.setStatus(JobStatus.IN_PROGRESS);
-        jobRepository.save(job);
+        assertThat(processedJob.getStatus(), is(JobStatus.SUCCESSFUL));
+        assertThat(processedJob.getStatusMessage(), is("100%"));
+        assertThat(processedJob.getExpiresAt(), notNullValue());
+        assertThat(processedJob.getCompletedAt(), notNullValue());
+
+        final List<JobOutput> jobOutputs = job.getJobOutputs();
+        assertFalse(jobOutputs.isEmpty());
+    }
+
+    @Test
+    @DisplayName("When the error count is below threshold, job does not fail")
+    void when_errorCount_is_below_threshold_do_not_fail_job() {
+        when(mockBfdClient.requestEOBFromServer(anyString()))
+                .thenReturn(bundle1, bundles)
+                .thenReturn(bundle1, bundles)
+                .thenReturn(bundle1, bundles)
+                .thenReturn(bundle1, bundles)
+                .thenReturn(bundle1, bundles)
+                .thenReturn(bundle1, bundles)
+                .thenReturn(bundle1, bundles)
+                .thenReturn(bundle1, bundles)
+                .thenReturn(bundle1, bundles)
+                .thenReturn(bundle1, bundle1, bundle1, bundle1, bundle1)
+                .thenThrow(fail, fail, fail, fail, fail)
+                ;
 
         var processedJob = cut.process("S0000");
 
@@ -148,6 +179,28 @@ class JobProcessorIntegrationTest {
 
         final List<JobOutput> jobOutputs = job.getJobOutputs();
         assertFalse(jobOutputs.isEmpty());
+    }
+
+    @Test
+    @DisplayName("When the error count is greater than or equal to threshold, job should fail")
+    void when_errorCount_is_not_below_threshold_fail_job() {
+        when(mockBfdClient.requestEOBFromServer(anyString()))
+                .thenReturn(bundle1, bundles)
+                .thenReturn(bundle1, bundles)
+                .thenThrow(fail, fail, fail, fail, fail, fail, fail, fail, fail, fail)
+                .thenReturn(bundle1, bundles)
+        ;
+
+        var processedJob = cut.process("S0000");
+
+        assertThat(processedJob.getStatus(), is(JobStatus.FAILED));
+        assertThat(processedJob.getStatusMessage(), is("Too many patient records in the job had failures"));
+        assertThat(processedJob.getExpiresAt(), nullValue());
+        assertThat(processedJob.getCompletedAt(), notNullValue());
+    }
+
+    private Bundle[] getBundles() {
+        return new Bundle[]{bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1};
     }
 
     private Sponsor createSponsor() {
