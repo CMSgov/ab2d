@@ -22,3 +22,5 @@ databaseChangeLog:
       file: db/changelog/v001/update_attestation_date.sql
   - include:
       file: db/changelog/v001/add_concurrent_job_column.sql
+  - include:
+      file: db/changelog/v001/add_downloaded_to_job_output.sql

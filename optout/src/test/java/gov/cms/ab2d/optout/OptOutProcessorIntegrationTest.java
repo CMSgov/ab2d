@@ -32,7 +32,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @Slf4j
-@SpringBootTest
+@SpringBootTest(classes = SpringBootApp.class)
 @Testcontainers
 class OptOutProcessorIntegrationTest {
 
@@ -41,9 +41,6 @@ class OptOutProcessorIntegrationTest {
 
     @Autowired
     private OptOutRepository optOutRepo;
-
-    @Autowired
-    private OptOutConverterService optOutConverterSvc;
 
     @Autowired
     private OptOutProcessor cut;

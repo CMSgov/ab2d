@@ -1,5 +1,6 @@
 package gov.cms.ab2d.common.model;
 
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -14,10 +15,12 @@ import javax.validation.constraints.NotNull;
 @Entity
 @Getter
 @Setter
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class JobOutput {
 
     @Id
     @GeneratedValue
+    @EqualsAndHashCode.Include
     private Long id;
 
     @ManyToOne
@@ -33,4 +36,7 @@ public class JobOutput {
 
     @NotNull
     private Boolean error;
+
+    @NotNull
+    private Boolean downloaded = false;
 }
