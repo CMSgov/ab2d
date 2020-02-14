@@ -5,6 +5,7 @@ import ca.uhn.fhir.rest.gclient.ICriterion;
 import ca.uhn.fhir.rest.gclient.TokenClientParam;
 import ca.uhn.fhir.rest.server.exceptions.ResourceNotFoundException;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.bouncycastle.util.encoders.Hex;
 import org.hl7.fhir.dstu3.model.Bundle;
 import org.hl7.fhir.dstu3.model.ExplanationOfBenefit;
@@ -32,8 +33,13 @@ import java.security.spec.KeySpec;
 @Slf4j
 public class BFDClientImpl implements BFDClient {
 
+    public static final String PTDCNTRCT_URL_PREFIX = "https://bluebutton.cms.gov/resources/variables/ptdcntrct";
+
     @Value("${bfd.eob.pagesize}")
     private int pageSize;
+
+    @Value("${bfd.contract.to.bene.pagesize}")
+    private int contractToBenePageSize;
 
     private IGenericClient client;
 
@@ -147,5 +153,36 @@ public class BFDClientImpl implements BFDClient {
                 .next(bundle)
                 .encodedJson()
                 .execute();
+    }
+
+
+    @Override
+    @Retryable(
+            maxAttemptsExpression = "${bfd.retry.maxAttempts:3}",
+            backoff = @Backoff(delayExpression = "${bfd.retry.backoffDelay:250}", multiplier = 2),
+            exclude = { ResourceNotFoundException.class }
+    )
+    public Bundle requestPartDEnrolleesFromServer(String contractNum, int month) {
+        var monthParameter = createMonthParameter(month);
+        var theCriterion = new TokenClientParam("_has:Coverage.extension")
+                .exactly()
+                .systemAndIdentifier(monthParameter, contractNum);
+
+        return client.search()
+                .forResource(Patient.class)
+                .where(theCriterion)
+                .count(contractToBenePageSize)
+                .withAdditionalHeader("IncludeIdentifiers", "true")
+                .returnBundle(Bundle.class)
+                .encodedJson()
+                .execute();
+    }
+
+    private String createMonthParameter(int month) {
+        final String zeroPaddedMonth = StringUtils.leftPad("" + month, 2, '0');
+        return new StringBuilder()
+                .append(PTDCNTRCT_URL_PREFIX)
+                .append(zeroPaddedMonth)
+                .toString();
     }
 }
