@@ -5,25 +5,22 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
 
-import static gov.cms.ab2d.worker.processor.JobDataWriterImpl.OUTPUT_FILE_SUFFIX;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 class JobDataWriterTest {
 
-    @TempDir Path tempDir;
+    @TempDir
+    Path tempDir;
 
-    private JobDataWriter cut;
-    byte[] line;
-
+    private StreamHelper cut;
+    private String poem = "Twinkle Twinkle Little Star";
+    private byte[] line = poem.getBytes();
 
     @BeforeEach
     void setup() throws IOException {
@@ -32,42 +29,41 @@ class JobDataWriterTest {
         contract.setContractName("CONTRACT_NAME");
         var OutputDirPath = Paths.get(tempDir.toString(), contract.getContractName());
         var outputDir = Files.createDirectory(OutputDirPath);
-        cut = new JobDataWriterImpl(outputDir, contract, 30, 50, OUTPUT_FILE_SUFFIX);
-
-        var poem = "Twinkle Twinkle Little Star";
-        line = poem.getBytes();
+        cut = new TextStreamHelperImpl(outputDir, contract.getContractNumber(), 30, 50);
     }
 
     @Test
     void addOneDataEntry_createsOneDataFile() {
-
-        cut.addDataEntry(line);
+        cut.addData(line);
+        cut.close();
 
         var dataFiles = cut.getDataFiles();
         assertThat(dataFiles.size(), is(1));
 
         var size = dataFiles.iterator().next().toFile().length();
-        assertThat(size, is(Long.valueOf(line.length)));
+        assertThat(size, is((long) line.length));
     }
 
     @Test
     void addTwoEntriesThatCrossesMaxFileSize_shouldCreateMultipleFiles() {
-        cut.addDataEntry(line);
-        cut.addDataEntry(line);
+        cut.addData(line);
+        cut.addData(line);
+        cut.close();
 
         var dataFiles = cut.getDataFiles();
         assertThat(dataFiles.size(), is(2));
         dataFiles.forEach(file -> {
             var size = file.toFile().length();
-            assertThat(size, is(Long.valueOf(line.length)));
+            assertThat(size, is((long) line.length));
         });
     }
 
     @Test
     void addThreeEntriesThatCrossesMaxFileSize_shouldCreateMultipleFiles() {
-        cut.addDataEntry(line);
-        cut.addDataEntry(line);
-        cut.addDataEntry(line);
+        cut.addData(line);
+        cut.addData(line);
+        cut.addData(line);
+        cut.close();
 
         var dataFiles = cut.getDataFiles();
         assertThat(dataFiles.size(), is(3));
@@ -79,31 +75,19 @@ class JobDataWriterTest {
 
     @Test
     void addOneErrorEntry_createsOneErrorFile() {
-        cut.addErrorEntry(line);
+        cut.addError(poem);
+        cut.close();
         var errorFiles = cut.getErrorFiles();
         assertThat(errorFiles.size(), is(1));
     }
 
     @Test
     void addMultipleErrorEntries_createsOneErrorFile() {
-        cut.addErrorEntry(line);
-        cut.addErrorEntry(line);
-        cut.addErrorEntry(line);
+        cut.addData(line);
+        cut.addData(line);
+        cut.addError(poem);
         var errorFiles = cut.getErrorFiles();
+        cut.close();
         assertThat(errorFiles.size(), is(1));
     }
-
-    @Test
-    void writeToZipFile() throws IOException {
-        String zipFile = "out.zip";
-        byte[] line = "Hello World".getBytes("UTF-8");
-
-        try (FileOutputStream fos = new FileOutputStream(zipFile)) {
-            try (ZipOutputStream zos = new ZipOutputStream(fos)) {
-                zos.putNextEntry(new ZipEntry("in.txt"));
-                zos.write(line);
-            }
-        }
-    }
-
 }

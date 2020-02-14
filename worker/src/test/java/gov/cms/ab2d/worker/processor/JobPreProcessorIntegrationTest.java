@@ -100,7 +100,7 @@ class JobPreProcessorIntegrationTest {
         user.setUsername("Harry_Potter");
         user.setFirstName("Harry");
         user.setLastName("Potter");
-        user.setEmail("harry_potter@hogwarts.com");
+        user.setEmail("harry_potter@hogwarts.edu");
         user.setEnabled(TRUE);
         user.setSponsor(sponsor);
         return userRepository.save(user);

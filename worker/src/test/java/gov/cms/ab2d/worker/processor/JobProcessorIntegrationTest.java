@@ -109,7 +109,6 @@ class JobProcessorIntegrationTest {
         ReflectionTestUtils.setField(cut, "efsMount", tmpEfsMountDir.toString());
     }
 
-
     @Test
     @DisplayName("When a job is in submitted status, it can be processed")
     void processJob() {
@@ -198,7 +197,4 @@ class JobProcessorIntegrationTest {
         job.setCreatedAt(OffsetDateTime.now());
         return jobRepository.save(job);
     }
-
-
-
 }

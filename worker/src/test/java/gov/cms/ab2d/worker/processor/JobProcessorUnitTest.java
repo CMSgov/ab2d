@@ -215,7 +215,7 @@ class JobProcessorUnitTest {
                 .thenReturn(Arrays.asList(optOuts.get(1)))
                 .thenReturn(Arrays.asList(optOuts.get(2)));
 
-        // Test data has 3 patientIds  each of whom has opted out.
+        // Test data has 3 patientIds each of whom has opted out.
         // So the patientsClaimsProcessor should never be called.
         var processedJob = cut.process(jobUuid);
 
@@ -226,7 +226,6 @@ class JobProcessorUnitTest {
         verify(contractAdapter).getPatients(anyString());
         verify(patientClaimsProcessor, never()).process(any(), any(), any());
     }
-
 
     @Test
     @DisplayName("When patientClaimsProcessor throws an exception, the job status becomes FAILED")
@@ -384,7 +383,7 @@ class JobProcessorUnitTest {
         user.setUsername("Harry_Potter");
         user.setFirstName("Harry");
         user.setLastName("Potter");
-        user.setEmail("harry_potter@hogwarts.com");
+        user.setEmail("harry_potter@hogwarts.edu");
         user.setEnabled(TRUE);
         user.setSponsor(sponsor);
         return user;
