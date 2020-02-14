@@ -23,7 +23,7 @@ public class TextStreamHelperImpl extends StreamHelperImpl {
             throws FileNotFoundException {
         super(path, contractNumber, totalBytesAllowed, tryLockTimeout);
 
-        super.currentStream = createStream();
+        setCurrentStream(createStream());
     }
 
     /**
@@ -33,12 +33,12 @@ public class TextStreamHelperImpl extends StreamHelperImpl {
      * @throws FileNotFoundException if you can't create the stream
      */
     private OutputStream createStream() throws FileNotFoundException {
-        String fileName = super.path.toString() + "/" + super.createFileName();
+        String fileName = getPath().toString() + "/" + createFileName();
         File f = new File(fileName);
         f.getParentFile().mkdirs();
         OutputStream stream = new BufferedOutputStream(new FileOutputStream(fileName));
         Path p = Path.of(fileName);
-        filesCreated.add(p);
+        getFilesCreated().add(p);
         return stream;
     }
 
@@ -49,26 +49,26 @@ public class TextStreamHelperImpl extends StreamHelperImpl {
      */
     @Override
     public void addData(byte[] data) {
-        tryLock(super.dataFileLock);
+        tryLock(getDataFileLock());
         if (data == null || data.length == 0) {
             return;
         }
         try {
-            if (super.currentStream == null) {
-                super.currentStream = createStream();
-                super.totalBytesWritten = 0;
+            if (getCurrentStream() == null) {
+                setCurrentStream(createStream());
+                setTotalBytesWritten(0);
             }
-            if (super.totalBytesWritten + data.length > super.totalBytesAllowed && totalBytesWritten > 0) {
-                super.currentStream.close();
-                super.currentStream = createStream();
-                super.totalBytesWritten = 0;
+            if (getTotalBytesWritten() + data.length > getTotalBytesAllowed() && getTotalBytesWritten() > 0) {
+                getCurrentStream().close();
+                setCurrentStream(createStream());
+                setTotalBytesWritten(0);
             }
-            super.currentStream.write(data);
-            super.totalBytesWritten += data.length;
+            getCurrentStream().write(data);
+            setTotalBytesWritten(getTotalBytesWritten() + data.length);
         } catch (Exception ex) {
-            log.error("Unable to create file output stream for contract " + super.contractNumber + "[" + (super.counter - 1) + "]", ex);
+            log.error("Unable to create file output stream for contract " + getContractNumber() + "[" + (getCounter() - 1) + "]", ex);
         } finally {
-            super.dataFileLock.unlock();
+            getDataFileLock().unlock();
         }
     }
 
@@ -77,17 +77,17 @@ public class TextStreamHelperImpl extends StreamHelperImpl {
      */
     @Override
     public void close() {
-        if (super.currentStream == null) {
+        if (getCurrentStream() == null) {
             return;
         }
         try {
-            super.currentStream.close();
-            int numFiles = filesCreated.size();
-            if (filesCreated.get(numFiles - 1).toFile().length() == 0) {
-                filesCreated.remove(numFiles - 1);
+            getCurrentStream().close();
+            int numFiles = getFilesCreated().size();
+            if (getFilesCreated().get(numFiles - 1).toFile().length() == 0) {
+                getFilesCreated().remove(numFiles - 1);
             }
         } catch (Exception ex) {
-            log.error("Unable to close output stream for contract " + contractNumber + "[" + counter + "]", ex);
+            log.error("Unable to close output stream for contract " + getContractNumber() + "[" + getCounter() + "]", ex);
         }
     }
 }

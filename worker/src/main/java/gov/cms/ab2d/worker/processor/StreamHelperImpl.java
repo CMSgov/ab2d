@@ -1,5 +1,7 @@
 package gov.cms.ab2d.worker.processor;
 
+import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 
@@ -36,36 +38,46 @@ public abstract class StreamHelperImpl implements StreamHelper, AutoCloseable {
     }
 
     // Current file counter
-    int counter = 1;
+    @Getter
+    private int counter = 1;
 
     // Passed contract number
-    String contractNumber;
+    @Getter
+    private final String contractNumber;
 
     // Directory where to put the files
-    protected Path path;
+    @Getter
+    private final Path path;
 
     // Total number of bytes written to the file
-    long totalBytesWritten = 0;
+    @Getter @Setter
+    private long totalBytesWritten = 0;
 
     // Total bytes allowed in the file
-    long totalBytesAllowed;
+    @Getter
+    private final long totalBytesAllowed;
 
     // The current output stream
-    OutputStream currentStream;
+    @Getter @Setter
+    private OutputStream currentStream;
 
     // The time before a lock times out and unlocks
     private final int tryLockTimeout;
 
     // Data file lock
-    final Lock dataFileLock  = new ReentrantLock();
+    @Getter
+    private final Lock dataFileLock  = new ReentrantLock();
 
     // Error file lock
+    @Getter
     private final Lock errorFileLock = new ReentrantLock();
 
     // List of data files created
-    List<Path> filesCreated;
+    @Getter
+    private List<Path> filesCreated;
 
     // List of error files created
+    @Getter
     private List<Path> errorFilesCreated;
 
     // Location of error file

@@ -15,8 +15,6 @@ import java.util.zip.ZipOutputStream;
 @Slf4j
 public class ZipStreamHelperImpl extends StreamHelperImpl {
 
-    private Path currentFile;
-
     // Current index of zip file
     private int currentZipIteration = 1;
 
@@ -58,14 +56,14 @@ public class ZipStreamHelperImpl extends StreamHelperImpl {
      * @throws FileNotFoundException if there was an error writing to the file system
      */
     private ZipOutputStream createStream() throws FileNotFoundException {
-        String zipFileName = super.path.toString() + "/" + createZipFileName();
+        String zipFileName = getPath().toString() + "/" + createZipFileName();
         File f = new File(zipFileName);
         f.getParentFile().mkdirs();
-        currentFile = Path.of(zipFileName);
+        Path currentFile = Path.of(zipFileName);
         FileOutputStream fos = new FileOutputStream(zipFileName);
         BufferedOutputStream bos = new BufferedOutputStream(fos);
-        totalBytesWritten = 0;
-        filesCreated.add(currentFile);
+        setTotalBytesWritten(0);
+        getFilesCreated().add(currentFile);
         return new ZipOutputStream(bos);
     }
 
@@ -78,7 +76,7 @@ public class ZipStreamHelperImpl extends StreamHelperImpl {
         var partName = Integer.toString(currentZipIteration);
         var paddedPartitionNo = StringUtils.leftPad(partName, 4, '0');
         currentZipIteration++;
-        return contractNumber +
+        return getContractNumber() +
                 "_" +
                 paddedPartitionNo +
                 FileOutputType.ZIP.getSuffix();
@@ -101,7 +99,7 @@ public class ZipStreamHelperImpl extends StreamHelperImpl {
      */
     @Override
     public void addData(byte[] data) {
-        tryLock(super.dataFileLock);
+        tryLock(getDataFileLock());
         if (data == null || data.length == 0) {
             return;
         }
@@ -118,9 +116,9 @@ public class ZipStreamHelperImpl extends StreamHelperImpl {
             }
             currentPartByteStream.write(data);
         } catch (Exception ex) {
-            log.error("Unable to create file output stream for contract " + contractNumber + "[" + (currentZipIteration - 1) + "]", ex);
+            log.error("Unable to create file output stream for contract " + getContractNumber() + "[" + (currentZipIteration - 1) + "]", ex);
         } finally {
-            super.dataFileLock.unlock();
+            getDataFileLock().unlock();
         }
     }
 
@@ -130,8 +128,8 @@ public class ZipStreamHelperImpl extends StreamHelperImpl {
      * @throws FileNotFoundException - if there was an error writing to the file system
      */
     private void checkInitStreams() throws FileNotFoundException {
-        if (super.currentStream == null) {
-            currentStream = createStream();
+        if (getCurrentStream() == null) {
+            setCurrentStream(createStream());
         }
         if (currentPartByteStream == null) {
             currentPartByteStream = new ByteArrayOutputStream();
@@ -150,15 +148,15 @@ public class ZipStreamHelperImpl extends StreamHelperImpl {
      */
     private void addPartToFile() throws IOException {
         ZipEntry entry = createFilePart();
-        ((ZipOutputStream) currentStream).putNextEntry(entry);
-        currentStream.write(currentPartByteStream.toByteArray());
-        ((ZipOutputStream) currentStream).closeEntry();
-        totalBytesWritten += entry.getCompressedSize();
+        ((ZipOutputStream) getCurrentStream()).putNextEntry(entry);
+        getCurrentStream().write(currentPartByteStream.toByteArray());
+        ((ZipOutputStream) getCurrentStream()).closeEntry();
+        setTotalBytesWritten(getTotalBytesWritten() + entry.getCompressedSize());
         double currentCompression = (double) entry.getCompressedSize() / currentPartByteStream.size();
-        if (super.counter == 2) {
+        if (getCounter() == 2) {
             averageCompression = currentCompression;
         } else {
-            averageCompression = ((averageCompression * (super.counter - 1)) + currentCompression) / super.counter;
+            averageCompression = ((averageCompression * (getCounter() - 1)) + currentCompression) / getCounter();
         }
         currentPartByteStream = new ByteArrayOutputStream();
     }
@@ -169,8 +167,8 @@ public class ZipStreamHelperImpl extends StreamHelperImpl {
      * @throws IOException - if there was an error closing/creating the file
      */
     private void resetZipFile() throws IOException {
-        currentStream.close();
-        currentStream = createStream();
+        getCurrentStream().close();
+        setCurrentStream(createStream());
     }
 
     /**
@@ -182,7 +180,7 @@ public class ZipStreamHelperImpl extends StreamHelperImpl {
      */
     private boolean fileFull(ByteArrayOutputStream ba) {
         double probableSize = ba.size() * averageCompression;
-        return (totalBytesWritten + probableSize > totalBytesAllowed);
+        return (getTotalBytesWritten() + probableSize > getTotalBytesAllowed());
     }
 
     /**
@@ -190,7 +188,7 @@ public class ZipStreamHelperImpl extends StreamHelperImpl {
      */
     @Override
     public void close() {
-        if (currentStream == null) {
+        if (getCurrentStream() == null) {
             return;
         }
         try {
@@ -200,13 +198,13 @@ public class ZipStreamHelperImpl extends StreamHelperImpl {
                 }
                 addPartToFile();
             }
-            currentStream.close();
-            int numFiles = filesCreated.size();
-            if (filesCreated.get(numFiles - 1).toFile().length() == 0) {
-                filesCreated.remove(numFiles - 1);
+            getCurrentStream().close();
+            int numFiles = getFilesCreated().size();
+            if (getFilesCreated().get(numFiles - 1).toFile().length() == 0) {
+                getFilesCreated().remove(numFiles - 1);
             }
         } catch (Exception ex) {
-            log.error("Unable to close output stream for contract " + contractNumber + "[" + currentZipIteration + "]", ex);
+            log.error("Unable to close output stream for contract " + getContractNumber() + "[" + currentZipIteration + "]", ex);
         }
     }
 }
