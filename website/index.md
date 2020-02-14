@@ -38,6 +38,9 @@ they may or may not use the Medicare claims data, including the limitations asso
 of the data. Visit [HPMS](https://hpms.cms.gov)
 
 ## Frequently Asked Questions
+As CMS continues to gather feedback from PDP sponsors on sharing Part A & B claims data, we anticipate adding more FAQs 
+to this page. If you have a question that is not listed below, please ask in the [AB2D Google Group](https://groups.google.com/forum/#!forum/ab2d-api).
+
 1. **Why is CMS making claims data available to PDP sponsors?**<br><br>
 In February 2018, the [Bipartisan Budget Act of 2018 (BBA)](https://www.congress.gov/bill/115th-congress/house-bill/1892/text)
 was signed into law and included a provision 
@@ -51,9 +54,9 @@ In response to the [Bipartisan Budget Act of 2018 (BBA)](https://www.congress.go
 CMS published a 
 [Final Rule](https://www.federalregister.gov/d/2019-06822/page-15745)
  to implement section 50354 of the BBA, which outlines the manner in which CMS proposes to implement this requirement.<br><br>
-3. **Who is eligible to request Medicare Claims data?**<br><br>
+3. **Who is eligible to request Medicare Claims data under this process?**<br><br>
 Standalone Medicare Part D plan (PDP) sponsors.<br><br>
-4. **When can PDP sponsors request data?**<br><br>
+4. **When can PDP sponsors begin requesting data?**<br><br>
 The Health Plan Management System (HPMS) Claims Data Attestation module can be used by PDP Sponsors to submit a 
 request for Medicare claims data (by contract) beginning January 1, 2020. The HPMS attestation process ensures PDP 
 sponsors are aware of how Medicare claims data may and may not be used, including limitations associated with reuse 
@@ -61,7 +64,7 @@ and redisclosure of the data. To submit a request, visit [HPMS](hpms.cms.gov).<b
 5. **What is Claims Data Attestation?**<br><br>
 Attestation performed through the 
 [Health Plan Management System (HPMS)](https://www.cms.gov/Research-Statistics-Data-and-Systems/Computer-Data-and-Systems/HPMS/Overview) 
-Attestation performed through the Health Plan Management System (HPMS) Claims Data Attestation module affirms adherence 
+Claims Data Attestation module affirms adherence 
 to the permitted uses and limitations for Medicare claims data that is listed in § 423.153 of the 
 [Final Rule](https://www.federalregister.gov/d/2019-06822/page-15745).<br><br>
 6. **What is the permitted use of the data?**<br><br>
@@ -109,9 +112,9 @@ sponsors with data that is the most current as practicable. While we understand 
 PDP sponsors, we must adhere to the statutory language. As this program matures, PDP sponsors will amass historical data.
 <br><br>
 12. **What is the lag time for getting claims data?**<br><br>
-CCMS is working on providing data as current as practicable. There are a number of factors impacting the lag time, 
+CMS is working on providing data as current as practicable. There are a number of factors impacting the lag time, 
 we will monitor the lag time as we build out the API.<br><br>
-13. **How can we get more data elements beside what's listed in the Final Rule?**<br><br>
+13. **How can we get more data elements in addition to what’s listed in the Final Rule?**<br><br>
 CMS will continue to evaluate the data elements provided to PDP sponsors to determine if data elements should be added 
 or removed based on the information needed to carry out the permitted uses of the data. Any proposed changes would be 
 established through rulemaking.<br><br>
