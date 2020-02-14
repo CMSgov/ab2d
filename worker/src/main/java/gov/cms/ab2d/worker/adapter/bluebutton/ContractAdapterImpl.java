@@ -10,7 +10,6 @@ import org.hl7.fhir.dstu3.model.Identifier;
 import org.hl7.fhir.dstu3.model.Patient;
 import org.hl7.fhir.dstu3.model.ResourceType;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.text.ParseException;
@@ -27,45 +26,43 @@ import java.util.stream.Collectors;
 @Component
 public class ContractAdapterImpl implements ContractAdapter {
 
-    @Value("${bfd.serverBaseUrl}")
-    private String serverBaseUrl;
-
     @Autowired
     private BFDClient bfdClient;
 
-    private static final String BENE_ID_FILE = "/test-stub-data/synthetic-bene-ids.csv";
-    private static final int MAX_ROWS = 30_000;
-
     @Override
     public GetPatientsByContractResponse getPatients(String contractNumber) {
-
-        final var patientsPerContract = fetchPatientRecords(contractNumber);
-
-        return GetPatientsByContractResponse.builder()
-                .contractNumber(contractNumber)
-                .patients(patientsPerContract)
-                .build();
-    }
-
-    private List<PatientDTO> fetchPatientRecords(final String contractNumber) {
 
         var currentMonth = LocalDate.now().getMonthValue();
         log.info("Current Month : [{}]", currentMonth);
 
         var patientDTOs = new ArrayList<PatientDTO>();
 
-        for (var month = 1; month <= currentMonth ; month++) {
+        for (var month = 1; month <= currentMonth; month++) {
             var patientsIds = getPatientIdsForMonth(contractNumber, month);
 
             processPatientIDs(patientDTOs, month, patientsIds);
         }
 
-        return patientDTOs;
+        return GetPatientsByContractResponse.builder()
+                .contractNumber(contractNumber)
+                .patients(patientDTOs)
+                .build();
     }
 
 
     private List<String> getPatientIdsForMonth(String contractNumber, Integer month) {
-        final Bundle bundle = getBundle(contractNumber, month);
+        Bundle bundle = getBundle(contractNumber, month);
+        final List<String> patientIDs = extractPatientIDs(bundle);
+
+        while (bundle.getLink(Bundle.LINK_NEXT) != null) {
+            bundle = bfdClient.requestNextBundleFromServer(bundle);
+            patientIDs.addAll(extractPatientIDs(bundle));
+        }
+
+        return patientIDs;
+    }
+
+    private List<String> extractPatientIDs(Bundle bundle) {
         return bundle.getEntry().stream()
                 .map(Bundle.BundleEntryComponent::getResource)
                 .filter(resource -> resource.getResourceType() == ResourceType.Patient)
@@ -94,7 +91,7 @@ public class ContractAdapterImpl implements ContractAdapter {
     }
 
 
-    private void processPatientIDs(ArrayList<PatientDTO> patientDTOs, int month, List<String> patientsIds) {
+    private void processPatientIDs(List<PatientDTO> patientDTOs, int month, List<String> patientsIds) {
         for (String patientId : patientsIds) {
             if (patientId == null) {
                 continue;
@@ -132,47 +129,4 @@ public class ContractAdapterImpl implements ContractAdapter {
         }
     }
 
-
-
-
-
-
-//    public static void main(String[] args) {
-//        ContractAdapterImpl cut = new ContractAdapterImpl();
-//        final List<Bundle> bundle = cut.fetchPatientRecords("S00000");
-//    }
-
-
-//    private GetPatientsByContractResponse toResponse(String contractNumber, List<String> rows) {
-//        return GetPatientsByContractResponse.builder()
-//                .contractNumber(contractNumber)
-//                .patients(toPatients(rows))
-//                .build();
-//    }
-//
-//    private List<PatientDTO> toPatients(List<String> rows) {
-//        return rows.stream()
-//                .map(row -> createPatientDTO(row))
-//                .collect(Collectors.toList());
-//    }
-//
-//
-//    private PatientDTO createPatientDTO(String row) {
-//        return PatientDTO.builder()
-//                .patientId(row)
-//                .datesUnderContract(toMonthsUnderContract())
-//                .build();
-//    }
-//
-//    /**
-//     * returns all 12 months in the list.
-//     * @return
-//     */
-//    private List<FilterOutByDate.DateRange> toMonthsUnderContract() {
-//        try {
-//            return Arrays.asList(new FilterOutByDate.DateRange(new Date(0), new Date()));
-//        } catch (Exception ex) {
-//            return new ArrayList<>();
-//        }
-//    }
 }
