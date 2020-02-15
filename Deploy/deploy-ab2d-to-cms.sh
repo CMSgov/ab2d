@@ -819,6 +819,10 @@ fi
 # AMI Generation for Jenkins node
 #
 
+# Set profile to the management AWS account
+
+export AWS_PROFILE="${CMS_ECR_REPO_ENV}"
+
 # Set JENKINS_AMI_ID if it already exists for the deployment
 
 echo "Set JENKINS_AMI_ID if it already exists for the deployment..."
@@ -873,6 +877,10 @@ DEPLOYER_IP_ADDRESS=$(curl ipinfo.io/ip)
 #
 # Create "auto.tfvars" files
 #
+
+# Set profile to the target AWS account
+
+export AWS_PROFILE="${CMS_ENV}"
 
 # Create "auto.tfvars" file for shared components
 
