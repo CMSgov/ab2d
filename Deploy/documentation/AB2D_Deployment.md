@@ -23,7 +23,7 @@
 1. [Deploy and configure Jenkins](#deploy-and-configure-jenkins)
 1. [Deploy AB2D static site](#deploy-ab2d-static-site)
    * [Download the AB2D domain certificates and get private key from CMS](#download-the-ab2d-domain-certificates-and-get-private-key-from-cms)
-   * [Import the certificate into certificate manager](#import-the-certificate-into-certificate-manager)
+   * [Import the AB2D domain certificate into certificate manager](#import-the-ab2d-domain-certificate-into-certificate-manager)
    * [Generate and test the website](#generate-and-test-the-website)
    * [Create an S3 bucket for the website](#create-an-s3-bucket-for-the-website)
    * [Upload website to S3](#upload-website-to-s3)
@@ -54,6 +54,9 @@
 1. [Encrypt BFD keystore and put in S3](#encrypt-bfd-keystore-and-put-in-s3)
 1. [Configure New Relic infrastructure](#configure-new-relic-infrastructure)
 1. [Configure New Relic users](#configure-new-relic-users)
+1. [Download the sandbox domain certificates and get private key from CMS](#download-the-sandbox-domain-certificates-and-get-private-key-from-cms)
+1. [Import the sandbox domain certificate into certificate manager](#import-the-sandbox-domain-certificate-into-certificate-manager)
+1. [Map the application load balancer for sandbox certificate](#map-the-application-load-balancer-for-sandbox-certificate)
 
 ## Note the starting state of the customer AWS account
 
@@ -1860,7 +1863,11 @@
    $ 7z x entrust.zip
    ```
 
-### Import the certificate into certificate manager
+1. Save the "entrust.zip" file and private key in 1Password
+
+   > *** TO DO ***
+
+### Import the AB2D domain certificate into certificate manager
 
 1. Open Chrome
 
@@ -4173,3 +4180,179 @@
      | base64 --decode \
      > /tmp/newrelic-infra.yml
    ```
+
+## Download the sandbox domain certificates and get private key from CMS
+
+1. Note that CMS will request a domain certificate from Digicert for the following domain
+
+   ```
+   sandbox.ab2d.cms.gov
+   ```
+
+1. Wait for the email from Digicert
+
+1. Wait for CMS to provide the following
+
+   - private key used to make the domain certificate request
+
+1. After receiving the private key save it under "~/Downloads"
+
+   ```
+   sandbox_ab2d_cms_gov.key
+   ```
+   
+1. Note the following in the email
+
+   - Key Info - RSA 2048-bit
+   
+   - Signature Algorithm - SHA-256 with RSA Encryption and SHA-1 root
+   
+   - Product Name - Digital ID Class 3 - Symantec Global Server OnSite
+   
+1. Select the "Download your certificate and the intermediate CAs here" link in the Digicert email
+
+1. Scroll down to the bottom of the page
+
+1. Select **Download**
+
+1. Scroll down to the "X.509" section
+
+1. Open a terminal
+
+1. Delete existing "ServerCertificateSandbox.crt" file (if exists)
+
+   ```ShellSession
+   $ rm -f ~/Downloads/ServerCertificateSandbox.crt
+   ```
+
+1. Open a new "ServerCertificateSandbox.crt" file
+
+   ```ShellSession
+   $ vim ~/Downloads/ServerCertificateSandbox.crt
+   ```
+
+1. Return to the web page with the "X.509" text block
+
+1. Select all text within the "X.509" text block
+
+1. Copy the "X.509" text block to the clipboard
+
+1. Paste the text into the "ServerCertificateSandbox.crt" file
+
+1. Save and close the file
+
+1. Return to "Download Certificate" page
+
+1. Select the "Install the intermediate CA separately for PKCS #7" link
+
+1. Select the **RSA SHA-2** tab
+
+1. Select **Download** beside "Secure Site" under "Intermediate CA" under the the "SHA-2 Intermediate CAs (under SHA-1 Root)" section
+
+1. Wait for the download to complete
+
+1. Note the following file will appear under "Downloads"
+
+   ```
+   DigiCertSHA2SecureServerCA.pem
+   ```
+
+1. Save the following files to 1Password
+
+   > *** TO DO ***
+   
+   - ServerCertificateSandbox.crt (certificate)
+
+   - sandbox_ab2d_cms_gov.key (private key)
+
+   - DigiCertSHA2SecureServerCA.pem (intermediate certificate)
+   
+## Import the sandbox domain certificate into certificate manager
+
+1. Open Chrome
+
+1. Log on to AWS
+
+1. Navigate to Certificate Manager
+
+1. Select **Get Started** under "Provision certificates"
+
+1. Select **Import a certificate**
+
+1. Open a terminal
+
+1. Copy the contents of "ServerCertificate.crt" to the clipboard
+
+   ```ShellSession
+   $ cat ~/Downloads/ServerCertificateSandbox.crt | pbcopy
+   ```
+
+1. Return to the "Import a Certificate" page in Chrome
+
+1. Paste the contents of the "ServerCertificate.crt" into the **Certificate body** text box
+
+1. Copy the contents of the private key to the clipboard
+
+   ```ShellSession
+   $ cat ~/Downloads/sandbox_ab2d_cms_gov.key | pbcopy
+   ```
+   
+1. Paste the contents of the the private key that was provided separately by CMS into the **Certificate private key** text box
+
+1. Return to the terminal
+
+1. Copy Intermediate.crt the clipboard
+
+   ```ShellSession
+   $ cat DigiCertSHA2SecureServerCA.pem | pbcopy
+   ```
+
+1. Paste the intermediate certificate into the **Certificate chain** text box
+
+1. Select **Next** on the "Import certificate" page
+
+1. Select **Review and import**
+
+1. Note that the following information should be displayed
+
+   *Format:*
+
+   **Domains:** ab2d.cms.gov
+
+   **Expires in:** {number} Days
+
+   **Public key info:** RSA-2048
+
+   **Signature algorithm:** SHA256WITHRSA
+   
+1. Select **Import**
+
+## Map the application load balancer for sandbox certificate
+
+1. Open Chrome
+
+1. Log on to the Sandbox AWS account
+
+1. Select **EC2**
+
+1. Select **Load Balancers** under the "LOAD BALANCING" section in the leftmost panel
+
+1. Select the **Listeners** tab
+
+1. Select **Add listener**
+
+1. Configure the listener as follows
+
+   - **Protocol:** HTTPS
+
+   - **port:** 443
+
+   - **Default actions:** Forward to ab2d-sbx-sandbox-api-tg: 1 (select the checkmark to save this)
+
+   - **Security policy:** ELBSecurityPolicy-2016-08
+
+   - **Default SSL certificate:** From ACM (recommended) sandbox.ab2d.cms.gov - {unique id}
+
+1. Select **Save**
+
+1. Select **aws** in the top left of the page
