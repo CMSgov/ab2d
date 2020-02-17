@@ -273,12 +273,14 @@ types and properly advertises so by specifying  "Accept-Encoding: gzip, deflate"
 
 ## Tutorials
 
-To aid developers implement a client solution, there are two tutorials for the Sandbox:
+To aid developers implement a client solution, there are three tutorials for the Sandbox:
 
 - A [tutorial](tutorial-postman) that leverages Postman and the Swagger docs. This is the easier tutorial and
-walks through the interaction of the Postman UI and Swagger UI.
+walks through the interaction of the Postman UI and Swagger UI
 
-- A [tutorial](tutorial-curl) that uses cURL. This tutorial expects more experience with cURL and the BASH command line.
+- A [tutorial](tutorial-curl) that uses cURL. This tutorial expects more experience with cURL and the BASH command line
+
+- A [tutorial](windows-tutorial) that helps Windows users execute the commands to download data 
 
 ## Troubleshooting
 
