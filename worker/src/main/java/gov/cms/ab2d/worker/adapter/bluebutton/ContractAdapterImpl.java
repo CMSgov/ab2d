@@ -2,6 +2,7 @@ package gov.cms.ab2d.worker.adapter.bluebutton;
 
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.filter.FilterOutByDate;
+import gov.cms.ab2d.filter.FilterOutByDate.DateRange;
 import gov.cms.ab2d.worker.adapter.bluebutton.GetPatientsByContractResponse.PatientDTO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -43,22 +44,30 @@ public class ContractAdapterImpl implements ContractAdapter {
             var bfdPatientsIds = getPatientIdsForMonth(contractNumber, month);
 
             for (String bfdPatientId : bfdPatientsIds) {
-                var optPatient = findPatient(patientDTOs, bfdPatientId);
+                var activeDateRange = toDateRange(month);
 
+                var optPatient = findPatient(patientDTOs, bfdPatientId);
                 if (optPatient.isPresent()) {
                     // patient id was already active on this contract in previous month(s)
                     // So just add this month to the patient's datesUnderContract
+
                     var patientDTO = optPatient.get();
-                    patientDTO.getDatesUnderContract().add(toDateRange(month));
+                    if (activeDateRange != null) {
+                        patientDTO.getDatesUnderContract().add(activeDateRange);
+                    }
 
                 } else {
                     // new patient id.
                     // Create a new PatientDTO for this patient
                     // And then add this month to the patient's datesUnderContract
+
                     var patientDTO = PatientDTO.builder()
                             .patientId(bfdPatientId)
-                            .datesUnderContract(toDateRange(month))
                             .build();
+
+                    if (activeDateRange != null) {
+                        patientDTO.getDatesUnderContract().add(activeDateRange);
+                    }
 
                     patientDTOs.add(patientDTO);
                 }
@@ -144,11 +153,11 @@ public class ContractAdapterImpl implements ContractAdapter {
 
 
     /**
-     * returns the PatientDTO, if the bfdPatientId was present in previous month(s)
+     * Given a patientId, searches for a PatientDTO in a list of PatientDTOs
      *
      * @param patientDTOs
      * @param bfdPatientId
-     * @return PatientDTO is the same patientId was active on the contract in a previous month
+     * @return an optional PatientDTO
      */
     private Optional<PatientDTO> findPatient(List<PatientDTO> patientDTOs, String bfdPatientId) {
         return patientDTOs.stream()
@@ -162,14 +171,13 @@ public class ContractAdapterImpl implements ContractAdapter {
      * @param month
      * @return a DateRange
      */
-    private FilterOutByDate.DateRange toDateRange(int month) {
-        FilterOutByDate.DateRange dateRange = null;
+    private DateRange toDateRange(int month) {
+        DateRange dateRange = null;
         try {
             dateRange = FilterOutByDate.getDateRange(month, LocalDate.now().getYear());
         } catch (ParseException e) {
             log.error("unable to create Date Range ", e);
-            //should I do something here???
-            //ignore for now.
+            //ignore
         }
 
         return dateRange;

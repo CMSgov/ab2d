@@ -37,7 +37,7 @@ class ContractAdapterTest {
         Patient patient = new Patient();
         Bundle.BundleEntryComponent component = new Bundle.BundleEntryComponent();
         component.setResource(patient);
-        // Creates new list;
+
         List<Bundle.BundleEntryComponent> entry = fakeBundle.getEntry();
         entry.add(component);
 
