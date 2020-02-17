@@ -54,7 +54,7 @@ class ZipStreamHelperImplTest {
      * @throws FileNotFoundException - if there was an error writing the files
      */
     void testZips(String contractId, int totalBytesAllowedInFile, int totalAllowedInPart,
-                  int numberStrings, int minStringSize, int maxStringSize) throws FileNotFoundException {
+                  int numberStrings, int minStringSize, int maxStringSize) throws IOException {
         System.out.println("\nRun Test: " + contractId + " - " + totalBytesAllowedInFile +
                 "(" + totalAllowedInPart + ") - Num Lines - " + numberStrings);
         int zipCounter = 1;
@@ -111,7 +111,7 @@ class ZipStreamHelperImplTest {
      * @param helper - the helper to add data to
      * @return a list of test data
      */
-    private List<String> addTestData(int numIters, int minStringSize, int maxStringSize, StreamHelper helper) {
+    private List<String> addTestData(int numIters, int minStringSize, int maxStringSize, StreamHelper helper) throws IOException {
         List<String> testVals = new ArrayList<>();
         for (int i = 0; i < numIters; i++) {
             int size = getRandomBetween(minStringSize, maxStringSize);

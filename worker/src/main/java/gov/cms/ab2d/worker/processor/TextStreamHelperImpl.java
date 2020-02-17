@@ -48,11 +48,11 @@ public class TextStreamHelperImpl extends StreamHelperImpl {
      * @param data - the data to write
      */
     @Override
-    public void addData(byte[] data) {
-        tryLock(getDataFileLock());
+    public void addData(byte[] data) throws IOException {
         if (data == null || data.length == 0) {
             return;
         }
+        tryLock(getDataFileLock());
         try {
             if (getCurrentStream() == null) {
                 setCurrentStream(createStream());
@@ -67,6 +67,7 @@ public class TextStreamHelperImpl extends StreamHelperImpl {
             setTotalBytesWritten(getTotalBytesWritten() + data.length);
         } catch (Exception ex) {
             log.error("Unable to create file output stream for contract " + getContractNumber() + "[" + (getCounter() - 1) + "]", ex);
+            throw ex;
         } finally {
             getDataFileLock().unlock();
         }

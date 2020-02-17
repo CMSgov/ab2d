@@ -98,7 +98,7 @@ public class ZipStreamHelperImpl extends StreamHelperImpl {
      * @param data - the data to write
      */
     @Override
-    public void addData(byte[] data) {
+    public void addData(byte[] data) throws IOException {
         tryLock(getDataFileLock());
         if (data == null || data.length == 0) {
             return;
@@ -117,6 +117,7 @@ public class ZipStreamHelperImpl extends StreamHelperImpl {
             currentPartByteStream.write(data);
         } catch (Exception ex) {
             log.error("Unable to create file output stream for contract " + getContractNumber() + "[" + (currentZipIteration - 1) + "]", ex);
+            throw ex;
         } finally {
             getDataFileLock().unlock();
         }

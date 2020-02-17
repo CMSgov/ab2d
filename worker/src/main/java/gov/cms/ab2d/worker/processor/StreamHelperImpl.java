@@ -157,7 +157,7 @@ public abstract class StreamHelperImpl implements StreamHelper, AutoCloseable {
      * @param data - the error data to add
      */
     @Override
-    public void addError(String data) {
+    public void addError(String data) throws IOException {
         if (data == null || data.isEmpty()) {
             return;
         }
