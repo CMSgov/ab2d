@@ -66,8 +66,9 @@ public class TextStreamHelperImpl extends StreamHelperImpl {
             getCurrentStream().write(data);
             setTotalBytesWritten(getTotalBytesWritten() + data.length);
         } catch (Exception ex) {
-            log.error("Unable to create file output stream for contract " + getContractNumber() + "[" + (getCounter() - 1) + "]", ex);
-            throw ex;
+            String error = "Unable to create file output stream for contract " + getContractNumber() + "[" + (getCounter() - 1) + "]";
+            log.error(error, ex);
+            throw new IOException(error, ex);
         } finally {
             getDataFileLock().unlock();
         }
@@ -77,7 +78,7 @@ public class TextStreamHelperImpl extends StreamHelperImpl {
      * Close the stream clean up any empty files in the files created list
      */
     @Override
-    public void close() {
+    public void close() throws IOException {
         if (getCurrentStream() == null) {
             return;
         }
@@ -88,7 +89,9 @@ public class TextStreamHelperImpl extends StreamHelperImpl {
                 getFilesCreated().remove(numFiles - 1);
             }
         } catch (Exception ex) {
-            log.error("Unable to close output stream for contract " + getContractNumber() + "[" + getCounter() + "]", ex);
+            String error = "Unable to close output stream for contract " + getContractNumber() + "[" + getCounter() + "]";
+            log.error(error, ex);
+            throw new IOException(error, ex);
         }
     }
 }

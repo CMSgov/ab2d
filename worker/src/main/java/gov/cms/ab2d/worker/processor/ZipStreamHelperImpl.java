@@ -116,8 +116,9 @@ public class ZipStreamHelperImpl extends StreamHelperImpl {
             }
             currentPartByteStream.write(data);
         } catch (Exception ex) {
-            log.error("Unable to create file output stream for contract " + getContractNumber() + "[" + (currentZipIteration - 1) + "]", ex);
-            throw ex;
+            String err = "Unable to create file output stream for contract " + getContractNumber() + "[" + (currentZipIteration - 1) + "]";
+            log.error(err, ex);
+            throw new IOException(err, ex);
         } finally {
             getDataFileLock().unlock();
         }
@@ -188,7 +189,7 @@ public class ZipStreamHelperImpl extends StreamHelperImpl {
      * Close the stream and add any lingering data to the zip file or a new one if it's too big
      */
     @Override
-    public void close() {
+    public void close() throws IOException {
         if (getCurrentStream() == null) {
             return;
         }
@@ -205,7 +206,9 @@ public class ZipStreamHelperImpl extends StreamHelperImpl {
                 getFilesCreated().remove(numFiles - 1);
             }
         } catch (Exception ex) {
-            log.error("Unable to close output stream for contract " + getContractNumber() + "[" + currentZipIteration + "]", ex);
+            String error = "Unable to close output stream for contract " + getContractNumber() + "[" + currentZipIteration + "]";
+            log.error(error, ex);
+            throw new IOException(error, ex);
         }
     }
 }

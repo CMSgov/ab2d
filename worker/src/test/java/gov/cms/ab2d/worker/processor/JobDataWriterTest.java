@@ -33,7 +33,7 @@ class JobDataWriterTest {
     }
 
     @Test
-    void addOneDataEntry_createsOneDataFile() {
+    void addOneDataEntry_createsOneDataFile() throws IOException {
         cut.addData(line);
         cut.close();
 
@@ -45,7 +45,7 @@ class JobDataWriterTest {
     }
 
     @Test
-    void addTwoEntriesThatCrossesMaxFileSize_shouldCreateMultipleFiles() {
+    void addTwoEntriesThatCrossesMaxFileSize_shouldCreateMultipleFiles() throws IOException {
         cut.addData(line);
         cut.addData(line);
         cut.close();
@@ -59,7 +59,7 @@ class JobDataWriterTest {
     }
 
     @Test
-    void addThreeEntriesThatCrossesMaxFileSize_shouldCreateMultipleFiles() {
+    void addThreeEntriesThatCrossesMaxFileSize_shouldCreateMultipleFiles() throws IOException {
         cut.addData(line);
         cut.addData(line);
         cut.addData(line);
@@ -74,7 +74,7 @@ class JobDataWriterTest {
     }
 
     @Test
-    void addOneErrorEntry_createsOneErrorFile() {
+    void addOneErrorEntry_createsOneErrorFile() throws IOException {
         cut.addError(poem);
         cut.close();
         var errorFiles = cut.getErrorFiles();
@@ -82,7 +82,7 @@ class JobDataWriterTest {
     }
 
     @Test
-    void addMultipleErrorEntries_createsOneErrorFile() {
+    void addMultipleErrorEntries_createsOneErrorFile() throws IOException {
         cut.addError(poem);
         cut.addError(poem);
         cut.addError(poem);

@@ -9,5 +9,5 @@ public interface StreamHelper {
     void addError(String data) throws IOException;
     List<Path> getDataFiles();
     List<Path> getErrorFiles();
-    void close();
+    void close() throws IOException;
 }
