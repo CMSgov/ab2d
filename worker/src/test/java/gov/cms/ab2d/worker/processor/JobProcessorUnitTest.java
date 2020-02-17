@@ -403,10 +403,11 @@ class JobProcessorUnitTest {
     }
 
     private PatientDTO toPatientDTO() throws ParseException {
-        final int anInt = random.nextInt(11);
+        int anInt = random.nextInt(11);
+        var dateRange = new FilterOutByDate.DateRange(new Date(0), new Date());
         return PatientDTO.builder()
                 .patientId("patient_" + anInt)
-                .datesUnderContract(new FilterOutByDate.DateRange(new Date(0), new Date()))
+                .dateRangesUnderContract(Arrays.asList(dateRange))
                 .build();
     }
 

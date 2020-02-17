@@ -146,7 +146,7 @@ public class ContractAdapterStub implements ContractAdapter {
     private GetPatientsByContractResponse.PatientDTO toPatientDTO(String row) {
         return GetPatientsByContractResponse.PatientDTO.builder()
                 .patientId(row)
-                .datesUnderContract(toMonthsUnderContract())
+                .dateRangesUnderContract(toMonthsUnderContract())
                 .build();
     }
 

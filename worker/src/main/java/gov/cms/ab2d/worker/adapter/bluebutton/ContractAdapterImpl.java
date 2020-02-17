@@ -28,6 +28,9 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class ContractAdapterImpl implements ContractAdapter {
 
+    private static final String BENEFICIARY_ID = "https://bluebutton.cms.gov/resources/variables/bene_id";
+
+
     private final BFDClient bfdClient;
 
 
@@ -35,16 +38,15 @@ public class ContractAdapterImpl implements ContractAdapter {
     @Override
     public GetPatientsByContractResponse getPatients(String contractNumber) {
 
-        var currentMonth = LocalDate.now().getMonthValue();
-        log.info("Current Month : [{}]", currentMonth);
-
         var patientDTOs = new ArrayList<PatientDTO>();
 
+        var currentMonth = LocalDate.now().getMonthValue();
         for (var month = 1; month <= currentMonth; month++) {
             var bfdPatientsIds = getPatientIdsForMonth(contractNumber, month);
 
+            var monthDateRange = toDateRange(month);
+
             for (String bfdPatientId : bfdPatientsIds) {
-                var activeDateRange = toDateRange(month);
 
                 var optPatient = findPatient(patientDTOs, bfdPatientId);
                 if (optPatient.isPresent()) {
@@ -52,8 +54,8 @@ public class ContractAdapterImpl implements ContractAdapter {
                     // So just add this month to the patient's datesUnderContract
 
                     var patientDTO = optPatient.get();
-                    if (activeDateRange != null) {
-                        patientDTO.getDatesUnderContract().add(activeDateRange);
+                    if (monthDateRange != null) {
+                        patientDTO.getDateRangesUnderContract().add(monthDateRange);
                     }
 
                 } else {
@@ -65,8 +67,8 @@ public class ContractAdapterImpl implements ContractAdapter {
                             .patientId(bfdPatientId)
                             .build();
 
-                    if (activeDateRange != null) {
-                        patientDTO.getDatesUnderContract().add(activeDateRange);
+                    if (monthDateRange != null) {
+                        patientDTO.getDateRangesUnderContract().add(monthDateRange);
                     }
 
                     patientDTOs.add(patientDTO);
@@ -147,7 +149,7 @@ public class ContractAdapterImpl implements ContractAdapter {
     }
 
     private boolean isBeneficiaryId(Identifier identifier) {
-        return identifier.getSystem().toLowerCase().endsWith("bene_id");
+        return identifier.getSystem().equalsIgnoreCase(BENEFICIARY_ID);
     }
 
 

@@ -95,12 +95,12 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
         Bundle eobBundle = bfdClient.requestEOBFromServer(patient.getPatientId());
 
         final List<BundleEntryComponent> entries = eobBundle.getEntry();
-        final List<Resource> resources = extractResources(entries, patient.getDatesUnderContract(), attTime);
+        final List<Resource> resources = extractResources(entries, patient.getDateRangesUnderContract(), attTime);
 
         while (eobBundle.getLink(Bundle.LINK_NEXT) != null) {
             eobBundle = bfdClient.requestNextBundleFromServer(eobBundle);
             final List<BundleEntryComponent> nextEntries = eobBundle.getEntry();
-            resources.addAll(extractResources(nextEntries, patient.getDatesUnderContract(), attTime));
+            resources.addAll(extractResources(nextEntries, patient.getDateRangesUnderContract(), attTime));
         }
 
         log.debug("Bundle - Total: {} - Entries: {} ", eobBundle.getTotal(), entries.size());
