@@ -391,7 +391,11 @@ public class JobProcessorImpl implements JobProcessor {
             }
         } finally {
             if (helper != null) {
-                helper.close();
+                try {
+                    helper.close();
+                } catch (Exception ex) {
+                    log.error("Unable to close the helper", ex);
+                }
             }
         }
         // All jobs are done, return the job output records
