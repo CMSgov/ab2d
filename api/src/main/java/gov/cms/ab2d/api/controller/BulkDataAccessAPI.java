@@ -300,18 +300,18 @@ public class BulkDataAccessAPI {
     }
 
     @ApiOperation(value = "Downloads a file produced by an export job.", response = String.class,
-            produces = NDJSON_FIRE_CONTENT_TYPE,
+            produces = NDJSON_FIRE_CONTENT_TYPE + " or " + ZIPFORMAT,
             authorizations = {
                     @Authorization(value = "Authorization", scopes = {
                             @AuthorizationScope(description = "Downloads Export File", scope = "Authorization") })
             })
     @ApiImplicitParams(value = {
             @ApiImplicitParam(name = "Accept", required = false, paramType = "header", value =
-                    NDJSON_FIRE_CONTENT_TYPE, defaultValue = NDJSON_FIRE_CONTENT_TYPE)}
+                    NDJSON_FIRE_CONTENT_TYPE + " or " + ZIPFORMAT, defaultValue = NDJSON_FIRE_CONTENT_TYPE)}
     )
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Returns the requested file as " +
-                    NDJSON_FIRE_CONTENT_TYPE, responseHeaders = {
+                    NDJSON_FIRE_CONTENT_TYPE + " or " + ZIPFORMAT, responseHeaders = {
                     @ResponseHeader(name = "Content-Type", description =
                             "Content-Type header that matches the file format being delivered: " +
                                     NDJSON_FIRE_CONTENT_TYPE,
@@ -335,9 +335,13 @@ public class BulkDataAccessAPI {
         RequestAttributes requestAttributes = RequestContextHolder.getRequestAttributes();
         HttpServletResponse response = ((ServletRequestAttributes) requestAttributes).getResponse();
 
-        log.info("Sending file to client");
+        log.info("Sending " + filename + " file to client");
 
-        response.setHeader(HttpHeaders.CONTENT_TYPE, NDJSON_FIRE_CONTENT_TYPE);
+        String mimeType = NDJSON_FIRE_CONTENT_TYPE;
+        if (downloadResource.getFilename().endsWith("zip")) {
+            mimeType = ZIPFORMAT;
+        }
+        response.setHeader(HttpHeaders.CONTENT_TYPE, mimeType);
 
         try (OutputStream out = response.getOutputStream(); FileInputStream in = new FileInputStream(downloadResource.getFile())) {
             IOUtils.copy(in, out);

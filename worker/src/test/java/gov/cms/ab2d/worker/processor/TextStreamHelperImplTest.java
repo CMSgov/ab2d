@@ -17,7 +17,7 @@ class TextStreamHelperImplTest {
     File tmpDirFolder;
 
     @Test
-    void createFileName() throws FileNotFoundException {
+    void createFileName() throws IOException {
         TextStreamHelperImpl helper = new TextStreamHelperImpl(tmpDirFolder.toPath(), "C1111", 10, 20);
         assertEquals("C1111_0002.ndjson", helper.createFileName());
         helper.close();
@@ -40,7 +40,7 @@ class TextStreamHelperImplTest {
     }
 
     @Test
-    void getEmptyDataFiles() throws FileNotFoundException {
+    void getEmptyDataFiles() throws IOException {
         TextStreamHelperImpl helper = new TextStreamHelperImpl(tmpDirFolder.toPath(), "C1111", 10, 20);
         helper.close();
         List<Path> dataFiles = helper.getDataFiles();
