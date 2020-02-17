@@ -6,6 +6,7 @@ import gov.cms.ab2d.filter.FilterOutByDate.DateRange;
 import gov.cms.ab2d.worker.adapter.bluebutton.GetPatientsByContractResponse.PatientDTO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.hl7.fhir.dstu3.model.Bundle;
 import org.hl7.fhir.dstu3.model.Identifier;
@@ -17,8 +18,8 @@ import java.text.ParseException;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 
@@ -92,9 +93,9 @@ public class ContractAdapterImpl implements ContractAdapter {
      * @param month
      * @return a list of PatientIds
      */
-    private List<String> getPatientIdsForMonth(String contractNumber, Integer month) {
+    private Set<String> getPatientIdsForMonth(String contractNumber, Integer month) {
         Bundle bundle = getBundle(contractNumber, month);
-        final List<String> patientIDs = extractPatientIDs(bundle);
+        final Set<String> patientIDs = extractPatientIDs(bundle);
 
         while (bundle.getLink(Bundle.LINK_NEXT) != null) {
             bundle = bfdClient.requestNextBundleFromServer(bundle);
@@ -126,14 +127,14 @@ public class ContractAdapterImpl implements ContractAdapter {
      * @param bundle
      * @return a list of patientIds
      */
-    private List<String> extractPatientIDs(Bundle bundle) {
+    private Set<String> extractPatientIDs(Bundle bundle) {
         return bundle.getEntry().stream()
                 .map(Bundle.BundleEntryComponent::getResource)
                 .filter(resource -> resource.getResourceType() == ResourceType.Patient)
                 .map(resource -> (Patient) resource)
                 .map(patient -> extractPatientId(patient))
-                .filter(Objects::nonNull)
-                .collect(Collectors.toList());
+                .filter(StringUtils::isNotBlank)
+                .collect(Collectors.toSet());
     }
 
     /**
