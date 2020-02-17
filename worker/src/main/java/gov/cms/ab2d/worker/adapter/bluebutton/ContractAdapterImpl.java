@@ -102,9 +102,7 @@ public class ContractAdapterImpl implements ContractAdapter {
      */
     private Bundle getBundle(String contractNumber, int month) {
         try {
-            final Bundle bundle = bfdClient.requestPartDEnrolleesFromServer(contractNumber, month);
-            log.info("Bundle : {}", bundle);
-            return bundle;
+            return bfdClient.requestPartDEnrolleesFromServer(contractNumber, month);
         } catch (Exception e) {
             final Throwable rootCause = ExceptionUtils.getRootCause(e);
             log.error("Error while calling for Contract-2-Bene API : {}", e.getMessage(), rootCause);
@@ -148,12 +146,12 @@ public class ContractAdapterImpl implements ContractAdapter {
     /**
      * returns the PatientDTO, if the bfdPatientId was present in previous month(s)
      *
-     * @param allPatientDTOsInContract
+     * @param patientDTOs
      * @param bfdPatientId
      * @return PatientDTO is the same patientId was active on the contract in a previous month
      */
-    private Optional<PatientDTO> findPatient(List<PatientDTO> allPatientDTOsInContract, String bfdPatientId) {
-        return allPatientDTOsInContract.stream()
+    private Optional<PatientDTO> findPatient(List<PatientDTO> patientDTOs, String bfdPatientId) {
+        return patientDTOs.stream()
                 .filter(patientDTO -> patientDTO.getPatientId().equals(bfdPatientId))
                 .findAny();
     }

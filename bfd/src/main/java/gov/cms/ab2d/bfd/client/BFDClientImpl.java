@@ -163,11 +163,11 @@ public class BFDClientImpl implements BFDClient {
             backoff = @Backoff(delayExpression = "${bfd.retry.backoffDelay:250}", multiplier = 2),
             exclude = { ResourceNotFoundException.class, InvalidRequestException.class }
     )
-    public Bundle requestPartDEnrolleesFromServer(String contractNum, int month) {
+    public Bundle requestPartDEnrolleesFromServer(String contractNumber, int month) {
         var monthParameter = createMonthParameter(month);
         var theCriterion = new TokenClientParam("_has:Coverage.extension")
                 .exactly()
-                .systemAndIdentifier(monthParameter, contractNum);
+                .systemAndIdentifier(monthParameter, contractNumber);
 
         return client.search()
                 .forResource(Patient.class)
