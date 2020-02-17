@@ -99,10 +99,10 @@ public class ZipStreamHelperImpl extends StreamHelperImpl {
      */
     @Override
     public void addData(byte[] data) throws IOException {
-        tryLock(getDataFileLock());
         if (data == null || data.length == 0) {
             return;
         }
+        tryLock(getDataFileLock());
         try {
             // If streams don't exist, create them
             checkInitStreams();
