@@ -42,7 +42,7 @@ import java.util.stream.Collectors;
 
 import static gov.cms.ab2d.api.util.Constants.GENERIC_FHIR_ERR_MSG;
 import static gov.cms.ab2d.api.util.SwaggerConstants.*;
-import static gov.cms.ab2d.common.service.JobServiceImpl.ZIPFORMAT;
+import static gov.cms.ab2d.common.service.JobService.ZIPFORMAT;
 import static gov.cms.ab2d.common.util.Constants.*;
 
 @Slf4j

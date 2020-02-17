@@ -62,7 +62,7 @@ public class JobProcessorImpl implements JobProcessor {
     private long ndjsonRollOver;
 
     @Value("${job.file.rollover.zip:200}")
-    private long zipRollOver = 200;
+    private long zipRollOver;
 
     @Value("${cancellation.check.frequency:10}")
     private int cancellationCheckFrequency;

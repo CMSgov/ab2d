@@ -83,8 +83,8 @@ class JobDataWriterTest {
 
     @Test
     void addMultipleErrorEntries_createsOneErrorFile() {
-        cut.addData(line);
-        cut.addData(line);
+        cut.addError(poem);
+        cut.addError(poem);
         cut.addError(poem);
         var errorFiles = cut.getErrorFiles();
         cut.close();

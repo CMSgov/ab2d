@@ -29,7 +29,6 @@ import java.util.UUID;
 @Service
 @Transactional
 public class JobServiceImpl implements JobService {
-    public static final String ZIPFORMAT = "application/zip";
 
     @Autowired
     private UserService userService;

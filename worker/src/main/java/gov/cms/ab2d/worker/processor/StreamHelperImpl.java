@@ -51,7 +51,7 @@ public abstract class StreamHelperImpl implements StreamHelper, AutoCloseable {
 
     // Total number of bytes written to the file
     @Getter @Setter
-    private long totalBytesWritten = 0;
+    private volatile long totalBytesWritten = 0;
 
     // Total bytes allowed in the file
     @Getter
@@ -59,7 +59,7 @@ public abstract class StreamHelperImpl implements StreamHelper, AutoCloseable {
 
     // The current output stream
     @Getter @Setter
-    private OutputStream currentStream;
+    private volatile OutputStream currentStream;
 
     // The time before a lock times out and unlocks
     private final int tryLockTimeout;
