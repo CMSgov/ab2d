@@ -57,6 +57,7 @@
 1. [Download the sandbox domain certificates and get private key from CMS](#download-the-sandbox-domain-certificates-and-get-private-key-from-cms)
 1. [Import the sandbox domain certificate into certificate manager](#import-the-sandbox-domain-certificate-into-certificate-manager)
 1. [Map the application load balancer for sandbox certificate](#map-the-application-load-balancer-for-sandbox-certificate)
+1. [Setup Jenkins server in management AWS account](#setup-jenkins-server-in-management-aws-account)
 
 ## Note the starting state of the customer AWS account
 
@@ -4446,3 +4447,17 @@
 1. Select **Save**
 
 1. Select **aws** in the top left of the page
+
+## Setup Jenkins server in management AWS account
+
+1. Setup VPN access
+
+   > *** TO DO ***
+
+1. Setup Jenkins security group
+
+   > *** TO DO ***
+
+1. Setup Jenkins EC2 instance
+
+   > *** TO DO ***
