@@ -2026,6 +2026,14 @@
    $ cd ~/code/ab2d/website
    ```
 
+1. If deploying to the "ab2d.cms.gov" site, change the head from 'dev' to 'prod'
+
+   *Note that you will later be reverting this change after you deploy the "ab2d.cms.gov" site.*
+
+   ```ShellSession
+   $ sed -i "" 's%cms-ab2d[\/]dev%cms-ab2d/prod%g' _includes/head.html
+   ```
+
 1. Generate and test the website
 
    1. Ensure required gems are installed
@@ -2173,6 +2181,14 @@
    
    ```ShellSession
    $ aws s3 cp --recursive _site/ s3://ab2d-east-impl-website/
+   ```
+
+1. If you deployed to the "ab2d.cms.gov" site, revert head from 'prod' back to 'dev'
+
+   *Note that you will later be reverting this change after you deploy the "ab2d.cms.gov" site.*
+
+   ```ShellSession
+   $ sed -i "" 's%cms-ab2d[\/]prod%cms-ab2d/dev%g' _includes/head.html
    ```
 
 ### Create CloudFront distribution
