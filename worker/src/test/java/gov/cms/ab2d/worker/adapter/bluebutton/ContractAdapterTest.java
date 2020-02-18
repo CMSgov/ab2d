@@ -16,6 +16,7 @@ import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.Month;
+import java.util.Calendar;
 
 import static org.hamcrest.CoreMatchers.endsWith;
 import static org.hamcrest.CoreMatchers.is;
@@ -117,12 +118,12 @@ class ContractAdapterTest {
         var dateRangesUnderContract = patient1.getDateRangesUnderContract();
 
         //month is January
-        assertThat(dateRangesUnderContract.get(0).getStart().getMonth(), is(0));
-        assertThat(dateRangesUnderContract.get(0).getEnd().getMonth(), is(0));
+        assertThat(dateRangesUnderContract.get(0).getStart().getMonth(), is(Calendar.JANUARY));
+        assertThat(dateRangesUnderContract.get(0).getEnd().getMonth(), is(Calendar.JANUARY));
 
         //month is March
-        assertThat(dateRangesUnderContract.get(1).getStart().getMonth(), is(2));
-        assertThat(dateRangesUnderContract.get(1).getEnd().getMonth(), is(2));
+        assertThat(dateRangesUnderContract.get(1).getStart().getMonth(), is(Calendar.MARCH));
+        assertThat(dateRangesUnderContract.get(1).getEnd().getMonth(), is(Calendar.MARCH));
 
         verify(client, times(3)).requestPartDEnrolleesFromServer(anyString(), anyInt());
         verify(client, never()).requestNextBundleFromServer(Mockito.any(Bundle.class));
