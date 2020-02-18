@@ -14,6 +14,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.LocalDate;
+
 import static org.hamcrest.CoreMatchers.endsWith;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
@@ -34,12 +36,14 @@ class ContractAdapterTest {
 
     private ContractAdapter cut;
     private String contractNumber = "S0000";
+    private int currentMonth;
 
 
     @BeforeEach
     void setUp() {
         cut = new ContractAdapterImpl(client);
 
+        currentMonth = LocalDate.now().getMonthValue();
         var bundle = new Bundle();
         var entries = bundle.getEntry();
         entries.add(createBundleEntry("ccw_patient_000"));
@@ -53,7 +57,7 @@ class ContractAdapterTest {
     @Test
     @DisplayName("given contractNumber, get patients from BFD API")
     void GivenContractNumber_ShouldReturnPatients() {
-        var response = cut.getPatients(contractNumber);
+        var response = cut.getPatients(contractNumber, currentMonth);
 
         Assert.assertThat(response, notNullValue());
         Assert.assertThat(response.getContractNumber(), is(contractNumber));
@@ -67,7 +71,7 @@ class ContractAdapterTest {
                 .thenThrow(new InvalidRequestException("Request is invalid"));
 
         var exceptionThrown = assertThrows(RuntimeException.class,
-                () -> cut.getPatients(contractNumber));
+                () -> cut.getPatients(contractNumber, currentMonth));
 
         assertThat(exceptionThrown.getMessage(), endsWith("Request is invalid"));
     }

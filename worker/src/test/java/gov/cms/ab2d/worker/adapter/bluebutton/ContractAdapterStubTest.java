@@ -7,11 +7,16 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
+import java.time.LocalDate;
+import java.time.Month;
+
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 
 class ContractAdapterStubTest {
     private ContractAdapterStub cut;
+
+    private int currentMonth = Month.MARCH.getValue();
 
     @BeforeEach
     void setup() {
@@ -22,21 +27,21 @@ class ContractAdapterStubTest {
     @Test
     @DisplayName("when contractNumber is 0, returns 100 patient records")
     void when_0000_returns_100() {
-        var patients = cut.getPatients("S0000").getPatients();
+        var patients = cut.getPatients("S0000", currentMonth).getPatients();
         assertThat(patients.size(), is(100));
     }
 
     @Test
     @DisplayName("when contractNumber is greater than 9999, returns empty list")
     void whenGreaterThan_9999_returns_000() {
-        var patients = cut.getPatients("S19999").getPatients();
+        var patients = cut.getPatients("S19999", currentMonth).getPatients();
         assertThat(patients.size(), is(0));
     }
 
     @Test
     @DisplayName("when contractNumber is 9999, returns 9_999_000 patient records")
     void when_S9999_returns_9999000() {
-        var patients = cut.getPatients("S9999").getPatients();
+        var patients = cut.getPatients("S9999", currentMonth).getPatients();
         assertThat(patients.size(), is(9999000));
     }
 
@@ -55,7 +60,7 @@ class ContractAdapterStubTest {
             "S5000, 5000000",
     })
     void when_contractNumber_returns_PatientCount(String contractNumber, int patientCount) {
-        var patients = cut.getPatients(contractNumber).getPatients();
+        var patients = cut.getPatients(contractNumber, currentMonth).getPatients();
         assertThat(patients.size(), is(patientCount));
     }
 

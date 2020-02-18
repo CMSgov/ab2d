@@ -37,11 +37,10 @@ public class ContractAdapterImpl implements ContractAdapter {
 
 
     @Override
-    public GetPatientsByContractResponse getPatients(String contractNumber) {
+    public GetPatientsByContractResponse getPatients(final String contractNumber, final int currentMonth) {
 
         var patientDTOs = new ArrayList<PatientDTO>();
 
-        var currentMonth = LocalDate.now().getMonthValue();
         for (var month = 1; month <= currentMonth; month++) {
             var bfdPatientsIds = getPatientIdsForMonth(contractNumber, month);
 

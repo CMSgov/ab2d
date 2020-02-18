@@ -33,7 +33,7 @@ public class ContractAdapterStub implements ContractAdapter {
     private static final int MAX_ROWS = 30_000;
 
     @Override
-    public GetPatientsByContractResponse getPatients(String contractNumber) {
+    public GetPatientsByContractResponse getPatients(String contractNumber, int currentMonth) {
 
         final int contractSno = extractContractSno(contractNumber);
 
