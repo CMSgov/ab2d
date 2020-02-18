@@ -31,6 +31,7 @@
 1. [Appendix T: Test getting and decrypting a file from S3](#appendix-t-test-getting-and-decrypting-a-file-from-s3)
 1. [Appendix U: Interact with the New Relic infrastructure agent](#appendix-u-interact-with-the-new-relic-infrastructure-agent)
 1. [Appendix V: Add a new environment variable for ECS docker containers](#appendix-v-add-a-new-environment-variable-for-ecs-docker-containers)
+1. [Appendix W: Launch a base EC2 instance that is created from gold disk AMI](#appendix-w-launch-a-base-ec2-instance-that-is-created-from-gold-disk-ami)
 
 ## Appendix A: Access the CMS AWS console
 
@@ -2256,3 +2257,391 @@
 
      - add variable
 
+## Appendix W: Launch a base EC2 instance that is created from gold disk AMI
+
+1. Open Chrome
+
+1. Log to AWS account
+
+1. Select **EC2**
+
+1. Select **Instances** in the leftmost panel
+
+1. Select **Launch Instance**
+
+1. Enter the following in the "Search for an AMI by entering a search term" text box
+
+   ```
+   842420567215
+   ```
+
+1. Note that a "results" link will appear in the main part of the page
+
+   *Example:**
+
+   ```
+   12 results
+   ```
+
+1. Select the "XX results" link (where XX equals the number of results)
+
+   *Example:**
+
+   ```
+   12 results
+   ```
+
+1. Uncheck **Owned by me** in the leftmost panel
+
+1. Select the most recent "EAST-RH 7-7 Gold Image*" on the "Step 1: Choose an Amazon Machine Image (AMI)" page
+
+   *Example:*
+
+   ```
+   EAST-RH 7-7 Gold Image V.1.05 (HVM) 01-23-20 - ami-0f2d8f925de453e46
+   Root device type: ebs Virtualization type: hvm Owner: 842420567215 ENA Enabled: Yes
+   ```
+
+1. Select the following
+    
+   ```
+   m5.xlarge
+   ```
+
+1. Select **Next: Configure Instance Details**
+
+1. Configre the instance details as follows
+
+   - **Number of instances:** 1
+
+   - **Purchasing option:** {unchecked}
+
+   - **Network:** {vpc id} | ab2d-mgmt-east-dev
+
+   - **Subnet:** {subnet id} | ab2d-mgmt-east-dev-public-a | us-east-1a
+
+   - **Auto-assign Public IP:** Enable
+
+   - **Placement group:** {unchecked}
+
+   - **Capacity reservation:** Open
+
+   - **IAM Role:** Ab2dInstanceProfile
+
+   - **CPU Options:** {unchecked}
+
+   - **Shutdown behavior:** Stop
+
+   - **Stop - Hibernate behavior:** {unchecked}
+
+   - **Enable terminate protection:** {checked}
+
+   - **Monitoring:** {unchecked}
+
+   - **EBS-optimized instance:** {checked}
+
+   - **Tenancy:** Shared - Run a shared hardware instance
+
+   - **Elastic Inference:** {unchecked}
+
+1. Select **Next: Add Storage**
+
+1. Change "Size (GiB)" for the "Root" volume
+
+   ```
+   250
+   ```
+
+1. Select **Next: Add Tags**
+
+1. Select **Next:: Configure Security Group**
+
+1. Configure the "Step 6: Configure Security Group" page as follows
+
+   - **Create a new security group:** {selected}
+
+   - **Security group name:** ab2d-mgmt-east-dev-jenkins-sg
+
+   - **Description:** ab2d-mgmt-east-dev-jenkins-sg
+
+   - **Type:** All traffic
+
+   - **Protocol:** All
+
+   - **Port range:** 0 - 65535
+
+   - **Source:** 10.232.32.0/19
+
+   - **Description:** VPN Access
+
+1. Select **Review and Launch**
+
+1. Review the settings
+
+1. Select **Launch**
+
+1. Select the following from the first dropdown
+
+   ```
+   Choose an existing key pair
+   ```
+
+1. Select the following from the **Select a key pair** dropdown
+
+   ```
+   ab2d-mgmt-east-dev
+   ```
+
+1. Check **I acknowledge...**
+
+1. Select **Launch Instances**
+
+1. Select **aws** on the top left of the page
+
+1. Select **EC2**
+
+1. Select **Instances**
+
+1. Wait for the instance to finish starting up with successful status checks
+
+1. SSH into the instance
+
+1. View the available disk devices
+
+   1. Enter the following
+   
+      ```ShellSession
+      $ lsblk
+      ```
+
+   1. Note the output
+
+      *Example for an "m5.xlarge" instance:*
+
+      ```
+      nvme0n1                  259:0    0  30G  0 disk 
+      ├─nvme0n1p1              259:1    0   1G  0 part /boot
+      └─nvme0n1p2              259:2    0  29G  0 part 
+        ├─VolGroup00-auditVol  253:0    0   4G  0 lvm  /var/log/audit
+        ├─VolGroup00-homeVol   253:1    0   3G  0 lvm  /home
+        ├─VolGroup00-logVol    253:2    0   4G  0 lvm  /var/log
+        ├─VolGroup00-rootVol   253:3    0  10G  0 lvm  /
+        ├─VolGroup00-tmpVol    253:4    0   2G  0 lvm  /tmp
+        ├─VolGroup00-varVol    253:5    0   5G  0 lvm  /var
+        └─VolGroup00-vartmpVol 253:6    0   1G  0 lvm  /var/tmp
+      ```
+
+   1. Note the root device in the output
+
+      *Example for an "m5.xlarge" instance:*
+
+      - nvme0n1
+
+   1. Note the existing partitions
+
+      *Example for an "m5.xlarge" instance:*
+
+      - nvme0n1p1
+
+      - nvme0n1p2
+
+1. Create a new partition from unallocated space
+
+   1. View the available disk devices again
+   
+      ```ShellSession
+      $ lsblk
+      ```
+
+   1. Note the output
+
+      *Example for an "m5.xlarge" instance:*
+
+      ```
+      nvme0n1                  259:0    0  30G  0 disk 
+      ├─nvme0n1p1              259:1    0   1G  0 part /boot
+      └─nvme0n1p2              259:2    0  29G  0 part 
+        ├─VolGroup00-auditVol  253:0    0   4G  0 lvm  /var/log/audit
+        ├─VolGroup00-homeVol   253:1    0   3G  0 lvm  /home
+        ├─VolGroup00-logVol    253:2    0   4G  0 lvm  /var/log
+        ├─VolGroup00-rootVol   253:3    0  10G  0 lvm  /
+        ├─VolGroup00-tmpVol    253:4    0   2G  0 lvm  /tmp
+        ├─VolGroup00-varVol    253:5    0   5G  0 lvm  /var
+        └─VolGroup00-vartmpVol 253:6    0   1G  0 lvm  /var/tmp
+      ```
+
+   1. Note the root device in the output
+
+      *Example for an "m5.xlarge" instance:*
+
+      - nvme0n1
+
+   1. Enter the following:
+   
+      *Format:*
+   
+      ```ShellSession
+      $ sudo fdisk /dev/{root device}
+      ```
+   
+      *Example for an "m5.xlarge" instance:*
+   
+      ```ShellSession
+      $ sudo fdisk /dev/nvme0n1
+      ```
+
+   1. Request that the operating system re-reads the partition table
+
+      ```ShellSession
+      $ sudo partprobe
+      ```
+
+   1. View the available disk devices again
+   
+      ```ShellSession
+      $ lsblk
+      ```
+
+   1. Note the output
+
+      *Example for an "m5.xlarge" instance:*
+      
+      ```
+      nvme0n1                  259:0    0  250G  0 disk 
+      ├─nvme0n1p1              259:1    0    1G  0 part /boot
+      ├─nvme0n1p2              259:2    0   29G  0 part 
+      │ ├─VolGroup00-auditVol  253:0    0    4G  0 lvm  /var/log/audit
+      │ ├─VolGroup00-homeVol   253:1    0    3G  0 lvm  /home
+      │ ├─VolGroup00-logVol    253:2    0    4G  0 lvm  /var/log
+      │ ├─VolGroup00-rootVol   253:3    0   10G  0 lvm  /
+      │ ├─VolGroup00-tmpVol    253:4    0    2G  0 lvm  /tmp
+      │ ├─VolGroup00-varVol    253:5    0    5G  0 lvm  /var
+      │ └─VolGroup00-vartmpVol 253:6    0    1G  0 lvm  /var/tmp
+      └─nvme0n1p3              259:3    0  220G  0 part 
+      ```
+
+   1. Note the newly creating partition
+
+      *Example for an "m5.xlarge" instance:*
+
+      - nvme0n1p3
+
+1. Extend home partition
+
+   1. View the available disk devices again
+   
+      ```ShellSession
+      $ lsblk
+      ```
+
+   1. Note the output
+
+      *Example for an "m5.xlarge" instance:*
+      
+      ```
+      nvme0n1                  259:0    0  250G  0 disk 
+      ├─nvme0n1p1              259:1    0    1G  0 part /boot
+      ├─nvme0n1p2              259:2    0   29G  0 part 
+      │ ├─VolGroup00-auditVol  253:0    0    4G  0 lvm  /var/log/audit
+      │ ├─VolGroup00-homeVol   253:1    0    3G  0 lvm  /home
+      │ ├─VolGroup00-logVol    253:2    0    4G  0 lvm  /var/log
+      │ ├─VolGroup00-rootVol   253:3    0   10G  0 lvm  /
+      │ ├─VolGroup00-tmpVol    253:4    0    2G  0 lvm  /tmp
+      │ ├─VolGroup00-varVol    253:5    0    5G  0 lvm  /var
+      │ └─VolGroup00-vartmpVol 253:6    0    1G  0 lvm  /var/tmp
+      └─nvme0n1p3              259:3    0  220G  0 part 
+      ```
+
+   1. Note the newly creating partition again
+
+      *Example for an "m5.xlarge" instance:*
+
+      - nvme0n1p3
+
+   1. Create physical volume by initializing the partition for use by the Logical Volume Manager (LVM)
+
+      ```ShellSession
+      $ sudo pvcreate /dev/nvme0n1p3
+      ```
+
+   1. Note the output
+
+      ```
+      Physical volume "/dev/nvme0n1p3" successfully created.
+      ```
+
+   1. View the available disk devices again
+   
+      ```ShellSession
+      $ lsblk
+      ```
+
+   1. Note the output
+
+      *Example for an "m5.xlarge" instance:*
+      
+      ```
+      nvme0n1                  259:0    0  250G  0 disk 
+      ├─nvme0n1p1              259:1    0    1G  0 part /boot
+      ├─nvme0n1p2              259:2    0   29G  0 part 
+      │ ├─VolGroup00-auditVol  253:0    0    4G  0 lvm  /var/log/audit
+      │ ├─VolGroup00-homeVol   253:1    0    3G  0 lvm  /home
+      │ ├─VolGroup00-logVol    253:2    0    4G  0 lvm  /var/log
+      │ ├─VolGroup00-rootVol   253:3    0   10G  0 lvm  /
+      │ ├─VolGroup00-tmpVol    253:4    0    2G  0 lvm  /tmp
+      │ ├─VolGroup00-varVol    253:5    0    5G  0 lvm  /var
+      │ └─VolGroup00-vartmpVol 253:6    0    1G  0 lvm  /var/tmp
+      └─nvme0n1p3              259:3    0  220G  0 part 
+      ```
+
+   1. Note the volume group
+
+      ```
+      VolGroup00
+      ```
+
+   1. Add the new physical volume to the volume group
+
+      ```ShellSession
+      $ sudo vgextend VolGroup00 /dev/nvme0n1p3
+      ```
+
+   1. Note the output
+
+      ```
+      Volume group "VolGroup00" successfully extended
+      ```
+
+   1. Extend the size of the home logical volume
+
+      ```ShellSession
+      $ sudo lvextend -l +100%FREE /dev/mapper/VolGroup00-homeVol
+      ```
+
+   1. Note the output
+
+      ```
+      Size of logical volume VolGroup00/homeVol changed from <3.00 GiB (767 extents) to 222.99 GiB (57086 extents).
+  Logical volume VolGroup00/homeVol successfully resized.
+      ```
+
+   1. Expands the existing XFS filesystem
+
+      ```ShellSession
+      $ sudo xfs_growfs -d /dev/mapper/VolGroup00-homeVol
+      ```
+
+   1. Note the output
+
+      ```
+      meta-data=/dev/mapper/VolGroup00-homeVol isize=512    agcount=4, agsize=196352 blks
+               =                       sectsz=512   attr=2, projid32bit=1
+               =                       crc=1        finobt=0 spinodes=0
+      data     =                       bsize=4096   blocks=785408, imaxpct=25
+               =                       sunit=0      swidth=0 blks
+      naming   =version 2              bsize=4096   ascii-ci=0 ftype=1
+      log      =internal               bsize=4096   blocks=2560, version=2
+               =                       sectsz=512   sunit=0 blks, lazy-count=1
+      realtime =none                   extsz=4096   blocks=0, rtextents=0
+      data blocks changed from 785408 to 58456064
+      ```

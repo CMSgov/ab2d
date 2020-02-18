@@ -662,6 +662,12 @@
 
 1. Set target AWS profile
 
+   *Example for "Mgmt" environment:*
+
+   ```ShellSession
+   $ export AWS_PROFILE=ab2d-mgmt-east-dev
+   ```
+
    *Example for "Dev" environment:*
 
    ```ShellSession
@@ -683,6 +689,12 @@
 1. Create keypair
 
    1. Set the key name
+
+      *Example for "Mgmt" environment:*
+      
+      ```ShellSession
+      $ export KEY_NAME=ab2d-mgmt-east-dev
+      ```
 
       *Example for "Dev" environment:*
       
@@ -719,10 +731,16 @@
    ```
 
 1. Update the "authorized_keys" file for the environment
-
+      
    1. Open a second terminal
    
    1. Open the "authorized_keys" file for the environment
+
+      *Example for "Mgmt" environment:*
+
+      ```ShellSession
+      $ vim ~/code/ab2d/Deploy/terraform/environments/ab2d-mgmt-east-dev-shared/authorized_keys
+      ```
 
       *Example for "Dev" environment:*
       
@@ -762,6 +780,12 @@
 
 1. Set target AWS profile
 
+   *Example for "Mgmt" environment:*
+
+   ```
+   $ export AWS_PROFILE=ab2d-mgmt-east-dev
+   ```
+
    *Example for "Dev" environment:*
 
    ```ShellSession
@@ -781,6 +805,12 @@
    ```
 
 1. Change to the shared environment directory
+
+   *Example for "Mgmt" environment:*
+   
+   ```ShellSession
+   $ cd ~/code/ab2d/Deploy/terraform/environments/ab2d-mgmt-east-dev-shared
+   ```
 
    *Example for "Dev" environment:*
    
@@ -834,6 +864,12 @@
 
 1. Change to the environment-specific directory
 
+   *Example for "Mgmt" environment:*
+
+   ```ShellSession
+   $ cd ~/code/ab2d/Deploy/terraform/environments/ab2d-mgmt-east-dev
+   ```
+
    *Example for "Dev" environment:*
    
    ```ShellSession
@@ -882,6 +918,12 @@
 
 1. Set target AWS profile
 
+   *Example for "Mgmt" environment:*
+
+   ```ShellSession
+   $ export AWS_PROFILE=ab2d-mgmt-east-dev
+   ```
+
    *Example for "Dev" environment:*
 
    ```ShellSession
@@ -901,6 +943,12 @@
    ```
 
 1. Change to the shared environment directory
+
+   *Example for "Mgmt" environment:*
+
+   ```ShellSession
+   $ cd ~/code/ab2d/Deploy/terraform/environments/ab2d-mgmt-east-dev-shared
+   ```
 
    *Example for "Dev" environment:*
    
@@ -929,6 +977,12 @@
    ```
 
 1. Set AWS account number
+
+   *Example for "Mgmt" environment:*
+
+   ```ShellSession
+   $ export AWS_ACCOUNT_NUMBER=653916833532
+   ```
 
    *Example for "Dev" environment:*
 
@@ -980,6 +1034,12 @@
 
 1. Change to the environment-specific directory
 
+   *Example for "Mgmt" environment:*
+   
+   ```ShellSession
+   $ cd ~/code/ab2d/Deploy/terraform/environments/ab2d-mgmt-east-dev
+   ```
+
    *Example for "Dev" environment:*
    
    ```ShellSession
@@ -1018,6 +1078,12 @@
 
 1. Set target AWS profile
 
+   *Example for "Mgmt" environment:*
+
+   ```ShellSession
+   $ export AWS_PROFILE=ab2d-mgmt-east-dev
+   ```
+
    *Example for "Dev" environment:*
 
    ```ShellSession
@@ -1055,6 +1121,12 @@
 
 1. Set target AWS profile
 
+   *Example for "Mgmt" environment:*
+
+   ```ShellSession
+   $ export AWS_PROFILE=ab2d-mgmt-east-dev
+   ```
+
    *Example for "Dev" environment:*
 
    ```ShellSession
@@ -1074,6 +1146,12 @@
    ```
 
 1. Set AWS account number
+
+   *Example for "Mgmt" environment:*
+
+   ```ShellSession
+   $ export AWS_ACCOUNT_NUMBER=653916833532
+   ```
 
    *Example for "Dev" environment:*
 
@@ -1109,6 +1187,12 @@
 
 1. Set target AWS profile
 
+   *Example for "Mgmt" environment:*
+
+   ```ShellSession
+   $ export AWS_PROFILE=ab2d-mgmt-east-dev
+   ```
+
    *Example for "Dev" environment:*
 
    ```ShellSession
@@ -1128,6 +1212,12 @@
    ```
 
 1. Set automation bucket name
+
+   *Example for "Mgmt" environment:*
+   
+   ```ShellSession
+   $ export S3_AUTOMATION_BUCKET=ab2d-mgmt-east-dev-automation
+   ```
 
    *Example for "Dev" environment:*
    

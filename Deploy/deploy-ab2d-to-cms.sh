@@ -114,8 +114,10 @@ if [ -z "${VPC_EXISTS}" ]; then
 fi
 
 #
-# Get KMS key id (if exists)
+# Get KMS key id for target environment (if exists)
 #
+
+export AWS_PROFILE="${CMS_ENV}"
 
 KMS_KEY_ID=$(aws --region "${REGION}" kms list-aliases \
   --query="Aliases[?AliasName=='alias/ab2d-kms'].TargetKeyId" \
@@ -123,6 +125,23 @@ KMS_KEY_ID=$(aws --region "${REGION}" kms list-aliases \
 
 if [ -n "${KMS_KEY_ID}" ]; then
   KMS_KEY_STATE=$(aws --region "${REGION}" kms describe-key \
+    --key-id alias/ab2d-kms \
+    --query "KeyMetadata.KeyState" \
+    --output text)
+fi
+
+#
+# Get MGMT KMS key id for management environment (if exists)
+#
+
+export AWS_PROFILE="${CMS_ECR_REPO_ENV}"
+
+MGMT_KMS_KEY_ID=$(aws --region "${REGION}" kms list-aliases \
+  --query="Aliases[?AliasName=='alias/ab2d-kms'].TargetKeyId" \
+  --output text)
+
+if [ -n "${MGMT_KMS_KEY_ID}" ]; then
+  MGMT_KMS_KEY_STATE=$(aws --region "${REGION}" kms describe-key \
     --key-id alias/ab2d-kms \
     --query "KeyMetadata.KeyState" \
     --output text)
@@ -143,6 +162,10 @@ rm -f /var/log/terraform/tf.log
 # Initialize and validate terraform
 #
 
+# Set AWS profile to the targe environment
+
+export AWS_PROFILE="${CMS_ENV}"
+
 # Initialize and validate terraform for the shared components
 
 echo "**************************************************************"
@@ -155,10 +178,10 @@ cd terraform/environments/$CMS_SHARED_ENV
 rm -f *.tfvars
 
 terraform init \
-    -backend-config="bucket=${CMS_ENV}-automation" \
-    -backend-config="key=${CMS_SHARED_ENV}/terraform/terraform.tfstate" \
-    -backend-config="region=${REGION}" \
-    -backend-config="encrypt=true"
+  -backend-config="bucket=${CMS_ENV}-automation" \
+  -backend-config="key=${CMS_SHARED_ENV}/terraform/terraform.tfstate" \
+  -backend-config="region=${REGION}" \
+  -backend-config="encrypt=true"
 
 terraform validate
 
@@ -174,18 +197,39 @@ cd terraform/environments/$CMS_ENV
 rm -f *.tfvars
 
 terraform init \
-    -backend-config="bucket=${CMS_ENV}-automation" \
-    -backend-config="key=${CMS_ENV}/terraform/terraform.tfstate" \
-    -backend-config="region=${REGION}" \
-    -backend-config="encrypt=true"
+  -backend-config="bucket=${CMS_ENV}-automation" \
+  -backend-config="key=${CMS_ENV}/terraform/terraform.tfstate" \
+  -backend-config="region=${REGION}" \
+  -backend-config="encrypt=true"
+
+terraform validate
+
+# Initialize and validate terraform for the management environment
+
+echo "*******************************************************************"
+echo "Initialize and validate terraform for the managemenr environment..."
+echo "*******************************************************************"
+
+cd "${START_DIR}"
+cd "terraform/environments/$CMS_ECR_REPO_ENV-shared"
+
+rm -f *.tfvars
+
+terraform init \
+  -backend-config="bucket=${CMS_ECR_REPO_ENV}-automation" \
+  -backend-config="key=${CMS_ECR_REPO_ENV}/terraform/terraform.tfstate" \
+  -backend-config="region=${REGION}" \
+  -backend-config="encrypt=true"
 
 terraform validate
 
 #
-# Deploy or enable KMS
+# Deploy or enable KMS for target environment
 #
 
-# If KMS key exists, enable it; otherwise, create it
+# If target environment KMS key exists, enable it; otherwise, create it
+
+export AWS_PROFILE="${CMS_ENV}"
 
 if [ -n "$KMS_KEY_ID" ]; then
   echo "Enabling KMS key..."
@@ -200,9 +244,36 @@ else
     --target module.kms --auto-approve
 fi
 
-# Get KMS key id
+# Get target KMS key id
 
 KMS_KEY_ID=$(aws --region "${REGION}" kms list-aliases \
+  --query="Aliases[?AliasName=='alias/ab2d-kms'].TargetKeyId" \
+  --output text)
+
+#
+# Deploy or enable KMS for management environment
+#
+
+# If management environment KMS key exists, enable it; otherwise, create it
+
+export AWS_PROFILE="${CMS_ECR_REPO_ENV}"
+
+if [ -n "$MGMT_KMS_KEY_ID" ]; then
+  echo "Enabling KMS key..."
+  cd "${START_DIR}"
+  cd python3
+  ./enable-kms-key.py $MGMT_KMS_KEY_ID
+else
+  echo "Deploying KMS..."
+  cd "${START_DIR}"
+  cd "terraform/environments/${CMS_ECR_REPO_ENV}-shared"
+  terraform apply \
+    --target module.kms --auto-approve
+fi
+
+# Get MGMT KMS key id
+
+MGMT_KMS_KEY_ID=$(aws --region "${REGION}" kms list-aliases \
   --query="Aliases[?AliasName=='alias/ab2d-kms'].TargetKeyId" \
   --output text)
 
@@ -838,6 +909,7 @@ echo "If no AMI is specified then create a new one..."
 if [ -z "${JENKINS_AMI_ID}" ]; then
 
   # Get the latest seed AMI
+
   SEED_AMI=$(aws --region "${REGION}" ec2 describe-images \
     --owners "${OWNER}" \
     --filters "Name=name,Values=EAST-RH 7*" \
@@ -847,7 +919,40 @@ if [ -z "${JENKINS_AMI_ID}" ]; then
     | head -n1 \
     | awk '{print $1}')
 
+  # Get VPC ID for the management AWS account
+
+  echo "Getting VPC ID for the management AWS account..."
+
+  MGMT_VPC_ID=$(aws --region "${REGION}" ec2 describe-vpcs \
+    --filters "Name=tag:Name,Values=${CMS_ECR_REPO_ENV}" \
+    --query "Vpcs[*].[VpcId]" \
+    --output text)
+
+  if [ -z "${MGMT_VPC_ID}" ]; then
+    echo "*************************************************************"
+    echo "ERROR: MGMT VPC ID does not exist for the target AWS profile."
+    echo "*************************************************************"
+    exit 1
+  fi
+
+  # Get first subnet id for the management AWS account
+
+  echo "Getting first public subnet id for the management AWS account..."
+
+  MGMT_SUBNET_PUBLIC_1_ID=$(aws --region "${REGION}" ec2 describe-subnets \
+    --filters "Name=tag:Name,Values=${CMS_ECR_REPO_ENV}-public-a" \
+    --query "Subnets[*].SubnetId" \
+    --output text)
+
+  if [ -z "${MGMT_SUBNET_PUBLIC_1_ID}" ]; then
+
+    echo "ERROR: public subnet #1 for the management AWS account not found..."
+    exit 1
+
+  fi
+
   # Create AMI for Jenkins
+
   cd "${START_DIR}"
   cd packer/jenkins
   IP=$(curl ipinfo.io/ip)
@@ -856,8 +961,8 @@ if [ -z "${JENKINS_AMI_ID}" ]; then
     --var seed_ami=$SEED_AMI \
     --var region="${REGION}" \
     --var ec2_instance_type=$EC2_INSTANCE_TYPE \
-    --var vpc_id=$VPC_ID \
-    --var subnet_public_1_id=$SUBNET_PUBLIC_1_ID \
+    --var vpc_id=$MGMT_VPC_ID \
+    --var subnet_public_1_id=$MGMT_SUBNET_PUBLIC_1_ID \
     --var my_ip_address=$IP \
     --var ssh_username=$SSH_USERNAME \
     --var git_commit_hash=$COMMIT \
@@ -865,9 +970,11 @@ if [ -z "${JENKINS_AMI_ID}" ]; then
   JENKINS_AMI_ID=$(cat output.txt | awk 'match($0, /ami-.*/) { print substr($0, RSTART, RLENGTH) }' | tail -1)
   
   # Add name tag to AMI
+
   aws --region "${REGION}" ec2 create-tags \
     --resources $JENKINS_AMI_ID \
     --tags "Key=Name,Value=ab2d-jenkins-ami"
+
 fi
 
 # Get deployer IP address
