@@ -39,7 +39,7 @@ public abstract class StreamHelperImpl implements StreamHelper, AutoCloseable {
 
     // Current file counter
     @Getter
-    private int counter = 1;
+    private volatile int counter = 1;
 
     // Passed contract number
     @Getter
@@ -134,7 +134,7 @@ public abstract class StreamHelperImpl implements StreamHelper, AutoCloseable {
     }
 
     /**
-     * Take an arraw of bytes and append it to a file
+     * Take an array of bytes and append it to a file
      *
      * @param outputFile - the file to append to
      * @param data - the data to write
