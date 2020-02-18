@@ -8,13 +8,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.SpyBean;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Import;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
-import org.springframework.test.util.ReflectionTestUtils;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -93,15 +87,15 @@ public class AutoScalingServiceTest {
         var end = Instant.now();
 
         // The pool should have grown to 20.
-        assertThat(patientProcessorThreadPool.getMaxPoolSize(), equalTo(20));
+        assertThat(patientProcessorThreadPool.getMaxPoolSize(), equalTo(MAX_POOL_SIZE));
 
         // How do we actually verify that pool growth was in fact gradual and not instantaneous?
         // First, check that there was the expected time gap between auto scaling start & end
-        assertThat(Duration.between(start, end).getSeconds(), greaterThanOrEqualTo(20L));
+        assertThat(Duration.between(start, end).getSeconds(), greaterThanOrEqualTo(15L));
 
         // Then check that there were intermediate pool increases between 3 and MAX_POOL_SIZE.
         // Last metric taken should always be MAX_POOL_SIZE
-        assertThat(new ArrayDeque<>(metrics).getLast(), equalTo(20));
+        assertThat(new ArrayDeque<>(metrics).getLast(), equalTo(MAX_POOL_SIZE));
         // Some intermediate sizes should be in between, at least 3.
         assertThat(metrics.size(), greaterThanOrEqualTo(3));
         List<Integer> metricsList = new ArrayList<>(metrics);
@@ -112,7 +106,7 @@ public class AutoScalingServiceTest {
         // We need to make sure it does not grow beyond the max though. Let's sleep for a bit
         // and verify the size is still at the same max value.
         Thread.sleep(8000);
-        assertThat(patientProcessorThreadPool.getMaxPoolSize(), equalTo(20));
+        assertThat(patientProcessorThreadPool.getMaxPoolSize(), equalTo(MAX_POOL_SIZE));
 
         // Clean up.
         futures.stream().forEach(future -> future.cancel(true));

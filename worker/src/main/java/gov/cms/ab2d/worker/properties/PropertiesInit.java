@@ -10,7 +10,7 @@ import java.util.stream.Collectors;
 
 public class PropertiesInit {
 
-    // Load all of the environment variables from the database
+    // Load all of the properties from the database
     public PropertiesInit(PropertiesService propertiesService, ConfigurableEnvironment configurableEnvironment) {
         final Map<String, Object> properties = propertiesService.getAllProperties().stream()
                 .collect(Collectors.toMap(Properties::getKey, Properties::getValue));
