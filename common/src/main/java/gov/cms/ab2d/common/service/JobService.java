@@ -22,7 +22,7 @@ public interface JobService {
 
     Resource getResourceForJob(String jobUuid, String fileName) throws MalformedURLException;
 
-    void deleteFileForJob(File file);
+    void deleteFileForJob(File file, String jobUuid);
 
     boolean checkIfCurrentUserCanAddJob();
 }

@@ -45,6 +45,8 @@ import static gov.cms.ab2d.common.util.Constants.CONTRACT_LOG;
 import static gov.cms.ab2d.common.util.Constants.EOB;
 import static net.logstash.logback.argument.StructuredArguments.keyValue;
 
+import com.newrelic.api.agent.Trace;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -88,6 +90,7 @@ public class JobProcessorImpl implements JobProcessor {
 
     @Override
     @Transactional(propagation = Propagation.NEVER)
+    @Trace(metricName = "Job Processing", dispatcher = true)
     public Job process(final String jobUuid) {
 
         final Job job = jobRepository.findByJobUuid(jobUuid);

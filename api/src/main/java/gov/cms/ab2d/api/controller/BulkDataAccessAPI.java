@@ -338,7 +338,7 @@ public class BulkDataAccessAPI {
         try (OutputStream out = response.getOutputStream(); FileInputStream in = new FileInputStream(downloadResource.getFile())) {
             IOUtils.copy(in, out);
 
-            jobService.deleteFileForJob(downloadResource.getFile());
+            jobService.deleteFileForJob(downloadResource.getFile(), jobUuid);
 
             return new ResponseEntity<>(null, null, HttpStatus.OK);
         }

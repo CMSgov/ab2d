@@ -43,12 +43,12 @@ public class WorkerServiceImpl implements WorkerService {
 
     @PreDestroy
     public void resetInProgressJobs() {
-        log.info("Shutdown in progress ... Do house cleaning ...");
+        log.info("Shutdown in progress ... Do house keeping ...");
 
         if (!activeJobs.isEmpty()) {
             shutDownService.resetInProgressJobs(activeJobs);
         }
 
-        log.info("House cleaning done - Shutting down");
+        log.info("House keeping done - Shutting down");
     }
 }
