@@ -23,6 +23,7 @@ import java.util.UUID;
 
 import static gov.cms.ab2d.common.model.JobStatus.SUCCESSFUL;
 import static gov.cms.ab2d.common.util.Constants.EOB;
+import static gov.cms.ab2d.common.util.Constants.NDJSON_FIRE_CONTENT_TYPE;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.assertThat;
 
@@ -90,6 +91,7 @@ public class WorkerServiceTest {
         job.setResourceTypes(EOB);
         job.setCreatedAt(OffsetDateTime.now());
         job.setUser(user);
+        job.setOutputFormat(NDJSON_FIRE_CONTENT_TYPE);
         return jobRepository.save(job);
     }
 

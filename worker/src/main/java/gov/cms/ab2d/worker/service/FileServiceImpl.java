@@ -12,7 +12,12 @@ import java.nio.file.Path;
 @Component
 public class FileServiceImpl implements FileService {
 
-
+    /**
+     * Given a path, create a directory and return its path
+     *
+     * @param outputDir - the directory to create
+     * @return the Path to the created directory
+     */
     @Override
     public Path createDirectory(Path outputDir) {
         Path outputDirectory = null;
@@ -29,6 +34,4 @@ public class FileServiceImpl implements FileService {
         }
         return outputDirectory;
     }
-
-
 }
