@@ -24,6 +24,9 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 
@@ -58,6 +61,8 @@ class ContractAdapterTest {
 
         var patients = response.getPatients();
         assertThat(patients.size(), is(1));
+        verify(client, times(3)).requestPartDEnrolleesFromServer(anyString(), anyInt());
+        verify(client, never()).requestNextBundleFromServer(Mockito.any(Bundle.class));
     }
 
     @Test
@@ -70,6 +75,8 @@ class ContractAdapterTest {
         var patient0 = patients.get(0);
         assertThat(patient0.getPatientId(), is("ccw_patient_000"));
         assertThat(patient0.getDateRangesUnderContract().size(), is(1));
+        verify(client).requestPartDEnrolleesFromServer(anyString(), anyInt());
+        verify(client, never()).requestNextBundleFromServer(Mockito.any(Bundle.class));
     }
 
     @Test
@@ -79,6 +86,44 @@ class ContractAdapterTest {
         var patient0 = response.getPatients().get(0);
         assertThat(patient0.getPatientId(), is("ccw_patient_000"));
         assertThat(patient0.getDateRangesUnderContract().size(), is(2));
+        verify(client, times(2)).requestPartDEnrolleesFromServer(anyString(), anyInt());
+        verify(client, never()).requestNextBundleFromServer(Mockito.any(Bundle.class));
+    }
+
+    @Test
+    void GivenPatientActiveInMonth1And3ButNot2_ShouldReturnTwoRowsInDateRangesUnderContract() {
+        var bundle1 = bundle.copy();
+        // add 2nd patient
+        var entries = bundle1.getEntry();
+        entries.add(createBundleEntry("ccw_patient_001"));
+
+        when(client.requestPartDEnrolleesFromServer(anyString(), anyInt()))
+                .thenReturn(bundle1)    // January - patient1 is active
+                .thenReturn(bundle)     // February - patient1 is NOT active
+                .thenReturn(bundle1);   // March  - patient1 is active again
+
+        var response = cut.getPatients(contractNumber, Month.MARCH.getValue());
+
+        //expect patient0 to be active in all 3 months
+        var patient0 = response.getPatients().get(0);
+        assertThat(patient0.getPatientId(), is("ccw_patient_000"));
+        assertThat(patient0.getDateRangesUnderContract().size(), is(3));
+
+        //expect patient0 to be active in only 2 months
+        var patient1 = response.getPatients().get(1);
+        assertThat(patient1.getPatientId(), is("ccw_patient_001"));
+        assertThat(patient1.getDateRangesUnderContract().size(), is(2));
+
+        var dateRangesUnderContract = patient1.getDateRangesUnderContract();
+        //month is January
+        assertThat(dateRangesUnderContract.get(0).getStart().getMonth(), is(0));
+        assertThat(dateRangesUnderContract.get(0).getEnd().getMonth(), is(0));
+        //month is March
+        assertThat(dateRangesUnderContract.get(1).getStart().getMonth(), is(2));
+        assertThat(dateRangesUnderContract.get(1).getEnd().getMonth(), is(2));
+
+        verify(client, times(3)).requestPartDEnrolleesFromServer(anyString(), anyInt());
+        verify(client, never()).requestNextBundleFromServer(Mockito.any(Bundle.class));
     }
 
     @Test
@@ -106,6 +151,9 @@ class ContractAdapterTest {
         var patient1 = patients.get(1);
         assertThat(patient1.getPatientId(), is("ccw_patient_001"));
         assertThat(patient1.getDateRangesUnderContract().size(), is(1));
+
+        verify(client, times(2)).requestPartDEnrolleesFromServer(anyString(), anyInt());
+        verify(client, never()).requestNextBundleFromServer(Mockito.any(Bundle.class));
     }
 
 
@@ -135,6 +183,9 @@ class ContractAdapterTest {
         var patient1 = patients.get(1);
         assertThat(patient1.getPatientId(), is("ccw_patient_001"));
         assertThat(patient1.getDateRangesUnderContract().size(), is(1));
+
+        verify(client, times(2)).requestPartDEnrolleesFromServer(anyString(), anyInt());
+        verify(client, never()).requestNextBundleFromServer(Mockito.any(Bundle.class));
     }
 
 
@@ -155,6 +206,9 @@ class ContractAdapterTest {
         var patient1 = patients.get(1);
         assertThat(patient1.getPatientId(), is("ccw_patient_001"));
         assertThat(patient1.getDateRangesUnderContract().size(), is(2));
+
+        verify(client, times(2)).requestPartDEnrolleesFromServer(anyString(), anyInt());
+        verify(client, never()).requestNextBundleFromServer(Mockito.any(Bundle.class));
     }
 
 
@@ -187,6 +241,9 @@ class ContractAdapterTest {
         var patient2 = patients.get(2);
         assertThat(patient2.getPatientId(), is("ccw_patient_002"));
         assertThat(patient2.getDateRangesUnderContract().size(), is(1));
+
+        verify(client, times(1)).requestPartDEnrolleesFromServer(anyString(), anyInt());
+        verify(client).requestNextBundleFromServer(Mockito.any(Bundle.class));
     }
 
 
@@ -211,6 +268,9 @@ class ContractAdapterTest {
         var patient1 = patients.get(1);
         assertThat(patient1.getPatientId(), is("ccw_patient_001"));
         assertThat(patient1.getDateRangesUnderContract().size(), is(1));
+
+        verify(client, times(1)).requestPartDEnrolleesFromServer(anyString(), anyInt());
+        verify(client, never()).requestNextBundleFromServer(Mockito.any(Bundle.class));
     }
 
 
