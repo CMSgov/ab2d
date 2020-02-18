@@ -4466,14 +4466,265 @@
 
 ## Setup Jenkins server in management AWS account
 
-1. Setup VPN access
+1. Open Chrome
 
-   > *** TO DO ***
+1. Log to to the management AWS account
 
 1. Setup Jenkins security group
 
-   > *** TO DO ***
+   1. Select **Your VPCs** from the leftmost panel
+
+   1. Note the VPC ID of the 'ab2d-mgmt-east-dev" VPC
+
+      ```
+      vpc-0fccd950a4ce7469b
+      ```
+
+   1. Select **Security Groups** from the leftmost panel
+
+   1. Select **Create security group**
+
+   1. Configure the security group as follows
+
+      - **Security group name:** ab2d-mgmt-east-dev-jenkins-sg
+
+      - **Description:** ab2d-mgmt-east-dev-jenkins-sg
+
+      - **VPC:** vpc-0fccd950a4ce7469b
+
+   1. Select **Create**
+
+   1. Select **Close**
+
+   1. Select the newly created security group that has "ab2d-mgmt-east-dev-jenkins-sg" as its "Group Name"
+
+   1. Change the "Name" to be the following
+
+      ```
+      ab2d-mgmt-east-dev-jenkins-sg
+      ```
+
+   1. Select **Inbound Rules**
+
+   1. Select **Edit Rules**
+
+   1. Select **Add Rule**
+
+   1. Configure the inbound rule as follows
+
+      - **Type:** All traffic
+
+      - **Protocol:** All
+
+      - **Port Range:** All
+
+      - **Source:** Custom
+
+      - **CIDR:** 52.20.26.200/32,34.196.35.156/32,52.5.212.71/32
+
+      - **Description:** VPN Access
+
+   1. Select **Save rules**
+
+   1. Select **Close**
 
 1. Setup Jenkins EC2 instance
 
-   > *** TO DO ***
+   1. Select **aws** in the top left of the page
+
+   1. Select **EC2**
+
+   1. Select **Instances** in the leftmost panel
+
+   1. Select **Launch Instance**
+
+   1. Select **My AMIs**
+
+   1. Select **Select** beside the "AB2D-JENKINS" ami
+
+   1. Select the following
+
+      ```
+      m5.xlarge
+      ```
+
+   1. Select **Next: Configure Instance Details**
+
+   1. Configre the instance details as follows
+
+      - **Number of instances:** 1
+
+      - **Purchasing option:** {unchecked}
+
+      - **Network:** {vpc id} | ab2d-mgmt-east-dev
+
+      - **Subnet:** {subnet id} | ab2d-mgmt-east-dev-public-a | us-east-1a
+
+      - **Auto-assign Public IP:** Enable
+
+      - **Placement group:** {unchecked}
+
+      - **Capacity reservation:** Open
+
+      - **IAM Role:** Ab2dInstanceProfile
+
+      - **CPU Options:** {unchecked}
+
+      - **Shutdown behavior:** Stop
+
+      - **Stop - Hibernate behavior:** {unchecked}
+
+      - **Enable terminate protection:** {checked}
+
+      - **Monitoring:** {unchecked}
+
+      - **EBS-optimized instance:** {checked}
+
+      - **Tenancy:** Shared - Run a shared hardware instance
+
+      - **Elastic Inference:** {unchecked}
+
+   1. Select **Next: Add Storage**
+
+   1. Conigure the "Root" volume as follows
+
+      - **Volume Type:** Root
+
+      - **Device:** /dev/sda1
+
+      - **Snapshot:** {snapshot id}
+
+      - **Size (GiB):** 250
+
+      - **Volume Type:** General Purpose SSD (gp2)
+
+      - **IOPS:** 750 / 3000
+
+      - **Throughput (MB/s):** N/A
+
+      - **Delete on Termination:** {checked}
+
+      - **Encryption:** Not Encrypted
+
+   1. Select **Next: Add Tags**
+
+   1. Select **Add Tag**
+
+   1. Configure the key as follows
+
+      - **Key:** Name
+
+      - **Value:** ab2d-mgmt-east-dev-jenkins-vm
+
+      - **Instances:** {checked}
+
+      - **Volumes:** {checked}
+
+   1. Select **Next: Configure Security Group**
+
+   1. Select the **Select an existing security group** radio button
+
+   1. Select the following security group
+
+      ```
+      ab2d-mgmt-east-dev-jenkins-sg
+      ```
+
+   1. Select **Review and Launch**
+
+   1. Review the settings
+
+   1. Select **Launch**
+
+   1. Select the following from the first dropdown
+
+      ```
+      Choose an existing key pair
+      ```
+
+   1. Select the following from the **Select a key pair** dropdown
+
+      ```
+      ab2d-mgmt-east-dev
+      ```
+
+   1. Check **I acknowledge...**
+
+   1. Select **Launch Instances**
+
+   1. Select **aws** on the top left of the page
+
+   1. Select **EC2**
+
+   1. Select **Instances**
+
+   1. Wait for the instance to finish starting up with successful status checks
+
+1. Connect to the Jenkins EC2 instance
+
+   1. Note the public IP address of the Jenkins EC2 instance
+
+      ```
+      18.212.95.139
+      ```
+
+   1. Ensure that you are connected to the Cisco VPN
+
+   1. SSH into the instance using the private IP address
+
+      ```ShellSession
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@18.212.95.139
+      ```
+
+1. View the available disk devices
+
+   1. Enter the following
+
+      ```ShellSession
+      $ lsblk
+      ```
+
+   1. Note the output
+
+      *Example for an "m5.xlarge" instance:*
+
+      ```
+      nvme0n1                  259:0    0  250G  0 disk 
+      ├─nvme0n1p1              259:1    0    1G  0 part /boot
+      ├─nvme0n1p2              259:2    0   29G  0 part 
+      │ ├─VolGroup00-auditVol  253:0    0    4G  0 lvm  /var/log/audit
+      │ ├─VolGroup00-homeVol   253:1    0  223G  0 lvm  /home
+      │ ├─VolGroup00-logVol    253:2    0    4G  0 lvm  /var/log
+      │ ├─VolGroup00-rootVol   253:3    0   10G  0 lvm  /
+      │ ├─VolGroup00-tmpVol    253:4    0    2G  0 lvm  /tmp
+      │ ├─VolGroup00-varVol    253:5    0    5G  0 lvm  /var
+      │ └─VolGroup00-vartmpVol 253:6    0    1G  0 lvm  /var/tmp
+      └─nvme0n1p3              259:3    0  220G  0 part 
+        └─VolGroup00-homeVol   253:1    0  223G  0 lvm  /home
+      ```
+
+   1. Note the root device in the output
+
+      *Example for an "m5.xlarge" instance:*
+
+      - nvme0n1
+
+   1. Note the existing partitions
+
+      *Example for an "m5.xlarge" instance:*
+
+      - nvme0n1p1
+
+      - nvme0n1p2
+
+      - nvme0n1p3
+
+   1. Note the "homeVol" entries
+
+      - nvme0n1p2
+
+        - VolGroup00-homeVol   253:1    0  223G  0 lvm  /home
+
+      - nvme0n1p3
+
+        - VolGroup00-homeVol   253:1    0  223G  0 lvm  /home
