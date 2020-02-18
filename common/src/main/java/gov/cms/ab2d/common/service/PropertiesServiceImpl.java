@@ -15,13 +15,6 @@ public class PropertiesServiceImpl implements PropertiesService {
     @Autowired
     private PropertiesRepository propertiesRepository;
 
-    public String getProperty(String key) {
-        return propertiesRepository.findByKey(key).map(Properties::getValue).orElseThrow(() -> {
-            log.error("No entry was found for key {}", key);
-            return new ResourceNotFoundException("No entry was found for key " + key);
-        });
-    }
-
     public List<Properties> getAllProperties() {
         return propertiesRepository.findAll();
     }

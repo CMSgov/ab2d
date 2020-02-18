@@ -7,6 +7,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.ConfigurableEnvironment;
 
+// Separate this config out so that it runs before variables in the main config with the @Value annotation are evaluated
 @Configuration
 public class PropertyConfig {
 

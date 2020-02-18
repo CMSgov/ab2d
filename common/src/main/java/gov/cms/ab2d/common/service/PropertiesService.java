@@ -6,7 +6,5 @@ import java.util.List;
 
 public interface PropertiesService {
 
-    String getProperty(String key);
-
     List<Properties> getAllProperties();
 }
