@@ -38,7 +38,7 @@ they may or may not use the Medicare claims data, including the limitations asso
 of the data. Visit [HPMS](https://hpms.cms.gov)
 
 ## Frequently Asked Questions
-As CMS continues to gather feedback from PDP sponsors on sharing Part A & B claims data, we anticipate adding more FAQs 
+As CMS continues to gather feedback from PDP sponsors on sharing Parts A & B claims data, we anticipate adding more FAQs
 to this page. If you have a question that is not listed below, please ask in the [AB2D Google Group](https://groups.google.com/forum/#!forum/ab2d-api).
 
 1. **Why is CMS making claims data available to PDP sponsors?**<br><br>
@@ -120,6 +120,7 @@ or removed based on the information needed to carry out the permitted uses of th
 established through rulemaking.<br><br>
 14. **What are the data sources and how often is the data updated?**<br><br>
 The AB2D API will leverage the Beneficiary FHIR Data server, which gets the data from the Chronic Condition 
-Warehouse (CCW). The data is refreshed every weekend.<br><br>
+Warehouse (CCW). The data is refreshed weekly.<br><br>
 15. **I’ve already attested, when will I get access to the data?**<br><br>
+We are planning to provide a sandbox for the PDP sponsors to test the API using synthetic data in the Spring of 2020.<br><br>
 The production API with beneficiary claims data will be available later this year.
