@@ -40,8 +40,8 @@ import java.util.List;
 import java.util.Set;
 
 import static gov.cms.ab2d.common.service.JobServiceImpl.INITIAL_JOB_STATUS_MESSAGE;
-import static gov.cms.ab2d.common.util.Constants.EOB;
-import static gov.cms.ab2d.common.util.Constants.OPERATION_OUTCOME;
+import static gov.cms.ab2d.common.service.JobServiceImpl.ZIPFORMAT;
+import static gov.cms.ab2d.common.util.Constants.*;
 import static gov.cms.ab2d.common.util.DataSetup.TEST_USER;
 import static gov.cms.ab2d.common.util.DataSetup.VALID_CONTRACT_NUMBER;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -106,10 +106,12 @@ public class JobServiceTest {
 
     @Test
     public void createJob() {
-        Job job = jobService.createJob(EOB, "http://localhost:8080");
+        Job job = jobService.createJob(EOB, "http://localhost:8080", ZIPFORMAT);
         assertThat(job).isNotNull();
         assertThat(job.getId()).isNotNull();
         assertThat(job.getJobUuid()).isNotNull();
+        assertThat(job.getOutputFormat()).isNotNull();
+        assertEquals(job.getOutputFormat(), ZIPFORMAT);
         assertEquals(job.getProgress(), Integer.valueOf(0));
         assertEquals(job.getUser(), userRepository.findByUsername(TEST_USER));
         assertEquals(job.getResourceTypes(), EOB);
@@ -130,10 +132,12 @@ public class JobServiceTest {
     public void createJobWithContract() {
         Contract contract = contractRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
 
-        Job job = jobService.createJob(EOB, "http://localhost:8080", contract.getContractNumber());
+        Job job = jobService.createJob(EOB, "http://localhost:8080", contract.getContractNumber(), NDJSON_FIRE_CONTENT_TYPE);
         assertThat(job).isNotNull();
         assertThat(job.getId()).isNotNull();
         assertThat(job.getJobUuid()).isNotNull();
+        assertThat(job.getOutputFormat()).isNotNull();
+        assertEquals(NDJSON_FIRE_CONTENT_TYPE, job.getOutputFormat());
         assertEquals(job.getProgress(), Integer.valueOf(0));
         assertEquals(job.getUser(), userRepository.findByUsername(TEST_USER));
         assertEquals(job.getResourceTypes(), EOB);
@@ -154,20 +158,20 @@ public class JobServiceTest {
     @Test
     public void createJobWithBadContract() {
         Assertions.assertThrows(ResourceNotFoundException.class, () -> {
-            jobService.createJob(EOB, "http://localhost:8080", "BadContract");
+            jobService.createJob(EOB, "http://localhost:8080", "BadContract", NDJSON_FIRE_CONTENT_TYPE);
         });
     }
 
     @Test
     public void failedValidation() {
         Assertions.assertThrows(TransactionSystemException.class, () -> {
-            jobService.createJob("Patient,ExplanationOfBenefit,Coverage", "http://localhost:8080");
+            jobService.createJob("Patient,ExplanationOfBenefit,Coverage", "http://localhost:8080", NDJSON_FIRE_CONTENT_TYPE);
         });
     }
 
     @Test
     public void cancelJob() {
-        Job job = jobService.createJob(EOB, "http://localhost:8080");
+        Job job = jobService.createJob(EOB, "http://localhost:8080", NDJSON_FIRE_CONTENT_TYPE);
 
         jobService.cancelJob(job.getJobUuid());
 
@@ -186,7 +190,7 @@ public class JobServiceTest {
 
     @Test
     public void getJob() {
-        Job job = jobService.createJob(EOB, "http://localhost:8080");
+        Job job = jobService.createJob(EOB, "http://localhost:8080", NDJSON_FIRE_CONTENT_TYPE);
 
         Job retrievedJob = jobService.getAuthorizedJobByJobUuid(job.getJobUuid());
 
@@ -202,7 +206,7 @@ public class JobServiceTest {
 
     @Test
     public void testJobInSuccessfulState() {
-        Job job = jobService.createJob(EOB, "http://localhost:8080");
+        Job job = jobService.createJob(EOB, "http://localhost:8080", NDJSON_FIRE_CONTENT_TYPE);
 
         job.setStatus(JobStatus.SUCCESSFUL);
         jobRepository.saveAndFlush(job);
@@ -214,7 +218,7 @@ public class JobServiceTest {
 
     @Test
     public void testJobInCancelledState() {
-        Job job = jobService.createJob(EOB, "http://localhost:8080");
+        Job job = jobService.createJob(EOB, "http://localhost:8080", NDJSON_FIRE_CONTENT_TYPE);
 
         job.setStatus(JobStatus.CANCELLED);
         jobRepository.saveAndFlush(job);
@@ -227,7 +231,7 @@ public class JobServiceTest {
 
     @Test
     public void testJobInFailedState() {
-        Job job = jobService.createJob(EOB, "http://localhost:8080");
+        Job job = jobService.createJob(EOB, "http://localhost:8080", NDJSON_FIRE_CONTENT_TYPE);
 
         job.setStatus(JobStatus.FAILED);
         jobRepository.saveAndFlush(job);
@@ -240,7 +244,7 @@ public class JobServiceTest {
 
     @Test
     public void updateJob() {
-        Job job = jobService.createJob(EOB, "http://localhost:8080");
+        Job job = jobService.createJob(EOB, "http://localhost:8080", ZIPFORMAT);
         OffsetDateTime now = OffsetDateTime.now();
         OffsetDateTime localDateTime = OffsetDateTime.now();
         job.setProgress(100);
@@ -270,6 +274,7 @@ public class JobServiceTest {
         job.setJobOutputs(output);
 
         Job updatedJob = jobService.updateJob(job);
+        Assert.assertEquals(ZIPFORMAT, updatedJob.getOutputFormat());
         Assert.assertEquals(Integer.valueOf(100), updatedJob.getProgress());
         Assert.assertEquals(now, updatedJob.getLastPollTime());
         Assert.assertEquals(JobStatus.IN_PROGRESS, updatedJob.getStatus());
@@ -359,7 +364,7 @@ public class JobServiceTest {
     }
 
     private Job createJobForFileDownloads(String fileName, String errorFileName) {
-        Job job = jobService.createJob(EOB, "http://localhost:8080");
+        Job job = jobService.createJob(EOB, "http://localhost:8080", NDJSON_FIRE_CONTENT_TYPE);
         OffsetDateTime now = OffsetDateTime.now();
         OffsetDateTime localDateTime = OffsetDateTime.now();
         job.setProgress(100);
@@ -453,7 +458,7 @@ public class JobServiceTest {
 
     @Test
     public void checkIfUserCanAddJobTrueTest() {
-        jobService.createJob(EOB, "http://localhost:8080");
+        jobService.createJob(EOB, "http://localhost:8080", NDJSON_FIRE_CONTENT_TYPE);
 
         boolean result = jobService.checkIfCurrentUserCanAddJob();
         Assert.assertTrue(result);
@@ -461,9 +466,9 @@ public class JobServiceTest {
 
     @Test
     public void checkIfUserCanAddJobPastLimitTest() {
-        jobService.createJob(EOB, "http://localhost:8080");
-        jobService.createJob(EOB, "http://localhost:8080");
-        jobService.createJob(EOB, "http://localhost:8080");
+        jobService.createJob(EOB, "http://localhost:8080", NDJSON_FIRE_CONTENT_TYPE);
+        jobService.createJob(EOB, "http://localhost:8080", NDJSON_FIRE_CONTENT_TYPE);
+        jobService.createJob(EOB, "http://localhost:8080", NDJSON_FIRE_CONTENT_TYPE);
 
         boolean result = jobService.checkIfCurrentUserCanAddJob();
         Assert.assertFalse(result);
