@@ -162,7 +162,7 @@ rm -f /var/log/terraform/tf.log
 # Initialize and validate terraform
 #
 
-# Set AWS profile to the targe environment
+# Set AWS profile to the target environment
 
 export AWS_PROFILE="${CMS_ENV}"
 
@@ -203,6 +203,10 @@ terraform init \
   -backend-config="encrypt=true"
 
 terraform validate
+
+# Set AWS profile to the management environment
+
+export AWS_PROFILE="${CMS_ECR_REPO_ENV}"
 
 # Initialize and validate terraform for the management environment
 
@@ -280,6 +284,10 @@ MGMT_KMS_KEY_ID=$(aws --region "${REGION}" kms list-aliases \
 #
 # Create or get secrets
 #
+
+# Set AWS profile to the target environment
+
+export AWS_PROFILE="${CMS_ENV}"
 
 # Change to the "python3" directory
 
