@@ -74,7 +74,7 @@ public class TestRunner {
                     new File("../docker-compose.yml"))
                     //.withScaledService("api", 2) // failing now since it's not changing ports
                     .withScaledService("worker", 2)
-                    .withExposedService("db", 5432)
+                    .withExposedService("db", 5431)
                     .withExposedService("api", 8080, new HostPortWaitStrategy()
                             .withStartupTimeout(Duration.of(150, SECONDS)));
             container.start();
@@ -185,7 +185,7 @@ public class TestRunner {
         // Some of the data that is returned will be variable and will change from request to request, so not every
         // JSON object can be verified
         final JSONObject fileJson = new JSONObject(fileContent);
-        Assert.assertEquals(8, fileJson.length());
+        Assert.assertEquals(9, fileJson.length());
         Assert.assertEquals("ExplanationOfBenefit", fileJson.getString("resourceType"));
         Assert.assertEquals(0, fileJson.getInt("precedence"));
         String carrierString = fileJson.getString("id");
