@@ -109,15 +109,17 @@ class ContractAdapterTest {
         assertThat(patient0.getPatientId(), is("ccw_patient_000"));
         assertThat(patient0.getDateRangesUnderContract().size(), is(3));
 
-        //expect patient0 to be active in only 2 months
+        //expect patient1 to be active in only 2 months
         var patient1 = response.getPatients().get(1);
         assertThat(patient1.getPatientId(), is("ccw_patient_001"));
         assertThat(patient1.getDateRangesUnderContract().size(), is(2));
 
         var dateRangesUnderContract = patient1.getDateRangesUnderContract();
+
         //month is January
         assertThat(dateRangesUnderContract.get(0).getStart().getMonth(), is(0));
         assertThat(dateRangesUnderContract.get(0).getEnd().getMonth(), is(0));
+
         //month is March
         assertThat(dateRangesUnderContract.get(1).getStart().getMonth(), is(2));
         assertThat(dateRangesUnderContract.get(1).getEnd().getMonth(), is(2));
