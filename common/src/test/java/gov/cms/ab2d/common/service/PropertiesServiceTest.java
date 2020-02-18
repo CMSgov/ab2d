@@ -13,7 +13,9 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @SpringBootTest(classes = SpringBootApp.class)
 @TestPropertySource(locations = "/application.common.properties")
@@ -31,16 +33,28 @@ public class PropertiesServiceTest {
 
     @Test
     public void testCreationAndRetrieval() {
+        Map<String, Object> propertyMap = new HashMap<>(){{
+            put("abc", "val");
+            put("pcp.core.pool.size", 10);
+            put("pcp.max.pool.size", 150);
+            put("pcp.scaleToMax.time", 900);
+        }};
+
         Properties properties = new Properties();
         properties.setKey("abc");
         properties.setValue("val");
 
-        Properties retrievedProperties = propertiesRepository.save(properties);
+        propertiesRepository.save(properties);
 
         List<Properties> propertiesList = propertiesService.getAllProperties();
-        Properties propertiesFromList = propertiesList.get(0);
 
-        Assert.assertEquals(retrievedProperties.getValue(), propertiesFromList.getValue());
-        Assert.assertEquals(retrievedProperties.getKey(), propertiesFromList.getKey());
+        Assert.assertEquals(propertiesList.size(), 4);
+
+        for(Properties propertiesToCheck : propertiesList) {
+            Object propertyValue = propertyMap.get(propertiesToCheck.getKey());
+
+            Assert.assertNotNull(propertyValue);
+            Assert.assertEquals(propertyValue.toString(), propertiesToCheck.getValue());
+        }
     }
 }
