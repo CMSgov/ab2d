@@ -7,10 +7,11 @@ import java.io.File;
 import java.net.MalformedURLException;
 
 public interface JobService {
+    String ZIPFORMAT = "application/zip";
 
-    Job createJob(String resourceTypes, String url);
+    Job createJob(String resourceTypes, String url, String outputFormat);
 
-    Job createJob(String resourceTypes, String url, String contractNumber);
+    Job createJob(String resourceTypes, String url, String contractNumber, String outputFormat);
 
     void cancelJob(String jobUuid);
 
@@ -22,7 +23,7 @@ public interface JobService {
 
     Resource getResourceForJob(String jobUuid, String fileName) throws MalformedURLException;
 
-    void deleteFileForJob(File file);
+    void deleteFileForJob(File file, String jobUuid);
 
     boolean checkIfCurrentUserCanAddJob();
 }

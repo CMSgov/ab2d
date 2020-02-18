@@ -39,18 +39,21 @@ public class JobServiceImpl implements JobService {
     @Autowired
     private ContractRepository contractRepository;
 
+    @Autowired
+    private JobOutputService jobOutputService;
+
     @Value("${efs.mount}")
     private String fileDownloadPath;
 
     public static final String INITIAL_JOB_STATUS_MESSAGE = "0%";
 
     @Override
-    public Job createJob(String resourceTypes, String url) {
-        return createJob(resourceTypes, url, null);
+    public Job createJob(String resourceTypes, String url, String outputFormat) {
+        return createJob(resourceTypes, url, null, outputFormat);
     }
 
     @Override
-    public Job createJob(String resourceTypes, String url, String contractNumber) {
+    public Job createJob(String resourceTypes, String url, String contractNumber, String outputFormat) {
         Job job = new Job();
         job.setResourceTypes(resourceTypes);
         job.setJobUuid(UUID.randomUUID().toString());
@@ -58,6 +61,7 @@ public class JobServiceImpl implements JobService {
         job.setStatus(JobStatus.SUBMITTED);
         job.setStatusMessage(INITIAL_JOB_STATUS_MESSAGE);
         job.setCreatedAt(OffsetDateTime.now());
+        job.setOutputFormat(outputFormat);
         job.setProgress(0);
         job.setUser(userService.getCurrentUser());
 
@@ -132,9 +136,11 @@ public class JobServiceImpl implements JobService {
 
         // Make sure that there is a path that matches a job output for the job they are requesting
         boolean jobOutputMatchesPath = false;
+        JobOutput foundJobOutput = null;
         for (JobOutput jobOutput : job.getJobOutputs()) {
             if (jobOutput.getFilePath().equals(fileName)) {
                 jobOutputMatchesPath = true;
+                foundJobOutput = jobOutput;
                 break;
             }
         }
@@ -148,7 +154,14 @@ public class JobServiceImpl implements JobService {
         Resource resource = new UrlResource(file.toUri());
 
         if (!resource.exists()) {
-            String errorMsg = "The file is not present as it is either expired, been downloaded, or an error occurred. Please resubmit the job.";
+            String errorMsg;
+            if (foundJobOutput.getDownloaded()) {
+                errorMsg = "The file is not present as it has already been downloaded. Please resubmit the job.";
+            } else if (job.getExpiresAt().isBefore(OffsetDateTime.now())) {
+                errorMsg = "The file is not present as it has expired. Please resubmit the job.";
+            } else {
+                errorMsg = "The file is not present as there was an error. Please resubmit the job.";
+            }
             log.error(errorMsg);
             throw new JobOutputMissingException(errorMsg);
         }
@@ -157,11 +170,17 @@ public class JobServiceImpl implements JobService {
     }
 
     @Override
-    public void deleteFileForJob(File file) {
+    public void deleteFileForJob(File file, String jobUuid) {
         boolean deleted = file.delete();
         if (!deleted) {
             log.error("Was not able to delete the file {}", file.getName());
         }
+
+        String fileName = file.getName();
+        Job job = jobRepository.findByJobUuid(jobUuid);
+        JobOutput jobOutput = jobOutputService.findByFilePathAndJob(fileName, job);
+        jobOutput.setDownloaded(true);
+        jobOutputService.updateJobOutput(jobOutput);
     }
 
     @Override
