@@ -66,7 +66,7 @@ public class PatientClaimsProcessorUnitTest {
         createOutputFiles();
         patientDTO = new GetPatientsByContractResponse.PatientDTO();
         patientDTO.setPatientId(patientId);
-        patientDTO.setDatesUnderContract(List.of(new FilterOutByDate.DateRange(new Date(0), new Date())));
+        patientDTO.setDateRangesUnderContract(List.of(new FilterOutByDate.DateRange(new Date(0), new Date())));
 
         Contract contract = new Contract();
         helper = new TextStreamHelperImpl(tmpEfsMountDir.toPath(), contract.getContractNumber(), 30, 120);
