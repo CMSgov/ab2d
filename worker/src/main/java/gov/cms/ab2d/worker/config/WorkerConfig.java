@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.DependsOn;
 import org.springframework.context.annotation.Import;
 import org.springframework.integration.channel.ExecutorChannel;
 import org.springframework.integration.config.EnableIntegration;
@@ -48,9 +49,6 @@ public class WorkerConfig {
     @Value("${pcp.core.pool.size}")
     private int pcpCorePoolSize;
 
-    @Value("${pcp.max.pool.size}")
-    private int pcpMaxPoolSize;
-
     @Value("${pcp.queue.capacity}")
     private int pcpQueueCapacity;
 
@@ -64,6 +62,7 @@ public class WorkerConfig {
     private int jobQueueCapacity;
 
     @Bean
+    @DependsOn("propertiesInit")
     public Executor patientProcessorThreadPool() {
         final ThreadPoolTaskExecutor taskExecutor = new ThreadPoolTaskExecutor();
         taskExecutor.setCorePoolSize(pcpCorePoolSize);

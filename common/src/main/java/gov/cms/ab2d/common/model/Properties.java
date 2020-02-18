@@ -6,6 +6,7 @@ import lombok.Setter;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
+import javax.validation.constraints.NotNull;
 
 @Entity
 @Getter
@@ -16,7 +17,9 @@ public class Properties {
     @GeneratedValue
     private Long id;
 
+    @NotNull
     private String key;
 
+    @NotNull
     private String value;
 }
