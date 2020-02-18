@@ -104,7 +104,7 @@ public class PatientClaimsProcessorUnitTest {
         Bundle bundle1 = EobTestDataUtil.createBundle(eob.copy());
         when(mockBfdClient.requestEOBFromServer(patientId)).thenThrow(new RuntimeException("Test Exception"));
 
-        var exceptionThrown = assertThrows(RuntimeException.class,
+        var exceptionThrown = assertThrows(ExecutionException.class,
                 () -> cut.process(patientDTO, helper, earlyAttDate).get());
 
         assertThat(exceptionThrown.getCause().getMessage(), startsWith("Test Exception"));

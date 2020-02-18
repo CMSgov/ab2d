@@ -7,7 +7,7 @@ import java.io.File;
 import java.net.MalformedURLException;
 
 public interface JobService {
-    final String ZIPFORMAT = "application/zip";
+    String ZIPFORMAT = "application/zip";
 
     Job createJob(String resourceTypes, String url, String outputFormat);
 
