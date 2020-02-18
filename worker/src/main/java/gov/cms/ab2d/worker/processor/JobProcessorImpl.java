@@ -291,10 +291,11 @@ public class JobProcessorImpl implements JobProcessor {
      * @return the list of patients for each contract
      */
     private List<GetPatientsByContractResponse> fetchPatientsForAllContracts(List<Contract> attestedContracts) {
+        int currentMonth = LocalDate.now().getMonthValue();
         return attestedContracts
                 .stream()
                 .map(contract -> contract.getContractNumber())
-                .map(contractNumber -> contractAdapter.getPatients(contractNumber))
+                .map(contractNumber -> contractAdapter.getPatients(contractNumber, currentMonth))
                 .collect(Collectors.toList());
     }
 
