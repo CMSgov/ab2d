@@ -1,5 +1,7 @@
 package gov.cms.ab2d.api.util;
 
+import static gov.cms.ab2d.common.service.JobServiceImpl.ZIPFORMAT;
+
 public final class SwaggerConstants {
     public static final String MAIN = "This API Provides Part A (Hospital Insurance) & B " +
             "(Medical Insurance) claim data to Part D (Prescription Drug Benefit) sponsors. Consistent with " +
@@ -14,15 +16,16 @@ public final class SwaggerConstants {
             "progress in the generation of the requested files, and retrieve these files.";
 
     public static final String BULK_EXPORT_TYPE = "String of comma-delimited FHIR resource objects. Only resources of " +
-            "the specified resource types(s) SHALL be included in the response. Currently, only" +
+            "the specified resource types(s) SHALL be included in the response. Currently, only " +
             "ExplanationOfBenefit objects are supported";
 
     public static final String BULK_PREFER = "Value must be respond-async";
 
-    public static final String BULK_ACCEPT = "Value must be application/fhir+json";
+    public static final String BULK_ACCEPT = "Value must be application/fhir+json or " + ZIPFORMAT;
 
     public static final String BULK_OUTPUT_FORMAT = "The format for the " +
-            "requested bulk data files to be generated. Currently, only application/fhir+json is supported.";
+            "requested bulk data files to be generated. Currently, only application/fhir+json and " + ZIPFORMAT +
+            " are supported.";
 
     public static final String BULK_CONTRACT_EXPORT = "Initiate Part A & B bulk claim export job for a given contract number";
     public static final String BULK_CANCEL = "Cancel a pending or in progress export job";

@@ -5,5 +5,4 @@ import java.nio.file.Path;
 public interface FileService {
 
     Path createDirectory(Path outputDir);
-
 }
