@@ -4510,6 +4510,30 @@
 
    1. Select **Add Rule**
 
+   1. Open a new Chrome tab
+
+   1. Enter the following in the address bar
+
+      > https://confluence.cms.gov/pages/viewpage.action?spaceKey=AWSOC&title=CCS+Cloud+VPN+Public+IPs
+
+   1. Note the CCS Cloud VPN Public IPs
+
+      *Example of public IP addresses of cloudvpn.cms.gov:*
+
+      ```
+      52.20.26.200/32,34.196.35.156/32,52.5.212.71/32
+      ```
+
+      *Example of public IP addresses of cloudwest.cms.gov:*
+
+      ```
+      52.20.26.200/32,34.196.35.156/32,52.5.212.71/32
+      ```
+
+   1. Note that you will be using the public IP addresses of cloudvpn.cms.gov for the "CIDR" in the next step
+
+   1. Return to the AWS Chrome tab
+
    1. Configure the inbound rule as follows
 
       - **Type:** All traffic
