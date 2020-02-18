@@ -22,6 +22,28 @@
   <link rel="canonical" href="{{ page.url | replace:'index.html','' | absolute_url }}">
 
   <link rel="stylesheet" href="{{ site.cssurl | relative_url }}" />
+
+    <!-- CMS Tealium/Google Analytics BEGIN -->
+
+    <!--DataLayer (utag_data) Snippet
+    Within <head> of document at the highest possible point.-->
+    <script type="text/javascript">
+      var utag_data = { }
+    </script>
+
+    <!-- Within <head> of document below DataLayer snippet .
+    The utag.sync.js script should run as early as possible -->
+    <script src="https://tags.tiqcdn.com/utag/cmsgov/cms-ab2d/dev/utag.sync.js"></script>
+
+    <!-- Loading utag.js script asynchronously -->
+    <script type="text/javascript">
+      (function(a,b,c,d)
+        { a='https://tags.tiqcdn.com/utag/cmsgov/cms-ab2d/dev/utag.js'; b=document;c='script';d=b.createElement(c);d.src=a;d.type='text/java'+c;d.async=true; a=b.getElementsByTagName(c)[0];a.parentNode.insertBefore(d,a); }
+      )();
+    </script>
+
+    <!-- CMS Tealium/Google Analytics END -->
+
     <!-- Global site tag (gtag.js) - Google Analytics -->
     <script async src="https://www.google-analytics.com/analytics.js"></script>
     <script async src="/assets/js/autotrack.js"></script>
