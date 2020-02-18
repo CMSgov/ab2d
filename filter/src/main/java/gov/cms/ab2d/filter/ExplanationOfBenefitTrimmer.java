@@ -37,13 +37,14 @@ public class ExplanationOfBenefitTrimmer {
     private static void cleanOutUnNeededData(ExplanationOfBenefit benefit) {
         /*
            Keep:
-              patient;
-              provider;
-              organization;
-              facility;
+              patient
+              provider
+              organization
+              facility
               careTeam
-              diagnosis;
-              procedure;
+              diagnosis
+              procedure
+              billablePeriod
               item - Clear out required data
 
            Inherited - Identifier, resourceType, type
@@ -51,7 +52,6 @@ public class ExplanationOfBenefitTrimmer {
         benefit.setStatus(null);
         benefit.setExtension(null);
         benefit.setPatientTarget(null);
-        benefit.setBillablePeriod(null);
         benefit.setCreated(null);
         benefit.setEnterer(null);
         benefit.setEntererTarget(null);
