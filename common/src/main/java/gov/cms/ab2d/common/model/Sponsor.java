@@ -57,14 +57,11 @@ public class Sponsor {
         return false;
     }
 
-
-
     public List<Contract> getAggregatedAttestedContracts() {
         return parent == null
                 ? getAttestedContractsOfChildren()
                 : getAttestedContracts();
     }
-
 
     private List<Contract> getAttestedContractsOfChildren() {
         return children.stream()
@@ -72,7 +69,6 @@ public class Sponsor {
                 .flatMap(Collection::stream)
                 .collect(Collectors.toList());
     }
-
 
     /**
      * Every attested contract must have an attestedOn date.

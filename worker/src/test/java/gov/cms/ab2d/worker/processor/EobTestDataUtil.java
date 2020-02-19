@@ -16,7 +16,6 @@ import java.time.format.DateTimeFormatter;
 
 public final class EobTestDataUtil {
 
-
     public static ExplanationOfBenefit createEOB() {
         ExplanationOfBenefit eob = null;
 
@@ -53,11 +52,9 @@ public final class EobTestDataUtil {
         return bundleEntryComponent;
     }
 
-
     public static Bundle.BundleLinkComponent addNextLink() {
         Bundle.BundleLinkComponent linkComponent = new Bundle.BundleLinkComponent();
         linkComponent.setRelation(Bundle.LINK_NEXT);
         return linkComponent;
     }
-
 }
