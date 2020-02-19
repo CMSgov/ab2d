@@ -52,6 +52,9 @@ public class PropertiesServiceImpl implements PropertiesService {
     public List<PropertiesDTO> updateProperties(List<PropertiesDTO> propertiesDTOs) {
         List<PropertiesDTO> propertiesDTOsReturn = new ArrayList<>();
         for (PropertiesDTO propertiesDTO : propertiesDTOs) {
+            checkNameOfPropertyKey(propertiesDTO);
+
+            // If this becomes more extensive, consider having a table that contains a mapping of keys to validation expressions
             if (propertiesDTO.getKey().equals(PCP_CORE_POOL_SIZE)) {
                 int value = Integer.valueOf(propertiesDTO.getValue());
                 if (value > 100 || value < 1) {
@@ -79,11 +82,18 @@ public class PropertiesServiceImpl implements PropertiesService {
         return propertiesDTOsReturn;
     }
 
+    private void checkNameOfPropertyKey(PropertiesDTO properties) {
+        if (!ALLOWED_PROPERTY_NAMES.contains(properties.getKey())) {
+            log.error("Properties must contain a valid key name, received {}", properties.getKey());
+            throw new InvalidPropertiesException("Properties must contain a valid key name, received " + properties.getKey());
+        }
+    }
+
     private void addUpdatedPropertiesToList(List<PropertiesDTO> propertiesDTOsReturn, PropertiesDTO propertiesDTO) {
         Properties properties = getPropertiesByKey(propertiesDTO.getKey());
         propertiesDTO.setId(properties.getId());
         Properties mappedProperties = mapping.getModelMapper().map(propertiesDTO, Properties.class);
-        Properties updatedProperties = propertiesRepository.saveAndFlush(mappedProperties);
+        Properties updatedProperties = propertiesRepository.save(mappedProperties);
         propertiesDTOsReturn.add(mapping.getModelMapper().map(updatedProperties, PropertiesDTO.class));
     }
 
