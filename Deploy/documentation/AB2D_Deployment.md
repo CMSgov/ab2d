@@ -20,7 +20,6 @@
    * [Create required S3 buckets](#create-required-s3-buckets)
 1. [Create or update base aws environment](#create-or-update-base-aws-environment)
 1. [Update application](#update-application)
-1. [Deploy and configure Jenkins](#deploy-and-configure-jenkins)
 1. [Deploy AB2D static site](#deploy-ab2d-static-site)
    * [Download the AB2D domain certificates and get private key from CMS](#download-the-ab2d-domain-certificates-and-get-private-key-from-cms)
    * [Import the AB2D domain certificate into certificate manager](#import-the-ab2d-domain-certificate-into-certificate-manager)
@@ -58,6 +57,7 @@
 1. [Import the sandbox domain certificate into certificate manager](#import-the-sandbox-domain-certificate-into-certificate-manager)
 1. [Map the application load balancer for sandbox certificate](#map-the-application-load-balancer-for-sandbox-certificate)
 1. [Setup Jenkins server in management AWS account](#setup-jenkins-server-in-management-aws-account)
+1. [Deploy and configure Jenkins](#deploy-and-configure-jenkins)
 
 ## Note the starting state of the customer AWS account
 
@@ -1459,454 +1459,6 @@
      --database-secret-datetime=2019-10-25-14-55-07 \
      --auto-approve
    ```
-
-## Deploy and configure Jenkins
-
-1. Launch an EC2 instance from the Jenkins AMI
-
-1. Note that the following steps will likely be different on the gold disk version.*
-
-1. Connection to the Jenkins instance
-
-   *Example:*
-   
-   ```ShellSession
-   $ ssh -i ~/.ssh/ab2d-sbdemo-shared.pem centos@54.208.238.51
-   ```
-
-1. Install, enable, and start firewalld
-
-   1. Install firewalld
-
-      ```ShellSession
-      $ sudo yum install firewalld -y
-      ```
-
-   1. Enable firewalld
-
-      ```ShellSession
-      $ sudo systemctl enable firewalld
-      ```
-
-   1. Start firewalld
-
-      ```ShellSession
-      $ sudo systemctl start firewalld
-      ```
-
-   1. Check the firewall status
-
-      ```ShellSession
-      $ sudo firewall-cmd --state
-      ```
-
-   1. Verify that the following is displayed in the output
-
-      ```
-      running
-      ```
-
-   1. Check the firewalld daemon status
-
-      ```ShellSession
-      $ systemctl status firewalld | grep running
-      ```
-
-   1. Verify that the following is displayed
-
-      ```
-      Active: active (running)...
-      ```
-
-1. Note the default Jenkins port
-
-   1. Open the Jenkins config file
-
-      ```ShellSession
-      $ sudo cat /etc/sysconfig/jenkins | grep JENKINS_PORT
-      ```
-
-   1. Note the output
-
-      *Example:*
-      
-      ```
-      JENKINS_PORT="8080"
-      ```
-
-1. Add HTTP as a permanent service for the public zone
-
-   ```ShellSession
-   $ sudo firewall-cmd --zone=public --add-service=http --permanent
-   ```
-
-1. Determine what ports the server is expecting for network traffic
-
-   1. Install Security-Enhanced Linux (SELinux) tools
-   
-      ```ShellSession
-      $ sudo yum install policycoreutils-devel -y
-      $ sudo yum install setroubleshoot-server -y
-      ```
-
-   1. Determine what ports SELinux has configured for incoming network traffic
-
-      ```ShellSession
-      $ sepolicy network -t http_port_t
-      ```
-
-   1. Note the ports that are output
-
-      ```
-      http_port_t: tcp: 80,81,443,488,8008,8009,8443,9000
-      ```
-
-   1. Note that port 8080 is not listed
-
-1. Add port 8080 to SELinux policy configuration
-
-   ```ShellSession
-   $ sudo semanage port -m -t http_port_t -p tcp 8080
-   ```
-
-1. Verify that port 8080 is now included in SELinux policy configuration
-
-   ```ShellSession
-   $ sepolicy network -t http_port_t
-   ```
-
-1. Note the ports that are output
-
-   ```
-   http_port_t: tcp: 8080,80,81,443,488,8008,8009,8443,9000
-   ```
-   
-1. Configure the Jenkins servive for the firewall
-
-   1. Note the Jenkins wiki lists steps that are not necessary with current versions of CentOS
-      
-   1. Add Jenkins as a permanent service
-
-      ```ShellSession
-      $ sudo firewall-cmd --permanent --add-service=jenkins
-      ```
-
-   1. Reload
-
-      ```ShellSession
-      $ sudo firewall-cmd --reload
-      ```
-
-   1. Verify the port forwarding
-
-      ```ShellSession
-      $ sudo firewall-cmd --list-all
-      ```
-
-   1. Verify the following settings looks like this
-
-      - **services:** dhcpv6-client http jenkins ssh
-
-      - **masquerade:** no
-
-      - **forward-ports:**
-
-1. Check the current status of Jenkins
-
-   1. Enter the following
-   
-      ```ShellSession
-      $ systemctl status jenkins
-      ```
-
-   1. Note the following from the output
-
-      ```
-      Active: inactive (dead)
-      ```
-   
-1. Enable Jenkins
-
-   1. Enter the following
-  
-      ```ShellSession
-      $ sudo systemctl enable jenkins
-      ```
-
-   1. Note that the output shows that the system automatically did "chkconfig" on the sercvice because it is not a native service
-
-      ```
-      jenkins.service is not a native service, redirecting to /sbin/chkconfig.
-      Executing /sbin/chkconfig jenkins on
-      ```
-
-1. Start Jenkins
-
-   ```ShellSession
-   $ sudo systemctl start jenkins
-   ```
-   
-1. Check the current status of Jenkins
-
-   1. Enter the following
-    
-      ```ShellSession
-      $ systemctl status jenkins -l
-      ```
- 
-   1. Note the following from the output
- 
-      ```
-      Active: active (running)
-      ``` 
-
-1. Ensure that Jenkins is running on the default port 8080
-
-   1. Enter the following
-    
-      ```ShellSession
-      $ netstat -an | grep 8080
-      ```
-
-   1. Verify that the following is output
-
-      ```
-      tcp6       0      0 :::8080                 :::*                    LISTEN
-      ```
-
-   1. If no output is displayed, do the following
-
-      1. Restart Jenkins
-
-         ```ShellSession
-         $ sudo systemctl restart jenkins
-         ```
-
-      1. Repeat the "netstat" port step above
-
-1. Open Chrome
-
-1. Enter the following in the address bar
-
-   > http://{jenkins public ip address}:8080
-
-1. Configure Jenkins
-
-   1. Return to the terminal
-
-   1. Get the Jenkins administrator password
-
-      ```ShellSession
-      $ sudo cat /var/lib/jenkins/secrets/initialAdminPassword
-      ```
-
-   1. Copy and paste the password into the **Administrator password** text box of the Jenkins page displayed in Chrome
-
-   1. Select **Continue** on the *Unlock Jenkins* page
-
-   1. Select **Install suggested plugins**
-
-   1. Wait for installation to complete
-
-   1. Enter the following items for your user
-
-      - Username
-
-      - Password
-
-      - Confirm password
-
-      - Full name
-
-      - E-mail address
-
-   1. Select **Save and Continue**
-
-   1. Note the Jenkins URL
-
-   1. Select **Save and Finish**
-
-   1. Select **Start using Jenkins**
-
-1. Get information about the jenkins user account
-
-   1. Enter the following
-   
-      ```ShellSession
-      $ getent passwd jenkins
-      ```
-
-   2. Note the output
-
-      *Example:*
-      
-      ```
-      jenkins:x:997:994:Jenkins Automation Server:/var/lib/jenkins:/bin/false
-      ```
-
-   3. Note that the "/bin/false" in the output means that the user will not be able to use a login shell when running various commands
-
-1. Modify the jenkins user to allow it to use a login shell
-
-   1. Enter the following
-   
-      ```ShellSession
-      $ sudo usermod -s /bin/bash jenkins
-      ```
-
-   1. Verify the change
-
-      ```ShellSession
-      $ getent passwd jenkins
-      ```
-
-   1. Note the output
-
-      *Example:*
-      
-      ```
-      jenkins:x:997:994:Jenkins Automation Server:/var/lib/jenkins:/bin/bash
-      ```
-
-1. Give the local jenkins user a password for intial SSH connections
-
-   1. Enter the following
-   
-      ```ShellSession
-      $ sudo passwd jenkins
-      ```
-
-   1. Enter a password at the **New password** prompt
-
-   1. Reenter the password at the **Retype new password** prompt
-
-1. Note that if the jenkins user needs to run a build on a remote system, it will need SSH keys to do so
-
-1. Allow password authentication
-
-   1. Open the "sshd_config" file
-
-      ```ShellSession
-      $ sudo vim /etc/ssh/sshd_config
-      ```
-
-   1. Change the following line to look like this
-
-      ```
-      PasswordAuthentication yes
-      ```
-
-   1. Restart sshd
-
-      ```ShellSession
-      $ sudo systemctl restart sshd
-      ```
-
-1. Set up SSH keys for jenkins user
-
-   1. Switch to the jenkins user
-   
-      ```ShellSession
-      $ sudo su - jenkins
-      ```
-
-   1. View the jenkins user home directory
-
-      ```ShellSession
-      $ pwd
-      ```
-
-   1. Note the home directory
-
-      ```
-      /var/lib/jenkins
-      ```
-
-   1. Initiate creation of SSH keys
-
-      ```ShellSession
-      $ ssh-keygen
-      ```
-
-   1. Press **return** on the keyboard at the "Enter file in which to save the key (/var/lib/jenkins/.ssh/id_rsa)" prompt
-
-   1. Press **return** on the keyboard at the "Enter passphrase (empty for no passphrase)" prompt
-
-   1. Press **return** on the keyboard at the "Enter same passphrase again" prompt
-
-   1. Allow the machine to SSH into itself
-
-      ```ShellSession
-      $ ssh-copy-id jenkins@localhost
-      ```
-   
-   1. Enter the following at the "Are you sure you want to continue connecting (yes/no)" prompt
-
-      ```
-      yes
-      ```
-
-   1. Enter the jenkins user password at the "jenkins@localhost's password" prompt
-
-   1. Switch back to the centos user
-
-      ```ShellSession
-      $ exit
-      ```
-
-1. Disallow password authentication
-
-   1. Open the "sshd_config" file
-
-      ```ShellSession
-      $ sudo vim /etc/ssh/sshd_config
-      ```
-
-   1. Change the following line to look like this
-
-      ```
-      PasswordAuthentication no
-      ```
-
-   1. Restart sshd
-
-      ```ShellSession
-      $ sudo systemctl restart sshd
-      ```
-
-1. Verify that SSH to "jenkins@localhost" now works
-
-   ```ShellSession
-   $ sudo -u jenkins ssh jenkins@localhost
-   ```
-
-1. Exit the shell
-
-   ```ShellSession
-   $ exit
-   ```
-   
-1. Note that the resaon why jenkins needs ssh access to its server is so that can run builds locally (if required), since jenkins will do builds over SSH by default
-
-1. Add jenkins user to sudoers file
-
-   1. Enter the following
-
-      ```ShellSession
-      $ sudo visudo
-      ```
-
-   1. Modify this section as follows
-
-      ```
-      ## Allow root to run any commands anywhere
-      root    ALL=(ALL)       ALL
-      jenkins ALL=(ALL)       NOPASSWD: ALL
-      ```
-
-    1. Note that the above setting for the jenkins user is not ideal since it means that the jenkins user will be able to do "sudo" on all commands
-
-    1. Note that it would be better to lock down the jenkins user so that it can only do "sudo" on a certain subset of commands based on the requirements
 
 ## Deploy AB2D static site
 
@@ -4752,3 +4304,433 @@
       - nvme0n1p3
 
         - VolGroup00-homeVol   253:1    0  223G  0 lvm  /home
+
+## Deploy and configure Jenkins
+
+1. Connection to the Jenkins instance
+   
+   ```ShellSession
+   $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@18.212.95.139
+   ```
+
+1. Install, enable, and start firewalld
+
+   1. Install firewalld
+
+      ```ShellSession
+      $ sudo yum install firewalld -y
+      ```
+
+   1. Enable firewalld
+
+      ```ShellSession
+      $ sudo systemctl enable firewalld
+      ```
+
+   1. Start firewalld
+
+      ```ShellSession
+      $ sudo systemctl start firewalld
+      ```
+
+   1. Check the firewall status
+
+      ```ShellSession
+      $ sudo firewall-cmd --state
+      ```
+
+   1. Verify that the following is displayed in the output
+
+      ```
+      running
+      ```
+
+   1. Check the firewalld daemon status
+
+      ```ShellSession
+      $ systemctl status firewalld | grep running
+      ```
+
+   1. Verify that the following is displayed
+
+      ```
+      Active: active (running)...
+      ```
+
+1. Note the default Jenkins port
+
+   1. Open the Jenkins config file
+
+      ```ShellSession
+      $ sudo cat /etc/sysconfig/jenkins | grep JENKINS_PORT
+      ```
+
+   1. Note the output
+
+      *Example:*
+      
+      ```
+      JENKINS_PORT="8080"
+      ```
+
+1. Add HTTP as a permanent service for the public zone
+
+   ```ShellSession
+   $ sudo firewall-cmd --zone=public --add-service=http --permanent
+   ```
+
+1. Determine what ports the server is expecting for network traffic
+
+   1. Install Security-Enhanced Linux (SELinux) tools
+   
+      ```ShellSession
+      $ sudo yum install policycoreutils-devel -y
+      $ sudo yum install setroubleshoot-server -y
+      ```
+
+   1. Determine what ports SELinux has configured for incoming network traffic
+
+      ```ShellSession
+      $ sepolicy network -t http_port_t
+      ```
+
+   1. Note the ports that are output
+
+      ```
+      http_port_t: tcp: 80,81,443,488,8008,8009,8443,9000
+      ```
+
+   1. Note that port 8080 is not listed
+
+1. Add port 8080 to SELinux policy configuration
+
+   ```ShellSession
+   $ sudo semanage port -m -t http_port_t -p tcp 8080
+   ```
+
+1. Verify that port 8080 is now included in SELinux policy configuration
+
+   ```ShellSession
+   $ sepolicy network -t http_port_t
+   ```
+
+1. Note the ports that are output
+
+   ```
+   http_port_t: tcp: 8080,80,81,443,488,8008,8009,8443,9000
+   ```
+   
+1. Configure the Jenkins servive for the firewall
+
+   1. Note the Jenkins wiki lists steps that are not necessary with current versions of CentOS
+      
+   1. Add Jenkins as a permanent service
+
+      ```ShellSession
+      $ sudo firewall-cmd --permanent --add-service=jenkins
+      ```
+
+   1. Reload
+
+      ```ShellSession
+      $ sudo firewall-cmd --reload
+      ```
+
+   1. Verify the port forwarding
+
+      ```ShellSession
+      $ sudo firewall-cmd --list-all
+      ```
+
+   1. Verify the following settings looks like this
+
+      - **services:** dhcpv6-client http jenkins ssh
+
+      - **masquerade:** no
+
+      - **forward-ports:**
+   
+1. Enable Jenkins
+
+   1. Enter the following
+  
+      ```ShellSession
+      $ sudo systemctl enable jenkins
+      ```
+
+   1. Note that the output shows that the system automatically did "chkconfig" on the sercvice because it is not a native service
+
+      ```
+      jenkins.service is not a native service, redirecting to /sbin/chkconfig.
+      Executing /sbin/chkconfig jenkins on
+      ```
+
+1. Check the current status of Jenkins
+   
+   ```ShellSession
+   $ systemctl status jenkins -l
+   ```
+
+1. If Jenkins is not running, do the following
+   
+   1. Start Jenkins
+
+      ```ShellSession
+      $ sudo systemctl start jenkins
+      ```
+   
+   1. Re-check the current status of Jenkins
+ 
+   1. Note that you should see the following in the output
+ 
+      ```
+      Active: active (running)
+      ``` 
+
+1. Ensure that Jenkins is running on the default port 8080
+
+   1. Enter the following
+    
+      ```ShellSession
+      $ netstat -an | grep 8080
+      ```
+
+   1. Verify that the following is output
+
+      ```
+      tcp6       0      0 :::8080                 :::*                    LISTEN
+      ```
+
+   1. If no output is displayed, do the following
+
+      1. Restart Jenkins
+
+         ```ShellSession
+         $ sudo systemctl restart jenkins
+         ```
+
+      1. Repeat the "netstat" port step above
+
+1. Open Chrome
+
+1. Enter the following in the address bar
+
+   > http://http://18.212.95.139/:8080
+
+1. Configure Jenkins
+
+   1. Return to the terminal
+
+   1. Get the Jenkins administrator password
+
+      ```ShellSession
+      $ sudo cat /var/lib/jenkins/secrets/initialAdminPassword
+      ```
+
+   1. Copy and paste the password into the **Administrator password** text box of the Jenkins page displayed in Chrome
+
+   1. Select **Continue** on the *Unlock Jenkins* page
+
+   1. Select **Install suggested plugins**
+
+   1. Wait for installation to complete
+
+   1. Enter the following items for your user
+
+      - Username (alphanumeric characters, underscore and dash; e.g. fred-smith)
+
+      - Password
+
+      - Confirm password
+
+      - Full name
+
+      - E-mail address (e.g. fred.smith@semanticbits.com)
+
+   1. Select **Save and Continue**
+
+   1. Note the Jenkins URL
+
+   1. Select **Save and Finish**
+
+   1. Select **Start using Jenkins**
+
+1. Get information about the jenkins user account
+
+   1. Enter the following
+   
+      ```ShellSession
+      $ getent passwd jenkins
+      ```
+
+   2. Note the output
+
+      *Example:*
+      
+      ```
+      jenkins:x:997:994:Jenkins Automation Server:/var/lib/jenkins:/bin/false
+      ```
+
+   3. Note that the "/bin/false" in the output means that the user will not be able to use a login shell when running various commands
+
+1. Modify the jenkins user to allow it to use a login shell
+
+   1. Enter the following
+   
+      ```ShellSession
+      $ sudo usermod -s /bin/bash jenkins
+      ```
+
+   1. Verify the change
+
+      ```ShellSession
+      $ getent passwd jenkins
+      ```
+
+   1. Note the output
+
+      *Example:*
+      
+      ```
+      jenkins:x:997:994:Jenkins Automation Server:/var/lib/jenkins:/bin/bash
+      ```
+
+1. Give the local jenkins user a password for intial SSH connections
+
+   1. Enter the following that is at least 15 characters
+   
+      ```ShellSession
+      $ sudo passwd jenkins
+      ```
+
+   1. Enter a password at the **New password** prompt
+
+   1. Reenter the password at the **Retype new password** prompt
+
+1. Note that if the jenkins user needs to run a build on a remote system, it will need SSH keys to do so
+
+1. Allow password authentication
+
+   1. Open the "sshd_config" file
+
+      ```ShellSession
+      $ sudo vim /etc/ssh/sshd_config
+      ```
+
+   1. Change the following line to look like this
+
+      ```
+      PasswordAuthentication yes
+      ```
+
+   1. Restart sshd
+
+      ```ShellSession
+      $ sudo systemctl restart sshd
+      ```
+
+1. Set up SSH keys for jenkins user
+
+   1. Switch to the jenkins user
+   
+      ```ShellSession
+      $ sudo su - jenkins
+      ```
+
+   1. View the jenkins user home directory
+
+      ```ShellSession
+      $ pwd
+      ```
+
+   1. Note the home directory
+
+      ```
+      /var/lib/jenkins
+      ```
+
+   1. Initiate creation of SSH keys
+
+      ```ShellSession
+      $ ssh-keygen
+      ```
+
+   1. Press **return** on the keyboard at the "Enter file in which to save the key (/var/lib/jenkins/.ssh/id_rsa)" prompt
+
+   1. Press **return** on the keyboard at the "Enter passphrase (empty for no passphrase)" prompt
+
+   1. Press **return** on the keyboard at the "Enter same passphrase again" prompt
+
+   1. Allow the machine to SSH into itself
+
+      ```ShellSession
+      $ ssh-copy-id jenkins@localhost
+      ```
+   
+   1. Enter the following at the "Are you sure you want to continue connecting (yes/no)" prompt
+
+      ```
+      yes
+      ```
+
+   1. Enter the jenkins user password at the "jenkins@localhost's password" prompt
+
+   1. Switch back to the centos user
+
+      ```ShellSession
+      $ exit
+      ```
+
+1. Disallow password authentication
+
+   1. Open the "sshd_config" file
+
+      ```ShellSession
+      $ sudo vim /etc/ssh/sshd_config
+      ```
+
+   1. Change the following line to look like this
+
+      ```
+      PasswordAuthentication no
+      ```
+
+   1. Restart sshd
+
+      ```ShellSession
+      $ sudo systemctl restart sshd
+      ```
+
+1. Verify that SSH to "jenkins@localhost" now works
+
+   ```ShellSession
+   $ sudo -u jenkins ssh jenkins@localhost
+   ```
+
+1. Exit the shell
+
+   ```ShellSession
+   $ exit
+   ```
+   
+1. Note that the resaon why jenkins needs ssh access to its server is so that can run builds locally (if required), since jenkins will do builds over SSH by default
+
+1. Add jenkins user to sudoers file
+
+   1. Enter the following
+
+      ```ShellSession
+      $ sudo visudo
+      ```
+
+   1. Modify this section as follows
+
+      ```
+      ## Allow root to run any commands anywhere
+      root    ALL=(ALL)       ALL
+      jenkins ALL=(ALL)       NOPASSWD: ALL
+      ```
+
+    1. Note that the above setting for the jenkins user is not ideal since it means that the jenkins user will be able to do "sudo" on all commands
+
+    1. Note that it would be better to lock down the jenkins user so that it can only do "sudo" on a certain subset of commands based on the requirements
