@@ -24,7 +24,7 @@ import java.util.concurrent.Future;
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.assertThat;
 
-@SpringBootTest
+@SpringBootTest(properties = {"pcp.core.pool.size=3" , "pcp.max.pool.size=20", "pcp.scaleToMax.time=20"})
 @Testcontainers
 @Slf4j
 public class AutoScalingServiceTest {
@@ -32,8 +32,6 @@ public class AutoScalingServiceTest {
     public static final int QUEUE_SIZE = 25;
     public static final int MAX_POOL_SIZE = 20;
     public static final int MIN_POOL_SIZE = 3;
-    @Autowired
-    private AutoScalingService autoScalingService;
 
     @Autowired
     private ThreadPoolTaskExecutor patientProcessorThreadPool;
@@ -41,11 +39,13 @@ public class AutoScalingServiceTest {
     @Container
     private static final PostgreSQLContainer postgreSQLContainer = new AB2DPostgresqlContainer();
 
+
     @BeforeEach
     public void init() {
         patientProcessorThreadPool.getThreadPoolExecutor().purge();
         patientProcessorThreadPool.getThreadPoolExecutor().getQueue().clear();
     }
+
 
 
     @Test
@@ -97,7 +97,7 @@ public class AutoScalingServiceTest {
         // Last metric taken should always be MAX_POOL_SIZE
         assertThat(new ArrayDeque<>(metrics).getLast(), equalTo(MAX_POOL_SIZE));
         // Some intermediate sizes should be in between, at least 3.
-        assertThat(metrics.size(), greaterThanOrEqualTo(4));
+        assertThat(metrics.size(), greaterThanOrEqualTo(3));
         List<Integer> metricsList = new ArrayList<>(metrics);
         for (int i = 1; i < metricsList.size(); i++) {
             assertThat(metricsList.get(i - 1), lessThan(metricsList.get(i)));
