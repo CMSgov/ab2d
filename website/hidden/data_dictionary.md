@@ -26,7 +26,7 @@ table td {
         <tr>
             <th>AB2D&nbsp;Data&nbsp;Element</th>
             <th>FHIR&nbsp;Data&nbsp;Element</th>
-            <th>Definition</th>
+            <th>Definition&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</th>
             <th>
                 <a target="_blank" href="http://build.fhir.org/conformance-rules.html#cardinality">Cardinality</a>
             </th>
@@ -44,7 +44,7 @@ table td {
             <td>Enrollee identifier</td>
             <td>Patient.identifier</td>
             <td>
-                An CCW identifier for this patient in a form of Patient/&lt;identifier&gt;.
+                An CCW identifier for this patient in a form of Patient/&lt;identifier&gt; - Display MBI.
             </td>
             <td>1..1</td>
             <td></td>
@@ -62,8 +62,13 @@ table td {
             <td>Claim types</td>
             <td>ExplanationOfBenefit.type<br></td>
             <td>
-                An array of claim type codes in different coding systems, such as NCH Claim Type Code,
-                Blue Button EOB Type, FHIR Claim Type, and others.
+                Claim type code include:<br>
+                10-HHA claim<br>
+                20-Non swing bed SNF claim<br>
+                30-Swing bed SNF claim<br>
+                40-Outpatient claim<br>
+                50-Hospice claim<br>
+                60-Inpatient claim<br>
             </td>
             <td>1..*</td>
             <td>
