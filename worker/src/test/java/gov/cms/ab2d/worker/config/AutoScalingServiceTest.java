@@ -96,8 +96,8 @@ public class AutoScalingServiceTest {
         // Then check that there were intermediate pool increases between 3 and MAX_POOL_SIZE.
         // Last metric taken should always be MAX_POOL_SIZE
         assertThat(new ArrayDeque<>(metrics).getLast(), equalTo(MAX_POOL_SIZE));
-        // Some intermediate sizes should be in between, at least 3.
-        assertThat(metrics.size(), greaterThanOrEqualTo(3));
+        // There are 3 intermediate metrics and 1 final metric
+        assertThat(metrics.size(), greaterThanOrEqualTo(4));
         List<Integer> metricsList = new ArrayList<>(metrics);
         for (int i = 1; i < metricsList.size(); i++) {
             assertThat(metricsList.get(i - 1), lessThan(metricsList.get(i)));
