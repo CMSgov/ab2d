@@ -56,7 +56,9 @@ individuals entitled to or enrolled in Medicare, and to protect the security of 
 
 ## Data Dictionary
 
-<i>TODO: Embedded Spreadsheet</i>
+The full data dictionary is [here](data_dictionary).
+
+The description of the data used (and reused) elements is found [here](data_types).
 
 ## Sample AB2D File
 
