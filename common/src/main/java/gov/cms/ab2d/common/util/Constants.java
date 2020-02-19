@@ -29,4 +29,11 @@ public final class Constants {
     public static final String FHIR_PREFIX = "/fhir";
 
     public static final String ADMIN_PREFIX = "/admin";
+
+    // Properties
+    public static final String PCP_CORE_POOL_SIZE = "pcp.core.pool.size";
+
+    public static final String PCP_MAX_POOL_SIZE = "pcp.max.pool.size";
+
+    public static final String PCP_SCALE_TO_MAX_TIME = "pcp.scaleToMax.time";
 }

@@ -10,4 +10,8 @@ public interface PropertiesService {
     List<Properties> getAllProperties();
 
     List<PropertiesDTO> getAllPropertiesDTO();
+
+    Properties getPropertiesByKey(String key);
+
+    List<PropertiesDTO> updateProperties(List<PropertiesDTO> propertiesDTOs);
 }
