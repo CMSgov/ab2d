@@ -99,7 +99,7 @@ class JobProcessorUnitTest {
         when(jobRepository.findByJobUuid(anyString())).thenReturn(job);
 
         patientsByContract = createPatientsByContractResponse(contract);
-        Mockito.when(contractAdapter.getPatients(anyString())).thenReturn(patientsByContract);
+        Mockito.when(contractAdapter.getPatients(anyString(), anyInt())).thenReturn(patientsByContract);
 
         final Path outputDirPath = Paths.get(efsMountTmpDir.toString(), jobUuid);
         final Path outputDir = Files.createDirectories(outputDirPath);
@@ -179,7 +179,7 @@ class JobProcessorUnitTest {
 
     private void doVerify() {
         verify(fileService).createDirectory(any());
-        verify(contractAdapter).getPatients(anyString());
+        verify(contractAdapter).getPatients(anyString(), anyInt());
         verify(patientClaimsProcessor, atLeast(1)).process(any(), any(), any());
     }
 
@@ -202,7 +202,7 @@ class JobProcessorUnitTest {
         assertThat(processedJob.getExpiresAt(), notNullValue());
 
         verify(fileService).createDirectory(any());
-        verify(contractAdapter).getPatients(anyString());
+        verify(contractAdapter).getPatients(anyString(), anyInt());
     }
 
     @Test
@@ -223,7 +223,7 @@ class JobProcessorUnitTest {
         assertThat(processedJob.getStatusMessage(), is("The export process has produced no results"));
 
         verify(fileService).createDirectory(any());
-        verify(contractAdapter).getPatients(anyString());
+        verify(contractAdapter).getPatients(anyString(), anyInt());
         verify(patientClaimsProcessor, never()).process(any(), any(), any());
     }
 
@@ -255,7 +255,7 @@ class JobProcessorUnitTest {
         assertThat(processedJob.getExpiresAt(), notNullValue());
 
         verify(fileService, times(2)).createDirectory(any());
-        verify(contractAdapter).getPatients(anyString());
+        verify(contractAdapter).getPatients(anyString(), anyInt());
         verify(patientClaimsProcessor, atLeast(1)).process(any(), any(), any());
         verify(jobRepository, atLeastOnce()).updatePercentageCompleted(anyString(), anyInt());
     }
@@ -275,7 +275,7 @@ class JobProcessorUnitTest {
         var uncheckedIOE = new UncheckedIOException(errMsg, new IOException(errMsg));
 
         Mockito.when(fileService.createDirectory(any())).thenThrow(uncheckedIOE);
-        Mockito.lenient().when(contractAdapter.getPatients(anyString())).thenReturn(patientsByContract);
+        Mockito.lenient().when(contractAdapter.getPatients(anyString(), anyInt())).thenReturn(patientsByContract);
 
         var processedJob = cut.process(jobUuid);
 
@@ -284,7 +284,7 @@ class JobProcessorUnitTest {
         assertThat(processedJob.getExpiresAt(), nullValue());
 
         verify(fileService).createDirectory(any());
-        verify(contractAdapter, never()).getPatients(anyString());
+        verify(contractAdapter, never()).getPatients(anyString(), anyInt());
     }
 
     @Test
@@ -295,7 +295,7 @@ class JobProcessorUnitTest {
         var uncheckedIOE = new UncheckedIOException(errMsg, new IOException(errMsg));
 
         Mockito.when(fileService.createDirectory(any())).thenThrow(uncheckedIOE);
-        Mockito.lenient().when(contractAdapter.getPatients(anyString())).thenReturn(patientsByContract);
+        Mockito.lenient().when(contractAdapter.getPatients(anyString(), anyInt())).thenReturn(patientsByContract);
 
         var processedJob = cut.process(jobUuid);
 
@@ -304,7 +304,7 @@ class JobProcessorUnitTest {
         assertThat(processedJob.getExpiresAt(), nullValue());
 
         verify(fileService).createDirectory(any());
-        verify(contractAdapter, never()).getPatients(anyString());
+        verify(contractAdapter, never()).getPatients(anyString(), anyInt());
     }
 
     @Test
@@ -403,10 +403,11 @@ class JobProcessorUnitTest {
     }
 
     private PatientDTO toPatientDTO() throws ParseException {
-        final int anInt = random.nextInt(11);
+        int anInt = random.nextInt(11);
+        var dateRange = new FilterOutByDate.DateRange(new Date(0), new Date());
         return PatientDTO.builder()
                 .patientId("patient_" + anInt)
-                .datesUnderContract(new FilterOutByDate.DateRange(new Date(0), new Date()))
+                .dateRangesUnderContract(Arrays.asList(dateRange))
                 .build();
     }
 }

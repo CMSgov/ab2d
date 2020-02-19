@@ -9,6 +9,13 @@ public interface BFDClient {
     Bundle requestNextBundleFromServer(Bundle bundle);
     Bundle requestPatientFromServer(String patientId);
 
-    Bundle requestPartDEnrolleesFromServer(String contractNum, int month);
+    /**
+     * Request BFD for a list of all active patients in a contract for a specific month
+     *
+     * @param contractNumber
+     * @param month
+     * @return Bundle of Patient Resources
+     */
+    Bundle requestPartDEnrolleesFromServer(String contractNumber, int month);
 }
 
