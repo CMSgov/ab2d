@@ -38,6 +38,7 @@ import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Random;
 
+import static gov.cms.ab2d.common.util.Constants.NDJSON_FIRE_CONTENT_TYPE;
 import static java.lang.Boolean.TRUE;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.Matchers.notNullValue;
@@ -69,7 +70,7 @@ class JobProcessorIntegrationTest {
     @Autowired
     private JobOutputRepository jobOutputRepository;
     @Autowired
-    private ContractAdapter contractAdapter;
+    private ContractAdapter contractAdapterStub;
     @Autowired
     private OptOutRepository optOutRepository;
 
@@ -113,13 +114,12 @@ class JobProcessorIntegrationTest {
         FhirContext fhirContext = FhirContext.forDstu3();
         PatientClaimsProcessor patientClaimsProcessor = new PatientClaimsProcessorImpl(mockBfdClient, fhirContext);
 
-        cut = new JobProcessorImpl(fileService, jobRepository, jobOutputRepository, contractAdapter, patientClaimsProcessor,
+        cut = new JobProcessorImpl(fileService, jobRepository, jobOutputRepository, contractAdapterStub, patientClaimsProcessor,
                 optOutRepository);
         ReflectionTestUtils.setField(cut, "cancellationCheckFrequency", 10);
         ReflectionTestUtils.setField(cut, "efsMount", tmpEfsMountDir.toString());
         ReflectionTestUtils.setField(cut, "failureThreshold", 10);
     }
-
 
     @Test
     @DisplayName("When a job is in submitted status, it can be processed")
@@ -246,10 +246,8 @@ class JobProcessorIntegrationTest {
         job.setStatus(JobStatus.SUBMITTED);
         job.setStatusMessage("0%");
         job.setUser(user);
+        job.setOutputFormat(NDJSON_FIRE_CONTENT_TYPE);
         job.setCreatedAt(OffsetDateTime.now());
         return jobRepository.save(job);
     }
-
-
-
 }

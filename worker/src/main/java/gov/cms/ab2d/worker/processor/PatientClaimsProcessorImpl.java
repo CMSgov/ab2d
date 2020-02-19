@@ -40,32 +40,33 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
     private final FhirContext fhirContext;
 
     @Async("patientProcessorThreadPool")
-    public Future<Void> process(PatientDTO patientDTO, final JobDataWriter writer, OffsetDateTime attTime) {
+    /**
+     * Process the retrieval of patient explanation of benefit objects and write them
+     * to a file using the writer
+     */
+    public Future<Void> process(PatientDTO patientDTO, final StreamHelper helper, OffsetDateTime attTime) {
         int resourceCount = 0;
 
+        String payload = "";
         try {
+            // Retrieve the resource bundle of EOB objects
             var resources = getEobBundleResources(patientDTO, attTime);
 
             var jsonParser = fhirContext.newJsonParser();
 
-            var byteArrayOutputStream = new ByteArrayOutputStream();
             for (var resource : resources) {
                 ++resourceCount;
                 try {
-                    final String payload = jsonParser.encodeResourceToString(resource) + System.lineSeparator();
-                    byteArrayOutputStream.write(payload.getBytes(StandardCharsets.UTF_8));
+                    payload = jsonParser.encodeResourceToString(resource) + System.lineSeparator();
+                    helper.addData(payload.getBytes(StandardCharsets.UTF_8));
                 } catch (Exception e) {
                     log.warn("Encountered exception while processing job resources: {}", e.getMessage());
-                    handleException(writer, e);
+                    handleException(helper, payload, e);
                 }
-            }
-
-            if (byteArrayOutputStream.size() > 0) {
-                writer.addDataEntry(byteArrayOutputStream.toByteArray());
             }
         } catch (Exception e) {
             try {
-                handleException(writer, e);
+                handleException(helper, payload, e);
             } catch (IOException e1) {
                 //should not happen - original exception will be thrown
                 log.error("error during exception handling to write error record");
@@ -78,7 +79,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
         return new AsyncResult<>(null);
     }
 
-    private void handleException(JobDataWriter writer, Exception e) throws IOException {
+    private void handleException(StreamHelper helper, String data, Exception e) throws IOException {
         var errMsg = ExceptionUtils.getRootCauseMessage(e);
         var operationOutcome = FHIRUtil.getErrorOutcome(errMsg);
 
@@ -87,7 +88,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
 
         var byteArrayOutputStream = new ByteArrayOutputStream();
         byteArrayOutputStream.write(payload.getBytes(StandardCharsets.UTF_8));
-        writer.addErrorEntry(byteArrayOutputStream.toByteArray());
+        helper.addError(data);
     }
 
     private List<Resource> getEobBundleResources(PatientDTO patient, OffsetDateTime attTime) {
@@ -95,12 +96,12 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
         Bundle eobBundle = bfdClient.requestEOBFromServer(patient.getPatientId());
 
         final List<BundleEntryComponent> entries = eobBundle.getEntry();
-        final List<Resource> resources = extractResources(entries, patient.getDatesUnderContract(), attTime);
+        final List<Resource> resources = extractResources(entries, patient.getDateRangesUnderContract(), attTime);
 
         while (eobBundle.getLink(Bundle.LINK_NEXT) != null) {
             eobBundle = bfdClient.requestNextBundleFromServer(eobBundle);
             final List<BundleEntryComponent> nextEntries = eobBundle.getEntry();
-            resources.addAll(extractResources(nextEntries, patient.getDatesUnderContract(), attTime));
+            resources.addAll(extractResources(nextEntries, patient.getDateRangesUnderContract(), attTime));
         }
 
         log.debug("Bundle - Total: {} - Entries: {} ", eobBundle.getTotal(), entries.size());

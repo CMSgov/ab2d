@@ -21,6 +21,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import java.time.OffsetDateTime;
 import java.util.Random;
 
+import static gov.cms.ab2d.common.util.Constants.NDJSON_FIRE_CONTENT_TYPE;
 import static java.lang.Boolean.TRUE;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
@@ -57,7 +58,6 @@ class JobPreProcessorIntegrationTest {
         job = createJob(user);
     }
 
-
     @Test
     @DisplayName("When a job is in submitted status, it can be put into progress upon starting processing")
     void whenJobIsInSubmittedStatus_ThenJobShouldBePutInProgress() {
@@ -87,7 +87,6 @@ class JobPreProcessorIntegrationTest {
         assertThat(exceptionThrown.getMessage(), is("Job S0000 is not in SUBMITTED status"));
     }
 
-
     private Sponsor createSponsor() {
         Sponsor sponsor = new Sponsor();
         sponsor.setOrgName("Hogwarts School of Wizardry");
@@ -101,7 +100,7 @@ class JobPreProcessorIntegrationTest {
         user.setUsername("Harry_Potter");
         user.setFirstName("Harry");
         user.setLastName("Potter");
-        user.setEmail("harry_potter@hogwarts.com");
+        user.setEmail("harry_potter@hogwarts.edu");
         user.setEnabled(TRUE);
         user.setSponsor(sponsor);
         return userRepository.save(user);
@@ -113,6 +112,7 @@ class JobPreProcessorIntegrationTest {
         job.setStatus(JobStatus.SUBMITTED);
         job.setStatusMessage("0%");
         job.setUser(user);
+        job.setOutputFormat(NDJSON_FIRE_CONTENT_TYPE);
         job.setCreatedAt(OffsetDateTime.now());
         return jobRepository.save(job);
     }

@@ -6,6 +6,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.hl7.fhir.dstu3.model.ExplanationOfBenefit;
 import org.junit.jupiter.api.Test;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -33,14 +34,15 @@ class ExplanationOfBenefitTrimmerTest {
 
     @Test
     public void validateEmpty() {
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
         assertNull(ExplanationOfBenefitTrimmer.getBenefit(null));
         // Since getting a patient target creates a new one, make sure the object is empty
         assertTrue(eobCarrier.getPatientTarget().getIdentifier().isEmpty());
         assertNull(eobCarrier.getPatientTarget().getId());
         assertFalse(eobCarrier.getPatientTarget().getActive());
         assertNull(eobCarrier.getPatientTarget().getBirthDate());
-        assertNull(eobCarrier.getBillablePeriod().getStart());
-        assertNull(eobCarrier.getBillablePeriod().getEnd());
+        assertEquals(sdf.format(eobCarrier.getBillablePeriod().getStart()), "1999-10-27");
+        assertEquals(sdf.format(eobCarrier.getBillablePeriod().getEnd()), "1999-10-27");
         assertNull(eobCarrier.getCreated());
         assertTrue(StringUtils.isBlank(eobCarrier.getEnterer().getReference()));
         assertTrue(eobCarrier.getEntererTarget().getName().isEmpty());
