@@ -70,6 +70,18 @@
                             <goal>check</goal>
                         </goals>
                         <configuration>
+                            <rules>
+                                <rule>
+                                    <element>BUNDLE</element>
+                                    <limits>
+                                        <limit>
+                                            <counter>LINE</counter>
+                                            <value>COVEREDRATIO</value>
+                                            <minimum>91%</minimum>
+                                        </limit>
+                                    </limits>
+                                </rule>
+                            </rules>
                             <excludes>
                                 <exclude>**/gov/cms/ab2d/optout/job/**</exclude>
                                 <exclude>**/gov/cms/ab2d/optout/gateway/**</exclude>
