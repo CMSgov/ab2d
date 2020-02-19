@@ -50,7 +50,7 @@ public class AdminAPIPropertiesTests {
 
     @BeforeEach
     public void setup() throws JwtVerificationException {
-        token = testUtil.setupToken(List.of(ADMIN_ROLE, SPONSOR_ROLE));
+        token = testUtil.setupToken(List.of(ADMIN_ROLE));
     }
 
     @Test

@@ -90,7 +90,6 @@ public class AdminAPI {
     @ResponseStatus(value = HttpStatus.OK)
     @PutMapping("/properties")
     public ResponseEntity<List<PropertiesDTO>> updateProperties(@RequestBody List<PropertiesDTO> propertiesDTOs) {
-
         return new ResponseEntity<>(propertiesService.updateProperties(propertiesDTOs), null, HttpStatus.OK);
     }
 }
