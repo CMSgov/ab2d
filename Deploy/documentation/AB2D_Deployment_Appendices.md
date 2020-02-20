@@ -2684,5 +2684,80 @@
 1. Test getting the file from local machine
 
    ```ShellSession
-   $ aws --region us-east-1 --no-sign-request s3 cp s3://ab2d-optout-data-dev/T#EFT.ON.ACO.NGD1800.DPRF.D191029.T1135430 /tmp/.
+   $ aws --region us-east-1 --no-sign-request s3 cp \
+     s3://ab2d-optout-data-dev/T#EFT.ON.ACO.NGD1800.DPRF.D191029.T1135430 \
+     /tmp/.
    ```
+
+1. Test downloading a public S3 file using the AWS CLI without credentials
+
+   1. Test getting a public S3 file
+
+      ```ShellSession
+      $ aws --region us-east-1 s3 cp \
+        s3://ab2d-optout-data-dev/T#EFT.ON.ACO.NGD1800.DPRF.D191029.T1135430 \
+        /tmp/.
+      ```
+
+   1. Note that this will fail with the following output
+
+      ```
+      fatal error: Unable to locate credentials
+      ```
+
+1. Test downloading a public S3 file using the AWS CLI with the "ab2d-s3-signing" profile
+
+   1. Set AWS profile
+
+      ```ShellSession
+      $ export AWS_PROFILE=ab2d-s3-signing
+      ```
+
+   1. Test getting a public S3 file
+
+      ```ShellSession
+      $ aws --region us-east-1 s3 cp \
+        s3://ab2d-optout-data-dev/T#EFT.ON.ACO.NGD1800.DPRF.D191029.T1135430 \
+        /tmp/.
+      ```
+
+1. Open a new terminal
+
+1. Test interacting with a public S3 file using the AWS Java SDK without credentials
+
+   1. Change to the "s3-client-test" directory
+
+      ```ShellSession
+      $ cd ~/code/ab2d/Deploy/java/s3-client-test
+      ```
+
+   1. Build "s3-client-test"
+
+      ```ShellSession
+      $ mvn clean package
+      ```
+
+   1. Set AWS region
+
+      ```ShellSession
+      $ export AWS_REGION={'ab2d-s3-signing AWS region' in 1Password}
+      ```
+
+   1. Set AWS access key id
+
+      ```ShellSession
+      $ export AWS_ACCESS_KEY_ID={'ab2d-s3-signing AWS access key id' in 1Password}
+      ```
+
+   1. Set AWS secret access key
+
+      ```ShellSession
+      $ export AWS_SECRET_ACCESS_KEY={'ab2d-s3-signing AWS secret access key' in 1Password}
+      ```
+
+   1. Test interacting with a public S3 file
+
+      ```ShellSession
+      $ java -jar target/s3client-0.0.1-SNAPSHOT.jar
+      ```
+
