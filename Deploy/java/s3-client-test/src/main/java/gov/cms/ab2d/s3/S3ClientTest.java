@@ -6,7 +6,6 @@ import software.amazon.awssdk.auth.credentials.EnvironmentVariableCredentialsPro
 import software.amazon.awssdk.core.ResponseInputStream;
 import software.amazon.awssdk.core.exception.SdkClientException;
 import software.amazon.awssdk.core.exception.SdkServiceException;
-import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 import software.amazon.awssdk.services.s3.S3Client;
@@ -19,9 +18,6 @@ class S3ClientTest
 
     public static void main(String args[]) 
     {
-	// Set S3 region
-	String s3Region = "us-east-1";
-        final Region region = Region.of(s3Region);
 
 	// Set S3 bucket
 	String s3Bucket = "ab2d-optout-data-dev";
