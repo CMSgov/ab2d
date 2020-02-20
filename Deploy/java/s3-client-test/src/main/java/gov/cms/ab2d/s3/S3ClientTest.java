@@ -1,19 +1,22 @@
 package gov.cms.ab2d.s3;
 
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import software.amazon.awssdk.auth.credentials.EnvironmentVariableCredentialsProvider;
 import software.amazon.awssdk.core.ResponseInputStream;
 import software.amazon.awssdk.core.exception.SdkClientException;
 import software.amazon.awssdk.core.exception.SdkServiceException;
 import software.amazon.awssdk.regions.Region;
-import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectResponse;
+import software.amazon.awssdk.services.s3.S3Client;
 
 import java.io.InputStreamReader;
 
-@Slf4j
 class S3ClientTest
-{ 
+{
+    private static final Logger log = LoggerFactory.getLogger(S3ClientTest.class);
+
     public static void main(String args[]) 
     {
 	// Set S3 region
@@ -25,9 +28,15 @@ class S3ClientTest
 
 	// Set S3 file name
 	String s3Filename = "T#EFT.ON.ACO.NGD1800.DPRF.D191029.T1135430";
-	
+
         // build S3 client
-        final S3Client s3Client =  S3Client.builder().region(region).build();
+	// - note that the EnvironmentVariableCredentialsProvider expects
+	//   AWS_REGION, AWS_ACCESS_KEY_ID, and AWS_SECRET_ACCESS_KEY environment variables;
+	//   these variables are associated with the 'ab2d-s3-signing' IAM user that is maintained
+	//   within the AB2D managament AWS account.
+	final S3Client s3Client = S3Client.builder()
+                .credentialsProvider(EnvironmentVariableCredentialsProvider.create())
+                .build();
 
 	// build GetObjectRequest
         final GetObjectRequest getObjectRequest = GetObjectRequest.builder()
