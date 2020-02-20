@@ -2,6 +2,8 @@ package gov.cms.ab2d.e2etest;
 
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
+import liquibase.pro.packaged.S;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.assertj.core.util.Sets;
 import org.json.JSONArray;
@@ -11,6 +13,7 @@ import org.junit.Assert;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.testcontainers.containers.DockerComposeContainer;
+import org.testcontainers.containers.output.Slf4jLogConsumer;
 import org.testcontainers.containers.wait.strategy.HostPortWaitStrategy;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.yaml.snakeyaml.Yaml;
@@ -41,6 +44,7 @@ import static org.hamcrest.Matchers.matchesPattern;
 @Testcontainers
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @ExtendWith(TestRunnerParameterResolver.class)
+@Slf4j
 public class TestRunner {
 
     private static APIClient apiClient;
@@ -76,7 +80,9 @@ public class TestRunner {
                     .withScaledService("worker", 2)
                     .withExposedService("db", 5432)
                     .withExposedService("api", 8080, new HostPortWaitStrategy()
-                            .withStartupTimeout(Duration.of(150, SECONDS)));
+                        .withStartupTimeout(Duration.of(150, SECONDS)))
+                    .withLogConsumer("worker", new Slf4jLogConsumer(log))
+                    .withLogConsumer("api", new Slf4jLogConsumer(log));
             container.start();
         }
 
