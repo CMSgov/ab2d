@@ -32,6 +32,7 @@
 1. [Appendix U: Interact with the New Relic infrastructure agent](#appendix-u-interact-with-the-new-relic-infrastructure-agent)
 1. [Appendix V: Add a new environment variable for ECS docker containers](#appendix-v-add-a-new-environment-variable-for-ecs-docker-containers)
 1. [Appendix W: Launch a base EC2 instance that is created from gold disk AMI](#appendix-w-launch-a-base-ec2-instance-that-is-created-from-gold-disk-ami)
+1. [Appendix X: Verify access to the opt-out S3 bucket from sandbox worker nodes](#appendix-x-verify-access-to-the-opt-out-s3-bucket-from-sandbox-worker-nodes)
 
 ## Appendix A: Access the CMS AWS console
 
@@ -2645,3 +2646,43 @@
       realtime =none                   extsz=4096   blocks=0, rtextents=0
       data blocks changed from 785408 to 58456064
       ```
+
+## Appendix X: Verify access to the opt-out S3 bucket from sandbox worker nodes
+
+1. Change to the abd2 repo code directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d
+   ```
+   
+1. Gather opt-out S3 bucket information
+
+   ```ShellSession
+   $ cat optout/src/main/resources/application.optout.properties | grep "s3."
+   ```
+
+1. Note the output
+
+   ```
+   s3.region=${AB2D_S3_REGION:us-east-1}
+   s3.bucket=${AB2D_S3_OPTOUT_BUCKET:ab2d-optout-data-dev}
+   s3.filename=${AB2D_S3_OPTOUT_FILE:T#EFT.ON.ACO.NGD1800.DPRF.D191029.T1135430}
+   ```
+
+1. Delete s3 file (if exists locally)
+
+   ```ShellSession
+   $ rm -f /tmp/T#EFT.ON.ACO.NGD1800.DPRF.D191029.T1135430
+   ```
+
+1. Note the following
+
+   - the S3 file that we want to download is from a public s3 bucket
+
+   - in order to download a public S3 file without requiring AWS credentials, we need to include the "--no-sign-request" parameter
+
+1. Test getting the file from local machine
+
+   ```ShellSession
+   $ aws --region us-east-1 --no-sign-request s3 cp s3://ab2d-optout-data-dev/T#EFT.ON.ACO.NGD1800.DPRF.D191029.T1135430 /tmp/.
+   ```
