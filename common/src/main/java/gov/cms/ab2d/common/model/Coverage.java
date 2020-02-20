@@ -30,5 +30,5 @@ public class Coverage {
     @JoinColumn(name = "beneficiary_id")
     private Beneficiary beneficiary;
 
-    private Integer month;
+    private Integer partDMonth;
 }
