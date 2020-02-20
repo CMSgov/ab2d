@@ -314,6 +314,10 @@ public class TestRunner {
 
         HttpResponse<String> deleteResponse = secondUserAPIClient.cancelJobRequest(jobUUid);
         Assert.assertEquals(deleteResponse.statusCode(), 403);
+
+        // Cleanup
+        HttpResponse<String> secondDeleteResponse = apiClient.cancelJobRequest(jobUUid);
+        Assert.assertEquals(202, secondDeleteResponse.statusCode());
     }
 
     @Test
