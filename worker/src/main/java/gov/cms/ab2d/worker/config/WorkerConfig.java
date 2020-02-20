@@ -46,8 +46,8 @@ public class WorkerConfig {
     @Autowired
     private JobHandler handler;
 
-    @Value("${pcp.core.pool.size}")
-    private int pcpCorePoolSize;
+    //@Value("${pcp.core.pool.size}")
+    private int pcpCorePoolSize = 10;
 
     @Value("${pcp.queue.capacity}")
     private int pcpQueueCapacity;
