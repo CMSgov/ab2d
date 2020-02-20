@@ -331,6 +331,11 @@ public class TestRunner {
 
         HttpResponse<String> statusResponse = secondUserAPIClient.statusRequest(contentLocationList.iterator().next());
         Assert.assertEquals(statusResponse.statusCode(), 403);
+
+        // Cleanup
+        String jobUUid = JobUtil.getJobUuid(contentLocationList.iterator().next());
+        HttpResponse<String> secondDeleteResponse = apiClient.cancelJobRequest(jobUUid);
+        Assert.assertEquals(202, secondDeleteResponse.statusCode());
     }
 
     private APIClient createSecondUserClient() throws InterruptedException, JSONException, IOException {
