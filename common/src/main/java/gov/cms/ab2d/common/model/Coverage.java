@@ -5,6 +5,7 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
@@ -30,5 +31,6 @@ public class Coverage {
     @JoinColumn(name = "beneficiary_id")
     private Beneficiary beneficiary;
 
+    @Column(name = "part_d_month")
     private Integer partDMonth;
 }
