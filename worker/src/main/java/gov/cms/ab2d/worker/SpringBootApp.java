@@ -42,7 +42,7 @@ public class SpringBootApp {
             properties.put("pcp.scaleToMax.time", 900);
 
             env.getPropertySources().addLast(new MapPropertySource("db", properties));
-        }); //ApplicationEnvironmentPreparedEvent
+        });
         springApplication.run(args);
     }
 
