@@ -221,6 +221,7 @@ JSON
   cpu = 1024
   memory = 2048
   execution_role_arn = "arn:aws:iam::${var.aws_account_number}:role/Ab2dInstanceRole"
+  task_role_arn = "arn:aws:iam::${var.aws_account_number}:role/Ab2dEcsTaskRole"
 }
 
 resource "aws_lb" "api" {
