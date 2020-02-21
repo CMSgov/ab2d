@@ -1297,8 +1297,14 @@ if [ -n "${BUILD_NEW_IMAGES}" ]; then
 
   # Note that I can't build with "make docker-build" because test containers
   # try to run inside the docker container. Using "mvn clean package" instead.
-  export OKTA_CLIENT_ID=0oa2t0lsrdZw5uWRx297
-  export OKTA_CLIENT_PASSWORD=HHduWG6LogIvDIQuWgp3Zlo9OYMValTtH5OBcuHw
+  #
+  # Build with tests
+  #
+  # export OKTA_CLIENT_ID=0oa2t0lsrdZw5uWRx297
+  # export OKTA_CLIENT_PASSWORD=HHduWG6LogIvDIQuWgp3Zlo9OYMValTtH5OBcuHw
+  # mvn clean package
+  #
+  # Skipping tests
   mvn clean package -DskipTests
   sleep 5
 
