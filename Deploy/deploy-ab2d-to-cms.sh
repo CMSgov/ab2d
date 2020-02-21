@@ -211,7 +211,7 @@ export AWS_PROFILE="${CMS_ECR_REPO_ENV}"
 # Initialize and validate terraform for the management environment
 
 echo "*******************************************************************"
-echo "Initialize and validate terraform for the managemenr environment..."
+echo "Initialize and validate terraform for the management environment..."
 echo "*******************************************************************"
 
 cd "${START_DIR}"
