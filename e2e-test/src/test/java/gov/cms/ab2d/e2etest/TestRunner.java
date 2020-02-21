@@ -73,7 +73,7 @@ public class TestRunner {
             DockerComposeContainer container = new DockerComposeContainer(
                     new File("../docker-compose.yml"))
                     //.withScaledService("api", 2) // failing now since it's not changing ports
-                    .withScaledService("worker", 2)
+                    //.withScaledService("worker", 2)
                     .withExposedService("db", 5432)
                     .withExposedService("api", 8080, new HostPortWaitStrategy()
                             .withStartupTimeout(Duration.of(150, SECONDS)));
