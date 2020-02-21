@@ -4,6 +4,7 @@ import gov.cms.ab2d.bfd.client.BFDClientConfiguration;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.DependsOn;
@@ -34,6 +35,7 @@ import java.util.concurrent.ThreadPoolExecutor;
  */
 @Slf4j
 @Configuration
+@AutoConfigureAfter(PropertyConfig.class)
 @EnableAsync
 @EnableIntegration
 @EnableScheduling
@@ -46,8 +48,8 @@ public class WorkerConfig {
     @Autowired
     private JobHandler handler;
 
-    //@Value("${pcp.core.pool.size}")
-    private int pcpCorePoolSize = 10;
+    @Value("${pcp.core.pool.size}")
+    private int pcpCorePoolSize;
 
     @Value("${pcp.queue.capacity}")
     private int pcpQueueCapacity;
