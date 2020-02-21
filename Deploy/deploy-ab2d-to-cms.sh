@@ -1305,6 +1305,7 @@ if [ -n "${BUILD_NEW_IMAGES}" ]; then
   # mvn clean package
   #
   # Skipping tests
+  #
   mvn clean package -DskipTests
   sleep 5
 
