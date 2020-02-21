@@ -1,0 +1,14 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": "s3:*",
+            "Resource": [
+		"arn:aws:s3:::ab2d-mgmt-east-dev-automation/*",
+		"arn:aws:s3:::ab2d-mgmt-east-dev-cloudtrail/*",
+		"arn:aws:s3:::ab2d-mgmt-east-dev/*"
+            ]
+        }
+    ]
+}

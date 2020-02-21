@@ -174,9 +174,9 @@ Table of Contents
 1. Run the script to get the patient data
 
     ```
-./geteob.sh \
-    http://ab2d-sbx-sandbox-200688312.us-east-1.elb.amazonaws.com/api/v1/fhir \
-    MG9hMnQwbHNyZFp3NXVXUngyOTc6SEhkdVdHNkxvZ0l2RElRdVdncDNabG85T1lNVmFsVHRINU9CY3VIdw==
+    ./geteob.sh \
+      http://ab2d-sbx-sandbox-200688312.us-east-1.elb.amazonaws.com/api/v1/fhir \
+      MG9hMnQwbHNyZFp3NXVXUngyOTc6SEhkdVdHNkxvZ0l2RElRdVdncDNabG85T1lNVmFsVHRINU9CY3VIdw==
     ```
       
 2. Wait for the process to complete
@@ -196,7 +196,7 @@ Table of Contents
 2. Run the script to get the patient data for a specific contract number by entering the following at the dollar sign prompt
 
     ```
-./geteob.sh \
+    ./geteob.sh \
       http://ab2d-sbx-sandbox-200688312.us-east-1.elb.amazonaws.com/api/v1/fhir \
       MG9hMnQwbHNyZFp3NXVXUngyOTc6SEhkdVdHNkxvZ0l2RElRdVdncDNabG85T1lNVmFsVHRINU9CY3VIdw== \
       S0000
