@@ -1,8 +1,8 @@
 #!/bin/bash
 # Purpose: Shell script to provision image for app instances
 
-set -x #Be verbose
-set -e #Exit on first error
+set -x # Be verbose
+set -e # Exit on first error
 export APP_DIR=$HOME/app/
 
 #
@@ -12,7 +12,15 @@ export APP_DIR=$HOME/app/
 echo "Parse options..."
 for i in "$@"
 do
-case $i in
+  case $i in
+  --environment=*)
+  ENVIRONMENT="${i#*=}"
+  shift # past argument=value
+  ;;
+  --region=*)
+  REGION="${i#*=}"
+  shift # past argument=value
+  ;;
   --ssh-username=*)
   SSH_USERNAME="${i#*=}"
   shift # past argument=value
@@ -89,18 +97,28 @@ sudo sed -i '/SystemLogRateLimitBurst/c\$SystemLogRateLimitBurst 2000' /etc/rsys
 # sudo chown splunk:splunk /tmp/splunk-deploymentclient.conf
 # sudo mv -f /tmp/splunk-deploymentclient.conf /opt/splunkforwarder/etc/system/local/deploymentclient.conf
 
-#
-# LSH *** TO DO ***: Need to implement S3 with "encrypted-newrelic-infra.yml" file
-#
-# # Install newrelic infrastructure agent
-# cd /tmp
-# aws s3 cp s3://cms-ab2d-automation/encrypted-newrelic-infra.yml ./encrypted-newrelic-infra.yml
-# aws kms --region us-east-1 decrypt --ciphertext-blob fileb://encrypted-newrelic-infra.yml --output text --query Plaintext | base64 --decode > newrelic-infra.yml
-# [ -s newrelic-infra.yml ] || (echo "NewRelic file decryption failed" && exit 1)
-# sudo mv newrelic-infra.yml /etc/newrelic-infra.yml
+# Configure New Relic infrastructure agent
+
+cd /tmp
+aws s3 cp "s3://${ENVIRONMENT}-automation/encrypted-files/newrelic-infra.yml.encrypted" ./newrelic-infra.yml.encrypted
+aws kms --region "${REGION}" decrypt \
+  --ciphertext-blob fileb://newrelic-infra.yml.encrypted \
+  --output text \
+  --query Plaintext \
+  | base64 --decode \
+  > newrelic-infra.yml
+[ -s newrelic-infra.yml ] || (echo "NewRelic file decryption failed" && exit 1)
+sudo mv newrelic-infra.yml /etc/newrelic-infra.yml
+
+# Install New Relic infrastructure agent (skipped, since it is now pre-installed on gold disk)
+
 # sudo curl -o /etc/yum.repos.d/newrelic-infra.repo https://download.newrelic.com/infrastructure_agent/linux/yum/el/7/x86_64/newrelic-infra.repo
 # sudo yum -q makecache -y --disablerepo='*' --enablerepo='newrelic-infra'
 # sudo yum install newrelic-infra -y
+
+# Restart New Relic infrastructure agent
+
+sudo systemctl restart newrelic-infra
 
 #
 # LSH Comment out gold disk related section
@@ -110,7 +128,54 @@ sudo sed -i '/SystemLogRateLimitBurst/c\$SystemLogRateLimitBurst 2000' /etc/rsys
 # sudo /opt/splunkforwarder/bin/splunk clone-prep-clear-config
 # sudo /opt/splunkforwarder/bin/splunk start
 
+#
+# Setup Ruby environment
+#
+
+# Install rbenv dependencies
+sudo yum install -y git-core zlib zlib-devel gcc-c++ patch readline \
+  readline-devel libyaml-devel libffi-devel openssl-devel make bzip2 \
+  autoconf automake libtool bison curl sqlite-devel
+
+# Install rbenv and ruby-build
+set +e # Ignore errors
+curl -sL https://github.com/rbenv/rbenv-installer/raw/master/bin/rbenv-installer | bash -
+set -e # Exit on next error
+echo "*********************************************************"
+echo "NOTE: Ignore the 'not found' message in the above output."
+echo "*********************************************************"
+
+# Add rbenv initialization to "bashrc"
+echo 'export PATH="$HOME/.rbenv/bin:$PATH"' >> ~/.bashrc
+echo 'eval "$(rbenv init -)"' >> ~/.bashrc
+
+# Initialize rbenv for the current session
+export PATH="$HOME/.rbenv/bin:$PATH"
+eval "$(rbenv init -)"
+
+# Install Ruby 2.6.5
+echo "NOTE: the ruby install takes a while..."
+rbenv install 2.6.5
+
+# Set the global version of Ruby
+rbenv global 2.6.5
+
+# Install bundler
+gem install bundler
+
+# Update Ruby Gems
+gem update --system
+
+# Change to the "/tmp" directory
+cd /tmp
+
+# Ensure required gems are installed
+bundle install
+
+#
 # Make sure ec2 userdata is enabled
+#
+
 sudo touch /var/tmp/initial
 
 # ECS agent

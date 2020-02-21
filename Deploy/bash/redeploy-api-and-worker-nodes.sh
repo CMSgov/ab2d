@@ -119,7 +119,7 @@ export AWS_PROFILE=$(echo $PROFILE | tr '[:upper:]' '[:lower:]')
 #
 
 cd "${START_DIR}"
-cd ../terraform/environments/ab2d-$CMS_ENV
+cd ../terraform/environments/$CMS_ENV
 
 #
 # Get environment settings
@@ -130,7 +130,7 @@ cd ../terraform/environments/ab2d-$CMS_ENV
 echo "Getting first public subnet id..."
 
 SUBNET_PUBLIC_1_ID=$(aws ec2 describe-subnets \
-  --filters "Name=tag:Name,Values=ab2d-${CMS_ENV}-public-a" \
+  --filters "Name=tag:Name,Values=${CMS_ENV}-public-a" \
   --query "Subnets[*].SubnetId" \
   --output text)
 
@@ -146,7 +146,7 @@ fi
 echo "Getting second public subnet id..."
 
 SUBNET_PUBLIC_2_ID=$(aws ec2 describe-subnets \
-  --filters "Name=tag:Name,Values=ab2d-${CMS_ENV}-public-b" \
+  --filters "Name=tag:Name,Values=${CMS_ENV}-public-b" \
   --query "Subnets[*].SubnetId" \
   --output text)
 
@@ -162,7 +162,7 @@ fi
 echo "Getting first private subnet id..."
 
 SUBNET_PRIVATE_1_ID=$(aws ec2 describe-subnets \
-  --filters "Name=tag:Name,Values=ab2d-${CMS_ENV}-private-a" \
+  --filters "Name=tag:Name,Values=${CMS_ENV}-private-a" \
   --query "Subnets[*].SubnetId" \
   --output text)
 
@@ -178,7 +178,7 @@ fi
 echo "Getting second private subnet id..."
 
 SUBNET_PRIVATE_2_ID=$(aws ec2 describe-subnets \
-  --filters "Name=tag:Name,Values=ab2d-${CMS_ENV}-private-b" \
+  --filters "Name=tag:Name,Values=${CMS_ENV}-private-b" \
   --query "Subnets[*].SubnetId" \
   --output text)
 
@@ -215,12 +215,12 @@ echo 'deployer_ip_address = "'$DEPLOYER_IP_ADDRESS'"' \
 LOAD_BALANCERS_EXIST=$(aws --region us-east-1 elbv2 describe-load-balancers \
   --query "LoadBalancers[*].[LoadBalancerArn]" \
   --output text \
-  | grep "ab2d-${CMS_ENV}" \
+  | grep "${CMS_ENV}" \
   | xargs \
   | tr -d '\r')
 if [ -n "${LOAD_BALANCERS_EXIST}" ]; then
   ALB_ARN=$(aws --region us-east-1 elbv2 describe-load-balancers \
-    --name=ab2d-$CMS_ENV \
+    --name=$CMS_ENV \
     --query 'LoadBalancers[*].[LoadBalancerArn]' \
     --output text)
 fi
