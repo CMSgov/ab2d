@@ -38,6 +38,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 @EnableIntegration
 @EnableScheduling
 @Import(BFDClientConfiguration.class)
+@DependsOn("propertiesInit")
 public class WorkerConfig {
 
     @Autowired

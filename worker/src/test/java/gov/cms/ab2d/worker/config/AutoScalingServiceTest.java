@@ -53,12 +53,12 @@ public class AutoScalingServiceTest {
 
     @BeforeEach
     public void init() {
-        final Map<String, Object> properties = new HashMap<>() {{
+        /*final Map<String, Object> properties = new HashMap<>() {{
            put("pcp.core.pool.size", 3);
            put("pcp.max.pool.size", 20);
            put("pcp.scaleToMax", 20);
         }};
-        configurableEnvironment.getPropertySources().addFirst(new MapPropertySource("application", properties));
+        configurableEnvironment.getPropertySources().addFirst(new MapPropertySource("application", properties));*/
 
         patientProcessorThreadPool.getThreadPoolExecutor().purge();
         patientProcessorThreadPool.getThreadPoolExecutor().getQueue().clear();
