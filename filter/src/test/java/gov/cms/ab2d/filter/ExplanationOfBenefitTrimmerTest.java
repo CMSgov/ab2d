@@ -119,7 +119,6 @@ class ExplanationOfBenefitTrimmerTest {
                 EOBLoadUtilities.getEOBFromFileInClassPath(file, context));
 
         String result = jsonParser.encodeResourceToString(eCarrier);
-        System.out.println(result);
     }
 
     @Test
