@@ -75,11 +75,7 @@ public class TestRunner {
         if(environment.isUsesDockerCompose()) {
             DockerComposeContainer container = new DockerComposeContainer(
                     new File("../docker-compose.yml"))
-                    //.withScaledService("api", 2) // failing now since it's not changing ports
-                    //.withScaledService("worker", 1)
                     .withExposedService("db", 5432)
-                    .withExposedService("worker", 8081, new HostPortWaitStrategy()
-                        .withStartupTimeout(Duration.of(150, SECONDS)))
                     .withExposedService("api", 8080, new HostPortWaitStrategy()
                         .withStartupTimeout(Duration.of(150, SECONDS)))
                     .withLogConsumer("worker", new Slf4jLogConsumer(log))
