@@ -1,6 +1,8 @@
 package gov.cms.ab2d.worker.config;
 
 
+import gov.cms.ab2d.common.model.Properties;
+import gov.cms.ab2d.common.service.PropertiesService;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
@@ -8,6 +10,8 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.core.env.ConfigurableEnvironment;
+import org.springframework.core.env.MapPropertySource;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
@@ -15,11 +19,9 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.LinkedHashSet;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.Future;
+import java.util.stream.Collectors;
 
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.assertThat;
@@ -39,9 +41,25 @@ public class AutoScalingServiceTest {
     @Container
     private static final PostgreSQLContainer postgreSQLContainer = new AB2DPostgresqlContainer();
 
+    @Autowired
+    private ConfigurableEnvironment configurableEnvironment;
+
+    @Autowired
+    private PropertiesService propertiesService;
+
+    @Autowired
+    private AutoScalingService autoScalingService;
+
 
     @BeforeEach
     public void init() {
+        final Map<String, Object> properties = new HashMap<>() {{
+           put("pcp.core.pool.size", 3);
+           put("pcp.max.pool.size", 20);
+           put("pcp.scaleToMax", 20);
+        }};
+        configurableEnvironment.getPropertySources().addFirst(new MapPropertySource("application", properties));
+
         patientProcessorThreadPool.getThreadPoolExecutor().purge();
         patientProcessorThreadPool.getThreadPoolExecutor().getQueue().clear();
     }
