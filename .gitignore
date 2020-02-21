@@ -79,3 +79,8 @@ build/
 ### This is needed due to this .gitignore entry: "!**/src/main/**" ###
 **/src/main/.DS_Store
 
+### Compression files
+*.7z
+*.gz
+*.tar
+*.tgz
