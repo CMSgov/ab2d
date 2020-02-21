@@ -3,12 +3,10 @@ package gov.cms.ab2d.worker.config;
 import gov.cms.ab2d.common.service.PropertiesService;
 import gov.cms.ab2d.worker.properties.PropertiesInit;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.ConfigurableEnvironment;
 
 // Separate this config out so that it runs before variables in the main config with the @Value annotation are evaluated
-@Configuration
+//@Configuration
 public class PropertyConfig {
 
     @Autowired
@@ -17,7 +15,7 @@ public class PropertyConfig {
     @Autowired
     private PropertiesService propertiesService;
 
-    @Bean
+    //@Bean
     public PropertiesInit propertiesInit() {
         PropertiesInit propertiesInit = new PropertiesInit(propertiesService, configurableEnvironment);
         return propertiesInit;

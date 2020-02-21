@@ -4,10 +4,8 @@ import gov.cms.ab2d.bfd.client.BFDClientConfiguration;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.DependsOn;
 import org.springframework.context.annotation.Import;
 import org.springframework.integration.channel.ExecutorChannel;
 import org.springframework.integration.config.EnableIntegration;
@@ -35,7 +33,6 @@ import java.util.concurrent.ThreadPoolExecutor;
  */
 @Slf4j
 @Configuration
-@AutoConfigureAfter(PropertyConfig.class)
 @EnableAsync
 @EnableIntegration
 @EnableScheduling
@@ -65,7 +62,7 @@ public class WorkerConfig {
 
     // Use @DependsOn to control the loading order so that properties are set before they are used
     @Bean
-    @DependsOn("propertiesInit")
+    //@DependsOn("propertiesInit")
     public Executor patientProcessorThreadPool() {
         final ThreadPoolTaskExecutor taskExecutor = new ThreadPoolTaskExecutor();
         taskExecutor.setCorePoolSize(pcpCorePoolSize);
