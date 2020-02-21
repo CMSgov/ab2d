@@ -33,6 +33,11 @@
 1. [Appendix V: Add a new environment variable for ECS docker containers](#appendix-v-add-a-new-environment-variable-for-ecs-docker-containers)
 1. [Appendix W: Launch a base EC2 instance that is created from gold disk AMI](#appendix-w-launch-a-base-ec2-instance-that-is-created-from-gold-disk-ami)
 1. [Appendix X: Verify access to the opt-out S3 bucket from sandbox worker nodes](#appendix-x-verify-access-to-the-opt-out-s3-bucket-from-sandbox-worker-nodes)
+   * [Test getting a public S3 file using AWS CLI and no sign request](#test-getting-a-public-s3-file-using-aws-cli-and-no-sign-request)
+   * [Test downloading a public S3 file using the AWS CLI without credentials](#test-downloading-a-public-s3-file-using-the-aws-cli-without-credentials)
+   * [Test downloading a public S3 file using the AWS CLI with the "ab2d-s3-signing" profile](#test-downloading-a-public-s3-file-using-the-aws-cli-with-the-ab2d-s3-signing-profile)
+   * [Test interacting with a public S3 file using the AWS Java SDK with environment variables](#test-interacting-with-a-public-s3-file-using-the-aws-java-sdk-with-environment-variables)
+   * [Test interacting with a public S3 file on a worker node](#test-interacting-with-a-public-s3-file-on-a-worker-node)
 
 ## Appendix A: Access the CMS AWS console
 
@@ -2649,6 +2654,10 @@
 
 ## Appendix X: Verify access to the opt-out S3 bucket from sandbox worker nodes
 
+### Test getting a public S3 file using AWS CLI and no sign request
+
+1. Open a new terminal
+
 1. Change to the abd2 repo code directory
 
    ```ShellSession
@@ -2689,75 +2698,164 @@
      /tmp/.
    ```
 
-1. Test downloading a public S3 file using the AWS CLI without credentials
-
-   1. Test getting a public S3 file
-
-      ```ShellSession
-      $ aws --region us-east-1 s3 cp \
-        s3://ab2d-optout-data-dev/T#EFT.ON.ACO.NGD1800.DPRF.D191029.T1135430 \
-        /tmp/.
-      ```
-
-   1. Note that this will fail with the following output
-
-      ```
-      fatal error: Unable to locate credentials
-      ```
-
-1. Test downloading a public S3 file using the AWS CLI with the "ab2d-s3-signing" profile
-
-   1. Set AWS profile
-
-      ```ShellSession
-      $ export AWS_PROFILE=ab2d-s3-signing
-      ```
-
-   1. Test getting a public S3 file
-
-      ```ShellSession
-      $ aws --region us-east-1 s3 cp \
-        s3://ab2d-optout-data-dev/T#EFT.ON.ACO.NGD1800.DPRF.D191029.T1135430 \
-        /tmp/.
-      ```
+### Test downloading a public S3 file using the AWS CLI without credentials
 
 1. Open a new terminal
 
-1. Test interacting with a public S3 file using the AWS Java SDK without credentials
+1. Test getting a public S3 file
 
-   1. Change to the "s3-client-test" directory
+   ```ShellSession
+   $ aws --region us-east-1 s3 cp \
+     s3://ab2d-optout-data-dev/T#EFT.ON.ACO.NGD1800.DPRF.D191029.T1135430 \
+     /tmp/.
+   ```
 
-      ```ShellSession
-      $ cd ~/code/ab2d/Deploy/java/s3-client-test
-      ```
+1. Note that this will fail with the following output
 
-   1. Build "s3-client-test"
+   ```
+   fatal error: Unable to locate credentials
+   ```
 
-      ```ShellSession
-      $ mvn clean package
-      ```
+### Test downloading a public S3 file using the AWS CLI with the "ab2d-s3-signing" profile
 
-   1. Set AWS region
+1. Open a new terminal
 
-      ```ShellSession
-      $ export AWS_REGION={'ab2d-s3-signing AWS region' in 1Password}
-      ```
+1. Set AWS profile
 
-   1. Set AWS access key id
+   ```ShellSession
+   $ export AWS_PROFILE=ab2d-s3-signing
+   ```
 
-      ```ShellSession
-      $ export AWS_ACCESS_KEY_ID={'ab2d-s3-signing AWS access key id' in 1Password}
-      ```
+1. Test getting a public S3 file
 
-   1. Set AWS secret access key
+   ```ShellSession
+   $ aws --region us-east-1 s3 cp \
+     s3://ab2d-optout-data-dev/T#EFT.ON.ACO.NGD1800.DPRF.D191029.T1135430 \
+     /tmp/.
+   ```
 
-      ```ShellSession
-      $ export AWS_SECRET_ACCESS_KEY={'ab2d-s3-signing AWS secret access key' in 1Password}
-      ```
+### Test interacting with a public S3 file using the AWS Java SDK with environment variables
 
-   1. Test interacting with a public S3 file
+1. Change to the "s3-client-test" directory
 
-      ```ShellSession
-      $ java -jar target/s3client-0.0.1-SNAPSHOT.jar
-      ```
+   ```ShellSession
+   $ cd ~/code/ab2d/Deploy/java/s3-client-test
+   ```
 
+1. Build "s3-client-test"
+
+   ```ShellSession
+   $ mvn clean package
+   ```
+
+1. Set AWS region
+
+   ```ShellSession
+   $ export AWS_REGION={'ab2d-s3-signing AWS region' in 1Password}
+   ```
+
+1. Set AWS access key id
+
+   ```ShellSession
+   $ export AWS_ACCESS_KEY_ID={'ab2d-s3-signing AWS access key id' in 1Password}
+   ```
+
+1. Set AWS secret access key
+
+   ```ShellSession
+   $ export AWS_SECRET_ACCESS_KEY={'ab2d-s3-signing AWS secret access key' in 1Password}
+   ```
+
+1. Test interacting with a public S3 file
+
+   ```ShellSession
+   $ java -jar target/s3client-0.0.1-SNAPSHOT.jar
+   ```
+
+### Test interacting with a public S3 file on a worker node
+
+1. Change to the "s3-client-test" directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d/Deploy/java/s3-client-test
+   ```
+
+1. Build "s3-client-test"
+
+   ```ShellSession
+   $ mvn clean package
+   ```
+
+1. Zip up the target directory
+
+   ```ShellSession
+   $ tar -czvf target.tgz target
+   ```
+
+1. Copy the zipped target directory to a worker node
+
+   *Format:*
+
+   ```
+   $ scp -i ~/.ssh/ab2d-dev.pem \
+     -o ProxyCommand="ssh ec2-user@{controller private ip} nc {worker private ip} 22" \
+	target.tgz \
+	ec2-user@{worker private ip}:~
+   ```
+
+   *Example for Dev environment:*
+
+   ```
+   $ scp -i ~/.ssh/ab2d-dev.pem \
+     -o ProxyCommand="ssh ec2-user@10.242.5.190 nc 10.242.26.94 22" \
+	target.tgz \
+	ec2-user@10.242.26.94:~
+   ```
+
+1. Connect to the worker node
+
+   *Format:*
+   
+   ```ShellSession
+   $ ssh -i ~/.ssh/ab2d-dev.pem ec2-user@{worker private ip} \
+     -o ProxyCommand="ssh -W %h:%p ec2-user@{controller private ip}"
+   ```
+   
+   *Example for Dev environment:*
+   
+   ```ShellSession
+   $ ssh -i ~/.ssh/ab2d-dev.pem ec2-user@10.242.26.94 \
+     -o ProxyCommand="ssh -W %h:%p ec2-user@10.242.5.190"
+   ```
+
+1. Copy zipped target directory to a worker docker container
+   
+   ```ShellSession
+   $ docker cp target.tgz $(docker ps -aqf "name=ecs-worker-*" --filter "status=running"):/tmp
+   ```
+
+1. Connect to a running container
+
+   *Example for connecting to a worker container:*
+
+   ```ShellSession
+   $ docker exec -it $(docker ps -aqf "name=ecs-worker-*" --filter "status=running") /bin/bash
+   ```
+
+1. Change to the "/tmp" directory
+
+   ```ShellSession
+   $ cd /tmp
+   ```
+
+1. Unzip the zipped target file
+
+   ```ShellSession
+   $ tar -xzf target.tgz
+   ```
+
+1. Run the jar file
+
+   ```ShellSession
+   $ java -jar target/s3client-0.0.1-SNAPSHOT.jar
+   ```
