@@ -20,10 +20,9 @@
    * [Create required S3 buckets](#create-required-s3-buckets)
 1. [Create or update base aws environment](#create-or-update-base-aws-environment)
 1. [Update application](#update-application)
-1. [Deploy and configure Jenkins](#deploy-and-configure-jenkins)
 1. [Deploy AB2D static site](#deploy-ab2d-static-site)
    * [Download the AB2D domain certificates and get private key from CMS](#download-the-ab2d-domain-certificates-and-get-private-key-from-cms)
-   * [Import the certificate into certificate manager](#import-the-certificate-into-certificate-manager)
+   * [Import the AB2D domain certificate into certificate manager](#import-the-ab2d-domain-certificate-into-certificate-manager)
    * [Generate and test the website](#generate-and-test-the-website)
    * [Create an S3 bucket for the website](#create-an-s3-bucket-for-the-website)
    * [Upload website to S3](#upload-website-to-s3)
@@ -46,6 +45,19 @@
 1. [Configure New Relic and Splunk within the deployment AMI](#configure-new-relic-and-splunk-within-the-deployment-ami)
 1. [Request an Entrust certificate for sandbox.ab2d.cms.gov](#request-an-entrust-certificate-for-sandboxab2dcmsgov)
 1. [Submit an "Internet DNS Change Request Form" to product owner for the sandbox application load balancer](#submit-an-internet-dns-change-request-form-to-product-owner-for-the-sandbox-application-load-balancer)
+1. [Create an ab2d vault in 1Password](#create-an-ab2d-vault-in-1password)
+1. [Add an entrust certificate to the ab2d vault in 1Password](#add-an-entrust-certificate-to-the-ab2d-vault-in-1password)
+1. [Add a private key to the ab2d vault in 1Password](#add-a-private-key-to-the-ab2d-vault-in-1password)
+1. [Initiate BFD integration process](#initiate-bfd-integration-process)
+1. [Peer AB2D Dev, Sandbox, Impl environments with the BFD Sbx VPC and peer AB2D Prod with BFD Prod VPC](#peer-ab2d-dev-sandbox-impl-environments-with-the-bfd-sbx-vpc-and-peer-ab2d-prod-with-bfd-prod-vpc)
+1. [Encrypt BFD keystore and put in S3](#encrypt-bfd-keystore-and-put-in-s3)
+1. [Configure New Relic infrastructure](#configure-new-relic-infrastructure)
+1. [Configure New Relic users](#configure-new-relic-users)
+1. [Download the sandbox domain certificates and get private key from CMS](#download-the-sandbox-domain-certificates-and-get-private-key-from-cms)
+1. [Import the sandbox domain certificate into certificate manager](#import-the-sandbox-domain-certificate-into-certificate-manager)
+1. [Map the application load balancer for sandbox certificate](#map-the-application-load-balancer-for-sandbox-certificate)
+1. [Setup Jenkins server in management AWS account](#setup-jenkins-server-in-management-aws-account)
+1. [Deploy and configure Jenkins](#deploy-and-configure-jenkins)
 
 ## Note the starting state of the customer AWS account
 
@@ -188,7 +200,7 @@
    
 ### Note ignored components
 
-1. Note that Stephen Walter said that he doesn't know why these components were created
+1. Note that Stephen said that he doesn't know why these components were created
 
 1. Note the ignored VPC
 
@@ -371,7 +383,7 @@
 
 ### Note ignored components under the sbx AWS account
 
-1. Note that Stephen Walter said that he doesn't know why these components were created
+1. Note that Stephen said that he doesn't know why these components were created
 
 1. Note the ignored VPC
 
@@ -576,6 +588,12 @@
    $ aws configure --profile={vpc tag}
    ```
 
+   *Example for "Mgmt" environment:*
+   
+   ```ShellSession
+   $ aws configure --profile=ab2d-mgmt-east-dev
+   ```
+
    *Example for "Dev" environment:*
    
    ```ShellSession
@@ -586,6 +604,12 @@
    
    ```ShellSession
    $ aws configure --profile=ab2d-sbx-sandbox
+   ```
+
+   *Example for "Impl" environment:*
+   
+   ```ShellSession
+   $ aws configure --profile=ab2d-east-impl
    ```
 
 1. Enter {your aws access key} at the **AWS Access Key ID** prompt
@@ -639,6 +663,12 @@
 
 1. Set target AWS profile
 
+   *Example for "Mgmt" environment:*
+
+   ```ShellSession
+   $ export AWS_PROFILE=ab2d-mgmt-east-dev
+   ```
+
    *Example for "Dev" environment:*
 
    ```ShellSession
@@ -651,9 +681,21 @@
    $ export AWS_PROFILE=ab2d-sbx-sandbox
    ```
 
+   *Example for "Impl" environment:*
+
+   ```ShellSession
+   $ export AWS_PROFILE=ab2d-east-impl
+   ```
+
 1. Create keypair
 
    1. Set the key name
+
+      *Example for "Mgmt" environment:*
+      
+      ```ShellSession
+      $ export KEY_NAME=ab2d-mgmt-east-dev
+      ```
 
       *Example for "Dev" environment:*
       
@@ -665,6 +707,12 @@
 
       ```ShellSession
       $ export KEY_NAME=ab2d-sbx-sandbox
+      ```
+
+      *Example for "Impl" environment:*
+
+      ```ShellSession
+      $ export KEY_NAME=ab2d-east-impl
       ```
 
    1. Create the keypair
@@ -683,11 +731,17 @@
    $ chmod 600 ~/.ssh/${KEY_NAME}.pem
    ```
 
-1. Update the "authorized_keys" file for the "ab2d-dev" environment
-
+1. Update the "authorized_keys" file for the environment
+      
    1. Open a second terminal
    
    1. Open the "authorized_keys" file for the environment
+
+      *Example for "Mgmt" environment:*
+
+      ```ShellSession
+      $ vim ~/code/ab2d/Deploy/terraform/environments/ab2d-mgmt-east-dev-shared/authorized_keys
+      ```
 
       *Example for "Dev" environment:*
       
@@ -699,6 +753,12 @@
 
       ```ShellSession
       $ vim ~/code/ab2d/Deploy/terraform/environments/ab2d-sbx-sandbox-shared/authorized_keys
+      ```
+
+      *Example for "Impl" environment:*
+
+      ```ShellSession
+      $ vim ~/code/ab2d/Deploy/terraform/environments/ab2d-east-impl-shared/authorized_keys
       ```
 
    1. Return to the first terminal
@@ -721,6 +781,12 @@
 
 1. Set target AWS profile
 
+   *Example for "Mgmt" environment:*
+
+   ```
+   $ export AWS_PROFILE=ab2d-mgmt-east-dev
+   ```
+
    *Example for "Dev" environment:*
 
    ```ShellSession
@@ -733,7 +799,19 @@
    $ export AWS_PROFILE=ab2d-sbx-sandbox
    ```
 
+   *Example for "Impl" environment:*
+
+   ```ShellSession
+   $ export AWS_PROFILE=ab2d-east-impl
+   ```
+
 1. Change to the shared environment directory
+
+   *Example for "Mgmt" environment:*
+   
+   ```ShellSession
+   $ cd ~/code/ab2d/Deploy/terraform/environments/ab2d-mgmt-east-dev-shared
+   ```
 
    *Example for "Dev" environment:*
    
@@ -746,7 +824,13 @@
    ```ShellSession
    $ cd ~/code/ab2d/Deploy/terraform/environments/ab2d-sbx-sandbox-shared
    ```
+
+   *Example for "Impl" environment:*
    
+   ```ShellSession
+   $ cd ~/code/ab2d/Deploy/terraform/environments/ab2d-east-impl-shared
+   ```
+
 1. Create "Ab2dAccessPolicy"
 
    ```ShellSession
@@ -771,7 +855,21 @@
      --policy-document file://ab2d-s3-access-policy.json
    ```
 
+1. Create "Ab2dKmsPolicy"
+
+   ```ShellSession
+   $ aws iam create-policy \
+     --policy-name Ab2dKmsPolicy \
+     --policy-document file://ab2d-kms-policy.json
+   ```
+
 1. Change to the environment-specific directory
+
+   *Example for "Mgmt" environment:*
+
+   ```ShellSession
+   $ cd ~/code/ab2d/Deploy/terraform/environments/ab2d-mgmt-east-dev
+   ```
 
    *Example for "Dev" environment:*
    
@@ -783,6 +881,12 @@
    
    ```ShellSession
    $ cd ~/code/ab2d/Deploy/terraform/environments/ab2d-sbx-sandbox
+   ```
+
+   *Example for "Impl" environment:*
+   
+   ```ShellSession
+   $ cd ~/code/ab2d/Deploy/terraform/environments/ab2d-east-impl
    ```
 
 1. Create "Ab2dAssumePolicy"
@@ -815,6 +919,12 @@
 
 1. Set target AWS profile
 
+   *Example for "Mgmt" environment:*
+
+   ```ShellSession
+   $ export AWS_PROFILE=ab2d-mgmt-east-dev
+   ```
+
    *Example for "Dev" environment:*
 
    ```ShellSession
@@ -827,7 +937,19 @@
    $ export AWS_PROFILE=ab2d-sbx-sandbox
    ```
 
+   *Example for "Impl" environment:*
+
+   ```ShellSession
+   $ export AWS_PROFILE=ab2d-east-impl
+   ```
+
 1. Change to the shared environment directory
+
+   *Example for "Mgmt" environment:*
+
+   ```ShellSession
+   $ cd ~/code/ab2d/Deploy/terraform/environments/ab2d-mgmt-east-dev-shared
+   ```
 
    *Example for "Dev" environment:*
    
@@ -841,6 +963,12 @@
    $ cd ~/code/ab2d/Deploy/terraform/environments/ab2d-sbx-sandbox-shared
    ```
 
+   *Example for "Impl" environment:*
+   
+   ```ShellSession
+   $ cd ~/code/ab2d/Deploy/terraform/environments/ab2d-east-impl-shared
+   ```
+
 1. Create "Ab2dInstanceRole" role
 
    ```ShelSession
@@ -850,6 +978,12 @@
    ```
 
 1. Set AWS account number
+
+   *Example for "Mgmt" environment:*
+
+   ```ShellSession
+   $ export AWS_ACCOUNT_NUMBER=653916833532
+   ```
 
    *Example for "Dev" environment:*
 
@@ -861,6 +995,12 @@
 
    ```ShellSession
    $ export AWS_ACCOUNT_NUMBER=777200079629
+   ```
+
+   *Example for "Impl" environment:*
+
+   ```ShellSession
+   $ export AWS_ACCOUNT_NUMBER=330810004472
    ```
 
 1. Attach required policies to the "Ab2dInstanceRole" role
@@ -878,6 +1018,9 @@
    $ aws iam attach-role-policy \
      --role-name Ab2dInstanceRole \
      --policy-arn "arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role"
+   $ aws iam attach-role-policy \
+     --role-name Ab2dInstanceRole \
+     --policy-arn "arn:aws:iam::${AWS_ACCOUNT_NUMBER}:policy/Ab2dKmsPolicy"
    ```
 
 1. Attach secrets policy to the "Ab2dInstanceRole" role
@@ -892,6 +1035,12 @@
 
 1. Change to the environment-specific directory
 
+   *Example for "Mgmt" environment:*
+   
+   ```ShellSession
+   $ cd ~/code/ab2d/Deploy/terraform/environments/ab2d-mgmt-east-dev
+   ```
+
    *Example for "Dev" environment:*
    
    ```ShellSession
@@ -902,6 +1051,12 @@
    
    ```ShellSession
    $ cd ~/code/ab2d/Deploy/terraform/environments/ab2d-sbx-sandbox
+   ```
+
+   *Example for "Impl" environment:*
+   
+   ```ShellSession
+   $ cd ~/code/ab2d/Deploy/terraform/environments/ab2d-east-impl
    ```
 
 1. Create "Ab2dManagedRole" role
@@ -924,6 +1079,12 @@
 
 1. Set target AWS profile
 
+   *Example for "Mgmt" environment:*
+
+   ```ShellSession
+   $ export AWS_PROFILE=ab2d-mgmt-east-dev
+   ```
+
    *Example for "Dev" environment:*
 
    ```ShellSession
@@ -935,7 +1096,13 @@
    ```ShellSession
    $ export AWS_PROFILE=ab2d-sbx-sandbox
    ```
-   
+
+   *Example for "Impl" environment:*
+
+   ```ShellSession
+   $ export AWS_PROFILE=ab2d-east-impl
+   ```
+
 1. Create instance profile
 
    ```ShellSession
@@ -955,6 +1122,12 @@
 
 1. Set target AWS profile
 
+   *Example for "Mgmt" environment:*
+
+   ```ShellSession
+   $ export AWS_PROFILE=ab2d-mgmt-east-dev
+   ```
+
    *Example for "Dev" environment:*
 
    ```ShellSession
@@ -967,7 +1140,19 @@
    $ export AWS_PROFILE=ab2d-sbx-sandbox
    ```
 
+   *Example for "Impl" environment:*
+
+   ```ShellSession
+   $ export AWS_PROFILE=ab2d-east-impl
+   ```
+
 1. Set AWS account number
+
+   *Example for "Mgmt" environment:*
+
+   ```ShellSession
+   $ export AWS_ACCOUNT_NUMBER=653916833532
+   ```
 
    *Example for "Dev" environment:*
 
@@ -979,6 +1164,12 @@
 
    ```ShellSession
    $ export AWS_ACCOUNT_NUMBER=777200079629
+   ```
+
+   *Example for "Impl" environment:*
+
+   ```ShellSession
+   $ export AWS_ACCOUNT_NUMBER=330810004472
    ```
 
 1. Attach the Ab2dPermissionToPassRolesPolicy to an IAM user that runs the automation
@@ -997,6 +1188,12 @@
 
 1. Set target AWS profile
 
+   *Example for "Mgmt" environment:*
+
+   ```ShellSession
+   $ export AWS_PROFILE=ab2d-mgmt-east-dev
+   ```
+
    *Example for "Dev" environment:*
 
    ```ShellSession
@@ -1009,7 +1206,19 @@
    $ export AWS_PROFILE=ab2d-sbx-sandbox
    ```
 
+   *Example for "Impl" environment:*
+
+   ```ShellSession
+   $ export AWS_PROFILE=ab2d-east-impl
+   ```
+
 1. Set automation bucket name
+
+   *Example for "Mgmt" environment:*
+   
+   ```ShellSession
+   $ export S3_AUTOMATION_BUCKET=ab2d-mgmt-east-dev-automation
+   ```
 
    *Example for "Dev" environment:*
    
@@ -1021,6 +1230,12 @@
    
    ```ShellSession
    $ export S3_AUTOMATION_BUCKET=ab2d-sbx-sandbox-automation
+   ```
+
+   *Example for "Impl" environment:*
+   
+   ```ShellSession
+   $ export S3_AUTOMATION_BUCKET=ab2d-east-impl-automation
    ```
 
 1. Create S3 bucket for automation
@@ -1063,7 +1278,7 @@
    $ ./deploy-ab2d-to-cms.sh \
      --environment=ab2d-dev \
      --shared-environment=ab2d-dev-shared \
-     --ecr-repo-environment=ab2d-dev \
+     --ecr-repo-environment=ab2d-mgmt-east-dev \
      --region=us-east-1 \
      --vpc-id=vpc-0c6413ec40c5fdac3 \
      --ssh-username=ec2-user \
@@ -1080,7 +1295,7 @@
    $ ./deploy-ab2d-to-cms.sh \
      --environment=ab2d-dev \
      --shared-environment=ab2d-dev-shared \
-     --ecr-repo-environment=ab2d-dev \
+     --ecr-repo-environment=ab2d-mgmt-east-dev \
      --region=us-east-1 \
      --vpc-id=vpc-0c6413ec40c5fdac3 \
      --ssh-username=ec2-user \
@@ -1099,7 +1314,7 @@
    $ ./deploy-ab2d-to-cms.sh \
      --environment=ab2d-sbx-sandbox \
      --shared-environment=ab2d-sbx-sandbox-shared \
-     --ecr-repo-environment=ab2d-dev \
+     --ecr-repo-environment=ab2d-mgmt-east-dev \
      --region=us-east-1 \
      --vpc-id=vpc-08dbf3fa96684151c \
      --ssh-username=ec2-user \
@@ -1116,9 +1331,45 @@
    $ ./deploy-ab2d-to-cms.sh \
      --environment=ab2d-sbx-sandbox \
      --shared-environment=ab2d-sbx-sandbox-shared \
-     --ecr-repo-environment=ab2d-dev \
+     --ecr-repo-environment=ab2d-mgmt-east-dev \
      --region=us-east-1 \
      --vpc-id=vpc-08dbf3fa96684151c \
+     --ssh-username=ec2-user \
+     --owner=842420567215 \
+     --ec2-instance-type=m5.xlarge \
+     --database-secret-datetime=2020-01-02-09-15-01 \
+     --use-existing-images \
+     --auto-approve
+   ```
+
+1. If creating the AWS environment for Impl, do one of the following
+
+   *Deploy Impl by creating new api and worker images:*
+
+   ```ShellSession
+   $ ./deploy-ab2d-to-cms.sh \
+     --environment=ab2d-east-impl \
+     --shared-environment=ab2d-east-impl-shared \
+     --ecr-repo-environment=ab2d-mgmt-east-dev \
+     --region=us-east-1 \
+     --vpc-id=vpc-0e5d2e88de7f9cad4 \
+     --ssh-username=ec2-user \
+     --owner=842420567215 \
+     --ec2-instance-type=m5.xlarge \
+     --database-secret-datetime=2020-01-02-09-15-01 \
+     --build-new-images \
+     --auto-approve
+   ```
+
+   *Deploy Impl by using the latest existing api and worker images:*
+
+   ```ShellSession
+   $ ./deploy-ab2d-to-cms.sh \
+     --environment=ab2d-east-impl \
+     --shared-environment=ab2d-east-impl-shared \
+     --ecr-repo-environment=ab2d-mgmt-east-dev \
+     --region=us-east-1 \
+     --vpc-id=vpc-0e5d2e88de7f9cad4 \
      --ssh-username=ec2-user \
      --owner=842420567215 \
      --ec2-instance-type=m5.xlarge \
@@ -1162,6 +1413,20 @@
    - impl
 
    - prod
+
+1. If prompted, enter bfd url at the "Enter desired bfd_url" prompt
+
+1. If prompted, enter bfd keystore location at the "Enter desired bfd_keystore_location" prompt
+
+1. If prompted, enter bfd keystore password at the "Enter desired bfd_keystore_password" prompt
+
+1. If prompted, enter hicn hash pepper at the "Enter desired hicn_hash_pepper" prompt
+
+1. If prompted, enter hicn hash iter at the "Enter desired hicn_hash_iter" prompt
+
+1. If prompted, enter new relic app name at the "Enter desired new_relic_app_name" prompt
+
+1. If prompted, enter new relic license key at the "Enter desired new_relic_license_key" prompt
 
 ## Update application
 
@@ -1194,454 +1459,6 @@
      --database-secret-datetime=2019-10-25-14-55-07 \
      --auto-approve
    ```
-
-## Deploy and configure Jenkins
-
-1. Launch an EC2 instance from the Jenkins AMI
-
-1. Note that the following steps will likely be different on the gold disk version.*
-
-1. Connection to the Jenkins instance
-
-   *Example:*
-   
-   ```ShellSession
-   $ ssh -i ~/.ssh/ab2d-sbdemo-shared.pem centos@54.208.238.51
-   ```
-
-1. Install, enable, and start firewalld
-
-   1. Install firewalld
-
-      ```ShellSession
-      $ sudo yum install firewalld -y
-      ```
-
-   1. Enable firewalld
-
-      ```ShellSession
-      $ sudo systemctl enable firewalld
-      ```
-
-   1. Start firewalld
-
-      ```ShellSession
-      $ sudo systemctl start firewalld
-      ```
-
-   1. Check the firewall status
-
-      ```ShellSession
-      $ sudo firewall-cmd --state
-      ```
-
-   1. Verify that the following is displayed in the output
-
-      ```
-      running
-      ```
-
-   1. Check the firewalld daemon status
-
-      ```ShellSession
-      $ systemctl status firewalld | grep running
-      ```
-
-   1. Verify that the following is displayed
-
-      ```
-      Active: active (running)...
-      ```
-
-1. Note the default Jenkins port
-
-   1. Open the Jenkins config file
-
-      ```ShellSession
-      $ sudo cat /etc/sysconfig/jenkins | grep JENKINS_PORT
-      ```
-
-   1. Note the output
-
-      *Example:*
-      
-      ```
-      JENKINS_PORT="8080"
-      ```
-
-1. Add HTTP as a permanent service for the public zone
-
-   ```ShellSession
-   $ sudo firewall-cmd --zone=public --add-service=http --permanent
-   ```
-
-1. Determine what ports the server is expecting for network traffic
-
-   1. Install Security-Enhanced Linux (SELinux) tools
-   
-      ```ShellSession
-      $ sudo yum install policycoreutils-devel -y
-      $ sudo yum install setroubleshoot-server -y
-      ```
-
-   1. Determine what ports SELinux has configured for incoming network traffic
-
-      ```ShellSession
-      $ sepolicy network -t http_port_t
-      ```
-
-   1. Note the ports that are output
-
-      ```
-      http_port_t: tcp: 80,81,443,488,8008,8009,8443,9000
-      ```
-
-   1. Note that port 8080 is not listed
-
-1. Add port 8080 to SELinux policy configuration
-
-   ```ShellSession
-   $ sudo semanage port -m -t http_port_t -p tcp 8080
-   ```
-
-1. Verify that port 8080 is now included in SELinux policy configuration
-
-   ```ShellSession
-   $ sepolicy network -t http_port_t
-   ```
-
-1. Note the ports that are output
-
-   ```
-   http_port_t: tcp: 8080,80,81,443,488,8008,8009,8443,9000
-   ```
-   
-1. Configure the Jenkins servive for the firewall
-
-   1. Note the Jenkins wiki lists steps that are not necessary with current versions of CentOS
-      
-   1. Add Jenkins as a permanent service
-
-      ```ShellSession
-      $ sudo firewall-cmd --permanent --add-service=jenkins
-      ```
-
-   1. Reload
-
-      ```ShellSession
-      $ sudo firewall-cmd --reload
-      ```
-
-   1. Verify the port forwarding
-
-      ```ShellSession
-      $ sudo firewall-cmd --list-all
-      ```
-
-   1. Verify the following settings looks like this
-
-      - **services:** dhcpv6-client http jenkins ssh
-
-      - **masquerade:** no
-
-      - **forward-ports:**
-
-1. Check the current status of Jenkins
-
-   1. Enter the following
-   
-      ```ShellSession
-      $ systemctl status jenkins
-      ```
-
-   1. Note the following from the output
-
-      ```
-      Active: inactive (dead)
-      ```
-   
-1. Enable Jenkins
-
-   1. Enter the following
-  
-      ```ShellSession
-      $ sudo systemctl enable jenkins
-      ```
-
-   1. Note that the output shows that the system automatically did "chkconfig" on the sercvice because it is not a native service
-
-      ```
-      jenkins.service is not a native service, redirecting to /sbin/chkconfig.
-      Executing /sbin/chkconfig jenkins on
-      ```
-
-1. Start Jenkins
-
-   ```ShellSession
-   $ sudo systemctl start jenkins
-   ```
-   
-1. Check the current status of Jenkins
-
-   1. Enter the following
-    
-      ```ShellSession
-      $ systemctl status jenkins -l
-      ```
- 
-   1. Note the following from the output
- 
-      ```
-      Active: active (running)
-      ``` 
-
-1. Ensure that Jenkins is running on the default port 8080
-
-   1. Enter the following
-    
-      ```ShellSession
-      $ netstat -an | grep 8080
-      ```
-
-   1. Verify that the following is output
-
-      ```
-      tcp6       0      0 :::8080                 :::*                    LISTEN
-      ```
-
-   1. If no output is displayed, do the following
-
-      1. Restart Jenkins
-
-         ```ShellSession
-         $ sudo systemctl restart jenkins
-         ```
-
-      1. Repeat the "netstat" port step above
-
-1. Open Chrome
-
-1. Enter the following in the address bar
-
-   > http://{jenkins public ip address}:8080
-
-1. Configure Jenkins
-
-   1. Return to the terminal
-
-   1. Get the Jenkins administrator password
-
-      ```ShellSession
-      $ sudo cat /var/lib/jenkins/secrets/initialAdminPassword
-      ```
-
-   1. Copy and paste the password into the **Administrator password** text box of the Jenkins page displayed in Chrome
-
-   1. Select **Continue** on the *Unlock Jenkins* page
-
-   1. Select **Install suggested plugins**
-
-   1. Wait for installation to complete
-
-   1. Enter the following items for your user
-
-      - Username
-
-      - Password
-
-      - Confirm password
-
-      - Full name
-
-      - E-mail address
-
-   1. Select **Save and Continue**
-
-   1. Note the Jenkins URL
-
-   1. Select **Save and Finish**
-
-   1. Select **Start using Jenkins**
-
-1. Get information about the jenkins user account
-
-   1. Enter the following
-   
-      ```ShellSession
-      $ getent passwd jenkins
-      ```
-
-   2. Note the output
-
-      *Example:*
-      
-      ```
-      jenkins:x:997:994:Jenkins Automation Server:/var/lib/jenkins:/bin/false
-      ```
-
-   3. Note that the "/bin/false" in the output means that the user will not be able to use a login shell when running various commands
-
-1. Modify the jenkins user to allow it to use a login shell
-
-   1. Enter the following
-   
-      ```ShellSession
-      $ sudo usermod -s /bin/bash jenkins
-      ```
-
-   1. Verify the change
-
-      ```ShellSession
-      $ getent passwd jenkins
-      ```
-
-   1. Note the output
-
-      *Example:*
-      
-      ```
-      jenkins:x:997:994:Jenkins Automation Server:/var/lib/jenkins:/bin/bash
-      ```
-
-1. Give the local jenkins user a password for intial SSH connections
-
-   1. Enter the following
-   
-      ```ShellSession
-      $ sudo passwd jenkins
-      ```
-
-   1. Enter a password at the **New password** prompt
-
-   1. Reenter the password at the **Retype new password** prompt
-
-1. Note that if the jenkins user needs to run a build on a remote system, it will need SSH keys to do so
-
-1. Allow password authentication
-
-   1. Open the "sshd_config" file
-
-      ```ShellSession
-      $ sudo vim /etc/ssh/sshd_config
-      ```
-
-   1. Change the following line to look like this
-
-      ```
-      PasswordAuthentication yes
-      ```
-
-   1. Restart sshd
-
-      ```ShellSession
-      $ sudo systemctl restart sshd
-      ```
-
-1. Set up SSH keys for jenkins user
-
-   1. Switch to the jenkins user
-   
-      ```ShellSession
-      $ sudo su - jenkins
-      ```
-
-   1. View the jenkins user home directory
-
-      ```ShellSession
-      $ pwd
-      ```
-
-   1. Note the home directory
-
-      ```
-      /var/lib/jenkins
-      ```
-
-   1. Initiate creation of SSH keys
-
-      ```ShellSession
-      $ ssh-keygen
-      ```
-
-   1. Press **return** on the keyboard at the "Enter file in which to save the key (/var/lib/jenkins/.ssh/id_rsa)" prompt
-
-   1. Press **return** on the keyboard at the "Enter passphrase (empty for no passphrase)" prompt
-
-   1. Press **return** on the keyboard at the "Enter same passphrase again" prompt
-
-   1. Allow the machine to SSH into itself
-
-      ```ShellSession
-      $ ssh-copy-id jenkins@localhost
-      ```
-   
-   1. Enter the following at the "Are you sure you want to continue connecting (yes/no)" prompt
-
-      ```
-      yes
-      ```
-
-   1. Enter the jenkins user password at the "jenkins@localhost's password" prompt
-
-   1. Switch back to the centos user
-
-      ```ShellSession
-      $ exit
-      ```
-
-1. Disallow password authentication
-
-   1. Open the "sshd_config" file
-
-      ```ShellSession
-      $ sudo vim /etc/ssh/sshd_config
-      ```
-
-   1. Change the following line to look like this
-
-      ```
-      PasswordAuthentication no
-      ```
-
-   1. Restart sshd
-
-      ```ShellSession
-      $ sudo systemctl restart sshd
-      ```
-
-1. Verify that SSH to "jenkins@localhost" now works
-
-   ```ShellSession
-   $ sudo -u jenkins ssh jenkins@localhost
-   ```
-
-1. Exit the shell
-
-   ```ShellSession
-   $ exit
-   ```
-   
-1. Note that the resaon why jenkins needs ssh access to its server is so that can run builds locally (if required), since jenkins will do builds over SSH by default
-
-1. Add jenkins user to sudoers file
-
-   1. Enter the following
-
-      ```ShellSession
-      $ sudo visudo
-      ```
-
-   1. Modify this section as follows
-
-      ```
-      ## Allow root to run any commands anywhere
-      root    ALL=(ALL)       ALL
-      jenkins ALL=(ALL)       NOPASSWD: ALL
-      ```
-
-    1. Note that the above setting for the jenkins user is not ideal since it means that the jenkins user will be able to do "sudo" on all commands
-
-    1. Note that it would be better to lock down the jenkins user so that it can only do "sudo" on a certain subset of commands based on the requirements
 
 ## Deploy AB2D static site
 
@@ -1689,7 +1506,11 @@
    $ 7z x entrust.zip
    ```
 
-### Import the certificate into certificate manager
+1. Save the "entrust.zip" file and private key in 1Password
+
+   > *** TO DO ***
+
+### Import the AB2D domain certificate into certificate manager
 
 1. Open Chrome
 
@@ -1757,6 +1578,14 @@
    $ cd ~/code/ab2d/website
    ```
 
+1. If deploying to the "ab2d.cms.gov" site, change the head from 'dev' to 'prod'
+
+   *Note that you will later be reverting this change after you deploy the "ab2d.cms.gov" site.*
+
+   ```ShellSession
+   $ sed -i "" 's%cms-ab2d[\/]dev%cms-ab2d/prod%g' _includes/head.html
+   ```
+
 1. Generate and test the website
 
    1. Ensure required gems are installed
@@ -1809,10 +1638,16 @@
    $ export AWS_PROFILE={target aws profile}
    ```
 
-   *Example for CMS:*
+   *Example for "Dev" environment:*
    
    ```ShellSession
    $ export AWS_PROFILE=ab2d-dev
+   ```
+
+   *Example for "Impl" environment:*
+   
+   ```ShellSession
+   $ export AWS_PROFILE=ab2d-east-impl
    ```
 
 1. Create S3 bucket for the website
@@ -1824,28 +1659,35 @@
      --bucket {unique id}-ab2d-website
    ```
 
-   *Example for CMS:*
+   *Example for "Dev" environment:*
    
    ```ShellSession
    $ aws --region us-east-1 s3api create-bucket \
      --bucket cms-ab2d-website
    ```
 
-1. Block public access on the bucket
-
-   *Format:*
+   *Example for "Impl" environment:*
    
    ```ShellSession
-   $ aws --region us-east-1 s3api put-public-access-block \
-      --bucket {unique id}-ab2d-website \
-      --public-access-block-configuration BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true
+   $ aws --region us-east-1 s3api create-bucket \
+     --bucket ab2d-east-impl-website
    ```
 
-   *Example for CMS:*
+1. Block public access on the bucket
+
+   *Example for "Dev" environment:*
    
    ```ShellSession
    $ aws --region us-east-1 s3api put-public-access-block \
       --bucket cms-ab2d-website \
+      --public-access-block-configuration BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true
+   ```
+
+   *Example for "Impl" environment:*
+
+   ```ShellSession
+   $ aws --region us-east-1 s3api put-public-access-block \
+      --bucket ab2d-east-impl-website \
       --public-access-block-configuration BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true
    ```
 
@@ -1867,24 +1709,38 @@
    $ export AWS_PROFILE={target aws profile}
    ```
 
-   *Example for CMS:*
+   *Example for "Dev" environment:*
    
    ```ShellSession
    $ export AWS_PROFILE=ab2d-dev
    ```
 
-1. Upload website to S3
-
-   *Format:*
+   *Example for "Impl" environment:*
    
    ```ShellSession
-   $ aws s3 cp --recursive _site/ s3://{unique id}-ab2d-website/
+   $ export AWS_PROFILE=ab2d-east-impl
    ```
 
-   *Example for CMS:*
+1. Upload website to S3
+
+   *Example for "Dev" environment:*
    
    ```ShellSession
    $ aws s3 cp --recursive _site/ s3://cms-ab2d-website/
+   ```
+
+   *Example for "Impl" environment:*
+   
+   ```ShellSession
+   $ aws s3 cp --recursive _site/ s3://ab2d-east-impl-website/
+   ```
+
+1. If you deployed to the "ab2d.cms.gov" site, revert head from 'prod' back to 'dev'
+
+   *Note that you will later be reverting this change after you deploy the "ab2d.cms.gov" site.*
+
+   ```ShellSession
+   $ sed -i "" 's%cms-ab2d[\/]prod%cms-ab2d/dev%g' _includes/head.html
    ```
 
 ### Create CloudFront distribution
@@ -1911,25 +1767,25 @@
    
 1. Configure "Origin Settings" as follows:
 
-   *Format:*
+   *Example for "Dev" environment:*
    
-   - **Origin Domain Name:** {unique id}-ab2d-website.s3.amazonaws.com
-
-   - **Origin ID:** S3-{unique id}-ab2d-website
+   - **Origin Domain Name:** cms-ab2d-website.s3.amazonaws.com
+   
+   - **Origin ID:** S3-cms-ab2d-website
 
    - **Restrict Bucket Access:** Yes
 
    - **Origin Access Identity:** Create a New Identity
 
-   - **Comment:** access-identity-{unique id}-ab2d-website.s3.amazonaws.com
+   - **Comment:** access-identity-cms-ab2d-website.s3.amazonaws.com
 
    - **Grant Read Permissions on Bucket:** Yes, Update Bucket Policy
 
-   *Example for semanticbitsdemo:*
+   *Example for "Impl" environment:*
    
-   - **Origin Domain Name:** cms-ab2d-website.s3.amazonaws.com
+   - **Origin Domain Name:** ab2d-east-impl-website.s3.amazonaws.com
    
-   - **Origin ID:** S3-cms-ab2d-website
+   - **Origin ID:** S3-ab2d-east-impl-website
 
    - **Restrict Bucket Access:** Yes
 
@@ -1944,7 +1800,29 @@
    - **Viewer Protocol Policy:** Redirect HTTP to HTTPS
 
 1. Configure "Distribution Settings" as follows
+
+   *Example for "Dev" environment:*
+
+   > *** TO DO ***: Migrate certificate to prod and eliminate certificate here
    
+   **Alternate Domain Names (CNAMES):** ab2d.cms.gov
+
+   **SSL Certificate:** Custom SSL Certificate
+
+   **Custom SSL Certificate:** ab2d.cms.gov
+
+   **Default Root Object:** index.html
+
+   *Example for "Impl" environment:*
+   
+   **SSL Certificate:** Default CloudFront Certificate
+
+   **Default Root Object:** index.html
+
+   *Example for "Prod" environment:*
+
+   > *** TO DO ***
+    
    **Alternate Domain Names (CNAMES):** ab2d.cms.gov
 
    **SSL Certificate:** Custom SSL Certificate
@@ -1959,7 +1837,29 @@
 
 1. Note the distribution row that was created
 
-   *Format:*
+   *Example for "Dev" environment:*
+
+   > *** TO DO ***: Migrate cname to prod and eliminate cname here
+   
+   - **Delivery Method:** Web
+
+   - **Domain Name:** {unique id}.cloudfront.net
+
+   - **Origin:** cms-ab2d-website.s3.amazonaws.com
+
+   - **CNAMEs:** ab2d.cms.gov
+
+   *Example for "Impl" environment:*
+   
+   - **Delivery Method:** Web
+
+   - **Domain Name:** {unique id}.cloudfront.net
+
+   - **Origin:** ab2d-east-impl-website.s3.amazonaws.com
+
+   *Example for "Prod" environment:*
+
+   > *** TO DO ***
    
    - **Delivery Method:** Web
 
@@ -2572,8 +2472,6 @@
 
 ## Configure New Relic and Splunk within the deployment AMI
 
-> *** TO DO ***
-
 1. Change to the "app" directory under packer
 
    ```ShellSession
@@ -2659,3 +2557,2180 @@
 1. Submit the completed for to the product owner
 
 1. Note that the product owner will complete the process
+
+## Create an ab2d vault in 1Password
+
+1. Open Chrome
+
+1. Enter the following in the address bar
+
+   > https://my.1password.com/signin?l=en
+
+1. Log on to 1Password
+
+1. Select **New Vault**
+
+1. Type the following in the **Vault Title** text box
+
+   ```
+   ab2d
+   ```
+
+1. Keep **Let administrators manage this vault** checked
+
+1. Select **Create Vault**
+
+1. Note the newly created "ab2d" vault
+
+1. Select the gear icon within the "ab2d" vault
+
+1. Select **Manage** beside "People"
+
+1. Add team members
+
+   1. Type a team member's name in the search box
+
+   1. Check the checkbox beside the team member in the search results
+
+   1. Clear the search box
+
+   1. Repeat this step for all team members
+
+1. Note that the person creating the vault already has full access
+
+1. Select **Update Team Members**
+
+1. Note that added team members default to "View & Edit"
+
+1. Grant full acess to desired users
+
+   1. Note that the following people will be granted full access
+
+      - Business Analyst
+
+      - DevOps Engineer
+      
+      - Lead Engineer
+      
+      - Project Manager
+
+      - Scrum Master
+
+      - Security Engineer
+
+      - SemanticBits Systems Architect
+      
+   1. Select the gear icon beside the user to get full access
+
+   1. Select **Allow Managing**
+
+   1. Note that a checkmark icon now appears beside "Allow Managing"
+
+## Add an entrust certificate to the ab2d vault in 1Password
+
+> *** TO DO ***: Move this section elsewhere within the document
+
+1. Open Chrome
+
+1. Enter the following in the address bar
+
+   > https://my.1password.com/signin?l=en
+
+1. Log on to 1Password
+
+1. Select the gear icon within the "ab2d" vault
+
+1. Select **Open Vault** from the left side of the page
+
+1. Select the "+" icon at the bottom middle of the page
+
+1. Select **Document**
+
+1. Type the domain name related to the certificate that will be uploaded in the **Title** text box
+
+   *Example:*
+
+   ```
+   ab2d.cms.gov certificate chain
+   ```
+
+1. Select **Drag File to Upload**
+
+1. Navigate to the zip file of the downloaded certificates
+
+   *Example:*
+   
+   ```
+   ~/Downloads/entrust.zip
+   ```
+
+1. Select **Open**
+
+1. Create the following labels
+
+   label           |new field
+   ----------------|---------
+   certificate type|entrust
+
+1. Select **Save**
+
+## Add a private key to the ab2d vault in 1Password
+
+> *** TO DO ***: Move this section elsewhere within the document
+
+1. Open Chrome
+
+1. Enter the following in the address bar
+
+   > https://my.1password.com/signin?l=en
+
+1. Log on to 1Password
+
+1. Select the gear icon within the "ab2d" vault
+
+1. Select **Open Vault** from the left side of the page
+
+1. Select the "+" icon at the bottom middle of the page
+
+1. Select **Document**
+
+1. Type the domain name related to the certificate that will be uploaded in the **Title** text box
+
+   *Example:*
+
+   ```
+   ab2d dev private key
+   ```
+
+1. Select **Drag File to Upload**
+
+1. Navigate to the zip file of the downloaded certificates
+
+   *Example:*
+   
+   ```
+   ~/Downloads/ab2d-dev.pem
+   ```
+
+1. Select **Open**
+
+1. Create the following labels
+
+   label   |new field
+   --------|---------
+   key type|pem file
+
+1. Select **Save**
+
+## Initiate BFD integration process
+
+1. Note that there is a "bfd-users" slack channel for cmsgov with BFD engineers
+
+1. Remove temporary directory (if exists)
+
+   ```ShellSession
+   $ rm -rf ~/Downloads/bfd-integration
+   ```
+
+1. Create a temporary directory
+
+   ```ShellSession
+   $ mkdir -p ~/Downloads/bfd-integration
+   ```
+
+1. Change to the temporary directory
+
+   ```ShellSession
+   $ cd ~/Downloads/bfd-integration
+   ```
+
+1. Create a self-signed SSL certificate for AB2D client to BFD sandbox
+
+   *Example for "Dev" environment:*
+
+   ```ShellSession
+   $ openssl req \
+     -nodes -x509 \
+     -days 1825 \
+     -newkey rsa:4096 \
+     -keyout client_data_server_ab2d_dev_certificate.key \
+     -subj "/CN=ab2d-sbx-client" \
+     -out client_data_server_ab2d_dev_certificate.pem
+   ```
+   
+   *Example for "Sbx" environment:*
+
+   ```ShellSession
+   $ openssl req \
+     -nodes -x509 \
+     -days 1825 \
+     -newkey rsa:4096 \
+     -keyout client_data_server_ab2d_sbx_certificate.key \
+     -subj "/CN=ab2d-sbx-client" \
+     -out client_data_server_ab2d_sbx_certificate.pem
+   ```
+
+   *Example for "Impl" environment:*
+
+   ```ShellSession
+   $ openssl req \
+     -nodes -x509 \
+     -days 1825 \
+     -newkey rsa:4096 \
+     -keyout client_data_server_ab2d_imp_certificate.key \
+     -subj "/CN=ab2d-sbx-client" \
+     -out client_data_server_ab2d_imp_certificate.pem
+   ```
+
+1. Note that the following two files were created
+
+   *Example for "Dev" environment:*
+
+   - client_data_server_ab2d_dev_certificate.key (private key)
+
+   - client_data_server_ab2d_dev_certificate.pem (self-signed crtificate)
+
+   *Example for "Sbx" environment:*
+
+   - client_data_server_ab2d_sbx_certificate.key (private key)
+
+   - client_data_server_ab2d_sbx_certificate.pem (self-signed crtificate)
+
+   *Example for "Impl" environment:*
+
+   - client_data_server_ab2d_imp_certificate.key (private key)
+
+   - client_data_server_ab2d_imp_certificate.pem (self-signed crtificate)
+
+1. Create a keystore that includes the self-signed SSL certificate for AB2D client to BFD sandbox
+
+   *Example for "Dev" environment:*
+
+   ```ShellSession
+   $ openssl pkcs12 -export \
+     -in client_data_server_ab2d_dev_certificate.pem \
+     -inkey client_data_server_ab2d_dev_certificate.key \
+     -out ab2d_dev_keystore \
+     -name client_data_server_ab2d_dev_certificate
+   ```
+
+   *Example for "Sbx" environment:*
+
+   ```ShellSession
+   $ openssl pkcs12 -export \
+     -in client_data_server_ab2d_sbx_certificate.pem \
+     -inkey client_data_server_ab2d_sbx_certificate.key \
+     -out ab2d_sbx_keystore \
+     -name client_data_server_ab2d_sbx_certificate
+   ```
+
+   *Example for "Impl" environment:*
+
+   ```ShellSession
+   $ openssl pkcs12 -export \
+     -in client_data_server_ab2d_imp_certificate.pem \
+     -inkey client_data_server_ab2d_imp_certificate.key \
+     -out ab2d_imp_keystore \
+     -name client_data_server_ab2d_imp_certificate
+   ```
+   
+1. Enter the desired export password at the "Enter Export Password" prompt
+
+1. Re-enter the desired export password at the "Verifying - Enter Export Password" prompt
+
+1. Note that the following file has been created
+
+   *Example for "Dev" environment:*
+
+   - ab2d_dev_keystore (keystore)
+
+   *Example for "Sbx" environment:*
+
+   - ab2d_sbx_keystore (keystore)
+
+   *Example for "Impl" environment:*
+
+   - ab2d_imp_keystore (keystore)
+
+1. Export the public key from the self-signed SSL certificate for AB2D client to BFD sandbox
+
+   *Example for "Dev" environment:*
+
+   ```ShellSession
+   $ openssl x509 -pubkey -noout \
+     -in client_data_server_ab2d_dev_certificate.pem \
+     > client_data_server_ab2d_dev_certificate.pub
+   ```
+
+   *Example for "Sbx" environment:*
+   
+   ```ShellSession
+   $ openssl x509 -pubkey -noout \
+     -in client_data_server_ab2d_sbx_certificate.pem \
+     > client_data_server_ab2d_sbx_certificate.pub
+   ```
+
+   *Example for "Impl" environment:*
+
+   ```ShellSession
+   $ openssl x509 -pubkey -noout \
+     -in client_data_server_ab2d_imp_certificate.pem \
+     > client_data_server_ab2d_imp_certificate.pub
+   ```
+
+1. Note that the following file has been created
+
+   *Example for "Dev" environment:*
+   
+   - client_data_server_ab2d_dev_certificate.pub (public key)
+
+   *Example for "Sbx" environment:*
+   
+   - client_data_server_ab2d_sbx_certificate.pub (public key)
+
+   *Example for "Impl" environment:*
+
+   - client_data_server_ab2d_imp_certificate.pub (public key)
+
+1. Give the public key associated with the self-signed SSL certificate to a BFD engineer that you find on the "bfd-users" slack channel
+
+   *Example for "Dev" environment:*
+   
+   - client_data_server_ab2d_dev_certificate.pub
+
+   *Example for "Sbx" environment:*
+   
+   - client_data_server_ab2d_sbx_certificate.pub
+
+   *Example for "Impl" environment:*
+
+   - client_data_server_ab2d_imp_certificate.pub
+
+1. Send output from "prod-sbx.bfdcloud.net" that includes only the certificate to a file
+
+   ```ShellSession
+   $ openssl s_client -connect prod-sbx.bfdcloud.net:443 \
+     2>/dev/null | openssl x509 -text \
+     | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' \
+     > prod-sbx.bfdcloud.pem
+   ```
+
+1. Note that the following file has been created
+
+   - prod-sbx.bfdcloud.pem (certificate from the bfd sandbox server)
+
+1. Import "prod-sbx.bfdcloud.net" certificate into the keystore
+
+   *Example for "Dev" environment:*
+   
+   ```ShellSession
+   $ keytool -import \
+     -alias bfd-prod-sbx-selfsigned \
+     -file prod-sbx.bfdcloud.pem \
+     -storetype PKCS12 \
+     -keystore ab2d_dev_keystore
+   ```
+
+   *Example for "Sbx" environment:*
+   
+   ```ShellSession
+   $ keytool -import \
+     -alias bfd-prod-sbx-selfsigned \
+     -file prod-sbx.bfdcloud.pem \
+     -storetype PKCS12 \
+     -keystore ab2d_sbx_keystore
+   ```
+
+   *Example for "Impl" environment:*
+   
+   ```ShellSession
+   $ keytool -import \
+     -alias bfd-prod-sbx-selfsigned \
+     -file prod-sbx.bfdcloud.pem \
+     -storetype PKCS12 \
+     -keystore ab2d_imp_keystore
+   ```
+
+1. Enter the keystore password at the "Enter keystore password" prompt
+
+1. Enter the following at the "Trust this certificate" prompt
+
+   ```
+   yes
+   ```
+
+1. Verify that both the bfd sandbox and client certificates are present
+
+   *Example for "Dev" environment:*
+   
+   ```ShellSession
+   $ keytool -list -v -keystore ab2d_dev_keystore
+   ```
+
+   *Example for "Sbx" environment:*
+   
+   ```ShellSession
+   $ keytool -list -v -keystore ab2d_sbx_keystore
+   ```
+
+   *Example for "Impl" environment:*
+   
+   ```ShellSession
+   $ keytool -list -v -keystore ab2d_imp_keystore
+   ```
+
+1. Enter the keystore password at the "Enter keystore password" prompt
+
+1. Verify that there are sections for the following two aliases in the keystore list output
+
+   *Example for "Dev" environment:*
+   
+   - Alias name: bfd-prod-sbx-selfsigned
+
+   - Alias name: client_data_server_ab2d_dev_certificate
+
+   *Example for "Sbx" environment:*
+   
+   - Alias name: bfd-prod-sbx-selfsigned
+
+   - Alias name: client_data_server_ab2d_sbx_certificate
+
+   *Example for "Impl" environment:*
+   
+   - Alias name: bfd-prod-sbx-selfsigned
+
+   - Alias name: client_data_server_ab2d_imp_certificate
+
+1. Save the private key, self-signed certificate, keystore, and keystore password in the "ab2d" vault of 1Password
+
+   *Example for "Dev" environment:*
+
+   Label                                      |File
+   -------------------------------------------|-------------------------------------------
+   AB2D Keystore for Dev                      |ab2d_dev_keystore
+   client_data_server_ab2d_dev_certificate.key|client_data_server_ab2d_dev_certificate.key
+   client_data_server_ab2d_dev_certificate.pem|client_data_server_ab2d_dev_certificate.pem
+
+   Label                          |Value
+   -------------------------------|-----------------------------------------------
+   AB2D Keystore for Dev: Password|{password for the 'ab2d_dev_keystore' keystore}
+
+   *Example for "Sbx" environment:*
+
+   Label                                      |File
+   -------------------------------------------|-------------------------------------------
+   AB2D Keystore for Sandbox                  |ab2d_sbx_keystore
+   client_data_server_ab2d_sbx_certificate.key|client_data_server_ab2d_sbx_certificate.key
+   client_data_server_ab2d_sbx_certificate.pem|client_data_server_ab2d_sbx_certificate.pem
+
+   Label                              |Value
+   -----------------------------------|-----------------------------------------------
+   AB2D Keystore for Sandbox: Password|{password for the 'ab2d_sbx_keystore' keystore}
+
+   *Example for "Impl" environment:*
+
+   Label                                      |File
+   -------------------------------------------|-------------------------------------------
+   AB2D Keystore for Impl                     |ab2d_imp_keystore
+   client_data_server_ab2d_imp_certificate.key|client_data_server_ab2d_imp_certificate.key
+   client_data_server_ab2d_imp_certificate.pem|client_data_server_ab2d_imp_certificate.pem
+
+   Label                           |Value
+   --------------------------------|-----------------------------------------------
+   AB2D Keystore for Impl: Password|{password for the 'ab2d_imp_keystore' keystore}
+
+## Peer AB2D Dev, Sandbox, Impl environments with the BFD Sbx VPC and peer AB2D Prod with BFD Prod VPC
+
+1. Note that peering is no longer needed for using the BFD Sbx (AKA prod-sbx.bfdcloud.net)
+
+1. *** TO DO *** Determine what will need to be done for BFD Prod
+
+1. Note that CCS usually likes to handle the peering between project environments and BFD and then the ADO teams can authorize access
+
+   > *** TO DO ***: Determine if this step needed for BFD Prod?
+
+1. Request that CMS technical contact (e.g. Stephen) create a ticket like the following
+
+   > https://jira.cms.gov/browse/CMSAWSOPS-53861
+
+   > *** TO DO ***: Determine if this step needed for BFD Prod?
+
+## Encrypt BFD keystore and put in S3
+
+1. Get the keystore from 1Password and copy it to the "/tmp" directory
+
+   *Example for "Dev" environment:*
+
+   ```
+   /tmp/ab2d_dev_keystore
+   ```
+
+   *Example for "Sbx" environment:*
+
+   ```
+   /tmp/ab2d_sbx_keystore
+   ```
+
+   *Example for "Impl" environment:*
+
+   ```
+   /tmp/ab2d_imp_keystore
+   ```
+
+1. Set target AWS profile
+
+   *Example for "Dev" environment:*
+
+   ```ShellSession
+   $ export AWS_PROFILE=ab2d-dev
+   ```
+
+   *Example for "Sbx" environment:*
+
+   ```ShellSession
+   $ export AWS_PROFILE=ab2d-sbx-sandbox
+   ```
+
+   *Example for "Impl" environment:*
+   
+   ```ShellSession
+   $ export AWS_PROFILE=ab2d-east-impl
+   ```
+   
+1. Change to the ruby script directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d/Deploy/ruby
+   ```
+
+1. Ensure required gems are installed
+
+   ```ShellSession
+   $ bundle install
+   ```
+   
+1. Encrypt keystore and put it in S3
+
+   *Example for "Dev" environment:*
+   
+   ```ShellSession
+   $ bundle exec rake encrypt_and_put_file_into_s3['/tmp/ab2d_dev_keystore','ab2d-dev-automation']
+   ```
+
+   *Example for "Sbx" environment:*
+   
+   ```ShellSession
+   $ bundle exec rake encrypt_and_put_file_into_s3['/tmp/ab2d_sbx_keystore','ab2d-sbx-sandbox-automation']
+   ```
+
+   *Example for "Impl" environment:*
+   
+   ```ShellSession
+   $ bundle exec rake encrypt_and_put_file_into_s3['/tmp/ab2d_imp_keystore','ab2d-east-impl-automation']
+   ```
+
+1. Verify that you can get the encrypted keystore from S3 and decrypt it
+   
+   1. Remove existing keyfile from the "/tmp" directory (if exists)
+
+      *Example for "Dev" environment:*
+
+      ```ShellSession
+      $ rm -f /tmp/ab2d_dev_keystore
+      ```
+
+      *Example for "Sbx" environment:*
+
+      ```ShellSession
+      $ rm -f /tmp/ab2d_sbx_keystore
+      ```
+
+      *Example for "Impl" environment:*
+
+      ```ShellSession
+      $ rm -f /tmp/ab2d_impl_keystore
+      ```
+
+   1. Get keystore from S3 and decrypt it
+
+      *Example for "Dev" environment:*
+      
+      ```ShellSession
+      $ bundle exec rake get_file_from_s3_and_decrypt['/tmp/ab2d_dev_keystore','ab2d-dev-automation']
+      ```
+
+      *Example for "Sbx" environment:*
+
+      ```ShellSession
+      $ bundle exec rake get_file_from_s3_and_decrypt['/tmp/ab2d_sbx_keystore','ab2d-sbx-sandbox-automation']
+      ```
+
+      *Example for "Impl" environment:*
+
+      ```ShellSession
+      $ bundle exec rake get_file_from_s3_and_decrypt['/tmp/ab2d_imp_keystore','ab2d-east-impl-automation']
+      ```
+
+   1. Verify that both the bfd sandbox and client certificates are present
+
+      *Example for "Dev" environment:*
+
+      ```ShellSession
+      $ keytool -list -v -keystore /tmp/ab2d_dev_keystore
+      ```
+
+      *Example for "Sbx" environment:*
+
+      ```ShellSession
+      $ keytool -list -v -keystore /tmp/ab2d_sbx_keystore
+      ```
+
+      *Example for "Impl" environment:*
+
+      ```ShellSession
+      $ keytool -list -v -keystore /tmp/ab2d_imp_keystore
+      ```
+
+   1. Enter the keystore password at the "Enter keystore password" prompt
+
+   1. Verify that there are sections for the following two aliases in the keystore list output
+
+      *Example for "Dev" environment:*
+
+      - Alias name: bfd-prod-sbx-selfsigned
+
+      - Alias name: client_data_server_ab2d_dev_certificate
+
+      *Example for "Sbx" environment:*
+
+      - Alias name: bfd-prod-sbx-selfsigned
+
+      - Alias name: client_data_server_ab2d_sbx_certificate
+
+      *Example for "Impl" environment:*
+
+      - Alias name: bfd-prod-sbx-selfsigned
+
+      - Alias name: client_data_server_ab2d_imp_certificate
+
+## Configure New Relic infrastructure
+
+1. Open Chrome
+
+1. Enter the following in the address bar
+
+   > https://rpm.newrelic.com/accounts/2597286/setup
+
+1. Log on to New Relic
+
+1. Select **Infrastructure**
+
+1. Select the **AWS** tab
+
+1. Select **ELB**
+
+1. Note the instructions that are displayed
+
+   - Select the following role type: "Another AWS account".
+
+   - Enter {new relic aws account} for the "Account ID".
+
+   - Check the box in order to "Require external ID".
+
+   - Enter {new relic external id} for the "External ID".
+
+   - Click "Next: Permissions".
+
+1. Note and save the "new relic aws account" and "new relic external id"
+
+1. Configure the "AB2D Dev" environment
+
+   1. Log on to AWS account for AB2D Dev
+      
+   1. Select **IAM**
+   
+   1. Select **Roles** from the leftmost panel
+   
+   1. Select **Create role**
+
+   1. Select **Another AWS account**
+
+   1. Configure the role as follows
+
+      - **Account ID:** {new relic aws account}
+
+      - **Require external ID:** checked
+
+      - **External ID:** {new relic external id}
+   
+   1. Select **Next: Permissions**
+   
+   1. Return to the new relic web page
+   
+   1. Select **Next** on the "Step 1: Create a role and establish trust" page
+   
+   1. Return to the AWS account
+   
+   1. Enter the following in the **Search** text box
+   
+      ```
+      ReadOnlyAccess
+      ```
+   
+   1. Check **ReadOnlyAccess**
+   
+   1. Select **Next: Tags**
+   
+   1. Select **Next: Review**
+   
+   1. Return to the new relic web page
+   
+   1. Select **Next** on the "Step 2: Attach policy" page
+   
+   1. Return to the AWS account
+   
+   1. Configure the "Create role" page as follows
+   
+      - **Role name:** NewRelicInfrastructure-Integrations
+   
+   1. Select **Create Role**
+
+   1. Select the **NewRelicInfrastructure-Integrations** role
+   
+   1. Copy and save the **Role ARN**
+   
+   1. Return to the new relic web page
+   
+   1. Select **Next** on the "Step 3: Set role name and review" page
+   
+   1. Note that we won't be creating a budgets policy, since no budgets are defined in the AWS account
+   
+   1. Select **Next** on the "Step 4: Configure Budgets policy" page
+   
+   1. Return to the AWS account
+   
+   1. Configure the "Step 5: Add Account Details" page as follows
+         
+      - **AWS Account name:** AB2D Dev
+   
+      - **ARN:** {noted NewRelicInfrastructure-Integrations role ARN}
+   
+   1. Select **Next** on the "Step 5: Add Account Details" page
+   
+   1. Uncheck **Select all**
+   
+   1. Check the following services
+   
+      *Example for "Dev" environment:*
+   
+      - AutoScaling
+      
+      - CloudFront
+   
+      - CloudTrail
+   
+      - EBS
+   
+      - EC2
+   
+      - ECS
+   
+      - EFS
+   
+      - ELB
+   
+      - RDS
+   
+      - VPC
+   
+   1. Select **Next** on the "Step 6: Select Services" page
+   
+   1. Note the following is displayed
+   
+      ```
+      We're setting up your integration
+   
+      New Relic is retrieving monitoring data from AWS account AB2D Dev and configuring
+      AWS dashboards in New Relic Insights.
+   
+      This may take up to 5 minutes.
+      ```
+   
+   1. Select **OK** on the "We're setting up your integration" page
+
+1. Configure the "AB2D Sbx" environment
+
+   1. Open Chrome
+
+   1. Enter the following in the address bar
+
+      > https://rpm.newrelic.com/accounts/2597286/setup
+
+   1. Log on to New Relic
+
+   1. Select **Infrastructure**
+
+   1. Select the **AWS** tab
+
+   1. Select **Add an AWS account**
+
+   1. Open another Chrome tab
+
+   1. Log on to AWS account for AB2D Sbx
+      
+   1. Select **IAM**
+   
+   1. Select **Roles** from the leftmost panel
+
+   1. Select **Create role**
+
+   1. Select **Another AWS account**
+
+   1. Configure the role as follows
+
+      - **Account ID:** {new relic aws account}
+
+      - **Require external ID:** checked
+
+      - **External ID:** {new relic external id}
+
+   1. Select **Next: Permissions**
+
+   1. Return to the new relic web page
+
+   1. Select **Next** on the "Step 1: Create a role and establish trust" page
+
+   1. Return to the AWS account
+
+   1. Enter the following in the **Search** text box
+
+      ```
+      ReadOnlyAccess
+      ```
+
+   1. Check **ReadOnlyAccess**
+
+   1. Select **Next: Tags**
+
+   1. Select **Next: Review**
+
+   1. Return to the new relic web page
+
+   1. Select **Next** on the "Step 2: Attach policy" page
+
+   1. Return to the AWS account
+
+   1. Configure the "Create role" page as follows
+
+      - **Role name:** NewRelicInfrastructure-Integrations
+
+   1. Select **Create Role**
+
+   1. Select the **NewRelicInfrastructure-Integrations** role
+
+   1. Copy and save the **Role ARN**
+
+   1. Return to the new relic web page
+
+   1. Select **Next** on the "Step 3: Set role name and review" page
+
+   1. Note that we won't be creating a budgets policy, since no budgets are defined in the AWS account
+
+   1. Select **Next** on the "Step 4: Configure Budgets policy" page
+
+   1. Return to the AWS account
+
+   1. Configure the "Step 5: Add Account Details" page as follows
+
+      - **AWS Account name:** AB2D Sbx
+
+      - **ARN:** {noted NewRelicInfrastructure-Integrations role ARN}
+
+   1. Select **Next** on the "Step 5: Add Account Details" page
+
+   1. Uncheck **Select all**
+
+   1. Note that "CloudFront" is not currently used in the Sandbox but is used in the other environments
+
+   1. Check the following services
+
+      *Example for "Sbx" environment:*
+
+      - AutoScaling
+
+      - CloudTrail
+
+      - EBS
+
+      - EC2
+
+      - ECS
+
+      - EFS
+
+      - ELB
+
+      - RDS
+
+      - VPC
+
+   1. Select **Next** on the "Step 6: Select Services" page
+
+   1. Note the following is displayed
+
+      ```
+      We're setting up your integration
+
+      New Relic is retrieving monitoring data from AWS account AB2D Dev and configuring
+      AWS dashboards in New Relic Insights.
+
+      This may take up to 5 minutes.
+      ```
+
+   1. Select **OK** on the "We're setting up your integration" page
+
+1. Configure the "AB2D Impl" environment
+
+   1. Open Chrome
+
+   1. Enter the following in the address bar
+
+      > https://rpm.newrelic.com/accounts/2597286/setup
+
+   1. Log on to New Relic
+
+   1. Select **Infrastructure**
+
+   1. Select the **AWS** tab
+
+   1. Select **Add an AWS account**
+
+   1. Open another Chrome tab
+
+   1. Log on to AWS account for AB2D Impl
+
+   1. Select **IAM**
+
+   1. Select **Roles** from the leftmost panel
+
+   1. Select **Create role**
+
+   1. Select **Another AWS account**
+
+   1. Configure the role as follows
+
+      - **Account ID:** {new relic aws account}
+
+      - **Require external ID:** checked
+
+      - **External ID:** {new relic external id}
+
+   1. Select **Next: Permissions**
+
+   1. Return to the new relic web page
+
+   1. Select **Next** on the "Step 1: Create a role and establish trust" page
+
+   1. Return to the AWS account
+
+   1. Enter the following in the **Search** text box
+
+      ```
+      ReadOnlyAccess
+      ```
+
+   1. Check **ReadOnlyAccess**
+
+   1. Select **Next: Tags**
+
+   1. Select **Next: Review**
+
+   1. Return to the new relic web page
+
+   1. Select **Next** on the "Step 2: Attach policy" page
+
+   1. Return to the AWS account
+
+   1. Configure the "Create role" page as follows
+
+      - **Role name:** NewRelicInfrastructure-Integrations
+
+   1. Select **Create Role**
+
+   1. Select the **NewRelicInfrastructure-Integrations** role
+
+   1. Copy and save the **Role ARN**
+
+   1. Return to the new relic web page
+
+   1. Select **Next** on the "Step 3: Set role name and review" page
+
+   1. Note that we won't be creating a budgets policy, since no budgets are defined in the AWS account
+
+   1. Select **Next** on the "Step 4: Configure Budgets policy" page
+
+   1. Return to the AWS account
+
+   1. Configure the "Step 5: Add Account Details" page as follows
+
+      - **AWS Account name:** AB2D Impl
+
+      - **ARN:** {noted NewRelicInfrastructure-Integrations role ARN}
+
+   1. Select **Next** on the "Step 5: Add Account Details" page
+
+   1. Uncheck **Select all**
+
+   1. Note that "CloudFront" is not currently used in the Sandbox but is used in the other environments
+
+   1. Check the following services
+
+      *Example for "Impl" environment:*
+
+      - AutoScaling
+
+      - CloudFront
+
+      - CloudTrail
+
+      - EBS
+
+      - EC2
+
+      - ECS
+
+      - EFS
+
+      - ELB
+
+      - RDS
+
+      - VPC
+
+   1. Select **Next** on the "Step 6: Select Services" page
+
+   1. Note the following is displayed
+
+      ```
+      We're setting up your integration
+
+      New Relic is retrieving monitoring data from AWS account AB2D Dev and configuring
+      AWS dashboards in New Relic Insights.
+
+      This may take up to 5 minutes.
+      ```
+
+   1. Select **OK** on the "We're setting up your integration" page
+
+## Configure New Relic users
+
+1. Open Chrome
+
+1. Enter the following in the address bar
+
+   > https://rpm.newrelic.com/accounts/2597286
+
+1. Select the account icon dropdown in the upper right of the page
+
+1. Select **User preferences**
+
+1. Configure the user as follows
+
+   - **Default account:** aws-hhs-cms-oeda-ab2d
+
+   - **Time zone:** (GMT-05:00) Eastern Time (US & Canada)
+
+1. Select **Save user preferences**
+
+1. Add additional users
+
+   1. Select the account icon dropdown in the upper right of the page
+
+   1. Select **Account Settings**
+
+   1. Select **Users and roles** from the leftmost panel
+
+   1. Select **Add user**
+
+   1. Configure the user as follows
+
+      - **NAME:** {first name} {last name}
+
+      - **EMAIL:** {semanticbits email}
+
+   1. Choose a role for the user from the following options
+
+      - Admin
+
+      - User
+
+      - Restricted
+
+   1. Select **Add user**
+
+   1. Repeat this section for additional users
+
+## Configure New Relic configuration file
+
+1. Note these directions assume that you have done a first time deployment for a specific environment
+
+1. Open Chrome
+
+1. Enter the following in the address bar
+
+   > https://rpm.newrelic.com/accounts/2597286/setup
+
+1. Select the account icon dropdown in the upper right of the page
+
+1. Select **Account settings**
+
+1. Note the license key
+
+1. Change to the "Downloads" directory
+
+   ```ShellSession
+   $ cd ~/Downloads
+   ```
+
+1. Get the default New Relic configuration file from the development environment's controller
+
+   *Example for "Dev" environment:*
+
+   ```ShellSession
+   $ scp -i ~/.ssh/ab2d-dev.pem ec2-user@52.7.241.208:/etc/newrelic-infra.yml .
+   ```
+
+   *Example for "Sbx" environment:*
+
+   ```ShellSession
+   $ scp -i ~/.ssh/ab2d-sbx-sandbox.pem ec2-user@3.93.125.65:/etc/newrelic-infra.yml .
+   ```
+
+   *Example for "Impl" environment:*
+
+   ```ShellSession
+   $ scp -i ~/.ssh/ab2d-east-impl.pem ec2-user@3.234.127.171:/etc/newrelic-infra.yml .
+   ```
+
+1. Open New Relic congliguration file
+
+   ```ShellSession
+   $ vim ~/Downloads/newrelic-infra.yml
+   ```
+
+1. Uncomment and configure this line with the license key
+
+   ```
+   license_key: {noted license key}
+   ```
+
+1. Save and close the file
+
+1. Set target AWS profile
+
+   *Example for "Dev" environment:*
+
+   ```ShellSession
+   $ export AWS_PROFILE=ab2d-dev
+   ```
+
+   *Example for "Sbx" environment:*
+
+   ```ShellSession
+   $ export AWS_PROFILE=ab2d-sbx-sandbox
+   ```
+
+   *Example for "Impl" environment:*
+
+   ```ShellSession
+   $ export AWS_PROFILE=ab2d-east-impl
+   ```
+
+1. Set region
+
+   ```ShellSession
+   $ export REGION=us-east-1
+   ```
+
+1. Get KMS key ID
+
+   ```ShellSession
+   $ KMS_KEY_ID=$(aws --region "${REGION}" kms list-aliases \
+     --query="Aliases[?AliasName=='alias/ab2d-kms'].TargetKeyId" \
+     --output text)
+   ```
+
+1. Encrypt "newrelic-infra.yml" as "newrelic-infra.yml.encrypted"
+
+   ```ShellSession
+   $ aws kms --region "${REGION}" encrypt \
+     --key-id ${KMS_KEY_ID} \
+     --plaintext fileb://newrelic-infra.yml \
+     --query CiphertextBlob \
+     --output text \
+     | base64 --decode \
+     > newrelic-infra.yml.encrypted
+   ```
+
+1. Copy "newrelic-infra.yml.encrypted" to S3
+
+   *Example for "Dev" environment:*
+
+   ```ShellSession
+   $ aws s3 --region "${REGION}" cp \
+     ./newrelic-infra.yml.encrypted \
+     s3://ab2d-dev-automation/encrypted-files/
+   ```
+
+   *Example for "Sbx" environment:*
+
+   ```ShellSession
+   $ aws s3 --region "${REGION}" cp \
+     ./newrelic-infra.yml.encrypted \
+     s3://ab2d-sbx-sandbox-automation/encrypted-files/
+   ```
+
+   *Example for "Impl" environment:*
+
+   ```ShellSession
+   $ aws s3 --region "${REGION}" cp \
+     ./newrelic-infra.yml.encrypted \
+     s3://ab2d-east-impl-automation/encrypted-files/
+   ```
+
+1. Change to the "/tmp" directory
+
+   ```ShellSession
+   $ cd /tmp
+   ```
+
+1. Get "newrelic-infra.yml.encrypted" from S3
+
+   *Example for "Dev" environment:*
+
+   ```ShellSession
+   $ aws s3 --region "${REGION}" cp \
+     s3://ab2d-dev-automation/encrypted-files/newrelic-infra.yml.encrypted \
+     .
+   ```
+
+   *Example for "Sbx" environment:*
+
+   ```ShellSession
+   $ aws s3 --region "${REGION}" cp \
+     s3://ab2d-sbx-sandbox-automation/encrypted-files/newrelic-infra.yml.encrypted \
+     .
+   ```
+
+   *Example for "Impl" environment:*
+
+   ```ShellSession
+   $ aws s3 --region "${REGION}" cp \
+     s3://ab2d-east-impl-automation/encrypted-files/newrelic-infra.yml.encrypted \
+     .
+   ```
+
+1. Test decryption of the new relic configuration file
+
+   ```ShellSession
+   $ aws kms --region "${REGION}" decrypt \
+     --ciphertext-blob fileb://newrelic-infra.yml.encrypted \
+     --output text --query Plaintext \
+     | base64 --decode \
+     > /tmp/newrelic-infra.yml
+   ```
+
+## Download the sandbox domain certificates and get private key from CMS
+
+1. Note that CMS will request a domain certificate from Digicert for the following domain
+
+   ```
+   sandbox.ab2d.cms.gov
+   ```
+
+1. Wait for the email from Digicert
+
+1. Wait for CMS to provide the following
+
+   - private key used to make the domain certificate request
+
+1. After receiving the private key save it under "~/Downloads"
+
+   ```
+   sandbox_ab2d_cms_gov.key
+   ```
+   
+1. Note the following in the email
+
+   - Key Info - RSA 2048-bit
+   
+   - Signature Algorithm - SHA-256 with RSA Encryption and SHA-1 root
+   
+   - Product Name - Digital ID Class 3 - Symantec Global Server OnSite
+   
+1. Select the "Download your certificate and the intermediate CAs here" link in the Digicert email
+
+1. Scroll down to the bottom of the page
+
+1. Select **Download**
+
+1. Scroll down to the "X.509" section
+
+1. Open a terminal
+
+1. Delete existing "ServerCertificateSandbox.crt" file (if exists)
+
+   ```ShellSession
+   $ rm -f ~/Downloads/ServerCertificateSandbox.crt
+   ```
+
+1. Open a new "ServerCertificateSandbox.crt" file
+
+   ```ShellSession
+   $ vim ~/Downloads/ServerCertificateSandbox.crt
+   ```
+
+1. Return to the web page with the "X.509" text block
+
+1. Select all text within the "X.509" text block
+
+1. Copy the "X.509" text block to the clipboard
+
+1. Paste the text into the "ServerCertificateSandbox.crt" file
+
+1. Save and close the file
+
+1. Return to "Download Certificate" page
+
+1. Select the "Install the intermediate CA separately for PKCS #7" link
+
+1. Select the **RSA SHA-2** tab
+
+1. Select **Download** beside "Secure Site" under "Intermediate CA" under the the "SHA-2 Intermediate CAs (under SHA-1 Root)" section
+
+1. Wait for the download to complete
+
+1. Note the following file will appear under "Downloads"
+
+   ```
+   DigiCertSHA2SecureServerCA.pem
+   ```
+
+1. Save the following files to 1Password
+
+   > *** TO DO ***
+   
+   - ServerCertificateSandbox.crt (certificate)
+
+   - sandbox_ab2d_cms_gov.key (private key)
+
+   - DigiCertSHA2SecureServerCA.pem (intermediate certificate)
+   
+## Import the sandbox domain certificate into certificate manager
+
+1. Open Chrome
+
+1. Log on to AWS
+
+1. Navigate to Certificate Manager
+
+1. Select **Get Started** under "Provision certificates"
+
+1. Select **Import a certificate**
+
+1. Open a terminal
+
+1. Copy the contents of "ServerCertificate.crt" to the clipboard
+
+   ```ShellSession
+   $ cat ~/Downloads/ServerCertificateSandbox.crt | pbcopy
+   ```
+
+1. Return to the "Import a Certificate" page in Chrome
+
+1. Paste the contents of the "ServerCertificate.crt" into the **Certificate body** text box
+
+1. Copy the contents of the private key to the clipboard
+
+   ```ShellSession
+   $ cat ~/Downloads/sandbox_ab2d_cms_gov.key | pbcopy
+   ```
+   
+1. Paste the contents of the the private key that was provided separately by CMS into the **Certificate private key** text box
+
+1. Return to the terminal
+
+1. Copy Intermediate.crt the clipboard
+
+   ```ShellSession
+   $ cat DigiCertSHA2SecureServerCA.pem | pbcopy
+   ```
+
+1. Paste the intermediate certificate into the **Certificate chain** text box
+
+1. Select **Next** on the "Import certificate" page
+
+1. Select **Review and import**
+
+1. Note that the following information should be displayed
+
+   *Format:*
+
+   **Domains:** ab2d.cms.gov
+
+   **Expires in:** {number} Days
+
+   **Public key info:** RSA-2048
+
+   **Signature algorithm:** SHA256WITHRSA
+   
+1. Select **Import**
+
+## Map the application load balancer for sandbox certificate
+
+1. Open Chrome
+
+1. Log on to the Sandbox AWS account
+
+1. Select **EC2**
+
+1. Select **Load Balancers** under the "LOAD BALANCING" section in the leftmost panel
+
+1. Select the **Listeners** tab
+
+1. Select **Add listener**
+
+1. Configure the listener as follows
+
+   - **Protocol:** HTTPS
+
+   - **port:** 443
+
+   - **Default actions:** Forward to ab2d-sbx-sandbox-api-tg: 1 (select the checkmark to save this)
+
+   - **Security policy:** ELBSecurityPolicy-2016-08
+
+   - **Default SSL certificate:** From ACM (recommended) sandbox.ab2d.cms.gov - {unique id}
+
+1. Select **Save**
+
+1. Select **aws** in the top left of the page
+
+## Setup Jenkins server in management AWS account
+
+1. Open Chrome
+
+1. Log to to the management AWS account
+
+1. Setup Jenkins security group
+
+   1. Select **Your VPCs** from the leftmost panel
+
+   1. Note the VPC ID of the 'ab2d-mgmt-east-dev" VPC
+
+      ```
+      vpc-0fccd950a4ce7469b
+      ```
+
+   1. Select **Security Groups** from the leftmost panel
+
+   1. Select **Create security group**
+
+   1. Configure the security group as follows
+
+      - **Security group name:** ab2d-mgmt-east-dev-jenkins-sg
+
+      - **Description:** ab2d-mgmt-east-dev-jenkins-sg
+
+      - **VPC:** vpc-0fccd950a4ce7469b
+
+   1. Select **Create**
+
+   1. Select **Close**
+
+   1. Select the newly created security group that has "ab2d-mgmt-east-dev-jenkins-sg" as its "Group Name"
+
+   1. Change the "Name" to be the following
+
+      ```
+      ab2d-mgmt-east-dev-jenkins-sg
+      ```
+
+   1. Select **Inbound Rules**
+
+   1. Select **Edit Rules**
+
+   1. Select **Add Rule**
+
+   1. Open a new Chrome tab
+
+   1. Enter the following in the address bar
+
+      > https://confluence.cms.gov/pages/viewpage.action?spaceKey=AWSOC&title=CCS+Cloud+VPN+Public+IPs
+
+   1. Note the CCS Cloud VPN Public IPs
+
+      *Example of public IP addresses of cloudvpn.cms.gov:*
+
+      ```
+      52.20.26.200/32,34.196.35.156/32,52.5.212.71/32
+      ```
+
+      *Example of public IP addresses of cloudwest.cms.gov:*
+
+      ```
+      52.20.26.200/32,34.196.35.156/32,52.5.212.71/32
+      ```
+
+   1. Note that you will be using the public IP addresses of cloudvpn.cms.gov for the "CIDR" in the next step
+
+   1. Return to the AWS Chrome tab
+
+   1. Configure the inbound rule as follows
+
+      - **Type:** All traffic
+
+      - **Protocol:** All
+
+      - **Port Range:** All
+
+      - **Source:** Custom
+
+      - **CIDR:** 52.20.26.200/32,34.196.35.156/32,52.5.212.71/32
+
+      - **Description:** VPN Access
+
+   1. Select **Save rules**
+
+   1. Select **Close**
+
+1. Setup Jenkins EC2 instance
+
+   1. Select **aws** in the top left of the page
+
+   1. Select **EC2**
+
+   1. Select **Instances** in the leftmost panel
+
+   1. Select **Launch Instance**
+
+   1. Select **My AMIs**
+
+   1. Select **Select** beside the "AB2D-JENKINS" ami
+
+   1. Select the following
+
+      ```
+      m5.xlarge
+      ```
+
+   1. Select **Next: Configure Instance Details**
+
+   1. Configre the instance details as follows
+
+      - **Number of instances:** 1
+
+      - **Purchasing option:** {unchecked}
+
+      - **Network:** {vpc id} | ab2d-mgmt-east-dev
+
+      - **Subnet:** {subnet id} | ab2d-mgmt-east-dev-public-a | us-east-1a
+
+      - **Auto-assign Public IP:** Enable
+
+      - **Placement group:** {unchecked}
+
+      - **Capacity reservation:** Open
+
+      - **IAM Role:** Ab2dInstanceProfile
+
+      - **CPU Options:** {unchecked}
+
+      - **Shutdown behavior:** Stop
+
+      - **Stop - Hibernate behavior:** {unchecked}
+
+      - **Enable terminate protection:** {checked}
+
+      - **Monitoring:** {unchecked}
+
+      - **EBS-optimized instance:** {checked}
+
+      - **Tenancy:** Shared - Run a shared hardware instance
+
+      - **Elastic Inference:** {unchecked}
+
+   1. Select **Next: Add Storage**
+
+   1. Conigure the "Root" volume as follows
+
+      - **Volume Type:** Root
+
+      - **Device:** /dev/sda1
+
+      - **Snapshot:** {snapshot id}
+
+      - **Size (GiB):** 250
+
+      - **Volume Type:** General Purpose SSD (gp2)
+
+      - **IOPS:** 750 / 3000
+
+      - **Throughput (MB/s):** N/A
+
+      - **Delete on Termination:** {checked}
+
+      - **Encryption:** Not Encrypted
+
+   1. Select **Next: Add Tags**
+
+   1. Select **Add Tag**
+
+   1. Configure the key as follows
+
+      - **Key:** Name
+
+      - **Value:** ab2d-mgmt-east-dev-jenkins-vm
+
+      - **Instances:** {checked}
+
+      - **Volumes:** {checked}
+
+   1. Select **Next: Configure Security Group**
+
+   1. Select the **Select an existing security group** radio button
+
+   1. Select the following security group
+
+      ```
+      ab2d-mgmt-east-dev-jenkins-sg
+      ```
+
+   1. Select **Review and Launch**
+
+   1. Review the settings
+
+   1. Select **Launch**
+
+   1. Select the following from the first dropdown
+
+      ```
+      Choose an existing key pair
+      ```
+
+   1. Select the following from the **Select a key pair** dropdown
+
+      ```
+      ab2d-mgmt-east-dev
+      ```
+
+   1. Check **I acknowledge...**
+
+   1. Select **Launch Instances**
+
+   1. Select **aws** on the top left of the page
+
+   1. Select **EC2**
+
+   1. Select **Instances**
+
+   1. Wait for the instance to finish starting up with successful status checks
+
+1. Connect to the Jenkins EC2 instance
+
+   1. Note the public IP address of the Jenkins EC2 instance
+
+      ```
+      18.212.95.139
+      ```
+
+   1. Ensure that you are connected to the Cisco VPN
+
+   1. SSH into the instance using the private IP address
+
+      ```ShellSession
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@18.212.95.139
+      ```
+
+1. View the available disk devices
+
+   1. Enter the following
+
+      ```ShellSession
+      $ lsblk
+      ```
+
+   1. Note the output
+
+      *Example for an "m5.xlarge" instance:*
+
+      ```
+      nvme0n1                  259:0    0  250G  0 disk 
+      ├─nvme0n1p1              259:1    0    1G  0 part /boot
+      ├─nvme0n1p2              259:2    0   29G  0 part 
+      │ ├─VolGroup00-auditVol  253:0    0    4G  0 lvm  /var/log/audit
+      │ ├─VolGroup00-homeVol   253:1    0  223G  0 lvm  /home
+      │ ├─VolGroup00-logVol    253:2    0    4G  0 lvm  /var/log
+      │ ├─VolGroup00-rootVol   253:3    0   10G  0 lvm  /
+      │ ├─VolGroup00-tmpVol    253:4    0    2G  0 lvm  /tmp
+      │ ├─VolGroup00-varVol    253:5    0    5G  0 lvm  /var
+      │ └─VolGroup00-vartmpVol 253:6    0    1G  0 lvm  /var/tmp
+      └─nvme0n1p3              259:3    0  220G  0 part 
+        └─VolGroup00-homeVol   253:1    0  223G  0 lvm  /home
+      ```
+
+   1. Note the root device in the output
+
+      *Example for an "m5.xlarge" instance:*
+
+      - nvme0n1
+
+   1. Note the existing partitions
+
+      *Example for an "m5.xlarge" instance:*
+
+      - nvme0n1p1
+
+      - nvme0n1p2
+
+      - nvme0n1p3
+
+   1. Note the "homeVol" entries
+
+      - nvme0n1p2
+
+        - VolGroup00-homeVol   253:1    0  223G  0 lvm  /home
+
+      - nvme0n1p3
+
+        - VolGroup00-homeVol   253:1    0  223G  0 lvm  /home
+
+## Deploy and configure Jenkins
+
+1. Connection to the Jenkins instance
+   
+   ```ShellSession
+   $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@18.212.95.139
+   ```
+
+1. Install, enable, and start firewalld
+
+   1. Install firewalld
+
+      ```ShellSession
+      $ sudo yum install firewalld -y
+      ```
+
+   1. Enable firewalld
+
+      ```ShellSession
+      $ sudo systemctl enable firewalld
+      ```
+
+   1. Start firewalld
+
+      ```ShellSession
+      $ sudo systemctl start firewalld
+      ```
+
+   1. Check the firewall status
+
+      ```ShellSession
+      $ sudo firewall-cmd --state
+      ```
+
+   1. Verify that the following is displayed in the output
+
+      ```
+      running
+      ```
+
+   1. Check the firewalld daemon status
+
+      ```ShellSession
+      $ systemctl status firewalld | grep running
+      ```
+
+   1. Verify that the following is displayed
+
+      ```
+      Active: active (running)...
+      ```
+
+1. Note the default Jenkins port
+
+   1. Open the Jenkins config file
+
+      ```ShellSession
+      $ sudo cat /etc/sysconfig/jenkins | grep JENKINS_PORT
+      ```
+
+   1. Note the output
+
+      *Example:*
+      
+      ```
+      JENKINS_PORT="8080"
+      ```
+
+1. Add HTTP as a permanent service for the public zone
+
+   ```ShellSession
+   $ sudo firewall-cmd --zone=public --add-service=http --permanent
+   ```
+
+1. Determine what ports the server is expecting for network traffic
+
+   1. Install Security-Enhanced Linux (SELinux) tools
+   
+      ```ShellSession
+      $ sudo yum install policycoreutils-devel -y
+      $ sudo yum install setroubleshoot-server -y
+      ```
+
+   1. Determine what ports SELinux has configured for incoming network traffic
+
+      ```ShellSession
+      $ sepolicy network -t http_port_t
+      ```
+
+   1. Note the ports that are output
+
+      ```
+      http_port_t: tcp: 80,81,443,488,8008,8009,8443,9000
+      ```
+
+   1. Note that port 8080 is not listed
+
+1. Add port 8080 to SELinux policy configuration
+
+   ```ShellSession
+   $ sudo semanage port -m -t http_port_t -p tcp 8080
+   ```
+
+1. Verify that port 8080 is now included in SELinux policy configuration
+
+   ```ShellSession
+   $ sepolicy network -t http_port_t
+   ```
+
+1. Note the ports that are output
+
+   ```
+   http_port_t: tcp: 8080,80,81,443,488,8008,8009,8443,9000
+   ```
+   
+1. Configure the Jenkins servive for the firewall
+
+   1. Note the Jenkins wiki lists steps that are not necessary with current versions of CentOS
+      
+   1. Add Jenkins as a permanent service
+
+      ```ShellSession
+      $ sudo firewall-cmd --permanent --add-service=jenkins
+      ```
+
+   1. Reload
+
+      ```ShellSession
+      $ sudo firewall-cmd --reload
+      ```
+
+   1. Verify the port forwarding
+
+      ```ShellSession
+      $ sudo firewall-cmd --list-all
+      ```
+
+   1. Verify the following settings looks like this
+
+      - **services:** dhcpv6-client http jenkins ssh
+
+      - **masquerade:** no
+
+      - **forward-ports:**
+   
+1. Enable Jenkins
+
+   1. Enter the following
+  
+      ```ShellSession
+      $ sudo systemctl enable jenkins
+      ```
+
+   1. Note that the output shows that the system automatically did "chkconfig" on the sercvice because it is not a native service
+
+      ```
+      jenkins.service is not a native service, redirecting to /sbin/chkconfig.
+      Executing /sbin/chkconfig jenkins on
+      ```
+
+1. Check the current status of Jenkins
+   
+   ```ShellSession
+   $ systemctl status jenkins -l
+   ```
+
+1. If Jenkins is not running, do the following
+   
+   1. Start Jenkins
+
+      ```ShellSession
+      $ sudo systemctl start jenkins
+      ```
+   
+   1. Re-check the current status of Jenkins
+ 
+   1. Note that you should see the following in the output
+ 
+      ```
+      Active: active (running)
+      ``` 
+
+1. Ensure that Jenkins is running on the default port 8080
+
+   1. Enter the following
+    
+      ```ShellSession
+      $ netstat -an | grep 8080
+      ```
+
+   1. Verify that the following is output
+
+      ```
+      tcp6       0      0 :::8080                 :::*                    LISTEN
+      ```
+
+   1. If no output is displayed, do the following
+
+      1. Restart Jenkins
+
+         ```ShellSession
+         $ sudo systemctl restart jenkins
+         ```
+
+      1. Repeat the "netstat" port step above
+
+1. Open Chrome
+
+1. Enter the following in the address bar
+
+   > http://http://18.212.95.139/:8080
+
+1. Configure Jenkins
+
+   1. Return to the terminal
+
+   1. Get the Jenkins administrator password
+
+      ```ShellSession
+      $ sudo cat /var/lib/jenkins/secrets/initialAdminPassword
+      ```
+
+   1. Copy and paste the password into the **Administrator password** text box of the Jenkins page displayed in Chrome
+
+   1. Select **Continue** on the *Unlock Jenkins* page
+
+   1. Select **Install suggested plugins**
+
+   1. Wait for installation to complete
+
+   1. Enter the following items for your user
+
+      - Username (alphanumeric characters, underscore and dash; e.g. fred-smith)
+
+      - Password
+
+      - Confirm password
+
+      - Full name
+
+      - E-mail address (e.g. fred.smith@semanticbits.com)
+
+   1. Select **Save and Continue**
+
+   1. Note the Jenkins URL
+
+   1. Select **Save and Finish**
+
+   1. Select **Start using Jenkins**
+
+1. Get information about the jenkins user account
+
+   1. Enter the following
+   
+      ```ShellSession
+      $ getent passwd jenkins
+      ```
+
+   2. Note the output
+
+      *Example:*
+      
+      ```
+      jenkins:x:997:994:Jenkins Automation Server:/var/lib/jenkins:/bin/false
+      ```
+
+   3. Note that the "/bin/false" in the output means that the user will not be able to use a login shell when running various commands
+
+1. Modify the jenkins user to allow it to use a login shell
+
+   1. Enter the following
+   
+      ```ShellSession
+      $ sudo usermod -s /bin/bash jenkins
+      ```
+
+   1. Verify the change
+
+      ```ShellSession
+      $ getent passwd jenkins
+      ```
+
+   1. Note the output
+
+      *Example:*
+      
+      ```
+      jenkins:x:997:994:Jenkins Automation Server:/var/lib/jenkins:/bin/bash
+      ```
+
+1. Give the local jenkins user a password for intial SSH connections
+
+   1. Enter the following that is at least 15 characters
+   
+      ```ShellSession
+      $ sudo passwd jenkins
+      ```
+
+   1. Enter a password at the **New password** prompt
+
+   1. Reenter the password at the **Retype new password** prompt
+
+1. Note that if the jenkins user needs to run a build on a remote system, it will need SSH keys to do so
+
+1. Allow password authentication
+
+   1. Open the "sshd_config" file
+
+      ```ShellSession
+      $ sudo vim /etc/ssh/sshd_config
+      ```
+
+   1. Change the following line to look like this
+
+      ```
+      PasswordAuthentication yes
+      ```
+
+   1. Restart sshd
+
+      ```ShellSession
+      $ sudo systemctl restart sshd
+      ```
+
+1. Set up SSH keys for jenkins user
+
+   1. Switch to the jenkins user
+   
+      ```ShellSession
+      $ sudo su - jenkins
+      ```
+
+   1. View the jenkins user home directory
+
+      ```ShellSession
+      $ pwd
+      ```
+
+   1. Note the home directory
+
+      ```
+      /var/lib/jenkins
+      ```
+
+   1. Initiate creation of SSH keys
+
+      ```ShellSession
+      $ ssh-keygen
+      ```
+
+   1. Press **return** on the keyboard at the "Enter file in which to save the key (/var/lib/jenkins/.ssh/id_rsa)" prompt
+
+   1. Press **return** on the keyboard at the "Enter passphrase (empty for no passphrase)" prompt
+
+   1. Press **return** on the keyboard at the "Enter same passphrase again" prompt
+
+   1. Allow the machine to SSH into itself
+
+      ```ShellSession
+      $ ssh-copy-id jenkins@localhost
+      ```
+   
+   1. Enter the following at the "Are you sure you want to continue connecting (yes/no)" prompt
+
+      ```
+      yes
+      ```
+
+   1. Enter the jenkins user password at the "jenkins@localhost's password" prompt
+
+   1. Switch back to the centos user
+
+      ```ShellSession
+      $ exit
+      ```
+
+1. Disallow password authentication
+
+   1. Open the "sshd_config" file
+
+      ```ShellSession
+      $ sudo vim /etc/ssh/sshd_config
+      ```
+
+   1. Change the following line to look like this
+
+      ```
+      PasswordAuthentication no
+      ```
+
+   1. Restart sshd
+
+      ```ShellSession
+      $ sudo systemctl restart sshd
+      ```
+
+1. Verify that SSH to "jenkins@localhost" now works
+
+   ```ShellSession
+   $ sudo -u jenkins ssh jenkins@localhost
+   ```
+
+1. Exit the shell
+
+   ```ShellSession
+   $ exit
+   ```
+   
+1. Note that the resaon why jenkins needs ssh access to its server is so that can run builds locally (if required), since jenkins will do builds over SSH by default
+
+1. Add jenkins user to sudoers file
+
+   1. Enter the following
+
+      ```ShellSession
+      $ sudo visudo
+      ```
+
+   1. Modify this section as follows
+
+      ```
+      ## Allow root to run any commands anywhere
+      root    ALL=(ALL)       ALL
+      jenkins ALL=(ALL)       NOPASSWD: ALL
+      ```
+
+    1. Note that the above setting for the jenkins user is not ideal since it means that the jenkins user will be able to do "sudo" on all commands
+
+    1. Note that it would be better to lock down the jenkins user so that it can only do "sudo" on a certain subset of commands based on the requirements

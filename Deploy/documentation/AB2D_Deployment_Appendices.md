@@ -27,6 +27,11 @@
 1. [Appendix P: Display disk space](#appendix-p-display-disk-space)
 1. [Appendix Q: Test API using swagger](#appendix-q-test-api-using-swagger)
 1. [Appendix R: Update userdata for auto scaling groups through the AWS console](#appendix-r-update-userdata-for-auto-scaling-groups-through-the-aws-console)
+1. [Appendix S: Install Ruby on RedHat linux](#appendix-s-install-ruby-on-redhat-linux)
+1. [Appendix T: Test getting and decrypting a file from S3](#appendix-t-test-getting-and-decrypting-a-file-from-s3)
+1. [Appendix U: Interact with the New Relic infrastructure agent](#appendix-u-interact-with-the-new-relic-infrastructure-agent)
+1. [Appendix V: Add a new environment variable for ECS docker containers](#appendix-v-add-a-new-environment-variable-for-ecs-docker-containers)
+1. [Appendix W: Launch a base EC2 instance that is created from gold disk AMI](#appendix-w-launch-a-base-ec2-instance-that-is-created-from-gold-disk-ami)
 
 ## Appendix A: Access the CMS AWS console
 
@@ -485,7 +490,7 @@
    
    ```ShellSession
    $ export TARGET_ENVIRONMENT=ab2d-dev
-   $ export NODE_PRIVATE_IP=10.242.26.231
+   $ export NODE_PRIVATE_IP=10.242.26.83
    $ export SSH_USER_NAME=ec2-user
    ```
 
@@ -493,7 +498,7 @@
    
    ```ShellSession
    $ export TARGET_ENVIRONMENT=ab2d-sbx-sandbox
-   $ export NODE_PRIVATE_IP=10.242.31.151
+   $ export NODE_PRIVATE_IP=10.242.31.64
    $ export SSH_USER_NAME=ec2-user
    ```
 
@@ -517,7 +522,7 @@
    
    ```ShellSession
    $ export TARGET_ENVIRONMENT=ab2d-sbx-sandbox
-   $ export NODE_PRIVATE_IP=10.242.31.25
+   $ export NODE_PRIVATE_IP=10.242.31.162
    $ export SSH_USER_NAME=ec2-user
    ```
 
@@ -528,13 +533,38 @@
    ```ShellSession
    $ ssh -i ~/.ssh/${TARGET_ENVIRONMENT}.pem ${SSH_USER_NAME}@${NODE_PRIVATE_IP}
    ```
+
+1. Switch to root
+
+   ```ShellSession
+   $ sudo su
+   ```
+
+1. If you want to clear the log to get fresh logging, do the following:
+
+   1. Clear the log
+
+      ```ShellSession
+      $ sudo cat /dev/null > /var/log/messages
+      ```
+
+   2. Wait a few minutes to get the fresh logging
    
 1. Copy "messages" log to ec2-user home directory
 
    ```ShellSession
-   $ sudo su
    $ cp /var/log/messages /home/ec2-user
+   ```
+
+1. Change the ownership on the file
+
+   ```ShellSession
    $ chown ec2-user:ec2-user /home/ec2-user/messages
+   ```
+
+1. Exit the root user
+
+   ```ShellSession
    $ exit
    ```
 
@@ -657,16 +687,35 @@
 
 1. Set the target AWS profile
 
+   *Example for "Dev" environment:*
+
    ```ShellSession
-   $ export AWS_PROFILE=ab2d-shared
+   $ export AWS_PROFILE=ab2d-dev
+   ```
+
+   *Example for "Sbx" environment:*
+
+   ```ShellSession
+   $ export AWS_PROFILE=ab2d-sbx-sandbox
+   ```
+
+1. Set target environment
+
+   *Example for "Dev" environment:*
+
+   ```ShellSession
+   $ export TARGET_ENVIRONMENT=ab2d-dev
+   ```
+
+   *Example for "Sbx" environment:*
+
+   ```ShellSession
+   $ export TARGET_ENVIRONMENT=ab2d-sbx-sandbox
    ```
 
 1. Set controller access variables
-
-   *Example for CMS development environment:*
    
    ```ShellSession
-   $ export TARGET_ENVIRONMENT=ab2d-shared
    $ CONTROLLER_PUBLIC_IP=$(aws --region us-east-1 ec2 describe-instances \
      --filters "Name=tag:Name,Values=ab2d-deployment-controller" \
      --query="Reservations[*].Instances[?State.Name == 'running'].PublicIpAddress" \
@@ -915,7 +964,7 @@
    ```ShellSession
    $ ./bash/redeploy-api-and-worker-nodes.sh \
      --profile=ab2d-dev \
-     --environment=dev \
+     --environment=ab2d-dev \
      --vpc-id=vpc-0c6413ec40c5fdac3 \
      --ssh-username=ec2-user \
      --owner=842420567215 \
@@ -928,7 +977,7 @@
    ```ShellSession
    $ ./bash/redeploy-api-and-worker-nodes.sh \
      --profile=ab2d-sbx-sandbox \
-     --environment=sbx-sandbox \
+     --environment=ab2d-sbx-sandbox \
      --vpc-id=vpc-08dbf3fa96684151c \
      --ssh-username=ec2-user \
      --owner=842420567215 \
@@ -1778,4 +1827,821 @@
 
       ```
       terraform.tfstate
+      ```
+
+## Appendix S: Install Ruby on RedHat linux
+
+1. Install rbenv dependencies
+
+   ```ShellSession
+   $ sudo yum install -y git-core zlib zlib-devel gcc-c++ patch readline \
+     readline-devel libyaml-devel libffi-devel openssl-devel make bzip2 \
+     autoconf automake libtool bison curl sqlite-devel
+   ```
+
+1. Install rbenv and ruby-build
+
+   ```ShellSession
+   $ curl -sL https://github.com/rbenv/rbenv-installer/raw/master/bin/rbenv-installer | bash -
+   ```
+
+1. Note that will see output that looks similar to this
+
+   ```
+   Running doctor script to verify installation...
+   Checking for `rbenv' in PATH: which: no rbenv in (/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/opt/puppetlabs/bin:/home/ec2-user/.local/bin:/home/ec2-user/bin)
+   not found
+     You seem to have rbenv installed in `/home/ec2-user/.rbenv/bin', but that
+     directory is not present in PATH. Please add it to PATH by configuring
+     your `~/.bashrc', `~/.zshrc', or `~/.config/fish/config.fish'.
+   ```
+
+1. Add rbenv to path
+
+   ```ShellSession
+   $ echo 'export PATH="$HOME/.rbenv/bin:$PATH"' >> ~/.bashrc
+   $ echo 'eval "$(rbenv init -)"' >> ~/.bashrc
+   $ source ~/.bashrc
+   ```
+
+1. Note that you can the determine that latest stable version of Ruby available via rbenv by doing the following
+
+   ```ShellSession
+   $ rbenv install -l | grep -v - | tail -1
+   ```
+
+1. Note the current pinned version of Ruby on your development machine
+
+   1. Open a new terminal
+   
+   1. Enter the following on your Mac
+   
+      ```ShellSession
+      $ ruby --version
+      ```
+
+   1. Note the base ruby version
+
+      ```
+      2.6.5
+      ```
+
+   1. Note that you will to use the same version on RedHat because that is the version that was used to test ruby scripts
+
+1. Return to the RedHat node terminal session tab
+
+1. Install the noted version of Ruby
+
+   ```ShellSession
+   $ rbenv install 2.6.5
+   ```
+
+1. Wait for the installation to complete
+
+   *Note that the installation will take a while. Be patient.*
+   
+1. Set the global version of Ruby 
+   
+   ```ShellSession
+   $ rbenv global 2.6.5
+   ```
+
+1. Verify the Ruby version
+
+   ```ShellSession
+   $ ruby --version
+   ```
+
+1. Install bundler
+
+   ```ShellSession
+   $ gem install bundler
+   ```
+
+1. Update Ruby Gems
+
+   ```ShellSession
+   $ gem update --system
+   ```
+   
+## Appendix T: Test getting and decrypting a file from S3
+
+1. Copy Gemfile and Rakefile to the controller
+
+   *Example for "Dev" environment:*
+   
+   ```ShellSession
+   $ scp -i ~/.ssh/ab2d-dev.pem ruby/Gemfile ec2-user@52.7.241.208:/tmp
+   $ scp -i ~/.ssh/ab2d-dev.pem ruby/Rakefile ec2-user@52.7.241.208:/tmp
+   ```
+
+   *Example for "Sbx" environment:*
+   
+   ```ShellSession
+   $ scp -i ~/.ssh/ab2d-sbx-sandbox.pem ruby/Gemfile ec2-user@3.93.125.65:/tmp
+   $ scp -i ~/.ssh/ab2d-sbx-sandbox.pem ruby/Rakefile ec2-user@3.93.125.65:/tmp
+   ```
+
+1. Connect to the controller
+
+   *Example for "Dev" environment:*
+   
+   ```ShellSession
+   $ ssh -i ~/.ssh/ab2d-dev.pem ec2-user@52.7.241.208
+   ```
+
+   *Example for "Sbx" environment:*
+
+   ```ShellSession
+   $ ssh -i ~/.ssh/ab2d-sbx-sandbox.pem ec2-user@3.93.125.65
+   ```
+
+1. Copy Gemfile and Rakefile to a worker node
+
+   *Example for "Dev" environment:*
+   
+   ```ShellSession
+   $ scp -i ~/.ssh/ab2d-dev.pem /tmp/Gemfile ec2-user@10.242.26.249:/tmp
+   $ scp -i ~/.ssh/ab2d-dev.pem /tmp/Rakefile ec2-user@10.242.26.249:/tmp
+   ```
+
+   *Example for "Sbx" environment:*
+   
+   ```ShellSession
+   $ scp -i ~/.ssh/ab2d-sbx-sandbox.pem /tmp/Gemfile ec2-user@10.242.31.50:/tmp
+   $ scp -i ~/.ssh/ab2d-sbx-sandbox.pem /tmp/Rakefile ec2-user@10.242.31.50:/tmp
+   ```
+
+1. Connect to the worker node where the Gemfile and Rakefile were copied
+
+   *Example for "Dev" environment:*
+   
+   ```ShellSession
+   $ ssh -i ~/.ssh/ab2d-dev.pem ec2-user@10.242.26.249
+   ```
+
+   *Example for "Sbx" environment:*
+   
+   ```ShellSession
+   $ ssh -i ~/.ssh/ab2d-sbx-sandbox.pem ec2-user@10.242.31.50
+   ```
+
+1. Install rbenv dependencies
+
+   ```ShellSession
+   $ sudo yum install -y git-core zlib zlib-devel gcc-c++ patch readline \
+     readline-devel libyaml-devel libffi-devel openssl-devel make bzip2 \
+     autoconf automake libtool bison curl sqlite-devel
+   ```
+
+1. Install rbenv and ruby-build
+
+   ```ShellSession
+   $ curl -sL https://github.com/rbenv/rbenv-installer/raw/master/bin/rbenv-installer | bash -
+   ```
+
+1. Note that will see output that looks similar to this
+
+   ```
+   Running doctor script to verify installation...
+   Checking for `rbenv' in PATH: which: no rbenv in (/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/opt/puppetlabs/bin:/home/ec2-user/.local/bin:/home/ec2-user/bin)
+   not found
+     You seem to have rbenv installed in `/home/ec2-user/.rbenv/bin', but that
+     directory is not present in PATH. Please add it to PATH by configuring
+     your `~/.bashrc', `~/.zshrc', or `~/.config/fish/config.fish'.
+   ```
+
+1. Add rbenv to path
+
+   ```ShellSession
+   $ echo 'export PATH="$HOME/.rbenv/bin:$PATH"' >> ~/.bashrc
+   $ echo 'eval "$(rbenv init -)"' >> ~/.bashrc
+   $ source ~/.bashrc
+   ```
+
+1. Note that you can the determine that latest stable version of Ruby available via rbenv by doing the following
+
+   ```ShellSession
+   $ rbenv install -l | grep -v - | tail -1
+   ```
+
+1. Note the current pinned version of Ruby on your development machine
+
+   1. Open a new terminal
+   
+   1. Enter the following on your Mac
+   
+      ```ShellSession
+      $ ruby --version
+      ```
+
+   1. Note the base ruby version
+
+      ```
+      2.6.5
+      ```
+
+   1. Note that you will to use the same version on RedHat because that is the version that was used to test ruby scripts
+
+1. Return to the RedHat node terminal session tab
+
+1. Install the noted version of Ruby
+
+   ```ShellSession
+   $ rbenv install 2.6.5
+   ```
+
+1. Wait for the installation to complete
+
+   *Note that the installation will take a while. Be patient.*
+   
+1. Set the global version of Ruby 
+   
+   ```ShellSession
+   $ rbenv global 2.6.5
+   ```
+
+1. Verify the Ruby version
+
+   ```ShellSession
+   $ ruby --version
+   ```
+
+1. Install bundler
+
+   ```ShellSession
+   $ gem install bundler
+   ```
+
+1. Update Ruby Gems
+
+   ```ShellSession
+   $ gem update --system
+   ```
+
+1. Change to the "/tmp" directory
+
+   ```ShellSession
+   $ cd /tmp
+   ```
+
+1. Ensure required gems are installed
+
+   ```ShellSession
+   $ bundle install
+   ```
+   
+1. Get keystore from S3 and decrypt it
+
+   *Example for "Dev" environment:*
+   
+   ```ShellSession
+   $ bundle exec rake get_file_from_s3_and_decrypt['./test-file.txt','ab2d-dev-automation']
+   ```
+
+   *Example for "Sbx" environment:*
+
+   ```ShellSession
+   $ bundle exec rake get_file_from_s3_and_decrypt['./test-file.txt','ab2d-sbx-sandbox-automation']
+   ```
+
+   *Example for "Impl" environment:*
+
+   > *** TO DO ***: Run this after deploying to IMPL
+
+   ```ShellSession
+   $ bundle exec rake get_file_from_s3_and_decrypt['./test-file.txt','ab2d-east-impl-automation']
+   ```
+
+1. Verify that decrypted file is in the "/tmp" directory
+
+   ```ShellSession
+   $ cat /tmp/test-file.txt
+   ```
+
+1. Create a "bfd-keystore" directory under EFS (if doesn't exist)
+
+   ```ShellSession
+   $ sudo mkdir -p /mnt/efs/bfd-keystore
+   ```
+
+1. Move file to the "bfd-keystore" directory
+
+   ```ShellSession
+   $ sudo mv /tmp/test-file.txt /mnt/efs/bfd-keystore
+   ```
+
+## Appendix U: Interact with the New Relic infrastructure agent
+
+1. Connect to any EC2 instance
+
+1. Check the status of the New Relic infrastructure agent
+
+   ```ShellSession
+   $ sudo systemctl status newrelic-infra
+   ```
+
+1. If New Relic infrastructure agent is stopped, you can start it by running the following command
+
+   ```ShellSession
+   $ sudo systemctl start newrelic-infra
+   ```
+
+1. If New Relic infrastructure agent is started, you can stop it by running the following command
+
+   ```ShellSession
+   $ sudo systemctl stop newrelic-infra
+   ```
+
+1. If New Relic infrastructure agent is started, you can stop and restart it by running the following command
+
+   ```ShellSession
+   $ sudo systemctl restart newrelic-infra
+   ```
+
+## Appendix V: Add a new environment variable for ECS docker containers
+
+1. In order to add a new environment variable for api ECS docker containers, the following files should be changed
+
+   - ~/code/ab2d/Deploy/deploy-ab2d-to-cms.sh
+
+     - add "Create or get '???' secret" section
+
+     - add an error check for a failue to retireve the secret
+
+     - add to "not auto-approved" module.api call
+
+     - add to "auto-approved" module.api call
+
+   - ~/code/ab2d/Deploy/documentation/AB2D_Deployment.md
+
+     - add data entry for '???' secret
+   
+   - ~/code/ab2d/Deploy/terraform/modules/api/main.tf
+
+     - modify aws_ecs_task_definition
+
+   - ~/code/ab2d/Deploy/terraform/modules/api/variables.tf
+
+     - add variable
+
+   - ~/code/ab2d/Deploy/terraform/environments/ab2d-east-impl/main.tf
+
+     - add variable to the api call
+
+   - ~/code/ab2d/Deploy/terraform/environments/ab2d-east-impl/variables.tf
+
+     - add variable
+
+   - ~/code/ab2d/Deploy/terraform/environments/ab2d-dev/main.tf
+
+     - add variable to the api call
+   
+   - ~/code/ab2d/Deploy/terraform/environments/ab2d-dev/variables.tf
+
+     - add variable
+   
+   - ~/code/ab2d/Deploy/terraform/environments/ab2d-sbx-sandbox/main.tf
+
+     - add variable to the api call
+
+   - ~/code/ab2d/Deploy/terraform/environments/ab2d-sbx-sandbox/variables.tf
+
+     - add variable
+
+1. In order to add a new environment variable for worker ECS docker containers, the following files should be changed
+
+   - ~/code/ab2d/Deploy/deploy-ab2d-to-cms.sh
+
+     - add "Create or get '???' secret" section
+
+     - add an error check for a failue to retireve the secret
+
+     - add to "not auto-approved" module.worker call
+
+     - add to "auto-approved" module.worker call
+
+   - ~/code/ab2d/Deploy/documentation/AB2D_Deployment.md
+
+     - add data entry for '???' secret
+   
+   - ~/code/ab2d/Deploy/terraform/modules/worker/main.tf
+
+     - modify aws_ecs_task_definition
+
+   - ~/code/ab2d/Deploy/terraform/modules/worker/variables.tf
+
+     - add variable
+
+   - ~/code/ab2d/Deploy/terraform/environments/ab2d-east-impl/main.tf
+
+     - add variable to the worker call
+
+   - ~/code/ab2d/Deploy/terraform/environments/ab2d-east-impl/variables.tf
+
+     - add variable
+
+   - ~/code/ab2d/Deploy/terraform/environments/ab2d-dev/main.tf
+
+     - add variable to the worker call
+   
+   - ~/code/ab2d/Deploy/terraform/environments/ab2d-dev/variables.tf
+
+     - add variable
+   
+   - ~/code/ab2d/Deploy/terraform/environments/ab2d-sbx-sandbox/main.tf
+
+     - add variable to the worker call
+
+   - ~/code/ab2d/Deploy/terraform/environments/ab2d-sbx-sandbox/variables.tf
+
+     - add variable
+
+## Appendix W: Launch a base EC2 instance that is created from gold disk AMI
+
+1. Open Chrome
+
+1. Log to AWS account
+
+1. Select **EC2**
+
+1. Select **Instances** in the leftmost panel
+
+1. Select **Launch Instance**
+
+1. Enter the following in the "Search for an AMI by entering a search term" text box
+
+   ```
+   842420567215
+   ```
+
+1. Note that a "results" link will appear in the main part of the page
+
+   *Example:**
+
+   ```
+   12 results
+   ```
+
+1. Select the "XX results" link (where XX equals the number of results)
+
+   *Example:**
+
+   ```
+   12 results
+   ```
+
+1. Uncheck **Owned by me** in the leftmost panel
+
+1. Select the most recent "EAST-RH 7-7 Gold Image*" on the "Step 1: Choose an Amazon Machine Image (AMI)" page
+
+   *Example:*
+
+   ```
+   EAST-RH 7-7 Gold Image V.1.05 (HVM) 01-23-20 - ami-0f2d8f925de453e46
+   Root device type: ebs Virtualization type: hvm Owner: 842420567215 ENA Enabled: Yes
+   ```
+
+1. Select the following
+    
+   ```
+   m5.xlarge
+   ```
+
+1. Select **Next: Configure Instance Details**
+
+1. Configre the instance details as follows
+
+   - **Number of instances:** 1
+
+   - **Purchasing option:** {unchecked}
+
+   - **Network:** {vpc id} | ab2d-mgmt-east-dev
+
+   - **Subnet:** {subnet id} | ab2d-mgmt-east-dev-public-a | us-east-1a
+
+   - **Auto-assign Public IP:** Enable
+
+   - **Placement group:** {unchecked}
+
+   - **Capacity reservation:** Open
+
+   - **IAM Role:** Ab2dInstanceProfile
+
+   - **CPU Options:** {unchecked}
+
+   - **Shutdown behavior:** Stop
+
+   - **Stop - Hibernate behavior:** {unchecked}
+
+   - **Enable terminate protection:** {checked}
+
+   - **Monitoring:** {unchecked}
+
+   - **EBS-optimized instance:** {checked}
+
+   - **Tenancy:** Shared - Run a shared hardware instance
+
+   - **Elastic Inference:** {unchecked}
+
+1. Select **Next: Add Storage**
+
+1. Change "Size (GiB)" for the "Root" volume
+
+   ```
+   250
+   ```
+
+1. Select **Next: Add Tags**
+
+1. Select **Next:: Configure Security Group**
+
+1. Configure the "Step 6: Configure Security Group" page as follows
+
+   - **Create a new security group:** {selected}
+
+   - **Security group name:** ab2d-mgmt-east-dev-jenkins-sg
+
+   - **Description:** ab2d-mgmt-east-dev-jenkins-sg
+
+   - **Type:** All traffic
+
+   - **Protocol:** All
+
+   - **Port range:** 0 - 65535
+
+   - **Source:** 10.232.32.0/19
+
+   - **Description:** VPN Access
+
+1. Select **Review and Launch**
+
+1. Review the settings
+
+1. Select **Launch**
+
+1. Select the following from the first dropdown
+
+   ```
+   Choose an existing key pair
+   ```
+
+1. Select the following from the **Select a key pair** dropdown
+
+   ```
+   ab2d-mgmt-east-dev
+   ```
+
+1. Check **I acknowledge...**
+
+1. Select **Launch Instances**
+
+1. Select **aws** on the top left of the page
+
+1. Select **EC2**
+
+1. Select **Instances**
+
+1. Wait for the instance to finish starting up with successful status checks
+
+1. SSH into the instance
+
+1. View the available disk devices
+
+   1. Enter the following
+   
+      ```ShellSession
+      $ lsblk
+      ```
+
+   1. Note the output
+
+      *Example for an "m5.xlarge" instance:*
+
+      ```
+      nvme0n1                  259:0    0  30G  0 disk 
+      ├─nvme0n1p1              259:1    0   1G  0 part /boot
+      └─nvme0n1p2              259:2    0  29G  0 part 
+        ├─VolGroup00-auditVol  253:0    0   4G  0 lvm  /var/log/audit
+        ├─VolGroup00-homeVol   253:1    0   3G  0 lvm  /home
+        ├─VolGroup00-logVol    253:2    0   4G  0 lvm  /var/log
+        ├─VolGroup00-rootVol   253:3    0  10G  0 lvm  /
+        ├─VolGroup00-tmpVol    253:4    0   2G  0 lvm  /tmp
+        ├─VolGroup00-varVol    253:5    0   5G  0 lvm  /var
+        └─VolGroup00-vartmpVol 253:6    0   1G  0 lvm  /var/tmp
+      ```
+
+   1. Note the root device in the output
+
+      *Example for an "m5.xlarge" instance:*
+
+      - nvme0n1
+
+   1. Note the existing partitions
+
+      *Example for an "m5.xlarge" instance:*
+
+      - nvme0n1p1
+
+      - nvme0n1p2
+
+1. Create a new partition from unallocated space
+
+   1. View the available disk devices again
+   
+      ```ShellSession
+      $ lsblk
+      ```
+
+   1. Note the output
+
+      *Example for an "m5.xlarge" instance:*
+
+      ```
+      nvme0n1                  259:0    0  30G  0 disk 
+      ├─nvme0n1p1              259:1    0   1G  0 part /boot
+      └─nvme0n1p2              259:2    0  29G  0 part 
+        ├─VolGroup00-auditVol  253:0    0   4G  0 lvm  /var/log/audit
+        ├─VolGroup00-homeVol   253:1    0   3G  0 lvm  /home
+        ├─VolGroup00-logVol    253:2    0   4G  0 lvm  /var/log
+        ├─VolGroup00-rootVol   253:3    0  10G  0 lvm  /
+        ├─VolGroup00-tmpVol    253:4    0   2G  0 lvm  /tmp
+        ├─VolGroup00-varVol    253:5    0   5G  0 lvm  /var
+        └─VolGroup00-vartmpVol 253:6    0   1G  0 lvm  /var/tmp
+      ```
+
+   1. Note the root device in the output
+
+      *Example for an "m5.xlarge" instance:*
+
+      - nvme0n1
+
+   1. Enter the following:
+   
+      *Format:*
+   
+      ```ShellSession
+      $ sudo fdisk /dev/{root device}
+      ```
+   
+      *Example for an "m5.xlarge" instance:*
+   
+      ```ShellSession
+      $ sudo fdisk /dev/nvme0n1
+      ```
+
+   1. Request that the operating system re-reads the partition table
+
+      ```ShellSession
+      $ sudo partprobe
+      ```
+
+   1. View the available disk devices again
+   
+      ```ShellSession
+      $ lsblk
+      ```
+
+   1. Note the output
+
+      *Example for an "m5.xlarge" instance:*
+      
+      ```
+      nvme0n1                  259:0    0  250G  0 disk 
+      ├─nvme0n1p1              259:1    0    1G  0 part /boot
+      ├─nvme0n1p2              259:2    0   29G  0 part 
+      │ ├─VolGroup00-auditVol  253:0    0    4G  0 lvm  /var/log/audit
+      │ ├─VolGroup00-homeVol   253:1    0    3G  0 lvm  /home
+      │ ├─VolGroup00-logVol    253:2    0    4G  0 lvm  /var/log
+      │ ├─VolGroup00-rootVol   253:3    0   10G  0 lvm  /
+      │ ├─VolGroup00-tmpVol    253:4    0    2G  0 lvm  /tmp
+      │ ├─VolGroup00-varVol    253:5    0    5G  0 lvm  /var
+      │ └─VolGroup00-vartmpVol 253:6    0    1G  0 lvm  /var/tmp
+      └─nvme0n1p3              259:3    0  220G  0 part 
+      ```
+
+   1. Note the newly creating partition
+
+      *Example for an "m5.xlarge" instance:*
+
+      - nvme0n1p3
+
+1. Extend home partition
+
+   1. View the available disk devices again
+   
+      ```ShellSession
+      $ lsblk
+      ```
+
+   1. Note the output
+
+      *Example for an "m5.xlarge" instance:*
+      
+      ```
+      nvme0n1                  259:0    0  250G  0 disk 
+      ├─nvme0n1p1              259:1    0    1G  0 part /boot
+      ├─nvme0n1p2              259:2    0   29G  0 part 
+      │ ├─VolGroup00-auditVol  253:0    0    4G  0 lvm  /var/log/audit
+      │ ├─VolGroup00-homeVol   253:1    0    3G  0 lvm  /home
+      │ ├─VolGroup00-logVol    253:2    0    4G  0 lvm  /var/log
+      │ ├─VolGroup00-rootVol   253:3    0   10G  0 lvm  /
+      │ ├─VolGroup00-tmpVol    253:4    0    2G  0 lvm  /tmp
+      │ ├─VolGroup00-varVol    253:5    0    5G  0 lvm  /var
+      │ └─VolGroup00-vartmpVol 253:6    0    1G  0 lvm  /var/tmp
+      └─nvme0n1p3              259:3    0  220G  0 part 
+      ```
+
+   1. Note the newly creating partition again
+
+      *Example for an "m5.xlarge" instance:*
+
+      - nvme0n1p3
+
+   1. Create physical volume by initializing the partition for use by the Logical Volume Manager (LVM)
+
+      ```ShellSession
+      $ sudo pvcreate /dev/nvme0n1p3
+      ```
+
+   1. Note the output
+
+      ```
+      Physical volume "/dev/nvme0n1p3" successfully created.
+      ```
+
+   1. View the available disk devices again
+   
+      ```ShellSession
+      $ lsblk
+      ```
+
+   1. Note the output
+
+      *Example for an "m5.xlarge" instance:*
+      
+      ```
+      nvme0n1                  259:0    0  250G  0 disk 
+      ├─nvme0n1p1              259:1    0    1G  0 part /boot
+      ├─nvme0n1p2              259:2    0   29G  0 part 
+      │ ├─VolGroup00-auditVol  253:0    0    4G  0 lvm  /var/log/audit
+      │ ├─VolGroup00-homeVol   253:1    0    3G  0 lvm  /home
+      │ ├─VolGroup00-logVol    253:2    0    4G  0 lvm  /var/log
+      │ ├─VolGroup00-rootVol   253:3    0   10G  0 lvm  /
+      │ ├─VolGroup00-tmpVol    253:4    0    2G  0 lvm  /tmp
+      │ ├─VolGroup00-varVol    253:5    0    5G  0 lvm  /var
+      │ └─VolGroup00-vartmpVol 253:6    0    1G  0 lvm  /var/tmp
+      └─nvme0n1p3              259:3    0  220G  0 part 
+      ```
+
+   1. Note the volume group
+
+      ```
+      VolGroup00
+      ```
+
+   1. Add the new physical volume to the volume group
+
+      ```ShellSession
+      $ sudo vgextend VolGroup00 /dev/nvme0n1p3
+      ```
+
+   1. Note the output
+
+      ```
+      Volume group "VolGroup00" successfully extended
+      ```
+
+   1. Extend the size of the home logical volume
+
+      ```ShellSession
+      $ sudo lvextend -l +100%FREE /dev/mapper/VolGroup00-homeVol
+      ```
+
+   1. Note the output
+
+      ```
+      Size of logical volume VolGroup00/homeVol changed from <3.00 GiB (767 extents) to 222.99 GiB (57086 extents).
+  Logical volume VolGroup00/homeVol successfully resized.
+      ```
+
+   1. Expands the existing XFS filesystem
+
+      ```ShellSession
+      $ sudo xfs_growfs -d /dev/mapper/VolGroup00-homeVol
+      ```
+
+   1. Note the output
+
+      ```
+      meta-data=/dev/mapper/VolGroup00-homeVol isize=512    agcount=4, agsize=196352 blks
+               =                       sectsz=512   attr=2, projid32bit=1
+               =                       crc=1        finobt=0 spinodes=0
+      data     =                       bsize=4096   blocks=785408, imaxpct=25
+               =                       sunit=0      swidth=0 blks
+      naming   =version 2              bsize=4096   ascii-ci=0 ftype=1
+      log      =internal               bsize=4096   blocks=2560, version=2
+               =                       sectsz=512   sunit=0 blks, lazy-count=1
+      realtime =none                   extsz=4096   blocks=0, rtextents=0
+      data blocks changed from 785408 to 58456064
       ```

@@ -5,9 +5,9 @@
             "Effect": "Allow",
             "Action": "s3:*",
             "Resource": [
-		"arn:aws:s3:::ab2d-sbx-automation",
-		"arn:aws:s3:::ab2d-sbx-cloudtrail",
-		"arn:aws:s3:::ab2d-sbx"
+		"arn:aws:s3:::ab2d-sbx-sandbox-automation/*",
+		"arn:aws:s3:::ab2d-sbx-sandbox-cloudtrail/*",
+		"arn:aws:s3:::ab2d-sbx-sandbox/*"
             ]
         }
     ]

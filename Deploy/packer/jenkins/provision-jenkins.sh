@@ -19,8 +19,13 @@ case $i in
 esac
 done
 
-# LSH SKIP FOR NOW BEGIN
-# # Create a new partition from unallocated space
+#
+# Use unallocated space to extend the home partition
+#
+
+# Create a new partition from unallocated space
+
+# LSH BEGIN: changed for an "m5.xlarge" instance
 # (
 # echo n # Add a new partition
 # echo p # Primary partition
@@ -29,22 +34,53 @@ done
 # echo   # Last sector (Accept default)
 # echo w # Write changes
 # ) | sudo fdisk /dev/xvda || true #This is here because fdisk always non-zero code
-# sudo partprobe
-# LSH SKIP FOR NOW END
+(
+echo n # Add a new partition
+echo p # Primary partition
+echo   # Partition number (Accept default)
+echo   # First sector (Accept default)
+echo   # Last sector (Accept default)
+echo w # Write changes
+) | sudo fdisk /dev/nvme0n1 || true #This is here because fdisk always non-zero code
+# LSH END: changed for an "m5.xlarge" instance
 
-# LSH SKIP FOR NOW BEGIN
-# # Extend home parition
+# Request that the operating system re-reads the partition table
+
+sudo partprobe
+
+# Create physical volume by initializing the partition for use by the Logical Volume Manager (LVM)
+
+# LSH BEGIN: changed for an "m5.xlarge" instance
 # sudo pvcreate /dev/xvda3
-# sudo vgextend VolGroup00 /dev/xvda3
-# sudo lvextend -l +100%FREE /dev/mapper/VolGroup00-homeVol
-# sudo xfs_growfs -d /dev/mapper/VolGroup00-homeVol
-# LSH SKIP FOR NOW END
+sudo pvcreate /dev/nvme0n1p3
+# LSH END: changed for an "m5.xlarge" instance
 
+# Add the new physical volume to the volume group
+
+# LSH BEGIN: changed for an "m5.xlarge" instance
+# sudo vgextend VolGroup00 /dev/xvda3
+sudo vgextend VolGroup00 /dev/nvme0n1p3
+# LSH END: changed for an "m5.xlarge" instance
+
+# Extend the size of the home logical volume
+
+sudo lvextend -l +100%FREE /dev/mapper/VolGroup00-homeVol
+
+# Expands the existing XFS filesystem
+
+sudo xfs_growfs -d /dev/mapper/VolGroup00-homeVol
+
+#
 # Remove Nagios and Postfix
+#
+
 sudo yum -y remove nagios-common
 sudo rpm -e postfix
 
+#
 # Install depedencies
+#
+
 sudo yum -y update
 
 # LSH Testing environment BEGIN
@@ -63,15 +99,14 @@ sudo yum -y install \
 # LSH Testing environment BEGIN
 sudo yum -y install wget
 sudo yum -y install mlocate
-sudo yum -y install vim
 # LSH Testing environment END
 
 sudo pip install awscli
 
-# LSH Testing environment BEGIN
-# # Disable trendmicro during builder
-# sudo service ds_agent stop
-# LSH Testing environment END
+# LSH BEGIN: Comment this out if running within sbdemo environment
+# Disable trendmicro during builder
+sudo service ds_agent stop
+# LSH END: Comment this out if running within sbdemo environment
 
 # Remove tty requirement for sudo in scripts and ssh calls
 sudo sed -i.bak '/Defaults    requiretty/d' /etc/sudoers

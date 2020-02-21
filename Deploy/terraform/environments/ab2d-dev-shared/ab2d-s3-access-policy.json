@@ -5,9 +5,9 @@
             "Effect": "Allow",
             "Action": "s3:*",
             "Resource": [
-		"arn:aws:s3:::ab2d-dev-automation",
-		"arn:aws:s3:::ab2d-dev-cloudtrail",
-		"arn:aws:s3:::ab2d-dev"
+		"arn:aws:s3:::ab2d-dev-automation/*",
+		"arn:aws:s3:::ab2d-dev-cloudtrail/*",
+		"arn:aws:s3:::ab2d-dev/*"
             ]
         }
     ]
