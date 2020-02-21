@@ -1,21 +1,14 @@
 package gov.cms.ab2d.worker;
 
-import com.google.common.collect.Maps;
 import gov.cms.ab2d.optout.setup.OptOutQuartzSetup;
 import gov.cms.ab2d.worker.stuckjob.StuckJobQuartzSetup;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
-import org.springframework.boot.context.event.ApplicationEnvironmentPreparedEvent;
-import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.PropertySource;
-import org.springframework.core.env.ConfigurableEnvironment;
-import org.springframework.core.env.MapPropertySource;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.retry.annotation.EnableRetry;
-
-import java.util.Map;
 
 
 @SpringBootApplication(scanBasePackages = {
@@ -33,17 +26,7 @@ import java.util.Map;
 public class SpringBootApp {
 
     public static void main(String[] args) {
-        SpringApplication springApplication = new SpringApplication(SpringBootApp.class);
-        springApplication.addListeners((ApplicationListener<ApplicationEnvironmentPreparedEvent>) event -> {
-            ConfigurableEnvironment env = event.getEnvironment();
-            Map<String, Object> properties = Maps.newHashMap();
-            properties.put("pcp.core.pool.size", 10);
-            properties.put("pcp.max.pool.size", 150);
-            properties.put("pcp.scaleToMax.time", 900);
-
-            env.getPropertySources().addLast(new MapPropertySource("db", properties));
-        });
-        springApplication.run(args);
+        SpringApplication.run(SpringBootApp.class, args);
     }
 
 }

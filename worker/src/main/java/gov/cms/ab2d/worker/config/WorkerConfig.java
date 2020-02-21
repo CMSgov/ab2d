@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.DependsOn;
 import org.springframework.context.annotation.Import;
 import org.springframework.integration.channel.ExecutorChannel;
 import org.springframework.integration.config.EnableIntegration;
@@ -62,7 +63,7 @@ public class WorkerConfig {
 
     // Use @DependsOn to control the loading order so that properties are set before they are used
     @Bean
-    //@DependsOn("propertiesInit")
+    @DependsOn("propertiesInit")
     public Executor patientProcessorThreadPool() {
         final ThreadPoolTaskExecutor taskExecutor = new ThreadPoolTaskExecutor();
         taskExecutor.setCorePoolSize(pcpCorePoolSize);

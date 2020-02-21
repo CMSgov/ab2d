@@ -164,6 +164,9 @@ public class BFDClientImpl implements BFDClient {
             exclude = { ResourceNotFoundException.class, InvalidRequestException.class }
     )
     public Bundle requestPartDEnrolleesFromServer(String contractNumber, int month) {
+        log.info("\n\n*********************************\n\n");
+        log.info("Starting Part D enrollee call");
+        log.info("\n\n*********************************\n\n");
         var monthParameter = createMonthParameter(month);
         var theCriterion = new TokenClientParam("_has:Coverage.extension")
                 .exactly()

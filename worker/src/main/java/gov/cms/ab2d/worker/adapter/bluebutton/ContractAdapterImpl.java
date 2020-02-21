@@ -93,7 +93,11 @@ public class ContractAdapterImpl implements ContractAdapter {
      * @return a list of PatientIds
      */
     private Set<String> getPatientIdsForMonth(String contractNumber, Integer month) {
+        long start = System.currentTimeMillis();
         Bundle bundle = getBundle(contractNumber, month);
+        log.info("\n\n*********************************\n\n");
+        log.info("Ending Part D enrollee call");
+        log.info("\n\n*********************************\n\n");
         final Set<String> patientIDs = extractPatientIDs(bundle);
 
         while (bundle.getLink(Bundle.LINK_NEXT) != null) {
@@ -101,6 +105,11 @@ public class ContractAdapterImpl implements ContractAdapter {
             patientIDs.addAll(extractPatientIDs(bundle));
         }
 
+        log.info("\n\n*********************************\n\n");
+        log.info("Done requesting bundles");
+        long end = System.currentTimeMillis() - start;
+        log.info("Took " + end);
+        log.info("\n\n*********************************\n\n");
         return patientIDs;
     }
 
