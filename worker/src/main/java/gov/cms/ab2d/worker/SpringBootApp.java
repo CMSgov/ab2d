@@ -2,7 +2,6 @@ package gov.cms.ab2d.worker;
 
 import com.google.common.collect.Maps;
 import gov.cms.ab2d.optout.setup.OptOutQuartzSetup;
-import gov.cms.ab2d.worker.properties.PropertiesInit;
 import gov.cms.ab2d.worker.stuckjob.StuckJobQuartzSetup;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
