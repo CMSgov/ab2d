@@ -2786,6 +2786,12 @@
    $ mvn clean package
    ```
 
+1. Delete existing zipped target directory (if exists)
+
+   ```ShellSession
+   $ rm -f target.tgz
+   ```
+
 1. Zip up the target directory
 
    ```ShellSession
@@ -2846,6 +2852,12 @@
 
    ```ShellSession
    $ cd /tmp
+   ```
+
+1. Delete target directory (if exists)
+
+   ```ShellSession
+   $ rm -rf target
    ```
 
 1. Unzip the zipped target file
