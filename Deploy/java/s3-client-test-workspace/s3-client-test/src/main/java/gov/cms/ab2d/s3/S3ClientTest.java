@@ -37,6 +37,7 @@ class S3ClientTest
 		// Get s3 client for EC2 instance (if applicable)
 		S3Client s3Client = getS3ClientForEc2Instance(region, s3Bucket);
 		if (s3Client == null) {
+			// Get s3 client for development
 			s3Client = getS3ClientForDevelopment(region, s3Bucket);
 		}
 		
