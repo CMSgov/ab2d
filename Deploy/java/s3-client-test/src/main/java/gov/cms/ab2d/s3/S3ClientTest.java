@@ -3,9 +3,11 @@ package gov.cms.ab2d.s3;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.auth.credentials.EnvironmentVariableCredentialsProvider;
+import software.amazon.awssdk.auth.credentials.InstanceProfileCredentialsProvider;
 import software.amazon.awssdk.core.ResponseInputStream;
 import software.amazon.awssdk.core.exception.SdkClientException;
 import software.amazon.awssdk.core.exception.SdkServiceException;
+import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 import software.amazon.awssdk.services.s3.S3Client;
@@ -19,6 +21,10 @@ class S3ClientTest
     public static void main(String args[]) 
     {
 
+	// Set region
+	String s3Region = "us-east-1";
+	final Region region = Region.of(s3Region);
+
 	// Set S3 bucket
 	String s3Bucket = "ab2d-optout-data-dev";
 
@@ -30,9 +36,28 @@ class S3ClientTest
 	//   AWS_REGION, AWS_ACCESS_KEY_ID, and AWS_SECRET_ACCESS_KEY environment variables;
 	//   these variables are associated with the 'ab2d-s3-signing' IAM user that is maintained
 	//   within the AB2D managament AWS account.
-	final S3Client s3Client = S3Client.builder()
-                .credentialsProvider(EnvironmentVariableCredentialsProvider.create())
-                .build();
+
+	// *** Looks for credentials on development machine, but produces errors
+	// final S3Client s3Client =  S3Client.builder().region(region).build();
+
+	// *** Works with AWS environment variables
+	// final S3Client s3Client = S3Client.builder()
+	//         .credentialsProvider(EnvironmentVariableCredentialsProvider.create())
+	//         .build();
+
+	S3Client s3Client = null;
+	try {
+	    // Works with container running on EC2 instance and produces no errors
+	    s3Client = S3Client.builder()
+                         .credentialsProvider(InstanceProfileCredentialsProvider.create())
+                         .build();
+	} catch (Exception e) {
+	    // Works on development machine, but produces errors while trying different
+	    // credential options
+	    s3Client =  S3Client.builder()
+		         .region(region)
+		         .build();
+	}
 
 	// build GetObjectRequest
         final GetObjectRequest getObjectRequest = GetObjectRequest.builder()
