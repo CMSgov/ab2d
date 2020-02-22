@@ -2777,7 +2777,7 @@
 1. Change to the "s3-client-test" directory
 
    ```ShellSession
-   $ cd ~/code/ab2d/Deploy/java/s3-client-test
+   $ cd ~/code/ab2d/Deploy/java/s3-client-test-workspace/s3-client-test
    ```
 
 1. Build "s3-client-test"
