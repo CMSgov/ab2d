@@ -77,7 +77,7 @@ build/
 
 ### .DS_Store in "src/main" ###
 ### This is needed due to this .gitignore entry: "!**/src/main/**" ###
-**/src/main/.DS_Store
+**/src/main/**/.DS_Store
 
 ### Compression files
 *.7z
