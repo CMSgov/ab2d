@@ -78,15 +78,20 @@ public class S3GatewayImpl implements S3Gateway {
 
     private S3Client getS3ClientForEc2Instance(Region region, String s3Bucket) {
         S3Client s3Client = null;
+        ListBucketsResponse bucketList = null;
 
         // Try provider used by a container running on an EC2 instance
         try {
             s3Client = S3Client.builder()
                          .credentialsProvider(InstanceProfileCredentialsProvider.create())
                          .build();
+            bucketList = s3Client.listBuckets();
             return s3Client;
         } catch (Exception e) {
             log.info("InstanceProfileCredentialsProvider not used; {}", e.getMessage());
+        }
+        if (bucketList == null) {
+            s3Client = null;
         }
         return s3Client;
     }
@@ -94,9 +99,6 @@ public class S3GatewayImpl implements S3Gateway {
     private S3Client getS3ClientForDevelopment(Region region, String s3Bucket) {
         S3Client s3Client = null;
         ListBucketsResponse bucketList = null;
-
-        // Set the "aws.region" system property
-        System.setProperty("aws.region", region.id());
 
         // Try provider used when an aws credentials file exists and has a default entry
         try {
