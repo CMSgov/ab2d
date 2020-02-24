@@ -38,6 +38,7 @@
    * [Test downloading a public S3 file using the AWS CLI with the "ab2d-s3-signing" profile](#test-downloading-a-public-s3-file-using-the-aws-cli-with-the-ab2d-s3-signing-profile)
    * [Test interacting with a public S3 file using the AWS Java SDK with environment variables](#test-interacting-with-a-public-s3-file-using-the-aws-java-sdk-with-environment-variables)
    * [Test interacting with a public S3 file on a worker node](#test-interacting-with-a-public-s3-file-on-a-worker-node)
+1. [Appendix Y: Test the opt-out process using IntelliJ](#appendix-y-test-the-opt-out-process-using-intellij)
 
 ## Appendix A: Access the CMS AWS console
 
@@ -2884,4 +2885,58 @@
 
    ```ShellSession
    $ java -jar target/s3client-0.0.1-SNAPSHOT.jar
+   ```
+
+## Appendix Y: Test the opt-out process using IntelliJ
+
+1. Open a terminal
+
+1. Change to the "ab2d" repo directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d
+   ```
+   
+1. Start up the database container
+
+   ```ShellSession
+   $ docker-compose up db
+   ```
+
+1. Open the ab2d project in IntelliJ
+
+1. Open the following file in IntelliJ
+
+   ```
+   optout/src/main/resources/application.optout.properties
+   ```
+
+1. Note the cron schedule is currently set to run very hour at minute 0, second 0
+
+   ```
+   cron.schedule=0 0 * * * ?
+   ```
+   
+1. Temporarily modify the cron schedule line to run every minute
+
+   ```
+   cron.schedule=0 * * * * ?
+   ```
+
+1. Add desired debug breakpoints to the following file
+
+   ```
+   optout/src/main/java/gov/cms/ab2d/optout/gateway/S3GatewayImpl.java
+   ```
+
+1. Select the "Worker" configuration from the dropdown in the upper right of the page
+
+1. Select the debug icon toolbar button
+
+1. Wait for the cron job to trigger so that it reaches the first breakpoint in the "S3GatewayImpl.java" file
+
+1. After testing is complete, be sure to revert the "application.optout.properties" file
+
+   ```ShellSession
+   $ git checkout -- optout/src/main/resources/application.optout.properties
    ```
