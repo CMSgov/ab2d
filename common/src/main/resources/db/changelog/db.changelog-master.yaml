@@ -28,3 +28,5 @@ databaseChangeLog:
       file: db/changelog/v001/ab2d-934-allow-for-zip-downloads.sql
   - include:
       file: db/changelog/v001/ab2d-1069-recreate-coverage-table.sql
+  - include:
+      file: db/changelog/v001/add_properties_table.sql
