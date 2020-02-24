@@ -16,22 +16,32 @@ public class RoundRobinThreadPoolExecutor extends ThreadPoolExecutor {
     private static final int COUNT_MASK = (1 << COUNT_BITS) - 1;
 
     // runState is stored in the high-order bits
-    private static final int RUNNING    = -1 << COUNT_BITS;
-    private static final int SHUTDOWN   =  0 << COUNT_BITS;
-    private static final int STOP       =  1 << COUNT_BITS;
-    private static final int TIDYING    =  2 << COUNT_BITS;
-    private static final int TERMINATED =  3 << COUNT_BITS;
+    private static final int RUNNING = -1 << COUNT_BITS;
+    private static final int SHUTDOWN = 0 << COUNT_BITS;
+    private static final int STOP = 1 << COUNT_BITS;
+    private static final int TIDYING = 2 << COUNT_BITS;
+    private static final int TERMINATED = 3 << COUNT_BITS;
 
-    private static int runStateOf(int c)     { return c & ~COUNT_MASK; }
-    private static int workerCountOf(int c)  { return c & COUNT_MASK; }
-    private static int ctlOf(int rs, int wc) { return rs | wc; }
+    private static int runStateOf(int c) {
+        return c & ~COUNT_MASK;
+    }
+
+    private static int workerCountOf(int c) {
+        return c & COUNT_MASK;
+    }
+
+    private static int ctlOf(int rs, int wc) {
+        return rs | wc;
+    }
 
     private static boolean runStateLessThan(int c, int s) {
         return c < s;
     }
+
     private static boolean runStateAtLeast(int c, int s) {
         return c >= s;
     }
+
     private static boolean isRunning(int c) {
         return c < SHUTDOWN;
     }
@@ -79,6 +89,7 @@ public class RoundRobinThreadPoolExecutor extends ThreadPoolExecutor {
         public void run() {
             runWorker(this);
         }
+
         protected boolean isHeldExclusively() {
             return getState() != 0;
         }
@@ -97,10 +108,21 @@ public class RoundRobinThreadPoolExecutor extends ThreadPoolExecutor {
             return true;
         }
 
-        public void lock()        { acquire(1); }
-        public boolean tryLock()  { return tryAcquire(1); }
-        public void unlock()      { release(1); }
-        public boolean isLocked() { return isHeldExclusively(); }
+        public void lock() {
+            acquire(1);
+        }
+
+        public boolean tryLock() {
+            return tryAcquire(1);
+        }
+
+        public void unlock() {
+            release(1);
+        }
+
+        public boolean isLocked() {
+            return isHeldExclusively();
+        }
 
         void interruptIfStarted() {
             Thread t;
@@ -115,7 +137,7 @@ public class RoundRobinThreadPoolExecutor extends ThreadPoolExecutor {
 
     private void advanceRunState(int targetState) {
         // assert targetState == SHUTDOWN || targetState == STOP;
-        for (;;) {
+        for (; ; ) {
             int c = ctl.get();
             if (runStateAtLeast(c, targetState) ||
                     ctl.compareAndSet(c, ctlOf(targetState, workerCountOf(c))))
@@ -124,11 +146,11 @@ public class RoundRobinThreadPoolExecutor extends ThreadPoolExecutor {
     }
 
     final void tryTerminate() {
-        for (;;) {
+        for (; ; ) {
             int c = ctl.get();
             if (isRunning(c) ||
                     runStateAtLeast(c, TIDYING) ||
-                    (runStateLessThan(c, STOP) && ! workQueue.isEmpty()))
+                    (runStateLessThan(c, STOP) && !workQueue.isEmpty()))
                 return;
             if (workerCountOf(c) != 0) { // Eligible to terminate
                 interruptIdleWorkers(ONLY_ONE);
@@ -219,7 +241,7 @@ public class RoundRobinThreadPoolExecutor extends ThreadPoolExecutor {
 
     private boolean addWorker(Runnable firstTask, boolean core) {
         retry:
-        for (int c = ctl.get();;) {
+        for (int c = ctl.get(); ; ) {
             // Check if queue empty only if necessary.
             if (runStateAtLeast(c, SHUTDOWN)
                     && (runStateAtLeast(c, STOP)
@@ -227,7 +249,7 @@ public class RoundRobinThreadPoolExecutor extends ThreadPoolExecutor {
                     || workQueue.isEmpty()))
                 return false;
 
-            for (;;) {
+            for (; ; ) {
                 if (workerCountOf(c)
                         >= ((core ? corePoolSize : maximumPoolSize) & COUNT_MASK))
                     return false;
@@ -274,7 +296,7 @@ public class RoundRobinThreadPoolExecutor extends ThreadPoolExecutor {
                 }
             }
         } finally {
-            if (! workerStarted)
+            if (!workerStarted)
                 addWorkerFailed(w);
         }
         return workerStarted;
@@ -312,7 +334,7 @@ public class RoundRobinThreadPoolExecutor extends ThreadPoolExecutor {
         if (runStateLessThan(c, STOP)) {
             if (!completedAbruptly) {
                 int min = allowCoreThreadTimeOut ? 0 : corePoolSize;
-                if (min == 0 && ! workQueue.isEmpty())
+                if (min == 0 && !workQueue.isEmpty())
                     min = 1;
                 if (workerCountOf(c) >= min)
                     return; // replacement not needed
@@ -324,7 +346,7 @@ public class RoundRobinThreadPoolExecutor extends ThreadPoolExecutor {
     private Runnable getTask() {
         boolean timedOut = false; // Did the last poll() time out?
 
-        for (;;) {
+        for (; ; ) {
             int c = ctl.get();
 
             // Check if queue empty only if necessary.
@@ -399,41 +421,41 @@ public class RoundRobinThreadPoolExecutor extends ThreadPoolExecutor {
     }
 
     public RoundRobinThreadPoolExecutor(int corePoolSize,
-                              int maximumPoolSize,
-                              long keepAliveTime,
-                              TimeUnit unit,
-                              RoundRobinBlockingQueue<Runnable> workQueue) {
+                                        int maximumPoolSize,
+                                        long keepAliveTime,
+                                        TimeUnit unit,
+                                        RoundRobinBlockingQueue<Runnable> workQueue) {
         this(corePoolSize, maximumPoolSize, keepAliveTime, unit, workQueue,
                 Executors.defaultThreadFactory(), defaultHandler);
     }
 
     public RoundRobinThreadPoolExecutor(int corePoolSize,
-                              int maximumPoolSize,
-                              long keepAliveTime,
-                              TimeUnit unit,
-                              RoundRobinBlockingQueue<Runnable> workQueue,
-                              ThreadFactory threadFactory) {
+                                        int maximumPoolSize,
+                                        long keepAliveTime,
+                                        TimeUnit unit,
+                                        RoundRobinBlockingQueue<Runnable> workQueue,
+                                        ThreadFactory threadFactory) {
         this(corePoolSize, maximumPoolSize, keepAliveTime, unit, workQueue,
                 threadFactory, defaultHandler);
     }
 
     public RoundRobinThreadPoolExecutor(int corePoolSize,
-                              int maximumPoolSize,
-                              long keepAliveTime,
-                              TimeUnit unit,
-                              RoundRobinBlockingQueue<Runnable> workQueue,
-                              RejectedExecutionHandler handler) {
+                                        int maximumPoolSize,
+                                        long keepAliveTime,
+                                        TimeUnit unit,
+                                        RoundRobinBlockingQueue<Runnable> workQueue,
+                                        RejectedExecutionHandler handler) {
         this(corePoolSize, maximumPoolSize, keepAliveTime, unit, workQueue,
                 Executors.defaultThreadFactory(), handler);
     }
 
     public RoundRobinThreadPoolExecutor(int corePoolSize,
-                              int maximumPoolSize,
-                              long keepAliveTime,
-                              TimeUnit unit,
-                              RoundRobinBlockingQueue<Runnable> workQueue,
-                              ThreadFactory threadFactory,
-                              RejectedExecutionHandler handler) {
+                                        int maximumPoolSize,
+                                        long keepAliveTime,
+                                        TimeUnit unit,
+                                        RoundRobinBlockingQueue<Runnable> workQueue,
+                                        ThreadFactory threadFactory,
+                                        RejectedExecutionHandler handler) {
         super(corePoolSize, maximumPoolSize, keepAliveTime, unit, workQueue, threadFactory, handler);
         if (corePoolSize < 0 ||
                 maximumPoolSize <= 0 ||
@@ -463,12 +485,11 @@ public class RoundRobinThreadPoolExecutor extends ThreadPoolExecutor {
         }
         if (isRunning(c) && workQueue.add(category, command)) {
             int recheck = ctl.get();
-            if (! isRunning(recheck) && remove(command))
+            if (!isRunning(recheck) && remove(command))
                 reject(command);
             else if (workerCountOf(recheck) == 0)
                 addWorker(null, false);
-        }
-        else if (!addWorker(command, false))
+        } else if (!addWorker(command, false))
             reject(command);
     }
 
@@ -506,7 +527,9 @@ public class RoundRobinThreadPoolExecutor extends ThreadPoolExecutor {
         return runStateAtLeast(ctl.get(), SHUTDOWN);
     }
 
-    /** Used by ScheduledThreadPoolExecutor. */
+    /**
+     * Used by ScheduledThreadPoolExecutor.
+     */
     boolean isStopped() {
         return runStateAtLeast(ctl.get(), STOP);
     }
@@ -537,8 +560,9 @@ public class RoundRobinThreadPoolExecutor extends ThreadPoolExecutor {
         }
     }
 
-    @Deprecated(since="9")
-    protected void finalize() {}
+    @Deprecated(since = "9")
+    protected void finalize() {
+    }
 
     public void setThreadFactory(ThreadFactory threadFactory) {
         if (threadFactory == null)
@@ -657,7 +681,7 @@ public class RoundRobinThreadPoolExecutor extends ThreadPoolExecutor {
     }
 
     public static boolean isComplete(Future r) {
-        return (r == null || ((Future<?>)r).isCancelled());
+        return (r == null || ((Future<?>) r).isCancelled());
     }
 
     public void purge() {

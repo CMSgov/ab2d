@@ -52,13 +52,13 @@ public class RoundRobinThreadPoolTaskExecutor extends ThreadPoolTaskExecutor {
     }
 
     public int getMaxPoolSize() {
-        synchronized(this.poolSizeMonitor) {
+        synchronized (this.poolSizeMonitor) {
             return this.maxPoolSize;
         }
     }
 
     public void setCorePoolSize(int corePoolSize) {
-        synchronized(this.poolSizeMonitor) {
+        synchronized (this.poolSizeMonitor) {
             this.corePoolSize = corePoolSize;
             if (this.threadPoolExecutor != null) {
                 this.threadPoolExecutor.setCorePoolSize(corePoolSize);
@@ -67,7 +67,7 @@ public class RoundRobinThreadPoolTaskExecutor extends ThreadPoolTaskExecutor {
     }
 
     public void setMaxPoolSize(int maxPoolSize) {
-        synchronized(this.poolSizeMonitor) {
+        synchronized (this.poolSizeMonitor) {
             if (this.threadPoolExecutor != null) {
                 this.threadPoolExecutor.setMaximumPoolSize(maxPoolSize);
             }
@@ -75,16 +75,16 @@ public class RoundRobinThreadPoolTaskExecutor extends ThreadPoolTaskExecutor {
     }
 
     public void setKeepAliveSeconds(int keepAliveSeconds) {
-        synchronized(this.poolSizeMonitor) {
+        synchronized (this.poolSizeMonitor) {
             this.keepAliveSeconds = keepAliveSeconds;
             if (this.threadPoolExecutor != null) {
-                this.threadPoolExecutor.setKeepAliveTime((long)keepAliveSeconds, TimeUnit.SECONDS);
+                this.threadPoolExecutor.setKeepAliveTime((long) keepAliveSeconds, TimeUnit.SECONDS);
             }
         }
     }
 
     public int getKeepAliveSeconds() {
-        synchronized(this.poolSizeMonitor) {
+        synchronized (this.poolSizeMonitor) {
             return this.keepAliveSeconds;
         }
     }
