@@ -125,8 +125,8 @@ public class RoundRobinThreadPoolExecutor extends ThreadPoolExecutor {
         }
 
         void interruptIfStarted() {
-            Thread t;
-            if (getState() >= 0 && (t = thread) != null && !t.isInterrupted()) {
+            Thread t = thread;
+            if (getState() >= 0 && t != null && !t.isInterrupted()) {
                 try {
                     t.interrupt();
                 } catch (SecurityException ignore) {
