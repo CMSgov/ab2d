@@ -84,3 +84,6 @@ build/
 *.gz
 *.tar
 *.tgz
+
+### Eclipse
+.checkstyle
