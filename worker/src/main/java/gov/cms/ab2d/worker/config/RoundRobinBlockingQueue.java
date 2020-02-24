@@ -277,8 +277,9 @@ public class RoundRobinBlockingQueue<E> implements BlockingQueue<E> {
         final ReentrantLock lock = this.lock;
         lock.lockInterruptibly();
         try {
-            while (count == 0)
+            while (count == 0) {
                 notEmpty.await();
+            }
             return getNext();
         } finally {
             lock.unlock();

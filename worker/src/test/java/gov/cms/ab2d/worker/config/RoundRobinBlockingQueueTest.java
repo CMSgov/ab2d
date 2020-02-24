@@ -80,7 +80,6 @@ class RoundRobinBlockingQueueTest {
         assertThrows(UnsupportedOperationException.class, () -> queue.retainAll(new ArrayList<>()));
         assertThrows(UnsupportedOperationException.class, () -> queue.toArray(new String[4]));
         assertThrows(UnsupportedOperationException.class, () -> queue.toArray());
-        assertThrows(UnsupportedOperationException.class, () -> queue.take());
         assertEquals(Integer.MAX_VALUE, queue.remainingCapacity());
     }
 
