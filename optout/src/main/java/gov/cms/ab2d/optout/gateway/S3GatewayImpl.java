@@ -76,7 +76,7 @@ public class S3GatewayImpl implements S3Gateway {
         }
     }
 
-    private static S3Client getS3ClientForEc2Instance(Region region, String s3Bucket) {
+    private S3Client getS3ClientForEc2Instance(Region region, String s3Bucket) {
         S3Client s3Client = null;
 
         // Try provider used by a container running on an EC2 instance
@@ -91,7 +91,7 @@ public class S3GatewayImpl implements S3Gateway {
         return s3Client;
     }
 
-    private static S3Client getS3ClientForDevelopment(Region region, String s3Bucket) {
+    private S3Client getS3ClientForDevelopment(Region region, String s3Bucket) {
         S3Client s3Client = null;
         ListBucketsResponse bucketList = null;
 
