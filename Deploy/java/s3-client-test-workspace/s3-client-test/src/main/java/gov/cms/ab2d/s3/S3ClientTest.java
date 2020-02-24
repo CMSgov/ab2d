@@ -69,7 +69,7 @@ class S3ClientTest
 		S3Client s3Client = null;
 		ListBucketsResponse bucketList = null;
 		
-		// Provider used by a container running on an EC2 instance.
+		// Try provider used by a container running on an EC2 instance.
 		try {
 			s3Client = S3Client.builder()
 					.credentialsProvider(InstanceProfileCredentialsProvider.create())
