@@ -12,7 +12,7 @@ import java.util.concurrent.Future;
 public class PatientClaimsProcessorStub implements PatientClaimsProcessor {
 
     @Override
-    public Future<Void> process(GetPatientsByContractResponse.PatientDTO patientDTO, StreamHelper writer, OffsetDateTime attTime) {
+    public Future<Void> process(String contractId, GetPatientsByContractResponse.PatientDTO patientDTO, StreamHelper writer, OffsetDateTime attTime) {
 
         writer.getDataFiles().add(Path.of("TEST_DATA_FILE"));
         writer.getErrorFiles().add(Path.of("TEST_ERROR_FILE"));

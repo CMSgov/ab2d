@@ -65,7 +65,7 @@ public class WorkerConfig {
 
     @Bean
     public Executor patientProcessorThreadPool() {
-        final ThreadPoolTaskExecutor taskExecutor = new ThreadPoolTaskExecutor();
+        final ThreadPoolTaskExecutor taskExecutor = new RoundRobinThreadPoolTaskExecutor();
         taskExecutor.setCorePoolSize(pcpCorePoolSize);
         // Initially we lock the pool at the minimum size; auto-scaling is done
         // by a separate service.
@@ -75,7 +75,6 @@ public class WorkerConfig {
         taskExecutor.setThreadNamePrefix("pcp-");
         return taskExecutor;
     }
-
 
     @Bean
     public Executor mainJobProcessingPool() {

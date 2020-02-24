@@ -97,6 +97,12 @@
             <artifactId>newrelic-api</artifactId>
             <version>${newrelic.version}</version>
         </dependency>
+        <dependency>
+            <groupId>org.jetbrains</groupId>
+            <artifactId>annotations</artifactId>
+            <version>17.0.0</version>
+            <scope>compile</scope>
+        </dependency>
 
 
     </dependencies>

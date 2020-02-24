@@ -362,7 +362,7 @@ public class JobProcessorImpl implements JobProcessor {
                 }
 
                 // Add the thread to process the patient and start the thread
-                futureHandles.add(patientClaimsProcessor.process(patient, helper, contract.getAttestedOn()));
+                futureHandles.add(patientClaimsProcessor.process(contractNumber, patient, helper, contract.getAttestedOn()));
 
                 // Periodically check if cancelled
                 if (recordsProcessedCount % cancellationCheckFrequency == 0) {

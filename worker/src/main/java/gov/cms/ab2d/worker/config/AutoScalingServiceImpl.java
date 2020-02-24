@@ -54,7 +54,6 @@ public class AutoScalingServiceImpl implements AutoScalingService {
         this.executor = (ThreadPoolTaskExecutor) patientProcessorThreadPool;
     }
 
-
     @Override
     @Scheduled(fixedDelay = 5000)
     public void autoscale() {

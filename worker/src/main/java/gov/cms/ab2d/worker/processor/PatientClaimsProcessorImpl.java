@@ -44,7 +44,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
      * Process the retrieval of patient explanation of benefit objects and write them
      * to a file using the writer
      */
-    public Future<Void> process(PatientDTO patientDTO, final StreamHelper helper, OffsetDateTime attTime) {
+    public Future<Void> process(String contractId, PatientDTO patientDTO, final StreamHelper helper, OffsetDateTime attTime) {
         int resourceCount = 0;
 
         String payload = "";
