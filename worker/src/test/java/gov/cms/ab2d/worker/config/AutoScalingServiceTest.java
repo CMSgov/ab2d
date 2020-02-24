@@ -8,6 +8,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.scheduling.annotation.AsyncResult;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
@@ -19,6 +20,7 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 
 import static org.hamcrest.Matchers.*;
@@ -68,7 +70,7 @@ public class AutoScalingServiceTest {
         // Make the Executor busy.
         final List<Future> futures = new ArrayList<>();
         for (int i = 0; i < QUEUE_SIZE; i++) {
-            futures.add(patientProcessorThreadPool.submit(sleepyRunnable()));
+            futures.add(((RoundRobinThreadPoolTaskExecutor)patientProcessorThreadPool).submitWithCategory("S0000", sleepyRunnable()));
         }
 
         // In approximately 20 seconds the Executor should grow to the max.
@@ -120,14 +122,15 @@ public class AutoScalingServiceTest {
     }
 
 
-    private Runnable sleepyRunnable() {
-        return new Runnable() {
+    private Callable sleepyRunnable() {
+        return new Callable() {
             @Override
-            public void run() {
+            public Future<Void> call() {
                 try {
                     Thread.sleep(Long.MAX_VALUE);
+                    return new AsyncResult<>(null);
                 } catch (InterruptedException e) {
-                    // NO-OP
+                    return AsyncResult.forExecutionException(e);
                 }
             }
         };

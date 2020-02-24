@@ -23,7 +23,6 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 import javax.sql.DataSource;
-import java.util.concurrent.Executor;
 import java.util.concurrent.ThreadPoolExecutor;
 
 /**
@@ -64,7 +63,7 @@ public class WorkerConfig {
     private int jobQueueCapacity;
 
     @Bean
-    public Executor patientProcessorThreadPool() {
+    public ThreadPoolTaskExecutor patientProcessorThreadPool() {
         final ThreadPoolTaskExecutor taskExecutor = new RoundRobinThreadPoolTaskExecutor();
         taskExecutor.setCorePoolSize(pcpCorePoolSize);
         // Initially we lock the pool at the minimum size; auto-scaling is done
@@ -77,7 +76,7 @@ public class WorkerConfig {
     }
 
     @Bean
-    public Executor mainJobProcessingPool() {
+    public ThreadPoolTaskExecutor mainJobProcessingPool() {
         final ThreadPoolTaskExecutor taskExecutor = new ThreadPoolTaskExecutor();
         taskExecutor.setCorePoolSize(jobCorePoolSize);
         taskExecutor.setMaxPoolSize(jobMaxPoolSize);

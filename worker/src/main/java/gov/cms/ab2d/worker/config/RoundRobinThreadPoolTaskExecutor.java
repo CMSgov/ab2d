@@ -18,8 +18,8 @@ public class RoundRobinThreadPoolTaskExecutor extends ThreadPoolTaskExecutor {
     @NotNull
     protected ExecutorService initializeExecutor(ThreadFactory threadFactory, RejectedExecutionHandler rejectedExecutionHandler) {
         RoundRobinBlockingQueue<Runnable> queue = (RoundRobinBlockingQueue) this.createQueue(queueCapacity);
-        ThreadPoolExecutor executor = new RoundRobinThreadPoolExecutor(this.getCorePoolSize(), this.getMaxPoolSize(),
-                this.getKeepAliveSeconds(), TimeUnit.SECONDS, queue, threadFactory, rejectedExecutionHandler);
+        ThreadPoolExecutor executor = new RoundRobinThreadPoolExecutor(this.corePoolSize, this.maxPoolSize,
+                this.keepAliveSeconds, TimeUnit.SECONDS, queue, threadFactory, rejectedExecutionHandler);
 
         this.threadPoolExecutor = executor;
         return executor;
@@ -31,7 +31,7 @@ public class RoundRobinThreadPoolTaskExecutor extends ThreadPoolTaskExecutor {
         return new RoundRobinBlockingQueue<>();
     }
 
-    public Future<?> submitWithCategory(String category, Callable task) {
+    public Future<Void> submitWithCategory(String category, Callable task) {
         RoundRobinThreadPoolExecutor executor = (RoundRobinThreadPoolExecutor) this.getThreadPoolExecutor();
 
         try {
@@ -66,8 +66,15 @@ public class RoundRobinThreadPoolTaskExecutor extends ThreadPoolTaskExecutor {
         }
     }
 
+    public int getCorePoolSize() {
+        synchronized(this.poolSizeMonitor) {
+            return this.corePoolSize;
+        }
+    }
+
     public void setMaxPoolSize(int maxPoolSize) {
         synchronized (this.poolSizeMonitor) {
+            this.maxPoolSize = maxPoolSize;
             if (this.threadPoolExecutor != null) {
                 this.threadPoolExecutor.setMaximumPoolSize(maxPoolSize);
             }
