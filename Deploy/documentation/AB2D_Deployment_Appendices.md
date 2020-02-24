@@ -2828,10 +2828,24 @@
    ```
    
    *Example for Dev environment:*
-   
+
    ```ShellSession
    $ ssh -i ~/.ssh/ab2d-dev.pem ec2-user@10.242.26.94 \
      -o ProxyCommand="ssh -W %h:%p ec2-user@10.242.5.190"
+   ```
+
+   *Example for Sbx environment:*
+
+   ```ShellSession
+   $ ssh -i ~/.ssh/ab2d-sbx-sandbox.pem ec2-user@10.242.31.244 \
+     -o ProxyCommand="ssh -W %h:%p ec2-user@10.242.36.49"
+   ```
+
+   *Example for Impl environment:*
+
+   ```ShellSession
+   $ ssh -i ~/.ssh/ab2d-east-impl.pem ec2-user@10.242.133.14 \
+     -o ProxyCommand="ssh -W %h:%p ec2-user@10.242.132.76"
    ```
 
 1. Copy zipped target directory to a worker docker container
