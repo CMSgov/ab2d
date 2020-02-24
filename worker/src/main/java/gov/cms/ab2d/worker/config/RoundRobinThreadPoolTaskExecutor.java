@@ -67,7 +67,7 @@ public class RoundRobinThreadPoolTaskExecutor extends ThreadPoolTaskExecutor {
     }
 
     public int getCorePoolSize() {
-        synchronized(this.poolSizeMonitor) {
+        synchronized (this.poolSizeMonitor) {
             return this.corePoolSize;
         }
     }
