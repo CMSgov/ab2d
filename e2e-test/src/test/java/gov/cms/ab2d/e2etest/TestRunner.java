@@ -75,6 +75,7 @@ public class TestRunner {
         if(environment.isUsesDockerCompose()) {
             DockerComposeContainer container = new DockerComposeContainer(
                     new File("../docker-compose.yml"))
+                    .withScaledService("worker", 2)
                     .withExposedService("db", 5432)
                     .withExposedService("api", 8080, new HostPortWaitStrategy()
                         .withStartupTimeout(Duration.of(150, SECONDS)));
