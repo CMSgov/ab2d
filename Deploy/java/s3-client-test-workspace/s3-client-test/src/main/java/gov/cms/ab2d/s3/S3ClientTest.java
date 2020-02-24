@@ -87,7 +87,7 @@ class S3ClientTest
 		// Set the "aws.region" system property
 		System.setProperty("aws.region", region.id());
 		
-		// Provider used when an aws credentials file exists and has a default entry.
+		// Try provider used when an aws credentials file exists and has a default entry
 		try {
 			s3Client = S3Client.builder()
 					.credentialsProvider(ProfileCredentialsProvider.create())
@@ -98,8 +98,8 @@ class S3ClientTest
 			log.info("ProfileCredentialsProvider not used; {}", e.getMessage());
 		}
 		
-		// Provider used when AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY environment variables
-		// are present.
+		// Try provider used when AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY environment
+		// variables are present
 		try {
 			s3Client = S3Client.builder()
 					.credentialsProvider(EnvironmentVariableCredentialsProvider.create())
@@ -110,7 +110,7 @@ class S3ClientTest
 			log.info("EnvironmentVariableCredentialsProvider not used; {}", e.getMessage());
 		}
 		
-		// Provider used when aws.accessKeyId and aws.secretKey system properties are set.
+		// Try provider used when aws.accessKeyId and aws.secretKey system properties are set
 		try {
 			s3Client = S3Client.builder()
 					.credentialsProvider(SystemPropertyCredentialsProvider.create())
@@ -121,12 +121,12 @@ class S3ClientTest
 			log.info("SystemPropertyCredentialsProvider not used; {}", e.getMessage());
 		}
 		
-		// Last chance attempt using all other providers.
+		// Try all other providers
 		if (bucketList == null) {
 			s3Client =  S3Client.builder()
 					.region(region)
 					.build();
-			}
+		}
 		return s3Client;
 		
 	}
