@@ -70,15 +70,15 @@ public class RoundRobinThreadPoolExecutor extends ThreadPoolExecutor {
     private volatile boolean allowCoreThreadTimeOut;
     private volatile int corePoolSize;
     private volatile int maximumPoolSize;
-    private static final RejectedExecutionHandler defaultHandler = new AbortPolicy();
-    private static final RuntimePermission shutdownPerm =
+    private static final RejectedExecutionHandler DEFAULT_HANDLER = new AbortPolicy();
+    private static final RuntimePermission SHUTDOWN_PERM =
             new RuntimePermission("modifyThread");
 
     private final class Worker extends AbstractQueuedSynchronizer implements Runnable {
         private static final long serialVersionUID = 6138294804551838833L;
-        final Thread thread;
-        Runnable firstTask;
-        volatile long completedTasks;
+        private final Thread thread;
+        private Runnable firstTask;
+        private volatile long completedTasks;
 
         Worker(Runnable firstTask) {
             setState(-1); // inhibit interrupts until runWorker
@@ -137,7 +137,7 @@ public class RoundRobinThreadPoolExecutor extends ThreadPoolExecutor {
 
     private void advanceRunState(int targetState) {
         // assert targetState == SHUTDOWN || targetState == STOP;
-        for (; ; ) {
+        for (;;) {
             int c = ctl.get();
             if (runStateAtLeast(c, targetState) ||
                     ctl.compareAndSet(c, ctlOf(targetState, workerCountOf(c))))
@@ -146,7 +146,7 @@ public class RoundRobinThreadPoolExecutor extends ThreadPoolExecutor {
     }
 
     final void tryTerminate() {
-        for (; ; ) {
+        for (;;) {
             int c = ctl.get();
             if (isRunning(c) ||
                     runStateAtLeast(c, TIDYING) ||
@@ -180,7 +180,7 @@ public class RoundRobinThreadPoolExecutor extends ThreadPoolExecutor {
         // assert mainLock.isHeldByCurrentThread();
         SecurityManager security = System.getSecurityManager();
         if (security != null) {
-            security.checkPermission(shutdownPerm);
+            security.checkPermission(SHUTDOWN_PERM);
             for (Worker w : workers)
                 security.checkAccess(w.thread);
         }
@@ -241,7 +241,7 @@ public class RoundRobinThreadPoolExecutor extends ThreadPoolExecutor {
 
     private boolean addWorker(Runnable firstTask, boolean core) {
         retry:
-        for (int c = ctl.get(); ; ) {
+        for (int c = ctl.get();;) {
             // Check if queue empty only if necessary.
             if (runStateAtLeast(c, SHUTDOWN)
                     && (runStateAtLeast(c, STOP)
@@ -249,7 +249,7 @@ public class RoundRobinThreadPoolExecutor extends ThreadPoolExecutor {
                     || workQueue.isEmpty()))
                 return false;
 
-            for (; ; ) {
+            for (;;) {
                 if (workerCountOf(c)
                         >= ((core ? corePoolSize : maximumPoolSize) & COUNT_MASK))
                     return false;
@@ -346,7 +346,7 @@ public class RoundRobinThreadPoolExecutor extends ThreadPoolExecutor {
     private Runnable getTask() {
         boolean timedOut = false; // Did the last poll() time out?
 
-        for (; ; ) {
+        for (;;) {
             int c = ctl.get();
 
             // Check if queue empty only if necessary.
@@ -426,7 +426,7 @@ public class RoundRobinThreadPoolExecutor extends ThreadPoolExecutor {
                                         TimeUnit unit,
                                         RoundRobinBlockingQueue<Runnable> workQueue) {
         this(corePoolSize, maximumPoolSize, keepAliveTime, unit, workQueue,
-                Executors.defaultThreadFactory(), defaultHandler);
+                Executors.defaultThreadFactory(), DEFAULT_HANDLER);
     }
 
     public RoundRobinThreadPoolExecutor(int corePoolSize,
@@ -436,7 +436,7 @@ public class RoundRobinThreadPoolExecutor extends ThreadPoolExecutor {
                                         RoundRobinBlockingQueue<Runnable> workQueue,
                                         ThreadFactory threadFactory) {
         this(corePoolSize, maximumPoolSize, keepAliveTime, unit, workQueue,
-                threadFactory, defaultHandler);
+                threadFactory, DEFAULT_HANDLER);
     }
 
     public RoundRobinThreadPoolExecutor(int corePoolSize,
@@ -757,7 +757,8 @@ public class RoundRobinThreadPoolExecutor extends ThreadPoolExecutor {
 
     public String toString() {
         long ncompleted;
-        int nworkers, nactive;
+        int nworkers;
+        int nactive;
         final ReentrantLock mainLock = this.mainLock;
         mainLock.lock();
         try {
