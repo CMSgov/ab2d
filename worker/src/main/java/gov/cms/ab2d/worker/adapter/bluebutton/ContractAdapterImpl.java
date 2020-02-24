@@ -56,7 +56,9 @@ public class ContractAdapterImpl implements ContractAdapter {
                 // call BFD to fetch the data
 
                 bfdPatientsIds = getPatientIdsForMonth(contractNumber, month);
-                beneficiaryService.storeBeneficiaries(contract.getId(), bfdPatientsIds,  month);
+                if (!bfdPatientsIds.isEmpty()) {
+                    beneficiaryService.storeBeneficiaries(contract.getId(), bfdPatientsIds, month);
+                }
             }
 
             var monthDateRange = toDateRange(month);
