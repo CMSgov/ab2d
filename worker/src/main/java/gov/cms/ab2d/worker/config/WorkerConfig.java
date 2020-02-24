@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.DependsOn;
 import org.springframework.context.annotation.Import;
 import org.springframework.integration.channel.ExecutorChannel;
 import org.springframework.integration.config.EnableIntegration;
@@ -37,6 +38,8 @@ import java.util.concurrent.ThreadPoolExecutor;
 @EnableIntegration
 @EnableScheduling
 @Import(BFDClientConfiguration.class)
+// Use @DependsOn to control the loading order so that properties are set before they are used
+@DependsOn("propertiesInit")
 public class WorkerConfig {
 
     @Autowired
@@ -47,9 +50,6 @@ public class WorkerConfig {
 
     @Value("${pcp.core.pool.size}")
     private int pcpCorePoolSize;
-
-    @Value("${pcp.max.pool.size}")
-    private int pcpMaxPoolSize;
 
     @Value("${pcp.queue.capacity}")
     private int pcpQueueCapacity;
