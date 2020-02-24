@@ -1,9 +1,11 @@
 package gov.cms.ab2d.worker.adapter.bluebutton;
 
 import gov.cms.ab2d.bfd.client.BFDClient;
+import gov.cms.ab2d.common.repository.ContractRepository;
 import gov.cms.ab2d.filter.FilterOutByDate;
 import gov.cms.ab2d.filter.FilterOutByDate.DateRange;
 import gov.cms.ab2d.worker.adapter.bluebutton.GetPatientsByContractResponse.PatientDTO;
+import gov.cms.ab2d.worker.service.BeneficiaryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -12,6 +14,7 @@ import org.hl7.fhir.dstu3.model.Bundle;
 import org.hl7.fhir.dstu3.model.Identifier;
 import org.hl7.fhir.dstu3.model.Patient;
 import org.hl7.fhir.dstu3.model.ResourceType;
+import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
 
 import java.text.ParseException;
@@ -24,7 +27,7 @@ import java.util.stream.Collectors;
 
 
 @Slf4j
-//@Primary  - once the BFD API starts returning data, change this to primary bean so spring injects this instead of the stub.
+@Primary // - once the BFD API starts returning data, change this to primary bean so spring injects this instead of the stub.
 @Component
 @RequiredArgsConstructor
 public class ContractAdapterImpl implements ContractAdapter {
@@ -33,7 +36,8 @@ public class ContractAdapterImpl implements ContractAdapter {
 
 
     private final BFDClient bfdClient;
-
+    private final ContractRepository contractRepo;
+    private final BeneficiaryService beneficiaryService;
 
 
     @Override
@@ -41,8 +45,19 @@ public class ContractAdapterImpl implements ContractAdapter {
 
         var patientDTOs = new ArrayList<PatientDTO>();
 
+        var contract = contractRepo.findContractByContractNumber(contractNumber).get();
+        var contractId = contract.getId();
+
         for (var month = 1; month <= currentMonth; month++) {
-            var bfdPatientsIds = getPatientIdsForMonth(contractNumber, month);
+
+            Set<String> bfdPatientsIds = beneficiaryService.findPatientIdsInDb(contractId, month);
+            if (bfdPatientsIds.isEmpty()) {
+                // patient ids were not found in local DB given the contractId and currentMonth
+                // call BFD to fetch the data
+
+                bfdPatientsIds = getPatientIdsForMonth(contractNumber, month);
+                beneficiaryService.storeBeneficiaries(contract.getId(), bfdPatientsIds,  month);
+            }
 
             var monthDateRange = toDateRange(month);
 
@@ -51,7 +66,7 @@ public class ContractAdapterImpl implements ContractAdapter {
                 var optPatient = findPatient(patientDTOs, bfdPatientId);
                 if (optPatient.isPresent()) {
                     // patient id was already active on this contract in previous month(s)
-                    // So just add this month to the patient's datesUnderContract
+                    // So just add this month to the patient's dateRangesUnderContract
 
                     var patientDTO = optPatient.get();
                     if (monthDateRange != null) {
@@ -61,7 +76,7 @@ public class ContractAdapterImpl implements ContractAdapter {
                 } else {
                     // new patient id.
                     // Create a new PatientDTO for this patient
-                    // And then add this month to the patient's datesUnderContract
+                    // And then add this month to the patient's dateRangesUnderContract
 
                     var patientDTO = PatientDTO.builder()
                             .patientId(bfdPatientId)

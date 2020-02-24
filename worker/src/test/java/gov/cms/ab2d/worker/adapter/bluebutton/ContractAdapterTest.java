@@ -2,6 +2,9 @@ package gov.cms.ab2d.worker.adapter.bluebutton;
 
 import ca.uhn.fhir.rest.server.exceptions.InvalidRequestException;
 import gov.cms.ab2d.bfd.client.BFDClient;
+import gov.cms.ab2d.common.model.Contract;
+import gov.cms.ab2d.common.repository.ContractRepository;
+import gov.cms.ab2d.worker.service.BeneficiaryService;
 import org.hl7.fhir.dstu3.model.Bundle;
 import org.hl7.fhir.dstu3.model.Bundle.BundleEntryComponent;
 import org.hl7.fhir.dstu3.model.Bundle.BundleLinkComponent;
@@ -17,6 +20,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.Month;
 import java.util.Calendar;
+import java.util.Optional;
 
 import static org.hamcrest.CoreMatchers.endsWith;
 import static org.hamcrest.CoreMatchers.is;
@@ -36,8 +40,9 @@ class ContractAdapterTest {
 
     private static final String BENEFICIARY_ID = "https://bluebutton.cms.gov/resources/variables/bene_id";
 
-    @Mock
-    private BFDClient client;
+    @Mock BFDClient client;
+    @Mock ContractRepository contractRepository;
+    @Mock BeneficiaryService beneficiaryService;
 
     private ContractAdapter cut;
     private String contractNumber = "S0000";
@@ -47,9 +52,13 @@ class ContractAdapterTest {
 
     @BeforeEach
     void setUp() {
-        cut = new ContractAdapterImpl(client);
+        cut = new ContractAdapterImpl(client, contractRepository, beneficiaryService);
         bundle = createBundle();
         when(client.requestPartDEnrolleesFromServer(anyString(), anyInt())).thenReturn(bundle);
+
+        Contract contract = new Contract();
+        contract.setContractNumber(contractNumber);
+        when(contractRepository.findContractByContractNumber(anyString())).thenReturn(Optional.of(contract));
     }
 
     @Test
