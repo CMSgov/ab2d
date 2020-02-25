@@ -132,21 +132,44 @@
    $ aws --version
    ```
 
-1. If you already have the AWS CLI installed, ensure that you have one of the following options in place:
+1. If you are doing development within an IDE, ensure that you have one of these three options in place:
 
-   *Option #1: Verify that you have a "[default]" entry in the following file for your AWS credentials:*
+   *Option #1: Verify a default profile is in place*
 
    ```ShellSession
    $ cat ~/.aws/credentials
    ```
 
-   *Option #2: Ensure that you have the following environment variables set:*
+   *Option #2: Set AWS profile environment variable to desired profile within the API and/or Worker Run/Debug configurations:*
 
-   - AWS_ACCESS_KEY_ID
+   - AWS_PROFILE={desired profile from '~/.aws/credentials' file}
 
-   - AWS_SECRET_ACCESS_KEY
+   *Option #3: Set AWS credential environment variables within the API and/or Worker Run/Debug configurations:*
 
-   - AWS_REGION
+   - AWS_ACCESS_KEY_ID={desired AWS access key}
+
+   - AWS_SECRET_ACCESS_KEY={AWS secret access key that corresponds to the desired AWS access key}
+
+1. If you are running a jar file from the terminal, ensure that you have one of these three options in place:
+
+   *Option #1: Verify a default profile is in place*
+
+   ```ShellSession
+   $ cat ~/.aws/credentials
+   ```
+
+   *Option #2: Set AWS_PROFILE environment variable to desired profile:*
+
+   ```ShellSession
+   $ export AWS_PROFILE={desired profile from '~/.aws/credentials' file}
+   ```
+
+   *Option #3: Set AWS credential environment variables:*
+
+   ```ShellSession
+   $ export AWS_ACCESS_KEY_ID={desired AWS access key}
+   $ export AWS_SECRET_ACCESS_KEY={desired AWS access key}
+   ```
 
 1. If you already have the AWS CLI installed and configured, jump to the following section:
 
