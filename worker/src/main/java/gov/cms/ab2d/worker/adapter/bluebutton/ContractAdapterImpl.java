@@ -14,6 +14,7 @@ import org.hl7.fhir.dstu3.model.Bundle;
 import org.hl7.fhir.dstu3.model.Identifier;
 import org.hl7.fhir.dstu3.model.Patient;
 import org.hl7.fhir.dstu3.model.ResourceType;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.text.ParseException;
@@ -33,6 +34,8 @@ public class ContractAdapterImpl implements ContractAdapter {
 
     private static final String BENEFICIARY_ID = "https://bluebutton.cms.gov/resources/variables/bene_id";
 
+    @Value("${contract2bene.local.storage.threshold:1000}")
+    private int localStorageThreshold;
 
     private final BFDClient bfdClient;
     private final ContractRepository contractRepo;
@@ -55,7 +58,10 @@ public class ContractAdapterImpl implements ContractAdapter {
                 // call BFD to fetch the data
 
                 bfdPatientsIds = getPatientIdsForMonth(contractNumber, month);
-                if (!bfdPatientsIds.isEmpty()) {
+
+                //if number of benes for this month exceeds localStorageThreshold, store it locally
+                var beneficiaryCount = bfdPatientsIds.size();
+                if (beneficiaryCount > localStorageThreshold) {
                     beneficiaryService.storeBeneficiaries(contract.getId(), bfdPatientsIds, month);
                 }
             }
