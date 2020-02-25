@@ -16,8 +16,6 @@ import java.util.List;
 
 import static gov.cms.ab2d.common.util.Constants.*;
 
-import java.util.List;
-
 @Service
 @Transactional
 @Slf4j
