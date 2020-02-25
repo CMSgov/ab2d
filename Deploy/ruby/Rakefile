@@ -1,0 +1,64 @@
+require 'aws-sdk'
+
+class SecureS3Objects
+
+  def encrypt_and_put_file_into_s3(source_file, s3_bucket, s3_folder, region_name, kms_key_id)
+    
+    file_name = File.basename source_file
+    
+    kms = Aws::KMS::Client.new(region: region_name)
+    s3 = Aws::S3::Encryption::Client.new(
+      region: region_name,
+      kms_key_id: kms_key_id,
+      kms_client: kms,
+    )
+    s3_object_key = "#{s3_folder}/#{file_name}.encrypted"
+
+    File.open(source_file, "rb") do |file|
+      resp = s3.put_object(bucket: s3_bucket, key: s3_object_key, body: file)
+    end
+    
+  end
+
+  def get_file_from_s3_and_decrypt(source_file, s3_bucket, s3_folder, region_name, kms_key_id, destination_dir)
+
+    file_name = File.basename source_file
+    
+    kms = Aws::KMS::Client.new(region: region_name)
+    s3 = Aws::S3::Encryption::Client.new(
+      region: region_name,
+      kms_key_id: kms_key_id,
+      kms_client: kms
+    )
+    s3_object_key = "#{s3_folder}/#{file_name}.encrypted"
+    
+    path_components = s3_object_key.split('/')
+    encrypted_file_name = path_components[path_components.length - 1]
+    file_name = encrypted_file_name.sub('.encrypted', '')
+    path_and_file_name = "#{destination_dir}/#{file_name}"
+
+    File.open(path_and_file_name, "wb") do |file|
+      resp = s3.get_object({ bucket: s3_bucket, key: s3_object_key, response_target: path_and_file_name})
+    end
+
+  end
+  
+end
+
+desc 'Encrypt and put file into S3'
+task :encrypt_and_put_file_into_s3, [:param1, :param2] do |t, args|
+  source_path_and_file = "#{args.param1}"
+  s3_bucket = "#{args.param2}"
+  kms_key_id = "alias/ab2d-kms"
+  s3 = SecureS3Objects.new
+  s3.encrypt_and_put_file_into_s3("#{source_path_and_file}", "#{s3_bucket}", 'encrypted-files', 'us-east-1', "#{kms_key_id}")
+end
+
+desc 'Get file from S3 and decrypt'
+task :get_file_from_s3_and_decrypt, [:param1, :param2] do |t, args|
+  source_path_and_file = "#{args.param1}"
+  s3_bucket = "#{args.param2}"
+  kms_key_id = "alias/ab2d-kms"
+  s3 = SecureS3Objects.new
+  s3.get_file_from_s3_and_decrypt("#{source_path_and_file}", "#{s3_bucket}", 'encrypted-files', 'us-east-1', "#{kms_key_id}", '/tmp')
+end

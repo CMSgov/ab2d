@@ -180,6 +180,5 @@ class EOBLoadUtilitiesTest {
         ExplanationOfBenefit eobNew = ExplanationOfBenefitTrimmer.getBenefit(eob);
         String payload = jsonParser.encodeResourceToString(eobNew) + System.lineSeparator();
         assertNotNull(payload);
-        System.out.println(payload);
     }
 }

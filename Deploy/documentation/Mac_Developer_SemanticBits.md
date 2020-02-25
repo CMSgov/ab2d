@@ -44,6 +44,7 @@
 1. [Install and configure Ruby](#install-and-configure-ruby)
 1. [Install Keybase](#install-keybase)
 1. [Install Postman](#install-postman)
+1. [Install JMeter](#install-jmeter)
 
 ## Install Slack
 
@@ -878,8 +879,8 @@
    $ aws --version
    ```
 
-1. Backup existing profile shell script
-   
+1. Backup the file that you use for setting up your shell's environment
+
    *Example for bash:*
 
    ```ShellSession
@@ -1147,7 +1148,15 @@
    $ rbenv global 2.6.5
    ```
 
-1. Open a shell environment script that is loaded before your terminal is loaded
+1. Backup the file that you use for setting up your shell's environment
+
+   *Example for bash:*
+
+   ```ShellSession
+   $ cp ~/.bash_profile ~/.bash_profile_backup
+   ```
+
+1. Open the file that you use for setting up your shell's environment
 
    *Example if you are using the bash shell:*
 
@@ -1297,3 +1306,75 @@
 1. Select **Skip signing in and take me straight to the app** at the bottom of the page
 
 1. Close **Postman**
+
+## Install JMeter
+
+1. Open Chrome
+
+1. Enter the following in the address bar
+
+   > https://archive.apache.org/dist/jmeter/binaries
+
+1. Select the following
+
+   ```
+   apache-jmeter-5.2.1.tgz
+   ```
+
+1. Wait for the download to complete
+
+1. Extract to the "/tmp" directory
+
+   ```ShellSession
+   $ tar xvzf ~/Downloads/apache-jmeter*.tgz -C /tmp
+   ```
+
+1. Move the extracted directory to the "/opt" directory
+
+   ```ShellSession
+   $ sudo mv /tmp/apache-jmeter* /opt/apache-jmeter
+   ```
+
+1. Create a symlink to the jmeter binary
+
+   ```ShellSession
+   $ sudo ln -s /opt/apache-jmeter/bin/jmeter /usr/local/bin/jmeter
+   ```
+
+1. Backup the file that you use for setting up your shell's environment
+
+   *Example for bash:*
+
+   ```ShellSession
+   $ cp ~/.bash_profile ~/.bash_profile_backup
+   ```
+
+1. Add jmeter path to the file that you use for setting up your shell's environment
+
+   *Example for bash:*
+
+   ```ShellSession
+   $ printf '\n# Add jmeter home variable' >> ~/.bash_profile
+   $ printf '\nexport AB2D_JMETER_HOME="/opt/apache-jmeter"' >> ~/.bash_profile
+   ```
+   
+1. Add jmeter path to the file that you use for setting up your shell's environment
+
+   *Example for bash:*
+   
+   ```ShellSession
+   $ printf '\n# Add jmeter to Path' >> ~/.bash_profile
+   $ printf '\nexport PATH="$PATH:$AB2D_JMETER_HOME/bin"' >> ~/.bash_profile
+   ```
+
+1. Apply "bash_profile" changes now
+
+   ```ShellSession
+   $ source ~/.bash_profile
+   ```
+
+1. Verify jmeter by checking its version
+
+   ```ShellSession
+   $ jmeter --version
+   ```

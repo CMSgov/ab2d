@@ -38,6 +38,8 @@ import java.util.concurrent.ThreadPoolExecutor;
 @EnableIntegration
 @EnableScheduling
 @Import(BFDClientConfiguration.class)
+// Use @DependsOn to control the loading order so that properties are set before they are used
+@DependsOn("propertiesInit")
 public class WorkerConfig {
 
     @Autowired

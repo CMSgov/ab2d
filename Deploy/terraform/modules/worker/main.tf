@@ -61,7 +61,7 @@ resource "aws_ecs_task_definition" "worker" {
   [
     {
       "name": "${lower(var.env)}-worker",
-      "image": "${var.ecr_repo_aws_account}.dkr.ecr.us-east-1.amazonaws.com/ab2d_worker:${var.image_version}",
+      "image": "${var.ecr_repo_aws_account}.dkr.ecr.us-east-1.amazonaws.com/ab2d_worker:${lower(var.env)}-latest",
       "essential": true,
       "memory": 2048,
       "mountPoints": [
@@ -71,11 +71,31 @@ resource "aws_ecs_task_definition" "worker" {
 	}
       ],
       "environment": [
+	{
+	  "name" : "AB2D_BFD_KEYSTORE_LOCATION",
+	  "value" : "${var.bfd_keystore_location}"
+	},
+	{
+	  "name" : "AB2D_BFD_KEYSTORE_PASSWORD",
+	  "value" : "${var.bfd_keystore_password}"
+	},
+	{
+	  "name" : "AB2D_BFD_URL",
+	  "value" : "${var.bfd_url}"
+	},
+	{
+	  "name" : "AB2D_DB_DATABASE",
+	  "value" : "${var.db_name}"
+	},
         {
 	  "name" : "AB2D_DB_HOST",
 	  "value" : "${var.db_host}"
 	},
-        {
+	{
+	  "name" : "AB2D_DB_PASSWORD",
+	  "value" : "${var.db_password}"
+	},
+	{
 	  "name" : "AB2D_DB_PORT",
 	  "value" : "${var.db_port}"
 	},
@@ -84,16 +104,24 @@ resource "aws_ecs_task_definition" "worker" {
 	  "value" : "${var.db_username}"
 	},
 	{
-	  "name" : "AB2D_DB_PASSWORD",
-	  "value" : "${var.db_password}"
-	},
-	{
-	  "name" : "AB2D_DB_DATABASE",
-	  "value" : "${var.db_name}"
-	},
-        {
 	  "name" : "AB2D_EFS_MOUNT",
 	  "value" : "/mnt/efs"
+	},
+	{
+	  "name" : "AB2D_HICN_HASH_PEPPER",
+	  "value" : "${var.hicn_hash_pepper}"
+	},
+	{
+	  "name" : "AB2D_HICN_HASH_ITER",
+	  "value" : "${var.hicn_hash_iter}"
+	},
+        {
+	  "name" : "NEW_RELIC_APP_NAME",
+	  "value" : "${var.new_relic_app_name}"
+	},
+        {
+	  "name" : "NEW_RELIC_LICENSE_KEY",
+	  "value" : "${var.new_relic_license_key}"
 	}
       ],
       "logConfiguration": {
@@ -129,7 +157,7 @@ resource "aws_launch_configuration" "launch_config" {
   iam_instance_profile = var.iam_instance_profile
   key_name = var.ssh_key_name
   security_groups = [aws_security_group.worker.id]
-  user_data = templatefile("${path.module}/userdata.tpl",{ env = "${lower(var.env)}", cluster_name = "${lower(var.env)}-worker", efs_id = var.efs_id })
+  user_data = templatefile("${path.module}/userdata.tpl",{ env = "${lower(var.env)}", cluster_name = "${lower(var.env)}-worker", efs_id = var.efs_id, bfd_keystore_file_name = var.bfd_keystore_file_name })
   lifecycle { create_before_destroy = true }
 }
 

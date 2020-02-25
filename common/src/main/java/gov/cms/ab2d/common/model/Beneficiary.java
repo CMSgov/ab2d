@@ -5,13 +5,11 @@ import lombok.Setter;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.JoinTable;
-import javax.persistence.ManyToMany;
+import javax.persistence.OneToMany;
 import javax.validation.constraints.NotNull;
+import java.util.HashSet;
 import java.util.Set;
 
 @Entity
@@ -27,11 +25,8 @@ public class Beneficiary {
     @NotNull
     private String patientId;
 
-    @ManyToMany(fetch = FetchType.EAGER)
-    @JoinTable(
-            name = "coverage",
-            joinColumns = @JoinColumn(name = "beneficiary_id"),
-            inverseJoinColumns = @JoinColumn(name = "contract_id"))
-    private Set<Contract> contracts;
+    @OneToMany(mappedBy = "beneficiary")
+    private Set<Coverage> coverages = new HashSet<>();
+
 
 }

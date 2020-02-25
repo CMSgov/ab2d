@@ -114,8 +114,10 @@ if [ -z "${VPC_EXISTS}" ]; then
 fi
 
 #
-# Get KMS key id (if exists)
+# Get KMS key id for target environment (if exists)
 #
+
+export AWS_PROFILE="${CMS_ENV}"
 
 KMS_KEY_ID=$(aws --region "${REGION}" kms list-aliases \
   --query="Aliases[?AliasName=='alias/ab2d-kms'].TargetKeyId" \
@@ -123,6 +125,23 @@ KMS_KEY_ID=$(aws --region "${REGION}" kms list-aliases \
 
 if [ -n "${KMS_KEY_ID}" ]; then
   KMS_KEY_STATE=$(aws --region "${REGION}" kms describe-key \
+    --key-id alias/ab2d-kms \
+    --query "KeyMetadata.KeyState" \
+    --output text)
+fi
+
+#
+# Get MGMT KMS key id for management environment (if exists)
+#
+
+export AWS_PROFILE="${CMS_ECR_REPO_ENV}"
+
+MGMT_KMS_KEY_ID=$(aws --region "${REGION}" kms list-aliases \
+  --query="Aliases[?AliasName=='alias/ab2d-kms'].TargetKeyId" \
+  --output text)
+
+if [ -n "${MGMT_KMS_KEY_ID}" ]; then
+  MGMT_KMS_KEY_STATE=$(aws --region "${REGION}" kms describe-key \
     --key-id alias/ab2d-kms \
     --query "KeyMetadata.KeyState" \
     --output text)
@@ -143,6 +162,10 @@ rm -f /var/log/terraform/tf.log
 # Initialize and validate terraform
 #
 
+# Set AWS profile to the target environment
+
+export AWS_PROFILE="${CMS_ENV}"
+
 # Initialize and validate terraform for the shared components
 
 echo "**************************************************************"
@@ -155,10 +178,10 @@ cd terraform/environments/$CMS_SHARED_ENV
 rm -f *.tfvars
 
 terraform init \
-    -backend-config="bucket=${CMS_ENV}-automation" \
-    -backend-config="key=${CMS_SHARED_ENV}/terraform/terraform.tfstate" \
-    -backend-config="region=${REGION}" \
-    -backend-config="encrypt=true"
+  -backend-config="bucket=${CMS_ENV}-automation" \
+  -backend-config="key=${CMS_SHARED_ENV}/terraform/terraform.tfstate" \
+  -backend-config="region=${REGION}" \
+  -backend-config="encrypt=true"
 
 terraform validate
 
@@ -174,18 +197,43 @@ cd terraform/environments/$CMS_ENV
 rm -f *.tfvars
 
 terraform init \
-    -backend-config="bucket=${CMS_ENV}-automation" \
-    -backend-config="key=${CMS_ENV}/terraform/terraform.tfstate" \
-    -backend-config="region=${REGION}" \
-    -backend-config="encrypt=true"
+  -backend-config="bucket=${CMS_ENV}-automation" \
+  -backend-config="key=${CMS_ENV}/terraform/terraform.tfstate" \
+  -backend-config="region=${REGION}" \
+  -backend-config="encrypt=true"
+
+terraform validate
+
+# Set AWS profile to the management environment
+
+export AWS_PROFILE="${CMS_ECR_REPO_ENV}"
+
+# Initialize and validate terraform for the management environment
+
+echo "*******************************************************************"
+echo "Initialize and validate terraform for the management environment..."
+echo "*******************************************************************"
+
+cd "${START_DIR}"
+cd "terraform/environments/$CMS_ECR_REPO_ENV-shared"
+
+rm -f *.tfvars
+
+terraform init \
+  -backend-config="bucket=${CMS_ECR_REPO_ENV}-automation" \
+  -backend-config="key=${CMS_ECR_REPO_ENV}/terraform/terraform.tfstate" \
+  -backend-config="region=${REGION}" \
+  -backend-config="encrypt=true"
 
 terraform validate
 
 #
-# Deploy or enable KMS
+# Deploy or enable KMS for target environment
 #
 
-# If KMS key exists, enable it; otherwise, create it
+# If target environment KMS key exists, enable it; otherwise, create it
+
+export AWS_PROFILE="${CMS_ENV}"
 
 if [ -n "$KMS_KEY_ID" ]; then
   echo "Enabling KMS key..."
@@ -200,15 +248,46 @@ else
     --target module.kms --auto-approve
 fi
 
-# Get KMS key id
+# Get target KMS key id
 
 KMS_KEY_ID=$(aws --region "${REGION}" kms list-aliases \
   --query="Aliases[?AliasName=='alias/ab2d-kms'].TargetKeyId" \
   --output text)
 
 #
+# Deploy or enable KMS for management environment
+#
+
+# If management environment KMS key exists, enable it; otherwise, create it
+
+export AWS_PROFILE="${CMS_ECR_REPO_ENV}"
+
+if [ -n "$MGMT_KMS_KEY_ID" ]; then
+  echo "Enabling KMS key..."
+  cd "${START_DIR}"
+  cd python3
+  ./enable-kms-key.py $MGMT_KMS_KEY_ID
+else
+  echo "Deploying KMS..."
+  cd "${START_DIR}"
+  cd "terraform/environments/${CMS_ECR_REPO_ENV}-shared"
+  terraform apply \
+    --target module.kms --auto-approve
+fi
+
+# Get MGMT KMS key id
+
+MGMT_KMS_KEY_ID=$(aws --region "${REGION}" kms list-aliases \
+  --query="Aliases[?AliasName=='alias/ab2d-kms'].TargetKeyId" \
+  --output text)
+
+#
 # Create or get secrets
 #
+
+# Set AWS profile to the target environment
+
+export AWS_PROFILE="${CMS_ENV}"
 
 # Change to the "python3" directory
 
@@ -235,7 +314,7 @@ if [ -z "${DATABASE_PASSWORD}" ]; then
   DATABASE_PASSWORD=$(./get-database-secret.py $CMS_ENV database_password $DATABASE_SECRET_DATETIME)
 fi
 
-# Create or get database name secret (if doesn't exist)
+# Create or get database name secret
 
 DATABASE_NAME=$(./get-database-secret.py $CMS_ENV database_name $DATABASE_SECRET_DATETIME)
 if [ -z "${DATABASE_NAME}" ]; then
@@ -245,12 +324,89 @@ if [ -z "${DATABASE_NAME}" ]; then
   DATABASE_NAME=$(./get-database-secret.py $CMS_ENV database_name $DATABASE_SECRET_DATETIME)
 fi
 
+# Create or get bfd url secret
+
+BFD_URL=$(./get-database-secret.py $CMS_ENV bfd_url $DATABASE_SECRET_DATETIME)
+if [ -z "${BFD_URL}" ]; then
+  echo "*********************************************************"
+  ./create-database-secret.py $CMS_ENV bfd_url $KMS_KEY_ID $DATABASE_SECRET_DATETIME
+  echo "*********************************************************"
+  BFD_URL=$(./get-database-secret.py $CMS_ENV bfd_url $DATABASE_SECRET_DATETIME)
+fi
+
+# Create or get bfd keystore location secret
+
+BFD_KEYSTORE_LOCATION=$(./get-database-secret.py $CMS_ENV bfd_keystore_location $DATABASE_SECRET_DATETIME)
+if [ -z "${BFD_KEYSTORE_LOCATION}" ]; then
+  echo "*********************************************************"
+  ./create-database-secret.py $CMS_ENV bfd_keystore_location $KMS_KEY_ID $DATABASE_SECRET_DATETIME
+  echo "*********************************************************"
+  BFD_KEYSTORE_LOCATION=$(./get-database-secret.py $CMS_ENV bfd_keystore_location $DATABASE_SECRET_DATETIME)
+fi
+
+# Create or get bfd keystore password secret
+
+BFD_KEYSTORE_PASSWORD=$(./get-database-secret.py $CMS_ENV bfd_keystore_password $DATABASE_SECRET_DATETIME)
+if [ -z "${BFD_KEYSTORE_PASSWORD}" ]; then
+  echo "*********************************************************"
+  ./create-database-secret.py $CMS_ENV bfd_keystore_password $KMS_KEY_ID $DATABASE_SECRET_DATETIME
+  echo "*********************************************************"
+  BFD_KEYSTORE_PASSWORD=$(./get-database-secret.py $CMS_ENV bfd_keystore_password $DATABASE_SECRET_DATETIME)
+fi
+
+# Create or get hicn hash pepper secret
+
+HICN_HASH_PEPPER=$(./get-database-secret.py $CMS_ENV hicn_hash_pepper $DATABASE_SECRET_DATETIME)
+if [ -z "${HICN_HASH_PEPPER}" ]; then
+  echo "*********************************************************"
+  ./create-database-secret.py $CMS_ENV hicn_hash_pepper $KMS_KEY_ID $DATABASE_SECRET_DATETIME
+  echo "*********************************************************"
+  HICN_HASH_PEPPER=$(./get-database-secret.py $CMS_ENV hicn_hash_pepper $DATABASE_SECRET_DATETIME)
+fi
+
+# Create or get hicn hash iter secret
+
+HICN_HASH_ITER=$(./get-database-secret.py $CMS_ENV hicn_hash_iter $DATABASE_SECRET_DATETIME)
+if [ -z "${HICN_HASH_ITER}" ]; then
+  echo "*********************************************************"
+  ./create-database-secret.py $CMS_ENV hicn_hash_iter $KMS_KEY_ID $DATABASE_SECRET_DATETIME
+  echo "*********************************************************"
+  HICN_HASH_ITER=$(./get-database-secret.py $CMS_ENV hicn_hash_iter $DATABASE_SECRET_DATETIME)
+fi
+
+# Create or get new relic app name secret
+
+NEW_RELIC_APP_NAME=$(./get-database-secret.py $CMS_ENV new_relic_app_name $DATABASE_SECRET_DATETIME)
+if [ -z "${NEW_RELIC_APP_NAME}" ]; then
+  echo "*********************************************************"
+  ./create-database-secret.py $CMS_ENV new_relic_app_name $KMS_KEY_ID $DATABASE_SECRET_DATETIME
+  echo "*********************************************************"
+  NEW_RELIC_APP_NAME=$(./get-database-secret.py $CMS_ENV new_relic_app_name $DATABASE_SECRET_DATETIME)
+fi
+
+# Create or get new relic license key secret
+
+NEW_RELIC_LICENSE_KEY=$(./get-database-secret.py $CMS_ENV new_relic_license_key $DATABASE_SECRET_DATETIME)
+if [ -z "${NEW_RELIC_LICENSE_KEY}" ]; then
+  echo "*********************************************************"
+  ./create-database-secret.py $CMS_ENV new_relic_license_key $KMS_KEY_ID $DATABASE_SECRET_DATETIME
+  echo "*********************************************************"
+  NEW_RELIC_LICENSE_KEY=$(./get-database-secret.py $CMS_ENV new_relic_license_key $DATABASE_SECRET_DATETIME)
+fi
+
 # If any databse secret produced an error, exit the script
 
 if [ "${DATABASE_USER}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
   || [ "${DATABASE_PASSWORD}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
-  || [ "${DATABASE_NAME}" == "ERROR: Cannot get database secret because KMS key is disabled!" ]; then
-    echo "ERROR: Cannot get database secrets because KMS key is disabled!"
+  || [ "${DATABASE_NAME}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
+  || [ "${BFD_URL}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
+  || [ "${BFD_KEYSTORE_LOCATION}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
+  || [ "${BFD_KEYSTORE_PASSWORD}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
+  || [ "${HICN_HASH_PEPPER}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
+  || [ "${HICN_HASH_ITER}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
+  || [ "${NEW_RELIC_APP_NAME}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
+  || [ "${NEW_RELIC_LICENSE_KEY}" == "ERROR: Cannot get database secret because KMS key is disabled!" ]; then
+    echo "ERROR: Cannot get secrets because KMS key is disabled!"
     exit 1
 fi
 
@@ -721,6 +877,7 @@ if [ -z "${AMI_ID}" ]; then
   COMMIT=$(git rev-parse HEAD)
   packer build \
     --var seed_ami=$SEED_AMI \
+    --var environment="${CMS_ENV}" \
     --var region="${REGION}" \
     --var ec2_instance_type=$EC2_INSTANCE_TYPE \
     --var vpc_id=$VPC_ID \
@@ -741,6 +898,10 @@ fi
 # AMI Generation for Jenkins node
 #
 
+# Set profile to the management AWS account
+
+export AWS_PROFILE="${CMS_ECR_REPO_ENV}"
+
 # Set JENKINS_AMI_ID if it already exists for the deployment
 
 echo "Set JENKINS_AMI_ID if it already exists for the deployment..."
@@ -756,6 +917,7 @@ echo "If no AMI is specified then create a new one..."
 if [ -z "${JENKINS_AMI_ID}" ]; then
 
   # Get the latest seed AMI
+
   SEED_AMI=$(aws --region "${REGION}" ec2 describe-images \
     --owners "${OWNER}" \
     --filters "Name=name,Values=EAST-RH 7*" \
@@ -765,7 +927,40 @@ if [ -z "${JENKINS_AMI_ID}" ]; then
     | head -n1 \
     | awk '{print $1}')
 
+  # Get VPC ID for the management AWS account
+
+  echo "Getting VPC ID for the management AWS account..."
+
+  MGMT_VPC_ID=$(aws --region "${REGION}" ec2 describe-vpcs \
+    --filters "Name=tag:Name,Values=${CMS_ECR_REPO_ENV}" \
+    --query "Vpcs[*].[VpcId]" \
+    --output text)
+
+  if [ -z "${MGMT_VPC_ID}" ]; then
+    echo "*************************************************************"
+    echo "ERROR: MGMT VPC ID does not exist for the target AWS profile."
+    echo "*************************************************************"
+    exit 1
+  fi
+
+  # Get first subnet id for the management AWS account
+
+  echo "Getting first public subnet id for the management AWS account..."
+
+  MGMT_SUBNET_PUBLIC_1_ID=$(aws --region "${REGION}" ec2 describe-subnets \
+    --filters "Name=tag:Name,Values=${CMS_ECR_REPO_ENV}-public-a" \
+    --query "Subnets[*].SubnetId" \
+    --output text)
+
+  if [ -z "${MGMT_SUBNET_PUBLIC_1_ID}" ]; then
+
+    echo "ERROR: public subnet #1 for the management AWS account not found..."
+    exit 1
+
+  fi
+
   # Create AMI for Jenkins
+
   cd "${START_DIR}"
   cd packer/jenkins
   IP=$(curl ipinfo.io/ip)
@@ -774,8 +969,8 @@ if [ -z "${JENKINS_AMI_ID}" ]; then
     --var seed_ami=$SEED_AMI \
     --var region="${REGION}" \
     --var ec2_instance_type=$EC2_INSTANCE_TYPE \
-    --var vpc_id=$VPC_ID \
-    --var subnet_public_1_id=$SUBNET_PUBLIC_1_ID \
+    --var vpc_id=$MGMT_VPC_ID \
+    --var subnet_public_1_id=$MGMT_SUBNET_PUBLIC_1_ID \
     --var my_ip_address=$IP \
     --var ssh_username=$SSH_USERNAME \
     --var git_commit_hash=$COMMIT \
@@ -783,9 +978,11 @@ if [ -z "${JENKINS_AMI_ID}" ]; then
   JENKINS_AMI_ID=$(cat output.txt | awk 'match($0, /ami-.*/) { print substr($0, RSTART, RLENGTH) }' | tail -1)
   
   # Add name tag to AMI
+
   aws --region "${REGION}" ec2 create-tags \
     --resources $JENKINS_AMI_ID \
     --tags "Key=Name,Value=ab2d-jenkins-ami"
+
 fi
 
 # Get deployer IP address
@@ -795,6 +992,10 @@ DEPLOYER_IP_ADDRESS=$(curl ipinfo.io/ip)
 #
 # Create "auto.tfvars" files
 #
+
+# Set profile to the target AWS account
+
+export AWS_PROFILE="${CMS_ENV}"
 
 # Create "auto.tfvars" file for shared components
 
@@ -1038,15 +1239,15 @@ cd "${START_DIR}"
 
 # Get the public ip address of the controller
 
-CONTROLLER_PUBLIC_IP=$(aws --region "${REGION}" ec2 describe-instances \
+CONTROLLER_PRIVATE_IP=$(aws --region "${REGION}" ec2 describe-instances \
   --filters "Name=tag:Name,Values=ab2d-deployment-controller" \
-  --query="Reservations[*].Instances[?State.Name == 'running'].PublicIpAddress" \
+  --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
   --output text)
 
 # Determine if the database for the environment exists
 
 DB_NAME_IF_EXISTS=$(ssh -tt -i "~/.ssh/${CMS_ENV}.pem" \
-  "${SSH_USERNAME}@${CONTROLLER_PUBLIC_IP}" \
+  "${SSH_USERNAME}@${CONTROLLER_PRIVATE_IP}" \
   "psql -t --host "${DB_ENDPOINT}" --username "${DATABASE_USER}" --dbname postgres --command='SELECT datname FROM pg_catalog.pg_database'" \
   | grep "${DATABASE_NAME}" \
   | sort \
@@ -1056,10 +1257,10 @@ DB_NAME_IF_EXISTS=$(ssh -tt -i "~/.ssh/${CMS_ENV}.pem" \
 
 # Create the database for the environment if it doesn't exist
 
-if [ -n "${CONTROLLER_PUBLIC_IP}" ] && [ -n "${DB_ENDPOINT}" ] && [ "${DB_NAME_IF_EXISTS}" != "${DATABASE_NAME}" ]; then
+if [ -n "${CONTROLLER_PRIVATE_IP}" ] && [ -n "${DB_ENDPOINT}" ] && [ "${DB_NAME_IF_EXISTS}" != "${DATABASE_NAME}" ]; then
   echo "Creating database..."
   ssh -tt -i "~/.ssh/${CMS_ENV}.pem" \
-    "${SSH_USERNAME}@${CONTROLLER_PUBLIC_IP}" \
+    "${SSH_USERNAME}@${CONTROLLER_PRIVATE_IP}" \
     "createdb ${DATABASE_NAME} --host ${DB_ENDPOINT} --username ${DATABASE_USER}"
 fi
 
@@ -1073,24 +1274,6 @@ export AWS_PROFILE="${CMS_ECR_REPO_ENV}"
 
 cd "${START_DIR}"
 cd terraform/environments/$CMS_ECR_REPO_ENV
-
-# Get ecr repo aws account
-
-ECR_REPO_AWS_ACCOUNT=$(aws --region "${REGION}" sts get-caller-identity \
-  --query Account \
-  --output text)
-
-# Apply ecr repo policy to the "ab2d_api" repo
-
-aws --region "${REGION}" ecr set-repository-policy \
-  --repository-name ab2d_api \
-  --policy-text file://ab2d-ecr-policy.json
-
-# Apply ecr repo policy to the "ab2d_worker" repo
-
-aws --region "${REGION}" ecr set-repository-policy \
-  --repository-name ab2d_worker \
-  --policy-text file://ab2d-ecr-policy.json
 
 # Build new images or use existing images
 
@@ -1114,29 +1297,59 @@ if [ -n "${BUILD_NEW_IMAGES}" ]; then
 
   # Note that I can't build with "make docker-build" because test containers
   # try to run inside the docker container. Using "mvn clean package" instead.
-  mvn clean package
+  #
+  # Build with tests
+  #
+  # export OKTA_CLIENT_ID=0oa2t0lsrdZw5uWRx297
+  # export OKTA_CLIENT_PASSWORD=HHduWG6LogIvDIQuWgp3Zlo9OYMValTtH5OBcuHw
+  # mvn clean package
+  #
+  # Skipping tests
+  #
+  mvn clean package -DskipTests
   sleep 5
 
-  # Create an image version using the seven character git commit id
+  # Get branch name
 
-  IMAGE_VERSION=$(git rev-parse HEAD | cut -c1-7)
+  BRANCH=$(git rev-parse --abbrev-ref HEAD)
+
+  # Create an image version using the seven character git commit id
   
-  # Build API docker image
+  if [ "${BRANCH}" == "master" ]; then
+    echo "Using commit number of master branch as the image version."
+    COMMIT_NUMBER=$(git rev-parse HEAD | cut -c1-7)
+    IMAGE_VERSION="${CMS_ENV}-latest-${COMMIT_NUMBER}"
+  else # assume it is a devops branch and get the latest merge from master into the branch
+    echo "NOTE: Assuming this is a DevOps branch that has only DevOps changes."
+    echo "Using commit number of latest merge from branch into the current branch as the image version."
+    COMMIT_NUMBER=$(git log --merges | head -n 2 | tail -n 1 | cut -d" " -f 3)
+    IMAGE_VERSION="${CMS_ENV}-latest-${COMMIT_NUMBER}"
+  fi
+
+  # Build API docker images
 
   cd "${START_DIR}"
   cd ../api
   docker build \
+    --no-cache \
     --tag "ab2d_api:${IMAGE_VERSION}" .
+  docker build \
+    --no-cache \
+    --tag "ab2d_api:${CMS_ENV}-latest" .
 
   # Build worker docker image
 
   cd "${START_DIR}"
   cd ../worker
   docker build \
+    --no-cache \
     --tag "ab2d_worker:${IMAGE_VERSION}" .
+  docker build \
+    --no-cache \
+    --tag "ab2d_worker:${CMS_ENV}-latest" .
 
-  # Tag and push API docker image to ECR
-
+  # Get or create api repo
+  
   API_ECR_REPO_URI=$(aws --region "${REGION}" ecr describe-repositories \
     --query "repositories[?repositoryName == 'ab2d_api'].repositoryUri" \
     --output text)
@@ -1147,10 +1360,32 @@ if [ -n "${BUILD_NEW_IMAGES}" ]; then
       --query "repositories[?repositoryName == 'ab2d_api'].repositoryUri" \
       --output text)
   fi
+
+  # Get ecr repo aws account
+
+  ECR_REPO_AWS_ACCOUNT=$(aws --region "${REGION}" sts get-caller-identity \
+    --query Account \
+    --output text)
+  
+  # Apply ecr repo policy to the "ab2d_api" repo
+
+  cd "${START_DIR}"
+  cd terraform/environments/$CMS_ECR_REPO_ENV
+  aws --region "${REGION}" ecr set-repository-policy \
+    --repository-name ab2d_api \
+    --policy-text file://ab2d-ecr-policy.json
+
+  # Tag and push two copies (image version and latest version) of API docker image to ECR
+  # - image version keeps track of the master commit number (e.g. ab2d-dev-latest-3d0905b)
+  # - latest version is the same image but without the commit number (e.g. ab2d-dev-latest)
+  # - NOTE: the latest version is used by the ecs task definition so that it can remain static for zero downtime
+
   docker tag "ab2d_api:${IMAGE_VERSION}" "${API_ECR_REPO_URI}:${IMAGE_VERSION}"
   docker push "${API_ECR_REPO_URI}:${IMAGE_VERSION}"
+  docker tag "ab2d_api:${CMS_ENV}-latest" "${API_ECR_REPO_URI}:${CMS_ENV}-latest"
+  docker push "${API_ECR_REPO_URI}:${CMS_ENV}-latest"
 
-  # Tag and push worker docker image to ECR
+  # Get or create api repo
 
   WORKER_ECR_REPO_URI=$(aws --region "${REGION}" ecr describe-repositories \
     --query "repositories[?repositoryName == 'ab2d_worker'].repositoryUri" \
@@ -1162,9 +1397,143 @@ if [ -n "${BUILD_NEW_IMAGES}" ]; then
       --query "repositories[?repositoryName == 'ab2d_worker'].repositoryUri" \
       --output text)
   fi
+
+  # Apply ecr repo policy to the "ab2d_worker" repo
+
+  cd "${START_DIR}"
+  cd terraform/environments/$CMS_ECR_REPO_ENV
+  aws --region "${REGION}" ecr set-repository-policy \
+    --repository-name ab2d_worker \
+    --policy-text file://ab2d-ecr-policy.json
+
+  # Tag and push two copies (image version and latest version) of worker docker image to ECR
+  # - image version keeps track of the master commit number (e.g. ab2d-dev-latest-3d0905b)
+  # - latest version is the same image but without the commit number (e.g. ab2d-dev-latest)
+  # - NOTE: the latest version is used by the ecs task definition so that it can remain static for zero downtime
+
   docker tag "ab2d_worker:${IMAGE_VERSION}" "${WORKER_ECR_REPO_URI}:${IMAGE_VERSION}"
   docker push "${WORKER_ECR_REPO_URI}:${IMAGE_VERSION}"
+  docker tag "ab2d_worker:${CMS_ENV}-latest" "${WORKER_ECR_REPO_URI}:${CMS_ENV}-latest"
+  docker push "${WORKER_ECR_REPO_URI}:${CMS_ENV}-latest"
 
+  # Get list of untagged images in the api repository
+
+  IMAGES_TO_DELETE=$(aws --region "${REGION}" ecr list-images \
+    --repository-name ab2d_api \
+    --filter "tagStatus=UNTAGGED" \
+    --query 'imageIds[*]' \
+    --output json)
+
+  # Delete untagged images in the api repository
+  
+  aws --region "${REGION}" ecr batch-delete-image \
+    --repository-name ab2d_api \
+    --image-ids "$IMAGES_TO_DELETE" \
+    || true
+
+  # Get old 'latest-commit' api tag
+  
+  API_OLD_LATEST_COMMIT_TAG=$(aws --region "${REGION}" ecr describe-images \
+    --repository-name ab2d_api \
+    --query "imageDetails[*].{imageTag:imageTags[0],imagePushedAt:imagePushedAt}" \
+    --output json \
+    | jq 'sort_by(.imagePushedAt) | reverse' \
+    | jq ".[] | select(.imageTag | startswith(\"${CMS_ENV}-latest\"))" \
+    | jq --slurp '.' \
+    | jq 'del(.[0,1])' \
+    | jq '.[] | select(.imageTag)' \
+    | jq '.imageTag' \
+    | tr -d '"' \
+    | head -1)
+
+  if [ -n "${API_OLD_LATEST_COMMIT_TAG}" ]; then
+      
+    # Rename 'latest-commit' api tag
+
+    RENAME_API_OLD_LATEST_COMMIT_TAG=$(echo "${API_OLD_LATEST_COMMIT_TAG/-latest-/-}")
+
+    # Get manifest of tag to rename
+    
+    MANIFEST=$(aws --region "${REGION}" ecr batch-get-image \
+      --repository-name ab2d_api \
+      --image-ids imageTag="${API_OLD_LATEST_COMMIT_TAG}" \
+      --query 'images[].imageManifest' \
+      --output text)
+
+    # Add renamed api tag
+    
+    aws --region "${REGION}" ecr put-image \
+      --repository-name ab2d_api \
+      --image-tag "${RENAME_API_OLD_LATEST_COMMIT_TAG}" \
+      --image-manifest "${MANIFEST}"
+
+    # Remove old api tag
+  
+    aws --region "${REGION}" ecr batch-delete-image \
+      --repository-name ab2d_api \
+      --image-ids imageTag="${API_OLD_LATEST_COMMIT_TAG}"
+
+  fi
+  
+  # Get list of untagged images in the worker repository
+    
+  IMAGES_TO_DELETE=$(aws --region "${REGION}" ecr list-images \
+    --repository-name ab2d_worker \
+    --filter "tagStatus=UNTAGGED" \
+    --query 'imageIds[*]' \
+    --output json)
+
+  # Delete untagged images in the worker repository
+  
+  aws --region "${REGION}" ecr batch-delete-image \
+    --repository-name ab2d_worker \
+    --image-ids "$IMAGES_TO_DELETE" \
+    || true
+
+  # Get old 'latest-commit' worker tag
+  
+  WORKER_OLD_LATEST_COMMIT_TAG=$(aws --region "${REGION}" ecr describe-images \
+    --repository-name ab2d_worker \
+    --query "imageDetails[*].{imageTag:imageTags[0],imagePushedAt:imagePushedAt}" \
+    --output json \
+    | jq 'sort_by(.imagePushedAt) | reverse' \
+    | jq ".[] | select(.imageTag | startswith(\"${CMS_ENV}-latest\"))" \
+    | jq --slurp '.' \
+    | jq 'del(.[0,1])' \
+    | jq '.[] | select(.imageTag)' \
+    | jq '.imageTag' \
+    | tr -d '"' \
+    | head -1)
+
+  if [ -n "${WORKER_OLD_LATEST_COMMIT_TAG}" ]; then
+      
+    # Rename 'latest-commit' worker tag
+
+    RENAME_WORKER_OLD_LATEST_COMMIT_TAG=$(echo "${WORKER_OLD_LATEST_COMMIT_TAG/-latest-/-}")
+
+    # Get manifest of tag to rename
+    
+    MANIFEST=$(aws --region "${REGION}" ecr batch-get-image \
+      --repository-name ab2d_worker \
+      --image-ids imageTag="${WORKER_OLD_LATEST_COMMIT_TAG}" \
+      --query 'images[].imageManifest' \
+      --output text)
+
+    # Add renamed tag
+
+    aws --region "${REGION}" ecr put-image \
+      --repository-name ab2d_worker \
+      --image-tag "${RENAME_WORKER_OLD_LATEST_COMMIT_TAG}" \
+      --image-manifest "${MANIFEST}"
+
+    # Remove old tag
+  
+    aws --region "${REGION}" ecr batch-delete-image \
+      --repository-name ab2d_worker \
+      --image-ids imageTag="${WORKER_OLD_LATEST_COMMIT_TAG}"
+
+  fi
+  
 else # use existing images
 
   echo "Using existing images..."
@@ -1198,7 +1567,7 @@ else
   echo "The ECR image versions for ab2d_api and ab2d_worker were verified to be the same..."
 fi
 
-echo "Using image version '${IMAGE_VERSION}' for ab2d_api and ab2d_worker..."
+echo "Using master branch commit number '${COMMIT_NUMBER}' for ab2d_api and ab2d_worker..."
 
 # Reset to the target environment
     
@@ -1220,8 +1589,6 @@ cd terraform/environments/$CMS_ENV
 # Get current known good ECS task definitions
 #
 
-echo "Get current known good ECS task definitions..."
-
 CLUSTER_ARNS=$(aws --region "${REGION}" ecs list-clusters \
   --query 'clusterArns' \
   --output text \
@@ -1232,21 +1599,28 @@ CLUSTER_ARNS=$(aws --region "${REGION}" ecs list-clusters \
 if [ -z "${CLUSTER_ARNS}" ]; then
   echo "Skipping getting current ECS task definitions, since there are no existing clusters"
 else
+  if [ -n "${BUILD_NEW_IMAGES}" ]; then
+    echo "Using existing ECS task definitions..."
+  else
+    echo "Using newly created ECS task definitions..."
+
+    echo "Get current known good ECS task definitions..."
+
+    API_TASK_DEFINITION=$(aws --region "${REGION}" ecs describe-services \
+      --services "${CMS_ENV}-api" \
+      --cluster "${CMS_ENV}-api" \
+      | grep "taskDefinition" \
+      | head -1)
+    API_TASK_DEFINITION=$(echo $API_TASK_DEFINITION | awk -F'": "' '{print $2}' | tr -d '"' | tr -d ',')
     
-  API_TASK_DEFINITION=$(aws --region "${REGION}" ecs describe-services \
-    --services "${CMS_ENV}-api" \
-    --cluster "${CMS_ENV}-api" \
-    | grep "taskDefinition" \
-    | head -1)
-  API_TASK_DEFINITION=$(echo $API_TASK_DEFINITION | awk -F'": "' '{print $2}' | tr -d '"' | tr -d ',')
-  
-  WORKER_TASK_DEFINITION=$(aws --region "${REGION}" ecs describe-services \
-    --services "${CMS_ENV}-worker" \
-    --cluster "${CMS_ENV}-worker" \
-    | grep "taskDefinition" \
-    | head -1)
-  WORKER_TASK_DEFINITION=$(echo $WORKER_TASK_DEFINITION | awk -F'": "' '{print $2}' | tr -d '"' | tr -d ',')
-  
+    WORKER_TASK_DEFINITION=$(aws --region "${REGION}" ecs describe-services \
+      --services "${CMS_ENV}-worker" \
+      --cluster "${CMS_ENV}-worker" \
+      | grep "taskDefinition" \
+      | head -1)
+    WORKER_TASK_DEFINITION=$(echo $WORKER_TASK_DEFINITION | awk -F'": "' '{print $2}' | tr -d '"' | tr -d ',')
+
+  fi
 fi
 
 #
@@ -1330,6 +1704,7 @@ if [ -z "${DATABASE_HOST}" ]; then
   aws secretsmanager create-secret \
     --name "ab2d/${CMS_ENV}/module/db/database_host/${DATABASE_SECRET_DATETIME}" \
     --secret-string "${DB_ENDPOINT}"
+  DATABASE_HOST=$(./get-database-secret.py $CMS_ENV database_host $DATABASE_SECRET_DATETIME)
 fi
 
 # Create or get database port secret
@@ -1343,6 +1718,7 @@ if [ -z "${DATABASE_PORT}" ]; then
   aws secretsmanager create-secret \
     --name "ab2d/${CMS_ENV}/module/db/database_port/${DATABASE_SECRET_DATETIME}" \
     --secret-string "${DB_PORT}"
+  DATABASE_PORT=$(./get-database-secret.py $CMS_ENV database_port $DATABASE_SECRET_DATETIME)
 fi
 
 # Get database secret manager ARNs
@@ -1377,6 +1753,12 @@ DATABASE_NAME_SECRET_ARN=$(aws --region "${REGION}" secretsmanager describe-secr
 cd "${START_DIR}"
 cd terraform/environments/$CMS_ENV
 
+# Get the BFD keystore file name
+
+BFD_KEYSTORE_FILE_NAME=$(echo $BFD_KEYSTORE_LOCATION | cut -d"/" -f 6)
+
+# Run automation for API and worker based on auto approve parameter
+
 if [ -z "${AUTOAPPROVE}" ]; then
     
   # Confirm with the caller prior to applying changes.
@@ -1397,6 +1779,8 @@ if [ -z "${AUTOAPPROVE}" ]; then
     --var "deployer_ip_address=$DEPLOYER_IP_ADDRESS" \
     --var "ecr_repo_aws_account=$ECR_REPO_AWS_ACCOUNT" \
     --var "image_version=$IMAGE_VERSION" \
+    --var "new_relic_app_name=$NEW_RELIC_APP_NAME" \
+    --var "new_relic_license_key=$NEW_RELIC_LICENSE_KEY" \
     --target module.api
   
   terraform apply \
@@ -1414,6 +1798,14 @@ if [ -z "${AUTOAPPROVE}" ]; then
     --var "db_name_secret_arn=$DATABASE_NAME_SECRET_ARN" \
     --var "ecr_repo_aws_account=$ECR_REPO_AWS_ACCOUNT" \
     --var "image_version=$IMAGE_VERSION" \
+    --var "bfd_url=$BFD_URL" \
+    --var "bfd_keystore_location=$BFD_KEYSTORE_LOCATION" \
+    --var "bfd_keystore_password=$BFD_KEYSTORE_PASSWORD" \
+    --var "hicn_hash_pepper=$HICN_HASH_PEPPER" \
+    --var "hicn_hash_iter=$HICN_HASH_ITER" \
+    --var "bfd_keystore_file_name=$BFD_KEYSTORE_FILE_NAME" \
+    --var "new_relic_app_name=$NEW_RELIC_APP_NAME" \
+    --var "new_relic_license_key=$NEW_RELIC_LICENSE_KEY" \
     --target module.worker
 
 else
@@ -1436,6 +1828,8 @@ else
     --var "deployer_ip_address=$DEPLOYER_IP_ADDRESS" \
     --var "ecr_repo_aws_account=$ECR_REPO_AWS_ACCOUNT" \
     --var "image_version=$IMAGE_VERSION" \
+    --var "new_relic_app_name=$NEW_RELIC_APP_NAME" \
+    --var "new_relic_license_key=$NEW_RELIC_LICENSE_KEY" \
     --target module.api \
     --auto-approve
 
@@ -1454,6 +1848,14 @@ else
     --var "db_name_secret_arn=$DATABASE_NAME_SECRET_ARN" \
     --var "ecr_repo_aws_account=$ECR_REPO_AWS_ACCOUNT" \
     --var "image_version=$IMAGE_VERSION" \
+    --var "bfd_url=$BFD_URL" \
+    --var "bfd_keystore_location=$BFD_KEYSTORE_LOCATION" \
+    --var "bfd_keystore_password=$BFD_KEYSTORE_PASSWORD" \
+    --var "hicn_hash_pepper=$HICN_HASH_PEPPER" \
+    --var "hicn_hash_iter=$HICN_HASH_ITER" \
+    --var "bfd_keystore_file_name=$BFD_KEYSTORE_FILE_NAME" \
+    --var "new_relic_app_name=$NEW_RELIC_APP_NAME" \
+    --var "new_relic_license_key=$NEW_RELIC_LICENSE_KEY" \
     --target module.worker \
     --auto-approve
 

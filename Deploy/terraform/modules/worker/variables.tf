@@ -55,3 +55,16 @@ variable "image_version" {}
 variable "efs_id" {}
 variable "efs_security_group_id" {}
 variable "efs_dns_name" {}
+
+variable "bfd_url" {}
+variable "bfd_keystore_location" {}
+variable "bfd_keystore_password" {}
+
+variable "hicn_hash_pepper" {}
+variable "hicn_hash_iter" {}
+
+# Used in userdata.tpl
+variable "bfd_keystore_file_name" {}
+
+variable "new_relic_app_name" {}
+variable "new_relic_license_key" {}
