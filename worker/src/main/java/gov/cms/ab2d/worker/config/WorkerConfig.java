@@ -63,9 +63,7 @@ public class WorkerConfig {
     @Value("${job.queue.capacity}")
     private int jobQueueCapacity;
 
-    // Use @DependsOn to control the loading order so that properties are set before they are used
     @Bean
-    @DependsOn("propertiesInit")
     public Executor patientProcessorThreadPool() {
         final ThreadPoolTaskExecutor taskExecutor = new ThreadPoolTaskExecutor();
         taskExecutor.setCorePoolSize(pcpCorePoolSize);
