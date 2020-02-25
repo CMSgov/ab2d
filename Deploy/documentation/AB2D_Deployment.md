@@ -43,8 +43,6 @@
    * [Create a Jira ticket to connect job code to Splunk website](#create-a-jira-ticket-to-connect-job-code-to-splunk-website)
    * [Configure Splunk forwarder](#configure-splunk-forwarder)
 1. [Configure New Relic and Splunk within the deployment AMI](#configure-new-relic-and-splunk-within-the-deployment-ami)
-1. [Request an Entrust certificate for sandbox.ab2d.cms.gov](#request-an-entrust-certificate-for-sandboxab2dcmsgov)
-1. [Submit an "Internet DNS Change Request Form" to product owner for the sandbox application load balancer](#submit-an-internet-dns-change-request-form-to-product-owner-for-the-sandbox-application-load-balancer)
 1. [Create an ab2d vault in 1Password](#create-an-ab2d-vault-in-1password)
 1. [Add an entrust certificate to the ab2d vault in 1Password](#add-an-entrust-certificate-to-the-ab2d-vault-in-1password)
 1. [Add a private key to the ab2d vault in 1Password](#add-a-private-key-to-the-ab2d-vault-in-1password)
@@ -56,6 +54,7 @@
 1. [Download the sandbox domain certificates and get private key from CMS](#download-the-sandbox-domain-certificates-and-get-private-key-from-cms)
 1. [Import the sandbox domain certificate into certificate manager](#import-the-sandbox-domain-certificate-into-certificate-manager)
 1. [Map the application load balancer for sandbox certificate](#map-the-application-load-balancer-for-sandbox-certificate)
+1. [Submit an "Internet DNS Change Request Form" to product owner for the sandbox application load balancer](#submit-an-internet-dns-change-request-form-to-product-owner-for-the-sandbox-application-load-balancer)
 1. [Setup Jenkins server in management AWS account](#setup-jenkins-server-in-management-aws-account)
 1. [Deploy and configure Jenkins](#deploy-and-configure-jenkins)
 
@@ -2488,76 +2487,6 @@
 
 1. Save and close the file
 
-## Request an Entrust certificate for sandbox.ab2d.cms.gov
-
-> *** TO DO ***
-
-## Submit an "Internet DNS Change Request Form" to product owner for the sandbox application load balancer
-
-> *** TO DO ***
-
-1. Open Chrome
-
-1. Enter the following in the address bar
-
-   > https://confluence.cms.gov/pages/viewpage.action?pageId=138595233
-
-1. If the Confluence logon page appears, log on to Confluence
-
-1. Note that the "CNAME/DNS Change Requests" page should be displayed
-
-1. Select the **DNS change request form** link under the "Process" section
-
-1. Select the **Download** icon in the top right of the page
-
-1. Wait for the download to complete
-
-1. Open the downloaded form
-
-   ```
-   Internet DNS Change Request (2).pdf
-   ```
-
-1. Fill out the form as follows
-
-   *Requestor Information:*
-
-   - **Name:** {product owner first name} {product owner last name}
-
-   - **Organization:** {product owner organization}
-
-   - **Email:** {product owner email}
-
-   - **Phone:** {product owner phone}
-
-   *CMS Business Owner Information*
-
-   - **Name:** {business owner first name} {business owner last name}
-
-   - **Organization:** {business owner organization}
-
-   - **Email:** {business owner email}
-
-   - **Phone:** {business owner phone}
-
-   - **Reason:** To support data sharing with PDP sponsor.  This static webpage will provide information for the PDP sponsors.
-
-   *DNS Change Information*
-
-   - **DNS Zone:** cms.gov
-
-   - **Type of change:** CNAME
-
-   - **Actual Change:** ab2d.cms.gov CNAME {unique id}.cloudfront.net
-
-   - **Change Date & Time:** ASAP
-
-   - **Purpose of the change:** Initial launch of new informational page for AB2D API
-
-1. Submit the completed for to the product owner
-
-1. Note that the product owner will complete the process
-
 ## Create an ab2d vault in 1Password
 
 1. Open Chrome
@@ -4015,6 +3944,70 @@
 1. Select **Save**
 
 1. Select **aws** in the top left of the page
+
+## Submit an "Internet DNS Change Request Form" to product owner for the sandbox application load balancer
+
+1. Open Chrome
+
+1. Enter the following in the address bar
+
+   > https://confluence.cms.gov/pages/viewpage.action?pageId=138595233
+
+1. If the Confluence logon page appears, log on to Confluence
+
+1. Note that the "CNAME/DNS Change Requests" page should be displayed
+
+1. Select the **DNS change request form** link under the "Process" section
+
+1. Select the **Download** icon in the top right of the page
+
+1. Wait for the download to complete
+
+1. Open the downloaded form
+
+   ```
+   Internet DNS Change Request (2).pdf
+   ```
+
+1. Fill out the form as follows
+
+   *Requestor Information:*
+
+   - **Name:** {product owner first name} {product owner last name}
+
+   - **Organization:** {product owner organization}
+
+   - **Email:** {product owner email}
+
+   - **Phone:** {product owner phone}
+
+   *CMS Business Owner Information*
+
+   - **Name:** {business owner first name} {business owner last name}
+
+   - **Organization:** {business owner organization}
+
+   - **Email:** {business owner email}
+
+   - **Phone:** {business owner phone}
+
+   - **Reason:** To support developers that will be integrating with the AB2D API
+
+   *DNS Change Information*
+
+   - **DNS Zone:** cms.gov
+
+   - **Type of change:** CNAME
+
+   - **Actual Change:** sandbox.ab2d.cms.gov CNAME ab2d-sbx-sandbox-{unique id}.us-east-1.elb.amazonaws.com
+
+   - **Change Date & Time:** ASAP
+
+   - **Purpose of the change:** Initial launch of sandbox
+
+1. Submit the completed for to the product owner
+
+1. Note that the product owner will complete the process
 
 ## Setup Jenkins server in management AWS account
 
