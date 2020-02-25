@@ -11,6 +11,7 @@
 
 1. [Configure local repo with "git-secrets" protection](#configure-local-repo-with-git-secrets-protection)
 1. [Configure New Relic](#configure-new-relic)
+1. [Configure AWS CLI](#configure-aws-cli)
 1. [Running in Docker](#running-in-docker)
 1. [Deploying the solution](#deploying-the-solution)
 
@@ -19,10 +20,10 @@
 *This must be done each time you clone a new copy of the repo*
 
 1. Install git-secrets (on MacOS with brew simply run: `brew install git-secrets`)
+
     - See the README.md for "git-secrets" for more info or to install on other platforms:
 
        > https://github.com/awslabs/git-secrets
-
 
 1. Change to the repo directory
 
@@ -62,7 +63,7 @@
 
 1. If you do not have a New Relic account, jump to the following section:
 
-   [Running in Docker](#running-in-docker)
+   [Configure AWS CLI](#configure-aws-cli)
 
 1. Configure New Relic environment variables
 
@@ -109,6 +110,162 @@
       ```ShellSession
       $ source ~/.bash_profile
       ```
+
+## Configure AWS CLI
+
+1. Note that before proceeding, you will need to have a user with AWS programming credentials that has at least the following permissions
+
+   ```
+   {
+       "Effect": "Allow",
+       "Action": [
+           "s3:Get*",
+           "s3:List*"
+       ],
+       "Resource": "*"
+   } 
+   ```
+
+1. Determine if you already have the AWS CLI installed
+
+   ```ShellSession
+   $ aws --version
+   ```
+
+1. If you already have the AWS CLI installed, ensure that you have one of the following options in place:
+
+   *Option #1: Verify that you have a "[default]" entry in the following file for your AWS credentials:*
+
+   ```ShellSession
+   $ cat ~/.aws/credentials
+   ```
+
+   *Option #2: Ensure that you have the following environment variables set:*
+
+   - AWS_ACCESS_KEY_ID
+
+   - AWS_SECRET_ACCESS_KEY
+
+   - AWS_REGION
+
+1. If you already have the AWS CLI installed and configured, jump to the following section:
+
+   [Running in Docker](#running-in-docker)
+
+1. Determine if you have python3 installed
+
+   ```ShellSession
+   $ python3 --version
+   ```
+
+1. If you don't have python3 installed, do the following:
+
+   1. Ensure that you have ownership of homebrew
+   
+      ```ShellSession
+      $ sudo chown -R $(whoami) \
+        /usr/local/var/homebrew \
+        /usr/local/homebrew
+      ```
+   
+   1. Ensure that you have ownership of dependent directories
+   
+      ```ShellSession
+      $ sudo chown -R $(whoami) \
+        /usr/local/etc/bash_completion.d \
+        /usr/local/lib/pkgconfig \
+        /usr/local/share/aclocal \
+        /usr/local/share/doc \
+        /usr/local/share/man \
+        /usr/local/share/man/man1 \
+        /usr/local/share/man/man8 \
+        /usr/local/share/zsh \
+        /usr/local/share/zsh/site-functions
+      ```
+
+   1. If python3 is not installed, do the following:
+
+      ```ShellSession
+      $ brew install python3
+      ```
+
+   1. Upgrade pip3
+
+      *Ignore any incompatible warnings.*
+   
+      ```ShellSession
+      $ pip3 install --upgrade pip
+      ```
+
+1. Install the AWS CLI
+
+   ```ShellSession
+   $ pip3 install awscli --upgrade --user --no-warn-script-location
+   ```
+
+1. Set up your shell environment script with the path to the AWS CLI
+
+   1. Back up your current shell environment script
+   
+      *Example for bash:*
+
+      ```ShellSession
+      $ cp ~/.bash_profile ~/.bash_profile_backup
+      ```
+      
+   1. Add a comment heading for setting the AWS CLI path
+      
+      ```ShellSession
+      $ printf '\n# Add AWS CLI to Path' >> ~/.bash_profile
+      ```
+
+   1. Add the AWS CLI path
+
+      ```ShellSession
+      $ printf '\nexport PATH="$PATH:$HOME/Library/Python/3.7/bin"' >> ~/.bash_profile
+      ```
+
+   1. Apply the changes to the current terminal session
+
+      *Example for bash:*
+      
+      ```ShellSession
+      $ source ~/.bash_profile
+      ```
+
+   1. Verify that AWS CLI is working by verifying its version
+   
+      ```ShellSession
+      $ aws --version
+      ```
+
+1. Configure your default AWS CLI profile
+
+   ```ShellSession
+   $ aws configure
+   ```
+
+1. Enter {your aws access key} at the **AWS Access Key ID** prompt
+
+1. Enter {your aws secret access key} at the AWS Secret Access Key prompt
+
+1. Enter the following at the **Default region name** prompt
+
+   ```
+   us-east-1
+   ```
+
+1. Enter the following at the **Default output format** prompt
+
+   ```
+   json
+   ```
+
+1. Examine the contents of your AWS credentials file
+
+   ```ShellSession
+   $ cat ~/.aws/credentials
+   ```
 
 ## Running in Docker
 
