@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface CoverageRepository extends JpaRepository<Coverage, Long> {
@@ -19,6 +20,6 @@ public interface CoverageRepository extends JpaRepository<Coverage, Long> {
             "   AND c.partDMonth = :month ")
     List<String> findActivePatientIds(Long contractId, int month);
 
-    List<Coverage> findByContractAndBeneficiaryAndPartDMonth(Contract contract, Beneficiary bene, int month);
+    Optional<Coverage> findByContractAndBeneficiaryAndPartDMonth(Contract contract, Beneficiary bene, int month);
 
 }

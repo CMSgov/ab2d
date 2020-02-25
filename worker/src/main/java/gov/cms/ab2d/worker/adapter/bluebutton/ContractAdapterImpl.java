@@ -14,7 +14,6 @@ import org.hl7.fhir.dstu3.model.Bundle;
 import org.hl7.fhir.dstu3.model.Identifier;
 import org.hl7.fhir.dstu3.model.Patient;
 import org.hl7.fhir.dstu3.model.ResourceType;
-import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
 
 import java.text.ParseException;
@@ -27,7 +26,7 @@ import java.util.stream.Collectors;
 
 
 @Slf4j
-@Primary // - once the BFD API starts returning data, change this to primary bean so spring injects this instead of the stub.
+//@Primary // - once the BFD API starts returning data, change this to primary bean so spring injects this instead of the stub.
 @Component
 @RequiredArgsConstructor
 public class ContractAdapterImpl implements ContractAdapter {

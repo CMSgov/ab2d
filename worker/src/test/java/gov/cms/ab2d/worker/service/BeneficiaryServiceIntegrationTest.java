@@ -4,14 +4,11 @@ import gov.cms.ab2d.common.model.Beneficiary;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.Coverage;
 import gov.cms.ab2d.common.model.Sponsor;
-import gov.cms.ab2d.common.model.User;
 import gov.cms.ab2d.common.repository.BeneficiaryRepository;
 import gov.cms.ab2d.common.repository.ContractRepository;
 import gov.cms.ab2d.common.repository.CoverageRepository;
 import gov.cms.ab2d.common.repository.SponsorRepository;
-import gov.cms.ab2d.common.repository.UserRepository;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
-import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,18 +20,15 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Random;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static java.lang.Boolean.TRUE;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-@Slf4j
 @SpringBootTest
 @Testcontainers
 class BeneficiaryServiceIntegrationTest {
@@ -102,17 +96,7 @@ class BeneficiaryServiceIntegrationTest {
     void storeBeneficiaries_WhenTheBenesAlreadyExist() {
 
         cut.storeBeneficiaries(contract.getId(), patientIds, 1);
-
-        beneficiaries.stream().forEach( beneficiary -> {
-            final List<Coverage> coveragesSaved = coverageRepo.findByContractAndBeneficiaryAndPartDMonth(contract, beneficiary, 1);
-            assertThat(coveragesSaved.size(), is(1));
-
-            final Coverage coverageSaved = coveragesSaved.get(0);
-            assertThat(coverageSaved.getBeneficiary().getPatientId(), is(beneficiary.getPatientId()));
-            assertThat(coverageSaved.getContract().getContractNumber(), is(contract.getContractNumber()));
-            assertThat(coverageSaved.getContract().getContractName(), is(contract.getContractName()));
-            assertThat(coverageSaved.getPartDMonth(), is(1));
-        });
+        verifyStoredBenes();
     }
 
     @Test
@@ -120,16 +104,17 @@ class BeneficiaryServiceIntegrationTest {
 
         patientIds.add(Instant.now().toString() + random.nextInt(100));
         cut.storeBeneficiaries(contract.getId(), patientIds, 1);
+        verifyStoredBenes();
+    }
 
-        beneficiaries.stream().forEach( beneficiary -> {
-            final List<Coverage> coveragesSaved = coverageRepo.findByContractAndBeneficiaryAndPartDMonth(contract, beneficiary, 1);
-            assertThat(coveragesSaved.size(), is(1));
+    private void verifyStoredBenes() {
+        beneficiaries.stream().forEach(beneficiary -> {
+            var coverage = coverageRepo.findByContractAndBeneficiaryAndPartDMonth(contract, beneficiary, 1).get();
 
-            final Coverage coverageSaved = coveragesSaved.get(0);
-            assertThat(coverageSaved.getBeneficiary().getPatientId(), is(beneficiary.getPatientId()));
-            assertThat(coverageSaved.getContract().getContractNumber(), is(contract.getContractNumber()));
-            assertThat(coverageSaved.getContract().getContractName(), is(contract.getContractName()));
-            assertThat(coverageSaved.getPartDMonth(), is(1));
+            assertThat(coverage.getBeneficiary().getPatientId(), is(beneficiary.getPatientId()));
+            assertThat(coverage.getContract().getContractNumber(), is(contract.getContractNumber()));
+            assertThat(coverage.getContract().getContractName(), is(contract.getContractName()));
+            assertThat(coverage.getPartDMonth(), is(1));
         });
     }
 

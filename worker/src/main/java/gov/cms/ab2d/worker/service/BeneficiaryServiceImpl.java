@@ -13,7 +13,6 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashSet;
-import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -29,7 +28,7 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
 
     /**
      * Given a contractId and a month,
-     * search for bene information in the local db first.
+     * search for bene information in the local db
      *
      * @param contractId
      * @param month
@@ -37,7 +36,7 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
      */
     @Override
     public Set<String> findPatientIdsInDb(Long contractId, int month) {
-        final List<String> patientIds = coverageRepo.findActivePatientIds(contractId, month);
+        var patientIds = coverageRepo.findActivePatientIds(contractId, month);
         return new HashSet<>(patientIds);
     }
 
