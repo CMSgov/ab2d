@@ -301,8 +301,8 @@ class ContractAdapterTest {
 
 
     @Test
-    @DisplayName("given patient count > cachingThreshold, should store beneficiary data")
-    void GivenPatientCountGreaterThanCachingThreshold_ShouldStoreBeneficiaryData() {
+    @DisplayName("given patient count > cachingThreshold, should cache beneficiary data")
+    void GivenPatientCountGreaterThanCachingThreshold_ShouldCacheBeneficiaryData() {
         var entries = bundle.getEntry();
         entries.add(createBundleEntry("ccw_patient_001"));
         entries.add(createBundleEntry("ccw_patient_002"));
@@ -315,6 +315,23 @@ class ContractAdapterTest {
 
         verify(client).requestPartDEnrolleesFromServer(anyString(), anyInt());
         verify(beneficiaryService).storeBeneficiaries(anyLong(), anySet(), anyInt());
+    }
+
+    @Test
+    @DisplayName("given patient count < cachingThreshold, should not cache beneficiary data")
+    void GivenPatientCountLessThanCachingThreshold_ShouldNotCacheBeneficiaryData() {
+        var entries = bundle.getEntry();
+        entries.add(createBundleEntry("ccw_patient_001"));
+        entries.add(createBundleEntry("ccw_patient_002"));
+        entries.add(createBundleEntry("ccw_patient_003"));
+        entries.add(createBundleEntry("ccw_patient_004"));
+        entries.add(createBundleEntry("ccw_patient_005"));
+
+        ReflectionTestUtils.setField(cut, "cachingThreshold", 10);
+        cut.getPatients(contractNumber, Month.JANUARY.getValue());
+
+        verify(client).requestPartDEnrolleesFromServer(anyString(), anyInt());
+        verify(beneficiaryService, never()).storeBeneficiaries(anyLong(), anySet(), anyInt());
     }
 
 
