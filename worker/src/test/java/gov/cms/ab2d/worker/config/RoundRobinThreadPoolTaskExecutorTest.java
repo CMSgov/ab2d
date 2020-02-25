@@ -18,6 +18,7 @@ import org.springframework.util.concurrent.ListenableFuture;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class RoundRobinThreadPoolTaskExecutorTest {
     static final String THREAD_NAME_PREFIX = "test-";
@@ -44,6 +45,18 @@ class RoundRobinThreadPoolTaskExecutorTest {
         if (executor instanceof DisposableBean) {
             ((DisposableBean) executor).destroy();
         }
+    }
+
+    @Test
+    public void testGettersSetters() {
+        assertEquals(1, executor.getMaxPoolSize());
+        assertEquals(0, executor.getActiveCount());
+        executor.setCorePoolSize(1);
+        assertEquals(1, executor.getCorePoolSize());
+        executor.setKeepAliveSeconds(10);
+        assertEquals(10, executor.getKeepAliveSeconds());
+        executor.setQueueCapacity(2);
+        assertEquals(0, executor.getPoolSize());
     }
 
     @Test

@@ -42,16 +42,6 @@ public class RoundRobinThreadPoolTaskExecutor extends ThreadPoolTaskExecutor {
         }
     }
 
-    public void execute(String category, Runnable task) {
-        RoundRobinThreadPoolExecutor executor = (RoundRobinThreadPoolExecutor) this.getThreadPoolExecutor();
-
-        try {
-            executor.execute(task, category);
-        } catch (RejectedExecutionException var4) {
-            throw new TaskRejectedException("Executor [" + executor + "] did not accept task: " + task, var4);
-        }
-    }
-
     public int getMaxPoolSize() {
         synchronized (this.poolSizeMonitor) {
             return this.maxPoolSize;
@@ -123,15 +113,5 @@ public class RoundRobinThreadPoolTaskExecutor extends ThreadPoolTaskExecutor {
 
     public int getActiveCount() {
         return this.threadPoolExecutor == null ? 0 : this.threadPoolExecutor.getActiveCount();
-    }
-
-    public void execute(Runnable task) {
-        ThreadPoolExecutor executor = this.getThreadPoolExecutor();
-
-        try {
-            executor.execute(task);
-        } catch (RejectedExecutionException var4) {
-            throw new TaskRejectedException("Executor [" + executor + "] did not accept task: " + task, var4);
-        }
     }
 }
