@@ -7,8 +7,9 @@ import ca.uhn.fhir.rest.server.exceptions.InvalidRequestException;
 import ca.uhn.fhir.rest.server.exceptions.ResourceNotFoundException;
 import com.newrelic.api.agent.Trace;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.codec.DecoderException;
+import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.lang3.StringUtils;
-import org.bouncycastle.util.encoders.Hex;
 import org.hl7.fhir.dstu3.model.Bundle;
 import org.hl7.fhir.dstu3.model.ExplanationOfBenefit;
 import org.hl7.fhir.dstu3.model.Patient;
@@ -134,12 +135,12 @@ public class BFDClientImpl implements BFDClient {
      * @return the hashed value
      */
     private static String hashHICN(String hicn, String pepper, int iterations) {
-        KeySpec keySpec = new PBEKeySpec(hicn.toCharArray(), Hex.decode(pepper), iterations, 256);
         try {
+            KeySpec keySpec = new PBEKeySpec(hicn.toCharArray(), Hex.decodeHex(pepper), iterations, 256);
             SecretKeyFactory skf = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
             SecretKey secretKey = skf.generateSecret(keySpec);
-            return Hex.toHexString(secretKey.getEncoded());
-        } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
+            return Hex.encodeHexString(secretKey.getEncoded());
+        } catch (DecoderException | NoSuchAlgorithmException | InvalidKeySpecException e) {
             throw new ResourceNotFoundException("Could not hash HICN");
         }
     }
