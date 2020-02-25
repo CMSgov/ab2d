@@ -5,6 +5,7 @@ import ca.uhn.fhir.rest.gclient.ICriterion;
 import ca.uhn.fhir.rest.gclient.TokenClientParam;
 import ca.uhn.fhir.rest.server.exceptions.InvalidRequestException;
 import ca.uhn.fhir.rest.server.exceptions.ResourceNotFoundException;
+import com.newrelic.api.agent.Trace;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.bouncycastle.util.encoders.Hex;
@@ -87,6 +88,7 @@ public class BFDClientImpl implements BFDClient {
             exclude = { ResourceNotFoundException.class }
     )
     public Bundle requestEOBFromServer(String patientID) {
+        log.info("****************Requesting EOB");
         var excludeSAMHSA = new TokenClientParam("excludeSAMHSA").exactly().code("true");
         return client.search()
                 .forResource(ExplanationOfBenefit.class)

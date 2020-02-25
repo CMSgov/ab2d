@@ -1,5 +1,8 @@
 package gov.cms.ab2d.worker.processor;
 
+import com.newrelic.api.agent.NewRelic;
+import com.newrelic.api.agent.Segment;
+import com.newrelic.api.agent.Token;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.JobOutput;
@@ -362,7 +365,12 @@ public class JobProcessorImpl implements JobProcessor {
                 }
 
                 // Add the thread to process the patient and start the thread
-                futureHandles.add(patientClaimsProcessor.process(patient, helper, contract.getAttestedOn()));
+                //final Segment segment = NewRelic.getAgent().getTransaction().startSegment("Patient Processing");
+                final Token token = NewRelic.getAgent().getTransaction().getToken();
+
+                futureHandles.add(patientClaimsProcessor.process(patient, helper, contract.getAttestedOn(), token));
+
+                token.expire();
 
                 // Periodically check if cancelled
                 if (recordsProcessedCount % cancellationCheckFrequency == 0) {
