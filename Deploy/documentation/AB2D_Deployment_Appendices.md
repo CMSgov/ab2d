@@ -2838,7 +2838,7 @@
    *Example for Sbx environment:*
 
    ```ShellSession
-   $ ssh -i ~/.ssh/ab2d-sbx-sandbox.pem ec2-user@10.242.31.244 \
+   $ ssh -i ~/.ssh/ab2d-sbx-sandbox.pem ec2-user@10.242.31.184 \
      -o ProxyCommand="ssh -W %h:%p ec2-user@10.242.36.49"
    ```
 
