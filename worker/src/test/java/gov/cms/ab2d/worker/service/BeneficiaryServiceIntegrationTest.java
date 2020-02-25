@@ -3,130 +3,143 @@ package gov.cms.ab2d.worker.service;
 import gov.cms.ab2d.common.model.Beneficiary;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.Coverage;
+import gov.cms.ab2d.common.model.Sponsor;
+import gov.cms.ab2d.common.model.User;
 import gov.cms.ab2d.common.repository.BeneficiaryRepository;
 import gov.cms.ab2d.common.repository.ContractRepository;
 import gov.cms.ab2d.common.repository.CoverageRepository;
+import gov.cms.ab2d.common.repository.SponsorRepository;
+import gov.cms.ab2d.common.repository.UserRepository;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.transaction.annotation.Transactional;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-import javax.validation.constraints.NotNull;
+import java.time.Instant;
 import java.time.OffsetDateTime;
+import java.util.HashSet;
 import java.util.List;
-import java.util.Optional;
+import java.util.Random;
 import java.util.Set;
+import java.util.stream.Collectors;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static java.lang.Boolean.TRUE;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 @Slf4j
 @SpringBootTest
 @Testcontainers
 class BeneficiaryServiceIntegrationTest {
-
     @Container
     private static final PostgreSQLContainer postgreSQLContainer= new AB2DPostgresqlContainer();
 
     @Autowired BeneficiaryService cut;
+
     @Autowired BeneficiaryRepository beneRepo;
     @Autowired ContractRepository contractRepo;
     @Autowired CoverageRepository coverageRepo;
+    @Autowired SponsorRepository sponsorRepo;
+    @Autowired UserRepository userRepo;
 
-//    @BeforeEach
-//    void setUp() {
-//    }
+    private Random random = new Random();
+    private Contract contract;
+    private Set<Beneficiary> beneficiaries = new HashSet<>();
+    private Set<String> patientIds;
 
-//    @AfterEach
-//    void tearDown() {
-//    }
+    @BeforeEach
+    void setUp() {
+        userRepo.deleteAll();
+        coverageRepo.deleteAll();
+        sponsorRepo.deleteAll();
+        contractRepo.deleteAll();
+        beneRepo.deleteAll();
+
+        var sponsor = createSponsor();
+        createUser(sponsor);
+        contract = createContract(sponsor);
+
+        beneficiaries.add( createBeneficiary());
+        beneficiaries.add( createBeneficiary());
+        beneficiaries.add( createBeneficiary());
+        beneficiaries.add( createBeneficiary());
+
+        patientIds = beneficiaries.stream()
+                .map(b -> b.getPatientId())
+                .collect(Collectors.toSet());
+    }
+
 
     @Test
     void findPatientIdsInDb() {
+
+        // Given
+        beneficiaries.forEach(beneficiary -> {
+            final Coverage coverage = createCoverage(contract, beneficiary, 1);
+
+            contract.getCoverages().add(coverage);
+            contractRepo.save(contract);
+
+            beneficiary.getCoverages().add(coverage);
+            beneRepo.save(beneficiary);
+        });
+
+        final Set<String> patientIdsInDb = cut.findPatientIdsInDb(contract.getId(), 1);
+
+        //Then
+        assertFalse(patientIdsInDb.isEmpty());
+        assertThat(patientIdsInDb.size(), is(4));
+        for (String patientId: patientIdsInDb) {
+            assertTrue(beneficiaries.stream().anyMatch(b -> b.getPatientId().equals(patientId)));
+        }
+
     }
 
     @Test
-    @Transactional
-    void storeBeneficiaries() {
+    void storeBeneficiaries_WhenTheBenesAlreadyExist() {
 
-//        final Optional<Contract> s0000 = contracts.stream().filter(c -> c.getContractNumber().equalsIgnoreCase("S0000")).findAny();
-//        final Contract contractS0000 = s0000.get();
+        cut.storeBeneficiaries(contract.getId(), patientIds, 1);
 
-//        contracts.forEach(c -> {
-//            log.info("Contract:: id:[{}]-number:[{}]-name:[{}]-attestedOn:[{}]",
-//                    c.getId(), c.getContractNumber(), c.getContractName(), c.getAttestedOn());
-//            Contract contract = c;
-//            Beneficiary beneficiary = new Beneficiary();
-//            beneficiary.setPatientId("patientId");
-//            contract.addBeneficiary(beneficiary);
-//            contractRepo.save(contract);
-//        });
+        beneficiaries.stream().forEach( beneficiary -> {
+            final List<Coverage> coveragesSaved = coverageRepo.findByContractAndBeneficiaryAndPartDMonth(contract, beneficiary, 1);
+            assertThat(coveragesSaved.size(), is(1));
 
-        final Contract contractS0000 = new Contract();
-        contractS0000.setContractNumber("S0000");
-        contractS0000.setContractName("S0000");
-        contractS0000.setAttestedOn(OffsetDateTime.now().minusDays(2));
-            log.info("Contract:: id:[{}] - number:[{}] - name:[{}] - attestedOn:[{}]",
-                    contractS0000.getId(),
-                    contractS0000.getContractNumber(),
-                    contractS0000.getContractName(),
-                    contractS0000.getAttestedOn());
+            final Coverage coverageSaved = coveragesSaved.get(0);
+            assertThat(coverageSaved.getBeneficiary().getPatientId(), is(beneficiary.getPatientId()));
+            assertThat(coverageSaved.getContract().getContractNumber(), is(contract.getContractNumber()));
+            assertThat(coverageSaved.getContract().getContractName(), is(contract.getContractName()));
+            assertThat(coverageSaved.getPartDMonth(), is(1));
+        });
+    }
 
-            Contract contract = contractS0000;
-        final Beneficiary beneficiary = createBeneficiary();
-        if (beneficiary == null) {
-            log.info("Beneficiary is NULL");
-        }
+    @Test
+    void storeBeneficiaries_WhenThereAreAFewNewBenes() {
 
-        final Coverage coverage = createCoverage(contract, beneficiary, 1);
-        //TODO: Need to come up with an alternative for this.
-//        contract.addBeneficiary(beneficiary);
-        final Contract savedContract = contractRepo.save(contract);
+        patientIds.add(Instant.now().toString() + random.nextInt(100));
+        cut.storeBeneficiaries(contract.getId(), patientIds, 1);
 
+        beneficiaries.stream().forEach( beneficiary -> {
+            final List<Coverage> coveragesSaved = coverageRepo.findByContractAndBeneficiaryAndPartDMonth(contract, beneficiary, 1);
+            assertThat(coveragesSaved.size(), is(1));
 
-//        final Optional<Contract> optContract = contractRepo.findContractByContractNumber(contractS0000.getContractNumber());
-//        final Contract contract2 = optContract.get();
-//        contract2.getCoverages().stream().map(cov -> {
-//        contract2.getCoverages().forEach(cov -> {
-
-        final Set<Coverage> coverages = savedContract.getCoverages();
-        if (coverages == null) {
-            log.info("Coverages is NULL ... ");
-        } else if (coverages.isEmpty()) {
-            log.info("Coverages is empty() ... ");
-        } else {
-            final int coverageSize = coverages.size();
-            log.info("There are [{}] coverages for contract [{}]", coverages.size(), savedContract);
-            coverages.forEach(cov -> {
-                final Beneficiary beneficiary1 = cov.getBeneficiary();
-                if (beneficiary1 == null) {
-                    log.info("beneficiary1 is NULL");
-                } else {
-                    final Long id = beneficiary1.getId();
-                    if (id == null) {
-                        log.info("id is NULL");
-                    }
-                    final String patientId = beneficiary1.getPatientId();
-                    if (patientId == null) {
-                        log.info("patientId is NULL");
-                    }
-                    log.info(" Beneficiary :: id:[{}] -  patientId:[{}]", id, patientId);
-                }
-            });
-        }
-//        cut.storeBeneficiaries();
-
+            final Coverage coverageSaved = coveragesSaved.get(0);
+            assertThat(coverageSaved.getBeneficiary().getPatientId(), is(beneficiary.getPatientId()));
+            assertThat(coverageSaved.getContract().getContractNumber(), is(contract.getContractNumber()));
+            assertThat(coverageSaved.getContract().getContractName(), is(contract.getContractName()));
+            assertThat(coverageSaved.getPartDMonth(), is(1));
+        });
     }
 
     private Beneficiary createBeneficiary() {
         Beneficiary beneficiary = new Beneficiary();
-        beneficiary.setPatientId("patientId");
+        beneficiary.setPatientId("patientId" + Instant.now() + random.nextInt(100));
         return beneRepo.save(beneficiary);
     }
 
@@ -137,4 +150,59 @@ class BeneficiaryServiceIntegrationTest {
         coverage.setPartDMonth(partDMonth);
         return coverageRepo.save(coverage);
     }
+
+
+
+
+
+    private Sponsor createSponsor() {
+        Sponsor parent = new Sponsor();
+        parent.setOrgName("Parent");
+        parent.setLegalName("Parent");
+        parent.setHpmsId(350);
+
+        Sponsor sponsor = new Sponsor();
+        sponsor.setOrgName("Hogwarts School of Wizardry");
+        sponsor.setLegalName("Hogwarts School of Wizardry LLC");
+        final Random random = new Random();
+        sponsor.setHpmsId(random.nextInt());
+        sponsor.setParent(parent);
+        parent.getChildren().add(sponsor);
+        return sponsorRepo.save(sponsor);
+    }
+
+    private User createUser(Sponsor sponsor) {
+        User user = new User();
+        user.setUsername("Harry_Potter");
+        user.setFirstName("Harry");
+        user.setLastName("Potter");
+        user.setEmail("harry_potter@hogwarts.edu");
+        user.setEnabled(TRUE);
+        user.setSponsor(sponsor);
+        return userRepo.save(user);
+    }
+
+    private Contract createContract(Sponsor sponsor) {
+        Contract contract = new Contract();
+        contract.setContractName("CONTRACT_0000");
+        contract.setContractNumber("CONTRACT_0000");
+        contract.setAttestedOn(OffsetDateTime.now().minusDays(10));
+        contract.setSponsor(sponsor);
+
+        sponsor.getContracts().add(contract);
+        return contractRepo.save(contract);
+    }
+
+//    private Job createJob(User user) {
+//        Job job = new Job();
+//        job.setJobUuid("S0000");
+//        job.setStatus(JobStatus.SUBMITTED);
+//        job.setStatusMessage("0%");
+//        job.setUser(user);
+//        job.setOutputFormat(NDJSON_FIRE_CONTENT_TYPE);
+//        job.setCreatedAt(OffsetDateTime.now());
+//        return jobRepository.save(job);
+//    }
+
+
 }

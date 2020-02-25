@@ -1,5 +1,7 @@
 package gov.cms.ab2d.common.repository;
 
+import gov.cms.ab2d.common.model.Beneficiary;
+import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.Coverage;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -16,4 +18,7 @@ public interface CoverageRepository extends JpaRepository<Coverage, Long> {
             " WHERE c.contract.id = :contractId " +
             "   AND c.partDMonth = :month ")
     List<String> findActivePatientIds(Long contractId, int month);
+
+    List<Coverage> findByContractAndBeneficiaryAndPartDMonth(Contract contract, Beneficiary bene, int month);
+
 }
