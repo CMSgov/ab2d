@@ -47,7 +47,6 @@ class BeneficiaryServiceIntegrationTest {
     @Autowired ContractRepository contractRepo;
     @Autowired CoverageRepository coverageRepo;
     @Autowired SponsorRepository sponsorRepo;
-    @Autowired UserRepository userRepo;
 
     private Random random = new Random();
     private Contract contract;
@@ -56,14 +55,11 @@ class BeneficiaryServiceIntegrationTest {
 
     @BeforeEach
     void setUp() {
-        userRepo.deleteAll();
         coverageRepo.deleteAll();
-        sponsorRepo.deleteAll();
         contractRepo.deleteAll();
         beneRepo.deleteAll();
 
         var sponsor = createSponsor();
-        createUser(sponsor);
         contract = createContract(sponsor);
 
         beneficiaries.add( createBeneficiary());
@@ -152,9 +148,6 @@ class BeneficiaryServiceIntegrationTest {
     }
 
 
-
-
-
     private Sponsor createSponsor() {
         Sponsor parent = new Sponsor();
         parent.setOrgName("Parent");
@@ -171,38 +164,18 @@ class BeneficiaryServiceIntegrationTest {
         return sponsorRepo.save(sponsor);
     }
 
-    private User createUser(Sponsor sponsor) {
-        User user = new User();
-        user.setUsername("Harry_Potter");
-        user.setFirstName("Harry");
-        user.setLastName("Potter");
-        user.setEmail("harry_potter@hogwarts.edu");
-        user.setEnabled(TRUE);
-        user.setSponsor(sponsor);
-        return userRepo.save(user);
-    }
 
     private Contract createContract(Sponsor sponsor) {
         Contract contract = new Contract();
-        contract.setContractName("CONTRACT_0000");
-        contract.setContractNumber("CONTRACT_0000");
+        final Instant thisInstant = Instant.now();
+        contract.setContractName("CONTRACT_" + thisInstant + "0000");
+        contract.setContractNumber("CONTRACT_" + thisInstant + "0000");
         contract.setAttestedOn(OffsetDateTime.now().minusDays(10));
         contract.setSponsor(sponsor);
 
         sponsor.getContracts().add(contract);
         return contractRepo.save(contract);
     }
-
-//    private Job createJob(User user) {
-//        Job job = new Job();
-//        job.setJobUuid("S0000");
-//        job.setStatus(JobStatus.SUBMITTED);
-//        job.setStatusMessage("0%");
-//        job.setUser(user);
-//        job.setOutputFormat(NDJSON_FIRE_CONTENT_TYPE);
-//        job.setCreatedAt(OffsetDateTime.now());
-//        return jobRepository.save(job);
-//    }
 
 
 }
