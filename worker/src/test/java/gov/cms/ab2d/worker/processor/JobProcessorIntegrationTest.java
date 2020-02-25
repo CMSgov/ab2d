@@ -16,6 +16,7 @@ import gov.cms.ab2d.common.repository.SponsorRepository;
 import gov.cms.ab2d.common.repository.UserRepository;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.worker.adapter.bluebutton.ContractAdapter;
+import gov.cms.ab2d.worker.config.WorkerConfig;
 import gov.cms.ab2d.worker.service.FileService;
 import org.hl7.fhir.dstu3.model.Bundle;
 import org.hl7.fhir.dstu3.model.ExplanationOfBenefit;
@@ -73,6 +74,8 @@ class JobProcessorIntegrationTest {
     private ContractAdapter contractAdapterStub;
     @Autowired
     private OptOutRepository optOutRepository;
+    @Autowired
+    private WorkerConfig workerConfig;
 
     @Mock
     private BFDClient mockBfdClient;
@@ -112,7 +115,7 @@ class JobProcessorIntegrationTest {
         fail = new RuntimeException("TEST EXCEPTION");
 
         FhirContext fhirContext = FhirContext.forDstu3();
-        PatientClaimsProcessor patientClaimsProcessor = new PatientClaimsProcessorImpl(mockBfdClient, fhirContext);
+        PatientClaimsProcessor patientClaimsProcessor = new PatientClaimsProcessorImpl(mockBfdClient, fhirContext, workerConfig);
 
         cut = new JobProcessorImpl(fileService, jobRepository, jobOutputRepository, contractAdapterStub, patientClaimsProcessor,
                 optOutRepository);

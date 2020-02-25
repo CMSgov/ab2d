@@ -5,6 +5,8 @@ import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.filter.FilterOutByDate;
 import gov.cms.ab2d.worker.adapter.bluebutton.GetPatientsByContractResponse;
+import gov.cms.ab2d.worker.config.RoundRobinThreadPoolTaskExecutor;
+import gov.cms.ab2d.worker.config.WorkerConfig;
 import lombok.extern.slf4j.Slf4j;
 import org.hl7.fhir.dstu3.model.Bundle;
 import org.hl7.fhir.dstu3.model.ExplanationOfBenefit;
@@ -14,6 +16,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 import java.io.File;
 import java.io.IOException;
@@ -41,6 +44,8 @@ public class PatientClaimsProcessorUnitTest {
     private PatientClaimsProcessor cut;
 
     @Mock private BFDClient mockBfdClient;
+    @Mock private WorkerConfig workerConfig;
+    final ThreadPoolTaskExecutor taskExecutor = new RoundRobinThreadPoolTaskExecutor();
 
     @TempDir
     File tmpEfsMountDir;
@@ -59,9 +64,11 @@ public class PatientClaimsProcessorUnitTest {
         FhirContext fhirContext = ca.uhn.fhir.context.FhirContext.forDstu3();
         cut = new PatientClaimsProcessorImpl(
                 mockBfdClient,
-                fhirContext
+                fhirContext,
+                workerConfig
         );
-
+        taskExecutor.initialize();
+        when(workerConfig.patientProcessorThreadPool()).thenReturn(taskExecutor);
         eob = EobTestDataUtil.createEOB();
         createOutputFiles();
         patientDTO = new GetPatientsByContractResponse.PatientDTO();

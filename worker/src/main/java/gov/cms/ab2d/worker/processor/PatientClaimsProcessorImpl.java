@@ -48,10 +48,9 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
     public Future<Void> process(String contractId, PatientDTO patientDTO, final StreamHelper helper, OffsetDateTime attTime) {
         RoundRobinThreadPoolTaskExecutor taskExecutor = (RoundRobinThreadPoolTaskExecutor) workerConfig.patientProcessorThreadPool();
         return (taskExecutor.submitWithCategory(contractId, () -> doTheWork(patientDTO, helper, attTime)));
-
     }
 
-    private Callable doTheWork(PatientDTO patientDTO, StreamHelper helper, OffsetDateTime attTime) {
+    private Callable doTheWork(PatientDTO patientDTO, StreamHelper helper, OffsetDateTime attTime) throws Exception {
         int resourceCount = 0;
 
         String payload = "";
@@ -78,7 +77,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
                 //should not happen - original exception will be thrown
                 log.error("error during exception handling to write error record");
             }
-            return null;
+            throw e;
         }
 
         log.debug("finished writing [{}] resources", resourceCount);
