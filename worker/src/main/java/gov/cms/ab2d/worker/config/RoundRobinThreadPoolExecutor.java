@@ -9,7 +9,6 @@ import java.util.concurrent.locks.AbstractQueuedSynchronizer;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
-
 public class RoundRobinThreadPoolExecutor extends ThreadPoolExecutor {
     private final AtomicInteger ctl = new AtomicInteger(ctlOf(RUNNING, 0));
     private static final int COUNT_BITS = Integer.SIZE - 3;
@@ -424,35 +423,6 @@ public class RoundRobinThreadPoolExecutor extends ThreadPoolExecutor {
                                         int maximumPoolSize,
                                         long keepAliveTime,
                                         TimeUnit unit,
-                                        RoundRobinBlockingQueue<Runnable> workQueue) {
-        this(corePoolSize, maximumPoolSize, keepAliveTime, unit, workQueue,
-                Executors.defaultThreadFactory(), DEFAULT_HANDLER);
-    }
-
-    public RoundRobinThreadPoolExecutor(int corePoolSize,
-                                        int maximumPoolSize,
-                                        long keepAliveTime,
-                                        TimeUnit unit,
-                                        RoundRobinBlockingQueue<Runnable> workQueue,
-                                        ThreadFactory threadFactory) {
-        this(corePoolSize, maximumPoolSize, keepAliveTime, unit, workQueue,
-                threadFactory, DEFAULT_HANDLER);
-    }
-
-    public RoundRobinThreadPoolExecutor(int corePoolSize,
-                                        int maximumPoolSize,
-                                        long keepAliveTime,
-                                        TimeUnit unit,
-                                        RoundRobinBlockingQueue<Runnable> workQueue,
-                                        RejectedExecutionHandler handler) {
-        this(corePoolSize, maximumPoolSize, keepAliveTime, unit, workQueue,
-                Executors.defaultThreadFactory(), handler);
-    }
-
-    public RoundRobinThreadPoolExecutor(int corePoolSize,
-                                        int maximumPoolSize,
-                                        long keepAliveTime,
-                                        TimeUnit unit,
                                         RoundRobinBlockingQueue<Runnable> workQueue,
                                         ThreadFactory threadFactory,
                                         RejectedExecutionHandler handler) {
@@ -462,8 +432,9 @@ public class RoundRobinThreadPoolExecutor extends ThreadPoolExecutor {
                 maximumPoolSize < corePoolSize ||
                 keepAliveTime < 0)
             throw new IllegalArgumentException();
-        if (workQueue == null || threadFactory == null || handler == null)
+        if (workQueue == null || threadFactory == null || handler == null) {
             throw new NullPointerException();
+        }
         this.corePoolSize = corePoolSize;
         this.maximumPoolSize = maximumPoolSize;
         this.workQueue = workQueue;

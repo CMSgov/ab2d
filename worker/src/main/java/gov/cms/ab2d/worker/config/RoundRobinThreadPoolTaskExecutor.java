@@ -4,6 +4,8 @@ import org.jetbrains.annotations.NotNull;
 import org.springframework.core.task.TaskRejectedException;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.util.Assert;
+import org.springframework.util.concurrent.ListenableFuture;
+import org.springframework.util.concurrent.ListenableFutureTask;
 
 import java.util.concurrent.*;
 
@@ -32,12 +34,11 @@ public class RoundRobinThreadPoolTaskExecutor extends ThreadPoolTaskExecutor {
     }
 
     public Future<Void> submitWithCategory(String category, Callable task) {
-        RoundRobinThreadPoolExecutor executor = (RoundRobinThreadPoolExecutor) this.getThreadPoolExecutor();
-
+        RoundRobinThreadPoolExecutor executor = (RoundRobinThreadPoolExecutor) getThreadPoolExecutor();
         try {
             return executor.submitWithCategory(category, task);
-        } catch (RejectedExecutionException var4) {
-            throw new TaskRejectedException("Executor [" + executor + "] did not accept task: " + task, var4);
+        } catch (RejectedExecutionException ex) {
+            throw new TaskRejectedException("Executor [" + executor + "] did not accept task: " + task, ex);
         }
     }
 
@@ -93,6 +94,18 @@ public class RoundRobinThreadPoolTaskExecutor extends ThreadPoolTaskExecutor {
     public int getKeepAliveSeconds() {
         synchronized (this.poolSizeMonitor) {
             return this.keepAliveSeconds;
+        }
+    }
+
+    public <T> ListenableFuture<T> submitListenable(String category, Callable<T> task) {
+        RoundRobinThreadPoolExecutor executor = (RoundRobinThreadPoolExecutor) getThreadPoolExecutor();
+        try {
+            ListenableFutureTask<T> future = new ListenableFutureTask<>(task);
+            executor.execute(future, category);
+            return future;
+        }
+        catch (RejectedExecutionException ex) {
+            throw new TaskRejectedException("Executor [" + executor + "] did not accept task: " + task, ex);
         }
     }
 
