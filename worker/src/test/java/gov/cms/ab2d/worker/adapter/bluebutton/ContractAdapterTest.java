@@ -301,8 +301,8 @@ class ContractAdapterTest {
 
 
     @Test
-    @DisplayName("given patient count > localStorageThreshold, should store beneficiary data")
-    void GivenPatientCountGreaterThanLocalStorageThreshold_ShouldStoreBeneficiaryData() {
+    @DisplayName("given patient count > cachingThreshold, should store beneficiary data")
+    void GivenPatientCountGreaterThanCachingThreshold_ShouldStoreBeneficiaryData() {
         var entries = bundle.getEntry();
         entries.add(createBundleEntry("ccw_patient_001"));
         entries.add(createBundleEntry("ccw_patient_002"));
@@ -310,7 +310,7 @@ class ContractAdapterTest {
         entries.add(createBundleEntry("ccw_patient_004"));
         entries.add(createBundleEntry("ccw_patient_005"));
 
-        ReflectionTestUtils.setField(cut, "localStorageThreshold", 2);
+        ReflectionTestUtils.setField(cut, "cachingThreshold", 2);
         cut.getPatients(contractNumber, Month.JANUARY.getValue());
 
         verify(client).requestPartDEnrolleesFromServer(anyString(), anyInt());

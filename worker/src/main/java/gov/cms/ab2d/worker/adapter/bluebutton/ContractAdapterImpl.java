@@ -34,8 +34,8 @@ public class ContractAdapterImpl implements ContractAdapter {
 
     private static final String BENEFICIARY_ID = "https://bluebutton.cms.gov/resources/variables/bene_id";
 
-    @Value("${contract2bene.local.storage.threshold:1000}")
-    private int localStorageThreshold;
+    @Value("${contract2bene.caching.threshold:1000}")
+    private int cachingThreshold;
 
     private final BFDClient bfdClient;
     private final ContractRepository contractRepo;
@@ -59,9 +59,9 @@ public class ContractAdapterImpl implements ContractAdapter {
 
                 bfdPatientsIds = getPatientIdsForMonth(contractNumber, month);
 
-                //if number of benes for this month exceeds localStorageThreshold, store it locally
+                //if number of benes for this month exceeds cachingThreshold, cache it
                 var beneficiaryCount = bfdPatientsIds.size();
-                if (beneficiaryCount > localStorageThreshold) {
+                if (beneficiaryCount > cachingThreshold) {
                     beneficiaryService.storeBeneficiaries(contract.getId(), bfdPatientsIds, month);
                 }
             }
