@@ -94,7 +94,8 @@ sudo yum -y install \
   device-mapper-persistent-data \
   lvm2 \
   python-pip \
-  telnet
+  telnet \
+  nc
 
 # LSH Testing environment BEGIN
 sudo yum -y install wget
