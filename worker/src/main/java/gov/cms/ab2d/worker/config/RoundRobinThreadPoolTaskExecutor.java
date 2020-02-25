@@ -103,8 +103,7 @@ public class RoundRobinThreadPoolTaskExecutor extends ThreadPoolTaskExecutor {
             ListenableFutureTask<T> future = new ListenableFutureTask<>(task);
             executor.execute(future, category);
             return future;
-        }
-        catch (RejectedExecutionException ex) {
+        } catch (RejectedExecutionException ex) {
             throw new TaskRejectedException("Executor [" + executor + "] did not accept task: " + task, ex);
         }
     }
