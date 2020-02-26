@@ -30,3 +30,5 @@ databaseChangeLog:
       file: db/changelog/v001/ab2d-1069-recreate-coverage-table.sql
   - include:
       file: db/changelog/v001/add_properties_table.sql
+  - include:
+      file: db/changelog/v001/modify_hpms_ids.sql
