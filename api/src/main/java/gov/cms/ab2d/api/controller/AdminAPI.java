@@ -74,4 +74,16 @@ public class AdminAPI {
         UserDTO user = userService.updateUser(userDTO);
         return new ResponseEntity<>(user, null, HttpStatus.OK);
     }
+
+    @ResponseStatus(value = HttpStatus.OK)
+    @PutMapping("/maintenanceModeOn")
+    public ResponseEntity<Void> turnMaintenanceModeOn() {
+        return new ResponseEntity<>(null, null, HttpStatus.OK);
+    }
+
+    @ResponseStatus(value = HttpStatus.OK)
+    @PutMapping("/maintenanceModeOff")
+    public ResponseEntity<Void> turnMaintenanceModeOff() {
+        return new ResponseEntity<>(null, null, HttpStatus.OK);
+    }
 }

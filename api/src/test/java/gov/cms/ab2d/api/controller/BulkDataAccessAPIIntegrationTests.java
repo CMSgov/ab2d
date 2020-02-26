@@ -88,7 +88,7 @@ public class BulkDataAccessAPIIntegrationTests {
 
     private String token;
 
-    private static final String PATIENT_EXPORT_PATH = "/Patient/$export";
+    public static final String PATIENT_EXPORT_PATH = "/Patient/$export";
 
     private static final int MAX_JOBS_PER_USER = 3;
 

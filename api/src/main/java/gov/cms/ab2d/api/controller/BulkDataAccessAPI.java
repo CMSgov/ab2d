@@ -99,6 +99,8 @@ public class BulkDataAccessAPI {
             @RequestParam(required = false, name = "_outputFormat") String outputFormat) {
         log.info("Received request to export");
 
+        checkIfInMaintenanceMode();
+
         checkIfCurrentUserCanAddJob();
 
         checkResourceTypesAndOutputFormat(resourceTypes, outputFormat);
@@ -109,6 +111,12 @@ public class BulkDataAccessAPI {
         logSuccessfulJobCreation(job);
 
         return returnStatusForJobCreation(job);
+    }
+
+    private void checkIfInMaintenanceMode() {
+        if(true) {
+            throw new InMaintenanceModeException("The system is currently in maintenance mode. Please try the request again later.");
+        }
     }
 
     private void checkIfCurrentUserCanAddJob() {
