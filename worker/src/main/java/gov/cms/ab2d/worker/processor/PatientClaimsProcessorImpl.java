@@ -1,8 +1,6 @@
 package gov.cms.ab2d.worker.processor;
 
 import ca.uhn.fhir.context.FhirContext;
-import com.newrelic.api.agent.NewRelic;
-import com.newrelic.api.agent.Segment;
 import com.newrelic.api.agent.Token;
 import com.newrelic.api.agent.Trace;
 import gov.cms.ab2d.bfd.client.BFDClient;
@@ -77,14 +75,14 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
                 //should not happen - original exception will be thrown
                 log.error("error during exception handling to write error record");
             }
-            //segment.end();
+            token.expire();
 
             return AsyncResult.forExecutionException(e);
         }
 
         log.debug("finished writing [{}] resources", resourceCount);
 
-        //segment.end();
+        token.expire();
 
         return new AsyncResult<>(null);
     }

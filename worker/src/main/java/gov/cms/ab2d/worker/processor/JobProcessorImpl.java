@@ -1,8 +1,6 @@
 package gov.cms.ab2d.worker.processor;
 
-import com.newrelic.api.agent.NewRelic;
-import com.newrelic.api.agent.Segment;
-import com.newrelic.api.agent.Token;
+import com.newrelic.api.agent.*;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.JobOutput;
@@ -31,6 +29,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -51,8 +50,6 @@ import static gov.cms.ab2d.common.service.JobServiceImpl.ZIPFORMAT;
 import static gov.cms.ab2d.common.util.Constants.CONTRACT_LOG;
 import static gov.cms.ab2d.common.util.Constants.EOB;
 import static net.logstash.logback.argument.StructuredArguments.keyValue;
-
-import com.newrelic.api.agent.Trace;
 
 @Slf4j
 @Service
@@ -88,6 +85,9 @@ public class JobProcessorImpl implements JobProcessor {
 
     @Value("${audit.files.ttl.hours}")
     private int auditFilesTTLHours;
+
+    @Value("${bfd.serverBaseUrl}")
+    private String bfdServerBaseUrl;
 
     private final FileService fileService;
     private final JobRepository jobRepository;
@@ -141,7 +141,7 @@ public class JobProcessorImpl implements JobProcessor {
      * @param job - the job to process
      * @param outputDirPath - the output directory to put all the files
      */
-    private void processJob(Job job, Path outputDirPath) throws FileNotFoundException {
+    private void processJob(Job job, Path outputDirPath) throws FileNotFoundException, URISyntaxException {
         // Get the output directory
         var outputDir = createOutputDirectory(outputDirPath);
 
@@ -165,7 +165,9 @@ public class JobProcessorImpl implements JobProcessor {
             var contractData = new ContractData(contract, progressTracker, contract.getAttestedOn());
 
             /*** process contract ***/
+            final Segment contractSegment = NewRelic.getAgent().getTransaction().startSegment("Patient processing of contract " + contract.getContractNumber());
             var jobOutputs = processContract(outputDirPath, contractData, outputType);
+            contractSegment.end();
 
             // For each job output, add to the job and save the result
             jobOutputs.forEach(jobOutput -> job.addJobOutput(jobOutput));
@@ -365,12 +367,11 @@ public class JobProcessorImpl implements JobProcessor {
                 }
 
                 // Add the thread to process the patient and start the thread
-                //final Segment segment = NewRelic.getAgent().getTransaction().startSegment("Patient Processing");
+                // See https://docs.newrelic.com/docs/agents/java-agent/async-instrumentation/java-agent-api-asynchronous-applications
+                // for more detail on tokens with async calls
                 final Token token = NewRelic.getAgent().getTransaction().getToken();
 
                 futureHandles.add(patientClaimsProcessor.process(patient, helper, contract.getAttestedOn(), token));
-
-                token.expire();
 
                 // Periodically check if cancelled
                 if (recordsProcessedCount % cancellationCheckFrequency == 0) {
