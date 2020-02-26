@@ -6,8 +6,7 @@ import com.okta.jwt.JwtVerificationException;
 import gov.cms.ab2d.api.SpringBootApp;
 import gov.cms.ab2d.common.dto.PropertiesDTO;
 import gov.cms.ab2d.common.model.Properties;
-import gov.cms.ab2d.common.repository.RoleRepository;
-import gov.cms.ab2d.common.repository.UserRepository;
+import gov.cms.ab2d.common.repository.*;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import org.junit.Assert;
 import org.junit.jupiter.api.*;
@@ -44,10 +43,19 @@ public class AdminAPIPropertiesTests {
     private TestUtil testUtil;
 
     @Autowired
+    private SponsorRepository sponsorRepository;
+
+    @Autowired
     private UserRepository userRepository;
 
     @Autowired
     private RoleRepository roleRepository;
+
+    @Autowired
+    private JobRepository jobRepository;
+
+    @Autowired
+    private ContractRepository contractRepository;
 
     @Container
     private static final PostgreSQLContainer postgreSQLContainer= new AB2DPostgresqlContainer();
@@ -58,8 +66,11 @@ public class AdminAPIPropertiesTests {
 
     @BeforeEach
     public void setup() throws JwtVerificationException {
+        contractRepository.deleteAll();
+        jobRepository.deleteAll();
         userRepository.deleteAll();
         roleRepository.deleteAll();
+        sponsorRepository.deleteAll();
 
         token = testUtil.setupToken(List.of(ADMIN_ROLE));
     }
