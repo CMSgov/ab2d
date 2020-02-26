@@ -16,17 +16,13 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.concurrent.Callable;
+import java.util.*;
 import java.util.concurrent.Future;
 
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.assertThat;
 
-@SpringBootTest
+@SpringBootTest(properties = {"pcp.core.pool.size=3" , "pcp.max.pool.size=20", "pcp.scaleToMax.time=20"})
 @Testcontainers
 @Slf4j
 public class AutoScalingServiceTest {
@@ -34,8 +30,6 @@ public class AutoScalingServiceTest {
     public static final int QUEUE_SIZE = 25;
     public static final int MAX_POOL_SIZE = 20;
     public static final int MIN_POOL_SIZE = 3;
-    @Autowired
-    private AutoScalingService autoScalingService;
 
     @Autowired
     private ThreadPoolTaskExecutor patientProcessorThreadPool;
@@ -48,7 +42,6 @@ public class AutoScalingServiceTest {
         patientProcessorThreadPool.getThreadPoolExecutor().purge();
         patientProcessorThreadPool.getThreadPoolExecutor().getQueue().clear();
     }
-
 
     @Test
     @DisplayName("Auto-scaling does not kick in when the queue remains empty")
@@ -98,7 +91,7 @@ public class AutoScalingServiceTest {
         // Then check that there were intermediate pool increases between 3 and MAX_POOL_SIZE.
         // Last metric taken should always be MAX_POOL_SIZE
         assertThat(new ArrayDeque<>(metrics).getLast(), equalTo(MAX_POOL_SIZE));
-        // Some intermediate sizes should be in between, at least 3.
+        // There are 3 intermediate metrics and 1 final metric
         assertThat(metrics.size(), greaterThanOrEqualTo(4));
         List<Integer> metricsList = new ArrayList<>(metrics);
         for (int i = 1; i < metricsList.size(); i++) {

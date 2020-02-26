@@ -26,6 +26,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.integration.test.context.SpringIntegrationTest;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -71,6 +72,7 @@ class JobProcessorIntegrationTest {
     @Autowired
     private JobOutputRepository jobOutputRepository;
     @Autowired
+    @Qualifier("contractAdapterStub")
     private ContractAdapter contractAdapterStub;
     @Autowired
     private OptOutRepository optOutRepository;
