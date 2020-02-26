@@ -71,28 +71,6 @@ class JobProcessorUnitTest {
     @Mock private ContractAdapter contractAdapter;
     private PatientClaimsProcessor patientClaimsProcessor = spy(PatientClaimsProcessorStub.class);
 
-    private Token noOpToken =  new Token() {
-        @Override
-        public boolean link() {
-            return false;
-        }
-
-        @Override
-        public boolean expire() {
-            return false;
-        }
-
-        @Override
-        public boolean linkAndExpire() {
-            return false;
-        }
-
-        @Override
-        public boolean isActive() {
-            return false;
-        }
-    };
-
     private Job job;
     private GetPatientsByContractResponse patientsByContract;
 
@@ -247,7 +225,7 @@ class JobProcessorUnitTest {
 
         verify(fileService).createDirectory(any());
         verify(contractAdapter).getPatients(anyString(), anyInt());
-        verify(patientClaimsProcessor, never()).process(any(), any(), any(), noOpToken);
+        verify(patientClaimsProcessor, never()).process(any(), any(), any(), any());
     }
 
     @Test
@@ -279,7 +257,7 @@ class JobProcessorUnitTest {
 
         verify(fileService, times(2)).createDirectory(any());
         verify(contractAdapter).getPatients(anyString(), anyInt());
-        verify(patientClaimsProcessor, atLeast(1)).process(any(), any(), any(), noOpToken);
+        verify(patientClaimsProcessor, atLeast(1)).process(any(), any(), any(), any());
         verify(jobRepository, atLeastOnce()).updatePercentageCompleted(anyString(), anyInt());
     }
 
