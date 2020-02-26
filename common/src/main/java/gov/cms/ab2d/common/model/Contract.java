@@ -46,11 +46,4 @@ public class Contract {
     private Set<Coverage> coverages = new HashSet<>();
 
 
-    public void addBeneficiary(Beneficiary beneficiary) {
-        Coverage coverage = new Coverage();
-        coverage.setContract(this);
-        coverage.setBeneficiary(beneficiary);
-        coverages.add(coverage);
-        beneficiary.getCoverages().add(coverage);
-    }
 }
