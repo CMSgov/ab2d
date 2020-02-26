@@ -1,10 +1,10 @@
 env:
   global:
-    # The CC_TEST_REPORTER_ID
-    - secure: OY3JWzy8JxPXXqT/YOnYcwFGm46DgQdGMV5dkhDjrBeKgfb2H7ohY6GkAStQv8vV6LE/yu3N6f+XGuPwH2q27Q3I8daYeNY2MtGMt+wokkqhkJWG/XdqQodr+RbkUYN7BHiYQC6ZQKdh9NIA4JIWsNdh8TKrc7cFxy4WM5ACGO9pf6y96GRVT1CHIlwaYzXna+dE0Khbg3EGSa0tcEwLUmYdPGwK+6hiMeX0wTbhDr4YEh5kdnIAFuDDfj+KKmT9FJeTJXywFc9I6YuuYLL+z1g4GMAWCV7PoZdBOLVZQXzP/A8IE1jN7bSNean2risBRXi+PBKohZuvjpLb4UbTTp1+HR5FzPCKpkNvkLmyHpqaDCbDXfXSzMEwWxbj/6vmDK+hO5fqZrI/iO0rNugixxOKEl/ZPXga2Zf1nVxEGzfI86BVNHMegSL1AfLJ5kI+P/0HGnUBbnSAD/kH8k8Rd7r/PHCqoN7VwUhuirI5C9Ulbd6iMm1C8sgq7lOogJvVoS939lP3IcrtNhqmS3Wyc2YsWUE3RlIiJizOQB4K925el41o8qQmDvxIbB8tiDaqfkas3OjDVCr+JjzczXHgjV6Uze5EQovIQ4SvgNidZkjNyei+piJ+lwHx/34jBAC4GNs7uFgkA+RTrNtZCyHK2f2lv7OyNNzWyC3XMRIyQsM=
-    - codeclimate: true
-    - DOCKER_COMPOSE_VERSION: 1.24.1
-
+  - secure: OY3JWzy8JxPXXqT/YOnYcwFGm46DgQdGMV5dkhDjrBeKgfb2H7ohY6GkAStQv8vV6LE/yu3N6f+XGuPwH2q27Q3I8daYeNY2MtGMt+wokkqhkJWG/XdqQodr+RbkUYN7BHiYQC6ZQKdh9NIA4JIWsNdh8TKrc7cFxy4WM5ACGO9pf6y96GRVT1CHIlwaYzXna+dE0Khbg3EGSa0tcEwLUmYdPGwK+6hiMeX0wTbhDr4YEh5kdnIAFuDDfj+KKmT9FJeTJXywFc9I6YuuYLL+z1g4GMAWCV7PoZdBOLVZQXzP/A8IE1jN7bSNean2risBRXi+PBKohZuvjpLb4UbTTp1+HR5FzPCKpkNvkLmyHpqaDCbDXfXSzMEwWxbj/6vmDK+hO5fqZrI/iO0rNugixxOKEl/ZPXga2Zf1nVxEGzfI86BVNHMegSL1AfLJ5kI+P/0HGnUBbnSAD/kH8k8Rd7r/PHCqoN7VwUhuirI5C9Ulbd6iMm1C8sgq7lOogJvVoS939lP3IcrtNhqmS3Wyc2YsWUE3RlIiJizOQB4K925el41o8qQmDvxIbB8tiDaqfkas3OjDVCr+JjzczXHgjV6Uze5EQovIQ4SvgNidZkjNyei+piJ+lwHx/34jBAC4GNs7uFgkA+RTrNtZCyHK2f2lv7OyNNzWyC3XMRIyQsM=
+  - codeclimate: true
+  - DOCKER_COMPOSE_VERSION: 1.24.1
+  - secure: Ip4CjKu/Bpk7t7JUiIrZYBBOjcK5ToJuSUJxZ96bV+opd1fvYC2YnysqpH+DIMsMVhrtvjX33fEanX+LeNWNoI4BHWtk+RZGvK/NlZyKKGWP9293Sw47AdXDhyKRvcHBBNZT3flYncZx+8imU0/ZaSny9WEsX3IBWc/A10liHRSJMPklWp+vPI057Dx9ar3k3NtJBZgUvlsKPjw1cSgFBJBXNvtO2NLIHg8ACvIkpQg0uOSbUSeL4r4MMFgNm5aDxEoVN3zh2wTaGUviExq1uJA8sBSx4ndNVBLbMKyIrf2/heLiA53az3vkBB+/hVJiACJFMmIFlphCg5TqexQFYPIM9oplcMIl+FQFzhQBtkjZ3wN7LecYGqHTMgD74hWmUqkhLwjA3hUIY7l4QrxSE/6hx7G6q5CZoVUsHDHxV58iBPQ6Ls/Er8WXK9BPs7DbLBDDa6VjJjIWvAX/2EDcAZOYZ7eTlXHdOlahwGB3MIvfMKnzNQ4Od1o+uRdzeKXBafSG3C0+a1vNY5b3NUe7cKrCpl52A1af1l8XDSrWhqgt8IFeVXROiaDs5m4N3mSs+43iAWj6lg6qbOapTakHc6NB/HmP5DGBsUQVzVcF42clLasDMIYzTh/HXP9zeD/9k+yLvOtO/IfFpNFkG7r5VOEU5Qaqqcbvy7Ulch+D6L8=
+  - secure: a1rP3nx+D32ILFw396qxKl3ev11vSXl50jZoXQVppgpbQ08rp1u+9imH6GBZpkt0Uk5UMVnWb9s3RBlstbN6kECaF9lJHrImzEWcxrR7+hnoDCEhRcnoF+rNWeFcCMSQbai13Vk5kfaJcGIcUazYwLC1+DZ45BBNMg2MXRoUtgYz80b/2We1Z1IUFNOpISLBW2m6PTA1lU8K7h/Xlm9l703kWzxhINSYIl9Z98L2uU/9nWtszaDAjOywsLM8Ne95R3oO2yw2YWVY73hALguXcvYnOr2+4wsdBnZF1diqc1+8s84QePoaITM2yhBRWx5rCndJHMFBKooyvyZ0X9FSjdiOsoKUXnof92bQl1m5CRMQfa2KJYPUvxrhJMcgnbrMgg2wsyoZu22043/aFf3kr4R9ItwoyDBPv7bsXW3xtFDmvzvEMYXO7QbuXqOFqggBan8RoXWWvG442zZpbS506RZQy3UjDnGreOCHncubpJsd28e+Tngm+hbnSs8OGQWSUZoFGn5zjqYDI0VxKrLzwkPsvFr+JrZ4o5hLHZHk7t9mpmq24o6FGqlgMJNdm++Bay1cRhotorqmqPgxZRRWgiY5c0rH0HqgIefzHB0H/Iqt81UU7CvF6ZXzKHljqxZ0UFfmtQFU7btqcoFJG4d3C/aVst5oJe36czEAZd4PMwo=
 dist: bionic
 language: java
 jdk:
@@ -12,34 +12,40 @@ jdk:
 cache:
   directories:
   - "$HOME/.m2"
-
 before_install:
-  - curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
-  - sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
-  - sudo apt-get update
-  - sudo apt-get -y -o Dpkg::Options::="--force-confnew" install docker-ce
-  - sudo rm /usr/local/bin/docker-compose
-  - curl -L https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION}/docker-compose-`uname -s`-`uname -m` > docker-compose
-  - chmod +x docker-compose
-  - sudo mv docker-compose /usr/local/bin
-  - docker-compose version
-  - export OKTA_CLIENT_ID=0oa2t0lsrdZw5uWRx297
-  - export OKTA_CLIENT_PASSWORD=HHduWG6LogIvDIQuWgp3Zlo9OYMValTtH5OBcuHw
-  - export SECONDARY_USER_OKTA_CLIENT_ID=0oa2t0lc65ErV8OmY297
-  - export SECONDARY_USER_OKTA_CLIENT_PASSWORD=1Bl3HGO6eglkXUDtjVjto3L-3C0offzTMk2qlz9r
-
+- openssl aes-256-cbc -K $encrypted_27e3c48779c8_key -iv $encrypted_27e3c48779c8_iv
+  -in ab2d_dev_keystore.enc -out ab2d_dev_keystore -d
+- curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+- sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu
+  $(lsb_release -cs) stable"
+- sudo apt-get update
+- sudo apt-get -y -o Dpkg::Options::="--force-confnew" install docker-ce
+- sudo rm /usr/local/bin/docker-compose
+- curl -L https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION}/docker-compose-`uname
+  -s`-`uname -m` > docker-compose
+- chmod +x docker-compose
+- sudo mv docker-compose /usr/local/bin
+- docker-compose version
+- export OKTA_CLIENT_ID=0oa2t0lsrdZw5uWRx297
+- export OKTA_CLIENT_PASSWORD=HHduWG6LogIvDIQuWgp3Zlo9OYMValTtH5OBcuHw
+- export SECONDARY_USER_OKTA_CLIENT_ID=0oa2t0lc65ErV8OmY297
+- export SECONDARY_USER_OKTA_CLIENT_PASSWORD=1Bl3HGO6eglkXUDtjVjto3L-3C0offzTMk2qlz9r
 install: true
-
 before_script:
-  - curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
-  - chmod +x ./cc-test-reporter
-  - ./cc-test-reporter before-build
+- curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64
+  > ./cc-test-reporter
+- chmod +x ./cc-test-reporter
+- "./cc-test-reporter before-build"
 script:
-  - mvn clean verify
+- mvn clean verify
 after_script:
-  - export JACOCO_SOURCE_PATH=./api/src/main/java; ./cc-test-reporter format-coverage ./api/target/site/jacoco/jacoco.xml --input-type jacoco -o codeclimate.api.json
-  - export JACOCO_SOURCE_PATH=./common/src/main/java; ./cc-test-reporter format-coverage ./common/target/site/jacoco/jacoco.xml --input-type jacoco -o codeclimate.common.json
-  - export JACOCO_SOURCE_PATH=./hpms/src/main/java; ./cc-test-reporter format-coverage ./hpms/target/site/jacoco/jacoco.xml --input-type jacoco -o codeclimate.hpms.json
-  - export JACOCO_SOURCE_PATH=./bfd/src/main/java; ./cc-test-reporter format-coverage ./bfd/target/site/jacoco/jacoco.xml --input-type jacoco -o codeclimate.bfd.json
-  - ./cc-test-reporter sum-coverage codeclimate.*.json -o coverage/codeclimate.json
-  - if [[ "$TRAVIS_TEST_RESULT" == 0 ]]; then ./cc-test-reporter upload-coverage; fi
+- export JACOCO_SOURCE_PATH=./api/src/main/java; ./cc-test-reporter format-coverage
+  ./api/target/site/jacoco/jacoco.xml --input-type jacoco -o codeclimate.api.json
+- export JACOCO_SOURCE_PATH=./common/src/main/java; ./cc-test-reporter format-coverage
+  ./common/target/site/jacoco/jacoco.xml --input-type jacoco -o codeclimate.common.json
+- export JACOCO_SOURCE_PATH=./hpms/src/main/java; ./cc-test-reporter format-coverage
+  ./hpms/target/site/jacoco/jacoco.xml --input-type jacoco -o codeclimate.hpms.json
+- export JACOCO_SOURCE_PATH=./bfd/src/main/java; ./cc-test-reporter format-coverage
+  ./bfd/target/site/jacoco/jacoco.xml --input-type jacoco -o codeclimate.bfd.json
+- "./cc-test-reporter sum-coverage codeclimate.*.json -o coverage/codeclimate.json"
+- if [[ "$TRAVIS_TEST_RESULT" == 0 ]]; then ./cc-test-reporter upload-coverage; fi
