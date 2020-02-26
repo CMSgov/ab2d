@@ -17,6 +17,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
+import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 
 import static org.hamcrest.Matchers.*;
@@ -63,7 +64,7 @@ public class AutoScalingServiceTest {
         // Make the Executor busy.
         final List<Future> futures = new ArrayList<>();
         for (int i = 0; i < QUEUE_SIZE; i++) {
-            futures.add(((RoundRobinThreadPoolTaskExecutor)patientProcessorThreadPool).submitWithCategory("S0000", sleepyRunnable()));
+            futures.add(((RoundRobinThreadPoolTaskExecutor) patientProcessorThreadPool).submitWithCategory("S0000", sleepyRunnable()));
         }
 
         // In approximately 20 seconds the Executor should grow to the max.
