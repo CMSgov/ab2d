@@ -1,6 +1,7 @@
 package gov.cms.ab2d.worker.processor;
 
 import ca.uhn.fhir.context.FhirContext;
+import com.newrelic.api.agent.Token;
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.filter.FilterOutByDate;
@@ -54,6 +55,28 @@ public class PatientClaimsProcessorUnitTest {
     private OffsetDateTime earlyAttDate = OffsetDateTime.of(1970, 1, 1, 0, 0, 0, 0, ZoneOffset.UTC);
     private GetPatientsByContractResponse.PatientDTO patientDTO;
 
+    private Token noOpToken =  new Token() {
+        @Override
+        public boolean link() {
+            return false;
+        }
+
+        @Override
+        public boolean expire() {
+            return false;
+        }
+
+        @Override
+        public boolean linkAndExpire() {
+            return false;
+        }
+
+        @Override
+        public boolean isActive() {
+            return false;
+        }
+    };
+
     @BeforeEach
     void setUp() throws Exception {
         FhirContext fhirContext = ca.uhn.fhir.context.FhirContext.forDstu3();
@@ -73,11 +96,11 @@ public class PatientClaimsProcessorUnitTest {
     }
 
     @Test
-    void process_whenPatientHasSinglePageOfClaimsData() throws IOException, ExecutionException, InterruptedException {
+    void process_whenPatientHasSinglePageOfClaimsData() throws ExecutionException, InterruptedException {
         Bundle bundle1 = EobTestDataUtil.createBundle(eob.copy());
         when(mockBfdClient.requestEOBFromServer(patientId)).thenReturn(bundle1);
 
-        cut.process(patientDTO, helper, earlyAttDate, null).get();
+        cut.process(patientDTO, helper, earlyAttDate, noOpToken).get();
 
         verify(mockBfdClient).requestEOBFromServer(patientId);
         verify(mockBfdClient, never()).requestNextBundleFromServer(bundle1);
@@ -93,7 +116,7 @@ public class PatientClaimsProcessorUnitTest {
         when(mockBfdClient.requestEOBFromServer(patientId)).thenReturn(bundle1);
         when(mockBfdClient.requestNextBundleFromServer(bundle1)).thenReturn(bundle2);
 
-        cut.process(patientDTO, helper, earlyAttDate, null).get();
+        cut.process(patientDTO, helper, earlyAttDate, noOpToken).get();
 
         verify(mockBfdClient).requestEOBFromServer(patientId);
         verify(mockBfdClient).requestNextBundleFromServer(bundle1);
@@ -105,7 +128,7 @@ public class PatientClaimsProcessorUnitTest {
         when(mockBfdClient.requestEOBFromServer(patientId)).thenThrow(new RuntimeException("Test Exception"));
 
         var exceptionThrown = assertThrows(ExecutionException.class,
-                () -> cut.process(patientDTO, helper, earlyAttDate, null).get());
+                () -> cut.process(patientDTO, helper, earlyAttDate, noOpToken).get());
 
         assertThat(exceptionThrown.getCause().getMessage(), startsWith("Test Exception"));
 
@@ -118,7 +141,7 @@ public class PatientClaimsProcessorUnitTest {
         Bundle bundle1 = new Bundle();
         when(mockBfdClient.requestEOBFromServer(patientId)).thenReturn(bundle1);
 
-        cut.process(patientDTO, helper, earlyAttDate, null).get();
+        cut.process(patientDTO, helper, earlyAttDate, noOpToken).get();
 
         verify(mockBfdClient).requestEOBFromServer(patientId);
         verify(mockBfdClient, never()).requestNextBundleFromServer(bundle1);

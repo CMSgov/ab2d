@@ -29,7 +29,6 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -86,9 +85,6 @@ public class JobProcessorImpl implements JobProcessor {
     @Value("${audit.files.ttl.hours}")
     private int auditFilesTTLHours;
 
-    @Value("${bfd.serverBaseUrl}")
-    private String bfdServerBaseUrl;
-
     private final FileService fileService;
     private final JobRepository jobRepository;
     private final JobOutputRepository jobOutputRepository;
@@ -141,7 +137,7 @@ public class JobProcessorImpl implements JobProcessor {
      * @param job - the job to process
      * @param outputDirPath - the output directory to put all the files
      */
-    private void processJob(Job job, Path outputDirPath) throws FileNotFoundException, URISyntaxException {
+    private void processJob(Job job, Path outputDirPath) throws FileNotFoundException {
         // Get the output directory
         var outputDir = createOutputDirectory(outputDirPath);
 

@@ -1,5 +1,6 @@
 package gov.cms.ab2d.worker.processor;
 
+import com.newrelic.api.agent.Token;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.JobStatus;
@@ -69,6 +70,28 @@ class JobProcessorUnitTest {
     @Mock private OptOutRepository optOutRepository;
     @Mock private ContractAdapter contractAdapter;
     private PatientClaimsProcessor patientClaimsProcessor = spy(PatientClaimsProcessorStub.class);
+
+    private Token noOpToken =  new Token() {
+        @Override
+        public boolean link() {
+            return false;
+        }
+
+        @Override
+        public boolean expire() {
+            return false;
+        }
+
+        @Override
+        public boolean linkAndExpire() {
+            return false;
+        }
+
+        @Override
+        public boolean isActive() {
+            return false;
+        }
+    };
 
     private Job job;
     private GetPatientsByContractResponse patientsByContract;
@@ -180,7 +203,7 @@ class JobProcessorUnitTest {
     private void doVerify() {
         verify(fileService).createDirectory(any());
         verify(contractAdapter).getPatients(anyString(), anyInt());
-        verify(patientClaimsProcessor, atLeast(1)).process(any(), any(), any(), null);
+        verify(patientClaimsProcessor, atLeast(1)).process(any(), any(), any(), any());
     }
 
     @Test
@@ -224,7 +247,7 @@ class JobProcessorUnitTest {
 
         verify(fileService).createDirectory(any());
         verify(contractAdapter).getPatients(anyString(), anyInt());
-        verify(patientClaimsProcessor, never()).process(any(), any(), any(), null);
+        verify(patientClaimsProcessor, never()).process(any(), any(), any(), noOpToken);
     }
 
     @Test
@@ -256,7 +279,7 @@ class JobProcessorUnitTest {
 
         verify(fileService, times(2)).createDirectory(any());
         verify(contractAdapter).getPatients(anyString(), anyInt());
-        verify(patientClaimsProcessor, atLeast(1)).process(any(), any(), any(), null);
+        verify(patientClaimsProcessor, atLeast(1)).process(any(), any(), any(), noOpToken);
         verify(jobRepository, atLeastOnce()).updatePercentageCompleted(anyString(), anyInt());
     }
 

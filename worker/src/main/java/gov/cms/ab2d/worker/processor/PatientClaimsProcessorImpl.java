@@ -100,10 +100,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
     }
 
     private List<Resource> getEobBundleResources(PatientDTO patient, OffsetDateTime attTime) {
-
-        //final Segment segment = NewRelic.getAgent().getTransaction().startSegment("Request EOB");
         Bundle eobBundle = bfdClient.requestEOBFromServer(patient.getPatientId());
-        //segment.end();
 
         final List<BundleEntryComponent> entries = eobBundle.getEntry();
         final List<Resource> resources = extractResources(entries, patient.getDateRangesUnderContract(), attTime);

@@ -1,6 +1,5 @@
 package gov.cms.ab2d.worker.processor;
 
-import com.newrelic.api.agent.Segment;
 import com.newrelic.api.agent.Token;
 import gov.cms.ab2d.worker.adapter.bluebutton.GetPatientsByContractResponse.PatientDTO;
 
