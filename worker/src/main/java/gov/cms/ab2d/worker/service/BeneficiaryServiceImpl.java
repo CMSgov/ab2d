@@ -12,7 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Optional;
 import java.util.Set;
 
@@ -37,7 +37,7 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
     @Override
     public Set<String> findPatientIdsInDb(Long contractId, int month) {
         var patientIds = coverageRepo.findActivePatientIds(contractId, month);
-        return new HashSet<>(patientIds);
+        return new LinkedHashSet<>(patientIds);
     }
 
 
