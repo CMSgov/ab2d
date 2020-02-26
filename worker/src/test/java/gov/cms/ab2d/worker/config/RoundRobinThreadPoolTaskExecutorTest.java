@@ -1,11 +1,6 @@
 package gov.cms.ab2d.worker.config;
 
-import java.util.concurrent.Callable;
-import java.util.concurrent.CancellationException;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.awaitility.Awaitility;
@@ -18,7 +13,7 @@ import org.springframework.util.concurrent.ListenableFuture;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 class RoundRobinThreadPoolTaskExecutorTest {
     static final String THREAD_NAME_PREFIX = "test-";
@@ -48,7 +43,16 @@ class RoundRobinThreadPoolTaskExecutorTest {
     }
 
     @Test
-    public void testGettersSetters() {
+    public void testConstructor() {
+        assertThrows(IllegalArgumentException.class, () -> new RoundRobinThreadPoolExecutor(-1, -1, -1, TimeUnit.SECONDS, null, null, null));
+        assertThrows(IllegalArgumentException.class, () -> new RoundRobinThreadPoolExecutor(1, -1, -1, TimeUnit.SECONDS, null, null, null));
+        assertThrows(IllegalArgumentException.class, () -> new RoundRobinThreadPoolExecutor(10, 2, -1, TimeUnit.SECONDS, null, null, null));
+        assertThrows(IllegalArgumentException.class, () -> new RoundRobinThreadPoolExecutor(1, 2, -1, TimeUnit.SECONDS, null, null, null));
+        assertThrows(NullPointerException.class, () -> new RoundRobinThreadPoolExecutor(1, 2, 1, TimeUnit.SECONDS, null, null, null));
+    }
+
+    @Test
+    public void testGettersSetters() throws InterruptedException {
         assertEquals(1, executor.getMaxPoolSize());
         assertEquals(0, executor.getActiveCount());
         executor.setCorePoolSize(1);
@@ -57,14 +61,44 @@ class RoundRobinThreadPoolTaskExecutorTest {
         assertEquals(10, executor.getKeepAliveSeconds());
         executor.setQueueCapacity(2);
         assertEquals(0, executor.getPoolSize());
+        RoundRobinThreadPoolExecutor ex = (RoundRobinThreadPoolExecutor) executor.getThreadPoolExecutor();
+        ex.setKeepAliveTime(10, TimeUnit.SECONDS);
+        ex.finalize();
+        assertThrows(NullPointerException.class, () -> ex.reject(null));
+        assertThrows(IllegalArgumentException.class, () -> executor.setKeepAliveSeconds(-1));
+        ex.allowCoreThreadTimeOut(true);
+        ex.setRejectedExecutionHandler(new MyRejectedExecutionHandler());
+        ex.getRejectedExecutionHandler();
+        ex.setThreadFactory(new SimpleThreadFactory());
+        ex.awaitTermination(1, TimeUnit.SECONDS);
+        ex.shutdownNow();
+        ex.shutdown();
     }
 
     @Test
     public void executeRunnable() {
         TestTask task = new TestTask(1);
         executor.execute(task);
+        System.out.println("************ Executor: " + executor.getThreadPoolExecutor().toString());
+        System.out.println("************ Completed Tasks: " + executor.getThreadPoolExecutor().getCompletedTaskCount());
         await(task);
+        System.out.println("************ Completed Tasks: " + executor.getThreadPoolExecutor().getCompletedTaskCount());
         assertThreadNamePrefix(task);
+        assertEquals(executor.getMaxPoolSize(), executor.getThreadPoolExecutor().getMaximumPoolSize());
+    }
+
+    @Test
+    public void testRejectedExecutionHandler() {
+        MyRejectedExecutionHandler handler = new MyRejectedExecutionHandler();
+        assertThrows(NullPointerException.class, () -> executor.getThreadPoolExecutor().setRejectedExecutionHandler(null));
+        executor.getThreadPoolExecutor().setRejectedExecutionHandler(handler);
+        assertEquals(MyRejectedExecutionHandler.class, executor.getThreadPoolExecutor().getRejectedExecutionHandler().getClass());
+    }
+
+    class MyRejectedExecutionHandler implements RejectedExecutionHandler {
+        @Override
+        public void rejectedExecution(Runnable r, ThreadPoolExecutor executor) {
+        }
     }
 
     @Test
@@ -72,6 +106,39 @@ class RoundRobinThreadPoolTaskExecutorTest {
         TestTask task = new TestTask(0);
         executor.execute(task);
         // nothing to assert
+    }
+
+    @Test
+    public void testOther() {
+        executor.getThreadPoolExecutor().setMaximumPoolSize(5);
+        assertEquals(5, executor.getThreadPoolExecutor().getMaximumPoolSize());
+        executor.getThreadPoolExecutor().setKeepAliveTime(5, TimeUnit.SECONDS);
+        assertEquals(5, executor.getThreadPoolExecutor().getKeepAliveTime(TimeUnit.SECONDS));
+        RoundRobinThreadPoolExecutor rr = (RoundRobinThreadPoolExecutor) executor.getThreadPoolExecutor();
+        assertTrue(rr.isComplete(null));
+        rr.purge();
+        assertEquals(0, rr.getLargestPoolSize());
+    }
+
+    @Test
+    public void doOther() throws Exception {
+        assertThrows(IllegalArgumentException.class, () -> executor.getThreadPoolExecutor().setCorePoolSize(10));
+        executor.getThreadPoolExecutor().setCorePoolSize(1);
+        executor.getThreadPoolExecutor().setCorePoolSize(0);
+        executor.getThreadPoolExecutor().setMaximumPoolSize(10);
+        executor.getThreadPoolExecutor().setCorePoolSize(1);
+        assertEquals(1, executor.getThreadPoolExecutor().getCorePoolSize());
+        executor.getThreadPoolExecutor().prestartAllCoreThreads();
+        executor.getThreadPoolExecutor().allowCoreThreadTimeOut(true);
+        assertTrue(executor.getThreadPoolExecutor().allowsCoreThreadTimeOut());
+        RoundRobinThreadPoolExecutor rr = (RoundRobinThreadPoolExecutor) executor.getThreadPoolExecutor();
+        rr.prestartAllCoreThreads();
+        rr.prestartCoreThread();
+        System.out.println(rr.toString());
+        rr.getTaskCount();
+        rr.ensurePrestart();
+        Callable task = new TestCallable(1);
+        ListenableFuture<?> future = executor.submitListenable("AAA", task);
     }
 
     @Test
@@ -84,15 +151,6 @@ class RoundRobinThreadPoolTaskExecutorTest {
     }
 
     @Test
-    public void submitFailingRunnable() throws Exception {
-        TestTask task = new TestTask(0);
-        Future<?> future = executor.submit(task);
-        assertThatExceptionOfType(ExecutionException.class).isThrownBy(() ->
-                future.get(1000, TimeUnit.MILLISECONDS));
-        assertThat(future.isDone()).isTrue();
-    }
-
-    @Test
     public void submitRunnableWithGetAfterShutdown() throws Exception {
         Future<?> future1 = ((RoundRobinThreadPoolTaskExecutor) executor).submitWithCategory("CAT", new TestCallable(-1));
         Future<?> future2 = ((RoundRobinThreadPoolTaskExecutor) executor).submitWithCategory("CAT", new TestCallable(-1));
@@ -101,7 +159,27 @@ class RoundRobinThreadPoolTaskExecutorTest {
             future1.get(1000, TimeUnit.MILLISECONDS);
             future2.get(1000, TimeUnit.MILLISECONDS);
         });
+        RoundRobinThreadPoolExecutor ex = (RoundRobinThreadPoolExecutor) executor.getThreadPoolExecutor();
+        assertTrue(ex.isStopped());
+        assertTrue(executor.getThreadPoolExecutor().isShutdown());
+        assertTrue(executor.getThreadPoolExecutor().isTerminated());
+        assertFalse(executor.getThreadPoolExecutor().isTerminating());
     }
+
+    @Test
+    public void testSetThreadFactory() {
+        RoundRobinThreadPoolExecutor ex = (RoundRobinThreadPoolExecutor) executor.getThreadPoolExecutor();
+        assertThrows(NullPointerException.class, () -> ex.setThreadFactory(null));
+        SimpleThreadFactory f = new SimpleThreadFactory();
+        ex.setThreadFactory(f);
+        assertEquals(ex.getThreadFactory().getClass(), SimpleThreadFactory.class);
+    }
+
+    class SimpleThreadFactory implements ThreadFactory {
+        public Thread newThread(Runnable r) {
+            return new Thread(r);
+        }
+     }
 
     @Test
     public void submitFailingListenableRunnable() throws Exception {

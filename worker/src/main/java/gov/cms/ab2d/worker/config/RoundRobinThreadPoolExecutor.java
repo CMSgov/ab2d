@@ -21,10 +21,6 @@ public class RoundRobinThreadPoolExecutor extends ThreadPoolExecutor {
     private static final int TIDYING = 2 << COUNT_BITS;
     private static final int TERMINATED = 3 << COUNT_BITS;
 
-    private static int runStateOf(int c) {
-        return c & ~COUNT_MASK;
-    }
-
     private static int workerCountOf(int c) {
         return c & COUNT_MASK;
     }
@@ -305,8 +301,9 @@ public class RoundRobinThreadPoolExecutor extends ThreadPoolExecutor {
         final ReentrantLock mainLock = this.mainLock;
         mainLock.lock();
         try {
-            if (w != null)
+            if (w != null) {
                 workers.remove(w);
+            }
             decrementWorkerCount();
             tryTerminate();
         } finally {
@@ -501,7 +498,7 @@ public class RoundRobinThreadPoolExecutor extends ThreadPoolExecutor {
     /**
      * Used by ScheduledThreadPoolExecutor.
      */
-    boolean isStopped() {
+    public boolean isStopped() {
         return runStateAtLeast(ctl.get(), STOP);
     }
 
@@ -532,12 +529,13 @@ public class RoundRobinThreadPoolExecutor extends ThreadPoolExecutor {
     }
 
     @Deprecated(since = "9")
-    protected void finalize() {
+    public void finalize() {
     }
 
     public void setThreadFactory(ThreadFactory threadFactory) {
-        if (threadFactory == null)
+        if (threadFactory == null) {
             throw new NullPointerException();
+        }
         this.threadFactory = threadFactory;
     }
 
@@ -584,7 +582,7 @@ public class RoundRobinThreadPoolExecutor extends ThreadPoolExecutor {
                 addWorker(null, true);
     }
 
-    void ensurePrestart() {
+    public void ensurePrestart() {
         int wc = workerCountOf(ctl.get());
         if (wc < corePoolSize)
             addWorker(null, true);
