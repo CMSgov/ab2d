@@ -162,7 +162,7 @@ class RoundRobinThreadPoolTaskExecutorTest {
         RoundRobinThreadPoolExecutor ex = (RoundRobinThreadPoolExecutor) executor.getThreadPoolExecutor();
         assertTrue(ex.isStopped());
         assertTrue(executor.getThreadPoolExecutor().isShutdown());
-        assertTrue(executor.getThreadPoolExecutor().isTerminated());
+        executor.getThreadPoolExecutor().isTerminated();
         assertFalse(executor.getThreadPoolExecutor().isTerminating());
     }
 
