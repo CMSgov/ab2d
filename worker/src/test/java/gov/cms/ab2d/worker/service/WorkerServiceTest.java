@@ -4,6 +4,7 @@ import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.JobStatus;
 import gov.cms.ab2d.common.model.Sponsor;
 import gov.cms.ab2d.common.model.User;
+import gov.cms.ab2d.common.repository.CoverageRepository;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.common.repository.SponsorRepository;
 import gov.cms.ab2d.common.repository.UserRepository;
@@ -38,6 +39,7 @@ public class WorkerServiceTest {
 
     @Autowired private JobRepository jobRepository;
     @Autowired private SponsorRepository sponsorRepository;
+    @Autowired private CoverageRepository coverageRepository;
     @Autowired private UserRepository userRepository;
 
     @Container
@@ -47,6 +49,7 @@ public class WorkerServiceTest {
     public void init() {
         jobRepository.deleteAll();
         userRepository.deleteAll();
+        coverageRepository.deleteAll();
         sponsorRepository.deleteAll();
     }
 
