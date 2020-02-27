@@ -5,6 +5,7 @@ import gov.cms.ab2d.api.config.SwaggerConfig;
 import gov.cms.ab2d.api.util.SwaggerConstants;
 import gov.cms.ab2d.common.service.JobService;
 import gov.cms.ab2d.common.model.Job;
+import gov.cms.ab2d.common.service.PropertiesService;
 import io.swagger.annotations.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
@@ -70,6 +71,9 @@ public class BulkDataAccessAPI {
     @Autowired
     private JobService jobService;
 
+    @Autowired
+    private PropertiesService propertiesService;
+
     @ApiOperation(value = BULK_EXPORT,
         authorizations = {
             @Authorization(value = "Authorization", scopes = {
@@ -114,7 +118,7 @@ public class BulkDataAccessAPI {
     }
 
     private void checkIfInMaintenanceMode() {
-        if(true) {
+        if(propertiesService.isInMaintenanceMode()) {
             throw new InMaintenanceModeException("The system is currently in maintenance mode. Please try the request again later.");
         }
     }
@@ -183,6 +187,8 @@ public class BulkDataAccessAPI {
             @RequestParam(required = false, name = "_outputFormat") String outputFormat) {
         MDC.put(CONTRACT_LOG, contractNumber);
         log.info("Received request to export by contractNumber");
+
+        checkIfInMaintenanceMode();
 
         checkIfCurrentUserCanAddJob();
 

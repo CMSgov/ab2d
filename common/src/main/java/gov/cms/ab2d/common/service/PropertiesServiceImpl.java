@@ -30,6 +30,11 @@ public class PropertiesServiceImpl implements PropertiesService {
     private final Type propertiesListType = new TypeToken<List<PropertiesDTO>>() { } .getType();
 
     @Override
+    public boolean isInMaintenanceMode() {
+        return Boolean.valueOf(getPropertiesByKey(MAINTENANCE_MODE).getValue());
+    }
+
+    @Override
     public List<Properties> getAllProperties() {
         return propertiesRepository.findAll();
     }
@@ -73,6 +78,12 @@ public class PropertiesServiceImpl implements PropertiesService {
                 int value = Integer.valueOf(propertiesDTO.getValue());
                 if (value > 3600 || value < 1) {
                     logErrorAndThrowException(PCP_SCALE_TO_MAX_TIME, value);
+                }
+
+                addUpdatedPropertiesToList(propertiesDTOsReturn, propertiesDTO);
+            } else if (propertiesDTO.getKey().equals(MAINTENANCE_MODE)) {
+                if (!propertiesDTO.getValue().equals("true") && !propertiesDTO.getValue().equals("false")) {
+                    logErrorAndThrowException(MAINTENANCE_MODE, propertiesDTO.getValue());
                 }
 
                 addUpdatedPropertiesToList(propertiesDTOsReturn, propertiesDTO);

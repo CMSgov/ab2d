@@ -4,21 +4,36 @@ import com.okta.jwt.AccessTokenVerifier;
 import com.okta.jwt.Jwt;
 import com.okta.jwt.JwtVerificationException;
 import com.okta.jwt.impl.DefaultJwt;
+import gov.cms.ab2d.common.model.Job;
+import gov.cms.ab2d.common.model.JobOutput;
+import gov.cms.ab2d.common.model.JobStatus;
+import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.common.util.DataSetup;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
+import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 
+import static gov.cms.ab2d.common.util.Constants.EOB;
 import static gov.cms.ab2d.common.util.DataSetup.TEST_USER;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
@@ -28,6 +43,9 @@ public class TestUtil {
 
     @Autowired
     private DataSetup dataSetup;
+
+    @Autowired
+    private JobRepository jobRepository;
 
     @MockBean
     AccessTokenVerifier mockAccessTokenVerifier;
@@ -87,6 +105,39 @@ public class TestUtil {
         setupMock();
 
         return buildTokenStr();
+    }
+
+    public String createTestDownloadFile(String tmpJobLocation, Job job, String testFile) throws IOException {
+        Path destination = Paths.get(tmpJobLocation, job.getJobUuid());
+        String destinationStr = destination.toString();
+        Files.createDirectories(destination);
+        InputStream testFileStream = this.getClass().getResourceAsStream("/" + testFile);
+        String testFileStr = IOUtils.toString(testFileStream, "UTF-8");
+        try (PrintWriter out = new PrintWriter(destinationStr + File.separator + testFile)) {
+            out.println(testFileStr);
+        }
+
+        return destinationStr;
+    }
+
+    public Job createTestJobForDownload(String testFile) {
+        Job job = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
+        job.setStatus(JobStatus.SUCCESSFUL);
+        job.setProgress(100);
+        OffsetDateTime expireDate = OffsetDateTime.now().plusDays(100);
+        job.setExpiresAt(expireDate);
+        OffsetDateTime now = OffsetDateTime.now();
+        job.setCompletedAt(now);
+
+
+        JobOutput jobOutput = new JobOutput();
+        jobOutput.setFhirResourceType(EOB);
+        jobOutput.setJob(job);
+        jobOutput.setFilePath(testFile);
+        jobOutput.setError(false);
+        job.getJobOutputs().add(jobOutput);
+
+        return jobRepository.saveAndFlush(job);
     }
 
     private String buildTokenStr() {

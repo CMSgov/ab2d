@@ -549,32 +549,11 @@ public class BulkDataAccessAPIIntegrationTests {
                 .andReturn();
         String statusUrl = mvcResult.getResponse().getHeader("Content-Location");
 
-        Job job = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
-        job.setStatus(JobStatus.SUCCESSFUL);
-        job.setProgress(100);
-        OffsetDateTime expireDate = OffsetDateTime.now().plusDays(100);
-        job.setExpiresAt(expireDate);
-        OffsetDateTime now = OffsetDateTime.now();
-        job.setCompletedAt(now);
-
-        JobOutput jobOutput = new JobOutput();
-        jobOutput.setFhirResourceType(EOB);
-        jobOutput.setJob(job);
-        jobOutput.setFilePath("test.ndjson");
-        jobOutput.setError(false);
-        job.getJobOutputs().add(jobOutput);
-
-        jobRepository.saveAndFlush(job);
-
         String testFile = "test.ndjson";
-        Path destination = Paths.get(tmpJobLocation, job.getJobUuid());
-        String destinationStr = destination.toString();
-        Files.createDirectories(destination);
-        InputStream testFileStream = this.getClass().getResourceAsStream("/" + testFile);
-        String testFileStr = IOUtils.toString(testFileStream, "UTF-8");
-        try (PrintWriter out = new PrintWriter(destinationStr + File.separator + testFile)) {
-            out.println(testFileStr);
-        }
+
+        Job job = testUtil.createTestJobForDownload(testFile);
+
+        String destinationStr = testUtil.createTestDownloadFile(tmpJobLocation, job, testFile);
 
         MvcResult mvcResultStatusCall =
                 this.mockMvc.perform(get(statusUrl).contentType(MediaType.APPLICATION_JSON)
