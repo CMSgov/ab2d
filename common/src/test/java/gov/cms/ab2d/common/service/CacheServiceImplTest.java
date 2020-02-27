@@ -162,6 +162,30 @@ class CacheServiceImplTest {
         assertTrue(activePatientIds.isEmpty());
     }
 
+
+    @Test
+    void when_month_and_contractNumber_is_omitted_clear_all_rows_from_table() {
+        //given multiple months for a specific contract
+        createCoverage(contract, createBeneficiary(), february);
+        createCoverage(contract, createBeneficiary(), march);
+        createCoverage(contract, createBeneficiary(), april);
+        createCoverage(contract, createBeneficiary(), may);
+
+        //given multiple contracts for a specific month
+        createContractAndCoverage(january);
+        createContractAndCoverage(january);
+        createContractAndCoverage(january);
+
+        assertThat(coverageRepo.findAll().size(), is(24));
+
+        //when
+        ClearCoverageCacheRequest request = new ClearCoverageCacheRequest();
+        cut.clearCache(request);
+
+        //then
+        assertTrue(coverageRepo.findAll().isEmpty());
+    }
+
     private void createContractAndCoverage(final int month) {
         final String contractNumber = "CONTRACT_" + Instant.now().getNano();
         final Contract contract = createContract(sponsor, contractNumber);

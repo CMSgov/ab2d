@@ -44,6 +44,9 @@ public class CacheServiceImpl implements CacheService {
         } else if (hasMonth) {
             deletedCount = coverageRepo.deleteInBulk(month);
             log.info("[{}] {} month:[{}]", deletedCount, DEFAULT_MESG, month);
+        } else {
+            deletedCount = coverageRepo.deleteAllInBulk();
+            log.info("[{}] {} all contracts and all months", deletedCount, DEFAULT_MESG, month);
         }
 
         if (deletedCount == 0) {
