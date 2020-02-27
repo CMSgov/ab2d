@@ -42,7 +42,7 @@ public class AdminAPIClearCacheTest {
     private static final PostgreSQLContainer postgreSQLContainer= new AB2DPostgresqlContainer();
 
     @MockBean
-    private ClearCoverageCacheService clearCoverageCacheService;
+    private CacheService cacheService;
 
     @Autowired private MockMvc mockMvc;
     @Autowired private SponsorRepository sponsorRepository;
@@ -80,7 +80,7 @@ public class AdminAPIClearCacheTest {
 
         var errMsg = "Contract not found";
         doThrow(toException(errMsg))
-                .when(clearCoverageCacheService).clearCache(any());
+                .when(cacheService).clearCache(any());
 
         var response = doPost(request);
         verifyResponse(response, errMsg);
@@ -93,7 +93,7 @@ public class AdminAPIClearCacheTest {
         request.setMonth(0);
 
         doThrow(toException(INVALID_MONTH_ERROR))
-                .when(clearCoverageCacheService).clearCache(any());
+                .when(cacheService).clearCache(any());
 
         var response = doPost(request);
         verifyResponse(response, INVALID_MONTH_ERROR);
@@ -106,7 +106,7 @@ public class AdminAPIClearCacheTest {
         request.setMonth(13);
 
         doThrow(toException(INVALID_MONTH_ERROR))
-                .when(clearCoverageCacheService).clearCache(any());
+                .when(cacheService).clearCache(any());
 
         var response = doPost(request);
         verifyResponse(response, INVALID_MONTH_ERROR);

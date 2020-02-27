@@ -39,7 +39,7 @@ public class AdminAPI {
     private ExcelReportProcessor attestationReportProcessor;
 
     @Autowired
-    private ClearCoverageCacheService clearCoverageCacheService;
+    private CacheService cacheService;
 
     @Autowired
     private UserService userService;
@@ -89,7 +89,7 @@ public class AdminAPI {
 
     @PostMapping("/coverage/clearCache")
     public ResponseEntity<Void> clearCoverageCache(@RequestBody ClearCoverageCacheRequest request) {
-        clearCoverageCacheService.clearCache(request);
+        cacheService.clearCache(request);
         return ResponseEntity.noContent().build();
     }
 

@@ -31,11 +31,11 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @SpringBootTest
 @Testcontainers
-class ClearCoverageCacheServiceImplTest {
+class CacheServiceImplTest {
     @Container
     private static final PostgreSQLContainer postgreSQLContainer= new AB2DPostgresqlContainer();
 
-    @Autowired ClearCoverageCacheService cut;
+    @Autowired CacheService cut;
     @Autowired BeneficiaryRepository beneRepo;
     @Autowired CoverageRepository coverageRepo;
     @Autowired ContractRepository contractRepo;

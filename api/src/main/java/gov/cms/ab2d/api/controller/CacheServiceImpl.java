@@ -14,7 +14,7 @@ import java.util.Optional;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class ClearCoverageCacheServiceImpl implements ClearCoverageCacheService {
+public class CacheServiceImpl implements CacheService {
     private static final String DEFAULT_MESG = "rows deleted from coverage table for";
 
     private final ContractRepository contractRepo;

@@ -1,6 +1,6 @@
 package gov.cms.ab2d.api.controller;
 
-public interface ClearCoverageCacheService {
+public interface CacheService {
 
     void clearCache(ClearCoverageCacheRequest request);
 }
