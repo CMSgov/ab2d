@@ -1,5 +1,7 @@
 package gov.cms.ab2d.common.util;
 
+import java.util.Set;
+
 public final class Constants {
 
     private Constants() { }
@@ -29,4 +31,14 @@ public final class Constants {
     public static final String FHIR_PREFIX = "/fhir";
 
     public static final String ADMIN_PREFIX = "/admin";
+
+    // Properties that are allowed to be modified. When adding a new one, add it to a constant, and the Set below
+    public static final String PCP_CORE_POOL_SIZE = "pcp.core.pool.size";
+
+    public static final String PCP_MAX_POOL_SIZE = "pcp.max.pool.size";
+
+    public static final String PCP_SCALE_TO_MAX_TIME = "pcp.scaleToMax.time";
+
+    public static final Set<String> ALLOWED_PROPERTY_NAMES = Set.of(PCP_CORE_POOL_SIZE, PCP_MAX_POOL_SIZE,
+            PCP_SCALE_TO_MAX_TIME);
 }
