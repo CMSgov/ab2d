@@ -47,7 +47,6 @@ public class RoundRobinBlockingQueue<E> implements BlockingQueue<E> {
                 }
             }
             removeAll(toRemove);
-            toRemove.clear();
             if (linkedList.size() == 0) {
                 categoryQueues.remove(entry.getKey());
                 categories.remove(entry.getKey());
@@ -57,7 +56,7 @@ public class RoundRobinBlockingQueue<E> implements BlockingQueue<E> {
 
     // New code to add items
     public boolean add(String category, E e) {
-        log.debug("Adding " + category + " - " + e);
+        log.debug("Adding {} - {}", category, e);
         final ReentrantLock lock = this.lock;
         lock.lock();
         try {

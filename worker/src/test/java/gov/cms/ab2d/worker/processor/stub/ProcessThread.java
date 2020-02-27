@@ -21,7 +21,7 @@ public class ProcessThread {
 
     public String call(String contract) {
         try {
-            //log.info(contract + " - " + Thread.currentThread().getId() + " Started");
+            log.info("{} - Thread {} Started", contract, Thread.currentThread().toString());
             Thread.sleep(300);
             return Thread.currentThread() + " Done";
         } catch (Exception ex) {
