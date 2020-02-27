@@ -7,10 +7,7 @@ import gov.cms.ab2d.api.security.BadJWTTokenException;
 import gov.cms.ab2d.api.security.InvalidAuthHeaderException;
 import gov.cms.ab2d.api.security.MissingTokenException;
 import gov.cms.ab2d.api.security.UserNotEnabledException;
-import gov.cms.ab2d.common.service.InvalidContractException;
-import gov.cms.ab2d.common.service.InvalidJobAccessException;
-import gov.cms.ab2d.common.service.InvalidJobStateTransition;
-import gov.cms.ab2d.common.service.ResourceNotFoundException;
+import gov.cms.ab2d.common.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.hl7.fhir.dstu3.model.OperationOutcome;
@@ -43,7 +40,7 @@ class ErrorHandler extends ResponseEntityExceptionHandler {
     }
 
     // Most errors that are the fault of the client
-    @ExceptionHandler({InvalidUserInputException.class, InvalidJobStateTransition.class})
+    @ExceptionHandler({InvalidUserInputException.class, InvalidJobStateTransition.class, InvalidPropertiesException.class})
     public ResponseEntity<JsonNode> assertionException(final Exception e) throws IOException {
         return generateFHIRError(e, HttpStatus.BAD_REQUEST);
     }
