@@ -63,7 +63,7 @@ public class AdminAPIClearCacheTest {
     }
 
     @Test
-    void when_success_returns_no_content_status() throws Exception {
+    void should_return_no_content_status_on_success() throws Exception {
         ClearCoverageCacheRequest request = new ClearCoverageCacheRequest();
         request.setContractNumber("CONTRACT_NUMBER_0000");
         request.setMonth(1);
@@ -77,13 +77,13 @@ public class AdminAPIClearCacheTest {
     }
 
     @Test
-    void when_contract_not_found_should_throw_error_response() throws Exception {
+    void should_return_400_status_when_contract_not_found() throws Exception {
         ClearCoverageCacheRequest request = new ClearCoverageCacheRequest();
         request.setContractNumber("CONTRACT_NUMBER_0000");
         request.setMonth(1);
 
         var errMsg = "Contract not found";
-        doThrow(new InvalidUserInputException(errMsg))
+        doThrow(toException(errMsg))
                 .when(clearCoverageCacheService).clearCache(any());
 
         mockMvc.perform(post(API_URL)
@@ -100,11 +100,11 @@ public class AdminAPIClearCacheTest {
 
 
     @Test
-    void when_month_is_less_than_1_should_return_error_message() throws Exception {
+    void should_return_400_status_when_month_is_less_than_1() throws Exception {
         ClearCoverageCacheRequest request = new ClearCoverageCacheRequest();
         request.setMonth(0);
 
-        doThrow(new InvalidUserInputException(INVALID_MONTH_ERROR))
+        doThrow(toException(INVALID_MONTH_ERROR))
                 .when(clearCoverageCacheService).clearCache(any());
 
         mockMvc.perform(post(API_URL)
@@ -120,11 +120,11 @@ public class AdminAPIClearCacheTest {
     }
 
     @Test
-    void when_month_is_greater_than_12_should_return_error_message() throws Exception {
+    void should_return_400_status_when_month_is_greater_than_12() throws Exception {
         ClearCoverageCacheRequest request = new ClearCoverageCacheRequest();
         request.setMonth(13);
 
-        doThrow(new InvalidUserInputException(INVALID_MONTH_ERROR))
+        doThrow(toException(INVALID_MONTH_ERROR))
                 .when(clearCoverageCacheService).clearCache(any());
 
         mockMvc.perform(post(API_URL)
@@ -137,6 +137,10 @@ public class AdminAPIClearCacheTest {
                 .andExpect(jsonPath("$.issue[0].severity", is("error")))
                 .andExpect(jsonPath("$.issue[0].code", is("invalid")))
                 .andExpect(jsonPath("$.issue[0].details.text", is(INVALID_MONTH_ERROR)));
+    }
+
+    private InvalidUserInputException toException(String errMsg) {
+        return new InvalidUserInputException(errMsg);
     }
 
     private byte[] toRequestBody(ClearCoverageCacheRequest request) throws Exception {
