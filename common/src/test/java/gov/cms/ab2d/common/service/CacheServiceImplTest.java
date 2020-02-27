@@ -57,6 +57,7 @@ class CacheServiceImplTest {
 
     @BeforeEach
     void setUp() {
+        coverageRepo.deleteAll();
         final int nowNano = Instant.now().getNano();
         contractNumber = "CONTRACT_" + nowNano + "0000";
 
