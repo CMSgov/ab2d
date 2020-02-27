@@ -1,6 +1,8 @@
 package gov.cms.ab2d.api.controller;
 
+import gov.cms.ab2d.common.dto.PropertiesDTO;
 import gov.cms.ab2d.common.dto.UserDTO;
+import gov.cms.ab2d.common.service.PropertiesService;
 import gov.cms.ab2d.common.service.UserService;
 import gov.cms.ab2d.hpms.processing.ExcelReportProcessor;
 import gov.cms.ab2d.hpms.processing.ExcelType;
@@ -14,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.List;
 
 import static gov.cms.ab2d.common.util.Constants.*;
 
@@ -32,6 +35,9 @@ public class AdminAPI {
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private PropertiesService propertiesService;
 
     @ResponseStatus(value = HttpStatus.ACCEPTED)
     @PostMapping("/uploadOrgStructureReport")
@@ -85,5 +91,16 @@ public class AdminAPI {
     @PutMapping("/maintenanceModeOff")
     public ResponseEntity<Void> turnMaintenanceModeOff() {
         return new ResponseEntity<>(null, null, HttpStatus.OK);
+    }
+
+    @GetMapping("/properties")
+    public ResponseEntity<List<PropertiesDTO>> readProperties() {
+        return new ResponseEntity<>(propertiesService.getAllPropertiesDTO(), null, HttpStatus.OK);
+    }
+
+    @ResponseStatus(value = HttpStatus.OK)
+    @PutMapping("/properties")
+    public ResponseEntity<List<PropertiesDTO>> updateProperties(@RequestBody List<PropertiesDTO> propertiesDTOs) {
+        return new ResponseEntity<>(propertiesService.updateProperties(propertiesDTOs), null, HttpStatus.OK);
     }
 }
