@@ -15,6 +15,7 @@ import java.util.Optional;
 @Service
 @RequiredArgsConstructor
 public class ClearCoverageCacheServiceImpl implements ClearCoverageCacheService {
+    private static final String DEFAULT_MESG = "rows deleted from coverage table for";
 
     private final ContractRepository contractRepo;
     private final CoverageRepository coverageRepo;
@@ -22,7 +23,6 @@ public class ClearCoverageCacheServiceImpl implements ClearCoverageCacheService 
     @Override
     @Transactional
     public void clearCache(ClearCoverageCacheRequest request) {
-        var msg = "rows deleted from coverage table for";
 
         final Integer month = getMonth(request);
         final String contractNumber = request.getContractNumber();
@@ -34,17 +34,17 @@ public class ClearCoverageCacheServiceImpl implements ClearCoverageCacheService 
         if (hasMonth && hasContractNumber) {
 
             final int deletedCount = coverageRepo.deleteInBulk(contractId, month);
-            log.info("[{}] {} contractNumber:[{}] and month:[{}]", deletedCount, msg, contractNumber, month);
+            log.info("[{}] {} contractNumber:[{}] and month:[{}]", deletedCount, DEFAULT_MESG, contractNumber, month);
 
         } else if (hasContractNumber) {
 
             final int deletedCount = coverageRepo.deleteInBulk(contractId);
-            log.info("[{}] {} contractNumber:[{}]", deletedCount, msg, contractNumber);
+            log.info("[{}] {} contractNumber:[{}]", deletedCount, DEFAULT_MESG, contractNumber);
 
         } else if (hasMonth) {
 
             final int deletedCount = coverageRepo.deleteInBulk(month);
-            log.info("[{}] {} month:[{}]", deletedCount, msg, month);
+            log.info("[{}] {} month:[{}]", deletedCount, DEFAULT_MESG, month);
 
         }
     }

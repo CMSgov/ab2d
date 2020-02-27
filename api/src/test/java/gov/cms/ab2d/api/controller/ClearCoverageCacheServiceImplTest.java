@@ -1,10 +1,5 @@
 package gov.cms.ab2d.api.controller;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import gov.cms.ab2d.api.controller.ClearCoverageCacheRequest;
-import gov.cms.ab2d.api.controller.ClearCoverageCacheService;
-import gov.cms.ab2d.api.controller.InvalidUserInputException;
 import gov.cms.ab2d.common.model.Beneficiary;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.Coverage;
@@ -14,7 +9,6 @@ import gov.cms.ab2d.common.repository.ContractRepository;
 import gov.cms.ab2d.common.repository.CoverageRepository;
 import gov.cms.ab2d.common.repository.SponsorRepository;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
-import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,15 +29,13 @@ import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-@Slf4j
 @SpringBootTest
 @Testcontainers
 class ClearCoverageCacheServiceImplTest {
     @Container
     private static final PostgreSQLContainer postgreSQLContainer= new AB2DPostgresqlContainer();
 
-    @Autowired
-    ClearCoverageCacheService cut;
+    @Autowired ClearCoverageCacheService cut;
     @Autowired BeneficiaryRepository beneRepo;
     @Autowired CoverageRepository coverageRepo;
     @Autowired ContractRepository contractRepo;
@@ -114,8 +106,6 @@ class ClearCoverageCacheServiceImplTest {
         request.setContractNumber(contractNumber);
         request.setMonth(january);
 
-        log.info("REQUEST SENT : {}", jsonToString(request));
-
         cut.clearCache(request);
 
         final List<String> activePatientIds = coverageRepo.findActivePatientIds(contract.getId(), january);
@@ -135,7 +125,6 @@ class ClearCoverageCacheServiceImplTest {
         //when
         ClearCoverageCacheRequest request = new ClearCoverageCacheRequest();
         request.setContractNumber(contractNumber);
-        log.info("REQUEST SENT : {}", jsonToString(request));
         cut.clearCache(request);
 
         //then
@@ -163,7 +152,6 @@ class ClearCoverageCacheServiceImplTest {
         //when
         ClearCoverageCacheRequest request = new ClearCoverageCacheRequest();
         request.setMonth(january);
-        log.info("REQUEST SENT : {}", jsonToString(request));
         cut.clearCache(request);
 
         //then
@@ -222,17 +210,6 @@ class ClearCoverageCacheServiceImplTest {
         sponsor.setParent(parent);
         parent.getChildren().add(sponsor);
         return sponsorRepo.save(sponsor);
-    }
-
-
-    @Autowired private ObjectMapper om;
-    String jsonToString(Object payload) {
-        try {
-            return om.writeValueAsString(payload);
-        } catch (JsonProcessingException e) {
-            e.printStackTrace();
-            throw new RuntimeException("Could not serielize json to string");
-        }
     }
 
 
