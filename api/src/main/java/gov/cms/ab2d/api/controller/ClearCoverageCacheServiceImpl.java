@@ -31,21 +31,24 @@ public class ClearCoverageCacheServiceImpl implements ClearCoverageCacheService 
         final boolean hasContractNumber = StringUtils.isNotBlank(contractNumber);
         Long contractId = getContractId(contractNumber, hasContractNumber);
 
+        int deletedCount = 0;
         if (hasMonth && hasContractNumber) {
-
-            final int deletedCount = coverageRepo.deleteInBulk(contractId, month);
+            deletedCount = coverageRepo.deleteInBulk(contractId, month);
             log.info("[{}] {} contractNumber:[{}] and month:[{}]", deletedCount, DEFAULT_MESG, contractNumber, month);
 
         } else if (hasContractNumber) {
-
-            final int deletedCount = coverageRepo.deleteInBulk(contractId);
+            deletedCount = coverageRepo.deleteInBulk(contractId);
             log.info("[{}] {} contractNumber:[{}]", deletedCount, DEFAULT_MESG, contractNumber);
 
         } else if (hasMonth) {
-
-            final int deletedCount = coverageRepo.deleteInBulk(month);
+            deletedCount = coverageRepo.deleteInBulk(month);
             log.info("[{}] {} month:[{}]", deletedCount, DEFAULT_MESG, month);
+        }
 
+        if (deletedCount > 0) {
+            log.info("Coverage Cache cleared");
+        } else {
+            log.info("No records found in the coverage cache for the given criteria");
         }
     }
 
