@@ -35,9 +35,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 public class AdminAPIClearCacheTest {
 
     private static final String API_URL = "/api/v1/admin/coverage/clearCache";
+    private static final String INVALID_MONTH_ERROR = "invalid value for month. Month must be between 1 and 12";
 
     @Container
     private static final PostgreSQLContainer postgreSQLContainer= new AB2DPostgresqlContainer();
+
     @MockBean
     private ClearCoverageCacheService clearCoverageCacheService;
 
@@ -50,6 +52,7 @@ public class AdminAPIClearCacheTest {
 
     private String token;
 
+
     @BeforeEach
     void setup() throws JwtVerificationException {
         userRepository.deleteAll();
@@ -60,16 +63,14 @@ public class AdminAPIClearCacheTest {
     }
 
     @Test
-    void when_success_returns_no_content() throws Exception {
+    void when_success_returns_no_content_status() throws Exception {
         ClearCoverageCacheRequest request = new ClearCoverageCacheRequest();
         request.setContractNumber("CONTRACT_NUMBER_0000");
         request.setMonth(1);
 
-        final byte[] content = objectMapper.writeValueAsBytes(request);
-
         mockMvc.perform(post(API_URL)
                 .contentType(APPLICATION_JSON)
-                .content(content)
+                .content(objectMapper.writeValueAsBytes(request))
                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(204));
     }
@@ -80,20 +81,19 @@ public class AdminAPIClearCacheTest {
         request.setContractNumber("CONTRACT_NUMBER_0000");
         request.setMonth(1);
 
-        final byte[] requestBytes = objectMapper.writeValueAsBytes(request);
-
-        var exception = new InvalidUserInputException("Contract not found");
-        doThrow(exception).when(clearCoverageCacheService).clearCache(any());
+        var errMsg = "Contract not found";
+        doThrow(new InvalidUserInputException(errMsg))
+                .when(clearCoverageCacheService).clearCache(any());
 
         mockMvc.perform(post(API_URL)
                 .contentType(APPLICATION_JSON)
-                .content(requestBytes)
+                .content(objectMapper.writeValueAsBytes(request))
                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(400))
                 .andExpect(jsonPath("$.resourceType", is("OperationOutcome")))
                 .andExpect(jsonPath("$.issue[0].severity", is("error")))
                 .andExpect(jsonPath("$.issue[0].code", is("invalid")))
-                .andExpect(jsonPath("$.issue[0].details.text", is("Contract not found")));
+                .andExpect(jsonPath("$.issue[0].details.text", is(errMsg)));
     }
 
 
@@ -102,21 +102,18 @@ public class AdminAPIClearCacheTest {
         ClearCoverageCacheRequest request = new ClearCoverageCacheRequest();
         request.setMonth(0);
 
-        final byte[] requestBytes = objectMapper.writeValueAsBytes(request);
-
-        var errMsg = "invalid value for month. Month must be between 1 and 12";
-        var exception = new InvalidUserInputException(errMsg);
-        doThrow(exception).when(clearCoverageCacheService).clearCache(any());
+        doThrow(new InvalidUserInputException(INVALID_MONTH_ERROR))
+                .when(clearCoverageCacheService).clearCache(any());
 
         mockMvc.perform(post(API_URL)
                 .contentType(APPLICATION_JSON)
-                .content(requestBytes)
+                .content(objectMapper.writeValueAsBytes(request))
                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(400))
                 .andExpect(jsonPath("$.resourceType", is("OperationOutcome")))
                 .andExpect(jsonPath("$.issue[0].severity", is("error")))
                 .andExpect(jsonPath("$.issue[0].code", is("invalid")))
-                .andExpect(jsonPath("$.issue[0].details.text", is(errMsg)));
+                .andExpect(jsonPath("$.issue[0].details.text", is(INVALID_MONTH_ERROR)));
     }
 
     @Test
@@ -124,20 +121,18 @@ public class AdminAPIClearCacheTest {
         ClearCoverageCacheRequest request = new ClearCoverageCacheRequest();
         request.setMonth(13);
 
-        final byte[] requestBytes = objectMapper.writeValueAsBytes(request);
+        doThrow(new InvalidUserInputException(INVALID_MONTH_ERROR))
+                .when(clearCoverageCacheService).clearCache(any());
 
-        var errMsg = "invalid value for month. Month must be between 1 and 12";
-        var exception = new InvalidUserInputException(errMsg);
-        doThrow(exception).when(clearCoverageCacheService).clearCache(any());
         mockMvc.perform(post(API_URL)
                 .contentType(APPLICATION_JSON)
-                .content(requestBytes)
+                .content(objectMapper.writeValueAsBytes(request))
                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(400))
                 .andExpect(jsonPath("$.resourceType", is("OperationOutcome")))
                 .andExpect(jsonPath("$.issue[0].severity", is("error")))
                 .andExpect(jsonPath("$.issue[0].code", is("invalid")))
-                .andExpect(jsonPath("$.issue[0].details.text", is(errMsg)));
+                .andExpect(jsonPath("$.issue[0].details.text", is(INVALID_MONTH_ERROR)));
     }
 
 
