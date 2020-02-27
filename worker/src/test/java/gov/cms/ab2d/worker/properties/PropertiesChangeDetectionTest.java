@@ -46,13 +46,13 @@ public class PropertiesChangeDetectionTest {
 
         propertiesChangeDetection.detectChanges();
 
-        Object valuePCPCorePoolSize = configurableEnvironment.getPropertySources().get("db").getProperty(PCP_CORE_POOL_SIZE);
+        Object valuePCPCorePoolSize = configurableEnvironment.getPropertySources().get("application").getProperty(PCP_CORE_POOL_SIZE);
         Assert.assertEquals(valuePCPCorePoolSize, "25");
 
-        Object valuePCPMaxPoolSize = configurableEnvironment.getPropertySources().get("db").getProperty(PCP_MAX_POOL_SIZE);
+        Object valuePCPMaxPoolSize = configurableEnvironment.getPropertySources().get("application").getProperty(PCP_MAX_POOL_SIZE);
         Assert.assertEquals(valuePCPMaxPoolSize, "300");
 
-        Object valuePCPScaleToMaxTime = configurableEnvironment.getPropertySources().get("db").getProperty(PCP_SCALE_TO_MAX_TIME);
+        Object valuePCPScaleToMaxTime = configurableEnvironment.getPropertySources().get("application").getProperty(PCP_SCALE_TO_MAX_TIME);
         Assert.assertEquals(valuePCPScaleToMaxTime, "1500");
     }
 }
