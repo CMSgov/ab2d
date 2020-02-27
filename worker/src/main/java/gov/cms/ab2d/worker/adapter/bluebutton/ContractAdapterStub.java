@@ -15,8 +15,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static org.apache.commons.lang3.StringUtils.contains;
-
 /**
  * This is a stub implementation that we can use till the BFD API becomes available.
  * The rightmost 3 characters of the contractNumber being passed in must be numeric.
@@ -112,8 +110,7 @@ public class ContractAdapterStub implements ContractAdapter {
                         .limit(rowsToRetrieve)
                         // This is kind of a hack, I know, but this is a mock,
                         // and it's not going to be around for much longer anyway.
-                        .map(row -> contains(serverBaseUrl,
-                                "hhsdevcloud") ? row : "-"
+                        .map(row -> "-"
                                 .concat(row))
                         .collect(Collectors.toList());
 
