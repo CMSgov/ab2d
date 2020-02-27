@@ -7,8 +7,6 @@ import javax.validation.constraints.NotNull;
 @Data
 public class PropertiesDTO {
 
-    private Long id;
-
     @NotNull
     private String key;
 

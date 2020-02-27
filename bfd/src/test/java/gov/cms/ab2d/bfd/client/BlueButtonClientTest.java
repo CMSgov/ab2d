@@ -4,13 +4,14 @@ import ca.uhn.fhir.rest.client.exceptions.FhirClientConnectionException;
 import ca.uhn.fhir.rest.server.exceptions.ResourceNotFoundException;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.eclipse.jetty.http.HttpStatus;
+import org.apache.http.HttpStatus;
 import org.hl7.fhir.dstu3.model.Bundle;
 import org.hl7.fhir.dstu3.model.Patient;
 import org.hl7.fhir.dstu3.model.ResourceType;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockserver.client.MockServerClient;
 import org.mockserver.integration.ClientAndServer;
@@ -35,8 +36,6 @@ import java.util.concurrent.TimeUnit;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.junit.Assert.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
-
-import org.junit.jupiter.api.Test;
 
 
 @ExtendWith(SpringExtension.class)
@@ -78,14 +77,14 @@ public class BlueButtonClientTest {
     @BeforeAll
     public static void setupBFDClient() throws IOException {
         mockServer = ClientAndServer.startClientAndServer(mockServerPort);
-        createMockServerExpectation("/v1/fhir/metadata", HttpStatus.OK_200,
+        createMockServerExpectation("/v1/fhir/metadata", HttpStatus.SC_OK,
                 getRawXML(METADATA_PATH), List
                         .of());
 
         // Ensure timeouts are working.
         createMockServerExpectation(
                 "/v1/fhir/ExplanationOfBenefit",
-                HttpStatus.OK_200,
+                HttpStatus.SC_OK,
                 StringUtils.EMPTY,
                 Collections.singletonList(Parameter.param("patient", TEST_SLOW_PATIENT_ID)),
                 8000
@@ -94,14 +93,14 @@ public class BlueButtonClientTest {
         for (String patientId : TEST_PATIENT_IDS) {
             createMockServerExpectation(
                     "/v1/fhir/Patient/" + patientId,
-                    HttpStatus.OK_200,
+                    HttpStatus.SC_OK,
                     getRawXML(SAMPLE_PATIENT_PATH_PREFIX + patientId + ".xml"),
                     List.of()
             );
 
             createMockServerExpectation(
                     "/v1/fhir/ExplanationOfBenefit",
-                    HttpStatus.OK_200,
+                    HttpStatus.SC_OK,
                     getRawXML(SAMPLE_EOB_PATH_PREFIX + patientId + ".xml"),
                     List.of(Parameter.param("patient", patientId),
                             Parameter.param("excludeSAMHSA", "true"))
@@ -109,7 +108,7 @@ public class BlueButtonClientTest {
 
             createMockServerExpectation(
                     "/v1/fhir/Coverage",
-                    HttpStatus.OK_200,
+                    HttpStatus.SC_OK,
                     getRawXML(SAMPLE_COVERAGE_PATH_PREFIX + patientId + ".xml"),
                     Collections
                             .singletonList(Parameter.param("beneficiary", "Patient/" + patientId))
@@ -118,7 +117,7 @@ public class BlueButtonClientTest {
 
         createMockServerExpectation(
                 "/v1/fhir/Patient",
-                HttpStatus.OK_200,
+                HttpStatus.SC_OK,
                 getRawXML(SAMPLE_PATIENT_PATH_PREFIX + "/bundle/patientbundle.xml"),
                 List.of()
         );
@@ -126,13 +125,13 @@ public class BlueButtonClientTest {
         // Patient that exists, but has no records
         createMockServerExpectation(
                 "/v1/fhir/Patient/" + TEST_NO_RECORD_PATIENT_ID,
-                HttpStatus.OK_200,
+                HttpStatus.SC_OK,
                 getRawXML(SAMPLE_PATIENT_PATH_PREFIX + TEST_NO_RECORD_PATIENT_ID + ".xml"),
                 List.of()
         );
         createMockServerExpectation(
                 "/v1/fhir/ExplanationOfBenefit",
-                HttpStatus.OK_200,
+                HttpStatus.SC_OK,
                 getRawXML(SAMPLE_EOB_PATH_PREFIX + TEST_NO_RECORD_PATIENT_ID + ".xml"),
                 List.of(Parameter.param("patient", TEST_NO_RECORD_PATIENT_ID),
                         Parameter.param("excludeSAMHSA", "true"))
@@ -142,7 +141,7 @@ public class BlueButtonClientTest {
         for (String startIndex : List.of("10", "20", "30")) {
             createMockServerExpectation(
                     "/v1/fhir/ExplanationOfBenefit",
-                    HttpStatus.OK_200,
+                    HttpStatus.SC_OK,
                     getRawXML(SAMPLE_EOB_PATH_PREFIX + TEST_PATIENT_ID + "_" + startIndex + ".xml"),
                     List.of(Parameter.param("patient", TEST_PATIENT_ID),
                             Parameter.param("count", "10"),
@@ -154,7 +153,7 @@ public class BlueButtonClientTest {
         for(String month : CONTRACT_MONTHS) {
             createMockServerExpectation(
                     "/v1/fhir/Patient",
-                    HttpStatus.OK_200,
+                    HttpStatus.SC_OK,
                     getRawXML(SAMPLE_PATIENT_PATH_PREFIX + "/bundle/patientbundle.xml"),
                     List.of(Parameter.param("_has:Coverage.extension",
                             "https://bluebutton.cms.gov/resources/variables/" + month + "|" + CONTRACT))

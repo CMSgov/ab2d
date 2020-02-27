@@ -26,6 +26,6 @@ public class PropertiesInit {
         log.info("Updating properties");
         final Map<String, Object> properties = propertiesService.getAllProperties().stream()
                 .collect(Collectors.toMap(Properties::getKey, Properties::getValue));
-        configurableEnvironment.getPropertySources().addLast(new MapPropertySource("db", properties));
+        configurableEnvironment.getPropertySources().addLast(new MapPropertySource("application", properties));
     }
 }

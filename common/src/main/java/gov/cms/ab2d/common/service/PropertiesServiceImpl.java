@@ -91,8 +91,8 @@ public class PropertiesServiceImpl implements PropertiesService {
 
     private void addUpdatedPropertiesToList(List<PropertiesDTO> propertiesDTOsReturn, PropertiesDTO propertiesDTO) {
         Properties properties = getPropertiesByKey(propertiesDTO.getKey());
-        propertiesDTO.setId(properties.getId());
         Properties mappedProperties = mapping.getModelMapper().map(propertiesDTO, Properties.class);
+        mappedProperties.setId(properties.getId());
         Properties updatedProperties = propertiesRepository.save(mappedProperties);
         propertiesDTOsReturn.add(mapping.getModelMapper().map(updatedProperties, PropertiesDTO.class));
     }

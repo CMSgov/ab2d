@@ -2,13 +2,15 @@ package gov.cms.ab2d.e2etest;
 
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.assertj.core.util.Sets;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.Assert;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.testcontainers.containers.DockerComposeContainer;
 import org.testcontainers.containers.wait.strategy.HostPortWaitStrategy;
@@ -24,14 +26,12 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.zip.GZIPInputStream;
 
-import static gov.cms.ab2d.common.util.Constants.API_PREFIX;
 import static gov.cms.ab2d.e2etest.APIClient.PATIENT_EXPORT_PATH;
 import static java.time.temporal.ChronoUnit.SECONDS;
 import static org.hamcrest.Matchers.matchesPattern;
@@ -41,6 +41,7 @@ import static org.hamcrest.Matchers.matchesPattern;
 @Testcontainers
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @ExtendWith(TestRunnerParameterResolver.class)
+@Slf4j
 public class TestRunner {
 
     private static APIClient apiClient;
@@ -72,11 +73,13 @@ public class TestRunner {
         if(environment.isUsesDockerCompose()) {
             DockerComposeContainer container = new DockerComposeContainer(
                     new File("../docker-compose.yml"))
-                    //.withScaledService("api", 2) // failing now since it's not changing ports
+                    .withEnv(System.getenv())
                     .withScaledService("worker", 2)
                     .withExposedService("db", 5432)
                     .withExposedService("api", 8080, new HostPortWaitStrategy()
-                            .withStartupTimeout(Duration.of(150, SECONDS)));
+                        .withStartupTimeout(Duration.of(150, SECONDS)));
+                    //.withLogConsumer("worker", new Slf4jLogConsumer(log)) // Use to debug, for now there's too much log data
+                    //.withLogConsumer("api", new Slf4jLogConsumer(log));
             container.start();
         }
 
@@ -309,6 +312,10 @@ public class TestRunner {
 
         HttpResponse<String> deleteResponse = secondUserAPIClient.cancelJobRequest(jobUUid);
         Assert.assertEquals(deleteResponse.statusCode(), 403);
+
+        // Cleanup
+        HttpResponse<String> secondDeleteResponse = apiClient.cancelJobRequest(jobUUid);
+        Assert.assertEquals(202, secondDeleteResponse.statusCode());
     }
 
     @Test
@@ -322,6 +329,11 @@ public class TestRunner {
 
         HttpResponse<String> statusResponse = secondUserAPIClient.statusRequest(contentLocationList.iterator().next());
         Assert.assertEquals(statusResponse.statusCode(), 403);
+
+        // Cleanup
+        String jobUUid = JobUtil.getJobUuid(contentLocationList.iterator().next());
+        HttpResponse<String> secondDeleteResponse = apiClient.cancelJobRequest(jobUUid);
+        Assert.assertEquals(202, secondDeleteResponse.statusCode());
     }
 
     private APIClient createSecondUserClient() throws InterruptedException, JSONException, IOException {
