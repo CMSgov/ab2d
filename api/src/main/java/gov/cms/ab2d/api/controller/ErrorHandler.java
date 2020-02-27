@@ -10,6 +10,7 @@ import gov.cms.ab2d.api.security.UserNotEnabledException;
 import gov.cms.ab2d.common.service.InvalidContractException;
 import gov.cms.ab2d.common.service.InvalidJobAccessException;
 import gov.cms.ab2d.common.service.InvalidJobStateTransition;
+import gov.cms.ab2d.common.service.InvalidUserInputException;
 import gov.cms.ab2d.common.service.ResourceNotFoundException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
