@@ -1,5 +1,7 @@
 package gov.cms.ab2d.api.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import gov.cms.ab2d.common.dto.UserDTO;
 import gov.cms.ab2d.common.service.UserService;
 import gov.cms.ab2d.hpms.processing.ExcelReportProcessor;
@@ -10,12 +12,20 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 
-import static gov.cms.ab2d.common.util.Constants.*;
+import static gov.cms.ab2d.common.util.Constants.ADMIN_PREFIX;
+import static gov.cms.ab2d.common.util.Constants.API_PREFIX;
+import static gov.cms.ab2d.common.util.Constants.FILE_LOG;
 
 @Slf4j
 @RestController
@@ -29,6 +39,9 @@ public class AdminAPI {
     @Autowired
     @Qualifier("attestationReportProcessor")
     private ExcelReportProcessor attestationReportProcessor;
+
+    @Autowired
+    private ClearCoverageCacheService clearCoverageCacheService;
 
     @Autowired
     private UserService userService;
@@ -74,4 +87,28 @@ public class AdminAPI {
         UserDTO user = userService.updateUser(userDTO);
         return new ResponseEntity<>(user, null, HttpStatus.OK);
     }
+
+
+    @PostMapping("/coverage/clearCache")
+    public ResponseEntity<Void> clearCoverageCache(@RequestBody ClearCoverageCacheRequest request) {
+        log.info("######################################################################################");
+        log.info("inside clearCoverageCache() .... ");
+
+        log.info("REQUEST RECEIVED : {}", jsonToString(request));
+        log.info("######################################################################################");
+        clearCoverageCacheService.clearCache(request);
+        return ResponseEntity.noContent().build();
+    }
+
+    @Autowired private ObjectMapper om;
+    String jsonToString(Object payload) {
+        try {
+            return om.writeValueAsString(payload);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+            throw new RuntimeException("Could not serielize json to string");
+        }
+    }
+
+
 }

@@ -1,0 +1,144 @@
+package gov.cms.ab2d.api.controller;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.okta.jwt.JwtVerificationException;
+import gov.cms.ab2d.api.SpringBootApp;
+import gov.cms.ab2d.common.repository.RoleRepository;
+import gov.cms.ab2d.common.repository.SponsorRepository;
+import gov.cms.ab2d.common.repository.UserRepository;
+import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.web.servlet.MockMvc;
+import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
+
+import java.util.List;
+
+import static gov.cms.ab2d.api.util.Constants.ADMIN_ROLE;
+import static org.hamcrest.CoreMatchers.is;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
+import static org.springframework.http.MediaType.APPLICATION_JSON;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+@SpringBootTest(classes = SpringBootApp.class, webEnvironment = SpringBootTest.WebEnvironment.MOCK)
+@AutoConfigureMockMvc
+@Testcontainers
+public class AdminAPIClearCacheTest {
+
+    private static final String API_URL = "/api/v1/admin/coverage/clearCache";
+
+    @Container
+    private static final PostgreSQLContainer postgreSQLContainer= new AB2DPostgresqlContainer();
+    @MockBean
+    private ClearCoverageCacheService clearCoverageCacheService;
+
+    @Autowired private MockMvc mockMvc;
+    @Autowired private SponsorRepository sponsorRepository;
+    @Autowired private UserRepository userRepository;
+    @Autowired private RoleRepository roleRepository;
+    @Autowired private TestUtil testUtil;
+    @Autowired private ObjectMapper objectMapper;
+
+    private String token;
+
+    @BeforeEach
+    void setup() throws JwtVerificationException {
+        userRepository.deleteAll();
+        roleRepository.deleteAll();
+        sponsorRepository.deleteAll();
+
+        token = testUtil.setupToken(List.of(ADMIN_ROLE));
+    }
+
+    @Test
+    void when_success_returns_no_content() throws Exception {
+        ClearCoverageCacheRequest request = new ClearCoverageCacheRequest();
+        request.setContractNumber("CONTRACT_NUMBER_0000");
+        request.setMonth(1);
+
+        final byte[] content = objectMapper.writeValueAsBytes(request);
+
+        mockMvc.perform(post(API_URL)
+                .contentType(APPLICATION_JSON)
+                .content(content)
+                .header("Authorization", "Bearer " + token))
+                .andExpect(status().is(204));
+    }
+
+    @Test
+    void when_contract_not_found_should_throw_error_response() throws Exception {
+        ClearCoverageCacheRequest request = new ClearCoverageCacheRequest();
+        request.setContractNumber("CONTRACT_NUMBER_0000");
+        request.setMonth(1);
+
+        final byte[] requestBytes = objectMapper.writeValueAsBytes(request);
+
+        var exception = new InvalidUserInputException("Contract not found");
+        doThrow(exception).when(clearCoverageCacheService).clearCache(any());
+
+        mockMvc.perform(post(API_URL)
+                .contentType(APPLICATION_JSON)
+                .content(requestBytes)
+                .header("Authorization", "Bearer " + token))
+                .andExpect(status().is(400))
+                .andExpect(jsonPath("$.resourceType", is("OperationOutcome")))
+                .andExpect(jsonPath("$.issue[0].severity", is("error")))
+                .andExpect(jsonPath("$.issue[0].code", is("invalid")))
+                .andExpect(jsonPath("$.issue[0].details.text", is("Contract not found")));
+    }
+
+
+    @Test
+    void when_month_is_less_than_1_should_return_error_message() throws Exception {
+        ClearCoverageCacheRequest request = new ClearCoverageCacheRequest();
+        request.setMonth(0);
+
+        final byte[] requestBytes = objectMapper.writeValueAsBytes(request);
+
+        var errMsg = "invalid value for month. Month must be between 1 and 12";
+        var exception = new InvalidUserInputException(errMsg);
+        doThrow(exception).when(clearCoverageCacheService).clearCache(any());
+
+        mockMvc.perform(post(API_URL)
+                .contentType(APPLICATION_JSON)
+                .content(requestBytes)
+                .header("Authorization", "Bearer " + token))
+                .andExpect(status().is(400))
+                .andExpect(jsonPath("$.resourceType", is("OperationOutcome")))
+                .andExpect(jsonPath("$.issue[0].severity", is("error")))
+                .andExpect(jsonPath("$.issue[0].code", is("invalid")))
+                .andExpect(jsonPath("$.issue[0].details.text", is(errMsg)));
+    }
+
+    @Test
+    void when_month_is_greater_than_12_should_return_error_message() throws Exception {
+        ClearCoverageCacheRequest request = new ClearCoverageCacheRequest();
+        request.setMonth(13);
+
+        final byte[] requestBytes = objectMapper.writeValueAsBytes(request);
+
+        var errMsg = "invalid value for month. Month must be between 1 and 12";
+        var exception = new InvalidUserInputException(errMsg);
+        doThrow(exception).when(clearCoverageCacheService).clearCache(any());
+        mockMvc.perform(post(API_URL)
+                .contentType(APPLICATION_JSON)
+                .content(requestBytes)
+                .header("Authorization", "Bearer " + token))
+                .andExpect(status().is(400))
+                .andExpect(jsonPath("$.resourceType", is("OperationOutcome")))
+                .andExpect(jsonPath("$.issue[0].severity", is("error")))
+                .andExpect(jsonPath("$.issue[0].code", is("invalid")))
+                .andExpect(jsonPath("$.issue[0].details.text", is(errMsg)));
+    }
+
+
+}

@@ -4,6 +4,7 @@ import gov.cms.ab2d.common.model.Beneficiary;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.Coverage;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
@@ -21,5 +22,25 @@ public interface CoverageRepository extends JpaRepository<Coverage, Long> {
     List<String> findActivePatientIds(Long contractId, int month);
 
     Optional<Coverage> findByContractAndBeneficiaryAndPartDMonth(Contract contract, Beneficiary bene, int month);
+
+
+
+    @Modifying
+    @Query(" DELETE FROM Coverage c  " +
+            " WHERE c.partDMonth = :month  ")
+    int deleteInBulk(int month);
+
+    @Modifying
+    @Query(" DELETE FROM Coverage c  " +
+            " WHERE c.contract.id = :contractId  ")
+    int deleteInBulk(Long contractId);
+
+
+    @Modifying
+    @Query(" DELETE FROM Coverage c  " +
+            " WHERE c.contract.id = :contractId  " +
+            "   AND c.partDMonth = :month  ")
+    int deleteInBulk(Long contractId, int month);
+
 
 }
