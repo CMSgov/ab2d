@@ -118,7 +118,7 @@ public class BulkDataAccessAPI {
     }
 
     private void checkIfInMaintenanceMode() {
-        if(propertiesService.isInMaintenanceMode()) {
+        if (propertiesService.isInMaintenanceMode()) {
             throw new InMaintenanceModeException("The system is currently in maintenance mode. Please try the request again later.");
         }
     }
