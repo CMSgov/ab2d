@@ -162,7 +162,7 @@ resource "aws_ecs_task_definition" "api" {
       "name": "ab2d-api",
       "image": "${var.ecr_repo_aws_account}.dkr.ecr.us-east-1.amazonaws.com/ab2d_api:${lower(var.env)}-latest",
       "essential": true,
-      "memory": 2048,
+      "memory": "${ecs_task_def_memory}",
       "portMappings": [
         {
           "containerPort": ${var.container_port},
@@ -218,8 +218,8 @@ resource "aws_ecs_task_definition" "api" {
 JSON
   requires_compatibilities = ["EC2"]
   network_mode = "bridge"
-  cpu = 1024
-  memory = 2048
+  cpu = "${ecs_task_def_cpu}"
+  memory = "${ecs_task_def_memory}"
   execution_role_arn = "arn:aws:iam::${var.aws_account_number}:role/Ab2dInstanceRole"
 }
 

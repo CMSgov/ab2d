@@ -27,6 +27,9 @@ variable "autoscale_group_wait" {}
 variable "node_subnet_ids" {type=list(string)}
 variable "percent_capacity_increase" {default="20"}
 variable "override_task_definition_arn" {default=""}
+variable "ecs_container_def_memory" {}
+variable "ecs_task_def_cpu" {}
+variable "ecs_task_def_memory" {}
 
 # LSH BEGIN
 # variable "docker_repository_url" {}

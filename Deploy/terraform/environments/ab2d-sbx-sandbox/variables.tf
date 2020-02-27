@@ -33,7 +33,11 @@ variable "ami_id" {
   description = "This is meant to be a different value on every new deployment"
 }
 
-variable "ec2_instance_type" {
+variable "ec2_instance_type_api" {
+  default = ""
+}
+
+variable "ec2_instance_type_worker" {
   default = ""
 }
 
@@ -75,16 +79,28 @@ variable "ec2_iam_profile" {
   default = "Ab2dInstanceProfile"
 }
 
-variable "ec2_desired_instance_count" {
-  default = "2"
+variable "ec2_desired_instance_count_api" {
+  default = ""
 }
 
-variable "ec2_minimum_instance_count" {
-  default = "2"
+variable "ec2_minimum_instance_count_api" {
+  default = ""
 }
 
-variable "ec2_maximum_instance_count" {
-  default = "2"
+variable "ec2_maximum_instance_count_api" {
+  default = ""
+}
+
+variable "ec2_desired_instance_count_worker" {
+  default = ""
+}
+
+variable "ec2_minimum_instance_count_worker" {
+  default = ""
+}
+
+variable "ec2_maximum_instance_count_worker" {
+  default = ""
 }
 
 variable "gold_image_name" {
@@ -230,6 +246,30 @@ variable "s3_username_whitelist" {
 variable "current_task_definition_arn" {
   default     = ""
   description = "Please pass this on command line as part of deployment process"
+}
+
+variable "ecs_container_definition_new_memory_api" {
+  default = ""
+}
+
+variable "ecs_task_definition_cpu_api" {
+  default = ""
+}
+
+variable "ecs_task_definition_memory_api" {
+  default = ""
+}
+
+variable "ecs_container_definition_new_memory_worker" {
+  default = ""
+}
+
+variable "ecs_task_definition_cpu_worker" {
+  default = ""
+}
+
+variable "ecs_task_definition_memory_worker" {
+  default = ""
 }
 
 ## SNS specific variables #########################################################################

@@ -28,6 +28,9 @@ variable "max_instances" {}
 variable "autoscale_group_wait" {}
 variable "gold_disk_name" {}
 variable "override_task_definition_arn" {default=""}
+variable "ecs_container_def_memory" {}
+variable "ecs_task_def_cpu" {}
+variable "ecs_task_def_memory" {}
 
 # LSH SKIP FOR NOW BEGIN
 # variable "enterprise-tools-sec-group-id" {}
