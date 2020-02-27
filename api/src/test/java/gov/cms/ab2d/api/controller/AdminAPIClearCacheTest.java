@@ -69,9 +69,10 @@ public class AdminAPIClearCacheTest {
         request.setMonth(1);
 
         mockMvc.perform(post(API_URL)
+                .header("Authorization", "Bearer " + token)
                 .contentType(APPLICATION_JSON)
-                .content(objectMapper.writeValueAsBytes(request))
-                .header("Authorization", "Bearer " + token))
+                .content(toRequestBody(request))
+        )
                 .andExpect(status().is(204));
     }
 
@@ -86,9 +87,10 @@ public class AdminAPIClearCacheTest {
                 .when(clearCoverageCacheService).clearCache(any());
 
         mockMvc.perform(post(API_URL)
+                .header("Authorization", "Bearer " + token)
                 .contentType(APPLICATION_JSON)
-                .content(objectMapper.writeValueAsBytes(request))
-                .header("Authorization", "Bearer " + token))
+                .content(toRequestBody(request))
+        )
                 .andExpect(status().is(400))
                 .andExpect(jsonPath("$.resourceType", is("OperationOutcome")))
                 .andExpect(jsonPath("$.issue[0].severity", is("error")))
@@ -106,9 +108,10 @@ public class AdminAPIClearCacheTest {
                 .when(clearCoverageCacheService).clearCache(any());
 
         mockMvc.perform(post(API_URL)
+                .header("Authorization", "Bearer " + token)
                 .contentType(APPLICATION_JSON)
-                .content(objectMapper.writeValueAsBytes(request))
-                .header("Authorization", "Bearer " + token))
+                .content(toRequestBody(request))
+        )
                 .andExpect(status().is(400))
                 .andExpect(jsonPath("$.resourceType", is("OperationOutcome")))
                 .andExpect(jsonPath("$.issue[0].severity", is("error")))
@@ -125,14 +128,19 @@ public class AdminAPIClearCacheTest {
                 .when(clearCoverageCacheService).clearCache(any());
 
         mockMvc.perform(post(API_URL)
+                .header("Authorization", "Bearer " + token)
                 .contentType(APPLICATION_JSON)
-                .content(objectMapper.writeValueAsBytes(request))
-                .header("Authorization", "Bearer " + token))
+                .content(toRequestBody(request))
+        )
                 .andExpect(status().is(400))
                 .andExpect(jsonPath("$.resourceType", is("OperationOutcome")))
                 .andExpect(jsonPath("$.issue[0].severity", is("error")))
                 .andExpect(jsonPath("$.issue[0].code", is("invalid")))
                 .andExpect(jsonPath("$.issue[0].details.text", is(INVALID_MONTH_ERROR)));
+    }
+
+    private byte[] toRequestBody(ClearCoverageCacheRequest request) throws Exception {
+        return objectMapper.writeValueAsBytes(request);
     }
 
 
