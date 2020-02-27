@@ -1404,8 +1404,30 @@ if [ -n "${BUILD_NEW_IMAGES}" ]; then
   else # assume it is a devops branch and get the latest merge from master into the branch
     echo "NOTE: Assuming this is a DevOps branch that has only DevOps changes."
     echo "Using commit number of latest merge from branch into the current branch as the image version."
-    COMMIT_NUMBER=$(git log --merges | head -n 2 | tail -n 1 | cut -d" " -f 3)
-    IMAGE_VERSION="${CMS_ENV}-latest-${COMMIT_NUMBER}"
+
+    # Determine if branches are the same; an empty result means they are the same
+
+    COMPARE_BRANCH_WITH_MASTER=$(git log \
+      --decorate \
+      --graph \
+      --oneline \
+      --cherry-mark \
+      --boundary master..."${BRANCH}")
+
+    if [ -z "${COMPARE_BRANCH_WITH_MASTER}" ]; then
+
+      # Branches are the same; get "origin/master" commit number
+
+      COMMIT_NUMBER=$(git rev-parse origin/master | cut -c1-7)
+
+    else
+
+      # Branches are different; get the commit number of the latest merge from "origin/master"
+
+      COMMIT_NUMBER=$(git log --merges | head -n 2 | tail -n 1 | cut -d" " -f 3)
+      IMAGE_VERSION="${CMS_ENV}-latest-${COMMIT_NUMBER}"
+
+    fi
   fi
 
   # Build API docker images
