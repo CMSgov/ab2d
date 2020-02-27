@@ -156,5 +156,16 @@ public class AdminAPIMaintenanceModeTests {
                         .andExpect(status().is(200));
 
         Assert.assertTrue(!Files.exists(Paths.get(destinationStr + File.separator + testFile)));
+
+        // Cleanup
+        propertiesDTOs.clear();
+        maintenanceModeDTO.setValue("false");
+        propertiesDTOs.add(maintenanceModeDTO);
+
+        this.mockMvc.perform(
+                put(API_PREFIX + ADMIN_PREFIX + PROPERTIES_URL)
+                        .contentType(MediaType.APPLICATION_JSON).content(mapper.writeValueAsString(propertiesDTOs))
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().is(200));
     }
 }
