@@ -36,6 +36,7 @@ public class AutoScalingServiceTest {
     @Container
     private static final PostgreSQLContainer postgreSQLContainer = new AB2DPostgresqlContainer();
 
+
     @BeforeEach
     public void init() {
         patientProcessorThreadPool.getThreadPoolExecutor().purge();
@@ -90,6 +91,7 @@ public class AutoScalingServiceTest {
         // Then check that there were intermediate pool increases between 3 and MAX_POOL_SIZE.
         // Last metric taken should always be MAX_POOL_SIZE
         assertThat(new ArrayDeque<>(metrics).getLast(), equalTo(MAX_POOL_SIZE));
+
         // There are 3 intermediate metrics and 1 final metric
         assertThat(metrics.size(), greaterThanOrEqualTo(4));
         List<Integer> metricsList = new ArrayList<>(metrics);

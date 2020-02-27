@@ -2,6 +2,9 @@ package gov.cms.ab2d.worker.adapter.bluebutton;
 
 import ca.uhn.fhir.rest.server.exceptions.InvalidRequestException;
 import gov.cms.ab2d.bfd.client.BFDClient;
+import gov.cms.ab2d.common.model.Contract;
+import gov.cms.ab2d.common.repository.ContractRepository;
+import gov.cms.ab2d.worker.service.BeneficiaryService;
 import org.hl7.fhir.dstu3.model.Bundle;
 import org.hl7.fhir.dstu3.model.Bundle.BundleEntryComponent;
 import org.hl7.fhir.dstu3.model.Bundle.BundleLinkComponent;
@@ -14,9 +17,13 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 
+import java.time.Instant;
 import java.time.Month;
 import java.util.Calendar;
+import java.util.Optional;
+import java.util.Set;
 
 import static org.hamcrest.CoreMatchers.endsWith;
 import static org.hamcrest.CoreMatchers.is;
@@ -24,11 +31,9 @@ import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 
 @ExtendWith(MockitoExtension.class)
@@ -36,8 +41,9 @@ class ContractAdapterTest {
 
     private static final String BENEFICIARY_ID = "https://bluebutton.cms.gov/resources/variables/bene_id";
 
-    @Mock
-    private BFDClient client;
+    @Mock BFDClient client;
+    @Mock ContractRepository contractRepository;
+    @Mock BeneficiaryService beneficiaryService;
 
     private ContractAdapter cut;
     private String contractNumber = "S0000";
@@ -47,9 +53,15 @@ class ContractAdapterTest {
 
     @BeforeEach
     void setUp() {
-        cut = new ContractAdapterImpl(client);
+        cut = new ContractAdapterImpl(client, contractRepository, beneficiaryService);
+
         bundle = createBundle();
-        when(client.requestPartDEnrolleesFromServer(anyString(), anyInt())).thenReturn(bundle);
+        lenient().when(client.requestPartDEnrolleesFromServer(anyString(), anyInt())).thenReturn(bundle);
+
+        Contract contract = new Contract();
+        contract.setId(Long.valueOf(Instant.now().getNano()));
+        contract.setContractNumber(contractNumber);
+        when(contractRepository.findContractByContractNumber(anyString())).thenReturn(Optional.of(contract));
     }
 
     @Test
@@ -274,6 +286,52 @@ class ContractAdapterTest {
 
         verify(client, times(1)).requestPartDEnrolleesFromServer(anyString(), anyInt());
         verify(client, never()).requestNextBundleFromServer(Mockito.any(Bundle.class));
+    }
+
+
+    @Test
+    @DisplayName("given patientid rows in db for a specific contract & month, should not call BFD contract-2-bene api")
+    void GivenPatientInLocalDb_ShouldNotCallBfdContractToBeneAPI() {
+        when(beneficiaryService.findPatientIdsInDb(anyLong(), anyInt())).thenReturn(Set.of("ccw_patient_005"));
+        cut.getPatients(contractNumber, Month.JANUARY.getValue());
+
+        verify(client, never()).requestPartDEnrolleesFromServer(anyString(), anyInt());
+        verify(beneficiaryService, never()).storeBeneficiaries(anyLong(), anySet(), anyInt());
+    }
+
+
+    @Test
+    @DisplayName("given patient count > cachingThreshold, should cache beneficiary data")
+    void GivenPatientCountGreaterThanCachingThreshold_ShouldCacheBeneficiaryData() {
+        var entries = bundle.getEntry();
+        entries.add(createBundleEntry("ccw_patient_001"));
+        entries.add(createBundleEntry("ccw_patient_002"));
+        entries.add(createBundleEntry("ccw_patient_003"));
+        entries.add(createBundleEntry("ccw_patient_004"));
+        entries.add(createBundleEntry("ccw_patient_005"));
+
+        ReflectionTestUtils.setField(cut, "cachingThreshold", 2);
+        cut.getPatients(contractNumber, Month.JANUARY.getValue());
+
+        verify(client).requestPartDEnrolleesFromServer(anyString(), anyInt());
+        verify(beneficiaryService).storeBeneficiaries(anyLong(), anySet(), anyInt());
+    }
+
+    @Test
+    @DisplayName("given patient count < cachingThreshold, should not cache beneficiary data")
+    void GivenPatientCountLessThanCachingThreshold_ShouldNotCacheBeneficiaryData() {
+        var entries = bundle.getEntry();
+        entries.add(createBundleEntry("ccw_patient_001"));
+        entries.add(createBundleEntry("ccw_patient_002"));
+        entries.add(createBundleEntry("ccw_patient_003"));
+        entries.add(createBundleEntry("ccw_patient_004"));
+        entries.add(createBundleEntry("ccw_patient_005"));
+
+        ReflectionTestUtils.setField(cut, "cachingThreshold", 10);
+        cut.getPatients(contractNumber, Month.JANUARY.getValue());
+
+        verify(client).requestPartDEnrolleesFromServer(anyString(), anyInt());
+        verify(beneficiaryService, never()).storeBeneficiaries(anyLong(), anySet(), anyInt());
     }
 
 
