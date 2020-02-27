@@ -131,4 +131,24 @@ public class RoleTests {
                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(403));
     }
+
+    @Test
+    public void testWrongRolePropertiesRetrieval() throws Exception {
+        token = testUtil.setupToken(List.of(SPONSOR_ROLE));
+
+        this.mockMvc.perform(get(API_PREFIX +  ADMIN_PREFIX + "/properties")
+                .contentType(MediaType.APPLICATION_JSON)
+                .header("Authorization", "Bearer " + token))
+                .andExpect(status().is(403));
+    }
+
+    @Test
+    public void testWrongRolePropertiesUpdate() throws Exception {
+        token = testUtil.setupToken(List.of(SPONSOR_ROLE));
+
+        this.mockMvc.perform(put(API_PREFIX +  ADMIN_PREFIX + "/properties")
+                .contentType(MediaType.APPLICATION_JSON)
+                .header("Authorization", "Bearer " + token))
+                .andExpect(status().is(403));
+    }
 }

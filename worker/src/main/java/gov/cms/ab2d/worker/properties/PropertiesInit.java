@@ -14,7 +14,7 @@ public class PropertiesInit {
 
     // Load all of the properties from the database
     public PropertiesInit(PropertiesService propertiesService, ConfigurableEnvironment configurableEnvironment) {
-        log.info("**************Adding properties");
+        log.info("Adding properties");
         final Map<String, Object> properties = propertiesService.getAllProperties().stream()
                 .collect(Collectors.toMap(Properties::getKey, Properties::getValue));
         configurableEnvironment.getPropertySources().addLast(new MapPropertySource("application", properties));
