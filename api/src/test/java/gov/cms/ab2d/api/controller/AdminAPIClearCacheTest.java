@@ -14,6 +14,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -68,11 +69,7 @@ public class AdminAPIClearCacheTest {
         request.setContractNumber("CONTRACT_NUMBER_0000");
         request.setMonth(1);
 
-        mockMvc.perform(post(API_URL)
-                .header("Authorization", "Bearer " + token)
-                .contentType(APPLICATION_JSON)
-                .content(toRequestBody(request))
-        )
+        mockMvc.perform(doPost(request))
                 .andExpect(status().is(204));
     }
 
@@ -86,11 +83,7 @@ public class AdminAPIClearCacheTest {
         doThrow(toException(errMsg))
                 .when(clearCoverageCacheService).clearCache(any());
 
-        mockMvc.perform(post(API_URL)
-                .header("Authorization", "Bearer " + token)
-                .contentType(APPLICATION_JSON)
-                .content(toRequestBody(request))
-        )
+        mockMvc.perform(doPost(request))
                 .andExpect(status().is(400))
                 .andExpect(jsonPath("$.resourceType", is("OperationOutcome")))
                 .andExpect(jsonPath("$.issue[0].severity", is("error")))
@@ -107,11 +100,7 @@ public class AdminAPIClearCacheTest {
         doThrow(toException(INVALID_MONTH_ERROR))
                 .when(clearCoverageCacheService).clearCache(any());
 
-        mockMvc.perform(post(API_URL)
-                .header("Authorization", "Bearer " + token)
-                .contentType(APPLICATION_JSON)
-                .content(toRequestBody(request))
-        )
+        mockMvc.perform(doPost(request))
                 .andExpect(status().is(400))
                 .andExpect(jsonPath("$.resourceType", is("OperationOutcome")))
                 .andExpect(jsonPath("$.issue[0].severity", is("error")))
@@ -127,11 +116,7 @@ public class AdminAPIClearCacheTest {
         doThrow(toException(INVALID_MONTH_ERROR))
                 .when(clearCoverageCacheService).clearCache(any());
 
-        mockMvc.perform(post(API_URL)
-                .header("Authorization", "Bearer " + token)
-                .contentType(APPLICATION_JSON)
-                .content(toRequestBody(request))
-        )
+        mockMvc.perform(doPost(request))
                 .andExpect(status().is(400))
                 .andExpect(jsonPath("$.resourceType", is("OperationOutcome")))
                 .andExpect(jsonPath("$.issue[0].severity", is("error")))
@@ -139,12 +124,19 @@ public class AdminAPIClearCacheTest {
                 .andExpect(jsonPath("$.issue[0].details.text", is(INVALID_MONTH_ERROR)));
     }
 
-    private InvalidUserInputException toException(String errMsg) {
-        return new InvalidUserInputException(errMsg);
+    private MockHttpServletRequestBuilder doPost(ClearCoverageCacheRequest request) throws Exception {
+        return post(API_URL)
+                .header("Authorization", "Bearer " + token)
+                .contentType(APPLICATION_JSON)
+                .content(toRequestBody(request));
     }
 
     private byte[] toRequestBody(ClearCoverageCacheRequest request) throws Exception {
         return objectMapper.writeValueAsBytes(request);
+    }
+
+    private InvalidUserInputException toException(String errMsg) {
+        return new InvalidUserInputException(errMsg);
     }
 
 
