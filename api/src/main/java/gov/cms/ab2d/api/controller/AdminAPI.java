@@ -1,7 +1,5 @@
 package gov.cms.ab2d.api.controller;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import gov.cms.ab2d.common.dto.UserDTO;
 import gov.cms.ab2d.common.service.UserService;
 import gov.cms.ab2d.hpms.processing.ExcelReportProcessor;
@@ -91,23 +89,8 @@ public class AdminAPI {
 
     @PostMapping("/coverage/clearCache")
     public ResponseEntity<Void> clearCoverageCache(@RequestBody ClearCoverageCacheRequest request) {
-        log.info("######################################################################################");
-        log.info("inside clearCoverageCache() .... ");
-
-        log.info("REQUEST RECEIVED : {}", jsonToString(request));
-        log.info("######################################################################################");
         clearCoverageCacheService.clearCache(request);
         return ResponseEntity.noContent().build();
-    }
-
-    @Autowired private ObjectMapper om;
-    String jsonToString(Object payload) {
-        try {
-            return om.writeValueAsString(payload);
-        } catch (JsonProcessingException e) {
-            e.printStackTrace();
-            throw new RuntimeException("Could not serielize json to string");
-        }
     }
 
 
