@@ -1307,7 +1307,15 @@
      --vpc-id=vpc-0c6413ec40c5fdac3 \
      --ssh-username=ec2-user \
      --owner=842420567215 \
-     --ec2-instance-type=m5.xlarge \
+     --ec2_instance_type_api=m5.xlarge \
+     --ec2_instance_type_worker=m5.xlarge \
+     --ec2_instance_type_other=m5.xlarge \
+     --ec2_desired_instance_count_api=1 \
+     --ec2_minimum_instance_count_api=1 \
+     --ec2_maximum_instance_count_api=1 \
+     --ec2_desired_instance_count_worker=1 \
+     --ec2_minimum_instance_count_worker=1 \
+     --ec2_maximum_instance_count_worker=1 \
      --database-secret-datetime=2020-01-02-09-15-01 \
      --use-existing-images \
      --auto-approve
@@ -1326,7 +1334,15 @@
      --vpc-id=vpc-08dbf3fa96684151c \
      --ssh-username=ec2-user \
      --owner=842420567215 \
-     --ec2-instance-type=m5.xlarge \
+     --ec2_instance_type_api=m5.xlarge \
+     --ec2_instance_type_worker=m5.4xlarge \
+     --ec2_instance_type_other=m5.xlarge \
+     --ec2_desired_instance_count_api=2 \
+     --ec2_minimum_instance_count_api=2 \
+     --ec2_maximum_instance_count_api=2 \
+     --ec2_desired_instance_count_worker=2 \
+     --ec2_minimum_instance_count_worker=2 \
+     --ec2_maximum_instance_count_worker=2 \
      --database-secret-datetime=2020-01-02-09-15-01 \
      --build-new-images \
      --auto-approve
@@ -1343,7 +1359,15 @@
      --vpc-id=vpc-08dbf3fa96684151c \
      --ssh-username=ec2-user \
      --owner=842420567215 \
-     --ec2-instance-type=m5.xlarge \
+     --ec2_instance_type_api=m5.xlarge \
+     --ec2_instance_type_worker=m5.4xlarge \
+     --ec2_instance_type_other=m5.xlarge \
+     --ec2_desired_instance_count_api=2 \
+     --ec2_minimum_instance_count_api=2 \
+     --ec2_maximum_instance_count_api=2 \
+     --ec2_desired_instance_count_worker=2 \
+     --ec2_minimum_instance_count_worker=2 \
+     --ec2_maximum_instance_count_worker=2 \
      --database-secret-datetime=2020-01-02-09-15-01 \
      --use-existing-images \
      --auto-approve
@@ -1362,7 +1386,15 @@
      --vpc-id=vpc-0e5d2e88de7f9cad4 \
      --ssh-username=ec2-user \
      --owner=842420567215 \
-     --ec2-instance-type=m5.xlarge \
+     --ec2_instance_type_api=m5.xlarge \
+     --ec2_instance_type_worker=m5.4xlarge \
+     --ec2_instance_type_other=m5.xlarge \
+     --ec2_desired_instance_count_api=2 \
+     --ec2_minimum_instance_count_api=2 \
+     --ec2_maximum_instance_count_api=2 \
+     --ec2_desired_instance_count_worker=2 \
+     --ec2_minimum_instance_count_worker=2 \
+     --ec2_maximum_instance_count_worker=2 \
      --database-secret-datetime=2020-01-02-09-15-01 \
      --build-new-images \
      --auto-approve
@@ -1379,7 +1411,15 @@
      --vpc-id=vpc-0e5d2e88de7f9cad4 \
      --ssh-username=ec2-user \
      --owner=842420567215 \
-     --ec2-instance-type=m5.xlarge \
+     --ec2_instance_type_api=m5.xlarge \
+     --ec2_instance_type_worker=m5.4xlarge \
+     --ec2_instance_type_other=m5.xlarge \
+     --ec2_desired_instance_count_api=2 \
+     --ec2_minimum_instance_count_api=2 \
+     --ec2_maximum_instance_count_api=2 \
+     --ec2_desired_instance_count_worker=2 \
+     --ec2_minimum_instance_count_worker=2 \
+     --ec2_maximum_instance_count_worker=2 \
      --database-secret-datetime=2020-01-02-09-15-01 \
      --use-existing-images \
      --auto-approve
