@@ -106,6 +106,12 @@ public class PropertiesServiceTest {
                 Assert.fail("Received unknown key");
             }
         }
+
+        // Cleanup
+        propertiesDTOs.clear();
+        propertiesDTOMaintenanceMode.setValue("false");
+        propertiesDTOs.add(propertiesDTOMaintenanceMode);
+        propertiesService.updateProperties(propertiesDTOs);
     }
 
     private void validateInvalidPropertyValues(String key, String value) {

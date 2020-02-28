@@ -81,6 +81,7 @@ public class AdminAPI {
         return new ResponseEntity<>(user, null, HttpStatus.OK);
     }
 
+    @ResponseStatus(value = HttpStatus.OK)
     @GetMapping("/properties")
     public ResponseEntity<List<PropertiesDTO>> readProperties() {
         return new ResponseEntity<>(propertiesService.getAllPropertiesDTO(), null, HttpStatus.OK);
