@@ -10,7 +10,7 @@ sections:
   - Overview
   - Setup Windows Linux Subsystem
   - Authentication and Authorization
-  - User the API
+  - Use the API
 ctas:
 
 ---
