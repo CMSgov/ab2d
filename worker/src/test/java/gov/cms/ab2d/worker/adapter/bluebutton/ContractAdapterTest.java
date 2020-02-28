@@ -292,6 +292,7 @@ class ContractAdapterTest {
     @Test
     @DisplayName("given patientid rows in db for a specific contract & month, should not call BFD contract-2-bene api")
     void GivenPatientInLocalDb_ShouldNotCallBfdContractToBeneAPI() {
+        ReflectionTestUtils.setField(cut, "cachingOn", true);
         when(beneficiaryService.findPatientIdsInDb(anyLong(), anyInt())).thenReturn(Set.of("ccw_patient_005"));
         cut.getPatients(contractNumber, Month.JANUARY.getValue());
 
@@ -310,6 +311,7 @@ class ContractAdapterTest {
         entries.add(createBundleEntry("ccw_patient_004"));
         entries.add(createBundleEntry("ccw_patient_005"));
 
+        ReflectionTestUtils.setField(cut, "cachingOn", true);
         ReflectionTestUtils.setField(cut, "cachingThreshold", 2);
         cut.getPatients(contractNumber, Month.JANUARY.getValue());
 

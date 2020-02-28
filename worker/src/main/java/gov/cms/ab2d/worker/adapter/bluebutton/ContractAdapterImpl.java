@@ -1,6 +1,7 @@
 package gov.cms.ab2d.worker.adapter.bluebutton;
 
 import gov.cms.ab2d.bfd.client.BFDClient;
+import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.repository.ContractRepository;
 import gov.cms.ab2d.filter.FilterOutByDate;
 import gov.cms.ab2d.filter.FilterOutByDate.DateRange;
@@ -34,6 +35,9 @@ public class ContractAdapterImpl implements ContractAdapter {
 
     private static final String BENEFICIARY_ID = "https://bluebutton.cms.gov/resources/variables/bene_id";
 
+    @Value("${contract2bene.caching.on}")
+    private boolean cachingOn;
+
     @Value("${contract2bene.caching.threshold:1000}")
     private int cachingThreshold;
 
@@ -48,60 +52,44 @@ public class ContractAdapterImpl implements ContractAdapter {
         var patientDTOs = new ArrayList<PatientDTO>();
 
         var contract = contractRepo.findContractByContractNumber(contractNumber).get();
-        var contractId = contract.getId();
 
         for (var month = 1; month <= currentMonth; month++) {
-
-            Set<String> bfdPatientsIds = beneficiaryService.findPatientIdsInDb(contractId, month);
-            if (bfdPatientsIds.isEmpty()) {
-                // patient ids were not found in local DB given the contractId and currentMonth
-                // call BFD to fetch the data
-
-                bfdPatientsIds = getPatientIdsForMonth(contractNumber, month);
-
-                //if number of benes for this month exceeds cachingThreshold, cache it
-                var beneficiaryCount = bfdPatientsIds.size();
-                if (beneficiaryCount > cachingThreshold) {
-                    beneficiaryService.storeBeneficiaries(contract.getId(), bfdPatientsIds, month);
-                }
-            }
+            var bfdPatientsIds = getPatientsForMonth(contractNumber, contract, month);
 
             var monthDateRange = toDateRange(month);
 
             for (String bfdPatientId : bfdPatientsIds) {
-
-                var optPatient = findPatient(patientDTOs, bfdPatientId);
-                if (optPatient.isPresent()) {
-                    // patient id was already active on this contract in previous month(s)
-                    // So just add this month to the patient's dateRangesUnderContract
-
-                    var patientDTO = optPatient.get();
-                    if (monthDateRange != null) {
-                        patientDTO.getDateRangesUnderContract().add(monthDateRange);
-                    }
-
-                } else {
-                    // new patient id.
-                    // Create a new PatientDTO for this patient
-                    // And then add this month to the patient's dateRangesUnderContract
-
-                    var patientDTO = PatientDTO.builder()
-                            .patientId(bfdPatientId)
-                            .build();
-
-                    if (monthDateRange != null) {
-                        patientDTO.getDateRangesUnderContract().add(monthDateRange);
-                    }
-
-                    patientDTOs.add(patientDTO);
-                }
+                buildPatientDTOs(patientDTOs, monthDateRange, bfdPatientId);
             }
         }
 
-        return GetPatientsByContractResponse.builder()
-                .contractNumber(contractNumber)
-                .patients(patientDTOs)
-                .build();
+        return toGetPatientsByContractResponse(contractNumber, patientDTOs);
+    }
+
+    private Set<String> getPatientsForMonth(String contractNumber, Contract contract, int month) {
+        Set<String> bfdPatientsIds = null;
+
+        if (cachingOn) {
+            bfdPatientsIds = beneficiaryService.findPatientIdsInDb(contract.getId(), month);
+            if (!bfdPatientsIds.isEmpty()) {
+                return bfdPatientsIds;
+            }
+
+            // patient ids were not found in local DB given the contractId and currentMonth
+            // call BFD to fetch the data
+        }
+
+        bfdPatientsIds = getPatientIdsForMonth(contractNumber, month);
+
+        if (cachingOn) {
+            //if number of benes for this month exceeds cachingThreshold, cache it
+            var beneficiaryCount = bfdPatientsIds.size();
+            if (beneficiaryCount > cachingThreshold) {
+                beneficiaryService.storeBeneficiaries(contract.getId(), bfdPatientsIds, month);
+            }
+        }
+
+        return bfdPatientsIds;
     }
 
 
@@ -167,11 +155,41 @@ public class ContractAdapterImpl implements ContractAdapter {
         return patient.getIdentifier().stream()
                 .filter(identifier -> isBeneficiaryId(identifier))
                 .map(Identifier::getValue)
-                .findFirst().orElse(null);
+                .findFirst()
+                .orElse(null);
     }
 
     private boolean isBeneficiaryId(Identifier identifier) {
         return identifier.getSystem().equalsIgnoreCase(BENEFICIARY_ID);
+    }
+
+
+    private void buildPatientDTOs(ArrayList<PatientDTO> patientDTOs, DateRange monthDateRange, String bfdPatientId) {
+        var optPatient = findPatient(patientDTOs, bfdPatientId);
+        if (optPatient.isPresent()) {
+            // patient id was already active on this contract in previous month(s)
+            // So just add this month to the patient's dateRangesUnderContract
+
+            var patientDTO = optPatient.get();
+            if (monthDateRange != null) {
+                patientDTO.getDateRangesUnderContract().add(monthDateRange);
+            }
+
+        } else {
+            // new patient id.
+            // Create a new PatientDTO for this patient
+            // And then add this month to the patient's dateRangesUnderContract
+
+            var patientDTO = PatientDTO.builder()
+                    .patientId(bfdPatientId)
+                    .build();
+
+            if (monthDateRange != null) {
+                patientDTO.getDateRangesUnderContract().add(monthDateRange);
+            }
+
+            patientDTOs.add(patientDTO);
+        }
     }
 
 
@@ -206,5 +224,14 @@ public class ContractAdapterImpl implements ContractAdapter {
 
         return dateRange;
     }
+
+
+    private GetPatientsByContractResponse toGetPatientsByContractResponse(String contractNumber, ArrayList<PatientDTO> patientDTOs) {
+        return GetPatientsByContractResponse.builder()
+                .contractNumber(contractNumber)
+                .patients(patientDTOs)
+                .build();
+    }
+
 
 }
