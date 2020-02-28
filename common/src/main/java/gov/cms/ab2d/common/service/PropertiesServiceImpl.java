@@ -105,6 +105,9 @@ public class PropertiesServiceImpl implements PropertiesService {
         Properties mappedProperties = mapping.getModelMapper().map(propertiesDTO, Properties.class);
         mappedProperties.setId(properties.getId());
         Properties updatedProperties = propertiesRepository.save(mappedProperties);
+
+        log.info("Updated property {} with value {}", updatedProperties.getKey(), updatedProperties.getValue());
+
         propertiesDTOsReturn.add(mapping.getModelMapper().map(updatedProperties, PropertiesDTO.class));
     }
 
