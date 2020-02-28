@@ -23,6 +23,8 @@ class PropertiesChangeDetection {
         Map<String, Object> properties = propertiesInit.updatePropertiesFromDatabase();
 
         PropertiesChangedEvent propertiesChangedEvent = new PropertiesChangedEvent(this, properties);
+
+        // All places that rely on properties changing dynamically from the db will need to listen to this event
         applicationEventPublisher.publishEvent(propertiesChangedEvent);
     }
 }

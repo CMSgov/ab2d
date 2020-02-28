@@ -129,6 +129,7 @@ public class AutoScalingServiceImpl implements AutoScalingService, ApplicationLi
         }
     }
 
+    // An event that originates from the PropertiesChangeDetection class
     @Override
     public void onApplicationEvent(PropertiesChangedEvent propertiesChangedEvent) {
         corePoolSize = Integer.parseInt(propertiesChangedEvent.getPropertiesMap().get(PCP_CORE_POOL_SIZE).toString());

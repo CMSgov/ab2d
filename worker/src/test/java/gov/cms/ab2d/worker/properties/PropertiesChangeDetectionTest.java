@@ -66,5 +66,13 @@ public class PropertiesChangeDetectionTest {
 
         Object valuePCPScaleToMaxTime = configurableEnvironment.getPropertySources().get("application").getProperty(PCP_SCALE_TO_MAX_TIME);
         Assert.assertEquals(valuePCPScaleToMaxTime, "1500");
+
+        // Cleanup
+        propertiesCorePoolSize.setValue("10");
+        propertiesRepository.save(propertiesCorePoolSize);
+        propertiesMaxPoolSize.setValue("150");
+        propertiesRepository.save(propertiesMaxPoolSize);
+        propertiesScaleToMaxTime.setValue("900");
+        propertiesRepository.save(propertiesScaleToMaxTime);
     }
 }
