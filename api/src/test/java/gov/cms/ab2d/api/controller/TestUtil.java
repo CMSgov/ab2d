@@ -4,10 +4,12 @@ import com.okta.jwt.AccessTokenVerifier;
 import com.okta.jwt.Jwt;
 import com.okta.jwt.JwtVerificationException;
 import com.okta.jwt.impl.DefaultJwt;
+import gov.cms.ab2d.common.dto.PropertiesDTO;
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.JobOutput;
 import gov.cms.ab2d.common.model.JobStatus;
 import gov.cms.ab2d.common.repository.JobRepository;
+import gov.cms.ab2d.common.service.PropertiesService;
 import gov.cms.ab2d.common.util.DataSetup;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
@@ -34,6 +36,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 import static gov.cms.ab2d.common.util.Constants.EOB;
+import static gov.cms.ab2d.common.util.Constants.MAINTENANCE_MODE;
 import static gov.cms.ab2d.common.util.DataSetup.TEST_USER;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
@@ -46,6 +49,9 @@ public class TestUtil {
 
     @Autowired
     private JobRepository jobRepository;
+
+    @Autowired
+    private PropertiesService propertiesService;
 
     @MockBean
     AccessTokenVerifier mockAccessTokenVerifier;
@@ -138,6 +144,15 @@ public class TestUtil {
         job.getJobOutputs().add(jobOutput);
 
         return jobRepository.saveAndFlush(job);
+    }
+
+    public void turnMaintenanceModeOff() {
+        PropertiesDTO propertiesDTO = new PropertiesDTO();
+        propertiesDTO.setKey(MAINTENANCE_MODE);
+        propertiesDTO.setValue("false");
+        List<PropertiesDTO> propertiesDTOs = new ArrayList<>();
+        propertiesDTOs.add(propertiesDTO);
+        propertiesService.updateProperties(propertiesDTOs);
     }
 
     private String buildTokenStr() {

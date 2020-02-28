@@ -95,6 +95,7 @@ public class BulkDataAccessAPIIntegrationTests {
         roleRepository.deleteAll();
         sponsorRepository.deleteAll();
 
+        testUtil.turnMaintenanceModeOff();
         token = testUtil.setupToken(List.of(SPONSOR_ROLE));
     }
 
