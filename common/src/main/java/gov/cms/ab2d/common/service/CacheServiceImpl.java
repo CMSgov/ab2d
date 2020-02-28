@@ -34,19 +34,19 @@ public class CacheServiceImpl implements CacheService {
 
         int deletedCount = 0;
         if (hasMonth && hasContractNumber) {
-            deletedCount = coverageRepo.deleteInBulk(contractId, month);
+            deletedCount = coverageRepo.deleteByContractIdAndMonth(contractId, month);
             log.info("[{}] {} contractNumber:[{}] and month:[{}]", deletedCount, DEFAULT_MESG, contractNumber, month);
 
         } else if (hasContractNumber) {
-            deletedCount = coverageRepo.deleteInBulk(contractId);
+            deletedCount = coverageRepo.deleteByContractId(contractId);
             log.info("[{}] {} contractNumber:[{}]", deletedCount, DEFAULT_MESG, contractNumber);
 
         } else if (hasMonth) {
-            deletedCount = coverageRepo.deleteInBulk(month);
+            deletedCount = coverageRepo.deleteByMonth(month);
             log.info("[{}] {} month:[{}]", deletedCount, DEFAULT_MESG, month);
         } else {
-            deletedCount = coverageRepo.deleteAllInBulk();
-            log.info("[{}] {} all contracts and all months", deletedCount, DEFAULT_MESG, month);
+            coverageRepo.deleteAll();
+            log.info("Deleted all rows from coverage table");
         }
 
         if (deletedCount == 0) {

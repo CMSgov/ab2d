@@ -26,25 +26,21 @@ public interface CoverageRepository extends JpaRepository<Coverage, Long> {
 
 
     @Modifying
-    @Query(" DELETE FROM Coverage c  ")
-    int deleteAllInBulk();
-
-    @Modifying
     @Query(" DELETE FROM Coverage c  " +
             " WHERE c.partDMonth = :month  ")
-    int deleteInBulk(int month);
+    int deleteByMonth(int month);
 
     @Modifying
     @Query(" DELETE FROM Coverage c  " +
             " WHERE c.contract.id = :contractId  ")
-    int deleteInBulk(Long contractId);
+    int deleteByContractId(Long contractId);
 
 
     @Modifying
     @Query(" DELETE FROM Coverage c  " +
             " WHERE c.contract.id = :contractId  " +
             "   AND c.partDMonth = :month  ")
-    int deleteInBulk(Long contractId, int month);
+    int deleteByContractIdAndMonth(Long contractId, int month);
 
 
 }
