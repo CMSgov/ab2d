@@ -18,7 +18,7 @@ import java.util.concurrent.CountDownLatch;
 
 @Slf4j
 public class TestRunner extends AbstractJavaSamplerClient {
-    private static String FHIR_TYPE = "application/fhir+ndjson";
+    private static final String FHIR_TYPE = "application/fhir+ndjson";
 
     private String[] contractArr;
 

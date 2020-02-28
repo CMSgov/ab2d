@@ -46,7 +46,7 @@ import static org.hamcrest.Matchers.matchesPattern;
 @ExtendWith(TestRunnerParameterResolver.class)
 @Slf4j
 public class TestRunner {
-    private static String FHIR_TYPE = "application/fhir+ndjson";
+    private static final String FHIR_TYPE = "application/fhir+ndjson";
 
     private static APIClient apiClient;
 
@@ -74,24 +74,24 @@ public class TestRunner {
     }
 
     public void init() throws IOException, InterruptedException, JSONException {
-        if(environment.isUsesDockerCompose()) {
-            DockerComposeContainer container = new DockerComposeContainer(
-                    new File("../docker-compose.yml"))
-                    .withEnv(System.getenv())
-                    .withScaledService("worker", 2)
-                    .withExposedService("db", 5432)
-                    .withExposedService("api", 8080, new HostPortWaitStrategy()
-                        .withStartupTimeout(Duration.of(150, SECONDS)));
-                    //.withLogConsumer("worker", new Slf4jLogConsumer(log)) // Use to debug, for now there's too much log data
-                    //.withLogConsumer("api", new Slf4jLogConsumer(log));
-            container.start();
-        }
+//        if(environment.isUsesDockerCompose()) {
+//            DockerComposeContainer container = new DockerComposeContainer(
+//                    new File("../docker-compose.yml"))
+//                    .withEnv(System.getenv())
+//                    .withScaledService("worker", 2)
+//                    .withExposedService("db", 5432)
+//                    .withExposedService("api", 8080, new HostPortWaitStrategy()
+//                        .withStartupTimeout(Duration.of(150, SECONDS)));
+//                    //.withLogConsumer("worker", new Slf4jLogConsumer(log)) // Use to debug, for now there's too much log data
+//                    //.withLogConsumer("api", new Slf4jLogConsumer(log));
+//            container.start();
+//        }
 
         Yaml yaml = new Yaml();
         InputStream inputStream = getClass().getResourceAsStream("/" + environment.getConfigName());
         yamlMap = yaml.load(inputStream);
-        String oktaUrl = yamlMap.get("okta-url");
-        String baseUrl = yamlMap.get("base-url");
+        String oktaUrl = "https://test.idp.idm.cms.gov/oauth2/aus2r7y3gdaFMKBol297/v1/token";
+        String baseUrl = "http://localhost:8080";
         AB2D_API_URL = APIClient.buildAB2DAPIUrl(baseUrl);
 
         String oktaClientId = System.getenv("OKTA_CLIENT_ID");
