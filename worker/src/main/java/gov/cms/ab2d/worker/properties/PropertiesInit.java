@@ -22,10 +22,12 @@ public class PropertiesInit {
     }
 
     // Load all of the properties from the database and insert/overwrite
-    public void updatePropertiesFromDatabase() {
-        log.info("Updating properties");
+    public Map<String, Object> updatePropertiesFromDatabase() {
+        log.debug("Updating properties");
         final Map<String, Object> properties = propertiesService.getAllProperties().stream()
                 .collect(Collectors.toMap(Properties::getKey, Properties::getValue));
         configurableEnvironment.getPropertySources().addLast(new MapPropertySource("application", properties));
+
+        return properties;
     }
 }
