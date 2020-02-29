@@ -117,8 +117,8 @@ resource "aws_security_group" "load_balancer" {
 resource "aws_security_group_rule" "load_balancer_access" {
   type        = "ingress"
   description = "${lower(var.env)} website access"
-  from_port   = "80"
-  to_port     = "80"
+  from_port   = var.host_port
+  to_port     = var.host_port
   protocol    = "tcp"
   cidr_blocks = ["0.0.0.0/0"]
   security_group_id = aws_security_group.load_balancer.id
@@ -249,7 +249,7 @@ resource "aws_lb_target_group" "api" {
     healthy_threshold = 5
     unhealthy_threshold = 2
     timeout = 2
-    path = "/swagger-ui.html"
+    path = "/health"
     interval = 5
   }
 }
@@ -257,7 +257,8 @@ resource "aws_lb_target_group" "api" {
 resource "aws_lb_listener" "api" {
   load_balancer_arn = aws_lb.api.arn
   port = var.host_port
-  protocol = "HTTP"
+  protocol = "${var.alb_listener_protocol}"
+  certificate_arn = "${var.alb_listener_certificate_arn}"
 
   default_action {
     target_group_arn = aws_lb_target_group.api.arn

@@ -338,3 +338,29 @@ variable "new_relic_license_key" {
   default     = ""
   description = "Please pass this on command line and not as a value here"
 }
+
+## ALB specific variables #########################################################################
+
+variable "ecs_task_definition_host_port" {
+  type        = number
+  default     = 80
+  description = "Please pass this on command line and not as a value here"
+}
+
+variable "host_port" {
+  type        = number
+  default     = 80
+  description = "Please pass this on command line and not as a value here"
+}
+
+variable "alb_listener_protocol" {
+  type        = string
+  default     = "HTTP"
+  description = "Please pass this on command line and not as a value here"
+}
+
+variable "alb_listener_certificate_arn" {
+  type        = string
+  default     = ""
+  description = "Please pass this on command line and not as a value here"
+}

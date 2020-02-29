@@ -14,13 +14,14 @@ variable "healthcheck_url" {}
 variable "iam_instance_profile" {}
 variable "iam_role_arn" {}
 
-# LSH BEGIN
-# variable "container_port" {default=3000}
-# variable "host_port" {default=80}
 variable "container_port" {default=8080}
-variable "ecs_task_definition_host_port" {default=80}
-variable "host_port" {default=80}
-# LSH END
+# variable "ecs_task_definition_host_port" {default=443}
+# variable "host_port" {default=443}
+variable "ecs_task_definition_host_port" {type = number}
+variable "host_port" {type = number}
+
+variable "alb_listener_protocol" {type = string}
+variable "alb_listener_certificate_arn" {type = string}
 
 variable "desired_instances" {}
 variable "min_instances" {}

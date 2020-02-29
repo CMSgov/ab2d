@@ -97,6 +97,10 @@ module "api" {
   ecs_container_def_memory      = var.ecs_container_definition_new_memory_api
   ecs_task_def_cpu              = var.ecs_task_definition_cpu_api
   ecs_task_def_memory           = var.ecs_task_definition_memory_api
+  ecs_task_definition_host_port = var.ecs_task_definition_host_port
+  host_port                     = var.host_port
+  alb_listener_protocol         = var.alb_listener_protocol
+  alb_listener_certificate_arn  = var.alb_listener_certificate_arn
 }
 
 # LSH SKIP FOR NOW BEGIN

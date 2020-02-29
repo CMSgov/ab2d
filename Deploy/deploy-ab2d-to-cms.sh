@@ -1861,6 +1861,20 @@ cd terraform/environments/$CMS_ENV
 
 BFD_KEYSTORE_FILE_NAME=$(echo $BFD_KEYSTORE_LOCATION | cut -d"/" -f 6)
 
+# Get load balancer listener protocol, port, and certificate
+
+if [ "$CMS_ENV" == "ab2d-sbx-sandbox" ]; then
+  ALB_LISTENER_PORT=443
+  ALB_LISTENER_PROTOCOL="HTTPS"
+  ALB_LISTENER_CERTIFICATE_ARN=$(aws --region "${REGION}" acm list-certificates \
+    --query "CertificateSummaryList[?DomainName=='sandbox.ab2d.cms.gov'].CertificateArn" \
+    --output text)
+else
+  ALB_LISTENER_PORT=80
+  ALB_LISTENER_PROTOCOL="HTTP"
+  ALB_LISTENER_CERTIFICATE_ARN=""
+fi
+
 # Run automation for API and worker based on auto approve parameter
 
 if [ -z "${AUTOAPPROVE}" ]; then
@@ -1885,6 +1899,10 @@ if [ -z "${AUTOAPPROVE}" ]; then
     --var "image_version=$IMAGE_VERSION" \
     --var "new_relic_app_name=$NEW_RELIC_APP_NAME" \
     --var "new_relic_license_key=$NEW_RELIC_LICENSE_KEY" \
+    --var "ecs_task_definition_host_port=$ALB_LISTENER_PORT" \
+    --var "host_port=$ALB_LISTENER_PORT" \
+    --var "alb_listener_protocol=$ALB_LISTENER_PROTOCOL" \
+    --var "alb_listener_certificate_arn=$ALB_LISTENER_CERTIFICATE_ARN" \
     --target module.api
   
   terraform apply \
@@ -1934,6 +1952,10 @@ else
     --var "image_version=$IMAGE_VERSION" \
     --var "new_relic_app_name=$NEW_RELIC_APP_NAME" \
     --var "new_relic_license_key=$NEW_RELIC_LICENSE_KEY" \
+    --var "ecs_task_definition_host_port=$ALB_LISTENER_PORT" \
+    --var "host_port=$ALB_LISTENER_PORT" \
+    --var "alb_listener_protocol=$ALB_LISTENER_PROTOCOL" \
+    --var "alb_listener_certificate_arn=$ALB_LISTENER_CERTIFICATE_ARN" \
     --target module.api \
     --auto-approve
 
