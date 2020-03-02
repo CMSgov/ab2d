@@ -71,6 +71,7 @@ public class ContractAdapterImpl implements ContractAdapter {
     private boolean getCachingToggle() {
         return propertiesRepo.findByKey("ContractToBeneCachingOn")
                 .map(Properties::getValue)
+                .map(StringUtils::trim)
                 .map(Boolean::valueOf)
                 .orElse(Boolean.FALSE)
                 .booleanValue();

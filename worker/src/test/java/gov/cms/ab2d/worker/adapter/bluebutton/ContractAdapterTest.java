@@ -3,6 +3,7 @@ package gov.cms.ab2d.worker.adapter.bluebutton;
 import ca.uhn.fhir.rest.server.exceptions.InvalidRequestException;
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.model.Contract;
+import gov.cms.ab2d.common.model.Properties;
 import gov.cms.ab2d.common.repository.ContractRepository;
 import gov.cms.ab2d.common.repository.PropertiesRepository;
 import gov.cms.ab2d.worker.service.BeneficiaryService;
@@ -299,14 +300,16 @@ class ContractAdapterTest {
     @Test
     @DisplayName("given patientid rows in db for a specific contract & month, should not call BFD contract-2-bene api")
     void GivenPatientInLocalDb_ShouldNotCallBfdContractToBeneAPI() {
-        ReflectionTestUtils.setField(cut, "cachingOn", true);
         when(beneficiaryService.findPatientIdsInDb(anyLong(), anyInt())).thenReturn(Set.of("ccw_patient_005"));
+
+        when(propertiesRepository.findByKey("ContractToBeneCachingOn"))
+                .thenReturn(Optional.of(createCachingOnProperty()));
+
         cut.getPatients(contractNumber, Month.JANUARY.getValue());
 
         verify(client, never()).requestPartDEnrolleesFromServer(anyString(), anyInt());
         verify(beneficiaryService, never()).storeBeneficiaries(anyLong(), anySet(), anyInt());
     }
-
 
     @Test
     @DisplayName("given patient count > cachingThreshold, should cache beneficiary data")
@@ -318,12 +321,22 @@ class ContractAdapterTest {
         entries.add(createBundleEntry("ccw_patient_004"));
         entries.add(createBundleEntry("ccw_patient_005"));
 
-        ReflectionTestUtils.setField(cut, "cachingOn", true);
         ReflectionTestUtils.setField(cut, "cachingThreshold", 2);
+
+        when(propertiesRepository.findByKey("ContractToBeneCachingOn"))
+                .thenReturn(Optional.of(createCachingOnProperty()));
+
         cut.getPatients(contractNumber, Month.JANUARY.getValue());
 
         verify(client).requestPartDEnrolleesFromServer(anyString(), anyInt());
         verify(beneficiaryService).storeBeneficiaries(anyLong(), anySet(), anyInt());
+    }
+
+    private Properties createCachingOnProperty() {
+        Properties properties = new Properties();
+        properties.setKey("ContractToBeneCachingOn");
+        properties.setValue("true");
+        return properties;
     }
 
     @Test
