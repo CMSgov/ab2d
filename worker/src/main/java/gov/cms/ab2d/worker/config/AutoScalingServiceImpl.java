@@ -135,6 +135,8 @@ public class AutoScalingServiceImpl implements AutoScalingService, ApplicationLi
         corePoolSize = Integer.parseInt(propertiesChangedEvent.getPropertiesMap().get(PCP_CORE_POOL_SIZE).toString());
         maxPoolSize = Integer.parseInt(propertiesChangedEvent.getPropertiesMap().get(PCP_MAX_POOL_SIZE).toString());
         scaleToMaxTime = Double.parseDouble(propertiesChangedEvent.getPropertiesMap().get(PCP_SCALE_TO_MAX_TIME).toString());
+
+        this.executor.setCorePoolSize(corePoolSize);
     }
 
     enum Mode {

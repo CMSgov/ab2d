@@ -1,14 +1,15 @@
 package gov.cms.ab2d.worker.properties;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
 
-
-@Component
+@ConditionalOnProperty(value = "property.change.detection", matchIfMissing = true)
+@Component()
 class PropertiesChangeDetection {
 
     @Autowired
