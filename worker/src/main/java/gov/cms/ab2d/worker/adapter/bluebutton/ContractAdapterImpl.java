@@ -2,7 +2,9 @@ package gov.cms.ab2d.worker.adapter.bluebutton;
 
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.model.Contract;
+import gov.cms.ab2d.common.model.Properties;
 import gov.cms.ab2d.common.repository.ContractRepository;
+import gov.cms.ab2d.common.repository.PropertiesRepository;
 import gov.cms.ab2d.filter.FilterOutByDate;
 import gov.cms.ab2d.filter.FilterOutByDate.DateRange;
 import gov.cms.ab2d.worker.adapter.bluebutton.GetPatientsByContractResponse.PatientDTO;
@@ -35,15 +37,13 @@ public class ContractAdapterImpl implements ContractAdapter {
 
     private static final String BENEFICIARY_ID = "https://bluebutton.cms.gov/resources/variables/bene_id";
 
-    @Value("${contract2bene.caching.on}")
-    private boolean cachingOn;
-
     @Value("${contract2bene.caching.threshold:1000}")
     private int cachingThreshold;
 
     private final BFDClient bfdClient;
     private final ContractRepository contractRepo;
     private final BeneficiaryService beneficiaryService;
+    private final PropertiesRepository propertiesRepo;
 
 
     @Override
@@ -51,10 +51,12 @@ public class ContractAdapterImpl implements ContractAdapter {
 
         var patientDTOs = new ArrayList<PatientDTO>();
 
+        final boolean cachingOn = getCachingToggle();
+
         var contract = contractRepo.findContractByContractNumber(contractNumber).get();
 
         for (var month = 1; month <= currentMonth; month++) {
-            var bfdPatientsIds = getPatientsForMonth(contractNumber, contract, month);
+            var bfdPatientsIds = getPatientsForMonth(contractNumber, contract, month, cachingOn);
 
             var monthDateRange = toDateRange(month);
 
@@ -66,7 +68,15 @@ public class ContractAdapterImpl implements ContractAdapter {
         return toGetPatientsByContractResponse(contractNumber, patientDTOs);
     }
 
-    private Set<String> getPatientsForMonth(String contractNumber, Contract contract, int month) {
+    private boolean getCachingToggle() {
+        return propertiesRepo.findByKey("ContractToBeneCachingOn")
+                .map(Properties::getValue)
+                .map(Boolean::valueOf)
+                .orElse(Boolean.FALSE)
+                .booleanValue();
+    }
+
+    private Set<String> getPatientsForMonth(String contractNumber, Contract contract, int month, boolean cachingOn) {
         Set<String> bfdPatientsIds = null;
 
         if (cachingOn) {

@@ -4,6 +4,7 @@ import ca.uhn.fhir.rest.server.exceptions.InvalidRequestException;
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.repository.ContractRepository;
+import gov.cms.ab2d.common.repository.PropertiesRepository;
 import gov.cms.ab2d.worker.service.BeneficiaryService;
 import org.hl7.fhir.dstu3.model.Bundle;
 import org.hl7.fhir.dstu3.model.Bundle.BundleEntryComponent;
@@ -44,6 +45,7 @@ class ContractAdapterTest {
     @Mock BFDClient client;
     @Mock ContractRepository contractRepository;
     @Mock BeneficiaryService beneficiaryService;
+    @Mock PropertiesRepository propertiesRepository;
 
     private ContractAdapter cut;
     private String contractNumber = "S0000";
@@ -53,7 +55,12 @@ class ContractAdapterTest {
 
     @BeforeEach
     void setUp() {
-        cut = new ContractAdapterImpl(client, contractRepository, beneficiaryService);
+        cut = new ContractAdapterImpl(
+                client,
+                contractRepository,
+                beneficiaryService,
+                propertiesRepository
+        );
 
         bundle = createBundle();
         lenient().when(client.requestPartDEnrolleesFromServer(anyString(), anyInt())).thenReturn(bundle);
