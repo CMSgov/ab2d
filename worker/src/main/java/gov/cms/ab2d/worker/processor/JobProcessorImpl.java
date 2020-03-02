@@ -321,7 +321,7 @@ public class JobProcessorImpl implements JobProcessor {
     }
 
     private boolean isZipSupportOn() {
-        return propertiesService.isToggleOn("ZipSupportToggle");
+        return propertiesService.isToggleOn("ZipSupportOn");
     }
 
     /**
