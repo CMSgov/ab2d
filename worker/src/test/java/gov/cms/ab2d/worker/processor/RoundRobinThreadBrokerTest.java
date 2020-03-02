@@ -58,10 +58,14 @@ class RoundRobinThreadBrokerTest {
         assertFalse(submittedThread1.isDone());
         assertFalse(submittedThread2.isDone());
         assertFalse(submittedThread3.isDone());
+        assertFalse(roundRobinThreadBroker.isContractDone(contract1));
+        assertFalse(roundRobinThreadBroker.isContractDone(contract2));
         Thread.sleep(400);
         assertTrue(submittedThread1.isDone());
         assertTrue(submittedThread2.isDone());
         assertTrue(submittedThread3.isDone());
+        assertTrue(roundRobinThreadBroker.isContractDone(contract1));
+        assertTrue(roundRobinThreadBroker.isContractDone(contract2));
     }
 
     private GetPatientsByContractResponse.PatientDTO getNewPatient(String patientId) {

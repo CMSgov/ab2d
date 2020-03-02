@@ -17,6 +17,7 @@ public class RoundRobinThreadBroker {
     private List<String> contracts = new ArrayList<>();
     private Map<String, List<ThreadRequest>> threadRequests = new HashMap<>();
     private Map<String, List<Future<Void>>> futures = new HashMap<>();
+    private Map<String, Integer> futuresDone = new HashMap<>();
 
     private int currentIndex = 0;
 
@@ -49,13 +50,12 @@ public class RoundRobinThreadBroker {
     }
 
     public synchronized Future<Void> pushThreadFromContract(String contract) {
-        List<ThreadRequest> currentFuture = threadRequests.get(contract);
-        ThreadRequest val = currentFuture.remove(0);
-        if (currentFuture.size() == 0) {
+        List<ThreadRequest> currentRequest = threadRequests.get(contract);
+        ThreadRequest val = currentRequest.remove(0);
+        if (currentRequest.size() == 0) {
             // No more requests so remove contract. We don't have to increment index since we removed the item at the
             // current index
-            threadRequests.remove(currentFuture);
-            contracts.remove(contract);
+            threadRequests.remove(contract);
         } else {
             currentIndex++;
         }
@@ -69,10 +69,10 @@ public class RoundRobinThreadBroker {
     }
 
     public synchronized Future<Void> addNextThread() {
-        if (contracts.isEmpty()) {
+        if (threadRequests.isEmpty()) {
             return null;
         }
-        if (currentIndex >= contracts.size()) {
+        if (currentIndex >= threadRequests.size()) {
             currentIndex = 0;
         }
         String currentContract = contracts.get(currentIndex);
@@ -97,21 +97,15 @@ public class RoundRobinThreadBroker {
     }
 
     public synchronized int getNumberDone(String contract) throws ExecutionException, InterruptedException {
-        List<Future<Void>> contractFutures = futures.get(contract);
-        if (contractFutures == null || contractFutures.isEmpty()) {
+        cleanUpThreads();
+        Integer done = futuresDone.get(contract);
+        if (done == null) {
             return 0;
         }
-        int count = 0;
-        for (Future<Void> f : contractFutures) {
-            if (f.isDone()) {
-                f.get();
-                count++;
-            }
-        }
-        return count;
+        return done;
     }
 
-    public synchronized void cancelContract(String contract) {
+    public synchronized void cancelContract(final String contract) {
         List<ThreadRequest> th = threadRequests.get(contract);
         if (th != null) {
             th.clear();
@@ -120,7 +114,10 @@ public class RoundRobinThreadBroker {
         if (contractFutures == null) {
             return;
         }
-        contractFutures.parallelStream().forEach(future -> future.cancel(false));
+        contractFutures.parallelStream().forEach(future -> {
+            future.cancel(false);
+            addOneDone(contract);
+        });
         futures.remove(contract);
         threadRequests.remove(contract);
     }
@@ -132,14 +129,31 @@ public class RoundRobinThreadBroker {
             for (Future<Void> f : contractFutures) {
                 if (f.isDone() || f.isCancelled()) {
                     contractFutures.remove(f);
+                    addOneDone(entry.getKey());
                 }
             }
             // If all is done and there are no thread requests left, remove the contract
             List<ThreadRequest> contractRequests = threadRequests.get(entry.getKey());
-            if (contractFutures.size() == 0 && (contractRequests != null && contractRequests.size() == 0)) {
+            boolean noMoreRequests = !(contractRequests != null && contractRequests.size() > 0);
+            boolean noMoreFutures = !(contractFutures != null && contractFutures.size() > 0);
+            if (noMoreRequests) {
                 threadRequests.remove(entry.getKey());
+            }
+            if (noMoreFutures) {
                 futures.remove(entry.getKey());
             }
+            if (noMoreFutures && noMoreRequests) {
+                contracts.remove(entry.getKey());
+            }
+        }
+    }
+
+    private void addOneDone(String contract) {
+        Integer val = futuresDone.get(contract);
+        if (val == null) {
+            futuresDone.put(contract, 1);
+        } else {
+            futuresDone.put(contract, val + 1);
         }
     }
 }
