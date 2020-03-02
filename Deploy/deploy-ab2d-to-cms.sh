@@ -2150,6 +2150,10 @@ if [ -z "${AUTOAPPROVE}" ]; then
 
   terraform apply \
     --var "ami_id=$AMI_ID" \
+    --var "ecs_task_definition_host_port=$ALB_LISTENER_PORT" \
+    --var "host_port=$ALB_LISTENER_PORT" \
+    --var "alb_listener_protocol=$ALB_LISTENER_PROTOCOL" \
+    --var "alb_listener_certificate_arn=$ALB_LISTENER_CERTIFICATE_ARN" \
     --target module.cloudwatch
 
 else
@@ -2159,6 +2163,10 @@ else
   terraform apply \
     --target module.cloudwatch \
     --var "ami_id=$AMI_ID" \
+    --var "ecs_task_definition_host_port=$ALB_LISTENER_PORT" \
+    --var "host_port=$ALB_LISTENER_PORT" \
+    --var "alb_listener_protocol=$ALB_LISTENER_PROTOCOL" \
+    --var "alb_listener_certificate_arn=$ALB_LISTENER_CERTIFICATE_ARN" \
     --auto-approve
 
 fi
