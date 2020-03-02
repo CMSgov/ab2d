@@ -103,7 +103,7 @@ public class RoundRobinBlockingQueue<E> implements BlockingQueue<E> {
 
     @Override
     public Iterator<E> iterator() {
-        throw new UnsupportedOperationException("Complicated and probably not needed so unless it is, not implementing");
+        throw new UnsupportedOperationException("Not needed");
     }
 
     @Override
@@ -122,7 +122,7 @@ public class RoundRobinBlockingQueue<E> implements BlockingQueue<E> {
 
     @Override
     public boolean offer(E e, long timeout, TimeUnit unit) {
-        throw new UnsupportedOperationException("Cannot add an item directly on the queue");
+        throw new UnsupportedOperationException("Not needed");
     }
 
     @Override
@@ -156,9 +156,10 @@ public class RoundRobinBlockingQueue<E> implements BlockingQueue<E> {
             lock.unlock();
         }
     }
+
     @Override
     public void put(E e) {
-        throw new UnsupportedOperationException("Cannot put an item directly on the queue");
+        add(e);
     }
 
     public int remainingCapacity() {
@@ -170,7 +171,8 @@ public class RoundRobinBlockingQueue<E> implements BlockingQueue<E> {
         for (Map.Entry<String, LinkedList<E>> entry : categoryQueues.entrySet()) {
             if (entry.getValue().remove(o)) {
                 count--;
-                if (categoryQueues.get(entry.getKey()).isEmpty()) {
+                List entries = categoryQueues.get(entry.getKey());
+                if (entries != null && entries.isEmpty()) {
                     categoryQueues.remove(entry.getKey());
                     categories.remove(entry.getKey());
                 }
@@ -182,42 +184,22 @@ public class RoundRobinBlockingQueue<E> implements BlockingQueue<E> {
 
     @Override
     public boolean containsAll(Collection<?> c) {
-        final ReentrantLock lock = this.lock;
-        lock.lock();
-        try {
-            Optional<Boolean> falseFound = c.stream().map(this::contains).filter(res -> !res).findFirst();
-            if (falseFound.isPresent()) {
-                return false;
-            }
-            return true;
-        } finally {
-            lock.unlock();
-        }
+        throw new UnsupportedOperationException("Not needed");
     }
 
     @Override
     public boolean addAll(Collection<? extends E> c) {
-        throw new UnsupportedOperationException("Cannot put an item directly on the queue");
+        throw new UnsupportedOperationException("Not needed");
     }
 
     @Override
     public boolean removeAll(Collection<?> c) {
-        final ReentrantLock lock = this.lock;
-        lock.lock();
-        try {
-            long falseFound = c.stream().map(this::remove).filter(res -> !res).count();
-            if (falseFound > 0) {
-                return false;
-            }
-            return true;
-        } finally {
-            lock.unlock();
-        }
+        throw new UnsupportedOperationException("Not needed");
     }
 
     @Override
     public boolean retainAll(Collection<?> c) {
-        throw new UnsupportedOperationException("Complicated and probably not needed so unless it is, not implementing");
+        throw new UnsupportedOperationException("Not needed");
     }
 
     public int size() {
@@ -243,12 +225,12 @@ public class RoundRobinBlockingQueue<E> implements BlockingQueue<E> {
     }
 
     public Object[] toArray() {
-        throw new UnsupportedOperationException("Complicated and probably not needed so unless it is, not implementing");
+        throw new UnsupportedOperationException("Not needed");
     }
 
     @Override
     public <T> T[] toArray(T[] a) {
-        throw new UnsupportedOperationException("Complicated and probably not needed so unless it is, not implementing");
+        throw new UnsupportedOperationException("Not needed");
     }
 
     public String toString() {
