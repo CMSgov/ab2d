@@ -71,6 +71,8 @@ class JobProcessorIntegrationTest {
     @Autowired
     private JobOutputRepository jobOutputRepository;
     @Autowired
+    private RoundRobinThreadBroker roundRobinThreadBroker;
+    @Autowired
     @Qualifier("contractAdapterStub")
     private ContractAdapter contractAdapterStub;
     @Autowired
@@ -116,7 +118,7 @@ class JobProcessorIntegrationTest {
         FhirContext fhirContext = FhirContext.forDstu3();
         PatientClaimsProcessor patientClaimsProcessor = new PatientClaimsProcessorImpl(mockBfdClient, fhirContext);
 
-        cut = new JobProcessorImpl(fileService, jobRepository, jobOutputRepository, contractAdapterStub, patientClaimsProcessor,
+        cut = new JobProcessorImpl(fileService, jobRepository, jobOutputRepository, roundRobinThreadBroker, contractAdapterStub,
                 optOutRepository);
         ReflectionTestUtils.setField(cut, "cancellationCheckFrequency", 10);
         ReflectionTestUtils.setField(cut, "efsMount", tmpEfsMountDir.toString());

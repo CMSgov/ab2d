@@ -89,8 +89,8 @@ public class JobProcessorImpl implements JobProcessor {
     private final FileService fileService;
     private final JobRepository jobRepository;
     private final JobOutputRepository jobOutputRepository;
+    private final RoundRobinThreadBroker roundRobinThreadBroker;
     private final ContractAdapter contractAdapter;
-    private final PatientClaimsProcessor patientClaimsProcessor;
     private final OptOutRepository optOutRepository;
 
     /**
@@ -350,7 +350,6 @@ public class JobProcessorImpl implements JobProcessor {
                 helper = new TextStreamHelperImpl(outputDirPath, contractNumber, getRollOverThreshold(), tryLockTimeout);
             }
             int recordsProcessedCount = 0;
-            var futureHandles = new ArrayList<Future<Void>>();
             for (PatientDTO patient : patients) {
                 ++recordsProcessedCount;
 
@@ -361,8 +360,8 @@ public class JobProcessorImpl implements JobProcessor {
                     continue;
                 }
 
-                // Add the thread to process the patient and start the thread
-                futureHandles.add(patientClaimsProcessor.process(patient, helper, contract.getAttestedOn()));
+                // Add the thread to process the patient
+                roundRobinThreadBroker.add(contractNumber, new ThreadRequest(patient, helper, contract.getAttestedOn()));
 
                 // Periodically check if cancelled
                 if (recordsProcessedCount % cancellationCheckFrequency == 0) {
@@ -371,18 +370,18 @@ public class JobProcessorImpl implements JobProcessor {
                     isCancelled = hasJobBeenCancelled(jobUuid);
                     if (isCancelled) {
                         log.warn("Job [{}] has been cancelled. Attempting to stop processing the job shortly ... ", jobUuid);
-                        cancelFuturesInQueue(futureHandles);
+                        roundRobinThreadBroker.cancelContract(contractNumber);
                         break;
                     }
 
-                    processHandles(futureHandles, progressTracker);
+                    processHandles(contractNumber, progressTracker);
                 }
             }
 
             // While there are still patients not being processed, sleep for a bit and check progress
-            while (!futureHandles.isEmpty()) {
+            while (!roundRobinThreadBroker.isContractDone(contractNumber)) {
                 sleep();
-                processHandles(futureHandles, progressTracker);
+                processHandles(contractNumber, progressTracker);
             }
 
             if (isCancelled) {
@@ -416,20 +415,6 @@ public class JobProcessorImpl implements JobProcessor {
                 .filter(byContract -> byContract.getContractNumber().equals(contractNumber))
                 .findFirst()
                 .orElse(null);
-    }
-
-    /**
-     * Cancel threads
-     *
-     * @param futureHandles - the running threads
-     */
-    private void cancelFuturesInQueue(List<Future<Void>> futureHandles) {
-
-        // cancel any futures that have not started processing and are waiting in the queue.
-        futureHandles.parallelStream().forEach(future -> future.cancel(false));
-
-        //At this point, there may be a few futures that are already in progress.
-        //But all the futures that are not yet in progress would be cancelled.
     }
 
     /**
@@ -470,35 +455,26 @@ public class JobProcessorImpl implements JobProcessor {
      * For each thread, check to see if it's done. If it is, remove it from the list of pending
      * threads and increment the number processed
      *
-     * @param futureHandles - the thread futures
      * @param progressTracker - the tracker with updated tracker information
+     * @param contractNumber - the tracker we're checking on
      */
-    private void processHandles(List<Future<Void>> futureHandles, ProgressTracker progressTracker) {
-        Iterator<Future<Void>> iterator = futureHandles.iterator();
-        while (iterator.hasNext()) {
-            var future = iterator.next();
-            if (future.isDone()) {
-                progressTracker.incrementProcessedCount();
-                try {
-                    future.get();
-                } catch (InterruptedException | ExecutionException e) {
-                    analyzeException(futureHandles, progressTracker, e);
-
-                } catch (CancellationException e) {
-                    // This could happen in the rare event that a job was cancelled mid-process.
-                    // due to which the futures in the queue (that were not yet in progress) were cancelled.
-                    // Nothing to be done here
-                    log.warn("CancellationException while calling Future.get() - Job may have been cancelled");
-                }
-                iterator.remove();
-            }
+    private void processHandles(String contractNumber, ProgressTracker progressTracker) {
+        try {
+            progressTracker.setProcessedCount(contractNumber, roundRobinThreadBroker.getNumberDone(contractNumber));
+        } catch (InterruptedException | ExecutionException e) {
+            analyzeException(progressTracker, e, contractNumber);
+        } catch (CancellationException e) {
+            // This could happen in the rare event that a job was cancelled mid-process.
+            // due to which the futures in the queue (that were not yet in progress) were cancelled.
+            // Nothing to be done here
+            log.warn("CancellationException while calling Future.get() - Job may have been cancelled");
         }
 
         // If it's time, update the progress in the DB & logs
         trackProgress(progressTracker);
     }
 
-    private void analyzeException(List<Future<Void>> futureHandles, ProgressTracker progressTracker, Exception e) {
+    private void analyzeException(ProgressTracker progressTracker, Exception e, String contractId) {
         progressTracker.incrementFailureCount();
 
         if (progressTracker.isErrorCountBelowThreshold()) {
@@ -506,7 +482,7 @@ public class JobProcessorImpl implements JobProcessor {
             log.error("exception while processing patient {}", rootCause.getMessage(), rootCause);
             // log exception, but continue processing job as errorCount is below threshold
         } else {
-            cancelFuturesInQueue(futureHandles);
+            roundRobinThreadBroker.cancelContract(contractId);
             log.error("{} out of {} records failed. Stopping job", progressTracker.getFailureCount(), progressTracker.getTotalCount());
             throw new RuntimeException("Too many patient records in the job had failures");
         }

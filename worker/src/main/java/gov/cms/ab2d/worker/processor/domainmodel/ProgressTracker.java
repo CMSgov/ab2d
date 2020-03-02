@@ -6,7 +6,9 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.Singular;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Getter
 @Builder
@@ -16,8 +18,8 @@ public class ProgressTracker {
 
     @Singular
     private final List<GetPatientsByContractResponse> patientsByContracts;
+    Map<String, Integer> amountDoneByContract = new HashMap<>();
     private int totalCount;
-    private int processedCount;
 
     private final int failureThreshold;
     private int failureCount;
@@ -34,8 +36,17 @@ public class ProgressTracker {
     /**
      * Increment the number of patients processed
      */
-    public void incrementProcessedCount() {
-        ++processedCount;
+    public void incrementProcessedCount(String contract) {
+        Integer amountProcessed = amountDoneByContract.get(contract);
+        if (amountProcessed == null) {
+            amountDoneByContract.put(contract, 1);
+        } else {
+            amountDoneByContract.put(contract, 1 + amountProcessed);
+        }
+    }
+
+    public void setProcessedCount(String contract, int amount) {
+        amountDoneByContract.put(contract, amount);
     }
 
     public void incrementFailureCount() {
@@ -57,6 +68,14 @@ public class ProgressTracker {
         return totalCount;
     }
 
+    public int getProcessedCount() {
+        int total = 0;
+        for (Map.Entry<String, Integer> val : amountDoneByContract.entrySet()) {
+            total += val.getValue();
+        }
+        return total;
+    }
+
     /**
      * If it's been a long time (by frequency of processed patients) since we've updated the DB
      *
@@ -64,7 +83,7 @@ public class ProgressTracker {
      * @return true if it's been long enough
      */
     public boolean isTimeToUpdateDatabase(int reportProgressFrequency) {
-        return processedCount - lastDbUpdateCount >= reportProgressFrequency;
+        return getProcessedCount() - lastDbUpdateCount >= reportProgressFrequency;
     }
 
     /**
@@ -74,7 +93,7 @@ public class ProgressTracker {
      * @return true if it's  been long enough
      */
     public boolean isTimeToLog(int reportProgressLogFrequency) {
-        return processedCount - lastLogUpdateCount >= reportProgressLogFrequency;
+        return getProcessedCount() - lastLogUpdateCount >= reportProgressLogFrequency;
     }
 
     /**
@@ -84,8 +103,8 @@ public class ProgressTracker {
      * @return the percent complete
      */
     public int getPercentageCompleted() {
-        final int percentCompleted = (processedCount * 100) / getTotalCount();
-        lastDbUpdateCount = processedCount;
+        final int percentCompleted = (getProcessedCount() * 100) / getTotalCount();
+        lastDbUpdateCount = getProcessedCount();
         return percentCompleted;
     }
 

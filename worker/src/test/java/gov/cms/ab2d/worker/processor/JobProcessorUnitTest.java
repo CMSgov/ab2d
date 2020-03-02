@@ -24,6 +24,7 @@ import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.io.IOException;
@@ -68,7 +69,9 @@ class JobProcessorUnitTest {
     @Mock private JobOutputRepository jobOutputRepository;
     @Mock private OptOutRepository optOutRepository;
     @Mock private ContractAdapter contractAdapter;
-    private PatientClaimsProcessor patientClaimsProcessor = spy(PatientClaimsProcessorStub.class);
+    @Autowired
+    private RoundRobinThreadBroker roundRobinThreadBroker;
+    @Mock private PatientClaimsProcessor patientClaimsProcessor;
 
     private Job job;
     private GetPatientsByContractResponse patientsByContract;
@@ -79,8 +82,8 @@ class JobProcessorUnitTest {
                 fileService,
                 jobRepository,
                 jobOutputRepository,
+                roundRobinThreadBroker,
                 contractAdapter,
-                patientClaimsProcessor,
                 optOutRepository
         );
 
@@ -180,7 +183,7 @@ class JobProcessorUnitTest {
     private void doVerify() {
         verify(fileService).createDirectory(any());
         verify(contractAdapter).getPatients(anyString(), anyInt());
-        verify(patientClaimsProcessor, atLeast(1)).process(any(), any(), any());
+        verify(roundRobinThreadBroker, atLeast(1)).add(any(),  any());
     }
 
     @Test
@@ -224,7 +227,7 @@ class JobProcessorUnitTest {
 
         verify(fileService).createDirectory(any());
         verify(contractAdapter).getPatients(anyString(), anyInt());
-        verify(patientClaimsProcessor, never()).process(any(), any(), any());
+        verify(roundRobinThreadBroker, never()).add(any(), any());
     }
 
     @Test
@@ -256,7 +259,7 @@ class JobProcessorUnitTest {
 
         verify(fileService, times(2)).createDirectory(any());
         verify(contractAdapter).getPatients(anyString(), anyInt());
-        verify(patientClaimsProcessor, atLeast(1)).process(any(), any(), any());
+        verify(roundRobinThreadBroker, atLeast(1)).add(any(), any());
         verify(jobRepository, atLeastOnce()).updatePercentageCompleted(anyString(), anyInt());
     }
 
