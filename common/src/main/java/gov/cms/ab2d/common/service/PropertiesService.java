@@ -14,4 +14,6 @@ public interface PropertiesService {
     Properties getPropertiesByKey(String key);
 
     List<PropertiesDTO> updateProperties(List<PropertiesDTO> propertiesDTOs);
+
+    boolean isToggleOn(String toggleName);
 }

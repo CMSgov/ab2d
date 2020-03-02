@@ -3,9 +3,8 @@ package gov.cms.ab2d.worker.adapter.bluebutton;
 import ca.uhn.fhir.rest.server.exceptions.InvalidRequestException;
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.model.Contract;
-import gov.cms.ab2d.common.model.Properties;
 import gov.cms.ab2d.common.repository.ContractRepository;
-import gov.cms.ab2d.common.repository.PropertiesRepository;
+import gov.cms.ab2d.common.service.PropertiesService;
 import gov.cms.ab2d.worker.service.BeneficiaryService;
 import org.hl7.fhir.dstu3.model.Bundle;
 import org.hl7.fhir.dstu3.model.Bundle.BundleEntryComponent;
@@ -46,7 +45,7 @@ class ContractAdapterTest {
     @Mock BFDClient client;
     @Mock ContractRepository contractRepository;
     @Mock BeneficiaryService beneficiaryService;
-    @Mock PropertiesRepository propertiesRepository;
+    @Mock PropertiesService propertiesService;
 
     private ContractAdapter cut;
     private String contractNumber = "S0000";
@@ -60,7 +59,7 @@ class ContractAdapterTest {
                 client,
                 contractRepository,
                 beneficiaryService,
-                propertiesRepository
+                propertiesService
         );
 
         bundle = createBundle();
@@ -302,8 +301,8 @@ class ContractAdapterTest {
     void GivenPatientInLocalDb_ShouldNotCallBfdContractToBeneAPI() {
         when(beneficiaryService.findPatientIdsInDb(anyLong(), anyInt())).thenReturn(Set.of("ccw_patient_005"));
 
-        when(propertiesRepository.findByKey("ContractToBeneCachingOn"))
-                .thenReturn(Optional.of(createCachingOnProperty()));
+        when(propertiesService.isToggleOn("ContractToBeneCachingOn"))
+                .thenReturn(true);
 
         cut.getPatients(contractNumber, Month.JANUARY.getValue());
 
@@ -323,8 +322,8 @@ class ContractAdapterTest {
 
         ReflectionTestUtils.setField(cut, "cachingThreshold", 2);
 
-        when(propertiesRepository.findByKey("ContractToBeneCachingOn"))
-                .thenReturn(Optional.of(createCachingOnProperty()));
+        when(propertiesService.isToggleOn("ContractToBeneCachingOn"))
+                .thenReturn(true);
 
         cut.getPatients(contractNumber, Month.JANUARY.getValue());
 
@@ -332,12 +331,6 @@ class ContractAdapterTest {
         verify(beneficiaryService).storeBeneficiaries(anyLong(), anySet(), anyInt());
     }
 
-    private Properties createCachingOnProperty() {
-        Properties properties = new Properties();
-        properties.setKey("ContractToBeneCachingOn");
-        properties.setValue("true");
-        return properties;
-    }
 
     @Test
     @DisplayName("given patient count < cachingThreshold, should not cache beneficiary data")

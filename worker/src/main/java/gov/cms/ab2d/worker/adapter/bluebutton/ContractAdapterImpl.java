@@ -2,9 +2,8 @@ package gov.cms.ab2d.worker.adapter.bluebutton;
 
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.model.Contract;
-import gov.cms.ab2d.common.model.Properties;
 import gov.cms.ab2d.common.repository.ContractRepository;
-import gov.cms.ab2d.common.repository.PropertiesRepository;
+import gov.cms.ab2d.common.service.PropertiesService;
 import gov.cms.ab2d.filter.FilterOutByDate;
 import gov.cms.ab2d.filter.FilterOutByDate.DateRange;
 import gov.cms.ab2d.worker.adapter.bluebutton.GetPatientsByContractResponse.PatientDTO;
@@ -43,7 +42,7 @@ public class ContractAdapterImpl implements ContractAdapter {
     private final BFDClient bfdClient;
     private final ContractRepository contractRepo;
     private final BeneficiaryService beneficiaryService;
-    private final PropertiesRepository propertiesRepo;
+    private final PropertiesService propertiesService;
 
 
     @Override
@@ -51,7 +50,7 @@ public class ContractAdapterImpl implements ContractAdapter {
 
         var patientDTOs = new ArrayList<PatientDTO>();
 
-        final boolean cachingOn = getCachingToggle();
+        final boolean cachingOn = isContractToBeneCachingOn();
 
         var contract = contractRepo.findContractByContractNumber(contractNumber).get();
 
@@ -68,13 +67,8 @@ public class ContractAdapterImpl implements ContractAdapter {
         return toGetPatientsByContractResponse(contractNumber, patientDTOs);
     }
 
-    private boolean getCachingToggle() {
-        return propertiesRepo.findByKey("ContractToBeneCachingOn")
-                .map(Properties::getValue)
-                .map(StringUtils::trim)
-                .map(Boolean::valueOf)
-                .orElse(Boolean.FALSE)
-                .booleanValue();
+    private boolean isContractToBeneCachingOn() {
+        return propertiesService.isToggleOn("ContractToBeneCachingOn");
     }
 
     private Set<String> getPatientsForMonth(String contractNumber, Contract contract, int month, boolean cachingOn) {
