@@ -24,6 +24,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 import javax.sql.DataSource;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ThreadPoolExecutor;
 
@@ -65,7 +66,12 @@ public class WorkerConfig {
 
     @Bean
     public Executor patientProcessorThreadPool() {
-        final ThreadPoolTaskExecutor taskExecutor = new ThreadPoolTaskExecutor();
+        final ThreadPoolTaskExecutor taskExecutor = new ThreadPoolTaskExecutor() {
+            @Override
+            protected BlockingQueue<Runnable> createQueue(int queueCapacity) {
+                return new RoundRobinBlockingQueue<>();
+            }
+        };
         taskExecutor.setCorePoolSize(pcpCorePoolSize);
         // Initially we lock the pool at the minimum size; auto-scaling is done
         // by a separate service.

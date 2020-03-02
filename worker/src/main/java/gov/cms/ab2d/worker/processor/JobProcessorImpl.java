@@ -1,11 +1,7 @@
 package gov.cms.ab2d.worker.processor;
 
-import gov.cms.ab2d.common.model.Contract;
-import gov.cms.ab2d.common.model.Job;
-import gov.cms.ab2d.common.model.JobOutput;
-import gov.cms.ab2d.common.model.JobStatus;
-import gov.cms.ab2d.common.model.OptOut;
-import gov.cms.ab2d.common.model.Sponsor;
+import com.newrelic.api.agent.Trace;
+import gov.cms.ab2d.common.model.*;
 import gov.cms.ab2d.common.repository.JobOutputRepository;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.common.repository.OptOutRepository;
@@ -13,6 +9,7 @@ import gov.cms.ab2d.common.util.Constants;
 import gov.cms.ab2d.worker.adapter.bluebutton.ContractAdapter;
 import gov.cms.ab2d.worker.adapter.bluebutton.GetPatientsByContractResponse;
 import gov.cms.ab2d.worker.adapter.bluebutton.GetPatientsByContractResponse.PatientDTO;
+import gov.cms.ab2d.worker.config.RoundRobinBlockingQueue;
 import gov.cms.ab2d.worker.processor.domainmodel.ContractData;
 import gov.cms.ab2d.worker.processor.domainmodel.ProgressTracker;
 import gov.cms.ab2d.worker.service.FileService;
@@ -48,8 +45,6 @@ import static gov.cms.ab2d.common.service.JobServiceImpl.ZIPFORMAT;
 import static gov.cms.ab2d.common.util.Constants.CONTRACT_LOG;
 import static gov.cms.ab2d.common.util.Constants.EOB;
 import static net.logstash.logback.argument.StructuredArguments.keyValue;
-
-import com.newrelic.api.agent.Trace;
 
 @Slf4j
 @Service
@@ -362,7 +357,9 @@ public class JobProcessorImpl implements JobProcessor {
                 }
 
                 // Add the thread to process the patient and start the thread
+                RoundRobinBlockingQueue.CATEGORY_HOLDER.set(contractNumber);
                 futureHandles.add(patientClaimsProcessor.process(patient, helper, contract.getAttestedOn()));
+                RoundRobinBlockingQueue.CATEGORY_HOLDER.remove();
 
                 // Periodically check if cancelled
                 if (recordsProcessedCount % cancellationCheckFrequency == 0) {
