@@ -32,6 +32,11 @@ public class PropertiesServiceImpl implements PropertiesService {
     private final Type propertiesListType = new TypeToken<List<PropertiesDTO>>() { } .getType();
 
     @Override
+    public boolean isInMaintenanceMode() {
+        return Boolean.valueOf(getPropertiesByKey(MAINTENANCE_MODE).getValue());
+    }
+
+    @Override
     public List<Properties> getAllProperties() {
         return propertiesRepository.findAll();
     }
@@ -78,6 +83,12 @@ public class PropertiesServiceImpl implements PropertiesService {
                 }
 
                 addUpdatedPropertiesToList(propertiesDTOsReturn, propertiesDTO);
+            } else if (propertiesDTO.getKey().equals(MAINTENANCE_MODE)) {
+                if (!propertiesDTO.getValue().equals("true") && !propertiesDTO.getValue().equals("false")) {
+                    logErrorAndThrowException(MAINTENANCE_MODE, propertiesDTO.getValue());
+                }
+
+                addUpdatedPropertiesToList(propertiesDTOsReturn, propertiesDTO);
             }
         }
 
@@ -96,6 +107,9 @@ public class PropertiesServiceImpl implements PropertiesService {
         Properties mappedProperties = mapping.getModelMapper().map(propertiesDTO, Properties.class);
         mappedProperties.setId(properties.getId());
         Properties updatedProperties = propertiesRepository.save(mappedProperties);
+
+        log.info("Updated property {} with value {}", updatedProperties.getKey(), updatedProperties.getValue());
+
         propertiesDTOsReturn.add(mapping.getModelMapper().map(updatedProperties, PropertiesDTO.class));
     }
 

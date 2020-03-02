@@ -7,6 +7,8 @@ import java.util.List;
 
 public interface PropertiesService {
 
+    boolean isInMaintenanceMode();
+
     List<Properties> getAllProperties();
 
     List<PropertiesDTO> getAllPropertiesDTO();
