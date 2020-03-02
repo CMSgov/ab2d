@@ -14,6 +14,7 @@ import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.common.repository.OptOutRepository;
 import gov.cms.ab2d.common.repository.SponsorRepository;
 import gov.cms.ab2d.common.repository.UserRepository;
+import gov.cms.ab2d.common.service.PropertiesService;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.worker.adapter.bluebutton.ContractAdapter;
 import gov.cms.ab2d.worker.service.FileService;
@@ -75,6 +76,7 @@ class JobProcessorIntegrationTest {
     private ContractAdapter contractAdapterStub;
     @Autowired
     private OptOutRepository optOutRepository;
+    @Autowired private PropertiesService propertiesService;
 
     @Mock
     private BFDClient mockBfdClient;
@@ -116,8 +118,14 @@ class JobProcessorIntegrationTest {
         FhirContext fhirContext = FhirContext.forDstu3();
         PatientClaimsProcessor patientClaimsProcessor = new PatientClaimsProcessorImpl(mockBfdClient, fhirContext);
 
-        cut = new JobProcessorImpl(fileService, jobRepository, jobOutputRepository, contractAdapterStub, patientClaimsProcessor,
-                optOutRepository);
+        cut = new JobProcessorImpl(
+                fileService,
+                jobRepository,
+                jobOutputRepository,
+                contractAdapterStub,
+                patientClaimsProcessor,
+                optOutRepository,
+                propertiesService);
         ReflectionTestUtils.setField(cut, "cancellationCheckFrequency", 10);
         ReflectionTestUtils.setField(cut, "efsMount", tmpEfsMountDir.toString());
         ReflectionTestUtils.setField(cut, "failureThreshold", 10);
