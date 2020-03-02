@@ -20,8 +20,8 @@ import java.util.concurrent.Future;
 
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.assertThat;
-
-@SpringBootTest(properties = {"pcp.core.pool.size=3" , "pcp.max.pool.size=20", "pcp.scaleToMax.time=20"})
+// Set scheduling to false, otherwise the values from the database will override the values that are being hardcoded here.
+@SpringBootTest(properties = {"pcp.core.pool.size=3" , "pcp.max.pool.size=20", "pcp.scaleToMax.time=20", "app.scheduling.enable=false"})
 @Testcontainers
 @Slf4j
 public class AutoScalingServiceTest {
