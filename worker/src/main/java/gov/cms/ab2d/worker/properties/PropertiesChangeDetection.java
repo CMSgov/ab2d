@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.Map;
 
-@ConditionalOnProperty(value = "property.change.detection", matchIfMissing = true)
+@ConditionalOnProperty(value = "property.change.detection", havingValue = "true", matchIfMissing = true)
 @Component()
 class PropertiesChangeDetection {
 

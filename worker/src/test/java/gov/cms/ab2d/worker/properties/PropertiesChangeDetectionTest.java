@@ -15,7 +15,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 import static gov.cms.ab2d.common.util.Constants.*;
 
-@SpringBootTest(properties = "app.scheduling.enable=false")
+@SpringBootTest
 @Testcontainers
 public class PropertiesChangeDetectionTest {
 
@@ -41,7 +41,7 @@ public class PropertiesChangeDetectionTest {
         Assert.assertEquals(autoScalingService.getScaleToMaxTime(), 900.0, 0);
 
         Properties propertiesCorePoolSize = propertiesRepository.findByKey(PCP_CORE_POOL_SIZE).get();
-        propertiesCorePoolSize.setValue("25");
+        propertiesCorePoolSize.setValue("8");
         propertiesRepository.save(propertiesCorePoolSize);
 
         Properties propertiesMaxPoolSize = propertiesRepository.findByKey(PCP_MAX_POOL_SIZE).get();
@@ -54,12 +54,12 @@ public class PropertiesChangeDetectionTest {
 
         propertiesChangeDetection.detectChanges();
 
-        Assert.assertEquals(autoScalingService.getCorePoolSize(), 25);
+        Assert.assertEquals(autoScalingService.getCorePoolSize(), 8);
         Assert.assertEquals(autoScalingService.getMaxPoolSize(), 300);
         Assert.assertEquals(autoScalingService.getScaleToMaxTime(), 1500.0, 0);
 
         Object valuePCPCorePoolSize = configurableEnvironment.getPropertySources().get("application").getProperty(PCP_CORE_POOL_SIZE);
-        Assert.assertEquals(valuePCPCorePoolSize, "25");
+        Assert.assertEquals(valuePCPCorePoolSize, "8");
 
         Object valuePCPMaxPoolSize = configurableEnvironment.getPropertySources().get("application").getProperty(PCP_MAX_POOL_SIZE);
         Assert.assertEquals(valuePCPMaxPoolSize, "300");
