@@ -1,6 +1,9 @@
 package gov.cms.ab2d.worker.processor;
 
-import com.newrelic.api.agent.*;
+import com.newrelic.api.agent.NewRelic;
+import com.newrelic.api.agent.Segment;
+import com.newrelic.api.agent.Token;
+import com.newrelic.api.agent.Trace;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.JobOutput;
@@ -10,7 +13,6 @@ import gov.cms.ab2d.common.model.Sponsor;
 import gov.cms.ab2d.common.repository.JobOutputRepository;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.common.repository.OptOutRepository;
-import gov.cms.ab2d.common.service.PropertiesService;
 import gov.cms.ab2d.common.util.Constants;
 import gov.cms.ab2d.worker.adapter.bluebutton.ContractAdapter;
 import gov.cms.ab2d.worker.adapter.bluebutton.GetPatientsByContractResponse;
@@ -49,7 +51,6 @@ import static gov.cms.ab2d.common.model.JobStatus.SUCCESSFUL;
 import static gov.cms.ab2d.common.service.JobServiceImpl.ZIPFORMAT;
 import static gov.cms.ab2d.common.util.Constants.CONTRACT_LOG;
 import static gov.cms.ab2d.common.util.Constants.EOB;
-import static gov.cms.ab2d.common.util.Constants.ZIP_SUPPORT_ON;
 import static net.logstash.logback.argument.StructuredArguments.keyValue;
 
 @Slf4j
@@ -93,7 +94,7 @@ public class JobProcessorImpl implements JobProcessor {
     private final ContractAdapter contractAdapter;
     private final PatientClaimsProcessor patientClaimsProcessor;
     private final OptOutRepository optOutRepository;
-    private final PropertiesService  propertiesService;
+
     /**
      * Load the job and process it
      *
@@ -155,10 +156,8 @@ public class JobProcessorImpl implements JobProcessor {
 
             // Determine the type of output
             StreamHelperImpl.FileOutputType outputType =  StreamHelperImpl.FileOutputType.NDJSON;
-            if (isZipSupportOn()) {
-                if (job.getOutputFormat() != null && job.getOutputFormat().equalsIgnoreCase(ZIPFORMAT)) {
-                    outputType = StreamHelperImpl.FileOutputType.ZIP;
-                }
+            if (job.getOutputFormat() != null && job.getOutputFormat().equalsIgnoreCase(ZIPFORMAT)) {
+                outputType = StreamHelperImpl.FileOutputType.ZIP;
             }
 
             // Create a holder for the contract, writer, progress tracker and attested date
@@ -322,9 +321,6 @@ public class JobProcessorImpl implements JobProcessor {
         return ndjsonRollOver * Constants.ONE_MEGA_BYTE;
     }
 
-    private boolean isZipSupportOn() {
-        return propertiesService.isToggleOn(ZIP_SUPPORT_ON);
-    }
 
     /**
      * Process the contract - retrieve all the patients for the contract and create a thread in the

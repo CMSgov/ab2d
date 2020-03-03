@@ -14,7 +14,6 @@ import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.common.repository.OptOutRepository;
 import gov.cms.ab2d.common.repository.SponsorRepository;
 import gov.cms.ab2d.common.repository.UserRepository;
-import gov.cms.ab2d.common.service.PropertiesService;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.worker.adapter.bluebutton.ContractAdapter;
 import gov.cms.ab2d.worker.service.FileService;
@@ -76,7 +75,6 @@ class JobProcessorIntegrationTest {
     private ContractAdapter contractAdapterStub;
     @Autowired
     private OptOutRepository optOutRepository;
-    @Autowired private PropertiesService propertiesService;
 
     @Mock
     private BFDClient mockBfdClient;
@@ -124,8 +122,8 @@ class JobProcessorIntegrationTest {
                 jobOutputRepository,
                 contractAdapterStub,
                 patientClaimsProcessor,
-                optOutRepository,
-                propertiesService);
+                optOutRepository
+        );
         ReflectionTestUtils.setField(cut, "cancellationCheckFrequency", 10);
         ReflectionTestUtils.setField(cut, "efsMount", tmpEfsMountDir.toString());
         ReflectionTestUtils.setField(cut, "failureThreshold", 10);

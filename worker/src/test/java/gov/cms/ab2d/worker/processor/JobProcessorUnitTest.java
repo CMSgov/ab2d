@@ -70,7 +70,6 @@ class JobProcessorUnitTest {
     @Mock private JobOutputRepository jobOutputRepository;
     @Mock private OptOutRepository optOutRepository;
     @Mock private ContractAdapter contractAdapter;
-    @Mock private PropertiesService propertiesService;
     private PatientClaimsProcessor patientClaimsProcessor = spy(PatientClaimsProcessorStub.class);
 
     private Job job;
@@ -84,8 +83,7 @@ class JobProcessorUnitTest {
                 jobOutputRepository,
                 contractAdapter,
                 patientClaimsProcessor,
-                optOutRepository,
-                propertiesService
+                optOutRepository
         );
 
         ReflectionTestUtils.setField(cut, "cancellationCheckFrequency", 2);
