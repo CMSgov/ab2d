@@ -1,6 +1,8 @@
 package gov.cms.ab2d.worker.processor;
 
 import ca.uhn.fhir.context.FhirContext;
+import com.newrelic.api.agent.Token;
+import com.newrelic.api.agent.Trace;
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.util.FHIRUtil;
 import gov.cms.ab2d.filter.ExplanationOfBenefitTrimmer;
@@ -39,12 +41,14 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
     private final BFDClient bfdClient;
     private final FhirContext fhirContext;
 
+    @Trace(async = true)
     @Async("patientProcessorThreadPool")
     /**
      * Process the retrieval of patient explanation of benefit objects and write them
      * to a file using the writer
      */
-    public Future<Void> process(PatientDTO patientDTO, final StreamHelper helper, OffsetDateTime attTime) {
+    public Future<Void> process(PatientDTO patientDTO, final StreamHelper helper, OffsetDateTime attTime, Token token) {
+        token.link();
         int resourceCount = 0;
 
         String payload = "";
@@ -71,10 +75,14 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
                 //should not happen - original exception will be thrown
                 log.error("error during exception handling to write error record");
             }
+            token.expire();
+
             return AsyncResult.forExecutionException(e);
         }
 
         log.debug("finished writing [{}] resources", resourceCount);
+
+        token.expire();
 
         return new AsyncResult<>(null);
     }
@@ -92,7 +100,6 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
     }
 
     private List<Resource> getEobBundleResources(PatientDTO patient, OffsetDateTime attTime) {
-
         Bundle eobBundle = bfdClient.requestEOBFromServer(patient.getPatientId());
 
         final List<BundleEntryComponent> entries = eobBundle.getEntry();
