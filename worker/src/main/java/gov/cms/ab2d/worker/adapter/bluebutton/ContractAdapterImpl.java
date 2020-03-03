@@ -27,6 +27,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static gov.cms.ab2d.common.util.Constants.CONTRACT_2_BENE_CACHING_ON;
+
 
 @Slf4j
 //@Primary // - once the BFD API starts returning data, change this to primary bean so spring injects this instead of the stub.
@@ -68,7 +70,7 @@ public class ContractAdapterImpl implements ContractAdapter {
     }
 
     private boolean isContractToBeneCachingOn() {
-        return propertiesService.isToggleOn("ContractToBeneCachingOn");
+        return propertiesService.isToggleOn(CONTRACT_2_BENE_CACHING_ON);
     }
 
     private Set<String> getPatientsForMonth(String contractNumber, Contract contract, int month, boolean cachingOn) {
