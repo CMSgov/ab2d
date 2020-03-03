@@ -91,7 +91,6 @@ public class APIClient {
         }
         HttpRequest exportRequest = HttpRequest.newBuilder()
                 .uri(URI.create(ab2dApiUrl + PATIENT_EXPORT_PATH + paramString))
-
                 .timeout(Duration.ofSeconds(defaultTimeout))
                 .header("Content-Type", "application/json")
                 .header("Authorization", "Bearer " + jwtStr)
@@ -101,19 +100,25 @@ public class APIClient {
         return httpClient.send(exportRequest, HttpResponse.BodyHandlers.ofString());
     }
 
-    public HttpResponse<String> exportRequest() throws IOException, InterruptedException {
-        return exportRequest(Collections.emptyMap());
+    public HttpResponse<String> exportRequest(String exportType) throws IOException, InterruptedException {
+        return exportRequest(new HashMap<>() {{ put("_outputFormat", exportType); }});
     }
 
-    public HttpResponse<String> exportByContractRequest(String contractNumber) throws IOException, InterruptedException {
-        HttpRequest exportRequest = buildExportByContractRequest(contractNumber);
-
+    public HttpResponse<String> exportByContractRequest(String contractNumber, String exportType) throws IOException, InterruptedException {
+        HttpRequest exportRequest = buildExportByContractRequest(contractNumber, exportType);
         return httpClient.send(exportRequest, HttpResponse.BodyHandlers.ofString());
     }
 
-    public HttpRequest buildExportByContractRequest(String contractNumber) {
+    public HttpRequest buildExportByContractRequest(String contractNumber, String exportType) {
+        var jwtRequestParms = new HashMap<>() {{
+            put("_outputFormat", exportType);
+        }};
+        String paramString = buildParameterString(jwtRequestParms);
+        if(!paramString.equals("")) {
+            paramString = "?" + paramString;
+        }
         return HttpRequest.newBuilder()
-                .uri(URI.create(ab2dApiUrl + "Group/" + contractNumber + "/$export"))
+                .uri(URI.create(ab2dApiUrl + "Group/" + contractNumber + "/$export" + paramString))
                 .timeout(Duration.ofSeconds(defaultTimeout))
                 .header("Content-Type", "application/json")
                 .header("Authorization", "Bearer " + jwtStr)
