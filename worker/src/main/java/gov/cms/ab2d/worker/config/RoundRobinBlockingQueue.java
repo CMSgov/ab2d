@@ -11,6 +11,15 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
 @Slf4j
+/**
+ * A custom implementation of {@link BlockingQueue} made to fit the needs of AB2D. Because we have
+ * a single {@link java.util.concurrent.ThreadPoolExecutor} that handles all the tasks across
+ * jobs, we've had a bit of a race condition for a while, which was being mitigated by throttling.
+ * This queue implementation helps to solve that by introducing internal queues scoped to each
+ * particular job (or a contract to be precise), and serving tasks to the surrounding
+ * {@link java.util.concurrent.Executor}
+ * in round-robin fashion.
+ */
 public class RoundRobinBlockingQueue<E> implements BlockingQueue<E> {
 
     // The individual category queues

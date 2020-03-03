@@ -63,6 +63,8 @@ public class WorkerConfig {
 
     @Bean
     public Executor patientProcessorThreadPool() {
+        // Regretfully, no good way to supply a custom queue to ThreadPoolTaskExecutor
+        // other than by overriding createQueue
         final ThreadPoolTaskExecutor taskExecutor = new ThreadPoolTaskExecutor() {
             @Override
             protected BlockingQueue<Runnable> createQueue(int queueCapacity) {
