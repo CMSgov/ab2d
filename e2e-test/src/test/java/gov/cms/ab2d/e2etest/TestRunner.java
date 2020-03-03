@@ -291,11 +291,7 @@ public class TestRunner {
     @Test
     public void runSystemWideZipExport() throws IOException, InterruptedException, JSONException {
         HttpResponse<String> exportResponse = apiClient.exportRequest(ZIPFORMAT);
-        Assert.assertEquals(202, exportResponse.statusCode());
-        List<String> contentLocationList = exportResponse.headers().map().get("content-location");
-
-        String downloadUrl = performStatusRequests(contentLocationList, false, "S0000");
-        downloadZipFile(downloadUrl);
+        Assert.assertEquals(400, exportResponse.statusCode());
     }
 
     @Test
@@ -313,11 +309,7 @@ public class TestRunner {
     void runContractNumberZipExport() throws IOException, InterruptedException, JSONException {
         String contractNumber = "S0000";
         HttpResponse<String> exportResponse = apiClient.exportByContractRequest(contractNumber, ZIPFORMAT);
-        Assert.assertEquals(202, exportResponse.statusCode());
-        List<String> contentLocationList = exportResponse.headers().map().get("content-location");
-
-        String downloadUrl = performStatusRequests(contentLocationList, true, contractNumber);
-        downloadZipFile(downloadUrl);
+        Assert.assertEquals(400, exportResponse.statusCode());
     }
 
     @Test
