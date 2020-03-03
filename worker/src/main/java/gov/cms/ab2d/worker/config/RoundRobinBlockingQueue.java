@@ -5,7 +5,6 @@ import org.springframework.util.Assert;
 
 import java.util.*;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
@@ -15,7 +14,8 @@ import java.util.stream.Collectors;
 public class RoundRobinBlockingQueue<E> implements BlockingQueue<E> {
 
     // The individual category queues
-    private final Map<String, Deque<E>> categoryQueues = new ConcurrentHashMap<>();
+    private final Map<String, Deque<E>> categoryQueues =
+            Collections.synchronizedMap(new LinkedHashMap<>());
     // The current category index
     private int currentIndex;
     // Main lock guarding all access
@@ -80,10 +80,12 @@ public class RoundRobinBlockingQueue<E> implements BlockingQueue<E> {
         }
         lock.lock();
         try {
+            int size = size();
             for (Map.Entry<String, Deque<E>> entry : categoryQueues.entrySet()) {
                 c.addAll(entry.getValue());
+                entry.getValue().clear();
             }
-            return size();
+            return size;
         } finally {
             lock.unlock();
         }
