@@ -256,6 +256,20 @@ public class BulkDataAccessAPIIntegrationTests {
     }
 
     @Test
+    public void testPatientExportWithZipOutputFormat() throws Exception {
+        final String typeParams = "?_outputFormat=application/zip";
+        this.mockMvc.perform(get(API_PREFIX + FHIR_PREFIX + "/" + PATIENT_EXPORT_PATH + typeParams)
+                .contentType(MediaType.APPLICATION_JSON)
+                .header("Authorization", "Bearer " + token))
+                .andExpect(status().is(400))
+                .andExpect(jsonPath("$.resourceType", Is.is("OperationOutcome")))
+                .andExpect(jsonPath("$.issue[0].severity", Is.is("error")))
+                .andExpect(jsonPath("$.issue[0].code", Is.is("invalid")))
+                .andExpect(jsonPath("$.issue[0].details.text",
+                        Is.is("An _outputFormat of application/zip is not valid")));
+    }
+
+    @Test
     public void testDeleteJob() throws Exception {
         this.mockMvc.perform(
                 get(API_PREFIX + FHIR_PREFIX + PATIENT_EXPORT_PATH)
