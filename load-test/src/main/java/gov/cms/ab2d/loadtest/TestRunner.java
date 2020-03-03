@@ -18,6 +18,7 @@ import java.util.concurrent.CountDownLatch;
 
 @Slf4j
 public class TestRunner extends AbstractJavaSamplerClient {
+    private static final String FHIR_TYPE = "application/fhir+ndjson";
 
     private String[] contractArr;
 
@@ -111,7 +112,7 @@ public class TestRunner extends AbstractJavaSamplerClient {
             exportResult.sampleStart();
 
             try {
-                HttpResponse<String> exportResponse = apiClient.exportByContractRequest(contractNumber);
+                HttpResponse<String> exportResponse = apiClient.exportByContractRequest(contractNumber, FHIR_TYPE);
 
                 exportResult.sampleEnd();
                 exportResult.setResponseCode(String.valueOf(exportResponse.statusCode()));
