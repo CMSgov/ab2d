@@ -1,4 +1,4 @@
-package gov.cms.ab2d.api.controller;
+package gov.cms.ab2d.common.service;
 
 public class InvalidUserInputException extends RuntimeException {
 
