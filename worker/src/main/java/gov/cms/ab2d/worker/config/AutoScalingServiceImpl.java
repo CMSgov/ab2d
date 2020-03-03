@@ -1,7 +1,9 @@
 package gov.cms.ab2d.worker.config;
 
+import gov.cms.ab2d.worker.properties.PropertiesChangedEvent;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationListener;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
@@ -10,6 +12,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.concurrent.Executor;
 
+import static gov.cms.ab2d.common.util.Constants.*;
 import static gov.cms.ab2d.worker.config.AutoScalingServiceImpl.Mode.RESET;
 import static gov.cms.ab2d.worker.config.AutoScalingServiceImpl.Mode.SCALING_UP;
 
@@ -28,7 +31,7 @@ import static gov.cms.ab2d.worker.config.AutoScalingServiceImpl.Mode.SCALING_UP;
  */
 @Slf4j
 @Service
-public class AutoScalingServiceImpl implements AutoScalingService {
+public class AutoScalingServiceImpl implements AutoScalingService, ApplicationListener<PropertiesChangedEvent> {
 
     private final ThreadPoolTaskExecutor executor;
 
@@ -52,6 +55,21 @@ public class AutoScalingServiceImpl implements AutoScalingService {
      */
     public AutoScalingServiceImpl(Executor patientProcessorThreadPool) {
         this.executor = (ThreadPoolTaskExecutor) patientProcessorThreadPool;
+    }
+
+    @Override
+    public int getCorePoolSize() {
+        return corePoolSize;
+    }
+
+    @Override
+    public int getMaxPoolSize() {
+        return maxPoolSize;
+    }
+
+    @Override
+    public double getScaleToMaxTime() {
+        return scaleToMaxTime;
     }
 
 
@@ -109,6 +127,16 @@ public class AutoScalingServiceImpl implements AutoScalingService {
             kickOffTime = null;
             log.info("Auto-scaling: reset to core pool size");
         }
+    }
+
+    // An event that originates from the PropertiesChangeDetection class
+    @Override
+    public void onApplicationEvent(PropertiesChangedEvent propertiesChangedEvent) {
+        corePoolSize = Integer.parseInt(propertiesChangedEvent.getPropertiesMap().get(PCP_CORE_POOL_SIZE).toString());
+        maxPoolSize = Integer.parseInt(propertiesChangedEvent.getPropertiesMap().get(PCP_MAX_POOL_SIZE).toString());
+        scaleToMaxTime = Double.parseDouble(propertiesChangedEvent.getPropertiesMap().get(PCP_SCALE_TO_MAX_TIME).toString());
+
+        this.executor.setCorePoolSize(corePoolSize);
     }
 
     enum Mode {
