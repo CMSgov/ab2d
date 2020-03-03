@@ -161,6 +161,21 @@ table td {
             </td>
         </tr>
         <tr>
+            <td>&nbsp;</td>
+            <td>ExplanationOfBenefit.billablePeriod</td>
+            <td>Period of service</td>
+            <td>0..1</td>
+            <td></td>
+            <td>Period</td>
+            <td>
+                A period of service, such as<br>
+                <pre>&quot;servicedPeriod&quot;:{
+    &quot;start&quot;:&quot;2000-10-01&quot;,
+    &quot;end&quot;:&quot;2000-10-01&quot;
+}</pre>
+                    </td>
+                </tr>
+        <tr>
             <td>Place of service</td>
             <td>ExplanationOfBenefit.item[].location*</td>
             <td>Facility where the services were provided</td>
