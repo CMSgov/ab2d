@@ -108,6 +108,10 @@ This example was generated from synthetic claims data. Please expand the source 
    "patient": {
      "reference": "Patient/567834"
    },
+   "billablePeriod": {
+   	 "start": "1999-10-27",
+   	 "end": "1999-10-27"
+   },
    "provider": {
      "identifier": {
        "system": "https://bluebutton.cms.gov/resources/variables/prvdr_num",
