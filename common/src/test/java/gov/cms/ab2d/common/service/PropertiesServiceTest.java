@@ -46,7 +46,11 @@ public class PropertiesServiceTest {
             put(PCP_MAX_POOL_SIZE, 150);
             put(PCP_SCALE_TO_MAX_TIME, 900);
             put(MAINTENANCE_MODE, "false");
+            put(ZIP_SUPPORT_ON, "false");
         }};
+
+        List<Properties> propertyListBeforeInsert = propertiesService.getAllProperties();
+        int beforeCount = propertyListBeforeInsert.size();
 
         Properties properties = new Properties();
         properties.setKey("abc");
@@ -56,7 +60,7 @@ public class PropertiesServiceTest {
 
         List<Properties> propertiesList = propertiesService.getAllProperties();
 
-        Assert.assertEquals(propertiesList.size(), 5);
+        Assert.assertEquals(propertiesList.size(), beforeCount + 1);
 
         for(Properties propertiesToCheck : propertiesList) {
             Object propertyValue = propertyMap.get(propertiesToCheck.getKey());

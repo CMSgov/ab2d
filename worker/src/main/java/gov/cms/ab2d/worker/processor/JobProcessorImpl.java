@@ -49,6 +49,7 @@ import static gov.cms.ab2d.common.model.JobStatus.SUCCESSFUL;
 import static gov.cms.ab2d.common.service.JobServiceImpl.ZIPFORMAT;
 import static gov.cms.ab2d.common.util.Constants.CONTRACT_LOG;
 import static gov.cms.ab2d.common.util.Constants.EOB;
+import static gov.cms.ab2d.common.util.Constants.ZIP_SUPPORT_ON;
 import static net.logstash.logback.argument.StructuredArguments.keyValue;
 
 @Slf4j
@@ -321,7 +322,7 @@ public class JobProcessorImpl implements JobProcessor {
     }
 
     private boolean isZipSupportOn() {
-        return propertiesService.isToggleOn("ZipSupportOn");
+        return propertiesService.isToggleOn(ZIP_SUPPORT_ON);
     }
 
     /**

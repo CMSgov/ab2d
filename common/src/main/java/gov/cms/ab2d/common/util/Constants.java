@@ -41,6 +41,8 @@ public final class Constants {
 
     public static final String MAINTENANCE_MODE = "maintenance.mode";
 
+    public static final String ZIP_SUPPORT_ON = "ZipSupportOn";
+
     public static final Set<String> ALLOWED_PROPERTY_NAMES = Set.of(PCP_CORE_POOL_SIZE, PCP_MAX_POOL_SIZE,
-            PCP_SCALE_TO_MAX_TIME, MAINTENANCE_MODE);
+            PCP_SCALE_TO_MAX_TIME, MAINTENANCE_MODE, ZIP_SUPPORT_ON);
 }
