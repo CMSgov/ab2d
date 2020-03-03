@@ -17,7 +17,7 @@ public class RoundRobinBlockingQueue<E> implements BlockingQueue<E> {
     private final Map<String, Deque<E>> categoryQueues =
             Collections.synchronizedMap(new LinkedHashMap<>());
     // The current category index
-    private int currentIndex;
+    private volatile int currentIndex;
     // Main lock guarding all access
     private final ReentrantLock lock = new ReentrantLock();
     // Not empty condition on the lock
