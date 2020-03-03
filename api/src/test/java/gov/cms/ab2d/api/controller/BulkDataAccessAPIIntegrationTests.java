@@ -8,7 +8,6 @@ import gov.cms.ab2d.common.model.*;
 import gov.cms.ab2d.common.repository.*;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.DataSetup;
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.hamcrest.core.Is;
 import org.hl7.fhir.dstu3.model.DateTimeType;
@@ -30,10 +29,7 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.io.File;
-import java.io.InputStream;
-import java.io.PrintWriter;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
@@ -42,7 +38,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
 
-import static gov.cms.ab2d.api.util.Constants.*;
 import static gov.cms.ab2d.common.service.JobServiceImpl.INITIAL_JOB_STATUS_MESSAGE;
 import static gov.cms.ab2d.common.util.Constants.*;
 import static gov.cms.ab2d.common.util.DataSetup.*;
@@ -88,7 +83,7 @@ public class BulkDataAccessAPIIntegrationTests {
 
     private String token;
 
-    private static final String PATIENT_EXPORT_PATH = "/Patient/$export";
+    public static final String PATIENT_EXPORT_PATH = "/Patient/$export";
 
     private static final int MAX_JOBS_PER_USER = 3;
 
@@ -100,6 +95,7 @@ public class BulkDataAccessAPIIntegrationTests {
         roleRepository.deleteAll();
         sponsorRepository.deleteAll();
 
+        testUtil.turnMaintenanceModeOff();
         token = testUtil.setupToken(List.of(SPONSOR_ROLE));
     }
 
@@ -549,32 +545,11 @@ public class BulkDataAccessAPIIntegrationTests {
                 .andReturn();
         String statusUrl = mvcResult.getResponse().getHeader("Content-Location");
 
-        Job job = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
-        job.setStatus(JobStatus.SUCCESSFUL);
-        job.setProgress(100);
-        OffsetDateTime expireDate = OffsetDateTime.now().plusDays(100);
-        job.setExpiresAt(expireDate);
-        OffsetDateTime now = OffsetDateTime.now();
-        job.setCompletedAt(now);
-
-        JobOutput jobOutput = new JobOutput();
-        jobOutput.setFhirResourceType(EOB);
-        jobOutput.setJob(job);
-        jobOutput.setFilePath("test.ndjson");
-        jobOutput.setError(false);
-        job.getJobOutputs().add(jobOutput);
-
-        jobRepository.saveAndFlush(job);
-
         String testFile = "test.ndjson";
-        Path destination = Paths.get(tmpJobLocation, job.getJobUuid());
-        String destinationStr = destination.toString();
-        Files.createDirectories(destination);
-        InputStream testFileStream = this.getClass().getResourceAsStream("/" + testFile);
-        String testFileStr = IOUtils.toString(testFileStream, "UTF-8");
-        try (PrintWriter out = new PrintWriter(destinationStr + File.separator + testFile)) {
-            out.println(testFileStr);
-        }
+
+        Job job = testUtil.createTestJobForDownload(testFile);
+
+        String destinationStr = testUtil.createTestDownloadFile(tmpJobLocation, job, testFile);
 
         MvcResult mvcResultStatusCall =
                 this.mockMvc.perform(get(statusUrl).contentType(MediaType.APPLICATION_JSON)
