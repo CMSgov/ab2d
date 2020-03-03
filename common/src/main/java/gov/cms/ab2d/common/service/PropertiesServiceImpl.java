@@ -15,11 +15,7 @@ import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 
-import static gov.cms.ab2d.common.util.Constants.ALLOWED_PROPERTY_NAMES;
-import static gov.cms.ab2d.common.util.Constants.MAINTENANCE_MODE;
-import static gov.cms.ab2d.common.util.Constants.PCP_CORE_POOL_SIZE;
-import static gov.cms.ab2d.common.util.Constants.PCP_MAX_POOL_SIZE;
-import static gov.cms.ab2d.common.util.Constants.PCP_SCALE_TO_MAX_TIME;
+import static gov.cms.ab2d.common.util.Constants.*;
 import static java.lang.Boolean.FALSE;
 
 @Service
@@ -90,6 +86,12 @@ public class PropertiesServiceImpl implements PropertiesService {
             } else if (propertiesDTO.getKey().equals(MAINTENANCE_MODE)) {
                 if (!propertiesDTO.getValue().equals("true") && !propertiesDTO.getValue().equals("false")) {
                     logErrorAndThrowException(MAINTENANCE_MODE, propertiesDTO.getValue());
+                }
+
+                addUpdatedPropertiesToList(propertiesDTOsReturn, propertiesDTO);
+            } else if (propertiesDTO.getKey().equals(ZIP_SUPPORT_ON)) {
+                if (!propertiesDTO.getValue().equals("true") && !propertiesDTO.getValue().equals("false")) {
+                    logErrorAndThrowException(ZIP_SUPPORT_ON, propertiesDTO.getValue());
                 }
 
                 addUpdatedPropertiesToList(propertiesDTOsReturn, propertiesDTO);
