@@ -89,6 +89,12 @@ public class PropertiesServiceImpl implements PropertiesService {
                 }
 
                 addUpdatedPropertiesToList(propertiesDTOsReturn, propertiesDTO);
+            } else if (propertiesDTO.getKey().equals(CONTRACT_2_BENE_CACHING_ON)) {
+                if (!propertiesDTO.getValue().equals("true") && !propertiesDTO.getValue().equals("false")) {
+                    logErrorAndThrowException(CONTRACT_2_BENE_CACHING_ON, propertiesDTO.getValue());
+                }
+
+                addUpdatedPropertiesToList(propertiesDTOsReturn, propertiesDTO);
             }
         }
 
