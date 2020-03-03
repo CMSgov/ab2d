@@ -1,5 +1,6 @@
 package gov.cms.ab2d.worker.processor;
 
+import com.newrelic.api.agent.*;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.JobOutput;
@@ -48,8 +49,6 @@ import static gov.cms.ab2d.common.service.JobServiceImpl.ZIPFORMAT;
 import static gov.cms.ab2d.common.util.Constants.CONTRACT_LOG;
 import static gov.cms.ab2d.common.util.Constants.EOB;
 import static net.logstash.logback.argument.StructuredArguments.keyValue;
-
-import com.newrelic.api.agent.Trace;
 
 @Slf4j
 @Service
@@ -162,7 +161,9 @@ public class JobProcessorImpl implements JobProcessor {
             var contractData = new ContractData(contract, progressTracker, contract.getAttestedOn());
 
             /*** process contract ***/
+            final Segment contractSegment = NewRelic.getAgent().getTransaction().startSegment("Patient processing of contract " + contract.getContractNumber());
             var jobOutputs = processContract(outputDirPath, contractData, outputType);
+            contractSegment.end();
 
             // For each job output, add to the job and save the result
             jobOutputs.forEach(jobOutput -> job.addJobOutput(jobOutput));
@@ -362,7 +363,11 @@ public class JobProcessorImpl implements JobProcessor {
                 }
 
                 // Add the thread to process the patient and start the thread
-                futureHandles.add(patientClaimsProcessor.process(patient, helper, contract.getAttestedOn()));
+                // See https://docs.newrelic.com/docs/agents/java-agent/async-instrumentation/java-agent-api-asynchronous-applications
+                // for more detail on tokens with async calls
+                final Token token = NewRelic.getAgent().getTransaction().getToken();
+
+                futureHandles.add(patientClaimsProcessor.process(patient, helper, contract.getAttestedOn(), token));
 
                 // Periodically check if cancelled
                 if (recordsProcessedCount % cancellationCheckFrequency == 0) {
