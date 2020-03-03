@@ -1,7 +1,12 @@
 package gov.cms.ab2d.worker.processor;
 
-import com.newrelic.api.agent.Trace;
-import gov.cms.ab2d.common.model.*;
+import com.newrelic.api.agent.*;
+import gov.cms.ab2d.common.model.Contract;
+import gov.cms.ab2d.common.model.Job;
+import gov.cms.ab2d.common.model.JobOutput;
+import gov.cms.ab2d.common.model.JobStatus;
+import gov.cms.ab2d.common.model.OptOut;
+import gov.cms.ab2d.common.model.Sponsor;
 import gov.cms.ab2d.common.repository.JobOutputRepository;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.common.repository.OptOutRepository;
@@ -157,7 +162,9 @@ public class JobProcessorImpl implements JobProcessor {
             var contractData = new ContractData(contract, progressTracker, contract.getAttestedOn());
 
             /*** process contract ***/
+            final Segment contractSegment = NewRelic.getAgent().getTransaction().startSegment("Patient processing of contract " + contract.getContractNumber());
             var jobOutputs = processContract(outputDirPath, contractData, outputType);
+            contractSegment.end();
 
             // For each job output, add to the job and save the result
             jobOutputs.forEach(jobOutput -> job.addJobOutput(jobOutput));
@@ -357,8 +364,13 @@ public class JobProcessorImpl implements JobProcessor {
                 }
 
                 // Add the thread to process the patient and start the thread
+
+                // See https://docs.newrelic.com/docs/agents/java-agent/async-instrumentation/java-agent-api-asynchronous-applications
+                // for more detail on tokens with async calls
+                final Token token = NewRelic.getAgent().getTransaction().getToken();
+
                 RoundRobinBlockingQueue.CATEGORY_HOLDER.set(contractNumber);
-                futureHandles.add(patientClaimsProcessor.process(patient, helper, contract.getAttestedOn()));
+                futureHandles.add(patientClaimsProcessor.process(patient, helper, contract.getAttestedOn(), token));
                 RoundRobinBlockingQueue.CATEGORY_HOLDER.remove();
 
                 // Periodically check if cancelled
