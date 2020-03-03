@@ -5,47 +5,36 @@ import org.springframework.util.Assert;
 
 import java.util.*;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.stream.Collectors;
 
 @Slf4j
 public class RoundRobinBlockingQueue<E> implements BlockingQueue<E> {
-    // The list of categories
-    private List<String> categories = new ArrayList<>();
+
     // The individual category queues
-    private Map<String, LinkedList<E>> categoryQueues = new HashMap<>();
+    private final Map<String, Deque<E>> categoryQueues = new ConcurrentHashMap<>();
     // The current category index
-    private int currentIndex = 0;
+    private int currentIndex;
     // Main lock guarding all access
-    private ReentrantLock lock;
+    private final ReentrantLock lock = new ReentrantLock();
     // Not empty condition on the lock
-    private final Condition notEmpty;
-    // Total number in the queues
-    private long count = 0;
+    private final Condition notEmpty = lock.newCondition();
 
     public static final ThreadLocal<String> CATEGORY_HOLDER = new ThreadLocal<>();
-
-    RoundRobinBlockingQueue() {
-        log.info("Created Round Robin Blocking Queue");
-        lock = new ReentrantLock();
-        notEmpty = lock.newCondition();
-    }
 
     // New code to add items
     private boolean add(String category, E e) {
         log.debug("Adding {} - {}", category, e);
-        Assert.notNull(category, "Contract number required");
-        final ReentrantLock lock = this.lock;
+        Assert.notNull(category, "Contract number must be set via CATEGORY_HOLDER prior to using this method");
         lock.lock();
         try {
-            if (!categories.contains(category)) {
-                categories.add(category);
-                notEmpty.signal();
-            }
-            Queue<E> categoryQueue = categoryQueues.computeIfAbsent(category, k -> new LinkedList<>());
-            count++;
-            return categoryQueue.add(e);
+            Deque<E> categoryQueue = categoryQueues.computeIfAbsent(category, k -> new LinkedList<>());
+            categoryQueue.add(e);
+            notEmpty.signal();
+            return true;
         } finally {
             lock.unlock();
         }
@@ -58,12 +47,9 @@ public class RoundRobinBlockingQueue<E> implements BlockingQueue<E> {
 
     @Override
     public void clear() {
-        final ReentrantLock lock = this.lock;
         lock.lock();
         try {
             categoryQueues.clear();
-            categories.clear();
-            count = 0;
         } finally {
             lock.unlock();
         }
@@ -74,31 +60,38 @@ public class RoundRobinBlockingQueue<E> implements BlockingQueue<E> {
         if (o == null) {
             return false;
         }
-        for (Map.Entry<String, LinkedList<E>> entry : categoryQueues.entrySet()) {
-            if (entry.getValue() != null && entry.getValue().contains(o)) {
-                return true;
+        lock.lock();
+        try {
+            for (Map.Entry<String, Deque<E>> entry : categoryQueues.entrySet()) {
+                if (entry.getValue().contains(o)) {
+                    return true;
+                }
             }
+        } finally {
+            lock.unlock();
         }
         return false;
     }
 
+    @Override
     public int drainTo(Collection<? super E> c) {
-        long numToDrain = count;
-        for (int i = 0; i < numToDrain; i++) {
-            c.add(getNext());
+        if (c == this) {
+            throw new IllegalArgumentException("Cannot drain to itself");
         }
-        return (int) numToDrain;
+        lock.lock();
+        try {
+            for (Map.Entry<String, Deque<E>> entry : categoryQueues.entrySet()) {
+                c.addAll(entry.getValue());
+            }
+            return size();
+        } finally {
+            lock.unlock();
+        }
     }
 
+    @Override
     public int drainTo(Collection<? super E> c, int maxElements) {
-        long numToDrain = maxElements;
-        if (maxElements > count) {
-            numToDrain = count;
-        }
-        for (int i = 0; i < numToDrain; i++) {
-            c.add(getNext());
-        }
-        return (int) numToDrain;
+        throw new UnsupportedOperationException("Not needed");
     }
 
     @Override
@@ -108,7 +101,11 @@ public class RoundRobinBlockingQueue<E> implements BlockingQueue<E> {
 
     @Override
     public boolean offer(E e) {
-        return add(e);
+        try {
+            return add(e);
+        } catch (IllegalStateException ex) {
+            return false;
+        }
     }
 
     @Override
@@ -136,16 +133,19 @@ public class RoundRobinBlockingQueue<E> implements BlockingQueue<E> {
 
     @Override
     public E element() {
-        return peekNext();
+        var next = peekNext();
+        if (next == null) {
+            throw new NoSuchElementException();
+        }
+        return next;
     }
 
     @Override
     public E poll(long timeout, TimeUnit unit) throws InterruptedException {
         long nanos = unit.toNanos(timeout);
-        final ReentrantLock lock = this.lock;
         lock.lockInterruptibly();
         try {
-            while (count == 0) {
+            while (size() == 0) {
                 if (nanos <= 0L) {
                     return null;
                 }
@@ -162,22 +162,26 @@ public class RoundRobinBlockingQueue<E> implements BlockingQueue<E> {
         add(e);
     }
 
+    @Override
     public int remainingCapacity() {
         return Integer.MAX_VALUE;
     }
 
     @Override
     public boolean remove(Object o) {
-        for (Map.Entry<String, LinkedList<E>> entry : categoryQueues.entrySet()) {
-            if (entry.getValue().remove(o)) {
-                count--;
-                List entries = categoryQueues.get(entry.getKey());
-                if (entries != null && entries.isEmpty()) {
-                    categoryQueues.remove(entry.getKey());
-                    categories.remove(entry.getKey());
+        lock.lock();
+        try {
+            for (Map.Entry<String, Deque<E>> entry : categoryQueues.entrySet()) {
+                final Deque<E> queue = categoryQueues.get(entry.getKey());
+                if (queue.remove(o)) {
+                    if (queue.isEmpty()) {
+                        categoryQueues.remove(entry.getKey());
+                    }
+                    return true;
                 }
-                return true;
             }
+        } finally {
+            lock.unlock();
         }
         return false;
     }
@@ -202,20 +206,28 @@ public class RoundRobinBlockingQueue<E> implements BlockingQueue<E> {
         throw new UnsupportedOperationException("Not needed");
     }
 
+    @Override
     public int size() {
-        return (int) count;
+        lock.lock();
+        try {
+            return categoryQueues.values().stream().map(queue -> queue.size())
+                    .reduce(0, Integer::sum);
+        } finally {
+            lock.unlock();
+        }
     }
 
     @Override
     public boolean isEmpty() {
-        return count == 0;
+        return size() == 0;
     }
 
+    @Override
     public E take() throws InterruptedException {
         final ReentrantLock lock = this.lock;
         lock.lockInterruptibly();
         try {
-            while (count == 0) {
+            while (size() == 0) {
                 notEmpty.await();
             }
             return getNext();
@@ -224,6 +236,7 @@ public class RoundRobinBlockingQueue<E> implements BlockingQueue<E> {
         }
     }
 
+    @Override
     public Object[] toArray() {
         throw new UnsupportedOperationException("Not needed");
     }
@@ -233,13 +246,13 @@ public class RoundRobinBlockingQueue<E> implements BlockingQueue<E> {
         throw new UnsupportedOperationException("Not needed");
     }
 
+    @Override
     public String toString() {
-        if (categories.isEmpty()) {
-            return "Empty";
-        }
         StringBuilder builder = new StringBuilder();
-        for (String category : categories) {
-            builder.append(category).append(" with ").append(categoryQueues.get(category).size()).append(" Futures; ");
+        builder.append(this.getClass().getSimpleName() + ": ");
+        for (String category : categoryQueues.keySet()) {
+            builder.append(category).append(" with ").append(categoryQueues.get(category).size())
+                    .append(" Futures; ");
         }
         return builder.toString();
     }
@@ -250,24 +263,22 @@ public class RoundRobinBlockingQueue<E> implements BlockingQueue<E> {
      * @return
      */
     private E getNext() {
-        final ReentrantLock lock = this.lock;
         lock.lock();
         try {
-            if (categoryQueues == null || categories.isEmpty()) {
+            if (size() == 0) {
                 return null;
             }
-            if (currentIndex >= categories.size()) {
+            if (currentIndex >= categoryQueues.keySet().size()) {
                 currentIndex = 0;
             }
-            String currentContract = categories.get(currentIndex);
-            Queue<E> currentFuture = categoryQueues.get(currentContract);
-            E val = currentFuture.poll();
-            count--;
-            if (currentFuture.size() == 0) {
+            String currentContract =
+                    categoryQueues.keySet().stream().collect(Collectors.toList()).get(currentIndex);
+            Deque<E> queue = categoryQueues.get(currentContract);
+            E val = queue.poll();
+            if (queue.size() == 0) {
                 // No more requests so remove category. We don't have to increment index since we removed the item at the
                 // current index
-                categoryQueues.remove(currentFuture);
-                categories.remove(currentContract);
+                categoryQueues.remove(currentContract);
             } else {
                 currentIndex++;
             }
@@ -278,16 +289,16 @@ public class RoundRobinBlockingQueue<E> implements BlockingQueue<E> {
     }
 
     private E peekNext() {
-        final ReentrantLock lock = this.lock;
         lock.lock();
         try {
-            if (categoryQueues == null || categories.isEmpty()) {
+            if (size() == 0) {
                 return null;
             }
-            if (currentIndex >= categories.size()) {
+            if (currentIndex >= categoryQueues.keySet().size()) {
                 currentIndex = 0;
             }
-            String currentContract = categories.get(currentIndex);
+            String currentContract =
+                    categoryQueues.keySet().stream().collect(Collectors.toList()).get(currentIndex);
             return categoryQueues.get(currentContract).peek();
         } finally {
             lock.unlock();
