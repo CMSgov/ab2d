@@ -47,6 +47,9 @@ services:
       - AB2D_DB_USER=ab2d
       - AB2D_DB_PASSWORD=ab2d
       - AB2D_EFS_MOUNT=/tmp/ab2d_efs_mount
+      - AB2D_BFD_URL=https://prod-sbx.bfdcloud.net/v1/fhir/
+      - AB2D_BFD_KEYSTORE_PASSWORD=${AB2D_BFD_KEYSTORE_PASSWORD}
+      - AB2D_BFD_KEYSTORE_LOCATION=${AB2D_BFD_KEYSTORE_LOCATION}
       - NEW_RELIC_LICENSE_KEY="${NEW_RELIC_LICENSE_KEY}"
       - NEW_RELIC_APP_NAME="${NEW_RELIC_APP_NAME}"
     depends_on:
@@ -57,3 +60,8 @@ services:
 # This needs a shared volume so that both the API and worker module can access the ndjson files being generated
 volumes:
   tmp-volume:
+    driver: local
+    driver_opts:
+      type: none
+      device: /tmp/ab2d_efs_mount
+      o: bind

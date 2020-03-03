@@ -39,7 +39,8 @@ sudo yum -y install \
   tmux \
   yum-utils \
   python-pip \
-  telnet
+  telnet \
+  nc
 
 # LSH Testing environment BEGIN
 sudo yum -y install wget
