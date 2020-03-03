@@ -45,6 +45,7 @@ public class PropertiesServiceTest {
             put(PCP_CORE_POOL_SIZE, 10);
             put(PCP_MAX_POOL_SIZE, 150);
             put(PCP_SCALE_TO_MAX_TIME, 900);
+            put(MAINTENANCE_MODE, "false");
         }};
 
         Properties properties = new Properties();
@@ -55,7 +56,7 @@ public class PropertiesServiceTest {
 
         List<Properties> propertiesList = propertiesService.getAllProperties();
 
-        Assert.assertEquals(propertiesList.size(), 4);
+        Assert.assertEquals(propertiesList.size(), 5);
 
         for(Properties propertiesToCheck : propertiesList) {
             Object propertyValue = propertyMap.get(propertiesToCheck.getKey());
@@ -83,9 +84,14 @@ public class PropertiesServiceTest {
         propertiesDTOScaleToMaxTime.setValue("400");
         propertiesDTOs.add(propertiesDTOScaleToMaxTime);
 
+        PropertiesDTO propertiesDTOMaintenanceMode = new PropertiesDTO();
+        propertiesDTOMaintenanceMode.setKey(MAINTENANCE_MODE);
+        propertiesDTOMaintenanceMode.setValue("true");
+        propertiesDTOs.add(propertiesDTOMaintenanceMode);
+
         List<PropertiesDTO> updatedPropertiesDTOs = propertiesService.updateProperties(propertiesDTOs);
 
-        Assert.assertEquals(3, updatedPropertiesDTOs.size());
+        Assert.assertEquals(4, updatedPropertiesDTOs.size());
 
         for(PropertiesDTO propertiesDTO : updatedPropertiesDTOs) {
             if(propertiesDTO.getKey().equals(PCP_CORE_POOL_SIZE)) {
@@ -94,10 +100,18 @@ public class PropertiesServiceTest {
                 Assert.assertEquals("350", propertiesDTO.getValue());
             } else if (propertiesDTO.getKey().equals(PCP_SCALE_TO_MAX_TIME)) {
                 Assert.assertEquals("400", propertiesDTO.getValue());
+            } else if (propertiesDTO.getKey().equals(MAINTENANCE_MODE)) {
+                Assert.assertEquals("true", propertiesDTO.getValue());
             } else {
                 Assert.fail("Received unknown key");
             }
         }
+
+        // Cleanup
+        propertiesDTOs.clear();
+        propertiesDTOMaintenanceMode.setValue("false");
+        propertiesDTOs.add(propertiesDTOMaintenanceMode);
+        propertiesService.updateProperties(propertiesDTOs);
     }
 
     private void validateInvalidPropertyValues(String key, String value) {
@@ -122,6 +136,7 @@ public class PropertiesServiceTest {
             put(PCP_MAX_POOL_SIZE, "0");
             put(PCP_SCALE_TO_MAX_TIME, "3601");
             put(PCP_SCALE_TO_MAX_TIME, "0");
+            put(MAINTENANCE_MODE, "BADVALUE");
         }};
 
         invalidKeysValues.forEach((key, value) -> {

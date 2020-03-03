@@ -39,6 +39,8 @@ public final class Constants {
 
     public static final String PCP_SCALE_TO_MAX_TIME = "pcp.scaleToMax.time";
 
+    public static final String MAINTENANCE_MODE = "maintenance.mode";
+
     public static final Set<String> ALLOWED_PROPERTY_NAMES = Set.of(PCP_CORE_POOL_SIZE, PCP_MAX_POOL_SIZE,
-            PCP_SCALE_TO_MAX_TIME);
+            PCP_SCALE_TO_MAX_TIME, MAINTENANCE_MODE);
 }

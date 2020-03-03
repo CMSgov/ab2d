@@ -32,3 +32,5 @@ databaseChangeLog:
       file: db/changelog/v001/add_properties_table.sql
   - include:
       file: db/changelog/v001/modify_hpms_ids.sql
+  - include:
+      file: db/changelog/v001/add_maintenance_mode_property.sql

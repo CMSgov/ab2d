@@ -8,4 +8,9 @@ public interface AutoScalingService {
 
     void autoscale();
 
+    int getCorePoolSize();
+
+    int getMaxPoolSize();
+
+    double getScaleToMaxTime();
 }
