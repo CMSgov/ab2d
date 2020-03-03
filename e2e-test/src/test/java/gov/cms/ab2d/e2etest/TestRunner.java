@@ -31,7 +31,10 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.zip.GZIPInputStream;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
+import static gov.cms.ab2d.common.service.JobService.ZIPFORMAT;
 import static gov.cms.ab2d.e2etest.APIClient.PATIENT_EXPORT_PATH;
 import static java.time.temporal.ChronoUnit.SECONDS;
 import static org.hamcrest.Matchers.matchesPattern;
@@ -43,6 +46,7 @@ import static org.hamcrest.Matchers.matchesPattern;
 @ExtendWith(TestRunnerParameterResolver.class)
 @Slf4j
 public class TestRunner {
+    private static final String FHIR_TYPE = "application/fhir+ndjson";
 
     private static APIClient apiClient;
 
@@ -169,15 +173,16 @@ public class TestRunner {
         Boolean requiresAccessToken = json.getBoolean("requiresAccessToken");
         Assert.assertEquals(true, requiresAccessToken);
         String request = json.getString("request");
-        Assert.assertEquals(request, AB2D_API_URL + (contractNumber == null ? "Patient/$export" : "Group/" + contractNumber +
-                "/$export"));
+        String stem = AB2D_API_URL + (contractNumber == null ? "Patient/" : "Group/" + contractNumber + "/") + "$export?_outputFormat=";
+        Assert.assertTrue(request.startsWith(stem));
         JSONArray errors = json.getJSONArray("error");
         Assert.assertEquals(0, errors.length());
 
         JSONArray output = json.getJSONArray("output");
         JSONObject outputObject = output.getJSONObject(0);
         String url = outputObject.getString("url");
-        Assert.assertEquals(url, AB2D_API_URL + "Job/" + jobUuid + "/file/S0000_0001.ndjson");
+        String filestem = AB2D_API_URL + "Job/" + jobUuid + "/file/S0000_0001.";
+        Assert.assertTrue(url.equals(filestem + "ndjson") || (url.equals(filestem + "zip")));
         String type = outputObject.getString("type");
         Assert.assertEquals(type, "ExplanationOfBenefit");
 
@@ -225,6 +230,29 @@ public class TestRunner {
         verifyJsonFromfileDownload(downloadString);
     }
 
+    private void downloadZipFile(String url) throws IOException, InterruptedException, JSONException {
+        HttpResponse<InputStream> downloadResponse = apiClient.fileDownloadRequest(url);
+        ZipInputStream zipIn = new ZipInputStream(downloadResponse.body());
+        ZipEntry entry = zipIn.getNextEntry();
+        StringBuilder downloadString = new StringBuilder();
+        while(entry != null) {
+            downloadString.append(extractZipFileData(entry, zipIn));
+            zipIn.closeEntry();
+            entry = zipIn.getNextEntry();
+        }
+        verifyJsonFromfileDownload(downloadString.toString());
+    }
+
+    public static String extractZipFileData(ZipEntry entry, ZipInputStream zipIn) throws IOException {
+        StringBuilder result = new StringBuilder();
+        int read;
+        while ((read = zipIn.read()) != -1) {
+            result.append((char) read);
+        }
+        System.out.println("    Entry " + entry.getName() + " - size: " + result.length());
+        return result.toString();
+    }
+
     private String performStatusRequests(List<String> contentLocationList, boolean isContract,
                                                          String contractNumber) throws JSONException, IOException, InterruptedException {
         HttpResponse<String> statusResponse = apiClient.statusRequest(contentLocationList.iterator().next());
@@ -252,7 +280,7 @@ public class TestRunner {
 
     @Test
     public void runSystemWideExport() throws IOException, InterruptedException, JSONException {
-        HttpResponse<String> exportResponse = apiClient.exportRequest();
+        HttpResponse<String> exportResponse = apiClient.exportRequest(FHIR_TYPE);
         Assert.assertEquals(202, exportResponse.statusCode());
         List<String> contentLocationList = exportResponse.headers().map().get("content-location");
 
@@ -261,9 +289,19 @@ public class TestRunner {
     }
 
     @Test
+    public void runSystemWideZipExport() throws IOException, InterruptedException, JSONException {
+        HttpResponse<String> exportResponse = apiClient.exportRequest(ZIPFORMAT);
+        Assert.assertEquals(202, exportResponse.statusCode());
+        List<String> contentLocationList = exportResponse.headers().map().get("content-location");
+
+        String downloadUrl = performStatusRequests(contentLocationList, false, "S0000");
+        downloadZipFile(downloadUrl);
+    }
+
+    @Test
     public void runContractNumberExport() throws IOException, InterruptedException, JSONException {
         String contractNumber = "S0000";
-        HttpResponse<String> exportResponse = apiClient.exportByContractRequest(contractNumber);
+        HttpResponse<String> exportResponse = apiClient.exportByContractRequest(contractNumber, FHIR_TYPE);
         Assert.assertEquals(202, exportResponse.statusCode());
         List<String> contentLocationList = exportResponse.headers().map().get("content-location");
 
@@ -272,8 +310,19 @@ public class TestRunner {
     }
 
     @Test
+    void runContractNumberZipExport() throws IOException, InterruptedException, JSONException {
+        String contractNumber = "S0000";
+        HttpResponse<String> exportResponse = apiClient.exportByContractRequest(contractNumber, ZIPFORMAT);
+        Assert.assertEquals(202, exportResponse.statusCode());
+        List<String> contentLocationList = exportResponse.headers().map().get("content-location");
+
+        String downloadUrl = performStatusRequests(contentLocationList, true, contractNumber);
+        downloadZipFile(downloadUrl);
+    }
+
+    @Test
     public void testDelete() throws IOException, InterruptedException {
-        HttpResponse<String> exportResponse = apiClient.exportRequest();
+        HttpResponse<String> exportResponse = apiClient.exportRequest(FHIR_TYPE);
 
         Assert.assertEquals(202, exportResponse.statusCode());
         List<String> contentLocationList = exportResponse.headers().map().get("content-location");
@@ -287,7 +336,7 @@ public class TestRunner {
     @Test
     public void testUserCannotDownloadOtherUsersJob() throws IOException, InterruptedException, JSONException {
         String contractNumber = "S0000";
-        HttpResponse<String> exportResponse = apiClient.exportByContractRequest(contractNumber);
+        HttpResponse<String> exportResponse = apiClient.exportByContractRequest(contractNumber, FHIR_TYPE);
         Assert.assertEquals(202, exportResponse.statusCode());
         List<String> contentLocationList = exportResponse.headers().map().get("content-location");
 
@@ -301,7 +350,7 @@ public class TestRunner {
 
     @Test
     public void testUserCannotDeleteOtherUsersJob() throws IOException, InterruptedException, JSONException {
-        HttpResponse<String> exportResponse = apiClient.exportRequest();
+        HttpResponse<String> exportResponse = apiClient.exportRequest(FHIR_TYPE);
 
         Assert.assertEquals(202, exportResponse.statusCode());
         List<String> contentLocationList = exportResponse.headers().map().get("content-location");
@@ -320,7 +369,7 @@ public class TestRunner {
 
     @Test
     public void testUserCannotCheckStatusOtherUsersJob() throws IOException, InterruptedException, JSONException {
-        HttpResponse<String> exportResponse = apiClient.exportRequest();
+        HttpResponse<String> exportResponse = apiClient.exportRequest(FHIR_TYPE);
 
         Assert.assertEquals(202, exportResponse.statusCode());
         List<String> contentLocationList = exportResponse.headers().map().get("content-location");
