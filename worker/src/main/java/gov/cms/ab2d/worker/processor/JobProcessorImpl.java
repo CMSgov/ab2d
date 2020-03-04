@@ -373,8 +373,12 @@ public class JobProcessorImpl implements JobProcessor {
                 // could be viewed as a hack by many; but on the other hand it saves us from writing
                 // tons of extra code.
                 RoundRobinBlockingQueue.CATEGORY_HOLDER.set(progressTracker.getJobUuid());
-                futureHandles.add(patientClaimsProcessor.process(patient, helper, contract.getAttestedOn(), token));
-                RoundRobinBlockingQueue.CATEGORY_HOLDER.remove();
+                try {
+                    futureHandles.add(patientClaimsProcessor
+                            .process(patient, helper, contract.getAttestedOn(), token));
+                } finally {
+                    RoundRobinBlockingQueue.CATEGORY_HOLDER.remove();
+                }
 
                 // Periodically check if cancelled
                 if (recordsProcessedCount % cancellationCheckFrequency == 0) {
