@@ -19,7 +19,7 @@ public class TextStreamHelperImpl extends StreamHelperImpl {
      * @param totalBytesAllowed - the total number of bytes allowed to be written to the stream
      * @throws FileNotFoundException - if the file can't be created
      */
-    TextStreamHelperImpl(Path path, String contractNumber, long totalBytesAllowed, int tryLockTimeout)
+    public TextStreamHelperImpl(Path path, String contractNumber, long totalBytesAllowed, int tryLockTimeout)
             throws FileNotFoundException {
         super(path, contractNumber, totalBytesAllowed, tryLockTimeout);
 
