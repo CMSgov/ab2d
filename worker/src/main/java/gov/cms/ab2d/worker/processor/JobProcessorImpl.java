@@ -1,6 +1,9 @@
 package gov.cms.ab2d.worker.processor;
 
-import com.newrelic.api.agent.*;
+import com.newrelic.api.agent.NewRelic;
+import com.newrelic.api.agent.Segment;
+import com.newrelic.api.agent.Token;
+import com.newrelic.api.agent.Trace;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.JobOutput;
@@ -318,6 +321,7 @@ public class JobProcessorImpl implements JobProcessor {
     private long getRollOverThreshold() {
         return ndjsonRollOver * Constants.ONE_MEGA_BYTE;
     }
+
 
     /**
      * Process the contract - retrieve all the patients for the contract and create a thread in the
