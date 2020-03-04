@@ -90,6 +90,29 @@
                 </executions>
             </plugin>
 
+            <plugin>
+                <artifactId>maven-resources-plugin</artifactId>
+                <version>3.0.2</version>
+                <executions>
+                    <execution>
+                        <id>copy-resources</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${basedir}/jacoco</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>${basedir}/target/site/jacoco</directory>
+                                    <filtering>false</filtering>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
             <!-- http://maven.apache.org/guides/mini/guide-attached-tests.html -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -102,30 +125,6 @@
                         </goals>
                     </execution>
                 </executions>
-            </plugin>
-
-            <!-- Because everything depends on common, common will build first, the e2e tests appear to go next.
-                 The e2e tests run a clean for the whole app because the docker-compose does a mvn clean package as
-                 part of the build. Since package doesn't run the tests, this causes the common target/site/jacoco
-                 directory to be deleted (which contains jacoco reports) -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-clean-plugin</artifactId>
-                <version>3.1.0</version>
-                <configuration>
-                    <excludeDefaultDirectories>true</excludeDefaultDirectories>
-                    <filesets>
-                        <fileset>
-                            <directory>target</directory>
-                            <includes>
-                                <include>**</include>
-                            </includes>
-                            <excludes>
-                                <exclude>site/**</exclude>
-                            </excludes>
-                        </fileset>
-                    </filesets>
-                </configuration>
             </plugin>
         </plugins>
     </build>

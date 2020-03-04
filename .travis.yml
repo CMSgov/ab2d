@@ -45,7 +45,7 @@ after_script:
 - export JACOCO_SOURCE_PATH=./audit/src/main/java; ./cc-test-reporter format-coverage
   ./audit/target/site/jacoco/jacoco.xml --input-type jacoco -o codeclimate.audit.json
 - export JACOCO_SOURCE_PATH=./common/src/main/java; ./cc-test-reporter format-coverage
-  ./common/target/site/jacoco/jacoco.xml --input-type jacoco -o codeclimate.common.json
+  ./common/jacoco/site/jacoco/jacoco.xml --input-type jacoco -o codeclimate.common.json
 - export JACOCO_SOURCE_PATH=./filter/src/main/java; ./cc-test-reporter format-coverage
   ./filter/target/site/jacoco/jacoco.xml --input-type jacoco -o codeclimate.filter.json
 - export JACOCO_SOURCE_PATH=./hpms/src/main/java; ./cc-test-reporter format-coverage
