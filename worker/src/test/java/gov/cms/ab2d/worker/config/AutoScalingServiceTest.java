@@ -39,7 +39,6 @@ public class AutoScalingServiceTest {
 
     @BeforeEach
     public void init() {
-        patientProcessorThreadPool.getThreadPoolExecutor().purge();
         patientProcessorThreadPool.getThreadPoolExecutor().getQueue().clear();
     }
 
@@ -62,9 +61,11 @@ public class AutoScalingServiceTest {
     void autoScalingKicksInAndResizes() throws InterruptedException {
         // Make the Executor busy.
         final List<Future> futures = new ArrayList<>();
+        RoundRobinBlockingQueue.CATEGORY_HOLDER.set("TEST_CONTRACT");
         for (int i = 0; i < QUEUE_SIZE; i++) {
             futures.add(patientProcessorThreadPool.submit(sleepyRunnable()));
         }
+        RoundRobinBlockingQueue.CATEGORY_HOLDER.remove();
 
         // In approximately 20 seconds the Executor should grow to the max.
         var start = Instant.now();
