@@ -4,6 +4,7 @@ import ca.uhn.fhir.rest.server.exceptions.InvalidRequestException;
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.repository.ContractRepository;
+import gov.cms.ab2d.common.service.PropertiesService;
 import gov.cms.ab2d.worker.service.BeneficiaryService;
 import org.hl7.fhir.dstu3.model.Bundle;
 import org.hl7.fhir.dstu3.model.Bundle.BundleEntryComponent;
@@ -44,6 +45,7 @@ class ContractAdapterTest {
     @Mock BFDClient client;
     @Mock ContractRepository contractRepository;
     @Mock BeneficiaryService beneficiaryService;
+    @Mock PropertiesService propertiesService;
 
     private ContractAdapter cut;
     private String contractNumber = "S0000";
@@ -53,7 +55,12 @@ class ContractAdapterTest {
 
     @BeforeEach
     void setUp() {
-        cut = new ContractAdapterImpl(client, contractRepository, beneficiaryService);
+        cut = new ContractAdapterImpl(
+                client,
+                contractRepository,
+                beneficiaryService,
+                propertiesService
+        );
 
         bundle = createBundle();
         lenient().when(client.requestPartDEnrolleesFromServer(anyString(), anyInt())).thenReturn(bundle);
@@ -293,12 +300,15 @@ class ContractAdapterTest {
     @DisplayName("given patientid rows in db for a specific contract & month, should not call BFD contract-2-bene api")
     void GivenPatientInLocalDb_ShouldNotCallBfdContractToBeneAPI() {
         when(beneficiaryService.findPatientIdsInDb(anyLong(), anyInt())).thenReturn(Set.of("ccw_patient_005"));
+
+        when(propertiesService.isToggleOn("ContractToBeneCachingOn"))
+                .thenReturn(true);
+
         cut.getPatients(contractNumber, Month.JANUARY.getValue());
 
         verify(client, never()).requestPartDEnrolleesFromServer(anyString(), anyInt());
         verify(beneficiaryService, never()).storeBeneficiaries(anyLong(), anySet(), anyInt());
     }
-
 
     @Test
     @DisplayName("given patient count > cachingThreshold, should cache beneficiary data")
@@ -311,11 +321,16 @@ class ContractAdapterTest {
         entries.add(createBundleEntry("ccw_patient_005"));
 
         ReflectionTestUtils.setField(cut, "cachingThreshold", 2);
+
+        when(propertiesService.isToggleOn("ContractToBeneCachingOn"))
+                .thenReturn(true);
+
         cut.getPatients(contractNumber, Month.JANUARY.getValue());
 
         verify(client).requestPartDEnrolleesFromServer(anyString(), anyInt());
         verify(beneficiaryService).storeBeneficiaries(anyLong(), anySet(), anyInt());
     }
+
 
     @Test
     @DisplayName("given patient count < cachingThreshold, should not cache beneficiary data")

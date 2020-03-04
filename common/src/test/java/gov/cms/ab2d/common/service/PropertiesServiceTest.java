@@ -46,8 +46,11 @@ public class PropertiesServiceTest {
             put(PCP_MAX_POOL_SIZE, 150);
             put(PCP_SCALE_TO_MAX_TIME, 900);
             put(MAINTENANCE_MODE, "false");
+            put(CONTRACT_2_BENE_CACHING_ON, "false");
         }};
 
+        List<Properties> propertyListBeforeInsert = propertiesService.getAllProperties();
+        int beforeCount = propertyListBeforeInsert.size();
         Properties properties = new Properties();
         properties.setKey("abc");
         properties.setValue("val");
@@ -56,7 +59,7 @@ public class PropertiesServiceTest {
 
         List<Properties> propertiesList = propertiesService.getAllProperties();
 
-        Assert.assertEquals(propertiesList.size(), 5);
+        Assert.assertEquals(propertiesList.size(), beforeCount + 1);
 
         for(Properties propertiesToCheck : propertiesList) {
             Object propertyValue = propertyMap.get(propertiesToCheck.getKey());
@@ -89,9 +92,14 @@ public class PropertiesServiceTest {
         propertiesDTOMaintenanceMode.setValue("true");
         propertiesDTOs.add(propertiesDTOMaintenanceMode);
 
+        PropertiesDTO propertiesDTOContract2BeneCachineOn = new PropertiesDTO();
+        propertiesDTOContract2BeneCachineOn.setKey(CONTRACT_2_BENE_CACHING_ON);
+        propertiesDTOContract2BeneCachineOn.setValue("true");
+        propertiesDTOs.add(propertiesDTOContract2BeneCachineOn);
+
         List<PropertiesDTO> updatedPropertiesDTOs = propertiesService.updateProperties(propertiesDTOs);
 
-        Assert.assertEquals(4, updatedPropertiesDTOs.size());
+        Assert.assertEquals(5, updatedPropertiesDTOs.size());
 
         for(PropertiesDTO propertiesDTO : updatedPropertiesDTOs) {
             if(propertiesDTO.getKey().equals(PCP_CORE_POOL_SIZE)) {
@@ -101,6 +109,8 @@ public class PropertiesServiceTest {
             } else if (propertiesDTO.getKey().equals(PCP_SCALE_TO_MAX_TIME)) {
                 Assert.assertEquals("400", propertiesDTO.getValue());
             } else if (propertiesDTO.getKey().equals(MAINTENANCE_MODE)) {
+                Assert.assertEquals("true", propertiesDTO.getValue());
+            } else if (propertiesDTO.getKey().equals(CONTRACT_2_BENE_CACHING_ON)) {
                 Assert.assertEquals("true", propertiesDTO.getValue());
             } else {
                 Assert.fail("Received unknown key");
