@@ -95,6 +95,12 @@ public class PropertiesServiceImpl implements PropertiesService {
                 }
 
                 addUpdatedPropertiesToList(propertiesDTOsReturn, propertiesDTO);
+            } else if (propertiesDTO.getKey().equals(ZIP_SUPPORT_ON)) {
+                if (!propertiesDTO.getValue().equals("true") && !propertiesDTO.getValue().equals("false")) {
+                    logErrorAndThrowException(ZIP_SUPPORT_ON, propertiesDTO.getValue());
+                }
+
+                addUpdatedPropertiesToList(propertiesDTOsReturn, propertiesDTO);
             }
         }
 

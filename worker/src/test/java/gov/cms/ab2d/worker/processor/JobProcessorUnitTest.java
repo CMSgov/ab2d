@@ -1,6 +1,5 @@
 package gov.cms.ab2d.worker.processor;
 
-import com.newrelic.api.agent.Token;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.JobStatus;
