@@ -41,6 +41,8 @@ public final class Constants {
 
     public static final String MAINTENANCE_MODE = "maintenance.mode";
 
+    public static final String CONTRACT_2_BENE_CACHING_ON = "ContractToBeneCachingOn";
+
     public static final Set<String> ALLOWED_PROPERTY_NAMES = Set.of(PCP_CORE_POOL_SIZE, PCP_MAX_POOL_SIZE,
-            PCP_SCALE_TO_MAX_TIME, MAINTENANCE_MODE);
+            PCP_SCALE_TO_MAX_TIME, MAINTENANCE_MODE, CONTRACT_2_BENE_CACHING_ON);
 }
