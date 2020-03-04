@@ -3,10 +3,20 @@ package gov.cms.ab2d.api.controller;
 import com.google.gson.Gson;
 import gov.cms.ab2d.api.config.SwaggerConfig;
 import gov.cms.ab2d.api.util.SwaggerConstants;
+import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.service.InvalidUserInputException;
 import gov.cms.ab2d.common.service.JobService;
-import gov.cms.ab2d.common.model.Job;
-import io.swagger.annotations.*;
+import gov.cms.ab2d.common.service.PropertiesService;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiImplicitParam;
+import io.swagger.annotations.ApiImplicitParams;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
+import io.swagger.annotations.Authorization;
+import io.swagger.annotations.AuthorizationScope;
+import io.swagger.annotations.ResponseHeader;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.hl7.fhir.dstu3.model.DateTimeType;
@@ -71,6 +81,9 @@ public class BulkDataAccessAPI {
     @Autowired
     private JobService jobService;
 
+    @Autowired
+    private PropertiesService propertiesService;
+
     @ApiOperation(value = BULK_EXPORT,
         authorizations = {
             @Authorization(value = "Authorization", scopes = {
@@ -100,6 +113,8 @@ public class BulkDataAccessAPI {
             @RequestParam(required = false, name = "_outputFormat") String outputFormat) {
         log.info("Received request to export");
 
+        checkIfInMaintenanceMode();
+
         checkIfCurrentUserCanAddJob();
 
         checkResourceTypesAndOutputFormat(resourceTypes, outputFormat);
@@ -110,6 +125,12 @@ public class BulkDataAccessAPI {
         logSuccessfulJobCreation(job);
 
         return returnStatusForJobCreation(job);
+    }
+
+    private void checkIfInMaintenanceMode() {
+        if (propertiesService.isInMaintenanceMode()) {
+            throw new InMaintenanceModeException("The system is currently in maintenance mode. Please try the request again later.");
+        }
     }
 
     private void checkIfCurrentUserCanAddJob() {
@@ -125,9 +146,17 @@ public class BulkDataAccessAPI {
             log.error("Received invalid resourceTypes of {}", resourceTypes);
             throw new InvalidUserInputException("_type must be " + EOB);
         }
+
+        final String errMsg = "An _outputFormat of " + outputFormat + " is not valid";
+
         if (outputFormat != null && !ALLOWABLE_OUTPUT_FORMAT_SET.contains(outputFormat)) {
             log.error("Received _outputFormat {}, which is not valid", outputFormat);
-            throw new InvalidUserInputException("An _outputFormat of " + outputFormat + " is not valid");
+            throw new InvalidUserInputException(errMsg);
+        }
+
+        final boolean zipSupportOn = propertiesService.isToggleOn(ZIP_SUPPORT_ON);
+        if (!zipSupportOn && ZIPFORMAT.equalsIgnoreCase(outputFormat)) {
+            throw new InvalidUserInputException(errMsg);
         }
     }
 
@@ -176,6 +205,8 @@ public class BulkDataAccessAPI {
             @RequestParam(required = false, name = "_outputFormat") String outputFormat) {
         MDC.put(CONTRACT_LOG, contractNumber);
         log.info("Received request to export by contractNumber");
+
+        checkIfInMaintenanceMode();
 
         checkIfCurrentUserCanAddJob();
 

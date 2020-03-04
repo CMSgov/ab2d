@@ -20,8 +20,8 @@ import java.util.concurrent.Future;
 
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.assertThat;
-
-@SpringBootTest(properties = {"pcp.core.pool.size=3" , "pcp.max.pool.size=20", "pcp.scaleToMax.time=20"})
+// Set property.change.detection to false, otherwise the values from the database will override the values that are being hardcoded here.
+@SpringBootTest(properties = {"pcp.core.pool.size=3" , "pcp.max.pool.size=20", "pcp.scaleToMax.time=20", "property.change.detection=false"})
 @Testcontainers
 @Slf4j
 public class AutoScalingServiceTest {
@@ -39,7 +39,6 @@ public class AutoScalingServiceTest {
 
     @BeforeEach
     public void init() {
-        patientProcessorThreadPool.getThreadPoolExecutor().purge();
         patientProcessorThreadPool.getThreadPoolExecutor().getQueue().clear();
     }
 
@@ -62,9 +61,11 @@ public class AutoScalingServiceTest {
     void autoScalingKicksInAndResizes() throws InterruptedException {
         // Make the Executor busy.
         final List<Future> futures = new ArrayList<>();
+        RoundRobinBlockingQueue.CATEGORY_HOLDER.set("TEST_CONTRACT");
         for (int i = 0; i < QUEUE_SIZE; i++) {
             futures.add(patientProcessorThreadPool.submit(sleepyRunnable()));
         }
+        RoundRobinBlockingQueue.CATEGORY_HOLDER.remove();
 
         // In approximately 20 seconds the Executor should grow to the max.
         var start = Instant.now();

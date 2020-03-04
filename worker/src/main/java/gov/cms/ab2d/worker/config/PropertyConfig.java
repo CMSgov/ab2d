@@ -20,6 +20,7 @@ public class PropertyConfig {
     @Bean
     public PropertiesInit propertiesInit() {
         PropertiesInit propertiesInit = new PropertiesInit(propertiesService, configurableEnvironment);
+        propertiesInit.updatePropertiesFromDatabase();
         return propertiesInit;
     }
 }
