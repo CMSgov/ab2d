@@ -104,9 +104,10 @@
                 </executions>
             </plugin>
 
-            <!-- Because everything depends on common, common will build first. The e2e tests run a clean for the whole
-                 app because the docker-compose does a mvn clean package as part of the build. This causes the common
-                 target directory to be deleted (which contains jacoco reports) -->
+            <!-- Because everything depends on common, common will build first, the e2e tests appear to go next.
+                 The e2e tests run a clean for the whole app because the docker-compose does a mvn clean package as
+                 part of the build. Since package doesn't run the tests, this causes the common target/site/jacoco
+                 directory to be deleted (which contains jacoco reports) -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-clean-plugin</artifactId>
