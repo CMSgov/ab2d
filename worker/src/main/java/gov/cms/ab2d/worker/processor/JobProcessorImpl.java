@@ -17,6 +17,7 @@ import gov.cms.ab2d.common.util.Constants;
 import gov.cms.ab2d.worker.adapter.bluebutton.ContractAdapter;
 import gov.cms.ab2d.worker.adapter.bluebutton.GetPatientsByContractResponse;
 import gov.cms.ab2d.worker.adapter.bluebutton.GetPatientsByContractResponse.PatientDTO;
+import gov.cms.ab2d.worker.config.RoundRobinBlockingQueue;
 import gov.cms.ab2d.worker.processor.domainmodel.ContractData;
 import gov.cms.ab2d.worker.processor.domainmodel.ProgressTracker;
 import gov.cms.ab2d.worker.service.FileService;
@@ -367,11 +368,21 @@ public class JobProcessorImpl implements JobProcessor {
                 }
 
                 // Add the thread to process the patient and start the thread
+
                 // See https://docs.newrelic.com/docs/agents/java-agent/async-instrumentation/java-agent-api-asynchronous-applications
                 // for more detail on tokens with async calls
                 final Token token = NewRelic.getAgent().getTransaction().getToken();
 
-                futureHandles.add(patientClaimsProcessor.process(patient, helper, contract.getAttestedOn(), token));
+                // Using a ThreadLocal to communicate contract number to RoundRobinBlockingQueue
+                // could be viewed as a hack by many; but on the other hand it saves us from writing
+                // tons of extra code.
+                RoundRobinBlockingQueue.CATEGORY_HOLDER.set(progressTracker.getJobUuid());
+                try {
+                    futureHandles.add(patientClaimsProcessor
+                            .process(patient, helper, contract.getAttestedOn(), token));
+                } finally {
+                    RoundRobinBlockingQueue.CATEGORY_HOLDER.remove();
+                }
 
                 // Periodically check if cancelled
                 if (recordsProcessedCount % cancellationCheckFrequency == 0) {
