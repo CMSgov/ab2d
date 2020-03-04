@@ -147,14 +147,16 @@ public class BulkDataAccessAPI {
             throw new InvalidUserInputException("_type must be " + EOB);
         }
 
+        final String errMsg = "An _outputFormat of " + outputFormat + " is not valid";
+
         if (outputFormat != null && !ALLOWABLE_OUTPUT_FORMAT_SET.contains(outputFormat)) {
             log.error("Received _outputFormat {}, which is not valid", outputFormat);
-            throw new InvalidUserInputException("An _outputFormat of " + outputFormat + " is not valid");
+            throw new InvalidUserInputException(errMsg);
         }
 
         final boolean zipSupportOn = propertiesService.isToggleOn(ZIP_SUPPORT_ON);
         if (!zipSupportOn && ZIPFORMAT.equalsIgnoreCase(outputFormat)) {
-            throw new InvalidUserInputException("An _outputFormat of " + outputFormat + " is not valid");
+            throw new InvalidUserInputException(errMsg);
         }
     }
 
