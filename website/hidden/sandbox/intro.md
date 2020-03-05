@@ -90,7 +90,7 @@ sponsor PDP-100 will have 100 patients and PDP-30000 will have 30000 patients. E
         </tr>
         <tr>
             <td><b>Base64-encoded id:password</b></td>
-            <td>nQwbGM2NUVyVjhPbVkyOTc6MUJsM0hHTzZlZ2xrWFVEdGpWanRvM0wtM0Mwb2ZmelRNazJxbHo5cg==</td>
+            <td>MG9hMnQwbGM2NUVyVjhPbVkyOTc6MUJsM0hHTzZlZ2xrWFVEdGpWanRvM0wtM0Mwb2ZmelRNazJxbHo5cg==</td>
         </tr>
     </tbody>
 </table>
