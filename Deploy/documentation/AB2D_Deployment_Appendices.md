@@ -40,9 +40,9 @@
    * [Test interacting with a public S3 file on a worker node](#test-interacting-with-a-public-s3-file-on-a-worker-node)
 1. [Appendix Y: Test the opt-out process using IntelliJ](#appendix-y-test-the-opt-out-process-using-intellij)
 1. [Appendix Z: Test configuration of JVM settings within a container](#appendix-z-test-configuration-of-jvm-settings-within-a-container)
-   * [Check the current "heapsize" and "maxram" settings for an api node](#check-the-current-heapsize-and-maxram-settings-for-an-api-node)
+   * [Check the default "heapsize" and "maxram" settings for an api node](#check-the-default-heapsize-and-maxram-settings-for-an-api-node)
    * [Verify JVM parameters for an api node](#verify-jvm-parameters-for-an-api-node)
-   * [Check the current "heapsize" and "maxram" settings for a worker node](#check-the-current-heapsize-and-maxram-settings-for-a-worker-node)
+   * [Check the default "heapsize" and "maxram" settings for a worker node](#check-the-default-heapsize-and-maxram-settings-for-a-worker-node)
    * [Verify JVM parameters for a worker node](#verify-jvm-parameters-for-a-worker-node)
 
 ## Appendix A: Access the CMS AWS console
@@ -2948,7 +2948,7 @@
 
 ## Appendix Z: Test configuration of JVM settings within a container
 
-### Check the current "heapsize" and "maxram" settings for an api node
+### Check the default "heapsize" and "maxram" settings for an api node
 
 1. Connect to a api node
 
@@ -2979,7 +2979,7 @@
    $ docker exec -it $(docker ps -aqf "name=ecs-api-*" --filter "status=running") /bin/bash
    ```
 
-1. Get the current "heapsize" and "maxram" settings
+1. Get the default "heapsize" and "maxram" settings
 
    ```ShellSession
    $ java -XX:+PrintFlagsFinal -version | grep -Ei "maxheapsize|maxram"
@@ -3064,7 +3064,7 @@
    $ exit
    ```
 
-### Check the current "heapsize" and "maxram" settings for a worker node
+### Check the default "heapsize" and "maxram" settings for a worker node
 
 1. Connect to a worker node
 
@@ -3095,7 +3095,7 @@
    $ docker exec -it $(docker ps -aqf "name=ecs-worker-*" --filter "status=running") /bin/bash
    ```
 
-1. Get the current "heapsize" and "maxram" settings
+1. Get the default "heapsize" and "maxram" settings
 
    ```ShellSession
    $ java -XX:+PrintFlagsFinal -version | grep -Ei "maxheapsize|maxram"
