@@ -804,6 +804,7 @@
 
    ```ShellSession
    $ jq --version
+   ```
    
 ## Install Packer
 
