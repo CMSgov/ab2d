@@ -6,6 +6,7 @@ import gov.cms.ab2d.common.dto.PropertiesDTO;
 import gov.cms.ab2d.common.model.Properties;
 import gov.cms.ab2d.common.repository.PropertiesRepository;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,6 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static gov.cms.ab2d.common.util.Constants.*;
+import static java.lang.Boolean.FALSE;
 
 @Service
 @Transactional
@@ -28,6 +30,11 @@ public class PropertiesServiceImpl implements PropertiesService {
     private PropertiesRepository propertiesRepository;
 
     private final Type propertiesListType = new TypeToken<List<PropertiesDTO>>() { } .getType();
+
+    @Override
+    public boolean isInMaintenanceMode() {
+        return Boolean.valueOf(getPropertiesByKey(MAINTENANCE_MODE).getValue());
+    }
 
     @Override
     public List<Properties> getAllProperties() {
@@ -76,6 +83,24 @@ public class PropertiesServiceImpl implements PropertiesService {
                 }
 
                 addUpdatedPropertiesToList(propertiesDTOsReturn, propertiesDTO);
+            } else if (propertiesDTO.getKey().equals(MAINTENANCE_MODE)) {
+                if (!propertiesDTO.getValue().equals("true") && !propertiesDTO.getValue().equals("false")) {
+                    logErrorAndThrowException(MAINTENANCE_MODE, propertiesDTO.getValue());
+                }
+
+                addUpdatedPropertiesToList(propertiesDTOsReturn, propertiesDTO);
+            } else if (propertiesDTO.getKey().equals(CONTRACT_2_BENE_CACHING_ON)) {
+                if (!propertiesDTO.getValue().equals("true") && !propertiesDTO.getValue().equals("false")) {
+                    logErrorAndThrowException(CONTRACT_2_BENE_CACHING_ON, propertiesDTO.getValue());
+                }
+
+                addUpdatedPropertiesToList(propertiesDTOsReturn, propertiesDTO);
+            } else if (propertiesDTO.getKey().equals(ZIP_SUPPORT_ON)) {
+                if (!propertiesDTO.getValue().equals("true") && !propertiesDTO.getValue().equals("false")) {
+                    logErrorAndThrowException(ZIP_SUPPORT_ON, propertiesDTO.getValue());
+                }
+
+                addUpdatedPropertiesToList(propertiesDTOsReturn, propertiesDTO);
             }
         }
 
@@ -94,11 +119,24 @@ public class PropertiesServiceImpl implements PropertiesService {
         Properties mappedProperties = mapping.getModelMapper().map(propertiesDTO, Properties.class);
         mappedProperties.setId(properties.getId());
         Properties updatedProperties = propertiesRepository.save(mappedProperties);
+
+        log.info("Updated property {} with value {}", updatedProperties.getKey(), updatedProperties.getValue());
+
         propertiesDTOsReturn.add(mapping.getModelMapper().map(updatedProperties, PropertiesDTO.class));
     }
 
     private void logErrorAndThrowException(String propertyKey, Object propertyValue) {
         log.error("Incorrect value for {} of {}", propertyKey, propertyValue);
         throw new InvalidPropertiesException("Incorrect value for " + propertyKey + " of " + propertyValue);
+    }
+
+
+    public boolean isToggleOn(final String toggleName) {
+        return propertiesRepository.findByKey(toggleName)
+                .map(Properties::getValue)
+                .map(StringUtils::trim)
+                .map(Boolean::valueOf)
+                .orElse(FALSE)
+                .booleanValue();
     }
 }

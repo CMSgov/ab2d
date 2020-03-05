@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.okta.jwt.JwtVerificationException;
 import gov.cms.ab2d.api.SpringBootApp;
 import gov.cms.ab2d.common.dto.PropertiesDTO;
-import gov.cms.ab2d.common.model.Properties;
 import gov.cms.ab2d.common.repository.*;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import org.junit.Assert;
@@ -82,6 +81,9 @@ public class AdminAPIPropertiesTests {
             put(PCP_CORE_POOL_SIZE, 10);
             put(PCP_MAX_POOL_SIZE, 150);
             put(PCP_SCALE_TO_MAX_TIME, 900);
+            put(MAINTENANCE_MODE, "false");
+            put(CONTRACT_2_BENE_CACHING_ON, "false");
+            put(ZIP_SUPPORT_ON, "false");
         }};
 
         MvcResult mvcResult = this.mockMvc.perform(
@@ -96,7 +98,7 @@ public class AdminAPIPropertiesTests {
         ObjectMapper mapper = new ObjectMapper();
         List<PropertiesDTO> propertiesDTOs = mapper.readValue(result, new TypeReference<List<PropertiesDTO>>() { } );
 
-        Assert.assertEquals(3, propertiesDTOs.size());
+        Assert.assertEquals(6, propertiesDTOs.size());
         for(PropertiesDTO propertiesDTO : propertiesDTOs) {
             Object value = propertyMap.get(propertiesDTO.getKey());
 
@@ -124,10 +126,16 @@ public class AdminAPIPropertiesTests {
         pcpScaleToMaxTimeDTO.setValue("500");
         propertiesDTOs.add(pcpScaleToMaxTimeDTO);
 
+        PropertiesDTO maintenanceModeDTO = new PropertiesDTO();
+        maintenanceModeDTO.setKey(MAINTENANCE_MODE);
+        maintenanceModeDTO.setValue("true");
+        propertiesDTOs.add(maintenanceModeDTO);
+
         Map<String, Object> propertyMap = new HashMap<>(){{
             put(PCP_CORE_POOL_SIZE, 15);
             put(PCP_MAX_POOL_SIZE, 25);
             put(PCP_SCALE_TO_MAX_TIME, 500);
+            put(MAINTENANCE_MODE, "true");
         }};
 
         ObjectMapper mapper = new ObjectMapper();
@@ -143,7 +151,7 @@ public class AdminAPIPropertiesTests {
         String result = mvcResult.getResponse().getContentAsString();
         List<PropertiesDTO> propertiesDTOsRetrieved = mapper.readValue(result, new TypeReference<List<PropertiesDTO>>() { } );
 
-        Assert.assertEquals(3, propertiesDTOsRetrieved.size());
+        Assert.assertEquals(4, propertiesDTOsRetrieved.size());
         for(PropertiesDTO propertiesDTO : propertiesDTOsRetrieved) {
             Object value = propertyMap.get(propertiesDTO.getKey());
 

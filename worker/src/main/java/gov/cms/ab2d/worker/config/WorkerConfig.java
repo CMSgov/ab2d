@@ -24,6 +24,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 import javax.sql.DataSource;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ThreadPoolExecutor;
 
@@ -51,9 +52,6 @@ public class WorkerConfig {
     @Value("${pcp.core.pool.size}")
     private int pcpCorePoolSize;
 
-    @Value("${pcp.queue.capacity}")
-    private int pcpQueueCapacity;
-
     @Value("${job.core.pool.size}")
     private int jobCorePoolSize;
 
@@ -65,13 +63,18 @@ public class WorkerConfig {
 
     @Bean
     public Executor patientProcessorThreadPool() {
-        final ThreadPoolTaskExecutor taskExecutor = new ThreadPoolTaskExecutor();
+        // Regretfully, no good way to supply a custom queue to ThreadPoolTaskExecutor
+        // other than by overriding createQueue
+        final ThreadPoolTaskExecutor taskExecutor = new ThreadPoolTaskExecutor() {
+            @Override
+            protected BlockingQueue<Runnable> createQueue(int queueCapacity) {
+                return new RoundRobinBlockingQueue<>();
+            }
+        };
         taskExecutor.setCorePoolSize(pcpCorePoolSize);
         // Initially we lock the pool at the minimum size; auto-scaling is done
         // by a separate service.
         taskExecutor.setMaxPoolSize(pcpCorePoolSize);
-        taskExecutor.setQueueCapacity(pcpQueueCapacity);
-        taskExecutor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
         taskExecutor.setThreadNamePrefix("pcp-");
         return taskExecutor;
     }
