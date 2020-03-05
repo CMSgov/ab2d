@@ -97,13 +97,19 @@
             <artifactId>jackson-module-jaxb-annotations</artifactId>
         </dependency>
 
-	<dependency>
+	    <dependency>
             <groupId>com.newrelic.agent.java</groupId>
             <artifactId>newrelic-java</artifactId>
             <version>5.10.0</version>
             <scope>provided</scope>
             <type>zip</type>
-	</dependency>
+	    </dependency>
+
+        <dependency>
+            <groupId>org.bouncycastle</groupId>
+            <artifactId>bcpkix-jdk15on</artifactId>
+            <version>1.64</version>
+        </dependency>
 	
     </dependencies>
 

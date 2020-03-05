@@ -598,6 +598,8 @@ public class JobProcessorImpl implements JobProcessor {
         jobOutput.setFilePath(outputFile.getFileName().toString());
         jobOutput.setFhirResourceType(EOB);
         jobOutput.setError(isError);
+        jobOutput.setChecksum(fileService.generateChecksum(outputFile.toFile()));
+        jobOutput.setFileLength(outputFile.toFile().length());
         return jobOutput;
     }
 

@@ -1,8 +1,11 @@
 package gov.cms.ab2d.worker.service;
 
 import lombok.extern.slf4j.Slf4j;
+import org.bouncycastle.jcajce.provider.digest.SHA256;
 import org.springframework.stereotype.Component;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
@@ -33,5 +36,16 @@ public class FileServiceImpl implements FileService {
             throw new UncheckedIOException(errMsg + outputDir.getFileName(), e);
         }
         return outputDirectory;
+    }
+
+    @Override
+    public byte[] generateChecksum(File file) {
+        try (FileInputStream fileInputStream = new FileInputStream(file)) {
+            byte[] bytes = new SHA256.Digest().digest(fileInputStream.readAllBytes());
+            return bytes;
+        } catch (IOException e) {
+            log.error("Encountered IO Exception while generating checksum {}", e.getMessage(), e);
+            throw new UncheckedIOException(e);
+        }
     }
 }

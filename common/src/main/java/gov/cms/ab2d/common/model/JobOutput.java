@@ -39,4 +39,10 @@ public class JobOutput {
 
     @NotNull
     private Boolean downloaded = false;
+
+    @NotNull
+    private byte[] checksum;
+
+    @NotNull
+    private Long fileLength;
 }

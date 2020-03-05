@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import gov.cms.ab2d.api.config.SwaggerConfig;
 import gov.cms.ab2d.api.util.SwaggerConstants;
 import gov.cms.ab2d.common.model.Job;
+import gov.cms.ab2d.common.model.JobOutput;
 import gov.cms.ab2d.common.service.InvalidUserInputException;
 import gov.cms.ab2d.common.service.JobService;
 import gov.cms.ab2d.common.service.PropertiesService;
@@ -48,9 +49,13 @@ import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static gov.cms.ab2d.api.controller.JobCompletedResponse.CHECKSUM_STRING;
+import static gov.cms.ab2d.api.controller.JobCompletedResponse.CONTENT_LENGTH_STRING;
 import static gov.cms.ab2d.api.util.Constants.GENERIC_FHIR_ERR_MSG;
 import static gov.cms.ab2d.api.util.SwaggerConstants.*;
 import static gov.cms.ab2d.common.service.JobService.ZIPFORMAT;
@@ -301,11 +306,15 @@ public class BulkDataAccessAPI {
                 resp.setRequest(job.getRequestUrl());
                 resp.setRequiresAccessToken(true);
                 resp.setOutput(job.getJobOutputs().stream().filter(o ->
-                    !o .getError()).map(o ->
-                        new JobCompletedResponse.Output(o.getFhirResourceType(), getUrlPath(job, o.getFilePath()))).collect(Collectors.toList()));
+                    !o .getError()).map(o -> {
+                    List<JobCompletedResponse.ValueOutput> valueOutputs = generateValueOutputs(o);
+                        return new JobCompletedResponse.Output(o.getFhirResourceType(), getUrlPath(job, o.getFilePath()), valueOutputs);
+                }).collect(Collectors.toList()));
                 resp.setError(job.getJobOutputs().stream().filter(o ->
-                    o.getError()).map(o ->
-                        new JobCompletedResponse.Output(o.getFhirResourceType(), getUrlPath(job, o.getFilePath()))).collect(Collectors.toList()));
+                    o.getError()).map(o -> {
+                    List<JobCompletedResponse.ValueOutput> valueOutputs = generateValueOutputs(o);
+                        return new JobCompletedResponse.Output(o.getFhirResourceType(), getUrlPath(job, o.getFilePath()), valueOutputs);
+                }).collect(Collectors.toList()));
 
                 log.info("Job status completed successfully");
 
@@ -324,6 +333,13 @@ public class BulkDataAccessAPI {
                 log.error(unknownErrorMsg);
                 throw new RuntimeException(unknownErrorMsg);
         }
+    }
+
+    private List<JobCompletedResponse.ValueOutput> generateValueOutputs(JobOutput o) {
+        List<JobCompletedResponse.ValueOutput> valueOutputs = new ArrayList<>(2);
+        valueOutputs.add(new JobCompletedResponse.ValueOutput(o.getChecksum()));
+        valueOutputs.add(new JobCompletedResponse.ValueOutput(o.getFileLength()));
+        return valueOutputs;
     }
 
     private String getUrlPath(Job job, String filePath) {

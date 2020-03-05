@@ -1,5 +1,9 @@
 package gov.cms.ab2d.api.controller;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import lombok.Getter;
+import org.bouncycastle.util.encoders.Hex;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -16,6 +20,9 @@ public final class JobCompletedResponse {
     private boolean requiresAccessToken;
     private List<Output> output = new ArrayList<>();
     private List<Output> error = new ArrayList<>();
+
+    public static final String CHECKSUM_STRING = "https://ab2d.cms.gov/checksum";
+    public static final String CONTENT_LENGTH_STRING = "https://ab2d.cms.gov/file_length";
 
 
     public String getTransactionTime() {
@@ -58,30 +65,40 @@ public final class JobCompletedResponse {
         this.error = error;
     }
 
+    @Getter
     public static final class Output {
-        private String type;
-        private String url;
+        private final String type;
+        private final String url;
 
-        public Output(String type, String url) {
+        private final List<ValueOutput> valueOutputs;
+
+        public Output(String type, String url, List<ValueOutput> valueOutputs) {
             this.type = type;
             this.url = url;
-        }
-
-        public String getType() {
-            return type;
-        }
-
-        public void setType(String type) {
-            this.type = type;
-        }
-
-        public String getUrl() {
-            return url;
-        }
-
-        public void setUrl(String url) {
-            this.url = url;
+            this.valueOutputs = valueOutputs;
         }
     }
 
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    @Getter
+    public static final class ValueOutput {
+        private final String url;
+
+        private String valueString;
+
+        private Long valueDecimal;
+
+        public ValueOutput(byte[] valueString) {
+            this.url = CHECKSUM_STRING;
+            String stringChecksum = Hex.toHexString(valueString);
+
+            String formattedChecksum = String.format("%s:%s", "sha256", stringChecksum);
+            this.valueString = formattedChecksum;
+        }
+
+        public ValueOutput(Long valueDecimal) {
+            this.url = CONTENT_LENGTH_STRING;
+            this.valueDecimal = valueDecimal;
+        }
+    }
 }
