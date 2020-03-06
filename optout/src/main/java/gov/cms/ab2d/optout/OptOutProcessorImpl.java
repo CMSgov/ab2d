@@ -11,8 +11,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.util.List;
 
 @Slf4j
@@ -27,17 +25,23 @@ public class OptOutProcessorImpl implements OptOutProcessor {
     @Override
     @Transactional
     public void process() {
-        log.info("import opt-out data - start ...");
 
-        try (var inputStreamReader = s3Gateway.getOptOutFile();
-             var bufferedReader = new BufferedReader(inputStreamReader)
-        ) {
+        final List<String> filenames = s3Gateway.listOptOutFiles();
+        filenames.stream().forEach(this::fetchAndProcessOptOutFile);
+
+    }
+
+    private void fetchAndProcessOptOutFile(final String filename) {
+        try (var inputStreamReader = s3Gateway.getOptOutFile(filename);
+             var bufferedReader = new BufferedReader(inputStreamReader)) {
+
+            log.info("importing [{}]", filename);
+
             importOptOutRecords(bufferedReader);
 
-            log.info("import opt-out data - DONE.");
-        } catch (IOException e) {
-            log.info("import opt-out data - FAILED.");
-            throw new UncheckedIOException(e);
+            log.info("[{}] - import completed successfully", filename);
+        } catch (Exception e) {
+            log.error("[{}] - import FAILED ", filename, e);
         }
     }
 
