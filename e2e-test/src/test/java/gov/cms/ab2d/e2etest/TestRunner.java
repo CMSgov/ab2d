@@ -38,6 +38,7 @@ import java.util.zip.ZipInputStream;
 import static gov.cms.ab2d.common.service.JobService.ZIPFORMAT;
 import static gov.cms.ab2d.e2etest.APIClient.PATIENT_EXPORT_PATH;
 import static java.time.temporal.ChronoUnit.SECONDS;
+import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.matchesPattern;
 
 // Unit tests here can be run from the IDE and will use LOCAL as the default, they can also be run from the TestLauncher
@@ -192,13 +193,14 @@ public class TestRunner {
         String checkSumUrl = checkSumObject.getString("url");
         Assert.assertEquals("https://ab2d.cms.gov/checksum", checkSumUrl);
         String checkSum = checkSumObject.getString("valueString");
-        Assert.assertEquals("", checkSum);
+        Assert.assertEquals("sha256:", checkSum.substring(0, 6));
+        Assert.assertEquals(checkSum.length(), 71);
 
         JSONObject lengthObject = extension.getJSONObject(1);
         String lengthUrl = lengthObject.getString("url");
         Assert.assertEquals("https://ab2d.cms.gov/file_length", lengthUrl);
         long length = lengthObject.getLong("valueDecimal");
-        Assert.assertEquals(0, length);
+        Assert.assertThat(length, greaterThan(0L));
 
         return url;
     }
