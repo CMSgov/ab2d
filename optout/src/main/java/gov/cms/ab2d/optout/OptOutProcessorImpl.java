@@ -11,8 +11,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.util.List;
 
 @Slf4j
@@ -29,11 +27,11 @@ public class OptOutProcessorImpl implements OptOutProcessor {
     public void process() {
 
         final List<String> filenames = s3Gateway.listOptOutFiles();
-        filenames.stream().forEach(fileName -> fetchOptOutFile(fileName));
+        filenames.stream().forEach(this::fetchAndProcessOptOutFile);
 
     }
 
-    private void fetchOptOutFile(final String filename) {
+    private void fetchAndProcessOptOutFile(final String filename) {
         try (var inputStreamReader = s3Gateway.getOptOutFile(filename);
              var bufferedReader = new BufferedReader(inputStreamReader)) {
 
@@ -42,9 +40,8 @@ public class OptOutProcessorImpl implements OptOutProcessor {
             importOptOutRecords(bufferedReader);
 
             log.info("[{}] - import completed successfully", filename);
-        } catch (IOException e) {
-            log.error("[{}] - import FAILED", filename);
-            throw new UncheckedIOException(e);
+        } catch (Exception e) {
+            log.error("[{}] - import FAILED ", filename, e);
         }
     }
 
