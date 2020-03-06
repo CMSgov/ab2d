@@ -29,30 +29,21 @@ public class OptOutProcessorImpl implements OptOutProcessor {
     public void process() {
 
         final List<String> filenames = s3Gateway.listOptOutFiles();
-        logFileNames(filenames);
-
         filenames.stream().forEach(fileName -> fetchOptOutFile(fileName));
 
-    }
-
-    private void logFileNames(List<String> filenames) {
-
-        log.info("The following files were found in S3 ...");
-        filenames.stream()
-                .forEach(file -> log.info("{}", file));
     }
 
     private void fetchOptOutFile(final String filename) {
         try (var inputStreamReader = s3Gateway.getOptOutFile(filename);
              var bufferedReader = new BufferedReader(inputStreamReader)) {
 
-            log.info("importing file: [{}]", filename);
+            log.info("importing [{}]", filename);
 
             importOptOutRecords(bufferedReader);
 
-            log.info("file: [{}] - import complete", filename);
+            log.info("[{}] - import completed successfully", filename);
         } catch (IOException e) {
-            log.error("file: [{}] - import FAILED", filename);
+            log.error("[{}] - import FAILED", filename);
             throw new UncheckedIOException(e);
         }
     }
