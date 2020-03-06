@@ -39,6 +39,11 @@
    * [Test interacting with a public S3 file using the AWS Java SDK with environment variables](#test-interacting-with-a-public-s3-file-using-the-aws-java-sdk-with-environment-variables)
    * [Test interacting with a public S3 file on a worker node](#test-interacting-with-a-public-s3-file-on-a-worker-node)
 1. [Appendix Y: Test the opt-out process using IntelliJ](#appendix-y-test-the-opt-out-process-using-intellij)
+1. [Appendix Z: Test configuration of JVM settings within a container](#appendix-z-test-configuration-of-jvm-settings-within-a-container)
+   * [Check the default "heapsize" and "maxram" settings for an api node](#check-the-default-heapsize-and-maxram-settings-for-an-api-node)
+   * [Verify JVM parameters for an api node](#verify-jvm-parameters-for-an-api-node)
+   * [Check the default "heapsize" and "maxram" settings for a worker node](#check-the-default-heapsize-and-maxram-settings-for-a-worker-node)
+   * [Verify JVM parameters for a worker node](#verify-jvm-parameters-for-a-worker-node)
 
 ## Appendix A: Access the CMS AWS console
 
@@ -2939,4 +2944,238 @@
 
    ```ShellSession
    $ git checkout -- optout/src/main/resources/application.optout.properties
+   ```
+
+## Appendix Z: Test configuration of JVM settings within a container
+
+### Check the default "heapsize" and "maxram" settings for an api node
+
+1. Connect to a api node
+
+   *Format:*
+
+   ```ShellSession
+   $ ssh -i ~/.ssh/ab2d-dev.pem ec2-user@{api private ip} \
+     -o ProxyCommand="ssh -W %h:%p ec2-user@{controller private ip}"
+   ```
+
+   *Example for Dev environment:*
+
+   ```ShellSession
+   $ ssh -i ~/.ssh/ab2d-dev.pem ec2-user@10.242.26.23 \
+     -o ProxyCommand="ssh -W %h:%p ec2-user@10.242.5.190"
+   ```
+
+   *Example for Sbx environment:*
+
+   ```ShellSession
+   $ ssh -i ~/.ssh/ab2d-sbx-sandbox.pem ec2-user@10.242.31.133 \
+     -o ProxyCommand="ssh -W %h:%p ec2-user@10.242.36.49"
+   ```
+
+1. Connect to the running api container
+
+   ```ShellSession
+   $ docker exec -it $(docker ps -aqf "name=ecs-api-*" --filter "status=running") /bin/bash
+   ```
+
+1. Get the default "heapsize" and "maxram" settings
+
+   ```ShellSession
+   $ java -XX:+PrintFlagsFinal -version | grep -Ei "maxheapsize|maxram"
+   ```
+
+1. Note the output
+
+   *Example for Dev environment:*
+
+   ```
+   size_t MaxHeapSize           = 2147483648            {product} {ergonomic}
+   uint64_t MaxRAM              = 137438953472       {pd product} {default}
+   uintx MaxRAMFraction         = 4                     {product} {default}
+   double MaxRAMPercentage      = 25.000000             {product} {default}
+   size_t SoftMaxHeapSize       = 2147483648         {manageable} {ergonomic}
+   ```
+
+1. Exit the container
+
+   ```ShellSession
+   $ exit
+   ```
+
+1. Exit the api node
+
+   ```ShellSession
+   $ exit
+   ```
+
+### Verify JVM parameters for an api node
+
+1. Connect to a api node
+
+   *Format:*
+
+   ```ShellSession
+   $ ssh -i ~/.ssh/ab2d-dev.pem ec2-user@{api private ip} \
+     -o ProxyCommand="ssh -W %h:%p ec2-user@{controller private ip}"
+   ```
+
+   *Example for Dev environment:*
+
+   ```ShellSession
+   $ ssh -i ~/.ssh/ab2d-dev.pem ec2-user@10.242.26.23 \
+     -o ProxyCommand="ssh -W %h:%p ec2-user@10.242.5.190"
+   ```
+
+   *Example for Sbx environment:*
+
+   ```ShellSession
+   $ ssh -i ~/.ssh/ab2d-sbx-sandbox.pem ec2-user@10.242.31.133 \
+     -o ProxyCommand="ssh -W %h:%p ec2-user@10.242.36.49"
+   ```
+
+1. Connect to the running api container
+
+   ```ShellSession
+   $ docker exec -it $(docker ps -aqf "name=ecs-api-*" --filter "status=running") /bin/bash
+   ```
+
+1. Verify JVM parameters for API
+
+   ```ShellSession
+   $ jps -lvm | grep api
+   ```
+
+1. Note the output
+
+   ```
+   1 api-0.0.1-SNAPSHOT.jar -XX:+UseContainerSupport -XX:InitialRAMPercentage=40.0 -XX:MinRAMPercentage=20.0 -XX:MaxRAMPercentage=80.0 -javaagent:/usr/src/ab2d-api/newrelic/newrelic.jar
+   ```
+
+1. Exit the container
+
+   ```ShellSession
+   $ exit
+   ```
+
+1. Exit the api node
+
+   ```ShellSession
+   $ exit
+   ```
+
+### Check the default "heapsize" and "maxram" settings for a worker node
+
+1. Connect to a worker node
+
+   *Format:*
+
+   ```ShellSession
+   $ ssh -i ~/.ssh/ab2d-dev.pem ec2-user@{worker private ip} \
+     -o ProxyCommand="ssh -W %h:%p ec2-user@{controller private ip}"
+   ```
+
+   *Example for Dev environment:*
+
+   ```ShellSession
+   $ ssh -i ~/.ssh/ab2d-dev.pem ec2-user@10.242.26.47 \
+     -o ProxyCommand="ssh -W %h:%p ec2-user@10.242.5.190"
+   ```
+
+   *Example for Sbx environment:*
+
+   ```ShellSession
+   $ ssh -i ~/.ssh/ab2d-sbx-sandbox.pem ec2-user@10.242.31.110 \
+     -o ProxyCommand="ssh -W %h:%p ec2-user@10.242.36.49"
+   ```
+
+1. Connect to the running worker container
+
+   ```ShellSession
+   $ docker exec -it $(docker ps -aqf "name=ecs-worker-*" --filter "status=running") /bin/bash
+   ```
+
+1. Get the default "heapsize" and "maxram" settings
+
+   ```ShellSession
+   $ java -XX:+PrintFlagsFinal -version | grep -Ei "maxheapsize|maxram"
+   ```
+
+1. Note the output
+
+   *Example for Dev environment:*
+
+   ```
+   size_t MaxHeapSize           = 2147483648            {product} {ergonomic}
+   uint64_t MaxRAM              = 137438953472       {pd product} {default}
+   uintx MaxRAMFraction         = 4                     {product} {default}
+   double MaxRAMPercentage      = 25.000000             {product} {default}
+   size_t SoftMaxHeapSize       = 2147483648         {manageable} {ergonomic}
+   ```
+
+1. Exit the container
+
+   ```ShellSession
+   $ exit
+   ```
+
+1. Exit the worker node
+
+   ```ShellSession
+   $ exit
+   ```
+
+### Verify JVM parameters for a worker node
+
+1. Connect to a worker node
+
+   *Format:*
+
+   ```ShellSession
+   $ ssh -i ~/.ssh/ab2d-dev.pem ec2-user@{worker private ip} \
+     -o ProxyCommand="ssh -W %h:%p ec2-user@{controller private ip}"
+   ```
+
+   *Example for Dev environment:*
+
+   ```ShellSession
+   $ ssh -i ~/.ssh/ab2d-dev.pem ec2-user@10.242.26.47 \
+     -o ProxyCommand="ssh -W %h:%p ec2-user@10.242.5.190"
+   ```
+
+   *Example for Sbx environment:*
+
+   ```ShellSession
+   $ ssh -i ~/.ssh/ab2d-sbx-sandbox.pem ec2-user@10.242.31.110 \
+     -o ProxyCommand="ssh -W %h:%p ec2-user@10.242.36.49"
+   ```
+
+1. Connect to the running worker container
+
+   ```ShellSession
+   $ docker exec -it $(docker ps -aqf "name=ecs-worker-*" --filter "status=running") /bin/bash
+   ```
+
+1. Verify JVM parameters for API
+
+   ```ShellSession
+   $ jps -lvm | grep worker
+   ```
+
+1. Note the output
+
+   ```
+   1 worker-0.0.1-SNAPSHOT.jar -XX:+UseContainerSupport -XX:InitialRAMPercentage=40.0 -XX:MinRAMPercentage=20.0 -XX:MaxRAMPercentage=80.0 -javaagent:/usr/src/ab2d-worker/newrelic/newrelic.jar
+   ```
+
+1. Exit the container
+
+   ```ShellSession
+   $ exit
+   ```
+
+1. Exit the api node
+
+   ```ShellSession
+   $ exit
    ```

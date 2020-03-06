@@ -33,7 +33,11 @@ variable "ami_id" {
   description = "This is meant to be a different value on every new deployment"
 }
 
-variable "ec2_instance_type" {
+variable "ec2_instance_type_api" {
+  default = ""
+}
+
+variable "ec2_instance_type_worker" {
   default = ""
 }
 
@@ -75,16 +79,28 @@ variable "ec2_iam_profile" {
   default = "Ab2dInstanceProfile"
 }
 
-variable "ec2_desired_instance_count" {
-  default = "2"
+variable "ec2_desired_instance_count_api" {
+  default = ""
 }
 
-variable "ec2_minimum_instance_count" {
-  default = "2"
+variable "ec2_minimum_instance_count_api" {
+  default = ""
 }
 
-variable "ec2_maximum_instance_count" {
-  default = "2"
+variable "ec2_maximum_instance_count_api" {
+  default = ""
+}
+
+variable "ec2_desired_instance_count_worker" {
+  default = ""
+}
+
+variable "ec2_minimum_instance_count_worker" {
+  default = ""
+}
+
+variable "ec2_maximum_instance_count_worker" {
+  default = ""
 }
 
 variable "gold_image_name" {
@@ -232,6 +248,30 @@ variable "current_task_definition_arn" {
   description = "Please pass this on command line as part of deployment process"
 }
 
+variable "ecs_container_definition_new_memory_api" {
+  default = ""
+}
+
+variable "ecs_task_definition_cpu_api" {
+  default = ""
+}
+
+variable "ecs_task_definition_memory_api" {
+  default = ""
+}
+
+variable "ecs_container_definition_new_memory_worker" {
+  default = ""
+}
+
+variable "ecs_task_definition_cpu_worker" {
+  default = ""
+}
+
+variable "ecs_task_definition_memory_worker" {
+  default = ""
+}
+
 ## SNS specific variables #########################################################################
 
 variable "alert_email_address" {
@@ -295,6 +335,32 @@ variable "new_relic_app_name" {
 }
 
 variable "new_relic_license_key" {
+  default     = ""
+  description = "Please pass this on command line and not as a value here"
+}
+
+## ALB specific variables #########################################################################
+
+variable "ecs_task_definition_host_port" {
+  type        = number
+  default     = 80
+  description = "Please pass this on command line and not as a value here"
+}
+
+variable "host_port" {
+  type        = number
+  default     = 80
+  description = "Please pass this on command line and not as a value here"
+}
+
+variable "alb_listener_protocol" {
+  type        = string
+  default     = "HTTP"
+  description = "Please pass this on command line and not as a value here"
+}
+
+variable "alb_listener_certificate_arn" {
+  type        = string
   default     = ""
   description = "Please pass this on command line and not as a value here"
 }
