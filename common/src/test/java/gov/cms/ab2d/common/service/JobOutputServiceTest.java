@@ -90,6 +90,8 @@ public class JobOutputServiceTest {
         jobOutput.setFhirResourceType(EOB);
         jobOutput.setFilePath("file.ndjson");
         jobOutput.setJob(savedJob);
+        jobOutput.setChecksum("testoutput".getBytes());
+        jobOutput.setFileLength(20L);
         JobOutput savedJobOutput = jobOutputRepository.save(jobOutput);
         savedJobOutput.setDownloaded(true);
         savedJobOutput.setError(false);
@@ -114,6 +116,8 @@ public class JobOutputServiceTest {
         jobOutput.setDownloaded(false);
         jobOutput.setError(true);
         jobOutput.setFhirResourceType(EOB);
+        jobOutput.setChecksum("testoutput".getBytes());
+        jobOutput.setFileLength(20L);
         jobOutput.setFilePath("file.ndjson");
         jobOutput.setJob(savedJob);
         JobOutput savedJobOutput = jobOutputRepository.save(jobOutput);
@@ -136,6 +140,8 @@ public class JobOutputServiceTest {
         jobOutput.setError(true);
         jobOutput.setFhirResourceType(EOB);
         jobOutput.setFilePath("file.ndjson");
+        jobOutput.setChecksum("testoutput".getBytes());
+        jobOutput.setFileLength(20L);
         jobOutput.setJob(savedJob);
         jobOutputRepository.save(jobOutput);
 
