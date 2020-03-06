@@ -193,7 +193,7 @@ public class TestRunner {
         String checkSumUrl = checkSumObject.getString("url");
         Assert.assertEquals("https://ab2d.cms.gov/checksum", checkSumUrl);
         String checkSum = checkSumObject.getString("valueString");
-        Assert.assertEquals("sha256:", checkSum.substring(0, 6));
+        Assert.assertEquals("sha256:", checkSum.substring(0, 7));
         Assert.assertEquals(checkSum.length(), 71);
 
         JSONObject lengthObject = extension.getJSONObject(1);
