@@ -117,8 +117,8 @@ resource "aws_security_group" "load_balancer" {
 resource "aws_security_group_rule" "load_balancer_access" {
   type        = "ingress"
   description = "${lower(var.env)} website access"
-  from_port   = "80"
-  to_port     = "80"
+  from_port   = var.host_port
+  to_port     = var.host_port
   protocol    = "tcp"
   cidr_blocks = ["0.0.0.0/0"]
   security_group_id = aws_security_group.load_balancer.id
@@ -162,7 +162,7 @@ resource "aws_ecs_task_definition" "api" {
       "name": "ab2d-api",
       "image": "${var.ecr_repo_aws_account}.dkr.ecr.us-east-1.amazonaws.com/ab2d_api:${lower(var.env)}-latest",
       "essential": true,
-      "memory": 2048,
+      "memory": ${var.ecs_task_def_memory},
       "portMappings": [
         {
           "containerPort": ${var.container_port},
@@ -218,8 +218,8 @@ resource "aws_ecs_task_definition" "api" {
 JSON
   requires_compatibilities = ["EC2"]
   network_mode = "bridge"
-  cpu = 1024
-  memory = 2048
+  cpu = var.ecs_task_def_cpu
+  memory = var.ecs_task_def_memory
   execution_role_arn = "arn:aws:iam::${var.aws_account_number}:role/Ab2dInstanceRole"
 }
 
@@ -249,7 +249,7 @@ resource "aws_lb_target_group" "api" {
     healthy_threshold = 5
     unhealthy_threshold = 2
     timeout = 2
-    path = "/swagger-ui.html"
+    path = "/health"
     interval = 5
   }
 }
@@ -257,7 +257,8 @@ resource "aws_lb_target_group" "api" {
 resource "aws_lb_listener" "api" {
   load_balancer_arn = aws_lb.api.arn
   port = var.host_port
-  protocol = "HTTP"
+  protocol = "${var.alb_listener_protocol}"
+  certificate_arn = "${var.alb_listener_certificate_arn}"
 
   default_action {
     target_group_arn = aws_lb_target_group.api.arn

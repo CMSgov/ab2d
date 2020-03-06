@@ -55,8 +55,42 @@ case $i in
   OWNER="${i#*=}"
   shift # past argument=value
   ;;
-  --ec2-instance-type=*)
-  EC2_INSTANCE_TYPE="${i#*=}"
+  --ec2_instance_type_api=*)
+  EC2_INSTANCE_TYPE_API="${i#*=}"
+  shift # past argument=value
+  ;;
+  --ec2_instance_type_worker=*)
+  EC2_INSTANCE_TYPE_WORKER="${i#*=}"
+  shift # past argument=value
+  ;;
+  --ec2_instance_type_other=*)
+  EC2_INSTANCE_TYPE_OTHER="${i#*=}"
+  EC2_INSTANCE_TYPE_CONTROLLER="${EC2_INSTANCE_TYPE_OTHER}"
+  EC2_INSTANCE_TYPE_PACKER="${EC2_INSTANCE_TYPE_OTHER}"
+  shift # past argument=value
+  ;;
+  --ec2_desired_instance_count_api=*)
+  EC2_DESIRED_INSTANCE_COUNT_API="${i#*=}"
+  shift # past argument=value
+  ;;
+  --ec2_minimum_instance_count_api=*)
+  EC2_MINIMUM_INSTANCE_COUNT_API="${i#*=}"
+  shift # past argument=value
+  ;;
+  --ec2_maximum_instance_count_api=*)
+  EC2_MAXIMUM_INSTANCE_COUNT_API="${i#*=}"
+  shift # past argument=value
+  ;;
+  --ec2_desired_instance_count_worker=*)
+  EC2_DESIRED_INSTANCE_COUNT_WORKER="${i#*=}"
+  shift # past argument=value
+  ;;
+  --ec2_minimum_instance_count_worker=*)
+  EC2_MINIMUM_INSTANCE_COUNT_WORKER="${i#*=}"
+  shift # past argument=value
+  ;;
+  --ec2_maximum_instance_count_worker=*)
+  EC2_MAXIMUM_INSTANCE_COUNT_WORKER="${i#*=}"
   shift # past argument=value
   ;;
   --database-secret-datetime=*)
@@ -879,7 +913,7 @@ if [ -z "${AMI_ID}" ]; then
     --var seed_ami=$SEED_AMI \
     --var environment="${CMS_ENV}" \
     --var region="${REGION}" \
-    --var ec2_instance_type=$EC2_INSTANCE_TYPE \
+    --var ec2_instance_type="${EC2_INSTANCE_TYPE_PACKER}" \
     --var vpc_id=$VPC_ID \
     --var subnet_public_1_id=$SUBNET_PUBLIC_1_ID \
     --var my_ip_address=$IP \
@@ -968,7 +1002,7 @@ if [ -z "${JENKINS_AMI_ID}" ]; then
   packer build \
     --var seed_ami=$SEED_AMI \
     --var region="${REGION}" \
-    --var ec2_instance_type=$EC2_INSTANCE_TYPE \
+    --var ec2_instance_type="${EC2_INSTANCE_TYPE_PACKER}" \
     --var vpc_id=$MGMT_VPC_ID \
     --var subnet_public_1_id=$MGMT_SUBNET_PUBLIC_1_ID \
     --var my_ip_address=$IP \
@@ -990,14 +1024,12 @@ fi
 DEPLOYER_IP_ADDRESS=$(curl ipinfo.io/ip)
 
 #
-# Create "auto.tfvars" files
+# Create "auto.tfvars" file for shared components
 #
 
 # Set profile to the target AWS account
 
 export AWS_PROFILE="${CMS_ENV}"
-
-# Create "auto.tfvars" file for shared components
 
 cd "${START_DIR}"
 cd terraform/environments/$CMS_SHARED_ENV
@@ -1006,20 +1038,15 @@ DB_ENDPOINT=$(aws --region "${REGION}" rds describe-db-instances \
   --query="DBInstances[?DBInstanceIdentifier=='ab2d'].Endpoint.Address" \
   --output=text)
 
+# Save VPC_ID
+
+echo 'vpc_id = "'$VPC_ID'"' \
+  > $CMS_SHARED_ENV.auto.tfvars
+
+# Save private_subnet_ids
+
 if [ -z "${DB_ENDPOINT}" ]; then
-  echo 'vpc_id = "'$VPC_ID'"' \
-    > $CMS_SHARED_ENV.auto.tfvars
   echo 'private_subnet_ids = ["'$SUBNET_PRIVATE_1_ID'","'$SUBNET_PRIVATE_2_ID'"]' \
-    >> $CMS_SHARED_ENV.auto.tfvars
-  echo 'deployment_controller_subnet_ids = ["'$SUBNET_PUBLIC_1_ID'","'$SUBNET_PUBLIC_2_ID'"]' \
-    >> $CMS_SHARED_ENV.auto.tfvars
-  echo 'ec2_instance_type = "'$EC2_INSTANCE_TYPE'"' \
-    >> $CMS_SHARED_ENV.auto.tfvars
-  echo 'linux_user = "'$SSH_USERNAME'"' \
-    >> $CMS_SHARED_ENV.auto.tfvars
-  echo 'ami_id = "'$AMI_ID'"' \
-    >> $CMS_SHARED_ENV.auto.tfvars
-  echo 'deployer_ip_address = "'$DEPLOYER_IP_ADDRESS'"' \
     >> $CMS_SHARED_ENV.auto.tfvars
 else
   PRIVATE_SUBNETS_OUTPUT=$(aws --region "${REGION}" ec2 describe-subnets \
@@ -1041,21 +1068,50 @@ else
     COUNT=$COUNT+1
   done
 
-  echo 'vpc_id = "'$VPC_ID'"' \
-    > $CMS_SHARED_ENV.auto.tfvars
   echo "private_subnet_ids = [${PRIVATE_SUBNETS}]" \
     >> $CMS_SHARED_ENV.auto.tfvars
-  echo 'deployment_controller_subnet_ids = ["'$SUBNET_PUBLIC_1_ID'","'$SUBNET_PUBLIC_2_ID'"]' \
-    >> $CMS_SHARED_ENV.auto.tfvars
-  echo 'ec2_instance_type = "'$EC2_INSTANCE_TYPE'"' \
-    >> $CMS_SHARED_ENV.auto.tfvars
-  echo 'linux_user = "'$SSH_USERNAME'"' \
-    >> $CMS_SHARED_ENV.auto.tfvars
-  echo 'ami_id = "'$AMI_ID'"' \
-    >> $CMS_SHARED_ENV.auto.tfvars
-  echo 'deployer_ip_address = "'$DEPLOYER_IP_ADDRESS'"' \
-    >> $CMS_SHARED_ENV.auto.tfvars
 fi
+
+# Set remaining vars
+
+echo 'deployment_controller_subnet_ids = ["'$SUBNET_PUBLIC_1_ID'","'$SUBNET_PUBLIC_2_ID'"]' \
+  >> $CMS_SHARED_ENV.auto.tfvars
+echo 'ec2_instance_type = "'$EC2_INSTANCE_TYPE_CONTROLLER'"' \
+  >> $CMS_SHARED_ENV.auto.tfvars
+echo 'linux_user = "'$SSH_USERNAME'"' \
+  >> $CMS_SHARED_ENV.auto.tfvars
+echo 'ami_id = "'$AMI_ID'"' \
+  >> $CMS_SHARED_ENV.auto.tfvars
+echo 'deployer_ip_address = "'$DEPLOYER_IP_ADDRESS'"' \
+  >> $CMS_SHARED_ENV.auto.tfvars
+
+#
+# Create ".auto.tfvars" file for the target environment
+#
+
+# Determine cpu and memory for new API ECS container definition
+
+API_EC2_INSTANCE_CPU_COUNT=$(aws --region "${REGION}" ec2 describe-instance-types \
+  --instance-types "${EC2_INSTANCE_TYPE_API}" --query "InstanceTypes[*].VCpuInfo.DefaultVCpus" \
+  --output text)
+let API_CPU="($API_EC2_INSTANCE_CPU_COUNT/2)*1024"
+
+API_EC2_INSTANCE_MEMORY=$(aws --region "${REGION}" ec2 describe-instance-types \
+  --instance-types "${EC2_INSTANCE_TYPE_API}" --query "InstanceTypes[*].MemoryInfo.SizeInMiB" \
+  --output text)
+let API_MEMORY="$API_EC2_INSTANCE_MEMORY/2"
+
+# Determine cpu and memory for new worker ECS container definition
+
+WORKER_EC2_INSTANCE_CPU_COUNT=$(aws --region "${REGION}" ec2 describe-instance-types \
+  --instance-types "${EC2_INSTANCE_TYPE_WORKER}" --query "InstanceTypes[*].VCpuInfo.DefaultVCpus" \
+  --output text)
+let WORKER_CPU="($WORKER_EC2_INSTANCE_CPU_COUNT/2)*1024"
+
+WORKER_EC2_INSTANCE_MEMORY=$(aws --region "${REGION}" ec2 describe-instance-types \
+  --instance-types "${EC2_INSTANCE_TYPE_WORKER}" --query "InstanceTypes[*].MemoryInfo.SizeInMiB" \
+  --output text)
+let WORKER_MEMORY="$WORKER_EC2_INSTANCE_MEMORY/2"
 
 # Create ".auto.tfvars" file for the target environment
 
@@ -1068,7 +1124,33 @@ echo 'private_subnet_ids = ["'$SUBNET_PRIVATE_1_ID'","'$SUBNET_PRIVATE_2_ID'"]' 
   >> $CMS_ENV.auto.tfvars
 echo 'deployment_controller_subnet_ids = ["'$SUBNET_PUBLIC_1_ID'","'$SUBNET_PUBLIC_2_ID'"]' \
   >> $CMS_ENV.auto.tfvars
-echo 'ec2_instance_type = "'$EC2_INSTANCE_TYPE'"' \
+echo 'ec2_instance_type_api = "'$EC2_INSTANCE_TYPE_API'"' \
+  >> $CMS_ENV.auto.tfvars
+echo 'ec2_desired_instance_count_api = "'$EC2_DESIRED_INSTANCE_COUNT_API'"' \
+  >> $CMS_ENV.auto.tfvars
+echo 'ec2_minimum_instance_count_api = "'$EC2_MINIMUM_INSTANCE_COUNT_API'"' \
+  >> $CMS_ENV.auto.tfvars
+echo 'ec2_maximum_instance_count_api = "'$EC2_MAXIMUM_INSTANCE_COUNT_API'"' \
+  >> $CMS_ENV.auto.tfvars
+echo 'ecs_container_definition_new_memory_api = "'$API_MEMORY'"' \
+  >> $CMS_ENV.auto.tfvars
+echo 'ecs_task_definition_cpu_api = "'$API_CPU'"' \
+  >> $CMS_ENV.auto.tfvars
+echo 'ecs_task_definition_memory_api = "'$API_MEMORY'"' \
+  >> $CMS_ENV.auto.tfvars
+echo 'ec2_instance_type_worker = "'$EC2_INSTANCE_TYPE_WORKER'"' \
+  >> $CMS_ENV.auto.tfvars
+echo 'ec2_desired_instance_count_worker = "'$EC2_DESIRED_INSTANCE_COUNT_WORKER'"' \
+  >> $CMS_ENV.auto.tfvars
+echo 'ec2_minimum_instance_count_worker = "'$EC2_MINIMUM_INSTANCE_COUNT_WORKER'"' \
+  >> $CMS_ENV.auto.tfvars
+echo 'ec2_maximum_instance_count_worker = "'$EC2_MAXIMUM_INSTANCE_COUNT_WORKER'"' \
+  >> $CMS_ENV.auto.tfvars
+echo 'ecs_container_definition_new_memory_worker = "'$WORKER_MEMORY'"' \
+  >> $CMS_ENV.auto.tfvars
+echo 'ecs_task_definition_cpu_worker = "'$WORKER_CPU'"' \
+  >> $CMS_ENV.auto.tfvars
+echo 'ecs_task_definition_memory_worker = "'$WORKER_MEMORY'"' \
   >> $CMS_ENV.auto.tfvars
 echo 'linux_user = "'$SSH_USERNAME'"' \
   >> $CMS_ENV.auto.tfvars
@@ -1322,8 +1404,30 @@ if [ -n "${BUILD_NEW_IMAGES}" ]; then
   else # assume it is a devops branch and get the latest merge from master into the branch
     echo "NOTE: Assuming this is a DevOps branch that has only DevOps changes."
     echo "Using commit number of latest merge from branch into the current branch as the image version."
-    COMMIT_NUMBER=$(git log --merges | head -n 2 | tail -n 1 | cut -d" " -f 3)
-    IMAGE_VERSION="${CMS_ENV}-latest-${COMMIT_NUMBER}"
+
+    # Determine if branches are the same; an empty result means they are the same
+
+    COMPARE_BRANCH_WITH_MASTER=$(git log \
+      --decorate \
+      --graph \
+      --oneline \
+      --cherry-mark \
+      --boundary master..."${BRANCH}")
+
+    if [ -z "${COMPARE_BRANCH_WITH_MASTER}" ]; then
+
+      # Branches are the same; get "origin/master" commit number
+
+      COMMIT_NUMBER=$(git rev-parse origin/master | cut -c1-7)
+
+    else
+
+      # Branches are different; get the commit number of the latest merge from "origin/master"
+
+      COMMIT_NUMBER=$(git log --merges | head -n 2 | tail -n 1 | cut -d" " -f 3)
+      IMAGE_VERSION="${CMS_ENV}-latest-${COMMIT_NUMBER}"
+
+    fi
   fi
 
   # Build API docker images
@@ -1643,14 +1747,14 @@ else
   OLD_WORKER_TASK_COUNT=$(worker_task_count)
 fi
 
-# set expected api task count
+# Set expected api and worker task counts
 
 if [ -z "${CLUSTER_ARNS}" ]; then
-  EXPECTED_API_COUNT="2"
-  EXPECTED_WORKER_COUNT="2"
+  EXPECTED_API_COUNT="${EC2_DESIRED_INSTANCE_COUNT_API}"
+  EXPECTED_WORKER_COUNT="${EC2_DESIRED_INSTANCE_COUNT_WORKER}"
 else
-  let EXPECTED_API_COUNT="$OLD_API_TASK_COUNT*2"
-  let EXPECTED_WORKER_COUNT="$OLD_WORKER_TASK_COUNT*2"
+  let EXPECTED_API_COUNT="$OLD_API_TASK_COUNT+$EC2_DESIRED_INSTANCE_COUNT_API"
+  let EXPECTED_WORKER_COUNT="$OLD_WORKER_TASK_COUNT+$EC2_DESIRED_INSTANCE_COUNT_WORKER"
 fi
 
 #
@@ -1757,6 +1861,20 @@ cd terraform/environments/$CMS_ENV
 
 BFD_KEYSTORE_FILE_NAME=$(echo $BFD_KEYSTORE_LOCATION | cut -d"/" -f 6)
 
+# Get load balancer listener protocol, port, and certificate
+
+if [ "$CMS_ENV" == "ab2d-sbx-sandbox" ]; then
+  ALB_LISTENER_PORT=443
+  ALB_LISTENER_PROTOCOL="HTTPS"
+  ALB_LISTENER_CERTIFICATE_ARN=$(aws --region "${REGION}" acm list-certificates \
+    --query "CertificateSummaryList[?DomainName=='sandbox.ab2d.cms.gov'].CertificateArn" \
+    --output text)
+else
+  ALB_LISTENER_PORT=80
+  ALB_LISTENER_PROTOCOL="HTTP"
+  ALB_LISTENER_CERTIFICATE_ARN=""
+fi
+
 # Run automation for API and worker based on auto approve parameter
 
 if [ -z "${AUTOAPPROVE}" ]; then
@@ -1781,6 +1899,10 @@ if [ -z "${AUTOAPPROVE}" ]; then
     --var "image_version=$IMAGE_VERSION" \
     --var "new_relic_app_name=$NEW_RELIC_APP_NAME" \
     --var "new_relic_license_key=$NEW_RELIC_LICENSE_KEY" \
+    --var "ecs_task_definition_host_port=$ALB_LISTENER_PORT" \
+    --var "host_port=$ALB_LISTENER_PORT" \
+    --var "alb_listener_protocol=$ALB_LISTENER_PROTOCOL" \
+    --var "alb_listener_certificate_arn=$ALB_LISTENER_CERTIFICATE_ARN" \
     --target module.api
   
   terraform apply \
@@ -1830,6 +1952,10 @@ else
     --var "image_version=$IMAGE_VERSION" \
     --var "new_relic_app_name=$NEW_RELIC_APP_NAME" \
     --var "new_relic_license_key=$NEW_RELIC_LICENSE_KEY" \
+    --var "ecs_task_definition_host_port=$ALB_LISTENER_PORT" \
+    --var "host_port=$ALB_LISTENER_PORT" \
+    --var "alb_listener_protocol=$ALB_LISTENER_PROTOCOL" \
+    --var "alb_listener_certificate_arn=$ALB_LISTENER_CERTIFICATE_ARN" \
     --target module.api \
     --auto-approve
 
@@ -2024,6 +2150,10 @@ if [ -z "${AUTOAPPROVE}" ]; then
 
   terraform apply \
     --var "ami_id=$AMI_ID" \
+    --var "ecs_task_definition_host_port=$ALB_LISTENER_PORT" \
+    --var "host_port=$ALB_LISTENER_PORT" \
+    --var "alb_listener_protocol=$ALB_LISTENER_PROTOCOL" \
+    --var "alb_listener_certificate_arn=$ALB_LISTENER_CERTIFICATE_ARN" \
     --target module.cloudwatch
 
 else
@@ -2033,6 +2163,10 @@ else
   terraform apply \
     --target module.cloudwatch \
     --var "ami_id=$AMI_ID" \
+    --var "ecs_task_definition_host_port=$ALB_LISTENER_PORT" \
+    --var "host_port=$ALB_LISTENER_PORT" \
+    --var "alb_listener_protocol=$ALB_LISTENER_PROTOCOL" \
+    --var "alb_listener_certificate_arn=$ALB_LISTENER_CERTIFICATE_ARN" \
     --auto-approve
 
 fi
