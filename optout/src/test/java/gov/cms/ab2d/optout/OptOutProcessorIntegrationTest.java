@@ -10,6 +10,7 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.mockserver.integration.ClientAndServer;
+import org.quartz.Scheduler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -36,6 +37,9 @@ import static org.mockito.Mockito.when;
 @SpringBootTest(classes = SpringBootApp.class)
 @Testcontainers
 class OptOutProcessorIntegrationTest {
+
+    @MockBean
+    private Scheduler scheduler;
 
     @MockBean
     private S3Gateway mockS3Gateway;
@@ -101,6 +105,7 @@ class OptOutProcessorIntegrationTest {
         assertThat(optOut.getEffectiveDate(), is(LocalDate.of(2019,10,24)));
         assertThat(optOut.getCcwId(), is("20010000001115"));
 
+        verify(mockS3Gateway).listOptOutFiles();
         verify(mockS3Gateway).getOptOutFile(any());
     }
 }
