@@ -12,6 +12,7 @@
 1. [Configure local repo with "git-secrets" protection](#configure-local-repo-with-git-secrets-protection)
 1. [Configure New Relic](#configure-new-relic)
 1. [Configure AWS CLI](#configure-aws-cli)
+1. [Create volume directory](#create-volume-directory)
 1. [Running in Docker](#running-in-docker)
 1. [Deploying the solution](#deploying-the-solution)
 
@@ -289,6 +290,16 @@
    ```ShellSession
    $ cat ~/.aws/credentials
    ```
+
+## Create volume directory
+
+1. Create a volume directory
+
+   ```ShellSession
+   $ mkdir -p /tmp/ab2d_efs_mount
+   ```
+
+1. Note that this directory acts as a shared volume for the API and worker containers
 
 ## Running in Docker
 
