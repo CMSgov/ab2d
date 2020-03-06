@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.testcontainers.containers.DockerComposeContainer;
+import org.testcontainers.containers.output.Slf4jLogConsumer;
 import org.testcontainers.containers.wait.strategy.HostPortWaitStrategy;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.yaml.snakeyaml.Yaml;
@@ -185,6 +186,19 @@ public class TestRunner {
         Assert.assertTrue(url.equals(filestem + "ndjson") || (url.equals(filestem + "zip")));
         String type = outputObject.getString("type");
         Assert.assertEquals(type, "ExplanationOfBenefit");
+
+        JSONArray extension = outputObject.getJSONArray("extension");
+        JSONObject checkSumObject = extension.getJSONObject(0);
+        String checkSumUrl = checkSumObject.getString("url");
+        Assert.assertEquals("https://ab2d.cms.gov/checksum", checkSumUrl);
+        String checkSum = checkSumObject.getString("valueString");
+        Assert.assertEquals("", checkSum);
+
+        JSONObject lengthObject = extension.getJSONObject(1);
+        String lengthUrl = lengthObject.getString("url");
+        Assert.assertEquals("https://ab2d.cms.gov/file_length", lengthUrl);
+        long length = lengthObject.getLong("valueDecimal");
+        Assert.assertEquals(0, length);
 
         return url;
     }

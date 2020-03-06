@@ -70,12 +70,12 @@ public final class JobCompletedResponse {
         private final String type;
         private final String url;
 
-        private final List<ValueOutput> valueOutputs;
+        private final List<ValueOutput> extension;
 
         public Output(String type, String url, List<ValueOutput> valueOutputs) {
             this.type = type;
             this.url = url;
-            this.valueOutputs = valueOutputs;
+            this.extension = valueOutputs;
         }
     }
 

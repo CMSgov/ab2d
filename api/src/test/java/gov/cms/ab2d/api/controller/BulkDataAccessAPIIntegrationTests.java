@@ -38,6 +38,8 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
 
+import static gov.cms.ab2d.api.controller.JobCompletedResponse.CHECKSUM_STRING;
+import static gov.cms.ab2d.api.controller.JobCompletedResponse.CONTENT_LENGTH_STRING;
 import static gov.cms.ab2d.common.service.JobServiceImpl.INITIAL_JOB_STATUS_MESSAGE;
 import static gov.cms.ab2d.common.util.Constants.*;
 import static gov.cms.ab2d.common.util.DataSetup.*;
@@ -421,12 +423,16 @@ public class BulkDataAccessAPIIntegrationTests {
         jobOutput.setJob(job);
         jobOutput.setFilePath("file.ndjson");
         jobOutput.setError(false);
+        jobOutput.setFileLength(5000L);
+        jobOutput.setChecksum("file".getBytes());
         job.getJobOutputs().add(jobOutput);
 
         JobOutput errorJobOutput = new JobOutput();
         errorJobOutput.setFhirResourceType(OPERATION_OUTCOME);
         errorJobOutput.setJob(job);
         errorJobOutput.setFilePath("error.ndjson");
+        errorJobOutput.setFileLength(6000L);
+        errorJobOutput.setChecksum("error".getBytes());
         errorJobOutput.setError(true);
         job.getJobOutputs().add(errorJobOutput);
 
@@ -447,10 +453,26 @@ public class BulkDataAccessAPIIntegrationTests {
                 .andExpect(jsonPath("$.output[0].url",
                         Is.is("http://localhost" + API_PREFIX + FHIR_PREFIX + "/Job/" + job.getJobUuid() +
                                 "/file/file.ndjson")))
+                .andExpect(jsonPath("$.output[0].extension[0].url",
+                        Is.is(CHECKSUM_STRING)))
+                .andExpect(jsonPath("$.output[0].extension[0].valueString",
+                        Is.is("sha256:5c783636363936633635")))
+                .andExpect(jsonPath("$.output[0].extension[1].url",
+                        Is.is(CONTENT_LENGTH_STRING)))
+                .andExpect(jsonPath("$.output[0].extension[1].valueDecimal",
+                        Is.is(5000)))
                 .andExpect(jsonPath("$.error[0].type", Is.is(OPERATION_OUTCOME)))
                 .andExpect(jsonPath("$.error[0].url",
                         Is.is("http://localhost" + API_PREFIX + FHIR_PREFIX + "/Job/" + job.getJobUuid() +
-                                "/file/error.ndjson")));
+                                "/file/error.ndjson")))
+                .andExpect(jsonPath("$.error[0].extension[0].url",
+                        Is.is(CHECKSUM_STRING)))
+                .andExpect(jsonPath("$.error[0].extension[0].valueString",
+                        Is.is("sha256:5c7836353732373236663732")))
+                .andExpect(jsonPath("$.error[0].extension[1].url",
+                        Is.is(CONTENT_LENGTH_STRING)))
+                .andExpect(jsonPath("$.error[0].extension[1].valueDecimal",
+                        Is.is(6000)));
     }
 
     @Test

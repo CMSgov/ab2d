@@ -38,3 +38,5 @@ databaseChangeLog:
       file: db/changelog/v001/add_contract2beneCache_toggle_property.sql
   - include:
       file: db/changelog/v001/add_zip_support_toggle_property.sql
+  - include:
+      file: db/changelog/v001/add_checksum_length_job_output.sql
