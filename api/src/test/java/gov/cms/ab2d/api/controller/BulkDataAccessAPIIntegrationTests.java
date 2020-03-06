@@ -456,7 +456,7 @@ public class BulkDataAccessAPIIntegrationTests {
                 .andExpect(jsonPath("$.output[0].extension[0].url",
                         Is.is(CHECKSUM_STRING)))
                 .andExpect(jsonPath("$.output[0].extension[0].valueString",
-                        Is.is("sha256:5c783636363936633635")))
+                        Is.is("sha256:66696c65")))
                 .andExpect(jsonPath("$.output[0].extension[1].url",
                         Is.is(CONTENT_LENGTH_STRING)))
                 .andExpect(jsonPath("$.output[0].extension[1].valueDecimal",
@@ -468,7 +468,7 @@ public class BulkDataAccessAPIIntegrationTests {
                 .andExpect(jsonPath("$.error[0].extension[0].url",
                         Is.is(CHECKSUM_STRING)))
                 .andExpect(jsonPath("$.error[0].extension[0].valueString",
-                        Is.is("sha256:5c7836353732373236663732")))
+                        Is.is("sha256:6572726f72")))
                 .andExpect(jsonPath("$.error[0].extension[1].url",
                         Is.is(CONTENT_LENGTH_STRING)))
                 .andExpect(jsonPath("$.error[0].extension[1].valueDecimal",
