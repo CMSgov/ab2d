@@ -10,9 +10,12 @@ import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectResponse;
+import software.amazon.awssdk.services.s3.model.ListObjectsRequest;
 
 import java.io.InputStreamReader;
+import java.util.List;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Component
@@ -26,15 +29,44 @@ public class S3GatewayImpl implements S3Gateway {
     @Value("${s3.bucket}")
     private String s3Bucket;
 
-    @Value("${s3.filename}")
-    private String s3Filename;
 
     @Override
-    public InputStreamReader getOptOutFile() {
+    public List<String> listOptOutFiles() {
 
-        validateFileName();
+        // set region
+        final Region region = Region.of(s3Region);
 
-        //set region
+
+        // build S3 client
+        final S3Client s3Client =  S3Client.builder().region(region).build();
+
+        // create a ListObjectsRequest
+        final ListObjectsRequest listObjects = ListObjectsRequest.builder()
+                .bucket(s3Bucket)
+                .build();
+
+        // get a list of objects in the bucket
+        var listObjectsResponse = s3Client.listObjects(listObjects);
+        var s3Objects = listObjectsResponse.contents();
+
+        // extract key (filename) from the list of S3Objects
+        final List<String> fileNames = s3Objects.stream()
+                .map(s3Object -> {
+                    log.info("Found [{}] - Size [{}] KB", s3Object.key(), (s3Object.size() / 1024));
+                    return s3Object.key();
+                })
+                .collect(Collectors.toList());
+
+        return fileNames;
+    }
+
+
+    @Override
+    public InputStreamReader getOptOutFile(String fileName) {
+
+        validateFileName(fileName);
+
+        // set region
         final Region region = Region.of(s3Region);
 
 
@@ -42,10 +74,9 @@ public class S3GatewayImpl implements S3Gateway {
         final S3Client s3Client =  S3Client.builder().region(region).build();
 
 
-        // build GetObjectRequest
         final GetObjectRequest getObjectRequest = GetObjectRequest.builder()
                 .bucket(s3Bucket)
-                .key(s3Filename)
+                .key(fileName)
                 .build();
 
         try {
@@ -62,10 +93,10 @@ public class S3GatewayImpl implements S3Gateway {
     }
 
 
-    private void validateFileName() {
-        if (!FILENAME_PATTERN.matcher(s3Filename).matches()) {
+    private void validateFileName(String fileName) {
+        if (!FILENAME_PATTERN.matcher(fileName).matches()) {
             final String errMsg = "Filename is invalid ";
-            log.error("{} : {} ", errMsg, s3Filename);
+            log.error("{} : {} ", errMsg, fileName);
             throw new RuntimeException(errMsg);
         }
     }
