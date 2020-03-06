@@ -9,6 +9,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import software.amazon.awssdk.services.s3.model.S3Exception;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -29,14 +30,31 @@ public class OptOutProcessorImpl implements OptOutProcessor {
     public void process() {
         log.info("import opt-out data - start ...");
 
-        try (var inputStreamReader = s3Gateway.getOptOutFile();
+        final List<String> filenames = s3Gateway.listOptOutFiles();
+        logFileNames(filenames);
+
+        filenames.stream().forEach(fileName -> fetchOptOutFile(fileName));
+
+        log.info("import opt-out data - DONE.");
+    }
+
+    private void logFileNames(List<String> filenames) {
+
+        log.info("The following files were found in S3 ...");
+        filenames.stream()
+                .forEach(file -> log.info("{}", file));
+    }
+
+    private void fetchOptOutFile(final String filename) {
+        try (var inputStreamReader = s3Gateway.getOptOutFile(filename);
              var bufferedReader = new BufferedReader(inputStreamReader)
         ) {
+            log.info("importing file : {}", filename);
             importOptOutRecords(bufferedReader);
 
-            log.info("import opt-out data - DONE.");
+            log.info("imported file : {} - DONE", filename);
         } catch (IOException e) {
-            log.info("import opt-out data - FAILED.");
+            log.error("import opt-out data - FAILED.");
             throw new UncheckedIOException(e);
         }
     }

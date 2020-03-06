@@ -10,8 +10,14 @@ import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectResponse;
+import software.amazon.awssdk.services.s3.model.ListObjectsRequest;
+import software.amazon.awssdk.services.s3.model.ListObjectsResponse;
+import software.amazon.awssdk.services.s3.model.S3Object;
 
 import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.ListIterator;
 import java.util.regex.Pattern;
 
 @Slf4j
@@ -30,7 +36,7 @@ public class S3GatewayImpl implements S3Gateway {
     private String s3Filename;
 
     @Override
-    public InputStreamReader getOptOutFile() {
+    public List<String> listOptOutFiles() {
 
         validateFileName();
 
@@ -42,7 +48,41 @@ public class S3GatewayImpl implements S3Gateway {
         final S3Client s3Client =  S3Client.builder().region(region).build();
 
 
-        // build GetObjectRequest
+        final ListObjectsRequest listObjects = ListObjectsRequest.builder()
+                .bucket(s3Bucket)
+                .build();
+
+        ListObjectsResponse res = s3Client.listObjects(listObjects);
+        List<S3Object> objects = res.contents();
+
+        List<String> fileNames = new ArrayList<>();
+        for (ListIterator iterVals = objects.listIterator(); iterVals.hasNext();) {
+            S3Object myValue = (S3Object) iterVals.next();
+            log.info("##########################################################");
+            log.info(" The name of the key is " + myValue.key());
+            log.info(" The object is " + (myValue.size() / 1024) + " KBs");
+            log.info(" The owner is " + myValue.owner());
+            log.info("##########################################################");
+            fileNames.add(myValue.key());
+        }
+
+        return fileNames;
+    }
+
+
+    @Override
+    public InputStreamReader getOptOutFile(String fileName) {
+
+        validateFileName();
+
+        //set region
+        final Region region = Region.of(s3Region);
+
+
+        // build S3 client
+        final S3Client s3Client =  S3Client.builder().region(region).build();
+
+
         final GetObjectRequest getObjectRequest = GetObjectRequest.builder()
                 .bucket(s3Bucket)
                 .key(s3Filename)
