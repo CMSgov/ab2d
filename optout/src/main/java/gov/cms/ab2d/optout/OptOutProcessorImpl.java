@@ -9,7 +9,6 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-import software.amazon.awssdk.services.s3.model.S3Exception;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -28,14 +27,12 @@ public class OptOutProcessorImpl implements OptOutProcessor {
     @Override
     @Transactional
     public void process() {
-        log.info("import opt-out data - start ...");
 
         final List<String> filenames = s3Gateway.listOptOutFiles();
         logFileNames(filenames);
 
         filenames.stream().forEach(fileName -> fetchOptOutFile(fileName));
 
-        log.info("import opt-out data - DONE.");
     }
 
     private void logFileNames(List<String> filenames) {
