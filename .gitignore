@@ -87,3 +87,5 @@ build/
 
 ### Eclipse
 .checkstyle
+
+common/jacoco/**
