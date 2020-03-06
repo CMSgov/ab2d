@@ -135,15 +135,20 @@ public class TestUtil {
         OffsetDateTime now = OffsetDateTime.now();
         job.setCompletedAt(now);
 
+        addJobOutput(job, testFile);
 
+        return jobRepository.saveAndFlush(job);
+    }
+
+    public void addJobOutput(Job job, String testFile) {
         JobOutput jobOutput = new JobOutput();
         jobOutput.setFhirResourceType(EOB);
         jobOutput.setJob(job);
         jobOutput.setFilePath(testFile);
         jobOutput.setError(false);
+        jobOutput.setChecksum("testoutput".getBytes());
+        jobOutput.setFileLength(20L);
         job.getJobOutputs().add(jobOutput);
-
-        return jobRepository.saveAndFlush(job);
     }
 
     public void turnMaintenanceModeOff() {

@@ -54,8 +54,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static gov.cms.ab2d.api.controller.JobCompletedResponse.CHECKSUM_STRING;
-import static gov.cms.ab2d.api.controller.JobCompletedResponse.CONTENT_LENGTH_STRING;
 import static gov.cms.ab2d.api.util.Constants.GENERIC_FHIR_ERR_MSG;
 import static gov.cms.ab2d.api.util.SwaggerConstants.*;
 import static gov.cms.ab2d.common.service.JobService.ZIPFORMAT;

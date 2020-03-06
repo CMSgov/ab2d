@@ -628,12 +628,7 @@ public class BulkDataAccessAPIIntegrationTests {
         OffsetDateTime now = OffsetDateTime.now();
         job.setCompletedAt(now);
 
-        JobOutput jobOutput = new JobOutput();
-        jobOutput.setFhirResourceType(EOB);
-        jobOutput.setJob(job);
-        jobOutput.setFilePath("testmissing.ndjson");
-        jobOutput.setError(false);
-        job.getJobOutputs().add(jobOutput);
+        testUtil.addJobOutput(job, "test.ndjson");
 
         jobRepository.saveAndFlush(job);
 
@@ -670,12 +665,7 @@ public class BulkDataAccessAPIIntegrationTests {
         OffsetDateTime now = OffsetDateTime.now();
         job.setCompletedAt(now);
 
-        JobOutput jobOutput = new JobOutput();
-        jobOutput.setFhirResourceType(EOB);
-        jobOutput.setJob(job);
-        jobOutput.setFilePath("test.ndjson");
-        jobOutput.setError(false);
-        job.getJobOutputs().add(jobOutput);
+        testUtil.addJobOutput(job, "test.ndjson");
 
         jobRepository.saveAndFlush(job);
 
@@ -717,6 +707,8 @@ public class BulkDataAccessAPIIntegrationTests {
         jobOutput.setJob(job);
         jobOutput.setFilePath("test.ndjson");
         jobOutput.setError(false);
+        jobOutput.setChecksum("testoutput".getBytes());
+        jobOutput.setFileLength(20L);
         jobOutput.setDownloaded(true);
         job.getJobOutputs().add(jobOutput);
 
@@ -755,12 +747,7 @@ public class BulkDataAccessAPIIntegrationTests {
         OffsetDateTime now = OffsetDateTime.now();
         job.setCompletedAt(now);
 
-        JobOutput jobOutput = new JobOutput();
-        jobOutput.setFhirResourceType(EOB);
-        jobOutput.setJob(job);
-        jobOutput.setFilePath("test.ndjson");
-        jobOutput.setError(false);
-        job.getJobOutputs().add(jobOutput);
+        testUtil.addJobOutput(job, "test.ndjson");
 
         jobRepository.saveAndFlush(job);
 
