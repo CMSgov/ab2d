@@ -28,6 +28,8 @@ import java.io.InputStream;
 import java.net.SocketTimeoutException;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
+import java.time.OffsetDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 import java.util.List;
 import java.util.MissingResourceException;
@@ -181,6 +183,15 @@ public class BlueButtonClientTest {
     @Test
     public void shouldGetEOBFromPatientID() {
         Bundle response = bbc.requestEOBFromServer(TEST_PATIENT_ID);
+
+        assertNotNull(response, "The demo patient should have a non-null EOB bundle");
+        assertEquals(32, response.getTotal(), "The demo patient should have exactly 32 EOBs");
+    }
+
+    @Test
+    public void shouldGetEOBFromPatientIDSince() {
+        Bundle response = bbc.requestEOBFromServer(TEST_PATIENT_ID, OffsetDateTime.parse(
+                "2020-02-13T00:00:00.000-05:00", DateTimeFormatter.ISO_DATE_TIME));
 
         assertNotNull(response, "The demo patient should have a non-null EOB bundle");
         assertEquals(32, response.getTotal(), "The demo patient should have exactly 32 EOBs");
