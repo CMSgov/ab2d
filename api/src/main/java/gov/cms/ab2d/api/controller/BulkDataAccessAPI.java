@@ -319,10 +319,10 @@ public class BulkDataAccessAPI {
                 final ZonedDateTime jobExpiresUTC = ZonedDateTime.ofInstant(job.getExpiresAt().toInstant(), ZoneId.of("UTC"));
                 responseHeaders.add("Expires", DateTimeFormatter.RFC_1123_DATE_TIME.format(jobExpiresUTC));
 
-                final DateTimeType jobCompletedAt = new DateTimeType(job.getCompletedAt().toString());
+                final DateTimeType jobStartedAt = new DateTimeType(job.getCreatedAt().toString());
 
                 final JobCompletedResponse resp = new JobCompletedResponse();
-                resp.setTransactionTime(jobCompletedAt.toHumanDisplay());
+                resp.setTransactionTime(jobStartedAt.toHumanDisplay());
                 resp.setRequest(job.getRequestUrl());
                 resp.setRequiresAccessToken(true);
                 resp.setOutput(job.getJobOutputs().stream().filter(o ->
