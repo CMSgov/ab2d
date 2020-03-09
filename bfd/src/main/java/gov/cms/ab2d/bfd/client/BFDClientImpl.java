@@ -116,15 +116,20 @@ public class BFDClientImpl implements BFDClient {
     )
     public Bundle requestEOBFromServer(String patientID, OffsetDateTime sinceTime) {
         var excludeSAMHSA = new TokenClientParam("excludeSAMHSA").exactly().code("true");
-        IQuery<IBaseBundle> query = client.search()
-                .forResource(ExplanationOfBenefit.class)
-                .where(ExplanationOfBenefit.PATIENT.hasId(patientID))
-                .and(excludeSAMHSA);
+        DateRangeParam updatedSince = null;
         if (sinceTime != null) {
             Date d = Date.from(sinceTime.toInstant());
-            query.lastUpdated(new DateRangeParam(d, null));
+            updatedSince = new DateRangeParam(d, null);
         }
-        return query.count(pageSize).returnBundle(Bundle.class).encodedJson().execute();
+        return client.search()
+                .forResource(ExplanationOfBenefit.class)
+                .where(ExplanationOfBenefit.PATIENT.hasId(patientID))
+                .and(excludeSAMHSA)
+                .lastUpdated(updatedSince)
+                .count(pageSize)
+                .returnBundle(Bundle.class)
+                .encodedJson()
+                .execute();
     }
 
     /**

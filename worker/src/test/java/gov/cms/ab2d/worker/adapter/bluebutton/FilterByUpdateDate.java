@@ -67,7 +67,6 @@ public class FilterByUpdateDate {
                 || component.getResource().getMeta().getLastUpdated() == null) {
             return false;
         }
-        System.out.println(component.getResource().getMeta().getLastUpdated());
         return component.getResource().getMeta().getLastUpdated().getTime() >= earliest.toInstant().toEpochMilli();
     }
 }
