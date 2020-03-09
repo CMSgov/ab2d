@@ -46,6 +46,7 @@ public class OptOutTest {
         oo.setPolicyCode("Policy COde");
         oo.setPurposeCode("Purpose COde");
         oo.setScopeCode("Scope COde");
+        oo.setFilename("filename");
 
         List<OptOut> noopts = optOutRepository.findByCcwId("CCW ID");
         assertEquals(0, noopts.size());
@@ -62,5 +63,6 @@ public class OptOutTest {
         assertEquals(oo.getPolicyCode(), "Policy COde");
         assertEquals(oo.getPurposeCode(), "Purpose COde");
         assertEquals(oo.getScopeCode(), "Scope COde");
+        assertEquals(oo.getFilename(), "filename");
     }
 }
