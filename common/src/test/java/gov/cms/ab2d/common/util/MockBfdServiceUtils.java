@@ -1,4 +1,4 @@
-package gov.cms.ab2d.optout;
+package gov.cms.ab2d.common.util;
 
 import org.apache.http.HttpStatus;
 import org.mockserver.client.MockServerClient;
@@ -37,22 +37,22 @@ public class MockBfdServiceUtils {
                 );
     }
 
-    static void createMockServerExpectation(String path, int respCode, String payload,
+    public static void createMockServerExpectation(String path, int respCode, String payload,
                                                     List<Parameter> qStringParams, int port) {
         var delay = 100;
         createMockServerExpectation(path, respCode, payload, qStringParams, delay, port);
     }
 
-    static String getRawXML(String path) throws IOException {
-        InputStream sampleData = OptOutClientServiceTest.class.getClassLoader().getResourceAsStream(path);
+    public static String getRawXML(String path) throws IOException {
+        InputStream sampleData = MockBfdServiceUtils.class.getClassLoader().getResourceAsStream(path);
         if (sampleData == null) {
             throw new MissingResourceException("Cannot find sample requests",
-                    OptOutClientServiceTest.class.getName(), path);
+                    MockBfdServiceUtils.class.getName(), path);
         }
         return new String(sampleData.readAllBytes(), StandardCharsets.UTF_8);
     }
 
-    static void createMockServerMetaExpectation(String locOfFile, int mockServerPort) throws IOException {
+    public static void createMockServerMetaExpectation(String locOfFile, int mockServerPort) throws IOException {
         createMockServerExpectation("/v1/fhir/metadata",
                 200,
                 getRawXML(locOfFile),
@@ -60,7 +60,7 @@ public class MockBfdServiceUtils {
                 mockServerPort);
     }
 
-    static void createMockServerPatientExpectation(String locOfFile, int mockServerPort, List<Parameter> parms) throws IOException {
+    public static void createMockServerPatientExpectation(String locOfFile, int mockServerPort, List<Parameter> parms) throws IOException {
         MockBfdServiceUtils.createMockServerExpectation(
                 "/v1/fhir/Patient",
                 HttpStatus.SC_OK,

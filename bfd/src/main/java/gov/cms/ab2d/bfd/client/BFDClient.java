@@ -2,6 +2,7 @@ package gov.cms.ab2d.bfd.client;
 
 
 import org.hl7.fhir.dstu3.model.Bundle;
+import org.hl7.fhir.dstu3.model.CapabilityStatement;
 
 
 public interface BFDClient {
@@ -17,5 +18,7 @@ public interface BFDClient {
      * @return Bundle of Patient Resources
      */
     Bundle requestPartDEnrolleesFromServer(String contractNumber, int month);
+
+    CapabilityStatement capabilityStatement();
 }
 
