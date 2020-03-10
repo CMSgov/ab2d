@@ -3,6 +3,7 @@ package gov.cms.ab2d.bfd.client;
 import ca.uhn.fhir.rest.client.api.IGenericClient;
 import ca.uhn.fhir.rest.gclient.ICriterion;
 import ca.uhn.fhir.rest.gclient.TokenClientParam;
+import ca.uhn.fhir.rest.param.DateRangeParam;
 import ca.uhn.fhir.rest.server.exceptions.InvalidRequestException;
 import ca.uhn.fhir.rest.server.exceptions.ResourceNotFoundException;
 import lombok.extern.slf4j.Slf4j;
@@ -25,6 +26,8 @@ import javax.validation.constraints.NotEmpty;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.KeySpec;
+import java.time.OffsetDateTime;
+import java.util.Date;
 
 /**
  * Credits: most of the code in this class has been copied over from https://github
@@ -88,11 +91,39 @@ public class BFDClientImpl implements BFDClient {
             exclude = { ResourceNotFoundException.class }
     )
     public Bundle requestEOBFromServer(String patientID) {
+        return requestEOBFromServer(patientID, null);
+    }
+
+    /**
+     * Queries Blue Button server for Explanations of Benefit associated with a given patient
+     * similar to {@link #requestEOBFromServer(String)} but includes a date filter in which the
+     * _lastUpdated date must be after
+     * <p>
+     *
+     * @param patientID The requested patient's ID
+     * @param sinceTime The start date for the request
+     * @return {@link Bundle} Containing a number (possibly 0) of {@link ExplanationOfBenefit}
+     * objects
+     * @throws ResourceNotFoundException when the requested patient does not exist
+     */
+    @Override
+    @Retryable(
+            maxAttemptsExpression = "${bfd.retry.maxAttempts:3}",
+            backoff = @Backoff(delayExpression = "${bfd.retry.backoffDelay:250}", multiplier = 2),
+            exclude = { ResourceNotFoundException.class }
+    )
+    public Bundle requestEOBFromServer(String patientID, OffsetDateTime sinceTime) {
         var excludeSAMHSA = new TokenClientParam("excludeSAMHSA").exactly().code("true");
+        DateRangeParam updatedSince = null;
+        if (sinceTime != null) {
+            Date d = Date.from(sinceTime.toInstant());
+            updatedSince = new DateRangeParam(d, null);
+        }
         return client.search()
                 .forResource(ExplanationOfBenefit.class)
                 .where(ExplanationOfBenefit.PATIENT.hasId(patientID))
                 .and(excludeSAMHSA)
+                .lastUpdated(updatedSince)
                 .count(pageSize)
                 .returnBundle(Bundle.class)
                 .encodedJson()
@@ -156,7 +187,6 @@ public class BFDClientImpl implements BFDClient {
                 .encodedJson()
                 .execute();
     }
-
 
     @Override
     @Retryable(

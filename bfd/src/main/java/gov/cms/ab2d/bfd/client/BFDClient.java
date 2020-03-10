@@ -3,9 +3,12 @@ package gov.cms.ab2d.bfd.client;
 
 import org.hl7.fhir.dstu3.model.Bundle;
 
+import java.time.OffsetDateTime;
+
 
 public interface BFDClient {
     Bundle requestEOBFromServer(String patientID);
+    Bundle requestEOBFromServer(String patientID, OffsetDateTime sinceTime);
     Bundle requestNextBundleFromServer(Bundle bundle);
     Bundle requestPatientFromServer(String patientId);
 

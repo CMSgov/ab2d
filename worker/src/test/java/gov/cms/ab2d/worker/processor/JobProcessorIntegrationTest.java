@@ -46,6 +46,7 @@ import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
@@ -110,6 +111,7 @@ class JobProcessorIntegrationTest {
         bundle1 = EobTestDataUtil.createBundle(eob.copy());
         bundles = getBundles();
         when(mockBfdClient.requestEOBFromServer(anyString())).thenReturn(bundle1);
+        when(mockBfdClient.requestEOBFromServer(anyString(), any())).thenReturn(bundle1);
 
         fail = new RuntimeException("TEST EXCEPTION");
 
@@ -192,7 +194,7 @@ class JobProcessorIntegrationTest {
     @Test
     @DisplayName("When the error count is greater than or equal to threshold, job should fail")
     void when_errorCount_is_not_below_threshold_fail_job() {
-        when(mockBfdClient.requestEOBFromServer(anyString()))
+        when(mockBfdClient.requestEOBFromServer(anyString(), any()))
                 .thenReturn(bundle1, bundles)
                 .thenReturn(bundle1, bundles)
                 .thenThrow(fail, fail, fail, fail, fail, fail, fail, fail, fail, fail)
