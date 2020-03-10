@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.PostConstruct;
 import java.util.List;
 
 import static gov.cms.ab2d.common.util.Constants.MAINTENANCE_MODE;
@@ -36,29 +37,56 @@ class BFDHealthCheck {
 
     private int consecutiveFailures = 0;
 
+    private Status bfdStatus = Status.UP;
+
     void checkBFDHealth() {
 
-        CapabilityStatement capabilityStatement = bfdClient.capabilityStatement();
-        if (capabilityStatement == null || capabilityStatement.getStatus() != Enumerations.PublicationStatus.ACTIVE) {
-            consecutiveFailures++;
-            consecutiveSuccesses = 0;
-        } else {
-            consecutiveSuccesses++;
-            consecutiveFailures = 0;
+        boolean errorOccurred = false;
+        CapabilityStatement capabilityStatement = null;
+        try {
+            capabilityStatement = bfdClient.capabilityStatement();
+        } catch (Exception e) {
+            errorOccurred = true;
+            log.error("Exception occurred while trying to retrieve capability statement", e);
+            markFailure();
         }
 
-        if (consecutiveSuccesses == consecutiveSuccessesToBringUp) {
+        if(!errorOccurred) {
+            if (capabilityStatement == null || capabilityStatement.getStatus() != Enumerations.PublicationStatus.ACTIVE) {
+                markFailure();
+            } else {
+                consecutiveSuccesses++;
+                consecutiveFailures = 0;
+                log.info("{} consecutive successes to connect to BFD", consecutiveSuccesses);
+            }
+        }
+
+        if (consecutiveSuccesses >= consecutiveSuccessesToBringUp && bfdStatus == Status.DOWN) {
+            bfdStatus = Status.UP;
             consecutiveSuccesses = 0;
             PropertiesDTO propertiesDTO = new PropertiesDTO();
             propertiesDTO.setKey(MAINTENANCE_MODE);
             propertiesDTO.setValue("false");
             propertiesService.updateProperties(List.of(propertiesDTO));
-        } else if (consecutiveFailures == consecutiveFailuresToTakeDown) {
+            log.info("Updated the {} property to false", MAINTENANCE_MODE);
+        } else if (consecutiveFailures >= consecutiveFailuresToTakeDown && bfdStatus == Status.UP) {
+            bfdStatus = Status.DOWN;
             consecutiveFailures = 0;
             PropertiesDTO propertiesDTO = new PropertiesDTO();
             propertiesDTO.setKey(MAINTENANCE_MODE);
             propertiesDTO.setValue("true");
             propertiesService.updateProperties(List.of(propertiesDTO));
+            log.info("Updated the {} property to true", MAINTENANCE_MODE);
         }
+    }
+
+    private void markFailure() {
+        consecutiveFailures++;
+        consecutiveSuccesses = 0;
+        log.info("{} consecutive failures to connect to BFD", consecutiveFailures);
+    }
+
+    private enum Status {
+        UP, DOWN;
     }
 }
