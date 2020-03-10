@@ -24,4 +24,5 @@ public class OptOut {
     private String scopeCode;
     private String mbi;
     private String ccwId;
+    private String filename;
 }

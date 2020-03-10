@@ -1,8 +1,8 @@
 package gov.cms.ab2d.optout;
 
-import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.model.OptOut;
 import gov.cms.ab2d.common.repository.OptOutRepository;
+import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.optout.gateway.S3Gateway;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Before;
@@ -10,6 +10,7 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.mockserver.integration.ClientAndServer;
+import org.quartz.Scheduler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -28,6 +29,7 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.Matchers.empty;
 import static org.junit.Assert.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -35,6 +37,9 @@ import static org.mockito.Mockito.when;
 @SpringBootTest(classes = SpringBootApp.class)
 @Testcontainers
 class OptOutProcessorIntegrationTest {
+
+    @MockBean
+    private Scheduler scheduler;
 
     @MockBean
     private S3Gateway mockS3Gateway;
@@ -80,7 +85,8 @@ class OptOutProcessorIntegrationTest {
         final InputStream inputStream = getClass().getResourceAsStream("/" + testInputFile);
         final InputStreamReader isr = new InputStreamReader(inputStream);
 
-        when(mockS3Gateway.getOptOutFile()).thenReturn(isr);
+        when(mockS3Gateway.listOptOutFiles()).thenReturn(List.of(testInputFile));
+        when(mockS3Gateway.getOptOutFile(any())).thenReturn(isr);
 
         final List<OptOut> optOutRowsBeforeProcessing = optOutRepo.findAll();
         cut.process();
@@ -88,8 +94,8 @@ class OptOutProcessorIntegrationTest {
 
         assertThat(optOutRowsBeforeProcessing, is(empty()));
         assertThat(optOutRowsAfterProcessing, is(not(empty())));
-        // Each search in our test comes back with two patients (reusing mock result from other test)
-        assertThat(optOutRowsAfterProcessing.size(), is(18));
+
+        assertThat(optOutRowsAfterProcessing.size(), is(7));
 
         final OptOut optOut = optOutRepo.findByCcwId("20010000001115").get(0);
         assertThat(optOut.getPolicyCode(), is("OPTOUT"));
@@ -99,6 +105,7 @@ class OptOutProcessorIntegrationTest {
         assertThat(optOut.getEffectiveDate(), is(LocalDate.of(2019,10,24)));
         assertThat(optOut.getCcwId(), is("20010000001115"));
 
-        verify(mockS3Gateway).getOptOutFile();
+        verify(mockS3Gateway).listOptOutFiles();
+        verify(mockS3Gateway).getOptOutFile(any());
     }
 }

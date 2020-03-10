@@ -112,7 +112,7 @@ public class TestRunner extends AbstractJavaSamplerClient {
             exportResult.sampleStart();
 
             try {
-                HttpResponse<String> exportResponse = apiClient.exportByContractRequest(contractNumber, FHIR_TYPE);
+                HttpResponse<String> exportResponse = apiClient.exportByContractRequest(contractNumber, FHIR_TYPE, null);
 
                 exportResult.sampleEnd();
                 exportResult.setResponseCode(String.valueOf(exportResponse.statusCode()));

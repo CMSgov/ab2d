@@ -47,14 +47,15 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
      * Process the retrieval of patient explanation of benefit objects and write them
      * to a file using the writer
      */
-    public Future<Void> process(PatientDTO patientDTO, final StreamHelper helper, OffsetDateTime attTime, Token token) {
+    public Future<Void> process(PatientDTO patientDTO, final StreamHelper helper, OffsetDateTime attTime,
+                                OffsetDateTime sinceTime, Token token) {
         token.link();
         int resourceCount = 0;
 
         String payload = "";
         try {
             // Retrieve the resource bundle of EOB objects
-            var resources = getEobBundleResources(patientDTO, attTime);
+            var resources = getEobBundleResources(patientDTO, attTime, sinceTime);
 
             var jsonParser = fhirContext.newJsonParser();
 
@@ -99,8 +100,8 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
         helper.addError(data);
     }
 
-    private List<Resource> getEobBundleResources(PatientDTO patient, OffsetDateTime attTime) {
-        Bundle eobBundle = bfdClient.requestEOBFromServer(patient.getPatientId());
+    private List<Resource> getEobBundleResources(PatientDTO patient, OffsetDateTime attTime, OffsetDateTime sinceTime) {
+        Bundle eobBundle = bfdClient.requestEOBFromServer(patient.getPatientId(), sinceTime);
 
         final List<BundleEntryComponent> entries = eobBundle.getEntry();
         final List<Resource> resources = extractResources(entries, patient.getDateRangesUnderContract(), attTime);

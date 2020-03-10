@@ -180,7 +180,7 @@ class JobProcessorUnitTest {
     private void doVerify() {
         verify(fileService).createDirectory(any());
         verify(contractAdapter).getPatients(anyString(), anyInt());
-        verify(patientClaimsProcessor, atLeast(1)).process(any(), any(), any(), any());
+        verify(patientClaimsProcessor, atLeast(1)).process(any(), any(), any(), any(), any());
     }
 
     @Test
@@ -224,7 +224,7 @@ class JobProcessorUnitTest {
 
         verify(fileService).createDirectory(any());
         verify(contractAdapter).getPatients(anyString(), anyInt());
-        verify(patientClaimsProcessor, never()).process(any(), any(), any(), any());
+        verify(patientClaimsProcessor, never()).process(any(), any(), any(), any(), any());
     }
 
     @Test
@@ -256,7 +256,7 @@ class JobProcessorUnitTest {
 
         verify(fileService, times(2)).createDirectory(any());
         verify(contractAdapter).getPatients(anyString(), anyInt());
-        verify(patientClaimsProcessor, atLeast(1)).process(any(), any(), any(), any());
+        verify(patientClaimsProcessor, atLeast(1)).process(any(), any(), any(), any(), any());
         verify(jobRepository, atLeastOnce()).updatePercentageCompleted(anyString(), anyInt());
     }
 

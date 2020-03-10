@@ -126,7 +126,7 @@ public class JobServiceTest {
     public void createJobWithContract() {
         Contract contract = contractRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
 
-        Job job = jobService.createJob(EOB, "http://localhost:8080", contract.getContractNumber(), NDJSON_FIRE_CONTENT_TYPE);
+        Job job = jobService.createJob(EOB, "http://localhost:8080", contract.getContractNumber(), NDJSON_FIRE_CONTENT_TYPE, null);
         assertThat(job).isNotNull();
         assertThat(job.getId()).isNotNull();
         assertThat(job.getJobUuid()).isNotNull();
@@ -152,7 +152,7 @@ public class JobServiceTest {
     @Test
     public void createJobWithBadContract() {
         Assertions.assertThrows(ResourceNotFoundException.class, () -> {
-            jobService.createJob(EOB, "http://localhost:8080", "BadContract", NDJSON_FIRE_CONTENT_TYPE);
+            jobService.createJob(EOB, "http://localhost:8080", "BadContract", NDJSON_FIRE_CONTENT_TYPE, null);
         });
     }
 

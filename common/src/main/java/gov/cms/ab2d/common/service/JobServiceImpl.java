@@ -49,11 +49,11 @@ public class JobServiceImpl implements JobService {
 
     @Override
     public Job createJob(String resourceTypes, String url, String outputFormat) {
-        return createJob(resourceTypes, url, null, outputFormat);
+        return createJob(resourceTypes, url, null, outputFormat, null);
     }
 
     @Override
-    public Job createJob(String resourceTypes, String url, String contractNumber, String outputFormat) {
+    public Job createJob(String resourceTypes, String url, String contractNumber, String outputFormat, OffsetDateTime since) {
         Job job = new Job();
         job.setResourceTypes(resourceTypes);
         job.setJobUuid(UUID.randomUUID().toString());
@@ -63,6 +63,7 @@ public class JobServiceImpl implements JobService {
         job.setCreatedAt(OffsetDateTime.now());
         job.setOutputFormat(outputFormat);
         job.setProgress(0);
+        job.setSince(since);
         job.setUser(userService.getCurrentUser());
 
         if (contractNumber != null) {
