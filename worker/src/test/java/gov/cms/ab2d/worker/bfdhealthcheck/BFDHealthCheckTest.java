@@ -42,18 +42,18 @@ public class BFDHealthCheckTest {
     @Value("${bfd.health.check.consecutive.successes}")
     private int consecutiveSuccessesToBringUp;
 
-    private static int mockServerPort = 8083;
+    private static final int MOCK_SERVER_PORT = 8083;
     private static ClientAndServer mockServer;
     private static final String TEST_DIR = "test-data/";
 
     @BeforeAll
-    public static void setupBFDClient() throws IOException {
-        mockServer = ClientAndServer.startClientAndServer(mockServerPort);
+    public static void setupBFDClient() {
+        mockServer = ClientAndServer.startClientAndServer(MOCK_SERVER_PORT);
     }
 
     @Test
     public void testBfdGoingDown() throws IOException {
-        MockBfdServiceUtils.createMockServerMetaExpectation(TEST_DIR + "meta-unknown-status.xml", mockServerPort);
+        MockBfdServiceUtils.createMockServerMetaExpectation(TEST_DIR + "meta-unknown-status.xml", MOCK_SERVER_PORT);
 
         Properties maintenanceProperties = propertiesService.getPropertiesByKey(MAINTENANCE_MODE);
         Assert.assertEquals("false", maintenanceProperties.getValue());
@@ -64,11 +64,18 @@ public class BFDHealthCheckTest {
 
         maintenanceProperties = propertiesService.getPropertiesByKey(MAINTENANCE_MODE);
         Assert.assertEquals("true", maintenanceProperties.getValue());
+
+        // Cleanup
+        MockBfdServiceUtils.reset(MOCK_SERVER_PORT);
+        MockBfdServiceUtils.createMockServerMetaExpectation(TEST_DIR + "meta.xml", MOCK_SERVER_PORT);
+        for(int i = 0; i < consecutiveSuccessesToBringUp; i++) {
+            bfdHealthCheck.checkBFDHealth();
+        }
     }
 
     @Test
     public void testBfdComingBackUp() throws IOException {
-        MockBfdServiceUtils.createMockServerMetaExpectation(TEST_DIR + "meta.xml", mockServerPort);
+        MockBfdServiceUtils.createMockServerMetaExpectation(TEST_DIR + "meta.xml", MOCK_SERVER_PORT);
 
         PropertiesDTO propertiesDTO = new PropertiesDTO();
         propertiesDTO.setKey(MAINTENANCE_MODE);
@@ -88,21 +95,21 @@ public class BFDHealthCheckTest {
 
     @Test
     public void testBfdGoingUpAndDown() throws IOException {
-        MockBfdServiceUtils.createMockServerMetaExpectation(TEST_DIR + "meta-unknown-status.xml", mockServerPort);
+        MockBfdServiceUtils.createMockServerMetaExpectation(TEST_DIR + "meta-unknown-status.xml", MOCK_SERVER_PORT);
 
         for(int i = 0; i < consecutiveFailuresToTakeDown - 1; i++) {
             bfdHealthCheck.checkBFDHealth();
         }
 
-        MockBfdServiceUtils.reset(mockServerPort);
-        MockBfdServiceUtils.createMockServerMetaExpectation(TEST_DIR + "meta.xml", mockServerPort);
+        MockBfdServiceUtils.reset(MOCK_SERVER_PORT);
+        MockBfdServiceUtils.createMockServerMetaExpectation(TEST_DIR + "meta.xml", MOCK_SERVER_PORT);
 
         for(int i = 0; i < consecutiveSuccessesToBringUp - 1; i++) {
             bfdHealthCheck.checkBFDHealth();
         }
 
-        MockBfdServiceUtils.reset(mockServerPort);
-        MockBfdServiceUtils.createMockServerMetaExpectation(TEST_DIR + "meta-unknown-status.xml", mockServerPort);
+        MockBfdServiceUtils.reset(MOCK_SERVER_PORT);
+        MockBfdServiceUtils.createMockServerMetaExpectation(TEST_DIR + "meta-unknown-status.xml", MOCK_SERVER_PORT);
 
         bfdHealthCheck.checkBFDHealth();
 
@@ -115,6 +122,13 @@ public class BFDHealthCheckTest {
 
         maintenanceProperties = propertiesService.getPropertiesByKey(MAINTENANCE_MODE);
         Assert.assertEquals("true", maintenanceProperties.getValue());
+
+        // Cleanup
+        MockBfdServiceUtils.reset(MOCK_SERVER_PORT);
+        MockBfdServiceUtils.createMockServerMetaExpectation(TEST_DIR + "meta.xml", MOCK_SERVER_PORT);
+        for(int i = 0; i < consecutiveSuccessesToBringUp; i++) {
+            bfdHealthCheck.checkBFDHealth();
+        }
     }
 
     @AfterAll
