@@ -232,7 +232,7 @@ public class TestRunner {
         String checkSum = checkSumObject.getString("valueString");
         byte[] sha256ByteArr = DigestUtils.sha256(fileContent);
         String sha256Str = Hex.encodeHexString(sha256ByteArr);
-        Assert.assertEquals(sha256Str, checkSum);
+        Assert.assertEquals("sha256:" + sha256Str, checkSum);
         Assert.assertEquals(checkSum.length(), 71);
 
         JSONObject lengthObject = extension.getJSONObject(1);
