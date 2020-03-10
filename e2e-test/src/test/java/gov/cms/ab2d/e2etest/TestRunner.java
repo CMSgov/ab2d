@@ -28,6 +28,7 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.zip.GZIPInputStream;
@@ -35,7 +36,9 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 import static gov.cms.ab2d.common.service.JobService.ZIPFORMAT;
+import static gov.cms.ab2d.common.util.Constants.SINCE_EARLIEST_DATE;
 import static gov.cms.ab2d.e2etest.APIClient.PATIENT_EXPORT_PATH;
+import static java.time.format.DateTimeFormatter.ISO_DATE_TIME;
 import static java.time.temporal.ChronoUnit.SECONDS;
 import static org.hamcrest.Matchers.matchesPattern;
 
@@ -61,6 +64,8 @@ public class TestRunner {
     private Map<String, String> yamlMap;
 
     private Environment environment;
+
+    private OffsetDateTime earliest = OffsetDateTime.parse(SINCE_EARLIEST_DATE, ISO_DATE_TIME);
 
     public void runTests() throws InterruptedException, JSONException, IOException {
         runSystemWideExport();
@@ -137,7 +142,7 @@ public class TestRunner {
         long start = System.currentTimeMillis();
         int status = 0;
         Set<Integer> statusesBetween0And100 = Sets.newHashSet();
-        while(status != 200) {
+        while(status != 200 && status != 500) {
             Thread.sleep(DELAY * 1000);
             statusResponse = apiClient.statusRequest(statusUrl);
             status = statusResponse.statusCode();
@@ -160,7 +165,7 @@ public class TestRunner {
             //Assert.fail("Did not receive more than 1 distinct progress values between 0 and 100");
         }
 
-        if(status == 200) {
+        if (status == 200 || status == 500) {
             return statusResponse;
         } else {
             // Instead of doing Assert.fail do this to make the return status happy
@@ -273,6 +278,10 @@ public class TestRunner {
 
         String jobUuid = JobUtil.getJobUuid(contentLocationList.iterator().next());
 
+        if (statusResponseAgain.statusCode() == 500) {
+            // No values returned if 500
+            return null;
+        }
         Assert.assertEquals(200, statusResponseAgain.statusCode());
 
         return verifyJsonFromStatusResponse(statusResponseAgain, jobUuid, isContract ? contractNumber : null);
@@ -280,7 +289,7 @@ public class TestRunner {
 
     @Test
     public void runSystemWideExport() throws IOException, InterruptedException, JSONException {
-        HttpResponse<String> exportResponse = apiClient.exportRequest(FHIR_TYPE);
+        HttpResponse<String> exportResponse = apiClient.exportRequest(FHIR_TYPE, null);
         Assert.assertEquals(202, exportResponse.statusCode());
         List<String> contentLocationList = exportResponse.headers().map().get("content-location");
 
@@ -289,15 +298,39 @@ public class TestRunner {
     }
 
     @Test
+    public void runSystemWideExportSince() throws IOException, InterruptedException, JSONException {
+        HttpResponse<String> exportResponse = apiClient.exportRequest(FHIR_TYPE, earliest);
+        System.out.println(earliest);
+        Assert.assertEquals(202, exportResponse.statusCode());
+        List<String> contentLocationList = exportResponse.headers().map().get("content-location");
+
+        String downloadUrl = performStatusRequests(contentLocationList, false, "S0000");
+        if (downloadUrl != null) {
+            downloadFile(downloadUrl);
+        }
+    }
+
+    @Test
+    public void runErrorSince() throws IOException, InterruptedException {
+        OffsetDateTime timeBeforeEarliest = earliest.minus(1, ChronoUnit.MINUTES);
+        HttpResponse<String> exportResponse = apiClient.exportRequest(FHIR_TYPE, timeBeforeEarliest);
+        Assert.assertEquals(400, exportResponse.statusCode());
+
+        OffsetDateTime timeAfterNow = OffsetDateTime.now().plus(1, ChronoUnit.MINUTES);
+        HttpResponse<String> exportResponse2 = apiClient.exportRequest(FHIR_TYPE, timeBeforeEarliest);
+        Assert.assertEquals(400, exportResponse2.statusCode());
+    }
+
+    @Test
     public void runSystemWideZipExport() throws IOException, InterruptedException, JSONException {
-        HttpResponse<String> exportResponse = apiClient.exportRequest(ZIPFORMAT);
+        HttpResponse<String> exportResponse = apiClient.exportRequest(ZIPFORMAT, null);
         Assert.assertEquals(400, exportResponse.statusCode());
     }
 
     @Test
     public void runContractNumberExport() throws IOException, InterruptedException, JSONException {
         String contractNumber = "S0000";
-        HttpResponse<String> exportResponse = apiClient.exportByContractRequest(contractNumber, FHIR_TYPE);
+        HttpResponse<String> exportResponse = apiClient.exportByContractRequest(contractNumber, FHIR_TYPE, null);
         Assert.assertEquals(202, exportResponse.statusCode());
         List<String> contentLocationList = exportResponse.headers().map().get("content-location");
 
@@ -308,13 +341,13 @@ public class TestRunner {
     @Test
     void runContractNumberZipExport() throws IOException, InterruptedException, JSONException {
         String contractNumber = "S0000";
-        HttpResponse<String> exportResponse = apiClient.exportByContractRequest(contractNumber, ZIPFORMAT);
+        HttpResponse<String> exportResponse = apiClient.exportByContractRequest(contractNumber, ZIPFORMAT, null);
         Assert.assertEquals(400, exportResponse.statusCode());
     }
 
     @Test
     public void testDelete() throws IOException, InterruptedException {
-        HttpResponse<String> exportResponse = apiClient.exportRequest(FHIR_TYPE);
+        HttpResponse<String> exportResponse = apiClient.exportRequest(FHIR_TYPE, null);
 
         Assert.assertEquals(202, exportResponse.statusCode());
         List<String> contentLocationList = exportResponse.headers().map().get("content-location");
@@ -328,7 +361,7 @@ public class TestRunner {
     @Test
     public void testUserCannotDownloadOtherUsersJob() throws IOException, InterruptedException, JSONException {
         String contractNumber = "S0000";
-        HttpResponse<String> exportResponse = apiClient.exportByContractRequest(contractNumber, FHIR_TYPE);
+        HttpResponse<String> exportResponse = apiClient.exportByContractRequest(contractNumber, FHIR_TYPE, null);
         Assert.assertEquals(202, exportResponse.statusCode());
         List<String> contentLocationList = exportResponse.headers().map().get("content-location");
 
@@ -342,7 +375,7 @@ public class TestRunner {
 
     @Test
     public void testUserCannotDeleteOtherUsersJob() throws IOException, InterruptedException, JSONException {
-        HttpResponse<String> exportResponse = apiClient.exportRequest(FHIR_TYPE);
+        HttpResponse<String> exportResponse = apiClient.exportRequest(FHIR_TYPE, null);
 
         Assert.assertEquals(202, exportResponse.statusCode());
         List<String> contentLocationList = exportResponse.headers().map().get("content-location");
@@ -361,7 +394,7 @@ public class TestRunner {
 
     @Test
     public void testUserCannotCheckStatusOtherUsersJob() throws IOException, InterruptedException, JSONException {
-        HttpResponse<String> exportResponse = apiClient.exportRequest(FHIR_TYPE);
+        HttpResponse<String> exportResponse = apiClient.exportRequest(FHIR_TYPE, null);
 
         Assert.assertEquals(202, exportResponse.statusCode());
         List<String> contentLocationList = exportResponse.headers().map().get("content-location");

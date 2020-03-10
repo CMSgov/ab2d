@@ -7,5 +7,6 @@ import java.time.OffsetDateTime;
 import java.util.concurrent.Future;
 
 public interface PatientClaimsProcessor {
-    Future<Void> process(PatientDTO patientDTO, StreamHelper helper, OffsetDateTime attTime, Token token);
+    Future<Void> process(PatientDTO patientDTO, StreamHelper helper, OffsetDateTime attTime,
+                         OffsetDateTime sinceTime, Token token);
 }
