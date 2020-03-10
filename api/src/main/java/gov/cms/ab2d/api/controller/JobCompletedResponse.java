@@ -2,7 +2,6 @@ package gov.cms.ab2d.api.controller;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Getter;
-import org.apache.commons.codec.binary.Hex;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -88,12 +87,9 @@ public final class JobCompletedResponse {
 
         private Long valueDecimal;
 
-        public FileMetadata(byte[] valueString) {
+        public FileMetadata(String valueString) {
             this.url = CHECKSUM_STRING;
-            String stringChecksum = Hex.encodeHexString(valueString);
-
-            String formattedChecksum = String.format("%s:%s", "sha256", stringChecksum);
-            this.valueString = formattedChecksum;
+            this.valueString = String.format("%s:%s", "sha256", valueString);
         }
 
         public FileMetadata(Long valueDecimal) {

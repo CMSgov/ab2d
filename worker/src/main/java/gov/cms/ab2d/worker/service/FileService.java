@@ -7,5 +7,5 @@ public interface FileService {
 
     Path createDirectory(Path outputDir);
 
-    byte[] generateChecksum(File file);
+    String generateChecksum(File file);
 }

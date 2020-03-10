@@ -146,7 +146,7 @@ public class TestUtil {
         jobOutput.setJob(job);
         jobOutput.setFilePath(testFile);
         jobOutput.setError(false);
-        jobOutput.setChecksum("testoutput".getBytes());
+        jobOutput.setChecksum("testoutput");
         jobOutput.setFileLength(20L);
         job.getJobOutputs().add(jobOutput);
     }

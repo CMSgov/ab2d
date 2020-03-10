@@ -232,9 +232,10 @@ public class TestRunner {
 
         JSONObject lengthObject = extension.getJSONObject(1);
         String lengthUrl = lengthObject.getString("url");
+
         Assert.assertEquals("https://ab2d.cms.gov/file_length", lengthUrl);
         long length = lengthObject.getLong("valueDecimal");
-        Assert.assertThat(length, greaterThan(0L));
+        Assert.assertEquals(length, fileContent.getBytes().length);
     }
 
     private void downloadFile(Pair<String, JSONArray> downloadDetails) throws IOException, InterruptedException, JSONException {

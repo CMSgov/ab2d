@@ -41,7 +41,7 @@ public class JobOutput {
     private Boolean downloaded = false;
 
     @NotNull
-    private byte[] checksum;
+    private String checksum;
 
     @NotNull
     private Long fileLength;

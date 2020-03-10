@@ -256,7 +256,7 @@ public class JobServiceTest {
         jobOutput.setError(false);
         jobOutput.setFhirResourceType(EOB);
         jobOutput.setFilePath("file.ndjson");
-        jobOutput.setChecksum("testoutput".getBytes());
+        jobOutput.setChecksum("testoutput");
         jobOutput.setFileLength(20L);
         jobOutput.setJob(job);
 
@@ -264,7 +264,7 @@ public class JobServiceTest {
         errorJobOutput.setError(true);
         errorJobOutput.setFhirResourceType(OPERATION_OUTCOME);
         errorJobOutput.setFilePath("error.ndjson");
-        errorJobOutput.setChecksum("erroroutput".getBytes());
+        errorJobOutput.setChecksum("erroroutput");
         errorJobOutput.setFileLength(22L);
         errorJobOutput.setJob(job);
 
@@ -380,7 +380,7 @@ public class JobServiceTest {
         jobOutput.setError(false);
         jobOutput.setFhirResourceType(EOB);
         jobOutput.setFilePath(fileName);
-        jobOutput.setChecksum("testoutput".getBytes());
+        jobOutput.setChecksum("testoutput");
         jobOutput.setFileLength(20L);
         jobOutput.setJob(job);
 
@@ -388,7 +388,7 @@ public class JobServiceTest {
         errorJobOutput.setError(true);
         errorJobOutput.setFhirResourceType(OPERATION_OUTCOME);
         errorJobOutput.setFilePath(errorFileName);
-        errorJobOutput.setChecksum("erroroutput".getBytes());
+        errorJobOutput.setChecksum("erroroutput");
         errorJobOutput.setFileLength(22L);
         errorJobOutput.setJob(job);
 
