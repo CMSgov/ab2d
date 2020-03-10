@@ -66,7 +66,7 @@ public class OptOutProcessorImpl implements OptOutProcessor {
                     log.info("Multiple({}) Patients for HICN {}", newOptOuts.size(), newOptOuts.get(0).getHicn());
                 }
 
-                newOptOuts.forEach(newOptOut -> upsertOptOutRecord(newOptOut, filename));
+                newOptOuts.forEach(newOptOut -> saveOptOutRecord(newOptOut, filename));
                 insertedRowCount = insertedRowCount + newOptOuts.size();
             } catch (Exception e) {
                 log.error("Invalid opt out record - line number :[{}]", linesReadCount, e);
@@ -88,7 +88,7 @@ public class OptOutProcessorImpl implements OptOutProcessor {
      * @param newOptOut
      * @param filename
      */
-    private void upsertOptOutRecord(OptOut newOptOut, String filename) {
+    private void saveOptOutRecord(OptOut newOptOut, String filename) {
         newOptOut.setFilename(filename);
 
         final Optional<OptOut> optDbData = optOutRepository.findByCcwIdAndHicn(newOptOut.getCcwId(), newOptOut.getHicn());
