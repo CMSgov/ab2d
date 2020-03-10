@@ -15,6 +15,11 @@ import java.util.MissingResourceException;
 import java.util.concurrent.TimeUnit;
 
 public class MockBfdServiceUtils {
+
+    public static void reset(int mockServerPort) {
+        new MockServerClient("localhost", mockServerPort).reset();
+    }
+
     static void createMockServerExpectation(String path, int respCode, String payload,
                                                     List<Parameter> qStringParams, int delayMs, int mockServerPort) {
         new MockServerClient("localhost", mockServerPort)

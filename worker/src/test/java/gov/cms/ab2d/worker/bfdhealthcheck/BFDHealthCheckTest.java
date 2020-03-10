@@ -19,10 +19,11 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.io.IOException;
+import java.util.List;
 
 import static gov.cms.ab2d.common.util.Constants.MAINTENANCE_MODE;
 
-@SpringBootTest(classes = SpringBootApp.class)
+@SpringBootTest(classes = SpringBootApp.class, properties = "bfd.serverBaseUrl=http://localhost:8083/v1/fhir/")
 @Testcontainers
 public class BFDHealthCheckTest {
 
@@ -38,23 +39,77 @@ public class BFDHealthCheckTest {
     @Value("${bfd.health.check.consecutive.failures}")
     private int consecutiveFailuresToTakeDown;
 
+    @Value("${bfd.health.check.consecutive.successes}")
+    private int consecutiveSuccessesToBringUp;
+
     private static int mockServerPort = 8083;
     private static ClientAndServer mockServer;
     private static final String TEST_DIR = "test-data/";
 
     @BeforeAll
-    public static void setupBFDClient() {
+    public static void setupBFDClient() throws IOException {
         mockServer = ClientAndServer.startClientAndServer(mockServerPort);
     }
 
     @Test
-    public void testBfdDown() throws IOException {
+    public void testBfdGoingDown() throws IOException {
         MockBfdServiceUtils.createMockServerMetaExpectation(TEST_DIR + "meta-unknown-status.xml", mockServerPort);
 
         Properties maintenanceProperties = propertiesService.getPropertiesByKey(MAINTENANCE_MODE);
         Assert.assertEquals("false", maintenanceProperties.getValue());
 
         for(int i = 0; i < consecutiveFailuresToTakeDown; i++) {
+            bfdHealthCheck.checkBFDHealth();
+        }
+
+        maintenanceProperties = propertiesService.getPropertiesByKey(MAINTENANCE_MODE);
+        Assert.assertEquals("true", maintenanceProperties.getValue());
+    }
+
+    @Test
+    public void testBfdComingBackUp() throws IOException {
+        MockBfdServiceUtils.createMockServerMetaExpectation(TEST_DIR + "meta.xml", mockServerPort);
+
+        PropertiesDTO propertiesDTO = new PropertiesDTO();
+        propertiesDTO.setKey(MAINTENANCE_MODE);
+        propertiesDTO.setValue("true");
+        List<PropertiesDTO> propertiesDTOs = propertiesService.updateProperties(List.of(propertiesDTO));
+
+        PropertiesDTO maintenancePropertiesUpdated = propertiesDTOs.get(0);
+        Assert.assertEquals("true", maintenancePropertiesUpdated.getValue());
+
+        for (int i = 0; i < consecutiveSuccessesToBringUp; i++) {
+            bfdHealthCheck.checkBFDHealth();
+        }
+
+        Properties maintenanceProperties = propertiesService.getPropertiesByKey(MAINTENANCE_MODE);
+        Assert.assertEquals("false", maintenanceProperties.getValue());
+    }
+
+    @Test
+    public void testBfdGoingUpAndDown() throws IOException {
+        MockBfdServiceUtils.createMockServerMetaExpectation(TEST_DIR + "meta-unknown-status.xml", mockServerPort);
+
+        for(int i = 0; i < consecutiveFailuresToTakeDown - 1; i++) {
+            bfdHealthCheck.checkBFDHealth();
+        }
+
+        MockBfdServiceUtils.reset(mockServerPort);
+        MockBfdServiceUtils.createMockServerMetaExpectation(TEST_DIR + "meta.xml", mockServerPort);
+
+        for(int i = 0; i < consecutiveSuccessesToBringUp - 1; i++) {
+            bfdHealthCheck.checkBFDHealth();
+        }
+
+        MockBfdServiceUtils.reset(mockServerPort);
+        MockBfdServiceUtils.createMockServerMetaExpectation(TEST_DIR + "meta-unknown-status.xml", mockServerPort);
+
+        bfdHealthCheck.checkBFDHealth();
+
+        Properties maintenanceProperties = propertiesService.getPropertiesByKey(MAINTENANCE_MODE);
+        Assert.assertEquals("false", maintenanceProperties.getValue());
+
+        for(int i = 0; i < consecutiveFailuresToTakeDown - 1; i++) {
             bfdHealthCheck.checkBFDHealth();
         }
 

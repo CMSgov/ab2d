@@ -47,7 +47,7 @@ class OptOutClientServiceTest {
     public static void setupBFDClient() throws IOException {
         mockServer = ClientAndServer.startClientAndServer(mockServerPort);
 
-        MockBfdServiceUtils.createMockServerMetaExpectation("meta.xml", mockServerPort);
+        MockBfdServiceUtils.createMockServerMetaExpectation(TEST_DIR + "meta.xml", mockServerPort);
         MockBfdServiceUtils.createMockServerPatientExpectation( TEST_DIR + "patientbundle.xml",
                 mockServerPort, List.of());
     }

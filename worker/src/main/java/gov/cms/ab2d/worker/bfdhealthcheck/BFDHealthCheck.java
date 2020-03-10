@@ -47,20 +47,18 @@ class BFDHealthCheck {
             consecutiveFailures = 0;
         }
 
-        if(consecutiveSuccesses == consecutiveSuccessesToBringUp) {
+        if (consecutiveSuccesses == consecutiveSuccessesToBringUp) {
             consecutiveSuccesses = 0;
             PropertiesDTO propertiesDTO = new PropertiesDTO();
             propertiesDTO.setKey(MAINTENANCE_MODE);
             propertiesDTO.setValue("false");
             propertiesService.updateProperties(List.of(propertiesDTO));
-        } else if(consecutiveFailures == consecutiveFailuresToTakeDown) {
+        } else if (consecutiveFailures == consecutiveFailuresToTakeDown) {
             consecutiveFailures = 0;
             PropertiesDTO propertiesDTO = new PropertiesDTO();
             propertiesDTO.setKey(MAINTENANCE_MODE);
             propertiesDTO.setValue("true");
             propertiesService.updateProperties(List.of(propertiesDTO));
         }
-
-
     }
 }
