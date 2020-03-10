@@ -328,7 +328,7 @@ public class TestRunner {
         List<String> contentLocationList = exportResponse.headers().map().get("content-location");
 
         Pair<String, JSONArray> downloadDetails = performStatusRequests(contentLocationList, false, "S0000");
-        if (downloadDetails.getFirst() != null) {
+        if (downloadDetails != null) {
             downloadFile(downloadDetails);
         }
     }
