@@ -1,7 +1,7 @@
 package gov.cms.ab2d.worker.service;
 
 import lombok.extern.slf4j.Slf4j;
-import org.bouncycastle.jcajce.provider.digest.SHA256;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.springframework.stereotype.Component;
 
 import java.io.File;
@@ -41,7 +41,7 @@ public class FileServiceImpl implements FileService {
     @Override
     public byte[] generateChecksum(File file) {
         try (FileInputStream fileInputStream = new FileInputStream(file)) {
-            byte[] bytes = new SHA256.Digest().digest(fileInputStream.readAllBytes());
+            byte[] bytes = DigestUtils.sha3_256(fileInputStream.readAllBytes());
             return bytes;
         } catch (IOException e) {
             log.error("Encountered IO Exception while generating checksum {}", e.getMessage(), e);

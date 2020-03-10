@@ -2,7 +2,7 @@ package gov.cms.ab2d.api.controller;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Getter;
-import org.bouncycastle.util.encoders.Hex;
+import org.apache.commons.codec.binary.Hex;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -70,9 +70,9 @@ public final class JobCompletedResponse {
         private final String type;
         private final String url;
 
-        private final List<ValueOutput> extension;
+        private final List<FileMetadata> extension;
 
-        public Output(String type, String url, List<ValueOutput> valueOutputs) {
+        public Output(String type, String url, List<FileMetadata> valueOutputs) {
             this.type = type;
             this.url = url;
             this.extension = valueOutputs;
@@ -81,22 +81,22 @@ public final class JobCompletedResponse {
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     @Getter
-    public static final class ValueOutput {
+    public static final class FileMetadata {
         private final String url;
 
         private String valueString;
 
         private Long valueDecimal;
 
-        public ValueOutput(byte[] valueString) {
+        public FileMetadata(byte[] valueString) {
             this.url = CHECKSUM_STRING;
-            String stringChecksum = Hex.toHexString(valueString);
+            String stringChecksum = Hex.encodeHexString(valueString);
 
             String formattedChecksum = String.format("%s:%s", "sha256", stringChecksum);
             this.valueString = formattedChecksum;
         }
 
-        public ValueOutput(Long valueDecimal) {
+        public FileMetadata(Long valueDecimal) {
             this.url = CONTENT_LENGTH_STRING;
             this.valueDecimal = valueDecimal;
         }

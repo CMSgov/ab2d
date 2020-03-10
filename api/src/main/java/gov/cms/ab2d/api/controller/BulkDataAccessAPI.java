@@ -305,12 +305,12 @@ public class BulkDataAccessAPI {
                 resp.setRequiresAccessToken(true);
                 resp.setOutput(job.getJobOutputs().stream().filter(o ->
                     !o .getError()).map(o -> {
-                    List<JobCompletedResponse.ValueOutput> valueOutputs = generateValueOutputs(o);
+                    List<JobCompletedResponse.FileMetadata> valueOutputs = generateValueOutputs(o);
                         return new JobCompletedResponse.Output(o.getFhirResourceType(), getUrlPath(job, o.getFilePath()), valueOutputs);
                 }).collect(Collectors.toList()));
                 resp.setError(job.getJobOutputs().stream().filter(o ->
                     o.getError()).map(o -> {
-                    List<JobCompletedResponse.ValueOutput> valueOutputs = generateValueOutputs(o);
+                    List<JobCompletedResponse.FileMetadata> valueOutputs = generateValueOutputs(o);
                         return new JobCompletedResponse.Output(o.getFhirResourceType(), getUrlPath(job, o.getFilePath()), valueOutputs);
                 }).collect(Collectors.toList()));
 
@@ -333,10 +333,10 @@ public class BulkDataAccessAPI {
         }
     }
 
-    private List<JobCompletedResponse.ValueOutput> generateValueOutputs(JobOutput o) {
-        List<JobCompletedResponse.ValueOutput> valueOutputs = new ArrayList<>(2);
-        valueOutputs.add(new JobCompletedResponse.ValueOutput(o.getChecksum()));
-        valueOutputs.add(new JobCompletedResponse.ValueOutput(o.getFileLength()));
+    private List<JobCompletedResponse.FileMetadata> generateValueOutputs(JobOutput o) {
+        List<JobCompletedResponse.FileMetadata> valueOutputs = new ArrayList<>(2);
+        valueOutputs.add(new JobCompletedResponse.FileMetadata(o.getChecksum()));
+        valueOutputs.add(new JobCompletedResponse.FileMetadata(o.getFileLength()));
         return valueOutputs;
     }
 

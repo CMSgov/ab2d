@@ -104,12 +104,6 @@
             <scope>provided</scope>
             <type>zip</type>
 	    </dependency>
-
-        <dependency>
-            <groupId>org.bouncycastle</groupId>
-            <artifactId>bcpkix-jdk15on</artifactId>
-            <version>${bounceycastle.version}</version>
-        </dependency>
 	
     </dependencies>
 
