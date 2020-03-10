@@ -75,7 +75,7 @@ module "api" {
   desired_instances             = var.ec2_desired_instance_count_api
   min_instances                 = var.ec2_minimum_instance_count_api
   max_instances                 = var.ec2_maximum_instance_count_api
-  autoscale_group_wait          = "0" #Change this later for 0 downtime deployment
+  autoscale_group_wait          = "0" # 0 for quick deployment; 4 for 0 downtime deployment
   gold_disk_name                = var.gold_image_name
   override_task_definition_arn  = var.current_task_definition_arn
   aws_account_number            = var.aws_account_number
