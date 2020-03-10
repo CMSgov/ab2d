@@ -327,9 +327,9 @@ public class TestRunner {
         Assert.assertEquals(202, exportResponse.statusCode());
         List<String> contentLocationList = exportResponse.headers().map().get("content-location");
 
-        String downloadUrl = performStatusRequests(contentLocationList, false, "S0000");
-        if (downloadUrl != null) {
-            downloadFile(downloadUrl);
+        Pair<String, JSONArray> downloadDetails = performStatusRequests(contentLocationList, false, "S0000");
+        if (downloadDetails.getFirst() != null) {
+            downloadFile(downloadDetails);
         }
     }
 
