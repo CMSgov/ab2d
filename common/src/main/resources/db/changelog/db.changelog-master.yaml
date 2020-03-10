@@ -39,6 +39,8 @@ databaseChangeLog:
   - include:
       file: db/changelog/v001/add_zip_support_toggle_property.sql
   - include:
+      file: db/changelog/v001/ab2d-1144-add-since-val.sql
+  - include:
       file: db/changelog/v001/ab2d_1167_add_column_to_opt_out_table.sql
 
 

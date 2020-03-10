@@ -24,6 +24,7 @@ import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -55,6 +56,8 @@ import static gov.cms.ab2d.api.util.Constants.GENERIC_FHIR_ERR_MSG;
 import static gov.cms.ab2d.api.util.SwaggerConstants.*;
 import static gov.cms.ab2d.common.service.JobService.ZIPFORMAT;
 import static gov.cms.ab2d.common.util.Constants.*;
+import static java.time.format.DateTimeFormatter.ISO_DATE_TIME;
+import static java.time.format.DateTimeFormatter.ISO_OFFSET_DATE_TIME;
 
 @Slf4j
 @Api(value = "Bulk Data Access API", description = SwaggerConstants.BULK_MAIN)
@@ -110,21 +113,41 @@ public class BulkDataAccessAPI {
                     allowableValues = ALLOWABLE_OUTPUT_FORMATS, defaultValue = "application/fhir" +
                     "+ndjson"
             )
-            @RequestParam(required = false, name = "_outputFormat") String outputFormat) {
+            @RequestParam(required = false, name = "_outputFormat") String outputFormat,
+            @ApiParam(value = "Beginning time of query. Returns all records \"since\" this time. At this time, it must be after " + SINCE_EARLIEST_DATE,
+                    example = SINCE_EARLIEST_DATE)
+            @RequestParam(required = false, name = "_since") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime since) {
         log.info("Received request to export");
 
         checkIfInMaintenanceMode();
-
         checkIfCurrentUserCanAddJob();
-
         checkResourceTypesAndOutputFormat(resourceTypes, outputFormat);
+        checkSinceTime(since);
 
         Job job = jobService.createJob(resourceTypes, ServletUriComponentsBuilder.fromCurrentRequest().toUriString(),
-                outputFormat);
+                null, outputFormat, since);
 
         logSuccessfulJobCreation(job);
 
         return returnStatusForJobCreation(job);
+    }
+
+    private void checkSinceTime(OffsetDateTime date) {
+        if (date == null) {
+            return;
+        }
+        if (date.isAfter(OffsetDateTime.now())) {
+            throw new InvalidUserInputException("You can not use a time after the current time for _since");
+        }
+        try {
+            OffsetDateTime ed = OffsetDateTime.parse(SINCE_EARLIEST_DATE, ISO_DATE_TIME);
+            if (date.isBefore(ed)) {
+                log.error("Invalid _since time received {}", date);
+                throw new InvalidUserInputException("_since must be after " + ed.format(ISO_OFFSET_DATE_TIME));
+            }
+        } catch (Exception ex) {
+            throw new InvalidUserInputException("${api.since.date.earliest} date value '" + SINCE_EARLIEST_DATE + "' is invalid");
+        }
     }
 
     private void checkIfInMaintenanceMode() {
@@ -202,18 +225,20 @@ public class BulkDataAccessAPI {
                     allowableValues = ALLOWABLE_OUTPUT_FORMATS, defaultValue = "application/fhir" +
                     "+ndjson"
             )
-            @RequestParam(required = false, name = "_outputFormat") String outputFormat) {
-        MDC.put(CONTRACT_LOG, contractNumber);
+            @RequestParam(required = false, name = "_outputFormat") String outputFormat,
+            @ApiParam(value = "Beginning time of query. Returns all records \"since\" this time. At this time, it must be after " + SINCE_EARLIEST_DATE,
+                      example = SINCE_EARLIEST_DATE)
+            @RequestParam(required = false, name = "_since") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime since) {
+            MDC.put(CONTRACT_LOG, contractNumber);
         log.info("Received request to export by contractNumber");
 
         checkIfInMaintenanceMode();
-
         checkIfCurrentUserCanAddJob();
-
         checkResourceTypesAndOutputFormat(resourceTypes, outputFormat);
+        checkSinceTime(since);
 
         Job job = jobService.createJob(resourceTypes, ServletUriComponentsBuilder.fromCurrentRequest().toUriString(),
-                contractNumber, outputFormat);
+                contractNumber, outputFormat, since);
 
         logSuccessfulJobCreation(job);
 
@@ -294,10 +319,10 @@ public class BulkDataAccessAPI {
                 final ZonedDateTime jobExpiresUTC = ZonedDateTime.ofInstant(job.getExpiresAt().toInstant(), ZoneId.of("UTC"));
                 responseHeaders.add("Expires", DateTimeFormatter.RFC_1123_DATE_TIME.format(jobExpiresUTC));
 
-                final DateTimeType jobCompletedAt = new DateTimeType(job.getCompletedAt().toString());
+                final DateTimeType jobStartedAt = new DateTimeType(job.getCreatedAt().toString());
 
                 final JobCompletedResponse resp = new JobCompletedResponse();
-                resp.setTransactionTime(jobCompletedAt.toHumanDisplay());
+                resp.setTransactionTime(jobStartedAt.toHumanDisplay());
                 resp.setRequest(job.getRequestUrl());
                 resp.setRequiresAccessToken(true);
                 resp.setOutput(job.getJobOutputs().stream().filter(o ->
