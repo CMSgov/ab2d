@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.io.BufferedReader;
 import java.util.List;
+import java.util.Optional;
 
 @Slf4j
 @Component
@@ -37,7 +38,7 @@ public class OptOutProcessorImpl implements OptOutProcessor {
 
             log.info("importing [{}]", filename);
 
-            importOptOutRecords(bufferedReader);
+            importOptOutRecords(bufferedReader, filename);
 
             log.info("[{}] - import completed successfully", filename);
         } catch (Exception e) {
@@ -45,7 +46,7 @@ public class OptOutProcessorImpl implements OptOutProcessor {
         }
     }
 
-    private void importOptOutRecords(BufferedReader bufferedReader) {
+    private void importOptOutRecords(BufferedReader bufferedReader, String filename) {
         var iterator = IOUtils.lineIterator(bufferedReader);
 
         int linesReadCount = 0;
@@ -60,13 +61,13 @@ public class OptOutProcessorImpl implements OptOutProcessor {
                     continue;
                 }
 
-                List<OptOut> optOuts = optOutConverterService.convert(line);
-                if (optOuts.size() > 1) {
-                    log.info("Multiple({}) Patients for HICN {}", optOuts.size(), optOuts.get(0).getHicn());
+                List<OptOut> newOptOuts = optOutConverterService.convert(line);
+                if (newOptOuts.size() > 1) {
+                    log.info("Multiple({}) Patients for HICN {}", newOptOuts.size(), newOptOuts.get(0).getHicn());
                 }
 
-                optOuts.forEach(o -> optOutRepository.save(o));
-                insertedRowCount = insertedRowCount + optOuts.size();
+                newOptOuts.forEach(newOptOut -> saveOptOutRecord(newOptOut, filename));
+                insertedRowCount = insertedRowCount + newOptOuts.size();
             } catch (Exception e) {
                 log.error("Invalid opt out record - line number :[{}]", linesReadCount, e);
             }
@@ -74,5 +75,36 @@ public class OptOutProcessorImpl implements OptOutProcessor {
 
         log.info("[{}] rows read from file", linesReadCount);
         log.info("[{}] rows inserted into opt_out table", insertedRowCount);
+    }
+
+
+    /**
+     *
+     * Search the table for an opt_out record given CCW_ID and HICN
+     * if none found, insert the new opt_out record.
+     * if a record already exists AND the effective date is different, update the effective data and the new filename
+     * Otherwise, ignore it
+     *
+     * @param newOptOut
+     * @param filename
+     */
+    private void saveOptOutRecord(OptOut newOptOut, String filename) {
+        newOptOut.setFilename(filename);
+
+        final Optional<OptOut> optDbData = optOutRepository.findByCcwIdAndHicn(newOptOut.getCcwId(), newOptOut.getHicn());
+        if (optDbData.isEmpty()) {
+            optOutRepository.save(newOptOut);
+            return;
+        }
+
+        // a row was found in the opt_out table with the same ccw_id & hicn.
+        // if the effectiveDate is different, update the Effective Date & new filename
+        final OptOut dbOptOut = optDbData.get();
+        if (!dbOptOut.getEffectiveDate().isEqual(newOptOut.getEffectiveDate())) {
+            dbOptOut.setEffectiveDate(newOptOut.getEffectiveDate());
+            dbOptOut.setFilename(newOptOut.getFilename());
+            optOutRepository.save(dbOptOut);
+        }
+
     }
 }

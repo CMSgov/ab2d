@@ -63,7 +63,10 @@ class OptOutClientServiceTest {
         assertNotNull(optOut);
         assertEquals(2, optOut.size());
         assertEquals("20010000001115", optOut.get(0).getCcwId());
-        optOut.forEach(o -> optOutRepository.save(o));
+        optOut.forEach(o -> {
+            o.setFilename("test_filename");
+            optOutRepository.save(o);
+        });
     }
 
     private Stream<String> getLinesFromFile() {
