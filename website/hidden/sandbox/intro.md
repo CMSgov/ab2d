@@ -42,7 +42,7 @@ The API uses the JSON Web Tokens (JWT) to authorize use of the endpoints. The to
 "Authorization" header field with the value specified as "Bearer xxxxx" where xxxxx is the value of the JWT. 
 
 There are 6 users set up in the Sandbox. They are useful to view different types and sizes of data. For example, 
-sponsor PDP-100 will have 100 patients and PDP-30000 will have 30000 patients. Each has one contract associated with it.
+sponsor PDP-100 will have 100 patients and PDP-1000 will have 1000 patients. Each has one contract associated with it.
 
 <table class="ds-c-table">
     <tbody>
@@ -166,32 +166,6 @@ sponsor PDP-100 will have 100 patients and PDP-30000 will have 30000 patients. E
         <tr>
             <td><b>Base64-encoded id:password</b></td>
             <td>MG9hMnQwbG05cW9BdEpIcUMyOTc6eWJSNjBKbXRjcFJ0NlNBZUxtdmJxNmwtM1lEUkNaUC1XTjFBdDZ0Xw==</td>
-        </tr>
-    </tbody>
-</table>
-
-<br/>
-<table class="ds-c-table">
-    <tbody>
-        <tr>
-            <td><b>Sponsor</b></td>
-            <td>PDP-30000</td>
-        </tr>
-        <tr>
-            <td><b>Contract</b></td>
-            <td>S0030</td>
-        </tr>
-        <tr>
-            <td><b>Client ID</b></td>
-            <td>0oa2t0lrjyVeVAZjt297</td>
-        </tr>
-        <tr>
-            <td><b>Client Password</b></td>
-            <td>kpJkYR2k7CfojrzuZAha0CVVN9PtFKBW4M2ADRKx</td>
-        </tr>
-        <tr>
-            <td><b>Base64-encoded id:password</b></td>
-            <td>MG9hMnQwbHJqeVZlVkFaanQyOTc6a3BKa1lSMms3Q2ZvanJ6dVpBaGEwQ1ZWTjlQdEZLQlc0TTJBRFJLeA==</td>
         </tr>
     </tbody>
 </table>

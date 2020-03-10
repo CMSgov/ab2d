@@ -162,7 +162,7 @@ public class JobProcessorImpl implements JobProcessor {
             }
 
             // Create a holder for the contract, writer, progress tracker and attested date
-            var contractData = new ContractData(contract, progressTracker, contract.getAttestedOn());
+            var contractData = new ContractData(contract, progressTracker, contract.getAttestedOn(), job.getSince());
 
             /*** process contract ***/
             final Segment contractSegment = NewRelic.getAgent().getTransaction().startSegment("Patient processing of contract " + contract.getContractNumber());
@@ -379,7 +379,7 @@ public class JobProcessorImpl implements JobProcessor {
                 RoundRobinBlockingQueue.CATEGORY_HOLDER.set(progressTracker.getJobUuid());
                 try {
                     futureHandles.add(patientClaimsProcessor
-                            .process(patient, helper, contract.getAttestedOn(), token));
+                            .process(patient, helper, contract.getAttestedOn(), contractData.getSinceTime(), token));
                 } finally {
                     RoundRobinBlockingQueue.CATEGORY_HOLDER.remove();
                 }

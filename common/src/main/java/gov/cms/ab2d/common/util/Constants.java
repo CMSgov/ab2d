@@ -48,4 +48,8 @@ public final class Constants {
     public static final Set<String> ALLOWED_PROPERTY_NAMES = Set.of(PCP_CORE_POOL_SIZE, PCP_MAX_POOL_SIZE,
             PCP_SCALE_TO_MAX_TIME, MAINTENANCE_MODE, CONTRACT_2_BENE_CACHING_ON, ZIP_SUPPORT_ON);
 
+    // This is the earliest time the _since filter is valid - probably should be in the properties file but I
+    // wanted to include it in the swagger documentation and for the swagger annotation, the value has to be
+    // constant at compile time so I put it here.
+    public static final String SINCE_EARLIEST_DATE = "2020-02-13T00:00:00.000-05:00";
 }

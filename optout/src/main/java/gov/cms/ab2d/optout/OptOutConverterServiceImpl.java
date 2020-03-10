@@ -22,10 +22,10 @@ public class OptOutConverterServiceImpl implements OptOutConverterService {
     @Autowired
     private BFDClient bfdClient;
 
-    private static final Pattern HEALTH_INSURANCE_CLAIM_NUMBER_PATTERN = Pattern.compile("\\d{9}[A-Za-z0-9]{0,2}");
+    private static final Pattern HICN_PATTERN = Pattern.compile("\\d{9}[A-Za-z0-9]{0,2}");
 
-    private static final int HEALTH_INSURANCE_CLAIM_NUMBER_START = 0;
-    private static final int HEALTH_INSURANCE_CLAIM_NUMBER_END = 11;
+    private static final int HICN_START = 0;
+    private static final int HICN_END = 11;
     private static final int EFFECTIVE_DATE_START = 354;
     private static final int EFFECTIVE_DATE_END = 362;
     private static final int SOURCE_CODE_START = 362;
@@ -74,7 +74,8 @@ public class OptOutConverterServiceImpl implements OptOutConverterService {
         }
 
         // Find the HICN ID
-        String hicn = parseHealthInsuranceClaimNumber(line);
+        String hicn = parseHICN(line);
+
         // From BB, receive the list of patients with that HICN Id and create OptOut objects
         List<Patient> patients = getPatientInfo(hicn);
         for (Patient patient : patients) {
@@ -193,9 +194,9 @@ public class OptOutConverterServiceImpl implements OptOutConverterService {
      * @param line - the line containing the HICN
      * @return the value of the HICN Id
      */
-    private String parseHealthInsuranceClaimNumber(String line) {
-        var claimNumber = line.substring(HEALTH_INSURANCE_CLAIM_NUMBER_START, HEALTH_INSURANCE_CLAIM_NUMBER_END).trim();
-        if (!HEALTH_INSURANCE_CLAIM_NUMBER_PATTERN.matcher(claimNumber).matches()) {
+    private String parseHICN(String line) {
+        var claimNumber = line.substring(HICN_START, HICN_END).trim();
+        if (!HICN_PATTERN.matcher(claimNumber).matches()) {
             throw new RuntimeException("HICN does not match expected format");
         }
         return claimNumber;

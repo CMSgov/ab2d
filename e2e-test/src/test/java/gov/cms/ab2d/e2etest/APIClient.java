@@ -15,8 +15,9 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.time.OffsetDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Base64;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -100,19 +101,27 @@ public class APIClient {
         return httpClient.send(exportRequest, HttpResponse.BodyHandlers.ofString());
     }
 
-    public HttpResponse<String> exportRequest(String exportType) throws IOException, InterruptedException {
-        return exportRequest(new HashMap<>() {{ put("_outputFormat", exportType); }});
+    public HttpResponse<String> exportRequest(String exportType, OffsetDateTime since) throws IOException, InterruptedException {
+        Map<Object, Object> map  = new HashMap<>();
+        map.put("_outputFormat", exportType);
+        if (since != null) {
+            map.put("_since", since.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
+        }
+        return exportRequest(map);
     }
 
-    public HttpResponse<String> exportByContractRequest(String contractNumber, String exportType) throws IOException, InterruptedException {
-        HttpRequest exportRequest = buildExportByContractRequest(contractNumber, exportType);
+    public HttpResponse<String> exportByContractRequest(String contractNumber, String exportType, OffsetDateTime since) throws IOException, InterruptedException {
+        HttpRequest exportRequest = buildExportByContractRequest(contractNumber, exportType, since);
         return httpClient.send(exportRequest, HttpResponse.BodyHandlers.ofString());
     }
 
-    public HttpRequest buildExportByContractRequest(String contractNumber, String exportType) {
+    public HttpRequest buildExportByContractRequest(String contractNumber, String exportType, OffsetDateTime since) {
         var jwtRequestParms = new HashMap<>() {{
             put("_outputFormat", exportType);
         }};
+        if (since != null) {
+            jwtRequestParms.put("_since", since.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
+        }
         String paramString = buildParameterString(jwtRequestParms);
         if(!paramString.equals("")) {
             paramString = "?" + paramString;
