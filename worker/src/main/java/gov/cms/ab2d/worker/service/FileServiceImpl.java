@@ -41,7 +41,7 @@ public class FileServiceImpl implements FileService {
     @Override
     public byte[] generateChecksum(File file) {
         try (FileInputStream fileInputStream = new FileInputStream(file)) {
-            byte[] bytes = DigestUtils.sha3_256(fileInputStream.readAllBytes());
+            byte[] bytes = DigestUtils.sha256(fileInputStream);
             return bytes;
         } catch (IOException e) {
             log.error("Encountered IO Exception while generating checksum {}", e.getMessage(), e);

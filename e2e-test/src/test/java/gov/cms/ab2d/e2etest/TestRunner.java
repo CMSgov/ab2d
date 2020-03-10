@@ -3,6 +3,8 @@ package gov.cms.ab2d.e2etest;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.codec.binary.Hex;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.IOUtils;
 import org.assertj.core.util.Sets;
 import org.json.JSONArray;
@@ -12,6 +14,7 @@ import org.junit.Assert;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.data.util.Pair;
 import org.testcontainers.containers.DockerComposeContainer;
 import org.testcontainers.containers.output.Slf4jLogConsumer;
 import org.testcontainers.containers.wait.strategy.HostPortWaitStrategy;
@@ -170,7 +173,7 @@ public class TestRunner {
         }
     }
 
-    private String verifyJsonFromStatusResponse(HttpResponse<String> statusResponse, String jobUuid, String contractNumber) throws JSONException {
+    private Pair<String, JSONArray> verifyJsonFromStatusResponse(HttpResponse<String> statusResponse, String jobUuid, String contractNumber) throws JSONException {
         final JSONObject json = new JSONObject(statusResponse.body());
         Boolean requiresAccessToken = json.getBoolean("requiresAccessToken");
         Assert.assertEquals(true, requiresAccessToken);
@@ -189,23 +192,11 @@ public class TestRunner {
         Assert.assertEquals(type, "ExplanationOfBenefit");
 
         JSONArray extension = outputObject.getJSONArray("extension");
-        JSONObject checkSumObject = extension.getJSONObject(0);
-        String checkSumUrl = checkSumObject.getString("url");
-        Assert.assertEquals("https://ab2d.cms.gov/checksum", checkSumUrl);
-        String checkSum = checkSumObject.getString("valueString");
-        Assert.assertEquals("sha256:", checkSum.substring(0, 7));
-        Assert.assertEquals(checkSum.length(), 71);
 
-        JSONObject lengthObject = extension.getJSONObject(1);
-        String lengthUrl = lengthObject.getString("url");
-        Assert.assertEquals("https://ab2d.cms.gov/file_length", lengthUrl);
-        long length = lengthObject.getLong("valueDecimal");
-        Assert.assertThat(length, greaterThan(0L));
-
-        return url;
+        return Pair.of(url, extension);
     }
 
-    private void verifyJsonFromfileDownload(String fileContent) throws JSONException {
+    private void verifyJsonFromfileDownload(String fileContent, JSONArray extension) throws JSONException {
         // Some of the data that is returned will be variable and will change from request to request, so not every
         // JSON object can be verified
         final JSONObject fileJson = new JSONObject(fileContent);
@@ -229,10 +220,25 @@ public class TestRunner {
         Assert.assertNotNull(diagnosisJson);
         final JSONArray itemJson = fileJson.getJSONArray("item");
         Assert.assertNotNull(itemJson);
+
+        JSONObject checkSumObject = extension.getJSONObject(0);
+        String checkSumUrl = checkSumObject.getString("url");
+        Assert.assertEquals("https://ab2d.cms.gov/checksum", checkSumUrl);
+        String checkSum = checkSumObject.getString("valueString");
+        byte[] sha256ByteArr = DigestUtils.sha256(fileContent);
+        String sha256Str = Hex.encodeHexString(sha256ByteArr);
+        Assert.assertEquals(sha256Str, checkSum);
+        Assert.assertEquals(checkSum.length(), 71);
+
+        JSONObject lengthObject = extension.getJSONObject(1);
+        String lengthUrl = lengthObject.getString("url");
+        Assert.assertEquals("https://ab2d.cms.gov/file_length", lengthUrl);
+        long length = lengthObject.getLong("valueDecimal");
+        Assert.assertThat(length, greaterThan(0L));
     }
 
-    private void downloadFile(String url) throws IOException, InterruptedException, JSONException {
-        HttpResponse<InputStream> downloadResponse = apiClient.fileDownloadRequest(url);
+    private void downloadFile(Pair<String, JSONArray> downloadDetails) throws IOException, InterruptedException, JSONException {
+        HttpResponse<InputStream> downloadResponse = apiClient.fileDownloadRequest(downloadDetails.getFirst());
 
         Assert.assertEquals(200, downloadResponse.statusCode());
         String contentEncoding = downloadResponse.headers().map().get("content-encoding").iterator().next();
@@ -243,10 +249,10 @@ public class TestRunner {
             downloadString = IOUtils.toString(gzipInputStream, Charset.defaultCharset());
         }
 
-        verifyJsonFromfileDownload(downloadString);
+        verifyJsonFromfileDownload(downloadString, downloadDetails.getSecond());
     }
 
-    private void downloadZipFile(String url) throws IOException, InterruptedException, JSONException {
+    private void downloadZipFile(String url, JSONArray extension) throws IOException, InterruptedException, JSONException {
         HttpResponse<InputStream> downloadResponse = apiClient.fileDownloadRequest(url);
         ZipInputStream zipIn = new ZipInputStream(downloadResponse.body());
         ZipEntry entry = zipIn.getNextEntry();
@@ -256,7 +262,7 @@ public class TestRunner {
             zipIn.closeEntry();
             entry = zipIn.getNextEntry();
         }
-        verifyJsonFromfileDownload(downloadString.toString());
+        verifyJsonFromfileDownload(downloadString.toString(), extension);
     }
 
     public static String extractZipFileData(ZipEntry entry, ZipInputStream zipIn) throws IOException {
@@ -269,7 +275,7 @@ public class TestRunner {
         return result.toString();
     }
 
-    private String performStatusRequests(List<String> contentLocationList, boolean isContract,
+    private Pair<String, JSONArray> performStatusRequests(List<String> contentLocationList, boolean isContract,
                                                          String contractNumber) throws JSONException, IOException, InterruptedException {
         HttpResponse<String> statusResponse = apiClient.statusRequest(contentLocationList.iterator().next());
 
@@ -300,8 +306,8 @@ public class TestRunner {
         Assert.assertEquals(202, exportResponse.statusCode());
         List<String> contentLocationList = exportResponse.headers().map().get("content-location");
 
-        String downloadUrl = performStatusRequests(contentLocationList, false, "S0000");
-        downloadFile(downloadUrl);
+        Pair<String, JSONArray> downloadDetails = performStatusRequests(contentLocationList, false, "S0000");
+        downloadFile(downloadDetails);
     }
 
     @Test
@@ -317,8 +323,8 @@ public class TestRunner {
         Assert.assertEquals(202, exportResponse.statusCode());
         List<String> contentLocationList = exportResponse.headers().map().get("content-location");
 
-        String downloadUrl = performStatusRequests(contentLocationList, true, contractNumber);
-        downloadFile(downloadUrl);
+        Pair<String, JSONArray> downloadDetails = performStatusRequests(contentLocationList, true, contractNumber);
+        downloadFile(downloadDetails);
     }
 
     @Test
@@ -348,11 +354,11 @@ public class TestRunner {
         Assert.assertEquals(202, exportResponse.statusCode());
         List<String> contentLocationList = exportResponse.headers().map().get("content-location");
 
-        String downloadUrl = performStatusRequests(contentLocationList, true, contractNumber);
+        Pair<String, JSONArray> downloadDetails = performStatusRequests(contentLocationList, true, contractNumber);
 
         APIClient secondUserAPIClient = createSecondUserClient();
 
-        HttpResponse<InputStream> downloadResponse = secondUserAPIClient.fileDownloadRequest(downloadUrl);
+        HttpResponse<InputStream> downloadResponse = secondUserAPIClient.fileDownloadRequest(downloadDetails.getFirst());
         Assert.assertEquals(downloadResponse.statusCode(), 403);
     }
 
