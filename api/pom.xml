@@ -97,13 +97,13 @@
             <artifactId>jackson-module-jaxb-annotations</artifactId>
         </dependency>
 
-	<dependency>
+	    <dependency>
             <groupId>com.newrelic.agent.java</groupId>
             <artifactId>newrelic-java</artifactId>
             <version>5.10.0</version>
             <scope>provided</scope>
             <type>zip</type>
-	</dependency>
+	    </dependency>
 	
     </dependencies>
 

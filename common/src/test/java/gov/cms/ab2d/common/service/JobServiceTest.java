@@ -13,14 +13,10 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.transaction.TransactionSystemException;
 import org.testcontainers.containers.PostgreSQLContainer;
@@ -43,9 +39,7 @@ import static gov.cms.ab2d.common.service.JobServiceImpl.INITIAL_JOB_STATUS_MESS
 import static gov.cms.ab2d.common.service.JobServiceImpl.ZIPFORMAT;
 import static gov.cms.ab2d.common.util.Constants.*;
 import static gov.cms.ab2d.common.util.DataSetup.TEST_USER;
-import static gov.cms.ab2d.common.util.DataSetup.VALID_CONTRACT_NUMBER;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -262,12 +256,16 @@ public class JobServiceTest {
         jobOutput.setError(false);
         jobOutput.setFhirResourceType(EOB);
         jobOutput.setFilePath("file.ndjson");
+        jobOutput.setChecksum("testoutput");
+        jobOutput.setFileLength(20L);
         jobOutput.setJob(job);
 
         JobOutput errorJobOutput = new JobOutput();
         errorJobOutput.setError(true);
         errorJobOutput.setFhirResourceType(OPERATION_OUTCOME);
         errorJobOutput.setFilePath("error.ndjson");
+        errorJobOutput.setChecksum("erroroutput");
+        errorJobOutput.setFileLength(22L);
         errorJobOutput.setJob(job);
 
         List<JobOutput> output = List.of(jobOutput, errorJobOutput);
@@ -382,12 +380,16 @@ public class JobServiceTest {
         jobOutput.setError(false);
         jobOutput.setFhirResourceType(EOB);
         jobOutput.setFilePath(fileName);
+        jobOutput.setChecksum("testoutput");
+        jobOutput.setFileLength(20L);
         jobOutput.setJob(job);
 
         JobOutput errorJobOutput = new JobOutput();
         errorJobOutput.setError(true);
         errorJobOutput.setFhirResourceType(OPERATION_OUTCOME);
         errorJobOutput.setFilePath(errorFileName);
+        errorJobOutput.setChecksum("erroroutput");
+        errorJobOutput.setFileLength(22L);
         errorJobOutput.setJob(job);
 
         List<JobOutput> output = List.of(jobOutput, errorJobOutput);
