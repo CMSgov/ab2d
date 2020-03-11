@@ -57,6 +57,7 @@
 1. [Submit an "Internet DNS Change Request Form" to product owner for the sandbox application load balancer](#submit-an-internet-dns-change-request-form-to-product-owner-for-the-sandbox-application-load-balancer)
 1. [Setup Jenkins server in management AWS account](#setup-jenkins-server-in-management-aws-account)
 1. [Deploy and configure Jenkins](#deploy-and-configure-jenkins)
+1. [Upgrade Jenkins](#upgrade-jenkins)
 
 ## Note the starting state of the customer AWS account
 
@@ -4059,230 +4060,37 @@
 
 ## Setup Jenkins server in management AWS account
 
-1. Open Chrome
+1. Open a terminal
 
-1. Log to to the management AWS account
+1. Change to the "Deploy" directory
 
-1. Setup Jenkins security group
+   ```ShellSession
+   $ cd ~/code/ab2d/Deploy
+   ```
 
-   1. Select **Your VPCs** from the leftmost panel
+1. Create EC2 instance for Jenkins master
 
-   1. Note the VPC ID of the 'ab2d-mgmt-east-dev" VPC
+   ```ShellSession
+   $ ./bash/deploy-jenkins-master.sh
+   ```
+   
+1. Wait for the automation to complete
 
-      ```
-      vpc-0fccd950a4ce7469b
-      ```
+1. Set the management AWS profile
 
-   1. Select **Security Groups** from the leftmost panel
-
-   1. Select **Create security group**
-
-   1. Configure the security group as follows
-
-      - **Security group name:** ab2d-mgmt-east-dev-jenkins-sg
-
-      - **Description:** ab2d-mgmt-east-dev-jenkins-sg
-
-      - **VPC:** vpc-0fccd950a4ce7469b
-
-   1. Select **Create**
-
-   1. Select **Close**
-
-   1. Select the newly created security group that has "ab2d-mgmt-east-dev-jenkins-sg" as its "Group Name"
-
-   1. Change the "Name" to be the following
-
-      ```
-      ab2d-mgmt-east-dev-jenkins-sg
-      ```
-
-   1. Select **Inbound Rules**
-
-   1. Select **Edit Rules**
-
-   1. Select **Add Rule**
-
-   1. Open a new Chrome tab
-
-   1. Enter the following in the address bar
-
-      > https://confluence.cms.gov/pages/viewpage.action?spaceKey=AWSOC&title=CCS+Cloud+VPN+Public+IPs
-
-   1. Note the CCS Cloud VPN Public IPs
-
-      *Example of public IP addresses of cloudvpn.cms.gov:*
-
-      ```
-      52.20.26.200/32,34.196.35.156/32,52.5.212.71/32
-      ```
-
-      *Example of public IP addresses of cloudwest.cms.gov:*
-
-      ```
-      52.20.26.200/32,34.196.35.156/32,52.5.212.71/32
-      ```
-
-   1. Note that you will be using the public IP addresses of cloudvpn.cms.gov for the "CIDR" in the next step
-
-   1. Return to the AWS Chrome tab
-
-   1. Configure the inbound rule as follows
-
-      - **Type:** All traffic
-
-      - **Protocol:** All
-
-      - **Port Range:** All
-
-      - **Source:** Custom
-
-      - **CIDR:** 52.20.26.200/32,34.196.35.156/32,52.5.212.71/32
-
-      - **Description:** VPN Access
-
-   1. Select **Save rules**
-
-   1. Select **Close**
-
-1. Setup Jenkins EC2 instance
-
-   1. Select **aws** in the top left of the page
-
-   1. Select **EC2**
-
-   1. Select **Instances** in the leftmost panel
-
-   1. Select **Launch Instance**
-
-   1. Select **My AMIs**
-
-   1. Select **Select** beside the "AB2D-JENKINS" ami
-
-   1. Select the following
-
-      ```
-      m5.xlarge
-      ```
-
-   1. Select **Next: Configure Instance Details**
-
-   1. Configre the instance details as follows
-
-      - **Number of instances:** 1
-
-      - **Purchasing option:** {unchecked}
-
-      - **Network:** {vpc id} | ab2d-mgmt-east-dev
-
-      - **Subnet:** {subnet id} | ab2d-mgmt-east-dev-public-a | us-east-1a
-
-      - **Auto-assign Public IP:** Enable
-
-      - **Placement group:** {unchecked}
-
-      - **Capacity reservation:** Open
-
-      - **IAM Role:** Ab2dInstanceProfile
-
-      - **CPU Options:** {unchecked}
-
-      - **Shutdown behavior:** Stop
-
-      - **Stop - Hibernate behavior:** {unchecked}
-
-      - **Enable terminate protection:** {checked}
-
-      - **Monitoring:** {unchecked}
-
-      - **EBS-optimized instance:** {checked}
-
-      - **Tenancy:** Shared - Run a shared hardware instance
-
-      - **Elastic Inference:** {unchecked}
-
-   1. Select **Next: Add Storage**
-
-   1. Conigure the "Root" volume as follows
-
-      - **Volume Type:** Root
-
-      - **Device:** /dev/sda1
-
-      - **Snapshot:** {snapshot id}
-
-      - **Size (GiB):** 250
-
-      - **Volume Type:** General Purpose SSD (gp2)
-
-      - **IOPS:** 750 / 3000
-
-      - **Throughput (MB/s):** N/A
-
-      - **Delete on Termination:** {checked}
-
-      - **Encryption:** Not Encrypted
-
-   1. Select **Next: Add Tags**
-
-   1. Select **Add Tag**
-
-   1. Configure the key as follows
-
-      - **Key:** Name
-
-      - **Value:** ab2d-mgmt-east-dev-jenkins-vm
-
-      - **Instances:** {checked}
-
-      - **Volumes:** {checked}
-
-   1. Select **Next: Configure Security Group**
-
-   1. Select the **Select an existing security group** radio button
-
-   1. Select the following security group
-
-      ```
-      ab2d-mgmt-east-dev-jenkins-sg
-      ```
-
-   1. Select **Review and Launch**
-
-   1. Review the settings
-
-   1. Select **Launch**
-
-   1. Select the following from the first dropdown
-
-      ```
-      Choose an existing key pair
-      ```
-
-   1. Select the following from the **Select a key pair** dropdown
-
-      ```
-      ab2d-mgmt-east-dev
-      ```
-
-   1. Check **I acknowledge...**
-
-   1. Select **Launch Instances**
-
-   1. Select **aws** on the top left of the page
-
-   1. Select **EC2**
-
-   1. Select **Instances**
-
-   1. Wait for the instance to finish starting up with successful status checks
-
+   ```ShellSession
+   $ export AWS_PROFILE=ab2d-mgmt-east-dev
+   ```
+   
 1. Connect to the Jenkins EC2 instance
 
-   1. Note the public IP address of the Jenkins EC2 instance
-
-      ```
-      18.212.95.139
+   1. Get the private IP address of Jenkins EC2 instance
+   
+      ```ShellSession
+      $ JENKINS_MASTER_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-jenkins-master" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+        --output text)
       ```
 
    1. Ensure that you are connected to the Cisco VPN
@@ -4290,7 +4098,7 @@
    1. SSH into the instance using the private IP address
 
       ```ShellSession
-      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@18.212.95.139
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_MASTER_PRIVATE_IP
       ```
 
 1. View the available disk devices
@@ -4348,54 +4156,29 @@
 
 ## Deploy and configure Jenkins
 
-1. Connection to the Jenkins instance
-   
+1. Set the management AWS profile
+
    ```ShellSession
-   $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@18.212.95.139
+   $ export AWS_PROFILE=ab2d-mgmt-east-dev
    ```
+   
+1. Connect to the Jenkins EC2 instance
 
-1. Install, enable, and start firewalld
+   1. Get the private IP address of Jenkins EC2 instance
+   
+      ```ShellSession
+      $ JENKINS_MASTER_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-jenkins-master" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+        --output text)
+      ```
 
-   1. Install firewalld
+   1. Ensure that you are connected to the Cisco VPN
+
+   1. SSH into the instance using the private IP address
 
       ```ShellSession
-      $ sudo yum install firewalld -y
-      ```
-
-   1. Enable firewalld
-
-      ```ShellSession
-      $ sudo systemctl enable firewalld
-      ```
-
-   1. Start firewalld
-
-      ```ShellSession
-      $ sudo systemctl start firewalld
-      ```
-
-   1. Check the firewall status
-
-      ```ShellSession
-      $ sudo firewall-cmd --state
-      ```
-
-   1. Verify that the following is displayed in the output
-
-      ```
-      running
-      ```
-
-   1. Check the firewalld daemon status
-
-      ```ShellSession
-      $ systemctl status firewalld | grep running
-      ```
-
-   1. Verify that the following is displayed
-
-      ```
-      Active: active (running)...
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_MASTER_PRIVATE_IP
       ```
 
 1. Note the default Jenkins port
@@ -4409,88 +4192,11 @@
    1. Note the output
 
       *Example:*
-      
+
       ```
       JENKINS_PORT="8080"
       ```
 
-1. Add HTTP as a permanent service for the public zone
-
-   ```ShellSession
-   $ sudo firewall-cmd --zone=public --add-service=http --permanent
-   ```
-
-1. Determine what ports the server is expecting for network traffic
-
-   1. Install Security-Enhanced Linux (SELinux) tools
-   
-      ```ShellSession
-      $ sudo yum install policycoreutils-devel -y
-      $ sudo yum install setroubleshoot-server -y
-      ```
-
-   1. Determine what ports SELinux has configured for incoming network traffic
-
-      ```ShellSession
-      $ sepolicy network -t http_port_t
-      ```
-
-   1. Note the ports that are output
-
-      ```
-      http_port_t: tcp: 80,81,443,488,8008,8009,8443,9000
-      ```
-
-   1. Note that port 8080 is not listed
-
-1. Add port 8080 to SELinux policy configuration
-
-   ```ShellSession
-   $ sudo semanage port -m -t http_port_t -p tcp 8080
-   ```
-
-1. Verify that port 8080 is now included in SELinux policy configuration
-
-   ```ShellSession
-   $ sepolicy network -t http_port_t
-   ```
-
-1. Note the ports that are output
-
-   ```
-   http_port_t: tcp: 8080,80,81,443,488,8008,8009,8443,9000
-   ```
-   
-1. Configure the Jenkins servive for the firewall
-
-   1. Note the Jenkins wiki lists steps that are not necessary with current versions of CentOS
-      
-   1. Add Jenkins as a permanent service
-
-      ```ShellSession
-      $ sudo firewall-cmd --permanent --add-service=jenkins
-      ```
-
-   1. Reload
-
-      ```ShellSession
-      $ sudo firewall-cmd --reload
-      ```
-
-   1. Verify the port forwarding
-
-      ```ShellSession
-      $ sudo firewall-cmd --list-all
-      ```
-
-   1. Verify the following settings looks like this
-
-      - **services:** dhcpv6-client http jenkins ssh
-
-      - **masquerade:** no
-
-      - **forward-ports:**
-   
 1. Enable Jenkins
 
    1. Enter the following
@@ -4552,11 +4258,25 @@
 
       1. Repeat the "netstat" port step above
 
+1. Note the private IP of Jenkins master
+
+   ```ShellSession
+   $ hostname -I | awk '{print $1}'
+   ```
+
 1. Open Chrome
 
 1. Enter the following in the address bar
 
-   > http://http://18.212.95.139/:8080
+   *Format:*
+   
+   > http://{jenkins master private ip}:8080
+
+   *Example:*
+   
+   > http://10.242.37.79:8080
+
+1. Bookmark Jenkins for your browser
 
 1. Configure Jenkins
 
@@ -4638,7 +4358,13 @@
 
 1. Give the local jenkins user a password for intial SSH connections
 
-   1. Enter the following that is at least 15 characters
+   1. Create a "jenkins redhat user" entry in 1Password that meets the following requirements
+
+      - at least 15 characeters
+
+      - at least 1 special character
+      
+   1. Enter the following
    
       ```ShellSession
       $ sudo passwd jenkins
@@ -4664,6 +4390,8 @@
       PasswordAuthentication yes
       ```
 
+   1. Save and close the file
+   
    1. Restart sshd
 
       ```ShellSession
@@ -4775,3 +4503,80 @@
     1. Note that the above setting for the jenkins user is not ideal since it means that the jenkins user will be able to do "sudo" on all commands
 
     1. Note that it would be better to lock down the jenkins user so that it can only do "sudo" on a certain subset of commands based on the requirements
+
+## Upgrade Jenkins
+
+1. Open Chrome
+
+1. Enter the following in the address bar
+
+   *Format:*
+   
+   > http://{jenkins master private ip}:8080
+
+   *Example:*
+   
+   > http://10.242.37.79:8080
+
+1. Select **Manage Jenkins** from the leftmost panel
+
+1. If you see "New version of Jenkins ({version}) is available for download (changelog)" under "Manage Jenkins", do the following:
+
+   1. Right click **download**
+
+   1. Select **Copy Link Address** from the context menu
+
+   1. Save the URL for a later step
+
+1. Set the management AWS profile
+
+   ```ShellSession
+   $ export AWS_PROFILE=ab2d-mgmt-east-dev
+   ```
+   
+1. Connect to the Jenkins EC2 instance
+
+   1. Get the private IP address of Jenkins EC2 instance
+   
+      ```ShellSession
+      $ JENKINS_MASTER_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-jenkins-master" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+        --output text)
+      ```
+
+   1. Ensure that you are connected to the Cisco VPN
+
+   1. SSH into the instance using the private IP address
+
+      ```ShellSession
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_MASTER_PRIVATE_IP
+      ```
+
+1. Change to the "/tmp" directory
+
+   ```ShellSession
+   $ cd /tmp
+   ```
+
+1. Delete existing war download (if exists)
+
+   ```ShellSession
+   $ rm -f jenkins.war
+   ```
+
+1. Download the latest jenkins.war
+
+   *Format:*
+   
+   ```ShellSession
+   $ curl -O {download url copied from jenkins}
+   ```
+   
+   *Example:*
+   
+   ```ShellSession
+   $ curl -O http://updates.jenkins-ci.org/download/war/2.225/jenkins.war
+   ```
+
+> *** TO DO ***
