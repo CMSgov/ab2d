@@ -23,7 +23,6 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.ResultActions;
-import org.springframework.test.web.servlet.result.MockMvcResultHandlers;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -42,10 +41,10 @@ import static gov.cms.ab2d.api.controller.JobCompletedResponse.CHECKSUM_STRING;
 import static gov.cms.ab2d.api.controller.JobCompletedResponse.CONTENT_LENGTH_STRING;
 import static gov.cms.ab2d.common.service.JobServiceImpl.INITIAL_JOB_STATUS_MESSAGE;
 import static gov.cms.ab2d.common.util.Constants.*;
-import static gov.cms.ab2d.common.util.DataSetup.*;
+import static gov.cms.ab2d.common.util.DataSetup.TEST_USER;
+import static gov.cms.ab2d.common.util.DataSetup.VALID_CONTRACT_NUMBER;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest(classes = SpringBootApp.class, webEnvironment = SpringBootTest.WebEnvironment.MOCK)
@@ -473,7 +472,7 @@ public class BulkDataAccessAPIIntegrationTests {
                 .andExpect(header().string("Expires",
                         DateTimeFormatter.RFC_1123_DATE_TIME.format(jobExpiresUTC)))
                 .andExpect(jsonPath("$.transactionTime",
-                        Is.is(new DateTimeType(now.toString()).toHumanDisplay())))
+                        Is.is(new DateTimeType(job.getCreatedAt().toString()).toHumanDisplay())))
                 .andExpect(jsonPath("$.request", Is.is(job.getRequestUrl())))
                 .andExpect(jsonPath("$.requiresAccessToken", Is.is(true)))
                 .andExpect(jsonPath("$.output[0].type", Is.is(EOB)))
@@ -532,7 +531,7 @@ public class BulkDataAccessAPIIntegrationTests {
                 .andExpect(header().string("Expires",
                         DateTimeFormatter.RFC_1123_DATE_TIME.format(jobExpiresUTC)))
                 .andExpect(jsonPath("$.transactionTime",
-                        Is.is(new DateTimeType(now.toString()).toHumanDisplay())))
+                        Is.is(new DateTimeType(job.getCreatedAt().toString()).toHumanDisplay())))
                 .andExpect(jsonPath("$.request", Is.is(job.getRequestUrl())))
                 .andExpect(jsonPath("$.requiresAccessToken", Is.is(true)))
                 .andExpect(jsonPath("$.output[0].type", Is.is(EOB)))
