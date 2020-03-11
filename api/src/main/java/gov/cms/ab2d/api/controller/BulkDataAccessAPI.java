@@ -41,6 +41,7 @@ import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.constraints.NotBlank;
 import java.io.FileInputStream;
@@ -127,12 +128,23 @@ public class BulkDataAccessAPI {
         checkResourceTypesAndOutputFormat(resourceTypes, outputFormat);
         checkSinceTime(since);
 
-        Job job = jobService.createJob(resourceTypes, ServletUriComponentsBuilder.fromCurrentRequest().toUriString(),
-                null, outputFormat, since);
+        Job job = jobService.createJob(resourceTypes, getCurrentUrl(), null, outputFormat, since);
 
         logSuccessfulJobCreation(job);
 
         return returnStatusForJobCreation(job);
+    }
+
+    private String getCurrentUrl() {
+        return shouldReplaceWithHttps() ?
+                ServletUriComponentsBuilder.fromCurrentRequest().scheme("https").toUriString() :
+                ServletUriComponentsBuilder.fromCurrentRequest().toUriString().replace(":80/", "/");
+    }
+
+    private boolean shouldReplaceWithHttps() {
+        HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes())
+                .getRequest();
+        return "https".equalsIgnoreCase(request.getHeader("X-Forwarded-Proto"));
     }
 
     private void checkSinceTime(OffsetDateTime date) {
@@ -192,13 +204,18 @@ public class BulkDataAccessAPI {
     }
 
     private ResponseEntity<Void> returnStatusForJobCreation(Job job) {
-        String statusURL = ServletUriComponentsBuilder.fromCurrentRequestUri().replacePath
-                (String.format(API_PREFIX + FHIR_PREFIX + "/Job/%s/$status", job.getJobUuid())).toUriString();
+        String statusURL = getUrl(API_PREFIX + FHIR_PREFIX + "/Job/" + job.getJobUuid() + "/$status");
         HttpHeaders responseHeaders = new HttpHeaders();
         responseHeaders.add("Content-Location", statusURL);
 
         return new ResponseEntity<>(null, responseHeaders,
                 HttpStatus.ACCEPTED);
+    }
+
+    String getUrl(String ending) {
+        return shouldReplaceWithHttps() ?
+                ServletUriComponentsBuilder.fromCurrentRequestUri().scheme("https").replacePath(ending).toUriString() :
+                ServletUriComponentsBuilder.fromCurrentRequestUri().replacePath(ending).toUriString().replace(":80/", "/");
     }
 
     @ApiOperation(value = BULK_CONTRACT_EXPORT,
@@ -240,8 +257,7 @@ public class BulkDataAccessAPI {
         checkResourceTypesAndOutputFormat(resourceTypes, outputFormat);
         checkSinceTime(since);
 
-        Job job = jobService.createJob(resourceTypes, ServletUriComponentsBuilder.fromCurrentRequest().toUriString(),
-                contractNumber, outputFormat, since);
+        Job job = jobService.createJob(resourceTypes, getCurrentUrl(), contractNumber, outputFormat, since);
 
         logSuccessfulJobCreation(job);
 
@@ -366,8 +382,7 @@ public class BulkDataAccessAPI {
     }
 
     private String getUrlPath(Job job, String filePath) {
-        String requestURIString = ServletUriComponentsBuilder.fromCurrentRequestUri().replacePath(API_PREFIX + FHIR_PREFIX + "/Job/" + job.getJobUuid()).toUriString();
-        return requestURIString + "/file/" + filePath;
+        return getUrl(API_PREFIX + FHIR_PREFIX + "/Job/" + job.getJobUuid() + "/file/" + filePath);
     }
 
     @ApiOperation(value = "Downloads a file produced by an export job.", response = String.class,
