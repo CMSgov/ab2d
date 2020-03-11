@@ -2,6 +2,7 @@ package gov.cms.ab2d.optout;
 
 import gov.cms.ab2d.common.model.OptOut;
 import gov.cms.ab2d.common.repository.OptOutRepository;
+import gov.cms.ab2d.common.util.MockBfdServiceUtils;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.optout.gateway.S3Gateway;
 import lombok.extern.slf4j.Slf4j;
@@ -61,7 +62,7 @@ class OptOutProcessorIntegrationTest {
     public static void setupBFDClient() throws IOException {
         mockServer = ClientAndServer.startClientAndServer(mockServerPort);
 
-        MockBfdServiceUtils.createMockServerMetaExpectation("test-data/meta.xml", mockServerPort);
+        MockBfdServiceUtils.createMockServerMetaExpectation(TEST_DIR + "meta.xml", mockServerPort);
         MockBfdServiceUtils.createMockServerPatientExpectation( TEST_DIR + "patientbundle.xml",
                 mockServerPort, List.of());
     }
@@ -81,7 +82,7 @@ class OptOutProcessorIntegrationTest {
     void process_shouldInsertRowsIntoOptOutTable()  {
         optOutRepo.deleteAll();
 
-        final String testInputFile = "test-data/test-data.txt";
+        final String testInputFile = "test-data.txt";
         final InputStream inputStream = getClass().getResourceAsStream("/" + testInputFile);
         final InputStreamReader isr = new InputStreamReader(inputStream);
 

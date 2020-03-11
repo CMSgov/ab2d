@@ -5,9 +5,7 @@ import ca.uhn.fhir.rest.server.exceptions.ResourceNotFoundException;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.http.HttpStatus;
-import org.hl7.fhir.dstu3.model.Bundle;
-import org.hl7.fhir.dstu3.model.Patient;
-import org.hl7.fhir.dstu3.model.ResourceType;
+import org.hl7.fhir.dstu3.model.*;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
@@ -274,6 +272,15 @@ public class BlueButtonClientTest {
             assertNotNull(response, "There should be a non null patient bundle");
             assertEquals(2, response.getEntry().size(), "The bundle has 2 patients");
         }
+    }
+
+    @Test
+    public void shouldGetMetadata() {
+        CapabilityStatement capabilityStatement = bbc.capabilityStatement();
+
+        assertNotNull(capabilityStatement, "There should be a non null capability statement");
+        assertEquals(capabilityStatement.getFhirVersion(), "3.0.1");
+        assertEquals(capabilityStatement.getStatus(), Enumerations.PublicationStatus.ACTIVE);
     }
 
     /**
