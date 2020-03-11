@@ -4576,3 +4576,17 @@
    ```ShellSessiion
    $ systemctl status jenkins
    ```
+
+1. Open Chrome
+
+1. Enter the following in the address bar
+
+   *Format:*
+
+   > http://{jenkins master private ip}:8080
+
+   *Example:*
+
+   > http://10.242.37.79:8080
+
+1. Verify that Jenkins has been updated to the new version
