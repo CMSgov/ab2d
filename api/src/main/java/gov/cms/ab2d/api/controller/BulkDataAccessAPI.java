@@ -133,13 +133,9 @@ public class BulkDataAccessAPI {
     }
 
     private String getCurrentUrl() {
-        String request = ServletUriComponentsBuilder.fromCurrentRequest().toUriString();
-        request = request.replace(":80/", "/");
-        if (!shouldReplaceWithHttps()) {
-            return request;
-        }
-        request = request.replace("http://", "https://");
-        return request;
+        return shouldReplaceWithHttps() ?
+                ServletUriComponentsBuilder.fromCurrentRequest().scheme("https").toUriString() :
+                ServletUriComponentsBuilder.fromCurrentRequest().toUriString().replace(":80/", "/");
     }
 
     private boolean shouldReplaceWithHttps() {
@@ -214,12 +210,9 @@ public class BulkDataAccessAPI {
     }
 
     String getUrl(String ending) {
-        String url = ServletUriComponentsBuilder.fromCurrentRequestUri().replacePath(ending).toUriString();
-        url = url.replace(":80/", "/");
-        if (!shouldReplaceWithHttps()) {
-            return url;
-        }
-        return url.replace("http://", "https://");
+        return shouldReplaceWithHttps() ?
+                ServletUriComponentsBuilder.fromCurrentRequestUri().scheme("https").replacePath(ending).toUriString() :
+                ServletUriComponentsBuilder.fromCurrentRequestUri().replacePath(ending).toUriString().replace(":80/", "/");
     }
 
     @ApiOperation(value = BULK_CONTRACT_EXPORT,

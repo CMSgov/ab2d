@@ -49,6 +49,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest(classes = SpringBootApp.class, webEnvironment = SpringBootTest.WebEnvironment.MOCK)
 @AutoConfigureMockMvc
 @Testcontainers
+/* When checking in, comment out print statements. They are very helpful, but fill up the logs */
 public class BulkDataAccessAPIIntegrationTests {
 
     @Autowired
@@ -112,8 +113,8 @@ public class BulkDataAccessAPIIntegrationTests {
     public void testBasicPatientExport() throws Exception {
         ResultActions resultActions = this.mockMvc.perform(
                 get(API_PREFIX + FHIR_PREFIX + PATIENT_EXPORT_PATH).contentType(MediaType.APPLICATION_JSON)
-                .header("Authorization", "Bearer " + token))
-                .andDo(print());
+                .header("Authorization", "Bearer " + token));
+                // .andDo(print());
         Job job = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
 
         String statusUrl =
@@ -136,8 +137,8 @@ public class BulkDataAccessAPIIntegrationTests {
         ResultActions resultActions = this.mockMvc.perform(
                 get(API_PREFIX + FHIR_PREFIX + PATIENT_EXPORT_PATH).contentType(MediaType.APPLICATION_JSON)
                         .header("Authorization", "Bearer " + token)
-                        .header("X-Forwarded-Proto", "https"))
-                .andDo(print());
+                        .header("X-Forwarded-Proto", "https"));
+                // .andDo(print());
         Job job = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
 
         String statusUrl =
@@ -232,7 +233,8 @@ public class BulkDataAccessAPIIntegrationTests {
         ResultActions resultActions =
                 this.mockMvc.perform(get(API_PREFIX + FHIR_PREFIX + "/" + PATIENT_EXPORT_PATH + typeParams)
                         .header("Authorization", "Bearer " + token)
-                        .contentType(MediaType.APPLICATION_JSON)).andDo(print());
+                        .contentType(MediaType.APPLICATION_JSON));
+                    // .andDo(print());
         Job job = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
 
         String statusUrl =
@@ -657,7 +659,8 @@ public class BulkDataAccessAPIIntegrationTests {
                         .header("Accept-Encoding", "gzip, deflate, br"))
                         .andExpect(status().is(200))
                         .andExpect(content().contentType(NDJSON_FIRE_CONTENT_TYPE))
-                        .andDo(MockMvcResultHandlers.print()).andReturn();
+                        // .andDo(MockMvcResultHandlers.print())
+                        .andReturn();
         String downloadedFile = downloadFileCall.getResponse().getContentAsString();
         String testValue = JsonPath.read(downloadedFile, "$.test");
         Assert.assertEquals("value", testValue);
@@ -845,8 +848,8 @@ public class BulkDataAccessAPIIntegrationTests {
         ResultActions resultActions = this.mockMvc.perform(
                 get(API_PREFIX + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export").contentType(MediaType.APPLICATION_JSON)
                         .header("Authorization", "Bearer " + token)
-                        .header("X-Forwarded-Proto", "https"))
-                .andDo(print());
+                        .header("X-Forwarded-Proto", "https"));
+                // .andDo(print());
         Job job = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
 
         String statusUrl =
@@ -870,8 +873,8 @@ public class BulkDataAccessAPIIntegrationTests {
         Contract contract = contractOptional.get();
         ResultActions resultActions = this.mockMvc.perform(
                 get(API_PREFIX + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export").contentType(MediaType.APPLICATION_JSON)
-                        .header("Authorization", "Bearer " + token))
-                .andDo(print());
+                        .header("Authorization", "Bearer " + token));
+                // .andDo(print());
         Job job = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
 
         String statusUrl =
@@ -898,7 +901,8 @@ public class BulkDataAccessAPIIntegrationTests {
         ResultActions resultActions =
                 this.mockMvc.perform(get(API_PREFIX + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export" + typeParams)
                         .header("Authorization", "Bearer " + token)
-                        .contentType(MediaType.APPLICATION_JSON)).andDo(print());
+                        .contentType(MediaType.APPLICATION_JSON));
+                // .andDo(print());
         Job job = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
 
         String statusUrl =
