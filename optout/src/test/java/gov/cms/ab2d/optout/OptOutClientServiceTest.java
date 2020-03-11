@@ -4,6 +4,7 @@ import gov.cms.ab2d.common.model.OptOut;
 import gov.cms.ab2d.common.repository.OptOutRepository;
 
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
+import gov.cms.ab2d.common.util.MockBfdServiceUtils;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -46,7 +47,7 @@ class OptOutClientServiceTest {
     public static void setupBFDClient() throws IOException {
         mockServer = ClientAndServer.startClientAndServer(mockServerPort);
 
-        MockBfdServiceUtils.createMockServerMetaExpectation("test-data/meta.xml", mockServerPort);
+        MockBfdServiceUtils.createMockServerMetaExpectation(TEST_DIR + "meta.xml", mockServerPort);
         MockBfdServiceUtils.createMockServerPatientExpectation( TEST_DIR + "patientbundle.xml",
                 mockServerPort, List.of());
     }
@@ -70,7 +71,7 @@ class OptOutClientServiceTest {
     }
 
     private Stream<String> getLinesFromFile() {
-        final String testInputFile = "test-data/test-data.txt";
+        final String testInputFile = "test-data.txt";
         final InputStream inputStream = getClass().getResourceAsStream("/" + testInputFile);
         final InputStreamReader isr = new InputStreamReader(inputStream);
         final BufferedReader bufferedReader = new BufferedReader(isr);
