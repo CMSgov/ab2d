@@ -78,7 +78,7 @@ In this example, we will be using the Linux subsystem for Windows 10.
 These directions refer to the Ubuntu Windows Linux File System, but you can also use other Unix-like applications to do the same steps.
 When you are instructed to "Open a terminal" in the Use cUrl instructions, you will do the following steps:
 
-<i>NOTE: Make sure that you are comfortable with these steps before proceeding to the [cUrl](tutorial-curl) tutorial</i>
+<i>NOTE: Make sure that you are comfortable with these steps before proceeding to the [cUrl](tutorial-curl.html) tutorial</i>
 
 1. Select the "Type here to search" text box near the bottom left on your Windows desktop
 2. Type the following in the "Type here to search" text box
@@ -94,4 +94,4 @@ When you are instructed to "Open a terminal" in the Use cUrl instructions, you w
     clicking after the dollar sign prompt within the Ubuntu shell
     - The copied text should automatically appear after the dollar sign when you right click (this includes multi-line commands)
     
-You are now ready to use the AB2D API. Jump to the [cUrl](tutorial-curl) tutorial.
+You are now ready to use the AB2D API. Jump to the [cUrl](tutorial-curl.html) tutorial.

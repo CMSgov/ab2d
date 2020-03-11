@@ -23,9 +23,9 @@ ctas:
 
 ## Prerequisites &amp; Caveats
 These instructions have been tested on the following machines:
-- Mac - [Setup Information](setup-mac)
-- RedHat Linux - [Setup Information](setup-linux)
-- Windows 10 (using Ubuntu Windows Linux File System terminal) - [Setup Information](setup-windows)
+- Mac - [Setup Information](setup-mac.html)
+- RedHat Linux - [Setup Information](setup-linux.html)
+- Windows 10 (using Ubuntu Windows Linux File System terminal) - [Setup Information](setup-windows.html)
 
 If you don't have a Mac, Linux or Windows 10 machine setup with both cUrl and jq, jump to the setup information page
 associated with your machine.
@@ -139,7 +139,7 @@ The bearer token will expire in 1 hour.
 In this section, you will initiate a Part A & B bulk explanation of benefit export job.
 
 <i style="font-size: small">Note to Windows users - When you are instructed to "open a terminal", the instructions are assuming that you are 
-opening ubuntu or some other terminal that supports curl and jq. See [Windows 10 Setup information](setup-windows).</i>
+opening ubuntu or some other terminal that supports curl and jq. See [Windows 10 Setup information](setup-windows.html).</i>
 
 1. Open a terminal
 

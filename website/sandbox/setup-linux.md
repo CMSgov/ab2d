@@ -23,4 +23,4 @@ These instructions were written for CentOS/RedHat Linux.
 
     ```jq --version```
 
-You are now ready to use the AB2D API. Jump to the [cUrl](tutorial-curl) tutorial.
+You are now ready to use the AB2D API. Jump to the [cUrl](tutorial-curl.html) tutorial.

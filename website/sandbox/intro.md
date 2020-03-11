@@ -260,18 +260,18 @@ to do that:
 
 #### Postman and Swagger. 
 Swagger is included with the API and the free Postman application can be downloaded [here](https://www.postman.com/).
-If you want to use Postman and Swagger jump to the following page - [Use the API with Postman and Swagger](tutorial-postman)
+If you want to use Postman and Swagger jump to the following page - [Use the API with Postman and Swagger](tutorial-postman.html)
 
 #### Using cURL and jq
 
 If you currently don't have both curl and jq installed, jump to the setup page associated with your machine
 
-- [Setup Linux](setup-linux)
-- [Setup Mac](setup-mac)
-- [Setup Windows 10](setup-windows)
+- [Setup Linux](setup-linux.html)
+- [Setup Mac](setup-mac.html)
+- [Setup Windows 10](setup-windows.html)
 
 If you already have your machine setup to use both curl and jq, you can jump to the following page - 
-[Use the API with Curl](tutorial-curl)
+[Use the API with Curl](tutorial-curl.html)
 
 ## Troubleshooting
 

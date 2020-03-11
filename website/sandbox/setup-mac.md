@@ -29,4 +29,4 @@ Setup Mac for API use
 
     ```jq --version```
 
-You are now ready to use the AB2D API. Jump to the [cUrl](tutorial-curl) tutorial.
+You are now ready to use the AB2D API. Jump to the [cUrl](tutorial-curl.html) tutorial.

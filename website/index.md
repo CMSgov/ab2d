@@ -42,9 +42,9 @@ of the data. Visit [HPMS](https://hpms.cms.gov)
 
 ## For Developers
 
-For documentation on our sandbox, go [here](sandbox/intro).
+For documentation on our sandbox, go [here](sandbox/intro.html).
 
-To learn more about our data, go [here](data/dd).
+To learn more about our data, go [here](data/dd.html).
 
 ---
 
