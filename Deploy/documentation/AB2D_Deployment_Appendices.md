@@ -44,6 +44,7 @@
    * [Verify JVM parameters for an api node](#verify-jvm-parameters-for-an-api-node)
    * [Check the default "heapsize" and "maxram" settings for a worker node](#check-the-default-heapsize-and-maxram-settings-for-a-worker-node)
    * [Verify JVM parameters for a worker node](#verify-jvm-parameters-for-a-worker-node)
+1. [Appendix AA: View CCS Cloud VPN Public IPs](#appendix-aa-view-ccs-cloud-vpn-public-ips)
 
 ## Appendix A: Access the CMS AWS console
 
@@ -3179,3 +3180,11 @@
    ```ShellSession
    $ exit
    ```
+
+## Appendix AA: View CCS Cloud VPN Public IPs
+
+1. Open Chrome
+
+1. Enter the following in the address bar
+
+   > https://confluence.cms.gov/pages/viewpage.action?spaceKey=AWSOC&title=CCS+Cloud+VPN+Public+IPs
