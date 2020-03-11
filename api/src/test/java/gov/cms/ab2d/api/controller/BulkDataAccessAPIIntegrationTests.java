@@ -450,6 +450,8 @@ public class BulkDataAccessAPIIntegrationTests {
         jobOutput.setJob(job);
         jobOutput.setFilePath("file.ndjson");
         jobOutput.setError(false);
+        jobOutput.setChecksum("ABCD");
+        jobOutput.setFileLength(10L);
         job.getJobOutputs().add(jobOutput);
 
         JobOutput errorJobOutput = new JobOutput();
@@ -457,6 +459,8 @@ public class BulkDataAccessAPIIntegrationTests {
         errorJobOutput.setJob(job);
         errorJobOutput.setFilePath("error.ndjson");
         errorJobOutput.setError(true);
+        errorJobOutput.setChecksum("1010F");
+        errorJobOutput.setFileLength(20L);
         job.getJobOutputs().add(errorJobOutput);
 
         jobRepository.saveAndFlush(job);
