@@ -18,10 +18,7 @@ import org.springframework.security.web.authentication.logout.LogoutFilter;
 import java.time.Duration;
 
 import static gov.cms.ab2d.api.util.Constants.ADMIN_ROLE;
-import static gov.cms.ab2d.common.util.Constants.ADMIN_PREFIX;
-import static gov.cms.ab2d.common.util.Constants.API_PREFIX;
-import static gov.cms.ab2d.common.util.Constants.FHIR_PREFIX;
-import static gov.cms.ab2d.common.util.Constants.SPONSOR_ROLE;
+import static gov.cms.ab2d.common.util.Constants.*;
 
 
 @Configuration
@@ -53,7 +50,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     @Override
     public void configure(WebSecurity web) {
         web.ignoring().antMatchers("/swagger-ui.html", "/swagger-ui.html/**", "/configuration/**",
-                "/swagger-resources/**", "/v2/api-docs", "/webjars/**", "/health");
+                "/swagger-resources/**", "/v2/api-docs", "/webjars/**", "/health", STATUS_ENDPOINT);
     }
 
     @Override
