@@ -28,7 +28,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import static gov.cms.ab2d.common.util.Constants.MAINTENANCE_PREFIX;
+import static gov.cms.ab2d.common.util.Constants.STATUS_ENDPOINT;
 
 @Slf4j
 @Component
@@ -55,7 +55,7 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
             return;
         }
 
-        if (requestUri.startsWith("/health") || requestUri.startsWith(MAINTENANCE_PREFIX)) {
+        if (requestUri.startsWith("/health") || requestUri.startsWith(STATUS_ENDPOINT)) {
             log.info("Health or maintenance requested");
             chain.doFilter(request, response);
             return;

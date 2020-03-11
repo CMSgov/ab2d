@@ -11,7 +11,7 @@ import static gov.cms.ab2d.common.util.Constants.*;
 
 @Slf4j
 @RestController
-@RequestMapping(path = MAINTENANCE_PREFIX, produces = "application/json")
+@RequestMapping(produces = "application/json")
 public class MaintenanceModeAPI {
 
     @Autowired
@@ -19,7 +19,7 @@ public class MaintenanceModeAPI {
 
     // This API endpoint does not have authentication, an exception was made in SecurityConfig.java and JWTAuthenticationFilter.java
     @ResponseStatus(value = HttpStatus.ACCEPTED)
-    @GetMapping("/status")
+    @GetMapping(STATUS_ENDPOINT)
     public ResponseEntity<MaintenanceModeResponse> getMaintenanceMode() {
         MaintenanceModeResponse maintenanceModeResponse = new MaintenanceModeResponse(String.valueOf(propertiesService.isInMaintenanceMode()));
         return new ResponseEntity<>(maintenanceModeResponse, null, HttpStatus.OK);

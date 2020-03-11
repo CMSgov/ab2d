@@ -38,7 +38,7 @@ public class MaintenanceModeAPITests {
 
     @Test
     public void testMaintenanceModeOff() throws Exception {
-        this.mockMvc.perform(get(MAINTENANCE_PREFIX + "/status")
+        this.mockMvc.perform(get(STATUS_ENDPOINT)
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().is(200))
                 .andExpect(jsonPath("$.maintenanceMode", Is.is("false")));
@@ -51,7 +51,7 @@ public class MaintenanceModeAPITests {
         propertiesDTO.setValue("true");
         propertiesService.updateProperties(List.of(propertiesDTO));
 
-        this.mockMvc.perform(get(MAINTENANCE_PREFIX + "/status")
+        this.mockMvc.perform(get(STATUS_ENDPOINT)
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().is(200))
                 .andExpect(jsonPath("$.maintenanceMode", Is.is("true")));
