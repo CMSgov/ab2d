@@ -4506,6 +4506,8 @@
 
 ## Upgrade Jenkins
 
+1. Ensure that you are connected to the Cisco VPN
+
 1. Open Chrome
 
 1. Enter the following in the address bar
@@ -4545,38 +4547,32 @@
         --output text)
       ```
 
-   1. Ensure that you are connected to the Cisco VPN
-
    1. SSH into the instance using the private IP address
 
       ```ShellSession
       $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_MASTER_PRIVATE_IP
       ```
 
-1. Change to the "/tmp" directory
+1. Stop Jenkins
 
    ```ShellSession
-   $ cd /tmp
+   $ sudo systemctl stop jenkins
    ```
 
-1. Delete existing war download (if exists)
+1. Upgrade Jenkins
 
    ```ShellSession
-   $ rm -f jenkins.war
+   $ sudo yum update jenkins -y
    ```
 
-1. Download the latest jenkins.war
+1. Start Jenkins
 
-   *Format:*
-   
    ```ShellSession
-   $ curl -O {download url copied from jenkins}
-   ```
-   
-   *Example:*
-   
-   ```ShellSession
-   $ curl -O http://updates.jenkins-ci.org/download/war/2.225/jenkins.war
+   $ sudo systemctl start jenkins
    ```
 
-> *** TO DO ***
+1. Verify the status of Jenkins
+
+   ```ShellSessiion
+   $ systemctl status jenkins
+   ```
