@@ -56,7 +56,7 @@ class BFDHealthCheck {
             } else {
                 consecutiveSuccesses++;
                 consecutiveFailures = 0;
-                log.info("{} consecutive successes to connect to BFD", consecutiveSuccesses);
+                log.debug("{} consecutive successes to connect to BFD", consecutiveSuccesses);
             }
         }
 
@@ -82,7 +82,7 @@ class BFDHealthCheck {
     private void markFailure() {
         consecutiveFailures++;
         consecutiveSuccesses = 0;
-        log.info("{} consecutive failures to connect to BFD", consecutiveFailures);
+        log.debug("{} consecutive failures to connect to BFD", consecutiveFailures);
     }
 
     private enum Status {
