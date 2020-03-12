@@ -45,6 +45,8 @@
    * [Check the default "heapsize" and "maxram" settings for a worker node](#check-the-default-heapsize-and-maxram-settings-for-a-worker-node)
    * [Verify JVM parameters for a worker node](#verify-jvm-parameters-for-a-worker-node)
 1. [Appendix AA: View CCS Cloud VPN Public IPs](#appendix-aa-view-ccs-cloud-vpn-public-ips)
+1. [Appendix BB: Update controller](#appendix-bb-update-controller)
+1. [Appendix CC: Fix bad terraform component](#appendix-cc-fix-bad-terraform-component)
 
 ## Appendix A: Access the CMS AWS console
 
@@ -479,7 +481,7 @@
    *Example for "Sbx" environment:*
    
    ```ShellSession
-   $ export CONTROLLER_PUBLIC_IP=3.93.125.65
+   $ export CONTROLLER_PUBLIC_IP=10.242.36.48
    $ export SSH_USER_NAME=ec2-user
    ```
 
@@ -511,7 +513,7 @@
    
    ```ShellSession
    $ export TARGET_ENVIRONMENT=ab2d-sbx-sandbox
-   $ export NODE_PRIVATE_IP=10.242.31.64
+   $ export NODE_PRIVATE_IP=10.242.31.193
    $ export SSH_USER_NAME=ec2-user
    ```
 
@@ -519,7 +521,7 @@
    
    ```ShellSession
    $ export TARGET_ENVIRONMENT=ab2d-sbx-sandbox
-   $ export NODE_PRIVATE_IP=10.242.31.120
+   $ export NODE_PRIVATE_IP=10.242.31.48
    $ export SSH_USER_NAME=ec2-user
    ```
 
@@ -527,7 +529,7 @@
    
    ```ShellSession
    $ export TARGET_ENVIRONMENT=ab2d-sbx-sandbox
-   $ export NODE_PRIVATE_IP=10.242.31.153
+   $ export NODE_PRIVATE_IP=10.242.31.8
    $ export SSH_USER_NAME=ec2-user
    ```
 
@@ -535,7 +537,7 @@
    
    ```ShellSession
    $ export TARGET_ENVIRONMENT=ab2d-sbx-sandbox
-   $ export NODE_PRIVATE_IP=10.242.31.162
+   $ export NODE_PRIVATE_IP=10.242.31.132
    $ export SSH_USER_NAME=ec2-user
    ```
 
@@ -729,19 +731,17 @@
 1. Set controller access variables
    
    ```ShellSession
-   $ CONTROLLER_PUBLIC_IP=$(aws --region us-east-1 ec2 describe-instances \
+   $ CONTROLLER_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
      --filters "Name=tag:Name,Values=ab2d-deployment-controller" \
-     --query="Reservations[*].Instances[?State.Name == 'running'].PublicIpAddress" \
+     --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
      --output text)
    $ export SSH_USER_NAME=ec2-user
    ```
    
 1. Connect to the controller
-
-   *Format:*
    
    ```ShellSession
-   $ ssh -i ~/.ssh/${TARGET_ENVIRONMENT}.pem ${SSH_USER_NAME}@${CONTROLLER_PUBLIC_IP}
+   $ ssh -i ~/.ssh/${TARGET_ENVIRONMENT}.pem ${SSH_USER_NAME}@${CONTROLLER_PRIVATE_IP}
    ```
 
 1. Set target DB environment variables
@@ -3188,3 +3188,194 @@
 1. Enter the following in the address bar
 
    > https://confluence.cms.gov/pages/viewpage.action?spaceKey=AWSOC&title=CCS+Cloud+VPN+Public+IPs
+
+## Appendix BB: Update controller
+
+1. Change to the "Deploy" directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d/Deploy
+   ```
+
+1. Switch to development AWS profile
+
+   *Example for Dev environment:*
+   
+   ```ShellSession
+   $ export AWS_PROFILE=ab2d-dev
+   ```
+
+   *Example for Sbx environment:*
+   
+   ```ShellSession
+   $ export AWS_PROFILE=ab2d-sbx-sandbox
+   ```
+
+   *Example for Impl environment:*
+   
+   ```ShellSession
+   $ export AWS_PROFILE=ab2d-east-impl
+   ```
+
+1. Set the target environment
+
+   *Example for Dev environment:*
+
+   ```ShellSession
+   $ CMS_ENV=ab2d-dev
+   ```
+
+   *Example for Sbx environment:*
+
+   ```ShellSession
+   $ CMS_ENV=ab2d-sbx-sandbox
+   ```
+
+   *Example for Impl environment:*
+
+   ```ShellSession
+   $ CMS_ENV=ab2d-east-impl
+   ```
+
+1. Set the shared environment
+
+   *Example for Dev environment:*
+   
+   ```ShellSession
+   $ CMS_SHARED_ENV=ab2d-dev-shared
+   ```
+
+   *Example for Sbx environment:*
+   
+   ```ShellSession
+   $ CMS_SHARED_ENV=ab2d-sbx-sandbox-shared
+   ```
+
+   *Example for Impl environment:*
+   
+   ```ShellSession
+   $ CMS_SHARED_ENV=ab2d-east-impl-shared
+   ```
+
+1. Change to the python3 directory
+
+   ```ShellSession
+   $ cd python3
+   ```
+
+1. Set database secret datetime
+
+   ```ShellSession
+   $ DATABASE_SECRET_DATETIME="2020-01-02-09-15-01"
+   ```
+   
+1. Get database user
+
+   ```ShellSession
+   $ DATABASE_USER=$(./get-database-secret.py $CMS_ENV database_user $DATABASE_SECRET_DATETIME)
+   ```
+
+1. Get database password
+
+   ```ShellSession
+   $ DATABASE_PASSWORD=$(./get-database-secret.py $CMS_ENV database_password $DATABASE_SECRET_DATETIME)
+   ```
+
+1. Get database name
+
+   ```ShellSession
+   $ DATABASE_NAME=$(./get-database-secret.py $CMS_ENV database_name $DATABASE_SECRET_DATETIME)
+   ```
+
+1. Get deployer IP address
+
+   ```ShellSession
+   $ DEPLOYER_IP_ADDRESS=$(curl ipinfo.io/ip)
+   ```
+
+1. Change to the "Deploy" directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d/Deploy
+   ```
+
+1. Change to the shared environment
+
+   ```ShellSession
+   $ cd "terraform/environments/${CMS_SHARED_ENV}"
+   ```
+
+1. Verify the changes that will be made
+
+   ```ShellSession
+   $ terraform plan \
+     --var "db_username=${DATABASE_USER}" \
+     --var "db_password=${DATABASE_PASSWORD}" \
+     --var "db_name=${DATABASE_NAME}" \
+     --var "deployer_ip_address=${DEPLOYER_IP_ADDRESS}" \
+     --target module.controller
+   ```
+
+1. Update controller
+
+   ```ShellSession
+   $ terraform apply \
+     --var "db_username=${DATABASE_USER}" \
+     --var "db_password=${DATABASE_PASSWORD}" \
+     --var "db_name=${DATABASE_NAME}" \
+     --var "deployer_ip_address=${DEPLOYER_IP_ADDRESS}" \
+     --target module.controller \
+     --auto-approve
+   ```
+
+## Appendix CC: Fix bad terraform component
+
+1. Note that the following component was failing to refresh when automation was rerun
+
+   *Example of a component that was failing to refresh:*
+   
+   ```
+   module.controller.random_shuffle.public_subnets
+   ```
+   
+1. Change to the "Deploy" directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d/Deploy
+   ```
+   
+1. Change to the environment where the existing component is failing to refresh
+
+   *Example for Dev shared environment:*
+   
+   ```ShellSession
+   $ cd terraform/environments/ab2d-dev-shared
+   ```
+
+1. Verify that the component is under terraform control
+
+   *Format:*
+   
+   ```ShellSession
+   $ terraform state list | grep {search word}
+   ```
+
+   *Example for 'module.controller.random_shuffle.public_subnets':*
+   
+   ```ShellSession
+   $ terraform state list | grep shuffle
+   ```
+
+1. Note the terraform reference for the target component
+
+   ```
+   module.controller.random_shuffle.public_subnets
+   ```
+
+1. Remove the component from terraform control
+
+   ```ShellSession
+   $ terraform state rm module.controller.random_shuffle.public_subnets
+   ```
+
+1. Rerun the automation, so that the module will be recreated instead of being refreshed
