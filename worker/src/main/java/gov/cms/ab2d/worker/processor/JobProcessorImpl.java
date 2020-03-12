@@ -18,6 +18,7 @@ import gov.cms.ab2d.worker.adapter.bluebutton.ContractAdapter;
 import gov.cms.ab2d.worker.adapter.bluebutton.GetPatientsByContractResponse;
 import gov.cms.ab2d.worker.adapter.bluebutton.GetPatientsByContractResponse.PatientDTO;
 import gov.cms.ab2d.worker.config.RoundRobinBlockingQueue;
+import gov.cms.ab2d.worker.processor.StreamHelperImpl.FileOutputType;
 import gov.cms.ab2d.worker.processor.domainmodel.ContractData;
 import gov.cms.ab2d.worker.processor.domainmodel.ProgressTracker;
 import gov.cms.ab2d.worker.service.FileService;
@@ -31,6 +32,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
@@ -52,6 +54,8 @@ import static gov.cms.ab2d.common.model.JobStatus.SUCCESSFUL;
 import static gov.cms.ab2d.common.service.JobServiceImpl.ZIPFORMAT;
 import static gov.cms.ab2d.common.util.Constants.CONTRACT_LOG;
 import static gov.cms.ab2d.common.util.Constants.EOB;
+import static gov.cms.ab2d.worker.processor.StreamHelperImpl.FileOutputType.NDJSON;
+import static gov.cms.ab2d.worker.processor.StreamHelperImpl.FileOutputType.ZIP;
 import static net.logstash.logback.argument.StructuredArguments.keyValue;
 
 @Slf4j
@@ -156,9 +160,9 @@ public class JobProcessorImpl implements JobProcessor {
             log.info("Job [{}] - contract [{}] ", jobUuid, contract.getContractNumber());
 
             // Determine the type of output
-            StreamHelperImpl.FileOutputType outputType =  StreamHelperImpl.FileOutputType.NDJSON;
+            FileOutputType outputType =  NDJSON;
             if (job.getOutputFormat() != null && job.getOutputFormat().equalsIgnoreCase(ZIPFORMAT)) {
-                outputType = StreamHelperImpl.FileOutputType.ZIP;
+                outputType = ZIP;
             }
 
             // Create a holder for the contract, writer, progress tracker and attested date
@@ -210,9 +214,7 @@ public class JobProcessorImpl implements JobProcessor {
      * @param outputDirPath - the directory to delete
      */
     private void deleteExistingDirectory(Path outputDirPath) {
-        final File[] files = outputDirPath.toFile()
-                .listFiles((dir, name) -> name.toLowerCase().endsWith(StreamHelperImpl.FileOutputType.NDJSON.getSuffix()) ||
-                        name.toLowerCase().endsWith(StreamHelperImpl.FileOutputType.ZIP.getSuffix()));
+        final File[] files = outputDirPath.toFile().listFiles(getFilenameFilter());
 
         for (File file : files) {
             final Path filePath = file.toPath();
@@ -223,22 +225,33 @@ public class JobProcessorImpl implements JobProcessor {
             }
 
             if (Files.isRegularFile(filePath)) {
-                try {
-                    Files.delete(filePath);
-                } catch (IOException ex) {
-                    var errMsg = "Could not delete file ";
-                    log.error("{} : {}", errMsg, filePath.toAbsolutePath());
-                    throw new UncheckedIOException(errMsg + filePath.toFile().getName(), ex);
-                }
+                doDelete(filePath);
             }
         }
 
+        doDelete(outputDirPath);
+    }
+
+    /**
+     *
+     * @return a Filename filter for ndjson and zip files
+     */
+    private FilenameFilter getFilenameFilter() {
+        return (dir, name) -> {
+            final String filename = name.toLowerCase();
+            final String ndjson = NDJSON.getSuffix();
+            final String zip = ZIP.getSuffix();
+            return filename.endsWith(ndjson) || filename.endsWith(zip);
+        };
+    }
+
+    private void doDelete(Path path) {
         try {
-            Files.delete(outputDirPath);
+            Files.delete(path);
         } catch (IOException ex) {
-            var errMsg = "Could not delete directory ";
-            log.error("{} : {} ", errMsg, outputDirPath.toAbsolutePath());
-            throw new UncheckedIOException(errMsg + outputDirPath.toFile().getName(), ex);
+            var errMsg = "Could not delete ";
+            log.error("{} : {} ", errMsg, path.toAbsolutePath());
+            throw new UncheckedIOException(errMsg + path.toFile().getName(), ex);
         }
     }
 
@@ -333,7 +346,7 @@ public class JobProcessorImpl implements JobProcessor {
      * @return - the job output records containing the file information
      */
     private List<JobOutput> processContract(Path outputDirPath, ContractData contractData,
-                                            StreamHelperImpl.FileOutputType contractType) throws FileNotFoundException {
+                                            FileOutputType contractType) throws FileNotFoundException {
         var contract = contractData.getContract();
         log.info("Beginning to process contract {}", keyValue(CONTRACT_LOG, contract.getContractName()));
 
@@ -350,7 +363,7 @@ public class JobProcessorImpl implements JobProcessor {
 
         StreamHelper helper = null;
         try {
-            if (contractType == StreamHelperImpl.FileOutputType.ZIP) {
+            if (contractType == ZIP) {
                 helper = new ZipStreamHelperImpl(outputDirPath, contractNumber, getZipRolloverThreshold(), getRollOverThreshold(), tryLockTimeout);
             } else {
                 helper = new TextStreamHelperImpl(outputDirPath, contractNumber, getRollOverThreshold(), tryLockTimeout);
