@@ -56,9 +56,9 @@ individuals entitled to or enrolled in Medicare, and to protect the security of 
 
 ## Data Dictionary
 
-The full data dictionary is [here](data_dictionary).
+The full data dictionary is [here](data_dictionary.html).
 
-The description of the data used (and reused) elements is found [here](data_types).
+The description of the data used (and reused) elements is found [here](data_types.html).
 
 ## Sample AB2D File
 
