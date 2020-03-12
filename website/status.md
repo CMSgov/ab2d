@@ -14,17 +14,18 @@ ctas:
 ---
 
 <script>
-    const downStatusHtml = "<img style=\"vertical-align: middle;\" src='assets/img/status-down.png' /> <span>The system is currently in maintenance mode. Please check back later.</span>";
+    let baseUrl = 'http://127.0.0.1:8080';
+
     function pollServer() {
-        $.get('http://127.0.0.1:8080/status', function(data) {
+        $.get(baseUrl + 'status', function(data) {
             if(data.maintenanceMode === 'false') {
                 $('#status-content').html("<img style=\"vertical-align: middle;\" src='assets/img/status-up.png' /> <span>The system is operating normally</span>");                     
             } else {
-                $('#status-content').html(downStatusHtml);
+                $('#status-content').html("<img style=\"vertical-align: middle;\" src='assets/img/status-down.png' /> <span>The system is currently in maintenance mode. Please check back later.</span>");
             }
         })
         .fail(function() {
-            $('#status-content').html(downStatusHtml); 
+            $('#status-content').html("<img style=\"vertical-align: middle;\" src='assets/img/status-down.png' /> <span>The system is currently unreachable. Please check back later.</span>"); 
         })
         .always(function() {
             setTimeout(pollServer, 10000);
