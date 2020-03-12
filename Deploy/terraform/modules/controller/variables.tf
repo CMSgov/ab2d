@@ -8,5 +8,5 @@ variable "ssh_key_name" {}
 variable "iam_instance_profile" {}
 variable "gold_disk_name" {}
 variable "db_sec_group_id" {}
-
 variable "deployer_ip_address" {}
+variable "vpn_private_sec_group_id" {}
