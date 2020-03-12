@@ -20,14 +20,19 @@
    * [Create required S3 buckets](#create-required-s3-buckets)
 1. [Create or update base aws environment](#create-or-update-base-aws-environment)
 1. [Update application](#update-application)
-1. [Deploy AB2D static site](#deploy-ab2d-static-site)
+1. [Obtain and import ab2d.cms.gov certificate](#obtain-and-import-ab2dcmsgov-certificate)
    * [Download the AB2D domain certificates and get private key from CMS](#download-the-ab2d-domain-certificates-and-get-private-key-from-cms)
    * [Import the AB2D domain certificate into certificate manager](#import-the-ab2d-domain-certificate-into-certificate-manager)
-   * [Generate and test the website](#generate-and-test-the-website)
-   * [Create an S3 bucket for the website](#create-an-s3-bucket-for-the-website)
-   * [Upload website to S3](#upload-website-to-s3)
-   * [Create CloudFront distribution](#create-cloudfront-distribution)
-   * [Determine how to integrate cms.gov Route 53 with AB2D CloudFront distribution](#determine-how-to-integrate-cmsgov-route-53-with-ab2d-cloudfront-distribution)
+1. [Create initial AB2D static website in development](#create-initial-ab2d-static-website-in-development)
+   * [Generate and test the website for development](#generate-and-test-the-website-for-development)
+   * [Create an S3 bucket for the website in development](#create-an-s3-bucket-for-the-website-in-development)
+   * [Upload initial website to S3 in development](#upload-initial-website-to-s3-in-development)
+   * [Create CloudFront distribution in development](#create-cloudfront-distribution-in-development)
+1. [Create initial AB2D static website in production](#create-initial-ab2d-static-website-in-production)
+   * [Generate and test the website for production](#generate-and-test-the-website-for-production)
+   * [Create an S3 bucket for the website in production](#create-an-s3-bucket-for-the-website-in-production)
+   * [Upload initial website to S3 in production](#upload-initial-website-to-s3-in-production)
+   * [Create CloudFront distribution in production](#create-cloudfront-distribution-in-production)
    * [Submit an "Internet DNS Change Request Form" to product owner](#submit-an-internet-dns-change-request-form-to-product-owner)
 1. [Configure New Relic](#configure-new-relic)
    * [Set up a New Relic free trial](#set-up-a-new-relic-free-trial)
@@ -55,9 +60,12 @@
 1. [Import the sandbox domain certificate into certificate manager](#import-the-sandbox-domain-certificate-into-certificate-manager)
 1. [Map the application load balancer for sandbox certificate](#map-the-application-load-balancer-for-sandbox-certificate)
 1. [Submit an "Internet DNS Change Request Form" to product owner for the sandbox application load balancer](#submit-an-internet-dns-change-request-form-to-product-owner-for-the-sandbox-application-load-balancer)
-1. [Setup Jenkins server in management AWS account](#setup-jenkins-server-in-management-aws-account)
+1. [Setup Jenkins master in management AWS account](#setup-jenkins-master-in-management-aws-account)
 1. [Deploy and configure Jenkins](#deploy-and-configure-jenkins)
 1. [Upgrade Jenkins](#upgrade-jenkins)
+1. [Verify VPC peering between the management and development AWS accounts](#verify-vpc-peering-between-the-management-and-development-aws-accounts)
+1. [Update existing AB2D static website in development](#update-existing-ab2d-static-website-in-development)
+1. [Update existing AB2D static website in production](#update-existing-ab2d-static-website-in-production)
 
 ## Note the starting state of the customer AWS account
 
@@ -1508,7 +1516,7 @@
      --auto-approve
    ```
 
-## Deploy AB2D static site
+## Obtain and import ab2d.cms.gov certificate
 
 ### Download the AB2D domain certificates and get private key from CMS
 
@@ -1618,7 +1626,9 @@
    
 1. Select **Import**
 
-### Generate and test the website
+## Create initial AB2D static website in development
+
+### Generate and test the website for development
 
 1. Change to the "website" directory
 
@@ -1626,7 +1636,182 @@
    $ cd ~/code/ab2d/website
    ```
 
-1. If deploying to the "ab2d.cms.gov" site, change the head from 'dev' to 'prod'
+1. Generate and test the website
+
+   1. Ensure required gems are installed
+
+      ```ShellSession
+      $ bundle install
+      ```
+
+   1. Generate and serve website on the jekyll server
+
+      ```ShellSession
+      $ bundle exec jekyll serve
+      ```
+     
+   1. Open Chrome
+
+   1. Enter the following in the address bar
+   
+      > http://127.0.0.1:4000
+      
+   1. Verify that the website comes up
+
+   1. Return to the terminal where the jekyll server is running
+   
+   1. Press **control+c** on the keyboard to stop the Jekyll server
+
+1. Verify the generated site
+
+   1. Note that a "_site" directory was automatically generated when you ran "bundle exec jekyll serve"
+   
+   1. List the contents of the directory
+
+      ```ShellSession
+      $ ls _site
+      ```
+    
+   1. Note the following two files that will be used in CloudFront distribution configuration
+
+      - index.html
+
+      - 404.html
+
+### Create an S3 bucket for the website in development
+
+1. Note that IMPL is acting as development at the current time
+
+   > *** TO DO ***: Change this after production is available.
+   
+1. Set the target AWS profile
+   
+   ```ShellSession
+   $ export AWS_PROFILE=ab2d-east-impl
+   ```
+
+1. Create S3 bucket for the website
+   
+   ```ShellSession
+   $ aws --region us-east-1 s3api create-bucket \
+     --bucket ab2d-east-impl-website
+   ```
+
+1. Block public access on the bucket
+
+   ```ShellSession
+   $ aws --region us-east-1 s3api put-public-access-block \
+      --bucket ab2d-east-impl-website \
+      --public-access-block-configuration BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true
+   ```
+
+### Upload initial website to S3 in development
+
+1. Note that IMPL is acting as development at the current time
+
+   > *** TO DO ***: Change this after production is available.
+
+1. Note that the uploaded website will be used to create an S3 API endpoint as the origin within CloudFront
+
+1. Change to the "website" directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d/website
+   ```
+
+1. Set the target AWS profile
+   
+   ```ShellSession
+   $ export AWS_PROFILE=ab2d-east-impl
+   ```
+
+1. Upload website to S3
+   
+   ```ShellSession
+   $ aws s3 cp --recursive _site/ s3://ab2d-east-impl-website/
+   ```
+
+### Create CloudFront distribution in development
+
+1. Note that IMPL is acting as development at the current time
+
+   > *** TO DO ***: Change this after production is available.
+
+1. Open Chrome
+
+1. Log on to AWS
+
+1. Navigate to CloudFront
+
+1. Select **Create Distribution**
+
+1. Select **Get Started** under the *Web* section
+
+1. Note the following very important information before configuring the "Origin Settings"
+
+   1. Note that there are two "Origin Domain Name" values that can be used for doing a distribution for an S3 website
+
+      - S3 API Endpoint <-- this is the method that we want to use
+
+      - S3 Website Endpoint
+
+   1. Note that the "Origin ID" will automatically fill-in based on the "Origin Domain Name"
+   
+1. Configure "Origin Settings" as follows:
+   
+   - **Origin Domain Name:** ab2d-east-impl-website.s3.amazonaws.com
+   
+   - **Origin ID:** S3-ab2d-east-impl-website
+
+   - **Restrict Bucket Access:** Yes
+
+   - **Origin Access Identity:** Create a New Identity
+
+   - **Comment:** access-identity-ab2d-east-impl-website.s3.amazonaws.com
+
+   - **Grant Read Permissions on Bucket:** Yes, Update Bucket Policy
+
+1. Configure "Default Cache Behavior Settings" as follows
+
+   - **Viewer Protocol Policy:** Redirect HTTP to HTTPS
+
+1. Configure "Distribution Settings" as follows
+   
+   **SSL Certificate:** Default CloudFront Certificate
+
+   **Default Root Object:** index.html
+
+1. Select **Create Distribution**
+
+1. Select **Distributions** in the leftmost panel
+
+1. Note the distribution row that was created
+   
+   - **Delivery Method:** Web
+
+   - **Domain Name:** {unique id}.cloudfront.net
+
+   - **Origin:** ab2d-east-impl-website.s3.amazonaws.com
+
+1. Note that it will take about 30 minutes for the CloudFront distribution to complete
+
+1. Wait for the "Status" to change to the following
+
+   ```
+   Deployed
+   ```
+
+## Create initial AB2D static website in production
+
+### Generate and test the website for production
+
+1. Change to the "website" directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d/website
+   ```
+
+1. Change the head from 'dev' to 'prod'
 
    *Note that you will later be reverting this change after you deploy the "ab2d.cms.gov" site.*
 
@@ -1676,54 +1861,26 @@
 
       - 404.html
 
-### Create an S3 bucket for the website
+### Create an S3 bucket for the website in production
+
+1. Note that DEV is acting as production at the current time
+
+   > *** TO DO ***: Change this after production is available.
 
 1. Set the target AWS profile
 
-   *Format:*
-   
-   ```ShellSession
-   $ export AWS_PROFILE={target aws profile}
-   ```
-
-   *Example for "Dev" environment:*
-   
    ```ShellSession
    $ export AWS_PROFILE=ab2d-dev
    ```
 
-   *Example for "Impl" environment:*
-   
-   ```ShellSession
-   $ export AWS_PROFILE=ab2d-east-impl
-   ```
-
 1. Create S3 bucket for the website
-
-   *Format:*
-   
-   ```ShellSession
-   $ aws --region us-east-1 s3api create-bucket \
-     --bucket {unique id}-ab2d-website
-   ```
-
-   *Example for "Dev" environment:*
    
    ```ShellSession
    $ aws --region us-east-1 s3api create-bucket \
      --bucket cms-ab2d-website
    ```
 
-   *Example for "Impl" environment:*
-   
-   ```ShellSession
-   $ aws --region us-east-1 s3api create-bucket \
-     --bucket ab2d-east-impl-website
-   ```
-
 1. Block public access on the bucket
-
-   *Example for "Dev" environment:*
    
    ```ShellSession
    $ aws --region us-east-1 s3api put-public-access-block \
@@ -1731,15 +1888,11 @@
       --public-access-block-configuration BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true
    ```
 
-   *Example for "Impl" environment:*
+### Upload initial website to S3 in production
 
-   ```ShellSession
-   $ aws --region us-east-1 s3api put-public-access-block \
-      --bucket ab2d-east-impl-website \
-      --public-access-block-configuration BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true
-   ```
+1. Note that DEV is acting as production at the current time
 
-### Upload website to S3
+   > *** TO DO ***: Change this after production is available.
 
 1. Note that the uploaded website will be used to create an S3 API endpoint as the origin within CloudFront
 
@@ -1750,40 +1903,18 @@
    ```
 
 1. Set the target AWS profile
-
-   *Format:*
-   
-   ```ShellSession
-   $ export AWS_PROFILE={target aws profile}
-   ```
-
-   *Example for "Dev" environment:*
    
    ```ShellSession
    $ export AWS_PROFILE=ab2d-dev
    ```
 
-   *Example for "Impl" environment:*
-   
-   ```ShellSession
-   $ export AWS_PROFILE=ab2d-east-impl
-   ```
-
 1. Upload website to S3
-
-   *Example for "Dev" environment:*
    
    ```ShellSession
    $ aws s3 cp --recursive _site/ s3://cms-ab2d-website/
    ```
 
-   *Example for "Impl" environment:*
-   
-   ```ShellSession
-   $ aws s3 cp --recursive _site/ s3://ab2d-east-impl-website/
-   ```
-
-1. If you deployed to the "ab2d.cms.gov" site, revert head from 'prod' back to 'dev'
+1. Revert head from 'prod' back to 'dev'
 
    *Note that you will later be reverting this change after you deploy the "ab2d.cms.gov" site.*
 
@@ -1791,7 +1922,11 @@
    $ sed -i "" 's%cms-ab2d[\/]prod%cms-ab2d/dev%g' _includes/head.html
    ```
 
-### Create CloudFront distribution
+### Create CloudFront distribution in production
+
+1. Note that DEV is acting as production at the current time
+
+   > *** TO DO ***: Change this after production is available.
 
 1. Open Chrome
 
@@ -1814,26 +1949,10 @@
    1. Note that the "Origin ID" will automatically fill-in based on the "Origin Domain Name"
    
 1. Configure "Origin Settings" as follows:
-
-   *Example for "Dev" environment:*
    
    - **Origin Domain Name:** cms-ab2d-website.s3.amazonaws.com
    
    - **Origin ID:** S3-cms-ab2d-website
-
-   - **Restrict Bucket Access:** Yes
-
-   - **Origin Access Identity:** Create a New Identity
-
-   - **Comment:** access-identity-cms-ab2d-website.s3.amazonaws.com
-
-   - **Grant Read Permissions on Bucket:** Yes, Update Bucket Policy
-
-   *Example for "Impl" environment:*
-   
-   - **Origin Domain Name:** ab2d-east-impl-website.s3.amazonaws.com
-   
-   - **Origin ID:** S3-ab2d-east-impl-website
 
    - **Restrict Bucket Access:** Yes
 
@@ -1848,29 +1967,7 @@
    - **Viewer Protocol Policy:** Redirect HTTP to HTTPS
 
 1. Configure "Distribution Settings" as follows
-
-   *Example for "Dev" environment:*
-
-   > *** TO DO ***: Migrate certificate to prod and eliminate certificate here
    
-   **Alternate Domain Names (CNAMES):** ab2d.cms.gov
-
-   **SSL Certificate:** Custom SSL Certificate
-
-   **Custom SSL Certificate:** ab2d.cms.gov
-
-   **Default Root Object:** index.html
-
-   *Example for "Impl" environment:*
-   
-   **SSL Certificate:** Default CloudFront Certificate
-
-   **Default Root Object:** index.html
-
-   *Example for "Prod" environment:*
-
-   > *** TO DO ***
-    
    **Alternate Domain Names (CNAMES):** ab2d.cms.gov
 
    **SSL Certificate:** Custom SSL Certificate
@@ -1884,30 +1981,6 @@
 1. Select **Distributions** in the leftmost panel
 
 1. Note the distribution row that was created
-
-   *Example for "Dev" environment:*
-
-   > *** TO DO ***: Migrate cname to prod and eliminate cname here
-   
-   - **Delivery Method:** Web
-
-   - **Domain Name:** {unique id}.cloudfront.net
-
-   - **Origin:** cms-ab2d-website.s3.amazonaws.com
-
-   - **CNAMEs:** ab2d.cms.gov
-
-   *Example for "Impl" environment:*
-   
-   - **Delivery Method:** Web
-
-   - **Domain Name:** {unique id}.cloudfront.net
-
-   - **Origin:** ab2d-east-impl-website.s3.amazonaws.com
-
-   *Example for "Prod" environment:*
-
-   > *** TO DO ***
    
    - **Delivery Method:** Web
 
@@ -4058,7 +4131,7 @@
 
 1. Note that the product owner will complete the process
 
-## Setup Jenkins server in management AWS account
+## Setup Jenkins master in management AWS account
 
 1. Open a terminal
 
@@ -4087,9 +4160,9 @@
    1. Get the private IP address of Jenkins EC2 instance
    
       ```ShellSession
-      $ JENKINS_MASTER_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+      $ JENKINS_MASTER_PUBLIC_IP=$(aws --region us-east-1 ec2 describe-instances \
         --filters "Name=tag:Name,Values=ab2d-jenkins-master" \
-        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PublicIpAddress" \
         --output text)
       ```
 
@@ -4098,7 +4171,7 @@
    1. SSH into the instance using the private IP address
 
       ```ShellSession
-      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_MASTER_PRIVATE_IP
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_MASTER_PUBLIC_IP
       ```
 
 1. View the available disk devices
@@ -4167,9 +4240,9 @@
    1. Get the private IP address of Jenkins EC2 instance
    
       ```ShellSession
-      $ JENKINS_MASTER_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+      $ JENKINS_MASTER_PUBLIC_IP=$(aws --region us-east-1 ec2 describe-instances \
         --filters "Name=tag:Name,Values=ab2d-jenkins-master" \
-        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PublicIpAddress" \
         --output text)
       ```
 
@@ -4178,7 +4251,7 @@
    1. SSH into the instance using the private IP address
 
       ```ShellSession
-      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_MASTER_PRIVATE_IP
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_MASTER_PUBLIC_IP
       ```
 
 1. Note the default Jenkins port
@@ -4270,11 +4343,11 @@
 
    *Format:*
    
-   > http://{jenkins master private ip}:8080
+   > http://{jenkins master public ip}:8080
 
    *Example:*
    
-   > http://10.242.37.79:8080
+   > http://35.173.33.85:8080
 
 1. Bookmark Jenkins for your browser
 
@@ -4590,3 +4663,278 @@
    > http://10.242.37.79:8080
 
 1. Verify that Jenkins has been updated to the new version
+
+## Verify VPC peering between the management and development AWS accounts
+
+1. Set the AWS profile to the management account
+
+   ```ShellSession
+   $ export AWS_PROFILE=ab2d-mgmt-east-dev
+   ```
+   
+1. Set management region
+
+   ```ShellSession
+   $ export REGION=us-east-1
+   ```
+
+1. Verify that the VPC peering connection from management to development is "Active"
+
+   ```ShellSession
+   $ aws --region "${REGION}" ec2 describe-vpc-peering-connections \
+     --filters "Name=tag:Name,Values='ab2d-mgmt-east-dev-ab2d-dev'" \
+     --query "VpcPeeringConnections[*].Status.Message" \
+     --output text
+   ```
+
+1. Set jenkins master access variables
+   
+   ```ShellSession
+   $ JENKINS_MASTER_PUBLIC_IP=$(aws --region "${REGION}" ec2 describe-instances \
+     --filters "Name=tag:Name,Values=ab2d-jenkins-master" \
+     --query="Reservations[*].Instances[?State.Name == 'running'].PublicIpAddress" \
+     --output text)
+   $ export SSH_USER_NAME=ec2-user
+   ```
+
+1. Copy the development environment key to the controller
+
+   ```ShellSession
+   $ scp -i ~/.ssh/${AWS_PROFILE}.pem \
+     ~/.ssh/ab2d-dev.pem \
+     ${SSH_USER_NAME}@${JENKINS_MASTER_PUBLIC_IP}:~/.ssh
+   ```
+
+1. Connect to the Jenkins master
+
+   ```ShellSession
+   $ ssh -i ~/.ssh/${AWS_PROFILE}.pem ${SSH_USER_NAME}@${JENKINS_MASTER_PUBLIC_IP}
+   ```
+
+## Update existing AB2D static website in development
+
+1. Note that IMPL is acting as development at the current time
+
+   > *** TO DO ***: Change this after production is available.
+
+1. Change to the "website" directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d/website
+   ```
+
+1. Generate and test the website
+
+   1. Ensure required gems are installed
+
+      ```ShellSession
+      $ bundle install
+      ```
+
+   1. Generate and serve website on the jekyll server
+
+      ```ShellSession
+      $ bundle exec jekyll serve
+      ```
+     
+   1. Open Chrome
+
+   1. Enter the following in the address bar
+   
+      > http://127.0.0.1:4000
+      
+   1. Verify that the website comes up
+
+   1. Return to the terminal where the jekyll server is running
+   
+   1. Press **control+c** on the keyboard to stop the Jekyll server
+
+1. Verify the generated site
+
+   1. Note that a "_site" directory was automatically generated when you ran "bundle exec jekyll serve"
+   
+   1. List the contents of the directory
+
+      ```ShellSession
+      $ ls _site
+      ```
+    
+   1. Note the following two files that will be used in CloudFront distribution configuration
+
+      - index.html
+
+      - 404.html
+
+1. Set the target AWS profile
+   
+   ```ShellSession
+   $ export AWS_PROFILE=ab2d-east-impl
+   ```
+
+1. Set the region
+
+   ```ShellSession
+   $ export REGION=us-east-1
+   ```
+   
+1. Upload website to S3
+   
+   ```ShellSession
+   $ aws --region "${REGION}" s3 cp \
+     --recursive _site/ s3://ab2d-east-impl-website/
+   ```
+
+1. Get CloudFront distribution id
+
+   ```ShellSession
+   $ CLOUDFRONT_DITRIBUTION_ID=$(aws --region "${REGION}" cloudfront list-distributions \
+     --query "DistributionList.Items[0].Id" \
+     --output text)
+   ```
+   
+1. Initiate invalidation of old website files from CloudFront edge caches
+
+   ```ShellSession
+   $ aws --region "${REGION}" cloudfront create-invalidation \
+     --distribution-id "${CLOUDFRONT_DITRIBUTION_ID}" \
+     --paths "/*"
+   ```
+
+1. Wait for the status of the most recent inavlidation to complete
+
+   1. Check status of the most recent inavlidation
+
+      ```ShellSession
+      $ aws --region us-east-1 cloudfront list-invalidations \
+        --distribution-id "${CLOUDFRONT_DITRIBUTION_ID}" \
+        --query "InvalidationList.Items[0].Status" \
+        --output text
+      ```
+
+   1. If the output is "InProgress", wait for a couple minutes and check the status again
+
+   1. If the output is "Completed", submit the website for approval
+
+      > https://d146fnxfjv0ejo.cloudfront.net/
+   
+## Update existing AB2D static website in production
+
+1. Note that DEV is acting as production at the current time
+
+   > *** TO DO ***: Change this after production is available.
+
+1. Change to the "website" directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d/website
+   ```
+
+1. Change the head from 'dev' to 'prod'
+
+   *Note that you will later be reverting this change after you deploy the "ab2d.cms.gov" site.*
+
+   ```ShellSession
+   $ sed -i "" 's%cms-ab2d[\/]dev%cms-ab2d/prod%g' _includes/head.html
+   ```
+
+1. Generate and test the website
+
+   1. Ensure required gems are installed
+
+      ```ShellSession
+      $ bundle install
+      ```
+
+   1. Generate and serve website on the jekyll server
+
+      ```ShellSession
+      $ bundle exec jekyll serve
+      ```
+     
+   1. Open Chrome
+
+   1. Enter the following in the address bar
+   
+      > http://127.0.0.1:4000
+      
+   1. Verify that the website comes up
+
+   1. Return to the terminal where the jekyll server is running
+   
+   1. Press **control+c** on the keyboard to stop the Jekyll server
+
+1. Verify the generated site
+
+   1. Note that a "_site" directory was automatically generated when you ran "bundle exec jekyll serve"
+   
+   1. List the contents of the directory
+
+      ```ShellSession
+      $ ls _site
+      ```
+    
+   1. Note the following two files that will be used in CloudFront distribution configuration
+
+      - index.html
+
+      - 404.html
+
+1. Set the target AWS profile
+   
+   ```ShellSession
+   $ export AWS_PROFILE=ab2d-dev
+   ```
+
+1. Set the region
+
+   ```ShellSession
+   $ export REGION=us-east-1
+   ```
+
+1. Upload website to S3
+   
+   ```ShellSession
+   $ aws --region "${REGION}" s3 cp \
+     --recursive _site/ s3://cms-ab2d-website/
+   ```
+
+1. Get CloudFront distribution id
+
+   ```ShellSession
+   $ CLOUDFRONT_DITRIBUTION_ID=$(aws --region "${REGION}" cloudfront list-distributions \
+     --query "DistributionList.Items[0].Id" \
+     --output text)
+   ```
+
+1. Initiate invalidation of old website files from CloudFront edge caches
+
+   ```ShellSession
+   $ aws --region "${REGION}" cloudfront create-invalidation \
+     --distribution-id "${CLOUDFRONT_DITRIBUTION_ID}" \
+     --paths "/*"
+   ```
+
+1. Wait for the status of the most recent inavlidation to complete
+
+   1. Check status of the most recent inavlidation
+
+      ```ShellSession
+      $ aws --region us-east-1 cloudfront list-invalidations \
+        --distribution-id E8P2KHG7IH0TG \
+        --query "InvalidationList.Items[0].Status" \
+        --output text
+      ```
+
+   1. If the output is "InProgress", wait for a couple minutes and check the status again
+
+   1. If the output is "Completed", announce that the production website has been deployed
+
+      > https://ab2d.cms.gov/
+
+1. Revert head from 'prod' back to 'dev'
+
+   *Note that you will later be reverting this change after you deploy the "ab2d.cms.gov" site.*
+
+   ```ShellSession
+   $ sed -i "" 's%cms-ab2d[\/]prod%cms-ab2d/dev%g' _includes/head.html
+   ```
