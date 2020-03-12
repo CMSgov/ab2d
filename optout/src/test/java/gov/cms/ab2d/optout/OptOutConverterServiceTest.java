@@ -142,7 +142,7 @@ class OptOutConverterServiceTest {
     }
 
     private Stream<String> getLinesFromFile() {
-        final String testInputFile = "test-data/test-data.txt";
+        final String testInputFile = "test-data.txt";
         final InputStream inputStream = getClass().getResourceAsStream("/" + testInputFile);
         final InputStreamReader isr = new InputStreamReader(inputStream);
         final BufferedReader bufferedReader = new BufferedReader(isr);

@@ -11,6 +11,7 @@ import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.lang3.StringUtils;
 import org.hl7.fhir.dstu3.model.Bundle;
+import org.hl7.fhir.dstu3.model.CapabilityStatement;
 import org.hl7.fhir.dstu3.model.ExplanationOfBenefit;
 import org.hl7.fhir.dstu3.model.Patient;
 import org.springframework.beans.factory.annotation.Value;
@@ -207,6 +208,19 @@ public class BFDClientImpl implements BFDClient {
                 .withAdditionalHeader("IncludeIdentifiers", "true")
                 .returnBundle(Bundle.class)
                 .encodedJson()
+                .execute();
+    }
+
+
+    @Override
+    @Retryable(
+            maxAttemptsExpression = "${bfd.retry.maxAttempts:3}",
+            backoff = @Backoff(delayExpression = "${bfd.retry.backoffDelay:250}", multiplier = 2),
+            exclude = { ResourceNotFoundException.class }
+    )
+    public CapabilityStatement capabilityStatement() {
+        return client.capabilities()
+                .ofType(CapabilityStatement.class)
                 .execute();
     }
 
