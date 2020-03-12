@@ -9,6 +9,7 @@ subnav-link-gradient: "blueberry-lime-link"
 sections:
   - Overview
   - Attestation  
+  - For Developers
   - Frequently Asked Questions
 ctas:
 
@@ -36,6 +37,16 @@ PDP sponsors may request Medicare claims data via the Claims Data Attestation mo
 the Health Plan Management System (HPMS). This attestation process ensures that PDP sponsors are aware of how 
 they may or may not use the Medicare claims data, including the limitations associated with the reuse and redisclosure 
 of the data. Visit [HPMS](https://hpms.cms.gov)
+
+---
+
+## For Developers
+
+For documentation on our sandbox, go [here](sandbox/intro.html).
+
+To learn more about our data, go [here](data/dd.html).
+
+---
 
 ## Frequently Asked Questions
 As CMS continues to gather feedback from PDP sponsors on sharing Parts A & B claims data, we anticipate adding more FAQs
