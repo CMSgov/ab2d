@@ -24,7 +24,7 @@ ctas:
 </style>
 ## Introduction
 
-This site is a developer's guide on how to use the AB2D API to bulk search select Part A and Part B claims data by 
+This is an advanced user's guide on how to use the AB2D API to bulk search select Part A and Part B claims data by 
 Medicare Part D plan (PDP) sponsors. This service provides asynchronous access to the data. The sponsor will request data, a 
 job will be created to retrieve this data, a job number returned, the job will be processed and once it is complete, 
 the data will be available to download. The status of the job can be requested at any time to determine whether it is complete.
@@ -41,7 +41,7 @@ The Sandbox/Swagger page is available [here](https://sandbox.ab2d.cms.gov/swagge
 The API uses the JSON Web Tokens (JWT) to authorize use of the endpoints. The token should be sent using the 
 "Authorization" header field with the value specified as "Bearer xxxxx" where xxxxx is the value of the JWT. 
 
-There are 6 users set up in the Sandbox. They are useful to view different types and sizes of data. For example, 
+There are 5 users set up in the Sandbox. They are useful to view different types and sizes of data. For example, 
 sponsor PDP-100 will have 100 patients and PDP-1000 will have 1000 patients. Each has one contract associated with it.
 
 <table class="ds-c-table">
@@ -199,16 +199,22 @@ The following are the list of endpoints the API supports:
 ### Request data
 A job will be created and a job identifier returned. You can request either by contract number:
 
-```GET /api/v1/fhir/Group/{contractNumber}/$export```
+```
+GET /api/v1/fhir/Group/{contractNumber}/$export
+```
 
 or all Part D patients registered with the sponsor:
 
-```GET /api/v1/fhir/Patient/$export```
+```
+GET /api/v1/fhir/Patient/$export
+```
 
 ### Status
 Once a job has been created, the user can/should request the status of the submitted job. 
 
-```GET /api/v1/fhir/Job/{jobUuid}/$status```
+```
+GET /api/v1/fhir/Job/{jobUuid}/$status
+```
 
 The job will either be in progress or completed. The application will limit the frequency in which a job status may 
 be queried. The value of "retry-after" passed back in the response header should indicate a minimum amount of time 
@@ -218,7 +224,9 @@ data or any error messages.
 ### Download
 Once the search job has been completed, the contents of the of the created file(s) can be downloaded by using:
 
-```GET /api/v1/fhir/Job/{jobUuid}/file/{filename}```
+```
+GET /api/v1/fhir/Job/{jobUuid}/file/{filename}
+```
 
 The file(s) are specified as the output of the status request. Each file will only be available for 24 hours after the 
 job has completed. Files are also unavailable after they have been successfully downloaded. 
@@ -247,14 +255,23 @@ types and properly advertises so by specifying  "Accept-Encoding: gzip, deflate"
 
 ## Tutorials
 
-To aid developers implement a client solution, there are three tutorials for the Sandbox:
+The purpose of these instructions is to provide a way for users to interact with the AB2D API. There are two main ways 
+to do that:
 
-- A [tutorial](tutorial-postman) that leverages Postman and the Swagger docs. This is the easier tutorial and
-walks through the interaction of the Postman UI and Swagger UI
+#### Postman and Swagger. 
+Swagger is included with the API and the free Postman application can be downloaded [here](https://www.postman.com/).
+If you want to use Postman and Swagger jump to the following page - [Use the API with Postman and Swagger](tutorial-postman.html)
 
-- A [tutorial](tutorial-curl) that uses cURL. This tutorial expects more experience with cURL and the BASH command line
+#### Using cURL and jq
 
-- A [tutorial](windows-tutorial) that helps Windows users execute the commands to download data 
+If you currently don't have both curl and jq installed, jump to the setup page associated with your machine
+
+- [Setup Linux](setup-linux.html)
+- [Setup Mac](setup-mac.html)
+- [Setup Windows 10](setup-windows.html)
+
+If you already have your machine setup to use both curl and jq, you can jump to the following page - 
+[Use the API with Curl](tutorial-curl.html)
 
 ## Troubleshooting
 
@@ -267,7 +284,7 @@ Your token is either incorrect or has expired
 
 - Your token has expired
 - You have specified a contract that is not yours
-- You are not an user authorized to use the service
+- You are not a user authorized to use the service
 
 #### 404 HTTP Response - Page not found
 - The page doesn't exist. Check the URL to make sure it exists. Put it in a browser and see what the error is. You will 
@@ -276,7 +293,8 @@ not have passed credentials or necessary parameters so it will give you another 
 $status but $ means a variable value in the bash command line.
 
 #### Unable to Download Bulk Data File
-- You're file name or job name are not correct. You can call the $status command again and verify that you have the file name & job name correct.
+- Your file name or job name are not correct. You can call the $status command again and verify that you have the file 
+name & job name correct.
 - You can only download the file once. If you have already done that, it no longer exists on our system
 - The time between when the job completed and you requested the file was greater than 24 hours. Files are 
 automatically deleted (or expired) after 24 hours.
