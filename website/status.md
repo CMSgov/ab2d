@@ -14,7 +14,7 @@ ctas:
 ---
 
 <script>
-    let baseUrl = 'http://127.0.0.1:8080/';
+    let baseUrl = 'https://sandbox.ab2d.cms.gov/';
 
     function pollServer() {
         $.get(baseUrl + 'status', function(data) {
