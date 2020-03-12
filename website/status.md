@@ -1,42 +1,44 @@
 ---
 layout: home
-title:  "Maintenance Mode"
+title:  "System Status"
 date:   2019-11-02 09:21:12 -0500 
-description: Display the status of whether or not the AB2D bulk status API is in maintenance mode or not.
+description: This page gives an overview of the status of our systems.
 landing-page: live
 gradient: "blueberry-lime-background"
 subnav-link-gradient: "blueberry-lime-link"
-
+sections:
+  - name: Home
+    link: /
 ctas:
 
 ---
 
-<script type="text/javascript" src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
 <script>
-    var $j = jQuery.noConflict();
+    const downStatusHtml = "<img style=\"vertical-align: middle;\" src='assets/img/status-down.png' /> <span>The system is currently in maintenance mode. Please check back later.</span>";
     function pollServer() {
-        $j("#status-content").html("<img src='assets/img/spinner.gif' />");
-        $j.get({
-            url: 'http://127.0.0.1:8080/status',
-            success: function(data) {
-                if(data.maintenanceMode === 'true') {
-                    $j('#status-content').html("The system is operating normally");                     
-                } else {
-                    $j('#status-content').html("The system is currently in maintenance mode. Please check back later");
-                }
-            },
-            failure: function() {
-                $j('#status-content').html("Error occurred retrieving status from the system"); 
-            },
-            complete: function() {
-                setTimeout(pollServer, 10000);
+        $.get('http://127.0.0.1:8080/status', function(data) {
+            if(data.maintenanceMode === 'false') {
+                $('#status-content').html("<img style=\"vertical-align: middle;\" src='assets/img/status-up.png' /> <span>The system is operating normally</span>");                     
+            } else {
+                $('#status-content').html(downStatusHtml);
             }
+        })
+        .fail(function() {
+            $('#status-content').html(downStatusHtml); 
+        })
+        .always(function() {
+            setTimeout(pollServer, 10000);
         });
     }
    
-    $j(document).ready(function() {
+    $(document).ready(function() {
         pollServer();
     });
 </script>
 
-<div id="status-content"></div>
+<div id="status-section" style="padding: 5px;">
+    <h3>System Status</h3>
+    <div style="border-top: 1px solid silver; border-bottom: 1px solid silver; padding: 4px;">
+        <span id="status-content" style="padding-left: 10px;"></span>
+    </div>
+</div>
