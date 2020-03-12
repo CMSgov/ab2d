@@ -420,7 +420,7 @@ page is unresponsive and asks you several times if you want to wait, do so.
 
         response_1583369581232.json
 
-    If there was more that one file to download, do the following under the <b>GET</b> "/api/v1/fhir/Job/{jobUuid}/file/{filename}" endpoint
+    If there was more than one file to download, do the following under the <b>GET</b> "/api/v1/fhir/Job/{jobUuid}/file/{filename}" endpoint
 
     a. Change the A file name text box to the next file name
 
@@ -437,7 +437,7 @@ page is unresponsive and asks you several times if you want to wait, do so.
 ## Bulk Export Contract Job
 This section will show you how to initiate a Part A & B bulk claim export job for a given contract number.
 
-1. Ceate a new JWT bearer token before proceeding, if any of the following are true:
+1. Create a new JWT bearer token before proceeding, if any of the following are true:
 
     - don't have a recent bearer token?
 

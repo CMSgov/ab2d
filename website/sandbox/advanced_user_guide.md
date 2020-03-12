@@ -284,7 +284,7 @@ Your token is either incorrect or has expired
 
 - Your token has expired
 - You have specified a contract that is not yours
-- You are not an user authorized to use the service
+- You are not a user authorized to use the service
 
 #### 404 HTTP Response - Page not found
 - The page doesn't exist. Check the URL to make sure it exists. Put it in a browser and see what the error is. You will 
@@ -293,7 +293,7 @@ not have passed credentials or necessary parameters so it will give you another 
 $status but $ means a variable value in the bash command line.
 
 #### Unable to Download Bulk Data File
-- You're file name or job name are not correct. You can call the $status command again and verify that you have the file 
+- Your file name or job name are not correct. You can call the $status command again and verify that you have the file 
 name & job name correct.
 - You can only download the file once. If you have already done that, it no longer exists on our system
 - The time between when the job completed and you requested the file was greater than 24 hours. Files are 
