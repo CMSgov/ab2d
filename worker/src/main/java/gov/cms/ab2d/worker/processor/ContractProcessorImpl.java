@@ -80,7 +80,7 @@ public class ContractProcessorImpl implements ContractProcessor {
      * @return - the job output records containing the file information
      */
     public List<JobOutput> process(Path outputDirPath, ContractData contractData,
-                                            FileOutputType contractType) throws FileNotFoundException {
+                                            FileOutputType outputType) throws FileNotFoundException {
         var contract = contractData.getContract();
         log.info("Beginning to process contract {}", keyValue(CONTRACT_LOG, contract.getContractName()));
 
@@ -96,11 +96,8 @@ public class ContractProcessorImpl implements ContractProcessor {
 
         StreamHelper helper = null;
         try {
-            if (contractType == ZIP) {
-                helper = new ZipStreamHelperImpl(outputDirPath, contractNumber, getZipRolloverThreshold(), getRollOverThreshold(), tryLockTimeout);
-            } else {
-                helper = new TextStreamHelperImpl(outputDirPath, contractNumber, getRollOverThreshold(), tryLockTimeout);
-            }
+            helper = createOutputHelper(outputDirPath, contractNumber, outputType);
+
             int recordsProcessedCount = 0;
             var futureHandles = new ArrayList<Future<Void>>();
             for (PatientDTO patient : patients) {
@@ -127,30 +124,54 @@ public class ContractProcessorImpl implements ContractProcessor {
                     processHandles(futureHandles, progressTracker);
                 }
             }
+            awaitTermination(progressTracker, futureHandles);
 
-            // While there are still patient records in progress, sleep for a bit and check progress
-            while (!futureHandles.isEmpty()) {
-                sleep();
-                processHandles(futureHandles, progressTracker);
-            }
         } finally {
-            if (helper != null) {
-                try {
-                    helper.close();
-                } catch (Exception ex) {
-                    log.error("Unable to close the helper", ex);
-                }
-            }
+            closeHelper(helper);
         }
 
+        handleCancellation(isCancelled);
+
+        // All jobs are done, return the job output records
+        return createJobOutputs(helper.getDataFiles(), helper.getErrorFiles());
+    }
+
+    private StreamHelper createOutputHelper(Path outputDirPath, String contractNumber, FileOutputType outputType) throws FileNotFoundException {
+        if (outputType == ZIP) {
+            return new ZipStreamHelperImpl(outputDirPath, contractNumber, getZipRolloverThreshold(), getRollOverThreshold(), tryLockTimeout);
+        } else {
+            return new TextStreamHelperImpl(outputDirPath, contractNumber, getRollOverThreshold(), tryLockTimeout);
+        }
+    }
+
+    /**
+     * While there are still patient records in progress, sleep for a bit and check progress
+     * @param progressTracker
+     * @param futureHandles
+     */
+    private void awaitTermination(ProgressTracker progressTracker, ArrayList<Future<Void>> futureHandles) {
+        while (!futureHandles.isEmpty()) {
+            sleep();
+            processHandles(futureHandles, progressTracker);
+        }
+    }
+
+    private void closeHelper(StreamHelper helper) {
+        if (helper != null) {
+            try {
+                helper.close();
+            } catch (Exception ex) {
+                log.error("Unable to close the helper", ex);
+            }
+        }
+    }
+
+    private void handleCancellation(boolean isCancelled) {
         if (isCancelled) {
             final String errMsg = "Job was cancelled while it was being processed";
             log.warn("{}", errMsg);
             throw new JobCancelledException(errMsg);
         }
-
-        // All jobs are done, return the job output records
-        return createJobOutputs(helper.getDataFiles(), helper.getErrorFiles());
     }
 
     /**
