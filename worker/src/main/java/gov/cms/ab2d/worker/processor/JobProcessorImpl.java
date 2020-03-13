@@ -42,7 +42,6 @@ import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
@@ -500,35 +499,46 @@ public class JobProcessorImpl implements JobProcessor {
     }
 
     /**
-     * For each thread, check to see if it's done. If it is, remove it from the list of pending
-     * threads and increment the number processed
+     * For each future, check to see if it's done. If it is, remove it from the list of future handles
+     * and increment the number processed
      *
      * @param futureHandles - the thread futures
      * @param progressTracker - the tracker with updated tracker information
      */
     private void processHandles(List<Future<Void>> futureHandles, ProgressTracker progressTracker) {
-        Iterator<Future<Void>> iterator = futureHandles.iterator();
+        var iterator = futureHandles.iterator();
         while (iterator.hasNext()) {
             var future = iterator.next();
             if (future.isDone()) {
-                progressTracker.incrementProcessedCount();
-                try {
-                    future.get();
-                } catch (InterruptedException | ExecutionException e) {
-                    analyzeException(futureHandles, progressTracker, e);
-
-                } catch (CancellationException e) {
-                    // This could happen in the rare event that a job was cancelled mid-process.
-                    // due to which the futures in the queue (that were not yet in progress) were cancelled.
-                    // Nothing to be done here
-                    log.warn("CancellationException while calling Future.get() - Job may have been cancelled");
-                }
+                processFuture(futureHandles, progressTracker, future);
                 iterator.remove();
             }
         }
 
-        // If it's time, update the progress in the DB & logs
+        // update the progress in the DB & logs periodically
         trackProgress(progressTracker);
+    }
+
+    /**
+     * process the future that is marked as done.
+     * On doing a get(), if an exception is thrown, analyze it to decide whether to stop the batch or not.
+     * @param futureHandles
+     * @param progressTracker
+     * @param future
+     */
+    private void processFuture(List<Future<Void>> futureHandles, ProgressTracker progressTracker, Future<Void> future) {
+        progressTracker.incrementProcessedCount();
+        try {
+            future.get();
+        } catch (InterruptedException | ExecutionException e) {
+            analyzeException(futureHandles, progressTracker, e);
+
+        } catch (CancellationException e) {
+            // This could happen in the rare event that a job was cancelled mid-process.
+            // due to which the futures in the queue (that were not yet in progress) were cancelled.
+            // Nothing to be done here
+            log.warn("CancellationException while calling Future.get() - Job may have been cancelled");
+        }
     }
 
     private void analyzeException(List<Future<Void>> futureHandles, ProgressTracker progressTracker, Exception e) {
