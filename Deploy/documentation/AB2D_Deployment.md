@@ -61,7 +61,13 @@
 1. [Map the application load balancer for sandbox certificate](#map-the-application-load-balancer-for-sandbox-certificate)
 1. [Submit an "Internet DNS Change Request Form" to product owner for the sandbox application load balancer](#submit-an-internet-dns-change-request-form-to-product-owner-for-the-sandbox-application-load-balancer)
 1. [Setup Jenkins master in management AWS account](#setup-jenkins-master-in-management-aws-account)
-1. [Deploy and configure Jenkins](#deploy-and-configure-jenkins)
+1. [Configure Jenkins master](#configure-jenkins-master)
+   [Enable Jenkins](#enable-jenkins)
+   [Initialize the Jenkins GUI](#initialize-the-jenkins-gui)
+   [Configure SSH on Jenkins master](#configure-ssh-on-jenkins-master)
+   [Create jenkins IAM user in the development AWS account](#create-jenkins-iam-user-in-the-development-aws-account)
+   [Configure AWS CLI for Dev environment on Jenkins master](#configure-aws-cli-for-dev-environment-on-jenkins-master)
+   [Install python3, pip3, and required pip modules](#install-python3-pip3-and-required-pip-modules)
 1. [Upgrade Jenkins](#upgrade-jenkins)
 1. [Verify VPC peering between the management and development AWS accounts](#verify-vpc-peering-between-the-management-and-development-aws-accounts)
 1. [Update existing AB2D static website in development](#update-existing-ab2d-static-website-in-development)
@@ -522,7 +528,7 @@
 
    - **Console login link:** https://{aws account number}.signin.aws.amazon.com/console
 
-1. Save these credentials someone safe like a personal slack channel
+1. Save these credentials in 1Password
 
 1. Note that if you want AWS console access with your IAM user, you will need to enable multi-factor authentication (MFA)
 
@@ -4227,7 +4233,9 @@
 
         - VolGroup00-homeVol   253:1    0  223G  0 lvm  /home
 
-## Deploy and configure Jenkins
+## Configure Jenkins master
+
+### Enable Jenkins
 
 1. Set the management AWS profile
 
@@ -4331,11 +4339,13 @@
 
       1. Repeat the "netstat" port step above
 
-1. Note the private IP of Jenkins master
+1. Note the public IP of Jenkins master
 
    ```ShellSession
-   $ hostname -I | awk '{print $1}'
+   $ curl http://checkip.amazonaws.com
    ```
+
+### Initialize the Jenkins GUI
 
 1. Open Chrome
 
@@ -4389,6 +4399,33 @@
 
    1. Select **Start using Jenkins**
 
+### Configure SSH on Jenkins master
+
+1. Set the management AWS profile
+
+   ```ShellSession
+   $ export AWS_PROFILE=ab2d-mgmt-east-dev
+   ```
+   
+1. Connect to the Jenkins EC2 instance
+
+   1. Get the private IP address of Jenkins EC2 instance
+   
+      ```ShellSession
+      $ JENKINS_MASTER_PUBLIC_IP=$(aws --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-jenkins-master" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PublicIpAddress" \
+        --output text)
+      ```
+
+   1. Ensure that you are connected to the Cisco VPN
+
+   1. SSH into the instance using the private IP address
+
+      ```ShellSession
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_MASTER_PUBLIC_IP
+      ```
+      
 1. Get information about the jenkins user account
 
    1. Enter the following
@@ -4576,6 +4613,262 @@
     1. Note that the above setting for the jenkins user is not ideal since it means that the jenkins user will be able to do "sudo" on all commands
 
     1. Note that it would be better to lock down the jenkins user so that it can only do "sudo" on a certain subset of commands based on the requirements
+
+### Create jenkins IAM user in the development AWS account
+
+1. Open Chrome
+
+1. Log on to the development AWS account
+
+1. Select **IAM**
+
+1. Select **Users** in the leftmost panel
+
+1. Select **Add user**
+
+1. Configure the user as follows
+
+   - **User name:** jenkins
+
+   - **Programmatic access:** checked
+
+   - **AWS Management Console access:** unchecked
+
+1. Select **Next: Permissions**
+
+1. Check the checkbox beside **Administrators**
+
+1. Select **Next: Tags**
+
+1. Select **Next: Review**
+
+1. Select **Create user**
+
+1. Select **Download .csv**
+
+1. Select **Close**
+
+1. Note that the following can be found in the "credentials.csv" file that you downloaded
+
+   *Format:*
+   
+   - **User name:** {your semanticbits email}
+
+   - **Password:** {blank because you did custom password}
+
+   - **Access key ID:** {your access key}
+
+   - **Secret access key:** {your secret access key}
+
+   - **Console login link:** https://{aws account number}.signin.aws.amazon.com/console
+
+1. Save these credentials someone safe like a personal slack channel
+
+### Configure AWS CLI for Dev environment on Jenkins master
+
+1. Set the management AWS profile
+
+   ```ShellSession
+   $ export AWS_PROFILE=ab2d-mgmt-east-dev
+   ```
+   
+1. Connect to the Jenkins EC2 instance
+
+   1. Get the private IP address of Jenkins EC2 instance
+   
+      ```ShellSession
+      $ JENKINS_MASTER_PUBLIC_IP=$(aws --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-jenkins-master" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PublicIpAddress" \
+        --output text)
+      ```
+
+   1. Ensure that you are connected to the Cisco VPN
+
+   1. SSH into the instance using the private IP address
+
+      ```ShellSession
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_MASTER_PUBLIC_IP
+      ```
+
+1. Configure AWS CLI
+   
+   ```ShellSession
+   $ aws configure --profile=ab2d-dev
+   ```
+
+1. Enter {your aws access key} at the **AWS Access Key ID** prompt
+
+1. Enter {your aws secret access key} at the AWS Secret Access Key prompt
+
+1. Enter the following at the **Default region name** prompt
+
+   ```
+   us-east-1
+   ```
+
+1. Enter the following at the **Default output format** prompt
+
+   ```
+   json
+   ```
+
+1. Examine the contents of your AWS credentials file
+
+   ```ShellSession
+   $ cat ~/.aws/credentials
+   ```
+
+### Install python3, pip3, and required pip modules
+
+1. Check the version of python3 that is installed on your development machine
+
+   ```ShellSession
+   $ python3 --version
+   ```
+
+1. Note the python3 version
+
+   *Format:*
+
+   ```
+   Python {python3 version}
+   ```
+
+   *Example:*
+
+   ```
+   Python 3.7.5
+   ```
+   
+1. Set the management AWS profile
+
+   ```ShellSession
+   $ export AWS_PROFILE=ab2d-mgmt-east-dev
+   ```
+   
+1. Connect to the Jenkins EC2 instance
+
+   1. Get the private IP address of Jenkins EC2 instance
+   
+      ```ShellSession
+      $ JENKINS_MASTER_PUBLIC_IP=$(aws --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-jenkins-master" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PublicIpAddress" \
+        --output text)
+      ```
+
+   1. Ensure that you are connected to the Cisco VPN
+
+   1. SSH into the instance using the private IP address
+
+      ```ShellSession
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_MASTER_PUBLIC_IP
+      ```
+      
+1. Installed Python requirements
+
+   ```ShellSession
+   $ sudo yum install gcc openssl-devel bzip2-devel libffi-devel -y
+   ```
+
+1. Change to the "/usr/src" directory
+
+   ```ShellSession
+   $ cd /usr/src
+   ```
+
+1. Set the python3 version to be the same as your development machine
+
+   *Format:*
+
+   ```ShellSession
+   $ PYTHON3_VERSION={python3 version}
+   ```
+
+   *Example:*
+
+   ```ShellSession
+   $ PYTHON3_VERSION=3.7.5
+   ```
+
+1. Download the python3 source package
+
+   ```ShellSession
+   $ sudo wget "https://www.python.org/ftp/python/${PYTHON3_VERSION}/Python-${PYTHON3_VERSION}.tgz"
+   ```
+
+1. Unzip the python3 source package
+
+   ```ShellSession
+   $ sudo tar xzf "Python-${PYTHON3_VERSION}.tgz"
+   ```
+
+1. Delete the "tgz" file
+
+   ```ShellSession
+   $ sudo rm "Python-${PYTHON3_VERSION}.tgz"
+   ```
+
+1. Change to python3 source directory
+
+   ```ShellSession
+   $ cd "Python-${PYTHON3_VERSION}"
+   ```
+
+1. Enable optimzations for the python3 source
+
+   ```ShellSession
+   $ sudo ./configure --enable-optimizations
+   ```
+
+1. Install python3 without overwriting the default python binary (/usr/bin/python)
+
+   ```ShellSession
+   $ sudo make altinstall
+   ```
+
+1. Create a python3 symbolic link
+
+   *Example where python 3.7.x has been installed:*
+   
+   ```ShellSession
+   $ sudo ln -s /usr/local/bin/python3.7 /usr/local/bin/python3
+   ```
+
+1. Create a pip3 symbolic link
+
+   *Example where python 3.7.x has been installed:*
+   
+   ```ShellSession
+   $ sudo ln -s /usr/local/bin/pip3.7 /usr/local/bin/pip3
+   ```
+
+1. Upgrade pip3 site packages
+
+   ```ShellSession
+   $ pip3 install --upgrade pip --user
+   ```
+
+1. Install lxml
+
+   *Note that "lxml" is a library for parsing XML and HTML.*
+
+   ```ShellSession
+   $ pip3 install lxml
+   ```
+
+1. Install requests
+
+   ```ShellSession
+   $ pip3 install requests
+   ```
+
+1. Install boto3
+
+   ```ShellSession
+   $ pip3 install boto3
+   ```
 
 ## Upgrade Jenkins
 
