@@ -22,7 +22,8 @@ import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Path;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -79,8 +80,8 @@ public class ContractProcessorImpl implements ContractProcessor {
      * @param contractData - the contract data (contract, progress tracker, attested time, writer)
      * @return - the job output records containing the file information
      */
-    public List<JobOutput> process(Path outputDirPath, ContractData contractData,
-                                            FileOutputType outputType) throws FileNotFoundException {
+    public List<JobOutput> process(Path outputDirPath, ContractData contractData, FileOutputType outputType) {
+
         var contract = contractData.getContract();
         log.info("Beginning to process contract {}", keyValue(CONTRACT_LOG, contract.getContractName()));
 
@@ -127,7 +128,7 @@ public class ContractProcessorImpl implements ContractProcessor {
             awaitTermination(progressTracker, futureHandles);
 
         } finally {
-            closeHelper(helper);
+            close(helper);
         }
 
         handleCancellation(isCancelled);
@@ -136,11 +137,15 @@ public class ContractProcessorImpl implements ContractProcessor {
         return createJobOutputs(helper.getDataFiles(), helper.getErrorFiles());
     }
 
-    private StreamHelper createOutputHelper(Path outputDirPath, String contractNumber, FileOutputType outputType) throws FileNotFoundException {
-        if (outputType == ZIP) {
-            return new ZipStreamHelperImpl(outputDirPath, contractNumber, getZipRolloverThreshold(), getRollOverThreshold(), tryLockTimeout);
-        } else {
-            return new TextStreamHelperImpl(outputDirPath, contractNumber, getRollOverThreshold(), tryLockTimeout);
+    private StreamHelper createOutputHelper(Path outputDirPath, String contractNumber, FileOutputType outputType) {
+        try {
+            if (outputType == ZIP) {
+                return new ZipStreamHelperImpl(outputDirPath, contractNumber, getZipRolloverThreshold(), getRollOverThreshold(), tryLockTimeout);
+            } else {
+                return new TextStreamHelperImpl(outputDirPath, contractNumber, getRollOverThreshold(), tryLockTimeout);
+            }
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
         }
     }
 
@@ -156,7 +161,7 @@ public class ContractProcessorImpl implements ContractProcessor {
         }
     }
 
-    private void closeHelper(StreamHelper helper) {
+    private void close(StreamHelper helper) {
         if (helper != null) {
             try {
                 helper.close();

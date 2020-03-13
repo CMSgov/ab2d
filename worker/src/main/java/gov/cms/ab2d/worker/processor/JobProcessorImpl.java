@@ -23,7 +23,6 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -107,7 +106,7 @@ public class JobProcessorImpl implements JobProcessor {
      * @param job - the job to process
      * @param outputDirPath - the output directory to put all the files
      */
-    private void processJob(Job job, Path outputDirPath) throws FileNotFoundException {
+    private void processJob(Job job, Path outputDirPath) {
         // Create the output directory
         createOutputDirectory(outputDirPath);
 
