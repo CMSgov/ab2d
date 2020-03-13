@@ -2,7 +2,6 @@ package gov.cms.ab2d.api.controller;
 
 import com.google.gson.Gson;
 import gov.cms.ab2d.api.config.SwaggerConfig;
-import gov.cms.ab2d.api.util.SwaggerConstants;
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.JobOutput;
 import gov.cms.ab2d.common.service.InvalidUserInputException;
@@ -57,16 +56,24 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import static gov.cms.ab2d.api.util.Constants.GENERIC_FHIR_ERR_MSG;
-import static gov.cms.ab2d.api.util.SwaggerConstants.*;
+import static gov.cms.ab2d.api.util.SwaggerConstants.BULK_ACCEPT;
+import static gov.cms.ab2d.api.util.SwaggerConstants.BULK_CANCEL;
+import static gov.cms.ab2d.api.util.SwaggerConstants.BULK_CONTRACT_EXPORT;
+import static gov.cms.ab2d.api.util.SwaggerConstants.BULK_EXPORT;
+import static gov.cms.ab2d.api.util.SwaggerConstants.BULK_EXPORT_TYPE;
+import static gov.cms.ab2d.api.util.SwaggerConstants.BULK_MAIN;
+import static gov.cms.ab2d.api.util.SwaggerConstants.BULK_OUTPUT_FORMAT;
+import static gov.cms.ab2d.api.util.SwaggerConstants.BULK_PREFER;
 import static gov.cms.ab2d.common.service.JobService.ZIPFORMAT;
 import static gov.cms.ab2d.common.util.Constants.*;
 import static java.time.format.DateTimeFormatter.ISO_DATE_TIME;
 import static java.time.format.DateTimeFormatter.ISO_OFFSET_DATE_TIME;
 
 @Slf4j
-@Api(value = "Bulk Data Access API", description = SwaggerConstants.BULK_MAIN)
+@Api(value = "Bulk Data Access API", description = BULK_MAIN)
 @RestController
 @RequestMapping(path = API_PREFIX + FHIR_PREFIX, produces = {"application/json", NDJSON_FIRE_CONTENT_TYPE})
+@SuppressWarnings("PMD.TooManyStaticImports")
 /**
  * The sole REST controller for AB2D's implementation of the FHIR Bulk Data API specification.
  */
