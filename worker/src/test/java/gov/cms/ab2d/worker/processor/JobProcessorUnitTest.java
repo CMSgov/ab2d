@@ -280,7 +280,7 @@ class JobProcessorUnitTest {
         var processedJob = cut.process(jobUuid);
 
         assertThat(processedJob.getStatus(), is(JobStatus.FAILED));
-        assertThat(processedJob.getStatusMessage(), CoreMatchers.startsWith("Could not delete directory"));
+        assertThat(processedJob.getStatusMessage(), CoreMatchers.startsWith("Could not delete"));
         assertThat(processedJob.getExpiresAt(), nullValue());
 
         verify(fileService).createDirectory(any());
