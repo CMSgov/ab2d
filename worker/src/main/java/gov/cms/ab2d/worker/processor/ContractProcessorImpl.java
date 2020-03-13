@@ -2,7 +2,6 @@ package gov.cms.ab2d.worker.processor;
 
 import com.newrelic.api.agent.NewRelic;
 import com.newrelic.api.agent.Token;
-import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.JobOutput;
 import gov.cms.ab2d.common.model.JobStatus;
 import gov.cms.ab2d.common.model.OptOut;
@@ -81,20 +80,15 @@ public class ContractProcessorImpl implements ContractProcessor {
      * @return - the job output records containing the file information
      */
     public List<JobOutput> process(Path outputDirPath, ContractData contractData, FileOutputType outputType) {
-
-        var contract = contractData.getContract();
-        log.info("Beginning to process contract {}", keyValue(CONTRACT_LOG, contract.getContractName()));
-
-        var contractNumber = contract.getContractNumber();
+        var contractNumber = contractData.getContract().getContractNumber();
+        log.info("Beginning to process contract {}", keyValue(CONTRACT_LOG, contractNumber));
 
         var progressTracker = contractData.getProgressTracker();
-
         var patients = getPatientsByContract(contractNumber, progressTracker);
         int patientCount = patients.size();
         log.info("Contract [{}] has [{}] Patients", contractNumber, patientCount);
 
         boolean isCancelled = false;
-
         StreamHelper helper = null;
         try {
             helper = createOutputHelper(outputDirPath, contractNumber, outputType);
@@ -109,7 +103,7 @@ public class ContractProcessorImpl implements ContractProcessor {
                     continue;
                 }
 
-                futureHandles.add(processPatient(contractData, contract, progressTracker, helper, patient));
+                futureHandles.add(processPatient(contractData, helper, patient));
 
                 // Periodically check if cancelled
                 if (recordsProcessedCount % cancellationCheckFrequency == 0) {
@@ -186,21 +180,20 @@ public class ContractProcessorImpl implements ContractProcessor {
      * See https://docs.newrelic.com/docs/agents/java-agent/async-instrumentation/java-agent-api-asynchronous-applications
      *
      * @param contractData
-     * @param contract
-     * @param progressTracker
      * @param helper
      * @param patient
-     * @return
+     * @return a Future<Void>
      */
-    private Future<Void> processPatient(ContractData contractData, Contract contract, ProgressTracker progressTracker, StreamHelper helper, PatientDTO patient) {
+    private Future<Void> processPatient(ContractData contractData, StreamHelper helper, PatientDTO patient) {
         final Token token = NewRelic.getAgent().getTransaction().getToken();
 
         // Using a ThreadLocal to communicate contract number to RoundRobinBlockingQueue
         // could be viewed as a hack by many; but on the other hand it saves us from writing
         // tons of extra code.
-        RoundRobinBlockingQueue.CATEGORY_HOLDER.set(progressTracker.getJobUuid());
+        var jobUuid = contractData.getProgressTracker().getJobUuid();
+        RoundRobinBlockingQueue.CATEGORY_HOLDER.set(jobUuid);
         try {
-            var attestedOn = contract.getAttestedOn();
+            var attestedOn = contractData.getContract().getAttestedOn();
             var sinceTime = contractData.getSinceTime();
             return patientClaimsProcessor.process(patient, helper, attestedOn, sinceTime, token);
 
