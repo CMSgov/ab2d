@@ -2,6 +2,7 @@ package gov.cms.ab2d.worker.processor;
 
 import com.newrelic.api.agent.NewRelic;
 import com.newrelic.api.agent.Token;
+import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.JobOutput;
 import gov.cms.ab2d.common.model.JobStatus;
 import gov.cms.ab2d.common.model.OptOut;
@@ -25,6 +26,7 @@ import java.io.FileNotFoundException;
 import java.nio.file.Path;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
@@ -86,8 +88,7 @@ public class ContractProcessorImpl implements ContractProcessor {
 
         var progressTracker = contractData.getProgressTracker();
 
-        var patientsByContract = getPatientsByContract(contractNumber, progressTracker);
-        var patients = patientsByContract.getPatients();
+        var patients = getPatientsByContract(contractNumber, progressTracker);
         int patientCount = patients.size();
         log.info("Contract [{}] has [{}] Patients", contractNumber, patientCount);
 
@@ -105,29 +106,12 @@ public class ContractProcessorImpl implements ContractProcessor {
             for (PatientDTO patient : patients) {
                 ++recordsProcessedCount;
 
-                final String patientId = patient.getPatientId();
-
-                if (isOptOutPatient(patientId)) {
+                if (isOptOutPatient(patient.getPatientId())) {
                     // this patient has opted out. skip patient record.
                     continue;
                 }
 
-                // Add the thread to process the patient and start the thread
-
-                // See https://docs.newrelic.com/docs/agents/java-agent/async-instrumentation/java-agent-api-asynchronous-applications
-                // for more detail on tokens with async calls
-                final Token token = NewRelic.getAgent().getTransaction().getToken();
-
-                // Using a ThreadLocal to communicate contract number to RoundRobinBlockingQueue
-                // could be viewed as a hack by many; but on the other hand it saves us from writing
-                // tons of extra code.
-                RoundRobinBlockingQueue.CATEGORY_HOLDER.set(progressTracker.getJobUuid());
-                try {
-                    futureHandles.add(patientClaimsProcessor
-                            .process(patient, helper, contract.getAttestedOn(), contractData.getSinceTime(), token));
-                } finally {
-                    RoundRobinBlockingQueue.CATEGORY_HOLDER.remove();
-                }
+                futureHandles.add(processPatient(contractData, contract, progressTracker, helper, patient));
 
                 // Periodically check if cancelled
                 if (recordsProcessedCount % cancellationCheckFrequency == 0) {
@@ -144,16 +128,10 @@ public class ContractProcessorImpl implements ContractProcessor {
                 }
             }
 
-            // While there are still patients not being processed, sleep for a bit and check progress
+            // While there are still patient records in progress, sleep for a bit and check progress
             while (!futureHandles.isEmpty()) {
                 sleep();
                 processHandles(futureHandles, progressTracker);
-            }
-
-            if (isCancelled) {
-                final String errMsg = "Job was cancelled while it was being processed";
-                log.warn("{}", errMsg);
-                throw new JobCancelledException(errMsg);
             }
         } finally {
             if (helper != null) {
@@ -164,8 +142,46 @@ public class ContractProcessorImpl implements ContractProcessor {
                 }
             }
         }
+
+        if (isCancelled) {
+            final String errMsg = "Job was cancelled while it was being processed";
+            log.warn("{}", errMsg);
+            throw new JobCancelledException(errMsg);
+        }
+
         // All jobs are done, return the job output records
         return createJobOutputs(helper.getDataFiles(), helper.getErrorFiles());
+    }
+
+    /**
+     * Create a token from newRelic for the transaction.
+     *
+     * On using new-relic tokens with async calls
+     * See https://docs.newrelic.com/docs/agents/java-agent/async-instrumentation/java-agent-api-asynchronous-applications
+     *
+     * @param contractData
+     * @param contract
+     * @param progressTracker
+     * @param helper
+     * @param patient
+     * @return
+     */
+    private Future<Void> processPatient(ContractData contractData, Contract contract, ProgressTracker progressTracker, StreamHelper helper, PatientDTO patient) {
+        final Token token = NewRelic.getAgent().getTransaction().getToken();
+
+        // Using a ThreadLocal to communicate contract number to RoundRobinBlockingQueue
+        // could be viewed as a hack by many; but on the other hand it saves us from writing
+        // tons of extra code.
+        RoundRobinBlockingQueue.CATEGORY_HOLDER.set(progressTracker.getJobUuid());
+        try {
+            var attestedOn = contract.getAttestedOn();
+            var sinceTime = contractData.getSinceTime();
+            return patientClaimsProcessor.process(patient, helper, attestedOn, sinceTime, token);
+
+        } finally {
+            RoundRobinBlockingQueue.CATEGORY_HOLDER.remove();
+        }
+
     }
 
     /**
@@ -175,12 +191,13 @@ public class ContractProcessorImpl implements ContractProcessor {
      * @param progressTracker - the progress tracker for all contracts and patients for the job
      * @return the contract's patients
      */
-    private GetPatientsByContractResponse getPatientsByContract(String contractNumber, ProgressTracker progressTracker) {
+    private List<PatientDTO> getPatientsByContract(String contractNumber, ProgressTracker progressTracker) {
         return progressTracker.getPatientsByContracts()
                 .stream()
                 .filter(byContract -> byContract.getContractNumber().equals(contractNumber))
                 .findFirst()
-                .orElse(null);
+                .map(GetPatientsByContractResponse::getPatients)
+                .orElse(Collections.emptyList());
     }
 
 
