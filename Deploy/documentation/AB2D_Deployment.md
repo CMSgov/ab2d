@@ -4920,7 +4920,7 @@
 
       ```ShellSession
       $ aws --region us-east-1 cloudfront list-invalidations \
-        --distribution-id E8P2KHG7IH0TG \
+        --distribution-id "${CLOUDFRONT_DITRIBUTION_ID}" \
         --query "InvalidationList.Items[0].Status" \
         --output text
       ```
