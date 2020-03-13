@@ -36,7 +36,11 @@ layout: default
         <h5 class="sr-only" id="page-sub-nav">Page navigation links</h5>
         <ul class="ds-c-list ds-c-list--bare" id="mainNav" aria-labelledby="page-sub-nav">
           {% for item in page.sections %}
-            <li><a href="#{{ item | slugify }}" aria-label="{{ item }} section, current page" class="ds-u-display--block {{ page.subnav-link-gradient }}" aria-label="{{ item }} section, current page">{{ item }}</a></li>
+            {% if item.link %}
+            <li><a href="{{item.link}}">{{item.name}}</a></li>
+            {% else %}
+            <li><a href="#{{ item.name | slugify }}" aria-label="{{ item.name }} section, current page" class="ds-u-display--block {{ page.subnav-link-gradient }}" aria-label="{{ item.name }} section, current page">{{ item.name }}</a></li>
+            {% endif %}
           {% endfor %}
         </ul>
       </nav>

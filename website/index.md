@@ -7,10 +7,12 @@ landing-page: live
 gradient: "blueberry-lime-background"
 subnav-link-gradient: "blueberry-lime-link"
 sections:
-  - Overview
-  - Attestation  
-  - For Developers
-  - Frequently Asked Questions
+  - name: Overview
+  - name: Attestation
+  - name: Frequently Asked Questions
+  - name: For Developers
+  - name: Status
+    link: status
 ctas:
 
 ---
