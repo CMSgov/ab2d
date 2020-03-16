@@ -66,7 +66,7 @@ public class FileDeletionServiceImpl implements FileDeletionService {
                     try {
                         job = jobService.getJobByJobUuid(jobUuid);
                     } catch (ResourceNotFoundException e) {
-                        // just move on since there was no job connected to this directory
+                        log.trace("No job connected to directory {}", path); // Put a log statement here to make PMD happy
                     }
                     Instant deleteCheckTime = null;
                     if (job != null && job.getStatus().isFinished()) {

@@ -56,12 +56,10 @@ public class CacheServiceImpl implements CacheService {
 
     private Integer getMonth(ClearCoverageCacheRequest request) {
         final Integer month = request.getMonth();
-        if (month != null) {
-            if (month < 1 || month > 12) {
-                final String errMsg = "invalid value for month. Month must be between 1 and 12";
-                log.error("{} - invalid month  :[{}]", errMsg, month);
-                throw new InvalidUserInputException(errMsg);
-            }
+        if (month != null && (month < 1 || month > 12)) {
+            final String errMsg = "invalid value for month. Month must be between 1 and 12";
+            log.error("{} - invalid month  :[{}]", errMsg, month);
+            throw new InvalidUserInputException(errMsg);
         }
         return month;
     }
