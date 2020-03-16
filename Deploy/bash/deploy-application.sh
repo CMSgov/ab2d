@@ -104,10 +104,6 @@ case $i in
   USE_EXISTING_IMAGES="true"
   shift # past argument=value
   ;;
-  --auto-approve)
-  AUTOAPPROVE="true"
-  shift # past argument=value
-  ;;
 esac
 done
 
