@@ -164,6 +164,11 @@ if [ -n "${KMS_KEY_ID}" ]; then
     --key-id alias/ab2d-kms \
     --query "KeyMetadata.KeyState" \
     --output text)
+else
+  echo "***************************************************"
+  echo "ERROR: kms key id for target environment not found."
+  echo "***************************************************"
+  exit 1
 fi
 
 #
@@ -181,6 +186,11 @@ if [ -n "${MGMT_KMS_KEY_ID}" ]; then
     --key-id alias/ab2d-kms \
     --query "KeyMetadata.KeyState" \
     --output text)
+else
+  echo "*******************************************************"
+  echo "ERROR: kms key id for management environment not found."
+  echo "*******************************************************"
+  exit 1
 fi
 
 #
@@ -227,10 +237,6 @@ terraform validate
 
 export AWS_PROFILE="${CMS_ENV}"
 
-KMS_KEY_ID=$(aws --region "${REGION}" kms list-aliases \
-  --query="Aliases[?AliasName=='alias/ab2d-kms'].TargetKeyId" \
-  --output text)
-
 echo "Enabling KMS key..."
 cd "${START_DIR}/.."
 cd python3
@@ -242,10 +248,6 @@ cd python3
 
 export AWS_PROFILE="${CMS_ECR_REPO_ENV}"
 
-MGMT_KMS_KEY_ID=$(aws --region "${REGION}" kms list-aliases \
-  --query="Aliases[?AliasName=='alias/ab2d-kms'].TargetKeyId" \
-  --output text)
-
 echo "Enabling KMS key..."
 cd "${START_DIR}/.."
 cd python3
@@ -255,45 +257,119 @@ cd python3
 # Get secrets
 #
 
+# Set AWS profile to the target environment
+
+export AWS_PROFILE="${CMS_ENV}"
+
 # Get database user secret
 
 DATABASE_USER=$(./get-database-secret.py $CMS_ENV database_user $DATABASE_SECRET_DATETIME)
+
+if [ -z "${DATABASE_USER}" ]; then
+  echo "**************************************"
+  echo "ERROR: database user secret not found."
+  echo "**************************************"
+  exit 1
+fi
 
 # Get database password secret
 
 DATABASE_PASSWORD=$(./get-database-secret.py $CMS_ENV database_password $DATABASE_SECRET_DATETIME)
 
+if [ -z "${DATABASE_PASSWORD}" ]; then
+  echo "******************************************"
+  echo "ERROR: database password secret not found."
+  echo "******************************************"
+  exit 1
+fi
+
 # Get database name secret
 
 DATABASE_NAME=$(./get-database-secret.py $CMS_ENV database_name $DATABASE_SECRET_DATETIME)
+
+if [ -z "${DATABASE_NAME}" ]; then
+  echo "***************************************"
+  echo "ERROR: database name secret not found."
+  echo "**************************************"
+  exit 1
+fi
 
 # Get bfd url secret
 
 BFD_URL=$(./get-database-secret.py $CMS_ENV bfd_url $DATABASE_SECRET_DATETIME)
 
+if [ -z "${BFD_URL}" ]; then
+  echo "********************************"
+  echo "ERROR: bfd url secret not found."
+  echo "********************************"
+  exit 1
+fi
+
 # Get bfd keystore location secret
 
 BFD_KEYSTORE_LOCATION=$(./get-database-secret.py $CMS_ENV bfd_keystore_location $DATABASE_SECRET_DATETIME)
+
+if [ -z "${BFD_KEYSTORE_LOCATION}" ]; then
+  echo "**********************************************"
+  echo "ERROR: bfd keystore location secret not found."
+  echo "**********************************************"
+  exit 1
+fi
 
 # Get bfd keystore password secret
 
 BFD_KEYSTORE_PASSWORD=$(./get-database-secret.py $CMS_ENV bfd_keystore_password $DATABASE_SECRET_DATETIME)
 
+if [ -z "${BFD_KEYSTORE_PASSWORD}" ]; then
+  echo "**********************************************"
+  echo "ERROR: bfd keystore password secret not found."
+  echo "**********************************************"
+  exit 1
+fi
+
 # Get hicn hash pepper secret
 
 HICN_HASH_PEPPER=$(./get-database-secret.py $CMS_ENV hicn_hash_pepper $DATABASE_SECRET_DATETIME)
+
+if [ -z "${HICN_HASH_PEPPER}" ]; then
+  echo "*****************************************"
+  echo "ERROR: hicn hash pepper secret not found."
+  echo "*****************************************"
+  exit 1
+fi
 
 # Get hicn hash iter secret
 
 HICN_HASH_ITER=$(./get-database-secret.py $CMS_ENV hicn_hash_iter $DATABASE_SECRET_DATETIME)
 
+if [ -z "${HICN_HASH_ITER}" ]; then
+  echo "***************************************"
+  echo "ERROR: hicn hash iter secret not found."
+  echo "***************************************"
+  exit 1
+fi
+
 # Get new relic app name secret
 
 NEW_RELIC_APP_NAME=$(./get-database-secret.py $CMS_ENV new_relic_app_name $DATABASE_SECRET_DATETIME)
 
+if [ -z "${NEW_RELIC_APP_NAME}" ]; then
+  echo "*******************************************"
+  echo "ERROR: new relic app name secret not found."
+  echo "*******************************************"
+  exit 1
+fi
+
 # Get new relic license key secret
 
 NEW_RELIC_LICENSE_KEY=$(./get-database-secret.py $CMS_ENV new_relic_license_key $DATABASE_SECRET_DATETIME)
+
+if [ -z "${NEW_RELIC_LICENSE_KEY}" ]; then
+  echo "**********************************************"
+  echo "ERROR: new relic license key secret not found."
+  echo "**********************************************"
+  exit 1
+fi
 
 # If any databse secret produced an error, exit the script
 
@@ -309,4 +385,75 @@ if [ "${DATABASE_USER}" == "ERROR: Cannot get database secret because KMS key is
   || [ "${NEW_RELIC_LICENSE_KEY}" == "ERROR: Cannot get database secret because KMS key is disabled!" ]; then
     echo "ERROR: Cannot get secrets because KMS key is disabled!"
     exit 1
+fi
+
+#
+# Get network attributes
+#
+
+# Set AWS profile to the target environment
+
+export AWS_PROFILE="${CMS_ENV}"
+
+# Get first public subnet id
+
+SUBNET_PUBLIC_1_ID=$(aws --region "${REGION}" ec2 describe-subnets \
+  --filters "Name=tag:Name,Values=${CMS_ENV}-public-a" \
+  --query "Subnets[*].SubnetId" \
+  --output text)
+
+if [ -z "${SUBNET_PUBLIC_1_ID}" ]; then
+  echo "ERROR: public subnet #1 not found..."
+  exit 1
+fi
+
+# Get second public subnet id
+
+SUBNET_PUBLIC_2_ID=$(aws --region "${REGION}" ec2 describe-subnets \
+  --filters "Name=tag:Name,Values=${CMS_ENV}-public-b" \
+  --query "Subnets[*].SubnetId" \
+  --output text)
+
+if [ -z "${SUBNET_PUBLIC_2_ID}" ]; then
+  echo "ERROR: public subnet #2 not found..."
+  exit 1
+fi
+
+# Get first private subnet id
+
+SUBNET_PRIVATE_1_ID=$(aws --region "${REGION}" ec2 describe-subnets \
+  --filters "Name=tag:Name,Values=${CMS_ENV}-private-a" \
+  --query "Subnets[*].SubnetId" \
+  --output text)
+
+if [ -z "${SUBNET_PRIVATE_1_ID}" ]; then
+  echo "ERROR: private subnet #1 not found..."
+  exit 1
+fi
+
+# Get second private subnet id
+
+SUBNET_PRIVATE_2_ID=$(aws --region "${REGION}" ec2 describe-subnets \
+  --filters "Name=tag:Name,Values=${CMS_ENV}-private-b" \
+  --query "Subnets[*].SubnetId" \
+  --output text)
+
+if [ -z "${SUBNET_PRIVATE_2_ID}" ]; then
+  echo "ERROR: private subnet #2 not found..."
+  exit 1
+fi
+
+#
+# Get AMI id
+#
+
+AMI_ID=$(aws --region "${REGION}" ec2 describe-images \
+  --owners self \
+  --filters "Name=tag:Name,Values=ab2d-ami" \
+  --query "Images[*].[ImageId]" \
+  --output text)
+
+if [ -z "${AMI_ID}" ]; then
+  echo "ERROR: AMI id not found..."
+  exit 1
 fi
