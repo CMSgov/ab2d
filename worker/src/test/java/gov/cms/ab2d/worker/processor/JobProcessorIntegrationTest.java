@@ -117,16 +117,23 @@ class JobProcessorIntegrationTest {
 
         FhirContext fhirContext = FhirContext.forDstu3();
         PatientClaimsProcessor patientClaimsProcessor = new PatientClaimsProcessorImpl(mockBfdClient, fhirContext);
+        ContractProcessor contractProcessor = new ContractProcessorImpl(
+                fileService,
+                jobRepository,
+                patientClaimsProcessor,
+                optOutRepository
+        );
+
+        ReflectionTestUtils.setField(contractProcessor, "cancellationCheckFrequency", 10);
 
         cut = new JobProcessorImpl(
                 fileService,
                 jobRepository,
                 jobOutputRepository,
                 contractAdapterStub,
-                patientClaimsProcessor,
-                optOutRepository
+                contractProcessor
         );
-        ReflectionTestUtils.setField(cut, "cancellationCheckFrequency", 10);
+
         ReflectionTestUtils.setField(cut, "efsMount", tmpEfsMountDir.toString());
         ReflectionTestUtils.setField(cut, "failureThreshold", 10);
     }
