@@ -42,6 +42,7 @@ import static net.logstash.logback.argument.StructuredArguments.keyValue;
 @Slf4j
 @Service
 @RequiredArgsConstructor
+@SuppressWarnings("PMD.TooManyStaticImports")
 public class ContractProcessorImpl implements ContractProcessor {
     private static final int SLEEP_DURATION = 250;
 
