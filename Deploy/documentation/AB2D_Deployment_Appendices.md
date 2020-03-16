@@ -47,6 +47,7 @@
 1. [Appendix AA: View CCS Cloud VPN Public IPs](#appendix-aa-view-ccs-cloud-vpn-public-ips)
 1. [Appendix BB: Update controller](#appendix-bb-update-controller)
 1. [Appendix CC: Fix bad terraform component](#appendix-cc-fix-bad-terraform-component)
+1. [Appendix DD: Test running development automation from Jenkins master](#appendix-dd-test-running-development-automation-from-jenkins-master)
 
 ## Appendix A: Access the CMS AWS console
 
@@ -3379,3 +3380,79 @@
    ```
 
 1. Rerun the automation, so that the module will be recreated instead of being refreshed
+
+## Appendix DD: Test running development automation from Jenkins master
+
+1. Set the management AWS profile
+
+   ```ShellSession
+   $ export AWS_PROFILE=ab2d-mgmt-east-dev
+   ```
+
+1. Connect to the Jenkins EC2 instance
+
+   1. Get the private IP address of Jenkins EC2 instance
+
+      ```ShellSession
+      $ JENKINS_MASTER_PUBLIC_IP=$(aws --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-jenkins-master" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PublicIpAddress" \
+        --output text)
+      ```
+
+   1. Ensure that you are connected to the Cisco VPN
+
+   1. SSH into the instance using the private IP address
+
+      ```ShellSession
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_MASTER_PUBLIC_IP
+      ```
+
+1. Create code directory
+
+   ```ShellSession
+   $ mkdir -p ~/code
+   ```
+
+1. Change to the "code" directory
+
+   ```ShellSession
+   $ cd ~/code
+   ```
+
+1. Clone the ab2d repo
+
+   ```ShellSession
+   $ git clone https://github.com/CMSgov/ab2d.git
+   ```
+
+1. Change to the "Deploy" directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d/Deploy
+   ```
+
+1. Run application deployment automation
+
+   ```ShellSession
+   $ ./bash/deploy-application.sh \
+     --environment=ab2d-dev \
+     --shared-environment=ab2d-dev-shared \
+     --ecr-repo-environment=ab2d-mgmt-east-dev \
+     --region=us-east-1 \
+     --vpc-id=vpc-0c6413ec40c5fdac3 \
+     --ssh-username=ec2-user \
+     --owner=842420567215 \
+     --ec2_instance_type_api=m5.xlarge \
+     --ec2_instance_type_worker=m5.xlarge \
+     --ec2_instance_type_other=m5.xlarge \
+     --ec2_desired_instance_count_api=1 \
+     --ec2_minimum_instance_count_api=1 \
+     --ec2_maximum_instance_count_api=1 \
+     --ec2_desired_instance_count_worker=1 \
+     --ec2_minimum_instance_count_worker=1 \
+     --ec2_maximum_instance_count_worker=1 \
+     --database-secret-datetime=2020-01-02-09-15-01 \
+     --build-new-images \
+     --auto-approve
+   ```
