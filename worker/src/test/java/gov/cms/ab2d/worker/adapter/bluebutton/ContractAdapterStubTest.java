@@ -38,13 +38,6 @@ class ContractAdapterStubTest {
         assertThat(patients.size(), is(0));
     }
 
-    @Test
-    @DisplayName("when contractNumber is 9999, returns 9_999_000 patient records")
-    void when_S9999_returns_9999000() {
-        var patients = cut.getPatients("S9999", currentMonth).getPatients();
-        assertThat(patients.size(), is(9999000));
-    }
-
 
     @DisplayName("Given ContractNumber, returns varying number of patient records")
     @ParameterizedTest(name = "Given ContractNumber \"{0}\" returns {1} patient records")
@@ -54,10 +47,7 @@ class ContractAdapterStubTest {
             "S0010, 10000",
             "S0030, 30000",
             "S0100, 100000",
-            "S0110, 110000",
-            "S1000, 1000000",
-            "S2000, 2000000",
-            "S5000, 5000000",
+            "S0110, 110000"
     })
     void when_contractNumber_returns_PatientCount(String contractNumber, int patientCount) {
         var patients = cut.getPatients(contractNumber, currentMonth).getPatients();
