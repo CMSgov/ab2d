@@ -68,6 +68,7 @@
    [Create jenkins IAM user in the development AWS account](#create-jenkins-iam-user-in-the-development-aws-account)
    [Configure AWS CLI for Dev environment on Jenkins master](#configure-aws-cli-for-dev-environment-on-jenkins-master)
    [Install python3, pip3, and required pip modules](#install-python3-pip3-and-required-pip-modules)
+   [Configure Terraform logging](#configure-terraform-logging)
 1. [Upgrade Jenkins](#upgrade-jenkins)
 1. [Verify VPC peering between the management and development AWS accounts](#verify-vpc-peering-between-the-management-and-development-aws-accounts)
 1. [Update existing AB2D static website in development](#update-existing-ab2d-static-website-in-development)
@@ -4868,6 +4869,29 @@
 
    ```ShellSession
    $ pip3 install boto3
+   ```
+
+### Configure Terraform logging
+
+1. Modify the SSH config file
+
+   1. Open the SSH config file
+
+      ```ShellSession
+      $ vim ~/.ssh/config
+      ```
+
+   2. Add or modify SSH config file to include the following line
+
+      ```
+      StrictHostKeyChecking no
+      ```
+
+1. Ensure terraform log directory exists
+
+   ```ShellSession
+   $ sudo mkdir -p /var/log/terraform
+   $ sudo chown -R "$(id -u)":"$(id -g -nr)" /var/log/terraform
    ```
 
 ## Upgrade Jenkins
