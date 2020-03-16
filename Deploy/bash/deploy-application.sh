@@ -208,7 +208,7 @@ echo "***************************************************************"
 echo "Initialize and validate terraform for the target environment..."
 echo "***************************************************************"
 
-cd "${START_DIR}"
+cd "${START_DIR}/.."
 cd terraform/environments/$CMS_ENV
 
 rm -f *.tfvars
@@ -220,3 +220,93 @@ terraform init \
   -backend-config="encrypt=true"
 
 terraform validate
+
+#
+# Get and enable KMS key id for target environment
+#
+
+export AWS_PROFILE="${CMS_ENV}"
+
+KMS_KEY_ID=$(aws --region "${REGION}" kms list-aliases \
+  --query="Aliases[?AliasName=='alias/ab2d-kms'].TargetKeyId" \
+  --output text)
+
+echo "Enabling KMS key..."
+cd "${START_DIR}/.."
+cd python3
+./enable-kms-key.py $KMS_KEY_ID
+
+#
+# Get and enable KMS key id for management environment
+#
+
+export AWS_PROFILE="${CMS_ECR_REPO_ENV}"
+
+MGMT_KMS_KEY_ID=$(aws --region "${REGION}" kms list-aliases \
+  --query="Aliases[?AliasName=='alias/ab2d-kms'].TargetKeyId" \
+  --output text)
+
+echo "Enabling KMS key..."
+cd "${START_DIR}/.."
+cd python3
+./enable-kms-key.py $MGMT_KMS_KEY_ID
+
+#
+# Get secrets
+#
+
+# Get database user secret
+
+DATABASE_USER=$(./get-database-secret.py $CMS_ENV database_user $DATABASE_SECRET_DATETIME)
+
+# Get database password secret
+
+DATABASE_PASSWORD=$(./get-database-secret.py $CMS_ENV database_password $DATABASE_SECRET_DATETIME)
+
+# Get database name secret
+
+DATABASE_NAME=$(./get-database-secret.py $CMS_ENV database_name $DATABASE_SECRET_DATETIME)
+
+# Get bfd url secret
+
+BFD_URL=$(./get-database-secret.py $CMS_ENV bfd_url $DATABASE_SECRET_DATETIME)
+
+# Get bfd keystore location secret
+
+BFD_KEYSTORE_LOCATION=$(./get-database-secret.py $CMS_ENV bfd_keystore_location $DATABASE_SECRET_DATETIME)
+
+# Get bfd keystore password secret
+
+BFD_KEYSTORE_PASSWORD=$(./get-database-secret.py $CMS_ENV bfd_keystore_password $DATABASE_SECRET_DATETIME)
+
+# Get hicn hash pepper secret
+
+HICN_HASH_PEPPER=$(./get-database-secret.py $CMS_ENV hicn_hash_pepper $DATABASE_SECRET_DATETIME)
+
+# Get hicn hash iter secret
+
+HICN_HASH_ITER=$(./get-database-secret.py $CMS_ENV hicn_hash_iter $DATABASE_SECRET_DATETIME)
+
+# Get new relic app name secret
+
+NEW_RELIC_APP_NAME=$(./get-database-secret.py $CMS_ENV new_relic_app_name $DATABASE_SECRET_DATETIME)
+
+# Get new relic license key secret
+
+NEW_RELIC_LICENSE_KEY=$(./get-database-secret.py $CMS_ENV new_relic_license_key $DATABASE_SECRET_DATETIME)
+
+# If any databse secret produced an error, exit the script
+
+if [ "${DATABASE_USER}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
+  || [ "${DATABASE_PASSWORD}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
+  || [ "${DATABASE_NAME}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
+  || [ "${BFD_URL}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
+  || [ "${BFD_KEYSTORE_LOCATION}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
+  || [ "${BFD_KEYSTORE_PASSWORD}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
+  || [ "${HICN_HASH_PEPPER}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
+  || [ "${HICN_HASH_ITER}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
+  || [ "${NEW_RELIC_APP_NAME}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
+  || [ "${NEW_RELIC_LICENSE_KEY}" == "ERROR: Cannot get database secret because KMS key is disabled!" ]; then
+    echo "ERROR: Cannot get secrets because KMS key is disabled!"
+    exit 1
+fi
