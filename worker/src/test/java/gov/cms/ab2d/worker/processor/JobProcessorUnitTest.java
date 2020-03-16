@@ -3,17 +3,14 @@ package gov.cms.ab2d.worker.processor;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.JobStatus;
-import gov.cms.ab2d.common.model.OptOut;
 import gov.cms.ab2d.common.model.Sponsor;
 import gov.cms.ab2d.common.model.User;
 import gov.cms.ab2d.common.repository.JobOutputRepository;
 import gov.cms.ab2d.common.repository.JobRepository;
-import gov.cms.ab2d.common.repository.OptOutRepository;
 import gov.cms.ab2d.filter.FilterOutByDate;
 import gov.cms.ab2d.worker.adapter.bluebutton.ContractAdapter;
 import gov.cms.ab2d.worker.adapter.bluebutton.GetPatientsByContractResponse;
 import gov.cms.ab2d.worker.adapter.bluebutton.GetPatientsByContractResponse.PatientDTO;
-import gov.cms.ab2d.worker.processor.stub.PatientClaimsProcessorStub;
 import gov.cms.ab2d.worker.service.FileService;
 import org.hamcrest.CoreMatchers;
 import org.junit.jupiter.api.BeforeEach;
@@ -32,25 +29,23 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.ParseException;
-import java.time.LocalDate;
 import java.time.OffsetDateTime;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
-import java.util.List;
 import java.util.Random;
-import java.util.stream.Collectors;
 
 import static java.lang.Boolean.TRUE;
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class JobProcessorUnitTest {
@@ -66,9 +61,8 @@ class JobProcessorUnitTest {
     @Mock private FileService fileService;
     @Mock private JobRepository jobRepository;
     @Mock private JobOutputRepository jobOutputRepository;
-    @Mock private OptOutRepository optOutRepository;
     @Mock private ContractAdapter contractAdapter;
-    private PatientClaimsProcessor patientClaimsProcessor = spy(PatientClaimsProcessorStub.class);
+    @Mock private ContractProcessor contractProcessor;
 
     private Job job;
     private GetPatientsByContractResponse patientsByContract;
@@ -80,14 +74,9 @@ class JobProcessorUnitTest {
                 jobRepository,
                 jobOutputRepository,
                 contractAdapter,
-                patientClaimsProcessor,
-                optOutRepository
+                contractProcessor
         );
 
-        ReflectionTestUtils.setField(cut, "cancellationCheckFrequency", 2);
-        ReflectionTestUtils.setField(cut, "reportProgressDbFrequency", 2);
-        ReflectionTestUtils.setField(cut, "reportProgressLogFrequency", 3);
-        ReflectionTestUtils.setField(cut, "tryLockTimeout", 30);
         ReflectionTestUtils.setField(cut, "efsMount", efsMountTmpDir.toString());
 
         final Sponsor parentSponsor = createParentSponsor();
@@ -115,7 +104,6 @@ class JobProcessorUnitTest {
         assertThat(processedJob.getStatus(), is(JobStatus.SUCCESSFUL));
         assertThat(processedJob.getStatusMessage(), is("100%"));
         assertThat(processedJob.getExpiresAt(), notNullValue());
-        verify(jobRepository, atLeastOnce()).updatePercentageCompleted(anyString(), anyInt());
         doVerify();
     }
 
@@ -134,22 +122,7 @@ class JobProcessorUnitTest {
         assertThat(processedJob.getStatus(), is(JobStatus.SUCCESSFUL));
         assertThat(processedJob.getStatusMessage(), is("100%"));
         assertThat(processedJob.getExpiresAt(), notNullValue());
-        verify(jobRepository, atLeastOnce()).updatePercentageCompleted(anyString(), anyInt());
         doVerify();
-    }
-
-    @Test
-    @DisplayName("When a job is cancelled while it is being processed, then attempt to stop the job gracefully without completing it")
-    void whenJobIsCancelledWhileItIsBeingProcessed_ThenAttemptToStopTheJob() {
-
-        when(jobRepository.findJobStatus(anyString())).thenReturn(JobStatus.CANCELLED);
-
-        var processedJob = cut.process(jobUuid);
-
-        assertThat(processedJob.getStatus(), is(not(JobStatus.SUCCESSFUL)));
-        assertThat(processedJob.getCompletedAt(), nullValue());
-        doVerify();
-        verify(jobRepository, atLeastOnce()).updatePercentageCompleted(anyString(), anyInt());
     }
 
     @Test
@@ -174,57 +147,11 @@ class JobProcessorUnitTest {
         assertThat(processedJob.getStatusMessage(), is("100%"));
         assertThat(processedJob.getExpiresAt(), notNullValue());
         doVerify();
-        verify(jobRepository, atLeastOnce()).updatePercentageCompleted(anyString(), anyInt());
     }
 
     private void doVerify() {
         verify(fileService).createDirectory(any());
         verify(contractAdapter).getPatients(anyString(), anyInt());
-        verify(patientClaimsProcessor, atLeast(1)).process(any(), any(), any(), any(), any());
-    }
-
-    @Test
-    @DisplayName("When patient has opted out, their record will be skipped.")
-    void processJob_whenSomePatientHasOptedOut_ShouldSkipThatPatientRecord() {
-
-        final List<OptOut> optOuts = getOptOutRows(patientsByContract);
-        when(optOutRepository.findByCcwId(anyString()))
-                .thenReturn(new ArrayList<>())
-                .thenReturn(Arrays.asList(optOuts.get(1)))
-                .thenReturn(Arrays.asList(optOuts.get(2)));
-
-        // Test data has 3 patientIds  each of whom has opted out.
-        // So the patientsClaimsProcessor should never be called.
-        var processedJob = cut.process(jobUuid);
-
-        assertThat(processedJob.getStatus(), is(JobStatus.SUCCESSFUL));
-        assertThat(processedJob.getStatusMessage(), is("100%"));
-        assertThat(processedJob.getExpiresAt(), notNullValue());
-
-        verify(fileService).createDirectory(any());
-        verify(contractAdapter).getPatients(anyString(), anyInt());
-    }
-
-    @Test
-    @DisplayName("When all patients have opted out, their record will be skipped and job FAILS as no jobOutput rows were created")
-    void processJob_whenAllPatientsHaveOptedOut_SkipTheirRecordsAndfailJobAsNoJobOutputRowsCreated() {
-
-        final List<OptOut> optOuts = getOptOutRows(patientsByContract);
-        when(optOutRepository.findByCcwId(anyString()))
-                .thenReturn(Arrays.asList(optOuts.get(0)))
-                .thenReturn(Arrays.asList(optOuts.get(1)))
-                .thenReturn(Arrays.asList(optOuts.get(2)));
-
-        // Test data has 3 patientIds each of whom has opted out.
-        // So the patientsClaimsProcessor should never be called.
-        var processedJob = cut.process(jobUuid);
-
-        assertThat(processedJob.getStatus(), is(JobStatus.FAILED));
-        assertThat(processedJob.getStatusMessage(), is("The export process has produced no results"));
-
-        verify(fileService).createDirectory(any());
-        verify(contractAdapter).getPatients(anyString(), anyInt());
-        verify(patientClaimsProcessor, never()).process(any(), any(), any(), any(), any());
     }
 
     @Test
@@ -256,8 +183,6 @@ class JobProcessorUnitTest {
 
         verify(fileService, times(2)).createDirectory(any());
         verify(contractAdapter).getPatients(anyString(), anyInt());
-        verify(patientClaimsProcessor, atLeast(1)).process(any(), any(), any(), any(), any());
-        verify(jobRepository, atLeastOnce()).updatePercentageCompleted(anyString(), anyInt());
     }
 
     @Test
@@ -305,43 +230,6 @@ class JobProcessorUnitTest {
 
         verify(fileService).createDirectory(any());
         verify(contractAdapter, never()).getPatients(anyString(), anyInt());
-    }
-
-    @Test
-    @DisplayName("When many patientId are present, 'PercentageCompleted' should be updated many times")
-    void whenManyPatientIdsAreProcessed_shouldUpdatePercentageCompletedMultipleTimes() throws ParseException {
-
-        var contract = job.getUser().getSponsor().getContracts().iterator().next();
-        var patients = createPatientsByContractResponse(contract).getPatients();
-        var manyPatientIds = new ArrayList<PatientDTO>();
-        manyPatientIds.addAll(patients);
-        manyPatientIds.addAll(patients);
-        manyPatientIds.addAll(patients);
-        manyPatientIds.addAll(patients);
-        manyPatientIds.addAll(patients);
-        manyPatientIds.addAll(patients);
-        patientsByContract.setPatients(manyPatientIds);
-        var processedJob = cut.process(jobUuid);
-
-        assertThat(processedJob.getStatus(), is(JobStatus.SUCCESSFUL));
-        assertThat(processedJob.getStatusMessage(), is("100%"));
-        assertThat(processedJob.getExpiresAt(), notNullValue());
-        verify(jobRepository, times(9)).updatePercentageCompleted(anyString(), anyInt());
-        doVerify();
-    }
-
-    private List<OptOut> getOptOutRows(GetPatientsByContractResponse patientsByContract) {
-        return patientsByContract.getPatients()
-                .stream().map(PatientDTO::getPatientId)
-                .map(this::createOptOut)
-                .collect(Collectors.toList());
-    }
-
-    private OptOut createOptOut(String patientId) {
-        OptOut optOut = new OptOut();
-        optOut.setHicn(patientId);
-        optOut.setEffectiveDate(LocalDate.now().minusDays(10));
-        return optOut;
     }
 
     private Sponsor createParentSponsor() {
