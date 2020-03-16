@@ -9,6 +9,6 @@ import java.util.List;
 
 public interface ContractProcessor {
 
-    List<JobOutput> process(Path outputDirPath, ContractData contractData, FileOutputType contractType);
+    List<JobOutput> process(Path outputDirPath, ContractData contractData, FileOutputType outputType);
 
 }

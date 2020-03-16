@@ -103,7 +103,7 @@ public class ContractProcessorImpl implements ContractProcessor {
                     continue;
                 }
 
-                futureHandles.add(processPatient(contractData, helper, patient));
+                futureHandles.add(processPatient(patient, contractData, helper));
 
                 // Periodically check if cancelled
                 if (recordsProcessedCount % cancellationCheckFrequency == 0) {
@@ -119,7 +119,7 @@ public class ContractProcessorImpl implements ContractProcessor {
                     processHandles(futureHandles, progressTracker);
                 }
             }
-            awaitTermination(progressTracker, futureHandles);
+            awaitTermination(futureHandles, progressTracker);
 
         } finally {
             close(helper);
@@ -145,10 +145,10 @@ public class ContractProcessorImpl implements ContractProcessor {
 
     /**
      * While there are still patient records in progress, sleep for a bit and check progress
-     * @param progressTracker
      * @param futureHandles
+     * @param progressTracker
      */
-    private void awaitTermination(ProgressTracker progressTracker, ArrayList<Future<Void>> futureHandles) {
+    private void awaitTermination(ArrayList<Future<Void>> futureHandles, ProgressTracker progressTracker) {
         while (!futureHandles.isEmpty()) {
             sleep();
             processHandles(futureHandles, progressTracker);
@@ -179,12 +179,12 @@ public class ContractProcessorImpl implements ContractProcessor {
      * On using new-relic tokens with async calls
      * See https://docs.newrelic.com/docs/agents/java-agent/async-instrumentation/java-agent-api-asynchronous-applications
      *
+     * @param patient
      * @param contractData
      * @param helper
-     * @param patient
      * @return a Future<Void>
      */
-    private Future<Void> processPatient(ContractData contractData, StreamHelper helper, PatientDTO patient) {
+    private Future<Void> processPatient(PatientDTO patient, ContractData contractData, StreamHelper helper) {
         final Token token = NewRelic.getAgent().getTransaction().getToken();
 
         // Using a ThreadLocal to communicate contract number to RoundRobinBlockingQueue
