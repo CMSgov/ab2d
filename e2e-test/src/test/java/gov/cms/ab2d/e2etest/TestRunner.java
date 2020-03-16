@@ -25,6 +25,9 @@ import javax.crypto.SecretKey;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.net.URI;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
@@ -72,10 +75,18 @@ public class TestRunner {
 
     private OffsetDateTime earliest = OffsetDateTime.parse(SINCE_EARLIEST_DATE, ISO_DATE_TIME);
 
-    public void runTests() throws InterruptedException, JSONException, IOException {
-        runSystemWideExport();
-        runContractNumberExport();
-        testDelete();
+    // Get all methods annotated with @Test and run them. This will only be called from TestLaucher when running against
+    // an external environment, the regular tests that run as part of a build will be called like they normally would
+    // during a build.
+    public void runTests() throws InvocationTargetException, IllegalAccessException {
+        final Class annotation = Test.class;
+        final Class<?> klass = this.getClass();
+        final List<Method> allMethods = new ArrayList<>(Arrays.asList(klass.getDeclaredMethods()));
+        for (final Method method : allMethods) {
+            if (method.isAnnotationPresent(annotation)) {
+                method.invoke(this);
+            }
+        }
     }
 
     public TestRunner(Environment environment) throws IOException, InterruptedException, JSONException {
