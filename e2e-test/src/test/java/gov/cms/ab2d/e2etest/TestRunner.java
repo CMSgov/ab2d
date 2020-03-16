@@ -255,11 +255,11 @@ public class TestRunner {
     }
 
     private boolean validFields(JSONObject jsonObject) {
-        List<String> allowedFields = Arrays.asList("identifier", "item", "meta", "patient", "billablePeriod", "diagnosis",
+        Set<String> allowedFields = Set.of("identifier", "item", "meta", "patient", "billablePeriod", "diagnosis",
                 "provider", "id", "type", "precedence", "resourceType", "organization", "facility", "careTeam",
                 "procedure");
 
-        List<String> disallowedFields = Arrays.asList("status", "extension", "patientTarget", "created", "enterer",
+        Set<String> disallowedFields = Set.of("status", "extension", "patientTarget", "created", "enterer",
             "entererTarget", "insurer", "insurerTarget", "providerTarget", "organizationTarget", "referral",
             "referralTarget", "facilityTarget", "claim", "claimTarget", "claimResponse", "claimResponseTarget",
             "outcome", "disposition", "related", "prescription", "prescriptionTarget", "originalPrescription",
