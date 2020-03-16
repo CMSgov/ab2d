@@ -134,7 +134,9 @@ fi
 
 export AWS_PROFILE="${CMS_ENV}"
 
+#
 # Verify that VPC ID exists
+#
 
 VPC_EXISTS=$(aws --region "${REGION}" ec2 describe-vpcs \
   --query "Vpcs[?VpcId=='$VPC_ID'].VpcId" \
