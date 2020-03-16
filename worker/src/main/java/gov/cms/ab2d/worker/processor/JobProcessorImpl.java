@@ -146,7 +146,7 @@ public class JobProcessorImpl implements JobProcessor {
      */
     private void processJob(Job job, Path outputDirPath) throws FileNotFoundException {
         // Get the output directory
-        var outputDir = createOutputDirectory(outputDirPath);
+        createOutputDirectory(outputDirPath);
 
         // Get all attested contracts for that job (or the one specified in the job)
         var attestedContracts = getAttestedContracts(job);

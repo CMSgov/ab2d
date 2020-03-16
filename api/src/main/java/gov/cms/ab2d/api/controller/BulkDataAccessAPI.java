@@ -39,7 +39,14 @@ import java.time.OffsetDateTime;
 import java.util.Set;
 
 import static gov.cms.ab2d.api.util.Constants.GENERIC_FHIR_ERR_MSG;
-import static gov.cms.ab2d.api.util.SwaggerConstants.*;
+import static gov.cms.ab2d.api.util.SwaggerConstants.BULK_ACCEPT;
+import static gov.cms.ab2d.api.util.SwaggerConstants.BULK_CANCEL;
+import static gov.cms.ab2d.api.util.SwaggerConstants.BULK_CONTRACT_EXPORT;
+import static gov.cms.ab2d.api.util.SwaggerConstants.BULK_EXPORT;
+import static gov.cms.ab2d.api.util.SwaggerConstants.BULK_EXPORT_TYPE;
+import static gov.cms.ab2d.api.util.SwaggerConstants.BULK_MAIN;
+import static gov.cms.ab2d.api.util.SwaggerConstants.BULK_OUTPUT_FORMAT;
+import static gov.cms.ab2d.api.util.SwaggerConstants.BULK_PREFER;
 import static gov.cms.ab2d.common.service.JobService.ZIPFORMAT;
 import static gov.cms.ab2d.common.util.Constants.*;
 import static java.time.format.DateTimeFormatter.ISO_DATE_TIME;
@@ -52,6 +59,7 @@ import static java.time.format.DateTimeFormatter.ISO_OFFSET_DATE_TIME;
 @Api(value = "Bulk Data Access API", description = SwaggerConstants.BULK_MAIN, tags = {"Export"})
 @RestController
 @RequestMapping(path = API_PREFIX + FHIR_PREFIX, produces = {"application/json", NDJSON_FIRE_CONTENT_TYPE})
+@SuppressWarnings("PMD.TooManyStaticImports")
 public class BulkDataAccessAPI {
 
     // Since this is used in an annotation, it can't be derived from the Set, otherwise it will be an error
