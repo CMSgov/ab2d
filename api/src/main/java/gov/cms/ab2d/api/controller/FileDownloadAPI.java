@@ -25,7 +25,6 @@ import java.io.OutputStream;
 import static gov.cms.ab2d.api.util.Constants.GENERIC_FHIR_ERR_MSG;
 import static gov.cms.ab2d.common.service.JobService.ZIPFORMAT;
 import static gov.cms.ab2d.common.util.Constants.*;
-import static gov.cms.ab2d.common.util.Constants.NDJSON_FIRE_CONTENT_TYPE;
 
 @Slf4j
 @Api(value = "Bulk Data File Download API", description = "After creating a job, the API to download the generated bulk download files",

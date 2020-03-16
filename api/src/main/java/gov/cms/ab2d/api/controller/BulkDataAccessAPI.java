@@ -18,7 +18,6 @@ import io.swagger.annotations.ResponseHeader;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -69,9 +68,6 @@ public class BulkDataAccessAPI {
     static final String JOB_NOT_FOUND_ERROR_MSG = "Job not found. " + GENERIC_FHIR_ERR_MSG;
 
     static final String JOB_CANCELLED_MSG = "Job canceled";
-
-    @Value("${api.retry-after.delay}")
-    private int retryAfterDelay;
 
     @Autowired
     private JobService jobService;

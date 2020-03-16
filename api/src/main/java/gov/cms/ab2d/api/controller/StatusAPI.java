@@ -32,7 +32,6 @@ import static gov.cms.ab2d.api.controller.BulkDataAccessAPI.JOB_CANCELLED_MSG;
 import static gov.cms.ab2d.api.controller.BulkDataAccessAPI.JOB_NOT_FOUND_ERROR_MSG;
 import static gov.cms.ab2d.api.util.Constants.GENERIC_FHIR_ERR_MSG;
 import static gov.cms.ab2d.api.util.SwaggerConstants.BULK_CANCEL;
-import static gov.cms.ab2d.common.service.JobService.ZIPFORMAT;
 import static gov.cms.ab2d.common.util.Constants.*;
 
 @Slf4j
@@ -41,14 +40,11 @@ import static gov.cms.ab2d.common.util.Constants.*;
         tags = {"Status"})
 @RestController
 @RequestMapping(path = API_PREFIX + FHIR_PREFIX, produces = {"application/json", NDJSON_FIRE_CONTENT_TYPE})
+@SuppressWarnings("PMD.TooManyStaticImports")
 /**
  * The sole REST controller for AB2D's implementation of the FHIR Bulk Data API Status (both GET & DELETE).
  */
 public class StatusAPI {
-
-    // Since this is used in an annotation, it can't be derived from the Set, otherwise it will be an error
-    private static final String ALLOWABLE_OUTPUT_FORMATS =
-            "application/fhir+ndjson,application/ndjson,ndjson," + ZIPFORMAT;
 
     @Value("${api.retry-after.delay}")
     private int retryAfterDelay;
