@@ -32,7 +32,7 @@ import static gov.cms.ab2d.common.util.Constants.NDJSON_FIRE_CONTENT_TYPE;
         tags = {"Download"})
 @RestController
 @RequestMapping(path = API_PREFIX + FHIR_PREFIX, produces = {"application/json", NDJSON_FIRE_CONTENT_TYPE})
-public class FileDownloadApi {
+public class FileDownloadAPI {
     @Autowired
     private JobService jobService;
 
