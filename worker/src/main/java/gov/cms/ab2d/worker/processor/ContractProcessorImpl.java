@@ -107,11 +107,9 @@ public class ContractProcessorImpl implements ContractProcessor {
 
                 // Periodically check if cancelled
                 if (recordsProcessedCount % cancellationCheckFrequency == 0) {
-
-                    var jobUuid = contractData.getProgressTracker().getJobUuid();
-                    isCancelled = hasJobBeenCancelled(jobUuid);
+                    isCancelled = hasJobBeenCancelled(progressTracker.getJobUuid());
                     if (isCancelled) {
-                        log.warn("Job [{}] has been cancelled. Attempting to stop processing the job shortly ... ", jobUuid);
+                        log.warn("Job [{}] has been cancelled. Attempting to stop processing the job shortly ... ", progressTracker.getJobUuid());
                         cancelFuturesInQueue(futureHandles);
                         break;
                     }
