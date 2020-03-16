@@ -18,6 +18,7 @@ import gov.cms.ab2d.worker.adapter.bluebutton.ContractAdapter;
 import gov.cms.ab2d.worker.adapter.bluebutton.GetPatientsByContractResponse;
 import gov.cms.ab2d.worker.adapter.bluebutton.GetPatientsByContractResponse.PatientDTO;
 import gov.cms.ab2d.worker.config.RoundRobinBlockingQueue;
+import gov.cms.ab2d.worker.processor.StreamHelperImpl.FileOutputType;
 import gov.cms.ab2d.worker.processor.domainmodel.ContractData;
 import gov.cms.ab2d.worker.processor.domainmodel.ProgressTracker;
 import gov.cms.ab2d.worker.service.FileService;
@@ -31,6 +32,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
@@ -40,7 +42,6 @@ import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
@@ -52,6 +53,8 @@ import static gov.cms.ab2d.common.model.JobStatus.SUCCESSFUL;
 import static gov.cms.ab2d.common.service.JobServiceImpl.ZIPFORMAT;
 import static gov.cms.ab2d.common.util.Constants.CONTRACT_LOG;
 import static gov.cms.ab2d.common.util.Constants.EOB;
+import static gov.cms.ab2d.worker.processor.StreamHelperImpl.FileOutputType.NDJSON;
+import static gov.cms.ab2d.worker.processor.StreamHelperImpl.FileOutputType.ZIP;
 import static net.logstash.logback.argument.StructuredArguments.keyValue;
 
 @Slf4j
@@ -143,7 +146,7 @@ public class JobProcessorImpl implements JobProcessor {
      */
     private void processJob(Job job, Path outputDirPath) throws FileNotFoundException {
         // Get the output directory
-        var outputDir = createOutputDirectory(outputDirPath);
+        createOutputDirectory(outputDirPath);
 
         // Get all attested contracts for that job (or the one specified in the job)
         var attestedContracts = getAttestedContracts(job);
@@ -156,9 +159,9 @@ public class JobProcessorImpl implements JobProcessor {
             log.info("Job [{}] - contract [{}] ", jobUuid, contract.getContractNumber());
 
             // Determine the type of output
-            StreamHelperImpl.FileOutputType outputType =  StreamHelperImpl.FileOutputType.NDJSON;
+            FileOutputType outputType =  NDJSON;
             if (job.getOutputFormat() != null && job.getOutputFormat().equalsIgnoreCase(ZIPFORMAT)) {
-                outputType = StreamHelperImpl.FileOutputType.ZIP;
+                outputType = ZIP;
             }
 
             // Create a holder for the contract, writer, progress tracker and attested date
@@ -210,9 +213,7 @@ public class JobProcessorImpl implements JobProcessor {
      * @param outputDirPath - the directory to delete
      */
     private void deleteExistingDirectory(Path outputDirPath) {
-        final File[] files = outputDirPath.toFile()
-                .listFiles((dir, name) -> name.toLowerCase().endsWith(StreamHelperImpl.FileOutputType.NDJSON.getSuffix()) ||
-                        name.toLowerCase().endsWith(StreamHelperImpl.FileOutputType.ZIP.getSuffix()));
+        final File[] files = outputDirPath.toFile().listFiles(getFilenameFilter());
 
         for (File file : files) {
             final Path filePath = file.toPath();
@@ -223,22 +224,33 @@ public class JobProcessorImpl implements JobProcessor {
             }
 
             if (Files.isRegularFile(filePath)) {
-                try {
-                    Files.delete(filePath);
-                } catch (IOException ex) {
-                    var errMsg = "Could not delete file ";
-                    log.error("{} : {}", errMsg, filePath.toAbsolutePath());
-                    throw new UncheckedIOException(errMsg + filePath.toFile().getName(), ex);
-                }
+                doDelete(filePath);
             }
         }
 
+        doDelete(outputDirPath);
+    }
+
+    /**
+     *
+     * @return a Filename filter for ndjson and zip files
+     */
+    private FilenameFilter getFilenameFilter() {
+        return (dir, name) -> {
+            final String filename = name.toLowerCase();
+            final String ndjson = NDJSON.getSuffix();
+            final String zip = ZIP.getSuffix();
+            return filename.endsWith(ndjson) || filename.endsWith(zip);
+        };
+    }
+
+    private void doDelete(Path path) {
         try {
-            Files.delete(outputDirPath);
+            Files.delete(path);
         } catch (IOException ex) {
-            var errMsg = "Could not delete directory ";
-            log.error("{} : {} ", errMsg, outputDirPath.toAbsolutePath());
-            throw new UncheckedIOException(errMsg + outputDirPath.toFile().getName(), ex);
+            var errMsg = "Could not delete ";
+            log.error("{} : {} ", errMsg, path.toAbsolutePath());
+            throw new UncheckedIOException(errMsg + path.toFile().getName(), ex);
         }
     }
 
@@ -333,7 +345,7 @@ public class JobProcessorImpl implements JobProcessor {
      * @return - the job output records containing the file information
      */
     private List<JobOutput> processContract(Path outputDirPath, ContractData contractData,
-                                            StreamHelperImpl.FileOutputType contractType) throws FileNotFoundException {
+                                            FileOutputType contractType) throws FileNotFoundException {
         var contract = contractData.getContract();
         log.info("Beginning to process contract {}", keyValue(CONTRACT_LOG, contract.getContractName()));
 
@@ -350,7 +362,7 @@ public class JobProcessorImpl implements JobProcessor {
 
         StreamHelper helper = null;
         try {
-            if (contractType == StreamHelperImpl.FileOutputType.ZIP) {
+            if (contractType == ZIP) {
                 helper = new ZipStreamHelperImpl(outputDirPath, contractNumber, getZipRolloverThreshold(), getRollOverThreshold(), tryLockTimeout);
             } else {
                 helper = new TextStreamHelperImpl(outputDirPath, contractNumber, getRollOverThreshold(), tryLockTimeout);
@@ -487,35 +499,46 @@ public class JobProcessorImpl implements JobProcessor {
     }
 
     /**
-     * For each thread, check to see if it's done. If it is, remove it from the list of pending
-     * threads and increment the number processed
+     * For each future, check to see if it's done. If it is, remove it from the list of future handles
+     * and increment the number processed
      *
      * @param futureHandles - the thread futures
      * @param progressTracker - the tracker with updated tracker information
      */
     private void processHandles(List<Future<Void>> futureHandles, ProgressTracker progressTracker) {
-        Iterator<Future<Void>> iterator = futureHandles.iterator();
+        var iterator = futureHandles.iterator();
         while (iterator.hasNext()) {
             var future = iterator.next();
             if (future.isDone()) {
-                progressTracker.incrementProcessedCount();
-                try {
-                    future.get();
-                } catch (InterruptedException | ExecutionException e) {
-                    analyzeException(futureHandles, progressTracker, e);
-
-                } catch (CancellationException e) {
-                    // This could happen in the rare event that a job was cancelled mid-process.
-                    // due to which the futures in the queue (that were not yet in progress) were cancelled.
-                    // Nothing to be done here
-                    log.warn("CancellationException while calling Future.get() - Job may have been cancelled");
-                }
+                processFuture(futureHandles, progressTracker, future);
                 iterator.remove();
             }
         }
 
-        // If it's time, update the progress in the DB & logs
+        // update the progress in the DB & logs periodically
         trackProgress(progressTracker);
+    }
+
+    /**
+     * process the future that is marked as done.
+     * On doing a get(), if an exception is thrown, analyze it to decide whether to stop the batch or not.
+     * @param futureHandles
+     * @param progressTracker
+     * @param future
+     */
+    private void processFuture(List<Future<Void>> futureHandles, ProgressTracker progressTracker, Future<Void> future) {
+        progressTracker.incrementProcessedCount();
+        try {
+            future.get();
+        } catch (InterruptedException | ExecutionException e) {
+            analyzeException(futureHandles, progressTracker, e);
+
+        } catch (CancellationException e) {
+            // This could happen in the rare event that a job was cancelled mid-process.
+            // due to which the futures in the queue (that were not yet in progress) were cancelled.
+            // Nothing to be done here
+            log.warn("CancellationException while calling Future.get() - Job may have been cancelled");
+        }
     }
 
     private void analyzeException(List<Future<Void>> futureHandles, ProgressTracker progressTracker, Exception e) {
