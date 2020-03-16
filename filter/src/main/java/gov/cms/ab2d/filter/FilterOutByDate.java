@@ -276,6 +276,6 @@ public final class FilterOutByDate {
         if (start == null || end == null) {
             return false;
         }
-        return (range.inRange(start) || range.inRange(end));
+        return range.inRange(start) || range.inRange(end);
     }
 }

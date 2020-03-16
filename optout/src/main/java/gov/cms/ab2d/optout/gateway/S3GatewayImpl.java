@@ -52,7 +52,7 @@ public class S3GatewayImpl implements S3Gateway {
         // extract key (filename) from the list of S3Objects
         final List<String> fileNames = s3Objects.stream()
                 .map(s3Object -> {
-                    log.info("Found [{}] - Size [{}] KB", s3Object.key(), (s3Object.size() / 1024));
+                    log.info("Found [{}] - Size [{}] KB", s3Object.key(), s3Object.size() / 1024);
                     return s3Object.key();
                 })
                 .collect(Collectors.toList());
