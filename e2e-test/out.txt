@@ -1,0 +1,150 @@
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] -----------------------< gov.cms.ab2d:e2e-test >------------------------
+[INFO] Building e2e-test 0.0.1-SNAPSHOT
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- maven-clean-plugin:3.1.0:clean (default-clean) @ e2e-test ---
+[INFO] Deleting /Users/andy.daykin/code/ab2d/e2e-test/target
+[INFO] 
+[INFO] --- maven-checkstyle-plugin:3.1.1:check (validate) @ e2e-test ---
+[INFO] Starting audit...
+Audit done.
+[INFO] You have 0 Checkstyle violations.
+[INFO] 
+[INFO] >>> findbugs-maven-plugin:3.0.5:check (validate) > :findbugs @ e2e-test >>>
+[INFO] 
+[INFO] --- findbugs-maven-plugin:3.0.5:findbugs (findbugs) @ e2e-test ---
+[INFO] 
+[INFO] <<< findbugs-maven-plugin:3.0.5:check (validate) < :findbugs @ e2e-test <<<
+[INFO] 
+[INFO] 
+[INFO] --- findbugs-maven-plugin:3.0.5:check (validate) @ e2e-test ---
+[INFO] 
+[INFO] --- jacoco-maven-plugin:0.8.5:prepare-agent (default) @ e2e-test ---
+[INFO] argLine set to -javaagent:/Users/andy.daykin/.m2/repository/org/jacoco/org.jacoco.agent/0.8.5/org.jacoco.agent-0.8.5-runtime.jar=destfile=/Users/andy.daykin/code/ab2d/e2e-test/target/jacoco.exec
+[INFO] 
+[INFO] --- maven-resources-plugin:3.1.0:resources (default-resources) @ e2e-test ---
+[INFO] Using 'UTF-8' encoding to copy filtered resources.
+[INFO] skip non existing resourceDirectory /Users/andy.daykin/code/ab2d/e2e-test/src/main/resources
+[INFO] skip non existing resourceDirectory /Users/andy.daykin/code/ab2d/e2e-test/src/main/resources
+[INFO] 
+[INFO] --- maven-compiler-plugin:3.8.1:compile (default-compile) @ e2e-test ---
+[INFO] No sources to compile
+[INFO] 
+[INFO] --- maven-resources-plugin:3.1.0:testResources (default-testResources) @ e2e-test ---
+[INFO] Using 'UTF-8' encoding to copy filtered resources.
+[INFO] Copying 8 resources
+[INFO] 
+[INFO] --- maven-compiler-plugin:3.8.1:testCompile (default-testCompile) @ e2e-test ---
+[INFO] Changes detected - recompiling the module!
+[INFO] Compiling 6 source files to /Users/andy.daykin/code/ab2d/e2e-test/target/test-classes
+[INFO] /Users/andy.daykin/code/ab2d/e2e-test/src/test/java/gov/cms/ab2d/e2etest/TestRunner.java: /Users/andy.daykin/code/ab2d/e2e-test/src/test/java/gov/cms/ab2d/e2etest/TestRunner.java uses unchecked or unsafe operations.
+[INFO] /Users/andy.daykin/code/ab2d/e2e-test/src/test/java/gov/cms/ab2d/e2etest/TestRunner.java: Recompile with -Xlint:unchecked for details.
+[INFO] 
+[INFO] --- maven-surefire-plugin:2.22.2:test (default-test) @ e2e-test ---
+[INFO] 
+[INFO] -------------------------------------------------------
+[INFO]  T E S T S
+[INFO] -------------------------------------------------------
+[INFO] Running gov.cms.ab2d.e2etest.TestRunner
+09:44:42.954 [main] INFO  o.t.d.DockerClientProviderStrategy - Loaded org.testcontainers.dockerclient.UnixSocketClientProviderStrategy from ~/.testcontainers.properties, will try it first
+09:44:43.689 [main] INFO  o.t.d.UnixSocketClientProviderStrategy - Accessing docker with local Unix socket
+09:44:43.690 [main] INFO  o.t.d.DockerClientProviderStrategy - Found Docker environment with local Unix socket (unix:///var/run/docker.sock)
+09:44:43.869 [main] INFO  o.testcontainers.DockerClientFactory - Docker host IP address is localhost
+09:44:43.913 [main] INFO  o.testcontainers.DockerClientFactory - Connected to docker: 
+  Server Version: 19.03.5
+  API Version: 1.40
+  Operating System: Docker Desktop
+  Total Memory: 1988 MB
+09:44:45.606 [main] INFO  o.t.utility.RegistryAuthLocator - Credential helper/store (docker-credential-desktop) does not have credentials for quay.io
+09:44:46.248 [main] INFO  o.testcontainers.DockerClientFactory - Ryuk started - will monitor and terminate Testcontainers containers on JVM exit
+09:44:46.248 [main] INFO  o.testcontainers.DockerClientFactory - Checking the system...
+09:44:46.249 [main] INFO  o.testcontainers.DockerClientFactory - ✔︎ Docker server version should be at least 1.6.0
+09:44:46.388 [main] INFO  o.testcontainers.DockerClientFactory - ✔︎ Docker environment should have more than 2GB free disk space
+09:44:46.985 [main] INFO  🐳 [docker/compose:1.24.1] - Creating container for image: docker/compose:1.24.1
+09:44:47.046 [main] INFO  o.t.utility.RegistryAuthLocator - Credential helper/store (docker-credential-desktop) does not have credentials for index.docker.io
+09:44:47.284 [main] INFO  o.t.utility.RegistryAuthLocator - Credential helper/store (docker-credential-desktop) does not have credentials for index.docker.io
+09:44:47.902 [main] INFO  🐳 [docker/compose:1.24.1] - Starting container with ID: 237a6de429e1066d358e659663d8a3de8d57fef924e70377113a9e6002f9dfba
+09:44:48.164 [main] INFO  🐳 [docker/compose:1.24.1] - Container docker/compose:1.24.1 is starting: 237a6de429e1066d358e659663d8a3de8d57fef924e70377113a9e6002f9dfba
+09:44:56.469 [main] INFO  🐳 [docker/compose:1.24.1] - Container docker/compose:1.24.1 started in PT9.484669S
+09:44:56.483 [main] INFO  🐳 [docker/compose:1.24.1] - Docker Compose container is running for command: up -d --scale worker=2
+09:44:56.490 [main] INFO  🐳 [docker/compose:1.24.1] - Docker Compose has finished running
+09:44:56.494 [tc-okhttp-stream-501639324] INFO  🐳 [docker/compose:1.24.1] - STDERR: Creating network "twmpv92v7m28_default" with the default driver
+09:44:56.495 [tc-okhttp-stream-501639324] INFO  🐳 [docker/compose:1.24.1] - STDERR: Creating volume "twmpv92v7m28_tmp-volume" with local driver
+09:44:56.495 [tc-okhttp-stream-501639324] INFO  🐳 [docker/compose:1.24.1] - STDERR: Building api
+09:44:56.496 [tc-okhttp-stream-501639324] INFO  🐳 [docker/compose:1.24.1] - STDOUT: Step 1/5 : FROM openjdk:13
+09:44:56.496 [tc-okhttp-stream-501639324] INFO  🐳 [docker/compose:1.24.1] - STDOUT:  ---> bbb8034f26b5
+09:44:56.496 [tc-okhttp-stream-501639324] INFO  🐳 [docker/compose:1.24.1] - STDOUT: Step 2/5 : WORKDIR /usr/src/ab2d-api
+09:44:56.497 [tc-okhttp-stream-501639324] INFO  🐳 [docker/compose:1.24.1] - STDOUT:  ---> Using cache
+09:44:56.497 [tc-okhttp-stream-501639324] INFO  🐳 [docker/compose:1.24.1] - STDOUT:  ---> 66d08e86e222
+09:44:56.497 [tc-okhttp-stream-501639324] INFO  🐳 [docker/compose:1.24.1] - STDOUT: Step 3/5 : ADD target /usr/src/ab2d-api
+09:44:56.498 [tc-okhttp-stream-501639324] INFO  🐳 [docker/compose:1.24.1] - STDOUT:  ---> Using cache
+09:44:56.498 [tc-okhttp-stream-501639324] INFO  🐳 [docker/compose:1.24.1] - STDOUT:  ---> cea840054274
+09:44:56.498 [tc-okhttp-stream-501639324] INFO  🐳 [docker/compose:1.24.1] - STDOUT: Step 4/5 : CMD java -javaagent:/usr/src/ab2d-api/newrelic/newrelic.jar -jar api-*-SNAPSHOT.jar
+09:44:56.499 [tc-okhttp-stream-501639324] INFO  🐳 [docker/compose:1.24.1] - STDOUT:  ---> Using cache
+09:44:56.499 [tc-okhttp-stream-501639324] INFO  🐳 [docker/compose:1.24.1] - STDOUT:  ---> dc2b9e6eff65
+09:44:56.499 [tc-okhttp-stream-501639324] INFO  🐳 [docker/compose:1.24.1] - STDOUT: Step 5/5 : EXPOSE 8080
+09:44:56.500 [main] INFO  🐳 [alpine/socat:latest] - Creating container for image: alpine/socat:latest
+09:44:56.500 [tc-okhttp-stream-501639324] INFO  🐳 [docker/compose:1.24.1] - STDOUT:  ---> Using cache
+09:44:56.500 [tc-okhttp-stream-501639324] INFO  🐳 [docker/compose:1.24.1] - STDOUT:  ---> 3e4c360b0009
+09:44:56.500 [tc-okhttp-stream-501639324] INFO  🐳 [docker/compose:1.24.1] - STDOUT: Successfully built 3e4c360b0009
+09:44:56.501 [tc-okhttp-stream-501639324] INFO  🐳 [docker/compose:1.24.1] - STDOUT: Successfully tagged twmpv92v7m28_api:latest
+09:44:56.501 [tc-okhttp-stream-501639324] INFO  🐳 [docker/compose:1.24.1] - STDERR: Image for service api was built because it did not already exist. To rebuild this image you must use `docker-compose build` or `docker-compose up --build`.
+09:44:56.501 [tc-okhttp-stream-501639324] INFO  🐳 [docker/compose:1.24.1] - STDERR: Building worker
+09:44:56.501 [tc-okhttp-stream-501639324] INFO  🐳 [docker/compose:1.24.1] - STDOUT: Step 1/4 : FROM openjdk:13
+09:44:56.502 [tc-okhttp-stream-501639324] INFO  🐳 [docker/compose:1.24.1] - STDOUT:  ---> bbb8034f26b5
+09:44:56.502 [tc-okhttp-stream-501639324] INFO  🐳 [docker/compose:1.24.1] - STDOUT: Step 2/4 : WORKDIR /usr/src/ab2d-worker
+09:44:56.502 [tc-okhttp-stream-501639324] INFO  🐳 [docker/compose:1.24.1] - STDOUT:  ---> Using cache
+09:44:56.502 [tc-okhttp-stream-501639324] INFO  🐳 [docker/compose:1.24.1] - STDOUT:  ---> b678355fb6cd
+09:44:56.503 [tc-okhttp-stream-501639324] INFO  🐳 [docker/compose:1.24.1] - STDOUT: Step 3/4 : ADD target /usr/src/ab2d-worker
+09:44:56.503 [tc-okhttp-stream-501639324] INFO  🐳 [docker/compose:1.24.1] - STDOUT:  ---> Using cache
+09:44:56.503 [tc-okhttp-stream-501639324] INFO  🐳 [docker/compose:1.24.1] - STDOUT:  ---> a9fb47409309
+09:44:56.504 [tc-okhttp-stream-501639324] INFO  🐳 [docker/compose:1.24.1] - STDOUT: Step 4/4 : CMD java -javaagent:/usr/src/ab2d-worker/newrelic/newrelic.jar -jar worker-*-SNAPSHOT.jar
+09:44:56.504 [tc-okhttp-stream-501639324] INFO  🐳 [docker/compose:1.24.1] - STDOUT:  ---> Using cache
+09:44:56.505 [tc-okhttp-stream-501639324] INFO  🐳 [docker/compose:1.24.1] - STDOUT:  ---> 83a15330bc8d
+09:44:56.505 [tc-okhttp-stream-501639324] INFO  🐳 [docker/compose:1.24.1] - STDOUT: Successfully built 83a15330bc8d
+09:44:56.506 [tc-okhttp-stream-501639324] INFO  🐳 [docker/compose:1.24.1] - STDOUT: Successfully tagged twmpv92v7m28_worker:latest
+09:44:56.506 [tc-okhttp-stream-501639324] INFO  🐳 [docker/compose:1.24.1] - STDERR: Image for service worker was built because it did not already exist. To rebuild this image you must use `docker-compose build` or `docker-compose up --build`.
+09:44:56.507 [tc-okhttp-stream-501639324] INFO  🐳 [docker/compose:1.24.1] - STDERR: Creating twmpv92v7m28_db_1 ... 
+09:44:56.507 [tc-okhttp-stream-501639324] INFO  🐳 [docker/compose:1.24.1] - STDERR: Creating twmpv92v7m28_build_1 ... 
+09:44:56.508 [tc-okhttp-stream-501639324] INFO  🐳 [docker/compose:1.24.1] - STDERR: Creating twmpv92v7m28_build_1 ... doneCreating twmpv92v7m28_db_1    ... doneCreating twmpv92v7m28_worker_1 ... 
+09:44:56.508 [tc-okhttp-stream-501639324] INFO  🐳 [docker/compose:1.24.1] - STDERR: Creating twmpv92v7m28_worker_2 ... 
+09:44:56.509 [tc-okhttp-stream-501639324] INFO  🐳 [docker/compose:1.24.1] - STDERR: Creating twmpv92v7m28_api_1    ... 
+09:44:56.509 [tc-okhttp-stream-501639324] INFO  🐳 [docker/compose:1.24.1] - STDERR: Creating twmpv92v7m28_worker_2 ... doneCreating twmpv92v7m28_worker_1 ... doneCreating twmpv92v7m28_api_1    ... done
+09:44:56.728 [main] INFO  o.t.utility.RegistryAuthLocator - Credential helper/store (docker-credential-desktop) does not have credentials for index.docker.io
+09:44:57.074 [main] INFO  🐳 [alpine/socat:latest] - Starting container with ID: c6a1c213dfda1778a7ccf9cc5668c7e92118cfc7096724a977d806dfec568090
+09:44:58.459 [main] INFO  🐳 [alpine/socat:latest] - Container alpine/socat:latest is starting: c6a1c213dfda1778a7ccf9cc5668c7e92118cfc7096724a977d806dfec568090
+09:44:58.988 [main] INFO  🐳 [alpine/socat:latest] - Container alpine/socat:latest started in PT2.488631S
+[ERROR] Tests run: 1, Failures: 0, Errors: 1, Skipped: 0, Time elapsed: 166.702 s <<< FAILURE! - in gov.cms.ab2d.e2etest.TestRunner
+[ERROR] gov.cms.ab2d.e2etest.TestRunner  Time elapsed: 166.675 s  <<< ERROR!
+java.lang.RuntimeException: org.testcontainers.containers.ContainerLaunchException: Timed out waiting for container port to open (localhost ports: [8080, 33382] should be listening)
+	at gov.cms.ab2d.e2etest.TestRunner.init(TestRunner.java:84)
+	at gov.cms.ab2d.e2etest.TestRunner.<init>(TestRunner.java:70)
+Caused by: org.testcontainers.containers.ContainerLaunchException: Timed out waiting for container port to open (localhost ports: [8080, 33382] should be listening)
+
+[INFO] 
+[INFO] Results:
+[INFO] 
+[ERROR] Errors: 
+[ERROR]   TestRunner.<init>:70->init:84 » Runtime org.testcontainers.containers.Containe...
+[INFO] 
+[ERROR] Tests run: 1, Failures: 0, Errors: 1, Skipped: 0
+[INFO] 
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD FAILURE
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  02:52 min
+[INFO] Finished at: 2020-03-03T09:47:29-06:00
+[INFO] ------------------------------------------------------------------------
+[ERROR] Failed to execute goal org.apache.maven.plugins:maven-surefire-plugin:2.22.2:test (default-test) on project e2e-test: There are test failures.
+[ERROR] 
+[ERROR] Please refer to /Users/andy.daykin/code/ab2d/e2e-test/target/surefire-reports for the individual test results.
+[ERROR] Please refer to dump files (if any exist) [date].dump, [date]-jvmRun[N].dump and [date].dumpstream.
+[ERROR] -> [Help 1]
+[ERROR] 
+[ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.
+[ERROR] Re-run Maven using the -X switch to enable full debug logging.
+[ERROR] 
+[ERROR] For more information about the errors and possible solutions, please read the following articles:
+[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoFailureException

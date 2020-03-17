@@ -34,6 +34,8 @@ public final class Constants {
 
     public static final String STATUS_ENDPOINT = "/status";
 
+    public static final String HEALTH_ENDPOINT = "/health";
+
     // Properties that are allowed to be modified. When adding a new one, add it to a constant, and the Set below
     public static final String PCP_CORE_POOL_SIZE = "pcp.core.pool.size";
 
