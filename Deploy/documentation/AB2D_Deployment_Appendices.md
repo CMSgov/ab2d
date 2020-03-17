@@ -3437,7 +3437,6 @@
    ```ShellSession
    $ ./bash/deploy-application.sh \
      --environment=ab2d-dev \
-     --shared-environment=ab2d-dev-shared \
      --ecr-repo-environment=ab2d-mgmt-east-dev \
      --region=us-east-1 \
      --vpc-id=vpc-0c6413ec40c5fdac3 \
@@ -3453,6 +3452,5 @@
      --ec2_minimum_instance_count_worker=1 \
      --ec2_maximum_instance_count_worker=1 \
      --database-secret-datetime=2020-01-02-09-15-01 \
-     --build-new-images \
-     --auto-approve
+     --build-new-images
    ```
