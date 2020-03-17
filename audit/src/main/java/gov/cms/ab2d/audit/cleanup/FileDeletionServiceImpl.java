@@ -44,6 +44,20 @@ public class FileDeletionServiceImpl implements FileDeletionService {
     @Override
     public void deleteFiles() {
         log.info("File deletion service kicked off");
+        validateEfsMount();
+
+        try (Stream<Path> filePaths = Files.walk(Paths.get(efsMount), FileVisitOption.FOLLOW_LINKS)) {
+            filePaths.filter(Files::isRegularFile).forEach(this::deleteFile);
+        } catch (IOException e) {
+            log.error("Encountered exception while trying to gather the list of files to delete", e);
+        }
+
+    }
+
+    /**
+     * validates the EFS mount.
+     */
+    private void validateEfsMount() {
         if (!efsMount.startsWith("/")) {
             throw new EFSMountFormatException("EFS Mount must start with a /");
         }
@@ -57,44 +71,82 @@ public class FileDeletionServiceImpl implements FileDeletionService {
                 throw new EFSMountFormatException("EFS mount must not start with a directory that contains important files");
             }
         }
+    }
 
-        try (Stream<Path> walk = Files.walk(Paths.get(efsMount), FileVisitOption.FOLLOW_LINKS)) {
-            walk.filter(Files::isRegularFile).forEach(path -> {
-                try {
-                    String jobUuid = new File(path.toUri()).getParentFile().getName();
-                    Job job = null;
-                    try {
-                        job = jobService.getJobByJobUuid(jobUuid);
-                    } catch (ResourceNotFoundException e) {
-                        log.trace("No job connected to directory {}", path); // Put a log statement here to make PMD happy
-                    }
-                    Instant deleteCheckTime = null;
-                    if (job != null && job.getStatus().isFinished()) {
-                        deleteCheckTime = job.getCompletedAt().toInstant();
-                    } else if (job == null) {
-                        FileTime creationTime = (FileTime) Files.getAttribute(path, "creationTime");
-                        deleteCheckTime = creationTime.toInstant();
-                    }
+    /**
+     * Given a file path, checks to make sure it is eligible for deletion and then deletes it.
+     *
+     * @param path - path of the file to be deleted
+     */
+    private void deleteFile(Path path) {
+        var jobUuid = new File(path.toUri()).getParentFile().getName();
+        var job = findJob(jobUuid, path);
 
-                    if (deleteCheckTime != null) {
-                        if (deleteCheckTime.isBefore(Instant.now().minus(auditFilesTTLHours, ChronoUnit.HOURS)) &&
-                                path.toString().endsWith(FILE_EXTENSION.toLowerCase())) {
-                            Files.delete(path);
-                            log.info("Deleted file {}", path);
-                        } else {
-                            logFileNotEligibleForDeletion(path);
-                        }
-                    } else {
-                        logFileNotEligibleForDeletion(path);
-                    }
-                } catch (IOException e) {
-                    log.error("Encountered exception trying to delete a file {}, moving onto next one", path, e);
+        try {
+            var deleteCheckTime = getDeleteCheckTime(path, job);
+            if (deleteCheckTime == null) {
+                logFileNotEligibleForDeletion(path);
+            } else {
+                final Instant oldestDeletableTime = calculateOldestDeletableTime();
+                final boolean filenameHasValidExtension = isFilenameExtensionValid(path);
+
+                if (deleteCheckTime.isBefore(oldestDeletableTime) && filenameHasValidExtension) {
+                    Files.delete(path);
+                    log.info("Deleted file {}", path);
+                } else {
+                    logFileNotEligibleForDeletion(path);
                 }
-            });
-
+            }
         } catch (IOException e) {
-            log.error("Encountered exception while trying to gather the list of files to delete", e);
+            log.error("Encountered exception trying to delete a file {}, moving onto next one", path, e);
         }
+    }
+
+    /**
+     * Given a jobUuid, finds the job
+     *
+     * @param jobUuid
+     * @param path
+     * @return
+     */
+    private Job findJob(String jobUuid, Path path) {
+        Job job = null;
+        try {
+            job = jobService.getJobByJobUuid(jobUuid);
+        } catch (ResourceNotFoundException e) {
+            log.trace("No job connected to directory {}", path); // Put a log statement here to make PMD happy
+        }
+        return job;
+    }
+
+    /**
+     * Calculates the oldes deletable dateTime given the time to live for the audit files.
+     *
+     * @return
+     */
+    private Instant calculateOldestDeletableTime() {
+        return Instant.now().minus(auditFilesTTLHours, ChronoUnit.HOURS);
+    }
+
+    /**
+     *
+     * @param path
+     * @return true if the filename has a valid extension (.ndjson)
+     */
+    private boolean isFilenameExtensionValid(Path path) {
+        return path.toString().endsWith(FILE_EXTENSION.toLowerCase());
+    }
+
+    
+    private Instant getDeleteCheckTime(Path path, Job job)  throws IOException {
+        Instant deleteCheckTime = null;
+        if (job != null && job.getStatus().isFinished()) {
+            deleteCheckTime = job.getCompletedAt().toInstant();
+        } else if (job == null) {
+            FileTime creationTime = (FileTime) Files.getAttribute(path, "creationTime");
+            deleteCheckTime = creationTime.toInstant();
+        }
+        return deleteCheckTime;
     }
 
     private void logFileNotEligibleForDeletion(Path path) {
