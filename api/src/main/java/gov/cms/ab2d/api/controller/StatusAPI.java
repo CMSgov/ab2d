@@ -52,7 +52,7 @@ public class StatusAPI {
     @Autowired
     private JobService jobService;
 
-   private boolean shouldReplaceWithHttps() {
+    private boolean shouldReplaceWithHttps() {
         HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes())
                 .getRequest();
         return "https".equalsIgnoreCase(request.getHeader("X-Forwarded-Proto"));
@@ -96,56 +96,77 @@ public class StatusAPI {
 
         Job job = jobService.getAuthorizedJobByJobUuid(jobUuid);
 
-        OffsetDateTime now = OffsetDateTime.now();
-
-        if (job.getLastPollTime() != null && job.getLastPollTime().plusSeconds(retryAfterDelay).isAfter(now)) {
+        if (pollingTooMuch(job)) {
             log.error("User was polling too frequently");
             throw new TooManyRequestsException("You are polling too frequently");
         }
 
-        job.setLastPollTime(now);
-        jobService.updateJob(job);
+        updateLastPollTime(job);
 
         HttpHeaders responseHeaders = new HttpHeaders();
         switch (job.getStatus()) {
             case SUCCESSFUL:
-                final ZonedDateTime jobExpiresUTC = ZonedDateTime.ofInstant(job.getExpiresAt().toInstant(), ZoneId.of("UTC"));
-                responseHeaders.add("Expires", DateTimeFormatter.RFC_1123_DATE_TIME.format(jobExpiresUTC));
-
-                final DateTimeType jobStartedAt = new DateTimeType(job.getCreatedAt().toString());
-
-                final JobCompletedResponse resp = new JobCompletedResponse();
-                resp.setTransactionTime(jobStartedAt.toHumanDisplay());
-                resp.setRequest(job.getRequestUrl());
-                resp.setRequiresAccessToken(true);
-                resp.setOutput(job.getJobOutputs().stream().filter(o ->
-                    !o .getError()).map(o -> {
-                    List<JobCompletedResponse.FileMetadata> valueOutputs = generateValueOutputs(o);
-                        return new JobCompletedResponse.Output(o.getFhirResourceType(), getUrlPath(job, o.getFilePath()), valueOutputs);
-                }).collect(Collectors.toList()));
-                resp.setError(job.getJobOutputs().stream().filter(o ->
-                    o.getError()).map(o -> {
-                    List<JobCompletedResponse.FileMetadata> valueOutputs = generateValueOutputs(o);
-                        return new JobCompletedResponse.Output(o.getFhirResourceType(), getUrlPath(job, o.getFilePath()), valueOutputs);
-                }).collect(Collectors.toList()));
-
-                log.info("Job status completed successfully");
-
-                return new ResponseEntity<>(resp, responseHeaders, HttpStatus.OK);
+                return getSuccessResponse(job);
             case SUBMITTED:
             case IN_PROGRESS:
                 responseHeaders.add("X-Progress", job.getProgress() + "% complete");
                 responseHeaders.add("Retry-After", Integer.toString(retryAfterDelay));
                 return new ResponseEntity<>(null, responseHeaders, HttpStatus.ACCEPTED);
             case FAILED:
-                String jobFailedMessage = "Job failed while processing";
-                log.error(jobFailedMessage);
-                throw new JobProcessingException(jobFailedMessage);
+                throwFailedResponse("Job failed while processing");
             default:
-                String unknownErrorMsg = "Unknown status of job";
-                log.error(unknownErrorMsg);
-                throw new RuntimeException(unknownErrorMsg);
+                throwFailedResponse("Unknown status of job");
         }
+        throw new JobProcessingException("Unknown error");
+    }
+
+    private ResponseEntity throwFailedResponse(String msg) {
+        log.error(msg);
+        throw new JobProcessingException(msg);
+    }
+
+    private ResponseEntity getSuccessResponse(Job job) {
+        HttpHeaders responseHeaders = new HttpHeaders();
+        final ZonedDateTime jobExpiresUTC = ZonedDateTime.ofInstant(job.getExpiresAt().toInstant(), ZoneId.of("UTC"));
+        responseHeaders.add("Expires", DateTimeFormatter.RFC_1123_DATE_TIME.format(jobExpiresUTC));
+        final JobCompletedResponse resp = getJobCompletedResonse(job);
+        log.info("Job status completed successfully");
+        return new ResponseEntity<>(resp, responseHeaders, HttpStatus.OK);
+    }
+
+    private void updateLastPollTime(Job job) {
+        job.setLastPollTime(OffsetDateTime.now());
+        jobService.updateJob(job);
+    }
+
+    private boolean pollingTooMuch(Job job) {
+        return (job.getLastPollTime() != null && job.getLastPollTime().plusSeconds(retryAfterDelay).isAfter(OffsetDateTime.now()));
+    }
+
+    private JobCompletedResponse getJobCompletedResonse(Job job) {
+
+        final JobCompletedResponse resp = new JobCompletedResponse();
+
+        final DateTimeType jobStartedAt = new DateTimeType(job.getCreatedAt().toString());
+        resp.setTransactionTime(jobStartedAt.toHumanDisplay());
+
+        resp.setRequest(job.getRequestUrl());
+
+        resp.setRequiresAccessToken(true);
+
+        resp.setOutput(job.getJobOutputs().stream().filter(o ->
+                !o .getError()).map(o -> {
+            List<JobCompletedResponse.FileMetadata> valueOutputs = generateValueOutputs(o);
+            return new JobCompletedResponse.Output(o.getFhirResourceType(), getUrlPath(job, o.getFilePath()), valueOutputs);
+        }).collect(Collectors.toList()));
+
+        resp.setError(job.getJobOutputs().stream().filter(o ->
+                o.getError()).map(o -> {
+                    List<JobCompletedResponse.FileMetadata> valueOutputs = generateValueOutputs(o);
+                    return new JobCompletedResponse.Output(o.getFhirResourceType(), getUrlPath(job, o.getFilePath()), valueOutputs);
+        }).collect(Collectors.toList()));
+
+        return resp;
     }
 
     @ApiOperation(value = BULK_CANCEL,
