@@ -5,4 +5,4 @@ checks:
       threshold: 35
   method-complexity:
     config:
-      threshold: 15
+      threshold: 10
