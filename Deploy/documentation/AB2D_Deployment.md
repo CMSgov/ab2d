@@ -65,10 +65,16 @@
    [Enable Jenkins](#enable-jenkins)
    [Initialize the Jenkins GUI](#initialize-the-jenkins-gui)
    [Configure SSH on Jenkins master](#configure-ssh-on-jenkins-master)
+   [Create jenkins IAM user in the management AWS account](#create-jenkins-iam-user-in-the-management-aws-account)
+   [Configure AWS CLI for management environment on Jenkins master](#configure-aws-cli-for-management-environment-on-jenkins-master)
    [Create jenkins IAM user in the development AWS account](#create-jenkins-iam-user-in-the-development-aws-account)
    [Configure AWS CLI for Dev environment on Jenkins master](#configure-aws-cli-for-dev-environment-on-jenkins-master)
    [Install python3, pip3, and required pip modules](#install-python3-pip3-and-required-pip-modules)
-   [Configure Terraform logging](#configure-terraform-logging)
+   [Install Terraform on Jenkins master](#install-terraform-on-jenkins-master)
+   [Configure Terraform logging on Jenkins master](#configure-terraform-logging-on-jenkins-master)
+   [Install JDK 13 on Jenkins master](#install-jdk-13-on-jenkins-master)
+   [Install maven on Jenkins master](#install-maven-on-jenkins-master)
+   [Install jq on Jenkins master](#install-jq-on-jenkins-master)
 1. [Upgrade Jenkins](#upgrade-jenkins)
 1. [Verify VPC peering between the management and development AWS accounts](#verify-vpc-peering-between-the-management-and-development-aws-accounts)
 1. [Update existing AB2D static website in development](#update-existing-ab2d-static-website-in-development)
@@ -4615,6 +4621,111 @@
 
     1. Note that it would be better to lock down the jenkins user so that it can only do "sudo" on a certain subset of commands based on the requirements
 
+### Create jenkins IAM user in the management AWS account
+
+1. Open Chrome
+
+1. Log on to the development AWS account
+
+1. Select **IAM**
+
+1. Select **Users** in the leftmost panel
+
+1. Select **Add user**
+
+1. Configure the user as follows
+
+   - **User name:** jenkins
+
+   - **Programmatic access:** checked
+
+   - **AWS Management Console access:** unchecked
+
+1. Select **Next: Permissions**
+
+1. Check the checkbox beside **Administrators**
+
+1. Select **Next: Tags**
+
+1. Select **Next: Review**
+
+1. Select **Create user**
+
+1. Select **Download .csv**
+
+1. Select **Close**
+
+1. Note that the following can be found in the "credentials.csv" file that you downloaded
+
+   *Format:*
+   
+   - **User name:** {your semanticbits email}
+
+   - **Password:** {blank because you did custom password}
+
+   - **Access key ID:** {your access key}
+
+   - **Secret access key:** {your secret access key}
+
+   - **Console login link:** https://{aws account number}.signin.aws.amazon.com/console
+
+1. Save these credentials in 1Password
+
+### Configure AWS CLI for management environment on Jenkins master
+
+1. Set the management AWS profile
+
+   ```ShellSession
+   $ export AWS_PROFILE=ab2d-mgmt-east-dev
+   ```
+   
+1. Connect to the Jenkins EC2 instance
+
+   1. Get the private IP address of Jenkins EC2 instance
+   
+      ```ShellSession
+      $ JENKINS_MASTER_PUBLIC_IP=$(aws --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-jenkins-master" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PublicIpAddress" \
+        --output text)
+      ```
+
+   1. Ensure that you are connected to the Cisco VPN
+
+   1. SSH into the instance using the private IP address
+
+      ```ShellSession
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_MASTER_PUBLIC_IP
+      ```
+
+1. Configure AWS CLI
+   
+   ```ShellSession
+   $ aws configure --profile=ab2d-mgmt-east-dev
+   ```
+
+1. Enter {your aws access key} at the **AWS Access Key ID** prompt
+
+1. Enter {your aws secret access key} at the AWS Secret Access Key prompt
+
+1. Enter the following at the **Default region name** prompt
+
+   ```
+   us-east-1
+   ```
+
+1. Enter the following at the **Default output format** prompt
+
+   ```
+   json
+   ```
+
+1. Examine the contents of your AWS credentials file
+
+   ```ShellSession
+   $ cat ~/.aws/credentials
+   ```
+
 ### Create jenkins IAM user in the development AWS account
 
 1. Open Chrome
@@ -4663,7 +4774,7 @@
 
    - **Console login link:** https://{aws account number}.signin.aws.amazon.com/console
 
-1. Save these credentials someone safe like a personal slack channel
+1. Save these credentials in 1Password
 
 ### Configure AWS CLI for Dev environment on Jenkins master
 
@@ -4871,7 +4982,117 @@
    $ pip3 install boto3
    ```
 
-### Configure Terraform logging
+### Install Terraform on Jenkins master
+
+1. Check the version of terraform that is installed on your development machine
+
+   ```ShellSession
+   $ terraform --version
+   ```
+
+1. Note the terraform version
+
+   *Format:*
+
+   ```
+   Terraform v{terraform version}
+   ```
+
+   *Example:*
+
+   ```
+   Terraform v0.12.9
+   ```
+   
+1. Set the management AWS profile
+
+   ```ShellSession
+   $ export AWS_PROFILE=ab2d-mgmt-east-dev
+   ```
+   
+1. Connect to the Jenkins EC2 instance
+
+   1. Get the private IP address of Jenkins EC2 instance
+   
+      ```ShellSession
+      $ JENKINS_MASTER_PUBLIC_IP=$(aws --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-jenkins-master" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PublicIpAddress" \
+        --output text)
+      ```
+
+   1. Ensure that you are connected to the Cisco VPN
+
+   1. SSH into the instance using the private IP address
+
+      ```ShellSession
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_MASTER_PUBLIC_IP
+      ```
+
+1. Set desired terraform version
+
+   *Format:*
+   
+   ```ShellSession
+   $ TERRAFORM_VERSION={terraform version}
+   ```
+
+   *Example:*
+   
+   ```ShellSession
+   $ TERRAFORM_VERSION=0.12.9
+   ```
+
+1. Change to the "/tmp" directory
+
+   ```ShellSession
+   $ cd /tmp
+   ```
+   
+1. Download terraform
+
+   ```ShellSession
+   $ sudo wget "https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip"
+   ```
+
+1. Extract the downloaded file
+
+   ```ShellSession
+   $ sudo unzip ./terraform_${TERRAFORM_VERSION}_linux_amd64.zip -d /usr/local/bin
+   ```
+
+1. Check the terraform version
+
+   ```ShellSession
+   $ terraform --version
+   ```
+
+### Configure Terraform logging on Jenkins master
+
+1. Set the management AWS profile
+
+   ```ShellSession
+   $ export AWS_PROFILE=ab2d-mgmt-east-dev
+   ```
+   
+1. Connect to the Jenkins EC2 instance
+
+   1. Get the private IP address of Jenkins EC2 instance
+   
+      ```ShellSession
+      $ JENKINS_MASTER_PUBLIC_IP=$(aws --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-jenkins-master" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PublicIpAddress" \
+        --output text)
+      ```
+
+   1. Ensure that you are connected to the Cisco VPN
+
+   1. SSH into the instance using the private IP address
+
+      ```ShellSession
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_MASTER_PUBLIC_IP
+      ```
 
 1. Modify the SSH config file
 
@@ -4894,6 +5115,188 @@
    $ sudo chown -R "$(id -u)":"$(id -g -nr)" /var/log/terraform
    ```
 
+### Install JDK 13 on Jenkins master
+
+1. Set the management AWS profile
+
+   ```ShellSession
+   $ export AWS_PROFILE=ab2d-mgmt-east-dev
+   ```
+   
+1. Connect to the Jenkins EC2 instance
+
+   1. Get the private IP address of Jenkins EC2 instance
+   
+      ```ShellSession
+      $ JENKINS_MASTER_PUBLIC_IP=$(aws --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-jenkins-master" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PublicIpAddress" \
+        --output text)
+      ```
+
+   1. Ensure that you are connected to the Cisco VPN
+
+   1. SSH into the instance using the private IP address
+
+      ```ShellSession
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_MASTER_PUBLIC_IP
+      ```
+
+1. Install JDK 13
+
+   ```ShellSession
+   $ sudo yum install java-13-openjdk-devel -y
+   ```
+
+1. Get JDK 13 java binary
+
+   ```ShellSession
+   $ JAVA_13=$(alternatives --display java | grep family | grep java-13-openjdk | cut -d' ' -f1)
+   ```
+   
+1. Set java binary to JDK 13
+
+   ```ShellSession
+   $ sudo alternatives --set java $JAVA_13
+   ```
+
+1. Get JDK 13 javac binary
+
+   ```ShellSession
+   $ JAVAC_13=$(alternatives --display javac | grep family | grep java-13-openjdk | cut -d' ' -f1)
+   ```
+   
+1. Set javac binary to JDK 13
+
+   ```ShellSession
+   $ sudo alternatives --set javac $JAVAC_13
+   ```
+
+### Install maven on Jenkins master
+
+1. Check the version of maven that is installed on your development machine
+
+   ```ShellSession
+   $ mvn --version
+   ```
+
+1. Note the terraform version
+
+   *Format:*
+
+   ```
+   Apache Maven {maven version}
+   ```
+
+   *Example:*
+
+   ```
+   Apache Maven 3.6.3
+   ```
+
+1. Set the management AWS profile
+
+   ```ShellSession
+   $ export AWS_PROFILE=ab2d-mgmt-east-dev
+   ```
+   
+1. Connect to the Jenkins EC2 instance
+
+   1. Get the private IP address of Jenkins EC2 instance
+   
+      ```ShellSession
+      $ JENKINS_MASTER_PUBLIC_IP=$(aws --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-jenkins-master" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PublicIpAddress" \
+        --output text)
+      ```
+
+   1. Ensure that you are connected to the Cisco VPN
+
+   1. SSH into the instance using the private IP address
+
+      ```ShellSession
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_MASTER_PUBLIC_IP
+      ```
+
+1. Change to the "/opt" directory
+
+   ```ShellSession
+   $ cd /opt
+   ```
+
+1. Set desired maven version
+
+   ```ShellSession
+   MAVEN_VERSION=3.6.3
+   ```
+
+1. Download maven
+
+   ```ShellSession
+   $ sudo wget https://downloads.apache.org/maven/maven-3/${MAVEN_VERSION}/binaries/apache-maven-${MAVEN_VERSION}-bin.tar.gz
+   ```
+
+1. Extract maven from the archive
+
+   ```ShellSession
+   $ sudo tar xzf apache-maven-${MAVEN_VERSION}-bin.tar.gz
+   ```
+
+1. Delete the maven archive
+
+   ```ShellSession
+   $ sudo rm -f apache-maven-${MAVEN_VERSION}-bin.tar.gz
+   ```
+   
+1. Create a symbolic link for maven
+
+   ```ShellSession
+   $ sudo ln -s apache-maven-${MAVEN_VERSION} maven
+   ```
+
+1. Setup M2_HOME environment variable
+
+   ```ShellSession
+   $ echo 'export M2_HOME=/opt/maven' \
+     | sudo tee --append /etc/profile.d/maven.sh \
+     > /dev/null
+   ```
+
+1. Add the M2_HOME environment variable to PATH
+
+   ```ShellSession
+   $ echo 'export PATH=${M2_HOME}/bin:${PATH}' \
+     | sudo tee --append /etc/profile.d/maven.sh \
+     > /dev/null
+   ```
+
+1. Load the maven environment variables
+
+   ```ShellSession
+   $ source /etc/profile.d/maven.sh
+   ```
+
+1. Verify the maven version
+
+   ```ShellSession
+   $ mvn --version
+   ```
+
+### Install jq on Jenkins master
+
+1. Install jq
+
+   ```ShellSession
+   $ sudo yum install jq -y
+   ```
+
+1. Verify jq by checking its version
+
+   ```ShellSession
+   $ jq --version
+   ```
+   
 ## Upgrade Jenkins
 
 1. Ensure that you are connected to the Cisco VPN
