@@ -209,6 +209,17 @@ or all Part D patients registered with the sponsor:
 GET /api/v1/fhir/Patient/$export
 ```
 
+#### Parameters
+
+The _since parameter can be used to limit data to only data that has been updated since the specified parameter.
+The format is the [ISO 8601 DateTime standard](https://www.w3.org/TR/NOTE-datetime) e.g. YYYY-MM-DDThh:mm:ssTZD
+
+```
+GET /api/v1/fhir/Patient/$export?_since=2020-03-16T00:00:00-05:00
+```
+
+Dates prior to 2020-02-13 are not supported and will result in a failure response.
+
 ### Status
 Once a job has been created, the user can/should request the status of the submitted job. 
 
