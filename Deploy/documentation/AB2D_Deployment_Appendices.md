@@ -1268,8 +1268,6 @@
 
 1. Enter the "swagger-ui.html" URL for the target environment in the address bar
 
-1. Select **bulk-data-access-api**
-
 1. Note the list of API endpoints that are displayed
 
 1. Authorize the endpoints using the JWT access token
@@ -1295,6 +1293,8 @@
    1. Note that locked icons does not mean that you typed in the authorization token correctly
 
 1. Test the "/api/v1/fhir/Patient/$export" API
+
+   1. Select **Export**
 
    1. Select **GET** beside the "/api/v1/fhir/Patient/$export" API
 
@@ -1339,6 +1339,8 @@
 
 1. Test the "/api/v1/fhir/Job/{jobUuid}/$status" API
 
+   1. Select **Status**
+
    1. Select **GET** beside the "/api/v1/fhir/Job/{jobUuid}/$status" API
 
    1. Select **Try it out**
@@ -1364,6 +1366,8 @@
    1. Select **GET** again beside the "/api/v1/fhir/Job/{jobUuid}/$status" API to collapse the section
 
 1. Test the "/api/v1/fhir/Job/{jobUuid}/file/{filename}" API
+
+   1. Select **Download**
 
    1. Select **GET** beside the "/api/v1/fhir/Job/{jobUuid}/file/{filename}" API
 

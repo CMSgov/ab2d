@@ -45,43 +45,43 @@ First, we will prepare an "ab2d" Collection in Postman.
 
 1. Open Postman
    
-2. Select the <b>New dropdown</b> from the top left of the page
+1. Select the <b>New dropdown</b> from the top left of the page
    
-3. Select <b>Collection</b>
+1. Select <b>Collection</b>
    
-4. Configure the "CREATE A NEW COLLECTION" page as follows
+1. Configure the "CREATE A NEW COLLECTION" page as follows
    
    <b>Name:</b> ab2d
    
-5. Select <b>Create</b>
+1. Select <b>Create</b>
    
-6. Close the "ab2d" panel that appears to the right of the leftmost panel
+1. Close the "ab2d" panel that appears to the right of the leftmost panel
    
-7. Hover over "ab2d" in the leftmost panel
+1. Hover over "ab2d" in the leftmost panel
    
-8. Select ... beside "ab2d"
+1. Select ... beside "ab2d"
    
-9. Select <b>Add Request</b>
+1. Select <b>Add Request</b>
    
-10. Configure the "SAVE REQUEST" page as follows
+1. Configure the "SAVE REQUEST" page as follows
    
     <b>Request name:</b> retreive-a-token
    
-11. Select <b>Save to ab2d</b>
+1. Select <b>Save to ab2d</b>
    
-12. Expand the <b>ab2d</b> node
+1. Expand the <b>ab2d</b> node
    
-13. Select <b>GET retreive-a-token</b>
+1. Select <b>GET retreive-a-token</b>
    
-14. Change "GET" to "POST"
+1. Change "GET" to "POST"
    
-15. Configure the "POST retrieve-a-token" page as follows
+1. Configure the "POST retrieve-a-token" page as follows
    
     <b>Enter request URL:</b> https://test.idp.idm.cms.gov/oauth2/aus2r7y3gdaFMKBol297/v1/token
    
-16. Select the Params tab
+1. Select the Params tab
    
-17. Configure the "Params" tab as follows:
+1. Configure the "Params" tab as follows:
 
     <table class="ds-c-table">
     <thead>
@@ -102,7 +102,7 @@ First, we will prepare an "ab2d" Collection in Postman.
     </tbody>
     </table>
    
-18. There are 5 users (clients) setup in the sandbox
+1. There are 5 users (clients) setup in the sandbox
 
     <table class="ds-c-table">
     <thead>
@@ -147,7 +147,7 @@ First, we will prepare an "ab2d" Collection in Postman.
     </tbody>
     </table>
     
-19. The basic authorization encoded user names and passwords for each of those 5 users are below for convenience
+1. The basic authorization encoded user names and passwords for each of those 5 users are below for convenience
     
     <table class="ds-c-table">
     <thead>
@@ -180,13 +180,13 @@ First, we will prepare an "ab2d" Collection in Postman.
     </tbody>
     </table>
    
-20. Choose the desired user to test and note its basic authorization
+1. Choose the desired user to test and note its basic authorization
    
     Note that the first user has the least data and each successive user has a greater amount of data.
    
-21. Select the <b>Headers</b> tab on the "POST retrieve-a-token" page
+1. Select the <b>Headers</b> tab on the "POST retrieve-a-token" page
    
-22. Configure the "Headers" tab as follows
+1. Configure the "Headers" tab as follows
    
     <table class="ds-c-table">
     <thead>
@@ -236,9 +236,9 @@ First, we will prepare an "ab2d" Collection in Postman.
       </tbody> 
     </table>
    
-23. Select Send
+1. Select Send
    
-24. Verify that you get a response with an access token under the "Body" tab at the bottom of the page
+1. Verify that you get a response with an access token under the "Body" tab at the bottom of the page
    
     Format:
    
@@ -258,25 +258,25 @@ First, we will prepare an "ab2d" Collection in Postman.
             "scope": "clientCreds"
         }
    
-25. Select <b>Save</b> near the top right of the page
+1. Select <b>Save</b> near the top right of the page
    
-26. Close the "POST retrieve-a-token" tab
+1. Close the "POST retrieve-a-token" tab
    
-27. Close Postman
+1. Close Postman
 
 ### Retrieve a JSON Web Token (JWT)
 
 1. Open Postman
 
-2. Select the Collections tab in the leftmost panel
+1. Select the Collections tab in the leftmost panel
 
-3. Expand the ab2d collection node
+1. Expand the ab2d collection node
 
-4. Select the POST retrieve-a-token
+1. Select the POST retrieve-a-token
 
-5. Select Send
+1. Select Send
 
-6. Note the output
+1. Note the output
 
     Format:
 
@@ -296,9 +296,9 @@ First, we will prepare an "ab2d" Collection in Postman.
             "scope": "clientCreds"
         }
 
-7. Copy and save the access token for use in the next sections
+1. Copy and save the access token for use in the next sections
 
-8. This bearer access token expires after 1 hour
+1. This bearer access token expires after 1 hour
 
 ## Bulk Export Job
 These instructions will initiate a part A & B bulk claim export job
@@ -308,7 +308,7 @@ These instructions will initiate a part A & B bulk claim export job
     - bearer token is older than 1 hour (expired)?
     - bearer token was created with a user that is different than the user that you want to use?
 
-2. Open the Swagger web page for the API
+1. Open the Swagger web page for the API
 
     <i>Note that Chrome was used for our testing.</i>
 
@@ -316,9 +316,9 @@ These instructions will initiate a part A & B bulk claim export job
     https://sandbox.ab2d.cms.gov/swagger-ui.html
     ```
 
-3. Select Authorize on the right side of the page
+1. Select Authorize on the right side of the page
 
-4. Type the following in the <b>Value</b> text box using your latest access token
+1. Type the following in the <b>Value</b> text box using your latest access token
 
     <i>Note that the access token must be preceded by "Bearer" and there should be a space between "Bearer" and the access token.</i>
 
@@ -328,21 +328,21 @@ These instructions will initiate a part A & B bulk claim export job
     Bearer {access token}
     ```
 
-5. Select <b>Authorize</b>
+1. Select <b>Authorize</b>
 
-6. Select <b>Close</b>
+1. Select <b>Close</b>
 
-7. If the "GET" and "DELETE" operations are not visible, select <b>bulk-data-access-api</b> to view the "GET" and "DELETE" operations
+1. If the export endpoints are not visible, select <b>Export</b> to view the export operations
 
-8. Select <b>GET</b> beside "/api/v1/fhir/Patient/$export" for "Initiate Part A & B bulk claim export job" to expand the details of the operation
+1. Select <b>GET</b> beside "/api/v1/fhir/Patient/$export" for "Initiate Part A & B bulk claim export job" to expand the details of the operation
 
-9. Select <b>Try it out</b>
+1. Select <b>Try it out</b>
 
-10. Select <b>Execute</b>
+1. Select <b>Execute</b>
 
-11. Scroll down to the "Server response" section and note the "Code"
+1. Scroll down to the "Server response" section and note the "Code"
 
-12. If the response code is 202, copy the job id from the "Response headers" section to your clipboard
+1. If the response code is 202, copy the job id from the "Response headers" section to your clipboard
 
     Format:
 
@@ -356,15 +356,17 @@ These instructions will initiate a part A & B bulk claim export job
     content-location: http://sandbox.ab2d.cms.gov/api/v1/fhir/Job/afc222d1-a55b-403b-ad22-49f5aefec4b6/$status 
     ```
 
-13. Select <b>GET</b> beside "/api/v1/fhir/Job/{jobUuid}/$status" for "Returns a status of an export job" to expand the details of the operation
+1. If the status endpoints are not visible, select <b>Status</b>
 
-14. Select <b>Try it out</b>
+1. Select <b>GET</b> beside "/api/v1/fhir/Job/{jobUuid}/$status" for "Returns a status of an export job" to expand the details of the operation
 
-15. Paste the job id into the A job identifier text box
+1. Select <b>Try it out</b>
 
-16. Select Execute
+1. Paste the job id into the A job identifier text box
 
-17. If the status is 202, it will tell you the percent complete.
+1. Select Execute
+
+1. If the status is 202, it will tell you the percent complete.
 
     Example:
 
@@ -373,7 +375,7 @@ These instructions will initiate a part A & B bulk claim export job
     Based on the progress, you can a wait a period of time and try the status check again by selecting <b>Execute</b> until you 
     see a status of 200
 
-18. If the status is 200, save the job id and file(s) to download from the following line under the "Response body" text box
+1. If the status is 200, save the job id and file(s) to download from the following line under the "Response body" text box
 
     Format:
 
@@ -383,34 +385,36 @@ These instructions will initiate a part A & B bulk claim export job
 
         "url": "http://sandbox.ab2d.cms.gov/api/v1/fhir/Job/afc222d1-a55b-403b-ad22-49f5aefec4b6/file/S0000_0001.ndjson"
 
-19. Select <b>GET</b> beside "/api/v1/fhir/Job/{jobUuid}/file/{filename}" for "Downloads a file produced by an export job" to 
+1. If the file download endpoint is not visible, select <b>Download</b>
+
+1. Select <b>GET</b> beside "/api/v1/fhir/Job/{jobUuid}/file/{filename}" for "Downloads a file produced by an export job" to 
 expand the details of the operation
 
-20. Select <b>Try it out</b>
+1. Select <b>Try it out</b>
 
-21. Type the file to download in the A file name text box
+1. Type the file to download in the A file name text box
 
     Example:
 
         S0000_0001.ndjson
 
-22. Type the job id in the A job identifier text box
+1. Type the job id in the A job identifier text box
 
     Example:
 
         afc222d1-a55b-403b-ad22-49f5aefec4b6
 
-23. Select <b>Execute</b>
+1. Select <b>Execute</b>
 
-24. Verify that you got a response code of 200. The results of the file appears within the "Response Body" text box.
+1. Verify that you got a response code of 200. The results of the file appears within the "Response Body" text box.
 
     <i>Note at the top of the output it says "can't parse JSON.  Raw result:". This is normal because the specification 
     requires that the output be new line delimited JSON.</i>
 
-25. Select <b>Download</b> within the "Response Body" text box at the bottom left of the text box. If the browser says that the 
+1. Select <b>Download</b> within the "Response Body" text box at the bottom left of the text box. If the browser says that the 
 page is unresponsive and asks you several times if you want to wait, do so.
 
-26. Wait for the download to complete. The export file will appear in your downloads.
+1. Wait for the download to complete. The export file will appear in your downloads.
 
     Format:
 
@@ -428,7 +432,7 @@ page is unresponsive and asks you several times if you want to wait, do so.
 
     c. Repeat the process for each file name that appeared in the output
 
-26. If you are going to use Swagger again during this browser session, select Cancel under the three operations that you used in this section
+1. If you are going to use Swagger again during this browser session, select Cancel under the three operations that you used in this section
 
         GET /api/v1/fhir/Job/{jobUuid}/$status
         GET /api/v1/fhir/Job/{jobUuid}/file/{filename}
@@ -445,15 +449,15 @@ This section will show you how to initiate a Part A & B bulk claim export job fo
 
     - bearer token was created with a user that is different than the user that you want to use?
 
-2. Open the Swagger web page for the API
+1. Open the Swagger web page for the API
 
     <i>Note that Chrome was used for our testing.</i>
 
     [https://sandbox.ab2d.cms.gov/swagger-ui.html](https://sandbox.ab2d.cms.gov/swagger-ui.html)
 
-3. Select <b>Authorize</b> on the right side of the page
+1. Select <b>Authorize</b> on the right side of the page
 
-4. Type the following in the <b>Value</b> text box using your latest access token
+1. Type the following in the <b>Value</b> text box using your latest access token
 
     Note that the access token must be preceded by "Bearer" and there should be a space between "Bearer" and the access token.
 
@@ -461,27 +465,27 @@ This section will show you how to initiate a Part A & B bulk claim export job fo
 
         Bearer {access token}
 
-5. Select <b>Authorize</b>
+1. Select <b>Authorize</b>
 
-6. Select <b>Close</b>
+1. Select <b>Close</b>
 
-7. If the "GET" and "DELETE" operations are not visible, select bulk-data-access-api to view the "GET" and "DELETE" operations
+1. If the export endpoints are not visible, select <b>Export</b> to view the export operations
 
-8. Select <b>GET</b> beside "/api/v1/fhir/Group/{contractNumber}/$export" for "Initiate Part A & B bulk claim export job for a given contract number" to expand the details of the operation
+1. Select <b>GET</b> beside "/api/v1/fhir/Group/{contractNumber}/$export" for "Initiate Part A & B bulk claim export job for a given contract number" to expand the details of the operation
 
-9. Select <b>Try it out</b>
+1. Select <b>Try it out</b>
 
-10. Type the desired contract number in the A contract number text box
+1. Type the desired contract number in the A contract number text box
 
     Example:
 
         S0000
 
-11. Select Execute
+1. Select Execute
 
-12. Scroll down to the "Server response" section and note the "Code"
+1. Scroll down to the "Server response" section and note the "Code"
 
-13. If the response code is 202, copy the job id from the "Response headers" section to your clipboard
+1. If the response code is 202, copy the job id from the "Response headers" section to your clipboard
 
     Format:
 
@@ -491,15 +495,17 @@ This section will show you how to initiate a Part A & B bulk claim export job fo
 
         content-location: http://sandbox.ab2d.cms.gov/api/v1/fhir/Job/6c5df22b-61cc-4c3d-815f-4e56aa647699/$status 
 
-14. Select <b>GET</b> beside "/api/v1/fhir/Job/{jobUuid}/$status" for "Returns a status of an export job" to expand the details of the operation
+1. If the status endpoints are not visible, select <b>Status</b>
 
-15. Select <b>Try it out</b>
+1. Select <b>GET</b> beside "/api/v1/fhir/Job/{jobUuid}/$status" for "Returns a status of an export job" to expand the details of the operation
 
-16. Paste the job id into the A job identifier text box
+1. Select <b>Try it out</b>
 
-17. Select <b>Execute</b>
+1. Paste the job id into the A job identifier text box
 
-18. If the status is 202, it will tell you the percent complete.
+1. Select <b>Execute</b>
+
+1. If the status is 202, it will tell you the percent complete.
 
     Example:
 
@@ -507,7 +513,7 @@ This section will show you how to initiate a Part A & B bulk claim export job fo
         
     Based on the progress, you can a wait a period of time and try the status check again by selecting <b>Execute</b> until you see a status of 200
 
-19. If the status is 200, note and save the job id and file(s) to download from the following line under the "Response body" text box
+1. If the status is 200, note and save the job id and file(s) to download from the following line under the "Response body" text box
 
     Format:
 
@@ -517,31 +523,33 @@ This section will show you how to initiate a Part A & B bulk claim export job fo
 
         "url": "http://sandbox.ab2d.cms.gov/api/v1/fhir/Job/6c5df22b-61cc-4c3d-815f-4e56aa647699/file/S0000_0001.ndjson"
 
-20. Select <b>GET</b> beside "/api/v1/fhir/Job/{jobUuid}/file/{filename}" for "Downloads a file produced by an export job" to expand the details of the operation
+1. If the download endpoint is not visible, select <b>Download</b>
 
-21. Select <b>Try it out</b>
+1. Select <b>GET</b> beside "/api/v1/fhir/Job/{jobUuid}/file/{filename}" for "Downloads a file produced by an export job" to expand the details of the operation
 
-22. Type the file to download in the <b>A file name</b> text box
+1. Select <b>Try it out</b>
+
+1. Type the file to download in the <b>A file name</b> text box
 
     Example:
 
         S0000_0001.ndjson
 
-23. Type the job id in the <b>A job identifier</b> text box
+1. Type the job id in the <b>A job identifier</b> text box
 
     Example:
 
         6c5df22b-61cc-4c3d-815f-4e56aa647699
 
-24. Select <b>Execute</b>
+1. Select <b>Execute</b>
 
-25. Verify that you got a response code of 200. The results of the file appears within the "Response Body" text box.
+1. Verify that you got a response code of 200. The results of the file appears within the "Response Body" text box.
 
     <i>Note at the top of the output it says "can't parse JSON.  Raw result:". This is normal because the specification requires that the output be new line delimited JSON.</i>
 
-25. Select <b>Download</b> within the "Response Body" text box at the bottom left of the text box. If the browser says that the page is unresponsive and asks you several times if you want to wait, do so
+1. Select <b>Download</b> within the "Response Body" text box at the bottom left of the text box. If the browser says that the page is unresponsive and asks you several times if you want to wait, do so
 
-26. Wait for the download to complete. The export file will appear in your downloads.
+1. Wait for the download to complete. The export file will appear in your downloads.
 
     Format:
 
@@ -551,7 +559,7 @@ This section will show you how to initiate a Part A & B bulk claim export job fo
 
         response_1583369581232.json
 
-27. If there was more that one file to download, do the following under the <b>GET</b> “/api/v1/fhir/Job/{jobUuid}/file/{filename}” endpoint
+1. If there was more that one file to download, do the following under the <b>GET</b> “/api/v1/fhir/Job/{jobUuid}/file/{filename}” endpoint
 
     a. Change the A file name text box to the next file name
 
@@ -559,7 +567,7 @@ This section will show you how to initiate a Part A & B bulk claim export job fo
 
     c. Repeat the process for each file name that appeared in the output
 
-28. If you are going to use Swagger again during this browser session, select <b>Cancel</b> under the three operations that you used in this section
+1. If you are going to use Swagger again during this browser session, select <b>Cancel</b> under the three operations that you used in this section
 
         GET /api/v1/fhir/Group/{contractNumber}/$export
         GET /api/v1/fhir/Job/{jobUuid}/$status

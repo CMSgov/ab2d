@@ -12,6 +12,7 @@ import java.time.Month;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class ContractAdapterStubTest {
     private ContractAdapterStub cut;
@@ -38,6 +39,11 @@ class ContractAdapterStubTest {
         assertThat(patients.size(), is(0));
     }
 
+    @Test
+    @DisplayName("Do error checking for extractContractSno")
+    void testExtractContractSnoError() {
+        assertEquals(0, cut.extractContractSno("AAAA"));
+    }
 
     @DisplayName("Given ContractNumber, returns varying number of patient records")
     @ParameterizedTest(name = "Given ContractNumber \"{0}\" returns {1} patient records")
