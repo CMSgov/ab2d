@@ -4162,13 +4162,13 @@
    
 1. Wait for the automation to complete
 
-1. Set the management AWS profile
+1. Connect to Jenkins master
 
-   ```ShellSession
-   $ export AWS_PROFILE=ab2d-mgmt-east-dev
-   ```
-   
-1. Connect to the Jenkins EC2 instance
+   1. Set the management AWS profile
+
+      ```ShellSession
+      $ export AWS_PROFILE=ab2d-mgmt-east-dev
+      ```
 
    1. Get the private IP address of Jenkins EC2 instance
    
@@ -4244,13 +4244,13 @@
 
 ### Enable Jenkins
 
-1. Set the management AWS profile
+1. Connect to Jenkins master
 
-   ```ShellSession
-   $ export AWS_PROFILE=ab2d-mgmt-east-dev
-   ```
-   
-1. Connect to the Jenkins EC2 instance
+   1. Set the management AWS profile
+
+      ```ShellSession
+      $ export AWS_PROFILE=ab2d-mgmt-east-dev
+      ```
 
    1. Get the private IP address of Jenkins EC2 instance
    
@@ -4408,13 +4408,13 @@
 
 ### Configure SSH on Jenkins master
 
-1. Set the management AWS profile
+1. Connect to Jenkins master
 
-   ```ShellSession
-   $ export AWS_PROFILE=ab2d-mgmt-east-dev
-   ```
-   
-1. Connect to the Jenkins EC2 instance
+   1. Set the management AWS profile
+
+      ```ShellSession
+      $ export AWS_PROFILE=ab2d-mgmt-east-dev
+      ```
 
    1. Get the private IP address of Jenkins EC2 instance
    
@@ -4673,13 +4673,13 @@
 
 ### Configure AWS CLI for management environment on Jenkins master
 
-1. Set the management AWS profile
+1. Connect to Jenkins master
 
-   ```ShellSession
-   $ export AWS_PROFILE=ab2d-mgmt-east-dev
-   ```
-   
-1. Connect to the Jenkins EC2 instance
+   1. Set the management AWS profile
+
+      ```ShellSession
+      $ export AWS_PROFILE=ab2d-mgmt-east-dev
+      ```
 
    1. Get the private IP address of Jenkins EC2 instance
    
@@ -4778,13 +4778,13 @@
 
 ### Configure AWS CLI for Dev environment on Jenkins master
 
-1. Set the management AWS profile
+1. Connect to Jenkins master
 
-   ```ShellSession
-   $ export AWS_PROFILE=ab2d-mgmt-east-dev
-   ```
-   
-1. Connect to the Jenkins EC2 instance
+   1. Set the management AWS profile
+
+      ```ShellSession
+      $ export AWS_PROFILE=ab2d-mgmt-east-dev
+      ```
 
    1. Get the private IP address of Jenkins EC2 instance
    
@@ -4853,13 +4853,13 @@
    Python 3.7.5
    ```
    
-1. Set the management AWS profile
+1. Connect to Jenkins master
 
-   ```ShellSession
-   $ export AWS_PROFILE=ab2d-mgmt-east-dev
-   ```
-   
-1. Connect to the Jenkins EC2 instance
+   1. Set the management AWS profile
+
+      ```ShellSession
+      $ export AWS_PROFILE=ab2d-mgmt-east-dev
+      ```
 
    1. Get the private IP address of Jenkins EC2 instance
    
@@ -5004,13 +5004,13 @@
    Terraform v0.12.9
    ```
    
-1. Set the management AWS profile
+1. Connect to Jenkins master
 
-   ```ShellSession
-   $ export AWS_PROFILE=ab2d-mgmt-east-dev
-   ```
-   
-1. Connect to the Jenkins EC2 instance
+   1. Set the management AWS profile
+
+      ```ShellSession
+      $ export AWS_PROFILE=ab2d-mgmt-east-dev
+      ```
 
    1. Get the private IP address of Jenkins EC2 instance
    
@@ -5069,13 +5069,13 @@
 
 ### Configure Terraform logging on Jenkins master
 
-1. Set the management AWS profile
+1. Connect to Jenkins master
 
-   ```ShellSession
-   $ export AWS_PROFILE=ab2d-mgmt-east-dev
-   ```
-   
-1. Connect to the Jenkins EC2 instance
+   1. Set the management AWS profile
+
+      ```ShellSession
+      $ export AWS_PROFILE=ab2d-mgmt-east-dev
+      ```
 
    1. Get the private IP address of Jenkins EC2 instance
    
@@ -5117,13 +5117,13 @@
 
 ### Install JDK 13 on Jenkins master
 
-1. Set the management AWS profile
+1. Connect to Jenkins master
 
-   ```ShellSession
-   $ export AWS_PROFILE=ab2d-mgmt-east-dev
-   ```
-   
-1. Connect to the Jenkins EC2 instance
+   1. Set the management AWS profile
+
+      ```ShellSession
+      $ export AWS_PROFILE=ab2d-mgmt-east-dev
+      ```
 
    1. Get the private IP address of Jenkins EC2 instance
    
@@ -5194,13 +5194,13 @@
    Apache Maven 3.6.3
    ```
 
-1. Set the management AWS profile
+1. Connect to Jenkins master
 
-   ```ShellSession
-   $ export AWS_PROFILE=ab2d-mgmt-east-dev
-   ```
-   
-1. Connect to the Jenkins EC2 instance
+   1. Set the management AWS profile
+
+      ```ShellSession
+      $ export AWS_PROFILE=ab2d-mgmt-east-dev
+      ```
 
    1. Get the private IP address of Jenkins EC2 instance
    
@@ -5323,13 +5323,13 @@
 
    1. Save the URL for a later step
 
-1. Set the management AWS profile
+1. Connect to Jenkins master
 
-   ```ShellSession
-   $ export AWS_PROFILE=ab2d-mgmt-east-dev
-   ```
-   
-1. Connect to the Jenkins EC2 instance
+   1. Set the management AWS profile
+
+      ```ShellSession
+      $ export AWS_PROFILE=ab2d-mgmt-east-dev
+      ```
 
    1. Get the private IP address of Jenkins EC2 instance
    
