@@ -140,7 +140,7 @@ public class StatusAPI {
     }
 
     private boolean pollingTooMuch(Job job) {
-        return (job.getLastPollTime() != null && job.getLastPollTime().plusSeconds(retryAfterDelay).isAfter(OffsetDateTime.now()));
+        return job.getLastPollTime() != null && job.getLastPollTime().plusSeconds(retryAfterDelay).isAfter(OffsetDateTime.now());
     }
 
     private JobCompletedResponse getJobCompletedResonse(Job job) {
