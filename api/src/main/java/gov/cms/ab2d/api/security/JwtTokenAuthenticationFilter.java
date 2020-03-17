@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import static gov.cms.ab2d.common.util.Constants.HEALTH_ENDPOINT;
 import static gov.cms.ab2d.common.util.Constants.STATUS_ENDPOINT;
 
 @Slf4j
@@ -46,23 +47,129 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
             throws ServletException, IOException {
-        String requestUri = request.getRequestURI();
-        // These need to be here and in SecurityConfig, which uses the antMatchers with ** to do filtering
+
+        if (shouldBePublic(request.getRequestURI())) {
+            chain.doFilter(request, response);
+            return;
+        }
+
+        String token = getToken(request);
+
+        String username = getUserName(token);
+
+        if (username != null) {
+            MDC.put("username", username);
+            User user = getUser(username);
+
+            List<GrantedAuthority> authorities = getGrantedAuth(user);
+            UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
+                    username, null, authorities);
+            auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+
+            log.info("Successfully logged in");
+            SecurityContextHolder.getContext().setAuthentication(auth);
+        } else {
+            String usernameBlankMsg = "Username was blank";
+            log.error(usernameBlankMsg);
+            throw new BadJWTTokenException(usernameBlankMsg);
+        }
+
+        // go to the next filter in the filter chain
+        chain.doFilter(request, response);
+    }
+
+    /**
+     * Retrieve the list of granted authorities from the user's roles
+     *
+     * @param user - the user
+     * @return - the granted authorities
+     */
+    private List<GrantedAuthority> getGrantedAuth(User user) {
+        List<GrantedAuthority> authorities = new ArrayList<>();
+        for (Role role : user.getRoles()) {
+            log.info("Adding role {}", role.getName());
+            authorities.add(new SimpleGrantedAuthority(role.getName()));
+        }
+        return authorities;
+    }
+
+    /**
+     * Given a user name, look up the user in the database
+     *
+     * @param username - the user name
+     * @return - the user object
+     */
+    private User getUser(String username) {
+        User user;
+        try {
+            user = userService.getUserByUsername(username);
+        } catch (ResourceNotFoundException exception) {
+            throw new UsernameNotFoundException("User was not found");
+        }
+        if (user == null) {
+            throw new UsernameNotFoundException("User was not found");
+        }
+
+        if (!user.getEnabled()) {
+            log.error("User is not enabled");
+            throw new UserNotEnabledException("User " + username + " is not enabled");
+        }
+        return user;
+    }
+
+    /**
+     * Retrieve the user name from a JWT token
+     *
+     * @param token - the token
+     * @return - the user name
+     */
+    private String getUserName(String token) {
+        Jwt jwt;
+        try {
+            jwt = accessTokenVerifier.decode(token);
+        } catch (JwtVerificationException e) {
+            log.error("Unable to decode JWT token {}", e.getMessage());
+            throw new BadJWTTokenException("Unable to decode JWT token", e);
+        }
+
+        Object subClaim = jwt.getClaims().get("sub");
+        if (subClaim == null) {
+            String tokenErrorMsg = "Token did not contain username field";
+            log.error(tokenErrorMsg);
+            throw new BadJWTTokenException(tokenErrorMsg);
+        }
+        return subClaim.toString();
+    }
+
+    /**
+     * Return true if the page should be publically available without authorization. Examples
+     * include health check, swagger pages, etc.
+     *
+     * @param requestUri - the URL requested
+     * @return true if it's public
+     */
+    private boolean shouldBePublic(String requestUri) {
         if (requestUri.startsWith("/swagger-ui") || requestUri.startsWith("/webjars") || requestUri.startsWith("/swagger-resources") ||
-            requestUri.startsWith("/v2/api-docs") || requestUri.startsWith("/configuration")) {
+                requestUri.startsWith("/v2/api-docs") || requestUri.startsWith("/configuration")) {
             log.info("Swagger requested");
-            chain.doFilter(request, response);
-            return;
+            return true;
         }
 
-        if (requestUri.startsWith("/health") || requestUri.startsWith(STATUS_ENDPOINT)) {
+        if (requestUri.startsWith(HEALTH_ENDPOINT) || requestUri.startsWith(STATUS_ENDPOINT)) {
             log.info("Health or maintenance requested");
-            chain.doFilter(request, response);
-            return;
+            return true;
         }
+        return false;
+    }
 
+    /**
+     * Retrieve the value of the bearer token from the header
+     *
+     * @param request - the request object
+     * @return - the value of the bearer token
+     */
+    private String getToken(HttpServletRequest request) {
         String header = request.getHeader(jwtConfig.getHeader());
-
         if (header == null) {
             String noHeaderMsg = "Authorization header for token was not present";
             log.error(noHeaderMsg);
@@ -81,55 +188,6 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
             log.error(emptyTokenMsg);
             throw new MissingTokenException(emptyTokenMsg);
         }
-
-        Jwt jwt;
-        try {
-            jwt = accessTokenVerifier.decode(token);
-        } catch (JwtVerificationException e) {
-            log.error("Unable to decode JWT token {}", e.getMessage());
-            throw new BadJWTTokenException("Unable to decode JWT token", e);
-        }
-
-        Object subClaim = jwt.getClaims().get("sub");
-        if (subClaim == null) {
-            String tokenErrorMsg = "Token did not contain username field";
-            log.error(tokenErrorMsg);
-            throw new BadJWTTokenException(tokenErrorMsg);
-        }
-        String username = subClaim.toString();
-
-        if (username != null) {
-            MDC.put("username", username);
-            User user;
-            try {
-                user = userService.getUserByUsername(username);
-            } catch (ResourceNotFoundException exception) {
-                throw new UsernameNotFoundException("User was not found");
-            }
-
-            if (!user.getEnabled()) {
-                log.error("User is not enabled");
-                throw new UserNotEnabledException("User " + username + " is not enabled");
-            }
-
-            List<GrantedAuthority> authorities = new ArrayList<>();
-            for (Role role : user.getRoles()) {
-                log.info("Adding role {}", role.getName());
-                authorities.add(new SimpleGrantedAuthority(role.getName()));
-            }
-            UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
-                    username, null, authorities);
-            auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-
-            log.info("Successfully logged in");
-            SecurityContextHolder.getContext().setAuthentication(auth);
-        } else {
-            String usernameBlankMsg = "Username was blank";
-            log.error(usernameBlankMsg);
-            throw new BadJWTTokenException(usernameBlankMsg);
-        }
-
-        // go to the next filter in the filter chain
-        chain.doFilter(request, response);
+        return token;
     }
 }

@@ -37,7 +37,7 @@ public class ContractAdapterStub implements ContractAdapter {
     }
 
 
-    private Integer extractContractSno(String contractNumber) {
+    Integer extractContractSno(String contractNumber) {
         //valid range from 0000 - 9999
         final String contractNumberSuffix = contractNumber.substring(contractNumber.length() - 4);
 
