@@ -4,7 +4,10 @@ import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.model.OptOut;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.hl7.fhir.dstu3.model.*;
+import org.hl7.fhir.dstu3.model.Bundle;
+import org.hl7.fhir.dstu3.model.Identifier;
+import org.hl7.fhir.dstu3.model.Patient;
+import org.hl7.fhir.dstu3.model.ResourceType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -74,23 +77,22 @@ public class OptOutConverterServiceImpl implements OptOutConverterService {
         }
 
         // Find the HICN ID
-        String hicn = parseHICN(line);
+        var hicn = parseHICN(line);
+        optOuts.addAll(createOptOuts(line, hicn));
 
-        // From BB, receive the list of patients with that HICN Id and create OptOut objects
-        List<Patient> patients = getPatientInfo(hicn);
-        for (Patient patient : patients) {
-            OptOut optOut = new OptOut();
-            optOut.setPolicyCode("OPTOUT");
-            optOut.setPurposeCode("TREAT");
-            optOut.setLoIncCode("64292-6");
-            optOut.setScopeCode("patient-privacy");
-            optOut.setEffectiveDate(parseEffectiveDate(line));
-            optOut.setHicn(hicn);
-            optOut.setCcwId(getCcwId(patient));
-            optOut.setMbi(getMbi(patient));
-            optOuts.add(optOut);
-        }
         return optOuts;
+    }
+
+    /**
+     * From BB, receive the list of patients with that HICN Id and create OptOut objects
+     * @param line - line in the file
+     * @param hicn - The HICN Id
+     * @return a list of OptOut records
+     */
+    private List<OptOut> createOptOuts(String line, String hicn) {
+        return getPatientInfo(hicn).stream()
+                .map(patient -> createOptOut(line, hicn, patient))
+                .collect(Collectors.toList());
     }
 
     /**
@@ -113,6 +115,25 @@ public class OptOutConverterServiceImpl implements OptOutConverterService {
                     .collect(Collectors.toList());
         }
         return new ArrayList<>();
+    }
+
+    /**
+     * @param line
+     * @param hicn
+     * @param patient
+     * @return an OptOut record
+     */
+    private OptOut createOptOut(String line, String hicn, Patient patient) {
+        OptOut optOut = new OptOut();
+        optOut.setPolicyCode("OPTOUT");
+        optOut.setPurposeCode("TREAT");
+        optOut.setLoIncCode("64292-6");
+        optOut.setScopeCode("patient-privacy");
+        optOut.setEffectiveDate(parseEffectiveDate(line));
+        optOut.setHicn(hicn);
+        optOut.setCcwId(getCcwId(patient));
+        optOut.setMbi(getMbi(patient));
+        return optOut;
     }
 
     /**
