@@ -48,6 +48,7 @@
 1. [Appendix BB: Update controller](#appendix-bb-update-controller)
 1. [Appendix CC: Fix bad terraform component](#appendix-cc-fix-bad-terraform-component)
 1. [Appendix DD: Test running development automation from Jenkins master](#appendix-dd-test-running-development-automation-from-jenkins-master)
+1. [Appendix EE: Fix Jenkins reverse proxy error](#appendix-ee-fix-jenkins-reverse-proxy-error)
 
 ## Appendix A: Access the CMS AWS console
 
@@ -3466,3 +3467,51 @@
      --database-secret-datetime=2020-01-02-09-15-01 \
      --build-new-images
    ```
+
+## Appendix EE: Fix Jenkins reverse proxy error
+
+1. Ensure that you are connected to the Cisco VPN
+
+1. Open Chrome
+
+1. Enter the following in the address bar
+
+   *Format:*
+
+   > http://{jenkins master public ip}:8080
+
+   *Example:*
+
+   > http://35.173.33.85:8080
+
+1. Select **Manage Jenkins**
+
+1. Note that if you see the following error, these instructions will fix the issue
+
+   ```
+   It appears that your reverse proxy set up is broken.
+   ```
+
+1. Select **Configure System**
+
+1. Type the following in the **Jenkins URL** text box under the "Jenkins Location" section
+
+   *Format:*
+
+   ```
+   {url used to access jenkins from browser}
+   ```
+
+   *Example:*
+
+   ```
+   http://35.173.33.85:8080/
+   ```
+
+1. Select **Apply**
+
+1. Select **Save**
+
+1. Select **Manage Jenkins** again
+
+1. Note that the reverse proxy warning no longer appears
