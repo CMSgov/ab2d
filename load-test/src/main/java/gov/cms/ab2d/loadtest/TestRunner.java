@@ -16,6 +16,8 @@ import java.net.http.HttpResponse;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
+import org.apache.commons.lang3.tuple.ImmutablePair;
+
 @Slf4j
 public class TestRunner extends AbstractJavaSamplerClient {
     private static final String FHIR_TYPE = "application/fhir+ndjson";
@@ -98,18 +100,30 @@ public class TestRunner extends AbstractJavaSamplerClient {
             this.mainResult = mainResult;
         }
 
-        @Override
-        public void run() {
+        private SampleResult createContractResultAndStart() {
             SampleResult contractResult = new SampleResult();
             addSubResultToSampleResult(mainResult, contractResult);
             contractResult.sampleStart();
             contractResult.setThreadName("Contract " + contractNumber);
 
+            return contractResult;
+        }
+
+        private SampleResult createExportResultAndStart(SampleResult contractResult) {
             SampleResult exportResult = new SampleResult();
             contractResult.addSubResult(exportResult);
             exportResult.setSuccessful(false);
             exportResult.setThreadName("Export for contract " + contractNumber);
             exportResult.sampleStart();
+
+            return exportResult;
+        }
+
+        @Override
+        public void run() {
+            SampleResult contractResult = createContractResultAndStart();
+
+            SampleResult exportResult = createExportResultAndStart(contractResult);
 
             try {
                 HttpResponse<String> exportResponse = apiClient.exportByContractRequest(contractNumber, FHIR_TYPE, null);
@@ -127,84 +141,22 @@ public class TestRunner extends AbstractJavaSamplerClient {
                 List<String> contentLocationList = exportResponse.headers().map().get("content-location");
                 String url = contentLocationList.get(0);
 
-                int status = 0;
-                HttpResponse<String> statusResponse = null;
-
                 SampleResult statusResult = new SampleResult();
                 contractResult.addSubResult(statusResult);
                 statusResult.setSuccessful(false);
                 statusResult.setThreadName("Status checks for contract " + contractNumber);
                 statusResult.sampleStart();
 
-                boolean finishedStatus = false;
-                int i = 1;
-                while (!finishedStatus) {
-                    Thread.sleep(50);
+                ImmutablePair<HttpResponse<String>, Integer> statusResponses = performStatusCalls(url, statusResult);
 
-                    SampleResult statusResultCall = new SampleResult();
-                    statusResult.addSubResult(statusResultCall);
-                    statusResultCall.setSuccessful(false);
-                    statusResultCall.setThreadName("Status call " + i + " for contract " + contractNumber);
-                    statusResultCall.sampleStart();
-
-                    statusResponse = apiClient.statusRequest(url);
-                    status = statusResponse.statusCode();
-
-                    statusResultCall.sampleEnd();
-                    statusResultCall.setSuccessful(true);
-                    statusResultCall.setResponseCode(String.valueOf(status));
-
-                    if (status == 200 || status == 500) {
-                        finishedStatus = true;
-                    }
-
-                    i++;
-                }
+                HttpResponse<String> statusResponse = statusResponses.getLeft();
+                int status = statusResponses.getRight();
 
                 statusResult.sampleEnd();
                 statusResult.setResponseCode(String.valueOf(statusResponse.statusCode()));
                 statusResult.setResponseMessage(statusResponse.body());
 
-                if (status == 200) {
-                    statusResult.setSuccessful(true);
-
-                    SampleResult downloadGroupResult = new SampleResult();
-                    contractResult.addSubResult(downloadGroupResult);
-                    downloadGroupResult.setSuccessful(false);
-                    downloadGroupResult.sampleStart();
-
-                    JSONObject json = new JSONObject(statusResponse.body());
-                    JSONArray output = json.getJSONArray("output");
-                    for (int j = 0; j < output.length(); j++) {
-                        JSONObject outputObject = output.getJSONObject(j);
-                        String downloadUrl = outputObject.getString("url");
-
-                        SampleResult downloadResult = new SampleResult();
-                        downloadGroupResult.addSubResult(downloadResult);
-                        downloadResult.setSuccessful(false);
-                        downloadResult.sampleStart();
-                        downloadResult.setThreadName("Download for contract " + contractNumber + " with URL " + downloadUrl);
-
-                        HttpResponse<InputStream> downloadResponse = apiClient.fileDownloadRequest(downloadUrl);
-
-                        downloadResult.sampleEnd();
-                        downloadResult.setResponseCode(String.valueOf(downloadResponse.statusCode()));
-                        downloadResult.setBodySize((long) downloadResponse.body().readAllBytes().length);
-
-                        if (downloadResponse.statusCode() == 200) {
-                            downloadResult.setSuccessful(true);
-                        } else {
-                            throw new RuntimeException("Received error when trying to download file for contract " + contractNumber + " - " +
-                                    downloadResponse.body());
-                        }
-                    }
-
-                    downloadGroupResult.sampleEnd();
-                    downloadGroupResult.setSuccessful(true);
-                } else {
-                    throw new RuntimeException("Received error from server when checking status for contract " + contractNumber + " - " +
-                            statusResponse.body());
-                }
+                checkStatusAndPerformDownloadResult(status, statusResult, contractResult, statusResponse);
 
                 contractResult.setSuccessful(true);
             } catch (Exception e) {
@@ -212,6 +164,85 @@ public class TestRunner extends AbstractJavaSamplerClient {
             } finally {
                 contractResult.sampleEnd();
                 countDownLatch.countDown();
+            }
+        }
+
+        private void checkStatusAndPerformDownloadResult(int status, SampleResult statusResult, SampleResult contractResult,
+                                                         HttpResponse<String> statusResponse) throws JSONException, IOException, InterruptedException {
+            if (status == 200) {
+                statusResult.setSuccessful(true);
+
+                SampleResult downloadGroupResult = new SampleResult();
+                contractResult.addSubResult(downloadGroupResult);
+                downloadGroupResult.setSuccessful(false);
+                downloadGroupResult.sampleStart();
+
+                JSONObject json = new JSONObject(statusResponse.body());
+                JSONArray output = json.getJSONArray("output");
+                for (int j = 0; j < output.length(); j++) {
+                    createDownloadResultsAndProcess(j, output, downloadGroupResult);
+                }
+
+                downloadGroupResult.sampleEnd();
+                downloadGroupResult.setSuccessful(true);
+            } else {
+                throw new RuntimeException("Received error from server when checking status for contract " + contractNumber + " - " +
+                        statusResponse.body());
+            }
+        }
+
+        private ImmutablePair<HttpResponse<String>, Integer>  performStatusCalls(String url, SampleResult statusResult) throws InterruptedException, IOException {
+            HttpResponse<String> statusResponse = null;
+            int status = 0;
+            boolean finishedStatus = false;
+            int i = 1;
+            while (!finishedStatus) {
+                Thread.sleep(50);
+
+                SampleResult statusResultCall = new SampleResult();
+                statusResult.addSubResult(statusResultCall);
+                statusResultCall.setSuccessful(false);
+                statusResultCall.setThreadName("Status call " + i + " for contract " + contractNumber);
+                statusResultCall.sampleStart();
+
+                statusResponse = apiClient.statusRequest(url);
+                status = statusResponse.statusCode();
+
+                statusResultCall.sampleEnd();
+                statusResultCall.setSuccessful(true);
+                statusResultCall.setResponseCode(String.valueOf(status));
+
+                if (status == 200 || status == 500) {
+                    finishedStatus = true;
+                }
+
+                i++;
+            }
+
+            return ImmutablePair.of(statusResponse, status);
+        }
+
+        private void createDownloadResultsAndProcess(int index, JSONArray output, SampleResult downloadGroupResult) throws JSONException, IOException, InterruptedException {
+            JSONObject outputObject = output.getJSONObject(index);
+            String downloadUrl = outputObject.getString("url");
+
+            SampleResult downloadResult = new SampleResult();
+            downloadGroupResult.addSubResult(downloadResult);
+            downloadResult.setSuccessful(false);
+            downloadResult.sampleStart();
+            downloadResult.setThreadName("Download for contract " + contractNumber + " with URL " + downloadUrl);
+
+            HttpResponse<InputStream> downloadResponse = apiClient.fileDownloadRequest(downloadUrl);
+
+            downloadResult.sampleEnd();
+            downloadResult.setResponseCode(String.valueOf(downloadResponse.statusCode()));
+            downloadResult.setBodySize((long) downloadResponse.body().readAllBytes().length);
+
+            if (downloadResponse.statusCode() == 200) {
+                downloadResult.setSuccessful(true);
+            } else {
+                throw new RuntimeException("Received error when trying to download file for contract " + contractNumber + " - " +
+                        downloadResponse.body());
             }
         }
     }
