@@ -137,7 +137,7 @@ public class FileDeletionServiceImpl implements FileDeletionService {
         return path.toString().endsWith(FILE_EXTENSION.toLowerCase());
     }
 
-    
+
     private Instant getDeleteCheckTime(Path path, Job job)  throws IOException {
         Instant deleteCheckTime = null;
         if (job != null && job.getStatus().isFinished()) {
