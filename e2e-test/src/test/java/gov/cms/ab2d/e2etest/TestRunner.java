@@ -216,7 +216,7 @@ public class TestRunner {
         // Some of the data that is returned will be variable and will change from request to request, so not every
         // JSON object can be verified
         final JSONObject fileJson = new JSONObject(fileContent);
-        Assert.assertEquals(9, fileJson.length());
+        Assert.assertTrue(validFields(fileJson));
         Assert.assertEquals("ExplanationOfBenefit", fileJson.getString("resourceType"));
         Assert.assertEquals(0, fileJson.getInt("precedence"));
         String carrierString = fileJson.getString("id");
@@ -252,6 +252,39 @@ public class TestRunner {
         Assert.assertEquals("https://ab2d.cms.gov/file_length", lengthUrl);
         long length = lengthObject.getLong("valueDecimal");
         Assert.assertEquals(length, fileContent.getBytes().length);
+    }
+
+    private boolean validFields(JSONObject jsonObject) {
+        Set<String> allowedFields = Set.of("identifier", "item", "meta", "patient", "billablePeriod", "diagnosis",
+                "provider", "id", "type", "precedence", "resourceType", "organization", "facility", "careTeam",
+                "procedure");
+
+        Set<String> disallowedFields = Set.of("status", "extension", "patientTarget", "created", "enterer",
+            "entererTarget", "insurer", "insurerTarget", "providerTarget", "organizationTarget", "referral",
+            "referralTarget", "facilityTarget", "claim", "claimTarget", "claimResponse", "claimResponseTarget",
+            "outcome", "disposition", "related", "prescription", "prescriptionTarget", "originalPrescription",
+            "originalPrescriptionTarget", "payee", "information", "precedence", "insurance", "accident",
+            "employmentImpacted", "hospitalization", "addItem", "totalCost", "unallocDeductable", "totalBenefit",
+            "payment", "form", "contained", "processNote", "benefitBalance");
+
+        JSONArray obj = jsonObject.names();
+        for (int i = 0; i< obj.length(); i++) {
+            try {
+                String val = (String) obj.get(i);
+                if (!allowedFields.contains(val)) {
+                    if (disallowedFields.contains(val)) {
+                        System.out.println("********** API outputted invalid field '" + val + "'");
+                        return false;
+                    } else {
+                        System.out.println("********** API outputted unknown field '" + val + "'");
+                        return false;
+                    }
+                }
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
+        return true;
     }
 
     private void downloadFile(Pair<String, JSONArray> downloadDetails) throws IOException, InterruptedException, JSONException {
