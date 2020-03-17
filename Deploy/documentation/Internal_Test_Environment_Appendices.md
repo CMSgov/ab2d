@@ -623,7 +623,7 @@
 
    *Format:*
    
-   > http://{controller ip address}:8080/swagger-ui.html#/bulk-data-access-api
+   > http://{controller ip address}:8080/swagger-ui.html
 
 1. Open a second terminal
 
@@ -893,7 +893,7 @@
 
       *Example:*
       
-      > http://34.203.8.2:8080/swagger-ui.html#/bulk-data-access-api
+      > http://34.203.8.2:8080/swagger-ui.html
 
    3. Verify that the "AB2D FHIR Bulk Data Access API" page is displayed
 
@@ -1026,7 +1026,7 @@
 
    2. Enter the following in the address bar
 
-      > http://localhost:8080/swagger-ui.html#/bulk-data-access-api
+      > http://localhost:8080/swagger-ui.html
 
    3. Verify that the "AB2D FHIR Bulk Data Access API" page is displayed
 

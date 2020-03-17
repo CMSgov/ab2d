@@ -12,8 +12,7 @@ public final class SwaggerConstants {
 
     // Bulk Export API
     public static final String BULK_MAIN = "API through which an authenticated and authorized " +
-            "PDP sponsor may request a bulk-data export from a server, receive status information regarding " +
-            "progress in the generation of the requested files, and retrieve these files.";
+            "PDP sponsor may request a bulk-data export from a server.";
 
     public static final String BULK_EXPORT_TYPE = "String of comma-delimited FHIR resource objects. Only resources of " +
             "the specified resource types(s) SHALL be included in the response. Currently, only " +
