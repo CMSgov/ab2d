@@ -715,6 +715,12 @@
    $ export AWS_PROFILE=ab2d-sbx-sandbox
    ```
 
+   *Example for "Impl" environment:*
+
+   ```ShellSession
+   $ export AWS_PROFILE=ab2d-east-impl
+   ```
+
 1. Set target environment
 
    *Example for "Dev" environment:*
@@ -727,6 +733,12 @@
 
    ```ShellSession
    $ export TARGET_ENVIRONMENT=ab2d-sbx-sandbox
+   ```
+
+   *Example for "Impl" environment:*
+
+   ```ShellSession
+   $ export TARGET_ENVIRONMENT=ab2d-east-impl
    ```
 
 1. Set controller access variables
