@@ -1,23 +1,19 @@
 package gov.cms.ab2d.worker.processor.stub;
 
-import com.newrelic.api.agent.Token;
-import gov.cms.ab2d.worker.adapter.bluebutton.GetPatientsByContractResponse;
 import gov.cms.ab2d.worker.processor.PatientClaimsProcessor;
-import gov.cms.ab2d.worker.processor.StreamHelper;
+import gov.cms.ab2d.worker.processor.domainmodel.PatientClaimsRequest;
 import org.springframework.scheduling.annotation.AsyncResult;
 
 import java.nio.file.Path;
-import java.time.OffsetDateTime;
 import java.util.concurrent.Future;
 
 public class PatientClaimsProcessorStub implements PatientClaimsProcessor {
 
     @Override
-    public Future<Void> process(GetPatientsByContractResponse.PatientDTO patientDTO, StreamHelper writer,
-                                OffsetDateTime attTime, OffsetDateTime sinceTime, Token token) {
+    public Future<Void> process(PatientClaimsRequest request) {
 
-        writer.getDataFiles().add(Path.of("TEST_DATA_FILE"));
-        writer.getErrorFiles().add(Path.of("TEST_ERROR_FILE"));
+        request.getHelper().getDataFiles().add(Path.of("TEST_DATA_FILE"));
+        request.getHelper().getErrorFiles().add(Path.of("TEST_ERROR_FILE"));
         return new AsyncResult<>(null);
     }
 }
