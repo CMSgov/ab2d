@@ -112,7 +112,7 @@ class ContractProcessorUnitTest {
                 () -> cut.process(outputDir, contractData, NDJSON));
 
         assertThat(exceptionThrown.getMessage(), startsWith("Job was cancelled while it was being processed"));
-        verify(patientClaimsProcessor, atLeast(1)).process(any(), any(), any(), any(), any());
+        verify(patientClaimsProcessor, atLeast(1)).process(any());
         verify(jobRepository, atLeastOnce()).updatePercentageCompleted(anyString(), anyInt());
     }
 
@@ -130,7 +130,7 @@ class ContractProcessorUnitTest {
         var jobOutputs = cut.process(outputDir, contractData, NDJSON);
 
         assertFalse(jobOutputs.isEmpty());
-        verify(patientClaimsProcessor, atLeast(1)).process(any(), any(), any(), any(), any());
+        verify(patientClaimsProcessor, atLeast(1)).process(any());
     }
 
     @Test
@@ -149,7 +149,7 @@ class ContractProcessorUnitTest {
                 () -> cut.process(outputDir, contractData, NDJSON));
 
         assertThat(exceptionThrown.getMessage(), startsWith("The export process has produced no results"));
-        verify(patientClaimsProcessor, never()).process(any(), any(), any(), any(), any());
+        verify(patientClaimsProcessor, never()).process(any());
     }
 
     @Test
@@ -170,7 +170,7 @@ class ContractProcessorUnitTest {
 
         assertFalse(jobOutputs.isEmpty());
         verify(jobRepository, times(9)).updatePercentageCompleted(anyString(), anyInt());
-        verify(patientClaimsProcessor, atLeast(1)).process(any(), any(), any(), any(), any());
+        verify(patientClaimsProcessor, atLeast(1)).process(any());
     }
 
     private List<OptOut> getOptOutRows(GetPatientsByContractResponse patientsByContract) {
