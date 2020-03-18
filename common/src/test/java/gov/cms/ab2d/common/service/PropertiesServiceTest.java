@@ -78,9 +78,10 @@ public class PropertiesServiceTest {
     void testMisc() {
         PropertiesDTO val = new PropertiesDTO();
         val.setKey(MAINTENANCE_MODE);
-        val.setValue("true");
         assertFalse(propertiesService.isToggleOn(MAINTENANCE_MODE));
-        propertiesService.updateProperties(List.of(val));
+        List<PropertiesDTO> currentProperties = propertiesService.getAllPropertiesDTO();
+        currentProperties.stream().filter(c -> c.getKey().equalsIgnoreCase(MAINTENANCE_MODE)).findFirst().get().setValue("true");
+        propertiesService.updateProperties(currentProperties);
         assertTrue(propertiesService.isToggleOn(MAINTENANCE_MODE));
         assertEquals(true, propertiesService.isInMaintenanceMode());
         List<PropertiesDTO> vals = propertiesService.getAllPropertiesDTO();
