@@ -2,6 +2,8 @@ package gov.cms.ab2d.common.util;
 
 import org.testcontainers.containers.PostgreSQLContainer;
 
+import java.util.Collections;
+
 public class AB2DPostgresqlContainer extends PostgreSQLContainer<AB2DPostgresqlContainer> {
 
     private static final String IMAGE_VERSION = "postgres:11";
@@ -12,6 +14,7 @@ public class AB2DPostgresqlContainer extends PostgreSQLContainer<AB2DPostgresqlC
 
     @Override
     public void start() {
+        super.withTmpFs(Collections.singletonMap("/var/lib/postgresql/data", "rw"));
         super.start();
         System.setProperty("DB_URL", this.getJdbcUrl());
         System.setProperty("DB_USERNAME", this.getUsername());
