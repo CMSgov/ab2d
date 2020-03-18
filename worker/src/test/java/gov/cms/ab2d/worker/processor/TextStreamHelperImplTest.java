@@ -3,12 +3,13 @@ package gov.cms.ab2d.worker.processor;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.attribute.PosixFilePermission;
+import java.nio.file.attribute.PosixFilePermissions;
 import java.util.List;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -20,6 +21,50 @@ class TextStreamHelperImplTest {
     void createFileName() throws IOException {
         TextStreamHelperImpl helper = new TextStreamHelperImpl(tmpDirFolder.toPath(), "C1111", 10, 20);
         assertEquals("C1111_0002.ndjson", helper.createFileName());
+        helper.close();
+    }
+
+    @Test
+    void testSomePermsAppend() throws IOException {
+        Path loc = Path.of(tmpDirFolder + "/testfile");
+        Files.createFile(loc);
+        TextStreamHelperImpl helper = new TextStreamHelperImpl(Path.of(tmpDirFolder.toString()), "C1111", 10, 20);
+        Set<PosixFilePermission> permissions = PosixFilePermissions.fromString("r-xr-xr-x");
+        Files.setPosixFilePermissions(loc, permissions);
+        byte[] val = new byte[2];
+        val[0] = 'a';
+        val[1] = 'b';
+        assertThrows(UncheckedIOException.class, () -> helper.appendToFile(loc, val));
+        Set<PosixFilePermission> permissionsBack = PosixFilePermissions.fromString("rw-r-xr-x");
+        // Set them back so that the junit can remove directory
+        Files.setPosixFilePermissions(loc, permissionsBack);
+        helper.close();
+    }
+
+    @Test
+    void testSomePerms() throws IOException {
+        byte[] val = new byte[2];
+        val[0] = 'a';
+        val[1] = 'b';
+        Path loc = Path.of(tmpDirFolder + "/testdir");
+        Files.createDirectory(loc);
+        Set<PosixFilePermission> permissions = PosixFilePermissions.fromString("r-xr-xr-x");
+        TextStreamHelperImpl helper = new TextStreamHelperImpl(loc, "C1111", 10, 20);
+        Files.setPosixFilePermissions(loc, permissions);
+        helper.addData(null);
+        helper.addData(val);
+        assertThrows(UncheckedIOException.class, () -> helper.createErrorFile());
+        Set<PosixFilePermission> permissionsBack = PosixFilePermissions.fromString("rwxr-xr-x");
+        // Set them back so that the junit can remove directory
+        Files.setPosixFilePermissions(loc, permissionsBack);
+        helper.close();
+    }
+
+    @Test
+    void appendToFileTest() throws IOException {
+        assertThrows(NullPointerException.class, () -> new TextStreamHelperImpl(null, "C1111", 10, 20));
+        TextStreamHelperImpl helper = new TextStreamHelperImpl(tmpDirFolder.toPath(), "C1111", 10, 1);
+        assertThrows(RuntimeException.class, () -> helper.tryLock(null));
         helper.close();
     }
 
