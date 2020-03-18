@@ -54,59 +54,65 @@ public class OrgStructureReportProcessor implements ExcelReportProcessor {
                 }
                 if (contractNumber.toUpperCase().startsWith("E") ||
                         contractNumber.toUpperCase().startsWith("S")) {
-                    String sponsorParentName = currentRow.getCell(0).getStringCellValue();
-                    Double sponsorParentHpmsId = currentRow.getCell(1).getNumericCellValue();
-                    String sponsorName = currentRow.getCell(2).getStringCellValue();
-                    Double sponsorHpmsId = currentRow.getCell(3).getNumericCellValue();
-                    String contractName = currentRow.getCell(5).getStringCellValue();
-
-                    Optional<Sponsor> parentSponsorOptional = sponsorService
-                            .findByHpmsIdAndParent(sponsorParentHpmsId.intValue(), null);
-
-                    Sponsor parentSponsor;
-                    if (parentSponsorOptional.isPresent()) {
-                        parentSponsor = parentSponsorOptional.get();
-                    } else {
-                        parentSponsor = new Sponsor();
-                        parentSponsor.setHpmsId(sponsorParentHpmsId.intValue());
-                        parentSponsor.setLegalName(sponsorParentName);
-                        parentSponsor.setOrgName(sponsorParentName);
-                        sponsorService.saveSponsor(parentSponsor);
-                    }
-
-                    Optional<Sponsor> sponsorOptional =
-                            sponsorService.findByHpmsIdAndParent(sponsorHpmsId.intValue(),
-                                    parentSponsor);
-
-                    Sponsor sponsor;
-                    if (!sponsorOptional.isPresent()) {
-                        sponsor = new Sponsor();
-                    } else {
-                        sponsor = sponsorOptional.get();
-                    }
-
-                    log.info("Starting processing for sponsor {}", keyValue(SPONSOR_LOG, sponsorHpmsId));
-
-                    sponsor.setHpmsId(sponsorHpmsId.intValue());
-                    sponsor.setLegalName(sponsorName);
-                    sponsor.setOrgName(sponsorName);
-                    sponsor.setParent(parentSponsor);
-
-                    // Only add the contract if it doesn't already exist
-                    if (!sponsor.hasContract(contractNumber)) {
-                        Contract contract = new Contract();
-                        contract.setContractName(contractName);
-                        contract.setContractNumber(contractNumber);
-                        contract.setSponsor(sponsor);
-
-                        sponsor.getContracts().add(contract);
-                    }
-
-                    sponsorService.saveSponsor(sponsor);
-
-                    log.info("Sponsor saved {}", keyValue(SPONSOR_LOG, sponsorHpmsId));
+                    linkSponsorWithContract(currentRow, contractNumber);
                 }
             }
         }
+    }
+
+    private void linkSponsorWithContract(Row currentRow, String contractNumber) {
+        String sponsorParentName = currentRow.getCell(0).getStringCellValue();
+        Double sponsorParentHpmsId = currentRow.getCell(1).getNumericCellValue();
+        String sponsorName = currentRow.getCell(2).getStringCellValue();
+        Double sponsorHpmsId = currentRow.getCell(3).getNumericCellValue();
+        String contractName = currentRow.getCell(5).getStringCellValue();
+
+        Optional<Sponsor> parentSponsorOptional = sponsorService
+                .findByHpmsIdAndParent(sponsorParentHpmsId.intValue(), null);
+
+        Sponsor parentSponsor;
+        if (parentSponsorOptional.isPresent()) {
+            parentSponsor = parentSponsorOptional.get();
+        } else {
+            parentSponsor = new Sponsor();
+            parentSponsor.setHpmsId(sponsorParentHpmsId.intValue());
+            parentSponsor.setLegalName(sponsorParentName);
+            parentSponsor.setOrgName(sponsorParentName);
+            sponsorService.saveSponsor(parentSponsor);
+        }
+
+        Optional<Sponsor> sponsorOptional = sponsorService.findByHpmsIdAndParent(sponsorHpmsId.intValue(), parentSponsor);
+
+        Sponsor sponsor;
+        if (!sponsorOptional.isPresent()) {
+            sponsor = new Sponsor();
+        } else {
+            sponsor = sponsorOptional.get();
+        }
+
+        log.info("Starting processing for sponsor {}", keyValue(SPONSOR_LOG, sponsorHpmsId));
+
+        sponsor.setHpmsId(sponsorHpmsId.intValue());
+        sponsor.setLegalName(sponsorName);
+        sponsor.setOrgName(sponsorName);
+        sponsor.setParent(parentSponsor);
+
+        saveContractWithSponsor(sponsor, contractNumber, contractName, sponsorHpmsId);
+    }
+
+    private void saveContractWithSponsor(Sponsor sponsor, String contractNumber, String contractName, Double sponsorHpmsId) {
+        // Only add the contract if it doesn't already exist
+        if (!sponsor.hasContract(contractNumber)) {
+            Contract contract = new Contract();
+            contract.setContractName(contractName);
+            contract.setContractNumber(contractNumber);
+            contract.setSponsor(sponsor);
+
+            sponsor.getContracts().add(contract);
+        }
+
+        sponsorService.saveSponsor(sponsor);
+
+        log.info("Sponsor saved {}", keyValue(SPONSOR_LOG, sponsorHpmsId));
     }
 }
