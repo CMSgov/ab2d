@@ -49,6 +49,7 @@
 1. [Appendix CC: Fix bad terraform component](#appendix-cc-fix-bad-terraform-component)
 1. [Appendix DD: Test running development automation from Jenkins master](#appendix-dd-test-running-development-automation-from-jenkins-master)
 1. [Appendix EE: Fix Jenkins reverse proxy error](#appendix-ee-fix-jenkins-reverse-proxy-error)
+1. [Appendix FF: Manually add JDK 13 to a node that already has JDK 8]
 
 ## Appendix A: Access the CMS AWS console
 
@@ -3515,3 +3516,59 @@
 1. Select **Manage Jenkins** again
 
 1. Note that the reverse proxy warning no longer appears
+
+## Appendix FF: Manually add JDK 13 to a node that already has JDK 8
+
+1. Connect to desired node
+
+1. Install JDK 13
+
+   ```ShellSession
+   $ sudo yum install java-13-openjdk-devel -y
+   ```
+
+1. Get JDK 13 java binary
+
+   ```ShellSession
+   $ JAVA_13=$(alternatives --display java | grep family | grep java-13-openjdk | cut -d' ' -f1)
+   ```
+   
+1. Set java binary to JDK 13
+
+   ```ShellSession
+   $ sudo alternatives --set java $JAVA_13
+   ```
+
+1. Get JDK 13 javac binary
+
+   ```ShellSession
+   $ JAVAC_13=$(alternatives --display javac | grep family | grep java-13-openjdk | cut -d' ' -f1)
+   ```
+   
+1. Set javac binary to JDK 13
+
+   ```ShellSession
+   $ sudo alternatives --set javac $JAVAC_13
+   ```
+
+## Appendix GG: Destroy Jenkins agent
+
+1. Change to the "Deploy" directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d/Deploy
+   ```
+
+1. Change to the shared manegment environment
+
+   ```ShellSession
+   $ cd terraform/environments/ab2d-mgmt-east-dev-shared
+   ```
+
+1. Destroy the Jenkins agent
+
+   ```ShellSession
+   $ terraform destroy \
+     --target module.jenkins_agent \
+     --auto-approve
+   ```

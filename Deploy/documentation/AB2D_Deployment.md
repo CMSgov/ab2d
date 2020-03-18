@@ -60,21 +60,28 @@
 1. [Import the sandbox domain certificate into certificate manager](#import-the-sandbox-domain-certificate-into-certificate-manager)
 1. [Map the application load balancer for sandbox certificate](#map-the-application-load-balancer-for-sandbox-certificate)
 1. [Submit an "Internet DNS Change Request Form" to product owner for the sandbox application load balancer](#submit-an-internet-dns-change-request-form-to-product-owner-for-the-sandbox-application-load-balancer)
+1. [Create jenkins IAM users](#create-jenkins-iam-users)
+   [Create jenkins IAM user in the management AWS account](#create-jenkins-iam-user-in-the-management-aws-account)
+   [Create jenkins IAM user in the development AWS account](#create-jenkins-iam-user-in-the-development-aws-account)
 1. [Setup Jenkins master in management AWS account](#setup-jenkins-master-in-management-aws-account)
 1. [Configure Jenkins master](#configure-jenkins-master)
    [Enable Jenkins](#enable-jenkins)
    [Initialize the Jenkins GUI](#initialize-the-jenkins-gui)
    [Configure SSH on Jenkins master](#configure-ssh-on-jenkins-master)
-   [Create jenkins IAM user in the management AWS account](#create-jenkins-iam-user-in-the-management-aws-account)
-   [Configure AWS CLI for management environment on Jenkins master](#configure-aws-cli-for-management-environment-on-jenkins-master)
-   [Create jenkins IAM user in the development AWS account](#create-jenkins-iam-user-in-the-development-aws-account)
-   [Configure AWS CLI for Dev environment on Jenkins master](#configure-aws-cli-for-dev-environment-on-jenkins-master)
-   [Install python3, pip3, and required pip modules](#install-python3-pip3-and-required-pip-modules)
-   [Install Terraform on Jenkins master](#install-terraform-on-jenkins-master)
-   [Configure Terraform logging on Jenkins master](#configure-terraform-logging-on-jenkins-master)
-   [Install JDK 13 on Jenkins master](#install-jdk-13-on-jenkins-master)
-   [Install maven on Jenkins master](#install-maven-on-jenkins-master)
-   [Install jq on Jenkins master](#install-jq-on-jenkins-master)
+1. [Setup Jenkins agent in management AWS account](#setup-jenkins-agent-in-management-aws-account)
+1. [Configure Jenkins agent](#configure-jenkins-master)
+   [Create a local jenkins user](#create-a-local-jenkins-user)
+   [Install development tools on Jenkins agent](#install-development-tools-on-jenkins-agent)
+   [Configure AWS CLI for management environment on Jenkins agent](#configure-aws-cli-for-management-environment-on-jenkins-agent)
+   [Configure AWS CLI for Dev environment on Jenkins agent](#configure-aws-cli-for-dev-environment-on-jenkins-agent)
+   [Allow password authentication on Jenkins agent](#allow-password-authentication-on-jenkins-agent)
+   [Install python3, pip3, and required pip modules on Jenkins agent](#install-python3-pip3-and-required-pip-modules-on-jenkins-agent)
+   [Install Terraform on Jenkins agent](#install-terraform-on-jenkins-agent)
+   [Configure Terraform logging on Jenkins agent](#configure-terraform-logging-on-jenkins-agent)
+   [Install maven on Jenkins agent](#install-maven-on-jenkins-agent)
+   [Install jq on Jenkins agent](#install-jq-on-jenkins-agent)
+1. [Configure Jenkins for AB2D](#configure-jenkins-for-ab2d)
+   [Configure a Jenkins project for development application deploy](#configure-a-jenkins-project-for-development-application-deploy)
 1. [Upgrade Jenkins](#upgrade-jenkins)
 1. [Verify VPC peering between the management and development AWS accounts](#verify-vpc-peering-between-the-management-and-development-aws-accounts)
 1. [Update existing AB2D static website in development](#update-existing-ab2d-static-website-in-development)
@@ -4144,6 +4151,108 @@
 
 1. Note that the product owner will complete the process
 
+## Create jenkins IAM users
+
+### Create jenkins IAM user in the management AWS account
+
+1. Open Chrome
+
+1. Log on to the development AWS account
+
+1. Select **IAM**
+
+1. Select **Users** in the leftmost panel
+
+1. Select **Add user**
+
+1. Configure the user as follows
+
+   - **User name:** jenkins
+
+   - **Programmatic access:** checked
+
+   - **AWS Management Console access:** unchecked
+
+1. Select **Next: Permissions**
+
+1. Check the checkbox beside **Administrators**
+
+1. Select **Next: Tags**
+
+1. Select **Next: Review**
+
+1. Select **Create user**
+
+1. Select **Download .csv**
+
+1. Select **Close**
+
+1. Note that the following can be found in the "credentials.csv" file that you downloaded
+
+   *Format:*
+   
+   - **User name:** {your semanticbits email}
+
+   - **Password:** {blank because you did custom password}
+
+   - **Access key ID:** {your access key}
+
+   - **Secret access key:** {your secret access key}
+
+   - **Console login link:** https://{aws account number}.signin.aws.amazon.com/console
+
+1. Save these credentials in 1Password
+
+### Create jenkins IAM user in the development AWS account
+
+1. Open Chrome
+
+1. Log on to the development AWS account
+
+1. Select **IAM**
+
+1. Select **Users** in the leftmost panel
+
+1. Select **Add user**
+
+1. Configure the user as follows
+
+   - **User name:** jenkins
+
+   - **Programmatic access:** checked
+
+   - **AWS Management Console access:** unchecked
+
+1. Select **Next: Permissions**
+
+1. Check the checkbox beside **Administrators**
+
+1. Select **Next: Tags**
+
+1. Select **Next: Review**
+
+1. Select **Create user**
+
+1. Select **Download .csv**
+
+1. Select **Close**
+
+1. Note that the following can be found in the "credentials.csv" file that you downloaded
+
+   *Format:*
+   
+   - **User name:** {your semanticbits email}
+
+   - **Password:** {blank because you did custom password}
+
+   - **Access key ID:** {your access key}
+
+   - **Secret access key:** {your secret access key}
+
+   - **Console login link:** https://{aws account number}.signin.aws.amazon.com/console
+
+1. Save these credentials in 1Password
+
 ## Setup Jenkins master in management AWS account
 
 1. Open a terminal
@@ -4255,9 +4364,9 @@
    1. Get the private IP address of Jenkins EC2 instance
    
       ```ShellSession
-      $ JENKINS_MASTER_PUBLIC_IP=$(aws --region us-east-1 ec2 describe-instances \
+      $ JENKINS_MASTER_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
         --filters "Name=tag:Name,Values=ab2d-jenkins-master" \
-        --query="Reservations[*].Instances[?State.Name == 'running'].PublicIpAddress" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
         --output text)
       ```
 
@@ -4266,7 +4375,7 @@
    1. SSH into the instance using the private IP address
 
       ```ShellSession
-      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_MASTER_PUBLIC_IP
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_MASTER_PRIVATE_IP
       ```
 
 1. Note the default Jenkins port
@@ -4352,6 +4461,18 @@
    $ curl http://checkip.amazonaws.com
    ```
 
+1. Note the private IP of Jenkins master
+
+   ```ShellSession
+   $ hostname --ip-address | awk '{print $2}'
+   ```
+
+1. Exit Jenkins master
+
+   ```ShellSession
+   $ exit
+   ```
+   
 ### Initialize the Jenkins GUI
 
 1. Open Chrome
@@ -4359,14 +4480,39 @@
 1. Enter the following in the address bar
 
    *Format:*
-   
-   > http://{jenkins master public ip}:8080
+
+   > http://{jenkins master private ip}:8080
 
    *Example:*
-   
-   > http://35.173.33.85:8080
+
+   > http://10.242.37.74:8080
 
 1. Bookmark Jenkins for your browser
+
+1. Connect to Jenkins master
+
+   1. Set the management AWS profile
+
+      ```ShellSession
+      $ export AWS_PROFILE=ab2d-mgmt-east-dev
+      ```
+
+   1. Get the private IP address of Jenkins EC2 instance
+   
+      ```ShellSession
+      $ JENKINS_MASTER_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-jenkins-master" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+        --output text)
+      ```
+
+   1. Ensure that you are connected to the Cisco VPN
+
+   1. SSH into the instance using the private IP address
+
+      ```ShellSession
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_MASTER_PRIVATE_IP
+      ```
 
 1. Configure Jenkins
 
@@ -4402,6 +4548,10 @@
 
    1. Note the Jenkins URL
 
+      *Example:*
+
+      > http://10.242.37.74:8080/
+
    1. Select **Save and Finish**
 
    1. Select **Start using Jenkins**
@@ -4419,9 +4569,9 @@
    1. Get the private IP address of Jenkins EC2 instance
    
       ```ShellSession
-      $ JENKINS_MASTER_PUBLIC_IP=$(aws --region us-east-1 ec2 describe-instances \
+      $ JENKINS_MASTER_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
         --filters "Name=tag:Name,Values=ab2d-jenkins-master" \
-        --query="Reservations[*].Instances[?State.Name == 'running'].PublicIpAddress" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
         --output text)
       ```
 
@@ -4430,7 +4580,7 @@
    1. SSH into the instance using the private IP address
 
       ```ShellSession
-      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_MASTER_PUBLIC_IP
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_MASTER_PRIVATE_IP
       ```
       
 1. Get information about the jenkins user account
@@ -4475,7 +4625,7 @@
 
 1. Give the local jenkins user a password for intial SSH connections
 
-   1. Create a "jenkins redhat user" entry in 1Password that meets the following requirements
+   1. Create a "jenkins master redhat user" entry in 1Password that meets the following requirements
 
       - at least 15 characeters
 
@@ -4561,7 +4711,7 @@
 
    1. Enter the jenkins user password at the "jenkins@localhost's password" prompt
 
-   1. Switch back to the centos user
+   1. Switch back to ec2-user
 
       ```ShellSession
       $ exit
@@ -4621,59 +4771,113 @@
 
     1. Note that it would be better to lock down the jenkins user so that it can only do "sudo" on a certain subset of commands based on the requirements
 
-### Create jenkins IAM user in the management AWS account
+## Setup Jenkins agent in management AWS account
 
-1. Open Chrome
+1. Open a terminal
 
-1. Log on to the development AWS account
+1. Change to the "Deploy" directory
 
-1. Select **IAM**
+   ```ShellSession
+   $ cd ~/code/ab2d/Deploy
+   ```
 
-1. Select **Users** in the leftmost panel
+1. Create EC2 instance for Jenkins master
 
-1. Select **Add user**
-
-1. Configure the user as follows
-
-   - **User name:** jenkins
-
-   - **Programmatic access:** checked
-
-   - **AWS Management Console access:** unchecked
-
-1. Select **Next: Permissions**
-
-1. Check the checkbox beside **Administrators**
-
-1. Select **Next: Tags**
-
-1. Select **Next: Review**
-
-1. Select **Create user**
-
-1. Select **Download .csv**
-
-1. Select **Close**
-
-1. Note that the following can be found in the "credentials.csv" file that you downloaded
-
-   *Format:*
+   ```ShellSession
+   $ ./bash/deploy-jenkins-agent.sh
+   ```
    
-   - **User name:** {your semanticbits email}
+1. Wait for the automation to complete
 
-   - **Password:** {blank because you did custom password}
+1. Connect to Jenkins agent
 
-   - **Access key ID:** {your access key}
+   1. Set the management AWS agent
 
-   - **Secret access key:** {your secret access key}
+      ```ShellSession
+      $ export AWS_PROFILE=ab2d-mgmt-east-dev
+      ```
 
-   - **Console login link:** https://{aws account number}.signin.aws.amazon.com/console
+   1. Get the private IP address of Jenkins EC2 instance
+   
+      ```ShellSession
+      $ JENKINS_AGENT_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-jenkins-agent" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+        --output text)
+      ```
 
-1. Save these credentials in 1Password
+   1. Ensure that you are connected to the Cisco VPN
 
-### Configure AWS CLI for management environment on Jenkins master
+   1. SSH into the instance using the private IP address
 
-1. Connect to Jenkins master
+      ```ShellSession
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_AGENT_PRIVATE_IP
+      ```
+
+1. View the available disk devices
+
+   1. Enter the following
+
+      ```ShellSession
+      $ lsblk
+      ```
+
+   1. Note the output
+
+      *Example for an "m5.xlarge" instance:*
+
+      ```
+      nvme0n1                  259:0    0  250G  0 disk 
+      ├─nvme0n1p1              259:1    0    1G  0 part /boot
+      ├─nvme0n1p2              259:2    0   29G  0 part 
+      │ ├─VolGroup00-auditVol  253:0    0    4G  0 lvm  /var/log/audit
+      │ ├─VolGroup00-homeVol   253:1    0  223G  0 lvm  /home
+      │ ├─VolGroup00-logVol    253:2    0    4G  0 lvm  /var/log
+      │ ├─VolGroup00-rootVol   253:3    0   10G  0 lvm  /
+      │ ├─VolGroup00-tmpVol    253:4    0    2G  0 lvm  /tmp
+      │ ├─VolGroup00-varVol    253:5    0    5G  0 lvm  /var
+      │ └─VolGroup00-vartmpVol 253:6    0    1G  0 lvm  /var/tmp
+      └─nvme0n1p3              259:3    0  220G  0 part 
+        └─VolGroup00-homeVol   253:1    0  223G  0 lvm  /home
+      ```
+
+   1. Note the root device in the output
+
+      *Example for an "m5.xlarge" instance:*
+
+      - nvme0n1
+
+   1. Note the existing partitions
+
+      *Example for an "m5.xlarge" instance:*
+
+      - nvme0n1p1
+
+      - nvme0n1p2
+
+      - nvme0n1p3
+
+   1. Note the "homeVol" entries
+
+      - nvme0n1p2
+
+        - VolGroup00-homeVol   253:1    0  223G  0 lvm  /home
+
+      - nvme0n1p3
+
+        - VolGroup00-homeVol   253:1    0  223G  0 lvm  /home
+
+1. Exit the Jenkins agent
+
+   ```ShellSession
+   $ exit
+   ```
+   
+## Configure Jenkins agent
+
+### Create a local jenkins user
+
+1. Connect to Jenkins agent
 
    1. Set the management AWS profile
 
@@ -4684,9 +4888,9 @@
    1. Get the private IP address of Jenkins EC2 instance
    
       ```ShellSession
-      $ JENKINS_MASTER_PUBLIC_IP=$(aws --region us-east-1 ec2 describe-instances \
-        --filters "Name=tag:Name,Values=ab2d-jenkins-master" \
-        --query="Reservations[*].Instances[?State.Name == 'running'].PublicIpAddress" \
+      $ JENKINS_AGENT_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-jenkins-agent" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
         --output text)
       ```
 
@@ -4695,7 +4899,163 @@
    1. SSH into the instance using the private IP address
 
       ```ShellSession
-      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_MASTER_PUBLIC_IP
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_AGENT_PRIVATE_IP
+      ```
+
+1. Add a jenkins user
+
+   ```ShellSession
+   $ sudo useradd jenkins
+   ```
+
+1. Give the local jenkins user a password
+
+   1. Create a "jenkins agent redhat user" entry in 1Password that meets the following requirements
+
+      - at least 15 characeters
+
+      - at least 1 special character
+      
+   1. Enter the following
+   
+      ```ShellSession
+      $ sudo passwd jenkins
+      ```
+
+   1. Enter a password at the **New password** prompt
+
+   1. Reenter the password at the **Retype new password** prompt
+
+1. Add jenkins user to sudoers file
+
+   1. Enter the following
+
+      ```ShellSession
+      $ sudo visudo
+      ```
+
+   1. Modify this section as follows
+
+      ```
+      ## Allow root to run any commands anywhere
+      root    ALL=(ALL)       ALL
+      jenkins ALL=(ALL)       NOPASSWD: ALL
+      ```
+
+    1. Note that the above setting for the jenkins user is not ideal since it means that the jenkins user will be able to do "sudo" on all commands
+
+    1. Note that it would be better to lock down the jenkins user so that it can only do "sudo" on a certain subset of commands based on the requirements
+
+1. Exit the Jenkins agent
+
+   ```ShellSession
+   $ exit
+   ```
+   
+### Install development tools on Jenkins agent
+
+1. Connect to Jenkins agent
+
+   1. Set the management AWS profile
+
+      ```ShellSession
+      $ export AWS_PROFILE=ab2d-mgmt-east-dev
+      ```
+
+   1. Get the private IP address of Jenkins EC2 instance
+   
+      ```ShellSession
+      $ JENKINS_AGENT_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-jenkins-agent" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+        --output text)
+      ```
+
+   1. Ensure that you are connected to the Cisco VPN
+
+   1. SSH into the instance using the private IP address
+
+      ```ShellSession
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_AGENT_PRIVATE_IP
+      ```
+
+1. Install development tools
+
+   ```ShellSession
+   $ sudo yum group install "Development Tools" -y
+   ```
+
+1. Note that the following tools were installed
+
+   - autoconf
+
+   - automake
+
+   - bison
+
+   - byacc
+
+   - cscope
+
+   - ctags
+
+   - diffstat
+
+   - doxygen
+
+   - flex
+
+   - gcc
+
+   - gcc-c++
+
+   - gcc-gfortran
+
+   - indent
+
+   - intltool
+
+   - libtool
+
+   - patchutils
+
+   - rcs
+
+   - rpm-build
+
+   - rpm-sign
+
+   - subversion
+
+   - swig
+
+   - systemtap
+
+### Configure AWS CLI for management environment on Jenkins agent
+
+1. Connect to Jenkins agent
+
+   1. Set the management AWS profile
+
+      ```ShellSession
+      $ export AWS_PROFILE=ab2d-mgmt-east-dev
+      ```
+
+   1. Get the private IP address of Jenkins EC2 instance
+   
+      ```ShellSession
+      $ JENKINS_AGENT_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-jenkins-agent" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+        --output text)
+      ```
+
+   1. Ensure that you are connected to the Cisco VPN
+
+   1. SSH into the instance using the private IP address
+
+      ```ShellSession
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_AGENT_PRIVATE_IP
       ```
 
 1. Configure AWS CLI
@@ -4726,59 +5086,15 @@
    $ cat ~/.aws/credentials
    ```
 
-### Create jenkins IAM user in the development AWS account
+1. Exit the Jenkins agent node
 
-1. Open Chrome
-
-1. Log on to the development AWS account
-
-1. Select **IAM**
-
-1. Select **Users** in the leftmost panel
-
-1. Select **Add user**
-
-1. Configure the user as follows
-
-   - **User name:** jenkins
-
-   - **Programmatic access:** checked
-
-   - **AWS Management Console access:** unchecked
-
-1. Select **Next: Permissions**
-
-1. Check the checkbox beside **Administrators**
-
-1. Select **Next: Tags**
-
-1. Select **Next: Review**
-
-1. Select **Create user**
-
-1. Select **Download .csv**
-
-1. Select **Close**
-
-1. Note that the following can be found in the "credentials.csv" file that you downloaded
-
-   *Format:*
+   ```ShellSession
+   $ exit
+   ```
    
-   - **User name:** {your semanticbits email}
+### Configure AWS CLI for Dev environment on Jenkins agent
 
-   - **Password:** {blank because you did custom password}
-
-   - **Access key ID:** {your access key}
-
-   - **Secret access key:** {your secret access key}
-
-   - **Console login link:** https://{aws account number}.signin.aws.amazon.com/console
-
-1. Save these credentials in 1Password
-
-### Configure AWS CLI for Dev environment on Jenkins master
-
-1. Connect to Jenkins master
+1. Connect to Jenkins agent
 
    1. Set the management AWS profile
 
@@ -4789,9 +5105,9 @@
    1. Get the private IP address of Jenkins EC2 instance
    
       ```ShellSession
-      $ JENKINS_MASTER_PUBLIC_IP=$(aws --region us-east-1 ec2 describe-instances \
-        --filters "Name=tag:Name,Values=ab2d-jenkins-master" \
-        --query="Reservations[*].Instances[?State.Name == 'running'].PublicIpAddress" \
+      $ JENKINS_AGENT_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-jenkins-agent" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
         --output text)
       ```
 
@@ -4800,7 +5116,7 @@
    1. SSH into the instance using the private IP address
 
       ```ShellSession
-      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_MASTER_PUBLIC_IP
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_AGENT_PRIVATE_IP
       ```
 
 1. Configure AWS CLI
@@ -4831,7 +5147,188 @@
    $ cat ~/.aws/credentials
    ```
 
-### Install python3, pip3, and required pip modules
+1. Exit the Jenkins agent node
+
+   ```ShellSession
+   $ exit
+   ```
+
+### Allow password authentication on Jenkins agent
+
+1. Connect to Jenkins agent
+
+   1. Set the management AWS profile
+
+      ```ShellSession
+      $ export AWS_PROFILE=ab2d-mgmt-east-dev
+      ```
+
+   1. Get the private IP address of Jenkins EC2 instance
+   
+      ```ShellSession
+      $ JENKINS_AGENT_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-jenkins-agent" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+        --output text)
+      ```
+
+   1. Ensure that you are connected to the Cisco VPN
+
+   1. SSH into the instance using the private IP address
+
+      ```ShellSession
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_AGENT_PRIVATE_IP
+      ```
+
+1. Open the "sshd_config" file
+
+   ```ShellSession
+   $ sudo vim /etc/ssh/sshd_config
+   ```
+
+1. Change the following line to look like this
+
+   ```
+   PasswordAuthentication yes
+   ```
+
+1. Restart sshd
+
+   ```ShellSession
+   $ sudo systemctl restart sshd
+   ```
+
+1. Open a second terminal that will be used to connect to Jenkins Master
+
+1. Connect to Jenkins master
+
+   1. Set the management AWS profile
+
+      ```ShellSession
+      $ export AWS_PROFILE=ab2d-mgmt-east-dev
+      ```
+
+   1. Get the private IP address of Jenkins EC2 instance
+   
+      ```ShellSession
+      $ JENKINS_MASTER_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-jenkins-master" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+        --output text)
+      ```
+
+   1. Ensure that you are connected to the Cisco VPN
+
+   1. SSH into the instance using the private IP address
+
+      ```ShellSession
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_MASTER_PRIVATE_IP
+      ```
+
+1. Switch to the jenkins user from Jenkins master terminal
+
+   ```ShellSession
+   $ sudo su - jenkins
+   ```
+
+1. Get the private IP address of Jenkins agent from Jenkins master terminal
+
+   ```ShellSession
+   $ JENKINS_AGENT_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+     --filters "Name=tag:Name,Values=ab2d-jenkins-agent" \
+     --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+     --output text)
+   ```
+   
+1. Copy the jenkins master ssh key to the jenkins agent from Jenkins master terminal
+
+   ```ShellSession
+   $ ssh-copy-id jenkins@${JENKINS_AGENT_PRIVATE_IP}
+   ```
+
+1. Enter the following at the "Are you sure you want to continue connecting (yes/no)" prompt from Jenkins master terminal
+
+   ```
+   yes
+   ```
+
+1. Enter the jenkins user password for the jenkins agent at the "jenkins@{jenkins agent private ip}'s password" prompt from Jenkins master terminal
+
+1. Verify that you can SSH into the Jenkins agent from Jenkins master terminal
+
+   ```ShellSession
+   $ sudo -u jenkins ssh jenkins@${JENKINS_AGENT_PRIVATE_IP}
+   ```
+
+1. Exit the Jenkins agent from Jenkins master terminal
+
+   ```ShellSession
+   $ exit
+   ```
+
+1. Exit the jenkins user from Jenkins master terminal
+
+   ```ShellSession
+   $ exit
+   ```
+
+1. Exit Jenkins master from Jenkins master terminal
+
+   ```ShellSession
+   $ exit
+   ```
+
+1. Close the Jenkins master terminal
+
+1. Return to the Jenkins agent terminal (log back in to the Jenkins agent, if it has timed out)
+
+1. Disallow password authentication from the Jenkins agent terminal
+
+   1. Open the "sshd_config" file
+
+      ```ShellSession
+      $ sudo vim /etc/ssh/sshd_config
+      ```
+
+   1. Change the following line to look like this
+
+      ```
+      PasswordAuthentication no
+      ```
+
+   1. Save and close the file
+
+   1. Restart sshd
+
+      ```ShellSession
+      $ sudo systemctl restart sshd
+      ```
+
+1. Switch to the jenkins user from Jenkins agent terminal
+
+   ```ShellSession
+   $ sudo su - jenkins
+   ```
+
+1. Create a directory for jobs that are built on behalf of the Jenkins Master node from Jenkins agent terminal
+
+   ```ShellSession
+   $ mkdir -p ~/jenkins_agent
+   ```
+
+1. Exit the jenkins user
+
+   ```ShellSession
+   $ exit
+   ```
+   
+1. Exit the Jenkins agent
+
+   ```ShellSession
+   $ exit
+   ```
+   
+### Install python3, pip3, and required pip modules on Jenkins agent
 
 1. Check the version of python3 that is installed on your development machine
 
@@ -4853,7 +5350,7 @@
    Python 3.7.5
    ```
    
-1. Connect to Jenkins master
+1. Connect to Jenkins agent
 
    1. Set the management AWS profile
 
@@ -4864,9 +5361,9 @@
    1. Get the private IP address of Jenkins EC2 instance
    
       ```ShellSession
-      $ JENKINS_MASTER_PUBLIC_IP=$(aws --region us-east-1 ec2 describe-instances \
-        --filters "Name=tag:Name,Values=ab2d-jenkins-master" \
-        --query="Reservations[*].Instances[?State.Name == 'running'].PublicIpAddress" \
+      $ JENKINS_AGENT_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-jenkins-agent" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
         --output text)
       ```
 
@@ -4875,13 +5372,17 @@
    1. SSH into the instance using the private IP address
 
       ```ShellSession
-      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_MASTER_PUBLIC_IP
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_AGENT_PRIVATE_IP
       ```
-      
-1. Installed Python requirements
+
+1. Note that the following Python requirement was already installed by the "Development Tools" group install
+
+   - gcc
+   
+1. Installed other Python requirements
 
    ```ShellSession
-   $ sudo yum install gcc openssl-devel bzip2-devel libffi-devel -y
+   $ sudo yum install openssl-devel bzip2-devel libffi-devel -y
    ```
 
 1. Change to the "/usr/src" directory
@@ -4940,6 +5441,18 @@
    $ sudo make altinstall
    ```
 
+1. Upgrade pip
+
+   ```ShellSession
+   $ sudo pip install --upgrade pip
+   ```
+
+1. Upgrade pip3
+
+   ```ShellSession
+   $ sudo /usr/local/bin/pip3.7 install --upgrade pip
+   ```
+   
 1. Create a python3 symbolic link
 
    *Example where python 3.7.x has been installed:*
@@ -4956,7 +5469,7 @@
    $ sudo ln -s /usr/local/bin/pip3.7 /usr/local/bin/pip3
    ```
 
-1. Upgrade pip3 site packages
+1. Upgrade pip3 site packages for user
 
    ```ShellSession
    $ pip3 install --upgrade pip --user
@@ -4982,7 +5495,13 @@
    $ pip3 install boto3
    ```
 
-### Install Terraform on Jenkins master
+1. Exit the Jenkins agent node
+
+   ```ShellSession
+   $ exit
+   ```
+
+### Install Terraform on Jenkins agent
 
 1. Check the version of terraform that is installed on your development machine
 
@@ -5004,7 +5523,7 @@
    Terraform v0.12.9
    ```
    
-1. Connect to Jenkins master
+1. Connect to Jenkins agent
 
    1. Set the management AWS profile
 
@@ -5015,9 +5534,9 @@
    1. Get the private IP address of Jenkins EC2 instance
    
       ```ShellSession
-      $ JENKINS_MASTER_PUBLIC_IP=$(aws --region us-east-1 ec2 describe-instances \
-        --filters "Name=tag:Name,Values=ab2d-jenkins-master" \
-        --query="Reservations[*].Instances[?State.Name == 'running'].PublicIpAddress" \
+      $ JENKINS_AGENT_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-jenkins-agent" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
         --output text)
       ```
 
@@ -5026,7 +5545,7 @@
    1. SSH into the instance using the private IP address
 
       ```ShellSession
-      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_MASTER_PUBLIC_IP
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_AGENT_PRIVATE_IP
       ```
 
 1. Set desired terraform version
@@ -5067,9 +5586,15 @@
    $ terraform --version
    ```
 
-### Configure Terraform logging on Jenkins master
+1. Exit the Jenkins agent node
 
-1. Connect to Jenkins master
+   ```ShellSession
+   $ exit
+   ```
+
+### Configure Terraform logging on Jenkins agent
+
+1. Connect to Jenkins agent
 
    1. Set the management AWS profile
 
@@ -5080,9 +5605,9 @@
    1. Get the private IP address of Jenkins EC2 instance
    
       ```ShellSession
-      $ JENKINS_MASTER_PUBLIC_IP=$(aws --region us-east-1 ec2 describe-instances \
-        --filters "Name=tag:Name,Values=ab2d-jenkins-master" \
-        --query="Reservations[*].Instances[?State.Name == 'running'].PublicIpAddress" \
+      $ JENKINS_AGENT_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-jenkins-agent" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
         --output text)
       ```
 
@@ -5091,10 +5616,10 @@
    1. SSH into the instance using the private IP address
 
       ```ShellSession
-      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_MASTER_PUBLIC_IP
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_AGENT_PRIVATE_IP
       ```
 
-1. Modify the SSH config file
+1. Create or modify the SSH config file
 
    1. Open the SSH config file
 
@@ -5102,77 +5627,22 @@
       $ vim ~/.ssh/config
       ```
 
-   2. Add or modify SSH config file to include the following line
+   1. Create of modify SSH config file to include the following line at the end of the file
 
       ```
       StrictHostKeyChecking no
       ```
 
+   1. Save and close the file
+
 1. Ensure terraform log directory exists
 
    ```ShellSession
    $ sudo mkdir -p /var/log/terraform
-   $ sudo chown -R "$(id -u)":"$(id -g -nr)" /var/log/terraform
+   $ sudo chown -R jenkins:jenkins /var/log/terraform
    ```
 
-### Install JDK 13 on Jenkins master
-
-1. Connect to Jenkins master
-
-   1. Set the management AWS profile
-
-      ```ShellSession
-      $ export AWS_PROFILE=ab2d-mgmt-east-dev
-      ```
-
-   1. Get the private IP address of Jenkins EC2 instance
-   
-      ```ShellSession
-      $ JENKINS_MASTER_PUBLIC_IP=$(aws --region us-east-1 ec2 describe-instances \
-        --filters "Name=tag:Name,Values=ab2d-jenkins-master" \
-        --query="Reservations[*].Instances[?State.Name == 'running'].PublicIpAddress" \
-        --output text)
-      ```
-
-   1. Ensure that you are connected to the Cisco VPN
-
-   1. SSH into the instance using the private IP address
-
-      ```ShellSession
-      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_MASTER_PUBLIC_IP
-      ```
-
-1. Install JDK 13
-
-   ```ShellSession
-   $ sudo yum install java-13-openjdk-devel -y
-   ```
-
-1. Get JDK 13 java binary
-
-   ```ShellSession
-   $ JAVA_13=$(alternatives --display java | grep family | grep java-13-openjdk | cut -d' ' -f1)
-   ```
-   
-1. Set java binary to JDK 13
-
-   ```ShellSession
-   $ sudo alternatives --set java $JAVA_13
-   ```
-
-1. Get JDK 13 javac binary
-
-   ```ShellSession
-   $ JAVAC_13=$(alternatives --display javac | grep family | grep java-13-openjdk | cut -d' ' -f1)
-   ```
-   
-1. Set javac binary to JDK 13
-
-   ```ShellSession
-   $ sudo alternatives --set javac $JAVAC_13
-   ```
-
-### Install maven on Jenkins master
+### Install maven on Jenkins agent
 
 1. Check the version of maven that is installed on your development machine
 
@@ -5283,7 +5753,7 @@
    $ mvn --version
    ```
 
-### Install jq on Jenkins master
+### Install jq on Jenkins agent
 
 1. Install jq
 
@@ -5296,7 +5766,29 @@
    ```ShellSession
    $ jq --version
    ```
-   
+
+## Configure Jenkins for AB2D
+
+### Configure a Jenkins project for development application deploy
+
+1. Note that a Jenkins project is the same as the deprecated Jenkins job (even though job is still used in the GUI)
+
+1. Ensure that you are connected to the Cisco VPN
+
+1. Open Chrome
+
+1. Enter the following in the address bar
+
+   *Format:*
+
+   > http://{jenkins master public ip}:8080
+
+   *Example:*
+
+   > http://35.173.33.85:8080
+
+1. *** TO DO ***
+
 ## Upgrade Jenkins
 
 1. Ensure that you are connected to the Cisco VPN
@@ -5306,12 +5798,12 @@
 1. Enter the following in the address bar
 
    *Format:*
-   
-   > http://{jenkins master private ip}:8080
+
+   > http://{jenkins master public ip}:8080
 
    *Example:*
-   
-   > http://10.242.37.79:8080
+
+   > http://35.173.33.85:8080
 
 1. Select **Manage Jenkins** from the leftmost panel
 
@@ -5358,6 +5850,46 @@
    $ sudo yum update jenkins -y
    ```
 
+1. Ensure that the java binary is set to JDK 8
+
+   1. Get JDK 8 java binary
+
+      ```ShellSession
+      $ JAVA_8=$(alternatives --display java | grep family | grep java-1.8.0-openjdk | cut -d' ' -f1)
+      ```
+   
+   1. Set java binary to JDK 8
+
+      ```ShellSession
+      $ sudo alternatives --set java $JAVA_8
+      ```
+
+   1. Verify that the java binary is set to JDK 8
+
+      ```ShellSession
+      $ java -version
+      ```
+
+1. Ensure that the javac binary is set to JDK 8
+
+   1. Get JDK 8 javac binary
+
+      ```ShellSession
+      $ JAVAC_8=$(alternatives --display javac | grep family | grep java-1.8.0-openjdk | cut -d' ' -f1)
+      ```
+   
+   1. Set javac binary to JDK 8
+
+      ```ShellSession
+      $ sudo alternatives --set javac $JAVAC_8
+      ```
+
+   1. Verify that the javac binary is set to JDK 8
+
+      ```ShellSession
+      $ javac -version
+      ```
+
 1. Start Jenkins
 
    ```ShellSession
@@ -5376,11 +5908,11 @@
 
    *Format:*
 
-   > http://{jenkins master private ip}:8080
+   > http://{jenkins master public ip}:8080
 
    *Example:*
 
-   > http://10.242.37.79:8080
+   > http://35.173.33.85:8080
 
 1. Verify that Jenkins has been updated to the new version
 

@@ -11,6 +11,13 @@ terraform {
   }
 }
 
+data "aws_security_group" "ab2d_jenkins_master_sg" {
+  filter {
+    name   = "tag:Name"
+    values = ["ab2d-jenkins-master-sg"]
+  }
+}
+
 module "kms" {
   source             = "../../modules/kms"
   env                = var.env
@@ -28,6 +35,21 @@ module "jenkins_master" {
   linux_user               = var.linux_user
   ssh_key_name             = var.ssh_key_name
   iam_instance_profile     = var.ec2_iam_profile
+}
+
+module "jenkins_agent" {
+  source                       = "../../modules/jenkins_agent"
+  env                          = var.env
+  vpc_id                       = var.vpc_id
+  public_subnet_ids            = var.public_subnet_ids
+  private_subnet_ids           = var.private_subnet_ids
+  jenkins_master_sec_group_id  = "${data.aws_security_group.ab2d_jenkins_master_sg.id}"
+  vpn_private_sec_group_id     = var.vpn_private_sec_group_id
+  ami_id                       = var.ami_id
+  instance_type                = var.ec2_instance_type
+  linux_user                   = var.linux_user
+  ssh_key_name                 = var.ssh_key_name
+  iam_instance_profile         = var.ec2_iam_profile
 }
 
 resource "null_resource" "authorized_keys_file" {

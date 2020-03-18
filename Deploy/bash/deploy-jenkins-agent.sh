@@ -121,10 +121,10 @@ SUBNET_PUBLIC_2_ID=$(aws --region "${REGION}" ec2 describe-subnets \
   --output text)
 
 if [ -z "${SUBNET_PUBLIC_2_ID}" ]; then
-
+    
   echo "ERROR: public subnet #2 not found..."
   exit 1
-
+  
 fi
 
 # Get first private subnet id
@@ -160,22 +160,22 @@ if [ -z "${SUBNET_PRIVATE_2_ID}" ]; then
 fi
 
 #
-# AMI Generation for Jenkins master node
+# AMI Generation for Jenkins agent node
 #
 
-# Set JENKINS_AMI_ID if it already exists for the deployment
+# Set JENKINS_AGENT_AMI_ID if it already exists for the deployment
 
-echo "Set JENKINS_AMI_ID if it already exists for the deployment..."
-JENKINS_AMI_ID=$(aws --region "${REGION}" ec2 describe-images \
+echo "Set JENKINS_AGENT_AMI_ID if it already exists for the deployment..."
+JENKINS_AGENT_AMI_ID=$(aws --region "${REGION}" ec2 describe-images \
   --owners self \
-  --filters "Name=tag:Name,Values=ab2d-jenkins-ami" \
+  --filters "Name=tag:Name,Values=ab2d-jenkins-agent-ami" \
   --query "Images[*].[ImageId]" \
   --output text)
 
 # If no AMI is specified then create a new one
 
 echo "If no AMI is specified then create a new one..."
-if [ -z "${JENKINS_AMI_ID}" ]; then
+if [ -z "${JENKINS_AGENT_AMI_ID}" ]; then
 
   # Get the latest seed AMI
 
@@ -188,10 +188,10 @@ if [ -z "${JENKINS_AMI_ID}" ]; then
     | head -n1 \
     | awk '{print $1}')
 
-  # Create AMI for Jenkins master
+  # Create AMI for Jenkins agent
 
   cd "${START_DIR}/.."
-  cd packer/jenkins
+  cd packer/jenkins_agent
   IP=$(curl ipinfo.io/ip)
   COMMIT=$(git rev-parse HEAD)
   packer build \
@@ -204,13 +204,13 @@ if [ -z "${JENKINS_AMI_ID}" ]; then
     --var ssh_username=$SSH_USERNAME \
     --var git_commit_hash=$COMMIT \
     app.json  2>&1 | tee output.txt
-  JENKINS_AMI_ID=$(cat output.txt | awk 'match($0, /ami-.*/) { print substr($0, RSTART, RLENGTH) }' | tail -1)
+  JENKINS_AGENT_AMI_ID=$(cat output.txt | awk 'match($0, /ami-.*/) { print substr($0, RSTART, RLENGTH) }' | tail -1)
   
   # Add name tag to AMI
 
   aws --region "${REGION}" ec2 create-tags \
-    --resources $JENKINS_AMI_ID \
-    --tags "Key=Name,Value=ab2d-jenkins-ami"
+    --resources $JENKINS_AGENT_AMI_ID \
+    --tags "Key=Name,Value=ab2d-jenkins-agent-ami"
 
 fi
 
@@ -235,11 +235,11 @@ echo 'ec2_instance_type = "'$EC2_INSTANCE_TYPE'"' \
   >> $CMS_SHARED_ENV.auto.tfvars
 echo 'linux_user = "'$SSH_USERNAME'"' \
   >> $CMS_SHARED_ENV.auto.tfvars
-echo 'ami_id = "'$JENKINS_AMI_ID'"' \
+echo 'ami_id = "'$JENKINS_AGENT_AMI_ID'"' \
   >> $CMS_SHARED_ENV.auto.tfvars
 
 #
-# Deploy jenkins master
+# Deploy jenkins agent
 #
 
 cd "${START_DIR}/.."
@@ -247,19 +247,5 @@ cd terraform/environments/$CMS_SHARED_ENV
 
 echo "Create or update jenkins master..."
 terraform apply \
-  --target module.jenkins_master \
-  --auto-approve
-
-#
-# Push authorized_keys file to jenkins master
-#
-
-cd "${START_DIR}/.."
-cd terraform/environments/$CMS_SHARED_ENV
-
-echo "Push authorized_keys file to jenkins master..."
-terraform taint \
-  --allow-missing null_resource.authorized_keys_file
-terraform apply \
-  --target null_resource.authorized_keys_file \
+  --target module.jenkins_agent \
   --auto-approve
