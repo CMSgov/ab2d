@@ -14,7 +14,7 @@ import java.util.zip.ZipInputStream;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class ZipStreamHelperImplTest {
+public class ZipStreamHelperImplTest {
 
     @TempDir
     File tmpDirFolder;
@@ -168,7 +168,7 @@ class ZipStreamHelperImplTest {
      * @return the contents of the zip file entry
      * @throws IOException if there was an error reading the file
      */
-    private String extractFileData(ZipEntry entry, ZipInputStream zipIn) throws IOException {
+    public static String extractFileData(ZipEntry entry, ZipInputStream zipIn) throws IOException {
         StringBuilder result = new StringBuilder();
         int read;
         while ((read = zipIn.read()) != -1) {

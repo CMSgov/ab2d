@@ -41,14 +41,15 @@ public final class FilterOutByDate {
         public DateRange(Date start, Date end) throws ParseException {
             SimpleDateFormat fullDateFormat = new SimpleDateFormat(FULL);
             SimpleDateFormat shortDateFormat = new SimpleDateFormat(SHORT);
-            if (start != null) {
-                // we're only dealing with dates, not times, so 0 out time
-                this.start = shortDateFormat.parse(shortDateFormat.format(start));
+            if (start == null) {
+                start = new Date(0);
             }
-            if (end != null) {
-                // we're only dealing with dates, not times, so max out time
-                this.end = fullDateFormat.parse(shortDateFormat.format(end) + " 23:59:59");
+            if (end == null) {
+                end = new Date(Long.MAX_VALUE);
             }
+            this.start = shortDateFormat.parse(shortDateFormat.format(start));
+            // we're only dealing with dates, not times, so max out time
+            this.end = fullDateFormat.parse(shortDateFormat.format(end) + " 23:59:59");
         }
 
         /**
@@ -56,16 +57,8 @@ public final class FilterOutByDate {
          *
          * @param d - the date to compare
          * @return true if the date is in range
-         * @throws ParseException if there was an error constructing the Date objects
          */
-        public boolean inRange(Date d) throws ParseException {
-            // we're only dealing with dates, not times, so 0 out time
-            if (start == null && end != null) {
-                return d.getTime() <= end.getTime();
-            }
-            if (start != null && end == null) {
-                return d.getTime() >= start.getTime();
-            }
+        public boolean inRange(Date d) {
             return d.getTime() <= end.getTime() && d.getTime() >= start.getTime();
         }
     }
@@ -87,22 +80,19 @@ public final class FilterOutByDate {
      * @throws ParseException if a date manipulation error occurs
      */
     public static List<DateRange> getDateRanges(List<Integer> months, int year) throws ParseException {
-        List<DateRange> ranges = new ArrayList<>();
         if (months == null || months.isEmpty() || year == 0) {
-            return ranges;
+            return new ArrayList<>();
         }
-        List<Integer> monthList = new ArrayList<>(12);
-        for (int i = 0; i < 12; i++) {
-            monthList.add(0);
-        }
-        for (int i = 0; i < months.size(); i++) {
-            int m = months.get(i);
-            monthList.set(m - 1, 1);
-        }
-        months.forEach(c -> monthList.set(c - 1, 1));
+        List<Integer> monthList = getMonthList(months);
+        return getRanges(monthList, year);
+    }
+
+    private static List<DateRange> getRanges(List<Integer> monthList, int year) throws ParseException {
+        List<DateRange> ranges = new ArrayList<>();
         int startVal = -1;
         int endVal = -1;
         boolean in = false;
+        // Iterate through the month list and create data ranges
         for (int i = 0; i < monthList.size(); i++) {
             if (monthList.get(i) == 1) {
                 if (!in) {
@@ -114,13 +104,34 @@ public final class FilterOutByDate {
                     endVal = i - 1;
                     ranges.add(getDateRange(startVal + 1, year, endVal + 1, year));
                 }
-               in = false;
+                in = false;
             }
         }
         if (in) {
             ranges.add(getDateRange(startVal + 1, year, 12, year));
         }
         return ranges;
+    }
+
+    /**
+     * Create a list of size 12 of months where if the passed months argument is in the list, set it to 1.
+     * For example, if you have a list of months [1, 4, 5] for months Jan, Apr & May, convert into list:
+     * [1, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0]
+     *
+     * @param months - the months
+     * @return the months in a list of 12 where a value of 1 means that month is checked
+     */
+    private static List<Integer> getMonthList(List<Integer> months) {
+        List<Integer> monthList = new ArrayList<>(12);
+        for (int i = 0; i < 12; i++) {
+            monthList.add(0);
+        }
+        for (int i = 0; i < months.size(); i++) {
+            int m = months.get(i);
+            monthList.set(m - 1, 1);
+        }
+        months.forEach(c -> monthList.set(c - 1, 1));
+        return monthList;
     }
 
     /**
@@ -264,9 +275,8 @@ public final class FilterOutByDate {
      * @param ben - the EOB object
      * @param range - the date range
      * @return true if the EOB object's billable period is within the date range
-     * @throws ParseException - if there was a date parsing error
      */
-    static boolean withinDateRange(ExplanationOfBenefit ben, DateRange range) throws ParseException {
+    static boolean withinDateRange(ExplanationOfBenefit ben, DateRange range) {
         if (ben == null || ben.getBillablePeriod() == null) {
             return false;
         }
