@@ -158,7 +158,7 @@ public class ZipStreamHelperImpl extends StreamHelperImpl {
         if (getCounter() == 2) {
             averageCompression = currentCompression;
         } else {
-            averageCompression = ((averageCompression * (getCounter() - 1)) + currentCompression) / getCounter();
+            averageCompression = (averageCompression * (getCounter() - 1) + currentCompression) / getCounter();
         }
         currentPartByteStream = new ByteArrayOutputStream();
     }
@@ -182,7 +182,7 @@ public class ZipStreamHelperImpl extends StreamHelperImpl {
      */
     private boolean fileFull(ByteArrayOutputStream ba) {
         double probableSize = ba.size() * averageCompression;
-        return (getTotalBytesWritten() + probableSize > getTotalBytesAllowed());
+        return getTotalBytesWritten() + probableSize > getTotalBytesAllowed();
     }
 
     /**

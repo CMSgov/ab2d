@@ -21,8 +21,7 @@ import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 
-import static gov.cms.ab2d.common.util.Constants.API_PREFIX;
-import static gov.cms.ab2d.common.util.Constants.FHIR_PREFIX;
+import static gov.cms.ab2d.common.util.Constants.*;
 
 @Slf4j
 public class APIClient {
@@ -177,7 +176,7 @@ public class APIClient {
 
     public HttpResponse<String> healthCheck() throws IOException, InterruptedException {
         HttpRequest healthCheckRequest = HttpRequest.newBuilder()
-                .uri(URI.create(ab2dUrl + "/health"))
+                .uri(URI.create(ab2dUrl + HEALTH_ENDPOINT))
                 .timeout(Duration.ofSeconds(defaultTimeout))
                 .GET()
                 .build();

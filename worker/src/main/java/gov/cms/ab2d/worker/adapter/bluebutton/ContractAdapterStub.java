@@ -2,7 +2,6 @@ package gov.cms.ab2d.worker.adapter.bluebutton;
 
 import gov.cms.ab2d.filter.FilterOutByDate;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
@@ -24,9 +23,6 @@ import java.util.stream.Collectors;
 @Component
 public class ContractAdapterStub implements ContractAdapter {
 
-    @Value("${bfd.serverBaseUrl}")
-    private String serverBaseUrl;
-
     private static final String BENE_ID_FILE = "/test-stub-data/synthetic-bene-ids.csv";
     private static final int MAX_ROWS = 30_000;
 
@@ -41,7 +37,7 @@ public class ContractAdapterStub implements ContractAdapter {
     }
 
 
-    private Integer extractContractSno(String contractNumber) {
+    Integer extractContractSno(String contractNumber) {
         //valid range from 0000 - 9999
         final String contractNumberSuffix = contractNumber.substring(contractNumber.length() - 4);
 
@@ -62,6 +58,7 @@ public class ContractAdapterStub implements ContractAdapter {
             }
         } catch (NumberFormatException e) {
             //ignore - this check is to see if the contractNumber has 5 digits instead of 4 making it > 9999
+            log.trace("Contract number has value of {} before extraction", contractNumber);
         }
 
         return sno;
@@ -90,7 +87,7 @@ public class ContractAdapterStub implements ContractAdapter {
     }
 
     private int determineNumberOfRows(int contractSno) {
-        return contractSno == 0 ? 100 : (contractSno * 1000);
+        return contractSno == 0 ? 100 : contractSno * 1000;
     }
 
     private int determineRowsToRetrieve(int numberOfRows) {

@@ -6,8 +6,11 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
-import static gov.cms.ab2d.api.util.Constants.*;
+import static gov.cms.ab2d.api.util.Constants.BASE_SANDBOX_URL;
+import static gov.cms.ab2d.api.util.Constants.FHIR_SANDBOX_URL;
 
+// These are being transformed to JSON so it looks like they aren't being used, but they do get translated
+@SuppressWarnings("PMD.UnusedPrivateField")
 class CapabilityStatement {
 
     private final String resourceType = "CapabilityStatement";
