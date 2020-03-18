@@ -67,54 +67,43 @@ public class PropertiesServiceImpl implements PropertiesService {
         List<PropertiesDTO> propertiesDTOsReturn = new ArrayList<>();
         for (PropertiesDTO propertiesDTO : propertiesDTOs) {
             checkNameOfPropertyKey(propertiesDTO);
+            String key = propertiesDTO.getKey();
 
             // If this becomes more extensive, consider having a table that contains a mapping of keys to validation expressions
-            if (propertiesDTO.getKey().equals(PCP_CORE_POOL_SIZE)) {
-                int value = Integer.valueOf(propertiesDTO.getValue());
-                if (value > 100 || value < 1) {
-                    logErrorAndThrowException(PCP_CORE_POOL_SIZE, value);
-                }
-
+            if (key.equals(PCP_CORE_POOL_SIZE)) {
+                validateInt(key, propertiesDTO, 1, 100);
                 addUpdatedPropertiesToList(propertiesDTOsReturn, propertiesDTO);
-            } else if (propertiesDTO.getKey().equals(PCP_MAX_POOL_SIZE)) {
-                int value = Integer.valueOf(propertiesDTO.getValue());
-                if (value > 500 || value < 1) {
-                    logErrorAndThrowException(PCP_MAX_POOL_SIZE, value);
-                }
-
+            } else if (key.equals(PCP_MAX_POOL_SIZE)) {
+                validateInt(key, propertiesDTO, 1, 500);
                 addUpdatedPropertiesToList(propertiesDTOsReturn, propertiesDTO);
-            } else if (propertiesDTO.getKey().equals(PCP_SCALE_TO_MAX_TIME)) {
-                int value = Integer.valueOf(propertiesDTO.getValue());
-                if (value > 3600 || value < 1) {
-                    logErrorAndThrowException(PCP_SCALE_TO_MAX_TIME, value);
-                }
-
+            } else if (key.equals(PCP_SCALE_TO_MAX_TIME)) {
+                validateInt(key, propertiesDTO, 1, 3600);
                 addUpdatedPropertiesToList(propertiesDTOsReturn, propertiesDTO);
-            } else if (propertiesDTO.getKey().equals(MAINTENANCE_MODE)) {
-                if (!propertiesDTO.getValue().equals("true") && !propertiesDTO.getValue().equals("false")) {
-                    logErrorAndThrowException(MAINTENANCE_MODE, propertiesDTO.getValue());
-                }
-
-                addUpdatedPropertiesToList(propertiesDTOsReturn, propertiesDTO);
-            } else if (propertiesDTO.getKey().equals(CONTRACT_2_BENE_CACHING_ON)) {
-                if (!propertiesDTO.getValue().equals("true") && !propertiesDTO.getValue().equals("false")) {
-                    logErrorAndThrowException(CONTRACT_2_BENE_CACHING_ON, propertiesDTO.getValue());
-                }
-
-                addUpdatedPropertiesToList(propertiesDTOsReturn, propertiesDTO);
-            } else if (propertiesDTO.getKey().equals(ZIP_SUPPORT_ON)) {
-                if (!propertiesDTO.getValue().equals("true") && !propertiesDTO.getValue().equals("false")) {
-                    logErrorAndThrowException(ZIP_SUPPORT_ON, propertiesDTO.getValue());
-                }
-
+            } else if (propertiesDTO.getKey().equals(MAINTENANCE_MODE) ||
+                propertiesDTO.getKey().equals(CONTRACT_2_BENE_CACHING_ON) ||
+                propertiesDTO.getKey().equals(ZIP_SUPPORT_ON)) {
+                validateBoolean(key, propertiesDTO);
                 addUpdatedPropertiesToList(propertiesDTOsReturn, propertiesDTO);
             }
         }
-
         return propertiesDTOsReturn;
     }
 
-    private void checkNameOfPropertyKey(PropertiesDTO properties) {
+    void validateInt(String var, PropertiesDTO property, int min, int max) {
+        Integer val = Integer.valueOf(property.getValue());
+        if (property == null || val < min || val > max) {
+            logErrorAndThrowException(var, val);
+        }
+    }
+
+    void validateBoolean(String var, PropertiesDTO property) {
+        String val = property.getValue();
+        if (property == null || !(val.equalsIgnoreCase("true") || val.equalsIgnoreCase("false"))) {
+            logErrorAndThrowException(var, val);
+        }
+    }
+
+    void checkNameOfPropertyKey(PropertiesDTO properties) {
         if (!ALLOWED_PROPERTY_NAMES.contains(properties.getKey())) {
             log.error("Properties must contain a valid key name, received {}", properties.getKey());
             throw new InvalidPropertiesException("Properties must contain a valid key name, received " + properties.getKey());
