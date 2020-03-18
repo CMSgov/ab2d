@@ -6,6 +6,7 @@ import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.filter.FilterOutByDate;
 import gov.cms.ab2d.worker.adapter.bluebutton.GetPatientsByContractResponse;
+import gov.cms.ab2d.worker.processor.domainmodel.PatientClaimsRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.hl7.fhir.dstu3.model.Bundle;
 import org.hl7.fhir.dstu3.model.ExplanationOfBenefit;
@@ -76,6 +77,7 @@ public class PatientClaimsProcessorUnitTest {
             return false;
         }
     };
+    private PatientClaimsRequest request;
 
     @BeforeEach
     void setUp() throws Exception {
@@ -93,6 +95,8 @@ public class PatientClaimsProcessorUnitTest {
 
         Contract contract = new Contract();
         helper = new TextStreamHelperImpl(tmpEfsMountDir.toPath(), contract.getContractNumber(), 30, 120);
+
+        request = new PatientClaimsRequest(patientDTO, helper, earlyAttDate, null, noOpToken);
     }
 
     @Test
@@ -100,14 +104,14 @@ public class PatientClaimsProcessorUnitTest {
         Bundle bundle1 = EobTestDataUtil.createBundle(eob.copy());
         when(mockBfdClient.requestEOBFromServer(patientId, null)).thenReturn(bundle1);
 
-        cut.process(patientDTO, helper, earlyAttDate, null, noOpToken).get();
+        cut.process(request).get();
 
         verify(mockBfdClient).requestEOBFromServer(patientId, null);
         verify(mockBfdClient, never()).requestNextBundleFromServer(bundle1);
     }
 
     @Test
-    void process_whenPatientHasMultiplePagesOfClaimsData() throws IOException, ExecutionException, InterruptedException {
+    void process_whenPatientHasMultiplePagesOfClaimsData() throws ExecutionException, InterruptedException {
         Bundle bundle1 = EobTestDataUtil.createBundle(eob.copy());
         bundle1.addLink(EobTestDataUtil.addNextLink());
 
@@ -116,7 +120,7 @@ public class PatientClaimsProcessorUnitTest {
         when(mockBfdClient.requestEOBFromServer(patientId, null)).thenReturn(bundle1);
         when(mockBfdClient.requestNextBundleFromServer(bundle1)).thenReturn(bundle2);
 
-        cut.process(patientDTO, helper, earlyAttDate, null, noOpToken).get();
+        cut.process(request).get();
 
         verify(mockBfdClient).requestEOBFromServer(patientId, null);
         verify(mockBfdClient).requestNextBundleFromServer(bundle1);
@@ -128,7 +132,7 @@ public class PatientClaimsProcessorUnitTest {
         when(mockBfdClient.requestEOBFromServer(patientId, null)).thenThrow(new RuntimeException("Test Exception"));
 
         var exceptionThrown = assertThrows(ExecutionException.class,
-                () -> cut.process(patientDTO, helper, earlyAttDate, null, noOpToken).get());
+                () -> cut.process(request).get());
 
         assertThat(exceptionThrown.getCause().getMessage(), startsWith("Test Exception"));
 
@@ -141,7 +145,7 @@ public class PatientClaimsProcessorUnitTest {
         Bundle bundle1 = new Bundle();
         when(mockBfdClient.requestEOBFromServer(patientId, null)).thenReturn(bundle1);
 
-        cut.process(patientDTO, helper, earlyAttDate, null, noOpToken).get();
+        cut.process(request).get();
 
         verify(mockBfdClient).requestEOBFromServer(patientId, null);
         verify(mockBfdClient, never()).requestNextBundleFromServer(bundle1);
