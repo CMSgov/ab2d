@@ -7,7 +7,7 @@ import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.util.FHIRUtil;
 import gov.cms.ab2d.filter.ExplanationOfBenefitTrimmer;
 import gov.cms.ab2d.filter.FilterOutByDate;
-import gov.cms.ab2d.worker.adapter.bluebutton.GetPatientsByContractResponse.PatientDTO;
+import gov.cms.ab2d.worker.processor.domainmodel.PatientClaimsRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
@@ -41,21 +41,22 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
     private final BFDClient bfdClient;
     private final FhirContext fhirContext;
 
-    @Trace(async = true)
-    @Async("patientProcessorThreadPool")
     /**
      * Process the retrieval of patient explanation of benefit objects and write them
      * to a file using the writer
      */
-    public Future<Void> process(PatientDTO patientDTO, final StreamHelper helper, OffsetDateTime attTime,
-                                OffsetDateTime sinceTime, Token token) {
+    @Trace(async = true)
+    @Async("patientProcessorThreadPool")
+    public Future<Void> process(PatientClaimsRequest request) {
+        final Token token = request.getToken();
         token.link();
+
         int resourceCount = 0;
 
         String payload = "";
         try {
             // Retrieve the resource bundle of EOB objects
-            var resources = getEobBundleResources(patientDTO, attTime, sinceTime);
+            var resources = getEobBundleResources(request);
 
             var jsonParser = fhirContext.newJsonParser();
 
@@ -63,28 +64,27 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
                 ++resourceCount;
                 try {
                     payload = jsonParser.encodeResourceToString(resource) + System.lineSeparator();
-                    helper.addData(payload.getBytes(StandardCharsets.UTF_8));
+                    request.getHelper().addData(payload.getBytes(StandardCharsets.UTF_8));
                 } catch (Exception e) {
                     log.warn("Encountered exception while processing job resources: {}", e.getMessage());
-                    handleException(helper, payload, e);
+                    handleException(request.getHelper(), payload, e);
                 }
             }
         } catch (Exception e) {
             try {
-                handleException(helper, payload, e);
+                handleException(request.getHelper(), payload, e);
             } catch (IOException e1) {
                 //should not happen - original exception will be thrown
                 log.error("error during exception handling to write error record");
             }
-            token.expire();
 
+            token.expire();
             return AsyncResult.forExecutionException(e);
         }
 
         log.debug("finished writing [{}] resources", resourceCount);
 
         token.expire();
-
         return new AsyncResult<>(null);
     }
 
@@ -100,8 +100,11 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
         helper.addError(data);
     }
 
-    private List<Resource> getEobBundleResources(PatientDTO patient, OffsetDateTime attTime, OffsetDateTime sinceTime) {
-        Bundle eobBundle = bfdClient.requestEOBFromServer(patient.getPatientId(), sinceTime);
+    private List<Resource> getEobBundleResources(PatientClaimsRequest request) {
+        var patient = request.getPatientDTO();
+        var attTime = request.getAttTime();
+
+        Bundle eobBundle = bfdClient.requestEOBFromServer(patient.getPatientId(), request.getSinceTime());
 
         final List<BundleEntryComponent> entries = eobBundle.getEntry();
         final List<Resource> resources = extractResources(entries, patient.getDateRangesUnderContract(), attTime);
