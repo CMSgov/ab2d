@@ -81,6 +81,14 @@
    [Install maven on Jenkins agent](#install-maven-on-jenkins-agent)
    [Install jq on Jenkins agent](#install-jq-on-jenkins-agent)
 1. [Configure Jenkins for AB2D](#configure-jenkins-for-ab2d)
+   [Configure jenkins SSH credentials](#configure-jenkins-ssh-credentials)
+   [Configure "personal access token" public GitHub credentials](#configure-personal-access-token-public-github-credentials)
+   [Configure public GitHub credentials](#configure-public-github-credentials)
+   [Install the SSH plugin](#install-the-ssh-plugin)
+   [Configure the SSH plugin](#configure-the-ssh-plugin)
+   [Install the "Scheduled Build" plugin](#install-the-scheduled-build-plugin)
+   [Configure GitHub plugin](#configure-github-plugin)
+   [Add the Jenkins agent node](#add-the-jenkins-agent-node)
    [Configure a Jenkins project for development application deploy](#configure-a-jenkins-project-for-development-application-deploy)
 1. [Upgrade Jenkins](#upgrade-jenkins)
 1. [Verify VPC peering between the management and development AWS accounts](#verify-vpc-peering-between-the-management-and-development-aws-accounts)
@@ -5767,7 +5775,750 @@
    $ jq --version
    ```
 
+## Create GitHub user for Jenkins automation
+
+1. Create a login entry in 1Password for the the GitHub user
+
+   1. Open 1Password
+   
+   1. Select **+**
+
+   1. Select **Login**
+
+   1. Configure the login entry as follows
+   
+      - **Login:** github.com
+
+      - **Vault:** ab2d
+
+      - **username:** ab2d-jenkins
+
+      - **password:** {genrate one using 1password}
+
+      - **website:** https://github.com
+
+      - **label:** email
+
+      - **new field:** ab2d@semanticbits.com
+
+   1. Select **Save**
+
+1. Open Chrome
+
+1. Enter the following in the address bar
+
+   > https://github.com/
+
+1. If you are logged into an existing Public GitHub account, log off of it
+
+1. Type the desired account name in the **Username** text box
+
+   *Note that it will warn you if the username is already taken.*
+
+   ```
+   ab2d-jenkins
+   ```
+
+1. Type the email that will be tied to this account
+
+   *Note that it will warn you if the email is already tied to a different GitHib account.*
+
+   *Example:*
+   
+   ```
+   ab2d@semanticbits.com
+   ```
+
+1. Complete the initial setup (no need to create a repository)
+
+1. Select the profile icon in the upper right of the page
+
+1. Select **Settings**
+
+1. Select **Security** from the leftmost panel
+
+1. Select **Enable two-factor authentication**
+
+1. Select **Set up using SMS**
+
+1. Select **Download** to download the recovery codes
+
+1. Print out a hard-copy of the recovery codes
+
+1. Save the first three recovery codes from the left column in 1Password
+
+   1. Open 1Password
+
+   1. Select github.com for ab2d-jenkins
+
+   1. Select **Edit**
+
+   1. Add to the entry as follows
+
+      *Format:*
+      
+      - **label:** recovery code 1
+
+      - **new field:** {first recovery code}
+
+      - **label:** recovery code 2
+
+      - **new field:** {second recovery code}
+
+      - **label:** recovery code 3
+
+      - **new field:** {third recovery code}
+
+   1. Select **Save**
+
+   1. Return to the current GitHub page in Chrome
+
+   1. Select **Next**
+
+   1. Type in your cell phone number in the **Phone number** text box
+
+   1. Select **Send authentication code**
+
+   1. Type in the authentication code that you received into the **Enter the six-digit code sent to your phone** text box
+
+   1. Select **Enable**
+
+1. If you have a second cell phone, do the following
+
+   1. Select **Add fallback SMS number**
+
+   1. Type in your sceond cell phone number in the **Phone number** text box
+
+   1. Select **Set fallback**
+
+1. Create a personal access token
+
+   1. Scroll down
+
+   1. Select **Back to settings**
+
+   1. Select **Developer settings** from the leftmost section
+
+   1. Select **Personal access tokens**
+
+   1. Select **Generate new token**
+
+   1. Configure the "New personal access token" page as follows
+
+      **Note:** jenkins
+
+      **Repo:** checked
+
+      **admin:repo_hook:** checked
+
+      **admin:org_hook:** checked
+
+   1. Select **Generate token**
+
+   1. Select the copy to clipboard icon
+
+   1. Open 1Password
+
+   1. Select github.com for ab2d-jenkins
+
+   1. Select **Edit**
+
+   1. Add to the entry as follows
+
+      *Format:*
+      
+      - **label:** personal access token
+
+      - **new field:** {personal access token}
+
+   1. Select **Save**
+
+1. Return to the current GitHub page in Chrome
+
+1. Log off the ab2d-jenkins user
+
 ## Configure Jenkins for AB2D
+
+### Configure jenkins SSH credentials
+
+1. Get the private IP address of Jenkins master
+
+   1. Set the management AWS profile
+
+      ```ShellSession
+      $ export AWS_PROFILE=ab2d-mgmt-east-dev
+      ```
+
+   1. Get the private IP address of Jenkins master
+   
+      ```ShellSession
+      $ JENKINS_MASTER_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-jenkins-master" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+        --output text)
+      ```
+
+1. Display the contents of the jenkins ssh private key
+
+   ```ShellSession
+   $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_MASTER_PRIVATE_IP \
+     sudo -u jenkins cat /var/lib/jenkins/.ssh/id_rsa \
+     | pbcopy
+   ```
+
+1. Copy the private key to the clipboard
+
+1. Open the Jenkins GUI
+
+   1. Ensure that you are connected to the Cisco VPN
+
+   1. Open Chrome
+
+   1. Enter the following in the address bar
+
+      *Format:*
+
+      > http://{jenkins master private ip}:8080
+
+      *Example:*
+
+      > http://10.242.37.74:8080
+
+1. Select **Credentials** from the leftmost panel
+
+1. Select **System** under "Credentials" from the leftmost panel
+
+1. Select **Global credentials (unrestricted)**
+
+1. Select **Add credentials** from the leftmost panel
+
+1. Note that the username to configure in the next step is the "jenkins" linux user associated with the SSH private key
+
+1. Configure the credentials
+
+   - **Kind:** SSH Username with private key
+
+   - **Scope:** Global (Jenkins, nodes, items, all child items, etc)
+
+   - **Username:** jenkins
+
+   - **Private Key - Enter directly:** selected
+
+   - Select **Add**
+
+   - **Enter New Secret Below:** {paste contents of private key for jenkins}
+
+1. Select **OK** on the *Add Credentials* page
+
+1. Select **Jenkins** in the top left of the page
+
+### Configure "personal access token" public GitHub credentials
+
+1. Open the Jenkins GUI
+
+   1. Ensure that you are connected to the Cisco VPN
+
+   1. Open Chrome
+
+   1. Enter the following in the address bar
+
+      *Format:*
+
+      > http://{jenkins master private ip}:8080
+
+      *Example:*
+
+      > http://10.242.37.74:8080
+      
+1. Select **Credentials** from the leftmost panel
+
+1. Select **System** under *Credentials* from the leftmost panel
+
+1. Select **Global credentials (unrestricted)**
+
+1. Select **Add credentials** from the leftmost panel
+
+1. Configure the credentials
+
+   - **Kind:** Secret text
+
+   - **Scope:** Global (Jenkins, nodes, items, all child items, etc)
+
+   - **Secret:** {personal access token for lhanekam}
+
+   - **ID:** GITHUB_AB2D_JENKINS
+
+1. Select **OK** on the *Add Credentials* page
+
+1. Select **Jenkins** in the top left of the page
+
+### Configure public GitHub credentials
+
+1. Open the Jenkins GUI
+
+   1. Ensure that you are connected to the Cisco VPN
+
+   1. Open Chrome
+
+   1. Enter the following in the address bar
+
+      *Format:*
+
+      > http://{jenkins master private ip}:8080
+
+      *Example:*
+
+      > http://10.242.37.74:8080
+      
+1. Note that username and password for the GitHub credentials will be as follows
+
+   - username: ab2d-jenkins
+
+   - password: {personal access token for ab2d-jenkins; not the github password}
+
+1. Select **Credentials** from the leftmost panel
+
+1. Select **System** under *Credentials* from the leftmost panel
+
+1. Select **Global credentials (unrestricted)**
+
+1. Select **Add credentials** from the leftmost panel
+
+1. Configure the credentials
+
+   - **Kind:** Username with password
+
+   - **Scope:** Global (Jenkins, nodes, items, all child items, etc)
+
+   - **Username:** ab2d-jenkins
+
+   - **Password:** {personal access token for ab2d-jenkins}
+
+   - **ID:** GITHUB_AB2D_JENKINS_PAT
+
+1. Select **OK** on the *Add Credentials* page
+
+1. Select **Jenkins** in the top left of the page
+
+### Install the SSH plugin
+
+1. Open the Jenkins GUI
+
+   1. Ensure that you are connected to the Cisco VPN
+
+   1. Open Chrome
+
+   1. Enter the following in the address bar
+
+      *Format:*
+
+      > http://{jenkins master private ip}:8080
+
+      *Example:*
+
+      > http://10.242.37.74:8080
+      
+1. Select **Manage Jenkins** from the leftmost panel
+
+1. Select **Manage Plugins** under the "System Configuration" section
+
+1. Select the **Available** tab
+
+1. Type the following in the **Filter** text box on the top right of the page
+
+   ```
+   ssh
+   ```
+
+1. Check **SSH**
+
+1. Select **Download now and install after restart**
+
+1. Note that if there are no jobs running, you can safely restart Jenkins
+
+1. Check **Restart Jenkins when installation is complete and no jobs are running
+
+1. Wait for Jenkins to restart
+
+1. Log on to Jenkins
+
+1. Select **Manage Jenkins** from the leftmost panel
+
+1. Select **Manage Plugins** under the "System Configuration" section
+
+1. Select the **Installed** tab
+
+1. Verify that the **SSH plugin** now appears on this tab
+
+1. Select **Jenkins** in the top left of the page to retrun to the home page
+
+### Configure the SSH plugin
+
+1. Open the Jenkins GUI
+
+   1. Ensure that you are connected to the Cisco VPN
+
+   1. Open Chrome
+
+   1. Enter the following in the address bar
+
+      *Format:*
+
+      > http://{jenkins master private ip}:8080
+
+      *Example:*
+
+      > http://10.242.37.74:8080
+      
+1. Select **Manage Jenkins**
+
+1. Select **Configure System** under the "System Configuration" section
+
+1. Scroll down to the **SSH remote hosts** section
+
+1. Select **Add** beside *SSH sites*
+
+1. Configure localhost
+
+   - **Hostname:** localhost
+
+   - **Port:** 22
+
+   - **Credentials:** jenkins
+
+1. Select **Check connection**
+
+1. Verify that "Successful connection" is displayed
+
+1. Open a terminal
+
+1. Copy the private IP address of Jenkins agent to the clipboard
+
+   1. Set the management AWS profile
+
+      ```ShellSession
+      $ export AWS_PROFILE=ab2d-mgmt-east-dev
+      ```
+
+   1. Copy the private IP address of Jenkins agent to the clipboard
+   
+      ```ShellSession
+      $ aws --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-jenkins-agent" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+        --output text \
+	| pbcopy
+      ```
+
+1. Return to the Jenkins GUI
+
+1. Select **Add** below the "Successful connection" display
+
+1. Configure Jenkins agent
+
+   - **Hostname:** 10.123.1.203 (use the private IP address)
+
+   - **Port:** 22
+
+   - **Credentials:** jenkins
+
+1. Select **Check connection**
+
+1. Verify that "Successful connection" is displayed
+
+1. Select **Save**
+
+### Install the "Scheduled Build" plugin
+
+1. Open the Jenkins GUI
+
+   1. Ensure that you are connected to the Cisco VPN
+
+   1. Open Chrome
+
+   1. Enter the following in the address bar
+
+      *Format:*
+
+      > http://{jenkins master private ip}:8080
+
+      *Example:*
+
+      > http://10.242.37.74:8080
+      
+1. Note that the "Scheduled Build" plugin acts like a Linux "at" command
+
+   *See the following for information about the Linux "at" command:*
+
+   > https://tecadmin.net/one-time-task-scheduling-using-at-commad-in-linux
+
+1. Select **Manage Jenkins** from the leftmost panel
+
+1. Select **Manage Plugins** under the "System Configuration" section
+
+1. Select the **Available** tab
+
+1. Type the following in the **Filter** text box on the top right of the page
+
+   ```
+   schedule build
+   ```
+
+1. Check **Schedule Build**
+
+1. Select **Download now and install after restart**
+
+1. Note that if there are no jobs running, you can safely restart Jenkins
+
+1. Check **Restart Jenkins when installation is complete and no jobs are running
+
+1. Wait for Jenkins to restart
+
+1. Log on to Jenkins
+
+1. Select **Manage Jenkins** from the leftmost panel
+
+1. Select **Manage Plugins**
+
+1. Select the **Installed** tab
+
+1. Verify that the **Schedule Build plugin** now appears on this tab
+
+1. Select **Jenkins** in the top left of the page to retrun to the home page
+
+### Configure GitHub plugin
+
+1. Open the Jenkins GUI
+
+   1. Ensure that you are connected to the Cisco VPN
+
+   1. Open Chrome
+
+   1. Enter the following in the address bar
+
+      *Format:*
+
+      > http://{jenkins master private ip}:8080
+
+      *Example:*
+
+      > http://10.242.37.74:8080
+      
+1. Select **Manage Jenkins**
+
+1. Select **Configure System**
+
+1. Scroll down to the **GitHub** section
+
+1. Select **Add GitHub Server**
+
+1. Select **GitHub Server**
+
+1. Configure the GitHub Server
+
+   - **Name:** github_com
+
+   - **API URL:** https://api.github.com
+
+   - **Credentials:** GITHUB_AB2D_JENKINS
+
+1. Check **Manage hooks**
+
+1. Select **Test connection**
+
+1. Verify that a message similar to this is displayed
+
+   ```
+   Credentials verified for user lhanekam, rate limit: 4998
+   ```
+
+1. Select **Save**
+
+### Add the Jenkins agent node
+
+1. Open a terminal
+
+1. Get and note the private IP address of Jenkins agent to the clipboard
+
+   1. Set the management AWS profile
+
+      ```ShellSession
+      $ export AWS_PROFILE=ab2d-mgmt-east-dev
+      ```
+
+   1. Copy the private IP address of Jenkins agent to the clipboard
+   
+      ```ShellSession
+      $ aws --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-jenkins-agent" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+        --output text
+      ```
+
+   1. Note the private IP address of the Jenkins agent
+
+      *Format:*
+
+      ```
+      {private ip address of the jenkins agent}
+      ```
+
+      *Example:*
+
+      ```
+      10.242.37.53
+      ```
+
+1. Get and note the number of CPUs for Jenkins agent
+
+   1. Set the management AWS profile
+
+      ```ShellSession
+      $ export AWS_PROFILE=ab2d-mgmt-east-dev
+      ```
+
+   1. Set the region
+
+      ```ShellSession
+      $ export REGION=us-east-1
+      ```
+      
+   1. Get the instance type of the Jenkins agent
+   
+      ```ShellSession
+      $ JENKINS_AGENT_INSTANCE_TYPE=$(aws --region "${REGION}" ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-jenkins-agent" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].InstanceType" \
+        --output text)
+      ```
+
+   1. Get the numbr of CPUs for Jenkins agent
+
+      ```ShellSession
+      $ aws --region "${REGION}" ec2 describe-instance-types \
+        --instance-types "${JENKINS_AGENT_INSTANCE_TYPE}" --query "InstanceTypes[*].VCpuInfo.DefaultVCpus" \
+        --output text
+      ```
+
+   1. Note the number that is output
+
+      *Format:*
+
+      ```
+      {cpu count for jenkins agent}
+      ```
+
+      *Example:*
+
+      ```
+      4
+      ```
+      
+1. Open the Jenkins GUI
+
+   1. Ensure that you are connected to the Cisco VPN
+
+   1. Open Chrome
+
+   1. Enter the following in the address bar
+
+      *Format:*
+
+      > http://{jenkins master private ip}:8080
+
+      *Example:*
+
+      > http://10.242.37.74:8080
+      
+1. Select **Manage Jenkins**
+
+1. Select **Manage Nodes and Clouds** under the "System Configuration" section
+
+1. Select **New Node** from the leftmost panel
+
+1. Type the following in the **Node name** text box
+
+   ```
+   agent01
+   ```
+
+1. Check **Permanent Agent**
+
+1. Select **OK** on the "New Node" page
+
+1. Configure the Jenkins agent node
+
+   *Format:*
+   
+   - **Name:** agent01
+
+   - **Description:** Agent 01
+
+   - **# of executors:** {cpu count for jenkins agent}
+
+   - **Remote root directory:** /home/jenkins/jenkins_agent
+
+   - **Labels:** {leave blank}
+
+   - **Usage:** Use this node as much as possible
+
+   - **Launch method:** Launch agent agents via SSH
+
+   - **Host:** {private ip address of the jenkins agent}
+
+   - **Credentials:** jenkins
+
+   - **Host Key Verification Strategy:** Known hosts file Verification Strategy
+
+   - **Availability:** Keep this agent online as much as possible
+
+   *Example:*
+   
+   - **Name:** agent01
+
+   - **Description:** Agent 01
+
+   - **# of executors:** 4
+
+   - **Remote root directory:** /home/jenkins/jenkins_agent
+
+   - **Labels:** {leave blank}
+
+   - **Usage:** Use this node as much as possible
+
+   - **Launch method:** Launch agent agents via SSH
+
+   - **Host:** 10.242.37.53
+
+   - **Credentials:** jenkins
+
+   - **Host Key Verification Strategy:** Known hosts file Verification Strategy
+
+   - **Availability:** Keep this agent online as much as possible
+
+1. Note that the "Labels" property that we are not currently using is typically used to group nodes that are used for different functions
+
+   *Examples:*
+
+   - slave01 to slave05 might all have the label "development_builds"
+
+   - slave31 to slave35 might all have the label "production_builds"
+
+1. Select **Save**
+
+1. Note that the new agent node will have an X on it which means that it is still being setup
+
+1. Select the new agent node
+
+1. Select **Log** from the leftmost panel
+
+1. Verify that the following appears at the end of the log file
+
+   ```
+   Agent successfully connected and online
+   ```
+
+1. Select **Jenkins** at the top left of the page
 
 ### Configure a Jenkins project for development application deploy
 
@@ -5781,11 +6532,11 @@
 
    *Format:*
 
-   > http://{jenkins master public ip}:8080
+   > http://{jenkins master private ip}:8080
 
    *Example:*
 
-   > http://35.173.33.85:8080
+   > http://10.242.37.74:8080
 
 1. *** TO DO ***
 
@@ -5803,7 +6554,7 @@
 
    *Example:*
 
-   > http://35.173.33.85:8080
+   > http://10.242.37.74:8080
 
 1. Select **Manage Jenkins** from the leftmost panel
 
@@ -5823,7 +6574,7 @@
       $ export AWS_PROFILE=ab2d-mgmt-east-dev
       ```
 
-   1. Get the private IP address of Jenkins EC2 instance
+   1. Get the private IP address of Jenkins master
    
       ```ShellSession
       $ JENKINS_MASTER_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
@@ -5850,46 +6601,6 @@
    $ sudo yum update jenkins -y
    ```
 
-1. Ensure that the java binary is set to JDK 8
-
-   1. Get JDK 8 java binary
-
-      ```ShellSession
-      $ JAVA_8=$(alternatives --display java | grep family | grep java-1.8.0-openjdk | cut -d' ' -f1)
-      ```
-   
-   1. Set java binary to JDK 8
-
-      ```ShellSession
-      $ sudo alternatives --set java $JAVA_8
-      ```
-
-   1. Verify that the java binary is set to JDK 8
-
-      ```ShellSession
-      $ java -version
-      ```
-
-1. Ensure that the javac binary is set to JDK 8
-
-   1. Get JDK 8 javac binary
-
-      ```ShellSession
-      $ JAVAC_8=$(alternatives --display javac | grep family | grep java-1.8.0-openjdk | cut -d' ' -f1)
-      ```
-   
-   1. Set javac binary to JDK 8
-
-      ```ShellSession
-      $ sudo alternatives --set javac $JAVAC_8
-      ```
-
-   1. Verify that the javac binary is set to JDK 8
-
-      ```ShellSession
-      $ javac -version
-      ```
-
 1. Start Jenkins
 
    ```ShellSession
@@ -5912,7 +6623,7 @@
 
    *Example:*
 
-   > http://35.173.33.85:8080
+   > http://10.242.37.74:8080
 
 1. Verify that Jenkins has been updated to the new version
 
