@@ -17,6 +17,7 @@ public class TextStreamHelperImpl extends StreamHelperImpl {
      * @param path - where to create the file
      * @param contractNumber - the contract number
      * @param totalBytesAllowed - the total number of bytes allowed to be written to the stream
+     * @param tryLockTimeout - the amount of time to wait before timing out lock
      * @throws FileNotFoundException - if the file can't be created
      */
     public TextStreamHelperImpl(Path path, String contractNumber, long totalBytesAllowed, int tryLockTimeout)
@@ -54,10 +55,6 @@ public class TextStreamHelperImpl extends StreamHelperImpl {
         }
         tryLock(getDataFileLock());
         try {
-            if (getCurrentStream() == null) {
-                setCurrentStream(createStream());
-                setTotalBytesWritten(0);
-            }
             if (getTotalBytesWritten() + data.length > getTotalBytesAllowed() && getTotalBytesWritten() > 0) {
                 getCurrentStream().close();
                 setCurrentStream(createStream());
@@ -79,9 +76,6 @@ public class TextStreamHelperImpl extends StreamHelperImpl {
      */
     @Override
     public void close() throws IOException {
-        if (getCurrentStream() == null) {
-            return;
-        }
         try {
             getCurrentStream().close();
             int numFiles = getFilesCreated().size();
