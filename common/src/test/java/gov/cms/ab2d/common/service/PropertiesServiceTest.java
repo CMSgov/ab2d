@@ -87,6 +87,8 @@ public class PropertiesServiceTest {
         List<PropertiesDTO> vals = propertiesService.getAllPropertiesDTO();
         assertEquals("true", (vals.stream()
                 .filter(c -> c.getKey().equalsIgnoreCase(MAINTENANCE_MODE)).findFirst().map(PropertiesDTO::getValue).get()));
+        currentProperties.stream().filter(c -> c.getKey().equalsIgnoreCase(MAINTENANCE_MODE)).findFirst().get().setValue("false");
+        propertiesService.updateProperties(currentProperties);
     }
 
     @Test
