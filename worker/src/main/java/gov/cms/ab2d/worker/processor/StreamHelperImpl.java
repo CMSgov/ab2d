@@ -139,7 +139,7 @@ public abstract class StreamHelperImpl implements StreamHelper, AutoCloseable {
      * @param outputFile - the file to append to
      * @param data - the data to write
      */
-    private void appendToFile(Path outputFile, byte[] data) {
+    void appendToFile(Path outputFile, byte[] data) {
         try {
             Files.write(outputFile, data, APPEND);
         } catch (IOException e) {
@@ -175,13 +175,10 @@ public abstract class StreamHelperImpl implements StreamHelper, AutoCloseable {
     /**
      * If the error file doesn't exist, create it
      */
-    private void createErrorFile() {
+    void createErrorFile() {
         var fileName = contractNumber +
                 FileOutputType.NDJSON_ERROR.getSuffix();
 
-        if (path == null) {
-            throw new IllegalArgumentException("output directory must not be null");
-        }
         final Path errorFilePath = Path.of(path.toString(), fileName);
         try {
             errorFile = Files.createFile(errorFilePath);
