@@ -13,9 +13,9 @@ cache:
   directories:
   - "$HOME/.m2"
 before_install:
-- mkdir -p /tmp/ab2d_efs_mount
+- mkdir -p /opt/ab2d
 - openssl aes-256-cbc -K $encrypted_27e3c48779c8_key -iv $encrypted_27e3c48779c8_iv
-  -in ab2d_dev_keystore.enc -out /tmp/ab2d_efs_mount/ab2d_dev_keystore -d
+  -in ab2d_dev_keystore.enc -out /opt/ab2d/ab2d_dev_keystore -d
 - curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
 - sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu
   $(lsb_release -cs) stable"
