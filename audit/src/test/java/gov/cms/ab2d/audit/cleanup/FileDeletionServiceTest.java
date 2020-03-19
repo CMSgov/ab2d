@@ -243,4 +243,21 @@ public class FileDeletionServiceTest {
                 fileDeletionService.deleteFiles());
         assertThat(exceptionThrown.getMessage(), is("EFS mount must not start with a directory that contains important files"));
     }
+
+    @Test
+    public void testEFSMountOptAb2d() {
+        ReflectionTestUtils.setField(fileDeletionService, "efsMount", "/opt/ab2d");
+
+        // Confirm no exceptions thrown
+        fileDeletionService.deleteFiles();
+    }
+
+    @Test
+    public void testEFSMountOpt() {
+        ReflectionTestUtils.setField(fileDeletionService, "efsMount", "/opt");
+
+        var exceptionThrown = assertThrows(EFSMountFormatException.class,() ->
+                fileDeletionService.deleteFiles());
+        assertThat(exceptionThrown.getMessage(), is("EFS mount must be at least 5 characters"));
+    }
 }
