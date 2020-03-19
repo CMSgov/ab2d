@@ -2765,7 +2765,7 @@
 1. Change to the "s3-client-test" directory
 
    ```ShellSession
-   $ cd ~/code/ab2d/Deploy/java/s3-client-test
+   $ cd ~/code/ab2d/Deploy/java/s3-client-test-workspace/s3-client-test
    ```
 
 1. Build "s3-client-test"
@@ -3575,4 +3575,332 @@
    $ terraform destroy \
      --target module.jenkins_agent \
      --auto-approve
+   ```
+
+## Appendix HH: Manual test of Splunk configuration
+
+1. Connect to an API node in development
+
+   1. Ensure that you are connected to the Cisco VPN
+
+   1. Set the dev AWS profile
+
+      ```ShellSession
+      $ export AWS_PROFILE=ab2d-dev
+      ```
+
+   1. Connect to the development controller
+
+      ```ShellSession
+      $ ssh -i ~/.ssh/${AWS_PROFILE}.pem ec2-user@$(aws \
+        --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-deployment-controller" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+        --output text)
+      ```
+
+   1. Connect to the desired API node
+
+      *Example for connecting to the first API node:*
+
+      ```ShellSession
+      $ ssh ec2-user@$(./list-api-instances.sh \
+        | grep 10. \
+	| awk '{print $2}' \
+	| head -n 1)
+      ```
+
+1. Switch to the root user
+
+   ```ShellSession
+   $ sudo su
+   ```
+
+1. Verify existing logs prior to changes
+
+   OS Level Logging                        |Exists|CloudWatch Log Group
+   ----------------------------------------|------|------------------------------------------------
+   /var/log/amazon/ssm/amazon-ssm-agent.log|yes   |/aws/ec2/var/log/amazon/ssm/amazon-ssm-agent.log
+   /var/log/audit/audit.log                |yes   |/aws/ec2/var/log/audit/audit.log
+   /var/log/awslogs.log                    |no    |/aws/ec2/var/log/awslogs.log
+   /var/log/cloud-init-output.log          |yes   |/aws/ec2/var/log/cloud-init-output.log
+   /var/log/cloud-init.log                 |yes   |/aws/ec2/var/log/cloud-init.log
+   /var/log/cron                           |yes   |/aws/ec2/var/log/cron
+   /var/log/dmesg                          |yes   |/aws/ec2/var/log/dmesg
+   /var/log/maillog                        |yes   |/aws/ec2/var/log/maillog
+   /var/log/messages                       |yes   |/aws/ec2/var/log/messages
+   /var/log/secure                         |yes   |/aws/ec2/var/log/secure
+   /var/opt/ds_agent/diag/ds_agent-err.log |yes   |/aws/ec2/var/opt/ds_agent/diag/ds_agent-err.log
+   /var/opt/ds_agent/diag/ds_agent.log     |yes   |/aws/ec2/var/opt/ds_agent/diag/ds_agent.log
+   /var/opt/ds_agent/diag/ds_am.log        |yes   |/aws/ec2/var/opt/ds_agent/diag/ds_am.log
+   N/A                                     |N/A   |CloudTrail/DefaultLogGroup
+   N/A                                     |N/A   |<accountId>-west-dev-vpc-flowlogs
+
+1. Exit the root user
+
+   ```ShellSession
+   $ exit
+   ```
+
+1. Exit the API node
+
+   ```ShellSession
+   $ exit
+   ```
+
+1. Exit the controler
+
+   ```ShellSession
+   $ exit
+   ```
+
+1. Note that the following IAM policy has been created in Mgmt, Dev, Sbx, and Impl
+
+   **Policy:** Ab2dCloudWatchLogsPolicy
+
+   ```
+   {
+       "Version": "2012-10-17",
+       "Statement": [
+           {
+               "Sid": "Stmt1584652230001",
+               "Effect": "Allow",
+               "Action": [
+                   "logs:CreateLogGroup",
+                   "logs:CreateLogStream",
+                   "logs:PutLogEvents",
+                   "logs:DescribeLogStreams"
+               ],
+               "Resource": [
+                   "arn:aws:logs:*:*:*"
+               ]
+           }
+       ]
+   }
+   ```
+
+1. Note that the "Ab2dCloudWatchLogsPolicy" IAM policy to the "Ab2dInstanceRole" role in Mgmt, Dev, Sbx, and Impl
+
+1. Connect to an API node in development
+
+   1. Ensure that you are connected to the Cisco VPN
+
+   1. Set the dev AWS profile
+
+      ```ShellSession
+      $ export AWS_PROFILE=ab2d-dev
+      ```
+
+   1. Connect to the development controller
+
+      ```ShellSession
+      $ ssh -i ~/.ssh/${AWS_PROFILE}.pem ec2-user@$(aws \
+        --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-deployment-controller" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+        --output text)
+      ```
+
+   1. Connect to the desired API node
+
+      *Example for connecting to the first API node:*
+
+      ```ShellSession
+      $ ssh ec2-user@$(./list-api-instances.sh \
+        | grep 10. \
+	| awk '{print $2}' \
+	| head -n 1)
+      ```
+
+1. Download the CloudWatch Log agent
+
+   1. Change to the "/tmp" directory
+
+      ```ShellSession
+      $ cd /tmp
+      ```
+
+   1. Download the CloudWatch Log Agent
+
+      ```ShellSession
+      $ curl -O https://s3.amazonaws.com/aws-cloudwatch/downloads/latest/awslogs-agent-setup.py
+      ```
+
+1. Configure the CloudWatch Log Agent and start logging "/var/log/messages"
+
+   1. Enter the following
+
+      ```ShellSession
+      $ sudo python /tmp/awslogs-agent-setup.py --region us-east-1
+      ```
+
+   1. Note the following dependencies are downloaded
+
+      ```
+      AgentDependencies/
+      AgentDependencies/awslogscli/
+      AgentDependencies/awslogscli/urllib3-1.25.6.tar.gz
+      AgentDependencies/awslogscli/jmespath-0.9.2.tar.gz
+      AgentDependencies/awslogscli/colorama-0.3.7.zip
+      AgentDependencies/awslogscli/idna-2.8.tar.gz
+      AgentDependencies/awslogscli/awscli-1.11.41.tar.gz
+      AgentDependencies/awslogscli/argparse-1.2.1.tar.gz
+      AgentDependencies/awslogscli/botocore-1.13.9.tar.gz
+      AgentDependencies/awslogscli/docutils-0.15.2.tar.gz
+      AgentDependencies/awslogscli/pyasn1-0.2.3.tar.gz
+      AgentDependencies/awslogscli/python-dateutil-2.6.0.tar.gz
+      AgentDependencies/awslogscli/botocore-1.5.4.tar.gz
+      AgentDependencies/awslogscli/jmespath-0.9.4.tar.gz
+      AgentDependencies/awslogscli/awscli-cwlogs-1.4.6.tar.gz
+      AgentDependencies/awslogscli/ordereddict-1.1.tar.gz
+      AgentDependencies/awslogscli/futures-3.3.0.tar.gz
+      AgentDependencies/awslogscli/futures-3.0.5.tar.gz
+      AgentDependencies/awslogscli/certifi-2019.9.11.tar.gz
+      AgentDependencies/awslogscli/six-1.12.0.tar.gz
+      AgentDependencies/awslogscli/s3transfer-0.1.10.tar.gz
+      AgentDependencies/awslogscli/six-1.10.0.tar.gz
+      AgentDependencies/awslogscli/requests-2.18.4.tar.gz
+      AgentDependencies/awslogscli/rsa-3.4.2.tar.gz
+      AgentDependencies/awslogscli/s3transfer-0.2.1.tar.gz
+      AgentDependencies/awslogscli/docutils-0.13.1.tar.gz
+      AgentDependencies/awslogscli/urllib3-1.22.tar.gz
+      AgentDependencies/awslogscli/awscli-1.16.273.tar.gz
+      AgentDependencies/awslogscli/PyYAML-5.1.2.tar.gz
+      AgentDependencies/awslogscli/idna-2.5.tar.gz
+      AgentDependencies/awslogscli/PyYAML-3.12.tar.gz
+      AgentDependencies/awslogscli/pyasn1-0.4.7.tar.gz
+      AgentDependencies/awslogscli/colorama-0.4.1.tar.gz
+      AgentDependencies/awslogscli/simplejson-3.3.0.tar.gz
+      AgentDependencies/awslogscli/chardet-3.0.4.tar.gz
+      AgentDependencies/virtualenv-15.1.0/
+      AgentDependencies/virtualenv-15.1.0/setup.cfg
+      AgentDependencies/virtualenv-15.1.0/tests/
+      AgentDependencies/virtualenv-15.1.0/tests/__init__.py
+      AgentDependencies/virtualenv-15.1.0/tests/test_cmdline.py
+      AgentDependencies/virtualenv-15.1.0/tests/test_virtualenv.py
+      AgentDependencies/virtualenv-15.1.0/tests/test_activate_output.expected
+      AgentDependencies/virtualenv-15.1.0/tests/test_activate.sh
+      AgentDependencies/virtualenv-15.1.0/scripts/
+      AgentDependencies/virtualenv-15.1.0/scripts/virtualenv
+      AgentDependencies/virtualenv-15.1.0/virtualenv.py
+      AgentDependencies/virtualenv-15.1.0/MANIFEST.in
+      AgentDependencies/virtualenv-15.1.0/README.rst
+      AgentDependencies/virtualenv-15.1.0/AUTHORS.txt
+      AgentDependencies/virtualenv-15.1.0/setup.py
+      AgentDependencies/virtualenv-15.1.0/LICENSE.txt
+      AgentDependencies/virtualenv-15.1.0/virtualenv_support/
+      AgentDependencies/virtualenv-15.1.0/virtualenv_support/__init__.py
+      AgentDependencies/virtualenv-15.1.0/virtualenv_support/wheel-0.29.0-py2.py3-none-any.whl
+      AgentDependencies/virtualenv-15.1.0/virtualenv_support/argparse-1.4.0-py2.py3-none-any.whl
+      AgentDependencies/virtualenv-15.1.0/virtualenv_support/pip-9.0.1-py2.py3-none-any.whl
+      AgentDependencies/virtualenv-15.1.0/virtualenv_support/setuptools-28.8.0-py2.py3-none-any.whl
+      AgentDependencies/virtualenv-15.1.0/PKG-INFO
+      AgentDependencies/virtualenv-15.1.0/bin/
+      AgentDependencies/virtualenv-15.1.0/bin/rebuild-script.py
+      AgentDependencies/virtualenv-15.1.0/virtualenv.egg-info/
+      AgentDependencies/virtualenv-15.1.0/virtualenv.egg-info/not-zip-safe
+      AgentDependencies/virtualenv-15.1.0/virtualenv.egg-info/SOURCES.txt
+      AgentDependencies/virtualenv-15.1.0/virtualenv.egg-info/entry_points.txt
+      AgentDependencies/virtualenv-15.1.0/virtualenv.egg-info/top_level.txt
+      AgentDependencies/virtualenv-15.1.0/virtualenv.egg-info/PKG-INFO
+      AgentDependencies/virtualenv-15.1.0/virtualenv.egg-info/dependency_links.txt
+      AgentDependencies/virtualenv-15.1.0/virtualenv_embedded/
+      AgentDependencies/virtualenv-15.1.0/virtualenv_embedded/activate.ps1
+      AgentDependencies/virtualenv-15.1.0/virtualenv_embedded/activate.csh
+      AgentDependencies/virtualenv-15.1.0/virtualenv_embedded/deactivate.bat
+      AgentDependencies/virtualenv-15.1.0/virtualenv_embedded/activate_this.py
+      AgentDependencies/virtualenv-15.1.0/virtualenv_embedded/activate.fish
+      AgentDependencies/virtualenv-15.1.0/virtualenv_embedded/python-config
+      AgentDependencies/virtualenv-15.1.0/virtualenv_embedded/activate.bat
+      AgentDependencies/virtualenv-15.1.0/virtualenv_embedded/distutils.cfg
+      AgentDependencies/virtualenv-15.1.0/virtualenv_embedded/site.py
+      AgentDependencies/virtualenv-15.1.0/virtualenv_embedded/activate.sh
+      AgentDependencies/virtualenv-15.1.0/virtualenv_embedded/distutils-init.py
+      AgentDependencies/virtualenv-15.1.0/docs/
+      AgentDependencies/virtualenv-15.1.0/docs/userguide.rst
+      AgentDependencies/virtualenv-15.1.0/docs/index.rst
+      AgentDependencies/virtualenv-15.1.0/docs/development.rst
+      AgentDependencies/virtualenv-15.1.0/docs/reference.rst
+      AgentDependencies/virtualenv-15.1.0/docs/Makefile
+      AgentDependencies/virtualenv-15.1.0/docs/conf.py
+      AgentDependencies/virtualenv-15.1.0/docs/changes.rst
+      AgentDependencies/virtualenv-15.1.0/docs/installation.rst
+      AgentDependencies/virtualenv-15.1.0/docs/make.bat
+      AgentDependencies/pip-6.1.1.tar.gz
+      ```
+
+   1. Wait for the following to display
+
+      ```
+      Step 1 of 5: Installing pip ...DONE
+      ```
+
+   1. Wait for the following to display
+
+      *Note that this may take a while.*
+
+      ```
+      Step 2 of 5: Downloading the latest CloudWatch Logs agent bits ...DONE
+      ```
+
+   1. Note that the following is displayed
+
+      ```
+      Step 3 of 5: Configuring AWS CLI ...
+      ```
+
+   1. Press **return** on the keyboard to accept the default at the "AWS Access Key ID" prompt
+
+   1. Press **return** on the keyboard to accept the default at the "AWS Secret Access Key" prompt
+
+   1. Press **return** on the keyboard to accept the default at the "Default region name" prompt
+
+   1. Press **return** on the keyboard to accept the default at the "Default output format" prompt
+
+   1. Note that the following is displayed
+
+      ```
+      Step 4 of 5: Configuring the CloudWatch Logs Agent ...
+      ```
+
+   1. Add the following log by entering the following at the prompts
+
+      - **Path of log file to upload:** /var/log/messages
+
+      - **Destination Log Group name:** /aws/ec2/var/log/messages
+
+      - **Choose Log Stream Name:** 1 *Use EC2 instance id*
+
+      - **Choose Log Event timestamp format:** 3 *%Y-%m-%d %H:%M:%S (2008-09-08 11:52:54)*
+
+      - **Choose initial position of upload:** 1 *From start of file.*
+
+      - **More log files to configure:** N
+
+   1. Wait for the following to display
+
+      ```
+      Step 5 of 5: Setting up agent as a daemon ...DONE
+      ```
+
+   1. Note the following is output
+
+      ------------------------------------------------------
+      - Configuration file successfully saved at: /var/awslogs/etc/awslogs.conf
+      - You can begin accessing new log events after a few moments at https://console.aws.amazon.com/cloudwatch/home?region=us-east-1#logs:
+      - You can use 'sudo service awslogs start|stop|status|restart' to control the daemon.
+      - To see diagnostic information for the CloudWatch Logs Agent, see /var/log/awslogs.log
+      - You can rerun interactive setup using 'sudo python ./awslogs-agent-setup.py --region us-east-1 --only-generate-config'
+      ------------------------------------------------------
+
+1. Exit the API node
+
+   ```ShellSession
+   $ exit
+   ```
+
+1. Exit the controler
+
+   ```ShellSession
+   $ exit
    ```
