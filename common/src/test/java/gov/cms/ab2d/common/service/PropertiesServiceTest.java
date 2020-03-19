@@ -22,6 +22,9 @@ import java.util.Map;
 import static gov.cms.ab2d.common.util.Constants.*;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.junit.Assert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @SpringBootTest(classes = SpringBootApp.class)
@@ -69,6 +72,23 @@ public class PropertiesServiceTest {
             Assert.assertNotNull(propertyValue);
             Assert.assertEquals(propertyValue.toString(), propertiesToCheck.getValue());
         }
+    }
+
+    @Test
+    void testMisc() {
+        PropertiesDTO val = new PropertiesDTO();
+        val.setKey(MAINTENANCE_MODE);
+        assertFalse(propertiesService.isToggleOn(MAINTENANCE_MODE));
+        List<PropertiesDTO> currentProperties = propertiesService.getAllPropertiesDTO();
+        currentProperties.stream().filter(c -> c.getKey().equalsIgnoreCase(MAINTENANCE_MODE)).findFirst().get().setValue("true");
+        propertiesService.updateProperties(currentProperties);
+        assertTrue(propertiesService.isToggleOn(MAINTENANCE_MODE));
+        assertEquals(true, propertiesService.isInMaintenanceMode());
+        List<PropertiesDTO> vals = propertiesService.getAllPropertiesDTO();
+        assertEquals("true", (vals.stream()
+                .filter(c -> c.getKey().equalsIgnoreCase(MAINTENANCE_MODE)).findFirst().map(PropertiesDTO::getValue).get()));
+        currentProperties.stream().filter(c -> c.getKey().equalsIgnoreCase(MAINTENANCE_MODE)).findFirst().get().setValue("false");
+        propertiesService.updateProperties(currentProperties);
     }
 
     @Test
@@ -131,6 +151,32 @@ public class PropertiesServiceTest {
         propertiesDTOMaintenanceMode.setValue("false");
         propertiesDTOs.add(propertiesDTOMaintenanceMode);
         propertiesService.updateProperties(propertiesDTOs);
+    }
+
+    @Test
+    public void testValidProperties() {
+        PropertiesDTO p = new PropertiesDTO();
+        p.setKey("Bad");
+        p.setValue("Value");
+        PropertiesServiceImpl val = (PropertiesServiceImpl) propertiesService;
+        assertThrows(InvalidPropertiesException.class, () -> val.checkNameOfPropertyKey(p));
+
+        PropertiesDTO p2 = new PropertiesDTO();
+        p2.setKey(PCP_CORE_POOL_SIZE);
+        p2.setValue("200");
+        assertThrows(InvalidPropertiesException.class, () -> val.validateInt(PCP_CORE_POOL_SIZE, p2, 1, 100));
+        p2.setValue("100");
+        val.validateInt(PCP_CORE_POOL_SIZE, p2, 1, 100);
+
+        p2.setKey(PCP_CORE_POOL_SIZE);
+        p2.setValue("");
+        assertThrows(InvalidPropertiesException.class, () -> val.validateBoolean(ZIP_SUPPORT_ON, p2));
+        p2.setValue("true");
+        val.validateBoolean(ZIP_SUPPORT_ON, p2);
+        p2.setValue("false");
+        val.validateBoolean(ZIP_SUPPORT_ON, p2);
+        p2.setValue(null);
+        assertThrows(NullPointerException.class, () -> val.validateBoolean(ZIP_SUPPORT_ON, p2));
     }
 
     private void validateInvalidPropertyValues(String key, String value) {
