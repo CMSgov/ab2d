@@ -67,7 +67,7 @@ public class FileDeletionServiceImpl implements FileDeletionService {
         }
 
         for (String directory : disallowedDirectories) {
-            if (efsMount.startsWith(directory)) {
+            if (efsMount.startsWith(directory) && !efsMount.startsWith("/opt/ab2d")) {
                 throw new EFSMountFormatException("EFS mount must not start with a directory that contains important files");
             }
         }
