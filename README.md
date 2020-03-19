@@ -296,7 +296,7 @@
 1. Create a volume directory
 
    ```ShellSession
-   $ mkdir -p /tmp/ab2d_efs_mount
+   $ mkdir -p /opt/ab2d
    ```
 
 1. Note that this directory acts as a shared volume for the API and worker containers
