@@ -899,6 +899,14 @@
      --policy-document file://ab2d-kms-policy.json
    ```
 
+1. Create "Ab2dCloudWatchLogsPolicy"
+
+   ```ShellSession
+   $ aws iam create-policy \
+     --policy-name Ab2dCloudWatchLogsPolicy \
+     --policy-document file://ab2d-cloudwatch-logs-policy.json
+   ```
+
 1. Change to the environment-specific directory
 
    *Example for "Mgmt" environment:*
@@ -1057,6 +1065,9 @@
    $ aws iam attach-role-policy \
      --role-name Ab2dInstanceRole \
      --policy-arn "arn:aws:iam::${AWS_ACCOUNT_NUMBER}:policy/Ab2dKmsPolicy"
+   $ aws iam attach-role-policy \
+     --role-name Ab2dInstanceRole \
+     --policy-arn "arn:aws:iam::${AWS_ACCOUNT_NUMBER}:policy/Ab2dCloudWatchLogsPolicy"
    ```
 
 1. Attach secrets policy to the "Ab2dInstanceRole" role
@@ -2369,6 +2380,8 @@
 > https://confluence.cms.gov/display/BEDAP/New+Relic
 
 ## Configure Splunk
+
+> *** TO DO ***: Determine if this section should be eliminated or if anything can be merged in with new Splunk section.
 
 ### Inventory the Splunk installation included with Gold Disk
 
