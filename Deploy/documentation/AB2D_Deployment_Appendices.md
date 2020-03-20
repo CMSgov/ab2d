@@ -3611,8 +3611,8 @@
       ```ShellSession
       $ ssh ec2-user@$(./list-api-instances.sh \
         | grep 10. \
-	| awk '{print $2}' \
-	| head -n 1)
+        | awk '{print $2}' \
+        | head -n 1)
       ```
 
 1. Switch to the root user
@@ -3713,8 +3713,8 @@
       ```ShellSession
       $ ssh ec2-user@$(./list-api-instances.sh \
         | grep 10. \
-	| awk '{print $2}' \
-	| head -n 1)
+        | awk '{print $2}' \
+        | head -n 1)
       ```
 
 1. Download the CloudWatch Log agent
