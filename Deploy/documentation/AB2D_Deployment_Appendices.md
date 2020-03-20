@@ -49,7 +49,10 @@
 1. [Appendix CC: Fix bad terraform component](#appendix-cc-fix-bad-terraform-component)
 1. [Appendix DD: Test running development automation from Jenkins master](#appendix-dd-test-running-development-automation-from-jenkins-master)
 1. [Appendix EE: Fix Jenkins reverse proxy error](#appendix-ee-fix-jenkins-reverse-proxy-error)
-1. [Appendix FF: Manually add JDK 13 to a node that already has JDK 8]
+1. [Appendix FF: Manually add JDK 13 to a node that already has JDK 8](#appendix-ff-manually-add-jdk-13-to-a-node-that-already-has-jdk8)
+1. [Appendix GG: Destroy Jenkins agent](#appendix-gg-destroy-jenkins-agent)
+1. [Appendix HH: Manual test of Splunk configuration](#appendix-hh-manual-test-of-splunk-configuration)
+   [Configure CloudWatch Log agent and onboard \/var/\log\/messages](#configure-cloudwatch-log-agent-and-onboard-var-log-messages)
 
 ## Appendix A: Access the CMS AWS console
 
@@ -3579,6 +3582,8 @@
 
 ## Appendix HH: Manual test of Splunk configuration
 
+### Configure CloudWatch Log agent and onboard \/var/\log\/messages
+
 1. Connect to an API node in development
 
    1. Ensure that you are connected to the Cisco VPN
@@ -3883,7 +3888,7 @@
       Step 5 of 5: Setting up agent as a daemon ...DONE
       ```
 
-   1. Note the following is output
+   1. Note the following output
 
       ------------------------------------------------------
       - Configuration file successfully saved at: /var/awslogs/etc/awslogs.conf
