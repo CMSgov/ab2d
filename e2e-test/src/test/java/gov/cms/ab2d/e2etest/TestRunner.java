@@ -75,6 +75,8 @@ public class TestRunner {
 
     private OffsetDateTime earliest = OffsetDateTime.parse(SINCE_EARLIEST_DATE, ISO_DATE_TIME);
 
+    private final Set<String> acceptableIdStrings = Set.of("carrier", "dme", "hha", "hospice", "inpatient", "outpatient", "snf");
+
     // Get all methods annotated with @Test and run them. This will only be called from TestLaucher when running against
     // an external environment, the regular tests that run as part of a build will be called like they normally would
     // during a build.
@@ -212,7 +214,7 @@ public class TestRunner {
         return Pair.of(url, extension);
     }
 
-    private void verifyJsonFromfileDownload(String fileContent, JSONArray extension) throws JSONException {
+    private void verifyJsonFromfileDownload(String fileContent, JSONArray extension, OffsetDateTime since) throws JSONException {
         // Some of the data that is returned will be variable and will change from request to request, so not every
         // JSON object can be verified
         final JSONObject fileJson = new JSONObject(fileContent);
@@ -220,7 +222,19 @@ public class TestRunner {
         Assert.assertEquals("ExplanationOfBenefit", fileJson.getString("resourceType"));
         Assert.assertEquals(0, fileJson.getInt("precedence"));
         String idString = fileJson.getString("id");
-        Assert.assertTrue(idString.startsWith("carrier") || idString.startsWith("outpatient"));
+
+        boolean found = false;
+        for(String acceptableIdString : acceptableIdStrings) {
+            if(idString.startsWith(acceptableIdString)) {
+                found = true;
+                break;
+            }
+        }
+
+        if(!found) {
+            Assert.fail("No acceptable ID string was found, received " + idString);
+        }
+
         final JSONObject patientJson = fileJson.getJSONObject("patient");
         String referenceString = patientJson.getString("reference");
         Assert.assertTrue(referenceString.startsWith("Patient"));
@@ -236,6 +250,13 @@ public class TestRunner {
         Assert.assertNotNull(diagnosisJson);
         final JSONArray itemJson = fileJson.getJSONArray("item");
         Assert.assertNotNull(itemJson);
+
+        final JSONObject metaJson = fileJson.getJSONObject("meta");
+        final String lastUpdated = metaJson.getString("lastUpdated");
+        Instant lastUpdatedInstant = Instant.parse(lastUpdated);
+        if(since != null) {
+            Assert.assertTrue(lastUpdatedInstant.isAfter(since.toInstant()));
+        }
 
         JSONObject checkSumObject = extension.getJSONObject(0);
         String checkSumUrl = checkSumObject.getString("url");
@@ -287,7 +308,7 @@ public class TestRunner {
         return true;
     }
 
-    private void downloadFile(Pair<String, JSONArray> downloadDetails) throws IOException, InterruptedException, JSONException {
+    private void downloadFile(Pair<String, JSONArray> downloadDetails, OffsetDateTime since) throws IOException, InterruptedException, JSONException {
         HttpResponse<InputStream> downloadResponse = apiClient.fileDownloadRequest(downloadDetails.getFirst());
 
         Assert.assertEquals(200, downloadResponse.statusCode());
@@ -299,10 +320,10 @@ public class TestRunner {
             downloadString = IOUtils.toString(gzipInputStream, Charset.defaultCharset());
         }
 
-        verifyJsonFromfileDownload(downloadString, downloadDetails.getSecond());
+        verifyJsonFromfileDownload(downloadString, downloadDetails.getSecond(), since);
     }
 
-    private void downloadZipFile(String url, JSONArray extension) throws IOException, InterruptedException, JSONException {
+    private void downloadZipFile(String url, JSONArray extension, OffsetDateTime since) throws IOException, InterruptedException, JSONException {
         HttpResponse<InputStream> downloadResponse = apiClient.fileDownloadRequest(url);
         ZipInputStream zipIn = new ZipInputStream(downloadResponse.body());
         ZipEntry entry = zipIn.getNextEntry();
@@ -312,7 +333,7 @@ public class TestRunner {
             zipIn.closeEntry();
             entry = zipIn.getNextEntry();
         }
-        verifyJsonFromfileDownload(downloadString.toString(), extension);
+        verifyJsonFromfileDownload(downloadString.toString(), extension, since);
     }
 
     public static String extractZipFileData(ZipEntry entry, ZipInputStream zipIn) throws IOException {
@@ -361,7 +382,7 @@ public class TestRunner {
         List<String> contentLocationList = exportResponse.headers().map().get("content-location");
 
         Pair<String, JSONArray> downloadDetails = performStatusRequests(contentLocationList, false, "S0000");
-        downloadFile(downloadDetails);
+        downloadFile(downloadDetails, null);
     }
 
     @Test
@@ -373,7 +394,7 @@ public class TestRunner {
 
         Pair<String, JSONArray> downloadDetails = performStatusRequests(contentLocationList, false, "S0000");
         if (downloadDetails != null) {
-            downloadFile(downloadDetails);
+            downloadFile(downloadDetails, earliest);
         }
     }
 
@@ -402,7 +423,7 @@ public class TestRunner {
         List<String> contentLocationList = exportResponse.headers().map().get("content-location");
 
         Pair<String, JSONArray> downloadDetails = performStatusRequests(contentLocationList, true, contractNumber);
-        downloadFile(downloadDetails);
+        downloadFile(downloadDetails, null);
     }
 
     @Test
