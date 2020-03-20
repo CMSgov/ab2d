@@ -52,7 +52,7 @@
 1. [Appendix FF: Manually add JDK 13 to a node that already has JDK 8](#appendix-ff-manually-add-jdk-13-to-a-node-that-already-has-jdk8)
 1. [Appendix GG: Destroy Jenkins agent](#appendix-gg-destroy-jenkins-agent)
 1. [Appendix HH: Manual test of Splunk configuration](#appendix-hh-manual-test-of-splunk-configuration)
-   [Configure CloudWatch Log agent and onboard \/var/\log\/messages](#configure-cloudwatch-log-agent-and-onboard-var-log-messages)
+   [Configure CloudWatch Log agent and onboard \/var\/log\/messages](#configure-cloudwatch-log-agent-and-onboard-var-log-messages)
 
 ## Appendix A: Access the CMS AWS console
 
@@ -3582,7 +3582,7 @@
 
 ## Appendix HH: Manual test of Splunk configuration
 
-### Configure CloudWatch Log agent and onboard \/var/\log\/messages
+### Configure CloudWatch Log agent and onboard \/var\/log\/messages
 
 1. Connect to an API node in development
 
