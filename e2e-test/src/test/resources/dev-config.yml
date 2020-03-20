@@ -1,2 +1,3 @@
 okta-url: 'https://test.idp.idm.cms.gov/oauth2/aus2r7y3gdaFMKBol297/v1/token'
 base-url: 'http://ab2d-dev-204191066.us-east-1.elb.amazonaws.com'
+bfd-url: 'https://prod-sbx.bfdcloud.net/v1/fhir/'

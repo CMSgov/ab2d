@@ -47,7 +47,6 @@ import static gov.cms.ab2d.common.util.Constants.SINCE_EARLIEST_DATE;
 import static gov.cms.ab2d.e2etest.APIClient.PATIENT_EXPORT_PATH;
 import static java.time.format.DateTimeFormatter.ISO_DATE_TIME;
 import static java.time.temporal.ChronoUnit.SECONDS;
-import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.matchesPattern;
 
 // Unit tests here can be run from the IDE and will use LOCAL as the default, they can also be run from the TestLauncher
@@ -60,6 +59,8 @@ public class TestRunner {
     private static final String FHIR_TYPE = "application/fhir+ndjson";
 
     private static APIClient apiClient;
+
+    private static BFDClient bfdClient;
 
     private static String AB2D_API_URL;
 
@@ -119,6 +120,9 @@ public class TestRunner {
         String oktaPassword = System.getenv("OKTA_CLIENT_PASSWORD");
 
         apiClient = new APIClient(baseUrl, oktaUrl, oktaClientId, oktaPassword);
+
+        String bfdUrl = yamlMap.get("bfd-url");
+        bfdClient = new BFDClient(bfdUrl);
 
         // add in later
         //uploadOrgStructureReport();
@@ -561,5 +565,19 @@ public class TestRunner {
         HttpResponse<String> healthCheckResponse = apiClient.healthCheck();
 
         Assert.assertEquals(200, healthCheckResponse.statusCode());
+    }
+
+    @Test
+    public void testOptOut() throws IOException, InterruptedException, JSONException {
+        HttpResponse<String> patientWithHICNResponse = bfdClient.getPatientWithHICN();
+
+
+        HttpResponse<String> exportResponse = apiClient.exportRequest(FHIR_TYPE, null);
+
+        Assert.assertEquals(202, exportResponse.statusCode());
+        List<String> contentLocationList = exportResponse.headers().map().get("content-location");
+
+        Pair<String, JSONArray> downloadDetails = performStatusRequests(contentLocationList, false, "S0000");
+        downloadFile(downloadDetails);
     }
 }
