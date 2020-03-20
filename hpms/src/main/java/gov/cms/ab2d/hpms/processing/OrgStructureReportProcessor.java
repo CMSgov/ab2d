@@ -4,14 +4,17 @@ import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.Sponsor;
 import gov.cms.ab2d.common.service.SponsorService;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellType;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Iterator;
 import java.util.Optional;
 
 import static gov.cms.ab2d.common.util.Constants.SPONSOR_LOG;
@@ -29,34 +32,40 @@ public class OrgStructureReportProcessor implements ExcelReportProcessor {
     public void processReport(InputStream xlsInputStream, ExcelType excelType) throws IOException {
         try (Workbook workbook = excelType.getWorkbookType(xlsInputStream)) {
             Sheet datatypeSheet = workbook.getSheetAt(0);
-            Iterator<Row> iterator = datatypeSheet.iterator();
-
             log.info("Beginning processing a total of {} rows", datatypeSheet.getPhysicalNumberOfRows());
 
-            while (iterator.hasNext()) {
+            processSheet(datatypeSheet);
+        }
+    }
 
-                Row currentRow = iterator.next();
-                if (currentRow == null) {
-                    continue;
-                }
-                Cell contractNumberCell = currentRow.getCell(4);
-                if (contractNumberCell == null) {
-                    continue;
-                }
-                // Contract number can occasionally be a numeric cell, so we need to account for
-                // that
-                if (contractNumberCell.getCellType() != CellType.STRING) {
-                    continue;
-                }
-                String contractNumber = contractNumberCell.getStringCellValue();
-                if (contractNumber == null) {
-                    continue;
-                }
-                if (contractNumber.toUpperCase().startsWith("E") ||
-                        contractNumber.toUpperCase().startsWith("S")) {
-                    linkSponsorWithContract(currentRow, contractNumber);
-                }
-            }
+    private void processSheet(Sheet datatypeSheet) {
+        var iterator = datatypeSheet.iterator();
+        while (iterator.hasNext()) {
+            Row currentRow = iterator.next();
+            processRow(currentRow);
+        }
+    }
+
+    private void processRow(Row currentRow) {
+        if (currentRow == null) {
+            return;
+        }
+        Cell contractNumberCell = currentRow.getCell(4);
+        if (contractNumberCell == null) {
+            return;
+        }
+        // Contract number can occasionally be a numeric cell, so we need to account for
+        // that
+        if (contractNumberCell.getCellType() != CellType.STRING) {
+            return;
+        }
+        String contractNumber = contractNumberCell.getStringCellValue();
+        if (contractNumber == null) {
+            return;
+        }
+        if (contractNumber.toUpperCase().startsWith("E") ||
+                contractNumber.toUpperCase().startsWith("S")) {
+            linkSponsorWithContract(currentRow, contractNumber);
         }
     }
 
