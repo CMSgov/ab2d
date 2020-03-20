@@ -52,7 +52,12 @@
 1. [Appendix FF: Manually add JDK 13 to a node that already has JDK 8](#appendix-ff-manually-add-jdk-13-to-a-node-that-already-has-jdk8)
 1. [Appendix GG: Destroy Jenkins agent](#appendix-gg-destroy-jenkins-agent)
 1. [Appendix HH: Manual test of Splunk configuration](#appendix-hh-manual-test-of-splunk-configuration)
+   * [Request Splunk HEC URL and Splunk HEC Token](#request-splunk-hec-url-and-splunk-hec-token)
+   * [Verify or create a "cwlg_lambda_splunk_hec_role" role](#verify-or-create-a-cwlglambdasplunkhecrole-role)
    * [Configure CloudWatch Log agent and onboard \/var\/log\/messages](#configure-cloudwatch-log-agent-and-onboard-varlogmessages)
+   * [Verify logging to the \/aws\/ec2\/var\/log\/messages CloudWatch Log Group](#verify-logging-to-the-awsec2varlogmessages-cloudwatch-log-group)
+   * [Configure the \/aws\/ec2\/var\/log\/messages CloudWatch Log Group to Splunk HEC Lambda Configuration](#configure-the-awsec2varlogmessages-cloudwatch-log-group-to-splunk-hec-lambda-configuration)
+   * [Onboard additional CloudWatch log groups](#onboard-additional-cloudwatch-log-groups)
 
 ## Appendix A: Access the CMS AWS console
 
@@ -3582,6 +3587,100 @@
 
 ## Appendix HH: Manual test of Splunk configuration
 
+### Request Splunk HEC URL and Splunk HEC Token
+
+> *** TO DO ***
+
+1. Open Chrome
+
+1. Enter the following in the address bar
+
+   > https://jiraent.cms.gov/servicedesk/customer/portal/13
+
+1. Configure the request as follows
+
+   - **Summary:** Request Splunk HEC URL and Splunk HEC Token for AB2D project
+
+   - **Project Name:** Project 058 BCDA
+
+   - **Account Alias:** None
+
+   - **Service Category:** Central Logging
+
+   - **Task:** Onboarding and Data Ingestion
+
+   - **Description:**
+
+     ```
+     Hello,
+     
+     I am requesting a Splunk HEC URL and Splunk HEC Token.
+     
+     Note that this is for the AB2D project.
+     
+     Thanks for your consideration.
+     
+     Lonnie Hanekamp
+     ```
+
+   - **Severity:** Minimal
+
+   - **Urgency:** Low
+
+   - **Reported Source:** Self Service
+
+   - **Requested Due Date:** {3 working days from now}
+
+1. Select **Create**
+
+### Verify or create a "cwlg_lambda_splunk_hec_role" role
+
+1. Open Chrome
+
+1. Log on to the development AWS account
+
+1. Select "IAM"
+
+1. Select **Roles**
+
+1. Determine if the "cwlg_lambda_splunk_hec_role" role alredy exists
+
+   1. Type the following in the **Search** text box under "Create role"
+
+      ```
+      cwlg_lambda_splunk_hec_role
+      ```
+
+   1. If the role already exists, jump to the following section
+
+      [Configure CloudWatch Log agent and onboard \/var\/log\/messages](#configure-cloudwatch-log-agent-and-onboard-varlogmessages)
+      
+1. Select **Create role**
+
+1. Select the **AWS service** tab
+
+1. Select **Lambda**
+
+1. Select **Next: Permissions**
+
+1. Type the following in the **Search** text box
+
+   ```
+   AWSLambdaBasicExecutionRole
+   ```
+
+1. Select the checkbox beside "AWSLambdaBasicExecutionRole"
+
+1. Select **Next: Tags**
+
+1. Select **Next: Review**
+
+1. Configure the "Review" page as follows
+
+   - **Role name:** cwlg_lambda_splunk_hec_role
+
+1. Select **Create role**
+
 ### Configure CloudWatch Log agent and onboard \/var\/log\/messages
 
 1. Connect to an API node in development
@@ -3898,6 +3997,40 @@
       - You can rerun interactive setup using 'sudo python ./awslogs-agent-setup.py --region us-east-1 --only-generate-config'
       ------------------------------------------------------
 
+1. View the "/var/log/messages" entry in the newly created CloudWatch Log agent
+
+   1. Enter the following
+   
+      ```ShellSession
+      $ sudo cat /var/awslogs/etc/awslogs.conf | tail -7
+      ```
+
+   1. Note the output
+
+      ```
+      [/var/log/messages]
+      datetime_format = %Y-%m-%d %H:%M:%S
+      file = /var/log/messages
+      buffer_duration = 5000
+      log_stream_name = {instance_id}
+      initial_position = start_of_file
+      log_group_name = /aws/ec2/var/log/messages
+      ```
+
+1. Ensure the CloudWatch Log Agent is running
+
+   1. Check the status of the CloudWatch Log Agent
+
+      ```ShellSession
+      $ service awslogs status
+      ```
+
+   1. If the CloudWatch Log Agent is not running, start it by entering the following
+
+      ```ShellSession
+      $ sudo service awslogs start
+      ```
+      
 1. Exit the API node
 
    ```ShellSession
@@ -3909,3 +4042,102 @@
    ```ShellSession
    $ exit
    ```
+
+### Verify logging to the \/aws\/ec2\/var\/log\/messages CloudWatch Log Group
+
+1. Open Chrome
+
+1. Log on to the development AWS account
+
+1. Select **CloudWatch**
+
+1. Select **Log groups** under the "Logs" section in the leftmost panel
+
+1. Select the following
+
+   ```
+   /aws/ec2/var/log/messages
+   ```
+
+1. Select the instance id
+
+   *Example:*
+
+   ```
+   i-01fbbfdf09d80d874
+   ```
+
+1. Note the list of events that appear within the main page
+
+### Configure the \/aws\/ec2\/var\/log\/messages CloudWatch Log Group to Splunk HEC Lambda Configuration
+
+> *** TO DO ***: Waiting for Splunk HEC URL AND Splunk HEC Token
+
+1. Verify that the \/aws\/ec2\/var\/log\/messages CloudWatch Log Group has no subscription configured
+
+   1. Open Chrome
+
+   1. Log to to the development AWS account
+
+   1. Select **CloudWatch**
+
+   1. Select **Log groups** under the "Logs" section in the leftmost panel
+
+   1. Select the radio button beside the following
+
+      ```
+      /aws/ec2/var/log/messages
+      ```
+
+   1. Select **Actions**
+
+   1. If **Remove Subscription Filter** is enabled, select it and remove the subscription
+
+1. Create a Lambda logger function for the \/aws\/ec2\/var\/log\/messages CloudWatch Log Group
+
+   1. Open Chrome
+
+   1. Log to to the development AWS account
+
+   1. Select **Lambda**
+
+   1. Select **Create function**
+
+   1. Select **Use a blueprint**
+
+   1. Enter the following in the **Filter by tags and attributes or search by keyword** text box
+
+      ```
+      splunk
+      ```
+
+   1. Select the following
+
+      ```
+      splunk-cloudwatch-logs-procesesor
+      ```
+
+   1. Select **Configure**
+
+   1. Configure the "Basic Information" section as follows
+
+      - **Function name:** clwg-logger-aws-ec2-var-log-messages
+
+      - **Execution role radio button:** {selected}
+
+      - **Execution role dropdown:** cwg_lambda_splunk_hec_role
+
+   1. Configure the "CloudWatch Logs Trigger" section
+
+      - **Log group:** /aws/ec2/var/log/messages
+
+      - **Filter name:** clwg_logging_filter_aws_ec2_var_log_messages
+
+      - **Enable trigger:** {checked}
+
+      > *** TO DO ***: Waiting for Splunk HEC URL AND Splunk HEC Token
+
+
+### Onboard additional CloudWatch log groups
+
+> *** TO DO ***
