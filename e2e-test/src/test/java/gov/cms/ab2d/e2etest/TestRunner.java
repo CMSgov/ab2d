@@ -219,8 +219,8 @@ public class TestRunner {
         Assert.assertTrue(validFields(fileJson));
         Assert.assertEquals("ExplanationOfBenefit", fileJson.getString("resourceType"));
         Assert.assertEquals(0, fileJson.getInt("precedence"));
-        String carrierString = fileJson.getString("id");
-        Assert.assertTrue(carrierString.startsWith("carrier"));
+        String idString = fileJson.getString("id");
+        Assert.assertTrue(idString.startsWith("carrier") || idString.startsWith("outpatient"));
         final JSONObject patientJson = fileJson.getJSONObject("patient");
         String referenceString = patientJson.getString("reference");
         Assert.assertTrue(referenceString.startsWith("Patient"));
@@ -228,7 +228,7 @@ public class TestRunner {
         Assert.assertNotNull(typeJson);
         final JSONArray codingJson = typeJson.getJSONArray("coding");
         Assert.assertNotNull(codingJson);
-        Assert.assertEquals(4, codingJson.length());
+        Assert.assertTrue(codingJson.length() >= 4);
         final JSONArray identifierJson = fileJson.getJSONArray("identifier");
         Assert.assertNotNull(identifierJson);
         Assert.assertEquals(2, identifierJson.length());
