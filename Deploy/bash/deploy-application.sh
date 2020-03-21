@@ -552,7 +552,7 @@ else # assume it is a devops branch and get the latest merge from master into th
 
     # Branches are different; get the commit number of the latest merge from "origin/master"
 
-    COMMIT_NUMBER=$(git log --merges | head -n 2 | tail -n 1 | cut -d" " -f 3)
+    COMMIT_NUMBER=$(git log --merges | head -n 2 | tail -n 1 | cut -d" " -f 3 | cut -c1-7)
     IMAGE_VERSION="${CMS_ENV}-latest-${COMMIT_NUMBER}"
 
   fi
