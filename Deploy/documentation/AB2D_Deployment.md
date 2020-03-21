@@ -6622,7 +6622,67 @@
 
 1. Select **OK** on the "Enter an item name" page
 
-> *** TO DO ***
+1. Check **This project is parameterized**
+
+1. Add the "CMS_ENV_PARAM" parameter
+
+   1. Select **Add Parameter**
+
+   1. Select **String Parameter**
+
+   1. Configure the "String Parameter" as follows
+
+      - **Name:** CMS_ENV_PARAM
+
+      - **Default Value:** ab2d-dev
+
+      - **Description:**
+
+        ```
+	Corresponds to the deployment environment associated with an AWS account.
+	```
+
+   1. Check **Trim the string**
+
+1. Add the "CMS_ECR_REPO_ENV_PARAM" parameter
+
+   1. Select **Add Parameter**
+
+   1. Select **String Parameter**
+
+   1. Configure the "String Parameter" as follows
+
+      - **Name:** CMS_ECR_REPO_ENV_PARAM
+
+      - **Default Value:** ab2d-mgmt-east-dev
+
+      - **Description:**
+
+        ```
+	Corresponds to the management environment associated with an AWS account.
+	```
+
+   1. Check **Trim the string**
+
+1. Add the "REGION_PARAM" parameter
+
+   1. Select **Add Parameter**
+
+   1. Select **String Parameter**
+
+   1. Configure the "String Parameter" as follows
+
+      - **Name:** REGION_PARAM
+
+      - **Default Value:** us-east-1
+
+      - **Description:**
+
+        ```
+	Corresponds to AWS region of the target VPC.
+	```
+
+   1. Check **Trim the string**
 
 ## Upgrade Jenkins
 
