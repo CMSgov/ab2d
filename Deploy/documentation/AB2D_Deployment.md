@@ -89,6 +89,7 @@
    [Install the "Scheduled Build" plugin](#install-the-scheduled-build-plugin)
    [Configure GitHub plugin](#configure-github-plugin)
    [Add the Jenkins agent node](#add-the-jenkins-agent-node)
+   [Create a "development" folder in Jenkins](#create-a-development-folder-in-jenkins)
    [Configure a Jenkins project for development application deploy](#configure-a-jenkins-project-for-development-application-deploy)
 1. [Upgrade Jenkins](#upgrade-jenkins)
 1. [Verify VPC peering between the management and development AWS accounts](#verify-vpc-peering-between-the-management-and-development-aws-accounts)
@@ -5981,7 +5982,7 @@
 
 1. Copy the private key to the clipboard
 
-1. Open the Jenkins GUI
+1. Log on to the Jenkins GUI (if not already logged in)
 
    1. Ensure that you are connected to the Cisco VPN
 
@@ -5996,6 +5997,8 @@
       *Example:*
 
       > http://10.242.37.74:8080
+
+   1. Log on to the Jenkins GUI
 
 1. Select **Credentials** from the leftmost panel
 
@@ -6027,7 +6030,7 @@
 
 ### Configure "personal access token" public GitHub credentials
 
-1. Open the Jenkins GUI
+1. Log on to the Jenkins GUI (if not already logged in)
 
    1. Ensure that you are connected to the Cisco VPN
 
@@ -6042,6 +6045,8 @@
       *Example:*
 
       > http://10.242.37.74:8080
+
+   1. Log on to the Jenkins GUI
       
 1. Select **Credentials** from the leftmost panel
 
@@ -6067,7 +6072,7 @@
 
 ### Configure public GitHub credentials
 
-1. Open the Jenkins GUI
+1. Log on to the Jenkins GUI (if not already logged in)
 
    1. Ensure that you are connected to the Cisco VPN
 
@@ -6082,6 +6087,8 @@
       *Example:*
 
       > http://10.242.37.74:8080
+
+   1. Log on to the Jenkins GUI
       
 1. Note that username and password for the GitHub credentials will be as follows
 
@@ -6115,7 +6122,7 @@
 
 ### Install the SSH plugin
 
-1. Open the Jenkins GUI
+1. Log on to the Jenkins GUI (if not already logged in)
 
    1. Ensure that you are connected to the Cisco VPN
 
@@ -6130,6 +6137,8 @@
       *Example:*
 
       > http://10.242.37.74:8080
+
+   1. Log on to the Jenkins GUI
       
 1. Select **Manage Jenkins** from the leftmost panel
 
@@ -6167,7 +6176,7 @@
 
 ### Configure the SSH plugin
 
-1. Open the Jenkins GUI
+1. Log on to the Jenkins GUI (if not already logged in)
 
    1. Ensure that you are connected to the Cisco VPN
 
@@ -6182,6 +6191,8 @@
       *Example:*
 
       > http://10.242.37.74:8080
+
+   1. Log on to the Jenkins GUI
       
 1. Select **Manage Jenkins**
 
@@ -6243,7 +6254,7 @@
 
 ### Install the "Scheduled Build" plugin
 
-1. Open the Jenkins GUI
+1. Log on to the Jenkins GUI (if not already logged in)
 
    1. Ensure that you are connected to the Cisco VPN
 
@@ -6258,6 +6269,8 @@
       *Example:*
 
       > http://10.242.37.74:8080
+
+   1. Log on to the Jenkins GUI
       
 1. Note that the "Scheduled Build" plugin acts like a Linux "at" command
 
@@ -6301,7 +6314,7 @@
 
 ### Configure GitHub plugin
 
-1. Open the Jenkins GUI
+1. Log on to the Jenkins GUI (if not already logged in)
 
    1. Ensure that you are connected to the Cisco VPN
 
@@ -6316,6 +6329,8 @@
       *Example:*
 
       > http://10.242.37.74:8080
+
+   1. Log on to the Jenkins GUI
       
 1. Select **Manage Jenkins**
 
@@ -6427,7 +6442,7 @@
       4
       ```
       
-1. Open the Jenkins GUI
+1. Log on to the Jenkins GUI (if not already logged in)
 
    1. Ensure that you are connected to the Cisco VPN
 
@@ -6442,6 +6457,8 @@
       *Example:*
 
       > http://10.242.37.74:8080
+
+   1. Log on to the Jenkins GUI
       
 1. Select **Manage Jenkins**
 
@@ -6533,41 +6550,99 @@
 
 1. Select **Jenkins** at the top left of the page
 
+### Create a "development" folder in Jenkins
+
+1. Log on to the Jenkins GUI (if not already logged in)
+
+   1. Ensure that you are connected to the Cisco VPN
+
+   1. Open Chrome
+
+   1. Enter the following in the address bar
+
+      *Format:*
+
+      > http://{jenkins master private ip}:8080
+
+      *Example:*
+
+      > http://10.242.37.74:8080
+
+   1. Log on to the Jenkins GUI
+
+1. Select **New Item** from the leftmost panel
+
+1. Type the following in the **Enter an item name** text box
+
+   ```
+   development
+   ```
+
+1. Select **Folder**
+
+1. Select **OK** on the "Enter an item name" page
+
+1. Select **Save**
+
+1. Select the **Jenkins** bread crumb in the top left of the page
+
 ### Configure a Jenkins project for development application deploy
 
 1. Note that a Jenkins project is the same as the deprecated Jenkins job (even though job is still used in the GUI)
 
-1. Ensure that you are connected to the Cisco VPN
+1. Log on to the Jenkins GUI (if not already logged in)
 
-1. Open Chrome
+   1. Ensure that you are connected to the Cisco VPN
 
-1. Enter the following in the address bar
+   1. Open Chrome
 
-   *Format:*
+   1. Enter the following in the address bar
 
-   > http://{jenkins master private ip}:8080
+      *Format:*
 
-   *Example:*
+      > http://{jenkins master private ip}:8080
 
-   > http://10.242.37.74:8080
+      *Example:*
 
-1. *** TO DO ***
+      > http://10.242.37.74:8080
+
+   1. Log on to the Jenkins GUI
+
+1. Select the **development** link
+
+1. Select **New Item** from the leftmost panel
+
+1. Type the following in the **Enter an item name** text box
+
+   ```
+   deploy-to-development
+   ```
+
+1. Select **Freestyle project**
+
+1. Select **OK** on the "Enter an item name" page
+
+> *** TO DO ***
 
 ## Upgrade Jenkins
 
-1. Ensure that you are connected to the Cisco VPN
+1. Log on to the Jenkins GUI (if not already logged in)
 
-1. Open Chrome
+   1. Ensure that you are connected to the Cisco VPN
 
-1. Enter the following in the address bar
+   1. Open Chrome
 
-   *Format:*
+   1. Enter the following in the address bar
 
-   > http://{jenkins master public ip}:8080
+      *Format:*
 
-   *Example:*
+      > http://{jenkins master private ip}:8080
 
-   > http://10.242.37.74:8080
+      *Example:*
+
+      > http://10.242.37.74:8080
+
+   1. Log on to the Jenkins GUI
 
 1. Select **Manage Jenkins** from the leftmost panel
 
@@ -6626,17 +6701,23 @@
    $ systemctl status jenkins
    ```
 
-1. Open Chrome
+1. Log on to the Jenkins GUI (if not already logged in)
 
-1. Enter the following in the address bar
+   1. Ensure that you are connected to the Cisco VPN
 
-   *Format:*
+   1. Open Chrome
 
-   > http://{jenkins master public ip}:8080
+   1. Enter the following in the address bar
 
-   *Example:*
+      *Format:*
 
-   > http://10.242.37.74:8080
+      > http://{jenkins master private ip}:8080
+
+      *Example:*
+
+      > http://10.242.37.74:8080
+
+   1. Log on to the Jenkins GUI
 
 1. Verify that Jenkins has been updated to the new version
 
