@@ -3458,27 +3458,31 @@
    $ cd ~/code/ab2d/Deploy
    ```
 
+1. Set test parameters
+
+   ```ShellSession
+   $ export CMS_ENV_PARAM=ab2d-dev
+   $ export CMS_ECR_REPO_ENV_PARAM=ab2d-mgmt-east-dev
+   $ export REGION_PARAM=us-east-1
+   $ export VPC_ID_PARAM=vpc-0c6413ec40c5fdac3
+   $ export SSH_USERNAME_PARAM=ec2-user
+   $ export OWNER_PARAM=842420567215
+   $ export EC2_INSTANCE_TYPE_API_PARAM=m5.xlarge
+   $ export EC2_INSTANCE_TYPE_WORKER_PARAM=m5.xlarge
+   $ export EC2_DESIRED_INSTANCE_COUNT_API_PARAM=1
+   $ export EC2_MINIMUM_INSTANCE_COUNT_API_PARAM=1
+   $ export EC2_MAXIMUM_INSTANCE_COUNT_API_PARAM=1
+   $ export EC2_DESIRED_INSTANCE_COUNT_WORKER_PARAM=1
+   $ export EC2_MINIMUM_INSTANCE_COUNT_WORKER_PARAM=1
+   $ export EC2_MAXIMUM_INSTANCE_COUNT_WORKER_PARAM=1
+   $ export DATABASE_SECRET_DATETIME_PARAM=2020-01-02-09-15-01
+   $ export DEBUG_LEVEL_PARAM=WARN
+   ```
+
 1. Run application deployment automation
 
    ```ShellSession
-   $ ./bash/deploy-application.sh \
-     --environment=ab2d-dev \
-     --ecr-repo-environment=ab2d-mgmt-east-dev \
-     --region=us-east-1 \
-     --vpc-id=vpc-0c6413ec40c5fdac3 \
-     --ssh-username=ec2-user \
-     --owner=842420567215 \
-     --ec2_instance_type_api=m5.xlarge \
-     --ec2_instance_type_worker=m5.xlarge \
-     --ec2_instance_type_other=m5.xlarge \
-     --ec2_desired_instance_count_api=1 \
-     --ec2_minimum_instance_count_api=1 \
-     --ec2_maximum_instance_count_api=1 \
-     --ec2_desired_instance_count_worker=1 \
-     --ec2_minimum_instance_count_worker=1 \
-     --ec2_maximum_instance_count_worker=1 \
-     --database-secret-datetime=2020-01-02-09-15-01 \
-     --build-new-images
+   $ ./bash/deploy-application.sh
    ```
 
 ## Appendix EE: Fix Jenkins reverse proxy error
