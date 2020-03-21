@@ -13,6 +13,7 @@ import gov.cms.ab2d.worker.adapter.bluebutton.GetPatientsByContractResponse.Pati
 import gov.cms.ab2d.worker.config.RoundRobinBlockingQueue;
 import gov.cms.ab2d.worker.processor.StreamHelperImpl.FileOutputType;
 import gov.cms.ab2d.worker.processor.domainmodel.ContractData;
+import gov.cms.ab2d.worker.processor.domainmodel.PatientClaimsRequest;
 import gov.cms.ab2d.worker.processor.domainmodel.ProgressTracker;
 import gov.cms.ab2d.worker.service.FileService;
 import lombok.RequiredArgsConstructor;
@@ -194,7 +195,9 @@ public class ContractProcessorImpl implements ContractProcessor {
         try {
             var attestedOn = contractData.getContract().getAttestedOn();
             var sinceTime = contractData.getSinceTime();
-            return patientClaimsProcessor.process(patient, helper, attestedOn, sinceTime, token);
+            var patientClaimsRequest = new PatientClaimsRequest(patient, helper, attestedOn, sinceTime, token);
+
+            return patientClaimsProcessor.process(patientClaimsRequest);
 
         } finally {
             RoundRobinBlockingQueue.CATEGORY_HOLDER.remove();
