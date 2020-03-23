@@ -3434,6 +3434,12 @@
       $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_MASTER_PUBLIC_IP
       ```
 
+1. Switch to the jenkins user
+
+   ```ShellSession
+   $ sudo su - jenkins
+   ```
+
 1. Create code directory
 
    ```ShellSession
@@ -3452,6 +3458,66 @@
    $ git clone https://github.com/CMSgov/ab2d.git
    ```
 
+1. Change to the repo directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d
+   ```
+
+1. Checkout the desired branch
+
+   *Format:*
+
+   ```ShellSession
+   $ git checkout {desired branch}
+   ```
+
+   *Example:*
+
+   ```ShellSession
+   $ git checkout feature/ab2d-573-create-jenkins-scripts-for-automation-hooks
+   ```
+
+1. Verify that python3 is working
+
+   1. Change to the "python3" directory
+
+      ```ShellSession
+      $ cd ~/code/ab2d/Deploy/python3
+      ```
+
+   1. Set the test environment variables
+
+      ```ShellSession
+      $ export AWS_PROFILE=ab2d-dev
+      $ export CMS_ENV=ab2d-dev
+      $ export DATABASE_SECRET_DATETIME=2020-01-02-09-15-01
+      ```
+
+   1. Test getting the database user for the development environment
+
+      ```ShellSession
+      $ DATABASE_USER=$(./get-database-secret.py $CMS_ENV database_user $DATABASE_SECRET_DATETIME)
+      ```
+
+   1. Verify that the database user was retrieved
+
+      ```ShellSession
+      $ echo $DATABASE_USER
+      ```
+
+   1. Exit the jenkins user so that environment variables can be reset
+
+      ```ShellSession
+      $ exit
+      ```
+
+1. Connect to the jenkins user
+
+   ```ShellSession
+   $ sudo su - jenkins
+   ```
+
 1. Change to the "Deploy" directory
 
    ```ShellSession
@@ -3466,7 +3532,6 @@
    $ export REGION_PARAM=us-east-1
    $ export VPC_ID_PARAM=vpc-0c6413ec40c5fdac3
    $ export SSH_USERNAME_PARAM=ec2-user
-   $ export OWNER_PARAM=842420567215
    $ export EC2_INSTANCE_TYPE_API_PARAM=m5.xlarge
    $ export EC2_INSTANCE_TYPE_WORKER_PARAM=m5.xlarge
    $ export EC2_DESIRED_INSTANCE_COUNT_API_PARAM=1
