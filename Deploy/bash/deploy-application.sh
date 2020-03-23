@@ -30,8 +30,6 @@ VPC_ID="${VPC_ID_PARAM}"
 
 SSH_USERNAME="${SSH_USERNAME_PARAM}"
 
-OWNER="${OWNER_PARAM}"
-
 EC2_INSTANCE_TYPE_API="${EC2_INSTANCE_TYPE_API_PARAM}"
 
 EC2_INSTANCE_TYPE_WORKER="${EC2_INSTANCE_TYPE_WORKER_PARAM}"
@@ -62,7 +60,6 @@ if [ -z "${CMS_ENV_PARAM}" ] \
     || [ -z "${REGION_PARAM}" ] \
     || [ -z "${VPC_ID_PARAM}" ] \
     || [ -z "${SSH_USERNAME_PARAM}" ] \
-    || [ -z "${OWNER_PARAM}" ] \
     || [ -z "${EC2_INSTANCE_TYPE_API_PARAM}" ] \
     || [ -z "${EC2_INSTANCE_TYPE_WORKER_PARAM}" ] \
     || [ -z "${EC2_DESIRED_INSTANCE_COUNT_API_PARAM}" ] \
@@ -506,7 +503,7 @@ echo "Build and push API and worker to ECR..."
 
 # Log on to ECR
     
-read -sra cmd < <(aws ecr get-login --no-include-email)
+read -sra cmd < <(aws --region "${REGION}" ecr get-login --no-include-email)
 pass="${cmd[5]}"
 unset cmd[4] cmd[5]
 "${cmd[@]}" --password-stdin <<< "$pass"
