@@ -4813,6 +4813,8 @@
 
 1. Connect to Jenkins agent
 
+   1. Ensure that you are connected to the Cisco VPN
+
    1. Set the management AWS agent
 
       ```ShellSession
@@ -4901,6 +4903,8 @@
 
 1. Connect to Jenkins agent
 
+   1. Ensure that you are connected to the Cisco VPN
+
    1. Set the management AWS profile
 
       ```ShellSession
@@ -4977,6 +4981,8 @@
 ### Install development tools on Jenkins agent
 
 1. Connect to Jenkins agent
+
+   1. Ensure that you are connected to the Cisco VPN
 
    1. Set the management AWS profile
 
@@ -5057,6 +5063,8 @@
 
 1. Connect to Jenkins agent
 
+   1. Ensure that you are connected to the Cisco VPN
+
    1. Set the management AWS profile
 
       ```ShellSession
@@ -5079,6 +5087,12 @@
       ```ShellSession
       $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_AGENT_PRIVATE_IP
       ```
+
+1. Switch to the jenkins user
+
+   ```ShellSession
+   $ sudo su - jenkins
+   ```
 
 1. Configure AWS CLI
    
@@ -5117,6 +5131,8 @@
 ### Configure AWS CLI for Dev environment on Jenkins agent
 
 1. Connect to Jenkins agent
+
+   1. Ensure that you are connected to the Cisco VPN
 
    1. Set the management AWS profile
 
@@ -5178,6 +5194,8 @@
 ### Allow password authentication on Jenkins agent
 
 1. Connect to Jenkins agent
+
+   1. Ensure that you are connected to the Cisco VPN
 
    1. Set the management AWS profile
 
@@ -5374,6 +5392,8 @@
    
 1. Connect to Jenkins agent
 
+   1. Ensure that you are connected to the Cisco VPN
+
    1. Set the management AWS profile
 
       ```ShellSession
@@ -5497,25 +5517,39 @@
    $ pip3 install --upgrade pip --user
    ```
 
-1. Install lxml
+1. Install required pip modules for jenkins user
 
-   *Note that "lxml" is a library for parsing XML and HTML.*
+   1. Switch to the jenkins user
 
-   ```ShellSession
-   $ pip3 install lxml
-   ```
+      ```ShellSession
+      $ sudo su - jenkins
+      ```
 
-1. Install requests
+   1. Install lxml
 
-   ```ShellSession
-   $ pip3 install requests
-   ```
+      *Note that "lxml" is a library for parsing XML and HTML.*
 
-1. Install boto3
+      ```ShellSession
+      $ pip3 install lxml
+      ```
 
-   ```ShellSession
-   $ pip3 install boto3
-   ```
+   1. Install requests
+
+      ```ShellSession
+      $ pip3 install requests
+      ```
+
+   1. Install boto3
+
+      ```ShellSession
+      $ pip3 install boto3
+      ```
+
+   1. Exit the Jenkins user
+
+      ```ShellSession
+      $ exit
+      ```
 
 1. Exit the Jenkins agent node
 
@@ -5547,6 +5581,8 @@
    
 1. Connect to Jenkins agent
 
+   1. Ensure that you are connected to the Cisco VPN
+
    1. Set the management AWS profile
 
       ```ShellSession
@@ -5554,7 +5590,7 @@
       ```
 
    1. Get the private IP address of Jenkins EC2 instance
-   
+
       ```ShellSession
       $ JENKINS_AGENT_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
         --filters "Name=tag:Name,Values=ab2d-jenkins-agent" \
@@ -5618,6 +5654,8 @@
 
 1. Connect to Jenkins agent
 
+   1. Ensure that you are connected to the Cisco VPN
+
    1. Set the management AWS profile
 
       ```ShellSession
@@ -5625,7 +5663,7 @@
       ```
 
    1. Get the private IP address of Jenkins EC2 instance
-   
+
       ```ShellSession
       $ JENKINS_AGENT_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
         --filters "Name=tag:Name,Values=ab2d-jenkins-agent" \
@@ -5665,6 +5703,33 @@
    ```
 
 ### Install maven on Jenkins agent
+
+1. Connect to Jenkins agent
+
+   1. Ensure that you are connected to the Cisco VPN
+
+   1. Set the management AWS profile
+
+      ```ShellSession
+      $ export AWS_PROFILE=ab2d-mgmt-east-dev
+      ```
+
+   1. Get the private IP address of Jenkins EC2 instance
+
+      ```ShellSession
+      $ JENKINS_AGENT_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-jenkins-agent" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+        --output text)
+      ```
+
+   1. Ensure that you are connected to the Cisco VPN
+
+   1. SSH into the instance using the private IP address
+
+      ```ShellSession
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_AGENT_PRIVATE_IP
+      ```
 
 1. Check the version of maven that is installed on your development machine
 
@@ -5777,6 +5842,33 @@
 
 ### Install jq on Jenkins agent
 
+1. Connect to Jenkins agent
+
+   1. Ensure that you are connected to the Cisco VPN
+
+   1. Set the management AWS profile
+
+      ```ShellSession
+      $ export AWS_PROFILE=ab2d-mgmt-east-dev
+      ```
+
+   1. Get the private IP address of Jenkins EC2 instance
+
+      ```ShellSession
+      $ JENKINS_AGENT_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-jenkins-agent" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+        --output text)
+      ```
+
+   1. Ensure that you are connected to the Cisco VPN
+
+   1. SSH into the instance using the private IP address
+
+      ```ShellSession
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_AGENT_PRIVATE_IP
+      ```
+
 1. Install jq
 
    ```ShellSession
@@ -5788,6 +5880,118 @@
    ```ShellSession
    $ jq --version
    ```
+
+### Add the jenkins user to the docker group
+
+1. Connect to Jenkins agent
+
+   1. Ensure that you are connected to the Cisco VPN
+
+   1. Set the management AWS profile
+
+      ```ShellSession
+      $ export AWS_PROFILE=ab2d-mgmt-east-dev
+      ```
+
+   1. Get the private IP address of Jenkins EC2 instance
+
+      ```ShellSession
+      $ JENKINS_AGENT_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-jenkins-agent" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+        --output text)
+      ```
+
+   1. Ensure that you are connected to the Cisco VPN
+
+   1. SSH into the instance using the private IP address
+
+      ```ShellSession
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_AGENT_PRIVATE_IP
+      ```
+
+1. Determine if the jenkins user is already part of the docker group
+
+   ```ShellSession
+   $ cat /etc/group | grep docker | grep jenkins
+   ```
+
+1. If there is no output, add the jenkins user to the docker group
+
+   ```ShellSession
+   $ sudo usermod -a -G docker jenkins
+   ```
+
+1. Verify that the jenkins user is now a part of the docker group
+
+   ```ShellSession
+   $ cat /etc/group | grep docker | grep jenkins
+   ```
+
+1. Note the output
+
+   *Example:*
+
+   ```
+   docker:x:988:ec2-user,jenkins
+   ```
+
+### Ensure jenkins can use the Unix socket for the Docker daemon
+
+1. Connect to Jenkins agent
+
+   1. Ensure that you are connected to the Cisco VPN
+
+   1. Set the management AWS profile
+
+      ```ShellSession
+      $ export AWS_PROFILE=ab2d-mgmt-east-dev
+      ```
+
+   1. Get the private IP address of Jenkins EC2 instance
+
+      ```ShellSession
+      $ JENKINS_AGENT_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-jenkins-agent" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+        --output text)
+      ```
+
+   1. Ensure that you are connected to the Cisco VPN
+
+   1. SSH into the instance using the private IP address
+
+      ```ShellSession
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_AGENT_PRIVATE_IP
+      ```
+
+1. Note the default permissions for the Unix socket for the Docker daemon
+
+   1. Enter the following
+
+      ```ShellSession
+      $ ls -al /var/run/docker.sock
+      ```
+
+   1. Note the default permissions
+
+      ```
+      srw-rw----
+      ```
+
+1. Give "other" read and write permissions so that Jenkins build will work
+
+   1. Enter the following
+
+      ```ShellSession
+      $ sudo chmod 666 /var/run/docker.sock
+      ```
+
+   1. Note the modified permission
+
+      ```
+      srw-rw-rw-
+      ```
 
 ## Create GitHub user for Jenkins automation
 
@@ -5957,6 +6161,8 @@
 
 1. Get the private IP address of Jenkins master
 
+   1. Ensure that you are connected to the Cisco VPN
+
    1. Set the management AWS profile
 
       ```ShellSession
@@ -5964,7 +6170,7 @@
       ```
 
    1. Get the private IP address of Jenkins master
-   
+
       ```ShellSession
       $ JENKINS_MASTER_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
         --filters "Name=tag:Name,Values=ab2d-jenkins-master" \
@@ -6644,6 +6850,8 @@
 
    1. Check **Trim the string**
 
+   1. Select **Apply**
+
 1. Add the "CMS_ECR_REPO_ENV_PARAM" parameter
 
    1. Select **Add Parameter**
@@ -6664,6 +6872,8 @@
 
    1. Check **Trim the string**
 
+   1. Select **Apply**
+
 1. Add the "REGION_PARAM" parameter
 
    1. Select **Add Parameter**
@@ -6683,6 +6893,346 @@
 	```
 
    1. Check **Trim the string**
+
+   1. Select **Apply**
+
+1. Add the "VPC_ID_PARAM" parameter
+
+   1. Select **Add Parameter**
+
+   1. Select **String Parameter**
+
+   1. Configure the "String Parameter" as follows
+
+      - **Name:** VPC_ID_PARAM
+
+      - **Default Value:** vpc-0c6413ec40c5fdac3
+
+      - **Description:**
+
+        ```
+	Corresponds to the VPC ID of the target VPC.
+	```
+
+   1. Check **Trim the string**
+
+   1. Select **Apply**
+
+1. Add the "SSH_USERNAME_PARAM" parameter
+
+   1. Select **Add Parameter**
+
+   1. Select **String Parameter**
+
+   1. Configure the "String Parameter" as follows
+
+      - **Name:** SSH_USERNAME_PARAM
+
+      - **Default Value:** ec2-user
+
+      - **Description:**
+
+        ```
+	Corresponds to the main linux user for EC2 instances.
+	```
+
+   1. Check **Trim the string**
+
+   1. Select **Apply**
+
+1. Add the "EC2_INSTANCE_TYPE_API_PARAM" parameter
+
+   1. Select **Add Parameter**
+
+   1. Select **String Parameter**
+
+   1. Configure the "String Parameter" as follows
+
+      - **Name:** EC2_INSTANCE_TYPE_API_PARAM
+
+      - **Default Value:** m5.xlarge
+
+      - **Description:**
+
+        ```
+	Corresponds to the EC2 instance type of API nodes.
+	```
+
+   1. Check **Trim the string**
+
+   1. Select **Apply**
+
+1. Add the "EC2_INSTANCE_TYPE_WORKER_PARAM" parameter
+
+   1. Select **Add Parameter**
+
+   1. Select **String Parameter**
+
+   1. Configure the "String Parameter" as follows
+
+      - **Name:** EC2_INSTANCE_TYPE_WORKER_PARAM
+
+      - **Default Value:** m5.xlarge
+
+      - **Description:**
+
+        ```
+	Corresponds to the EC2 instance type of worker nodes.
+	```
+
+   1. Check **Trim the string**
+
+   1. Select **Apply**
+
+1. Add the "EC2_DESIRED_INSTANCE_COUNT_API_PARAM" parameter
+
+   1. Select **Add Parameter**
+
+   1. Select **String Parameter**
+
+   1. Configure the "String Parameter" as follows
+
+      - **Name:** EC2_DESIRED_INSTANCE_COUNT_API_PARAM
+
+      - **Default Value:** 1
+
+      - **Description:**
+
+        ```
+	Corresponds to the desired API node count.
+	```
+
+   1. Check **Trim the string**
+
+   1. Select **Apply**
+
+1. Add the "EC2_MINIMUM_INSTANCE_COUNT_API_PARAM" parameter
+
+   1. Select **Add Parameter**
+
+   1. Select **String Parameter**
+
+   1. Configure the "String Parameter" as follows
+
+      - **Name:** EC2_MINIMUM_INSTANCE_COUNT_API_PARAM
+
+      - **Default Value:** 1
+
+      - **Description:**
+
+        ```
+	Corresponds to the minumum API node(s) count.
+	```
+
+   1. Check **Trim the string**
+
+   1. Select **Apply**
+
+1. Add the "EC2_MAXIMUM_INSTANCE_COUNT_API_PARAM" parameter
+
+   1. Select **Add Parameter**
+
+   1. Select **String Parameter**
+
+   1. Configure the "String Parameter" as follows
+
+      - **Name:** EC2_MAXIMUM_INSTANCE_COUNT_API_PARAM
+
+      - **Default Value:** 1
+
+      - **Description:**
+
+        ```
+	Corresponds to the maximum API node(s) count.
+	```
+
+   1. Check **Trim the string**
+
+   1. Select **Apply**
+
+1. Add the "EC2_DESIRED_INSTANCE_COUNT_WORKER_PARAM" parameter
+
+   1. Select **Add Parameter**
+
+   1. Select **String Parameter**
+
+   1. Configure the "String Parameter" as follows
+
+      - **Name:** EC2_DESIRED_INSTANCE_COUNT_WORKER_PARAM
+
+      - **Default Value:** 1
+
+      - **Description:**
+
+        ```
+	Corresponds to the desired worker node count.
+	```
+
+   1. Check **Trim the string**
+
+   1. Select **Apply**
+
+1. Add the "EC2_MINIMUM_INSTANCE_COUNT_WORKER_PARAM" parameter
+
+   1. Select **Add Parameter**
+
+   1. Select **String Parameter**
+
+   1. Configure the "String Parameter" as follows
+
+      - **Name:** EC2_MINIMUM_INSTANCE_COUNT_WORKER_PARAM
+
+      - **Default Value:** 1
+
+      - **Description:**
+
+        ```
+	Corresponds to the minumum worker node(s) count.
+	```
+
+   1. Check **Trim the string**
+
+   1. Select **Apply**
+
+1. Add the "EC2_MAXIMUM_INSTANCE_COUNT_WORKER_PARAM" parameter
+
+   1. Select **Add Parameter**
+
+   1. Select **String Parameter**
+
+   1. Configure the "String Parameter" as follows
+
+      - **Name:** EC2_MAXIMUM_INSTANCE_COUNT_WORKER_PARAM
+
+      - **Default Value:** 1
+
+      - **Description:**
+
+        ```
+	Corresponds to the maximum worker node(s) count.
+	```
+
+   1. Check **Trim the string**
+
+   1. Select **Apply**
+
+1. Add the "DATABASE_SECRET_DATETIME_PARAM" parameter
+
+   1. Select **Add Parameter**
+
+   1. Select **String Parameter**
+
+   1. Configure the "String Parameter" as follows
+
+      - **Name:** DATABASE_SECRET_DATETIME_PARAM
+
+      - **Default Value:** 2020-01-02-09-15-01
+
+      - **Description:**
+
+        ```
+	Corresponds to a datatime string that is needed to get secrets in secrets manager.
+	```
+
+   1. Check **Trim the string**
+
+   1. Select **Apply**
+
+1. Add the "DEBUG_LEVEL_PARAM" parameter
+
+   1. Select **Add Parameter**
+
+   1. Select **String Parameter**
+
+   1. Configure the "String Parameter" as follows
+
+      - **Name:** DEBUG_LEVEL_PARAM
+
+      - **Default Value:** WARN
+
+      - **Description:**
+
+        ```
+	Corresponds to terraform logging level.
+	```
+
+   1. Check **Trim the string**
+
+   1. Select **Apply**
+
+1. Scroll down to the "Source Code Management" section
+
+1. Add source control management
+
+   1. Select the **Git** radio button under "Source Code Management"
+
+   1. Note that credentials are not needed since this is a public repository
+
+   1. Configure the "Repositories" section as follows
+
+      *Example for "master" branch"*
+
+      - **Repository URL:** https://github.com/CMSgov/ab2d
+
+      - **Credentials:** - none -
+
+      - **Branch Specifier:** */master
+
+   1. Select **Apply**
+
+1. Scroll down to the "Build" section
+
+1. Configure the build
+
+   1. Select **Add build step**
+
+   1. Select **Execute shell**
+
+   1. Type the following in **Command** text box
+
+      ```
+      cd ./Deploy
+      chmod +x ./bash/deploy-application.sh
+      ./bash/deploy-application.sh
+      ```
+
+   1. Select **Apply**
+
+1. Select **Save**
+
+1. Test the deployment
+
+   1. Select **Build with Parameters**
+
+   1. Note that the parameters and their default values are displayed
+
+   1. Scroll down to the bottom of the parameters
+
+   1. Select **Build**
+
+1. View the deployment output
+
+   1. Select the build number under "Build History" for the current build
+
+      *Example:*
+
+      ```
+      #1
+      ```
+
+   1. Select **Console Output**
+
+   1. Observe the output
+
+1. If the last line of the output is "Finished: FAILURE", do the following:
+
+   1. Review the deployment output
+
+   1. Resolve the issue
+
+   1. Try running the the build again
+
+> *** TO DO ***
 
 ## Upgrade Jenkins
 
