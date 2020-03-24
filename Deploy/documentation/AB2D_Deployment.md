@@ -5861,8 +5861,6 @@
         --output text)
       ```
 
-   1. Ensure that you are connected to the Cisco VPN
-
    1. SSH into the instance using the private IP address
 
       ```ShellSession
@@ -7232,7 +7230,11 @@
 
    1. Try running the the build again
 
-> *** TO DO ***
+1. Verify that the last line of output is as follows:
+
+   ```
+   Finished: SUCCESS
+   ```
 
 ## Upgrade Jenkins
 
