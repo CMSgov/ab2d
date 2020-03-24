@@ -7178,6 +7178,10 @@
 
    1. Select **Apply**
 
+1. Scroll down to the "Build Environment" section
+
+1. Check **Add timestamps to the Console Output**
+
 1. Scroll down to the "Build" section
 
 1. Configure the build
@@ -7235,6 +7239,19 @@
    ```
    Finished: SUCCESS
    ```
+
+1. Collect timing metrics based on the output and observation of the "Destroy old deployment" process
+
+   Process                                   |Start Time|End Time|Process Time
+   ------------------------------------------|----------|--------|------------
+   Prepare for deployment                    |16:30:42  |16:31:03|00:21
+   Build API and worker                      |16:31:03  |16:32:03|01:00
+   Push API and worker images to ECR         |16:32:03  |16:33:01|00:58
+   Complete API module automation            |16:33:01  |16:34:05|01:04
+   Complete worker module automation         |16:34:05  |16:34:56|00:51
+   Wait for API and Worker ECS tasks to start|16:34:56  |16:48:02|13:06
+   New deployment active                     |16:48:02  |16:48:02|00:00
+   Destroy old deployment                    |16:48:02  |16:49:30|07:44
 
 ## Upgrade Jenkins
 
