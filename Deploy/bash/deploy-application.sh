@@ -1105,6 +1105,7 @@ else
   aws --region "${REGION}" autoscaling delete-auto-scaling-group \
     --auto-scaling-group-name $OLD_WORKER_ASG \
     --force-delete || true
+  sleep 60
 fi
 
 # Wait for old Autoscaling groups to terminate
