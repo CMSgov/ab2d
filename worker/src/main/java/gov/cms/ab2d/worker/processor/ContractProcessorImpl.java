@@ -195,13 +195,7 @@ public class ContractProcessorImpl implements ContractProcessor {
         try {
             var attestedOn = contractData.getContract().getAttestedOn();
             var sinceTime = contractData.getSinceTime();
-            var patientClaimsRequest = new PatientClaimsRequest(
-                    patient,
-                    helper,
-                    attestedOn,
-                    sinceTime,
-                    token
-            );
+            var patientClaimsRequest = new PatientClaimsRequest(patient, helper, attestedOn, sinceTime, token);
 
             return patientClaimsProcessor.process(patientClaimsRequest);
 
