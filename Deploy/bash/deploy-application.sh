@@ -998,6 +998,44 @@ terraform apply \
   --auto-approve
 
 #
+# Deploy CloudWatch
+#
+
+cd "${START_DIR}/.."
+cd terraform/environments/$CMS_ENV
+
+echo "Deploy CloudWatch..."
+
+terraform apply \
+  --target module.cloudwatch \
+  --var "ami_id=$AMI_ID" \
+  --var "ecs_task_definition_host_port=$ALB_LISTENER_PORT" \
+  --var "host_port=$ALB_LISTENER_PORT" \
+  --var "alb_listener_protocol=$ALB_LISTENER_PROTOCOL" \
+  --var "alb_listener_certificate_arn=$ALB_LISTENER_CERTIFICATE_ARN" \
+  --auto-approve
+
+#
+# Deploy AWS WAF
+#
+
+terraform apply \
+  --target module.waf \
+  --auto-approve
+
+#
+# Apply AWS Shield standard to the application load balancer
+#
+
+# Note that no change is actually made since AWS shield standard is automatically applied to
+# the application load balancer. This section may be needed later if AWS Shield Advanced is
+# applied instead.
+
+terraform apply \
+  --target module.shield \
+  --auto-approve
+
+#
 # Ensure new autoscaling group is running containers
 #
 
@@ -1069,6 +1107,24 @@ else
     --force-delete || true
 fi
 
+# Wait for old Autoscaling groups to delete
+
+RETRIES_ASG=0
+ASG_NOT_IN_SERVICE=$(aws --region "${REGION}" autoscaling describe-auto-scaling-groups \
+  --query "AutoScalingGroups[*].Instances[?LifecycleState != 'InService'].LifecycleState" \
+  --output text)
+while [ -n "${ASG_NOT_IN_SERVICE}" ] do
+  echo "Waiting for old autoscaling groups to terminate..."
+  if [ "$RETRIES_ASG" != "15" ]; then
+    echo "Retry in 60 seconds..."
+    sleep 60
+    RETRIES_ASG=$(expr $RETRIES_ASG + 1)
+  else
+    echo "Max retries reached. Exiting..."
+    exit 1
+  fi
+done
+
 # Remove old launch configurations
 
 if [ -z "${CLUSTER_ARNS}" ]; then
@@ -1101,41 +1157,3 @@ else
   done
   
 fi
-
-#
-# Deploy CloudWatch
-#
-
-cd "${START_DIR}/.."
-cd terraform/environments/$CMS_ENV
-
-echo "Deploy CloudWatch..."
-
-terraform apply \
-  --target module.cloudwatch \
-  --var "ami_id=$AMI_ID" \
-  --var "ecs_task_definition_host_port=$ALB_LISTENER_PORT" \
-  --var "host_port=$ALB_LISTENER_PORT" \
-  --var "alb_listener_protocol=$ALB_LISTENER_PROTOCOL" \
-  --var "alb_listener_certificate_arn=$ALB_LISTENER_CERTIFICATE_ARN" \
-  --auto-approve
-
-#
-# Deploy AWS WAF
-#
-    
-terraform apply \
-  --target module.waf \
-  --auto-approve
-  
-#
-# Apply AWS Shield standard to the application load balancer
-#
-
-# Note that no change is actually made since AWS shield standard is automatically applied to
-# the application load balancer. This section may be needed later if AWS Shield Advanced is
-# applied instead.
-    
-terraform apply \
-  --target module.shield \
-  --auto-approve
