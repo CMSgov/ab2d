@@ -7194,7 +7194,13 @@
 
 1. Configure build triggers
 
-   1. Check **GitHub hook trigger for GITScm polling**
+   1. Check **Poll SCM**
+
+   1. Type the following in the **Schedule** text box
+
+      ```
+      H/5 * * * *
+      ```
 
    1. Select **Apply**
 
