@@ -589,7 +589,7 @@ public class TestRunner {
         Assert.assertEquals(202, exportResponse.statusCode());
         List<String> contentLocationList = exportResponse.headers().map().get("content-location");
 
-        Pair<String, JSONArray> downloadDetails = performStatusRequests(contentLocationList, false, "S0001");
+        Pair<String, JSONArray> downloadDetails = performStatusRequests(contentLocationList, false, "S0000");
         downloadFile(downloadDetails, true);
     }
 }

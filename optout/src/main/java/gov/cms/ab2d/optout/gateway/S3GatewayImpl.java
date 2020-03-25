@@ -29,15 +29,17 @@ public class S3GatewayImpl implements S3Gateway {
     @Value("${s3.bucket}")
     private String s3Bucket;
 
-    // set region
-    private final Region region = Region.of(s3Region);
-
-    // build S3 client
-    final S3Client s3Client =  S3Client.builder().region(region).build();
-
 
     @Override
     public List<String> listOptOutFiles() {
+
+        // set region
+        final Region region = Region.of(s3Region);
+
+
+        // build S3 client
+        final S3Client s3Client =  S3Client.builder().region(region).build();
+
         // create a ListObjectsRequest
         final ListObjectsRequest listObjects = ListObjectsRequest.builder()
                 .bucket(s3Bucket)
@@ -61,7 +63,16 @@ public class S3GatewayImpl implements S3Gateway {
 
     @Override
     public InputStreamReader getOptOutFile(String fileName) {
+
         validateFileName(fileName);
+
+        // set region
+        final Region region = Region.of(s3Region);
+
+
+        // build S3 client
+        final S3Client s3Client =  S3Client.builder().region(region).build();
+
 
         final GetObjectRequest getObjectRequest = GetObjectRequest.builder()
                 .bucket(s3Bucket)
@@ -78,6 +89,7 @@ public class S3GatewayImpl implements S3Gateway {
             log.error("Client exception on attempting to call AWS : ", e);
             throw e;
         }
+
     }
 
 
