@@ -6826,6 +6826,18 @@
 
 1. Select **OK** on the "Enter an item name" page
 
+1. Configure GitHub project
+
+   1. Check **GitHub project**
+
+   1. Type the following in the **Project url** text box
+
+      ```
+      https://github.com/CMSgov/ab2d
+      ```
+
+   1. Select **Apply**
+
 1. Check **This project is parameterized**
 
 1. Add the "CMS_ENV_PARAM" parameter
@@ -7175,6 +7187,14 @@
       - **Credentials:** - none -
 
       - **Branch Specifier:** */master
+
+   1. Select **Apply**
+
+1. Scroll down to the "Build Triggers" section
+
+1. Configure build triggers
+
+   1. Check **GitHub hook trigger for GITScm polling**
 
    1. Select **Apply**
 
