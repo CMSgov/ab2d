@@ -1113,7 +1113,7 @@ RETRIES_ASG=0
 ASG_NOT_IN_SERVICE=$(aws --region "${REGION}" autoscaling describe-auto-scaling-groups \
   --query "AutoScalingGroups[*].Instances[?LifecycleState != 'InService'].LifecycleState" \
   --output text)
-while [ -n "${ASG_NOT_IN_SERVICE}" ] do
+while [ -n "${ASG_NOT_IN_SERVICE}" ]; do
   echo "Waiting for old autoscaling groups to terminate..."
   if [ "$RETRIES_ASG" != "15" ]; then
     echo "Retry in 60 seconds..."
