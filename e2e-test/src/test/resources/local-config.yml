@@ -1,3 +1,2 @@
 okta-url: 'https://test.idp.idm.cms.gov/oauth2/aus2r7y3gdaFMKBol297/v1/token'
 base-url: 'http://localhost:8080'
-bfd-url: 'https://prod-sbx.bfdcloud.net/v1/fhir/'

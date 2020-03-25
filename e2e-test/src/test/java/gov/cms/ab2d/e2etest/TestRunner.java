@@ -11,8 +11,11 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.Assert;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.TestMethodOrder;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.data.util.Pair;
 import org.testcontainers.containers.DockerComposeContainer;
@@ -55,12 +58,11 @@ import static org.hamcrest.Matchers.matchesPattern;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @ExtendWith(TestRunnerParameterResolver.class)
 @Slf4j
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class TestRunner {
     private static final String FHIR_TYPE = "application/fhir+ndjson";
 
     private static APIClient apiClient;
-
-    private static BFDClient bfdClient;
 
     private static String AB2D_API_URL;
 
@@ -103,9 +105,9 @@ public class TestRunner {
                     .withScaledService("worker", 2)
                     .withExposedService("db", 5432)
                     .withExposedService("api", 8080, new HostPortWaitStrategy()
-                        .withStartupTimeout(Duration.of(150, SECONDS)));
-                    //.withLogConsumer("worker", new Slf4jLogConsumer(log)) // Use to debug, for now there's too much log data
-                    //.withLogConsumer("api", new Slf4jLogConsumer(log));
+                        .withStartupTimeout(Duration.of(150, SECONDS)))
+                    .withLogConsumer("worker", new Slf4jLogConsumer(log)) // Use to debug, for now there's too much log data
+                    .withLogConsumer("api", new Slf4jLogConsumer(log));
             container.start();
         }
 
@@ -120,9 +122,6 @@ public class TestRunner {
         String oktaPassword = System.getenv("OKTA_CLIENT_PASSWORD");
 
         apiClient = new APIClient(baseUrl, oktaUrl, oktaClientId, oktaPassword);
-
-        String bfdUrl = yamlMap.get("bfd-url");
-        bfdClient = new BFDClient(bfdUrl);
 
         // add in later
         //uploadOrgStructureReport();
@@ -216,7 +215,7 @@ public class TestRunner {
         return Pair.of(url, extension);
     }
 
-    private void verifyJsonFromfileDownload(String fileContent, JSONArray extension) throws JSONException {
+    private void verifyJsonFromfileDownload(String fileContent, JSONArray extension, boolean optOut) throws JSONException {
         // Some of the data that is returned will be variable and will change from request to request, so not every
         // JSON object can be verified
         final JSONObject fileJson = new JSONObject(fileContent);
@@ -291,7 +290,7 @@ public class TestRunner {
         return true;
     }
 
-    private void downloadFile(Pair<String, JSONArray> downloadDetails) throws IOException, InterruptedException, JSONException {
+    private void downloadFile(Pair<String, JSONArray> downloadDetails, boolean optOut) throws IOException, InterruptedException, JSONException {
         HttpResponse<InputStream> downloadResponse = apiClient.fileDownloadRequest(downloadDetails.getFirst());
 
         Assert.assertEquals(200, downloadResponse.statusCode());
@@ -303,7 +302,7 @@ public class TestRunner {
             downloadString = IOUtils.toString(gzipInputStream, Charset.defaultCharset());
         }
 
-        verifyJsonFromfileDownload(downloadString, downloadDetails.getSecond());
+        verifyJsonFromfileDownload(downloadString, downloadDetails.getSecond(), optOut);
     }
 
     private void downloadZipFile(String url, JSONArray extension) throws IOException, InterruptedException, JSONException {
@@ -316,7 +315,7 @@ public class TestRunner {
             zipIn.closeEntry();
             entry = zipIn.getNextEntry();
         }
-        verifyJsonFromfileDownload(downloadString.toString(), extension);
+        verifyJsonFromfileDownload(downloadString.toString(), extension, false);
     }
 
     public static String extractZipFileData(ZipEntry entry, ZipInputStream zipIn) throws IOException {
@@ -359,16 +358,18 @@ public class TestRunner {
     }
 
     @Test
+    @Order(1)
     public void runSystemWideExport() throws IOException, InterruptedException, JSONException {
         HttpResponse<String> exportResponse = apiClient.exportRequest(FHIR_TYPE, null);
         Assert.assertEquals(202, exportResponse.statusCode());
         List<String> contentLocationList = exportResponse.headers().map().get("content-location");
 
         Pair<String, JSONArray> downloadDetails = performStatusRequests(contentLocationList, false, "S0000");
-        downloadFile(downloadDetails);
+        downloadFile(downloadDetails, false);
     }
 
     @Test
+    @Order(2)
     public void runSystemWideExportSince() throws IOException, InterruptedException, JSONException {
         HttpResponse<String> exportResponse = apiClient.exportRequest(FHIR_TYPE, earliest);
         System.out.println(earliest);
@@ -377,11 +378,12 @@ public class TestRunner {
 
         Pair<String, JSONArray> downloadDetails = performStatusRequests(contentLocationList, false, "S0000");
         if (downloadDetails != null) {
-            downloadFile(downloadDetails);
+            downloadFile(downloadDetails, false);
         }
     }
 
     @Test
+    @Order(3)
     public void runErrorSince() throws IOException, InterruptedException {
         OffsetDateTime timeBeforeEarliest = earliest.minus(1, ChronoUnit.MINUTES);
         HttpResponse<String> exportResponse = apiClient.exportRequest(FHIR_TYPE, timeBeforeEarliest);
@@ -393,12 +395,14 @@ public class TestRunner {
     }
 
     @Test
+    @Order(4)
     public void runSystemWideZipExport() throws IOException, InterruptedException, JSONException {
         HttpResponse<String> exportResponse = apiClient.exportRequest(ZIPFORMAT, null);
         Assert.assertEquals(400, exportResponse.statusCode());
     }
 
     @Test
+    @Order(5)
     public void runContractNumberExport() throws IOException, InterruptedException, JSONException {
         String contractNumber = "S0000";
         HttpResponse<String> exportResponse = apiClient.exportByContractRequest(contractNumber, FHIR_TYPE, null);
@@ -406,10 +410,11 @@ public class TestRunner {
         List<String> contentLocationList = exportResponse.headers().map().get("content-location");
 
         Pair<String, JSONArray> downloadDetails = performStatusRequests(contentLocationList, true, contractNumber);
-        downloadFile(downloadDetails);
+        downloadFile(downloadDetails, false);
     }
 
     @Test
+    @Order(6)
     void runContractNumberZipExport() throws IOException, InterruptedException, JSONException {
         String contractNumber = "S0000";
         HttpResponse<String> exportResponse = apiClient.exportByContractRequest(contractNumber, ZIPFORMAT, null);
@@ -417,6 +422,7 @@ public class TestRunner {
     }
 
     @Test
+    @Order(7)
     public void testDelete() throws IOException, InterruptedException {
         HttpResponse<String> exportResponse = apiClient.exportRequest(FHIR_TYPE, null);
 
@@ -430,6 +436,7 @@ public class TestRunner {
     }
 
     @Test
+    @Order(8)
     public void testUserCannotDownloadOtherUsersJob() throws IOException, InterruptedException, JSONException {
         String contractNumber = "S0000";
         HttpResponse<String> exportResponse = apiClient.exportByContractRequest(contractNumber, FHIR_TYPE, null);
@@ -445,6 +452,7 @@ public class TestRunner {
     }
 
     @Test
+    @Order(9)
     public void testUserCannotDeleteOtherUsersJob() throws IOException, InterruptedException, JSONException {
         HttpResponse<String> exportResponse = apiClient.exportRequest(FHIR_TYPE, null);
 
@@ -464,6 +472,7 @@ public class TestRunner {
     }
 
     @Test
+    @Order(10)
     public void testUserCannotCheckStatusOtherUsersJob() throws IOException, InterruptedException, JSONException {
         HttpResponse<String> exportResponse = apiClient.exportRequest(FHIR_TYPE, null);
 
@@ -491,6 +500,7 @@ public class TestRunner {
     }
 
     @Test
+    @Order(11)
     public void testUserCannotMakeRequestWithoutToken() throws IOException, InterruptedException {
         HttpRequest exportRequest = HttpRequest.newBuilder()
                 .uri(URI.create(AB2D_API_URL + PATIENT_EXPORT_PATH))
@@ -505,6 +515,7 @@ public class TestRunner {
     }
 
     @Test
+    @Order(12)
     public void testUserCannotMakeRequestWithSelfSignedToken() throws IOException, InterruptedException, JSONException {
         String clientSecret = "wefikjweglkhjwelgkjweglkwegwegewg";
         SecretKey sharedSecret = Keys.hmacShaKeyFor(clientSecret.getBytes(StandardCharsets.UTF_8));
@@ -541,6 +552,7 @@ public class TestRunner {
     }
 
     @Test
+    @Order(13)
     public void testBadQueryParameterResource() throws IOException, InterruptedException {
         var params = new HashMap<>(){{
             put("_type", "BadParam");
@@ -551,6 +563,7 @@ public class TestRunner {
     }
 
     @Test
+    @Order(14)
     public void testBadQueryParameterOutputFormat() throws IOException, InterruptedException {
         var params = new HashMap<>(){{
             put("_outputFormat", "BadParam");
@@ -561,6 +574,7 @@ public class TestRunner {
     }
 
     @Test
+    @Order(15)
     public void testHealthEndPoint() throws IOException, InterruptedException {
         HttpResponse<String> healthCheckResponse = apiClient.healthCheck();
 
@@ -568,16 +582,14 @@ public class TestRunner {
     }
 
     @Test
+    @Order(16)
     public void testOptOut() throws IOException, InterruptedException, JSONException {
-        HttpResponse<String> patientWithHICNResponse = bfdClient.getPatientWithHICN();
-
-
         HttpResponse<String> exportResponse = apiClient.exportRequest(FHIR_TYPE, null);
 
         Assert.assertEquals(202, exportResponse.statusCode());
         List<String> contentLocationList = exportResponse.headers().map().get("content-location");
 
-        Pair<String, JSONArray> downloadDetails = performStatusRequests(contentLocationList, false, "S0000");
-        downloadFile(downloadDetails);
+        Pair<String, JSONArray> downloadDetails = performStatusRequests(contentLocationList, false, "S0001");
+        downloadFile(downloadDetails, true);
     }
 }
