@@ -1107,7 +1107,7 @@ else
     --force-delete || true
 fi
 
-# Wait for old Autoscaling groups to delete
+# Wait for old Autoscaling groups to terminate
 
 RETRIES_ASG=0
 ASG_NOT_IN_SERVICE=$(aws --region "${REGION}" autoscaling describe-auto-scaling-groups \
