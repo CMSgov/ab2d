@@ -1119,6 +1119,9 @@ while [ -n "${ASG_NOT_IN_SERVICE}" ]; do
   if [ "$RETRIES_ASG" != "15" ]; then
     echo "Retry in 60 seconds..."
     sleep 60
+    ASG_NOT_IN_SERVICE=$(aws --region "${REGION}" autoscaling describe-auto-scaling-groups \
+      --query "AutoScalingGroups[*].Instances[?LifecycleState != 'InService'].LifecycleState" \
+      --output text)
     RETRIES_ASG=$(expr $RETRIES_ASG + 1)
   else
     echo "Max retries reached. Exiting..."
