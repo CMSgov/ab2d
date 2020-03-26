@@ -91,6 +91,8 @@
    [Add the Jenkins agent node](#add-the-jenkins-agent-node)
    [Create a "development" folder in Jenkins](#create-a-development-folder-in-jenkins)
    [Configure a Jenkins project for development application deploy](#configure-a-jenkins-project-for-development-application-deploy)
+   [Create a "sandbox" folder in Jenkins](#create-a-sandbox-folder-in-jenkins)
+   [Configure a Jenkins project for sandbox application deploy](#configure-a-jenkins-project-for-sandbox-application-deploy)
 1. [Upgrade Jenkins](#upgrade-jenkins)
 1. [Verify VPC peering between the management and development AWS accounts](#verify-vpc-peering-between-the-management-and-development-aws-accounts)
 1. [Update existing AB2D static website in development](#update-existing-ab2d-static-website-in-development)
@@ -7280,6 +7282,533 @@
 
 1. Collect timing metrics based on the output and observation of the "Destroy old deployment" process
 
+   > *** TO DO ***: Update metrics
+
+   Process                                   |Start Time|End Time|Process Time
+   ------------------------------------------|----------|--------|------------
+   Prepare for deployment                    |16:30:42  |16:31:03|00:21
+   Build API and worker                      |16:31:03  |16:32:03|01:00
+   Push API and worker images to ECR         |16:32:03  |16:33:01|00:58
+   Complete API module automation            |16:33:01  |16:34:05|01:04
+   Complete worker module automation         |16:34:05  |16:34:56|00:51
+   Wait for API and Worker ECS tasks to start|16:34:56  |16:48:02|13:06
+   New deployment active                     |16:48:02  |16:48:02|00:00
+   Destroy old deployment                    |16:48:02  |16:49:30|07:44
+
+### Create a "sandbox" folder in Jenkins
+
+1. Log on to the Jenkins GUI (if not already logged in)
+
+   1. Ensure that you are connected to the Cisco VPN
+
+   1. Open Chrome
+
+   1. Enter the following in the address bar
+
+      *Format:*
+
+      > http://{jenkins master private ip}:8080
+
+      *Example:*
+
+      > http://10.242.37.74:8080
+
+   1. Log on to the Jenkins GUI
+
+1. Select **New Item** from the leftmost panel
+
+1. Type the following in the **Enter an item name** text box
+
+   ```
+   sandbox
+   ```
+
+1. Select **Folder**
+
+1. Select **OK** on the "Enter an item name" page
+
+1. Select **Save**
+
+1. Select the **Jenkins** bread crumb in the top left of the page
+
+### Configure a Jenkins project for sandbox application deploy
+
+1. Note that a Jenkins project is the same as the deprecated Jenkins job (even though job is still used in the GUI)
+
+1. Log on to the Jenkins GUI (if not already logged in)
+
+   1. Ensure that you are connected to the Cisco VPN
+
+   1. Open Chrome
+
+   1. Enter the following in the address bar
+
+      *Format:*
+
+      > http://{jenkins master private ip}:8080
+
+      *Example:*
+
+      > http://10.242.37.74:8080
+
+   1. Log on to the Jenkins GUI
+
+1. Select the **sandbox** link
+
+1. Select **New Item** from the leftmost panel
+
+1. Type the following in the **Enter an item name** text box
+
+   ```
+   deploy-to-sandbox
+   ```
+
+1. Select **Freestyle project**
+
+1. Select **OK** on the "Enter an item name" page
+
+1. Configure log rotation strategy for jenkins builds
+
+   1. Check **Discard old builds**
+
+   1. Configure "Discard old builds" as follows
+
+      - **Strategy:** Log Rotation
+
+      - **Days to keep builds:** 14
+
+      - **Max # of builds to keep:** 14
+
+1. Configure GitHub project
+
+   1. Check **GitHub project**
+
+   1. Type the following in the **Project url** text box
+
+      ```
+      https://github.com/CMSgov/ab2d
+      ```
+
+   1. Select **Apply**
+
+1. Check **This project is parameterized**
+
+1. Add the "CMS_ENV_PARAM" parameter
+
+   1. Select **Add Parameter**
+
+   1. Select **String Parameter**
+
+   1. Configure the "String Parameter" as follows
+
+      - **Name:** CMS_ENV_PARAM
+
+      - **Default Value:** ab2d-sbx-sandbox
+
+      - **Description:**
+
+        ```
+	Corresponds to the sandbox environment associated with an AWS account.
+	```
+
+   1. Check **Trim the string**
+
+   1. Select **Apply**
+
+1. Add the "CMS_ECR_REPO_ENV_PARAM" parameter
+
+   1. Select **Add Parameter**
+
+   1. Select **String Parameter**
+
+   1. Configure the "String Parameter" as follows
+
+      - **Name:** CMS_ECR_REPO_ENV_PARAM
+
+      - **Default Value:** ab2d-mgmt-east-dev
+
+      - **Description:**
+
+        ```
+	Corresponds to the management environment associated with an AWS account.
+	```
+
+   1. Check **Trim the string**
+
+   1. Select **Apply**
+
+1. Add the "REGION_PARAM" parameter
+
+   1. Select **Add Parameter**
+
+   1. Select **String Parameter**
+
+   1. Configure the "String Parameter" as follows
+
+      - **Name:** REGION_PARAM
+
+      - **Default Value:** us-east-1
+
+      - **Description:**
+
+        ```
+	Corresponds to AWS region of the target VPC.
+	```
+
+   1. Check **Trim the string**
+
+   1. Select **Apply**
+
+1. Add the "VPC_ID_PARAM" parameter
+
+   1. Select **Add Parameter**
+
+   1. Select **String Parameter**
+
+   1. Configure the "String Parameter" as follows
+
+      - **Name:** VPC_ID_PARAM
+
+      - **Default Value:** vpc-08dbf3fa96684151c
+
+      - **Description:**
+
+        ```
+	Corresponds to the VPC ID of the target VPC.
+	```
+
+   1. Check **Trim the string**
+
+   1. Select **Apply**
+
+1. Add the "SSH_USERNAME_PARAM" parameter
+
+   1. Select **Add Parameter**
+
+   1. Select **String Parameter**
+
+   1. Configure the "String Parameter" as follows
+
+      - **Name:** SSH_USERNAME_PARAM
+
+      - **Default Value:** ec2-user
+
+      - **Description:**
+
+        ```
+	Corresponds to the main linux user for EC2 instances.
+	```
+
+   1. Check **Trim the string**
+
+   1. Select **Apply**
+
+1. Add the "EC2_INSTANCE_TYPE_API_PARAM" parameter
+
+   1. Select **Add Parameter**
+
+   1. Select **String Parameter**
+
+   1. Configure the "String Parameter" as follows
+
+      - **Name:** EC2_INSTANCE_TYPE_API_PARAM
+
+      - **Default Value:** m5.xlarge
+
+      - **Description:**
+
+        ```
+	Corresponds to the EC2 instance type of API nodes.
+	```
+
+   1. Check **Trim the string**
+
+   1. Select **Apply**
+
+1. Add the "EC2_INSTANCE_TYPE_WORKER_PARAM" parameter
+
+   1. Select **Add Parameter**
+
+   1. Select **String Parameter**
+
+   1. Configure the "String Parameter" as follows
+
+      - **Name:** EC2_INSTANCE_TYPE_WORKER_PARAM
+
+      - **Default Value:** m5.4xlarge
+
+      - **Description:**
+
+        ```
+	Corresponds to the EC2 instance type of worker nodes.
+	```
+
+   1. Check **Trim the string**
+
+   1. Select **Apply**
+
+1. Add the "EC2_DESIRED_INSTANCE_COUNT_API_PARAM" parameter
+
+   1. Select **Add Parameter**
+
+   1. Select **String Parameter**
+
+   1. Configure the "String Parameter" as follows
+
+      - **Name:** EC2_DESIRED_INSTANCE_COUNT_API_PARAM
+
+      - **Default Value:** 2
+
+      - **Description:**
+
+        ```
+	Corresponds to the desired API node count.
+	```
+
+   1. Check **Trim the string**
+
+   1. Select **Apply**
+
+1. Add the "EC2_MINIMUM_INSTANCE_COUNT_API_PARAM" parameter
+
+   1. Select **Add Parameter**
+
+   1. Select **String Parameter**
+
+   1. Configure the "String Parameter" as follows
+
+      - **Name:** EC2_MINIMUM_INSTANCE_COUNT_API_PARAM
+
+      - **Default Value:** 2
+
+      - **Description:**
+
+        ```
+	Corresponds to the minumum API node(s) count.
+	```
+
+   1. Check **Trim the string**
+
+   1. Select **Apply**
+
+1. Add the "EC2_MAXIMUM_INSTANCE_COUNT_API_PARAM" parameter
+
+   1. Select **Add Parameter**
+
+   1. Select **String Parameter**
+
+   1. Configure the "String Parameter" as follows
+
+      - **Name:** EC2_MAXIMUM_INSTANCE_COUNT_API_PARAM
+
+      - **Default Value:** 2
+
+      - **Description:**
+
+        ```
+	Corresponds to the maximum API node(s) count.
+	```
+
+   1. Check **Trim the string**
+
+   1. Select **Apply**
+
+1. Add the "EC2_DESIRED_INSTANCE_COUNT_WORKER_PARAM" parameter
+
+   1. Select **Add Parameter**
+
+   1. Select **String Parameter**
+
+   1. Configure the "String Parameter" as follows
+
+      - **Name:** EC2_DESIRED_INSTANCE_COUNT_WORKER_PARAM
+
+      - **Default Value:** 2
+
+      - **Description:**
+
+        ```
+	Corresponds to the desired worker node count.
+	```
+
+   1. Check **Trim the string**
+
+   1. Select **Apply**
+
+1. Add the "EC2_MINIMUM_INSTANCE_COUNT_WORKER_PARAM" parameter
+
+   1. Select **Add Parameter**
+
+   1. Select **String Parameter**
+
+   1. Configure the "String Parameter" as follows
+
+      - **Name:** EC2_MINIMUM_INSTANCE_COUNT_WORKER_PARAM
+
+      - **Default Value:** 2
+
+      - **Description:**
+
+        ```
+	Corresponds to the minumum worker node(s) count.
+	```
+
+   1. Check **Trim the string**
+
+   1. Select **Apply**
+
+1. Add the "EC2_MAXIMUM_INSTANCE_COUNT_WORKER_PARAM" parameter
+
+   1. Select **Add Parameter**
+
+   1. Select **String Parameter**
+
+   1. Configure the "String Parameter" as follows
+
+      - **Name:** EC2_MAXIMUM_INSTANCE_COUNT_WORKER_PARAM
+
+      - **Default Value:** 2
+
+      - **Description:**
+
+        ```
+	Corresponds to the maximum worker node(s) count.
+	```
+
+   1. Check **Trim the string**
+
+   1. Select **Apply**
+
+1. Add the "DATABASE_SECRET_DATETIME_PARAM" parameter
+
+   1. Select **Add Parameter**
+
+   1. Select **String Parameter**
+
+   1. Configure the "String Parameter" as follows
+
+      - **Name:** DATABASE_SECRET_DATETIME_PARAM
+
+      - **Default Value:** 2020-01-02-09-15-01
+
+      - **Description:**
+
+        ```
+	Corresponds to a datatime string that is needed to get secrets in secrets manager.
+	```
+
+   1. Check **Trim the string**
+
+   1. Select **Apply**
+
+1. Add the "DEBUG_LEVEL_PARAM" parameter
+
+   1. Select **Add Parameter**
+
+   1. Select **String Parameter**
+
+   1. Configure the "String Parameter" as follows
+
+      - **Name:** DEBUG_LEVEL_PARAM
+
+      - **Default Value:** WARN
+
+      - **Description:**
+
+        ```
+	Corresponds to terraform logging level.
+	```
+
+   1. Check **Trim the string**
+
+   1. Select **Apply**
+
+1. Scroll down to the "Source Code Management" section
+
+1. Add source control management
+
+   1. Select the **Git** radio button under "Source Code Management"
+
+   1. Note that credentials are not needed since this is a public repository
+
+   1. Configure the "Repositories" section as follows
+
+      *Example for "master" branch"*
+
+      - **Repository URL:** https://github.com/CMSgov/ab2d
+
+      - **Credentials:** - none -
+
+      - **Branch Specifier:** */master
+
+   1. Select **Apply**
+
+1. Scroll down to the "Build Environment" section
+
+1. Check **Add timestamps to the Console Output**
+
+1. Scroll down to the "Build" section
+
+1. Configure the build
+
+   1. Select **Add build step**
+
+   1. Select **Execute shell**
+
+   1. Type the following in **Command** text box
+
+      ```
+      cd ./Deploy
+      chmod +x ./bash/deploy-application.sh
+      ./bash/deploy-application.sh
+      ```
+
+   1. Select **Apply**
+
+1. Select **Save**
+
+1. Test the deployment
+
+   1. Select **Build with Parameters**
+
+   1. Note that the parameters and their default values are displayed
+
+   1. Scroll down to the bottom of the parameters
+
+   1. Select **Build**
+
+1. View the deployment output
+
+   1. Select the build number under "Build History" for the current build
+
+      *Example:*
+
+      ```
+      #1
+      ```
+
+   1. Select **Console Output**
+
+   1. Observe the output
+
+1. If the last line of the output is "Finished: FAILURE", do the following:
+
+   1. Review the deployment output
+
+   1. Resolve the issue
+
+   1. Try running the the build again
+
+1. Verify that the last line of output is as follows:
+
+   ```
+   Finished: SUCCESS
+   ```
+
+1. Collect timing metrics based on the output and observation of the "Destroy old deployment" process
+
+   > *** TO DO ***: Update metrics
+   
    Process                                   |Start Time|End Time|Process Time
    ------------------------------------------|----------|--------|------------
    Prepare for deployment                    |16:30:42  |16:31:03|00:21
@@ -7312,14 +7841,6 @@
    1. Log on to the Jenkins GUI
 
 1. Select **Manage Jenkins** from the leftmost panel
-
-1. If you see "New version of Jenkins ({version}) is available for download (changelog)" under "Manage Jenkins", do the following:
-
-   1. Right click **download**
-
-   1. Select **Copy Link Address** from the context menu
-
-   1. Save the URL for a later step
 
 1. Connect to Jenkins master
 
