@@ -1982,6 +1982,81 @@ else
 fi
 
 #
+# Deploy CloudWatch
+#
+
+cd "${START_DIR}"
+cd terraform/environments/$CMS_ENV
+
+echo "Deploy CloudWatch..."
+if [ -z "${AUTOAPPROVE}" ]; then
+
+  terraform apply \
+    --var "ami_id=$AMI_ID" \
+    --var "ecs_task_definition_host_port=$ALB_LISTENER_PORT" \
+    --var "host_port=$ALB_LISTENER_PORT" \
+    --var "alb_listener_protocol=$ALB_LISTENER_PROTOCOL" \
+    --var "alb_listener_certificate_arn=$ALB_LISTENER_CERTIFICATE_ARN" \
+    --target module.cloudwatch
+
+else
+
+  # Apply the changes without prompting
+
+  terraform apply \
+    --target module.cloudwatch \
+    --var "ami_id=$AMI_ID" \
+    --var "ecs_task_definition_host_port=$ALB_LISTENER_PORT" \
+    --var "host_port=$ALB_LISTENER_PORT" \
+    --var "alb_listener_protocol=$ALB_LISTENER_PROTOCOL" \
+    --var "alb_listener_certificate_arn=$ALB_LISTENER_CERTIFICATE_ARN" \
+    --auto-approve
+
+fi
+
+#
+# Deploy AWS WAF
+#
+
+if [ -z "${AUTOAPPROVE}" ]; then
+
+  terraform apply \
+    --target module.waf
+
+else
+
+  # Apply the changes without prompting
+
+  terraform apply \
+    --target module.waf \
+    --auto-approve
+
+fi
+
+#
+# Apply AWS Shield standard to the application load balancer
+#
+
+# Note that no change is actually made since AWS shield standard is automatically applied to
+# the application load balancer. This section may be needed later if AWS Shield Advanced is
+# applied instead.
+
+if [ -z "${AUTOAPPROVE}" ]; then
+
+  terraform apply \
+    --target module.shield
+
+else
+
+  # Apply the changes without prompting
+
+  terraform apply \
+    --target module.shield \
+    --auto-approve
+
+fi
+
+#
 # Apply schedule autoscaling if applicable
 #
 
@@ -2129,80 +2204,5 @@ else
       | jq '. | length')
   
   done
-  
-fi
-
-#
-# Deploy CloudWatch
-#
-
-cd "${START_DIR}"
-cd terraform/environments/$CMS_ENV
-
-echo "Deploy CloudWatch..."
-if [ -z "${AUTOAPPROVE}" ]; then
-
-  terraform apply \
-    --var "ami_id=$AMI_ID" \
-    --var "ecs_task_definition_host_port=$ALB_LISTENER_PORT" \
-    --var "host_port=$ALB_LISTENER_PORT" \
-    --var "alb_listener_protocol=$ALB_LISTENER_PROTOCOL" \
-    --var "alb_listener_certificate_arn=$ALB_LISTENER_CERTIFICATE_ARN" \
-    --target module.cloudwatch
-
-else
-    
-  # Apply the changes without prompting
-
-  terraform apply \
-    --target module.cloudwatch \
-    --var "ami_id=$AMI_ID" \
-    --var "ecs_task_definition_host_port=$ALB_LISTENER_PORT" \
-    --var "host_port=$ALB_LISTENER_PORT" \
-    --var "alb_listener_protocol=$ALB_LISTENER_PROTOCOL" \
-    --var "alb_listener_certificate_arn=$ALB_LISTENER_CERTIFICATE_ARN" \
-    --auto-approve
-
-fi
-
-#
-# Deploy AWS WAF
-#
-
-if [ -z "${AUTOAPPROVE}" ]; then
-    
-  terraform apply \
-    --target module.waf
-  
-else
-
-  # Apply the changes without prompting
-    
-  terraform apply \
-    --target module.waf \
-    --auto-approve
-  
-fi
-
-#
-# Apply AWS Shield standard to the application load balancer
-#
-
-# Note that no change is actually made since AWS shield standard is automatically applied to
-# the application load balancer. This section may be needed later if AWS Shield Advanced is
-# applied instead.
-
-if [ -z "${AUTOAPPROVE}" ]; then
-    
-  terraform apply \
-    --target module.shield
-  
-else
-
-  # Apply the changes without prompting
-    
-  terraform apply \
-    --target module.shield \
-    --auto-approve
   
 fi
