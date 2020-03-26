@@ -58,6 +58,7 @@
    * [Verify logging to the \/aws\/ec2\/var\/log\/messages CloudWatch Log Group](#verify-logging-to-the-awsec2varlogmessages-cloudwatch-log-group)
    * [Configure the \/aws\/ec2\/var\/log\/messages CloudWatch Log Group to Splunk HEC Lambda Configuration](#configure-the-awsec2varlogmessages-cloudwatch-log-group-to-splunk-hec-lambda-configuration)
    * [Onboard additional CloudWatch log groups](#onboard-additional-cloudwatch-log-groups)
+1. [Appendix II: Get application load balancer access logs](#appendix-ii-get-application-load-balancer-access-logs)
 
 ## Appendix A: Access the CMS AWS console
 
@@ -4210,3 +4211,29 @@
 ### Onboard additional CloudWatch log groups
 
 > *** TO DO ***
+
+## Appendix II: Get application load balancer access logs
+
+1. Set AWS profile
+
+   *Example for Sbx:*
+
+   ```ShellSession
+   $ export AWS_PROFILE=ab2d-sbx-sandbox
+   ```
+
+1. Set the region
+
+   *Example for Sbx:*
+
+   ```ShellSession
+   $ export REGION=us-east-1
+   ```
+
+1. Output a string that provides datetime and ip address of person or entity accessing the load balancer
+
+   *Example for Sbx:*
+
+   ```ShellSession
+   $ aws s3api list-objects --bucket ab2d-sbx-sandbox-cloudtrail --query "Contents[*].Key"
+   ```
