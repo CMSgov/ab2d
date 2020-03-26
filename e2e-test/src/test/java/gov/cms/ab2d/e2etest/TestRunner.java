@@ -41,6 +41,7 @@ import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.stream.Collectors;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -107,9 +108,9 @@ public class TestRunner {
                     .withScaledService("worker", 2)
                     .withExposedService("db", 5432)
                     .withExposedService("api", 8080, new HostPortWaitStrategy()
-                        .withStartupTimeout(Duration.of(150, SECONDS)))
-                    .withLogConsumer("worker", new Slf4jLogConsumer(log)) // Use to debug, for now there's too much log data
-                    .withLogConsumer("api", new Slf4jLogConsumer(log));
+                        .withStartupTimeout(Duration.of(150, SECONDS)));
+                    //.withLogConsumer("worker", new Slf4jLogConsumer(log)) // Use to debug, for now there's too much log data
+                    //.withLogConsumer("api", new Slf4jLogConsumer(log));
             container.start();
         }
 
@@ -217,48 +218,64 @@ public class TestRunner {
         return Pair.of(url, extension);
     }
 
-    private void verifyJsonFromfileDownload(String fileContent, JSONArray extension, OffsetDateTime since, boolean optOut) throws JSONException {
+    private void verifyJsonFromfileDownload(String fileContent, JSONArray extension, OffsetDateTime since, String optOut) throws JSONException {
         // Some of the data that is returned will be variable and will change from request to request, so not every
         // JSON object can be verified
-        final JSONObject fileJson = new JSONObject(fileContent);
-        Assert.assertTrue(validFields(fileJson));
-        Assert.assertEquals("ExplanationOfBenefit", fileJson.getString("resourceType"));
-        Assert.assertEquals(0, fileJson.getInt("precedence"));
-        String idString = fileJson.getString("id");
+        //final JSONObject fileJson = new JSONObject(fileContent);
 
-        boolean found = false;
-        for(String acceptableIdString : acceptableIdStrings) {
-            if(idString.startsWith(acceptableIdString)) {
-                found = true;
-                break;
+        String[] jsonLines = fileContent.split("\n");
+        for (String str : jsonLines) {
+            if (str.isEmpty()) {
+                continue;
             }
-        }
 
-        if(!found) {
-            Assert.fail("No acceptable ID string was found, received " + idString);
-        }
+            JSONObject jsonObject = new JSONObject(str);
 
-        final JSONObject patientJson = fileJson.getJSONObject("patient");
-        String referenceString = patientJson.getString("reference");
-        Assert.assertTrue(referenceString.startsWith("Patient"));
-        final JSONObject typeJson = fileJson.getJSONObject("type");
-        Assert.assertNotNull(typeJson);
-        final JSONArray codingJson = typeJson.getJSONArray("coding");
-        Assert.assertNotNull(codingJson);
-        Assert.assertTrue(codingJson.length() >= 4);
-        final JSONArray identifierJson = fileJson.getJSONArray("identifier");
-        Assert.assertNotNull(identifierJson);
-        Assert.assertEquals(2, identifierJson.length());
-        final JSONArray diagnosisJson = fileJson.getJSONArray("diagnosis");
-        Assert.assertNotNull(diagnosisJson);
-        final JSONArray itemJson = fileJson.getJSONArray("item");
-        Assert.assertNotNull(itemJson);
+            Assert.assertTrue(validFields(jsonObject));
+            Assert.assertEquals("ExplanationOfBenefit", jsonObject.getString("resourceType"));
+            Assert.assertEquals(0, jsonObject.getInt("precedence"));
+            String idString = jsonObject.getString("id");
 
-        final JSONObject metaJson = fileJson.getJSONObject("meta");
-        final String lastUpdated = metaJson.getString("lastUpdated");
-        Instant lastUpdatedInstant = Instant.parse(lastUpdated);
-        if(since != null) {
-            Assert.assertTrue(lastUpdatedInstant.isAfter(since.toInstant()));
+            boolean found = false;
+            for (String acceptableIdString : acceptableIdStrings) {
+                if (idString.startsWith(acceptableIdString)) {
+                    found = true;
+                    break;
+                }
+            }
+
+            if (!found) {
+                Assert.fail("No acceptable ID string was found, received " + idString);
+            }
+
+            final JSONObject patientJson = jsonObject.getJSONObject("patient");
+            String referenceString = patientJson.getString("reference");
+            Assert.assertTrue(referenceString.startsWith("Patient"));
+
+            String patientId = referenceString.substring(referenceString.indexOf('-') + 1);
+            if(optOut != null && patientId.equals(optOut)) {
+                Assert.fail("Patient ID opted out, but showed up in the download");
+            }
+
+            final JSONObject typeJson = jsonObject.getJSONObject("type");
+            Assert.assertNotNull(typeJson);
+            final JSONArray codingJson = typeJson.getJSONArray("coding");
+            Assert.assertNotNull(codingJson);
+            Assert.assertTrue(codingJson.length() >= 4);
+            final JSONArray identifierJson = jsonObject.getJSONArray("identifier");
+            Assert.assertNotNull(identifierJson);
+            Assert.assertEquals(2, identifierJson.length());
+            final JSONArray diagnosisJson = jsonObject.getJSONArray("diagnosis");
+            Assert.assertNotNull(diagnosisJson);
+            final JSONArray itemJson = jsonObject.getJSONArray("item");
+            Assert.assertNotNull(itemJson);
+
+            final JSONObject metaJson = jsonObject.getJSONObject("meta");
+            final String lastUpdated = metaJson.getString("lastUpdated");
+            Instant lastUpdatedInstant = Instant.parse(lastUpdated);
+            if (since != null) {
+                Assert.assertTrue(lastUpdatedInstant.isAfter(since.toInstant()));
+            }
         }
 
         JSONObject checkSumObject = extension.getJSONObject(0);
@@ -311,7 +328,7 @@ public class TestRunner {
         return true;
     }
 
-    private void downloadFile(Pair<String, JSONArray> downloadDetails, OffsetDateTime since, boolean optOut) throws IOException, InterruptedException, JSONException {
+    private void downloadFile(Pair<String, JSONArray> downloadDetails, OffsetDateTime since, String optOut) throws IOException, InterruptedException, JSONException {
         HttpResponse<InputStream> downloadResponse = apiClient.fileDownloadRequest(downloadDetails.getFirst());
 
         Assert.assertEquals(200, downloadResponse.statusCode());
@@ -336,7 +353,7 @@ public class TestRunner {
             zipIn.closeEntry();
             entry = zipIn.getNextEntry();
         }
-        verifyJsonFromfileDownload(downloadString.toString(), extension, since, false);
+        verifyJsonFromfileDownload(downloadString.toString(), extension, since, null);
     }
 
     public static String extractZipFileData(ZipEntry entry, ZipInputStream zipIn) throws IOException {
@@ -386,7 +403,7 @@ public class TestRunner {
         List<String> contentLocationList = exportResponse.headers().map().get("content-location");
 
         Pair<String, JSONArray> downloadDetails = performStatusRequests(contentLocationList, false, "S0000");
-        downloadFile(downloadDetails, null, false);
+        downloadFile(downloadDetails, null, null);
     }
 
     @Test
@@ -399,7 +416,7 @@ public class TestRunner {
 
         Pair<String, JSONArray> downloadDetails = performStatusRequests(contentLocationList, false, "S0000");
         if (downloadDetails != null) {
-            downloadFile(downloadDetails, earliest, false);
+            downloadFile(downloadDetails, earliest, null);
         }
     }
 
@@ -431,7 +448,7 @@ public class TestRunner {
         List<String> contentLocationList = exportResponse.headers().map().get("content-location");
 
         Pair<String, JSONArray> downloadDetails = performStatusRequests(contentLocationList, true, contractNumber);
-        downloadFile(downloadDetails, null, false);
+        downloadFile(downloadDetails, null, null);
     }
 
     @Test
@@ -611,6 +628,6 @@ public class TestRunner {
         List<String> contentLocationList = exportResponse.headers().map().get("content-location");
 
         Pair<String, JSONArray> downloadDetails = performStatusRequests(contentLocationList, false, "S0000");
-        downloadFile(downloadDetails, null, true);
+        downloadFile(downloadDetails, null, "19990000002906");
     }
 }
