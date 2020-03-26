@@ -6826,6 +6826,18 @@
 
 1. Select **OK** on the "Enter an item name" page
 
+1. Configure log rotation strategy for jenkins builds
+
+   1. Check **Discard old builds**
+
+   1. Configure "Discard old builds" as follows
+
+      - **Strategy:** Log Rotation
+
+      - **Days to keep builds:** 14
+
+      - **Max # of builds to keep:** 14
+
 1. Configure GitHub project
 
    1. Check **GitHub project**
