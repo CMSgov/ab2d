@@ -151,6 +151,30 @@ export TF_LOG_PATH=/var/log/terraform/tf.log
 rm -f /var/log/terraform/tf.log
 
 #
+# Configure docker environment
+#
+
+# Delete orphaned volumes (if any)
+
+docker volume ls -qf dangling=true | xargs -I name docker volume rm name
+
+# Delete all containers (if any)
+
+docker ps -aq | xargs -I name docker rm --force name
+
+# Delete all images (if any)
+
+docker images -q | xargs -I name docker rmi --force name
+
+# Delete orphaned volumes again (if any)
+
+docker volume ls -qf dangling=true | xargs -I name docker volume rm name
+
+# Delete all images again (if any)
+
+docker images -q | xargs -I name docker rmi --force name
+
+#
 # Initialize and validate terraform
 #
 
