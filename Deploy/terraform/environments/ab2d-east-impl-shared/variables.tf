@@ -263,3 +263,7 @@ variable "hicn_hash_iter" {
   default     = ""
   description = "Please pass this on command line and not as a value here"
 }
+
+variable "vpn_private_sec_group_id" {
+  default = "sg-096060a9885fbc297"
+}

@@ -41,5 +41,5 @@ We are providing three different examples on how users can interact with the AB2
 ## Production Data
 
 Interested in Production Data? Has your organization attested and retrieved synthetic claims data from our Sandbox 
-environment? If so, please email the job ID generated to: [PDP-Data@cms.hhs.gov](PDP-Data@cms.hhs.gov). The AB2D team 
+environment? If so, please email the job ID generated to: [PDP-Data@cms.hhs.gov](mailto:PDP-Data@cms.hhs.gov). The AB2D team 
 will verify and follow-up with production credentials. 
