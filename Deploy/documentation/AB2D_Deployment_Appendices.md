@@ -44,6 +44,21 @@
    * [Verify JVM parameters for an api node](#verify-jvm-parameters-for-an-api-node)
    * [Check the default "heapsize" and "maxram" settings for a worker node](#check-the-default-heapsize-and-maxram-settings-for-a-worker-node)
    * [Verify JVM parameters for a worker node](#verify-jvm-parameters-for-a-worker-node)
+1. [Appendix AA: View CCS Cloud VPN Public IPs](#appendix-aa-view-ccs-cloud-vpn-public-ips)
+1. [Appendix BB: Update controller](#appendix-bb-update-controller)
+1. [Appendix CC: Fix bad terraform component](#appendix-cc-fix-bad-terraform-component)
+1. [Appendix DD: Test running development automation from Jenkins master](#appendix-dd-test-running-development-automation-from-jenkins-master)
+1. [Appendix EE: Fix Jenkins reverse proxy error](#appendix-ee-fix-jenkins-reverse-proxy-error)
+1. [Appendix FF: Manually add JDK 13 to a node that already has JDK 8](#appendix-ff-manually-add-jdk-13-to-a-node-that-already-has-jdk8)
+1. [Appendix GG: Destroy Jenkins agent](#appendix-gg-destroy-jenkins-agent)
+1. [Appendix HH: Manual test of Splunk configuration](#appendix-hh-manual-test-of-splunk-configuration)
+   * [Request Splunk HEC URL and Splunk HEC Token](#request-splunk-hec-url-and-splunk-hec-token)
+   * [Verify or create a "cwlg_lambda_splunk_hec_role" role](#verify-or-create-a-cwlglambdasplunkhecrole-role)
+   * [Configure CloudWatch Log agent and onboard \/var\/log\/messages](#configure-cloudwatch-log-agent-and-onboard-varlogmessages)
+   * [Verify logging to the \/aws\/ec2\/var\/log\/messages CloudWatch Log Group](#verify-logging-to-the-awsec2varlogmessages-cloudwatch-log-group)
+   * [Configure the \/aws\/ec2\/var\/log\/messages CloudWatch Log Group to Splunk HEC Lambda Configuration](#configure-the-awsec2varlogmessages-cloudwatch-log-group-to-splunk-hec-lambda-configuration)
+   * [Onboard additional CloudWatch log groups](#onboard-additional-cloudwatch-log-groups)
+1. [Appendix II: Get application load balancer access logs](#appendix-ii-get-application-load-balancer-access-logs)
 
 ## Appendix A: Access the CMS AWS console
 
@@ -478,7 +493,7 @@
    *Example for "Sbx" environment:*
    
    ```ShellSession
-   $ export CONTROLLER_PUBLIC_IP=3.93.125.65
+   $ export CONTROLLER_PUBLIC_IP=10.242.36.48
    $ export SSH_USER_NAME=ec2-user
    ```
 
@@ -510,7 +525,7 @@
    
    ```ShellSession
    $ export TARGET_ENVIRONMENT=ab2d-sbx-sandbox
-   $ export NODE_PRIVATE_IP=10.242.31.64
+   $ export NODE_PRIVATE_IP=10.242.31.193
    $ export SSH_USER_NAME=ec2-user
    ```
 
@@ -518,7 +533,7 @@
    
    ```ShellSession
    $ export TARGET_ENVIRONMENT=ab2d-sbx-sandbox
-   $ export NODE_PRIVATE_IP=10.242.31.120
+   $ export NODE_PRIVATE_IP=10.242.31.48
    $ export SSH_USER_NAME=ec2-user
    ```
 
@@ -526,7 +541,7 @@
    
    ```ShellSession
    $ export TARGET_ENVIRONMENT=ab2d-sbx-sandbox
-   $ export NODE_PRIVATE_IP=10.242.31.153
+   $ export NODE_PRIVATE_IP=10.242.31.8
    $ export SSH_USER_NAME=ec2-user
    ```
 
@@ -534,7 +549,7 @@
    
    ```ShellSession
    $ export TARGET_ENVIRONMENT=ab2d-sbx-sandbox
-   $ export NODE_PRIVATE_IP=10.242.31.162
+   $ export NODE_PRIVATE_IP=10.242.31.132
    $ export SSH_USER_NAME=ec2-user
    ```
 
@@ -711,6 +726,12 @@
    $ export AWS_PROFILE=ab2d-sbx-sandbox
    ```
 
+   *Example for "Impl" environment:*
+
+   ```ShellSession
+   $ export AWS_PROFILE=ab2d-east-impl
+   ```
+
 1. Set target environment
 
    *Example for "Dev" environment:*
@@ -725,22 +746,26 @@
    $ export TARGET_ENVIRONMENT=ab2d-sbx-sandbox
    ```
 
+   *Example for "Impl" environment:*
+
+   ```ShellSession
+   $ export TARGET_ENVIRONMENT=ab2d-east-impl
+   ```
+
 1. Set controller access variables
    
    ```ShellSession
-   $ CONTROLLER_PUBLIC_IP=$(aws --region us-east-1 ec2 describe-instances \
+   $ CONTROLLER_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
      --filters "Name=tag:Name,Values=ab2d-deployment-controller" \
-     --query="Reservations[*].Instances[?State.Name == 'running'].PublicIpAddress" \
+     --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
      --output text)
    $ export SSH_USER_NAME=ec2-user
    ```
    
 1. Connect to the controller
-
-   *Format:*
    
    ```ShellSession
-   $ ssh -i ~/.ssh/${TARGET_ENVIRONMENT}.pem ${SSH_USER_NAME}@${CONTROLLER_PUBLIC_IP}
+   $ ssh -i ~/.ssh/${TARGET_ENVIRONMENT}.pem ${SSH_USER_NAME}@${CONTROLLER_PRIVATE_IP}
    ```
 
 1. Set target DB environment variables
@@ -2749,7 +2774,7 @@
 1. Change to the "s3-client-test" directory
 
    ```ShellSession
-   $ cd ~/code/ab2d/Deploy/java/s3-client-test
+   $ cd ~/code/ab2d/Deploy/java/s3-client-test-workspace/s3-client-test
    ```
 
 1. Build "s3-client-test"
@@ -3182,4 +3207,1033 @@
 
    ```ShellSession
    $ exit
+   ```
+
+## Appendix AA: View CCS Cloud VPN Public IPs
+
+1. Open Chrome
+
+1. Enter the following in the address bar
+
+   > https://confluence.cms.gov/pages/viewpage.action?spaceKey=AWSOC&title=CCS+Cloud+VPN+Public+IPs
+
+## Appendix BB: Update controller
+
+1. Change to the "Deploy" directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d/Deploy
+   ```
+
+1. Switch to development AWS profile
+
+   *Example for Dev environment:*
+   
+   ```ShellSession
+   $ export AWS_PROFILE=ab2d-dev
+   ```
+
+   *Example for Sbx environment:*
+   
+   ```ShellSession
+   $ export AWS_PROFILE=ab2d-sbx-sandbox
+   ```
+
+   *Example for Impl environment:*
+   
+   ```ShellSession
+   $ export AWS_PROFILE=ab2d-east-impl
+   ```
+
+1. Set the target environment
+
+   *Example for Dev environment:*
+
+   ```ShellSession
+   $ CMS_ENV=ab2d-dev
+   ```
+
+   *Example for Sbx environment:*
+
+   ```ShellSession
+   $ CMS_ENV=ab2d-sbx-sandbox
+   ```
+
+   *Example for Impl environment:*
+
+   ```ShellSession
+   $ CMS_ENV=ab2d-east-impl
+   ```
+
+1. Set the shared environment
+
+   *Example for Dev environment:*
+   
+   ```ShellSession
+   $ CMS_SHARED_ENV=ab2d-dev-shared
+   ```
+
+   *Example for Sbx environment:*
+   
+   ```ShellSession
+   $ CMS_SHARED_ENV=ab2d-sbx-sandbox-shared
+   ```
+
+   *Example for Impl environment:*
+   
+   ```ShellSession
+   $ CMS_SHARED_ENV=ab2d-east-impl-shared
+   ```
+
+1. Change to the python3 directory
+
+   ```ShellSession
+   $ cd python3
+   ```
+
+1. Set database secret datetime
+
+   ```ShellSession
+   $ DATABASE_SECRET_DATETIME="2020-01-02-09-15-01"
+   ```
+   
+1. Get database user
+
+   ```ShellSession
+   $ DATABASE_USER=$(./get-database-secret.py $CMS_ENV database_user $DATABASE_SECRET_DATETIME)
+   ```
+
+1. Get database password
+
+   ```ShellSession
+   $ DATABASE_PASSWORD=$(./get-database-secret.py $CMS_ENV database_password $DATABASE_SECRET_DATETIME)
+   ```
+
+1. Get database name
+
+   ```ShellSession
+   $ DATABASE_NAME=$(./get-database-secret.py $CMS_ENV database_name $DATABASE_SECRET_DATETIME)
+   ```
+
+1. Get deployer IP address
+
+   ```ShellSession
+   $ DEPLOYER_IP_ADDRESS=$(curl ipinfo.io/ip)
+   ```
+
+1. Change to the "Deploy" directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d/Deploy
+   ```
+
+1. Change to the shared environment
+
+   ```ShellSession
+   $ cd "terraform/environments/${CMS_SHARED_ENV}"
+   ```
+
+1. Verify the changes that will be made
+
+   ```ShellSession
+   $ terraform plan \
+     --var "db_username=${DATABASE_USER}" \
+     --var "db_password=${DATABASE_PASSWORD}" \
+     --var "db_name=${DATABASE_NAME}" \
+     --var "deployer_ip_address=${DEPLOYER_IP_ADDRESS}" \
+     --target module.controller
+   ```
+
+1. Update controller
+
+   ```ShellSession
+   $ terraform apply \
+     --var "db_username=${DATABASE_USER}" \
+     --var "db_password=${DATABASE_PASSWORD}" \
+     --var "db_name=${DATABASE_NAME}" \
+     --var "deployer_ip_address=${DEPLOYER_IP_ADDRESS}" \
+     --target module.controller \
+     --auto-approve
+   ```
+
+## Appendix CC: Fix bad terraform component
+
+1. Note that the following component was failing to refresh when automation was rerun
+
+   *Example of a component that was failing to refresh:*
+   
+   ```
+   module.controller.random_shuffle.public_subnets
+   ```
+   
+1. Change to the "Deploy" directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d/Deploy
+   ```
+   
+1. Change to the environment where the existing component is failing to refresh
+
+   *Example for Dev shared environment:*
+   
+   ```ShellSession
+   $ cd terraform/environments/ab2d-dev-shared
+   ```
+
+1. Verify that the component is under terraform control
+
+   *Format:*
+   
+   ```ShellSession
+   $ terraform state list | grep {search word}
+   ```
+
+   *Example for 'module.controller.random_shuffle.public_subnets':*
+   
+   ```ShellSession
+   $ terraform state list | grep shuffle
+   ```
+
+1. Note the terraform reference for the target component
+
+   ```
+   module.controller.random_shuffle.public_subnets
+   ```
+
+1. Remove the component from terraform control
+
+   ```ShellSession
+   $ terraform state rm module.controller.random_shuffle.public_subnets
+   ```
+
+1. Rerun the automation, so that the module will be recreated instead of being refreshed
+
+## Appendix DD: Test running development automation from Jenkins master
+
+1. Set the management AWS profile
+
+   ```ShellSession
+   $ export AWS_PROFILE=ab2d-mgmt-east-dev
+   ```
+
+1. Connect to the Jenkins EC2 instance
+
+   1. Get the private IP address of Jenkins EC2 instance
+
+      ```ShellSession
+      $ JENKINS_MASTER_PUBLIC_IP=$(aws --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-jenkins-master" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PublicIpAddress" \
+        --output text)
+      ```
+
+   1. Ensure that you are connected to the Cisco VPN
+
+   1. SSH into the instance using the private IP address
+
+      ```ShellSession
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_MASTER_PUBLIC_IP
+      ```
+
+1. Switch to the jenkins user
+
+   ```ShellSession
+   $ sudo su - jenkins
+   ```
+
+1. Create code directory
+
+   ```ShellSession
+   $ mkdir -p ~/code
+   ```
+
+1. Change to the "code" directory
+
+   ```ShellSession
+   $ cd ~/code
+   ```
+
+1. Clone the ab2d repo
+
+   ```ShellSession
+   $ git clone https://github.com/CMSgov/ab2d.git
+   ```
+
+1. Change to the repo directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d
+   ```
+
+1. Checkout the desired branch
+
+   *Format:*
+
+   ```ShellSession
+   $ git checkout {desired branch}
+   ```
+
+   *Example:*
+
+   ```ShellSession
+   $ git checkout feature/ab2d-573-create-jenkins-scripts-for-automation-hooks
+   ```
+
+1. Verify that python3 is working
+
+   1. Change to the "python3" directory
+
+      ```ShellSession
+      $ cd ~/code/ab2d/Deploy/python3
+      ```
+
+   1. Set the test environment variables
+
+      ```ShellSession
+      $ export AWS_PROFILE=ab2d-dev
+      $ export CMS_ENV=ab2d-dev
+      $ export DATABASE_SECRET_DATETIME=2020-01-02-09-15-01
+      ```
+
+   1. Test getting the database user for the development environment
+
+      ```ShellSession
+      $ DATABASE_USER=$(./get-database-secret.py $CMS_ENV database_user $DATABASE_SECRET_DATETIME)
+      ```
+
+   1. Verify that the database user was retrieved
+
+      ```ShellSession
+      $ echo $DATABASE_USER
+      ```
+
+   1. Exit the jenkins user so that environment variables can be reset
+
+      ```ShellSession
+      $ exit
+      ```
+
+1. Connect to the jenkins user
+
+   ```ShellSession
+   $ sudo su - jenkins
+   ```
+
+1. Change to the "Deploy" directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d/Deploy
+   ```
+
+1. Set test parameters
+
+   ```ShellSession
+   $ export CMS_ENV_PARAM=ab2d-dev
+   $ export CMS_ECR_REPO_ENV_PARAM=ab2d-mgmt-east-dev
+   $ export REGION_PARAM=us-east-1
+   $ export VPC_ID_PARAM=vpc-0c6413ec40c5fdac3
+   $ export SSH_USERNAME_PARAM=ec2-user
+   $ export EC2_INSTANCE_TYPE_API_PARAM=m5.xlarge
+   $ export EC2_INSTANCE_TYPE_WORKER_PARAM=m5.xlarge
+   $ export EC2_DESIRED_INSTANCE_COUNT_API_PARAM=1
+   $ export EC2_MINIMUM_INSTANCE_COUNT_API_PARAM=1
+   $ export EC2_MAXIMUM_INSTANCE_COUNT_API_PARAM=1
+   $ export EC2_DESIRED_INSTANCE_COUNT_WORKER_PARAM=1
+   $ export EC2_MINIMUM_INSTANCE_COUNT_WORKER_PARAM=1
+   $ export EC2_MAXIMUM_INSTANCE_COUNT_WORKER_PARAM=1
+   $ export DATABASE_SECRET_DATETIME_PARAM=2020-01-02-09-15-01
+   $ export DEBUG_LEVEL_PARAM=WARN
+   ```
+
+1. Run application deployment automation
+
+   ```ShellSession
+   $ ./bash/deploy-application.sh
+   ```
+
+## Appendix EE: Fix Jenkins reverse proxy error
+
+1. Ensure that you are connected to the Cisco VPN
+
+1. Open Chrome
+
+1. Enter the following in the address bar
+
+   *Format:*
+
+   > http://{jenkins master public ip}:8080
+
+   *Example:*
+
+   > http://35.173.33.85:8080
+
+1. Select **Manage Jenkins**
+
+1. Note that if you see the following error, these instructions will fix the issue
+
+   ```
+   It appears that your reverse proxy set up is broken.
+   ```
+
+1. Select **Configure System**
+
+1. Type the following in the **Jenkins URL** text box under the "Jenkins Location" section
+
+   *Format:*
+
+   ```
+   {url used to access jenkins from browser}
+   ```
+
+   *Example:*
+
+   ```
+   http://35.173.33.85:8080/
+   ```
+
+1. Select **Apply**
+
+1. Select **Save**
+
+1. Select **Manage Jenkins** again
+
+1. Note that the reverse proxy warning no longer appears
+
+## Appendix FF: Manually add JDK 13 to a node that already has JDK 8
+
+1. Connect to desired node
+
+1. Install JDK 13
+
+   ```ShellSession
+   $ sudo yum install java-13-openjdk-devel -y
+   ```
+
+1. Get JDK 13 java binary
+
+   ```ShellSession
+   $ JAVA_13=$(alternatives --display java | grep family | grep java-13-openjdk | cut -d' ' -f1)
+   ```
+   
+1. Set java binary to JDK 13
+
+   ```ShellSession
+   $ sudo alternatives --set java $JAVA_13
+   ```
+
+1. Get JDK 13 javac binary
+
+   ```ShellSession
+   $ JAVAC_13=$(alternatives --display javac | grep family | grep java-13-openjdk | cut -d' ' -f1)
+   ```
+   
+1. Set javac binary to JDK 13
+
+   ```ShellSession
+   $ sudo alternatives --set javac $JAVAC_13
+   ```
+
+## Appendix GG: Destroy Jenkins agent
+
+1. Change to the "Deploy" directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d/Deploy
+   ```
+
+1. Change to the shared manegment environment
+
+   ```ShellSession
+   $ cd terraform/environments/ab2d-mgmt-east-dev-shared
+   ```
+
+1. Destroy the Jenkins agent
+
+   ```ShellSession
+   $ terraform destroy \
+     --target module.jenkins_agent \
+     --auto-approve
+   ```
+
+## Appendix HH: Manual test of Splunk configuration
+
+### Request Splunk HEC URL and Splunk HEC Token
+
+> *** TO DO ***
+
+1. Open Chrome
+
+1. Enter the following in the address bar
+
+   > https://jiraent.cms.gov/servicedesk/customer/portal/13
+
+1. Configure the request as follows
+
+   - **Summary:** Request Splunk HEC URL and Splunk HEC Token for AB2D project
+
+   - **Project Name:** Project 058 BCDA
+
+   - **Account Alias:** None
+
+   - **Service Category:** Central Logging
+
+   - **Task:** Onboarding and Data Ingestion
+
+   - **Description:**
+
+     ```
+     Hello,
+     
+     I am requesting a Splunk HEC URL and Splunk HEC Token.
+     
+     Note that this is for the AB2D project.
+     
+     Thanks for your consideration.
+     
+     Lonnie Hanekamp
+     ```
+
+   - **Severity:** Minimal
+
+   - **Urgency:** Low
+
+   - **Reported Source:** Self Service
+
+   - **Requested Due Date:** {3 working days from now}
+
+1. Select **Create**
+
+### Verify or create a "cwlg_lambda_splunk_hec_role" role
+
+1. Open Chrome
+
+1. Log on to the development AWS account
+
+1. Select "IAM"
+
+1. Select **Roles**
+
+1. Determine if the "cwlg_lambda_splunk_hec_role" role alredy exists
+
+   1. Type the following in the **Search** text box under "Create role"
+
+      ```
+      cwlg_lambda_splunk_hec_role
+      ```
+
+   1. If the role already exists, jump to the following section
+
+      [Configure CloudWatch Log agent and onboard \/var\/log\/messages](#configure-cloudwatch-log-agent-and-onboard-varlogmessages)
+      
+1. Select **Create role**
+
+1. Select the **AWS service** tab
+
+1. Select **Lambda**
+
+1. Select **Next: Permissions**
+
+1. Type the following in the **Search** text box
+
+   ```
+   AWSLambdaBasicExecutionRole
+   ```
+
+1. Select the checkbox beside "AWSLambdaBasicExecutionRole"
+
+1. Select **Next: Tags**
+
+1. Select **Next: Review**
+
+1. Configure the "Review" page as follows
+
+   - **Role name:** cwlg_lambda_splunk_hec_role
+
+1. Select **Create role**
+
+### Configure CloudWatch Log agent and onboard \/var\/log\/messages
+
+1. Connect to an API node in development
+
+   1. Ensure that you are connected to the Cisco VPN
+
+   1. Set the dev AWS profile
+
+      ```ShellSession
+      $ export AWS_PROFILE=ab2d-dev
+      ```
+
+   1. Connect to the development controller
+
+      ```ShellSession
+      $ ssh -i ~/.ssh/${AWS_PROFILE}.pem ec2-user@$(aws \
+        --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-deployment-controller" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+        --output text)
+      ```
+
+   1. Connect to the desired API node
+
+      *Example for connecting to the first API node:*
+
+      ```ShellSession
+      $ ssh ec2-user@$(./list-api-instances.sh \
+        | grep 10. \
+        | awk '{print $2}' \
+        | head -n 1)
+      ```
+
+1. Switch to the root user
+
+   ```ShellSession
+   $ sudo su
+   ```
+
+1. Verify existing logs prior to changes
+
+   OS Level Logging                        |Exists|CloudWatch Log Group
+   ----------------------------------------|------|------------------------------------------------
+   /var/log/amazon/ssm/amazon-ssm-agent.log|yes   |/aws/ec2/var/log/amazon/ssm/amazon-ssm-agent.log
+   /var/log/audit/audit.log                |yes   |/aws/ec2/var/log/audit/audit.log
+   /var/log/awslogs.log                    |no    |/aws/ec2/var/log/awslogs.log
+   /var/log/cloud-init-output.log          |yes   |/aws/ec2/var/log/cloud-init-output.log
+   /var/log/cloud-init.log                 |yes   |/aws/ec2/var/log/cloud-init.log
+   /var/log/cron                           |yes   |/aws/ec2/var/log/cron
+   /var/log/dmesg                          |yes   |/aws/ec2/var/log/dmesg
+   /var/log/maillog                        |yes   |/aws/ec2/var/log/maillog
+   /var/log/messages                       |yes   |/aws/ec2/var/log/messages
+   /var/log/secure                         |yes   |/aws/ec2/var/log/secure
+   /var/opt/ds_agent/diag/ds_agent-err.log |yes   |/aws/ec2/var/opt/ds_agent/diag/ds_agent-err.log
+   /var/opt/ds_agent/diag/ds_agent.log     |yes   |/aws/ec2/var/opt/ds_agent/diag/ds_agent.log
+   /var/opt/ds_agent/diag/ds_am.log        |yes   |/aws/ec2/var/opt/ds_agent/diag/ds_am.log
+   N/A                                     |N/A   |CloudTrail/DefaultLogGroup
+   N/A                                     |N/A   |<accountId>-west-dev-vpc-flowlogs
+
+1. Exit the root user
+
+   ```ShellSession
+   $ exit
+   ```
+
+1. Exit the API node
+
+   ```ShellSession
+   $ exit
+   ```
+
+1. Exit the controler
+
+   ```ShellSession
+   $ exit
+   ```
+
+1. Note that the following IAM policy has been created in Mgmt, Dev, Sbx, and Impl
+
+   **Policy:** Ab2dCloudWatchLogsPolicy
+
+   ```
+   {
+       "Version": "2012-10-17",
+       "Statement": [
+           {
+               "Sid": "Stmt1584652230001",
+               "Effect": "Allow",
+               "Action": [
+                   "logs:CreateLogGroup",
+                   "logs:CreateLogStream",
+                   "logs:PutLogEvents",
+                   "logs:DescribeLogStreams"
+               ],
+               "Resource": [
+                   "arn:aws:logs:*:*:*"
+               ]
+           }
+       ]
+   }
+   ```
+
+1. Note that the "Ab2dCloudWatchLogsPolicy" IAM policy to the "Ab2dInstanceRole" role in Mgmt, Dev, Sbx, and Impl
+
+1. Connect to an API node in development
+
+   1. Ensure that you are connected to the Cisco VPN
+
+   1. Set the dev AWS profile
+
+      ```ShellSession
+      $ export AWS_PROFILE=ab2d-dev
+      ```
+
+   1. Connect to the development controller
+
+      ```ShellSession
+      $ ssh -i ~/.ssh/${AWS_PROFILE}.pem ec2-user@$(aws \
+        --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-deployment-controller" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+        --output text)
+      ```
+
+   1. Connect to the desired API node
+
+      *Example for connecting to the first API node:*
+
+      ```ShellSession
+      $ ssh ec2-user@$(./list-api-instances.sh \
+        | grep 10. \
+        | awk '{print $2}' \
+        | head -n 1)
+      ```
+
+1. Download the CloudWatch Log agent
+
+   1. Change to the "/tmp" directory
+
+      ```ShellSession
+      $ cd /tmp
+      ```
+
+   1. Download the CloudWatch Log Agent
+
+      ```ShellSession
+      $ curl -O https://s3.amazonaws.com/aws-cloudwatch/downloads/latest/awslogs-agent-setup.py
+      ```
+
+1. Configure the CloudWatch Log Agent and start logging "/var/log/messages"
+
+   1. Enter the following
+
+      ```ShellSession
+      $ sudo python /tmp/awslogs-agent-setup.py --region us-east-1
+      ```
+
+   1. Note the following dependencies are downloaded
+
+      ```
+      AgentDependencies/
+      AgentDependencies/awslogscli/
+      AgentDependencies/awslogscli/urllib3-1.25.6.tar.gz
+      AgentDependencies/awslogscli/jmespath-0.9.2.tar.gz
+      AgentDependencies/awslogscli/colorama-0.3.7.zip
+      AgentDependencies/awslogscli/idna-2.8.tar.gz
+      AgentDependencies/awslogscli/awscli-1.11.41.tar.gz
+      AgentDependencies/awslogscli/argparse-1.2.1.tar.gz
+      AgentDependencies/awslogscli/botocore-1.13.9.tar.gz
+      AgentDependencies/awslogscli/docutils-0.15.2.tar.gz
+      AgentDependencies/awslogscli/pyasn1-0.2.3.tar.gz
+      AgentDependencies/awslogscli/python-dateutil-2.6.0.tar.gz
+      AgentDependencies/awslogscli/botocore-1.5.4.tar.gz
+      AgentDependencies/awslogscli/jmespath-0.9.4.tar.gz
+      AgentDependencies/awslogscli/awscli-cwlogs-1.4.6.tar.gz
+      AgentDependencies/awslogscli/ordereddict-1.1.tar.gz
+      AgentDependencies/awslogscli/futures-3.3.0.tar.gz
+      AgentDependencies/awslogscli/futures-3.0.5.tar.gz
+      AgentDependencies/awslogscli/certifi-2019.9.11.tar.gz
+      AgentDependencies/awslogscli/six-1.12.0.tar.gz
+      AgentDependencies/awslogscli/s3transfer-0.1.10.tar.gz
+      AgentDependencies/awslogscli/six-1.10.0.tar.gz
+      AgentDependencies/awslogscli/requests-2.18.4.tar.gz
+      AgentDependencies/awslogscli/rsa-3.4.2.tar.gz
+      AgentDependencies/awslogscli/s3transfer-0.2.1.tar.gz
+      AgentDependencies/awslogscli/docutils-0.13.1.tar.gz
+      AgentDependencies/awslogscli/urllib3-1.22.tar.gz
+      AgentDependencies/awslogscli/awscli-1.16.273.tar.gz
+      AgentDependencies/awslogscli/PyYAML-5.1.2.tar.gz
+      AgentDependencies/awslogscli/idna-2.5.tar.gz
+      AgentDependencies/awslogscli/PyYAML-3.12.tar.gz
+      AgentDependencies/awslogscli/pyasn1-0.4.7.tar.gz
+      AgentDependencies/awslogscli/colorama-0.4.1.tar.gz
+      AgentDependencies/awslogscli/simplejson-3.3.0.tar.gz
+      AgentDependencies/awslogscli/chardet-3.0.4.tar.gz
+      AgentDependencies/virtualenv-15.1.0/
+      AgentDependencies/virtualenv-15.1.0/setup.cfg
+      AgentDependencies/virtualenv-15.1.0/tests/
+      AgentDependencies/virtualenv-15.1.0/tests/__init__.py
+      AgentDependencies/virtualenv-15.1.0/tests/test_cmdline.py
+      AgentDependencies/virtualenv-15.1.0/tests/test_virtualenv.py
+      AgentDependencies/virtualenv-15.1.0/tests/test_activate_output.expected
+      AgentDependencies/virtualenv-15.1.0/tests/test_activate.sh
+      AgentDependencies/virtualenv-15.1.0/scripts/
+      AgentDependencies/virtualenv-15.1.0/scripts/virtualenv
+      AgentDependencies/virtualenv-15.1.0/virtualenv.py
+      AgentDependencies/virtualenv-15.1.0/MANIFEST.in
+      AgentDependencies/virtualenv-15.1.0/README.rst
+      AgentDependencies/virtualenv-15.1.0/AUTHORS.txt
+      AgentDependencies/virtualenv-15.1.0/setup.py
+      AgentDependencies/virtualenv-15.1.0/LICENSE.txt
+      AgentDependencies/virtualenv-15.1.0/virtualenv_support/
+      AgentDependencies/virtualenv-15.1.0/virtualenv_support/__init__.py
+      AgentDependencies/virtualenv-15.1.0/virtualenv_support/wheel-0.29.0-py2.py3-none-any.whl
+      AgentDependencies/virtualenv-15.1.0/virtualenv_support/argparse-1.4.0-py2.py3-none-any.whl
+      AgentDependencies/virtualenv-15.1.0/virtualenv_support/pip-9.0.1-py2.py3-none-any.whl
+      AgentDependencies/virtualenv-15.1.0/virtualenv_support/setuptools-28.8.0-py2.py3-none-any.whl
+      AgentDependencies/virtualenv-15.1.0/PKG-INFO
+      AgentDependencies/virtualenv-15.1.0/bin/
+      AgentDependencies/virtualenv-15.1.0/bin/rebuild-script.py
+      AgentDependencies/virtualenv-15.1.0/virtualenv.egg-info/
+      AgentDependencies/virtualenv-15.1.0/virtualenv.egg-info/not-zip-safe
+      AgentDependencies/virtualenv-15.1.0/virtualenv.egg-info/SOURCES.txt
+      AgentDependencies/virtualenv-15.1.0/virtualenv.egg-info/entry_points.txt
+      AgentDependencies/virtualenv-15.1.0/virtualenv.egg-info/top_level.txt
+      AgentDependencies/virtualenv-15.1.0/virtualenv.egg-info/PKG-INFO
+      AgentDependencies/virtualenv-15.1.0/virtualenv.egg-info/dependency_links.txt
+      AgentDependencies/virtualenv-15.1.0/virtualenv_embedded/
+      AgentDependencies/virtualenv-15.1.0/virtualenv_embedded/activate.ps1
+      AgentDependencies/virtualenv-15.1.0/virtualenv_embedded/activate.csh
+      AgentDependencies/virtualenv-15.1.0/virtualenv_embedded/deactivate.bat
+      AgentDependencies/virtualenv-15.1.0/virtualenv_embedded/activate_this.py
+      AgentDependencies/virtualenv-15.1.0/virtualenv_embedded/activate.fish
+      AgentDependencies/virtualenv-15.1.0/virtualenv_embedded/python-config
+      AgentDependencies/virtualenv-15.1.0/virtualenv_embedded/activate.bat
+      AgentDependencies/virtualenv-15.1.0/virtualenv_embedded/distutils.cfg
+      AgentDependencies/virtualenv-15.1.0/virtualenv_embedded/site.py
+      AgentDependencies/virtualenv-15.1.0/virtualenv_embedded/activate.sh
+      AgentDependencies/virtualenv-15.1.0/virtualenv_embedded/distutils-init.py
+      AgentDependencies/virtualenv-15.1.0/docs/
+      AgentDependencies/virtualenv-15.1.0/docs/userguide.rst
+      AgentDependencies/virtualenv-15.1.0/docs/index.rst
+      AgentDependencies/virtualenv-15.1.0/docs/development.rst
+      AgentDependencies/virtualenv-15.1.0/docs/reference.rst
+      AgentDependencies/virtualenv-15.1.0/docs/Makefile
+      AgentDependencies/virtualenv-15.1.0/docs/conf.py
+      AgentDependencies/virtualenv-15.1.0/docs/changes.rst
+      AgentDependencies/virtualenv-15.1.0/docs/installation.rst
+      AgentDependencies/virtualenv-15.1.0/docs/make.bat
+      AgentDependencies/pip-6.1.1.tar.gz
+      ```
+
+   1. Wait for the following to display
+
+      ```
+      Step 1 of 5: Installing pip ...DONE
+      ```
+
+   1. Wait for the following to display
+
+      *Note that this may take a while.*
+
+      ```
+      Step 2 of 5: Downloading the latest CloudWatch Logs agent bits ...DONE
+      ```
+
+   1. Note that the following is displayed
+
+      ```
+      Step 3 of 5: Configuring AWS CLI ...
+      ```
+
+   1. Press **return** on the keyboard to accept the default at the "AWS Access Key ID" prompt
+
+   1. Press **return** on the keyboard to accept the default at the "AWS Secret Access Key" prompt
+
+   1. Press **return** on the keyboard to accept the default at the "Default region name" prompt
+
+   1. Press **return** on the keyboard to accept the default at the "Default output format" prompt
+
+   1. Note that the following is displayed
+
+      ```
+      Step 4 of 5: Configuring the CloudWatch Logs Agent ...
+      ```
+
+   1. Add the following log by entering the following at the prompts
+
+      - **Path of log file to upload:** /var/log/messages
+
+      - **Destination Log Group name:** /aws/ec2/var/log/messages
+
+      - **Choose Log Stream Name:** 1 *Use EC2 instance id*
+
+      - **Choose Log Event timestamp format:** 3 *%Y-%m-%d %H:%M:%S (2008-09-08 11:52:54)*
+
+      - **Choose initial position of upload:** 1 *From start of file.*
+
+      - **More log files to configure:** N
+
+   1. Wait for the following to display
+
+      ```
+      Step 5 of 5: Setting up agent as a daemon ...DONE
+      ```
+
+   1. Note the following output
+
+      ------------------------------------------------------
+      - Configuration file successfully saved at: /var/awslogs/etc/awslogs.conf
+      - You can begin accessing new log events after a few moments at https://console.aws.amazon.com/cloudwatch/home?region=us-east-1#logs:
+      - You can use 'sudo service awslogs start|stop|status|restart' to control the daemon.
+      - To see diagnostic information for the CloudWatch Logs Agent, see /var/log/awslogs.log
+      - You can rerun interactive setup using 'sudo python ./awslogs-agent-setup.py --region us-east-1 --only-generate-config'
+      ------------------------------------------------------
+
+1. View the "/var/log/messages" entry in the newly created CloudWatch Log agent
+
+   1. Enter the following
+   
+      ```ShellSession
+      $ sudo cat /var/awslogs/etc/awslogs.conf | tail -7
+      ```
+
+   1. Note the output
+
+      ```
+      [/var/log/messages]
+      datetime_format = %Y-%m-%d %H:%M:%S
+      file = /var/log/messages
+      buffer_duration = 5000
+      log_stream_name = {instance_id}
+      initial_position = start_of_file
+      log_group_name = /aws/ec2/var/log/messages
+      ```
+
+1. Ensure the CloudWatch Log Agent is running
+
+   1. Check the status of the CloudWatch Log Agent
+
+      ```ShellSession
+      $ service awslogs status
+      ```
+
+   1. If the CloudWatch Log Agent is not running, start it by entering the following
+
+      ```ShellSession
+      $ sudo service awslogs start
+      ```
+      
+1. Exit the API node
+
+   ```ShellSession
+   $ exit
+   ```
+
+1. Exit the controler
+
+   ```ShellSession
+   $ exit
+   ```
+
+### Verify logging to the \/aws\/ec2\/var\/log\/messages CloudWatch Log Group
+
+1. Open Chrome
+
+1. Log on to the development AWS account
+
+1. Select **CloudWatch**
+
+1. Select **Log groups** under the "Logs" section in the leftmost panel
+
+1. Select the following
+
+   ```
+   /aws/ec2/var/log/messages
+   ```
+
+1. Select the instance id
+
+   *Example:*
+
+   ```
+   i-01fbbfdf09d80d874
+   ```
+
+1. Note the list of events that appear within the main page
+
+### Configure the \/aws\/ec2\/var\/log\/messages CloudWatch Log Group to Splunk HEC Lambda Configuration
+
+> *** TO DO ***: Waiting for Splunk HEC URL AND Splunk HEC Token
+
+1. Verify that the \/aws\/ec2\/var\/log\/messages CloudWatch Log Group has no subscription configured
+
+   1. Open Chrome
+
+   1. Log to to the development AWS account
+
+   1. Select **CloudWatch**
+
+   1. Select **Log groups** under the "Logs" section in the leftmost panel
+
+   1. Select the radio button beside the following
+
+      ```
+      /aws/ec2/var/log/messages
+      ```
+
+   1. Select **Actions**
+
+   1. If **Remove Subscription Filter** is enabled, select it and remove the subscription
+
+1. Create a Lambda logger function for the \/aws\/ec2\/var\/log\/messages CloudWatch Log Group
+
+   1. Open Chrome
+
+   1. Log to to the development AWS account
+
+   1. Select **Lambda**
+
+   1. Select **Create function**
+
+   1. Select **Use a blueprint**
+
+   1. Enter the following in the **Filter by tags and attributes or search by keyword** text box
+
+      ```
+      splunk
+      ```
+
+   1. Select the following
+
+      ```
+      splunk-cloudwatch-logs-procesesor
+      ```
+
+   1. Select **Configure**
+
+   1. Configure the "Basic Information" section as follows
+
+      - **Function name:** clwg-logger-aws-ec2-var-log-messages
+
+      - **Execution role radio button:** {selected}
+
+      - **Execution role dropdown:** cwg_lambda_splunk_hec_role
+
+   1. Configure the "CloudWatch Logs Trigger" section
+
+      - **Log group:** /aws/ec2/var/log/messages
+
+      - **Filter name:** clwg_logging_filter_aws_ec2_var_log_messages
+
+      - **Enable trigger:** {checked}
+
+      > *** TO DO ***: Waiting for Splunk HEC URL AND Splunk HEC Token
+
+
+### Onboard additional CloudWatch log groups
+
+> *** TO DO ***
+
+## Appendix II: Get application load balancer access logs
+
+1. Set AWS profile
+
+   *Example for Sbx:*
+
+   ```ShellSession
+   $ export AWS_PROFILE=ab2d-sbx-sandbox
+   ```
+
+1. Set the region
+
+   *Example for Sbx:*
+
+   ```ShellSession
+   $ export REGION=us-east-1
+   ```
+
+1. Output a string that provides datetime and ip address of person or entity accessing the load balancer
+
+   *Example for Sbx:*
+
+   ```ShellSession
+   $ aws s3api list-objects --bucket ab2d-sbx-sandbox-cloudtrail --query "Contents[*].Key"
    ```
