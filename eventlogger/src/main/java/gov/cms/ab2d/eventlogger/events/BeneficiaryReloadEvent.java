@@ -1,29 +1,21 @@
-package gov.cms.ab2d.eventlogger;
+package gov.cms.ab2d.eventlogger.events;
 
+import gov.cms.ab2d.eventlogger.LoggableEvent;
 import lombok.Data;
-
-import java.time.OffsetDateTime;
 
 /**
  * Records when a bulk import is done of beneficiary data
  */
 @Data
-public class BeneficiaryReloadEventLogger implements LoggableEvent {
+public class BeneficiaryReloadEvent extends LoggableEvent {
     public enum FileType {
         OPT_OUT,
         CONTRACT_MAPPING
     }
-    // id
-    private Long id;
     // The type of load being performed
     private FileType fileType;
     // The file name we're loading from
     private String fileName;
     // The number of values loaded
     private int numberLoaded;
-
-    @Override
-    public boolean log(OffsetDateTime eventTime) {
-        return false;
-    }
 }

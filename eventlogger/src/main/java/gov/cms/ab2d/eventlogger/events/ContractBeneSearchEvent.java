@@ -1,9 +1,8 @@
-package gov.cms.ab2d.eventlogger;
+package gov.cms.ab2d.eventlogger.events;
 
+import gov.cms.ab2d.eventlogger.LoggableEvent;
 import lombok.AllArgsConstructor;
 import lombok.Data;
-
-import java.time.OffsetDateTime;
 
 /**
  * When beneficiaries EOB claims are searched from BFD. This is a summary object. Otherwise, we're creating
@@ -11,13 +10,9 @@ import java.time.OffsetDateTime;
  */
 @Data
 @AllArgsConstructor
-public class ContractBeneSearchEventLogger implements LoggableEvent {
-    // id
-    private Long id;
+public class ContractBeneSearchEvent extends LoggableEvent {
     // The contract searched
     private String contractNumber;
-    // The associated job
-    private String jobId;
     // The number of beneficiaries in the contract
     private int numInContract;
     // The number successfully searched
@@ -26,9 +21,4 @@ public class ContractBeneSearchEventLogger implements LoggableEvent {
     private int numOptedOut;
     // The number of errors that occured during searching
     private int numErrors;
-
-    @Override
-    public boolean log(OffsetDateTime eventTime) {
-        return false;
-    }
 }

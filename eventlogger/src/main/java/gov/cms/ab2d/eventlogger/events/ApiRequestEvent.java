@@ -1,18 +1,13 @@
-package gov.cms.ab2d.eventlogger;
+package gov.cms.ab2d.eventlogger.events;
 
+import gov.cms.ab2d.eventlogger.LoggableEvent;
 import lombok.Data;
-
-import java.time.OffsetDateTime;
 
 /**
  * Class to create and log an API request coming from a user
  */
 @Data
-public class ApiRequestEventLogger implements LoggableEvent {
-    // id
-    private Long id;
-    // The user doing the API request
-    private String user;
+public class ApiRequestEvent extends LoggableEvent {
     // The URL requested including request parameters
     private String url;
     // The IP address of the user doing the API request
@@ -21,9 +16,4 @@ public class ApiRequestEventLogger implements LoggableEvent {
     private String tokenHash;
     // The unique id of this request (to pair with the response)
     private String requestId;
-
-    @Override
-    public boolean log(OffsetDateTime eventTime) {
-        return false;
-    }
 }

@@ -1,18 +1,13 @@
-package gov.cms.ab2d.eventlogger;
+package gov.cms.ab2d.eventlogger.events;
 
+import gov.cms.ab2d.eventlogger.LoggableEvent;
 import lombok.Data;
-
-import java.time.OffsetDateTime;
 
 /**
  * Class to create and log an API request sent back to the user
  */
 @Data
-public class ApiResponseEventLogger implements LoggableEvent {
-    // id
-    private Long id;
-    // The user who wanted the answer
-    private String user;
+public class ApiResponseEvent extends LoggableEvent {
     // The HTTP response code
     private int responseCode;
     // The response sent - assuming not all the data
@@ -21,9 +16,4 @@ public class ApiResponseEventLogger implements LoggableEvent {
     private String description;
     // The unique id that this response is a response to
     private String requestId;
-
-    @Override
-    public boolean log(OffsetDateTime eventTime) {
-        return false;
-    }
 }

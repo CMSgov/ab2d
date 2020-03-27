@@ -1,10 +1,23 @@
 package gov.cms.ab2d.eventlogger;
 
+import lombok.Data;
+
 import java.time.OffsetDateTime;
 
 /**
  * Interface describing a loggable event
  */
-public interface LoggableEvent {
-    boolean log(OffsetDateTime eventTime);
+@Data
+public abstract class LoggableEvent {
+    // id
+    private Long id;
+
+    // Time the event occurred
+    private OffsetDateTime timeOfEvent;
+
+    // The user the event may be related to
+    private String user;
+
+    // The job the event may be related to
+    private String jobId;
 }
