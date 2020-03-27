@@ -13,6 +13,8 @@ sections:
   - name: For Developers
   - name: Status
     link: status
+  - name: AB2D Easy
+    link: ab2d-easy
 ctas:
 
 ---
