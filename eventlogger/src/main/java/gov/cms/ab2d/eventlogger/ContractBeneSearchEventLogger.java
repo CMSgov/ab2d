@@ -12,8 +12,10 @@ import java.time.OffsetDateTime;
 @Data
 @AllArgsConstructor
 public class ContractBeneSearchEventLogger implements LoggableEvent {
+    // id
+    private Long id;
     // The contract searched
-    private String contract;
+    private String contractNumber;
     // The associated job
     private String jobId;
     // The number of beneficiaries in the contract

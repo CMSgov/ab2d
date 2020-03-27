@@ -10,13 +10,14 @@ import java.time.OffsetDateTime;
  */
 @Data
 public class JobStatusChangeEventLogger implements LoggableEvent {
-
+    // id
+    private Long id;
     // The job id associated with the change
     private String jobId;
     // The old state
-    private JobStatus oldState;
+    private JobStatus oldStatus;
     // The new state
-    private JobStatus newState;
+    private JobStatus newStatus;
     // A description if needed whey this state occurred if it isn't obvious
     private String description;
 

@@ -18,10 +18,12 @@ public class ErrorEventLogger implements LoggableEvent {
         TOO_MANY_STATUS_REQUESTS,
         TOO_MANY_SEARCH_ERRORS
     }
+    // id
+    private Long id;
     // The type of error we're reporting
     private ErrorType errorType;
     // The user name associated with this error (if there is any)
-    private String userName;
+    private String user;
     // The IP address associated with this error (if there is any)
     private String ipAddress;
     // The job id associated with this error (if there is any)

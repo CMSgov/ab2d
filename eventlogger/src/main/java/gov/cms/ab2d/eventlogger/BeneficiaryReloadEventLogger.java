@@ -13,6 +13,8 @@ public class BeneficiaryReloadEventLogger implements LoggableEvent {
         OPT_OUT,
         CONTRACT_MAPPING
     }
+    // id
+    private Long id;
     // The type of load being performed
     private FileType fileType;
     // The file name we're loading from

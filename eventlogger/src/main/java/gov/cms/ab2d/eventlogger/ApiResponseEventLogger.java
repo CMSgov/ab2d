@@ -9,6 +9,8 @@ import java.time.OffsetDateTime;
  */
 @Data
 public class ApiResponseEventLogger implements LoggableEvent {
+    // id
+    private Long id;
     // The user who wanted the answer
     private String user;
     // The HTTP response code

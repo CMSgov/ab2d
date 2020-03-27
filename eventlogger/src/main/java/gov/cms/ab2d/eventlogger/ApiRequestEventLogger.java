@@ -9,6 +9,8 @@ import java.time.OffsetDateTime;
  */
 @Data
 public class ApiRequestEventLogger implements LoggableEvent {
+    // id
+    private Long id;
     // The user doing the API request
     private String user;
     // The URL requested including request parameters
