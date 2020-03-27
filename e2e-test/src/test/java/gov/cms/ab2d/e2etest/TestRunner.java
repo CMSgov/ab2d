@@ -221,8 +221,6 @@ public class TestRunner {
     private void verifyJsonFromfileDownload(String fileContent, JSONArray extension, OffsetDateTime since, String optOut) throws JSONException {
         // Some of the data that is returned will be variable and will change from request to request, so not every
         // JSON object can be verified
-        //final JSONObject fileJson = new JSONObject(fileContent);
-
         String[] jsonLines = fileContent.split("\n");
         for (String str : jsonLines) {
             if (str.isEmpty()) {
