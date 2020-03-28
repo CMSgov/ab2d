@@ -22,6 +22,7 @@ variable "host_port" {type = number}
 
 variable "alb_listener_protocol" {type = string}
 variable "alb_listener_certificate_arn" {type = string}
+variable "alb_internal" {type = bool}
 
 variable "desired_instances" {}
 variable "min_instances" {}

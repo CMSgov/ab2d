@@ -109,6 +109,10 @@ case $i in
   USE_EXISTING_IMAGES="true"
   shift # past argument=value
   ;;
+  --internet-facing=*)
+  INTERNET_FACING=${i#*=}
+  shift # past argument=value
+  ;;
   --auto-approve)
   AUTOAPPROVE="true"
   shift # past argument=value
@@ -125,6 +129,17 @@ if [ -z "${ENVIRONMENT}" ] || [ -z "${SHARED_ENVIRONMENT}" ] || [ -z "${VPC_ID}"
   echo "Try running the script like one of these options:"
   echo "./create-base-environment.sh --environment=dev --shared-environment=shared --vpc-id={vpc id} --owner=842420567215 --database-secret-datetime={YYYY-MM-DD-HH-MM-SS}"
   echo "./create-base-environment.sh --environment=dev --vpc-id={vpc id} --owner=842420567215 --database-secret-datetime={YYYY-MM-DD-HH-MM-SS} --debug-level={TRACE|DEBUG|INFO|WARN|ERROR}"
+  exit 1
+fi
+
+# Set whether load balancer is internal based on "internet-facing" parameter
+
+if [ "$INTERNET_FACING" == "false" ]; then
+  ALB_INTERNAL=true
+elif [ "$INTERNET_FACING" == "true" ]; then
+  ALB_INTERNAL=false
+else
+  echo "ERROR: the '--internet-facing' parameter must be true or false"
   exit 1
 fi
 
@@ -1897,6 +1912,7 @@ if [ -z "${AUTOAPPROVE}" ]; then
     --var "host_port=$ALB_LISTENER_PORT" \
     --var "alb_listener_protocol=$ALB_LISTENER_PROTOCOL" \
     --var "alb_listener_certificate_arn=$ALB_LISTENER_CERTIFICATE_ARN" \
+    --var "alb_internal=$ALB_INTERNAL" \
     --target module.api
   
   terraform apply \
@@ -1950,6 +1966,7 @@ else
     --var "host_port=$ALB_LISTENER_PORT" \
     --var "alb_listener_protocol=$ALB_LISTENER_PROTOCOL" \
     --var "alb_listener_certificate_arn=$ALB_LISTENER_CERTIFICATE_ARN" \
+    --var "alb_internal=$ALB_INTERNAL" \
     --target module.api \
     --auto-approve
 
@@ -1997,6 +2014,7 @@ if [ -z "${AUTOAPPROVE}" ]; then
     --var "host_port=$ALB_LISTENER_PORT" \
     --var "alb_listener_protocol=$ALB_LISTENER_PROTOCOL" \
     --var "alb_listener_certificate_arn=$ALB_LISTENER_CERTIFICATE_ARN" \
+    --var "alb_internal=$ALB_INTERNAL" \
     --target module.cloudwatch
 
 else
@@ -2010,6 +2028,7 @@ else
     --var "host_port=$ALB_LISTENER_PORT" \
     --var "alb_listener_protocol=$ALB_LISTENER_PROTOCOL" \
     --var "alb_listener_certificate_arn=$ALB_LISTENER_CERTIFICATE_ARN" \
+    --var "alb_internal=$ALB_INTERNAL" \
     --auto-approve
 
 fi
@@ -2021,6 +2040,7 @@ fi
 if [ -z "${AUTOAPPROVE}" ]; then
 
   terraform apply \
+    --var "alb_internal=$ALB_INTERNAL" \
     --target module.waf
 
 else
@@ -2028,6 +2048,7 @@ else
   # Apply the changes without prompting
 
   terraform apply \
+    --var "alb_internal=$ALB_INTERNAL" \
     --target module.waf \
     --auto-approve
 

@@ -225,7 +225,7 @@ JSON
 
 resource "aws_lb" "api" {
   name = "${lower(var.env)}"
-  internal = false
+  internal = var.alb_internal
   load_balancer_type = "application"
   security_groups = [aws_security_group.api.id, aws_security_group.load_balancer.id]
   subnets = var.controller_subnet_ids
