@@ -94,6 +94,10 @@
    [Create a "sandbox" folder in Jenkins](#create-a-sandbox-folder-in-jenkins)
    [Configure a Jenkins project for sandbox application deploy](#configure-a-jenkins-project-for-sandbox-application-deploy)
 1. [Upgrade Jenkins](#upgrade-jenkins)
+1. [Configure Jenkins user to allow for SSH](#configure-jenkins-user-to-allow-for-ssh)
+1. [Configure executors for Jenkins master](#configure-executors-for-jenkins-master)
+1. [Configure Jenkins CLI](#configure-jenkins-cli)
+1. [Export Jenkins projects](#export-jenkins-projects)
 1. [Verify VPC peering between the management and development AWS accounts](#verify-vpc-peering-between-the-management-and-development-aws-accounts)
 1. [Update existing AB2D static website in development](#update-existing-ab2d-static-website-in-development)
 1. [Update existing AB2D static website in production](#update-existing-ab2d-static-website-in-production)
@@ -1344,6 +1348,7 @@
      --ec2_maximum_instance_count_worker=1 \
      --database-secret-datetime=2020-01-02-09-15-01 \
      --build-new-images \
+     --internet-facing=false \
      --auto-approve
    ```
 
@@ -1369,6 +1374,7 @@
      --ec2_maximum_instance_count_worker=1 \
      --database-secret-datetime=2020-01-02-09-15-01 \
      --use-existing-images \
+     --internet-facing=false \
      --auto-approve
    ```
 
@@ -1396,6 +1402,7 @@
      --ec2_maximum_instance_count_worker=2 \
      --database-secret-datetime=2020-01-02-09-15-01 \
      --build-new-images \
+     --internet-facing=true \
      --auto-approve
    ```
 
@@ -1421,6 +1428,7 @@
      --ec2_maximum_instance_count_worker=2 \
      --database-secret-datetime=2020-01-02-09-15-01 \
      --use-existing-images \
+     --internet-facing=true \
      --auto-approve
    ```
 
@@ -1448,6 +1456,7 @@
      --ec2_maximum_instance_count_worker=2 \
      --database-secret-datetime=2020-01-02-09-15-01 \
      --build-new-images \
+     --internet-facing=false \
      --auto-approve
    ```
 
@@ -1473,6 +1482,7 @@
      --ec2_maximum_instance_count_worker=2 \
      --database-secret-datetime=2020-01-02-09-15-01 \
      --use-existing-images \
+     --internet-facing=false \
      --auto-approve
    ```
 
@@ -7184,6 +7194,18 @@
 
    1. Select **Apply**
 
+1. Restrict where the project can be run
+
+   1. Check **Restrict where this project can be run**
+
+   1. Type the following in the **Label Expression** text box
+
+      ```
+      agent01
+      ```
+
+   1. Select **Apply**
+
 1. Scroll down to the "Source Code Management" section
 
 1. Add source control management
@@ -7723,6 +7745,18 @@
 
    1. Select **Apply**
 
+1. Restrict where the project can be run
+
+   1. Check **Restrict where this project can be run**
+
+   1. Type the following in the **Label Expression** text box
+
+      ```
+      agent01
+      ```
+
+   1. Select **Apply**
+
 1. Scroll down to the "Source Code Management" section
 
 1. Add source control management
@@ -7908,6 +7942,247 @@
    1. Log on to the Jenkins GUI
 
 1. Verify that Jenkins has been updated to the new version
+
+## Configure Jenkins user to allow for SSH
+
+1. Log on to the Jenkins GUI (if not already logged in)
+
+   1. Ensure that you are connected to the Cisco VPN
+
+   1. Open Chrome
+
+   1. Enter the following in the address bar
+
+      *Format:*
+
+      > http://{jenkins master private ip}:8080
+
+      *Example:*
+
+      > http://10.242.37.74:8080
+
+   1. Log on to the Jenkins GUI
+
+1. Select **Manage Jenkins** from the leftmost panel
+
+1. Scroll to the "Security" section
+
+1. Select **Manage Users**
+
+1. Select the desired user
+
+1. Select **Configure** from the leftmost panel
+
+1. Scroll down to the "SSH Public Keys" section
+
+1. Copy the public key for the user to the clipboard
+
+   1. Open a terminal
+
+   1. Copy the public key for the user to the clipboard
+
+      ```ShellSession
+      $ cat ~/.ssh/id_rsa.pub | pbcopy
+      ```
+
+1. Return to the Jenkins GUI
+
+1. Paste the public key into the **SSH Public Keys** text box
+
+1. Select **Apply**
+
+1. Select **Save**
+
+## Configure executors for Jenkins master
+
+1. Log on to the Jenkins GUI (if not already logged in)
+
+   1. Ensure that you are connected to the Cisco VPN
+
+   1. Open Chrome
+
+   1. Enter the following in the address bar
+
+      *Format:*
+
+      > http://{jenkins master private ip}:8080
+
+      *Example:*
+
+      > http://10.242.37.74:8080
+
+   1. Log on to the Jenkins GUI
+
+1. Select **Manage Jenkins** in the leftmost panel
+
+1. Select **Configure System**
+
+1. Note the following
+
+   - the "number of executors" defaulted to 2
+
+   - the Jenkins master has 4 cores for its instance type
+
+   - typically you will want the number of executors to match the number of cores
+
+1. Type the following in the **# of executors** text box
+
+   ```
+   4
+   ```
+
+1. Select **Apply**
+
+1. Select **Save**
+
+## Configure Jenkins CLI
+
+1. Log on to the Jenkins GUI (if not already logged in)
+
+   1. Ensure that you are connected to the Cisco VPN
+
+   1. Open Chrome
+
+   1. Enter the following in the address bar
+
+      *Format:*
+
+      > http://{jenkins master private ip}:8080
+
+      *Example:*
+
+      > http://10.242.37.74:8080
+
+   1. Log on to the Jenkins GUI
+
+1. Select **Manage Jenkins** in the leftmost panel
+
+1. Scroll down to the "Tools and Actions" section
+
+1. Select **Jenkins CLI**
+
+1. Note the list of commands available for the Jenkins CLI
+
+1. Select **jenkins-cli.jar** to download the file
+
+1. Wait for the download to complete
+
+1. If propted by browser, select **Keep**
+
+1. Create a directory for the Jenkins CLI
+
+   ```ShellSession
+   $ sudo mkdir -p /opt/jenkins-cli
+   ```
+
+1. Move the extracted directory to the "/opt" directory
+
+   ```ShellSession
+   $ sudo mv ~/Downloads/jenkins-cli.jar /opt/jenkins-cli
+   ```
+
+1. Set permssions on jenkins-cli
+
+   ```ShellSession
+   $ sudo chown -R $(id -u):$(id -g -nr) /opt/jenkins-cli
+   $ sudo chmod 755 /opt/jenkins-cli
+   ```
+
+1. Verify that you can list the top level Jenkins projects
+
+   *Format:*
+
+   ```ShellSession
+   $ java -jar /opt/jenkins-cli/jenkins-cli.jar \
+     -s "http:/{jenkins master private ip}:8080" \
+     -auth {jenkins user}:{jenkins password} \
+     list-jobs
+   ```
+
+1. Verify that you can list Jenkins projects within the development folder
+
+   *Format:*
+
+   ```ShellSession
+   $ java -jar /opt/jenkins-cli/jenkins-cli.jar \
+     -s "http://{jenkins master private ip}:8080" \
+     -auth {jenkins user}:{jenkins password} \
+     list-jobs development
+   ```
+
+## Export Jenkins projects
+
+1. Change to the "Deploy" directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d/Deploy
+   ```
+
+1. Create a jenkins directory
+
+   ```ShellSession
+   $ mkdir -p jenkins
+   ```
+
+1. Export the development folder
+
+   *Format:*
+
+   ```ShellSession
+   $ java -jar /opt/jenkins-cli/jenkins-cli.jar \
+     -s "http://{jenkins master private ip}:8080" \
+     -auth {jenkins user}:{jenkins password} \
+     get-job development \
+     > ./jenkins/development.xml
+   ```
+
+1. Create a "development" directory under the "jenkins" directory
+
+   ```ShellSession
+   $ mkdir -p jenkins/development
+   ```
+
+1. Export the "deploy-to-development" project
+
+   *Format:*
+
+   ```ShellSession
+   $ java -jar /opt/jenkins-cli/jenkins-cli.jar \
+     -s "http://{jenkins master private ip}:8080" \
+     -auth {jenkins user}:{jenkins password} \
+     get-job development/deploy-to-development \
+     > ./jenkins/development/deploy-to-development.xml
+   ```
+
+1. Export the sandbox folder
+
+   *Format:*
+
+   ```ShellSession
+   $ java -jar /opt/jenkins-cli/jenkins-cli.jar \
+     -s "http://{jenkins master private ip}:8080" \
+     -auth {jenkins user}:{jenkins password} \
+     get-job sandbox \
+     > ./jenkins/sandbox.xml
+   ```
+
+1. Create a "sandbox" directory under the "jenkins" directory
+
+   ```ShellSession
+   $ mkdir -p jenkins/sandbox
+   ```
+
+1. Export the "deploy-to-sandbox" project
+
+   *Format:*
+
+   ```ShellSession
+   $ java -jar /opt/jenkins-cli/jenkins-cli.jar \
+     -s "http://{jenkins master private ip}:8080" \
+     -auth {jenkins user}:{jenkins password} \
+     get-job sandbox/deploy-to-sandbox \
+     > ./jenkins/sandbox/deploy-to-sandbox.xml
+   ```
 
 ## Verify VPC peering between the management and development AWS accounts
 
