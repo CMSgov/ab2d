@@ -9,7 +9,7 @@ import java.util.Map;
 
 @Configuration
 public class SqlMapperConfig {
-    Map<Class<? extends LoggableEvent>, SqlEventMapper> mapping = new HashMap<>() {
+    private Map<Class<? extends LoggableEvent>, SqlEventMapper> mapping = new HashMap<>() {
         {
             put(ApiRequestEvent.class, new ApiRequestEventMapper());
             put(ApiResponseEvent.class, new ApiResponseEventMapper());
