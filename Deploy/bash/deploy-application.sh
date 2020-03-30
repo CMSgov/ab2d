@@ -69,7 +69,7 @@ if [ -z "${CMS_ENV_PARAM}" ] \
     || [ -z "${EC2_MINIMUM_INSTANCE_COUNT_WORKER_PARAM}" ] \
     || [ -z "${EC2_MAXIMUM_INSTANCE_COUNT_WORKER_PARAM}" ] \
     || [ -z "${DATABASE_SECRET_DATETIME_PARAM}" ] \
-    || [ -z "${DEBUG_LEVEL_PARAM}" ] \\
+    || [ -z "${DEBUG_LEVEL_PARAM}" ] \
     || [ -z "${INTERNET_FACING_PARAM}" ]; then
   echo "ERROR: All parameters must be set."
   exit 1
