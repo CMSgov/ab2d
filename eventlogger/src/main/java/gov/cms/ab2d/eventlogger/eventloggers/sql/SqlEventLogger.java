@@ -4,9 +4,9 @@ import gov.cms.ab2d.eventlogger.EventLogger;
 import gov.cms.ab2d.eventlogger.EventLoggingException;
 import gov.cms.ab2d.eventlogger.LoggableEvent;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
-@Component
+@Service
 public class SqlEventLogger implements EventLogger {
     @Autowired
     private SqlMapperConfig mapperConfig;

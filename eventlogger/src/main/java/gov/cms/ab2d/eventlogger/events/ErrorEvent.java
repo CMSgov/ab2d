@@ -1,14 +1,14 @@
 package gov.cms.ab2d.eventlogger.events;
 
 import gov.cms.ab2d.eventlogger.LoggableEvent;
-import lombok.AllArgsConstructor;
 import lombok.Data;
+
+import java.time.OffsetDateTime;
 
 /**
  * Logs exceptions that occur. I assume this logger will increase the most over time
  */
 @Data
-@AllArgsConstructor
 public class ErrorEvent extends LoggableEvent {
     public enum ErrorType {
         FILE_ALREADY_DELETED,
@@ -21,4 +21,10 @@ public class ErrorEvent extends LoggableEvent {
     private ErrorType errorType;
     // A description of the error
     private String description;
+
+    public ErrorEvent(String user, String jobId, ErrorType errorType, String description) {
+        super(OffsetDateTime.now(), user, jobId);
+        this.errorType = errorType;
+        this.description = description;
+    }
 }

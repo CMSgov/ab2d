@@ -3,6 +3,8 @@ package gov.cms.ab2d.eventlogger.events;
 import gov.cms.ab2d.eventlogger.LoggableEvent;
 import lombok.Data;
 
+import java.time.OffsetDateTime;
+
 /**
  * Records when a bulk import is done of beneficiary data
  */
@@ -18,4 +20,11 @@ public class BeneficiaryReloadEvent extends LoggableEvent {
     private String fileName;
     // The number of values loaded
     private int numberLoaded;
+
+    public BeneficiaryReloadEvent(FileType fileType, String fileName, int numLoaded) {
+        super(OffsetDateTime.now(), null, null);
+        this.fileType = fileType;
+        this.fileName = fileName;
+        this.numberLoaded = numLoaded;
+    }
 }
