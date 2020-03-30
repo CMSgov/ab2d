@@ -36,6 +36,8 @@ ctas:
 </style>
 
 <script>
+    const baseUrl = 'https://sandbox.ab2d.cms.gov/';
+
     function retrieveOktaToken(event) {
         event.preventDefault();
     
@@ -46,7 +48,7 @@ ctas:
             'clientSecret': clientSecret
         };
         $.ajax({
-            url: 'http://localhost:8080/oktaproxy',
+            url: baseUrl + 'oktaproxy',
             data: formData,
             dataType: 'json',
             type: 'post',
