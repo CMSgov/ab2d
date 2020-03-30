@@ -29,6 +29,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static gov.cms.ab2d.common.util.Constants.HEALTH_ENDPOINT;
+import static gov.cms.ab2d.common.util.Constants.OKTA_PROXY_ENDPOINT;
 import static gov.cms.ab2d.common.util.Constants.STATUS_ENDPOINT;
 
 @Slf4j
@@ -155,8 +156,8 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
             return true;
         }
 
-        if (requestUri.startsWith(HEALTH_ENDPOINT) || requestUri.startsWith(STATUS_ENDPOINT)) {
-            log.info("Health or maintenance requested");
+        if (requestUri.startsWith(HEALTH_ENDPOINT) || requestUri.startsWith(STATUS_ENDPOINT) || requestUri.startsWith(OKTA_PROXY_ENDPOINT)) {
+            log.info("Health, okta proxy, or maintenance requested");
             return true;
         }
         return false;
