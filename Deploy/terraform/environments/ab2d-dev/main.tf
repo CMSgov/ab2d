@@ -102,6 +102,7 @@ module "api" {
   alb_listener_protocol         = var.alb_listener_protocol
   alb_listener_certificate_arn  = var.alb_listener_certificate_arn
   alb_internal                  = var.alb_internal
+  alb_security_group_ip_range   = var.alb_security_group_ip_range
 }
 
 # LSH SKIP FOR NOW BEGIN

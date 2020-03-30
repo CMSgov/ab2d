@@ -7194,6 +7194,28 @@
 
    1. Select **Apply**
 
+1. Add the "INTERNET_FACING_PARAM" parameter
+
+   1. Select **Add Parameter**
+
+   1. Select **String Parameter**
+
+   1. Configure the "String Parameter" as follows
+
+      - **Name:** INTERNET_FACING_PARAM
+
+      - **Default Value:** false
+
+      - **Description:**
+
+        ```
+	Corresponds to terraform logging level.
+	```
+
+   1. Check **Trim the string**
+
+   1. Select **Apply**
+
 1. Restrict where the project can be run
 
    1. Check **Restrict where this project can be run**
@@ -7734,6 +7756,28 @@
       - **Name:** DEBUG_LEVEL_PARAM
 
       - **Default Value:** WARN
+
+      - **Description:**
+
+        ```
+	Corresponds to terraform logging level.
+	```
+
+   1. Check **Trim the string**
+
+   1. Select **Apply**
+
+1. Add the "INTERNET_FACING_PARAM" parameter
+
+   1. Select **Add Parameter**
+
+   1. Select **String Parameter**
+
+   1. Configure the "String Parameter" as follows
+
+      - **Name:** INTERNET_FACING_PARAM
+
+      - **Default Value:** true
 
       - **Description:**
 

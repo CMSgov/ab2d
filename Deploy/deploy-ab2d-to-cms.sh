@@ -445,6 +445,16 @@ if [ -z "${NEW_RELIC_LICENSE_KEY}" ]; then
   NEW_RELIC_LICENSE_KEY=$(./get-database-secret.py $CMS_ENV new_relic_license_key $DATABASE_SECRET_DATETIME)
 fi
 
+# Create or get private ip address CIDR range for VPN
+
+VPN_PRIVATE_IP_ADDRESS_CIDR_RANGE=$(./get-database-secret.py $CMS_ENV vpn_private_ip_address_cidr_range $DATABASE_SECRET_DATETIME)
+if [ -z "${VPN_PRIVATE_IP_ADDRESS_CIDR_RANGE}" ]; then
+  echo "*********************************************************"
+  ./create-database-secret.py $CMS_ENV vpn_private_ip_address_cidr_range $KMS_KEY_ID $DATABASE_SECRET_DATETIME
+  echo "*********************************************************"
+  VPN_PRIVATE_IP_ADDRESS_CIDR_RANGE=$(./get-database-secret.py $CMS_ENV vpn_private_ip_address_cidr_range $DATABASE_SECRET_DATETIME)
+fi
+
 # If any databse secret produced an error, exit the script
 
 if [ "${DATABASE_USER}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
@@ -456,7 +466,8 @@ if [ "${DATABASE_USER}" == "ERROR: Cannot get database secret because KMS key is
   || [ "${HICN_HASH_PEPPER}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
   || [ "${HICN_HASH_ITER}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
   || [ "${NEW_RELIC_APP_NAME}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
-  || [ "${NEW_RELIC_LICENSE_KEY}" == "ERROR: Cannot get database secret because KMS key is disabled!" ]; then
+  || [ "${NEW_RELIC_LICENSE_KEY}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
+  || [ "${VPN_PRIVATE_IP_ADDRESS_CIDR_RANGE}" == "ERROR: Cannot get database secret because KMS key is disabled!" ]; then
     echo "ERROR: Cannot get secrets because KMS key is disabled!"
     exit 1
 fi
@@ -1878,10 +1889,12 @@ if [ "$CMS_ENV" == "ab2d-sbx-sandbox" ]; then
   ALB_LISTENER_CERTIFICATE_ARN=$(aws --region "${REGION}" acm list-certificates \
     --query "CertificateSummaryList[?DomainName=='sandbox.ab2d.cms.gov'].CertificateArn" \
     --output text)
+  ALB_SECURITY_GROUP_IP_RANGE="0.0.0.0/0"
 else
   ALB_LISTENER_PORT=80
   ALB_LISTENER_PROTOCOL="HTTP"
   ALB_LISTENER_CERTIFICATE_ARN=""
+  ALB_SECURITY_GROUP_IP_RANGE="${VPN_PRIVATE_IP_ADDRESS_CIDR_RANGE}"
 fi
 
 # Run automation for API and worker based on auto approve parameter
@@ -1913,6 +1926,7 @@ if [ -z "${AUTOAPPROVE}" ]; then
     --var "alb_listener_protocol=$ALB_LISTENER_PROTOCOL" \
     --var "alb_listener_certificate_arn=$ALB_LISTENER_CERTIFICATE_ARN" \
     --var "alb_internal=$ALB_INTERNAL" \
+    --var "alb_security_group_ip_range=$ALB_SECURITY_GROUP_IP_RANGE" \
     --target module.api
   
   terraform apply \
@@ -1967,6 +1981,7 @@ else
     --var "alb_listener_protocol=$ALB_LISTENER_PROTOCOL" \
     --var "alb_listener_certificate_arn=$ALB_LISTENER_CERTIFICATE_ARN" \
     --var "alb_internal=$ALB_INTERNAL" \
+    --var "alb_security_group_ip_range=$ALB_SECURITY_GROUP_IP_RANGE" \
     --target module.api \
     --auto-approve
 
@@ -2015,6 +2030,7 @@ if [ -z "${AUTOAPPROVE}" ]; then
     --var "alb_listener_protocol=$ALB_LISTENER_PROTOCOL" \
     --var "alb_listener_certificate_arn=$ALB_LISTENER_CERTIFICATE_ARN" \
     --var "alb_internal=$ALB_INTERNAL" \
+    --var "alb_security_group_ip_range=$ALB_SECURITY_GROUP_IP_RANGE" \
     --target module.cloudwatch
 
 else
@@ -2029,6 +2045,7 @@ else
     --var "alb_listener_protocol=$ALB_LISTENER_PROTOCOL" \
     --var "alb_listener_certificate_arn=$ALB_LISTENER_CERTIFICATE_ARN" \
     --var "alb_internal=$ALB_INTERNAL" \
+    --var "alb_security_group_ip_range=$ALB_SECURITY_GROUP_IP_RANGE" \
     --auto-approve
 
 fi
@@ -2041,6 +2058,7 @@ if [ -z "${AUTOAPPROVE}" ]; then
 
   terraform apply \
     --var "alb_internal=$ALB_INTERNAL" \
+    --var "alb_security_group_ip_range=$ALB_SECURITY_GROUP_IP_RANGE" \
     --target module.waf
 
 else
@@ -2049,6 +2067,7 @@ else
 
   terraform apply \
     --var "alb_internal=$ALB_INTERNAL" \
+    --var "alb_security_group_ip_range=$ALB_SECURITY_GROUP_IP_RANGE" \
     --target module.waf \
     --auto-approve
 

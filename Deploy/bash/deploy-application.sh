@@ -69,8 +69,20 @@ if [ -z "${CMS_ENV_PARAM}" ] \
     || [ -z "${EC2_MINIMUM_INSTANCE_COUNT_WORKER_PARAM}" ] \
     || [ -z "${EC2_MAXIMUM_INSTANCE_COUNT_WORKER_PARAM}" ] \
     || [ -z "${DATABASE_SECRET_DATETIME_PARAM}" ] \
-    || [ -z "${DEBUG_LEVEL_PARAM}" ]; then
+    || [ -z "${DEBUG_LEVEL_PARAM}" ] \\
+    || [ -z "${INTERNET_FACING_PARAM}" ]; then
   echo "ERROR: All parameters must be set."
+  exit 1
+fi
+
+# Set whether load balancer is internal based on "internet-facing" parameter
+
+if [ "$INTERNET_FACING_PARAM" == "false" ]; then
+  ALB_INTERNAL=true
+elif [ "$INTERNET_FACING_PARAM" == "true" ]; then
+  ALB_INTERNAL=false
+else
+  echo "ERROR: the '--internet-facing' parameter must be true or false"
   exit 1
 fi
 
@@ -341,6 +353,10 @@ if [ -z "${NEW_RELIC_LICENSE_KEY}" ]; then
   exit 1
 fi
 
+# Get private ip address CIDR range for VPN
+
+VPN_PRIVATE_IP_ADDRESS_CIDR_RANGE=$(./get-database-secret.py $CMS_ENV vpn_private_ip_address_cidr_range $DATABASE_SECRET_DATETIME)
+
 # If any databse secret produced an error, exit the script
 
 if [ "${DATABASE_USER}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
@@ -352,7 +368,8 @@ if [ "${DATABASE_USER}" == "ERROR: Cannot get database secret because KMS key is
   || [ "${HICN_HASH_PEPPER}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
   || [ "${HICN_HASH_ITER}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
   || [ "${NEW_RELIC_APP_NAME}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
-  || [ "${NEW_RELIC_LICENSE_KEY}" == "ERROR: Cannot get database secret because KMS key is disabled!" ]; then
+  || [ "${NEW_RELIC_LICENSE_KEY}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
+  || [ "${VPN_PRIVATE_IP_ADDRESS_CIDR_RANGE}" == "ERROR: Cannot get database secret because KMS key is disabled!" ]; then
     echo "ERROR: Cannot get secrets because KMS key is disabled!"
     exit 1
 fi
@@ -962,10 +979,12 @@ if [ "$CMS_ENV" == "ab2d-sbx-sandbox" ]; then
   ALB_LISTENER_CERTIFICATE_ARN=$(aws --region "${REGION}" acm list-certificates \
     --query "CertificateSummaryList[?DomainName=='sandbox.ab2d.cms.gov'].CertificateArn" \
     --output text)
+  ALB_SECURITY_GROUP_IP_RANGE="0.0.0.0/0"
 else
   ALB_LISTENER_PORT=80
   ALB_LISTENER_PROTOCOL="HTTP"
   ALB_LISTENER_CERTIFICATE_ARN=""
+  ALB_SECURITY_GROUP_IP_RANGE="${VPN_PRIVATE_IP_ADDRESS_CIDR_RANGE}"
 fi
 
 # Run automation for API and worker
@@ -992,6 +1011,8 @@ terraform apply \
   --var "host_port=$ALB_LISTENER_PORT" \
   --var "alb_listener_protocol=$ALB_LISTENER_PROTOCOL" \
   --var "alb_listener_certificate_arn=$ALB_LISTENER_CERTIFICATE_ARN" \
+  --var "alb_internal=$ALB_INTERNAL" \
+  --var "alb_security_group_ip_range=$ALB_SECURITY_GROUP_IP_RANGE" \
   --target module.api \
   --auto-approve
 
@@ -1037,6 +1058,8 @@ terraform apply \
   --var "host_port=$ALB_LISTENER_PORT" \
   --var "alb_listener_protocol=$ALB_LISTENER_PROTOCOL" \
   --var "alb_listener_certificate_arn=$ALB_LISTENER_CERTIFICATE_ARN" \
+  --var "alb_internal=$ALB_INTERNAL" \
+  --var "alb_security_group_ip_range=$ALB_SECURITY_GROUP_IP_RANGE" \
   --auto-approve
 
 #
@@ -1044,6 +1067,8 @@ terraform apply \
 #
 
 terraform apply \
+  --var "alb_internal=$ALB_INTERNAL" \
+  --var "alb_security_group_ip_range=$ALB_SECURITY_GROUP_IP_RANGE" \
   --target module.waf \
   --auto-approve
 

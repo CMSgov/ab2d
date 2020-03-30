@@ -120,7 +120,7 @@ resource "aws_security_group_rule" "load_balancer_access" {
   from_port   = var.host_port
   to_port     = var.host_port
   protocol    = "tcp"
-  cidr_blocks = ["0.0.0.0/0"]
+  cidr_blocks = [var.alb_security_group_ip_range]
   security_group_id = aws_security_group.load_balancer.id
 }
 

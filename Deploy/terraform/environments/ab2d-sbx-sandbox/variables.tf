@@ -364,3 +364,15 @@ variable "alb_listener_certificate_arn" {
   default     = ""
   description = "Please pass this on command line and not as a value here"
 }
+
+variable "alb_internal" {
+  type        = bool
+  default     = true
+  description = "Please pass this on command line and not as a value here"
+}
+
+variable "alb_security_group_ip_range" {
+  type        = string
+  default     = "0.0.0.0/0"
+  description = "Please pass this on command line and not as a value here"
+}
