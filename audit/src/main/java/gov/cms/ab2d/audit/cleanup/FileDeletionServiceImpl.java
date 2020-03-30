@@ -97,8 +97,8 @@ public class FileDeletionServiceImpl implements FileDeletionService {
 
                 if (deleteCheckTime.isBefore(oldestDeletableTime) && filenameHasValidExtension) {
                     eventLogger.log(new FileEvent(
-                            job.getUser() == null ? null : job.getUser().getUsername(),
-                            job.getJobUuid(), new File(path.toUri()), FileEvent.FileStatus.DELETE));
+                            job == null || job.getUser() == null ? null : job.getUser().getUsername(),
+                            jobUuid, new File(path.toUri()), FileEvent.FileStatus.DELETE));
                     Files.delete(path);
                     log.info("Deleted file {}", path);
                 } else {
