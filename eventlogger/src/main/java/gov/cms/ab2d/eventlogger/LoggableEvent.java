@@ -20,4 +20,10 @@ public abstract class LoggableEvent {
 
     // The job the event may be related to
     private String jobId;
+
+    public LoggableEvent(OffsetDateTime timeOfEvent, String user, String jobId) {
+        this.timeOfEvent = timeOfEvent;
+        this.user = user;
+        this.jobId = jobId;
+    }
 }

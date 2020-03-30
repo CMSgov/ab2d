@@ -1,0 +1,26 @@
+package gov.cms.ab2d.eventlogger.eventloggers.sql;
+
+import gov.cms.ab2d.eventlogger.LoggableEvent;
+import gov.cms.ab2d.eventlogger.events.*;
+import org.springframework.context.annotation.Configuration;
+
+import java.util.HashMap;
+import java.util.Map;
+
+@Configuration
+public class SqlMapperConfig {
+    Map<Class<? extends LoggableEvent>, SqlEventMapper> mapping = new HashMap<>() {
+        {
+            put(ApiRequestEvent.class, new ApiRequestEventMapper());
+            put(ApiResponseEvent.class, new ApiResponseEventMapper());
+            put(BeneficiaryReloadEvent.class, new BeneficiaryReloadEventMapper());
+            put(ContractBeneSearchEvent.class, new ContractBeneSearchEventMapper());
+            put(ErrorEvent.class, new ErrorEventSqlMapper());
+            put(FileEvent.class, new FilesEventMapper());
+        }
+    };
+
+    public SqlEventMapper getMapper(Class<? extends LoggableEvent> event) {
+        return mapping.get(event);
+    }
+}

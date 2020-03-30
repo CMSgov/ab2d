@@ -3,6 +3,8 @@ package gov.cms.ab2d.audit.cleanup;
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.service.JobService;
 import gov.cms.ab2d.common.service.ResourceNotFoundException;
+import gov.cms.ab2d.eventlogger.EventLogger;
+import gov.cms.ab2d.eventlogger.events.FileEvent;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -32,6 +34,9 @@ public class FileDeletionServiceImpl implements FileDeletionService {
 
     @Autowired
     private JobService jobService;
+
+    @Autowired
+    private EventLogger eventLogger;
 
     private static final String FILE_EXTENSION = ".ndjson";
 
@@ -91,6 +96,9 @@ public class FileDeletionServiceImpl implements FileDeletionService {
                 final boolean filenameHasValidExtension = isFilenameExtensionValid(path);
 
                 if (deleteCheckTime.isBefore(oldestDeletableTime) && filenameHasValidExtension) {
+                    eventLogger.log(new FileEvent(
+                            job.getUser() == null ? null : job.getUser().getUsername(),
+                            job.getJobUuid(), new File(path.toUri()), FileEvent.FileStatus.DELETE));
                     Files.delete(path);
                     log.info("Deleted file {}", path);
                 } else {

@@ -1,11 +1,18 @@
 package gov.cms.ab2d.eventlogger.events;
 
 import gov.cms.ab2d.eventlogger.LoggableEvent;
-import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.codec.binary.Hex;
+import org.apache.commons.codec.digest.DigestUtils;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.time.OffsetDateTime;
 
 @Data
-@AllArgsConstructor
+@Slf4j
 public class FileEvent extends LoggableEvent {
     public enum FileStatus {
         OPEN,
@@ -20,4 +27,20 @@ public class FileEvent extends LoggableEvent {
     private long fileSize;
     // The content hash so we can compare different files
     private String fileHash;
+
+    public FileEvent(String user, String jobId, File file, FileStatus status) {
+        super(OffsetDateTime.now(), user, jobId);
+        this.fileName = file.getName();
+        this.status = status;
+        this.fileSize = file.length();
+        this.fileHash = generateChecksum(file);
+    }
+
+    private String generateChecksum(File file) {
+        try (FileInputStream fileInputStream = new FileInputStream(file)) {
+            return Hex.encodeHexString(DigestUtils.sha256(fileInputStream));
+        } catch (IOException e) {
+            return "";
+        }
+    }
 }
