@@ -22,7 +22,18 @@ ctas:
 
 <style type="text/css">
     #okta-token-status-message {
-        display: 'hidden'
+        display: none;
+        padding: 5px;
+        color: black;
+    }
+    
+    .failure-status {
+        border: 1px solid red;
+        background-color: lightcoral;
+    }
+    .success-status {
+        border: 1px solid green;
+        background-color: lightgreen;
     }
 </style>
 
@@ -30,51 +41,29 @@ ctas:
     function retrieveOktaToken(event) {
         event.preventDefault();
     
-        const clientId = $('#clientID').val();
+        const clientID = $('#clientID').val();
         const clientSecret = $('#clientSecret').val();
-        const authorization = btoa(clientId + ':' + clientSecret);
-        console.log("Auth: " + authorization); 
+        const formData = {
+            'clientID': clientID,
+            'clientSecret': clientSecret
+        };
         $.ajax({
-            url: 'https://test.idp.idm.cms.gov/oauth2/aus2r7y3gdaFMKBol297/v1/token?grant_type=client_credentials&scope=clientCreds',
+            url: 'http://localhost:8080/oktaproxy',
+            data: formData,
             dataType: 'json',
             type: 'post',
-            contentType: 'application/json',
             headers: {
-                'Authorization': 'Basic ' + authorization,
                 'Content-Type': 'application/x-www-form-urlencoded',
-                'Origin': 'ab2d-easy'
             },
             success: function (data) {
-                console.log(data);
+                token = data.accessToken;
+                $("#okta-token-status-message").html("Successfully retrieved okta token").addClass("success-status").show();
             },
             error: function(data) {
-                console.log(data);
+                $("#okta-token-status-message").html("Failed to retrieve okta token. Please try again.").addClass("failure-status").show();
             }
         });
     }
-    
-    /*let baseUrl = 'https://sandbox.ab2d.cms.gov/';
-    
-    
-    function pollServer() {
-        $.get(baseUrl + 'status', function(data) {
-            if(data.maintenanceMode === 'false') {
-                $('#status-content').html("<img style=\"vertical-align: middle;\" src='assets/img/status-up.png' /> <span>The system is operating normally</span>");                     
-            } else {
-                $('#status-content').html("<img style=\"vertical-align: middle;\" src='assets/img/status-down.png' /> <span>The system is currently in maintenance mode. Please check back later.</span>");
-            }
-        })
-        .fail(function() {
-            $('#status-content').html("<img style=\"vertical-align: middle;\" src='assets/img/status-down.png' /> <span>The system is currently unreachable. Please check back later.</span>"); 
-        })
-        .always(function() {
-            setTimeout(pollServer, 10000);
-        });
-    }
-   
-    $(document).ready(function() {
-        pollServer();
-    });*/
 </script>
 
 <div id="ab2d-easy-section" style="padding: 5px;">
@@ -103,5 +92,7 @@ ctas:
         <button class="btn btn-primary" type="submit" onclick="retrieveOktaToken(event);">Get Token</button>
     </form>
     
-    <div id="okta-token-status-message"></div>
+    <br />
+    
+    <div class="col-md-6 mb-3" id="okta-token-status-message"></div>
 </div>
