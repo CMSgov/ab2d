@@ -54,13 +54,10 @@ resource "random_shuffle" "public_subnets" {
   result_count = 1
 }
 
-# LSH SKIP FOR NOW BEGIN
-# vpc_security_group_ids = [aws_security_group.deployment_controller.id,var.enterprise-tools-sec-group-id,var.vpn-private-sec-group-id]
-# LSH SKIP FOR NOW END
 resource "aws_instance" "deployment_controller" {
   ami = var.ami_id
   instance_type = var.instance_type
-  vpc_security_group_ids = [aws_security_group.deployment_controller.id]
+  vpc_security_group_ids = [aws_security_group.deployment_controller.id,var.vpn_private_sec_group_id]
   disable_api_termination = false
   key_name = var.ssh_key_name
   monitoring = true
