@@ -14,7 +14,6 @@
 
 	<properties>
 		<project.root>${basedir}/..</project.root>
-		<maven.test.skip>true</maven.test.skip>
 	</properties>
 
 	<dependencies>

@@ -14,7 +14,6 @@
         <project.root>${basedir}/..</project.root>
         <springfox.version>2.9.2</springfox.version>
         <okta-jwt.version>0.4.0</okta-jwt.version>
-        <maven.test.skip>true</maven.test.skip>
     </properties>
 
     <dependencies>
