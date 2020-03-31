@@ -88,6 +88,7 @@
    [Configure the SSH plugin](#configure-the-ssh-plugin)
    [Install the "Scheduled Build" plugin](#install-the-scheduled-build-plugin)
    [Configure GitHub plugin](#configure-github-plugin)
+   [Install and configure the GitHub Authentication Plugin](#install-and-configure-the-github-uthentication-plugin)
    [Add the Jenkins agent node](#add-the-jenkins-agent-node)
    [Create a "development" folder in Jenkins](#create-a-development-folder-in-jenkins)
    [Configure a Jenkins project for development application deploy](#configure-a-jenkins-project-for-development-application-deploy)
@@ -4517,10 +4518,6 @@
 
    > http://{jenkins master private ip}:8080
 
-   *Example:*
-
-   > http://10.242.37.74:8080
-
 1. Bookmark Jenkins for your browser
 
 1. Connect to Jenkins master
@@ -4582,9 +4579,9 @@
 
    1. Note the Jenkins URL
 
-      *Example:*
+      *Format:*
 
-      > http://10.242.37.74:8080/
+      > http://{jenkins master private ip}:8080
 
    1. Select **Save and Finish**
 
@@ -6210,10 +6207,6 @@
 
       > http://{jenkins master private ip}:8080
 
-      *Example:*
-
-      > http://10.242.37.74:8080
-
    1. Log on to the Jenkins GUI
 
 1. Select **Credentials** from the leftmost panel
@@ -6258,10 +6251,6 @@
 
       > http://{jenkins master private ip}:8080
 
-      *Example:*
-
-      > http://10.242.37.74:8080
-
    1. Log on to the Jenkins GUI
       
 1. Select **Credentials** from the leftmost panel
@@ -6299,10 +6288,6 @@
       *Format:*
 
       > http://{jenkins master private ip}:8080
-
-      *Example:*
-
-      > http://10.242.37.74:8080
 
    1. Log on to the Jenkins GUI
       
@@ -6349,10 +6334,6 @@
       *Format:*
 
       > http://{jenkins master private ip}:8080
-
-      *Example:*
-
-      > http://10.242.37.74:8080
 
    1. Log on to the Jenkins GUI
       
@@ -6403,10 +6384,6 @@
       *Format:*
 
       > http://{jenkins master private ip}:8080
-
-      *Example:*
-
-      > http://10.242.37.74:8080
 
    1. Log on to the Jenkins GUI
       
@@ -6482,10 +6459,6 @@
 
       > http://{jenkins master private ip}:8080
 
-      *Example:*
-
-      > http://10.242.37.74:8080
-
    1. Log on to the Jenkins GUI
       
 1. Note that the "Scheduled Build" plugin acts like a Linux "at" command
@@ -6542,10 +6515,6 @@
 
       > http://{jenkins master private ip}:8080
 
-      *Example:*
-
-      > http://10.242.37.74:8080
-
    1. Log on to the Jenkins GUI
       
 1. Select **Manage Jenkins**
@@ -6577,6 +6546,126 @@
    ```
 
 1. Select **Save**
+
+### Register a new OAuth application with GitHub
+
+1. Open Chrome
+
+1. Enter the following in the address bar
+
+   > https://github.com/settings/applications/new
+
+1. Configure the "Register a new OAuth application" page as follows
+
+   - **Application name:** jenkins-github-authentication
+
+   - **Homepage URL:** https://ab2d.cms.gov
+
+   - **Authorization callback URL:** http://{private ip address of jenkins master}:8080/securityRealm/finishLogin
+
+1. Select **Register application**
+
+1. Select the GitHub icon in the top left of the page
+
+1. Note that the application is owned by the user that created it
+   
+### Install and configure the GitHub Authentication Plugin
+
+1. Verify that you can navigate to the "jenkins-github-authentication" OAuth application
+
+   1. Select your GitHub profile icon in the top right of the page
+
+   1. Select **Settings**
+
+   1. Select **Developer settings** from the leftmost panel
+
+   1. Select **OAuth apps** from the leftmost panel
+
+   1. Select **jenkins-github-authentication**
+
+   1. Note the following settings for the OAuth application
+
+      - Client ID
+
+      - Client Secret
+
+1. Log on to the Jenkins GUI (if not already logged in)
+
+   1. Ensure that you are connected to the Cisco VPN
+
+   1. Open Chrome
+
+   1. Enter the following in the address bar
+
+      *Format:*
+
+      > http://{jenkins master private ip}:8080
+
+   1. Log on to the Jenkins GUI
+
+1. Select **Manage Jenkins** from the leftmost panel
+
+1. Select **Manage Plugins**
+
+1. Select the **Available** tab
+
+1. Select **Check now**
+
+1. Scroll down to "GitHub Authentication"
+
+1. Check **GitHub Authentication**
+
+1. Select **Download now and install after restart**
+
+1. Check **Restart Jenkins when installation is complete and no jobs are running**
+
+1. Wait for Jenkins to restart
+
+1. Log on to Jenkins
+
+1. Select **Manage Jenkins** in the leftmost panel
+
+1. Scroll down to the "Security" section
+
+1. Select **Configure Global Security** under the "Security" section
+
+1. Select the **Github Authentication Plugin** radio button under "Security Realm" within the "Authentication" section
+
+1. Configure "Global GitHub OAuth Settings" as follows
+
+   - **GitHub Web URI:** https://github.com
+
+   - **GitHub API URI:** https://api.github.com
+
+   - **Client ID:** {client id for the 'jenkins-github-authentication' github application}
+
+   - **Client Secret:** {client id for the 'jenkins-github-authentication' github application}
+
+   - **OAuth Scope(s):** read:org,user:email,repo
+
+1. Select **Apply**
+
+1. Select **Save**
+
+1. Log out of Jenkins
+
+1. Open Jenkins again
+
+1. Note the following appears on the "Authorize jenkins-github-authentication" page
+
+   - **jenkins-github-authentication by lhanekam:** wants to access your lhanekam account
+
+   - **Organizations and teams:** Read-only access
+
+   - **Repositories:** Public and private
+
+   - **Personal user data:** Email addresses (read-only)
+
+   - **Organization access:** CMSgov
+
+1. Select **Authorize lhanekam**
+
+1. Enter password for lhanekam
 
 ### Add the Jenkins agent node
 
@@ -6669,10 +6758,6 @@
       *Format:*
 
       > http://{jenkins master private ip}:8080
-
-      *Example:*
-
-      > http://10.242.37.74:8080
 
    1. Log on to the Jenkins GUI
       
@@ -6780,10 +6865,6 @@
 
       > http://{jenkins master private ip}:8080
 
-      *Example:*
-
-      > http://10.242.37.74:8080
-
    1. Log on to the Jenkins GUI
 
 1. Select **New Item** from the leftmost panel
@@ -6817,10 +6898,6 @@
       *Format:*
 
       > http://{jenkins master private ip}:8080
-
-      *Example:*
-
-      > http://10.242.37.74:8080
 
    1. Log on to the Jenkins GUI
 
@@ -7353,10 +7430,6 @@
 
       > http://{jenkins master private ip}:8080
 
-      *Example:*
-
-      > http://10.242.37.74:8080
-
    1. Log on to the Jenkins GUI
 
 1. Select **New Item** from the leftmost panel
@@ -7390,10 +7463,6 @@
       *Format:*
 
       > http://{jenkins master private ip}:8080
-
-      *Example:*
-
-      > http://10.242.37.74:8080
 
    1. Log on to the Jenkins GUI
 
@@ -7912,10 +7981,6 @@
 
       > http://{jenkins master private ip}:8080
 
-      *Example:*
-
-      > http://10.242.37.74:8080
-
    1. Log on to the Jenkins GUI
 
 1. Select **Manage Jenkins** from the leftmost panel
@@ -7949,6 +8014,12 @@
    $ sudo systemctl stop jenkins
    ```
 
+1. Clear the jenkins log
+
+   ```ShellSession
+   $ sudo cat /dev/null > /var/log/jenkins/jenkins.log
+   ```
+   
 1. Upgrade Jenkins
 
    ```ShellSession
@@ -7979,13 +8050,33 @@
 
       > http://{jenkins master private ip}:8080
 
-      *Example:*
-
-      > http://10.242.37.74:8080
-
    1. Log on to the Jenkins GUI
 
 1. Verify that Jenkins has been updated to the new version
+
+1. Select **Manage Jenkins** from the leftmost panel
+
+1. Select **Manage Plugins**
+
+1. Select the **Updates** tab
+
+1. If there are updates listed, do the following:
+
+   1. Select **Check now**
+
+   1. Wait for the check to complete
+
+   1. Note any warnings for plugins to determine if you will need to make any changes to existing projects to conform with the update
+
+   1. Check all plugins listed under the "Updates" tab
+   
+   1. Select **Download now and install after restart**
+
+   1. Check **Restart Jenkins when installation is complete and no jobs are running**
+
+   1. Wait for Jenkins to restart
+
+   1. Log on to Jenkins
 
 ## Configure Jenkins user to allow for SSH
 
@@ -8000,10 +8091,6 @@
       *Format:*
 
       > http://{jenkins master private ip}:8080
-
-      *Example:*
-
-      > http://10.242.37.74:8080
 
    1. Log on to the Jenkins GUI
 
@@ -8051,10 +8138,6 @@
 
       > http://{jenkins master private ip}:8080
 
-      *Example:*
-
-      > http://10.242.37.74:8080
-
    1. Log on to the Jenkins GUI
 
 1. Select **Manage Jenkins** in the leftmost panel
@@ -8092,10 +8175,6 @@
       *Format:*
 
       > http://{jenkins master private ip}:8080
-
-      *Example:*
-
-      > http://10.242.37.74:8080
 
    1. Log on to the Jenkins GUI
 
