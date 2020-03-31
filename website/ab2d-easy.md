@@ -25,6 +25,14 @@ ctas:
         color: black;
     }
     
+    #export {
+        display: none;
+    }
+    
+    #export-status {
+        display: none;
+    }
+    
     .failure-status {
         border: 1px solid red;
         background-color: lightcoral;
@@ -36,7 +44,9 @@ ctas:
 </style>
 
 <script>
-    const baseUrl = 'https://sandbox.ab2d.cms.gov/';
+    const baseUrl = 'http://localhost:8080/';
+    const fhirSegment = 'api/v1/fhir/';
+    let token = '';
 
     function retrieveOktaToken(event) {
         event.preventDefault();
@@ -58,11 +68,59 @@ ctas:
             success: function (data) {
                 token = data.accessToken;
                 $("#okta-token-status-message").html("Successfully retrieved okta token").addClass("success-status").show();
+                $("#export").show();
             },
             error: function(data) {
                 $("#okta-token-status-message").html("Failed to retrieve okta token. Please try again.").addClass("failure-status").show();
             }
         });
+    }
+    
+    function startExport(event) {
+        event.preventDefault();
+        
+        const contractNumber = $("#contractNumber").val();
+        
+        let url = '';
+        if(contractNumber === undefined || contractNumber === '') {
+            url = baseUrl + fhirSegment + 'Patient/$export';
+        } else {
+            url = baseUrl + fhirSegment + '/Group/' + contractNumber + '/$export';        
+        }
+        
+        $.ajax({
+            url: url,
+            headers: {
+                'Authorization': 'Basic ' + token
+            },
+            type: 'get',
+            success: function(data, status, xhr) {
+                const contentLocation = xhr.getResponseHeader('Content-Location');
+                $('#export-status-message').html("Bulk export successfully started.").addClass("success-status").show();
+                $('#export-button').addClass("disabled"); //TODO remove event handler
+                initiateStatusChecks(contentLocation);
+            },
+            error: function() {
+                $('#export-status-message').html("Failed to start bulk export. Please try again").addClass("failure-status").show(); 
+            }
+        });
+    }
+    
+    function initiateStatusChecks(url) {
+        
+    }
+    
+    function cancelExport() {
+        $.ajax({
+            url: url,
+            headers: {
+                'Authorization': 'Basic ' + token
+            },
+            type: 'get',
+            success: function(data, status, xhr) {
+        });
+        
+        /Job/{jobUuid}/$status
     }
 </script>
 
@@ -95,4 +153,29 @@ ctas:
     <br />
     
     <div class="col-md-6 mb-3" id="okta-token-status-message"></div>
+    
+    <br />
+    
+    <form>
+        <div class="form-row form-group" id="export">
+            <div class="col-md-6 mb-3">
+              <label for="clientSecret">Contract Number</label>
+              <input type="text" class="form-control" id="contractNumber" placeholder="Contract Number (Optional)" required>
+            </div>
+            <button class="btn btn-primary" type="submit" id="export-button" onclick="startExport(event);">Start Export</button>
+            
+            <div id="export-status-message"></div>
+        </div>
+    </form>
+    
+    <br />
+    
+    <div id="export-in-progress">
+        <form>
+            <button class="btn btn-primary" type="submit" id="cancel-button" onclick="cancelExport(event);">Cancel Export</button>
+            <div class="form-row form-group" id="status"></div>
+        </form>
+    </div>
+        
+    
 </div>
