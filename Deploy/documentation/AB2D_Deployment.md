@@ -88,7 +88,8 @@
    [Configure the SSH plugin](#configure-the-ssh-plugin)
    [Install the "Scheduled Build" plugin](#install-the-scheduled-build-plugin)
    [Configure GitHub plugin](#configure-github-plugin)
-   [Install and configure the GitHub Authentication Plugin](#install-and-configure-the-github-uthentication-plugin)
+   [Install and configure the Authorize Project plugin](#install-and-configure-the-authorize-project-plugin)
+   [Install and configure the GitHub Authentication plugin](#install-and-configure-the-github-uthentication-plugin)
    [Add the Jenkins agent node](#add-the-jenkins-agent-node)
    [Create a "development" folder in Jenkins](#create-a-development-folder-in-jenkins)
    [Configure a Jenkins project for development application deploy](#configure-a-jenkins-project-for-development-application-deploy)
@@ -6547,47 +6548,200 @@
 
 1. Select **Save**
 
+### Install and configure the Authorize Project plugin
+
+1. Note the following
+
+   - Builds in Jenkins run as the virtual Jenkins SYSTEM user with full Jenkins permissions by default.
+
+   - This can be a problem if some users have restricted or no access to some jobs, but can configure others.
+
+   - The Authorize Project Plugin can be used to handle these situations.
+
+1. Log on to the Jenkins GUI (if not already logged in)
+
+   1. Ensure that you are connected to the Cisco VPN
+
+   1. Open Chrome
+
+   1. Enter the following in the address bar
+
+      *Format:*
+
+      > http://{jenkins master private ip}:8080
+
+   1. Log on to the Jenkins GUI
+
+1. Select **Manage Jenkins**
+
+1. Select **Manage Plugins**
+
+1. Select the **Available** tab
+
+1. Scroll down to "Authorize Project"
+
+1. Check **Authorize Project**
+
+1. Select **Download now and install after restart**
+
+1. Check **Restart Jenkins when installation is complete and no jobs are running**
+
+1. Select **Jenkins** in the top left of the page
+
+1. Select **Manage Jenkins**
+
+1. Scroll down to the "Security" section
+
+1. Select **Configure Global Security**
+
+1. Scroll down to the the "Access Control for Builds" section
+
+1. Note that there are two "Access Control for Builds" sections that can be configured
+
+   - Pre-project configurable Build Authorization
+
+   - Project default Build Authorization
+
+1. Note that at this point only "Project default Build Authorization" is being configured to behave with default "Run as SYSTEM" behavior
+
+   > *** TO DO ***: Consider additional strategies for configuring "Access Control for Builds" as additional users are added.
+
+1. Select **Add**
+
+1. Select **Project default Build Authorization**
+
+1. Select "Run as SYSTEM" from the **Strategy** dropdown
+
+1. Select **Apply**
+
+1. Select **Save**
+
 ### Register a new OAuth application with GitHub
 
-1. Open Chrome
+1. Open Chome
 
 1. Enter the following in the address bar
 
-   > https://github.com/settings/applications/new
+   > https://github.com
 
-1. Configure the "Register a new OAuth application" page as follows
+1. Select the profile icon in the top right of the page
+
+1. Select **Sign out**
+
+1. Select **Sign in**
+
+1. Log on using the "ab2d-jenkins" user (see 1Password)
+
+1. Type the authentication code that was sent to Lonnie's phone in the **Authentication code** text box
+
+1. Select **Verify**
+
+1. Select the profile icon in the top right of the page
+
+1. Select **Settings**
+
+1. Select **Developer settings**
+
+1. Select **OAuth Apps**
+
+1. Select **Register a new application**
+
+1. Configure "Register a new OAuth application" as follows
 
    - **Application name:** jenkins-github-authentication
 
    - **Homepage URL:** https://ab2d.cms.gov
 
-   - **Authorization callback URL:** http://{private ip address of jenkins master}:8080/securityRealm/finishLogin
+   - **Application description:** {blank}
 
-1. Select **Register application**
+   - **Authorization callback URL:** https://{private ip address of jenkins master}:8080/securityRealm/finishLogin
 
-1. Select the GitHub icon in the top left of the page
+1. Select **Register application
 
-1. Note that the application is owned by the user that created it
+1. Note the following
+
+   - Client ID
+
+   - Client Secret
+
+1. Create the following in 1Password
+
+   - **jenkins-github-authentication Client ID:** {client id}
+
+   - **jenkins-github-authentication Client Secret:** {client secret}
+
+1. Log out of GitHub
    
-### Install and configure the GitHub Authentication Plugin
+### Install and configure the GitHub Authentication plugin
 
-1. Verify that you can navigate to the "jenkins-github-authentication" OAuth application
+1. Connect to Jenkins master
 
-   1. Select your GitHub profile icon in the top right of the page
+   1. Set the management AWS profile
 
-   1. Select **Settings**
+      ```ShellSession
+      $ export AWS_PROFILE=ab2d-mgmt-east-dev
+      ```
 
-   1. Select **Developer settings** from the leftmost panel
+   1. Get the private IP address of Jenkins master
 
-   1. Select **OAuth apps** from the leftmost panel
+      ```ShellSession
+      $ JENKINS_MASTER_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-jenkins-master" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+        --output text)
+      ```
 
-   1. Select **jenkins-github-authentication**
+   1. SSH into the instance using the private IP address
 
-   1. Note the following settings for the OAuth application
+      ```ShellSession
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_MASTER_PRIVATE_IP
+      ```
 
-      - Client ID
+1. Backup the exiting Jenkins configuration file before proceeding
 
-      - Client Secret
+   1. Switch to the jenkins user
+
+      ```ShellSession
+      $ sudo su - jenkins
+      ```
+
+   1. Open the "config.xml"
+
+      ```ShellSession
+      $ vim config.xml
+      ```
+
+   1. Note that the default settings for authorization strategy and  security realm
+
+      ```
+      <authorizationStrategy class="hudson.security.FullControlOnceLoggedInAuthorizationStrategy">
+        <denyAnonymousReadAccess>true</denyAnonymousReadAccess>
+      </authorizationStrategy>
+      <securityRealm class="hudson.security.HudsonPrivateSecurityRealm">
+        <disableSignup>true</disableSignup>
+        <enableCaptcha>false</enableCaptcha>
+      </securityRealm>
+      ```
+
+   1. Change to the '/var/lib/jenkins' directory
+
+      ```ShellSession
+      $ cd /var/lib/jenkins
+      ```
+
+   1. Backup the jenkins config file
+
+      ```ShellSession
+      $ cp config.xml config.xml.backup
+      ```
+
+1. Open Chome
+
+1. Enter the following in the address bar
+
+   > https://github.com
+
+1. Log on as your user
 
 1. Log on to the Jenkins GUI (if not already logged in)
 
@@ -6637,23 +6791,47 @@
 
    - **GitHub API URI:** https://api.github.com
 
-   - **Client ID:** {client id for the 'jenkins-github-authentication' github application}
+   - **Client ID:** {jenkins-github-authentication client id from 1password}
 
-   - **Client Secret:** {client id for the 'jenkins-github-authentication' github application}
+   - **Client Secret:** {jenkins-github-authentication client secret from 1password}
 
    - **OAuth Scope(s):** read:org,user:email,repo
 
 1. Select **Apply**
 
+1. Scroll down to the **Authorization** section
+
+1. Select the **Matrix-based security** radio button
+
+1. Add desired GitHub users
+
+   1. Select **Add user or group**
+
+   1. Type the desired GitHub user into the **User or group name** text box
+
+   1. Select **OK**
+
+   1. Set desired permissions for the user using the checkboxes
+
+   1. Select **Apply**
+
+   1. Repeat this step for any additional users
+
 1. Select **Save**
 
 1. Log out of Jenkins
 
+### Log on to Jenkins using GitHub OAuth authentication
+
 1. Open Jenkins again
+
+1. Note that you will be prompted to log on to GitHub, if you are not already logged in
+
+1. Log on to GitHub
 
 1. Note the following appears on the "Authorize jenkins-github-authentication" page
 
-   - **jenkins-github-authentication by lhanekam:** wants to access your lhanekam account
+   - **jenkins-github-authentication by lhanekam:** wants to access your {your github user} account
 
    - **Organizations and teams:** Read-only access
 
@@ -6665,7 +6843,7 @@
 
 1. Select **Authorize lhanekam**
 
-1. Enter password for lhanekam
+1. Verify that the Jenkins page loads
 
 ### Add the Jenkins agent node
 
