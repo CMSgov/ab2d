@@ -3,6 +3,7 @@ package gov.cms.ab2d.api.security;
 import lombok.extern.slf4j.Slf4j;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -17,6 +18,9 @@ import java.util.Base64;
 @Slf4j
 public class OktaTokenGeneratorImpl implements OktaTokenGenerator {
 
+    @Value("${api.okta-jwt-issuer}")
+    private String oktaJwtIssuer;
+
     private final HttpClient httpClient = HttpClient.newBuilder()
             .version(HttpClient.Version.HTTP_2)
             .build();
@@ -27,7 +31,7 @@ public class OktaTokenGeneratorImpl implements OktaTokenGenerator {
         String authString = Base64.getEncoder().encodeToString((clientID + ":" + clientSecret).getBytes());
 
         HttpRequest request = HttpRequest.newBuilder()
-                .uri(new URI("https://test.idp.idm.cms.gov/oauth2/aus2r7y3gdaFMKBol297/v1/token?grant_type=client_credentials&scope=clientCreds"))
+                .uri(new URI(oktaJwtIssuer + "/v1/token?grant_type=client_credentials&scope=clientCreds"))
                 .version(HttpClient.Version.HTTP_2)
                 .POST(HttpRequest.BodyPublishers.ofString(""))
                 .header("Content-Type", "application/x-www-form-urlencoded")
