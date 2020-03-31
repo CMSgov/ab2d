@@ -12,6 +12,9 @@ import org.springframework.context.annotation.Configuration;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Maps all the different event classes to their SQL serializers
+ */
 @Configuration
 public class SqlMapperConfig {
     private Map<Class<? extends LoggableEvent>, SqlEventMapper> mapping = new HashMap<>() {
