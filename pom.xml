@@ -5,6 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
     <modules>
         <module>common</module>
+        <module>eventlogger</module>
         <module>api</module>
         <module>worker</module>
         <module>bfd</module>
