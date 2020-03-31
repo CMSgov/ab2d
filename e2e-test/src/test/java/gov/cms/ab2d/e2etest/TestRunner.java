@@ -104,9 +104,9 @@ public class TestRunner {
                     .withScaledService("worker", 2)
                     .withExposedService("db", 5432)
                     .withExposedService("api", 8080, new HostPortWaitStrategy()
-                        .withStartupTimeout(Duration.of(150, SECONDS)));
-                    //.withLogConsumer("worker", new Slf4jLogConsumer(log)) // Use to debug, for now there's too much log data
-                    //.withLogConsumer("api", new Slf4jLogConsumer(log));
+                        .withStartupTimeout(Duration.of(150, SECONDS)))
+                    .withLogConsumer("worker", new Slf4jLogConsumer(log)) // Use to debug, for now there's too much log data
+                    .withLogConsumer("api", new Slf4jLogConsumer(log));
             container.start();
         }
 

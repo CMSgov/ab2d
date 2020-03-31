@@ -11,6 +11,9 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.time.OffsetDateTime;
 
+/**
+ * Log events that happen to files such as when they are open, closed or deleted
+ */
 @Data
 @Slf4j
 public class FileEvent extends LoggableEvent {
