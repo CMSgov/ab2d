@@ -134,7 +134,9 @@ fi
 
 export AWS_PROFILE="${CMS_ENV}"
 
+#
 # Verify that VPC ID exists
+#
 
 VPC_EXISTS=$(aws --region "${REGION}" ec2 describe-vpcs \
   --query "Vpcs[?VpcId=='$VPC_ID'].VpcId" \
@@ -1391,44 +1393,36 @@ if [ -n "${BUILD_NEW_IMAGES}" ]; then
   mvn clean package -DskipTests
   sleep 5
 
-  # Get branch name
+  # Get image version based on a master commit number
 
-  BRANCH=$(git rev-parse --abbrev-ref HEAD)
-
-  # Create an image version using the seven character git commit id
+  CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+  COMMIT_NUMBER_OF_CURRENT_BRANCH=$(git rev-parse "${CURRENT_BRANCH}" | cut -c1-7)
+  COMMIT_NUMBER_OF_ORIGIN_MASTER=$(git rev-parse origin/master | cut -c1-7)
   
-  if [ "${BRANCH}" == "master" ]; then
-    echo "Using commit number of master branch as the image version."
-    COMMIT_NUMBER=$(git rev-parse HEAD | cut -c1-7)
-    IMAGE_VERSION="${CMS_ENV}-latest-${COMMIT_NUMBER}"
-  else # assume it is a devops branch and get the latest merge from master into the branch
+  if [ "${COMMIT_NUMBER_OF_CURRENT_BRANCH}" == "${COMMIT_NUMBER_OF_ORIGIN_MASTER}" ]; then
+    echo "NOTE: The current branch is the master branch."
+    echo "Using commit number of origin/master branch as the image version."
+    COMMIT_NUMBER="${COMMIT_NUMBER_OF_ORIGIN_MASTER}"
+  else
     echo "NOTE: Assuming this is a DevOps branch that has only DevOps changes."
-    echo "Using commit number of latest merge from branch into the current branch as the image version."
-
-    # Determine if branches are the same; an empty result means they are the same
-
     COMPARE_BRANCH_WITH_MASTER=$(git log \
       --decorate \
       --graph \
       --oneline \
       --cherry-mark \
-      --boundary master..."${BRANCH}")
-
+      --boundary origin/master..."${BRANCH}")
     if [ -z "${COMPARE_BRANCH_WITH_MASTER}" ]; then
-
-      # Branches are the same; get "origin/master" commit number
-
-      COMMIT_NUMBER=$(git rev-parse origin/master | cut -c1-7)
-
+      echo "NOTE: DevOps branch is the same as origin/master."
+      echo "Using commit number of origin/master branch as the image version."
+      COMMIT_NUMBER="${COMMIT_NUMBER_OF_ORIGIN_MASTER}"
     else
-
-      # Branches are different; get the commit number of the latest merge from "origin/master"
-
-      COMMIT_NUMBER=$(git log --merges | head -n 2 | tail -n 1 | cut -d" " -f 3)
-      IMAGE_VERSION="${CMS_ENV}-latest-${COMMIT_NUMBER}"
-
+      echo "NOTE: DevOps branch is different from origin/master."
+      echo "Using commit number of latest merge from origin/master into the current branch as the image version."
+      COMMIT_NUMBER=$(git log --merges | head -n 2 | tail -n 1 | cut -d" " -f 3 | cut -c1-7)
     fi
   fi
+  
+  IMAGE_VERSION="${CMS_ENV}-latest-${COMMIT_NUMBER}"
 
   # Build API docker images
 
@@ -1988,6 +1982,81 @@ else
 fi
 
 #
+# Deploy CloudWatch
+#
+
+cd "${START_DIR}"
+cd terraform/environments/$CMS_ENV
+
+echo "Deploy CloudWatch..."
+if [ -z "${AUTOAPPROVE}" ]; then
+
+  terraform apply \
+    --var "ami_id=$AMI_ID" \
+    --var "ecs_task_definition_host_port=$ALB_LISTENER_PORT" \
+    --var "host_port=$ALB_LISTENER_PORT" \
+    --var "alb_listener_protocol=$ALB_LISTENER_PROTOCOL" \
+    --var "alb_listener_certificate_arn=$ALB_LISTENER_CERTIFICATE_ARN" \
+    --target module.cloudwatch
+
+else
+
+  # Apply the changes without prompting
+
+  terraform apply \
+    --target module.cloudwatch \
+    --var "ami_id=$AMI_ID" \
+    --var "ecs_task_definition_host_port=$ALB_LISTENER_PORT" \
+    --var "host_port=$ALB_LISTENER_PORT" \
+    --var "alb_listener_protocol=$ALB_LISTENER_PROTOCOL" \
+    --var "alb_listener_certificate_arn=$ALB_LISTENER_CERTIFICATE_ARN" \
+    --auto-approve
+
+fi
+
+#
+# Deploy AWS WAF
+#
+
+if [ -z "${AUTOAPPROVE}" ]; then
+
+  terraform apply \
+    --target module.waf
+
+else
+
+  # Apply the changes without prompting
+
+  terraform apply \
+    --target module.waf \
+    --auto-approve
+
+fi
+
+#
+# Apply AWS Shield standard to the application load balancer
+#
+
+# Note that no change is actually made since AWS shield standard is automatically applied to
+# the application load balancer. This section may be needed later if AWS Shield Advanced is
+# applied instead.
+
+if [ -z "${AUTOAPPROVE}" ]; then
+
+  terraform apply \
+    --target module.shield
+
+else
+
+  # Apply the changes without prompting
+
+  terraform apply \
+    --target module.shield \
+    --auto-approve
+
+fi
+
+#
 # Apply schedule autoscaling if applicable
 #
 
@@ -2135,80 +2204,5 @@ else
       | jq '. | length')
   
   done
-  
-fi
-
-#
-# Deploy CloudWatch
-#
-
-cd "${START_DIR}"
-cd terraform/environments/$CMS_ENV
-
-echo "Deploy CloudWatch..."
-if [ -z "${AUTOAPPROVE}" ]; then
-
-  terraform apply \
-    --var "ami_id=$AMI_ID" \
-    --var "ecs_task_definition_host_port=$ALB_LISTENER_PORT" \
-    --var "host_port=$ALB_LISTENER_PORT" \
-    --var "alb_listener_protocol=$ALB_LISTENER_PROTOCOL" \
-    --var "alb_listener_certificate_arn=$ALB_LISTENER_CERTIFICATE_ARN" \
-    --target module.cloudwatch
-
-else
-    
-  # Apply the changes without prompting
-
-  terraform apply \
-    --target module.cloudwatch \
-    --var "ami_id=$AMI_ID" \
-    --var "ecs_task_definition_host_port=$ALB_LISTENER_PORT" \
-    --var "host_port=$ALB_LISTENER_PORT" \
-    --var "alb_listener_protocol=$ALB_LISTENER_PROTOCOL" \
-    --var "alb_listener_certificate_arn=$ALB_LISTENER_CERTIFICATE_ARN" \
-    --auto-approve
-
-fi
-
-#
-# Deploy AWS WAF
-#
-
-if [ -z "${AUTOAPPROVE}" ]; then
-    
-  terraform apply \
-    --target module.waf
-  
-else
-
-  # Apply the changes without prompting
-    
-  terraform apply \
-    --target module.waf \
-    --auto-approve
-  
-fi
-
-#
-# Apply AWS Shield standard to the application load balancer
-#
-
-# Note that no change is actually made since AWS shield standard is automatically applied to
-# the application load balancer. This section may be needed later if AWS Shield Advanced is
-# applied instead.
-
-if [ -z "${AUTOAPPROVE}" ]; then
-    
-  terraform apply \
-    --target module.shield
-  
-else
-
-  # Apply the changes without prompting
-    
-  terraform apply \
-    --target module.shield \
-    --auto-approve
   
 fi
