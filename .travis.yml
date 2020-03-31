@@ -38,6 +38,7 @@ before_install:
 - export SECONDARY_USER_OKTA_CLIENT_PASSWORD=1Bl3HGO6eglkXUDtjVjto3L-3C0offzTMk2qlz9r
 - export AB2D_OPT_OUT_JOB_SCHEDULE='*/15 * * * * ?'
 - export AB2D_HICN_HASH_PEPPER=`cat bfd_sbx_hash_pepper`
+- export AB2D_HICN_HASH_ITER=1000
 install: true
 before_script:
 - curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64
