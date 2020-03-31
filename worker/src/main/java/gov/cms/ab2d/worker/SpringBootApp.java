@@ -17,7 +17,8 @@ import org.springframework.retry.annotation.EnableRetry;
         "gov.cms.ab2d.worker",
         "gov.cms.ab2d.bfd.client",
         "gov.cms.ab2d.audit",
-        "gov.cms.ab2d.optout"
+        "gov.cms.ab2d.optout",
+        "gov.cms.ab2d.eventlogger"
 })
 @EntityScan(basePackages = {"gov.cms.ab2d.common.model"})
 @EnableJpaRepositories("gov.cms.ab2d.common.repository")
