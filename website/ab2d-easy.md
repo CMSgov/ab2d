@@ -33,6 +33,14 @@ ctas:
         display: none;
     }
     
+    #export-in-progress {
+        display: none;
+    }
+    
+    #progress-bar {
+        display: none;
+    }
+    
     .failure-status {
         border: 1px solid red;
         background-color: lightcoral;
@@ -46,10 +54,17 @@ ctas:
 <script>
     const baseUrl = 'http://localhost:8080/';
     const fhirSegment = 'api/v1/fhir/';
+    
+    const fadeInTime = 1000;
+    
+    const statusIntervalTimeout = 6000;
+    let statusInterval = undefined;
+    
+    let contentLocationUrl = undefined;
+    
     let token = '';
 
-    function retrieveOktaToken(event) {
-        event.preventDefault();
+    function retrieveOktaToken() {
     
         const clientID = $('#clientID').val();
         const clientSecret = $('#clientSecret').val();
@@ -68,7 +83,8 @@ ctas:
             success: function (data) {
                 token = data.accessToken;
                 $("#okta-token-status-message").html("Successfully retrieved okta token").addClass("success-status").show();
-                $("#export").show();
+                $("#export").fadeIn(fadeInTime);
+                turnOnExportEventHandler();
             },
             error: function(data) {
                 $("#okta-token-status-message").html("Failed to retrieve okta token. Please try again.").addClass("failure-status").show();
@@ -76,52 +92,140 @@ ctas:
         });
     }
     
-    function startExport(event) {
-        event.preventDefault();
-        
+    function startExport() {
         const contractNumber = $("#contractNumber").val();
         
         let url = '';
         if(contractNumber === undefined || contractNumber === '') {
             url = baseUrl + fhirSegment + 'Patient/$export';
         } else {
-            url = baseUrl + fhirSegment + '/Group/' + contractNumber + '/$export';        
+            url = baseUrl + fhirSegment + 'Group/' + contractNumber + '/$export';        
         }
         
         $.ajax({
             url: url,
             headers: {
-                'Authorization': 'Basic ' + token
+                'Authorization': 'Bearer ' + token
             },
             type: 'get',
             success: function(data, status, xhr) {
-                const contentLocation = xhr.getResponseHeader('Content-Location');
-                $('#export-status-message').html("Bulk export successfully started.").addClass("success-status").show();
-                $('#export-button').addClass("disabled"); //TODO remove event handler
-                initiateStatusChecks(contentLocation);
+                contentLocationUrl = xhr.getResponseHeader('Content-Location');
+                $('#export-status-message').html("Bulk export successfully started.").addClass("success-status").fadeIn(fadeInTime);
+                $('#export-in-progress').fadeIn(fadeInTime);
+                $('#progress-bar').fadeIn(fadeInTime);
+                initiateStatusChecks();
+                turnOffTokenEventHandler();
+                turnOffExportEventHandler();
+                turnOnCancelEventHandler();
             },
             error: function() {
-                $('#export-status-message').html("Failed to start bulk export. Please try again").addClass("failure-status").show(); 
+                $('#export-status-message').html("Failed to start bulk export. Please try again").addClass("failure-status").fadeIn(fadeInTime); 
             }
         });
     }
     
-    function initiateStatusChecks(url) {
-        
+    function initiateStatusChecks() {
+        statusInterval = setInterval(function() {
+            doStatusCheck(contentLocationUrl);
+        }, statusIntervalTimeout);
     }
     
-    function cancelExport() {
+    function doStatusCheck() {
         $.ajax({
-            url: url,
+            url: contentLocationUrl,
             headers: {
-                'Authorization': 'Basic ' + token
+                'Authorization': 'Bearer ' + token
             },
             type: 'get',
             success: function(data, status, xhr) {
+                if(xhr.status === 202) {
+                    let xProgress = xhr.getResponseHeader('X-Progress');
+                    let value = xProgress.substring(0, xProgress.indexOf('%'));
+                    updateProgressBar(value);
+                } else if(xhr.status === 200) {
+                    cancelStatusInterval();
+                    turnOffCancelEventHandler();
+                    updateProgressBar(100);
+                } else if(xhr.status === 500) {
+                    cancelStatusInterval();
+                }
+            },
+            error: function() {
+                $('#export-status-message').html("Failed to start bulk export. Please try again").addClass("failure-status").fadeIn(fadeInTime); 
+            }
         });
-        
-        /Job/{jobUuid}/$status
     }
+    
+    function cancelStatusInterval() {
+        clearInterval(statusInterval);    
+    }
+    
+    function updateProgressBar(value) {
+        $('#progress-bar .progress-bar').css('width', value + '%').attr('aria-valuenow', value)
+            .text(value + '%');
+    }
+    
+    function cancelExport(event) {
+        $.ajax({
+            url: contentLocationUrl,
+            headers: {
+                'Authorization': 'Bearer ' + token
+            },
+            type: 'get',
+            success: function(data, status, xhr) {
+            
+            },
+            error: function() {
+                $('#export-status-message').html("Failed to start bulk export. Please try again").addClass("failure-status").fadeIn(fadeInTime); 
+            }
+        });
+    }
+    
+    function turnOnTokenEventHandler() {
+        $("#generate-token-button").addClass("enabled");
+        $("#generate-token-button").on("click", function(event) {
+            event.preventDefault();
+            retrieveOktaToken();
+        });
+    }
+    
+    function turnOffTokenEventHandler() {
+        $("#generate-token-button").addClass("disabled");
+        $("#generate-token-button").off("click");
+    }
+    
+    function turnOnExportEventHandler() {
+        console.log("turning on");
+        $("#export-button").addClass("enabled");
+        $("#export-button").on("click", function(event) {
+            console.log("default");
+            console.dir(event);
+            event.preventDefault();
+            startExport();
+        });
+    }
+    
+    function turnOffExportEventHandler() {
+        $("#export-button").addClass("disabled");
+        $("#export-button").off("click");
+    }
+    
+    function turnOnCancelEventHandler() {
+        $("#cancel-button").addClass("enabled");
+        $("#cancel-button").on("click", function(event) {
+            event.preventDefault();
+            startExport();
+        });
+    }
+    
+    function turnOffCancelEventHandler() {
+        $("#cancel-button").addClass("disabled");
+        $("#cancel-button").off("click");
+    }
+    
+    $(document).ready(function() {
+        turnOnTokenEventHandler();
+    });
 </script>
 
 <div id="ab2d-easy-section" style="padding: 5px;">
@@ -147,7 +251,7 @@ ctas:
               <input type="text" class="form-control" id="clientSecret" placeholder="Client Secret" required>
             </div>
         </div>
-        <button class="btn btn-primary" type="submit" onclick="retrieveOktaToken(event);">Get Token</button>
+        <button class="btn btn-primary" id="generate-token-button">Get Token</button>
     </form>
     
     <br />
@@ -160,9 +264,11 @@ ctas:
         <div class="form-row form-group" id="export">
             <div class="col-md-6 mb-3">
               <label for="clientSecret">Contract Number</label>
-              <input type="text" class="form-control" id="contractNumber" placeholder="Contract Number (Optional)" required>
+              <input type="text" class="form-control" id="contractNumber" placeholder="Contract Number (Optional)">
             </div>
-            <button class="btn btn-primary" type="submit" id="export-button" onclick="startExport(event);">Start Export</button>
+            <button class="btn btn-primary" type="submit" id="export-button">Start Export</button>
+            
+            <br />
             
             <div id="export-status-message"></div>
         </div>
@@ -172,10 +278,18 @@ ctas:
     
     <div id="export-in-progress">
         <form>
-            <button class="btn btn-primary" type="submit" id="cancel-button" onclick="cancelExport(event);">Cancel Export</button>
+            <button class="btn btn-primary" type="submit" id="cancel-button">Cancel Export</button>
             <div class="form-row form-group" id="status"></div>
         </form>
     </div>
         
+    <br />    
+        
+    <div id="progress-bar">    
+        <div class="progress">
+            <div class="progress-bar" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
+        </div>
+    </div>        
     
+    <!-- Download Data -->
 </div>
