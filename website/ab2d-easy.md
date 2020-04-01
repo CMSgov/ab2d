@@ -36,6 +36,7 @@ ctas:
 </style>
 
 <script>
+    // Sandbox URL, could change
     const baseUrl = 'https://sandbox.ab2d.cms.gov/';
 
     function retrieveOktaToken(event) {
