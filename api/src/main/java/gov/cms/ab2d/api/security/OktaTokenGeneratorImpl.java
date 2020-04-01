@@ -41,7 +41,7 @@ public class OktaTokenGeneratorImpl implements OktaTokenGenerator {
 
         HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 
-        if(response.statusCode() != 200) {
+        if (response.statusCode() != 200) {
             log.error("Did not receive a 200 code from token generation request, received {}", response.statusCode());
             throw new TokenResponseError("Did not receive a 200 code from token generation request, received " + response.statusCode());
         }
