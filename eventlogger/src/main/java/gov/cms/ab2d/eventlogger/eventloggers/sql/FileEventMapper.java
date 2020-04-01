@@ -14,7 +14,7 @@ import java.sql.SQLException;
 import java.time.OffsetDateTime;
 
 public class FileEventMapper extends SqlEventMapper {
-    JdbcTemplate template;
+    private JdbcTemplate template;
 
     public FileEventMapper(JdbcTemplate template) {
         this.template = template;
@@ -32,7 +32,7 @@ public class FileEventMapper extends SqlEventMapper {
         KeyHolder keyHolder = new GeneratedKeyHolder();
         template.update(connection -> {
             PreparedStatement ps = connection
-                    .prepareStatement(query, new String[] { "id" } );
+                    .prepareStatement(query, new String[] { "id" });
             ps.setObject(1, UtilMethods.convertToUtc(be.getTimeOfEvent()));
             ps.setString(2, be.getUser());
             ps.setString(3, be.getJobId());

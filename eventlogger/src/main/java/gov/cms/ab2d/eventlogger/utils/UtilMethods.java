@@ -4,9 +4,9 @@ import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 
-public class UtilMethods {
+public final class UtilMethods {
 
-    private UtilMethods() {}
+    private UtilMethods() { }
 
     public static LocalDateTime convertToUtc(OffsetDateTime dt) {
         if (dt != null) {

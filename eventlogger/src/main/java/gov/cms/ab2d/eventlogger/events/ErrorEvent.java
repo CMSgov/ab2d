@@ -22,7 +22,7 @@ public class ErrorEvent extends LoggableEvent {
     // A description of the error
     private String description;
 
-    public ErrorEvent() {}
+    public ErrorEvent() { }
 
     public ErrorEvent(String user, String jobId, ErrorType errorType, String description) {
         super(OffsetDateTime.now(), user, jobId);
