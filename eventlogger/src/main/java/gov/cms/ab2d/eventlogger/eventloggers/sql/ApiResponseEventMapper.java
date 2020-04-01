@@ -33,7 +33,7 @@ public class ApiResponseEventMapper extends SqlEventMapper {
         KeyHolder keyHolder = new GeneratedKeyHolder();
         template.update(connection -> {
             PreparedStatement ps = connection
-                    .prepareStatement(query, new String[] { "id" });
+                    .prepareStatement(query, new String[] {"id"});
             ps.setObject(1, UtilMethods.convertToUtc(be.getTimeOfEvent()));
             ps.setString(2, be.getUser());
             ps.setString(3, be.getJobId());
