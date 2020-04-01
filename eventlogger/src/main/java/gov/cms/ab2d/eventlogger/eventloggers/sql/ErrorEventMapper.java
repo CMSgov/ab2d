@@ -13,10 +13,10 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.OffsetDateTime;
 
-public class ErrorEventSqlMapper extends SqlEventMapper {
+public class ErrorEventMapper extends SqlEventMapper {
     private JdbcTemplate template;
 
-    public ErrorEventSqlMapper(JdbcTemplate template) {
+    public ErrorEventMapper(JdbcTemplate template) {
         this.template = template;
     }
 

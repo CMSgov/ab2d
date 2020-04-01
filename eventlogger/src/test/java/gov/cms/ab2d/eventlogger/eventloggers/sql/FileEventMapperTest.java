@@ -1,11 +1,11 @@
 package gov.cms.ab2d.eventlogger.eventloggers.sql;
 
-import gov.cms.ab2d.common.model.JobStatus;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
+import gov.cms.ab2d.eventlogger.EventLoggingException;
 import gov.cms.ab2d.eventlogger.LoggableEvent;
 import gov.cms.ab2d.eventlogger.SpringBootApp;
+import gov.cms.ab2d.eventlogger.events.ErrorEvent;
 import gov.cms.ab2d.eventlogger.events.FileEvent;
-import gov.cms.ab2d.eventlogger.events.JobStatusChangeEvent;
 import gov.cms.ab2d.eventlogger.reports.sql.LoadObjects;
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.Test;
@@ -39,6 +39,12 @@ class FileEventMapperTest {
 
     @TempDir
     Path tmpDir;
+
+    @Test
+    void exceptionTests() {
+        assertThrows(EventLoggingException.class, () ->
+                new FileEventMapper(null).log(new ErrorEvent()));
+    }
 
     @Test
     void log() throws IOException {

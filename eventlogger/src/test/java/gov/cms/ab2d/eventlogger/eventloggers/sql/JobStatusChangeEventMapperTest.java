@@ -2,8 +2,10 @@ package gov.cms.ab2d.eventlogger.eventloggers.sql;
 
 import gov.cms.ab2d.common.model.JobStatus;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
+import gov.cms.ab2d.eventlogger.EventLoggingException;
 import gov.cms.ab2d.eventlogger.LoggableEvent;
 import gov.cms.ab2d.eventlogger.SpringBootApp;
+import gov.cms.ab2d.eventlogger.events.FileEvent;
 import gov.cms.ab2d.eventlogger.events.JobStatusChangeEvent;
 import gov.cms.ab2d.eventlogger.reports.sql.LoadObjects;
 import org.junit.jupiter.api.Test;
@@ -16,8 +18,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import java.time.OffsetDateTime;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest(classes = SpringBootApp.class)
 @Testcontainers
@@ -30,6 +31,12 @@ class JobStatusChangeEventMapperTest {
 
     @Autowired
     LoadObjects loadObjects;
+
+    @Test
+    void exceptionTests() {
+        assertThrows(EventLoggingException.class, () ->
+                new JobStatusChangeEventMapper(null).log(new FileEvent()));
+    }
 
     @Test
     void log() {

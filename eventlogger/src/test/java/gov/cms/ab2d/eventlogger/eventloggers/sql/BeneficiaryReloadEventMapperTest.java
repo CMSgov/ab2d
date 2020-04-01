@@ -1,9 +1,11 @@
 package gov.cms.ab2d.eventlogger.eventloggers.sql;
 
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
+import gov.cms.ab2d.eventlogger.EventLoggingException;
 import gov.cms.ab2d.eventlogger.LoggableEvent;
 import gov.cms.ab2d.eventlogger.SpringBootApp;
 import gov.cms.ab2d.eventlogger.events.BeneficiaryReloadEvent;
+import gov.cms.ab2d.eventlogger.events.ErrorEvent;
 import gov.cms.ab2d.eventlogger.reports.sql.LoadObjects;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,6 +30,12 @@ class BeneficiaryReloadEventMapperTest {
 
     @Autowired
     LoadObjects loadObjects;
+
+    @Test
+    void exceptionTests() {
+        assertThrows(EventLoggingException.class, () ->
+                new BeneficiaryReloadEventMapper(null).log(new ErrorEvent()));
+    }
 
     @Test
     void log() {

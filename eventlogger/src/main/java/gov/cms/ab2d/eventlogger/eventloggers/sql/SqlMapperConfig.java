@@ -37,7 +37,7 @@ public class SqlMapperConfig {
         mapping.put(ApiResponseEvent.class, new ApiResponseEventMapper(jdbcTemplate));
         mapping.put(BeneficiaryReloadEvent.class, new BeneficiaryReloadEventMapper(jdbcTemplate));
         mapping.put(ContractBeneSearchEvent.class, new ContractBeneSearchEventMapper(jdbcTemplate));
-        mapping.put(ErrorEvent.class, new ErrorEventSqlMapper(jdbcTemplate));
+        mapping.put(ErrorEvent.class, new ErrorEventMapper(jdbcTemplate));
         mapping.put(FileEvent.class, new FileEventMapper(jdbcTemplate));
         mapping.put(JobStatusChangeEvent.class, new JobStatusChangeEventMapper(jdbcTemplate));
     }
