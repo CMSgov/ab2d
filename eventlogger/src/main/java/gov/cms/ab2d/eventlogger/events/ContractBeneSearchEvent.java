@@ -22,6 +22,8 @@ public class ContractBeneSearchEvent extends LoggableEvent {
     // The number of errors that occured during searching
     private int numErrors;
 
+    public ContractBeneSearchEvent() { }
+
     public ContractBeneSearchEvent(String user, String jobId, String contractNumber, int numInContract, int numbSearched,
                                    int numOptedOut, int numErrors) {
         super(OffsetDateTime.now(), user, jobId);

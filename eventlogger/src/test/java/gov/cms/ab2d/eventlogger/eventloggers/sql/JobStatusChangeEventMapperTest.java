@@ -1,0 +1,53 @@
+package gov.cms.ab2d.eventlogger.eventloggers.sql;
+
+import gov.cms.ab2d.common.model.JobStatus;
+import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
+import gov.cms.ab2d.eventlogger.LoggableEvent;
+import gov.cms.ab2d.eventlogger.SpringBootApp;
+import gov.cms.ab2d.eventlogger.events.JobStatusChangeEvent;
+import gov.cms.ab2d.eventlogger.reports.sql.LoadObjects;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
+
+import java.time.OffsetDateTime;
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+@SpringBootTest(classes = SpringBootApp.class)
+@Testcontainers
+class JobStatusChangeEventMapperTest {
+    @Container
+    private static final PostgreSQLContainer postgreSQLContainer= new AB2DPostgresqlContainer();
+
+    @Autowired
+    SqlEventLogger sqlEventLogger;
+
+    @Autowired
+    LoadObjects loadObjects;
+
+    @Test
+    void log() {
+        JobStatusChangeEvent jsce = new JobStatusChangeEvent("laila", "job123", JobStatus.IN_PROGRESS,
+                JobStatus.FAILED, "Description");
+        sqlEventLogger.log(jsce);
+        long id = jsce.getId();
+        OffsetDateTime val = jsce.getTimeOfEvent();
+        List<LoggableEvent> events = loadObjects.loadAllJobStatusChangeEvent();
+        assertEquals(1, events.size());
+        JobStatusChangeEvent event = (JobStatusChangeEvent) events.get(0);
+        assertTrue(event.getId() > 0);
+        assertEquals(event.getId(), jsce.getId());
+        assertEquals("laila", event.getUser());
+        assertEquals("job123", event.getJobId());
+        assertEquals(val.getNano(), event.getTimeOfEvent().getNano());
+        assertEquals(JobStatus.FAILED, event.getNewStatus());
+        assertEquals(JobStatus.IN_PROGRESS, event.getOldStatus());
+        assertEquals("Description", event.getDescription());
+    }
+}

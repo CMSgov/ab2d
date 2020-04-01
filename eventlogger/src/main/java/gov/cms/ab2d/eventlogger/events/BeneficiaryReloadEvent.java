@@ -21,6 +21,8 @@ public class BeneficiaryReloadEvent extends LoggableEvent {
     // The number of values loaded
     private int numberLoaded;
 
+    public BeneficiaryReloadEvent() { }
+
     public BeneficiaryReloadEvent(FileType fileType, String fileName, int numLoaded) {
         super(OffsetDateTime.now(), null, null);
         this.fileType = fileType;

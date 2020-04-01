@@ -18,6 +18,8 @@ public class JobStatusChangeEvent extends LoggableEvent {
     // A description if needed whey this state occurred if it isn't obvious
     private String description;
 
+    public JobStatusChangeEvent() { }
+
     public JobStatusChangeEvent(String user, String jobId, JobStatus oldStatus, JobStatus newStatus, String description) {
         super(OffsetDateTime.now(), user, jobId);
         this.oldStatus = oldStatus;

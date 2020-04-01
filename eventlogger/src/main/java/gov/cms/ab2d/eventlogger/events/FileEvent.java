@@ -31,12 +31,16 @@ public class FileEvent extends LoggableEvent {
     // The content hash so we can compare different files
     private String fileHash;
 
+    public FileEvent() {}
+
     public FileEvent(String user, String jobId, File file, FileStatus status) {
         super(OffsetDateTime.now(), user, jobId);
-        this.fileName = file.getName();
+        this.fileName = file.getAbsolutePath();
         this.status = status;
-        this.fileSize = file.length();
-        this.fileHash = generateChecksum(file);
+        if (file != null) {
+            this.fileSize = file.length();
+            this.fileHash = generateChecksum(file);
+        }
     }
 
     private String generateChecksum(File file) {

@@ -19,6 +19,8 @@ public class ApiResponseEvent extends LoggableEvent {
     // The unique id that this response is a response to
     private String requestId;
 
+    public ApiResponseEvent() { }
+
     public ApiResponseEvent(String user, String jobId, int responseCode, String responseString, String description,
                             String requestId) {
         super(OffsetDateTime.now(), user, jobId);

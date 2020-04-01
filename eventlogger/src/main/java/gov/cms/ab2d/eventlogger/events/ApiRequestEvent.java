@@ -19,6 +19,8 @@ public class ApiRequestEvent extends LoggableEvent {
     // The unique id of this request (to pair with the response)
     private String requestId;
 
+    public ApiRequestEvent() { }
+
     public ApiRequestEvent(String user, String jobId, String url, String ipAddress, String tokenHash,
                             String requestId) {
         super(OffsetDateTime.now(), user, jobId);
