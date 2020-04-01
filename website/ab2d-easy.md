@@ -33,10 +33,6 @@ ctas:
         display: none;
     }
     
-    #export-in-progress {
-        display: none;
-    }
-    
     #progress-bar {
         display: none;
     }
@@ -58,6 +54,10 @@ ctas:
     }
     .alert {
         display: none;
+    }
+    
+    .ab2d-easy-section {
+        margin-top: 45px;
     }
 </style>
 
@@ -137,7 +137,6 @@ ctas:
             success: function(data, status, xhr) {
                 contentLocationUrl = xhr.getResponseHeader('Content-Location');
                 showAlert(successClass, "Bulk export successfully started.");
-                $('#export-in-progress').fadeIn(fadeInTime);
                 $('#progress-bar').fadeIn(fadeInTime);
                 initiateStatusChecks();
                 turnOffTokenEventHandler();
@@ -191,18 +190,19 @@ ctas:
             .text(value + '%');
     }
     
-    function cancelExport(event) {
+    function cancelExport() {
         $.ajax({
             url: contentLocationUrl,
             headers: {
                 'Authorization': 'Bearer ' + token
             },
-            type: 'get',
+            type: 'delete',
             success: function(data, status, xhr) {
-            
+                showAlert(successClass, "Cancelled bulk export");
+                doReset();
             },
             error: function() {
-                showAlert(failureClass, "Failed to start bulk export. Please try again");
+                showAlert(failureClass, "Failed to cancel bulk export. Please try again");
             }
         });
     }
@@ -221,11 +221,8 @@ ctas:
     }
     
     function turnOnExportEventHandler() {
-        console.log("turning on");
         $("#export-button").addClass("enabled");
         $("#export-button").on("click", function(event) {
-            console.log("default");
-            console.dir(event);
             event.preventDefault();
             startExport();
         });
@@ -237,16 +234,22 @@ ctas:
     }
     
     function turnOnCancelEventHandler() {
-        $("#cancel-button").addClass("enabled");
+        $("#cancel-button").removeClass("disabled").addClass("enabled");
         $("#cancel-button").on("click", function(event) {
             event.preventDefault();
-            startExport();
+            cancelExport();
         });
     }
     
     function turnOffCancelEventHandler() {
         $("#cancel-button").addClass("disabled");
         $("#cancel-button").off("click");
+    }
+    
+    function doReset() {
+        $("#progressBar").fadeOut(fadeOutTime);
+        $("#export").fadeOut(fadeOutTime);
+        turnOnTokenEventHandler();
     }
     
     $(document).ready(function() {
@@ -270,50 +273,46 @@ ctas:
         download sample data.
     </div>
     
-    <br />
-    
-    <form>
-        <div class="form-row form-group">
-            <div class="col-md-6 mb-3">
-              <label for="clientID">Client ID</label>
-              <input type="text" class="form-control" id="clientID" placeholder="Client ID" required>
-            </div>
-            <div class="col-md-6 mb-3">
-              <label for="clientSecret">Client Secret</label>
-              <input type="text" class="form-control" id="clientSecret" placeholder="Client Secret" required>
-            </div>
-        </div>
-        <button class="btn btn-primary" id="generate-token-button">Get Token</button>
-    </form>
-    
-    <br />
-    
-    <form>
-        <div class="form-row form-group" id="export">
-            <div class="col-md-6 mb-3">
-              <label for="clientSecret">Contract Number</label>
-              <input type="text" class="form-control" id="contractNumber" placeholder="Contract Number (Optional)">
-            </div>
-            <button class="btn btn-primary" type="submit" id="export-button">Start Export</button>
-        </div>
-    </form>
-    
-    <br />
-    
-    <div id="export-in-progress">
+    <div class="form-group ab2d-easy-section">
         <form>
-            <button class="btn btn-primary" type="submit" id="cancel-button">Cancel Export</button>
-            <div class="form-row form-group" id="status"></div>
+            <div class="form-row">
+                <div class="col-md-6 mb-3">
+                  <label for="clientID">Client ID</label>
+                  <input type="text" class="form-control" id="clientID" placeholder="Client ID" required>
+                </div>
+                <div class="col-md-6 mb-3">
+                  <label for="clientSecret">Client Secret</label>
+                  <input type="text" class="form-control" id="clientSecret" placeholder="Client Secret" required>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="col-md-6 mb-3">
+                    <button class="btn btn-primary" id="generate-token-button">Get Token</button>
+                </div>
+            </div>
+        </form>    
+    </div>
+    
+    <div class="form-group ab2d-easy-section" id="export">
+        <form>
+            <div class="form-row">
+                <div class="col-md-6 mb-3">
+                    <label for="clientSecret">Contract Number</label>
+                    <input type="text" class="form-control" id="contractNumber" placeholder="Contract Number (Optional)">               
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="col-md-6 mb-3"><button class="btn btn-primary" type="submit" id="export-button">Start Export</button></div>
+                <div class="col-md-6 mb-3"><button class="btn btn-primary disabled" type="submit" id="cancel-button">Cancel Export</button></div>
+            </div>
         </form>
     </div>
         
-    <br />    
-        
-    <div id="progress-bar">    
-        <div class="progress">
-            <div class="progress-bar" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
+    <div id="progress-bar" class="ab2d-easy-section">    
+        <div class="progress" style="height: 32px;">
+            <div class="progress-bar progress-bar-striped" role="progressbar" style="width: 0%; padding: 0px 5px 0px 5px;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
         </div>
-    </div>        
+    </div>
     
     <!-- Download Data -->
 </div>
