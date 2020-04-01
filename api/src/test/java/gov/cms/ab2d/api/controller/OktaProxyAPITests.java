@@ -58,6 +58,6 @@ public class OktaProxyAPITests {
                         new BasicNameValuePair("clientID", "BadParam"),
                         new BasicNameValuePair("clientSecret", "BadParam")
                 )))))
-                .andExpect(status().is(400));
+                .andExpect(status().is(500));
     }
 }
