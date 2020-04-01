@@ -1,7 +1,13 @@
 package gov.cms.ab2d.eventlogger.eventloggers.sql;
 
 import gov.cms.ab2d.eventlogger.LoggableEvent;
-import gov.cms.ab2d.eventlogger.events.*;
+import gov.cms.ab2d.eventlogger.events.ApiRequestEvent;
+import gov.cms.ab2d.eventlogger.events.ApiResponseEvent;
+import gov.cms.ab2d.eventlogger.events.BeneficiaryReloadEvent;
+import gov.cms.ab2d.eventlogger.events.ContractBeneSearchEvent;
+import gov.cms.ab2d.eventlogger.events.ErrorEvent;
+import gov.cms.ab2d.eventlogger.events.FileEvent;
+import gov.cms.ab2d.eventlogger.events.JobStatusChangeEvent;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.JdbcTemplate;
