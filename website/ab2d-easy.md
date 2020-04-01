@@ -49,6 +49,16 @@ ctas:
         border: 1px solid green;
         background-color: lightgreen;
     }
+    
+    .myAlert-top {
+        position: fixed;
+        top: 5px; 
+        left: 2%;
+        width: 96%;
+    }
+    .alert {
+        display: none;
+    }
 </style>
 
 <script>
@@ -56,13 +66,28 @@ ctas:
     const fhirSegment = 'api/v1/fhir/';
     
     const fadeInTime = 1000;
+    const fadeOutTime = 1000;
     
     const statusIntervalTimeout = 6000;
     let statusInterval = undefined;
     
     let contentLocationUrl = undefined;
     
+    const successClass = 'alert-success';
+    const failureClass = 'alert-danger';
+    
     let token = '';
+    
+    function showAlert(cssClass, message) {
+        $("#alert-dialog").removeClass(successClass).removeClass(failureClass);
+        $("#alert-dialog").addClass(cssClass);
+        $("#alert-text").text(message);
+        
+        $("#alert-dialog").fadeIn(fadeInTime);
+        setTimeout(function() {
+            $("#alert-dialog").fadeOut(fadeOutTime); 
+        }, 3500);
+    }
 
     function retrieveOktaToken() {
     
@@ -82,7 +107,8 @@ ctas:
             },
             success: function (data) {
                 token = data.accessToken;
-                $("#okta-token-status-message").html("Successfully retrieved okta token").addClass("success-status").show();
+                showAlert(successClass, 'Successfully retrieved okta token');
+                
                 $("#export").fadeIn(fadeInTime);
                 turnOnExportEventHandler();
             },
@@ -110,7 +136,7 @@ ctas:
             type: 'get',
             success: function(data, status, xhr) {
                 contentLocationUrl = xhr.getResponseHeader('Content-Location');
-                $('#export-status-message').html("Bulk export successfully started.").addClass("success-status").fadeIn(fadeInTime);
+                showAlert(successClass, "Bulk export successfully started.");
                 $('#export-in-progress').fadeIn(fadeInTime);
                 $('#progress-bar').fadeIn(fadeInTime);
                 initiateStatusChecks();
@@ -119,7 +145,7 @@ ctas:
                 turnOnCancelEventHandler();
             },
             error: function() {
-                $('#export-status-message').html("Failed to start bulk export. Please try again").addClass("failure-status").fadeIn(fadeInTime); 
+                showAlert(failureClass, "Failed to start bulk export. Please try again"); 
             }
         });
     }
@@ -151,7 +177,7 @@ ctas:
                 }
             },
             error: function() {
-                $('#export-status-message').html("Failed to start bulk export. Please try again").addClass("failure-status").fadeIn(fadeInTime); 
+                showAlert(failureClass, "Failed to start bulk export. Please try again");
             }
         });
     }
@@ -176,7 +202,7 @@ ctas:
             
             },
             error: function() {
-                $('#export-status-message').html("Failed to start bulk export. Please try again").addClass("failure-status").fadeIn(fadeInTime); 
+                showAlert(failureClass, "Failed to start bulk export. Please try again");
             }
         });
     }
@@ -229,6 +255,12 @@ ctas:
 </script>
 
 <div id="ab2d-easy-section" style="padding: 5px;">
+
+    <div class="myAlert-top alert" id="alert-dialog">
+        <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
+        <span id="alert-text"></span>
+    </div>
+
     <h3>AB2D Easy</h3>
     
     <br />
@@ -256,10 +288,6 @@ ctas:
     
     <br />
     
-    <div class="col-md-6 mb-3" id="okta-token-status-message"></div>
-    
-    <br />
-    
     <form>
         <div class="form-row form-group" id="export">
             <div class="col-md-6 mb-3">
@@ -267,10 +295,6 @@ ctas:
               <input type="text" class="form-control" id="contractNumber" placeholder="Contract Number (Optional)">
             </div>
             <button class="btn btn-primary" type="submit" id="export-button">Start Export</button>
-            
-            <br />
-            
-            <div id="export-status-message"></div>
         </div>
     </form>
     
