@@ -19,12 +19,6 @@ ctas:
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/js/bootstrap.min.js" integrity="sha384-B0UglyR+jN6CkvvICOB2joaf5I4l3gm9GU6Hc1og6Ls7i6U/mkkaduKaBhlAXv9k" crossorigin="anonymous"></script>
 
 <style type="text/css">
-    #okta-token-status-message {
-        display: none;
-        padding: 5px;
-        color: black;
-    }
-    
     #export {
         display: none;
     }
@@ -46,14 +40,8 @@ ctas:
         background-color: lightgreen;
     }
     
-    .myAlert-top {
-        position: fixed;
-        top: 5px; 
-        left: 2%;
-        width: 96%;
-    }
-    .alert {
-        display: none;
+    #alert-toast {
+        z-index: 1000;
     }
     
     .ab2d-easy-section {
@@ -78,21 +66,14 @@ ctas:
     
     let token = '';
     
+    let headerRight = undefined;
+    
     const toastOptions = {
-        delay: 3500
+        delay: 4500
     };
     
     function showAlert(cssClass, message) {
-        /*$("#alert-dialog").removeClass(successClass).removeClass(failureClass);
-        $("#alert-dialog").addClass(cssClass);
-        $("#alert-text").text(message);
-        
-        $("#alert-dialog").fadeIn(fadeInTime);
-        setTimeout(function() {
-            $("#alert-dialog").fadeOut(fadeOutTime); 
-        }, 3500);*/
-        
-        $('#toast-body').text(message);
+        $('#toast-body').text(message).removeClass(successClass).removeClass(failureClass).addClass(cssClass);
         $('#alert-toast').toast(toastOptions);
         $('#alert-toast').toast('show');
     }
@@ -121,7 +102,7 @@ ctas:
                 turnOnExportEventHandler();
             },
             error: function(data) {
-                $("#okta-token-status-message").html("Failed to authenticate. Please try again.").addClass("failure-status").show();
+                showAlert(failureClass, "Failed to authenticate. Please try again."); 
             }
         });
     }
@@ -263,32 +244,36 @@ ctas:
         turnOffExportEventHandler();
     }
     
+    function setupAlertPositioning() {
+        const $elt = $('#ab2d-easy-header');
+        const offset = $elt.offset();
+        headerRight = $(window).width() - offset.left + 15;
+        $('#alert-toast').css('right', headerRight);
+    }
+    
     $(document).ready(function() {
         turnOnTokenEventHandler();
+        setupAlertPositioning();
+    });
+    
+    $(window).resize(function() {
+        setupAlertPositioning();
     });
 </script>
 
 <div id="ab2d-easy-section" style="padding: 5px;">
 
-    <!--div class="myAlert-top alert" id="alert-dialog">
-        <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
-        <span id="alert-text"></span>
-    </div>-->
-    
-    <div aria-live="polite" aria-atomic="true" class="d-flex justify-content-center align-items-center" style="min-height: 200px;">
-    
-      <!-- Then put toasts within -->
-      <div class="toast" id="alert-toast" role="alert" aria-live="assertive" aria-atomic="true">
+    <div class="toast" id="alert-toast" role="alert" aria-live="assertive" aria-atomic="true" style="position: fixed; top: 100px;">
         <div class="toast-header">
-          <button style="position: absolute; right: 5px;" type="button" class="ml-2 mb-1 close" data-dismiss="toast" aria-label="Close">
+            <small>Notification</small>
+            <button type="button" class="ml-2 mb-1 close" data-dismiss="toast" style="position: absolute; right: 5px;">
             <span aria-hidden="true">&times;</span>
-          </button>
+            </button>
         </div>
         <div class="toast-body" id="toast-body"></div>
-      </div>
     </div>
 
-    <h3>AB2D Easy</h3>
+    <h3 id="ab2d-easy-header">AB2D Easy</h3>
     
     <br />
     
