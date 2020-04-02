@@ -11,8 +11,11 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.Assert;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.TestMethodOrder;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.data.util.Pair;
 import org.testcontainers.containers.DockerComposeContainer;
@@ -38,6 +41,7 @@ import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.stream.Collectors;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -47,7 +51,6 @@ import static gov.cms.ab2d.common.util.Constants.SINCE_EARLIEST_DATE;
 import static gov.cms.ab2d.e2etest.APIClient.PATIENT_EXPORT_PATH;
 import static java.time.format.DateTimeFormatter.ISO_DATE_TIME;
 import static java.time.temporal.ChronoUnit.SECONDS;
-import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.matchesPattern;
 
 // Unit tests here can be run from the IDE and will use LOCAL as the default, they can also be run from the TestLauncher
@@ -56,6 +59,7 @@ import static org.hamcrest.Matchers.matchesPattern;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @ExtendWith(TestRunnerParameterResolver.class)
 @Slf4j
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class TestRunner {
     private static final String FHIR_TYPE = "application/fhir+ndjson";
 
@@ -214,48 +218,62 @@ public class TestRunner {
         return Pair.of(url, extension);
     }
 
-    private void verifyJsonFromfileDownload(String fileContent, JSONArray extension, OffsetDateTime since) throws JSONException {
+    private void verifyJsonFromfileDownload(String fileContent, JSONArray extension, OffsetDateTime since, String optOut) throws JSONException {
         // Some of the data that is returned will be variable and will change from request to request, so not every
         // JSON object can be verified
-        final JSONObject fileJson = new JSONObject(fileContent);
-        Assert.assertTrue(validFields(fileJson));
-        Assert.assertEquals("ExplanationOfBenefit", fileJson.getString("resourceType"));
-        Assert.assertEquals(0, fileJson.getInt("precedence"));
-        String idString = fileJson.getString("id");
-
-        boolean found = false;
-        for(String acceptableIdString : acceptableIdStrings) {
-            if(idString.startsWith(acceptableIdString)) {
-                found = true;
-                break;
+        String[] jsonLines = fileContent.split("\n");
+        for (String str : jsonLines) {
+            if (str.isEmpty()) {
+                continue;
             }
-        }
 
-        if(!found) {
-            Assert.fail("No acceptable ID string was found, received " + idString);
-        }
+            JSONObject jsonObject = new JSONObject(str);
 
-        final JSONObject patientJson = fileJson.getJSONObject("patient");
-        String referenceString = patientJson.getString("reference");
-        Assert.assertTrue(referenceString.startsWith("Patient"));
-        final JSONObject typeJson = fileJson.getJSONObject("type");
-        Assert.assertNotNull(typeJson);
-        final JSONArray codingJson = typeJson.getJSONArray("coding");
-        Assert.assertNotNull(codingJson);
-        Assert.assertTrue(codingJson.length() >= 4);
-        final JSONArray identifierJson = fileJson.getJSONArray("identifier");
-        Assert.assertNotNull(identifierJson);
-        Assert.assertEquals(2, identifierJson.length());
-        final JSONArray diagnosisJson = fileJson.getJSONArray("diagnosis");
-        Assert.assertNotNull(diagnosisJson);
-        final JSONArray itemJson = fileJson.getJSONArray("item");
-        Assert.assertNotNull(itemJson);
+            Assert.assertTrue(validFields(jsonObject));
+            Assert.assertEquals("ExplanationOfBenefit", jsonObject.getString("resourceType"));
+            Assert.assertEquals(0, jsonObject.getInt("precedence"));
+            String idString = jsonObject.getString("id");
 
-        final JSONObject metaJson = fileJson.getJSONObject("meta");
-        final String lastUpdated = metaJson.getString("lastUpdated");
-        Instant lastUpdatedInstant = Instant.parse(lastUpdated);
-        if(since != null) {
-            Assert.assertTrue(lastUpdatedInstant.isAfter(since.toInstant()));
+            boolean found = false;
+            for (String acceptableIdString : acceptableIdStrings) {
+                if (idString.startsWith(acceptableIdString)) {
+                    found = true;
+                    break;
+                }
+            }
+
+            if (!found) {
+                Assert.fail("No acceptable ID string was found, received " + idString);
+            }
+
+            final JSONObject patientJson = jsonObject.getJSONObject("patient");
+            String referenceString = patientJson.getString("reference");
+            Assert.assertTrue(referenceString.startsWith("Patient"));
+
+            String patientId = referenceString.substring(referenceString.indexOf('-') + 1);
+            if(optOut != null && patientId.equals(optOut)) {
+                Assert.fail("Patient ID opted out, but showed up in the download");
+            }
+
+            final JSONObject typeJson = jsonObject.getJSONObject("type");
+            Assert.assertNotNull(typeJson);
+            final JSONArray codingJson = typeJson.getJSONArray("coding");
+            Assert.assertNotNull(codingJson);
+            Assert.assertTrue(codingJson.length() >= 4);
+            final JSONArray identifierJson = jsonObject.getJSONArray("identifier");
+            Assert.assertNotNull(identifierJson);
+            Assert.assertEquals(2, identifierJson.length());
+            final JSONArray diagnosisJson = jsonObject.getJSONArray("diagnosis");
+            Assert.assertNotNull(diagnosisJson);
+            final JSONArray itemJson = jsonObject.getJSONArray("item");
+            Assert.assertNotNull(itemJson);
+
+            final JSONObject metaJson = jsonObject.getJSONObject("meta");
+            final String lastUpdated = metaJson.getString("lastUpdated");
+            Instant lastUpdatedInstant = Instant.parse(lastUpdated);
+            if (since != null) {
+                Assert.assertTrue(lastUpdatedInstant.isAfter(since.toInstant()));
+            }
         }
 
         JSONObject checkSumObject = extension.getJSONObject(0);
@@ -308,7 +326,7 @@ public class TestRunner {
         return true;
     }
 
-    private void downloadFile(Pair<String, JSONArray> downloadDetails, OffsetDateTime since) throws IOException, InterruptedException, JSONException {
+    private void downloadFile(Pair<String, JSONArray> downloadDetails, OffsetDateTime since, String optOut) throws IOException, InterruptedException, JSONException {
         HttpResponse<InputStream> downloadResponse = apiClient.fileDownloadRequest(downloadDetails.getFirst());
 
         Assert.assertEquals(200, downloadResponse.statusCode());
@@ -320,7 +338,7 @@ public class TestRunner {
             downloadString = IOUtils.toString(gzipInputStream, Charset.defaultCharset());
         }
 
-        verifyJsonFromfileDownload(downloadString, downloadDetails.getSecond(), since);
+        verifyJsonFromfileDownload(downloadString, downloadDetails.getSecond(), since, optOut);
     }
 
     private void downloadZipFile(String url, JSONArray extension, OffsetDateTime since) throws IOException, InterruptedException, JSONException {
@@ -333,7 +351,7 @@ public class TestRunner {
             zipIn.closeEntry();
             entry = zipIn.getNextEntry();
         }
-        verifyJsonFromfileDownload(downloadString.toString(), extension, since);
+        verifyJsonFromfileDownload(downloadString.toString(), extension, since, null);
     }
 
     public static String extractZipFileData(ZipEntry entry, ZipInputStream zipIn) throws IOException {
@@ -376,16 +394,18 @@ public class TestRunner {
     }
 
     @Test
+    @Order(1)
     public void runSystemWideExport() throws IOException, InterruptedException, JSONException {
         HttpResponse<String> exportResponse = apiClient.exportRequest(FHIR_TYPE, null);
         Assert.assertEquals(202, exportResponse.statusCode());
         List<String> contentLocationList = exportResponse.headers().map().get("content-location");
 
         Pair<String, JSONArray> downloadDetails = performStatusRequests(contentLocationList, false, "S0000");
-        downloadFile(downloadDetails, null);
+        downloadFile(downloadDetails, null, null);
     }
 
     @Test
+    @Order(2)
     public void runSystemWideExportSince() throws IOException, InterruptedException, JSONException {
         HttpResponse<String> exportResponse = apiClient.exportRequest(FHIR_TYPE, earliest);
         System.out.println(earliest);
@@ -394,11 +414,12 @@ public class TestRunner {
 
         Pair<String, JSONArray> downloadDetails = performStatusRequests(contentLocationList, false, "S0000");
         if (downloadDetails != null) {
-            downloadFile(downloadDetails, earliest);
+            downloadFile(downloadDetails, earliest, null);
         }
     }
 
     @Test
+    @Order(3)
     public void runErrorSince() throws IOException, InterruptedException {
         OffsetDateTime timeBeforeEarliest = earliest.minus(1, ChronoUnit.MINUTES);
         HttpResponse<String> exportResponse = apiClient.exportRequest(FHIR_TYPE, timeBeforeEarliest);
@@ -410,12 +431,14 @@ public class TestRunner {
     }
 
     @Test
+    @Order(4)
     public void runSystemWideZipExport() throws IOException, InterruptedException, JSONException {
         HttpResponse<String> exportResponse = apiClient.exportRequest(ZIPFORMAT, null);
         Assert.assertEquals(400, exportResponse.statusCode());
     }
 
     @Test
+    @Order(5)
     public void runContractNumberExport() throws IOException, InterruptedException, JSONException {
         String contractNumber = "S0000";
         HttpResponse<String> exportResponse = apiClient.exportByContractRequest(contractNumber, FHIR_TYPE, null);
@@ -423,10 +446,11 @@ public class TestRunner {
         List<String> contentLocationList = exportResponse.headers().map().get("content-location");
 
         Pair<String, JSONArray> downloadDetails = performStatusRequests(contentLocationList, true, contractNumber);
-        downloadFile(downloadDetails, null);
+        downloadFile(downloadDetails, null, null);
     }
 
     @Test
+    @Order(6)
     void runContractNumberZipExport() throws IOException, InterruptedException, JSONException {
         String contractNumber = "S0000";
         HttpResponse<String> exportResponse = apiClient.exportByContractRequest(contractNumber, ZIPFORMAT, null);
@@ -434,6 +458,7 @@ public class TestRunner {
     }
 
     @Test
+    @Order(7)
     public void testDelete() throws IOException, InterruptedException {
         HttpResponse<String> exportResponse = apiClient.exportRequest(FHIR_TYPE, null);
 
@@ -447,6 +472,7 @@ public class TestRunner {
     }
 
     @Test
+    @Order(8)
     public void testUserCannotDownloadOtherUsersJob() throws IOException, InterruptedException, JSONException {
         String contractNumber = "S0000";
         HttpResponse<String> exportResponse = apiClient.exportByContractRequest(contractNumber, FHIR_TYPE, null);
@@ -462,6 +488,7 @@ public class TestRunner {
     }
 
     @Test
+    @Order(9)
     public void testUserCannotDeleteOtherUsersJob() throws IOException, InterruptedException, JSONException {
         HttpResponse<String> exportResponse = apiClient.exportRequest(FHIR_TYPE, null);
 
@@ -481,6 +508,7 @@ public class TestRunner {
     }
 
     @Test
+    @Order(10)
     public void testUserCannotCheckStatusOtherUsersJob() throws IOException, InterruptedException, JSONException {
         HttpResponse<String> exportResponse = apiClient.exportRequest(FHIR_TYPE, null);
 
@@ -508,6 +536,7 @@ public class TestRunner {
     }
 
     @Test
+    @Order(11)
     public void testUserCannotMakeRequestWithoutToken() throws IOException, InterruptedException {
         HttpRequest exportRequest = HttpRequest.newBuilder()
                 .uri(URI.create(AB2D_API_URL + PATIENT_EXPORT_PATH))
@@ -522,6 +551,7 @@ public class TestRunner {
     }
 
     @Test
+    @Order(12)
     public void testUserCannotMakeRequestWithSelfSignedToken() throws IOException, InterruptedException, JSONException {
         String clientSecret = "wefikjweglkhjwelgkjweglkwegwegewg";
         SecretKey sharedSecret = Keys.hmacShaKeyFor(clientSecret.getBytes(StandardCharsets.UTF_8));
@@ -558,6 +588,7 @@ public class TestRunner {
     }
 
     @Test
+    @Order(13)
     public void testBadQueryParameterResource() throws IOException, InterruptedException {
         var params = new HashMap<>(){{
             put("_type", "BadParam");
@@ -568,6 +599,7 @@ public class TestRunner {
     }
 
     @Test
+    @Order(14)
     public void testBadQueryParameterOutputFormat() throws IOException, InterruptedException {
         var params = new HashMap<>(){{
             put("_outputFormat", "BadParam");
@@ -578,9 +610,22 @@ public class TestRunner {
     }
 
     @Test
+    @Order(15)
     public void testHealthEndPoint() throws IOException, InterruptedException {
         HttpResponse<String> healthCheckResponse = apiClient.healthCheck();
 
         Assert.assertEquals(200, healthCheckResponse.statusCode());
+    }
+
+    @Test
+    @Order(16)
+    public void testOptOut() throws IOException, InterruptedException, JSONException {
+        HttpResponse<String> exportResponse = apiClient.exportRequest(FHIR_TYPE, null);
+
+        Assert.assertEquals(202, exportResponse.statusCode());
+        List<String> contentLocationList = exportResponse.headers().map().get("content-location");
+
+        Pair<String, JSONArray> downloadDetails = performStatusRequests(contentLocationList, false, "S0000");
+        downloadFile(downloadDetails, null, "19990000002906");
     }
 }
