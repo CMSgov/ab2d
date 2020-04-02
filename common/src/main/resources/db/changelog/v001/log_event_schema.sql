@@ -11,7 +11,7 @@ CREATE TABLE event_api_request
         user_id VARCHAR(255),
         url VARCHAR(2048),
         ip_address VARCHAR(32),
-        token_hash VARCHAR(32),
+        token_hash VARCHAR(255),
         request_id VARCHAR(32)
 );
 ALTER TABLE event_api_request ADD CONSTRAINT "pk_api_request_event" PRIMARY KEY (id);
