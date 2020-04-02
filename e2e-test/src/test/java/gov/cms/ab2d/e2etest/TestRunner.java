@@ -626,6 +626,6 @@ public class TestRunner {
         List<String> contentLocationList = exportResponse.headers().map().get("content-location");
 
         Pair<String, JSONArray> downloadDetails = performStatusRequests(contentLocationList, false, "S0000");
-        downloadFile(downloadDetails, null, "19990000002906");
+        downloadFile(downloadDetails, null, "19990000002906"); // User should not be included
     }
 }
