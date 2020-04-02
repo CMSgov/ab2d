@@ -78,15 +78,23 @@ ctas:
     
     let token = '';
     
+    const toastOptions = {
+        delay: 3500
+    };
+    
     function showAlert(cssClass, message) {
-        $("#alert-dialog").removeClass(successClass).removeClass(failureClass);
+        /*$("#alert-dialog").removeClass(successClass).removeClass(failureClass);
         $("#alert-dialog").addClass(cssClass);
         $("#alert-text").text(message);
         
         $("#alert-dialog").fadeIn(fadeInTime);
         setTimeout(function() {
             $("#alert-dialog").fadeOut(fadeOutTime); 
-        }, 3500);
+        }, 3500);*/
+        
+        $('#toast-body').text(message);
+        $('#alert-toast').toast(toastOptions);
+        $('#alert-toast').toast('show');
     }
 
     function retrieveOktaToken() {
@@ -107,13 +115,13 @@ ctas:
             },
             success: function (data) {
                 token = data.accessToken;
-                showAlert(successClass, 'Successfully retrieved okta token');
+                showAlert(successClass, 'Successfully authenticated');
                 
                 $("#export").fadeIn(fadeInTime);
                 turnOnExportEventHandler();
             },
             error: function(data) {
-                $("#okta-token-status-message").html("Failed to retrieve okta token. Please try again.").addClass("failure-status").show();
+                $("#okta-token-status-message").html("Failed to authenticate. Please try again.").addClass("failure-status").show();
             }
         });
     }
@@ -176,7 +184,7 @@ ctas:
                 }
             },
             error: function() {
-                showAlert(failureClass, "Failed to start bulk export. Please try again");
+                showAlert(failureClass, "Failed to check status for bulk export.");
             }
         });
     }
@@ -208,7 +216,7 @@ ctas:
     }
     
     function turnOnTokenEventHandler() {
-        $("#generate-token-button").addClass("enabled");
+        $("#generate-token-button").removeClass("disabled").addClass("enabled");
         $("#generate-token-button").on("click", function(event) {
             event.preventDefault();
             retrieveOktaToken();
@@ -216,12 +224,12 @@ ctas:
     }
     
     function turnOffTokenEventHandler() {
-        $("#generate-token-button").addClass("disabled");
+        $("#generate-token-button").removeClass("enabled").addClass("disabled");
         $("#generate-token-button").off("click");
     }
     
     function turnOnExportEventHandler() {
-        $("#export-button").addClass("enabled");
+        $("#export-button").removeClass("disabled").addClass("enabled");
         $("#export-button").on("click", function(event) {
             event.preventDefault();
             startExport();
@@ -229,7 +237,7 @@ ctas:
     }
     
     function turnOffExportEventHandler() {
-        $("#export-button").addClass("disabled");
+        $("#export-button").removeClass("enabled").addClass("disabled");
         $("#export-button").off("click");
     }
     
@@ -242,14 +250,17 @@ ctas:
     }
     
     function turnOffCancelEventHandler() {
-        $("#cancel-button").addClass("disabled");
+        $("#cancel-button").removeClass("enabled").addClass("disabled");
         $("#cancel-button").off("click");
     }
     
     function doReset() {
-        $("#progressBar").fadeOut(fadeOutTime);
+        cancelStatusInterval();
+        $("#progress-bar").fadeOut(fadeOutTime);
         $("#export").fadeOut(fadeOutTime);
         turnOnTokenEventHandler();
+        turnOffCancelEventHandler();
+        turnOffExportEventHandler();
     }
     
     $(document).ready(function() {
@@ -259,9 +270,22 @@ ctas:
 
 <div id="ab2d-easy-section" style="padding: 5px;">
 
-    <div class="myAlert-top alert" id="alert-dialog">
+    <!--div class="myAlert-top alert" id="alert-dialog">
         <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
         <span id="alert-text"></span>
+    </div>-->
+    
+    <div aria-live="polite" aria-atomic="true" class="d-flex justify-content-center align-items-center" style="min-height: 200px;">
+    
+      <!-- Then put toasts within -->
+      <div class="toast" id="alert-toast" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="toast-header">
+          <button style="position: absolute; right: 5px;" type="button" class="ml-2 mb-1 close" data-dismiss="toast" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="toast-body" id="toast-body"></div>
+      </div>
     </div>
 
     <h3>AB2D Easy</h3>
@@ -282,12 +306,12 @@ ctas:
                 </div>
                 <div class="col-md-6 mb-3">
                   <label for="clientSecret">Client Secret</label>
-                  <input type="text" class="form-control" id="clientSecret" placeholder="Client Secret" required>
+                  <input type="password" class="form-control" id="clientSecret" placeholder="Client Secret" required>
                 </div>
             </div>
             <div class="form-row">
                 <div class="col-md-6 mb-3">
-                    <button class="btn btn-primary" id="generate-token-button">Get Token</button>
+                    <button class="btn btn-primary" id="generate-token-button">Authenticate</button>
                 </div>
             </div>
         </form>    
@@ -302,8 +326,10 @@ ctas:
                 </div>
             </div>
             <div class="form-row">
-                <div class="col-md-6 mb-3"><button class="btn btn-primary" type="submit" id="export-button">Start Export</button></div>
-                <div class="col-md-6 mb-3"><button class="btn btn-primary disabled" type="submit" id="cancel-button">Cancel Export</button></div>
+                <div class="col-md-6 mb-3">
+                    <button class="btn btn-primary" type="submit" id="export-button">Start Export</button>
+                    <button class="btn btn-danger disabled" type="submit" id="cancel-button">Cancel Export</button>
+                </div>
             </div>
         </form>
     </div>
