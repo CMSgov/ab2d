@@ -111,7 +111,7 @@ ctas:
         const contractNumber = $("#contractNumber").val();
         
         let url = '';
-        if(contractNumber === undefined || contractNumber === '') {
+        if(contractNumber === undefined || contractNumber === null || contractNumber === '') {
             url = baseUrl + fhirSegment + 'Patient/$export';
         } else {
             url = baseUrl + fhirSegment + 'Group/' + contractNumber + '/$export';        
