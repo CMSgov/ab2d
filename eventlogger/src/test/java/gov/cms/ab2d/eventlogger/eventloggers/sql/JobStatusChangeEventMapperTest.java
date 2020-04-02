@@ -24,7 +24,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @Testcontainers
 class JobStatusChangeEventMapperTest {
     @Container
-    private static final PostgreSQLContainer postgreSQLContainer= new AB2DPostgresqlContainer();
+    private static final PostgreSQLContainer postgreSQLContainer = new AB2DPostgresqlContainer();
 
     @Autowired
     SqlEventLogger sqlEventLogger;

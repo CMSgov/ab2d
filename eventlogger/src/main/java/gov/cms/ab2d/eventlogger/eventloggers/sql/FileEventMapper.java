@@ -4,48 +4,46 @@ import gov.cms.ab2d.eventlogger.EventLoggingException;
 import gov.cms.ab2d.eventlogger.LoggableEvent;
 import gov.cms.ab2d.eventlogger.events.FileEvent;
 import gov.cms.ab2d.eventlogger.utils.UtilMethods;
-import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.OffsetDateTime;
 
-public class FileEventMapper extends SqlEventMapper {
-    private JdbcTemplate template;
+class FileEventMapper extends SqlEventMapper {
+    private NamedParameterJdbcTemplate template;
 
-    public FileEventMapper(JdbcTemplate template) {
+    FileEventMapper(NamedParameterJdbcTemplate template) {
         this.template = template;
     }
+
     @Override
     public void log(LoggableEvent event) {
         if (event.getClass() != FileEvent.class) {
             throw new EventLoggingException("Used " + event.getClass().toString() + " instead of " + FileEvent.class.toString());
         }
+        FileEvent be = (FileEvent) event;
+
+        KeyHolder keyHolder = new GeneratedKeyHolder();
         String query = "insert into event_file " +
                 " (time_of_event, user_id, job_id, file_name, status, file_size, file_hash) " +
-                " values (?, ?, ?, ?, ?, ?, ?)";
+                " values (:time, :user, :job, :fileName, :status, :fileSize, :fileHash)";
 
-        FileEvent be = (FileEvent) event;
-        KeyHolder keyHolder = new GeneratedKeyHolder();
-        template.update(connection -> {
-            PreparedStatement ps = connection
-                    .prepareStatement(query, new String[] {"id"});
-            ps.setObject(1, UtilMethods.convertToUtc(be.getTimeOfEvent()));
-            ps.setString(2, be.getUser());
-            ps.setString(3, be.getJobId());
-            ps.setString(4, be.getFileName());
-            ps.setString(5, be.getStatus() != null ? be.getStatus().name() : null);
-            ps.setLong(6, be.getFileSize());
-            ps.setString(7, be.getFileHash());
-            return ps;
-        }, keyHolder);
+        SqlParameterSource parameters = new MapSqlParameterSource()
+                .addValue("time", UtilMethods.convertToUtc(be.getTimeOfEvent()))
+                .addValue("user", be.getUser())
+                .addValue("job", be.getJobId())
+                .addValue("fileName", be.getFileName())
+                .addValue("status", be.getStatus() != null ? be.getStatus().name() : null)
+                .addValue("fileSize", be.getFileSize())
+                .addValue("fileHash", be.getFileHash());
 
-        if (keyHolder.getKey() != null) {
-            event.setId(keyHolder.getKey().longValue());
-        }
+        template.update(query, parameters, keyHolder);
+        event.setId(SqlEventMapper.getIdValue(keyHolder));
     }
 
     @Override

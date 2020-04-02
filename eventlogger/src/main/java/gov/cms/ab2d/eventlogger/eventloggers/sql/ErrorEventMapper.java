@@ -4,19 +4,20 @@ import gov.cms.ab2d.eventlogger.EventLoggingException;
 import gov.cms.ab2d.eventlogger.LoggableEvent;
 import gov.cms.ab2d.eventlogger.events.ErrorEvent;
 import gov.cms.ab2d.eventlogger.utils.UtilMethods;
-import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.OffsetDateTime;
 
 public class ErrorEventMapper extends SqlEventMapper {
-    private JdbcTemplate template;
+    private NamedParameterJdbcTemplate template;
 
-    public ErrorEventMapper(JdbcTemplate template) {
+    ErrorEventMapper(NamedParameterJdbcTemplate template) {
         this.template = template;
     }
 
@@ -25,27 +26,22 @@ public class ErrorEventMapper extends SqlEventMapper {
         if (event.getClass() != ErrorEvent.class) {
             throw new EventLoggingException("Used " + event.getClass().toString() + " instead of " + ErrorEvent.class.toString());
         }
+        ErrorEvent be = (ErrorEvent) event;
 
+        KeyHolder keyHolder = new GeneratedKeyHolder();
         String query = "insert into event_error " +
                 " (time_of_event, user_id, job_id, error_type, description) " +
-                " values (?, ?, ?, ?, ?)";
+                " values (:time, :user, :job, :errorType, :description)";
 
-        ErrorEvent be = (ErrorEvent) event;
-        KeyHolder keyHolder = new GeneratedKeyHolder();
-        template.update(connection -> {
-            PreparedStatement ps = connection
-                    .prepareStatement(query, new String[] {"id"});
-            ps.setObject(1, UtilMethods.convertToUtc(be.getTimeOfEvent()));
-            ps.setString(2, be.getUser());
-            ps.setString(3, be.getJobId());
-            ps.setString(4, be.getErrorType() != null ? be.getErrorType().name() : null);
-            ps.setString(5, be.getDescription());
-            return ps;
-        }, keyHolder);
+        SqlParameterSource parameters = new MapSqlParameterSource()
+                .addValue("time", UtilMethods.convertToUtc(be.getTimeOfEvent()))
+                .addValue("user", be.getUser())
+                .addValue("job", be.getJobId())
+                .addValue("errorType", be.getErrorType() != null ? be.getErrorType().name() : null)
+                .addValue("description", be.getDescription());
 
-        if (keyHolder.getKey() != null) {
-            event.setId(keyHolder.getKey().longValue());
-        }
+        template.update(query, parameters, keyHolder);
+        event.setId(SqlEventMapper.getIdValue(keyHolder));
     }
 
     @Override

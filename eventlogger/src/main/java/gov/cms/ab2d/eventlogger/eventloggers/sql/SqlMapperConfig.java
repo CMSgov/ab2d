@@ -8,9 +8,8 @@ import gov.cms.ab2d.eventlogger.events.ContractBeneSearchEvent;
 import gov.cms.ab2d.eventlogger.events.ErrorEvent;
 import gov.cms.ab2d.eventlogger.events.FileEvent;
 import gov.cms.ab2d.eventlogger.events.JobStatusChangeEvent;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -20,10 +19,13 @@ import java.util.Map;
  */
 @Configuration
 public class SqlMapperConfig {
-    @Autowired
-    private JdbcTemplate jdbcTemplate;
+    private final NamedParameterJdbcTemplate jdbcTemplate;
 
     private Map<Class<? extends LoggableEvent>, SqlEventMapper> mapping = new HashMap<>();
+
+    public SqlMapperConfig(NamedParameterJdbcTemplate jdbcTemplate) {
+        this.jdbcTemplate = jdbcTemplate;
+    }
 
     public SqlEventMapper getMapper(Class<? extends LoggableEvent> event) {
         if (mapping.isEmpty()) {

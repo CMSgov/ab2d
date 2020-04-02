@@ -2,12 +2,14 @@ package gov.cms.ab2d.eventlogger.events;
 
 import gov.cms.ab2d.eventlogger.LoggableEvent;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 import java.time.OffsetDateTime;
 
 /**
  * Class to create and log an API request coming from a user
  */
+@EqualsAndHashCode(callSuper = true)
 @Data
 public class ApiRequestEvent extends LoggableEvent {
     // The URL requested including request parameters

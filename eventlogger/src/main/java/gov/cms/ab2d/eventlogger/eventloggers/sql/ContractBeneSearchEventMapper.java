@@ -4,7 +4,9 @@ import gov.cms.ab2d.eventlogger.EventLoggingException;
 import gov.cms.ab2d.eventlogger.LoggableEvent;
 import gov.cms.ab2d.eventlogger.events.ContractBeneSearchEvent;
 import gov.cms.ab2d.eventlogger.utils.UtilMethods;
-import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 
@@ -12,9 +14,9 @@ import java.sql.*;
 import java.time.OffsetDateTime;
 
 public class ContractBeneSearchEventMapper extends SqlEventMapper {
-    private JdbcTemplate template;
+    private NamedParameterJdbcTemplate template;
 
-    public ContractBeneSearchEventMapper(JdbcTemplate template) {
+    ContractBeneSearchEventMapper(NamedParameterJdbcTemplate template) {
         this.template = template;
     }
 
@@ -23,29 +25,25 @@ public class ContractBeneSearchEventMapper extends SqlEventMapper {
         if (event.getClass() != ContractBeneSearchEvent.class) {
             throw new EventLoggingException("Used " + event.getClass().toString() + " instead of " + ContractBeneSearchEvent.class.toString());
         }
+        ContractBeneSearchEvent be = (ContractBeneSearchEvent) event;
+
+        KeyHolder keyHolder = new GeneratedKeyHolder();
         String query = "insert into event_bene_search " +
                 " (time_of_event, user_id, job_id, contract_number, num_in_contract, num_searched, num_opted_out, num_errors) " +
-                " values (?, ?, ?, ?, ?, ?, ?, ?)";
+                " values (:time, :user, :job, :contractNum, :numInContract, :numSearched, :numOptedOut, :numErrors)";
 
-        ContractBeneSearchEvent be = (ContractBeneSearchEvent) event;
-        KeyHolder keyHolder = new GeneratedKeyHolder();
-        template.update(connection -> {
-            PreparedStatement ps = connection
-                    .prepareStatement(query, new String[] {"id"});
-            ps.setObject(1, UtilMethods.convertToUtc(be.getTimeOfEvent()));
-            ps.setString(2, be.getUser());
-            ps.setString(3, be.getJobId());
-            ps.setString(4, be.getContractNumber());
-            ps.setInt(5, be.getNumInContract());
-            ps.setInt(6, be.getNumSearched());
-            ps.setInt(7, be.getNumOptedOut());
-            ps.setInt(8, be.getNumErrors());
-            return ps;
-        }, keyHolder);
+        SqlParameterSource parameters = new MapSqlParameterSource()
+                .addValue("time", UtilMethods.convertToUtc(be.getTimeOfEvent()))
+                .addValue("user", be.getUser())
+                .addValue("job", be.getJobId())
+                .addValue("contractNum", be.getContractNumber())
+                .addValue("numInContract", be.getNumInContract())
+                .addValue("numSearched", be.getNumSearched())
+                .addValue("numOptedOut", be.getNumOptedOut())
+                .addValue("numErrors", be.getNumErrors());
 
-        if (keyHolder.getKey() != null) {
-            event.setId(keyHolder.getKey().longValue());
-        }
+        template.update(query, parameters, keyHolder);
+        event.setId(SqlEventMapper.getIdValue(keyHolder));
     }
 
     @Override

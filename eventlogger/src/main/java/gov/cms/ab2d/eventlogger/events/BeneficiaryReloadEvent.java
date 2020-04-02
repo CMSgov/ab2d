@@ -2,12 +2,14 @@ package gov.cms.ab2d.eventlogger.events;
 
 import gov.cms.ab2d.eventlogger.LoggableEvent;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 import java.time.OffsetDateTime;
 
 /**
  * Records when a bulk import is done of beneficiary data
  */
+@EqualsAndHashCode(callSuper = true)
 @Data
 public class BeneficiaryReloadEvent extends LoggableEvent {
     public enum FileType {

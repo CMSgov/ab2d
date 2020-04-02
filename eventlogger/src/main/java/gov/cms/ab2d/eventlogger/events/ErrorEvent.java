@@ -2,12 +2,14 @@ package gov.cms.ab2d.eventlogger.events;
 
 import gov.cms.ab2d.eventlogger.LoggableEvent;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 import java.time.OffsetDateTime;
 
 /**
  * Logs exceptions that occur. I assume this logger will increase the most over time
  */
+@EqualsAndHashCode(callSuper = true)
 @Data
 public class ErrorEvent extends LoggableEvent {
     public enum ErrorType {
