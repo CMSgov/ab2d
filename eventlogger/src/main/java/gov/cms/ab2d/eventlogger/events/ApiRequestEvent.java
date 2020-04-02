@@ -3,6 +3,8 @@ package gov.cms.ab2d.eventlogger.events;
 import gov.cms.ab2d.eventlogger.LoggableEvent;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import org.apache.commons.codec.binary.Hex;
+import org.apache.commons.codec.digest.DigestUtils;
 
 import java.time.OffsetDateTime;
 
@@ -23,12 +25,14 @@ public class ApiRequestEvent extends LoggableEvent {
 
     public ApiRequestEvent() { }
 
-    public ApiRequestEvent(String user, String jobId, String url, String ipAddress, String tokenHash,
+    public ApiRequestEvent(String user, String jobId, String url, String ipAddress, String token,
                             String requestId) {
         super(OffsetDateTime.now(), user, jobId);
         this.url = url;
         this.ipAddress = ipAddress;
-        this.tokenHash = tokenHash;
+        if (token != null) {
+            this.tokenHash = Hex.encodeHexString(DigestUtils.sha256(token));
+        }
         this.requestId = requestId;
     }
 }

@@ -7,6 +7,8 @@ import gov.cms.ab2d.eventlogger.SpringBootApp;
 import gov.cms.ab2d.eventlogger.events.ApiRequestEvent;
 import gov.cms.ab2d.eventlogger.events.ErrorEvent;
 import gov.cms.ab2d.eventlogger.reports.sql.LoadObjects;
+import org.apache.commons.codec.binary.Hex;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -40,7 +42,7 @@ class ApiRequestEventMapperTest {
     @Test
     void log() {
         ApiRequestEvent jsce = new ApiRequestEvent("laila", "job123", "http://localhost",
-                "127.0.0.1", "hash", "123");
+                "127.0.0.1", "token", "123");
         sqlEventLogger.log(jsce);
         long id = jsce.getId();
         OffsetDateTime val = jsce.getTimeOfEvent();
@@ -54,7 +56,7 @@ class ApiRequestEventMapperTest {
         assertEquals(val.getNano(), event.getTimeOfEvent().getNano());
         assertEquals("http://localhost", event.getUrl());
         assertEquals("127.0.0.1", event.getIpAddress());
-        assertEquals("hash", event.getTokenHash());
+        assertEquals(Hex.encodeHexString(DigestUtils.sha256("token")), event.getTokenHash());
         assertEquals("123", event.getRequestId());
     }
 }
