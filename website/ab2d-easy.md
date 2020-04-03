@@ -50,7 +50,8 @@ ctas:
 </style>
 
 <script>
-    const baseUrl = 'http://localhost:8080/';
+    // Sandbox URL, could change
+    const baseUrl = 'https://sandbox.ab2d.cms.gov/';
     const fhirSegment = 'api/v1/fhir/';
     
     const fadeInTime = 1000;
