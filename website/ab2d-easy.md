@@ -17,7 +17,7 @@ ctas:
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.6/umd/popper.min.js" integrity="sha384-wHAiFfRlMFy6i5SRaxvfOCifBUQy1xHdJ/yoi7FRNXMRBu5WHdZYu1hA6ZOblgut" crossorigin="anonymous"></script>
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/js/bootstrap.min.js" integrity="sha384-B0UglyR+jN6CkvvICOB2joaf5I4l3gm9GU6Hc1og6Ls7i6U/mkkaduKaBhlAXv9k" crossorigin="anonymous"></script>
-
+<script src="assets/js/jquery.binarytransport.js" type="text/javascript"></script>
 <style type="text/css">
     #export {
         display: none;
@@ -271,14 +271,52 @@ ctas:
         turnOffExportEventHandler();
     }
     
+    function downloadJSON(url) {
+        $.ajax({
+            url: url,
+            headers: {
+                'Authorization': 'Bearer ' + token
+            },
+            dataType: 'binary',
+            type: 'get',
+            processData: 'false',
+            success: function(blob) {
+                showAlert(successClass, "File download started");
+                const windowUrl = window.URL || window.webkitURL;
+                const downloadUrl = windowUrl.createObjectURL(blob);
+                const anchor = $("<a></a>"); 
+                anchor.css("display", "none"); 
+                $("body").append(anchor);
+                anchor.prop('href', downloadUrl);
+                anchor.prop('download', url);
+                anchor.get(0).click();
+                windowUrl.revokeObjectURL(downloadUrl);
+                anchor.remove();
+            },
+            error: function() {
+                showAlert(failureClass, "Failed to download file");
+            }
+        });
+    }
+    
     function showDownloadLinks(responseJSON) {
         if(responseJSON.error.length > 0) {
             
         }
         for(let i = 0; i < responseJSON.output.length; i++) {
             $("#download-section-links").append("<li><a href='" + responseJSON.output[i].url + "'>Download " +
-                responseJSON.output[i].type + " file</a></li>");
+                responseJSON.output[i].type + " file</a></li>").on('click', function(event) {
+                    event.preventDefault();
+                    downloadJSON(responseJSON.output[i].url);
+                });
         }
+        
+        /*$("#download-section-links").each(function() {
+            $(this).on('click', function($elem) {
+                const link = $(elem).attr('href');
+                  
+            });  
+        });*/
         
         $("#download-section").fadeIn(fadeInTime);
     }
