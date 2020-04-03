@@ -18,13 +18,16 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.util.Arrays;
+import java.util.List;
 
 import static gov.cms.ab2d.common.util.Constants.OKTA_PROXY_ENDPOINT;
+import static gov.cms.ab2d.common.util.Constants.SPONSOR_ROLE;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@SpringBootTest(classes = SpringBootApp.class, webEnvironment = SpringBootTest.WebEnvironment.MOCK)
+@SpringBootTest(classes = SpringBootApp.class, webEnvironment = SpringBootTest.WebEnvironment.MOCK,
+        properties = {"api.okta-jwt-issuer=https://test.idp.idm.cms.gov/oauth2/aus2r7y3gdaFMKBol297"})
 @AutoConfigureMockMvc
 @Testcontainers
 public class OktaProxyAPITests {
@@ -55,6 +58,6 @@ public class OktaProxyAPITests {
                         new BasicNameValuePair("clientID", "BadParam"),
                         new BasicNameValuePair("clientSecret", "BadParam")
                 )))))
-                .andExpect(status().is(400));
+                .andExpect(status().is(500));
     }
 }

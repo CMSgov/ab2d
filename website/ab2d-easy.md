@@ -79,7 +79,6 @@ ctas:
     }
 
     function retrieveOktaToken() {
-    
         const clientID = $('#clientID').val();
         const clientSecret = $('#clientSecret').val();
         const formData = {
