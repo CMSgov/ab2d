@@ -20,7 +20,7 @@ public class CorsConfig {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowCredentials(true);
-        config.addAllowedOrigin("*");
+        config.addAllowedOrigin("127.0.0.1:4000");
         config.addAllowedHeader("*");
         config.addExposedHeader("Content-Location");
         config.addExposedHeader("X-Progress");
