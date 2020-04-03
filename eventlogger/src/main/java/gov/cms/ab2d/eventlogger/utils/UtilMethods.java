@@ -16,4 +16,15 @@ public final class UtilMethods {
             return null;
         }
     }
+
+    public static String parseJobId(String requestUri) {
+        if (requestUri == null) {
+            return null;
+        }
+        if (requestUri.contains("/Job/")) {
+            String firstPart = requestUri.substring(requestUri.indexOf("/Job/") + 5);
+            return firstPart.substring(0, firstPart.indexOf("/"));
+        }
+        return null;
+    }
 }
