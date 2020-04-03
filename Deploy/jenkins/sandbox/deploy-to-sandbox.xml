@@ -108,6 +108,12 @@
           <defaultValue>WARN</defaultValue>
           <trim>true</trim>
         </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>INTERNET_FACING_PARAM</name>
+          <description>Corresponds to whether the application load balancer is internet facing or only available to VPN.</description>
+          <defaultValue>true</defaultValue>
+          <trim>true</trim>
+        </hudson.model.StringParameterDefinition>
       </parameterDefinitions>
     </hudson.model.ParametersDefinitionProperty>
   </properties>
