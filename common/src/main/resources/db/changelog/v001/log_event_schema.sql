@@ -31,7 +31,7 @@ CREATE TABLE event_api_response
         response_code INT,
         response_string TEXT,
         description TEXT,
-        request_id VARCHAR (32)
+        request_id VARCHAR (255)
 );
 ALTER TABLE event_api_response ADD CONSTRAINT "pk_api_response_event" PRIMARY KEY (id);
 CREATE INDEX "ix_api_response_user" ON event_api_response (user_id);
