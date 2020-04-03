@@ -47,6 +47,32 @@ ctas:
     .ab2d-easy-section {
         margin-top: 45px;
     }
+    
+    #download-section {
+        display: none;
+    }
+    
+    #download-section-content {
+        padding: 5px;
+    }
+    
+    #download-files-text {
+        margin-bottom: 5px;
+    }
+    
+    #download-section-links {
+        padding-inline-start: 5px;
+        list-style: none;
+        margin-top: 5px;
+    }
+    
+    #download-section-links li {
+        margin-bottom: 8px;
+    }
+    
+    #download-section-links a {
+        color: #4B78C4;
+    }
 </style>
 
 <script>
@@ -250,8 +276,8 @@ ctas:
             
         }
         for(let i = 0; i < responseJSON.output.length; i++) {
-            $("#download-section-content").append("<a href='" + responseJSON.output[i].url + "'>Download " +
-                responseJSON.output[i].type + " file</a>");
+            $("#download-section-links").append("<li><a href='" + responseJSON.output[i].url + "'>Download " +
+                responseJSON.output[i].type + " file</a></li>");
         }
         
         $("#download-section").fadeIn(fadeInTime);
@@ -339,6 +365,10 @@ ctas:
     </div>
     
     <div id="download-section" class="ab2d-easy-section">
-        <div class="col-md-6 mb-3" id="download-section-content"></div>
+        <div id="download-files-text">Download Files</div>
+        <div id="download-section-content">
+            <ul id="download-section-links">
+            </ul>
+        </div>
     </div>
 </div>
