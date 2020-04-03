@@ -108,9 +108,9 @@ public class TestRunner {
                     .withScaledService("worker", 2)
                     .withExposedService("db", 5432)
                     .withExposedService("api", 8080, new HostPortWaitStrategy()
-                        .withStartupTimeout(Duration.of(150, SECONDS)));
-                    // .withLogConsumer("worker", new Slf4jLogConsumer(log)) // Use to debug, for now there's too much log data
-                    // .withLogConsumer("api", new Slf4jLogConsumer(log));
+                        .withStartupTimeout(Duration.of(150, SECONDS)))
+                     .withLogConsumer("worker", new Slf4jLogConsumer(log)) // Use to debug, for now there's too much log data
+                     .withLogConsumer("api", new Slf4jLogConsumer(log));
             container.start();
         }
 
@@ -626,6 +626,6 @@ public class TestRunner {
         List<String> contentLocationList = exportResponse.headers().map().get("content-location");
 
         Pair<String, JSONArray> downloadDetails = performStatusRequests(contentLocationList, false, "S0000");
-        downloadFile(downloadDetails, null, "19990000002906");
+        downloadFile(downloadDetails, null, "19990000002906"); // User should not be included
     }
 }
