@@ -7464,7 +7464,7 @@
       - **Description:**
 
         ```
-	Corresponds to terraform logging level.
+	Corresponds to whether the application load balancer is internet facing or only available to VPN.
 	```
 
    1. Check **Trim the string**
@@ -8032,7 +8032,7 @@
       - **Description:**
 
         ```
-	Corresponds to terraform logging level.
+	Corresponds to whether the application load balancer is internet facing or only available to VPN.
 	```
 
    1. Check **Trim the string**
@@ -8435,7 +8435,7 @@
    ```ShellSession
    $ java -jar /opt/jenkins-cli/jenkins-cli.jar \
      -s "http://{jenkins master private ip}:8080" \
-     -auth {jenkins user}:{jenkins password} \
+     -auth {github user}:{github personal access token} \
      get-job development \
      > ./jenkins/development.xml
    ```
@@ -8453,7 +8453,7 @@
    ```ShellSession
    $ java -jar /opt/jenkins-cli/jenkins-cli.jar \
      -s "http://{jenkins master private ip}:8080" \
-     -auth {jenkins user}:{jenkins password} \
+     -auth {github user}:{github personal access token} \
      get-job development/deploy-to-development \
      > ./jenkins/development/deploy-to-development.xml
    ```
@@ -8465,7 +8465,7 @@
    ```ShellSession
    $ java -jar /opt/jenkins-cli/jenkins-cli.jar \
      -s "http://{jenkins master private ip}:8080" \
-     -auth {jenkins user}:{jenkins password} \
+     -auth {github user}:{github personal access token} \
      get-job sandbox \
      > ./jenkins/sandbox.xml
    ```
@@ -8483,7 +8483,7 @@
    ```ShellSession
    $ java -jar /opt/jenkins-cli/jenkins-cli.jar \
      -s "http://{jenkins master private ip}:8080" \
-     -auth {jenkins user}:{jenkins password} \
+     -auth {github user}:{github personal access token} \
      get-job sandbox/deploy-to-sandbox \
      > ./jenkins/sandbox/deploy-to-sandbox.xml
    ```
