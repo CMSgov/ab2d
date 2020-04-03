@@ -7,8 +7,7 @@ import gov.cms.ab2d.eventlogger.SpringBootApp;
 import gov.cms.ab2d.eventlogger.events.ApiRequestEvent;
 import gov.cms.ab2d.eventlogger.events.ErrorEvent;
 import gov.cms.ab2d.eventlogger.reports.sql.LoadObjects;
-import org.apache.commons.codec.binary.Hex;
-import org.apache.commons.codec.digest.DigestUtils;
+import gov.cms.ab2d.eventlogger.utils.UtilMethods;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -56,7 +55,7 @@ class ApiRequestEventMapperTest {
         assertEquals(val.getNano(), event.getTimeOfEvent().getNano());
         assertEquals("http://localhost", event.getUrl());
         assertEquals("127.0.0.1", event.getIpAddress());
-        assertEquals(Hex.encodeHexString(DigestUtils.sha256("token")), event.getTokenHash());
+        assertEquals(UtilMethods.hashIt("token"), event.getTokenHash());
         assertEquals("123", event.getRequestId());
     }
 }
