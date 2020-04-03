@@ -160,6 +160,7 @@ ctas:
                     cancelStatusInterval();
                     turnOffCancelEventHandler();
                     updateProgressBar(100);
+                    showDownloadLinks(xhr.responseJSON);
                 } else if(xhr.status === 500) {
                     cancelStatusInterval();
                 }
@@ -244,6 +245,18 @@ ctas:
         turnOffExportEventHandler();
     }
     
+    function showDownloadLinks(responseJSON) {
+        if(responseJSON.error.length > 0) {
+            
+        }
+        for(let i = 0; i < responseJSON.output.length; i++) {
+            $("#download-section-content").append("<a href='" + responseJSON.output[i].url + "'>Download " +
+                responseJSON.output[i].type + " file</a>");
+        }
+        
+        $("#download-section").fadeIn(fadeInTime);
+    }
+    
     function setupAlertPositioning() {
         const $elt = $('#ab2d-easy-header');
         const offset = $elt.offset();
@@ -325,5 +338,7 @@ ctas:
         </div>
     </div>
     
-    <!-- Download Data -->
+    <div id="download-section" class="ab2d-easy-section">
+        <div class="col-md-6 mb-3" id="download-section-content"></div>
+    </div>
 </div>
