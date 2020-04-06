@@ -4315,7 +4315,7 @@
       $ export AWS_PROFILE=ab2d-mgmt-east-dev
       ```
 
-   1. Get the private IP address of Jenkins EC2 instance
+   1. Get the public IP address of Jenkins EC2 instance
    
       ```ShellSession
       $ JENKINS_MASTER_PUBLIC_IP=$(aws --region us-east-1 ec2 describe-instances \
@@ -4326,7 +4326,7 @@
 
    1. Ensure that you are connected to the Cisco VPN
 
-   1. SSH into the instance using the private IP address
+   1. SSH into the instance using the public IP address
 
       ```ShellSession
       $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_MASTER_PUBLIC_IP
@@ -4397,21 +4397,21 @@
       $ export AWS_PROFILE=ab2d-mgmt-east-dev
       ```
 
-   1. Get the private IP address of Jenkins EC2 instance
+   1. Get the public IP address of Jenkins EC2 instance
    
       ```ShellSession
-      $ JENKINS_MASTER_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+      $ JENKINS_MASTER_PUBLIC_IP=$(aws --region us-east-1 ec2 describe-instances \
         --filters "Name=tag:Name,Values=ab2d-jenkins-master" \
-        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PublicIpAddress" \
         --output text)
       ```
 
    1. Ensure that you are connected to the Cisco VPN
 
-   1. SSH into the instance using the private IP address
+   1. SSH into the instance using the public IP address
 
       ```ShellSession
-      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_MASTER_PRIVATE_IP
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_MASTER_PUBLIC_IP
       ```
 
 1. Note the default Jenkins port
@@ -4517,7 +4517,7 @@
 
    *Format:*
 
-   > http://{jenkins master private ip}:8080
+   > http://{jenkins master public ip}:8080
 
 1. Bookmark Jenkins for your browser
 
@@ -4529,21 +4529,21 @@
       $ export AWS_PROFILE=ab2d-mgmt-east-dev
       ```
 
-   1. Get the private IP address of Jenkins EC2 instance
+   1. Get the public IP address of Jenkins EC2 instance
    
       ```ShellSession
-      $ JENKINS_MASTER_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+      $ JENKINS_MASTER_PUBLIC_IP=$(aws --region us-east-1 ec2 describe-instances \
         --filters "Name=tag:Name,Values=ab2d-jenkins-master" \
-        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PublicIpAddress" \
         --output text)
       ```
 
    1. Ensure that you are connected to the Cisco VPN
 
-   1. SSH into the instance using the private IP address
+   1. SSH into the instance using the public IP address
 
       ```ShellSession
-      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_MASTER_PRIVATE_IP
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_MASTER_PUBLIC_IP
       ```
 
 1. Configure Jenkins
@@ -4582,7 +4582,7 @@
 
       *Format:*
 
-      > http://{jenkins master private ip}:8080
+      > http://{jenkins master public ip}:8080
 
    1. Select **Save and Finish**
 
@@ -4598,21 +4598,21 @@
       $ export AWS_PROFILE=ab2d-mgmt-east-dev
       ```
 
-   1. Get the private IP address of Jenkins EC2 instance
+   1. Get the public IP address of Jenkins EC2 instance
    
       ```ShellSession
-      $ JENKINS_MASTER_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+      $ JENKINS_MASTER_PUBLIC_IP=$(aws --region us-east-1 ec2 describe-instances \
         --filters "Name=tag:Name,Values=ab2d-jenkins-master" \
-        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PublicIpAddress" \
         --output text)
       ```
 
    1. Ensure that you are connected to the Cisco VPN
 
-   1. SSH into the instance using the private IP address
+   1. SSH into the instance using the public IP address
 
       ```ShellSession
-      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_MASTER_PRIVATE_IP
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_MASTER_PUBLIC_IP
       ```
       
 1. Get information about the jenkins user account
@@ -4821,7 +4821,7 @@
    
 1. Wait for the automation to complete
 
-1. Connect to Jenkins agent
+1. Connect to Jenkins agent through the Jenkins master using the ProxyJump flag (-J)
 
    1. Ensure that you are connected to the Cisco VPN
 
@@ -4831,7 +4831,16 @@
       $ export AWS_PROFILE=ab2d-mgmt-east-dev
       ```
 
-   1. Get the private IP address of Jenkins EC2 instance
+   1. Get the public IP address of Jenkins master instance
+
+      ```ShellSession
+      $ JENKINS_MASTER_PUBLIC_IP=$(aws --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-jenkins-master" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PublicIpAddress" \
+        --output text)
+      ```
+
+   1. Get the private IP address of Jenkins agent instance
    
       ```ShellSession
       $ JENKINS_AGENT_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
@@ -4842,10 +4851,12 @@
 
    1. Ensure that you are connected to the Cisco VPN
 
-   1. SSH into the instance using the private IP address
+   1. SSH into the Jenkins agent through the Jenkins master using the ProxyJump flag (-J)
 
       ```ShellSession
-      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_AGENT_PRIVATE_IP
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem -J \
+        ec2-user@$JENKINS_MASTER_PUBLIC_IP \
+	ec2-user@$JENKINS_AGENT_PRIVATE_IP
       ```
 
 1. View the available disk devices
@@ -5261,9 +5272,9 @@
    1. Get the private IP address of Jenkins EC2 instance
    
       ```ShellSession
-      $ JENKINS_MASTER_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+      $ JENKINS_MASTER_PUBLIC_IP=$(aws --region us-east-1 ec2 describe-instances \
         --filters "Name=tag:Name,Values=ab2d-jenkins-master" \
-        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PublicIpAddress" \
         --output text)
       ```
 
@@ -5272,7 +5283,7 @@
    1. SSH into the instance using the private IP address
 
       ```ShellSession
-      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_MASTER_PRIVATE_IP
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_MASTER_PUBLIC_IP
       ```
 
 1. Switch to the jenkins user from Jenkins master terminal
@@ -6167,7 +6178,7 @@
 
 ### Configure jenkins SSH credentials
 
-1. Get the private IP address of Jenkins master
+1. Get the public IP address of Jenkins master
 
    1. Ensure that you are connected to the Cisco VPN
 
@@ -6177,19 +6188,19 @@
       $ export AWS_PROFILE=ab2d-mgmt-east-dev
       ```
 
-   1. Get the private IP address of Jenkins master
+   1. Get the public IP address of Jenkins master
 
       ```ShellSession
-      $ JENKINS_MASTER_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+      $ JENKINS_MASTER_PUBLIC_IP=$(aws --region us-east-1 ec2 describe-instances \
         --filters "Name=tag:Name,Values=ab2d-jenkins-master" \
-        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PublicIpAddress" \
         --output text)
       ```
 
 1. Display the contents of the jenkins ssh private key
 
    ```ShellSession
-   $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_MASTER_PRIVATE_IP \
+   $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_MASTER_PUBLIC_IP \
      sudo -u jenkins cat /var/lib/jenkins/.ssh/id_rsa \
      | pbcopy
    ```
@@ -6682,19 +6693,19 @@
       $ export AWS_PROFILE=ab2d-mgmt-east-dev
       ```
 
-   1. Get the private IP address of Jenkins master
+   1. Get the public IP address of Jenkins master
 
       ```ShellSession
-      $ JENKINS_MASTER_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+      $ JENKINS_MASTER_PUBLIC_IP=$(aws --region us-east-1 ec2 describe-instances \
         --filters "Name=tag:Name,Values=ab2d-jenkins-master" \
-        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PublicIpAddress" \
         --output text)
       ```
 
-   1. SSH into the instance using the private IP address
+   1. SSH into the instance using the public IP address
 
       ```ShellSession
-      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_MASTER_PRIVATE_IP
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_MASTER_PUBLIC_IP
       ```
 
 1. Backup the exiting Jenkins configuration file before proceeding
@@ -8174,19 +8185,19 @@
       $ export AWS_PROFILE=ab2d-mgmt-east-dev
       ```
 
-   1. Get the private IP address of Jenkins master
+   1. Get the public IP address of Jenkins master
    
       ```ShellSession
-      $ JENKINS_MASTER_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+      $ JENKINS_MASTER_PUBLIC_IP=$(aws --region us-east-1 ec2 describe-instances \
         --filters "Name=tag:Name,Values=ab2d-jenkins-master" \
-        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PublicIpAddress" \
         --output text)
       ```
 
-   1. SSH into the instance using the private IP address
+   1. SSH into the instance using the public IP address
 
       ```ShellSession
-      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_MASTER_PRIVATE_IP
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_MASTER_PUBLIC_IP
       ```
 
 1. Stop Jenkins
