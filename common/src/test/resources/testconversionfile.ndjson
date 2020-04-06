@@ -1,0 +1,27 @@
+{
+  "resourceType": "ExplanationOfBenefit",
+  "id": "snf-777777777",
+  "identifier": [
+    {
+      "system": "https://bluebutton.cms.gov/resources/variables/clm_id",
+      "value": "777777777"
+    },
+    {
+      "system": "https://bluebutton.cms.gov/resources/identifier/claim-group",
+      "value": "900"
+    }
+  ],
+  "type": {
+    "coding": [
+      {
+        "system": "https://bluebutton.cms.gov/resources/variables/nch_clm_type_cd",
+        "code": "20",
+        "display": "Non swing bed Skilled Nursing Facility (SNF) claim"
+      },
+      {
+        "system": "https://bluebutton.cms.gov/resources/codesystem/eob-type",
+        "code": "SNF"
+      }
+    ]
+  }
+}

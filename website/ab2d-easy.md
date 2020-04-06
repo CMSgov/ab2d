@@ -31,6 +31,10 @@ ctas:
         display: none;
     }
     
+    #reset-section {
+        display: none;
+    }
+    
     .failure-status {
         border: 1px solid red;
         background-color: lightcoral;
@@ -262,13 +266,34 @@ ctas:
         $("#cancel-button").off("click");
     }
     
+    function turnOnResetEventHandler() {
+        $("#reset-button").on("click", function(event) {
+            event.preventDefault();
+            resetAll();  
+        });  
+    }
+    
+    function resetAll() {
+        $('#reset-section').fadeOut(fadeOutTime);
+        $('#download-section').fadeOut(fadeOutTime, function() {
+            $('#download-section-links').html('');  
+        });
+        doReset();
+    }
+    
     function doReset() {
         cancelStatusInterval();
-        $("#progress-bar").fadeOut(fadeOutTime);
+        resetProgressBar();
         $("#export").fadeOut(fadeOutTime);
         turnOnTokenEventHandler();
         turnOffCancelEventHandler();
         turnOffExportEventHandler();
+    }
+    
+    function resetProgressBar() {
+        $("#progress-bar").fadeOut(fadeOutTime, function() {
+            updateProgressBar(0);
+        });
     }
     
     function downloadJSON(url) {
@@ -311,14 +336,12 @@ ctas:
                 });
         }
         
-        /*$("#download-section-links").each(function() {
-            $(this).on('click', function($elem) {
-                const link = $(elem).attr('href');
-                  
-            });  
-        });*/
+        $("#download-section").fadeIn(fadeInTime, function() {
+            $("#reset-section").fadeIn(fadeInTime);
+            turnOnResetEventHandler();  
+        });
         
-        $("#download-section").fadeIn(fadeInTime);
+        
     }
     
     function setupAlertPositioning() {
@@ -408,5 +431,9 @@ ctas:
             <ul id="download-section-links">
             </ul>
         </div>
+    </div>
+    
+    <div id="reset-section" class="ab2d-easy-section">
+         <button class="btn btn-primary" type="submit" id="reset-button">Reset</button>
     </div>
 </div>
