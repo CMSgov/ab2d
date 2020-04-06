@@ -1347,7 +1347,7 @@ fi
 
 cd "${START_DIR}"
 
-# Get the public ip address of the controller
+# Get the private ip address of the controller
 
 CONTROLLER_PRIVATE_IP=$(aws --region "${REGION}" ec2 describe-instances \
   --filters "Name=tag:Name,Values=ab2d-deployment-controller" \
