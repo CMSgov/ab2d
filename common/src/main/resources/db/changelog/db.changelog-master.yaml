@@ -44,3 +44,5 @@ databaseChangeLog:
       file: db/changelog/v001/ab2d_1167_add_column_to_opt_out_table.sql
   - include:
       file: db/changelog/v001/add_checksum_length_job_output.sql
+  - include:
+      file: db/changelog/v001/log_event_schema.sql
