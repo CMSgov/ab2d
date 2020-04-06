@@ -1013,6 +1013,7 @@ terraform apply \
   --var "alb_listener_certificate_arn=$ALB_LISTENER_CERTIFICATE_ARN" \
   --var "alb_internal=$ALB_INTERNAL" \
   --var "alb_security_group_ip_range=$ALB_SECURITY_GROUP_IP_RANGE" \
+  --var "vpn_private_ip_address_cidr_range=${VPN_PRIVATE_IP_ADDRESS_CIDR_RANGE}" \
   --target module.api \
   --auto-approve
 
@@ -1039,6 +1040,7 @@ terraform apply \
   --var "bfd_keystore_file_name=$BFD_KEYSTORE_FILE_NAME" \
   --var "new_relic_app_name=$NEW_RELIC_APP_NAME" \
   --var "new_relic_license_key=$NEW_RELIC_LICENSE_KEY" \
+  --var "vpn_private_ip_address_cidr_range=${VPN_PRIVATE_IP_ADDRESS_CIDR_RANGE}" \
   --target module.worker \
   --auto-approve
 

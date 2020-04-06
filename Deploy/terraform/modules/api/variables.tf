@@ -71,3 +71,4 @@ variable "new_relic_app_name" {}
 variable "new_relic_license_key" {}
 
 variable "alb_security_group_ip_range" {}
+variable "vpn_private_ip_address_cidr_range" {}

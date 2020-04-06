@@ -54,19 +54,19 @@ module "s3" {
 # enterprise-tools-sec-group-id = var.enterprise-tools-sec-group-id
 # LSH SKIP FOR NOW END
 module "controller" {
-  source                   = "../../modules/controller"
-  env                      = var.env
-  vpc_id                   = var.vpc_id
-  controller_subnet_ids    = var.deployment_controller_subnet_ids
-  vpn_private_sec_group_id = var.vpn_private_sec_group_id
-  db_sec_group_id          = module.db.aws_security_group_sg_database_id
-  ami_id                   = var.ami_id
-  instance_type            = var.ec2_instance_type
-  linux_user               = var.linux_user
-  ssh_key_name             = var.ssh_key_name
-  iam_instance_profile     = var.ec2_iam_profile
-  gold_disk_name           = var.gold_image_name
-  deployer_ip_address      = var.deployer_ip_address
+  source                            = "../../modules/controller"
+  env                               = var.env
+  vpc_id                            = var.vpc_id
+  controller_subnet_ids             = var.deployment_controller_subnet_ids
+  db_sec_group_id                   = module.db.aws_security_group_sg_database_id
+  ami_id                            = var.ami_id
+  instance_type                     = var.ec2_instance_type
+  linux_user                        = var.linux_user
+  ssh_key_name                      = var.ssh_key_name
+  iam_instance_profile              = var.ec2_iam_profile
+  gold_disk_name                    = var.gold_image_name
+  deployer_ip_address               = var.deployer_ip_address
+  vpn_private_ip_address_cidr_range = var.vpn_private_ip_address_cidr_range
 }
 
 module "lonnie_access_controller" {

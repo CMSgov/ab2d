@@ -107,18 +107,6 @@ variable "gold_image_name" {
   default = "EAST-RH 7-7 Gold Image V.1.03 (HVM) 11-20-19"
 }
 
-# LSH SKIP FOR NOW BEGIN
-# variable "enterprise-tools-sec-group-id" {
-#   default = "sg-0566ad330966d8ba7"
-# }
-# LSH SKIP FOR NOW END
-
-# LSH SKIP FOR NOW BEGIN
-# variable "vpn-private-sec-group-id" {
-#   default = "sg-07fbbd710a8b15851"
-# }
-# LSH SKIP FOR NOW END
-
 ## RDS specific variables ########################################################################
 
 variable "db_allocated_storage_size" {
@@ -374,5 +362,10 @@ variable "alb_internal" {
 variable "alb_security_group_ip_range" {
   type        = string
   default     = "0.0.0.0/0"
+  description = "Please pass this on command line and not as a value here"
+}
+
+variable "vpn_private_ip_address_cidr_range" {
+  default = ""
   description = "Please pass this on command line and not as a value here"
 }

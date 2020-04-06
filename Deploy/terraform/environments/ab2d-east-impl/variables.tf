@@ -376,3 +376,8 @@ variable "alb_security_group_ip_range" {
   default     = "0.0.0.0/0"
   description = "Please pass this on command line and not as a value here"
 }
+
+variable "vpn_private_ip_address_cidr_range" {
+  default = ""
+  description = "Please pass this on command line and not as a value here"
+}
