@@ -33,10 +33,7 @@ public class ApiRequestEventMapper extends SqlEventMapper {
                 " (time_of_event, user_id, job_id, url, ip_address, token_hash, request_id) " +
                 " values (:time, :user, :job, :url, :ipAddress, :tokenHash, :requestId)";
 
-        SqlParameterSource parameters = new MapSqlParameterSource()
-            .addValue("time", UtilMethods.convertToUtc(be.getTimeOfEvent()))
-            .addValue("user", be.getUser())
-            .addValue("job", be.getJobId())
+        SqlParameterSource parameters = super.addSuperParams(event)
             .addValue("url", be.getUrl())
             .addValue("ipAddress", be.getIpAddress())
             .addValue("tokenHash", be.getTokenHash())

@@ -33,10 +33,7 @@ public class ErrorEventMapper extends SqlEventMapper {
                 " (time_of_event, user_id, job_id, error_type, description) " +
                 " values (:time, :user, :job, :errorType, :description)";
 
-        SqlParameterSource parameters = new MapSqlParameterSource()
-                .addValue("time", UtilMethods.convertToUtc(be.getTimeOfEvent()))
-                .addValue("user", be.getUser())
-                .addValue("job", be.getJobId())
+        SqlParameterSource parameters = super.addSuperParams(event)
                 .addValue("errorType", be.getErrorType() != null ? be.getErrorType().name() : null)
                 .addValue("description", be.getDescription());
 

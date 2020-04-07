@@ -33,10 +33,7 @@ public class ApiResponseEventMapper extends SqlEventMapper {
                 " (time_of_event, user_id, job_id, response_code, response_string, description, request_id) " +
                 " values (:time, :user, :job, :responseCode, :responseString, :description, :requestId)";
 
-        SqlParameterSource parameters = new MapSqlParameterSource()
-                .addValue("time", UtilMethods.convertToUtc(be.getTimeOfEvent()))
-                .addValue("user", be.getUser())
-                .addValue("job", be.getJobId())
+        SqlParameterSource parameters = super.addSuperParams(event)
                 .addValue("responseCode", be.getResponseCode())
                 .addValue("responseString", be.getResponseString())
                 .addValue("description", be.getDescription())

@@ -33,10 +33,7 @@ public class ReloadEventMapper extends SqlEventMapper {
                 " (time_of_event, user_id, job_id, file_type, file_name, number_loaded) " +
                 " values (:time, :user, :job, :fileType, :fileName, :numLoaded)";
 
-        SqlParameterSource parameters = new MapSqlParameterSource()
-                .addValue("time", UtilMethods.convertToUtc(be.getTimeOfEvent()))
-                .addValue("user", be.getUser())
-                .addValue("job", be.getJobId())
+        SqlParameterSource parameters = super.addSuperParams(event)
                 .addValue("fileType", be.getFileType() == null ? null : be.getFileType().name())
                 .addValue("fileName", be.getFileName())
                 .addValue("numLoaded", be.getNumberLoaded());

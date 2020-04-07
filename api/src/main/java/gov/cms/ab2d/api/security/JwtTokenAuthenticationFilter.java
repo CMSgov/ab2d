@@ -52,7 +52,7 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
     private JwtConfig jwtConfig;
 
     @Autowired
-    EventLogger eventLogger;
+    private EventLogger eventLogger;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
