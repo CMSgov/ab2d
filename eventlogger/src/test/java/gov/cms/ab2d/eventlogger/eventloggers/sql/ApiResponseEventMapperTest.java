@@ -10,6 +10,7 @@ import gov.cms.ab2d.eventlogger.reports.sql.LoadObjects;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.HttpStatus;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -39,7 +40,7 @@ class ApiResponseEventMapperTest {
 
     @Test
     void log() {
-        ApiResponseEvent jsce = new ApiResponseEvent("laila", "job123", 404,
+        ApiResponseEvent jsce = new ApiResponseEvent("laila", "job123", HttpStatus.NOT_FOUND,
                 "Not Found", "Description", "123");
         sqlEventLogger.log(jsce);
         long id = jsce.getId();

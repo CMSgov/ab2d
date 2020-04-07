@@ -8,6 +8,8 @@ import gov.cms.ab2d.common.model.OptOut;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.common.repository.OptOutRepository;
 import gov.cms.ab2d.common.util.Constants;
+import gov.cms.ab2d.eventlogger.EventLogger;
+import gov.cms.ab2d.eventlogger.events.ErrorEvent;
 import gov.cms.ab2d.worker.adapter.bluebutton.GetPatientsByContractResponse;
 import gov.cms.ab2d.worker.adapter.bluebutton.GetPatientsByContractResponse.PatientDTO;
 import gov.cms.ab2d.worker.config.RoundRobinBlockingQueue;
@@ -19,6 +21,7 @@ import gov.cms.ab2d.worker.service.FileService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -65,6 +68,8 @@ public class ContractProcessorImpl implements ContractProcessor {
     @Value("${file.try.lock.timeout}")
     private int tryLockTimeout;
 
+    @Autowired
+    private EventLogger eventLogger;
 
     private final FileService fileService;
     private final JobRepository jobRepository;
@@ -102,6 +107,7 @@ public class ContractProcessorImpl implements ContractProcessor {
 
                 if (isOptOutPatient(patient.getPatientId())) {
                     // this patient has opted out. skip patient record.
+                    progressTracker.incrementOptOutCount();
                     continue;
                 }
 
@@ -341,6 +347,9 @@ public class ContractProcessorImpl implements ContractProcessor {
             // log exception, but continue processing job as errorCount is below threshold
         } else {
             cancelFuturesInQueue(futureHandles);
+            String description = progressTracker.getFailureCount() + " out of " + progressTracker.getTotalCount() + " records failed. Stopping job";
+            eventLogger.log(new ErrorEvent(null, progressTracker.getJobUuid(),
+                    ErrorEvent.ErrorType.TOO_MANY_SEARCH_ERRORS, description));
             log.error("{} out of {} records failed. Stopping job", progressTracker.getFailureCount(), progressTracker.getTotalCount());
             throw new RuntimeException("Too many patient records in the job had failures");
         }

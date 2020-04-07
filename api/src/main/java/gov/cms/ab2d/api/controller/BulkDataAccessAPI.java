@@ -5,6 +5,8 @@ import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.service.InvalidUserInputException;
 import gov.cms.ab2d.common.service.JobService;
 import gov.cms.ab2d.common.service.PropertiesService;
+import gov.cms.ab2d.eventlogger.EventLogger;
+import gov.cms.ab2d.eventlogger.events.ApiResponseEvent;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiImplicitParams;
@@ -75,6 +77,9 @@ public class BulkDataAccessAPI {
     @Autowired
     private PropertiesService propertiesService;
 
+    @Autowired
+    private EventLogger eventLogger;
+
     @ApiOperation(value = BULK_EXPORT,
         authorizations = {
             @Authorization(value = "Authorization", scopes = {
@@ -95,6 +100,7 @@ public class BulkDataAccessAPI {
     @ResponseStatus(value = HttpStatus.ACCEPTED)
     @GetMapping("/Patient/$export")
     public ResponseEntity<Void> exportAllPatients(
+            HttpServletRequest request,
             @ApiParam(value = BULK_EXPORT_TYPE, allowableValues = EOB, defaultValue = EOB)
             @RequestParam(required = false, name = "_type", defaultValue = EOB) String resourceTypes,
             @ApiParam(value = BULK_OUTPUT_FORMAT,
@@ -116,7 +122,7 @@ public class BulkDataAccessAPI {
 
         logSuccessfulJobCreation(job);
 
-        return returnStatusForJobCreation(job);
+        return returnStatusForJobCreation(job, (String) request.getAttribute(REQUEST_ID));
     }
 
     private String getCurrentUrl() {
@@ -187,11 +193,12 @@ public class BulkDataAccessAPI {
         log.info("Successfully created job");
     }
 
-    private ResponseEntity<Void> returnStatusForJobCreation(Job job) {
+    private ResponseEntity<Void> returnStatusForJobCreation(Job job, String requestId) {
         String statusURL = getUrl(API_PREFIX + FHIR_PREFIX + "/Job/" + job.getJobUuid() + "/$status");
         HttpHeaders responseHeaders = new HttpHeaders();
         responseHeaders.add("Content-Location", statusURL);
-
+        eventLogger.log(new ApiResponseEvent(MDC.get(USERNAME), job.getJobUuid(), HttpStatus.ACCEPTED, "Job Created",
+                "Job " + job.getJobUuid() + " was created", requestId));
         return new ResponseEntity<>(null, responseHeaders,
                 HttpStatus.ACCEPTED);
     }
@@ -221,7 +228,9 @@ public class BulkDataAccessAPI {
     )
     @ResponseStatus(value = HttpStatus.ACCEPTED)
     @GetMapping("/Group/{contractNumber}/$export")
-    public ResponseEntity<Void> exportPatientsWithContract(@ApiParam(value = "A contract number", required = true)
+    public ResponseEntity<Void> exportPatientsWithContract(
+            HttpServletRequest request,
+            @ApiParam(value = "A contract number", required = true)
             @PathVariable @NotBlank String contractNumber,
             @ApiParam(value = BULK_EXPORT_TYPE, allowableValues = EOB, defaultValue = EOB)
             @RequestParam(required = false, name = "_type") String resourceTypes,
@@ -245,6 +254,6 @@ public class BulkDataAccessAPI {
 
         logSuccessfulJobCreation(job);
 
-        return returnStatusForJobCreation(job);
+        return returnStatusForJobCreation(job, (String) request.getAttribute(REQUEST_ID));
     }
 }

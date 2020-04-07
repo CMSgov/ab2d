@@ -9,6 +9,8 @@ import gov.cms.ab2d.common.model.JobStatus;
 import gov.cms.ab2d.common.model.Sponsor;
 import gov.cms.ab2d.common.repository.JobOutputRepository;
 import gov.cms.ab2d.common.repository.JobRepository;
+import gov.cms.ab2d.eventlogger.EventLogger;
+import gov.cms.ab2d.eventlogger.events.ContractBeneSearchEvent;
 import gov.cms.ab2d.worker.adapter.bluebutton.ContractAdapter;
 import gov.cms.ab2d.worker.adapter.bluebutton.GetPatientsByContractResponse;
 import gov.cms.ab2d.worker.processor.StreamHelperImpl.FileOutputType;
@@ -17,6 +19,7 @@ import gov.cms.ab2d.worker.processor.domainmodel.ProgressTracker;
 import gov.cms.ab2d.worker.service.FileService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
@@ -50,6 +53,9 @@ public class JobProcessorImpl implements JobProcessor {
 
     @Value("${audit.files.ttl.hours}")
     private int auditFilesTTLHours;
+
+    @Autowired
+    private EventLogger eventLogger;
 
     /** Failure threshold an integer expressed as a percentage of failure tolerated in a batch **/
     @Value("${failure.threshold}")
@@ -137,6 +143,14 @@ public class JobProcessorImpl implements JobProcessor {
             // For each job output, add to the job and save the result
             jobOutputs.forEach(job::addJobOutput);
             jobOutputRepository.saveAll(jobOutputs);
+
+            eventLogger.log(new ContractBeneSearchEvent(job.getUser() == null ? null : job.getUser().getUsername(),
+                    job.getJobUuid(),
+                    contract.getContractNumber(),
+                    (int) progressTracker.getContractCount(contract.getContractNumber()),
+                    progressTracker.getProcessedCount(),
+                    progressTracker.getOptOutCount(),
+                    progressTracker.getFailureCount()));
         }
 
         completeJob(job);

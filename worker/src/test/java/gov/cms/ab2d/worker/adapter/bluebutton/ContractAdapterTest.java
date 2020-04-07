@@ -52,7 +52,6 @@ class ContractAdapterTest {
     private int currentMonth = Month.MARCH.getValue();
     private Bundle bundle;
 
-
     @BeforeEach
     void setUp() {
         cut = new ContractAdapterImpl(
@@ -178,7 +177,6 @@ class ContractAdapterTest {
         verify(client, never()).requestNextBundleFromServer(Mockito.any(Bundle.class));
     }
 
-
     @Test
     void GivenAPatientLeavesInFeb_ShouldReturnOnlyOneRowsForThatPatientInDateRangesUnderContract() {
         var bundle1 = bundle.copy();
@@ -210,7 +208,6 @@ class ContractAdapterTest {
         verify(client, never()).requestNextBundleFromServer(Mockito.any(Bundle.class));
     }
 
-
     @Test
     void GivenTwoPatientsActiveInJanAndFeb_ShouldReturnTwoPatientRowsEachWithTwoRowsInDateRangesUnderContract() {
         var entries = bundle.getEntry();
@@ -232,7 +229,6 @@ class ContractAdapterTest {
         verify(client, times(2)).requestPartDEnrolleesFromServer(anyString(), anyInt());
         verify(client, never()).requestNextBundleFromServer(Mockito.any(Bundle.class));
     }
-
 
     @Test
     void GivenMultiplePages_ShouldProcessAllPages() {
@@ -268,7 +264,6 @@ class ContractAdapterTest {
         verify(client).requestNextBundleFromServer(Mockito.any(Bundle.class));
     }
 
-
     @Test
     void GivenDuplicatePatientRowsFromBFD_ShouldEliminateDuplicates() {
         var entries = bundle.getEntry();
@@ -294,7 +289,6 @@ class ContractAdapterTest {
         verify(client, times(1)).requestPartDEnrolleesFromServer(anyString(), anyInt());
         verify(client, never()).requestNextBundleFromServer(Mockito.any(Bundle.class));
     }
-
 
     @Test
     @DisplayName("given patientid rows in db for a specific contract & month, should not call BFD contract-2-bene api")
@@ -331,7 +325,6 @@ class ContractAdapterTest {
         verify(beneficiaryService).storeBeneficiaries(anyLong(), anySet(), anyInt());
     }
 
-
     @Test
     @DisplayName("given patient count < cachingThreshold, should not cache beneficiary data")
     void GivenPatientCountLessThanCachingThreshold_ShouldNotCacheBeneficiaryData() {
@@ -349,7 +342,6 @@ class ContractAdapterTest {
         verify(beneficiaryService, never()).storeBeneficiaries(anyLong(), anySet(), anyInt());
     }
 
-
     @Test
     @DisplayName("when call to BFD API throws Invalid Request exception, throws Exception")
     void whenBfdCallThrowsInvalidRequestException_ShouldThrowRuntimeException() {
@@ -361,7 +353,6 @@ class ContractAdapterTest {
 
         assertThat(exceptionThrown.getMessage(), endsWith("Request is invalid"));
     }
-
 
     private Bundle createBundle() {
         return createBundle("ccw_patient_000");

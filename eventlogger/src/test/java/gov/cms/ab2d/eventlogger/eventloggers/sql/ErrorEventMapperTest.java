@@ -39,7 +39,7 @@ class ErrorEventMapperTest {
 
     @Test
     void log() {
-        ErrorEvent jsce = new ErrorEvent("laila", "job123", ErrorEvent.ErrorType.INVALID_CONTRACT,
+        ErrorEvent jsce = new ErrorEvent("laila", "job123", ErrorEvent.ErrorType.CONTRACT_NOT_FOUND,
                 "Description");
         sqlEventLogger.log(jsce);
         long id = jsce.getId();
@@ -52,7 +52,7 @@ class ErrorEventMapperTest {
         assertEquals("laila", event.getUser());
         assertEquals("job123", event.getJobId());
         assertEquals(val.getNano(), event.getTimeOfEvent().getNano());
-        assertEquals(ErrorEvent.ErrorType.INVALID_CONTRACT, event.getErrorType());
+        assertEquals(ErrorEvent.ErrorType.CONTRACT_NOT_FOUND, event.getErrorType());
         assertEquals("Description", event.getDescription());
 
     }

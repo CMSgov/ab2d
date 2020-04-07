@@ -2,10 +2,13 @@ package gov.cms.ab2d.optout;
 
 import gov.cms.ab2d.common.model.OptOut;
 import gov.cms.ab2d.common.repository.OptOutRepository;
+import gov.cms.ab2d.eventlogger.EventLogger;
+import gov.cms.ab2d.eventlogger.events.ReloadEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,6 +23,9 @@ public class OptOutImporterImpl implements OptOutImporter {
 
     private final OptOutRepository optOutRepository;
     private final OptOutConverterService optOutConverterService;
+
+    @Autowired
+    private EventLogger eventLogger;
 
     @Override
     @Transactional
@@ -49,11 +55,11 @@ public class OptOutImporterImpl implements OptOutImporter {
                 log.error("Invalid opt out record - line number :[{}]", linesReadCount, e);
             }
         }
+        eventLogger.log(new ReloadEvent(null, ReloadEvent.FileType.OPT_OUT, filename, linesReadCount));
 
         log.info("[{}] rows read from file", linesReadCount);
         log.info("[{}] rows inserted into opt_out table", insertedRowCount);
     }
-
 
     /**
      *
@@ -82,6 +88,5 @@ public class OptOutImporterImpl implements OptOutImporter {
             dbOptOut.setFilename(newOptOut.getFilename());
             optOutRepository.save(dbOptOut);
         }
-
     }
 }

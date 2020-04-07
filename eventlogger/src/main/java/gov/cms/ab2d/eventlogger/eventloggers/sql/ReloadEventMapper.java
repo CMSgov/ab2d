@@ -2,7 +2,7 @@ package gov.cms.ab2d.eventlogger.eventloggers.sql;
 
 import gov.cms.ab2d.eventlogger.EventLoggingException;
 import gov.cms.ab2d.eventlogger.LoggableEvent;
-import gov.cms.ab2d.eventlogger.events.BeneficiaryReloadEvent;
+import gov.cms.ab2d.eventlogger.events.ReloadEvent;
 import gov.cms.ab2d.eventlogger.utils.UtilMethods;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -14,19 +14,19 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.OffsetDateTime;
 
-public class BeneficiaryReloadEventMapper extends SqlEventMapper {
+public class ReloadEventMapper extends SqlEventMapper {
     private NamedParameterJdbcTemplate template;
 
-    BeneficiaryReloadEventMapper(NamedParameterJdbcTemplate template) {
+    ReloadEventMapper(NamedParameterJdbcTemplate template) {
         this.template = template;
     }
 
     @Override
     public void log(LoggableEvent event) {
-        if (event.getClass() != BeneficiaryReloadEvent.class) {
-            throw new EventLoggingException("Used " + event.getClass().toString() + " instead of " + BeneficiaryReloadEvent.class.toString());
+        if (event.getClass() != ReloadEvent.class) {
+            throw new EventLoggingException("Used " + event.getClass().toString() + " instead of " + ReloadEvent.class.toString());
         }
-        BeneficiaryReloadEvent be = (BeneficiaryReloadEvent) event;
+        ReloadEvent be = (ReloadEvent) event;
 
         KeyHolder keyHolder = new GeneratedKeyHolder();
         String query = "insert into event_bene_reload " +
@@ -46,14 +46,14 @@ public class BeneficiaryReloadEventMapper extends SqlEventMapper {
     }
 
     @Override
-    public BeneficiaryReloadEvent mapRow(ResultSet resultSet, int i) throws SQLException {
-        BeneficiaryReloadEvent event = new BeneficiaryReloadEvent();
+    public ReloadEvent mapRow(ResultSet resultSet, int i) throws SQLException {
+        ReloadEvent event = new ReloadEvent();
         event.setId(resultSet.getLong("id"));
         event.setTimeOfEvent(resultSet.getObject("time_of_event", OffsetDateTime.class));
         event.setUser(resultSet.getString("user_id"));
         event.setJobId(resultSet.getString("job_id"));
 
-        event.setFileType(BeneficiaryReloadEvent.FileType.valueOf(resultSet.getString("file_type")));
+        event.setFileType(ReloadEvent.FileType.valueOf(resultSet.getString("file_type")));
         event.setFileName(resultSet.getString("file_name"));
         event.setNumberLoaded(resultSet.getInt("number_loaded"));
 

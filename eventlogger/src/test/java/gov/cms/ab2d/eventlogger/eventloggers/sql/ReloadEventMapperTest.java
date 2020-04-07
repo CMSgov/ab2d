@@ -4,7 +4,7 @@ import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.eventlogger.EventLoggingException;
 import gov.cms.ab2d.eventlogger.LoggableEvent;
 import gov.cms.ab2d.eventlogger.SpringBootApp;
-import gov.cms.ab2d.eventlogger.events.BeneficiaryReloadEvent;
+import gov.cms.ab2d.eventlogger.events.ReloadEvent;
 import gov.cms.ab2d.eventlogger.events.ErrorEvent;
 import gov.cms.ab2d.eventlogger.reports.sql.LoadObjects;
 import org.junit.jupiter.api.Test;
@@ -21,7 +21,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest(classes = SpringBootApp.class)
 @Testcontainers
-class BeneficiaryReloadEventMapperTest {
+class ReloadEventMapperTest {
     @Container
     private static final PostgreSQLContainer postgreSQLContainer = new AB2DPostgresqlContainer();
 
@@ -34,26 +34,26 @@ class BeneficiaryReloadEventMapperTest {
     @Test
     void exceptionTests() {
         assertThrows(EventLoggingException.class, () ->
-                new BeneficiaryReloadEventMapper(null).log(new ErrorEvent()));
+                new ReloadEventMapper(null).log(new ErrorEvent()));
     }
 
     @Test
     void log() {
-        BeneficiaryReloadEvent cbse = new BeneficiaryReloadEvent(BeneficiaryReloadEvent.FileType.CONTRACT_MAPPING,
+        ReloadEvent cbse = new ReloadEvent(null, ReloadEvent.FileType.CONTRACT_MAPPING,
                 "filename", 10);
         sqlEventLogger.log(cbse);
         long id = cbse.getId();
         OffsetDateTime val = cbse.getTimeOfEvent();
-        List<LoggableEvent> events = loadObjects.loadAllBeneficiaryReloadEvent();
+        List<LoggableEvent> events = loadObjects.loadAllReloadEvent();
         assertEquals(1, events.size());
-        BeneficiaryReloadEvent event = (BeneficiaryReloadEvent) events.get(0);
+        ReloadEvent event = (ReloadEvent) events.get(0);
         assertTrue(event.getId() > 0);
         assertEquals(event.getId(), cbse.getId());
         assertNull(event.getUser());
         assertNull(event.getJobId());
         assertEquals("filename", event.getFileName());
         assertEquals(10, event.getNumberLoaded());
-        assertEquals(BeneficiaryReloadEvent.FileType.CONTRACT_MAPPING, event.getFileType());
+        assertEquals(ReloadEvent.FileType.CONTRACT_MAPPING, event.getFileType());
         assertEquals(val.getNano(), event.getTimeOfEvent().getNano());
     }
 }

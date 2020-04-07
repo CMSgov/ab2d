@@ -12,6 +12,10 @@ public final class Constants {
 
     public static final String JOB_LOG = "job";
 
+    public static final String USERNAME = "username";
+
+    public static final String REQUEST_ID = "RequestId";
+
     public static final String FILE_LOG = "filename";
 
     public static final String CONTRACT_LOG = "contract";

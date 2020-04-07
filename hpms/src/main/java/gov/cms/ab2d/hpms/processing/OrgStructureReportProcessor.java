@@ -3,12 +3,15 @@ package gov.cms.ab2d.hpms.processing;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.Sponsor;
 import gov.cms.ab2d.common.service.SponsorService;
+import gov.cms.ab2d.eventlogger.EventLogger;
+import gov.cms.ab2d.eventlogger.events.ReloadEvent;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
+import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,6 +21,8 @@ import java.io.InputStream;
 import java.util.Optional;
 
 import static gov.cms.ab2d.common.util.Constants.SPONSOR_LOG;
+import static gov.cms.ab2d.common.util.Constants.USERNAME;
+import static gov.cms.ab2d.eventlogger.events.ReloadEvent.FileType.UPLOAD_ORG_STRUCTURE_REPORT;
 import static net.logstash.logback.argument.StructuredArguments.keyValue;
 
 @Slf4j
@@ -26,15 +31,18 @@ import static net.logstash.logback.argument.StructuredArguments.keyValue;
 public class OrgStructureReportProcessor implements ExcelReportProcessor {
 
     @Autowired
+    private EventLogger eventLogger;
+
+    @Autowired
     private SponsorService sponsorService;
 
     @Override
-    public void processReport(InputStream xlsInputStream, ExcelType excelType) throws IOException {
+    public void processReport(String fileName, InputStream xlsInputStream, ExcelType excelType) throws IOException {
         try (Workbook workbook = excelType.getWorkbookType(xlsInputStream)) {
             Sheet datatypeSheet = workbook.getSheetAt(0);
             log.info("Beginning processing a total of {} rows", datatypeSheet.getPhysicalNumberOfRows());
-
             processSheet(datatypeSheet);
+            eventLogger.log(new ReloadEvent(MDC.get(USERNAME), UPLOAD_ORG_STRUCTURE_REPORT, fileName, datatypeSheet.getPhysicalNumberOfRows()));
         }
     }
 
