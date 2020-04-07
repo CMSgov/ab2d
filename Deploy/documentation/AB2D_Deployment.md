@@ -88,10 +88,18 @@
    [Configure the SSH plugin](#configure-the-ssh-plugin)
    [Install the "Scheduled Build" plugin](#install-the-scheduled-build-plugin)
    [Configure GitHub plugin](#configure-github-plugin)
+   [Install and configure the Authorize Project plugin](#install-and-configure-the-authorize-project-plugin)
+   [Install and configure the GitHub Authentication plugin](#install-and-configure-the-github-uthentication-plugin)
    [Add the Jenkins agent node](#add-the-jenkins-agent-node)
    [Create a "development" folder in Jenkins](#create-a-development-folder-in-jenkins)
    [Configure a Jenkins project for development application deploy](#configure-a-jenkins-project-for-development-application-deploy)
+   [Create a "sandbox" folder in Jenkins](#create-a-sandbox-folder-in-jenkins)
+   [Configure a Jenkins project for sandbox application deploy](#configure-a-jenkins-project-for-sandbox-application-deploy)
 1. [Upgrade Jenkins](#upgrade-jenkins)
+1. [Configure Jenkins user to allow for SSH](#configure-jenkins-user-to-allow-for-ssh)
+1. [Configure executors for Jenkins master](#configure-executors-for-jenkins-master)
+1. [Configure Jenkins CLI](#configure-jenkins-cli)
+1. [Export Jenkins projects](#export-jenkins-projects)
 1. [Verify VPC peering between the management and development AWS accounts](#verify-vpc-peering-between-the-management-and-development-aws-accounts)
 1. [Update existing AB2D static website in development](#update-existing-ab2d-static-website-in-development)
 1. [Update existing AB2D static website in production](#update-existing-ab2d-static-website-in-production)
@@ -1342,6 +1350,7 @@
      --ec2_maximum_instance_count_worker=1 \
      --database-secret-datetime=2020-01-02-09-15-01 \
      --build-new-images \
+     --internet-facing=false \
      --auto-approve
    ```
 
@@ -1367,6 +1376,7 @@
      --ec2_maximum_instance_count_worker=1 \
      --database-secret-datetime=2020-01-02-09-15-01 \
      --use-existing-images \
+     --internet-facing=false \
      --auto-approve
    ```
 
@@ -1394,6 +1404,7 @@
      --ec2_maximum_instance_count_worker=2 \
      --database-secret-datetime=2020-01-02-09-15-01 \
      --build-new-images \
+     --internet-facing=true \
      --auto-approve
    ```
 
@@ -1419,6 +1430,7 @@
      --ec2_maximum_instance_count_worker=2 \
      --database-secret-datetime=2020-01-02-09-15-01 \
      --use-existing-images \
+     --internet-facing=true \
      --auto-approve
    ```
 
@@ -1446,6 +1458,7 @@
      --ec2_maximum_instance_count_worker=2 \
      --database-secret-datetime=2020-01-02-09-15-01 \
      --build-new-images \
+     --internet-facing=false \
      --auto-approve
    ```
 
@@ -1471,6 +1484,7 @@
      --ec2_maximum_instance_count_worker=2 \
      --database-secret-datetime=2020-01-02-09-15-01 \
      --use-existing-images \
+     --internet-facing=false \
      --auto-approve
    ```
 
@@ -4301,7 +4315,7 @@
       $ export AWS_PROFILE=ab2d-mgmt-east-dev
       ```
 
-   1. Get the private IP address of Jenkins EC2 instance
+   1. Get the public IP address of Jenkins EC2 instance
    
       ```ShellSession
       $ JENKINS_MASTER_PUBLIC_IP=$(aws --region us-east-1 ec2 describe-instances \
@@ -4312,7 +4326,7 @@
 
    1. Ensure that you are connected to the Cisco VPN
 
-   1. SSH into the instance using the private IP address
+   1. SSH into the instance using the public IP address
 
       ```ShellSession
       $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_MASTER_PUBLIC_IP
@@ -4383,21 +4397,21 @@
       $ export AWS_PROFILE=ab2d-mgmt-east-dev
       ```
 
-   1. Get the private IP address of Jenkins EC2 instance
+   1. Get the public IP address of Jenkins EC2 instance
    
       ```ShellSession
-      $ JENKINS_MASTER_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+      $ JENKINS_MASTER_PUBLIC_IP=$(aws --region us-east-1 ec2 describe-instances \
         --filters "Name=tag:Name,Values=ab2d-jenkins-master" \
-        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PublicIpAddress" \
         --output text)
       ```
 
    1. Ensure that you are connected to the Cisco VPN
 
-   1. SSH into the instance using the private IP address
+   1. SSH into the instance using the public IP address
 
       ```ShellSession
-      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_MASTER_PRIVATE_IP
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_MASTER_PUBLIC_IP
       ```
 
 1. Note the default Jenkins port
@@ -4503,11 +4517,7 @@
 
    *Format:*
 
-   > http://{jenkins master private ip}:8080
-
-   *Example:*
-
-   > http://10.242.37.74:8080
+   > http://{jenkins master public ip}:8080
 
 1. Bookmark Jenkins for your browser
 
@@ -4519,21 +4529,21 @@
       $ export AWS_PROFILE=ab2d-mgmt-east-dev
       ```
 
-   1. Get the private IP address of Jenkins EC2 instance
+   1. Get the public IP address of Jenkins EC2 instance
    
       ```ShellSession
-      $ JENKINS_MASTER_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+      $ JENKINS_MASTER_PUBLIC_IP=$(aws --region us-east-1 ec2 describe-instances \
         --filters "Name=tag:Name,Values=ab2d-jenkins-master" \
-        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PublicIpAddress" \
         --output text)
       ```
 
    1. Ensure that you are connected to the Cisco VPN
 
-   1. SSH into the instance using the private IP address
+   1. SSH into the instance using the public IP address
 
       ```ShellSession
-      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_MASTER_PRIVATE_IP
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_MASTER_PUBLIC_IP
       ```
 
 1. Configure Jenkins
@@ -4570,9 +4580,9 @@
 
    1. Note the Jenkins URL
 
-      *Example:*
+      *Format:*
 
-      > http://10.242.37.74:8080/
+      > http://{jenkins master public ip}:8080
 
    1. Select **Save and Finish**
 
@@ -4588,21 +4598,21 @@
       $ export AWS_PROFILE=ab2d-mgmt-east-dev
       ```
 
-   1. Get the private IP address of Jenkins EC2 instance
+   1. Get the public IP address of Jenkins EC2 instance
    
       ```ShellSession
-      $ JENKINS_MASTER_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+      $ JENKINS_MASTER_PUBLIC_IP=$(aws --region us-east-1 ec2 describe-instances \
         --filters "Name=tag:Name,Values=ab2d-jenkins-master" \
-        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PublicIpAddress" \
         --output text)
       ```
 
    1. Ensure that you are connected to the Cisco VPN
 
-   1. SSH into the instance using the private IP address
+   1. SSH into the instance using the public IP address
 
       ```ShellSession
-      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_MASTER_PRIVATE_IP
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_MASTER_PUBLIC_IP
       ```
       
 1. Get information about the jenkins user account
@@ -4811,7 +4821,7 @@
    
 1. Wait for the automation to complete
 
-1. Connect to Jenkins agent
+1. Connect to Jenkins agent through the Jenkins master using the ProxyJump flag (-J)
 
    1. Ensure that you are connected to the Cisco VPN
 
@@ -4821,7 +4831,16 @@
       $ export AWS_PROFILE=ab2d-mgmt-east-dev
       ```
 
-   1. Get the private IP address of Jenkins EC2 instance
+   1. Get the public IP address of Jenkins master instance
+
+      ```ShellSession
+      $ JENKINS_MASTER_PUBLIC_IP=$(aws --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-jenkins-master" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PublicIpAddress" \
+        --output text)
+      ```
+
+   1. Get the private IP address of Jenkins agent instance
    
       ```ShellSession
       $ JENKINS_AGENT_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
@@ -4832,10 +4851,12 @@
 
    1. Ensure that you are connected to the Cisco VPN
 
-   1. SSH into the instance using the private IP address
+   1. SSH into the Jenkins agent through the Jenkins master using the ProxyJump flag (-J)
 
       ```ShellSession
-      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_AGENT_PRIVATE_IP
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem -J \
+        ec2-user@$JENKINS_MASTER_PUBLIC_IP \
+	ec2-user@$JENKINS_AGENT_PRIVATE_IP
       ```
 
 1. View the available disk devices
@@ -5251,9 +5272,9 @@
    1. Get the private IP address of Jenkins EC2 instance
    
       ```ShellSession
-      $ JENKINS_MASTER_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+      $ JENKINS_MASTER_PUBLIC_IP=$(aws --region us-east-1 ec2 describe-instances \
         --filters "Name=tag:Name,Values=ab2d-jenkins-master" \
-        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PublicIpAddress" \
         --output text)
       ```
 
@@ -5262,7 +5283,7 @@
    1. SSH into the instance using the private IP address
 
       ```ShellSession
-      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_MASTER_PRIVATE_IP
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_MASTER_PUBLIC_IP
       ```
 
 1. Switch to the jenkins user from Jenkins master terminal
@@ -6157,7 +6178,7 @@
 
 ### Configure jenkins SSH credentials
 
-1. Get the private IP address of Jenkins master
+1. Get the public IP address of Jenkins master
 
    1. Ensure that you are connected to the Cisco VPN
 
@@ -6167,19 +6188,19 @@
       $ export AWS_PROFILE=ab2d-mgmt-east-dev
       ```
 
-   1. Get the private IP address of Jenkins master
+   1. Get the public IP address of Jenkins master
 
       ```ShellSession
-      $ JENKINS_MASTER_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+      $ JENKINS_MASTER_PUBLIC_IP=$(aws --region us-east-1 ec2 describe-instances \
         --filters "Name=tag:Name,Values=ab2d-jenkins-master" \
-        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PublicIpAddress" \
         --output text)
       ```
 
 1. Display the contents of the jenkins ssh private key
 
    ```ShellSession
-   $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_MASTER_PRIVATE_IP \
+   $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_MASTER_PUBLIC_IP \
      sudo -u jenkins cat /var/lib/jenkins/.ssh/id_rsa \
      | pbcopy
    ```
@@ -6197,10 +6218,6 @@
       *Format:*
 
       > http://{jenkins master private ip}:8080
-
-      *Example:*
-
-      > http://10.242.37.74:8080
 
    1. Log on to the Jenkins GUI
 
@@ -6246,10 +6263,6 @@
 
       > http://{jenkins master private ip}:8080
 
-      *Example:*
-
-      > http://10.242.37.74:8080
-
    1. Log on to the Jenkins GUI
       
 1. Select **Credentials** from the leftmost panel
@@ -6287,10 +6300,6 @@
       *Format:*
 
       > http://{jenkins master private ip}:8080
-
-      *Example:*
-
-      > http://10.242.37.74:8080
 
    1. Log on to the Jenkins GUI
       
@@ -6337,10 +6346,6 @@
       *Format:*
 
       > http://{jenkins master private ip}:8080
-
-      *Example:*
-
-      > http://10.242.37.74:8080
 
    1. Log on to the Jenkins GUI
       
@@ -6391,10 +6396,6 @@
       *Format:*
 
       > http://{jenkins master private ip}:8080
-
-      *Example:*
-
-      > http://10.242.37.74:8080
 
    1. Log on to the Jenkins GUI
       
@@ -6470,10 +6471,6 @@
 
       > http://{jenkins master private ip}:8080
 
-      *Example:*
-
-      > http://10.242.37.74:8080
-
    1. Log on to the Jenkins GUI
       
 1. Note that the "Scheduled Build" plugin acts like a Linux "at" command
@@ -6530,10 +6527,6 @@
 
       > http://{jenkins master private ip}:8080
 
-      *Example:*
-
-      > http://10.242.37.74:8080
-
    1. Log on to the Jenkins GUI
       
 1. Select **Manage Jenkins**
@@ -6565,6 +6558,303 @@
    ```
 
 1. Select **Save**
+
+### Install and configure the Authorize Project plugin
+
+1. Note the following
+
+   - Builds in Jenkins run as the virtual Jenkins SYSTEM user with full Jenkins permissions by default.
+
+   - This can be a problem if some users have restricted or no access to some jobs, but can configure others.
+
+   - The Authorize Project Plugin can be used to handle these situations.
+
+1. Log on to the Jenkins GUI (if not already logged in)
+
+   1. Ensure that you are connected to the Cisco VPN
+
+   1. Open Chrome
+
+   1. Enter the following in the address bar
+
+      *Format:*
+
+      > http://{jenkins master private ip}:8080
+
+   1. Log on to the Jenkins GUI
+
+1. Select **Manage Jenkins**
+
+1. Select **Manage Plugins**
+
+1. Select the **Available** tab
+
+1. Scroll down to "Authorize Project"
+
+1. Check **Authorize Project**
+
+1. Select **Download now and install after restart**
+
+1. Check **Restart Jenkins when installation is complete and no jobs are running**
+
+1. Select **Jenkins** in the top left of the page
+
+1. Select **Manage Jenkins**
+
+1. Scroll down to the "Security" section
+
+1. Select **Configure Global Security**
+
+1. Scroll down to the the "Access Control for Builds" section
+
+1. Note that there are two "Access Control for Builds" sections that can be configured
+
+   - Pre-project configurable Build Authorization
+
+   - Project default Build Authorization
+
+1. Note that at this point only "Project default Build Authorization" is being configured to behave with default "Run as SYSTEM" behavior
+
+   > *** TO DO ***: Consider additional strategies for configuring "Access Control for Builds" as additional users are added.
+
+1. Select **Add**
+
+1. Select **Project default Build Authorization**
+
+1. Select "Run as SYSTEM" from the **Strategy** dropdown
+
+1. Select **Apply**
+
+1. Select **Save**
+
+### Register a new OAuth application with GitHub
+
+1. Open Chome
+
+1. Enter the following in the address bar
+
+   > https://github.com
+
+1. Select the profile icon in the top right of the page
+
+1. Select **Sign out**
+
+1. Select **Sign in**
+
+1. Log on using the "ab2d-jenkins" user (see 1Password)
+
+1. Type the authentication code that was sent to Lonnie's phone in the **Authentication code** text box
+
+1. Select **Verify**
+
+1. Select the profile icon in the top right of the page
+
+1. Select **Settings**
+
+1. Select **Developer settings**
+
+1. Select **OAuth Apps**
+
+1. Select **Register a new application**
+
+1. Configure "Register a new OAuth application" as follows
+
+   - **Application name:** jenkins-github-authentication
+
+   - **Homepage URL:** https://ab2d.cms.gov
+
+   - **Application description:** {blank}
+
+   - **Authorization callback URL:** https://{private ip address of jenkins master}:8080/securityRealm/finishLogin
+
+1. Select **Register application
+
+1. Note the following
+
+   - Client ID
+
+   - Client Secret
+
+1. Create the following in 1Password
+
+   - **jenkins-github-authentication Client ID:** {client id}
+
+   - **jenkins-github-authentication Client Secret:** {client secret}
+
+1. Log out of GitHub
+   
+### Install and configure the GitHub Authentication plugin
+
+1. Connect to Jenkins master
+
+   1. Set the management AWS profile
+
+      ```ShellSession
+      $ export AWS_PROFILE=ab2d-mgmt-east-dev
+      ```
+
+   1. Get the public IP address of Jenkins master
+
+      ```ShellSession
+      $ JENKINS_MASTER_PUBLIC_IP=$(aws --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-jenkins-master" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PublicIpAddress" \
+        --output text)
+      ```
+
+   1. SSH into the instance using the public IP address
+
+      ```ShellSession
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_MASTER_PUBLIC_IP
+      ```
+
+1. Backup the exiting Jenkins configuration file before proceeding
+
+   1. Switch to the jenkins user
+
+      ```ShellSession
+      $ sudo su - jenkins
+      ```
+
+   1. Open the "config.xml"
+
+      ```ShellSession
+      $ vim config.xml
+      ```
+
+   1. Note that the default settings for authorization strategy and  security realm
+
+      ```
+      <authorizationStrategy class="hudson.security.FullControlOnceLoggedInAuthorizationStrategy">
+        <denyAnonymousReadAccess>true</denyAnonymousReadAccess>
+      </authorizationStrategy>
+      <securityRealm class="hudson.security.HudsonPrivateSecurityRealm">
+        <disableSignup>true</disableSignup>
+        <enableCaptcha>false</enableCaptcha>
+      </securityRealm>
+      ```
+
+   1. Change to the '/var/lib/jenkins' directory
+
+      ```ShellSession
+      $ cd /var/lib/jenkins
+      ```
+
+   1. Backup the jenkins config file
+
+      ```ShellSession
+      $ cp config.xml config.xml.backup
+      ```
+
+1. Open Chome
+
+1. Enter the following in the address bar
+
+   > https://github.com
+
+1. Log on as your user
+
+1. Log on to the Jenkins GUI (if not already logged in)
+
+   1. Ensure that you are connected to the Cisco VPN
+
+   1. Open Chrome
+
+   1. Enter the following in the address bar
+
+      *Format:*
+
+      > http://{jenkins master private ip}:8080
+
+   1. Log on to the Jenkins GUI
+
+1. Select **Manage Jenkins** from the leftmost panel
+
+1. Select **Manage Plugins**
+
+1. Select the **Available** tab
+
+1. Select **Check now**
+
+1. Scroll down to "GitHub Authentication"
+
+1. Check **GitHub Authentication**
+
+1. Select **Download now and install after restart**
+
+1. Check **Restart Jenkins when installation is complete and no jobs are running**
+
+1. Wait for Jenkins to restart
+
+1. Log on to Jenkins
+
+1. Select **Manage Jenkins** in the leftmost panel
+
+1. Scroll down to the "Security" section
+
+1. Select **Configure Global Security** under the "Security" section
+
+1. Select the **Github Authentication Plugin** radio button under "Security Realm" within the "Authentication" section
+
+1. Configure "Global GitHub OAuth Settings" as follows
+
+   - **GitHub Web URI:** https://github.com
+
+   - **GitHub API URI:** https://api.github.com
+
+   - **Client ID:** {jenkins-github-authentication client id from 1password}
+
+   - **Client Secret:** {jenkins-github-authentication client secret from 1password}
+
+   - **OAuth Scope(s):** read:org,user:email,repo
+
+1. Select **Apply**
+
+1. Scroll down to the **Authorization** section
+
+1. Select the **Matrix-based security** radio button
+
+1. Add desired GitHub users
+
+   1. Select **Add user or group**
+
+   1. Type the desired GitHub user into the **User or group name** text box
+
+   1. Select **OK**
+
+   1. Set desired permissions for the user using the checkboxes
+
+   1. Select **Apply**
+
+   1. Repeat this step for any additional users
+
+1. Select **Save**
+
+1. Log out of Jenkins
+
+### Log on to Jenkins using GitHub OAuth authentication
+
+1. Open Jenkins again
+
+1. Note that you will be prompted to log on to GitHub, if you are not already logged in
+
+1. Log on to GitHub
+
+1. Note the following appears on the "Authorize jenkins-github-authentication" page
+
+   - **jenkins-github-authentication by lhanekam:** wants to access your {your github user} account
+
+   - **Organizations and teams:** Read-only access
+
+   - **Repositories:** Public and private
+
+   - **Personal user data:** Email addresses (read-only)
+
+   - **Organization access:** CMSgov
+
+1. Select **Authorize lhanekam**
+
+1. Verify that the Jenkins page loads
 
 ### Add the Jenkins agent node
 
@@ -6657,10 +6947,6 @@
       *Format:*
 
       > http://{jenkins master private ip}:8080
-
-      *Example:*
-
-      > http://10.242.37.74:8080
 
    1. Log on to the Jenkins GUI
       
@@ -6768,10 +7054,6 @@
 
       > http://{jenkins master private ip}:8080
 
-      *Example:*
-
-      > http://10.242.37.74:8080
-
    1. Log on to the Jenkins GUI
 
 1. Select **New Item** from the leftmost panel
@@ -6805,10 +7087,6 @@
       *Format:*
 
       > http://{jenkins master private ip}:8080
-
-      *Example:*
-
-      > http://10.242.37.74:8080
 
    1. Log on to the Jenkins GUI
 
@@ -7182,6 +7460,40 @@
 
    1. Select **Apply**
 
+1. Add the "INTERNET_FACING_PARAM" parameter
+
+   1. Select **Add Parameter**
+
+   1. Select **String Parameter**
+
+   1. Configure the "String Parameter" as follows
+
+      - **Name:** INTERNET_FACING_PARAM
+
+      - **Default Value:** false
+
+      - **Description:**
+
+        ```
+	Corresponds to whether the application load balancer is internet facing or only available to VPN.
+	```
+
+   1. Check **Trim the string**
+
+   1. Select **Apply**
+
+1. Restrict where the project can be run
+
+   1. Check **Restrict where this project can be run**
+
+   1. Type the following in the **Label Expression** text box
+
+      ```
+      agent01
+      ```
+
+   1. Select **Apply**
+
 1. Scroll down to the "Source Code Management" section
 
 1. Add source control management
@@ -7280,6 +7592,562 @@
 
 1. Collect timing metrics based on the output and observation of the "Destroy old deployment" process
 
+   *New deployment active:* 16:41
+
+   *Total time including cleanup:* 24:01
+
+   Process                                   |Start Time|End Time|Process Time
+   ------------------------------------------|----------|--------|------------
+   Prepare for deployment                    |16:07:07  |16:07:31|00:24
+   Build API and worker                      |16:07:31  |16:08:31|01:00
+   Push API and worker images to ECR         |16:08:31  |16:09:39|01:08
+   Complete API module automation            |16:09:39  |16:10:40|01:01
+   Complete worker module automation         |16:10:40  |16:11:31|00:51
+   Complete CloudWatch, WAF, and Shield      |16:11:31  |16:11:38|00:07
+   Wait for API and Worker ECS tasks to start|16:11:38  |16:23:48|12:10
+   New deployment active                     |16:23:48  |16:23:48|00:00
+   Destroy old deployment                    |16:23:48  |16:31:08|07:20
+
+### Create a "sandbox" folder in Jenkins
+
+1. Log on to the Jenkins GUI (if not already logged in)
+
+   1. Ensure that you are connected to the Cisco VPN
+
+   1. Open Chrome
+
+   1. Enter the following in the address bar
+
+      *Format:*
+
+      > http://{jenkins master private ip}:8080
+
+   1. Log on to the Jenkins GUI
+
+1. Select **New Item** from the leftmost panel
+
+1. Type the following in the **Enter an item name** text box
+
+   ```
+   sandbox
+   ```
+
+1. Select **Folder**
+
+1. Select **OK** on the "Enter an item name" page
+
+1. Select **Save**
+
+1. Select the **Jenkins** bread crumb in the top left of the page
+
+### Configure a Jenkins project for sandbox application deploy
+
+1. Note that a Jenkins project is the same as the deprecated Jenkins job (even though job is still used in the GUI)
+
+1. Log on to the Jenkins GUI (if not already logged in)
+
+   1. Ensure that you are connected to the Cisco VPN
+
+   1. Open Chrome
+
+   1. Enter the following in the address bar
+
+      *Format:*
+
+      > http://{jenkins master private ip}:8080
+
+   1. Log on to the Jenkins GUI
+
+1. Select the **sandbox** link
+
+1. Select **New Item** from the leftmost panel
+
+1. Type the following in the **Enter an item name** text box
+
+   ```
+   deploy-to-sandbox
+   ```
+
+1. Select **Freestyle project**
+
+1. Select **OK** on the "Enter an item name" page
+
+1. Configure log rotation strategy for jenkins builds
+
+   1. Check **Discard old builds**
+
+   1. Configure "Discard old builds" as follows
+
+      - **Strategy:** Log Rotation
+
+      - **Days to keep builds:** 14
+
+      - **Max # of builds to keep:** 14
+
+1. Configure GitHub project
+
+   1. Check **GitHub project**
+
+   1. Type the following in the **Project url** text box
+
+      ```
+      https://github.com/CMSgov/ab2d
+      ```
+
+   1. Select **Apply**
+
+1. Check **This project is parameterized**
+
+1. Add the "CMS_ENV_PARAM" parameter
+
+   1. Select **Add Parameter**
+
+   1. Select **String Parameter**
+
+   1. Configure the "String Parameter" as follows
+
+      - **Name:** CMS_ENV_PARAM
+
+      - **Default Value:** ab2d-sbx-sandbox
+
+      - **Description:**
+
+        ```
+	Corresponds to the sandbox environment associated with an AWS account.
+	```
+
+   1. Check **Trim the string**
+
+   1. Select **Apply**
+
+1. Add the "CMS_ECR_REPO_ENV_PARAM" parameter
+
+   1. Select **Add Parameter**
+
+   1. Select **String Parameter**
+
+   1. Configure the "String Parameter" as follows
+
+      - **Name:** CMS_ECR_REPO_ENV_PARAM
+
+      - **Default Value:** ab2d-mgmt-east-dev
+
+      - **Description:**
+
+        ```
+	Corresponds to the management environment associated with an AWS account.
+	```
+
+   1. Check **Trim the string**
+
+   1. Select **Apply**
+
+1. Add the "REGION_PARAM" parameter
+
+   1. Select **Add Parameter**
+
+   1. Select **String Parameter**
+
+   1. Configure the "String Parameter" as follows
+
+      - **Name:** REGION_PARAM
+
+      - **Default Value:** us-east-1
+
+      - **Description:**
+
+        ```
+	Corresponds to AWS region of the target VPC.
+	```
+
+   1. Check **Trim the string**
+
+   1. Select **Apply**
+
+1. Add the "VPC_ID_PARAM" parameter
+
+   1. Select **Add Parameter**
+
+   1. Select **String Parameter**
+
+   1. Configure the "String Parameter" as follows
+
+      - **Name:** VPC_ID_PARAM
+
+      - **Default Value:** vpc-08dbf3fa96684151c
+
+      - **Description:**
+
+        ```
+	Corresponds to the VPC ID of the target VPC.
+	```
+
+   1. Check **Trim the string**
+
+   1. Select **Apply**
+
+1. Add the "SSH_USERNAME_PARAM" parameter
+
+   1. Select **Add Parameter**
+
+   1. Select **String Parameter**
+
+   1. Configure the "String Parameter" as follows
+
+      - **Name:** SSH_USERNAME_PARAM
+
+      - **Default Value:** ec2-user
+
+      - **Description:**
+
+        ```
+	Corresponds to the main linux user for EC2 instances.
+	```
+
+   1. Check **Trim the string**
+
+   1. Select **Apply**
+
+1. Add the "EC2_INSTANCE_TYPE_API_PARAM" parameter
+
+   1. Select **Add Parameter**
+
+   1. Select **String Parameter**
+
+   1. Configure the "String Parameter" as follows
+
+      - **Name:** EC2_INSTANCE_TYPE_API_PARAM
+
+      - **Default Value:** m5.xlarge
+
+      - **Description:**
+
+        ```
+	Corresponds to the EC2 instance type of API nodes.
+	```
+
+   1. Check **Trim the string**
+
+   1. Select **Apply**
+
+1. Add the "EC2_INSTANCE_TYPE_WORKER_PARAM" parameter
+
+   1. Select **Add Parameter**
+
+   1. Select **String Parameter**
+
+   1. Configure the "String Parameter" as follows
+
+      - **Name:** EC2_INSTANCE_TYPE_WORKER_PARAM
+
+      - **Default Value:** m5.4xlarge
+
+      - **Description:**
+
+        ```
+	Corresponds to the EC2 instance type of worker nodes.
+	```
+
+   1. Check **Trim the string**
+
+   1. Select **Apply**
+
+1. Add the "EC2_DESIRED_INSTANCE_COUNT_API_PARAM" parameter
+
+   1. Select **Add Parameter**
+
+   1. Select **String Parameter**
+
+   1. Configure the "String Parameter" as follows
+
+      - **Name:** EC2_DESIRED_INSTANCE_COUNT_API_PARAM
+
+      - **Default Value:** 2
+
+      - **Description:**
+
+        ```
+	Corresponds to the desired API node count.
+	```
+
+   1. Check **Trim the string**
+
+   1. Select **Apply**
+
+1. Add the "EC2_MINIMUM_INSTANCE_COUNT_API_PARAM" parameter
+
+   1. Select **Add Parameter**
+
+   1. Select **String Parameter**
+
+   1. Configure the "String Parameter" as follows
+
+      - **Name:** EC2_MINIMUM_INSTANCE_COUNT_API_PARAM
+
+      - **Default Value:** 2
+
+      - **Description:**
+
+        ```
+	Corresponds to the minumum API node(s) count.
+	```
+
+   1. Check **Trim the string**
+
+   1. Select **Apply**
+
+1. Add the "EC2_MAXIMUM_INSTANCE_COUNT_API_PARAM" parameter
+
+   1. Select **Add Parameter**
+
+   1. Select **String Parameter**
+
+   1. Configure the "String Parameter" as follows
+
+      - **Name:** EC2_MAXIMUM_INSTANCE_COUNT_API_PARAM
+
+      - **Default Value:** 2
+
+      - **Description:**
+
+        ```
+	Corresponds to the maximum API node(s) count.
+	```
+
+   1. Check **Trim the string**
+
+   1. Select **Apply**
+
+1. Add the "EC2_DESIRED_INSTANCE_COUNT_WORKER_PARAM" parameter
+
+   1. Select **Add Parameter**
+
+   1. Select **String Parameter**
+
+   1. Configure the "String Parameter" as follows
+
+      - **Name:** EC2_DESIRED_INSTANCE_COUNT_WORKER_PARAM
+
+      - **Default Value:** 2
+
+      - **Description:**
+
+        ```
+	Corresponds to the desired worker node count.
+	```
+
+   1. Check **Trim the string**
+
+   1. Select **Apply**
+
+1. Add the "EC2_MINIMUM_INSTANCE_COUNT_WORKER_PARAM" parameter
+
+   1. Select **Add Parameter**
+
+   1. Select **String Parameter**
+
+   1. Configure the "String Parameter" as follows
+
+      - **Name:** EC2_MINIMUM_INSTANCE_COUNT_WORKER_PARAM
+
+      - **Default Value:** 2
+
+      - **Description:**
+
+        ```
+	Corresponds to the minumum worker node(s) count.
+	```
+
+   1. Check **Trim the string**
+
+   1. Select **Apply**
+
+1. Add the "EC2_MAXIMUM_INSTANCE_COUNT_WORKER_PARAM" parameter
+
+   1. Select **Add Parameter**
+
+   1. Select **String Parameter**
+
+   1. Configure the "String Parameter" as follows
+
+      - **Name:** EC2_MAXIMUM_INSTANCE_COUNT_WORKER_PARAM
+
+      - **Default Value:** 2
+
+      - **Description:**
+
+        ```
+	Corresponds to the maximum worker node(s) count.
+	```
+
+   1. Check **Trim the string**
+
+   1. Select **Apply**
+
+1. Add the "DATABASE_SECRET_DATETIME_PARAM" parameter
+
+   1. Select **Add Parameter**
+
+   1. Select **String Parameter**
+
+   1. Configure the "String Parameter" as follows
+
+      - **Name:** DATABASE_SECRET_DATETIME_PARAM
+
+      - **Default Value:** 2020-01-02-09-15-01
+
+      - **Description:**
+
+        ```
+	Corresponds to a datatime string that is needed to get secrets in secrets manager.
+	```
+
+   1. Check **Trim the string**
+
+   1. Select **Apply**
+
+1. Add the "DEBUG_LEVEL_PARAM" parameter
+
+   1. Select **Add Parameter**
+
+   1. Select **String Parameter**
+
+   1. Configure the "String Parameter" as follows
+
+      - **Name:** DEBUG_LEVEL_PARAM
+
+      - **Default Value:** WARN
+
+      - **Description:**
+
+        ```
+	Corresponds to terraform logging level.
+	```
+
+   1. Check **Trim the string**
+
+   1. Select **Apply**
+
+1. Add the "INTERNET_FACING_PARAM" parameter
+
+   1. Select **Add Parameter**
+
+   1. Select **String Parameter**
+
+   1. Configure the "String Parameter" as follows
+
+      - **Name:** INTERNET_FACING_PARAM
+
+      - **Default Value:** true
+
+      - **Description:**
+
+        ```
+	Corresponds to whether the application load balancer is internet facing or only available to VPN.
+	```
+
+   1. Check **Trim the string**
+
+   1. Select **Apply**
+
+1. Restrict where the project can be run
+
+   1. Check **Restrict where this project can be run**
+
+   1. Type the following in the **Label Expression** text box
+
+      ```
+      agent01
+      ```
+
+   1. Select **Apply**
+
+1. Scroll down to the "Source Code Management" section
+
+1. Add source control management
+
+   1. Select the **Git** radio button under "Source Code Management"
+
+   1. Note that credentials are not needed since this is a public repository
+
+   1. Configure the "Repositories" section as follows
+
+      *Example for "master" branch"*
+
+      - **Repository URL:** https://github.com/CMSgov/ab2d
+
+      - **Credentials:** - none -
+
+      - **Branch Specifier:** */master
+
+   1. Select **Apply**
+
+1. Scroll down to the "Build Environment" section
+
+1. Check **Add timestamps to the Console Output**
+
+1. Scroll down to the "Build" section
+
+1. Configure the build
+
+   1. Select **Add build step**
+
+   1. Select **Execute shell**
+
+   1. Type the following in **Command** text box
+
+      ```
+      cd ./Deploy
+      chmod +x ./bash/deploy-application.sh
+      ./bash/deploy-application.sh
+      ```
+
+   1. Select **Apply**
+
+1. Select **Save**
+
+1. Test the deployment
+
+   1. Select **Build with Parameters**
+
+   1. Note that the parameters and their default values are displayed
+
+   1. Scroll down to the bottom of the parameters
+
+   1. Select **Build**
+
+1. View the deployment output
+
+   1. Select the build number under "Build History" for the current build
+
+      *Example:*
+
+      ```
+      #1
+      ```
+
+   1. Select **Console Output**
+
+   1. Observe the output
+
+1. If the last line of the output is "Finished: FAILURE", do the following:
+
+   1. Review the deployment output
+
+   1. Resolve the issue
+
+   1. Try running the the build again
+
+1. Verify that the last line of output is as follows:
+
+   ```
+   Finished: SUCCESS
+   ```
+
+1. Collect timing metrics based on the output and observation of the "Destroy old deployment" process
+
+   > *** TO DO ***: Update metrics
+   
    Process                                   |Start Time|End Time|Process Time
    ------------------------------------------|----------|--------|------------
    Prepare for deployment                    |16:30:42  |16:31:03|00:21
@@ -7305,21 +8173,9 @@
 
       > http://{jenkins master private ip}:8080
 
-      *Example:*
-
-      > http://10.242.37.74:8080
-
    1. Log on to the Jenkins GUI
 
 1. Select **Manage Jenkins** from the leftmost panel
-
-1. If you see "New version of Jenkins ({version}) is available for download (changelog)" under "Manage Jenkins", do the following:
-
-   1. Right click **download**
-
-   1. Select **Copy Link Address** from the context menu
-
-   1. Save the URL for a later step
 
 1. Connect to Jenkins master
 
@@ -7329,25 +8185,31 @@
       $ export AWS_PROFILE=ab2d-mgmt-east-dev
       ```
 
-   1. Get the private IP address of Jenkins master
+   1. Get the public IP address of Jenkins master
    
       ```ShellSession
-      $ JENKINS_MASTER_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+      $ JENKINS_MASTER_PUBLIC_IP=$(aws --region us-east-1 ec2 describe-instances \
         --filters "Name=tag:Name,Values=ab2d-jenkins-master" \
-        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PublicIpAddress" \
         --output text)
       ```
 
-   1. SSH into the instance using the private IP address
+   1. SSH into the instance using the public IP address
 
       ```ShellSession
-      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_MASTER_PRIVATE_IP
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_MASTER_PUBLIC_IP
       ```
 
 1. Stop Jenkins
 
    ```ShellSession
    $ sudo systemctl stop jenkins
+   ```
+
+1. Clear the jenkins log
+
+   ```ShellSession
+   $ sudo cat /dev/null > /var/log/jenkins/jenkins.log
    ```
 
 1. Upgrade Jenkins
@@ -7380,13 +8242,262 @@
 
       > http://{jenkins master private ip}:8080
 
-      *Example:*
-
-      > http://10.242.37.74:8080
-
    1. Log on to the Jenkins GUI
 
 1. Verify that Jenkins has been updated to the new version
+
+1. Select **Manage Jenkins** from the leftmost panel
+
+1. Select **Manage Plugins**
+
+1. Select the **Updates** tab
+
+1. If there are updates listed, do the following:
+
+   1. Select **Check now**
+
+   1. Wait for the check to complete
+
+   1. Note any warnings for plugins to determine if you will need to make any changes to existing projects to conform with the update
+
+   1. Check all plugins listed under the "Updates" tab
+   
+   1. Select **Download now and install after restart**
+
+   1. Check **Restart Jenkins when installation is complete and no jobs are running**
+
+   1. Wait for Jenkins to restart
+
+   1. Log on to Jenkins
+
+## Configure Jenkins user to allow for SSH
+
+1. Log on to the Jenkins GUI (if not already logged in)
+
+   1. Ensure that you are connected to the Cisco VPN
+
+   1. Open Chrome
+
+   1. Enter the following in the address bar
+
+      *Format:*
+
+      > http://{jenkins master private ip}:8080
+
+   1. Log on to the Jenkins GUI
+
+1. Select **Manage Jenkins** from the leftmost panel
+
+1. Scroll to the "Security" section
+
+1. Select **Manage Users**
+
+1. Select the desired user
+
+1. Select **Configure** from the leftmost panel
+
+1. Scroll down to the "SSH Public Keys" section
+
+1. Copy the public key for the user to the clipboard
+
+   1. Open a terminal
+
+   1. Copy the public key for the user to the clipboard
+
+      ```ShellSession
+      $ cat ~/.ssh/id_rsa.pub | pbcopy
+      ```
+
+1. Return to the Jenkins GUI
+
+1. Paste the public key into the **SSH Public Keys** text box
+
+1. Select **Apply**
+
+1. Select **Save**
+
+## Configure executors for Jenkins master
+
+1. Log on to the Jenkins GUI (if not already logged in)
+
+   1. Ensure that you are connected to the Cisco VPN
+
+   1. Open Chrome
+
+   1. Enter the following in the address bar
+
+      *Format:*
+
+      > http://{jenkins master private ip}:8080
+
+   1. Log on to the Jenkins GUI
+
+1. Select **Manage Jenkins** in the leftmost panel
+
+1. Select **Configure System**
+
+1. Note the following
+
+   - the "number of executors" defaulted to 2
+
+   - the Jenkins master has 4 cores for its instance type
+
+   - typically you will want the number of executors to match the number of cores
+
+1. Type the following in the **# of executors** text box
+
+   ```
+   4
+   ```
+
+1. Select **Apply**
+
+1. Select **Save**
+
+## Configure Jenkins CLI
+
+1. Log on to the Jenkins GUI (if not already logged in)
+
+   1. Ensure that you are connected to the Cisco VPN
+
+   1. Open Chrome
+
+   1. Enter the following in the address bar
+
+      *Format:*
+
+      > http://{jenkins master private ip}:8080
+
+   1. Log on to the Jenkins GUI
+
+1. Select **Manage Jenkins** in the leftmost panel
+
+1. Scroll down to the "Tools and Actions" section
+
+1. Select **Jenkins CLI**
+
+1. Note the list of commands available for the Jenkins CLI
+
+1. Select **jenkins-cli.jar** to download the file
+
+1. Wait for the download to complete
+
+1. If propted by browser, select **Keep**
+
+1. Create a directory for the Jenkins CLI
+
+   ```ShellSession
+   $ sudo mkdir -p /opt/jenkins-cli
+   ```
+
+1. Move the extracted directory to the "/opt" directory
+
+   ```ShellSession
+   $ sudo mv ~/Downloads/jenkins-cli.jar /opt/jenkins-cli
+   ```
+
+1. Set permssions on jenkins-cli
+
+   ```ShellSession
+   $ sudo chown -R $(id -u):$(id -g -nr) /opt/jenkins-cli
+   $ sudo chmod 755 /opt/jenkins-cli
+   ```
+
+1. Verify that you can list the top level Jenkins projects
+
+   *Format:*
+
+   ```ShellSession
+   $ java -jar /opt/jenkins-cli/jenkins-cli.jar \
+     -s "http:/{jenkins master private ip}:8080" \
+     -auth {jenkins user}:{jenkins password} \
+     list-jobs
+   ```
+
+1. Verify that you can list Jenkins projects within the development folder
+
+   *Format:*
+
+   ```ShellSession
+   $ java -jar /opt/jenkins-cli/jenkins-cli.jar \
+     -s "http://{jenkins master private ip}:8080" \
+     -auth {jenkins user}:{jenkins password} \
+     list-jobs development
+   ```
+
+## Export Jenkins projects
+
+1. Change to the "Deploy" directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d/Deploy
+   ```
+
+1. Create a jenkins directory
+
+   ```ShellSession
+   $ mkdir -p jenkins
+   ```
+
+1. Export the development folder
+
+   *Format:*
+
+   ```ShellSession
+   $ java -jar /opt/jenkins-cli/jenkins-cli.jar \
+     -s "http://{jenkins master private ip}:8080" \
+     -auth {github user}:{github personal access token} \
+     get-job development \
+     > ./jenkins/development.xml
+   ```
+
+1. Create a "development" directory under the "jenkins" directory
+
+   ```ShellSession
+   $ mkdir -p jenkins/development
+   ```
+
+1. Export the "deploy-to-development" project
+
+   *Format:*
+
+   ```ShellSession
+   $ java -jar /opt/jenkins-cli/jenkins-cli.jar \
+     -s "http://{jenkins master private ip}:8080" \
+     -auth {github user}:{github personal access token} \
+     get-job development/deploy-to-development \
+     > ./jenkins/development/deploy-to-development.xml
+   ```
+
+1. Export the sandbox folder
+
+   *Format:*
+
+   ```ShellSession
+   $ java -jar /opt/jenkins-cli/jenkins-cli.jar \
+     -s "http://{jenkins master private ip}:8080" \
+     -auth {github user}:{github personal access token} \
+     get-job sandbox \
+     > ./jenkins/sandbox.xml
+   ```
+
+1. Create a "sandbox" directory under the "jenkins" directory
+
+   ```ShellSession
+   $ mkdir -p jenkins/sandbox
+   ```
+
+1. Export the "deploy-to-sandbox" project
+
+   *Format:*
+
+   ```ShellSession
+   $ java -jar /opt/jenkins-cli/jenkins-cli.jar \
+     -s "http://{jenkins master private ip}:8080" \
+     -auth {github user}:{github personal access token} \
+     get-job sandbox/deploy-to-sandbox \
+     > ./jenkins/sandbox/deploy-to-sandbox.xml
+   ```
 
 ## Verify VPC peering between the management and development AWS accounts
 
