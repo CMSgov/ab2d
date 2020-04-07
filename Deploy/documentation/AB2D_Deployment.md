@@ -4849,8 +4849,6 @@
         --output text)
       ```
 
-   1. Ensure that you are connected to the Cisco VPN
-
    1. SSH into the Jenkins agent through the Jenkins master using the ProxyJump flag (-J)
 
       ```ShellSession
