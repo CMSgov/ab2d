@@ -56,13 +56,34 @@
    * [Prepare IAM policies and roles for CloudWatch Log groups](#prepare-iam-policies-and-roles-for-cloudwatch-log-groups)
    * [Configure CloudWatch Log groups](#configure-cloudwatch-log-groups)
    * [Configure CloudWatch Log groups for management environment](#configure-cloudwatch-log-groups-for-management-environment)
-     * [Configure CloudTrail CloudWatch Log group](#configure-cloudtrail-cloudwatch-log-group)
-     * [Configure VPC flow log CloudWatch Log group](#configure-vpc-flow-log-cloudwatch-log-group)
+     * [Configure CloudTrail CloudWatch Log group for management environment](#configure-cloudtrail-cloudwatch-log-group-for-management-environment)
+     * [Configure VPC flow log CloudWatch Log group for management environment](#configure-vpc-flow-log-cloudwatch-log-group-for-management-environment)
      * [Onboard first Jenkins master log to CloudWatch Log groups](#onboard-first-jenkins-master-log-to-cloudwatch-log-groups)
      * [Onboard additional CloudWatch log groups for Jenkins master](#onboard-additional-cloudwatch-log-groups-for-jenkins-master)
      * [Onboard first Jenkins agent log to CloudWatch Log groups](#onboard-first-jenkins-agent-log-to-cloudwatch-log-groups)
      * [Onboard additional CloudWatch log groups for Jenkins agent](#onboard-additional-cloudwatch-log-groups-for-jenkins-agent)
      * [Verify logging to CloudWatch Log Group for management environment](#verify-logging-to-cloudwatch-log-group-for-management-environment)
+   * [Configure CloudWatch Log groups for development environment](#configure-cloudwatch-log-groups-for-development-environment)
+     * [Configure CloudTrail CloudWatch Log group for development environment](#configure-cloudtrail-cloudwatch-log-group-for-development-environment)
+     * [Configure VPC flow log CloudWatch Log group for development environment](#configure-vpc-flow-log-cloudwatch-log-group-for-development-environment)
+     * [Onboard first deployment controller log to CloudWatch Log groups for development environment](#onboard-first-deployment-controller-log-to-cloudwatch-log-groups-for-development-environment)
+     * [Onboard additional CloudWatch log groups for deployment controller log for development environment](#onboard-additional-cloudwatch-log-groups-for-deployment-controller-log-for-development-environment)
+     * [Onboard first api node log to CloudWatch Log groups for development environment](#onboard-first-api-node-log-to-cloudwatch-log-groups-for-development-environment)
+     * [Onboard additional CloudWatch log groups for first api node log for development environment](#onboard-additional-cloudwatch-log-groups-for-first-api-node-log-for-development-environment)
+   * [Configure CloudWatch Log groups for sandbox environment](#configure-cloudwatch-log-groups-for-sandbox-environment)
+     * [Configure CloudTrail CloudWatch Log group for sandbox environment](#configure-cloudtrail-cloudwatch-log-group-for-sandbox-environment)
+     * [Configure VPC flow log CloudWatch Log group for sandbox environment](#configure-vpc-flow-log-cloudwatch-log-group-for-sandbox-environment)
+     * [Onboard first deployment controller log to CloudWatch Log groups for sandbox environment](#onboard-first-deployment-controller-log-to-cloudwatch-log-groups-for-sandbox-environment)
+     * [Onboard additional CloudWatch log groups for deployment controller log for sandbox environment](#onboard-additional-cloudwatch-log-groups-for-deployment-controller-log-for-sandbox-environment)
+     * [Onboard first api node log to CloudWatch Log groups for sandbox environment](#onboard-first-api-node-log-to-cloudwatch-log-groups-for-sandbox-environment)
+     * [Onboard additional CloudWatch log groups for first api node log for sandbox environment](#onboard-additional-cloudwatch-log-groups-for-first-api-node-log-for-sandbox-environment)
+   * [Configure CloudWatch Log groups for impl environment](#configure-cloudwatch-log-groups-for-impl-environment)
+     * [Configure CloudTrail CloudWatch Log group for impl environment](#configure-cloudtrail-cloudwatch-log-group-for-impl-environment)
+     * [Configure VPC flow log CloudWatch Log group for impl environment](#configure-vpc-flow-log-cloudwatch-log-group-for-impl-environment)
+     * [Onboard first deployment controller log to CloudWatch Log groups for impl environment](#onboard-first-deployment-controller-log-to-cloudwatch-log-groups-for-impl-environment)
+     * [Onboard additional CloudWatch log groups for deployment controller log for impl environment](#onboard-additional-cloudwatch-log-groups-for-deployment-controller-log-for-impl-environment)
+     * [Onboard first api node log to CloudWatch Log groups for impl environment](#onboard-first-api-node-log-to-cloudwatch-log-groups-for-impl-environment)
+     * [Onboard additional CloudWatch log groups for first api node log for impl environment](#onboard-additional-cloudwatch-log-groups-for-first-api-node-log-for-impl-environment)
 1. [Appendix II: Get application load balancer access logs](#appendix-ii-get-application-load-balancer-access-logs)
 1. [Appendix JJ: Export CloudWatch Log Group data to S3](#appendix-jj-export-cloudwatch-log-group-data-to-s3)
 
@@ -3782,7 +3803,7 @@
 
 #### Configure CloudWatch Log groups for management environment
 
-##### Configure CloudTrail CloudWatch Log group
+##### Configure CloudTrail CloudWatch Log group for management environment
 
 1. Log on to the AWS management account
 
@@ -3795,8 +3816,6 @@
    1. Select **Create log group**
 
    1. Configure the "Create log group" page as follows
-
-      *Format:*
 
       - **Log Group Name:** CloudTrail/DefaultLogGroup
 
@@ -3838,6 +3857,12 @@
 
 1. Create a role for CloudTrail
 
+   1. Set the AWS profile
+
+      ```ShellSession
+      $ export AWS_PROFILE=ab2d-mgmt-east-dev
+      ```
+
    1. Change to the "Deploy" directory
 
       ```ShellSession
@@ -3876,7 +3901,7 @@
      --cloud-watch-logs-role-arn arn:aws:iam::653916833532:role/Ab2dCloudTrailAssumeRole
    ```
 
-##### Configure VPC flow log CloudWatch Log group
+##### Configure VPC flow log CloudWatch Log group for management environment
 
 1. Log on to the AWS management account
 
@@ -3892,9 +3917,7 @@
 
    1. Configure the "Create log group" page as follows
 
-      *Format:*
-
-      - **Log Group Name:** {aws account id}-vpc-flow-logs
+      - **Log Group Name:** 653916833532-vpc-flow-logs
 
    1. Select **Create log group**
 
@@ -4461,6 +4484,70 @@
    $ exit
    ```
 
+1. Verify that all expected CloudWatch Log groups are present
+
+   1. Log on to the AWS develoment environment account
+
+   1. Select **CloudWatch**
+
+   1. Select **Log groups** from the leftmost panel
+
+   1. Verify that all of the following log groups are displayed
+
+      - /aws/ec2/var/log/amazon/ssm/amazon-ssm-agent.log
+
+      - /aws/ec2/var/log/audit/audit.log
+
+      - /aws/ec2/var/log/awslogs.log
+
+      - /aws/ec2/var/log/cloud-init-output.log
+
+      - /aws/ec2/var/log/cloud-init.log
+
+      - /aws/ec2/var/log/cron
+
+      - /aws/ec2/var/log/dmesg
+
+      - /aws/ec2/var/log/messages
+
+      - /aws/ec2/var/log/secure
+
+      - /aws/ec2/var/opt/ds_agent/diag/ds_agent-err.log
+
+      - /aws/ec2/var/opt/ds_agent/diag/ds_agent.log
+
+      - /aws/ec2/var/opt/ds_agent/diag/ds_am.log
+
+      - 653916833532-vpc-flow-logs
+
+      - CloudTrail/DefaultLogGroup
+
+1. If any of the log groups are missing, do the following:
+
+   1. Note the missing group(s) so that you can later investigate why it is missing
+
+      *Noted missing groups when creating on 2020-04-07:*
+
+      - NONE
+
+   1. Select **Actions**
+
+   1. Select **Create log group**
+
+   1. Configure the "Create log group" page as follows
+
+      - **Log group name:** {missing log group}
+
+   1. Select **Create log group**
+
+   1. Repeat this process for all missing groups
+
+1. Select each log group and note which ones have no data
+
+   *Noted log groups with no data when checking on 2020-04-07:*
+
+   - NONE
+
 ##### Onboard first Jenkins agent log to CloudWatch Log groups
 
 1. Connect to Jenkins agent through the Jenkins master using the ProxyJump flag (-J)
@@ -4903,7 +4990,161 @@
 
 1. Note the list of events that appear within the main page
 
-#### Configure CloudWatch Logs for development environment
+#### Configure CloudWatch Log groups for development environment
+
+##### Configure CloudTrail CloudWatch Log group for development environment
+
+1. Log on to the AWS development account
+
+1. Create a CloudTrail CloudWatch Log group
+
+   1. Select **Log groups** from the leftmost panel
+
+   1. Select **Actions**
+
+   1. Select **Create log group**
+
+   1. Configure the "Create log group" page as follows
+
+      - **Log Group Name:** CloudTrail/DefaultLogGroup
+
+   1. Select **Create log group**
+
+1. Create a trail in CloudTrail
+
+   1. Select **CloudTrail**
+
+   1. Select **Create trail**
+
+   1. Configure "Create Trail"
+
+      - **Trail name:** cloudtrail-default
+
+      - **Apply trail to all regions:** No
+
+   1. Configure "Management events"
+
+      - **Read/Write events:** All
+
+      - **Log AWS KMS events:** Yes
+
+   1. Configure "Insights events"
+
+      - **Log Insights events:** No
+
+   1. Configure "Data Events" for the "S3" tab
+
+      - **Select all S3 buckets in your account:** Checked
+
+   1. Configure "Storage location"
+
+      - **Create a new S3 bucket:** No
+
+      - **S3 bucket:** ab2d-dev-cloudtrail
+
+   1. Select **Create**
+
+1. Create a role for CloudTrail
+
+   1. Set the AWS profile
+
+      ```ShellSession
+      $ export AWS_PROFILE=ab2d-dev
+      ```
+
+   1. Change to the "Deploy" directory
+
+      ```ShellSession
+      $ cd ~/code/ab2d/Deploy
+      ```
+
+   1. Change to the shared directory
+
+      ```ShellSession
+      $ cd terraform/environments/ab2d-dev-shared
+      ```
+
+   1. Create the "Ab2dCloudTrailAssumeRole" role
+
+      ```ShellSession
+      $ aws --region us-east-1 iam create-role \
+        --role-name Ab2dCloudTrailAssumeRole \
+        --assume-role-policy-document file://ab2d-cloudtrail-assume-role-policy.json
+      ```
+
+   1. Add a CloudWatch log group policy to the CloudTrail role
+
+      ```ShellSession
+      $ aws --region us-east-1 iam put-role-policy \
+        --role-name Ab2dCloudTrailAssumeRole \
+	--policy-name Ab2dCloudTrailPolicy \
+	--policy-document file://ab2d-cloudtrail-cloudwatch-policy.json
+      ```
+
+1. Update the trail in CloudTrail with the log group and role information
+
+   ```ShellSession
+   $ aws --region us-east-1 cloudtrail update-trail \
+     --name cloudtrail-default \
+     --cloud-watch-logs-log-group-arn arn:aws:logs:us-east-1:349849222861:log-group:CloudTrail/DefaultLogGroup:* \
+     --cloud-watch-logs-role-arn arn:aws:iam::349849222861:role/Ab2dCloudTrailAssumeRole
+   ```
+
+##### Configure VPC flow log CloudWatch Log group for development environment
+
+1. Log on to the AWS development account
+
+1. Create a VPC flow log CloudWatch Log group
+
+   1. Select **CloudWatch**
+
+   1. Select **Log groups** from the leftmost panel
+
+   1. Select **Actions**
+
+   1. Select **Create log group**
+
+   1. Configure the "Create log group" page as follows
+
+      - **Log Group Name:** 349849222861-vpc-flow-logs
+
+   1. Select **Create log group**
+
+1. Create a VPC flow log
+
+   1. Select **VPC**
+
+   1. Select **Your VPCs** from the leftmost panel
+
+   1. Select the following VPC
+
+      ```
+      ab2d-dev
+      ```
+
+   1. Select the **Flow Logs** tab
+
+   1. Select **Create flow log**
+
+   1. Configure the "Create flow log" page
+
+      *Format:*
+
+      - **Filter:** All
+
+      - **Maximum aggregation interval:** 10 minutes
+
+      - **Destination:** Send to CloudWatch Logs
+
+      - **Destination log group:** {aws account id}-vpc-flow-logs
+
+      - **IAM role:** Ab2dInstanceRole
+
+   1. Select **Create**
+
+   1. Select **Close** on the "Create flow log" page
+
+##### Onboard first deployment controller log to CloudWatch Log groups for development environment
 
 1. Connect to an API node in development
 
@@ -4915,7 +5156,7 @@
       $ export AWS_PROFILE=ab2d-dev
       ```
 
-   1. Connect to the development controller
+   1. Connect to the deployment controller
 
       ```ShellSession
       $ ssh -i ~/.ssh/${AWS_PROFILE}.pem ec2-user@$(aws \
@@ -4923,92 +5164,6 @@
         --filters "Name=tag:Name,Values=ab2d-deployment-controller" \
         --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
         --output text)
-      ```
-
-   1. Connect to the desired API node
-
-      *Example for connecting to the first API node:*
-
-      ```ShellSession
-      $ ssh ec2-user@$(./list-api-instances.sh \
-        | grep 10. \
-        | awk '{print $2}' \
-        | head -n 1)
-      ```
-
-1. Switch to the root user
-
-   ```ShellSession
-   $ sudo su
-   ```
-
-1. Verify existing logs prior to changes
-
-   OS Level Logging                        |Exists|CloudWatch Log Group
-   ----------------------------------------|------|------------------------------------------------
-   /var/log/amazon/ssm/amazon-ssm-agent.log|yes   |/aws/ec2/var/log/amazon/ssm/amazon-ssm-agent.log
-   /var/log/audit/audit.log                |yes   |/aws/ec2/var/log/audit/audit.log
-   /var/log/awslogs.log                    |no    |/aws/ec2/var/log/awslogs.log
-   /var/log/cloud-init-output.log          |yes   |/aws/ec2/var/log/cloud-init-output.log
-   /var/log/cloud-init.log                 |yes   |/aws/ec2/var/log/cloud-init.log
-   /var/log/cron                           |yes   |/aws/ec2/var/log/cron
-   /var/log/dmesg                          |yes   |/aws/ec2/var/log/dmesg
-   /var/log/maillog                        |yes   |/aws/ec2/var/log/maillog
-   /var/log/messages                       |yes   |/aws/ec2/var/log/messages
-   /var/log/secure                         |yes   |/aws/ec2/var/log/secure
-   /var/opt/ds_agent/diag/ds_agent-err.log |yes   |/aws/ec2/var/opt/ds_agent/diag/ds_agent-err.log
-   /var/opt/ds_agent/diag/ds_agent.log     |yes   |/aws/ec2/var/opt/ds_agent/diag/ds_agent.log
-   /var/opt/ds_agent/diag/ds_am.log        |yes   |/aws/ec2/var/opt/ds_agent/diag/ds_am.log
-   N/A                                     |N/A   |CloudTrail/DefaultLogGroup
-   N/A                                     |N/A   |<accountId>-west-dev-vpc-flowlogs
-
-1. Exit the root user
-
-   ```ShellSession
-   $ exit
-   ```
-
-1. Exit the API node
-
-   ```ShellSession
-   $ exit
-   ```
-
-1. Exit the controler
-
-   ```ShellSession
-   $ exit
-   ```
-
-1. Connect to an API node in development
-
-   1. Ensure that you are connected to the Cisco VPN
-
-   1. Set the dev AWS profile
-
-      ```ShellSession
-      $ export AWS_PROFILE=ab2d-dev
-      ```
-
-   1. Connect to the development controller
-
-      ```ShellSession
-      $ ssh -i ~/.ssh/${AWS_PROFILE}.pem ec2-user@$(aws \
-        --region us-east-1 ec2 describe-instances \
-        --filters "Name=tag:Name,Values=ab2d-deployment-controller" \
-        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
-        --output text)
-      ```
-
-   1. Connect to the desired API node
-
-      *Example for connecting to the first API node:*
-
-      ```ShellSession
-      $ ssh ec2-user@$(./list-api-instances.sh \
-        | grep 10. \
-        | awk '{print $2}' \
-        | head -n 1)
       ```
 
 1. Download the CloudWatch Log agent
@@ -5031,101 +5186,6 @@
 
       ```ShellSession
       $ sudo python /tmp/awslogs-agent-setup.py --region us-east-1
-      ```
-
-   1. Note the following dependencies are downloaded
-
-      ```
-      AgentDependencies/
-      AgentDependencies/awslogscli/
-      AgentDependencies/awslogscli/urllib3-1.25.6.tar.gz
-      AgentDependencies/awslogscli/jmespath-0.9.2.tar.gz
-      AgentDependencies/awslogscli/colorama-0.3.7.zip
-      AgentDependencies/awslogscli/idna-2.8.tar.gz
-      AgentDependencies/awslogscli/awscli-1.11.41.tar.gz
-      AgentDependencies/awslogscli/argparse-1.2.1.tar.gz
-      AgentDependencies/awslogscli/botocore-1.13.9.tar.gz
-      AgentDependencies/awslogscli/docutils-0.15.2.tar.gz
-      AgentDependencies/awslogscli/pyasn1-0.2.3.tar.gz
-      AgentDependencies/awslogscli/python-dateutil-2.6.0.tar.gz
-      AgentDependencies/awslogscli/botocore-1.5.4.tar.gz
-      AgentDependencies/awslogscli/jmespath-0.9.4.tar.gz
-      AgentDependencies/awslogscli/awscli-cwlogs-1.4.6.tar.gz
-      AgentDependencies/awslogscli/ordereddict-1.1.tar.gz
-      AgentDependencies/awslogscli/futures-3.3.0.tar.gz
-      AgentDependencies/awslogscli/futures-3.0.5.tar.gz
-      AgentDependencies/awslogscli/certifi-2019.9.11.tar.gz
-      AgentDependencies/awslogscli/six-1.12.0.tar.gz
-      AgentDependencies/awslogscli/s3transfer-0.1.10.tar.gz
-      AgentDependencies/awslogscli/six-1.10.0.tar.gz
-      AgentDependencies/awslogscli/requests-2.18.4.tar.gz
-      AgentDependencies/awslogscli/rsa-3.4.2.tar.gz
-      AgentDependencies/awslogscli/s3transfer-0.2.1.tar.gz
-      AgentDependencies/awslogscli/docutils-0.13.1.tar.gz
-      AgentDependencies/awslogscli/urllib3-1.22.tar.gz
-      AgentDependencies/awslogscli/awscli-1.16.273.tar.gz
-      AgentDependencies/awslogscli/PyYAML-5.1.2.tar.gz
-      AgentDependencies/awslogscli/idna-2.5.tar.gz
-      AgentDependencies/awslogscli/PyYAML-3.12.tar.gz
-      AgentDependencies/awslogscli/pyasn1-0.4.7.tar.gz
-      AgentDependencies/awslogscli/colorama-0.4.1.tar.gz
-      AgentDependencies/awslogscli/simplejson-3.3.0.tar.gz
-      AgentDependencies/awslogscli/chardet-3.0.4.tar.gz
-      AgentDependencies/virtualenv-15.1.0/
-      AgentDependencies/virtualenv-15.1.0/setup.cfg
-      AgentDependencies/virtualenv-15.1.0/tests/
-      AgentDependencies/virtualenv-15.1.0/tests/__init__.py
-      AgentDependencies/virtualenv-15.1.0/tests/test_cmdline.py
-      AgentDependencies/virtualenv-15.1.0/tests/test_virtualenv.py
-      AgentDependencies/virtualenv-15.1.0/tests/test_activate_output.expected
-      AgentDependencies/virtualenv-15.1.0/tests/test_activate.sh
-      AgentDependencies/virtualenv-15.1.0/scripts/
-      AgentDependencies/virtualenv-15.1.0/scripts/virtualenv
-      AgentDependencies/virtualenv-15.1.0/virtualenv.py
-      AgentDependencies/virtualenv-15.1.0/MANIFEST.in
-      AgentDependencies/virtualenv-15.1.0/README.rst
-      AgentDependencies/virtualenv-15.1.0/AUTHORS.txt
-      AgentDependencies/virtualenv-15.1.0/setup.py
-      AgentDependencies/virtualenv-15.1.0/LICENSE.txt
-      AgentDependencies/virtualenv-15.1.0/virtualenv_support/
-      AgentDependencies/virtualenv-15.1.0/virtualenv_support/__init__.py
-      AgentDependencies/virtualenv-15.1.0/virtualenv_support/wheel-0.29.0-py2.py3-none-any.whl
-      AgentDependencies/virtualenv-15.1.0/virtualenv_support/argparse-1.4.0-py2.py3-none-any.whl
-      AgentDependencies/virtualenv-15.1.0/virtualenv_support/pip-9.0.1-py2.py3-none-any.whl
-      AgentDependencies/virtualenv-15.1.0/virtualenv_support/setuptools-28.8.0-py2.py3-none-any.whl
-      AgentDependencies/virtualenv-15.1.0/PKG-INFO
-      AgentDependencies/virtualenv-15.1.0/bin/
-      AgentDependencies/virtualenv-15.1.0/bin/rebuild-script.py
-      AgentDependencies/virtualenv-15.1.0/virtualenv.egg-info/
-      AgentDependencies/virtualenv-15.1.0/virtualenv.egg-info/not-zip-safe
-      AgentDependencies/virtualenv-15.1.0/virtualenv.egg-info/SOURCES.txt
-      AgentDependencies/virtualenv-15.1.0/virtualenv.egg-info/entry_points.txt
-      AgentDependencies/virtualenv-15.1.0/virtualenv.egg-info/top_level.txt
-      AgentDependencies/virtualenv-15.1.0/virtualenv.egg-info/PKG-INFO
-      AgentDependencies/virtualenv-15.1.0/virtualenv.egg-info/dependency_links.txt
-      AgentDependencies/virtualenv-15.1.0/virtualenv_embedded/
-      AgentDependencies/virtualenv-15.1.0/virtualenv_embedded/activate.ps1
-      AgentDependencies/virtualenv-15.1.0/virtualenv_embedded/activate.csh
-      AgentDependencies/virtualenv-15.1.0/virtualenv_embedded/deactivate.bat
-      AgentDependencies/virtualenv-15.1.0/virtualenv_embedded/activate_this.py
-      AgentDependencies/virtualenv-15.1.0/virtualenv_embedded/activate.fish
-      AgentDependencies/virtualenv-15.1.0/virtualenv_embedded/python-config
-      AgentDependencies/virtualenv-15.1.0/virtualenv_embedded/activate.bat
-      AgentDependencies/virtualenv-15.1.0/virtualenv_embedded/distutils.cfg
-      AgentDependencies/virtualenv-15.1.0/virtualenv_embedded/site.py
-      AgentDependencies/virtualenv-15.1.0/virtualenv_embedded/activate.sh
-      AgentDependencies/virtualenv-15.1.0/virtualenv_embedded/distutils-init.py
-      AgentDependencies/virtualenv-15.1.0/docs/
-      AgentDependencies/virtualenv-15.1.0/docs/userguide.rst
-      AgentDependencies/virtualenv-15.1.0/docs/index.rst
-      AgentDependencies/virtualenv-15.1.0/docs/development.rst
-      AgentDependencies/virtualenv-15.1.0/docs/reference.rst
-      AgentDependencies/virtualenv-15.1.0/docs/Makefile
-      AgentDependencies/virtualenv-15.1.0/docs/conf.py
-      AgentDependencies/virtualenv-15.1.0/docs/changes.rst
-      AgentDependencies/virtualenv-15.1.0/docs/installation.rst
-      AgentDependencies/virtualenv-15.1.0/docs/make.bat
-      AgentDependencies/pip-6.1.1.tar.gz
       ```
 
    1. Wait for the following to display
@@ -5225,12 +5285,6 @@
       ```ShellSession
       $ sudo service awslogs start
       ```
-      
-1. Exit the API node
-
-   ```ShellSession
-   $ exit
-   ```
 
 1. Exit the controler
 
@@ -5238,33 +5292,1803 @@
    $ exit
    ```
 
-### Verify logging to the first CloudWatch Log Group
+##### Onboard additional CloudWatch log groups for deployment controller log for development environment
 
-1. Open Chrome
+1. Connect to deployment controller
 
-1. Log on to the development AWS account
+   1. Ensure that you are connected to the Cisco VPN
 
-1. Select **CloudWatch**
+   1. Set the dev AWS profile
 
-1. Select **Log groups** under the "Logs" section in the leftmost panel
+      *Example for Mgmt environment:*
 
-1. Select the following
+      ```ShellSession
+      $ export AWS_PROFILE=ab2d-dev
+      ```
 
+   1. Connect to the development controller
+
+      ```ShellSession
+      $ ssh -i ~/.ssh/${AWS_PROFILE}.pem ec2-user@$(aws \
+        --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-deployment-controller" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+        --output text)
+      ```
+
+1. Onboard additional log groups
+
+   1. Change to the "/tmp" directory
+
+      ```ShellSession
+      $ cd /tmp
+      ```
+
+   1. Run the interactive setup for the CloudWatch Log agent
+
+      ```ShellSession
+      $ sudo python ./awslogs-agent-setup.py \
+        --region us-east-1 \
+        --only-generate-config
+      ```
+
+   1. Note that the following is displayed
+
+      ```
+      Step 3 of 5: Configuring AWS CLI ...
+      ```
+
+   1. Press **return** on the keyboard to accept the default at the "AWS Access Key ID" prompt
+
+   1. Press **return** on the keyboard to accept the default at the "AWS Secret Access Key" prompt
+
+   1. Press **return** on the keyboard to accept the default at the "Default region name" prompt
+
+   1. Press **return** on the keyboard to accept the default at the "Default output format" prompt
+
+   1. Note that the following is displayed
+
+      ```
+      Step 4 of 5: Configuring the CloudWatch Logs Agent ...
+      ```
+
+   1. Add the following log by entering the following at the prompts
+
+      - **Path of log file to upload:** /var/log/amazon/ssm/amazon-ssm-agent.log
+
+      - **Destination Log Group name:** /aws/ec2/var/log/amazon/ssm/amazon-ssm-agent.log
+
+      - **Choose Log Stream Name:** 1 *Use EC2 instance id*
+
+      - **Choose Log Event timestamp format:** 3 *%Y-%m-%d %H:%M:%S (2008-09-08 11:52:54)*
+
+      - **Choose initial position of upload:** 1 *From start of file.*
+
+      - **More log files to configure:** Y
+
+   1. Add the following log by entering the following at the prompts
+
+      - **Path of log file to upload:** /var/log/audit/audit.log
+
+      - **Destination Log Group name:** /aws/ec2/var/log/audit/audit.log
+
+      - **Choose Log Stream Name:** 1 *Use EC2 instance id*
+
+      - **Choose Log Event timestamp format:** 3 *%Y-%m-%d %H:%M:%S (2008-09-08 11:52:54)*
+
+      - **Choose initial position of upload:** 1 *From start of file.*
+
+      - **More log files to configure:** Y
+
+   1. Add the following log by entering the following at the prompts
+
+      - **Path of log file to upload:** /var/log/awslogs.log
+
+      - **Destination Log Group name:** /aws/ec2/var/log/awslogs.log
+
+      - **Choose Log Stream Name:** 1 *Use EC2 instance id*
+
+      - **Choose Log Event timestamp format:** 3 *%Y-%m-%d %H:%M:%S (2008-09-08 11:52:54)*
+
+      - **Choose initial position of upload:** 1 *From start of file.*
+
+      - **More log files to configure:** Y
+
+   1. Add the following log by entering the following at the prompts
+
+      - **Path of log file to upload:** /var/log/cloud-init-output.log
+
+      - **Destination Log Group name:** /aws/ec2/var/log/cloud-init-output.log
+
+      - **Choose Log Stream Name:** 1 *Use EC2 instance id*
+
+      - **Choose Log Event timestamp format:** 3 *%Y-%m-%d %H:%M:%S (2008-09-08 11:52:54)*
+
+      - **Choose initial position of upload:** 1 *From start of file.*
+
+      - **More log files to configure:** Y
+
+   1. Add the following log by entering the following at the prompts
+
+      - **Path of log file to upload:** /var/log/cloud-init.log
+
+      - **Destination Log Group name:** /aws/ec2/var/log/cloud-init.log
+
+      - **Choose Log Stream Name:** 1 *Use EC2 instance id*
+
+      - **Choose Log Event timestamp format:** 3 *%Y-%m-%d %H:%M:%S (2008-09-08 11:52:54)*
+
+      - **Choose initial position of upload:** 1 *From start of file.*
+
+      - **More log files to configure:** Y
+
+   1. Add the following log by entering the following at the prompts
+
+      - **Path of log file to upload:** /var/log/cron
+
+      - **Destination Log Group name:** /aws/ec2/var/log/cron
+
+      - **Choose Log Stream Name:** 1 *Use EC2 instance id*
+
+      - **Choose Log Event timestamp format:** 3 *%Y-%m-%d %H:%M:%S (2008-09-08 11:52:54)*
+
+      - **Choose initial position of upload:** 1 *From start of file.*
+
+      - **More log files to configure:** Y
+
+   1. Add the following log by entering the following at the prompts
+
+      - **Path of log file to upload:** /var/log/dmesg
+
+      - **Destination Log Group name:** /aws/ec2/var/log/dmesg
+
+      - **Choose Log Stream Name:** 1 *Use EC2 instance id*
+
+      - **Choose Log Event timestamp format:** 3 *%Y-%m-%d %H:%M:%S (2008-09-08 11:52:54)*
+
+      - **Choose initial position of upload:** 1 *From start of file.*
+
+      - **More log files to configure:** Y
+
+   1. Add the following log by entering the following at the prompts
+
+      - **Path of log file to upload:** /var/log/maillog
+
+      - **Destination Log Group name:** /aws/ec2/var/log/maillog
+
+      - **Choose Log Stream Name:** 1 *Use EC2 instance id*
+
+      - **Choose Log Event timestamp format:** 3 *%Y-%m-%d %H:%M:%S (2008-09-08 11:52:54)*
+
+      - **Choose initial position of upload:** 1 *From start of file.*
+
+      - **More log files to configure:** Y
+
+   1. Add the following log by entering the following at the prompts
+
+      - **Path of log file to upload:** /var/log/secure
+
+      - **Destination Log Group name:** /aws/ec2/var/log/secure
+
+      - **Choose Log Stream Name:** 1 *Use EC2 instance id*
+
+      - **Choose Log Event timestamp format:** 3 *%Y-%m-%d %H:%M:%S (2008-09-08 11:52:54)*
+
+      - **Choose initial position of upload:** 1 *From start of file.*
+
+      - **More log files to configure:** Y
+
+   1. Add the following log by entering the following at the prompts
+
+      - **Path of log file to upload:** /var/opt/ds_agent/diag/ds_agent-err.log
+
+      - **Destination Log Group name:** /aws/ec2/var/opt/ds_agent/diag/ds_agent-err.log
+
+      - **Choose Log Stream Name:** 1 *Use EC2 instance id*
+
+      - **Choose Log Event timestamp format:** 3 *%Y-%m-%d %H:%M:%S (2008-09-08 11:52:54)*
+
+      - **Choose initial position of upload:** 1 *From start of file.*
+
+      - **More log files to configure:** Y
+
+   1. Add the following log by entering the following at the prompts
+
+      - **Path of log file to upload:** /var/opt/ds_agent/diag/ds_agent.log
+
+      - **Destination Log Group name:** /aws/ec2/var/opt/ds_agent/diag/ds_agent.log
+
+      - **Choose Log Stream Name:** 1 *Use EC2 instance id*
+
+      - **Choose Log Event timestamp format:** 3 *%Y-%m-%d %H:%M:%S (2008-09-08 11:52:54)*
+
+      - **Choose initial position of upload:** 1 *From start of file.*
+
+      - **More log files to configure:** Y
+
+   1. Add the following log by entering the following at the prompts
+
+      - **Path of log file to upload:** /var/opt/ds_agent/diag/ds_am.log
+
+      - **Destination Log Group name:** /aws/ec2/var/opt/ds_agent/diag/ds_am.log
+
+      - **Choose Log Stream Name:** 1 *Use EC2 instance id*
+
+      - **Choose Log Event timestamp format:** 3 *%Y-%m-%d %H:%M:%S (2008-09-08 11:52:54)*
+
+      - **Choose initial position of upload:** 1 *From start of file.*
+
+      - **More log files to configure:** N
+
+   1. Note all the new CloudWatch log groups configurations are appended after the first "/var/log/messages" section in the configuaration file
+
+      ```ShellSession
+      $ sudo cat /var/awslogs/etc/awslogs.conf
+      ```
+
+1. Restart the awslogs service
+
+   ```ShellSession
+   $ sudo service awslogs restart
    ```
-   /aws/ec2/var/log/messages
+
+1. Reload systemd configuration
+
+   ```ShellSession
+   $ sudo systemctl daemon-reload
    ```
 
-1. Select the instance id
+1. Exit deployment controller
 
-   *Example:*
-
-   ```
-   i-01fbbfdf09d80d874
+   ```ShellSession
+   $ exit
    ```
 
-1. Note the list of events that appear within the main page
+1. Verify that all expected CloudWatch Log groups are present
 
-### Onboard additional CloudWatch log groups
+   1. Log on to the AWS develoment environment account
+
+   1. Select **CloudWatch**
+
+   1. Select **Log groups** from the leftmost panel
+
+   1. Verify that all of the following log groups are displayed
+	
+      - /aws/ec2/var/log/amazon/ssm/amazon-ssm-agent.log
+
+      - /aws/ec2/var/log/audit/audit.log
+
+      - /aws/ec2/var/log/awslogs.log
+
+      - /aws/ec2/var/log/cloud-init-output.log
+
+      - /aws/ec2/var/log/cloud-init.log
+
+      - /aws/ec2/var/log/cron
+
+      - /aws/ec2/var/log/dmesg
+
+      - /aws/ec2/var/log/messages
+
+      - /aws/ec2/var/log/secure
+
+      - /aws/ec2/var/opt/ds_agent/diag/ds_agent-err.log
+
+      - /aws/ec2/var/opt/ds_agent/diag/ds_agent.log
+
+      - /aws/ec2/var/opt/ds_agent/diag/ds_am.log
+
+      - 349849222861-vpc-flow-logs
+
+      - CloudTrail/DefaultLogGroup
+
+1. If any of the log groups are missing, do the following:
+
+   1. Note the missing group(s) so that you can later investigate why it is missing
+
+      *Noted missing groups when creating on 2020-04-07:*
+
+      - /aws/ec2/var/log/amazon/ssm/amazon-ssm-agent.log
+
+      - /aws/ec2/var/log/cloud-init.log
+
+   1. Select **Actions**
+
+   1. Select **Create log group**
+
+   1. Configure the "Create log group" page as follows
+
+      - **Log group name:** {missing log group}
+
+   1. Select **Create log group**
+
+   1. Repeat this process for all missing groups
+
+1. Select each log group and note which ones have no data
+
+   *Noted log groups with no data when checking on 2020-04-07:*
+
+   - /aws/ec2/var/log/amazon/ssm/amazon-ssm-agent.log
+
+   - /aws/ec2/var/log/cloud-init.log
+
+   - 349849222861-vpc-flow-logs
+
+##### Onboard first api node log to CloudWatch Log groups for development environment
+
+> *** TO DO ***
+
+1. Connect to an API node in development
+
+   1. Ensure that you are connected to the Cisco VPN
+
+   1. Set the dev AWS profile
+
+      ```ShellSession
+      $ export AWS_PROFILE=ab2d-dev
+      ```
+
+   1. Connect to the development controller
+
+      ```ShellSession
+      $ ssh -i ~/.ssh/${AWS_PROFILE}.pem ec2-user@$(aws \
+        --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-deployment-controller" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+        --output text)
+      ```
+
+   1. Connect to the desired API node
+
+      *Example for connecting to the first API node:*
+
+      ```ShellSession
+      $ ssh ec2-user@$(./list-api-instances.sh \
+        | grep 10. \
+        | awk '{print $2}' \
+        | head -n 1)
+      ```
+
+> *** TO DO ***
+
+##### Onboard additional CloudWatch log groups for first api node log for development environment
+
+> *** TO DO ***
+
+1. Connect to an API node in sandbox
+
+   1. Ensure that you are connected to the Cisco VPN
+
+   1. Set the dev AWS profile
+
+      ```ShellSession
+      $ export AWS_PROFILE=ab2d-dev
+      ```
+
+   1. Connect to the sandbox controller
+
+      ```ShellSession
+      $ ssh -i ~/.ssh/${AWS_PROFILE}.pem ec2-user@$(aws \
+        --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-deployment-controller" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+        --output text)
+      ```
+
+   1. Connect to the desired API node
+
+      *Example for connecting to the first API node:*
+
+      ```ShellSession
+      $ ssh ec2-user@$(./list-api-instances.sh \
+        | grep 10. \
+        | awk '{print $2}' \
+        | head -n 1)
+      ```
+
+> *** TO DO ***
+
+#### Configure CloudWatch Log groups for sandbox environment
+
+##### Configure CloudTrail CloudWatch Log group for sandbox environment
+
+1. Note that I am skipping this section since Splunk team already created a CloudTrail
+
+> *** TO DO ***: Verify this with Splunk team
+
+1. Log on to the AWS sandbox account
+
+1. Create a CloudTrail CloudWatch Log group
+
+   1. Select **Log groups** from the leftmost panel
+
+   1. Select **Actions**
+
+   1. Select **Create log group**
+
+   1. Configure the "Create log group" page as follows
+
+      - **Log Group Name:** CloudTrail/DefaultLogGroup
+
+   1. Select **Create log group**
+
+1. Create a trail in CloudTrail
+
+   1. Select **CloudTrail**
+
+   1. Select **Create trail**
+
+   1. Configure "Create Trail"
+
+      - **Trail name:** cloudtrail-default
+
+      - **Apply trail to all regions:** No
+
+   1. Configure "Management events"
+
+      - **Read/Write events:** All
+
+      - **Log AWS KMS events:** Yes
+
+   1. Configure "Insights events"
+
+      - **Log Insights events:** No
+
+   1. Configure "Data Events" for the "S3" tab
+
+      - **Select all S3 buckets in your account:** Checked
+
+   1. Configure "Storage location"
+
+      - **Create a new S3 bucket:** No
+
+      - **S3 bucket:** ab2d-sbx-sandbox-cloudtrail
+
+   1. Select **Create**
+
+1. Create a role for CloudTrail
+
+   1. Set the AWS profile
+
+      ```ShellSession
+      $ export AWS_PROFILE=ab2d-sbx-sandbox
+      ```
+
+   1. Change to the "Deploy" directory
+
+      ```ShellSession
+      $ cd ~/code/ab2d/Deploy
+      ```
+
+   1. Change to the shared directory
+
+      ```ShellSession
+      $ cd terraform/environments/ab2d-sbx-sandbox-shared
+      ```
+
+   1. Create the "Ab2dCloudTrailAssumeRole" role
+
+      ```ShellSession
+      $ aws --region us-east-1 iam create-role \
+        --role-name Ab2dCloudTrailAssumeRole \
+        --assume-role-policy-document file://ab2d-cloudtrail-assume-role-policy.json
+      ```
+
+   1. Add a CloudWatch log group policy to the CloudTrail role
+
+      ```ShellSession
+      $ aws --region us-east-1 iam put-role-policy \
+        --role-name Ab2dCloudTrailAssumeRole \
+	--policy-name Ab2dCloudTrailPolicy \
+	--policy-document file://ab2d-cloudtrail-cloudwatch-policy.json
+      ```
+
+1. Update the trail in CloudTrail with the log group and role information
+
+   ```ShellSession
+   $ aws --region us-east-1 cloudtrail update-trail \
+     --name cloudtrail-default \
+     --cloud-watch-logs-log-group-arn arn:aws:logs:us-east-1:777200079629:log-group:CloudTrail/DefaultLogGroup:* \
+     --cloud-watch-logs-role-arn arn:aws:iam::777200079629:role/Ab2dCloudTrailAssumeRole
+   ```
+
+##### Configure VPC flow log CloudWatch Log group for sandbox environment
+
+1. Note that I am skipping this section since Splunk team already had a flow log created
+
+   - /aws/lambda/client-logging-east-VPCFlowLogsFunction-1WH14LVH8S998
+
+> *** TO DO ***: Verify this with Splunk team
+
+1. Log on to the AWS sandbox account
+
+1. Create a VPC flow log CloudWatch Log group
+
+   1. Select **CloudWatch**
+
+   1. Select **Log groups** from the leftmost panel
+
+   1. Select **Actions**
+
+   1. Select **Create log group**
+
+   1. Configure the "Create log group" page as follows
+
+      - **Log Group Name:** 777200079629-vpc-flow-logs
+
+   1. Select **Create log group**
+
+1. Create a VPC flow log
+
+   1. Select **VPC**
+
+   1. Select **Your VPCs** from the leftmost panel
+
+   1. Select the following VPC
+
+      ```
+      ab2d-sbx-sandbox
+      ```
+
+   1. Select the **Flow Logs** tab
+
+   1. Select **Create flow log**
+
+   1. Configure the "Create flow log" page
+
+      *Format:*
+
+      - **Filter:** All
+
+      - **Maximum aggregation interval:** 10 minutes
+
+      - **Destination:** Send to CloudWatch Logs
+
+      - **Destination log group:** {aws account id}-vpc-flow-logs
+
+      - **IAM role:** Ab2dInstanceRole
+
+   1. Select **Create**
+
+   1. Select **Close** on the "Create flow log" page
+
+##### Onboard first deployment controller log to CloudWatch Log groups for sandbox environment
+
+1. Connect to an API node in sandbox
+
+   1. Ensure that you are connected to the Cisco VPN
+
+   1. Set the dev AWS profile
+
+      ```ShellSession
+      $ export AWS_PROFILE=ab2d-sbx-sandbox
+      ```
+
+   1. Connect to the deployment controller
+
+      ```ShellSession
+      $ ssh -i ~/.ssh/${AWS_PROFILE}.pem ec2-user@$(aws \
+        --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-deployment-controller" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+        --output text)
+      ```
+
+1. Download the CloudWatch Log agent
+
+   1. Change to the "/tmp" directory
+
+      ```ShellSession
+      $ cd /tmp
+      ```
+
+   1. Download the CloudWatch Log Agent
+
+      ```ShellSession
+      $ curl -O https://s3.amazonaws.com/aws-cloudwatch/downloads/latest/awslogs-agent-setup.py
+      ```
+
+1. Configure the CloudWatch Log Agent and start logging "/var/log/messages"
+
+   1. Enter the following
+
+      ```ShellSession
+      $ sudo python /tmp/awslogs-agent-setup.py --region us-east-1
+      ```
+
+   1. Wait for the following to display
+
+      ```
+      Step 1 of 5: Installing pip ...DONE
+      ```
+
+   1. Wait for the following to display
+
+      *Note that this may take a while.*
+
+      ```
+      Step 2 of 5: Downloading the latest CloudWatch Logs agent bits ...DONE
+      ```
+
+   1. Note that the following is displayed
+
+      ```
+      Step 3 of 5: Configuring AWS CLI ...
+      ```
+
+   1. Press **return** on the keyboard to accept the default at the "AWS Access Key ID" prompt
+
+   1. Press **return** on the keyboard to accept the default at the "AWS Secret Access Key" prompt
+
+   1. Press **return** on the keyboard to accept the default at the "Default region name" prompt
+
+   1. Press **return** on the keyboard to accept the default at the "Default output format" prompt
+
+   1. Note that the following is displayed
+
+      ```
+      Step 4 of 5: Configuring the CloudWatch Logs Agent ...
+      ```
+
+   1. Add the following log by entering the following at the prompts
+
+      - **Path of log file to upload:** /var/log/messages
+
+      - **Destination Log Group name:** /aws/ec2/var/log/messages
+
+      - **Choose Log Stream Name:** 1 *Use EC2 instance id*
+
+      - **Choose Log Event timestamp format:** 3 *%Y-%m-%d %H:%M:%S (2008-09-08 11:52:54)*
+
+      - **Choose initial position of upload:** 1 *From start of file.*
+
+      - **More log files to configure:** N
+
+   1. Wait for the following to display
+
+      ```
+      Step 5 of 5: Setting up agent as a daemon ...DONE
+      ```
+
+   1. Note the following output
+
+      ------------------------------------------------------
+      - Configuration file successfully saved at: /var/awslogs/etc/awslogs.conf
+      - You can begin accessing new log events after a few moments at https://console.aws.amazon.com/cloudwatch/home?region=us-east-1#logs:
+      - You can use 'sudo service awslogs start|stop|status|restart' to control the daemon.
+      - To see diagnostic information for the CloudWatch Logs Agent, see /var/log/awslogs.log
+      - You can rerun interactive setup using 'sudo python ./awslogs-agent-setup.py --region us-east-1 --only-generate-config'
+      ------------------------------------------------------
+
+1. View the "/var/log/messages" entry in the newly created CloudWatch Log agent
+
+   1. Enter the following
+   
+      ```ShellSession
+      $ sudo cat /var/awslogs/etc/awslogs.conf | tail -7
+      ```
+
+   1. Note the output
+
+      ```
+      [/var/log/messages]
+      datetime_format = %Y-%m-%d %H:%M:%S
+      file = /var/log/messages
+      buffer_duration = 5000
+      log_stream_name = {instance_id}
+      initial_position = start_of_file
+      log_group_name = /aws/ec2/var/log/messages
+      ```
+
+1. Ensure the CloudWatch Log Agent is running
+
+   1. Check the status of the CloudWatch Log Agent
+
+      ```ShellSession
+      $ service awslogs status
+      ```
+
+   1. If the CloudWatch Log Agent is not running, start it by entering the following
+
+      ```ShellSession
+      $ sudo service awslogs start
+      ```
+
+1. Exit the controler
+
+   ```ShellSession
+   $ exit
+   ```
+
+##### Onboard additional CloudWatch log groups for deployment controller log for sandbox environment
+
+1. Connect to deployment controller
+
+   1. Ensure that you are connected to the Cisco VPN
+
+   1. Set the dev AWS profile
+
+      *Example for Mgmt environment:*
+
+      ```ShellSession
+      $ export AWS_PROFILE=ab2d-sbx-sandbox
+      ```
+
+   1. Connect to the sandbox controller
+
+      ```ShellSession
+      $ ssh -i ~/.ssh/${AWS_PROFILE}.pem ec2-user@$(aws \
+        --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-deployment-controller" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+        --output text)
+      ```
+
+1. Onboard additional log groups
+
+   1. Change to the "/tmp" directory
+
+      ```ShellSession
+      $ cd /tmp
+      ```
+
+   1. Run the interactive setup for the CloudWatch Log agent
+
+      ```ShellSession
+      $ sudo python ./awslogs-agent-setup.py \
+        --region us-east-1 \
+        --only-generate-config
+      ```
+
+   1. Note that the following is displayed
+
+      ```
+      Step 3 of 5: Configuring AWS CLI ...
+      ```
+
+   1. Press **return** on the keyboard to accept the default at the "AWS Access Key ID" prompt
+
+   1. Press **return** on the keyboard to accept the default at the "AWS Secret Access Key" prompt
+
+   1. Press **return** on the keyboard to accept the default at the "Default region name" prompt
+
+   1. Press **return** on the keyboard to accept the default at the "Default output format" prompt
+
+   1. Note that the following is displayed
+
+      ```
+      Step 4 of 5: Configuring the CloudWatch Logs Agent ...
+      ```
+
+   1. Add the following log by entering the following at the prompts
+
+      - **Path of log file to upload:** /var/log/amazon/ssm/amazon-ssm-agent.log
+
+      - **Destination Log Group name:** /aws/ec2/var/log/amazon/ssm/amazon-ssm-agent.log
+
+      - **Choose Log Stream Name:** 1 *Use EC2 instance id*
+
+      - **Choose Log Event timestamp format:** 3 *%Y-%m-%d %H:%M:%S (2008-09-08 11:52:54)*
+
+      - **Choose initial position of upload:** 1 *From start of file.*
+
+      - **More log files to configure:** Y
+
+   1. Add the following log by entering the following at the prompts
+
+      - **Path of log file to upload:** /var/log/audit/audit.log
+
+      - **Destination Log Group name:** /aws/ec2/var/log/audit/audit.log
+
+      - **Choose Log Stream Name:** 1 *Use EC2 instance id*
+
+      - **Choose Log Event timestamp format:** 3 *%Y-%m-%d %H:%M:%S (2008-09-08 11:52:54)*
+
+      - **Choose initial position of upload:** 1 *From start of file.*
+
+      - **More log files to configure:** Y
+
+   1. Add the following log by entering the following at the prompts
+
+      - **Path of log file to upload:** /var/log/awslogs.log
+
+      - **Destination Log Group name:** /aws/ec2/var/log/awslogs.log
+
+      - **Choose Log Stream Name:** 1 *Use EC2 instance id*
+
+      - **Choose Log Event timestamp format:** 3 *%Y-%m-%d %H:%M:%S (2008-09-08 11:52:54)*
+
+      - **Choose initial position of upload:** 1 *From start of file.*
+
+      - **More log files to configure:** Y
+
+   1. Add the following log by entering the following at the prompts
+
+      - **Path of log file to upload:** /var/log/cloud-init-output.log
+
+      - **Destination Log Group name:** /aws/ec2/var/log/cloud-init-output.log
+
+      - **Choose Log Stream Name:** 1 *Use EC2 instance id*
+
+      - **Choose Log Event timestamp format:** 3 *%Y-%m-%d %H:%M:%S (2008-09-08 11:52:54)*
+
+      - **Choose initial position of upload:** 1 *From start of file.*
+
+      - **More log files to configure:** Y
+
+   1. Add the following log by entering the following at the prompts
+
+      - **Path of log file to upload:** /var/log/cloud-init.log
+
+      - **Destination Log Group name:** /aws/ec2/var/log/cloud-init.log
+
+      - **Choose Log Stream Name:** 1 *Use EC2 instance id*
+
+      - **Choose Log Event timestamp format:** 3 *%Y-%m-%d %H:%M:%S (2008-09-08 11:52:54)*
+
+      - **Choose initial position of upload:** 1 *From start of file.*
+
+      - **More log files to configure:** Y
+
+   1. Add the following log by entering the following at the prompts
+
+      - **Path of log file to upload:** /var/log/cron
+
+      - **Destination Log Group name:** /aws/ec2/var/log/cron
+
+      - **Choose Log Stream Name:** 1 *Use EC2 instance id*
+
+      - **Choose Log Event timestamp format:** 3 *%Y-%m-%d %H:%M:%S (2008-09-08 11:52:54)*
+
+      - **Choose initial position of upload:** 1 *From start of file.*
+
+      - **More log files to configure:** Y
+
+   1. Add the following log by entering the following at the prompts
+
+      - **Path of log file to upload:** /var/log/dmesg
+
+      - **Destination Log Group name:** /aws/ec2/var/log/dmesg
+
+      - **Choose Log Stream Name:** 1 *Use EC2 instance id*
+
+      - **Choose Log Event timestamp format:** 3 *%Y-%m-%d %H:%M:%S (2008-09-08 11:52:54)*
+
+      - **Choose initial position of upload:** 1 *From start of file.*
+
+      - **More log files to configure:** Y
+
+   1. Add the following log by entering the following at the prompts
+
+      - **Path of log file to upload:** /var/log/maillog
+
+      - **Destination Log Group name:** /aws/ec2/var/log/maillog
+
+      - **Choose Log Stream Name:** 1 *Use EC2 instance id*
+
+      - **Choose Log Event timestamp format:** 3 *%Y-%m-%d %H:%M:%S (2008-09-08 11:52:54)*
+
+      - **Choose initial position of upload:** 1 *From start of file.*
+
+      - **More log files to configure:** Y
+
+   1. Add the following log by entering the following at the prompts
+
+      - **Path of log file to upload:** /var/log/secure
+
+      - **Destination Log Group name:** /aws/ec2/var/log/secure
+
+      - **Choose Log Stream Name:** 1 *Use EC2 instance id*
+
+      - **Choose Log Event timestamp format:** 3 *%Y-%m-%d %H:%M:%S (2008-09-08 11:52:54)*
+
+      - **Choose initial position of upload:** 1 *From start of file.*
+
+      - **More log files to configure:** Y
+
+   1. Add the following log by entering the following at the prompts
+
+      - **Path of log file to upload:** /var/opt/ds_agent/diag/ds_agent-err.log
+
+      - **Destination Log Group name:** /aws/ec2/var/opt/ds_agent/diag/ds_agent-err.log
+
+      - **Choose Log Stream Name:** 1 *Use EC2 instance id*
+
+      - **Choose Log Event timestamp format:** 3 *%Y-%m-%d %H:%M:%S (2008-09-08 11:52:54)*
+
+      - **Choose initial position of upload:** 1 *From start of file.*
+
+      - **More log files to configure:** Y
+
+   1. Add the following log by entering the following at the prompts
+
+      - **Path of log file to upload:** /var/opt/ds_agent/diag/ds_agent.log
+
+      - **Destination Log Group name:** /aws/ec2/var/opt/ds_agent/diag/ds_agent.log
+
+      - **Choose Log Stream Name:** 1 *Use EC2 instance id*
+
+      - **Choose Log Event timestamp format:** 3 *%Y-%m-%d %H:%M:%S (2008-09-08 11:52:54)*
+
+      - **Choose initial position of upload:** 1 *From start of file.*
+
+      - **More log files to configure:** Y
+
+   1. Add the following log by entering the following at the prompts
+
+      - **Path of log file to upload:** /var/opt/ds_agent/diag/ds_am.log
+
+      - **Destination Log Group name:** /aws/ec2/var/opt/ds_agent/diag/ds_am.log
+
+      - **Choose Log Stream Name:** 1 *Use EC2 instance id*
+
+      - **Choose Log Event timestamp format:** 3 *%Y-%m-%d %H:%M:%S (2008-09-08 11:52:54)*
+
+      - **Choose initial position of upload:** 1 *From start of file.*
+
+      - **More log files to configure:** N
+
+   1. Note all the new CloudWatch log groups configurations are appended after the first "/var/log/messages" section in the configuaration file
+
+      ```ShellSession
+      $ sudo cat /var/awslogs/etc/awslogs.conf
+      ```
+
+1. Restart the awslogs service
+
+   ```ShellSession
+   $ sudo service awslogs restart
+   ```
+
+1. Reload systemd configuration
+
+   ```ShellSession
+   $ sudo systemctl daemon-reload
+   ```
+
+1. Exit deployment controller
+
+   ```ShellSession
+   $ exit
+   ```
+
+1. Verify that all expected CloudWatch Log groups are present
+
+   1. Log on to the AWS sandbox environment account
+
+   1. Select **CloudWatch**
+
+   1. Select **Log groups** from the leftmost panel
+
+   1. Verify that all of the following log groups are displayed
+	
+      - /aws/ec2/var/log/amazon/ssm/amazon-ssm-agent.log
+
+      - /aws/ec2/var/log/audit/audit.log
+
+      - /aws/ec2/var/log/awslogs.log
+
+      - /aws/ec2/var/log/cloud-init-output.log
+
+      - /aws/ec2/var/log/cloud-init.log
+
+      - /aws/ec2/var/log/cron
+
+      - /aws/ec2/var/log/dmesg
+
+      - /aws/ec2/var/log/messages
+
+      - /aws/ec2/var/log/secure
+
+      - /aws/ec2/var/opt/ds_agent/diag/ds_agent-err.log
+
+      - /aws/ec2/var/opt/ds_agent/diag/ds_agent.log
+
+      - /aws/ec2/var/opt/ds_agent/diag/ds_am.log
+
+      - 349849222861-vpc-flow-logs
+
+      - CloudTrail/DefaultLogGroup
+
+1. If any of the log groups are missing, do the following:
+
+   1. Note the missing group(s) so that you can later investigate why it is missing
+
+      *Noted missing groups when creating on 2020-04-07:*
+
+      - /aws/ec2/var/log/amazon/ssm/amazon-ssm-agent.log
+
+      - /aws/ec2/var/log/cloud-init.log
+
+   1. Select **Actions**
+
+   1. Select **Create log group**
+
+   1. Configure the "Create log group" page as follows
+
+      - **Log group name:** {missing log group}
+
+   1. Select **Create log group**
+
+   1. Repeat this process for all missing groups
+
+1. Select each log group and note which ones have no data
+
+   *Noted log groups with no data when checking on 2020-04-07:*
+
+   - /aws/ec2/var/log/amazon/ssm/amazon-ssm-agent.log
+
+   - /aws/ec2/var/log/cloud-init.log
+
+##### Onboard first api node log to CloudWatch Log groups for sandbox environment
+
+> *** TO DO ***
+
+1. Connect to an API node in sandbox
+
+   1. Ensure that you are connected to the Cisco VPN
+
+   1. Set the dev AWS profile
+
+      ```ShellSession
+      $ export AWS_PROFILE=ab2d-dev
+      ```
+
+   1. Connect to the sandbox controller
+
+      ```ShellSession
+      $ ssh -i ~/.ssh/${AWS_PROFILE}.pem ec2-user@$(aws \
+        --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-deployment-controller" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+        --output text)
+      ```
+
+   1. Connect to the desired API node
+
+      *Example for connecting to the first API node:*
+
+      ```ShellSession
+      $ ssh ec2-user@$(./list-api-instances.sh \
+        | grep 10. \
+        | awk '{print $2}' \
+        | head -n 1)
+      ```
+
+> *** TO DO ***
+
+##### Onboard additional CloudWatch log groups for first api node log for sandbox environment
+
+> *** TO DO ***
+
+1. Connect to an API node in sandbox
+
+   1. Ensure that you are connected to the Cisco VPN
+
+   1. Set the dev AWS profile
+
+      ```ShellSession
+      $ export AWS_PROFILE=ab2d-dev
+      ```
+
+   1. Connect to the sandbox controller
+
+      ```ShellSession
+      $ ssh -i ~/.ssh/${AWS_PROFILE}.pem ec2-user@$(aws \
+        --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-deployment-controller" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+        --output text)
+      ```
+
+   1. Connect to the desired API node
+
+      *Example for connecting to the first API node:*
+
+      ```ShellSession
+      $ ssh ec2-user@$(./list-api-instances.sh \
+        | grep 10. \
+        | awk '{print $2}' \
+        | head -n 1)
+      ```
+
+> *** TO DO ***
+
+#### Configure CloudWatch Log groups for impl environment
+
+##### Configure CloudTrail CloudWatch Log group for impl environment
+
+1. Log on to the AWS impl account
+
+1. Create a CloudTrail CloudWatch Log group
+
+   1. Select **Log groups** from the leftmost panel
+
+   1. Select **Actions**
+
+   1. Select **Create log group**
+
+   1. Configure the "Create log group" page as follows
+
+      - **Log Group Name:** CloudTrail/DefaultLogGroup
+
+   1. Select **Create log group**
+
+1. Create a trail in CloudTrail
+
+   1. Select **CloudTrail**
+
+   1. Select **Create trail**
+
+   1. Configure "Create Trail"
+
+      - **Trail name:** cloudtrail-default
+
+      - **Apply trail to all regions:** No
+
+   1. Configure "Management events"
+
+      - **Read/Write events:** All
+
+      - **Log AWS KMS events:** Yes
+
+   1. Configure "Insights events"
+
+      - **Log Insights events:** No
+
+   1. Configure "Data Events" for the "S3" tab
+
+      - **Select all S3 buckets in your account:** Checked
+
+   1. Configure "Storage location"
+
+      - **Create a new S3 bucket:** No
+
+      - **S3 bucket:** ab2d-sbx-impl-cloudtrail
+
+   1. Select **Create**
+
+1. Create a role for CloudTrail
+
+   1. Set the AWS profile
+
+      ```ShellSession
+      $ export AWS_PROFILE=ab2d-east-impl
+      ```
+
+   1. Change to the "Deploy" directory
+
+      ```ShellSession
+      $ cd ~/code/ab2d/Deploy
+      ```
+
+   1. Change to the shared directory
+
+      ```ShellSession
+      $ cd terraform/environments/ab2d-east-impl-shared
+      ```
+
+   1. Create the "Ab2dCloudTrailAssumeRole" role
+
+      ```ShellSession
+      $ aws --region us-east-1 iam create-role \
+        --role-name Ab2dCloudTrailAssumeRole \
+        --assume-role-policy-document file://ab2d-cloudtrail-assume-role-policy.json
+      ```
+
+   1. Add a CloudWatch log group policy to the CloudTrail role
+
+      ```ShellSession
+      $ aws --region us-east-1 iam put-role-policy \
+        --role-name Ab2dCloudTrailAssumeRole \
+	--policy-name Ab2dCloudTrailPolicy \
+	--policy-document file://ab2d-cloudtrail-cloudwatch-policy.json
+      ```
+
+1. Update the trail in CloudTrail with the log group and role information
+
+   ```ShellSession
+   $ aws --region us-east-1 cloudtrail update-trail \
+     --name cloudtrail-default \
+     --cloud-watch-logs-log-group-arn arn:aws:logs:us-east-1:330810004472:log-group:CloudTrail/DefaultLogGroup:* \
+     --cloud-watch-logs-role-arn arn:aws:iam::330810004472:role/Ab2dCloudTrailAssumeRole
+   ```
+
+##### Configure VPC flow log CloudWatch Log group for impl environment
+
+1. Log on to the AWS impl account
+
+1. Create a VPC flow log CloudWatch Log group
+
+   1. Select **CloudWatch**
+
+   1. Select **Log groups** from the leftmost panel
+
+   1. Select **Actions**
+
+   1. Select **Create log group**
+
+   1. Configure the "Create log group" page as follows
+
+      - **Log Group Name:** 330810004472-vpc-flow-logs
+
+   1. Select **Create log group**
+
+1. Create a VPC flow log
+
+   1. Select **VPC**
+
+   1. Select **Your VPCs** from the leftmost panel
+
+   1. Select the following VPC
+
+      ```
+      ab2d-east-impl
+      ```
+
+   1. Select the **Flow Logs** tab
+
+   1. Select **Create flow log**
+
+   1. Configure the "Create flow log" page
+
+      *Format:*
+
+      - **Filter:** All
+
+      - **Maximum aggregation interval:** 10 minutes
+
+      - **Destination:** Send to CloudWatch Logs
+
+      - **Destination log group:** {aws account id}-vpc-flow-logs
+
+      - **IAM role:** Ab2dInstanceRole
+
+   1. Select **Create**
+
+   1. Select **Close** on the "Create flow log" page
+
+##### Onboard first deployment controller log to CloudWatch Log groups for impl environment
+
+1. Connect to an API node in impl
+
+   1. Ensure that you are connected to the Cisco VPN
+
+   1. Set the dev AWS profile
+
+      ```ShellSession
+      $ export AWS_PROFILE=ab2d-east-impl
+      ```
+
+   1. Connect to the deployment controller
+
+      ```ShellSession
+      $ ssh -i ~/.ssh/${AWS_PROFILE}.pem ec2-user@$(aws \
+        --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-deployment-controller" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+        --output text)
+      ```
+
+1. Download the CloudWatch Log agent
+
+   1. Change to the "/tmp" directory
+
+      ```ShellSession
+      $ cd /tmp
+      ```
+
+   1. Download the CloudWatch Log Agent
+
+      ```ShellSession
+      $ curl -O https://s3.amazonaws.com/aws-cloudwatch/downloads/latest/awslogs-agent-setup.py
+      ```
+
+1. Configure the CloudWatch Log Agent and start logging "/var/log/messages"
+
+   1. Enter the following
+
+      ```ShellSession
+      $ sudo python /tmp/awslogs-agent-setup.py --region us-east-1
+      ```
+
+   1. Wait for the following to display
+
+      ```
+      Step 1 of 5: Installing pip ...DONE
+      ```
+
+   1. Wait for the following to display
+
+      *Note that this may take a while.*
+
+      ```
+      Step 2 of 5: Downloading the latest CloudWatch Logs agent bits ...DONE
+      ```
+
+   1. Note that the following is displayed
+
+      ```
+      Step 3 of 5: Configuring AWS CLI ...
+      ```
+
+   1. Press **return** on the keyboard to accept the default at the "AWS Access Key ID" prompt
+
+   1. Press **return** on the keyboard to accept the default at the "AWS Secret Access Key" prompt
+
+   1. Press **return** on the keyboard to accept the default at the "Default region name" prompt
+
+   1. Press **return** on the keyboard to accept the default at the "Default output format" prompt
+
+   1. Note that the following is displayed
+
+      ```
+      Step 4 of 5: Configuring the CloudWatch Logs Agent ...
+      ```
+
+   1. Add the following log by entering the following at the prompts
+
+      - **Path of log file to upload:** /var/log/messages
+
+      - **Destination Log Group name:** /aws/ec2/var/log/messages
+
+      - **Choose Log Stream Name:** 1 *Use EC2 instance id*
+
+      - **Choose Log Event timestamp format:** 3 *%Y-%m-%d %H:%M:%S (2008-09-08 11:52:54)*
+
+      - **Choose initial position of upload:** 1 *From start of file.*
+
+      - **More log files to configure:** N
+
+   1. Wait for the following to display
+
+      ```
+      Step 5 of 5: Setting up agent as a daemon ...DONE
+      ```
+
+   1. Note the following output
+
+      ------------------------------------------------------
+      - Configuration file successfully saved at: /var/awslogs/etc/awslogs.conf
+      - You can begin accessing new log events after a few moments at https://console.aws.amazon.com/cloudwatch/home?region=us-east-1#logs:
+      - You can use 'sudo service awslogs start|stop|status|restart' to control the daemon.
+      - To see diagnostic information for the CloudWatch Logs Agent, see /var/log/awslogs.log
+      - You can rerun interactive setup using 'sudo python ./awslogs-agent-setup.py --region us-east-1 --only-generate-config'
+      ------------------------------------------------------
+
+1. View the "/var/log/messages" entry in the newly created CloudWatch Log agent
+
+   1. Enter the following
+   
+      ```ShellSession
+      $ sudo cat /var/awslogs/etc/awslogs.conf | tail -7
+      ```
+
+   1. Note the output
+
+      ```
+      [/var/log/messages]
+      datetime_format = %Y-%m-%d %H:%M:%S
+      file = /var/log/messages
+      buffer_duration = 5000
+      log_stream_name = {instance_id}
+      initial_position = start_of_file
+      log_group_name = /aws/ec2/var/log/messages
+      ```
+
+1. Ensure the CloudWatch Log Agent is running
+
+   1. Check the status of the CloudWatch Log Agent
+
+      ```ShellSession
+      $ service awslogs status
+      ```
+
+   1. If the CloudWatch Log Agent is not running, start it by entering the following
+
+      ```ShellSession
+      $ sudo service awslogs start
+      ```
+
+1. Exit the controler
+
+   ```ShellSession
+   $ exit
+   ```
+
+##### Onboard additional CloudWatch log groups for deployment controller log for impl environment
+
+1. Connect to deployment controller
+
+   1. Ensure that you are connected to the Cisco VPN
+
+   1. Set the dev AWS profile
+
+      *Example for Mgmt environment:*
+
+      ```ShellSession
+      $ export AWS_PROFILE=ab2d-east-impl
+      ```
+
+   1. Connect to the impl controller
+
+      ```ShellSession
+      $ ssh -i ~/.ssh/${AWS_PROFILE}.pem ec2-user@$(aws \
+        --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-deployment-controller" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+        --output text)
+      ```
+
+1. Onboard additional log groups
+
+   1. Change to the "/tmp" directory
+
+      ```ShellSession
+      $ cd /tmp
+      ```
+
+   1. Run the interactive setup for the CloudWatch Log agent
+
+      ```ShellSession
+      $ sudo python ./awslogs-agent-setup.py \
+        --region us-east-1 \
+        --only-generate-config
+      ```
+
+   1. Note that the following is displayed
+
+      ```
+      Step 3 of 5: Configuring AWS CLI ...
+      ```
+
+   1. Press **return** on the keyboard to accept the default at the "AWS Access Key ID" prompt
+
+   1. Press **return** on the keyboard to accept the default at the "AWS Secret Access Key" prompt
+
+   1. Press **return** on the keyboard to accept the default at the "Default region name" prompt
+
+   1. Press **return** on the keyboard to accept the default at the "Default output format" prompt
+
+   1. Note that the following is displayed
+
+      ```
+      Step 4 of 5: Configuring the CloudWatch Logs Agent ...
+      ```
+
+   1. Add the following log by entering the following at the prompts
+
+      - **Path of log file to upload:** /var/log/amazon/ssm/amazon-ssm-agent.log
+
+      - **Destination Log Group name:** /aws/ec2/var/log/amazon/ssm/amazon-ssm-agent.log
+
+      - **Choose Log Stream Name:** 1 *Use EC2 instance id*
+
+      - **Choose Log Event timestamp format:** 3 *%Y-%m-%d %H:%M:%S (2008-09-08 11:52:54)*
+
+      - **Choose initial position of upload:** 1 *From start of file.*
+
+      - **More log files to configure:** Y
+
+   1. Add the following log by entering the following at the prompts
+
+      - **Path of log file to upload:** /var/log/audit/audit.log
+
+      - **Destination Log Group name:** /aws/ec2/var/log/audit/audit.log
+
+      - **Choose Log Stream Name:** 1 *Use EC2 instance id*
+
+      - **Choose Log Event timestamp format:** 3 *%Y-%m-%d %H:%M:%S (2008-09-08 11:52:54)*
+
+      - **Choose initial position of upload:** 1 *From start of file.*
+
+      - **More log files to configure:** Y
+
+   1. Add the following log by entering the following at the prompts
+
+      - **Path of log file to upload:** /var/log/awslogs.log
+
+      - **Destination Log Group name:** /aws/ec2/var/log/awslogs.log
+
+      - **Choose Log Stream Name:** 1 *Use EC2 instance id*
+
+      - **Choose Log Event timestamp format:** 3 *%Y-%m-%d %H:%M:%S (2008-09-08 11:52:54)*
+
+      - **Choose initial position of upload:** 1 *From start of file.*
+
+      - **More log files to configure:** Y
+
+   1. Add the following log by entering the following at the prompts
+
+      - **Path of log file to upload:** /var/log/cloud-init-output.log
+
+      - **Destination Log Group name:** /aws/ec2/var/log/cloud-init-output.log
+
+      - **Choose Log Stream Name:** 1 *Use EC2 instance id*
+
+      - **Choose Log Event timestamp format:** 3 *%Y-%m-%d %H:%M:%S (2008-09-08 11:52:54)*
+
+      - **Choose initial position of upload:** 1 *From start of file.*
+
+      - **More log files to configure:** Y
+
+   1. Add the following log by entering the following at the prompts
+
+      - **Path of log file to upload:** /var/log/cloud-init.log
+
+      - **Destination Log Group name:** /aws/ec2/var/log/cloud-init.log
+
+      - **Choose Log Stream Name:** 1 *Use EC2 instance id*
+
+      - **Choose Log Event timestamp format:** 3 *%Y-%m-%d %H:%M:%S (2008-09-08 11:52:54)*
+
+      - **Choose initial position of upload:** 1 *From start of file.*
+
+      - **More log files to configure:** Y
+
+   1. Add the following log by entering the following at the prompts
+
+      - **Path of log file to upload:** /var/log/cron
+
+      - **Destination Log Group name:** /aws/ec2/var/log/cron
+
+      - **Choose Log Stream Name:** 1 *Use EC2 instance id*
+
+      - **Choose Log Event timestamp format:** 3 *%Y-%m-%d %H:%M:%S (2008-09-08 11:52:54)*
+
+      - **Choose initial position of upload:** 1 *From start of file.*
+
+      - **More log files to configure:** Y
+
+   1. Add the following log by entering the following at the prompts
+
+      - **Path of log file to upload:** /var/log/dmesg
+
+      - **Destination Log Group name:** /aws/ec2/var/log/dmesg
+
+      - **Choose Log Stream Name:** 1 *Use EC2 instance id*
+
+      - **Choose Log Event timestamp format:** 3 *%Y-%m-%d %H:%M:%S (2008-09-08 11:52:54)*
+
+      - **Choose initial position of upload:** 1 *From start of file.*
+
+      - **More log files to configure:** Y
+
+   1. Add the following log by entering the following at the prompts
+
+      - **Path of log file to upload:** /var/log/maillog
+
+      - **Destination Log Group name:** /aws/ec2/var/log/maillog
+
+      - **Choose Log Stream Name:** 1 *Use EC2 instance id*
+
+      - **Choose Log Event timestamp format:** 3 *%Y-%m-%d %H:%M:%S (2008-09-08 11:52:54)*
+
+      - **Choose initial position of upload:** 1 *From start of file.*
+
+      - **More log files to configure:** Y
+
+   1. Add the following log by entering the following at the prompts
+
+      - **Path of log file to upload:** /var/log/secure
+
+      - **Destination Log Group name:** /aws/ec2/var/log/secure
+
+      - **Choose Log Stream Name:** 1 *Use EC2 instance id*
+
+      - **Choose Log Event timestamp format:** 3 *%Y-%m-%d %H:%M:%S (2008-09-08 11:52:54)*
+
+      - **Choose initial position of upload:** 1 *From start of file.*
+
+      - **More log files to configure:** Y
+
+   1. Add the following log by entering the following at the prompts
+
+      - **Path of log file to upload:** /var/opt/ds_agent/diag/ds_agent-err.log
+
+      - **Destination Log Group name:** /aws/ec2/var/opt/ds_agent/diag/ds_agent-err.log
+
+      - **Choose Log Stream Name:** 1 *Use EC2 instance id*
+
+      - **Choose Log Event timestamp format:** 3 *%Y-%m-%d %H:%M:%S (2008-09-08 11:52:54)*
+
+      - **Choose initial position of upload:** 1 *From start of file.*
+
+      - **More log files to configure:** Y
+
+   1. Add the following log by entering the following at the prompts
+
+      - **Path of log file to upload:** /var/opt/ds_agent/diag/ds_agent.log
+
+      - **Destination Log Group name:** /aws/ec2/var/opt/ds_agent/diag/ds_agent.log
+
+      - **Choose Log Stream Name:** 1 *Use EC2 instance id*
+
+      - **Choose Log Event timestamp format:** 3 *%Y-%m-%d %H:%M:%S (2008-09-08 11:52:54)*
+
+      - **Choose initial position of upload:** 1 *From start of file.*
+
+      - **More log files to configure:** Y
+
+   1. Add the following log by entering the following at the prompts
+
+      - **Path of log file to upload:** /var/opt/ds_agent/diag/ds_am.log
+
+      - **Destination Log Group name:** /aws/ec2/var/opt/ds_agent/diag/ds_am.log
+
+      - **Choose Log Stream Name:** 1 *Use EC2 instance id*
+
+      - **Choose Log Event timestamp format:** 3 *%Y-%m-%d %H:%M:%S (2008-09-08 11:52:54)*
+
+      - **Choose initial position of upload:** 1 *From start of file.*
+
+      - **More log files to configure:** N
+
+   1. Note all the new CloudWatch log groups configurations are appended after the first "/var/log/messages" section in the configuaration file
+
+      ```ShellSession
+      $ sudo cat /var/awslogs/etc/awslogs.conf
+      ```
+
+1. Restart the awslogs service
+
+   ```ShellSession
+   $ sudo service awslogs restart
+   ```
+
+1. Reload systemd configuration
+
+   ```ShellSession
+   $ sudo systemctl daemon-reload
+   ```
+
+1. Exit deployment controller
+
+   ```ShellSession
+   $ exit
+   ```
+
+1. Verify that all expected CloudWatch Log groups are present
+
+   1. Log on to the AWS impl environment account
+
+   1. Select **CloudWatch**
+
+   1. Select **Log groups** from the leftmost panel
+
+   1. Verify that all of the following log groups are displayed
+	
+      - /aws/ec2/var/log/amazon/ssm/amazon-ssm-agent.log
+
+      - /aws/ec2/var/log/audit/audit.log
+
+      - /aws/ec2/var/log/awslogs.log
+
+      - /aws/ec2/var/log/cloud-init-output.log
+
+      - /aws/ec2/var/log/cloud-init.log
+
+      - /aws/ec2/var/log/cron
+
+      - /aws/ec2/var/log/dmesg
+
+      - /aws/ec2/var/log/messages
+
+      - /aws/ec2/var/log/secure
+
+      - /aws/ec2/var/opt/ds_agent/diag/ds_agent-err.log
+
+      - /aws/ec2/var/opt/ds_agent/diag/ds_agent.log
+
+      - /aws/ec2/var/opt/ds_agent/diag/ds_am.log
+
+      - 349849222861-vpc-flow-logs
+
+      - CloudTrail/DefaultLogGroup
+
+1. If any of the log groups are missing, do the following:
+
+   1. Note the missing group(s) so that you can later investigate why it is missing
+
+      *Noted missing groups when creating on 2020-04-07:*
+
+      - /aws/ec2/var/log/amazon/ssm/amazon-ssm-agent.log
+
+      - /aws/ec2/var/log/cloud-init.log
+
+   1. Select **Actions**
+
+   1. Select **Create log group**
+
+   1. Configure the "Create log group" page as follows
+
+      - **Log group name:** {missing log group}
+
+   1. Select **Create log group**
+
+   1. Repeat this process for all missing groups
+
+1. Select each log group and note which ones have no data
+
+   *Noted log groups with no data when checking on 2020-04-07:*
+
+   - /aws/ec2/var/log/amazon/ssm/amazon-ssm-agent.log
+
+   - /aws/ec2/var/log/cloud-init.log
+
+   - 330810004472-vpc-flow-logs
+
+##### Onboard first api node log to CloudWatch Log groups for impl environment
+
+> *** TO DO ***
+
+1. Connect to an API node in impl
+
+   1. Ensure that you are connected to the Cisco VPN
+
+   1. Set the dev AWS profile
+
+      ```ShellSession
+      $ export AWS_PROFILE=ab2d-east-impl
+      ```
+
+   1. Connect to the impl controller
+
+      ```ShellSession
+      $ ssh -i ~/.ssh/${AWS_PROFILE}.pem ec2-user@$(aws \
+        --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-deployment-controller" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+        --output text)
+      ```
+
+   1. Connect to the desired API node
+
+      *Example for connecting to the first API node:*
+
+      ```ShellSession
+      $ ssh ec2-user@$(./list-api-instances.sh \
+        | grep 10. \
+        | awk '{print $2}' \
+        | head -n 1)
+      ```
+
+> *** TO DO ***
+
+##### Onboard additional CloudWatch log groups for first api node log for impl environment
+
+> *** TO DO ***
+
+1. Connect to an API node in impl
+
+   1. Ensure that you are connected to the Cisco VPN
+
+   1. Set the dev AWS profile
+
+      ```ShellSession
+      $ export AWS_PROFILE=ab2d-dev
+      ```
+
+   1. Connect to the impl controller
+
+      ```ShellSession
+      $ ssh -i ~/.ssh/${AWS_PROFILE}.pem ec2-user@$(aws \
+        --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-deployment-controller" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+        --output text)
+      ```
+
+   1. Connect to the desired API node
+
+      *Example for connecting to the first API node:*
+
+      ```ShellSession
+      $ ssh ec2-user@$(./list-api-instances.sh \
+        | grep 10. \
+        | awk '{print $2}' \
+        | head -n 1)
+      ```
 
 > *** TO DO ***
 
