@@ -3543,6 +3543,7 @@
    $ export EC2_MAXIMUM_INSTANCE_COUNT_WORKER_PARAM=1
    $ export DATABASE_SECRET_DATETIME_PARAM=2020-01-02-09-15-01
    $ export DEBUG_LEVEL_PARAM=WARN
+   $ export INTERNET_FACING_PARAM=false
    ```
 
 1. Run application deployment automation
@@ -3557,15 +3558,50 @@
 
 1. Open Chrome
 
-1. Enter the following in the address bar
+1. Update Jenkins URL for GitHub OAuth application
+
+   1. Lonnie logs onto his GitHub account
+
+   1. Select the GitHub profile icon in the top left of the page
+
+   1. Select **Settings**
+
+   1. Select **Developer settings** from the leftmost panel
+
+   1. Select **OAuth Apps** from the leftmost panel
+
+   1. Select the following OAuth app
+
+      ```
+      jenkins-github-authentication
+      ```
+
+   1. Change the **Authorization callback URL** to use the desired IP address
+
+      *Example of using the private IP address:**
+
+      > http://{jenkins master private ip address}:8080/securityRealm/finishLogin
+
+      *Example of using the public IP address:**
+
+      > http://{jenkins master public ip address}:8080/securityRealm/finishLogin
+
+
+   1. If you changed the "Authorization callback URL", select **Update application**
+
+1. Enter the Jenkins master URL based on the IP address used to configure the "Authorization callback URL"
 
    *Format:*
 
+   > http://{jenkins ip address used for github authentication}:8080
+
+   *Example if GitHub integration is configured with private IP address:*
+
+   > http://{jenkins master private ip}:8080
+
+   *Example if GitHub integration is configured with public IP address:*
+
    > http://{jenkins master public ip}:8080
-
-   *Example:*
-
-   > http://35.173.33.85:8080
 
 1. Select **Manage Jenkins**
 
@@ -3581,15 +3617,15 @@
 
    *Format:*
 
-   ```
-   {url used to access jenkins from browser}
-   ```
+   > http://{jenkins ip address used for github authentication}:8080
 
-   *Example:*
+   *Example if GitHub integration is configured with private IP address:*
 
-   ```
-   http://35.173.33.85:8080/
-   ```
+   > http://{jenkins master private ip}:8080
+
+   *Example if GitHub integration is configured with public IP address:*
+
+   > http://{jenkins master public ip}:8080
 
 1. Select **Apply**
 

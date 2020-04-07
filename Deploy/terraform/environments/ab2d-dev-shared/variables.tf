@@ -269,6 +269,7 @@ variable "bfd_keystore_file_name" {
   description = "Please pass this on command line and not as a value here"
 }
 
-variable "vpn_private_sec_group_id" {
-  default = "sg-0e8bd674b6c9dc024"
+variable "vpn_private_ip_address_cidr_range" {
+  default = ""
+  description = "Please pass this on command line and not as a value here"
 }

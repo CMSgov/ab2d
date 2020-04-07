@@ -37,53 +37,15 @@ resource "aws_security_group_rule" "controller_access" {
   security_group_id = aws_security_group.api.id
 }
 
-# LSH SKIP FOR NOW BEGIN
-# resource "aws_security_group_rule" "vpn_http" {
-#   type        = "ingress"
-#   description = "VPN Access"
-#   from_port   = var.host_port
-#   to_port     = var.host_port
-#   protocol    = "tcp"
-#   cidr_blocks = ["10.252.0.0/16", "10.232.32.0/19", "10.251.0.0/16", "52.20.26.200/32", "34.196.35.156/32"]
-#   security_group_id = aws_security_group.api.id
-# }
-# LSH SKIP FOR NOW END
-
-# LSH SKIP FOR NOW BEGIN
-# resource "aws_security_group_rule" "vpn_https" {
-#   type        = "ingress"
-#   description = "VPN Access"
-#   from_port   = "443"
-#   to_port     = "443"
-#   protocol    = "tcp"
-#   cidr_blocks = ["10.252.0.0/16", "10.232.32.0/19", "10.251.0.0/16", "52.20.26.200/32", "34.196.35.156/32"]
-#   security_group_id = aws_security_group.api.id
-# }
-# LSH SKIP FOR NOW END
-
-# LSH SKIP FOR NOW BEGIN
-# resource "aws_security_group_rule" "kong_http" {
-#   type        = "ingress"
-#   description = "Kong"
-#   from_port   = var.host_port
-#   to_port     = var.host_port
-#   protocol    = "tcp"
-#   cidr_blocks = ["34.204.33.165/32","34.226.82.144/32","34.200.65.22/32","34.227.6.19/32"]
-#   security_group_id = aws_security_group.api.id
-# }
-# LSH SKIP FOR NOW END
-
-# LSH SKIP FOR NOW BEGIN
-# resource "aws_security_group_rule" "kong_https" {
-#   type        = "ingress"
-#   description = "Kong"
-#   from_port   = "443"
-#   to_port     = "443"
-#   protocol    = "tcp"
-#   cidr_blocks = ["34.204.33.165/32","34.226.82.144/32","34.200.65.22/32","34.227.6.19/32"]
-#   security_group_id = aws_security_group.api.id
-# }
-# LSH SKIP FOR NOW END
+resource "aws_security_group_rule" "vpn_access_api" {
+  type        = "ingress"
+  description = "VPN access"
+  from_port   = "-1"
+  to_port     = "-1"
+  protocol    = "-1"
+  cidr_blocks = [var.vpn_private_ip_address_cidr_range]
+  security_group_id = aws_security_group.api.id
+}
 
 resource "aws_security_group_rule" "egress_api" {
   type        = "egress"
@@ -120,7 +82,7 @@ resource "aws_security_group_rule" "load_balancer_access" {
   from_port   = var.host_port
   to_port     = var.host_port
   protocol    = "tcp"
-  cidr_blocks = ["0.0.0.0/0"]
+  cidr_blocks = [var.alb_security_group_ip_range]
   security_group_id = aws_security_group.load_balancer.id
 }
 
@@ -225,7 +187,7 @@ JSON
 
 resource "aws_lb" "api" {
   name = "${lower(var.env)}"
-  internal = false
+  internal = var.alb_internal
   load_balancer_type = "application"
   security_groups = [aws_security_group.api.id, aws_security_group.load_balancer.id]
   subnets = var.controller_subnet_ids

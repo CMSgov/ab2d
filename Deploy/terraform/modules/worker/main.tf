@@ -17,6 +17,16 @@ resource "aws_security_group_rule" "controller_access" {
   security_group_id = aws_security_group.worker.id
 }
 
+resource "aws_security_group_rule" "vpn_access_worker" {
+  type        = "ingress"
+  description = "VPN access"
+  from_port   = "-1"
+  to_port     = "-1"
+  protocol    = "-1"
+  cidr_blocks = [var.vpn_private_ip_address_cidr_range]
+  security_group_id = aws_security_group.worker.id
+}
+
 resource "aws_security_group_rule" "egress_worker" {
   type        = "egress"
   description = "Allow all egress"
