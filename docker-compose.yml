@@ -28,6 +28,7 @@ services:
       - AB2D_DB_USER=ab2d
       - AB2D_DB_PASSWORD=ab2d
       - AB2D_EFS_MOUNT=/opt/ab2d
+      - AB2D_ALLOWED_ORIGIN="${AB2D_ALLOWED_ORIGIN}"
       - NEW_RELIC_LICENSE_KEY="${NEW_RELIC_LICENSE_KEY}"
       - NEW_RELIC_APP_NAME="${NEW_RELIC_APP_NAME}"
     ports:

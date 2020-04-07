@@ -1,6 +1,7 @@
 package gov.cms.ab2d.api.config;
 
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -15,12 +16,15 @@ import org.springframework.web.filter.CorsFilter;
 @Configuration
 public class CorsConfig {
 
+    @Value("${api.allowed-origin}")
+    private String allowedOrigin;
+
     @Bean
     public FilterRegistrationBean corsFilter() {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowCredentials(true);
-        config.addAllowedOrigin("127.0.0.1:4000");
+        config.addAllowedOrigin(allowedOrigin);
         config.addAllowedHeader("*");
         config.addExposedHeader("Content-Location");
         config.addExposedHeader("X-Progress");
