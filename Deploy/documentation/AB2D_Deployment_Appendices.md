@@ -4449,6 +4449,18 @@
    $ sudo service awslogs restart
    ```
 
+1. Reload systemd configuration
+
+   ```ShellSession
+   $ sudo systemctl daemon-reload
+   ```
+
+1. Exit Jenkins master
+
+   ```ShellSession
+   $ exit
+   ```
+
 ##### Onboard first Jenkins agent log to CloudWatch Log groups
 
 1. Connect to Jenkins agent through the Jenkins master using the ProxyJump flag (-J)
@@ -4615,7 +4627,255 @@
 
 ##### Onboard additional CloudWatch log groups for Jenkins agent
 
-> *** TO DO ***
+1. Connect to Jenkins agent
+
+   1. Ensure that you are connected to the Cisco VPN
+
+   1. Set the dev AWS profile
+
+      *Example for Mgmt environment:*
+
+      ```ShellSession
+      $ export AWS_PROFILE=ab2d-mgmt-east-dev
+      ```
+
+   1. Connect to the development controller
+
+      ```ShellSession
+      $ ssh -i ~/.ssh/${AWS_PROFILE}.pem ec2-user@$(aws \
+        --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-jenkins-agent" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+        --output text)
+      ```
+
+1. Onboard additional log groups
+
+   1. Change to the "/tmp" directory
+
+      ```ShellSession
+      $ cd /tmp
+      ```
+
+   1. Run the interactive setup for the CloudWatch Log agent
+
+      ```ShellSession
+      $ sudo python ./awslogs-agent-setup.py \
+        --region us-east-1 \
+        --only-generate-config
+      ```
+
+   1. Note that the following is displayed
+
+      ```
+      Step 3 of 5: Configuring AWS CLI ...
+      ```
+
+   1. Press **return** on the keyboard to accept the default at the "AWS Access Key ID" prompt
+
+   1. Press **return** on the keyboard to accept the default at the "AWS Secret Access Key" prompt
+
+   1. Press **return** on the keyboard to accept the default at the "Default region name" prompt
+
+   1. Press **return** on the keyboard to accept the default at the "Default output format" prompt
+
+   1. Note that the following is displayed
+
+      ```
+      Step 4 of 5: Configuring the CloudWatch Logs Agent ...
+      ```
+
+   1. Add the following log by entering the following at the prompts
+
+      - **Path of log file to upload:** /var/log/amazon/ssm/amazon-ssm-agent.log
+
+      - **Destination Log Group name:** /aws/ec2/var/log/amazon/ssm/amazon-ssm-agent.log
+
+      - **Choose Log Stream Name:** 1 *Use EC2 instance id*
+
+      - **Choose Log Event timestamp format:** 3 *%Y-%m-%d %H:%M:%S (2008-09-08 11:52:54)*
+
+      - **Choose initial position of upload:** 1 *From start of file.*
+
+      - **More log files to configure:** Y
+
+   1. Add the following log by entering the following at the prompts
+
+      - **Path of log file to upload:** /var/log/audit/audit.log
+
+      - **Destination Log Group name:** /aws/ec2/var/log/audit/audit.log
+
+      - **Choose Log Stream Name:** 1 *Use EC2 instance id*
+
+      - **Choose Log Event timestamp format:** 3 *%Y-%m-%d %H:%M:%S (2008-09-08 11:52:54)*
+
+      - **Choose initial position of upload:** 1 *From start of file.*
+
+      - **More log files to configure:** Y
+
+   1. Add the following log by entering the following at the prompts
+
+      - **Path of log file to upload:** /var/log/awslogs.log
+
+      - **Destination Log Group name:** /aws/ec2/var/log/awslogs.log
+
+      - **Choose Log Stream Name:** 1 *Use EC2 instance id*
+
+      - **Choose Log Event timestamp format:** 3 *%Y-%m-%d %H:%M:%S (2008-09-08 11:52:54)*
+
+      - **Choose initial position of upload:** 1 *From start of file.*
+
+      - **More log files to configure:** Y
+
+   1. Add the following log by entering the following at the prompts
+
+      - **Path of log file to upload:** /var/log/cloud-init-output.log
+
+      - **Destination Log Group name:** /aws/ec2/var/log/cloud-init-output.log
+
+      - **Choose Log Stream Name:** 1 *Use EC2 instance id*
+
+      - **Choose Log Event timestamp format:** 3 *%Y-%m-%d %H:%M:%S (2008-09-08 11:52:54)*
+
+      - **Choose initial position of upload:** 1 *From start of file.*
+
+      - **More log files to configure:** Y
+
+   1. Add the following log by entering the following at the prompts
+
+      - **Path of log file to upload:** /var/log/cloud-init.log
+
+      - **Destination Log Group name:** /aws/ec2/var/log/cloud-init.log
+
+      - **Choose Log Stream Name:** 1 *Use EC2 instance id*
+
+      - **Choose Log Event timestamp format:** 3 *%Y-%m-%d %H:%M:%S (2008-09-08 11:52:54)*
+
+      - **Choose initial position of upload:** 1 *From start of file.*
+
+      - **More log files to configure:** Y
+
+   1. Add the following log by entering the following at the prompts
+
+      - **Path of log file to upload:** /var/log/cron
+
+      - **Destination Log Group name:** /aws/ec2/var/log/cron
+
+      - **Choose Log Stream Name:** 1 *Use EC2 instance id*
+
+      - **Choose Log Event timestamp format:** 3 *%Y-%m-%d %H:%M:%S (2008-09-08 11:52:54)*
+
+      - **Choose initial position of upload:** 1 *From start of file.*
+
+      - **More log files to configure:** Y
+
+   1. Add the following log by entering the following at the prompts
+
+      - **Path of log file to upload:** /var/log/dmesg
+
+      - **Destination Log Group name:** /aws/ec2/var/log/dmesg
+
+      - **Choose Log Stream Name:** 1 *Use EC2 instance id*
+
+      - **Choose Log Event timestamp format:** 3 *%Y-%m-%d %H:%M:%S (2008-09-08 11:52:54)*
+
+      - **Choose initial position of upload:** 1 *From start of file.*
+
+      - **More log files to configure:** Y
+
+   1. Add the following log by entering the following at the prompts
+
+      - **Path of log file to upload:** /var/log/maillog
+
+      - **Destination Log Group name:** /aws/ec2/var/log/maillog
+
+      - **Choose Log Stream Name:** 1 *Use EC2 instance id*
+
+      - **Choose Log Event timestamp format:** 3 *%Y-%m-%d %H:%M:%S (2008-09-08 11:52:54)*
+
+      - **Choose initial position of upload:** 1 *From start of file.*
+
+      - **More log files to configure:** Y
+
+   1. Add the following log by entering the following at the prompts
+
+      - **Path of log file to upload:** /var/log/secure
+
+      - **Destination Log Group name:** /aws/ec2/var/log/secure
+
+      - **Choose Log Stream Name:** 1 *Use EC2 instance id*
+
+      - **Choose Log Event timestamp format:** 3 *%Y-%m-%d %H:%M:%S (2008-09-08 11:52:54)*
+
+      - **Choose initial position of upload:** 1 *From start of file.*
+
+      - **More log files to configure:** Y
+
+   1. Add the following log by entering the following at the prompts
+
+      - **Path of log file to upload:** /var/opt/ds_agent/diag/ds_agent-err.log
+
+      - **Destination Log Group name:** /aws/ec2/var/opt/ds_agent/diag/ds_agent-err.log
+
+      - **Choose Log Stream Name:** 1 *Use EC2 instance id*
+
+      - **Choose Log Event timestamp format:** 3 *%Y-%m-%d %H:%M:%S (2008-09-08 11:52:54)*
+
+      - **Choose initial position of upload:** 1 *From start of file.*
+
+      - **More log files to configure:** Y
+
+   1. Add the following log by entering the following at the prompts
+
+      - **Path of log file to upload:** /var/opt/ds_agent/diag/ds_agent.log
+
+      - **Destination Log Group name:** /aws/ec2/var/opt/ds_agent/diag/ds_agent.log
+
+      - **Choose Log Stream Name:** 1 *Use EC2 instance id*
+
+      - **Choose Log Event timestamp format:** 3 *%Y-%m-%d %H:%M:%S (2008-09-08 11:52:54)*
+
+      - **Choose initial position of upload:** 1 *From start of file.*
+
+      - **More log files to configure:** Y
+
+   1. Add the following log by entering the following at the prompts
+
+      - **Path of log file to upload:** /var/opt/ds_agent/diag/ds_am.log
+
+      - **Destination Log Group name:** /aws/ec2/var/opt/ds_agent/diag/ds_am.log
+
+      - **Choose Log Stream Name:** 1 *Use EC2 instance id*
+
+      - **Choose Log Event timestamp format:** 3 *%Y-%m-%d %H:%M:%S (2008-09-08 11:52:54)*
+
+      - **Choose initial position of upload:** 1 *From start of file.*
+
+      - **More log files to configure:** N
+
+   1. Note all the new CloudWatch log groups configurations are appended after the first "/var/log/messages" section in the configuaration file
+
+      ```ShellSession
+      $ sudo cat /var/awslogs/etc/awslogs.conf
+      ```
+
+1. Restart the awslogs service
+
+   ```ShellSession
+   $ sudo service awslogs restart
+   ```
+
+1. Reload systemd configuration
+
+   ```ShellSession
+   $ sudo systemctl daemon-reload
+   ```
+
+1. Exit Jenkins agent
+
+   ```ShellSession
+   $ exit
+   ```
 
 ##### Verify logging to CloudWatch Log Group for management environment
 
