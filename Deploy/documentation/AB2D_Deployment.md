@@ -8771,3 +8771,55 @@
    ```ShellSession
    $ sed -i "" 's%cms-ab2d[\/]prod%cms-ab2d/dev%g' _includes/head.html
    ```
+
+## Create CloudTrail S3 bucket for management account
+
+1. Change to the "Deploy" directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d/Deploy
+   ```
+
+1. Change to the management shared directory
+
+   ```ShellSession
+   $ cd terraform/environments/ab2d-mgmt-east-dev-shared
+   ```
+
+1. Set the AWS profile
+
+   ```ShellSession
+   $ export AWS_PROFILE=ab2d-mgmt-east-dev
+   ```
+
+1. Create the CloudTrail S3 bucket for management account
+
+   ```ShellSession
+   $ aws --region us-east-1 s3api create-bucket \
+     --bucket "ab2d-mgmt-east-dev-cloudtrail"
+   ```
+
+1. Block public access on bucket
+
+   ```ShellSession
+   $ aws --region us-east-1 s3api put-public-access-block \
+     --bucket "ab2d-mgmt-east-dev-cloudtrail" \
+     --public-access-block-configuration BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true
+   ```
+
+1. Give "Write objects" and "Read bucket permissions" to the "S3 log delivery group" of the "cloudtrail" bucket
+
+   ```ShellSession
+   $ aws --region us-east-1 s3api put-bucket-acl \
+     --bucket "ab2d-mgmt-east-dev-cloudtrail" \
+     --grant-write URI=http://acs.amazonaws.com/groups/s3/LogDelivery \
+     --grant-read-acp URI=http://acs.amazonaws.com/groups/s3/LogDelivery
+   ```
+
+1. Add bucket policy to the "cloudtrail" S3 bucket
+
+   ```ShellSession
+   $ aws --region us-east-1 s3api put-bucket-policy \
+     --bucket "ab2d-mgmt-east-dev-cloudtrail" \
+     --policy file://ab2d-cloudtrail-bucket-policy.json
+   ```
