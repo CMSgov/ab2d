@@ -54,7 +54,7 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
     @Autowired
     private EventLogger eventLogger;
 
-    private final static Map<Class, HttpStatus> responseMap = new HashMap<>() {
+    private static final Map<Class, HttpStatus> RESPONSE_MAP = new HashMap<>() {
         {
             put(InvalidUserInputException.class, HttpStatus.BAD_REQUEST);
             put(InvalidJobStateTransition.class, HttpStatus.BAD_REQUEST);
@@ -77,7 +77,7 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
     };
 
     private static HttpStatus getErrorResponse(Class clazz) {
-        HttpStatus res = responseMap.get(clazz);
+        HttpStatus res = RESPONSE_MAP.get(clazz);
         if (res == null) {
             return HttpStatus.INTERNAL_SERVER_ERROR;
         }
@@ -97,7 +97,7 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
             ResourceNotFoundException.class
     })
     public ResponseEntity<JsonNode> assertionException(final Exception e, HttpServletRequest request) throws IOException {
-        return generateFHIRError(e, responseMap.get(e.getClass()), request);
+        return generateFHIRError(e, RESPONSE_MAP.get(e.getClass()), request);
     }
 
     @ExceptionHandler({ContractNotFoundException.class})
@@ -141,7 +141,7 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
         httpHeaders.add("Retry-After", Integer.toString(retryAfterDelay));
         eventLogger.log(new ErrorEvent(MDC.get(USERNAME), UtilMethods.parseJobId(request.getRequestURI()),
                 ErrorEvent.ErrorType.TOO_MANY_STATUS_REQUESTS, "Too many requests performed in too short a time"));
-        return generateFHIRError(e, responseMap.get(e.getClass()), httpHeaders, request);
+        return generateFHIRError(e, RESPONSE_MAP.get(e.getClass()), httpHeaders, request);
     }
 
     private ResponseEntity<Void> generateError(Exception ex, HttpServletRequest request) {
