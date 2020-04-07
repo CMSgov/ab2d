@@ -284,7 +284,9 @@ ctas:
     function doReset() {
         cancelStatusInterval();
         resetProgressBar();
-        $("#export").fadeOut(fadeOutTime);
+        $("#export").fadeOut(fadeOutTime, function() {
+            $('#contractNumber').val('');  
+        });
         turnOnTokenEventHandler();
         turnOffCancelEventHandler();
         turnOffExportEventHandler();
@@ -330,7 +332,7 @@ ctas:
         }
         for(let i = 0; i < responseJSON.output.length; i++) {
             $("#download-section-links").append("<li><a href='" + responseJSON.output[i].url + "'>Download " +
-                responseJSON.output[i].type + " file</a></li>").on('click', function(event) {
+                responseJSON.output[i].type + " file</a></li>").one('click', function(event) {
                     event.preventDefault();
                     downloadJSON(responseJSON.output[i].url);
                 });
