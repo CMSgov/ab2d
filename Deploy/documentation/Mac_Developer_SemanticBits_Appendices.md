@@ -75,14 +75,14 @@
 
 1. Enter the following in the address bar
 
-   > https://jira.cms.gov/projects/CMSAWSOPS/issues/CMSAWSOPS-49590?filter=allopenissues
+   > https://jiraent.cms.gov/servicedesk/customer/portal/13
 
-1. Select **Create**
+1. Select **CMS Cloud Access Request**
 
 1. Fill out the form as follows
 
-   **Issue Type:** Access
-
+   *Format:*
+   
    **Summary:** AWS VPN access for {your eua id}
 
    **Project Name:** Project 058 BCDA
@@ -91,14 +91,12 @@
 
    **Types of Access/Resets:** Cisco AnyConnect Access
 
-   **Severity:** Minimal
-
-   **Urgency:** Medium
+   **Approvers:** Andrew Harnish
 
    **Description:**
 
    ```
-   I'm an engineer working on the {your project name} project at CMS. Can I have AWS VPN access?
+   I'm an engineer working on the AB2D project at CMS. Can I have AWS VPN access?
 
    User ID: {your eua id}
 
@@ -112,6 +110,10 @@
 
    {your first name}
    ```
+
+   **Severity:** Minimal
+
+   **Urgency:** Medium
 
    **Reported Source:** Self Service
 
