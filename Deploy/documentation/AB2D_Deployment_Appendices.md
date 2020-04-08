@@ -7269,7 +7269,7 @@
    $ cd ~/Downloads/bfd-integration
    ```
 
-1. Download the following files from and copy them to "~/Downloads/bfd-integration"
+1. Download the following files from 1Password and copy them to "~/Downloads/bfd-integration"
 
    *Example for "Dev" environment:*
    
