@@ -86,7 +86,7 @@
      * [Onboard additional CloudWatch log groups for first api node log for impl environment](#onboard-additional-cloudwatch-log-groups-for-first-api-node-log-for-impl-environment)
 1. [Appendix II: Get application load balancer access logs](#appendix-ii-get-application-load-balancer-access-logs)
 1. [Appendix JJ: Export CloudWatch Log Group data to S3](#appendix-jj-export-cloudwatch-log-group-data-to-s3)
-1. [Appendix KK: Change the BFD domain in AB2D keystores](#appendix-kk-change-the-bfd-domain-in0ab2d-keystores)
+1. [Appendix KK: Change the BFD domain in AB2D keystores](#appendix-kk-change-the-bfd-domain-in-ab2d-keystores)
 
 ## Appendix A: Access the CMS AWS console
 
