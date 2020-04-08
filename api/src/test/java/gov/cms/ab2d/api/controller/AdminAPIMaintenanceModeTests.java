@@ -8,6 +8,12 @@ import gov.cms.ab2d.common.dto.PropertiesDTO;
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.repository.*;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
+import gov.cms.ab2d.eventlogger.LoggableEvent;
+import gov.cms.ab2d.eventlogger.events.ApiRequestEvent;
+import gov.cms.ab2d.eventlogger.events.ApiResponseEvent;
+import gov.cms.ab2d.eventlogger.events.ReloadEvent;
+import gov.cms.ab2d.eventlogger.reports.sql.LoadObjects;
+import gov.cms.ab2d.eventlogger.utils.UtilMethods;
 import org.junit.Assert;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -15,6 +21,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
@@ -31,6 +38,8 @@ import java.util.List;
 import static gov.cms.ab2d.api.controller.BulkDataAccessAPIIntegrationTests.PATIENT_EXPORT_PATH;
 import static gov.cms.ab2d.api.util.Constants.ADMIN_ROLE;
 import static gov.cms.ab2d.common.util.Constants.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -67,6 +76,9 @@ public class AdminAPIMaintenanceModeTests {
     @Autowired
     private TestUtil testUtil;
 
+    @Autowired
+    private LoadObjects loadObjects;
+
     private static final String PROPERTIES_URL = "/properties";
 
     private String token;
@@ -100,7 +112,28 @@ public class AdminAPIMaintenanceModeTests {
 
         this.mockMvc.perform(get(API_PREFIX + FHIR_PREFIX + PATIENT_EXPORT_PATH).contentType(MediaType.APPLICATION_JSON)
                 .header("Authorization", "Bearer " + token))
-                .andExpect(status().is(500));
+                .andExpect(status().is(HttpStatus.SERVICE_UNAVAILABLE.value()));
+
+        List<LoggableEvent> apiReqEvents = loadObjects.loadAllApiRequestEvent();
+        assertEquals(2, apiReqEvents.size());
+        ApiRequestEvent requestEvent = (ApiRequestEvent) apiReqEvents.get(0);
+
+        List<LoggableEvent> apiResEvents = loadObjects.loadAllApiResponseEvent();
+        assertEquals(1, apiResEvents.size());
+        ApiResponseEvent responseEvent = (ApiResponseEvent) apiResEvents.get(0);
+        assertEquals(HttpStatus.SERVICE_UNAVAILABLE.value(), responseEvent.getResponseCode());
+
+        List<LoggableEvent> reloadEvents = loadObjects.loadAllReloadEvent();
+        assertEquals(1, reloadEvents.size());
+        ReloadEvent reloadEvent = (ReloadEvent) reloadEvents.get(0);
+        assertEquals(ReloadEvent.FileType.PROPERTIES, reloadEvent.getFileType());
+
+        assertTrue(UtilMethods.allEmpty(
+                loadObjects.loadAllContractBeneSearchEvent(),
+                loadObjects.loadAllErrorEvent(),
+                loadObjects.loadAllFileEvent(),
+                loadObjects.loadAllJobStatusChangeEvent()
+        ));
 
         propertiesDTOs.clear();
         maintenanceModeDTO.setValue("false");

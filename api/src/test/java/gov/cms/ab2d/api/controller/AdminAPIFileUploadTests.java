@@ -11,6 +11,7 @@ import gov.cms.ab2d.eventlogger.LoggableEvent;
 import gov.cms.ab2d.eventlogger.events.ApiRequestEvent;
 import gov.cms.ab2d.eventlogger.events.ApiResponseEvent;
 import gov.cms.ab2d.eventlogger.events.ReloadEvent;
+import gov.cms.ab2d.eventlogger.reports.sql.DeleteObjects;
 import gov.cms.ab2d.eventlogger.reports.sql.LoadObjects;
 import gov.cms.ab2d.eventlogger.utils.UtilMethods;
 import org.junit.jupiter.api.BeforeEach;
@@ -51,6 +52,9 @@ public class AdminAPIFileUploadTests {
     @Autowired
     private LoadObjects loadObjects;
 
+    @Autowired
+    private DeleteObjects deleteObjects;
+
     @Container
     private static final PostgreSQLContainer postgreSQLContainer = new AB2DPostgresqlContainer();
 
@@ -81,6 +85,9 @@ public class AdminAPIFileUploadTests {
         userRepository.deleteAll();
         roleRepository.deleteAll();
         sponsorRepository.deleteAll();
+        deleteObjects.deleteAllApiRequestEvent();
+        deleteObjects.deleteAllApiResponseEvent();
+        deleteObjects.deleteAllReloadEvent();
 
         token = testUtil.setupToken(List.of(ADMIN_ROLE));
     }
