@@ -3013,10 +3013,10 @@
 
    - client_data_server_ab2d_imp_certificate.pub
 
-1. Send output from "prod-sbx.bfdcloud.net" that includes only the certificate to a file
+1. Send output from "prod-sbx.bfd.cms.gov" that includes only the certificate to a file
 
    ```ShellSession
-   $ openssl s_client -connect prod-sbx.bfdcloud.net:443 \
+   $ openssl s_client -connect prod-sbx.bfd.cms.gov:443 \
      2>/dev/null | openssl x509 -text \
      | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' \
      > prod-sbx.bfdcloud.pem
@@ -3026,7 +3026,7 @@
 
    - prod-sbx.bfdcloud.pem (certificate from the bfd sandbox server)
 
-1. Import "prod-sbx.bfdcloud.net" certificate into the keystore
+1. Import "prod-sbx.bfd.cms.gov" certificate into the keystore
 
    *Example for "Dev" environment:*
    
@@ -3148,7 +3148,7 @@
 
 ## Peer AB2D Dev, Sandbox, Impl environments with the BFD Sbx VPC and peer AB2D Prod with BFD Prod VPC
 
-1. Note that peering is no longer needed for using the BFD Sbx (AKA prod-sbx.bfdcloud.net)
+1. Note that peering is no longer needed for using the BFD Sbx (AKA prod-sbx.bfd.cms.gov)
 
 1. *** TO DO *** Determine what will need to be done for BFD Prod
 

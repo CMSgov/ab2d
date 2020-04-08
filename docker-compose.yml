@@ -47,7 +47,7 @@ services:
       - AB2D_DB_USER=ab2d
       - AB2D_DB_PASSWORD=ab2d
       - AB2D_EFS_MOUNT=/opt/ab2d
-      - AB2D_BFD_URL=https://prod-sbx.bfdcloud.net/v1/fhir/
+      - AB2D_BFD_URL=https://prod-sbx.bfd.cms.gov/v1/fhir/
       - AB2D_BFD_KEYSTORE_PASSWORD=${AB2D_BFD_KEYSTORE_PASSWORD}
       - AB2D_BFD_KEYSTORE_LOCATION=${AB2D_BFD_KEYSTORE_LOCATION}
       - NEW_RELIC_LICENSE_KEY="${NEW_RELIC_LICENSE_KEY}"
