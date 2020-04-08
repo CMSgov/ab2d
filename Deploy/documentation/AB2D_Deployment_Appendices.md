@@ -7447,3 +7447,17 @@
    *Example for "Impl" environment:*
    
    - **1Password entry:** AB2D Keystore for Impl: Password
+
+1. Upload the keystore as a document in 1Password
+
+   *Example for "Dev" environment:*
+   
+   - **1Password entry:** AB2D Keystore for Dev
+   
+   *Example for "Sbx" environment:*
+   
+   - **1Password entry:** AB2D Keystore for Sandbox
+
+   *Example for "Impl" environment:*
+   
+   - **1Password entry:** AB2D Keystore for Impl
