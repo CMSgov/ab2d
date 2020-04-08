@@ -87,6 +87,7 @@
 1. [Appendix II: Get application load balancer access logs](#appendix-ii-get-application-load-balancer-access-logs)
 1. [Appendix JJ: Export CloudWatch Log Group data to S3](#appendix-jj-export-cloudwatch-log-group-data-to-s3)
 1. [Appendix KK: Change the BFD certificate in AB2D keystores](#appendix-kk-change-the-bfd-certificate-in-ab2d-keystores)
+1. [Appendix LL: Update existing WAF](#appendix-ll-update-existing-waf)
 
 ## Appendix A: Access the CMS AWS console
 
@@ -7461,3 +7462,40 @@
    *Example for "Impl" environment:*
    
    - **1Password entry:** AB2D Keystore for Impl
+
+## Appendix LL: Update existing WAF
+
+1. Change to the "Deploy" directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d/Deploy
+   ```
+
+1. Set test parameters
+
+   ```ShellSession
+   $ export CMS_ENV_PARAM=ab2d-dev
+   $ export REGION_PARAM=us-east-1
+   $ export DEBUG_LEVEL_PARAM=WARN
+   $ export INTERNET_FACING_PARAM=false
+
+
+   $ export CMS_ECR_REPO_ENV_PARAM=ab2d-mgmt-east-dev
+   $ export VPC_ID_PARAM=vpc-0c6413ec40c5fdac3
+   $ export SSH_USERNAME_PARAM=ec2-user
+   $ export EC2_INSTANCE_TYPE_API_PARAM=m5.xlarge
+   $ export EC2_INSTANCE_TYPE_WORKER_PARAM=m5.xlarge
+   $ export EC2_DESIRED_INSTANCE_COUNT_API_PARAM=1
+   $ export EC2_MINIMUM_INSTANCE_COUNT_API_PARAM=1
+   $ export EC2_MAXIMUM_INSTANCE_COUNT_API_PARAM=1
+   $ export EC2_DESIRED_INSTANCE_COUNT_WORKER_PARAM=1
+   $ export EC2_MINIMUM_INSTANCE_COUNT_WORKER_PARAM=1
+   $ export EC2_MAXIMUM_INSTANCE_COUNT_WORKER_PARAM=1
+   $ export DATABASE_SECRET_DATETIME_PARAM=2020-01-02-09-15-01
+   ```
+
+1. Run application deployment automation
+
+   ```ShellSession
+   $ ./bash/update-waf.sh
+   ```
