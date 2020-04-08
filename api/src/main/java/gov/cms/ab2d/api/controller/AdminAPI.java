@@ -8,6 +8,7 @@ import gov.cms.ab2d.common.service.PropertiesService;
 import gov.cms.ab2d.common.service.UserService;
 import gov.cms.ab2d.eventlogger.EventLogger;
 import gov.cms.ab2d.eventlogger.events.ApiResponseEvent;
+import gov.cms.ab2d.eventlogger.events.ReloadEvent;
 import gov.cms.ab2d.hpms.processing.ExcelReportProcessor;
 import gov.cms.ab2d.hpms.processing.ExcelType;
 import lombok.extern.slf4j.Slf4j;
@@ -38,6 +39,7 @@ import static gov.cms.ab2d.common.util.Constants.REQUEST_ID;
 
 @Slf4j
 @RestController
+@SuppressWarnings("PMD.TooManyStaticImports")
 @RequestMapping(path = API_PREFIX + ADMIN_PREFIX, produces = "application/json")
 public class AdminAPI {
 
@@ -107,6 +109,7 @@ public class AdminAPI {
     @PostMapping("/user")
     public ResponseEntity<UserDTO> createUser(@RequestBody UserDTO userDTO) {
         UserDTO user = userService.createUser(userDTO);
+        log.info("{} was created", user.getUsername());
         return new ResponseEntity<>(user, null, HttpStatus.CREATED);
     }
 
@@ -114,6 +117,7 @@ public class AdminAPI {
     @PutMapping("/user")
     public ResponseEntity<UserDTO> updateUser(@RequestBody UserDTO userDTO) {
         UserDTO user = userService.updateUser(userDTO);
+        log.info("{} was updated", user.getUsername());
         return new ResponseEntity<>(user, null, HttpStatus.OK);
     }
 
@@ -126,9 +130,10 @@ public class AdminAPI {
     @ResponseStatus(value = HttpStatus.OK)
     @PutMapping("/properties")
     public ResponseEntity<List<PropertiesDTO>> updateProperties(@RequestBody List<PropertiesDTO> propertiesDTOs) {
+        eventLogger.log(new ReloadEvent(MDC.get(USERNAME), ReloadEvent.FileType.PROPERTIES, null,
+                propertiesDTOs.size()));
         return new ResponseEntity<>(propertiesService.updateProperties(propertiesDTOs), null, HttpStatus.OK);
     }
-
 
     @PostMapping("/coverage/clearCache")
     public ResponseEntity<Void> clearCoverageCache(@RequestBody ClearCoverageCacheRequest request) {

@@ -3,11 +3,13 @@ package gov.cms.ab2d.eventlogger.utils;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.codec.digest.DigestUtils;
 
+import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.io.InputStream;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
+import java.util.List;
 
 public final class UtilMethods {
 
@@ -42,5 +44,44 @@ public final class UtilMethods {
 
     public static String hashIt(InputStream stream) throws IOException {
         return Hex.encodeHexString(DigestUtils.sha256(stream));
+    }
+
+    public static <T> boolean allEmpty(List<T>...events) {
+        for (List<T> e : events) {
+            if (e != null && !e.isEmpty()) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public static String getURL(HttpServletRequest req) {
+        String method = req.getMethod();             // GET, POST
+        String scheme = req.getScheme();             // http
+        String serverName = req.getServerName();     // hostname.com
+        int serverPort = req.getServerPort();        // 80
+        String contextPath = req.getContextPath();   // /mywebapp
+        String servletPath = req.getServletPath();   // /servlet/MyServlet
+        String pathInfo = req.getPathInfo();         // /a/b;c=123
+        String queryString = req.getQueryString();   // d=789
+
+        // Reconstruct original requesting URL
+        StringBuilder url = new StringBuilder();
+        url.append(method).append(" ");
+        url.append(scheme).append("://").append(serverName);
+
+        if (serverPort != 80 && serverPort != 443) {
+            url.append(":").append(serverPort);
+        }
+
+        url.append(contextPath).append(servletPath);
+
+        if (pathInfo != null) {
+            url.append(pathInfo);
+        }
+        if (queryString != null) {
+            url.append("?").append(queryString);
+        }
+        return url.toString();
     }
 }

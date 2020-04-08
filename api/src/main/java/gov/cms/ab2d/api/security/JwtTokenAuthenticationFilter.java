@@ -40,6 +40,7 @@ import static gov.cms.ab2d.common.util.Constants.STATUS_ENDPOINT;
 
 @Slf4j
 @Component
+@SuppressWarnings("PMD.TooManyStaticImports")
 public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
 
     @Autowired
@@ -94,11 +95,8 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
     }
 
     private String logApiRequestEvent(HttpServletRequest request, String token, String username, String jobId) {
-        String url = request.getRequestURI();
-        String qryString = request.getQueryString();
-        if (qryString != null && !qryString.isEmpty()) {
-            url += "?" + qryString;
-        }
+        String url = UtilMethods.getURL(request);
+
         String uniqueId = UUID.randomUUID().toString();
         ApiRequestEvent requestEvent = new ApiRequestEvent(username, jobId, url, request.getRemoteAddr(),
                 token, uniqueId);

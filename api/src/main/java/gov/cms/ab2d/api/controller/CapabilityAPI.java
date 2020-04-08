@@ -26,6 +26,7 @@ import static gov.cms.ab2d.common.util.Constants.REQUEST_ID;
  * The sole REST controller for AB2D's implementation of the FHIR Bulk Data API capability statement.
  */
 @Slf4j
+@SuppressWarnings("PMD.TooManyStaticImports")
 @Api(value = "FHIR capability statement", description = "Provides the standard required capability statement", tags = {"Capabilities"})
 @RestController
 @RequestMapping(path = API_PREFIX + FHIR_PREFIX, produces = {"application/json", NDJSON_FIRE_CONTENT_TYPE})

@@ -16,7 +16,8 @@ public class ReloadEvent extends LoggableEvent {
         OPT_OUT,
         CONTRACT_MAPPING,
         UPLOAD_ORG_STRUCTURE_REPORT,
-        ATTESTATION_REPORT
+        ATTESTATION_REPORT,
+        PROPERTIES
     }
     // The type of load being performed
     private FileType fileType;
