@@ -7323,7 +7323,17 @@
 
 1. Copy and paste the following password entry from 1Password at the "Enter Export Password" prompt
 
-   - **1Password entry** AB2D Keystore for Sandbox: Password
+   *Example for "Dev" environment:*
+   
+   - **1Password entry:** AB2D Keystore for Dev: Password
+
+   *Example for "Sbx" environment:*
+   
+   - **1Password entry:** AB2D Keystore for Sandbox: Password
+
+   *Example for "Impl" environment:*
+   
+   - **1Password entry:** AB2D Keystore for Impl: Password
    
 1. Note that the following file has been created
 
@@ -7368,7 +7378,15 @@
 
    *Example for "Dev" environment:*
    
-   - **1Password entry** AB2D Keystore for Dev: Password
+   - **1Password entry:** AB2D Keystore for Dev: Password
+
+   *Example for "Sbx" environment:*
+   
+   - **1Password entry:** AB2D Keystore for Sandbox: Password
+
+   *Example for "Impl" environment:*
+   
+   - **1Password entry:** AB2D Keystore for Impl: Password
 
 1. Enter the following at the "Trust this certificate" prompt
 
@@ -7400,12 +7418,12 @@
 
    *Example for "Dev" environment:*
    
-   - **1Password entry** AB2D Keystore for Dev: Password
+   - **1Password entry:** AB2D Keystore for Dev: Password
 
    *Example for "Sbx" environment:*
    
-   - **1Password entry** AB2D Keystore for Sandbox: Password
+   - **1Password entry:** AB2D Keystore for Sandbox: Password
 
    *Example for "Impl" environment:*
    
-   - **1Password entry** AB2D Keystore for Impl: Password
+   - **1Password entry:** AB2D Keystore for Impl: Password
