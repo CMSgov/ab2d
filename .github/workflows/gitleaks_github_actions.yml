@@ -25,4 +25,4 @@ jobs:
         SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
       uses: Ilshidur/action-slack@master
       with:
-        args: 'Potential Secrets found in: https://github.com/{{ GITHUB_REPOSITORY }}/commit/{{ GITHUB_SHA }}\n Link to build with full gitleaks output: https://github.com/{{ GITHUB_REPOSITORY }}/commit/{{ GITHUB_SHA }}/checks'
+        args: 'Potential Secrets found in: https://github.com/{{ GITHUB_REPOSITORY }}/commit/{{ GITHUB_SHA }} Link to build with full gitleaks output: https://github.com/{{ GITHUB_REPOSITORY }}/commit/{{ GITHUB_SHA }}/checks'
