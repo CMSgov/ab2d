@@ -7374,6 +7374,26 @@
      -keystore ab2d_dev_keystore
    ```
 
+   *Example for "Sbx" environment:*
+   
+   ```ShellSession
+   $ keytool -import \
+     -alias bfd-prod-sbx-selfsigned \
+     -file prod-sbx.bfdcloud.pem \
+     -storetype PKCS12 \
+     -keystore ab2d_sbx_keystore
+   ```
+
+   *Example for "Impl" environment:*
+   
+   ```ShellSession
+   $ keytool -import \
+     -alias bfd-prod-sbx-selfsigned \
+     -file prod-sbx.bfdcloud.pem \
+     -storetype PKCS12 \
+     -keystore ab2d_imp_keystore
+   ```
+
 1. Copy and paste the following password entry from 1Password at the "Enter keystore password" prompt
 
    *Example for "Dev" environment:*
