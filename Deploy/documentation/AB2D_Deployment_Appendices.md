@@ -86,6 +86,7 @@
      * [Onboard additional CloudWatch log groups for first api node log for impl environment](#onboard-additional-cloudwatch-log-groups-for-first-api-node-log-for-impl-environment)
 1. [Appendix II: Get application load balancer access logs](#appendix-ii-get-application-load-balancer-access-logs)
 1. [Appendix JJ: Export CloudWatch Log Group data to S3](#appendix-jj-export-cloudwatch-log-group-data-to-s3)
+1. [Appendix KK: Change the BFD domain in AB2D keystores](#appendix-kk-change-the-bfd-domain-in0ab2d-keystores)
 
 ## Appendix A: Access the CMS AWS console
 
@@ -7247,3 +7248,164 @@
    ```
    "code": "COMPLETED",
    ```
+
+## Appendix KK: Change the BFD domain in AB2D keystores
+
+1. Remove temporary directory (if exists)
+
+   ```ShellSession
+   $ rm -rf ~/Downloads/bfd-integration
+   ```
+
+1. Create a temporary directory
+
+   ```ShellSession
+   $ mkdir -p ~/Downloads/bfd-integration
+   ```
+
+1. Change to the temporary directory
+
+   ```ShellSession
+   $ cd ~/Downloads/bfd-integration
+   ```
+
+1. Download the following files from and copy them to "~/Downloads/bfd-integration"
+
+   *Example for "Dev" environment:*
+   
+   - client_data_server_ab2d_dev_certificate.key
+
+   - client_data_server_ab2d_dev_certificate.pem
+
+   *Example for "Sbx" environment:*
+   
+   - client_data_server_ab2d_sbx_certificate.key
+
+   - client_data_server_ab2d_sbx_certificate.pem
+
+   *Example for "Impl" environment:*
+   
+   - client_data_server_ab2d_imp_certificate.key
+
+   - client_data_server_ab2d_imp_certificate.pem
+
+1. Create a keystore that includes the self-signed SSL certificate for AB2D client to BFD sandbox
+
+   *Example for "Dev" environment:*
+
+   ```ShellSession
+   $ openssl pkcs12 -export \
+     -in client_data_server_ab2d_dev_certificate.pem \
+     -inkey client_data_server_ab2d_dev_certificate.key \
+     -out ab2d_dev_keystore \
+     -name client_data_server_ab2d_dev_certificate
+   ```
+
+   *Example for "Sbx" environment:*
+
+   ```ShellSession
+   $ openssl pkcs12 -export \
+     -in client_data_server_ab2d_sbx_certificate.pem \
+     -inkey client_data_server_ab2d_sbx_certificate.key \
+     -out ab2d_sbx_keystore \
+     -name client_data_server_ab2d_sbx_certificate
+   ```
+
+   *Example for "Impl" environment:*
+
+   ```ShellSession
+   $ openssl pkcs12 -export \
+     -in client_data_server_ab2d_imp_certificate.pem \
+     -inkey client_data_server_ab2d_imp_certificate.key \
+     -out ab2d_imp_keystore \
+     -name client_data_server_ab2d_imp_certificate
+   ```
+
+1. Copy and paste the following password entry from 1Password at the "Enter Export Password" prompt
+
+   - **1Password entry** AB2D Keystore for Sandbox: Password
+   
+1. Note that the following file has been created
+
+   *Example for "Dev" environment:*
+
+   - ab2d_dev_keystore (keystore)
+
+   *Example for "Sbx" environment:*
+
+   - ab2d_sbx_keystore (keystore)
+
+   *Example for "Impl" environment:*
+
+   - ab2d_imp_keystore (keystore)
+
+1. Send output from "prod-sbx.bfd.cms.gov" that includes only the certificate to a file
+
+   ```ShellSession
+   $ openssl s_client -connect prod-sbx.bfd.cms.gov:443 \
+     2>/dev/null | openssl x509 -text \
+     | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' \
+     > prod-sbx.bfdcloud.pem
+   ```
+
+1. Note that the following file has been created
+
+   - prod-sbx.bfdcloud.pem (certificate from the bfd sandbox server)
+
+1. Import "prod-sbx.bfd.cms.gov" certificate into the keystore
+
+   *Example for "Dev" environment:*
+   
+   ```ShellSession
+   $ keytool -import \
+     -alias bfd-prod-sbx-selfsigned \
+     -file prod-sbx.bfdcloud.pem \
+     -storetype PKCS12 \
+     -keystore ab2d_dev_keystore
+   ```
+
+1. Copy and paste the following password entry from 1Password at the "Enter keystore password" prompt
+
+   *Example for "Dev" environment:*
+   
+   - **1Password entry** AB2D Keystore for Dev: Password
+
+1. Enter the following at the "Trust this certificate" prompt
+
+   ```
+   yes
+   ```
+
+1. Verify that both the bfd sandbox and client certificates are present
+
+   *Example for "Dev" environment:*
+   
+   ```ShellSession
+   $ keytool -list -v -keystore ab2d_dev_keystore
+   ```
+
+   *Example for "Sbx" environment:*
+   
+   ```ShellSession
+   $ keytool -list -v -keystore ab2d_sbx_keystore
+   ```
+
+   *Example for "Impl" environment:*
+   
+   ```ShellSession
+   $ keytool -list -v -keystore ab2d_imp_keystore
+   ```
+
+1. Copy and paste the following password entry from 1Password at the "Enter keystore password" prompt
+
+   *Example for "Dev" environment:*
+   
+   - **1Password entry** AB2D Keystore for Dev: Password
+
+   *Example for "Sbx" environment:*
+   
+   - **1Password entry** AB2D Keystore for Sandbox: Password
+
+   *Example for "Impl" environment:*
+   
+   - **1Password entry** AB2D Keystore for Impl: Password
