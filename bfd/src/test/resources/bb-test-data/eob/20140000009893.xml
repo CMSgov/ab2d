@@ -7,7 +7,7 @@
    <total value="1"/>
    <link>
       <relation value="self"/>
-      <url value="https://prod-sbx.bfdcloud.net/v1/fhir/ExplanationOfBenefit?patient=-20140000009893&amp;excludeSAMHSA=true"/>
+      <url value="https://prod-sbx.bfd.cms.gov/v1/fhir/ExplanationOfBenefit?patient=-20140000009893&amp;excludeSAMHSA=true"/>
    </link>
    <entry>
       <resource>
