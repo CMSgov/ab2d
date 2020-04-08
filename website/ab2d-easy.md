@@ -102,6 +102,8 @@ ctas:
         delay: 4500
     };
     
+    let downloadStartTime = undefined;
+    
     function showAlert(cssClass, message) {
         $('#toast-body').text(message).removeClass(successClass).removeClass(failureClass).addClass(cssClass);
         $('#alert-toast').toast(toastOptions);
@@ -161,6 +163,7 @@ ctas:
                 turnOffTokenEventHandler();
                 turnOffExportEventHandler();
                 turnOnCancelEventHandler();
+                initiateDownloadTimer();
             },
             error: function() {
                 showAlert(failureClass, "Failed to start bulk export. Please try again"); 
@@ -205,9 +208,30 @@ ctas:
         clearInterval(statusInterval);    
     }
     
+    function initiateDownloadTimer() {
+        downloadStartTime = new Date();
+    }
+    
     function updateProgressBar(value) {
+        let text = value + '%';
+    
+        if(value > 0 && value < 100) {
+            let timeElapsedMilliseconds = new Date().getTime() - downloadStartTime.getTime();
+            let totalEstimatedMilliseconds = timeElapsedMilliseconds * (100 / value);
+            let totalEstimatedMillisecondsLeft = totalEstimatedMilliseconds - timeElapsedMilliseconds;
+            let totalSecondsLeft = Math.ceil(totalEstimatedMillisecondsLeft / 1000);
+            if(totalSecondsLeft > 60) {
+                let minutes = Math.floor(totalSecondsLeft / 60);
+                let seconds = totalSecondsLeft - 60 * minutes;
+                let totalTimeRemaining = minutes + " minutes, " + seconds + " seconds remaining";
+                text += " (" + totalTimeRemaining + ")";
+            } else {
+                text += " (" + totalSecondsLeft + " seconds remaining)";
+            }
+        }
+    
         $('#progress-bar .progress-bar').css('width', value + '%').attr('aria-valuenow', value)
-            .text(value + '%');
+            .text(text);
     }
     
     function cancelExport() {
@@ -298,7 +322,7 @@ ctas:
         });
     }
     
-    function downloadJSON(url) {
+    function downloadJSON(url, linkTitle) {
         $.ajax({
             url: url,
             headers: {
@@ -315,7 +339,7 @@ ctas:
                 anchor.css("display", "none"); 
                 $("body").append(anchor);
                 anchor.prop('href', downloadUrl);
-                anchor.prop('download', url);
+                anchor.prop('download', linkTitle);
                 anchor.get(0).click();
                 windowUrl.revokeObjectURL(downloadUrl);
                 anchor.remove();
@@ -328,13 +352,15 @@ ctas:
     
     function showDownloadLinks(responseJSON) {
         if(responseJSON.error.length > 0) {
-            
+            showAlert(failureClass, 'There was an error while processing the file');
         }
         for(let i = 0; i < responseJSON.output.length; i++) {
-            $("#download-section-links").append("<li><a href='" + responseJSON.output[i].url + "'>Download " +
-                responseJSON.output[i].type + " file</a></li>").one('click', function(event) {
+            const url = responseJSON.output[i].url;
+            const linkTitle = url.substring(url.indexOf(fhirSegment) + fhirSegment.length, url.length);
+            $("#download-section-links").append("<li><a href='" + responseJSON.output[i].url + "'>" +
+                linkTitle + "</a></li>").one('click', function(event) {
                     event.preventDefault();
-                    downloadJSON(responseJSON.output[i].url);
+                    downloadJSON(responseJSON.output[i].url, linkTitle);
                 });
         }
         
@@ -355,17 +381,19 @@ ctas:
     
     $(document).ready(function() {
         turnOnTokenEventHandler();
-        setupAlertPositioning();
+        //setupAlertPositioning();
     });
     
     $(window).resize(function() {
-        setupAlertPositioning();
+        //setupAlertPositioning();
     });
 </script>
 
 <div id="ab2d-easy-section" style="padding: 5px;">
 
-    <div class="toast" id="alert-toast" role="alert" aria-live="assertive" aria-atomic="true" style="position: fixed; top: 100px;">
+    <h3 id="ab2d-easy-header">AB2D Easy</h3>
+        
+    <div class="toast" id="alert-toast" role="alert" aria-live="assertive" aria-atomic="true" style="position: absolute;">
         <div class="toast-header">
             <small>Notification</small>
             <button type="button" class="ml-2 mb-1 close" data-dismiss="toast" style="position: absolute; right: 5px;">
@@ -373,10 +401,8 @@ ctas:
             </button>
         </div>
         <div class="toast-body" id="toast-body"></div>
-    </div>
-
-    <h3 id="ab2d-easy-header">AB2D Easy</h3>
-    
+    </div>   
+         
     <br />
     
     <div class="intro-text">
