@@ -165,7 +165,7 @@ public class TestRunner {
         int status = 0;
         Set<Integer> statusesBetween0And100 = Sets.newHashSet();
         while(status != 200 && status != 500) {
-            Thread.sleep(DELAY * 1000);
+            Thread.sleep(DELAY * 1000 + 1000);
             statusResponse = apiClient.statusRequest(statusUrl);
             status = statusResponse.statusCode();
 
