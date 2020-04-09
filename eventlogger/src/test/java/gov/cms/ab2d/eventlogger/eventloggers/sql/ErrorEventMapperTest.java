@@ -6,6 +6,7 @@ import gov.cms.ab2d.eventlogger.LoggableEvent;
 import gov.cms.ab2d.eventlogger.SpringBootApp;
 import gov.cms.ab2d.eventlogger.events.ErrorEvent;
 import gov.cms.ab2d.eventlogger.events.FileEvent;
+import gov.cms.ab2d.eventlogger.reports.sql.DeleteObjects;
 import gov.cms.ab2d.eventlogger.reports.sql.LoadObjects;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,6 +32,9 @@ class ErrorEventMapperTest {
     @Autowired
     LoadObjects loadObjects;
 
+    @Autowired
+    DeleteObjects deleteObjects;
+
     @Test
     void exceptionTests() {
         assertThrows(EventLoggingException.class, () ->
@@ -54,6 +58,8 @@ class ErrorEventMapperTest {
         assertEquals(val.getNano(), event.getTimeOfEvent().getNano());
         assertEquals(ErrorEvent.ErrorType.CONTRACT_NOT_FOUND, event.getErrorType());
         assertEquals("Description", event.getDescription());
-
+        deleteObjects.deleteAllErrorEvent();
+        events = loadObjects.loadAllErrorEvent();
+        assertEquals(0, events.size());
     }
 }

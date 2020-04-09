@@ -6,6 +6,7 @@ import gov.cms.ab2d.eventlogger.LoggableEvent;
 import gov.cms.ab2d.eventlogger.SpringBootApp;
 import gov.cms.ab2d.eventlogger.events.ErrorEvent;
 import gov.cms.ab2d.eventlogger.events.FileEvent;
+import gov.cms.ab2d.eventlogger.reports.sql.DeleteObjects;
 import gov.cms.ab2d.eventlogger.reports.sql.LoadObjects;
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.Test;
@@ -36,6 +37,9 @@ class FileEventMapperTest {
 
     @Autowired
     LoadObjects loadObjects;
+
+    @Autowired
+    DeleteObjects deleteObjects;
 
     @TempDir
     Path tmpDir;
@@ -71,5 +75,8 @@ class FileEventMapperTest {
         assertEquals(11, event.getFileSize());
         assertEquals(FileEvent.FileStatus.CLOSE, event.getStatus());
         f.delete();
+        deleteObjects.deleteAllFileEvent();
+        events = loadObjects.loadAllFileEvent();
+        assertEquals(0, events.size());
     }
 }

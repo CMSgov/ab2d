@@ -24,7 +24,6 @@ class ContractAdapterStubTest {
         cut = new ContractAdapterStub();
     }
 
-
     @Test
     @DisplayName("when contractNumber is 0, returns 100 patient records")
     void when_0000_returns_100() {
@@ -59,6 +58,4 @@ class ContractAdapterStubTest {
         var patients = cut.getPatients(contractNumber, currentMonth).getPatients();
         assertThat(patients.size(), is(patientCount));
     }
-
-
 }

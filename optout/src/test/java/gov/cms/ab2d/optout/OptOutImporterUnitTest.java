@@ -33,8 +33,6 @@ class OptOutImporterUnitTest {
         cut = new OptOutImporterImpl(optOutRepo, converterService);
     }
 
-
-
     @Test
     void process()  {
         var filename = "test-data.txt";
@@ -49,7 +47,6 @@ class OptOutImporterUnitTest {
         verify(optOutRepo, times(32)).findByCcwIdAndHicn(any(), any());
         verify(optOutRepo, times(32)).save(any());
         verify(converterService, times(32)).convert(any());
-
     }
 
     private OptOut createOptOut(String filename) {
@@ -58,9 +55,6 @@ class OptOutImporterUnitTest {
         optout.setCcwId("ccw_id_" + + Instant.now().getNano());
         optout.setEffectiveDate(LocalDate.now());
         optout.setFilename(filename);
-
         return optout;
     }
-
-
 }

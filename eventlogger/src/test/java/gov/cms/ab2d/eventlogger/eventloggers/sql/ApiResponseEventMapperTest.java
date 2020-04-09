@@ -6,6 +6,7 @@ import gov.cms.ab2d.eventlogger.LoggableEvent;
 import gov.cms.ab2d.eventlogger.SpringBootApp;
 import gov.cms.ab2d.eventlogger.events.ApiResponseEvent;
 import gov.cms.ab2d.eventlogger.events.ErrorEvent;
+import gov.cms.ab2d.eventlogger.reports.sql.DeleteObjects;
 import gov.cms.ab2d.eventlogger.reports.sql.LoadObjects;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,6 +33,9 @@ class ApiResponseEventMapperTest {
     @Autowired
     LoadObjects loadObjects;
 
+    @Autowired
+    DeleteObjects deleteObjects;
+
     @Test
     void exceptionTests() {
         assertThrows(EventLoggingException.class, () ->
@@ -57,5 +61,8 @@ class ApiResponseEventMapperTest {
         assertEquals("Not Found", event.getResponseString());
         assertEquals(404, event.getResponseCode());
         assertEquals("123", event.getRequestId());
+        deleteObjects.deleteAllApiResponseEvent();
+        events = loadObjects.loadAllApiResponseEvent();
+        assertEquals(0, events.size());
     }
 }

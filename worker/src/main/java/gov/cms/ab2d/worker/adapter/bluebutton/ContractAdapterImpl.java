@@ -44,13 +44,11 @@ public class ContractAdapterImpl implements ContractAdapter {
     @Value("${contract2bene.caching.threshold:1000}")
     private int cachingThreshold;
 
-    @Autowired
-    private EventLogger eventLogger;
-
     private final BFDClient bfdClient;
     private final ContractRepository contractRepo;
     private final BeneficiaryService beneficiaryService;
     private final PropertiesService propertiesService;
+    private final EventLogger eventLogger;
 
     @Override
     public GetPatientsByContractResponse getPatients(final String contractNumber, final int currentMonth) {

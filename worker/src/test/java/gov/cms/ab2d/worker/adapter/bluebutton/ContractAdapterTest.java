@@ -5,6 +5,7 @@ import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.repository.ContractRepository;
 import gov.cms.ab2d.common.service.PropertiesService;
+import gov.cms.ab2d.eventlogger.EventLogger;
 import gov.cms.ab2d.worker.service.BeneficiaryService;
 import org.hl7.fhir.dstu3.model.Bundle;
 import org.hl7.fhir.dstu3.model.Bundle.BundleEntryComponent;
@@ -36,7 +37,6 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
-
 @ExtendWith(MockitoExtension.class)
 class ContractAdapterTest {
 
@@ -46,6 +46,7 @@ class ContractAdapterTest {
     @Mock ContractRepository contractRepository;
     @Mock BeneficiaryService beneficiaryService;
     @Mock PropertiesService propertiesService;
+    @Mock EventLogger eventLogger;
 
     private ContractAdapter cut;
     private String contractNumber = "S0000";
@@ -58,7 +59,8 @@ class ContractAdapterTest {
                 client,
                 contractRepository,
                 beneficiaryService,
-                propertiesService
+                propertiesService,
+                eventLogger
         );
 
         bundle = createBundle();
@@ -389,5 +391,4 @@ class ContractAdapterTest {
         linkComponent.setRelation(Bundle.LINK_NEXT);
         return linkComponent;
     }
-
 }

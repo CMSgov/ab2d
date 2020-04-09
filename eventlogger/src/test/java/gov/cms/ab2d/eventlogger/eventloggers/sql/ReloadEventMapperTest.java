@@ -6,6 +6,7 @@ import gov.cms.ab2d.eventlogger.LoggableEvent;
 import gov.cms.ab2d.eventlogger.SpringBootApp;
 import gov.cms.ab2d.eventlogger.events.ReloadEvent;
 import gov.cms.ab2d.eventlogger.events.ErrorEvent;
+import gov.cms.ab2d.eventlogger.reports.sql.DeleteObjects;
 import gov.cms.ab2d.eventlogger.reports.sql.LoadObjects;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,6 +32,9 @@ class ReloadEventMapperTest {
     @Autowired
     LoadObjects loadObjects;
 
+    @Autowired
+    DeleteObjects deleteObjects;
+
     @Test
     void exceptionTests() {
         assertThrows(EventLoggingException.class, () ->
@@ -55,5 +59,8 @@ class ReloadEventMapperTest {
         assertEquals(10, event.getNumberLoaded());
         assertEquals(ReloadEvent.FileType.CONTRACT_MAPPING, event.getFileType());
         assertEquals(val.getNano(), event.getTimeOfEvent().getNano());
+        deleteObjects.deleteAllReloadEvent();
+        events = loadObjects.loadAllReloadEvent();
+        assertEquals(0, events.size());
     }
 }

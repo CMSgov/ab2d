@@ -55,7 +55,7 @@ public class OptOutImporterImpl implements OptOutImporter {
                 log.error("Invalid opt out record - line number :[{}]", linesReadCount, e);
             }
         }
-        eventLogger.log(new ReloadEvent(null, ReloadEvent.FileType.OPT_OUT, filename, linesReadCount));
+        eventLogger.log(new ReloadEvent(null, ReloadEvent.FileType.OPT_OUT, filename, insertedRowCount));
 
         log.info("[{}] rows read from file", linesReadCount);
         log.info("[{}] rows inserted into opt_out table", insertedRowCount);
