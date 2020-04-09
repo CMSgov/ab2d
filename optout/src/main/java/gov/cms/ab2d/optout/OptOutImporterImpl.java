@@ -23,9 +23,7 @@ public class OptOutImporterImpl implements OptOutImporter {
 
     private final OptOutRepository optOutRepository;
     private final OptOutConverterService optOutConverterService;
-
-    @Autowired
-    private EventLogger eventLogger;
+    private final EventLogger eventLogger;
 
     @Override
     @Transactional
