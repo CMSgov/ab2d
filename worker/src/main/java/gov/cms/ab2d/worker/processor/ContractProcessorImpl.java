@@ -68,14 +68,12 @@ public class ContractProcessorImpl implements ContractProcessor {
     @Value("${file.try.lock.timeout}")
     private int tryLockTimeout;
 
-    @Autowired
-    private EventLogger eventLogger;
 
     private final FileService fileService;
     private final JobRepository jobRepository;
     private final PatientClaimsProcessor patientClaimsProcessor;
     private final OptOutRepository optOutRepository;
-
+    private final EventLogger eventLogger;
 
     /**
      * Process the contract - retrieve all the patients for the contract and create a thread in the

@@ -12,6 +12,7 @@ import gov.cms.ab2d.eventlogger.LoggableEvent;
 import gov.cms.ab2d.eventlogger.events.ApiRequestEvent;
 import gov.cms.ab2d.eventlogger.events.ApiResponseEvent;
 import gov.cms.ab2d.eventlogger.events.ReloadEvent;
+import gov.cms.ab2d.eventlogger.reports.sql.DeleteObjects;
 import gov.cms.ab2d.eventlogger.reports.sql.LoadObjects;
 import gov.cms.ab2d.eventlogger.utils.UtilMethods;
 import org.junit.Assert;
@@ -79,6 +80,9 @@ public class AdminAPIMaintenanceModeTests {
     @Autowired
     private LoadObjects loadObjects;
 
+    @Autowired
+    private DeleteObjects deleteObjects;
+
     private static final String PROPERTIES_URL = "/properties";
 
     private String token;
@@ -90,6 +94,9 @@ public class AdminAPIMaintenanceModeTests {
         userRepository.deleteAll();
         roleRepository.deleteAll();
         sponsorRepository.deleteAll();
+        deleteObjects.deleteAllReloadEvent();
+        deleteObjects.deleteAllApiResponseEvent();
+        deleteObjects.deleteAllApiRequestEvent();
 
         token = testUtil.setupToken(List.of(SPONSOR_ROLE, ADMIN_ROLE));
     }

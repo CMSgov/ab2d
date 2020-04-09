@@ -54,9 +54,6 @@ public class JobProcessorImpl implements JobProcessor {
     @Value("${audit.files.ttl.hours}")
     private int auditFilesTTLHours;
 
-    @Autowired
-    private EventLogger eventLogger;
-
     /** Failure threshold an integer expressed as a percentage of failure tolerated in a batch **/
     @Value("${failure.threshold}")
     private int failureThreshold;
@@ -66,6 +63,7 @@ public class JobProcessorImpl implements JobProcessor {
     private final JobOutputRepository jobOutputRepository;
     private final ContractAdapter contractAdapter;
     private final ContractProcessor contractProcessor;
+    private final EventLogger eventLogger;
 
     /**
      * Load the job and process it
@@ -306,6 +304,4 @@ public class JobProcessorImpl implements JobProcessor {
         jobRepository.save(job);
         log.info("Job: [{}] is DONE", job.getJobUuid());
     }
-
-
 }

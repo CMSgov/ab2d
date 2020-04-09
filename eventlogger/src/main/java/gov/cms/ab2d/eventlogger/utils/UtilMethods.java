@@ -30,6 +30,9 @@ public final class UtilMethods {
         }
         if (requestUri.contains("/Job/")) {
             String firstPart = requestUri.substring(requestUri.indexOf("/Job/") + 5);
+            if (firstPart.indexOf('/') < 0) {
+                return null;
+            }
             return firstPart.substring(0, firstPart.indexOf("/"));
         }
         return null;

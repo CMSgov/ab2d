@@ -15,6 +15,14 @@ import gov.cms.ab2d.common.repository.OptOutRepository;
 import gov.cms.ab2d.common.repository.SponsorRepository;
 import gov.cms.ab2d.common.repository.UserRepository;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
+import gov.cms.ab2d.eventlogger.EventLogger;
+import gov.cms.ab2d.eventlogger.LoggableEvent;
+import gov.cms.ab2d.eventlogger.eventloggers.sql.SqlEventLogger;
+import gov.cms.ab2d.eventlogger.eventloggers.sql.SqlMapperConfig;
+import gov.cms.ab2d.eventlogger.events.ErrorEvent;
+import gov.cms.ab2d.eventlogger.reports.sql.DeleteObjects;
+import gov.cms.ab2d.eventlogger.reports.sql.LoadObjects;
+import gov.cms.ab2d.eventlogger.utils.UtilMethods;
 import gov.cms.ab2d.worker.adapter.bluebutton.ContractAdapter;
 import gov.cms.ab2d.worker.service.FileService;
 import org.hl7.fhir.dstu3.model.Bundle;
@@ -40,12 +48,15 @@ import java.util.List;
 import java.util.Random;
 
 import static gov.cms.ab2d.common.util.Constants.NDJSON_FIRE_CONTENT_TYPE;
+import static gov.cms.ab2d.eventlogger.events.ErrorEvent.ErrorType.TOO_MANY_SEARCH_ERRORS;
 import static java.lang.Boolean.TRUE;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
@@ -76,6 +87,12 @@ class JobProcessorIntegrationTest {
     private ContractAdapter contractAdapterStub;
     @Autowired
     private OptOutRepository optOutRepository;
+    @Autowired
+    private DeleteObjects deleteObjects;
+    @Autowired
+    private LoadObjects loadObjects;
+    @Autowired
+    private SqlMapperConfig mapperConfig;
 
     @Mock
     private BFDClient mockBfdClient;
@@ -98,6 +115,13 @@ class JobProcessorIntegrationTest {
         jobRepository.deleteAll();
         userRepository.deleteAll();
         sponsorRepository.deleteAll();
+        deleteObjects.deleteAllApiRequestEvent();
+        deleteObjects.deleteAllApiResponseEvent();
+        deleteObjects.deleteAllReloadEvent();
+        deleteObjects.deleteAllContractBeneSearchEvent();
+        deleteObjects.deleteAllErrorEvent();
+        deleteObjects.deleteAllFileEvent();
+        deleteObjects.deleteAllJobStatusChangeEvent();
 
         sponsor = createSponsor();
         user = createUser(sponsor);
@@ -117,11 +141,13 @@ class JobProcessorIntegrationTest {
 
         FhirContext fhirContext = FhirContext.forDstu3();
         PatientClaimsProcessor patientClaimsProcessor = new PatientClaimsProcessorImpl(mockBfdClient, fhirContext);
+        EventLogger eventLogger = new SqlEventLogger(mapperConfig);
         ContractProcessor contractProcessor = new ContractProcessorImpl(
                 fileService,
                 jobRepository,
                 patientClaimsProcessor,
-                optOutRepository
+                optOutRepository,
+                eventLogger
         );
 
         ReflectionTestUtils.setField(contractProcessor, "cancellationCheckFrequency", 10);
@@ -131,7 +157,8 @@ class JobProcessorIntegrationTest {
                 jobRepository,
                 jobOutputRepository,
                 contractAdapterStub,
-                contractProcessor
+                contractProcessor,
+                eventLogger
         );
 
         ReflectionTestUtils.setField(cut, "efsMount", tmpEfsMountDir.toString());
@@ -207,8 +234,21 @@ class JobProcessorIntegrationTest {
                 .thenThrow(fail, fail, fail, fail, fail, fail, fail, fail, fail, fail)
                 .thenReturn(bundle1, bundles)
         ;
-
         var processedJob = cut.process("S0000");
+
+        List<LoggableEvent> errorEvents = loadObjects.loadAllErrorEvent();
+        assertEquals(1, errorEvents.size());
+        ErrorEvent errorEvent = (ErrorEvent) errorEvents.get(0);
+        assertEquals(TOO_MANY_SEARCH_ERRORS, errorEvent.getErrorType());
+
+        assertTrue(UtilMethods.allEmpty(
+                loadObjects.loadAllApiRequestEvent(),
+                loadObjects.loadAllApiResponseEvent(),
+                loadObjects.loadAllReloadEvent(),
+                loadObjects.loadAllContractBeneSearchEvent(),
+                loadObjects.loadAllFileEvent(),
+                loadObjects.loadAllJobStatusChangeEvent()
+        ));
 
         assertThat(processedJob.getStatus(), is(JobStatus.FAILED));
         assertThat(processedJob.getStatusMessage(), is("Too many patient records in the job had failures"));

@@ -68,8 +68,17 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
             return;
         }
 
-        String token = getToken(request);
-        String username = getUserName(token);
+        String token = null;
+        String username = null;
+        try {
+            token = getToken(request);
+            username = getUserName(token);
+        } catch (Exception ex) {
+            String requestId = logApiRequestEvent(request, token, username, jobId);
+            request.setAttribute(REQUEST_ID, requestId);
+            throw ex;
+        }
+
         String requestId = logApiRequestEvent(request, token, username, jobId);
         request.setAttribute(REQUEST_ID, requestId);
 

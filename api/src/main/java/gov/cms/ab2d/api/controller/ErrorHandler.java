@@ -72,7 +72,8 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
             put(InMaintenanceModeException.class, HttpStatus.SERVICE_UNAVAILABLE);
             put(URISyntaxException.class, HttpStatus.SERVICE_UNAVAILABLE);
             put(ContractNotFoundException.class, HttpStatus.NOT_FOUND);
-            put(JobOutputMissingException.class, HttpStatus.NOT_FOUND);
+            put(JobOutputMissingException.class, HttpStatus.INTERNAL_SERVER_ERROR);
+            put(JobProcessingException.class, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     };
 
@@ -88,30 +89,31 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
     @ExceptionHandler(Exception.class)
     public ResponseEntity<JsonNode> serverException(final Exception e, HttpServletRequest request) throws IOException {
         log.error("Encountered exception: ", e);
-        return generateFHIRError(e, HttpStatus.INTERNAL_SERVER_ERROR, request);
+        return generateFHIRError(e, request);
     }
 
     @ExceptionHandler({InvalidUserInputException.class,
             InvalidJobStateTransition.class,
             InvalidPropertiesException.class,
+            JobProcessingException.class,
             ResourceNotFoundException.class
     })
     public ResponseEntity<JsonNode> assertionException(final Exception e, HttpServletRequest request) throws IOException {
-        return generateFHIRError(e, RESPONSE_MAP.get(e.getClass()), request);
+        return generateFHIRError(e, request);
     }
 
     @ExceptionHandler({ContractNotFoundException.class})
-    public ResponseEntity<Void> contractNotFoundException(final Exception e, HttpServletRequest request) {
+    public ResponseEntity<JsonNode> contractNotFoundException(final Exception e, HttpServletRequest request) throws IOException {
         eventLogger.log(new ErrorEvent(MDC.get(USERNAME), null,
                 ErrorEvent.ErrorType.CONTRACT_NOT_FOUND, getRootCause(e)));
-        return generateError(e, request);
+        return generateFHIRError(e, request);
     }
 
     @ExceptionHandler({JobOutputMissingException.class})
-    public ResponseEntity<Void> handleJobOutputMissing(Exception e, HttpServletRequest request) {
-        eventLogger.log(new ErrorEvent(MDC.get(USERNAME), null,
+    public ResponseEntity<JsonNode> handleJobOutputMissing(Exception e, HttpServletRequest request) throws IOException {
+        eventLogger.log(new ErrorEvent(MDC.get(USERNAME), UtilMethods.parseJobId(request.getRequestURI()),
                 ErrorEvent.ErrorType.FILE_ALREADY_DELETED, getRootCause(e)));
-        return generateError(e, request);
+        return generateFHIRError(e, request);
     }
 
     @ExceptionHandler({InvalidContractException.class})
@@ -123,7 +125,6 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
 
     @ExceptionHandler({MissingTokenException.class,
             InvalidAuthHeaderException.class,
-            JobProcessingException.class,
             BadJWTTokenException.class,
             UsernameNotFoundException.class,
             UserNotEnabledException.class,
@@ -141,7 +142,7 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
         httpHeaders.add("Retry-After", Integer.toString(retryAfterDelay));
         eventLogger.log(new ErrorEvent(MDC.get(USERNAME), UtilMethods.parseJobId(request.getRequestURI()),
                 ErrorEvent.ErrorType.TOO_MANY_STATUS_REQUESTS, "Too many requests performed in too short a time"));
-        return generateFHIRError(e, RESPONSE_MAP.get(e.getClass()), httpHeaders, request);
+        return generateFHIRError(e, httpHeaders, request);
     }
 
     private ResponseEntity<Void> generateError(Exception ex, HttpServletRequest request) {
@@ -151,12 +152,13 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
         return new ResponseEntity<>(null, null, status);
     }
 
-    private ResponseEntity<JsonNode> generateFHIRError(Exception e, HttpStatus httpStatus, HttpServletRequest request) throws IOException {
-        return generateFHIRError(e, httpStatus, null, request);
+    private ResponseEntity<JsonNode> generateFHIRError(Exception e, HttpServletRequest request) throws IOException {
+        return generateFHIRError(e, null, request);
     }
 
-    private ResponseEntity<JsonNode> generateFHIRError(Exception e, HttpStatus httpStatus, HttpHeaders httpHeaders, HttpServletRequest request) throws IOException {
+    private ResponseEntity<JsonNode> generateFHIRError(Exception e, HttpHeaders httpHeaders, HttpServletRequest request) throws IOException {
         String msg = getRootCause(e);
+        HttpStatus httpStatus = RESPONSE_MAP.get(e.getClass());
 
         OperationOutcome operationOutcome = getErrorOutcome(msg);
         String encoded = outcomeToJSON(operationOutcome);

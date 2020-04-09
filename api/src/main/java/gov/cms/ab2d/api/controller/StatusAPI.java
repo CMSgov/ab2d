@@ -141,7 +141,7 @@ public class StatusAPI {
         log.info("Job status completed successfully");
         HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes())
                 .getRequest();
-        eventLogger.log(new ApiResponseEvent(MDC.get(USERNAME), job.getJobUuid(), HttpStatus.ACCEPTED,
+        eventLogger.log(new ApiResponseEvent(MDC.get(USERNAME), job.getJobUuid(), HttpStatus.OK,
                 "Job completed", null, (String) request.getAttribute(REQUEST_ID)));
         return new ResponseEntity<>(resp, responseHeaders, HttpStatus.OK);
     }
