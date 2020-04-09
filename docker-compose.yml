@@ -28,6 +28,7 @@ services:
       - AB2D_DB_USER=ab2d
       - AB2D_DB_PASSWORD=ab2d
       - AB2D_EFS_MOUNT=/opt/ab2d
+      - AB2D_ALLOWED_ORIGIN="${AB2D_ALLOWED_ORIGIN}"
       - NEW_RELIC_LICENSE_KEY="${NEW_RELIC_LICENSE_KEY}"
       - NEW_RELIC_APP_NAME="${NEW_RELIC_APP_NAME}"
     ports:
@@ -47,11 +48,16 @@ services:
       - AB2D_DB_USER=ab2d
       - AB2D_DB_PASSWORD=ab2d
       - AB2D_EFS_MOUNT=/opt/ab2d
-      - AB2D_BFD_URL=https://prod-sbx.bfdcloud.net/v1/fhir/
+      - AB2D_BFD_URL=https://prod-sbx.bfd.cms.gov/v1/fhir/
       - AB2D_BFD_KEYSTORE_PASSWORD=${AB2D_BFD_KEYSTORE_PASSWORD}
       - AB2D_BFD_KEYSTORE_LOCATION=${AB2D_BFD_KEYSTORE_LOCATION}
       - NEW_RELIC_LICENSE_KEY="${NEW_RELIC_LICENSE_KEY}"
       - NEW_RELIC_APP_NAME="${NEW_RELIC_APP_NAME}"
+      - AB2D_OPT_OUT_JOB_SCHEDULE=${AB2D_OPT_OUT_JOB_SCHEDULE}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AB2D_HICN_HASH_PEPPER=${AB2D_HICN_HASH_PEPPER}
+      - AB2D_HICN_HASH_ITER=${AB2D_HICN_HASH_ITER}
     depends_on:
       - db
     volumes:

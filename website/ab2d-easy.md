@@ -18,6 +18,7 @@ ctas:
 <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.6/umd/popper.min.js" integrity="sha384-wHAiFfRlMFy6i5SRaxvfOCifBUQy1xHdJ/yoi7FRNXMRBu5WHdZYu1hA6ZOblgut" crossorigin="anonymous"></script>
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/js/bootstrap.min.js" integrity="sha384-B0UglyR+jN6CkvvICOB2joaf5I4l3gm9GU6Hc1og6Ls7i6U/mkkaduKaBhlAXv9k" crossorigin="anonymous"></script>
 <script src="assets/js/jquery.binarytransport.js" type="text/javascript"></script>
+
 <style type="text/css">
     #export {
         display: none;
@@ -81,6 +82,7 @@ ctas:
 
 <script>
     const baseUrl = 'http://localhost:8080/';
+
     const fhirSegment = 'api/v1/fhir/';
     
     const fadeInTime = 1000;
@@ -102,8 +104,8 @@ ctas:
         delay: 4500
     };
     
-    let downloadStartTime = undefined;
-    
+    let downloadStartTime = undefined;    
+
     function showAlert(cssClass, message) {
         $('#toast-body').text(message).removeClass(successClass).removeClass(failureClass).addClass(cssClass);
         $('#alert-toast').toast(toastOptions);
@@ -111,7 +113,6 @@ ctas:
     }
 
     function retrieveOktaToken() {
-    
         const clientID = $('#clientID').val();
         const clientSecret = $('#clientSecret').val();
         const formData = {
@@ -164,6 +165,7 @@ ctas:
                 turnOffExportEventHandler();
                 turnOnCancelEventHandler();
                 initiateDownloadTimer();
+
             },
             error: function() {
                 showAlert(failureClass, "Failed to start bulk export. Please try again"); 
@@ -371,7 +373,7 @@ ctas:
         
         
     }
-    
+
     function setupAlertPositioning() {
         const $elt = $('#ab2d-easy-header');
         const offset = $elt.offset();
@@ -402,7 +404,7 @@ ctas:
         </div>
         <div class="toast-body" id="toast-body"></div>
     </div>   
-         
+       
     <br />
     
     <div class="intro-text">

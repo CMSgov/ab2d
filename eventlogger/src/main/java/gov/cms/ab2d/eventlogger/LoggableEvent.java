@@ -9,6 +9,8 @@ import java.time.OffsetDateTime;
  */
 @Data
 public abstract class LoggableEvent {
+    public LoggableEvent() { }
+
     // id
     private Long id;
 

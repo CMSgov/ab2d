@@ -7,7 +7,9 @@ import gov.cms.ab2d.eventlogger.events.BeneficiaryReloadEvent;
 import gov.cms.ab2d.eventlogger.events.ContractBeneSearchEvent;
 import gov.cms.ab2d.eventlogger.events.ErrorEvent;
 import gov.cms.ab2d.eventlogger.events.FileEvent;
+import gov.cms.ab2d.eventlogger.events.JobStatusChangeEvent;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -17,18 +19,28 @@ import java.util.Map;
  */
 @Configuration
 public class SqlMapperConfig {
-    private Map<Class<? extends LoggableEvent>, SqlEventMapper> mapping = new HashMap<>() {
-        {
-            put(ApiRequestEvent.class, new ApiRequestEventMapper());
-            put(ApiResponseEvent.class, new ApiResponseEventMapper());
-            put(BeneficiaryReloadEvent.class, new BeneficiaryReloadEventMapper());
-            put(ContractBeneSearchEvent.class, new ContractBeneSearchEventMapper());
-            put(ErrorEvent.class, new ErrorEventSqlMapper());
-            put(FileEvent.class, new FilesEventMapper());
-        }
-    };
+    private final NamedParameterJdbcTemplate jdbcTemplate;
+
+    private Map<Class<? extends LoggableEvent>, SqlEventMapper> mapping = new HashMap<>();
+
+    public SqlMapperConfig(NamedParameterJdbcTemplate jdbcTemplate) {
+        this.jdbcTemplate = jdbcTemplate;
+    }
 
     public SqlEventMapper getMapper(Class<? extends LoggableEvent> event) {
+        if (mapping.isEmpty()) {
+            init();
+        }
         return mapping.get(event);
+    }
+
+    private void init() {
+        mapping.put(ApiRequestEvent.class, new ApiRequestEventMapper(jdbcTemplate));
+        mapping.put(ApiResponseEvent.class, new ApiResponseEventMapper(jdbcTemplate));
+        mapping.put(BeneficiaryReloadEvent.class, new BeneficiaryReloadEventMapper(jdbcTemplate));
+        mapping.put(ContractBeneSearchEvent.class, new ContractBeneSearchEventMapper(jdbcTemplate));
+        mapping.put(ErrorEvent.class, new ErrorEventMapper(jdbcTemplate));
+        mapping.put(FileEvent.class, new FileEventMapper(jdbcTemplate));
+        mapping.put(JobStatusChangeEvent.class, new JobStatusChangeEventMapper(jdbcTemplate));
     }
 }

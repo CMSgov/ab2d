@@ -1,13 +1,16 @@
 package gov.cms.ab2d.eventlogger.events;
 
 import gov.cms.ab2d.eventlogger.LoggableEvent;
+import gov.cms.ab2d.eventlogger.utils.UtilMethods;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 import java.time.OffsetDateTime;
 
 /**
  * Class to create and log an API request coming from a user
  */
+@EqualsAndHashCode(callSuper = true)
 @Data
 public class ApiRequestEvent extends LoggableEvent {
     // The URL requested including request parameters
@@ -19,12 +22,16 @@ public class ApiRequestEvent extends LoggableEvent {
     // The unique id of this request (to pair with the response)
     private String requestId;
 
-    public ApiRequestEvent(String user, String jobId, String url, String ipAddress, String tokenHash,
+    public ApiRequestEvent() { }
+
+    public ApiRequestEvent(String user, String jobId, String url, String ipAddress, String token,
                             String requestId) {
         super(OffsetDateTime.now(), user, jobId);
         this.url = url;
         this.ipAddress = ipAddress;
-        this.tokenHash = tokenHash;
+        if (token != null) {
+            this.tokenHash = UtilMethods.hashIt(token);
+        }
         this.requestId = requestId;
     }
 }
