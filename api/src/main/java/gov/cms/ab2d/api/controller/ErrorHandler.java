@@ -25,6 +25,7 @@ import org.hl7.fhir.dstu3.model.OperationOutcome;
 import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -74,6 +75,7 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
             put(ContractNotFoundException.class, HttpStatus.NOT_FOUND);
             put(JobOutputMissingException.class, HttpStatus.INTERNAL_SERVER_ERROR);
             put(JobProcessingException.class, HttpStatus.INTERNAL_SERVER_ERROR);
+            put(DataIntegrityViolationException.class, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     };
 
@@ -158,7 +160,7 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
 
     private ResponseEntity<JsonNode> generateFHIRError(Exception e, HttpHeaders httpHeaders, HttpServletRequest request) throws IOException {
         String msg = getRootCause(e);
-        HttpStatus httpStatus = RESPONSE_MAP.get(e.getClass());
+        HttpStatus httpStatus = getErrorResponse(e.getClass());
 
         OperationOutcome operationOutcome = getErrorOutcome(msg);
         String encoded = outcomeToJSON(operationOutcome);
