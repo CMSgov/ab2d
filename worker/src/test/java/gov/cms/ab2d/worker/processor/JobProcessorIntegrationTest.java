@@ -19,6 +19,7 @@ import gov.cms.ab2d.eventlogger.EventLogger;
 import gov.cms.ab2d.eventlogger.LoggableEvent;
 import gov.cms.ab2d.eventlogger.eventloggers.sql.SqlEventLogger;
 import gov.cms.ab2d.eventlogger.eventloggers.sql.SqlMapperConfig;
+import gov.cms.ab2d.eventlogger.events.ContractBeneSearchEvent;
 import gov.cms.ab2d.eventlogger.events.ErrorEvent;
 import gov.cms.ab2d.eventlogger.reports.sql.DeleteObjects;
 import gov.cms.ab2d.eventlogger.reports.sql.LoadObjects;
@@ -220,6 +221,14 @@ class JobProcessorIntegrationTest {
         assertThat(processedJob.getStatusMessage(), is("100%"));
         assertThat(processedJob.getExpiresAt(), notNullValue());
         assertThat(processedJob.getCompletedAt(), notNullValue());
+
+        List<LoggableEvent> beneSearchEvents = loadObjects.loadAllContractBeneSearchEvent();
+        assertEquals(1, beneSearchEvents.size());
+        ContractBeneSearchEvent event = (ContractBeneSearchEvent) beneSearchEvents.get(0);
+        assertEquals("S0000", event.getJobId());
+        assertEquals(100, event.getNumInContract());
+        assertEquals("CONTRACT_0000", event.getContractNumber());
+        assertEquals(100, event.getNumSearched());
 
         final List<JobOutput> jobOutputs = job.getJobOutputs();
         assertFalse(jobOutputs.isEmpty());

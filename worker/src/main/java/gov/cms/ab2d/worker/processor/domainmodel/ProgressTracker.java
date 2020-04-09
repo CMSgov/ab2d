@@ -49,10 +49,14 @@ public class ProgressTracker {
         ++optOutCount;
     }
 
-    public long getContractCount(String contractNumber) {
-        return patientsByContracts.stream()
+    public int getContractCount(String contractNumber) {
+        GetPatientsByContractResponse response = patientsByContracts.stream()
                 .filter(c -> contractNumber.equalsIgnoreCase(c.getContractNumber()))
-                .count();
+                .findFirst().orElse(null);
+        if (response == null || response.getPatients() == null) {
+            return 0;
+        }
+        return response.getPatients().size();
     }
     /**
      * Get the total number of patients we're processing across all contracts
