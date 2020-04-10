@@ -3722,56 +3722,6 @@
 
 ## Appendix HH: Manual test of Splunk configuration
 
-### Verify or create a "cwlg_lambda_splunk_hec_role" role
-
-> *** TO DO ***: Remove this section if it will be handled by Splunk team
-
-1. Open Chrome
-
-1. Log on to the development AWS account
-
-1. Select "IAM"
-
-1. Select **Roles**
-
-1. Determine if the "cwlg_lambda_splunk_hec_role" role alredy exists
-
-   1. Type the following in the **Search** text box under "Create role"
-
-      ```
-      cwlg_lambda_splunk_hec_role
-      ```
-
-   1. If the role already exists, jump to the following section
-
-      [Configure CloudWatch Log agent and onboard \/var\/log\/messages](#configure-cloudwatch-log-agent-and-onboard-varlogmessages)
-
-1. Select **Create role**
-
-1. Select the **AWS service** tab
-
-1. Select **Lambda**
-
-1. Select **Next: Permissions**
-
-1. Type the following in the **Search** text box
-
-   ```
-   AWSLambdaBasicExecutionRole
-   ```
-
-1. Select the checkbox beside "AWSLambdaBasicExecutionRole"
-
-1. Select **Next: Tags**
-
-1. Select **Next: Review**
-
-1. Configure the "Review" page as follows
-
-   - **Role name:** cwlg_lambda_splunk_hec_role
-
-1. Select **Create role**
-
 ### Prepare IAM policies and roles for CloudWatch Log groups
 
 1. Note that the following IAM policy has been created in Mgmt, Dev, Sbx, and Impl
@@ -3789,6 +3739,7 @@
                    "logs:CreateLogGroup",
                    "logs:CreateLogStream",
                    "logs:PutLogEvents",
+		   "logs:DescribeLogGroups",
                    "logs:DescribeLogStreams"
                ],
                "Resource": [
@@ -3800,6 +3751,45 @@
    ```
 
 1. Note that the "Ab2dCloudWatchLogsPolicy" IAM policy has been attached to the "Ab2dInstanceRole" role in Mgmt, Dev, Sbx, and Impl
+
+1. Set trust relationship between the "Ab2dInstanceRole" role and the VPC flow log service
+
+   1. Select the following IAM role
+
+      ```
+      Ab2dInstanceRole
+      ```
+
+   1. Select the **Trust relationships** tab
+
+   1. Select **Edit trust relationship**
+
+   1. Modify the trust relationship to include the VPC flow logs service
+
+      *Example:*
+
+      ```
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Sid": "",
+            "Effect": "Allow",
+            "Principal": {
+              "Service": [
+                "ecs-tasks.amazonaws.com",
+                "lambda.amazonaws.com",
+                "ec2.amazonaws.com",
+		"vpc-flow-logs.amazonaws.com"
+              ]
+            },
+            "Action": "sts:AssumeRole"
+          }
+        ]
+      }
+      ```
+
+   1. Select **Update Trust Policy**
 
 ### Configure CloudWatch Log groups
 
@@ -3819,7 +3809,7 @@
 
    1. Configure the "Create log group" page as follows
 
-      - **Log Group Name:** CloudTrail/DefaultLogGroup
+      - **Log Group Name:** cloudtrail-logs
 
    1. Select **Create log group**
 
@@ -3899,7 +3889,7 @@
    ```ShellSession
    $ aws --region us-east-1 cloudtrail update-trail \
      --name cloudtrail-default \
-     --cloud-watch-logs-log-group-arn arn:aws:logs:us-east-1:653916833532:log-group:CloudTrail/DefaultLogGroup:* \
+     --cloud-watch-logs-log-group-arn arn:aws:logs:us-east-1:653916833532:log-group:cloudtrail-logs:* \
      --cloud-watch-logs-role-arn arn:aws:iam::653916833532:role/Ab2dCloudTrailAssumeRole
    ```
 
@@ -3919,7 +3909,7 @@
 
    1. Configure the "Create log group" page as follows
 
-      - **Log Group Name:** 653916833532-vpc-flow-logs
+      - **Log Group Name:** vpc-flowlogs
 
    1. Select **Create log group**
 
@@ -3949,7 +3939,7 @@
 
       - **Destination:** Send to CloudWatch Logs
 
-      - **Destination log group:** {aws account id}-vpc-flow-logs
+      - **Destination log group:** vpc-flowlogs
 
       - **IAM role:** Ab2dInstanceRole
 
@@ -4004,8 +3994,8 @@
    /var/opt/ds_agent/diag/ds_agent-err.log |yes   |/aws/ec2/var/opt/ds_agent/diag/ds_agent-err.log
    /var/opt/ds_agent/diag/ds_agent.log     |yes   |/aws/ec2/var/opt/ds_agent/diag/ds_agent.log
    /var/opt/ds_agent/diag/ds_am.log        |yes   |/aws/ec2/var/opt/ds_agent/diag/ds_am.log
-   N/A                                     |N/A   |CloudTrail/DefaultLogGroup
-   N/A                                     |N/A   |<accountId>-west-dev-vpc-flowlogs
+   N/A                                     |N/A   |cloudtrail-logs
+   N/A                                     |N/A   |vpc-flowlogs
 
 1. Exit the root user
 
@@ -4520,9 +4510,9 @@
 
       - /aws/ec2/var/opt/ds_agent/diag/ds_am.log
 
-      - 653916833532-vpc-flow-logs
+      - vpc-flowlogs
 
-      - CloudTrail/DefaultLogGroup
+      - cloudtrail-logs
 
 1. If any of the log groups are missing, do the following:
 
@@ -5008,7 +4998,7 @@
 
    1. Configure the "Create log group" page as follows
 
-      - **Log Group Name:** CloudTrail/DefaultLogGroup
+      - **Log Group Name:** cloudtrail-logs
 
    1. Select **Create log group**
 
@@ -5088,7 +5078,7 @@
    ```ShellSession
    $ aws --region us-east-1 cloudtrail update-trail \
      --name cloudtrail-default \
-     --cloud-watch-logs-log-group-arn arn:aws:logs:us-east-1:349849222861:log-group:CloudTrail/DefaultLogGroup:* \
+     --cloud-watch-logs-log-group-arn arn:aws:logs:us-east-1:349849222861:log-group:cloudtrail-logs:* \
      --cloud-watch-logs-role-arn arn:aws:iam::349849222861:role/Ab2dCloudTrailAssumeRole
    ```
 
@@ -5108,7 +5098,7 @@
 
    1. Configure the "Create log group" page as follows
 
-      - **Log Group Name:** 349849222861-vpc-flow-logs
+      - **Log Group Name:** vpc-flowlogs
 
    1. Select **Create log group**
 
@@ -5138,7 +5128,7 @@
 
       - **Destination:** Send to CloudWatch Logs
 
-      - **Destination log group:** {aws account id}-vpc-flow-logs
+      - **Destination log group:** vpc-flowlogs
 
       - **IAM role:** Ab2dInstanceRole
 
@@ -5580,9 +5570,9 @@
 
       - /aws/ec2/var/opt/ds_agent/diag/ds_am.log
 
-      - 349849222861-vpc-flow-logs
+      - vpc-flowlogs
 
-      - CloudTrail/DefaultLogGroup
+      - cloudtrail-logs
 
 1. If any of the log groups are missing, do the following:
 
@@ -5614,7 +5604,7 @@
 
    - /aws/ec2/var/log/cloud-init.log
 
-   - 349849222861-vpc-flow-logs
+   - vpc-flowlogs
 
 ##### Onboard first api node log to CloudWatch Log groups for development environment
 
@@ -5710,7 +5700,7 @@
 
    1. Configure the "Create log group" page as follows
 
-      - **Log Group Name:** CloudTrail/DefaultLogGroup
+      - **Log Group Name:** cloudtrail-logs
 
    1. Select **Create log group**
 
@@ -5790,7 +5780,7 @@
    ```ShellSession
    $ aws --region us-east-1 cloudtrail update-trail \
      --name cloudtrail-default \
-     --cloud-watch-logs-log-group-arn arn:aws:logs:us-east-1:777200079629:log-group:CloudTrail/DefaultLogGroup:* \
+     --cloud-watch-logs-log-group-arn arn:aws:logs:us-east-1:777200079629:log-group:cloudtrail-logs:* \
      --cloud-watch-logs-role-arn arn:aws:iam::777200079629:role/Ab2dCloudTrailAssumeRole
    ```
 
@@ -5816,7 +5806,7 @@
 
    1. Configure the "Create log group" page as follows
 
-      - **Log Group Name:** 777200079629-vpc-flow-logs
+      - **Log Group Name:** vpc-flowlogs
 
    1. Select **Create log group**
 
@@ -5846,7 +5836,7 @@
 
       - **Destination:** Send to CloudWatch Logs
 
-      - **Destination log group:** {aws account id}-vpc-flow-logs
+      - **Destination log group:** vpc-flowlogs
 
       - **IAM role:** Ab2dInstanceRole
 
@@ -6288,9 +6278,9 @@
 
       - /aws/ec2/var/opt/ds_agent/diag/ds_am.log
 
-      - 349849222861-vpc-flow-logs
+      - vpc-flowlogs
 
-      - CloudTrail/DefaultLogGroup
+      - cloudtrail-logs
 
 1. If any of the log groups are missing, do the following:
 
@@ -6412,7 +6402,7 @@
 
    1. Configure the "Create log group" page as follows
 
-      - **Log Group Name:** CloudTrail/DefaultLogGroup
+      - **Log Group Name:** cloudtrail-logs
 
    1. Select **Create log group**
 
@@ -6492,7 +6482,7 @@
    ```ShellSession
    $ aws --region us-east-1 cloudtrail update-trail \
      --name cloudtrail-default \
-     --cloud-watch-logs-log-group-arn arn:aws:logs:us-east-1:330810004472:log-group:CloudTrail/DefaultLogGroup:* \
+     --cloud-watch-logs-log-group-arn arn:aws:logs:us-east-1:330810004472:log-group:cloudtrail-logs:* \
      --cloud-watch-logs-role-arn arn:aws:iam::330810004472:role/Ab2dCloudTrailAssumeRole
    ```
 
@@ -6512,7 +6502,7 @@
 
    1. Configure the "Create log group" page as follows
 
-      - **Log Group Name:** 330810004472-vpc-flow-logs
+      - **Log Group Name:** vpc-flowlogs
 
    1. Select **Create log group**
 
@@ -6542,7 +6532,7 @@
 
       - **Destination:** Send to CloudWatch Logs
 
-      - **Destination log group:** {aws account id}-vpc-flow-logs
+      - **Destination log group:** vpc-flowlogs
 
       - **IAM role:** Ab2dInstanceRole
 
@@ -6984,9 +6974,9 @@
 
       - /aws/ec2/var/opt/ds_agent/diag/ds_am.log
 
-      - 349849222861-vpc-flow-logs
+      - vpc-flowlogs
 
-      - CloudTrail/DefaultLogGroup
+      - cloudtrail-logs
 
 1. If any of the log groups are missing, do the following:
 
@@ -7018,7 +7008,7 @@
 
    - /aws/ec2/var/log/cloud-init.log
 
-   - 330810004472-vpc-flow-logs
+   - vpc-flowlogs
 
 ##### Onboard first api node log to CloudWatch Log groups for impl environment
 
