@@ -78,6 +78,10 @@ ctas:
     #download-section-links a {
         color: #4B78C4;
     }
+    
+    .progress {
+        background-color: #DEDFEF;
+    }
 </style>
 
 <script>
@@ -221,6 +225,7 @@ ctas:
             let timeElapsedMilliseconds = new Date().getTime() - downloadStartTime.getTime();
             let totalEstimatedMilliseconds = timeElapsedMilliseconds * (100 / value);
             let totalEstimatedMillisecondsLeft = totalEstimatedMilliseconds - timeElapsedMilliseconds;
+            // Use Math.ceil, avoid showing a 0 seconds left scenario
             let totalSecondsLeft = Math.ceil(totalEstimatedMillisecondsLeft / 1000);
             if(totalSecondsLeft > 60) {
                 let minutes = Math.floor(totalSecondsLeft / 60);
@@ -358,20 +363,29 @@ ctas:
         }
         for(let i = 0; i < responseJSON.output.length; i++) {
             const url = responseJSON.output[i].url;
-            const linkTitle = url.substring(url.indexOf(fhirSegment) + fhirSegment.length, url.length);
-            $("#download-section-links").append("<li><a href='" + responseJSON.output[i].url + "'>" +
-                linkTitle + "</a></li>").one('click', function(event) {
-                    event.preventDefault();
-                    downloadJSON(responseJSON.output[i].url, linkTitle);
-                });
+            const linkTitle = getLinkTitle(url);
+            $("#download-section-links").append("<li><a href='" + url + "'>" +
+                linkTitle + "</a></li>");
         }
+        
+        $("#download-section-links li").each(function() {
+            $(this).one('click', function(event) {
+                event.preventDefault();
+                const anchor = $(this).find('a');
+                const url = anchor.attr('href');
+                const linkTitle = getLinkTitle(url);
+                downloadJSON(url, linkTitle);
+            });
+        });
         
         $("#download-section").fadeIn(fadeInTime, function() {
             $("#reset-section").fadeIn(fadeInTime);
             turnOnResetEventHandler();  
         });
-        
-        
+    }
+    
+    function getLinkTitle(url) {
+        return url.substring(url.indexOf(fhirSegment) + fhirSegment.length, url.length);
     }
 
     function setupAlertPositioning() {
