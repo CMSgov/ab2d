@@ -47,10 +47,6 @@ module "efs" {
   encryption_key_arn  = "${data.aws_kms_key.ab2d_kms.arn}"
 }
 
-# LSH SKIP FOR NOW BEGIN
-# vpn-private-sec-group-id      = var.vpn-private-sec-group-id
-# enterprise-tools-sec-group-id = var.enterprise-tools-sec-group-id
-# LSH SKIP FOR NOW END
 module "api" {
   source                        = "../../modules/api"
   env                           = var.env
@@ -101,12 +97,11 @@ module "api" {
   host_port                     = var.host_port
   alb_listener_protocol         = var.alb_listener_protocol
   alb_listener_certificate_arn  = var.alb_listener_certificate_arn
+  alb_internal                  = var.alb_internal
+  alb_security_group_ip_range   = var.alb_security_group_ip_range
+  vpn_private_ip_address_cidr_range = var.vpn_private_ip_address_cidr_range
 }
 
-# LSH SKIP FOR NOW BEGIN
-# vpn-private-sec-group-id      = var.vpn-private-sec-group-id
-# enterprise-tools-sec-group-id = var.enterprise-tools-sec-group-id
-# LSH SKIP FOR NOW END
 module "worker" {
   source                          = "../../modules/worker"
   env                             = var.env
@@ -156,6 +151,7 @@ module "worker" {
   ecs_container_def_memory        = var.ecs_container_definition_new_memory_worker
   ecs_task_def_cpu                = var.ecs_task_definition_cpu_worker
   ecs_task_def_memory             = var.ecs_task_definition_memory_worker
+  vpn_private_ip_address_cidr_range = var.vpn_private_ip_address_cidr_range
 }
 
 module "cloudwatch" {

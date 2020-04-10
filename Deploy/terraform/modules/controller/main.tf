@@ -7,28 +7,6 @@ resource "aws_security_group" "deployment_controller" {
   }
 }
 
-# # *** TO DO ***: eliminate this after VPN access is setup
-# resource "aws_security_group_rule" "whitelist_lonnie" {
-#   type        = "ingress"
-#   description = "Whitelist Lonnie"
-#   from_port   = "22"
-#   to_port     = "22"
-#   protocol    = "TCP"
-#   cidr_blocks = ["${var.deployer_ip_address}/32"]
-#   security_group_id = aws_security_group.deployment_controller.id
-# }
-
-# # *** TO DO ***: eliminate this after VPN access is setup
-# resource "aws_security_group_rule" "whitelist_denis" {
-#   type        = "ingress"
-#   description = "Whitelist Denis"
-#   from_port   = "22"
-#   to_port     = "22"
-#   protocol    = "TCP"
-#   cidr_blocks = ["104.37.31.98/32"]
-#   security_group_id = aws_security_group.deployment_controller.id
-# }
-
 resource "aws_security_group_rule" "egress_controller" {
   type        = "egress"
   description = "Allow all egress"
@@ -36,6 +14,16 @@ resource "aws_security_group_rule" "egress_controller" {
   to_port     = "0"
   protocol    = "-1"
   cidr_blocks = ["0.0.0.0/0"]
+  security_group_id = aws_security_group.deployment_controller.id
+}
+
+resource "aws_security_group_rule" "vpn_access_controller" {
+  type        = "ingress"
+  description = "VPN access"
+  from_port   = "-1"
+  to_port     = "-1"
+  protocol    = "-1"
+  cidr_blocks = [var.vpn_private_ip_address_cidr_range]
   security_group_id = aws_security_group.deployment_controller.id
 }
 
@@ -57,7 +45,7 @@ resource "random_shuffle" "public_subnets" {
 resource "aws_instance" "deployment_controller" {
   ami = var.ami_id
   instance_type = var.instance_type
-  vpc_security_group_ids = [aws_security_group.deployment_controller.id,var.vpn_private_sec_group_id]
+  vpc_security_group_ids = [aws_security_group.deployment_controller.id]
   disable_api_termination = false
   key_name = var.ssh_key_name
   monitoring = true

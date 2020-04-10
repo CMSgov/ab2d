@@ -71,3 +71,5 @@ variable "bfd_keystore_file_name" {}
 
 variable "new_relic_app_name" {}
 variable "new_relic_license_key" {}
+
+variable "vpn_private_ip_address_cidr_range" {}

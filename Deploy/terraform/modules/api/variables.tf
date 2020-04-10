@@ -22,6 +22,7 @@ variable "host_port" {type = number}
 
 variable "alb_listener_protocol" {type = string}
 variable "alb_listener_certificate_arn" {type = string}
+variable "alb_internal" {type = bool}
 
 variable "desired_instances" {}
 variable "min_instances" {}
@@ -68,3 +69,6 @@ variable "beta" {}
 
 variable "new_relic_app_name" {}
 variable "new_relic_license_key" {}
+
+variable "alb_security_group_ip_range" {}
+variable "vpn_private_ip_address_cidr_range" {}
