@@ -61,8 +61,18 @@ public final class UtilMethods {
     public static String getURL(HttpServletRequest req) {
         String method = req.getMethod();             // GET, POST
         String scheme = req.getScheme();             // http
+        // If behind load balancer, get the real scheme
+        String forwardedSchmed = req.getHeader("X-Forwarded-Proto");
+        if (forwardedSchmed != null && !forwardedSchmed.isEmpty()) {
+            scheme = forwardedSchmed;
+        }
         String serverName = req.getServerName();     // hostname.com
         int serverPort = req.getServerPort();        // 80
+        // If behind load balancer, get the real port
+        String forwardedPort = req.getHeader("X-Forwarded-Port");
+        if (forwardedPort != null && !forwardedPort.isEmpty()) {
+            serverPort = Integer.parseInt(forwardedPort);
+        }
         String contextPath = req.getContextPath();   // /mywebapp
         String servletPath = req.getServletPath();   // /servlet/MyServlet
         String pathInfo = req.getPathInfo();         // /a/b;c=123
@@ -86,5 +96,15 @@ public final class UtilMethods {
             url.append("?").append(queryString);
         }
         return url.toString();
+    }
+
+    public static String getIpAddress(HttpServletRequest request) {
+        String ipAddress = request.getRemoteAddr();
+        // If behind load balancer, get the real IP
+        String xff = request.getHeader("X-Forwarded-For");
+        if (xff != null && !xff.isEmpty()) {
+            return xff;
+        }
+        return ipAddress;
     }
 }

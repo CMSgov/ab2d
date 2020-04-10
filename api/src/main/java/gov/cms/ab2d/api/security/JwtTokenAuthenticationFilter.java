@@ -105,9 +105,8 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
 
     private String logApiRequestEvent(HttpServletRequest request, String token, String username, String jobId) {
         String url = UtilMethods.getURL(request);
-
         String uniqueId = UUID.randomUUID().toString();
-        ApiRequestEvent requestEvent = new ApiRequestEvent(username, jobId, url, request.getRemoteAddr(),
+        ApiRequestEvent requestEvent = new ApiRequestEvent(username, jobId, url, UtilMethods.getIpAddress(request),
                 token, uniqueId);
         eventLogger.log(requestEvent);
         return uniqueId;

@@ -25,8 +25,6 @@ public class HealthAPI {
     @GetMapping(HEALTH_ENDPOINT)
     public ResponseEntity<Void> getHealth(HttpServletRequest request) {
         if (healthCheck.healthy()) {
-            eventLogger.log(new ApiResponseEvent(MDC.get(USERNAME), null, HttpStatus.OK, "API Health Ok",
-                    null, (String) request.getAttribute(REQUEST_ID)));
             return new ResponseEntity<>(HttpStatus.OK);
         } else {
             eventLogger.log(new ApiResponseEvent(MDC.get(USERNAME), null, HttpStatus.INTERNAL_SERVER_ERROR, "API Health NOT Ok",
