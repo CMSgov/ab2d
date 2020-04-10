@@ -9,7 +9,7 @@
         "logs:CreateLogStream"
       ],
       "Resource": [
-        "arn:aws:logs:us-east-1:349849222861:log-group:CloudTrail/DefaultLogGroup:log-stream:349849222861_CloudTrail_us-east-1*"
+        "arn:aws:logs:us-east-1:349849222861:log-group:cloudtrail-logs:log-stream:349849222861_CloudTrail_us-east-1*"
       ]
 
     },
@@ -20,7 +20,7 @@
         "logs:PutLogEvents"
       ],
       "Resource": [
-        "arn:aws:logs:us-east-1:349849222861:log-group:CloudTrail/DefaultLogGroup:log-stream:349849222861_CloudTrail_us-east-1*"
+        "arn:aws:logs:us-east-1:349849222861:log-group:cloudtrail-logs:log-stream:349849222861_CloudTrail_us-east-1*"
       ]
     }
   ]
