@@ -85,7 +85,8 @@ ctas:
 </style>
 
 <script>
-    const baseUrl = 'http://localhost:8080/';
+    // Sandbox URL, could change
+    const baseUrl = 'https://sandbox.ab2d.cms.gov/';
 
     const fhirSegment = 'api/v1/fhir/';
     
@@ -387,21 +388,9 @@ ctas:
     function getLinkTitle(url) {
         return url.substring(url.indexOf(fhirSegment) + fhirSegment.length, url.length);
     }
-
-    function setupAlertPositioning() {
-        const $elt = $('#ab2d-easy-header');
-        const offset = $elt.offset();
-        headerRight = $(window).width() - offset.left + 15;
-        $('#alert-toast').css('right', headerRight);
-    }
     
     $(document).ready(function() {
         turnOnTokenEventHandler();
-        //setupAlertPositioning();
-    });
-    
-    $(window).resize(function() {
-        //setupAlertPositioning();
     });
 </script>
 
