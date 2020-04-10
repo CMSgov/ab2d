@@ -28,6 +28,65 @@ do
 esac
 done
 
+#
+# Use unallocated space to extend the var and home partitions
+#
+
+# Create a new partition from unallocated space
+
+# LSH BEGIN: changed for an "m5.xlarge" instance
+# (
+# echo n # Add a new partition
+# echo p # Primary partition
+# echo   # Partition number (Accept default)
+# echo   # First sector (Accept default)
+# echo   # Last sector (Accept default)
+# echo w # Write changes
+# ) | sudo fdisk /dev/xvda || true #This is here because fdisk always non-zero code
+(
+echo n # Add a new partition
+echo p # Primary partition
+echo   # Partition number (Accept default)
+echo   # First sector (Accept default)
+echo   # Last sector (Accept default)
+echo w # Write changes
+) | sudo fdisk /dev/nvme0n1 || true #This is here because fdisk always non-zero code
+# LSH END: changed for an "m5.xlarge" instance
+
+# Request that the operating system re-reads the partition table
+
+sudo partprobe
+
+# Create physical volume by initializing the partition for use by the Logical Volume Manager (LVM)
+
+# LSH BEGIN: changed for an "m5.xlarge" instance
+# sudo pvcreate /dev/xvda3
+sudo pvcreate /dev/nvme0n1p3
+# LSH END: changed for an "m5.xlarge" instance
+
+# Add the new physical volume to the volume group
+
+# LSH BEGIN: changed for an "m5.xlarge" instance
+# sudo vgextend VolGroup00 /dev/xvda3
+sudo vgextend VolGroup00 /dev/nvme0n1p3
+# LSH END: changed for an "m5.xlarge" instance
+
+# Extend the size of the var logical volume
+
+sudo lvextend -l +50%FREE /dev/mapper/VolGroup00-varVol
+
+# Extend the size of the home logical volume
+
+sudo lvextend -l +50%FREE /dev/mapper/VolGroup00-homeVol
+
+# Expand the existing XFS filesystem for the var logical volume
+
+sudo xfs_growfs -d /dev/mapper/VolGroup00-varVol
+
+# Expand the existing XFS filesystem for the home logical volume
+
+sudo xfs_growfs -d /dev/mapper/VolGroup00-homeVol
+
 # Remove Nagios and Postfix
 sudo yum -y remove nagios-common
 sudo rpm -e postfix
@@ -57,7 +116,7 @@ sudo yum-config-manager --add-repo https://download.docker.com/linux/centos/dock
 sudo rpm --import https://download.docker.com/linux/centos/gpg
 sudo yum-config-manager --enable rhel-7-server-extras-rpms
 sudo yum-config-manager --enable rhui-REGION-rhel-server-extras
-sudo yum -y install docker-ce-18.06.1.ce-3.el7
+sudo yum -y install docker-ce-3:19.03.8-3.el7
 
 # LSH Testing environment BEGIN
 # sudo usermod -aG docker ec2-user
