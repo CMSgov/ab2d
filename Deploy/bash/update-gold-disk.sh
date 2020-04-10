@@ -84,12 +84,40 @@ else
   echo "SEED_AMI=${SEED_AMI}"
 fi
 
+# Determine commit number
+
+CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+COMMIT_NUMBER_OF_CURRENT_BRANCH=$(git rev-parse "${CURRENT_BRANCH}" | cut -c1-7)
+COMMIT_NUMBER_OF_ORIGIN_MASTER=$(git rev-parse origin/master | cut -c1-7)
+
+if [ "${COMMIT_NUMBER_OF_CURRENT_BRANCH}" == "${COMMIT_NUMBER_OF_ORIGIN_MASTER}" ]; then
+  echo "NOTE: The current branch is the master branch."
+  echo "Using commit number of origin/master branch as the image version."
+  COMMIT_NUMBER="${COMMIT_NUMBER_OF_ORIGIN_MASTER}"
+else
+  echo "NOTE: Assuming this is a DevOps branch that has only DevOps changes."
+  COMPARE_BRANCH_WITH_MASTER=$(git log \
+    --decorate \
+    --graph \
+    --oneline \
+    --cherry-mark \
+    --boundary origin/master..."${BRANCH}")
+  if [ -z "${COMPARE_BRANCH_WITH_MASTER}" ]; then
+    echo "NOTE: DevOps branch is the same as origin/master."
+    echo "Using commit number of origin/master branch as the image version."
+    COMMIT_NUMBER="${COMMIT_NUMBER_OF_ORIGIN_MASTER}"
+  else
+    echo "NOTE: DevOps branch is different from origin/master."
+    echo "Using commit number of latest merge from origin/master into the current branch as the image version."
+    COMMIT_NUMBER=$(git log --merges | head -n 2 | tail -n 1 | cut -d" " -f 3 | cut -c1-7)
+  fi
+fi
+
 # Create AMI for controller, api, and worker nodes
 
 cd "${START_DIR}/.."
 cd packer/app
 IP=$(curl ipinfo.io/ip)
-COMMIT=$(git rev-parse HEAD)
 packer build \
   --var seed_ami="${SEED_AMI}" \
   --var environment="${CMS_ENV}" \
@@ -99,7 +127,7 @@ packer build \
   --var subnet_public_1_id="${SUBNET_PUBLIC_1_ID}" \
   --var my_ip_address="${IP}" \
   --var ssh_username="${SSH_USERNAME}" \
-  --var git_commit_hash="${COMMIT}" \
+  --var git_commit_hash="${COMMIT_NUMBER}" \
   app.json  2>&1 | tee output.txt
 AMI_ID=$(cat output.txt | awk 'match($0, /ami-.*/) { print substr($0, RSTART, RLENGTH) }' | tail -1)
 
