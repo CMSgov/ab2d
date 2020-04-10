@@ -88,6 +88,8 @@
 1. [Appendix JJ: Export CloudWatch Log Group data to S3](#appendix-jj-export-cloudwatch-log-group-data-to-s3)
 1. [Appendix KK: Change the BFD certificate in AB2D keystores](#appendix-kk-change-the-bfd-certificate-in-ab2d-keystores)
 1. [Appendix LL: Update existing WAF](#appendix-ll-update-existing-waf)
+1. [Appendix MM: Create new AMI from latest gold disk image](#appendix-mm-create-new-ami-from-latest-gold-disk-image)
+1. [Appendix NN: Get the latest version of docker-ce](#appendix-nn-get-the-latest-version-of-docker-ce)
 
 ## Appendix A: Access the CMS AWS console
 
@@ -7463,25 +7465,13 @@
 
 1. Set test parameters
 
+   *Example for "Dev" environment:*
+
    ```ShellSession
    $ export CMS_ENV_PARAM=ab2d-dev
    $ export REGION_PARAM=us-east-1
    $ export DEBUG_LEVEL_PARAM=WARN
    $ export INTERNET_FACING_PARAM=false
-
-
-   $ export CMS_ECR_REPO_ENV_PARAM=ab2d-mgmt-east-dev
-   $ export VPC_ID_PARAM=vpc-0c6413ec40c5fdac3
-   $ export SSH_USERNAME_PARAM=ec2-user
-   $ export EC2_INSTANCE_TYPE_API_PARAM=m5.xlarge
-   $ export EC2_INSTANCE_TYPE_WORKER_PARAM=m5.xlarge
-   $ export EC2_DESIRED_INSTANCE_COUNT_API_PARAM=1
-   $ export EC2_MINIMUM_INSTANCE_COUNT_API_PARAM=1
-   $ export EC2_MAXIMUM_INSTANCE_COUNT_API_PARAM=1
-   $ export EC2_DESIRED_INSTANCE_COUNT_WORKER_PARAM=1
-   $ export EC2_MINIMUM_INSTANCE_COUNT_WORKER_PARAM=1
-   $ export EC2_MAXIMUM_INSTANCE_COUNT_WORKER_PARAM=1
-   $ export DATABASE_SECRET_DATETIME_PARAM=2020-01-02-09-15-01
    ```
 
 1. Run application deployment automation
@@ -7489,3 +7479,116 @@
    ```ShellSession
    $ ./bash/update-waf.sh
    ```
+
+## Appendix MM: Create new AMI from latest gold disk image
+
+1. Change to the "Deploy" directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d/Deploy
+   ```
+
+1. Set the management AWS profile
+
+   ```ShellSession
+   $ export AWS_PROFILE=ab2d-dev
+   ```
+
+1. Set test parameters
+
+   *Example for "Dev" environment:*
+
+   ```ShellSession
+   $ export CMS_ENV_PARAM=ab2d-dev
+   $ export DEBUG_LEVEL_PARAM=WARN
+   $ export EC2_INSTANCE_TYPE_PACKER_PARAM=m5.xlarge
+   $ export OWNER_PARAM=743302140042
+   $ export REGION_PARAM=us-east-1
+   $ export SSH_USERNAME_PARAM=ec2-user
+   $ export VPC_ID_PARAM=vpc-0c6413ec40c5fdac3
+   ```
+
+1. Run application deployment automation
+
+   ```ShellSession
+   $ ./bash/update-gold-disk.sh
+   ```
+
+## Appendix NN: Get the latest version of docker-ce
+
+1. Get the latest version of docker-ce
+
+   ```ShellSession
+   $ sudo yum list docker-ce --showduplicates \
+     | sort -r \
+     | grep docker-ce.x86_64 \
+     | head -1
+   ```
+
+1. Note the output
+
+   *Format:*
+
+   ```
+   docker-ce.x86_64            {docker ce version}                docker-ce-stable
+   ```
+
+   *Example:*
+
+   ```
+   docker-ce.x86_64            3:19.03.8-3.el7                    docker-ce-stable
+   ```
+
+1. Upgrade the "provision-app-instance.sh" script with the latest docker ce version
+
+   1. Change to the "Deploy" directory
+
+      ```ShellSession
+      $ cd ~/code/ab2d/Deploy
+      ```
+
+   1. Open "provision-app-instance.sh"
+
+      ```ShellSession
+      $ vim ./packer/app/provision-app-instance.sh
+      ```
+
+   1. Change the following line as follows
+
+      *Format:*
+
+      ```
+      sudo yum -y install docker-ce-{docker ce version}
+      ```
+
+      *Example:*
+
+      ```
+      sudo yum -y install docker-ce-3:19.03.8-3.el7
+      ```
+
+   1. Save and close the file
+
+1. Upgrade the "provision-jenkins.sh" script with the latest docker ce version
+
+   1. Open "provision-jenkins.sh"
+
+      ```ShellSession
+      $ vim ./packer/jenkins/provision-jenkins.sh
+      ```
+
+   1. Change the following line as follows
+
+      *Format:*
+
+      ```
+      sudo yum -y install docker-ce-{docker ce version}
+      ```
+
+      *Example:*
+
+      ```
+      sudo yum -y install docker-ce-3:19.03.8-3.el7
+      ```
+
+   1. Save and close the file
