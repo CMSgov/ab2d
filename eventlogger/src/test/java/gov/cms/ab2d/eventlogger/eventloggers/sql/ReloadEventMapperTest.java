@@ -1,6 +1,6 @@
 package gov.cms.ab2d.eventlogger.eventloggers.sql;
 
-import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
+import gov.cms.ab2d.eventlogger.AB2DPostgresqlContainer;
 import gov.cms.ab2d.eventlogger.EventLoggingException;
 import gov.cms.ab2d.eventlogger.LoggableEvent;
 import gov.cms.ab2d.eventlogger.SpringBootApp;

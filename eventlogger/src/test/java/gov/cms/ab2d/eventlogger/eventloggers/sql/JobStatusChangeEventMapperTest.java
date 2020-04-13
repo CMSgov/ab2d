@@ -1,7 +1,6 @@
 package gov.cms.ab2d.eventlogger.eventloggers.sql;
 
-import gov.cms.ab2d.common.model.JobStatus;
-import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
+import gov.cms.ab2d.eventlogger.AB2DPostgresqlContainer;
 import gov.cms.ab2d.eventlogger.EventLoggingException;
 import gov.cms.ab2d.eventlogger.LoggableEvent;
 import gov.cms.ab2d.eventlogger.SpringBootApp;
@@ -44,8 +43,8 @@ class JobStatusChangeEventMapperTest {
 
     @Test
     void log() {
-        JobStatusChangeEvent jsce = new JobStatusChangeEvent("laila", "job123", JobStatus.IN_PROGRESS,
-                JobStatus.FAILED, "Description");
+        JobStatusChangeEvent jsce = new JobStatusChangeEvent("laila", "job123", "IN_PROGRESS",
+                "FAILED", "Description");
         sqlEventLogger.log(jsce);
         long id = jsce.getId();
         OffsetDateTime val = jsce.getTimeOfEvent();
@@ -57,8 +56,8 @@ class JobStatusChangeEventMapperTest {
         assertEquals("laila", event.getUser());
         assertEquals("job123", event.getJobId());
         assertEquals(val.getNano(), event.getTimeOfEvent().getNano());
-        assertEquals(JobStatus.FAILED, event.getNewStatus());
-        assertEquals(JobStatus.IN_PROGRESS, event.getOldStatus());
+        assertEquals("FAILED", event.getNewStatus());
+        assertEquals("IN_PROGRESS", event.getOldStatus());
         assertEquals("Description", event.getDescription());
         deleteObjects.deleteAllJobStatusChangeEvent();
         events = loadObjects.loadAllJobStatusChangeEvent();
