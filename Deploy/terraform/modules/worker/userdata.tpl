@@ -117,8 +117,8 @@ else
   # Get keystore from S3, decrypt it, and move it to EFS
   #
 
-  # Change to the "/tmp" directory
-  cd /tmp
+  # Change to the "/deployment" directory
+  cd /deployment
 
   # Commented out because packer installs ruby under ec2_user, while user data runs as root
   #

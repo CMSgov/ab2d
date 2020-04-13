@@ -28,80 +28,14 @@ do
 esac
 done
 
-#
-# Update yum
-#
-
-sudo yum -y update
-
-#
-# Use unallocated space to extend the var and home partitions
-#
-
-# Install logical volume manager
-
-sudo yum install -y lvm2
-
-# # Create a new partition from unallocated space
-
-# # LSH BEGIN: changed for an "m5.xlarge" instance
-# # (
-# # echo n # Add a new partition
-# # echo p # Primary partition
-# # echo   # Partition number (Accept default)
-# # echo   # First sector (Accept default)
-# # echo   # Last sector (Accept default)
-# # echo w # Write changes
-# # ) | sudo fdisk /dev/xvda || true #This is here because fdisk always non-zero code
-# (
-# echo n # Add a new partition
-# echo p # Primary partition
-# echo   # Partition number (Accept default)
-# echo   # First sector (Accept default)
-# echo   # Last sector (Accept default)
-# echo w # Write changes
-# ) | sudo fdisk /dev/nvme0n1 || true #This is here because fdisk always non-zero code
-# # LSH END: changed for an "m5.xlarge" instance
-
-# # Request that the operating system re-reads the partition table
-
-# sudo partprobe
-
-# # Create physical volume by initializing the partition for use by the Logical Volume Manager (LVM)
-
-# # LSH BEGIN: changed for an "m5.xlarge" instance
-# # sudo pvcreate /dev/xvda3
-# sudo pvcreate /dev/nvme0n1p3
-# # LSH END: changed for an "m5.xlarge" instance
-
-# # Add the new physical volume to the volume group
-
-# # LSH BEGIN: changed for an "m5.xlarge" instance
-# # sudo vgextend VolGroup00 /dev/xvda3
-# sudo vgextend VolGroup00 /dev/nvme0n1p3
-# # LSH END: changed for an "m5.xlarge" instance
-
-# # Extend the size of the var logical volume
-
-# sudo lvextend -l +50%FREE /dev/mapper/VolGroup00-varVol
-
-# # Extend the size of the home logical volume
-
-# sudo lvextend -l +50%FREE /dev/mapper/VolGroup00-homeVol
-
-# # Expand the existing XFS filesystem for the var logical volume
-
-# sudo xfs_growfs -d /dev/mapper/VolGroup00-varVol
-
-# # Expand the existing XFS filesystem for the home logical volume
-
-# sudo xfs_growfs -d /dev/mapper/VolGroup00-homeVol
-
 # Remove Nagios and Postfix
+
 sudo yum -y remove nagios-common
 sudo rpm -e postfix
 
 # Install depedencies
+
+sudo yum -y update
 sudo yum -y install \
   vim \
   tmux \
@@ -113,7 +47,7 @@ sudo yum -y install \
   epel-release \
   python-pip
 
-# Postgres 11
+# Install Postgres 11
 
 wget https://download.postgresql.org/pub/repos/yum/RPM-GPG-KEY-PGDG-11
 sudo rpm --import RPM-GPG-KEY-PGDG-11
@@ -121,7 +55,7 @@ sudo yum -y install https://download.postgresql.org/pub/repos/yum/11/redhat/rhel
 
 sudo yum -y install postgresql11
 
-# Docker
+# Install Docker
 
 sudo yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
 sudo rpm --import https://download.docker.com/linux/centos/gpg
@@ -219,9 +153,9 @@ gem install bundler
 
 gem update --system
 
-# Change to the "/tmp" directory
+# Change to the "/deployment" directory
 
-cd /tmp
+cd /deployment
 
 # Ensure required gems are installed
 

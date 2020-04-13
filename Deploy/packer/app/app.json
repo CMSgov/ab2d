@@ -39,6 +39,12 @@
     }],
   "provisioners": [
     {
+      "type": "shell","inline": [
+        "sudo mkdir -p /deployment",
+	"sudo chmod -R 777 /deployment"
+      ]
+    },
+    {
       "type": "file",
       "source": "./splunk-deploymentclient.conf",
       "destination": "/tmp/splunk-deploymentclient.conf"
@@ -61,12 +67,12 @@
     {
       "type": "file",
       "source": "../../ruby/Gemfile",
-      "destination": "/tmp/Gemfile"
+      "destination": "/deployment/Gemfile"
     },
     {
       "type": "file",
       "source": "../../ruby/Rakefile",
-      "destination": "/tmp/Rakefile"
+      "destination": "/deployment/Rakefile"
     },
     {
       "type": "shell","inline": [
