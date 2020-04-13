@@ -33,6 +33,7 @@ import static gov.cms.ab2d.common.util.Constants.*;
 @Api(value = "Bulk Data File Download API", description = "After creating a job, the API to download the generated bulk download files",
         tags = {"Download"})
 @RestController
+@CrossOrigin
 @RequestMapping(path = API_PREFIX + FHIR_PREFIX, produces = {"application/json", NDJSON_FIRE_CONTENT_TYPE})
 public class FileDownloadAPI {
     @Autowired
