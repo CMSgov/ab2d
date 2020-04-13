@@ -17,6 +17,7 @@ ctas:
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.6/umd/popper.min.js" integrity="sha384-wHAiFfRlMFy6i5SRaxvfOCifBUQy1xHdJ/yoi7FRNXMRBu5WHdZYu1hA6ZOblgut" crossorigin="anonymous"></script>
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/js/bootstrap.min.js" integrity="sha384-B0UglyR+jN6CkvvICOB2joaf5I4l3gm9GU6Hc1og6Ls7i6U/mkkaduKaBhlAXv9k" crossorigin="anonymous"></script>
+<script src="assets/js/jquery.binarytransport.js" type="text/javascript"></script>
 
 <style type="text/css">
     #export {
@@ -28,6 +29,10 @@ ctas:
     }
     
     #progress-bar {
+        display: none;
+    }
+    
+    #reset-section {
         display: none;
     }
     
@@ -47,11 +52,42 @@ ctas:
     .ab2d-easy-section {
         margin-top: 45px;
     }
+    
+    #download-section {
+        display: none;
+    }
+    
+    #download-section-content {
+        padding: 5px;
+    }
+    
+    #download-files-text {
+        margin-bottom: 5px;
+    }
+    
+    #download-section-links {
+        padding-inline-start: 5px;
+        list-style: none;
+        margin-top: 5px;
+    }
+    
+    #download-section-links li {
+        margin-bottom: 8px;
+    }
+    
+    #download-section-links a {
+        color: #4B78C4;
+    }
+    
+    .progress {
+        background-color: #DEDFEF;
+    }
 </style>
 
 <script>
     // Sandbox URL, could change
     const baseUrl = 'https://sandbox.ab2d.cms.gov/';
+
     const fhirSegment = 'api/v1/fhir/';
     
     const fadeInTime = 1000;
@@ -73,6 +109,8 @@ ctas:
         delay: 4500
     };
     
+    let downloadStartTime = undefined;    
+
     function showAlert(cssClass, message) {
         $('#toast-body').text(message).removeClass(successClass).removeClass(failureClass).addClass(cssClass);
         $('#alert-toast').toast(toastOptions);
@@ -131,6 +169,8 @@ ctas:
                 turnOffTokenEventHandler();
                 turnOffExportEventHandler();
                 turnOnCancelEventHandler();
+                initiateDownloadTimer();
+
             },
             error: function() {
                 showAlert(failureClass, "Failed to start bulk export. Please try again"); 
@@ -160,6 +200,7 @@ ctas:
                     cancelStatusInterval();
                     turnOffCancelEventHandler();
                     updateProgressBar(100);
+                    showDownloadLinks(xhr.responseJSON);
                 } else if(xhr.status === 500) {
                     cancelStatusInterval();
                 }
@@ -174,9 +215,31 @@ ctas:
         clearInterval(statusInterval);    
     }
     
+    function initiateDownloadTimer() {
+        downloadStartTime = new Date();
+    }
+    
     function updateProgressBar(value) {
+        let text = value + '%';
+    
+        if(value > 0 && value < 100) {
+            let timeElapsedMilliseconds = new Date().getTime() - downloadStartTime.getTime();
+            let totalEstimatedMilliseconds = timeElapsedMilliseconds * (100 / value);
+            let totalEstimatedMillisecondsLeft = totalEstimatedMilliseconds - timeElapsedMilliseconds;
+            // Use Math.ceil, avoid showing a 0 seconds left scenario
+            let totalSecondsLeft = Math.ceil(totalEstimatedMillisecondsLeft / 1000);
+            if(totalSecondsLeft > 60) {
+                let minutes = Math.floor(totalSecondsLeft / 60);
+                let seconds = totalSecondsLeft - 60 * minutes;
+                let totalTimeRemaining = minutes + " minutes, " + seconds + " seconds remaining";
+                text += " (" + totalTimeRemaining + ")";
+            } else {
+                text += " (" + totalSecondsLeft + " seconds remaining)";
+            }
+        }
+    
         $('#progress-bar .progress-bar').css('width', value + '%').attr('aria-valuenow', value)
-            .text(value + '%');
+            .text(text);
     }
     
     function cancelExport() {
@@ -235,35 +298,107 @@ ctas:
         $("#cancel-button").off("click");
     }
     
+    function turnOnResetEventHandler() {
+        $("#reset-button").on("click", function(event) {
+            event.preventDefault();
+            resetAll();  
+        });  
+    }
+    
+    function resetAll() {
+        $('#reset-section').fadeOut(fadeOutTime);
+        $('#download-section').fadeOut(fadeOutTime, function() {
+            $('#download-section-links').html('');  
+        });
+        doReset();
+    }
+    
     function doReset() {
         cancelStatusInterval();
-        $("#progress-bar").fadeOut(fadeOutTime);
-        $("#export").fadeOut(fadeOutTime);
+        resetProgressBar();
+        $("#export").fadeOut(fadeOutTime, function() {
+            $('#contractNumber').val('');  
+        });
         turnOnTokenEventHandler();
         turnOffCancelEventHandler();
         turnOffExportEventHandler();
     }
     
-    function setupAlertPositioning() {
-        const $elt = $('#ab2d-easy-header');
-        const offset = $elt.offset();
-        headerRight = $(window).width() - offset.left + 15;
-        $('#alert-toast').css('right', headerRight);
+    function resetProgressBar() {
+        $("#progress-bar").fadeOut(fadeOutTime, function() {
+            updateProgressBar(0);
+        });
+    }
+    
+    function downloadJSON(url, linkTitle) {
+        $.ajax({
+            url: url,
+            headers: {
+                'Authorization': 'Bearer ' + token
+            },
+            dataType: 'binary',
+            type: 'get',
+            processData: 'false',
+            success: function(blob) {
+                showAlert(successClass, "File download started");
+                const windowUrl = window.URL || window.webkitURL;
+                const downloadUrl = windowUrl.createObjectURL(blob);
+                const anchor = $("<a></a>"); 
+                anchor.css("display", "none"); 
+                $("body").append(anchor);
+                anchor.prop('href', downloadUrl);
+                anchor.prop('download', linkTitle);
+                anchor.get(0).click();
+                windowUrl.revokeObjectURL(downloadUrl);
+                anchor.remove();
+            },
+            error: function() {
+                showAlert(failureClass, "Failed to download file");
+            }
+        });
+    }
+    
+    function showDownloadLinks(responseJSON) {
+        if(responseJSON.error.length > 0) {
+            showAlert(failureClass, 'There was an error while processing the file');
+        }
+        for(let i = 0; i < responseJSON.output.length; i++) {
+            const url = responseJSON.output[i].url;
+            const linkTitle = getLinkTitle(url);
+            $("#download-section-links").append("<li><a href='" + url + "'>" +
+                linkTitle + "</a></li>");
+        }
+        
+        $("#download-section-links li").each(function() {
+            $(this).one('click', function(event) {
+                event.preventDefault();
+                const anchor = $(this).find('a');
+                const url = anchor.attr('href');
+                const linkTitle = getLinkTitle(url);
+                downloadJSON(url, linkTitle);
+            });
+        });
+        
+        $("#download-section").fadeIn(fadeInTime, function() {
+            $("#reset-section").fadeIn(fadeInTime);
+            turnOnResetEventHandler();  
+        });
+    }
+    
+    function getLinkTitle(url) {
+        return url.substring(url.indexOf(fhirSegment) + fhirSegment.length, url.length);
     }
     
     $(document).ready(function() {
         turnOnTokenEventHandler();
-        setupAlertPositioning();
-    });
-    
-    $(window).resize(function() {
-        setupAlertPositioning();
     });
 </script>
 
 <div id="ab2d-easy-section" style="padding: 5px;">
 
-    <div class="toast" id="alert-toast" role="alert" aria-live="assertive" aria-atomic="true" style="position: fixed; top: 100px;">
+    <h3 id="ab2d-easy-header">AB2D Easy</h3>
+        
+    <div class="toast" id="alert-toast" role="alert" aria-live="assertive" aria-atomic="true" style="position: absolute;">
         <div class="toast-header">
             <small>Notification</small>
             <button type="button" class="ml-2 mb-1 close" data-dismiss="toast" style="position: absolute; right: 5px;">
@@ -271,10 +406,8 @@ ctas:
             </button>
         </div>
         <div class="toast-body" id="toast-body"></div>
-    </div>
-
-    <h3 id="ab2d-easy-header">AB2D Easy</h3>
-    
+    </div>   
+       
     <br />
     
     <div class="intro-text">
@@ -325,5 +458,15 @@ ctas:
         </div>
     </div>
     
-    <!-- Download Data -->
+    <div id="download-section" class="ab2d-easy-section">
+        <div id="download-files-text">Download Files</div>
+        <div id="download-section-content">
+            <ul id="download-section-links">
+            </ul>
+        </div>
+    </div>
+    
+    <div id="reset-section" class="ab2d-easy-section">
+         <button class="btn btn-primary" type="submit" id="reset-button">Reset</button>
+    </div>
 </div>
