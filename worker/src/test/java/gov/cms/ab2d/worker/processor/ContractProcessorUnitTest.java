@@ -8,6 +8,7 @@ import gov.cms.ab2d.common.model.Sponsor;
 import gov.cms.ab2d.common.model.User;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.common.repository.OptOutRepository;
+import gov.cms.ab2d.eventlogger.EventLogger;
 import gov.cms.ab2d.filter.FilterOutByDate;
 import gov.cms.ab2d.worker.adapter.bluebutton.GetPatientsByContractResponse;
 import gov.cms.ab2d.worker.adapter.bluebutton.GetPatientsByContractResponse.PatientDTO;
@@ -62,6 +63,7 @@ class ContractProcessorUnitTest {
     @Mock private FileService fileService;
     @Mock private JobRepository jobRepository;
     @Mock private OptOutRepository optOutRepository;
+    @Mock private EventLogger eventLogger;
     private PatientClaimsProcessor patientClaimsProcessor = spy(PatientClaimsProcessorStub.class);
 
     private GetPatientsByContractResponse patientsByContract;
@@ -74,7 +76,8 @@ class ContractProcessorUnitTest {
                 fileService,
                 jobRepository,
                 patientClaimsProcessor,
-                optOutRepository
+                optOutRepository,
+                eventLogger
         );
 
         ReflectionTestUtils.setField(cut, "cancellationCheckFrequency", 2);

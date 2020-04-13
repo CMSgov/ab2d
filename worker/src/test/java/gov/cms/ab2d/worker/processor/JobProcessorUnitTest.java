@@ -7,6 +7,7 @@ import gov.cms.ab2d.common.model.Sponsor;
 import gov.cms.ab2d.common.model.User;
 import gov.cms.ab2d.common.repository.JobOutputRepository;
 import gov.cms.ab2d.common.repository.JobRepository;
+import gov.cms.ab2d.eventlogger.EventLogger;
 import gov.cms.ab2d.filter.FilterOutByDate;
 import gov.cms.ab2d.worker.adapter.bluebutton.ContractAdapter;
 import gov.cms.ab2d.worker.adapter.bluebutton.GetPatientsByContractResponse;
@@ -63,6 +64,7 @@ class JobProcessorUnitTest {
     @Mock private JobOutputRepository jobOutputRepository;
     @Mock private ContractAdapter contractAdapter;
     @Mock private ContractProcessor contractProcessor;
+    @Mock private EventLogger eventLogger;
 
     private Job job;
     private GetPatientsByContractResponse patientsByContract;
@@ -74,7 +76,8 @@ class JobProcessorUnitTest {
                 jobRepository,
                 jobOutputRepository,
                 contractAdapter,
-                contractProcessor
+                contractProcessor,
+                eventLogger
         );
 
         ReflectionTestUtils.setField(cut, "efsMount", efsMountTmpDir.toString());

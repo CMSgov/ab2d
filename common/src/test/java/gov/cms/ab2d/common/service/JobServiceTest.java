@@ -151,7 +151,7 @@ public class JobServiceTest {
 
     @Test
     public void createJobWithBadContract() {
-        Assertions.assertThrows(ResourceNotFoundException.class, () -> {
+        Assertions.assertThrows(ContractNotFoundException.class, () -> {
             jobService.createJob(EOB, "http://localhost:8080", "BadContract", NDJSON_FIRE_CONTENT_TYPE, null);
         });
     }

@@ -3,7 +3,7 @@ package gov.cms.ab2d.eventlogger.eventloggers.sql;
 import gov.cms.ab2d.eventlogger.LoggableEvent;
 import gov.cms.ab2d.eventlogger.events.ApiRequestEvent;
 import gov.cms.ab2d.eventlogger.events.ApiResponseEvent;
-import gov.cms.ab2d.eventlogger.events.BeneficiaryReloadEvent;
+import gov.cms.ab2d.eventlogger.events.ReloadEvent;
 import gov.cms.ab2d.eventlogger.events.ContractBeneSearchEvent;
 import gov.cms.ab2d.eventlogger.events.ErrorEvent;
 import gov.cms.ab2d.eventlogger.events.FileEvent;
@@ -37,7 +37,7 @@ public class SqlMapperConfig {
     private void init() {
         mapping.put(ApiRequestEvent.class, new ApiRequestEventMapper(jdbcTemplate));
         mapping.put(ApiResponseEvent.class, new ApiResponseEventMapper(jdbcTemplate));
-        mapping.put(BeneficiaryReloadEvent.class, new BeneficiaryReloadEventMapper(jdbcTemplate));
+        mapping.put(ReloadEvent.class, new ReloadEventMapper(jdbcTemplate));
         mapping.put(ContractBeneSearchEvent.class, new ContractBeneSearchEventMapper(jdbcTemplate));
         mapping.put(ErrorEvent.class, new ErrorEventMapper(jdbcTemplate));
         mapping.put(FileEvent.class, new FileEventMapper(jdbcTemplate));

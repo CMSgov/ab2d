@@ -5,5 +5,5 @@ import java.io.InputStream;
 
 public interface ExcelReportProcessor {
 
-    void processReport(InputStream xlsInputStream, ExcelType excelType) throws IOException;
+    void processReport(String fileName, InputStream xlsInputStream, ExcelType excelType) throws IOException;
 }

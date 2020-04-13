@@ -5,6 +5,7 @@ import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.repository.ContractRepository;
 import gov.cms.ab2d.common.service.PropertiesService;
+import gov.cms.ab2d.eventlogger.EventLogger;
 import gov.cms.ab2d.worker.service.BeneficiaryService;
 import org.hl7.fhir.dstu3.model.Bundle;
 import org.hl7.fhir.dstu3.model.Bundle.BundleEntryComponent;
@@ -36,7 +37,6 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
-
 @ExtendWith(MockitoExtension.class)
 class ContractAdapterTest {
 
@@ -46,12 +46,12 @@ class ContractAdapterTest {
     @Mock ContractRepository contractRepository;
     @Mock BeneficiaryService beneficiaryService;
     @Mock PropertiesService propertiesService;
+    @Mock EventLogger eventLogger;
 
     private ContractAdapter cut;
     private String contractNumber = "S0000";
     private int currentMonth = Month.MARCH.getValue();
     private Bundle bundle;
-
 
     @BeforeEach
     void setUp() {
@@ -59,7 +59,8 @@ class ContractAdapterTest {
                 client,
                 contractRepository,
                 beneficiaryService,
-                propertiesService
+                propertiesService,
+                eventLogger
         );
 
         bundle = createBundle();
@@ -178,7 +179,6 @@ class ContractAdapterTest {
         verify(client, never()).requestNextBundleFromServer(Mockito.any(Bundle.class));
     }
 
-
     @Test
     void GivenAPatientLeavesInFeb_ShouldReturnOnlyOneRowsForThatPatientInDateRangesUnderContract() {
         var bundle1 = bundle.copy();
@@ -210,7 +210,6 @@ class ContractAdapterTest {
         verify(client, never()).requestNextBundleFromServer(Mockito.any(Bundle.class));
     }
 
-
     @Test
     void GivenTwoPatientsActiveInJanAndFeb_ShouldReturnTwoPatientRowsEachWithTwoRowsInDateRangesUnderContract() {
         var entries = bundle.getEntry();
@@ -232,7 +231,6 @@ class ContractAdapterTest {
         verify(client, times(2)).requestPartDEnrolleesFromServer(anyString(), anyInt());
         verify(client, never()).requestNextBundleFromServer(Mockito.any(Bundle.class));
     }
-
 
     @Test
     void GivenMultiplePages_ShouldProcessAllPages() {
@@ -268,7 +266,6 @@ class ContractAdapterTest {
         verify(client).requestNextBundleFromServer(Mockito.any(Bundle.class));
     }
 
-
     @Test
     void GivenDuplicatePatientRowsFromBFD_ShouldEliminateDuplicates() {
         var entries = bundle.getEntry();
@@ -294,7 +291,6 @@ class ContractAdapterTest {
         verify(client, times(1)).requestPartDEnrolleesFromServer(anyString(), anyInt());
         verify(client, never()).requestNextBundleFromServer(Mockito.any(Bundle.class));
     }
-
 
     @Test
     @DisplayName("given patientid rows in db for a specific contract & month, should not call BFD contract-2-bene api")
@@ -331,7 +327,6 @@ class ContractAdapterTest {
         verify(beneficiaryService).storeBeneficiaries(anyLong(), anySet(), anyInt());
     }
 
-
     @Test
     @DisplayName("given patient count < cachingThreshold, should not cache beneficiary data")
     void GivenPatientCountLessThanCachingThreshold_ShouldNotCacheBeneficiaryData() {
@@ -349,7 +344,6 @@ class ContractAdapterTest {
         verify(beneficiaryService, never()).storeBeneficiaries(anyLong(), anySet(), anyInt());
     }
 
-
     @Test
     @DisplayName("when call to BFD API throws Invalid Request exception, throws Exception")
     void whenBfdCallThrowsInvalidRequestException_ShouldThrowRuntimeException() {
@@ -361,7 +355,6 @@ class ContractAdapterTest {
 
         assertThat(exceptionThrown.getMessage(), endsWith("Request is invalid"));
     }
-
 
     private Bundle createBundle() {
         return createBundle("ccw_patient_000");
@@ -398,5 +391,4 @@ class ContractAdapterTest {
         linkComponent.setRelation(Bundle.LINK_NEXT);
         return linkComponent;
     }
-
 }

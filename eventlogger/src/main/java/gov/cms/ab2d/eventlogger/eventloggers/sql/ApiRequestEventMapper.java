@@ -3,8 +3,6 @@ package gov.cms.ab2d.eventlogger.eventloggers.sql;
 import gov.cms.ab2d.eventlogger.EventLoggingException;
 import gov.cms.ab2d.eventlogger.LoggableEvent;
 import gov.cms.ab2d.eventlogger.events.ApiRequestEvent;
-import gov.cms.ab2d.eventlogger.utils.UtilMethods;
-import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
@@ -33,10 +31,7 @@ public class ApiRequestEventMapper extends SqlEventMapper {
                 " (time_of_event, user_id, job_id, url, ip_address, token_hash, request_id) " +
                 " values (:time, :user, :job, :url, :ipAddress, :tokenHash, :requestId)";
 
-        SqlParameterSource parameters = new MapSqlParameterSource()
-            .addValue("time", UtilMethods.convertToUtc(be.getTimeOfEvent()))
-            .addValue("user", be.getUser())
-            .addValue("job", be.getJobId())
+        SqlParameterSource parameters = super.addSuperParams(event)
             .addValue("url", be.getUrl())
             .addValue("ipAddress", be.getIpAddress())
             .addValue("tokenHash", be.getTokenHash())

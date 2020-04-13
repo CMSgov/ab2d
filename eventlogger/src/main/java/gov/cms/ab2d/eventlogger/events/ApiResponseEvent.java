@@ -3,6 +3,7 @@ package gov.cms.ab2d.eventlogger.events;
 import gov.cms.ab2d.eventlogger.LoggableEvent;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import org.springframework.http.HttpStatus;
 
 import java.time.OffsetDateTime;
 
@@ -23,10 +24,12 @@ public class ApiResponseEvent extends LoggableEvent {
 
     public ApiResponseEvent() { }
 
-    public ApiResponseEvent(String user, String jobId, int responseCode, String responseString, String description,
+    public ApiResponseEvent(String user, String jobId, HttpStatus responseCode, String responseString, String description,
                             String requestId) {
         super(OffsetDateTime.now(), user, jobId);
-        this.responseCode = responseCode;
+        if (responseCode != null) {
+            this.responseCode = responseCode.value();
+        }
         this.responseString = responseString;
         this.description = description;
         this.requestId = requestId;

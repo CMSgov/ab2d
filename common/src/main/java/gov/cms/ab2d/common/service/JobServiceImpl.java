@@ -81,7 +81,7 @@ public class JobServiceImpl implements JobService {
                 job.setContract(contractFound);
             }, () -> {
                 log.error("Contract {} was not found", contractNumber);
-                throw new ResourceNotFoundException("Contract " + contractNumber + " was not found");
+                throw new ContractNotFoundException("Contract " + contractNumber + " was not found");
             });
         }
 
