@@ -89,7 +89,8 @@
 1. [Appendix KK: Change the BFD certificate in AB2D keystores](#appendix-kk-change-the-bfd-certificate-in-ab2d-keystores)
 1. [Appendix LL: Update existing WAF](#appendix-ll-update-existing-waf)
 1. [Appendix MM: Create new AMI from latest gold disk image](#appendix-mm-create-new-ami-from-latest-gold-disk-image)
-1. [Appendix NN: Get the latest version of docker-ce](#appendix-nn-get-the-latest-version-of-docker-ce)
+1. [Appendix NN: Manually test the deployment](#appendix-nn-manually-test-the-deployment)
+1. [Appendix OO: Merge a specific commit from master into your branch](#appendix-oo-merge-a-specific-commit-from-master-into-your-branch)
 
 ## Appendix A: Access the CMS AWS console
 
@@ -704,7 +705,7 @@
 1. Connect to the controller
 
    *Format:*
-   
+
    ```ShellSession
    $ ssh -i ~/.ssh/${TARGET_ENVIRONMENT}.pem ${SSH_USER_NAME}@${CONTROLLER_PUBLIC_IP}
    ```
@@ -712,13 +713,13 @@
 1. Set node variables
 
    *Example for "Dev" environment:*
-   
+
    ```ShellSession
    $ export TARGET_ENVIRONMENT=ab2d-dev
    $ export NODE_PRIVATE_IP=10.242.26.231
    $ export SSH_USER_NAME=ec2-user
    ```
-   
+
 1. Connect to a node
 
    *Format:*
@@ -7490,6 +7491,8 @@
 
 1. Set the management AWS profile
 
+   *Example for "Dev" environment:*
+   
    ```ShellSession
    $ export AWS_PROFILE=ab2d-dev
    ```
@@ -7514,15 +7517,45 @@
    $ ./bash/update-gold-disk.sh
    ```
 
-## Appendix NN: Get the latest version of docker-ce
+## Appendix NN: Manually test the deployment
 
-1. Get the latest version of docker-ce
+1. Retrieve a JSON Web Token (JWT)
 
+   1. Set the authorization for the test user
+
+      *Example for test user 0oa2t0lsrdZw5uWRx297:*
+
+      ```ShellSession
+      $ AUTH=MG9hMnQwbHNyZFp3NXVXUngyOTc6SEhkdVdHNkxvZ0l2RElRdVdncDNabG85T1lNVmFsVHRINU9CY3VIdw==
+      ```
+
+   1. Retrieve a JWT bearer token by entering the following at the terminal prompt
+
+      ```ShellSession
+      $ BEARER_TOKEN=$(curl -X POST "https://test.idp.idm.cms.gov/oauth2/aus2r7y3gdaFMKBol297/v1/token?grant_type=client_credentials&scope=clientCreds" \
+        -H "Content-Type: application/x-www-form-urlencoded" \
+        -H "Accept: application/json" \
+        -H "Authorization: Basic ${AUTH}" \
+        | jq --raw-output ".access_token")
+      ```
+
+   1. Ensure that you have a "BEARER_TOKEN" environment variable before proceeding
+
+      ```ShellSession
+      $ echo $BEARER_TOKEN
+      ```
+
+1. Create an export job
+
+   *Example for "Dev" environment:*
+   
    ```ShellSession
-   $ sudo yum list docker-ce --showduplicates \
-     | sort -r \
-     | grep docker-ce.x86_64 \
-     | head -1
+   $ curl "http://internal-ab2d-dev-820359992.us-east-1.elb.amazonaws.com/api/v1/fhir/Patient/\$export?_outputFormat=application%2Ffhir%2Bndjson&_type=ExplanationOfBenefit" \
+     -sD - \
+     -H "accept: application/json" \
+     -H "Accept: application/fhir+json" \
+     -H "Prefer: respond-async" \
+     -H "Authorization: Bearer ${BEARER_TOKEN}"
    ```
 
 1. Note the output
@@ -7530,65 +7563,199 @@
    *Format:*
 
    ```
-   docker-ce.x86_64            {docker ce version}                docker-ce-stable
+   HTTP/1.1 {response code}
+   Date: Mon, 13 Apr 2020 16:35:38 GMT
+   Content-Length: 0
+   Connection: keep-alive
+   Vary: Origin
+   Vary: Access-Control-Request-Method
+   Vary: Access-Control-Request-Headers
+   Vary: Origin
+   Vary: Access-Control-Request-Method
+   Vary: Access-Control-Request-Headers
+   Content-Location: http://internal-ab2d-dev-820359992.us-east-1.elb.amazonaws.com/api/v1/fhir/Job/{job id}/$status
+   X-Content-Type-Options: nosniff
+   X-XSS-Protection: 1; mode=block
+   Cache-Control: no-cache, no-store, max-age=0, must-revalidate
+   Pragma: no-cache
+   Expires: 0
+   X-Frame-Options: DENY
+   ```
+
+   *Example for "Dev" environment:*
+
+   ```
+   HTTP/1.1 202
+   Date: Mon, 13 Apr 2020 16:35:38 GMT
+   Content-Length: 0
+   Connection: keep-alive
+   Vary: Origin
+   Vary: Access-Control-Request-Method
+   Vary: Access-Control-Request-Headers
+   Vary: Origin
+   Vary: Access-Control-Request-Method
+   Vary: Access-Control-Request-Headers
+   Content-Location: http://internal-ab2d-dev-820359992.us-east-1.elb.amazonaws.com/api/v1/fhir/Job/42d7addc-0e1b-4687-a1e2-5e029f173849/$status
+   X-Content-Type-Options: nosniff
+   X-XSS-Protection: 1; mode=block
+   Cache-Control: no-cache, no-store, max-age=0, must-revalidate
+   Pragma: no-cache
+   Expires: 0
+   X-Frame-Options: DENY
+   ```
+
+1. Note the response code and job id from the output
+
+   ```
+   {response-code} = 202 
+   {job id} = 42d7addc-0e1b-4687-a1e2-5e029f173849
+   ```
+
+1. If the response code is 202, set an environment variable for the job by entering the following at the terminal prompt
+
+   *Format:*
+
+   ```ShellSession
+   $ JOB={job id}
+   ```
+   
+   *Example:*
+
+   ```ShellSession
+   $ JOB=42d7addc-0e1b-4687-a1e2-5e029f173849
+   ```
+
+1. Check the status of the job by entering the following at the terminal prompt
+
+   *Example for "Dev" environment:*
+   
+   ```ShellSession
+   $ curl "http://internal-ab2d-dev-820359992.us-east-1.elb.amazonaws.com/api/v1/fhir/Job/${JOB}/\$status" \
+     -sD - \
+     -H "accept: application/json" \
+     -H "Authorization: Bearer ${BEARER_TOKEN}"
+   ```
+
+1. Note the output
+
+   *Format:*
+
+   ```
+   HTTP/1.1 {response-code} 
+   Date: Mon, 13 Apr 2020 22:13:32 GMT
+   Content-Type: application/json
+   Transfer-Encoding: chunked
+   Connection: keep-alive
+   Vary: accept-encoding,origin,access-control-request-headers,access-control-request-method,accept-encoding
+   X-Frame-Options: DENY
+   X-XSS-Protection: 1; mode=block
+   X-Content-Type-Options: nosniff
+   Expires: Tue, 14 Apr 2020 22:11:39 GMT
+   
+   {"transactionTime":"Apr 13, 2020, 10:11:35 PM","request":"http://internal-ab2d-dev-820359992.us-east-1.elb.amazonaws.com/api/v1/fhir/Patient/$export?_outputFormat=application%252Ffhir%252Bndjson&_type=ExplanationOfBenefit","requiresAccessToken":true,"output":[{"type":"ExplanationOfBenefit","url":"http://internal-ab2d-dev-820359992.us-east-1.elb.amazonaws.com/api/v1/fhir/Job/42d7addc-0e1b-4687-a1e2-5e029f173849/file/{file to download}","extension":[{"url":"https://ab2d.cms.gov/checksum","valueString":"sha256:46ccda6384b31693c27d057500a4ee116cd6f0540b3370a7e4d50c649ea8da27"},{"url":"https://ab2d.cms.gov/file_length","valueDecimal":9194196}]}],"error":[]}
    ```
 
    *Example:*
 
    ```
-   docker-ce.x86_64            3:19.03.8-3.el7                    docker-ce-stable
+   HTTP/1.1 200 
+   Date: Mon, 13 Apr 2020 22:13:32 GMT
+   Content-Type: application/json
+   Transfer-Encoding: chunked
+   Connection: keep-alive
+   Vary: accept-encoding,origin,access-control-request-headers,access-control-request-method,accept-encoding
+   X-Frame-Options: DENY
+   X-XSS-Protection: 1; mode=block
+   X-Content-Type-Options: nosniff
+   Expires: Tue, 14 Apr 2020 22:11:39 GMT
+   
+   {"transactionTime":"Apr 13, 2020, 10:11:35 PM","request":"http://internal-ab2d-dev-820359992.us-east-1.elb.amazonaws.com/api/v1/fhir/Patient/$export?_outputFormat=application%252Ffhir%252Bndjson&_type=ExplanationOfBenefit","requiresAccessToken":true,"output":[{"type":"ExplanationOfBenefit","url":"http://internal-ab2d-dev-820359992.us-east-1.elb.amazonaws.com/api/v1/fhir/Job/42d7addc-0e1b-4687-a1e2-5e029f173849/file/S0000_0001.ndjson","extension":[{"url":"https://ab2d.cms.gov/checksum","valueString":"sha256:46ccda6384b31693c27d057500a4ee116cd6f0540b3370a7e4d50c649ea8da27"},{"url":"https://ab2d.cms.gov/file_length","valueDecimal":9194196}]}],"error":[]}   
    ```
 
-1. Upgrade the "provision-app-instance.sh" script with the latest docker ce version
+1. If the status is 202, do the following
 
-   1. Change to the "Deploy" directory
-
-      ```ShellSession
-      $ cd ~/code/ab2d/Deploy
-      ```
-
-   1. Open "provision-app-instance.sh"
-
-      ```ShellSession
-      $ vim ./packer/app/provision-app-instance.sh
-      ```
-
-   1. Change the following line as follows
+   1. Note the following in the output, for example:
 
       *Format:*
-
+      
       ```
-      sudo yum -y install docker-ce-{docker ce version}
+      x-progress: {percentage} complete
       ```
 
       *Example:*
-
+      
       ```
-      sudo yum -y install docker-ce-3:19.03.8-3.el7
+      x-progress: 7% complete
       ```
 
-   1. Save and close the file
+   1. Based on the progress, you can a wait a period of time and try the status check again until you see a status of 200
 
-1. Upgrade the "provision-jenkins.sh" script with the latest docker ce version
+1. If the status is 200, download the files by doing the following:
 
-   1. Open "provision-jenkins.sh"
+   1. Set an environment variable to the first file to download
 
       ```ShellSession
-      $ vim ./packer/jenkins/provision-jenkins.sh
+      $ FILE=S0000_0001.ndjson
       ```
 
-   1. Change the following line as follows
+   1. Get the Part A & B bulk claim export data by entering the following at the terminal prompt
 
-      *Format:*
-
-      ```
-      sudo yum -y install docker-ce-{docker ce version}
-      ```
-
-      *Example:*
-
-      ```
-      sudo yum -y install docker-ce-3:19.03.8-3.el7
+      ```ShellSession
+      $ curl "http://internal-ab2d-dev-820359992.us-east-1.elb.amazonaws.com/api/v1/fhir/Job/${JOB}/file/${FILE}" \
+        -H "accept: application/json" \
+        -H "Accept: application/fhir+json" \
+        -H "Authorization: Bearer ${BEARER_TOKEN}" \
+        > ${FILE}
       ```
 
-   1. Save and close the file
+## Appendix OO: Merge a specific commit from master into your branch
+
+1. Ensure that you have committed or stashed any changes in your current branch
+
+1. Update "origin/master"
+
+   ```ShellSession
+   $ git fetch --all
+   ```
+
+1. Change to the master branch
+
+   ```ShellSession
+   $ git checkout master
+   ```
+
+1. Update master with the latest from GitHub
+
+   ```ShellSession
+   $ git pull
+   ```
+
+1. Create a temporary release branch
+
+   *Format:*
+   
+   ```ShellSession
+   $ git checkout -b temporary-release-branch {desired commit number}
+   ```
+
+1. Checkout your deployment branch
+
+   *Format:*
+   
+   ```ShellSession
+   $ git checkout {your deployment branch}
+   ```
+
+1. Merge the temporary release branch into your deployment branch
+
+   ```ShellSession
+   $ git merge temporary-release-branch
+   ```
+
+1. Handle any conflicts, commit, and push
+
+1. Delete the temorary release branch
+
+   ```ShellSession
+   $ git branch -D temporary-release-branch
+   ```
