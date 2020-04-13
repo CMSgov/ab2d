@@ -4,6 +4,8 @@ import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.repository.ContractRepository;
 import gov.cms.ab2d.common.service.PropertiesService;
+import gov.cms.ab2d.eventlogger.EventLogger;
+import gov.cms.ab2d.eventlogger.events.ReloadEvent;
 import gov.cms.ab2d.filter.FilterOutByDate;
 import gov.cms.ab2d.filter.FilterOutByDate.DateRange;
 import gov.cms.ab2d.worker.adapter.bluebutton.GetPatientsByContractResponse.PatientDTO;
@@ -45,7 +47,7 @@ public class ContractAdapterImpl implements ContractAdapter {
     private final ContractRepository contractRepo;
     private final BeneficiaryService beneficiaryService;
     private final PropertiesService propertiesService;
-
+    private final EventLogger eventLogger;
 
     @Override
     public GetPatientsByContractResponse getPatients(final String contractNumber, final int currentMonth) {
@@ -99,7 +101,6 @@ public class ContractAdapterImpl implements ContractAdapter {
         return bfdPatientsIds;
     }
 
-
     /**
      * Given a contractNumber and month,
      * calls BFD api to get a bundle of resources from which the patientIDs are extracted.
@@ -117,10 +118,11 @@ public class ContractAdapterImpl implements ContractAdapter {
             bundle = bfdClient.requestNextBundleFromServer(bundle);
             patientIDs.addAll(extractPatientIDs(bundle));
         }
+        eventLogger.log(new ReloadEvent(null, ReloadEvent.FileType.CONTRACT_MAPPING,
+                "Contract: " + contractNumber + " - month " + month, patientIDs.size()));
 
         return patientIDs;
     }
-
 
     /**
      * given a contractNumber & a month, calls BFD API to find all patients active in the contract during the month
@@ -170,7 +172,6 @@ public class ContractAdapterImpl implements ContractAdapter {
         return identifier.getSystem().equalsIgnoreCase(BENEFICIARY_ID);
     }
 
-
     private void buildPatientDTOs(ArrayList<PatientDTO> patientDTOs, DateRange monthDateRange, String bfdPatientId) {
         var optPatient = findPatient(patientDTOs, bfdPatientId);
         if (optPatient.isPresent()) {
@@ -198,8 +199,6 @@ public class ContractAdapterImpl implements ContractAdapter {
             patientDTOs.add(patientDTO);
         }
     }
-
-
 
     /**
      * Given a patientId, searches for a PatientDTO in a list of PatientDTOs
@@ -232,13 +231,10 @@ public class ContractAdapterImpl implements ContractAdapter {
         return dateRange;
     }
 
-
     private GetPatientsByContractResponse toGetPatientsByContractResponse(String contractNumber, ArrayList<PatientDTO> patientDTOs) {
         return GetPatientsByContractResponse.builder()
                 .contractNumber(contractNumber)
                 .patients(patientDTOs)
                 .build();
     }
-
-
 }

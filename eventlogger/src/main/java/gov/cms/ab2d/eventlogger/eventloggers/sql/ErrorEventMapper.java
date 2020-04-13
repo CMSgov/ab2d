@@ -3,8 +3,6 @@ package gov.cms.ab2d.eventlogger.eventloggers.sql;
 import gov.cms.ab2d.eventlogger.EventLoggingException;
 import gov.cms.ab2d.eventlogger.LoggableEvent;
 import gov.cms.ab2d.eventlogger.events.ErrorEvent;
-import gov.cms.ab2d.eventlogger.utils.UtilMethods;
-import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
@@ -33,10 +31,7 @@ public class ErrorEventMapper extends SqlEventMapper {
                 " (time_of_event, user_id, job_id, error_type, description) " +
                 " values (:time, :user, :job, :errorType, :description)";
 
-        SqlParameterSource parameters = new MapSqlParameterSource()
-                .addValue("time", UtilMethods.convertToUtc(be.getTimeOfEvent()))
-                .addValue("user", be.getUser())
-                .addValue("job", be.getJobId())
+        SqlParameterSource parameters = super.addSuperParams(event)
                 .addValue("errorType", be.getErrorType() != null ? be.getErrorType().name() : null)
                 .addValue("description", be.getDescription());
 

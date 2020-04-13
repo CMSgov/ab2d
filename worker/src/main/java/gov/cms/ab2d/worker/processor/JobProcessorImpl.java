@@ -9,6 +9,8 @@ import gov.cms.ab2d.common.model.JobStatus;
 import gov.cms.ab2d.common.model.Sponsor;
 import gov.cms.ab2d.common.repository.JobOutputRepository;
 import gov.cms.ab2d.common.repository.JobRepository;
+import gov.cms.ab2d.eventlogger.EventLogger;
+import gov.cms.ab2d.eventlogger.events.ContractBeneSearchEvent;
 import gov.cms.ab2d.worker.adapter.bluebutton.ContractAdapter;
 import gov.cms.ab2d.worker.adapter.bluebutton.GetPatientsByContractResponse;
 import gov.cms.ab2d.worker.processor.StreamHelperImpl.FileOutputType;
@@ -60,6 +62,7 @@ public class JobProcessorImpl implements JobProcessor {
     private final JobOutputRepository jobOutputRepository;
     private final ContractAdapter contractAdapter;
     private final ContractProcessor contractProcessor;
+    private final EventLogger eventLogger;
 
     /**
      * Load the job and process it
@@ -137,6 +140,14 @@ public class JobProcessorImpl implements JobProcessor {
             // For each job output, add to the job and save the result
             jobOutputs.forEach(job::addJobOutput);
             jobOutputRepository.saveAll(jobOutputs);
+
+            eventLogger.log(new ContractBeneSearchEvent(job.getUser() == null ? null : job.getUser().getUsername(),
+                    job.getJobUuid(),
+                    contract.getContractNumber(),
+                    progressTracker.getContractCount(contract.getContractNumber()),
+                    progressTracker.getProcessedCount(),
+                    progressTracker.getOptOutCount(),
+                    progressTracker.getFailureCount()));
         }
 
         completeJob(job);
@@ -292,6 +303,4 @@ public class JobProcessorImpl implements JobProcessor {
         jobRepository.save(job);
         log.info("Job: [{}] is DONE", job.getJobUuid());
     }
-
-
 }

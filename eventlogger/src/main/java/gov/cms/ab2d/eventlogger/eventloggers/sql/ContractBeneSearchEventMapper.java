@@ -3,8 +3,6 @@ package gov.cms.ab2d.eventlogger.eventloggers.sql;
 import gov.cms.ab2d.eventlogger.EventLoggingException;
 import gov.cms.ab2d.eventlogger.LoggableEvent;
 import gov.cms.ab2d.eventlogger.events.ContractBeneSearchEvent;
-import gov.cms.ab2d.eventlogger.utils.UtilMethods;
-import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
@@ -32,10 +30,7 @@ public class ContractBeneSearchEventMapper extends SqlEventMapper {
                 " (time_of_event, user_id, job_id, contract_number, num_in_contract, num_searched, num_opted_out, num_errors) " +
                 " values (:time, :user, :job, :contractNum, :numInContract, :numSearched, :numOptedOut, :numErrors)";
 
-        SqlParameterSource parameters = new MapSqlParameterSource()
-                .addValue("time", UtilMethods.convertToUtc(be.getTimeOfEvent()))
-                .addValue("user", be.getUser())
-                .addValue("job", be.getJobId())
+        SqlParameterSource parameters = super.addSuperParams(event)
                 .addValue("contractNum", be.getContractNumber())
                 .addValue("numInContract", be.getNumInContract())
                 .addValue("numSearched", be.getNumSearched())

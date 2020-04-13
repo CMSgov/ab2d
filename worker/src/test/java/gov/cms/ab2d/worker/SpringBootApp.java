@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 @SpringBootApplication(scanBasePackages = {
         "gov.cms.ab2d.common",
         "gov.cms.ab2d.worker",
+        "gov.cms.ab2d.eventlogger",
         "gov.cms.ab2d.bfd.client"
 })
 @EntityScan(basePackages = {"gov.cms.ab2d.common.model"})

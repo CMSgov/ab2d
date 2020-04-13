@@ -14,7 +14,7 @@ import java.time.OffsetDateTime;
 public class ErrorEvent extends LoggableEvent {
     public enum ErrorType {
         FILE_ALREADY_DELETED,
-        INVALID_CONTRACT,
+        CONTRACT_NOT_FOUND,
         UNAUTHORIZED_CONTRACT,
         TOO_MANY_STATUS_REQUESTS,
         TOO_MANY_SEARCH_ERRORS
