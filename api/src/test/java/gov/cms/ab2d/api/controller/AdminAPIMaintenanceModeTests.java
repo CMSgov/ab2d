@@ -97,6 +97,10 @@ public class AdminAPIMaintenanceModeTests {
         deleteObjects.deleteAllReloadEvent();
         deleteObjects.deleteAllApiResponseEvent();
         deleteObjects.deleteAllApiRequestEvent();
+        deleteObjects.deleteAllContractBeneSearchEvent();
+        deleteObjects.deleteAllErrorEvent();
+        deleteObjects.deleteAllFileEvent();
+        deleteObjects.deleteAllJobStatusChangeEvent();
 
         token = testUtil.setupToken(List.of(SPONSOR_ROLE, ADMIN_ROLE));
     }
