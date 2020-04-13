@@ -109,24 +109,31 @@ ctas:
         delay: 4500
     };
     
-    let downloadStartTime = undefined;    
+    let downloadStartTime = undefined;
+    
+    let reAuthTimeout = undefined;
 
     function showAlert(cssClass, message) {
         $('#toast-body').text(message).removeClass(successClass).removeClass(failureClass).addClass(cssClass);
         $('#alert-toast').toast(toastOptions);
         $('#alert-toast').toast('show');
     }
-
+    
     function retrieveOktaToken() {
+        clearTimeout(reAuthTimeout);
         const clientID = $('#clientID').val();
         const clientSecret = $('#clientSecret').val();
         const formData = {
             'clientID': clientID,
             'clientSecret': clientSecret
         };
+        doOktaAuth(formData, true);
+    }
+
+    function doOktaAuth(credentials, showAlerts) {
         $.ajax({
             url: baseUrl + 'oktaproxy',
-            data: formData,
+            data: credentials,
             dataType: 'json',
             type: 'post',
             headers: {
@@ -134,8 +141,10 @@ ctas:
             },
             success: function (data) {
                 token = data.accessToken;
-                showAlert(successClass, 'Successfully authenticated');
-                
+                if(showAlerts) {
+                    showAlert(successClass, 'Successfully authenticated');
+                }
+                initiateTokenRefresh(credentials);
                 $("#export").fadeIn(fadeInTime);
                 turnOnExportEventHandler();
             },
@@ -143,6 +152,12 @@ ctas:
                 showAlert(failureClass, "Failed to authenticate. Please try again."); 
             }
         });
+    }
+    
+    function initiateTokenRefresh(credentials) {
+        reAuthTimeout = setTimeout(function() {
+             doOktaAuth(credentials, false); 
+        }, 60 * 1000 * 58); // Refresh every 58 minutes
     }
     
     function startExport() {
