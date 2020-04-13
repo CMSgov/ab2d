@@ -1315,17 +1315,17 @@
 1. Change to the deploy directory
 
    *Format:*
-   
+
    ```ShellSession
    $ cd {code directory}/ab2d/Deploy
    ```
 
    *Example:*
-   
+
    ```ShellSession
    $ cd ~/code/ab2d/Deploy
    ```
-   
+
 1. If creating the AWS environment for Dev, do one of the following
 
    *Deploy Dev by creating new api and worker images:*
