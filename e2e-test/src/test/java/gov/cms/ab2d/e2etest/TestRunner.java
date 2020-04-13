@@ -105,6 +105,7 @@ public class TestRunner {
             DockerComposeContainer container = new DockerComposeContainer(
                     new File("../docker-compose.yml"))
                     .withEnv(System.getenv())
+                    .withLocalCompose(true)
                     .withScaledService("worker", 2)
                     .withExposedService("db", 5432)
                     .withExposedService("api", 8080, new HostPortWaitStrategy()
