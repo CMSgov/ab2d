@@ -4,7 +4,7 @@ import gov.cms.ab2d.eventlogger.LoggableEvent;
 import gov.cms.ab2d.eventlogger.eventloggers.sql.SqlMapperConfig;
 import gov.cms.ab2d.eventlogger.events.ApiRequestEvent;
 import gov.cms.ab2d.eventlogger.events.ApiResponseEvent;
-import gov.cms.ab2d.eventlogger.events.BeneficiaryReloadEvent;
+import gov.cms.ab2d.eventlogger.events.ReloadEvent;
 import gov.cms.ab2d.eventlogger.events.ContractBeneSearchEvent;
 import gov.cms.ab2d.eventlogger.events.ErrorEvent;
 import gov.cms.ab2d.eventlogger.events.FileEvent;
@@ -30,8 +30,8 @@ public class LoadObjects {
         return getAll("event_api_response", ApiResponseEvent.class);
      }
 
-    public List<LoggableEvent> loadAllBeneficiaryReloadEvent() {
-        return getAll("event_bene_reload", BeneficiaryReloadEvent.class);
+    public List<LoggableEvent> loadAllReloadEvent() {
+        return getAll("event_bene_reload", ReloadEvent.class);
     }
 
     public List<LoggableEvent> loadAllContractBeneSearchEvent() {

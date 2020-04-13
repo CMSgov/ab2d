@@ -6,6 +6,7 @@ import gov.cms.ab2d.eventlogger.LoggableEvent;
 import gov.cms.ab2d.eventlogger.SpringBootApp;
 import gov.cms.ab2d.eventlogger.events.ErrorEvent;
 import gov.cms.ab2d.eventlogger.events.FileEvent;
+import gov.cms.ab2d.eventlogger.reports.sql.DeleteObjects;
 import gov.cms.ab2d.eventlogger.reports.sql.LoadObjects;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,6 +32,9 @@ class ErrorEventMapperTest {
     @Autowired
     LoadObjects loadObjects;
 
+    @Autowired
+    DeleteObjects deleteObjects;
+
     @Test
     void exceptionTests() {
         assertThrows(EventLoggingException.class, () ->
@@ -39,7 +43,7 @@ class ErrorEventMapperTest {
 
     @Test
     void log() {
-        ErrorEvent jsce = new ErrorEvent("laila", "job123", ErrorEvent.ErrorType.INVALID_CONTRACT,
+        ErrorEvent jsce = new ErrorEvent("laila", "job123", ErrorEvent.ErrorType.CONTRACT_NOT_FOUND,
                 "Description");
         sqlEventLogger.log(jsce);
         long id = jsce.getId();
@@ -52,8 +56,10 @@ class ErrorEventMapperTest {
         assertEquals("laila", event.getUser());
         assertEquals("job123", event.getJobId());
         assertEquals(val.getNano(), event.getTimeOfEvent().getNano());
-        assertEquals(ErrorEvent.ErrorType.INVALID_CONTRACT, event.getErrorType());
+        assertEquals(ErrorEvent.ErrorType.CONTRACT_NOT_FOUND, event.getErrorType());
         assertEquals("Description", event.getDescription());
-
+        deleteObjects.deleteAllErrorEvent();
+        events = loadObjects.loadAllErrorEvent();
+        assertEquals(0, events.size());
     }
 }

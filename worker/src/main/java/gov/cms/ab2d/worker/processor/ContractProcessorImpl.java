@@ -8,6 +8,8 @@ import gov.cms.ab2d.common.model.OptOut;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.common.repository.OptOutRepository;
 import gov.cms.ab2d.common.util.Constants;
+import gov.cms.ab2d.eventlogger.EventLogger;
+import gov.cms.ab2d.eventlogger.events.ErrorEvent;
 import gov.cms.ab2d.worker.adapter.bluebutton.GetPatientsByContractResponse;
 import gov.cms.ab2d.worker.adapter.bluebutton.GetPatientsByContractResponse.PatientDTO;
 import gov.cms.ab2d.worker.config.RoundRobinBlockingQueue;
@@ -70,7 +72,7 @@ public class ContractProcessorImpl implements ContractProcessor {
     private final JobRepository jobRepository;
     private final PatientClaimsProcessor patientClaimsProcessor;
     private final OptOutRepository optOutRepository;
-
+    private final EventLogger eventLogger;
 
     /**
      * Process the contract - retrieve all the patients for the contract and create a thread in the
@@ -102,6 +104,7 @@ public class ContractProcessorImpl implements ContractProcessor {
 
                 if (isOptOutPatient(patient.getPatientId())) {
                     // this patient has opted out. skip patient record.
+                    progressTracker.incrementOptOutCount();
                     continue;
                 }
 
@@ -341,6 +344,9 @@ public class ContractProcessorImpl implements ContractProcessor {
             // log exception, but continue processing job as errorCount is below threshold
         } else {
             cancelFuturesInQueue(futureHandles);
+            String description = progressTracker.getFailureCount() + " out of " + progressTracker.getTotalCount() + " records failed. Stopping job";
+            eventLogger.log(new ErrorEvent(null, progressTracker.getJobUuid(),
+                    ErrorEvent.ErrorType.TOO_MANY_SEARCH_ERRORS, description));
             log.error("{} out of {} records failed. Stopping job", progressTracker.getFailureCount(), progressTracker.getTotalCount());
             throw new RuntimeException("Too many patient records in the job had failures");
         }

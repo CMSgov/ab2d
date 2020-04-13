@@ -4,6 +4,8 @@ import gov.cms.ab2d.api.config.SwaggerConfig;
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.JobOutput;
 import gov.cms.ab2d.common.service.JobService;
+import gov.cms.ab2d.eventlogger.EventLogger;
+import gov.cms.ab2d.eventlogger.events.ApiResponseEvent;
 import io.swagger.annotations.*;
 import lombok.extern.slf4j.Slf4j;
 import org.hl7.fhir.dstu3.model.DateTimeType;
@@ -53,6 +55,9 @@ public class StatusAPI {
     @Autowired
     private JobService jobService;
 
+    @Autowired
+    private EventLogger eventLogger;
+
     private boolean shouldReplaceWithHttps() {
         HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes())
                 .getRequest();
@@ -90,7 +95,7 @@ public class StatusAPI {
     )
     @GetMapping(value = "/Job/{jobUuid}/$status")
     @ResponseStatus(value = HttpStatus.OK)
-    public ResponseEntity<JobCompletedResponse> getJobStatus(
+    public ResponseEntity<JobCompletedResponse> getJobStatus(HttpServletRequest request,
             @ApiParam(value = "A job identifier", required = true) @PathVariable @NotBlank String jobUuid) {
         MDC.put(JOB_LOG, jobUuid);
         log.info("Request submitted to get job status");
@@ -112,6 +117,9 @@ public class StatusAPI {
             case IN_PROGRESS:
                 responseHeaders.add("X-Progress", job.getProgress() + "% complete");
                 responseHeaders.add("Retry-After", Integer.toString(retryAfterDelay));
+                eventLogger.log(new ApiResponseEvent(MDC.get(USERNAME), job.getJobUuid(), HttpStatus.ACCEPTED,
+                        "Job in progress", job.getProgress() + "% complete",
+                        (String) request.getAttribute(REQUEST_ID)));
                 return new ResponseEntity<>(null, responseHeaders, HttpStatus.ACCEPTED);
             case FAILED:
                 throwFailedResponse("Job failed while processing");
@@ -132,6 +140,10 @@ public class StatusAPI {
         responseHeaders.add("Expires", DateTimeFormatter.RFC_1123_DATE_TIME.format(jobExpiresUTC));
         final JobCompletedResponse resp = getJobCompletedResonse(job);
         log.info("Job status completed successfully");
+        HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes())
+                .getRequest();
+        eventLogger.log(new ApiResponseEvent(MDC.get(USERNAME), job.getJobUuid(), HttpStatus.OK,
+                "Job completed", null, (String) request.getAttribute(REQUEST_ID)));
         return new ResponseEntity<>(resp, responseHeaders, HttpStatus.OK);
     }
 
@@ -183,6 +195,7 @@ public class StatusAPI {
     @DeleteMapping(value = "/Job/{jobUuid}/$status")
     @ResponseStatus(value = HttpStatus.ACCEPTED)
     public ResponseEntity<Void> deleteRequest(
+            HttpServletRequest request,
             @ApiParam(value = "A job identifier", required = true)
             @PathVariable @NotBlank String jobUuid) {
         MDC.put(JOB_LOG, jobUuid);
@@ -191,6 +204,9 @@ public class StatusAPI {
         jobService.cancelJob(jobUuid);
 
         log.info("Job successfully cancelled");
+
+        eventLogger.log(new ApiResponseEvent(MDC.get(USERNAME), jobUuid, HttpStatus.ACCEPTED,
+                "Job cancelled", null, (String) request.getAttribute(REQUEST_ID)));
 
         return new ResponseEntity<>(null, null,
                 HttpStatus.ACCEPTED);

@@ -96,13 +96,15 @@ public class AttestationReportProcessorTests {
         createData("S1234", "Med Contract", "Ins. Co.", 789);
         createData("S5678", "United HC Contract", "Ins. Co. 1", 321);
 
-        InputStream testFileStream = this.getClass().getResourceAsStream("/Attestation_Report_Sample.xlsx");
-        attestationReportProcessor.processReport(testFileStream, ExcelType.fromFileType("Attestation_Report_Sample.xlsx"));
+        String file = "Attestation_Report_Sample.xlsx";
+        InputStream testFileStream = this.getClass().getResourceAsStream("/" + file);
+        attestationReportProcessor.processReport(file, testFileStream, ExcelType.fromFileType(file));
         checkResults();
 
         // Open stream again since it gets auto closed
-        testFileStream = this.getClass().getResourceAsStream("/Attestation_Report_Sample.xlsx");
-        attestationReportProcessor.processReport(testFileStream, ExcelType.fromFileType("Attestation_Report_Sample.xlsx"));
+        String file2 = "Attestation_Report_Sample.xlsx";
+        testFileStream = this.getClass().getResourceAsStream("/" + file2);
+        attestationReportProcessor.processReport(file2, testFileStream, ExcelType.fromFileType(file2));
         checkResults();
     }
 

@@ -4,11 +4,14 @@ import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.service.ContractService;
 import gov.cms.ab2d.common.util.AttestationStatus;
 import gov.cms.ab2d.common.util.DateUtil;
+import gov.cms.ab2d.eventlogger.EventLogger;
+import gov.cms.ab2d.eventlogger.events.ReloadEvent;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
+import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,6 +26,8 @@ import java.util.Map;
 import java.util.Optional;
 
 import static gov.cms.ab2d.common.util.Constants.CONTRACT_LOG;
+import static gov.cms.ab2d.common.util.Constants.USERNAME;
+import static gov.cms.ab2d.eventlogger.events.ReloadEvent.FileType.ATTESTATION_REPORT;
 import static net.logstash.logback.argument.StructuredArguments.keyValue;
 
 
@@ -34,6 +39,9 @@ public class AttestationReportProcessor implements ExcelReportProcessor {
     @Autowired
     private ContractService contractService;
 
+    @Autowired
+    private EventLogger eventLogger;
+
     private static final String ATTESTATION_OFFSET_DATE_TIME_PATTERN = "M/d/y h:m a Z";
 
     @Value
@@ -44,7 +52,7 @@ public class AttestationReportProcessor implements ExcelReportProcessor {
     }
 
     @Override
-    public void processReport(InputStream xlsInputStream, ExcelType excelType) throws IOException {
+    public void processReport(String fileName, InputStream xlsInputStream, ExcelType excelType) throws IOException {
         try (Workbook workbook = excelType.getWorkbookType(xlsInputStream)) {
             Sheet datatypeSheet = workbook.getSheetAt(0);
             Iterator<Row> iterator = datatypeSheet.iterator();
@@ -72,6 +80,7 @@ public class AttestationReportProcessor implements ExcelReportProcessor {
             }
 
             updateContract(contractsSeenToLatestAttestationData);
+            eventLogger.log(new ReloadEvent(MDC.get(USERNAME), ATTESTATION_REPORT, fileName, datatypeSheet.getPhysicalNumberOfRows()));
         }
     }
 
