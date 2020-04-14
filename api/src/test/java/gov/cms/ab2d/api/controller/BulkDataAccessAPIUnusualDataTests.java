@@ -30,6 +30,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import java.util.List;
 import java.util.Optional;
 
+import static gov.cms.ab2d.common.model.JobStatus.SUBMITTED;
 import static gov.cms.ab2d.common.service.JobServiceImpl.INITIAL_JOB_STATUS_MESSAGE;
 import static gov.cms.ab2d.common.util.Constants.*;
 import static gov.cms.ab2d.common.util.DataSetup.*;
@@ -113,8 +114,8 @@ public class BulkDataAccessAPIUnusualDataTests {
         assertTrue(UtilMethods.allEmpty(
                 loadObjects.loadAllReloadEvent(),
                 loadObjects.loadAllContractBeneSearchEvent(),
-                loadObjects.loadAllFileEvent(),
-                loadObjects.loadAllJobStatusChangeEvent()
+                loadObjects.loadAllJobStatusChangeEvent(),
+                loadObjects.loadAllFileEvent()
         ));
     }
 
@@ -142,8 +143,8 @@ public class BulkDataAccessAPIUnusualDataTests {
         assertTrue(UtilMethods.allEmpty(
                 loadObjects.loadAllReloadEvent(),
                 loadObjects.loadAllContractBeneSearchEvent(),
-                loadObjects.loadAllFileEvent(),
-                loadObjects.loadAllJobStatusChangeEvent()));
+                loadObjects.loadAllJobStatusChangeEvent(),
+                loadObjects.loadAllFileEvent()));
     }
 
     @Test
@@ -164,7 +165,7 @@ public class BulkDataAccessAPIUnusualDataTests {
         resultActions.andExpect(status().isAccepted())
                 .andExpect(header().string("Content-Location", statusUrl));
 
-        Assert.assertEquals(job.getStatus(), JobStatus.SUBMITTED);
+        Assert.assertEquals(job.getStatus(), SUBMITTED);
         Assert.assertEquals(job.getStatusMessage(), INITIAL_JOB_STATUS_MESSAGE);
         Assert.assertEquals(job.getProgress(), Integer.valueOf(0));
         Assert.assertEquals(job.getRequestUrl(),

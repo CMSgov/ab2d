@@ -21,6 +21,7 @@ import gov.cms.ab2d.eventlogger.eventloggers.sql.SqlEventLogger;
 import gov.cms.ab2d.eventlogger.eventloggers.sql.SqlMapperConfig;
 import gov.cms.ab2d.eventlogger.events.ContractBeneSearchEvent;
 import gov.cms.ab2d.eventlogger.events.ErrorEvent;
+import gov.cms.ab2d.eventlogger.events.JobStatusChangeEvent;
 import gov.cms.ab2d.eventlogger.reports.sql.DeleteObjects;
 import gov.cms.ab2d.eventlogger.reports.sql.LoadObjects;
 import gov.cms.ab2d.eventlogger.utils.UtilMethods;
@@ -28,6 +29,7 @@ import gov.cms.ab2d.worker.adapter.bluebutton.ContractAdapter;
 import gov.cms.ab2d.worker.service.FileService;
 import org.hl7.fhir.dstu3.model.Bundle;
 import org.hl7.fhir.dstu3.model.ExplanationOfBenefit;
+import org.junit.Assert;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -56,8 +58,7 @@ import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
@@ -171,6 +172,12 @@ class JobProcessorIntegrationTest {
     void processJob() {
         var processedJob = cut.process("S0000");
 
+        List<LoggableEvent> jobStatusChange = loadObjects.loadAllJobStatusChangeEvent();
+        Assert.assertEquals(1, jobStatusChange.size());
+        JobStatusChangeEvent jobEvent = (JobStatusChangeEvent) jobStatusChange.get(0);
+        Assert.assertEquals(JobStatus.SUCCESSFUL.name(), jobEvent.getNewStatus());
+        Assert.assertEquals(JobStatus.IN_PROGRESS.name(), jobEvent.getOldStatus());
+
         assertThat(processedJob.getStatus(), is(JobStatus.SUCCESSFUL));
         assertThat(processedJob.getStatusMessage(), is("100%"));
         assertThat(processedJob.getExpiresAt(), notNullValue());
@@ -250,13 +257,18 @@ class JobProcessorIntegrationTest {
         ErrorEvent errorEvent = (ErrorEvent) errorEvents.get(0);
         assertEquals(TOO_MANY_SEARCH_ERRORS, errorEvent.getErrorType());
 
+        List<LoggableEvent> jobEvents = loadObjects.loadAllJobStatusChangeEvent();
+        assertEquals(1, jobEvents.size());
+        JobStatusChangeEvent jobEvent = (JobStatusChangeEvent) jobEvents.get(0);
+        assertEquals("IN_PROGRESS", jobEvent.getOldStatus());
+        assertEquals("FAILED", jobEvent.getNewStatus());
+
         assertTrue(UtilMethods.allEmpty(
                 loadObjects.loadAllApiRequestEvent(),
                 loadObjects.loadAllApiResponseEvent(),
                 loadObjects.loadAllReloadEvent(),
                 loadObjects.loadAllContractBeneSearchEvent(),
-                loadObjects.loadAllFileEvent(),
-                loadObjects.loadAllJobStatusChangeEvent()
+                loadObjects.loadAllFileEvent()
         ));
 
         assertThat(processedJob.getStatus(), is(JobStatus.FAILED));

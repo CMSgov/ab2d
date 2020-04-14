@@ -88,6 +88,10 @@ public class AdminAPIFileUploadTests {
         deleteObjects.deleteAllApiRequestEvent();
         deleteObjects.deleteAllApiResponseEvent();
         deleteObjects.deleteAllReloadEvent();
+        deleteObjects.deleteAllContractBeneSearchEvent();
+        deleteObjects.deleteAllErrorEvent();
+        deleteObjects.deleteAllFileEvent();
+        deleteObjects.deleteAllJobStatusChangeEvent();
 
         token = testUtil.setupToken(List.of(ADMIN_ROLE));
     }
