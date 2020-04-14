@@ -12,17 +12,23 @@ sudo hostname "$(hostname -s).${env}"
 # Setup EFS realted items 
 #
  
-# Build and install amazon-efs-utils as an RPM package
+# Build amazon-efs-utils as an RPM package
+
 sudo yum -y install git
 sudo yum -y install rpm-build
 cd /tmp
 git clone https://github.com/aws/efs-utils
 cd efs-utils
 sudo make rpm
-sudo yum -y install ./build/amazon-efs-utils*rpm
+
+# Install amazon-efs-utils as an RPM package
+# - note that '--nogpgcheck' is now required for installing locally built rpm
+
+sudo yum -y install ./build/amazon-efs-utils*rpm --nogpgcheck
 
 # Upgrade stunnel for using EFS mount helper with TLS
 # - by default, it enforces certificate hostname checking
+
 sudo yum install gcc openssl-devel tcp_wrappers-devel -y
 cd /tmp
 curl -o stunnel-5.55.tar.gz https://www.stunnel.org/downloads/stunnel-5.55.tar.gz
@@ -36,6 +42,7 @@ if [[ -f /bin/stunnel ]]; then sudo mv /bin/stunnel /root; fi
 sudo ln -s /usr/local/bin/stunnel /bin/stunnel
 
 # Configure running container instances to use an Amazon EFS file system
+
 sudo mkdir /mnt/efs
 sudo cp /etc/fstab /etc/fstab.bak
 
@@ -53,6 +60,7 @@ sudo mount -a
 
 # ECS config file
 # https://github.com/aws/amazon-ecs-agent
+
 sudo mkdir -p /etc/ecs
 sudo sh -c 'echo "
 ECS_DATADIR=/data
@@ -71,6 +79,7 @@ ECS_CLUSTER="${cluster_name}"
 ECS_LOGLEVEL=info" > /etc/ecs/ecs.config'
 
 # Autostart the ecs client
+
 sudo docker run --name ecs-agent \
 --detach=true \
 --restart=on-failure:10 \
