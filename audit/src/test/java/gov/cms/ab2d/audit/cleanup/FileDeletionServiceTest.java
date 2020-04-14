@@ -7,6 +7,10 @@ import gov.cms.ab2d.common.model.JobStatus;
 import gov.cms.ab2d.common.model.User;
 import gov.cms.ab2d.common.service.JobService;
 import gov.cms.ab2d.common.util.DataSetup;
+import gov.cms.ab2d.eventlogger.LoggableEvent;
+import gov.cms.ab2d.eventlogger.events.FileEvent;
+import gov.cms.ab2d.eventlogger.reports.sql.LoadObjects;
+import gov.cms.ab2d.eventlogger.utils.UtilMethods;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,8 +40,7 @@ import java.util.UUID;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest(classes = SpringBootApp.class)
 @TestPropertySource(locations = "/application.audit.properties")
@@ -51,13 +54,16 @@ public class FileDeletionServiceTest {
     private FileDeletionService fileDeletionService;
 
     @Container
-    private static final PostgreSQLContainer postgreSQLContainer= new AB2DPostgresqlContainer();
+    private static final PostgreSQLContainer postgreSQLContainer = new AB2DPostgresqlContainer();
 
     @Autowired
     private JobService jobService;
 
     @Autowired
     private DataSetup dataSetup;
+
+    @Autowired
+    private LoadObjects loadObjects;
 
     private static final String TEST_FILE = "testFile.ndjson";
 
@@ -205,6 +211,28 @@ public class FileDeletionServiceTest {
         assertTrue(Files.exists(noPermissionsFileDestination));
 
         assertTrue(Files.exists(regularFileDestination));
+        List<LoggableEvent> fileEvents = loadObjects.loadAllFileEvent();
+        assertEquals(3, fileEvents.size());
+        FileEvent e1 = (FileEvent) fileEvents.get(0);
+        FileEvent e2 = (FileEvent) fileEvents.get(1);
+        FileEvent e3 = (FileEvent) fileEvents.get(2);
+        assertTrue(e1.getFileName().equalsIgnoreCase(destination.toString()) ||
+                e2.getFileName().equalsIgnoreCase(destination.toString()) ||
+                e3.getFileName().equalsIgnoreCase(destination.toString()));
+        assertTrue(e1.getFileName().equalsIgnoreCase(nestedFileDestination.toString()) ||
+                e2.getFileName().equalsIgnoreCase(nestedFileDestination.toString()) ||
+                e3.getFileName().equalsIgnoreCase(nestedFileDestination.toString()));
+        assertTrue(e1.getFileName().equalsIgnoreCase(destinationJobConnection.toString()) ||
+                e2.getFileName().equalsIgnoreCase(destinationJobConnection.toString()) ||
+                e3.getFileName().equalsIgnoreCase(destinationJobConnection.toString()));
+
+        assertTrue(UtilMethods.allEmpty(
+                loadObjects.loadAllApiRequestEvent(),
+                loadObjects.loadAllApiResponseEvent(),
+                loadObjects.loadAllReloadEvent(),
+                loadObjects.loadAllContractBeneSearchEvent(),
+                loadObjects.loadAllErrorEvent(),
+                loadObjects.loadAllJobStatusChangeEvent()));
 
         // Cleanup
         Files.delete(destinationNotDeleted);
@@ -221,8 +249,8 @@ public class FileDeletionServiceTest {
     public void testEFSMountSlash() {
         ReflectionTestUtils.setField(fileDeletionService, "efsMount", "~/UsersDir");
 
-        var exceptionThrown = assertThrows(EFSMountFormatException.class,() ->
-            fileDeletionService.deleteFiles());
+        var exceptionThrown = assertThrows(EFSMountFormatException.class, () ->
+                fileDeletionService.deleteFiles());
         assertThat(exceptionThrown.getMessage(), is("EFS Mount must start with a /"));
     }
 
@@ -230,7 +258,7 @@ public class FileDeletionServiceTest {
     public void testEFSMountDirectorySize() {
         ReflectionTestUtils.setField(fileDeletionService, "efsMount", "/a");
 
-        var exceptionThrown = assertThrows(EFSMountFormatException.class,() ->
+        var exceptionThrown = assertThrows(EFSMountFormatException.class, () ->
                 fileDeletionService.deleteFiles());
         assertThat(exceptionThrown.getMessage(), is("EFS mount must be at least 5 characters"));
     }
@@ -239,7 +267,7 @@ public class FileDeletionServiceTest {
     public void testEFSMountDirectoryBlacklist() {
         ReflectionTestUtils.setField(fileDeletionService, "efsMount", "/usr/baddirectory");
 
-        var exceptionThrown = assertThrows(EFSMountFormatException.class,() ->
+        var exceptionThrown = assertThrows(EFSMountFormatException.class, () ->
                 fileDeletionService.deleteFiles());
         assertThat(exceptionThrown.getMessage(), is("EFS mount must not start with a directory that contains important files"));
     }
@@ -256,7 +284,7 @@ public class FileDeletionServiceTest {
     public void testEFSMountOpt() {
         ReflectionTestUtils.setField(fileDeletionService, "efsMount", "/opt");
 
-        var exceptionThrown = assertThrows(EFSMountFormatException.class,() ->
+        var exceptionThrown = assertThrows(EFSMountFormatException.class, () ->
                 fileDeletionService.deleteFiles());
         assertThat(exceptionThrown.getMessage(), is("EFS mount must be at least 5 characters"));
     }
