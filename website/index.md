@@ -12,9 +12,9 @@ sections:
   - name: Frequently Asked Questions
   - name: For Developers
   - name: Status
-    link: status
+    link: status.html
   - name: AB2D Easy
-    link: ab2d-easy
+    link: ab2d-easy.html
 ctas:
 
 ---
