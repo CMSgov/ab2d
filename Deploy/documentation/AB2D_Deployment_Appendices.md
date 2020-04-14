@@ -7492,9 +7492,15 @@
 1. Set the management AWS profile
 
    *Example for "Dev" environment:*
-   
+
    ```ShellSession
    $ export AWS_PROFILE=ab2d-dev
+   ```
+
+   *Example for "Sbx" environment:*
+
+   ```ShellSession
+   $ export AWS_PROFILE=ab2d-sbx-sandbox
    ```
 
 1. Set test parameters
@@ -7509,6 +7515,18 @@
    $ export REGION_PARAM=us-east-1
    $ export SSH_USERNAME_PARAM=ec2-user
    $ export VPC_ID_PARAM=vpc-0c6413ec40c5fdac3
+   ```
+
+   *Example for "Sbx" environment:*
+
+   ```ShellSession
+   $ export CMS_ENV_PARAM=ab2d-sbx-sandbox
+   $ export DEBUG_LEVEL_PARAM=WARN
+   $ export EC2_INSTANCE_TYPE_PACKER_PARAM=m5.xlarge
+   $ export OWNER_PARAM=743302140042
+   $ export REGION_PARAM=us-east-1
+   $ export SSH_USERNAME_PARAM=ec2-user
+   $ export VPC_ID_PARAM=vpc-08dbf3fa96684151c
    ```
 
 1. Run application deployment automation
@@ -7558,28 +7576,38 @@
      -H "Authorization: Bearer ${BEARER_TOKEN}"
    ```
 
+   *Example for "Sbx" environment:*
+
+   ```ShellSession
+   $ curl "https://sandbox.ab2d.cms.gov/api/v1/fhir/Patient/\$export?_outputFormat=application%2Ffhir%2Bndjson&_type=ExplanationOfBenefit" \
+     -sD - \
+     -H "accept: application/json" \
+     -H "Accept: application/fhir+json" \
+     -H "Prefer: respond-async" \
+     -H "Authorization: Bearer ${BEARER_TOKEN}"
+   ```
+
 1. Note the output
 
    *Format:*
 
    ```
-   HTTP/1.1 {response code}
+   HTTP/2 {response code}
    Date: Mon, 13 Apr 2020 16:35:38 GMT
-   Content-Length: 0
-   Connection: keep-alive
-   Vary: Origin
-   Vary: Access-Control-Request-Method
-   Vary: Access-Control-Request-Headers
-   Vary: Origin
-   Vary: Access-Control-Request-Method
-   Vary: Access-Control-Request-Headers
-   Content-Location: http://internal-ab2d-dev-820359992.us-east-1.elb.amazonaws.com/api/v1/fhir/Job/{job id}/$status
-   X-Content-Type-Options: nosniff
-   X-XSS-Protection: 1; mode=block
-   Cache-Control: no-cache, no-store, max-age=0, must-revalidate
-   Pragma: no-cache
-   Expires: 0
-   X-Frame-Options: DENY
+   content-length: 0
+   vary: Origin
+   vary: Access-Control-Request-Method
+   vary: Access-Control-Request-Headers
+   vary: Origin
+   vary: Access-Control-Request-Method
+   vary: Access-Control-Request-Headers
+   content-location: https://sandbox.ab2d.cms.gov/api/v1/fhir/Job/{job id}/$status
+   x-content-type-options: nosniff
+   x-xss-protection: 1; mode=block
+   cache-control: no-cache, no-store, max-age=0, must-revalidate
+   pragma: no-cache
+   expires: 0
+   x-frame-options: DENY
    ```
 
    *Example for "Dev" environment:*
@@ -7602,6 +7630,27 @@
    Pragma: no-cache
    Expires: 0
    X-Frame-Options: DENY
+   ```
+
+   *Example for "Sbx" environment:*
+
+   ```
+   HTTP/2 202
+   Date: Mon, 13 Apr 2020 16:35:38 GMT
+   content-length: 0
+   vary: Origin
+   vary: Access-Control-Request-Method
+   vary: Access-Control-Request-Headers
+   vary: Origin
+   vary: Access-Control-Request-Method
+   vary: Access-Control-Request-Headers
+   content-location: https://sandbox.ab2d.cms.gov/api/v1/fhir/Job/09b4d5e6-92f7-4dcb-8b49-dbdd2e22dc69/$status
+   x-content-type-options: nosniff
+   x-xss-protection: 1; mode=block
+   cache-control: no-cache, no-store, max-age=0, must-revalidate
+   pragma: no-cache
+   expires: 0
+   x-frame-options: DENY
    ```
 
 1. Note the response code and job id from the output
@@ -7630,7 +7679,7 @@
    *Example for "Dev" environment:*
    
    ```ShellSession
-   $ curl "http://internal-ab2d-dev-820359992.us-east-1.elb.amazonaws.com/api/v1/fhir/Job/${JOB}/\$status" \
+   $ curl "https://sandbox.ab2d.cms.gov/api/v1/fhir/Job/${JOB}/\$status" \
      -sD - \
      -H "accept: application/json" \
      -H "Authorization: Bearer ${BEARER_TOKEN}"
@@ -7701,12 +7750,18 @@
    1. Get the Part A & B bulk claim export data by entering the following at the terminal prompt
 
       ```ShellSession
-      $ curl "http://internal-ab2d-dev-820359992.us-east-1.elb.amazonaws.com/api/v1/fhir/Job/${JOB}/file/${FILE}" \
+      $ curl "https://sandbox.ab2d.cms.gov/api/v1/fhir/Job/${JOB}/file/${FILE}" \
         -H "accept: application/json" \
         -H "Accept: application/fhir+json" \
         -H "Authorization: Bearer ${BEARER_TOKEN}" \
         > ${FILE}
       ```
+
+1. View the downloaded file
+
+   ```ShellSession
+   $ cat $FILE
+   ```
 
 ## Appendix OO: Merge a specific commit from master into your branch
 
