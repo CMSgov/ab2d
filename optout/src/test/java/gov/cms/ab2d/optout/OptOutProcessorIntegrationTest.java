@@ -4,6 +4,11 @@ import gov.cms.ab2d.common.model.OptOut;
 import gov.cms.ab2d.common.repository.OptOutRepository;
 import gov.cms.ab2d.common.util.MockBfdServiceUtils;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
+import gov.cms.ab2d.eventlogger.LoggableEvent;
+import gov.cms.ab2d.eventlogger.events.ReloadEvent;
+import gov.cms.ab2d.eventlogger.reports.sql.DeleteObjects;
+import gov.cms.ab2d.eventlogger.reports.sql.LoadObjects;
+import gov.cms.ab2d.eventlogger.utils.UtilMethods;
 import gov.cms.ab2d.optout.gateway.S3Gateway;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Before;
@@ -30,6 +35,8 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.Matchers.empty;
 import static org.junit.Assert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -51,6 +58,12 @@ class OptOutProcessorIntegrationTest {
     @Autowired
     private OptOutProcessor cut;
 
+    @Autowired
+    private LoadObjects loadObjects;
+
+    @Autowired
+    private DeleteObjects deleteObjects;
+
     @Container
     private static final PostgreSQLContainer postgreSQLContainer= new AB2DPostgresqlContainer();
 
@@ -70,6 +83,7 @@ class OptOutProcessorIntegrationTest {
     @Before
     public void clearDB() {
         optOutRepo.deleteAll();
+        deleteObjects.deleteAllReloadEvent();
     }
 
     @AfterAll
@@ -108,5 +122,21 @@ class OptOutProcessorIntegrationTest {
 
         verify(mockS3Gateway).listOptOutFiles();
         verify(mockS3Gateway).getOptOutFile(any());
+
+        List<LoggableEvent> reloadEvents = loadObjects.loadAllReloadEvent();
+        assertEquals(1, reloadEvents.size());
+        ReloadEvent requestEvent = (ReloadEvent) reloadEvents.get(0);
+        assertEquals(ReloadEvent.FileType.OPT_OUT, requestEvent.getFileType());
+        assertEquals(testInputFile, requestEvent.getFileName());
+        assertEquals(18, requestEvent.getNumberLoaded());
+
+        assertTrue(UtilMethods.allEmpty(
+                loadObjects.loadAllApiRequestEvent(),
+                loadObjects.loadAllApiResponseEvent(),
+                loadObjects.loadAllContractBeneSearchEvent(),
+                loadObjects.loadAllErrorEvent(),
+                loadObjects.loadAllFileEvent(),
+                loadObjects.loadAllJobStatusChangeEvent()
+        ));
     }
 }

@@ -6,10 +6,12 @@ import gov.cms.ab2d.eventlogger.LoggableEvent;
 import gov.cms.ab2d.eventlogger.SpringBootApp;
 import gov.cms.ab2d.eventlogger.events.ApiResponseEvent;
 import gov.cms.ab2d.eventlogger.events.ErrorEvent;
+import gov.cms.ab2d.eventlogger.reports.sql.DeleteObjects;
 import gov.cms.ab2d.eventlogger.reports.sql.LoadObjects;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.HttpStatus;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -31,6 +33,9 @@ class ApiResponseEventMapperTest {
     @Autowired
     LoadObjects loadObjects;
 
+    @Autowired
+    DeleteObjects deleteObjects;
+
     @Test
     void exceptionTests() {
         assertThrows(EventLoggingException.class, () ->
@@ -39,7 +44,7 @@ class ApiResponseEventMapperTest {
 
     @Test
     void log() {
-        ApiResponseEvent jsce = new ApiResponseEvent("laila", "job123", 404,
+        ApiResponseEvent jsce = new ApiResponseEvent("laila", "job123", HttpStatus.NOT_FOUND,
                 "Not Found", "Description", "123");
         sqlEventLogger.log(jsce);
         long id = jsce.getId();
@@ -56,5 +61,8 @@ class ApiResponseEventMapperTest {
         assertEquals("Not Found", event.getResponseString());
         assertEquals(404, event.getResponseCode());
         assertEquals("123", event.getRequestId());
+        deleteObjects.deleteAllApiResponseEvent();
+        events = loadObjects.loadAllApiResponseEvent();
+        assertEquals(0, events.size());
     }
 }

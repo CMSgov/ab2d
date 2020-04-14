@@ -5,8 +5,6 @@ import gov.cms.ab2d.eventlogger.EventLoggingException;
 import gov.cms.ab2d.eventlogger.LoggableEvent;
 import gov.cms.ab2d.eventlogger.events.FileEvent;
 import gov.cms.ab2d.eventlogger.events.JobStatusChangeEvent;
-import gov.cms.ab2d.eventlogger.utils.UtilMethods;
-import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
@@ -35,10 +33,7 @@ public class JobStatusChangeEventMapper extends SqlEventMapper {
                 " (time_of_event, user_id, job_id, old_status, new_status, description) " +
                 " values (:time, :user, :job, :oldStatus, :newStatus, :description)";
 
-        SqlParameterSource parameters = new MapSqlParameterSource()
-                .addValue("time", UtilMethods.convertToUtc(be.getTimeOfEvent()))
-                .addValue("user", be.getUser())
-                .addValue("job", be.getJobId())
+        SqlParameterSource parameters = super.addSuperParams(event)
                 .addValue("oldStatus", be.getOldStatus() != null ? be.getOldStatus().name() : null)
                 .addValue("newStatus", be.getNewStatus() != null ? be.getNewStatus().name() : null)
                 .addValue("description", be.getDescription());

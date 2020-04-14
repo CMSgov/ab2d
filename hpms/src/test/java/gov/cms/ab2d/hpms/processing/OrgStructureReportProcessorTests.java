@@ -75,13 +75,15 @@ public class OrgStructureReportProcessorTests {
     @Test
     @Transactional // Used so collections that are lazily loaded can be accessed
     public void testProcessReport() throws IOException {
-        InputStream testFileStream = this.getClass().getResourceAsStream("/parent_org_and_legal_entity_20191031_111812.xls");
-        excelReportProcessor.processReport(testFileStream, ExcelType.fromFileType("parent_org_and_legal_entity_20191031_111812.xls"));
+        String fileName = "parent_org_and_legal_entity_20191031_111812.xls";
+        InputStream testFileStream = this.getClass().getResourceAsStream("/" + fileName);
+        excelReportProcessor.processReport(fileName, testFileStream, ExcelType.fromFileType(fileName));
         checkResults();
 
         // Stream gets closed so open again. This file should be able to be processed over and over and not overwrite anything
-        testFileStream = this.getClass().getResourceAsStream("/parent_org_and_legal_entity_20191031_111812.xls");
-        excelReportProcessor.processReport(testFileStream, ExcelType.fromFileType("parent_org_and_legal_entity_20191031_111812.xls"));
+        String fileName2 = "parent_org_and_legal_entity_20191031_111812.xls";
+        testFileStream = this.getClass().getResourceAsStream("/" + fileName2);
+        excelReportProcessor.processReport(fileName2, testFileStream, ExcelType.fromFileType(fileName2));
         checkResults();
     }
 

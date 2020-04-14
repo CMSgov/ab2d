@@ -7,6 +7,7 @@ import gov.cms.ab2d.eventlogger.LoggableEvent;
 import gov.cms.ab2d.eventlogger.SpringBootApp;
 import gov.cms.ab2d.eventlogger.events.FileEvent;
 import gov.cms.ab2d.eventlogger.events.JobStatusChangeEvent;
+import gov.cms.ab2d.eventlogger.reports.sql.DeleteObjects;
 import gov.cms.ab2d.eventlogger.reports.sql.LoadObjects;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,6 +33,9 @@ class JobStatusChangeEventMapperTest {
     @Autowired
     LoadObjects loadObjects;
 
+    @Autowired
+    DeleteObjects deleteObjects;
+
     @Test
     void exceptionTests() {
         assertThrows(EventLoggingException.class, () ->
@@ -56,5 +60,8 @@ class JobStatusChangeEventMapperTest {
         assertEquals(JobStatus.FAILED, event.getNewStatus());
         assertEquals(JobStatus.IN_PROGRESS, event.getOldStatus());
         assertEquals("Description", event.getDescription());
+        deleteObjects.deleteAllJobStatusChangeEvent();
+        events = loadObjects.loadAllJobStatusChangeEvent();
+        assertEquals(0, events.size());
     }
 }

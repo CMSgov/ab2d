@@ -11,10 +11,13 @@ import java.time.OffsetDateTime;
  */
 @EqualsAndHashCode(callSuper = true)
 @Data
-public class BeneficiaryReloadEvent extends LoggableEvent {
+public class ReloadEvent extends LoggableEvent {
     public enum FileType {
         OPT_OUT,
-        CONTRACT_MAPPING
+        CONTRACT_MAPPING,
+        UPLOAD_ORG_STRUCTURE_REPORT,
+        ATTESTATION_REPORT,
+        PROPERTIES
     }
     // The type of load being performed
     private FileType fileType;
@@ -23,10 +26,10 @@ public class BeneficiaryReloadEvent extends LoggableEvent {
     // The number of values loaded
     private int numberLoaded;
 
-    public BeneficiaryReloadEvent() { }
+    public ReloadEvent() { }
 
-    public BeneficiaryReloadEvent(FileType fileType, String fileName, int numLoaded) {
-        super(OffsetDateTime.now(), null, null);
+    public ReloadEvent(String user, FileType fileType, String fileName, int numLoaded) {
+        super(OffsetDateTime.now(), user, null);
         this.fileType = fileType;
         this.fileName = fileName;
         this.numberLoaded = numLoaded;

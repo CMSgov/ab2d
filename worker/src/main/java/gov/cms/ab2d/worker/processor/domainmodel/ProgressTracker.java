@@ -31,6 +31,9 @@ public class ProgressTracker {
     @Setter
     private int lastUpdatedPercentage;
 
+    @Setter
+    private int optOutCount;
+
     /**
      * Increment the number of patients processed
      */
@@ -42,6 +45,19 @@ public class ProgressTracker {
         ++failureCount;
     }
 
+    public void incrementOptOutCount() {
+        ++optOutCount;
+    }
+
+    public int getContractCount(String contractNumber) {
+        GetPatientsByContractResponse response = patientsByContracts.stream()
+                .filter(c -> contractNumber.equalsIgnoreCase(c.getContractNumber()))
+                .findFirst().orElse(null);
+        if (response == null || response.getPatients() == null) {
+            return 0;
+        }
+        return response.getPatients().size();
+    }
     /**
      * Get the total number of patients we're processing across all contracts
      *
