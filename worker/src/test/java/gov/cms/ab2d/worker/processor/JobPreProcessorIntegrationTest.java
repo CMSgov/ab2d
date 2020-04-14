@@ -8,6 +8,11 @@ import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.common.repository.SponsorRepository;
 import gov.cms.ab2d.common.repository.UserRepository;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
+import gov.cms.ab2d.eventlogger.LoggableEvent;
+import gov.cms.ab2d.eventlogger.events.JobStatusChangeEvent;
+import gov.cms.ab2d.eventlogger.reports.sql.DeleteObjects;
+import gov.cms.ab2d.eventlogger.reports.sql.LoadObjects;
+import gov.cms.ab2d.eventlogger.utils.UtilMethods;
 import gov.cms.ab2d.worker.processor.JobPreProcessor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -19,13 +24,14 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.time.OffsetDateTime;
+import java.util.List;
 import java.util.Random;
 
 import static gov.cms.ab2d.common.util.Constants.NDJSON_FIRE_CONTENT_TYPE;
 import static java.lang.Boolean.TRUE;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
 @Testcontainers
@@ -41,6 +47,10 @@ class JobPreProcessorIntegrationTest {
     private SponsorRepository sponsorRepository;
     @Autowired
     private UserRepository userRepository;
+    @Autowired
+    private LoadObjects loadObjects;
+    @Autowired
+    private DeleteObjects deleteObjects;
 
     private Job job;
 
@@ -52,6 +62,7 @@ class JobPreProcessorIntegrationTest {
         jobRepository.deleteAll();
         userRepository.deleteAll();
         sponsorRepository.deleteAll();
+        deleteObjects.deleteAllJobStatusChangeEvent();
 
         var sponsor = createSponsor();
         var user = createUser(sponsor);
@@ -63,6 +74,20 @@ class JobPreProcessorIntegrationTest {
     void whenJobIsInSubmittedStatus_ThenJobShouldBePutInProgress() {
         var processedJob = cut.preprocess("S0000");
         assertThat(processedJob.getStatus(), is(JobStatus.IN_PROGRESS));
+
+        List<LoggableEvent> jobStatusChange = loadObjects.loadAllJobStatusChangeEvent();
+        assertEquals(1, jobStatusChange.size());
+        JobStatusChangeEvent event = (JobStatusChangeEvent) jobStatusChange.get(0);
+        assertEquals("SUBMITTED", event.getOldStatus());
+        assertEquals("IN_PROGRESS", event.getNewStatus());
+
+        assertTrue(UtilMethods.allEmpty(
+                loadObjects.loadAllApiRequestEvent(),
+                loadObjects.loadAllApiResponseEvent(),
+                loadObjects.loadAllReloadEvent(),
+                loadObjects.loadAllContractBeneSearchEvent(),
+                loadObjects.loadAllErrorEvent(),
+                loadObjects.loadAllFileEvent()));
     }
 
     @Test

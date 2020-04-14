@@ -12,6 +12,7 @@ import gov.cms.ab2d.eventlogger.LoggableEvent;
 import gov.cms.ab2d.eventlogger.events.ApiRequestEvent;
 import gov.cms.ab2d.eventlogger.events.ApiResponseEvent;
 import gov.cms.ab2d.eventlogger.events.ErrorEvent;
+import gov.cms.ab2d.eventlogger.events.JobStatusChangeEvent;
 import gov.cms.ab2d.eventlogger.reports.sql.DeleteObjects;
 import gov.cms.ab2d.eventlogger.reports.sql.LoadObjects;
 import gov.cms.ab2d.eventlogger.utils.UtilMethods;
@@ -152,12 +153,17 @@ public class BulkDataAccessAPIIntegrationTests {
 
         assertEquals(requestEvent.getRequestId(), responseEvent.getRequestId());
 
+        List<LoggableEvent> jobEvents = loadObjects.loadAllJobStatusChangeEvent();
+        assertEquals(1, jobEvents.size());
+        JobStatusChangeEvent jobEvent = (JobStatusChangeEvent) jobEvents.get(0);
+        assertEquals(JobStatus.SUBMITTED.name(), jobEvent.getNewStatus());
+        assertNull(jobEvent.getOldStatus());
+
         assertTrue(UtilMethods.allEmpty(
                 loadObjects.loadAllReloadEvent(),
                 loadObjects.loadAllContractBeneSearchEvent(),
                 loadObjects.loadAllErrorEvent(),
-                loadObjects.loadAllFileEvent(),
-                loadObjects.loadAllJobStatusChangeEvent()));
+                loadObjects.loadAllFileEvent()));
 
         Job job = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
 
@@ -225,12 +231,17 @@ public class BulkDataAccessAPIIntegrationTests {
         ErrorEvent errorEvent = (ErrorEvent) errorEvents.get(0);
         assertEquals(ErrorEvent.ErrorType.TOO_MANY_STATUS_REQUESTS, errorEvent.getErrorType());
 
+        List<LoggableEvent> jobEvents = loadObjects.loadAllJobStatusChangeEvent();
+        assertEquals(MAX_JOBS_PER_USER, jobEvents.size());
+        jobEvents.forEach(e -> assertEquals(JobStatus.SUBMITTED.name(), ((JobStatusChangeEvent) e).getNewStatus()));
+        JobStatusChangeEvent jobEvent = (JobStatusChangeEvent) jobEvents.get(0);
+        assertEquals(JobStatus.SUBMITTED.name(), jobEvent.getNewStatus());
+        assertNull(jobEvent.getOldStatus());
+
         assertTrue(UtilMethods.allEmpty(
                 loadObjects.loadAllReloadEvent(),
                 loadObjects.loadAllContractBeneSearchEvent(),
-                loadObjects.loadAllFileEvent(),
-                loadObjects.loadAllJobStatusChangeEvent()));
-
+                loadObjects.loadAllFileEvent()));
     }
 
     @Test
@@ -409,6 +420,14 @@ public class BulkDataAccessAPIIntegrationTests {
                 .andExpect(content().string(StringUtils.EMPTY));
 
         Job cancelledJob = jobRepository.findByJobUuid(job.getJobUuid());
+        List<LoggableEvent> jobStatusChange = loadObjects.loadAllJobStatusChangeEvent();
+        assertEquals(2, jobStatusChange.size());
+        JobStatusChangeEvent event1 = (JobStatusChangeEvent) jobStatusChange.get(0);
+        assertEquals("SUBMITTED", event1.getNewStatus());
+        assertNull(event1.getOldStatus());
+        JobStatusChangeEvent event2 = (JobStatusChangeEvent) jobStatusChange.get(1);
+        assertEquals("SUBMITTED", event2.getOldStatus());
+        assertEquals("CANCELLED", event2.getNewStatus());
         assertEquals(JobStatus.CANCELLED, cancelledJob.getStatus());
     }
 
@@ -694,13 +713,15 @@ public class BulkDataAccessAPIIntegrationTests {
         assertEquals(requestEvent.getRequestId(), responseEvent.getRequestId());
         assertEquals(requestEvent2.getRequestId(), responseEvent2.getRequestId());
 
+        // Technically the job status change has 1 entry but should have more because
+        // it went through the entire process, but because it is done manually here
+        // events weren't created for it.
+
         assertTrue(UtilMethods.allEmpty(
                 loadObjects.loadAllReloadEvent(),
                 loadObjects.loadAllContractBeneSearchEvent(),
                 loadObjects.loadAllErrorEvent(),
-                loadObjects.loadAllFileEvent(),
-                loadObjects.loadAllJobStatusChangeEvent()));
-
+                loadObjects.loadAllFileEvent()));
     }
 
     @Test
@@ -738,8 +759,7 @@ public class BulkDataAccessAPIIntegrationTests {
                 loadObjects.loadAllReloadEvent(),
                 loadObjects.loadAllContractBeneSearchEvent(),
                 loadObjects.loadAllErrorEvent(),
-                loadObjects.loadAllFileEvent(),
-                loadObjects.loadAllJobStatusChangeEvent()));
+                loadObjects.loadAllFileEvent()));
     }
 
     @Test
@@ -903,9 +923,7 @@ public class BulkDataAccessAPIIntegrationTests {
         assertTrue(UtilMethods.allEmpty(
                 loadObjects.loadAllReloadEvent(),
                 loadObjects.loadAllContractBeneSearchEvent(),
-                loadObjects.loadAllFileEvent(),
-                loadObjects.loadAllJobStatusChangeEvent()
-        ));
+                loadObjects.loadAllFileEvent()));
 
     }
 

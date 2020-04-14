@@ -3,9 +3,7 @@ package gov.cms.ab2d.worker.stuckjob;
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.JobStatus;
 import gov.cms.ab2d.common.repository.JobRepository;
-import org.jetbrains.annotations.NotNull;
-import org.junit.Assert;
-import org.junit.jupiter.api.AfterEach;
+import gov.cms.ab2d.eventlogger.EventLogger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -18,13 +16,10 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
-import static org.hamcrest.CoreMatchers.any;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
-import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -36,14 +31,20 @@ class CancelStuckJobsProcessorTest {
 
     private String jobUuid = "6d08bf08-f926-4e19-8d89-ad67ef89f17e";
 
-    @Mock   JobRepository mockJobRepo;
-    @Captor ArgumentCaptor<Job> captor;
+    @Mock
+    JobRepository mockJobRepo;
+
+    @Mock
+    private EventLogger eventLogger;
+
+    @Captor
+    private ArgumentCaptor<Job> captor;
 
     private List<Job> jobs = new ArrayList<>();
 
     @BeforeEach
     void setUp() {
-        cut = new CancelStuckJobsProcessorImpl(mockJobRepo);
+        cut = new CancelStuckJobsProcessorImpl(mockJobRepo, eventLogger);
         ReflectionTestUtils.setField(cut, "cancelThreshold", 6);
 
         jobs.add(createStuckJob(7));

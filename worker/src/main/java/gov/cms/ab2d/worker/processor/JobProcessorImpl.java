@@ -11,6 +11,7 @@ import gov.cms.ab2d.common.repository.JobOutputRepository;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.eventlogger.EventLogger;
 import gov.cms.ab2d.eventlogger.events.ContractBeneSearchEvent;
+import gov.cms.ab2d.eventlogger.events.JobStatusChangeEvent;
 import gov.cms.ab2d.worker.adapter.bluebutton.ContractAdapter;
 import gov.cms.ab2d.worker.adapter.bluebutton.GetPatientsByContractResponse;
 import gov.cms.ab2d.worker.processor.StreamHelperImpl.FileOutputType;
@@ -92,6 +93,12 @@ public class JobProcessorImpl implements JobProcessor {
             deleteExistingDirectory(outputDirPath);
 
         } catch (Exception e) {
+            eventLogger.log(new JobStatusChangeEvent(
+                    job.getUser() == null ? null : job.getUser().getUsername(),
+                    job.getJobUuid(),
+                    job.getStatus() == null ? null : job.getStatus().name(),
+                    JobStatus.FAILED.name(), "Job Failed - " + e.getMessage()));
+
             log.error("Unexpected expection ", e);
             job.setStatus(JobStatus.FAILED);
             job.setStatusMessage(e.getMessage());
@@ -294,6 +301,11 @@ public class JobProcessorImpl implements JobProcessor {
      * @param job - The job to set as complete
      */
     private void completeJob(Job job) {
+        eventLogger.log(new JobStatusChangeEvent(
+                job.getUser() == null ? null : job.getUser().getUsername(),
+                job.getJobUuid(),
+                job.getStatus() == null ? null : job.getStatus().name(),
+                JobStatus.SUCCESSFUL.name(), "Job Finished"));
         job.setStatus(SUCCESSFUL);
         job.setStatusMessage("100%");
         job.setProgress(100);

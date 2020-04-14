@@ -3,8 +3,7 @@ package gov.cms.ab2d.worker.processor;
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.JobStatus;
 import gov.cms.ab2d.common.repository.JobRepository;
-import gov.cms.ab2d.worker.processor.JobPreProcessor;
-import gov.cms.ab2d.worker.processor.JobPreProcessorImpl;
+import gov.cms.ab2d.eventlogger.EventLogger;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -16,9 +15,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.not;
-import static org.hamcrest.Matchers.notNullValue;
-import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -34,12 +30,14 @@ class JobPreProcessorUnitTest {
 
     @Mock
     private JobRepository jobRepository;
+    @Mock
+    private EventLogger eventLogger;
 
     private Job job;
 
     @BeforeEach
     void setUp() {
-        cut = new JobPreProcessorImpl(jobRepository);
+        cut = new JobPreProcessorImpl(jobRepository, eventLogger);
         job = createJob();
     }
 
