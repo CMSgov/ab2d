@@ -68,6 +68,9 @@ This example was generated from synthetic claims data. Please expand the source 
  {
    "resourceType": "ExplanationOfBenefit",
    "id": "snf-777777777",
+   "meta": {
+        "lastUpdated": "2019-05-25T23:45:16.962-04:00"
+   }
    "identifier": [
      {
        "system": "https://bluebutton.cms.gov/resources/variables/clm_id",
