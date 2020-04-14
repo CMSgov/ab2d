@@ -1,6 +1,5 @@
 package gov.cms.ab2d.eventlogger.events;
 
-import gov.cms.ab2d.common.model.JobStatus;
 import gov.cms.ab2d.eventlogger.LoggableEvent;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -14,15 +13,15 @@ import java.time.OffsetDateTime;
 @Data
 public class JobStatusChangeEvent extends LoggableEvent {
     // The old state
-    private JobStatus oldStatus;
+    private String oldStatus;
     // The new state
-    private JobStatus newStatus;
+    private String newStatus;
     // A description if needed whey this state occurred if it isn't obvious
     private String description;
 
     public JobStatusChangeEvent() { }
 
-    public JobStatusChangeEvent(String user, String jobId, JobStatus oldStatus, JobStatus newStatus, String description) {
+    public JobStatusChangeEvent(String user, String jobId, String oldStatus, String newStatus, String description) {
         super(OffsetDateTime.now(), user, jobId);
         this.oldStatus = oldStatus;
         this.newStatus = newStatus;

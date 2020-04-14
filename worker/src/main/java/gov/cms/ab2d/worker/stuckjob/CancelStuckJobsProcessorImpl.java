@@ -3,6 +3,8 @@ package gov.cms.ab2d.worker.stuckjob;
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.JobStatus;
 import gov.cms.ab2d.common.repository.JobRepository;
+import gov.cms.ab2d.eventlogger.EventLogger;
+import gov.cms.ab2d.eventlogger.events.JobStatusChangeEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -21,6 +23,7 @@ public class CancelStuckJobsProcessorImpl implements CancelStuckJobsProcessor {
     private int cancelThreshold;
 
     private final JobRepository jobRepository;
+    private final EventLogger eventLogger;
 
     @Override
     @Transactional
@@ -35,6 +38,11 @@ public class CancelStuckJobsProcessorImpl implements CancelStuckJobsProcessor {
             log.warn("Cancelling job - uuid:{} - created at:{} - status :{} - completed_at",
                     stuckJob.getJobUuid(), stuckJob.getCreatedAt(), stuckJob.getStatus(), stuckJob.getCompletedAt());
 
+            eventLogger.log(new JobStatusChangeEvent(
+                    stuckJob.getUser() == null ? null : stuckJob.getUser().getUsername(),
+                    stuckJob.getJobUuid(),
+                    stuckJob.getStatus() == null ? null : stuckJob.getStatus().name(),
+                    JobStatus.CANCELLED.name(), "Cancelling stuck job"));
             stuckJob.setStatus(JobStatus.CANCELLED);
             jobRepository.save(stuckJob);
         }

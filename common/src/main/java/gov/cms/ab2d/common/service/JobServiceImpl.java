@@ -9,6 +9,8 @@ import gov.cms.ab2d.common.model.JobStatus;
 import gov.cms.ab2d.common.model.Sponsor;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.repository.ContractRepository;
+import gov.cms.ab2d.eventlogger.EventLogger;
+import gov.cms.ab2d.eventlogger.events.JobStatusChangeEvent;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -41,6 +43,9 @@ public class JobServiceImpl implements JobService {
 
     @Autowired
     private JobOutputService jobOutputService;
+
+    @Autowired
+    private EventLogger eventLogger;
 
     @Value("${efs.mount}")
     private String fileDownloadPath;
@@ -84,6 +89,9 @@ public class JobServiceImpl implements JobService {
                 throw new ContractNotFoundException("Contract " + contractNumber + " was not found");
             });
         }
+        eventLogger.log(new JobStatusChangeEvent(
+                job.getUser() == null ? null : job.getUser().getUsername(),
+                job.getJobUuid(), null, JobStatus.SUBMITTED.name(), "Job Created"));
 
         return jobRepository.save(job);
     }
@@ -96,6 +104,11 @@ public class JobServiceImpl implements JobService {
             log.error("Job had a status of {} so it was not able to be cancelled", job.getStatus());
             throw new InvalidJobStateTransition("Job has a status of " + job.getStatus() + ", so it cannot be cancelled");
         }
+        eventLogger.log(new JobStatusChangeEvent(
+                job.getUser() == null ? null : job.getUser().getUsername(),
+                job.getJobUuid(),
+                job.getStatus() == null ? null : job.getStatus().name(),
+                JobStatus.CANCELLED.name(), "Job Cancelled"));
 
         jobRepository.cancelJobByJobUuid(jobUuid);
     }
