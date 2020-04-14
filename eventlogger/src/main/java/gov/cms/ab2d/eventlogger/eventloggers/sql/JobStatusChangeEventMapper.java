@@ -1,6 +1,5 @@
 package gov.cms.ab2d.eventlogger.eventloggers.sql;
 
-import gov.cms.ab2d.common.model.JobStatus;
 import gov.cms.ab2d.eventlogger.EventLoggingException;
 import gov.cms.ab2d.eventlogger.LoggableEvent;
 import gov.cms.ab2d.eventlogger.events.FileEvent;
@@ -34,8 +33,8 @@ public class JobStatusChangeEventMapper extends SqlEventMapper {
                 " values (:time, :user, :job, :oldStatus, :newStatus, :description)";
 
         SqlParameterSource parameters = super.addSuperParams(event)
-                .addValue("oldStatus", be.getOldStatus() != null ? be.getOldStatus().name() : null)
-                .addValue("newStatus", be.getNewStatus() != null ? be.getNewStatus().name() : null)
+                .addValue("oldStatus", be.getOldStatus())
+                .addValue("newStatus", be.getNewStatus())
                 .addValue("description", be.getDescription());
 
         template.update(query, parameters, keyHolder);
@@ -49,8 +48,8 @@ public class JobStatusChangeEventMapper extends SqlEventMapper {
         event.setTimeOfEvent(resultSet.getObject("time_of_event", OffsetDateTime.class));
         event.setUser(resultSet.getString("user_id"));
         event.setJobId(resultSet.getString("job_id"));
-        event.setOldStatus(JobStatus.valueOf(resultSet.getString("old_status")));
-        event.setNewStatus(JobStatus.valueOf(resultSet.getString("new_status")));
+        event.setOldStatus(resultSet.getString("old_status"));
+        event.setNewStatus(resultSet.getString("new_status"));
         event.setDescription(resultSet.getString("description"));
         return event;
     }
