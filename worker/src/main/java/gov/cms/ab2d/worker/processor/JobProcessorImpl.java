@@ -207,7 +207,7 @@ public class JobProcessorImpl implements JobProcessor {
             if (Files.isRegularFile(filePath)) {
                 eventLogger.log(new FileEvent(
                         job == null || job.getUser() == null ? null : job.getUser().getUsername(),
-                        job == null ? null: job.getJobUuid(),
+                        job == null ? null : job.getJobUuid(),
                         filePath.toFile(), FileEvent.FileStatus.DELETE));
 
                 doDelete(filePath);
