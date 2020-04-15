@@ -1415,11 +1415,11 @@ if [ -n "${BUILD_NEW_IMAGES}" ]; then
   #
   # export OKTA_CLIENT_ID=0oa2t0lsrdZw5uWRx297
   # export OKTA_CLIENT_PASSWORD=HHduWG6LogIvDIQuWgp3Zlo9OYMValTtH5OBcuHw
-  # mvn clean package
+  # mvn -T 1C clean package
   #
   # Skipping tests
   #
-  mvn clean package -DskipTests
+  mvn -T 1C clean package -DskipTests
   sleep 5
 
   # Get image version based on a master commit number

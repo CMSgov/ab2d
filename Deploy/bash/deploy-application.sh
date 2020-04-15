@@ -554,7 +554,7 @@ unset cmd[4] cmd[5]
 cd "${START_DIR}/.."
 cd ..
 
-mvn clean package -DskipTests
+mvn -T 1C clean package -DskipTests
 sleep 5
 
 # Get image version based on a master commit number
