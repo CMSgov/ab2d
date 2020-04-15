@@ -1,9 +1,12 @@
 package gov.cms.ab2d.worker.processor;
 
 import gov.cms.ab2d.common.model.Contract;
+import gov.cms.ab2d.eventlogger.EventLogger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -18,18 +21,22 @@ class JobDataWriterTest {
     @TempDir
     Path tempDir;
 
+    @Mock
+    private EventLogger eventLogger;
     private StreamHelper cut;
     private String poem = "Twinkle Twinkle Little Star";
     private byte[] line = poem.getBytes();
 
     @BeforeEach
     void setup() throws IOException {
+        MockitoAnnotations.initMocks(this);
         Contract contract = new Contract();
         contract.setContractNumber("CONTRACT_NUMBER");
         contract.setContractName("CONTRACT_NAME");
         var OutputDirPath = Paths.get(tempDir.toString(), contract.getContractName());
         var outputDir = Files.createDirectory(OutputDirPath);
-        cut = new TextStreamHelperImpl(outputDir, contract.getContractNumber(), 30, 50);
+        cut = new TextStreamHelperImpl(outputDir, contract.getContractNumber(), 30, 50,
+                eventLogger, null);
     }
 
     @Test
@@ -69,7 +76,7 @@ class JobDataWriterTest {
         assertThat(dataFiles.size(), is(3));
         dataFiles.forEach(file -> {
             var size = file.toFile().length();
-            assertThat(size, is(Long.valueOf(line.length)));
+            assertThat(size, is((long) line.length));
         });
     }
 
