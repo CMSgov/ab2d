@@ -1,5 +1,7 @@
 package gov.cms.ab2d.worker.processor;
 
+import gov.cms.ab2d.common.model.Job;
+import gov.cms.ab2d.eventlogger.EventLogger;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -36,6 +38,12 @@ public abstract class StreamHelperImpl implements StreamHelper, AutoCloseable {
             return suffix;
         }
     }
+
+    @Getter
+    private EventLogger eventLogger;
+
+    @Getter
+    private Job job;
 
     // Current file counter
     @Getter
@@ -91,13 +99,16 @@ public abstract class StreamHelperImpl implements StreamHelper, AutoCloseable {
      * @param totalBytesAllowed - the total number of bytes allowed in a file
      * @param tryLockTimeout - the lock time out
      */
-    StreamHelperImpl(Path path, String contractNumber, long totalBytesAllowed, int tryLockTimeout) {
+    StreamHelperImpl(Path path, String contractNumber, long totalBytesAllowed, int tryLockTimeout,
+                     EventLogger eventLogger, Job job) {
         this.path = path;
         this.contractNumber = contractNumber;
         this.totalBytesAllowed = totalBytesAllowed;
         this.tryLockTimeout = tryLockTimeout;
-        filesCreated = new ArrayList<>();
-        errorFilesCreated = new ArrayList<>();
+        this.filesCreated = new ArrayList<>();
+        this.errorFilesCreated = new ArrayList<>();
+        this.eventLogger = eventLogger;
+        this.job = job;
     }
 
     /**

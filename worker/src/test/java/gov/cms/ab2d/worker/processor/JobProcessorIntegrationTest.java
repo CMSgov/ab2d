@@ -21,6 +21,7 @@ import gov.cms.ab2d.eventlogger.eventloggers.sql.SqlEventLogger;
 import gov.cms.ab2d.eventlogger.eventloggers.sql.SqlMapperConfig;
 import gov.cms.ab2d.eventlogger.events.ContractBeneSearchEvent;
 import gov.cms.ab2d.eventlogger.events.ErrorEvent;
+import gov.cms.ab2d.eventlogger.events.FileEvent;
 import gov.cms.ab2d.eventlogger.events.JobStatusChangeEvent;
 import gov.cms.ab2d.eventlogger.reports.sql.DeleteObjects;
 import gov.cms.ab2d.eventlogger.reports.sql.LoadObjects;
@@ -263,13 +264,21 @@ class JobProcessorIntegrationTest {
         assertEquals("IN_PROGRESS", jobEvent.getOldStatus());
         assertEquals("FAILED", jobEvent.getNewStatus());
 
+        List<LoggableEvent> fileEvents = loadObjects.loadAllFileEvent();
+        // Since the max size of the file is not set here (so it's 0), every second write creates a new file since
+        // the file is no longer empty after the first write. This means, there were 20 files created so 40 events
+        assertEquals(40, fileEvents.size());
+        assertEquals(20, fileEvents.stream().filter(e -> ((FileEvent) e).getStatus() == FileEvent.FileStatus.OPEN).count());
+        assertEquals(20, fileEvents.stream().filter(e -> ((FileEvent) e).getStatus() == FileEvent.FileStatus.CLOSE).count());
+        assertTrue(((FileEvent) fileEvents.get(39)).getFileName().contains("0020.ndjson"));
+        assertTrue(((FileEvent) fileEvents.get(0)).getFileName().contains("0001.ndjson"));
+        assertEquals(20, fileEvents.stream().filter(e -> ((FileEvent) e).getFileHash().length() > 0).count());
+
         assertTrue(UtilMethods.allEmpty(
                 loadObjects.loadAllApiRequestEvent(),
                 loadObjects.loadAllApiResponseEvent(),
                 loadObjects.loadAllReloadEvent(),
-                loadObjects.loadAllContractBeneSearchEvent(),
-                loadObjects.loadAllFileEvent()
-        ));
+                loadObjects.loadAllContractBeneSearchEvent()));
 
         assertThat(processedJob.getStatus(), is(JobStatus.FAILED));
         assertThat(processedJob.getStatusMessage(), is("Too many patient records in the job had failures"));

@@ -26,7 +26,6 @@ public class FileServiceIntegrationTest {
 
     private FileService cut;
 
-
     @TempDir
     File tmpEfsMountDir;
 
@@ -35,16 +34,12 @@ public class FileServiceIntegrationTest {
         cut = new FileServiceImpl();
     }
 
-
-
     @Test
     void testCreateDirectory() throws IOException {
         Files.deleteIfExists(tmpEfsMountDir.toPath());
         final Path directory = cut.createDirectory(tmpEfsMountDir.toPath());
         Assertions.assertTrue(directory.toFile().isDirectory());
     }
-
-
 
     @Test
     void testCreateDirectoryWhenDirectoryAlreadyExist_ThrowsException() throws IOException {
@@ -57,8 +52,4 @@ public class FileServiceIntegrationTest {
 
         assertThat(exceptionThrown.getMessage(), startsWith("Could not create output directory"));
     }
-
-
-
-
 }
