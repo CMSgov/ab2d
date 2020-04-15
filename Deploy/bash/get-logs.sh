@@ -247,25 +247,48 @@ do
 done < "$input"
 WORKER_COUNT=$COUNTER
 
-# Determine if logs were downloaded
+# Determine the logs downloaded clount
 
 if [ $API_COUNT -eq 0 ] && [ $WORKER_COUNT -eq 0 ]; then
-  LOGS_DOWNLOADED=NO
+  LOGS_DOWNLOADED_COUNT=0
 else
-  LOGS_DOWNLOADED=YES    
+  LOGS_DOWNLOADED_COUNT="$((API_COUNT+WORKER_COUNT))"
 fi
 
-# Echo environment settings
+# Create summary
 
 if [ $REPLY -lt 4 ]; then
+
   echo ""
+  echo "**********************************************"
+  echo "ENVIRONMENT SUMMARY"
   echo "**********************************************"
   echo "AWS_PROFILE=${AWS_PROFILE}"
   echo "SSH_PRIVATE_KEY=${SSH_PRIVATE_KEY}"
   echo "CONTROLLER_PRIVATE_IP=${CONTROLLER_PRIVATE_IP}"
   echo "API_COUNT=${API_COUNT}"
   echo "WORKER_COUNT=${WORKER_COUNT}"
-  echo "LOGS_DOWNLOADED=${LOGS_DOWNLOADED}"
-  echo "**********************************************"
+  echo "LOGS_DOWNLOADED_COUNT=${LOGS_DOWNLOADED_COUNT}"
+
   echo ""
+  echo "**********************************************"
+  echo "LOGS DOWNLOADED"
+  echo "**********************************************"
+  if [ $API_COUNT -eq 0 ] && [ $WORKER_COUNT -eq 0 ]; then
+    echo "NONE"
+  fi
+  if [ $API_COUNT -ge 1 ]; then
+    for i in $(seq 1 $API_COUNT)
+    do
+      echo "~/Downloads/messages-api-node-${i}.txt"
+    done
+  fi
+  if [ $WORKER_COUNT -ge 1 ]; then
+    for i in $(seq 1 $WORKER_COUNT)
+    do
+      echo "~/Downloads/messages-worker-node-${i}.txt"
+    done
+  fi
+  echo ""
+
 fi
