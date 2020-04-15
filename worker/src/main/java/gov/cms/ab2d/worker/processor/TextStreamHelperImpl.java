@@ -1,8 +1,16 @@
 package gov.cms.ab2d.worker.processor;
 
+import gov.cms.ab2d.common.model.Job;
+import gov.cms.ab2d.eventlogger.EventLogger;
+import gov.cms.ab2d.eventlogger.events.FileEvent;
 import lombok.extern.slf4j.Slf4j;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.BufferedOutputStream;
+import java.io.FileOutputStream;
+import java.io.OutputStream;
 import java.nio.file.Path;
 
 /**
@@ -10,6 +18,8 @@ import java.nio.file.Path;
  */
 @Slf4j
 public class TextStreamHelperImpl extends StreamHelperImpl {
+
+    private File currentFile;
 
     /**
      * Implement the text stream helper
@@ -20,9 +30,10 @@ public class TextStreamHelperImpl extends StreamHelperImpl {
      * @param tryLockTimeout - the amount of time to wait before timing out lock
      * @throws FileNotFoundException - if the file can't be created
      */
-    public TextStreamHelperImpl(Path path, String contractNumber, long totalBytesAllowed, int tryLockTimeout)
+    public TextStreamHelperImpl(Path path, String contractNumber, long totalBytesAllowed, int tryLockTimeout,
+                                EventLogger logger, Job job)
             throws FileNotFoundException {
-        super(path, contractNumber, totalBytesAllowed, tryLockTimeout);
+        super(path, contractNumber, totalBytesAllowed, tryLockTimeout, logger, job);
 
         setCurrentStream(createStream());
     }
@@ -37,6 +48,10 @@ public class TextStreamHelperImpl extends StreamHelperImpl {
         String fileName = getPath().toString() + "/" + createFileName();
         File f = new File(fileName);
         f.getParentFile().mkdirs();
+        currentFile = f;
+        getEventLogger().log(new FileEvent(
+                getJob() == null || getJob().getUser() == null ? null : getJob().getUser().getUsername(),
+                getJob() == null ? null : getJob().getJobUuid(), f, FileEvent.FileStatus.OPEN));
         OutputStream stream = new BufferedOutputStream(new FileOutputStream(fileName));
         Path p = Path.of(fileName);
         getFilesCreated().add(p);
@@ -57,6 +72,9 @@ public class TextStreamHelperImpl extends StreamHelperImpl {
         try {
             if (getTotalBytesWritten() + data.length > getTotalBytesAllowed() && getTotalBytesWritten() > 0) {
                 getCurrentStream().close();
+                getEventLogger().log(new FileEvent(
+                        getJob() == null || getJob().getUser() == null ? null : getJob().getUser().getUsername(),
+                        getJob() == null ? null : getJob().getJobUuid(), currentFile, FileEvent.FileStatus.CLOSE));
                 setCurrentStream(createStream());
                 setTotalBytesWritten(0);
             }
@@ -78,6 +96,9 @@ public class TextStreamHelperImpl extends StreamHelperImpl {
     public void close() throws IOException {
         try {
             getCurrentStream().close();
+            getEventLogger().log(new FileEvent(
+                    getJob() == null || getJob().getUser() == null ? null : getJob().getUser().getUsername(),
+                    getJob() == null ? null : getJob().getJobUuid(), currentFile, FileEvent.FileStatus.CLOSE));
             int numFiles = getFilesCreated().size();
             if (getFilesCreated().get(numFiles - 1).toFile().length() == 0) {
                 getFilesCreated().remove(numFiles - 1);

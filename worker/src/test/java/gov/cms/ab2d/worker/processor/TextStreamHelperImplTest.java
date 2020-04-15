@@ -1,7 +1,11 @@
 package gov.cms.ab2d.worker.processor;
 
+import gov.cms.ab2d.eventlogger.EventLogger;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -16,10 +20,18 @@ import static org.junit.jupiter.api.Assertions.*;
 class TextStreamHelperImplTest {
     @TempDir
     File tmpDirFolder;
+    @Mock
+    private EventLogger eventLogger;
+
+    @BeforeEach
+    void init() {
+        MockitoAnnotations.initMocks(this);
+    }
 
     @Test
     void createFileName() throws IOException {
-        TextStreamHelperImpl helper = new TextStreamHelperImpl(tmpDirFolder.toPath(), "C1111", 10, 20);
+        TextStreamHelperImpl helper = new TextStreamHelperImpl(
+                tmpDirFolder.toPath(), "C1111", 10, 20, eventLogger, null);
         assertEquals("C1111_0002.ndjson", helper.createFileName());
         helper.close();
     }
@@ -28,7 +40,8 @@ class TextStreamHelperImplTest {
     void testSomePermsAppend() throws IOException {
         Path loc = Path.of(tmpDirFolder + "/testfile");
         Files.createFile(loc);
-        TextStreamHelperImpl helper = new TextStreamHelperImpl(Path.of(tmpDirFolder.toString()), "C1111", 10, 20);
+        TextStreamHelperImpl helper = new TextStreamHelperImpl(
+                Path.of(tmpDirFolder.toString()), "C1111", 10, 20, eventLogger, null);
         Set<PosixFilePermission> permissions = PosixFilePermissions.fromString("r-xr-xr-x");
         Files.setPosixFilePermissions(loc, permissions);
         byte[] val = new byte[2];
@@ -49,7 +62,8 @@ class TextStreamHelperImplTest {
         Path loc = Path.of(tmpDirFolder + "/testdir");
         Files.createDirectory(loc);
         Set<PosixFilePermission> permissions = PosixFilePermissions.fromString("r-xr-xr-x");
-        TextStreamHelperImpl helper = new TextStreamHelperImpl(loc, "C1111", 10, 20);
+        TextStreamHelperImpl helper = new TextStreamHelperImpl(
+                loc, "C1111", 10, 20, eventLogger, null);
         Files.setPosixFilePermissions(loc, permissions);
         helper.addData(null);
         helper.addData(val);
@@ -62,15 +76,18 @@ class TextStreamHelperImplTest {
 
     @Test
     void appendToFileTest() throws IOException {
-        assertThrows(NullPointerException.class, () -> new TextStreamHelperImpl(null, "C1111", 10, 20));
-        TextStreamHelperImpl helper = new TextStreamHelperImpl(tmpDirFolder.toPath(), "C1111", 10, 1);
+        assertThrows(NullPointerException.class, () -> new TextStreamHelperImpl(
+                null, "C1111", 10, 20, eventLogger, null));
+        TextStreamHelperImpl helper = new TextStreamHelperImpl(
+                tmpDirFolder.toPath(), "C1111", 10, 1, eventLogger, null);
         assertThrows(RuntimeException.class, () -> helper.tryLock(null));
         helper.close();
     }
 
     @Test
     void addError() throws IOException {
-        TextStreamHelperImpl helper = new TextStreamHelperImpl(tmpDirFolder.toPath(), "C1111", 10, 20);
+        TextStreamHelperImpl helper = new TextStreamHelperImpl(
+                tmpDirFolder.toPath(), "C1111", 10, 20, eventLogger, null);
         List<Path> errorFiles = helper.getErrorFiles();
         assertTrue(errorFiles.isEmpty());
         helper.addError("Error Info\n");
@@ -86,7 +103,8 @@ class TextStreamHelperImplTest {
 
     @Test
     void getEmptyDataFiles() throws IOException {
-        TextStreamHelperImpl helper = new TextStreamHelperImpl(tmpDirFolder.toPath(), "C1111", 10, 20);
+        TextStreamHelperImpl helper = new TextStreamHelperImpl(
+                tmpDirFolder.toPath(), "C1111", 10, 20, eventLogger, null);
         helper.close();
         List<Path> dataFiles = helper.getDataFiles();
         assertTrue(dataFiles.isEmpty());
@@ -94,7 +112,8 @@ class TextStreamHelperImplTest {
 
     @Test
     void getDataFilesWithLongData() throws IOException {
-        TextStreamHelperImpl helper = new TextStreamHelperImpl(tmpDirFolder.toPath(), "C1111", 10, 20);
+        TextStreamHelperImpl helper = new TextStreamHelperImpl(
+                tmpDirFolder.toPath(), "C1111", 10, 20, eventLogger, null);
         String longString = "Once upon a time in America, there lived a sweet girl who wandered the planet";
         helper.addData(longString.getBytes());
         helper.close();
@@ -106,7 +125,8 @@ class TextStreamHelperImplTest {
 
     @Test
     void getDataFiles() throws IOException {
-        TextStreamHelperImpl helper = new TextStreamHelperImpl(tmpDirFolder.toPath(), "C1111", 10, 20);
+        TextStreamHelperImpl helper = new TextStreamHelperImpl(
+                tmpDirFolder.toPath(), "C1111", 10, 20, eventLogger, null);
         String shortString = "Hello";
         helper.addData(shortString.getBytes());
         String shortString2 = "W";
