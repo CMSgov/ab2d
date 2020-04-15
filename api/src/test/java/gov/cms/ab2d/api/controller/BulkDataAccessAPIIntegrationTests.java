@@ -9,10 +9,7 @@ import gov.cms.ab2d.common.repository.*;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.DataSetup;
 import gov.cms.ab2d.eventlogger.LoggableEvent;
-import gov.cms.ab2d.eventlogger.events.ApiRequestEvent;
-import gov.cms.ab2d.eventlogger.events.ApiResponseEvent;
-import gov.cms.ab2d.eventlogger.events.ErrorEvent;
-import gov.cms.ab2d.eventlogger.events.JobStatusChangeEvent;
+import gov.cms.ab2d.eventlogger.events.*;
 import gov.cms.ab2d.eventlogger.reports.sql.DeleteObjects;
 import gov.cms.ab2d.eventlogger.reports.sql.LoadObjects;
 import gov.cms.ab2d.eventlogger.utils.UtilMethods;
@@ -55,6 +52,7 @@ import static gov.cms.ab2d.common.util.DataSetup.VALID_CONTRACT_NUMBER;
 import static gov.cms.ab2d.eventlogger.events.ErrorEvent.ErrorType.FILE_ALREADY_DELETED;
 import static junit.framework.TestCase.assertTrue;
 import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -420,6 +418,7 @@ public class BulkDataAccessAPIIntegrationTests {
                 .andExpect(content().string(StringUtils.EMPTY));
 
         Job cancelledJob = jobRepository.findByJobUuid(job.getJobUuid());
+
         List<LoggableEvent> jobStatusChange = loadObjects.loadAllJobStatusChangeEvent();
         assertEquals(2, jobStatusChange.size());
         JobStatusChangeEvent event1 = (JobStatusChangeEvent) jobStatusChange.get(0);
@@ -620,7 +619,6 @@ public class BulkDataAccessAPIIntegrationTests {
                         Is.is("https://localhost" + API_PREFIX + FHIR_PREFIX + "/Job/" + job.getJobUuid() +
                                 "/file/error.ndjson")));
     }
-
 
     @Test
     public void testGetStatusWhileFinished() throws Exception {
@@ -862,6 +860,13 @@ public class BulkDataAccessAPIIntegrationTests {
                         .andExpect(content().contentType(NDJSON_FIRE_CONTENT_TYPE))
                         // .andDo(MockMvcResultHandlers.print())
                         .andReturn();
+        List<LoggableEvent> fileEvents = loadObjects.loadAllFileEvent();
+        assertEquals(1, fileEvents.size());
+        FileEvent fileEvent = (FileEvent) fileEvents.get(0);
+        assertEquals(FileEvent.FileStatus.DELETE, fileEvent.getStatus());
+        assertEquals(destinationStr + "/" + testFile, fileEvent.getFileName());
+        assertNotNull(fileEvent.getFileHash());
+
         String downloadedFile = downloadFileCall.getResponse().getContentAsString();
         String testValue = JsonPath.read(downloadedFile, "$.test");
         assertEquals("value", testValue);
