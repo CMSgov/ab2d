@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -e #Exit on first error
+# set -e #Exit on first error
 # set -x #Be verbose
 
 #
@@ -140,10 +140,9 @@ fi
 
 # Verify VPN access to controller
 
-nc -z -v "${CONTROLLER_PRIVATE_IP}" 22 > "/tmp/verify-controller.txt" 2>&1
-VERIFY_VPN_ACCESS_TO_CONTROLLER=$(cat /tmp/verify-controller.txt | grep "succeeded")
+nc -v -z -G 5 "${CONTROLLER_PRIVATE_IP}" 22 &> /dev/null
 
-if [ -n "${VERIFY_VPN_ACCESS_TO_CONTROLLER}" ]; then
+if [ $? -eq 0 ]; then
   echo "VPN access to controller verified..."
   echo ""
 else
@@ -154,20 +153,119 @@ else
   exit 1
 fi
 
-rm -f /tmp/verify-controller.txt
+# Get the private IP addresses of API nodes
 
-# Get the API count of the dev environment
+ssh -i "~/.ssh/${SSH_PRIVATE_KEY}" ec2-user@"${CONTROLLER_PRIVATE_IP}" \
+  ./list-api-instances.sh \
+  | grep "10." \
+  | awk '{print $2}' \
+  > "/tmp/${AWS_PROFILE}-api-nodes.txt"
 
-# Get the worker count of the dev environment
+# Get the private IP addresses of worker nodes
+
+ssh -i "~/.ssh/${SSH_PRIVATE_KEY}" ec2-user@"${CONTROLLER_PRIVATE_IP}" \
+  ./list-worker-instances.sh \
+  | grep "10." \
+  | awk '{print $2}' \
+  > "/tmp/${AWS_PROFILE}-worker-nodes.txt"
+
+# Delete old logs
+
+echo ""
+echo "Delete existing API and worker logs in the 'Downloads' directory..."
+
+rm -f ${HOME}/Downloads/messages-api-node-*.txt
+rm -f ${HOME}/Downloads/messages-worker-node-*.txt
+
+# Get logs from API nodes
+
+input="/tmp/${AWS_PROFILE}-api-nodes.txt"
+COUNTER=0
+while IFS= read -r IP_ADDRESS
+do
+  echo "IP_ADDRESS=${IP_ADDRESS}"
+  COUNTER=$((COUNTER+1))
+  nc -v -z -G 5 "${IP_ADDRESS}" 22 &> /dev/null
+  if [ $? -eq 0 ]; then
+    echo ""
+    echo "VPN access to API node $COUNTER ($IP_ADDRESS) verified..."
+  else
+    echo ""
+    echo "**************************************************************************"
+    echo "ERROR: VPN access to API node $COUNTER ($IP_ADDRESS) could not be verified"
+    echo "**************************************************************************"
+    echo ""
+    exit 1
+  fi
+  echo ""
+  echo "Getting log from API node $COUNTER ($IP_ADDRESS)..."
+  ssh -i "~/.ssh/${SSH_PRIVATE_KEY}" ec2-user@"${IP_ADDRESS}" \
+    sudo cp /var/log/messages /home/ec2-user \
+    < /dev/null
+  ssh -i "~/.ssh/${SSH_PRIVATE_KEY}" ec2-user@"${IP_ADDRESS}" \
+    sudo chown ec2-user:ec2-user /home/ec2-user/messages \
+    < /dev/null
+  scp -i ~/.ssh/${SSH_PRIVATE_KEY} \
+    "ec2-user@${IP_ADDRESS}:~/messages" \
+    "${HOME}/Downloads/messages-api-node-${COUNTER}.txt" \
+    < /dev/null
+done < "$input"
+API_COUNT=$COUNTER
+
+# Get logs from worker nodes
+
+input="/tmp/${AWS_PROFILE}-worker-nodes.txt"
+COUNTER=0
+while IFS= read -r IP_ADDRESS
+do
+  echo "IP_ADDRESS=${IP_ADDRESS}"
+  COUNTER=$((COUNTER+1))
+  nc -v -z -G 5 "${IP_ADDRESS}" 22 &> /dev/null
+  if [ $? -eq 0 ]; then
+    echo ""
+    echo "VPN access to worker node $COUNTER ($IP_ADDRESS) verified..."
+  else
+    echo ""
+    echo "*****************************************************************************"
+    echo "ERROR: VPN access to worker node $COUNTER ($IP_ADDRESS) could not be verified"
+    echo "*****************************************************************************"
+    echo ""
+    exit 1
+  fi
+  echo ""
+  echo "Getting log from worker node $COUNTER ($IP_ADDRESS)..."
+  ssh -i "~/.ssh/${SSH_PRIVATE_KEY}" ec2-user@"${IP_ADDRESS}" \
+    sudo cp /var/log/messages /home/ec2-user \
+    < /dev/null
+  ssh -i "~/.ssh/${SSH_PRIVATE_KEY}" ec2-user@"${IP_ADDRESS}" \
+    sudo chown ec2-user:ec2-user /home/ec2-user/messages \
+    < /dev/null
+  scp -i ~/.ssh/${SSH_PRIVATE_KEY} \
+    "ec2-user@${IP_ADDRESS}:~/messages" \
+    "${HOME}/Downloads/messages-worker-node-${COUNTER}.txt" \
+    < /dev/null
+done < "$input"
+WORKER_COUNT=$COUNTER
+
+# Determine if logs were downloaded
+
+if [ $API_COUNT -eq 0 ] && [ $WORKER_COUNT -eq 0 ]; then
+  LOGS_DOWNLOADED=NO
+else
+  LOGS_DOWNLOADED=YES    
+fi
 
 # Echo environment settings
 
 if [ $REPLY -lt 4 ]; then
+  echo ""
   echo "**********************************************"
   echo "AWS_PROFILE=${AWS_PROFILE}"
   echo "SSH_PRIVATE_KEY=${SSH_PRIVATE_KEY}"
   echo "CONTROLLER_PRIVATE_IP=${CONTROLLER_PRIVATE_IP}"
-  echo "VERIFY_VPN_ACCESS_TO_CONTROLLER=verified"
+  echo "API_COUNT=${API_COUNT}"
+  echo "WORKER_COUNT=${WORKER_COUNT}"
+  echo "LOGS_DOWNLOADED=${LOGS_DOWNLOADED}"
   echo "**********************************************"
   echo ""
 fi
