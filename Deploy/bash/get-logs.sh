@@ -120,53 +120,20 @@ else
   exit 1
 fi
 
-# Get the controller private ip address
-
-CONTROLLER_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
-  --filters "Name=tag:Name,Values=ab2d-deployment-controller" \
-  --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
-  --output text)
-
-if [ -n "${CONTROLLER_PRIVATE_IP}" ]; then
-  echo "The private IP address of the controller for ${AWS_PROFILE} has been retrieved..."
-  echo ""
-else
-  echo "*******************************************************************************************"
-  echo "ERROR: The private IP address of the controller for ${AWS_PROFILE} could not be retrieved."
-  echo "*******************************************************************************************"
-  echo ""
-  exit 1
-fi
-
-# Verify VPN access to controller
-
-nc -v -z -G 5 "${CONTROLLER_PRIVATE_IP}" 22 &> /dev/null
-
-if [ $? -eq 0 ]; then
-  echo "VPN access to controller verified..."
-  echo ""
-else
-  echo "*****************************************************"
-  echo "ERROR: VPN access to controller could not be verified"
-  echo "*****************************************************"
-  echo ""
-  exit 1
-fi
-
 # Get the private IP addresses of API nodes
 
-ssh -i "~/.ssh/${SSH_PRIVATE_KEY}" ec2-user@"${CONTROLLER_PRIVATE_IP}" \
-  ./list-api-instances.sh \
-  | grep "10." \
-  | awk '{print $2}' \
+aws --region us-east-1 ec2 describe-instances \
+  --filters "Name=tag:Name,Values=${AWS_PROFILE}-api" \
+  --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+  --output text \
   > "/tmp/${AWS_PROFILE}-api-nodes.txt"
 
 # Get the private IP addresses of worker nodes
 
-ssh -i "~/.ssh/${SSH_PRIVATE_KEY}" ec2-user@"${CONTROLLER_PRIVATE_IP}" \
-  ./list-worker-instances.sh \
-  | grep "10." \
-  | awk '{print $2}' \
+aws --region us-east-1 ec2 describe-instances \
+  --filters "Name=tag:Name,Values=${AWS_PROFILE}-worker" \
+  --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+  --output text \
   > "/tmp/${AWS_PROFILE}-worker-nodes.txt"
 
 # Delete old logs
@@ -265,7 +232,6 @@ if [ $REPLY -lt 4 ]; then
   echo "**********************************************"
   echo "AWS_PROFILE=${AWS_PROFILE}"
   echo "SSH_PRIVATE_KEY=${SSH_PRIVATE_KEY}"
-  echo "CONTROLLER_PRIVATE_IP=${CONTROLLER_PRIVATE_IP}"
   echo "API_COUNT=${API_COUNT}"
   echo "WORKER_COUNT=${WORKER_COUNT}"
   echo "LOGS_DOWNLOADED_COUNT=${LOGS_DOWNLOADED_COUNT}"
