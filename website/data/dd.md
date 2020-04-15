@@ -69,7 +69,7 @@ This example was generated from synthetic claims data. Please expand the source 
    "resourceType": "ExplanationOfBenefit",
    "id": "snf-777777777",
    "meta": {
-        "lastUpdated": "2019-05-25T23:45:16.962-04:00"
+        "lastUpdated": "2020-02-13T00:00:00.000-05:00"
    }
    "identifier": [
      {
