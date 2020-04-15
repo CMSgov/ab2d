@@ -109,9 +109,9 @@ public class TestRunner {
                     .withScaledService("worker", 2)
                     .withExposedService("db", 5432)
                     .withExposedService("api", 8080, new HostPortWaitStrategy()
-                        .withStartupTimeout(Duration.of(150, SECONDS)))
-                     .withLogConsumer("worker", new Slf4jLogConsumer(log)) // Use to debug, for now there's too much log data
-                     .withLogConsumer("api", new Slf4jLogConsumer(log));
+                        .withStartupTimeout(Duration.of(150, SECONDS)));
+                     //.withLogConsumer("worker", new Slf4jLogConsumer(log)) // Use to debug, for now there's too much log data
+                     //.withLogConsumer("api", new Slf4jLogConsumer(log));
             container.start();
         }
 
@@ -166,7 +166,7 @@ public class TestRunner {
         int status = 0;
         Set<Integer> statusesBetween0And100 = Sets.newHashSet();
         while(status != 200 && status != 500) {
-            Thread.sleep(DELAY * 1000 + 1000);
+            Thread.sleep(DELAY * 1000 + 2000);
             statusResponse = apiClient.statusRequest(statusUrl);
             status = statusResponse.statusCode();
 
