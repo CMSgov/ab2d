@@ -55,8 +55,6 @@ public class ZipStreamHelperImplTest {
      */
     void testZips(String contractId, int totalBytesAllowedInFile, int totalAllowedInPart,
                   int numberStrings, int minStringSize, int maxStringSize) throws IOException {
-        System.out.println("\nRun Test: " + contractId + " - " + totalBytesAllowedInFile +
-                "(" + totalAllowedInPart + ") - Num Lines - " + numberStrings);
         int zipCounter = 1;
         int partCounter = 1;
 
@@ -76,7 +74,6 @@ public class ZipStreamHelperImplTest {
         for (Path zip : zipFiles) {
             String fileName = zip.getFileName().toString();
             long size = zip.toFile().length();
-            System.out.println("Unpacking " + fileName + " - size: " + size);
             assertTrue(fileName.endsWith("0" + zipCounter + ".zip"));
             try (ZipInputStream zipIn = new ZipInputStream(new FileInputStream(zip.toString()))) {
                 ZipEntry entry = zipIn.getNextEntry();
@@ -92,7 +89,6 @@ public class ZipStreamHelperImplTest {
             }
             zipCounter++;
         }
-        System.out.println("Average Compression: " + helper.getAverageCompression());
         // Make sure we loaded the same data that we tried to write
         String testValString = String.join("", testVals);
         assertEquals(testValString, output.toString());
@@ -174,7 +170,6 @@ public class ZipStreamHelperImplTest {
         while ((read = zipIn.read()) != -1) {
             result.append((char) read);
         }
-        System.out.println("    Entry " + entry.getName() + " - size: " + result.length());
         return result.toString();
     }
 
