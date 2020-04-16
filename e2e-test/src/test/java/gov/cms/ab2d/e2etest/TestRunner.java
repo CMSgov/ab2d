@@ -166,7 +166,7 @@ public class TestRunner {
         int status = 0;
         Set<Integer> statusesBetween0And100 = Sets.newHashSet();
         while(status != 200 && status != 500) {
-            Thread.sleep(DELAY * 1000 + 1000);
+            Thread.sleep(DELAY * 1000 + 2000);
             statusResponse = apiClient.statusRequest(statusUrl);
             status = statusResponse.statusCode();
 
@@ -618,6 +618,7 @@ public class TestRunner {
         Assert.assertEquals(200, healthCheckResponse.statusCode());
     }
 
+    // Consider removing if tests are failing
     @Test
     @Order(16)
     public void testOptOut() throws IOException, InterruptedException, JSONException {
