@@ -1,5 +1,8 @@
 package gov.cms.ab2d.worker.processor;
 
+import gov.cms.ab2d.common.model.Job;
+import gov.cms.ab2d.eventlogger.EventLogger;
+import gov.cms.ab2d.eventlogger.events.FileEvent;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -14,6 +17,7 @@ import java.util.zip.ZipOutputStream;
  */
 @Slf4j
 public class ZipStreamHelperImpl extends StreamHelperImpl {
+    private File currentFile;
 
     // Current index of zip file
     private int currentZipIteration = 1;
@@ -43,8 +47,8 @@ public class ZipStreamHelperImpl extends StreamHelperImpl {
      * @throws FileNotFoundException if there was an error writing to the file system
      */
     ZipStreamHelperImpl(Path path, String contractNumber, long totalBytesAllowed, long totalBytesInEntry,
-                         int tryLockTimeout) throws FileNotFoundException {
-        super(path, contractNumber, totalBytesAllowed, tryLockTimeout);
+                        int tryLockTimeout, EventLogger logger, Job job) throws FileNotFoundException {
+        super(path, contractNumber, totalBytesAllowed, tryLockTimeout, logger, job);
         this.totalExpandedBytesInEntryAllowed = totalBytesInEntry;
         checkInitStreams();
     }
@@ -58,6 +62,11 @@ public class ZipStreamHelperImpl extends StreamHelperImpl {
     private ZipOutputStream createStream() throws FileNotFoundException {
         String zipFileName = getPath().toString() + "/" + createZipFileName();
         File f = new File(zipFileName);
+        currentFile = f;
+        getEventLogger().log(new FileEvent(
+                getJob() == null || getJob().getUser() == null ? null : getJob().getUser().getUsername(),
+                getJob() == null ? null : getJob().getJobUuid(), f, FileEvent.FileStatus.OPEN));
+
         f.getParentFile().mkdirs();
         Path currentFile = Path.of(zipFileName);
         FileOutputStream fos = new FileOutputStream(zipFileName);
@@ -170,6 +179,10 @@ public class ZipStreamHelperImpl extends StreamHelperImpl {
      */
     private void resetZipFile() throws IOException {
         getCurrentStream().close();
+        getEventLogger().log(new FileEvent(
+                getJob() == null || getJob().getUser() == null ? null : getJob().getUser().getUsername(),
+                getJob() == null ? null : getJob().getJobUuid(), currentFile, FileEvent.FileStatus.CLOSE));
+
         setCurrentStream(createStream());
     }
 
@@ -200,6 +213,10 @@ public class ZipStreamHelperImpl extends StreamHelperImpl {
                 }
                 addPartToFile();
             }
+            getEventLogger().log(new FileEvent(
+                    getJob() == null || getJob().getUser() == null ? null : getJob().getUser().getUsername(),
+                    getJob() == null ? null : getJob().getJobUuid(), currentFile, FileEvent.FileStatus.CLOSE));
+
             getCurrentStream().close();
             int numFiles = getFilesCreated().size();
             if (getFilesCreated().get(numFiles - 1).toFile().length() == 0) {
