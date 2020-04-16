@@ -22,6 +22,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
@@ -72,6 +73,7 @@ class ContractProcessorUnitTest {
 
     @BeforeEach
     void setUp() throws Exception {
+        MockitoAnnotations.initMocks(this);
         cut = new ContractProcessorImpl(
                 fileService,
                 jobRepository,
