@@ -18,6 +18,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -28,6 +29,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.validation.constraints.NotBlank;
 import java.io.IOException;
 import java.util.List;
 
@@ -139,5 +141,17 @@ public class AdminAPI {
     public ResponseEntity<Void> clearCoverageCache(@RequestBody ClearCoverageCacheRequest request) {
         cacheService.clearCache(request);
         return ResponseEntity.noContent().build();
+    }
+
+    @ResponseStatus(value = HttpStatus.OK)
+    @PutMapping("/user/{username}/enable")
+    public ResponseEntity<UserDTO> enableUser(@PathVariable @NotBlank String username) {
+        return new ResponseEntity<>(userService.enableUser(username), null, HttpStatus.OK);
+    }
+
+    @ResponseStatus(value = HttpStatus.OK)
+    @PutMapping("/user/{username}/disable")
+    public ResponseEntity<UserDTO> disableUser(@PathVariable @NotBlank String username) {
+        return new ResponseEntity<>(userService.disableUser(username), null, HttpStatus.OK);
     }
 }

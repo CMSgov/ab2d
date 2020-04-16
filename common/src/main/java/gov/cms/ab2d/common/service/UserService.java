@@ -12,4 +12,8 @@ public interface UserService {
     UserDTO createUser(UserDTO userDTO);
 
     UserDTO updateUser(UserDTO userDTO);
+
+    UserDTO enableUser(String username);
+
+    UserDTO disableUser(String username);
 }
