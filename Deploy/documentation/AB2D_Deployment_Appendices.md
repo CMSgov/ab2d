@@ -2780,7 +2780,7 @@
 1. Build "s3-client-test"
 
    ```ShellSession
-   $ mvn -T 1C clean package
+   $ mvn clean package
    ```
 
 1. Set AWS region
@@ -2818,7 +2818,7 @@
 1. Build "s3-client-test"
 
    ```ShellSession
-   $ mvn -T 1C clean package
+   $ mvn clean package
    ```
 
 1. Delete existing zipped target directory (if exists)

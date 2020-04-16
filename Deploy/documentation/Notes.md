@@ -246,7 +246,7 @@
         build:
           image: maven:3-jdk-13
           working_dir: /usr/src/mymaven
-          command: mvn -T 1C clean package
+          command: mvn clean package
           volumes:
             - .:/usr/src/mymaven
             - ${HOME}/.m2:/root/.m2
