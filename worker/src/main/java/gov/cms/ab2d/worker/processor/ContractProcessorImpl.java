@@ -2,6 +2,7 @@ package gov.cms.ab2d.worker.processor;
 
 import com.newrelic.api.agent.NewRelic;
 import com.newrelic.api.agent.Token;
+import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.JobOutput;
 import gov.cms.ab2d.common.model.JobStatus;
 import gov.cms.ab2d.common.model.OptOut;
@@ -67,7 +68,6 @@ public class ContractProcessorImpl implements ContractProcessor {
     @Value("${file.try.lock.timeout}")
     private int tryLockTimeout;
 
-
     private final FileService fileService;
     private final JobRepository jobRepository;
     private final PatientClaimsProcessor patientClaimsProcessor;
@@ -95,7 +95,9 @@ public class ContractProcessorImpl implements ContractProcessor {
         boolean isCancelled = false;
         StreamHelper helper = null;
         try {
-            helper = createOutputHelper(outputDirPath, contractNumber, outputType);
+            var jobUuid = contractData.getProgressTracker().getJobUuid();
+            Job job = jobRepository.findByJobUuid(jobUuid);
+            helper = createOutputHelper(outputDirPath, contractNumber, outputType, job);
 
             int recordsProcessedCount = 0;
             var futureHandles = new ArrayList<Future<Void>>();
@@ -134,12 +136,14 @@ public class ContractProcessorImpl implements ContractProcessor {
         return createJobOutputs(helper.getDataFiles(), helper.getErrorFiles());
     }
 
-    private StreamHelper createOutputHelper(Path outputDirPath, String contractNumber, FileOutputType outputType) {
+    private StreamHelper createOutputHelper(Path outputDirPath, String contractNumber, FileOutputType outputType, Job job) {
         try {
             if (outputType == ZIP) {
-                return new ZipStreamHelperImpl(outputDirPath, contractNumber, getZipRolloverThreshold(), getRollOverThreshold(), tryLockTimeout);
+                return new ZipStreamHelperImpl(outputDirPath, contractNumber, getZipRolloverThreshold(),
+                        getRollOverThreshold(), tryLockTimeout, eventLogger, job);
             } else {
-                return new TextStreamHelperImpl(outputDirPath, contractNumber, getRollOverThreshold(), tryLockTimeout);
+                return new TextStreamHelperImpl(outputDirPath, contractNumber, getRollOverThreshold(), tryLockTimeout,
+                        eventLogger, job);
             }
         } catch (IOException e) {
             throw new UncheckedIOException(e);
@@ -148,8 +152,8 @@ public class ContractProcessorImpl implements ContractProcessor {
 
     /**
      * While there are still patient records in progress, sleep for a bit and check progress
-     * @param futureHandles
-     * @param progressTracker
+     * @param futureHandles - the running threads
+     * @param progressTracker - the object maintaining the progress of the job
      */
     private void awaitTermination(ArrayList<Future<Void>> futureHandles, ProgressTracker progressTracker) {
         while (!futureHandles.isEmpty()) {
@@ -182,9 +186,9 @@ public class ContractProcessorImpl implements ContractProcessor {
      * On using new-relic tokens with async calls
      * See https://docs.newrelic.com/docs/agents/java-agent/async-instrumentation/java-agent-api-asynchronous-applications
      *
-     * @param patient
-     * @param contractData
-     * @param helper
+     * @param patient - process to process
+     * @param contractData - the contract data information
+     * @param helper - the helper used to write to the file
      * @return a Future<Void>
      */
     private Future<Void> processPatient(PatientDTO patient, ContractData contractData, StreamHelper helper) {
@@ -205,7 +209,6 @@ public class ContractProcessorImpl implements ContractProcessor {
         } finally {
             RoundRobinBlockingQueue.CATEGORY_HOLDER.remove();
         }
-
     }
 
     /**

@@ -10,6 +10,7 @@ import gov.cms.ab2d.common.model.Sponsor;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.repository.ContractRepository;
 import gov.cms.ab2d.eventlogger.EventLogger;
+import gov.cms.ab2d.eventlogger.events.FileEvent;
 import gov.cms.ab2d.eventlogger.events.JobStatusChangeEvent;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -185,16 +186,18 @@ public class JobServiceImpl implements JobService {
 
     @Override
     public void deleteFileForJob(File file, String jobUuid) {
-        boolean deleted = file.delete();
-        if (!deleted) {
-            log.error("Was not able to delete the file {}", file.getName());
-        }
-
         String fileName = file.getName();
         Job job = jobRepository.findByJobUuid(jobUuid);
         JobOutput jobOutput = jobOutputService.findByFilePathAndJob(fileName, job);
         jobOutput.setDownloaded(true);
         jobOutputService.updateJobOutput(jobOutput);
+        eventLogger.log(new FileEvent(
+                job == null || job.getUser() == null ? null : job.getUser().getUsername(),
+                jobUuid, file, FileEvent.FileStatus.DELETE));
+        boolean deleted = file.delete();
+        if (!deleted) {
+            log.error("Was not able to delete the file {}", file.getName());
+        }
     }
 
     @Override

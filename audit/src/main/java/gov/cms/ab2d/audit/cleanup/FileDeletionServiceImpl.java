@@ -87,6 +87,7 @@ public class FileDeletionServiceImpl implements FileDeletionService {
         var jobUuid = new File(path.toUri()).getParentFile().getName();
         var job = findJob(jobUuid, path);
 
+        FileEvent fileEvent = null;
         try {
             var deleteCheckTime = getDeleteCheckTime(path, job);
             if (deleteCheckTime == null) {
@@ -96,14 +97,19 @@ public class FileDeletionServiceImpl implements FileDeletionService {
                 final boolean filenameHasValidExtension = isFilenameExtensionValid(path);
 
                 if (deleteCheckTime.isBefore(oldestDeletableTime) && filenameHasValidExtension) {
-                    eventLogger.log(new FileEvent(
+                    // Create the event here while we still have the file data
+                    fileEvent = new FileEvent(
                             job == null || job.getUser() == null ? null : job.getUser().getUsername(),
-                            jobUuid, new File(path.toUri()), FileEvent.FileStatus.DELETE));
+                            jobUuid, new File(path.toUri()), FileEvent.FileStatus.DELETE);
                     Files.delete(path);
                     log.info("Deleted file {}", path);
                 } else {
                     logFileNotEligibleForDeletion(path);
                 }
+            }
+            // Actually log here because if we've gotten here with an exception, we deleted it.
+            if (fileEvent != null) {
+                eventLogger.log(fileEvent);
             }
         } catch (IOException e) {
             log.error("Encountered exception trying to delete a file {}, moving onto next one", path, e);
