@@ -618,6 +618,7 @@ public class TestRunner {
         Assert.assertEquals(200, healthCheckResponse.statusCode());
     }
 
+    // Consider removing if tests are failing
     @Test
     @Order(16)
     public void testOptOut() throws IOException, InterruptedException, JSONException {
