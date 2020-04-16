@@ -2,6 +2,7 @@ package gov.cms.ab2d.optout;
 
 import gov.cms.ab2d.common.model.OptOut;
 import gov.cms.ab2d.common.repository.OptOutRepository;
+import gov.cms.ab2d.eventlogger.EventLogger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -25,15 +26,14 @@ class OptOutImporterUnitTest {
 
     @Mock private OptOutConverterService converterService;
     @Mock private OptOutRepository optOutRepo;
+    @Mock private EventLogger eventLogger;
 
     private OptOutImporter cut;
 
     @BeforeEach
     public void setup() {
-        cut = new OptOutImporterImpl(optOutRepo, converterService);
+        cut = new OptOutImporterImpl(optOutRepo, converterService, eventLogger);
     }
-
-
 
     @Test
     void process()  {
@@ -49,7 +49,6 @@ class OptOutImporterUnitTest {
         verify(optOutRepo, times(32)).findByCcwIdAndHicn(any(), any());
         verify(optOutRepo, times(32)).save(any());
         verify(converterService, times(32)).convert(any());
-
     }
 
     private OptOut createOptOut(String filename) {
@@ -58,9 +57,6 @@ class OptOutImporterUnitTest {
         optout.setCcwId("ccw_id_" + + Instant.now().getNano());
         optout.setEffectiveDate(LocalDate.now());
         optout.setFilename(filename);
-
         return optout;
     }
-
-
 }

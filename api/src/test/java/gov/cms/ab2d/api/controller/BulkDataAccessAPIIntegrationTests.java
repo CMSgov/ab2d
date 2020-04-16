@@ -8,6 +8,11 @@ import gov.cms.ab2d.common.model.*;
 import gov.cms.ab2d.common.repository.*;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.DataSetup;
+import gov.cms.ab2d.eventlogger.LoggableEvent;
+import gov.cms.ab2d.eventlogger.events.*;
+import gov.cms.ab2d.eventlogger.reports.sql.DeleteObjects;
+import gov.cms.ab2d.eventlogger.reports.sql.LoadObjects;
+import gov.cms.ab2d.eventlogger.utils.UtilMethods;
 import org.apache.commons.lang3.StringUtils;
 import org.hamcrest.core.Is;
 import org.hl7.fhir.dstu3.model.DateTimeType;
@@ -19,6 +24,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
@@ -43,6 +49,11 @@ import static gov.cms.ab2d.common.service.JobServiceImpl.INITIAL_JOB_STATUS_MESS
 import static gov.cms.ab2d.common.util.Constants.*;
 import static gov.cms.ab2d.common.util.DataSetup.TEST_USER;
 import static gov.cms.ab2d.common.util.DataSetup.VALID_CONTRACT_NUMBER;
+import static gov.cms.ab2d.eventlogger.events.ErrorEvent.ErrorType.FILE_ALREADY_DELETED;
+import static junit.framework.TestCase.assertTrue;
+import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -83,6 +94,12 @@ public class BulkDataAccessAPIIntegrationTests {
     @Autowired
     private DataSetup dataSetup;
 
+    @Autowired
+    private DeleteObjects deleteObjects;
+
+    @Autowired
+    private LoadObjects loadObjects;
+
     private String token;
 
     public static final String PATIENT_EXPORT_PATH = "/Patient/$export";
@@ -96,6 +113,14 @@ public class BulkDataAccessAPIIntegrationTests {
         userRepository.deleteAll();
         roleRepository.deleteAll();
         sponsorRepository.deleteAll();
+
+        deleteObjects.deleteAllApiRequestEvent();
+        deleteObjects.deleteAllApiResponseEvent();
+        deleteObjects.deleteAllReloadEvent();
+        deleteObjects.deleteAllContractBeneSearchEvent();
+        deleteObjects.deleteAllErrorEvent();
+        deleteObjects.deleteAllFileEvent();
+        deleteObjects.deleteAllJobStatusChangeEvent();
 
         testUtil.turnMaintenanceModeOff();
         token = testUtil.setupToken(List.of(SPONSOR_ROLE));
@@ -116,7 +141,31 @@ public class BulkDataAccessAPIIntegrationTests {
                 get(API_PREFIX + FHIR_PREFIX + PATIENT_EXPORT_PATH).contentType(MediaType.APPLICATION_JSON)
                 .header("Authorization", "Bearer " + token));
                 // .andDo(print());
+        List<LoggableEvent> apiRequestEvents = loadObjects.loadAllApiRequestEvent();
+        ApiRequestEvent requestEvent = (ApiRequestEvent) apiRequestEvents.get(0);
+        assertEquals(1, apiRequestEvents.size());
+        List<LoggableEvent> apiResponseEvents = loadObjects.loadAllApiResponseEvent();
+        ApiResponseEvent responseEvent = (ApiResponseEvent) apiResponseEvents.get(0);
+        assertEquals(1, apiResponseEvents.size());
+        assertEquals(HttpStatus.ACCEPTED.value(), responseEvent.getResponseCode());
+
+        assertEquals(requestEvent.getRequestId(), responseEvent.getRequestId());
+
+        List<LoggableEvent> jobEvents = loadObjects.loadAllJobStatusChangeEvent();
+        assertEquals(1, jobEvents.size());
+        JobStatusChangeEvent jobEvent = (JobStatusChangeEvent) jobEvents.get(0);
+        assertEquals(JobStatus.SUBMITTED.name(), jobEvent.getNewStatus());
+        assertNull(jobEvent.getOldStatus());
+
+        assertTrue(UtilMethods.allEmpty(
+                loadObjects.loadAllReloadEvent(),
+                loadObjects.loadAllContractBeneSearchEvent(),
+                loadObjects.loadAllErrorEvent(),
+                loadObjects.loadAllFileEvent()));
+
         Job job = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
+
+        assertEquals(job.getJobUuid(), responseEvent.getJobId());
 
         String statusUrl =
                 "http://localhost" + API_PREFIX + FHIR_PREFIX + "/Job/" + job.getJobUuid() + "/$status";
@@ -124,13 +173,13 @@ public class BulkDataAccessAPIIntegrationTests {
         resultActions.andExpect(status().isAccepted())
                 .andExpect(header().string("Content-Location", statusUrl));
 
-        Assert.assertEquals(job.getStatus(), JobStatus.SUBMITTED);
-        Assert.assertEquals(job.getStatusMessage(), INITIAL_JOB_STATUS_MESSAGE);
-        Assert.assertEquals(job.getProgress(), Integer.valueOf(0));
-        Assert.assertEquals(job.getRequestUrl(),
+        assertEquals(job.getStatus(), JobStatus.SUBMITTED);
+        assertEquals(job.getStatusMessage(), INITIAL_JOB_STATUS_MESSAGE);
+        assertEquals(job.getProgress(), Integer.valueOf(0));
+        assertEquals(job.getRequestUrl(),
                 "http://localhost" + API_PREFIX + FHIR_PREFIX + PATIENT_EXPORT_PATH);
-        Assert.assertEquals(job.getResourceTypes(), EOB);
-        Assert.assertEquals(job.getUser(), userRepository.findByUsername(TEST_USER));
+        assertEquals(job.getResourceTypes(), EOB);
+        assertEquals(job.getUser(), userRepository.findByUsername(TEST_USER));
     }
 
     @Test
@@ -148,13 +197,13 @@ public class BulkDataAccessAPIIntegrationTests {
         resultActions.andExpect(status().isAccepted())
                 .andExpect(header().string("Content-Location", statusUrl));
 
-        Assert.assertEquals(job.getStatus(), JobStatus.SUBMITTED);
-        Assert.assertEquals(job.getStatusMessage(), INITIAL_JOB_STATUS_MESSAGE);
-        Assert.assertEquals(job.getProgress(), Integer.valueOf(0));
-        Assert.assertEquals(job.getRequestUrl(),
+        assertEquals(job.getStatus(), JobStatus.SUBMITTED);
+        assertEquals(job.getStatusMessage(), INITIAL_JOB_STATUS_MESSAGE);
+        assertEquals(job.getProgress(), Integer.valueOf(0));
+        assertEquals(job.getRequestUrl(),
                 "https://localhost" + API_PREFIX + FHIR_PREFIX + PATIENT_EXPORT_PATH);
-        Assert.assertEquals(job.getResourceTypes(), EOB);
-        Assert.assertEquals(job.getUser(), userRepository.findByUsername(TEST_USER));
+        assertEquals(job.getResourceTypes(), EOB);
+        assertEquals(job.getUser(), userRepository.findByUsername(TEST_USER));
     }
 
     @Test
@@ -167,6 +216,30 @@ public class BulkDataAccessAPIIntegrationTests {
                         .andExpect(status().is(429))
                         .andExpect(header().string("Retry-After", "30"))
                         .andExpect(header().doesNotExist("X-Progress"));
+        List<LoggableEvent> apiRequestEvents = loadObjects.loadAllApiRequestEvent();
+        assertEquals(MAX_JOBS_PER_USER + 1, apiRequestEvents.size());
+        ApiRequestEvent requestEvent = (ApiRequestEvent) apiRequestEvents.get(0);
+
+        List<LoggableEvent> apiResponseEvents = loadObjects.loadAllApiResponseEvent();
+        assertEquals(MAX_JOBS_PER_USER + 1, apiResponseEvents.size());
+        ApiResponseEvent responseEvent = (ApiResponseEvent) apiResponseEvents.get(apiResponseEvents.size() - 1);
+        assertEquals(HttpStatus.TOO_MANY_REQUESTS.value(), responseEvent.getResponseCode());
+
+        List<LoggableEvent> errorEvents = loadObjects.loadAllErrorEvent();
+        ErrorEvent errorEvent = (ErrorEvent) errorEvents.get(0);
+        assertEquals(ErrorEvent.ErrorType.TOO_MANY_STATUS_REQUESTS, errorEvent.getErrorType());
+
+        List<LoggableEvent> jobEvents = loadObjects.loadAllJobStatusChangeEvent();
+        assertEquals(MAX_JOBS_PER_USER, jobEvents.size());
+        jobEvents.forEach(e -> assertEquals(JobStatus.SUBMITTED.name(), ((JobStatusChangeEvent) e).getNewStatus()));
+        JobStatusChangeEvent jobEvent = (JobStatusChangeEvent) jobEvents.get(0);
+        assertEquals(JobStatus.SUBMITTED.name(), jobEvent.getNewStatus());
+        assertNull(jobEvent.getOldStatus());
+
+        assertTrue(UtilMethods.allEmpty(
+                loadObjects.loadAllReloadEvent(),
+                loadObjects.loadAllContractBeneSearchEvent(),
+                loadObjects.loadAllFileEvent()));
     }
 
     @Test
@@ -244,13 +317,13 @@ public class BulkDataAccessAPIIntegrationTests {
         resultActions.andExpect(status().isAccepted())
                 .andExpect(header().string("Content-Location", statusUrl));
 
-        Assert.assertEquals(job.getStatus(), JobStatus.SUBMITTED);
-        Assert.assertEquals(job.getStatusMessage(), INITIAL_JOB_STATUS_MESSAGE);
-        Assert.assertEquals(job.getProgress(), Integer.valueOf(0));
-        Assert.assertEquals(job.getRequestUrl(),
+        assertEquals(job.getStatus(), JobStatus.SUBMITTED);
+        assertEquals(job.getStatusMessage(), INITIAL_JOB_STATUS_MESSAGE);
+        assertEquals(job.getProgress(), Integer.valueOf(0));
+        assertEquals(job.getRequestUrl(),
                 "http://localhost" + API_PREFIX + FHIR_PREFIX + PATIENT_EXPORT_PATH + typeParams);
-        Assert.assertEquals(job.getResourceTypes(), EOB);
-        Assert.assertEquals(job.getUser(), userRepository.findByUsername(TEST_USER));
+        assertEquals(job.getResourceTypes(), EOB);
+        assertEquals(job.getUser(), userRepository.findByUsername(TEST_USER));
     }
 
     @Test
@@ -265,6 +338,24 @@ public class BulkDataAccessAPIIntegrationTests {
                 .andExpect(jsonPath("$.issue[0].code", Is.is("invalid")))
                 .andExpect(jsonPath("$.issue[0].details.text",
                         Is.is("_type must be ExplanationOfBenefit")));
+
+        List<LoggableEvent> apiRequestEvents = loadObjects.loadAllApiRequestEvent();
+        ApiRequestEvent requestEvent = (ApiRequestEvent) apiRequestEvents.get(0);
+        assertNull(requestEvent.getJobId());
+
+        List<LoggableEvent> apiResponseEvents = loadObjects.loadAllApiResponseEvent();
+        ApiResponseEvent responseEvent = (ApiResponseEvent) apiResponseEvents.get(0);
+        assertNull(responseEvent.getJobId());
+        assertEquals(400, responseEvent.getResponseCode());
+
+        assertEquals(requestEvent.getRequestId(), responseEvent.getRequestId());
+
+        assertTrue(UtilMethods.allEmpty(
+                loadObjects.loadAllReloadEvent(),
+                loadObjects.loadAllContractBeneSearchEvent(),
+                loadObjects.loadAllErrorEvent(),
+                loadObjects.loadAllFileEvent(),
+                loadObjects.loadAllJobStatusChangeEvent()));
     }
 
     @Test
@@ -280,6 +371,23 @@ public class BulkDataAccessAPIIntegrationTests {
                 .andExpect(jsonPath("$.issue[0].details.text",
                         Is.is("An _outputFormat of Invalid is not " +
                                 "valid")));
+        List<LoggableEvent> apiRequestEvents = loadObjects.loadAllApiRequestEvent();
+        ApiRequestEvent requestEvent = (ApiRequestEvent) apiRequestEvents.get(0);
+        assertNull(requestEvent.getJobId());
+
+        List<LoggableEvent> apiResponseEvents = loadObjects.loadAllApiResponseEvent();
+        ApiResponseEvent responseEvent = (ApiResponseEvent) apiResponseEvents.get(0);
+        assertNull(responseEvent.getJobId());
+        assertEquals(400, responseEvent.getResponseCode());
+
+        assertEquals(requestEvent.getRequestId(), responseEvent.getRequestId());
+
+        assertTrue(UtilMethods.allEmpty(
+                loadObjects.loadAllReloadEvent(),
+                loadObjects.loadAllContractBeneSearchEvent(),
+                loadObjects.loadAllErrorEvent(),
+                loadObjects.loadAllFileEvent(),
+                loadObjects.loadAllJobStatusChangeEvent()));
     }
 
     @Test
@@ -310,7 +418,16 @@ public class BulkDataAccessAPIIntegrationTests {
                 .andExpect(content().string(StringUtils.EMPTY));
 
         Job cancelledJob = jobRepository.findByJobUuid(job.getJobUuid());
-        Assert.assertEquals(JobStatus.CANCELLED, cancelledJob.getStatus());
+
+        List<LoggableEvent> jobStatusChange = loadObjects.loadAllJobStatusChangeEvent();
+        assertEquals(2, jobStatusChange.size());
+        JobStatusChangeEvent event1 = (JobStatusChangeEvent) jobStatusChange.get(0);
+        assertEquals("SUBMITTED", event1.getNewStatus());
+        assertNull(event1.getOldStatus());
+        JobStatusChangeEvent event2 = (JobStatusChangeEvent) jobStatusChange.get(1);
+        assertEquals("SUBMITTED", event2.getOldStatus());
+        assertEquals("CANCELLED", event2.getNewStatus());
+        assertEquals(JobStatus.CANCELLED, cancelledJob.getStatus());
     }
 
     @Test
@@ -324,7 +441,25 @@ public class BulkDataAccessAPIIntegrationTests {
                 .andExpect(jsonPath("$.issue[0].details.text",
                         Is.is("No job with jobUuid NonExistentJob was " +
                                 "found")));
-        ;
+        List<LoggableEvent> apiRequestEvents = loadObjects.loadAllApiRequestEvent();
+        ApiRequestEvent requestEvent = (ApiRequestEvent) apiRequestEvents.get(0);
+        assertEquals("NonExistentJob", requestEvent.getJobId());
+
+        List<LoggableEvent> apiResponseEvents = loadObjects.loadAllApiResponseEvent();
+        ApiResponseEvent responseEvent = (ApiResponseEvent) apiResponseEvents.get(0);
+        // Since the job does not exist, don't return it as the job id in the response event
+        assertNull(responseEvent.getJobId());
+        assertEquals(404, responseEvent.getResponseCode());
+
+        assertEquals(requestEvent.getRequestId(), responseEvent.getRequestId());
+
+        assertTrue(UtilMethods.allEmpty(
+                loadObjects.loadAllReloadEvent(),
+                loadObjects.loadAllContractBeneSearchEvent(),
+                loadObjects.loadAllErrorEvent(),
+                loadObjects.loadAllFileEvent(),
+                loadObjects.loadAllJobStatusChangeEvent()));
+
     }
 
     @Test
@@ -485,7 +620,6 @@ public class BulkDataAccessAPIIntegrationTests {
                                 "/file/error.ndjson")));
     }
 
-
     @Test
     public void testGetStatusWhileFinished() throws Exception {
         MvcResult mvcResult = this.mockMvc.perform(
@@ -558,6 +692,34 @@ public class BulkDataAccessAPIIntegrationTests {
                         Is.is(CONTENT_LENGTH_STRING)))
                 .andExpect(jsonPath("$.error[0].extension[1].valueDecimal",
                         Is.is(6000)));
+
+        List<LoggableEvent> apiRequestEvents = loadObjects.loadAllApiRequestEvent();
+        assertEquals(2, apiRequestEvents.size());
+        ApiRequestEvent requestEvent = (ApiRequestEvent) apiRequestEvents.get(0);
+        ApiRequestEvent requestEvent2 = (ApiRequestEvent) apiRequestEvents.get(1);
+        assertEquals(null, requestEvent.getJobId());
+        assertEquals(job.getJobUuid(), requestEvent2.getJobId());
+
+        List<LoggableEvent> apiResponseEvents = loadObjects.loadAllApiResponseEvent();
+        assertEquals(2, apiResponseEvents.size());
+        ApiResponseEvent responseEvent = (ApiResponseEvent) apiResponseEvents.get(0);
+        ApiResponseEvent responseEvent2 = (ApiResponseEvent) apiResponseEvents.get(1);
+        assertEquals(job.getJobUuid(), responseEvent.getJobId());
+        assertEquals(job.getJobUuid(), responseEvent2.getJobId());
+        assertEquals(200, responseEvent2.getResponseCode());
+
+        assertEquals(requestEvent.getRequestId(), responseEvent.getRequestId());
+        assertEquals(requestEvent2.getRequestId(), responseEvent2.getRequestId());
+
+        // Technically the job status change has 1 entry but should have more because
+        // it went through the entire process, but because it is done manually here
+        // events weren't created for it.
+
+        assertTrue(UtilMethods.allEmpty(
+                loadObjects.loadAllReloadEvent(),
+                loadObjects.loadAllContractBeneSearchEvent(),
+                loadObjects.loadAllErrorEvent(),
+                loadObjects.loadAllFileEvent()));
     }
 
     @Test
@@ -584,6 +746,18 @@ public class BulkDataAccessAPIIntegrationTests {
                 .andExpect(jsonPath("$.issue[0].code", Is.is("invalid")))
                 .andExpect(jsonPath("$.issue[0].details.text",
                         Is.is("Job failed while processing")));
+        List<LoggableEvent> apiRequestEvents = loadObjects.loadAllApiRequestEvent();
+        ApiRequestEvent requestEvent = (ApiRequestEvent) apiRequestEvents.get(0);
+
+        List<LoggableEvent> apiResponseEvents = loadObjects.loadAllApiResponseEvent();
+        ApiResponseEvent responseEvent = (ApiResponseEvent) apiResponseEvents.get(0);
+        assertEquals(requestEvent.getRequestId(), responseEvent.getRequestId());
+
+        assertTrue(UtilMethods.allEmpty(
+                loadObjects.loadAllReloadEvent(),
+                loadObjects.loadAllContractBeneSearchEvent(),
+                loadObjects.loadAllErrorEvent(),
+                loadObjects.loadAllFileEvent()));
     }
 
     @Test
@@ -609,7 +783,7 @@ public class BulkDataAccessAPIIntegrationTests {
                 .andExpect(jsonPath("$.issue[0].code", Is.is("invalid")))
                 .andExpect(jsonPath("$.issue[0].details.text",
                         Is.is("No job with jobUuid BadId was found")));
-    }
+     }
 
     @Test
     public void testGetStatusWithSpaceUrl() throws Exception {
@@ -686,13 +860,20 @@ public class BulkDataAccessAPIIntegrationTests {
                         .andExpect(content().contentType(NDJSON_FIRE_CONTENT_TYPE))
                         // .andDo(MockMvcResultHandlers.print())
                         .andReturn();
+        List<LoggableEvent> fileEvents = loadObjects.loadAllFileEvent();
+        assertEquals(1, fileEvents.size());
+        FileEvent fileEvent = (FileEvent) fileEvents.get(0);
+        assertEquals(FileEvent.FileStatus.DELETE, fileEvent.getStatus());
+        assertEquals(destinationStr + "/" + testFile, fileEvent.getFileName());
+        assertNotNull(fileEvent.getFileHash());
+
         String downloadedFile = downloadFileCall.getResponse().getContentAsString();
         String testValue = JsonPath.read(downloadedFile, "$.test");
-        Assert.assertEquals("value", testValue);
+        assertEquals("value", testValue);
         String arrValue1 = JsonPath.read(downloadedFile, "$.array[0]");
-        Assert.assertEquals("val1", arrValue1);
+        assertEquals("val1", arrValue1);
         String arrValue2 = JsonPath.read(downloadedFile, "$.array[1]");
-        Assert.assertEquals("val2", arrValue2);
+        assertEquals("val2", arrValue2);
 
         Assert.assertTrue(!Files.exists(Paths.get(destinationStr + File.separator + testFile)));
     }
@@ -732,6 +913,23 @@ public class BulkDataAccessAPIIntegrationTests {
                 .andExpect(jsonPath("$.issue[0].code", Is.is("invalid")))
                 .andExpect(jsonPath("$.issue[0].details.text",
                         Is.is("The file is not present as there was an error. Please resubmit the job.")));
+        List<LoggableEvent> apiRequestEvents = loadObjects.loadAllApiRequestEvent();
+        ApiRequestEvent requestEvent = (ApiRequestEvent) apiRequestEvents.get(apiRequestEvents.size() - 1);
+
+        List<LoggableEvent> apiResponseEvents = loadObjects.loadAllApiResponseEvent();
+        ApiResponseEvent responseEvent = (ApiResponseEvent) apiResponseEvents.get(apiResponseEvents.size() - 1);
+        assertEquals(requestEvent.getRequestId(), responseEvent.getRequestId());
+
+        List<LoggableEvent> errorEvents = loadObjects.loadAllErrorEvent();
+        ErrorEvent errorEvent = (ErrorEvent) errorEvents.get(0);
+        assertEquals(FILE_ALREADY_DELETED, errorEvent.getErrorType());
+        assertEquals(errorEvent.getJobId(), requestEvent.getJobId());
+
+        assertTrue(UtilMethods.allEmpty(
+                loadObjects.loadAllReloadEvent(),
+                loadObjects.loadAllContractBeneSearchEvent(),
+                loadObjects.loadAllFileEvent()));
+
     }
 
     @Test
@@ -870,13 +1068,13 @@ public class BulkDataAccessAPIIntegrationTests {
         resultActions.andExpect(status().isAccepted())
                 .andExpect(header().string("Content-Location", statusUrl));
 
-        Assert.assertEquals(job.getStatus(), JobStatus.SUBMITTED);
-        Assert.assertEquals(job.getStatusMessage(), INITIAL_JOB_STATUS_MESSAGE);
-        Assert.assertEquals(job.getProgress(), Integer.valueOf(0));
-        Assert.assertEquals(job.getRequestUrl(),
+        assertEquals(job.getStatus(), JobStatus.SUBMITTED);
+        assertEquals(job.getStatusMessage(), INITIAL_JOB_STATUS_MESSAGE);
+        assertEquals(job.getProgress(), Integer.valueOf(0));
+        assertEquals(job.getRequestUrl(),
                 "https://localhost" + API_PREFIX + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export");
-        Assert.assertEquals(job.getResourceTypes(), null);
-        Assert.assertEquals(job.getUser(), userRepository.findByUsername(TEST_USER));
+        assertEquals(job.getResourceTypes(), null);
+        assertEquals(job.getUser(), userRepository.findByUsername(TEST_USER));
     }
 
     @Test
@@ -895,13 +1093,13 @@ public class BulkDataAccessAPIIntegrationTests {
         resultActions.andExpect(status().isAccepted())
                 .andExpect(header().string("Content-Location", statusUrl));
 
-        Assert.assertEquals(job.getStatus(), JobStatus.SUBMITTED);
-        Assert.assertEquals(job.getStatusMessage(), INITIAL_JOB_STATUS_MESSAGE);
-        Assert.assertEquals(job.getProgress(), Integer.valueOf(0));
-        Assert.assertEquals(job.getRequestUrl(),
+        assertEquals(job.getStatus(), JobStatus.SUBMITTED);
+        assertEquals(job.getStatusMessage(), INITIAL_JOB_STATUS_MESSAGE);
+        assertEquals(job.getProgress(), Integer.valueOf(0));
+        assertEquals(job.getRequestUrl(),
                 "http://localhost" + API_PREFIX + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export");
-        Assert.assertEquals(job.getResourceTypes(), null);
-        Assert.assertEquals(job.getUser(), userRepository.findByUsername(TEST_USER));
+        assertEquals(job.getResourceTypes(), null);
+        assertEquals(job.getUser(), userRepository.findByUsername(TEST_USER));
     }
 
     @Test
@@ -923,13 +1121,13 @@ public class BulkDataAccessAPIIntegrationTests {
         resultActions.andExpect(status().isAccepted())
                 .andExpect(header().string("Content-Location", statusUrl));
 
-        Assert.assertEquals(job.getStatus(), JobStatus.SUBMITTED);
-        Assert.assertEquals(job.getStatusMessage(), INITIAL_JOB_STATUS_MESSAGE);
-        Assert.assertEquals(job.getProgress(), Integer.valueOf(0));
-        Assert.assertEquals(job.getRequestUrl(),
+        assertEquals(job.getStatus(), JobStatus.SUBMITTED);
+        assertEquals(job.getStatusMessage(), INITIAL_JOB_STATUS_MESSAGE);
+        assertEquals(job.getProgress(), Integer.valueOf(0));
+        assertEquals(job.getRequestUrl(),
                 "http://localhost" + API_PREFIX + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export" + typeParams);
-        Assert.assertEquals(job.getResourceTypes(), EOB);
-        Assert.assertEquals(job.getUser(), userRepository.findByUsername(TEST_USER));
+        assertEquals(job.getResourceTypes(), EOB);
+        assertEquals(job.getUser(), userRepository.findByUsername(TEST_USER));
     }
 
     @Test
@@ -1101,6 +1299,6 @@ public class BulkDataAccessAPIIntegrationTests {
 
         String body = mvcResult.getResponse().getContentAsString();
 
-        Assert.assertEquals(body, new Gson().toJson(new CapabilityStatement()));
+        assertEquals(body, new Gson().toJson(new CapabilityStatement()));
     }
 }

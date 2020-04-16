@@ -9,6 +9,10 @@ import gov.cms.ab2d.common.model.JobStatus;
 import gov.cms.ab2d.common.model.Sponsor;
 import gov.cms.ab2d.common.repository.JobOutputRepository;
 import gov.cms.ab2d.common.repository.JobRepository;
+import gov.cms.ab2d.eventlogger.EventLogger;
+import gov.cms.ab2d.eventlogger.events.ContractBeneSearchEvent;
+import gov.cms.ab2d.eventlogger.events.FileEvent;
+import gov.cms.ab2d.eventlogger.events.JobStatusChangeEvent;
 import gov.cms.ab2d.worker.adapter.bluebutton.ContractAdapter;
 import gov.cms.ab2d.worker.adapter.bluebutton.GetPatientsByContractResponse;
 import gov.cms.ab2d.worker.processor.StreamHelperImpl.FileOutputType;
@@ -60,6 +64,7 @@ public class JobProcessorImpl implements JobProcessor {
     private final JobOutputRepository jobOutputRepository;
     private final ContractAdapter contractAdapter;
     private final ContractProcessor contractProcessor;
+    private final EventLogger eventLogger;
 
     /**
      * Load the job and process it
@@ -86,10 +91,16 @@ public class JobProcessorImpl implements JobProcessor {
             log.warn("Job: [{}] CANCELLED", jobUuid);
 
             log.info("Deleting output directory : {} ", outputDirPath.toAbsolutePath());
-            deleteExistingDirectory(outputDirPath);
+            deleteExistingDirectory(outputDirPath, job);
 
         } catch (Exception e) {
-            log.error("Unexpected expection ", e);
+            eventLogger.log(new JobStatusChangeEvent(
+                    job.getUser() == null ? null : job.getUser().getUsername(),
+                    job.getJobUuid(),
+                    job.getStatus() == null ? null : job.getStatus().name(),
+                    JobStatus.FAILED.name(), "Job Failed - " + e.getMessage()));
+
+            log.error("Unexpected exception ", e);
             job.setStatus(JobStatus.FAILED);
             job.setStatusMessage(e.getMessage());
             job.setCompletedAt(OffsetDateTime.now());
@@ -108,7 +119,7 @@ public class JobProcessorImpl implements JobProcessor {
      */
     private void processJob(Job job, Path outputDirPath) {
         // Create the output directory
-        createOutputDirectory(outputDirPath);
+        createOutputDirectory(outputDirPath, job);
 
         // Get all attested contracts for that job (or the one specified in the job)
         var attestedContracts = getAttestedContracts(job);
@@ -137,6 +148,14 @@ public class JobProcessorImpl implements JobProcessor {
             // For each job output, add to the job and save the result
             jobOutputs.forEach(job::addJobOutput);
             jobOutputRepository.saveAll(jobOutputs);
+
+            eventLogger.log(new ContractBeneSearchEvent(job.getUser() == null ? null : job.getUser().getUsername(),
+                    job.getJobUuid(),
+                    contract.getContractNumber(),
+                    progressTracker.getContractCount(contract.getContractNumber()),
+                    progressTracker.getProcessedCount(),
+                    progressTracker.getOptOutCount(),
+                    progressTracker.getFailureCount()));
         }
 
         completeJob(job);
@@ -148,7 +167,7 @@ public class JobProcessorImpl implements JobProcessor {
      * @param outputDirPath - the path to the output directory you want to create
      * @return the path to the newly created directory
      */
-    private Path createOutputDirectory(Path outputDirPath) {
+    private Path createOutputDirectory(Path outputDirPath, Job job) {
         Path directory = null;
         try {
             directory = fileService.createDirectory(outputDirPath);
@@ -156,7 +175,7 @@ public class JobProcessorImpl implements JobProcessor {
             final IOException cause = e.getCause();
             if (cause != null && cause.getMessage().equalsIgnoreCase("Directory already exists")) {
                 log.warn("Directory already exists. Delete and create afresh ...");
-                deleteExistingDirectory(outputDirPath);
+                deleteExistingDirectory(outputDirPath, job);
                 directory = fileService.createDirectory(outputDirPath);
             } else {
                 throw e;
@@ -174,7 +193,7 @@ public class JobProcessorImpl implements JobProcessor {
      *
      * @param outputDirPath - the directory to delete
      */
-    private void deleteExistingDirectory(Path outputDirPath) {
+    private void deleteExistingDirectory(Path outputDirPath, Job job) {
         final File[] files = outputDirPath.toFile().listFiles(getFilenameFilter());
 
         for (File file : files) {
@@ -186,6 +205,11 @@ public class JobProcessorImpl implements JobProcessor {
             }
 
             if (Files.isRegularFile(filePath)) {
+                eventLogger.log(new FileEvent(
+                        job == null || job.getUser() == null ? null : job.getUser().getUsername(),
+                        job == null ? null : job.getJobUuid(),
+                        filePath.toFile(), FileEvent.FileStatus.DELETE));
+
                 doDelete(filePath);
             }
         }
@@ -283,6 +307,11 @@ public class JobProcessorImpl implements JobProcessor {
      * @param job - The job to set as complete
      */
     private void completeJob(Job job) {
+        eventLogger.log(new JobStatusChangeEvent(
+                job.getUser() == null ? null : job.getUser().getUsername(),
+                job.getJobUuid(),
+                job.getStatus() == null ? null : job.getStatus().name(),
+                JobStatus.SUCCESSFUL.name(), "Job Finished"));
         job.setStatus(SUCCESSFUL);
         job.setStatusMessage("100%");
         job.setProgress(100);
@@ -292,6 +321,4 @@ public class JobProcessorImpl implements JobProcessor {
         jobRepository.save(job);
         log.info("Job: [{}] is DONE", job.getJobUuid());
     }
-
-
 }

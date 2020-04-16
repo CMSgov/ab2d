@@ -2,6 +2,8 @@ package gov.cms.ab2d.api.controller;
 
 import gov.cms.ab2d.api.config.SwaggerConfig;
 import gov.cms.ab2d.common.service.JobService;
+import gov.cms.ab2d.eventlogger.EventLogger;
+import gov.cms.ab2d.eventlogger.events.ApiResponseEvent;
 import io.swagger.annotations.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
@@ -16,6 +18,7 @@ import org.springframework.web.context.request.RequestAttributes;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.constraints.NotBlank;
 import java.io.FileInputStream;
@@ -30,10 +33,14 @@ import static gov.cms.ab2d.common.util.Constants.*;
 @Api(value = "Bulk Data File Download API", description = "After creating a job, the API to download the generated bulk download files",
         tags = {"Download"})
 @RestController
+@CrossOrigin
 @RequestMapping(path = API_PREFIX + FHIR_PREFIX, produces = {"application/json", NDJSON_FIRE_CONTENT_TYPE})
 public class FileDownloadAPI {
     @Autowired
     private JobService jobService;
+
+    @Autowired
+    private EventLogger eventLogger;
 
     @ApiOperation(value = "Downloads a file produced by an export job.", response = String.class,
             produces = NDJSON_FIRE_CONTENT_TYPE + " or " + ZIPFORMAT,
@@ -60,6 +67,7 @@ public class FileDownloadAPI {
     @ResponseStatus(value = HttpStatus.OK)
     @GetMapping(value = "/Job/{jobUuid}/file/{filename}")
     public ResponseEntity<Void> downloadFile(
+            HttpServletRequest request,
             @ApiParam(value = "A job identifier", required = true) @PathVariable @NotBlank String jobUuid,
             @ApiParam(value = "A file name", required = true) @PathVariable @NotBlank String filename) throws IOException {
         MDC.put(JOB_LOG, jobUuid);
@@ -83,6 +91,9 @@ public class FileDownloadAPI {
             IOUtils.copy(in, out);
 
             jobService.deleteFileForJob(downloadResource.getFile(), jobUuid);
+
+            eventLogger.log(new ApiResponseEvent(MDC.get(USERNAME), jobUuid, HttpStatus.OK, "File Download",
+                    "File " + filename + " was downloaded", (String) request.getAttribute(REQUEST_ID)));
 
             return new ResponseEntity<>(null, null, HttpStatus.OK);
         }

@@ -6,6 +6,9 @@ import gov.cms.ab2d.common.dto.UserDTO;
 import gov.cms.ab2d.common.service.CacheService;
 import gov.cms.ab2d.common.service.PropertiesService;
 import gov.cms.ab2d.common.service.UserService;
+import gov.cms.ab2d.eventlogger.EventLogger;
+import gov.cms.ab2d.eventlogger.events.ApiResponseEvent;
+import gov.cms.ab2d.eventlogger.events.ReloadEvent;
 import gov.cms.ab2d.hpms.processing.ExcelReportProcessor;
 import gov.cms.ab2d.hpms.processing.ExcelType;
 import lombok.extern.slf4j.Slf4j;
@@ -24,15 +27,19 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.util.List;
 
-import static gov.cms.ab2d.common.util.Constants.ADMIN_PREFIX;
 import static gov.cms.ab2d.common.util.Constants.API_PREFIX;
+import static gov.cms.ab2d.common.util.Constants.ADMIN_PREFIX;
 import static gov.cms.ab2d.common.util.Constants.FILE_LOG;
+import static gov.cms.ab2d.common.util.Constants.USERNAME;
+import static gov.cms.ab2d.common.util.Constants.REQUEST_ID;
 
 @Slf4j
 @RestController
+@SuppressWarnings("PMD.TooManyStaticImports")
 @RequestMapping(path = API_PREFIX + ADMIN_PREFIX, produces = "application/json")
 public class AdminAPI {
 
@@ -53,30 +60,47 @@ public class AdminAPI {
     @Autowired
     private PropertiesService propertiesService;
 
+    @Autowired
+    private EventLogger eventLogger;
+
     @ResponseStatus(value = HttpStatus.ACCEPTED)
     @PostMapping("/uploadOrgStructureReport")
-    public ResponseEntity<Void> uploadOrgStructureReport(@RequestParam("file") MultipartFile hpmsFile) throws IOException {
+    public ResponseEntity<Void> uploadOrgStructureReport(HttpServletRequest request, @RequestParam("file") MultipartFile hpmsFile) throws IOException {
         MDC.put(FILE_LOG, hpmsFile.getOriginalFilename());
         log.info("Request submitted to upload org structure report");
 
-        orgStructureReportProcessor.processReport(hpmsFile.getInputStream(), ExcelType.fromFileType(hpmsFile.getOriginalFilename()));
+        orgStructureReportProcessor.processReport(hpmsFile.getOriginalFilename(),
+                hpmsFile.getInputStream(), ExcelType.fromFileType(hpmsFile.getOriginalFilename()));
 
-        log.info("Org structure report successfully uploaded and processed");
+        String success = "Org structure report successfully uploaded and processed";
+        log.info(success);
 
+        eventLogger.log(new ApiResponseEvent(MDC.get(USERNAME), null,
+                HttpStatus.ACCEPTED,
+                "UploadOrgStructureReport Success",
+                success,
+                (String) request.getAttribute(REQUEST_ID)));
         return new ResponseEntity<>(null, null,
                 HttpStatus.ACCEPTED);
     }
 
     @ResponseStatus(value = HttpStatus.ACCEPTED)
     @PostMapping("/uploadAttestationReport")
-    public ResponseEntity<Void> uploadAttestationReport(@RequestParam("file") MultipartFile attestationFile) throws IOException {
+    public ResponseEntity<Void> uploadAttestationReport(HttpServletRequest request, @RequestParam("file") MultipartFile attestationFile) throws IOException {
         MDC.put(FILE_LOG, attestationFile.getOriginalFilename());
         log.info("Request submitted to upload attestation report");
 
-        attestationReportProcessor.processReport(attestationFile.getInputStream(), ExcelType.fromFileType(attestationFile.getOriginalFilename()));
+        attestationReportProcessor.processReport(attestationFile.getOriginalFilename(),
+                attestationFile.getInputStream(), ExcelType.fromFileType(attestationFile.getOriginalFilename()));
 
-        log.info("Attestation report successfully uploaded");
+        String success = "Attestation report successfully uploaded";
+        log.info(success);
 
+        eventLogger.log(new ApiResponseEvent(MDC.get(USERNAME), null,
+                HttpStatus.ACCEPTED,
+                "uploadAttestationReport Success",
+                success,
+                (String) request.getAttribute(REQUEST_ID)));
         return new ResponseEntity<>(null, null,
                 HttpStatus.ACCEPTED);
     }
@@ -85,6 +109,7 @@ public class AdminAPI {
     @PostMapping("/user")
     public ResponseEntity<UserDTO> createUser(@RequestBody UserDTO userDTO) {
         UserDTO user = userService.createUser(userDTO);
+        log.info("{} was created", user.getUsername());
         return new ResponseEntity<>(user, null, HttpStatus.CREATED);
     }
 
@@ -92,6 +117,7 @@ public class AdminAPI {
     @PutMapping("/user")
     public ResponseEntity<UserDTO> updateUser(@RequestBody UserDTO userDTO) {
         UserDTO user = userService.updateUser(userDTO);
+        log.info("{} was updated", user.getUsername());
         return new ResponseEntity<>(user, null, HttpStatus.OK);
     }
 
@@ -104,15 +130,14 @@ public class AdminAPI {
     @ResponseStatus(value = HttpStatus.OK)
     @PutMapping("/properties")
     public ResponseEntity<List<PropertiesDTO>> updateProperties(@RequestBody List<PropertiesDTO> propertiesDTOs) {
+        eventLogger.log(new ReloadEvent(MDC.get(USERNAME), ReloadEvent.FileType.PROPERTIES, null,
+                propertiesDTOs.size()));
         return new ResponseEntity<>(propertiesService.updateProperties(propertiesDTOs), null, HttpStatus.OK);
     }
-
 
     @PostMapping("/coverage/clearCache")
     public ResponseEntity<Void> clearCoverageCache(@RequestBody ClearCoverageCacheRequest request) {
         cacheService.clearCache(request);
         return ResponseEntity.noContent().build();
     }
-
-
 }

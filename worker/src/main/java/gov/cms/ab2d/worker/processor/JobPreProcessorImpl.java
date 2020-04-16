@@ -1,7 +1,10 @@
 package gov.cms.ab2d.worker.processor;
 
 import gov.cms.ab2d.common.model.Job;
+import gov.cms.ab2d.common.model.JobStatus;
 import gov.cms.ab2d.common.repository.JobRepository;
+import gov.cms.ab2d.eventlogger.EventLogger;
+import gov.cms.ab2d.eventlogger.events.JobStatusChangeEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -18,6 +21,7 @@ import static gov.cms.ab2d.common.model.JobStatus.SUBMITTED;
 public class JobPreProcessorImpl implements JobPreProcessor {
 
     private final JobRepository jobRepository;
+    private final EventLogger eventLogger;
 
     @Override
     @Transactional(propagation = Propagation.REQUIRES_NEW, isolation = Isolation.SERIALIZABLE)
@@ -35,6 +39,11 @@ public class JobPreProcessorImpl implements JobPreProcessor {
             log.error("Job is not in submitted status");
             throw new IllegalArgumentException(errMsg);
         }
+        eventLogger.log(new JobStatusChangeEvent(
+                job.getUser() == null ? null : job.getUser().getUsername(),
+                job.getJobUuid(),
+                job.getStatus() == null ? null : job.getStatus().name(),
+                JobStatus.IN_PROGRESS.name(), "Job in progress"));
 
         job.setStatus(IN_PROGRESS);
         job.setStatusMessage(null);

@@ -7,6 +7,13 @@ import gov.cms.ab2d.common.model.Sponsor;
 import gov.cms.ab2d.common.repository.*;
 import gov.cms.ab2d.common.service.SponsorService;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
+import gov.cms.ab2d.eventlogger.LoggableEvent;
+import gov.cms.ab2d.eventlogger.events.ApiRequestEvent;
+import gov.cms.ab2d.eventlogger.events.ApiResponseEvent;
+import gov.cms.ab2d.eventlogger.events.ReloadEvent;
+import gov.cms.ab2d.eventlogger.reports.sql.DeleteObjects;
+import gov.cms.ab2d.eventlogger.reports.sql.LoadObjects;
+import gov.cms.ab2d.eventlogger.utils.UtilMethods;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,6 +34,8 @@ import java.util.List;
 import static gov.cms.ab2d.api.util.Constants.*;
 import static gov.cms.ab2d.common.util.Constants.ADMIN_PREFIX;
 import static gov.cms.ab2d.common.util.Constants.API_PREFIX;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest(classes = SpringBootApp.class, webEnvironment = SpringBootTest.WebEnvironment.MOCK)
@@ -40,8 +49,14 @@ public class AdminAPIFileUploadTests {
     @Autowired
     private SponsorService sponsorService;
 
+    @Autowired
+    private LoadObjects loadObjects;
+
+    @Autowired
+    private DeleteObjects deleteObjects;
+
     @Container
-    private static final PostgreSQLContainer postgreSQLContainer= new AB2DPostgresqlContainer();
+    private static final PostgreSQLContainer postgreSQLContainer = new AB2DPostgresqlContainer();
 
     @Autowired
     private SponsorRepository sponsorRepository;
@@ -70,6 +85,13 @@ public class AdminAPIFileUploadTests {
         userRepository.deleteAll();
         roleRepository.deleteAll();
         sponsorRepository.deleteAll();
+        deleteObjects.deleteAllApiRequestEvent();
+        deleteObjects.deleteAllApiResponseEvent();
+        deleteObjects.deleteAllReloadEvent();
+        deleteObjects.deleteAllContractBeneSearchEvent();
+        deleteObjects.deleteAllErrorEvent();
+        deleteObjects.deleteAllFileEvent();
+        deleteObjects.deleteAllJobStatusChangeEvent();
 
         token = testUtil.setupToken(List.of(ADMIN_ROLE));
     }
@@ -85,6 +107,30 @@ public class AdminAPIFileUploadTests {
                 .file(mockMultipartFile).contentType(MediaType.MULTIPART_FORM_DATA)
                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(202));
+
+        List<LoggableEvent> apiReqEvents = loadObjects.loadAllApiRequestEvent();
+        assertEquals(1, apiReqEvents.size());
+        ApiRequestEvent requestEvent = (ApiRequestEvent) apiReqEvents.get(0);
+
+        List<LoggableEvent> apiResEvents = loadObjects.loadAllApiResponseEvent();
+        assertEquals(1, apiResEvents.size());
+        ApiResponseEvent responseEvent = (ApiResponseEvent) apiResEvents.get(0);
+
+        List<LoggableEvent> reloadEvents = loadObjects.loadAllReloadEvent();
+        assertEquals(1, reloadEvents.size());
+        ReloadEvent reloadEvent = (ReloadEvent) reloadEvents.get(0);
+        assertEquals(ReloadEvent.FileType.UPLOAD_ORG_STRUCTURE_REPORT, reloadEvent.getFileType());
+        assertEquals(fileName, reloadEvent.getFileName());
+
+        assertTrue(reloadEvent.getTimeOfEvent().isAfter(requestEvent.getTimeOfEvent()));
+        assertTrue(responseEvent.getTimeOfEvent().isAfter(reloadEvent.getTimeOfEvent()));
+
+        assertTrue(UtilMethods.allEmpty(
+                loadObjects.loadAllContractBeneSearchEvent(),
+                loadObjects.loadAllErrorEvent(),
+                loadObjects.loadAllFileEvent(),
+                loadObjects.loadAllJobStatusChangeEvent()
+        ));
     }
 
     @Test
@@ -102,6 +148,31 @@ public class AdminAPIFileUploadTests {
                 .file(mockMultipartFile).contentType(MediaType.MULTIPART_FORM_DATA)
                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(202));
+
+        List<LoggableEvent> apiReqEvents = loadObjects.loadAllApiRequestEvent();
+        assertEquals(1, apiReqEvents.size());
+        ApiRequestEvent requestEvent = (ApiRequestEvent) apiReqEvents.get(0);
+
+        List<LoggableEvent> apiResEvents = loadObjects.loadAllApiResponseEvent();
+        assertEquals(1, apiResEvents.size());
+        ApiResponseEvent responseEvent = (ApiResponseEvent) apiResEvents.get(0);
+
+        List<LoggableEvent> reloadEvents = loadObjects.loadAllReloadEvent();
+        assertEquals(1, reloadEvents.size());
+        ReloadEvent reloadEvent = (ReloadEvent) reloadEvents.get(0);
+        assertEquals(ReloadEvent.FileType.ATTESTATION_REPORT, reloadEvent.getFileType());
+        assertEquals(fileName, reloadEvent.getFileName());
+
+        assertTrue(reloadEvent.getTimeOfEvent().isAfter(requestEvent.getTimeOfEvent()));
+        assertTrue(responseEvent.getTimeOfEvent().isAfter(reloadEvent.getTimeOfEvent()));
+
+        assertTrue(UtilMethods.allEmpty(
+                loadObjects.loadAllContractBeneSearchEvent(),
+                loadObjects.loadAllErrorEvent(),
+                loadObjects.loadAllFileEvent(),
+                loadObjects.loadAllJobStatusChangeEvent()
+        ));
+
     }
 
     // There has to be an existing contract in order for this report to be able to process data

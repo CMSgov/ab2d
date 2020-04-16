@@ -8,6 +8,9 @@ import gov.cms.ab2d.common.model.Role;
 import gov.cms.ab2d.common.model.User;
 import gov.cms.ab2d.common.service.ResourceNotFoundException;
 import gov.cms.ab2d.common.service.UserService;
+import gov.cms.ab2d.eventlogger.EventLogger;
+import gov.cms.ab2d.eventlogger.events.ApiRequestEvent;
+import gov.cms.ab2d.eventlogger.utils.UtilMethods;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,13 +30,17 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
+import static gov.cms.ab2d.common.util.Constants.USERNAME;
+import static gov.cms.ab2d.common.util.Constants.REQUEST_ID;
 import static gov.cms.ab2d.common.util.Constants.HEALTH_ENDPOINT;
 import static gov.cms.ab2d.common.util.Constants.OKTA_PROXY_ENDPOINT;
 import static gov.cms.ab2d.common.util.Constants.STATUS_ENDPOINT;
 
 @Slf4j
 @Component
+@SuppressWarnings("PMD.TooManyStaticImports")
 public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
 
     @Autowired
@@ -45,21 +52,38 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
     @Autowired
     private JwtConfig jwtConfig;
 
+    @Autowired
+    private EventLogger eventLogger;
+
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
             throws ServletException, IOException {
 
+        String jobId = UtilMethods.parseJobId(request.getRequestURI());
+
         if (shouldBePublic(request.getRequestURI())) {
+            String requestId = logApiRequestEvent(request, null, null, jobId);
+            request.setAttribute(REQUEST_ID, requestId);
             chain.doFilter(request, response);
             return;
         }
 
-        String token = getToken(request);
+        String token = null;
+        String username = null;
+        try {
+            token = getToken(request);
+            username = getUserName(token);
+        } catch (Exception ex) {
+            String requestId = logApiRequestEvent(request, token, username, jobId);
+            request.setAttribute(REQUEST_ID, requestId);
+            throw ex;
+        }
 
-        String username = getUserName(token);
+        String requestId = logApiRequestEvent(request, token, username, jobId);
+        request.setAttribute(REQUEST_ID, requestId);
 
         if (username != null) {
-            MDC.put("username", username);
+            MDC.put(USERNAME, username);
             User user = getUser(username);
 
             List<GrantedAuthority> authorities = getGrantedAuth(user);
@@ -77,6 +101,15 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
 
         // go to the next filter in the filter chain
         chain.doFilter(request, response);
+    }
+
+    private String logApiRequestEvent(HttpServletRequest request, String token, String username, String jobId) {
+        String url = UtilMethods.getURL(request);
+        String uniqueId = UUID.randomUUID().toString();
+        ApiRequestEvent requestEvent = new ApiRequestEvent(username, jobId, url, UtilMethods.getIpAddress(request),
+                token, uniqueId);
+        eventLogger.log(requestEvent);
+        return uniqueId;
     }
 
     /**
@@ -153,6 +186,10 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
         if (requestUri.startsWith("/swagger-ui") || requestUri.startsWith("/webjars") || requestUri.startsWith("/swagger-resources") ||
                 requestUri.startsWith("/v2/api-docs") || requestUri.startsWith("/configuration")) {
             log.info("Swagger requested");
+            return true;
+        }
+
+        if (requestUri.contains("favicon.ico")) {
             return true;
         }
 

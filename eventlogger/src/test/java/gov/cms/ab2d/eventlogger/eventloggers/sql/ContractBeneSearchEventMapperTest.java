@@ -5,14 +5,15 @@ import gov.cms.ab2d.eventlogger.LoggableEvent;
 import gov.cms.ab2d.eventlogger.SpringBootApp;
 import gov.cms.ab2d.eventlogger.events.ContractBeneSearchEvent;
 import gov.cms.ab2d.eventlogger.events.ErrorEvent;
+import gov.cms.ab2d.eventlogger.reports.sql.DeleteObjects;
 import gov.cms.ab2d.eventlogger.reports.sql.LoadObjects;
+import gov.cms.ab2d.eventlogger.AB2DPostgresqlContainer;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
-import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -30,6 +31,9 @@ class ContractBeneSearchEventMapperTest {
 
     @Autowired
     LoadObjects loadObjects;
+
+    @Autowired
+    DeleteObjects deleteObjects;
 
     @Test
     void exceptionTests() {
@@ -57,5 +61,8 @@ class ContractBeneSearchEventMapperTest {
         assertEquals(3, event.getNumOptedOut());
         assertEquals(2, event.getNumErrors());
         assertEquals(val.getNano(), event.getTimeOfEvent().getNano());
+        deleteObjects.deleteAllContractBeneSearchEvent();
+        events = loadObjects.loadAllContractBeneSearchEvent();
+        assertEquals(0, events.size());
     }
 }

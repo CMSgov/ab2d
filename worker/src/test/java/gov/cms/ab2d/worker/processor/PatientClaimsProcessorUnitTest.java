@@ -4,6 +4,7 @@ import ca.uhn.fhir.context.FhirContext;
 import com.newrelic.api.agent.Token;
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.model.Contract;
+import gov.cms.ab2d.eventlogger.EventLogger;
 import gov.cms.ab2d.filter.FilterOutByDate;
 import gov.cms.ab2d.worker.adapter.bluebutton.GetPatientsByContractResponse;
 import gov.cms.ab2d.worker.processor.domainmodel.PatientClaimsRequest;
@@ -43,6 +44,7 @@ public class PatientClaimsProcessorUnitTest {
     private PatientClaimsProcessor cut;
 
     @Mock private BFDClient mockBfdClient;
+    @Mock private EventLogger eventLogger;
 
     @TempDir
     File tmpEfsMountDir;
@@ -94,7 +96,8 @@ public class PatientClaimsProcessorUnitTest {
         patientDTO.setDateRangesUnderContract(List.of(new FilterOutByDate.DateRange(new Date(0), new Date())));
 
         Contract contract = new Contract();
-        helper = new TextStreamHelperImpl(tmpEfsMountDir.toPath(), contract.getContractNumber(), 30, 120);
+        helper = new TextStreamHelperImpl(tmpEfsMountDir.toPath(), contract.getContractNumber(),
+                30, 120, eventLogger, null);
 
         request = new PatientClaimsRequest(patientDTO, helper, earlyAttDate, null, noOpToken);
     }

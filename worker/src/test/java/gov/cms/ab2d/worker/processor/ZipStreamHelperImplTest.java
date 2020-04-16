@@ -1,8 +1,12 @@
 package gov.cms.ab2d.worker.processor;
 
+import gov.cms.ab2d.eventlogger.EventLogger;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -14,14 +18,23 @@ import java.util.zip.ZipInputStream;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class ZipStreamHelperImplTest {
+class ZipStreamHelperImplTest {
 
     @TempDir
     File tmpDirFolder;
 
+    @Mock private EventLogger eventLogger;
+
+    @BeforeEach
+    void init() {
+        MockitoAnnotations.initMocks(this);
+    }
+
     @Test
     void createFileName() throws IOException {
-        ZipStreamHelperImpl helper = new ZipStreamHelperImpl(tmpDirFolder.toPath(), "C1111", 100, 100, 20);
+        ZipStreamHelperImpl helper = new ZipStreamHelperImpl(
+                tmpDirFolder.toPath(), "C1111", 100, 100, 20,
+                eventLogger, null);
         assertEquals("C1111_0001.ndjson", helper.createFileName());
         assertEquals("C1111_0002.ndjson", helper.createFileName());
         assertEquals("C1111_0003.ndjson", helper.createFileName());
@@ -62,7 +75,8 @@ public class ZipStreamHelperImplTest {
 
         // Create the zip helper
         ZipStreamHelperImpl helper = new ZipStreamHelperImpl(
-                tmpDirFolder.toPath(), contractId, totalBytesAllowedInFile, totalAllowedInPart, 20);
+                tmpDirFolder.toPath(), contractId, totalBytesAllowedInFile, totalAllowedInPart, 20,
+                eventLogger, null);
         // Get the test data and write it to the zip file
         List<String> testVals = addTestData(numberStrings, minStringSize, maxStringSize, helper);
         // Close it and close any streams
@@ -180,7 +194,9 @@ public class ZipStreamHelperImplTest {
 
     @Test
     void addError() throws IOException {
-        ZipStreamHelperImpl helper = new ZipStreamHelperImpl(tmpDirFolder.toPath(), "C1111", 10, 10, 20);
+        ZipStreamHelperImpl helper = new ZipStreamHelperImpl(
+                tmpDirFolder.toPath(), "C1111", 10, 10, 20,
+                eventLogger, null);
         List<Path> errorFiles = helper.getErrorFiles();
         assertTrue(errorFiles.isEmpty());
         helper.addError("Error Info\n");
