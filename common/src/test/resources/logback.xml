@@ -5,6 +5,7 @@
         </encoder>
     </appender>
     <logger name="com.github.dockerjava.core.command" level="ERROR"/>
+    <logger name="liquibase" level="ERROR"/>
     <root level="INFO">
         <appender-ref ref="STDOUT" />
     </root>
