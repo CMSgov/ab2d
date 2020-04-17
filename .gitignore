@@ -94,3 +94,5 @@ common/jacoco/**
 ### This is needed due to this .gitignore entry: "!**/src/test/**" ###
 **/src/test/**/.DS_Store
 
+### DevOps website
+./Deploy/website-temp
