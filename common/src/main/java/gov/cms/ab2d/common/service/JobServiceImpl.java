@@ -134,8 +134,8 @@ public class JobServiceImpl implements JobService {
     public Job getAuthorizedJobByJobUuidAndRole(String jobUuid) {
         User user = userService.getCurrentUser();
 
-        for(Role role : user.getRoles()) {
-            if(role.getName().equals(ADMIN_ROLE)) {
+        for (Role role : user.getRoles()) {
+            if (role.getName().equals(ADMIN_ROLE)) {
                 log.info("Admin accessed job {}", jobUuid);
                 return getJobByJobUuid(jobUuid);
             }
