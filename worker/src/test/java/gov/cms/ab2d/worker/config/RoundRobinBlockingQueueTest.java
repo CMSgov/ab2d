@@ -46,7 +46,6 @@ public class RoundRobinBlockingQueueTest {
         assertFalse(queue.contains(future2));
         queue.add(future1);
         queue.add(future2);
-        System.out.println(queue.toString());
         assertFalse(queue.contains(null));
         assertTrue(queue.contains(future2));
         assertEquals(2, queue.size());
