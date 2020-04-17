@@ -67,7 +67,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserDTO enableUser(String username) {
-        User user = userRepository.findByUsername(username);
+        User user = getUserByUsername(username);
         user.setEnabled(true);
 
         User updatedUser = userRepository.saveAndFlush(user);
@@ -76,7 +76,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserDTO disableUser(String username) {
-        User user = userRepository.findByUsername(username);
+        User user = getUserByUsername(username);
         user.setEnabled(false);
 
         User updatedUser = userRepository.saveAndFlush(user);

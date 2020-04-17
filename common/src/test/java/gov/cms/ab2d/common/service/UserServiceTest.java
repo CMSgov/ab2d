@@ -27,6 +27,7 @@ import javax.annotation.Nullable;
 import javax.validation.ConstraintViolationException;
 
 import static gov.cms.ab2d.common.util.Constants.SPONSOR_ROLE;
+import static gov.cms.ab2d.common.util.DataSetup.TEST_USER;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
@@ -223,5 +224,29 @@ public class UserServiceTest {
         });
         assertThat(exceptionThrown.getMessage(), is("ModelMapper mapping errors:\n\n1) Converter Converter<class gov.cms.ab2d.common.dto.SponsorDTO, class gov.cms.ab2d.common.model.Sponsor> failed to convert gov.cms.ab2d.common.dto.SponsorDTO to gov.cms.ab2d.common.model.Sponsor.\n\n1 error"
         ));
+    }
+
+    @Test
+    public void testEnableUser() {
+        Sponsor sponsor = dataSetup.createSponsor("Parent Corp.", 456, "Test", 123);
+
+        UserDTO user = createUser(sponsor, SPONSOR_ROLE);
+        user.setEnabled(false);
+
+        userService.createUser(user);
+
+        UserDTO updatedUser = userService.enableUser(user.getUsername());
+        Assert.assertEquals(updatedUser.getEnabled(), true);
+    }
+
+    @Test
+    public void testDisableUser() {
+        Sponsor sponsor = dataSetup.createSponsor("Parent Corp.", 456, "Test", 123);
+
+        UserDTO user = createUser(sponsor, SPONSOR_ROLE);
+        userService.createUser(user);
+
+        UserDTO updatedUser = userService.disableUser(user.getUsername());
+        Assert.assertEquals(updatedUser.getEnabled(), false);
     }
 }
