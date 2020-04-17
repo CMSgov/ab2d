@@ -52,7 +52,6 @@
         </dependency>
     </dependencies>
 
-
     <build>
         <plugins>
             <plugin>
@@ -66,6 +65,21 @@
                         </goals>
                     </execution>
                 </executions>
+            </plugin>
+            <!-- Run mvn exec:java to execute this -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>1.6.0</version>
+                <configuration>
+                    <executable>java</executable>
+                    <classpathScope>test</classpathScope>
+                    <mainClass>gov.cms.ab2d.e2etest.TestLauncher</mainClass>
+                    <cleanupDaemonThreads>false</cleanupDaemonThreads>
+                    <arguments>
+                        <argument>SBX</argument>
+                    </arguments>
+                </configuration>
             </plugin>
         </plugins>
     </build>
