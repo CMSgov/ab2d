@@ -82,11 +82,11 @@ sponsor PDP-100 will have 100 patients and PDP-1000 will have 1000 patients. Eac
         </tr>
         <tr>
             <td><b>Client ID</b></td>
-            <td>0lc65ErV8OmY297	</td>
+            <td>0oa2t0lc65ErV8OmY297</td>
         </tr>
         <tr>
             <td><b>Client Password</b></td>
-            <td>GO6eglkXUDtjVjto3L-3C0offzTMk2qlz9r</td>
+            <td>1Bl3HGO6eglkXUDtjVjto3L-3C0offzTMk2qlz9r</td>
         </tr>
         <tr>
             <td><b>Base64-encoded id:password</b></td>
