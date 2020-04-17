@@ -95,4 +95,4 @@ common/jacoco/**
 **/src/test/**/.DS_Store
 
 ### DevOps website
-./Deploy/website-temp
+Deploy/website-temp
