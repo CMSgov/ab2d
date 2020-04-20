@@ -35,7 +35,6 @@ import java.util.UUID;
 import static gov.cms.ab2d.common.util.Constants.USERNAME;
 import static gov.cms.ab2d.common.util.Constants.REQUEST_ID;
 import static gov.cms.ab2d.common.util.Constants.HEALTH_ENDPOINT;
-import static gov.cms.ab2d.common.util.Constants.OKTA_PROXY_ENDPOINT;
 import static gov.cms.ab2d.common.util.Constants.STATUS_ENDPOINT;
 
 @Slf4j
