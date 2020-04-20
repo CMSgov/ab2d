@@ -193,8 +193,8 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
             return true;
         }
 
-        if (requestUri.startsWith(HEALTH_ENDPOINT) || requestUri.startsWith(STATUS_ENDPOINT) || requestUri.startsWith(OKTA_PROXY_ENDPOINT)) {
-            log.info("Health, okta proxy, or maintenance requested");
+        if (requestUri.startsWith(HEALTH_ENDPOINT) || requestUri.startsWith(STATUS_ENDPOINT)) {
+            log.info("Health or maintenance requested");
             return true;
         }
         return false;
