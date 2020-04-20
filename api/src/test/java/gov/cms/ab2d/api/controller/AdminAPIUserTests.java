@@ -5,7 +5,9 @@ import com.okta.jwt.JwtVerificationException;
 import gov.cms.ab2d.api.SpringBootApp;
 import gov.cms.ab2d.common.dto.SponsorDTO;
 import gov.cms.ab2d.common.dto.UserDTO;
+import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.Sponsor;
+import gov.cms.ab2d.common.model.User;
 import gov.cms.ab2d.common.repository.*;
 import gov.cms.ab2d.common.model.Role;
 import gov.cms.ab2d.common.service.RoleService;
@@ -227,10 +229,35 @@ public class AdminAPIUserTests {
 
     @Test
     public void testCreateUserOnAdminBehalf() throws Exception {
+        UserDTO userDTO = new UserDTO();
+        userDTO.setUsername("test@test.com");
+        userDTO.setEmail("test@test.com");
+        userDTO.setEnabled(true);
+        userDTO.setFirstName("Test");
+        userDTO.setLastName("User");
+        Sponsor sponsor = sponsorRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
+        userDTO.setSponsor(new SponsorDTO(sponsor.getHpmsId(), sponsor.getOrgName()));
+        userDTO.setRole(SPONSOR_ROLE);
+
+        ObjectMapper mapper = new ObjectMapper();
+
+        this.mockMvc.perform(
+                post(API_PREFIX + ADMIN_PREFIX + USER_URL)
+                        .contentType(MediaType.APPLICATION_JSON).content(mapper.writeValueAsString(userDTO))
+                        .header("Authorization", "Bearer " + token));
+
         MvcResult mvcResult = this.mockMvc.perform(
-                post(API_PREFIX + ADMIN_PREFIX + USER_URL + "/" + TEST_USER + "/job")
+                post(API_PREFIX + ADMIN_PREFIX + USER_URL + "/" + userDTO.getUsername() + "/job")
                         .contentType(MediaType.APPLICATION_JSON)
                         .header("Authorization", "Bearer " + token))
                 .andReturn();
+
+        Assert.assertEquals(mvcResult.getResponse().getStatus(), 202);
+
+        String header = mvcResult.getResponse().getHeader("Content-Location");
+
+        Job job = jobRepository.findByJobUuid(header.substring(header.indexOf("/Job/") + 5, header.indexOf("/$status")));
+        User jobUser = job.getUser();
+        Assert.assertEquals(jobUser.getUsername(), userDTO.getUsername());
     }
 }
