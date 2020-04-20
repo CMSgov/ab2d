@@ -86,13 +86,7 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
             MDC.put(USERNAME, username);
             User user = getUser(username);
 
-            List<GrantedAuthority> authorities = getGrantedAuth(user);
-            UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
-                    username, null, authorities);
-            auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-
-            log.info("Successfully logged in");
-            SecurityContextHolder.getContext().setAuthentication(auth);
+            userService.setupUserAndRolesInSecurityContext(user, request);
         } else {
             String usernameBlankMsg = "Username was blank";
             log.error(usernameBlankMsg);
@@ -110,21 +104,6 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
                 token, uniqueId);
         eventLogger.log(requestEvent);
         return uniqueId;
-    }
-
-    /**
-     * Retrieve the list of granted authorities from the user's roles
-     *
-     * @param user - the user
-     * @return - the granted authorities
-     */
-    private List<GrantedAuthority> getGrantedAuth(User user) {
-        List<GrantedAuthority> authorities = new ArrayList<>();
-        for (Role role : user.getRoles()) {
-            log.info("Adding role {}", role.getName());
-            authorities.add(new SimpleGrantedAuthority(role.getName()));
-        }
-        return authorities;
     }
 
     /**

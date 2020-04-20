@@ -29,6 +29,7 @@ import java.util.List;
 
 import static gov.cms.ab2d.common.util.Constants.*;
 import static gov.cms.ab2d.common.util.Constants.ADMIN_ROLE;
+import static gov.cms.ab2d.common.util.DataSetup.TEST_USER;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -222,5 +223,14 @@ public class AdminAPIUserTests {
                         .contentType(MediaType.APPLICATION_JSON).content(mapper.writeValueAsString(userDTO))
                         .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(404));
+    }
+
+    @Test
+    public void testCreateUserOnAdminBehalf() throws Exception {
+        MvcResult mvcResult = this.mockMvc.perform(
+                post(API_PREFIX + ADMIN_PREFIX + USER_URL + "/" + TEST_USER + "/job")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header("Authorization", "Bearer " + token))
+                .andReturn();
     }
 }

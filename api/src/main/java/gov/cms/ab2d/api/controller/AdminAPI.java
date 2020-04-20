@@ -11,13 +11,16 @@ import gov.cms.ab2d.eventlogger.events.ApiResponseEvent;
 import gov.cms.ab2d.eventlogger.events.ReloadEvent;
 import gov.cms.ab2d.hpms.processing.ExcelReportProcessor;
 import gov.cms.ab2d.hpms.processing.ExcelType;
+import io.swagger.annotations.ApiParam;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -28,12 +31,18 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.validation.constraints.NotBlank;
 import java.io.IOException;
+import java.time.OffsetDateTime;
 import java.util.List;
 
+import static gov.cms.ab2d.api.util.SwaggerConstants.BULK_EXPORT_TYPE;
+import static gov.cms.ab2d.api.util.SwaggerConstants.BULK_OUTPUT_FORMAT;
 import static gov.cms.ab2d.common.util.Constants.API_PREFIX;
 import static gov.cms.ab2d.common.util.Constants.ADMIN_PREFIX;
+import static gov.cms.ab2d.common.util.Constants.EOB;
 import static gov.cms.ab2d.common.util.Constants.FILE_LOG;
+import static gov.cms.ab2d.common.util.Constants.SINCE_EARLIEST_DATE;
 import static gov.cms.ab2d.common.util.Constants.USERNAME;
 import static gov.cms.ab2d.common.util.Constants.REQUEST_ID;
 
@@ -62,6 +71,9 @@ public class AdminAPI {
 
     @Autowired
     private EventLogger eventLogger;
+
+    @Autowired
+    private BulkDataAccessAPI bulkDataAccessAPI;
 
     @ResponseStatus(value = HttpStatus.ACCEPTED)
     @PostMapping("/uploadOrgStructureReport")
@@ -139,5 +151,16 @@ public class AdminAPI {
     public ResponseEntity<Void> clearCoverageCache(@RequestBody ClearCoverageCacheRequest request) {
         cacheService.clearCache(request);
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/user/{username}/job")
+    public ResponseEntity<Void> createJobOnBehalfOfUser(@PathVariable @NotBlank String username,
+        HttpServletRequest request,
+        @RequestParam(required = false, name = "_type", defaultValue = EOB) String resourceTypes,
+        @RequestParam(required = false, name = "_outputFormat") String outputFormat,
+        @RequestParam(required = false, name = "_since") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime since) {
+        userService.setupUserImpersonation(username, request);
+
+        return bulkDataAccessAPI.exportAllPatients(request, resourceTypes, outputFormat, since);
     }
 }
