@@ -84,6 +84,7 @@ echo "--------------------"
 echo "Getting bearer token"
 echo "--------------------"
 echo ""
+
 BEARER_TOKEN=$(curl --location --request POST 'https://cloudtamer.cms.gov/api/v2/token' \
   --header 'Accept: application/json' \
   --header 'Accept-Language: en-US,en;q=0.5' \
@@ -96,6 +97,7 @@ echo "-----------------------------"
 echo "Getting temporary credentials"
 echo "-----------------------------"
 echo ""
+
 JSON_OUTPUT=$(curl --location --request POST 'https://cloudtamer.cms.gov/api/v3/temporary-credentials' \
   --header 'Accept: application/json' \
   --header 'Accept-Language: en-US,en;q=0.5' \
