@@ -46,3 +46,5 @@ databaseChangeLog:
       file: db/changelog/v001/add_checksum_length_job_output.sql
   - include:
       file: db/changelog/v001/log_event_schema.sql
+  - include:
+      file: db/changelog/v001/update_contract_numbers.sql
