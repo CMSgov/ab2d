@@ -11,10 +11,10 @@ sections:
   - name: Attestation
   - name: Frequently Asked Questions
   - name: For Developers
-  ## - name: Status
-  ##   link: status.html
-  ## - name: AB2D Easy
-  ##   link: ab2d-easy.html
+  - name: Status
+    link: status
+  - name: AB2D Easy
+    link: ab2d-easy
 ctas:
 
 ---
