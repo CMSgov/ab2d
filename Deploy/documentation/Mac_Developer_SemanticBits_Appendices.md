@@ -2,7 +2,7 @@
 
 ## Table of Contents
 
-1. [Appendix A: PostgrSQL 11](#appendix-a-postgresql-11)
+1. [Appendix A: PostgreSQL 11](#appendix-a-postgresql-11)
    * [Install PostgreSQL 11](#install-postgresql-11)
    * [Uninstall PostgreSQL 11](#uninstall-postgresql-11)
 1. [Appendix B: CMS VPN access](#appendix-b-cms-vpn-access)
@@ -11,8 +11,9 @@
    * [Install and configure Cisco AnyConnect VPN](#install-and-configure-cisco-anyconnect-vpn)
    * [Log into Cisco AnyConnect client](#log-into-cisco-anyconnect-client)
    * [Disconnect from the Cisco AnyConnect client](#disconnect-from-the-cisco-anyconnect-client)
+1. [Appendix C: Install 1Password API](#appendix-c-install-1password-api)
 
-## Appendix A: PostgrSQL 11
+## Appendix A: PostgreSQL 11
 
 ### Install PostgreSQL 11
 
@@ -273,3 +274,21 @@
 1. Select the **Cisco AnyConnect Secure Mobility Client** menu
 
 1. Select **Quit Cisco AnyConnect**
+
+## Appendix C: Install 1Password API
+
+1. Install the 1Password API
+
+   ```ShellSession
+   $ brew cask install 1password-cli
+   ```
+
+1. Wait for the installation to complete
+
+   *Note that this takes a while.*
+
+1. Verify the 1Password API by checking its version
+
+   ```ShellSession
+   $ op --version
+   ```

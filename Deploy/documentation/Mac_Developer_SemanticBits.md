@@ -1380,20 +1380,3 @@
    $ jmeter --version
    ```
 
-## Install 1Password API
-
-1. Install the 1Password API
-
-   ```ShellSession
-   $ brew cask install 1password-cli
-   ```
-
-1. Wait for the installation to complete
-
-   *Note that this takes a while.*
-
-1. Verify the 1Password API by checking its version
-
-   ```ShellSession
-   $ op --version
-   ```
