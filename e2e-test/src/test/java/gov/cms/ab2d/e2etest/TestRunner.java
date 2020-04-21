@@ -202,7 +202,7 @@ public class TestRunner {
         JSONArray output = json.getJSONArray("output");
         JSONObject outputObject = output.getJSONObject(0);
         String url = outputObject.getString("url");
-        String filestem = AB2D_API_URL + "Job/" + jobUuid + "/file/S0000_0001.";
+        String filestem = AB2D_API_URL + "Job/" + jobUuid + "/file/Z0000_0001.";
         Assert.assertTrue(url.equals(filestem + "ndjson") || (url.equals(filestem + "zip")));
         String type = outputObject.getString("type");
         Assert.assertEquals(type, "ExplanationOfBenefit");
@@ -394,7 +394,7 @@ public class TestRunner {
         Assert.assertEquals(202, exportResponse.statusCode());
         List<String> contentLocationList = exportResponse.headers().map().get("content-location");
 
-        Pair<String, JSONArray> downloadDetails = performStatusRequests(contentLocationList, false, "S0000");
+        Pair<String, JSONArray> downloadDetails = performStatusRequests(contentLocationList, false, "Z0000");
         downloadFile(downloadDetails, null, null);
     }
 
@@ -406,7 +406,7 @@ public class TestRunner {
         Assert.assertEquals(202, exportResponse.statusCode());
         List<String> contentLocationList = exportResponse.headers().map().get("content-location");
 
-        Pair<String, JSONArray> downloadDetails = performStatusRequests(contentLocationList, false, "S0000");
+        Pair<String, JSONArray> downloadDetails = performStatusRequests(contentLocationList, false, "Z0000");
         if (downloadDetails != null) {
             downloadFile(downloadDetails, earliest, null);
         }
@@ -434,7 +434,7 @@ public class TestRunner {
     @Test
     @Order(5)
     public void runContractNumberExport() throws IOException, InterruptedException, JSONException {
-        String contractNumber = "S0000";
+        String contractNumber = "Z0000";
         HttpResponse<String> exportResponse = apiClient.exportByContractRequest(contractNumber, FHIR_TYPE, null);
         Assert.assertEquals(202, exportResponse.statusCode());
         List<String> contentLocationList = exportResponse.headers().map().get("content-location");
@@ -446,7 +446,7 @@ public class TestRunner {
     @Test
     @Order(6)
     void runContractNumberZipExport() throws IOException, InterruptedException, JSONException {
-        String contractNumber = "S0000";
+        String contractNumber = "Z0000";
         HttpResponse<String> exportResponse = apiClient.exportByContractRequest(contractNumber, ZIPFORMAT, null);
         Assert.assertEquals(400, exportResponse.statusCode());
     }
@@ -468,7 +468,7 @@ public class TestRunner {
     @Test
     @Order(8)
     public void testUserCannotDownloadOtherUsersJob() throws IOException, InterruptedException, JSONException {
-        String contractNumber = "S0000";
+        String contractNumber = "Z0000";
         HttpResponse<String> exportResponse = apiClient.exportByContractRequest(contractNumber, FHIR_TYPE, null);
         Assert.assertEquals(202, exportResponse.statusCode());
         List<String> contentLocationList = exportResponse.headers().map().get("content-location");
@@ -621,7 +621,7 @@ public class TestRunner {
         Assert.assertEquals(202, exportResponse.statusCode());
         List<String> contentLocationList = exportResponse.headers().map().get("content-location");
 
-        Pair<String, JSONArray> downloadDetails = performStatusRequests(contentLocationList, false, "S0000");
+        Pair<String, JSONArray> downloadDetails = performStatusRequests(contentLocationList, false, "Z0000");
         downloadFile(downloadDetails, null, "19990000002906"); // User should not be included
     }
 }

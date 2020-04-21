@@ -52,7 +52,7 @@ sponsor PDP-100 will have 100 patients and PDP-1000 will have 1000 patients. Eac
         </tr>
         <tr>
             <td><b>Contract</b></td>
-            <td>S0000</td>
+            <td>Z0000</td>
         </tr>
         <tr>
             <td><b>Client ID</b></td>
@@ -78,7 +78,7 @@ sponsor PDP-100 will have 100 patients and PDP-1000 will have 1000 patients. Eac
         </tr>
         <tr>
             <td><b>Contract</b></td>
-            <td>S0001</td>
+            <td>Z0001</td>
         </tr>
         <tr>
             <td><b>Client ID</b></td>
@@ -103,7 +103,7 @@ sponsor PDP-100 will have 100 patients and PDP-1000 will have 1000 patients. Eac
         </tr>
         <tr>
             <td><b>Contract</b></td>
-            <td>S0002</td>
+            <td>Z0002</td>
         </tr>
         <tr>
             <td><b>Client ID</b></td>
@@ -128,7 +128,7 @@ sponsor PDP-100 will have 100 patients and PDP-1000 will have 1000 patients. Eac
         </tr>
         <tr>
             <td><b>Contract</b></td>
-            <td>S0005</td>
+            <td>Z0005</td>
         </tr>
         <tr>
             <td><b>Client ID</b></td>
@@ -153,7 +153,7 @@ sponsor PDP-100 will have 100 patients and PDP-1000 will have 1000 patients. Eac
         </tr>
         <tr>
             <td><b>Contract</b></td>
-            <td>S0010</td>
+            <td>Z0010</td>
         </tr>
         <tr>
             <td><b>Client ID</b></td>

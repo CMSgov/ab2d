@@ -29,7 +29,7 @@ public class TestRunner extends AbstractJavaSamplerClient {
     @Override
     public Arguments getDefaultParameters() {
         final Arguments arguments = new Arguments();
-        arguments.addArgument("contracts", "S0003");
+        arguments.addArgument("contracts", "Z0003");
         arguments.addArgument("api-url", "http://localhost:8080/api/v1/fhir/");
         arguments.addArgument("okta-url", "https://test.idp.idm.cms.gov/oauth2/aus2r7y3gdaFMKBol297/v1/token");
 
