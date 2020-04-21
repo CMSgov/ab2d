@@ -1,6 +1,7 @@
 package gov.cms.ab2d.common.service;
 
 import gov.cms.ab2d.common.model.JobOutput;
+import gov.cms.ab2d.common.model.Role;
 import gov.cms.ab2d.common.model.User;
 import gov.cms.ab2d.common.repository.JobRepository;
 
@@ -27,6 +28,8 @@ import java.nio.file.Paths;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
+
+import static gov.cms.ab2d.common.util.Constants.ADMIN_ROLE;
 
 @Slf4j
 @Service
@@ -114,8 +117,7 @@ public class JobServiceImpl implements JobService {
         jobRepository.cancelJobByJobUuid(jobUuid);
     }
 
-    @Override
-    public Job getAuthorizedJobByJobUuid(String jobUuid) {
+    private Job getAuthorizedJobByJobUuid(String jobUuid) {
         Job job = getJobByJobUuid(jobUuid);
 
         User user = userService.getCurrentUser();
@@ -126,6 +128,20 @@ public class JobServiceImpl implements JobService {
         }
 
         return job;
+    }
+
+    @Override
+    public Job getAuthorizedJobByJobUuidAndRole(String jobUuid) {
+        User user = userService.getCurrentUser();
+
+        for (Role role : user.getRoles()) {
+            if (role.getName().equals(ADMIN_ROLE)) {
+                log.info("Admin accessed job {}", jobUuid);
+                return getJobByJobUuid(jobUuid);
+            }
+        }
+
+        return getAuthorizedJobByJobUuid(jobUuid);
     }
 
     @Override
