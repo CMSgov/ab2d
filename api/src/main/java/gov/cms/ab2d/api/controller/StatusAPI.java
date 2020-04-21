@@ -42,7 +42,6 @@ import static gov.cms.ab2d.common.util.Constants.*;
         tags = {"Status"})
 @RestController
 @RequestMapping(path = API_PREFIX + FHIR_PREFIX, produces = {"application/json", NDJSON_FIRE_CONTENT_TYPE})
-@CrossOrigin
 @SuppressWarnings("PMD.TooManyStaticImports")
 /**
  * The sole REST controller for AB2D's implementation of the FHIR Bulk Data API Status (both GET & DELETE).
@@ -100,7 +99,7 @@ public class StatusAPI {
         MDC.put(JOB_LOG, jobUuid);
         log.info("Request submitted to get job status");
 
-        Job job = jobService.getAuthorizedJobByJobUuid(jobUuid);
+        Job job = jobService.getAuthorizedJobByJobUuidAndRole(jobUuid);
 
         if (pollingTooMuch(job)) {
             log.error("User was polling too frequently");

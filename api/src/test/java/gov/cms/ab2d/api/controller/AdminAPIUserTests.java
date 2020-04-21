@@ -6,10 +6,12 @@ import gov.cms.ab2d.api.SpringBootApp;
 import gov.cms.ab2d.common.dto.SponsorDTO;
 import gov.cms.ab2d.common.dto.UserDTO;
 import gov.cms.ab2d.common.model.Sponsor;
+import gov.cms.ab2d.common.model.User;
 import gov.cms.ab2d.common.repository.*;
 import gov.cms.ab2d.common.model.Role;
 import gov.cms.ab2d.common.service.RoleService;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
+import gov.cms.ab2d.common.util.DataSetup;
 import org.hamcrest.core.Is;
 import org.junit.Assert;
 import org.junit.jupiter.api.BeforeEach;
@@ -29,6 +31,7 @@ import java.util.List;
 
 import static gov.cms.ab2d.common.util.Constants.*;
 import static gov.cms.ab2d.common.util.Constants.ADMIN_ROLE;
+import static gov.cms.ab2d.common.util.DataSetup.TEST_USER;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -64,11 +67,16 @@ public class AdminAPIUserTests {
     private TestUtil testUtil;
 
     @Autowired
+    private DataSetup dataSetup;
+
+    @Autowired
     private RoleService roleService;
 
     private String token;
 
     private static final String USER_URL = "/user";
+
+    private static final String ENABLE_DISABLE_USER = "enableDisableUser";
 
     @BeforeEach
     public void setup() throws JwtVerificationException {
@@ -222,5 +230,75 @@ public class AdminAPIUserTests {
                         .contentType(MediaType.APPLICATION_JSON).content(mapper.writeValueAsString(userDTO))
                         .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(404));
+    }
+
+    @Test
+    public void enableUser() throws Exception {
+        // Ensure user is in right state first
+        setupUser(false);
+
+        MvcResult mvcResult = this.mockMvc.perform(
+                put(API_PREFIX + ADMIN_PREFIX + USER_URL + "/" + ENABLE_DISABLE_USER + "/enable")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header("Authorization", "Bearer " + token))
+                .andReturn();
+
+        Assert.assertEquals(mvcResult.getResponse().getStatus(), 200);
+
+        ObjectMapper mapper = new ObjectMapper();
+
+        String updateResult = mvcResult.getResponse().getContentAsString();
+        UserDTO updatedUserDTO = mapper.readValue(updateResult, UserDTO.class);
+
+        Assert.assertEquals(updatedUserDTO.getEnabled(), true);
+    }
+
+    @Test
+    public void enableUserNotFound() throws Exception {
+        this.mockMvc.perform(
+                put(API_PREFIX + ADMIN_PREFIX + USER_URL + "/baduser/enable")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().is(404));
+    }
+
+    @Test
+    public void disableUser() throws Exception {
+        // Ensure user is in right state first
+        setupUser(true);
+
+        MvcResult mvcResult = this.mockMvc.perform(
+                put(API_PREFIX + ADMIN_PREFIX + USER_URL + "/" + ENABLE_DISABLE_USER + "/disable")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header("Authorization", "Bearer " + token))
+                .andReturn();
+
+        Assert.assertEquals(mvcResult.getResponse().getStatus(), 200);
+
+        ObjectMapper mapper = new ObjectMapper();
+
+        String updateResult = mvcResult.getResponse().getContentAsString();
+        UserDTO updatedUserDTO = mapper.readValue(updateResult, UserDTO.class);
+
+        Assert.assertEquals(updatedUserDTO.getEnabled(), false);
+    }
+
+    @Test
+    public void disableUserNotFound() throws Exception {
+        this.mockMvc.perform(
+                put(API_PREFIX + ADMIN_PREFIX + USER_URL + "/baduser/disable")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().is(404));
+    }
+
+    private void setupUser(boolean enabled) {
+        Sponsor savedSponsor = dataSetup.createSponsor("Parent Corp. 1", 34534, "Test 1", 123543);
+        User user = new User();
+        user.setUsername(ENABLE_DISABLE_USER);
+        user.setEnabled(enabled);
+        user.setSponsor(savedSponsor);
+
+        userRepository.save(user);
     }
 }
