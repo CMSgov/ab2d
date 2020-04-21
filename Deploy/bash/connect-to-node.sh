@@ -11,32 +11,6 @@ START_DIR="$( cd "$(dirname "$0")" ; pwd -P )"
 cd "${START_DIR}"
 
 #
-# Define functions
-#
-
-aws_credentials_parser ()
-{
-    ini="$(<$1)"                # read the file
-    ini="${ini//[/\[}"          # escape [
-    ini="${ini//]/\]}"          # escape ]
-    IFS=$'\n' && ini=( ${ini} ) # convert to line-array
-    ini=( ${ini[*]//;*/} )      # remove comments with ;
-    ini=( ${ini[*]/\    =/=} )  # remove tabs before =
-    ini=( ${ini[*]/=\   /=} )   # remove tabs after =
-    ini=( ${ini[*]/\ =\ /=} )   # remove anything with a space around =
-    ini=( ${ini[*]/#\\[/\}$'\n'aws_credentials.section.} ) # set section prefix
-    ini=( ${ini[*]/%\\]/ \(} )    # convert text2function (1)
-    ini=( ${ini[*]/=/=\( } )    # convert item to array
-    ini=( ${ini[*]/%/ \)} )     # close array parenthesis
-    ini=( ${ini[*]/%\\ \)/ \\} ) # the multiline trick
-    ini=( ${ini[*]/%\( \)/\(\) \{} ) # convert text2function (2)
-    ini=( ${ini[*]/%\} \)/\}} ) # remove extra parenthesis
-    ini[0]="" # remove first element
-    ini[${#ini[*]} + 1]='}'    # add the last brace
-    eval "$(echo "${ini[*]}")" # eval the result
-}
-
-#
 # Retrieve user input
 #
 
@@ -49,17 +23,20 @@ select opt in "${options[@]}"
 do
     case $opt in
         "Dev AWS account")
-	    export AWS_PROFILE=ab2d-dev
+	    export AWS_ACCOUNT_NUMBER=349849222861
+	    export CMS_ENV=ab2d-dev
 	    SSH_PRIVATE_KEY=ab2d-dev.pem
 	    break
             ;;
         "Sbx AWS account")
-	    export AWS_PROFILE=ab2d-sbx-sandbox
+	    export AWS_ACCOUNT_NUMBER=777200079629
+	    export CMS_ENV=ab2d-sbx-sandbox
 	    SSH_PRIVATE_KEY=ab2d-sbx-sandbox.pem
 	    break
             ;;
         "Impl AWS account")
-	    export AWS_PROFILE=ab2d-east-impl
+	    export AWS_ACCOUNT_NUMBER=330810004472
+	    export CMS_ENV=ab2d-east-impl
 	    SSH_PRIVATE_KEY=ab2d-east-impl.pem
 	    break
             ;;
@@ -74,24 +51,54 @@ if [ $REPLY -eq 4 ]; then
   exit 0
 fi
 
-# Verify AWS credentials exist
+#
+# Acquire temporary credentials via CloudTamer API
+#
 
-if [ ! -f "${HOME}/.aws/credentials" ]; then
-  echo "***********************************"
-  echo "ERROR: AWS credentials do not exist"
-  echo "***********************************"
-  echo ""
-  exit 1
+if [ -z $CLOUDTAMER_USER_NAME ]; then
+  echo "Enter your CloudTamer user name (EUA ID):"
+  read CLOUDTAMER_USER_NAME
 fi
 
-# Verify AWS profile exists
+if [ -z $CLOUDTAMER_PASSWORD ]; then
+  echo "Enter your CloudTamer password:"
+  read CLOUDTAMER_PASSWORD
+fi
 
-aws_credentials_parser "${HOME}/.aws/credentials"
-aws_credentials.section.ab2d-dev
+BEARER_TOKEN=$(curl --location --request POST 'https://cloudtamer.cms.gov/api/v2/token' \
+  --header 'Accept: application/json' \
+  --header 'Accept-Language: en-US,en;q=0.5' \
+  --header 'Content-Type: application/json' \
+  --data-raw "{\"username\":\"${CLOUDTAMER_USER_NAME}\",\"password\":\"${CLOUDTAMER_PASSWORD}\",\"idms\":{\"id\":2}}" \
+  | jq --raw-output ".data.access.token")
 
-if [ -z "${aws_access_key_id}" ] || [ -z "${aws_secret_access_key}" ]; then
+JSON_OUTPUT=$(curl --location --request POST 'https://cloudtamer.cms.gov/api/v3/temporary-credentials' \
+  --header 'Accept: application/json' \
+  --header 'Accept-Language: en-US,en;q=0.5' \
+  --header 'Content-Type: application/json' \
+  --header "Authorization: Bearer ${BEARER_TOKEN}" \
+  --header 'Content-Type: application/json' \
+  --data-raw "{\"account_number\":\"${AWS_ACCOUNT_NUMBER}\",\"iam_role_name\":\"ab2d-spe-developer\"}" \
+  | jq --raw-output ".data")
+
+# Set default AWS region
+
+export AWS_DEFAULT_REGION=us-east-1
+
+# Get temporary AWS credentials
+
+export AWS_ACCESS_KEY_ID=$(echo $JSON_OUTPUT | jq --raw-output ".access_key")
+export AWS_SECRET_ACCESS_KEY=$(echo $JSON_OUTPUT | jq --raw-output ".secret_access_key")
+
+# Get AWS session token (required for temporary credentials)
+
+export AWS_SESSION_TOKEN=$(echo $JSON_OUTPUT | jq --raw-output ".session_token")
+
+# Verify AWS credentials
+
+if [ -z "${AWS_ACCESS_KEY_ID}" ] || [ -z "${AWS_SECRET_ACCESS_KEY}" ]; then
   echo "**********************************************************************"
-  echo "ERROR: AWS credentials do not exist for the ${AWS_PROFILE} AWS profile"
+  echo "ERROR: AWS credentials do not exist for the ${CMS_ENV} AWS account"
   echo "**********************************************************************"
   echo ""
   exit 1
@@ -101,7 +108,7 @@ fi
 
 if [ ! -f "${HOME}/.ssh/${SSH_PRIVATE_KEY}" ]; then
   echo "**********************************************************************"
-  echo "ERROR: SSH private key for ${AWS_PROFILE} do not exist..."
+  echo "ERROR: SSH private key for ${CMS_ENV} do not exist..."
   echo "**********************************************************************"
   echo ""
   exit 1
@@ -131,13 +138,13 @@ if [ $opt == 'API' ]; then
   # Get the private IP addresses of API nodes
   
   aws --region us-east-1 ec2 describe-instances \
-    --filters "Name=tag:Name,Values=${AWS_PROFILE}-api" \
+    --filters "Name=tag:Name,Values=${CMS_ENV}-api" \
     --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
     --output text \
-    > "/tmp/${AWS_PROFILE}-api-nodes.txt"
+    > "/tmp/${CMS_ENV}-api-nodes.txt"
 
   echo ""
-  IFS=$'\n' read -d '' -r -a API_NODES < /tmp/${AWS_PROFILE}-api-nodes.txt
+  IFS=$'\n' read -d '' -r -a API_NODES < /tmp/${CMS_ENV}-api-nodes.txt
   PS3="Please enter the desired API node number: "
   select IP_ADDRESS_SELECTED in "${API_NODES[@]}"; do
     for ITEM in "${API_NODES[@]}"; do
@@ -154,13 +161,13 @@ if [ $opt == 'Worker' ]; then
   # Get the private IP addresses of worker nodes
   
   aws --region us-east-1 ec2 describe-instances \
-    --filters "Name=tag:Name,Values=${AWS_PROFILE}-worker" \
+    --filters "Name=tag:Name,Values=${CMS_ENV}-worker" \
     --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
     --output text \
-    > "/tmp/${AWS_PROFILE}-worker-nodes.txt"
+    > "/tmp/${CMS_ENV}-worker-nodes.txt"
 
   echo ""
-  IFS=$'\n' read -d '' -r -a WORKER_NODES < /tmp/${AWS_PROFILE}-worker-nodes.txt
+  IFS=$'\n' read -d '' -r -a WORKER_NODES < /tmp/${CMS_ENV}-worker-nodes.txt
   PS3="Please enter the desired worker node number: "
   select IP_ADDRESS_SELECTED in "${WORKER_NODES[@]}"; do
     for ITEM in "${WORKER_NODES[@]}"; do
@@ -172,6 +179,14 @@ if [ $opt == 'Worker' ]; then
 
 fi
 
+if [ -z $IP_ADDRESS_SELECTED ]; then
+  echo "**************************************************************************"
+  echo "ERROR: There are no $opt nodes in that environment"
+  echo "**************************************************************************"
+  echo ""
+  exit 1  
+fi
+
 if [ $opt == 'API' ] || [ $opt == 'Worker' ]; then
 
   nc -v -z -G 5 "${IP_ADDRESS_SELECTED}" 22 &> /dev/null
@@ -180,7 +195,7 @@ if [ $opt == 'API' ] || [ $opt == 'Worker' ]; then
   else
     echo ""
     echo "**************************************************************************"
-    echo "ERROR: VPN access to API node $COUNTER ($IP_ADDRESS) could not be verified"
+    echo "ERROR: VPN access to $opt node $COUNTER ($IP_ADDRESS) could not be verified"
     echo "**************************************************************************"
     echo ""
     exit 1
