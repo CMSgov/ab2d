@@ -91,6 +91,7 @@
 1. [Appendix MM: Create new AMI from latest gold disk image](#appendix-mm-create-new-ami-from-latest-gold-disk-image)
 1. [Appendix NN: Manually test the deployment](#appendix-nn-manually-test-the-deployment)
 1. [Appendix OO: Merge a specific commit from master into your branch](#appendix-oo-merge-a-specific-commit-from-master-into-your-branch)
+1. [Appendix PP: Test running development automation from development machine](#appendix-pp-test-running-development-automation-from-development-machine)
 
 ## Appendix A: Access the CMS AWS console
 
@@ -3390,19 +3391,74 @@
 
 ## Appendix CC: Fix bad terraform component
 
-1. Note that the following component was failing to refresh when automation was rerun
+1. Note the component that was failing to refresh when automation was rerun
 
    *Example of a component that was failing to refresh:*
    
    ```
    module.controller.random_shuffle.public_subnets
    ```
-   
+
 1. Change to the "Deploy" directory
 
    ```ShellSession
    $ cd ~/code/ab2d/Deploy
    ```
+
+1. Get temporary AWS credentials for target environment
+
+   1. Set AWS account number
+
+      *Example for Dev:*
+
+      ```ShellSession
+      $ export AWS_ACCOUNT_NUMBER=349849222861
+      ```
+
+      *Example for Sbx:*
+
+      ```ShellSession
+      $ export AWS_ACCOUNT_NUMBER=777200079629
+      ```
+
+      *Example for Impl:*
+
+      ```ShellSession
+      $ export AWS_ACCOUNT_NUMBER=330810004472
+      ```
+
+   1. Get bearer token
+
+      ```ShellSession
+      $ BEARER_TOKEN=$(curl --location --request POST 'https://cloudtamer.cms.gov/api/v2/token' \
+          --header 'Accept: application/json' \
+          --header 'Accept-Language: en-US,en;q=0.5' \
+          --header 'Content-Type: application/json' \
+          --data-raw "{\"username\":\"${CLOUDTAMER_USER_NAME}\",\"password\":\"${CLOUDTAMER_PASSWORD}\",\"idms\":{\"id\":2}}" \
+          | jq --raw-output ".data.access.token")
+      ```
+
+   1. Get JSON output for temporary credentials
+
+      ```ShellSession
+      $ JSON_OUTPUT=$(curl --location --request POST 'https://cloudtamer.cms.gov/api/v3/temporary-credentials' \
+          --header 'Accept: application/json' \
+          --header 'Accept-Language: en-US,en;q=0.5' \
+          --header 'Content-Type: application/json' \
+          --header "Authorization: Bearer ${BEARER_TOKEN}" \
+          --header 'Content-Type: application/json' \
+          --data-raw "{\"account_number\":\"${AWS_ACCOUNT_NUMBER}\",\"iam_role_name\":\"ab2d-spe-developer\"}" \
+          | jq --raw-output ".data")
+      ```
+
+   1. Get temporary AWS credentials
+
+      ```ShellSession
+      $ export AWS_DEFAULT_REGION=us-east-1
+      $ export AWS_ACCESS_KEY_ID=$(echo $JSON_OUTPUT | jq --raw-output ".access_key")
+      $ export AWS_SECRET_ACCESS_KEY=$(echo $JSON_OUTPUT | jq --raw-output ".secret_access_key")
+      $ export AWS_SESSION_TOKEN=$(echo $JSON_OUTPUT | jq --raw-output ".session_token")
+      ```
    
 1. Change to the environment where the existing component is failing to refresh
 
@@ -7813,4 +7869,39 @@
 
    ```ShellSession
    $ git branch -D temporary-release-branch
+   ```
+
+## Appendix PP: Test running development automation from development machine
+
+1. Change to the "Deploy" directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d/Deploy
+   ```
+
+1. Set test parameters
+
+   ```ShellSession
+   $ export CMS_ENV_PARAM=ab2d-dev
+   $ export CMS_ECR_REPO_ENV_PARAM=ab2d-mgmt-east-dev
+   $ export REGION_PARAM=us-east-1
+   $ export VPC_ID_PARAM=vpc-0c6413ec40c5fdac3
+   $ export SSH_USERNAME_PARAM=ec2-user
+   $ export EC2_INSTANCE_TYPE_API_PARAM=m5.xlarge
+   $ export EC2_INSTANCE_TYPE_WORKER_PARAM=m5.xlarge
+   $ export EC2_DESIRED_INSTANCE_COUNT_API_PARAM=1
+   $ export EC2_MINIMUM_INSTANCE_COUNT_API_PARAM=1
+   $ export EC2_MAXIMUM_INSTANCE_COUNT_API_PARAM=1
+   $ export EC2_DESIRED_INSTANCE_COUNT_WORKER_PARAM=1
+   $ export EC2_MINIMUM_INSTANCE_COUNT_WORKER_PARAM=1
+   $ export EC2_MAXIMUM_INSTANCE_COUNT_WORKER_PARAM=1
+   $ export DATABASE_SECRET_DATETIME_PARAM=2020-01-02-09-15-01
+   $ export DEBUG_LEVEL_PARAM=WARN
+   $ export INTERNET_FACING_PARAM=false
+   ```
+
+1. Run application deployment automation
+
+   ```ShellSession
+   $ ./bash/deploy-application.sh
    ```
