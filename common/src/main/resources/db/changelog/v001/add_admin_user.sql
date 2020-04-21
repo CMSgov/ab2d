@@ -2,7 +2,7 @@
 --  -------------------------------------------------------------------------------------------------------------------
 
 --changeset adaykin:add_admin_user failOnError:true
-INSERT INTO sponsor (id, hpms_id, org_name, legal_name, parent_id) VALUES ((select nextval('hibernate_sequence')), 9, 'AB2D Admin', null, null);
+INSERT INTO sponsor (id, hpms_id, org_name, legal_name, parent_id) VALUES ((select nextval('hibernate_sequence')), 999999, 'AB2D Admin', null, null);
 
 INSERT INTO user_account (id, username, first_name, last_name, email, sponsor_id, enabled) VALUES ((select nextval('hibernate_sequence')),
                                                                                                    '0oa32rfir2xLtx7s2297', null, null, null, (select id from sponsor where hpms_id=9), true);
