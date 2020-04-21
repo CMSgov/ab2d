@@ -99,7 +99,7 @@ public class StatusAPI {
         MDC.put(JOB_LOG, jobUuid);
         log.info("Request submitted to get job status");
 
-        Job job = jobService.getAuthorizedJobByJobUuid(jobUuid);
+        Job job = jobService.getAuthorizedJobByJobUuidAndRole(jobUuid);
 
         if (pollingTooMuch(job)) {
             log.error("User was polling too frequently");
