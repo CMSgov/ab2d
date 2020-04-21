@@ -11,12 +11,6 @@ START_DIR="$( cd "$(dirname "$0")" ; pwd -P )"
 cd "${START_DIR}"
 
 #
-# Set default values
-#
-
-export DEBUG_LEVEL="WARN"
-
-#
 # Parse options
 #
 
@@ -144,10 +138,122 @@ else
 fi
 
 #
-# Set environment
+# Set AWS account numbers
 #
 
-export AWS_PROFILE="${CMS_ENV}"
+CMS_ECR_REPO_ENV_AWS_ACCOUNT_NUMBER=653916833532
+
+if [ "${CMS_ENV}" == "ab2d-dev" ]; then
+  CMS_ENV_AWS_ACCOUNT_NUMBER=349849222861
+elif [ "${CMS_ENV}" == "ab2d-sbx-sandbox" ]; then
+  CMS_ENV_AWS_ACCOUNT_NUMBER=777200079629
+elif [ "${CMS_ENV}" == "ab2d-east-impl" ]; then
+  CMS_ENV_AWS_ACCOUNT_NUMBER=330810004472
+else
+  echo "ERROR: 'CMS_ENV' environment is unknown."
+  exit 1  
+fi
+
+#
+# Define functions
+#
+
+get_temporary_aws_credentials ()
+{
+  # Set AWS account number
+
+  AWS_ACCOUNT_NUMBER="$1"
+
+  # Verify that CloudTamer user name and password environment variables are set
+
+  if [ -z $CLOUDTAMER_USER_NAME ] || [ -z $CLOUDTAMER_PASSWORD ]; then
+    echo ""
+    echo "----------------------------"
+    echo "Enter CloudTamer credentials"
+    echo "----------------------------"
+  fi
+
+  if [ -z $CLOUDTAMER_USER_NAME ]; then
+    echo ""
+    echo "Enter your CloudTamer user name (EUA ID):"
+    read CLOUDTAMER_USER_NAME
+  fi
+
+  if [ -z $CLOUDTAMER_PASSWORD ]; then
+    echo ""
+    echo "Enter your CloudTamer password:"
+    read CLOUDTAMER_PASSWORD
+  fi
+
+  # Get bearer token
+
+  echo ""
+  echo "--------------------"
+  echo "Getting bearer token"
+  echo "--------------------"
+  echo ""
+
+  BEARER_TOKEN=$(curl --location --request POST 'https://cloudtamer.cms.gov/api/v2/token' \
+    --header 'Accept: application/json' \
+    --header 'Accept-Language: en-US,en;q=0.5' \
+    --header 'Content-Type: application/json' \
+    --data-raw "{\"username\":\"${CLOUDTAMER_USER_NAME}\",\"password\":\"${CLOUDTAMER_PASSWORD}\",\"idms\":{\"id\":2}}" \
+    | jq --raw-output ".data.access.token")
+
+  # Get json output for temporary AWS credentials
+
+  echo ""
+  echo "-----------------------------"
+  echo "Getting temporary credentials"
+  echo "-----------------------------"
+  echo ""
+
+  JSON_OUTPUT=$(curl --location --request POST 'https://cloudtamer.cms.gov/api/v3/temporary-credentials' \
+    --header 'Accept: application/json' \
+    --header 'Accept-Language: en-US,en;q=0.5' \
+    --header 'Content-Type: application/json' \
+    --header "Authorization: Bearer ${BEARER_TOKEN}" \
+    --header 'Content-Type: application/json' \
+    --data-raw "{\"account_number\":\"${AWS_ACCOUNT_NUMBER}\",\"iam_role_name\":\"ab2d-spe-developer\"}" \
+    | jq --raw-output ".data")
+
+  # Set default AWS region
+
+  export AWS_DEFAULT_REGION=us-east-1
+
+  # Get temporary AWS credentials
+
+  export AWS_ACCESS_KEY_ID=$(echo $JSON_OUTPUT | jq --raw-output ".access_key")
+  export AWS_SECRET_ACCESS_KEY=$(echo $JSON_OUTPUT | jq --raw-output ".secret_access_key")
+
+  # Get AWS session token (required for temporary credentials)
+
+  export AWS_SESSION_TOKEN=$(echo $JSON_OUTPUT | jq --raw-output ".session_token")
+
+  # Verify AWS credentials
+
+  if [ -z "${AWS_ACCESS_KEY_ID}" ] \
+      || [ -z "${AWS_SECRET_ACCESS_KEY}" ] \
+      || [ -z "${AWS_SESSION_TOKEN}" ]; then
+    echo "**********************************************************************"
+    echo "ERROR: AWS credentials do not exist for the ${CMS_ENV} AWS account"
+    echo "**********************************************************************"
+    echo ""
+    exit 1
+  fi
+}
+
+#
+# Set default values
+#
+
+export DEBUG_LEVEL="WARN"
+
+#
+# Set AWS target environment
+#
+
+get_temporary_aws_credentials "${CMS_ENV_AWS_ACCOUNT_NUMBER}"
 
 #
 # Verify that VPC ID exists
@@ -168,8 +274,6 @@ fi
 # Get KMS key id for target environment (if exists)
 #
 
-export AWS_PROFILE="${CMS_ENV}"
-
 KMS_KEY_ID=$(aws --region "${REGION}" kms list-aliases \
   --query="Aliases[?AliasName=='alias/ab2d-kms'].TargetKeyId" \
   --output text)
@@ -182,21 +286,29 @@ if [ -n "${KMS_KEY_ID}" ]; then
 fi
 
 #
-# Get MGMT KMS key id for management environment (if exists)
+# Deploy or enable KMS for target environment
 #
 
-export AWS_PROFILE="${CMS_ECR_REPO_ENV}"
+# If target environment KMS key exists, enable it; otherwise, create it
 
-MGMT_KMS_KEY_ID=$(aws --region "${REGION}" kms list-aliases \
+if [ -n "$KMS_KEY_ID" ]; then
+  echo "Enabling KMS key..."
+  cd "${START_DIR}"
+  cd python3
+  ./enable-kms-key.py $KMS_KEY_ID
+else
+  echo "Deploying KMS..."
+  cd "${START_DIR}"
+  cd terraform/environments/$CMS_SHARED_ENV
+  terraform apply \
+    --target module.kms --auto-approve
+fi
+
+# Get target KMS key id
+
+KMS_KEY_ID=$(aws --region "${REGION}" kms list-aliases \
   --query="Aliases[?AliasName=='alias/ab2d-kms'].TargetKeyId" \
   --output text)
-
-if [ -n "${MGMT_KMS_KEY_ID}" ]; then
-  MGMT_KMS_KEY_STATE=$(aws --region "${REGION}" kms describe-key \
-    --key-id alias/ab2d-kms \
-    --query "KeyMetadata.KeyState" \
-    --output text)
-fi
 
 #
 # Configure terraform
@@ -212,10 +324,6 @@ rm -f /var/log/terraform/tf.log
 #
 # Initialize and validate terraform
 #
-
-# Set AWS profile to the target environment
-
-export AWS_PROFILE="${CMS_ENV}"
 
 # Initialize and validate terraform for the shared components
 
@@ -255,90 +363,9 @@ terraform init \
 
 terraform validate
 
-# Set AWS profile to the management environment
-
-export AWS_PROFILE="${CMS_ECR_REPO_ENV}"
-
-# Initialize and validate terraform for the management environment
-
-echo "*******************************************************************"
-echo "Initialize and validate terraform for the management environment..."
-echo "*******************************************************************"
-
-cd "${START_DIR}"
-cd "terraform/environments/$CMS_ECR_REPO_ENV-shared"
-
-rm -f *.tfvars
-
-terraform init \
-  -backend-config="bucket=${CMS_ECR_REPO_ENV}-automation" \
-  -backend-config="key=${CMS_ECR_REPO_ENV}/terraform/terraform.tfstate" \
-  -backend-config="region=${REGION}" \
-  -backend-config="encrypt=true"
-
-terraform validate
-
-#
-# Deploy or enable KMS for target environment
-#
-
-# If target environment KMS key exists, enable it; otherwise, create it
-
-export AWS_PROFILE="${CMS_ENV}"
-
-if [ -n "$KMS_KEY_ID" ]; then
-  echo "Enabling KMS key..."
-  cd "${START_DIR}"
-  cd python3
-  ./enable-kms-key.py $KMS_KEY_ID
-else
-  echo "Deploying KMS..."
-  cd "${START_DIR}"
-  cd terraform/environments/$CMS_SHARED_ENV
-  terraform apply \
-    --target module.kms --auto-approve
-fi
-
-# Get target KMS key id
-
-KMS_KEY_ID=$(aws --region "${REGION}" kms list-aliases \
-  --query="Aliases[?AliasName=='alias/ab2d-kms'].TargetKeyId" \
-  --output text)
-
-#
-# Deploy or enable KMS for management environment
-#
-
-# If management environment KMS key exists, enable it; otherwise, create it
-
-export AWS_PROFILE="${CMS_ECR_REPO_ENV}"
-
-if [ -n "$MGMT_KMS_KEY_ID" ]; then
-  echo "Enabling KMS key..."
-  cd "${START_DIR}"
-  cd python3
-  ./enable-kms-key.py $MGMT_KMS_KEY_ID
-else
-  echo "Deploying KMS..."
-  cd "${START_DIR}"
-  cd "terraform/environments/${CMS_ECR_REPO_ENV}-shared"
-  terraform apply \
-    --target module.kms --auto-approve
-fi
-
-# Get MGMT KMS key id
-
-MGMT_KMS_KEY_ID=$(aws --region "${REGION}" kms list-aliases \
-  --query="Aliases[?AliasName=='alias/ab2d-kms'].TargetKeyId" \
-  --output text)
-
 #
 # Create or get secrets
 #
-
-# Set AWS profile to the target environment
-
-export AWS_PROFILE="${CMS_ENV}"
 
 # Change to the "python3" directory
 
@@ -960,9 +987,62 @@ fi
 # AMI Generation for Jenkins node
 #
 
-# Set profile to the management AWS account
+# Set AWS management environment
 
-export AWS_PROFILE="${CMS_ECR_REPO_ENV}"
+get_temporary_aws_credentials "${CMS_ECR_REPO_ENV_AWS_ACCOUNT_NUMBER}"
+
+# Get MGMT KMS key id for management environment (if exists)
+
+MGMT_KMS_KEY_ID=$(aws --region "${REGION}" kms list-aliases \
+  --query="Aliases[?AliasName=='alias/ab2d-kms'].TargetKeyId" \
+  --output text)
+
+if [ -n "${MGMT_KMS_KEY_ID}" ]; then
+  MGMT_KMS_KEY_STATE=$(aws --region "${REGION}" kms describe-key \
+    --key-id alias/ab2d-kms \
+    --query "KeyMetadata.KeyState" \
+    --output text)
+fi
+
+# Initialize and validate terraform for the management environment
+
+echo "*******************************************************************"
+echo "Initialize and validate terraform for the management environment..."
+echo "*******************************************************************"
+
+cd "${START_DIR}"
+cd "terraform/environments/$CMS_ECR_REPO_ENV-shared"
+
+rm -f *.tfvars
+
+terraform init \
+  -backend-config="bucket=${CMS_ECR_REPO_ENV}-automation" \
+  -backend-config="key=${CMS_ECR_REPO_ENV}/terraform/terraform.tfstate" \
+  -backend-config="region=${REGION}" \
+  -backend-config="encrypt=true"
+
+terraform validate
+
+# If management environment KMS key exists, enable it; otherwise, create it
+
+if [ -n "$MGMT_KMS_KEY_ID" ]; then
+  echo "Enabling KMS key..."
+  cd "${START_DIR}"
+  cd python3
+  ./enable-kms-key.py $MGMT_KMS_KEY_ID
+else
+  echo "Deploying KMS..."
+  cd "${START_DIR}"
+  cd "terraform/environments/${CMS_ECR_REPO_ENV}-shared"
+  terraform apply \
+    --target module.kms --auto-approve
+fi
+
+# Get MGMT KMS key id
+
+MGMT_KMS_KEY_ID=$(aws --region "${REGION}" kms list-aliases \
+  --query="Aliases[?AliasName=='alias/ab2d-kms'].TargetKeyId" \
+  --output text)
 
 # Set JENKINS_AMI_ID if it already exists for the deployment
 
@@ -1052,12 +1132,14 @@ fi
 DEPLOYER_IP_ADDRESS=$(curl ipinfo.io/ip)
 
 #
-# Create "auto.tfvars" file for shared components
+# Set AWS target environment
 #
 
-# Set profile to the target AWS account
+get_temporary_aws_credentials "${CMS_ENV_AWS_ACCOUNT_NUMBER}"
 
-export AWS_PROFILE="${CMS_ENV}"
+#
+# Create "auto.tfvars" file for shared components
+#
 
 cd "${START_DIR}"
 cd terraform/environments/$CMS_SHARED_ENV
@@ -1230,19 +1312,6 @@ aws --region "${REGION}" s3api put-bucket-policy \
   --policy file://ab2d-cloudtrail-bucket-policy.json
 
 #
-# Create dev S3 bucket
-#
-
-echo "Deploying dev S3 bucket..."
-
-cd "${START_DIR}"
-cd terraform/environments/$CMS_SHARED_ENV
-
-terraform apply \
-  --target module.s3 \
-  --auto-approve
-
-#
 # Deploy db
 #
 
@@ -1378,12 +1447,14 @@ if [ -n "${CONTROLLER_PRIVATE_IP}" ] && [ -n "${DB_ENDPOINT}" ] && [ "${DB_NAME_
 fi
 
 #
-# Deploy AWS application modules
+# Set AWS management environment
 #
 
-# Set environment to the AWS account where the shared ECR repository is maintained
-    
-export AWS_PROFILE="${CMS_ECR_REPO_ENV}"
+get_temporary_aws_credentials "${CMS_ECR_REPO_ENV_AWS_ACCOUNT_NUMBER}"
+
+#
+# Deploy AWS application modules
+#
 
 cd "${START_DIR}"
 cd terraform/environments/$CMS_ECR_REPO_ENV
@@ -1696,9 +1767,11 @@ fi
 
 echo "Using master branch commit number '${COMMIT_NUMBER}' for ab2d_api and ab2d_worker..."
 
-# Reset to the target environment
-    
-export AWS_PROFILE="${CMS_ENV}"
+#
+# Set AWS target environment
+#
+
+get_temporary_aws_credentials "${CMS_ENV_AWS_ACCOUNT_NUMBER}"
 
 cd "${START_DIR}"
 cd terraform/environments/$CMS_ENV

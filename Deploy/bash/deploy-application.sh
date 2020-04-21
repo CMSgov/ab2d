@@ -11,10 +11,29 @@ START_DIR="$( cd "$(dirname "$0")" ; pwd -P )"
 cd "${START_DIR}"
 
 #
-# Set default values
+# Check vars are not empty before proceeding
 #
 
-export DEBUG_LEVEL="WARN"
+echo "Check vars are not empty before proceeding..."
+if [ -z "${CMS_ENV_PARAM}" ] \
+    || [ -z "${CMS_ECR_REPO_ENV_PARAM}" ] \
+    || [ -z "${REGION_PARAM}" ] \
+    || [ -z "${VPC_ID_PARAM}" ] \
+    || [ -z "${SSH_USERNAME_PARAM}" ] \
+    || [ -z "${EC2_INSTANCE_TYPE_API_PARAM}" ] \
+    || [ -z "${EC2_INSTANCE_TYPE_WORKER_PARAM}" ] \
+    || [ -z "${EC2_DESIRED_INSTANCE_COUNT_API_PARAM}" ] \
+    || [ -z "${EC2_MINIMUM_INSTANCE_COUNT_API_PARAM}" ] \
+    || [ -z "${EC2_MAXIMUM_INSTANCE_COUNT_API_PARAM}" ] \
+    || [ -z "${EC2_DESIRED_INSTANCE_COUNT_WORKER_PARAM}" ] \
+    || [ -z "${EC2_MINIMUM_INSTANCE_COUNT_WORKER_PARAM}" ] \
+    || [ -z "${EC2_MAXIMUM_INSTANCE_COUNT_WORKER_PARAM}" ] \
+    || [ -z "${DATABASE_SECRET_DATETIME_PARAM}" ] \
+    || [ -z "${DEBUG_LEVEL_PARAM}" ] \
+    || [ -z "${INTERNET_FACING_PARAM}" ]; then
+  echo "ERROR: All parameters must be set."
+  exit 1
+fi
 
 #
 # Set parameters
@@ -48,32 +67,7 @@ EC2_MAXIMUM_INSTANCE_COUNT_WORKER="${EC2_MAXIMUM_INSTANCE_COUNT_WORKER_PARAM}"
 
 DATABASE_SECRET_DATETIME="${DATABASE_SECRET_DATETIME_PARAM}"
 
-DEBUG_LEVEL="${DEBUG_LEVEL_PARAM}"
-
-#
-# Check vars are not empty before proceeding
-#
-
-echo "Check vars are not empty before proceeding..."
-if [ -z "${CMS_ENV_PARAM}" ] \
-    || [ -z "${CMS_ECR_REPO_ENV_PARAM}" ] \
-    || [ -z "${REGION_PARAM}" ] \
-    || [ -z "${VPC_ID_PARAM}" ] \
-    || [ -z "${SSH_USERNAME_PARAM}" ] \
-    || [ -z "${EC2_INSTANCE_TYPE_API_PARAM}" ] \
-    || [ -z "${EC2_INSTANCE_TYPE_WORKER_PARAM}" ] \
-    || [ -z "${EC2_DESIRED_INSTANCE_COUNT_API_PARAM}" ] \
-    || [ -z "${EC2_MINIMUM_INSTANCE_COUNT_API_PARAM}" ] \
-    || [ -z "${EC2_MAXIMUM_INSTANCE_COUNT_API_PARAM}" ] \
-    || [ -z "${EC2_DESIRED_INSTANCE_COUNT_WORKER_PARAM}" ] \
-    || [ -z "${EC2_MINIMUM_INSTANCE_COUNT_WORKER_PARAM}" ] \
-    || [ -z "${EC2_MAXIMUM_INSTANCE_COUNT_WORKER_PARAM}" ] \
-    || [ -z "${DATABASE_SECRET_DATETIME_PARAM}" ] \
-    || [ -z "${DEBUG_LEVEL_PARAM}" ] \
-    || [ -z "${INTERNET_FACING_PARAM}" ]; then
-  echo "ERROR: All parameters must be set."
-  exit 1
-fi
+export DEBUG_LEVEL="${DEBUG_LEVEL_PARAM}"
 
 # Set whether load balancer is internal based on "internet-facing" parameter
 
@@ -87,10 +81,116 @@ else
 fi
 
 #
-# Set environment
+# Set AWS account numbers
 #
 
-export AWS_PROFILE="${CMS_ENV}"
+CMS_ECR_REPO_ENV_AWS_ACCOUNT_NUMBER=653916833532
+
+if [ "${CMS_ENV}" == "ab2d-dev" ]; then
+  CMS_ENV_AWS_ACCOUNT_NUMBER=349849222861
+elif [ "${CMS_ENV}" == "ab2d-sbx-sandbox" ]; then
+  CMS_ENV_AWS_ACCOUNT_NUMBER=777200079629
+elif [ "${CMS_ENV}" == "ab2d-east-impl" ]; then
+  CMS_ENV_AWS_ACCOUNT_NUMBER=330810004472
+else
+  echo "ERROR: 'CMS_ENV' environment is unknown."
+  exit 1  
+fi
+
+#
+# Define functions
+#
+
+get_temporary_aws_credentials ()
+{
+  # Set AWS account number
+
+  AWS_ACCOUNT_NUMBER="$1"
+
+  # Verify that CloudTamer user name and password environment variables are set
+
+  if [ -z $CLOUDTAMER_USER_NAME ] || [ -z $CLOUDTAMER_PASSWORD ]; then
+    echo ""
+    echo "----------------------------"
+    echo "Enter CloudTamer credentials"
+    echo "----------------------------"
+  fi
+
+  if [ -z $CLOUDTAMER_USER_NAME ]; then
+    echo ""
+    echo "Enter your CloudTamer user name (EUA ID):"
+    read CLOUDTAMER_USER_NAME
+  fi
+
+  if [ -z $CLOUDTAMER_PASSWORD ]; then
+    echo ""
+    echo "Enter your CloudTamer password:"
+    read CLOUDTAMER_PASSWORD
+  fi
+
+  # Get bearer token
+
+  echo ""
+  echo "--------------------"
+  echo "Getting bearer token"
+  echo "--------------------"
+  echo ""
+
+  BEARER_TOKEN=$(curl --location --request POST 'https://cloudtamer.cms.gov/api/v2/token' \
+    --header 'Accept: application/json' \
+    --header 'Accept-Language: en-US,en;q=0.5' \
+    --header 'Content-Type: application/json' \
+    --data-raw "{\"username\":\"${CLOUDTAMER_USER_NAME}\",\"password\":\"${CLOUDTAMER_PASSWORD}\",\"idms\":{\"id\":2}}" \
+    | jq --raw-output ".data.access.token")
+
+  # Get json output for temporary AWS credentials
+
+  echo ""
+  echo "-----------------------------"
+  echo "Getting temporary credentials"
+  echo "-----------------------------"
+  echo ""
+
+  JSON_OUTPUT=$(curl --location --request POST 'https://cloudtamer.cms.gov/api/v3/temporary-credentials' \
+    --header 'Accept: application/json' \
+    --header 'Accept-Language: en-US,en;q=0.5' \
+    --header 'Content-Type: application/json' \
+    --header "Authorization: Bearer ${BEARER_TOKEN}" \
+    --header 'Content-Type: application/json' \
+    --data-raw "{\"account_number\":\"${AWS_ACCOUNT_NUMBER}\",\"iam_role_name\":\"ab2d-spe-developer\"}" \
+    | jq --raw-output ".data")
+
+  # Set default AWS region
+
+  export AWS_DEFAULT_REGION=us-east-1
+
+  # Get temporary AWS credentials
+
+  export AWS_ACCESS_KEY_ID=$(echo $JSON_OUTPUT | jq --raw-output ".access_key")
+  export AWS_SECRET_ACCESS_KEY=$(echo $JSON_OUTPUT | jq --raw-output ".secret_access_key")
+
+  # Get AWS session token (required for temporary credentials)
+
+  export AWS_SESSION_TOKEN=$(echo $JSON_OUTPUT | jq --raw-output ".session_token")
+
+  # Verify AWS credentials
+
+  if [ -z "${AWS_ACCESS_KEY_ID}" ] \
+      || [ -z "${AWS_SECRET_ACCESS_KEY}" ] \
+      || [ -z "${AWS_SESSION_TOKEN}" ]; then
+    echo "**********************************************************************"
+    echo "ERROR: AWS credentials do not exist for the ${CMS_ENV} AWS account"
+    echo "**********************************************************************"
+    echo ""
+    exit 1
+  fi
+}
+
+#
+# Set AWS target environment
+#
+
+get_temporary_aws_credentials "${CMS_ENV_AWS_ACCOUNT_NUMBER}"
 
 #
 # Verify that VPC ID exists
@@ -111,8 +211,6 @@ fi
 # Get KMS key id for target environment (if exists)
 #
 
-export AWS_PROFILE="${CMS_ENV}"
-
 KMS_KEY_ID=$(aws --region "${REGION}" kms list-aliases \
   --query="Aliases[?AliasName=='alias/ab2d-kms'].TargetKeyId" \
   --output text)
@@ -126,28 +224,6 @@ else
   echo "***************************************************"
   echo "ERROR: kms key id for target environment not found."
   echo "***************************************************"
-  exit 1
-fi
-
-#
-# Get MGMT KMS key id for management environment (if exists)
-#
-
-export AWS_PROFILE="${CMS_ECR_REPO_ENV}"
-
-MGMT_KMS_KEY_ID=$(aws --region "${REGION}" kms list-aliases \
-  --query="Aliases[?AliasName=='alias/ab2d-kms'].TargetKeyId" \
-  --output text)
-
-if [ -n "${MGMT_KMS_KEY_ID}" ]; then
-  MGMT_KMS_KEY_STATE=$(aws --region "${REGION}" kms describe-key \
-    --key-id alias/ab2d-kms \
-    --query "KeyMetadata.KeyState" \
-    --output text)
-else
-  echo "*******************************************************"
-  echo "ERROR: kms key id for management environment not found."
-  echo "*******************************************************"
   exit 1
 fi
 
@@ -190,10 +266,6 @@ docker images -q | xargs -I name docker rmi --force name
 # Initialize and validate terraform
 #
 
-# Set AWS profile to the target environment
-
-export AWS_PROFILE="${CMS_ENV}"
-
 # Initialize and validate terraform for the target environment
 
 echo "***************************************************************"
@@ -217,31 +289,14 @@ terraform validate
 # Get and enable KMS key id for target environment
 #
 
-export AWS_PROFILE="${CMS_ENV}"
-
 echo "Enabling KMS key..."
 cd "${START_DIR}/.."
 cd python3
 ./enable-kms-key.py $KMS_KEY_ID
 
 #
-# Get and enable KMS key id for management environment
-#
-
-export AWS_PROFILE="${CMS_ECR_REPO_ENV}"
-
-echo "Enabling KMS key..."
-cd "${START_DIR}/.."
-cd python3
-./enable-kms-key.py $MGMT_KMS_KEY_ID
-
-#
 # Get secrets
 #
-
-# Set AWS profile to the target environment
-
-export AWS_PROFILE="${CMS_ENV}"
 
 # Get database user secret
 
@@ -377,10 +432,6 @@ fi
 #
 # Get network attributes
 #
-
-# Set AWS profile to the target environment
-
-export AWS_PROFILE="${CMS_ENV}"
 
 # Get first public subnet id
 
@@ -531,9 +582,34 @@ echo 'deployer_ip_address = "'$DEPLOYER_IP_ADDRESS'"' \
 # Deploy AWS application modules
 #
 
+# Set AWS management environment
+
+get_temporary_aws_credentials "${CMS_ECR_REPO_ENV_AWS_ACCOUNT_NUMBER}"
+
+MGMT_KMS_KEY_ID=$(aws --region "${REGION}" kms list-aliases \
+  --query="Aliases[?AliasName=='alias/ab2d-kms'].TargetKeyId" \
+  --output text)
+
+if [ -n "${MGMT_KMS_KEY_ID}" ]; then
+  MGMT_KMS_KEY_STATE=$(aws --region "${REGION}" kms describe-key \
+    --key-id alias/ab2d-kms \
+    --query "KeyMetadata.KeyState" \
+    --output text)
+else
+  echo "*******************************************************"
+  echo "ERROR: kms key id for management environment not found."
+  echo "*******************************************************"
+  exit 1
+fi
+
+# Get and enable KMS key id for management environment
+
+echo "Enabling KMS key..."
+cd "${START_DIR}/.."
+cd python3
+./enable-kms-key.py $MGMT_KMS_KEY_ID
+
 # Set environment to the AWS account where the shared ECR repository is maintained
-    
-export AWS_PROFILE="${CMS_ECR_REPO_ENV}"
 
 cd "${START_DIR}/.."
 cd terraform/environments/$CMS_ECR_REPO_ENV
@@ -814,10 +890,14 @@ else
 fi
 
 echo "Using master branch commit number '${COMMIT_NUMBER}' for ab2d_api and ab2d_worker..."
+    
+#
+# Set AWS target environment
+#
+
+get_temporary_aws_credentials "${CMS_ENV_AWS_ACCOUNT_NUMBER}"
 
 # Reset to the target environment
-    
-export AWS_PROFILE="${CMS_ENV}"
 
 cd "${START_DIR}/.."
 cd terraform/environments/$CMS_ENV
