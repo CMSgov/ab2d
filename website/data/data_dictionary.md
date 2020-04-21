@@ -273,5 +273,15 @@ table td {
                 the adjudication details of the ClaimResponse.
             </td>
         </tr>
+        <tr>
+            <td>Information to support the _since parameter</td>
+            <td>ExplanationOfBenefit.meta.lastUpdated</td>
+            <td>Data to indicate the time the data was last updated</td>
+            <td>0..1</td>
+            <td></td>
+            <td>Instant</td>
+            <td>To support the _since parameter in the API, ExplanationOfBenefit object now searches
+            by and returns the last updated date of the ExplanationOfBenefit</td>
+        </tr>
     </tbody>
 </table>
