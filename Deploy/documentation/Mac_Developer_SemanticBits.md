@@ -9,9 +9,7 @@
 1. [Verify SSH access to public GitHub using default SSH key pair](#verify-ssh-access-to-public-github-using-default-ssh-key-pair)
 1. [Change ownership of HomeBrew related directories](#change-ownership-of-homebrew-related-directories)
 1. [Install python3](#install-python3)
-1. [Configure python3](#configure-python3)
-   * [Make python3 the default python](#make-python3-the-default-python)
-   * [Configure pip3](#configure-pip3)
+1. [Configure pip3](#configure-pip3)
 1. [Install and configure Java](#install-and-configure-java)
    * [Uninstall any existing versions of Java](#uninstall-any-existing-versions-of-java)
    * [Install or verify Java SE Development Kit 13 (JDK13)](#install-or-verify-java-se-development-kit-13-jdk13)
@@ -45,6 +43,7 @@
 1. [Install Keybase](#install-keybase)
 1. [Install Postman](#install-postman)
 1. [Install JMeter](#install-jmeter)
+1. [Configure development CloudTamer credentials](#configure-development-cloudtamer-credentials)
 
 ## Install Slack
 
@@ -296,10 +295,8 @@
    ```ShellSession
    $ brew install python3
    ```
-   
-## Configure python3
 
-### Configure pip3
+## Configure pip3
 
 1. Upgrade pip3
 
@@ -1380,3 +1377,44 @@
    $ jmeter --version
    ```
 
+## Configure development CloudTamer credentials
+
+1. Backup the file that you use for setting up your shell's environment
+
+   *Example for bash:*
+
+   ```ShellSession
+   $ cp ~/.bash_profile ~/.bash_profile_backup
+   ```
+
+1. Set CloudTamer user name
+
+   *Format:*
+
+   ```ShellSession
+   TEMP_CLOUDTAMER_USER_NAME={your eua id}
+   TEMP_CLOUDTAMER_PASSWORD={your cloudtamer password}
+   ```
+
+1. Add development CloudTamer credentials to your interactive shell script
+
+   *Example for bash:*
+
+   ```ShellSession
+   $ printf '\n# Set development CloudTamer credentials' >> ~/.bash_profile
+   $ printf "\nexport CLOUDTAMER_USER_NAME=\"$TEMP_CLOUDTAMER_USER_NAME\"" >> ~/.bash_profile
+   $ printf "\nexport CLOUDTAMER_PASSWORD=\"$TEMP_CLOUDTAMER_PASSWORD\"" >> ~/.bash_profile
+   ```
+
+1. Load updated profile in the current terminal
+
+   ```ShellSession
+   $ source ~/.bash_profile
+   ```
+
+1. Verify development CloudTamer credentials have been set 
+
+   ```ShellSession
+   $ echo "${CLOUDTAMER_USER_NAME}"
+   $ echo "${CLOUDTAMER_PASSWORD}"
+   ```
