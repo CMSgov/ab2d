@@ -17,6 +17,10 @@ cd "${START_DIR}"
 # Ask user of chooose an environment
 
 echo ""
+echo "--------------------------"
+echo "Choose desired AWS account"
+echo "--------------------------"
+echo ""
 PS3='Please enter your choice: '
 options=("Dev AWS account" "Sbx AWS account" "Impl AWS account" "Quit")
 select opt in "${options[@]}"
@@ -48,6 +52,7 @@ do
 done
 
 if [ $REPLY -eq 4 ]; then
+  echo ""
   exit 0
 fi
 
@@ -55,16 +60,30 @@ fi
 # Acquire temporary credentials via CloudTamer API
 #
 
+if [ -z $CLOUDTAMER_USER_NAME ] || [ -z $CLOUDTAMER_PASSWORD ]; then
+  echo ""
+  echo "----------------------------"
+  echo "Enter CloudTamer credentials"
+  echo "----------------------------"
+fi
+
 if [ -z $CLOUDTAMER_USER_NAME ]; then
+  echo ""
   echo "Enter your CloudTamer user name (EUA ID):"
   read CLOUDTAMER_USER_NAME
 fi
 
 if [ -z $CLOUDTAMER_PASSWORD ]; then
+  echo ""
   echo "Enter your CloudTamer password:"
   read CLOUDTAMER_PASSWORD
 fi
 
+echo ""
+echo "--------------------"
+echo "Getting bearer token"
+echo "--------------------"
+echo ""
 BEARER_TOKEN=$(curl --location --request POST 'https://cloudtamer.cms.gov/api/v2/token' \
   --header 'Accept: application/json' \
   --header 'Accept-Language: en-US,en;q=0.5' \
@@ -72,6 +91,11 @@ BEARER_TOKEN=$(curl --location --request POST 'https://cloudtamer.cms.gov/api/v2
   --data-raw "{\"username\":\"${CLOUDTAMER_USER_NAME}\",\"password\":\"${CLOUDTAMER_PASSWORD}\",\"idms\":{\"id\":2}}" \
   | jq --raw-output ".data.access.token")
 
+echo ""
+echo "-----------------------------"
+echo "Getting temporary credentials"
+echo "-----------------------------"
+echo ""
 JSON_OUTPUT=$(curl --location --request POST 'https://cloudtamer.cms.gov/api/v3/temporary-credentials' \
   --header 'Accept: application/json' \
   --header 'Accept-Language: en-US,en;q=0.5' \
@@ -96,7 +120,9 @@ export AWS_SESSION_TOKEN=$(echo $JSON_OUTPUT | jq --raw-output ".session_token")
 
 # Verify AWS credentials
 
-if [ -z "${AWS_ACCESS_KEY_ID}" ] || [ -z "${AWS_SECRET_ACCESS_KEY}" ]; then
+if [ -z "${AWS_ACCESS_KEY_ID}" ] \
+    || [ -z "${AWS_SECRET_ACCESS_KEY}" ] \
+    || [ -z "${AWS_SESSION_TOKEN}" ]; then
   echo "**********************************************************************"
   echo "ERROR: AWS credentials do not exist for the ${CMS_ENV} AWS account"
   echo "**********************************************************************"
@@ -115,6 +141,10 @@ if [ ! -f "${HOME}/.ssh/${SSH_PRIVATE_KEY}" ]; then
 fi
 
 echo ""
+echo "----------------"
+echo "Choose node type"
+echo "----------------"
+echo ""
 PS3='What type of node do you want to connect to?: '
 options=("API" "Worker" "Quit")
 select opt in "${options[@]}"
@@ -132,6 +162,13 @@ do
         *) echo "invalid option $REPLY";;
     esac
 done
+
+if [ $opt == 'API' ] || [ $opt == 'Worker' ]; then
+  echo ""
+  echo "-------------------"
+  echo "Choose desired node"
+  echo "-------------------"
+fi
 
 if [ $opt == 'API' ]; then
 
@@ -177,6 +214,11 @@ if [ $opt == 'Worker' ]; then
     done
   done
 
+fi
+
+if [ $REPLY -eq 3 ]; then
+  echo ""
+  exit 0
 fi
 
 if [ -z $IP_ADDRESS_SELECTED ]; then
