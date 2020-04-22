@@ -80,6 +80,10 @@
    [Configure Terraform logging on Jenkins agent](#configure-terraform-logging-on-jenkins-agent)
    [Install maven on Jenkins agent](#install-maven-on-jenkins-agent)
    [Install jq on Jenkins agent](#install-jq-on-jenkins-agent)
+   [Add the jenkins user to the docker group](#add-the-jenkins-user-to-the-docker-group)
+   [Ensure jenkins can use the Unix socket for the Docker daemon](#ensure-jenkins-can-use-the-unix-socket-for-the-docker-daemon)
+   [Configure CloudTamer credentials on Jenkins agent](#configure-cloudtamer-credentials-on-jenkins-agent)
+1. [Create GitHub user for Jenkins automation](#create-github-user-for-jenkins-automation)
 1. [Configure Jenkins for AB2D](#configure-jenkins-for-ab2d)
    [Configure jenkins SSH credentials](#configure-jenkins-ssh-credentials)
    [Configure "personal access token" public GitHub credentials](#configure-personal-access-token-public-github-credentials)
@@ -6009,6 +6013,51 @@
       ```
       srw-rw-rw-
       ```
+
+### Configure CloudTamer credentials on Jenkins agent
+
+1. Change to the "repo" directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d/Deploy
+   ```
+
+1. Setup environment for the management AWS account
+
+   1. Set AWS environment variables using the CloudTamer API
+
+      ```ShellSession
+      $ source ./bash/set-env.sh
+      ```
+
+   1. Enter the number of the desired AWS acccout where the desired logs reside
+
+      ```
+      1
+      ```
+
+1. Get private IP address of Jenkins agent
+
+   ```ShellSession
+   $ JENKINS_AGENT_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+     --filters "Name=tag:Name,Values=ab2d-jenkins-agent" \
+     --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+     --output text)
+   ```
+
+1. Connect to Jenkins agent
+
+   ```ShellSession
+   $ ssh -i ~/.ssh/$SSH_PRIVATE_KEY ec2-user@$JENKINS_AGENT_PRIVATE_IP
+   ```
+
+1. Switch to the Jenkins user
+
+   ```ShellSession
+   $ sudo su - jenkins
+   ```
+
+> *** TO DO ***
 
 ## Create GitHub user for Jenkins automation
 
