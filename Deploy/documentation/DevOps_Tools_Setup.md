@@ -9,6 +9,7 @@
    * [Configure development CloudTamer credentials](#configure-development-cloudtamer-credentials)
    * [Verify that you can get logs from api and worker nodes](#verify-that-you-can-get-logs-from-api-and-worker-nodes)
    * [Verify that you can connect to api and worker nodes](#verify-that-you-can-connect-to-api-and-worker-nodes)
+   * [Verify that you can set AWS environment variables](#verify-that-you-can-set-aws-environment-variables)
 1. [Bookmark Jenkins master](#bookmark-jenkins-master)
    
 ## Prepare development machine
@@ -138,19 +139,19 @@
 
 1. Ensure that your are connected to CMS Cisco VPN before proceeding
 
-1. Change to the "Deploy" directory
+1. Change to the "repo" directory
 
    ```ShellSession
-   $ cd ~/code/ab2d/Deploy
+   $ cd ~/code/ab2d
    ```
 
 1. Run the get logs script
 
    ```ShellSession
-   $ ./bash/get-logs.sh
+   $ ./Deploy/bash/get-logs.sh
    ```
 
-1. Enter the number of the desired AWS acccout where the desired logs reside
+1. Enter the number of the desired AWS account where the desired logs reside
 
    *Example for Sbx:*
 
@@ -193,19 +194,19 @@
 
 1. Ensure that your are connected to CMS Cisco VPN before proceeding
 
-1. Change to the "Deploy" directory
+1. Change to the "repo" directory
 
    ```ShellSession
-   $ cd ~/code/ab2d/Deploy
+   $ cd ~/code/ab2d
    ```
 
 1. Run the get logs script
 
    ```ShellSession
-   $ ./bash/connect-to-node.sh
+   $ ./Deploy/bash/connect-to-node.sh
    ```
    
-1. Enter the number of the desired AWS acccout where desired node resides
+1. Enter the number of the desired AWS account where desired node resides
 
    *Example for Sbx:*
 
@@ -244,6 +245,87 @@
    ```ShellSession
    $ exit
    ```
+
+### Verify that you can set AWS environment variables
+
+1. Ensure that your are connected to CMS Cisco VPN before proceeding
+
+1. Change to the "repo" directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d
+   ```
+
+1. Set AWS environment variables using the CloudTamer API
+
+   ```ShellSession
+   $ source ./Deploy/bash/set-env.sh
+   ```
+
+1. Enter the number of the desired AWS account where the desired logs reside
+
+   *Example for Mgmt:*
+
+   ```
+   1
+   ```
+
+   *Example for Dev:*
+
+   ```
+   2
+   ```
+
+   *Example for Sbx:*
+
+   ```
+   3
+   ```
+
+   *Example for Impl:*
+
+   ```
+   4
+   ```
+
+1. Note that temporary AWS credentials from CloudTamer will expire after an hour
+
+1. Verify that the environment is set correctly by getting the key name used by the instances
+
+   1. Enter the following
+
+      ```ShellSession
+      $ aws --region us-east-1 ec2 describe-instances \
+        --query "Reservations[*].Instances[*].KeyName" \
+	--output text \
+	| head -1
+      ```
+
+   1. Verify that the key name output matches the selected environment
+
+      *Example for Mgmt:*
+      
+      ```
+      ab2d-mgmt-east-dev
+      ```
+
+      *Example for Dev:*
+      
+      ```
+      ab2d-dev
+      ```
+
+      *Example for Sbx:*
+      
+      ```
+      ab2d-sbx-sandbox
+      ```
+
+      *Example for Impl:*
+      
+      ```
+      ab2d-east-impl
+      ```
 
 ## Bookmark Jenkins master
 
