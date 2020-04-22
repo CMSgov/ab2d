@@ -270,4 +270,28 @@ public class UserServiceTest {
         });
         Assert.assertEquals(exceptionThrown.getMessage(), "User is not present in our database");
     }
+
+    @Test
+    public void testEnableUser() {
+        Sponsor sponsor = dataSetup.createSponsor("Parent Corp.", 456, "Test", 123);
+
+        UserDTO user = createUser(sponsor, SPONSOR_ROLE);
+        user.setEnabled(false);
+
+        userService.createUser(user);
+
+        UserDTO updatedUser = userService.enableUser(user.getUsername());
+        Assert.assertEquals(updatedUser.getEnabled(), true);
+    }
+
+    @Test
+    public void testDisableUser() {
+        Sponsor sponsor = dataSetup.createSponsor("Parent Corp.", 456, "Test", 123);
+
+        UserDTO user = createUser(sponsor, SPONSOR_ROLE);
+        userService.createUser(user);
+
+        UserDTO updatedUser = userService.disableUser(user.getUsername());
+        Assert.assertEquals(updatedUser.getEnabled(), false);
+    }
 }

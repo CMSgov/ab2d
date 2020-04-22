@@ -22,4 +22,8 @@ public interface UserService {
     void setupUserAndRolesInSecurityContext(User user, HttpServletRequest request);
 
     List<GrantedAuthority> getGrantedAuth(User user);
+
+    UserDTO enableUser(String username);
+
+    UserDTO disableUser(String username);
 }

@@ -109,4 +109,22 @@ public class UserServiceImpl implements UserService {
         }
         return authorities;
     }
+
+    @Override
+    public UserDTO enableUser(String username) {
+        User user = getUserByUsername(username);
+        user.setEnabled(true);
+
+        User updatedUser = userRepository.saveAndFlush(user);
+        return mapping.getModelMapper().map(updatedUser, UserDTO.class);
+    }
+
+    @Override
+    public UserDTO disableUser(String username) {
+        User user = getUserByUsername(username);
+        user.setEnabled(false);
+
+        User updatedUser = userRepository.saveAndFlush(user);
+        return mapping.getModelMapper().map(updatedUser, UserDTO.class);
+    }
 }

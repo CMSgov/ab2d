@@ -159,4 +159,16 @@ public class AdminAPI {
 
         return bulkDataAccessAPI.exportAllPatients(request, resourceTypes, outputFormat, since);
     }
+
+    @ResponseStatus(value = HttpStatus.OK)
+    @PutMapping("/user/{username}/enable")
+    public ResponseEntity<UserDTO> enableUser(@PathVariable @NotBlank String username) {
+        return new ResponseEntity<>(userService.enableUser(username), null, HttpStatus.OK);
+    }
+
+    @ResponseStatus(value = HttpStatus.OK)
+    @PutMapping("/user/{username}/disable")
+    public ResponseEntity<UserDTO> disableUser(@PathVariable @NotBlank String username) {
+        return new ResponseEntity<>(userService.disableUser(username), null, HttpStatus.OK);
+    }
 }
