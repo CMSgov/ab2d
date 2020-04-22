@@ -10,7 +10,7 @@ import gov.cms.ab2d.common.model.JobStatus;
 import gov.cms.ab2d.common.model.Sponsor;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.repository.ContractRepository;
-import gov.cms.ab2d.eventlogger.EventLogger;
+import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.events.FileEvent;
 import gov.cms.ab2d.eventlogger.events.JobStatusChangeEvent;
 import lombok.extern.slf4j.Slf4j;
@@ -49,7 +49,7 @@ public class JobServiceImpl implements JobService {
     private JobOutputService jobOutputService;
 
     @Autowired
-    private EventLogger eventLogger;
+    private LogManager eventLogger;
 
     @Value("${efs.mount}")
     private String fileDownloadPath;

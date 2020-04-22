@@ -6,7 +6,7 @@ import gov.cms.ab2d.common.dto.UserDTO;
 import gov.cms.ab2d.common.service.CacheService;
 import gov.cms.ab2d.common.service.PropertiesService;
 import gov.cms.ab2d.common.service.UserService;
-import gov.cms.ab2d.eventlogger.EventLogger;
+import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.events.ApiResponseEvent;
 import gov.cms.ab2d.eventlogger.events.ReloadEvent;
 import gov.cms.ab2d.hpms.processing.ExcelReportProcessor;
@@ -63,7 +63,7 @@ public class AdminAPI {
     private PropertiesService propertiesService;
 
     @Autowired
-    private EventLogger eventLogger;
+    private LogManager eventLogger;
 
     @ResponseStatus(value = HttpStatus.ACCEPTED)
     @PostMapping("/uploadOrgStructureReport")

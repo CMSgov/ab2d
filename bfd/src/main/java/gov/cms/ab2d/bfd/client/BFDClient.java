@@ -8,8 +8,8 @@ import java.time.OffsetDateTime;
 
 
 public interface BFDClient {
-    Bundle requestEOBFromServer(String patientID);
-    Bundle requestEOBFromServer(String patientID, OffsetDateTime sinceTime);
+    Bundle requestEOBFromServer(String user, String contractNum, String jobId, String patientID);
+    Bundle requestEOBFromServer(String user, String contractNum, String jobId, String patientID, OffsetDateTime sinceTime);
     Bundle requestNextBundleFromServer(Bundle bundle);
     Bundle requestPatientFromServer(String patientId);
 

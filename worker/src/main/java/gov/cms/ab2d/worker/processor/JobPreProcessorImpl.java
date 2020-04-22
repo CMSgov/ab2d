@@ -3,7 +3,7 @@ package gov.cms.ab2d.worker.processor;
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.JobStatus;
 import gov.cms.ab2d.common.repository.JobRepository;
-import gov.cms.ab2d.eventlogger.EventLogger;
+import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.events.JobStatusChangeEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,7 +21,7 @@ import static gov.cms.ab2d.common.model.JobStatus.SUBMITTED;
 public class JobPreProcessorImpl implements JobPreProcessor {
 
     private final JobRepository jobRepository;
-    private final EventLogger eventLogger;
+    private final LogManager eventLogger;
 
     @Override
     @Transactional(propagation = Propagation.REQUIRES_NEW, isolation = Isolation.SERIALIZABLE)

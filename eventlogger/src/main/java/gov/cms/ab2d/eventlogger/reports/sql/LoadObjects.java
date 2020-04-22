@@ -50,6 +50,10 @@ public class LoadObjects {
         return getAll("event_job_status_change", JobStatusChangeEvent.class);
     }
 
+    public List<LoggableEvent> loadAllBeneficiarySearchEvent() {
+        return null;
+    }
+
     private List<LoggableEvent> getAll(String table, Class eventClass) {
         String qry = "SELECT * FROM " + table;
         return template.query(qry, configMapper.getMapper(eventClass));

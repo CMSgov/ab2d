@@ -15,7 +15,7 @@ import gov.cms.ab2d.common.service.InvalidJobAccessException;
 import gov.cms.ab2d.common.service.ResourceNotFoundException;
 import gov.cms.ab2d.common.service.ContractNotFoundException;
 import gov.cms.ab2d.common.service.JobOutputMissingException;
-import gov.cms.ab2d.eventlogger.EventLogger;
+import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.events.ApiResponseEvent;
 import gov.cms.ab2d.eventlogger.events.ErrorEvent;
 import gov.cms.ab2d.eventlogger.utils.UtilMethods;
@@ -53,7 +53,7 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
     private int retryAfterDelay;
 
     @Autowired
-    private EventLogger eventLogger;
+    private LogManager eventLogger;
 
     private static final Map<Class, HttpStatus> RESPONSE_MAP = new HashMap<>() {
         {

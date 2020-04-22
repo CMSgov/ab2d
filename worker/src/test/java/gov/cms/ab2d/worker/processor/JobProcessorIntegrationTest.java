@@ -15,9 +15,8 @@ import gov.cms.ab2d.common.repository.OptOutRepository;
 import gov.cms.ab2d.common.repository.SponsorRepository;
 import gov.cms.ab2d.common.repository.UserRepository;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
-import gov.cms.ab2d.eventlogger.EventLogger;
+import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.LoggableEvent;
-import gov.cms.ab2d.eventlogger.eventloggers.sql.SqlEventLogger;
 import gov.cms.ab2d.eventlogger.eventloggers.sql.SqlMapperConfig;
 import gov.cms.ab2d.eventlogger.events.ContractBeneSearchEvent;
 import gov.cms.ab2d.eventlogger.events.ErrorEvent;
@@ -96,6 +95,8 @@ class JobProcessorIntegrationTest {
     private LoadObjects loadObjects;
     @Autowired
     private SqlMapperConfig mapperConfig;
+    @Autowired
+    private LogManager logManager;
 
     @Mock
     private BFDClient mockBfdClient;
@@ -137,20 +138,19 @@ class JobProcessorIntegrationTest {
         ExplanationOfBenefit eob = EobTestDataUtil.createEOB();
         bundle1 = EobTestDataUtil.createBundle(eob.copy());
         bundles = getBundles();
-        when(mockBfdClient.requestEOBFromServer(anyString())).thenReturn(bundle1);
-        when(mockBfdClient.requestEOBFromServer(anyString(), any())).thenReturn(bundle1);
+        when(mockBfdClient.requestEOBFromServer(anyString(), anyString(), anyString(), anyString())).thenReturn(bundle1);
+        when(mockBfdClient.requestEOBFromServer(anyString(), anyString(), anyString(), anyString(), any())).thenReturn(bundle1);
 
         fail = new RuntimeException("TEST EXCEPTION");
 
         FhirContext fhirContext = FhirContext.forDstu3();
         PatientClaimsProcessor patientClaimsProcessor = new PatientClaimsProcessorImpl(mockBfdClient, fhirContext);
-        EventLogger eventLogger = new SqlEventLogger(mapperConfig);
         ContractProcessor contractProcessor = new ContractProcessorImpl(
                 fileService,
                 jobRepository,
                 patientClaimsProcessor,
                 optOutRepository,
-                eventLogger
+                logManager
         );
 
         ReflectionTestUtils.setField(contractProcessor, "cancellationCheckFrequency", 10);
@@ -161,7 +161,7 @@ class JobProcessorIntegrationTest {
                 jobOutputRepository,
                 contractAdapterStub,
                 contractProcessor,
-                eventLogger
+                logManager
         );
 
         ReflectionTestUtils.setField(cut, "efsMount", tmpEfsMountDir.toString());
@@ -209,7 +209,7 @@ class JobProcessorIntegrationTest {
     @Test
     @DisplayName("When the error count is below threshold, job does not fail")
     void when_errorCount_is_below_threshold_do_not_fail_job() {
-        when(mockBfdClient.requestEOBFromServer(anyString()))
+        when(mockBfdClient.requestEOBFromServer(anyString(), anyString(), anyString(), anyString()))
                 .thenReturn(bundle1, bundles)
                 .thenReturn(bundle1, bundles)
                 .thenReturn(bundle1, bundles)
@@ -245,7 +245,7 @@ class JobProcessorIntegrationTest {
     @Test
     @DisplayName("When the error count is greater than or equal to threshold, job should fail")
     void when_errorCount_is_not_below_threshold_fail_job() {
-        when(mockBfdClient.requestEOBFromServer(anyString(), any()))
+        when(mockBfdClient.requestEOBFromServer(anyString(), anyString(), anyString(), anyString(), any()))
                 .thenReturn(bundle1, bundles)
                 .thenReturn(bundle1, bundles)
                 .thenThrow(fail, fail, fail, fail, fail, fail, fail, fail, fail, fail)

@@ -6,6 +6,8 @@ import ca.uhn.fhir.rest.gclient.TokenClientParam;
 import ca.uhn.fhir.rest.param.DateRangeParam;
 import ca.uhn.fhir.rest.server.exceptions.InvalidRequestException;
 import ca.uhn.fhir.rest.server.exceptions.ResourceNotFoundException;
+import gov.cms.ab2d.eventlogger.LogManager;
+import gov.cms.ab2d.eventlogger.events.BeneficiarySearchEvent;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Hex;
@@ -39,7 +41,7 @@ import java.util.Date;
 @Slf4j
 public class BFDClientImpl implements BFDClient {
 
-    public static final String PTDCNTRCT_URL_PREFIX = "https://bluebutton.cms.gov/resources/variables/ptdcntrct";
+    private static final String PTDCNTRCT_URL_PREFIX = "https://bluebutton.cms.gov/resources/variables/ptdcntrct";
 
     @Value("${bfd.eob.pagesize}")
     private int pageSize;
@@ -47,7 +49,8 @@ public class BFDClientImpl implements BFDClient {
     @Value("${bfd.contract.to.bene.pagesize}")
     private int contractToBenePageSize;
 
-    private IGenericClient client;
+    private final IGenericClient client;
+    private final LogManager logManager;
 
     @Value("${bfd.hicn.hash}")
     private String hcinHash;
@@ -59,8 +62,9 @@ public class BFDClientImpl implements BFDClient {
     @Value("${bfd.hash.iter}")
     private int bfdHashIter;
 
-    public BFDClientImpl(IGenericClient bfdFhirRestClient) {
+    public BFDClientImpl(IGenericClient bfdFhirRestClient, LogManager logManager) {
         this.client = bfdFhirRestClient;
+        this.logManager = logManager;
     }
 
     /**
@@ -91,14 +95,14 @@ public class BFDClientImpl implements BFDClient {
             backoff = @Backoff(delayExpression = "${bfd.retry.backoffDelay:250}", multiplier = 2),
             exclude = { ResourceNotFoundException.class }
     )
-    public Bundle requestEOBFromServer(String patientID) {
-        return requestEOBFromServer(patientID, null);
+    public Bundle requestEOBFromServer(String user, String contractNum, String jobId, String patientID) {
+        return requestEOBFromServer(user, contractNum, jobId, patientID, null);
     }
 
     /**
      * Queries Blue Button server for Explanations of Benefit associated with a given patient
-     * similar to {@link #requestEOBFromServer(String)} but includes a date filter in which the
-     * _lastUpdated date must be after
+     * similar to {@link #requestEOBFromServer(String user, String contractNum, String jobId, String patientID)}
+     * but includes a date filter in which the _lastUpdated date must be after
      * <p>
      *
      * @param patientID The requested patient's ID
@@ -113,22 +117,37 @@ public class BFDClientImpl implements BFDClient {
             backoff = @Backoff(delayExpression = "${bfd.retry.backoffDelay:250}", multiplier = 2),
             exclude = { ResourceNotFoundException.class }
     )
-    public Bundle requestEOBFromServer(String patientID, OffsetDateTime sinceTime) {
+    public Bundle requestEOBFromServer(String user, String contractNum, String jobId, String patientID, OffsetDateTime sinceTime) {
         var excludeSAMHSA = new TokenClientParam("excludeSAMHSA").exactly().code("true");
         DateRangeParam updatedSince = null;
         if (sinceTime != null) {
             Date d = Date.from(sinceTime.toInstant());
             updatedSince = new DateRangeParam(d, null);
         }
-        return client.search()
-                .forResource(ExplanationOfBenefit.class)
-                .where(ExplanationOfBenefit.PATIENT.hasId(patientID))
-                .and(excludeSAMHSA)
-                .lastUpdated(updatedSince)
-                .count(pageSize)
-                .returnBundle(Bundle.class)
-                .encodedJson()
-                .execute();
+        OffsetDateTime start = OffsetDateTime.now();
+        Bundle bundle;
+        try {
+            bundle = client.search()
+                    .forResource(ExplanationOfBenefit.class)
+                    .where(ExplanationOfBenefit.PATIENT.hasId(patientID))
+                    .and(excludeSAMHSA)
+                    .lastUpdated(updatedSince)
+                    .count(pageSize)
+                    .returnBundle(Bundle.class)
+                    .encodedJson()
+                    .execute();
+            OffsetDateTime end = OffsetDateTime.now();
+            logManager.log(LogManager.LogType.KINESIS,
+                    new BeneficiarySearchEvent(user, jobId, contractNum, start, end,
+                            patientID, "SUCCESS"));
+        } catch (Exception ex) {
+            OffsetDateTime end = OffsetDateTime.now();
+            logManager.log(LogManager.LogType.KINESIS,
+                    new BeneficiarySearchEvent(user, jobId, contractNum, start, end,
+                            patientID, "ERROR: " + ex.getMessage()));
+            throw ex;
+        }
+        return bundle;
     }
 
     /**
@@ -226,9 +245,6 @@ public class BFDClientImpl implements BFDClient {
 
     private String createMonthParameter(int month) {
         final String zeroPaddedMonth = StringUtils.leftPad("" + month, 2, '0');
-        return new StringBuilder()
-                .append(PTDCNTRCT_URL_PREFIX)
-                .append(zeroPaddedMonth)
-                .toString();
+        return PTDCNTRCT_URL_PREFIX + zeroPaddedMonth;
     }
 }

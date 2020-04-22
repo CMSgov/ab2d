@@ -4,7 +4,7 @@ import ca.uhn.fhir.context.FhirContext;
 import com.newrelic.api.agent.Token;
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.model.Contract;
-import gov.cms.ab2d.eventlogger.EventLogger;
+import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.filter.FilterOutByDate;
 import gov.cms.ab2d.worker.adapter.bluebutton.GetPatientsByContractResponse;
 import gov.cms.ab2d.worker.processor.domainmodel.PatientClaimsRequest;
@@ -33,6 +33,7 @@ import java.util.concurrent.ExecutionException;
 import static org.hamcrest.CoreMatchers.startsWith;
 import static org.junit.Assert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -44,7 +45,7 @@ public class PatientClaimsProcessorUnitTest {
     private PatientClaimsProcessor cut;
 
     @Mock private BFDClient mockBfdClient;
-    @Mock private EventLogger eventLogger;
+    @Mock private LogManager eventLogger;
 
     @TempDir
     File tmpEfsMountDir;
@@ -105,11 +106,11 @@ public class PatientClaimsProcessorUnitTest {
     @Test
     void process_whenPatientHasSinglePageOfClaimsData() throws ExecutionException, InterruptedException {
         Bundle bundle1 = EobTestDataUtil.createBundle(eob.copy());
-        when(mockBfdClient.requestEOBFromServer(patientId, null)).thenReturn(bundle1);
+        when(mockBfdClient.requestEOBFromServer(anyString(), anyString(), anyString(), patientId, null)).thenReturn(bundle1);
 
         cut.process(request).get();
 
-        verify(mockBfdClient).requestEOBFromServer(patientId, null);
+        verify(mockBfdClient).requestEOBFromServer(anyString(), anyString(), anyString(), patientId, null);
         verify(mockBfdClient, never()).requestNextBundleFromServer(bundle1);
     }
 
@@ -120,37 +121,37 @@ public class PatientClaimsProcessorUnitTest {
 
         Bundle bundle2 = EobTestDataUtil.createBundle(eob.copy());
 
-        when(mockBfdClient.requestEOBFromServer(patientId, null)).thenReturn(bundle1);
+        when(mockBfdClient.requestEOBFromServer(anyString(), anyString(), anyString(), patientId, null)).thenReturn(bundle1);
         when(mockBfdClient.requestNextBundleFromServer(bundle1)).thenReturn(bundle2);
 
         cut.process(request).get();
 
-        verify(mockBfdClient).requestEOBFromServer(patientId, null);
+        verify(mockBfdClient).requestEOBFromServer(anyString(), anyString(), anyString(), patientId, null);
         verify(mockBfdClient).requestNextBundleFromServer(bundle1);
     }
 
     @Test
     void process_whenBfdClientThrowsException() {
         Bundle bundle1 = EobTestDataUtil.createBundle(eob.copy());
-        when(mockBfdClient.requestEOBFromServer(patientId, null)).thenThrow(new RuntimeException("Test Exception"));
+        when(mockBfdClient.requestEOBFromServer(anyString(), anyString(), anyString(), patientId, null)).thenThrow(new RuntimeException("Test Exception"));
 
         var exceptionThrown = assertThrows(ExecutionException.class,
                 () -> cut.process(request).get());
 
         assertThat(exceptionThrown.getCause().getMessage(), startsWith("Test Exception"));
 
-        verify(mockBfdClient).requestEOBFromServer(patientId, null);
+        verify(mockBfdClient).requestEOBFromServer(anyString(), anyString(), anyString(), patientId, null);
         verify(mockBfdClient, never()).requestNextBundleFromServer(bundle1);
     }
 
     @Test
     void process_whenPatientHasNoEOBClaimsData() throws ExecutionException, InterruptedException {
         Bundle bundle1 = new Bundle();
-        when(mockBfdClient.requestEOBFromServer(patientId, null)).thenReturn(bundle1);
+        when(mockBfdClient.requestEOBFromServer(anyString(), anyString(), anyString(), patientId, null)).thenReturn(bundle1);
 
         cut.process(request).get();
 
-        verify(mockBfdClient).requestEOBFromServer(patientId, null);
+        verify(mockBfdClient).requestEOBFromServer(anyString(), anyString(), anyString(), patientId, null);
         verify(mockBfdClient, never()).requestNextBundleFromServer(bundle1);
     }
 

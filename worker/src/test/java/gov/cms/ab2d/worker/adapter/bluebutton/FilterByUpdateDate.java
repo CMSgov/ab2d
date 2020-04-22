@@ -42,7 +42,7 @@ public class FilterByUpdateDate {
         patient.setPatientId(patientId);
         FilterOutByDate.DateRange d1 = new FilterOutByDate.DateRange(new Date(0), new Date());
         patient.setDateRangesUnderContract(Arrays.asList(d1));
-        Bundle resourcesAll = bfdClient.requestEOBFromServer(patientId);
+        Bundle resourcesAll = bfdClient.requestEOBFromServer("user", "contractNum", "jobId", patientId);
         assertNotNull(resourcesAll);
         assertEquals(26, resourcesAll.getEntry().size());
         List<Bundle.BundleEntryComponent> manuallyFiltered = resourcesAll.getEntry().stream()
@@ -50,7 +50,7 @@ public class FilterByUpdateDate {
                 .collect(Collectors.toList());
         assertEquals(4, manuallyFiltered.size());
 
-        Bundle resourcesAfter = bfdClient.requestEOBFromServer(patientId, earliest);
+        Bundle resourcesAfter = bfdClient.requestEOBFromServer("user", "contractNum", "jobId", patientId, earliest);
         assertNotNull(resourcesAfter);
         assertEquals(4, resourcesAfter.getEntry().size());
         List<String> listOne = manuallyFiltered.stream().map(c -> c.getResource().getId()).collect(Collectors.toList());

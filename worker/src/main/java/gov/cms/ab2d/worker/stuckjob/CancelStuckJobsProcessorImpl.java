@@ -3,7 +3,7 @@ package gov.cms.ab2d.worker.stuckjob;
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.JobStatus;
 import gov.cms.ab2d.common.repository.JobRepository;
-import gov.cms.ab2d.eventlogger.EventLogger;
+import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.events.JobStatusChangeEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,7 +23,7 @@ public class CancelStuckJobsProcessorImpl implements CancelStuckJobsProcessor {
     private int cancelThreshold;
 
     private final JobRepository jobRepository;
-    private final EventLogger eventLogger;
+    private final LogManager eventLogger;
 
     @Override
     @Transactional

@@ -23,7 +23,7 @@ public class SqlEventLogger implements EventLogger {
         try {
             SqlEventMapper mapper = mapperConfig.getMapper(event.getClass());
             if (mapper == null) {
-                throw new EventLoggingException("Can't find logger for " + event.getClass().toString());
+                throw new EventLoggingException("Can't find SQL logger for " + event.getClass().toString());
             }
             mapper.log(event);
         } catch (Exception ex) {
