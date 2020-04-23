@@ -167,6 +167,7 @@
 
    *Example for Sbx:*
 
+   ```
    **********************************************
    ENVIRONMENT SUMMARY
    **********************************************
@@ -176,19 +177,22 @@
    API_COUNT=2
    WORKER_COUNT=2
    LOGS_DOWNLOADED_COUNT=4
+   ```
 
 1. Note the "LOGS SUMMARY"
 
    *Example for Sbx:*
 
+   ```
    **********************************************
    LOGS DOWNLOADED
    **********************************************
    
-   ~/Downloads/messages-api-node-1.txt
-   ~/Downloads/messages-api-node-2.txt
-   ~/Downloads/messages-worker-node-1.txt
-   ~/Downloads/messages-worker-node-2.txt
+   ~/Downloads/messages-api-node-10.242.26.68.txt
+   ~/Downloads/messages-api-node-10.242.26.71.txt
+   ~/Downloads/messages-worker-node-10.242.26.89.txt
+   ~/Downloads/messages-worker-node-91.txt
+   ```
    
 ### Verify that you can connect to api and worker nodes
 
