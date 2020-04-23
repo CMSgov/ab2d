@@ -301,7 +301,7 @@
       ```ShellSession
       $ aws --region us-east-1 ec2 describe-instances \
         --query "Reservations[*].Instances[*].KeyName" \
-	--output text \
+        --output text \
         | head -1
       ```
 
