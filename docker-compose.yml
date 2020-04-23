@@ -31,7 +31,7 @@ services:
       - NEW_RELIC_LICENSE_KEY="${NEW_RELIC_LICENSE_KEY}"
       - NEW_RELIC_APP_NAME="${NEW_RELIC_APP_NAME}"
     ports:
-      - "8080:8080"
+      - "8443:8443"
     depends_on:
       - db
     volumes:
