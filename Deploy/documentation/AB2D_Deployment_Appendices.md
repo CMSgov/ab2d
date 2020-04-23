@@ -7539,25 +7539,47 @@
 
 ## Appendix MM: Create new AMI from latest gold disk image
 
-1. Change to the "Deploy" directory
+1. Ensure that your are connected to CMS Cisco VPN before proceeding
+
+1. Change to the "repo" directory
 
    ```ShellSession
    $ cd ~/code/ab2d/Deploy
    ```
 
-1. Set the management AWS profile
-
-   *Example for "Dev" environment:*
+1. Set AWS environment variables using the CloudTamer API
 
    ```ShellSession
-   $ export AWS_PROFILE=ab2d-dev
+   $ source ./bash/set-env.sh
    ```
 
-   *Example for "Sbx" environment:*
+1. Enter the number of the desired AWS account where the desired logs reside
 
-   ```ShellSession
-   $ export AWS_PROFILE=ab2d-sbx-sandbox
+   *Example for Mgmt:*
+
    ```
+   1
+   ```
+
+   *Example for Dev:*
+
+   ```
+   2
+   ```
+
+   *Example for Sbx:*
+
+   ```
+   3
+   ```
+
+   *Example for Impl:*
+
+   ```
+   4
+   ```
+
+1. Note that temporary AWS credentials from CloudTamer will expire after an hour
 
 1. Set test parameters
 
