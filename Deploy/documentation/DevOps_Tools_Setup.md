@@ -302,7 +302,7 @@
       $ aws --region us-east-1 ec2 describe-instances \
         --query "Reservations[*].Instances[*].KeyName" \
 	--output text \
-	| head -1
+        | head -1
       ```
 
    1. Verify that the key name output matches the selected environment
