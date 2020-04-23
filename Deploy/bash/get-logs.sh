@@ -187,7 +187,7 @@ do
     < /dev/null
   scp -i ~/.ssh/${SSH_PRIVATE_KEY} \
     "ec2-user@${IP_ADDRESS}:~/messages" \
-    "${HOME}/Downloads/messages-api-node-${COUNTER}.txt" \
+    "${HOME}/Downloads/messages-api-node-${IP_ADDRESS}.txt" \
     < /dev/null
 done < "$input"
 API_COUNT=$COUNTER
@@ -221,7 +221,7 @@ do
     < /dev/null
   scp -i ~/.ssh/${SSH_PRIVATE_KEY} \
     "ec2-user@${IP_ADDRESS}:~/messages" \
-    "${HOME}/Downloads/messages-worker-node-${COUNTER}.txt" \
+    "${HOME}/Downloads/messages-worker-node-${IP_ADDRESS}.txt" \
     < /dev/null
 done < "$input"
 WORKER_COUNT=$COUNTER
@@ -258,15 +258,15 @@ if [ $REPLY -lt 4 ]; then
     echo "NONE"
   fi
   if [ $API_COUNT -ge 1 ]; then
-    for i in $(seq 1 $API_COUNT)
-    do
-      echo "~/Downloads/messages-api-node-${i}.txt"
+    for filename in $HOME/Downloads/messages-api-node-*.txt; do	  
+      BASE_NAME=$(basename "${filename}")	  
+      echo "~/Downloads/${BASE_NAME}"
     done
   fi
   if [ $WORKER_COUNT -ge 1 ]; then
-    for i in $(seq 1 $WORKER_COUNT)
-    do
-      echo "~/Downloads/messages-worker-node-${i}.txt"
+    for filename in $HOME/Downloads/messages-worker-node-*.txt; do
+      BASE_NAME=$(basename "${filename}")	  
+      echo "~/Downloads/${BASE_NAME}"
     done
   fi
   echo ""
