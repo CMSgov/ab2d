@@ -962,6 +962,14 @@
      --policy-document file://ab2d-permission-to-pass-roles-policy.json
    ```
 
+1. Create "Ab2dBfdProdSbxPolicy"
+
+   ```ShellSession
+   $ aws iam create-policy \
+     --policy-name Ab2dBfdProdSbxPolicy \
+     --policy-document file://ab2d-bfd-prod-sbx-policy.json
+   ```
+
 1. Create "Ab2dSecretsPolicy"
 
    > *** TO DO ***: Create process to implement this
@@ -1081,6 +1089,9 @@
    $ aws iam attach-role-policy \
      --role-name Ab2dInstanceRole \
      --policy-arn "arn:aws:iam::${AWS_ACCOUNT_NUMBER}:policy/Ab2dCloudWatchLogsPolicy"
+   $ aws iam attach-role-policy \
+     --role-name Ab2dInstanceRole \
+     --policy-arn "arn:aws:iam::${AWS_ACCOUNT_NUMBER}:policy/Ab2dBfdProdSbxPolicy"
    ```
 
 1. Attach secrets policy to the "Ab2dInstanceRole" role
