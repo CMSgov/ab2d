@@ -205,7 +205,6 @@ public class BFDClientImpl implements BFDClient {
                 .forResource(Patient.class)
                 .where(theCriterion)
                 .count(contractToBenePageSize)
-                .withAdditionalHeader("IncludeIdentifiers", "true")
                 .returnBundle(Bundle.class)
                 .encodedJson()
                 .execute();
