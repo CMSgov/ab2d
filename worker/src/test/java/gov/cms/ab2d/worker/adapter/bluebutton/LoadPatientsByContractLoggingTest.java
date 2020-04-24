@@ -57,6 +57,7 @@ public class LoadPatientsByContractLoggingTest {
 
     @Autowired
     private SqlEventLogger sqlEventLogger;
+
     @Mock
     private KinesisEventLogger kinesisEventLogger;
 

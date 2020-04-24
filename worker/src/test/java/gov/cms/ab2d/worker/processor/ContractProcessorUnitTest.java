@@ -103,7 +103,8 @@ class ContractProcessorUnitTest {
                 .patientsByContract(patientsByContract)
                 .failureThreshold(10)
                 .build();
-        contractData = new ContractData(contract, progressTracker, contract.getAttestedOn(), job.getSince());
+        contractData = new ContractData(contract, progressTracker, contract.getAttestedOn(), job.getSince(),
+                job.getUser() != null ? job.getUser().getUsername() : null);
     }
 
 

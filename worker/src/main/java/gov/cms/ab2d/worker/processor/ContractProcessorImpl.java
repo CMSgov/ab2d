@@ -198,16 +198,13 @@ public class ContractProcessorImpl implements ContractProcessor {
         // could be viewed as a hack by many; but on the other hand it saves us from writing
         // tons of extra code.
         var jobUuid = contractData.getProgressTracker().getJobUuid();
-        Job job = jobRepository.findByJobUuid(jobUuid);
         RoundRobinBlockingQueue.CATEGORY_HOLDER.set(jobUuid);
         try {
             var attestedOn = contractData.getContract().getAttestedOn();
             var sinceTime = contractData.getSinceTime();
             var patientClaimsRequest = new PatientClaimsRequest(patient, helper, attestedOn, sinceTime,
-                    job != null && job.getUser() != null ? job.getUser().getUsername() : null,
-                    jobUuid,
-                    contractData != null && contractData.getContract() != null ?
-                            contractData.getContract().getContractNumber() : null, token);
+                    contractData.getUserId(), jobUuid,
+                    contractData.getContract() != null ? contractData.getContract().getContractNumber() : null, token);
             return patientClaimsProcessor.process(patientClaimsRequest);
 
         } finally {

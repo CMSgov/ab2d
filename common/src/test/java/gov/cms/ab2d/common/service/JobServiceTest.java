@@ -438,7 +438,7 @@ public class JobServiceTest {
         job.setResourceTypes(EOB);
         job.setRequestUrl("http://localhost");
         job.setStatusMessage("Pending");
-        job.setExpiresAt(now);
+        job.setExpiresAt(OffsetDateTime.MAX);
         job.setUser(userService.getCurrentUser());
 
         JobOutput jobOutput = new JobOutput();
