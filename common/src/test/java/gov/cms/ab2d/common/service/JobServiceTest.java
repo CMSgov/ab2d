@@ -5,11 +5,15 @@ import gov.cms.ab2d.common.model.*;
 import gov.cms.ab2d.common.repository.*;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.DataSetup;
+import gov.cms.ab2d.eventlogger.LogManager;
+import gov.cms.ab2d.eventlogger.eventloggers.kinesis.KinesisEventLogger;
+import gov.cms.ab2d.eventlogger.eventloggers.sql.SqlEventLogger;
 import org.apache.commons.io.IOUtils;
 import org.junit.Assert;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -49,7 +53,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 @Testcontainers
 public class JobServiceTest {
 
-    @Autowired
     private JobService jobService;
 
     @Autowired
@@ -79,12 +82,24 @@ public class JobServiceTest {
     @Autowired
     private RoleService roleService;
 
+    @Autowired
+    private JobOutputService jobOutputService;
+
+    @Autowired
+    private SqlEventLogger sqlEventLogger;
+
+    @Mock
+    private KinesisEventLogger kinesisEventLogger;
+
     @Container
     private static final PostgreSQLContainer postgreSQLContainer= new AB2DPostgresqlContainer();
 
     // Be safe and make sure nothing from another test will impact current test
     @BeforeEach
     public void setup() {
+        LogManager logManager = new LogManager(sqlEventLogger, kinesisEventLogger);
+        jobService = new JobServiceImpl(userService, jobRepository, contractRepository, jobOutputService, logManager);
+
         contractRepository.deleteAll();
         jobRepository.deleteAll();
         userRepository.deleteAll();

@@ -44,7 +44,7 @@ public class KinesisEventLogger implements EventLogger {
             ResponseMetadata data = putRecordResult.getSdkResponseMetadata();
             event.setAwsId(data.getRequestId());
         } catch (Exception ex) {
-            log.error("Error in pushing event to Kinesis " + json, ex);
+            log.error("Error in pushing event to Kinesis " + json + " - " + ex.getMessage());
         }
     }
 

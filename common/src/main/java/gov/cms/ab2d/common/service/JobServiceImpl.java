@@ -36,25 +36,24 @@ import static gov.cms.ab2d.common.util.Constants.ADMIN_ROLE;
 @Transactional
 public class JobServiceImpl implements JobService {
 
-    @Autowired
-    private UserService userService;
-
-    @Autowired
-    private JobRepository jobRepository;
-
-    @Autowired
-    private ContractRepository contractRepository;
-
-    @Autowired
-    private JobOutputService jobOutputService;
-
-    @Autowired
-    private LogManager eventLogger;
+    private final UserService userService;
+    private final JobRepository jobRepository;
+    private final ContractRepository contractRepository;
+    private final JobOutputService jobOutputService;
+    private final LogManager eventLogger;
 
     @Value("${efs.mount}")
     private String fileDownloadPath;
 
     public static final String INITIAL_JOB_STATUS_MESSAGE = "0%";
+
+    public JobServiceImpl(UserService userService, JobRepository jobRepository, ContractRepository contractRepository, JobOutputService jobOutputService, LogManager eventLogger) {
+        this.userService = userService;
+        this.jobRepository = jobRepository;
+        this.contractRepository = contractRepository;
+        this.jobOutputService = jobOutputService;
+        this.eventLogger = eventLogger;
+    }
 
     @Override
     public Job createJob(String resourceTypes, String url, String outputFormat) {
