@@ -687,8 +687,16 @@ public class BulkDataAccessAPIIntegrationTests {
         assertEquals(2, apiRequestEvents.size());
         ApiRequestEvent requestEvent = (ApiRequestEvent) apiRequestEvents.get(0);
         ApiRequestEvent requestEvent2 = (ApiRequestEvent) apiRequestEvents.get(1);
-        assertEquals(null, requestEvent.getJobId());
-        assertEquals(job.getJobUuid(), requestEvent2.getJobId());
+        if (requestEvent.getUrl().contains("export")) {
+            assertEquals(null, requestEvent.getJobId());
+        } else {
+            assertEquals(job.getJobUuid(), requestEvent.getJobId());
+        }
+        if (requestEvent2.getUrl().contains("export")) {
+            assertEquals(null, requestEvent2.getJobId());
+        } else {
+            assertEquals(job.getJobUuid(), requestEvent2.getJobId());
+        }
 
         List<LoggableEvent> apiResponseEvents = doAll.load(ApiResponseEvent.class);
         assertEquals(2, apiResponseEvents.size());
@@ -698,7 +706,10 @@ public class BulkDataAccessAPIIntegrationTests {
         assertEquals(job.getJobUuid(), responseEvent2.getJobId());
         assertEquals(200, responseEvent2.getResponseCode());
 
-        assertEquals(requestEvent.getRequestId(), responseEvent.getRequestId());
+        assertTrue(requestEvent.getRequestId().equals(responseEvent.getRequestId()) ||
+                requestEvent.getRequestId().equalsIgnoreCase(responseEvent2.getRequestId()));
+        assertTrue(requestEvent2.getRequestId().equals(responseEvent.getRequestId()) ||
+                requestEvent2.getRequestId().equalsIgnoreCase(responseEvent2.getRequestId()));
         assertEquals(requestEvent2.getRequestId(), responseEvent2.getRequestId());
 
         // Technically the job status change has 1 entry but should have more because

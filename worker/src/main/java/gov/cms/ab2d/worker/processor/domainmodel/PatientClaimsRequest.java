@@ -15,6 +15,8 @@ public class PatientClaimsRequest {
     private final StreamHelper helper;
     private final OffsetDateTime attTime;
     private final OffsetDateTime sinceTime;
+    private final String user;
+    private final String job;
+    private final String contractNum;
     private final Token token;
-
 }

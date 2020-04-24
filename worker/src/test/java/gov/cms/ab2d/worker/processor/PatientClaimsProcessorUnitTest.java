@@ -51,10 +51,7 @@ public class PatientClaimsProcessorUnitTest {
     File tmpEfsMountDir;
 
     private ExplanationOfBenefit eob;
-    private Path outputFile;
-    private Path errorFile;
     private String patientId = "1234567890";
-    private StreamHelper helper;
 
     private OffsetDateTime earlyAttDate = OffsetDateTime.of(1970, 1, 1, 0, 0, 0, 0, ZoneOffset.UTC);
     private GetPatientsByContractResponse.PatientDTO patientDTO;
@@ -87,7 +84,8 @@ public class PatientClaimsProcessorUnitTest {
         FhirContext fhirContext = ca.uhn.fhir.context.FhirContext.forDstu3();
         cut = new PatientClaimsProcessorImpl(
                 mockBfdClient,
-                fhirContext
+                fhirContext,
+                eventLogger
         );
 
         eob = EobTestDataUtil.createEOB();
@@ -97,20 +95,21 @@ public class PatientClaimsProcessorUnitTest {
         patientDTO.setDateRangesUnderContract(List.of(new FilterOutByDate.DateRange(new Date(0), new Date())));
 
         Contract contract = new Contract();
-        helper = new TextStreamHelperImpl(tmpEfsMountDir.toPath(), contract.getContractNumber(),
+        StreamHelper helper = new TextStreamHelperImpl(tmpEfsMountDir.toPath(), contract.getContractNumber(),
                 30, 120, eventLogger, null);
 
-        request = new PatientClaimsRequest(patientDTO, helper, earlyAttDate, null, noOpToken);
+        request = new PatientClaimsRequest(patientDTO, helper, earlyAttDate, null, "user", "job",
+                "contractNum", noOpToken);
     }
 
     @Test
     void process_whenPatientHasSinglePageOfClaimsData() throws ExecutionException, InterruptedException {
         Bundle bundle1 = EobTestDataUtil.createBundle(eob.copy());
-        when(mockBfdClient.requestEOBFromServer(anyString(), anyString(), anyString(), patientId, null)).thenReturn(bundle1);
+        when(mockBfdClient.requestEOBFromServer(patientId, null)).thenReturn(bundle1);
 
         cut.process(request).get();
 
-        verify(mockBfdClient).requestEOBFromServer(anyString(), anyString(), anyString(), patientId, null);
+        verify(mockBfdClient).requestEOBFromServer(patientId, null);
         verify(mockBfdClient, never()).requestNextBundleFromServer(bundle1);
     }
 
@@ -121,37 +120,37 @@ public class PatientClaimsProcessorUnitTest {
 
         Bundle bundle2 = EobTestDataUtil.createBundle(eob.copy());
 
-        when(mockBfdClient.requestEOBFromServer(anyString(), anyString(), anyString(), patientId, null)).thenReturn(bundle1);
+        when(mockBfdClient.requestEOBFromServer(patientId, null)).thenReturn(bundle1);
         when(mockBfdClient.requestNextBundleFromServer(bundle1)).thenReturn(bundle2);
 
         cut.process(request).get();
 
-        verify(mockBfdClient).requestEOBFromServer(anyString(), anyString(), anyString(), patientId, null);
+        verify(mockBfdClient).requestEOBFromServer(patientId, null);
         verify(mockBfdClient).requestNextBundleFromServer(bundle1);
     }
 
     @Test
     void process_whenBfdClientThrowsException() {
         Bundle bundle1 = EobTestDataUtil.createBundle(eob.copy());
-        when(mockBfdClient.requestEOBFromServer(anyString(), anyString(), anyString(), patientId, null)).thenThrow(new RuntimeException("Test Exception"));
+        when(mockBfdClient.requestEOBFromServer(patientId, null)).thenThrow(new RuntimeException("Test Exception"));
 
         var exceptionThrown = assertThrows(ExecutionException.class,
                 () -> cut.process(request).get());
 
         assertThat(exceptionThrown.getCause().getMessage(), startsWith("Test Exception"));
 
-        verify(mockBfdClient).requestEOBFromServer(anyString(), anyString(), anyString(), patientId, null);
+        verify(mockBfdClient).requestEOBFromServer(patientId, null);
         verify(mockBfdClient, never()).requestNextBundleFromServer(bundle1);
     }
 
     @Test
     void process_whenPatientHasNoEOBClaimsData() throws ExecutionException, InterruptedException {
         Bundle bundle1 = new Bundle();
-        when(mockBfdClient.requestEOBFromServer(anyString(), anyString(), anyString(), patientId, null)).thenReturn(bundle1);
+        when(mockBfdClient.requestEOBFromServer(patientId, null)).thenReturn(bundle1);
 
         cut.process(request).get();
 
-        verify(mockBfdClient).requestEOBFromServer(anyString(), anyString(), anyString(), patientId, null);
+        verify(mockBfdClient).requestEOBFromServer(patientId, null);
         verify(mockBfdClient, never()).requestNextBundleFromServer(bundle1);
     }
 
@@ -160,8 +159,8 @@ public class PatientClaimsProcessorUnitTest {
         final Path outputDirPath = Paths.get(tmpEfsMountDir.toPath().toString(), UUID.randomUUID().toString());
         Files.createDirectories(outputDirPath);
 
-        outputFile = createFile(outputDirPath, "contract_name.ndjson");
-        errorFile = createFile(outputDirPath, "contract_name_error.ndjson");
+        Path outputFile = createFile(outputDirPath, "contract_name.ndjson");
+        Path errorFile = createFile(outputDirPath, "contract_name_error.ndjson");
     }
 
     private Path createFile(Path outputDirPath, String output_filename) throws IOException {
