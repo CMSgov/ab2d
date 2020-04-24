@@ -8,13 +8,17 @@ import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.common.repository.SponsorRepository;
 import gov.cms.ab2d.common.repository.UserRepository;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
+import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.LoggableEvent;
+import gov.cms.ab2d.eventlogger.eventloggers.kinesis.KinesisEventLogger;
+import gov.cms.ab2d.eventlogger.eventloggers.sql.SqlEventLogger;
 import gov.cms.ab2d.eventlogger.events.*;
 import gov.cms.ab2d.eventlogger.reports.sql.DoAll;
 import gov.cms.ab2d.eventlogger.utils.UtilMethods;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.testcontainers.containers.PostgreSQLContainer;
@@ -36,7 +40,6 @@ import static org.junit.jupiter.api.Assertions.*;
 class JobPreProcessorIntegrationTest {
     private Random random = new Random();
 
-    @Autowired
     private JobPreProcessor cut;
 
     @Autowired
@@ -47,6 +50,11 @@ class JobPreProcessorIntegrationTest {
     private UserRepository userRepository;
     @Autowired
     private DoAll doAll;
+    @Autowired
+    private SqlEventLogger sqlEventLogger;
+
+    @Mock
+    private KinesisEventLogger kinesisEventLogger;
 
     private Job job;
 
@@ -55,6 +63,8 @@ class JobPreProcessorIntegrationTest {
 
     @BeforeEach
     void setUp() {
+        LogManager manager = new LogManager(sqlEventLogger, kinesisEventLogger);
+        cut = new JobPreProcessorImpl(jobRepository, manager);
         jobRepository.deleteAll();
         userRepository.deleteAll();
         sponsorRepository.deleteAll();
