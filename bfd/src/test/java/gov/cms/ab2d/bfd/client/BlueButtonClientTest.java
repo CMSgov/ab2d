@@ -169,7 +169,7 @@ public class BlueButtonClientTest {
     @Test
     public void shouldGetTimedOutOnSlowResponse() {
         var exception = Assertions.assertThrows(FhirClientConnectionException.class, () -> {
-            bbc.requestEOBFromServer(TEST_SLOW_PATIENT_ID);
+            bbc.requestEOBFromServer(null, null, null, TEST_SLOW_PATIENT_ID);
         });
 
         var rootCause = ExceptionUtils.getRootCause(exception);
@@ -180,7 +180,7 @@ public class BlueButtonClientTest {
 
     @Test
     public void shouldGetEOBFromPatientID() {
-        Bundle response = bbc.requestEOBFromServer(TEST_PATIENT_ID);
+        Bundle response = bbc.requestEOBFromServer(null, null, null, TEST_PATIENT_ID);
 
         assertNotNull(response, "The demo patient should have a non-null EOB bundle");
         assertEquals(32, response.getTotal(), "The demo patient should have exactly 32 EOBs");
@@ -188,7 +188,7 @@ public class BlueButtonClientTest {
 
     @Test
     public void shouldGetEOBFromPatientIDSince() {
-        Bundle response = bbc.requestEOBFromServer(TEST_PATIENT_ID, OffsetDateTime.parse(
+        Bundle response = bbc.requestEOBFromServer(null, null, null, TEST_PATIENT_ID, OffsetDateTime.parse(
                 "2020-02-13T00:00:00.000-05:00", DateTimeFormatter.ISO_DATE_TIME));
 
         assertNotNull(response, "The demo patient should have a non-null EOB bundle");
@@ -197,13 +197,13 @@ public class BlueButtonClientTest {
 
     @Test
     public void shouldGetEOBPatientNoRecords() {
-        Bundle response = bbc.requestEOBFromServer(TEST_NO_RECORD_PATIENT_ID);
+        Bundle response = bbc.requestEOBFromServer(null, null, null, TEST_NO_RECORD_PATIENT_ID);
         assertFalse(response.hasEntry());
     }
 
     @Test
     public void shouldNotHaveNextBundle() {
-        Bundle response = bbc.requestEOBFromServer(TEST_SINGLE_EOB_PATIENT_ID);
+        Bundle response = bbc.requestEOBFromServer(null, null, null, TEST_SINGLE_EOB_PATIENT_ID);
 
         assertNotNull(response, "The demo patient should have a non-null EOB bundle");
         assertEquals(1, response.getTotal(), "The demo patient should have exactly 1 EOBs");
@@ -213,7 +213,7 @@ public class BlueButtonClientTest {
 
     @Test
     public void shouldHaveNextBundle() {
-        Bundle response = bbc.requestEOBFromServer(TEST_PATIENT_ID);
+        Bundle response = bbc.requestEOBFromServer(null, null, null, TEST_PATIENT_ID);
 
         assertNotNull(response, "The demo patient should have a non-null EOB bundle");
         assertNotNull(response.getLink(Bundle.LINK_NEXT),
@@ -225,7 +225,7 @@ public class BlueButtonClientTest {
 
     @Test
     public void shouldReturnBundleContainingOnlyEOBs() {
-        Bundle response = bbc.requestEOBFromServer(TEST_PATIENT_ID);
+        Bundle response = bbc.requestEOBFromServer(null, null, null, TEST_PATIENT_ID);
 
         response.getEntry().forEach((entry) -> assertEquals(
                 entry.getResource().getResourceType(),
@@ -250,7 +250,7 @@ public class BlueButtonClientTest {
 
     @Test
     public void shouldHandlePatientsWithOnlyOneEOB() {
-        final Bundle response = bbc.requestEOBFromServer(TEST_SINGLE_EOB_PATIENT_ID);
+        final Bundle response = bbc.requestEOBFromServer(null, null, null, TEST_SINGLE_EOB_PATIENT_ID);
         assertEquals(1, response.getTotal(), "This demo patient should have exactly 1 EOB");
     }
 
@@ -258,7 +258,7 @@ public class BlueButtonClientTest {
     public void shouldThrowExceptionWhenResourceNotFound() {
         assertThrows(
                 ResourceNotFoundException.class,
-                () -> bbc.requestEOBFromServer(TEST_NONEXISTENT_PATIENT_ID),
+                () -> bbc.requestEOBFromServer(null, null, null, TEST_NONEXISTENT_PATIENT_ID),
                 "BlueButton client should throw exceptions when asked to retrieve EOBs for a " +
                         "non-existent patient"
         );

@@ -10,7 +10,6 @@ import org.springframework.jdbc.support.KeyHolder;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.time.OffsetDateTime;
 
 class FileEventMapper extends SqlEventMapper {
     private NamedParameterJdbcTemplate template;
@@ -28,8 +27,8 @@ class FileEventMapper extends SqlEventMapper {
 
         KeyHolder keyHolder = new GeneratedKeyHolder();
         String query = "insert into event_file " +
-                " (time_of_event, user_id, job_id, file_name, status, file_size, file_hash) " +
-                " values (:time, :user, :job, :fileName, :status, :fileSize, :fileHash)";
+                " (time_of_event, user_id, job_id, file_name, status, file_size, file_hash, aws_id) " +
+                " values (:time, :user, :job, :fileName, :status, :fileSize, :fileHash, :awsId)";
 
         SqlParameterSource parameters = super.addSuperParams(event)
                 .addValue("fileName", be.getFileName())
@@ -44,10 +43,7 @@ class FileEventMapper extends SqlEventMapper {
     @Override
     public FileEvent mapRow(ResultSet resultSet, int i) throws SQLException {
         FileEvent event = new FileEvent();
-        event.setId(resultSet.getLong("id"));
-        event.setTimeOfEvent(resultSet.getObject("time_of_event", OffsetDateTime.class));
-        event.setUser(resultSet.getString("user_id"));
-        event.setJobId(resultSet.getString("job_id"));
+        extractSuperParams(resultSet, event);
 
         event.setFileName(resultSet.getString("file_name"));
         event.setStatus(FileEvent.FileStatus.valueOf(resultSet.getString("status")));

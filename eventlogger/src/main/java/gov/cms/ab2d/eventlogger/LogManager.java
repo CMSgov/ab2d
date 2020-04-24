@@ -2,17 +2,17 @@ package gov.cms.ab2d.eventlogger;
 
 import gov.cms.ab2d.eventlogger.eventloggers.kinesis.KinesisEventLogger;
 import gov.cms.ab2d.eventlogger.eventloggers.sql.SqlEventLogger;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
-import java.util.EnumSet;
 
 @Service
 public class LogManager {
-    @Autowired
-    private SqlEventLogger sqlEventLogger;
-    @Autowired
-    private KinesisEventLogger kinesisEventLogger;
+    private final SqlEventLogger sqlEventLogger;
+    private final KinesisEventLogger kinesisEventLogger;
+
+    public LogManager(SqlEventLogger sqlEventLogger, KinesisEventLogger kinesisEventLogger) {
+        this.sqlEventLogger = sqlEventLogger;
+        this.kinesisEventLogger = kinesisEventLogger;
+    }
 
     public enum LogType {
         SQL,
@@ -20,8 +20,14 @@ public class LogManager {
     }
 
     public void log(LoggableEvent event) {
-        EnumSet.allOf(LogType.class)
-                .forEach(type -> log(type, event));
+        // Save to the database
+        sqlEventLogger.log(event);
+
+        // This event will contain the db id
+        kinesisEventLogger.log(event);
+
+        // This event will not contain the AWS Id, update event in the DB
+        sqlEventLogger.updateAwsId(event.getAwsId(), event);
     }
 
     public void log(LogType type, LoggableEvent event) {

@@ -11,7 +11,6 @@ import org.springframework.jdbc.support.KeyHolder;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.time.OffsetDateTime;
 
 public class JobStatusChangeEventMapper extends SqlEventMapper {
     private NamedParameterJdbcTemplate template;
@@ -29,8 +28,8 @@ public class JobStatusChangeEventMapper extends SqlEventMapper {
 
         KeyHolder keyHolder = new GeneratedKeyHolder();
         String query = "insert into event_job_status_change " +
-                " (time_of_event, user_id, job_id, old_status, new_status, description) " +
-                " values (:time, :user, :job, :oldStatus, :newStatus, :description)";
+                " (time_of_event, user_id, job_id, old_status, new_status, description, aws_id) " +
+                " values (:time, :user, :job, :oldStatus, :newStatus, :description, :awsId)";
 
         SqlParameterSource parameters = super.addSuperParams(event)
                 .addValue("oldStatus", be.getOldStatus())
@@ -44,10 +43,8 @@ public class JobStatusChangeEventMapper extends SqlEventMapper {
     @Override
     public JobStatusChangeEvent mapRow(ResultSet resultSet, int i) throws SQLException {
         JobStatusChangeEvent event = new JobStatusChangeEvent();
-        event.setId(resultSet.getLong("id"));
-        event.setTimeOfEvent(resultSet.getObject("time_of_event", OffsetDateTime.class));
-        event.setUser(resultSet.getString("user_id"));
-        event.setJobId(resultSet.getString("job_id"));
+        extractSuperParams(resultSet, event);
+
         event.setOldStatus(resultSet.getString("old_status"));
         event.setNewStatus(resultSet.getString("new_status"));
         event.setDescription(resultSet.getString("description"));

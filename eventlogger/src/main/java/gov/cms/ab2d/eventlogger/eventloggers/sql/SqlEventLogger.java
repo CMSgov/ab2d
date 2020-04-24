@@ -4,6 +4,7 @@ import gov.cms.ab2d.eventlogger.EventLogger;
 import gov.cms.ab2d.eventlogger.EventLoggingException;
 import gov.cms.ab2d.eventlogger.LoggableEvent;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -12,9 +13,11 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 public class SqlEventLogger implements EventLogger {
     private final SqlMapperConfig mapperConfig;
+    private final JdbcTemplate template;
 
-    public SqlEventLogger(SqlMapperConfig mapperConfig) {
+    public SqlEventLogger(SqlMapperConfig mapperConfig, JdbcTemplate template) {
         this.mapperConfig = mapperConfig;
+        this.template = template;
     }
 
     @Override
@@ -28,6 +31,13 @@ public class SqlEventLogger implements EventLogger {
             mapper.log(event);
         } catch (Exception ex) {
             log.error("Error in logging event " + event.toString());
+        }
+    }
+
+    public void updateAwsId(String awsId, LoggableEvent event) {
+        if (event != null && event.getAwsId() != null && event.getId() != null && event.getId() > 0) {
+            this.template.update("UPDATE " + mapperConfig.getTableMapper(event.getClass()) +
+                    " SET aws_id = ? WHERE id = ?", event.getAwsId(), event.getId());
         }
     }
 }

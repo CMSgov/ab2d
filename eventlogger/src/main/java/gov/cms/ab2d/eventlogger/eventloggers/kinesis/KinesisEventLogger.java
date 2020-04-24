@@ -30,8 +30,9 @@ public class KinesisEventLogger implements EventLogger {
 
     @Override
     public void log(LoggableEvent event) {
+        String json = null;
         try {
-            String json = getJsonString(event);
+            json = getJsonString(event);
             Record record = new Record()
                     .withData(ByteBuffer.wrap(json.getBytes()));
 
@@ -41,9 +42,9 @@ public class KinesisEventLogger implements EventLogger {
 
             PutRecordResult putRecordResult = client.putRecord(putRecordRequest);
             ResponseMetadata data = putRecordResult.getSdkResponseMetadata();
-            System.out.println(data.toString());
+            event.setAwsId(data.getRequestId());
         } catch (Exception ex) {
-            log.error("Error in pushing event to Kinesis " + event.toString());
+            log.error("Error in pushing event to Kinesis " + json);
         }
     }
 

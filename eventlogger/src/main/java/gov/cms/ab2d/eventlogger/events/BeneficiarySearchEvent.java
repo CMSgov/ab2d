@@ -18,7 +18,7 @@ public class BeneficiarySearchEvent extends LoggableEvent {
     // The contract it's part of
     private String contractNum;
 
-    public BeneficiarySearchEvent() {}
+    public BeneficiarySearchEvent() { }
 
     public BeneficiarySearchEvent(String user, String jobId, String contractNum,
                                   OffsetDateTime startTime, OffsetDateTime endTime,
