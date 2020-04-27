@@ -15,6 +15,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -31,10 +32,12 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.constraints.NotBlank;
 import java.io.IOException;
+import java.time.OffsetDateTime;
 import java.util.List;
 
 import static gov.cms.ab2d.common.util.Constants.API_PREFIX;
 import static gov.cms.ab2d.common.util.Constants.ADMIN_PREFIX;
+import static gov.cms.ab2d.common.util.Constants.EOB;
 import static gov.cms.ab2d.common.util.Constants.FILE_LOG;
 import static gov.cms.ab2d.common.util.Constants.USERNAME;
 import static gov.cms.ab2d.common.util.Constants.REQUEST_ID;
@@ -64,6 +67,9 @@ public class AdminAPI {
 
     @Autowired
     private LogManager eventLogger;
+
+    @Autowired
+    private BulkDataAccessAPI bulkDataAccessAPI;
 
     @ResponseStatus(value = HttpStatus.ACCEPTED)
     @PostMapping("/uploadOrgStructureReport")
@@ -141,6 +147,17 @@ public class AdminAPI {
     public ResponseEntity<Void> clearCoverageCache(@RequestBody ClearCoverageCacheRequest request) {
         cacheService.clearCache(request);
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/user/{username}/job")
+    public ResponseEntity<Void> createJobOnBehalfOfUser(@PathVariable @NotBlank String username,
+        HttpServletRequest request,
+        @RequestParam(required = false, name = "_type", defaultValue = EOB) String resourceTypes,
+        @RequestParam(required = false, name = "_outputFormat") String outputFormat,
+        @RequestParam(required = false, name = "_since") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime since) {
+        userService.setupUserImpersonation(username, request);
+
+        return bulkDataAccessAPI.exportAllPatients(request, resourceTypes, outputFormat, since);
     }
 
     @ResponseStatus(value = HttpStatus.OK)

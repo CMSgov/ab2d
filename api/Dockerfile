@@ -8,4 +8,4 @@ CMD java \
     -XX:MaxRAMPercentage=80.0 \
     -javaagent:/usr/src/ab2d-api/newrelic/newrelic.jar \
     -jar api-*-SNAPSHOT.jar
-EXPOSE 8080
+EXPOSE 8443
