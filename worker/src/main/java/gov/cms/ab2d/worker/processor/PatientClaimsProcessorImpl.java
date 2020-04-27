@@ -16,6 +16,7 @@ import org.hl7.fhir.dstu3.model.Bundle.BundleEntryComponent;
 import org.hl7.fhir.dstu3.model.ExplanationOfBenefit;
 import org.hl7.fhir.dstu3.model.Resource;
 import org.hl7.fhir.dstu3.model.ResourceType;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.AsyncResult;
 import org.springframework.stereotype.Component;
@@ -40,6 +41,9 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
 
     private final BFDClient bfdClient;
     private final FhirContext fhirContext;
+
+    @Value("${claims.skipBillablePeriodCheck}")
+    private boolean skipBillablePeriodCheck;
 
     /**
      * Process the retrieval of patient explanation of benefit objects and write them
@@ -132,7 +136,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
                 // Get only the explanation of benefits
                 .filter(resource -> resource.getResourceType() == ResourceType.ExplanationOfBenefit)
                 // Filter by date
-                .filter(resource -> FilterOutByDate.valid((ExplanationOfBenefit) resource, attDate, dateRanges))
+                .filter(resource -> skipBillablePeriodCheck || FilterOutByDate.valid((ExplanationOfBenefit) resource, attDate, dateRanges))
                 // filter it
                 .map(resource -> ExplanationOfBenefitTrimmer.getBenefit((ExplanationOfBenefit) resource))
                 // Remove any empty values
