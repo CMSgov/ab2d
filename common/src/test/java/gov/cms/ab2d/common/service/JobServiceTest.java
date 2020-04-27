@@ -22,6 +22,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.transaction.TransactionSystemException;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
@@ -100,6 +101,7 @@ public class JobServiceTest {
     public void setup() {
         LogManager logManager = new LogManager(sqlEventLogger, kinesisEventLogger);
         jobService = new JobServiceImpl(userService, jobRepository, contractRepository, jobOutputService, logManager);
+        ReflectionTestUtils.setField(jobService, "fileDownloadPath", tmpJobLocation);
 
         contractRepository.deleteAll();
         jobRepository.deleteAll();
