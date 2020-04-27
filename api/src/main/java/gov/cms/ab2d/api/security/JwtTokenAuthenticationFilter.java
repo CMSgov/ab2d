@@ -4,7 +4,6 @@ import com.google.common.base.Strings;
 import com.okta.jwt.AccessTokenVerifier;
 import com.okta.jwt.Jwt;
 import com.okta.jwt.JwtVerificationException;
-import gov.cms.ab2d.common.model.Role;
 import gov.cms.ab2d.common.model.User;
 import gov.cms.ab2d.common.service.ResourceNotFoundException;
 import gov.cms.ab2d.common.service.UserService;
@@ -14,12 +13,7 @@ import gov.cms.ab2d.eventlogger.utils.UtilMethods;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -28,8 +22,6 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.UUID;
 
 import static gov.cms.ab2d.common.util.Constants.USERNAME;
@@ -85,13 +77,7 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
             MDC.put(USERNAME, username);
             User user = getUser(username);
 
-            List<GrantedAuthority> authorities = getGrantedAuth(user);
-            UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
-                    username, null, authorities);
-            auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-
-            log.info("Successfully logged in");
-            SecurityContextHolder.getContext().setAuthentication(auth);
+            userService.setupUserAndRolesInSecurityContext(user, request);
         } else {
             String usernameBlankMsg = "Username was blank";
             log.error(usernameBlankMsg);
@@ -109,21 +95,6 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
                 token, uniqueId);
         eventLogger.log(requestEvent);
         return uniqueId;
-    }
-
-    /**
-     * Retrieve the list of granted authorities from the user's roles
-     *
-     * @param user - the user
-     * @return - the granted authorities
-     */
-    private List<GrantedAuthority> getGrantedAuth(User user) {
-        List<GrantedAuthority> authorities = new ArrayList<>();
-        for (Role role : user.getRoles()) {
-            log.info("Adding role {}", role.getName());
-            authorities.add(new SimpleGrantedAuthority(role.getName()));
-        }
-        return authorities;
     }
 
     /**

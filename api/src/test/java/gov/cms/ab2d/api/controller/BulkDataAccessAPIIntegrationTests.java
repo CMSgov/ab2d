@@ -1301,4 +1301,15 @@ public class BulkDataAccessAPIIntegrationTests {
 
         assertEquals(body, new Gson().toJson(new CapabilityStatement()));
     }
+
+    @Test
+    public void tlsTest() throws Exception {
+        MvcResult mvcResult = this.mockMvc.perform(
+                get("https://localhost:8443/" + API_PREFIX + FHIR_PREFIX + "/metadata").contentType(MediaType.APPLICATION_JSON)
+                        .header("Authorization", "Bearer " + token)).andReturn();
+
+        String body = mvcResult.getResponse().getContentAsString();
+
+        assertEquals(body, new Gson().toJson(new CapabilityStatement()));
+    }
 }

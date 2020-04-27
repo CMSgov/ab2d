@@ -18,14 +18,25 @@ import org.modelmapper.MappingException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.test.context.TestPropertySource;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import javax.annotation.Nullable;
+import javax.servlet.http.HttpServletRequest;
 import javax.validation.ConstraintViolationException;
 
+import java.util.List;
+
+import static gov.cms.ab2d.common.util.Constants.ADMIN_ROLE;
 import static gov.cms.ab2d.common.util.Constants.SPONSOR_ROLE;
 import static gov.cms.ab2d.common.util.DataSetup.TEST_USER;
 import static org.hamcrest.CoreMatchers.is;
@@ -224,6 +235,40 @@ public class UserServiceTest {
         });
         assertThat(exceptionThrown.getMessage(), is("ModelMapper mapping errors:\n\n1) Converter Converter<class gov.cms.ab2d.common.dto.SponsorDTO, class gov.cms.ab2d.common.model.Sponsor> failed to convert gov.cms.ab2d.common.dto.SponsorDTO to gov.cms.ab2d.common.model.Sponsor.\n\n1 error"
         ));
+    }
+
+    @Test
+    public void testSetupUserAndRolesInSecurityContext() {
+        HttpServletRequest httpServletRequest = new MockHttpServletRequest();
+
+        List<GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority(ADMIN_ROLE));
+        UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
+                "ADMIN", null, authorities);
+        auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(httpServletRequest));
+        SecurityContextHolder.getContext().setAuthentication(auth);
+
+        Sponsor sponsor = dataSetup.createSponsor("Parent Corp.", 456, "Test", 123);
+        UserDTO user = createUser(sponsor, SPONSOR_ROLE);
+        UserDTO createdUser = userService.createUser(user);
+
+        String username = createdUser.getUsername();
+
+        userService.setupUserImpersonation(username, httpServletRequest);
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        Assert.assertEquals(authentication.getPrincipal(), "test@test.com");
+        Assert.assertEquals(authentication.getAuthorities().size(), 1);
+        GrantedAuthority grantedAuthority = authentication.getAuthorities().iterator().next();
+        Assert.assertEquals(grantedAuthority.getAuthority(), SPONSOR_ROLE);
+    }
+
+    @Test
+    public void testSetupUserAndRolesInSecurityContextBadUser() {
+        HttpServletRequest httpServletRequest = new MockHttpServletRequest();
+        var exceptionThrown = Assertions.assertThrows(ResourceNotFoundException.class, () -> {
+            userService.setupUserImpersonation("UserDoesNotExist", httpServletRequest);
+        });
+        Assert.assertEquals(exceptionThrown.getMessage(), "User is not present in our database");
     }
 
     @Test
