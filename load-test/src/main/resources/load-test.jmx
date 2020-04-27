@@ -41,7 +41,7 @@
                 </elementProp>
                 <elementProp name="api-url" elementType="Argument">
                   <stringProp name="Argument.name">api-url</stringProp>
-                  <stringProp name="Argument.value">http://localhost:8080/api/v1/fhir/</stringProp>
+                  <stringProp name="Argument.value">https://localhost:8443/api/v1/fhir/</stringProp>
                   <stringProp name="Argument.metadata">=</stringProp>
                 </elementProp>
                 <elementProp name="okta-url" elementType="Argument">
