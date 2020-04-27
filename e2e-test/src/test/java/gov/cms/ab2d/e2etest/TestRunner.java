@@ -11,11 +11,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.Assert;
-import org.junit.jupiter.api.MethodOrderer;
-import org.junit.jupiter.api.Order;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
-import org.junit.jupiter.api.TestMethodOrder;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.data.util.Pair;
 import org.testcontainers.containers.DockerComposeContainer;
@@ -28,7 +24,6 @@ import javax.crypto.SecretKey;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URI;
@@ -36,12 +31,13 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
-import java.util.stream.Collectors;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -95,12 +91,12 @@ public class TestRunner {
         }
     }
 
-    public TestRunner(Environment environment) throws IOException, InterruptedException, JSONException {
+    public TestRunner(Environment environment) throws IOException, InterruptedException, JSONException, NoSuchAlgorithmException, KeyManagementException {
         this.environment = environment;
         init();
     }
 
-    public void init() throws IOException, InterruptedException, JSONException {
+    public void init() throws IOException, InterruptedException, JSONException, KeyManagementException, NoSuchAlgorithmException {
         if(environment.isUsesDockerCompose()) {
             DockerComposeContainer container = new DockerComposeContainer(
                     new File("../docker-compose.yml"))
@@ -108,10 +104,10 @@ public class TestRunner {
                     .withLocalCompose(true)
                     .withScaledService("worker", 2)
                     .withExposedService("db", 5432)
-                    .withExposedService("api", 8080, new HostPortWaitStrategy()
-                        .withStartupTimeout(Duration.of(150, SECONDS)));
-                     //.withLogConsumer("worker", new Slf4jLogConsumer(log)) // Use to debug, for now there's too much log data
-                     //.withLogConsumer("api", new Slf4jLogConsumer(log));
+                    .withExposedService("api", 8443, new HostPortWaitStrategy()
+                        .withStartupTimeout(Duration.of(150, SECONDS)))
+                     .withLogConsumer("worker", new Slf4jLogConsumer(log)) // Use to debug, for now there's too much log data
+                     .withLogConsumer("api", new Slf4jLogConsumer(log));
             container.start();
         }
 
@@ -474,7 +470,7 @@ public class TestRunner {
 
     @Test
     @Order(8)
-    public void testUserCannotDownloadOtherUsersJob() throws IOException, InterruptedException, JSONException {
+    public void testUserCannotDownloadOtherUsersJob() throws IOException, InterruptedException, JSONException, NoSuchAlgorithmException, KeyManagementException {
         String contractNumber = "S0000";
         HttpResponse<String> exportResponse = apiClient.exportByContractRequest(contractNumber, FHIR_TYPE, null);
         Assert.assertEquals(202, exportResponse.statusCode());
@@ -490,7 +486,7 @@ public class TestRunner {
 
     @Test
     @Order(9)
-    public void testUserCannotDeleteOtherUsersJob() throws IOException, InterruptedException, JSONException {
+    public void testUserCannotDeleteOtherUsersJob() throws IOException, InterruptedException, JSONException, NoSuchAlgorithmException, KeyManagementException {
         HttpResponse<String> exportResponse = apiClient.exportRequest(FHIR_TYPE, null);
 
         Assert.assertEquals(202, exportResponse.statusCode());
@@ -510,7 +506,7 @@ public class TestRunner {
 
     @Test
     @Order(10)
-    public void testUserCannotCheckStatusOtherUsersJob() throws IOException, InterruptedException, JSONException {
+    public void testUserCannotCheckStatusOtherUsersJob() throws IOException, InterruptedException, JSONException, NoSuchAlgorithmException, KeyManagementException {
         HttpResponse<String> exportResponse = apiClient.exportRequest(FHIR_TYPE, null);
 
         Assert.assertEquals(202, exportResponse.statusCode());
@@ -527,7 +523,7 @@ public class TestRunner {
         Assert.assertEquals(202, secondDeleteResponse.statusCode());
     }
 
-    private APIClient createSecondUserClient() throws InterruptedException, JSONException, IOException {
+    private APIClient createSecondUserClient() throws InterruptedException, JSONException, IOException, KeyManagementException, NoSuchAlgorithmException {
         String oktaUrl = yamlMap.get("okta-url");
 
         String oktaClientId = System.getenv("SECONDARY_USER_OKTA_CLIENT_ID");
@@ -621,6 +617,7 @@ public class TestRunner {
     // Consider removing if tests are failing
     @Test
     @Order(16)
+    @Disabled
     public void testOptOut() throws IOException, InterruptedException, JSONException {
         HttpResponse<String> exportResponse = apiClient.exportRequest(FHIR_TYPE, null);
 

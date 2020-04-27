@@ -92,10 +92,7 @@ public class JobServiceTest {
 
         dataSetup.setupUser(List.of());
 
-        SecurityContextHolder.getContext().setAuthentication(
-                new UsernamePasswordAuthenticationToken(
-                        new org.springframework.security.core.userdetails.User(TEST_USER,
-                                "test", new ArrayList<>()), "pass"));
+        setupRegularUserSecurityContext();
     }
 
     @Test
@@ -186,15 +183,68 @@ public class JobServiceTest {
     public void getJob() {
         Job job = jobService.createJob(EOB, "http://localhost:8080", NDJSON_FIRE_CONTENT_TYPE);
 
-        Job retrievedJob = jobService.getAuthorizedJobByJobUuid(job.getJobUuid());
+        Job retrievedJob = jobService.getAuthorizedJobByJobUuidAndRole(job.getJobUuid());
 
         assertEquals(job, retrievedJob);
     }
 
     @Test
+    public void getJobAdminRole() {
+        // Job created by regular user
+        Job job = jobService.createJob(EOB, "http://localhost:8080", NDJSON_FIRE_CONTENT_TYPE);
+
+        setupAdminUser();
+
+        Job retrievedJob = jobService.getAuthorizedJobByJobUuidAndRole(job.getJobUuid());
+
+        assertEquals(job, retrievedJob);
+    }
+
+    @Test
+    public void getJobCreatedByAdminRole() {
+        setupAdminUser();
+
+        // Job created by admin user
+        Job job = jobService.createJob(EOB, "http://localhost:8080", NDJSON_FIRE_CONTENT_TYPE);
+
+        setupRegularUserSecurityContext();
+
+        Assertions.assertThrows(InvalidJobAccessException.class, () -> {
+            jobService.getAuthorizedJobByJobUuidAndRole(job.getJobUuid());
+        });
+    }
+
+    private void setupAdminUser() {
+        final String adminUsername = "ADMIN_USER";
+        User user = new User();
+        user.setUsername(adminUsername);
+        user.setEnabled(true);
+        Role role = roleService.findRoleByName(ADMIN_ROLE);
+        user.addRole(role);
+
+        Sponsor sponsor = dataSetup.createSponsor("Parent Corp. #2", 12345, "Test #2", 6789);
+
+        user.setSponsor(sponsor);
+
+        userRepository.saveAndFlush(user);
+
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken(
+                        new org.springframework.security.core.userdetails.User(adminUsername,
+                                "test", new ArrayList<>()), "pass"));
+    }
+
+    private void setupRegularUserSecurityContext() {
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken(
+                        new org.springframework.security.core.userdetails.User(TEST_USER,
+                                "test", new ArrayList<>()), "pass"));
+    }
+
+    @Test
     public void getNonExistentJob() {
         Assertions.assertThrows(ResourceNotFoundException.class, () -> {
-            jobService.getAuthorizedJobByJobUuid("NonExistent");
+            jobService.getAuthorizedJobByJobUuidAndRole("NonExistent");
         });
     }
 

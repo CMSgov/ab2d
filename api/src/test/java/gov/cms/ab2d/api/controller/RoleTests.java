@@ -23,6 +23,7 @@ import java.io.InputStream;
 import java.util.List;
 
 import static gov.cms.ab2d.common.util.Constants.*;
+import static gov.cms.ab2d.common.util.DataSetup.TEST_USER;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -56,6 +57,8 @@ public class RoleTests {
 
     @BeforeEach
     public void setup() {
+        testUtil.turnMaintenanceModeOff();
+
         jobRepository.deleteAll();
         userRepository.deleteAll();
         roleRepository.deleteAll();
@@ -64,13 +67,13 @@ public class RoleTests {
 
     // This will test the API using a role that should not be able to access sponsor URLs
     @Test
-    public void testWrongRoleSponsorApi() throws Exception {
+    public void testAdminRoleAccessingSponsorApi() throws Exception {
         token = testUtil.setupToken(List.of(ADMIN_ROLE));
 
-        this.mockMvc.perform(get(API_PREFIX +  FHIR_PREFIX + "/Patient/$export")
+        this.mockMvc.perform(get(API_PREFIX + FHIR_PREFIX + "/Patient/$export")
                 .contentType(MediaType.APPLICATION_JSON)
                 .header("Authorization", "Bearer " + token))
-                .andExpect(status().is(403));
+                .andExpect(status().is(202));
     }
 
     // This will test the API using a role that should not be able to access admin URLs
@@ -147,6 +150,36 @@ public class RoleTests {
         token = testUtil.setupToken(List.of(SPONSOR_ROLE));
 
         this.mockMvc.perform(put(API_PREFIX +  ADMIN_PREFIX + "/properties")
+                .contentType(MediaType.APPLICATION_JSON)
+                .header("Authorization", "Bearer " + token))
+                .andExpect(status().is(403));
+    }
+
+    @Test
+    public void testWrongRoleCreateJobOnBehalfOfUser() throws Exception {
+        token = testUtil.setupToken(List.of(SPONSOR_ROLE));
+
+        this.mockMvc.perform(put(API_PREFIX +  ADMIN_PREFIX + "/user/testuser/job")
+                .contentType(MediaType.APPLICATION_JSON)
+                .header("Authorization", "Bearer " + token))
+                .andExpect(status().is(403));
+    }
+
+    @Test
+    public void testWrongRoleEnableUser() throws Exception {
+        token = testUtil.setupToken(List.of(SPONSOR_ROLE));
+
+        this.mockMvc.perform(put(API_PREFIX +  ADMIN_PREFIX + "/user/" + TEST_USER + "/enable")
+                .contentType(MediaType.APPLICATION_JSON)
+                .header("Authorization", "Bearer " + token))
+                .andExpect(status().is(403));
+    }
+
+    @Test
+    public void testWrongRoleDisableUser() throws Exception {
+        token = testUtil.setupToken(List.of(SPONSOR_ROLE));
+
+        this.mockMvc.perform(put(API_PREFIX +  ADMIN_PREFIX + "/user/" + TEST_USER + "/disable")
                 .contentType(MediaType.APPLICATION_JSON)
                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(403));

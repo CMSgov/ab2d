@@ -50,7 +50,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     @Override
     public void configure(WebSecurity web) {
         web.ignoring().antMatchers("/swagger-ui.html", "/swagger-ui.html/**", "/configuration/**",
-                "/swagger-resources/**", "/v2/api-docs", "/webjars/**", HEALTH_ENDPOINT, STATUS_ENDPOINT, OKTA_PROXY_ENDPOINT);
+                "/swagger-resources/**", "/v2/api-docs", "/webjars/**", HEALTH_ENDPOINT, STATUS_ENDPOINT);
     }
 
     @Override
@@ -65,7 +65,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
             .addFilterAfter(jwtTokenAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
             .authorizeRequests()
             .antMatchers(API_PREFIX + ADMIN_PREFIX + "/**").hasAuthority(ADMIN_ROLE)
-            .antMatchers(API_PREFIX + FHIR_PREFIX + "/**").hasAuthority(SPONSOR_ROLE)
+            .antMatchers(API_PREFIX + FHIR_PREFIX + "/**").hasAnyAuthority(SPONSOR_ROLE, ADMIN_ROLE)
             .anyRequest().authenticated();
     }
 
