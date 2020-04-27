@@ -8,7 +8,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
-public class KenesisConfig {
+public class KinesisConfig {
     @Value("${eventlogger.kinesis.region}")
     private String region;
 
