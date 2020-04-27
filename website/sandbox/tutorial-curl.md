@@ -45,31 +45,31 @@ There are 5 users (clients) setup in the sandbox
     <tbody>
         <tr>
             <td>PDP-100</td>
-            <td>S0000</td>
+            <td>Z0000</td>
             <td>0oa2t0lsrdZw5uWRx297</td>
             <td>HHduWG6LogIvDIQuWgp3Zlo9OYMValTtH5OBcuHw</td>
         </tr>
         <tr>
             <td>PDP-1000</td>
-            <td>S0001</td>
+            <td>Z0001</td>
             <td>0lc65ErV8OmY297</td>
             <td>GO6eglkXUDtjVjto3L-3C0offzTMk2qlz9r</td>
         </tr>
         <tr>
             <td>PDP-2000</td>
-            <td>S0002</td>
+            <td>Z0002</td>
             <td>0oa2t0lkicpxFGkGt297</td>
             <td>eDpanJTtw90vY2viYlX4o2rgVRIR4tDRH0mWr9vN</td>
         </tr>
         <tr>
             <td>PDP-5000</td>
-            <td>S0005</td>
+            <td>Z0005</td>
             <td>0oa2t0l6c1tQbTikz297</td>
             <td>80zX-7GeiMiiA6zVghiqYZL82oLAWSxhgfBkfo0T</td>
         </tr>
         <tr>
             <td>PDP-10000</td>
-            <td>S0010</td>
+            <td>Z0010</td>
             <td>0oa2t0lm9qoAtJHqC297</td>
             <td>ybR60JmtcpRt6SAeLmvbq6l-3YDRCZP-WN1At6t_</td>
         </tr>
@@ -314,14 +314,14 @@ opening ubuntu or some other terminal that supports curl and jq. See [Windows 10
         "output":[
             {
                 "type":"ExplanationOfBenefit",
-                "url":"https://sandbox.ab2d.cms.gov/api/v1/fhir/Job/5298026c-e503-4d93-9974-c7732f56a0f8/file/S0000_0001.ndjson"
+                "url":"https://sandbox.ab2d.cms.gov/api/v1/fhir/Job/5298026c-e503-4d93-9974-c7732f56a0f8/file/Z0000_0001.ndjson"
             }
         ],
         "error":[]
     }
     ```
 
-    The JSON (formated here for readability) will contain the location of the files in the .output[].url values. S0001 indicates the contract number, 0001 indicates the file for that contract number. If the contract is big enough that breaking it into parts is warranted, you might see S0001_00002.ndjson, for example.
+    The JSON (formated here for readability) will contain the location of the files in the .output[].url values. Z0001 indicates the contract number, 0001 indicates the file for that contract number. If the contract is big enough that breaking it into parts is warranted, you might see Z0001_00002.ndjson, for example.
 
     9. Note the response code and file to download from the output
 
@@ -329,7 +329,7 @@ opening ubuntu or some other terminal that supports curl and jq. See [Windows 10
 
     ```
     {response code} = 200
-    {file to download} = S0000_0001.ndjson
+    {file to download} = Z0000_0001.ndjson
     ```
 
     The following are the possible response codes
@@ -391,7 +391,7 @@ opening ubuntu or some other terminal that supports curl and jq. See [Windows 10
     Example:
 
     ```
-    FILE=S0000_0001.ndjson
+    FILE=Z0000_0001.ndjson
     ```
 
     b. Get the Part A & B bulk claim export data by entering the following at the terminal prompt
@@ -414,7 +414,7 @@ opening ubuntu or some other terminal that supports curl and jq. See [Windows 10
 
     Example:
 
-        S0000_0001.ndjson
+        Z0000_0001.ndjson
 
     e. Verify that there is data in the file by entering the following at the terminal prompt
 
@@ -424,7 +424,7 @@ opening ubuntu or some other terminal that supports curl and jq. See [Windows 10
 
     Example:
 
-        cat S0000_0001.ndjson
+        cat Z0000_0001.ndjson
 
     f. Repeat this process to download additional files (if any)
 
