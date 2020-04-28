@@ -22,7 +22,7 @@ echo "Choose desired AWS account"
 echo "--------------------------"
 echo ""
 PS3='Please enter your choice: '
-options=("Dev AWS account" "Sbx AWS account" "Impl AWS account" "Quit")
+options=("Dev AWS account" "Sbx AWS account" "Impl AWS account" "Prod AWS account" "Quit")
 select opt in "${options[@]}"
 do
     case $opt in
@@ -44,6 +44,12 @@ do
 	    SSH_PRIVATE_KEY=ab2d-east-impl.pem
 	    break
             ;;
+        "Prod AWS account")
+	    export AWS_ACCOUNT_NUMBER=595094747606
+	    export CMS_ENV=ab2d-east-prod
+	    SSH_PRIVATE_KEY=ab2d-east-prod.pem
+	    break
+            ;;
         "Quit")
             break
             ;;
@@ -51,7 +57,7 @@ do
     esac
 done
 
-if [ $REPLY -eq 4 ]; then
+if [ $REPLY -eq 5 ]; then
   exit 0
 fi
 

@@ -7541,7 +7541,7 @@
 
 1. Ensure that your are connected to CMS Cisco VPN before proceeding
 
-1. Change to the "repo" directory
+1. Change to the "Deploy" directory
 
    ```ShellSession
    $ cd ~/code/ab2d/Deploy

@@ -799,12 +799,14 @@ if [ -n "${API_OLD_LATEST_COMMIT_TAG}" ]; then
     --output text)
 
   # Add renamed api tag
-  
-  aws --region "${REGION}" ecr put-image \
-    --repository-name ab2d_api \
-    --image-tag "${RENAME_API_OLD_LATEST_COMMIT_TAG}" \
-    --image-manifest "${MANIFEST}"
 
+  if [ -n "${MANIFEST}" ]; then
+    aws --region "${REGION}" ecr put-image \
+      --repository-name ab2d_api \
+      --image-tag "${RENAME_API_OLD_LATEST_COMMIT_TAG}" \
+      --image-manifest "${MANIFEST}"
+  fi
+  
   # Remove old api tag
 
   aws --region "${REGION}" ecr batch-delete-image \
@@ -857,14 +859,16 @@ if [ -n "${WORKER_OLD_LATEST_COMMIT_TAG}" ]; then
     --query 'images[].imageManifest' \
     --output text)
 
-  # Add renamed tag
+  # Add renamed worker tag
 
-  aws --region "${REGION}" ecr put-image \
-    --repository-name ab2d_worker \
-    --image-tag "${RENAME_WORKER_OLD_LATEST_COMMIT_TAG}" \
-    --image-manifest "${MANIFEST}"
-
-  # Remove old tag
+  if [ -n "${MANIFEST}" ]; then
+    aws --region "${REGION}" ecr put-image \
+      --repository-name ab2d_worker \
+      --image-tag "${RENAME_WORKER_OLD_LATEST_COMMIT_TAG}" \
+      --image-manifest "${MANIFEST}"
+  fi
+  
+  # Remove old worker tag
 
   aws --region "${REGION}" ecr batch-delete-image \
     --repository-name ab2d_worker \

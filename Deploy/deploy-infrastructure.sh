@@ -31,10 +31,6 @@ case $i in
   REGION="${i#*=}"
   shift # past argument=value
   ;;
-  --vpc-id=*)
-  VPC_ID="${i#*=}"
-  shift # past argument=value
-  ;;
   --ssh-username=*)
   SSH_USERNAME="${i#*=}"
   shift # past argument=value
@@ -161,7 +157,6 @@ if  [ "${PARAMETER_ERROR}" == "YES" ] \
     || [ -z "${ENVIRONMENT}" ] \
     || [ -z "${ECR_REPO_ENVIRONMENT}" ] \
     || [ -z "${REGION}" ] \
-    || [ -z "${VPC_ID}" ] \
     || [ -z "${SSH_USERNAME}" ] \
     || [ -z "${OWNER}" ] \
     || [ -z "${EC2_INSTANCE_TYPE_API}" ] \
@@ -228,6 +223,8 @@ elif [ "${CMS_ENV}" == "ab2d-sbx-sandbox" ]; then
   CMS_ENV_AWS_ACCOUNT_NUMBER=777200079629
 elif [ "${CMS_ENV}" == "ab2d-east-impl" ]; then
   CMS_ENV_AWS_ACCOUNT_NUMBER=330810004472
+elif [ "${CMS_ENV}" == "ab2d-east-prod" ]; then
+  CMS_ENV_AWS_ACCOUNT_NUMBER=5950-9474-7606
 else
   echo "ERROR: 'CMS_ENV' environment is unknown."
   exit 1  
@@ -333,3 +330,105 @@ export DEBUG_LEVEL="WARN"
 #
 
 get_temporary_aws_credentials "${CMS_ENV_AWS_ACCOUNT_NUMBER}"
+
+#########################
+# BEGIN #1 (LSH 2020-04-27)
+#########################
+
+# #
+# # Verify that VPC ID exists
+# #
+
+# VPC_EXISTS=$(aws --region "${REGION}" ec2 describe-vpcs \
+#   --query "Vpcs[?VpcId=='$VPC_ID'].VpcId" \
+#   --output text)
+
+# if [ -z "${VPC_EXISTS}" ]; then
+#   echo "*********************************************************"
+#   echo "ERROR: VPC ID does not exist for the target AWS profile."
+#   echo "*********************************************************"
+#   exit 1
+# fi
+
+#
+# Get VPC ID
+#
+
+VPC_ID=$(aws --region "${REGION}" ec2 describe-vpcs \
+  --filters "Name=tag:Name,Values=${CMS_ENV}" \
+  --query "Vpcs[*].VpcId" \
+  --output text)
+
+#########################
+# END #1 (LSH 2020-04-27)
+#########################
+
+# #
+# # Get KMS key id for target environment (if exists)
+# #
+
+# KMS_KEY_ID=$(aws --region "${REGION}" kms list-aliases \
+#   --query="Aliases[?AliasName=='alias/ab2d-kms'].TargetKeyId" \
+#   --output text)
+
+# if [ -n "${KMS_KEY_ID}" ]; then
+#   KMS_KEY_STATE=$(aws --region "${REGION}" kms describe-key \
+#     --key-id alias/ab2d-kms \
+#     --query "KeyMetadata.KeyState" \
+#     --output text)
+# fi
+
+# #
+# # Deploy or enable KMS for target environment
+# #
+
+# # If target environment KMS key exists, enable it; otherwise, create it
+
+# if [ -n "$KMS_KEY_ID" ]; then
+#   echo "Enabling KMS key..."
+#   cd "${START_DIR}"
+#   cd python3
+#   ./enable-kms-key.py $KMS_KEY_ID
+# else
+#   echo "Deploying KMS..."
+#   cd "${START_DIR}"
+#   cd terraform/environments/$CMS_SHARED_ENV
+#   terraform apply \
+#     --target module.kms --auto-approve
+# fi
+
+# # Get target KMS key id
+
+# KMS_KEY_ID=$(aws --region "${REGION}" kms list-aliases \
+#   --query="Aliases[?AliasName=='alias/ab2d-kms'].TargetKeyId" \
+#   --output text)
+
+#
+# Configure terraform
+#
+
+# Reset logging
+
+echo "Setting terraform debug level to $DEBUG_LEVEL..."
+export TF_LOG=$DEBUG_LEVEL
+export TF_LOG_PATH=/var/log/terraform/tf.log
+rm -f /var/log/terraform/tf.log
+
+# Initialize and validate terraform for the target environment
+
+echo "***************************************************************"
+echo "Initialize and validate terraform for the target environment..."
+echo "***************************************************************"
+
+cd "${START_DIR}"
+cd terraform/environments/$CMS_ENV
+
+rm -f *.tfvars
+
+terraform init \
+  -backend-config="bucket=${CMS_ENV}-automation" \
+  -backend-config="key=${CMS_ENV}/terraform/terraform.tfstate" \
+  -backend-config="region=${REGION}" \
+  -backend-config="encrypt=true"
+
+terraform validate
