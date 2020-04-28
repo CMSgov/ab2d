@@ -39,6 +39,7 @@ before_install:
 - export AB2D_OPT_OUT_JOB_SCHEDULE='*/15 * * * * ?'
 - export AB2D_HICN_HASH_PEPPER=`cat bfd_sbx_hash_pepper`
 - export AB2D_HICN_HASH_ITER=1000
+- export AB2D_CLAIMS_SKIP_BILLABLE_PERIOD_CHECK=true
 install: true
 before_script:
 - curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64

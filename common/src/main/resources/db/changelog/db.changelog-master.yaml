@@ -50,3 +50,5 @@ databaseChangeLog:
       file: db/changelog/v001/add_admin_user.sql
   - include:
       file: db/changelog/v001/ab2d-1377-add-aws-id.sql
+  - include:
+      file: db/changelog/v001/update_contract_numbers.sql
