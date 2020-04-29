@@ -65,7 +65,7 @@ module "api" {
   alpha                             = var.private_subnet_ids[0]
   beta                              = var.private_subnet_ids[1]
   logging_bucket                    = var.logging_bucket_name
-  healthcheck_url                   = var.elb_healthcheck_url
+  # healthcheck_url                   = var.elb_healthcheck_url
   iam_instance_profile              = var.ec2_iam_profile
   iam_role_arn                      = "arn:aws:iam::${var.aws_account_number}:role/Ab2dInstanceRole"
   desired_instances                 = var.ec2_desired_instance_count_api

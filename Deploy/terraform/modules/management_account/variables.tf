@@ -1,6 +1,9 @@
 variable "mgmt_aws_account_number" {}
-variable "aws_account_number" {}
-variable "env" {}
+variable "ab2d_mgmt_role_arn" {}
+
+# variable "mgmt_aws_account_number" {}
+# variable "aws_account_number" {}
+# variable "env" {}
 
 # Create "Ab2dInstanceRole" DONE
 

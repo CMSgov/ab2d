@@ -1,3 +1,7 @@
+#
+# Create KMS key
+#
+
 resource "aws_kms_key" "a" {
   description = "ab2d-kms"
   tags = {
@@ -14,8 +18,7 @@ resource "aws_kms_key" "a" {
             "Principal": {
                 "AWS": [
                     "arn:aws:iam::${var.aws_account_number}:root",
-                    "arn:aws:iam::${var.aws_account_number}:role/Ab2dInstanceRole",
-                    "arn:aws:iam::${var.aws_account_number}:user/lonnie.hanekamp@semanticbits.com"
+                    "arn:aws:iam::${var.aws_account_number}:role/Ab2dInstanceRole"
                 ]
             },
             "Action": "kms:*",
@@ -29,4 +32,30 @@ EOF
 resource "aws_kms_alias" "a" {
   name = "alias/ab2d-kms"
   target_key_id = aws_kms_key.a.key_id
+}
+
+#
+# Create Ab2dKmsPolicy and attach it to Ab2dInstanceRole
+#
+
+data "aws_iam_policy_document" "instance_role_kms_policy" {
+  statement {
+    actions = [
+      "kms:Decrypt"
+    ]
+
+    resources = [
+      "${aws_kms_key.a.arn}"
+    ]
+  }
+}
+
+resource "aws_iam_policy" "kms_policy" {
+  name   = "Ab2dKmsPolicy"
+  policy = "${data.aws_iam_policy_document.instance_role_kms_policy.json}"
+}
+
+resource "aws_iam_role_policy_attachment" "instance_role_kms_policy_attach" {
+  role       = "${var.ab2d_instance_role_name}"
+  policy_arn = "${aws_iam_policy.kms_policy.arn}"
 }

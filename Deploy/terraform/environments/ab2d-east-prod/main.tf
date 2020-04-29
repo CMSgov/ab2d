@@ -14,6 +14,37 @@ module "iam" {
   source                  = "../../modules/iam"
   mgmt_aws_account_number = var.mgmt_aws_account_number
   aws_account_number      = var.aws_account_number
+  env                     = var.env
+}
+
+module "kms" {
+  source                  = "../../modules/kms"
+  aws_account_number      = var.aws_account_number
+  env                     = var.env
+  ab2d_instance_role_name = module.iam.ab2d_instance_role_name
+}
+
+module "db" {
+  source                  = "../../modules/db"
+  allocated_storage_size  = var.db_allocated_storage_size
+  engine_version          = var.postgres_engine_version
+  instance_class          = var.db_instance_class
+  snapshot_id             = var.db_snapshot_id
+  subnet_group_name       = var.db_subnet_group_name
+  parameter_group_name    = var.db_parameter_group_name
+  backup_retention_period = var.db_backup_retention_period
+  backup_window           = var.db_backup_window
+  copy_tags_to_snapshot   = var.db_copy_tags_to_snapshot
+  iops                    = var.db_iops
+  kms_key_id              = module.kms.arn
+  maintenance_window      = var.db_maintenance_window
+  vpc_id                  = var.vpc_id
+  db_instance_subnet_ids  = var.private_subnet_ids
+  identifier              = var.db_identifier
+  multi_az                = var.db_multi_az
+  username                = var.db_username
+  password                = var.db_password
+  skip_final_snapshot     = var.db_skip_final_snapshot
 }
 
 # data "aws_db_instance" "ab2d" {

@@ -56,6 +56,8 @@ elif [ "${CMS_ENV}" == "ab2d-sbx-sandbox" ]; then
   CMS_ENV_AWS_ACCOUNT_NUMBER=777200079629
 elif [ "${CMS_ENV}" == "ab2d-east-impl" ]; then
   CMS_ENV_AWS_ACCOUNT_NUMBER=330810004472
+elif [ "${CMS_ENV}" == "ab2d-east-prod" ]; then
+  CMS_ENV_AWS_ACCOUNT_NUMBER=595094747606
 else
   echo "ERROR: 'CMS_ENV' environment is unknown."
   exit 1  

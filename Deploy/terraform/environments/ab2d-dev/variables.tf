@@ -71,9 +71,9 @@ variable "autoscale_group_wait" {
   description = "Number of instances in service to wait for before activating autoscaling group"
 }
 
-variable "elb_healthcheck_url" {
-  default = "HTTP:8080/"
-}
+# variable "elb_healthcheck_url" {
+#   default = "HTTP:8080/"
+# }
 
 variable "ec2_iam_profile" {
   default = "Ab2dInstanceProfile"

@@ -7579,11 +7579,17 @@
    4
    ```
 
+   *Example for Prod:*
+
+   ```
+   5
+   ```
+
 1. Note that temporary AWS credentials from CloudTamer will expire after an hour
 
-1. Set test parameters
+1. Set gold disk test parameters
 
-   *Example for "Dev" environment:*
+   *Example for "Dev":*
 
    ```ShellSession
    $ export CMS_ENV_PARAM=ab2d-dev
@@ -7595,7 +7601,7 @@
    $ export VPC_ID_PARAM=vpc-0c6413ec40c5fdac3
    ```
 
-   *Example for "Sbx" environment:*
+   *Example for "Sbx":*
 
    ```ShellSession
    $ export CMS_ENV_PARAM=ab2d-sbx-sandbox
@@ -7605,6 +7611,18 @@
    $ export REGION_PARAM=us-east-1
    $ export SSH_USERNAME_PARAM=ec2-user
    $ export VPC_ID_PARAM=vpc-08dbf3fa96684151c
+   ```
+
+   *Example for "Prod":*
+
+   ```ShellSession
+   $ export CMS_ENV_PARAM=ab2d-east-prod
+   $ export DEBUG_LEVEL_PARAM=WARN
+   $ export EC2_INSTANCE_TYPE_PACKER_PARAM=m5.xlarge
+   $ export OWNER_PARAM=743302140042
+   $ export REGION_PARAM=us-east-1
+   $ export SSH_USERNAME_PARAM=ec2-user
+   $ export VPC_ID_PARAM=vpc-0c9d55c3d85f46a65
    ```
 
 1. Run application deployment automation

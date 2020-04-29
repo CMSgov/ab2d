@@ -224,7 +224,7 @@ elif [ "${CMS_ENV}" == "ab2d-sbx-sandbox" ]; then
 elif [ "${CMS_ENV}" == "ab2d-east-impl" ]; then
   CMS_ENV_AWS_ACCOUNT_NUMBER=330810004472
 elif [ "${CMS_ENV}" == "ab2d-east-prod" ]; then
-  CMS_ENV_AWS_ACCOUNT_NUMBER=5950-9474-7606
+  CMS_ENV_AWS_ACCOUNT_NUMBER=595094747606
 else
   echo "ERROR: 'CMS_ENV' environment is unknown."
   exit 1  
@@ -432,3 +432,53 @@ terraform init \
   -backend-config="encrypt=true"
 
 terraform validate
+
+#
+# Deploy db
+#
+
+echo "Create or update database instance..."
+
+# Get database secrets
+
+DATABASE_USER=$(./get-database-secret.py $CMS_ENV database_user $DATABASE_SECRET_DATETIME)
+DATABASE_PASSWORD=$(./get-database-secret.py $CMS_ENV database_password $DATABASE_SECRET_DATETIME)
+DATABASE_NAME=$(./get-database-secret.py $CMS_ENV database_name $DATABASE_SECRET_DATETIME)
+
+# Verify database credentials
+
+if [ -z "${DATABASE_USER}" ] \
+    || [ -z "${DATABASE_PASSWORD}" ] \
+    || [ -z "${DATABASE_NAME}" ]; then
+  echo "***********************************************************************"
+  echo "ERROR: Database credentials do not exist for the ${CMS_ENV} AWS account"
+  echo "***********************************************************************"
+  echo ""
+  exit 1
+fi
+
+# Create DB instance (if doesn't exist)
+
+terraform apply \
+  --var "db_username=${DATABASE_USER}" \
+  --var "db_password=${DATABASE_PASSWORD}" \
+  --var "db_name=${DATABASE_NAME}" \
+  --target module.db --auto-approve
+
+DB_ENDPOINT=$(aws --region "${REGION}" rds describe-db-instances \
+  --query="DBInstances[?DBInstanceIdentifier=='ab2d'].Endpoint.Address" \
+  --output=text)
+
+cd "${START_DIR}"
+cd terraform/environments/$CMS_SHARED_ENV
+rm -f generated/.pgpass
+
+# Generate ".pgpass" file
+
+cd "${START_DIR}"
+cd terraform/environments/$CMS_SHARED_ENV
+mkdir -p generated
+
+# Add default database
+
+echo "${DB_ENDPOINT}:5432:postgres:${DATABASE_USER}:${DATABASE_PASSWORD}" > generated/.pgpass
