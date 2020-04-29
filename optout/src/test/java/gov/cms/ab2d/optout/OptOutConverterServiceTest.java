@@ -42,7 +42,7 @@ class OptOutConverterServiceTest {
     @Container
     private static final PostgreSQLContainer postgreSQLContainer= new AB2DPostgresqlContainer();
 
-    private static final String MBI_IDENTIFIER = "identifier-us-mbi";
+    private static final String MBI_IDENTIFIER = "id1-us-mbi";
 
     private static final String PRE_1964_IDENTIFIER = "a123456";
 
