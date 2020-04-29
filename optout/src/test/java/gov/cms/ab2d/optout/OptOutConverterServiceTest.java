@@ -4,7 +4,9 @@ import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.model.OptOut;
 import org.hl7.fhir.dstu3.model.Bundle;
+import org.hl7.fhir.dstu3.model.Identifier;
 import org.hl7.fhir.dstu3.model.Patient;
+import org.junit.Assert;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -40,6 +42,12 @@ class OptOutConverterServiceTest {
     @Container
     private static final PostgreSQLContainer postgreSQLContainer= new AB2DPostgresqlContainer();
 
+    private static final String MBI_IDENTIFIER = "identifier-us-mbi";
+
+    private static final String PRE_1964_IDENTIFIER = "a123456";
+
+    private static final String POST_1964_IDENTIFIER = "a123456789";
+
     @BeforeEach
     void setUp() {
         Bundle fakeBundle = new Bundle();
@@ -50,8 +58,23 @@ class OptOutConverterServiceTest {
         List<Bundle.BundleEntryComponent> entry = fakeBundle.getEntry();
         entry.add(component);
         cut = new OptOutConverterServiceImpl();
+
+        Bundle mbiBundle = new Bundle();
+        Patient mbiPatient = new Patient();
+        Identifier identifier = new Identifier();
+        identifier.setSystem(MBI_IDENTIFIER);
+        identifier.setValue(MBI_IDENTIFIER);
+        mbiPatient.setIdentifier(List.of(identifier));
+        Bundle.BundleEntryComponent mbiComponent = new Bundle.BundleEntryComponent();
+        mbiComponent.setResource(mbiPatient);
+        List<Bundle.BundleEntryComponent> mbiEntry = mbiBundle.getEntry();
+        mbiEntry.add(mbiComponent);
+
         MockitoAnnotations.initMocks(this);
-        when(client.requestPatientFromServer("1000011403")).thenReturn(fakeBundle);
+        when(client.requestPatientByHICN("1000011403")).thenReturn(fakeBundle);
+        when(client.requestPatientByHICN(PRE_1964_IDENTIFIER)).thenReturn(fakeBundle);
+        when(client.requestPatientByHICN(POST_1964_IDENTIFIER)).thenReturn(fakeBundle);
+        when(client.requestPatientByMBI(MBI_IDENTIFIER)).thenReturn(mbiBundle);
     }
 
     @Test
@@ -119,26 +142,52 @@ class OptOutConverterServiceTest {
     }
 
     @Test
-    @DisplayName("when HICN is invalid, should throw an exception")
-    void whenHicnIsInvalid_shouldThrowException() {
-        final String line = getLinesFromFile().skip(6).limit(1).collect(Collectors.toList()).get(0);
-
-        //The first 9 characters of HICN must be numeric. Replacing 1st character with an alphabet for this test case.
-        final String lineWithInvalidHicn = "A" + line.substring(1);
-
-        var exceptionThrown = assertThrows(RuntimeException.class,
-                () -> cut.convert(lineWithInvalidHicn));
-
-        assertThat(exceptionThrown.getMessage(), startsWith("HICN does not match expected format"));
-    }
-
-    @Test
     @DisplayName("given line with valid data, should create a opt_out record")
-    void whenValidData_shouldCreateOptOutRecord() {
+    void whenValidData_shouldCreateOptOutRecordWithHICN() {
         final String line = getLinesFromFile().skip(6).limit(1).collect(Collectors.toList()).get(0);
 
         final List<OptOut> optionalOptOut = cut.convert(line);
         assertFalse(optionalOptOut.isEmpty());
+
+        OptOut optOut = optionalOptOut.get(0);
+        Assert.assertNotNull(optOut.getHicn());
+    }
+
+    @Test
+    @DisplayName("given line with valid data, should create a opt_out record")
+    void whenValidData_shouldCreateOptOutRecordWithHICNPre1964() {
+        final String line = getLinesFromFile().skip(9).limit(1).collect(Collectors.toList()).get(0);
+
+        final List<OptOut> optionalOptOut = cut.convert(line);
+        assertFalse(optionalOptOut.isEmpty());
+
+        OptOut optOut = optionalOptOut.get(0);
+        Assert.assertNotNull(optOut.getHicn());
+    }
+
+    @Test
+    @DisplayName("given line with valid data, should create a opt_out record")
+    void whenValidData_shouldCreateOptOutRecordWithHICNPost1964() {
+        final String line = getLinesFromFile().skip(10).limit(1).collect(Collectors.toList()).get(0);
+
+        final List<OptOut> optionalOptOut = cut.convert(line);
+        assertFalse(optionalOptOut.isEmpty());
+
+        OptOut optOut = optionalOptOut.get(0);
+        Assert.assertNotNull(optOut.getHicn());
+    }
+
+    @Test
+    @DisplayName("given line with valid data, should create a opt_out record")
+    void whenValidData_shouldCreateOptOutRecordWithMBI() {
+        final String line = getLinesFromFile().skip(8).limit(1).collect(Collectors.toList()).get(0);
+
+        final List<OptOut> optionalOptOut = cut.convert(line);
+        assertFalse(optionalOptOut.isEmpty());
+
+        OptOut optOut = optionalOptOut.get(0);
+        Assert.assertNull(optOut.getHicn());
+        Assert.assertEquals(optOut.getMbi(), MBI_IDENTIFIER);
     }
 
     private Stream<String> getLinesFromFile() {

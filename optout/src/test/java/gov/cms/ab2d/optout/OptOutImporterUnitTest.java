@@ -22,7 +22,6 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class OptOutImporterUnitTest {
-    private static final String TEST_DIR = "test-data/";
 
     @Mock private OptOutConverterService converterService;
     @Mock private OptOutRepository optOutRepo;
@@ -46,9 +45,9 @@ class OptOutImporterUnitTest {
 
         cut.process(new BufferedReader(isr), filename);
 
-        verify(optOutRepo, times(32)).findByCcwIdAndHicn(any(), any());
-        verify(optOutRepo, times(32)).save(any());
-        verify(converterService, times(32)).convert(any());
+        verify(optOutRepo, times(35)).findByCcwIdAndHicn(any(), any());
+        verify(optOutRepo, times(35)).save(any());
+        verify(converterService, times(35)).convert(any());
     }
 
     private OptOut createOptOut(String filename) {
