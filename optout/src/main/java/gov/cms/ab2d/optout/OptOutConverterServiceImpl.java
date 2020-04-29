@@ -33,6 +33,7 @@ public class OptOutConverterServiceImpl implements OptOutConverterService {
     private static final Pattern POST_1964_PATTERN = Pattern.compile("[a-zA-Z]\\d{9}");
 
     private static final int HICN_START = 0;
+    private static final int HICN_END = 11;
     private static final int EFFECTIVE_DATE_START = 354;
     private static final int EFFECTIVE_DATE_END = 362;
     private static final int SOURCE_CODE_START = 362;
@@ -237,12 +238,9 @@ public class OptOutConverterServiceImpl implements OptOutConverterService {
      * Parse the id from the line, which could be a HICN or MBI
      *
      * @param line - the line containing the identifier
-     * @return the value of the Id
+     * @return the value of the intentifier
      */
     private String parseIdentifier(String line) {
-        int firstSpace = line.indexOf(" ");
-        var claimNumber = line.substring(HICN_START, firstSpace).trim();
-
-        return claimNumber;
+        return line.substring(HICN_START, HICN_END).trim();
     }
 }
