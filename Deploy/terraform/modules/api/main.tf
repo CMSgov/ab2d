@@ -204,7 +204,7 @@ resource "aws_lb" "api" {
 resource "aws_lb_target_group" "api" {
   name = "${lower(var.env)}-api-tg"
   port = var.host_port
-  protocol = "HTTP"
+  protocol = "HTTPS"
   vpc_id = var.vpc_id
 
   health_check {

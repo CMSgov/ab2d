@@ -10,11 +10,11 @@ variable "linux_user" {}
 variable "ssh_key_name" {}
 variable "node_subnet_ids" {type=list(string)}
 variable "logging_bucket" {}
-variable "healthcheck_url" {}
+# variable "healthcheck_url" {}
 variable "iam_instance_profile" {}
 variable "iam_role_arn" {}
 
-variable "container_port" {default=8080}
+variable "container_port" {default=8443}
 # variable "ecs_task_definition_host_port" {default=443}
 # variable "host_port" {default=443}
 variable "ecs_task_definition_host_port" {type = number}
