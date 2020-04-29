@@ -26,8 +26,8 @@ public class ContractBeneSearchEventMapper extends SqlEventMapper {
 
         KeyHolder keyHolder = new GeneratedKeyHolder();
         String query = "insert into event_bene_search " +
-                " (time_of_event, user_id, job_id, contract_number, num_in_contract, num_searched, num_opted_out, num_errors, aws_id) " +
-                " values (:time, :user, :job, :contractNum, :numInContract, :numSearched, :numOptedOut, :numErrors, :awsId)";
+                " (time_of_event, user_id, job_id, contract_number, num_in_contract, num_searched, num_opted_out, num_errors, aws_id, environment) " +
+                " values (:time, :user, :job, :contractNum, :numInContract, :numSearched, :numOptedOut, :numErrors, :awsId, :environment)";
 
         SqlParameterSource parameters = super.addSuperParams(event)
                 .addValue("contractNum", be.getContractNumber())

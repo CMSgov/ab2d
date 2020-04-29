@@ -33,7 +33,8 @@ public abstract class SqlEventMapper implements RowMapper {
                 .addValue("time", UtilMethods.convertToUtc(event.getTimeOfEvent()))
                 .addValue("user", event.getUser())
                 .addValue("job", event.getJobId())
-                .addValue("awsId", event.getAwsId());
+                .addValue("awsId", event.getAwsId())
+                .addValue("environment", event.getEnvironment());
     }
 
     void extractSuperParams(ResultSet rs, LoggableEvent event) throws SQLException {
@@ -42,5 +43,6 @@ public abstract class SqlEventMapper implements RowMapper {
         event.setUser(rs.getString("user_id"));
         event.setJobId(rs.getString("job_id"));
         event.setAwsId(rs.getString("aws_id"));
+        event.setEnvironment(rs.getString("environment"));
     }
 }

@@ -22,22 +22,27 @@ import java.nio.ByteBuffer;
 @Service
 @Slf4j
 public class KinesisEventLogger implements EventLogger {
+    @Value("${execution.env:dev}")
+    private String appEnv;
+
     @Autowired
     private AmazonKinesisFirehose client;
 
-    @Value("${eventlogger.kinesis.stream}")
+    @Value("${eventlogger.kinesis.stream.prefix:bfd-insights-ab2d-}")
     private String streamId;
 
     @Override
     public void log(LoggableEvent event) {
         String json = null;
+        event.setEnvironment(appEnv);
         try {
-            json = getJsonString(event);
+            json = getJsonString(event) + "\n";
             Record record = new Record()
                     .withData(ByteBuffer.wrap(json.getBytes()));
 
             PutRecordRequest putRecordRequest = new PutRecordRequest();
-            putRecordRequest.setDeliveryStreamName(streamId);
+            String className = event.getClass().getSimpleName().toLowerCase();
+            putRecordRequest.setDeliveryStreamName(streamId + className);
             putRecordRequest.setRecord(record);
 
             PutRecordResult putRecordResult = client.putRecord(putRecordRequest);

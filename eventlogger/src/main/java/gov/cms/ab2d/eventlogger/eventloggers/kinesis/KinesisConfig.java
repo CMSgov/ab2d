@@ -9,7 +9,7 @@ import org.springframework.context.annotation.Configuration;
 
 @Configuration
 public class KinesisConfig {
-    @Value("${eventlogger.kinesis.region}")
+    @Value("${eventlogger.kinesis.region:US_EAST_1}")
     private String region;
 
     @Bean

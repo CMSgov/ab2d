@@ -4,6 +4,7 @@ import gov.cms.ab2d.eventlogger.EventLogger;
 import gov.cms.ab2d.eventlogger.EventLoggingException;
 import gov.cms.ab2d.eventlogger.LoggableEvent;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
@@ -12,6 +13,9 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @Slf4j
 public class SqlEventLogger implements EventLogger {
+    @Value("${execution.env:dev}")
+    private String appEnv;
+
     private final SqlMapperConfig mapperConfig;
     private final JdbcTemplate template;
 
@@ -23,6 +27,7 @@ public class SqlEventLogger implements EventLogger {
     @Override
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void log(LoggableEvent event) {
+        event.setEnvironment(appEnv);
         try {
             SqlEventMapper mapper = mapperConfig.getMapper(event.getClass());
             if (mapper == null) {

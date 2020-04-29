@@ -11,6 +11,9 @@ import java.time.OffsetDateTime;
 public abstract class LoggableEvent {
     public LoggableEvent() { }
 
+    // If it's dev, prod, etc.
+    private String environment;
+
     // DB id if there is one
     private Long id;
 
