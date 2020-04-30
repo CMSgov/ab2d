@@ -52,6 +52,7 @@ public class BlueButtonClientTest {
     private static final String TEST_NONEXISTENT_PATIENT_ID = "31337";
     private static final String TEST_SLOW_PATIENT_ID = "20010000001111";
     private static final String TEST_NO_RECORD_PATIENT_ID = "20010000001115";
+    private static final String TEST_NO_RECORD_PATIENT_ID_MBI = "20010000001116";
 
     // Paths to test resources
     private static final String METADATA_PATH = "bb-test-data/meta.xml";
@@ -137,6 +138,20 @@ public class BlueButtonClientTest {
                         Parameter.param("excludeSAMHSA", "true"))
         );
 
+        createMockServerExpectation(
+                "/v1/fhir/Patient/" + TEST_NO_RECORD_PATIENT_ID_MBI,
+                HttpStatus.SC_OK,
+                getRawXML(SAMPLE_PATIENT_PATH_PREFIX + TEST_NO_RECORD_PATIENT_ID_MBI + ".xml"),
+                List.of()
+        );
+        createMockServerExpectation(
+                "/v1/fhir/ExplanationOfBenefit",
+                HttpStatus.SC_OK,
+                getRawXML(SAMPLE_EOB_PATH_PREFIX + TEST_NO_RECORD_PATIENT_ID_MBI + ".xml"),
+                List.of(Parameter.param("patient", TEST_NO_RECORD_PATIENT_ID_MBI),
+                        Parameter.param("excludeSAMHSA", "true"))
+        );
+
         // Create mocks for pages of the results
         for (String startIndex : List.of("10", "20", "30")) {
             createMockServerExpectation(
@@ -202,6 +217,12 @@ public class BlueButtonClientTest {
     }
 
     @Test
+    public void shouldGetEOBPatientNoRecordsMBI() {
+        Bundle response = bbc.requestEOBFromServer(TEST_NO_RECORD_PATIENT_ID_MBI);
+        assertFalse(response.hasEntry());
+    }
+
+    @Test
     public void shouldNotHaveNextBundle() {
         Bundle response = bbc.requestEOBFromServer(TEST_SINGLE_EOB_PATIENT_ID);
 
@@ -235,10 +256,24 @@ public class BlueButtonClientTest {
     }
 
     @Test
-    public void testPersonIds() {
-        Bundle response = bbc.requestPatientFromServer("11111");
+    public void testPersonIdsHICN() {
+        Bundle response = bbc.requestPatientByHICN("11111");
         assertNotNull(response);
-        assertEquals(response.getEntry().size(), 2);
+        assertEquals(response.getEntry().size(), 3);
+        Patient p1 = (Patient) response.getEntry().get(0).getResource();
+        Patient p2 = (Patient) response.getEntry().get(0).getResource();
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+        assertTrue(sdf.format(p1.getBirthDate()).equalsIgnoreCase("2014-06-01")
+                && sdf.format(p2.getBirthDate()).equalsIgnoreCase("2014-06-01"));
+        assertTrue(p1.getName().get(0).getFamily().equalsIgnoreCase("Doe")
+                && p2.getName().get(0).getFamily().equalsIgnoreCase("Doe"));
+    }
+
+    @Test
+    public void testPersonIdsMBI() {
+        Bundle response = bbc.requestPatientByMBI("11111");
+        assertNotNull(response);
+        assertEquals(response.getEntry().size(), 3);
         Patient p1 = (Patient) response.getEntry().get(0).getResource();
         Patient p2 = (Patient) response.getEntry().get(0).getResource();
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
@@ -270,7 +305,7 @@ public class BlueButtonClientTest {
             Bundle response = bbc.requestPartDEnrolleesFromServer(CONTRACT, i);
 
             assertNotNull(response, "There should be a non null patient bundle");
-            assertEquals(2, response.getEntry().size(), "The bundle has 2 patients");
+            assertEquals(3, response.getEntry().size(), "The bundle has 2 patients");
         }
     }
 
