@@ -11,7 +11,8 @@ public interface BFDClient {
     Bundle requestEOBFromServer(String patientID);
     Bundle requestEOBFromServer(String patientID, OffsetDateTime sinceTime);
     Bundle requestNextBundleFromServer(Bundle bundle);
-    Bundle requestPatientFromServer(String patientId);
+    Bundle requestPatientByHICN(String patientId);
+    Bundle requestPatientByMBI(String patientId);
 
     /**
      * Request BFD for a list of all active patients in a contract for a specific month
