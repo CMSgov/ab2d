@@ -114,7 +114,7 @@ variable "postgres_engine_version" {
 }
 
 variable "db_instance_class" {
-  default = "db.r4.4xlarge"
+  default = "db.m4.2xlarge"
 }
 
 variable "db_snapshot_id" {
