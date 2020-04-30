@@ -24,6 +24,11 @@ module "kms" {
   ab2d_instance_role_name = module.iam.ab2d_instance_role_name
 }
 
+module "static_website" {
+  source                  = "../../modules/static_website"
+  env                     = var.env
+}
+
 module "db" {
   source                  = "../../modules/db"
   allocated_storage_size  = var.db_allocated_storage_size
