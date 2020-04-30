@@ -40,9 +40,9 @@ public class SqlEventLogger implements EventLogger {
     }
 
     public void updateAwsId(String awsId, LoggableEvent event) {
-        if (event != null && event.getAwsId() != null && event.getId() != null && event.getId() > 0) {
+        if (event != null && awsId != null && event.getId() != null && event.getId() > 0) {
             this.template.update("UPDATE " + mapperConfig.getTableMapper(event.getClass()) +
-                    " SET aws_id = ? WHERE id = ?", event.getAwsId(), event.getId());
+                    " SET aws_id = ? WHERE id = ?", awsId, event.getId());
         }
     }
 }
