@@ -13,6 +13,8 @@ import org.json.JSONObject;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.http.HttpResponse;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
@@ -29,8 +31,8 @@ public class TestRunner extends AbstractJavaSamplerClient {
     @Override
     public Arguments getDefaultParameters() {
         final Arguments arguments = new Arguments();
-        arguments.addArgument("contracts", "S0003");
-        arguments.addArgument("api-url", "http://localhost:8080/api/v1/fhir/");
+        arguments.addArgument("contracts", "Z0003");
+        arguments.addArgument("api-url", "https://localhost:8080/api/v1/fhir/");
         arguments.addArgument("okta-url", "https://test.idp.idm.cms.gov/oauth2/aus2r7y3gdaFMKBol297/v1/token");
 
         return arguments;
@@ -44,7 +46,7 @@ public class TestRunner extends AbstractJavaSamplerClient {
         String oktaClientPassword = System.getenv("AB2D_OKTA_CLIENT_PASSWORD");
         try {
             apiClient = new APIClient(apiUrl, oktaUrl, oktaClientId, oktaClientPassword);
-        } catch (IOException | InterruptedException | JSONException e) {
+        } catch (IOException | InterruptedException | JSONException | NoSuchAlgorithmException | KeyManagementException e) {
             throw new RuntimeException(e);
         }
 

@@ -50,7 +50,10 @@ public class BFDClientImpl implements BFDClient {
     private IGenericClient client;
 
     @Value("${bfd.hicn.hash}")
-    private String hcinHash;
+    private String hicnHash;
+
+    @Value("${bfd.mbi.hash}")
+    private String mbiHash;
 
     @NotEmpty
     @Value("${bfd.hash.pepper}")
@@ -143,35 +146,61 @@ public class BFDClientImpl implements BFDClient {
             backoff = @Backoff(delayExpression = "${bfd.retry.backoffDelay:250}", multiplier = 2),
             exclude = { ResourceNotFoundException.class }
     )
-    public Bundle requestPatientFromServer(String hicn) {
-        String hicnHashVal = hashHICN(hicn, bfdHashPepper, bfdHashIter);
-        ICriterion hicnHashEquals = new TokenClientParam("identifier").exactly()
-                .systemAndCode(hcinHash, hicnHashVal);
+    public Bundle requestPatientByHICN(String hicn) {
+        String hicnHashVal = hashIdentifier(hicn, bfdHashPepper, bfdHashIter);
+        ICriterion hicnHashEquals = generateHash(hicnHash, hicnHashVal);
+        return clientSearch(hicnHashEquals);
+    }
+
+    private Bundle clientSearch(ICriterion hashEquals) {
         return client.search()
                 .forResource(Patient.class)
-                .where(hicnHashEquals)
+                .where(hashEquals)
                 .withAdditionalHeader("IncludeIdentifiers", "true")
                 .returnBundle(Bundle.class)
                 .encodedJson()
                 .execute();
     }
 
+    private ICriterion generateHash(String hash, String hashVal) {
+        return new TokenClientParam("identifier").exactly()
+                .systemAndCode(hash, hashVal);
+    }
+
     /**
-     * Hash the HICN Id
+     * Pull all the data (specifically IDs) from the patient
      *
-     * @param hicn - The HCIN id
+     * @param mbi - The MBI id
+     * @return The bundle containing the patient object
+     */
+    @Override
+    @Retryable(
+            maxAttemptsExpression = "${bfd.retry.maxAttempts:3}",
+            backoff = @Backoff(delayExpression = "${bfd.retry.backoffDelay:250}", multiplier = 2),
+            exclude = { ResourceNotFoundException.class }
+    )
+    public Bundle requestPatientByMBI(String mbi) {
+        String hashVal = hashIdentifier(mbi, bfdHashPepper, bfdHashIter);
+        ICriterion mbiHashEquals = generateHash(mbiHash, hashVal);
+        return clientSearch(mbiHashEquals);
+    }
+
+    /**
+     * Hash the identifier
+     *
+     * @param identifier - The patient identifier
      * @param pepper - The pepper to put into the algorithm
      * @param iterations - The number of iterations
      * @return the hashed value
      */
-    private static String hashHICN(String hicn, String pepper, int iterations) {
+    private static String hashIdentifier(String identifier, String pepper, int iterations) {
         try {
-            KeySpec keySpec = new PBEKeySpec(hicn.toCharArray(), Hex.decodeHex(pepper), iterations, 256);
+            KeySpec keySpec = new PBEKeySpec(identifier.toCharArray(), Hex.decodeHex(pepper), iterations, 256);
             SecretKeyFactory skf = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
             SecretKey secretKey = skf.generateSecret(keySpec);
             return Hex.encodeHexString(secretKey.getEncoded());
         } catch (DecoderException | NoSuchAlgorithmException | InvalidKeySpecException e) {
-            throw new ResourceNotFoundException("Could not hash HICN");
+            throw new ResourceNotFoundException("Could not hash identifier");
         }
     }
 
@@ -205,7 +234,6 @@ public class BFDClientImpl implements BFDClient {
                 .forResource(Patient.class)
                 .where(theCriterion)
                 .count(contractToBenePageSize)
-                .withAdditionalHeader("IncludeIdentifiers", "true")
                 .returnBundle(Bundle.class)
                 .encodedJson()
                 .execute();

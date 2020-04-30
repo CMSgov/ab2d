@@ -15,6 +15,7 @@ import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.data.util.Pair;
 import org.testcontainers.containers.DockerComposeContainer;
+import org.testcontainers.containers.output.Slf4jLogConsumer;
 import org.testcontainers.containers.wait.strategy.HostPortWaitStrategy;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.yaml.snakeyaml.Yaml;
@@ -30,6 +31,8 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.OffsetDateTime;
@@ -88,12 +91,12 @@ public class TestRunner {
         }
     }
 
-    public TestRunner(Environment environment) throws IOException, InterruptedException, JSONException {
+    public TestRunner(Environment environment) throws IOException, InterruptedException, JSONException, NoSuchAlgorithmException, KeyManagementException {
         this.environment = environment;
         init();
     }
 
-    public void init() throws IOException, InterruptedException, JSONException {
+    public void init() throws IOException, InterruptedException, JSONException, KeyManagementException, NoSuchAlgorithmException {
         if(environment.isUsesDockerCompose()) {
             DockerComposeContainer container = new DockerComposeContainer(
                     new File("../docker-compose.yml"))
@@ -101,10 +104,10 @@ public class TestRunner {
                     .withLocalCompose(true)
                     .withScaledService("worker", 2)
                     .withExposedService("db", 5432)
-                    .withExposedService("api", 8080, new HostPortWaitStrategy()
-                        .withStartupTimeout(Duration.of(150, SECONDS)));
-                     //.withLogConsumer("worker", new Slf4jLogConsumer(log)) // Use to debug, for now there's too much log data
-                     //.withLogConsumer("api", new Slf4jLogConsumer(log));
+                    .withExposedService("api", 8443, new HostPortWaitStrategy()
+                        .withStartupTimeout(Duration.of(150, SECONDS)))
+                     .withLogConsumer("worker", new Slf4jLogConsumer(log)) // Use to debug, for now there's too much log data
+                     .withLogConsumer("api", new Slf4jLogConsumer(log));
             container.start();
         }
 
@@ -202,7 +205,7 @@ public class TestRunner {
         JSONArray output = json.getJSONArray("output");
         JSONObject outputObject = output.getJSONObject(0);
         String url = outputObject.getString("url");
-        String filestem = AB2D_API_URL + "Job/" + jobUuid + "/file/S0000_0001.";
+        String filestem = AB2D_API_URL + "Job/" + jobUuid + "/file/Z0000_0001.";
         Assert.assertTrue(url.equals(filestem + "ndjson") || (url.equals(filestem + "zip")));
         String type = outputObject.getString("type");
         Assert.assertEquals(type, "ExplanationOfBenefit");
@@ -394,7 +397,7 @@ public class TestRunner {
         Assert.assertEquals(202, exportResponse.statusCode());
         List<String> contentLocationList = exportResponse.headers().map().get("content-location");
 
-        Pair<String, JSONArray> downloadDetails = performStatusRequests(contentLocationList, false, "S0000");
+        Pair<String, JSONArray> downloadDetails = performStatusRequests(contentLocationList, false, "Z0000");
         downloadFile(downloadDetails, null, null);
     }
 
@@ -406,7 +409,7 @@ public class TestRunner {
         Assert.assertEquals(202, exportResponse.statusCode());
         List<String> contentLocationList = exportResponse.headers().map().get("content-location");
 
-        Pair<String, JSONArray> downloadDetails = performStatusRequests(contentLocationList, false, "S0000");
+        Pair<String, JSONArray> downloadDetails = performStatusRequests(contentLocationList, false, "Z0000");
         if (downloadDetails != null) {
             downloadFile(downloadDetails, earliest, null);
         }
@@ -434,7 +437,7 @@ public class TestRunner {
     @Test
     @Order(5)
     public void runContractNumberExport() throws IOException, InterruptedException, JSONException {
-        String contractNumber = "S0000";
+        String contractNumber = "Z0000";
         HttpResponse<String> exportResponse = apiClient.exportByContractRequest(contractNumber, FHIR_TYPE, null);
         Assert.assertEquals(202, exportResponse.statusCode());
         List<String> contentLocationList = exportResponse.headers().map().get("content-location");
@@ -446,7 +449,7 @@ public class TestRunner {
     @Test
     @Order(6)
     void runContractNumberZipExport() throws IOException, InterruptedException, JSONException {
-        String contractNumber = "S0000";
+        String contractNumber = "Z0000";
         HttpResponse<String> exportResponse = apiClient.exportByContractRequest(contractNumber, ZIPFORMAT, null);
         Assert.assertEquals(400, exportResponse.statusCode());
     }
@@ -467,8 +470,9 @@ public class TestRunner {
 
     @Test
     @Order(8)
-    public void testUserCannotDownloadOtherUsersJob() throws IOException, InterruptedException, JSONException {
-        String contractNumber = "S0000";
+
+    public void testUserCannotDownloadOtherUsersJob() throws IOException, InterruptedException, JSONException, NoSuchAlgorithmException, KeyManagementException {
+        String contractNumber = "Z0000";
         HttpResponse<String> exportResponse = apiClient.exportByContractRequest(contractNumber, FHIR_TYPE, null);
         Assert.assertEquals(202, exportResponse.statusCode());
         List<String> contentLocationList = exportResponse.headers().map().get("content-location");
@@ -483,7 +487,7 @@ public class TestRunner {
 
     @Test
     @Order(9)
-    public void testUserCannotDeleteOtherUsersJob() throws IOException, InterruptedException, JSONException {
+    public void testUserCannotDeleteOtherUsersJob() throws IOException, InterruptedException, JSONException, NoSuchAlgorithmException, KeyManagementException {
         HttpResponse<String> exportResponse = apiClient.exportRequest(FHIR_TYPE, null);
 
         Assert.assertEquals(202, exportResponse.statusCode());
@@ -503,7 +507,7 @@ public class TestRunner {
 
     @Test
     @Order(10)
-    public void testUserCannotCheckStatusOtherUsersJob() throws IOException, InterruptedException, JSONException {
+    public void testUserCannotCheckStatusOtherUsersJob() throws IOException, InterruptedException, JSONException, NoSuchAlgorithmException, KeyManagementException {
         HttpResponse<String> exportResponse = apiClient.exportRequest(FHIR_TYPE, null);
 
         Assert.assertEquals(202, exportResponse.statusCode());
@@ -520,7 +524,7 @@ public class TestRunner {
         Assert.assertEquals(202, secondDeleteResponse.statusCode());
     }
 
-    private APIClient createSecondUserClient() throws InterruptedException, JSONException, IOException {
+    private APIClient createSecondUserClient() throws InterruptedException, JSONException, IOException, KeyManagementException, NoSuchAlgorithmException {
         String oktaUrl = yamlMap.get("okta-url");
 
         String oktaClientId = System.getenv("SECONDARY_USER_OKTA_CLIENT_ID");
@@ -621,7 +625,7 @@ public class TestRunner {
         Assert.assertEquals(202, exportResponse.statusCode());
         List<String> contentLocationList = exportResponse.headers().map().get("content-location");
 
-        Pair<String, JSONArray> downloadDetails = performStatusRequests(contentLocationList, false, "S0000");
+        Pair<String, JSONArray> downloadDetails = performStatusRequests(contentLocationList, false, "Z0000");
         downloadFile(downloadDetails, null, "19990000002906"); // User should not be included
     }
 }

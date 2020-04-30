@@ -116,31 +116,31 @@ First, we will prepare an "ab2d" Collection in Postman.
     <tbody>
         <tr>
             <td>PDP-100</td>
-            <td>S0000</td>
+            <td>Z0000</td>
             <td>0oa2t0lsrdZw5uWRx297</td>
             <td>HHduWG6LogIvDIQuWgp3Zlo9OYMValTtH5OBcuHw</td>
         </tr>
         <tr>
             <td>PDP-1000</td>
-            <td>S0001</td>
+            <td>Z0001</td>
             <td>0lc65ErV8OmY297</td>
             <td>GO6eglkXUDtjVjto3L-3C0offzTMk2qlz9r</td>
         </tr>
         <tr>
             <td>PDP-2000</td>
-            <td>S0002</td>
+            <td>Z0002</td>
             <td>0oa2t0lkicpxFGkGt297</td>
             <td>eDpanJTtw90vY2viYlX4o2rgVRIR4tDRH0mWr9vN</td>
         </tr>
         <tr>
             <td>PDP-5000</td>
-            <td>S0005</td>
+            <td>Z0005</td>
             <td>0oa2t0l6c1tQbTikz297</td>
             <td>80zX-7GeiMiiA6zVghiqYZL82oLAWSxhgfBkfo0T</td>
         </tr>
         <tr>
             <td>PDP-10000</td>
-            <td>S0010</td>
+            <td>Z0010</td>
             <td>0oa2t0lm9qoAtJHqC297</td>
             <td>ybR60JmtcpRt6SAeLmvbq6l-3YDRCZP-WN1At6t_</td>
         </tr>
@@ -383,7 +383,7 @@ These instructions will initiate a part A & B bulk claim export job
 
     Example:
 
-        "url": "http://sandbox.ab2d.cms.gov/api/v1/fhir/Job/afc222d1-a55b-403b-ad22-49f5aefec4b6/file/S0000_0001.ndjson"
+        "url": "http://sandbox.ab2d.cms.gov/api/v1/fhir/Job/afc222d1-a55b-403b-ad22-49f5aefec4b6/file/Z0000_0001.ndjson"
 
 1. If the file download endpoint is not visible, select <b>Download</b>
 
@@ -396,7 +396,7 @@ expand the details of the operation
 
     Example:
 
-        S0000_0001.ndjson
+        Z0000_0001.ndjson
 
 1. Type the job id in the A job identifier text box
 
@@ -479,7 +479,7 @@ This section will show you how to initiate a Part A & B bulk claim export job fo
 
     Example:
 
-        S0000
+        Z0000
 
 1. Select Execute
 
@@ -521,7 +521,7 @@ This section will show you how to initiate a Part A & B bulk claim export job fo
 
     Example:
 
-        "url": "http://sandbox.ab2d.cms.gov/api/v1/fhir/Job/6c5df22b-61cc-4c3d-815f-4e56aa647699/file/S0000_0001.ndjson"
+        "url": "http://sandbox.ab2d.cms.gov/api/v1/fhir/Job/6c5df22b-61cc-4c3d-815f-4e56aa647699/file/Z0000_0001.ndjson"
 
 1. If the download endpoint is not visible, select <b>Download</b>
 
@@ -533,7 +533,7 @@ This section will show you how to initiate a Part A & B bulk claim export job fo
 
     Example:
 
-        S0000_0001.ndjson
+        Z0000_0001.ndjson
 
 1. Type the job id in the <b>A job identifier</b> text box
 
