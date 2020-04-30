@@ -110,7 +110,7 @@ class OptOutProcessorIntegrationTest {
         assertThat(optOutRowsBeforeProcessing, is(empty()));
         assertThat(optOutRowsAfterProcessing, is(not(empty())));
 
-        assertThat(optOutRowsAfterProcessing.size(), is(7));
+        assertThat(optOutRowsAfterProcessing.size(), is(10));
 
         final OptOut optOut = optOutRepo.findByCcwId("20010000001115").get(0);
         assertThat(optOut.getPolicyCode(), is("OPTOUT"));
@@ -128,7 +128,7 @@ class OptOutProcessorIntegrationTest {
         ReloadEvent requestEvent = (ReloadEvent) reloadEvents.get(0);
         assertEquals(ReloadEvent.FileType.OPT_OUT, requestEvent.getFileType());
         assertEquals(testInputFile, requestEvent.getFileName());
-        assertEquals(18, requestEvent.getNumberLoaded());
+        assertEquals(24, requestEvent.getNumberLoaded());
 
         assertTrue(UtilMethods.allEmpty(
                 loadObjects.loadAllApiRequestEvent(),
