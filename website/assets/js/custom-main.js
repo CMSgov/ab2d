@@ -15,6 +15,20 @@
         }
     });
 
+    // Activate anchor link scrolling. The selectors can be more specific if additional anchor links for
+    // different purposes than using the scroll to are added
+    $(document).on('click', 'a[href^="#"]', function (event) {
+        $('.navbar-nav .nav-item').each(function () {
+            $(this).removeClass('active');
+        });
+        $(this).parent().addClass('active');
+        event.preventDefault();
+
+        $('html, body').animate({
+            scrollTop: $($.attr(this, 'href')).offset().top
+        }, 1000);
+    });
+
     // Closes responsive menu when a scroll trigger link is clicked
     $('.js-scroll-trigger').click(function() {
         $('.navbar-collapse').collapse('hide');
