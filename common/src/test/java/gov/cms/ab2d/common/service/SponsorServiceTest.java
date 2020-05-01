@@ -46,7 +46,6 @@ public class SponsorServiceTest {
         sponsorRepository.deleteAll();
     }
 
-
     @Test
     public void testSponsors() {
         Sponsor parent = new Sponsor();

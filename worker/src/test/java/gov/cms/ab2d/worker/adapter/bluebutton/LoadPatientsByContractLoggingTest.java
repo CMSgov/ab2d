@@ -5,16 +5,19 @@ import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.repository.ContractRepository;
 import gov.cms.ab2d.common.service.PropertiesService;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
-import gov.cms.ab2d.eventlogger.EventLogger;
+import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.LoggableEvent;
-import gov.cms.ab2d.eventlogger.events.ReloadEvent;
-import gov.cms.ab2d.eventlogger.reports.sql.LoadObjects;
+import gov.cms.ab2d.eventlogger.eventloggers.kinesis.KinesisEventLogger;
+import gov.cms.ab2d.eventlogger.eventloggers.sql.SqlEventLogger;
+import gov.cms.ab2d.eventlogger.events.*;
+import gov.cms.ab2d.eventlogger.reports.sql.DoAll;
 import gov.cms.ab2d.eventlogger.utils.UtilMethods;
 import gov.cms.ab2d.worker.SpringBootApp;
 import gov.cms.ab2d.worker.service.BeneficiaryService;
 import org.hl7.fhir.dstu3.model.Bundle;
 import org.hl7.fhir.dstu3.model.Identifier;
 import org.hl7.fhir.dstu3.model.Patient;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,7 +44,7 @@ public class LoadPatientsByContractLoggingTest {
     private BFDClient bfdClient;
 
     @Autowired
-    private LoadObjects loadObjects;
+    private DoAll doAll;
 
     @Mock
     private ContractRepository contractRepo;
@@ -53,15 +56,25 @@ public class LoadPatientsByContractLoggingTest {
     private PropertiesService propertiesService;
 
     @Autowired
-    private EventLogger eventLogger;
+    private SqlEventLogger sqlEventLogger;
+
+    @Mock
+    private KinesisEventLogger kinesisEventLogger;
+
+    private LogManager logManager;
 
     @Container
     private static final PostgreSQLContainer postgreSQLContainer= new AB2DPostgresqlContainer();
 
+    @BeforeEach
+    void setUp() {
+        logManager = new LogManager(sqlEventLogger, kinesisEventLogger);
+    }
+
     @Test
     public void testLogging() {
         ContractAdapterImpl cai = new ContractAdapterImpl(bfdClient, contractRepo, beneficiaryService,
-                propertiesService, eventLogger);
+                propertiesService, logManager);
 
         String contractId = "C1234";
         Bundle bundle = createBundle();
@@ -75,19 +88,19 @@ public class LoadPatientsByContractLoggingTest {
         lenient().when(contractRepo.findContractByContractNumber(anyString())).thenReturn(java.util.Optional.of(contract));
         cai.getPatients(contractId, 1);
 
-        List<LoggableEvent> reloadEvents = loadObjects.loadAllReloadEvent();
+        List<LoggableEvent> reloadEvents = doAll.load(ReloadEvent.class);
         assertEquals(1, reloadEvents.size());
         ReloadEvent reloadEvent = (ReloadEvent) reloadEvents.get(0);
         assertEquals(ReloadEvent.FileType.CONTRACT_MAPPING, reloadEvent.getFileType());
         assertEquals(1, reloadEvent.getNumberLoaded());
 
         assertTrue(UtilMethods.allEmpty(
-                loadObjects.loadAllApiRequestEvent(),
-                loadObjects.loadAllApiResponseEvent(),
-                loadObjects.loadAllContractBeneSearchEvent(),
-                loadObjects.loadAllErrorEvent(),
-                loadObjects.loadAllFileEvent(),
-                loadObjects.loadAllJobStatusChangeEvent()
+                doAll.load(ApiRequestEvent.class),
+                doAll.load(ApiResponseEvent.class),
+                doAll.load(ContractBeneSearchEvent.class),
+                doAll.load(ErrorEvent.class),
+                doAll.load(FileEvent.class),
+                doAll.load(JobStatusChangeEvent.class)
         ));
     }
 

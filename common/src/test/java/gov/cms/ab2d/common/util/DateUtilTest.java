@@ -1,8 +1,7 @@
 package gov.cms.ab2d.common.util;
 
-import gov.cms.ab2d.common.util.DateUtil;
 import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;

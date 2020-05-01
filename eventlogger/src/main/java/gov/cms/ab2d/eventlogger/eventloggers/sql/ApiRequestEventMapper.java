@@ -10,7 +10,6 @@ import org.springframework.jdbc.support.KeyHolder;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.time.OffsetDateTime;
 
 public class ApiRequestEventMapper extends SqlEventMapper {
     private NamedParameterJdbcTemplate template;
@@ -28,8 +27,8 @@ public class ApiRequestEventMapper extends SqlEventMapper {
 
         KeyHolder keyHolder = new GeneratedKeyHolder();
         String query = "insert into event_api_request " +
-                " (time_of_event, user_id, job_id, url, ip_address, token_hash, request_id) " +
-                " values (:time, :user, :job, :url, :ipAddress, :tokenHash, :requestId)";
+                " (time_of_event, user_id, job_id, url, ip_address, token_hash, request_id, aws_id, environment) " +
+                " values (:time, :user, :job, :url, :ipAddress, :tokenHash, :requestId, :awsId, :environment)";
 
         SqlParameterSource parameters = super.addSuperParams(event)
             .addValue("url", be.getUrl())
@@ -44,10 +43,7 @@ public class ApiRequestEventMapper extends SqlEventMapper {
     @Override
     public ApiRequestEvent mapRow(ResultSet resultSet, int i) throws SQLException {
         ApiRequestEvent event = new ApiRequestEvent();
-        event.setId(resultSet.getLong("id"));
-        event.setTimeOfEvent(resultSet.getObject("time_of_event", OffsetDateTime.class));
-        event.setUser(resultSet.getString("user_id"));
-        event.setJobId(resultSet.getString("job_id"));
+        extractSuperParams(resultSet, event);
 
         event.setUrl(resultSet.getString("url"));
         event.setIpAddress(resultSet.getString("ip_address"));

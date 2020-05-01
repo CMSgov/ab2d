@@ -1,7 +1,7 @@
 package gov.cms.ab2d.api.controller;
 
 import gov.cms.ab2d.api.util.HealthCheck;
-import gov.cms.ab2d.eventlogger.EventLogger;
+import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.events.ApiResponseEvent;
 import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,7 +20,7 @@ public class HealthAPI {
     private HealthCheck healthCheck;
 
     @Autowired
-    private EventLogger eventLogger;
+    private LogManager eventLogger;
 
     @GetMapping(HEALTH_ENDPOINT)
     public ResponseEntity<Void> getHealth(HttpServletRequest request) {

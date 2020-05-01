@@ -2,7 +2,7 @@ package gov.cms.ab2d.api.controller;
 
 import gov.cms.ab2d.api.config.SwaggerConfig;
 import gov.cms.ab2d.common.service.JobService;
-import gov.cms.ab2d.eventlogger.EventLogger;
+import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.events.ApiResponseEvent;
 import io.swagger.annotations.*;
 import lombok.extern.slf4j.Slf4j;
@@ -39,7 +39,7 @@ public class FileDownloadAPI {
     private JobService jobService;
 
     @Autowired
-    private EventLogger eventLogger;
+    private LogManager eventLogger;
 
     @ApiOperation(value = "Downloads a file produced by an export job.", response = String.class,
             produces = NDJSON_FIRE_CONTENT_TYPE + " or " + ZIPFORMAT,

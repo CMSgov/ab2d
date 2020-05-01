@@ -11,8 +11,14 @@ import java.time.OffsetDateTime;
 public abstract class LoggableEvent {
     public LoggableEvent() { }
 
-    // id
+    // If it's dev, prod, etc.
+    private String environment;
+
+    // DB id if there is one
     private Long id;
+
+    // AWS Id if there is one
+    private String awsId;
 
     // Time the event occurred
     private OffsetDateTime timeOfEvent;

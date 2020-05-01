@@ -2,7 +2,7 @@ package gov.cms.ab2d.optout;
 
 import gov.cms.ab2d.common.model.OptOut;
 import gov.cms.ab2d.common.repository.OptOutRepository;
-import gov.cms.ab2d.eventlogger.EventLogger;
+import gov.cms.ab2d.eventlogger.LogManager;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -25,7 +25,7 @@ class OptOutImporterUnitTest {
 
     @Mock private OptOutConverterService converterService;
     @Mock private OptOutRepository optOutRepo;
-    @Mock private EventLogger eventLogger;
+    @Mock private LogManager eventLogger;
 
     private OptOutImporter cut;
 
