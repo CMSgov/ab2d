@@ -172,3 +172,11 @@ module "waf" {
   env     = var.env
   alb_arn = module.api.alb_arn
 }
+
+# Kinesis Firehose Test
+
+module "kinesis_firehose" {
+  source   = "../../modules/kinesis_firehose"
+  database = var.kinesis_firehose_database
+  stream   = var.kinesis_firehose_stream
+}

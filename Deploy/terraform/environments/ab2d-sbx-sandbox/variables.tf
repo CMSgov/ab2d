@@ -369,3 +369,15 @@ variable "vpn_private_ip_address_cidr_range" {
   default = ""
   description = "Please pass this on command line and not as a value here"
 }
+
+# Kinesis Firehose Test
+
+variable "kinesis_firehose_database" {
+  default = ""
+  description = "Please pass this on command line and not as a value here"
+}
+
+variable "kinesis_firehose_stream" {
+  default = ""
+  description = "Please pass this on command line and not as a value here"
+}
