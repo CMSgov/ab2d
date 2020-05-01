@@ -9,8 +9,10 @@ import gov.cms.ab2d.common.service.JobService;
 import gov.cms.ab2d.common.util.DataSetup;
 import gov.cms.ab2d.eventlogger.LoggableEvent;
 import gov.cms.ab2d.eventlogger.events.FileEvent;
+import gov.cms.ab2d.eventlogger.reports.sql.DeleteObjects;
 import gov.cms.ab2d.eventlogger.reports.sql.LoadObjects;
 import gov.cms.ab2d.eventlogger.utils.UtilMethods;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -65,6 +67,9 @@ public class FileDeletionServiceTest {
     @Autowired
     private LoadObjects loadObjects;
 
+    @Autowired
+    private DeleteObjects deleteObjects;
+
     private static final String TEST_FILE = "testFile.ndjson";
 
     private static final String TEST_FILE_NOT_DELETED = "testFileNotDeleted.ndjson";
@@ -84,6 +89,11 @@ public class FileDeletionServiceTest {
         BasicFileAttributeView attributes = Files.getFileAttributeView(path, BasicFileAttributeView.class);
         FileTime time = FileTime.fromMillis(LocalDate.now().minus(2, ChronoUnit.DAYS).toEpochDay());
         attributes.setTimes(time, time, time);
+    }
+
+    @BeforeEach
+    public void init() {
+        deleteObjects.deleteAllFileEvent();
     }
 
     @Test

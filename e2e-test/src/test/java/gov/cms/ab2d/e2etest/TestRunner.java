@@ -618,7 +618,6 @@ public class TestRunner {
     // Consider removing if tests are failing
     @Test
     @Order(16)
-    @Disabled
     public void testOptOut() throws IOException, InterruptedException, JSONException {
         HttpResponse<String> exportResponse = apiClient.exportRequest(FHIR_TYPE, null);
 
