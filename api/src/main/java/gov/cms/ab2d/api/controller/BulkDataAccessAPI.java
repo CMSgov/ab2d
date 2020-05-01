@@ -5,7 +5,7 @@ import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.service.InvalidUserInputException;
 import gov.cms.ab2d.common.service.JobService;
 import gov.cms.ab2d.common.service.PropertiesService;
-import gov.cms.ab2d.eventlogger.EventLogger;
+import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.events.ApiResponseEvent;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
@@ -78,7 +78,7 @@ public class BulkDataAccessAPI {
     private PropertiesService propertiesService;
 
     @Autowired
-    private EventLogger eventLogger;
+    private LogManager eventLogger;
 
     @ApiOperation(value = BULK_EXPORT,
         authorizations = {

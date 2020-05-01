@@ -10,11 +10,10 @@ import gov.cms.ab2d.common.model.JobStatus;
 import gov.cms.ab2d.common.model.Sponsor;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.repository.ContractRepository;
-import gov.cms.ab2d.eventlogger.EventLogger;
+import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.events.FileEvent;
 import gov.cms.ab2d.eventlogger.events.JobStatusChangeEvent;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
@@ -36,25 +35,24 @@ import static gov.cms.ab2d.common.util.Constants.ADMIN_ROLE;
 @Transactional
 public class JobServiceImpl implements JobService {
 
-    @Autowired
-    private UserService userService;
-
-    @Autowired
-    private JobRepository jobRepository;
-
-    @Autowired
-    private ContractRepository contractRepository;
-
-    @Autowired
-    private JobOutputService jobOutputService;
-
-    @Autowired
-    private EventLogger eventLogger;
+    private final UserService userService;
+    private final JobRepository jobRepository;
+    private final ContractRepository contractRepository;
+    private final JobOutputService jobOutputService;
+    private final LogManager eventLogger;
 
     @Value("${efs.mount}")
     private String fileDownloadPath;
 
     public static final String INITIAL_JOB_STATUS_MESSAGE = "0%";
+
+    public JobServiceImpl(UserService userService, JobRepository jobRepository, ContractRepository contractRepository, JobOutputService jobOutputService, LogManager eventLogger) {
+        this.userService = userService;
+        this.jobRepository = jobRepository;
+        this.contractRepository = contractRepository;
+        this.jobOutputService = jobOutputService;
+        this.eventLogger = eventLogger;
+    }
 
     @Override
     public Job createJob(String resourceTypes, String url, String outputFormat) {

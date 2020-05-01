@@ -5,11 +5,15 @@ import gov.cms.ab2d.common.model.*;
 import gov.cms.ab2d.common.repository.*;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.DataSetup;
+import gov.cms.ab2d.eventlogger.LogManager;
+import gov.cms.ab2d.eventlogger.eventloggers.kinesis.KinesisEventLogger;
+import gov.cms.ab2d.eventlogger.eventloggers.sql.SqlEventLogger;
 import org.apache.commons.io.IOUtils;
 import org.junit.Assert;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -18,6 +22,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.transaction.TransactionSystemException;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
@@ -31,6 +36,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.OffsetDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -49,7 +55,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 @Testcontainers
 public class JobServiceTest {
 
-    @Autowired
     private JobService jobService;
 
     @Autowired
@@ -79,12 +84,25 @@ public class JobServiceTest {
     @Autowired
     private RoleService roleService;
 
+    @Autowired
+    private JobOutputService jobOutputService;
+
+    @Autowired
+    private SqlEventLogger sqlEventLogger;
+
+    @Mock
+    private KinesisEventLogger kinesisEventLogger;
+
     @Container
     private static final PostgreSQLContainer postgreSQLContainer= new AB2DPostgresqlContainer();
 
     // Be safe and make sure nothing from another test will impact current test
     @BeforeEach
     public void setup() {
+        LogManager logManager = new LogManager(sqlEventLogger, kinesisEventLogger);
+        jobService = new JobServiceImpl(userService, jobRepository, contractRepository, jobOutputService, logManager);
+        ReflectionTestUtils.setField(jobService, "fileDownloadPath", tmpJobLocation);
+
         contractRepository.deleteAll();
         jobRepository.deleteAll();
         userRepository.deleteAll();
@@ -423,7 +441,7 @@ public class JobServiceTest {
         job.setResourceTypes(EOB);
         job.setRequestUrl("http://localhost");
         job.setStatusMessage("Pending");
-        job.setExpiresAt(now);
+        job.setExpiresAt(now.plus(1, ChronoUnit.HOURS));
         job.setUser(userService.getCurrentUser());
 
         JobOutput jobOutput = new JobOutput();

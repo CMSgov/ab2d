@@ -10,7 +10,6 @@ import org.springframework.jdbc.support.KeyHolder;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.time.OffsetDateTime;
 
 public class ReloadEventMapper extends SqlEventMapper {
     private NamedParameterJdbcTemplate template;
@@ -28,8 +27,8 @@ public class ReloadEventMapper extends SqlEventMapper {
 
         KeyHolder keyHolder = new GeneratedKeyHolder();
         String query = "insert into event_bene_reload " +
-                " (time_of_event, user_id, job_id, file_type, file_name, number_loaded) " +
-                " values (:time, :user, :job, :fileType, :fileName, :numLoaded)";
+                " (time_of_event, user_id, job_id, file_type, file_name, number_loaded, aws_id, environment) " +
+                " values (:time, :user, :job, :fileType, :fileName, :numLoaded, :awsId, :environment)";
 
         SqlParameterSource parameters = super.addSuperParams(event)
                 .addValue("fileType", be.getFileType() == null ? null : be.getFileType().name())
@@ -43,10 +42,7 @@ public class ReloadEventMapper extends SqlEventMapper {
     @Override
     public ReloadEvent mapRow(ResultSet resultSet, int i) throws SQLException {
         ReloadEvent event = new ReloadEvent();
-        event.setId(resultSet.getLong("id"));
-        event.setTimeOfEvent(resultSet.getObject("time_of_event", OffsetDateTime.class));
-        event.setUser(resultSet.getString("user_id"));
-        event.setJobId(resultSet.getString("job_id"));
+        extractSuperParams(resultSet, event);
 
         event.setFileType(ReloadEvent.FileType.valueOf(resultSet.getString("file_type")));
         event.setFileName(resultSet.getString("file_name"));

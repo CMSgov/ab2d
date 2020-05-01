@@ -2,7 +2,7 @@ package gov.cms.ab2d.optout;
 
 import gov.cms.ab2d.common.model.OptOut;
 import gov.cms.ab2d.common.repository.OptOutRepository;
-import gov.cms.ab2d.eventlogger.EventLogger;
+import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.events.ReloadEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,7 +22,7 @@ public class OptOutImporterImpl implements OptOutImporter {
 
     private final OptOutRepository optOutRepository;
     private final OptOutConverterService optOutConverterService;
-    private final EventLogger eventLogger;
+    private final LogManager eventLogger;
 
     @Override
     @Transactional
