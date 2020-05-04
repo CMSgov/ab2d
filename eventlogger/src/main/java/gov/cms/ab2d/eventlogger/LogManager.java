@@ -23,8 +23,9 @@ public class LogManager {
         // Save to the database
         sqlEventLogger.log(event);
 
-        // This event will contain the db id
-        kinesisEventLogger.log(event);
+        // This event will contain the db id, block so we can get the
+        // aws id.
+        kinesisEventLogger.log(event, true);
 
         // This event will not contain the AWS Id, update event in the DB
         sqlEventLogger.updateAwsId(event.getAwsId(), event);
