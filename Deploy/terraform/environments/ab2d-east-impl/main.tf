@@ -65,7 +65,7 @@ module "api" {
   alpha                             = var.private_subnet_ids[0]
   beta                              = var.private_subnet_ids[1]
   logging_bucket                    = var.logging_bucket_name
-  healthcheck_url                   = var.elb_healthcheck_url
+  # healthcheck_url                   = var.elb_healthcheck_url
   iam_instance_profile              = var.ec2_iam_profile
   iam_role_arn                      = "arn:aws:iam::${var.aws_account_number}:role/Ab2dInstanceRole"
   desired_instances                 = var.ec2_desired_instance_count_api
@@ -171,4 +171,16 @@ module "waf" {
   source  = "../../modules/waf"
   env     = var.env
   alb_arn = module.api.alb_arn
+}
+
+# Kinesis Firehose
+
+module "kinesis_firehose" {
+  source                            = "../../modules/kinesis_firehose"
+  aws_account_number                = var.aws_account_number
+  env                               = var.env
+  kinesis_firehose_bucket           = var.kinesis_firehose_bucket
+  kinesis_firehose_delivery_streams = var.kinesis_firehose_delivery_streams
+  kinesis_firehose_kms_key_arn      = var.kinesis_firehose_kms_key_arn
+  kinesis_firehose_role             = var.kinesis_firehose_role
 }
