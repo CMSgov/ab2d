@@ -173,10 +173,14 @@ module "waf" {
   alb_arn = module.api.alb_arn
 }
 
-# Kinesis Firehose Test
+# Kinesis Firehose
 
 module "kinesis_firehose" {
-  source   = "../../modules/kinesis_firehose"
-  database = var.kinesis_firehose_database
-  stream   = var.kinesis_firehose_stream
+  source                            = "../../modules/kinesis_firehose"
+  aws_account_number                = var.aws_account_number
+  env                               = var.env
+  kinesis_firehose_bucket           = var.kinesis_firehose_bucket
+  kinesis_firehose_delivery_streams = var.kinesis_firehose_delivery_streams
+  kinesis_firehose_kms_key_arn      = var.kinesis_firehose_kms_key_arn
+  kinesis_firehose_role             = var.kinesis_firehose_role
 }
