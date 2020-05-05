@@ -182,7 +182,7 @@ if [ -z "${S3_AUTOMATION_BUCKET_EXISTS}" ]; then
   
   aws --region "${AWS_DEFAULT_REGION}" s3api put-public-access-block \
     --bucket ${S3_AUTOMATION_BUCKET} \
-    --public-access-block-configuration BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true  
+    --public-access-block-configuration BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true
 fi
 
 # Create or verify S3 environment bucket
