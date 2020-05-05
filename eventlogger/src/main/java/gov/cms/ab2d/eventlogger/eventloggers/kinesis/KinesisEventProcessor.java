@@ -21,7 +21,7 @@ public class KinesisEventProcessor implements Callable<Void> {
     private AmazonKinesisFirehose client;
     private String streamId;
     private LoggableEvent event;
-    private static final ObjectMapper mapper = new ObjectMapper()
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper()
             .registerModule(new ParameterNamesModule())
             .registerModule(new Jdk8Module())
             .registerModule(new JavaTimeModule());
@@ -33,7 +33,7 @@ public class KinesisEventProcessor implements Callable<Void> {
     }
 
     static String getJsonString(LoggableEvent event) throws JsonProcessingException {
-        return mapper.writeValueAsString(event);
+        return OBJECT_MAPPER.writeValueAsString(event);
     }
 
     @Override
