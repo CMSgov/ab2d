@@ -369,3 +369,32 @@ variable "vpn_private_ip_address_cidr_range" {
   default = ""
   description = "Please pass this on command line and not as a value here"
 }
+
+#
+# Kinesis Firehose specific variables
+#
+
+variable "kinesis_firehose_bucket" {
+  default = "bfd-insights-ab2d-577373831711"
+}
+
+variable "kinesis_firehose_delivery_streams" {
+  default = [
+    "api_request_event",
+    "api_response_event",
+    "beneficiary_search_event",
+    "contract_bene_search_event",
+    "error_event",
+    "file_event",
+    "job_status_change_event",
+    "reload_event"
+  ]
+}
+
+variable "kinesis_firehose_kms_key_arn" {
+  default = "arn:aws:kms:us-east-1:577373831711:key/97973f21-cdc5-421e-83a8-8545b007999f"
+}
+
+variable "kinesis_firehose_role" {
+  default = "Ab2dBfdInsightsRole"
+}
