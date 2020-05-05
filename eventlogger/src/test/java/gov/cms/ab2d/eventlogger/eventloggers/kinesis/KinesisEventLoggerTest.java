@@ -109,26 +109,9 @@ class KinesisEventLoggerTest {
         e.setJobId("JOB123");
         e.setTimeOfEvent(OffsetDateTime.now());
         e.setUser("ME");
-        logger.log(e);
-        logger.log(e);
-        logger.log(e);
-        logger.log(e);
-        logger.log(e);
-        logger.log(e);
-        logger.log(e);
-        logger.log(e);
-        logger.log(e);
-        logger.log(e);
-        logger.log(e);
-        logger.log(e);
-        logger.log(e);
-        logger.log(e);
-        logger.log(e);
-        logger.log(e);
-        logger.log(e);
-        logger.log(e);
-        logger.log(e);
-        logger.log(e);
+        for (int i = 0; i < 20; i++) {
+            logger.log(e, false);
+        }
         while (!logger.isFinished()) {
             Thread.sleep(1000);
         }

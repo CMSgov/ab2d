@@ -8,7 +8,10 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
 
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 @Service
 @Slf4j
@@ -37,12 +40,10 @@ public class KinesisEventLogger implements EventLogger {
         KinesisEventProcessor processor = new KinesisEventProcessor(event, client, streamId);
         Future<Void> future = ex.submit(processor);
         if (block) {
-            while (!future.isDone()) {
-                try {
-                    Thread.sleep(10);
-                } catch (InterruptedException e) {
-                    log.error("Unable to wait for thread to sleep", e);
-                }
+            try {
+                future.get(10, TimeUnit.SECONDS);
+            } catch (InterruptedException | ExecutionException | TimeoutException e) {
+                log.error("Unable to wait for thread to sleep", e);
             }
         }
     }
