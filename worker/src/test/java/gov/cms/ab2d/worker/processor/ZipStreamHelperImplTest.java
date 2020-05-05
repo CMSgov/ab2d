@@ -1,6 +1,6 @@
 package gov.cms.ab2d.worker.processor;
 
-import gov.cms.ab2d.eventlogger.EventLogger;
+import gov.cms.ab2d.eventlogger.LogManager;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -23,7 +23,7 @@ class ZipStreamHelperImplTest {
     @TempDir
     File tmpDirFolder;
 
-    @Mock private EventLogger eventLogger;
+    @Mock private LogManager eventLogger;
 
     @BeforeEach
     void init() {

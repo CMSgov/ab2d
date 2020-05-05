@@ -5,7 +5,7 @@ import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.repository.ContractRepository;
 import gov.cms.ab2d.common.service.PropertiesService;
-import gov.cms.ab2d.eventlogger.EventLogger;
+import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.worker.service.BeneficiaryService;
 import org.hl7.fhir.dstu3.model.Bundle;
 import org.hl7.fhir.dstu3.model.Bundle.BundleEntryComponent;
@@ -46,7 +46,7 @@ class ContractAdapterTest {
     @Mock ContractRepository contractRepository;
     @Mock BeneficiaryService beneficiaryService;
     @Mock PropertiesService propertiesService;
-    @Mock EventLogger eventLogger;
+    @Mock LogManager eventLogger;
 
     private ContractAdapter cut;
     private String contractNumber = "S0000";

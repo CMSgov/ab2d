@@ -5,6 +5,8 @@ import com.newrelic.api.agent.Token;
 import com.newrelic.api.agent.Trace;
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.util.FHIRUtil;
+import gov.cms.ab2d.eventlogger.LogManager;
+import gov.cms.ab2d.eventlogger.events.BeneficiarySearchEvent;
 import gov.cms.ab2d.filter.ExplanationOfBenefitTrimmer;
 import gov.cms.ab2d.filter.FilterOutByDate;
 import gov.cms.ab2d.worker.processor.domainmodel.PatientClaimsRequest;
@@ -41,6 +43,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
 
     private final BFDClient bfdClient;
     private final FhirContext fhirContext;
+    private final LogManager logManager;
 
     @Value("${claims.skipBillablePeriodCheck}")
     private boolean skipBillablePeriodCheck;
@@ -108,7 +111,24 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
         var patient = request.getPatientDTO();
         var attTime = request.getAttTime();
 
-        Bundle eobBundle = bfdClient.requestEOBFromServer(patient.getPatientId(), request.getSinceTime());
+        OffsetDateTime start = OffsetDateTime.now();
+        Bundle eobBundle;
+        try {
+            eobBundle = bfdClient.requestEOBFromServer(patient.getPatientId(), request.getSinceTime());
+            logManager.log(LogManager.LogType.KINESIS,
+                    new BeneficiarySearchEvent(request.getUser(), request.getJob(), request.getContractNum(),
+                            start, OffsetDateTime.now(),
+                            request.getPatientDTO() != null ? request.getPatientDTO().getPatientId() : null,
+                            "SUCCESS"));
+
+        } catch (Exception ex) {
+            logManager.log(LogManager.LogType.KINESIS,
+                    new BeneficiarySearchEvent(request.getUser(), request.getJob(), request.getContractNum(),
+                            start, OffsetDateTime.now(),
+                            request.getPatientDTO() != null ? request.getPatientDTO().getPatientId() : null,
+                            "ERROR: " + ex.getMessage()));
+            throw ex;
+        }
 
         final List<BundleEntryComponent> entries = eobBundle.getEntry();
         final List<Resource> resources = extractResources(entries, patient.getDateRangesUnderContract(), attTime);

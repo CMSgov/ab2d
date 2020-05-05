@@ -9,7 +9,7 @@ import gov.cms.ab2d.common.model.JobStatus;
 import gov.cms.ab2d.common.model.Sponsor;
 import gov.cms.ab2d.common.repository.JobOutputRepository;
 import gov.cms.ab2d.common.repository.JobRepository;
-import gov.cms.ab2d.eventlogger.EventLogger;
+import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.events.ContractBeneSearchEvent;
 import gov.cms.ab2d.eventlogger.events.FileEvent;
 import gov.cms.ab2d.eventlogger.events.JobStatusChangeEvent;
@@ -64,7 +64,7 @@ public class JobProcessorImpl implements JobProcessor {
     private final JobOutputRepository jobOutputRepository;
     private final ContractAdapter contractAdapter;
     private final ContractProcessor contractProcessor;
-    private final EventLogger eventLogger;
+    private final LogManager eventLogger;
 
     /**
      * Load the job and process it
@@ -138,7 +138,8 @@ public class JobProcessorImpl implements JobProcessor {
             }
 
             // Create a holder for the contract, writer, progress tracker and attested date
-            var contractData = new ContractData(contract, progressTracker, contract.getAttestedOn(), job.getSince());
+            var contractData = new ContractData(contract, progressTracker, contract.getAttestedOn(), job.getSince(),
+                    job.getUser() != null ? job.getUser().getUsername() : null);
 
             final Segment contractSegment = NewRelic.getAgent().getTransaction().startSegment("Patient processing of contract " + contract.getContractNumber());
 

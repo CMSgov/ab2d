@@ -3,15 +3,11 @@ package gov.cms.ab2d.api.controller;
 import gov.cms.ab2d.api.SpringBootApp;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.Job;
-import gov.cms.ab2d.common.model.JobStatus;
 import gov.cms.ab2d.common.repository.*;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.eventlogger.LoggableEvent;
-import gov.cms.ab2d.eventlogger.events.ApiRequestEvent;
-import gov.cms.ab2d.eventlogger.events.ApiResponseEvent;
-import gov.cms.ab2d.eventlogger.events.ErrorEvent;
-import gov.cms.ab2d.eventlogger.reports.sql.DeleteObjects;
-import gov.cms.ab2d.eventlogger.reports.sql.LoadObjects;
+import gov.cms.ab2d.eventlogger.events.*;
+import gov.cms.ab2d.eventlogger.reports.sql.DoAll;
 import gov.cms.ab2d.eventlogger.utils.UtilMethods;
 import org.junit.Assert;
 import org.junit.jupiter.api.BeforeEach;
@@ -67,10 +63,7 @@ public class BulkDataAccessAPIUnusualDataTests {
     private ContractRepository contractRepository;
 
     @Autowired
-    private DeleteObjects deleteObjects;
-
-    @Autowired
-    private LoadObjects loadObjects;
+    private DoAll doAll;
 
     @Container
     private static final PostgreSQLContainer postgreSQLContainer= new AB2DPostgresqlContainer();
@@ -82,13 +75,7 @@ public class BulkDataAccessAPIUnusualDataTests {
         userRepository.deleteAll();
         roleRepository.deleteAll();
         sponsorRepository.deleteAll();
-        deleteObjects.deleteAllApiRequestEvent();
-        deleteObjects.deleteAllApiResponseEvent();
-        deleteObjects.deleteAllReloadEvent();
-        deleteObjects.deleteAllContractBeneSearchEvent();
-        deleteObjects.deleteAllErrorEvent();
-        deleteObjects.deleteAllFileEvent();
-        deleteObjects.deleteAllJobStatusChangeEvent();
+        doAll.delete();
     }
 
     @Test
@@ -100,22 +87,22 @@ public class BulkDataAccessAPIUnusualDataTests {
                 .contentType(MediaType.APPLICATION_JSON)
                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(403));
-        List<LoggableEvent> apiRequestEvents = loadObjects.loadAllApiRequestEvent();
+        List<LoggableEvent> apiRequestEvents = doAll.load(ApiRequestEvent.class);
         ApiRequestEvent requestEvent = (ApiRequestEvent) apiRequestEvents.get(0);
 
-        List<LoggableEvent> apiResponseEvents = loadObjects.loadAllApiResponseEvent();
+        List<LoggableEvent> apiResponseEvents = doAll.load(ApiResponseEvent.class);
         ApiResponseEvent responseEvent = (ApiResponseEvent) apiResponseEvents.get(0);
         assertEquals(requestEvent.getRequestId(), responseEvent.getRequestId());
 
-        List<LoggableEvent> errorEvents = loadObjects.loadAllErrorEvent();
+        List<LoggableEvent> errorEvents = doAll.load(ErrorEvent.class);
         ErrorEvent errorEvent = (ErrorEvent) errorEvents.get(0);
         assertEquals(errorEvent.getErrorType(), ErrorEvent.ErrorType.UNAUTHORIZED_CONTRACT);
 
         assertTrue(UtilMethods.allEmpty(
-                loadObjects.loadAllReloadEvent(),
-                loadObjects.loadAllContractBeneSearchEvent(),
-                loadObjects.loadAllJobStatusChangeEvent(),
-                loadObjects.loadAllFileEvent()
+                doAll.load(ReloadEvent.class),
+                doAll.load(ContractBeneSearchEvent.class),
+                doAll.load(JobStatusChangeEvent.class),
+                doAll.load(FileEvent.class)
         ));
     }
 
@@ -129,22 +116,22 @@ public class BulkDataAccessAPIUnusualDataTests {
                 .contentType(MediaType.APPLICATION_JSON)
                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(403));
-        List<LoggableEvent> apiRequestEvents = loadObjects.loadAllApiRequestEvent();
+        List<LoggableEvent> apiRequestEvents = doAll.load(ApiRequestEvent.class);
         ApiRequestEvent requestEvent = (ApiRequestEvent) apiRequestEvents.get(0);
 
-        List<LoggableEvent> apiResponseEvents = loadObjects.loadAllApiResponseEvent();
+        List<LoggableEvent> apiResponseEvents = doAll.load(ApiResponseEvent.class);
         ApiResponseEvent responseEvent = (ApiResponseEvent) apiResponseEvents.get(0);
         assertEquals(requestEvent.getRequestId(), responseEvent.getRequestId());
 
-        List<LoggableEvent> errorEvents = loadObjects.loadAllErrorEvent();
+        List<LoggableEvent> errorEvents = doAll.load(ErrorEvent.class);
         ErrorEvent errorEvent = (ErrorEvent) errorEvents.get(0);
         assertEquals(errorEvent.getErrorType(), ErrorEvent.ErrorType.UNAUTHORIZED_CONTRACT);
 
         assertTrue(UtilMethods.allEmpty(
-                loadObjects.loadAllReloadEvent(),
-                loadObjects.loadAllContractBeneSearchEvent(),
-                loadObjects.loadAllJobStatusChangeEvent(),
-                loadObjects.loadAllFileEvent()));
+                doAll.load(ReloadEvent.class),
+                doAll.load(ContractBeneSearchEvent.class),
+                doAll.load(JobStatusChangeEvent.class),
+                doAll.load(FileEvent.class)));
     }
 
     @Test

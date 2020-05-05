@@ -3,7 +3,7 @@ package gov.cms.ab2d.hpms.processing;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.Sponsor;
 import gov.cms.ab2d.common.service.SponsorService;
-import gov.cms.ab2d.eventlogger.EventLogger;
+import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.events.ReloadEvent;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.usermodel.Cell;
@@ -31,7 +31,7 @@ import static net.logstash.logback.argument.StructuredArguments.keyValue;
 public class OrgStructureReportProcessor implements ExcelReportProcessor {
 
     @Autowired
-    private EventLogger eventLogger;
+    private LogManager eventLogger;
 
     @Autowired
     private SponsorService sponsorService;

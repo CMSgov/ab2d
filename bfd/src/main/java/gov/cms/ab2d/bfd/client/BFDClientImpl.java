@@ -254,9 +254,6 @@ public class BFDClientImpl implements BFDClient {
 
     private String createMonthParameter(int month) {
         final String zeroPaddedMonth = StringUtils.leftPad("" + month, 2, '0');
-        return new StringBuilder()
-                .append(PTDCNTRCT_URL_PREFIX)
-                .append(zeroPaddedMonth)
-                .toString();
+        return PTDCNTRCT_URL_PREFIX + zeroPaddedMonth;
     }
 }

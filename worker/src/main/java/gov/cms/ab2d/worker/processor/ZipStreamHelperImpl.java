@@ -1,7 +1,7 @@
 package gov.cms.ab2d.worker.processor;
 
 import gov.cms.ab2d.common.model.Job;
-import gov.cms.ab2d.eventlogger.EventLogger;
+import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.events.FileEvent;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -47,7 +47,7 @@ public class ZipStreamHelperImpl extends StreamHelperImpl {
      * @throws FileNotFoundException if there was an error writing to the file system
      */
     ZipStreamHelperImpl(Path path, String contractNumber, long totalBytesAllowed, long totalBytesInEntry,
-                        int tryLockTimeout, EventLogger logger, Job job) throws FileNotFoundException {
+                        int tryLockTimeout, LogManager logger, Job job) throws FileNotFoundException {
         super(path, contractNumber, totalBytesAllowed, tryLockTimeout, logger, job);
         this.totalExpandedBytesInEntryAllowed = totalBytesInEntry;
         checkInitStreams();
@@ -63,7 +63,7 @@ public class ZipStreamHelperImpl extends StreamHelperImpl {
         String zipFileName = getPath().toString() + "/" + createZipFileName();
         File f = new File(zipFileName);
         currentFile = f;
-        getEventLogger().log(new FileEvent(
+        getLogManager().log(new FileEvent(
                 getJob() == null || getJob().getUser() == null ? null : getJob().getUser().getUsername(),
                 getJob() == null ? null : getJob().getJobUuid(), f, FileEvent.FileStatus.OPEN));
 
@@ -179,7 +179,7 @@ public class ZipStreamHelperImpl extends StreamHelperImpl {
      */
     private void resetZipFile() throws IOException {
         getCurrentStream().close();
-        getEventLogger().log(new FileEvent(
+        getLogManager().log(new FileEvent(
                 getJob() == null || getJob().getUser() == null ? null : getJob().getUser().getUsername(),
                 getJob() == null ? null : getJob().getJobUuid(), currentFile, FileEvent.FileStatus.CLOSE));
 
@@ -213,7 +213,7 @@ public class ZipStreamHelperImpl extends StreamHelperImpl {
                 }
                 addPartToFile();
             }
-            getEventLogger().log(new FileEvent(
+            getLogManager().log(new FileEvent(
                     getJob() == null || getJob().getUser() == null ? null : getJob().getUser().getUsername(),
                     getJob() == null ? null : getJob().getJobUuid(), currentFile, FileEvent.FileStatus.CLOSE));
 

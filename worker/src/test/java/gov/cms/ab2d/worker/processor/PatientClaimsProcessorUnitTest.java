@@ -4,7 +4,7 @@ import ca.uhn.fhir.context.FhirContext;
 import com.newrelic.api.agent.Token;
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.model.Contract;
-import gov.cms.ab2d.eventlogger.EventLogger;
+import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.filter.FilterOutByDate;
 import gov.cms.ab2d.worker.adapter.bluebutton.GetPatientsByContractResponse;
 import gov.cms.ab2d.worker.processor.domainmodel.PatientClaimsRequest;
@@ -44,16 +44,13 @@ public class PatientClaimsProcessorUnitTest {
     private PatientClaimsProcessor cut;
 
     @Mock private BFDClient mockBfdClient;
-    @Mock private EventLogger eventLogger;
+    @Mock private LogManager eventLogger;
 
     @TempDir
     File tmpEfsMountDir;
 
     private ExplanationOfBenefit eob;
-    private Path outputFile;
-    private Path errorFile;
     private String patientId = "1234567890";
-    private StreamHelper helper;
 
     private OffsetDateTime earlyAttDate = OffsetDateTime.of(1970, 1, 1, 0, 0, 0, 0, ZoneOffset.UTC);
     private GetPatientsByContractResponse.PatientDTO patientDTO;
@@ -86,7 +83,8 @@ public class PatientClaimsProcessorUnitTest {
         FhirContext fhirContext = ca.uhn.fhir.context.FhirContext.forDstu3();
         cut = new PatientClaimsProcessorImpl(
                 mockBfdClient,
-                fhirContext
+                fhirContext,
+                eventLogger
         );
 
         eob = EobTestDataUtil.createEOB();
@@ -96,10 +94,11 @@ public class PatientClaimsProcessorUnitTest {
         patientDTO.setDateRangesUnderContract(List.of(new FilterOutByDate.DateRange(new Date(0), new Date())));
 
         Contract contract = new Contract();
-        helper = new TextStreamHelperImpl(tmpEfsMountDir.toPath(), contract.getContractNumber(),
+        StreamHelper helper = new TextStreamHelperImpl(tmpEfsMountDir.toPath(), contract.getContractNumber(),
                 30, 120, eventLogger, null);
 
-        request = new PatientClaimsRequest(patientDTO, helper, earlyAttDate, null, noOpToken);
+        request = new PatientClaimsRequest(patientDTO, helper, earlyAttDate, null, "user", "job",
+                "contractNum", noOpToken);
     }
 
     @Test
@@ -159,8 +158,8 @@ public class PatientClaimsProcessorUnitTest {
         final Path outputDirPath = Paths.get(tmpEfsMountDir.toPath().toString(), UUID.randomUUID().toString());
         Files.createDirectories(outputDirPath);
 
-        outputFile = createFile(outputDirPath, "contract_name.ndjson");
-        errorFile = createFile(outputDirPath, "contract_name_error.ndjson");
+        Path outputFile = createFile(outputDirPath, "contract_name.ndjson");
+        Path errorFile = createFile(outputDirPath, "contract_name_error.ndjson");
     }
 
     private Path createFile(Path outputDirPath, String output_filename) throws IOException {

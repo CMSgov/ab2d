@@ -10,7 +10,6 @@ import org.springframework.jdbc.support.KeyHolder;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.time.OffsetDateTime;
 
 public class ErrorEventMapper extends SqlEventMapper {
     private NamedParameterJdbcTemplate template;
@@ -28,8 +27,8 @@ public class ErrorEventMapper extends SqlEventMapper {
 
         KeyHolder keyHolder = new GeneratedKeyHolder();
         String query = "insert into event_error " +
-                " (time_of_event, user_id, job_id, error_type, description) " +
-                " values (:time, :user, :job, :errorType, :description)";
+                " (time_of_event, user_id, job_id, error_type, description, aws_id, environment) " +
+                " values (:time, :user, :job, :errorType, :description, :awsId, :environment)";
 
         SqlParameterSource parameters = super.addSuperParams(event)
                 .addValue("errorType", be.getErrorType() != null ? be.getErrorType().name() : null)
@@ -42,13 +41,11 @@ public class ErrorEventMapper extends SqlEventMapper {
     @Override
     public ErrorEvent mapRow(ResultSet resultSet, int i) throws SQLException {
         ErrorEvent event = new ErrorEvent();
-        event.setId(resultSet.getLong("id"));
-        event.setTimeOfEvent(resultSet.getObject("time_of_event", OffsetDateTime.class));
-        event.setUser(resultSet.getString("user_id"));
-        event.setJobId(resultSet.getString("job_id"));
+        extractSuperParams(resultSet, event);
 
         event.setErrorType(ErrorEvent.ErrorType.valueOf(resultSet.getString("error_type")));
         event.setDescription(resultSet.getString("description"));
+
         return event;
     }
 }

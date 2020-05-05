@@ -15,16 +15,12 @@ import gov.cms.ab2d.common.repository.OptOutRepository;
 import gov.cms.ab2d.common.repository.SponsorRepository;
 import gov.cms.ab2d.common.repository.UserRepository;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
-import gov.cms.ab2d.eventlogger.EventLogger;
+import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.LoggableEvent;
+import gov.cms.ab2d.eventlogger.eventloggers.kinesis.KinesisEventLogger;
 import gov.cms.ab2d.eventlogger.eventloggers.sql.SqlEventLogger;
-import gov.cms.ab2d.eventlogger.eventloggers.sql.SqlMapperConfig;
-import gov.cms.ab2d.eventlogger.events.ContractBeneSearchEvent;
-import gov.cms.ab2d.eventlogger.events.ErrorEvent;
-import gov.cms.ab2d.eventlogger.events.FileEvent;
-import gov.cms.ab2d.eventlogger.events.JobStatusChangeEvent;
-import gov.cms.ab2d.eventlogger.reports.sql.DeleteObjects;
-import gov.cms.ab2d.eventlogger.reports.sql.LoadObjects;
+import gov.cms.ab2d.eventlogger.events.*;
+import gov.cms.ab2d.eventlogger.reports.sql.DoAll;
 import gov.cms.ab2d.eventlogger.utils.UtilMethods;
 import gov.cms.ab2d.worker.adapter.bluebutton.ContractAdapter;
 import gov.cms.ab2d.worker.service.FileService;
@@ -76,6 +72,8 @@ class JobProcessorIntegrationTest {
     @Autowired
     private FileService fileService;
     @Autowired
+    private DoAll doAll;
+    @Autowired
     private JobRepository jobRepository;
     @Autowired
     private SponsorRepository sponsorRepository;
@@ -91,11 +89,11 @@ class JobProcessorIntegrationTest {
     @Autowired
     private OptOutRepository optOutRepository;
     @Autowired
-    private DeleteObjects deleteObjects;
-    @Autowired
-    private LoadObjects loadObjects;
-    @Autowired
-    private SqlMapperConfig mapperConfig;
+    private SqlEventLogger sqlEventLogger;
+    @Mock
+    private KinesisEventLogger kinesisEventLogger;
+
+    private LogManager logManager;
 
     @Mock
     private BFDClient mockBfdClient;
@@ -118,14 +116,9 @@ class JobProcessorIntegrationTest {
         jobRepository.deleteAll();
         userRepository.deleteAll();
         sponsorRepository.deleteAll();
-        deleteObjects.deleteAllApiRequestEvent();
-        deleteObjects.deleteAllApiResponseEvent();
-        deleteObjects.deleteAllReloadEvent();
-        deleteObjects.deleteAllContractBeneSearchEvent();
-        deleteObjects.deleteAllErrorEvent();
-        deleteObjects.deleteAllFileEvent();
-        deleteObjects.deleteAllJobStatusChangeEvent();
+        doAll.delete();
 
+        logManager = new LogManager(sqlEventLogger, kinesisEventLogger);
         sponsor = createSponsor();
         user = createUser(sponsor);
         job = createJob(user);
@@ -143,14 +136,13 @@ class JobProcessorIntegrationTest {
         fail = new RuntimeException("TEST EXCEPTION");
 
         FhirContext fhirContext = FhirContext.forDstu3();
-        PatientClaimsProcessor patientClaimsProcessor = new PatientClaimsProcessorImpl(mockBfdClient, fhirContext);
-        EventLogger eventLogger = new SqlEventLogger(mapperConfig);
+        PatientClaimsProcessor patientClaimsProcessor = new PatientClaimsProcessorImpl(mockBfdClient, fhirContext, logManager);
         ContractProcessor contractProcessor = new ContractProcessorImpl(
                 fileService,
                 jobRepository,
                 patientClaimsProcessor,
                 optOutRepository,
-                eventLogger
+                logManager
         );
 
         ReflectionTestUtils.setField(contractProcessor, "cancellationCheckFrequency", 10);
@@ -161,7 +153,7 @@ class JobProcessorIntegrationTest {
                 jobOutputRepository,
                 contractAdapterStub,
                 contractProcessor,
-                eventLogger
+                logManager
         );
 
         ReflectionTestUtils.setField(cut, "efsMount", tmpEfsMountDir.toString());
@@ -173,7 +165,7 @@ class JobProcessorIntegrationTest {
     void processJob() {
         var processedJob = cut.process("S0000");
 
-        List<LoggableEvent> jobStatusChange = loadObjects.loadAllJobStatusChangeEvent();
+        List<LoggableEvent> jobStatusChange = doAll.load(JobStatusChangeEvent.class);
         Assert.assertEquals(1, jobStatusChange.size());
         JobStatusChangeEvent jobEvent = (JobStatusChangeEvent) jobStatusChange.get(0);
         Assert.assertEquals(JobStatus.SUCCESSFUL.name(), jobEvent.getNewStatus());
@@ -230,7 +222,7 @@ class JobProcessorIntegrationTest {
         assertThat(processedJob.getExpiresAt(), notNullValue());
         assertThat(processedJob.getCompletedAt(), notNullValue());
 
-        List<LoggableEvent> beneSearchEvents = loadObjects.loadAllContractBeneSearchEvent();
+        List<LoggableEvent> beneSearchEvents = doAll.load(ContractBeneSearchEvent.class);
         assertEquals(1, beneSearchEvents.size());
         ContractBeneSearchEvent event = (ContractBeneSearchEvent) beneSearchEvents.get(0);
         assertEquals("S0000", event.getJobId());
@@ -253,18 +245,18 @@ class JobProcessorIntegrationTest {
         ;
         var processedJob = cut.process("S0000");
 
-        List<LoggableEvent> errorEvents = loadObjects.loadAllErrorEvent();
+        List<LoggableEvent> errorEvents = doAll.load(ErrorEvent.class);
         assertEquals(1, errorEvents.size());
         ErrorEvent errorEvent = (ErrorEvent) errorEvents.get(0);
         assertEquals(TOO_MANY_SEARCH_ERRORS, errorEvent.getErrorType());
 
-        List<LoggableEvent> jobEvents = loadObjects.loadAllJobStatusChangeEvent();
+        List<LoggableEvent> jobEvents = doAll.load(JobStatusChangeEvent.class);
         assertEquals(1, jobEvents.size());
         JobStatusChangeEvent jobEvent = (JobStatusChangeEvent) jobEvents.get(0);
         assertEquals("IN_PROGRESS", jobEvent.getOldStatus());
         assertEquals("FAILED", jobEvent.getNewStatus());
 
-        List<LoggableEvent> fileEvents = loadObjects.loadAllFileEvent();
+        List<LoggableEvent> fileEvents = doAll.load(FileEvent.class);
         // Since the max size of the file is not set here (so it's 0), every second write creates a new file since
         // the file is no longer empty after the first write. This means, there were 20 files created so 40 events
         assertEquals(40, fileEvents.size());
@@ -275,10 +267,10 @@ class JobProcessorIntegrationTest {
         assertEquals(20, fileEvents.stream().filter(e -> ((FileEvent) e).getFileHash().length() > 0).count());
 
         assertTrue(UtilMethods.allEmpty(
-                loadObjects.loadAllApiRequestEvent(),
-                loadObjects.loadAllApiResponseEvent(),
-                loadObjects.loadAllReloadEvent(),
-                loadObjects.loadAllContractBeneSearchEvent()));
+                doAll.load(ApiRequestEvent.class),
+                doAll.load(ApiResponseEvent.class),
+                doAll.load(ReloadEvent.class),
+                doAll.load(ContractBeneSearchEvent.class)));
 
         assertThat(processedJob.getStatus(), is(JobStatus.FAILED));
         assertThat(processedJob.getStatusMessage(), is("Too many patient records in the job had failures"));

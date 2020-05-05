@@ -8,7 +8,7 @@ import gov.cms.ab2d.common.model.Sponsor;
 import gov.cms.ab2d.common.model.User;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.common.repository.OptOutRepository;
-import gov.cms.ab2d.eventlogger.EventLogger;
+import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.filter.FilterOutByDate;
 import gov.cms.ab2d.worker.adapter.bluebutton.GetPatientsByContractResponse;
 import gov.cms.ab2d.worker.adapter.bluebutton.GetPatientsByContractResponse.PatientDTO;
@@ -64,7 +64,7 @@ class ContractProcessorUnitTest {
     @Mock private FileService fileService;
     @Mock private JobRepository jobRepository;
     @Mock private OptOutRepository optOutRepository;
-    @Mock private EventLogger eventLogger;
+    @Mock private LogManager eventLogger;
     private PatientClaimsProcessor patientClaimsProcessor = spy(PatientClaimsProcessorStub.class);
 
     private GetPatientsByContractResponse patientsByContract;
@@ -103,7 +103,8 @@ class ContractProcessorUnitTest {
                 .patientsByContract(patientsByContract)
                 .failureThreshold(10)
                 .build();
-        contractData = new ContractData(contract, progressTracker, contract.getAttestedOn(), job.getSince());
+        contractData = new ContractData(contract, progressTracker, contract.getAttestedOn(), job.getSince(),
+                job.getUser() != null ? job.getUser().getUsername() : null);
     }
 
 

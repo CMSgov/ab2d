@@ -11,8 +11,7 @@ import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.eventlogger.LoggableEvent;
 import gov.cms.ab2d.eventlogger.events.ApiRequestEvent;
 import gov.cms.ab2d.eventlogger.events.ApiResponseEvent;
-import gov.cms.ab2d.eventlogger.reports.sql.DeleteObjects;
-import gov.cms.ab2d.eventlogger.reports.sql.LoadObjects;
+import gov.cms.ab2d.eventlogger.reports.sql.DoAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -57,10 +56,7 @@ public class AuthenticationTests {
     private JobRepository jobRepository;
 
     @Autowired
-    private LoadObjects loadObjects;
-
-    @Autowired
-    private DeleteObjects deleteObjects;
+    private DoAll doAll;
 
     @Container
     private static final PostgreSQLContainer postgreSQLContainer= new AB2DPostgresqlContainer();
@@ -73,8 +69,7 @@ public class AuthenticationTests {
         userRepository.deleteAll();
         roleRepository.deleteAll();
         sponsorRepository.deleteAll();
-        deleteObjects.deleteAllApiRequestEvent();
-        deleteObjects.deleteAllApiResponseEvent();
+        doAll.delete();
         token = testUtil.setupToken(List.of(SPONSOR_ROLE));
     }
 
@@ -84,10 +79,10 @@ public class AuthenticationTests {
         this.mockMvc.perform(get(API_PREFIX + FHIR_PREFIX + "/Patient/$export")
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().is(401));
-        List<LoggableEvent> apiRequestEvents = loadObjects.loadAllApiRequestEvent();
+        List<LoggableEvent> apiRequestEvents = doAll.load(ApiRequestEvent.class);
         assertEquals(1, apiRequestEvents.size());
         ApiRequestEvent requestEvent = (ApiRequestEvent) apiRequestEvents.get(0);
-        List<LoggableEvent> apiResponseEvents = loadObjects.loadAllApiResponseEvent();
+        List<LoggableEvent> apiResponseEvents = doAll.load(ApiResponseEvent.class);
         assertEquals(1, apiResponseEvents.size());
         ApiResponseEvent responseEvent = (ApiResponseEvent) apiResponseEvents.get(0);
         assertEquals(HttpStatus.UNAUTHORIZED.value(), responseEvent.getResponseCode());
@@ -119,10 +114,10 @@ public class AuthenticationTests {
                 .header("Authorization", "Bearer " + token)
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().is(403));
-        List<LoggableEvent> apiRequestEvents = loadObjects.loadAllApiRequestEvent();
+        List<LoggableEvent> apiRequestEvents = doAll.load(ApiRequestEvent.class);
         assertEquals(1, apiRequestEvents.size());
         ApiRequestEvent requestEvent = (ApiRequestEvent) apiRequestEvents.get(0);
-        List<LoggableEvent> apiResponseEvents = loadObjects.loadAllApiResponseEvent();
+        List<LoggableEvent> apiResponseEvents = doAll.load(ApiResponseEvent.class);
         assertEquals(1, apiResponseEvents.size());
         ApiResponseEvent responseEvent = (ApiResponseEvent) apiResponseEvents.get(0);
         assertEquals(HttpStatus.FORBIDDEN.value(), responseEvent.getResponseCode());
@@ -139,10 +134,10 @@ public class AuthenticationTests {
                 .header("Authorization", "Bearer " + token)
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().is(403));
-        List<LoggableEvent> apiRequestEvents = loadObjects.loadAllApiRequestEvent();
+        List<LoggableEvent> apiRequestEvents = doAll.load(ApiRequestEvent.class);
         assertEquals(1, apiRequestEvents.size());
         ApiRequestEvent requestEvent = (ApiRequestEvent) apiRequestEvents.get(0);
-        List<LoggableEvent> apiResponseEvents = loadObjects.loadAllApiResponseEvent();
+        List<LoggableEvent> apiResponseEvents = doAll.load(ApiResponseEvent.class);
         assertEquals(1, apiResponseEvents.size());
         ApiResponseEvent responseEvent = (ApiResponseEvent) apiResponseEvents.get(0);
         assertEquals(HttpStatus.FORBIDDEN.value(), responseEvent.getResponseCode());
