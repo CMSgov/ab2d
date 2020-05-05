@@ -92,6 +92,7 @@
 1. [Appendix NN: Manually test the deployment](#appendix-nn-manually-test-the-deployment)
 1. [Appendix OO: Merge a specific commit from master into your branch](#appendix-oo-merge-a-specific-commit-from-master-into-your-branch)
 1. [Appendix PP: Test running development automation from development machine](#appendix-pp-test-running-development-automation-from-development-machine)
+1. [Appendix QQ: Set up demonstration of cross account access of an encrypted S3 bucket](#appendix-qq-set-up-demonstration-of-cross-account-access-of-an-encrypted-s3-bucket)
 
 ## Appendix A: Access the CMS AWS console
 
@@ -7945,3 +7946,77 @@
    ```ShellSession
    $ ./bash/deploy-application.sh
    ```
+
+## Appendix QQ: Set up demonstration of cross account access of an encrypted S3 bucket
+
+1. Open a new terminal
+
+1. Set AWS credentials to the SemanticBits demo account
+
+   ```ShellSession
+   $ export AWS_PROFILE=sbdemo-shared
+   ```
+
+1. Set default AWS region
+
+   ```ShellSession
+   $ export AWS_DEFAULT_REGION=us-east-1
+   ```
+   
+1. Set test bucket name
+
+   *Example:*
+   
+   ```ShellSession
+   $ S3_TEST_BUCKET_NAME="ab2d-optout"
+   ```
+
+1. Determine if bucket already exists
+
+   ```ShellSession
+   $ S3_TEST_BUCKET_EXISTS=$(aws --region "${AWS_DEFAULT_REGION}" s3api list-buckets \
+     --query "Buckets[?Name=='${S3_TEST_BUCKET_NAME}'].Name" \
+     --output text)
+   ```
+
+1. Create the bucket (if doesn't exist)
+
+   ```ShellSession
+   $ if [ -z "${S3_AUTOMATION_BUCKET_EXISTS}" ]; then \
+     aws --region "${AWS_DEFAULT_REGION}" s3api create-bucket \
+       --bucket ${S3_TEST_BUCKET_NAME}; \
+     fi
+   ```
+
+1. Block public access on the bucket
+
+   ```ShellSession
+   $ aws --region "${AWS_DEFAULT_REGION}" s3api put-public-access-block \
+    --bucket ${S3_TEST_BUCKET_NAME} \
+    --public-access-block-configuration BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true
+   ```
+
+1. Set kms key name
+
+   ```ShellSession
+   $ S3_TEST_BUCKET_KEY_NAME="${S3_TEST_BUCKET_NAME}-key"
+   ```
+   
+1. Create a kms key for the bucket
+
+   ```ShellSession
+   $ S3_TEST_BUCKET_KEY_ID=$(aws --region "${AWS_DEFAULT_REGION}" kms create-key \
+     | jq --raw-output ".KeyMetadata.KeyId")
+   ```
+
+1. Create an alias for the kms key for the bucket
+
+   ```ShellSession
+   $ aws --region "${AWS_DEFAULT_REGION}" kms create-alias \
+     --alias-name "alias/${S3_TEST_BUCKET_NAME}" \
+     --target-key-id "${S3_TEST_BUCKET_KEY_ID}"
+   ```
+
+> *** TO DO ***
+
+
