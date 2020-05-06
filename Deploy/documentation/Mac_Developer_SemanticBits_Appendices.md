@@ -12,6 +12,7 @@
    * [Log into Cisco AnyConnect client](#log-into-cisco-anyconnect-client)
    * [Disconnect from the Cisco AnyConnect client](#disconnect-from-the-cisco-anyconnect-client)
 1. [Appendix C: Install 1Password API](#appendix-c-install-1password-api)
+1. [Appendix D: Troubleshoot VPN access](#appendix-d-troubleshoot-vpn-access)
 
 ## Appendix A: PostgreSQL 11
 
@@ -292,3 +293,38 @@
    ```ShellSession
    $ op --version
    ```
+
+## Appendix D: Troubleshoot VPN access
+
+1. If you get a "The VPN client driver encountered an error. Please restart your computer or device, then try again." message, try the following:
+
+   1. Reboot your machine
+
+   1. Try reconnecting to the Cisco VPN client again
+
+1. If you continute to get a "The VPN client driver encountered an error. Please restart your computer or device, then try again." message, try the following:
+
+   1. Open Chrome
+
+   1. Enter the following in the address bar
+
+      > https://confluence.cms.gov/pages/viewpage.action?spaceKey=AWSOC&title=Cisco+AnyConnect+Client
+
+
+   1. Download and install the latest VPN client
+
+   1. Reboot your machine
+
+   1. Try reconnecting to the Cisco VPN client again
+
+1. If you continute to get a "The VPN client driver encountered an error. Please restart your computer or device, then try again." message, try the following:
+
+   1. Open a terminal
+
+   1. Enter the following at the prompt
+
+      ```ShellSession
+      $ sudo launchctl unload /Library/LaunchDaemons/com.vpn.semanticbits.plist
+      ```
+
+   1. Try reconnecting to the Cisco VPN client again
