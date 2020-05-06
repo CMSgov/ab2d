@@ -117,6 +117,10 @@ resource "aws_ecs_task_definition" "worker" {
 	  "name" : "AB2D_EFS_MOUNT",
 	  "value" : "/mnt/efs"
 	},
+        {
+	  "name" : "AB2D_EXECUTION_ENV",
+	  "value" : "${lower(var.env)}"
+	},
 	{
 	  "name" : "AB2D_HICN_HASH_PEPPER",
 	  "value" : "${var.hicn_hash_pepper}"
