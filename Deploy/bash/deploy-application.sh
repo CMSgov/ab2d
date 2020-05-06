@@ -30,7 +30,8 @@ if [ -z "${CMS_ENV_PARAM}" ] \
     || [ -z "${EC2_MAXIMUM_INSTANCE_COUNT_WORKER_PARAM}" ] \
     || [ -z "${DATABASE_SECRET_DATETIME_PARAM}" ] \
     || [ -z "${DEBUG_LEVEL_PARAM}" ] \
-    || [ -z "${INTERNET_FACING_PARAM}" ]; then
+    || [ -z "${INTERNET_FACING_PARAM}" ] \
+    || [ -z "${CLOUD_TAMER_PARAM}" ]; then
   echo "ERROR: All parameters must be set."
   exit 1
 fi
@@ -77,6 +78,17 @@ elif [ "$INTERNET_FACING_PARAM" == "true" ]; then
   ALB_INTERNAL=false
 else
   echo "ERROR: the '--internet-facing' parameter must be true or false"
+  exit 1
+fi
+
+# Set whether CloudTamer API should be used
+
+if [ "$CLOUD_TAMER_PARAM" == "false" ]; then
+  CLOUD_TAMER=false
+elif [ "$CLOUD_TAMER" == "true" ]; then
+  CLOUD_TAMER=true
+else
+  echo "ERROR: the '--cloud-tamer' parameter must be true or false"
   exit 1
 fi
 
@@ -190,7 +202,11 @@ get_temporary_aws_credentials ()
 # Set AWS target environment
 #
 
-get_temporary_aws_credentials "${CMS_ENV_AWS_ACCOUNT_NUMBER}"
+if [ $CLOUD_TAMER ]; then
+  get_temporary_aws_credentials "${CMS_ENV_AWS_ACCOUNT_NUMBER}"
+else
+  export AWS_PROFILE="${CMS_ENV}"
+fi
 
 #
 # Verify that VPC ID exists
@@ -584,7 +600,11 @@ echo 'deployer_ip_address = "'$DEPLOYER_IP_ADDRESS'"' \
 
 # Set AWS management environment
 
-get_temporary_aws_credentials "${CMS_ECR_REPO_ENV_AWS_ACCOUNT_NUMBER}"
+if [ $CLOUD_TAMER ]; then
+  get_temporary_aws_credentials "${CMS_ECR_REPO_ENV_AWS_ACCOUNT_NUMBER}"
+else
+  export AWS_PROFILE="${CMS_ECR_REPO_ENV}"
+fi
 
 MGMT_KMS_KEY_ID=$(aws --region "${REGION}" kms list-aliases \
   --query="Aliases[?AliasName=='alias/ab2d-kms'].TargetKeyId" \
@@ -899,7 +919,11 @@ echo "Using master branch commit number '${COMMIT_NUMBER}' for ab2d_api and ab2d
 # Set AWS target environment
 #
 
-get_temporary_aws_credentials "${CMS_ENV_AWS_ACCOUNT_NUMBER}"
+if [ $CLOUD_TAMER ]; then
+  get_temporary_aws_credentials "${CMS_ENV_AWS_ACCOUNT_NUMBER}"
+else
+  export AWS_PROFILE="${CMS_ENV}"
+fi
 
 # Reset to the target environment
 
