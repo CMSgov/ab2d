@@ -4,7 +4,7 @@ import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.service.ContractService;
 import gov.cms.ab2d.common.util.AttestationStatus;
 import gov.cms.ab2d.common.util.DateUtil;
-import gov.cms.ab2d.eventlogger.EventLogger;
+import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.events.ReloadEvent;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
@@ -30,7 +30,6 @@ import static gov.cms.ab2d.common.util.Constants.USERNAME;
 import static gov.cms.ab2d.eventlogger.events.ReloadEvent.FileType.ATTESTATION_REPORT;
 import static net.logstash.logback.argument.StructuredArguments.keyValue;
 
-
 @Service("attestationReportProcessor")
 @Transactional
 @Slf4j
@@ -40,7 +39,7 @@ public class AttestationReportProcessor implements ExcelReportProcessor {
     private ContractService contractService;
 
     @Autowired
-    private EventLogger eventLogger;
+    private LogManager eventLogger;
 
     private static final String ATTESTATION_OFFSET_DATE_TIME_PATTERN = "M/d/y h:m a Z";
 

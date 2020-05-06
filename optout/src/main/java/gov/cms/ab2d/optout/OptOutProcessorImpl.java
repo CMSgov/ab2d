@@ -18,10 +18,8 @@ public class OptOutProcessorImpl implements OptOutProcessor {
 
     @Override
     public void process() {
-
         final List<String> filenames = s3Gateway.listOptOutFiles();
         filenames.stream().forEach(this::fetchAndProcessOptOutFile);
-
     }
 
     private void fetchAndProcessOptOutFile(final String filename) {
@@ -37,6 +35,4 @@ public class OptOutProcessorImpl implements OptOutProcessor {
             log.error("[{}] - import FAILED ", filename, e);
         }
     }
-
-
 }

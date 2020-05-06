@@ -2,7 +2,7 @@ package gov.cms.ab2d.optout;
 
 import gov.cms.ab2d.common.model.OptOut;
 import gov.cms.ab2d.common.repository.OptOutRepository;
-import gov.cms.ab2d.eventlogger.EventLogger;
+import gov.cms.ab2d.eventlogger.LogManager;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -22,11 +22,10 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class OptOutImporterUnitTest {
-    private static final String TEST_DIR = "test-data/";
 
     @Mock private OptOutConverterService converterService;
     @Mock private OptOutRepository optOutRepo;
-    @Mock private EventLogger eventLogger;
+    @Mock private LogManager eventLogger;
 
     private OptOutImporter cut;
 
@@ -46,9 +45,9 @@ class OptOutImporterUnitTest {
 
         cut.process(new BufferedReader(isr), filename);
 
-        verify(optOutRepo, times(32)).findByCcwIdAndHicn(any(), any());
-        verify(optOutRepo, times(32)).save(any());
-        verify(converterService, times(32)).convert(any());
+        verify(optOutRepo, times(35)).findByCcwIdAndHicn(any(), any());
+        verify(optOutRepo, times(35)).save(any());
+        verify(converterService, times(35)).convert(any());
     }
 
     private OptOut createOptOut(String filename) {

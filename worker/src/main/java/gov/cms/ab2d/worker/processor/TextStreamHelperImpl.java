@@ -1,7 +1,7 @@
 package gov.cms.ab2d.worker.processor;
 
 import gov.cms.ab2d.common.model.Job;
-import gov.cms.ab2d.eventlogger.EventLogger;
+import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.events.FileEvent;
 import lombok.extern.slf4j.Slf4j;
 
@@ -31,7 +31,7 @@ public class TextStreamHelperImpl extends StreamHelperImpl {
      * @throws FileNotFoundException - if the file can't be created
      */
     public TextStreamHelperImpl(Path path, String contractNumber, long totalBytesAllowed, int tryLockTimeout,
-                                EventLogger logger, Job job)
+                                LogManager logger, Job job)
             throws FileNotFoundException {
         super(path, contractNumber, totalBytesAllowed, tryLockTimeout, logger, job);
 
@@ -49,7 +49,7 @@ public class TextStreamHelperImpl extends StreamHelperImpl {
         File f = new File(fileName);
         f.getParentFile().mkdirs();
         currentFile = f;
-        getEventLogger().log(new FileEvent(
+        getLogManager().log(new FileEvent(
                 getJob() == null || getJob().getUser() == null ? null : getJob().getUser().getUsername(),
                 getJob() == null ? null : getJob().getJobUuid(), f, FileEvent.FileStatus.OPEN));
         OutputStream stream = new BufferedOutputStream(new FileOutputStream(fileName));
@@ -72,7 +72,7 @@ public class TextStreamHelperImpl extends StreamHelperImpl {
         try {
             if (getTotalBytesWritten() + data.length > getTotalBytesAllowed() && getTotalBytesWritten() > 0) {
                 getCurrentStream().close();
-                getEventLogger().log(new FileEvent(
+                getLogManager().log(new FileEvent(
                         getJob() == null || getJob().getUser() == null ? null : getJob().getUser().getUsername(),
                         getJob() == null ? null : getJob().getJobUuid(), currentFile, FileEvent.FileStatus.CLOSE));
                 setCurrentStream(createStream());
@@ -96,7 +96,7 @@ public class TextStreamHelperImpl extends StreamHelperImpl {
     public void close() throws IOException {
         try {
             getCurrentStream().close();
-            getEventLogger().log(new FileEvent(
+            getLogManager().log(new FileEvent(
                     getJob() == null || getJob().getUser() == null ? null : getJob().getUser().getUsername(),
                     getJob() == null ? null : getJob().getJobUuid(), currentFile, FileEvent.FileStatus.CLOSE));
             int numFiles = getFilesCreated().size();

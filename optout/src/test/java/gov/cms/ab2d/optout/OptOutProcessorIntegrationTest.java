@@ -5,9 +5,8 @@ import gov.cms.ab2d.common.repository.OptOutRepository;
 import gov.cms.ab2d.common.util.MockBfdServiceUtils;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.eventlogger.LoggableEvent;
-import gov.cms.ab2d.eventlogger.events.ReloadEvent;
-import gov.cms.ab2d.eventlogger.reports.sql.DeleteObjects;
-import gov.cms.ab2d.eventlogger.reports.sql.LoadObjects;
+import gov.cms.ab2d.eventlogger.events.*;
+import gov.cms.ab2d.eventlogger.reports.sql.DoAll;
 import gov.cms.ab2d.eventlogger.utils.UtilMethods;
 import gov.cms.ab2d.optout.gateway.S3Gateway;
 import lombok.extern.slf4j.Slf4j;
@@ -59,10 +58,7 @@ class OptOutProcessorIntegrationTest {
     private OptOutProcessor cut;
 
     @Autowired
-    private LoadObjects loadObjects;
-
-    @Autowired
-    private DeleteObjects deleteObjects;
+    private DoAll doAll;
 
     @Container
     private static final PostgreSQLContainer postgreSQLContainer= new AB2DPostgresqlContainer();
@@ -83,7 +79,7 @@ class OptOutProcessorIntegrationTest {
     @Before
     public void clearDB() {
         optOutRepo.deleteAll();
-        deleteObjects.deleteAllReloadEvent();
+        doAll.delete();
     }
 
     @AfterAll
@@ -110,7 +106,7 @@ class OptOutProcessorIntegrationTest {
         assertThat(optOutRowsBeforeProcessing, is(empty()));
         assertThat(optOutRowsAfterProcessing, is(not(empty())));
 
-        assertThat(optOutRowsAfterProcessing.size(), is(7));
+        assertThat(optOutRowsAfterProcessing.size(), is(10));
 
         final OptOut optOut = optOutRepo.findByCcwId("20010000001115").get(0);
         assertThat(optOut.getPolicyCode(), is("OPTOUT"));
@@ -123,20 +119,20 @@ class OptOutProcessorIntegrationTest {
         verify(mockS3Gateway).listOptOutFiles();
         verify(mockS3Gateway).getOptOutFile(any());
 
-        List<LoggableEvent> reloadEvents = loadObjects.loadAllReloadEvent();
+        List<LoggableEvent> reloadEvents = doAll.load(ReloadEvent.class);
         assertEquals(1, reloadEvents.size());
         ReloadEvent requestEvent = (ReloadEvent) reloadEvents.get(0);
         assertEquals(ReloadEvent.FileType.OPT_OUT, requestEvent.getFileType());
         assertEquals(testInputFile, requestEvent.getFileName());
-        assertEquals(18, requestEvent.getNumberLoaded());
+        assertEquals(24, requestEvent.getNumberLoaded());
 
         assertTrue(UtilMethods.allEmpty(
-                loadObjects.loadAllApiRequestEvent(),
-                loadObjects.loadAllApiResponseEvent(),
-                loadObjects.loadAllContractBeneSearchEvent(),
-                loadObjects.loadAllErrorEvent(),
-                loadObjects.loadAllFileEvent(),
-                loadObjects.loadAllJobStatusChangeEvent()
+                doAll.load(ApiRequestEvent.class),
+                doAll.load(ApiResponseEvent.class),
+                doAll.load(ContractBeneSearchEvent.class),
+                doAll.load(ErrorEvent.class),
+                doAll.load(FileEvent.class),
+                doAll.load(JobStatusChangeEvent.class)
         ));
     }
 }

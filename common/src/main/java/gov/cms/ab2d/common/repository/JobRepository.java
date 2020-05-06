@@ -19,6 +19,7 @@ import java.util.List;
 public interface JobRepository extends JpaRepository<Job, Long> {
 
     @Modifying
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     @Query("update Job j set j.status = gov.cms.ab2d.common.model.JobStatus.CANCELLED where j.jobUuid = :jobUuid")
     void cancelJobByJobUuid(@Param("jobUuid") String jobUuid);
 

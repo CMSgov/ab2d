@@ -2,7 +2,6 @@ package gov.cms.ab2d.worker.adapter.bluebutton;
 
 import gov.cms.ab2d.filter.FilterOutByDate;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 
@@ -19,7 +18,7 @@ import java.util.stream.Collectors;
  * The rightmost 3 characters of the contractNumber being passed in must be numeric.
  */
 @Slf4j
-@Primary    //Till the BFD api starts returning data, use this as the primary instance.
+//@Primary    //Till the BFD api starts returning data, use this as the primary instance.
 @Component
 public class ContractAdapterStub implements ContractAdapter {
 

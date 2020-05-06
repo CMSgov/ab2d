@@ -1,6 +1,6 @@
 package gov.cms.ab2d.worker.processor;
 
-import gov.cms.ab2d.eventlogger.EventLogger;
+import gov.cms.ab2d.eventlogger.LogManager;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -21,7 +21,7 @@ class TextStreamHelperImplTest {
     @TempDir
     File tmpDirFolder;
     @Mock
-    private EventLogger eventLogger;
+    private LogManager eventLogger;
 
     @BeforeEach
     void init() {

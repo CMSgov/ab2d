@@ -9,11 +9,8 @@ import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.repository.*;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.eventlogger.LoggableEvent;
-import gov.cms.ab2d.eventlogger.events.ApiRequestEvent;
-import gov.cms.ab2d.eventlogger.events.ApiResponseEvent;
-import gov.cms.ab2d.eventlogger.events.ReloadEvent;
-import gov.cms.ab2d.eventlogger.reports.sql.DeleteObjects;
-import gov.cms.ab2d.eventlogger.reports.sql.LoadObjects;
+import gov.cms.ab2d.eventlogger.events.*;
+import gov.cms.ab2d.eventlogger.reports.sql.DoAll;
 import gov.cms.ab2d.eventlogger.utils.UtilMethods;
 import org.junit.Assert;
 import org.junit.jupiter.api.BeforeEach;
@@ -78,10 +75,7 @@ public class AdminAPIMaintenanceModeTests {
     private TestUtil testUtil;
 
     @Autowired
-    private LoadObjects loadObjects;
-
-    @Autowired
-    private DeleteObjects deleteObjects;
+    private DoAll doAll;
 
     private static final String PROPERTIES_URL = "/properties";
 
@@ -94,13 +88,7 @@ public class AdminAPIMaintenanceModeTests {
         userRepository.deleteAll();
         roleRepository.deleteAll();
         sponsorRepository.deleteAll();
-        deleteObjects.deleteAllReloadEvent();
-        deleteObjects.deleteAllApiResponseEvent();
-        deleteObjects.deleteAllApiRequestEvent();
-        deleteObjects.deleteAllContractBeneSearchEvent();
-        deleteObjects.deleteAllErrorEvent();
-        deleteObjects.deleteAllFileEvent();
-        deleteObjects.deleteAllJobStatusChangeEvent();
+        doAll.delete();
 
         token = testUtil.setupToken(List.of(SPONSOR_ROLE, ADMIN_ROLE));
     }
@@ -125,25 +113,25 @@ public class AdminAPIMaintenanceModeTests {
                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(HttpStatus.SERVICE_UNAVAILABLE.value()));
 
-        List<LoggableEvent> apiReqEvents = loadObjects.loadAllApiRequestEvent();
+        List<LoggableEvent> apiReqEvents = doAll.load(ApiRequestEvent.class);
         assertEquals(2, apiReqEvents.size());
         ApiRequestEvent requestEvent = (ApiRequestEvent) apiReqEvents.get(0);
 
-        List<LoggableEvent> apiResEvents = loadObjects.loadAllApiResponseEvent();
+        List<LoggableEvent> apiResEvents = doAll.load(ApiResponseEvent.class);
         assertEquals(1, apiResEvents.size());
         ApiResponseEvent responseEvent = (ApiResponseEvent) apiResEvents.get(0);
         assertEquals(HttpStatus.SERVICE_UNAVAILABLE.value(), responseEvent.getResponseCode());
 
-        List<LoggableEvent> reloadEvents = loadObjects.loadAllReloadEvent();
+        List<LoggableEvent> reloadEvents = doAll.load(ReloadEvent.class);
         assertEquals(1, reloadEvents.size());
         ReloadEvent reloadEvent = (ReloadEvent) reloadEvents.get(0);
         assertEquals(ReloadEvent.FileType.PROPERTIES, reloadEvent.getFileType());
 
         assertTrue(UtilMethods.allEmpty(
-                loadObjects.loadAllContractBeneSearchEvent(),
-                loadObjects.loadAllErrorEvent(),
-                loadObjects.loadAllFileEvent(),
-                loadObjects.loadAllJobStatusChangeEvent()
+                doAll.load(ContractBeneSearchEvent.class),
+                doAll.load(ErrorEvent.class),
+                doAll.load(FileEvent.class),
+                doAll.load(JobStatusChangeEvent.class)
         ));
 
         propertiesDTOs.clear();
