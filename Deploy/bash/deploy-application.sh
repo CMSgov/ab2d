@@ -83,13 +83,11 @@ fi
 
 # Set whether CloudTamer API should be used
 
-if [ "$CLOUD_TAMER_PARAM" == "false" ]; then
-  CLOUD_TAMER=false
-elif [ "$CLOUD_TAMER" == "true" ]; then
-  CLOUD_TAMER=true
-else
+if [ "$CLOUD_TAMER" != "false"  && "$CLOUD_TAMER" != "true" ]; then
   echo "ERROR: the '--cloud-tamer' parameter must be true or false"
   exit 1
+else
+  CLOUD_TAMER="${CLOUD_TAMER_PARAM}"
 fi
 
 #
@@ -202,7 +200,7 @@ get_temporary_aws_credentials ()
 # Set AWS target environment
 #
 
-if [ $CLOUD_TAMER ]; then
+if [ "${CLOUD_TAMER}" == "true" ]; then
   get_temporary_aws_credentials "${CMS_ENV_AWS_ACCOUNT_NUMBER}"
 else
   export AWS_PROFILE="${CMS_ENV}"
@@ -600,7 +598,7 @@ echo 'deployer_ip_address = "'$DEPLOYER_IP_ADDRESS'"' \
 
 # Set AWS management environment
 
-if [ $CLOUD_TAMER ]; then
+if [ "${CLOUD_TAMER}" == "true" ]; then
   get_temporary_aws_credentials "${CMS_ECR_REPO_ENV_AWS_ACCOUNT_NUMBER}"
 else
   export AWS_PROFILE="${CMS_ECR_REPO_ENV}"
@@ -919,7 +917,7 @@ echo "Using master branch commit number '${COMMIT_NUMBER}' for ab2d_api and ab2d
 # Set AWS target environment
 #
 
-if [ $CLOUD_TAMER ]; then
+if [ "${CLOUD_TAMER}" == "true" ]; then
   get_temporary_aws_credentials "${CMS_ENV_AWS_ACCOUNT_NUMBER}"
 else
   export AWS_PROFILE="${CMS_ENV}"
