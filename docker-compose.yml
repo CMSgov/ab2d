@@ -28,6 +28,7 @@ services:
       - AB2D_DB_USER=ab2d
       - AB2D_DB_PASSWORD=ab2d
       - AB2D_EFS_MOUNT=/opt/ab2d
+      - AB2D_EXECUTION_ENV=local
       - NEW_RELIC_LICENSE_KEY="${NEW_RELIC_LICENSE_KEY}"
       - NEW_RELIC_APP_NAME="${NEW_RELIC_APP_NAME}"
     ports:
@@ -47,6 +48,7 @@ services:
       - AB2D_DB_USER=ab2d
       - AB2D_DB_PASSWORD=ab2d
       - AB2D_EFS_MOUNT=/opt/ab2d
+      - AB2D_EXECUTION_ENV=local
       - AB2D_BFD_URL=https://prod-sbx.bfd.cms.gov/v1/fhir/
       - AB2D_BFD_KEYSTORE_PASSWORD=${AB2D_BFD_KEYSTORE_PASSWORD}
       - AB2D_BFD_KEYSTORE_LOCATION=${AB2D_BFD_KEYSTORE_LOCATION}
