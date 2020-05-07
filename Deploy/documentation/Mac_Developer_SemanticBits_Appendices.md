@@ -13,6 +13,7 @@
    * [Disconnect from the Cisco AnyConnect client](#disconnect-from-the-cisco-anyconnect-client)
 1. [Appendix C: Install 1Password API](#appendix-c-install-1password-api)
 1. [Appendix D: Troubleshoot VPN access](#appendix-d-troubleshoot-vpn-access)
+1. [Appendix E: Configure show file extensions in Finder](#appendix-e-configure-show-file-extensions-in-finder)
 
 ## Appendix A: PostgreSQL 11
 
@@ -328,3 +329,17 @@
       ```
 
    1. Try reconnecting to the Cisco VPN client again
+
+## Appendix E: Configure show file extensions in Finder
+
+1. Open Finder
+
+1. Select the **Finder** menu
+
+1. Select **Preferences**
+
+1. Select the **Advanced** tab
+
+1. Check **Show all filename extensions**
+
+1. CLose the "Finder Preferences" window
