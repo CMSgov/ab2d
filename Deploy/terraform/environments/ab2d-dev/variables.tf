@@ -331,19 +331,19 @@ variable "new_relic_license_key" {
 
 variable "ecs_task_definition_host_port" {
   type        = number
-  default     = 80
+  default     = 443
   description = "Please pass this on command line and not as a value here"
 }
 
 variable "host_port" {
   type        = number
-  default     = 80
+  default     = 443
   description = "Please pass this on command line and not as a value here"
 }
 
 variable "alb_listener_protocol" {
   type        = string
-  default     = "HTTP"
+  default     = "HTTPS"
   description = "Please pass this on command line and not as a value here"
 }
 
