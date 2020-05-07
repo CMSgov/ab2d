@@ -1086,11 +1086,15 @@ if [ "$CMS_ENV" == "ab2d-sbx-sandbox" ]; then
     --query "CertificateSummaryList[?DomainName=='sandbox.ab2d.cms.gov'].CertificateArn" \
     --output text)
   ALB_SECURITY_GROUP_IP_RANGE="0.0.0.0/0"
-else
+elif [ "$CMS_ENV" == "ab2d-dev" ]; then
   ALB_LISTENER_PORT=443
   ALB_LISTENER_PROTOCOL="HTTPS"
-  ALB_LISTENER_CERTIFICATE_ARN=""
+  ALB_LISTENER_CERTIFICATE_ARN=$(aws --region "${REGION}" acm list-certificates \
+    --query "CertificateSummaryList[?DomainName=='dev.ab2d.cms.gov'].CertificateArn" \
+    --output text)
   ALB_SECURITY_GROUP_IP_RANGE="${VPN_PRIVATE_IP_ADDRESS_CIDR_RANGE}"
+else
+  echo "*** TO DO ***: need to configure IMPL and Prod"
 fi
 
 # Run automation for API and worker
@@ -1285,6 +1289,8 @@ while [ -n "${ASG_NOT_IN_SERVICE}" ]; do
     exit 1
   fi
 done
+
+sleep 60
 
 # Remove old launch configurations
 
