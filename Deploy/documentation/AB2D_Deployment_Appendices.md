@@ -93,6 +93,7 @@
 1. [Appendix OO: Merge a specific commit from master into your branch](#appendix-oo-merge-a-specific-commit-from-master-into-your-branch)
 1. [Appendix PP: Test running development automation from development machine](#appendix-pp-test-running-development-automation-from-development-machine)
 1. [Appendix QQ: Set up demonstration of cross account access of an encrypted S3 bucket](#appendix-qq-set-up-demonstration-of-cross-account-access-of-an-encrypted-s3-bucket)
+1. [Appendix RR: Tealium and Google Analytics notes](#appendix-rr-tealium-and-google-analytics-notes)
 
 ## Appendix A: Access the CMS AWS console
 
@@ -8019,4 +8020,22 @@
 
 > *** TO DO ***
 
+## Appendix RR: Tealium and Google Analytics notes
 
+*Here is the service desk ticket that we created:*
+
+> https://jira.cms.gov/browse/WHSD-24539
+
+*Here is documentation that CMS support created that let us know what to add to the website pages:*
+
+> https://confluence.cms.gov/display/BLSTANALYT/Tealium+Implementation+Documentation#TealiumImplementationDocumentation-ab2d.cms.gov
+
+*This is part we added for our development version of our Jekyll static website:*
+
+> https://github.com/CMSgov/ab2d/blob/master/website/_includes/head.html#L26-L49
+
+*For the production static website, I just changed the "head.html" from dev to prod like this:*
+
+```ShellSession
+$ sed -i "" 's%cms-ab2d[\/]prod%cms-ab2d/dev%g' _includes/head.html (edited)
+```
