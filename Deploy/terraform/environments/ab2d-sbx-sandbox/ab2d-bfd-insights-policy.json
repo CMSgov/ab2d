@@ -20,6 +20,7 @@
                 "s3:GetObject",
                 "s3:ListBucket",
                 "s3:ListBucketMultipartUploads",
+		"s3:PutObjectAcl",
                 "s3:PutObject"
             ],
             "Resource": [
@@ -59,7 +60,7 @@
                 "kinesis:GetRecords",
                 "kinesis:ListShards"
             ],
-            "Resource": "arn:aws:kinesis:us-east-1:777200079629:stream/bfd-insights-ab2d"
+            "Resource": "*"
         }
     ]
 }
