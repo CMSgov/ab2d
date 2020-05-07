@@ -388,6 +388,17 @@ public class TestRunner {
         return verifyJsonFromStatusResponse(statusResponseAgain, jobUuid, isContract ? contractNumber : null);
     }
 
+    @BeforeEach
+    public void printMemory() {
+        int mb = 1024 * 1024;
+        Runtime runtime = Runtime.getRuntime();
+        System.out.println("**********************");
+        System.out.println(runtime.freeMemory() / mb);
+        System.out.println(runtime.totalMemory() / mb);
+        System.out.println(runtime.maxMemory() / mb);
+        System.out.println("**********************");
+    }
+
     @Test
     @Order(1)
     public void runSystemWideExport() throws IOException, InterruptedException, JSONException {
