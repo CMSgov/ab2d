@@ -13,11 +13,12 @@ resource "aws_kms_key" "a" {
     "Id": "key-default-1",
     "Statement": [
         {
-            "Sid": "Enable IAM User Permissions",
+            "Sid": "Enable IAM Permissions",
             "Effect": "Allow",
             "Principal": {
                 "AWS": [
-                    "arn:aws:iam::${var.aws_account_number}:root",
+		    "arn:aws:iam::${var.aws_account_number}:root",
+		    "arn:aws:iam::${var.aws_account_number}:role/ab2d-spe-developer",
                     "arn:aws:iam::${var.aws_account_number}:role/Ab2dInstanceRole"
                 ]
             },
