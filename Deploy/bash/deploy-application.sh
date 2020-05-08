@@ -255,6 +255,10 @@ export TF_LOG_PATH=/var/log/terraform/tf.log
 rm -f /var/log/terraform/tf.log
 
 #
+# USE EXISTING BUILD #1 BEGIN
+#
+
+#
 # Configure docker environment
 #
 
@@ -277,6 +281,10 @@ docker volume ls -qf dangling=true | xargs -I name docker volume rm name
 # Delete all images again (if any)
 
 docker images -q | xargs -I name docker rmi --force name
+
+#
+# USE EXISTING BUILD #1 END
+#
 
 #
 # Initialize and validate terraform
@@ -522,6 +530,11 @@ DEPLOYER_IP_ADDRESS=$(curl ipinfo.io/ip)
 # Create ".auto.tfvars" file for the target environment
 #
 
+# Change to the target environment
+
+cd "${START_DIR}/.."
+cd terraform/environments/$CMS_ENV
+
 # Determine cpu and memory for new API ECS container definition
 
 API_EC2_INSTANCE_CPU_COUNT=$(aws --region "${REGION}" ec2 describe-instance-types \
@@ -629,6 +642,10 @@ cd "${START_DIR}/.."
 cd python3
 ./enable-kms-key.py $MGMT_KMS_KEY_ID
 
+#
+# USE EXISTING BUILD #2 BEGIN
+#
+
 # Set environment to the AWS account where the shared ECR repository is maintained
 
 cd "${START_DIR}/.."
@@ -652,6 +669,10 @@ cd ..
 
 mvn clean package -DskipTests
 sleep 5
+
+#
+# USE EXISTING BUILD #2 END
+#
 
 # Get image version based on a master commit number
 
@@ -683,6 +704,10 @@ else
 fi
 
 IMAGE_VERSION="${CMS_ENV}-latest-${COMMIT_NUMBER}"
+
+#
+# USE EXISTING BUILD #3 BEGIN
+#
 
 # Build API docker images
 
@@ -719,11 +744,19 @@ if [ -z "${API_ECR_REPO_URI}" ]; then
     --output text)
 fi
 
+#
+# USE EXISTING BUILD #3 END
+#
+
 # Get ecr repo aws account
 
 ECR_REPO_AWS_ACCOUNT=$(aws --region "${REGION}" sts get-caller-identity \
   --query Account \
   --output text)
+
+#
+# USE EXISTING BUILD #4 BEGIN
+#
 
 # Apply ecr repo policy to the "ab2d_api" repo
 
@@ -914,7 +947,11 @@ else
 fi
 
 echo "Using master branch commit number '${COMMIT_NUMBER}' for ab2d_api and ab2d_worker..."
-    
+
+#
+# USE EXISTING BUILD #4 END
+#
+
 #
 # Set AWS target environment
 #
@@ -1095,13 +1132,24 @@ elif [ "$CMS_ENV" == "ab2d-dev" ]; then
     --query "CertificateSummaryList[?DomainName=='dev.ab2d.cms.gov'].CertificateArn" \
     --output text)
   ALB_SECURITY_GROUP_IP_RANGE="${VPN_PRIVATE_IP_ADDRESS_CIDR_RANGE}"
+elif [ "$CMS_ENV" == "ab2d-east-prod" ]; then
+  ALB_LISTENER_PORT=443
+  ALB_LISTENER_PROTOCOL="HTTPS"
+
+  # *** TO DO ***: switch to domain certificate, when obtained
+  ALB_LISTENER_CERTIFICATE_ARN="arn:aws:iam::595094747606:server-certificate/Ab2dTempCom"
+
+  ALB_SECURITY_GROUP_IP_RANGE="${VPN_PRIVATE_IP_ADDRESS_CIDR_RANGE}"
 else
-  echo "*** TO DO ***: need to configure IMPL and Prod"
+  echo "*** TO DO ***: need to configure IMPL"
+  exit 1
 fi
 
 # Run automation for API and worker
 
 terraform apply \
+  --var "env=${CMS_ENV}" \
+  --var	"aws_account_number=${CMS_ENV_AWS_ACCOUNT_NUMBER}" \
   --var "ami_id=$AMI_ID" \
   --var "current_task_definition_arn=$API_TASK_DEFINITION" \
   --var "db_host=$DATABASE_HOST" \
@@ -1130,6 +1178,8 @@ terraform apply \
   --auto-approve
 
 terraform apply \
+  --var "env=${CMS_ENV}" \
+  --var "aws_account_number=${CMS_ENV_AWS_ACCOUNT_NUMBER}" \
   --var "ami_id=$AMI_ID" \
   --var "current_task_definition_arn=$WORKER_TASK_DEFINITION" \
   --var "db_host=$DATABASE_HOST" \
@@ -1167,6 +1217,7 @@ echo "Deploy CloudWatch..."
 
 terraform apply \
   --target module.cloudwatch \
+  --var "env=${CMS_ENV}" \
   --var "ami_id=$AMI_ID" \
   --var "ecs_task_definition_host_port=$ALB_LISTENER_PORT" \
   --var "host_port=$ALB_LISTENER_PORT" \
@@ -1181,6 +1232,7 @@ terraform apply \
 #
 
 terraform apply \
+  --var "env=${CMS_ENV}" \
   --var "alb_internal=$ALB_INTERNAL" \
   --var "alb_security_group_ip_range=$ALB_SECURITY_GROUP_IP_RANGE" \
   --target module.waf \
@@ -1195,6 +1247,7 @@ terraform apply \
 # applied instead.
 
 terraform apply \
+  --var "env=${CMS_ENV}" \
   --target module.shield \
   --auto-approve
 
