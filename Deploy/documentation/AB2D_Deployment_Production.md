@@ -17,11 +17,12 @@
 1. [Submit an "Internet DNS Change Request Form" to product owner for the sandbox application load balancer](#submit-an-internet-dns-change-request-form-to-product-owner-for-the-sandbox-application-load-balancer)
 1. [Submit an "Internet DNS Change Request Form" to product owner for the production application load balancer](#Submit an "internet-dns-change-request-form-to-product-owner-for-the-production-application-load-balancer)
 1. [Deploy to production](#deploy-to-production)
-   * [Initialize or verify base environment](#initialize-or-verify-base-environment)
+   * [Initialize or verify base environment for production](#initialize-or-verify-base-environment-for-production)
    * [Encrypt and upload New Relic configuration file](#encrypt-and-upload-new-relic-configuration-file)
-   * [Create, encrypt, and upload BFD AB2D keystore](#create-encrypt-and-upload-bfd-ab2d-keystore)
+   * [Create, encrypt, and upload BFD AB2D keystore for Prod](#create-encrypt-and-upload-bfd-ab2d-keystore-for-prod)
    * [Create or update AMI with latest gold disk](#create-or-update-ami-with-latest-gold-disk)
    * [Create or update infrastructure](#create-or-update-infrastructure)
+   * [Create or update application for production](#create-or-update-application-for-production)
 
 ## Obtain and import ab2d.cms.gov certificate
 
@@ -484,7 +485,7 @@
 
 ## Deploy to sandbox
 
-### Initialize or verify base environment
+### Initialize or verify base environment for sandbox
 
 1. Ensure that you are connected to CMS Cisco VPN
 
@@ -497,7 +498,8 @@
 1. Initialize or verify environment
 
    ```ShellShession
-   $ ./bash/initialize-environment.sh
+   $ ./bash/initialize-environment.sh \
+     --database-secret-datetime=2020-01-02-09-15-01
    ```
    
 1. Enter the number of the AWS account with the environment to initialize or verify
@@ -614,9 +616,249 @@
    $ cat /tmp/newrelic-infra.yml
    ```
 
-### Create, encrypt, and upload BFD AB2D keystore
+### Create, encrypt, and upload BFD AB2D keystore for Prod
 
-> *** TO DO ***
+1. Note that there is a "bfd-users" slack channel for cmsgov with BFD engineers
+
+1. Create a password in 1Password with the following desrciption
+
+   ```
+   AB2D_BFD_KEYSTORE_PASSWORD in Prod
+   ```
+
+1. Remove temporary directory (if exists)
+
+   ```ShellSession
+   $ rm -rf ~/Downloads/bfd-integration
+   ```
+
+1. Create a temporary directory
+
+   ```ShellSession
+   $ mkdir -p ~/Downloads/bfd-integration
+   ```
+
+1. Change to the temporary directory
+
+   ```ShellSession
+   $ cd ~/Downloads/bfd-integration
+   ```
+
+1. Create a self-signed SSL certificate for AB2D client to BFD sandbox
+
+   ```ShellSession
+   $ openssl req \
+     -nodes -x509 \
+     -days 1825 \
+     -newkey rsa:4096 \
+     -keyout client_data_server_ab2d_prod_certificate.key \
+     -subj "/CN=ab2d-sbx-client" \
+     -out client_data_server_ab2d_prod_certificate.pem
+   ```
+
+1. Note that the following two files were created
+
+   - client_data_server_ab2d_prod_certificate.key (private key)
+
+   - client_data_server_ab2d_prod_certificate.pem (self-signed crtificate)
+
+1. Create a keystore that includes the self-signed SSL certificate for AB2D client to BFD sandbox
+
+   ```ShellSession
+   $ openssl pkcs12 -export \
+     -in client_data_server_ab2d_prod_certificate.pem \
+     -inkey client_data_server_ab2d_prod_certificate.key \
+     -out ab2d_prod_keystore \
+     -name client_data_server_ab2d_prod_certificate
+   ```
+ 
+1. Copy the "AB2D_BFD_KEYSTORE_PASSWORD in Prod" password from 1Password to the clipboard
+
+1. Paste the password at the "Enter Export Password" prompt
+
+1. Paste the password again at the "Verifying - Enter Export Password" prompt
+
+1. Note that the following file has been created
+
+   - ab2d_prod_keystore (keystore)
+
+1. Export the public key from the self-signed SSL certificate for AB2D client to BFD sandbox
+
+   ```ShellSession
+   $ openssl x509 -pubkey -noout \
+     -in client_data_server_ab2d_prod_certificate.pem \
+     > client_data_server_ab2d_prod_certificate.pub
+   ```
+
+1. Note that the following file has been created
+
+   - client_data_server_ab2d_prod_certificate.pub (public key)
+
+1. Give the public key associated with the self-signed SSL certificate to a BFD engineer that you find on the "bfd-users" slack channel
+
+   - client_data_server_ab2d_prod_certificate.pub
+
+1. Send output from "prod-sbx.bfd.cms.gov" that includes only the certificate to a file
+
+   ```ShellSession
+   $ openssl s_client -connect prod-sbx.bfd.cms.gov:443 \
+     2>/dev/null | openssl x509 -text \
+     | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' \
+     > prod-sbx.bfdcloud.pem
+   ```
+
+1. Note that the following file has been created
+
+   - prod-sbx.bfdcloud.pem (certificate from the bfd sandbox server)
+
+1. Import "prod-sbx.bfd.cms.gov" certificate into the keystore
+   
+   ```ShellSession
+   $ keytool -import \
+     -alias bfd-prod-sbx-selfsigned \
+     -file prod-sbx.bfdcloud.pem \
+     -storetype PKCS12 \
+     -keystore ab2d_prod_keystore
+   ```
+
+1. Copy the "AB2D_BFD_KEYSTORE_PASSWORD in Prod" password from 1Password to the clipboard
+
+1. Enter the keystore password at the "Enter keystore password" prompt
+
+1. Enter the following at the "Trust this certificate" prompt
+
+   ```
+   yes
+   ```
+
+1. Verify that both the bfd sandbox and client certificates are present
+   
+   ```ShellSession
+   $ keytool -list -v -keystore ab2d_prod_keystore
+   ```
+
+1. Copy the "AB2D_BFD_KEYSTORE_PASSWORD in Prod" password from 1Password to the clipboard
+
+1. Enter the keystore password at the "Enter keystore password" prompt
+
+1. Verify that there are sections for the following two aliases in the keystore list output
+   
+   - Alias name: bfd-prod-sbx-selfsigned
+
+   - Alias name: client_data_server_ab2d_prod_certificate
+
+1. Save the keystore, private key, self-signed certificate, and public key in the "ab2d" vault of 1Password
+
+   Label                                       |File
+   --------------------------------------------|-------------------------------------------
+   AB2D BFD Keystore for Prod                  |ab2d_prod_keystore
+   client_data_server_ab2d_prod_certificate.key|client_data_server_ab2d_prod_certificate.key
+   client_data_server_ab2d_prod_certificate.pem|client_data_server_ab2d_prod_certificate.pem
+   client_data_server_ab2d_prod_certificate.pub|client_data_server_ab2d_prod_certificate.pub
+
+## Peer AB2D Dev, Sandbox, Impl environments with the BFD Sbx VPC and peer AB2D Prod with BFD Prod VPC
+
+1. Note that peering is no longer needed for using the BFD Sbx (AKA prod-sbx.bfd.cms.gov)
+
+1. *** TO DO *** Determine what will need to be done for BFD Prod
+
+1. Note that CCS usually likes to handle the peering between project environments and BFD and then the ADO teams can authorize access
+
+   > *** TO DO ***: Determine if this step needed for BFD Prod?
+
+1. Request that CMS technical contact (e.g. Stephen) create a ticket like the following
+
+   > https://jira.cms.gov/browse/CMSAWSOPS-53861
+
+   > *** TO DO ***: Determine if this step needed for BFD Prod?
+
+## Encrypt BFD keystore and put in S3
+
+1. Get the keystore from 1Password and copy it to the "/tmp" directory
+
+   ```
+   /tmp/ab2d_prod_keystore
+   ```
+
+1. Change to the "Deploy" directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d/Deploy
+   ```
+
+1. Set AWS environment variables using the CloudTamer API
+
+   ```ShellSession
+   $ source ./bash/set-env.sh
+   ```
+
+1. Enter the number of the desired AWS account where the desired logs reside
+
+   ```
+   5
+   ```
+   
+1. Change to the ruby script directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d/Deploy/ruby
+   ```
+
+1. Ensure required gems are installed
+
+   ```ShellSession
+   $ bundle install
+   ```
+   
+1. Encrypt keystore and put it in S3
+   
+   ```ShellSession
+   $ bundle exec rake encrypt_and_put_file_into_s3['/tmp/ab2d_prod_keystore','ab2d-east-prod-automation']
+   ```
+
+1. Verify that you can get the encrypted keystore from S3 and decrypt it
+   
+   1. Remove existing keyfile from the "/tmp" directory (if exists)
+
+      ```ShellSession
+      $ rm -f /tmp/ab2d_prod_keystore
+      ```
+
+   1. Get keystore from S3 and decrypt it
+
+      ```ShellSession
+      $ bundle exec rake get_file_from_s3_and_decrypt['/tmp/ab2d_prod_keystore','ab2d-east-prod-automation']
+      ```
+
+   1. Verify that both the bfd sandbox and client certificates are present
+
+      ```ShellSession
+      $ keytool -list -v -keystore /tmp/ab2d_prod_keystore
+      ```
+
+   1. Copy the "AB2D_BFD_KEYSTORE_PASSWORD in Prod" password from 1Password to the clipboard
+
+   1. Enter the keystore password at the "Enter keystore password" prompt
+
+   1. Verify that there are sections for the following two aliases in the keystore list output
+
+      - Alias name: bfd-prod-sbx-selfsigned
+
+      - Alias name: client_data_server_ab2d_prod_certificate
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 ### Create or update AMI with latest gold disk
 
@@ -648,9 +890,13 @@
 
 ### Create or update infrastructure
 
-1. Deploy infrastructure
+1. Change to the "Deploy" directory
 
-   *Example for "Prod" environment:*
+   ```ShellSession
+   $ cd ~/code/ab2d/Deploy
+   ```
+
+1. Deploy infrastructure
    
    ```ShellSession
    $ ./deploy-infrastructure.sh \
@@ -741,7 +987,7 @@
 
 ## Deploy to production
 
-### Initialize or verify base environment
+### Initialize or verify base environment for production
 
 1. Ensure that you are connected to CMS Cisco VPN
 
@@ -754,7 +1000,8 @@
 1. Initialize or verify environment
 
    ```ShellShession
-   $ ./bash/initialize-environment.sh
+   $ ./bash/initialize-environment.sh \
+     --database-secret-datetime=2020-01-02-09-15-01
    ```
    
 1. Enter the number of the AWS account with the environment to initialize or verify
@@ -808,8 +1055,6 @@
    ```
 
 1. Enter the number of the desired AWS account where the desired logs reside
-
-   *Example for "Prod" environment:*
 
    ```
    5
@@ -873,10 +1118,6 @@
    $ cat /tmp/newrelic-infra.yml
    ```
 
-### Create, encrypt, and upload BFD AB2D keystore
-
-> *** TO DO ***
-
 ### Create or update AMI with latest gold disk
 
 1. Change to the "Deploy" directory
@@ -907,9 +1148,13 @@
 
 ### Create or update infrastructure
 
-1. Deploy infrastructure
+1. Change to the "Deploy" directory
 
-   *Example for "Prod" environment:*
+   ```ShellSession
+   $ cd ~/code/ab2d/Deploy
+   ```
+
+1. Deploy infrastructure
    
    ```ShellSession
    $ ./deploy-infrastructure.sh \
@@ -920,18 +1165,54 @@
      --ssh-username=ec2-user \
      --owner=743302140042 \
      --ec2_instance_type_api=m5.xlarge \
-     --ec2_instance_type_worker=m5.xlarge \
+     --ec2_instance_type_worker=m5.4xlarge \
      --ec2_instance_type_other=m5.xlarge \
-     --ec2_desired_instance_count_api=1 \
-     --ec2_minimum_instance_count_api=1 \
-     --ec2_maximum_instance_count_api=1 \
-     --ec2_desired_instance_count_worker=1 \
-     --ec2_minimum_instance_count_worker=1 \
-     --ec2_maximum_instance_count_worker=1 \
+     --ec2_desired_instance_count_api=2 \
+     --ec2_minimum_instance_count_api=2 \
+     --ec2_maximum_instance_count_api=2 \
+     --ec2_desired_instance_count_worker=2 \
+     --ec2_minimum_instance_count_worker=2 \
+     --ec2_maximum_instance_count_worker=2 \
      --database-secret-datetime=2020-01-02-09-15-01 \
      --build-new-images \
-     --internet-facing=false \
+     --internet-facing=true \
      --auto-approve
+   ```
+
+### Create or update application for production
+
+1. Change to the "Deploy" directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d/Deploy
+   ```
+
+1. Set parameters
+
+   ```ShellSession
+   $ export CMS_ENV_PARAM=ab2d-east-prod
+   $ export CMS_ECR_REPO_ENV_PARAM=ab2d-mgmt-east-dev
+   $ export REGION_PARAM=us-east-1
+   $ export VPC_ID_PARAM=vpc-0c9d55c3d85f46a65
+   $ export SSH_USERNAME_PARAM=ec2-user
+   $ export EC2_INSTANCE_TYPE_API_PARAM=m5.xlarge
+   $ export EC2_INSTANCE_TYPE_WORKER_PARAM=m5.4xlarge
+   $ export EC2_DESIRED_INSTANCE_COUNT_API_PARAM=2
+   $ export EC2_MINIMUM_INSTANCE_COUNT_API_PARAM=2
+   $ export EC2_MAXIMUM_INSTANCE_COUNT_API_PARAM=2
+   $ export EC2_DESIRED_INSTANCE_COUNT_WORKER_PARAM=2
+   $ export EC2_MINIMUM_INSTANCE_COUNT_WORKER_PARAM=2
+   $ export EC2_MAXIMUM_INSTANCE_COUNT_WORKER_PARAM=2
+   $ export DATABASE_SECRET_DATETIME_PARAM=2020-01-02-09-15-01
+   $ export DEBUG_LEVEL_PARAM=WARN
+   $ export INTERNET_FACING_PARAM=true
+   $ export CLOUD_TAMER_PARAM=true
+   ``` 
+
+1. Deploy application
+
+   ```ShellSession
+   $ ./bash/deploy-application.sh
    ```
 
 ### Submit an "Internet DNS Change Request Form" to product owner for the production application load balancer
