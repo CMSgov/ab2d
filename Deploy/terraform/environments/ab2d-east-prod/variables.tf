@@ -40,6 +40,10 @@ variable "ami_id" {
   description = "This is meant to be a different value on every new deployment"
 }
 
+variable "ec2_instance_type" {
+  default = ""
+}
+
 variable "ec2_instance_type_api" {
   default = ""
 }
@@ -222,160 +226,156 @@ variable "db_name_secret_arn" {
   description = "Please pass this on command line and not as a value here"
 }
 
-# ## S3 specific variables #########################################################################
+## S3 specific variables #########################################################################
 
-# variable "file_bucket_name" {
-#   default = "ab2d-east-prod"
-# }
+variable "file_bucket_name" {
+  default = "ab2d-east-prod"
+}
 
-# variable "logging_bucket_name" {
-#   default = "ab2d-east-prod-cloudtrail"
-# }
+variable "logging_bucket_name" {
+  default = "ab2d-east-prod-cloudtrail"
+}
 
-# variable "s3_username_whitelist" {
-#   default = ["lonnie.hanekamp@semanticbits.com"]
-# }
+## ECS specific variables #########################################################################
 
-# ## ECS specific variables #########################################################################
+variable "current_task_definition_arn" {
+  default     = ""
+  description = "Please pass this on command line as part of deployment process"
+}
 
-# variable "current_task_definition_arn" {
-#   default     = ""
-#   description = "Please pass this on command line as part of deployment process"
-# }
+variable "ecs_container_definition_new_memory_api" {
+  default = ""
+}
 
-# variable "ecs_container_definition_new_memory_api" {
-#   default = ""
-# }
+variable "ecs_task_definition_cpu_api" {
+  default = ""
+}
 
-# variable "ecs_task_definition_cpu_api" {
-#   default = ""
-# }
+variable "ecs_task_definition_memory_api" {
+  default = ""
+}
 
-# variable "ecs_task_definition_memory_api" {
-#   default = ""
-# }
+variable "ecs_container_definition_new_memory_worker" {
+  default = ""
+}
 
-# variable "ecs_container_definition_new_memory_worker" {
-#   default = ""
-# }
+variable "ecs_task_definition_cpu_worker" {
+  default = ""
+}
 
-# variable "ecs_task_definition_cpu_worker" {
-#   default = ""
-# }
+variable "ecs_task_definition_memory_worker" {
+  default = ""
+}
 
-# variable "ecs_task_definition_memory_worker" {
-#   default = ""
-# }
+## SNS specific variables #########################################################################
 
-# ## SNS specific variables #########################################################################
+variable "alert_email_address" {
+  default = "lonnie.hanekamp@semanticbits.com"
+}
 
-# variable "alert_email_address" {
-#   default = "lonnie.hanekamp@semanticbits.com"
-# }
+variable "victorops_url_endpoint" {
+  default = ""
+}
 
-# variable "victorops_url_endpoint" {
-#   default = ""
-# }
+variable "deployer_ip_address" {
+  default = ""
+  description = "Programmatically determined and passed in at the command line"
+}
 
-# variable "deployer_ip_address" {
-#   default = ""
-#   description = "Programmatically determined and passed in at the command line"
-# }
+variable "ecr_repo_aws_account" {
+  default = ""
+  description = "Programmatically determined and passed in at the command line"
+}
 
-# variable "ecr_repo_aws_account" {
-#   default = ""
-#   description = "Programmatically determined and passed in at the command line"
-# }
+variable "image_version" {
+  default = ""
+  description = "Programmatically determined and passed in at the command line"
+}
 
-# variable "image_version" {
-#   default = ""
-#   description = "Programmatically determined and passed in at the command line"
-# }
+## BFD specific variables #########################################################################
 
-# ## BFD specific variables #########################################################################
+variable "bfd_url" {
+  default     = ""
+  description = "Please pass this on command line and not as a value here"
+}
 
-# variable "bfd_url" {
-#   default     = ""
-#   description = "Please pass this on command line and not as a value here"
-# }
+variable "bfd_keystore_location" {
+  default     = ""
+  description = "Please pass this on command line and not as a value here"
+}
 
-# variable "bfd_keystore_location" {
-#   default     = ""
-#   description = "Please pass this on command line and not as a value here"
-# }
+variable "bfd_keystore_password" {
+  default     = ""
+  description = "Please pass this on command line and not as a value here"
+}
 
-# variable "bfd_keystore_password" {
-#   default     = ""
-#   description = "Please pass this on command line and not as a value here"
-# }
+variable "hicn_hash_pepper" {
+  default     = ""
+  description = "Please pass this on command line and not as a value here"
+}
 
-# variable "hicn_hash_pepper" {
-#   default     = ""
-#   description = "Please pass this on command line and not as a value here"
-# }
+variable "hicn_hash_iter" {
+  default     = ""
+  description = "Please pass this on command line and not as a value here"
+}
 
-# variable "hicn_hash_iter" {
-#   default     = ""
-#   description = "Please pass this on command line and not as a value here"
-# }
+variable "bfd_keystore_file_name" {
+  default     = ""
+  description = "Please pass this on command line and not as a value here"
+}
 
-# variable "bfd_keystore_file_name" {
-#   default     = ""
-#   description = "Please pass this on command line and not as a value here"
-# }
+variable "new_relic_app_name" {
+  default     = ""
+  description = "Please pass this on command line and not as a value here"
+}
 
-# variable "new_relic_app_name" {
-#   default     = ""
-#   description = "Please pass this on command line and not as a value here"
-# }
+variable "new_relic_license_key" {
+  default     = ""
+  description = "Please pass this on command line and not as a value here"
+}
 
-# variable "new_relic_license_key" {
-#   default     = ""
-#   description = "Please pass this on command line and not as a value here"
-# }
+## ALB specific variables #########################################################################
 
-# ## ALB specific variables #########################################################################
+variable "ecs_task_definition_host_port" {
+  type        = number
+  default     = 443
+  description = "Please pass this on command line and not as a value here"
+}
 
-# variable "ecs_task_definition_host_port" {
-#   type        = number
-#   default     = 80
-#   description = "Please pass this on command line and not as a value here"
-# }
+variable "host_port" {
+  type        = number
+  default     = 443
+  description = "Please pass this on command line and not as a value here"
+}
 
-# variable "host_port" {
-#   type        = number
-#   default     = 80
-#   description = "Please pass this on command line and not as a value here"
-# }
+variable "alb_listener_protocol" {
+  type        = string
+  default     = "HTTPS"
+  description = "Please pass this on command line and not as a value here"
+}
 
-# variable "alb_listener_protocol" {
-#   type        = string
-#   default     = "HTTP"
-#   description = "Please pass this on command line and not as a value here"
-# }
+variable "alb_listener_certificate_arn" {
+  type        = string
+  default     = ""
+  description = "Please pass this on command line and not as a value here"
+}
 
-# variable "alb_listener_certificate_arn" {
-#   type        = string
-#   default     = ""
-#   description = "Please pass this on command line and not as a value here"
-# }
+variable "alb_internal" {
+  type        = bool
+  default     = true
+  description = "Please pass this on command line and not as a value here"
+}
 
-# variable "alb_internal" {
-#   type        = bool
-#   default     = true
-#   description = "Please pass this on command line and not as a value here"
-# }
+variable "alb_security_group_ip_range" {
+  type        = string
+  default     = "0.0.0.0/0"
+  description = "Please pass this on command line and not as a value here"
+}
 
-# variable "alb_security_group_ip_range" {
-#   type        = string
-#   default     = "0.0.0.0/0"
-#   description = "Please pass this on command line and not as a value here"
-# }
-
-# variable "vpn_private_ip_address_cidr_range" {
-#   default = ""
-#   description = "Please pass this on command line and not as a value here"
-# }
+variable "vpn_private_ip_address_cidr_range" {
+  default = ""
+  description = "Please pass this on command line and not as a value here"
+}
 
 #
 # Kinesis Firehose specific variables

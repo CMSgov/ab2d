@@ -167,6 +167,10 @@ resource "aws_ecs_task_definition" "api" {
 	  "value" : "${lower(var.env)}"
 	},
         {
+	  "name" : "AB2D_DB_SSL_MODE",
+	  "value" : "require"
+	},
+        {
 	  "name" : "NEW_RELIC_APP_NAME",
 	  "value" : "${var.new_relic_app_name}"
 	},
