@@ -16,9 +16,9 @@ import java.util.concurrent.TimeoutException;
 @Service
 @Slf4j
 public class KinesisEventLogger implements EventLogger {
-    @Value("${execution.env:dev}")
+    @Value("${execution.env:local}")
     private String appEnv;
-    @Value("${eventlogger.kinesis.stream.prefix:bfd-insights-ab2d-}")
+    @Value("${eventlogger.kinesis.stream.prefix:}")
     private String streamId;
 
     private final KinesisConfig config;
@@ -36,6 +36,9 @@ public class KinesisEventLogger implements EventLogger {
 
     public void log(LoggableEvent event, boolean block) {
         event.setEnvironment(appEnv);
+        if (appEnv.equalsIgnoreCase("local")) {
+            return;
+        }
         ThreadPoolTaskExecutor ex = config.kinesisLogProcessingPool();
         KinesisEventProcessor processor = new KinesisEventProcessor(event, client, streamId);
         Future<Void> future = ex.submit(processor);
