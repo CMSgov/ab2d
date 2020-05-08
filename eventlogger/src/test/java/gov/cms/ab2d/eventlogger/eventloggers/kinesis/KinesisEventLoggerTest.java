@@ -4,29 +4,30 @@ import com.amazonaws.ResponseMetadata;
 import com.amazonaws.services.kinesisfirehose.AmazonKinesisFirehose;
 import com.amazonaws.services.kinesisfirehose.model.PutRecordResult;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.fasterxml.jackson.module.paramnames.ParameterNamesModule;
 import gov.cms.ab2d.eventlogger.AB2DPostgresqlContainer;
+import gov.cms.ab2d.eventlogger.LoggableEvent;
 import gov.cms.ab2d.eventlogger.SpringBootApp;
-import gov.cms.ab2d.eventlogger.events.BeneficiarySearchEvent;
-import gov.cms.ab2d.eventlogger.events.ErrorEvent;
+import gov.cms.ab2d.eventlogger.events.*;
 import org.json.JSONException;
+import org.json.JSONObject;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.time.OffsetDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
+import static gov.cms.ab2d.eventlogger.eventloggers.kinesis.KinesisEventProcessor.camelCaseToUnderscore;
+import static gov.cms.ab2d.eventlogger.eventloggers.kinesis.KinesisEventProcessor.getJsonString;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
@@ -48,6 +49,7 @@ class KinesisEventLoggerTest {
     @BeforeEach
     void init() {
         logger = new KinesisEventLogger(config, firehose);
+        ReflectionTestUtils.setField(logger, "appEnv", "dev");
         doReturn(generateRandomResult()).when(firehose).putRecord(any());
     }
 
@@ -85,19 +87,6 @@ class KinesisEventLoggerTest {
         assertEquals("contract1", se.getContractNum());
         assertEquals(now, se.getTimeOfEvent());
         assertEquals(now2, se.getResponseDate());
-        String json = KinesisEventProcessor.getJsonString(se);
-        System.out.println(json);
-        ObjectMapper mapper = new ObjectMapper()
-                .registerModule(new ParameterNamesModule())
-                .registerModule(new Jdk8Module())
-                .registerModule(new JavaTimeModule());
-        BeneficiarySearchEvent resultBene = mapper.readValue(json, BeneficiarySearchEvent.class);
-        assertEquals("bene1", resultBene.getBeneId());
-        assertEquals("SUCCESS", resultBene.getResponse());
-        assertEquals("job1", resultBene.getJobId());
-        assertEquals("contract1", resultBene.getContractNum());
-        assertEquals(now.getNano(), resultBene.getTimeOfEvent().getNano());
-        assertEquals(now2.getNano(), resultBene.getResponseDate().getNano());
     }
 
     @Test
@@ -116,5 +105,75 @@ class KinesisEventLoggerTest {
             Thread.sleep(1000);
         }
         assertNotNull(e.getAwsId());
+    }
+
+    @Test
+    public void testLocal() {
+        ReflectionTestUtils.setField(logger, "appEnv", "local");
+        ErrorEvent e = new ErrorEvent();
+        e.setDescription("Test Error");
+        e.setErrorType(ErrorEvent.ErrorType.UNAUTHORIZED_CONTRACT);
+        e.setId(1L);
+        e.setJobId("JOB123");
+        e.setTimeOfEvent(OffsetDateTime.now());
+        e.setUser("ME");
+
+        e.setAwsId("BOGUS");
+        logger.log(e, true);
+        String env = e.getEnvironment();
+        // Since we never logged, aws id was not reset
+        assertEquals("BOGUS", e.getAwsId());
+        ReflectionTestUtils.setField(logger, "appEnv", "dev");
+        logger.log(e, true);
+        assertTrue(e.getAwsId() == null || !e.getAwsId().equalsIgnoreCase("BOGUS"));
+    }
+
+    @Test
+    void camelCaseConvertestTest() {
+        LoggableEvent event = new ApiRequestEvent();
+        assertEquals("api_request_event", camelCaseToUnderscore(event.getClass().getSimpleName()));
+        event = new ApiResponseEvent();
+        assertEquals("api_response_event", camelCaseToUnderscore(event.getClass().getSimpleName()));
+        event = new BeneficiarySearchEvent();
+        assertEquals("beneficiary_search_event", camelCaseToUnderscore(event.getClass().getSimpleName()));
+        event = new ContractBeneSearchEvent();
+        assertEquals("contract_bene_search_event", camelCaseToUnderscore(event.getClass().getSimpleName()));
+        event = new ErrorEvent();
+        assertEquals("error_event", camelCaseToUnderscore(event.getClass().getSimpleName()));
+        event = new FileEvent();
+        assertEquals("file_event", camelCaseToUnderscore(event.getClass().getSimpleName()));
+        event = new JobStatusChangeEvent();
+        assertEquals("job_status_change_event", camelCaseToUnderscore(event.getClass().getSimpleName()));
+        event = new ReloadEvent();
+        assertEquals("reload_event", camelCaseToUnderscore(event.getClass().getSimpleName()));
+    }
+
+    @Test
+    void testJsonConversion() throws JSONException {
+        OffsetDateTime now = OffsetDateTime.now();
+        ErrorEvent e = new ErrorEvent();
+        e.setDescription("Test Error");
+        e.setErrorType(ErrorEvent.ErrorType.UNAUTHORIZED_CONTRACT);
+        e.setId(1L);
+        e.setJobId("JOB123");
+        e.setTimeOfEvent(now);
+        e.setUser("ME");
+        e.setAwsId("BOGUS");
+        e.setEnvironment("dev");
+
+        String jsonString = getJsonString(e);
+        JSONObject jsonObj = new JSONObject(jsonString);
+        assertEquals("Test Error", jsonObj.getString("description"));
+        assertEquals(1, jsonObj.getInt("id"));
+        assertEquals("JOB123", jsonObj.getString("job_id"));
+        assertEquals("UNAUTHORIZED_CONTRACT", jsonObj.getString("error_type"));
+        assertEquals("ME", jsonObj.getString("user"));
+        assertEquals("BOGUS", jsonObj.getString("aws_id"));
+        assertEquals("dev", jsonObj.getString("environment"));
+        String dateString = jsonObj.getString("time_of_event");
+        assertNotNull(dateString);
+        assertTrue(dateString.contains("Z"));
+        OffsetDateTime dateObj = OffsetDateTime.parse(dateString, DateTimeFormatter.ISO_DATE_TIME);
+        assertEquals(now.toEpochSecond(), dateObj.toEpochSecond());
     }
 }
