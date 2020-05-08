@@ -1,7 +1,7 @@
 #!/bin/bash
 
 set -e #Exit on first error
-# set -x #Be verbose
+set -x #Be verbose
 
 #
 # Change to working directory
@@ -397,12 +397,6 @@ VPC_ID=$(aws --region "${REGION}" ec2 describe-vpcs \
 #     --target module.kms --auto-approve
 # fi
 
-# # Get target KMS key id
-
-# KMS_KEY_ID=$(aws --region "${REGION}" kms list-aliases \
-#   --query="Aliases[?AliasName=='alias/ab2d-kms'].TargetKeyId" \
-#   --output text)
-
 #
 # Configure terraform
 #
@@ -439,6 +433,11 @@ terraform validate
 
 echo "Create or update database instance..."
 
+# Change to the "python3" directory
+
+cd "${START_DIR}"
+cd python3
+
 # Get database secrets
 
 DATABASE_USER=$(./get-database-secret.py $CMS_ENV database_user $DATABASE_SECRET_DATETIME)
@@ -457,6 +456,142 @@ if [ -z "${DATABASE_USER}" ] \
   exit 1
 fi
 
+# Get VPN privte ip address range
+
+VPN_PRIVATE_IP_ADDRESS_CIDR_RANGE=$(./get-database-secret.py $CMS_ENV vpn_private_ip_address_cidr_range $DATABASE_SECRET_DATETIME)
+
+# Change to the target directory
+
+cd "${START_DIR}"
+cd terraform/environments/$CMS_ENV
+
+#
+# Get network information
+#
+
+# Get first public subnet id
+
+SUBNET_PUBLIC_1_ID=$(aws --region "${REGION}" ec2 describe-subnets \
+  --filters "Name=tag:Name,Values=${CMS_ENV}-public-a" \
+  --query "Subnets[*].SubnetId" \
+  --output text)
+
+if [ -z "${SUBNET_PUBLIC_1_ID}" ]; then
+  echo "ERROR: public subnet #1 not found..."
+  exit 1
+fi
+
+# Get second public subnet id
+
+SUBNET_PUBLIC_2_ID=$(aws --region "${REGION}" ec2 describe-subnets \
+  --filters "Name=tag:Name,Values=${CMS_ENV}-public-b" \
+  --query "Subnets[*].SubnetId" \
+  --output text)
+
+if [ -z "${SUBNET_PUBLIC_2_ID}" ]; then
+  echo "ERROR: public subnet #2 not found..."
+  exit 1
+fi
+
+# Get first private subnet id
+
+SUBNET_PRIVATE_1_ID=$(aws --region "${REGION}" ec2 describe-subnets \
+  --filters "Name=tag:Name,Values=${CMS_ENV}-private-a" \
+  --query "Subnets[*].SubnetId" \
+  --output text)
+
+if [ -z "${SUBNET_PRIVATE_1_ID}" ]; then
+  echo "ERROR: private subnet #1 not found..."
+  exit 1
+fi
+
+# Get second private subnet id
+
+SUBNET_PRIVATE_2_ID=$(aws --region "${REGION}" ec2 describe-subnets \
+  --filters "Name=tag:Name,Values=${CMS_ENV}-private-b" \
+  --query "Subnets[*].SubnetId" \
+  --output text)
+
+if [ -z "${SUBNET_PRIVATE_2_ID}" ]; then
+  echo "ERROR: private subnet #2 not found..."
+  exit 1
+fi
+
+#
+# Create "auto.tfvars" file
+#
+
+# Get AMI ID
+
+AMI_ID=$(aws --region "${REGION}" ec2 describe-images \
+  --owners self \
+  --filters "Name=tag:Name,Values=ab2d-ami" \
+  --query "Images[*].[ImageId]" \
+  --output text)
+
+# Get deployer IP address
+
+DEPLOYER_IP_ADDRESS=$(curl ipinfo.io/ip)
+
+# Get DB endpoint
+
+DB_ENDPOINT=$(aws --region "${REGION}" rds describe-db-instances \
+  --query="DBInstances[?DBInstanceIdentifier=='ab2d'].Endpoint.Address" \
+  --output=text)
+
+# Save VPC_ID
+
+echo 'vpc_id = "'$VPC_ID'"' \
+  > $CMS_ENV.auto.tfvars
+
+# Save private_subnet_ids
+
+if [ -z "${DB_ENDPOINT}" ]; then
+  echo 'private_subnet_ids = ["'$SUBNET_PRIVATE_1_ID'","'$SUBNET_PRIVATE_2_ID'"]' \
+    >> $CMS_ENV.auto.tfvars
+else
+  PRIVATE_SUBNETS_OUTPUT=$(aws --region "${REGION}" ec2 describe-subnets \
+    --filters "Name=tag:Name,Values=*-private-*" \
+    --query "Subnets[*].SubnetId" \
+    --output text)
+
+  IFS=$'\t' read -ra subnet_array <<< "$PRIVATE_SUBNETS_OUTPUT"
+  unset IFS
+
+  COUNT=1
+  for i in "${subnet_array[@]}"
+  do
+    if [ $COUNT == 1 ]; then
+      PRIVATE_SUBNETS=\"$i\"
+    else
+      PRIVATE_SUBNETS=$PRIVATE_SUBNETS,\"$i\"
+    fi
+    COUNT=$COUNT+1
+  done
+
+  echo "private_subnet_ids = [${PRIVATE_SUBNETS}]" \
+    >> $CMS_ENV.auto.tfvars
+fi
+
+# Set remaining vars
+
+echo 'deployment_controller_subnet_ids = ["'$SUBNET_PUBLIC_1_ID'","'$SUBNET_PUBLIC_2_ID'"]' \
+  >> $CMS_ENV.auto.tfvars
+
+echo 'ec2_instance_type = "'$EC2_INSTANCE_TYPE_CONTROLLER'"' \
+  >> $CMS_ENV.auto.tfvars
+
+echo 'linux_user = "'$SSH_USERNAME'"' \
+  >> $CMS_ENV.auto.tfvars
+
+echo 'ami_id = "'$AMI_ID'"' \
+  >> $CMS_ENV.auto.tfvars
+
+echo 'deployer_ip_address = "'$DEPLOYER_IP_ADDRESS'"' \
+  >> $CMS_ENV.auto.tfvars
+echo 'vpn_private_ip_address_cidr_range = "'$VPN_PRIVATE_IP_ADDRESS_CIDR_RANGE'"' \
+  >> $CMS_ENV.auto.tfvars
+
 # Create DB instance (if doesn't exist)
 
 terraform apply \
@@ -470,15 +605,140 @@ DB_ENDPOINT=$(aws --region "${REGION}" rds describe-db-instances \
   --output=text)
 
 cd "${START_DIR}"
-cd terraform/environments/$CMS_SHARED_ENV
+cd terraform/environments/$CMS_ENV
 rm -f generated/.pgpass
 
 # Generate ".pgpass" file
 
 cd "${START_DIR}"
-cd terraform/environments/$CMS_SHARED_ENV
+cd terraform/environments/$CMS_ENV
 mkdir -p generated
 
 # Add default database
 
 echo "${DB_ENDPOINT}:5432:postgres:${DATABASE_USER}:${DATABASE_PASSWORD}" > generated/.pgpass
+
+#
+# Deploy controller
+#
+
+echo "Create or update controller..."
+
+terraform apply \
+  --var "env=${CMS_ENV}" \
+  --var "db_username=${DATABASE_USER}" \
+  --var "db_password=${DATABASE_PASSWORD}" \
+  --var "db_name=${DATABASE_NAME}" \
+  --var "deployer_ip_address=${DEPLOYER_IP_ADDRESS}" \
+  --var "vpn_private_ip_address_cidr_range=${VPN_PRIVATE_IP_ADDRESS_CIDR_RANGE}" \
+  --target module.controller \
+  --auto-approve
+
+#
+# Deploy EFS
+#
+
+# Get files system id (if exists)
+
+EFS_FS_ID=$(aws --region "${REGION}" efs describe-file-systems \
+  --query="FileSystems[?CreationToken=='${CMS_ENV}-efs'].FileSystemId" \
+  --output=text)
+
+# Create file system (if doesn't exist)
+
+if [ -z "${EFS_FS_ID}" ]; then
+  echo "Creating EFS..."
+  terraform apply \
+    --var "env=${CMS_ENV}" \
+    --target module.efs \
+    --auto-approve
+fi
+
+#
+# Create database
+#
+
+cd "${START_DIR}"
+
+# Get the private ip address of the controller
+
+CONTROLLER_PRIVATE_IP=$(aws --region "${REGION}" ec2 describe-instances \
+  --filters "Name=tag:Name,Values=ab2d-deployment-controller" \
+  --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+  --output text)
+
+# Determine if the database for the environment exists
+
+DB_NAME_IF_EXISTS=$(ssh -tt -i "~/.ssh/${CMS_ENV}.pem" \
+  "${SSH_USERNAME}@${CONTROLLER_PRIVATE_IP}" \
+  "psql -t --host "${DB_ENDPOINT}" --username "${DATABASE_USER}" --dbname postgres --command='SELECT datname FROM pg_catalog.pg_database'" \
+  | grep "${DATABASE_NAME}" \
+  | sort \
+  | head -n 1 \
+  | xargs \
+  | tr -d '\r')
+
+# Create the database for the environment if it doesn't exist
+
+if [ -n "${CONTROLLER_PRIVATE_IP}" ] && [ -n "${DB_ENDPOINT}" ] && [ "${DB_NAME_IF_EXISTS}" != "${DATABASE_NAME}" ]; then
+  echo "Creating database..."
+  ssh -tt -i "~/.ssh/${CMS_ENV}.pem" \
+    "${SSH_USERNAME}@${CONTROLLER_PRIVATE_IP}" \
+    "createdb ${DATABASE_NAME} --host ${DB_ENDPOINT} --username ${DATABASE_USER}"
+fi
+
+# Change to the "python3" directory
+
+cd "${START_DIR}"
+cd python3
+
+# Create or get database host secret
+
+DATABASE_HOST=$(./get-database-secret.py $CMS_ENV database_host $DATABASE_SECRET_DATETIME)
+if [ -z "${DATABASE_HOST}" ]; then
+  aws secretsmanager create-secret \
+    --name "ab2d/${CMS_ENV}/module/db/database_host/${DATABASE_SECRET_DATETIME}" \
+    --secret-string "${DB_ENDPOINT}"
+  DATABASE_HOST=$(./get-database-secret.py $CMS_ENV database_host $DATABASE_SECRET_DATETIME)
+fi
+
+# Create or get database port secret
+
+DB_PORT=$(aws --region "${REGION}" rds describe-db-instances \
+  --query="DBInstances[?DBInstanceIdentifier=='ab2d'].Endpoint.Port" \
+  --output=text)
+
+DATABASE_PORT=$(./get-database-secret.py $CMS_ENV database_port $DATABASE_SECRET_DATETIME)
+if [ -z "${DATABASE_PORT}" ]; then
+  aws secretsmanager create-secret \
+    --name "ab2d/${CMS_ENV}/module/db/database_port/${DATABASE_SECRET_DATETIME}" \
+    --secret-string "${DB_PORT}"
+  DATABASE_PORT=$(./get-database-secret.py $CMS_ENV database_port $DATABASE_SECRET_DATETIME)
+fi
+
+# Get database secret manager ARNs
+
+DATABASE_HOST_SECRET_ARN=$(aws --region "${REGION}" secretsmanager describe-secret \
+  --secret-id "ab2d/${CMS_ENV}/module/db/database_host/${DATABASE_SECRET_DATETIME}" \
+  --query "ARN" \
+  --output text)
+
+DATABASE_PORT_SECRET_ARN=$(aws --region "${REGION}" secretsmanager describe-secret \
+  --secret-id "ab2d/${CMS_ENV}/module/db/database_port/${DATABASE_SECRET_DATETIME}" \
+  --query "ARN" \
+  --output text)
+
+DATABASE_USER_SECRET_ARN=$(aws --region "${REGION}" secretsmanager describe-secret \
+  --secret-id "ab2d/${CMS_ENV}/module/db/database_user/${DATABASE_SECRET_DATETIME}" \
+  --query "ARN" \
+  --output text)
+
+DATABASE_PASSWORD_SECRET_ARN=$(aws --region "${REGION}" secretsmanager describe-secret \
+  --secret-id "ab2d/${CMS_ENV}/module/db/database_password/${DATABASE_SECRET_DATETIME}" \
+  --query "ARN" \
+  --output text)
+
+DATABASE_NAME_SECRET_ARN=$(aws --region "${REGION}" secretsmanager describe-secret \
+  --secret-id "ab2d/${CMS_ENV}/module/db/database_name/${DATABASE_SECRET_DATETIME}" \
+  --query "ARN" \
+  --output text)
