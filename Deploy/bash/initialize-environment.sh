@@ -1,7 +1,7 @@
 #!/bin/bash
 
 set -e #Exit on first error
-# set -x #Be verbose
+set -x #Be verbose
 
 #
 # Change to working directory
@@ -9,6 +9,33 @@ set -e #Exit on first error
 
 START_DIR="$( cd "$(dirname "$0")" ; pwd -P )"
 cd "${START_DIR}"
+
+#
+# Parse options
+#
+
+for i in "$@"
+do
+case $i in
+  --database-secret-datetime=*)
+  DATABASE_SECRET_DATETIME=$(echo ${i#*=})
+  shift # past argument=value
+  ;;
+esac
+done
+
+# Check that the other vars are not empty before proceeding
+
+if [ -z "${DATABASE_SECRET_DATETIME}" ]; then
+  echo ""
+  echo "**********************************************************************"
+  echo "ERROR: Try running the script like this example:"
+  echo "./deploy-infrastructure.sh \\"
+  echo "  --database-secret-datetime=2020-01-02-09-15-01 \\"
+  echo "**********************************************************************"
+  echo ""
+  exit 1
+fi
 
 #
 # Set management AWS account
@@ -200,6 +227,45 @@ if [ -z "${S3_ENVIRONMENT_BUCKET_EXISTS}" ]; then
     --public-access-block-configuration BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true  
 fi
 
+#
+# Create cloudtrail bucket
+#
+
+S3_CLOUDTRAIL_BUCKET_EXISTS=$(aws --region "${AWS_DEFAULT_REGION}" s3api list-buckets \
+  --query "Buckets[?Name=='${CMS_ENV}-cloudtrail'].Name" \
+  --output text)
+
+if [ -z "${S3_CLOUDTRAIL_BUCKET_EXISTS}" ]; then
+
+  # Create cloudtrail bucket
+
+  aws --region "${AWS_DEFAULT_REGION}" s3api create-bucket \
+    --bucket "${CMS_ENV}-cloudtrail"
+
+  # Block public access
+
+  aws --region "${AWS_DEFAULT_REGION}" s3api put-public-access-block \
+    --bucket "${CMS_ENV}-cloudtrail" \
+    --public-access-block-configuration BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true
+
+  # Give "Write objects" and "Read bucket permissions" to the "S3 log delivery group" of the "cloudtrail" bucket
+
+  aws --region "${AWS_DEFAULT_REGION}" s3api put-bucket-acl \
+    --bucket "${CMS_ENV}-cloudtrail" \
+    --grant-write URI=http://acs.amazonaws.com/groups/s3/LogDelivery \
+    --grant-read-acp URI=http://acs.amazonaws.com/groups/s3/LogDelivery
+
+  # Add bucket policy to the "cloudtrail" S3 bucket
+
+  cd "${START_DIR}/.."
+  cd terraform/environments/$CMS_ENV
+
+  aws --region "${AWS_DEFAULT_REGION}" s3api put-bucket-policy \
+    --bucket "${CMS_ENV}-cloudtrail" \
+    --policy file://ab2d-cloudtrail-bucket-policy.json
+
+fi
+
 # Reset logging
 
 echo "Setting terraform debug level to $DEBUG_LEVEL..."
@@ -236,11 +302,19 @@ KEY_NAME=$(aws --region "${AWS_DEFAULT_REGION}" ec2 describe-key-pairs \
   --output text)
 
 if [ -z "${KEY_NAME}" ]; then
+
+  # Create private key
+
   aws --region "${AWS_DEFAULT_REGION}" ec2 create-key-pair \
     --key-name ${CMS_ENV} \
     --query 'KeyMaterial' \
     --output text \
     > ~/.ssh/${CMS_ENV}.pem
+
+  # Set permissions on private key
+
+  chmod 600 ~/.ssh/${CMS_ENV}.pem
+
 fi
 
 #
@@ -248,9 +322,9 @@ fi
 #
 
 terraform apply \
+  --var "env=${CMS_ENV}" \
   --var "mgmt_aws_account_number=${CMS_ECR_REPO_ENV_AWS_ACCOUNT_NUMBER}" \
   --var "aws_account_number=${CMS_ENV_AWS_ACCOUNT_NUMBER}" \
-  --var "env=${CMS_ENV}" \
   --target module.iam \
   --auto-approve
 
@@ -259,8 +333,8 @@ terraform apply \
 #
 
 terraform apply \
-  --var "aws_account_number=${CMS_ENV_AWS_ACCOUNT_NUMBER}" \
   --var "env=${CMS_ENV}" \
+  --var "aws_account_number=${CMS_ENV_AWS_ACCOUNT_NUMBER}" \
   --target module.kms \
   --auto-approve
 
@@ -268,9 +342,15 @@ terraform apply \
 # Create or get secrets
 #
 
+# Get target KMS key id
+
+KMS_KEY_ID=$(aws --region "${AWS_DEFAULT_REGION}" kms list-aliases \
+  --query="Aliases[?AliasName=='alias/ab2d-kms'].TargetKeyId" \
+  --output text)
+
 # Change to the "python3" directory
 
-cd "${START_DIR}"
+cd "${START_DIR}/.."
 cd python3
 
 # Create or get database user secret
@@ -404,9 +484,16 @@ fi
 # Configure networking
 #
 
+# Get VPC ID
+
+VPC_ID=$(aws --region "${AWS_DEFAULT_REGION}" ec2 describe-vpcs \
+  --filters "Name=tag:Name,Values=${CMS_ENV}" \
+  --query "Vpcs[*].VpcId" \
+  --output text)
+
 # Enable DNS hostname on VPC
 
-VPC_ENABLE_DNS_HOSTNAMES=$(aws --region "${REGION}" ec2 describe-vpc-attribute \
+VPC_ENABLE_DNS_HOSTNAMES=$(aws --region "${AWS_DEFAULT_REGION}" ec2 describe-vpc-attribute \
   --vpc-id $VPC_ID \
   --attribute enableDnsHostnames \
   --query "EnableDnsHostnames.Value" \
