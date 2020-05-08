@@ -94,6 +94,7 @@
 1. [Appendix PP: Test running development automation from development machine](#appendix-pp-test-running-development-automation-from-development-machine)
 1. [Appendix QQ: Set up demonstration of cross account access of an encrypted S3 bucket](#appendix-qq-set-up-demonstration-of-cross-account-access-of-an-encrypted-s3-bucket)
 1. [Appendix RR: Tealium and Google Analytics notes](#appendix-rr-tealium-and-google-analytics-notes)
+1. [Appendix SS: Destroy API and Worker clusters](#appendix-ss-destroy-api-and-worker-clusters)
 
 ## Appendix A: Access the CMS AWS console
 
@@ -3634,6 +3635,7 @@
    $ export DATABASE_SECRET_DATETIME_PARAM=2020-01-02-09-15-01
    $ export DEBUG_LEVEL_PARAM=WARN
    $ export INTERNET_FACING_PARAM=false
+   $ export CLOUD_TAMER_PARAM=true
    ```
 
 1. Run application deployment automation
@@ -7940,6 +7942,7 @@
    $ export DATABASE_SECRET_DATETIME_PARAM=2020-01-02-09-15-01
    $ export DEBUG_LEVEL_PARAM=WARN
    $ export INTERNET_FACING_PARAM=false
+   $ export CLOUD_TAMER_PARAM=true
    ```
 
 1. Run application deployment automation
@@ -8039,3 +8042,61 @@
 ```ShellSession
 $ sed -i "" 's%cms-ab2d[\/]prod%cms-ab2d/dev%g' _includes/head.html (edited)
 ```
+
+## Appendix SS: Destroy application
+
+1. Change to the "Deploy" directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d/Deploy
+   ```
+
+1. Set the target environment
+
+   ```ShellSession
+   $ source ./bash/set-env.sh
+   ```
+
+1. Select the target environment by entering the corresponding number on the keyboard
+
+1. Change to the target environment
+
+   ```ShellSession
+   $ cd "terraform/environments/${CMS_ENV}"
+   ```
+
+1. Destroy WAF
+
+   ```ShellSession
+   $ terraform destroy \
+     --target module.waf \
+     --auto-approve
+   ```
+
+1. Destroy CloudWatch
+
+   ```ShellSession
+   $ terraform destroy \
+     --target module.cloudwatch \
+     --auto-approve
+   ```
+
+1. Destroy Worker
+
+   ```ShellSession
+   $ terraform destroy \
+     --target module.worker \
+     --auto-approve
+   ```
+
+1. Take delete protection off the load balancer
+
+   > *** TO DO ***
+   
+1. Destroy API
+
+   ```ShellSession
+   $ terraform destroy \
+     --target module.api \
+     --auto-approve
+   ```
