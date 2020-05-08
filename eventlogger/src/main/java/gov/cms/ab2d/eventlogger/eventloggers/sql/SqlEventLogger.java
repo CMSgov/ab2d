@@ -13,7 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @Slf4j
 public class SqlEventLogger implements EventLogger {
-    @Value("${execution.env:dev}")
+    @Value("${execution.env:local}")
     private String appEnv;
 
     private final SqlMapperConfig mapperConfig;
