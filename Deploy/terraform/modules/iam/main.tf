@@ -299,7 +299,8 @@ data "aws_iam_policy_document" "instance_role_assume_role_policy" {
       identifiers = [
         "ec2.amazonaws.com",
         "ecs-tasks.amazonaws.com",
-	"lambda.amazonaws.com"
+	"s3.amazonaws.com",
+	"vpc-flow-logs.amazonaws.com"
       ]
     }
   }
