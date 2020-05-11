@@ -1,17 +1,24 @@
-variable "aws_account_number" {
-  default = "777200079629"
+variable "mgmt_aws_account_number" {
+  type        = string
+  default     = ""
+  description = "Please pass this on command line and not as a value here"
 }
 
-variable "aws_profile" {
-  default = "ab2d-sbx-sandbox"
+variable "aws_account_number" {
+  type        = string
+  default     = ""
+  description = "Please pass this on command line and not as a value here"
 }
 
 variable "env" {
-  default = "ab2d-sbx-sandbox"
+  type        = string
+  default     = ""
+  description = "Please pass this on command line and not as a value here"
 }
 
 variable "vpc_id" {
   default = ""
+  description = "Please pass this on command line and not as a value here"
 }
 
 ## EC2 specific variables ########################################################################
@@ -31,6 +38,10 @@ variable "deployment_controller_subnet_ids" {
 variable "ami_id" {
   default     = ""
   description = "This is meant to be a different value on every new deployment"
+}
+
+variable "ec2_instance_type" {
+  default = ""
 }
 
 variable "ec2_instance_type_api" {
@@ -104,7 +115,7 @@ variable "ec2_maximum_instance_count_worker" {
 }
 
 variable "gold_image_name" {
-  default = "EAST-RH 7-7 Gold Image V.1.03 (HVM) 11-20-19"
+  default = "rhel7-gi-2020-04-22T23-29-10Z"
 }
 
 ## RDS specific variables ########################################################################
@@ -118,7 +129,7 @@ variable "postgres_engine_version" {
 }
 
 variable "db_instance_class" {
-  default = "db.r4.4xlarge"
+  default = "db.m4.2xlarge"
 }
 
 variable "db_snapshot_id" {
@@ -162,7 +173,7 @@ variable "db_identifier" {
 }
 
 variable "db_multi_az" {
-  default = "false"
+  default = "true"
 }
 
 variable "db_host" {
@@ -223,10 +234,6 @@ variable "file_bucket_name" {
 
 variable "logging_bucket_name" {
   default = "ab2d-sbx-sandbox-cloudtrail"
-}
-
-variable "s3_username_whitelist" {
-  default = ["lonnie.hanekamp@semanticbits.com"]
 }
 
 ## ECS specific variables #########################################################################
@@ -331,19 +338,19 @@ variable "new_relic_license_key" {
 
 variable "ecs_task_definition_host_port" {
   type        = number
-  default     = 80
+  default     = 443
   description = "Please pass this on command line and not as a value here"
 }
 
 variable "host_port" {
   type        = number
-  default     = 80
+  default     = 443
   description = "Please pass this on command line and not as a value here"
 }
 
 variable "alb_listener_protocol" {
   type        = string
-  default     = "HTTP"
+  default     = "HTTPS"
   description = "Please pass this on command line and not as a value here"
 }
 
@@ -355,7 +362,7 @@ variable "alb_listener_certificate_arn" {
 
 variable "alb_internal" {
   type        = bool
-  default     = true
+  default     = false
   description = "Please pass this on command line and not as a value here"
 }
 

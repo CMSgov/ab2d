@@ -1,17 +1,24 @@
-variable "aws_account_number" {
-  default = "330810004472"
+variable "mgmt_aws_account_number" {
+  type        = string
+  default     = ""
+  description = "Please pass this on command line and not as a value here"
 }
 
-variable "aws_profile" {
-  default = "ab2d-east-impl"
+variable "aws_account_number" {
+  type        = string
+  default     = ""
+  description = "Please pass this on command line and not as a value here"
 }
 
 variable "env" {
-  default = "ab2d-east-impl"
+  type        = string
+  default     = ""
+  description = "Please pass this on command line and not as a value here"
 }
 
 variable "vpc_id" {
   default = ""
+  description = "Please pass this on command line and not as a value here"
 }
 
 ## EC2 specific variables ########################################################################
@@ -31,6 +38,10 @@ variable "deployment_controller_subnet_ids" {
 variable "ami_id" {
   default     = ""
   description = "This is meant to be a different value on every new deployment"
+}
+
+variable "ec2_instance_type" {
+  default = ""
 }
 
 variable "ec2_instance_type_api" {
@@ -71,9 +82,9 @@ variable "autoscale_group_wait" {
   description = "Number of instances in service to wait for before activating autoscaling group"
 }
 
-variable "elb_healthcheck_url" {
-  default = "HTTP:8080/"
-}
+# variable "elb_healthcheck_url" {
+#   default = "HTTP:8080/"
+# }
 
 variable "ec2_iam_profile" {
   default = "Ab2dInstanceProfile"
@@ -104,20 +115,8 @@ variable "ec2_maximum_instance_count_worker" {
 }
 
 variable "gold_image_name" {
-  default = "EAST-RH 7-7 Gold Image V.1.03 (HVM) 11-20-19"
+  default = "rhel7-gi-2020-04-22T23-29-10Z"
 }
-
-# LSH SKIP FOR NOW BEGIN
-# variable "enterprise-tools-sec-group-id" {
-#   default = "sg-0566ad330966d8ba7"
-# }
-# LSH SKIP FOR NOW END
-
-# LSH SKIP FOR NOW BEGIN
-# variable "vpn-private-sec-group-id" {
-#   default = "sg-07fbbd710a8b15851"
-# }
-# LSH SKIP FOR NOW END
 
 ## RDS specific variables ########################################################################
 
@@ -130,7 +129,7 @@ variable "postgres_engine_version" {
 }
 
 variable "db_instance_class" {
-  default = "db.r4.4xlarge"
+  default = "db.m4.2xlarge"
 }
 
 variable "db_snapshot_id" {
@@ -237,10 +236,6 @@ variable "logging_bucket_name" {
   default = "ab2d-east-impl-cloudtrail"
 }
 
-variable "s3_username_whitelist" {
-  default = ["lonnie.hanekamp@semanticbits.com"]
-}
-
 ## ECS specific variables #########################################################################
 
 variable "current_task_definition_arn" {
@@ -343,19 +338,19 @@ variable "new_relic_license_key" {
 
 variable "ecs_task_definition_host_port" {
   type        = number
-  default     = 80
+  default     = 443
   description = "Please pass this on command line and not as a value here"
 }
 
 variable "host_port" {
   type        = number
-  default     = 80
+  default     = 443
   description = "Please pass this on command line and not as a value here"
 }
 
 variable "alb_listener_protocol" {
   type        = string
-  default     = "HTTP"
+  default     = "HTTPS"
   description = "Please pass this on command line and not as a value here"
 }
 
@@ -367,7 +362,7 @@ variable "alb_listener_certificate_arn" {
 
 variable "alb_internal" {
   type        = bool
-  default     = false
+  default     = true
   description = "Please pass this on command line and not as a value here"
 }
 
