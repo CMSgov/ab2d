@@ -1379,3 +1379,31 @@ else
   done
   
 fi
+
+# Remove old target groups
+
+if [ -z "${CLUSTER_ARNS}" ]; then
+  echo "Skipping removing old launch configurations, since there are no existing clusters"
+else
+
+  # Get count of old target groups
+
+  OLD_TARGET_GROUP_COUNT=$(aws --region "${REGION}" elbv2 describe-target-groups \
+    --query "TargetGroups[?LoadBalancerArns==\`[]\`].TargetGroupName" \
+    | jq '. | length')
+
+  if [ $OLD_TARGET_GROUP_COUNT -gt 0 ]; then
+    for i in {1..$OLD_TARGET_GROUP_COUNT}
+    do
+      OLD_TARGET_GROUP_ARN=$(aws --region "${REGION}" elbv2 describe-target-groups \
+        --query "TargetGroups[?LoadBalancerArns==\`[]\`].TargetGroupArn" \
+        --output text \
+        | sort -k2 \
+        | head -n1 \
+        | awk '{print $1}')
+
+      aws --region "${REGION}" elbv2 delete-target-group \
+        --target-group-arn "${OLD_TARGET_GROUP_ARN}"
+    done
+  fi
+fi
