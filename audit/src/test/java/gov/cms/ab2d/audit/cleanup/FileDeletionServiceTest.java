@@ -8,9 +8,16 @@ import gov.cms.ab2d.common.model.User;
 import gov.cms.ab2d.common.service.JobService;
 import gov.cms.ab2d.common.util.DataSetup;
 import gov.cms.ab2d.eventlogger.LoggableEvent;
-import gov.cms.ab2d.eventlogger.events.*;
+import gov.cms.ab2d.eventlogger.events.ApiRequestEvent;
+import gov.cms.ab2d.eventlogger.events.ApiResponseEvent;
+import gov.cms.ab2d.eventlogger.events.ContractBeneSearchEvent;
+import gov.cms.ab2d.eventlogger.events.ErrorEvent;
+import gov.cms.ab2d.eventlogger.events.FileEvent;
+import gov.cms.ab2d.eventlogger.events.JobStatusChangeEvent;
+import gov.cms.ab2d.eventlogger.events.ReloadEvent;
 import gov.cms.ab2d.eventlogger.reports.sql.DoAll;
 import gov.cms.ab2d.eventlogger.utils.UtilMethods;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -84,6 +91,11 @@ public class FileDeletionServiceTest {
         BasicFileAttributeView attributes = Files.getFileAttributeView(path, BasicFileAttributeView.class);
         FileTime time = FileTime.fromMillis(LocalDate.now().minus(2, ChronoUnit.DAYS).toEpochDay());
         attributes.setTimes(time, time, time);
+    }
+
+    @BeforeEach
+    public void init() {
+        doAll.delete();
     }
 
     @Test
