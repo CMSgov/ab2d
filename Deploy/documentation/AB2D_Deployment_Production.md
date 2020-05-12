@@ -698,25 +698,25 @@
 
    - client_data_server_ab2d_prod_certificate.pub
 
-1. Send output from "prod-sbx.bfd.cms.gov" that includes only the certificate to a file
+1. Send output from "prod.bfd.cms.gov" that includes only the certificate to a file
 
    ```ShellSession
-   $ openssl s_client -connect prod-sbx.bfd.cms.gov:443 \
+   $ openssl s_client -connect prod.bfd.cms.gov:443 \
      2>/dev/null | openssl x509 -text \
      | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' \
-     > prod-sbx.bfdcloud.pem
+     > prod.bfd.cms.gov.pem
    ```
 
 1. Note that the following file has been created
 
-   - prod-sbx.bfdcloud.pem (certificate from the bfd sandbox server)
+   - prod.bfd.cms.gov.pem (certificate from the bfd sandbox server)
 
-1. Import "prod-sbx.bfd.cms.gov" certificate into the keystore
+1. Import "prod.bfd.cms.gov" certificate into the keystore
    
    ```ShellSession
    $ keytool -import \
-     -alias bfd-prod-sbx-selfsigned \
-     -file prod-sbx.bfdcloud.pem \
+     -alias bfd-prod-selfsigned \
+     -file prod.bfd.cms.gov.pem \
      -storetype PKCS12 \
      -keystore ab2d_prod_keystore
    ```
@@ -749,12 +749,12 @@
 
 1. Save the keystore, private key, self-signed certificate, and public key in the "ab2d" vault of 1Password
 
-   Label                                       |File
-   --------------------------------------------|-------------------------------------------
-   AB2D BFD Keystore for Prod                  |ab2d_prod_keystore
-   client_data_server_ab2d_prod_certificate.key|client_data_server_ab2d_prod_certificate.key
-   client_data_server_ab2d_prod_certificate.pem|client_data_server_ab2d_prod_certificate.pem
-   client_data_server_ab2d_prod_certificate.pub|client_data_server_ab2d_prod_certificate.pub
+   Label                                         |File
+   ----------------------------------------------|-------------------------------------------
+   AB2D Prod Keystore for BFD Prod               |ab2d_prod_keystore
+   AB2D Prod Private Key for BFD Prod            |client_data_server_ab2d_prod_certificate.key
+   AB2D Prod Self-signed Certificate for BFD Prod|client_data_server_ab2d_prod_certificate.pem
+   AB2D Prod Public Key for BFD Prod             |client_data_server_ab2d_prod_certificate.pub
 
 ## Peer AB2D Dev, Sandbox, Impl environments with the BFD Sbx VPC and peer AB2D Prod with BFD Prod VPC
 
