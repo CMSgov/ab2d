@@ -47,7 +47,7 @@ class LogManagerTest {
                 ((ErrorEvent)args[0]).setAwsId("aws1111");
                 return null; // void method, so return null
             }
-        }).when(kinesisEventLogger).log(event);
+        }).when(kinesisEventLogger).log(event, true);
 
         logManager.log(event);
         assertEquals("aws1111", event.getAwsId());

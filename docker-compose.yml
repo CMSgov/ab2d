@@ -31,6 +31,7 @@ services:
       - AB2D_EXECUTION_ENV=local
       - NEW_RELIC_LICENSE_KEY="${NEW_RELIC_LICENSE_KEY}"
       - NEW_RELIC_APP_NAME="${NEW_RELIC_APP_NAME}"
+      - AB2D_EXECUTION_ENV=${AB2D_EXECUTION_ENV}
     ports:
       - "8443:8443"
     depends_on:
@@ -63,6 +64,7 @@ services:
       - AB2D_KEYSTORE_LOCATION=${AB2D_KEYSTORE_LOCATION}
       - AB2D_KEYSTORE_PASSWORD=${AB2D_KEYSTORE_PASSWORD}
       - AB2D_KEY_ALIAS=${AB2D_KEY_ALIAS}
+      - AB2D_EXECUTION_ENV=${AB2D_EXECUTION_ENV}
     depends_on:
       - db
     volumes:
