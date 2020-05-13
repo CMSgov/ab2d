@@ -1,7 +1,6 @@
 provider "aws" {
   region  = "us-east-1"
   version = "~> 2.21"
-  profile = var.aws_profile
 }
 
 # Had to pass "-backend-config" parameters to "terraform init" since "Variables
