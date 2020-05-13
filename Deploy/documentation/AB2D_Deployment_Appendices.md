@@ -95,6 +95,7 @@
 1. [Appendix QQ: Set up demonstration of cross account access of an encrypted S3 bucket](#appendix-qq-set-up-demonstration-of-cross-account-access-of-an-encrypted-s3-bucket)
 1. [Appendix RR: Tealium and Google Analytics notes](#appendix-rr-tealium-and-google-analytics-notes)
 1. [Appendix SS: Destroy API and Worker clusters](#appendix-ss-destroy-api-and-worker-clusters)
+1. [Appendix TT: Migrate terraform state from shared environment to main environment](#appendix-tt-migrate-terraform-state-from-shared-environment-to-main-environment)
 
 ## Appendix A: Access the CMS AWS console
 
@@ -8100,3 +8101,95 @@ $ sed -i "" 's%cms-ab2d[\/]prod%cms-ab2d/dev%g' _includes/head.html (edited)
      --target module.api \
      --auto-approve
    ```
+
+## Appendix TT: Migrate terraform state from shared environment to main environment
+
+1. Ensure that you are connected to CMS Cisco VPN
+
+1. Change to the "Deploy" directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d/Deploy
+   ```
+
+1. Set AWS environment variables using the CloudTamer API
+
+   ```ShellSession
+   $ source ./bash/set-env.sh
+   ```
+
+1. Choose desired environment
+
+   *Example for "Dev" environment:*
+
+   ```
+   2
+   ```
+
+1. Change to target directory
+
+   *Example for "Dev" environment:*
+
+   ```ShellSession
+   $ cd terraform/environments/ab2d-dev
+   ```
+
+1. List and note the current modules under the target environment
+
+   ```ShellSession
+   $ terraform state list
+   ```
+
+1. Pull the terraform state file for the target environment from S3
+
+   ```ShellSession
+   $ terraform state pull > terraform.tfstate
+   ```
+
+1. Change to the "Deploy" directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d/Deploy
+   ```
+
+1. Change to source directory
+
+   *Example for "Dev" environment:*
+
+   ```ShellSession
+   $ cd terraform/environments/ab2d-dev-shared
+   ```
+
+1. List and note the current modules under the source environment
+
+   ```ShellSession
+   $ terraform state list
+   ```
+
+1. Move the state of a module from the source environment to the target environment state file
+
+   *Example #1:*
+   
+   ```ShellSession
+   $ terraform state mv \
+     -state-out=../ab2d-dev/terraform.tfstate \
+     null_resource.authorized_keys_file \
+     null_resource.authorized_keys_file
+   ```
+
+   *Example #2:*
+   
+   ```ShellSession
+   $ terraform state mv \
+     -state-out=../ab2d-dev/terraform.tfstate \
+     module.controller.aws_eip.deployment_controller \
+     module.controller.aws_eip.deployment_controller
+   ```
+
+> *** TO DO ***: Complete moving modules from ab2d-dev-shared to ab2d-dev
+
+> *** TO DO ***: Complete moving modules from ab2d-sbx-sandbox-shared to ab2d-sbx-sandbox
+
+> *** TO DO ***: Complete moving modules from ab2d-east-impl-shared to ab2d-east-impl
+
+> *** TO DO ***: Eliminate shared environments from branch
