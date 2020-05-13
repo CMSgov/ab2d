@@ -1,5 +1,9 @@
 package gov.cms.ab2d.optout;
 
+import gov.cms.ab2d.common.model.OptOutFile;
+import gov.cms.ab2d.common.repository.OptOutFileRepository;
+import gov.cms.ab2d.common.service.OptOutFileService;
+import gov.cms.ab2d.common.service.ResourceNotFoundException;
 import gov.cms.ab2d.optout.gateway.S3Gateway;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -15,6 +19,8 @@ public class OptOutProcessorImpl implements OptOutProcessor {
 
     private final S3Gateway s3Gateway;
     private final OptOutImporter optOutImporter;
+    private final OptOutFileService optOutFileService;
+    private final OptOutFileRepository optOutFileRepository;
 
     @Override
     public void process() {
@@ -23,6 +29,11 @@ public class OptOutProcessorImpl implements OptOutProcessor {
     }
 
     private void fetchAndProcessOptOutFile(final String filename) {
+        if (optOutFileProcessed(filename)) {
+            log.info("Skipping import of file [{}]", filename);
+            return;
+        }
+
         try (var inputStreamReader = s3Gateway.getOptOutFile(filename);
              var bufferedReader = new BufferedReader(inputStreamReader)) {
 
@@ -30,9 +41,23 @@ public class OptOutProcessorImpl implements OptOutProcessor {
 
             optOutImporter.process(bufferedReader, filename);
 
+            OptOutFile optOutFile = new OptOutFile();
+            optOutFile.setFilename(filename);
+            optOutFileRepository.save(optOutFile);
+
             log.info("[{}] - import completed successfully", filename);
         } catch (Exception e) {
             log.error("[{}] - import FAILED ", filename, e);
         }
+    }
+
+    private boolean optOutFileProcessed(String filename) {
+        try {
+            optOutFileService.findByFilename(filename);
+        } catch (ResourceNotFoundException exception) {
+            return false;
+        }
+
+        return true;
     }
 }
