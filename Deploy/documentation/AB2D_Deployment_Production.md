@@ -567,16 +567,44 @@
 
 1. Send output from "prod.bfd.cms.gov" that includes only the certificate to a file
 
-   ```ShellSession
-   $ openssl s_client -connect prod.bfd.cms.gov:443 \
-     2>/dev/null | openssl x509 -text \
-     | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' \
-     > prod.bfd.cms.gov.pem
-   ```
+   1. Ensure that you are connected to CMS Cisco VPN
+
+   1. Set AWS environment variables using the CloudTamer API
+
+      ```ShellSession
+      $ source ~/code/ab2d/Deploy/bash/set-env.sh
+      ```
+
+   1. Enter the number of the desired AWS account where the desired logs reside
+
+      ```
+      5
+      ```
+
+   1. Get certificate from "prod.bfd.cms.gov"
+
+      ```ShellSession
+      $ ssh -i ~/.ssh/ab2d-east-prod.pem \
+        ec2-user@$(aws --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=${CMS_ENV}-api" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+        --output text \
+        | head -1) \
+        openssl s_client -connect prod.bfd.cms.gov:443 \
+        2>/dev/null | openssl x509 -text \
+        | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' \
+        > prod.bfd.cms.gov.pem
+      ```
 
 1. Note that the following file has been created
 
    - prod.bfd.cms.gov.pem (certificate from the bfd sandbox server)
+
+1. Verify that there is a certificate inside of "prod.bfd.cms.gov.pem"
+
+   ```ShellSession
+   $ cat prod.bfd.cms.gov.pem
+   ```
 
 1. Import "prod.bfd.cms.gov" certificate into the keystore
    
@@ -588,7 +616,7 @@
      -keystore ab2d_prod_keystore
    ```
 
-1. Copy the "AB2D_BFD_KEYSTORE_PASSWORD in Prod" password from 1Password to the clipboard
+1. Copy the "AB2D Prod - BFD Prod - Keystore Password" password from 1Password to the clipboard
 
 1. Enter the keystore password at the "Enter keystore password" prompt
 
@@ -604,13 +632,13 @@
    $ keytool -list -v -keystore ab2d_prod_keystore
    ```
 
-1. Copy the "AB2D_BFD_KEYSTORE_PASSWORD in Prod" password from 1Password to the clipboard
+1. Copy the "AB2D Prod - BFD Prod - Keystore Password" password from 1Password to the clipboard
 
 1. Enter the keystore password at the "Enter keystore password" prompt
 
 1. Verify that there are sections for the following two aliases in the keystore list output
    
-   - Alias name: bfd-prod-sbx-selfsigned
+   - Alias name: bfd-prod-selfsigned
 
    - Alias name: client_data_server_ab2d_prod_certificate
 
@@ -618,10 +646,10 @@
 
    Label                                         |File
    ----------------------------------------------|-------------------------------------------
-   AB2D Prod Keystore for BFD Prod               |ab2d_prod_keystore
-   AB2D Prod Private Key for BFD Prod            |client_data_server_ab2d_prod_certificate.key
-   AB2D Prod Self-signed Certificate for BFD Prod|client_data_server_ab2d_prod_certificate.pem
-   AB2D Prod Public Key for BFD Prod             |client_data_server_ab2d_prod_certificate.pub
+   AB2D Prod - BFD Prod - Keystore               |ab2d_prod_keystore
+   AB2D Prod - BFD Prod - Private Key            |client_data_server_ab2d_prod_certificate.key
+   AB2D Prod - BFD Prod - Self-signed Certificate|client_data_server_ab2d_prod_certificate.pem
+   AB2D Prod - BFD Prod - Public Key             |client_data_server_ab2d_prod_certificate.pub
 
 ## Peer AB2D Dev, Sandbox, Impl environments with the BFD Sbx VPC and peer AB2D Prod with BFD Prod VPC
 
@@ -927,10 +955,10 @@
    $ export EC2_INSTANCE_TYPE_WORKER_PARAM=m5.4xlarge
    $ export EC2_DESIRED_INSTANCE_COUNT_API_PARAM=2
    $ export EC2_MINIMUM_INSTANCE_COUNT_API_PARAM=2
-   $ export EC2_MAXIMUM_INSTANCE_COUNT_API_PARAM=2
+   $ export EC2_MAXIMUM_INSTANCE_COUNT_API_PARAM=4
    $ export EC2_DESIRED_INSTANCE_COUNT_WORKER_PARAM=2
    $ export EC2_MINIMUM_INSTANCE_COUNT_WORKER_PARAM=2
-   $ export EC2_MAXIMUM_INSTANCE_COUNT_WORKER_PARAM=2
+   $ export EC2_MAXIMUM_INSTANCE_COUNT_WORKER_PARAM=4
    $ export DATABASE_SECRET_DATETIME_PARAM=2020-01-02-09-15-01
    $ export DEBUG_LEVEL_PARAM=WARN
    $ export INTERNET_FACING_PARAM=true
