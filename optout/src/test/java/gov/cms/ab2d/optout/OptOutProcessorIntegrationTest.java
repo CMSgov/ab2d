@@ -131,7 +131,7 @@ class OptOutProcessorIntegrationTest {
         ReloadEvent requestEvent = (ReloadEvent) reloadEvents.get(0);
         assertEquals(ReloadEvent.FileType.OPT_OUT, requestEvent.getFileType());
         assertEquals(testInputFile, requestEvent.getFileName());
-        assertEquals(24, requestEvent.getNumberLoaded());
+        assertEquals(12, requestEvent.getNumberLoaded());
 
         assertTrue(UtilMethods.allEmpty(
                 doAll.load(ApiRequestEvent.class),
