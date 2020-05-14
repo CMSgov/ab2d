@@ -595,6 +595,7 @@ echo 'vpn_private_ip_address_cidr_range = "'$VPN_PRIVATE_IP_ADDRESS_CIDR_RANGE'"
 # Create DB instance (if doesn't exist)
 
 terraform apply \
+  --var "env=${CMS_ENV}" \
   --var "db_username=${DATABASE_USER}" \
   --var "db_password=${DATABASE_PASSWORD}" \
   --var "db_name=${DATABASE_NAME}" \
