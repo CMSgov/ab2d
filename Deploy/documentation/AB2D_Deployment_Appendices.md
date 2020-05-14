@@ -8186,8 +8186,109 @@ $ sed -i "" 's%cms-ab2d[\/]prod%cms-ab2d/dev%g' _includes/head.html (edited)
      module.controller.aws_eip.deployment_controller
    ```
 
-> *** TO DO ***: Complete moving modules from ab2d-dev-shared to ab2d-dev
+1. Change to the "Deploy" directory
 
+   ```ShellSession
+   $ cd ~/code/ab2d/Deploy
+   ```
+
+1. Change to target directory
+
+   *Example for "Dev" environment:*
+
+   ```ShellSession
+   $ cd terraform/environments/ab2d-dev
+   ```
+
+1. Push the modified terraform state file to S3
+
+   ```ShellSession
+   $ terraform state push terraform.tfstate
+   ```
+
+1. Delete the ".terraform" directory
+
+   ```ShellSession
+   $ rm -rf .terraform
+   ```
+   
+1. Backup the local terraform state file and its backup files
+
+   1. Create a backup directory
+   
+      ```ShellSession
+      $ mkdir -p ~/Downloads/backup
+      ```
+
+   1. Move local terraform state file and its backup files to backup directory
+
+      ```ShellSession
+      $ mv terraform.tfstate* ~/Downloads/backup
+      ```
+
+1. Change to the "Deploy" directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d/Deploy
+   ```
+
+1. Deploy infrastructure
+
+   *Example for "Dev" environment:*
+   
+   ```ShellSession
+   $ ./deploy-infrastructure.sh \
+     --environment=ab2d-dev \
+     --ecr-repo-environment=ab2d-mgmt-east-dev \
+     --region=us-east-1 \
+     --vpc-id=vpc-0c6413ec40c5fdac3 \
+     --ssh-username=ec2-user \
+     --owner=743302140042 \
+     --ec2_instance_type_api=m5.xlarge \
+     --ec2_instance_type_worker=m5.xlarge \
+     --ec2_instance_type_other=m5.xlarge \
+     --ec2_desired_instance_count_api=1 \
+     --ec2_minimum_instance_count_api=1 \
+     --ec2_maximum_instance_count_api=1 \
+     --ec2_desired_instance_count_worker=1 \
+     --ec2_minimum_instance_count_worker=1 \
+     --ec2_maximum_instance_count_worker=1 \
+     --database-secret-datetime=2020-01-02-09-15-01 \
+     --build-new-images \
+     --internet-facing=false \
+     --auto-approve
+   ```
+
+1. Set parameters
+
+   *Example for "Dev" environment:*
+   
+   ```ShellSession
+   $ export CMS_ENV_PARAM=ab2d-dev
+   $ export CMS_ECR_REPO_ENV_PARAM=ab2d-mgmt-east-dev
+   $ export REGION_PARAM=us-east-1
+   $ export VPC_ID_PARAM=vpc-0c6413ec40c5fdac3
+   $ export SSH_USERNAME_PARAM=ec2-user
+   $ export EC2_INSTANCE_TYPE_API_PARAM=m5.xlarge
+   $ export EC2_INSTANCE_TYPE_WORKER_PARAM=m5.xlarge
+   $ export EC2_DESIRED_INSTANCE_COUNT_API_PARAM=1
+   $ export EC2_MINIMUM_INSTANCE_COUNT_API_PARAM=1
+   $ export EC2_MAXIMUM_INSTANCE_COUNT_API_PARAM=1
+   $ export EC2_DESIRED_INSTANCE_COUNT_WORKER_PARAM=1
+   $ export EC2_MINIMUM_INSTANCE_COUNT_WORKER_PARAM=1
+   $ export EC2_MAXIMUM_INSTANCE_COUNT_WORKER_PARAM=1
+   $ export DATABASE_SECRET_DATETIME_PARAM=2020-01-02-09-15-01
+   $ export DEBUG_LEVEL_PARAM=WARN
+   $ export INTERNET_FACING_PARAM=false
+   $ export CLOUD_TAMER_PARAM=true
+   ``` 
+
+1. Deploy application
+
+   ```ShellSession
+   $ ./bash/deploy-application.sh
+   ```
+   
 > *** TO DO ***: Complete moving modules from ab2d-sbx-sandbox-shared to ab2d-sbx-sandbox
 
 > *** TO DO ***: Complete moving modules from ab2d-east-impl-shared to ab2d-east-impl
