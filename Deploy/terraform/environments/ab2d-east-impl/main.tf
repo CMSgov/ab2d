@@ -1,13 +1,93 @@
 provider "aws" {
   region  = "us-east-1"
   version = "~> 2.21"
-  profile = var.aws_profile
 }
 
 # Had to pass "-backend-config" parameters to "terraform init" since "Variables
 # may not be used here"
 terraform {
   backend "s3" {
+  }
+}
+
+module "iam" {
+  source                  = "../../modules/iam"
+  mgmt_aws_account_number = var.mgmt_aws_account_number
+  aws_account_number      = var.aws_account_number
+  env                     = var.env
+}
+
+module "kms" {
+  source                  = "../../modules/kms"
+  aws_account_number      = var.aws_account_number
+  env                     = var.env
+  ab2d_instance_role_name = module.iam.ab2d_instance_role_name
+}
+
+data "aws_kms_key" "ab2d_kms" {
+  key_id = "alias/ab2d-kms"
+}
+
+module "db" {
+  source                  = "../../modules/db"
+  env                     = var.env
+  allocated_storage_size  = var.db_allocated_storage_size
+  engine_version          = var.postgres_engine_version
+  instance_class          = var.db_instance_class
+  snapshot_id             = var.db_snapshot_id
+  subnet_group_name       = var.db_subnet_group_name
+  parameter_group_name    = var.db_parameter_group_name
+  backup_retention_period = var.db_backup_retention_period
+  backup_window           = var.db_backup_window
+  copy_tags_to_snapshot   = var.db_copy_tags_to_snapshot
+  iops                    = var.db_iops
+  kms_key_id              = "${data.aws_kms_key.ab2d_kms.arn}"
+  maintenance_window      = var.db_maintenance_window
+  vpc_id                  = var.vpc_id
+  db_instance_subnet_ids  = var.private_subnet_ids
+  identifier              = var.db_identifier
+  multi_az                = var.db_multi_az
+  username                = var.db_username
+  password                = var.db_password
+  skip_final_snapshot     = var.db_skip_final_snapshot
+  cpm_backup              = var.cpm_backup
+}
+
+# LSH SKIP FOR NOW BEGIN
+# enterprise-tools-sec-group-id = var.enterprise-tools-sec-group-id
+# LSH SKIP FOR NOW END
+module "controller" {
+  source                   = "../../modules/controller"
+  env                      = var.env
+  vpc_id                   = var.vpc_id
+  controller_subnet_ids    = var.deployment_controller_subnet_ids
+  db_sec_group_id          = module.db.aws_security_group_sg_database_id
+  ami_id                   = var.ami_id
+  instance_type            = var.ec2_instance_type
+  linux_user               = var.linux_user
+  ssh_key_name             = var.ssh_key_name
+  iam_instance_profile     = var.ec2_iam_profile
+  gold_disk_name           = var.gold_image_name
+  deployer_ip_address      = var.deployer_ip_address
+  vpn_private_ip_address_cidr_range = var.vpn_private_ip_address_cidr_range
+}
+
+module "lonnie_access_controller" {
+  description  = "Lonnie"
+  cidr_blocks  = ["${var.deployer_ip_address}/32"]
+  source       = "../../modules/access_controller"
+  sec_group_id = module.controller.deployment_controller_sec_group_id
+}
+
+resource "null_resource" "authorized_keys_file" {
+  depends_on = [module.controller]
+
+  provisioner "local-exec" {
+    command = "scp -o StrictHostKeyChecking=no -i ~/.ssh/${var.ssh_key_name}.pem ./authorized_keys ${var.linux_user}@${module.controller.deployment_controller_private_ip}:/home/${var.linux_user}/.ssh"
+  }
+
+  provisioner "local-exec" {
+    command = "ssh -i ~/.ssh/${var.ssh_key_name}.pem ${var.linux_user}@${module.controller.deployment_controller_private_ip} 'chmod 600 ~/.ssh/authorized_keys'"
   }
 }
 
@@ -20,10 +100,6 @@ data "aws_instance" "ab2d_deployment_controller" {
     name   = "tag:Name"
     values = ["ab2d-deployment-controller"]
   }
-}
-
-data "aws_kms_key" "ab2d_kms" {
-  key_id = "alias/ab2d-kms"
 }
 
 data "aws_security_group" "ab2d_database_sg" {
