@@ -1,4 +1,5 @@
 # Required input vars
+variable "env" {}
 variable "allocated_storage_size" {}
 variable "engine_version" {}
 variable "instance_class" {}
@@ -18,3 +19,4 @@ variable "multi_az" {}
 variable "username" {}
 variable "password" {}
 variable "skip_final_snapshot" {}
+variable "cpm_backup" {}
