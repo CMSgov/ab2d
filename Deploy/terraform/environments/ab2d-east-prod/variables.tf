@@ -226,6 +226,10 @@ variable "db_name_secret_arn" {
   description = "Please pass this on command line and not as a value here"
 }
 
+variable "cpm_backup" {
+  default = "4HR Daily Weekly Monthly"
+}
+
 ## S3 specific variables #########################################################################
 
 variable "file_bucket_name" {
