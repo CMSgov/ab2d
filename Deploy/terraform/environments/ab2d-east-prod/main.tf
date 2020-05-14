@@ -29,8 +29,13 @@ module "static_website" {
   env                     = var.env
 }
 
+data "aws_kms_key" "ab2d_kms" {
+  key_id = "alias/ab2d-kms"
+}
+
 module "db" {
   source                  = "../../modules/db"
+  env                     = var.env
   allocated_storage_size  = var.db_allocated_storage_size
   engine_version          = var.postgres_engine_version
   instance_class          = var.db_instance_class
@@ -41,8 +46,7 @@ module "db" {
   backup_window           = var.db_backup_window
   copy_tags_to_snapshot   = var.db_copy_tags_to_snapshot
   iops                    = var.db_iops
-  # kms_key_id              = module.kms.arn
-  kms_key_id              = "arn:aws:kms:us-east-1:595094747606:key/42bdc538-3ee3-4096-8f91-06640b604667"
+  kms_key_id              = "${data.aws_kms_key.ab2d_kms.arn}"
   maintenance_window      = var.db_maintenance_window
   vpc_id                  = var.vpc_id
   db_instance_subnet_ids  = var.private_subnet_ids
@@ -51,6 +55,7 @@ module "db" {
   username                = var.db_username
   password                = var.db_password
   skip_final_snapshot     = var.db_skip_final_snapshot
+  cpm_backup              = var.cpm_backup
 }
 
 # LSH SKIP FOR NOW BEGIN
@@ -100,10 +105,6 @@ data "aws_instance" "ab2d_deployment_controller" {
     name   = "tag:Name"
     values = ["ab2d-deployment-controller"]
   }
-}
-
-data "aws_kms_key" "ab2d_kms" {
-  key_id = "alias/ab2d-kms"
 }
 
 data "aws_security_group" "ab2d_database_sg" {
