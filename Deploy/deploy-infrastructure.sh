@@ -1,7 +1,7 @@
 #!/bin/bash
 
 set -e #Exit on first error
-set -x #Be verbose
+# set -x #Be verbose
 
 #
 # Change to working directory
@@ -243,7 +243,6 @@ get_temporary_aws_credentials ()
   # Verify that CloudTamer user name and password environment variables are set
 
   if [ -z $CLOUDTAMER_USER_NAME ] || [ -z $CLOUDTAMER_PASSWORD ]; then
-    echo ""
     echo "----------------------------"
     echo "Enter CloudTamer credentials"
     echo "----------------------------"
@@ -275,6 +274,37 @@ get_temporary_aws_credentials ()
     --header 'Content-Type: application/json' \
     --data-raw "{\"username\":\"${CLOUDTAMER_USER_NAME}\",\"password\":\"${CLOUDTAMER_PASSWORD}\",\"idms\":{\"id\":2}}" \
     | jq --raw-output ".data.access.token")
+
+  if [ "${BEARER_TOKEN}" == "null" ]; then
+    echo "**********************************************************************************************"
+    echo "ERROR: Retrieval of bearer token failed."
+    echo ""
+    echo "Do you need to update your "CLOUDTAMER_PASSWORD" environment variable?"
+    echo ""
+    echo "Have you been locked out due to the failed password attempts?"
+    echo ""
+    echo "If you have gotten locked out due to failed password attempts, do the following:"
+    echo "1. Go to this site:"
+    echo "   https://jiraent.cms.gov/servicedesk/customer/portal/13"
+    echo "2. Select 'CMS Cloud Access Request'"
+    echo "3. Configure page as follows:"
+    echo "   - Summary: CloudTamer & CloudVPN account password reset for {your eua id}"
+    echo "   - CMS Business Unit: OEDA"
+    echo "   - Project Name: Project 058 BCDA"
+    echo "   - Types of Access/Resets: Cisco AnyConnect and AWS Console Password Resets [not MFA]"
+    echo "   - Approvers: Stephen Walter"
+    echo "   - Description"
+    echo "     I am locked out of VPN access due to failed password attempts."
+    echo "     Can you reset my CloudTamer & CloudVPN account password?"
+    echo "     EUA: {your eua id}"
+    echo "     email: {your email}"
+    echo "     cell phone: {your cell phone number}"
+    echo "4. After you submit your ticket, call the following number and give them your ticket number."
+    echo "   888-533-4777"
+    echo "**********************************************************************************************"
+    echo ""
+    exit 1
+  fi
 
   # Get json output for temporary AWS credentials
 
@@ -331,25 +361,6 @@ export DEBUG_LEVEL="WARN"
 
 get_temporary_aws_credentials "${CMS_ENV_AWS_ACCOUNT_NUMBER}"
 
-#########################
-# BEGIN #1 (LSH 2020-04-27)
-#########################
-
-# #
-# # Verify that VPC ID exists
-# #
-
-# VPC_EXISTS=$(aws --region "${REGION}" ec2 describe-vpcs \
-#   --query "Vpcs[?VpcId=='$VPC_ID'].VpcId" \
-#   --output text)
-
-# if [ -z "${VPC_EXISTS}" ]; then
-#   echo "*********************************************************"
-#   echo "ERROR: VPC ID does not exist for the target AWS profile."
-#   echo "*********************************************************"
-#   exit 1
-# fi
-
 #
 # Get VPC ID
 #
@@ -358,44 +369,6 @@ VPC_ID=$(aws --region "${REGION}" ec2 describe-vpcs \
   --filters "Name=tag:Name,Values=${CMS_ENV}" \
   --query "Vpcs[*].VpcId" \
   --output text)
-
-#########################
-# END #1 (LSH 2020-04-27)
-#########################
-
-# #
-# # Get KMS key id for target environment (if exists)
-# #
-
-# KMS_KEY_ID=$(aws --region "${REGION}" kms list-aliases \
-#   --query="Aliases[?AliasName=='alias/ab2d-kms'].TargetKeyId" \
-#   --output text)
-
-# if [ -n "${KMS_KEY_ID}" ]; then
-#   KMS_KEY_STATE=$(aws --region "${REGION}" kms describe-key \
-#     --key-id alias/ab2d-kms \
-#     --query "KeyMetadata.KeyState" \
-#     --output text)
-# fi
-
-# #
-# # Deploy or enable KMS for target environment
-# #
-
-# # If target environment KMS key exists, enable it; otherwise, create it
-
-# if [ -n "$KMS_KEY_ID" ]; then
-#   echo "Enabling KMS key..."
-#   cd "${START_DIR}"
-#   cd python3
-#   ./enable-kms-key.py $KMS_KEY_ID
-# else
-#   echo "Deploying KMS..."
-#   cd "${START_DIR}"
-#   cd terraform/environments/$CMS_SHARED_ENV
-#   terraform apply \
-#     --target module.kms --auto-approve
-# fi
 
 #
 # Configure terraform
@@ -717,29 +690,3 @@ if [ -z "${DATABASE_PORT}" ]; then
   DATABASE_PORT=$(./get-database-secret.py $CMS_ENV database_port $DATABASE_SECRET_DATETIME)
 fi
 
-# Get database secret manager ARNs
-
-DATABASE_HOST_SECRET_ARN=$(aws --region "${REGION}" secretsmanager describe-secret \
-  --secret-id "ab2d/${CMS_ENV}/module/db/database_host/${DATABASE_SECRET_DATETIME}" \
-  --query "ARN" \
-  --output text)
-
-DATABASE_PORT_SECRET_ARN=$(aws --region "${REGION}" secretsmanager describe-secret \
-  --secret-id "ab2d/${CMS_ENV}/module/db/database_port/${DATABASE_SECRET_DATETIME}" \
-  --query "ARN" \
-  --output text)
-
-DATABASE_USER_SECRET_ARN=$(aws --region "${REGION}" secretsmanager describe-secret \
-  --secret-id "ab2d/${CMS_ENV}/module/db/database_user/${DATABASE_SECRET_DATETIME}" \
-  --query "ARN" \
-  --output text)
-
-DATABASE_PASSWORD_SECRET_ARN=$(aws --region "${REGION}" secretsmanager describe-secret \
-  --secret-id "ab2d/${CMS_ENV}/module/db/database_password/${DATABASE_SECRET_DATETIME}" \
-  --query "ARN" \
-  --output text)
-
-DATABASE_NAME_SECRET_ARN=$(aws --region "${REGION}" secretsmanager describe-secret \
-  --secret-id "ab2d/${CMS_ENV}/module/db/database_name/${DATABASE_SECRET_DATETIME}" \
-  --query "ARN" \
-  --output text)
