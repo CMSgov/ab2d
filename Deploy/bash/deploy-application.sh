@@ -113,7 +113,7 @@ fi
 # Define functions
 #
 
-get_temporary_aws_credentials ()
+get_temporary_aws_credentials_via_cloudtamer_api ()
 {
   # Set AWS account number
 
@@ -154,6 +154,37 @@ get_temporary_aws_credentials ()
     --header 'Content-Type: application/json' \
     --data-raw "{\"username\":\"${CLOUDTAMER_USER_NAME}\",\"password\":\"${CLOUDTAMER_PASSWORD}\",\"idms\":{\"id\":2}}" \
     | jq --raw-output ".data.access.token")
+
+  if [ "${BEARER_TOKEN}" == "null" ]; then
+    echo "**********************************************************************************************"
+    echo "ERROR: Retrieval of bearer token failed."
+    echo ""
+    echo "Do you need to update your "CLOUDTAMER_PASSWORD" environment variable?"
+    echo ""
+    echo "Have you been locked out due to the failed password attempts?"
+    echo ""
+    echo "If you have gotten locked out due to failed password attempts, do the following:"
+    echo "1. Go to this site:"
+    echo "   https://jiraent.cms.gov/servicedesk/customer/portal/13"
+    echo "2. Select 'CMS Cloud Access Request'"
+    echo "3. Configure page as follows:"
+    echo "   - Summary: CloudTamer & CloudVPN account password reset for {your eua id}"
+    echo "   - CMS Business Unit: OEDA"
+    echo "   - Project Name: Project 058 BCDA"
+    echo "   - Types of Access/Resets: Cisco AnyConnect and AWS Console Password Resets [not MFA]"
+    echo "   - Approvers: Stephen Walter"
+    echo "   - Description"
+    echo "     I am locked out of VPN access due to failed password attempts."
+    echo "     Can you reset my CloudTamer & CloudVPN account password?"
+    echo "     EUA: {your eua id}"
+    echo "     email: {your email}"
+    echo "     cell phone: {your cell phone number}"
+    echo "4. After you submit your ticket, call the following number and give them your ticket number."
+    echo "   888-533-4777"
+    echo "**********************************************************************************************"
+    echo ""
+    exit 1
+  fi
 
   # Get json output for temporary AWS credentials
 
@@ -198,14 +229,61 @@ get_temporary_aws_credentials ()
   fi
 }
 
+get_temporary_aws_credentials_via_aws_sts_assume_role ()
+{
+  # Set AWS account number
+
+  AWS_ACCOUNT_NUMBER="$1"
+
+  SESSION_NAME="$2"
+
+  # Get json output for temporary AWS credentials
+
+  echo ""
+  echo "-----------------------------"
+  echo "Getting temporary credentials"
+  echo "-----------------------------"
+  echo ""
+
+  JSON_OUTPUT=$(aws --region us-east-1 sts assume-role \
+    --role-arn "arn:aws:iam::${AWS_ACCOUNT_NUMBER}:role/Ab2dMgmtRole" \
+    --role-session-name "${SESSION_NAME}" \
+    | jq --raw-output ".Credentials")
+
+  # Set default AWS region
+
+  export AWS_DEFAULT_REGION=us-east-1
+  
+  # Get temporary AWS credentials
+
+  export AWS_ACCESS_KEY_ID=$(echo $JSON_OUTPUT | jq --raw-output ".AccessKeyId")
+  export AWS_SECRET_ACCESS_KEY=$(echo $JSON_OUTPUT | jq --raw-output ".SecretAccessKey")
+
+  # Get AWS session token (required for temporary credentials)
+
+  export AWS_SESSION_TOKEN=$(echo $JSON_OUTPUT | jq --raw-output ".SessionToken")
+
+  # Verify AWS credentials
+
+  if [ -z "${AWS_ACCESS_KEY_ID}" ] \
+      || [ -z "${AWS_SECRET_ACCESS_KEY}" ] \
+      || [ -z "${AWS_SESSION_TOKEN}" ]; then
+    echo "**********************************************************************"
+    echo "ERROR: AWS credentials do not exist for the ${CMS_ENV} AWS account"
+    echo "**********************************************************************"
+    echo ""
+    exit 1
+  fi
+}
+
 #
 # Set AWS target environment
 #
 
 if [ "${CLOUD_TAMER}" == "true" ]; then
-  get_temporary_aws_credentials "${CMS_ENV_AWS_ACCOUNT_NUMBER}"
+  get_temporary_aws_credentials_via_cloudtamer_api "${CMS_ENV_AWS_ACCOUNT_NUMBER}"
 else
-  export AWS_PROFILE="${CMS_ENV}"
+  get_temporary_aws_credentials_via_aws_sts_assume_role "${CMS_ENV_AWS_ACCOUNT_NUMBER}" "${CMS_ENV}"
 fi
 
 #
@@ -614,7 +692,7 @@ echo 'deployer_ip_address = "'$DEPLOYER_IP_ADDRESS'"' \
 # Set AWS management environment
 
 if [ "${CLOUD_TAMER}" == "true" ]; then
-  get_temporary_aws_credentials "${CMS_ECR_REPO_ENV_AWS_ACCOUNT_NUMBER}"
+  get_temporary_aws_credentials_via_cloudtamer_api "${CMS_ECR_REPO_ENV_AWS_ACCOUNT_NUMBER}"
 else
   export AWS_PROFILE="${CMS_ECR_REPO_ENV}"
 fi
@@ -957,7 +1035,7 @@ echo "Using master branch commit number '${COMMIT_NUMBER}' for ab2d_api and ab2d
 #
 
 if [ "${CLOUD_TAMER}" == "true" ]; then
-  get_temporary_aws_credentials "${CMS_ENV_AWS_ACCOUNT_NUMBER}"
+  get_temporary_aws_credentials_via_cloudtamer_api "${CMS_ENV_AWS_ACCOUNT_NUMBER}"
 else
   export AWS_PROFILE="${CMS_ENV}"
 fi
