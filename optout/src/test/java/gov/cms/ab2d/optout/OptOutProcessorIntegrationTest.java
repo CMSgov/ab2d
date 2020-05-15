@@ -128,10 +128,16 @@ class OptOutProcessorIntegrationTest {
 
         List<LoggableEvent> reloadEvents = doAll.load(ReloadEvent.class);
         assertEquals(2, reloadEvents.size());
+
         ReloadEvent requestEvent = (ReloadEvent) reloadEvents.get(0);
         assertEquals(ReloadEvent.FileType.OPT_OUT, requestEvent.getFileType());
         assertEquals(testInputFile, requestEvent.getFileName());
         assertEquals(12, requestEvent.getNumberLoaded());
+
+        ReloadEvent requestEventSecondary = (ReloadEvent) reloadEvents.get(1);
+        assertEquals(ReloadEvent.FileType.OPT_OUT, requestEventSecondary.getFileType());
+        assertEquals(testInputFileSecondary, requestEventSecondary.getFileName());
+        assertEquals(4, requestEventSecondary.getNumberLoaded());
 
         assertTrue(UtilMethods.allEmpty(
                 doAll.load(ApiRequestEvent.class),
@@ -143,13 +149,17 @@ class OptOutProcessorIntegrationTest {
         ));
 
         // Verify files don't get processed again
+        final InputStream inputStreamAgain = getClass().getResourceAsStream("/" + testInputFile);
+        final InputStreamReader isrAgain = new InputStreamReader(inputStreamAgain);
+
+        final InputStream inputStreamSecondaryAgain = getClass().getResourceAsStream("/" + testInputFileSecondary);
+        final InputStreamReader isrSecondaryAgain = new InputStreamReader(inputStreamSecondaryAgain);
+
+        when(mockS3Gateway.getOptOutFile(testInputFile)).thenReturn(isrAgain);
+        when(mockS3Gateway.getOptOutFile(testInputFileSecondary)).thenReturn(isrSecondaryAgain);
         cut.process();
 
-    }
-
-    @Test
-    public void testShouldProcessDifferentFiles() {
-        OptOut optOut = new OptOut();
-
+        reloadEvents = doAll.load(ReloadEvent.class);
+        assertEquals(2, reloadEvents.size());
     }
 }
