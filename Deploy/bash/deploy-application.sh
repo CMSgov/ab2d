@@ -235,6 +235,8 @@ get_temporary_aws_credentials_via_aws_sts_assume_role ()
 
   AWS_ACCOUNT_NUMBER="$1"
 
+  # Set session name
+
   SESSION_NAME="$2"
 
   # Get json output for temporary AWS credentials
