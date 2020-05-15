@@ -121,6 +121,44 @@ BEARER_TOKEN=$(curl --location --request POST 'https://cloudtamer.cms.gov/api/v2
   --data-raw "{\"username\":\"${CLOUDTAMER_USER_NAME}\",\"password\":\"${CLOUDTAMER_PASSWORD}\",\"idms\":{\"id\":2}}" \
   | jq --raw-output ".data.access.token")
 
+BEARER_TOKEN=$(curl --location --request POST 'https://cloudtamer.cms.gov/api/v2/token' \
+  --header 'Accept: application/json' \
+  --header 'Accept-Language: en-US,en;q=0.5' \
+  --header 'Content-Type: application/json' \
+  --data-raw "{\"username\":\"${CLOUDTAMER_USER_NAME}\",\"password\":\"${CLOUDTAMER_PASSWORD}\",\"idms\":{\"id\":2}}" \
+  | jq --raw-output ".data.access.token")
+
+if [ "${BEARER_TOKEN}" == "null" ]; then
+  echo "**********************************************************************************************"
+  echo "ERROR: Retrieval of bearer token failed."
+  echo ""
+  echo "Do you need to update your "CLOUDTAMER_PASSWORD" environment variable?"
+  echo ""
+  echo "Have you been locked out due to the failed password attempts?"
+  echo ""
+  echo "If you have gotten locked out due to failed password attempts, do the following:"
+  echo "1. Go to this site:"
+  echo "   https://jiraent.cms.gov/servicedesk/customer/portal/13"
+  echo "2. Select 'CMS Cloud Access Request'"
+  echo "3. Configure page as follows:"
+  echo "   - Summary: CloudTamer & CloudVPN account password reset for {your eua id}"
+  echo "   - CMS Business Unit: OEDA"
+  echo "   - Project Name: Project 058 BCDA"
+  echo "   - Types of Access/Resets: Cisco AnyConnect and AWS Console Password Resets [not MFA]"
+  echo "   - Approvers: Stephen Walter"
+  echo "   - Description"
+  echo "     I am locked out of VPN access due to failed password attempts."
+  echo "     Can you reset my CloudTamer & CloudVPN account password?"
+  echo "     EUA: {your eua id}"
+  echo "     email: {your email}"
+  echo "     cell phone: {your cell phone number}"
+  echo "4. After you submit your ticket, call the following number and give them your ticket number."
+  echo "   888-533-4777"
+  echo "**********************************************************************************************"
+  echo ""
+  exit 1
+fi
+
 echo ""
 echo "-----------------------------"
 echo "Getting temporary credentials"
