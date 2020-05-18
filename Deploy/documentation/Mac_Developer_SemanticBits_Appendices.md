@@ -14,6 +14,7 @@
 1. [Appendix C: Install 1Password API](#appendix-c-install-1password-api)
 1. [Appendix D: Troubleshoot VPN access](#appendix-d-troubleshoot-vpn-access)
 1. [Appendix E: Configure show file extensions in Finder](#appendix-e-configure-show-file-extensions-in-finder)
+1. [Appendix F: Register for Okta Prod credentials](#appendix-f-register-for-okta-prod-credentials)
 
 ## Appendix A: PostgreSQL 11
 
@@ -342,4 +343,38 @@
 
 1. Check **Show all filename extensions**
 
-1. CLose the "Finder Preferences" window
+1. Close the "Finder Preferences" window
+
+## Appendix F: Register for Okta Prod credentials
+
+1. Open Chrome
+
+1. Enter the following in the address bar
+
+   > https://test.reg.idm.cms.gov/registration.html
+
+1. Enter your personal and contact information
+
+1. Check **Agree to our Terms & Conditions**
+
+1. Select **Next**
+
+1. Configure user id, password, and challenge questions
+
+   *Example for User ID:*
+   
+   - **Enter User ID:** fred.smith@semanticbits.com
+
+1. Select **Submit**
+
+1. Select **OK** on the "Submit result" dialog
+
+1. Verify logon
+
+   1. Open Chrome
+
+   1. Enter the following in the address bar
+
+      > https://test.idp.idm.cms.gov/
+
+   1. Log on
