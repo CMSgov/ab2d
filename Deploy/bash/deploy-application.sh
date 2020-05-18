@@ -696,7 +696,7 @@ echo 'deployer_ip_address = "'$DEPLOYER_IP_ADDRESS'"' \
 if [ "${CLOUD_TAMER}" == "true" ]; then
   get_temporary_aws_credentials_via_cloudtamer_api "${CMS_ECR_REPO_ENV_AWS_ACCOUNT_NUMBER}"
 else
-  export AWS_PROFILE="${CMS_ECR_REPO_ENV}"
+  get_temporary_aws_credentials_via_aws_sts_assume_role "${CMS_ECR_REPO_ENV_AWS_ACCOUNT_NUMBER}" "${CMS_ECR_REPO_ENV}"
 fi
 
 MGMT_KMS_KEY_ID=$(aws --region "${REGION}" kms list-aliases \
@@ -1039,7 +1039,7 @@ echo "Using master branch commit number '${COMMIT_NUMBER}' for ab2d_api and ab2d
 if [ "${CLOUD_TAMER}" == "true" ]; then
   get_temporary_aws_credentials_via_cloudtamer_api "${CMS_ENV_AWS_ACCOUNT_NUMBER}"
 else
-  export AWS_PROFILE="${CMS_ENV}"
+  get_temporary_aws_credentials_via_aws_sts_assume_role "${CMS_ENV_AWS_ACCOUNT_NUMBER}" "${CMS_ENV}"
 fi
 
 # Reset to the target environment
