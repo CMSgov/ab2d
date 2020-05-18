@@ -96,6 +96,7 @@
 1. [Appendix RR: Tealium and Google Analytics notes](#appendix-rr-tealium-and-google-analytics-notes)
 1. [Appendix SS: Destroy API and Worker clusters](#appendix-ss-destroy-api-and-worker-clusters)
 1. [Appendix TT: Migrate terraform state from shared environment to main environment](#appendix-tt-migrate-terraform-state-from-shared-environment-to-main-environment)
+1. [Appendix UU: Access Health Plan Management System (HPMS)](#appendix-uu-access-health-plan-management-system-hpms)
 
 ## Appendix A: Access the CMS AWS console
 
@@ -7669,7 +7670,7 @@
    *Example for "Dev" environment:*
    
    ```ShellSession
-   $ curl "http://internal-ab2d-dev-820359992.us-east-1.elb.amazonaws.com/api/v1/fhir/Patient/\$export?_outputFormat=application%2Ffhir%2Bndjson&_type=ExplanationOfBenefit" \
+   $ curl "https://internal-ab2d-dev-820359992.us-east-1.elb.amazonaws.com/api/v1/fhir/Patient/\$export?_outputFormat=application%2Ffhir%2Bndjson&_type=ExplanationOfBenefit" \
      -sD - \
      -H "accept: application/json" \
      -H "Accept: application/fhir+json" \
@@ -8294,3 +8295,31 @@ $ sed -i "" 's%cms-ab2d[\/]prod%cms-ab2d/dev%g' _includes/head.html (edited)
 > *** TO DO ***: Complete moving modules from ab2d-east-impl-shared to ab2d-east-impl
 
 > *** TO DO ***: Eliminate shared environments from branch
+
+## Appendix UU: Access Health Plan Management System (HPMS)
+
+1. Request aprroval for the following EUA job code
+
+   ```
+   HPMS_Prod_AWS
+   ```
+
+1. Wait to be approved for the "HPMS_Prod_AWS" job code
+
+1. Open Chrome
+
+1. Enter the following in the address bar
+
+   > https://hpms.cms.gov
+
+1. Log on with your standard EUA credentials
+
+1. Scroll down to the bottom of the page
+
+1. Select the **Accept** radio button
+
+1. Select **Submit**
+
+1. Complete required fields on the "User Account Management" page
+
+1. Select **Save**
