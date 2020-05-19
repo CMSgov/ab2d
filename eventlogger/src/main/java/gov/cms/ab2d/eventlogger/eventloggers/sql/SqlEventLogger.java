@@ -5,15 +5,17 @@ import gov.cms.ab2d.eventlogger.EventLoggingException;
 import gov.cms.ab2d.eventlogger.LoggableEvent;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.PropertySource;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@PropertySource("classpath:application.eventlogger.properties")
 @Slf4j
 public class SqlEventLogger implements EventLogger {
-    @Value("${execution.env:local}")
+    @Value("${execution.env}")
     private String appEnv;
 
     private final SqlMapperConfig mapperConfig;
