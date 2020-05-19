@@ -5,7 +5,6 @@ import gov.cms.ab2d.eventlogger.EventLogger;
 import gov.cms.ab2d.eventlogger.LoggableEvent;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.PropertySource;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
 
@@ -15,10 +14,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 @Service
-@PropertySource("classpath:application.eventlogger.properties")
 @Slf4j
 public class KinesisEventLogger implements EventLogger {
-    @Value("${execution.env}")
+    @Value("${execution.env:local}")
     private String appEnv;
     @Value("${eventlogger.kinesis.stream.prefix:}")
     private String streamId;
