@@ -42,7 +42,6 @@ fi
 #
 
 CMS_ECR_REPO_ENV_AWS_ACCOUNT_NUMBER=653916833532
-CMS_ECR_REPO_ENV=ab2d-mgmt-east-dev
 
 #
 # Define functions
@@ -505,38 +504,3 @@ if [ "${VPC_ENABLE_DNS_HOSTNAMES}" == "False" ]; then
     --vpc-id $VPC_ID \
     --enable-dns-hostnames
 fi
-
-#
-# Set AWS management environment
-#
-
-get_temporary_aws_credentials "${CMS_ECR_REPO_ENV_AWS_ACCOUNT_NUMBER}"
-
-# Initialize and validate terraform for the management environment
-
-echo "*******************************************************************"
-echo "Initialize and validate terraform for the management environment..."
-echo "*******************************************************************"
-
-cd "${START_DIR}/.."
-cd terraform/environments/$CMS_ECR_REPO_ENV
-
-rm -f *.tfvars
-
-terraform init \
-  -backend-config="bucket=${CMS_ECR_REPO_ENV}-automation" \
-  -backend-config="key=${CMS_ECR_REPO_ENV}/terraform/terraform.tfstate" \
-  -backend-config="region=${AWS_DEFAULT_REGION}" \
-  -backend-config="encrypt=true"
-
-terraform validate
-
-#
-# Create of verify management account components
-#
-
-terraform apply \
-  --var "mgmt_aws_account_number=${CMS_ECR_REPO_ENV_AWS_ACCOUNT_NUMBER}" \
-  --var "aws_account_number=${CMS_ENV_AWS_ACCOUNT_NUMBER}" \
-  --target module.management_account \
-  --auto-approve
