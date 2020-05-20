@@ -93,6 +93,10 @@ resource "aws_ecs_task_definition" "worker" {
 	  "name" : "AB2D_BFD_URL",
 	  "value" : "${var.bfd_url}"
 	},
+        {
+	  "name" : "AB2D_CLAIMS_SKIP_BILLABLE_PERIOD_CHECK",
+	  "value" : "${var.claims_skip_billable_period_check}"
+	},
 	{
 	  "name" : "AB2D_DB_DATABASE",
 	  "value" : "${var.db_name}"

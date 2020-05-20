@@ -228,6 +228,7 @@ module "worker" {
   ecs_task_def_cpu                  = var.ecs_task_definition_cpu_worker
   ecs_task_def_memory               = var.ecs_task_definition_memory_worker
   vpn_private_ip_address_cidr_range = var.vpn_private_ip_address_cidr_range
+  claims_skip_billable_period_check = var.claims_skip_billable_period_check
 }
 
 module "cloudwatch" {

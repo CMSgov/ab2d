@@ -414,3 +414,11 @@ variable "kinesis_firehose_kms_key_arn" {
 variable "kinesis_firehose_role" {
   default = "Ab2dBfdInsightsRole"
 }
+
+#
+# Worker
+#
+
+variable "claims_skip_billable_period_check" {
+  default = "true"
+}
