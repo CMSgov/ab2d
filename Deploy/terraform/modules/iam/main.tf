@@ -336,11 +336,6 @@ resource "aws_iam_role_policy_attachment" "instance_role_cloud_watch_logs_policy
 #   policy_arn = "${aws_iam_policy.bfd_prod_sbx_policy.arn}"
 # }
 
-resource "aws_iam_role_policy_attachment" "cms_approved_aws_services_attach_to_instance_role" {
-  role       = "${aws_iam_role.ab2d_instance_role.name}"
-  policy_arn = "${data.aws_iam_policy.cms_approved_aws_services.arn}"
-}
-
 resource "aws_iam_role_policy_attachment" "amazon_ec2_container_service_for_ec2_role_attach" {
   role       = "${aws_iam_role.ab2d_instance_role.name}"
   policy_arn = "${data.aws_iam_policy.amazon_ec2_container_service_for_ec2_role.arn}"
