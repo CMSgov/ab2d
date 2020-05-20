@@ -260,3 +260,11 @@ module "kinesis_firehose" {
   kinesis_firehose_kms_key_arn      = var.kinesis_firehose_kms_key_arn
   kinesis_firehose_role             = var.kinesis_firehose_role
 }
+
+# Management Target
+
+module "management_target" {
+  source                      = "../../modules/management_target"
+  mgmt_aws_account_number     = var.mgmt_aws_account_number
+  ab2d_spe_developer_policies = var.ab2d_spe_developer_policies
+}
