@@ -17,6 +17,7 @@
 1. [Submit an "Internet DNS Change Request Form" to product owner for the sandbox application load balancer](#submit-an-internet-dns-change-request-form-to-product-owner-for-the-sandbox-application-load-balancer)
 1. [Submit an "Internet DNS Change Request Form" to product owner for the production application load balancer](#Submit an "internet-dns-change-request-form-to-product-owner-for-the-production-application-load-balancer)
 1. [Deploy to production](#deploy-to-production)
+   * [Initialize or verify greenfield environment](#initialize-or-verify-greenfield-environment)
    * [Initialize or verify base environment for production](#initialize-or-verify-base-environment-for-production)
    * [Encrypt and upload New Relic configuration file](#encrypt-and-upload-new-relic-configuration-file)
    * [Create, encrypt, and upload BFD AB2D keystore for Prod](#create-encrypt-and-upload-bfd-ab2d-keystore-for-prod)
@@ -742,6 +743,22 @@
       - Alias name: client_data_server_ab2d_prod_certificate
 
 ## Deploy to production
+
+### Initialize or verify greenfield environment
+
+1. Ensure that you are connected to CMS Cisco VPN
+
+1. Change to the "Deploy" directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d/Deploy
+   ```
+
+1. Initialize or verify environment
+
+   ```ShellShession
+   $ ./bash/initialize-greenfield-environment.sh
+   ```
 
 ### Initialize or verify base environment for production
 
