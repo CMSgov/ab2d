@@ -901,16 +901,56 @@
 
 1. Set gold disk test parameters
 
+   *Example for "Dev" environment:*
+
+   ```ShellSession
+   $ export CMS_ENV_PARAM=ab2d-dev \
+     && export DEBUG_LEVEL_PARAM=WARN \
+     && export EC2_INSTANCE_TYPE_PACKER_PARAM=m5.xlarge \
+     && export OWNER_PARAM=743302140042 \
+     && export REGION_PARAM=us-east-1 \
+     && export SSH_USERNAME_PARAM=ec2-user \
+     && export VPC_ID_PARAM=vpc-0c6413ec40c5fdac3 \
+     && export CLOUD_TAMER_PARAM=true
+   ```
+
+   *Example for "Sbx" environment:*
+
+   ```ShellSession
+   $ export CMS_ENV_PARAM=ab2d-sbx-sandbox \
+     && export DEBUG_LEVEL_PARAM=WARN \
+     && export EC2_INSTANCE_TYPE_PACKER_PARAM=m5.xlarge \
+     && export OWNER_PARAM=743302140042 \
+     && export REGION_PARAM=us-east-1 \
+     && export SSH_USERNAME_PARAM=ec2-user \
+     && export VPC_ID_PARAM=vpc-08dbf3fa96684151c \
+     && export CLOUD_TAMER_PARAM=true
+   ```
+
+   *Example for "Impl" environment:*
+
+   ```ShellSession
+   $ export CMS_ENV_PARAM=ab2d-east-impl \
+     && export DEBUG_LEVEL_PARAM=WARN \
+     && export EC2_INSTANCE_TYPE_PACKER_PARAM=m5.xlarge \
+     && export OWNER_PARAM=743302140042 \
+     && export REGION_PARAM=us-east-1 \
+     && export SSH_USERNAME_PARAM=ec2-user \
+     && export VPC_ID_PARAM=vpc-0e5d2e88de7f9cad4 \
+     && export CLOUD_TAMER_PARAM=true
+   ```
+
    *Example for "Prod" environment:*
 
    ```ShellSession
-   $ export CMS_ENV_PARAM=ab2d-east-prod
-   $ export DEBUG_LEVEL_PARAM=WARN
-   $ export EC2_INSTANCE_TYPE_PACKER_PARAM=m5.xlarge
-   $ export OWNER_PARAM=743302140042
-   $ export REGION_PARAM=us-east-1
-   $ export SSH_USERNAME_PARAM=ec2-user
-   $ export VPC_ID_PARAM=vpc-0c9d55c3d85f46a65
+   $ export CMS_ENV_PARAM=ab2d-east-prod \
+     && export DEBUG_LEVEL_PARAM=WARN \
+     && export EC2_INSTANCE_TYPE_PACKER_PARAM=m5.xlarge \
+     && export OWNER_PARAM=743302140042 \
+     && export REGION_PARAM=us-east-1 \
+     && export SSH_USERNAME_PARAM=ec2-user \
+     && export VPC_ID_PARAM=vpc-0c9d55c3d85f46a65 \
+     && export CLOUD_TAMER_PARAM=true
    ```
 
 1. Create or update AMI with latest gold disk
@@ -963,23 +1003,23 @@
 1. Set parameters
 
    ```ShellSession
-   $ export CMS_ENV_PARAM=ab2d-east-prod
-   $ export CMS_ECR_REPO_ENV_PARAM=ab2d-mgmt-east-dev
-   $ export REGION_PARAM=us-east-1
-   $ export VPC_ID_PARAM=vpc-0c9d55c3d85f46a65
-   $ export SSH_USERNAME_PARAM=ec2-user
-   $ export EC2_INSTANCE_TYPE_API_PARAM=m5.xlarge
-   $ export EC2_INSTANCE_TYPE_WORKER_PARAM=m5.4xlarge
-   $ export EC2_DESIRED_INSTANCE_COUNT_API_PARAM=2
-   $ export EC2_MINIMUM_INSTANCE_COUNT_API_PARAM=2
-   $ export EC2_MAXIMUM_INSTANCE_COUNT_API_PARAM=4
-   $ export EC2_DESIRED_INSTANCE_COUNT_WORKER_PARAM=2
-   $ export EC2_MINIMUM_INSTANCE_COUNT_WORKER_PARAM=2
-   $ export EC2_MAXIMUM_INSTANCE_COUNT_WORKER_PARAM=4
-   $ export DATABASE_SECRET_DATETIME_PARAM=2020-01-02-09-15-01
-   $ export DEBUG_LEVEL_PARAM=WARN
-   $ export INTERNET_FACING_PARAM=true
-   $ export CLOUD_TAMER_PARAM=true
+   $ export CMS_ENV_PARAM=ab2d-east-prod \
+     && export CMS_ECR_REPO_ENV_PARAM=ab2d-mgmt-east-dev \
+     && export REGION_PARAM=us-east-1 \
+     && export VPC_ID_PARAM=vpc-0c9d55c3d85f46a65 \
+     && export SSH_USERNAME_PARAM=ec2-user \
+     && export EC2_INSTANCE_TYPE_API_PARAM=m5.xlarge \
+     && export EC2_INSTANCE_TYPE_WORKER_PARAM=m5.4xlarge \
+     && export EC2_DESIRED_INSTANCE_COUNT_API_PARAM=2 \
+     && export EC2_MINIMUM_INSTANCE_COUNT_API_PARAM=2 \
+     && export EC2_MAXIMUM_INSTANCE_COUNT_API_PARAM=4 \
+     && export EC2_DESIRED_INSTANCE_COUNT_WORKER_PARAM=2 \
+     && export EC2_MINIMUM_INSTANCE_COUNT_WORKER_PARAM=2 \
+     && export EC2_MAXIMUM_INSTANCE_COUNT_WORKER_PARAM=4 \
+     && export DATABASE_SECRET_DATETIME_PARAM=2020-01-02-09-15-01 \
+     && export DEBUG_LEVEL_PARAM=WARN \
+     && export INTERNET_FACING_PARAM=true \
+     && export CLOUD_TAMER_PARAM=true
    ``` 
 
 1. Deploy application
