@@ -43,7 +43,7 @@ CMS_ECR_REPO_ENV=ab2d-mgmt-east-dev
 # Define functions
 #
 
-get_temporary_aws_credentials ()
+get_temporary_aws_credentials_via_cloudtamer_api ()
 {
   # Set AWS account number
 
@@ -84,6 +84,37 @@ get_temporary_aws_credentials ()
     --header 'Content-Type: application/json' \
     --data-raw "{\"username\":\"${CLOUDTAMER_USER_NAME}\",\"password\":\"${CLOUDTAMER_PASSWORD}\",\"idms\":{\"id\":2}}" \
     | jq --raw-output ".data.access.token")
+
+  if [ "${BEARER_TOKEN}" == "null" ]; then
+    echo "**********************************************************************************************"
+    echo "ERROR: Retrieval of bearer token failed."
+    echo ""
+    echo "Do you need to update your "CLOUDTAMER_PASSWORD" environment variable?"
+    echo ""
+    echo "Have you been locked out due to the failed password attempts?"
+    echo ""
+    echo "If you have gotten locked out due to failed password attempts, do the following:"
+    echo "1. Go to this site:"
+    echo "   https://jiraent.cms.gov/servicedesk/customer/portal/13"
+    echo "2. Select 'CMS Cloud Access Request'"
+    echo "3. Configure page as follows:"
+    echo "   - Summary: CloudTamer & CloudVPN account password reset for {your eua id}"
+    echo "   - CMS Business Unit: OEDA"
+    echo "   - Project Name: Project 058 BCDA"
+    echo "   - Types of Access/Resets: Cisco AnyConnect and AWS Console Password Resets [not MFA]"
+    echo "   - Approvers: Stephen Walter"
+    echo "   - Description"
+    echo "     I am locked out of VPN access due to failed password attempts."
+    echo "     Can you reset my CloudTamer & CloudVPN account password?"
+    echo "     EUA: {your eua id}"
+    echo "     email: {your email}"
+    echo "     cell phone: {your cell phone number}"
+    echo "4. After you submit your ticket, call the following number and give them your ticket number."
+    echo "   888-533-4777"
+    echo "**********************************************************************************************"
+    echo ""
+    exit 1
+  fi
 
   # Get json output for temporary AWS credentials
 
@@ -136,7 +167,7 @@ get_temporary_aws_credentials ()
 # Set AWS development environment
 #
 
-get_temporary_aws_credentials "${CMS_DEV_ENV_AWS_ACCOUNT_NUMBER}"
+get_temporary_aws_credentials_via_cloudtamer_api "${CMS_DEV_ENV_AWS_ACCOUNT_NUMBER}"
 
 # Initialize and validate terraform for the development environment
 
@@ -188,7 +219,7 @@ terraform apply \
 # Set AWS sandbox environment
 #
 
-get_temporary_aws_credentials "${CMS_SBX_ENV_AWS_ACCOUNT_NUMBER}"
+get_temporary_aws_credentials_via_cloudtamer_api "${CMS_SBX_ENV_AWS_ACCOUNT_NUMBER}"
 
 # Initialize and validate terraform for the sandbox environment
 
@@ -240,7 +271,7 @@ terraform apply \
 # Set AWS implementation environment
 #
 
-get_temporary_aws_credentials "${CMS_IMPL_ENV_AWS_ACCOUNT_NUMBER}"
+get_temporary_aws_credentials_via_cloudtamer_api "${CMS_IMPL_ENV_AWS_ACCOUNT_NUMBER}"
 
 # Initialize and validate terraform for the implementation environment
 
@@ -292,7 +323,7 @@ terraform apply \
 # Set AWS production environment
 #
 
-get_temporary_aws_credentials "${CMS_PROD_ENV_AWS_ACCOUNT_NUMBER}"
+get_temporary_aws_credentials_via_cloudtamer_api "${CMS_PROD_ENV_AWS_ACCOUNT_NUMBER}"
 
 # Initialize and validate terraform for the production environment
 
@@ -344,7 +375,7 @@ terraform apply \
 # Set AWS management environment
 #
 
-get_temporary_aws_credentials "${CMS_ECR_REPO_ENV_AWS_ACCOUNT_NUMBER}"
+get_temporary_aws_credentials_via_cloudtamer_api "${CMS_ECR_REPO_ENV_AWS_ACCOUNT_NUMBER}"
 
 # Initialize and validate terraform for the management environment
 
