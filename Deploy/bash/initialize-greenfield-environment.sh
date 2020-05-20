@@ -36,18 +36,21 @@ CMS_PROD_ENV=ab2d-east-prod
 
 # Set environment variables for management AWS account
 
-CMS_ECR_REPO_ENV_AWS_ACCOUNT_NUMBER=653916833532
-CMS_ECR_REPO_ENV=ab2d-mgmt-east-dev
+CMS_MGMT_ENV_AWS_ACCOUNT_NUMBER=653916833532
+CMS_MGMT_ENV=ab2d-mgmt-east-dev
 
 #
 # Define functions
 #
 
+# Define get temporary AWS credentials via CloudTamer API function
+
 get_temporary_aws_credentials_via_cloudtamer_api ()
 {
-  # Set AWS account number
+  # Set parameters
 
   AWS_ACCOUNT_NUMBER="$1"
+  CMS_ENV="$2"
 
   # Verify that CloudTamer user name and password environment variables are set
 
@@ -159,262 +162,95 @@ get_temporary_aws_credentials_via_cloudtamer_api ()
   fi
 }
 
-########################################################################################
-# Configure Greenfield Development AWS account
-########################################################################################
+# Define configure greenfield environment function
+
+configure_greenfield_environment ()
+{
+
+  # Set parameters
+    
+  AWS_ACCOUNT_NUMBER="$1"   # Options: 349849222861|777200079629|330810004472|595094747606|653916833532
+  CMS_ENV="$2"              # Options: ab2d-dev|ab2d-sbx-sandbox|ab2d-east-impl|ab2d-east-prod|ab2d-mgmt-east-dev
+  MODULE="$3"               # Options: management_target|management_account
+    
+  # Get AWS credentials for target environment
+  
+  get_temporary_aws_credentials_via_cloudtamer_api "${AWS_ACCOUNT_NUMBER}" "${CMS_ENV}"
+
+  # Initialize and validate terraform for the target environment
+
+  echo "******************************************************************************"
+  echo "Initialize and validate terraform for the ${CMS_ENV} environment..."
+  echo "******************************************************************************"
+  
+  cd "${START_DIR}/.."
+  cd terraform/environments/$CMS_ENV
+  
+  rm -f *.tfvars
+  
+  terraform init \
+    -backend-config="bucket=${CMS_ENV}-automation" \
+    -backend-config="key=${CMS_ENV}/terraform/terraform.tfstate" \
+    -backend-config="region=${AWS_DEFAULT_REGION}" \
+    -backend-config="encrypt=true"
+  
+  terraform validate
+
+  # Get the policies that are attached to the "ab2d-spe-developer" role
+  # - the "ab2d-spe-developer" role is controlled by GDIT automation
+  # - any modifications to the "ab2d-spe-developer" role are wiped out by GDIT automation
+  # - therefore, we are creating our own role that has the same policies but that also allows us
+  #   to set trust relationships
+  
+  AB2D_SPE_DEVELOPER_POLICIES=$(aws --region us-east-1 iam list-attached-role-policies \
+    --role-name ab2d-spe-developer \
+    --query "AttachedPolicies[*].PolicyArn" \
+    | tr -d '[:space:]\n')
+
+  # Create or verify greenfield components
+  
+  terraform apply \
+    --var "mgmt_aws_account_number=${CMS_MGMT_ENV_AWS_ACCOUNT_NUMBER}" \
+    --var ab2d_spe_developer_policies=$AB2D_SPE_DEVELOPER_POLICIES \
+    --target "module.${MODULE}" \
+    --auto-approve
+}
 
 #
-# Set AWS development environment
+# Configure Greenfield AWS accounts
 #
 
-get_temporary_aws_credentials_via_cloudtamer_api "${CMS_DEV_ENV_AWS_ACCOUNT_NUMBER}"
+# Configure target develoment AWS account
 
-# Initialize and validate terraform for the development environment
+configure_greenfield_environment \
+  "${CMS_DEV_ENV_AWS_ACCOUNT_NUMBER}" \
+  "${CMS_DEV_ENV}" \
+  "management_target"
 
-echo "********************************************************************"
-echo "Initialize and validate terraform for the development environment..."
-echo "********************************************************************"
+# Configure target sandbox AWS account
 
-cd "${START_DIR}/.."
-cd terraform/environments/$CMS_DEV_ENV
+configure_greenfield_environment \
+  "${CMS_SBX_ENV_AWS_ACCOUNT_NUMBER}" \
+  "${CMS_SBX_ENV}" \
+  "management_target"
 
-rm -f *.tfvars
+# Configure target implementation AWS account
 
-terraform init \
-  -backend-config="bucket=${CMS_DEV_ENV}-automation" \
-  -backend-config="key=${CMS_DEV_ENV}/terraform/terraform.tfstate" \
-  -backend-config="region=${AWS_DEFAULT_REGION}" \
-  -backend-config="encrypt=true"
+configure_greenfield_environment \
+  "${CMS_IMPL_ENV_AWS_ACCOUNT_NUMBER}" \
+  "${CMS_IMPL_ENV}" \
+  "management_target"
 
-terraform validate
+# Configure target production AWS account
 
-#
-# Create of verify greenfield components for development account
-#
+configure_greenfield_environment \
+  "${CMS_PROD_ENV_AWS_ACCOUNT_NUMBER}" \
+  "${CMS_PROD_ENV}" \
+  "management_target"
 
-# Get the policies that are attached to the "ab2d-spe-developer" role
-# - the "ab2d-spe-developer" role is controlled by GDIT automation
-# - any modifications to the "ab2d-spe-developer" role are wiped out by GDIT automation
-# - therefore, we are creating our own role that has the same policies but that also allows us
-#   to set trust relationships
+# Configure management AWS account that manages the other accounts
 
-AB2D_SPE_DEVELOPER_POLICIES=$(aws --region us-east-1 iam list-attached-role-policies \
-  --role-name ab2d-spe-developer \
-  --query "AttachedPolicies[*].PolicyArn" \
-  | tr -d '[:space:]\n')
-
-# Create or verify greenfield components
-
-terraform apply \
-  --var "mgmt_aws_account_number=${CMS_ECR_REPO_ENV_AWS_ACCOUNT_NUMBER}" \
-  --var ab2d_spe_developer_policies=$AB2D_SPE_DEVELOPER_POLICIES \
-  --target module.management_target \
-  --auto-approve
-
-########################################################################################
-# Configure Greenfield Sandbox AWS account
-########################################################################################
-
-#
-# Set AWS sandbox environment
-#
-
-get_temporary_aws_credentials_via_cloudtamer_api "${CMS_SBX_ENV_AWS_ACCOUNT_NUMBER}"
-
-# Initialize and validate terraform for the sandbox environment
-
-echo "****************************************************************"
-echo "Initialize and validate terraform for the sandbox environment..."
-echo "****************************************************************"
-
-cd "${START_DIR}/.."
-cd terraform/environments/$CMS_SBX_ENV
-
-rm -f *.tfvars
-
-terraform init \
-  -backend-config="bucket=${CMS_SBX_ENV}-automation" \
-  -backend-config="key=${CMS_SBX_ENV}/terraform/terraform.tfstate" \
-  -backend-config="region=${AWS_DEFAULT_REGION}" \
-  -backend-config="encrypt=true"
-
-terraform validate
-
-#
-# Create of verify greenfield components for management account
-#
-
-# Get the policies that are attached to the "ab2d-spe-developer" role
-# - the "ab2d-spe-developer" role is controlled by GDIT automation
-# - any modifications to the "ab2d-spe-developer" role are wiped out by GDIT automation
-# - therefore, we are creating our own role that has the same policies but that also allows us
-#   to set trust relationships
-
-AB2D_SPE_DEVELOPER_POLICIES=$(aws --region us-east-1 iam list-attached-role-policies \
-  --role-name ab2d-spe-developer \
-  --query "AttachedPolicies[*].PolicyArn" \
-  | tr -d '[:space:]\n')
-
-# Create or verify greenfield components
-
-terraform apply \
-  --var "mgmt_aws_account_number=${CMS_ECR_REPO_ENV_AWS_ACCOUNT_NUMBER}" \
-  --var ab2d_spe_developer_policies=$AB2D_SPE_DEVELOPER_POLICIES \
-  --target module.management_target \
-  --auto-approve
-
-########################################################################################
-# Configure Greenfield Implementation AWS account
-########################################################################################
-
-#
-# Set AWS implementation environment
-#
-
-get_temporary_aws_credentials_via_cloudtamer_api "${CMS_IMPL_ENV_AWS_ACCOUNT_NUMBER}"
-
-# Initialize and validate terraform for the implementation environment
-
-echo "***********************************************************************"
-echo "Initialize and validate terraform for the implementation environment..."
-echo "***********************************************************************"
-
-cd "${START_DIR}/.."
-cd terraform/environments/$CMS_IMPL_ENV
-
-rm -f *.tfvars
-
-terraform init \
-  -backend-config="bucket=${CMS_IMPL_ENV}-automation" \
-  -backend-config="key=${CMS_IMPL_ENV}/terraform/terraform.tfstate" \
-  -backend-config="region=${AWS_DEFAULT_REGION}" \
-  -backend-config="encrypt=true"
-
-terraform validate
-
-#
-# Create of verify greenfield components for management account
-#
-
-# Get the policies that are attached to the "ab2d-spe-developer" role
-# - the "ab2d-spe-developer" role is controlled by GDIT automation
-# - any modifications to the "ab2d-spe-developer" role are wiped out by GDIT automation
-# - therefore, we are creating our own role that has the same policies but that also allows us
-#   to set trust relationships
-
-AB2D_SPE_DEVELOPER_POLICIES=$(aws --region us-east-1 iam list-attached-role-policies \
-  --role-name ab2d-spe-developer \
-  --query "AttachedPolicies[*].PolicyArn" \
-  | tr -d '[:space:]\n')
-
-# Create or verify greenfield components
-
-terraform apply \
-  --var "mgmt_aws_account_number=${CMS_ECR_REPO_ENV_AWS_ACCOUNT_NUMBER}" \
-  --var ab2d_spe_developer_policies=$AB2D_SPE_DEVELOPER_POLICIES \
-  --target module.management_target \
-  --auto-approve
-
-########################################################################################
-# Configure Greenfield Production AWS account
-########################################################################################
-
-#
-# Set AWS production environment
-#
-
-get_temporary_aws_credentials_via_cloudtamer_api "${CMS_PROD_ENV_AWS_ACCOUNT_NUMBER}"
-
-# Initialize and validate terraform for the production environment
-
-echo "*******************************************************************"
-echo "Initialize and validate terraform for the production environment..."
-echo "*******************************************************************"
-
-cd "${START_DIR}/.."
-cd terraform/environments/$CMS_PROD_ENV
-
-rm -f *.tfvars
-
-terraform init \
-  -backend-config="bucket=${CMS_PROD_ENV}-automation" \
-  -backend-config="key=${CMS_PROD_ENV}/terraform/terraform.tfstate" \
-  -backend-config="region=${AWS_DEFAULT_REGION}" \
-  -backend-config="encrypt=true"
-
-terraform validate
-
-#
-# Create of verify greenfield components for management account
-#
-
-# Get the policies that are attached to the "ab2d-spe-developer" role
-# - the "ab2d-spe-developer" role is controlled by GDIT automation
-# - any modifications to the "ab2d-spe-developer" role are wiped out by GDIT automation
-# - therefore, we are creating our own role that has the same policies but that also allows us
-#   to set trust relationships
-
-AB2D_SPE_DEVELOPER_POLICIES=$(aws --region us-east-1 iam list-attached-role-policies \
-  --role-name ab2d-spe-developer \
-  --query "AttachedPolicies[*].PolicyArn" \
-  | tr -d '[:space:]\n')
-
-# Create or verify greenfield components
-
-terraform apply \
-  --var "mgmt_aws_account_number=${CMS_ECR_REPO_ENV_AWS_ACCOUNT_NUMBER}" \
-  --var ab2d_spe_developer_policies=$AB2D_SPE_DEVELOPER_POLICIES \
-  --target module.management_target \
-  --auto-approve
-
-########################################################################################
-# Configure Greenfield Management AWS account
-########################################################################################
-
-#
-# Set AWS management environment
-#
-
-get_temporary_aws_credentials_via_cloudtamer_api "${CMS_ECR_REPO_ENV_AWS_ACCOUNT_NUMBER}"
-
-# Initialize and validate terraform for the management environment
-
-echo "*******************************************************************"
-echo "Initialize and validate terraform for the management environment..."
-echo "*******************************************************************"
-
-cd "${START_DIR}/.."
-cd terraform/environments/$CMS_ECR_REPO_ENV
-
-rm -f *.tfvars
-
-terraform init \
-  -backend-config="bucket=${CMS_ECR_REPO_ENV}-automation" \
-  -backend-config="key=${CMS_ECR_REPO_ENV}/terraform/terraform.tfstate" \
-  -backend-config="region=${AWS_DEFAULT_REGION}" \
-  -backend-config="encrypt=true"
-
-terraform validate
-
-#
-# Create of verify greenfield components for management account
-#
-
-# Get the policies that are attached to the "ab2d-spe-developer" role
-# - the "ab2d-spe-developer" role is controlled by GDIT automation
-# - any modifications to the "ab2d-spe-developer" role are wiped out by GDIT automation
-# - therefore, we are creating our own role that has the same policies but that also allows us
-#   to set trust relationships
-
-AB2D_SPE_DEVELOPER_POLICIES=$(aws --region us-east-1 iam list-attached-role-policies \
-  --role-name ab2d-spe-developer \
-  --query "AttachedPolicies[*].PolicyArn" \
-  | tr -d '[:space:]\n')
-
-# Create or verify greenfield components
-
-terraform apply \
-  --var "mgmt_aws_account_number=${CMS_ECR_REPO_ENV_AWS_ACCOUNT_NUMBER}" \
-  --var ab2d_spe_developer_policies=$AB2D_SPE_DEVELOPER_POLICIES \
-  --target module.management_account \
-  --auto-approve
+configure_greenfield_environment \
+  "${CMS_MGMT_ENV_AWS_ACCOUNT_NUMBER}" \
+  "${CMS_MGMT_ENV}" \
+  "management_account"
