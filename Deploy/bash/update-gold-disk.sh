@@ -21,7 +21,8 @@ if [ -z "${CMS_ENV_PARAM}" ] \
     || [ -z "${OWNER_PARAM}" ] \
     || [ -z "${REGION_PARAM}" ] \
     || [ -z "${SSH_USERNAME_PARAM}" ] \
-    || [ -z "${VPC_ID_PARAM}" ]; then
+    || [ -z "${VPC_ID_PARAM}" ] \
+    || [ -z "${CLOUD_TAMER_PARAM}" ]; then
   echo "ERROR: All parameters must be set."
   exit 1
 fi
@@ -43,6 +44,15 @@ REGION="${REGION_PARAM}"
 SSH_USERNAME="${SSH_USERNAME_PARAM}"
 
 VPC_ID="${VPC_ID_PARAM}"
+
+# Set whether CloudTamer API should be used
+
+if [ "$CLOUD_TAMER" != "false"  && "$CLOUD_TAMER" != "true" ]; then
+  echo "ERROR: the '--cloud-tamer' parameter must be true or false"
+  exit 1
+else
+  CLOUD_TAMER="${CLOUD_TAMER_PARAM}"
+fi
 
 #
 # Set AWS account numbers
@@ -67,7 +77,7 @@ fi
 # Define functions
 #
 
-get_temporary_aws_credentials ()
+get_temporary_aws_credentials_via_cloudtamer_api ()
 {
   # Set AWS account number
 
@@ -108,6 +118,37 @@ get_temporary_aws_credentials ()
     --header 'Content-Type: application/json' \
     --data-raw "{\"username\":\"${CLOUDTAMER_USER_NAME}\",\"password\":\"${CLOUDTAMER_PASSWORD}\",\"idms\":{\"id\":2}}" \
     | jq --raw-output ".data.access.token")
+
+  if [ "${BEARER_TOKEN}" == "null" ]; then
+    echo "**********************************************************************************************"
+    echo "ERROR: Retrieval of bearer token failed."
+    echo ""
+    echo "Do you need to update your "CLOUDTAMER_PASSWORD" environment variable?"
+    echo ""
+    echo "Have you been locked out due to the failed password attempts?"
+    echo ""
+    echo "If you have gotten locked out due to failed password attempts, do the following:"
+    echo "1. Go to this site:"
+    echo "   https://jiraent.cms.gov/servicedesk/customer/portal/13"
+    echo "2. Select 'CMS Cloud Access Request'"
+    echo "3. Configure page as follows:"
+    echo "   - Summary: CloudTamer & CloudVPN account password reset for {your eua id}"
+    echo "   - CMS Business Unit: OEDA"
+    echo "   - Project Name: Project 058 BCDA"
+    echo "   - Types of Access/Resets: Cisco AnyConnect and AWS Console Password Resets [not MFA]"
+    echo "   - Approvers: Stephen Walter"
+    echo "   - Description"
+    echo "     I am locked out of VPN access due to failed password attempts."
+    echo "     Can you reset my CloudTamer & CloudVPN account password?"
+    echo "     EUA: {your eua id}"
+    echo "     email: {your email}"
+    echo "     cell phone: {your cell phone number}"
+    echo "4. After you submit your ticket, call the following number and give them your ticket number."
+    echo "   888-533-4777"
+    echo "**********************************************************************************************"
+    echo ""
+    exit 1
+  fi
 
   # Get json output for temporary AWS credentials
 
@@ -152,11 +193,64 @@ get_temporary_aws_credentials ()
   fi
 }
 
+get_temporary_aws_credentials_via_aws_sts_assume_role ()
+{
+  # Set AWS account number
+
+  AWS_ACCOUNT_NUMBER="$1"
+
+  # Set session name
+
+  SESSION_NAME="$2"
+
+  # Get json output for temporary AWS credentials
+
+  echo ""
+  echo "-----------------------------"
+  echo "Getting temporary credentials"
+  echo "-----------------------------"
+  echo ""
+
+  JSON_OUTPUT=$(aws --region us-east-1 sts assume-role \
+    --role-arn "arn:aws:iam::${AWS_ACCOUNT_NUMBER}:role/Ab2dMgmtRole" \
+    --role-session-name "${SESSION_NAME}" \
+    | jq --raw-output ".Credentials")
+
+  # Set default AWS region
+
+  export AWS_DEFAULT_REGION=us-east-1
+
+  # Get temporary AWS credentials
+
+  export AWS_ACCESS_KEY_ID=$(echo $JSON_OUTPUT | jq --raw-output ".AccessKeyId")
+  export AWS_SECRET_ACCESS_KEY=$(echo $JSON_OUTPUT | jq --raw-output ".SecretAccessKey")
+
+  # Get AWS session token (required for temporary credentials)
+
+  export AWS_SESSION_TOKEN=$(echo $JSON_OUTPUT | jq --raw-output ".SessionToken")
+
+  # Verify AWS credentials
+
+  if [ -z "${AWS_ACCESS_KEY_ID}" ] \
+      || [ -z "${AWS_SECRET_ACCESS_KEY}" ] \
+      || [ -z "${AWS_SESSION_TOKEN}" ]; then
+    echo "**********************************************************************"
+    echo "ERROR: AWS credentials do not exist for the ${CMS_ENV} AWS account"
+    echo "**********************************************************************"
+    echo ""
+    exit 1
+  fi
+}
+
 #
 # Set AWS target environment
 #
 
-get_temporary_aws_credentials "${CMS_ENV_AWS_ACCOUNT_NUMBER}"
+if [ "${CLOUD_TAMER}" == "true" ]; then
+  get_temporary_aws_credentials_via_cloudtamer_api "${CMS_ENV_AWS_ACCOUNT_NUMBER}"
+else
+  get_temporary_aws_credentials_via_aws_sts_assume_role "${CMS_ENV_AWS_ACCOUNT_NUMBER}" "${CMS_ENV}"
+fi
 
 #
 # AMI Generation
@@ -188,12 +282,33 @@ AMI_ID=$(aws --region "${REGION}" ec2 describe-images \
   --query "Images[*].[ImageId]" \
   --output text)
 
-# Deregister existing ab2d ami
+# If AMI ID exists, determine if it is in use
 
 if [ -n "${AMI_ID}" ]; then
-  echo "Deregister existing ab2d ami..."  
+  AMI_ID_IN_USE=$(aws --region us-east-1 ec2 describe-instances \
+    --query "Reservations[*].Instances[?ImageId=='${AMI_ID}']".InstanceId \
+    --output text)
+fi
+
+# If existing ab2d ami in use, rename it; if not deregister it
+
+if [ -n "${AMI_ID_IN_USE}" ]; then
+  echo "Rename existing ab2d ami..."
+
+  BASE_GOLD_DISK=$(aws --region us-east-1 ec2 describe-images \
+  --owners self --filters "Name=tag:Name,Values=ab2d-ami" \
+  --query "Images[*].Tags[?Key=='gold_ami'].Value" \
+  --output text)
+
+  aws --region "${REGION}" ec2 create-tags \
+  --resources "${AMI_ID}" \
+  --tags "Key=Name,Value=ab2d-ami-gold-disk-${BASE_GOLD_DISK}"
+elif [ -n "${AMI_ID}" ]; then
+  echo "Deregister existing ab2d ami..."
   aws --region "${REGION}" ec2 deregister-image \
     --image-id "${AMI_ID}"
+else
+  echo "Note that there is no existing ab2d ami."
 fi
 
 # Get the latest seed AMI
