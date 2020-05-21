@@ -39,16 +39,10 @@ echo "Choose desired AWS account"
 echo "--------------------------"
 echo ""
 PS3='Please enter your choice: '
-options=("Mgmt AWS account" "Dev AWS account" "Sbx AWS account" "Impl AWS account" "Prod AWS account" "Quit")
+options=("Dev AWS account" "Sbx AWS account" "Impl AWS account" "Prod AWS account" "Mgmt AWS account" "Quit")
 select opt in "${options[@]}"
 do
     case $opt in
-        "Mgmt AWS account")
-	    export AWS_ACCOUNT_NUMBER=653916833532
-	    export CMS_ENV=ab2d-mgmt-east-dev
-	    SSH_PRIVATE_KEY=ab2d-mgmt-east-dev.pem
-	    break
-            ;;	
         "Dev AWS account")
 	    export AWS_ACCOUNT_NUMBER=349849222861
 	    export CMS_ENV=ab2d-dev
@@ -71,6 +65,12 @@ do
 	    export AWS_ACCOUNT_NUMBER=595094747606
 	    export CMS_ENV=ab2d-east-prod
 	    SSH_PRIVATE_KEY=ab2d-east-prod.pem
+	    break
+            ;;
+        "Mgmt AWS account")
+	    export AWS_ACCOUNT_NUMBER=653916833532
+	    export CMS_ENV=ab2d-mgmt-east-dev
+	    SSH_PRIVATE_KEY=ab2d-mgmt-east-dev.pem
 	    break
             ;;
         "Quit")
