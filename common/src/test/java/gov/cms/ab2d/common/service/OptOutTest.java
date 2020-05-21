@@ -2,8 +2,11 @@ package gov.cms.ab2d.common.service;
 
 import gov.cms.ab2d.common.SpringBootApp;
 import gov.cms.ab2d.common.model.OptOut;
+import gov.cms.ab2d.common.model.OptOutFile;
+import gov.cms.ab2d.common.repository.OptOutFileRepository;
 import gov.cms.ab2d.common.repository.OptOutRepository;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
+import org.junit.Assert;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,6 +18,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -25,9 +29,6 @@ public class OptOutTest {
 
     @Autowired
     private OptOutRepository optOutRepository;
-
-    @Container
-    private static final PostgreSQLContainer postgreSQLContainer= new AB2DPostgresqlContainer();
 
     @BeforeEach
     public void cleanup() {
