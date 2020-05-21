@@ -11,47 +11,75 @@ START_DIR="$( cd "$(dirname "$0")" ; pwd -P )"
 cd "${START_DIR}"
 
 #
-# Parse options
+# Check vars are not empty before proceeding
 #
 
-for i in "$@"
-do
-case $i in
-  --database-secret-datetime=*)
-  DATABASE_SECRET_DATETIME=$(echo ${i#*=})
-  shift # past argument=value
-  ;;
-esac
-done
-
-# Check that the other vars are not empty before proceeding
-
-if [ -z "${DATABASE_SECRET_DATETIME}" ]; then
-  echo ""
-  echo "**********************************************************************"
-  echo "ERROR: Try running the script like this example:"
-  echo "./deploy-infrastructure.sh \\"
-  echo "  --database-secret-datetime=2020-01-02-09-15-01 \\"
-  echo "**********************************************************************"
-  echo ""
+echo "Check vars are not empty before proceeding..."
+if  [ -z "${CMS_ENV_PARAM}" ] \
+    || [ -z "${DEBUG_LEVEL_PARAM}" ] \
+    || [ -z "${REGION_PARAM}" ] \
+    || [ -z "${DATABASE_SECRET_DATETIME_PARAM}" ] \
+    || [ -z "${CLOUD_TAMER_PARAM}" ]; then
+  echo "ERROR: All parameters must be set."
   exit 1
 fi
 
 #
-# Set management AWS account
+# Set parameters
+#
+
+CMS_ENV="${CMS_ENV_PARAM}"
+
+export DEBUG_LEVEL="${DEBUG_LEVEL_PARAM}"
+
+REGION="${REGION_PARAM}"
+
+DATABASE_SECRET_DATETIME="${DATABASE_SECRET_DATETIME_PARAM}"
+
+# Set whether CloudTamer API should be used
+
+if [ "${CLOUD_TAMER_PARAM}" != "false" ] && [ "${CLOUD_TAMER_PARAM}" != "true" ]; then
+  echo "ERROR: CLOUD_TAMER_PARAM parameter must be true or false"
+  exit 1
+else
+  CLOUD_TAMER="${CLOUD_TAMER_PARAM}"
+fi
+
+#
+# Set AWS account numbers
 #
 
 CMS_ECR_REPO_ENV_AWS_ACCOUNT_NUMBER=653916833532
+
+if [ "${CMS_ENV}" == "ab2d-dev" ]; then
+  CMS_ENV_AWS_ACCOUNT_NUMBER=349849222861
+elif [ "${CMS_ENV}" == "ab2d-sbx-sandbox" ]; then
+  CMS_ENV_AWS_ACCOUNT_NUMBER=777200079629
+elif [ "${CMS_ENV}" == "ab2d-east-impl" ]; then
+  CMS_ENV_AWS_ACCOUNT_NUMBER=330810004472
+elif [ "${CMS_ENV}" == "ab2d-east-prod" ]; then
+  CMS_ENV_AWS_ACCOUNT_NUMBER=595094747606
+else
+  echo "ERROR: 'CMS_ENV' environment is unknown."
+  exit 1  
+fi
 
 #
 # Define functions
 #
 
-get_temporary_aws_credentials ()
+# Define get temporary AWS credentials via CloudTamer API function
+
+get_temporary_aws_credentials_via_cloudtamer_api ()
 {
-  # Set AWS account number
+  # Set parameters
 
   AWS_ACCOUNT_NUMBER="$1"
+  CMS_ENV="$2"
+
+  # Set default AWS region
+
+  export AWS_DEFAULT_REGION="${REGION}"
 
   # Verify that CloudTamer user name and password environment variables are set
 
@@ -89,6 +117,37 @@ get_temporary_aws_credentials ()
     --data-raw "{\"username\":\"${CLOUDTAMER_USER_NAME}\",\"password\":\"${CLOUDTAMER_PASSWORD}\",\"idms\":{\"id\":2}}" \
     | jq --raw-output ".data.access.token")
 
+  if [ "${BEARER_TOKEN}" == "null" ]; then
+    echo "**********************************************************************************************"
+    echo "ERROR: Retrieval of bearer token failed."
+    echo ""
+    echo "Do you need to update your "CLOUDTAMER_PASSWORD" environment variable?"
+    echo ""
+    echo "Have you been locked out due to the failed password attempts?"
+    echo ""
+    echo "If you have gotten locked out due to failed password attempts, do the following:"
+    echo "1. Go to this site:"
+    echo "   https://jiraent.cms.gov/servicedesk/customer/portal/13"
+    echo "2. Select 'CMS Cloud Access Request'"
+    echo "3. Configure page as follows:"
+    echo "   - Summary: CloudTamer & CloudVPN account password reset for {your eua id}"
+    echo "   - CMS Business Unit: OEDA"
+    echo "   - Project Name: Project 058 BCDA"
+    echo "   - Types of Access/Resets: Cisco AnyConnect and AWS Console Password Resets [not MFA]"
+    echo "   - Approvers: Stephen Walter"
+    echo "   - Description"
+    echo "     I am locked out of VPN access due to failed password attempts."
+    echo "     Can you reset my CloudTamer & CloudVPN account password?"
+    echo "     EUA: {your eua id}"
+    echo "     email: {your email}"
+    echo "     cell phone: {your cell phone number}"
+    echo "4. After you submit your ticket, call the following number and give them your ticket number."
+    echo "   888-533-4777"
+    echo "**********************************************************************************************"
+    echo ""
+    exit 1
+  fi
+
   # Get json output for temporary AWS credentials
 
   echo ""
@@ -105,10 +164,6 @@ get_temporary_aws_credentials ()
     --header 'Content-Type: application/json' \
     --data-raw "{\"account_number\":\"${AWS_ACCOUNT_NUMBER}\",\"iam_role_name\":\"ab2d-spe-developer\"}" \
     | jq --raw-output ".data")
-
-  # Set default AWS region
-
-  export AWS_DEFAULT_REGION=us-east-1
 
   # Get temporary AWS credentials
 
@@ -132,63 +187,66 @@ get_temporary_aws_credentials ()
   fi
 }
 
-#
-# Retrieve user input
-#
+# Define get temporary AWS credentials via AWS STS assume role
 
-# Ask user of chooose an environment
+get_temporary_aws_credentials_via_aws_sts_assume_role ()
+{
+  # Set AWS account number
 
-echo ""
-echo "--------------------------"
-echo "Choose desired AWS account"
-echo "--------------------------"
-echo ""
-PS3='Please enter your choice: '
-options=("Dev AWS account" "Sbx AWS account" "Impl AWS account" "Prod AWS account" "Quit")
-select opt in "${options[@]}"
-do
-    case $opt in
-        "Dev AWS account")
-	    export CMS_ENV_AWS_ACCOUNT_NUMBER=349849222861
-	    export CMS_ENV=ab2d-dev
-	    export SSH_PRIVATE_KEY=ab2d-dev.pem
-	    break
-            ;;
-        "Sbx AWS account")
-	    export CMS_ENV_AWS_ACCOUNT_NUMBER=777200079629
-	    export CMS_ENV=ab2d-sbx-sandbox
-	    export SSH_PRIVATE_KEY=ab2d-sbx-sandbox.pem
-	    break
-            ;;
-        "Impl AWS account")
-	    export CMS_ENV_AWS_ACCOUNT_NUMBER=330810004472
-	    export CMS_ENV=ab2d-east-impl
-	    export SSH_PRIVATE_KEY=ab2d-east-impl.pem
-	    break
-            ;;
-        "Prod AWS account")
-	    export CMS_ENV_AWS_ACCOUNT_NUMBER=595094747606
-	    export CMS_ENV=ab2d-east-prod
-	    export SSH_PRIVATE_KEY=ab2d-east-prod.pem
-	    break
-            ;;
-        "Quit")
-            break
-            ;;
-        *) echo "invalid option $REPLY";;
-    esac
-done
+  AWS_ACCOUNT_NUMBER="$1"
 
-if [ $REPLY -eq 5 ]; then
+  # Set session name
+
+  SESSION_NAME="$2"
+
+  # Set default AWS region
+
+  export AWS_DEFAULT_REGION="${REGION}"
+
+  # Get json output for temporary AWS credentials
+
   echo ""
-  exit 0
-fi
+  echo "-----------------------------"
+  echo "Getting temporary credentials"
+  echo "-----------------------------"
+  echo ""
+
+  JSON_OUTPUT=$(aws --region "${AWS_DEFAULT_REGION}" sts assume-role \
+    --role-arn "arn:aws:iam::${AWS_ACCOUNT_NUMBER}:role/Ab2dMgmtRole" \
+    --role-session-name "${SESSION_NAME}" \
+    | jq --raw-output ".Credentials")
+
+  # Get temporary AWS credentials
+
+  export AWS_ACCESS_KEY_ID=$(echo $JSON_OUTPUT | jq --raw-output ".AccessKeyId")
+  export AWS_SECRET_ACCESS_KEY=$(echo $JSON_OUTPUT | jq --raw-output ".SecretAccessKey")
+
+  # Get AWS session token (required for temporary credentials)
+
+  export AWS_SESSION_TOKEN=$(echo $JSON_OUTPUT | jq --raw-output ".SessionToken")
+
+  # Verify AWS credentials
+
+  if [ -z "${AWS_ACCESS_KEY_ID}" ] \
+      || [ -z "${AWS_SECRET_ACCESS_KEY}" ] \
+      || [ -z "${AWS_SESSION_TOKEN}" ]; then
+    echo "**********************************************************************"
+    echo "ERROR: AWS credentials do not exist for the ${CMS_ENV} AWS account"
+    echo "**********************************************************************"
+    echo ""
+    exit 1
+  fi
+}
 
 #
 # Set AWS target environment
 #
 
-get_temporary_aws_credentials "${CMS_ENV_AWS_ACCOUNT_NUMBER}"
+if [ "${CLOUD_TAMER}" == "true" ]; then
+  get_temporary_aws_credentials_via_cloudtamer_api "${CMS_ENV_AWS_ACCOUNT_NUMBER}" "${CMS_ENV}"
+else
+  get_temporary_aws_credentials_via_aws_sts_assume_role "${CMS_ENV_AWS_ACCOUNT_NUMBER}" "${CMS_ENV}"
+fi
 
 #
 # Configure terraform

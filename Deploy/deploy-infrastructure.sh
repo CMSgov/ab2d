@@ -1,214 +1,54 @@
 #!/bin/bash
 
 set -e #Exit on first error
-# set -x #Be verbose
+set -x #Be verbose
 
 #
 # Change to working directory
 #
 
-START_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+START_DIR="$( cd "$(dirname "$0")" ; pwd -P )"
 cd "${START_DIR}"
-
-#
-# Parse options
-#
-
-for i in "$@"
-do
-case $i in
-  --environment=*)
-  ENVIRONMENT="${i#*=}"
-  CMS_ENV=$(echo $ENVIRONMENT | tr '[:upper:]' '[:lower:]')
-  shift # past argument=value
-  ;;
-  --ecr-repo-environment=*)
-  ECR_REPO_ENVIRONMENT="${i#*=}"
-  CMS_ECR_REPO_ENV=$(echo $ECR_REPO_ENVIRONMENT | tr '[:upper:]' '[:lower:]')
-  shift # past argument=value
-  ;;
-  --region=*)
-  REGION="${i#*=}"
-  shift # past argument=value
-  ;;
-  --ssh-username=*)
-  SSH_USERNAME="${i#*=}"
-  shift # past argument=value
-  ;;
-  --owner=*)
-  OWNER="${i#*=}"
-  shift # past argument=value
-  ;;
-  --ec2_instance_type_api=*)
-  EC2_INSTANCE_TYPE_API="${i#*=}"
-  shift # past argument=value
-  ;;
-  --ec2_instance_type_worker=*)
-  EC2_INSTANCE_TYPE_WORKER="${i#*=}"
-  shift # past argument=value
-  ;;
-  --ec2_instance_type_other=*)
-  EC2_INSTANCE_TYPE_OTHER="${i#*=}"
-  EC2_INSTANCE_TYPE_CONTROLLER="${EC2_INSTANCE_TYPE_OTHER}"
-  EC2_INSTANCE_TYPE_PACKER="${EC2_INSTANCE_TYPE_OTHER}"
-  shift # past argument=value
-  ;;
-  --ec2_desired_instance_count_api=*)
-  EC2_DESIRED_INSTANCE_COUNT_API="${i#*=}"
-  shift # past argument=value
-  ;;
-  --ec2_minimum_instance_count_api=*)
-  EC2_MINIMUM_INSTANCE_COUNT_API="${i#*=}"
-  shift # past argument=value
-  ;;
-  --ec2_maximum_instance_count_api=*)
-  EC2_MAXIMUM_INSTANCE_COUNT_API="${i#*=}"
-  shift # past argument=value
-  ;;
-  --ec2_desired_instance_count_worker=*)
-  EC2_DESIRED_INSTANCE_COUNT_WORKER="${i#*=}"
-  shift # past argument=value
-  ;;
-  --ec2_minimum_instance_count_worker=*)
-  EC2_MINIMUM_INSTANCE_COUNT_WORKER="${i#*=}"
-  shift # past argument=value
-  ;;
-  --ec2_maximum_instance_count_worker=*)
-  EC2_MAXIMUM_INSTANCE_COUNT_WORKER="${i#*=}"
-  shift # past argument=value
-  ;;
-  --database-secret-datetime=*)
-  DATABASE_SECRET_DATETIME=$(echo ${i#*=})
-  shift # past argument=value
-  ;;  
-  --debug-level=*)
-  DEBUG_LEVEL=$(echo ${i#*=} | tr '[:lower:]' '[:upper:]')
-  shift # past argument=value
-  ;;
-  --build-new-images)
-  BUILD_NEW_IMAGES="true"
-  shift # past argument=value
-  ;;
-  --use-existing-images)
-  USE_EXISTING_IMAGES="true"
-  shift # past argument=value
-  ;;
-  --internet-facing=*)
-  INTERNET_FACING=${i#*=}
-  shift # past argument=value
-  ;;
-  --auto-approve)
-  AUTOAPPROVE="true"
-  shift # past argument=value
-  ;;
-esac
-done
 
 #
 # Check vars are not empty before proceeding
 #
 
-# Ensure that one of the following parameters is passed
-# --build-new-images
-# --use-existing-images
-
-if [ -z "${BUILD_NEW_IMAGES}" ] && [ -z "${USE_EXISTING_IMAGES}" ]; then
-  echo ""
-  echo "**********************************************************************"
-  echo "ERROR: pass one and only one of the following parameters:"
-  echo "--build-new-images"
-  echo "--use-existing-images"
-  echo "**********************************************************************"
-  PARAMETER_ERROR="YES"
-fi
-
-# Ensure that one and only one of the following is passed
-# --build-new-images
-# --use-existing-images
-
-if [ -n "${BUILD_NEW_IMAGES}" ] && [ -n "${USE_EXISTING_IMAGES}" ]; then
-  echo ""
-  echo "**********************************************************************"
-  echo "ERROR: pass only one of the following parameters:"
-  echo "--build-new-images"
-  echo "--use-existing-images"
-  echo "**********************************************************************"
-  echo ""
-  PARAMETER_ERROR="YES"
-fi
-
-#
-# Use existing images temporarily disabled (until multiple labels per ECR image is implemented)
-#
-
-if [ -n "${USE_EXISTING_IMAGES}" ]; then
-  echo ""
-  echo "**********************************************************************"
-  echo "The '--use-existing-images' option is temporarily disabled."
-  echo "Please use the '--build-new-images' option instead."
-  echo "**********************************************************************"
-  echo ""
+echo "Check vars are not empty before proceeding..."
+if  [ -z "${CMS_ENV_PARAM}" ] \
+    || [ -z "${DEBUG_LEVEL_PARAM}" ] \
+    || [ -z "${EC2_INSTANCE_TYPE_CONTROLLER_PARAM}" ] \
+    || [ -z "${REGION_PARAM}" ] \
+    || [ -z "${SSH_USERNAME_PARAM}" ] \
+    || [ -z "${DATABASE_SECRET_DATETIME_PARAM}" ] \
+    || [ -z "${CLOUD_TAMER_PARAM}" ]; then
+  echo "ERROR: All parameters must be set."
   exit 1
 fi
 
-# Check that the other vars are not empty before proceeding
+#
+# Set parameters
+#
 
-if  [ "${PARAMETER_ERROR}" == "YES" ] \
-    || [ -z "${ENVIRONMENT}" ] \
-    || [ -z "${ECR_REPO_ENVIRONMENT}" ] \
-    || [ -z "${REGION}" ] \
-    || [ -z "${SSH_USERNAME}" ] \
-    || [ -z "${OWNER}" ] \
-    || [ -z "${EC2_INSTANCE_TYPE_API}" ] \
-    || [ -z "${EC2_INSTANCE_TYPE_WORKER}" ] \
-    || [ -z "${EC2_INSTANCE_TYPE_OTHER}" ] \
-    || [ -z "${EC2_DESIRED_INSTANCE_COUNT_API}" ] \
-    || [ -z "${EC2_MINIMUM_INSTANCE_COUNT_API}" ] \
-    || [ -z "${EC2_MAXIMUM_INSTANCE_COUNT_API}" ] \
-    || [ -z "${EC2_DESIRED_INSTANCE_COUNT_WORKER}" ] \
-    || [ -z "${EC2_MINIMUM_INSTANCE_COUNT_WORKER}" ] \
-    || [ -z "${EC2_MAXIMUM_INSTANCE_COUNT_WORKER}" ] \
-    || [ -z "${INTERNET_FACING}" ] \
-    || [ -z "${DATABASE_SECRET_DATETIME}" ]; then
-  echo ""
-  echo "**********************************************************************"
-  echo "ERROR: Try running the script like this example:"
-  echo "./deploy-infrastructure.sh \\"
-  echo "  --environment=ab2d-dev \\"
-  echo "  --ecr-repo-environment=-ab2d-mgmt-east-dev \\"
-  echo "  --region=us-east-1 \\"
-  echo "  --vpc-id=vpc-0c6413ec40c5fdac3 \\"
-  echo "  --ssh-username=ec2-user \\"
-  echo "  --owner=842420567215 \\"
-  echo "  --ec2_instance_type_api=m5.xlarge \\"
-  echo "  --ec2_instance_type_worker=m5.xlarge \\"
-  echo "  --ec2_instance_type_other=m5.xlarge \\"
-  echo "  --ec2_desired_instance_count_api=1 \\"
-  echo "  --ec2_minimum_instance_count_api=1 \\"
-  echo "  --ec2_maximum_instance_count_api=1 \\"
-  echo "  --ec2_desired_instance_count_worker=1 \\"
-  echo "  --ec2_minimum_instance_count_worker=1 \\"
-  echo "  --ec2_maximum_instance_count_worker=1 \\"
-  echo "  --database-secret-datetime=2020-01-02-09-15-01 \\"
-  echo "  --build-new-images \\"
-  echo "  --internet-facing=false \\"
-  echo "  --auto-approve"  
-  echo "**********************************************************************"
-  echo ""
+CMS_ENV="${CMS_ENV_PARAM}"
+
+export DEBUG_LEVEL="${DEBUG_LEVEL_PARAM}"
+
+EC2_INSTANCE_TYPE_CONTROLLER="${EC2_INSTANCE_TYPE_CONTROLLER_PARAM}"
+
+REGION="${REGION_PARAM}"
+
+SSH_USERNAME="${SSH_USERNAME_PARAM}"
+
+DATABASE_SECRET_DATETIME="${DATABASE_SECRET_DATETIME_PARAM}"
+
+# Set whether CloudTamer API should be used
+
+if [ "${CLOUD_TAMER_PARAM}" != "false" ] && [ "${CLOUD_TAMER_PARAM}" != "true" ]; then
+  echo "ERROR: CLOUD_TAMER_PARAM parameter must be true or false"
   exit 1
-fi
-
-# Set whether load balancer is internal based on "internet-facing" parameter
-
-if [ "$INTERNET_FACING" == "false" ]; then
-  ALB_INTERNAL=true
-elif [ "$INTERNET_FACING" == "true" ]; then
-  ALB_INTERNAL=false
 else
-  echo "**********************************************************************"
-  echo "ERROR: the '--internet-facing' parameter must be true or false"
-  echo "**********************************************************************"
-  exit 1
+  CLOUD_TAMER="${CLOUD_TAMER_PARAM}"
 fi
 
 #
@@ -234,15 +74,23 @@ fi
 # Define functions
 #
 
-get_temporary_aws_credentials ()
+# Define get temporary AWS credentials via CloudTamer API function
+
+get_temporary_aws_credentials_via_cloudtamer_api ()
 {
-  # Set AWS account number
+  # Set parameters
 
   AWS_ACCOUNT_NUMBER="$1"
+  CMS_ENV="$2"
+
+  # Set default AWS region
+
+  export AWS_DEFAULT_REGION="${REGION}"
 
   # Verify that CloudTamer user name and password environment variables are set
 
   if [ -z $CLOUDTAMER_USER_NAME ] || [ -z $CLOUDTAMER_PASSWORD ]; then
+    echo ""
     echo "----------------------------"
     echo "Enter CloudTamer credentials"
     echo "----------------------------"
@@ -323,10 +171,6 @@ get_temporary_aws_credentials ()
     --data-raw "{\"account_number\":\"${AWS_ACCOUNT_NUMBER}\",\"iam_role_name\":\"ab2d-spe-developer\"}" \
     | jq --raw-output ".data")
 
-  # Set default AWS region
-
-  export AWS_DEFAULT_REGION=us-east-1
-
   # Get temporary AWS credentials
 
   export AWS_ACCESS_KEY_ID=$(echo $JSON_OUTPUT | jq --raw-output ".access_key")
@@ -349,23 +193,72 @@ get_temporary_aws_credentials ()
   fi
 }
 
-#
-# Set default values
-#
+# Define get temporary AWS credentials via AWS STS assume role
 
-export DEBUG_LEVEL="WARN"
+get_temporary_aws_credentials_via_aws_sts_assume_role ()
+{
+  # Set AWS account number
+
+  AWS_ACCOUNT_NUMBER="$1"
+
+  # Set session name
+
+  SESSION_NAME="$2"
+
+  # Set default AWS region
+
+  export AWS_DEFAULT_REGION="${REGION}"
+
+  # Get json output for temporary AWS credentials
+
+  echo ""
+  echo "-----------------------------"
+  echo "Getting temporary credentials"
+  echo "-----------------------------"
+  echo ""
+
+  JSON_OUTPUT=$(aws --region "${AWS_DEFAULT_REGION}" sts assume-role \
+    --role-arn "arn:aws:iam::${AWS_ACCOUNT_NUMBER}:role/Ab2dMgmtRole" \
+    --role-session-name "${SESSION_NAME}" \
+    | jq --raw-output ".Credentials")
+
+  # Get temporary AWS credentials
+
+  export AWS_ACCESS_KEY_ID=$(echo $JSON_OUTPUT | jq --raw-output ".AccessKeyId")
+  export AWS_SECRET_ACCESS_KEY=$(echo $JSON_OUTPUT | jq --raw-output ".SecretAccessKey")
+
+  # Get AWS session token (required for temporary credentials)
+
+  export AWS_SESSION_TOKEN=$(echo $JSON_OUTPUT | jq --raw-output ".SessionToken")
+
+  # Verify AWS credentials
+
+  if [ -z "${AWS_ACCESS_KEY_ID}" ] \
+      || [ -z "${AWS_SECRET_ACCESS_KEY}" ] \
+      || [ -z "${AWS_SESSION_TOKEN}" ]; then
+    echo "**********************************************************************"
+    echo "ERROR: AWS credentials do not exist for the ${CMS_ENV} AWS account"
+    echo "**********************************************************************"
+    echo ""
+    exit 1
+  fi
+}
 
 #
 # Set AWS target environment
 #
 
-get_temporary_aws_credentials "${CMS_ENV_AWS_ACCOUNT_NUMBER}"
+if [ "${CLOUD_TAMER}" == "true" ]; then
+  get_temporary_aws_credentials_via_cloudtamer_api "${CMS_ENV_AWS_ACCOUNT_NUMBER}" "${CMS_ENV}"
+else
+  get_temporary_aws_credentials_via_aws_sts_assume_role "${CMS_ENV_AWS_ACCOUNT_NUMBER}" "${CMS_ENV}"
+fi
 
 #
 # Get VPC ID
 #
 
-VPC_ID=$(aws --region "${REGION}" ec2 describe-vpcs \
+VPC_ID=$(aws --region "${AWS_DEFAULT_REGION}" ec2 describe-vpcs \
   --filters "Name=tag:Name,Values=${CMS_ENV}" \
   --query "Vpcs[*].VpcId" \
   --output text)
@@ -395,7 +288,7 @@ rm -f *.tfvars
 terraform init \
   -backend-config="bucket=${CMS_ENV}-automation" \
   -backend-config="key=${CMS_ENV}/terraform/terraform.tfstate" \
-  -backend-config="region=${REGION}" \
+  -backend-config="region=${AWS_DEFAULT_REGION}" \
   -backend-config="encrypt=true"
 
 terraform validate
@@ -444,7 +337,7 @@ cd terraform/environments/$CMS_ENV
 
 # Get first public subnet id
 
-SUBNET_PUBLIC_1_ID=$(aws --region "${REGION}" ec2 describe-subnets \
+SUBNET_PUBLIC_1_ID=$(aws --region "${AWS_DEFAULT_REGION}" ec2 describe-subnets \
   --filters "Name=tag:Name,Values=${CMS_ENV}-public-a" \
   --query "Subnets[*].SubnetId" \
   --output text)
@@ -456,7 +349,7 @@ fi
 
 # Get second public subnet id
 
-SUBNET_PUBLIC_2_ID=$(aws --region "${REGION}" ec2 describe-subnets \
+SUBNET_PUBLIC_2_ID=$(aws --region "${AWS_DEFAULT_REGION}" ec2 describe-subnets \
   --filters "Name=tag:Name,Values=${CMS_ENV}-public-b" \
   --query "Subnets[*].SubnetId" \
   --output text)
@@ -468,7 +361,7 @@ fi
 
 # Get first private subnet id
 
-SUBNET_PRIVATE_1_ID=$(aws --region "${REGION}" ec2 describe-subnets \
+SUBNET_PRIVATE_1_ID=$(aws --region "${AWS_DEFAULT_REGION}" ec2 describe-subnets \
   --filters "Name=tag:Name,Values=${CMS_ENV}-private-a" \
   --query "Subnets[*].SubnetId" \
   --output text)
@@ -480,7 +373,7 @@ fi
 
 # Get second private subnet id
 
-SUBNET_PRIVATE_2_ID=$(aws --region "${REGION}" ec2 describe-subnets \
+SUBNET_PRIVATE_2_ID=$(aws --region "${AWS_DEFAULT_REGION}" ec2 describe-subnets \
   --filters "Name=tag:Name,Values=${CMS_ENV}-private-b" \
   --query "Subnets[*].SubnetId" \
   --output text)
@@ -496,7 +389,7 @@ fi
 
 # Get AMI ID
 
-AMI_ID=$(aws --region "${REGION}" ec2 describe-images \
+AMI_ID=$(aws --region "${AWS_DEFAULT_REGION}" ec2 describe-images \
   --owners self \
   --filters "Name=tag:Name,Values=ab2d-ami" \
   --query "Images[*].[ImageId]" \
@@ -508,7 +401,7 @@ DEPLOYER_IP_ADDRESS=$(curl ipinfo.io/ip)
 
 # Get DB endpoint
 
-DB_ENDPOINT=$(aws --region "${REGION}" rds describe-db-instances \
+DB_ENDPOINT=$(aws --region "${AWS_DEFAULT_REGION}" rds describe-db-instances \
   --query="DBInstances[?DBInstanceIdentifier=='ab2d'].Endpoint.Address" \
   --output=text)
 
@@ -523,7 +416,7 @@ if [ -z "${DB_ENDPOINT}" ]; then
   echo 'private_subnet_ids = ["'$SUBNET_PRIVATE_1_ID'","'$SUBNET_PRIVATE_2_ID'"]' \
     >> $CMS_ENV.auto.tfvars
 else
-  PRIVATE_SUBNETS_OUTPUT=$(aws --region "${REGION}" ec2 describe-subnets \
+  PRIVATE_SUBNETS_OUTPUT=$(aws --region "${AWS_DEFAULT_REGION}" ec2 describe-subnets \
     --filters "Name=tag:Name,Values=*-private-*" \
     --query "Subnets[*].SubnetId" \
     --output text)
@@ -574,7 +467,7 @@ terraform apply \
   --var "db_name=${DATABASE_NAME}" \
   --target module.db --auto-approve
 
-DB_ENDPOINT=$(aws --region "${REGION}" rds describe-db-instances \
+DB_ENDPOINT=$(aws --region "${AWS_DEFAULT_REGION}" rds describe-db-instances \
   --query="DBInstances[?DBInstanceIdentifier=='ab2d'].Endpoint.Address" \
   --output=text)
 
@@ -614,7 +507,7 @@ terraform apply \
 
 # Get files system id (if exists)
 
-EFS_FS_ID=$(aws --region "${REGION}" efs describe-file-systems \
+EFS_FS_ID=$(aws --region "${AWS_DEFAULT_REGION}" efs describe-file-systems \
   --query="FileSystems[?CreationToken=='${CMS_ENV}-efs'].FileSystemId" \
   --output=text)
 
@@ -636,7 +529,7 @@ cd "${START_DIR}"
 
 # Get the private ip address of the controller
 
-CONTROLLER_PRIVATE_IP=$(aws --region "${REGION}" ec2 describe-instances \
+CONTROLLER_PRIVATE_IP=$(aws --region "${AWS_DEFAULT_REGION}" ec2 describe-instances \
   --filters "Name=tag:Name,Values=ab2d-deployment-controller" \
   --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
   --output text)
@@ -678,7 +571,7 @@ fi
 
 # Create or get database port secret
 
-DB_PORT=$(aws --region "${REGION}" rds describe-db-instances \
+DB_PORT=$(aws --region "${AWS_DEFAULT_REGION}" rds describe-db-instances \
   --query="DBInstances[?DBInstanceIdentifier=='ab2d'].Endpoint.Port" \
   --output=text)
 
@@ -689,4 +582,3 @@ if [ -z "${DATABASE_PORT}" ]; then
     --secret-string "${DB_PORT}"
   DATABASE_PORT=$(./get-database-secret.py $CMS_ENV database_port $DATABASE_SECRET_DATETIME)
 fi
-

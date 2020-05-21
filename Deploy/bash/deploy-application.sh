@@ -83,8 +83,8 @@ fi
 
 # Set whether CloudTamer API should be used
 
-if [ "$CLOUD_TAMER" != "false"  && "$CLOUD_TAMER" != "true" ]; then
-  echo "ERROR: the '--cloud-tamer' parameter must be true or false"
+if [ "${CLOUD_TAMER_PARAM}" != "false" ] && [ "${CLOUD_TAMER_PARAM}" != "true" ]; then
+  echo "ERROR: CLOUD_TAMER_PARAM parameter must be true or false"
   exit 1
 else
   CLOUD_TAMER="${CLOUD_TAMER_PARAM}"
@@ -113,11 +113,14 @@ fi
 # Define functions
 #
 
+# Define get temporary AWS credentials via CloudTamer API function
+
 get_temporary_aws_credentials_via_cloudtamer_api ()
 {
-  # Set AWS account number
+  # Set parameters
 
   AWS_ACCOUNT_NUMBER="$1"
+  CMS_ENV="$2"
 
   # Verify that CloudTamer user name and password environment variables are set
 
@@ -229,6 +232,8 @@ get_temporary_aws_credentials_via_cloudtamer_api ()
   fi
 }
 
+# Define get temporary AWS credentials via AWS STS assume role
+
 get_temporary_aws_credentials_via_aws_sts_assume_role ()
 {
   # Set AWS account number
@@ -283,7 +288,7 @@ get_temporary_aws_credentials_via_aws_sts_assume_role ()
 #
 
 if [ "${CLOUD_TAMER}" == "true" ]; then
-  get_temporary_aws_credentials_via_cloudtamer_api "${CMS_ENV_AWS_ACCOUNT_NUMBER}"
+  get_temporary_aws_credentials_via_cloudtamer_api "${CMS_ENV_AWS_ACCOUNT_NUMBER}" "${CMS_ENV}"
 else
   get_temporary_aws_credentials_via_aws_sts_assume_role "${CMS_ENV_AWS_ACCOUNT_NUMBER}" "${CMS_ENV}"
 fi
@@ -694,7 +699,7 @@ echo 'deployer_ip_address = "'$DEPLOYER_IP_ADDRESS'"' \
 # Set AWS management environment
 
 if [ "${CLOUD_TAMER}" == "true" ]; then
-  get_temporary_aws_credentials_via_cloudtamer_api "${CMS_ECR_REPO_ENV_AWS_ACCOUNT_NUMBER}"
+  get_temporary_aws_credentials_via_cloudtamer_api "${CMS_ECR_REPO_ENV_AWS_ACCOUNT_NUMBER}" "${CMS_ENV}"
 else
   get_temporary_aws_credentials_via_aws_sts_assume_role "${CMS_ECR_REPO_ENV_AWS_ACCOUNT_NUMBER}" "${CMS_ECR_REPO_ENV}"
 fi
@@ -1037,7 +1042,7 @@ echo "Using master branch commit number '${COMMIT_NUMBER}' for ab2d_api and ab2d
 #
 
 if [ "${CLOUD_TAMER}" == "true" ]; then
-  get_temporary_aws_credentials_via_cloudtamer_api "${CMS_ENV_AWS_ACCOUNT_NUMBER}"
+  get_temporary_aws_credentials_via_cloudtamer_api "${CMS_ENV_AWS_ACCOUNT_NUMBER}" "${CMS_ENV}"
 else
   get_temporary_aws_credentials_via_aws_sts_assume_role "${CMS_ENV_AWS_ACCOUNT_NUMBER}" "${CMS_ENV}"
 fi
