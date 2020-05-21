@@ -83,6 +83,10 @@ get_temporary_aws_credentials_via_cloudtamer_api ()
 
   AWS_ACCOUNT_NUMBER="$1"
 
+  # Set default AWS region
+
+  export AWS_DEFAULT_REGION="${REGION}"
+
   # Verify that CloudTamer user name and password environment variables are set
 
   if [ -z $CLOUDTAMER_USER_NAME ] || [ -z $CLOUDTAMER_PASSWORD ]; then
@@ -167,10 +171,6 @@ get_temporary_aws_credentials_via_cloudtamer_api ()
     --data-raw "{\"account_number\":\"${AWS_ACCOUNT_NUMBER}\",\"iam_role_name\":\"ab2d-spe-developer\"}" \
     | jq --raw-output ".data")
 
-  # Set default AWS region
-
-  export AWS_DEFAULT_REGION=us-east-1
-
   # Get temporary AWS credentials
 
   export AWS_ACCESS_KEY_ID=$(echo $JSON_OUTPUT | jq --raw-output ".access_key")
@@ -203,6 +203,10 @@ get_temporary_aws_credentials_via_aws_sts_assume_role ()
 
   SESSION_NAME="$2"
 
+  # Set default AWS region
+
+  export AWS_DEFAULT_REGION="${REGION}"
+
   # Get json output for temporary AWS credentials
 
   echo ""
@@ -211,14 +215,10 @@ get_temporary_aws_credentials_via_aws_sts_assume_role ()
   echo "-----------------------------"
   echo ""
 
-  JSON_OUTPUT=$(aws --region us-east-1 sts assume-role \
+  JSON_OUTPUT=$(aws --region "${AWS_DEFAULT_REGION}" sts assume-role \
     --role-arn "arn:aws:iam::${AWS_ACCOUNT_NUMBER}:role/Ab2dMgmtRole" \
     --role-session-name "${SESSION_NAME}" \
     | jq --raw-output ".Credentials")
-
-  # Set default AWS region
-
-  export AWS_DEFAULT_REGION=us-east-1
 
   # Get temporary AWS credentials
 
@@ -260,7 +260,7 @@ fi
 
 echo "Getting first public subnet id..."
 
-SUBNET_PUBLIC_1_ID=$(aws --region "${REGION}" ec2 describe-subnets \
+SUBNET_PUBLIC_1_ID=$(aws --region "${AWS_DEFAULT_REGION}" ec2 describe-subnets \
   --filters "Name=tag:Name,Values=${CMS_ENV}-public-a" \
   --query "Subnets[*].SubnetId" \
   --output text)
@@ -276,7 +276,7 @@ fi
 
 echo "Get AMI_ID if it already exists for the deployment..."
 
-AMI_ID=$(aws --region "${REGION}" ec2 describe-images \
+AMI_ID=$(aws --region "${AWS_DEFAULT_REGION}" ec2 describe-images \
   --owners self \
   --filters "Name=tag:Name,Values=ab2d-ami" \
   --query "Images[*].[ImageId]" \
@@ -285,7 +285,7 @@ AMI_ID=$(aws --region "${REGION}" ec2 describe-images \
 # If AMI ID exists, determine if it is in use
 
 if [ -n "${AMI_ID}" ]; then
-  AMI_ID_IN_USE=$(aws --region us-east-1 ec2 describe-instances \
+  AMI_ID_IN_USE=$(aws --region "${AWS_DEFAULT_REGION}" ec2 describe-instances \
     --query "Reservations[*].Instances[?ImageId=='${AMI_ID}']".InstanceId \
     --output text)
 fi
@@ -295,17 +295,17 @@ fi
 if [ -n "${AMI_ID_IN_USE}" ]; then
   echo "Rename existing ab2d ami..."
 
-  BASE_GOLD_DISK=$(aws --region us-east-1 ec2 describe-images \
-  --owners self --filters "Name=tag:Name,Values=ab2d-ami" \
-  --query "Images[*].Tags[?Key=='gold_ami'].Value" \
-  --output text)
+  BASE_GOLD_DISK=$(aws --region "${AWS_DEFAULT_REGION}" ec2 describe-images \
+    --owners self --filters "Name=tag:Name,Values=ab2d-ami" \
+    --query "Images[*].Tags[?Key=='gold_ami'].Value" \
+    --output text)
 
-  aws --region "${REGION}" ec2 create-tags \
-  --resources "${AMI_ID}" \
-  --tags "Key=Name,Value=ab2d-ami-gold-disk-${BASE_GOLD_DISK}"
+  aws --region "${AWS_DEFAULT_REGION}" ec2 create-tags \
+    --resources "${AMI_ID}" \
+    --tags "Key=Name,Value=ab2d-ami-gold-disk-${BASE_GOLD_DISK}"
 elif [ -n "${AMI_ID}" ]; then
   echo "Deregister existing ab2d ami..."
-  aws --region "${REGION}" ec2 deregister-image \
+  aws --region "${AWS_DEFAULT_REGION}" ec2 deregister-image \
     --image-id "${AMI_ID}"
 else
   echo "Note that there is no existing ab2d ami."
@@ -313,7 +313,7 @@ fi
 
 # Get the latest seed AMI
 
-SEED_AMI=$(aws --region "${REGION}" ec2 describe-images \
+SEED_AMI=$(aws --region "${AWS_DEFAULT_REGION}" ec2 describe-images \
   --owners "${OWNER}" \
   --filters "Name=name,Values=rhel7-gi-*" \
   --query "Images[*].[ImageId,CreationDate]" \
@@ -366,7 +366,7 @@ IP=$(curl ipinfo.io/ip)
 packer build \
   --var seed_ami="${SEED_AMI}" \
   --var environment="${CMS_ENV}" \
-  --var region="${REGION}" \
+  --var region="${AWS_DEFAULT_REGION}" \
   --var ec2_instance_type="${EC2_INSTANCE_TYPE_PACKER}" \
   --var vpc_id="${VPC_ID}" \
   --var subnet_public_1_id="${SUBNET_PUBLIC_1_ID}" \
@@ -378,6 +378,6 @@ AMI_ID=$(cat output.txt | awk 'match($0, /ami-.*/) { print substr($0, RSTART, RL
 
 # Add name tag to AMI
 
-aws --region "${REGION}" ec2 create-tags \
+aws --region "${AWS_DEFAULT_REGION}" ec2 create-tags \
   --resources "${AMI_ID}" \
   --tags "Key=Name,Value=ab2d-ami"
