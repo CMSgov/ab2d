@@ -117,6 +117,10 @@ fi
 
 get_temporary_aws_credentials_via_cloudtamer_api ()
 {
+  # Unset exsisting credntials
+
+  unset AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN
+
   # Set parameters
 
   AWS_ACCOUNT_NUMBER="$1"
@@ -236,6 +240,10 @@ get_temporary_aws_credentials_via_cloudtamer_api ()
 
 get_temporary_aws_credentials_via_aws_sts_assume_role ()
 {
+  # Unset exsisting credntials
+
+  unset AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN
+
   # Set AWS account number
 
   AWS_ACCOUNT_NUMBER="$1"
