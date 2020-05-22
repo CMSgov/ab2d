@@ -485,9 +485,18 @@ mkdir -p generated
 
 echo "${DB_ENDPOINT}:5432:postgres:${DATABASE_USER}:${DATABASE_PASSWORD}" > generated/.pgpass
 
+# Set the ".pgpass" file
+
+cd generated
+chmod 600 .pgpass
+export PGPASSFILE="${PWD}/.pgpass"
+
 #
 # Deploy controller
 #
+
+cd "${START_DIR}"
+cd terraform/environments/$CMS_ENV
 
 echo "Create or update controller..."
 
@@ -534,24 +543,50 @@ CONTROLLER_PRIVATE_IP=$(aws --region "${AWS_DEFAULT_REGION}" ec2 describe-instan
   --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
   --output text)
 
-# Determine if the database for the environment exists
+if [ "${CLOUD_TAMER}" == "true" ]; then
 
-DB_NAME_IF_EXISTS=$(ssh -tt -i "~/.ssh/${CMS_ENV}.pem" \
-  "${SSH_USERNAME}@${CONTROLLER_PRIVATE_IP}" \
-  "psql -t --host "${DB_ENDPOINT}" --username "${DATABASE_USER}" --dbname postgres --command='SELECT datname FROM pg_catalog.pg_database'" \
-  | grep "${DATABASE_NAME}" \
-  | sort \
-  | head -n 1 \
-  | xargs \
-  | tr -d '\r')
+  # Determine if the database for the environment exists
 
-# Create the database for the environment if it doesn't exist
-
-if [ -n "${CONTROLLER_PRIVATE_IP}" ] && [ -n "${DB_ENDPOINT}" ] && [ "${DB_NAME_IF_EXISTS}" != "${DATABASE_NAME}" ]; then
-  echo "Creating database..."
-  ssh -tt -i "~/.ssh/${CMS_ENV}.pem" \
+  DB_NAME_IF_EXISTS=$(ssh -tt -i "~/.ssh/${CMS_ENV}.pem" \
     "${SSH_USERNAME}@${CONTROLLER_PRIVATE_IP}" \
-    "createdb ${DATABASE_NAME} --host ${DB_ENDPOINT} --username ${DATABASE_USER}"
+    "psql -t --host "${DB_ENDPOINT}" --username "${DATABASE_USER}" --dbname postgres --command='SELECT datname FROM pg_catalog.pg_database'" \
+    | grep "${DATABASE_NAME}" \
+    | sort \
+    | head -n 1 \
+    | xargs \
+    | tr -d '\r')
+
+  # Create the database for the environment if it doesn't exist
+
+  if [ -n "${CONTROLLER_PRIVATE_IP}" ] && [ -n "${DB_ENDPOINT}" ] && [ "${DB_NAME_IF_EXISTS}" != "${DATABASE_NAME}" ]; then
+    echo "Creating database..."
+    ssh -tt -i "~/.ssh/${CMS_ENV}.pem" \
+      "${SSH_USERNAME}@${CONTROLLER_PRIVATE_IP}" \
+      "createdb ${DATABASE_NAME} --host ${DB_ENDPOINT} --username ${DATABASE_USER}"
+  fi
+
+else # Running from Jenkins agent
+
+  # Determine if the database for the environment exists
+
+  DB_NAME_IF_EXISTS=$(psql -t \
+    --host ab2d.cdi8i6wwresy.us-east-1.rds.amazonaws.com \
+    --username cmsadmin \
+    --dbname postgres \
+    --command='SELECT datname FROM pg_catalog.pg_database' \
+    | grep prod \
+    | sort \
+    | head -n 1 \
+    | xargs \
+    | tr -d '\r')
+
+  # Create the database for the environment if it doesn't exist
+
+  if [ -n "${DB_ENDPOINT}" ] && [ "${DB_NAME_IF_EXISTS}" != "${DATABASE_NAME}" ]; then
+    echo "Creating database..."
+    createdb ${DATABASE_NAME} --host ${DB_ENDPOINT} --username ${DATABASE_USER}
+  fi
+
 fi
 
 # Change to the "python3" directory
