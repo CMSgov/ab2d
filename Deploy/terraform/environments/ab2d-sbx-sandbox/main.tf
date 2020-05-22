@@ -29,28 +29,29 @@ data "aws_kms_key" "ab2d_kms" {
 }
 
 module "db" {
-  source                  = "../../modules/db"
-  env                     = var.env
-  allocated_storage_size  = var.db_allocated_storage_size
-  engine_version          = var.postgres_engine_version
-  instance_class          = var.db_instance_class
-  snapshot_id             = var.db_snapshot_id
-  subnet_group_name       = var.db_subnet_group_name
-  parameter_group_name    = var.db_parameter_group_name
-  backup_retention_period = var.db_backup_retention_period
-  backup_window           = var.db_backup_window
-  copy_tags_to_snapshot   = var.db_copy_tags_to_snapshot
-  iops                    = var.db_iops
-  kms_key_id              = "${data.aws_kms_key.ab2d_kms.arn}"
-  maintenance_window      = var.db_maintenance_window
-  vpc_id                  = var.vpc_id
-  db_instance_subnet_ids  = var.private_subnet_ids
-  identifier              = var.db_identifier
-  multi_az                = var.db_multi_az
-  username                = var.db_username
-  password                = var.db_password
-  skip_final_snapshot     = var.db_skip_final_snapshot
-  cpm_backup              = var.cpm_backup
+  source                     = "../../modules/db"
+  env                        = var.env
+  allocated_storage_size     = var.db_allocated_storage_size
+  engine_version             = var.postgres_engine_version
+  instance_class             = var.db_instance_class
+  snapshot_id                = var.db_snapshot_id
+  subnet_group_name          = var.db_subnet_group_name
+  parameter_group_name       = var.db_parameter_group_name
+  backup_retention_period    = var.db_backup_retention_period
+  backup_window              = var.db_backup_window
+  copy_tags_to_snapshot      = var.db_copy_tags_to_snapshot
+  iops                       = var.db_iops
+  kms_key_id                 = "${data.aws_kms_key.ab2d_kms.arn}"
+  maintenance_window         = var.db_maintenance_window
+  vpc_id                     = var.vpc_id
+  db_instance_subnet_ids     = var.private_subnet_ids
+  identifier                 = var.db_identifier
+  multi_az                   = var.db_multi_az
+  username                   = var.db_username
+  password                   = var.db_password
+  skip_final_snapshot        = var.db_skip_final_snapshot
+  cpm_backup                 = var.cpm_backup
+  jenkins_agent_sec_group_id = var.jenkins_agent_sec_group_id
 }
 
 # LSH SKIP FOR NOW BEGIN

@@ -422,3 +422,11 @@ variable "kinesis_firehose_role" {
 variable "claims_skip_billable_period_check" {
   default = "false"
 }
+
+#
+# Jenkins Agent
+#
+
+variable "jenkins_agent_sec_group_id" {
+  default = "653916833532/sg-0e370f9dcfe051ed0"
+}

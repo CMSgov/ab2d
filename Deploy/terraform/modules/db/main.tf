@@ -17,6 +17,16 @@ resource "aws_security_group_rule" "egress" {
   security_group_id = aws_security_group.sg_database.id
 }
 
+resource "aws_security_group_rule" "db_access_from_jenkins_agent" {
+  type        = "ingress"
+  description = "Jenkins Agent Access"
+  from_port   = "5432"
+  to_port     = "5432"
+  protocol    = "tcp"
+  source_security_group_id = var.jenkins_agent_sec_group_id
+  security_group_id = aws_security_group.sg_database.id
+}
+
 resource "aws_db_subnet_group" "subnet_group" {
   name = var.subnet_group_name
   subnet_ids = var.db_instance_subnet_ids

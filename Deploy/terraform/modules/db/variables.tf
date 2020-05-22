@@ -20,3 +20,4 @@ variable "username" {}
 variable "password" {}
 variable "skip_final_snapshot" {}
 variable "cpm_backup" {}
+variable "jenkins_agent_sec_group_id" {}
