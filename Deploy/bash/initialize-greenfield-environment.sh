@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -e #Exit on first error
+# set -e #Exit on first error
 set -x #Be verbose
 
 #
@@ -49,8 +49,8 @@ get_temporary_aws_credentials_via_cloudtamer_api ()
 {
   # Set parameters
 
-  AWS_ACCOUNT_NUMBER="$1"
-  CMS_ENV="$2"
+  AWS_ACCOUNT_NUMBER_CT="$1"
+  CMS_ENV_CT="$2"
 
   # Verify that CloudTamer user name and password environment variables are set
 
@@ -133,7 +133,7 @@ get_temporary_aws_credentials_via_cloudtamer_api ()
     --header 'Content-Type: application/json' \
     --header "Authorization: Bearer ${BEARER_TOKEN}" \
     --header 'Content-Type: application/json' \
-    --data-raw "{\"account_number\":\"${AWS_ACCOUNT_NUMBER}\",\"iam_role_name\":\"ab2d-spe-developer\"}" \
+    --data-raw "{\"account_number\":\"${AWS_ACCOUNT_NUMBER_CT}\",\"iam_role_name\":\"ab2d-spe-developer\"}" \
     | jq --raw-output ".data")
 
   # Set default AWS region
@@ -155,7 +155,7 @@ get_temporary_aws_credentials_via_cloudtamer_api ()
       || [ -z "${AWS_SECRET_ACCESS_KEY}" ] \
       || [ -z "${AWS_SESSION_TOKEN}" ]; then
     echo "**********************************************************************"
-    echo "ERROR: AWS credentials do not exist for the ${CMS_ENV} AWS account"
+    echo "ERROR: AWS credentials do not exist for the ${CMS_ENV_CT} AWS account"
     echo "**********************************************************************"
     echo ""
     exit 1
@@ -169,28 +169,28 @@ configure_greenfield_environment ()
 
   # Set parameters
     
-  AWS_ACCOUNT_NUMBER="$1"   # Options: 349849222861|777200079629|330810004472|595094747606|653916833532
-  CMS_ENV="$2"              # Options: ab2d-dev|ab2d-sbx-sandbox|ab2d-east-impl|ab2d-east-prod|ab2d-mgmt-east-dev
+  AWS_ACCOUNT_NUMBER_GE="$1"   # Options: 349849222861|777200079629|330810004472|595094747606|653916833532
+  CMS_ENV_GE="$2"              # Options: ab2d-dev|ab2d-sbx-sandbox|ab2d-east-impl|ab2d-east-prod|ab2d-mgmt-east-dev
   MODULE="$3"               # Options: management_target|management_account
     
   # Get AWS credentials for target environment
   
-  get_temporary_aws_credentials_via_cloudtamer_api "${AWS_ACCOUNT_NUMBER}" "${CMS_ENV}"
+  get_temporary_aws_credentials_via_cloudtamer_api "${AWS_ACCOUNT_NUMBER_GE}" "${CMS_ENV_GE}"
 
   # Initialize and validate terraform for the target environment
 
   echo "******************************************************************************"
-  echo "Initialize and validate terraform for the ${CMS_ENV} environment..."
+  echo "Initialize and validate terraform for the ${CMS_ENV_GE} environment..."
   echo "******************************************************************************"
   
   cd "${START_DIR}/.."
-  cd terraform/environments/$CMS_ENV
+  cd terraform/environments/$CMS_ENV_GE
   
   rm -f *.tfvars
   
   terraform init \
-    -backend-config="bucket=${CMS_ENV}-automation" \
-    -backend-config="key=${CMS_ENV}/terraform/terraform.tfstate" \
+    -backend-config="bucket=${CMS_ENV_GE}-automation" \
+    -backend-config="key=${CMS_ENV_GE}/terraform/terraform.tfstate" \
     -backend-config="region=${AWS_DEFAULT_REGION}" \
     -backend-config="encrypt=true"
   
@@ -214,6 +214,29 @@ configure_greenfield_environment ()
     --var ab2d_spe_developer_policies=$AB2D_SPE_DEVELOPER_POLICIES \
     --target "module.${MODULE}" \
     --auto-approve
+
+  # Create of verify key pair
+
+  KEY_NAME=$(aws --region "${AWS_DEFAULT_REGION}" ec2 describe-key-pairs \
+    --filters "Name=key-name,Values=${CMS_ENV_GE}" \
+    --query "KeyPairs[*].KeyName" \
+    --output text)
+
+  if [ -z "${KEY_NAME}" ]; then
+
+    # Create private key
+
+    aws --region "${AWS_DEFAULT_REGION}" ec2 create-key-pair \
+      --key-name ${CMS_ENV_GE} \
+      --query 'KeyMaterial' \
+      --output text \
+      > ~/.ssh/${CMS_ENV_GE}.pem
+
+    # Set permissions on private key
+
+    chmod 600 ~/.ssh/${CMS_ENV_GE}.pem
+
+  fi
 }
 
 #
