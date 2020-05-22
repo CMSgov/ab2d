@@ -244,13 +244,6 @@ get_temporary_aws_credentials_via_aws_sts_assume_role ()
 
   SESSION_NAME="$2"
 
-  # Switch to InstanceRole to prevent error on Jenkins agent where the target environment's
-  # assume role does not have permission to the assume the management account's management role
-
-  aws --region us-east-1 sts assume-role \
-    --role-arn "arn:aws:sts::${AWS_ACCOUNT_NUMBER}:assumed-role/Ab2dInstanceRole" \
-    --role-session-name "${SESSION_NAME}"
-
   # Get json output for temporary AWS credentials
 
   echo ""
