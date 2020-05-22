@@ -237,6 +237,34 @@ configure_greenfield_environment ()
     chmod 600 ~/.ssh/${CMS_ENV_GE}.pem
 
   fi
+
+  # Upload or verify private key on Jenkins agent (for non-management environments)
+
+  if [ "${AWS_ACCOUNT_NUMBER_GE}" != "${CMS_MGMT_ENV_AWS_ACCOUNT_NUMBER}" ]; then
+    
+    # Get AWS credentials for management environment
+      
+    get_temporary_aws_credentials_via_cloudtamer_api "${CMS_MGMT_ENV_AWS_ACCOUNT_NUMBER}" "${CMS_MGMT_ENV}"
+
+    # Get the private IP address of Jenkins agent instance
+    
+    JENKINS_AGENT_PRIVATE_IP=$(aws --region "${AWS_DEFAULT_REGION}" ec2 describe-instances \
+      --filters "Name=tag:Name,Values=ab2d-jenkins-agent" \
+      --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+      --output text)
+
+    # Upload or verify private key on Jenkins agent
+
+    PRIVATE_KEY_EXISTS=$(ssh -i ~/.ssh/${CMS_MGMT_ENV}.pem ec2-user@$JENKINS_AGENT_PRIVATE_IP \
+      sudo ls /home/jenkins/.ssh/${CMS_ENV_GE}.pem)
+
+    if [ -z "${PRIVATE_KEY_EXISTS}" ]; then
+      scp -i ~/.ssh/${CMS_MGMT_ENV}.pem ~/.ssh/${CMS_ENV_GE}.pem ec2-user@$JENKINS_AGENT_PRIVATE_IP:~/.ssh \
+        && ssh -i ~/.ssh/${CMS_MGMT_ENV}.pem ec2-user@$JENKINS_AGENT_PRIVATE_IP \
+  	sudo cp /home/ec2-user/.ssh/${CMS_ENV_GE}.pem /home/jenkins/.ssh/${CMS_ENV_GE}.pem
+    fi
+    
+  fi
 }
 
 #
