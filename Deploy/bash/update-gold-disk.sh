@@ -365,6 +365,7 @@ fi
 
 # Create AMI for controller, api, and worker nodes
 
+UNIX_EPOCH_TIME=$(date +%s)
 cd "${START_DIR}/.."
 cd packer/app
 IP=$(curl ipinfo.io/ip)
@@ -378,6 +379,7 @@ packer build \
   --var my_ip_address="${IP}" \
   --var ssh_username="${SSH_USERNAME}" \
   --var git_commit_hash="${COMMIT_NUMBER}" \
+  --var unix_epoch_time="${UNIX_EPOCH_TIME}" \
   app.json  2>&1 | tee output.txt
 AMI_ID=$(cat output.txt | awk 'match($0, /ami-.*/) { print substr($0, RSTART, RLENGTH) }' | tail -1)
 
