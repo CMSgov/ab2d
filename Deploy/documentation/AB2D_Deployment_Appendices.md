@@ -97,6 +97,7 @@
 1. [Appendix SS: Destroy API and Worker clusters](#appendix-ss-destroy-api-and-worker-clusters)
 1. [Appendix TT: Migrate terraform state from shared environment to main environment](#appendix-tt-migrate-terraform-state-from-shared-environment-to-main-environment)
 1. [Appendix UU: Access Health Plan Management System (HPMS)](#appendix-uu-access-health-plan-management-system-hpms)
+1. [Appendix VV: Import an existing resource using terraform](#appendix-vv-import-an-existing-resource-using-terraform)
 
 ## Appendix A: Access the CMS AWS console
 
@@ -7561,34 +7562,34 @@
 
 1. Enter the number of the desired AWS account where the desired logs reside
 
-   *Example for Mgmt:*
-
-   ```
-   1
-   ```
-
    *Example for Dev:*
 
    ```
-   2
+   1 (Dev AWS account)
    ```
 
    *Example for Sbx:*
 
    ```
-   3
+   2 (Sbx AWS account)
    ```
 
    *Example for Impl:*
 
    ```
-   4
+   3 (Impl AWS account)
    ```
 
    *Example for Prod:*
 
    ```
-   5
+   4 (Prod AWS account)
+   ```
+
+   *Example for Mgmt:*
+
+   ```
+   5 (Mgmt AWS account)
    ```
 
 1. Note that temporary AWS credentials from CloudTamer will expire after an hour
@@ -7928,23 +7929,23 @@
 1. Set test parameters
 
    ```ShellSession
-   $ export CMS_ENV_PARAM=ab2d-dev
-   $ export CMS_ECR_REPO_ENV_PARAM=ab2d-mgmt-east-dev
-   $ export REGION_PARAM=us-east-1
-   $ export VPC_ID_PARAM=vpc-0c6413ec40c5fdac3
-   $ export SSH_USERNAME_PARAM=ec2-user
-   $ export EC2_INSTANCE_TYPE_API_PARAM=m5.xlarge
-   $ export EC2_INSTANCE_TYPE_WORKER_PARAM=m5.xlarge
-   $ export EC2_DESIRED_INSTANCE_COUNT_API_PARAM=1
-   $ export EC2_MINIMUM_INSTANCE_COUNT_API_PARAM=1
-   $ export EC2_MAXIMUM_INSTANCE_COUNT_API_PARAM=1
-   $ export EC2_DESIRED_INSTANCE_COUNT_WORKER_PARAM=1
-   $ export EC2_MINIMUM_INSTANCE_COUNT_WORKER_PARAM=1
-   $ export EC2_MAXIMUM_INSTANCE_COUNT_WORKER_PARAM=1
-   $ export DATABASE_SECRET_DATETIME_PARAM=2020-01-02-09-15-01
-   $ export DEBUG_LEVEL_PARAM=WARN
-   $ export INTERNET_FACING_PARAM=false
-   $ export CLOUD_TAMER_PARAM=true
+   $ export CMS_ENV_PARAM=ab2d-dev \
+     && export CMS_ECR_REPO_ENV_PARAM=ab2d-mgmt-east-dev \
+     && export REGION_PARAM=us-east-1 \
+     && export VPC_ID_PARAM=vpc-0c6413ec40c5fdac3 \
+     && export SSH_USERNAME_PARAM=ec2-user \
+     && export EC2_INSTANCE_TYPE_API_PARAM=m5.xlarge \
+     && export EC2_INSTANCE_TYPE_WORKER_PARAM=m5.xlarge \
+     && export EC2_DESIRED_INSTANCE_COUNT_API_PARAM=1 \
+     && export EC2_MINIMUM_INSTANCE_COUNT_API_PARAM=1 \
+     && export EC2_MAXIMUM_INSTANCE_COUNT_API_PARAM=1 \
+     && export EC2_DESIRED_INSTANCE_COUNT_WORKER_PARAM=1 \
+     && export EC2_MINIMUM_INSTANCE_COUNT_WORKER_PARAM=1 \
+     && export EC2_MAXIMUM_INSTANCE_COUNT_WORKER_PARAM=1 \
+     && export DATABASE_SECRET_DATETIME_PARAM=2020-01-02-09-15-01 \
+     && export DEBUG_LEVEL_PARAM=WARN \
+     && export INTERNET_FACING_PARAM=false \
+     && export CLOUD_TAMER_PARAM=true
    ```
 
 1. Run application deployment automation
@@ -8124,7 +8125,7 @@ $ sed -i "" 's%cms-ab2d[\/]prod%cms-ab2d/dev%g' _includes/head.html (edited)
    *Example for "Dev" environment:*
 
    ```
-   2
+   1 (Dev AWS account)
    ```
 
 1. Change to target directory
@@ -8323,3 +8324,7 @@ $ sed -i "" 's%cms-ab2d[\/]prod%cms-ab2d/dev%g' _includes/head.html (edited)
 1. Complete required fields on the "User Account Management" page
 
 1. Select **Save**
+
+## Appendix VV: Import an existing resource using terraform
+
+> *** TO DO ***

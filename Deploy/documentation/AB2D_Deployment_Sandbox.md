@@ -72,7 +72,7 @@
 1. Enter the number of the desired AWS account where the desired logs reside
 
    ```
-   3
+   2 (Sbx AWS account)
    ```
 
 1. Get KMS key ID

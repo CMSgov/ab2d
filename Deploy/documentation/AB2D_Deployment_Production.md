@@ -691,7 +691,7 @@
 1. Enter the number of the desired AWS account where the desired logs reside
 
    ```
-   5
+   4 (Prod AWS account)
    ```
    
 1. Change to the ruby script directory
@@ -769,18 +769,21 @@
    ```ShellSession
    $ cd ~/code/ab2d/Deploy
    ```
-   
+
+1. Set parameters
+
+   ```ShellSession
+   $ export CMS_ENV_PARAM=ab2d-east-prod \
+     && export DEBUG_LEVEL_PARAM=WARN \
+     && export REGION_PARAM=us-east-1 \
+     && export DATABASE_SECRET_DATETIME_PARAM=2020-01-02-09-15-01 \
+     && export CLOUD_TAMER_PARAM=true
+   ```
+
 1. Initialize or verify environment
 
    ```ShellShession
-   $ ./bash/initialize-environment.sh \
-     --database-secret-datetime=2020-01-02-09-15-01
-   ```
-   
-1. Enter the number of the AWS account with the environment to initialize or verify
-
-   ```
-   4
+   $ ./bash/initialize-environment.sh
    ```
 
 ### Encrypt and upload New Relic configuration file
@@ -830,7 +833,7 @@
 1. Enter the number of the desired AWS account where the desired logs reside
 
    ```
-   5
+   4 (Prod AWS account)
    ```
 
 1. Get KMS key ID
@@ -967,29 +970,22 @@
    $ cd ~/code/ab2d/Deploy
    ```
 
+1. Set parameters
+
+   ```ShellSession
+   $ export CMS_ENV_PARAM=ab2d-east-prod \
+     && export DEBUG_LEVEL_PARAM=WARN \
+     && export EC2_INSTANCE_TYPE_CONTROLLER_PARAM=m5.xlarge \
+     && export REGION_PARAM=us-east-1 \
+     && export SSH_USERNAME_PARAM=ec2-user \
+     && export DATABASE_SECRET_DATETIME_PARAM=2020-01-02-09-15-01 \
+     && export CLOUD_TAMER_PARAM=true
+   ```
+
 1. Deploy infrastructure
    
    ```ShellSession
-   $ ./deploy-infrastructure.sh \
-     --environment=ab2d-east-prod \
-     --ecr-repo-environment=ab2d-mgmt-east-dev \
-     --region=us-east-1 \
-     --vpc-id=vpc-0c9d55c3d85f46a65 \
-     --ssh-username=ec2-user \
-     --owner=743302140042 \
-     --ec2_instance_type_api=m5.xlarge \
-     --ec2_instance_type_worker=m5.4xlarge \
-     --ec2_instance_type_other=m5.xlarge \
-     --ec2_desired_instance_count_api=2 \
-     --ec2_minimum_instance_count_api=2 \
-     --ec2_maximum_instance_count_api=2 \
-     --ec2_desired_instance_count_worker=2 \
-     --ec2_minimum_instance_count_worker=2 \
-     --ec2_maximum_instance_count_worker=2 \
-     --database-secret-datetime=2020-01-02-09-15-01 \
-     --build-new-images \
-     --internet-facing=true \
-     --auto-approve
+   $ ./deploy-infrastructure.sh
    ```
 
 ### Create or update application for production
