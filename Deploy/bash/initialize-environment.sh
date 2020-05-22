@@ -350,31 +350,6 @@ terraform init \
 terraform validate
 
 #
-# Create of verify key pair
-#
-
-KEY_NAME=$(aws --region "${AWS_DEFAULT_REGION}" ec2 describe-key-pairs \
-  --filters "Name=key-name,Values=${CMS_ENV}" \
-  --query "KeyPairs[*].KeyName" \
-  --output text)
-
-if [ -z "${KEY_NAME}" ]; then
-
-  # Create private key
-
-  aws --region "${AWS_DEFAULT_REGION}" ec2 create-key-pair \
-    --key-name ${CMS_ENV} \
-    --query 'KeyMaterial' \
-    --output text \
-    > ~/.ssh/${CMS_ENV}.pem
-
-  # Set permissions on private key
-
-  chmod 600 ~/.ssh/${CMS_ENV}.pem
-
-fi
-
-#
 # Create or refresh IAM components for target environment
 #
 
