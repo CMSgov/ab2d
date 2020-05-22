@@ -67,6 +67,8 @@ public class TestRunner {
 
     private static final int MAX_USER_JOBS = 3;
 
+    private String baseUrl = "";
+
     private Map<String, String> yamlMap;
 
     private Environment environment;
@@ -113,7 +115,7 @@ public class TestRunner {
         InputStream inputStream = getClass().getResourceAsStream("/" + environment.getConfigName());
         yamlMap = yaml.load(inputStream);
         String oktaUrl = yamlMap.get("okta-url");
-        String baseUrl = yamlMap.get("base-url");
+        baseUrl = yamlMap.get("base-url");
         AB2D_API_URL = APIClient.buildAB2DAPIUrl(baseUrl);
 
         String oktaClientId = System.getenv("OKTA_CLIENT_ID");
