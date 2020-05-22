@@ -120,7 +120,7 @@ get_temporary_aws_credentials_via_cloudtamer_api ()
   # Set parameters
 
   AWS_ACCOUNT_NUMBER="$1"
-  CMS_ENV="$2"
+  CMS_ENV_CT="$2"
 
   # Verify that CloudTamer user name and password environment variables are set
 
@@ -225,7 +225,7 @@ get_temporary_aws_credentials_via_cloudtamer_api ()
       || [ -z "${AWS_SECRET_ACCESS_KEY}" ] \
       || [ -z "${AWS_SESSION_TOKEN}" ]; then
     echo "**********************************************************************"
-    echo "ERROR: AWS credentials do not exist for the ${CMS_ENV} AWS account"
+    echo "ERROR: AWS credentials do not exist for the ${CMS_ENV_CT} AWS account"
     echo "**********************************************************************"
     echo ""
     exit 1
@@ -243,6 +243,13 @@ get_temporary_aws_credentials_via_aws_sts_assume_role ()
   # Set session name
 
   SESSION_NAME="$2"
+
+  # Switch to InstanceRole to prevent error on Jenkins agent where the target environment's
+  # assume role does not have permission to the assume the management account's management role
+
+  aws --region us-east-1 sts assume-role \
+    --role-arn "arn:aws:sts::${AWS_ACCOUNT_NUMBER}:assumed-role/Ab2dInstanceRole" \
+    --role-session-name "${SESSION_NAME}"
 
   # Get json output for temporary AWS credentials
 
@@ -276,7 +283,7 @@ get_temporary_aws_credentials_via_aws_sts_assume_role ()
       || [ -z "${AWS_SECRET_ACCESS_KEY}" ] \
       || [ -z "${AWS_SESSION_TOKEN}" ]; then
     echo "**********************************************************************"
-    echo "ERROR: AWS credentials do not exist for the ${CMS_ENV} AWS account"
+    echo "ERROR: AWS credentials do not exist for the ${SESSION_NAME} AWS account"
     echo "**********************************************************************"
     echo ""
     exit 1
