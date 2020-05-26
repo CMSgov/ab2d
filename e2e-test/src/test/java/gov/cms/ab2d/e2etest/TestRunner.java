@@ -530,7 +530,7 @@ public class TestRunner {
         String oktaClientId = System.getenv("SECONDARY_USER_OKTA_CLIENT_ID");
         String oktaPassword = System.getenv("SECONDARY_USER_OKTA_CLIENT_PASSWORD");
 
-        return new APIClient(AB2D_API_URL, oktaUrl, oktaClientId, oktaPassword);
+        return new APIClient(baseUrl, oktaUrl, oktaClientId, oktaPassword);
     }
 
     @Test
