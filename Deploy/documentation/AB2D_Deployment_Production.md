@@ -2,20 +2,13 @@
 
 ## Table of Contents
 
-1. [Obtain and import ab2d.cms.gov certificate](#obtain-and-import-ab2dcmsgov-certificate)
-   * [Download the AB2D domain certificates and get private key from CMS](#download-the-ab2d-domain-certificates-and-get-private-key-from-cms)
-   * [Import the AB2D domain certificate into certificate manager](#import-the-ab2d-domain-certificate-into-certificate-manager)
-1. [Obtain and import dev.ab2d.cms.gov common certificate](#obtain-and-import-devab2dcmsgov-common-certificate)
-   * [Download the dev domain certificate and get private key from CMS](#download-the-dev-domain-certificate-and-get-private-key-from-cms)
-   * [Import the dev domain certificate into certificate manager](#import-the-dev-domain-certificate-into-certificate-manager)
-1. [Obtain and import sandbox.ab2d.cms.gov entrust certificate](#obtain-and-import-sandboxab2dcmsgov-entrust-certificate)
-   * [Download the sandbox domain certificates and get private key from CMS](#download-the-sandbox-domain-certificates-and-get-private-key-from-cms)
-   * [Import the sandbox domain certificate into certificate manager](#import-the-sandbox-domain-certificate-into-certificate-manager)
-1. [Obtain and import impl.ab2d.cms.gov common certificate](#obtain-and-import-implab2dcmsgov-common-certificate)
 1. [Obtain and import api.ab2d.cms.gov entrust certificate](#obtain-and-import-apiab2dcmsgov-entrust-certificate)
-1. [Create initial AB2D static website](#create-initial-ab2d-static-website)
-1. [Submit an "Internet DNS Change Request Form" to product owner for the sandbox application load balancer](#submit-an-internet-dns-change-request-form-to-product-owner-for-the-sandbox-application-load-balancer)
-1. [Submit an "Internet DNS Change Request Form" to product owner for the production application load balancer](#Submit an "internet-dns-change-request-form-to-product-owner-for-the-production-application-load-balancer)
+lication-load-balancer)
+   * [Download the production domain certificates and get private key from CMS](#download-the-production-domain-certificates-and-get-private-key-from-cms)
+   * [Import the production domain certificate into certificate manager](#import-the-production-domain-certificate-into-certificate-manager)
+1. [Peer AB2D Dev, Sandbox, Impl environments with the BFD Sbx VPC and peer AB2D Prod with BFD Prod VPC](#peer-ab2d-dev-sandbox-impl-environments-with-the-bfd-sbx-vpc-and-peer-ab2d-prod-with-bfd-prod-vpc)
+1. [Encrypt BFD keystore and put in S3](#encrypt-bfd-keystore-and-put-in-s3)
+1. [Create a keystore for API nodes](#create-a-keystore-for-api-nodes)
 1. [Deploy to production](#deploy-to-production)
    * [Initialize or verify greenfield environment](#initialize-or-verify-greenfield-environment)
    * [Initialize or verify base environment for production](#initialize-or-verify-base-environment-for-production)
@@ -24,16 +17,19 @@
    * [Create or update AMI with latest gold disk](#create-or-update-ami-with-latest-gold-disk)
    * [Create or update infrastructure](#create-or-update-infrastructure)
    * [Create or update application for production](#create-or-update-application-for-production)
+1. [Submit an "Internet DNS Change Request Form" to product owner for the production application load balancer](#Submit an "internet-dns-change-request-form-to-product-owner-for-the-production-app
 
-## Obtain and import ab2d.cms.gov certificate
+## Obtain and import api.ab2d.cms.gov entrust certificate](#obtain-and-import-apiab2dcmsgov-entrust-certificate)
 
-### Download the AB2D domain certificates and get private key from CMS
+### Download the production domain certificates and get private key from CMS
 
 1. Note that CMS will request a domain certificate from Entrust for the following domain
 
    ```
-   ab2d.cms.gov
+   api.ab2d.cms.gov
    ```
+
+1. Wait for the email from Entrust
 
 1. Wait for CMS to provide the following
 
@@ -41,7 +37,25 @@
 
    - forwarded email from Entrust to download the certificate
 
-1. Select the link under "Use the following URL to pick up and install your certificate" in the forwarded Entrust email
+1. After receiving the private key save it under "~/Downloads"
+
+   ```
+   api_ab2d_cms_gov.key
+   ```
+
+1. Note the following in the email regarding the requested certificate
+
+   - cn=api.ab2d.cms.gov
+
+   - o=US Dept of Health and Human Services
+
+   - l=Rockville
+
+   - st=Maryland
+
+   - c=US 
+
+1. Select the link under "Use the following URL to pick up and install your certificate" in the email
 
 1. Select "Other" from the "...server type" dropdown
 
@@ -51,190 +65,64 @@
 
 1. Wait for the download to complete
 
-1. Note the following file has been downloaded
-
-   ```
-   entrust.zip
-   ```
-
-1. Open a terminal
-
 1. Change to the downloads directory
 
    ```ShellSession
    $ cd ~/Downloads
    ```
 
-1. Remove existing files
+1. Note the following file has been downloaded
+
+   ```
+   entrust.zip
+   ```
+
+1. Create a "production" directory
 
    ```ShellSession
-   $ rm -f Intermediate.crt
-   $ rm -f Root.crt
-   $ rm -f ServerCertificate.crt
-   $ rm -f ab2d_cms_gov.key
+   $ mkdir -p production
    ```
-   
+
+1. Move the zip file to the "production" directory
+
+   ```ShellSession
+   $ mv entrust.zip production
+   ```
+
+1. Move the private key to the "production" directory
+
+   ```ShellSession
+   $ mv api_ab2d_cms_gov.key production
+   ```
+
+1. Save the "entrust.zip" file and private key in 1Password as follows
+
+   Label                                       |File
+   --------------------------------------------|--------------------
+   AB2D Prod - Domain Certificate - Private Key|api_ab2d_cms_gov.key
+   AB2D Prod - Domain Certificate - Zip        |entrust.zip
+
+1. Change to the "production" directory
+
+   ```ShellSession
+   $ cd production
+   ```
+
 1. Unzip "entrust.zip"
 
    ```ShellSession
    $ 7z x entrust.zip
    ```
 
-1. Save the private key that you got from CMS to the "~/Downloads" directory
+1. Note the that following files have been added to the "production" directory
 
-   ```
-   ab2d_cms_gov.key
-   ```
+   - Intermediate.crt
 
-1. Save the "entrust.zip" file in 1Password
+   - ServerCertificate.crt
 
-   **1Password label:** ab2d.cms.gov certificate chain (entrust.zip)
+   - Root.crt
 
-1. Save the "ab2d_cms_gov.key" in 1Password
-
-   **1Password label:** ab2d.cms.gov private key (ab2d_cms_gov.key)
-
-### Import the AB2D domain certificate into certificate manager
-
-1. Open Chrome
-
-1. Log on to AWS
-
-1. Navigate to Certificate Manager
-
-1. Select **Get Started** under "Provision certificates"
-
-1. Select **Import a certificate**
-
-1. Open a terminal
-
-1. Copy the contents of "ServerCertificate.crt" to the clipboard
-
-   ```ShellSession
-   $ cat ~/Downloads/ServerCertificate.crt | pbcopy
-   ```
-
-1. Return to the "Import a Certificate" page in Chrome
-
-1. Paste the contents of the "ServerCertificate.crt" into the **Certificate body** text box
-
-1. Copy the contents of the private key to the clipboard
-
-   ```ShellSession
-   $ cat ~/Downloads/ab2d_cms_gov.key | pbcopy
-   ```
-   
-1. Paste the contents of the the private key that was provided separately by CMS into the **Certificate private key** text box
-
-1. Return to the terminal
-
-1. Copy the certificate key chain (Intermediate.crt + Root.crt) to the clipboard
-
-   ```ShellSession
-   $ echo -ne "$(cat ~/Downloads/Intermediate.crt)\n$(cat ~/Downloads/Root.crt)" | pbcopy
-   ```
-
-1. Paste the combined intermediate and root certificates into the **Certificate chain** text box
-
-1. Select **Next** on the "Import certificate" page
-
-1. Select **Review and import**
-
-1. Note that the following information should be displayed
-
-   *Format:*
-
-   **Domains:** ab2d.cms.gov
-
-   **Expires in:** {number} Days
-
-   **Public key info:** RSA-2048
-
-   **Signature algorithm:** SHA256WITHRSA
-   
-1. Select **Import**
-
-## Obtain and import dev.ab2d.cms.gov common certificate](#obtain-and-import-devab2dcmsgov-common-certificate)
-
-### Download the dev domain certificate and get private key from CMS
-
-1. Note that CMS will request a common certificate for the following domain
-
-   ```
-   dev.ab2d.cms.gov
-   ```
-
-1. Ensure that you receive the following information from CMS
-
-   - the Certificate Signing Request (CSR) file (dev_ab2d_cms_gov.csr)
-
-   - the private key file (dev_ab2d_cms_gov.key)
-
-   - reference number
-
-   - authorization Code
-
-   - an email that includes a link under "If you are retrieving a TLS Common Policy (“Web Server Certificate”)"
-
-1. Select the link in the email
-
-1. Configure the page as follows
-
-   - **Reference Number:** {reference number}
-
-   - **Authorization Code:** {authorization code}
-
-   - **Options:** displayed as PEM enoding of certificate in raw DER
-
-1. Select **Choose File**
-
-1. Navigate to the certificate signing request
-
-   ```
-   dev_ab2d_cms_gov.csr
-   ```
-
-1. Select **Submit**
-
-1. Copy the text of the certificate to the clipboard
-
-1. Paste the text of the certificate to file called this
-
-   ```
-   dev_ab2d_cms_gov.crt
-   ```
-
-1. Select the **Display CA Certificate** tab
-
-1. Copy the text of the certification authority certificate to the clipboard
-
-1. Paste the text of the certificate to file called this
-
-   ```
-   dev_ab2d_cms_gov_certification_authority.crt
-   ```
-
-1. Save the following files to 1Password
-   
-   - dev_ab2d_cms_gov.crt (dev.ab2d.cms.gov certificate)
-
-   - dev_ab2d_cms_gov.csr (dev.ab2d.cms.gov certificate signing request)
-
-   - dev_ab2d_cms_gov.key (dev.ab2d.cms.gov private key)
-
-   - dev_ab2d_cms_gov_certification_authority.crt (dev.ab2d.cms.gov certification authority certificate)
-
-### Import the dev domain certificate into certificate manager
-
-1. Download the following files from 1Password to the "~/Downloads" directory (if not already there)
-
-   - dev_ab2d_cms_gov.crt (dev.ab2d.cms.gov certificate)
-
-   - dev_ab2d_cms_gov.csr (dev.ab2d.cms.gov certificate signing request)
-
-   - dev_ab2d_cms_gov.key (dev.ab2d.cms.gov private key)
-
-   - dev_ab2d_cms_gov_certification_authority.crt (dev.ab2d.cms.gov certification authority certificate)
+### Import the production domain certificate into certificate manager
 
 1. Open Chrome
 
@@ -251,30 +139,32 @@
 1. Copy the contents of "ServerCertificate.crt" to the clipboard
 
    ```ShellSession
-   $ cat ~/Downloads/dev_ab2d_cms_gov.crt | pbcopy
+   $ cat ~/Downloads/production/ServerCertificate.crt | pbcopy
    ```
 
 1. Return to the "Import a Certificate" page in Chrome
 
 1. Paste the contents of the "ServerCertificate.crt" into the **Certificate body** text box
 
+1. Return to the terminal
+
 1. Copy the contents of the private key to the clipboard
 
    ```ShellSession
-   $ cat ~/Downloads/dev_ab2d_cms_gov.key | pbcopy
+   $ cat ~/Downloads/production/api_ab2d_cms_gov.key | pbcopy
    ```
-
+   
 1. Paste the contents of the the private key that was provided separately by CMS into the **Certificate private key** text box
 
 1. Return to the terminal
 
-1. Copy the contents of the certification authority certificate to the clipboard
+1. Copy the certificate key chain (Intermediate.crt + Root.crt) to the clipboard
 
    ```ShellSession
-   $ cat ~/Downloads/dev_ab2d_cms_gov_certification_authority.crt | pbcopy
+   $ echo -ne "$(cat ~/Downloads/production/Intermediate.crt)\n$(cat ~/Downloads/production/Root.crt)" | pbcopy
    ```
 
-1. Paste the certification authority certificate into the **Certificate chain** text box
+1. Paste the combined intermediate and root certificates into the **Certificate chain** text box
 
 1. Select **Next** on the "Import certificate" page
 
@@ -284,7 +174,7 @@
 
    *Format:*
 
-   **Domains:** dev.ab2d.cms.gov
+   **Domains:** api.ab2d.cms.gov
 
    **Expires in:** {number} Days
 
@@ -294,161 +184,203 @@
    
 1. Select **Import**
 
-## Obtain and import sandbox.ab2d.cms.gov entrust certificate](#obtain-and-import-sandboxab2dcmsgov-entrust-certificate)
+## Peer AB2D Dev, Sandbox, Impl environments with the BFD Sbx VPC and peer AB2D Prod with BFD Prod VPC
 
-### Download the sandbox domain certificates and get private key from CMS
+1. Note that peering is no longer needed for using the BFD Sbx (AKA prod-sbx.bfd.cms.gov)
 
-1. Note that CMS will request a domain certificate from Digicert for the following domain
+1. *** TO DO *** Determine what will need to be done for BFD Prod
+
+1. Note that CCS usually likes to handle the peering between project environments and BFD and then the ADO teams can authorize access
+
+   > *** TO DO ***: Determine if this step needed for BFD Prod?
+
+1. Request that CMS technical contact (e.g. Stephen) create a ticket like the following
+
+   > https://jira.cms.gov/browse/CMSAWSOPS-53861
+
+   > *** TO DO ***: Determine if this step needed for BFD Prod?
+
+## Encrypt BFD keystore and put in S3
+
+1. Get the keystore from 1Password and copy it to the "/tmp" directory
 
    ```
-   sandbox.ab2d.cms.gov
+   /tmp/ab2d_prod_keystore
    ```
 
-1. Wait for the email from Digicert
-
-1. Wait for CMS to provide the following
-
-   - private key used to make the domain certificate request
-
-1. After receiving the private key save it under "~/Downloads"
-
-   ```
-   sandbox_ab2d_cms_gov.key
-   ```
-   
-1. Note the following in the email
-
-   - Key Info - RSA 2048-bit
-   
-   - Signature Algorithm - SHA-256 with RSA Encryption and SHA-1 root
-   
-   - Product Name - Digital ID Class 3 - Symantec Global Server OnSite
-   
-1. Select the "Download your certificate and the intermediate CAs here" link in the Digicert email
-
-1. Scroll down to the bottom of the page
-
-1. Select **Download**
-
-1. Scroll down to the "X.509" section
-
-1. Open a terminal
-
-1. Delete existing "ServerCertificateSandbox.crt" file (if exists)
+1. Change to the "Deploy" directory
 
    ```ShellSession
-   $ rm -f ~/Downloads/ServerCertificateSandbox.crt
+   $ cd ~/code/ab2d/Deploy
    ```
 
-1. Open a new "ServerCertificateSandbox.crt" file
+1. Set AWS environment variables using the CloudTamer API
 
    ```ShellSession
-   $ vim ~/Downloads/ServerCertificateSandbox.crt
+   $ source ./bash/set-env.sh
    ```
 
-1. Return to the web page with the "X.509" text block
-
-1. Select all text within the "X.509" text block
-
-1. Copy the "X.509" text block to the clipboard
-
-1. Paste the text into the "ServerCertificateSandbox.crt" file
-
-1. Save and close the file
-
-1. Return to "Download Certificate" page
-
-1. Select the "Install the intermediate CA separately for PKCS #7" link
-
-1. Select the **RSA SHA-2** tab
-
-1. Select **Download** beside "Secure Site" under "Intermediate CA" under the the "SHA-2 Intermediate CAs (under SHA-1 Root)" section
-
-1. Wait for the download to complete
-
-1. Note the following file will appear under "Downloads"
+1. Enter the number of the desired AWS account where the desired logs reside
 
    ```
-   DigiCertSHA2SecureServerCA.pem
-   ```
-
-1. Save the following files to 1Password
-   
-   - ServerCertificateSandbox.crt (certificate)
-
-   - sandbox_ab2d_cms_gov.key (private key)
-
-   - DigiCertSHA2SecureServerCA.pem (intermediate certificate)
-
-### Import the sandbox domain certificate into certificate manager
-
-1. Open Chrome
-
-1. Log on to AWS
-
-1. Navigate to Certificate Manager
-
-1. Select **Get Started** under "Provision certificates"
-
-1. Select **Import a certificate**
-
-1. Open a terminal
-
-1. Copy the contents of "ServerCertificate.crt" to the clipboard
-
-   ```ShellSession
-   $ cat ~/Downloads/ServerCertificateSandbox.crt | pbcopy
-   ```
-
-1. Return to the "Import a Certificate" page in Chrome
-
-1. Paste the contents of the "ServerCertificate.crt" into the **Certificate body** text box
-
-1. Copy the contents of the private key to the clipboard
-
-   ```ShellSession
-   $ cat ~/Downloads/sandbox_ab2d_cms_gov.key | pbcopy
+   4 (Prod AWS account)
    ```
    
-1. Paste the contents of the the private key that was provided separately by CMS into the **Certificate private key** text box
-
-1. Return to the terminal
-
-1. Copy Intermediate.crt the clipboard
+1. Change to the ruby script directory
 
    ```ShellSession
-   $ cat DigiCertSHA2SecureServerCA.pem | pbcopy
+   $ cd ~/code/ab2d/Deploy/ruby
    ```
 
-1. Paste the intermediate certificate into the **Certificate chain** text box
+1. Ensure required gems are installed
 
-1. Select **Next** on the "Import certificate" page
+   ```ShellSession
+   $ bundle install
+   ```
+   
+1. Encrypt keystore and put it in S3
+   
+   ```ShellSession
+   $ bundle exec rake encrypt_and_put_file_into_s3['/tmp/ab2d_prod_keystore','ab2d-east-prod-automation']
+   ```
 
-1. Select **Review and import**
+1. Verify that you can get the encrypted keystore from S3 and decrypt it
+   
+   1. Remove existing keyfile from the "/tmp" directory (if exists)
 
-1. Note that the following information should be displayed
+      ```ShellSession
+      $ rm -f /tmp/ab2d_prod_keystore
+      ```
+
+   1. Get keystore from S3 and decrypt it
+
+      ```ShellSession
+      $ bundle exec rake get_file_from_s3_and_decrypt['/tmp/ab2d_prod_keystore','ab2d-east-prod-automation']
+      ```
+
+   1. Verify that both the bfd sandbox and client certificates are present
+
+      ```ShellSession
+      $ keytool -list -v -keystore /tmp/ab2d_prod_keystore
+      ```
+
+   1. Copy the "AB2D_BFD_KEYSTORE_PASSWORD in Prod" password from 1Password to the clipboard
+
+   1. Enter the keystore password at the "Enter keystore password" prompt
+
+   1. Verify that there are sections for the following two aliases in the keystore list output
+
+      - Alias name: bfd-prod-sbx-selfsigned
+
+      - Alias name: client_data_server_ab2d_prod_certificate
+
+## Create a keystore for API nodes
+
+1. Create a "Password" entry in 1Password as follows
 
    *Format:*
 
-   **Domains:** ab2d.cms.gov
+   - **label:** AB2D Prod - API - Keystore Password
 
-   **Expires in:** {number} Days
+   - **vault:** ab2d
 
-   **Public key info:** RSA-2048
+   - **password:** {generate a unique password}
 
-   **Signature algorithm:** SHA256WITHRSA
-   
-1. Select **Import**
+   - **notes:** AB2D_KEYSTORE_PASSWORD
 
-## Obtain and import impl.ab2d.cms.gov common certificate](#obtain-and-import-implab2dcmsgov-common-certificate)
+1. Create an "ab2d-api" directory under "Downloads"
 
-> *** TO DO ***
+   ```ShellSession
+   $ mkdir -p ~/Downloads/ab2d-api
+   ```
 
-## Obtain and import api.ab2d.cms.gov entrust certificate](#obtain-and-import-apiab2dcmsgov-entrust-certificate)
+1. Change to the "ab2d-api" directory
 
-> *** TO DO ***
+   ```ShellSession
+   $ cd ~/Downloads/ab2d-api
+   ```
 
-## Create initial AB2D static website
+1. Create a self-signed SSL certificate for API nodes
+
+   *Option #1:*
+
+   ```ShellSession
+   $ openssl req \
+     -nodes -x509 \
+     -days 3650 \
+     -newkey rsa:2048 \
+     -keyout ab2d_api_prod.key \
+     -subj "/CN=ab2d-api" \
+     -config /usr/local/etc/openssl@1.1/openssl.cnf \
+     -extensions v3_req \
+     -out ab2d_api_prod.pem
+   ```
+
+   *Option #2:*
+
+   ```ShellSession
+   $ openssl req \
+     -new \
+     -nodes \
+     -days 3650 \
+     -newkey rsa:2048 \
+     -keyout ab2d_api_prod.key \
+     -subj "/CN=ab2d-api" \
+     -config /usr/local/etc/openssl@1.1/openssl.cnf \
+     -extensions v3_req \
+     -out ab2d_api_prod.csr
+   ```
+
+   ```ShellSession
+   $ openssl x509 \
+     -req \
+     -days 3650 \
+     -in ab2d_api_prod.csr \
+     -signkey ab2d_api_prod.key \
+     -extfile /usr/local/etc/openssl@1.1/openssl.cnf \
+     -extensions v3_req \
+     -out ab2d_api_prod.pem
+   ```
+
+1. Note that the following two files were created
+
+   - ab2d_api_prod.key
+
+   - ab2d_api_prod.pem
+
+1. Create a keystore that includes the self-signed SSL certificate with an "ab2d" alias
+
+   ```ShellSession
+   $ openssl pkcs12 -export \
+     -in ab2d_api_prod.pem \
+     -inkey ab2d_api_prod.key \
+     -out ab2d_api_prod.p12 \
+     -name ab2d
+   ```
+
+1. Copy the "AB2D Prod - API - Keystore Password" password from 1Password to the clipboard
+
+1. Paste the password at the "Enter Export Password" prompt and press **enter** on the keyboard
+
+1. Paste the password again at the "Verifying - Enter Export Password" prompt and press **enter** on the keyboard
+
+1. Verify the contents of the keystore
+
+   ```ShellSession
+   $ keytool -list -v -keystore ab2d_api_prod.p12
+   ```
+
+1. Save the keystore, private key, and self-signed certificate in the "ab2d" vault of 1Password
+
+   Label                                    |File
+   -----------------------------------------|-------------------------------------------
+   AB2D Prod - API - Keystore               |ab2d_api_prod.p12
+   AB2D Prod - API - Private Key            |ab2d_api_prod.key
+   AB2D Prod - API - Self-signed Certificate|ab2d_api_prod.pem
+
+## Deploy to production
+
+### Initialize or verify greenfield environment
 
 1. Ensure that you are connected to CMS Cisco VPN
 
@@ -458,30 +390,144 @@
    $ cd ~/code/ab2d/Deploy
    ```
 
-1. Create static website
+1. Initialize or verify environment
+
+   ```ShellShession
+   $ ./bash/initialize-greenfield-environment.sh
+   ```
+
+### Initialize or verify base environment for production
+
+1. Ensure that you are connected to CMS Cisco VPN
+
+1. Change to the "Deploy" directory
 
    ```ShellSession
-   $ ./bash/create-or-update-website.sh
+   $ cd ~/code/ab2d/Deploy
    ```
 
-1. Choose desired AWS account
+1. Set parameters
 
-   *Example for "Prod" environment:*
-
-   ```
-   2
-   ```
-
-1. If a "Has this version of the website been approved for deployment to production" question appears, enter the following on the keyboard
-
-   ```
-   y
+   ```ShellSession
+   $ export CMS_ENV_PARAM=ab2d-east-prod \
+     && export DEBUG_LEVEL_PARAM=WARN \
+     && export REGION_PARAM=us-east-1 \
+     && export DATABASE_SECRET_DATETIME_PARAM=2020-01-02-09-15-01 \
+     && export CLOUD_TAMER_PARAM=true
    ```
 
-1. If an "Are you sure" question appears, enter the following on the keyboard
+1. Initialize or verify environment
+
+   ```ShellShession
+   $ ./bash/initialize-environment.sh
+   ```
+
+### Encrypt and upload New Relic configuration file
+
+1. Open a terminal
+
+1. Copy the New Relic configuration file to the "/tmp" directory
+
+   ```ShellSession
+   $ cp yaml/newrelic-infra.yml /tmp
+   ```
+
+1. Open the New Relic configuration file
+
+   ```SehllSession
+   $ vim /tmp/newrelic-infra.yml
+   ```
+   
+1. Open Chrome
+
+1. Enter the following in the address bar
+
+   > https://rpm.newrelic.com/accounts/2597286
+
+1. Log on to New Relic GUI
+
+1. Select the account dropdown in the upper right of the page
+
+1. Select **Account settings**
+
+1. Copy the "Licence key" to the clipboard
+
+1. Return to the terminal and modify the "newrelic-infra.yml" the following line as follows
 
    ```
-   y
+   license_key: {new relic license key}
+   ```
+
+1. Save and close the file
+
+1. Set AWS environment variables using the CloudTamer API
+
+   ```ShellSession
+   $ source ./bash/set-env.sh
+   ```
+
+1. Enter the number of the desired AWS account where the desired logs reside
+
+   ```
+   4 (Prod AWS account)
+   ```
+
+1. Get KMS key ID
+
+   ```ShellSession
+   $ KMS_KEY_ID=$(aws --region "${AWS_DEFAULT_REGION}" kms list-aliases \
+     --query="Aliases[?AliasName=='alias/ab2d-kms'].TargetKeyId" \
+     --output text)
+   ```
+
+1. Change to the "/tmp" directory
+
+   ```ShellSession
+   $ cd /tmp
+   ```
+
+1. Encrypt "newrelic-infra.yml" as "newrelic-infra.yml.encrypted"
+
+   ```ShellSession
+   $ aws kms --region "${AWS_DEFAULT_REGION}" encrypt \
+     --key-id ${KMS_KEY_ID} \
+     --plaintext fileb://newrelic-infra.yml \
+     --query CiphertextBlob \
+     --output text \
+     | base64 --decode \
+     > newrelic-infra.yml.encrypted
+   ```
+
+1. Copy "newrelic-infra.yml.encrypted" to S3
+
+   ```ShellSession
+   $ aws s3 --region "${AWS_DEFAULT_REGION}" cp \
+     ./newrelic-infra.yml.encrypted \
+     "s3://${CMS_ENV}-automation/encrypted-files/"
+   ```
+
+1. Get "newrelic-infra.yml.encrypted" from S3
+
+   ```ShellSession
+   $ aws s3 --region "${AWS_DEFAULT_REGION}" cp \
+     "s3://${CMS_ENV}-automation/encrypted-files/newrelic-infra.yml.encrypted" \
+     .
+   ```
+
+1. Test decryption of the new relic configuration file
+
+   ```ShellSession
+   $ aws kms --region "${AWS_DEFAULT_REGION}" decrypt \
+     --ciphertext-blob fileb://newrelic-infra.yml.encrypted \
+     --output text --query Plaintext \
+     | base64 --decode \
+     > /tmp/newrelic-infra.yml
+   ```
+
+1. Verify "newrelic-infra.yml" file contents
+
+   ```ShellSession
+   $ cat /tmp/newrelic-infra.yml
    ```
 
 ### Create, encrypt, and upload BFD AB2D keystore for Prod
@@ -651,248 +697,6 @@
    AB2D Prod - BFD Prod - Private Key            |client_data_server_ab2d_prod_certificate.key
    AB2D Prod - BFD Prod - Self-signed Certificate|client_data_server_ab2d_prod_certificate.pem
    AB2D Prod - BFD Prod - Public Key             |client_data_server_ab2d_prod_certificate.pub
-
-## Peer AB2D Dev, Sandbox, Impl environments with the BFD Sbx VPC and peer AB2D Prod with BFD Prod VPC
-
-1. Note that peering is no longer needed for using the BFD Sbx (AKA prod-sbx.bfd.cms.gov)
-
-1. *** TO DO *** Determine what will need to be done for BFD Prod
-
-1. Note that CCS usually likes to handle the peering between project environments and BFD and then the ADO teams can authorize access
-
-   > *** TO DO ***: Determine if this step needed for BFD Prod?
-
-1. Request that CMS technical contact (e.g. Stephen) create a ticket like the following
-
-   > https://jira.cms.gov/browse/CMSAWSOPS-53861
-
-   > *** TO DO ***: Determine if this step needed for BFD Prod?
-
-## Encrypt BFD keystore and put in S3
-
-1. Get the keystore from 1Password and copy it to the "/tmp" directory
-
-   ```
-   /tmp/ab2d_prod_keystore
-   ```
-
-1. Change to the "Deploy" directory
-
-   ```ShellSession
-   $ cd ~/code/ab2d/Deploy
-   ```
-
-1. Set AWS environment variables using the CloudTamer API
-
-   ```ShellSession
-   $ source ./bash/set-env.sh
-   ```
-
-1. Enter the number of the desired AWS account where the desired logs reside
-
-   ```
-   4 (Prod AWS account)
-   ```
-   
-1. Change to the ruby script directory
-
-   ```ShellSession
-   $ cd ~/code/ab2d/Deploy/ruby
-   ```
-
-1. Ensure required gems are installed
-
-   ```ShellSession
-   $ bundle install
-   ```
-   
-1. Encrypt keystore and put it in S3
-   
-   ```ShellSession
-   $ bundle exec rake encrypt_and_put_file_into_s3['/tmp/ab2d_prod_keystore','ab2d-east-prod-automation']
-   ```
-
-1. Verify that you can get the encrypted keystore from S3 and decrypt it
-   
-   1. Remove existing keyfile from the "/tmp" directory (if exists)
-
-      ```ShellSession
-      $ rm -f /tmp/ab2d_prod_keystore
-      ```
-
-   1. Get keystore from S3 and decrypt it
-
-      ```ShellSession
-      $ bundle exec rake get_file_from_s3_and_decrypt['/tmp/ab2d_prod_keystore','ab2d-east-prod-automation']
-      ```
-
-   1. Verify that both the bfd sandbox and client certificates are present
-
-      ```ShellSession
-      $ keytool -list -v -keystore /tmp/ab2d_prod_keystore
-      ```
-
-   1. Copy the "AB2D_BFD_KEYSTORE_PASSWORD in Prod" password from 1Password to the clipboard
-
-   1. Enter the keystore password at the "Enter keystore password" prompt
-
-   1. Verify that there are sections for the following two aliases in the keystore list output
-
-      - Alias name: bfd-prod-sbx-selfsigned
-
-      - Alias name: client_data_server_ab2d_prod_certificate
-
-## Deploy to production
-
-### Initialize or verify greenfield environment
-
-1. Ensure that you are connected to CMS Cisco VPN
-
-1. Change to the "Deploy" directory
-
-   ```ShellSession
-   $ cd ~/code/ab2d/Deploy
-   ```
-
-1. Initialize or verify environment
-
-   ```ShellShession
-   $ ./bash/initialize-greenfield-environment.sh
-   ```
-
-### Initialize or verify base environment for production
-
-1. Ensure that you are connected to CMS Cisco VPN
-
-1. Change to the "Deploy" directory
-
-   ```ShellSession
-   $ cd ~/code/ab2d/Deploy
-   ```
-
-1. Set parameters
-
-   ```ShellSession
-   $ export CMS_ENV_PARAM=ab2d-east-prod \
-     && export DEBUG_LEVEL_PARAM=WARN \
-     && export REGION_PARAM=us-east-1 \
-     && export DATABASE_SECRET_DATETIME_PARAM=2020-01-02-09-15-01 \
-     && export CLOUD_TAMER_PARAM=true
-   ```
-
-1. Initialize or verify environment
-
-   ```ShellShession
-   $ ./bash/initialize-environment.sh
-   ```
-
-### Encrypt and upload New Relic configuration file
-
-1. Open a terminal
-
-1. Copy the New Relic configuration file to the "/tmp" directory
-
-   ```ShellSession
-   $ cp yaml/newrelic-infra.yml /tmp
-   ```
-
-1. Open the New Relic configuration file
-
-   ```SehllSession
-   $ vim /tmp/newrelic-infra.yml
-   ```
-   
-1. Open Chrome
-
-1. Enter the following in the address bar
-
-   > https://rpm.newrelic.com/accounts/2597286
-
-1. Log on to New Relic GUI
-
-1. Select the account dropdown in the upper right of the page
-
-1. Select **Account settings**
-
-1. Copy the "Licence key" to the clipboard
-
-1. Return to the terminal and modify the "newrelic-infra.yml" the following line as follows
-
-   ```
-   license_key: {new relic license key}
-   ```
-
-1. Save and close the file
-
-1. Set AWS environment variables using the CloudTamer API
-
-   ```ShellSession
-   $ source ./bash/set-env.sh
-   ```
-
-1. Enter the number of the desired AWS account where the desired logs reside
-
-   ```
-   4 (Prod AWS account)
-   ```
-
-1. Get KMS key ID
-
-   ```ShellSession
-   $ KMS_KEY_ID=$(aws --region "${AWS_DEFAULT_REGION}" kms list-aliases \
-     --query="Aliases[?AliasName=='alias/ab2d-kms'].TargetKeyId" \
-     --output text)
-   ```
-
-1. Change to the "/tmp" directory
-
-   ```ShellSession
-   $ cd /tmp
-   ```
-
-1. Encrypt "newrelic-infra.yml" as "newrelic-infra.yml.encrypted"
-
-   ```ShellSession
-   $ aws kms --region "${AWS_DEFAULT_REGION}" encrypt \
-     --key-id ${KMS_KEY_ID} \
-     --plaintext fileb://newrelic-infra.yml \
-     --query CiphertextBlob \
-     --output text \
-     | base64 --decode \
-     > newrelic-infra.yml.encrypted
-   ```
-
-1. Copy "newrelic-infra.yml.encrypted" to S3
-
-   ```ShellSession
-   $ aws s3 --region "${AWS_DEFAULT_REGION}" cp \
-     ./newrelic-infra.yml.encrypted \
-     "s3://${CMS_ENV}-automation/encrypted-files/"
-   ```
-
-1. Get "newrelic-infra.yml.encrypted" from S3
-
-   ```ShellSession
-   $ aws s3 --region "${AWS_DEFAULT_REGION}" cp \
-     "s3://${CMS_ENV}-automation/encrypted-files/newrelic-infra.yml.encrypted" \
-     .
-   ```
-
-1. Test decryption of the new relic configuration file
-
-   ```ShellSession
-   $ aws kms --region "${AWS_DEFAULT_REGION}" decrypt \
-     --ciphertext-blob fileb://newrelic-infra.yml.encrypted \
-     --output text --query Plaintext \
-     | base64 --decode \
-     > /tmp/newrelic-infra.yml
-   ```
-
-1. Verify "newrelic-infra.yml" file contents
-
-   ```ShellSession
-   $ cat /tmp/newrelic-infra.yml
-   ```
 
 ### Create or update AMI with latest gold disk
 

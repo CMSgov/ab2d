@@ -1,4 +1,151 @@
+# AB2D Deployment Development
+
+## Table of Contents
+
+1. [Obtain and import dev.ab2d.cms.gov common certificate](#obtain-and-import-devab2dcmsgov-common-certificate)
+   * [Download the dev domain certificate and get private key from CMS](#download-the-dev-domain-certificate-and-get-private-key-from-cms)
+   * [Import the dev domain certificate into certificate manager](#import-the-dev-domain-certificate-into-certificate-manager)
 1. [Deploy to development](#deploy-to-development)
+
+## Obtain and import dev.ab2d.cms.gov common certificate](#obtain-and-import-devab2dcmsgov-common-certificate)
+
+### Download the dev domain certificate and get private key from CMS
+
+1. Note that CMS will request a common certificate for the following domain
+
+   ```
+   dev.ab2d.cms.gov
+   ```
+
+1. Ensure that you receive the following information from CMS
+
+   - the Certificate Signing Request (CSR) file (dev_ab2d_cms_gov.csr)
+
+   - the private key file (dev_ab2d_cms_gov.key)
+
+   - reference number
+
+   - authorization Code
+
+   - an email that includes a link under "If you are retrieving a TLS Common Policy (“Web Server Certificate”)"
+
+1. Select the link in the email
+
+1. Configure the page as follows
+
+   - **Reference Number:** {reference number}
+
+   - **Authorization Code:** {authorization code}
+
+   - **Options:** displayed as PEM enoding of certificate in raw DER
+
+1. Select **Choose File**
+
+1. Navigate to the certificate signing request
+
+   ```
+   dev_ab2d_cms_gov.csr
+   ```
+
+1. Select **Submit**
+
+1. Copy the text of the certificate to the clipboard
+
+1. Paste the text of the certificate to file called this
+
+   ```
+   dev_ab2d_cms_gov.crt
+   ```
+
+1. Select the **Display CA Certificate** tab
+
+1. Copy the text of the certification authority certificate to the clipboard
+
+1. Paste the text of the certificate to file called this
+
+   ```
+   dev_ab2d_cms_gov_certification_authority.crt
+   ```
+
+1. Save the following files to 1Password
+   
+   - dev_ab2d_cms_gov.crt (dev.ab2d.cms.gov certificate)
+
+   - dev_ab2d_cms_gov.csr (dev.ab2d.cms.gov certificate signing request)
+
+   - dev_ab2d_cms_gov.key (dev.ab2d.cms.gov private key)
+
+   - dev_ab2d_cms_gov_certification_authority.crt (dev.ab2d.cms.gov certification authority certificate)
+
+### Import the dev domain certificate into certificate manager
+
+1. Download the following files from 1Password to the "~/Downloads" directory (if not already there)
+
+   - dev_ab2d_cms_gov.crt (dev.ab2d.cms.gov certificate)
+
+   - dev_ab2d_cms_gov.csr (dev.ab2d.cms.gov certificate signing request)
+
+   - dev_ab2d_cms_gov.key (dev.ab2d.cms.gov private key)
+
+   - dev_ab2d_cms_gov_certification_authority.crt (dev.ab2d.cms.gov certification authority certificate)
+
+1. Open Chrome
+
+1. Log on to AWS
+
+1. Navigate to Certificate Manager
+
+1. If the "Get Started" page is displayed, select **Get Started** under "Provision certificates"
+
+1. Select **Import a certificate**
+
+1. Open a terminal
+
+1. Copy the contents of "ServerCertificate.crt" to the clipboard
+
+   ```ShellSession
+   $ cat ~/Downloads/dev_ab2d_cms_gov.crt | pbcopy
+   ```
+
+1. Return to the "Import a Certificate" page in Chrome
+
+1. Paste the contents of the "ServerCertificate.crt" into the **Certificate body** text box
+
+1. Copy the contents of the private key to the clipboard
+
+   ```ShellSession
+   $ cat ~/Downloads/dev_ab2d_cms_gov.key | pbcopy
+   ```
+
+1. Paste the contents of the the private key that was provided separately by CMS into the **Certificate private key** text box
+
+1. Return to the terminal
+
+1. Copy the contents of the certification authority certificate to the clipboard
+
+   ```ShellSession
+   $ cat ~/Downloads/dev_ab2d_cms_gov_certification_authority.crt | pbcopy
+   ```
+
+1. Paste the certification authority certificate into the **Certificate chain** text box
+
+1. Select **Next** on the "Import certificate" page
+
+1. Select **Review and import**
+
+1. Note that the following information should be displayed
+
+   *Format:*
+
+   **Domains:** dev.ab2d.cms.gov
+
+   **Expires in:** {number} Days
+
+   **Public key info:** RSA-2048
+
+   **Signature algorithm:** SHA256WITHRSA
+   
+1. Select **Import**
 
 ## Deploy to development
 

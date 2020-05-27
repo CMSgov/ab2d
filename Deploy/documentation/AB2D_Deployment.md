@@ -1631,9 +1631,12 @@
    $ 7z x entrust.zip
    ```
 
-1. Save the "entrust.zip" file and private key in 1Password
+1. Save the "entrust.zip" file and private key in 1Password as follows
 
-   > *** TO DO ***
+   Label                                                 |File
+   ------------------------------------------------------|----------------
+   AB2D Static Website - Domain Certificate - Private Key|ab2d_cms_gov.key
+   AB2D Static Website - Domain Certificate - Zip        |entrust.zip
 
 ### Import the AB2D domain certificate into certificate manager
 

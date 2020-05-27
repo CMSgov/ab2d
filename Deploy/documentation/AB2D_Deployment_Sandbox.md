@@ -1,4 +1,159 @@
+# AB2D Deployment Sandbox
+
+## Table of Contents
+
+1. [Obtain and import sandbox.ab2d.cms.gov entrust certificate](#obtain-and-import-sandboxab2dcmsgov-entrust-certificate)
+   * [Download the sandbox domain certificates and get private key from CMS](#download-the-sandbox-domain-certificates-and-get-private-key-from-cms)
+   * [Import the sandbox domain certificate into certificate manager](#import-the-sandbox-domain-certificate-into-certificate-manager)
 1. [Deploy to sandbox](#deploy-to-sandbox)
+1. [Submit an "Internet DNS Change Request Form" to product owner for the sandbox application load balancer](#submit-an-internet-dns-change-request-form-to-product-owner-for-the-sandbox-application-load-balancer)
+
+
+## Obtain and import sandbox.ab2d.cms.gov entrust certificate](#obtain-and-import-sandboxab2dcmsgov-entrust-certificate)
+
+### Download the sandbox domain certificates and get private key from CMS
+
+1. Note that CMS will request a domain certificate from Digicert for the following domain
+
+   ```
+   sandbox.ab2d.cms.gov
+   ```
+
+1. Wait for the email from Digicert
+
+1. Wait for CMS to provide the following
+
+   - private key used to make the domain certificate request
+
+1. After receiving the private key save it under "~/Downloads"
+
+   ```
+   sandbox_ab2d_cms_gov.key
+   ```
+   
+1. Note the following in the email
+
+   - Key Info - RSA 2048-bit
+   
+   - Signature Algorithm - SHA-256 with RSA Encryption and SHA-1 root
+   
+   - Product Name - Digital ID Class 3 - Symantec Global Server OnSite
+   
+1. Select the "Download your certificate and the intermediate CAs here" link in the Digicert email
+
+1. Scroll down to the bottom of the page
+
+1. Select **Download**
+
+1. Scroll down to the "X.509" section
+
+1. Open a terminal
+
+1. Delete existing "ServerCertificateSandbox.crt" file (if exists)
+
+   ```ShellSession
+   $ rm -f ~/Downloads/ServerCertificateSandbox.crt
+   ```
+
+1. Open a new "ServerCertificateSandbox.crt" file
+
+   ```ShellSession
+   $ vim ~/Downloads/ServerCertificateSandbox.crt
+   ```
+
+1. Return to the web page with the "X.509" text block
+
+1. Select all text within the "X.509" text block
+
+1. Copy the "X.509" text block to the clipboard
+
+1. Paste the text into the "ServerCertificateSandbox.crt" file
+
+1. Save and close the file
+
+1. Return to "Download Certificate" page
+
+1. Select the "Install the intermediate CA separately for PKCS #7" link
+
+1. Select the **RSA SHA-2** tab
+
+1. Select **Download** beside "Secure Site" under "Intermediate CA" under the the "SHA-2 Intermediate CAs (under SHA-1 Root)" section
+
+1. Wait for the download to complete
+
+1. Note the following file will appear under "Downloads"
+
+   ```
+   DigiCertSHA2SecureServerCA.pem
+   ```
+
+1. Save the following files to 1Password
+   
+   - ServerCertificateSandbox.crt (certificate)
+
+   - sandbox_ab2d_cms_gov.key (private key)
+
+   - DigiCertSHA2SecureServerCA.pem (intermediate certificate)
+
+### Import the sandbox domain certificate into certificate manager
+
+1. Open Chrome
+
+1. Log on to AWS
+
+1. Navigate to Certificate Manager
+
+1. Select **Get Started** under "Provision certificates"
+
+1. Select **Import a certificate**
+
+1. Open a terminal
+
+1. Copy the contents of "ServerCertificate.crt" to the clipboard
+
+   ```ShellSession
+   $ cat ~/Downloads/ServerCertificateSandbox.crt | pbcopy
+   ```
+
+1. Return to the "Import a Certificate" page in Chrome
+
+1. Paste the contents of the "ServerCertificate.crt" into the **Certificate body** text box
+
+1. Copy the contents of the private key to the clipboard
+
+   ```ShellSession
+   $ cat ~/Downloads/sandbox_ab2d_cms_gov.key | pbcopy
+   ```
+   
+1. Paste the contents of the the private key that was provided separately by CMS into the **Certificate private key** text box
+
+1. Return to the terminal
+
+1. Copy Intermediate.crt the clipboard
+
+   ```ShellSession
+   $ cat DigiCertSHA2SecureServerCA.pem | pbcopy
+   ```
+
+1. Paste the intermediate certificate into the **Certificate chain** text box
+
+1. Select **Next** on the "Import certificate" page
+
+1. Select **Review and import**
+
+1. Note that the following information should be displayed
+
+   *Format:*
+
+   **Domains:** ab2d.cms.gov
+
+   **Expires in:** {number} Days
+
+   **Public key info:** RSA-2048
+
+   **Signature algorithm:** SHA256WITHRSA
+   
+1. Select **Import**
 
 ## Deploy to sandbox
 
@@ -293,3 +448,7 @@
 1. Submit the completed for to the product owner
 
 1. Note that the product owner will complete the process
+
+## Submit an "Internet DNS Change Request Form" to product owner for the sandbox application load balancer
+
+> *** TO DO ***
