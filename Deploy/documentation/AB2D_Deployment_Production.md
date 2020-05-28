@@ -302,8 +302,6 @@ lication-load-balancer)
 
 1. Create a self-signed SSL certificate for API nodes
 
-   *Option #1:*
-
    ```ShellSession
    $ openssl req \
      -nodes -x509 \
@@ -312,32 +310,6 @@ lication-load-balancer)
      -keyout ab2d_api_prod.key \
      -subj "/CN=ab2d-api" \
      -config /usr/local/etc/openssl@1.1/openssl.cnf \
-     -extensions v3_req \
-     -out ab2d_api_prod.pem
-   ```
-
-   *Option #2:*
-
-   ```ShellSession
-   $ openssl req \
-     -new \
-     -nodes \
-     -days 3650 \
-     -newkey rsa:2048 \
-     -keyout ab2d_api_prod.key \
-     -subj "/CN=ab2d-api" \
-     -config /usr/local/etc/openssl@1.1/openssl.cnf \
-     -extensions v3_req \
-     -out ab2d_api_prod.csr
-   ```
-
-   ```ShellSession
-   $ openssl x509 \
-     -req \
-     -days 3650 \
-     -in ab2d_api_prod.csr \
-     -signkey ab2d_api_prod.key \
-     -extfile /usr/local/etc/openssl@1.1/openssl.cnf \
      -extensions v3_req \
      -out ab2d_api_prod.pem
    ```
@@ -388,6 +360,12 @@ lication-load-balancer)
 
    ```ShellSession
    $ cd ~/code/ab2d/Deploy
+   ```
+
+1. Set parameters
+
+   ```ShellSession
+   $ export DATABASE_SECRET_DATETIME_PARAM=2020-01-02-09-15-01
    ```
 
 1. Initialize or verify environment
