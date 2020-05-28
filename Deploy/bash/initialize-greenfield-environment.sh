@@ -327,8 +327,18 @@ set_secrets ()
     AB2D_KEYSTORE_PASSWORD=$(./get-database-secret.py $CMS_ENV_GE ab2d_keystore_password $DATABASE_SECRET_DATETIME)
   fi
 
+  # Create or get AB2D keystore password
+
+  AB2D_OKTA_JWT_ISSUER=$(./get-database-secret.py $CMS_ENV_GE ab2d_okta_jwt_issuer $DATABASE_SECRET_DATETIME)
+  if [ -z "${AB2D_OKTA_JWT_ISSUER}" ]; then
+    echo "*********************************************************"
+    ./create-database-secret.py $CMS_ENV_GE ab2d_okta_jwt_issuer $KMS_KEY_ID $DATABASE_SECRET_DATETIME
+    echo "*********************************************************"
+    AB2D_OKTA_JWT_ISSUER=$(./get-database-secret.py $CMS_ENV_GE ab2d_okta_jwt_issuer $DATABASE_SECRET_DATETIME)
+  fi
+
   # If any databse secret produced an error, exit the script
-  
+
   if [ "${DATABASE_USER}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
     || [ "${DATABASE_PASSWORD}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
     || [ "${DATABASE_NAME}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
@@ -341,7 +351,8 @@ set_secrets ()
     || [ "${NEW_RELIC_LICENSE_KEY}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
     || [ "${VPN_PRIVATE_IP_ADDRESS_CIDR_RANGE}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
     || [ "${AB2D_KEYSTORE_LOCATION}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
-    || [ "${AB2D_KEYSTORE_PASSWORD}" == "ERROR: Cannot get database secret because KMS key is disabled!" ]; then
+    || [ "${AB2D_KEYSTORE_PASSWORD}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
+    || [ "${AB2D_OKTA_JWT_ISSUER}" == "ERROR: Cannot get database secret because KMS key is disabled!" ]; then
       echo "ERROR: Cannot get secrets because KMS key is disabled!"
       exit 1
   fi
