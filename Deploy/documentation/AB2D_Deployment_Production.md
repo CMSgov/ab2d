@@ -18,6 +18,9 @@ lication-load-balancer)
    * [Create or update infrastructure](#create-or-update-infrastructure)
    * [Create or update application for production](#create-or-update-application-for-production)
 1. [Submit an "Internet DNS Change Request Form" to product owner for the production application load balancer](#Submit an "internet-dns-change-request-form-to-product-owner-for-the-production-app
+1. [Configure CloudWatch Log groups](#configure-cloudwatch-log-groups)
+   * [Configure CloudTrail CloudWatch Log group](#configure-cloudtrail-cloudwatch-log-group)
+   * [Configure VPC flow log CloudWatch Log group](#configure-vpc-flow-log-cloudwatch-log-group)
 
 ## Obtain and import api.ab2d.cms.gov entrust certificate](#obtain-and-import-apiab2dcmsgov-entrust-certificate)
 
@@ -809,3 +812,239 @@ lication-load-balancer)
 ### Submit an "Internet DNS Change Request Form" to product owner for the production application load balancer
 
 > *** TO DO ***
+
+## Configure CloudWatch Log groups
+
+### Configure CloudTrail CloudWatch Log group
+
+1. Log on to the AWS production account
+
+1. Create a CloudTrail CloudWatch Log group
+
+   1. Select **Log groups** from the leftmost panel
+
+   1. Select **Create log group**
+
+   1. Configure the "Create log group" page as follows
+
+      - **Log Group Name:** cloudtrail-logs
+
+   1. Select **Create**
+
+1. Create a trail in CloudTrail
+
+   1. Select **CloudTrail**
+
+   1. Select **Create trail**
+
+   1. Configure "Create Trail"
+
+      - **Trail name:** cloudtrail-default
+
+      - **Apply trail to all regions:** No
+
+   1. Configure "Management events"
+
+      - **Read/Write events:** All
+
+      - **Log AWS KMS events:** Yes
+
+   1. Configure "Insights events"
+
+      - **Log Insights events:** No
+
+   1. Configure "Data Events" for the "S3" tab
+
+      - **Select all S3 buckets in your account:** Checked
+
+   1. Configure "Storage location"
+
+      *Format:*
+      
+      - **Create a new S3 bucket:** No
+
+      - **S3 bucket:** {environment}-cloudtrail
+
+   1. Select **Create**
+
+1. Create a role for CloudTrail
+
+   1. Change to the "Deploy" directory
+
+      ```ShellSession
+      $ cd ~/code/ab2d/Deploy
+      ```
+
+   1. Set AWS environment variables using the CloudTamer API
+   
+      ```ShellSession
+      $ source ./bash/set-env.sh
+      ```
+   
+   1. Enter the number of the desired AWS account where the desired logs reside
+      
+      ```
+      4 (Prod AWS account)
+      ```
+
+   1. Change to the shared directory
+      
+      ```ShellSession
+      $ cd terraform/environments/ab2d-east-prod
+      ```
+
+   1. Create the "Ab2dCloudTrailAssumeRole" role
+
+      ```ShellSession
+      $ aws --region us-east-1 iam create-role \
+        --role-name Ab2dCloudTrailAssumeRole \
+        --assume-role-policy-document file://ab2d-cloudtrail-assume-role-policy.json
+      ```
+
+   1. Add a CloudWatch log group policy to the CloudTrail role
+
+      ```ShellSession
+      $ aws --region us-east-1 iam put-role-policy \
+        --role-name Ab2dCloudTrailAssumeRole \
+	--policy-name Ab2dCloudTrailPolicy \
+	--policy-document file://ab2d-cloudtrail-cloudwatch-policy.json
+      ```
+
+1. Update the trail in CloudTrail with the log group and role information
+
+   ```ShellSession
+   $ aws --region us-east-1 cloudtrail update-trail \
+     --name cloudtrail-default \
+     --cloud-watch-logs-log-group-arn arn:aws:logs:us-east-1:595094747606:log-group:cloudtrail-logs:* \
+     --cloud-watch-logs-role-arn arn:aws:iam::595094747606:role/Ab2dCloudTrailAssumeRole
+   ```
+
+### Configure VPC flow log CloudWatch Log group
+
+1. Log on to the AWS production account
+
+1. Create a VPC flow log CloudWatch Log group
+
+   1. Select **CloudWatch**
+
+   1. Select **Log groups** from the leftmost panel
+
+   1. Select **Create log group**
+
+   1. Configure the "Create log group" page as follows
+
+      - **Log Group Name:** vpc-flowlogs
+
+   1. Select **Create**
+
+1. Create a VPC flow log
+
+   1. Select **VPC**
+
+   1. Select **Your VPCs** from the leftmost panel
+
+   1. Select the following VPC
+
+      *Example for "Prod" environment:*
+      
+      ```
+      ab2d-east-prod
+      ```
+
+   1. Select the **Flow Logs** tab
+
+   1. Select **Create flow log**
+
+   1. Configure the "Create flow log" page
+
+      *Format:*
+
+      - **Filter:** All
+
+      - **Maximum aggregation interval:** 10 minutes
+
+      - **Destination:** Send to CloudWatch Logs
+
+      - **Destination log group:** vpc-flowlogs
+
+      - **IAM role:** Ab2dInstanceRole
+
+   1. Select **Create**
+
+   1. Select **Close** on the "Create flow log" page
+
+### Configure CloudWatch Log groups for RDS
+
+1. Log on to the AWS production account
+
+1. Select **RDS**
+
+1. Select **Parameter groups** from the leftmost panel
+
+1. Select the following parameter group
+
+   ```
+   ab2d-rds-parameter-group
+   ```
+
+1. Type the following in the "Filter parameters" text box
+
+   ```
+   log_statement
+   ```
+
+1. Select **Edit parameters**
+
+1. Select the following value from the dropdown beside "log_statement"
+
+   ```
+   all
+   ```
+
+1. Type the following in the "Filter parameters" text box
+
+   ```
+   log_min_duration_statement
+   ```
+
+1. Type the following value beside "log_min_duration_statement"
+
+   ```
+   1
+   ```
+
+1. Select **Preview changes**
+
+1. Verify that the desired changes are correct
+
+1. Select **Save changes**
+
+1. Select **Databases** from the leftmost panel
+
+1. Select the radio button beside the "ab2d" DB identifier
+
+1. Select **Modify**
+
+1. Scroll down to the "Log exports" section
+
+1. Check **Postgresql log**
+
+1. Check **Upgrade log**
+
+1. Select **Continue**
+
+1. Select **Modify DB Instance**
+
+1. Wait for log groups to be configured
+
+   *Note that this may take a couple minutes.*
+
+1. Select **CloudWatch**
+
+1. Select **Log groups**
+
+1. Verify that the following log group now appears in the list
+
+   ```
+   /aws/rds/instance/ab2d/postgresql
+   ```
