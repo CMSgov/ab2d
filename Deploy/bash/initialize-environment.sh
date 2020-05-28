@@ -541,6 +541,16 @@ if [ -z "${AB2D_KEYSTORE_PASSWORD}" ]; then
   exit 1
 fi
 
+AB2D_OKTA_JWT_ISSUER=$(./get-database-secret.py $CMS_ENV ab2d_okta_jwt_issuer $DATABASE_SECRET_DATETIME)
+if [ -z "${AB2D_OKTA_JWT_ISSUER}" ]; then
+  echo "**********************************************************************************"
+  echo "ERROR: The environment variable could not be retrieved."
+  echo ""
+  echo "Did you run the 'initialize-greenfield-environment.sh' script to set the variable?"
+  echo "**********************************************************************************"
+  exit 1
+fi
+
 # If any databse secret produced an error, exit the script
 
 if [ "${DATABASE_USER}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
@@ -555,7 +565,8 @@ if [ "${DATABASE_USER}" == "ERROR: Cannot get database secret because KMS key is
   || [ "${NEW_RELIC_LICENSE_KEY}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
   || [ "${VPN_PRIVATE_IP_ADDRESS_CIDR_RANGE}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
   || [ "${AB2D_KEYSTORE_LOCATION}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
-  || [ "${AB2D_KEYSTORE_PASSWORD}" == "ERROR: Cannot get database secret because KMS key is disabled!" ]; then
+  || [ "${AB2D_KEYSTORE_PASSWORD}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
+  || [ "${AB2D_OKTA_JWT_ISSUER}" == "ERROR: Cannot get database secret because KMS key is disabled!" ]; then
     echo "ERROR: Cannot get secrets because KMS key is disabled!"
     exit 1
 fi
