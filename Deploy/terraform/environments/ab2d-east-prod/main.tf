@@ -15,6 +15,8 @@ module "iam" {
   mgmt_aws_account_number = var.mgmt_aws_account_number
   aws_account_number      = var.aws_account_number
   env                     = var.env
+  bfd_opt_out_kms_arn     = var.bfd_opt_out_kms_arn
+  ab2d_s3_optout_bucket   = var.ab2d_s3_optout_bucket
 }
 
 module "kms" {

@@ -35,117 +35,6 @@ data "aws_iam_policy" "amazon_ec2_container_service_for_ec2_role" {
   arn = "arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role"
 }
 
-# # Create Ab2dAccessPolicy
-
-# data "aws_iam_policy_document" "instance_role_access_policy" {
-#   statement {
-#     actions = [
-#       "autoscaling:CreateAutoScalingGroup",
-#       "autoscaling:CreateLaunchConfiguration",
-#       "autoscaling:CreateOrUpdateTags",
-#       "autoscaling:DeleteAutoScalingGroup",
-#       "autoscaling:DeleteLaunchConfiguration",
-#       "autoscaling:DeletePolicy",
-#       "autoscaling:DeleteScheduledAction",
-#       "autoscaling:DeleteTags",
-#       "autoscaling:DescribeAutoScalingGroups",
-#       "autoscaling:DescribeLaunchConfigurations",
-#       "autoscaling:DescribeLoadBalancers",
-#       "autoscaling:DescribePolicies",
-#       "autoscaling:DescribeScalingActivities",
-#       "autoscaling:DescribeScheduledActions",
-#       "autoscaling:DetachInstances",
-#       "autoscaling:DisableMetricsCollection",
-#       "autoscaling:EnableMetricsCollection",
-#       "autoscaling:PutLifecycleHook",
-#       "autoscaling:PutNotificationConfiguration",
-#       "autoscaling:PutScalingPolicy",
-#       "autoscaling:PutScheduledUpdateGroupAction",
-#       "autoscaling:ResumeProcesses",
-#       "autoscaling:SuspendProcesses",
-#       "autoscaling:TerminateInstanceInAutoScalingGroup",
-#       "autoscaling:UpdateAutoScalingGroup",
-#       "cloudwatch:DeleteAlarms",
-#       "cloudwatch:DescribeAlarms",
-#       "cloudwatch:GetMetricStatistics",
-#       "cloudwatch:ListMetrics",
-#       "cloudwatch:PutMetricAlarm",
-#       "ec2:AttachClassicLinkVpc",
-#       "ec2:AuthorizeSecurityGroupIngress",
-#       "ec2:CreateNetworkInterface",
-#       "ec2:CreateSecurityGroup",
-#       "ec2:CreateTags",
-#       "ec2:DeleteSecurityGroup",
-#       "ec2:DeleteTags",
-#       "ec2:DescribeAccountAttributes",
-#       "ec2:DescribeAddresses",
-#       "ec2:DescribeAvailabilityZones",
-#       "ec2:DescribeClassicLinkInstances",
-#       "ec2:DescribeImages",
-#       "ec2:DescribeInstances",
-#       "ec2:DescribeKeyPairs",
-#       "ec2:DescribeRegions",
-#       "ec2:DescribeReservedInstances",
-#       "ec2:DescribeReservedInstancesOfferings",
-#       "ec2:DescribeSecurityGroups",
-#       "ec2:DescribeSpotPriceHistory",
-#       "ec2:DescribeSubnets",
-#       "ec2:DescribeTags",
-#       "ec2:DescribeVpcClassicLink",
-#       "ec2:DescribeVpcs",
-#       "ec2:GetConsoleOutput",
-#       "ec2:ModifyImageAttribute",
-#       "ec2:ModifyInstanceAttribute",
-#       "ec2:RebootInstances",
-#       "ec2:RevokeSecurityGroupIngress",
-#       "ec2:TerminateInstances",
-#       "elasticloadbalancing:ApplySecurityGroupsToLoadBalancer",
-#       "elasticloadbalancing:ConfigureHealthCheck",
-#       "elasticloadbalancing:CreateListener",
-#       "elasticloadbalancing:CreateLoadBalancer",
-#       "elasticloadbalancing:CreateLoadBalancerListeners",
-#       "elasticloadbalancing:CreateLoadBalancerPolicy",
-#       "elasticloadbalancing:CreateRule",
-#       "elasticloadbalancing:CreateTargetGroup",
-#       "elasticloadbalancing:DeleteListener",
-#       "elasticloadbalancing:DeleteLoadBalancer",
-#       "elasticloadbalancing:DeleteLoadBalancerListeners",
-#       "elasticloadbalancing:DeleteRule",
-#       "elasticloadbalancing:DeleteTargetGroup",
-#       "elasticloadbalancing:DeregisterInstancesFromLoadBalancer",
-#       "elasticloadbalancing:DeregisterTargets",
-#       "elasticloadbalancing:DescribeInstanceHealth",
-#       "elasticloadbalancing:DescribeListeners",
-#       "elasticloadbalancing:DescribeLoadBalancerAttributes",
-#       "elasticloadbalancing:DescribeLoadBalancerPolicies",
-#       "elasticloadbalancing:DescribeLoadBalancers",
-#       "elasticloadbalancing:DescribeRules",
-#       "elasticloadbalancing:DescribeTargetGroupAttributes",
-#       "elasticloadbalancing:DescribeTargetGroups",
-#       "elasticloadbalancing:DescribeTargetHealth",
-#       "elasticloadbalancing:ModifyListener",
-#       "elasticloadbalancing:ModifyLoadBalancerAttributes",
-#       "elasticloadbalancing:ModifyTargetGroup",
-#       "elasticloadbalancing:ModifyTargetGroupAttributes",
-#       "elasticloadbalancing:RegisterInstancesWithLoadBalancer",
-#       "elasticloadbalancing:RegisterTargets",
-#       "elasticloadbalancing:SetLoadBalancerPoliciesOfListener",
-#       "elasticloadbalancing:SetSecurityGroups",
-#       "iam:ListServerCertificates",
-#       "iam:PassRole"
-#     ]
-
-#     resources = [
-#       "*"
-#     ]
-#   }
-# }
-
-# resource "aws_iam_policy" "access_policy" {
-#   name   = "Ab2dAccessPolicy"
-#   policy = "${data.aws_iam_policy_document.instance_role_access_policy.json}"
-# }
-
 # Create Ab2dPackerPolicy
 
 data "aws_iam_policy_document" "instance_role_packer_policy" {
@@ -252,6 +141,10 @@ resource "aws_iam_policy" "cloud_watch_logs_policy" {
   policy = "${data.aws_iam_policy_document.instance_role_cloud_watch_logs_policy.json}"
 }
 
+########################
+# For Dev, Sbx, and Impl
+########################
+
 # # Create Ab2dBfdProdSbxPolicy
 
 # data "aws_iam_policy_document" "instance_role_bfd_prod_sbx_policy" {
@@ -288,6 +181,67 @@ resource "aws_iam_policy" "cloud_watch_logs_policy" {
 #   policy = "${data.aws_iam_policy_document.instance_role_bfd_prod_sbx_policy.json}"
 # }
 
+########################
+
+###########################################################################
+# Replace Ab2dBfdProdSbxPolicy with Ab2dBfdOptOutPolicy in all environments
+###########################################################################
+
+# Create Ab2dBfdOptOutPolicy
+
+data "aws_iam_policy_document" "instance_role_bfd_opt_out_policy" {
+  statement {
+    sid = "BfdS3BucketPart01"
+    
+    actions = [
+      "s3:GetObject",
+      "s3:GetObjectVersion*",
+      "s3:ListBucket",
+      "s3:ListBucketVersions"
+    ]
+
+    resources = [
+      "arn:aws:s3:::${var.ab2d_s3_optout_bucket}/*",
+      "arn:aws:s3:::${var.ab2d_s3_optout_bucket}"
+    ]
+  }
+
+  statement {
+    sid = "BfdS3BucketPart02"
+    
+    actions = [
+      "s3:HeadBucket"
+    ]
+
+    resources = [
+      "*"
+    ]
+  }
+
+  statement {
+    sid = "BfdKms"
+    
+    actions = [
+      "kms:Decrypt",
+      "kms:DescribeKey",
+      "kms:Encrypt",
+      "kms:GenerateDataKey*",
+      "kms:ReEncrypt*"
+    ]
+
+    resources = [
+      "${var.bfd_opt_out_kms_arn}"
+    ]
+  }
+}
+
+resource "aws_iam_policy" "bfd_opt_out_policy" {
+  name   = "Ab2dBfdOptOutPolicy"
+  policy = "${data.aws_iam_policy_document.instance_role_bfd_opt_out_policy.json}"
+}
+
+##########
+
 # Create Ab2dInstanceRole
 
 data "aws_iam_policy_document" "instance_role_assume_role_policy" {
@@ -311,11 +265,6 @@ resource "aws_iam_role" "ab2d_instance_role" {
   assume_role_policy = "${data.aws_iam_policy_document.instance_role_assume_role_policy.json}"
 }
 
-# resource "aws_iam_role_policy_attachment" "instance_role_access_policy_attach" {
-#   role       = "${aws_iam_role.ab2d_instance_role.name}"
-#   policy_arn = "${aws_iam_policy.access_policy.arn}"
-# }
-
 resource "aws_iam_role_policy_attachment" "instance_role_packer_policy_attach" {
   role       = "${aws_iam_role.ab2d_instance_role.name}"
   policy_arn = "${aws_iam_policy.packer_policy.arn}"
@@ -331,10 +280,21 @@ resource "aws_iam_role_policy_attachment" "instance_role_cloud_watch_logs_policy
   policy_arn = "${aws_iam_policy.cloud_watch_logs_policy.arn}"
 }
 
+resource "aws_iam_role_policy_attachment" "instance_role_bfd_opt_out_policy_attach" {
+  role       = "${aws_iam_role.ab2d_instance_role.name}"
+  policy_arn = "${aws_iam_policy.bfd_opt_out_policy.arn}"
+}
+
+########################
+# For Dev, Sbx, and Impl
+########################
+
 # resource "aws_iam_role_policy_attachment" "instance_role_bfd_prod_sbx_policy_attach" {
 #   role       = "${aws_iam_role.ab2d_instance_role.name}"
 #   policy_arn = "${aws_iam_policy.bfd_prod_sbx_policy.arn}"
 # }
+
+########################
 
 resource "aws_iam_role_policy_attachment" "amazon_ec2_container_service_for_ec2_role_attach" {
   role       = "${aws_iam_role.ab2d_instance_role.name}"

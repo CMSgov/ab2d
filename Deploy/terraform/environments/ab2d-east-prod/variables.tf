@@ -457,6 +457,10 @@ variable "ab2d_s3_optout_bucket" {
   default = "bfd-prod-medicare-opt-out-577373831711"
 }
 
+variable "bfd_opt_out_kms_arn" {
+  default = "arn:aws:kms:us-east-1:577373831711:key/8ba1ba3a-71ef-47f6-b94c-940c5bf1d16f"
+}
+
 #
 # Okta
 #
