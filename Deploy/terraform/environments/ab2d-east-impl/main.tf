@@ -180,6 +180,7 @@ module "api" {
   vpn_private_ip_address_cidr_range = var.vpn_private_ip_address_cidr_range
   ab2d_keystore_location            = var.ab2d_keystore_location
   ab2d_keystore_password            = var.ab2d_keystore_password
+  ab2d_okta_jwt_issuer              = var.ab2d_okta_jwt_issuer
 }
 
 module "worker" {
@@ -234,6 +235,8 @@ module "worker" {
   ecs_task_def_memory               = var.ecs_task_definition_memory_worker
   vpn_private_ip_address_cidr_range = var.vpn_private_ip_address_cidr_range
   claims_skip_billable_period_check = var.claims_skip_billable_period_check
+  ab2d_opt_out_job_schedule         = var.ab2d_opt_out_job_schedule
+  ab2d_s3_optout_bucket             = var.ab2d_s3_optout_bucket
 }
 
 module "cloudwatch" {

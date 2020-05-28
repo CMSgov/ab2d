@@ -444,3 +444,24 @@ variable "ab2d_keystore_password" {
   default     = ""
   description = "Please pass this on command line and not as a value here"
 }
+
+#
+# BFD opt-out process
+#
+
+variable "ab2d_opt_out_job_schedule" {
+  default = "0 0 * * * ?"
+}
+
+variable "ab2d_s3_optout_bucket" {
+  default = "bfd-prod-sbx-medicare-opt-out-577373831711"
+}
+
+#
+# Okta
+#
+
+variable "ab2d_okta_jwt_issuer" {
+  default     = ""
+  description = "Please pass this on command line and not as a value here"
+}
