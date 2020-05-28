@@ -137,6 +137,14 @@ resource "aws_ecs_task_definition" "worker" {
 	  "name" : "AB2D_HICN_HASH_ITER",
 	  "value" : "${var.hicn_hash_iter}"
 	},
+	{
+	  "name" : "AB2D_OPT_OUT_JOB_SCHEDULE",
+	  "value" : "${var.ab2d_opt_out_job_schedule}"
+	},
+	{
+	  "name" : "AB2D_S3_OPTOUT_BUCKET",
+	  "value" : "${var.ab2d_s3_optout_bucket}"
+	},
         {
 	  "name" : "NEW_RELIC_APP_NAME",
 	  "value" : "${var.new_relic_app_name}"
