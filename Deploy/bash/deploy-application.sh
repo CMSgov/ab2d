@@ -1300,6 +1300,7 @@ terraform apply \
   --var "vpn_private_ip_address_cidr_range=${VPN_PRIVATE_IP_ADDRESS_CIDR_RANGE}" \
   --var "ab2d_keystore_location=${AB2D_KEYSTORE_LOCATION}" \
   --var "ab2d_keystore_password=${AB2D_KEYSTORE_PASSWORD}" \
+  --var "ab2d_okta_jwt_issuer=${AB2D_OKTA_JWT_ISSUER}" \
   --target module.api \
   --auto-approve
 
