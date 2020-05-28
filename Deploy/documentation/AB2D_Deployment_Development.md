@@ -6,6 +6,7 @@
    * [Download the dev domain certificate and get private key from CMS](#download-the-dev-domain-certificate-and-get-private-key-from-cms)
    * [Import the dev domain certificate into certificate manager](#import-the-dev-domain-certificate-into-certificate-manager)
 1. [Deploy to development](#deploy-to-development)
+   * [Initialize or verify base environment](#initialize-or-verify-base-environment)
 
 ## Obtain and import dev.ab2d.cms.gov common certificate](#obtain-and-import-devab2dcmsgov-common-certificate)
 
@@ -149,27 +150,20 @@
 
 ## Deploy to development
 
-### Initialize or verify base environment for development
+### Initialize or verify base environment
 
 1. Ensure that you are connected to CMS Cisco VPN
-
-1. Change to the "Deploy" directory
-
-   ```ShellSession
-   $ cd ~/code/ab2d/Deploy
-   ```
    
 1. Initialize or verify environment
 
    ```ShellShession
-   $ ./bash/initialize-environment.sh \
-     --database-secret-datetime=2020-01-02-09-15-01
-   ```
-   
-1. Enter the number of the AWS account with the environment to initialize or verify
-
-   ```
-   1
+   $ cd ~/code/ab2d/Deploy \
+     && export CMS_ENV_PARAM=ab2d-dev \
+     && export DEBUG_LEVEL_PARAM=WARN \
+     && export REGION_PARAM=us-east-1 \
+     && export DATABASE_SECRET_DATETIME_PARAM=2020-01-02-09-15-01 \
+     && export CLOUD_TAMER_PARAM=true \
+     && ./bash/initialize-environment.sh
    ```
 
 ### Encrypt and upload New Relic configuration file

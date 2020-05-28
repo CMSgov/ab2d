@@ -10,8 +10,7 @@ lication-load-balancer)
 1. [Encrypt BFD keystore and put in S3](#encrypt-bfd-keystore-and-put-in-s3)
 1. [Create a keystore for API nodes](#create-a-keystore-for-api-nodes)
 1. [Deploy to production](#deploy-to-production)
-   * [Initialize or verify greenfield environment](#initialize-or-verify-greenfield-environment)
-   * [Initialize or verify base environment for production](#initialize-or-verify-base-environment-for-production)
+   * [Initialize or verify base environment](#initialize-or-verify-base-environment)
    * [Encrypt and upload New Relic configuration file](#encrypt-and-upload-new-relic-configuration-file)
    * [Create, encrypt, and upload BFD AB2D keystore for Prod](#create-encrypt-and-upload-bfd-ab2d-keystore-for-prod)
    * [Create or update AMI with latest gold disk](#create-or-update-ami-with-latest-gold-disk)
@@ -357,52 +356,20 @@ lication-load-balancer)
 
 ## Deploy to production
 
-### Initialize or verify greenfield environment
+### Initialize or verify base environment
 
 1. Ensure that you are connected to CMS Cisco VPN
-
-1. Change to the "Deploy" directory
-
-   ```ShellSession
-   $ cd ~/code/ab2d/Deploy
-   ```
-
-1. Set parameters
-
-   ```ShellSession
-   $ export DATABASE_SECRET_DATETIME_PARAM=2020-01-02-09-15-01
-   ```
 
 1. Initialize or verify environment
 
    ```ShellShession
-   $ ./bash/initialize-greenfield-environment.sh
-   ```
-
-### Initialize or verify base environment for production
-
-1. Ensure that you are connected to CMS Cisco VPN
-
-1. Change to the "Deploy" directory
-
-   ```ShellSession
-   $ cd ~/code/ab2d/Deploy
-   ```
-
-1. Set parameters
-
-   ```ShellSession
-   $ export CMS_ENV_PARAM=ab2d-east-prod \
+   $ cd ~/code/ab2d/Deploy \
+     && export CMS_ENV_PARAM=ab2d-east-prod \
      && export DEBUG_LEVEL_PARAM=WARN \
      && export REGION_PARAM=us-east-1 \
      && export DATABASE_SECRET_DATETIME_PARAM=2020-01-02-09-15-01 \
-     && export CLOUD_TAMER_PARAM=true
-   ```
-
-1. Initialize or verify environment
-
-   ```ShellShession
-   $ ./bash/initialize-environment.sh
+     && export CLOUD_TAMER_PARAM=true \
+     && ./bash/initialize-environment.sh
    ```
 
 ### Encrypt and upload New Relic configuration file
