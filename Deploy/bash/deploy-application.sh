@@ -1259,10 +1259,9 @@ elif [ "$CMS_ENV" == "ab2d-dev" ]; then
 elif [ "$CMS_ENV" == "ab2d-east-prod" ]; then
   ALB_LISTENER_PORT=443
   ALB_LISTENER_PROTOCOL="HTTPS"
-
-  # *** TO DO ***: switch to domain certificate, when obtained
-  ALB_LISTENER_CERTIFICATE_ARN="arn:aws:iam::595094747606:server-certificate/Ab2dTempCom"
-
+  ALB_LISTENER_CERTIFICATE_ARN=$(aws --region "${REGION}" acm list-certificates \
+    --query "CertificateSummaryList[?DomainName=='api.ab2d.cms.gov'].CertificateArn" \
+    --output text)
   ALB_SECURITY_GROUP_IP_RANGE="${VPN_PRIVATE_IP_ADDRESS_CIDR_RANGE}"
 else
   echo "*** TO DO ***: need to configure IMPL"
