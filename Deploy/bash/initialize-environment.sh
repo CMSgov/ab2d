@@ -385,114 +385,160 @@ KMS_KEY_ID=$(aws --region "${AWS_DEFAULT_REGION}" kms list-aliases \
 cd "${START_DIR}/.."
 cd python3
 
-# Create or get database user secret
+# Get database user secret
 
 DATABASE_USER=$(./get-database-secret.py $CMS_ENV database_user $DATABASE_SECRET_DATETIME)
 if [ -z "${DATABASE_USER}" ]; then
-  echo "*********************************************************"
-  ./create-database-secret.py $CMS_ENV database_user $KMS_KEY_ID $DATABASE_SECRET_DATETIME
-  echo "*********************************************************"
-  DATABASE_USER=$(./get-database-secret.py $CMS_ENV database_user $DATABASE_SECRET_DATETIME)
+  echo "**********************************************************************************"
+  echo "ERROR: The environment variable could not be retrieved."
+  echo ""
+  echo "Did you run the 'initialize-greenfield-environment.sh' script to set the variable?"
+  echo "**********************************************************************************"
+  exit 1
 fi
 
-# Create or get database password secret
+# Get database password secret
 
 DATABASE_PASSWORD=$(./get-database-secret.py $CMS_ENV database_password $DATABASE_SECRET_DATETIME)
 if [ -z "${DATABASE_PASSWORD}" ]; then
-  echo "*********************************************************"
-  ./create-database-secret.py $CMS_ENV database_password $KMS_KEY_ID $DATABASE_SECRET_DATETIME
-  echo "*********************************************************"
-  DATABASE_PASSWORD=$(./get-database-secret.py $CMS_ENV database_password $DATABASE_SECRET_DATETIME)
+  echo "**********************************************************************************"
+  echo "ERROR: The environment variable could not be retrieved."
+  echo ""
+  echo "Did you run the 'initialize-greenfield-environment.sh' script to set the variable?"
+  echo "**********************************************************************************"
+  exit 1
 fi
 
-# Create or get database name secret
+# Get database name secret
 
 DATABASE_NAME=$(./get-database-secret.py $CMS_ENV database_name $DATABASE_SECRET_DATETIME)
 if [ -z "${DATABASE_NAME}" ]; then
-  echo "*********************************************************"
-  ./create-database-secret.py $CMS_ENV database_name $KMS_KEY_ID $DATABASE_SECRET_DATETIME
-  echo "*********************************************************"
-  DATABASE_NAME=$(./get-database-secret.py $CMS_ENV database_name $DATABASE_SECRET_DATETIME)
+  echo "**********************************************************************************"
+  echo "ERROR: The environment variable could not be retrieved."
+  echo ""
+  echo "Did you run the 'initialize-greenfield-environment.sh' script to set the variable?"
+  echo "**********************************************************************************"
+  exit 1
 fi
 
-# Create or get bfd url secret
+# Get bfd url secret
 
 BFD_URL=$(./get-database-secret.py $CMS_ENV bfd_url $DATABASE_SECRET_DATETIME)
 if [ -z "${BFD_URL}" ]; then
-  echo "*********************************************************"
-  ./create-database-secret.py $CMS_ENV bfd_url $KMS_KEY_ID $DATABASE_SECRET_DATETIME
-  echo "*********************************************************"
-  BFD_URL=$(./get-database-secret.py $CMS_ENV bfd_url $DATABASE_SECRET_DATETIME)
+  echo "**********************************************************************************"
+  echo "ERROR: The environment variable could not be retrieved."
+  echo ""
+  echo "Did you run the 'initialize-greenfield-environment.sh' script to set the variable?"
+  echo "**********************************************************************************"
+  exit 1
 fi
 
-# Create or get bfd keystore location secret
+# Get bfd keystore location secret
 
 BFD_KEYSTORE_LOCATION=$(./get-database-secret.py $CMS_ENV bfd_keystore_location $DATABASE_SECRET_DATETIME)
 if [ -z "${BFD_KEYSTORE_LOCATION}" ]; then
-  echo "*********************************************************"
-  ./create-database-secret.py $CMS_ENV bfd_keystore_location $KMS_KEY_ID $DATABASE_SECRET_DATETIME
-  echo "*********************************************************"
-  BFD_KEYSTORE_LOCATION=$(./get-database-secret.py $CMS_ENV bfd_keystore_location $DATABASE_SECRET_DATETIME)
+  echo "**********************************************************************************"
+  echo "ERROR: The environment variable could not be retrieved."
+  echo ""
+  echo "Did you run the 'initialize-greenfield-environment.sh' script to set the variable?"
+  echo "**********************************************************************************"
+  exit 1
 fi
 
-# Create or get bfd keystore password secret
+# Get bfd keystore password secret
 
 BFD_KEYSTORE_PASSWORD=$(./get-database-secret.py $CMS_ENV bfd_keystore_password $DATABASE_SECRET_DATETIME)
 if [ -z "${BFD_KEYSTORE_PASSWORD}" ]; then
-  echo "*********************************************************"
-  ./create-database-secret.py $CMS_ENV bfd_keystore_password $KMS_KEY_ID $DATABASE_SECRET_DATETIME
-  echo "*********************************************************"
-  BFD_KEYSTORE_PASSWORD=$(./get-database-secret.py $CMS_ENV bfd_keystore_password $DATABASE_SECRET_DATETIME)
+  echo "**********************************************************************************"
+  echo "ERROR: The environment variable could not be retrieved."
+  echo ""
+  echo "Did you run the 'initialize-greenfield-environment.sh' script to set the variable?"
+  echo "**********************************************************************************"
+  exit 1
 fi
 
-# Create or get hicn hash pepper secret
+# Get hicn hash pepper secret
 
 HICN_HASH_PEPPER=$(./get-database-secret.py $CMS_ENV hicn_hash_pepper $DATABASE_SECRET_DATETIME)
 if [ -z "${HICN_HASH_PEPPER}" ]; then
-  echo "*********************************************************"
-  ./create-database-secret.py $CMS_ENV hicn_hash_pepper $KMS_KEY_ID $DATABASE_SECRET_DATETIME
-  echo "*********************************************************"
-  HICN_HASH_PEPPER=$(./get-database-secret.py $CMS_ENV hicn_hash_pepper $DATABASE_SECRET_DATETIME)
+  echo "**********************************************************************************"
+  echo "ERROR: The environment variable could not be retrieved."
+  echo ""
+  echo "Did you run the 'initialize-greenfield-environment.sh' script to set the variable?"
+  echo "**********************************************************************************"
+  exit 1
 fi
 
-# Create or get hicn hash iter secret
+# Get hicn hash iter secret
 
 HICN_HASH_ITER=$(./get-database-secret.py $CMS_ENV hicn_hash_iter $DATABASE_SECRET_DATETIME)
 if [ -z "${HICN_HASH_ITER}" ]; then
-  echo "*********************************************************"
-  ./create-database-secret.py $CMS_ENV hicn_hash_iter $KMS_KEY_ID $DATABASE_SECRET_DATETIME
-  echo "*********************************************************"
-  HICN_HASH_ITER=$(./get-database-secret.py $CMS_ENV hicn_hash_iter $DATABASE_SECRET_DATETIME)
+  echo "**********************************************************************************"
+  echo "ERROR: The environment variable could not be retrieved."
+  echo ""
+  echo "Did you run the 'initialize-greenfield-environment.sh' script to set the variable?"
+  echo "**********************************************************************************"
+  exit 1
 fi
 
-# Create or get new relic app name secret
+# Get new relic app name secret
 
 NEW_RELIC_APP_NAME=$(./get-database-secret.py $CMS_ENV new_relic_app_name $DATABASE_SECRET_DATETIME)
 if [ -z "${NEW_RELIC_APP_NAME}" ]; then
-  echo "*********************************************************"
-  ./create-database-secret.py $CMS_ENV new_relic_app_name $KMS_KEY_ID $DATABASE_SECRET_DATETIME
-  echo "*********************************************************"
-  NEW_RELIC_APP_NAME=$(./get-database-secret.py $CMS_ENV new_relic_app_name $DATABASE_SECRET_DATETIME)
+  echo "**********************************************************************************"
+  echo "ERROR: The environment variable could not be retrieved."
+  echo ""
+  echo "Did you run the 'initialize-greenfield-environment.sh' script to set the variable?"
+  echo "**********************************************************************************"
+  exit 1
 fi
 
-# Create or get new relic license key secret
+# Get new relic license key secret
 
 NEW_RELIC_LICENSE_KEY=$(./get-database-secret.py $CMS_ENV new_relic_license_key $DATABASE_SECRET_DATETIME)
 if [ -z "${NEW_RELIC_LICENSE_KEY}" ]; then
-  echo "*********************************************************"
-  ./create-database-secret.py $CMS_ENV new_relic_license_key $KMS_KEY_ID $DATABASE_SECRET_DATETIME
-  echo "*********************************************************"
-  NEW_RELIC_LICENSE_KEY=$(./get-database-secret.py $CMS_ENV new_relic_license_key $DATABASE_SECRET_DATETIME)
+  echo "**********************************************************************************"
+  echo "ERROR: The environment variable could not be retrieved."
+  echo ""
+  echo "Did you run the 'initialize-greenfield-environment.sh' script to set the variable?"
+  echo "**********************************************************************************"
+  exit 1
 fi
 
-# Create or get private ip address CIDR range for VPN
+# Get private ip address CIDR range for VPN
 
 VPN_PRIVATE_IP_ADDRESS_CIDR_RANGE=$(./get-database-secret.py $CMS_ENV vpn_private_ip_address_cidr_range $DATABASE_SECRET_DATETIME)
 if [ -z "${VPN_PRIVATE_IP_ADDRESS_CIDR_RANGE}" ]; then
-  echo "*********************************************************"
-  ./create-database-secret.py $CMS_ENV vpn_private_ip_address_cidr_range $KMS_KEY_ID $DATABASE_SECRET_DATETIME
-  echo "*********************************************************"
-  VPN_PRIVATE_IP_ADDRESS_CIDR_RANGE=$(./get-database-secret.py $CMS_ENV vpn_private_ip_address_cidr_range $DATABASE_SECRET_DATETIME)
+  echo "**********************************************************************************"
+  echo "ERROR: The environment variable could not be retrieved."
+  echo ""
+  echo "Did you run the 'initialize-greenfield-environment.sh' script to set the variable?"
+  echo "**********************************************************************************"
+  exit 1
+fi
+
+# Get AB2D keystore location
+
+AB2D_KEYSTORE_LOCATION=$(./get-database-secret.py $CMS_ENV ab2d_keystore_location $DATABASE_SECRET_DATETIME)
+if [ -z "${AB2D_KEYSTORE_LOCATION}" ]; then
+  echo "**********************************************************************************"
+  echo "ERROR: The environment variable could not be retrieved."
+  echo ""
+  echo "Did you run the 'initialize-greenfield-environment.sh' script to set the variable?"
+  echo "**********************************************************************************"
+  exit 1
+fi
+
+# Get AB2D keystore password
+
+AB2D_KEYSTORE_PASSWORD=$(./get-database-secret.py $CMS_ENV ab2d_keystore_password $DATABASE_SECRET_DATETIME)
+if [ -z "${AB2D_KEYSTORE_PASSWORD}" ]; then
+  echo "**********************************************************************************"
+  echo "ERROR: The environment variable could not be retrieved."
+  echo ""
+  echo "Did you run the 'initialize-greenfield-environment.sh' script to set the variable?"
+  echo "**********************************************************************************"
+  exit 1
 fi
 
 # If any databse secret produced an error, exit the script
@@ -507,7 +553,9 @@ if [ "${DATABASE_USER}" == "ERROR: Cannot get database secret because KMS key is
   || [ "${HICN_HASH_ITER}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
   || [ "${NEW_RELIC_APP_NAME}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
   || [ "${NEW_RELIC_LICENSE_KEY}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
-  || [ "${VPN_PRIVATE_IP_ADDRESS_CIDR_RANGE}" == "ERROR: Cannot get database secret because KMS key is disabled!" ]; then
+  || [ "${VPN_PRIVATE_IP_ADDRESS_CIDR_RANGE}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
+  || [ "${AB2D_KEYSTORE_LOCATION}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
+  || [ "${AB2D_KEYSTORE_PASSWORD}" == "ERROR: Cannot get database secret because KMS key is disabled!" ]; then
     echo "ERROR: Cannot get secrets because KMS key is disabled!"
     exit 1
 fi
