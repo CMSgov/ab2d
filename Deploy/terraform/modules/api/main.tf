@@ -179,6 +179,10 @@ resource "aws_ecs_task_definition" "api" {
 	  "value" : "${var.ab2d_keystore_password}"
 	},
         {
+	  "name" : "AB2D_OKTA_JWT_ISSUER",
+	  "value" : "${var.ab2d_okta_jwt_issuer}"
+	},
+        {
 	  "name" : "NEW_RELIC_APP_NAME",
 	  "value" : "${var.new_relic_app_name}"
 	},

@@ -76,3 +76,5 @@ variable "vpn_private_ip_address_cidr_range" {}
 
 variable "ab2d_keystore_location" {}
 variable "ab2d_keystore_password" {}
+
+variable "ab2d_okta_jwt_issuer" {}
