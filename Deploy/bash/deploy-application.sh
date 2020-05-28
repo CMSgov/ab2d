@@ -529,6 +529,35 @@ fi
 
 VPN_PRIVATE_IP_ADDRESS_CIDR_RANGE=$(./get-database-secret.py $CMS_ENV vpn_private_ip_address_cidr_range $DATABASE_SECRET_DATETIME)
 
+if [ -z "${VPN_PRIVATE_IP_ADDRESS_CIDR_RANGE}" ]; then
+  echo "**********************************************************"
+  echo "ERROR: VPN private IP address CIDR range secret not found."
+  echo "**********************************************************"
+  exit 1
+fi
+
+# Get AB2D keystore location
+
+AB2D_KEYSTORE_LOCATION=$(./get-database-secret.py $CMS_ENV ab2d_keystore_location $DATABASE_SECRET_DATETIME)
+
+if [ -z "${AB2D_KEYSTORE_LOCATION}" ]; then
+  echo "***********************************************"
+  echo "ERROR: AB2D keystore location secret not found."
+  echo "***********************************************"
+  exit 1
+fi
+
+# Get AB2D keystore password
+
+AB2D_KEYSTORE_PASSWORD=$(./get-database-secret.py $CMS_ENV ab2d_keystore_location $DATABASE_SECRET_DATETIME)
+
+if [ -z "${AB2D_KEYSTORE_PASSWORD}" ]; then
+  echo "***********************************************"
+  echo "ERROR: AB2D keystore password secret not found."
+  echo "***********************************************"
+  exit 1
+fi
+
 # If any databse secret produced an error, exit the script
 
 if [ "${DATABASE_USER}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
@@ -541,7 +570,9 @@ if [ "${DATABASE_USER}" == "ERROR: Cannot get database secret because KMS key is
   || [ "${HICN_HASH_ITER}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
   || [ "${NEW_RELIC_APP_NAME}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
   || [ "${NEW_RELIC_LICENSE_KEY}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
-  || [ "${VPN_PRIVATE_IP_ADDRESS_CIDR_RANGE}" == "ERROR: Cannot get database secret because KMS key is disabled!" ]; then
+  || [ "${VPN_PRIVATE_IP_ADDRESS_CIDR_RANGE}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
+  || [ "${AB2D_KEYSTORE_LOCATION}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
+  || [ "${AB2D_KEYSTORE_PASSWORD}" == "ERROR: Cannot get database secret because KMS key is disabled!" ]; then
     echo "ERROR: Cannot get secrets because KMS key is disabled!"
     exit 1
 fi
@@ -1267,6 +1298,8 @@ terraform apply \
   --var "alb_internal=$ALB_INTERNAL" \
   --var "alb_security_group_ip_range=$ALB_SECURITY_GROUP_IP_RANGE" \
   --var "vpn_private_ip_address_cidr_range=${VPN_PRIVATE_IP_ADDRESS_CIDR_RANGE}" \
+  --var "ab2d_keystore_location=${AB2D_KEYSTORE_LOCATION}" \
+  --var "ab2d_keystore_password=${AB2D_KEYSTORE_PASSWORD}" \
   --target module.api \
   --auto-approve
 
