@@ -164,7 +164,7 @@ resource "aws_ecs_task_definition" "api" {
 	},
         {
 	  "name" : "AB2D_EXECUTION_ENV",
-	  "value" : "${lower(var.env)}"
+	  "value" : "${lower(var.execution_env)}"
 	},
         {
 	  "name" : "AB2D_DB_SSL_MODE",
