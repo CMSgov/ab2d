@@ -171,6 +171,14 @@ resource "aws_ecs_task_definition" "api" {
 	  "value" : "require"
 	},
         {
+	  "name" : "AB2D_KEYSTORE_LOCATION",
+	  "value" : "${var.ab2d_keystore_location}"
+	},
+        {
+	  "name" : "AB2D_KEYSTORE_PASSWORD",
+	  "value" : "${var.ab2d_keystore_password}"
+	},
+        {
 	  "name" : "NEW_RELIC_APP_NAME",
 	  "value" : "${var.new_relic_app_name}"
 	},

@@ -430,3 +430,17 @@ variable "claims_skip_billable_period_check" {
 variable "jenkins_agent_sec_group_id" {
   default = "653916833532/sg-0e370f9dcfe051ed0"
 }
+
+#
+# AB2D Keystore for API
+#
+
+variable "ab2d_keystore_location" {
+  default     = ""
+  description = "Please pass this on command line and not as a value here"
+}
+
+variable "ab2d_keystore_password" {
+  default     = ""
+  description = "Please pass this on command line and not as a value here"
+}

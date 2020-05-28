@@ -178,6 +178,8 @@ module "api" {
   alb_internal                      = var.alb_internal
   alb_security_group_ip_range       = var.alb_security_group_ip_range
   vpn_private_ip_address_cidr_range = var.vpn_private_ip_address_cidr_range
+  ab2d_keystore_location            = var.ab2d_keystore_location
+  ab2d_keystore_password            = var.ab2d_keystore_password
 }
 
 module "worker" {

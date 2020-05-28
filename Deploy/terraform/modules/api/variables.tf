@@ -73,3 +73,6 @@ variable "new_relic_license_key" {}
 
 variable "alb_security_group_ip_range" {}
 variable "vpn_private_ip_address_cidr_range" {}
+
+variable "ab2d_keystore_location" {}
+variable "ab2d_keystore_password" {}
