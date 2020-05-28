@@ -21,6 +21,8 @@ lication-load-balancer)
 1. [Configure CloudWatch Log groups](#configure-cloudwatch-log-groups)
    * [Configure CloudTrail CloudWatch Log group](#configure-cloudtrail-cloudwatch-log-group)
    * [Configure VPC flow log CloudWatch Log group](#configure-vpc-flow-log-cloudwatch-log-group)
+   * [Configure CloudWatch Log groups for RDS](#configure-cloudwatch-log-groups-for-rds)
+   * [Submit a ticket to subscribe log groups to Splunk](#submit-a-ticket-to-subscribe-log-groups-to-splunk)
 
 ## Obtain and import api.ab2d.cms.gov entrust certificate](#obtain-and-import-apiab2dcmsgov-entrust-certificate)
 
@@ -1048,3 +1050,11 @@ lication-load-balancer)
    ```
    /aws/rds/instance/ab2d/postgresql
    ```
+
+### Submit a ticket to subscribe log groups to Splunk
+
+> *** TO DO ***
+
+*See this ticket:*
+
+> https://jiraent.cms.gov/servicedesk/customer/portal/13/CLDSUPSD-7398
