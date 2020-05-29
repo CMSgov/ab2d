@@ -76,6 +76,20 @@ resource "aws_security_group" "load_balancer" {
   }
 }
 
+data "aws_security_group" "cms_cloud_vpn" {
+  name = "cmscloud-vpn"
+}
+
+resource "aws_security_group_rule" "cms_cloud_vpn_access" {
+  type        = "ingress"
+  description = "CMS Cloud VPN Access"
+  from_port   = "-1"
+  to_port     = "-1"
+  protocol    = "-1"
+  source_security_group_id = aws_security_group.cms_cloud_vpn.id
+  security_group_id = aws_security_group.load_balancer.id
+}
+
 resource "aws_security_group_rule" "load_balancer_access" {
   type        = "ingress"
   description = "${lower(var.env)} website access"
