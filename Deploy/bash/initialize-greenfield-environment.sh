@@ -327,7 +327,7 @@ set_secrets ()
     AB2D_KEYSTORE_PASSWORD=$(./get-database-secret.py $CMS_ENV_GE ab2d_keystore_password $DATABASE_SECRET_DATETIME)
   fi
 
-  # Create or get AB2D keystore password
+  # Create or get OKTA JWT issuer
 
   AB2D_OKTA_JWT_ISSUER=$(./get-database-secret.py $CMS_ENV_GE ab2d_okta_jwt_issuer $DATABASE_SECRET_DATETIME)
   if [ -z "${AB2D_OKTA_JWT_ISSUER}" ]; then
