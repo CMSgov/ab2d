@@ -166,6 +166,16 @@ public class RoleTests {
     }
 
     @Test
+    public void testWrongRoleCreateJobByContractOnBehalfOfUser() throws Exception {
+        token = testUtil.setupToken(List.of(SPONSOR_ROLE));
+
+        this.mockMvc.perform(put(API_PREFIX +  ADMIN_PREFIX + "/user/testuser/job/Z0001")
+                .contentType(MediaType.APPLICATION_JSON)
+                .header("Authorization", "Bearer " + token))
+                .andExpect(status().is(403));
+    }
+
+    @Test
     public void testWrongRoleEnableUser() throws Exception {
         token = testUtil.setupToken(List.of(SPONSOR_ROLE));
 

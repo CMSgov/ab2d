@@ -160,6 +160,18 @@ public class AdminAPI {
         return bulkDataAccessAPI.exportAllPatients(request, resourceTypes, outputFormat, since);
     }
 
+    @PostMapping("/user/{username}/job/{contractNumber}")
+    public ResponseEntity<Void> createJobByContractOnBehalfOfUser(@PathVariable @NotBlank String username,
+                                                        @PathVariable @NotBlank String contractNumber,
+                                                        HttpServletRequest request,
+                                                        @RequestParam(required = false, name = "_type", defaultValue = EOB) String resourceTypes,
+                                                        @RequestParam(required = false, name = "_outputFormat") String outputFormat,
+                                                        @RequestParam(required = false, name = "_since") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime since) {
+        userService.setupUserImpersonation(username, request);
+
+        return bulkDataAccessAPI.exportPatientsWithContract(request, contractNumber, resourceTypes, outputFormat, since);
+    }
+
     @ResponseStatus(value = HttpStatus.OK)
     @PutMapping("/user/{username}/enable")
     public ResponseEntity<UserDTO> enableUser(@PathVariable @NotBlank String username) {
