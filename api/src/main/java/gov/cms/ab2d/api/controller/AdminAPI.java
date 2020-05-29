@@ -183,4 +183,10 @@ public class AdminAPI {
     public ResponseEntity<UserDTO> disableUser(@PathVariable @NotBlank String username) {
         return new ResponseEntity<>(userService.disableUser(username), null, HttpStatus.OK);
     }
+
+    @ResponseStatus(value = HttpStatus.OK)
+    @GetMapping("/user/{username}")
+    public ResponseEntity<UserDTO> getUser(@PathVariable @NotBlank String username) {
+        return new ResponseEntity<>(userService.getUser(username), null, HttpStatus.OK);
+    }
 }

@@ -3,6 +3,7 @@ package gov.cms.ab2d.api.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.okta.jwt.JwtVerificationException;
 import gov.cms.ab2d.api.SpringBootApp;
+import gov.cms.ab2d.common.dto.ContractDTO;
 import gov.cms.ab2d.common.dto.SponsorDTO;
 import gov.cms.ab2d.common.dto.UserDTO;
 import gov.cms.ab2d.common.model.Contract;
@@ -38,6 +39,7 @@ import static gov.cms.ab2d.common.util.Constants.ADMIN_ROLE;
 import static gov.cms.ab2d.common.util.DataSetup.TEST_USER;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -354,10 +356,57 @@ public class AdminAPIUserTests {
                 .andExpect(status().is(404));
     }
 
+    @Test
+    public void getUser() throws Exception {
+        // Ensure user is in right state first
+        setupUser(true);
+
+        MvcResult mvcResult = this.mockMvc.perform(
+                get(API_PREFIX + ADMIN_PREFIX + USER_URL + "/" + ENABLE_DISABLE_USER)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header("Authorization", "Bearer " + token))
+                .andReturn();
+
+        Assert.assertEquals(mvcResult.getResponse().getStatus(), 200);
+
+        ObjectMapper mapper = new ObjectMapper();
+
+        String getResult = mvcResult.getResponse().getContentAsString();
+        UserDTO userDTO = mapper.readValue(getResult, UserDTO.class);
+
+        Assert.assertEquals(userDTO.getEmail(), "test@test.com");
+        Assert.assertEquals(userDTO.getUsername(), ENABLE_DISABLE_USER);
+        Assert.assertEquals(userDTO.getFirstName(), "test");
+        Assert.assertEquals(userDTO.getLastName(), "user");
+        Assert.assertEquals(userDTO.getEnabled(), true);
+        Assert.assertEquals(userDTO.getSponsor().getHpmsId(), Integer.valueOf(123543));
+        Assert.assertEquals(userDTO.getSponsor().getOrgName(), "Test 1");
+        ContractDTO contractDTO = userDTO.getContracts().iterator().next();
+        Assert.assertEquals(contractDTO.getContractNumber(), "Z0000");
+        Assert.assertEquals(contractDTO.getContractName(), "Test Contract");
+        Assert.assertNotNull(contractDTO.getAttestedOn());
+    }
+
+    @Test
+    public void getUserNotFound() throws Exception {
+        MvcResult mvcResult = this.mockMvc.perform(
+                get(API_PREFIX + ADMIN_PREFIX + USER_URL + "/userNotFound")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header("Authorization", "Bearer " + token))
+                .andReturn();
+
+        Assert.assertEquals(mvcResult.getResponse().getStatus(), 404);
+    }
+
     private void setupUser(boolean enabled) {
         Sponsor savedSponsor = dataSetup.createSponsor("Parent Corp. 1", 34534, "Test 1", 123543);
+        Contract contract = dataSetup.setupContract(savedSponsor, "Z0000");
+        savedSponsor.setContracts(Set.of(contract));
         User user = new User();
         user.setUsername(ENABLE_DISABLE_USER);
+        user.setEmail("test@test.com");
+        user.setFirstName("test");
+        user.setLastName("user");
         user.setEnabled(enabled);
         user.setSponsor(savedSponsor);
 

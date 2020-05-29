@@ -194,4 +194,14 @@ public class RoleTests {
                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(403));
     }
+
+    @Test
+    public void testWrongRoleGetUser() throws Exception {
+        token = testUtil.setupToken(List.of(SPONSOR_ROLE));
+
+        this.mockMvc.perform(get(API_PREFIX +  ADMIN_PREFIX + "/user/" + TEST_USER)
+                .contentType(MediaType.APPLICATION_JSON)
+                .header("Authorization", "Bearer " + token))
+                .andExpect(status().is(403));
+    }
 }
