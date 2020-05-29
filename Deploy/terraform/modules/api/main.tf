@@ -77,7 +77,10 @@ resource "aws_security_group" "load_balancer" {
 }
 
 data "aws_security_group" "cms_cloud_vpn" {
-  name = "cmscloud-vpn"
+  filter {
+    name   = "group-name"
+    values = ["cmscloud-vpn"]
+  }
 }
 
 resource "aws_security_group_rule" "cms_cloud_vpn_access" {
