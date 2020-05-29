@@ -558,6 +558,15 @@ if [ -z "${AB2D_KEYSTORE_PASSWORD}" ]; then
   exit 1
 fi
 
+AB2D_OKTA_JWT_ISSUER=$(./get-database-secret.py $CMS_ENV ab2d_okta_jwt_issuer $DATABASE_SECRET_DATETIME)
+
+if [ -z "${AB2D_OKTA_JWT_ISSUER}" ]; then
+  echo "*********************************************"
+  echo "ERROR: AB2D OKTA JWT issuer secret not found."
+  echo "*********************************************"
+  exit 1
+fi
+
 # If any databse secret produced an error, exit the script
 
 if [ "${DATABASE_USER}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
