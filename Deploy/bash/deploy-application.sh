@@ -549,7 +549,7 @@ fi
 
 # Get AB2D keystore password
 
-AB2D_KEYSTORE_PASSWORD=$(./get-database-secret.py $CMS_ENV ab2d_keystore_location $DATABASE_SECRET_DATETIME)
+AB2D_KEYSTORE_PASSWORD=$(./get-database-secret.py $CMS_ENV ab2d_keystore_password $DATABASE_SECRET_DATETIME)
 
 if [ -z "${AB2D_KEYSTORE_PASSWORD}" ]; then
   echo "***********************************************"
