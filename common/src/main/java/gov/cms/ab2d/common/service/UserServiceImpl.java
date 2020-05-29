@@ -127,4 +127,11 @@ public class UserServiceImpl implements UserService {
         User updatedUser = userRepository.saveAndFlush(user);
         return mapping.getModelMapper().map(updatedUser, UserDTO.class);
     }
+
+    @Override
+    public UserDTO getUser(String username) {
+        User user = getUserByUsername(username);
+
+        return mapping.getModelMapper().map(user, UserDTO.class);
+    }
 }
