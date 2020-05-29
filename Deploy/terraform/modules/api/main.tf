@@ -89,7 +89,7 @@ resource "aws_security_group_rule" "cms_cloud_vpn_access" {
   from_port   = "-1"
   to_port     = "-1"
   protocol    = "-1"
-  source_security_group_id = aws_security_group.cms_cloud_vpn.id
+  source_security_group_id = data.aws_security_group.cms_cloud_vpn.id
   security_group_id = aws_security_group.load_balancer.id
 }
 
