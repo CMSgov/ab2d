@@ -9,6 +9,9 @@ lication-load-balancer)
 1. [Peer AB2D Dev, Sandbox, Impl environments with the BFD Sbx VPC and peer AB2D Prod with BFD Prod VPC](#peer-ab2d-dev-sandbox-impl-environments-with-the-bfd-sbx-vpc-and-peer-ab2d-prod-with-bfd-prod-vpc)
 1. [Encrypt BFD keystore and put in S3](#encrypt-bfd-keystore-and-put-in-s3)
 1. [Create a keystore for API nodes](#create-a-keystore-for-api-nodes)
+1. [Complete Okta production process](#complete-okta-production-process)
+   * [Register for Okta production](#register-for-okta-production)
+   * [Save the production Okta Client ID and Client Secret for the AB2D administrator account](#save-the-production-okta-client0id-and-client-secret-for-the-ab2d-administrator-account)
 1. [Deploy to production](#deploy-to-production)
    * [Initialize or verify base environment](#initialize-or-verify-base-environment)
    * [Encrypt and upload New Relic configuration file](#encrypt-and-upload-new-relic-configuration-file)
@@ -16,6 +19,11 @@ lication-load-balancer)
    * [Create or update AMI with latest gold disk](#create-or-update-ami-with-latest-gold-disk)
    * [Create or update infrastructure](#create-or-update-infrastructure)
    * [Create or update application for production](#create-or-update-application-for-production)
+1. [Upload HPMS Reports](#upload-hpms-reports)
+   * [Review HPMS Report requirements](#review-hpms-report-requirements)
+   * [Get 2020 Parent Organization and Legal Entity to Contract Report](#get-2020-parent-organization-and-legal-entity-to-contract-report)
+   * [Upload 2020 Parent Organization and Legal Entity to Contract Report data](#upload-2020-parent-organization-and-legal-entity-to-contract-report-data)
+   * [Get 2020 Attestation Report](#get-2020-attestation-report)
 1. [Submit an "Internet DNS Change Request Form" to product owner for the production application load balancer](#Submit an "internet-dns-change-request-form-to-product-owner-for-the-production-app
 1. [Configure CloudWatch Log groups](#configure-cloudwatch-log-groups)
    * [Configure CloudTrail CloudWatch Log group](#configure-cloudtrail-cloudwatch-log-group)
@@ -353,6 +361,59 @@ lication-load-balancer)
    AB2D Prod - API - Keystore               |ab2d_api_prod.p12
    AB2D Prod - API - Private Key            |ab2d_api_prod.key
    AB2D Prod - API - Self-signed Certificate|ab2d_api_prod.pem
+
+## Complete Okta production process
+
+### Register for Okta production
+
+1. Open Chrome
+
+1. Enter the following in the address bar
+
+   > https://test.reg.idm.cms.gov/registration.html
+
+1. Complete the registration process
+
+1. Provide the scrum master with your Okta username
+
+   *For example:*
+
+   ```
+   fred.smith@semanticbits.com
+   ```
+
+> *** TO DO ***: Ask John if he recalls the process after this step.
+
+### Save the production Okta Client ID and Client Secret for the AB2D administrator account
+
+1. Open Chrome
+
+1. Enter the following in the address bar
+
+   > https://idm.cms.gov/app/UserHome
+
+1. Complete the log on
+
+1. Select **Admin** from the top right of the page
+
+1. Select the **Applications** tab
+
+1. Select **AB2D - Admin**
+
+1. Note the following:
+
+   - the client ID of "AB2D Admin" is the public identifier for the client that is required for all OAuth flows
+
+   - the client ID of "AB2D Admin" will be the same for every AB2D environment
+
+1. Save the **Client ID** and **Client secret** under the "Client Credentials" section to 1Password as follows
+
+   *Format:*
+
+   1Password Type|Label                                |Value
+   --------------|-------------------------------------|-------------------------------
+   Secure Note   |AB2D Prod - OKTA Prod - Client ID    |{okta ab2d admin client id}
+   Password      |AB2D Prod - OKTA Prod - Client Secret|{okta ab2d admin client secret}
 
 ## Deploy to production
 
@@ -778,7 +839,287 @@ lication-load-balancer)
    $ ./bash/deploy-application.sh
    ```
 
-### Submit an "Internet DNS Change Request Form" to product owner for the production application load balancer
+## Upload HPMS Reports
+
+### Review HPMS Report requirements
+
+1. Note that before the system can begin handling PDP requests, the database needs to be seeded with certain data from HPMS
+
+1. Note that the data comes from two HPMS reports that need to be uploaded in the following order:
+
+   - 2020 Parent Organization and Legal Entity to Contract Report
+
+   - 2020 Attestation Report
+
+### Get 2020 Parent Organization and Legal Entity to Contract Report
+
+1. Open Chrome
+
+1. Enter the following in the address bar
+
+   > https://hpms.cms.gov/app/home.aspx
+
+1. Log on to HPMS
+
+1. Select **OK** on the "hpms.cms.gov says" dialog
+
+1. Select **Contract Management**
+
+1. Select **Contact Reports**
+
+1. Select the following from the **Select a Contract Year** list
+
+   ```
+   2020
+   ```
+
+1. Select **Next** on the "Select a Contract Year" page
+
+1. Select the following from the **Select a Report** list
+
+   ```
+   Parent Organization and Legal Entity to Contract Report
+   ```
+
+1. Select **Next** on the "Contract Year 2020" page
+
+1. Select the **All Parent Organizations** radio button
+
+1. Select the **All Legal Entities** radio button
+
+1. Select **Next** on the "Contract Management Reports 2020" page
+
+1. Scroll down to the bottom of the page
+
+1. Select **Download to Excel**
+
+1. Wait for the download to complete
+
+1. Open the downloaded file
+
+   *Example:*
+
+   ```
+   parent_org_and_legal_entity_20200601_143055.xls
+   ```
+
+1. Select **Yes** on the "Alert" dialog to open the file in Excel
+
+1. Save the file in "xlsx" format
+
+   1. Select **File**
+
+   1. Select **Save as**
+
+   1. Select the following from the **File Format** dropdown
+
+      ```
+      Excel Workbook (.xlsx)
+      ```
+
+   1. Select **Save**
+
+1. Close Excel
+
+1. Open a terminal tab
+
+1. Change to the "Downloads" directory
+
+   ```ShellSession
+   $ cd ~/Downloads
+   ```
+
+1. Delete the "xls" file
+
+   ```ShellSession
+   $ rm -f parent_org_and_legal_entity_*.xls
+   ```
+
+1. Verify the name of the "xlsx" file
+
+   ```ShellSession
+   $ ls parent_org_and_legal_entity_*.xlsx
+   ```
+
+1. Note the name of the "xlsx" file
+
+   *Example:*
+
+   ```
+   parent_org_and_legal_entity_20200601_143055.xlsx
+   ```
+
+1. Return to the "HPMS" website
+
+1. Select **HPMS** in the top left of the page
+
+1. Select **Log Out**
+
+### Upload 2020 Parent Organization and Legal Entity to Contract Report data
+
+1. Open a terminal tab
+
+1. Remove any existing contract report data files from Postman working directory
+
+   ```ShellSession
+   $ rm -f ~/Postman/files/parent_org_and_legal_entity_*.xlsx
+   ```
+
+1. Copy the file to the Postman working directory
+
+   ```ShellSession
+   $ cp ~/Downloads/parent_org_and_legal_entity_*.xlsx ~/Postman/files
+   ```
+
+1. Set "AB2D Prod - OKTA Prod - Client ID" from 1Password
+
+   ```ShellSession
+   $ OKTA_AB2D_ADMIN_CLIENT_ID={okta ab2d admin client id}
+   ```
+
+1. Set "AB2D Prod - OKTA Prod - Client Secret" from 1Password
+
+   ```ShellSession
+   $ OKTA_AB2D_ADMIN_CLIENT_SECRET={okta ab2d admin client secret}
+   ```
+
+1. Set authorization by converting "client_id:client secret" to Base64
+
+   ```ShellSession
+   $ AUTH=$(echo -n "${OKTA_AB2D_ADMIN_CLIENT_ID}:${OKTA_AB2D_ADMIN_CLIENT_SECRET}" | base64)
+   ```
+
+1. Set "AB2D Prod - OKTA Prod - URL" from 1Password
+
+   ```ShellSession
+   $ AB2D_OKTA_JWT_ISSUER={ab2d okta jwt issuer}
+   ```
+
+1. Get bearer token
+
+   ```ShellSession
+   $ BEARER_TOKEN=$(curl -X POST "${AB2D_OKTA_JWT_ISSUER}/v1/token?grant_type=client_credentials&scope=clientCreds" \
+     -H "Content-Type: application/x-www-form-urlencoded" \
+     -H "Accept: application/json" \
+     -H "Authorization: Basic ${AUTH}" \
+     | jq --raw-output ".access_token")
+   ```
+
+1. Verify bearer token
+
+   ```ShellSession
+   $ echo $BEARER_TOKEN
+   ```
+
+1. Upload 2020 Parent Organization and Legal Entity to Contract Report data
+
+   > *** TO DO ***
+
+   *What is the correct curl statement?"
+   
+   ```ShellSession
+   $ curl \
+     --location \
+     --request POST 'https://api.ab2d.cms.gov/api/v1/admin/uploadOrgStructureReport' \
+     --header 'Content-Type: application/x-www-form-urlencoded' \
+     --header 'Accept: application/json' \
+     --header "Authorization: Bearer ${BEARER_TOKEN}" \
+     --form 'file=parent_org_and_legal_entity_20200601_143055.xlsx'
+
+   $ curl \
+     --location \
+     --request POST 'https://api.ab2d.cms.gov/api/v1/admin/uploadOrgStructureReport' \
+     --header "Authorization: Bearer ${BEARER_TOKEN}" \
+     --form 'file=parent_org_and_legal_entity_20200601_143055.xlsx'
+
+   $ curl \
+     --location \
+     --request POST 'https://api.ab2d.cms.gov/api/v1/admin/uploadOrgStructureReport' \
+     --header 'Content-Type: multipart/form-data' \
+     --header "Authorization: Bearer ${BEARER_TOKEN}" \
+     --form 'file=parent_org_and_legal_entity_20200601_143055.xlsx'
+   ```
+
+1. Query the database
+
+   ```ShellSession
+   select p.org_name as "Parent Org Name",
+     s.org_name as "Org Name",
+     s.hpms_id as "Org HPMS ID",
+     c.contract_number as "Contract Number"
+   from sponsor s
+     left join sponsor p on s.parent_id = p.id
+     inner join contract c on s.id = c.sponsor_id
+   where c.contract_number not like 'Z%';
+   ```
+
+### Get 2020 Attestation Report
+
+1. Open Chrome
+
+1. Enter the following in the address bar
+
+   > https://hpms.cms.gov/app/home.aspx
+
+1. Log on to HPMS
+
+1. Select **OK** on the "hpms.cms.gov says" dialog
+
+1. Select **Contract Management**
+
+1. Select **Claims Data Attestation**
+
+1. Select **Report** from the leftmost panel
+
+1. Select **Select All Contracts**
+
+1. Scroll down to the bottom of the page
+
+1. Select **Create Report**
+
+1. Select **Download to Excel** at the bottom of the page
+
+1. Wait for the download to complete
+
+1. Open the downloaded file
+
+   *Example:*
+
+   ```
+   Attestation_Report1591039077734.xlsx
+   ```
+
+1. Close Excel
+
+1. Open a terminal tab
+
+1. Change to the "Downloads" directory
+
+   ```ShellSession
+   $ cd ~/Downloads
+   ```
+
+1. Verify the name of the "xlsx" file
+
+   ```ShellSession
+   $ ls Attestation_Report*.xlsx
+   ```
+
+1. Note the name of the "xlsx" file
+
+   *Example:*
+
+   ```
+   Attestation_Report1591039077734.xlsx
+   ```
+
+1. Return to the "HPMS" website
+
+1. Select **HPMS** in the top left of the page
+
+1. Select **Log Out**
+
+## Submit an "Internet DNS Change Request Form" to product owner for the production application load balancer
 
 > *** TO DO ***
 
