@@ -959,6 +959,8 @@ lication-load-balancer)
 
 1. Open a terminal tab
 
+1. Note that even though we are not using Postman for this process, we will move the file to the Postman working directory (in case we want to use Postman for debugging purposes)
+
 1. Remove any existing contract report data files from Postman working directory
 
    ```ShellSession
@@ -968,7 +970,7 @@ lication-load-balancer)
 1. Copy the file to the Postman working directory
 
    ```ShellSession
-   $ cp ~/Downloads/parent_org_and_legal_entity_*.xlsx ~/Postman/files
+   $ mv ~/Downloads/parent_org_and_legal_entity_*.xlsx ~/Postman/files
    ```
 
 1. Set "AB2D Prod - OKTA Prod - Client ID" from 1Password
@@ -1011,34 +1013,49 @@ lication-load-balancer)
    $ echo $BEARER_TOKEN
    ```
 
+1. Change to the Postman working directory
+
+   ```ShellSession
+   $ cd ~/Postman/files
+   ```
+
 1. Upload 2020 Parent Organization and Legal Entity to Contract Report data
-
-   > *** TO DO ***
-
-   *What is the correct curl statement?"
    
    ```ShellSession
    $ curl \
-     --location \
-     --request POST 'https://api.ab2d.cms.gov/api/v1/admin/uploadOrgStructureReport' \
-     --header 'Content-Type: application/x-www-form-urlencoded' \
-     --header 'Accept: application/json' \
-     --header "Authorization: Bearer ${BEARER_TOKEN}" \
-     --form 'file=parent_org_and_legal_entity_20200601_143055.xlsx'
-
-   $ curl \
+     -sD - \
      --location \
      --request POST 'https://api.ab2d.cms.gov/api/v1/admin/uploadOrgStructureReport' \
      --header "Authorization: Bearer ${BEARER_TOKEN}" \
-     --form 'file=parent_org_and_legal_entity_20200601_143055.xlsx'
-
-   $ curl \
-     --location \
-     --request POST 'https://api.ab2d.cms.gov/api/v1/admin/uploadOrgStructureReport' \
-     --header 'Content-Type: multipart/form-data' \
-     --header "Authorization: Bearer ${BEARER_TOKEN}" \
-     --form 'file=parent_org_and_legal_entity_20200601_143055.xlsx'
+     --form 'file=@parent_org_and_legal_entity_20200601_143055.xlsx'
    ```
+
+1. Change to the "Deploy" directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d/Deploy
+   ```
+
+1. Connect to a worker node for production
+
+   ```ShellSesssion
+   $ ./bash/connect-to-node.sh
+   ```
+
+1. Get database secerets
+
+   ```ShellSession
+   $ export DATABASE_HOST=$(docker exec -it $(docker ps -aqf "name=ecs-worker-*" --filter "status=running") bash -c 'echo "$AB2D_DB_HOST"' | tr -d '\r') \
+     && export DATABASE_NAME=$(docker exec -it $(docker ps -aqf "name=ecs-worker-*" --filter "status=running") bash -c 'echo "$AB2D_DB_DATABASE"' | tr -d '\r') \
+     && export DATABASE_USER=$(docker exec -it $(docker ps -aqf "name=ecs-worker-*" --filter "status=running") bash -c 'echo "$AB2D_DB_USER"' | tr -d '\r') \
+     && export PGPASSWORD=$(docker exec -it $(docker ps -aqf "name=ecs-worker-*" --filter "status=running") bash -c 'echo "$AB2D_DB_PASSWORD"' | tr -d '\r')
+   ```
+
+1. Connect to the database
+
+    ```ShellSession
+    $ psql --host "${DATABASE_HOST}" --username "${DATABASE_USER}" --dbname "${DATABASE_NAME}"
+    ```
 
 1. Query the database
 
@@ -1052,6 +1069,8 @@ lication-load-balancer)
      inner join contract c on s.id = c.sponsor_id
    where c.contract_number not like 'Z%';
    ```
+
+1. Spot check the results to see if the expected records have been inserted
 
 ### Get 2020 Attestation Report
 
