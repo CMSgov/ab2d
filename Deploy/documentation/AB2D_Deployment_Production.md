@@ -24,6 +24,7 @@ lication-load-balancer)
    * [Get 2020 Parent Organization and Legal Entity to Contract Report](#get-2020-parent-organization-and-legal-entity-to-contract-report)
    * [Upload 2020 Parent Organization and Legal Entity to Contract Report data](#upload-2020-parent-organization-and-legal-entity-to-contract-report-data)
    * [Get 2020 Attestation Report](#get-2020-attestation-report)
+   * [Upload 2020 Attestation Report data](#upload-2020-attestation-report-data)
 1. [Submit an "Internet DNS Change Request Form" to product owner for the production application load balancer](#Submit an "internet-dns-change-request-form-to-product-owner-for-the-production-app
 1. [Configure CloudWatch Log groups](#configure-cloudwatch-log-groups)
    * [Configure CloudTrail CloudWatch Log group](#configure-cloudtrail-cloudwatch-log-group)
@@ -1019,6 +1020,12 @@ lication-load-balancer)
    $ cd ~/Postman/files
    ```
 
+1. Set the file name
+
+   ```ShellSession
+   $ FILE=$(ls parent_org_and_legal_entity_*.xlsx | tr -d '\r')
+   ```
+
 1. Upload 2020 Parent Organization and Legal Entity to Contract Report data
    
    ```ShellSession
@@ -1027,8 +1034,10 @@ lication-load-balancer)
      --location \
      --request POST 'https://api.ab2d.cms.gov/api/v1/admin/uploadOrgStructureReport' \
      --header "Authorization: Bearer ${BEARER_TOKEN}" \
-     --form 'file=@parent_org_and_legal_entity_20200601_143055.xlsx'
+     --form "file=@${FILE}"
    ```
+
+1. Verify that you get a "202" reponse
 
 1. Change to the "Deploy" directory
 
@@ -1137,6 +1146,133 @@ lication-load-balancer)
 1. Select **HPMS** in the top left of the page
 
 1. Select **Log Out**
+
+### Upload 2020 Attestation Report data
+
+1. Open a terminal tab
+
+1. Note that even though we are not using Postman for this process, we will move the file to the Postman working directory (in case we want to use Postman for debugging purposes)
+
+1. Remove any existing contract report data files from Postman working directory
+
+   ```ShellSession
+   $ rm -f ~/Postman/files/Attestation_Report*.xlsx
+   ```
+
+1. Copy the file to the Postman working directory
+
+   ```ShellSession
+   $ mv ~/Downloads/Attestation_Report*.xlsx ~/Postman/files
+   ```
+
+1. Set "AB2D Prod - OKTA Prod - Client ID" from 1Password
+
+   ```ShellSession
+   $ OKTA_AB2D_ADMIN_CLIENT_ID={okta ab2d admin client id}
+   ```
+
+1. Set "AB2D Prod - OKTA Prod - Client Secret" from 1Password
+
+   ```ShellSession
+   $ OKTA_AB2D_ADMIN_CLIENT_SECRET={okta ab2d admin client secret}
+   ```
+
+1. Set authorization by converting "client_id:client secret" to Base64
+
+   ```ShellSession
+   $ AUTH=$(echo -n "${OKTA_AB2D_ADMIN_CLIENT_ID}:${OKTA_AB2D_ADMIN_CLIENT_SECRET}" | base64)
+   ```
+
+1. Set "AB2D Prod - OKTA Prod - URL" from 1Password
+
+   ```ShellSession
+   $ AB2D_OKTA_JWT_ISSUER={ab2d okta jwt issuer}
+   ```
+
+1. Get bearer token
+
+   ```ShellSession
+   $ BEARER_TOKEN=$(curl -X POST "${AB2D_OKTA_JWT_ISSUER}/v1/token?grant_type=client_credentials&scope=clientCreds" \
+     -H "Content-Type: application/x-www-form-urlencoded" \
+     -H "Accept: application/json" \
+     -H "Authorization: Basic ${AUTH}" \
+     | jq --raw-output ".access_token")
+   ```
+
+1. Verify bearer token
+
+   ```ShellSession
+   $ echo $BEARER_TOKEN
+   ```
+
+1. Change to the Postman working directory
+
+   ```ShellSession
+   $ cd ~/Postman/files
+   ```
+
+1. Set the file name
+
+   ```ShellSession
+   $ FILE=$(ls Attestation_Report*.xlsx | tr -d '\r')
+   ```
+
+1. Upload 2020 Parent Organization and Legal Entity to Contract Report data
+   
+   ```ShellSession
+   $ curl \
+     -sD - \
+     --location \
+     --request POST 'https://api.ab2d.cms.gov/api/v1/admin/uploadAttestationReport' \
+     --header "Authorization: Bearer ${BEARER_TOKEN}" \
+     --form "file=@${FILE}"
+   ```
+
+1. Verify that you get a "202" reponse
+
+1. Change to the "Deploy" directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d/Deploy
+   ```
+
+1. Connect to a worker node for production
+
+   ```ShellSesssion
+   $ ./bash/connect-to-node.sh
+   ```
+
+1. Get database secerets
+
+   ```ShellSession
+   $ export DATABASE_HOST=$(docker exec -it $(docker ps -aqf "name=ecs-worker-*" --filter "status=running") bash -c 'echo "$AB2D_DB_HOST"' | tr -d '\r') \
+     && export DATABASE_NAME=$(docker exec -it $(docker ps -aqf "name=ecs-worker-*" --filter "status=running") bash -c 'echo "$AB2D_DB_DATABASE"' | tr -d '\r') \
+     && export DATABASE_USER=$(docker exec -it $(docker ps -aqf "name=ecs-worker-*" --filter "status=running") bash -c 'echo "$AB2D_DB_USER"' | tr -d '\r') \
+     && export PGPASSWORD=$(docker exec -it $(docker ps -aqf "name=ecs-worker-*" --filter "status=running") bash -c 'echo "$AB2D_DB_PASSWORD"' | tr -d '\r')
+   ```
+
+1. Connect to the database
+
+    ```ShellSession
+    $ psql --host "${DATABASE_HOST}" --username "${DATABASE_USER}" --dbname "${DATABASE_NAME}"
+    ```
+
+1. Query the database
+
+   ```ShellSession
+   select p.org_name as "Parent Org Name",
+     s.org_name        as "Org Name",
+     s.hpms_id         as "Org HPMS ID",
+     c.contract_number as "Contract Number",
+     c.attested_on     as "Attested On"
+   from sponsor s
+     left join sponsor p on s.parent_id = p.id
+     inner join contract c on s.id = c.sponsor_id
+   where c.contract_number not like 'Z%'
+   and c.attested_on is not null;
+   ```
+
+1. Spot check the results to see if the expected records have been inserted
 
 ## Submit an "Internet DNS Change Request Form" to product owner for the production application load balancer
 
