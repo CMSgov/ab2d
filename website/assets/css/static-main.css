@@ -6165,10 +6165,16 @@ article h2::after {
 .step-section {
     margin-right: 80px;
     margin-left: 80px;
+    cursor: pointer;
 }
 
 .claims-data-content {
     margin-top: 40px;
     background-color: #EDEBEA;
-    padding: 15px;
+    padding: 25px;
+}
+
+.section-header {
+    text-align: center;
+    margin-bottom: 20px;
 }
