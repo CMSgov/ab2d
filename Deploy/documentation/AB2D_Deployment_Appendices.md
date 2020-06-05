@@ -7779,8 +7779,6 @@
    ```
 
 1. Check the status of the job by entering the following at the terminal prompt
-
-   *Example for "Dev" environment:*
    
    ```ShellSession
    $ curl "https://sandbox.ab2d.cms.gov/api/v1/fhir/Job/${JOB}/\$status" \
@@ -7865,6 +7863,21 @@
 
    ```ShellSession
    $ cat $FILE
+   ```
+
+1. Try the download opeartion a second time
+
+   ```ShellSession
+   $ curl "https://sandbox.ab2d.cms.gov/api/v1/fhir/Job/${JOB}/file/${FILE}" \
+     -H "accept: application/json" \
+     -H "Accept: application/fhir+json" \
+     -H "Authorization: Bearer ${BEARER_TOKEN}"
+   ```
+
+1. Verify that the following error message is displayed
+
+   ```
+   {"resourceType":"OperationOutcome","issue":[{"severity":"error","code":"invalid","details":{"text":"The file is not present as it has already been downloaded. Please resubmit the job."}}]}
    ```
 
 ## Appendix OO: Merge a specific commit from master into your branch
