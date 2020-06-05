@@ -379,7 +379,7 @@
    $ ./bash/deploy-application.sh
    ```
 
-### Submit an "Internet DNS Change Request Form" to product owner for the sandbox application load balancer
+## Submit an "Internet DNS Change Request Form" to product owner for the sandbox application load balancer
 
 1. Open Chrome
 
@@ -403,7 +403,7 @@
    Internet DNS Change Request (2).pdf
    ```
 
-1. Fill out the form as follows
+1. Fill out the "Requestor Information" as follows
 
    *Requestor Information:*
 
@@ -415,6 +415,8 @@
 
    - **Phone:** {product owner phone}
 
+1. Fill out the "CMS Business Owner Information" as follows
+
    *CMS Business Owner Information*
 
    - **Name:** {business owner first name} {business owner last name}
@@ -425,7 +427,9 @@
 
    - **Phone:** {business owner phone}
 
-   - **Reason:** To support developers that will be integrating with the AB2D API
+   - **Reason:** {reason}
+
+1. Fill out the "DNS Change Information" as follows
 
    *DNS Change Information*
 
@@ -437,12 +441,46 @@
 
    - **Change Date & Time:** ASAP
 
-   - **Purpose of the change:** Initial launch of sandbox
+   - **Purpose of the change:** {reason}
 
-1. Submit the completed for to the product owner
+1. Print to PDF in order to preserve changes by doing the following
 
-1. Note that the product owner will complete the process
+   1. Select the **File** menu
 
-## Submit an "Internet DNS Change Request Form" to product owner for the sandbox application load balancer
+   1. Select **Print**
 
-> *** TO DO ***
+   1. Select **Save as PDF** from the dropdown at the bottom left of the dialog
+
+   1. Save as the following
+
+      ```
+      Internet DNS Change Request - sandbox.ab2d.cms.gov - akamai - revised.pdf
+      ```
+
+1. Open Chrome
+
+1. Enter the following in the address bar
+
+   > https://jira.cms.gov/servicedesk/customer/portal/1
+
+1. Select **Internet DNS Support** from the leftmost panel
+
+1. Select **Internet DNS Change**
+
+1. Complete the "Internet DNS Change" page as follows
+
+   - **Summary:** Map existing AB2D sandbox domain to Akamai
+
+   - **Site:** CMS.gov
+
+   - **Component:** OIT
+
+   - **Phone Number:** {product owner phone}
+
+   - **Priority:** Medium - Interferes with my duties, but work can continue
+
+   - **Project Lead:** {cms business owner}
+
+   - **Description:** See attached form
+
+   - **Attachment:** "Internet DNS Change Request - sandbox.ab2d.cms.gov - akamai - revised.pdf"
