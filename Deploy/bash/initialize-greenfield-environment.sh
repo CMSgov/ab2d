@@ -59,124 +59,9 @@ CMS_MGMT_ENV=ab2d-mgmt-east-dev
 # Define functions
 #
 
-# Define get temporary AWS credentials via CloudTamer API function
+# Import the "get temporary AWS credentials via CloudTamer API" function
 
-get_temporary_aws_credentials_via_cloudtamer_api ()
-{
-  # Set parameters
-
-  AWS_ACCOUNT_NUMBER_CT="$1"
-  CMS_ENV_CT="$2"
-
-  # Verify that CloudTamer user name and password environment variables are set
-
-  if [ -z $CLOUDTAMER_USER_NAME ] || [ -z $CLOUDTAMER_PASSWORD ]; then
-    echo ""
-    echo "----------------------------"
-    echo "Enter CloudTamer credentials"
-    echo "----------------------------"
-  fi
-
-  if [ -z $CLOUDTAMER_USER_NAME ]; then
-    echo ""
-    echo "Enter your CloudTamer user name (EUA ID):"
-    read CLOUDTAMER_USER_NAME
-  fi
-
-  if [ -z $CLOUDTAMER_PASSWORD ]; then
-    echo ""
-    echo "Enter your CloudTamer password:"
-    read CLOUDTAMER_PASSWORD
-  fi
-
-  # Get bearer token
-
-  echo ""
-  echo "--------------------"
-  echo "Getting bearer token"
-  echo "--------------------"
-  echo ""
-
-  BEARER_TOKEN=$(curl --location --request POST 'https://cloudtamer.cms.gov/api/v2/token' \
-    --header 'Accept: application/json' \
-    --header 'Accept-Language: en-US,en;q=0.5' \
-    --header 'Content-Type: application/json' \
-    --data-raw "{\"username\":\"${CLOUDTAMER_USER_NAME}\",\"password\":\"${CLOUDTAMER_PASSWORD}\",\"idms\":{\"id\":2}}" \
-    | jq --raw-output ".data.access.token")
-
-  if [ "${BEARER_TOKEN}" == "null" ]; then
-    echo "**********************************************************************************************"
-    echo "ERROR: Retrieval of bearer token failed."
-    echo ""
-    echo "Do you need to update your "CLOUDTAMER_PASSWORD" environment variable?"
-    echo ""
-    echo "Have you been locked out due to the failed password attempts?"
-    echo ""
-    echo "If you have gotten locked out due to failed password attempts, do the following:"
-    echo "1. Go to this site:"
-    echo "   https://jiraent.cms.gov/servicedesk/customer/portal/13"
-    echo "2. Select 'CMS Cloud Access Request'"
-    echo "3. Configure page as follows:"
-    echo "   - Summary: CloudTamer & CloudVPN account password reset for {your eua id}"
-    echo "   - CMS Business Unit: OEDA"
-    echo "   - Project Name: Project 058 BCDA"
-    echo "   - Types of Access/Resets: Cisco AnyConnect and AWS Console Password Resets [not MFA]"
-    echo "   - Approvers: Stephen Walter"
-    echo "   - Description"
-    echo "     I am locked out of VPN access due to failed password attempts."
-    echo "     Can you reset my CloudTamer & CloudVPN account password?"
-    echo "     EUA: {your eua id}"
-    echo "     email: {your email}"
-    echo "     cell phone: {your cell phone number}"
-    echo "4. After you submit your ticket, call the following number and give them your ticket number."
-    echo "   888-533-4777"
-    echo "**********************************************************************************************"
-    echo ""
-    exit 1
-  fi
-
-  # Get json output for temporary AWS credentials
-
-  echo ""
-  echo "-----------------------------"
-  echo "Getting temporary credentials"
-  echo "-----------------------------"
-  echo ""
-
-  JSON_OUTPUT=$(curl --location --request POST 'https://cloudtamer.cms.gov/api/v3/temporary-credentials' \
-    --header 'Accept: application/json' \
-    --header 'Accept-Language: en-US,en;q=0.5' \
-    --header 'Content-Type: application/json' \
-    --header "Authorization: Bearer ${BEARER_TOKEN}" \
-    --header 'Content-Type: application/json' \
-    --data-raw "{\"account_number\":\"${AWS_ACCOUNT_NUMBER_CT}\",\"iam_role_name\":\"ab2d-spe-developer\"}" \
-    | jq --raw-output ".data")
-
-  # Set default AWS region
-
-  export AWS_DEFAULT_REGION=us-east-1
-
-  # Get temporary AWS credentials
-
-  export AWS_ACCESS_KEY_ID=$(echo $JSON_OUTPUT | jq --raw-output ".access_key")
-  export AWS_SECRET_ACCESS_KEY=$(echo $JSON_OUTPUT | jq --raw-output ".secret_access_key")
-
-  # Get AWS session token (required for temporary credentials)
-
-  export AWS_SESSION_TOKEN=$(echo $JSON_OUTPUT | jq --raw-output ".session_token")
-
-  # Verify AWS credentials
-
-  if [ -z "${AWS_ACCESS_KEY_ID}" ] \
-      || [ -z "${AWS_SECRET_ACCESS_KEY}" ] \
-      || [ -z "${AWS_SESSION_TOKEN}" ]; then
-    echo "**********************************************************************"
-    echo "ERROR: AWS credentials do not exist for the ${CMS_ENV_CT} AWS account"
-    echo "**********************************************************************"
-    echo ""
-    exit 1
-  fi
-}
+source "${START_DIR}/functions/fn_get_temporary_aws_credentials_via_cloudtamer_api.sh"
 
 # Define set secrets function
 
@@ -371,8 +256,8 @@ configure_greenfield_environment ()
     
   # Get AWS credentials for target environment
   
-  get_temporary_aws_credentials_via_cloudtamer_api "${AWS_ACCOUNT_NUMBER_GE}" "${CMS_ENV_GE}"
-
+  fn_get_temporary_aws_credentials_via_cloudtamer_api "${AWS_ACCOUNT_NUMBER_GE}" "${CMS_ENV_GE}"
+  
   # Initialize and validate terraform for the target environment
 
   echo "******************************************************************************"
@@ -398,7 +283,7 @@ configure_greenfield_environment ()
   # - therefore, we are creating our own role that has the same policies but that also allows us
   #   to set trust relationships
   
-  AB2D_SPE_DEVELOPER_POLICIES=$(aws --region us-east-1 iam list-attached-role-policies \
+  AB2D_SPE_DEVELOPER_POLICIES=$(aws --region "${AWS_DEFAULT_REGION}" iam list-attached-role-policies \
     --role-name ab2d-spe-developer \
     --query "AttachedPolicies[*].PolicyArn" \
     | tr -d '[:space:]\n')
@@ -444,7 +329,7 @@ configure_greenfield_environment ()
     
     # Get AWS credentials for management environment
       
-    get_temporary_aws_credentials_via_cloudtamer_api "${CMS_MGMT_ENV_AWS_ACCOUNT_NUMBER}" "${CMS_MGMT_ENV}"
+    fn_get_temporary_aws_credentials_via_cloudtamer_api "${CMS_MGMT_ENV_AWS_ACCOUNT_NUMBER}" "${CMS_MGMT_ENV}"
 
     # Get the private IP address of Jenkins agent instance
     
@@ -465,6 +350,11 @@ configure_greenfield_environment ()
     fi
     
   fi
+  echo ""
+  echo "**********************************************************"
+  echo "${CMS_ENV_GE} greenfield environment configured"
+  echo "**********************************************************"
+  echo ""
 }
 
 #
