@@ -31,9 +31,9 @@ sudo yum -y install ./build/amazon-efs-utils*rpm --nogpgcheck
 
 sudo yum install gcc openssl-devel tcp_wrappers-devel -y
 cd /tmp
-curl -o stunnel-5.55.tar.gz https://www.stunnel.org/downloads/stunnel-5.55.tar.gz
-tar xvfz stunnel-5.55.tar.gz
-cd stunnel-5.55
+curl -o stunnel-5.56.tar.gz https://www.stunnel.org/downloads/stunnel-5.56.tar.gz
+tar xvfz stunnel-5.56.tar.gz
+cd stunnel-5.56
 sudo ./configure
 sudo make
 sudo rm -f /bin/stunnel
@@ -47,10 +47,12 @@ sudo mkdir /mnt/efs
 sudo cp /etc/fstab /etc/fstab.bak
 
 #####
-# *** TO DO ***: resolve TLS issue
-# echo '${efs_id} /mnt/efs efs _netdev,tls 0 0' | sudo tee -a /etc/fstab
+# Without TLS
+# echo '${efs_id}:/ /mnt/efs efs _netdev 0 0' | sudo tee -a /etc/fstab
 # sudo mount -a
-echo '${efs_id}:/ /mnt/efs efs _netdev 0 0' | sudo tee -a /etc/fstab
+#
+# With TLS
+echo '${efs_id}:/ /mnt/efs efs _netdev,tls,iam 0 0' | sudo tee -a /etc/fstab
 sudo mount -a
 #####
 
