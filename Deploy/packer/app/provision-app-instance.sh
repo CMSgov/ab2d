@@ -90,6 +90,10 @@ sudo chmod 755 /etc/use_dsa_with_iptables
 
 sudo sed -i '/SystemLogRateLimitBurst/c\$SystemLogRateLimitBurst 2000' /etc/rsyslog.conf
 
+# Configure log rotation for '/var/log/messages'
+
+sudo sed -i.bak '/messages/ r /deployment/logrotate-var-log-messages-config-snippet' /etc/logrotate.d/syslog
+
 # Configure New Relic infrastructure agent
 
 cd /tmp

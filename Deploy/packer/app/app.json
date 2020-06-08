@@ -79,6 +79,11 @@
       "destination": "/deployment/Rakefile"
     },
     {
+      "type": "file",
+      "source": "./logrotate-var-log-messages-config-snippet",
+      "destination": "/deployment/logrotate-var-log-messages-config-snippet"
+    },
+    {
       "type": "shell","inline": [
         "sudo chmod 755 /tmp/provision-app-instance.sh",
         "/tmp/provision-app-instance.sh --ssh-username={{user `ssh_username`}} --environment={{user `environment`}} --region={{user `region`}}"
