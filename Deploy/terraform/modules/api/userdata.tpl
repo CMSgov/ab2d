@@ -42,16 +42,24 @@ if [[ -f /bin/stunnel ]]; then sudo mv /bin/stunnel /root; fi
 sudo ln -s /usr/local/bin/stunnel /bin/stunnel
 
 # Configure running container instances to use an Amazon EFS file system
+#
+# Mounting Your Amazon EFS File System Automatically
+# https://docs.aws.amazon.com/efs/latest/ug/mount-fs-auto-mount-onreboot.html
 
 sudo mkdir /mnt/efs
 sudo cp /etc/fstab /etc/fstab.bak
 
 #####
+# -----------
 # Without TLS
+# -----------
 # echo '${efs_id}:/ /mnt/efs efs _netdev 0 0' | sudo tee -a /etc/fstab
 # sudo mount -a
 #
+# --------
 # With TLS
+# --------
+# Mount with IAM authorization to an Amazon EC2 instance that has an instance profile
 echo '${efs_id}:/ /mnt/efs efs _netdev,tls,iam 0 0' | sudo tee -a /etc/fstab
 sudo mount -a
 #####
