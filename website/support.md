@@ -13,15 +13,22 @@ active-nav: support-nav
 	<path fill="#ffffff" d="M0,21.3c0,0,209.3-48,517.1,0s517.1,0,517.1,0v22.5H0V21.3z"/>
     </svg>
     <div class="container">
-        <div class="section-header">
-            <strong>We are Listening!</strong>
-            <br />
-            If you have a question, suggestion, or feedback please post it in the AB2D Google Group!
+        <div class="row">
+            <div class="col">
+                <div class="header-title">We are listening</div>
+                If you have a question, suggestion, or feedback please post it in the AB2D Google Group!
+                <br />
+                <br />
+                <div class="google-group-wrapper">
+                    <div class="join-our-google-group">JOIN OUR GOOGLE GROUP</div>
+                </div>
+            </div>
+            <div class="col">
+                <img src="assets/img/experts.svg" />
+            </div>        
         </div>
-        <div class="section-header">
-            <strong>Frequently Asked Questions</strong>
-        </div>
-        
+
+        <br />
 
         <div id="accordion">
           <div class="card">

@@ -5001,7 +5001,8 @@ a.ds-c-vertical-nav__label:hover {
     margin-right: auto;
     max-width: 1040px;
     padding-left: 16px;
-    padding-right: 16px
+    padding-right: 16px;
+    background-color: #21272F;
 }
 
 @media (min-width:544px) {
@@ -6031,13 +6032,21 @@ pre {
 }
 
 footer:before {
-    background: linear-gradient(30deg, #087BAE 10%, #34EFA4 90%);
     content: '';
     position: relative;
     top: -48px;
     display: block;
     height: 3px;
     width: 100%
+}
+
+footer {
+    background-color: #21272F;
+    color: white;
+}
+
+footer a {
+    color: #8DE4FF;
 }
 /*
 Everything above is a direct copy from the BB css project
@@ -6160,6 +6169,128 @@ article h2::after {
         background: linear-gradient(30deg, #339392, #339392 83%, #62C5C4);
     }
 
+}
+
+.step-accessing-claims {
+    width: 49px;
+    height: 30px;
+    font-family: Muli;
+    font-size: 16px;
+    font-weight: bold;
+    font-stretch: normal;
+    font-style: normal;
+    line-height: 1.88;
+    letter-spacing: normal;
+    margin-bottom: 10px;
+    cursor: pointer;
+}
+.step-accessing-claims-active {
+    color: #35414f;
+    margin-left: 10px;
+}
+.step-accessing-claims-nonactive {
+    color: #939fad;
+}
+.step-header {
+    width: 70px;
+    height: 36px;
+    font-family: Montserrat;
+    font-size: 16px;
+    font-weight: bold;
+    font-stretch: normal;
+    font-style: normal;
+    line-height: 2.25;
+    letter-spacing: 2.67px;
+    color: #de3072;
+    margin-bottom: 15px;
+}
+.step-title {
+    height: 30px;
+    font-family: Montserrat;
+    font-size: 30px;
+    font-weight: bold;
+    font-stretch: normal;
+    font-style: normal;
+    line-height: 1;
+    letter-spacing: normal;
+    color: #35414f;
+    margin-bottom: 15px;
+}
+.line-copy {
+    width: 81px;
+    height: 2px;
+    border: solid 4px #2ac4f3;
+    margin-bottom: 15px;
+}
+.header-title {
+    font-family: Muli;
+    font-size: 22px;
+    font-weight: 800;
+    font-stretch: normal;
+    font-style: normal;
+    line-height: 1.36;
+    letter-spacing: normal;
+    color: #35414f;
+    margin-bottom: 15px;
+}
+
+.green-check {
+    font-size: 18px;
+    font-weight: normal;
+    font-stretch: normal;
+    font-style: normal;
+    line-height: 1.5;
+    letter-spacing: normal;
+    color: #539a01;
+    max-width: 20px;
+}
+
+.step-content {
+    margin-bottom: 50px;
+}
+
+.google-group-wrapper {
+    width: 361px;
+    height: 62px;
+    border-radius: 31px;
+    background-color: #0071bc;
+}
+.join-our-google-group {
+    width: 249px;
+    height: 19px;
+    font-family: Montserrat;
+    font-size: 16px;
+    font-weight: bold;
+    font-stretch: normal;
+    font-style: normal;
+    line-height: normal;
+    letter-spacing: 1.07px;
+    text-align: center;
+    color: #ffffff;
+}
+
+.understanding-the-data-overview {
+    font-family: Montserrat;
+    font-size: 16px;
+    font-weight: bold;
+    font-stretch: normal;
+    font-style: normal;
+    line-height: 2.25;
+    letter-spacing: 2.67px;
+    color: #de3072;
+}
+
+.understanding-the-data-section {
+    width: 994px;
+    height: 243px;
+    border-radius: 5px;
+    box-shadow: 0 3px 7px 0 rgba(0, 0, 0, 0.13);
+    background-color: #ffffff;
+    padding: 45px;
+    margin-bottom: 50px;
+}
+.understanding-the-data-section-image {
+    max-width: 200px;
 }
 
 .step-section {

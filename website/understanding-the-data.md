@@ -13,34 +13,79 @@ active-nav: understanding-the-data-nav
 	<path fill="#ffffff" d="M0,21.3c0,0,209.3-48,517.1,0s517.1,0,517.1,0v22.5H0V21.3z"/>
     </svg>
     <div class="container">
-        <div class="section-header"><strong>Overview</strong></div>
-        The AB2D API is a RESTful based web service providing Medicare Parts A and B claims data using the industry-
-        standard HL7 Fast Healthcare Interoperability Resources (FHIR) resources, specifically the Bulk FHIR specification.
-        The AB2D API only provides data records for active enrollees that have not opted out of data sharing and excludes
-        all claims with substance abuse codes (as required by the Confidentiality of Alcohol and Drug Abuse Patient
-        Records Regulations, 42 CFR Part 2).
-        Sample AB2D Files
-        The examples below were generated from synthetic claims data but are similar to the files that will be
-        retrieved through the AB2D API for Part D Sponsors.
-        <ol>
-        <li>
-        Parts A and Parts B Sample Export for a Given Contract Number (Will link to Sample Data File page-
-        Use attachment in email to review page content. *Only minor changes were made from the content in the
-        current website)
-        </li>
-        </ol>
-        <br />
-        <strong>Data Dictionary</strong>
-        <br />
-        AB2D API users can leverage the <a href="https://ab2d.cms.gov/data/data_dictionary.html" target="_blank">AB2D Data Dictionary</a> for more information on the data
-         elements.
-        <br /><br />
-        <strong>Additional Resources</strong>
-        <ul>
-            <li><a href="http://json.org" target="_blank">Intro to JSON Format</a> and <a href="http://ndjson.org/" target="_blank">
-             NDJSON</a></li>
-            <li><a href="https://jsonlint.com/" target="_blank">JSON format viewer/validator (raw text/JSON format converter)</a></li>
-        </ul>
+        <div class="row" style="margin-bottom: 70px;">
+            <div class="col">
+                <div class="understanding-the-data-overview">Overview</div>
+                The AB2D API is a RESTful based web service providing Medicare Parts A and B claims data using the industry-
+                standard <a href="" target="_blank">HL7 Fast Healthcare Interoperability Resources (FHIR)</a> resources, specifically the 
+                <a href="https://hl7.org/fhir/uv/bulkdata/export/index.html" target="_blank">Bulk FHIR specification</a>. The AB2D API only provides data records for active enrollees that have not opted out of data sharing and excludes
+                all claims with substance abuse codes (as required by the Confidentiality of Alcohol and Drug Abuse Patient
+                Records Regulations, 42 CFR Part 2).
+            </div>
+            <div class="col">
+                <img src="assets/img/data-analysis.svg" />
+            </div>
+        </div>
+        
+        <div class="understanding-the-data-section">
+            <div class="row">
+                <div class="col understanding-the-data-section-image">
+                    <img src="assets/img/paper.svg" />
+                </div>
+                <div class="col">
+                    <div class="header-title">Sample AB2D Files</div>
+                    The examples below were generated from synthetic claims data but are similar to the files that will be
+                    retrieved through the AB2D API for Part D Sponsors.
+                    <br /><br />
+                    <ul>
+                    <li>
+                    Parts A and Parts B Sample Export for a Given Contract Number (Will link to Sample Data File page-
+                    Use attachment in email to review page content. *Only minor changes were made from the content in the
+                    current website)
+                    </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <div class="understanding-the-data-section">
+            <div class="row">
+                <div class="col understanding-the-data-section-image">
+                    <img src="assets/img/book.svg" />
+                </div>
+                <div class="col">
+                    <div class="header-title">Data Dictionary</div>
+                    AB2D API users can leverage the AB2D Data Dictionary
+                     for more information on the data elements.
+                    <br /><br />
+                    <a href="https://ab2d.cms.gov/data/data_dictionary.html" target="_blank">View Data Dictionary</a>
+                </div>
+            </div>
+        </div>
+                
+        <div class="understanding-the-data-section">
+            <div class="row">
+                <div class="col understanding-the-data-section-image">
+                    <img src="assets/img/creativity.svg" />
+                </div>
+                <div class="col">
+                    <div class="header-title">Additional Resources</div>
+                    Here are some helpful resources you can reference while using this site:
+                    <br /><br />
+                    <ul>
+                        <li>
+                            <a href="http://json.org/" target="_blank">Intro to JSON Format</a>
+                        </li>
+                        <li>
+                            <a href="http://ndjson.org/" target="_blank">Newline Delimited JSON (ndjson)</a>
+                        </li>
+                        <li>
+                            <a href="https://jsonlint.com/" target="_blank">JSON format viewer/validator</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
         
     </div>
 </section>    
