@@ -438,6 +438,12 @@ lication-load-balancer)
 
 1. Open a terminal
 
+1. Change to the "Deploy" directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d/Deploy
+   ```
+
 1. Copy the New Relic configuration file to the "/tmp" directory
 
    ```ShellSession
@@ -549,7 +555,7 @@ lication-load-balancer)
 1. Create a password in 1Password with the following desrciption
 
    ```
-   AB2D_BFD_KEYSTORE_PASSWORD in Prod
+   AB2D Prod - BFD Prod - Keystore Password
    ```
 
 1. Remove temporary directory (if exists)
@@ -570,7 +576,7 @@ lication-load-balancer)
    $ cd ~/Downloads/bfd-integration
    ```
 
-1. Create a self-signed SSL certificate for AB2D client to BFD sandbox
+1. Create a self-signed SSL certificate for AB2D client to BFD Prod
 
    ```ShellSession
    $ openssl req \
@@ -598,7 +604,7 @@ lication-load-balancer)
      -name client_data_server_ab2d_prod_certificate
    ```
  
-1. Copy the "AB2D_BFD_KEYSTORE_PASSWORD in Prod" password from 1Password to the clipboard
+1. Copy the "AB2D Prod - BFD Prod - Keystore Password" password from 1Password to the clipboard
 
 1. Paste the password at the "Enter Export Password" prompt
 
@@ -637,7 +643,7 @@ lication-load-balancer)
    1. Enter the number of the desired AWS account where the desired logs reside
 
       ```
-      5
+      4 (Prod AWS Account)
       ```
 
    1. Get certificate from "prod.bfd.cms.gov"
@@ -657,7 +663,7 @@ lication-load-balancer)
 
 1. Note that the following file has been created
 
-   - prod.bfd.cms.gov.pem (certificate from the bfd sandbox server)
+   - prod.bfd.cms.gov.pem (certificate from the bfd prod server)
 
 1. Verify that there is a certificate inside of "prod.bfd.cms.gov.pem"
 
