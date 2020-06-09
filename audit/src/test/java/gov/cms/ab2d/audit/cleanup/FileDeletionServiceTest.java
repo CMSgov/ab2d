@@ -8,9 +8,16 @@ import gov.cms.ab2d.common.model.User;
 import gov.cms.ab2d.common.service.JobService;
 import gov.cms.ab2d.common.util.DataSetup;
 import gov.cms.ab2d.eventlogger.LoggableEvent;
+import gov.cms.ab2d.eventlogger.events.ApiRequestEvent;
+import gov.cms.ab2d.eventlogger.events.ApiResponseEvent;
+import gov.cms.ab2d.eventlogger.events.ContractBeneSearchEvent;
+import gov.cms.ab2d.eventlogger.events.ErrorEvent;
 import gov.cms.ab2d.eventlogger.events.FileEvent;
-import gov.cms.ab2d.eventlogger.reports.sql.LoadObjects;
+import gov.cms.ab2d.eventlogger.events.JobStatusChangeEvent;
+import gov.cms.ab2d.eventlogger.events.ReloadEvent;
+import gov.cms.ab2d.eventlogger.reports.sql.DoAll;
 import gov.cms.ab2d.eventlogger.utils.UtilMethods;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -63,7 +70,7 @@ public class FileDeletionServiceTest {
     private DataSetup dataSetup;
 
     @Autowired
-    private LoadObjects loadObjects;
+    private DoAll doAll;
 
     private static final String TEST_FILE = "testFile.ndjson";
 
@@ -84,6 +91,11 @@ public class FileDeletionServiceTest {
         BasicFileAttributeView attributes = Files.getFileAttributeView(path, BasicFileAttributeView.class);
         FileTime time = FileTime.fromMillis(LocalDate.now().minus(2, ChronoUnit.DAYS).toEpochDay());
         attributes.setTimes(time, time, time);
+    }
+
+    @BeforeEach
+    public void init() {
+        doAll.delete();
     }
 
     @Test
@@ -211,7 +223,7 @@ public class FileDeletionServiceTest {
         assertTrue(Files.exists(noPermissionsFileDestination));
 
         assertTrue(Files.exists(regularFileDestination));
-        List<LoggableEvent> fileEvents = loadObjects.loadAllFileEvent();
+        List<LoggableEvent> fileEvents = doAll.load(FileEvent.class);
         assertEquals(3, fileEvents.size());
         FileEvent e1 = (FileEvent) fileEvents.get(0);
         FileEvent e2 = (FileEvent) fileEvents.get(1);
@@ -227,12 +239,12 @@ public class FileDeletionServiceTest {
                 e3.getFileName().equalsIgnoreCase(destinationJobConnection.toString()));
 
         assertTrue(UtilMethods.allEmpty(
-                loadObjects.loadAllApiRequestEvent(),
-                loadObjects.loadAllApiResponseEvent(),
-                loadObjects.loadAllReloadEvent(),
-                loadObjects.loadAllContractBeneSearchEvent(),
-                loadObjects.loadAllErrorEvent(),
-                loadObjects.loadAllJobStatusChangeEvent()));
+                doAll.load(ApiRequestEvent.class),
+                doAll.load(ApiResponseEvent.class),
+                doAll.load(ReloadEvent.class),
+                doAll.load(ContractBeneSearchEvent.class),
+                doAll.load(ErrorEvent.class),
+                doAll.load(JobStatusChangeEvent.class)));
 
         // Cleanup
         Files.delete(destinationNotDeleted);

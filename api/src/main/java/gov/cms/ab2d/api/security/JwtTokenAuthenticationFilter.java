@@ -7,7 +7,7 @@ import com.okta.jwt.JwtVerificationException;
 import gov.cms.ab2d.common.model.User;
 import gov.cms.ab2d.common.service.ResourceNotFoundException;
 import gov.cms.ab2d.common.service.UserService;
-import gov.cms.ab2d.eventlogger.EventLogger;
+import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.events.ApiRequestEvent;
 import gov.cms.ab2d.eventlogger.utils.UtilMethods;
 import lombok.extern.slf4j.Slf4j;
@@ -44,7 +44,7 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
     private JwtConfig jwtConfig;
 
     @Autowired
-    private EventLogger eventLogger;
+    private LogManager eventLogger;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)

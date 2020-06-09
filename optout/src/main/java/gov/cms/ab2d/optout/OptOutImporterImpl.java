@@ -2,7 +2,7 @@ package gov.cms.ab2d.optout;
 
 import gov.cms.ab2d.common.model.OptOut;
 import gov.cms.ab2d.common.repository.OptOutRepository;
-import gov.cms.ab2d.eventlogger.EventLogger;
+import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.events.ReloadEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,7 +22,7 @@ public class OptOutImporterImpl implements OptOutImporter {
 
     private final OptOutRepository optOutRepository;
     private final OptOutConverterService optOutConverterService;
-    private final EventLogger eventLogger;
+    private final LogManager eventLogger;
 
     @Override
     @Transactional
@@ -31,6 +31,7 @@ public class OptOutImporterImpl implements OptOutImporter {
 
         int linesReadCount = 0;
         int insertedRowCount = 0;
+        int updatedRowCount = 0;
         while (iterator.hasNext()) {
             ++linesReadCount;
 
@@ -46,16 +47,25 @@ public class OptOutImporterImpl implements OptOutImporter {
                     log.info("Multiple({}) Patients for HICN {}", newOptOuts.size(), newOptOuts.get(0).getHicn());
                 }
 
-                newOptOuts.forEach(newOptOut -> saveOptOutRecord(newOptOut, filename));
-                insertedRowCount = insertedRowCount + newOptOuts.size();
+                for (OptOut newOptOut : newOptOuts) {
+                    OptOutSaveType optOutSaveType = saveOptOutRecord(newOptOut, filename);
+                    if (optOutSaveType == OptOutSaveType.INSERT) {
+                        insertedRowCount++;
+                    } else if (optOutSaveType == OptOutSaveType.UPDATE) {
+                        updatedRowCount++;
+                    }
+                }
             } catch (Exception e) {
                 log.error("Invalid opt out record - line number :[{}]", linesReadCount, e);
             }
         }
-        eventLogger.log(new ReloadEvent(null, ReloadEvent.FileType.OPT_OUT, filename, insertedRowCount));
+        int totalRows = insertedRowCount + updatedRowCount;
+        eventLogger.log(new ReloadEvent(null, ReloadEvent.FileType.OPT_OUT, filename,
+                totalRows));
 
         log.info("[{}] rows read from file", linesReadCount);
         log.info("[{}] rows inserted into opt_out table", insertedRowCount);
+        log.info("[{}] rows updated in opt_out table", updatedRowCount);
     }
 
     /**
@@ -68,13 +78,13 @@ public class OptOutImporterImpl implements OptOutImporter {
      * @param newOptOut
      * @param filename
      */
-    private void saveOptOutRecord(OptOut newOptOut, String filename) {
+    private OptOutSaveType saveOptOutRecord(OptOut newOptOut, String filename) {
         newOptOut.setFilename(filename);
 
         final Optional<OptOut> optDbData = optOutRepository.findByCcwIdAndHicn(newOptOut.getCcwId(), newOptOut.getHicn());
         if (optDbData.isEmpty()) {
             optOutRepository.save(newOptOut);
-            return;
+            return OptOutSaveType.INSERT;
         }
 
         // a row was found in the opt_out table with the same ccw_id & hicn.
@@ -84,6 +94,15 @@ public class OptOutImporterImpl implements OptOutImporter {
             dbOptOut.setEffectiveDate(newOptOut.getEffectiveDate());
             dbOptOut.setFilename(newOptOut.getFilename());
             optOutRepository.save(dbOptOut);
+
+            return OptOutSaveType.UPDATE;
         }
+
+        return null;
+    }
+
+    private enum OptOutSaveType {
+        INSERT,
+        UPDATE;
     }
 }

@@ -17,7 +17,6 @@ import org.springframework.data.util.Pair;
 import org.testcontainers.containers.DockerComposeContainer;
 import org.testcontainers.containers.output.Slf4jLogConsumer;
 import org.testcontainers.containers.wait.strategy.HostPortWaitStrategy;
-import org.testcontainers.junit.jupiter.Testcontainers;
 import org.yaml.snakeyaml.Yaml;
 
 import javax.crypto.SecretKey;
@@ -51,7 +50,6 @@ import static org.hamcrest.Matchers.matchesPattern;
 
 // Unit tests here can be run from the IDE and will use LOCAL as the default, they can also be run from the TestLauncher
 // class to specify a custom environment
-@Testcontainers
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @ExtendWith(TestRunnerParameterResolver.class)
 @Slf4j
@@ -68,6 +66,8 @@ public class TestRunner {
     private static final int JOB_TIMEOUT = 300;
 
     private static final int MAX_USER_JOBS = 3;
+
+    private String baseUrl = "";
 
     private Map<String, String> yamlMap;
 
@@ -105,9 +105,9 @@ public class TestRunner {
                     .withScaledService("worker", 2)
                     .withExposedService("db", 5432)
                     .withExposedService("api", 8443, new HostPortWaitStrategy()
-                        .withStartupTimeout(Duration.of(150, SECONDS)))
-                     .withLogConsumer("worker", new Slf4jLogConsumer(log)) // Use to debug, for now there's too much log data
-                     .withLogConsumer("api", new Slf4jLogConsumer(log));
+                        .withStartupTimeout(Duration.of(150, SECONDS)));
+                     //.withLogConsumer("worker", new Slf4jLogConsumer(log)) // Use to debug, for now there's too much log data
+                     //.withLogConsumer("api", new Slf4jLogConsumer(log));
             container.start();
         }
 
@@ -115,7 +115,7 @@ public class TestRunner {
         InputStream inputStream = getClass().getResourceAsStream("/" + environment.getConfigName());
         yamlMap = yaml.load(inputStream);
         String oktaUrl = yamlMap.get("okta-url");
-        String baseUrl = yamlMap.get("base-url");
+        baseUrl = yamlMap.get("base-url");
         AB2D_API_URL = APIClient.buildAB2DAPIUrl(baseUrl);
 
         String oktaClientId = System.getenv("OKTA_CLIENT_ID");
@@ -530,7 +530,7 @@ public class TestRunner {
         String oktaClientId = System.getenv("SECONDARY_USER_OKTA_CLIENT_ID");
         String oktaPassword = System.getenv("SECONDARY_USER_OKTA_CLIENT_PASSWORD");
 
-        return new APIClient(AB2D_API_URL, oktaUrl, oktaClientId, oktaPassword);
+        return new APIClient(baseUrl, oktaUrl, oktaClientId, oktaPassword);
     }
 
     @Test
@@ -618,7 +618,6 @@ public class TestRunner {
     // Consider removing if tests are failing
     @Test
     @Order(16)
-    @Disabled
     public void testOptOut() throws IOException, InterruptedException, JSONException {
         HttpResponse<String> exportResponse = apiClient.exportRequest(FHIR_TYPE, null);
 

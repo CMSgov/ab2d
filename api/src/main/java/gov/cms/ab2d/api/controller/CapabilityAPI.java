@@ -1,7 +1,7 @@
 package gov.cms.ab2d.api.controller;
 
 import com.google.gson.Gson;
-import gov.cms.ab2d.eventlogger.EventLogger;
+import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.events.ApiResponseEvent;
 import io.swagger.annotations.*;
 import lombok.extern.slf4j.Slf4j;
@@ -32,7 +32,7 @@ import static gov.cms.ab2d.common.util.Constants.REQUEST_ID;
 @RequestMapping(path = API_PREFIX + FHIR_PREFIX, produces = {"application/json", NDJSON_FIRE_CONTENT_TYPE})
 public class CapabilityAPI {
     @Autowired
-    private EventLogger eventLogger;
+    private LogManager eventLogger;
 
     @ApiOperation(value = "A request for the FHIR capability statement", response = String.class,
             produces = "application/json",

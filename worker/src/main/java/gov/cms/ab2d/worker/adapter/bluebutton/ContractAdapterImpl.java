@@ -4,7 +4,7 @@ import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.repository.ContractRepository;
 import gov.cms.ab2d.common.service.PropertiesService;
-import gov.cms.ab2d.eventlogger.EventLogger;
+import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.events.ReloadEvent;
 import gov.cms.ab2d.filter.FilterOutByDate;
 import gov.cms.ab2d.filter.FilterOutByDate.DateRange;
@@ -48,7 +48,7 @@ public class ContractAdapterImpl implements ContractAdapter {
     private final ContractRepository contractRepo;
     private final BeneficiaryService beneficiaryService;
     private final PropertiesService propertiesService;
-    private final EventLogger eventLogger;
+    private final LogManager eventLogger;
 
     @Override
     public GetPatientsByContractResponse getPatients(final String contractNumber, final int currentMonth) {

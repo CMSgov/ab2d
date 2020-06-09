@@ -9,7 +9,7 @@ import gov.cms.ab2d.common.model.OptOut;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.common.repository.OptOutRepository;
 import gov.cms.ab2d.common.util.Constants;
-import gov.cms.ab2d.eventlogger.EventLogger;
+import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.events.ErrorEvent;
 import gov.cms.ab2d.worker.adapter.bluebutton.GetPatientsByContractResponse;
 import gov.cms.ab2d.worker.adapter.bluebutton.GetPatientsByContractResponse.PatientDTO;
@@ -72,7 +72,7 @@ public class ContractProcessorImpl implements ContractProcessor {
     private final JobRepository jobRepository;
     private final PatientClaimsProcessor patientClaimsProcessor;
     private final OptOutRepository optOutRepository;
-    private final EventLogger eventLogger;
+    private final LogManager eventLogger;
 
     /**
      * Process the contract - retrieve all the patients for the contract and create a thread in the
@@ -202,8 +202,9 @@ public class ContractProcessorImpl implements ContractProcessor {
         try {
             var attestedOn = contractData.getContract().getAttestedOn();
             var sinceTime = contractData.getSinceTime();
-            var patientClaimsRequest = new PatientClaimsRequest(patient, helper, attestedOn, sinceTime, token);
-
+            var patientClaimsRequest = new PatientClaimsRequest(patient, helper, attestedOn, sinceTime,
+                    contractData.getUserId(), jobUuid,
+                    contractData.getContract() != null ? contractData.getContract().getContractNumber() : null, token);
             return patientClaimsProcessor.process(patientClaimsRequest);
 
         } finally {

@@ -1,7 +1,7 @@
 package gov.cms.ab2d.worker.processor;
 
 import gov.cms.ab2d.common.model.Contract;
-import gov.cms.ab2d.eventlogger.EventLogger;
+import gov.cms.ab2d.eventlogger.LogManager;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -22,7 +22,7 @@ class JobDataWriterTest {
     Path tempDir;
 
     @Mock
-    private EventLogger eventLogger;
+    private LogManager eventLogger;
     private StreamHelper cut;
     private String poem = "Twinkle Twinkle Little Star";
     private byte[] line = poem.getBytes();

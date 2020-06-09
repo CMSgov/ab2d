@@ -13,6 +13,7 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Maps all the different event classes to their SQL serializers
@@ -21,26 +22,46 @@ import java.util.Map;
 public class SqlMapperConfig {
     private final NamedParameterJdbcTemplate jdbcTemplate;
 
-    private Map<Class<? extends LoggableEvent>, SqlEventMapper> mapping = new HashMap<>();
+    private Map<Class<? extends LoggableEvent>, SqlEventMapper> mapperMapping = new HashMap<>();
+    private Map<Class<? extends LoggableEvent>, String> tableMapping = new HashMap<>();
 
     public SqlMapperConfig(NamedParameterJdbcTemplate jdbcTemplate) {
         this.jdbcTemplate = jdbcTemplate;
     }
 
     public SqlEventMapper getMapper(Class<? extends LoggableEvent> event) {
-        if (mapping.isEmpty()) {
+        if (mapperMapping.isEmpty()) {
             init();
         }
-        return mapping.get(event);
+        return mapperMapping.get(event);
+    }
+
+    public String getTableMapper(Class<? extends LoggableEvent> event) {
+        if (tableMapping.isEmpty()) {
+            init();
+        }
+        return tableMapping.get(event);
     }
 
     private void init() {
-        mapping.put(ApiRequestEvent.class, new ApiRequestEventMapper(jdbcTemplate));
-        mapping.put(ApiResponseEvent.class, new ApiResponseEventMapper(jdbcTemplate));
-        mapping.put(ReloadEvent.class, new ReloadEventMapper(jdbcTemplate));
-        mapping.put(ContractBeneSearchEvent.class, new ContractBeneSearchEventMapper(jdbcTemplate));
-        mapping.put(ErrorEvent.class, new ErrorEventMapper(jdbcTemplate));
-        mapping.put(FileEvent.class, new FileEventMapper(jdbcTemplate));
-        mapping.put(JobStatusChangeEvent.class, new JobStatusChangeEventMapper(jdbcTemplate));
+        mapperMapping.put(ApiRequestEvent.class, new ApiRequestEventMapper(jdbcTemplate));
+        mapperMapping.put(ApiResponseEvent.class, new ApiResponseEventMapper(jdbcTemplate));
+        mapperMapping.put(ReloadEvent.class, new ReloadEventMapper(jdbcTemplate));
+        mapperMapping.put(ContractBeneSearchEvent.class, new ContractBeneSearchEventMapper(jdbcTemplate));
+        mapperMapping.put(ErrorEvent.class, new ErrorEventMapper(jdbcTemplate));
+        mapperMapping.put(FileEvent.class, new FileEventMapper(jdbcTemplate));
+        mapperMapping.put(JobStatusChangeEvent.class, new JobStatusChangeEventMapper(jdbcTemplate));
+
+        tableMapping.put(ApiRequestEvent.class, "event_api_request");
+        tableMapping.put(ApiResponseEvent.class, "event_api_response");
+        tableMapping.put(ReloadEvent.class, "event_bene_reload");
+        tableMapping.put(ContractBeneSearchEvent.class, "event_bene_search");
+        tableMapping.put(ErrorEvent.class, "event_error");
+        tableMapping.put(FileEvent.class, "event_file");
+        tableMapping.put(JobStatusChangeEvent.class, "event_job_status_change");
+    }
+
+    public Set<Class<? extends LoggableEvent>> getClasses() {
+        return tableMapping.keySet();
     }
 }
