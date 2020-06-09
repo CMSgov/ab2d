@@ -73,7 +73,7 @@ resource "aws_ecs_task_definition" "worker" {
       "name": "${lower(var.env)}-worker",
       "image": "${var.ecr_repo_aws_account}.dkr.ecr.us-east-1.amazonaws.com/ab2d_worker:${lower(var.env)}-latest",
       "essential": true,
-      "cpu": 9,
+      "cpu": 10,
       "memory": ${var.ecs_task_def_memory},
       "mountPoints": [
         {
