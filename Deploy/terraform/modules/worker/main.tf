@@ -74,7 +74,7 @@ resource "aws_ecs_task_definition" "worker" {
       "image": "${var.ecr_repo_aws_account}.dkr.ecr.us-east-1.amazonaws.com/ab2d_worker:${lower(var.env)}-latest",
       "essential": true,
       "cpu": 32,
-      "memory": ${var.ecs_task_def_memory},
+      "memory": 131072,
       "mountPoints": [
         {
 	  "containerPath": "/mnt/efs",
@@ -166,7 +166,7 @@ JSON
   network_mode = "bridge"
   # cpu = var.ecs_task_def_cpu
   # cpu = 10240
-  memory = var.ecs_task_def_memory
+  # memory = var.ecs_task_def_memory
   execution_role_arn = "arn:aws:iam::${var.aws_account_number}:role/Ab2dInstanceRole"
 }
 
