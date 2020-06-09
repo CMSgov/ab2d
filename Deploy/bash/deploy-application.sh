@@ -684,7 +684,13 @@ let API_CPU="($API_EC2_INSTANCE_CPU_COUNT)*1024"
 API_EC2_INSTANCE_MEMORY=$(aws --region "${REGION}" ec2 describe-instance-types \
   --instance-types "${EC2_INSTANCE_TYPE_API}" --query "InstanceTypes[*].MemoryInfo.SizeInMiB" \
   --output text)
-let API_MEMORY="$API_EC2_INSTANCE_MEMORY/2"
+
+################
+# LSH 2020-06-09
+################
+# let API_MEMORY="$API_EC2_INSTANCE_MEMORY/2"
+let API_MEMORY="$API_EC2_INSTANCE_MEMORY"
+################
 
 # Determine cpu and memory for new worker ECS container definition
 
@@ -702,7 +708,13 @@ let WORKER_CPU="($WORKER_EC2_INSTANCE_CPU_COUNT)*1024"
 WORKER_EC2_INSTANCE_MEMORY=$(aws --region "${REGION}" ec2 describe-instance-types \
   --instance-types "${EC2_INSTANCE_TYPE_WORKER}" --query "InstanceTypes[*].MemoryInfo.SizeInMiB" \
   --output text)
-let WORKER_MEMORY="$WORKER_EC2_INSTANCE_MEMORY/2"
+
+################
+# LSH 2020-06-09
+################
+# let WORKER_MEMORY="$WORKER_EC2_INSTANCE_MEMORY/2"
+let WORKER_MEMORY="$WORKER_EC2_INSTANCE_MEMORY"
+################
 
 # Create ".auto.tfvars" file for the target environment
 
