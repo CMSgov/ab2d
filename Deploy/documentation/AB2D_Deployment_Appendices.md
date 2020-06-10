@@ -99,6 +99,8 @@
 1. [Appendix UU: Access Health Plan Management System (HPMS)](#appendix-uu-access-health-plan-management-system-hpms)
 1. [Appendix VV: Import an existing resource using terraform](#appendix-vv-import-an-existing-resource-using-terraform)
    * [Import an existing IAM role](#import-an-existing-iam-role)
+   * [Import an existing IAM Instance Profile](#import-an-existing-iam-instance-profile)
+   * [Import an existing KMS key](#import-an-existing-kms-key)
 1. [Appendix WW: Use an SSH tunnel to query production database from local machine](#appendix-ww-use-an-ssh-tunnel-to-query-production-database-from-local-machine)
 
 ## Appendix A: Access the CMS AWS console
@@ -8385,6 +8387,89 @@ $ sed -i "" 's%cms-ab2d[\/]prod%cms-ab2d/dev%g' _includes/head.html (edited)
    The resources that were imported are shown above. These resources are now in
    your Terraform state and will henceforth be managed by Terraform.
    ```
+
+### Import an existing IAM Instance Profile
+
+1. Get credentials to the target AWS environment
+
+   1. Enter the following
+
+      ```ShellSession
+      $ source ~/code/ab2d/Deploy/bash/set-env.sh
+      ```
+
+   1. Respond to the prompts to change to the desired AWS environment
+
+1. Change to the target terraform environment
+
+   *Example for "Impl" environment:*
+
+    ```ShellSession
+    $ cd ~/code/ab2d/Deploy/terraform/environments/ab2d-east-impl
+    ```
+
+1. Import an existing IAM instance profile that is not currently managed by terraform
+
+   *Note that the IAM instance profile must already be defined in terraform.*
+
+   *Example of importing existing "Ab2dInstanceProfile" IAM instance profile:"
+
+   ```ShellSession
+   $ terraform import module.iam.aws_iam_instance_profile.test_profile Ab2dInstanceProfile
+   ```
+
+1. Verify that the import was successful based on expected output
+
+   ```
+   module.iam.aws_iam_instance_profile.test_profile: Import prepared!
+     Prepared aws_iam_instance_profile for import
+   module.iam.aws_iam_instance_profile.test_profile: Refreshing state... [id=Ab2dInstanceProfile]
+   
+   Import successful!
+   
+   The resources that were imported are shown above. These resources are now in
+   your Terraform state and will henceforth be managed by Terraform.
+   ```
+
+### Import an existing KMS key
+
+1. Get credentials to the target AWS environment
+
+   1. Enter the following
+
+      ```ShellSession
+      $ source ~/code/ab2d/Deploy/bash/set-env.sh
+      ```
+
+   1. Respond to the prompts to change to the desired AWS environment
+
+1. Change to the target terraform environment
+
+   *Example for "Impl" environment:*
+
+    ```ShellSession
+    $ cd ~/code/ab2d/Deploy/terraform/environments/ab2d-east-impl
+    ```
+
+1. Get the KMS key id
+
+   ```ShellSession
+   $ KMS_KEY_ID=$(aws --region "${AWS_DEFAULT_REGION}" kms list-aliases \
+     --query="Aliases[?AliasName=='alias/ab2d-kms'].TargetKeyId" \
+     --output text)
+   ```
+
+1. Import an existing KMS key that is not currently managed by terraform
+
+   *Note that the KMS key must already be defined in terraform.*
+
+   *Example of importing existing "Ab2dInstanceProfile" IAM instance profile:"
+
+   ```ShellSession
+   $ terraform import module.kms.aws_kms_key.a "${KMS_KEY_ID}"
+   ```
+
+1. Verify that the import was successful
 
 ## Appendix WW: Use an SSH tunnel to query production database from local machine
 
