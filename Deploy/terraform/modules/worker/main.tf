@@ -73,8 +73,8 @@ resource "aws_ecs_task_definition" "worker" {
       "name": "${lower(var.env)}-worker",
       "image": "${var.ecr_repo_aws_account}.dkr.ecr.us-east-1.amazonaws.com/ab2d_worker:${lower(var.env)}-latest",
       "essential": true,
-      "cpu": 32,
-      "memory": 120000,
+      "cpu": 32768,
+      "memory": 125953,
       "mountPoints": [
         {
 	  "containerPath": "/mnt/efs",
