@@ -98,6 +98,7 @@
 1. [Appendix TT: Migrate terraform state from shared environment to main environment](#appendix-tt-migrate-terraform-state-from-shared-environment-to-main-environment)
 1. [Appendix UU: Access Health Plan Management System (HPMS)](#appendix-uu-access-health-plan-management-system-hpms)
 1. [Appendix VV: Import an existing resource using terraform](#appendix-vv-import-an-existing-resource-using-terraform)
+   * [Import an existing IAM role](#import-an-existing-iam-role)
 1. [Appendix WW: Use an SSH tunnel to query production database from local machine](#appendix-ww-use-an-ssh-tunnel-to-query-production-database-from-local-machine)
 
 ## Appendix A: Access the CMS AWS console
@@ -8341,7 +8342,49 @@ $ sed -i "" 's%cms-ab2d[\/]prod%cms-ab2d/dev%g' _includes/head.html (edited)
 
 ## Appendix VV: Import an existing resource using terraform
 
-> *** TO DO ***
+### Import an existing IAM role
+
+1. Get credentials to the target AWS environment
+
+   1. Enter the following
+
+      ```ShellSession
+      $ source ~/code/ab2d/Deploy/bash/set-env.sh
+      ```
+
+   1. Respond to the prompts to change to the desired AWS environment
+
+1. Change to the target terraform environment
+
+   *Example for "Impl" environment:*
+
+    ```ShellSession
+    $ cd ~/code/ab2d/Deploy/terraform/environments/ab2d-east-impl
+    ```
+
+1. Import an existing IAM role that is not currently managed by terraform
+
+   *Note that the IAM role must already be defined in terraform.*
+
+   *Example of importing existing "Ab2dInstanceRole" IAM role:"
+
+   ```ShellSession
+   $ terraform import module.iam.aws_iam_role.ab2d_instance_role Ab2dInstanceRole
+   ```
+
+1. Verify that the import was successful based on expected output
+
+   ```
+   module.iam.aws_iam_role.ab2d_instance_role: Importing from ID "Ab2dInstanceRole"...
+   module.iam.aws_iam_role.ab2d_instance_role: Import prepared!
+     Prepared aws_iam_role for import
+   module.iam.aws_iam_role.ab2d_instance_role: Refreshing state... [id=Ab2dInstanceRole]
+
+   Import successful!
+
+   The resources that were imported are shown above. These resources are now in
+   your Terraform state and will henceforth be managed by Terraform.
+   ```
 
 ## Appendix WW: Use an SSH tunnel to query production database from local machine
 
