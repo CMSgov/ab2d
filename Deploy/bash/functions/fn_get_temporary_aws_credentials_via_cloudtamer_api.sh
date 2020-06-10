@@ -4,8 +4,8 @@ fn_get_temporary_aws_credentials_via_cloudtamer_api ()
 {
   # Set parameters
 
-  IN_AWS_ACCOUNT_NUMBER="$1"
-  IN_CMS_ENV="$2"
+  IN_AWS_ACCOUNT_NUMBER_CT_API="$1"
+  IN_CMS_ENV_CT_API="$2"
 
   # Set default AWS region
 
@@ -92,7 +92,7 @@ fn_get_temporary_aws_credentials_via_cloudtamer_api ()
     --header 'Content-Type: application/json' \
     --header "Authorization: Bearer ${BEARER_TOKEN}" \
     --header 'Content-Type: application/json' \
-    --data-raw "{\"account_number\":\"${IN_AWS_ACCOUNT_NUMBER}\",\"iam_role_name\":\"ab2d-spe-developer\"}" \
+    --data-raw "{\"account_number\":\"${IN_AWS_ACCOUNT_NUMBER_CT_API}\",\"iam_role_name\":\"ab2d-spe-developer\"}" \
     | jq --raw-output ".data")
 
   # Get temporary AWS credentials
@@ -110,7 +110,7 @@ fn_get_temporary_aws_credentials_via_cloudtamer_api ()
       || [ -z "${AWS_SECRET_ACCESS_KEY}" ] \
       || [ -z "${AWS_SESSION_TOKEN}" ]; then
     echo "**********************************************************************"
-    echo "ERROR: AWS credentials do not exist for the ${IN_CMS_ENV} AWS account"
+    echo "ERROR: AWS credentials do not exist for the ${IN_CMS_ENV_CT_API} AWS account"
     echo "**********************************************************************"
     echo ""
     exit 1
@@ -120,7 +120,7 @@ fn_get_temporary_aws_credentials_via_cloudtamer_api ()
 
   echo ""
   echo "*******************************************************************************"
-  echo "${IN_CMS_ENV} environment variables have been set."
+  echo "${IN_CMS_ENV_CT_API} environment variables have been set."
   echo "-------------------------------------------------------------------------------"
   echo "NOTE: These credentials expire in 1 hour."
   echo "*******************************************************************************"

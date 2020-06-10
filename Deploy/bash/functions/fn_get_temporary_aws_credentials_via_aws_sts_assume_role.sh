@@ -4,11 +4,11 @@ fn_get_temporary_aws_credentials_via_aws_sts_assume_role ()
 {
   # Set AWS account number
 
-  AWS_ACCOUNT_NUMBER="$1"
+  IN_AWS_ACCOUNT_NUMBER_ASSUME_ROLE="$1"
 
   # Set session name
 
-  SESSION_NAME="$2"
+  IN_SESSION_NAME_ASSUME_ROLE="$2"
 
   # Set default AWS region
 
@@ -23,8 +23,8 @@ fn_get_temporary_aws_credentials_via_aws_sts_assume_role ()
   echo ""
 
   JSON_OUTPUT=$(aws --region "${AWS_DEFAULT_REGION}" sts assume-role \
-    --role-arn "arn:aws:iam::${AWS_ACCOUNT_NUMBER}:role/Ab2dMgmtRole" \
-    --role-session-name "${SESSION_NAME}" \
+    --role-arn "arn:aws:iam::${IN_AWS_ACCOUNT_NUMBER_ASSUME_ROLE}:role/Ab2dMgmtRole" \
+    --role-session-name "${IN_SESSION_NAME_ASSUME_ROLE}" \
     | jq --raw-output ".Credentials")
 
   # Get temporary AWS credentials
