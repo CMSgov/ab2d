@@ -220,6 +220,8 @@ fi
 #   --var unix_epoch_time="${UNIX_EPOCH_TIME}" \
 #   app.json  2>&1 | tee output.txt
 
+cd packer/app
+
 AMI_ID=$(cat output.txt \
   | awk 'match($0, /ami-.*/) { print substr($0, RSTART, RLENGTH) }' \
   | tail -1 \
