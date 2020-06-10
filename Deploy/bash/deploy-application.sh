@@ -1301,6 +1301,14 @@ else
   exit 1
 fi
 
+# Get latest stable version of stunnel
+# - note that you need the latest, since older versions become unavailable
+STUNNEL_LATEST_VERSION=$(curl -s 'https://www.stunnel.org/downloads.html' | 
+  sed 's/</\'$'\n''</g' | sed -n '/>Latest Version$/,$ p' | 
+  egrep -m1 -o 'downloads/stunnel-.+\.tar\.gz' |
+  cut -d">" -f 2 |
+  sed 's/\.tar\.gz//')
+
 # Run automation for API and worker
 
 terraform apply \
@@ -1333,6 +1341,7 @@ terraform apply \
   --var "ab2d_keystore_location=${AB2D_KEYSTORE_LOCATION}" \
   --var "ab2d_keystore_password=${AB2D_KEYSTORE_PASSWORD}" \
   --var "ab2d_okta_jwt_issuer=${AB2D_OKTA_JWT_ISSUER}" \
+  --var "stunnel_latest_version=${STUNNEL_LATEST_VERSION}" \
   --target module.api \
   --auto-approve
 
@@ -1362,6 +1371,7 @@ terraform apply \
   --var "new_relic_app_name=$NEW_RELIC_APP_NAME" \
   --var "new_relic_license_key=$NEW_RELIC_LICENSE_KEY" \
   --var "vpn_private_ip_address_cidr_range=${VPN_PRIVATE_IP_ADDRESS_CIDR_RANGE}" \
+  --var "stunnel_latest_version=${STUNNEL_LATEST_VERSION}" \
   --target module.worker \
   --auto-approve
 

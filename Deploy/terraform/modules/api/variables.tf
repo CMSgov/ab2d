@@ -78,3 +78,5 @@ variable "ab2d_keystore_location" {}
 variable "ab2d_keystore_password" {}
 
 variable "ab2d_okta_jwt_issuer" {}
+
+variable "stunnel_latest_version" {}

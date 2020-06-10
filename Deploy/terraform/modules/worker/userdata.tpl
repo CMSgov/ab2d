@@ -31,19 +31,11 @@ sudo yum -y install ./build/amazon-efs-utils*rpm --nogpgcheck
 # - by default, it enforces certificate hostname checking
 #
 
-# Get latest stable version of stunnel
-# - note that you need the latest, since older versions become unavailable
-STUNNEL_LATEST_VERSION=$(curl -s 'https://www.stunnel.org/downloads.html' | 
-  sed 's/</\'$'\n''</g' | sed -n '/>Latest Version$/,$ p' | 
-  egrep -m1 -o 'downloads/stunnel-.+\.tar\.gz' |
-  cut -d">" -f 2 |
-  sed 's/\.tar\.gz//')
-
 sudo yum install gcc openssl-devel tcp_wrappers-devel -y
 cd /tmp
-curl -o "${STUNNEL_LATEST_VERSION}.tar.gz" "https://www.stunnel.org/downloads/${STUNNEL_LATEST_VERSION}.tar.gz"
-tar xvfz "${STUNNEL_LATEST_VERSION}.tar.gz"
-cd "${STUNNEL_LATEST_VERSION}"
+curl -o "${stunnel_latest_version}.tar.gz" "https://www.stunnel.org/downloads/${stunnel_latest_version}.tar.gz"
+tar xvfz "${stunnel_latest_version}.tar.gz"
+cd "${stunnel_latest_version}"
 sudo ./configure
 sudo make
 sudo rm -f /bin/stunnel
