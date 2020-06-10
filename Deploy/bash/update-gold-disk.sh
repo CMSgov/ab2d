@@ -219,7 +219,12 @@ packer build \
   --var git_commit_hash="${COMMIT_NUMBER}" \
   --var unix_epoch_time="${UNIX_EPOCH_TIME}" \
   app.json  2>&1 | tee output.txt
-AMI_ID=$(cat output.txt | awk 'match($0, /ami-.*/) { print substr($0, RSTART, RLENGTH) }' | tail -1)
+
+AMI_ID=$(cat output.txt \
+  | awk 'match($0, /ami-.*/) { print substr($0, RSTART, RLENGTH) }' \
+  | tail -1 \
+  | tr -d '\000-\011\013\014\016-\037' \
+  | cut -d"[" -f 1)
 
 # Add name tag to AMI
 
