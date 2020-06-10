@@ -20,7 +20,10 @@ active-nav: support-nav
                 <br />
                 <br />
                 <div class="google-group-wrapper">
-                    <div class="join-our-google-group">JOIN OUR GOOGLE GROUP</div>
+                    <a class="join-our-google-group" href="https://groups.google.com/forum/#!forum/ab2d-api" target="_blank">
+                        <span>JOIN OUR GOOGLE GROUP</span>
+                        <i class="material-icons" style="color: white;">open_in_new</i>
+                    </a>
                 </div>
             </div>
             <div class="col">

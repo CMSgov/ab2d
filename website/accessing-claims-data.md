@@ -18,15 +18,21 @@ active-nav: accessing-claims-data-nav
         $('.step-accessing-claims').on('click', function(event) {
             const stepId = $(this).attr('id');
             const idToShow = stepMappings[stepId];
+            
+            $('.step-accessing-claims').each(function() {
+                $(this).removeClass('step-accessing-claims-active').addClass('step-accessing-claims-nonactive');
+                $(this).find('.step-claims-dash').hide();
+            });
+            
+            $(this).removeClass('step-accessing-claims-nonactive').addClass('step-accessing-claims-active');
+            $(this).find('.step-claims-dash').show();
+            
             $('html, body').animate({
                 scrollTop: $('#' + idToShow).offset().top
             }, 2000);
         });
     });
 </script>
-
-<link href="https://fonts.googleapis.com/icon?family=Material+Icons"
-      rel="stylesheet">
 
 <section class="bg-white page-section py-5">
     <svg class="shape-divider" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
@@ -35,11 +41,13 @@ active-nav: accessing-claims-data-nav
     </svg>
     <div class="container">
         <div class="row">
-            <div class="col" style="max-width: 250px; position: fixed;">
-                <div id="step-1-icon" class="step-accessing-claims step-accessing-claims-active">Step 1</div> 
-                <div id="step-2-icon" class="step-accessing-claims step-accessing-claims-nonactive">Step 2</div>
-                <div id="step-3-icon" class="step-accessing-claims step-accessing-claims-nonactive">Step 3</div>
-                <div id="step-4-icon" class="step-accessing-claims step-accessing-claims-nonactive">Step 4</div>
+            <div class="col" style="max-width: 250px;">
+                <div style="position: fixed;">
+                    <div id="step-1-icon" class="step-accessing-claims step-accessing-claims-active">Step 1 <span class="step-claims-dash"></span></div> 
+                    <div id="step-2-icon" class="step-accessing-claims step-accessing-claims-nonactive">Step 2 <span class="step-claims-dash" style="display: none;"></span></div>
+                    <div id="step-3-icon" class="step-accessing-claims step-accessing-claims-nonactive">Step 3 <span class="step-claims-dash" style="display: none;"></span></div>
+                    <div id="step-4-icon" class="step-accessing-claims step-accessing-claims-nonactive">Step 4 <span class="step-claims-dash" style="display: none;"></span></div>
+                </div>
             </div>
             <div class="col">
             <div id="step-1-content" class="step-content">

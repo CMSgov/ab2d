@@ -6186,10 +6186,19 @@ article h2::after {
 }
 .step-accessing-claims-active {
     color: #35414f;
-    margin-left: 10px;
+    margin-left: 15px;
 }
 .step-accessing-claims-nonactive {
     color: #939fad;
+}
+.step-claims-dash {
+    width: 35px;
+    height: 1px;
+    display: inline;
+    background-color: #35414f;
+    margin-top: 25%;
+    margin-left: 10px;
+    position: absolute;
 }
 .step-header {
     width: 70px;
@@ -6254,10 +6263,14 @@ article h2::after {
     height: 62px;
     border-radius: 31px;
     background-color: #0071bc;
+    display: flex;
+    align-items: center;
 }
 .join-our-google-group {
-    width: 249px;
-    height: 19px;
+    display: flex;
+    align-items: center;
+    margin: auto;
+
     font-family: Montserrat;
     font-size: 16px;
     font-weight: bold;
@@ -6265,6 +6278,21 @@ article h2::after {
     font-style: normal;
     line-height: normal;
     letter-spacing: 1.07px;
+    color: #ffffff;
+}
+.join-our-google-group:hover {
+    color: #ffffff;
+}
+.open_in_new-copy-3 {
+    width: 24px;
+    height: 24px;
+    font-family: MaterialIcons;
+    font-size: 24px;
+    font-weight: normal;
+    font-stretch: normal;
+    font-style: normal;
+    line-height: normal;
+    letter-spacing: normal;
     text-align: center;
     color: #ffffff;
 }
@@ -6308,4 +6336,8 @@ article h2::after {
 .section-header {
     text-align: center;
     margin-bottom: 20px;
+}
+
+.card {
+    margin-bottom: 25px;
 }
