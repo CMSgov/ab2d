@@ -26,14 +26,24 @@ sudo make rpm
 
 sudo yum -y install ./build/amazon-efs-utils*rpm --nogpgcheck
 
+#
 # Upgrade stunnel for using EFS mount helper with TLS
 # - by default, it enforces certificate hostname checking
+#
+
+# Get latest stable version of stunnel
+# - note that you need the latest, since older versions become unavailable
+STUNNEL_LATEST_VERSION=$(curl -s 'https://www.stunnel.org/downloads.html' | 
+  sed 's/</\'$'\n''</g' | sed -n '/>Latest Version$/,$ p' | 
+  egrep -m1 -o 'downloads/stunnel-.+\.tar\.gz' |
+  cut -d">" -f 2 |
+  sed 's/\.tar\.gz//')
 
 sudo yum install gcc openssl-devel tcp_wrappers-devel -y
 cd /tmp
-curl -o stunnel-5.56.tar.gz https://www.stunnel.org/downloads/stunnel-5.56.tar.gz
-tar xvfz stunnel-5.56.tar.gz
-cd stunnel-5.56
+curl -o "${STUNNEL_LATEST_VERSION}.tar.gz" "https://www.stunnel.org/downloads/${STUNNEL_LATEST_VERSION}.tar.gz"
+tar xvfz "${STUNNEL_LATEST_VERSION}.tar.gz"
+cd "${STUNNEL_LATEST_VERSION}"
 sudo ./configure
 sudo make
 sudo rm -f /bin/stunnel
