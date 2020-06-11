@@ -504,13 +504,15 @@ API_EC2_INSTANCE_CPU_COUNT=$(aws --region "${AWS_DEFAULT_REGION}" ec2 describe-i
   --instance-types "${EC2_INSTANCE_TYPE_API}" --query "InstanceTypes[*].VCpuInfo.DefaultVCpus" \
   --output text)
 
-let API_CPU="($API_EC2_INSTANCE_CPU_COUNT)*1024"
+# let API_CPU="($API_EC2_INSTANCE_CPU_COUNT)*1024"
+let API_CPU="($API_EC2_INSTANCE_CPU_COUNT/2)*1024"
 
 API_EC2_INSTANCE_MEMORY=$(aws --region "${AWS_DEFAULT_REGION}" ec2 describe-instance-types \
   --instance-types "${EC2_INSTANCE_TYPE_API}" --query "InstanceTypes[*].MemoryInfo.SizeInMiB" \
   --output text)
 
-let API_MEMORY="$((${API_EC2_INSTANCE_MEMORY}*9/10))"
+# let API_MEMORY="$((${API_EC2_INSTANCE_MEMORY}*9/10))"
+let API_MEMORY="$API_EC2_INSTANCE_MEMORY/2"
 
 # Determine cpu and memory for new worker ECS container definition
 
