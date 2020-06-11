@@ -7,6 +7,12 @@ fn_get_temporary_aws_credentials_via_cloudtamer_api ()
   IN_AWS_ACCOUNT_NUMBER_CT_API="$1"
   IN_CMS_ENV_CT_API="$2"
 
+  # Unset existing credentials
+
+  unset AWS_ACCESS_KEY_ID
+  unset AWS_SECRET_ACCESS_KEY
+  unset AWS_SESSION_TOKEN
+
   # Set default AWS region
 
   export AWS_DEFAULT_REGION="us-east-1"

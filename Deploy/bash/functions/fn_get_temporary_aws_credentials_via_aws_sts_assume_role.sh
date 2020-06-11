@@ -2,13 +2,16 @@
 
 fn_get_temporary_aws_credentials_via_aws_sts_assume_role ()
 {
-  # Set AWS account number
+  # Set parameters
 
   IN_AWS_ACCOUNT_NUMBER_ASSUME_ROLE="$1"
-
-  # Set session name
-
   IN_SESSION_NAME_ASSUME_ROLE="$2"
+
+  # Unset existing credentials
+
+  unset AWS_ACCESS_KEY_ID
+  unset AWS_SECRET_ACCESS_KEY
+  unset AWS_SESSION_TOKEN
 
   # Set default AWS region
 
