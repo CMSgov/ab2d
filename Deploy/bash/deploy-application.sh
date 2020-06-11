@@ -113,199 +113,29 @@ fi
 # Define functions
 #
 
-# Define get temporary AWS credentials via CloudTamer API function
+# Import the "get temporary AWS credentials via CloudTamer API" function
 
-get_temporary_aws_credentials_via_cloudtamer_api ()
-{
-  # Unset exsisting credntials
+source "${START_DIR}/functions/fn_get_temporary_aws_credentials_via_cloudtamer_api.sh"
 
-  unset AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN
+# Import the "get temporary AWS credentials via AWS STS assume role" function
 
-  # Set parameters
-
-  AWS_ACCOUNT_NUMBER="$1"
-  CMS_ENV_CT="$2"
-
-  # Verify that CloudTamer user name and password environment variables are set
-
-  if [ -z $CLOUDTAMER_USER_NAME ] || [ -z $CLOUDTAMER_PASSWORD ]; then
-    echo ""
-    echo "----------------------------"
-    echo "Enter CloudTamer credentials"
-    echo "----------------------------"
-  fi
-
-  if [ -z $CLOUDTAMER_USER_NAME ]; then
-    echo ""
-    echo "Enter your CloudTamer user name (EUA ID):"
-    read CLOUDTAMER_USER_NAME
-  fi
-
-  if [ -z $CLOUDTAMER_PASSWORD ]; then
-    echo ""
-    echo "Enter your CloudTamer password:"
-    read CLOUDTAMER_PASSWORD
-  fi
-
-  # Get bearer token
-
-  echo ""
-  echo "--------------------"
-  echo "Getting bearer token"
-  echo "--------------------"
-  echo ""
-
-  BEARER_TOKEN=$(curl --location --request POST 'https://cloudtamer.cms.gov/api/v2/token' \
-    --header 'Accept: application/json' \
-    --header 'Accept-Language: en-US,en;q=0.5' \
-    --header 'Content-Type: application/json' \
-    --data-raw "{\"username\":\"${CLOUDTAMER_USER_NAME}\",\"password\":\"${CLOUDTAMER_PASSWORD}\",\"idms\":{\"id\":2}}" \
-    | jq --raw-output ".data.access.token")
-
-  if [ "${BEARER_TOKEN}" == "null" ]; then
-    echo "**********************************************************************************************"
-    echo "ERROR: Retrieval of bearer token failed."
-    echo ""
-    echo "Do you need to update your "CLOUDTAMER_PASSWORD" environment variable?"
-    echo ""
-    echo "Have you been locked out due to the failed password attempts?"
-    echo ""
-    echo "If you have gotten locked out due to failed password attempts, do the following:"
-    echo "1. Go to this site:"
-    echo "   https://jiraent.cms.gov/servicedesk/customer/portal/13"
-    echo "2. Select 'CMS Cloud Access Request'"
-    echo "3. Configure page as follows:"
-    echo "   - Summary: CloudTamer & CloudVPN account password reset for {your eua id}"
-    echo "   - CMS Business Unit: OEDA"
-    echo "   - Project Name: Project 058 BCDA"
-    echo "   - Types of Access/Resets: Cisco AnyConnect and AWS Console Password Resets [not MFA]"
-    echo "   - Approvers: Stephen Walter"
-    echo "   - Description"
-    echo "     I am locked out of VPN access due to failed password attempts."
-    echo "     Can you reset my CloudTamer & CloudVPN account password?"
-    echo "     EUA: {your eua id}"
-    echo "     email: {your email}"
-    echo "     cell phone: {your cell phone number}"
-    echo "4. After you submit your ticket, call the following number and give them your ticket number."
-    echo "   888-533-4777"
-    echo "**********************************************************************************************"
-    echo ""
-    exit 1
-  fi
-
-  # Get json output for temporary AWS credentials
-
-  echo ""
-  echo "-----------------------------"
-  echo "Getting temporary credentials"
-  echo "-----------------------------"
-  echo ""
-
-  JSON_OUTPUT=$(curl --location --request POST 'https://cloudtamer.cms.gov/api/v3/temporary-credentials' \
-    --header 'Accept: application/json' \
-    --header 'Accept-Language: en-US,en;q=0.5' \
-    --header 'Content-Type: application/json' \
-    --header "Authorization: Bearer ${BEARER_TOKEN}" \
-    --header 'Content-Type: application/json' \
-    --data-raw "{\"account_number\":\"${AWS_ACCOUNT_NUMBER}\",\"iam_role_name\":\"ab2d-spe-developer\"}" \
-    | jq --raw-output ".data")
-
-  # Set default AWS region
-
-  export AWS_DEFAULT_REGION=us-east-1
-
-  # Get temporary AWS credentials
-
-  export AWS_ACCESS_KEY_ID=$(echo $JSON_OUTPUT | jq --raw-output ".access_key")
-  export AWS_SECRET_ACCESS_KEY=$(echo $JSON_OUTPUT | jq --raw-output ".secret_access_key")
-
-  # Get AWS session token (required for temporary credentials)
-
-  export AWS_SESSION_TOKEN=$(echo $JSON_OUTPUT | jq --raw-output ".session_token")
-
-  # Verify AWS credentials
-
-  if [ -z "${AWS_ACCESS_KEY_ID}" ] \
-      || [ -z "${AWS_SECRET_ACCESS_KEY}" ] \
-      || [ -z "${AWS_SESSION_TOKEN}" ]; then
-    echo "**********************************************************************"
-    echo "ERROR: AWS credentials do not exist for the ${CMS_ENV_CT} AWS account"
-    echo "**********************************************************************"
-    echo ""
-    exit 1
-  fi
-}
-
-# Define get temporary AWS credentials via AWS STS assume role
-
-get_temporary_aws_credentials_via_aws_sts_assume_role ()
-{
-  # Unset exsisting credntials
-
-  unset AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN
-
-  # Set AWS account number
-
-  AWS_ACCOUNT_NUMBER="$1"
-
-  # Set session name
-
-  SESSION_NAME="$2"
-
-  # Get json output for temporary AWS credentials
-
-  echo ""
-  echo "-----------------------------"
-  echo "Getting temporary credentials"
-  echo "-----------------------------"
-  echo ""
-
-  JSON_OUTPUT=$(aws --region us-east-1 sts assume-role \
-    --role-arn "arn:aws:iam::${AWS_ACCOUNT_NUMBER}:role/Ab2dMgmtRole" \
-    --role-session-name "${SESSION_NAME}" \
-    | jq --raw-output ".Credentials")
-
-  # Set default AWS region
-
-  export AWS_DEFAULT_REGION=us-east-1
-  
-  # Get temporary AWS credentials
-
-  export AWS_ACCESS_KEY_ID=$(echo $JSON_OUTPUT | jq --raw-output ".AccessKeyId")
-  export AWS_SECRET_ACCESS_KEY=$(echo $JSON_OUTPUT | jq --raw-output ".SecretAccessKey")
-
-  # Get AWS session token (required for temporary credentials)
-
-  export AWS_SESSION_TOKEN=$(echo $JSON_OUTPUT | jq --raw-output ".SessionToken")
-
-  # Verify AWS credentials
-
-  if [ -z "${AWS_ACCESS_KEY_ID}" ] \
-      || [ -z "${AWS_SECRET_ACCESS_KEY}" ] \
-      || [ -z "${AWS_SESSION_TOKEN}" ]; then
-    echo "**********************************************************************"
-    echo "ERROR: AWS credentials do not exist for the ${SESSION_NAME} AWS account"
-    echo "**********************************************************************"
-    echo ""
-    exit 1
-  fi
-}
+source "${START_DIR}/functions/fn_get_temporary_aws_credentials_via_aws_sts_assume_role.sh"
 
 #
 # Set AWS target environment
 #
 
 if [ "${CLOUD_TAMER}" == "true" ]; then
-  get_temporary_aws_credentials_via_cloudtamer_api "${CMS_ENV_AWS_ACCOUNT_NUMBER}" "${CMS_ENV}"
+  fn_get_temporary_aws_credentials_via_cloudtamer_api "${CMS_ENV_AWS_ACCOUNT_NUMBER}" "${CMS_ENV}"
 else
-  get_temporary_aws_credentials_via_aws_sts_assume_role "${CMS_ENV_AWS_ACCOUNT_NUMBER}" "${CMS_ENV}"
+  fn_get_temporary_aws_credentials_via_aws_sts_assume_role "${CMS_ENV_AWS_ACCOUNT_NUMBER}" "${CMS_ENV}"
 fi
 
 #
 # Verify that VPC ID exists
 #
 
-VPC_EXISTS=$(aws --region "${REGION}" ec2 describe-vpcs \
+VPC_EXISTS=$(aws --region "${AWS_DEFAULT_REGION}" ec2 describe-vpcs \
   --query "Vpcs[?VpcId=='$VPC_ID'].VpcId" \
   --output text)
 
@@ -320,12 +150,12 @@ fi
 # Get KMS key id for target environment (if exists)
 #
 
-KMS_KEY_ID=$(aws --region "${REGION}" kms list-aliases \
+KMS_KEY_ID=$(aws --region "${AWS_DEFAULT_REGION}" kms list-aliases \
   --query="Aliases[?AliasName=='alias/ab2d-kms'].TargetKeyId" \
   --output text)
 
 if [ -n "${KMS_KEY_ID}" ]; then
-  KMS_KEY_STATE=$(aws --region "${REGION}" kms describe-key \
+  KMS_KEY_STATE=$(aws --region "${AWS_DEFAULT_REGION}" kms describe-key \
     --key-id alias/ab2d-kms \
     --query "KeyMetadata.KeyState" \
     --output text)
@@ -397,7 +227,7 @@ rm -f *.tfvars
 terraform init \
   -backend-config="bucket=${CMS_ENV}-automation" \
   -backend-config="key=${CMS_ENV}/terraform/terraform.tfstate" \
-  -backend-config="region=${REGION}" \
+  -backend-config="region=${AWS_DEFAULT_REGION}" \
   -backend-config="encrypt=true"
 
 terraform validate
@@ -592,7 +422,7 @@ fi
 
 # Get first public subnet id
 
-SUBNET_PUBLIC_1_ID=$(aws --region "${REGION}" ec2 describe-subnets \
+SUBNET_PUBLIC_1_ID=$(aws --region "${AWS_DEFAULT_REGION}" ec2 describe-subnets \
   --filters "Name=tag:Name,Values=${CMS_ENV}-public-a" \
   --query "Subnets[*].SubnetId" \
   --output text)
@@ -604,7 +434,7 @@ fi
 
 # Get second public subnet id
 
-SUBNET_PUBLIC_2_ID=$(aws --region "${REGION}" ec2 describe-subnets \
+SUBNET_PUBLIC_2_ID=$(aws --region "${AWS_DEFAULT_REGION}" ec2 describe-subnets \
   --filters "Name=tag:Name,Values=${CMS_ENV}-public-b" \
   --query "Subnets[*].SubnetId" \
   --output text)
@@ -616,7 +446,7 @@ fi
 
 # Get first private subnet id
 
-SUBNET_PRIVATE_1_ID=$(aws --region "${REGION}" ec2 describe-subnets \
+SUBNET_PRIVATE_1_ID=$(aws --region "${AWS_DEFAULT_REGION}" ec2 describe-subnets \
   --filters "Name=tag:Name,Values=${CMS_ENV}-private-a" \
   --query "Subnets[*].SubnetId" \
   --output text)
@@ -628,7 +458,7 @@ fi
 
 # Get second private subnet id
 
-SUBNET_PRIVATE_2_ID=$(aws --region "${REGION}" ec2 describe-subnets \
+SUBNET_PRIVATE_2_ID=$(aws --region "${AWS_DEFAULT_REGION}" ec2 describe-subnets \
   --filters "Name=tag:Name,Values=${CMS_ENV}-private-b" \
   --query "Subnets[*].SubnetId" \
   --output text)
@@ -642,7 +472,7 @@ fi
 # Get AMI id
 #
 
-AMI_ID=$(aws --region "${REGION}" ec2 describe-images \
+AMI_ID=$(aws --region "${AWS_DEFAULT_REGION}" ec2 describe-images \
   --owners self \
   --filters "Name=tag:Name,Values=ab2d-ami" \
   --query "Images[*].[ImageId]" \
@@ -670,51 +500,31 @@ cd terraform/environments/$CMS_ENV
 
 # Determine cpu and memory for new API ECS container definition
 
-API_EC2_INSTANCE_CPU_COUNT=$(aws --region "${REGION}" ec2 describe-instance-types \
+API_EC2_INSTANCE_CPU_COUNT=$(aws --region "${AWS_DEFAULT_REGION}" ec2 describe-instance-types \
   --instance-types "${EC2_INSTANCE_TYPE_API}" --query "InstanceTypes[*].VCpuInfo.DefaultVCpus" \
   --output text)
 
-################
-# LSH 2020-06-09
-################
-let API_CPU="($API_EC2_INSTANCE_CPU_COUNT/2)*1024"
-# let API_CPU="($API_EC2_INSTANCE_CPU_COUNT)*1024"
-################
+let API_CPU="($API_EC2_INSTANCE_CPU_COUNT)*1024"
 
-API_EC2_INSTANCE_MEMORY=$(aws --region "${REGION}" ec2 describe-instance-types \
+API_EC2_INSTANCE_MEMORY=$(aws --region "${AWS_DEFAULT_REGION}" ec2 describe-instance-types \
   --instance-types "${EC2_INSTANCE_TYPE_API}" --query "InstanceTypes[*].MemoryInfo.SizeInMiB" \
   --output text)
 
-################
-# LSH 2020-06-09
-################
-let API_MEMORY="$API_EC2_INSTANCE_MEMORY/2"
-# let API_MEMORY="$API_EC2_INSTANCE_MEMORY"
-################
+let API_MEMORY="$((${API_EC2_INSTANCE_MEMORY}*9/10))"
 
 # Determine cpu and memory for new worker ECS container definition
 
-WORKER_EC2_INSTANCE_CPU_COUNT=$(aws --region "${REGION}" ec2 describe-instance-types \
+WORKER_EC2_INSTANCE_CPU_COUNT=$(aws --region "${AWS_DEFAULT_REGION}" ec2 describe-instance-types \
   --instance-types "${EC2_INSTANCE_TYPE_WORKER}" --query "InstanceTypes[*].VCpuInfo.DefaultVCpus" \
   --output text)
 
-################
-# LSH 2020-06-09
-################
-let WORKER_CPU="($WORKER_EC2_INSTANCE_CPU_COUNT/2)*1024"
-# let WORKER_CPU="($WORKER_EC2_INSTANCE_CPU_COUNT)*1024"
-################
+let WORKER_CPU="($WORKER_EC2_INSTANCE_CPU_COUNT)*1024"
 
-WORKER_EC2_INSTANCE_MEMORY=$(aws --region "${REGION}" ec2 describe-instance-types \
+WORKER_EC2_INSTANCE_MEMORY=$(aws --region "${AWS_DEFAULT_REGION}" ec2 describe-instance-types \
   --instance-types "${EC2_INSTANCE_TYPE_WORKER}" --query "InstanceTypes[*].MemoryInfo.SizeInMiB" \
   --output text)
 
-################
-# LSH 2020-06-09
-################
-let WORKER_MEMORY="$WORKER_EC2_INSTANCE_MEMORY/2"
-# let WORKER_MEMORY="$WORKER_EC2_INSTANCE_MEMORY"
-################
+let WORKER_MEMORY="$((${WORKER_EC2_INSTANCE_MEMORY}*9/10))"
 
 # Create ".auto.tfvars" file for the target environment
 
@@ -771,17 +581,17 @@ echo 'deployer_ip_address = "'$DEPLOYER_IP_ADDRESS'"' \
 # Set AWS management environment
 
 if [ "${CLOUD_TAMER}" == "true" ]; then
-  get_temporary_aws_credentials_via_cloudtamer_api "${CMS_ECR_REPO_ENV_AWS_ACCOUNT_NUMBER}" "${CMS_ENV}"
+  fn_get_temporary_aws_credentials_via_cloudtamer_api "${CMS_ECR_REPO_ENV_AWS_ACCOUNT_NUMBER}" "${CMS_ENV}"
 else
-  get_temporary_aws_credentials_via_aws_sts_assume_role "${CMS_ECR_REPO_ENV_AWS_ACCOUNT_NUMBER}" "${CMS_ECR_REPO_ENV}"
+  fn_get_temporary_aws_credentials_via_aws_sts_assume_role "${CMS_ECR_REPO_ENV_AWS_ACCOUNT_NUMBER}" "${CMS_ECR_REPO_ENV}"
 fi
 
-MGMT_KMS_KEY_ID=$(aws --region "${REGION}" kms list-aliases \
+MGMT_KMS_KEY_ID=$(aws --region "${AWS_DEFAULT_REGION}" kms list-aliases \
   --query="Aliases[?AliasName=='alias/ab2d-kms'].TargetKeyId" \
   --output text)
 
 if [ -n "${MGMT_KMS_KEY_ID}" ]; then
-  MGMT_KMS_KEY_STATE=$(aws --region "${REGION}" kms describe-key \
+  MGMT_KMS_KEY_STATE=$(aws --region "${AWS_DEFAULT_REGION}" kms describe-key \
     --key-id alias/ab2d-kms \
     --query "KeyMetadata.KeyState" \
     --output text)
@@ -814,7 +624,7 @@ echo "Build and push API and worker to ECR..."
 
 # Log on to ECR
     
-read -sra cmd < <(aws --region "${REGION}" ecr get-login --no-include-email)
+read -sra cmd < <(aws --region "${AWS_DEFAULT_REGION}" ecr get-login --no-include-email)
 pass="${cmd[5]}"
 unset cmd[4] cmd[5]
 "${cmd[@]}" --password-stdin <<< "$pass"
@@ -890,13 +700,13 @@ docker build \
 
 # Get or create api repo
 
-API_ECR_REPO_URI=$(aws --region "${REGION}" ecr describe-repositories \
+API_ECR_REPO_URI=$(aws --region "${AWS_DEFAULT_REGION}" ecr describe-repositories \
   --query "repositories[?repositoryName == 'ab2d_api'].repositoryUri" \
   --output text)
 if [ -z "${API_ECR_REPO_URI}" ]; then
-  aws --region "${REGION}" ecr create-repository \
+  aws --region "${AWS_DEFAULT_REGION}" ecr create-repository \
     --repository-name "ab2d_api"
-  API_ECR_REPO_URI=$(aws --region "${REGION}" ecr describe-repositories \
+  API_ECR_REPO_URI=$(aws --region "${AWS_DEFAULT_REGION}" ecr describe-repositories \
     --query "repositories[?repositoryName == 'ab2d_api'].repositoryUri" \
     --output text)
 fi
@@ -907,7 +717,7 @@ fi
 
 # Get ecr repo aws account
 
-ECR_REPO_AWS_ACCOUNT=$(aws --region "${REGION}" sts get-caller-identity \
+ECR_REPO_AWS_ACCOUNT=$(aws --region "${AWS_DEFAULT_REGION}" sts get-caller-identity \
   --query Account \
   --output text)
 
@@ -919,7 +729,7 @@ ECR_REPO_AWS_ACCOUNT=$(aws --region "${REGION}" sts get-caller-identity \
 
 cd "${START_DIR}/.."
 cd terraform/environments/$CMS_ECR_REPO_ENV
-aws --region "${REGION}" ecr set-repository-policy \
+aws --region "${AWS_DEFAULT_REGION}" ecr set-repository-policy \
   --repository-name ab2d_api \
   --policy-text file://ab2d-ecr-policy.json
 
@@ -935,13 +745,13 @@ docker push "${API_ECR_REPO_URI}:${CMS_ENV}-latest"
 
 # Get or create api repo
 
-WORKER_ECR_REPO_URI=$(aws --region "${REGION}" ecr describe-repositories \
+WORKER_ECR_REPO_URI=$(aws --region "${AWS_DEFAULT_REGION}" ecr describe-repositories \
   --query "repositories[?repositoryName == 'ab2d_worker'].repositoryUri" \
   --output text)
 if [ -z "${WORKER_ECR_REPO_URI}" ]; then
-  aws --region "${REGION}" ecr create-repository \
+  aws --region "${AWS_DEFAULT_REGION}" ecr create-repository \
     --repository-name "ab2d_worker"
-  WORKER_ECR_REPO_URI=$(aws --region "${REGION}" ecr describe-repositories \
+  WORKER_ECR_REPO_URI=$(aws --region "${AWS_DEFAULT_REGION}" ecr describe-repositories \
     --query "repositories[?repositoryName == 'ab2d_worker'].repositoryUri" \
     --output text)
 fi
@@ -950,7 +760,7 @@ fi
 
 cd "${START_DIR}/.."
 cd terraform/environments/$CMS_ECR_REPO_ENV
-aws --region "${REGION}" ecr set-repository-policy \
+aws --region "${AWS_DEFAULT_REGION}" ecr set-repository-policy \
   --repository-name ab2d_worker \
   --policy-text file://ab2d-ecr-policy.json
 
@@ -966,7 +776,7 @@ docker push "${WORKER_ECR_REPO_URI}:${CMS_ENV}-latest"
 
 # Get list of untagged images in the api repository
 
-IMAGES_TO_DELETE=$(aws --region "${REGION}" ecr list-images \
+IMAGES_TO_DELETE=$(aws --region "${AWS_DEFAULT_REGION}" ecr list-images \
   --repository-name ab2d_api \
   --filter "tagStatus=UNTAGGED" \
   --query 'imageIds[*]' \
@@ -974,14 +784,14 @@ IMAGES_TO_DELETE=$(aws --region "${REGION}" ecr list-images \
 
 # Delete untagged images in the api repository
 
-aws --region "${REGION}" ecr batch-delete-image \
+aws --region "${AWS_DEFAULT_REGION}" ecr batch-delete-image \
   --repository-name ab2d_api \
   --image-ids "$IMAGES_TO_DELETE" \
   || true
 
 # Get old 'latest-commit' api tag
 
-API_OLD_LATEST_COMMIT_TAG=$(aws --region "${REGION}" ecr describe-images \
+API_OLD_LATEST_COMMIT_TAG=$(aws --region "${AWS_DEFAULT_REGION}" ecr describe-images \
   --repository-name ab2d_api \
   --query "imageDetails[*].{imageTag:imageTags[0],imagePushedAt:imagePushedAt}" \
   --output json \
@@ -1002,7 +812,7 @@ if [ -n "${API_OLD_LATEST_COMMIT_TAG}" ]; then
 
   # Get manifest of tag to rename
   
-  MANIFEST=$(aws --region "${REGION}" ecr batch-get-image \
+  MANIFEST=$(aws --region "${AWS_DEFAULT_REGION}" ecr batch-get-image \
     --repository-name ab2d_api \
     --image-ids imageTag="${API_OLD_LATEST_COMMIT_TAG}" \
     --query 'images[].imageManifest' \
@@ -1011,7 +821,7 @@ if [ -n "${API_OLD_LATEST_COMMIT_TAG}" ]; then
   # Add renamed api tag
 
   if [ -n "${MANIFEST}" ]; then
-    aws --region "${REGION}" ecr put-image \
+    aws --region "${AWS_DEFAULT_REGION}" ecr put-image \
       --repository-name ab2d_api \
       --image-tag "${RENAME_API_OLD_LATEST_COMMIT_TAG}" \
       --image-manifest "${MANIFEST}"
@@ -1019,7 +829,7 @@ if [ -n "${API_OLD_LATEST_COMMIT_TAG}" ]; then
   
   # Remove old api tag
 
-  aws --region "${REGION}" ecr batch-delete-image \
+  aws --region "${AWS_DEFAULT_REGION}" ecr batch-delete-image \
     --repository-name ab2d_api \
     --image-ids imageTag="${API_OLD_LATEST_COMMIT_TAG}"
 
@@ -1027,7 +837,7 @@ fi
 
 # Get list of untagged images in the worker repository
   
-IMAGES_TO_DELETE=$(aws --region "${REGION}" ecr list-images \
+IMAGES_TO_DELETE=$(aws --region "${AWS_DEFAULT_REGION}" ecr list-images \
   --repository-name ab2d_worker \
   --filter "tagStatus=UNTAGGED" \
   --query 'imageIds[*]' \
@@ -1035,14 +845,14 @@ IMAGES_TO_DELETE=$(aws --region "${REGION}" ecr list-images \
 
 # Delete untagged images in the worker repository
 
-aws --region "${REGION}" ecr batch-delete-image \
+aws --region "${AWS_DEFAULT_REGION}" ecr batch-delete-image \
   --repository-name ab2d_worker \
   --image-ids "$IMAGES_TO_DELETE" \
   || true
 
 # Get old 'latest-commit' worker tag
 
-WORKER_OLD_LATEST_COMMIT_TAG=$(aws --region "${REGION}" ecr describe-images \
+WORKER_OLD_LATEST_COMMIT_TAG=$(aws --region "${AWS_DEFAULT_REGION}" ecr describe-images \
   --repository-name ab2d_worker \
   --query "imageDetails[*].{imageTag:imageTags[0],imagePushedAt:imagePushedAt}" \
   --output json \
@@ -1063,7 +873,7 @@ if [ -n "${WORKER_OLD_LATEST_COMMIT_TAG}" ]; then
 
   # Get manifest of tag to rename
   
-  MANIFEST=$(aws --region "${REGION}" ecr batch-get-image \
+  MANIFEST=$(aws --region "${AWS_DEFAULT_REGION}" ecr batch-get-image \
     --repository-name ab2d_worker \
     --image-ids imageTag="${WORKER_OLD_LATEST_COMMIT_TAG}" \
     --query 'images[].imageManifest' \
@@ -1072,7 +882,7 @@ if [ -n "${WORKER_OLD_LATEST_COMMIT_TAG}" ]; then
   # Add renamed worker tag
 
   if [ -n "${MANIFEST}" ]; then
-    aws --region "${REGION}" ecr put-image \
+    aws --region "${AWS_DEFAULT_REGION}" ecr put-image \
       --repository-name ab2d_worker \
       --image-tag "${RENAME_WORKER_OLD_LATEST_COMMIT_TAG}" \
       --image-manifest "${MANIFEST}"
@@ -1080,7 +890,7 @@ if [ -n "${WORKER_OLD_LATEST_COMMIT_TAG}" ]; then
   
   # Remove old worker tag
 
-  aws --region "${REGION}" ecr batch-delete-image \
+  aws --region "${AWS_DEFAULT_REGION}" ecr batch-delete-image \
     --repository-name ab2d_worker \
     --image-ids imageTag="${WORKER_OLD_LATEST_COMMIT_TAG}"
 
@@ -1088,11 +898,11 @@ fi
   
 # Verify that the image versions of API and Worker are the same
 
-IMAGE_VERSION_API=$(aws --region "${REGION}" ecr describe-images \
+IMAGE_VERSION_API=$(aws --region "${AWS_DEFAULT_REGION}" ecr describe-images \
   --repository-name ab2d_api \
   --query 'sort_by(imageDetails,& imagePushedAt)[-1].imageTags[0]')
 
-IMAGE_VERSION_WORKER=$(aws --region "${REGION}" ecr describe-images \
+IMAGE_VERSION_WORKER=$(aws --region "${AWS_DEFAULT_REGION}" ecr describe-images \
   --repository-name ab2d_worker \
   --query 'sort_by(imageDetails,& imagePushedAt)[-1].imageTags[0]')
 
@@ -1114,9 +924,9 @@ echo "Using master branch commit number '${COMMIT_NUMBER}' for ab2d_api and ab2d
 #
 
 if [ "${CLOUD_TAMER}" == "true" ]; then
-  get_temporary_aws_credentials_via_cloudtamer_api "${CMS_ENV_AWS_ACCOUNT_NUMBER}" "${CMS_ENV}"
+  fn_get_temporary_aws_credentials_via_cloudtamer_api "${CMS_ENV_AWS_ACCOUNT_NUMBER}" "${CMS_ENV}"
 else
-  get_temporary_aws_credentials_via_aws_sts_assume_role "${CMS_ENV_AWS_ACCOUNT_NUMBER}" "${CMS_ENV}"
+  fn_get_temporary_aws_credentials_via_aws_sts_assume_role "${CMS_ENV_AWS_ACCOUNT_NUMBER}" "${CMS_ENV}"
 fi
 
 # Reset to the target environment
@@ -1128,7 +938,7 @@ cd terraform/environments/$CMS_ENV
 # Get current known good ECS task definitions
 #
 
-CLUSTER_ARNS=$(aws --region "${REGION}" ecs list-clusters \
+CLUSTER_ARNS=$(aws --region "${AWS_DEFAULT_REGION}" ecs list-clusters \
   --query 'clusterArns' \
   --output text \
   | grep "/${CMS_ENV}-api" \
@@ -1149,8 +959,8 @@ echo "Get ECS task counts before making any changes..."
 
 # Define task count functions
 
-api_task_count() { aws --region "${REGION}" ecs list-tasks --cluster "${CMS_ENV}-api" | grep "\:task\/"|wc -l|tr -d ' '; }
-worker_task_count() { aws --region "${REGION}" ecs list-tasks --cluster "${CMS_ENV}-worker" | grep "\:task\/"|wc -l|tr -d ' '; }
+api_task_count() { aws --region "${AWS_DEFAULT_REGION}" ecs list-tasks --cluster "${CMS_ENV}-api" | grep "\:task\/"|wc -l|tr -d ' '; }
+worker_task_count() { aws --region "${AWS_DEFAULT_REGION}" ecs list-tasks --cluster "${CMS_ENV}-worker" | grep "\:task\/"|wc -l|tr -d ' '; }
 
 # Get old api task count (if exists)
 
@@ -1196,10 +1006,10 @@ fi
 if [ -z "${CLUSTER_ARNS}" ]; then
   echo "Skipping removing autosclaing group and launch configuration, since there are no existing clusters"
 else
-  OLD_API_CONTAINER_INSTANCES=$(aws --region "${REGION}" ecs list-container-instances \
+  OLD_API_CONTAINER_INSTANCES=$(aws --region "${AWS_DEFAULT_REGION}" ecs list-container-instances \
     --cluster "${CMS_ENV}-api" \
     | grep container-instance)
-  OLD_WORKER_CONTAINER_INSTANCES=$(aws --region "${REGION}" ecs list-container-instances \
+  OLD_WORKER_CONTAINER_INSTANCES=$(aws --region "${AWS_DEFAULT_REGION}" ecs list-container-instances \
     --cluster "${CMS_ENV}-worker" \
     | grep container-instance)
 fi
@@ -1239,27 +1049,27 @@ fi
 
 # Get database secret manager ARNs
 
-DATABASE_HOST_SECRET_ARN=$(aws --region "${REGION}" secretsmanager describe-secret \
+DATABASE_HOST_SECRET_ARN=$(aws --region "${AWS_DEFAULT_REGION}" secretsmanager describe-secret \
   --secret-id "ab2d/${CMS_ENV}/module/db/database_host/${DATABASE_SECRET_DATETIME}" \
   --query "ARN" \
   --output text)
 
-DATABASE_PORT_SECRET_ARN=$(aws --region "${REGION}" secretsmanager describe-secret \
+DATABASE_PORT_SECRET_ARN=$(aws --region "${AWS_DEFAULT_REGION}" secretsmanager describe-secret \
   --secret-id "ab2d/${CMS_ENV}/module/db/database_port/${DATABASE_SECRET_DATETIME}" \
   --query "ARN" \
   --output text)
 
-DATABASE_USER_SECRET_ARN=$(aws --region "${REGION}" secretsmanager describe-secret \
+DATABASE_USER_SECRET_ARN=$(aws --region "${AWS_DEFAULT_REGION}" secretsmanager describe-secret \
   --secret-id "ab2d/${CMS_ENV}/module/db/database_user/${DATABASE_SECRET_DATETIME}" \
   --query "ARN" \
   --output text)
 
-DATABASE_PASSWORD_SECRET_ARN=$(aws --region "${REGION}" secretsmanager describe-secret \
+DATABASE_PASSWORD_SECRET_ARN=$(aws --region "${AWS_DEFAULT_REGION}" secretsmanager describe-secret \
   --secret-id "ab2d/${CMS_ENV}/module/db/database_password/${DATABASE_SECRET_DATETIME}" \
   --query "ARN" \
   --output text)
 
-DATABASE_NAME_SECRET_ARN=$(aws --region "${REGION}" secretsmanager describe-secret \
+DATABASE_NAME_SECRET_ARN=$(aws --region "${AWS_DEFAULT_REGION}" secretsmanager describe-secret \
   --secret-id "ab2d/${CMS_ENV}/module/db/database_name/${DATABASE_SECRET_DATETIME}" \
   --query "ARN" \
   --output text)
@@ -1278,21 +1088,21 @@ BFD_KEYSTORE_FILE_NAME=$(echo $BFD_KEYSTORE_LOCATION | cut -d"/" -f 6)
 if [ "$CMS_ENV" == "ab2d-sbx-sandbox" ]; then
   ALB_LISTENER_PORT=443
   ALB_LISTENER_PROTOCOL="HTTPS"
-  ALB_LISTENER_CERTIFICATE_ARN=$(aws --region "${REGION}" acm list-certificates \
+  ALB_LISTENER_CERTIFICATE_ARN=$(aws --region "${AWS_DEFAULT_REGION}" acm list-certificates \
     --query "CertificateSummaryList[?DomainName=='sandbox.ab2d.cms.gov'].CertificateArn" \
     --output text)
   ALB_SECURITY_GROUP_IP_RANGE="0.0.0.0/0"
 elif [ "$CMS_ENV" == "ab2d-dev" ]; then
   ALB_LISTENER_PORT=443
   ALB_LISTENER_PROTOCOL="HTTPS"
-  ALB_LISTENER_CERTIFICATE_ARN=$(aws --region "${REGION}" acm list-certificates \
+  ALB_LISTENER_CERTIFICATE_ARN=$(aws --region "${AWS_DEFAULT_REGION}" acm list-certificates \
     --query "CertificateSummaryList[?DomainName=='dev.ab2d.cms.gov'].CertificateArn" \
     --output text)
   ALB_SECURITY_GROUP_IP_RANGE="${VPN_PRIVATE_IP_ADDRESS_CIDR_RANGE}"
 elif [ "$CMS_ENV" == "ab2d-east-prod" ]; then
   ALB_LISTENER_PORT=443
   ALB_LISTENER_PROTOCOL="HTTPS"
-  ALB_LISTENER_CERTIFICATE_ARN=$(aws --region "${REGION}" acm list-certificates \
+  ALB_LISTENER_CERTIFICATE_ARN=$(aws --region "${AWS_DEFAULT_REGION}" acm list-certificates \
     --query "CertificateSummaryList[?DomainName=='api.ab2d.cms.gov'].CertificateArn" \
     --output text)
   ALB_SECURITY_GROUP_IP_RANGE="${VPN_PRIVATE_IP_ADDRESS_CIDR_RANGE}"
@@ -1465,11 +1275,11 @@ if [ -z "${CLUSTER_ARNS}" ]; then
 else
   OLD_API_INSTANCE_LIST=$(echo $OLD_API_CONTAINER_INSTANCES | tr -d ' ' | tr "\n" " " | tr -d "," | tr '""' ' ' | tr -d '"')
   OLD_WORKER_INSTANCE_LIST=$(echo $OLD_WORKER_CONTAINER_INSTANCES | tr -d ' ' | tr "\n" " " | tr -d "," | tr '""' ' ' | tr -d '"')
-  aws --region "${REGION}" ecs update-container-instances-state \
+  aws --region "${AWS_DEFAULT_REGION}" ecs update-container-instances-state \
     --cluster "${CMS_ENV}-api" \
     --status DRAINING \
     --container-instances $OLD_API_INSTANCE_LIST
-  aws --region "${REGION}" ecs update-container-instances-state \
+  aws --region "${AWS_DEFAULT_REGION}" ecs update-container-instances-state \
     --cluster "${CMS_ENV}-worker" \
     --status DRAINING \
     --container-instances $OLD_WORKER_INSTANCE_LIST
@@ -1484,10 +1294,10 @@ if [ -z "${CLUSTER_ARNS}" ]; then
 else
   OLD_API_ASG=$(echo $OLD_API_ASG | awk -F"/" '{print $2}')
   OLD_WORKER_ASG=$(echo $OLD_WORKER_ASG | awk -F"/" '{print $2}')
-  aws --region "${REGION}" autoscaling delete-auto-scaling-group \
+  aws --region "${AWS_DEFAULT_REGION}" autoscaling delete-auto-scaling-group \
     --auto-scaling-group-name $OLD_API_ASG \
     --force-delete || true
-  aws --region "${REGION}" autoscaling delete-auto-scaling-group \
+  aws --region "${AWS_DEFAULT_REGION}" autoscaling delete-auto-scaling-group \
     --auto-scaling-group-name $OLD_WORKER_ASG \
     --force-delete || true
   sleep 60
@@ -1496,7 +1306,7 @@ fi
 # Wait for old Autoscaling groups to terminate
 
 RETRIES_ASG=0
-ASG_NOT_IN_SERVICE=$(aws --region "${REGION}" autoscaling describe-auto-scaling-groups \
+ASG_NOT_IN_SERVICE=$(aws --region "${AWS_DEFAULT_REGION}" autoscaling describe-auto-scaling-groups \
   --query "AutoScalingGroups[*].Instances[?LifecycleState != 'InService'].LifecycleState" \
   --output text)
 while [ -n "${ASG_NOT_IN_SERVICE}" ]; do
@@ -1504,7 +1314,7 @@ while [ -n "${ASG_NOT_IN_SERVICE}" ]; do
   if [ "$RETRIES_ASG" != "15" ]; then
     echo "Retry in 60 seconds..."
     sleep 60
-    ASG_NOT_IN_SERVICE=$(aws --region "${REGION}" autoscaling describe-auto-scaling-groups \
+    ASG_NOT_IN_SERVICE=$(aws --region "${AWS_DEFAULT_REGION}" autoscaling describe-auto-scaling-groups \
       --query "AutoScalingGroups[*].Instances[?LifecycleState != 'InService'].LifecycleState" \
       --output text)
     RETRIES_ASG=$(expr $RETRIES_ASG + 1)
@@ -1523,25 +1333,25 @@ if [ -z "${CLUSTER_ARNS}" ]; then
 else
     
   LAUNCH_CONFIGURATION_EXPECTED_COUNT=2
-  LAUNCH_CONFIGURATION_ACTUAL_COUNT=$(aws --region "${REGION}" autoscaling describe-launch-configurations \
+  LAUNCH_CONFIGURATION_ACTUAL_COUNT=$(aws --region "${AWS_DEFAULT_REGION}" autoscaling describe-launch-configurations \
     --query "LaunchConfigurations[*].[LaunchConfigurationName,CreatedTime]" \
     | jq '. | length')
   
   while [ "$LAUNCH_CONFIGURATION_ACTUAL_COUNT" -gt "$LAUNCH_CONFIGURATION_EXPECTED_COUNT" ]; do
   
-    OLD_LAUNCH_CONFIGURATION=$(aws --region "${REGION}" autoscaling describe-launch-configurations \
+    OLD_LAUNCH_CONFIGURATION=$(aws --region "${AWS_DEFAULT_REGION}" autoscaling describe-launch-configurations \
       --query "LaunchConfigurations[*].[LaunchConfigurationName,CreatedTime]" \
       --output text \
       | sort -k2 \
       | head -n1 \
       | awk '{print $1}')
   
-    aws --region "${REGION}" autoscaling delete-launch-configuration \
+    aws --region "${AWS_DEFAULT_REGION}" autoscaling delete-launch-configuration \
       --launch-configuration-name "${OLD_LAUNCH_CONFIGURATION}"
   
     sleep 5
     
-    LAUNCH_CONFIGURATION_ACTUAL_COUNT=$(aws --region "${REGION}" autoscaling describe-launch-configurations \
+    LAUNCH_CONFIGURATION_ACTUAL_COUNT=$(aws --region "${AWS_DEFAULT_REGION}" autoscaling describe-launch-configurations \
       --query "LaunchConfigurations[*].[LaunchConfigurationName,CreatedTime]" \
       | jq '. | length')
   
@@ -1557,21 +1367,21 @@ else
 
   # Get count of old target groups
 
-  OLD_TARGET_GROUP_COUNT=$(aws --region "${REGION}" elbv2 describe-target-groups \
+  OLD_TARGET_GROUP_COUNT=$(aws --region "${AWS_DEFAULT_REGION}" elbv2 describe-target-groups \
     --query "TargetGroups[?LoadBalancerArns==\`[]\`].TargetGroupName" \
     | jq '. | length')
 
   if [ $OLD_TARGET_GROUP_COUNT -gt 0 ]; then
     for i in {1..$OLD_TARGET_GROUP_COUNT}
     do
-      OLD_TARGET_GROUP_ARN=$(aws --region "${REGION}" elbv2 describe-target-groups \
+      OLD_TARGET_GROUP_ARN=$(aws --region "${AWS_DEFAULT_REGION}" elbv2 describe-target-groups \
         --query "TargetGroups[?LoadBalancerArns==\`[]\`].TargetGroupArn" \
         --output text \
         | sort -k2 \
         | head -n1 \
         | awk '{print $1}')
 
-      aws --region "${REGION}" elbv2 delete-target-group \
+      aws --region "${AWS_DEFAULT_REGION}" elbv2 delete-target-group \
         --target-group-arn "${OLD_TARGET_GROUP_ARN}"
     done
   fi
