@@ -416,7 +416,7 @@ else # Running from Jenkins agent
     --username "${DATABASE_USER}" \
     --dbname postgres \
     --command='SELECT datname FROM pg_catalog.pg_database' \
-    | grep prod \
+    | grep "${DATABASE_NAME}" \
     | sort \
     | head -n 1 \
     | xargs \
