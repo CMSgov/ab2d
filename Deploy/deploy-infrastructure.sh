@@ -405,11 +405,15 @@ if [ "${CLOUD_TAMER}" == "true" ]; then
 
 else # Running from Jenkins agent
 
+  # Set PostgreSQL password
+
+  PGPASSWORD="${DATABASE_PASSWORD}"
+
   # Determine if the database for the environment exists
 
   DB_NAME_IF_EXISTS=$(psql -t \
-    --host ab2d.cdi8i6wwresy.us-east-1.rds.amazonaws.com \
-    --username cmsadmin \
+    --host "${DB_ENDPOINT}" \
+    --username "${DATABASE_USER}" \
     --dbname postgres \
     --command='SELECT datname FROM pg_catalog.pg_database' \
     | grep prod \
