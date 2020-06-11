@@ -1008,9 +1008,11 @@ if [ -z "${CLUSTER_ARNS}" ]; then
 else
   OLD_API_CONTAINER_INSTANCES=$(aws --region "${AWS_DEFAULT_REGION}" ecs list-container-instances \
     --cluster "${CMS_ENV}-api" \
+    --output text \
     | grep container-instance)
   OLD_WORKER_CONTAINER_INSTANCES=$(aws --region "${AWS_DEFAULT_REGION}" ecs list-container-instances \
     --cluster "${CMS_ENV}-worker" \
+    --output text \
     | grep container-instance)
 fi
 
@@ -1273,18 +1275,32 @@ done
 if [ -z "${CLUSTER_ARNS}" ]; then
   echo "Skipping draining old container instances, since there are no existing clusters"
 else
-  OLD_API_INSTANCE_LIST=$(echo $OLD_API_CONTAINER_INSTANCES | tr -d ' ' | tr "\n" " " | tr -d "," | tr '""' ' ' | tr -d '"')
-  OLD_WORKER_INSTANCE_LIST=$(echo $OLD_WORKER_CONTAINER_INSTANCES | tr -d ' ' | tr "\n" " " | tr -d "," | tr '""' ' ' | tr -d '"')
-  aws --region "${AWS_DEFAULT_REGION}" ecs update-container-instances-state \
-    --cluster "${CMS_ENV}-api" \
-    --status DRAINING \
-    --container-instances $OLD_API_INSTANCE_LIST
-  aws --region "${AWS_DEFAULT_REGION}" ecs update-container-instances-state \
-    --cluster "${CMS_ENV}-worker" \
-    --status DRAINING \
-    --container-instances $OLD_WORKER_INSTANCE_LIST
-  echo "Allowing all instances to drain for 60 seconds before proceeding..."
-  sleep 60
+  if [ -n "${OLD_API_CONTAINER_INSTANCES}"]; then
+    OLD_API_INSTANCE_LIST=$(echo $OLD_API_CONTAINER_INSTANCES \
+      | tr -d ' ' \
+      | tr "\n" " " \
+      | tr -d "," \
+      | tr '""' ' ' \
+      | tr -d '"')
+    aws --region "${AWS_DEFAULT_REGION}" ecs update-container-instances-state \
+      --cluster "${CMS_ENV}-api" \
+      --status DRAINING \
+      --container-instances $OLD_API_INSTANCE_LIST
+  fi
+  if [ -n "${OLD_WORKER_CONTAINER_INSTANCES}"]; then
+    OLD_WORKER_INSTANCE_LIST=$(echo $OLD_WORKER_CONTAINER_INSTANCES \
+      | tr -d ' ' \
+      | tr "\n" " " \
+      | tr -d "," \
+      | tr '""' ' ' \
+      | tr -d '"')
+    aws --region "${AWS_DEFAULT_REGION}" ecs update-container-instances-state \
+      --cluster "${CMS_ENV}-worker" \
+      --status DRAINING \
+      --container-instances $OLD_WORKER_INSTANCE_LIST
+    echo "Allowing all instances to drain for 60 seconds before proceeding..."
+    sleep 60
+  fi
 fi
 
 # Remove old Autoscaling groups
