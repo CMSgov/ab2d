@@ -7,6 +7,9 @@
    * [Initialize or verify base environment](#initialize-or-verify-base-environment)
    * [Encrypt and upload New Relic configuration file](#encrypt-and-upload-new-relic-configuration-file)
    * [Create, encrypt, and upload BFD AB2D keystore](#create-encrypt-and-upload-bfd-ab2d-keystore)
+   * [Create or update AMI with latest gold disk](#create-or-update-ami-with-latest-gold-disk)
+   * [Create or update infrastructure](#create-or-update-infrastructure)
+   * [Create or update application for production](#create-or-update-application-for-production)
 
 ## Obtain and import impl.ab2d.cms.gov common certificate](#obtain-and-import-implab2dcmsgov-common-certificate)
 
@@ -305,3 +308,92 @@
    AB2D Impl - BFD Prod Sbx - Private Key            |client_data_server_ab2d_imp_certificate.key
    AB2D Impl - BFD Prod Sbx - Self-signed Certificate|client_data_server_ab2d_imp_certificate.pem
    AB2D Impl - BFD Prod Sbx - Public Key             |client_data_server_ab2d_imp_certificate.pub
+
+### Create or update AMI with latest gold disk
+
+1. Change to the "Deploy" directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d/Deploy
+   ```
+
+1. Set gold disk test parameters
+
+   ```ShellSession
+   $ export CMS_ENV_PARAM=ab2d-east-impl \
+     && export DEBUG_LEVEL_PARAM=WARN \
+     && export EC2_INSTANCE_TYPE_PACKER_PARAM=m5.xlarge \
+     && export OWNER_PARAM=743302140042 \
+     && export REGION_PARAM=us-east-1 \
+     && export SSH_USERNAME_PARAM=ec2-user \
+     && export VPC_ID_PARAM=vpc-0e5d2e88de7f9cad4 \
+     && export CLOUD_TAMER_PARAM=true
+   ```
+
+1. Create or update AMI with latest gold disk
+
+   ```ShellSession
+   $ ./bash/update-gold-disk.sh
+   ```
+
+### Create or update infrastructure
+
+1. Change to the "Deploy" directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d/Deploy
+   ```
+
+1. Set parameters
+
+   ```ShellSession
+   $ export CMS_ENV_PARAM=ab2d-east-impl \
+     && export DEBUG_LEVEL_PARAM=WARN \
+     && export EC2_INSTANCE_TYPE_CONTROLLER_PARAM=m5.xlarge \
+     && export REGION_PARAM=us-east-1 \
+     && export SSH_USERNAME_PARAM=ec2-user \
+     && export DATABASE_SECRET_DATETIME_PARAM=2020-01-02-09-15-01 \
+     && export CLOUD_TAMER_PARAM=true
+   ```
+
+1. Deploy infrastructure
+   
+   ```ShellSession
+   $ ./deploy-infrastructure.sh
+   ```
+
+### Create or update application for production
+
+1. Change to the "Deploy" directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d/Deploy
+   ```
+
+1. Set parameters
+
+   ```ShellSession
+   $ export CMS_ENV_PARAM=ab2d-east-impl \
+     && export CMS_ECR_REPO_ENV_PARAM=ab2d-mgmt-east-dev \
+     && export REGION_PARAM=us-east-1 \
+     && export VPC_ID_PARAM=vpc-0e5d2e88de7f9cad4 \
+     && export SSH_USERNAME_PARAM=ec2-user \
+     && export EC2_INSTANCE_TYPE_API_PARAM=m5.xlarge \
+     && export EC2_INSTANCE_TYPE_WORKER_PARAM=m5.xlarge \
+     && export EC2_DESIRED_INSTANCE_COUNT_API_PARAM=1 \
+     && export EC2_MINIMUM_INSTANCE_COUNT_API_PARAM=1 \
+     && export EC2_MAXIMUM_INSTANCE_COUNT_API_PARAM=1 \
+     && export EC2_DESIRED_INSTANCE_COUNT_WORKER_PARAM=1 \
+     && export EC2_MINIMUM_INSTANCE_COUNT_WORKER_PARAM=1 \
+     && export EC2_MAXIMUM_INSTANCE_COUNT_WORKER_PARAM=1 \
+     && export DATABASE_SECRET_DATETIME_PARAM=2020-01-02-09-15-01 \
+     && export DEBUG_LEVEL_PARAM=WARN \
+     && export INTERNET_FACING_PARAM=true \
+     && export CLOUD_TAMER_PARAM=true
+   ``` 
+
+1. Deploy application
+
+   ```ShellSession
+   $ ./bash/deploy-application.sh
+   ```
