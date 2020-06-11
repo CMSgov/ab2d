@@ -55,15 +55,15 @@ sudo cp /etc/fstab /etc/fstab.bak
 # -----------
 # Without TLS
 # -----------
-# echo '${efs_id}:/ /mnt/efs efs _netdev 0 0' | sudo tee -a /etc/fstab
-# sudo mount -a
+echo '${efs_id}:/ /mnt/efs efs _netdev 0 0' | sudo tee -a /etc/fstab
+sudo mount -a
 #
 # --------
 # With TLS
 # --------
 # Mount with IAM authorization to an Amazon EC2 instance that has an instance profile
-echo '${efs_id}:/ /mnt/efs efs _netdev,tls,iam 0 0' | sudo tee -a /etc/fstab
-sudo mount -a
+# echo '${efs_id}:/ /mnt/efs efs _netdev,tls,iam 0 0' | sudo tee -a /etc/fstab
+# sudo mount -a
 #####
 
 # Place BFD keystore in shared EFS directory (if doesn't already exist)
