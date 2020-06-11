@@ -232,7 +232,7 @@ variable "db_name_secret_arn" {
 }
 
 variable "cpm_backup" {
-  default = "Daily"
+  default = "Monthly"
 }
 
 ## S3 specific variables #########################################################################
