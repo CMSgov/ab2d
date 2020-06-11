@@ -1006,14 +1006,25 @@ fi
 if [ -z "${CLUSTER_ARNS}" ]; then
   echo "Skipping removing autosclaing group and launch configuration, since there are no existing clusters"
 else
+
   OLD_API_CONTAINER_INSTANCES=$(aws --region "${AWS_DEFAULT_REGION}" ecs list-container-instances \
     --cluster "${CMS_ENV}-api" \
-    --output text \
-    | grep container-instance)
+    --output text)
+
+  if [ -n "${OLD_API_CONTAINER_INSTANCES}" ]; then
+    OLD_API_CONTAINER_INSTANCES=$(echo OLD_API_CONTAINER_INSTANCES \
+      | grep container-instance)
+  fi
+
   OLD_WORKER_CONTAINER_INSTANCES=$(aws --region "${AWS_DEFAULT_REGION}" ecs list-container-instances \
     --cluster "${CMS_ENV}-worker" \
-    --output text \
-    | grep container-instance)
+    --output text)
+
+  if [ -n "${OLD_WORKER_CONTAINER_INSTANCES}" ]; then
+    OLD_WORKER_CONTAINER_INSTANCES=$(echo OLD_WORKER_CONTAINER_INSTANCES \
+      | grep container-instance)
+  fi
+
 fi
 
 #
