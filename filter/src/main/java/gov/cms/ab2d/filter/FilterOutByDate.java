@@ -19,6 +19,7 @@ import java.util.stream.Collectors;
 public final class FilterOutByDate {
     private static final String SHORT = "MM/dd/yyyy";
     private static final String FULL = "MM/dd/yyyy HH:mm:ss";
+    private static final String ATTESTATION_EARLIEST_DATE = "2020-01-01T00:00:00.000-05:00";
 
     /**
      * Date range class used to define a from and to date for a subscribers membership.
@@ -223,18 +224,43 @@ public final class FilterOutByDate {
     public static List<ExplanationOfBenefit> filterByDate(List<ExplanationOfBenefit> benes,
                                               Date attestationDate,
                                               List<DateRange> dateRanges) throws ParseException {
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSz");
+        Date earliest = null;
+        try {
+            earliest = sdf.parse(ATTESTATION_EARLIEST_DATE);
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+        return filterByDate(benes, attestationDate, earliest, dateRanges);
+    }
+
+    /**
+     * This does most of the work of the class. It takes a list of explanation of benefit objects,
+     * the attestation date and list of valid date ranges and returns the list of qualifying objects
+     *
+     * @param benes           - the explanation of benefit objects
+     * @param attestationDate - the attestation date
+     * @param earliestDate    - the earliest date that ab2d data is available for any PDP
+     * @param dateRanges      - the list of date ranges
+     * @return - the list of objects done after the attestation date and in the date ranges
+     * @throws ParseException - if there is an issue parsing the dates
+     */
+    public static List<ExplanationOfBenefit> filterByDate(List<ExplanationOfBenefit> benes,
+                                              Date attestationDate,
+                                              Date earliestDate,
+                                              List<DateRange> dateRanges) throws ParseException {
         if (benes == null || benes.isEmpty()) {
             return new ArrayList<>();
         }
-        return benes.stream().filter(b -> valid(b, attestationDate, dateRanges)).collect(Collectors.toList());
+        return benes.stream().filter(b -> valid(b, attestationDate, earliestDate, dateRanges)).collect(Collectors.toList());
     }
 
-    public static boolean valid(ExplanationOfBenefit bene, Date attestationDate, List<DateRange> dateRanges) {
+    public static boolean valid(ExplanationOfBenefit bene, Date attestationDate, Date earliestDate, List<DateRange> dateRanges) {
         if (bene == null) {
             return false;
         }
         try {
-            if (afterAttestation(attestationDate, bene)) {
+            if (afterDate(attestationDate, bene) && afterDate(earliestDate, bene)) {
                 for (DateRange r : dateRanges) {
                     if (withinDateRange(bene, r)) {
                         return true;
@@ -253,18 +279,18 @@ public final class FilterOutByDate {
      * and the billable end time is 10/01/2020 00:00:00 it will be included because they were on
      * the same day
      *
-     * @param attestation - attestation date
+     * @param dateVal - attestation date
      * @param ben - the explanation of benefit object
      * @return if the EOB object is after the attestation date
      * @throws ParseException - if there is an issue parsing the dates
      */
-    static boolean afterAttestation(Date attestation, ExplanationOfBenefit ben) throws ParseException {
+    static boolean afterDate(Date dateVal, ExplanationOfBenefit ben) throws ParseException {
         SimpleDateFormat fullDateFormat = new SimpleDateFormat(FULL);
         SimpleDateFormat shortDateFormat = new SimpleDateFormat(SHORT);
-        if (ben == null || ben.getBillablePeriod() == null || attestation == null) {
+        if (ben == null || ben.getBillablePeriod() == null || dateVal == null) {
             return false;
         }
-        Date attToUse = fullDateFormat.parse(shortDateFormat.format(attestation) + " 00:00:00");
+        Date attToUse = fullDateFormat.parse(shortDateFormat.format(dateVal) + " 00:00:00");
         Period p = ben.getBillablePeriod();
         Date end = p.getEnd();
         return end != null && end.getTime() >= attToUse.getTime();
