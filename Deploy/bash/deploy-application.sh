@@ -900,15 +900,17 @@ fi
 
 IMAGE_VERSION_API=$(aws --region "${AWS_DEFAULT_REGION}" ecr describe-images \
   --repository-name ab2d_api \
-  --query 'sort_by(imageDetails,& imagePushedAt)[-1].imageTags[0]')
+  --query "sort_by(imageDetails,& imagePushedAt)[*].imageTags[? @ == '${CMS_ENV}-latest']"
+  --output text)
 
 IMAGE_VERSION_WORKER=$(aws --region "${AWS_DEFAULT_REGION}" ecr describe-images \
   --repository-name ab2d_worker \
-  --query 'sort_by(imageDetails,& imagePushedAt)[-1].imageTags[0]')
+  --query "sort_by(imageDetails,& imagePushedAt)[*].imageTags[? @ == '${CMS_ENV}-latest']"
+  --output text)
 
 if [ "${IMAGE_VERSION_API}" != "${IMAGE_VERSION_WORKER}" ]; then
   echo "ERROR: The ECR image versions for ab2d_api and ab2d_worker must be the same!"
-  exit 0
+  exit 1
 else
   echo "The ECR image versions for ab2d_api and ab2d_worker were verified to be the same..."
 fi
