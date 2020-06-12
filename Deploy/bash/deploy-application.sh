@@ -900,12 +900,12 @@ fi
 
 IMAGE_VERSION_API=$(aws --region "${AWS_DEFAULT_REGION}" ecr describe-images \
   --repository-name ab2d_api \
-  --query "sort_by(imageDetails,& imagePushedAt)[*].imageTags[? @ == '${CMS_ENV}-latest']"
+  --query "sort_by(imageDetails,& imagePushedAt)[*].imageTags[? @ == '${CMS_ENV}-latest']" \
   --output text)
 
 IMAGE_VERSION_WORKER=$(aws --region "${AWS_DEFAULT_REGION}" ecr describe-images \
   --repository-name ab2d_worker \
-  --query "sort_by(imageDetails,& imagePushedAt)[*].imageTags[? @ == '${CMS_ENV}-latest']"
+  --query "sort_by(imageDetails,& imagePushedAt)[*].imageTags[? @ == '${CMS_ENV}-latest']" \
   --output text)
 
 if [ "${IMAGE_VERSION_API}" != "${IMAGE_VERSION_WORKER}" ]; then
