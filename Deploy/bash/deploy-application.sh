@@ -1314,7 +1314,7 @@ done
 if [ -z "${CLUSTER_ARNS}" ]; then
   echo "Skipping draining old container instances, since there are no existing clusters"
 else
-  if [ -n "${OLD_API_CONTAINER_INSTANCES}"]; then
+  if [ -n "${OLD_API_CONTAINER_INSTANCES}" ]; then
     OLD_API_INSTANCE_LIST=$(echo $OLD_API_CONTAINER_INSTANCES \
       | tr -d ' ' \
       | tr "\n" " " \
@@ -1326,7 +1326,7 @@ else
       --status DRAINING \
       --container-instances $OLD_API_INSTANCE_LIST
   fi
-  if [ -n "${OLD_WORKER_CONTAINER_INSTANCES}"]; then
+  if [ -n "${OLD_WORKER_CONTAINER_INSTANCES}" ]; then
     OLD_WORKER_INSTANCE_LIST=$(echo $OLD_WORKER_CONTAINER_INSTANCES \
       | tr -d ' ' \
       | tr "\n" " " \
