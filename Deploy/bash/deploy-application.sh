@@ -1014,7 +1014,8 @@ else
     --output text)
 
   if [ -n "${OLD_API_CONTAINER_INSTANCES}" ]; then
-    OLD_API_CONTAINER_INSTANCES=$(echo OLD_API_CONTAINER_INSTANCES \
+    OLD_API_CONTAINER_INSTANCES=$(aws --region "${AWS_DEFAULT_REGION}" ecs list-container-instances \
+      --cluster "${CMS_ENV}-api" \
       | grep container-instance)
   fi
 
@@ -1023,7 +1024,8 @@ else
     --output text)
 
   if [ -n "${OLD_WORKER_CONTAINER_INSTANCES}" ]; then
-    OLD_WORKER_CONTAINER_INSTANCES=$(echo OLD_WORKER_CONTAINER_INSTANCES \
+    OLD_WORKER_CONTAINER_INSTANCES=$(aws --region "${AWS_DEFAULT_REGION}" ecs list-container-instances \
+      --cluster "${CMS_ENV}-worker" \
       | grep container-instance)
   fi
 
