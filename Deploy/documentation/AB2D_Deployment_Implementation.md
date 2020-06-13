@@ -13,7 +13,9 @@
 
 ## Obtain and import impl.ab2d.cms.gov common certificate](#obtain-and-import-implab2dcmsgov-common-certificate)
 
-> *** TO DO ***
+*Note that I am temporarily using "Appendix XX: Create a self-signed certificate for an EC2 load balancer"*
+
+> *** TO DO ***: get real common cerificate
 
 ## Deploy to implementation
 
