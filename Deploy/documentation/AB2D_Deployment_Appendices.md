@@ -102,6 +102,7 @@
    * [Import an existing IAM Instance Profile](#import-an-existing-iam-instance-profile)
    * [Import an existing KMS key](#import-an-existing-kms-key)
 1. [Appendix WW: Use an SSH tunnel to query production database from local machine](#appendix-ww-use-an-ssh-tunnel-to-query-production-database-from-local-machine)
+1. [Appendix XX: Create a self-signed certificate for an EC2 load balancer](#appendix-xx-create-a-self-signed-certificate-for-an-ec2-load-balancer)
 
 ## Appendix A: Access the CMS AWS console
 
@@ -8551,3 +8552,89 @@ $ sed -i "" 's%cms-ab2d[\/]prod%cms-ab2d/dev%g' _includes/head.html (edited)
    - if you don't maintain your connection to the database, the EC2 instance that you are tunneling through will auto-logout (this is due to the inactivity timeout set on the gold disks)
 
    - if your tunnel closes, you will need to rerun the SSH tunnel command
+
+## Appendix XX: Create a self-signed certificate for an EC2 load balancer
+
+1. Remove existing directory (if exists)
+
+   ```ShellSession
+   $ rm -rf ~/Downloads/ab2dtemp
+   ```
+
+1. Create the working directory
+
+   ```ShellSession
+   $ mkdir -p ~/Downloads/ab2dtemp
+   ```
+
+1. Change to the working directory
+
+   ```ShellSession
+   $ cd ~/Downloads/ab2dtemp
+   ```
+
+1. Set common name
+
+   ```ShellSession
+   $ export COMMON_NAME="ab2dtemp_com"
+   ```
+
+1. Set certificate name
+
+   ```ShellSession
+   $ export CERTIFICATE_NAME="Ab2dTempCom"
+   ```
+
+1. Create private key and self-sig
+
+   ```ShellSession
+   $ openssl req \
+     -nodes -x509 \
+     -days 1825 \
+     -newkey rsa:4096 \
+     -keyout "${COMMON_NAME}.key" \
+     -subj "/CN=${COMMON_NAME}" \
+     -out "${COMMON_NAME}_certificate.pem"
+   ```
+
+1. Note the following files were created
+
+   - ab2dtemp_com.key
+
+   - ab2dtemp_com_certificate.pem
+
+1. Set target environment
+
+   ```ShellSession
+   $ source ~/code/ab2d/Deploy/bash/set-env.sh
+   ```
+
+1. Create an IAM server certificate
+
+   ```ShellSession
+   $ aws --region "${AWS_DEFAULT_REGION}" iam upload-server-certificate \
+     --server-certificate-name "${CERTIFICATE_NAME}" \
+     --certificate-body "file://${COMMON_NAME}_certificate.pem" \
+     --private-key "file://${COMMON_NAME}.key"
+   ```
+
+1. Note the output
+
+   ```
+   {
+       "ServerCertificateMetadata": {
+           "Path": "/",
+           "ServerCertificateName": "{certificate name}",
+           "ServerCertificateId": "{server certificate id}",
+           "Arn": "arn:aws:iam::{aws account number}:server-certificate/{certificate name}",
+           "UploadDate": "YYYY-MM-DDThh:mm:ssZ",
+           "Expiration": "YYYY-MM-DDThh:mm:ssZ"
+       }
+   }
+   ```
+
+1. View the server cerificate in certificate list
+
+   ```ShellSession
+   $ aws --region "${AWS_DEFAULT_REGION}" iam list-server-certificates
+   ```
