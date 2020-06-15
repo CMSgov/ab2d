@@ -63,7 +63,6 @@ public abstract class LoggableEvent {
      * @return true if they have the same data
      */
     public boolean equals(final Object o) {
-        System.out.println("In equals");
         if (o == this) {
             return true;
         } else if (!(o instanceof LoggableEvent)) {

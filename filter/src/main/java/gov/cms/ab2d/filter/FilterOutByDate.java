@@ -215,29 +215,6 @@ public final class FilterOutByDate {
      * This does most of the work of the class. It takes a list of explanation of benefit objects,
      * the attestation date and list of valid date ranges and returns the list of qualifying objects
      *
-     * @param benes - the explanation of benefit objects
-     * @param attestationDate - the attestation date
-     * @param dateRanges - the list of date ranges
-     * @return - the list of objects done after the attestation date and in the date ranges
-     * @throws ParseException - if there is an issue parsing the dates
-     */
-    public static List<ExplanationOfBenefit> filterByDate(List<ExplanationOfBenefit> benes,
-                                              Date attestationDate,
-                                              List<DateRange> dateRanges) throws ParseException {
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSz");
-        Date earliest = null;
-        try {
-            earliest = sdf.parse(ATTESTATION_EARLIEST_DATE);
-        } catch (ParseException e) {
-            e.printStackTrace();
-        }
-        return filterByDate(benes, attestationDate, earliest, dateRanges);
-    }
-
-    /**
-     * This does most of the work of the class. It takes a list of explanation of benefit objects,
-     * the attestation date and list of valid date ranges and returns the list of qualifying objects
-     *
      * @param benes           - the explanation of benefit objects
      * @param attestationDate - the attestation date
      * @param earliestDate    - the earliest date that ab2d data is available for any PDP
