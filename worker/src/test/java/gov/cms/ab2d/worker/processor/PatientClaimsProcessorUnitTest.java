@@ -11,18 +11,22 @@ import gov.cms.ab2d.worker.processor.domainmodel.PatientClaimsRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.hl7.fhir.dstu3.model.Bundle;
 import org.hl7.fhir.dstu3.model.ExplanationOfBenefit;
+import org.hl7.fhir.dstu3.model.Resource;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.Date;
@@ -31,6 +35,7 @@ import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 
 import static org.hamcrest.CoreMatchers.startsWith;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.never;
@@ -41,7 +46,7 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 public class PatientClaimsProcessorUnitTest {
     // class under test
-    private PatientClaimsProcessor cut;
+    private PatientClaimsProcessorImpl cut;
 
     @Mock private BFDClient mockBfdClient;
     @Mock private LogManager eventLogger;
@@ -55,7 +60,7 @@ public class PatientClaimsProcessorUnitTest {
     private OffsetDateTime earlyAttDate = OffsetDateTime.of(1970, 1, 1, 0, 0, 0, 0, ZoneOffset.UTC);
     private GetPatientsByContractResponse.PatientDTO patientDTO;
 
-    private Token noOpToken =  new Token() {
+    private Token noOpToken = new Token() {
         @Override
         public boolean link() {
             return false;
@@ -99,6 +104,42 @@ public class PatientClaimsProcessorUnitTest {
 
         request = new PatientClaimsRequest(patientDTO, helper, earlyAttDate, null, "user", "job",
                 "contractNum", noOpToken);
+    }
+
+    @Test
+    void process_whenPDPhasAttestedBeforeBeginDate() throws ParseException {
+        // Set the earliest date to Jan 1
+        Bundle bundle1 = EobTestDataUtil.createBundle(eob.copy());
+        ReflectionTestUtils.setField(cut, "startDate", "01/01/2020");
+        // Attestation time is 10 years ago, eob date is 01/02/2020
+        List<Resource> resources = cut.extractResources(bundle1.getEntry(),
+                List.of(new FilterOutByDate.DateRange(new Date(0), new Date())), OffsetDateTime.now().minusYears(10));
+        assertEquals(1, resources.size());
+        // Set the billable date to 1970 and attestation date to 1920, should return no results
+        ExplanationOfBenefit eob = (ExplanationOfBenefit) bundle1.getEntry().get(0).getResource();
+        eob.getBillablePeriod().setStart(new Date(10));
+        eob.getBillablePeriod().setEnd(new Date(10));
+        resources = cut.extractResources(bundle1.getEntry(),
+                List.of(new FilterOutByDate.DateRange(new Date(0), new Date())), OffsetDateTime.now().minusYears(100));
+        assertEquals(0, resources.size());
+        // Set billable date to late year and attestation date to a hundred years ago, shouldn't return results
+        SimpleDateFormat sdf = new SimpleDateFormat("MM/dd/yyyy");
+        eob.getBillablePeriod().setStart(sdf.parse("12/29/2019"));
+        eob.getBillablePeriod().setEnd(sdf.parse("12/30/2019"));
+        resources = cut.extractResources(bundle1.getEntry(),
+                List.of(new FilterOutByDate.DateRange(new Date(0), new Date())), OffsetDateTime.now().minusYears(100));
+        assertEquals(0, resources.size());
+        // Set billable period to early 2020, attestation date in 2019, should return 1
+        eob.getBillablePeriod().setStart(sdf.parse("01/02/2020"));
+        eob.getBillablePeriod().setEnd(sdf.parse("01/03/2020"));
+        resources = cut.extractResources(bundle1.getEntry(),
+                List.of(new FilterOutByDate.DateRange(new Date(0), new Date())), OffsetDateTime.of(2019, 1, 1,
+                        1, 1, 1, 1, ZoneOffset.UTC));
+        assertEquals(1, resources.size());
+        // billable period is early 2020, attestation date is today, should return 0
+        resources = cut.extractResources(bundle1.getEntry(),
+                List.of(new FilterOutByDate.DateRange(new Date(0), new Date())), OffsetDateTime.now());
+        assertEquals(0, resources.size());
     }
 
     @Test

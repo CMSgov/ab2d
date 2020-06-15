@@ -51,7 +51,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
 
     @Value("${claims.skipBillablePeriodCheck}")
     private boolean skipBillablePeriodCheck;
-    @Value("${bfd.earliest.data.data}")
+    @Value("${bfd.earliest.data.data:01/01/2020}")
     private String startDate;
 
     /**
@@ -149,14 +149,14 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
         return resources;
     }
 
-    private List<Resource> extractResources(List<BundleEntryComponent> entries, final List<FilterOutByDate.DateRange> dateRanges,
+    List<Resource> extractResources(List<BundleEntryComponent> entries, final List<FilterOutByDate.DateRange> dateRanges,
                                             OffsetDateTime attTime) {
         if (attTime == null) {
             return new ArrayList<>();
         }
         long epochMilli = attTime.toInstant().toEpochMilli();
         Date attDate = new Date(epochMilli);
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+        SimpleDateFormat sdf = new SimpleDateFormat("MM/dd/yyyy");
         Date date;
         try {
             date = sdf.parse(startDate);
