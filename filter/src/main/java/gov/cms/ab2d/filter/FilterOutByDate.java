@@ -19,7 +19,6 @@ import java.util.stream.Collectors;
 public final class FilterOutByDate {
     private static final String SHORT = "MM/dd/yyyy";
     private static final String FULL = "MM/dd/yyyy HH:mm:ss";
-    private static final String ATTESTATION_EARLIEST_DATE = "2020-01-01T00:00:00.000-05:00";
 
     /**
      * Date range class used to define a from and to date for a subscribers membership.
