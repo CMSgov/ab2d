@@ -1,7 +1,6 @@
 package gov.cms.ab2d.eventlogger.eventloggers.sql;
 
 import gov.cms.ab2d.eventlogger.LoggableEvent;
-import gov.cms.ab2d.eventlogger.utils.UtilMethods;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.support.KeyHolder;
