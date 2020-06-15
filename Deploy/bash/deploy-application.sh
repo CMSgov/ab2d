@@ -1359,8 +1359,10 @@ fi
 if [ -z "${CLUSTER_ARNS}" ]; then
   echo "Skipping removing old autoscaling groups, since there are no existing clusters"
 else
-  OLD_API_ASG=$(echo $OLD_API_ASG | awk -F"/" '{print $2}')
-  OLD_WORKER_ASG=$(echo $OLD_WORKER_ASG | awk -F"/" '{print $2}')
+  OLD_API_ASG=$(echo $OLD_API_ASG \
+    | awk -F"/" '{print $2}')
+  OLD_WORKER_ASG=$(echo $OLD_WORKER_ASG \
+    | awk -F"/" '{print $2}')
   aws --region "${AWS_DEFAULT_REGION}" autoscaling delete-auto-scaling-group \
     --auto-scaling-group-name $OLD_API_ASG \
     --force-delete || true
