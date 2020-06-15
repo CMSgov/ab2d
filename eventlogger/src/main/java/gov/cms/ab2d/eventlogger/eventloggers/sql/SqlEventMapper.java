@@ -30,7 +30,7 @@ public abstract class SqlEventMapper implements RowMapper {
 
     MapSqlParameterSource addSuperParams(LoggableEvent event) {
         return new MapSqlParameterSource()
-                .addValue("time", UtilMethods.convertToUtc(event.getTimeOfEvent()))
+                .addValue("time", event.getTimeOfEvent())
                 .addValue("user", event.getUser())
                 .addValue("job", event.getJobId())
                 .addValue("awsId", event.getAwsId())
