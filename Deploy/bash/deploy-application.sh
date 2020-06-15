@@ -1395,6 +1395,50 @@ done
 
 sleep 60
 
+# Remove any duplicative API autoscaling groups
+
+API_ASG_COUNT=$(aws --region "${AWS_DEFAULT_REGION}" autoscaling describe-auto-scaling-groups \
+  --query "AutoScalingGroups[*].Tags[?Value == 'ab2d-dev-api'].ResourceId" \
+  --output text \
+  | sort \
+  | wc -l \
+  | tr -d ' ')
+
+if [ $API_ASG_COUNT -gt 1 ]; then
+  DUPLICATIVE_API_ASG_COUNT=$(expr $API_ASG_COUNT - 1)
+  for i in {1..$DUPLICATIVE_API_ASG_COUNT}
+  do
+    DUPLICATIVE_API_ASG=$(aws --region "${AWS_DEFAULT_REGION}" autoscaling describe-auto-scaling-groups \
+      --query "AutoScalingGroups[*].Tags[?Value == 'ab2d-dev-api'].ResourceId" \
+      --output text \
+      | sort \
+      | head -n $i \
+      | tail -n 1)
+    aws --region "${AWS_DEFAULT_REGION}" autoscaling delete-auto-scaling-group \
+      --auto-scaling-group-name $DUPLICATIVE_API_ASG \
+      --force-delete || true
+    sleep 60
+    RETRIES_ASG=0
+    ASG_NOT_IN_SERVICE=$(aws --region "${AWS_DEFAULT_REGION}" autoscaling describe-auto-scaling-groups \
+      --query "AutoScalingGroups[*].Instances[?LifecycleState != 'InService'].LifecycleState" \
+      --output text)
+    while [ -n "${ASG_NOT_IN_SERVICE}" ]; do
+      echo "Waiting for old autoscaling groups to terminate..."
+      if [ "$RETRIES_ASG" != "15" ]; then
+        echo "Retry in 60 seconds..."
+        sleep 60
+        ASG_NOT_IN_SERVICE=$(aws --region "${AWS_DEFAULT_REGION}" autoscaling describe-auto-scaling-groups \
+          --query "AutoScalingGroups[*].Instances[?LifecycleState != 'InService'].LifecycleState" \
+          --output text)
+        RETRIES_ASG=$(expr $RETRIES_ASG + 1)
+      else
+        echo "Max retries reached. Exiting..."
+        exit 1
+      fi
+    done
+  done
+fi
+
 # Remove old launch configurations
 
 if [ -z "${CLUSTER_ARNS}" ]; then
