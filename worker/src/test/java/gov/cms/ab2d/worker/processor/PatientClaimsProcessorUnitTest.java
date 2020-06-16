@@ -91,6 +91,7 @@ public class PatientClaimsProcessorUnitTest {
                 fhirContext,
                 eventLogger
         );
+        ReflectionTestUtils.setField(cut, "startDate", "01/01/1900");
 
         eob = EobTestDataUtil.createEOB();
         createOutputFiles();
