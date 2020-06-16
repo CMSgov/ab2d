@@ -1406,8 +1406,7 @@ API_ASG_COUNT=$(aws --region "${AWS_DEFAULT_REGION}" autoscaling describe-auto-s
 
 if [ $API_ASG_COUNT -gt 1 ]; then
   DUPLICATIVE_API_ASG_COUNT=$(expr $API_ASG_COUNT - 1)
-  for i in {1..$DUPLICATIVE_API_ASG_COUNT}
-  do
+  for ((i=1;i<=$DUPLICATIVE_API_ASG_COUNT;i++)); do
     DUPLICATIVE_API_ASG=$(aws --region "${AWS_DEFAULT_REGION}" autoscaling describe-auto-scaling-groups \
       --query "AutoScalingGroups[*].Tags[?Value == 'ab2d-dev-api'].ResourceId" \
       --output text \
@@ -1485,8 +1484,7 @@ else
     | jq '. | length')
 
   if [ $OLD_TARGET_GROUP_COUNT -gt 0 ]; then
-    for i in {1..$OLD_TARGET_GROUP_COUNT}
-    do
+    for ((i=1;i<=$OLD_TARGET_GROUP_COUNT;i++)); do
       OLD_TARGET_GROUP_ARN=$(aws --region "${AWS_DEFAULT_REGION}" elbv2 describe-target-groups \
         --query "TargetGroups[?LoadBalancerArns==\`[]\`].TargetGroupArn" \
         --output text \
