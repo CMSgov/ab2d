@@ -137,6 +137,7 @@ class JobProcessorIntegrationTest {
 
         FhirContext fhirContext = FhirContext.forDstu3();
         PatientClaimsProcessor patientClaimsProcessor = new PatientClaimsProcessorImpl(mockBfdClient, fhirContext, logManager);
+        ReflectionTestUtils.setField(patientClaimsProcessor, "startDate", "01/01/1900");
         ContractProcessor contractProcessor = new ContractProcessorImpl(
                 fileService,
                 jobRepository,
