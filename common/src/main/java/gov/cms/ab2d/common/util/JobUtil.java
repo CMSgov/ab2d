@@ -55,7 +55,7 @@ public class JobUtil {
             if (job != null) {
                 jobId = job.getJobUuid();
             }
-            log.error("Unable to determine if job " + job + " is done", ex);
+            log.error("Unable to determine if job " + jobId + " is done", ex);
             return false;
         }
     }
