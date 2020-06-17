@@ -6054,7 +6054,7 @@ BCDA changes below this line
 */
 
 body {
-    background-color: #f1f1f1;
+    background-color: white;
 }
 
 article h1 {
@@ -6340,4 +6340,34 @@ article h2::after {
 
 .card {
     margin-bottom: 25px;
+}
+
+.btn-link {
+    color: #35414f;
+}
+
+.card-header {
+    background-color: #f9fbfd;
+}
+.card-header:hover {
+    background-color: #f1f9fe;
+}
+.card-header-h5 {
+    display: inline-block;
+    max-width: 75%;
+    text-align: left;
+}
+.card-expand {
+    color: #27a9e0;
+    display: inline;
+    position: absolute;
+    right: 75px;
+}
+
+.icon-flipped {
+    -webkit-transform: rotate(180deg);
+    -moz-transform: rotate(180deg);
+    -ms-transform: rotate(180deg);
+    -o-transform: rotate(180deg);
+    transform: rotate(180deg);
 }

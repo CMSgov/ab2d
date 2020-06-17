@@ -8,6 +8,8 @@ active-nav: accessing-claims-data-nav
 ---
 
 <script type="text/javascript">
+    let scrollLock = false;
+    
     const stepMappings = {
         'step-1-icon': 'step-1-content',
         'step-2-icon': 'step-2-content',
@@ -16,7 +18,29 @@ active-nav: accessing-claims-data-nav
     };
     $(document).ready(function() {
         $('.step-accessing-claims').on('click', function(event) {
-            const stepId = $(this).attr('id');
+            scrollLock = true;
+            highlightNav($(this), true);
+        });
+        
+        /*$(window).scroll(function() {
+            if(scrollLock) {
+                return;
+            }
+                 
+            if($(this).scrollTop() >= $('#step-1-content').position().top) {
+                console.log("highlighting nav");
+                highlightNav($('#step-1-icon'), false);
+            } else if($(this).scrollTop() >= $('#step-2-content').position().top) {
+                highlightNav($('#step-2-icon'), false);
+            } else if($(this).scrollTop() >= $('#step-3-content').position().top) {
+                highlightNav($('#step-3-icon'), false);
+            } else if($(this).scrollTop() >= $('#step-4-content').position().top) {
+                highlightNav($('#step-4-icon'), false);
+            }
+        });*/
+        
+        function highlightNav(id, doScroll) {
+            const stepId = id.attr('id');
             const idToShow = stepMappings[stepId];
             
             $('.step-accessing-claims').each(function() {
@@ -24,12 +48,20 @@ active-nav: accessing-claims-data-nav
                 $(this).find('.step-claims-dash').hide();
             });
             
-            $(this).removeClass('step-accessing-claims-nonactive').addClass('step-accessing-claims-active');
-            $(this).find('.step-claims-dash').show();
+            id.removeClass('step-accessing-claims-nonactive').addClass('step-accessing-claims-active');
+            id.find('.step-claims-dash').show();
             
-            $('html, body').animate({
-                scrollTop: $('#' + idToShow).offset().top
-            }, 2000);
+            if(doScroll) {
+                $('html, body').animate({
+                    scrollTop: $('#' + idToShow).offset().top
+                }, 2000, function() {
+                  scrollLock = false;
+                });
+            }
+        }
+        
+        $('.card-header-h5').on('click', function(event) {
+            $(this).parent().find('.card-expand').toggleClass('icon-flipped');
         });
     });
 </script>
@@ -74,11 +106,12 @@ active-nav: accessing-claims-data-nav
                 <div id="who-can-attest-accordion">
                   <div class="card">
                     <div class="card-header" id="headingOne">
-                      <h5 class="mb-0">
+                      <h5 class="mb-0 card-header-h5">
                         <button class="btn btn-link" data-toggle="collapse" data-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
                           Who Can Attest?
                         </button>
                       </h5>
+                      <i class="material-icons card-expand">expand_more</i>
                     </div>
                 
                     <div id="collapseOne" class="collapse show" aria-labelledby="headingOne" data-parent="#accordion">
@@ -97,11 +130,12 @@ active-nav: accessing-claims-data-nav
                 <div id="affect-claims-data-accordion">
                   <div class="card">
                     <div class="card-header" id="headingTwo">
-                      <h5 class="mb-0">
+                      <h5 class="mb-0 card-header-h5">
                         <button class="btn btn-link" data-toggle="collapse" data-target="#collapseTwo" aria-expanded="true" aria-controls="collapseTwo">
                           How Does Attestation Affect Claims Data?
                         </button>
                       </h5>
+                      <i class="material-icons card-expand">expand_more</i>
                     </div>
                 
                     <div id="collapseTwo" class="collapse show" aria-labelledby="headingTwo" data-parent="#accordion">
@@ -122,11 +156,12 @@ active-nav: accessing-claims-data-nav
                 <div id="initially-attest-accordion">
                   <div class="card">
                     <div class="card-header" id="headingThree">
-                      <h5 class="mb-0">
+                      <h5 class="mb-0 card-header-h5">
                         <button class="btn btn-link" data-toggle="collapse" data-target="#collapseThree" aria-expanded="true" aria-controls="collapseThree">
                           How to initially Attest
                         </button>
                       </h5>
+                      <i class="material-icons card-expand">expand_more</i>
                     </div>
                 
                     <div id="collapseThree" class="collapse show" aria-labelledby="headingOne" data-parent="#accordion">
@@ -148,11 +183,12 @@ active-nav: accessing-claims-data-nav
                 <div id="affect-claims-data-accordion">
                   <div class="card">
                     <div class="card-header" id="headingFour">
-                      <h5 class="mb-0">
+                      <h5 class="mb-0 card-header-h5">
                         <button class="btn btn-link" data-toggle="collapse" data-target="#collapseFour" aria-expanded="true" aria-controls="collapseFour">
                           How to Add Additional Attesters
                         </button>
                       </h5>
+                      <i class="material-icons card-expand">expand_more</i>
                     </div>
                 
                     <div id="collapseFour" class="collapse show" aria-labelledby="headingFour" data-parent="#accordion">
