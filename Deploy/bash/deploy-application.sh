@@ -989,22 +989,22 @@ fi
 
 echo "Ensure Old Autoscaling Groups and containers are around to service requests..."
 
-if [ -z "${CLUSTER_ARNS}" ]; then
-  echo "Skipping setting OLD_API_ASG, since there are no existing clusters"
-else
-  OLD_API_ASG=$(terraform show \
-    | grep :autoScalingGroup: \
-    | awk -F" = " '{print $2}' \
-    | grep $CMS_ENV-api \
-    | head -1 \
-    | tr -d '"')
-  OLD_WORKER_ASG=$(terraform show \
-    | grep :autoScalingGroup: \
-    | awk -F" = " '{print $2}' \
-    | grep $CMS_ENV-worker \
-    | head -1 \
-    | tr -d '"')
-fi
+# if [ -z "${CLUSTER_ARNS}" ]; then
+#   echo "Skipping setting OLD_API_ASG, since there are no existing clusters"
+# else
+#   OLD_API_ASG=$(terraform show \
+#     | grep :autoScalingGroup: \
+#     | awk -F" = " '{print $2}' \
+#     | grep $CMS_ENV-api \
+#     | head -1 \
+#     | tr -d '"')
+#   OLD_WORKER_ASG=$(terraform show \
+#     | grep :autoScalingGroup: \
+#     | awk -F" = " '{print $2}' \
+#     | grep $CMS_ENV-worker \
+#     | head -1 \
+#     | tr -d '"')
+# fi
 
 if [ -z "${CLUSTER_ARNS}" ]; then
   echo "Skipping removing autosclaing group and launch configuration, since there are no existing clusters"
@@ -1354,46 +1354,23 @@ else
   fi
 fi
 
-# Remove old Autoscaling groups
+# # Remove old Autoscaling groups
 
-if [ -z "${CLUSTER_ARNS}" ]; then
-  echo "Skipping removing old autoscaling groups, since there are no existing clusters"
-else
-  OLD_API_ASG=$(echo $OLD_API_ASG \
-    | awk -F"/" '{print $2}')
-  OLD_WORKER_ASG=$(echo $OLD_WORKER_ASG \
-    | awk -F"/" '{print $2}')
-  aws --region "${AWS_DEFAULT_REGION}" autoscaling delete-auto-scaling-group \
-    --auto-scaling-group-name $OLD_API_ASG \
-    --force-delete || true
-  aws --region "${AWS_DEFAULT_REGION}" autoscaling delete-auto-scaling-group \
-    --auto-scaling-group-name $OLD_WORKER_ASG \
-    --force-delete || true
-  sleep 60
-fi
-
-# Wait for old Autoscaling groups to terminate
-
-RETRIES_ASG=0
-ASG_NOT_IN_SERVICE=$(aws --region "${AWS_DEFAULT_REGION}" autoscaling describe-auto-scaling-groups \
-  --query "AutoScalingGroups[*].Instances[?LifecycleState != 'InService'].LifecycleState" \
-  --output text)
-while [ -n "${ASG_NOT_IN_SERVICE}" ]; do
-  echo "Waiting for old autoscaling groups to terminate..."
-  if [ "$RETRIES_ASG" != "15" ]; then
-    echo "Retry in 60 seconds..."
-    sleep 60
-    ASG_NOT_IN_SERVICE=$(aws --region "${AWS_DEFAULT_REGION}" autoscaling describe-auto-scaling-groups \
-      --query "AutoScalingGroups[*].Instances[?LifecycleState != 'InService'].LifecycleState" \
-      --output text)
-    RETRIES_ASG=$(expr $RETRIES_ASG + 1)
-  else
-    echo "Max retries reached. Exiting..."
-    exit 1
-  fi
-done
-
-sleep 60
+# if [ -z "${CLUSTER_ARNS}" ]; then
+#   echo "Skipping removing old autoscaling groups, since there are no existing clusters"
+# else
+#   OLD_API_ASG=$(echo $OLD_API_ASG \
+#     | awk -F"/" '{print $2}')
+#   OLD_WORKER_ASG=$(echo $OLD_WORKER_ASG \
+#     | awk -F"/" '{print $2}')
+#   aws --region "${AWS_DEFAULT_REGION}" autoscaling delete-auto-scaling-group \
+#     --auto-scaling-group-name $OLD_API_ASG \
+#     --force-delete || true
+#   aws --region "${AWS_DEFAULT_REGION}" autoscaling delete-auto-scaling-group \
+#     --auto-scaling-group-name $OLD_WORKER_ASG \
+#     --force-delete || true
+#   sleep 60
+# fi
 
 # Remove any duplicative API autoscaling groups
 
@@ -1416,27 +1393,56 @@ if [ $API_ASG_COUNT -gt 1 ]; then
     aws --region "${AWS_DEFAULT_REGION}" autoscaling delete-auto-scaling-group \
       --auto-scaling-group-name $DUPLICATIVE_API_ASG \
       --force-delete || true
+  done
+fi
+
+# Remove any duplicative worker autoscaling groups
+
+WORKER_ASG_COUNT=$(aws --region "${AWS_DEFAULT_REGION}" autoscaling describe-auto-scaling-groups \
+  --query "AutoScalingGroups[*].Tags[?Value == 'ab2d-dev-worker'].ResourceId" \
+  --output text \
+  | sort \
+  | wc -l \
+  | tr -d ' ')
+
+if [ $WORKER_ASG_COUNT -gt 1 ]; then
+  DUPLICATIVE_WORKER_ASG_COUNT=$(expr $WORKER_ASG_COUNT - 1)
+  for ((i=1;i<=$DUPLICATIVE_WORKER_ASG_COUNT;i++)); do
+    DUPLICATIVE_WORKER_ASG=$(aws --region "${AWS_DEFAULT_REGION}" autoscaling describe-auto-scaling-groups \
+      --query "AutoScalingGroups[*].Tags[?Value == 'ab2d-dev-worker'].ResourceId" \
+      --output text \
+      | sort \
+      | head -n $i \
+      | tail -n 1)
+    aws --region "${AWS_DEFAULT_REGION}" autoscaling delete-auto-scaling-group \
+      --auto-scaling-group-name $DUPLICATIVE_WORKER_ASG \
+      --force-delete || true
+  done
+fi
+
+# Wait for old Autoscaling groups to terminate
+
+sleep 60
+RETRIES_ASG=0
+ASG_NOT_IN_SERVICE=$(aws --region "${AWS_DEFAULT_REGION}" autoscaling describe-auto-scaling-groups \
+  --query "AutoScalingGroups[*].Instances[?LifecycleState != 'InService'].LifecycleState" \
+  --output text)
+while [ -n "${ASG_NOT_IN_SERVICE}" ]; do
+  echo "Waiting for old autoscaling groups to terminate..."
+  if [ "$RETRIES_ASG" != "15" ]; then
+    echo "Retry in 60 seconds..."
     sleep 60
-    RETRIES_ASG=0
     ASG_NOT_IN_SERVICE=$(aws --region "${AWS_DEFAULT_REGION}" autoscaling describe-auto-scaling-groups \
       --query "AutoScalingGroups[*].Instances[?LifecycleState != 'InService'].LifecycleState" \
       --output text)
-    while [ -n "${ASG_NOT_IN_SERVICE}" ]; do
-      echo "Waiting for old autoscaling groups to terminate..."
-      if [ "$RETRIES_ASG" != "15" ]; then
-        echo "Retry in 60 seconds..."
-        sleep 60
-        ASG_NOT_IN_SERVICE=$(aws --region "${AWS_DEFAULT_REGION}" autoscaling describe-auto-scaling-groups \
-          --query "AutoScalingGroups[*].Instances[?LifecycleState != 'InService'].LifecycleState" \
-          --output text)
-        RETRIES_ASG=$(expr $RETRIES_ASG + 1)
-      else
-        echo "Max retries reached. Exiting..."
-        exit 1
-      fi
-    done
-  done
-fi
+    RETRIES_ASG=$(expr $RETRIES_ASG + 1)
+  else
+    echo "Max retries reached. Exiting..."
+    exit 1
+  fi
+done
+
+sleep 60
 
 # Remove old launch configurations
 
