@@ -25,7 +25,8 @@ lication-load-balancer)
    * [Upload 2020 Parent Organization and Legal Entity to Contract Report data](#upload-2020-parent-organization-and-legal-entity-to-contract-report-data)
    * [Get 2020 Attestation Report](#get-2020-attestation-report)
    * [Upload 2020 Attestation Report data](#upload-2020-attestation-report-data)
-1. [Create an upload account in Akamai](#create-an-upload-account-in-akamai)
+1. [Create an Akamai Upload Account in Akamai NetStorage](#create-an-akamai-upload-account-in-akamai-netstorage)
+1. [Upload static website to an Akamai Upload Directory within Akamai NetStorage](#upload-static-website-to-an-akamai-upload-directory-within-akamai-netstorage)
 1. [Submit an "Internet DNS Change Request Form" to product owner for the production application load balancer](#Submit an "internet-dns-change-request-form-to-product-owner-for-the-production-app
 1. [Configure CloudWatch Log groups](#configure-cloudwatch-log-groups)
    * [Configure CloudTrail CloudWatch Log group](#configure-cloudtrail-cloudwatch-log-group)
@@ -1281,7 +1282,7 @@ lication-load-balancer)
 
 1. Spot check the results to see if the expected records have been inserted
 
-## Create an upload account in Akamai
+## Create an Akamai Upload Account in Akamai NetStorage
 
 1. Open Chrome
 
@@ -1406,6 +1407,44 @@ lication-load-balancer)
    - **Read Write Privileges:** Read/Write
 
 1. Select **Create**
+
+## Upload static website to an Akamai Upload Directory within Akamai NetStorage
+
+1. Change to the "Deploy" directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d/Deploy
+   ```
+
+1. Create the static website
+
+   *Akamai Stage:*
+
+   ```ShellSession
+   $ export AKAMAI_RSYNC_DOMAIN_PARAM="ab2d.rsync.upload.akamai.com" \
+     && export AKAMAI_UPLOAD_DIRECTORY_PARAM="971498" \
+     && export NETSTORAGE_SSH_KEY_PARAM="${HOME}/.ssh/ab2d-akamai" \
+     && export WEBSITE_DIRECTORY_PARAM="${HOME}/akamai/_site" \
+     && ./bash/create-or-update-website-akamai.sh
+   ```
+
+1. Note that the following should have been created in the Akamai Upload Directory
+
+   - timestamped backup of the new website
+
+     **Akamai Stage Example:*
+
+     ```
+     /971498/_site_2020-06-18_11-47-48
+     ```
+
+   - new website
+
+     *Akamai Stage:*
+
+     ```
+     /971498/_site
+     ```
 
 ## Submit an "Internet DNS Change Request Form" to product owner for the production application load balancer
 
