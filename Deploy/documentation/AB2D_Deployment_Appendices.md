@@ -8761,34 +8761,13 @@ $ sed -i "" 's%cms-ab2d[\/]prod%cms-ab2d/dev%g' _includes/head.html (edited)
      --partial \
      --archive \
      --verbose \
+     --force \
      --rsh="ssh -v -oStrictHostKeyChecking=no -oHostKeyAlgorithms=+ssh-dss -i ${NETSTORAGE_SSH_KEY}" \
      _site/* \
      "sshacs@${AKAMAI_RSYNC_DOMAIN}:/${AKAMAI_UPLOAD_DIRECTORY}/_site"
    ```
 
 ## Appendix BBB: Delete all files in an Akamai Upload Directory within Akamai NetStorage
-
-1. Change to the directory where the "_site" directory exists
-
-   *Example where you are uploading the latest generated website:*
-
-   ```ShellSession
-   $ cd ~/code/ab2d/website
-   ```
-
-   *Example where the "_site" directory was downloaded from S3:*
-
-   ```ShellSession
-   $ cd ~/akamai
-   ```
-
-1. Verify that that the "_site" directory exists
-
-   ```ShellSession
-   $ [ -d "_site" ] \
-     && echo "Directory '_site' exists." \
-     || echo "Error: Directory '_site' does not exist."
-   ```
 
 1. Set a variable that points to your Akamai SSH key
 
