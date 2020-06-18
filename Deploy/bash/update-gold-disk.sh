@@ -28,7 +28,7 @@ if [ -z "${CMS_ENV_PARAM}" ] \
 fi
 
 #
-# Set parameters
+# Set variables
 #
 
 CMS_ENV="${CMS_ENV_PARAM}"

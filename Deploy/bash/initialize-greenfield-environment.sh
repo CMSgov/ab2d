@@ -21,7 +21,7 @@ if  [ -z "${DATABASE_SECRET_DATETIME_PARAM}" ]; then
 fi
 
 #
-# Set parameters
+# Set variables
 #
 
 DATABASE_SECRET_DATETIME="${DATABASE_SECRET_DATETIME_PARAM}"
