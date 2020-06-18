@@ -343,13 +343,31 @@ configure_greenfield_environment ()
     PRIVATE_KEY_EXISTS=$(ssh -i ~/.ssh/${CMS_MGMT_ENV}.pem ec2-user@$JENKINS_AGENT_PRIVATE_IP \
       sudo ls /home/jenkins/.ssh/${CMS_ENV_GE}.pem)
 
+    # Copy the private key of the target environment to the Jenkins agent
+
     if [ -z "${PRIVATE_KEY_EXISTS}" ]; then
       scp -i ~/.ssh/${CMS_MGMT_ENV}.pem ~/.ssh/${CMS_ENV_GE}.pem ec2-user@$JENKINS_AGENT_PRIVATE_IP:~/.ssh \
         && ssh -i ~/.ssh/${CMS_MGMT_ENV}.pem ec2-user@$JENKINS_AGENT_PRIVATE_IP \
   	sudo cp /home/ec2-user/.ssh/${CMS_ENV_GE}.pem /home/jenkins/.ssh/${CMS_ENV_GE}.pem
     fi
-    
+
+  else # if management account
+
+    # Upload or verify private key on Jenkins agent
+
+    PRIVATE_KEY_EXISTS=$(ssh -i ~/.ssh/${CMS_MGMT_ENV}.pem ec2-user@$JENKINS_AGENT_PRIVATE_IP \
+      sudo ls /home/jenkins/.ssh/${CMS_ENV_GE}.pem)
+
+    # Copy the Akamai private SSH key to the Jenkins agent
+
+    if [ -z "${PRIVATE_KEY_EXISTS}" ]; then
+      scp -i ~/.ssh/${CMS_MGMT_ENV}.pem ~/.ssh/ab2d-akamai ec2-user@$JENKINS_AGENT_PRIVATE_IP:~/.ssh \
+        && ssh -i ~/.ssh/${CMS_MGMT_ENV}.pem ec2-user@$JENKINS_AGENT_PRIVATE_IP \
+        sudo cp /home/ec2-user/.ssh/ab2d-akamai /home/jenkins/.ssh/ab2d-akamai
+    fi
+
   fi
+
   echo ""
   echo "**********************************************************"
   echo "${CMS_ENV_GE} greenfield environment configured"
