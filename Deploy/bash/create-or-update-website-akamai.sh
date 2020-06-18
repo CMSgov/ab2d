@@ -55,9 +55,9 @@ if [ "${GENERATE_WEBSITE_FROM_CODE}" == "true" ]; then
 
   # Configure head for Tealium/Google Analytics
 
-  if [ "${WEBSITE_DEPLOYMENT_TYPE}" == "stage" ]; then
+  if [ "${WEBSITE_DEPLOYMENT_TYPE}" == "prod" ]; then
     sed -i "" 's%cms-ab2d[\/]dev%cms-ab2d/prod%g' _includes/head.html
-  else
+  else # stage
     sed -i "" 's%cms-ab2d[\/]prod%cms-ab2d/dev%g' _includes/head.html
   fi
 
