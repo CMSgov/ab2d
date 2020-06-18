@@ -17,7 +17,9 @@ cd "${START_DIR}"
 echo "Check vars are not empty before proceeding..."
 if [ -z "${AKAMAI_RSYNC_DOMAIN_PARAM}" ] \
    || [ -z "${AKAMAI_UPLOAD_DIRECTORY_PARAM}" ] \
+   || [ -z "${GENERATE_WEBSITE_FROM_CODE_PARAM}" ] \
    || [ -z "${NETSTORAGE_SSH_KEY_PARAM}" ] \
+   || [ -z "${WEBSITE_DEPLOYMENT_TYPE_PARAM}" ] \
    || [ -z "${WEBSITE_DIRECTORY_PARAM}" ]; then
   echo "ERROR: All parameters must be set."
   exit 1
@@ -31,14 +33,48 @@ AKAMAI_RSYNC_DOMAIN="${AKAMAI_RSYNC_DOMAIN_PARAM}"
 
 AKAMAI_UPLOAD_DIRECTORY="${AKAMAI_UPLOAD_DIRECTORY_PARAM}"
 
+GENERATE_WEBSITE_FROM_CODE="${GENERATE_WEBSITE_FROM_CODE_PARAM}"
+
 NETSTORAGE_SSH_KEY="${NETSTORAGE_SSH_KEY_PARAM}"
 
 TIMESTAMP=`date +%Y-%m-%d_%H-%M-%S`
 
+WEBSITE_DEPLOYMENT_TYPE="${WEBSITE_DEPLOYMENT_TYPE_PARAM}"
+
 WEBSITE_DIRECTORY="${WEBSITE_DIRECTORY_PARAM}"
 
 #
-# Change to website parent directory
+# Generate the website
+#
+
+if [ "${GENERATE_WEBSITE_FROM_CODE}" == "true" ]; then
+
+  # Change to the repo's "website" direcory
+
+  cd "${START_DIR}"/../../website
+
+  # Configure head for Tealium/Google Analytics
+
+  if [ "${WEBSITE_DEPLOYMENT_TYPE}" == "stage" ]; then
+    sed -i "" 's%cms-ab2d[\/]dev%cms-ab2d/prod%g' _includes/head.html
+  else
+    sed -i "" 's%cms-ab2d[\/]prod%cms-ab2d/dev%g' _includes/head.html
+  fi
+
+  # Build the website
+
+  rm -rf _site
+  bundle install
+  bundle exec jekyll build
+
+  rm -rf "${HOME}/akamai"
+  mkdir -p "${HOME}/akamai"
+  cp -r _site "${HOME}/akamai"
+
+fi
+
+#
+# Change to the parent directory of the website directory
 #
 
 cd "${WEBSITE_DIRECTORY}/.."
