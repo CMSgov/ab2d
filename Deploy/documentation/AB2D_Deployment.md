@@ -93,7 +93,7 @@
    [Install the "Scheduled Build" plugin](#install-the-scheduled-build-plugin)
    [Configure GitHub plugin](#configure-github-plugin)
    [Install and configure the Authorize Project plugin](#install-and-configure-the-authorize-project-plugin)
-   [Install and configure the GitHub Authentication plugin](#install-and-configure-the-github-uthentication-plugin)
+   [Install and configure the GitHub Authentication plugin including adding GitHub users](#install-and-configure-the-github-authentication-plugin-including-adding-github-users)
    [Add the Jenkins agent node](#add-the-jenkins-agent-node)
    [Create a "development" folder in Jenkins](#create-a-development-folder-in-jenkins)
    [Configure a Jenkins project for development application deploy](#configure-a-jenkins-project-for-development-application-deploy)
@@ -6847,7 +6847,7 @@
 
 1. Log out of GitHub
    
-### Install and configure the GitHub Authentication plugin
+### Install and configure the GitHub Authentication plugin including adding GitHub users
 
 1. Connect to Jenkins master
 
