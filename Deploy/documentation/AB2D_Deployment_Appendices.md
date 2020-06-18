@@ -103,6 +103,11 @@
    * [Import an existing KMS key](#import-an-existing-kms-key)
 1. [Appendix WW: Use an SSH tunnel to query production database from local machine](#appendix-ww-use-an-ssh-tunnel-to-query-production-database-from-local-machine)
 1. [Appendix XX: Create a self-signed certificate for an EC2 load balancer](#appendix-xx-create-a-self-signed-certificate-for-an-ec2-load-balancer)
+1. [Appendix YY: Review VictorOps documentation](#appendix-yy-review-victorops-documentation)
+   * [VictorOps Sources](#victorops-sources)
+   * [VictorOps Overview](#victorops-overview)
+1. [Appendix AAA: Upload static website to an Akamai Upload Directory within Akamai NetStorage](#appendix-aaa-upload-static-website-to-an-akamai-upload-directory-within-akamai-netstorage)
+1. [Appendix BBB: Delete all files in an Akamai Upload Directory within Akamai NetStorage](#appendix-zz-delete-all-files-in-an-akamai-upload-directory-within-akamai-netstorage)
 
 ## Appendix A: Access the CMS AWS console
 
@@ -8637,4 +8642,197 @@ $ sed -i "" 's%cms-ab2d[\/]prod%cms-ab2d/dev%g' _includes/head.html (edited)
 
    ```ShellSession
    $ aws --region "${AWS_DEFAULT_REGION}" iam list-server-certificates
+   ```
+
+## Appendix YY: Review VictorOps documentation
+
+### VictorOps Sources
+
+1. Note "VictorOps" page in "MCT" Confluence space:*
+
+   > https://confluence.cms.gov/pages/viewpage.action?spaceKey=MCT&title=VictorOps
+
+### VictorOps Overview
+
+1. Note the following about VictorOps
+
+   - VictorOps is a tool to notify engineers and stakeholders of an incident
+
+   - VictorOps provides a platform for incident reporting and escalation
+
+1.  VictorOps configuration
+
+   - define multiple team rotations based on need
+
+   - define multiple escalations policies based on need
+
+1. Defining teams
+
+   - Engineering team
+
+     - DevOps engineer
+
+     - Backend developers
+
+   - Product team
+
+     - Scrum master
+
+     - Business analyst
+
+1. Defining escalation policies
+
+   - 
+
+1. Overview of a VictorOps process
+
+   - VictorOps is notified of a problematic event
+
+   - VictorOps pages on-call users (following a defined escalation policy) until someone is able to acknowledge the incident and begin investigating
+
+## Appendix AAA: Upload static website to an Akamai Upload Directory within Akamai NetStorage
+
+1. Change to the directory where the "_site" directory exists
+
+   *Example where you are uploading the latest generated website:*
+
+   ```ShellSession
+   $ cd ~/code/ab2d/website
+   ```
+
+   *Example where the website directory was downloaded from S3:*
+
+   ```ShellSession
+   $ cd ~/akamai
+   ```
+
+1. Verify that that the website directory exists
+
+   ```ShellSession
+   $ [ -d "_site" ] \
+     && echo -e "\nDirectory '_site' exists.\n" \
+     || echo -e "\nError: Directory '_site' does not exist.\n"
+   ```
+
+1. Set a variable that points to your Akamai SSH key
+
+   ```ShellSession
+   $ NETSTORAGE_SSH_KEY="$HOME/.ssh/ab2d-akamai"
+   ```
+
+1. Set the target Akamai Upload Directory within Akamai Net Storage
+
+   *Akamai Stage:*
+
+   ```ShellSession
+   $ AKAMAI_UPLOAD_DIRECTORY="971498"
+   ```
+
+1. Set the Akama Rsync domain
+
+   ```ShellSession
+   $ AKAMAI_RSYNC_DOMAIN=ab2d.rsync.upload.akamai.com
+   ```
+
+1. Set timestamp
+
+   ```ShellSession
+   $ TIMESTAMP=`date +%Y-%m-%d_%H-%M-%S`
+   ```
+
+1. Upload a timestamped website directory backup to the target Akamai Upload Directory
+
+   ```ShellSession
+   $ rsync \
+     --progress \
+     --partial \
+     --archive \
+     --verbose \
+     --rsh="ssh -v -oStrictHostKeyChecking=no -oHostKeyAlgorithms=+ssh-dss -i ${NETSTORAGE_SSH_KEY}" \
+     _site/* \
+     "sshacs@${AKAMAI_RSYNC_DOMAIN}:/${AKAMAI_UPLOAD_DIRECTORY}/_site_${TIMESTAMP}"
+   ```
+
+1. Create or update the website directory in the target Akamai Upload Directory
+
+   ```ShellSession
+   $ rsync \
+     --progress \
+     --partial \
+     --archive \
+     --verbose \
+     --rsh="ssh -v -oStrictHostKeyChecking=no -oHostKeyAlgorithms=+ssh-dss -i ${NETSTORAGE_SSH_KEY}" \
+     _site/* \
+     "sshacs@${AKAMAI_RSYNC_DOMAIN}:/${AKAMAI_UPLOAD_DIRECTORY}/_site"
+   ```
+
+## Appendix BBB: Delete all files in an Akamai Upload Directory within Akamai NetStorage
+
+1. Change to the directory where the "_site" directory exists
+
+   *Example where you are uploading the latest generated website:*
+
+   ```ShellSession
+   $ cd ~/code/ab2d/website
+   ```
+
+   *Example where the "_site" directory was downloaded from S3:*
+
+   ```ShellSession
+   $ cd ~/akamai
+   ```
+
+1. Verify that that the "_site" directory exists
+
+   ```ShellSession
+   $ [ -d "_site" ] \
+     && echo "Directory '_site' exists." \
+     || echo "Error: Directory '_site' does not exist."
+   ```
+
+1. Set a variable that points to your Akamai SSH key
+
+   ```ShellSession
+   $ NETSTORAGE_SSH_KEY="$HOME/.ssh/ab2d-akamai"
+   ```
+
+1. Set the target Akamai Upload Directory within Akamai Net Storage
+
+   *Akamai Stage:*
+
+   ```ShellSession
+   $ AKAMAI_UPLOAD_DIRECTORY="971498"
+   ```
+
+1. Set the Akama Rsync domain
+
+   ```ShellSession
+   $ AKAMAI_RSYNC_DOMAIN=ab2d.rsync.upload.akamai.com
+   ```
+
+1. Create an empty directory to use with rsync
+
+   ```ShellSession
+   $ rm -rf /tmp/empty_dir \
+     && mkdir /tmp/empty_dir
+   ```
+
+1. Change to the "/tmp" directory
+
+   ```ShellSession
+   $ cd /tmp
+   ```
+
+1. Delete everything in target Akamai Upload Directory
+
+   ```ShellSession
+   $ rsync \
+     --progress \
+     --partial \
+     --archive \
+     --verbose \
+     --omit-dir-times \
+     --force \
+     --rsh="ssh -v -oStrictHostKeyChecking=no -oHostKeyAlgorithms=+ssh-dss -i ${NETSTORAGE_SSH_KEY}" \
+     --delete empty_dir/ "sshacs@${AKAMAI_RSYNC_DOMAIN}:/${AKAMAI_UPLOAD_DIRECTORY}/"
    ```
