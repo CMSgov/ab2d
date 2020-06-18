@@ -1375,7 +1375,7 @@ fi
 # Remove any duplicative API autoscaling groups
 
 API_ASG_COUNT=$(aws --region "${AWS_DEFAULT_REGION}" autoscaling describe-auto-scaling-groups \
-  --query "AutoScalingGroups[*].Tags[?Value == 'ab2d-dev-api'].ResourceId" \
+  --query "AutoScalingGroups[*].Tags[?Value == '${CMS_ENV}-api'].ResourceId" \
   --output text \
   | sort \
   | wc -l \
@@ -1385,7 +1385,7 @@ if [ $API_ASG_COUNT -gt 1 ]; then
   DUPLICATIVE_API_ASG_COUNT=$(expr $API_ASG_COUNT - 1)
   for ((i=1;i<=$DUPLICATIVE_API_ASG_COUNT;i++)); do
     DUPLICATIVE_API_ASG=$(aws --region "${AWS_DEFAULT_REGION}" autoscaling describe-auto-scaling-groups \
-      --query "AutoScalingGroups[*].Tags[?Value == 'ab2d-dev-api'].ResourceId" \
+      --query "AutoScalingGroups[*].Tags[?Value == '${CMS_ENV}-api'].ResourceId" \
       --output text \
       | sort \
       | head -n $i \
@@ -1399,7 +1399,7 @@ fi
 # Remove any duplicative worker autoscaling groups
 
 WORKER_ASG_COUNT=$(aws --region "${AWS_DEFAULT_REGION}" autoscaling describe-auto-scaling-groups \
-  --query "AutoScalingGroups[*].Tags[?Value == 'ab2d-dev-worker'].ResourceId" \
+  --query "AutoScalingGroups[*].Tags[?Value == '${CMS_ENV}-worker'].ResourceId" \
   --output text \
   | sort \
   | wc -l \
@@ -1409,7 +1409,7 @@ if [ $WORKER_ASG_COUNT -gt 1 ]; then
   DUPLICATIVE_WORKER_ASG_COUNT=$(expr $WORKER_ASG_COUNT - 1)
   for ((i=1;i<=$DUPLICATIVE_WORKER_ASG_COUNT;i++)); do
     DUPLICATIVE_WORKER_ASG=$(aws --region "${AWS_DEFAULT_REGION}" autoscaling describe-auto-scaling-groups \
-      --query "AutoScalingGroups[*].Tags[?Value == 'ab2d-dev-worker'].ResourceId" \
+      --query "AutoScalingGroups[*].Tags[?Value == '${CMS_ENV}-worker'].ResourceId" \
       --output text \
       | sort \
       | head -n $i \
