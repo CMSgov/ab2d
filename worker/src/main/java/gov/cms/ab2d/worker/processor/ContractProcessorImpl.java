@@ -68,6 +68,9 @@ public class ContractProcessorImpl implements ContractProcessor {
     @Value("${file.try.lock.timeout}")
     private int tryLockTimeout;
 
+    @Value("${optout.used}")
+    private boolean optoutUsed;
+
     private final FileService fileService;
     private final JobRepository jobRepository;
     private final PatientClaimsProcessor patientClaimsProcessor;
@@ -104,10 +107,12 @@ public class ContractProcessorImpl implements ContractProcessor {
             for (PatientDTO patient : patients) {
                 ++recordsProcessedCount;
 
-                if (isOptOutPatient(patient.getPatientId())) {
-                    // this patient has opted out. skip patient record.
-                    progressTracker.incrementOptOutCount();
-                    continue;
+                if (optoutUsed) {
+                    if (isOptOutPatient(patient.getPatientId())) {
+                        // this patient has opted out. skip patient record.
+                        progressTracker.incrementOptOutCount();
+                        continue;
+                    }
                 }
 
                 futureHandles.add(processPatient(patient, contractData, helper));
