@@ -348,7 +348,9 @@ configure_greenfield_environment ()
     if [ -z "${PRIVATE_KEY_EXISTS}" ]; then
       scp -i ~/.ssh/${CMS_MGMT_ENV}.pem ~/.ssh/${CMS_ENV_GE}.pem ec2-user@$JENKINS_AGENT_PRIVATE_IP:~/.ssh \
         && ssh -i ~/.ssh/${CMS_MGMT_ENV}.pem ec2-user@$JENKINS_AGENT_PRIVATE_IP \
-  	sudo cp /home/ec2-user/.ssh/${CMS_ENV_GE}.pem /home/jenkins/.ssh/${CMS_ENV_GE}.pem
+          sudo cp /home/ec2-user/.ssh/${CMS_ENV_GE}.pem /home/jenkins/.ssh/${CMS_ENV_GE}.pem \
+        && ssh -i ~/.ssh/${CMS_MGMT_ENV}.pem ec2-user@$JENKINS_AGENT_PRIVATE_IP \
+          sudo chown jenkins:jenkins /home/jenkins/.ssh/${CMS_ENV_GE}.pem
     fi
 
   else # if management account
@@ -363,7 +365,9 @@ configure_greenfield_environment ()
     if [ -z "${PRIVATE_KEY_EXISTS}" ]; then
       scp -i ~/.ssh/${CMS_MGMT_ENV}.pem ~/.ssh/ab2d-akamai ec2-user@$JENKINS_AGENT_PRIVATE_IP:~/.ssh \
         && ssh -i ~/.ssh/${CMS_MGMT_ENV}.pem ec2-user@$JENKINS_AGENT_PRIVATE_IP \
-        sudo cp /home/ec2-user/.ssh/ab2d-akamai /home/jenkins/.ssh/ab2d-akamai
+          sudo cp /home/ec2-user/.ssh/ab2d-akamai /home/jenkins/.ssh/ab2d-akamai \
+        && ssh -i ~/.ssh/${CMS_MGMT_ENV}.pem ec2-user@$JENKINS_AGENT_PRIVATE_IP \
+          sudo chown jenkins:jenkins /home/jenkins/.ssh/ab2d-akamai
     fi
 
   fi
