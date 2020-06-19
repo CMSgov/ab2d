@@ -107,12 +107,10 @@ public class ContractProcessorImpl implements ContractProcessor {
             for (PatientDTO patient : patients) {
                 ++recordsProcessedCount;
 
-                if (optoutUsed) {
-                    if (isOptOutPatient(patient.getPatientId())) {
-                        // this patient has opted out. skip patient record.
-                        progressTracker.incrementOptOutCount();
-                        continue;
-                    }
+                if (optoutUsed && isOptOutPatient(patient.getPatientId())) {
+                    // this patient has opted out. skip patient record.
+                    progressTracker.incrementOptOutCount();
+                    continue;
                 }
 
                 futureHandles.add(processPatient(patient, contractData, helper));
