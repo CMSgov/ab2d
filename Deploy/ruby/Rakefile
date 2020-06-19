@@ -62,3 +62,21 @@ task :get_file_from_s3_and_decrypt, [:param1, :param2] do |t, args|
   s3 = SecureS3Objects.new
   s3.get_file_from_s3_and_decrypt("#{source_path_and_file}", "#{s3_bucket}", 'encrypted-files', 'us-east-1', "#{kms_key_id}", '/tmp')
 end
+
+desc 'Get public schema as a sql script and data as CSV files'
+task :database_public_get_data do
+
+  # Get environment variables
+
+  cms_env = `echo $CMS_ENV`
+  database_user = `echo $DATABASE_USER`
+  database_password = `echo $DATABASE_PASSWORD`
+  database_name = `echo $DATABASE_NAME`
+  database_host = `echo $DATABASE_HOST`
+  database_port = `echo $DATABASE_PORT`
+
+  # Test
+
+  puts "#{database_host}"
+
+end
