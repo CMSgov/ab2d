@@ -155,7 +155,7 @@ fi
 # Create a database_backup directory for the target environment
   
 rm -rf "${HOME}/database_backup/${CMS_ENV}"
-mkdir -p "${HOME}/database_backup/${CMS_ENV}"
+mkdir -p "${HOME}/database_backup/${CMS_ENV}/csv"
 
 # Set PostgreSQL password
 
