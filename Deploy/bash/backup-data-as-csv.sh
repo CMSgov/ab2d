@@ -152,8 +152,8 @@ fi
 
 # Create a database_backup directory for the target environment
   
-rm -rf "/database_backup/${CMS_ENV}"
-mkdir -p "/database_backup/${CMS_ENV}"
+rm -rf "${HOME}/database_backup/${CMS_ENV}"
+mkdir -p "${HOME}/database_backup/${CMS_ENV}"
 
 # Set PostgreSQL password
 
@@ -171,9 +171,9 @@ pg_dump \
   --no-acl \
   --format=p \
   --encoding='UTF8' \
-  --file='/database_backup/${CMS_ENV}/01-public-schema.sql'
+  --file="${HOME}/database_backup/${CMS_ENV}/01-public-schema.sql"
 
-sed -i '/^CREATE SCHEMA.*$/d' "/database_backup/${CMS_ENV}/01-public-schema.sql"
+sed -i '/^CREATE SCHEMA.*$/d' "${HOME}/database_backup/${CMS_ENV}/01-public-schema.sql"
 
 # Change to the ruby directory
 
