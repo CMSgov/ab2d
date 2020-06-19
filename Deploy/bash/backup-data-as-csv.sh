@@ -28,7 +28,7 @@ fi
 # Set variables
 #
 
-CMS_ENV="${CMS_ENV_PARAM}"
+export CMS_ENV="${CMS_ENV_PARAM}"
 
 DATABASE_SECRET_DATETIME="${DATABASE_SECRET_DATETIME_PARAM}"
 
@@ -95,7 +95,7 @@ cd python3
 
 # Get database user secret
 
-DATABASE_USER=$(./get-database-secret.py $CMS_ENV database_user $DATABASE_SECRET_DATETIME)
+export DATABASE_USER=$(./get-database-secret.py $CMS_ENV database_user $DATABASE_SECRET_DATETIME)
 
 if [ -z "${DATABASE_USER}" ]; then
   echo "**************************************"
@@ -106,7 +106,7 @@ fi
 
 # Get database password secret
 
-DATABASE_PASSWORD=$(./get-database-secret.py $CMS_ENV database_password $DATABASE_SECRET_DATETIME)
+export DATABASE_PASSWORD=$(./get-database-secret.py $CMS_ENV database_password $DATABASE_SECRET_DATETIME)
 
 if [ -z "${DATABASE_PASSWORD}" ]; then
   echo "******************************************"
@@ -117,7 +117,7 @@ fi
 
 # Get database name secret
 
-DATABASE_NAME=$(./get-database-secret.py $CMS_ENV database_name $DATABASE_SECRET_DATETIME)
+export DATABASE_NAME=$(./get-database-secret.py $CMS_ENV database_name $DATABASE_SECRET_DATETIME)
 
 if [ -z "${DATABASE_NAME}" ]; then
   echo "***************************************"
@@ -128,7 +128,7 @@ fi
 
 # Get database host secret
 
-DATABASE_HOST=$(./get-database-secret.py $CMS_ENV database_host $DATABASE_SECRET_DATETIME)
+export DATABASE_HOST=$(./get-database-secret.py $CMS_ENV database_host $DATABASE_SECRET_DATETIME)
 
 if [ -z "${DATABASE_HOST}" ]; then
   echo "***************************************************"
@@ -139,7 +139,7 @@ fi
 
 # Get database port secret
 
-DATABASE_PORT=$(./get-database-secret.py $CMS_ENV database_port $DATABASE_SECRET_DATETIME)
+export DATABASE_PORT=$(./get-database-secret.py $CMS_ENV database_port $DATABASE_SECRET_DATETIME)
 
 if [ -z "${DATABASE_PORT}" ]; then
   echo "***************************************************"
