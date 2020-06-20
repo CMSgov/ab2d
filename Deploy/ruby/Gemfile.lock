@@ -896,6 +896,7 @@ GEM
     aws-sigv4 (1.1.0)
       aws-eventstream (~> 1.0, >= 1.0.2)
     jmespath (1.4.0)
+    pg (1.2.3)
     rake (13.0.1)
 
 PLATFORMS
@@ -903,6 +904,7 @@ PLATFORMS
 
 DEPENDENCIES
   aws-sdk (~> 3)
+  pg
   rake
 
 BUNDLED WITH
