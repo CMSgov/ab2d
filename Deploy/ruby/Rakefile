@@ -69,13 +69,13 @@ task :database_public_get_data do
 
   # Get environment variables
 
-  home = `echo ${HOME}`
-  cms_env = `echo $CMS_ENV`
-  database_user = `echo $DATABASE_USER`
-  PGPASSWORD = `echo $PGPASSWORD`
-  database_name = `echo $DATABASE_NAME`
-  database_host = `echo $DATABASE_HOST`
-  database_port = `echo $DATABASE_PORT`
+  home = `printf ${HOME}`
+  cms_env = `printf $CMS_ENV`
+  database_user = `printf $DATABASE_USER`
+  PGPASSWORD = `printf $PGPASSWORD`
+  database_name = `printf $DATABASE_NAME`
+  database_host = `printf $DATABASE_HOST`
+  database_port = `printf $DATABASE_PORT`
 
   # Generate CSV files from database tables
 
