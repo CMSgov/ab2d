@@ -36,8 +36,14 @@ CLOUD_TAMER="${CLOUD_TAMER_PARAM}"
 
 # Set whether CloudTamer API should be used
 
-if [ "${CLOUD_TAMER_PARAM}" != "false" ] && [ "${CLOUD_TAMER_PARAM}" != "true" ]; then
-  echo "ERROR: CLOUD_TAMER_PARAM parameter must be true or false"
+if [ "${CLOUD_TAMER_PARAM}" != "false" ]; then
+  echo ""
+  echo "*********************************************************"
+  echo "ERROR: CLOUD_TAMER_PARAM parameter must be false"
+  echo ""
+  echo "CloudTamer is not currently supported for this script"
+  echo "*********************************************************"
+  echo ""
   exit 1
 else
   CLOUD_TAMER="${CLOUD_TAMER_PARAM}"
@@ -66,10 +72,6 @@ fi
 # Define functions
 #
 
-# Import the "get temporary AWS credentials via CloudTamer API" function
-
-source "${START_DIR}/functions/fn_get_temporary_aws_credentials_via_cloudtamer_api.sh"
-
 # Import the "get temporary AWS credentials via AWS STS assume role" function
 
 source "${START_DIR}/functions/fn_get_temporary_aws_credentials_via_aws_sts_assume_role.sh"
@@ -78,11 +80,7 @@ source "${START_DIR}/functions/fn_get_temporary_aws_credentials_via_aws_sts_assu
 # Set AWS target environment
 #
 
-if [ "${CLOUD_TAMER}" == "true" ]; then
-  fn_get_temporary_aws_credentials_via_cloudtamer_api "${CMS_ENV_AWS_ACCOUNT_NUMBER}" "${CMS_ENV}"
-else
-  fn_get_temporary_aws_credentials_via_aws_sts_assume_role "${CMS_ENV_AWS_ACCOUNT_NUMBER}" "${CMS_ENV}"
-fi
+fn_get_temporary_aws_credentials_via_aws_sts_assume_role "${CMS_ENV_AWS_ACCOUNT_NUMBER}" "${CMS_ENV}"
 
 #
 # Get secrets
