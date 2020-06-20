@@ -69,6 +69,7 @@ task :database_public_get_data do
 
   # Get environment variables
 
+  home = `echo ${HOME}`
   cms_env = `echo $CMS_ENV`
   database_user = `echo $DATABASE_USER`
   PGPASSWORD = `echo $PGPASSWORD`
@@ -78,7 +79,7 @@ task :database_public_get_data do
 
   # Generate CSV files from database tables
 
-  Dir.chdir("#{csv_dir}") do
+  Dir.chdir("#{home}/database_backup/#{cms_env}/csv") do
 
     # Delete existing CSV files and any CSV split results that may still exist
 
