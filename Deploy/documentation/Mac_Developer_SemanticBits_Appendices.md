@@ -20,6 +20,12 @@
 
 ### Install PostgreSQL 11
 
+1. Change the ownership of "openssl@1.1"
+
+   ```ShellSession
+   $ sudo chown -R $(whoami) "/usr/local/Cellar/openssl@1.1"
+   ```
+
 1. Install PostgreSQL 11
 
    ```ShellSession
@@ -30,19 +36,73 @@
 
    ```
    ==> Caveats
+   ==> openssl@1.1
+   A CA file has been bootstrapped using certificates from the system
+   keychain. To add additional certificates, place .pem files in
+     /usr/local/etc/openssl@1.1/certs
+
+   and run
+     /usr/local/opt/openssl@1.1/bin/c_rehash
+
+   openssl@1.1 is keg-only, which means it was not symlinked into /usr/local,
+   because macOS provides LibreSSL.
+
+   If you need to have openssl@1.1 first in your PATH run:
+     echo 'export PATH="/usr/local/opt/openssl@1.1/bin:$PATH"' >> /Users/lonnie.hanekamp/.bash_profile
+
+   For compilers to find openssl@1.1 you may need to set:
+     export LDFLAGS="-L/usr/local/opt/openssl@1.1/lib"
+     export CPPFLAGS="-I/usr/local/opt/openssl@1.1/include"
+
+   For pkg-config to find openssl@1.1 you may need to set:
+     export PKG_CONFIG_PATH="/usr/local/opt/openssl@1.1/lib/pkgconfig"
+
+   ==> readline
+   readline is keg-only, which means it was not symlinked into /usr/local,
+   because macOS provides BSD libedit.
+
+   For compilers to find readline you may need to set:
+     export LDFLAGS="-L/usr/local/opt/readline/lib"
+     export CPPFLAGS="-I/usr/local/opt/readline/include"
+
+   For pkg-config to find readline you may need to set:
+     export PKG_CONFIG_PATH="/usr/local/opt/readline/lib/pkgconfig"
+
+   ==> postgresql@11
    To migrate existing data from a previous major version of PostgreSQL run:
      brew postgresql-upgrade-database
 
-   To have launchd start postgresql now and restart at login:
-     brew services start postgresql
+   postgresql@11 is keg-only, which means it was not symlinked into /usr/local,
+   because this is an alternate version of another formula.
+
+   If you need to have postgresql@11 first in your PATH run:
+     echo 'export PATH="/usr/local/opt/postgresql@11/bin:$PATH"' >> /Users/lonnie.hanekamp/.bash_profile
+
+   For compilers to find postgresql@11 you may need to set:
+     export LDFLAGS="-L/usr/local/opt/postgresql@11/lib"
+     export CPPFLAGS="-I/usr/local/opt/postgresql@11/include"
+
+   For pkg-config to find postgresql@11 you may need to set:
+     export PKG_CONFIG_PATH="/usr/local/opt/postgresql@11/lib/pkgconfig"
+
+
+   To have launchd start postgresql@11 now and restart at login:
+     brew services start postgresql@11
    Or, if you don't want/need a background service you can just run:
-     pg_ctl -D /usr/local/var/postgres start
+     pg_ctl -D /usr/local/var/postgresql@11 start
+   ```
+
+1. Add PostgreSQL bin to your path
+
+   ```ShellSession
+   $ printf '\n# Add PostgreSQL to Path' >> ~/.bash_profile
+   $ printf '\nexport PATH="/usr/local/opt/postgresql@11/bin:$PATH"' >> ~/.bash_profile
    ```
 
 1. Start PostgreSQL service
 
    ```ShellSession
-   $ brew services start postgresql
+   $ brew services start postgresql@11
    ```
 
 1. Ensure that PostgreSQL is running on port 5432
