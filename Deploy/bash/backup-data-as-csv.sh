@@ -164,7 +164,7 @@ export PGPASSWORD="${DATABASE_PASSWORD}"
 # Create a schema script
 
 pg_dump \
-  'impl' \
+  --dbname='impl' \
   --host='ab2d.c8ic6b9oakpi.us-east-1.rds.amazonaws.com' \
   --username='cmsadmin' \
   --schema='public' \
