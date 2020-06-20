@@ -25,7 +25,6 @@ lication-load-balancer)
    * [Upload 2020 Parent Organization and Legal Entity to Contract Report data](#upload-2020-parent-organization-and-legal-entity-to-contract-report-data)
    * [Get 2020 Attestation Report](#get-2020-attestation-report)
    * [Upload 2020 Attestation Report data](#upload-2020-attestation-report-data)
-1. [Create an Akamai Upload Account in Akamai NetStorage](#create-an-akamai-upload-account-in-akamai-netstorage)
 1. [Upload static website to an Akamai Upload Directory within Akamai NetStorage](#upload-static-website-to-an-akamai-upload-directory-within-akamai-netstorage)
 1. [Submit an "Internet DNS Change Request Form" to product owner for the production application load balancer](#Submit an "internet-dns-change-request-form-to-product-owner-for-the-production-app
 1. [Configure CloudWatch Log groups](#configure-cloudwatch-log-groups)
@@ -1282,133 +1281,9 @@ lication-load-balancer)
 
 1. Spot check the results to see if the expected records have been inserted
 
-## Create an Akamai Upload Account in Akamai NetStorage
-
-1. Open Chrome
-
-1. Enter the following in the address bar
-
-   > https://control.akamai.com/apps/home-page
-
-1. Select the three bar icon in the top left of the page
-
-1. Select **NetStorage** under "CDN" in the leftmost panel
-
-1. Select the following storage group
-
-   ```
-   AB2D
-   ```
-
-1. Scroll down to the "Upload Directories" section
-
-1. Note the upload directories
-
-   - 971498 (used for static website stage)
-
-   - 1055691 (used for static website prod)
-
-1. Create an "ab2d-akamai-stage" keypair
-
-   ```ShellSession
-   $ ssh-keygen -t rsa -b 2048 -P "" -q -f "$HOME/.ssh/ab2d-akamai"
-   ```
-
-1. Select the ![Akamai Upload Accounts](images/akamai-upload-accounts.png) icon from leftmost toolbar
-
-1. Select **Add Upload Account**
-
-1. Configure the "Upload Account" page as follows
-
-   - **Id:** lhanekamp_ab2d
-
-   - **Contact Email Address:** lonnie.hanekamp@semanticbits.com
-
-   - **Add New Account radio button:** {selected}
-
-   - **First Name:** Lonnie
-
-   - **Last Name:** Hanekamp
-
-   - **Email:** {secondary email}
-
-   - **Phone:** {cell phone}
-
-1. Select **Next** on the "Upload Account" page
-
-1. Check the following
-
-   - 971498 (AB2D)
-
-   - 1055691 (AB2D)
-
-1. Select **Yes** on the "Are you sure you want to add the selected Directory Access to the upload account?" dialog
-
-1. Keep other defaults
-
-1. Select **Next** on the "Upload Directory Association" page
-
-1. Select **Add SSH Key**
-
-1. Open a terminal
-
-1. Copy the contents of "ab2d-akamai.pub" to the clipboard
-
-   ```ShellSession
-   $ cat ~/.ssh/ab2d-akamai.pub | pbcopy
-   ```
-
-1. Paste the public key into the **SSH Key** text box
-
-1. Select **Save**
-
-1. Select **Next** on the "Access Methods" page
-
-1. Select **Next** on the "Advanced Settings" page
-
-1. Note the "Upload Account Details"
-
-   - **Id:** lhanekamp_ab2d
-
-   - **Email:** lonnie.hanekamp@semanticbits.com
-
-   - **Storage Group Id:** 1065622
-
-   - **CP Codes:** 971498 1055691
-
-   - **First Name:** Lonnie
-
-   - **Last Name:** Hanekamp
-
-   - **Email:** {seconary email}
-
-   - **Phone:** {cell phone}
-
-   - **FTP:** Disabled
-
-   - **Rsync:** Disabled
-
-   - **SSH:** Enabled
-
-   - **Aspera Upload Acceleration:** Disabled
-
-   - **HTTP API Access:** Disabled
-
-   - **File Manager Access:** Disabled
-
-   - **Upload Directory:** 971498 (AB2D)
-
-   - **Upload Directory:** 971498 (AB2D)
-
-   - **Directory limit:** {blank}
-
-   - **Default directory:** {blank}
-
-   - **Read Write Privileges:** Read/Write
-
-1. Select **Create**
-
 ## Upload static website to an Akamai Upload Directory within Akamai NetStorage
+
+1. Note that these directions assume that the "Create an Akamai Upload Account in Akamai NetStorage" section in the "AB2D_Deployment_Greenfield" document has been completed
 
 1. Change to the "Deploy" directory
 
@@ -1418,12 +1293,26 @@ lication-load-balancer)
 
 1. Create the static website
 
-   *Akamai Stage:*
+   *Akamai Stage (using website pulled from CloudFront):*
 
    ```ShellSession
    $ export AKAMAI_RSYNC_DOMAIN_PARAM="ab2d.rsync.upload.akamai.com" \
      && export AKAMAI_UPLOAD_DIRECTORY_PARAM="971498" \
+     && export GENERATE_WEBSITE_FROM_CODE_PARAM="false" \
      && export NETSTORAGE_SSH_KEY_PARAM="${HOME}/.ssh/ab2d-akamai" \
+     && export WEBSITE_DEPLOYMENT_TYPE_PARAM="stage" \
+     && export WEBSITE_DIRECTORY_PARAM="${HOME}/akamai-from-cloudfront/_site" \
+     && ./bash/create-or-update-website-akamai.sh
+   ```
+
+   *Akamai Stage (using website generated from code):*
+
+   ```ShellSession
+   $ export AKAMAI_RSYNC_DOMAIN_PARAM="ab2d.rsync.upload.akamai.com" \
+     && export AKAMAI_UPLOAD_DIRECTORY_PARAM="971498" \
+     && export GENERATE_WEBSITE_FROM_CODE_PARAM="true" \
+     && export NETSTORAGE_SSH_KEY_PARAM="${HOME}/.ssh/ab2d-akamai" \
+     && export WEBSITE_DEPLOYMENT_TYPE_PARAM="stage" \
      && export WEBSITE_DIRECTORY_PARAM="${HOME}/akamai/_site" \
      && ./bash/create-or-update-website-akamai.sh
    ```
