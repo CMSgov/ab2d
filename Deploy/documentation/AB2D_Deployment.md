@@ -83,6 +83,8 @@
    [Add the jenkins user to the docker group](#add-the-jenkins-user-to-the-docker-group)
    [Ensure jenkins can use the Unix socket for the Docker daemon](#ensure-jenkins-can-use-the-unix-socket-for-the-docker-daemon)
    [Install packer on Jenkins agent](#install-packer-on-jenkins-agent)
+   [Setup ruby environment on Jenkins agent](#setup-ruby-environment-on-jenkins-agent)
+   [Install postgresql10-devel on Jenkins agent](#install-postgresql10-devel-on-jenkins-agent)
 1. [Create GitHub user for Jenkins automation](#create-github-user-for-jenkins-automation)
 1. [Configure Jenkins for AB2D](#configure-jenkins-for-ab2d)
    [Configure jenkins SSH credentials](#configure-jenkins-ssh-credentials)
@@ -6174,6 +6176,152 @@
 
    ```ShellSession
    $ sudo yum -y install postgresql11
+   ```
+
+### Setup ruby environment on Jenkins agent
+
+1. Change to the "repo" directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d/Deploy
+   ```
+
+1. Setup environment for the management AWS account
+
+   1. Set AWS environment variables using the CloudTamer API
+
+      ```ShellSession
+      $ source ./bash/set-env.sh
+      ```
+
+   1. Enter the number of the desired AWS acccout where the desired logs reside
+
+      ```
+      5 (Mgmt AWS account)
+      ```
+
+1. Get private IP address of Jenkins agent
+
+   ```ShellSession
+   $ JENKINS_AGENT_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+     --filters "Name=tag:Name,Values=ab2d-jenkins-agent" \
+     --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+     --output text)
+   ```
+
+1. Connect to Jenkins agent
+
+   ```ShellSession
+   $ ssh -i ~/.ssh/$SSH_PRIVATE_KEY ec2-user@$JENKINS_AGENT_PRIVATE_IP
+   ```
+
+1. Install rbenv dependencies
+
+   ```ShellSession
+   $ sudo yum install -y git-core zlib zlib-devel gcc-c++ patch readline \
+     readline-devel libyaml-devel libffi-devel openssl-devel make bzip2 \
+     autoconf automake libtool bison curl sqlite-devel
+   ```
+
+1. Switch to the Jenkins user
+
+   ```ShellSession
+   $ sudo su - jenkins
+   ```
+
+1. Install rbenv and ruby-build
+
+   ```ShellSession
+   $ curl -sL https://github.com/rbenv/rbenv-installer/raw/master/bin/rbenv-installer | bash -
+   ```
+
+1. Add rbenv initialization to "bashrc"
+
+   ```ShellSession
+   $ echo 'export PATH="$HOME/.rbenv/bin:$PATH"' >> ~/.bashrc
+   $ echo 'eval "$(rbenv init -)"' >> ~/.bashrc
+   ```
+
+1. Initialize rbenv for the current session
+
+   ```ShellSession
+   $ export PATH="$HOME/.rbenv/bin:$PATH"
+   $ eval "$(rbenv init -)"
+   ```
+
+1. Install Ruby 2.6.5
+
+   ```ShellSession
+   $ rbenv install 2.6.5
+   ```
+
+1. Set the global version of Ruby
+
+   ```SehellSession
+   $ rbenv global 2.6.5
+   ```
+
+1. Install bundler
+
+   ```ShellSession
+   $ gem install bundler
+   ```
+
+1. Update Ruby Gems
+
+   ```ShellSession
+   $ gem update --system
+   ```
+
+1. Verify ruby by checking its version
+
+   ```ShellSession
+   $ ruby --version
+   ```
+
+### Install postgresql10-devel on Jenkins agent
+
+1. Note that I couldn't install postgresql11-devel due to dependencies that could not be installed, so I am using "postgresql10-devel" instead
+
+1. Change to the "repo" directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d/Deploy
+   ```
+
+1. Setup environment for the management AWS account
+
+   1. Set AWS environment variables using the CloudTamer API
+
+      ```ShellSession
+      $ source ./bash/set-env.sh
+      ```
+
+   1. Enter the number of the desired AWS acccout where the desired logs reside
+
+      ```
+      5 (Mgmt AWS account)
+      ```
+
+1. Get private IP address of Jenkins agent
+
+   ```ShellSession
+   $ JENKINS_AGENT_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+     --filters "Name=tag:Name,Values=ab2d-jenkins-agent" \
+     --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+     --output text)
+   ```
+
+1. Connect to Jenkins agent
+
+   ```ShellSession
+   $ ssh -i ~/.ssh/$SSH_PRIVATE_KEY ec2-user@$JENKINS_AGENT_PRIVATE_IP
+   ```
+
+1. Install postgresql10-devel
+
+   ```ShellSession
+   $ sudo yum -y install postgresql10-devel
    ```
 
 ## Create GitHub user for Jenkins automation
