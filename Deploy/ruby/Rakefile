@@ -151,7 +151,7 @@ task :database_public_get_data do
   end
 
   puts "************************************************************"
-  puts "CSV files for the '#{cms_env]' environment can be found here"
+  puts "CSV files for the '#{cms_env}' environment can be found here"
   puts "************************************************************"
   puts ""
   puts "-------------"
