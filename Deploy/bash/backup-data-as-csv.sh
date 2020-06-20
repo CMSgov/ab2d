@@ -182,7 +182,18 @@ sed -i '/^CREATE SCHEMA.*$/d' "${HOME}/database_backup/${CMS_ENV}/01-public-sche
 cd "${START_DIR}/.."
 cd ruby
 
+#
 # Get data as CSV files
+#
+
+# Add the pgsql-10 binary directory to the path (required to install the pg gem)
+
+export PATH=$PATH:/usr/pgsql-10/bin
+
+# Install required gems
 
 bundle install
+
+# Get the public schema script and its data as csv files
+
 bundle exec rake database_public_get_data
