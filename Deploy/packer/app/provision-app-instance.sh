@@ -1,4 +1,7 @@
-#!/bin/bash
+#!/bin/bash -l
+# Note: that "-l" was added to the first line to make bash a login shell
+# - this causes .bash_profile and .bashrc to be sourced which is needed for ruby items
+
 # Purpose: Shell script to provision image for app instances
 
 set -x # Be verbose
