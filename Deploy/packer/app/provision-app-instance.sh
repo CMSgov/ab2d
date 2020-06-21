@@ -55,6 +55,12 @@ sudo yum -y install https://download.postgresql.org/pub/repos/yum/11/redhat/rhel
 
 sudo yum -y install postgresql11
 
+# Install Postgres 10 devel
+# - note that Postgres 11 devel could not be used because it had dependencies that require RedHat subscription changes that are not available
+# - need devel in order to use a newer version of pg_dump
+
+sudo yum -y install postgresql10-devel
+
 # Install Docker
 
 sudo yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
