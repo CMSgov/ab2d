@@ -170,6 +170,10 @@ gem update --system
 
 cd /deployment
 
+# Add the pgsql-10 binary directory to the path (required to install the pg gem)
+
+export PATH=$PATH:/usr/pgsql-10/bin
+
 # Ensure required gems are installed
 
 bundle install
