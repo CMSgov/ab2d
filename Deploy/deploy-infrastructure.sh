@@ -462,6 +462,9 @@ fi
 
 # Create Kinesis Firehose for lower environments only
 
+cd "${START_DIR}"
+cd terraform/environments/$CMS_ENV
+
 if [ "${CMS_ENV}" != "ab2d-east-prod" ]; then
   terraform apply \
     --var "env=${CMS_ENV}" \
