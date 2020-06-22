@@ -459,3 +459,13 @@ if [ -z "${DATABASE_PORT}" ]; then
     --secret-string "${DB_PORT}"
   DATABASE_PORT=$(./get-database-secret.py $CMS_ENV database_port $DATABASE_SECRET_DATETIME)
 fi
+
+# Create Kinesis Firehose for lower environments only
+
+if [ "${CMS_ENV}" != "ab2d-east-prod" ]; then
+  terraform apply \
+    --var "env=${CMS_ENV}" \
+    --var "aws_account_number=${CMS_ENV_AWS_ACCOUNT_NUMBER}" \
+    --target module.kinesis_firehose \
+    --auto-approve
+fi
