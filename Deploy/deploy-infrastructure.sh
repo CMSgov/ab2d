@@ -354,19 +354,30 @@ terraform apply \
 
 # Get files system id (if exists)
 
-EFS_FS_ID=$(aws --region "${AWS_DEFAULT_REGION}" efs describe-file-systems \
-  --query="FileSystems[?CreationToken=='${CMS_ENV}-efs'].FileSystemId" \
-  --output=text)
+# LSH 2020-06-22 BEGIN
 
-# Create file system (if doesn't exist)
+# EFS_FS_ID=$(aws --region "${AWS_DEFAULT_REGION}" efs describe-file-systems \
+#   --query="FileSystems[?CreationToken=='${CMS_ENV}-efs'].FileSystemId" \
+#   --output=text)
 
-if [ -z "${EFS_FS_ID}" ]; then
-  echo "Creating EFS..."
-  terraform apply \
-    --var "env=${CMS_ENV}" \
-    --target module.efs \
-    --auto-approve
-fi
+# # Create file system (if doesn't exist)
+
+# if [ -z "${EFS_FS_ID}" ]; then
+#   echo "Creating EFS..."
+#   terraform apply \
+#     --var "env=${CMS_ENV}" \
+#     --target module.efs \
+#     --auto-approve
+# fi
+
+echo "Create or update EFS..."
+
+terraform apply \
+  --var "env=${CMS_ENV}" \
+  --target module.efs \
+  --auto-approve
+
+# LSH 2020-06-22 END
 
 #
 # Create database
