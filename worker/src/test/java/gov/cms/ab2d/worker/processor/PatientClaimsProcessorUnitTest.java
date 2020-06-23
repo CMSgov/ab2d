@@ -104,11 +104,11 @@ public class PatientClaimsProcessorUnitTest {
     @Test
     void process_whenPatientHasSinglePageOfClaimsData() throws ExecutionException, InterruptedException {
         Bundle bundle1 = EobTestDataUtil.createBundle(eob.copy());
-        when(mockBfdClient.requestEOBFromServer(patientId, null)).thenReturn(bundle1);
+        when(mockBfdClient.requestEOBFromServer(patientId, request.getAttTime())).thenReturn(bundle1);
 
         cut.process(request).get();
 
-        verify(mockBfdClient).requestEOBFromServer(patientId, null);
+        verify(mockBfdClient).requestEOBFromServer(patientId, request.getAttTime());
         verify(mockBfdClient, never()).requestNextBundleFromServer(bundle1);
     }
 
@@ -119,37 +119,37 @@ public class PatientClaimsProcessorUnitTest {
 
         Bundle bundle2 = EobTestDataUtil.createBundle(eob.copy());
 
-        when(mockBfdClient.requestEOBFromServer(patientId, null)).thenReturn(bundle1);
+        when(mockBfdClient.requestEOBFromServer(patientId, request.getAttTime())).thenReturn(bundle1);
         when(mockBfdClient.requestNextBundleFromServer(bundle1)).thenReturn(bundle2);
 
         cut.process(request).get();
 
-        verify(mockBfdClient).requestEOBFromServer(patientId, null);
+        verify(mockBfdClient).requestEOBFromServer(patientId, request.getAttTime());
         verify(mockBfdClient).requestNextBundleFromServer(bundle1);
     }
 
     @Test
     void process_whenBfdClientThrowsException() {
         Bundle bundle1 = EobTestDataUtil.createBundle(eob.copy());
-        when(mockBfdClient.requestEOBFromServer(patientId, null)).thenThrow(new RuntimeException("Test Exception"));
+        when(mockBfdClient.requestEOBFromServer(patientId, request.getAttTime())).thenThrow(new RuntimeException("Test Exception"));
 
         var exceptionThrown = assertThrows(ExecutionException.class,
                 () -> cut.process(request).get());
 
         assertThat(exceptionThrown.getCause().getMessage(), startsWith("Test Exception"));
 
-        verify(mockBfdClient).requestEOBFromServer(patientId, null);
+        verify(mockBfdClient).requestEOBFromServer(patientId, request.getAttTime());
         verify(mockBfdClient, never()).requestNextBundleFromServer(bundle1);
     }
 
     @Test
     void process_whenPatientHasNoEOBClaimsData() throws ExecutionException, InterruptedException {
         Bundle bundle1 = new Bundle();
-        when(mockBfdClient.requestEOBFromServer(patientId, null)).thenReturn(bundle1);
+        when(mockBfdClient.requestEOBFromServer(patientId, request.getAttTime())).thenReturn(bundle1);
 
         cut.process(request).get();
 
-        verify(mockBfdClient).requestEOBFromServer(patientId, null);
+        verify(mockBfdClient).requestEOBFromServer(patientId, request.getAttTime());
         verify(mockBfdClient, never()).requestNextBundleFromServer(bundle1);
     }
 

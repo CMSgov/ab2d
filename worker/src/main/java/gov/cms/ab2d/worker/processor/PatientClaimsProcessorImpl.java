@@ -114,7 +114,9 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
         OffsetDateTime start = OffsetDateTime.now();
         Bundle eobBundle;
         try {
-            eobBundle = bfdClient.requestEOBFromServer(patient.getPatientId(), request.getSinceTime());
+
+            eobBundle = bfdClient.requestEOBFromServer(patient.getPatientId(),
+                    request.getSinceTime() == null ? request.getAttTime() : request.getSinceTime());
             logManager.log(LogManager.LogType.KINESIS,
                     new BeneficiarySearchEvent(request.getUser(), request.getJob(), request.getContractNum(),
                             start, OffsetDateTime.now(),
