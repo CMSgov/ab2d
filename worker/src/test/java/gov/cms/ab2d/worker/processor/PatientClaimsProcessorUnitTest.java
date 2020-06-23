@@ -60,6 +60,7 @@ public class PatientClaimsProcessorUnitTest {
     private String patientId = "1234567890";
 
     private OffsetDateTime earlyAttDate = OffsetDateTime.of(1970, 1, 1, 0, 0, 0, 0, ZoneOffset.UTC);
+    private OffsetDateTime laterAttDate = OffsetDateTime.of(2020, 2, 15, 0, 0, 0, 0, ZoneOffset.UTC);
     private GetPatientsByContractResponse.PatientDTO patientDTO;
 
     private Token noOpToken = new Token() {
@@ -105,7 +106,7 @@ public class PatientClaimsProcessorUnitTest {
         StreamHelper helper = new TextStreamHelperImpl(tmpEfsMountDir.toPath(), contract.getContractNumber(),
                 30, 120, eventLogger, null);
 
-        request = new PatientClaimsRequest(patientDTO, helper, earlyAttDate, null, "user", "job",
+        request = new PatientClaimsRequest(patientDTO, helper, laterAttDate, null, "user", "job",
                 "contractNum", noOpToken);
     }
 
@@ -211,7 +212,7 @@ public class PatientClaimsProcessorUnitTest {
 
         OffsetDateTime sinceDate = earlyAttDate.plusDays(1);
 
-        request = new PatientClaimsRequest(patientDTO, helper, earlyAttDate, sinceDate, "user", "job",
+        request = new PatientClaimsRequest(patientDTO, helper, laterAttDate, sinceDate, "user", "job",
                 "contractNum", noOpToken);
 
         Bundle bundle1 = EobTestDataUtil.createBundle(eob.copy());
@@ -220,6 +221,30 @@ public class PatientClaimsProcessorUnitTest {
         cut.process(request).get();
 
         verify(mockBfdClient).requestEOBFromServer(patientId, request.getSinceTime());
+        verify(mockBfdClient, never()).requestNextBundleFromServer(bundle1);
+    }
+
+    @Test
+    void process_whenPatientHasSinglePageOfClaimsDataEarlyAttDate() throws ExecutionException, InterruptedException,
+            FileNotFoundException, ParseException {
+        // Override default behavior of setup
+        patientDTO = new GetPatientsByContractResponse.PatientDTO();
+        patientDTO.setPatientId(patientId);
+        patientDTO.setDateRangesUnderContract(List.of(new FilterOutByDate.DateRange(new Date(0), new Date())));
+
+        Contract contract = new Contract();
+        StreamHelper helper = new TextStreamHelperImpl(tmpEfsMountDir.toPath(), contract.getContractNumber(),
+                30, 120, eventLogger, null);
+
+        request = new PatientClaimsRequest(patientDTO, helper, earlyAttDate, null, "user", "job",
+                "contractNum", noOpToken);
+
+        Bundle bundle1 = EobTestDataUtil.createBundle(eob.copy());
+        when(mockBfdClient.requestEOBFromServer(patientId, null)).thenReturn(bundle1);
+
+        cut.process(request).get();
+
+        verify(mockBfdClient).requestEOBFromServer(patientId, null);
         verify(mockBfdClient, never()).requestNextBundleFromServer(bundle1);
     }
 

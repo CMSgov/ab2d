@@ -38,7 +38,9 @@ import java.util.Objects;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
+import static gov.cms.ab2d.common.util.Constants.SINCE_EARLIEST_DATE;
 import static gov.cms.ab2d.filter.EOBLoadUtilities.isPartD;
+import static java.time.format.DateTimeFormatter.ISO_DATE_TIME;
 
 @Slf4j
 @Component
@@ -53,6 +55,8 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
     private boolean skipBillablePeriodCheck;
     @Value("${bfd.earliest.data.data:01/01/2020}")
     private String startDate;
+
+    private static final OffsetDateTime START_CHECK = OffsetDateTime.parse(SINCE_EARLIEST_DATE, ISO_DATE_TIME);
 
     /**
      * Process the retrieval of patient explanation of benefit objects and write them
@@ -120,9 +124,15 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
         OffsetDateTime start = OffsetDateTime.now();
         Bundle eobBundle;
         try {
-
-            eobBundle = bfdClient.requestEOBFromServer(patient.getPatientId(),
-                    request.getSinceTime() == null ? request.getAttTime() : request.getSinceTime());
+            OffsetDateTime sinceTime = null;
+            if(request.getSinceTime() == null) {
+                if(request.getAttTime().isAfter(START_CHECK)) {
+                    sinceTime = request.getAttTime();
+                }
+            } else {
+                sinceTime = request.getSinceTime();
+            }
+            eobBundle = bfdClient.requestEOBFromServer(patient.getPatientId(), sinceTime);
             logManager.log(LogManager.LogType.KINESIS,
                     new BeneficiarySearchEvent(request.getUser(), request.getJob(), request.getContractNum(),
                             start, OffsetDateTime.now(),
