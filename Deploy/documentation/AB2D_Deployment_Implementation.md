@@ -10,6 +10,7 @@
    * [Create or update AMI with latest gold disk](#create-or-update-ami-with-latest-gold-disk)
    * [Create or update infrastructure](#create-or-update-infrastructure)
    * [Create or update application for production](#create-or-update-application-for-production)
+1. [Upload static website to an Akamai Upload Directory within Akamai NetStorage](#upload-static-website-to-an-akamai-upload-directory-within-akamai-netstorage)
 
 ## Obtain and import impl.ab2d.cms.gov common certificate](#obtain-and-import-implab2dcmsgov-common-certificate)
 
@@ -399,3 +400,57 @@
    ```ShellSession
    $ ./bash/deploy-application.sh
    ```
+
+## Upload static website to an Akamai Upload Directory within Akamai NetStorage
+
+1. Note that these directions assume that the "Create an Akamai Upload Account in Akamai NetStorage" section in the "AB2D_Deployment_Greenfield" document has been completed
+
+1. Change to the "Deploy" directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d/Deploy
+   ```
+
+1. Create the static website
+
+   *Akamai Stage (using website pulled from CloudFront):*
+
+   ```ShellSession
+   $ export AKAMAI_RSYNC_DOMAIN_PARAM="ab2d.rsync.upload.akamai.com" \
+     && export AKAMAI_UPLOAD_DIRECTORY_PARAM="971498" \
+     && export GENERATE_WEBSITE_FROM_CODE_PARAM="false" \
+     && export NETSTORAGE_SSH_KEY_PARAM="${HOME}/.ssh/ab2d-akamai" \
+     && export WEBSITE_DEPLOYMENT_TYPE_PARAM="stage" \
+     && export WEBSITE_DIRECTORY_PARAM="${HOME}/akamai-from-cloudfront/_site" \
+     && ./bash/create-or-update-website-akamai.sh
+   ```
+
+   *Akamai Stage (using website generated from code):*
+
+   ```ShellSession
+   $ export AKAMAI_RSYNC_DOMAIN_PARAM="ab2d.rsync.upload.akamai.com" \
+     && export AKAMAI_UPLOAD_DIRECTORY_PARAM="971498" \
+     && export GENERATE_WEBSITE_FROM_CODE_PARAM="true" \
+     && export NETSTORAGE_SSH_KEY_PARAM="${HOME}/.ssh/ab2d-akamai" \
+     && export WEBSITE_DEPLOYMENT_TYPE_PARAM="stage" \
+     && export WEBSITE_DIRECTORY_PARAM="${HOME}/akamai/_site" \
+     && ./bash/create-or-update-website-akamai.sh
+   ```
+
+1. Note that the following should have been created in the Akamai Upload Directory
+
+   - timestamped backup of the new website
+
+     **Akamai Stage Example:*
+
+     ```
+     /971498/_site_2020-06-18_11-47-48
+     ```
+
+   - new website
+
+     *Akamai Stage:*
+
+     ```
+     /971498/_site
+     ```
