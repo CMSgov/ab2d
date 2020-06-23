@@ -1,13 +1,15 @@
-<div class="container"> <a class="navbar-brand js-scroll-trigger" href="#page-top"><img src="assets/img/logo-horiz.svg" alt="logo"/></a>
+<div class="container">
+    <a class="navbar-brand js-scroll-trigger" href="#page-top"><img src="assets/img/logo-horiz.svg" alt="logo"/></a>
     <button class="navbar-toggler ml-auto" type="button" data-toggle="collapse" data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation"> Menu <i class="fas fa-bars"></i> </button>
     <div class="collapse navbar-collapse" id="navbarResponsive">
-        <ul class="navbar-nav">
+        <ul class="navbar-nav mr-auto" style="width: 100%;">
             <li class="nav-item {% if page.active-nav == 'home-nav' %}{{ 'active' }}{% endif %}"> <a class="nav-link" href="/">Home</a> </li>
             <li class="nav-item {% if page.active-nav == 'overview-nav' %}{{ 'active' }}{% endif %}"> <a class="nav-link" href="overview">Overview</a> </li>
             <li class="dropdown dropdown-large nav-item {% if page.active-nav == 'accessing-claims-data-nav' %}{{ 'active' }}{% endif %}">
-                <a class="nav-link dropdown-toggle dropdown-medium" href="javascript:void()" data-toggle="dropdown" aria-expanded="false">Accessing Claims Data</a>
+                <a style="background-color: #323A45;" class="nav-link dropdown-toggle dropdown-medium" href="accessing-claims-data" data-toggle="dropdown" aria-expanded="false">Accessing Claims Data</a>
 
                 <div class="dropdown-menu">
+                    <a class="dropdown-item" href="accessing-claims-data">Getting Started</a>
                     <a class="dropdown-item" href="tutorial-postman">Postman and Swagger User Guide</a>
                     <a class="dropdown-item" href="tutorial-curl">Curl User Guide</a>
                     <a class="dropdown-item" href="advanced-user-guide">Advanced User Guide</a>

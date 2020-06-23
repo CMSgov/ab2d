@@ -6201,8 +6201,6 @@ article h2::after {
     position: absolute;
 }
 .step-header {
-    width: 70px;
-    height: 36px;
     font-family: Montserrat;
     font-size: 16px;
     font-weight: bold;
@@ -6212,9 +6210,9 @@ article h2::after {
     letter-spacing: 2.67px;
     color: #de3072;
     margin-bottom: 15px;
+    text-transform: uppercase;
 }
 .step-title {
-    height: 30px;
     font-family: Montserrat;
     font-size: 30px;
     font-weight: bold;
@@ -6227,8 +6225,9 @@ article h2::after {
 }
 .line-copy {
     width: 81px;
-    height: 2px;
-    border: solid 4px #2ac4f3;
+    height: 4px;
+    background-color: #2ac4f3;
+    border-radius: 4px;
     margin-bottom: 15px;
 }
 .header-title {
@@ -6272,7 +6271,7 @@ article h2::after {
     margin: auto;
 
     font-family: Montserrat;
-    font-size: 16px;
+    font-size: 14px;
     font-weight: bold;
     font-stretch: normal;
     font-style: normal;
@@ -6309,8 +6308,6 @@ article h2::after {
 }
 
 .understanding-the-data-section {
-    width: 994px;
-    height: 243px;
     border-radius: 5px;
     box-shadow: 0 3px 7px 0 rgba(0, 0, 0, 0.13);
     background-color: #ffffff;
@@ -6347,15 +6344,31 @@ article h2::after {
 }
 
 .card-header {
-    background-color: #f9fbfd;
+    background-color: white;
+    cursor: pointer;
 }
 .card-header:hover {
-    background-color: #f1f9fe;
+    background-color: white;
 }
 .card-header-h5 {
     display: inline-block;
     max-width: 75%;
     text-align: left;
+    font-family: Muli;
+    font-size: 16px;
+    font-weight: bold;
+    font-stretch: normal;
+    font-style: normal;
+    line-height: 1.5;
+    letter-spacing: normal;
+    color: #35414f;
+}
+.accordion-white-bg .card-header {
+    background-color: #f9fbfd;
+    transition: all 0.2s linear;
+}
+.accordion-white-bg .card-header:hover {
+    background-color: #f1f9fe;
 }
 .card-expand {
     color: #27a9e0;
@@ -6370,4 +6383,53 @@ article h2::after {
     -ms-transform: rotate(180deg);
     -o-transform: rotate(180deg);
     transform: rotate(180deg);
+}
+
+.dropdown:hover .dropdown-menu {
+    display: block;
+}
+.dropdown {
+    background-color: #525962;
+}
+.dropdown a {
+    color: white;
+    background-color: #525962;
+}
+.dropdown a:hover {
+    color: #8DE4FF;
+    background-color: #323A45;
+}
+.dropdown-menu {
+    background-color: #525962;
+}
+
+.dropdown-toggle::after {
+    border: none;
+    content: '\e5cf';
+    font-family: "MaterialIcons";
+    font-size: 15px;
+}
+
+ul.gray-bullets {
+    list-style: none; /* Remove default bullets */
+}
+
+ul.gray-bullets li::before {
+    content: "\2022";
+    color: #d8d8d8;
+    font-weight: bold;
+    display: inline-block;
+    width: 1em;
+    margin-left: -1em;
+}
+ul.gray-bullets li {
+    margin-bottom: 10px;
+}
+ul.gray-bullets a:hover {
+    text-decoration: underline;
+}
+
+.card .btn {
+    text-align: left;
+    text-decoration: none;
 }

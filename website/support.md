@@ -16,9 +16,9 @@ active-nav: support-nav
 </script>
 
 
-<section class="bg-white page-section py-5">
-    <svg class="shape-divider" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
-         viewBox="0 0 1034.2 43.8" style="enable-background:new 0 0 1034.2 43.8;" xml:space="preserve">
+<section class="bg-white page-section py-5" role="main">
+    <svg preserveAspectRatio="xMidYMin slice" class="shape-divider" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+         viewBox="0 0 1034.2 43.8" style="enable-background:new 0 0 1034.2 43.8;" xml:space="preserve" alt="divider">
 	<path fill="#ffffff" d="M0,21.3c0,0,209.3-48,517.1,0s517.1,0,517.1,0v22.5H0V21.3z"/>
     </svg>
     <div class="container">
@@ -31,29 +31,27 @@ active-nav: support-nav
                 <div class="google-group-wrapper">
                     <a class="join-our-google-group" href="https://groups.google.com/forum/#!forum/ab2d-api" target="_blank">
                         <span>JOIN OUR GOOGLE GROUP</span>
-                        <i class="material-icons" style="color: white;">open_in_new</i>
+                        <i class="material-icons pl-1" style="color: white;">open_in_new</i>
                     </a>
                 </div>
             </div>
             <div class="col">
-                <img src="assets/img/experts.svg" />
+                <img src="assets/img/experts.svg" alt="experts" />
             </div>        
         </div>
 
         <br />
 
-        <div id="accordion-support">
+        <div id="accordion-support" class="accordion-white-bg">
           <div class="card">
-            <div class="card-header" id="headingOne">
+            <div class="card-header" id="headingOne" data-toggle="collapse" data-target="#collapseOne" aria-expanded="false" aria-controls="collapseOne">
               <h5 class="mb-0" class="card-header-h5">
-                <button class="btn btn-link" data-toggle="collapse" data-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
-                  1. Why is CMS making claims data available to PDP sponsors?
-                </button>
+                  Why is CMS making claims data available to PDP sponsors?
               </h5>
-              <i class="material-icons card-expand icon-flipped">expand_more</i>
+              <i class="material-icons card-expand">expand_more</i>
             </div>
         
-            <div id="collapseOne" class="collapse show" aria-labelledby="headingOne" data-parent="#accordion">
+            <div id="collapseOne" class="collapse" aria-labelledby="headingOne" data-parent="#accordion">
               <div class="card-body">
                 In February 2018, the Bipartisan Budget Act of 2018 (BBA) was signed into law and included a provision
                 requiring the development of a process to share Medicare fee-for-services claims data with PDP sponsors.
@@ -67,11 +65,9 @@ active-nav: support-nav
           </div>
           
           <div class="card">
-            <div class="card-header" id="headingTwo">
+            <div class="card-header" id="headingTwo" data-toggle="collapse" data-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
               <h5 class="mb-0" class="card-header-h5">
-                <button class="btn btn-link collapsed" data-toggle="collapse" data-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
-                  2. What is the Final Rule?
-                </button>
+                  What is the Final Rule?
               </h5>
               <i class="material-icons card-expand">expand_more</i>
             </div>
@@ -84,11 +80,9 @@ active-nav: support-nav
           </div>
           
           <div class="card">
-            <div class="card-header" id="headingThree">
+            <div class="card-header" id="headingThree" data-toggle="collapse" data-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
               <h5 class="mb-0" class="card-header-h5">
-                <button class="btn btn-link collapsed" data-toggle="collapse" data-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
-                  3. Who is eligible to request Medicare Claims data under this process?
-                </button>
+                  Who is eligible to request Medicare Claims data under this process?
               </h5>
               <i class="material-icons card-expand">expand_more</i>
             </div>
@@ -100,12 +94,10 @@ active-nav: support-nav
           </div>
           
           <div class="card">
-              <div class="card-header" id="headingFour">
+              <div class="card-header" id="headingFour" data-toggle="collapse" data-target="#collapseFour" aria-expanded="false" aria-controls="collapseFour">
                 <h5 class="mb-0 card-header-h5">
-                  <button class="btn btn-link collapsed" data-toggle="collapse" data-target="#collapseFour" aria-expanded="false" aria-controls="collapseFour">
-                    4. How do standalone Medicare Part D Plan (PDP) sponsors access the Medicare Parts A and B claims data as
+                    How do standalone Medicare Part D Plan (PDP) sponsors access the Medicare Parts A and B claims data as
                     mandated the BBA and Final Rule?
-                  </button>
                 </h5>
                 <i class="material-icons card-expand">expand_more</i>
               </div>
@@ -118,12 +110,10 @@ active-nav: support-nav
           </div>
           
           <div class="card">
-              <div class="card-header" id="headingFive">
+              <div class="card-header" id="headingFive" data-toggle="collapse" data-target="#collapseFive" aria-expanded="false" aria-controls="collapseFive">
                 <h5 class="mb-0 card-header-h5">
-                  <button class="btn btn-link collapsed" data-toggle="collapse" data-target="#collapseFive" aria-expanded="false" aria-controls="collapseFive">
-                    5. I’m a Standalone Medicare Part D Plan (PDP) sponsor. How does my organization receive Medicare Parts
+                    I'm a Standalone Medicare Part D Plan (PDP) sponsor. How does my organization receive Medicare Parts
                     A and B claims information using the AB2D API?
-                  </button>
                 </h5>
                 <i class="material-icons card-expand">expand_more</i>
               </div>
@@ -138,11 +128,9 @@ active-nav: support-nav
           </div>
           
           <div class="card">
-            <div class="card-header" id="headingSix">
+            <div class="card-header" id="headingSix" data-toggle="collapse" data-target="#collapseSix" aria-expanded="false" aria-controls="collapseSix">
               <h5 class="mb-0 card-header-h5">
-                <button class="btn btn-link collapsed" data-toggle="collapse" data-target="#collapseSix" aria-expanded="false" aria-controls="collapseSix">
-                  6. What is Claims Data Attestation?
-                </button>
+                  What is Claims Data Attestation?
               </h5>
               <i class="material-icons card-expand">expand_more</i>
             </div>
@@ -158,11 +146,9 @@ active-nav: support-nav
           </div>
           
           <div class="card">
-              <div class="card-header" id="headingSeven">
+              <div class="card-header" id="headingSeven" data-toggle="collapse" data-target="#collapseSeven" aria-expanded="false" aria-controls="collapseSeven">
                 <h5 class="mb-0 card-header-h5">
-                  <button class="btn btn-link collapsed" data-toggle="collapse" data-target="#collapseSeven" aria-expanded="false" aria-controls="collapseSeven">
-                    7. Who within my organization can Attest?
-                  </button>
+                    Who within my organization can Attest?
                 </h5>
                 <i class="material-icons card-expand">expand_more</i>
               </div>
@@ -176,11 +162,9 @@ active-nav: support-nav
           </div>
           
           <div class="card">
-            <div class="card-header" id="headingEight">
+            <div class="card-header" id="headingEight" data-toggle="collapse" data-target="#collapseEight" aria-expanded="false" aria-controls="collapseEight">
               <h5 class="mb-0 card-header-h5">
-                <button class="btn btn-link collapsed" data-toggle="collapse" data-target="#collapseEight" aria-expanded="false" aria-controls="collapseEight">
-                  8. What happens if an Attestor leaves my company?
-                </button>
+                  What happens if an Attestor leaves my company?
               </h5>
               <i class="material-icons card-expand">expand_more</i>
             </div>
@@ -199,11 +183,9 @@ active-nav: support-nav
           </div>
           
           <div class="card">
-              <div class="card-header" id="headingNine">
+              <div class="card-header" id="headingNine" data-toggle="collapse" data-target="#collapseNine" aria-expanded="false" aria-controls="collapseNine">
                 <h5 class="mb-0 card-header-h5">
-                  <button class="btn btn-link collapsed" data-toggle="collapse" data-target="#collapseNine" aria-expanded="false" aria-controls="collapseNine">
-                    9. What is the permitted use of the data?
-                  </button>
+                    What is the permitted use of the data?
                 </h5>
                 <i class="material-icons card-expand">expand_more</i>
               </div>
@@ -221,11 +203,9 @@ active-nav: support-nav
           </div>
           
           <div class="card">
-            <div class="card-header" id="headingTen">
+            <div class="card-header" id="headingTen" data-toggle="collapse" data-target="#collapseTen" aria-expanded="false" aria-controls="collapseTen">
               <h5 class="mb-0 card-header-h5">
-                <button class="btn btn-link collapsed" data-toggle="collapse" data-target="#collapseTen" aria-expanded="false" aria-controls="collapseTen">
-                  10. What use of the data is not permitted?
-                </button>
+                  What use of the data is not permitted?
               </h5>
               <i class="material-icons card-expand">expand_more</i>
             </div>
@@ -243,11 +223,9 @@ active-nav: support-nav
           </div>
           
           <div class="card">
-              <div class="card-header" id="headingEleven">
+              <div class="card-header" id="headingEleven" data-toggle="collapse" data-target="#collapseEleven" aria-expanded="false" aria-controls="collapseEleven">
                 <h5 class="mb-0 card-header-h5">
-                  <button class="btn btn-link collapsed" data-toggle="collapse" data-target="#collapseEleven" aria-expanded="false" aria-controls="collapseEleven">
-                    11. When can PDP sponsors begin requesting data?
-                  </button>
+                    When can PDP sponsors begin requesting data?
                 </h5>
                 <i class="material-icons card-expand">expand_more</i>
               </div>
@@ -260,11 +238,9 @@ active-nav: support-nav
           </div>
           
           <div class="card">
-            <div class="card-header" id="headingTwelve">
+            <div class="card-header" id="headingTwelve" data-toggle="collapse" data-target="#collapseTwelve" aria-expanded="false" aria-controls="collapseTwelve">
               <h5 class="mb-0 card-header-h5">
-                <button class="btn btn-link collapsed" data-toggle="collapse" data-target="#collapseTwelve" aria-expanded="false" aria-controls="collapseTwelve">
-                  12. What is the format of the data extract?
-                </button>
+                  What is the format of the data extract?
               </h5>
               <i class="material-icons card-expand">expand_more</i>
             </div>
@@ -278,11 +254,9 @@ active-nav: support-nav
           </div>
           
           <div class="card">
-              <div class="card-header" id="headingThirteen">
+              <div class="card-header" id="headingThirteen" data-toggle="collapse" data-target="#collapseThirteen" aria-expanded="false" aria-controls="collapseThirteen">
                 <h5 class="mb-0 card-header-h5">
-                  <button class="btn btn-link collapsed" data-toggle="collapse" data-target="#collapseThirteen" aria-expanded="false" aria-controls="collapseThirteen">
-                    13. What are the data elements that will be accessible through the API?
-                  </button>
+                    What are the data elements that will be accessible through the API?
                 </h5>
                 <i class="material-icons card-expand">expand_more</i>
               </div>
@@ -305,11 +279,9 @@ active-nav: support-nav
           </div>
           
           <div class="card">
-            <div class="card-header" id="headingFourteen">
+            <div class="card-header" id="headingFourteen" data-toggle="collapse" data-target="#collapseFourteen" aria-expanded="false" aria-controls="collapseFourteen">
               <h5 class="mb-0 card-header-h5">
-                <button class="btn btn-link collapsed" data-toggle="collapse" data-target="#collapseFourteen" aria-expanded="false" aria-controls="collapseFourteen">
-                  14. Can a beneficiary opt-out of data sharing?
-                </button>
+                  Can a beneficiary opt-out of data sharing?
               </h5>
               <i class="material-icons card-expand">expand_more</i>
             </div>
@@ -322,11 +294,9 @@ active-nav: support-nav
           </div>
           
           <div class="card">
-              <div class="card-header" id="headingFifteen">
+              <div class="card-header" id="headingFifteen" data-toggle="collapse" data-target="#collapseFifteen" aria-expanded="false" aria-controls="collapseFifteen">
                 <h5 class="mb-0 card-header-h5">
-                  <button class="btn btn-link collapsed" data-toggle="collapse" data-target="#collapseFifteen" aria-expanded="false" aria-controls="collapseFifteen">
-                    15. Can a PDP sponsor request historical data?
-                  </button>
+                    Can a PDP sponsor request historical data?
                 </h5>
                 <i class="material-icons card-expand">expand_more</i>
               </div>
@@ -341,11 +311,9 @@ active-nav: support-nav
           </div>
           
           <div class="card">
-            <div class="card-header" id="headingSixteen">
+            <div class="card-header" id="headingSixteen" data-toggle="collapse" data-target="#collapseSixteen" aria-expanded="false" aria-controls="collapseSixteen">
               <h5 class="mb-0 card-header-h5">
-                <button class="btn btn-link collapsed" data-toggle="collapse" data-target="#collapseSixteen" aria-expanded="false" aria-controls="collapseSixteen">
-                  16. How can we get more data elements in addition to what’s listed in the Final Rule?
-                </button>
+                  How can we get more data elements in addition to what’s listed in the Final Rule?
               </h5>
               <i class="material-icons card-expand">expand_more</i>
             </div>
@@ -359,11 +327,9 @@ active-nav: support-nav
           </div>
           
           <div class="card">
-              <div class="card-header" id="headingSeventeen">
+              <div class="card-header" id="headingSeventeen" data-toggle="collapse" data-target="#collapseSeventeen" aria-expanded="false" aria-controls="collapseSeventeen">
                 <h5 class="mb-0 card-header-h5">
-                  <button class="btn btn-link collapsed" data-toggle="collapse" data-target="#collapseSeventeen" aria-expanded="false" aria-controls="collapseSeventeen">
-                    17. What are the data sources and how often is the data updated?
-                  </button>
+                    What are the data sources and how often is the data updated?
                 </h5>
                 <i class="material-icons card-expand">expand_more</i>
               </div>

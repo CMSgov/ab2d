@@ -66,9 +66,9 @@ active-nav: accessing-claims-data-nav
     });
 </script>
 
-<section class="bg-white page-section py-5">
-    <svg class="shape-divider" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
-         viewBox="0 0 1034.2 43.8" style="enable-background:new 0 0 1034.2 43.8;" xml:space="preserve">
+<section class="bg-white page-section py-5" role="main">
+    <svg preserveAspectRatio="xMidYMin slice" class="shape-divider" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+         viewBox="0 0 1034.2 43.8" style="enable-background:new 0 0 1034.2 43.8;" xml:space="preserve" alt="divider">
 	<path fill="#ffffff" d="M0,21.3c0,0,209.3-48,517.1,0s517.1,0,517.1,0v22.5H0V21.3z"/>
     </svg>
     <div class="container">
@@ -100,16 +100,14 @@ active-nav: accessing-claims-data-nav
                         </p>
                     </div>
                     <div class="col">
-                        <img src="assets/img/attestation.svg" width="424" height="315" />
+                        <img src="assets/img/attestation.svg" width="424" height="315" alt="attestation" />
                     </div>
                 </div>
                 <div id="who-can-attest-accordion">
                   <div class="card">
-                    <div class="card-header" id="headingOne">
+                    <div class="card-header" id="headingOne" data-toggle="collapse" data-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
                       <h5 class="mb-0 card-header-h5">
-                        <button class="btn btn-link" data-toggle="collapse" data-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
                           Who Can Attest?
-                        </button>
                       </h5>
                       <i class="material-icons card-expand">expand_more</i>
                     </div>
@@ -240,7 +238,7 @@ active-nav: accessing-claims-data-nav
                         
                     </div>
                     <div class="col">
-                        <img src="assets/img/data-specialist.svg" />
+                        <img src="assets/img/data-specialist.svg" alt="data-specialist" />
                     </div>
                 </div>
             </div>
@@ -275,7 +273,7 @@ active-nav: accessing-claims-data-nav
                         </ul>
                     </div>
                     <div class="col">
-                        <img src="assets/img/programmer.svg" />
+                        <img src="assets/img/programmer.svg" alt="programmer" />
                     </div>
                 </div>
             </div>
@@ -301,7 +299,7 @@ active-nav: accessing-claims-data-nav
                         </ul>
                     </div>
                     <div class="col">
-                        <img src="assets/img/production.svg" />
+                        <img src="assets/img/production.svg" alt="production" />
                     </div>
                 </div>
                 <div class="header-title">

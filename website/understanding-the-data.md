@@ -7,15 +7,15 @@ landing-page: live
 active-nav: understanding-the-data-nav
 ---
 
-<section class="bg-white page-section py-5">
-    <svg class="shape-divider" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
-         viewBox="0 0 1034.2 43.8" style="enable-background:new 0 0 1034.2 43.8;" xml:space="preserve">
+<section class="bg-white page-section py-5" role="main">
+    <svg class="shape-divider" preserveAspectRatio="xMidYMin slice" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+         viewBox="0 0 1034.2 43.8" style="enable-background:new 0 0 1034.2 43.8;" xml:space="preserve" alt="divider">
 	<path fill="#ffffff" d="M0,21.3c0,0,209.3-48,517.1,0s517.1,0,517.1,0v22.5H0V21.3z"/>
     </svg>
     <div class="container">
         <div class="row" style="margin-bottom: 70px;">
             <div class="col">
-                <div class="understanding-the-data-overview">Overview</div>
+                <div class="step-header">Overview</div>
                 The AB2D API is a RESTful based web service providing Medicare Parts A and B claims data using the industry-
                 standard <a href="" target="_blank">HL7 Fast Healthcare Interoperability Resources (FHIR)</a> resources, specifically the 
                 <a href="https://hl7.org/fhir/uv/bulkdata/export/index.html" target="_blank">Bulk FHIR specification</a>. The AB2D API only provides data records for active enrollees that have not opted out of data sharing and excludes
@@ -23,7 +23,7 @@ active-nav: understanding-the-data-nav
                 Records Regulations, 42 CFR Part 2).
             </div>
             <div class="col">
-                <img src="assets/img/data-analysis.svg" />
+                <img src="assets/img/data-analysis.svg" alt="data-analysis" />
             </div>
         </div>
     </div>
@@ -31,25 +31,25 @@ active-nav: understanding-the-data-nav
 
 <section class="bg-light-blue page-section pt-20 pb-10">        
     <svg class="shape-divider flip" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
-             viewBox="0 0 1034.2 43.8" style="enable-background:new 0 0 1034.2 43.8;" xml:space="preserve">
+             viewBox="0 0 1034.2 43.8" style="enable-background:new 0 0 1034.2 43.8;" xml:space="preserve" alt="divider">
         <path fill="#ffffff" d="M0,21.3c0,0,209.3-48,517.1,0s517.1,0,517.1,0v22.5H0V21.3z"/>
     </svg>
     <div class="container">    
         <div class="understanding-the-data-section">
             <div class="row">
                 <div class="col understanding-the-data-section-image">
-                    <img src="assets/img/paper.svg" />
+                    <img src="assets/img/paper.svg" alt="paper" />
                 </div>
                 <div class="col">
                     <div class="header-title">Sample AB2D Files</div>
                     The examples below were generated from synthetic claims data but are similar to the files that will be
                     retrieved through the AB2D API for Part D Sponsors.
                     <br /><br />
-                    <ul>
+                    <ul class="gray-bullets">
                     <li>
-                    Parts A and Parts B Sample Export for a Given Contract Number (Will link to Sample Data File page-
+                    <a href="">Parts A and Parts B Sample Export for a Given Contract Number (Will link to Sample Data File page-
                     Use attachment in email to review page content. *Only minor changes were made from the content in the
-                    current website)
+                    current website)</a>
                     </li>
                     </ul>
                 </div>
@@ -59,14 +59,15 @@ active-nav: understanding-the-data-nav
         <div class="understanding-the-data-section">
             <div class="row">
                 <div class="col understanding-the-data-section-image">
-                    <img src="assets/img/book.svg" />
+                    <img src="assets/img/book.svg" alt="book" />
                 </div>
                 <div class="col">
                     <div class="header-title">Data Dictionary</div>
                     AB2D API users can leverage the AB2D Data Dictionary
                      for more information on the data elements.
                     <br /><br />
-                    <a href="https://ab2d.cms.gov/data/data_dictionary.html" target="_blank">View Data Dictionary</a>
+                    <a href="https://ab2d.cms.gov/data/data_dictionary.html" target="_blank">View Data Dictionary
+                    <i class="fas pl-1 fa-arrow-right"></i></a>
                 </div>
             </div>
         </div>
@@ -74,13 +75,13 @@ active-nav: understanding-the-data-nav
         <div class="understanding-the-data-section">
             <div class="row">
                 <div class="col understanding-the-data-section-image">
-                    <img src="assets/img/creativity.svg" />
+                    <img src="assets/img/creativity.svg" alt="creativity" />
                 </div>
                 <div class="col">
                     <div class="header-title">Additional Resources</div>
                     Here are some helpful resources you can reference while using this site:
                     <br /><br />
-                    <ul>
+                    <ul class="gray-bullets">
                         <li>
                             <a href="http://json.org/" target="_blank">Intro to JSON Format</a>
                         </li>
