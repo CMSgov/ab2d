@@ -43,8 +43,7 @@ import static gov.cms.ab2d.worker.processor.StreamHelperImpl.FileOutputType.NDJS
 import static java.lang.Boolean.TRUE;
 import static org.hamcrest.CoreMatchers.startsWith;
 import static org.junit.Assert.assertThat;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -81,7 +80,7 @@ class ContractProcessorUnitTest {
                 optOutRepository,
                 eventLogger
         );
-
+        ReflectionTestUtils.setField(cut, "optoutUsed", true);
         ReflectionTestUtils.setField(cut, "cancellationCheckFrequency", 2);
         ReflectionTestUtils.setField(cut, "reportProgressDbFrequency", 2);
         ReflectionTestUtils.setField(cut, "reportProgressLogFrequency", 3);
@@ -111,7 +110,6 @@ class ContractProcessorUnitTest {
     @Test
     @DisplayName("When a job is cancelled while it is being processed, then attempt to stop the job gracefully without completing it")
     void whenJobIsCancelledWhileItIsBeingProcessed_ThenAttemptToStopTheJob() throws Exception {
-
         when(jobRepository.findJobStatus(anyString())).thenReturn(JobStatus.CANCELLED);
 
         var exceptionThrown = assertThrows(JobCancelledException.class,
@@ -122,11 +120,24 @@ class ContractProcessorUnitTest {
         verify(jobRepository, atLeastOnce()).updatePercentageCompleted(anyString(), anyInt());
     }
 
+    @Test
+    @DisplayName("When patient has opted out, but opt out is disabled their record will not be skipped.")
+    void processJob_whenSomePatientHasOptedOut_But_OptOut_Off_ShouldNotSkipThatPatientRecord() throws Exception {
+        ReflectionTestUtils.setField(cut, "optoutUsed", false);
+        final List<OptOut> optOuts = getOptOutRows(patientsByContract);
+        lenient().when(optOutRepository.findByCcwId(anyString()))
+                .thenReturn(new ArrayList<>())
+                .thenReturn(Arrays.asList(optOuts.get(1)))
+                .thenReturn(Arrays.asList(optOuts.get(2)));
+
+        var jobOutputs = cut.process(outputDir, contractData, NDJSON);
+        // Verify that all outputs are returned
+        assertEquals(6, jobOutputs.size());
+    }
 
     @Test
     @DisplayName("When patient has opted out, their record will be skipped.")
     void processJob_whenSomePatientHasOptedOut_ShouldSkipThatPatientRecord() throws Exception {
-
         final List<OptOut> optOuts = getOptOutRows(patientsByContract);
         when(optOutRepository.findByCcwId(anyString()))
                 .thenReturn(new ArrayList<>())
@@ -142,7 +153,6 @@ class ContractProcessorUnitTest {
     @Test
     @DisplayName("When all patients have opted out, should throw exception as no jobOutput rows were created")
     void processJob_whenAllPatientsHaveOptedOut_ShouldThrowException() throws Exception {
-
         final List<OptOut> optOuts = getOptOutRows(patientsByContract);
         when(optOutRepository.findByCcwId(anyString()))
                 .thenReturn(Arrays.asList(optOuts.get(0)))
@@ -161,7 +171,6 @@ class ContractProcessorUnitTest {
     @Test
     @DisplayName("When many patientId are present, 'PercentageCompleted' should be updated many times")
     void whenManyPatientIdsAreProcessed_shouldUpdatePercentageCompletedMultipleTimes() throws Exception {
-
         var contract = contractData.getContract();
         var patients = createPatientsByContractResponse(contract).getPatients();
         var manyPatientIds = new ArrayList<PatientDTO>();
