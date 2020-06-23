@@ -108,6 +108,10 @@
    * [VictorOps Overview](#victorops-overview)
 1. [Appendix AAA: Upload static website to an Akamai Upload Directory within Akamai NetStorage](#appendix-aaa-upload-static-website-to-an-akamai-upload-directory-within-akamai-netstorage)
 1. [Appendix BBB: Delete all files in an Akamai Upload Directory within Akamai NetStorage](#appendix-zz-delete-all-files-in-an-akamai-upload-directory-within-akamai-netstorage)
+1. [Appendix CCC: Reconcile terraform state between two environments](#appendix-ccc-reconcile-terraform-state-between-two-environments)
+   * [Reconcile terraform state of development environment with terraform state of implementation environment](#reconcile-terraform-state-of-development-environment-with-terraform-state-of-implementation-environment)
+   * [Reconcile terraform state of sandbox environment with terraform state of implementation environment](#reconcile-terraform-state-of-sandbox-environment-with-terraform-state-of-implementation-environment)
+1. [Appendix DDD: Backup and recovery](#appendix-ddd-backup-and-recovery)
 
 ## Appendix A: Access the CMS AWS console
 
@@ -8815,3 +8819,523 @@ $ sed -i "" 's%cms-ab2d[\/]prod%cms-ab2d/dev%g' _includes/head.html (edited)
      --rsh="ssh -v -oStrictHostKeyChecking=no -oHostKeyAlgorithms=+ssh-dss -i ${NETSTORAGE_SSH_KEY}" \
      --delete empty_dir/ "sshacs@${AKAMAI_RSYNC_DOMAIN}:/${AKAMAI_UPLOAD_DIRECTORY}/"
    ```
+
+## Appendix CCC: Reconcile terraform state between two environments
+
+### Reconcile terraform state of development environment with terraform state of implementation environment
+
+1. Copy terraform state of the implementation environment to a file
+
+   1. Open a new terminal tab
+
+   1. Get credentials for the implementation environment
+
+      ```ShellSession
+      $ source ~/code/ab2d/Deploy/bash/set-env.sh
+      ```
+
+   1. Change to the implementation terraform environment directory
+
+      ```ShellSession
+      $ cd ~/code/ab2d/Deploy/terraform/environments/ab2d-east-impl
+      ```
+
+   1. Copy terraform state to a file
+
+      ```ShellSession
+      $ terraform state list > ~/temp/impl.txt
+      ```
+
+1. Copy terraform state of the development environment to a file
+
+   1. Open a new terminal tab
+
+   1. Get credentials for the development environment
+
+      ```ShellSession
+      $ source ~/code/ab2d/Deploy/bash/set-env.sh
+      ```
+
+   1. Change to the development terraform environment directory
+
+      ```ShellSession
+      $ cd ~/code/ab2d/Deploy/terraform/environments/ab2d-dev
+      ```
+
+   1. Copy terraform state to a file
+
+      ```ShellSession
+      $ terraform state list > ~/temp/dev.txt
+      ```
+
+1. Note any items that are in "dev.txt" file but not in "impl.txt" file
+
+   *Example:*
+
+   ```
+   data.aws_db_instance.ab2d
+   null_resource.authorized_keys_file
+   module.controller.null_resource.deployment_contoller_private_key
+   module.controller.null_resource.list-api-instances-script
+   module.controller.null_resource.list-worker-instances-script
+   module.controller.null_resource.pgpass
+   module.controller.null_resource.remove_docker_from_controller
+   module.controller.null_resource.set-hostname
+   module.controller.null_resource.ssh_client_config
+   module.management_target.aws_iam_role_policy_attachment.mgmt_role_assume_policy_attach["arn:aws:iam::349849222861:policy/CMSApprovedAWSServices"]
+   module.management_target.aws_iam_role_policy_attachment.mgmt_role_assume_policy_attach["arn:aws:iam::349849222861:policy/CMSCloudApprovedRegions"]
+   module.management_target.aws_iam_role_policy_attachment.mgmt_role_assume_policy_attach["arn:aws:iam::349849222861:policy/ct-iamCreateUserRestrictionPolicy"]
+   ```
+
+1. Remove any items from dev that I no longer created by terraform
+
+   1. Select the development environment terminal tab
+
+   1. Refresh credentials for the development environment
+
+      ```ShellSession
+      $ source ~/code/ab2d/Deploy/bash/set-env.sh
+      ```
+
+   1. Remove the following from terraform state of development environment
+
+      ```ShellSession
+      $ terraform state rm data.aws_db_instance.ab2d
+      $ terraform state rm null_resource.authorized_keys_file
+      $ terraform state rm module.controller.null_resource.deployment_contoller_private_key
+      $ terraform state rm module.controller.null_resource.list-api-instances-script
+      $ terraform state rm module.controller.null_resource.list-worker-instances-script
+      $ terraform state rm module.controller.null_resource.pgpass
+      $ terraform state rm module.controller.null_resource.remove_docker_from_controller
+      $ terraform state rm module.controller.null_resource.set-hostname
+      $ terraform state rm module.controller.null_resource.ssh_client_config
+      ```
+
+1. Note any items that are in "impl.txt" file but not in "dev.txt" file
+
+   *Example:*
+
+   ```
+   module.db.aws_security_group_rule.db_access_from_jenkins_agent
+   module.kms.aws_kms_alias.a
+   module.management_target.aws_iam_role_policy_attachment.mgmt_role_assume_policy_attach["arn:aws:iam::330810004472:policy/CMSApprovedAWSServices"]
+   module.management_target.aws_iam_role_policy_attachment.mgmt_role_assume_policy_attach["arn:aws:iam::330810004472:policy/CMSCloudApprovedRegions"]
+   module.management_target.aws_iam_role_policy_attachment.mgmt_role_assume_policy_attach["arn:aws:iam::330810004472:policy/ct-iamCreateUserRestrictionPolicy"]
+   ```
+
+1. Add missing KMS alias
+
+   1. Select the development environment terminal tab
+
+   1. Refresh credentials for the development environment
+
+      ```ShellSession
+      $ source ~/code/ab2d/Deploy/bash/set-env.sh
+      ```
+
+   1. Import the missing KMS alias to put it under terraform management
+
+      ```ShellSession
+      $ terraform import module.kms.aws_kms_alias.a alias/ab2d-kms
+      ```
+
+1. Note that the following item that does not yet exist in development will be created when deploy-infrastructure.sh is run
+
+   ```
+   module.db.aws_security_group_rule.db_access_from_jenkins_agent
+   ```
+
+1. Run the following from Jenkins
+
+   ```
+   devops-engineer-only/01a-run-initialize-environment-only-for-development
+   ```
+
+1. Run the following from Jenkins
+
+   ```
+   devops-engineer-only/01b-run-update-gold-disk-only-for-development
+   ```
+
+
+1. Run the following from Jenkins
+
+   ```
+   devops-engineer-only/01c-run-deploy-infrastructure-only-for-development
+   ```
+
+1. Run the following from Jenkins
+
+   ```
+   01-update-application-only-for-development
+   ```
+
+1. Note the following error
+
+   ```
+   16:19:11 [1m[31mError: [0m[0m[1mError creating EFS file system: FileSystemAlreadyExists: File system 'fs-f7d2d376' already exists with creation token 'ab2d-dev-efs'
+   16:19:11 {
+   16:19:11   RespMetadata: {
+   16:19:11     StatusCode: 409,
+   16:19:11     RequestID: "3d0730d7-87ad-4cb6-b86d-170b0a30cffa"
+   16:19:11   },
+   16:19:11   ErrorCode: "FileSystemAlreadyExists",
+   16:19:11   FileSystemId: "fs-f7d2d376",
+   16:19:11   Message_: "File system 'fs-f7d2d376' already exists with creation token 'ab2d-dev-efs'"
+   16:19:11 }[0m
+   16:19:11 
+   16:19:11 [0m  on ../../modules/efs/main.tf line 1, in resource "aws_efs_file_system" "efs":
+   16:19:11    1: resource "aws_efs_file_system" "efs" [4m{[0m
+   16:19:11 [0m
+   16:19:11 [0m[0m
+   16:19:11 Build step 'Execute shell' marked build as failure
+   16:19:11 Finished: FAILURE
+   ```
+
+1. To fix the EFS error, do the following:
+
+   1. Open the AWS Console
+
+   1. Select **EFS**
+
+   1. Select the radio button beside the following
+
+      ```
+      ab2d-dev-efs
+      ```
+
+   1. Select **Actions**
+
+   1. Select **Delete file system**
+
+   1. Enter the file id in the "Enter File System ID" text box
+
+   1. Select **Delete File System**
+
+   1. Wait for file system to delete
+
+   1. Select **EC2**
+
+   1. Select **Security Groups** from the leftmost panel
+
+   1. Select the following security group
+
+      ```
+      ab2d-dev-efs-sg
+      ```
+
+   1. Select **Actions**
+
+   1. Select **Delete security group**
+
+   1. Select **Delete**
+
+   1. Select the development terminal tab
+
+   1. List and note EFS-related components that are currently in terraform state
+
+      ```ShellSession
+      $ terraform state list | grep efs
+      ```
+
+   1. Remove all listed EFS-related components from terraform state
+
+      *Example:*
+
+      ```ShellSession
+      $ terraform state rm module.api.aws_security_group_rule.efs_ingress
+      $ terraform state rm module.efs.aws_efs_file_system.efs
+      $ terraform state rm module.efs.aws_security_group.efs
+      $ terraform state rm module.worker.aws_security_group_rule.efs_ingress
+      ```
+
+   1. Re-run the following from Jenkins
+
+      ```
+      devops-engineer-only/01c-run-deploy-infrastructure-only-for-development
+      ```
+
+   1. Run the following from Jenkins
+
+      ```
+      01-update-application-only-for-development
+      ```
+
+### Reconcile terraform state of sandbox environment with terraform state of implementation environment
+
+1. Copy terraform state of the implementation environment to a file
+
+   1. Open a new terminal tab
+
+   1. Get credentials for the implementation environment
+
+      ```ShellSession
+      $ source ~/code/ab2d/Deploy/bash/set-env.sh
+      ```
+
+   1. Change to the implementation terraform environment directory
+
+      ```ShellSession
+      $ cd ~/code/ab2d/Deploy/terraform/environments/ab2d-east-impl
+      ```
+
+   1. Copy terraform state to a file
+
+      ```ShellSession
+      $ terraform state list > ~/temp/impl.txt
+      ```
+
+1. Copy terraform state of the sandbox environment to a file
+
+   1. Open a new terminal tab
+
+   1. Get credentials for the sandbox environment
+
+      ```ShellSession
+      $ source ~/code/ab2d/Deploy/bash/set-env.sh
+      ```
+
+   1. Change to the sandbox terraform environment directory
+
+      ```ShellSession
+      $ cd ~/code/ab2d/Deploy/terraform/environments/ab2d-sbx-sandbox
+      ```
+
+   1. Copy terraform state to a file
+
+      ```ShellSession
+      $ terraform state list > ~/temp/sbx.txt
+      ```
+
+1. Note any items that are in "sbx.txt" file but not in "impl.txt" file
+
+   *Example:*
+
+   ```
+   data.aws_db_instance.ab2d
+   module.management_target.aws_iam_role_policy_attachment.mgmt_role_assume_policy_attach["arn:aws:iam::777200079629:policy/CMSApprovedAWSServices"]
+   module.management_target.aws_iam_role_policy_attachment.mgmt_role_assume_policy_attach["arn:aws:iam::777200079629:policy/CMSCloudApprovedRegions"]
+   module.management_target.aws_iam_role_policy_attachment.mgmt_role_assume_policy_attach["arn:aws:iam::777200079629:policy/ct-iamCreateUserRestrictionPolicy"]   
+   ```
+
+1. Remove any items from sbx that I no longer created by terraform
+
+   1. Select the sandbox environment terminal tab
+
+   1. Refresh credentials for the sandbox environment
+
+      ```ShellSession
+      $ source ~/code/ab2d/Deploy/bash/set-env.sh
+      ```
+
+   1. Remove the following from terraform state of sandbox environment
+
+      ```ShellSession
+      $ terraform state rm data.aws_db_instance.ab2d
+      ```
+
+1. Note any items that are in "impl.txt" file but not in "sbx.txt" file
+
+   *Example:*
+
+   ```
+   module.api.data.aws_security_group.cms_cloud_vpn
+   module.api.aws_security_group_rule.cms_cloud_vpn_access
+   module.controller.aws_eip.deployment_controller
+   module.controller.aws_instance.deployment_controller
+   module.controller.aws_security_group.deployment_controller
+   module.controller.aws_security_group_rule.db_access_from_controller
+   module.controller.aws_security_group_rule.egress_controller
+   module.controller.aws_security_group_rule.vpn_access_controller
+   module.controller.null_resource.wait
+   module.controller.random_shuffle.public_subnets
+   module.db.aws_db_instance.db
+   module.db.aws_db_parameter_group.default
+   module.db.aws_db_subnet_group.subnet_group
+   module.db.aws_security_group.sg_database
+   module.db.aws_security_group_rule.db_access_from_jenkins_agent
+   module.db.aws_security_group_rule.egress
+   module.iam.aws_iam_instance_profile.test_profile
+   module.iam.aws_iam_policy.cloud_watch_logs_policy
+   module.iam.aws_iam_policy.packer_policy
+   module.iam.aws_iam_policy.s3_access_policy
+   module.iam.aws_iam_role.ab2d_instance_role
+   module.iam.aws_iam_role.ab2d_mgmt_role
+   module.iam.aws_iam_role_policy_attachment.amazon_ec2_container_service_for_ec2_role_attach
+   module.iam.aws_iam_role_policy_attachment.cms_approved_aws_services_attach
+   module.iam.aws_iam_role_policy_attachment.instance_role_bfd_opt_out_policy_attach
+   module.iam.aws_iam_role_policy_attachment.instance_role_cloud_watch_logs_policy_attach
+   module.iam.aws_iam_role_policy_attachment.instance_role_packer_policy_attach
+   module.iam.aws_iam_role_policy_attachment.instance_role_s3_access_policy_attach
+   module.kms.data.aws_iam_policy_document.instance_role_kms_policy
+   module.kms.aws_iam_policy.kms_policy
+   module.kms.aws_iam_role_policy_attachment.instance_role_kms_policy_attach
+   module.kms.aws_kms_alias.a
+   module.kms.aws_kms_key.a
+   module.management_target.aws_iam_role_policy_attachment.mgmt_role_assume_policy_attach["arn:aws:iam::330810004472:policy/CMSApprovedAWSServices"]
+   module.management_target.aws_iam_role_policy_attachment.mgmt_role_assume_policy_attach["arn:aws:iam::330810004472:policy/CMSCloudApprovedRegions"]
+   module.management_target.aws_iam_role_policy_attachment.mgmt_role_assume_policy_attach["arn:aws:iam::330810004472:policy/ct-iamCreateUserRestrictionPolicy"]
+   ```
+
+1. Add missing IAM terraform components that already exist
+
+   1. Select the sandbox environment terminal tab
+
+   1. Refresh credentials for the sandbox environment
+
+      ```ShellSession
+      $ source ~/code/ab2d/Deploy/bash/set-env.sh
+      ```
+
+   1. Import the missing IAM components to put it under terraform management
+
+      ```ShellSession
+      $ terraform import module.iam.aws_iam_role.ab2d_instance_role Ab2dInstanceRole
+      $ terraform import module.iam.aws_iam_role.ab2d_mgmt_role Ab2dMgmtRole
+      $ terraform import module.iam.aws_iam_instance_profile.test_profile Ab2dInstanceProfile
+      $ terraform import module.iam.aws_iam_policy.cloud_watch_logs_policy arn:aws:iam::777200079629:policy/Ab2dCloudWatchLogsPolicy
+      $ terraform import module.iam.aws_iam_policy.packer_policy arn:aws:iam::777200079629:policy/Ab2dPackerPolicy
+      $ terraform import module.iam.aws_iam_policy.s3_access_policy arn:aws:iam::777200079629:policy/Ab2dS3AccessPolicy
+      $ terraform import module.iam.aws_iam_role_policy_attachment.amazon_ec2_container_service_for_ec2_role_attach Ab2dInstanceRole/arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role
+      $ terraform import module.iam.aws_iam_role_policy_attachment.instance_role_cloud_watch_logs_policy_attach Ab2dInstanceRole/arn:aws:iam::777200079629:policy/Ab2dCloudWatchLogsPolicy
+      $ terraform import module.iam.aws_iam_role_policy_attachment.instance_role_packer_policy_attach Ab2dInstanceRole/arn:aws:iam::777200079629:policy/Ab2dPackerPolicy
+      $ terraform import module.iam.aws_iam_role_policy_attachment.instance_role_s3_access_policy_attach Ab2dInstanceRole/arn:aws:iam::777200079629:policy/Ab2dS3AccessPolicy
+
+      ??????????
+      $ terraform import module.iam.aws_iam_role_policy_attachment.cms_approved_aws_services_attach
+      ??????????
+      $ terraform import module.iam.aws_iam_role_policy_attachment.instance_role_bfd_opt_out_policy_attach
+      ```
+
+1. Add missing KMS components
+
+   1. Select the sandbox environment terminal tab
+
+   1. Refresh credentials for the sandbox environment
+
+      ```ShellSession
+      $ source ~/code/ab2d/Deploy/bash/set-env.sh
+      ```
+
+   1. Import the missing KMS components to put it under terraform management
+
+      ```ShellSession
+      $ KMS_KEY_ID=$(aws --region "${AWS_DEFAULT_REGION}" kms list-aliases \
+        --query="Aliases[?AliasName=='alias/ab2d-kms'].TargetKeyId" \
+        --output text)
+      $ terraform import module.kms.aws_kms_key.a "${KMS_KEY_ID}"
+      $ terraform import module.kms.aws_kms_alias.a alias/ab2d-kms
+      $ KMS_IAM_POLICY_ARN=$(aws --region "${AWS_DEFAULT_REGION}" iam list-policies \
+        --query "Policies[?PolicyName=='Ab2dKmsPolicy'].Arn" \
+        --output text)
+      $ terraform import module.kms.aws_iam_policy.kms_policy "${KMS_IAM_POLICY_ARN}"
+      $ terraform import module.kms.aws_iam_role_policy_attachment.instance_role_kms_policy_attach Ab2dInstanceRole/arn:aws:iam::777200079629:policy/Ab2dKmsPolicy
+
+      ???????????   
+      module.kms.data.aws_iam_policy_document.instance_role_kms_policy
+      ```
+
+1. Add missing db components
+
+   1. Select the sandbox environment terminal tab
+
+   1. Refresh credentials for the sandbox environment
+
+      ```ShellSession
+      $ source ~/code/ab2d/Deploy/bash/set-env.sh
+      ```
+
+   1. Import the missing db components to put it under terraform management
+
+      ```ShellSession
+      $ AB2D_DATABASE_SG=$(aws --region "${AWS_DEFAULT_REGION}" ec2 describe-security-groups \
+        --query "SecurityGroups[?GroupName=='ab2d-database-sg'].GroupId" \
+        --output text)
+      $ terraform import module.db.aws_security_group.sg_database "${AB2D_DATABASE_SG}"
+      $ terraform import module.db.aws_db_subnet_group.subnet_group ab2d-rds-subnet-group
+      $ terraform import module.db.aws_db_parameter_group.default ab2d-rds-parameter-group
+      $ terraform import module.db.aws_security_group_rule.egress "${AB2D_DATABASE_SG}_egress_all_0_65536_0.0.0.0/0"
+      $ terraform import module.db.aws_db_instance.db ab2d
+      ```
+
+1. Note that the following item that does not yet exist in development will be created when deploy-infrastructure.sh is run
+
+   ```
+   module.db.aws_security_group_rule.db_access_from_jenkins_agent
+   ```
+
+1. Add missing controller components
+
+   1. Select the sandbox environment terminal tab
+
+   1. Refresh credentials for the sandbox environment
+
+      ```ShellSession
+      $ source ~/code/ab2d/Deploy/bash/set-env.sh
+      ```
+
+   1. Import the missing controller components to put it under terraform management
+
+      ```ShellSession
+      $ AB2D_DEPLOYMENT_CONTROLLER_SG=$(aws --region "${AWS_DEFAULT_REGION}" ec2 describe-security-groups \
+  --query "SecurityGroups[?GroupName=='ab2d-deployment-controller-sg'].GroupId" \
+  --output text)
+      $ terraform import module.controller.aws_security_group.deployment_controller "${AB2D_DEPLOYMENT_CONTROLLER_SG}"
+      $ terraform import module.controller.aws_eip.deployment_controller eipalloc-066af1aaceecd5b70
+      $ terraform import module.controller.aws_security_group_rule.db_access_from_controller sg-0e0f230b719384463_ingress_tcp_5432_5432_sg-0b2eaf3ed92a7448d
+      $ terraform import module.controller.aws_security_group_rule.vpn_access_controller sg-0b2eaf3ed92a7448d_ingress_all_0_65536_10.232.32.0/19
+      $ terraform import module.controller.aws_security_group_rule.egress_controller sg-0b2eaf3ed92a7448d_egress_all_0_65536_0.0.0.0/0
+      ```
+
+1. Run "deploy-infrastructure.sh" from Jenkins for the sandbox environment
+
+   > *** TO DO ***
+
+## Appendix DDD: Backup and recovery
+
+1. Temporarily add a "Jenkins Agent Access" ingress rule to the "ab2d-database-sg" security group
+
+   ```
+   PostgreSQL
+   TCP
+   5432
+   Custom
+   653916833532/sg-0e370f9dcfe051ed0
+   Jenkins Agent Access
+   ```
+
+1. Stop API nodes via an autoscaling group schedule
+
+   > *** TO DO ***
+
+1. Stop worker nodes via an autoscaling group schedule
+
+   > *** TO DO ***
+
+1. Backup the current state of data by running the following Jenkins job
+
+   ```
+   devops-engineer-only/02-backup-data-as-csv-for-sandbox
+   ```
+
+1. Delete the "Jenkins Agent Access" ingress rule
+
+1. Note that the CSV backups of the tables can be found by doing the following
+
+   1. Connect to Jenkins agent
+
+   1. Switch to the jenkins user
+
+      ```ShellSession
+      $ sudo su - jenkins
+      ```
+
+   1. List the csv files
+
+      *Example for the "Sbx" environment:*
+
+      ```ShellSession
+      $ ls -al database_backup/ab2d-sbx-sandbox/csv
+      ```
+
+> *** TO DO ***
