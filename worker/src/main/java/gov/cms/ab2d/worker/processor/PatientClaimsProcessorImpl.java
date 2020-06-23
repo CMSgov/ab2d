@@ -26,7 +26,11 @@ import org.springframework.stereotype.Component;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -47,6 +51,8 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
 
     @Value("${claims.skipBillablePeriodCheck}")
     private boolean skipBillablePeriodCheck;
+    @Value("${bfd.earliest.data.data:01/01/2020}")
+    private String startDate;
 
     /**
      * Process the retrieval of patient explanation of benefit objects and write them
@@ -143,20 +149,29 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
         return resources;
     }
 
-    private List<Resource> extractResources(List<BundleEntryComponent> entries, final List<FilterOutByDate.DateRange> dateRanges,
+    List<Resource> extractResources(List<BundleEntryComponent> entries, final List<FilterOutByDate.DateRange> dateRanges,
                                             OffsetDateTime attTime) {
         if (attTime == null) {
             return new ArrayList<>();
         }
         long epochMilli = attTime.toInstant().toEpochMilli();
         Date attDate = new Date(epochMilli);
+        SimpleDateFormat sdf = new SimpleDateFormat("MM/dd/yyyy");
+        Date date;
+        try {
+            date = sdf.parse(startDate);
+        } catch (ParseException e) {
+            LocalDateTime d = LocalDateTime.of(2020, 1, 1, 0, 0, 0, 0);
+            date = new Date(d.toInstant(ZoneOffset.UTC).toEpochMilli());
+        }
+        final Date earliestDate = date;
         return entries.stream()
                 // Get the resource
                 .map(BundleEntryComponent::getResource)
                 // Get only the explanation of benefits
                 .filter(resource -> resource.getResourceType() == ResourceType.ExplanationOfBenefit)
                 // Filter by date
-                .filter(resource -> skipBillablePeriodCheck || FilterOutByDate.valid((ExplanationOfBenefit) resource, attDate, dateRanges))
+                .filter(resource -> skipBillablePeriodCheck || FilterOutByDate.valid((ExplanationOfBenefit) resource, attDate, earliestDate, dateRanges))
                 // filter it
                 .map(resource -> ExplanationOfBenefitTrimmer.getBenefit((ExplanationOfBenefit) resource))
                 // Remove any empty values
