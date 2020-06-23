@@ -21,11 +21,13 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.ParseException;
+
 import java.text.SimpleDateFormat;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
@@ -58,6 +60,7 @@ public class PatientClaimsProcessorUnitTest {
     private String patientId = "1234567890";
 
     private OffsetDateTime earlyAttDate = OffsetDateTime.of(1970, 1, 1, 0, 0, 0, 0, ZoneOffset.UTC);
+    private OffsetDateTime laterAttDate = OffsetDateTime.of(2020, 2, 15, 0, 0, 0, 0, ZoneOffset.UTC);
     private GetPatientsByContractResponse.PatientDTO patientDTO;
 
     private Token noOpToken = new Token() {
@@ -103,7 +106,7 @@ public class PatientClaimsProcessorUnitTest {
         StreamHelper helper = new TextStreamHelperImpl(tmpEfsMountDir.toPath(), contract.getContractNumber(),
                 30, 120, eventLogger, null);
 
-        request = new PatientClaimsRequest(patientDTO, helper, earlyAttDate, null, "user", "job",
+        request = new PatientClaimsRequest(patientDTO, helper, laterAttDate, null, "user", "job",
                 "contractNum", noOpToken);
     }
 
@@ -146,11 +149,11 @@ public class PatientClaimsProcessorUnitTest {
     @Test
     void process_whenPatientHasSinglePageOfClaimsData() throws ExecutionException, InterruptedException {
         Bundle bundle1 = EobTestDataUtil.createBundle(eob.copy());
-        when(mockBfdClient.requestEOBFromServer(patientId, null)).thenReturn(bundle1);
+        when(mockBfdClient.requestEOBFromServer(patientId, request.getAttTime())).thenReturn(bundle1);
 
         cut.process(request).get();
 
-        verify(mockBfdClient).requestEOBFromServer(patientId, null);
+        verify(mockBfdClient).requestEOBFromServer(patientId, request.getAttTime());
         verify(mockBfdClient, never()).requestNextBundleFromServer(bundle1);
     }
 
@@ -161,32 +164,82 @@ public class PatientClaimsProcessorUnitTest {
 
         Bundle bundle2 = EobTestDataUtil.createBundle(eob.copy());
 
-        when(mockBfdClient.requestEOBFromServer(patientId, null)).thenReturn(bundle1);
+        when(mockBfdClient.requestEOBFromServer(patientId, request.getAttTime())).thenReturn(bundle1);
         when(mockBfdClient.requestNextBundleFromServer(bundle1)).thenReturn(bundle2);
 
         cut.process(request).get();
 
-        verify(mockBfdClient).requestEOBFromServer(patientId, null);
+        verify(mockBfdClient).requestEOBFromServer(patientId, request.getAttTime());
         verify(mockBfdClient).requestNextBundleFromServer(bundle1);
     }
 
     @Test
     void process_whenBfdClientThrowsException() {
         Bundle bundle1 = EobTestDataUtil.createBundle(eob.copy());
-        when(mockBfdClient.requestEOBFromServer(patientId, null)).thenThrow(new RuntimeException("Test Exception"));
+        when(mockBfdClient.requestEOBFromServer(patientId, request.getAttTime())).thenThrow(new RuntimeException("Test Exception"));
 
         var exceptionThrown = assertThrows(ExecutionException.class,
                 () -> cut.process(request).get());
 
         assertThat(exceptionThrown.getCause().getMessage(), startsWith("Test Exception"));
 
-        verify(mockBfdClient).requestEOBFromServer(patientId, null);
+        verify(mockBfdClient).requestEOBFromServer(patientId, request.getAttTime());
         verify(mockBfdClient, never()).requestNextBundleFromServer(bundle1);
     }
 
     @Test
     void process_whenPatientHasNoEOBClaimsData() throws ExecutionException, InterruptedException {
         Bundle bundle1 = new Bundle();
+        when(mockBfdClient.requestEOBFromServer(patientId, request.getAttTime())).thenReturn(bundle1);
+
+        cut.process(request).get();
+
+        verify(mockBfdClient).requestEOBFromServer(patientId, request.getAttTime());
+        verify(mockBfdClient, never()).requestNextBundleFromServer(bundle1);
+    }
+
+    @Test
+    void process_whenPatientHasSinglePageOfClaimsDataSince() throws ExecutionException, InterruptedException,
+            FileNotFoundException, ParseException {
+        // Override default behavior of setup
+        patientDTO = new GetPatientsByContractResponse.PatientDTO();
+        patientDTO.setPatientId(patientId);
+        patientDTO.setDateRangesUnderContract(List.of(new FilterOutByDate.DateRange(new Date(0), new Date())));
+
+        Contract contract = new Contract();
+        StreamHelper helper = new TextStreamHelperImpl(tmpEfsMountDir.toPath(), contract.getContractNumber(),
+                30, 120, eventLogger, null);
+
+        OffsetDateTime sinceDate = earlyAttDate.plusDays(1);
+
+        request = new PatientClaimsRequest(patientDTO, helper, laterAttDate, sinceDate, "user", "job",
+                "contractNum", noOpToken);
+
+        Bundle bundle1 = EobTestDataUtil.createBundle(eob.copy());
+        when(mockBfdClient.requestEOBFromServer(patientId, request.getSinceTime())).thenReturn(bundle1);
+
+        cut.process(request).get();
+
+        verify(mockBfdClient).requestEOBFromServer(patientId, request.getSinceTime());
+        verify(mockBfdClient, never()).requestNextBundleFromServer(bundle1);
+    }
+
+    @Test
+    void process_whenPatientHasSinglePageOfClaimsDataEarlyAttDate() throws ExecutionException, InterruptedException,
+            FileNotFoundException, ParseException {
+        // Override default behavior of setup
+        patientDTO = new GetPatientsByContractResponse.PatientDTO();
+        patientDTO.setPatientId(patientId);
+        patientDTO.setDateRangesUnderContract(List.of(new FilterOutByDate.DateRange(new Date(0), new Date())));
+
+        Contract contract = new Contract();
+        StreamHelper helper = new TextStreamHelperImpl(tmpEfsMountDir.toPath(), contract.getContractNumber(),
+                30, 120, eventLogger, null);
+
+        request = new PatientClaimsRequest(patientDTO, helper, earlyAttDate, null, "user", "job",
+                "contractNum", noOpToken);
+
+        Bundle bundle1 = EobTestDataUtil.createBundle(eob.copy());
         when(mockBfdClient.requestEOBFromServer(patientId, null)).thenReturn(bundle1);
 
         cut.process(request).get();
