@@ -125,8 +125,8 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
         Bundle eobBundle;
         try {
             OffsetDateTime sinceTime = null;
-            if(request.getSinceTime() == null) {
-                if(request.getAttTime().isAfter(START_CHECK)) {
+            if (request.getSinceTime() == null) {
+                if (request.getAttTime().isAfter(START_CHECK)) {
                     sinceTime = request.getAttTime();
                 }
             } else {
