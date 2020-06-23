@@ -9,7 +9,7 @@ active-nav: support-nav
 
 <script type="text/javascript">
     $(document).ready(function() {
-        $('.card-header-h5').on('click', function(event) {
+        $('.card-header').on('click', function(event) {
             $(this).parent().find('.card-expand').toggleClass('icon-flipped');
         });
     });        

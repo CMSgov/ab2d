@@ -6433,3 +6433,9 @@ ul.gray-bullets a:hover {
     text-align: left;
     text-decoration: none;
 }
+
+.step-claims-menu {
+    position: sticky;
+    position: -webkit-sticky;
+    top: 100px;
+}

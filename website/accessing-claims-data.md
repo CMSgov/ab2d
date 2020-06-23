@@ -60,7 +60,7 @@ active-nav: accessing-claims-data-nav
             }
         }
         
-        $('.card-header-h5').on('click', function(event) {
+        $('.card-header').on('click', function(event) {
             $(this).parent().find('.card-expand').toggleClass('icon-flipped');
         });
     });
@@ -74,11 +74,19 @@ active-nav: accessing-claims-data-nav
     <div class="container">
         <div class="row">
             <div class="col" style="max-width: 250px;">
-                <div style="position: fixed;">
-                    <div id="step-1-icon" class="step-accessing-claims step-accessing-claims-active">Step 1 <span class="step-claims-dash"></span></div> 
-                    <div id="step-2-icon" class="step-accessing-claims step-accessing-claims-nonactive">Step 2 <span class="step-claims-dash" style="display: none;"></span></div>
-                    <div id="step-3-icon" class="step-accessing-claims step-accessing-claims-nonactive">Step 3 <span class="step-claims-dash" style="display: none;"></span></div>
-                    <div id="step-4-icon" class="step-accessing-claims step-accessing-claims-nonactive">Step 4 <span class="step-claims-dash" style="display: none;"></span></div>
+                <div class="step-claims-menu">
+                    <div id="step-1-icon" class="step-accessing-claims step-accessing-claims-active">
+                        Step 1 <span class="step-claims-dash"></span>
+                    </div> 
+                    <div id="step-2-icon" class="step-accessing-claims step-accessing-claims-nonactive">
+                        Step 2 <span class="step-claims-dash" style="display: none;"></span>
+                    </div>
+                    <div id="step-3-icon" class="step-accessing-claims step-accessing-claims-nonactive">
+                        Step 3 <span class="step-claims-dash" style="display: none;"></span>
+                    </div>
+                    <div id="step-4-icon" class="step-accessing-claims step-accessing-claims-nonactive">
+                        Step 4 <span class="step-claims-dash" style="display: none;"></span>
+                    </div>
                 </div>
             </div>
             <div class="col">
