@@ -122,13 +122,7 @@ public abstract class LoggableEvent {
         String thisJobId = this.getJobId();
         String otherJobId = other.getJobId();
         if (thisJobId == null) {
-            if (otherJobId != null) {
-                return false;
-            }
-        } else if (!thisJobId.equals(otherJobId)) {
-            return false;
-        }
-
-        return true;
-     }
+            return otherJobId == null;
+        } else return thisJobId.equals(otherJobId);
+    }
 }
