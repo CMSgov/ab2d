@@ -19,10 +19,12 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.text.ParseException;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.Date;
@@ -150,6 +152,32 @@ public class PatientClaimsProcessorUnitTest {
         cut.process(request).get();
 
         verify(mockBfdClient).requestEOBFromServer(patientId, request.getAttTime());
+        verify(mockBfdClient, never()).requestNextBundleFromServer(bundle1);
+    }
+
+    @Test
+    void process_whenPatientHasSinglePageOfClaimsDataSince() throws ExecutionException, InterruptedException,
+            FileNotFoundException, ParseException {
+        // Override default behavior of setup
+        patientDTO = new GetPatientsByContractResponse.PatientDTO();
+        patientDTO.setPatientId(patientId);
+        patientDTO.setDateRangesUnderContract(List.of(new FilterOutByDate.DateRange(new Date(0), new Date())));
+
+        Contract contract = new Contract();
+        StreamHelper helper = new TextStreamHelperImpl(tmpEfsMountDir.toPath(), contract.getContractNumber(),
+                30, 120, eventLogger, null);
+
+        OffsetDateTime sinceDate = earlyAttDate.plusDays(1);
+
+        request = new PatientClaimsRequest(patientDTO, helper, earlyAttDate, sinceDate, "user", "job",
+                "contractNum", noOpToken);
+
+        Bundle bundle1 = EobTestDataUtil.createBundle(eob.copy());
+        when(mockBfdClient.requestEOBFromServer(patientId, request.getSinceTime())).thenReturn(bundle1);
+
+        cut.process(request).get();
+
+        verify(mockBfdClient).requestEOBFromServer(patientId, request.getSinceTime());
         verify(mockBfdClient, never()).requestNextBundleFromServer(bundle1);
     }
 
