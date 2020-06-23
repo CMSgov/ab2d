@@ -9287,6 +9287,51 @@ $ sed -i "" 's%cms-ab2d[\/]prod%cms-ab2d/dev%g' _includes/head.html (edited)
       $ terraform import module.controller.aws_security_group_rule.egress_controller sg-0b2eaf3ed92a7448d_egress_all_0_65536_0.0.0.0/0
       ```
 
+1. Remove auto-added secuity group rules
+
+   ```ShellSession
+   $ terraform state rm module.db.aws_security_group_rule.sg_database
+   $ terraform state rm module.db.aws_security_group_rule.sg_database-1
+   $ terraform state rm module.db.aws_security_group_rule.sg_database-2
+   $ terraform state rm module.db.aws_security_group_rule.sg_database-3
+   $ terraform state rm module.controller.aws_security_group_rule.deployment_controller
+   $ terraform state rm module.controller.aws_security_group_rule.deployment_controller-1
+   $ terraform state rm module.controller.aws_security_group_rule.deployment_controller-2
+   ```
+
+1. Manually add a "CMS Cloud VPN Access" ingress rule to the "ab2d-east-prod-load-balancer-sg" security group with the following settings in the AWS console
+
+   ```
+   All traffic
+   All
+   All
+   sg-0ba0fa6edce74b231 (cmscloud-vpn)
+   CMS Cloud VPN Access
+   ```
+
+1. Import the "CMS Cloud VPN Access" ingress rule into terraform state
+
+   ```ShellSession
+   $ terraform import module.api.aws_security_group_rule.cms_cloud_vpn_access sg-0372341978a0c7caf_ingress_all_0_65536_sg-0ba0fa6edce74b231
+   ```
+
+1. Manually add a "Jenkins Agent Access" ingress rule to the "ab2d-database-sg" security group with the following settings in the AWS console
+
+   ```
+   PostgreSQL
+   TCP
+   5432
+   Custom
+   653916833532/sg-0e370f9dcfe051ed0
+   Jenkins Agent Access
+   ```
+
+1. Import the "Jenkins Agent Access" ingress rule into terraform state
+
+   ```ShellSession
+   $ terraform import module.db.aws_security_group_rule.db_access_from_jenkins_agent sg-0e0f230b719384463_ingress_tcp_5432_5432_653916833532/sg-0e370f9dcfe051ed0
+   ```
+
 1. Run "deploy-infrastructure.sh" from Jenkins for the sandbox environment
 
    > *** TO DO ***
