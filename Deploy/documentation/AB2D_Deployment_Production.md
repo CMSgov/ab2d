@@ -32,6 +32,7 @@ lication-load-balancer)
    * [Configure VPC flow log CloudWatch Log group](#configure-vpc-flow-log-cloudwatch-log-group)
    * [Configure CloudWatch Log groups for RDS](#configure-cloudwatch-log-groups-for-rds)
    * [Submit a ticket to subscribe log groups to Splunk](#submit-a-ticket-to-subscribe-log-groups-to-splunk)
+1. [Configure VictorOps](#configure-victorops)
 
 ## Obtain and import api.ab2d.cms.gov entrust certificate](#obtain-and-import-apiab2dcmsgov-entrust-certificate)
 
@@ -1293,26 +1294,26 @@ lication-load-balancer)
 
 1. Create the static website
 
-   *Akamai Stage (using website pulled from CloudFront):*
+   *Akamai Prod (using website pulled from CloudFront):*
 
    ```ShellSession
    $ export AKAMAI_RSYNC_DOMAIN_PARAM="ab2d.rsync.upload.akamai.com" \
-     && export AKAMAI_UPLOAD_DIRECTORY_PARAM="971498" \
+     && export AKAMAI_UPLOAD_DIRECTORY_PARAM="1055691" \
      && export GENERATE_WEBSITE_FROM_CODE_PARAM="false" \
      && export NETSTORAGE_SSH_KEY_PARAM="${HOME}/.ssh/ab2d-akamai" \
-     && export WEBSITE_DEPLOYMENT_TYPE_PARAM="stage" \
+     && export WEBSITE_DEPLOYMENT_TYPE_PARAM="prod" \
      && export WEBSITE_DIRECTORY_PARAM="${HOME}/akamai-from-cloudfront/_site" \
      && ./bash/create-or-update-website-akamai.sh
    ```
 
-   *Akamai Stage (using website generated from code):*
+   *Akamai Prod (using website generated from code):*
 
    ```ShellSession
    $ export AKAMAI_RSYNC_DOMAIN_PARAM="ab2d.rsync.upload.akamai.com" \
-     && export AKAMAI_UPLOAD_DIRECTORY_PARAM="971498" \
+     && export AKAMAI_UPLOAD_DIRECTORY_PARAM="1055691" \
      && export GENERATE_WEBSITE_FROM_CODE_PARAM="true" \
      && export NETSTORAGE_SSH_KEY_PARAM="${HOME}/.ssh/ab2d-akamai" \
-     && export WEBSITE_DEPLOYMENT_TYPE_PARAM="stage" \
+     && export WEBSITE_DEPLOYMENT_TYPE_PARAM="prod" \
      && export WEBSITE_DIRECTORY_PARAM="${HOME}/akamai/_site" \
      && ./bash/create-or-update-website-akamai.sh
    ```
@@ -1321,18 +1322,18 @@ lication-load-balancer)
 
    - timestamped backup of the new website
 
-     **Akamai Stage Example:*
+     **Akamai Prod Example:*
 
      ```
-     /971498/_site_2020-06-18_11-47-48
+     /1055691/_site_2020-06-18_11-47-48
      ```
 
    - new website
 
-     *Akamai Stage:*
+     *Akamai Prod:*
 
      ```
-     /971498/_site
+     /1055691/_site
      ```
 
 ## Submit an "Internet DNS Change Request Form" to product owner for the production application load balancer
@@ -1582,3 +1583,65 @@ lication-load-balancer)
 *See this ticket:*
 
 > https://jiraent.cms.gov/servicedesk/customer/portal/13/CLDSUPSD-7398
+
+## Configure VictorOps
+
+1. Request access to the following VictorOps
+
+   > https://portal.victorops.com/client/bcda
+
+1. When you receive an email invitation, click the link in the email to create a username and password for VictorOps
+
+1. You may want to create the following bookmarks for VictorOps
+
+   *CMS Gov VictorOps:*
+
+   > https://portal.victorops.com/client/bcda
+
+   *CMS Gov VictorOps Blog:*
+
+   > https://victorops.com/blog/
+
+   *CMS Gov VictorOps Knowledge Base:*
+
+   > https://help.victorops.com
+
+   *CMS Gov VictorOps Support:*
+
+   > https://victorops.com/contact/
+
+1. Open Chrome
+
+1. Enter the following in the address bar
+
+   > https://portal.victorops.com/client/bcda
+
+1. Log on to VictorOps (if not already logged in)
+
+1. If you are setting up VictorOps, verify that you are a "Global Admin" by doing the following
+
+   1. Select the **Users** tab
+
+   1. Scroll to your user
+
+   1. Verify that your role is "Global Admin"
+
+1. Select the **Teams** tab
+
+1. Select **AB2D**
+
+1. Select **Invite User**
+
+1. Add users
+
+   1. Type a user in the "Enter usernames" text box
+
+   1. Select the desired user from the search results
+
+   1. Repeat adding all desired users
+
+1. Select **Add User**
+
+1. Select **Close** on the "Success" window
+
+1. 
