@@ -24,6 +24,11 @@ public class DoAll {
         return template.query(qry, configMapper.getMapper(eventClass));
     }
 
+    public List<LoggableEvent> load(Class eventClass, String jobId) {
+        String qry = "SELECT * FROM " + configMapper.getTableMapper(eventClass) + " WHERE job_id = ? ORDER BY id";
+        return template.query(qry, new Object[]{jobId}, configMapper.getMapper(eventClass));
+    }
+
     public List<LoggableEvent> load() {
         Set<Class<? extends LoggableEvent>> entries = configMapper.getClasses();
         List<LoggableEvent> allEvents = new ArrayList<>();
