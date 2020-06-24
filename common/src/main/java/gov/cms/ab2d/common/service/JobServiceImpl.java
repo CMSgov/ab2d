@@ -10,9 +10,11 @@ import gov.cms.ab2d.common.model.JobStatus;
 import gov.cms.ab2d.common.model.Sponsor;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.repository.ContractRepository;
+import gov.cms.ab2d.common.util.JobUtil;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.events.FileEvent;
 import gov.cms.ab2d.eventlogger.events.JobStatusChangeEvent;
+import gov.cms.ab2d.eventlogger.reports.sql.DoSummary;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
@@ -40,18 +42,21 @@ public class JobServiceImpl implements JobService {
     private final ContractRepository contractRepository;
     private final JobOutputService jobOutputService;
     private final LogManager eventLogger;
+    private final DoSummary doSummary;
 
     @Value("${efs.mount}")
     private String fileDownloadPath;
 
     public static final String INITIAL_JOB_STATUS_MESSAGE = "0%";
 
-    public JobServiceImpl(UserService userService, JobRepository jobRepository, ContractRepository contractRepository, JobOutputService jobOutputService, LogManager eventLogger) {
+    public JobServiceImpl(UserService userService, JobRepository jobRepository, ContractRepository contractRepository,
+                          JobOutputService jobOutputService, LogManager eventLogger, DoSummary doSummary) {
         this.userService = userService;
         this.jobRepository = jobRepository;
         this.contractRepository = contractRepository;
         this.jobOutputService = jobOutputService;
         this.eventLogger = eventLogger;
+        this.doSummary = doSummary;
     }
 
     @Override
@@ -208,6 +213,9 @@ public class JobServiceImpl implements JobService {
         eventLogger.log(new FileEvent(
                 job == null || job.getUser() == null ? null : job.getUser().getUsername(),
                 jobUuid, file, FileEvent.FileStatus.DELETE));
+        if (JobUtil.isJobDone(job)) {
+            eventLogger.log(LogManager.LogType.KINESIS, doSummary.getSummary(job.getJobUuid()));
+        }
         boolean deleted = file.delete();
         if (!deleted) {
             log.error("Was not able to delete the file {}", file.getName());
