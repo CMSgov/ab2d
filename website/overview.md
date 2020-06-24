@@ -25,7 +25,7 @@ active-nav: overview-nav
                 <p>The Centers for Medicare and Medicaid Services (CMS) contracts with private insurance companies, known as Medicare Part D Plan (PDP) sponsors, to provide prescription drug coverage for enrollees.</p>
                 <p>
                     The <a href="https://www.congress.gov/bill/115th-congress/house-bill/1892/text" target="_blank">Bipartisan Budget Act of 2018 (BBA)</a> requires the development of a process to share Medicare claims data with
-                    PDP sponsors. <a href="#">The Final Rule</a> provides additional detail on the purposes and limitations on the use of data, the data request process, and data extract content.
+                    PDP sponsors. <a target="_blank" href="https://www.federalregister.gov/documents/2019/04/16/2019-06822/medicare-and-medicaid-programs-policy-and-technical-changes-to-the-medicare-advantage-medicare">The Final Rule</a> provides additional detail on the purposes and limitations on the use of data, the data request process, and data extract content.
                 </p>
                 <p>
                     In response to the BBA, CMS has developed an Application Programming Interface (API) known as the AB2D API. The AB2D API securely provides 

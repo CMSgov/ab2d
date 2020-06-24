@@ -6196,7 +6196,7 @@ article h2::after {
     height: 1px;
     display: inline;
     background-color: #35414f;
-    margin-top: 25%;
+    margin-top: 14px;
     margin-left: 10px;
     position: absolute;
 }
@@ -6374,7 +6374,13 @@ article h2::after {
     color: #27a9e0;
     display: inline;
     position: absolute;
-    right: 75px;
+    right: 25px;
+}
+
+.dropdown-caret.material-icons {
+    color: #8de4ff;
+    font-size: 16px;
+    margin-left: 5px;
 }
 
 .icon-flipped {
@@ -6388,24 +6394,32 @@ article h2::after {
 .dropdown:hover .dropdown-menu {
     display: block;
 }
-.dropdown {
+.dropdown .dropdown-menu {
     background-color: #525962;
+    padding: 0;
+    overflow: hidden;
 }
-.dropdown a {
+.dropdown .dropdown-menu a {
     color: white;
     background-color: #525962;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    font-size: 14px;
 }
-.dropdown a:hover {
+.dropdown .dropdown-menu a:hover {
     color: #8DE4FF;
     background-color: #323A45;
 }
 .dropdown-menu {
     background-color: #525962;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+    padding: 0;
+    overflow: hidden;
 }
 
 .dropdown-toggle::after {
     border: none;
-    content: '\e5cf';
+    content: '';
     font-family: "MaterialIcons";
     font-size: 15px;
 }

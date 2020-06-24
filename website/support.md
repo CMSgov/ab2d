@@ -12,7 +12,7 @@ active-nav: support-nav
         $('.card-header').on('click', function(event) {
             $(this).parent().find('.card-expand').toggleClass('icon-flipped');
         });
-    });        
+    });
 </script>
 
 

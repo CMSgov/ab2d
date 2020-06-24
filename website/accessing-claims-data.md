@@ -22,22 +22,21 @@ active-nav: accessing-claims-data-nav
             highlightNav($(this), true);
         });
         
-        /*$(window).scroll(function() {
+        $(window).scroll(function() {
             if(scrollLock) {
                 return;
             }
-                 
-            if($(this).scrollTop() >= $('#step-1-content').position().top) {
-                console.log("highlighting nav");
+                
+            if($(this).scrollTop() >= $('#step-1-content').offset().top && $(this).scrollTop() < $('#step-2-content').offset().top) {
                 highlightNav($('#step-1-icon'), false);
-            } else if($(this).scrollTop() >= $('#step-2-content').position().top) {
+            } else if($(this).scrollTop() >= $('#step-2-content').offset().top && $(this).scrollTop() < $('#step-3-content').offset().top) {
                 highlightNav($('#step-2-icon'), false);
-            } else if($(this).scrollTop() >= $('#step-3-content').position().top) {
+            } else if($(this).scrollTop() >= $('#step-3-content').offset().top && $(this).scrollTop() < $('#step-4-content').offset().top) {
                 highlightNav($('#step-3-icon'), false);
-            } else if($(this).scrollTop() >= $('#step-4-content').position().top) {
+            } else if($(this).scrollTop() >= $('#step-4-content').offset().top) {
                 highlightNav($('#step-4-icon'), false);
             }
-        });*/
+        });
         
         function highlightNav(id, doScroll) {
             const stepId = id.attr('id');
@@ -73,7 +72,7 @@ active-nav: accessing-claims-data-nav
     </svg>
     <div class="container">
         <div class="row">
-            <div class="col" style="max-width: 250px;">
+            <div class="col" style="max-width: 250px;" class="step-claims-menu-wrapper">
                 <div class="step-claims-menu">
                     <div id="step-1-icon" class="step-accessing-claims step-accessing-claims-active">
                         Step 1 <span class="step-claims-dash"></span>
@@ -111,7 +110,7 @@ active-nav: accessing-claims-data-nav
                         <img src="assets/img/attestation.svg" width="424" height="315" alt="attestation" />
                     </div>
                 </div>
-                <div id="who-can-attest-accordion">
+                <div id="who-can-attest-accordion" class="accordion-white-bg">
                   <div class="card">
                     <div class="card-header" id="headingOne" data-toggle="collapse" data-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
                       <h5 class="mb-0 card-header-h5">
@@ -133,11 +132,11 @@ active-nav: accessing-claims-data-nav
                   </div>
                 </div>
                 
-                <div id="affect-claims-data-accordion">
+                <div id="affect-claims-data-accordion" class="accordion-white-bg">
                   <div class="card">
-                    <div class="card-header" id="headingTwo">
+                    <div class="card-header" id="headingTwo" data-toggle="collapse" data-target="#collapseTwo" aria-expanded="true" aria-controls="collapseTwo">
                       <h5 class="mb-0 card-header-h5">
-                        <button class="btn btn-link" data-toggle="collapse" data-target="#collapseTwo" aria-expanded="true" aria-controls="collapseTwo">
+                        <button class="btn btn-link">
                           How Does Attestation Affect Claims Data?
                         </button>
                       </h5>
@@ -159,13 +158,11 @@ active-nav: accessing-claims-data-nav
                   </div>
                 </div>
                 
-                <div id="initially-attest-accordion">
+                <div id="initially-attest-accordion" class="accordion-white-bg">
                   <div class="card">
-                    <div class="card-header" id="headingThree">
+                    <div class="card-header" id="headingThree" data-toggle="collapse" data-target="#collapseThree" aria-expanded="true" aria-controls="collapseThree">
                       <h5 class="mb-0 card-header-h5">
-                        <button class="btn btn-link" data-toggle="collapse" data-target="#collapseThree" aria-expanded="true" aria-controls="collapseThree">
                           How to initially Attest
-                        </button>
                       </h5>
                       <i class="material-icons card-expand">expand_more</i>
                     </div>
@@ -186,13 +183,11 @@ active-nav: accessing-claims-data-nav
                   </div>
                 </div>
                 
-                <div id="affect-claims-data-accordion">
+                <div id="affect-claims-data-accordion" class="accordion-white-bg">
                   <div class="card">
-                    <div class="card-header" id="headingFour">
+                    <div class="card-header" id="headingFour" data-toggle="collapse" data-target="#collapseFour" aria-expanded="true" aria-controls="collapseFour">
                       <h5 class="mb-0 card-header-h5">
-                        <button class="btn btn-link" data-toggle="collapse" data-target="#collapseFour" aria-expanded="true" aria-controls="collapseFour">
                           How to Add Additional Attesters
-                        </button>
                       </h5>
                       <i class="material-icons card-expand">expand_more</i>
                     </div>
@@ -267,9 +262,9 @@ active-nav: accessing-claims-data-nav
                         <div class="header-title" style="margin-top: 30px;">Connecting to the Sandbox</div>
                         We are providing three different ways to retrieve synthetic claims data:
                         <ol>
-                            <li><a href="sandbox/tutorial-postman.html">Postman and Swagger User Guide</a></li>
-                            <li><a href="sandbox/tutorial-curl.html">Curl User Guide</a></li>
-                            <li><a href="sandbox/advanced_user_guide.html">Advanced User Guide</a></li>
+                            <li><a href="tutorial-postman">Postman and Swagger User Guide</a></li>
+                            <li><a href="tutorial-curl">Curl User Guide</a></li>
+                            <li><a href="advanced-user-guide">Advanced User Guide</a></li>
                         </ol>
                         
                         <div class="header-title" style="margin-top: 30px;">Verifying Synthetic Data Retrieval</div>
