@@ -112,6 +112,7 @@
    * [Reconcile terraform state of development environment with terraform state of implementation environment](#reconcile-terraform-state-of-development-environment-with-terraform-state-of-implementation-environment)
    * [Reconcile terraform state of sandbox environment with terraform state of implementation environment](#reconcile-terraform-state-of-sandbox-environment-with-terraform-state-of-implementation-environment)
 1. [Appendix DDD: Backup and recovery](#appendix-ddd-backup-and-recovery)
+1. [Appendix EEE: Modify the database instance type](#appendix-eee-modify-the-database-instance-type)
 
 ## Appendix A: Access the CMS AWS console
 
@@ -9338,24 +9339,117 @@ $ sed -i "" 's%cms-ab2d[\/]prod%cms-ab2d/dev%g' _includes/head.html (edited)
 
 ## Appendix DDD: Backup and recovery
 
-1. Temporarily add a "Jenkins Agent Access" ingress rule to the "ab2d-database-sg" security group
-
-   ```
-   PostgreSQL
-   TCP
-   5432
-   Custom
-   653916833532/sg-0e370f9dcfe051ed0
-   Jenkins Agent Access
-   ```
-
 1. Stop API nodes via an autoscaling group schedule
 
-   > *** TO DO ***
+   1. Log on to the target AWS account
+
+   1. Select **EC2**
+
+   1. Select **Auto Scaling Groups** form the leftmost panel
+
+   1. Select the API auto scaling group
+
+      *Example:*
+
+      ```
+      ab2d-sbx-sandbox-api-20200414203112829500000001
+      ```
+
+   1. Select the **Schedule Actions** tab
+
+   1. Select **Create Scheduled Action**
+
+   1. Configure the "Create Scheduled Action" page as follows
+
+      *Format:*
+
+      - **Name:** Stop API nodes
+
+      - **Min:** 0
+
+      - **Max:** 0
+
+      - **Desired Capacity:** 0
+
+      - **Recurrence:** Once
+
+      - **Start Time:** {utc time two minutes from now}
 
 1. Stop worker nodes via an autoscaling group schedule
 
-   > *** TO DO ***
+   1. Log on to the target AWS account
+
+   1. Select **EC2**
+
+   1. Select **Auto Scaling Groups** form the leftmost panel
+
+   1. Select the API auto scaling group
+
+      *Example:*
+
+      ```
+      ab2d-sbx-sandbox-worker-20200414203214104900000001
+      ```
+
+   1. Select the **Schedule Actions** tab
+
+   1. Select **Create Scheduled Action**
+
+   1. Configure the "Create Scheduled Action" page as follows
+
+      *Format:*
+
+      - **Name:** Stop worker nodes
+
+      - **Min:** 0
+
+      - **Max:** 0
+
+      - **Desired Capacity:** 0
+
+      - **Recurrence:** Once
+
+      - **Start Time:** {utc time two minutes from now}
+
+1. Wait for API and worker nodes to stop
+
+1. Take a database snapshot
+
+   1. Log on to the target AWS account
+
+   1. Select **RDS**
+
+   1. Select **Databases** from the leftmost panel
+
+   1. Select the radio button beside the following database
+
+      ```
+      ab2d
+      ```
+
+   1. Select **Actions**
+
+   1. Select **Take snapshot**
+
+   1. Type the following in the **Snapshot name** text box
+
+      *Format:*
+
+      ```
+      ab2d-{unix time}
+      ```
+
+   1. Select **Take Snapshot**
+
+   1. Wait for "Snapshot creation time" to appear
+
+      *Notes:*
+
+      - Note that this may take a while
+
+      - Note that if you select the snapshot you will see the status as "Creating", which is why the snapshot creation time has not yet been updated
+
+      - Note that you may need to refresh the page to see the snapshot creation time
 
 1. Backup the current state of data by running the following Jenkins job
 
@@ -9363,11 +9457,28 @@ $ sed -i "" 's%cms-ab2d[\/]prod%cms-ab2d/dev%g' _includes/head.html (edited)
    devops-engineer-only/02-backup-data-as-csv-for-sandbox
    ```
 
-1. Delete the "Jenkins Agent Access" ingress rule
+1. Make a backup of CSV backup files
 
-1. Note that the CSV backups of the tables can be found by doing the following
+   1. Get credentials for the management AWS account
 
-   1. Connect to Jenkins agent
+      ```ShellSession
+      $ source ~/code/ab2d/Deploy/bash/set-env.sh
+      ```
+
+   1. Get the private IP address of Jenkins agent instance
+
+      ```ShellSession
+      $ JENKINS_AGENT_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-jenkins-agent" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+        --output text)
+      ```
+
+   1. Connect to the Jenkins agent
+
+      ```ShellSession
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem "ec2-user@${JENKINS_AGENT_PRIVATE_IP}"
+      ```
 
    1. Switch to the jenkins user
 
@@ -9380,7 +9491,378 @@ $ sed -i "" 's%cms-ab2d[\/]prod%cms-ab2d/dev%g' _includes/head.html (edited)
       *Example for the "Sbx" environment:*
 
       ```ShellSession
-      $ ls -al database_backup/ab2d-sbx-sandbox/csv
+      $ ls -al ~/database_backup/ab2d-sbx-sandbox/csv
       ```
 
-> *** TO DO ***
+   1. Backup the csv directory
+
+      *Example for the "Sbx" environment:*
+
+      ```ShellSession
+      $ cd ~
+      $ DATETIME=`date +%Y-%m-%d-%H%M%S`
+      $ mkdir -p "csv-backup/${DATETIME}"
+      $ cp -r database_backup/ab2d-sbx-sandbox/csv "csv-backup/${DATETIME}"
+      ```
+
+1. Run the initialize environment Jenkins job
+
+   ```
+   devops-engineer-only/01a-run-initialize-environment-only-for-sandbox
+   ```
+
+1. Run the update gold disk Jenkins job
+
+   ```
+   devops-engineer-only/01b-run-update-gold-disk-only-for-sandbox
+   ```
+
+1. Run the deploy infrastructre Jenkins job
+
+   ```
+   devops-engineer-only/01c-run-deploy-infrastructure-only-for-sandbox
+   ```
+
+1. Run the update application Jenkins job
+
+   ```
+   devops-engineer-only/01-update-application-only-for-sandbox
+   ```
+
+## Appendix EEE: Modify the database instance type
+
+1. Stop API nodes via an autoscaling group schedule
+
+   1. Log on to the target AWS account
+
+   1. Select **EC2**
+
+   1. Select **Auto Scaling Groups** form the leftmost panel
+
+   1. Select the API auto scaling group
+
+      *Example:*
+
+      ```
+      ab2d-sbx-sandbox-api-20200414203112829500000001
+      ```
+
+   1. Select the **Schedule Actions** tab
+
+   1. Select **Create Scheduled Action**
+
+   1. Configure the "Create Scheduled Action" page as follows
+
+      *Format example for "Sbx" environment:*
+
+      - **Name:** Stop API nodes
+
+      - **Min:** 0
+
+      - **Max:** 0
+
+      - **Desired Capacity:** 0
+
+      - **Recurrence:** Once
+
+      - **Start Time:** {utc time two minutes from now}
+
+1. Stop worker nodes via an autoscaling group schedule
+
+   1. Log on to the target AWS account
+
+   1. Select **EC2**
+
+   1. Select **Auto Scaling Groups** form the leftmost panel
+
+   1. Select the API auto scaling group
+
+      *Example:*
+
+      ```
+      ab2d-sbx-sandbox-worker-20200414203214104900000001
+      ```
+
+   1. Select the **Schedule Actions** tab
+
+   1. Select **Create Scheduled Action**
+
+   1. Configure the "Create Scheduled Action" page as follows
+
+      *Format example for "Sbx" environment:*
+
+      - **Name:** Stop worker nodes
+
+      - **Min:** 0
+
+      - **Max:** 0
+
+      - **Desired Capacity:** 0
+
+      - **Recurrence:** Once
+
+      - **Start Time:** {utc time two minutes from now}
+
+1. Wait for API and worker nodes to stop
+
+1. Take a database snapshot
+
+   1. Log on to the target AWS account
+
+   1. Select **RDS**
+
+   1. Select **Databases** from the leftmost panel
+
+   1. Select the radio button beside the following database
+
+      ```
+      ab2d
+      ```
+
+   1. Select **Actions**
+
+   1. Select **Take snapshot**
+
+   1. Type the following in the **Snapshot name** text box
+
+      *Format:*
+
+      ```
+      ab2d-{unix time}
+      ```
+
+   1. Select **Take Snapshot**
+
+   1. Wait for "Snapshot creation time" to appear
+
+      *Notes:*
+
+      - Note that this may take a while
+
+      - Note that if you select the snapshot you will see the status as "Creating", which is why the snapshot creation time has not yet been updated
+
+      - Note that you may need to refresh the page to see the snapshot creation time
+
+1. Backup the current state of data by running the following Jenkins job
+
+   ```
+   devops-engineer-only/02-backup-data-as-csv-for-sandbox
+   ```
+
+1. Make a backup of CSV backup files
+
+   1. Get credentials for the management AWS account
+
+      ```ShellSession
+      $ source ~/code/ab2d/Deploy/bash/set-env.sh
+      ```
+
+   1. Get the private IP address of Jenkins agent instance
+
+      ```ShellSession
+      $ JENKINS_AGENT_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-jenkins-agent" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+        --output text)
+      ```
+
+   1. Connect to the Jenkins agent
+
+      ```ShellSession
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem "ec2-user@${JENKINS_AGENT_PRIVATE_IP}"
+      ```
+
+   1. Switch to the jenkins user
+
+      ```ShellSession
+      $ sudo su - jenkins
+      ```
+
+   1. List the csv files
+
+      *Example for the "Sbx" environment:*
+
+      ```ShellSession
+      $ ls -al ~/database_backup/ab2d-sbx-sandbox/csv
+      ```
+
+   1. Backup the csv directory
+
+      *Example for the "Sbx" environment:*
+
+      ```ShellSession
+      $ cd ~
+      $ DATETIME=`date +%Y-%m-%d-%H%M%S`
+      $ mkdir -p "csv-backup/${DATETIME}"
+      $ cp -r database_backup/ab2d-sbx-sandbox/csv "csv-backup/${DATETIME}"
+      ```
+
+1. Remove the database from terraform management prior to modifying database instance
+
+   1. Switch to the sandbox directory
+
+      *Example for "Sbx" environment:*
+
+      ```ShellSession
+      $ cd ~/code/ab2d/Deploy/terraform/environments/ab2d-sbx-sandbox
+      ```
+
+   1. Get credentials for the sandbox environment
+   
+      ```ShellSession
+      $ source ~/code/ab2d/Deploy/bash/set-env.sh
+      ```
+   
+   1. Remove the database terraform module
+   
+      ```ShellSession
+      $ terraform state rm module.db.aws_db_instance.db
+      ```
+
+1. Modify the database instance in the AWS console
+
+   1. Log on to the target AWS account
+
+   1. Select **RDS**
+
+   1. Select **Databases** from the leftmost panel
+
+   1. Select the radio button beside the following database
+
+      ```
+      ab2d
+      ```
+
+   1. Select **Modify**
+
+   1. Modify the database as follows
+
+      - **DB engine version:** PostgreSQL 11.5-R1
+
+      - **DB instance class:** db.m4.2xlarge
+
+      - **Multi-AZ deployment:** Yes
+
+      - **Storage type:** Provisioned IOPS (SSD)
+
+      - **Allocated Storage:** 500 GiB
+
+      - **Provisioned IOPS:** 5000
+
+      - **DB instance identifier:** ab2d
+
+   1. Scroll to the bottom of the page
+
+   1. Select **Continue**
+
+   1. Select the **Apply immediately** radio button
+
+   1. Select **Modify DB Instance**
+
+1. Wait for the database modification to complete
+
+   *Notes:*
+
+   - it may take a short period of time to see the status change to "Modifying"
+
+   - you may need to refresh the page to see the status changes
+
+1. Backup the current state of data by running the following Jenkins job again
+
+   ```
+   devops-engineer-only/02-backup-data-as-csv-for-sandbox
+   ```
+
+1. Import the new database configuration into terraform
+
+   1. Switch to the sandbox directory
+
+      *Example for "Sbx" environment:*
+
+      ```ShellSession
+      $ cd ~/code/ab2d/Deploy/terraform/environments/ab2d-sbx-sandbox
+      ```
+
+   1. Get credentials for the sandbox environment
+   
+      ```ShellSession
+      $ source ~/code/ab2d/Deploy/bash/set-env.sh
+      ```
+
+   1. Import the latest database instance into terraform
+
+      ```ShellSession
+      $ terraform import module.db.aws_db_instance.db ab2d
+      ```
+
+1. Restart the API nodes
+
+   1. Log on to the target AWS account
+
+   1. Select **EC2**
+
+   1. Select **Auto Scaling Groups** form the leftmost panel
+
+   1. Select the API auto scaling group
+
+      *Example:*
+
+      ```
+      ab2d-sbx-sandbox-api-20200414203112829500000001
+      ```
+
+   1. Select the **Schedule Actions** tab
+
+   1. Select **Create Scheduled Action**
+
+   1. Configure the "Create Scheduled Action" page as follows
+
+      *Format example for "Sbx" environment:*
+
+      - **Name:** Start API nodes
+
+      - **Min:** 2
+
+      - **Max:** 2
+
+      - **Desired Capacity:** 2
+
+      - **Recurrence:** Once
+
+      - **Start Time:** {utc time two minutes from now}
+
+1. Restart the worker nodes
+
+   1. Log on to the target AWS account
+
+   1. Select **EC2**
+
+   1. Select **Auto Scaling Groups** form the leftmost panel
+
+   1. Select the API auto scaling group
+
+      *Example:*
+
+      ```
+      ab2d-sbx-sandbox-worker-20200414203214104900000001
+      ```
+
+   1. Select the **Schedule Actions** tab
+
+   1. Select **Create Scheduled Action**
+
+   1. Configure the "Create Scheduled Action" page as follows
+
+      *Format example for "Sbx" environment:*
+
+      - **Name:** Start worker nodes
+
+      - **Min:** 2
+
+      - **Max:** 2
+
+      - **Desired Capacity:** 2
+
+      - **Recurrence:** Once
+
+      - **Start Time:** {utc time two minutes from now}
