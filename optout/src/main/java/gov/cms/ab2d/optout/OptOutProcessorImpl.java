@@ -7,6 +7,7 @@ import gov.cms.ab2d.common.service.ResourceNotFoundException;
 import gov.cms.ab2d.optout.gateway.S3Gateway;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.io.BufferedReader;
@@ -22,10 +23,15 @@ public class OptOutProcessorImpl implements OptOutProcessor {
     private final OptOutFileService optOutFileService;
     private final OptOutFileRepository optOutFileRepository;
 
+    @Value("${optout.used}")
+    private boolean optOutUsed;
+
     @Override
     public void process() {
-        final List<String> filenames = s3Gateway.listOptOutFiles();
-        filenames.stream().forEach(this::fetchAndProcessOptOutFile);
+        if (optOutUsed) {
+            final List<String> filenames = s3Gateway.listOptOutFiles();
+            filenames.stream().forEach(this::fetchAndProcessOptOutFile);
+        }
     }
 
     private void fetchAndProcessOptOutFile(final String filename) {
