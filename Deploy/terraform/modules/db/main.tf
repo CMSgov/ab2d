@@ -52,13 +52,13 @@ resource "aws_db_instance" "db" {
   snapshot_identifier     = var.snapshot_id
   db_subnet_group_name    = aws_db_subnet_group.subnet_group.id
   parameter_group_name    = aws_db_parameter_group.default.name
-  # backup_retention_period = var.backup_retention_period
-  # backup_window           = var.backup_window
+  backup_retention_period = var.backup_retention_period
+  backup_window           = var.backup_window
   copy_tags_to_snapshot   = var.copy_tags_to_snapshot
   iops                    = var.iops
   apply_immediately       = true
   kms_key_id              = var.kms_key_id
-  # maintenance_window      = var.maintenance_window
+  maintenance_window      = var.maintenance_window
   multi_az                = var.multi_az
   storage_encrypted       = true
   vpc_security_group_ids  = [aws_security_group.sg_database.id]
@@ -71,13 +71,5 @@ resource "aws_db_instance" "db" {
     env          = "${var.env}"
     role         = "db"
     "cpm backup" = "${var.cpm_backup}"
-  }
-
-  lifecycle {
-    create_before_destroy = true
-
-    ignore_changes = [
-      "snapshot_identifier",
-    ]
   }
 }
