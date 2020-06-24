@@ -41,15 +41,20 @@ public class KinesisEventLogger implements EventLogger {
         if (appEnv.equalsIgnoreCase("local")) {
             return;
         }
-        ThreadPoolTaskExecutor ex = config.kinesisLogProcessingPool();
-        KinesisEventProcessor processor = new KinesisEventProcessor(event, client, streamId);
-        Future<Void> future = ex.submit(processor);
-        if (block) {
-            try {
-                future.get(10, TimeUnit.SECONDS);
-            } catch (InterruptedException | ExecutionException | TimeoutException e) {
-                log.error("Unable to wait for thread to sleep", e);
+        try {
+            ThreadPoolTaskExecutor ex = config.kinesisLogProcessingPool();
+            KinesisEventProcessor processor = new KinesisEventProcessor(event, client, streamId);
+            Future<Void> future = ex.submit(processor);
+            if (block) {
+                try {
+                    future.get(10, TimeUnit.SECONDS);
+                } catch (InterruptedException | ExecutionException | TimeoutException e) {
+                    log.error("Unable to wait for thread to sleep", e);
+                }
             }
+        } catch (Exception ex) {
+            // Logging should never break anything
+            log.error("Unable to do Kinesis logging", ex);
         }
     }
 
