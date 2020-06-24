@@ -6257,30 +6257,25 @@ article h2::after {
     margin-bottom: 50px;
 }
 
-.google-group-wrapper {
-    width: 361px;
-    height: 62px;
-    border-radius: 31px;
+.google-group-wrapper a {
+    padding: 16px 26px;
+    border-radius: 100px;
     background-color: #0071bc;
-    display: flex;
     align-items: center;
-}
-.join-our-google-group {
-    display: flex;
-    align-items: center;
+    display: inline-block;
     margin: auto;
-
     font-family: Montserrat;
     font-size: 14px;
     font-weight: bold;
-    font-stretch: normal;
-    font-style: normal;
-    line-height: normal;
     letter-spacing: 1.07px;
     color: #ffffff;
+    transition: all 0.2s linear;
+}
+.external-icon {
+    vertical-align: middle;
 }
 .join-our-google-group:hover {
-    color: #ffffff;
+    background-color: #228dd3;
 }
 .open_in_new-copy-3 {
     width: 24px;
@@ -6352,7 +6347,7 @@ article h2::after {
 }
 .card-header-h5 {
     display: inline-block;
-    max-width: 75%;
+    max-width: 85%;
     text-align: left;
     font-family: Muli;
     font-size: 16px;
@@ -6374,11 +6369,10 @@ article h2::after {
     color: #27a9e0;
     display: inline;
     position: absolute;
-    right: 25px;
+    right: 15px;
 }
 
 .dropdown-caret.material-icons {
-    color: #8de4ff;
     font-size: 16px;
     margin-left: 5px;
 }
@@ -6396,6 +6390,7 @@ article h2::after {
 }
 .dropdown .dropdown-menu {
     background-color: #525962;
+    margin-top: -1px;
     padding: 0;
     overflow: hidden;
 }
@@ -6452,4 +6447,16 @@ ul.gray-bullets a:hover {
     position: sticky;
     position: -webkit-sticky;
     top: 100px;
+}
+
+.card {
+    border-radius: 7px;
+}
+.card-header {
+    padding: 20px 16px;
+    border-radius: 6px!important;
+    border-bottom: none;
+}
+.card-body {
+    border-top: 1px solid rgba(0, 0, 0, .125);
 }

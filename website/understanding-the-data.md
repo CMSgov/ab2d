@@ -14,7 +14,7 @@ active-nav: understanding-the-data-nav
     </svg>
     <div class="container">
         <div class="row" style="margin-bottom: 70px;">
-            <div class="col">
+            <div class="col-lg-6">
                 <div class="step-header">Overview</div>
                 The AB2D API is a RESTful based web service providing Medicare Parts A and B claims data using the industry-
                 standard <a href="" target="_blank">HL7 Fast Healthcare Interoperability Resources (FHIR)</a> resources, specifically the 
@@ -22,8 +22,8 @@ active-nav: understanding-the-data-nav
                 all claims with substance abuse codes (as required by the Confidentiality of Alcohol and Drug Abuse Patient
                 Records Regulations, 42 CFR Part 2).
             </div>
-            <div class="col">
-                <img src="assets/img/data-analysis.svg" alt="data-analysis" />
+            <div class="col-lg-6">
+                <img class="mt-3" src="assets/img/data-analysis.svg" alt="data-analysis" />
             </div>
         </div>
     </div>
@@ -37,10 +37,10 @@ active-nav: understanding-the-data-nav
     <div class="container">    
         <div class="understanding-the-data-section">
             <div class="row">
-                <div class="col understanding-the-data-section-image">
-                    <img src="assets/img/paper.svg" alt="paper" />
+                <div class="col-lg-2 text-center">
+                    <img class="mb-3" src="assets/img/paper.svg" alt="paper" />
                 </div>
-                <div class="col">
+                <div class="col-lg-10">
                     <div class="header-title">Sample AB2D Files</div>
                     The examples below were generated from synthetic claims data but are similar to the files that will be
                     retrieved through the AB2D API for Part D Sponsors.
@@ -58,10 +58,10 @@ active-nav: understanding-the-data-nav
         
         <div class="understanding-the-data-section">
             <div class="row">
-                <div class="col understanding-the-data-section-image">
-                    <img src="assets/img/book.svg" alt="book" />
+                <div class="col-lg-2 text-center">
+                    <img class="mb-3" src="assets/img/book.svg" alt="book" />
                 </div>
-                <div class="col">
+                <div class="col-lg-10">
                     <div class="header-title">Data Dictionary</div>
                     AB2D API users can leverage the AB2D Data Dictionary
                      for more information on the data elements.
@@ -74,10 +74,10 @@ active-nav: understanding-the-data-nav
                 
         <div class="understanding-the-data-section">
             <div class="row">
-                <div class="col understanding-the-data-section-image">
-                    <img src="assets/img/creativity.svg" alt="creativity" />
+                <div class="col-lg-2 text-center">
+                    <img class="mb-3" src="assets/img/creativity.svg" alt="creativity" />
                 </div>
-                <div class="col">
+                <div class="col-lg-10">
                     <div class="header-title">Additional Resources</div>
                     Here are some helpful resources you can reference while using this site:
                     <br /><br />

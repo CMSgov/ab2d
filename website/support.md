@@ -23,19 +23,19 @@ active-nav: support-nav
     </svg>
     <div class="container">
         <div class="row">
-            <div class="col">
+            <div class="col-lg-5">
                 <div class="header-title">We are listening</div>
                 If you have a question, suggestion, or feedback please post it in the AB2D Google Group!
                 <br />
                 <br />
-                <div class="google-group-wrapper">
+                <div class="google-group-wrapper mb-3">
                     <a class="join-our-google-group" href="https://groups.google.com/forum/#!forum/ab2d-api" target="_blank">
-                        <span>JOIN OUR GOOGLE GROUP</span>
-                        <i class="material-icons pl-1" style="color: white;">open_in_new</i>
+                        JOIN OUR GOOGLE GROUP
+                        <i class="material-icons pl-1 external-icon">open_in_new</i>
                     </a>
                 </div>
             </div>
-            <div class="col">
+            <div class="col-lg-7">
                 <img src="assets/img/experts.svg" alt="experts" />
             </div>        
         </div>
@@ -45,7 +45,7 @@ active-nav: support-nav
         <div id="accordion-support" class="accordion-white-bg">
           <div class="card">
             <div class="card-header" id="headingOne" data-toggle="collapse" data-target="#collapseOne" aria-expanded="false" aria-controls="collapseOne">
-              <h5 class="mb-0" class="card-header-h5">
+              <h5 class="mb-0 card-header-h5">
                   Why is CMS making claims data available to PDP sponsors?
               </h5>
               <i class="material-icons card-expand">expand_more</i>
@@ -66,7 +66,7 @@ active-nav: support-nav
           
           <div class="card">
             <div class="card-header" id="headingTwo" data-toggle="collapse" data-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
-              <h5 class="mb-0" class="card-header-h5">
+              <h5 class="mb-0 card-header-h5">
                   What is the Final Rule?
               </h5>
               <i class="material-icons card-expand">expand_more</i>
@@ -81,7 +81,7 @@ active-nav: support-nav
           
           <div class="card">
             <div class="card-header" id="headingThree" data-toggle="collapse" data-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
-              <h5 class="mb-0" class="card-header-h5">
+              <h5 class="mb-0 card-header-h5">
                   Who is eligible to request Medicare Claims data under this process?
               </h5>
               <i class="material-icons card-expand">expand_more</i>

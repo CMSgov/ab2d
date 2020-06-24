@@ -72,7 +72,7 @@ active-nav: accessing-claims-data-nav
     </svg>
     <div class="container">
         <div class="row">
-            <div class="col" style="max-width: 250px;" class="step-claims-menu-wrapper">
+            <div class="col-lg-6 step-claims-menu-col" style="max-width: 250px;">
                 <div class="step-claims-menu">
                     <div id="step-1-icon" class="step-accessing-claims step-accessing-claims-active">
                         Step 1 <span class="step-claims-dash"></span>
@@ -94,32 +94,50 @@ active-nav: accessing-claims-data-nav
                 <div class="step-title">Attestation</div>
                 <div class="line-copy"></div>
                 <div class="header-title">Overview</div>
-                <div class="row">
-                    <div class="col">
+                <div class="row mb-5">
+                    <div class="col-lg-6">
                         <p>
                             In order to access Medicare Parts A and B claims data, a Part D Plan (PDP) sponsor must first complete the attestation process for each of
                             their participating Part D contracts. During this process, a Part D Plan (PDP) sponsor formally reviews and agrees to comply with the 
                             <a href="#">Claims
                             Data Usage Protocols</a>. These protocols regulate how their organization may or may not use the Medicare claims data provided by the AB2D
                             API, including limitations associated with the reuse and disclosure of the data.
-                            What Type of Organizations Can Attest?
+                            What type of organizations can attest?
                             Stand-alone Medicare Part D Plan (PDP) sponsors (PACE and MAPD are not eligible).
                         </p>
                     </div>
-                    <div class="col">
+                    <div class="col-lg-6">
                         <img src="assets/img/attestation.svg" width="424" height="315" alt="attestation" />
                     </div>
                 </div>
-                <div id="who-can-attest-accordion" class="accordion-white-bg">
+                
+                <div id="what-type-accordion" class="accordion-white-bg">
                   <div class="card">
-                    <div class="card-header" id="headingOne" data-toggle="collapse" data-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+                    <div class="card-header" id="headingZero" data-toggle="collapse" data-target="#collapseZero" aria-expanded="true" aria-controls="collapseZero">
                       <h5 class="mb-0 card-header-h5">
-                          Who Can Attest?
+                          What type of organizations can attest?
                       </h5>
                       <i class="material-icons card-expand">expand_more</i>
                     </div>
                 
-                    <div id="collapseOne" class="collapse show" aria-labelledby="headingOne" data-parent="#accordion">
+                    <div id="collapseZero" class="collapse" aria-labelledby="headingZero" data-parent="#accordion">
+                      <div class="card-body">
+                        Stand-alone Medicare Part D Plan (PDP) sponsors (PACE and MAPD are not eligible).
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div id="who-can-attest-accordion" class="accordion-white-bg">
+                  <div class="card">
+                    <div class="card-header" id="headingOne" data-toggle="collapse" data-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+                      <h5 class="mb-0 card-header-h5">
+                          Who can attest?
+                      </h5>
+                      <i class="material-icons card-expand">expand_more</i>
+                    </div>
+                
+                    <div id="collapseOne" class="collapse" aria-labelledby="headingOne" data-parent="#accordion">
                       <div class="card-body">
                         <ul>
                             <li>Attestation must be performed by a Medicare Part D Plan (PDP) Sponsor CEO, CFO, or COO.</li>
@@ -136,14 +154,12 @@ active-nav: accessing-claims-data-nav
                   <div class="card">
                     <div class="card-header" id="headingTwo" data-toggle="collapse" data-target="#collapseTwo" aria-expanded="true" aria-controls="collapseTwo">
                       <h5 class="mb-0 card-header-h5">
-                        <button class="btn btn-link">
-                          How Does Attestation Affect Claims Data?
-                        </button>
+                          How does attestation affect claims data?
                       </h5>
                       <i class="material-icons card-expand">expand_more</i>
                     </div>
                 
-                    <div id="collapseTwo" class="collapse show" aria-labelledby="headingTwo" data-parent="#accordion">
+                    <div id="collapseTwo" class="collapse" aria-labelledby="headingTwo" data-parent="#accordion">
                       <div class="card-body">
                         <ul>
                             <li>Attested Part D Plan (PDP) sponsors are able to retrieve claims data for active plan enrollees from the date of attestation onwards.
@@ -162,12 +178,12 @@ active-nav: accessing-claims-data-nav
                   <div class="card">
                     <div class="card-header" id="headingThree" data-toggle="collapse" data-target="#collapseThree" aria-expanded="true" aria-controls="collapseThree">
                       <h5 class="mb-0 card-header-h5">
-                          How to initially Attest
+                          How to initially attest
                       </h5>
                       <i class="material-icons card-expand">expand_more</i>
                     </div>
                 
-                    <div id="collapseThree" class="collapse show" aria-labelledby="headingOne" data-parent="#accordion">
+                    <div id="collapseThree" class="collapse" aria-labelledby="headingOne" data-parent="#accordion">
                       <div class="card-body">
                         <ol>
                             <li>Log into HPMS</li>
@@ -187,12 +203,12 @@ active-nav: accessing-claims-data-nav
                   <div class="card">
                     <div class="card-header" id="headingFour" data-toggle="collapse" data-target="#collapseFour" aria-expanded="true" aria-controls="collapseFour">
                       <h5 class="mb-0 card-header-h5">
-                          How to Add Additional Attesters
+                          How to add additional attesters
                       </h5>
                       <i class="material-icons card-expand">expand_more</i>
                     </div>
                 
-                    <div id="collapseFour" class="collapse show" aria-labelledby="headingFour" data-parent="#accordion">
+                    <div id="collapseFour" class="collapse" aria-labelledby="headingFour" data-parent="#accordion">
                       <div class="card-body">
                         <ol>
                             <li>Log into HPMS</li>
@@ -216,7 +232,7 @@ active-nav: accessing-claims-data-nav
                 <div class="header-title">Overview</div>
                 
                 <div class="row">
-                    <div class="col">
+                    <div class="col-lg-6 mb-5">
                         After attesting, Part D Plan (PDP) Sponsors will need to assign an "AB2D Data Operations Specialist"
                         to act as their organization’s primary technical point of contact.
                         
@@ -240,7 +256,7 @@ active-nav: accessing-claims-data-nav
                         </div>
                         
                     </div>
-                    <div class="col">
+                    <div class="col-lg-6">
                         <img src="assets/img/data-specialist.svg" alt="data-specialist" />
                     </div>
                 </div>
@@ -253,7 +269,7 @@ active-nav: accessing-claims-data-nav
                 <div class="header-title">Overview</div>
                 
                 <div class="row">
-                    <div class="col">
+                    <div class="col-lg-6 mb-5">
                         The Sandbox is a test environment that enables anyone to interact with the AB2D API and retrieve synthetic Medicare Parts A and B claims data.
                         A Part D Plan (PDP) sponsor “AB2D Data Operations Specialist” will need to verify they have retrieved synthetic claims data successfully in 
                         order to gain access to production data. 
@@ -275,7 +291,7 @@ active-nav: accessing-claims-data-nav
                              the AB2D Team.</li>
                         </ul>
                     </div>
-                    <div class="col">
+                    <div class="col-lg-6">
                         <img src="assets/img/programmer.svg" alt="programmer" />
                     </div>
                 </div>
@@ -288,7 +304,7 @@ active-nav: accessing-claims-data-nav
                 <div class="header-title">Overview</div>
                 
                 <div class="row">
-                    <div class="col">
+                    <div class="col-lg-6 mb-5">
                         Once a connection to the sandbox environment has been verified, the AB2D team will work directly with the Part D Plan (PDP) sponsors to 
                         deliver production credentials. The Part D Plan (PDP) sponsor will use the production credentials to retrieve actual Medicare Parts A and B 
                         Claims Data from our production environment.
@@ -301,7 +317,7 @@ active-nav: accessing-claims-data-nav
                              will work directly with the Attestor(s) to provide their organization’s production credentials.</li>
                         </ul>
                     </div>
-                    <div class="col">
+                    <div class="col-lg-6 mb-5">
                         <img src="assets/img/production.svg" alt="production" />
                     </div>
                 </div>
