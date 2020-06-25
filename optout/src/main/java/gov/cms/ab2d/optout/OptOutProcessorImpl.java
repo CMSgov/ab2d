@@ -27,6 +27,11 @@ public class OptOutProcessorImpl implements OptOutProcessor {
     private boolean optOutUsed;
 
     @Override
+    public boolean isOptOutUsed() {
+        return optOutUsed;
+    }
+
+    @Override
     public void process() {
         if (optOutUsed) {
             final List<String> filenames = s3Gateway.listOptOutFiles();
