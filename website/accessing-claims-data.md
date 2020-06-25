@@ -278,9 +278,9 @@ active-nav: accessing-claims-data-nav
                         <div class="header-title" style="margin-top: 30px;">Connecting to the Sandbox</div>
                         We are providing three different ways to retrieve synthetic claims data:
                         <ol>
-                            <li><a href="tutorial-postman">Postman and Swagger User Guide</a></li>
-                            <li><a href="tutorial-curl">Curl User Guide</a></li>
-                            <li><a href="advanced-user-guide">Advanced User Guide</a></li>
+                            <li><a href="tutorial-postman.html">Postman and Swagger User Guide</a></li>
+                            <li><a href="tutorial-curl.html">Curl User Guide</a></li>
+                            <li><a href="advanced-user-guide.html">Advanced User Guide</a></li>
                         </ol>
                         
                         <div class="header-title" style="margin-top: 30px;">Verifying Synthetic Data Retrieval</div>
@@ -313,7 +313,7 @@ active-nav: accessing-claims-data-nav
                             Delivering Production Credentials
                         </div>
                         <ul>
-                            <li>After the “AB2D Data Operations Specialist” has provided their IP addresses and verified synthetic data retrieval, the AB2D team 
+                            <li>After the "AB2D Data Operations Specialist" has provided their IP addresses and verified synthetic data retrieval, the AB2D team 
                              will work directly with the Attestor(s) to provide their organization’s production credentials.</li>
                         </ul>
                     </div>
