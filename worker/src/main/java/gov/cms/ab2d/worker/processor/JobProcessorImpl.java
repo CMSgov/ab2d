@@ -14,7 +14,7 @@ import gov.cms.ab2d.eventlogger.events.ContractBeneSearchEvent;
 import gov.cms.ab2d.eventlogger.events.FileEvent;
 import gov.cms.ab2d.eventlogger.events.JobStatusChangeEvent;
 import gov.cms.ab2d.worker.adapter.bluebutton.ContractAdapter;
-import gov.cms.ab2d.worker.adapter.bluebutton.GetPatientsByContractResponse;
+import gov.cms.ab2d.worker.adapter.bluebutton.ContractBeneficiaries;
 import gov.cms.ab2d.worker.processor.StreamHelperImpl.FileOutputType;
 import gov.cms.ab2d.worker.processor.domainmodel.ContractData;
 import gov.cms.ab2d.worker.processor.domainmodel.ProgressTracker;
@@ -293,7 +293,7 @@ public class JobProcessorImpl implements JobProcessor {
      * @param attestedContracts - the attested contracts
      * @return the list of patients for each contract
      */
-    private List<GetPatientsByContractResponse> fetchPatientsForAllContracts(List<Contract> attestedContracts) {
+    private List<ContractBeneficiaries> fetchPatientsForAllContracts(List<Contract> attestedContracts) {
         int currentMonth = LocalDate.now().getMonthValue();
         return attestedContracts
                 .stream()

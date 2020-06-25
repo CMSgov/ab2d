@@ -10,8 +10,8 @@ import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.filter.FilterOutByDate;
 import gov.cms.ab2d.worker.adapter.bluebutton.ContractAdapter;
-import gov.cms.ab2d.worker.adapter.bluebutton.GetPatientsByContractResponse;
-import gov.cms.ab2d.worker.adapter.bluebutton.GetPatientsByContractResponse.PatientDTO;
+import gov.cms.ab2d.worker.adapter.bluebutton.ContractBeneficiaries;
+import gov.cms.ab2d.worker.adapter.bluebutton.ContractBeneficiaries.PatientDTO;
 import gov.cms.ab2d.worker.service.FileService;
 import org.hamcrest.CoreMatchers;
 import org.junit.jupiter.api.BeforeEach;
@@ -68,7 +68,7 @@ class JobProcessorUnitTest {
     @Mock private LogManager eventLogger;
 
     private Job job;
-    private GetPatientsByContractResponse patientsByContract;
+    private ContractBeneficiaries patientsByContract;
 
     @BeforeEach
     void setUp() throws Exception {
@@ -286,8 +286,8 @@ class JobProcessorUnitTest {
         return job;
     }
 
-    private GetPatientsByContractResponse createPatientsByContractResponse(Contract contract) throws ParseException {
-        return GetPatientsByContractResponse.builder()
+    private ContractBeneficiaries createPatientsByContractResponse(Contract contract) throws ParseException {
+        return ContractBeneficiaries.builder()
                 .contractNumber(contract.getContractNumber())
                 .patient(toPatientDTO())
                 .patient(toPatientDTO())

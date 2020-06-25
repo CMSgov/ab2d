@@ -26,7 +26,7 @@ public class ContractAdapterStub implements ContractAdapter {
     private static final int MAX_ROWS = 30_000;
 
     @Override
-    public GetPatientsByContractResponse getPatients(String contractNumber, int currentMonth) {
+    public ContractBeneficiaries getPatients(String contractNumber, int currentMonth) {
 
         final int contractSno = extractContractSno(contractNumber);
 
@@ -122,22 +122,22 @@ public class ContractAdapterStub implements ContractAdapter {
     }
 
 
-    private GetPatientsByContractResponse toResponse(String contractNumber, List<String> rows) {
-        return GetPatientsByContractResponse.builder()
+    private ContractBeneficiaries toResponse(String contractNumber, List<String> rows) {
+        return ContractBeneficiaries.builder()
                 .contractNumber(contractNumber)
                 .patients(toPatients(rows))
                 .build();
     }
 
-    private List<GetPatientsByContractResponse.PatientDTO> toPatients(List<String> rows) {
+    private List<ContractBeneficiaries.PatientDTO> toPatients(List<String> rows) {
         return rows.stream()
                 .map(row -> toPatientDTO(row))
                 .collect(Collectors.toList());
     }
 
 
-    private GetPatientsByContractResponse.PatientDTO toPatientDTO(String row) {
-        return GetPatientsByContractResponse.PatientDTO.builder()
+    private ContractBeneficiaries.PatientDTO toPatientDTO(String row) {
+        return ContractBeneficiaries.PatientDTO.builder()
                 .patientId(row)
                 .dateRangesUnderContract(toMonthsUnderContract())
                 .build();

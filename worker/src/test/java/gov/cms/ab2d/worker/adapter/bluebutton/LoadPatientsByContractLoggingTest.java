@@ -13,6 +13,8 @@ import gov.cms.ab2d.eventlogger.events.*;
 import gov.cms.ab2d.eventlogger.reports.sql.DoAll;
 import gov.cms.ab2d.eventlogger.utils.UtilMethods;
 import gov.cms.ab2d.worker.SpringBootApp;
+import gov.cms.ab2d.worker.processor.PatientContractProcessor;
+import gov.cms.ab2d.worker.processor.PatientContractProcessorImpl;
 import gov.cms.ab2d.worker.service.BeneficiaryService;
 import org.hl7.fhir.dstu3.model.Bundle;
 import org.hl7.fhir.dstu3.model.Identifier;
@@ -73,8 +75,9 @@ public class LoadPatientsByContractLoggingTest {
 
     @Test
     public void testLogging() {
-        ContractAdapterImpl cai = new ContractAdapterImpl(bfdClient, contractRepo, beneficiaryService,
-                propertiesService, logManager);
+        PatientContractProcessor patientContractProcessor = new PatientContractProcessorImpl(bfdClient);
+        ContractAdapterImpl cai = new ContractAdapterImpl(contractRepo, beneficiaryService,
+                propertiesService, patientContractProcessor, logManager);
 
         String contractId = "C1234";
         Bundle bundle = createBundle();
