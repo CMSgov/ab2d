@@ -37,7 +37,7 @@ ctas:
     });
 </script>
 
-<div id="status-section" style="padding: 5px;">
+<div id="status-section" style="padding: 5px;" role="main">
     <h3>System Status</h3>
     <div style="border-top: 1px solid silver; border-bottom: 1px solid silver; padding: 4px;">
         <span id="status-content" style="padding-left: 10px;"></span>
