@@ -33,6 +33,14 @@ lication-load-balancer)
    * [Configure CloudWatch Log groups for RDS](#configure-cloudwatch-log-groups-for-rds)
    * [Submit a ticket to subscribe log groups to Splunk](#submit-a-ticket-to-subscribe-log-groups-to-splunk)
 1. [Configure VictorOps](#configure-victorops)
+   * [Request access to VictorOps](#request-access-to-victorops)
+   * [Bookmark important VictorOps URLs](#bookmark-important-victorops-urls)
+   * [Add users to the AB2D team](#add-users-to-the-ab2d-team)
+   * [Install the VictorOps mobile app](#install-the-victorops-mobile-app)
+   * [Create on-call rotations and add relevant team members](#create-on-call-rotations-and-add-relevant-team-members)
+   * [Create an escalation policy](#create-an-escalation-policy)
+   * [Forward New Relic alerts to the VictorOps alerting service](#forward-new-relic-alerts-to-the-victorops-alerting-service)
+   * [Forward AWS CloudWatch alerts to the VictorOps alerting service](#forward-aws-cloudwatch-alerts-to-the-victorops-alerting-service)
 
 ## Obtain and import api.ab2d.cms.gov entrust certificate](#obtain-and-import-apiab2dcmsgov-entrust-certificate)
 
@@ -1586,13 +1594,19 @@ lication-load-balancer)
 
 ## Configure VictorOps
 
+### Request access to VictorOps
+
 1. Request access to the following VictorOps
 
    > https://portal.victorops.com/client/bcda
 
 1. When you receive an email invitation, click the link in the email to create a username and password for VictorOps
 
-1. You may want to create the following bookmarks for VictorOps
+### Bookmark important VictorOps URLs
+
+1. Open Chrome
+
+1. Add the following bookmarks for VictorOps
 
    *CMS Gov VictorOps:*
 
@@ -1609,6 +1623,8 @@ lication-load-balancer)
    *CMS Gov VictorOps Support:*
 
    > https://victorops.com/contact/
+
+### Add users to the AB2D team
 
 1. Open Chrome
 
@@ -1644,4 +1660,190 @@ lication-load-balancer)
 
 1. Select **Close** on the "Success" window
 
-1. 
+### Install the VictorOps mobile app
+
+> *** TO DO ***: Determine if we want to use this.
+
+### Create on-call rotations and add relevant team members
+
+1. Open Chrome
+
+1. Enter the following in the address bar
+
+   > https://portal.victorops.com/client/bcda
+
+1. Log on (if not already logged in)
+
+1. Select the **Teams** tab
+
+1. Select the following team
+
+   ```
+   AB2D
+   ```
+
+1. Select the **Rotations** tab
+
+1. Add an "On Call" rotation
+
+   1. Select **Add Rotation**
+
+   1. Type the following in the **Rotation name** text box
+
+      ```
+      On Call
+      ```
+
+   1. Select the following under "Add a shift to this rotation"
+
+      ```
+      24/7
+      ```
+
+   1. Configure the "On Call" rotation as follows
+
+      - **Shift name:** Standard Rotation
+
+      - **Time Zone:** America/New_York
+
+      - **Handoff happens every:** 7
+
+      - **days at:** 11:00 am
+
+      - **The next handoff happens:** {tomorrow's date}
+
+   1. Select **Save Rotation**
+
+   1. Select a user to add to the rotation from the "Select a user to add" dropdown
+
+   1. Repeat the last step to add additional users
+
+      *Example:*
+
+      - Adam (shift schedule 1)
+
+      - Barry (shift schedule 2)
+
+      - Carl (shift schedule 3)
+
+1. Add an "On Escalation" rotation
+
+   1. Select **Add Rotation**
+   
+   1. Type the following in the **Rotation name** text box
+   
+      ```
+      On Escalation
+      ```
+   
+   1. Select the following under "Add a shift to this rotation"
+   
+      ```
+      24/7
+      ```
+   
+   1. Configure the "On Call" rotation as follows
+
+      - **Shift name:** Standard Shift
+
+      - **Time Zone:** America/New_York
+
+      - **Handoff happens every:** 7
+
+      - **days at:** 11:00 am
+
+      - **The next handoff happens:** {tomorrow's date}
+
+   1. Select **Save Rotation**
+
+   1. Select a user to add to the rotation from the "Select a user to add" dropdown
+
+   1. Repeat the last step to add additional users
+
+      *If using the same user, make sure the users are ordered so that the same user is not in the same shift schedule of the two rotations.*
+
+      - Barry (shift schedule 1)
+
+      - Carl (shift schedule 2)
+
+      - Adam (shift schedule 3)
+
+### Create an escalation policy
+
+1. Open Chrome
+
+1. Enter the following in the address bar
+
+   > https://portal.victorops.com/client/bcda
+
+1. Log on (if not already logged in)
+
+1. Select the **Teams** tab
+
+1. Select the following team
+
+   ```
+   AB2D
+   ```
+
+1. Select the **Escalation Policies** tab
+
+1. Select **Add Escalation Policy**
+
+1. Type the following in the **Policy Name** text box
+
+   ```
+   Standard
+   ```
+
+1. Keep **Ignore Custom Paging Policies** unchecked
+
+1. Configure "Step 1" as follows
+
+   - **First dropdown:** Immediately
+
+   - **Second dropdown:** Notify the on-duty user(s) in rotation
+
+   - **Third dropdown:** On Call
+
+1. Select **Add Step**
+
+1. Configure "Step 2" as follows
+
+   - **First dropdown:** If still unacked after 30 more minutes,
+
+   - **Second dropdown:** Notify the on-duty user(s) in rotation
+
+   - **Third dropdown:** On Escalation
+
+1. Select **Add Step**
+
+1. Configure "Step 3" as follows
+
+   - **First dropdown:** If still unacked after 60 more minutes,
+
+   - **Second dropdown:** Notify user
+
+   - **Third dropdown:** {devops engineer}
+
+1. Select **Save**
+
+### Forward New Relic alerts to the VictorOps alerting service
+
+1. Note that New Relic APM, Infrastructure, and Synthetics alerts can be forwarded to the VictorOps alerting service
+
+> *** TO DO **
+
+### Forward AWS CloudWatch alerts to the VictorOps alerting service
+
+> *** TO DO ***
+
+### Create a dedicated CMS Slack channel for AB2D incidents
+
+1. Open Slack
+
+1. Select the CMS
+
+### Configure VictorOps alerting service to forward alerts to a dedicated Slack channel
+
+> *** TO DO ***
