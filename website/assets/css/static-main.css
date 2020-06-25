@@ -5001,7 +5001,8 @@ a.ds-c-vertical-nav__label:hover {
     margin-right: auto;
     max-width: 1040px;
     padding-left: 16px;
-    padding-right: 16px
+    padding-right: 16px;
+    background-color: #21272F;
 }
 
 @media (min-width:544px) {
@@ -6031,7 +6032,6 @@ pre {
 }
 
 footer:before {
-    background: linear-gradient(30deg, #087BAE 10%, #34EFA4 90%);
     content: '';
     position: relative;
     top: -48px;
@@ -6039,13 +6039,22 @@ footer:before {
     height: 3px;
     width: 100%
 }
+
+footer {
+    background-color: #21272F;
+    color: white;
+}
+
+footer a {
+    color: #8DE4FF;
+}
 /*
 Everything above is a direct copy from the BB css project
 BCDA changes below this line
 */
 
 body {
-    background-color: #f1f1f1;
+    background-color: white;
 }
 
 article h1 {
@@ -6160,4 +6169,294 @@ article h2::after {
         background: linear-gradient(30deg, #339392, #339392 83%, #62C5C4);
     }
 
+}
+
+.step-accessing-claims {
+    width: 49px;
+    height: 30px;
+    font-family: Muli;
+    font-size: 16px;
+    font-weight: bold;
+    font-stretch: normal;
+    font-style: normal;
+    line-height: 1.88;
+    letter-spacing: normal;
+    margin-bottom: 10px;
+    cursor: pointer;
+}
+.step-accessing-claims-active {
+    color: #35414f;
+    margin-left: 15px;
+}
+.step-accessing-claims-nonactive {
+    color: #939fad;
+}
+.step-claims-dash {
+    width: 35px;
+    height: 1px;
+    display: inline;
+    background-color: #35414f;
+    margin-top: 14px;
+    margin-left: 10px;
+    position: absolute;
+}
+.step-header {
+    font-family: Montserrat;
+    font-size: 16px;
+    font-weight: bold;
+    font-stretch: normal;
+    font-style: normal;
+    line-height: 2.25;
+    letter-spacing: 2.67px;
+    color: #de3072;
+    margin-bottom: 15px;
+    text-transform: uppercase;
+}
+.step-title {
+    font-family: Montserrat;
+    font-size: 30px;
+    font-weight: bold;
+    font-stretch: normal;
+    font-style: normal;
+    line-height: 1;
+    letter-spacing: normal;
+    color: #35414f;
+    margin-bottom: 15px;
+}
+.line-copy {
+    width: 81px;
+    height: 4px;
+    background-color: #2ac4f3;
+    border-radius: 4px;
+    margin-bottom: 15px;
+}
+.header-title {
+    font-family: Muli;
+    font-size: 22px;
+    font-weight: 800;
+    font-stretch: normal;
+    font-style: normal;
+    line-height: 1.36;
+    letter-spacing: normal;
+    color: #35414f;
+    margin-bottom: 15px;
+}
+
+.green-check {
+    font-size: 18px;
+    font-weight: normal;
+    font-stretch: normal;
+    font-style: normal;
+    line-height: 1.5;
+    letter-spacing: normal;
+    color: #539a01;
+    max-width: 20px;
+}
+
+.step-content {
+    margin-bottom: 50px;
+}
+
+.google-group-wrapper a {
+    padding: 16px 26px;
+    border-radius: 100px;
+    background-color: #0071bc;
+    align-items: center;
+    display: inline-block;
+    margin: auto;
+    font-family: Montserrat;
+    font-size: 14px;
+    font-weight: bold;
+    letter-spacing: 1.07px;
+    color: #ffffff;
+    transition: all 0.2s linear;
+}
+.external-icon {
+    vertical-align: middle;
+}
+.join-our-google-group:hover {
+    background-color: #228dd3;
+}
+.open_in_new-copy-3 {
+    width: 24px;
+    height: 24px;
+    font-family: MaterialIcons;
+    font-size: 24px;
+    font-weight: normal;
+    font-stretch: normal;
+    font-style: normal;
+    line-height: normal;
+    letter-spacing: normal;
+    text-align: center;
+    color: #ffffff;
+}
+
+.understanding-the-data-overview {
+    font-family: Montserrat;
+    font-size: 16px;
+    font-weight: bold;
+    font-stretch: normal;
+    font-style: normal;
+    line-height: 2.25;
+    letter-spacing: 2.67px;
+    color: #de3072;
+}
+
+.understanding-the-data-section {
+    border-radius: 5px;
+    box-shadow: 0 3px 7px 0 rgba(0, 0, 0, 0.13);
+    background-color: #ffffff;
+    padding: 45px;
+    margin-bottom: 50px;
+}
+.understanding-the-data-section-image {
+    max-width: 200px;
+}
+
+.step-section {
+    margin-right: 80px;
+    margin-left: 80px;
+    cursor: pointer;
+}
+
+.claims-data-content {
+    margin-top: 40px;
+    background-color: #EDEBEA;
+    padding: 25px;
+}
+
+.section-header {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.card {
+    margin-bottom: 25px;
+}
+
+.btn-link {
+    color: #35414f;
+}
+
+.card-header {
+    background-color: white;
+    cursor: pointer;
+}
+.card-header:hover {
+    background-color: white;
+}
+.card-header-h5 {
+    display: inline-block;
+    max-width: 85%;
+    text-align: left;
+    font-family: Muli;
+    font-size: 16px;
+    font-weight: bold;
+    font-stretch: normal;
+    font-style: normal;
+    line-height: 1.5;
+    letter-spacing: normal;
+    color: #35414f;
+}
+.accordion-white-bg .card-header {
+    background-color: #f9fbfd;
+    transition: all 0.2s linear;
+}
+.accordion-white-bg .card-header:hover {
+    background-color: #f1f9fe;
+}
+.card-expand {
+    color: #27a9e0;
+    display: inline;
+    position: absolute;
+    right: 15px;
+}
+
+.dropdown-caret.material-icons {
+    font-size: 16px;
+    margin-left: 5px;
+}
+
+.icon-flipped {
+    -webkit-transform: rotate(180deg);
+    -moz-transform: rotate(180deg);
+    -ms-transform: rotate(180deg);
+    -o-transform: rotate(180deg);
+    transform: rotate(180deg);
+}
+
+.dropdown:hover .dropdown-menu {
+    display: block;
+}
+.dropdown .dropdown-menu {
+    background-color: #525962;
+    margin-top: -1px;
+    padding: 0;
+    overflow: hidden;
+}
+.dropdown .dropdown-menu a {
+    color: white;
+    background-color: #525962;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    font-size: 14px;
+}
+.dropdown .dropdown-menu a:hover {
+    color: #8DE4FF;
+    background-color: #323A45;
+}
+.dropdown-menu {
+    background-color: #525962;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+    padding: 0;
+    overflow: hidden;
+}
+
+.dropdown-toggle::after {
+    border: none;
+    content: '';
+    font-family: "MaterialIcons";
+    font-size: 15px;
+}
+
+ul.gray-bullets {
+    list-style: none; /* Remove default bullets */
+}
+
+ul.gray-bullets li::before {
+    content: "\2022";
+    color: #d8d8d8;
+    font-weight: bold;
+    display: inline-block;
+    width: 1em;
+    margin-left: -1em;
+}
+ul.gray-bullets li {
+    margin-bottom: 10px;
+}
+ul.gray-bullets a:hover {
+    text-decoration: underline;
+}
+
+.card .btn {
+    text-align: left;
+    text-decoration: none;
+}
+
+.step-claims-menu {
+    position: sticky;
+    position: -webkit-sticky;
+    top: 100px;
+}
+
+.card {
+    border-radius: 7px;
+}
+.card-header {
+    padding: 20px 16px;
+    border-radius: 6px!important;
+    border-bottom: none;
+}
+.card-body {
+    border-top: 1px solid rgba(0, 0, 0, .125);
 }

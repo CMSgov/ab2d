@@ -1,20 +1,12 @@
 ---
-layout: home
-title:  "Claims Data to Part D Sponsors API"
+layout: tutorial_layout
+title:  "Advanced User Guide"
 date:   2019-11-02 09:21:12 -0500 
-description: CMS is developing a standards-based API to allow standalone Medicare Part D plan (PDP) sponsors to retrieve Medicare claims data for their enrollees.
+description: Advanced User Guide
 landing-page: live
-gradient: "blueberry-lime-background"
-subnav-link-gradient: "blueberry-lime-link"
-sections:
-  - Introduction
-  - Authentication and Authorization
-  - API Endpoints  
-  - Tutorials
-  - Troubleshooting
-ctas:
-
 ---
+
+
 <style>
 .ds-c-table td,
 .ds-c-table th {
@@ -313,4 +305,3 @@ automatically deleted (or expired) after 24 hours.
 
 #### Other
 If none of these hints work, you can always start a new job and retrieve the information again.
-
