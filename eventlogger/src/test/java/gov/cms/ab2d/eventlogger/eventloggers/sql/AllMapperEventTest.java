@@ -8,6 +8,8 @@ import gov.cms.ab2d.eventlogger.events.*;
 import gov.cms.ab2d.eventlogger.reports.sql.DoAll;
 import gov.cms.ab2d.eventlogger.utils.UtilMethods;
 import org.apache.commons.io.FileUtils;
+import org.junit.Before;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,6 +43,11 @@ public class AllMapperEventTest {
 
     @TempDir
     Path tmpDir;
+
+    @BeforeEach
+    public void init() {
+        doAll.delete();
+    }
 
     @Test
     void exceptionApiRequestTests() {

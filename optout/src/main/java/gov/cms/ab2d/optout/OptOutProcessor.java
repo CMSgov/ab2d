@@ -4,4 +4,5 @@ public interface OptOutProcessor {
 
     void process();
 
+    boolean isOptOutUsed();
 }
