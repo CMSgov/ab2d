@@ -64,7 +64,7 @@ resource "aws_instance" "deployment_controller" {
     purpose = "ECS container instance"
     sensitivity = "Public"
     maintainer = "lonnie.hanekamp@semanticbits.com"
-    cpm_backup = "NoBackup"
+    "cpm backup" = "NoBackup"
     purchase_type = "On-Demand"
     os_license = "Red Hat Enterprise Linux"
     gold_disk_name = var.gold_disk_name
