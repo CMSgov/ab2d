@@ -5,7 +5,7 @@
 1. [Obtain and import ab2d.cms.gov certificate](#obtain-and-import-ab2dcmsgov-certificate)
    * [Download the AB2D domain certificates and get private key from CMS](#download-the-ab2d-domain-certificates-and-get-private-key-from-cms)
    * [Import the AB2D domain certificate into certificate manager](#import-the-ab2d-domain-certificate-into-certificate-manager)
-1. [Create initial AB2D static website](#create-initial-ab2d-static-website)
+1. [Create or update AB2D static website](#create-or-update-ab2d-static-website)
 
 ## Obtain and import ab2d.cms.gov certificate
 
@@ -136,7 +136,7 @@
    
 1. Select **Import**
 
-## Create initial AB2D static website
+## Create or update AB2D static website
 
 1. Ensure that you are connected to CMS Cisco VPN
 
@@ -149,7 +149,7 @@
 1. Create static website
 
    ```ShellSession
-   $ ./bash/create-or-update-website.sh
+   $ ./bash/create-or-update-website-cloudfront.sh
    ```
 
 1. Choose desired AWS account
