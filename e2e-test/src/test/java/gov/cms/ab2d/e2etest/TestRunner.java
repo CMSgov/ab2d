@@ -200,6 +200,11 @@ public class TestRunner {
         String stem = AB2D_API_URL + (contractNumber == null ? "Patient/" : "Group/" + contractNumber + "/") + "$export?_outputFormat=";
         Assert.assertTrue(request.startsWith(stem));
         JSONArray errors = json.getJSONArray("error");
+
+        if(errors.length() > 0) {
+            System.out.println(errors);
+        }
+
         Assert.assertEquals(0, errors.length());
 
         JSONArray output = json.getJSONArray("output");
