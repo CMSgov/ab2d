@@ -271,7 +271,7 @@ to do that:
 
 #### Postman and Swagger. 
 Swagger is included with the API and the free Postman application can be downloaded [here](https://www.postman.com/).
-If you want to use Postman and Swagger jump to the following page - [Use the API with Postman and Swagger](tutorial-postman.html)
+If you want to use Postman and Swagger jump to the following page - [Use the API with Postman and Swagger](tutorial-postman.md)
 
 #### Using cURL and jq
 

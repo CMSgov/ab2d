@@ -41,6 +41,7 @@ before_install:
 - export AB2D_HICN_HASH_ITER=1000
 - export AB2D_CLAIMS_SKIP_BILLABLE_PERIOD_CHECK=true
 - export AB2D_EXECUTION_ENV=local
+- export AB2D_OPT_OUT_ENABLED=true
 - export AB2D_EARLIEST_DATA_DATE=01/01/1900
 install: true
 before_script:
