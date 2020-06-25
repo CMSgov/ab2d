@@ -110,56 +110,61 @@ class OptOutProcessorIntegrationTest {
         final List<OptOut> optOutRowsAfterProcessing = optOutRepo.findAll();
 
         assertThat(optOutRowsBeforeProcessing, is(empty()));
-        assertThat(optOutRowsAfterProcessing, is(not(empty())));
 
-        assertThat(optOutRowsAfterProcessing.size(), is(10));
+        boolean doOptOut = cut.isOptOutUsed();
 
-        final OptOut optOut = optOutRepo.findByCcwId("20010000001115").get(0);
-        assertThat(optOut.getPolicyCode(), is("OPTOUT"));
-        assertThat(optOut.getPurposeCode(), is("TREAT"));
-        assertThat(optOut.getScopeCode(), is("patient-privacy"));
-        assertThat(optOut.getLoIncCode(), is("64292-6"));
-        assertThat(optOut.getEffectiveDate(), is(LocalDate.of(2019,10,24)));
-        assertThat(optOut.getCcwId(), is("20010000001115"));
-        assertThat(optOut.getFilename(), is("test-data.txt"));
+        assertThat(optOutRowsAfterProcessing, doOptOut ? is(not(empty())) : is(empty()));
 
-        verify(mockS3Gateway).listOptOutFiles();
-        verify(mockS3Gateway, times(2)).getOptOutFile(any());
+        if(doOptOut) {
+            assertThat(optOutRowsAfterProcessing.size(), is(10));
 
-        List<LoggableEvent> reloadEvents = doAll.load(ReloadEvent.class);
-        assertEquals(2, reloadEvents.size());
+            final OptOut optOut = optOutRepo.findByCcwId("20010000001115").get(0);
+            assertThat(optOut.getPolicyCode(), is("OPTOUT"));
+            assertThat(optOut.getPurposeCode(), is("TREAT"));
+            assertThat(optOut.getScopeCode(), is("patient-privacy"));
+            assertThat(optOut.getLoIncCode(), is("64292-6"));
+            assertThat(optOut.getEffectiveDate(), is(LocalDate.of(2019, 10, 24)));
+            assertThat(optOut.getCcwId(), is("20010000001115"));
+            assertThat(optOut.getFilename(), is("test-data.txt"));
 
-        ReloadEvent requestEvent = (ReloadEvent) reloadEvents.get(0);
-        assertEquals(ReloadEvent.FileType.OPT_OUT, requestEvent.getFileType());
-        assertEquals(testInputFile, requestEvent.getFileName());
-        assertEquals(12, requestEvent.getNumberLoaded());
+            verify(mockS3Gateway).listOptOutFiles();
+            verify(mockS3Gateway, times(2)).getOptOutFile(any());
 
-        ReloadEvent requestEventSecondary = (ReloadEvent) reloadEvents.get(1);
-        assertEquals(ReloadEvent.FileType.OPT_OUT, requestEventSecondary.getFileType());
-        assertEquals(testInputFileSecondary, requestEventSecondary.getFileName());
-        assertEquals(4, requestEventSecondary.getNumberLoaded());
+            List<LoggableEvent> reloadEvents = doAll.load(ReloadEvent.class);
+            assertEquals(2, reloadEvents.size());
 
-        assertTrue(UtilMethods.allEmpty(
-                doAll.load(ApiRequestEvent.class),
-                doAll.load(ApiResponseEvent.class),
-                doAll.load(ContractBeneSearchEvent.class),
-                doAll.load(ErrorEvent.class),
-                doAll.load(FileEvent.class),
-                doAll.load(JobStatusChangeEvent.class)
-        ));
+            ReloadEvent requestEvent = (ReloadEvent) reloadEvents.get(0);
+            assertEquals(ReloadEvent.FileType.OPT_OUT, requestEvent.getFileType());
+            assertEquals(testInputFile, requestEvent.getFileName());
+            assertEquals(12, requestEvent.getNumberLoaded());
 
-        // Verify files don't get processed again
-        final InputStream inputStreamAgain = getClass().getResourceAsStream("/" + testInputFile);
-        final InputStreamReader isrAgain = new InputStreamReader(inputStreamAgain);
+            ReloadEvent requestEventSecondary = (ReloadEvent) reloadEvents.get(1);
+            assertEquals(ReloadEvent.FileType.OPT_OUT, requestEventSecondary.getFileType());
+            assertEquals(testInputFileSecondary, requestEventSecondary.getFileName());
+            assertEquals(4, requestEventSecondary.getNumberLoaded());
 
-        final InputStream inputStreamSecondaryAgain = getClass().getResourceAsStream("/" + testInputFileSecondary);
-        final InputStreamReader isrSecondaryAgain = new InputStreamReader(inputStreamSecondaryAgain);
+            assertTrue(UtilMethods.allEmpty(
+                    doAll.load(ApiRequestEvent.class),
+                    doAll.load(ApiResponseEvent.class),
+                    doAll.load(ContractBeneSearchEvent.class),
+                    doAll.load(ErrorEvent.class),
+                    doAll.load(FileEvent.class),
+                    doAll.load(JobStatusChangeEvent.class)
+            ));
 
-        when(mockS3Gateway.getOptOutFile(testInputFile)).thenReturn(isrAgain);
-        when(mockS3Gateway.getOptOutFile(testInputFileSecondary)).thenReturn(isrSecondaryAgain);
-        cut.process();
+            // Verify files don't get processed again
+            final InputStream inputStreamAgain = getClass().getResourceAsStream("/" + testInputFile);
+            final InputStreamReader isrAgain = new InputStreamReader(inputStreamAgain);
 
-        reloadEvents = doAll.load(ReloadEvent.class);
-        assertEquals(2, reloadEvents.size());
+            final InputStream inputStreamSecondaryAgain = getClass().getResourceAsStream("/" + testInputFileSecondary);
+            final InputStreamReader isrSecondaryAgain = new InputStreamReader(inputStreamSecondaryAgain);
+
+            when(mockS3Gateway.getOptOutFile(testInputFile)).thenReturn(isrAgain);
+            when(mockS3Gateway.getOptOutFile(testInputFileSecondary)).thenReturn(isrSecondaryAgain);
+            cut.process();
+
+            reloadEvents = doAll.load(ReloadEvent.class);
+            assertEquals(2, reloadEvents.size());
+        }
     }
 }
