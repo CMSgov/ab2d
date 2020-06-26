@@ -451,11 +451,13 @@
 
    1. Select **Save as PDF** from the dropdown at the bottom left of the dialog
 
-   1. Save as the following
+   1. Type the following in the **Save As** text box
 
       ```
       Internet DNS Change Request - sandbox.ab2d.cms.gov - akamai - revised.pdf
       ```
+
+   1. Select **Save**
 
 1. Open Chrome
 
@@ -484,3 +486,5 @@
    - **Description:** See attached form
 
    - **Attachment:** "Internet DNS Change Request - sandbox.ab2d.cms.gov - akamai - revised.pdf"
+
+1. Select **Create**
