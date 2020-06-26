@@ -6,6 +6,7 @@
    * [Download the AB2D domain certificates and get private key from CMS](#download-the-ab2d-domain-certificates-and-get-private-key-from-cms)
    * [Import the AB2D domain certificate into certificate manager](#import-the-ab2d-domain-certificate-into-certificate-manager)
 1. [Create or update AB2D static website](#create-or-update-ab2d-static-website)
+1. [Submit an "Internet DNS Change Request Form" to product owner for the static website](#submit-an-internet-dns-change-request-form-to-product-owner-for-the-static-website)
 
 ## Obtain and import ab2d.cms.gov certificate
 
@@ -171,3 +172,115 @@
    ```
    y
    ```
+
+## Submit an "Internet DNS Change Request Form" to product owner for the static website
+
+1. Open Chrome
+
+1. Enter the following in the address bar
+
+   > https://confluence.cms.gov/pages/viewpage.action?pageId=138595233
+
+1. If the Confluence logon page appears, log on to Confluence
+
+1. Note that the "CNAME/DNS Change Requests" page should be displayed
+
+1. Select the **DNS change request form** link under the "Process" section
+
+1. Select the **Download** icon in the top right of the page
+
+1. Wait for the download to complete
+
+1. Open the downloaded form
+
+   ```
+   Internet DNS Change Request (2).pdf
+   ```
+
+1. Fill out the "Requestor Information" as follows
+
+   *Requestor Information:*
+
+   - **Name:** {product owner first name} {product owner last name}
+
+   - **Organization:** {product owner organization}
+
+   - **Email:** {product owner email}
+
+   - **Phone:** {product owner phone}
+
+1. Fill out the "CMS Business Owner Information" as follows
+
+   *CMS Business Owner Information*
+
+   - **Name:** {business owner first name} {business owner last name}
+
+   - **Organization:** {business owner organization}
+
+   - **Email:** {business owner email}
+
+   - **Phone:** {business owner phone}
+
+   - **Reason:** {reason}
+
+1. Fill out the "DNS Change Information" as follows
+
+   *DNS Change Information*
+
+   - **DNS Zone:** cms.gov
+
+   - **Type of change:** CNAME
+
+   - **Actual Change:** ab2d.cms.gov CNAME ab2d-sbx-sandbox-{unique id}.us-east-1.elb.amazonaws.com
+
+   - **Change Date & Time:** ASAP
+
+   - **Purpose of the change:** {reason}
+
+1. Print to PDF in order to preserve changes by doing the following
+
+   1. Select the **File** menu
+
+   1. Select **Print**
+
+   1. Select **Save as PDF** from the dropdown at the bottom left of the dialog
+
+   1. Type the following in the **Save As** text box
+
+      ```
+      Internet DNS Change Request - ab2d.cms.gov - akamai - revised.pdf
+      ```
+
+   1. Select **Save**
+
+1. Open Chrome
+
+1. Enter the following in the address bar
+
+   > https://jira.cms.gov/servicedesk/customer/portal/1
+
+1. Select **Internet DNS Support** from the leftmost panel
+
+1. Select **Internet DNS Change**
+
+1. Complete the "Internet DNS Change" page as follows
+
+   - **Summary:** Map existing AB2D static website domain to Akamai
+
+   - **Site:** CMS.gov
+
+   - **Component:** OIT
+
+   - **Phone Number:** {product owner phone}
+
+   - **Due Date:** {blank}
+
+   - **Priority:** Medium - Interferes with my duties, but work can continue
+
+   - **Project Lead:** {cms business owner}
+
+   - **Description:** See attached form
+
+   - **Attachment:** "Internet DNS Change Request - ab2d.cms.gov - akamai - revised.pdf"
+
+1. Select **Create**
