@@ -90,6 +90,8 @@
 1. [Appendix LL: Update existing WAF](#appendix-ll-update-existing-waf)
 1. [Appendix MM: Create new AMI from latest gold disk image](#appendix-mm-create-new-ami-from-latest-gold-disk-image)
 1. [Appendix NN: Manually test the deployment](#appendix-nn-manually-test-the-deployment)
+   * [Manually test the deployment for sandbox](#manually-test-the-deployment-for-sandbox)
+   * [Manually test the deployment for production](#manually-test-the-deployment-for-production)
 1. [Appendix OO: Merge a specific commit from master into your branch](#appendix-oo-merge-a-specific-commit-from-master-into-your-branch)
 1. [Appendix PP: Test running development automation from development machine](#appendix-pp-test-running-development-automation-from-development-machine)
 1. [Appendix QQ: Set up demonstration of cross account access of an encrypted S3 bucket](#appendix-qq-set-up-demonstration-of-cross-account-access-of-an-encrypted-s3-bucket)
@@ -113,6 +115,8 @@
    * [Reconcile terraform state of sandbox environment with terraform state of implementation environment](#reconcile-terraform-state-of-sandbox-environment-with-terraform-state-of-implementation-environment)
 1. [Appendix DDD: Backup and recovery](#appendix-ddd-backup-and-recovery)
 1. [Appendix EEE: Modify the database instance type](#appendix-eee-modify-the-database-instance-type)
+1. [Appendix FFF: Run e2e tests](#appendix-fff-run-e2e-tests)
+   * [Run e2e tests for production](#run-e2e-tests-for-production)
 
 ## Appendix A: Access the CMS AWS console
 
@@ -7655,6 +7659,8 @@
 
 ## Appendix NN: Manually test the deployment
 
+### Manually test the deployment for sandbox
+
 1. Retrieve a JSON Web Token (JWT)
 
    1. Set the authorization for the test user
@@ -7883,6 +7889,222 @@
 
    ```ShellSession
    $ curl "https://sandbox.ab2d.cms.gov/api/v1/fhir/Job/${JOB}/file/${FILE}" \
+     -H "accept: application/json" \
+     -H "Accept: application/fhir+json" \
+     -H "Authorization: Bearer ${BEARER_TOKEN}"
+   ```
+
+1. Verify that the following error message is displayed
+
+   ```
+   {"resourceType":"OperationOutcome","issue":[{"severity":"error","code":"invalid","details":{"text":"The file is not present as it has already been downloaded. Please resubmit the job."}}]}
+   ```
+
+### Manually test the deployment for production
+
+1. Retrieve a JSON Web Token (JWT)
+
+   1. Set "AB2D Prod : OKTA Prod : AB2D - PDP-1000 : Client ID" from 1Password
+
+      ```ShellSession
+      $ OKTA_CLIENT_ID={okta ab2d admin client id}
+      ```
+
+   1. Set "AB2D Prod : OKTA Prod : AB2D - PDP-1000 : Client Secret" from 1Password
+
+      ```ShellSession
+      $ OKTA_CLIENT_PASSWORD={okta ab2d admin client secret}
+      ```
+
+   1. Set the authorization for the test user
+
+      ```ShellSession
+      $ AUTH=$(echo -n "${OKTA_CLIENT_ID}:${OKTA_CLIENT_PASSWORD}" | base64)
+      ```
+
+   1. Retrieve a JWT bearer token by entering the following at the terminal prompt
+
+      ```ShellSession
+      $ BEARER_TOKEN=$(curl -X POST "https://idm.cms.gov/oauth2/aus2ytanytjdaF9cr297/v1/token?grant_type=client_credentials&scope=clientCreds" \
+        -H "Content-Type: application/x-www-form-urlencoded" \
+        -H "Accept: application/json" \
+        -H "Authorization: Basic ${AUTH}" \
+        | jq --raw-output ".access_token")
+      ```
+
+   1. Ensure that you have a "BEARER_TOKEN" environment variable before proceeding
+
+      ```ShellSession
+      $ echo $BEARER_TOKEN
+      ```
+
+1. Create an export job
+
+   ```ShellSession
+   $ curl "https://api.ab2d.cms.gov/api/v1/fhir/Patient/\$export?_outputFormat=application%2Ffhir%2Bndjson&_type=ExplanationOfBenefit" \
+     -sD - \
+     -H "accept: application/json" \
+     -H "Accept: application/fhir+json" \
+     -H "Prefer: respond-async" \
+     -H "Authorization: Bearer ${BEARER_TOKEN}"
+   ```
+
+1. Note the output
+
+   *Format:*
+
+   ```
+   HTTP/2 {response code}
+   Date: Mon, 13 Apr 2020 16:35:38 GMT
+   content-length: 0
+   vary: Origin
+   vary: Access-Control-Request-Method
+   vary: Access-Control-Request-Headers
+   vary: Origin
+   vary: Access-Control-Request-Method
+   vary: Access-Control-Request-Headers
+   content-location: https://sandbox.ab2d.cms.gov/api/v1/fhir/Job/{job id}/$status
+   x-content-type-options: nosniff
+   x-xss-protection: 1; mode=block
+   cache-control: no-cache, no-store, max-age=0, must-revalidate
+   pragma: no-cache
+   expires: 0
+   x-frame-options: DENY
+   ```
+
+   *Example for "Sbx" environment:*
+
+   ```
+   HTTP/2 202
+   Date: Mon, 13 Apr 2020 16:35:38 GMT
+   content-length: 0
+   vary: Origin
+   vary: Access-Control-Request-Method
+   vary: Access-Control-Request-Headers
+   vary: Origin
+   vary: Access-Control-Request-Method
+   vary: Access-Control-Request-Headers
+   content-location: https://api.ab2d.cms.gov/api/v1/fhir/Job/31624a77-6515-4e59-aabe-5e8a192d2d7f/$status
+   x-content-type-options: nosniff
+   x-xss-protection: 1; mode=block
+   cache-control: no-cache, no-store, max-age=0, must-revalidate
+   pragma: no-cache
+   expires: 0
+   x-frame-options: DENY
+   ```
+
+1. Note the response code and job id from the output
+
+   ```
+   {response-code} = 202 
+   {job id} = 31624a77-6515-4e59-aabe-5e8a192d2d7f
+   ```
+
+1. If the response code is 202, set an environment variable for the job by entering the following at the terminal prompt
+
+   *Format:*
+
+   ```ShellSession
+   $ JOB={job id}
+   ```
+   
+   *Example:*
+
+   ```ShellSession
+   $ JOB=31624a77-6515-4e59-aabe-5e8a192d2d7f
+   ```
+
+1. Check the status of the job by entering the following at the terminal prompt
+   
+   ```ShellSession
+   $ curl "https://api.ab2d.cms.gov/api/v1/fhir/Job/${JOB}/\$status" \
+     -sD - \
+     -H "accept: application/json" \
+     -H "Authorization: Bearer ${BEARER_TOKEN}"
+   ```
+
+1. Note the output
+
+   *Format:*
+
+   ```
+   HTTP/1.1 {response-code} 
+   Date: Mon, 13 Apr 2020 22:13:32 GMT
+   Content-Type: application/json
+   Transfer-Encoding: chunked
+   Connection: keep-alive
+   Vary: accept-encoding,origin,access-control-request-headers,access-control-request-method,accept-encoding
+   X-Frame-Options: DENY
+   X-XSS-Protection: 1; mode=block
+   X-Content-Type-Options: nosniff
+   Expires: Tue, 14 Apr 2020 22:11:39 GMT
+   
+   {"transactionTime":"Apr 13, 2020, 10:11:35 PM","request":"http://internal-ab2d-dev-820359992.us-east-1.elb.amazonaws.com/api/v1/fhir/Patient/$export?_outputFormat=application%252Ffhir%252Bndjson&_type=ExplanationOfBenefit","requiresAccessToken":true,"output":[{"type":"ExplanationOfBenefit","url":"http://internal-ab2d-dev-820359992.us-east-1.elb.amazonaws.com/api/v1/fhir/Job/42d7addc-0e1b-4687-a1e2-5e029f173849/file/{file to download}","extension":[{"url":"https://ab2d.cms.gov/checksum","valueString":"sha256:46ccda6384b31693c27d057500a4ee116cd6f0540b3370a7e4d50c649ea8da27"},{"url":"https://ab2d.cms.gov/file_length","valueDecimal":9194196}]}],"error":[]}
+   ```
+
+   *Example:*
+
+   ```
+   HTTP/1.1 200 
+   Date: Mon, 13 Apr 2020 22:13:32 GMT
+   Content-Type: application/json
+   Transfer-Encoding: chunked
+   Connection: keep-alive
+   Vary: accept-encoding,origin,access-control-request-headers,access-control-request-method,accept-encoding
+   X-Frame-Options: DENY
+   X-XSS-Protection: 1; mode=block
+   X-Content-Type-Options: nosniff
+   Expires: Tue, 14 Apr 2020 22:11:39 GMT
+   
+   {"transactionTime":"Apr 13, 2020, 10:11:35 PM","request":"http://internal-ab2d-dev-820359992.us-east-1.elb.amazonaws.com/api/v1/fhir/Patient/$export?_outputFormat=application%252Ffhir%252Bndjson&_type=ExplanationOfBenefit","requiresAccessToken":true,"output":[{"type":"ExplanationOfBenefit","url":"http://internal-ab2d-dev-820359992.us-east-1.elb.amazonaws.com/api/v1/fhir/Job/42d7addc-0e1b-4687-a1e2-5e029f173849/file/S0000_0001.ndjson","extension":[{"url":"https://ab2d.cms.gov/checksum","valueString":"sha256:46ccda6384b31693c27d057500a4ee116cd6f0540b3370a7e4d50c649ea8da27"},{"url":"https://ab2d.cms.gov/file_length","valueDecimal":9194196}]}],"error":[]}   
+   ```
+
+1. If the status is 202, do the following
+
+   1. Note the following in the output, for example:
+
+      *Format:*
+      
+      ```
+      x-progress: {percentage} complete
+      ```
+
+      *Example:*
+      
+      ```
+      x-progress: 7% complete
+      ```
+
+   1. Based on the progress, you can a wait a period of time and try the status check again until you see a status of 200
+
+1. If the status is 200, download the files by doing the following:
+
+   1. Set an environment variable to the first file to download
+
+      ```ShellSession
+      $ FILE=S8067_0001.ndjson
+      ```
+
+   1. Get the Part A & B bulk claim export data by entering the following at the terminal prompt
+
+      ```ShellSession
+      $ curl "https://api.ab2d.cms.gov/api/v1/fhir/Job/${JOB}/file/${FILE}" \
+        -H "accept: application/json" \
+        -H "Accept: application/fhir+json" \
+        -H "Authorization: Bearer ${BEARER_TOKEN}" \
+        > ${FILE}
+      ```
+
+1. View the downloaded file
+
+   ```ShellSession
+   $ cat $FILE
+   ```
+
+1. Try the download opeartion a second time
+
+   ```ShellSession
+   $ curl "https://api.ab2d.cms.gov/api/v1/fhir/Job/${JOB}/file/${FILE}" \
      -H "accept: application/json" \
      -H "Accept: application/fhir+json" \
      -H "Authorization: Bearer ${BEARER_TOKEN}"
@@ -9866,3 +10088,75 @@ $ sed -i "" 's%cms-ab2d[\/]prod%cms-ab2d/dev%g' _includes/head.html (edited)
       - **Recurrence:** Once
 
       - **Start Time:** {utc time two minutes from now}
+
+## Appendix FFF: Run e2e tests
+
+### Run e2e tests for production
+
+1. Switch to the repo directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d
+   ```
+
+1. Set configuration prefix
+
+   ```ShellSession
+   $ export E2E_ENV_CONFIG_PREFIX=prod
+   ```
+
+1. Set e2e test environment target
+
+   ```ShellSession
+   $ export E2E_TARGET_ENV=PROD
+   ```
+
+1. Examine the configuration file for production
+
+   ```ShellSession
+   $ cat "./e2e-test/src/test/resources/${E2E_ENV_CONFIG_PREFIX}-config.yml" ; echo
+   ```
+
+1. If the settings are not correct, do the following
+
+   1. Open the configuration file
+
+      ```ShellSession
+      $ vim "./e2e-test/src/test/resources/${E2E_ENV_CONFIG_PREFIX}-config.yml"
+      ```
+
+   1. Modify the settings to make them correct
+
+   1. Save and close the file
+
+1. Build the application and skip tests
+
+   ```ShellSession
+   $ mvn clean package -DskipTests
+   ```
+
+1. Set first OKTA test user
+
+   ```ShellSession
+   $ export OKTA_CLIENT_ID={first okta client id}
+   $ export OKTA_CLIENT_PASSWORD={first okta client secret}
+   ```
+
+1. Set second OKTA test user
+
+   ```ShellSession
+   $ export SECONDARY_USER_OKTA_CLIENT_ID={second okta client id}
+   $ export SECONDARY_USER_OKTA_CLIENT_PASSWORD={second okta client secret}
+   ```
+
+1. Change to the target directory
+
+   ```ShellSession
+   $ cd ./e2e-test/target
+   ```
+
+1. Run e2e testing
+
+   ```ShellSession
+   $ java -cp e2e-test-0.0.1-SNAPSHOT-fat-tests.jar gov.cms.ab2d.e2etest.TestLauncher "${E2E_TARGET_ENV}"
+   ```
