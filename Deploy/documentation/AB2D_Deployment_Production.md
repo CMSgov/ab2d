@@ -421,10 +421,10 @@ lication-load-balancer)
 
    *Format:*
 
-   1Password Type|Label                                |Value
-   --------------|-------------------------------------|-------------------------------
-   Secure Note   |AB2D Prod - OKTA Prod - Client ID    |{okta ab2d admin client id}
-   Password      |AB2D Prod - OKTA Prod - Client Secret|{okta ab2d admin client secret}
+   1Password Type|Label                                               |Value
+   --------------|----------------------------------------------------|-------------------------------
+   Secure Note   |AB2D Prod : OKTA Prod : AB2D - Admin : Client ID    |{okta ab2d admin client id}
+   Password      |AB2D Prod : OKTA Prod : AB2D - Admin : Client Secret|{okta ab2d admin client secret}
 
 ## Deploy to production
 
@@ -990,13 +990,13 @@ lication-load-balancer)
    $ mv ~/Downloads/parent_org_and_legal_entity_*.xlsx ~/Postman/files
    ```
 
-1. Set "AB2D Prod - OKTA Prod - Client ID" from 1Password
+1. Set "AB2D Prod : OKTA Prod : AB2D - Admin : Client ID" from 1Password
 
    ```ShellSession
    $ OKTA_AB2D_ADMIN_CLIENT_ID={okta ab2d admin client id}
    ```
 
-1. Set "AB2D Prod - OKTA Prod - Client Secret" from 1Password
+1. Set "AB2D Prod : OKTA Prod : AB2D - Admin : Client Secret" from 1Password
 
    ```ShellSession
    $ OKTA_AB2D_ADMIN_CLIENT_SECRET={okta ab2d admin client secret}
@@ -1181,13 +1181,13 @@ lication-load-balancer)
    $ mv ~/Downloads/Attestation_Report*.xlsx ~/Postman/files
    ```
 
-1. Set "AB2D Prod - OKTA Prod - Client ID" from 1Password
+1. Set "AB2D Prod : OKTA Prod : AB2D - Admin : Client ID" from 1Password
 
    ```ShellSession
    $ OKTA_AB2D_ADMIN_CLIENT_ID={okta ab2d admin client id}
    ```
 
-1. Set "AB2D Prod - OKTA Prod - Client Secret" from 1Password
+1. Set "AB2D Prod : OKTA Prod : AB2D - Admin : Client Secret" from 1Password
 
    ```ShellSession
    $ OKTA_AB2D_ADMIN_CLIENT_SECRET={okta ab2d admin client secret}
