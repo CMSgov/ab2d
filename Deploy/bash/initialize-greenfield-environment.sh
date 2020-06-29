@@ -84,142 +84,182 @@ set_secrets ()
   
   # Create or get database user secret
   
-  DATABASE_USER=$(./get-database-secret.py $CMS_ENV_GE database_user $DATABASE_SECRET_DATETIME)
+  DATABASE_USER=$(./get-database-secret.py $CMS_ENV_SS database_user $DATABASE_SECRET_DATETIME)
   if [ -z "${DATABASE_USER}" ]; then
     echo "*********************************************************"
-    ./create-database-secret.py $CMS_ENV_GE database_user $KMS_KEY_ID $DATABASE_SECRET_DATETIME
+    ./create-database-secret.py $CMS_ENV_SS database_user $KMS_KEY_ID $DATABASE_SECRET_DATETIME
     echo "*********************************************************"
-    DATABASE_USER=$(./get-database-secret.py $CMS_ENV_GE database_user $DATABASE_SECRET_DATETIME)
+    DATABASE_USER=$(./get-database-secret.py $CMS_ENV_SS database_user $DATABASE_SECRET_DATETIME)
   fi
   
   # Create or get database password secret
   
-  DATABASE_PASSWORD=$(./get-database-secret.py $CMS_ENV_GE database_password $DATABASE_SECRET_DATETIME)
+  DATABASE_PASSWORD=$(./get-database-secret.py $CMS_ENV_SS database_password $DATABASE_SECRET_DATETIME)
   if [ -z "${DATABASE_PASSWORD}" ]; then
     echo "*********************************************************"
-    ./create-database-secret.py $CMS_ENV_GE database_password $KMS_KEY_ID $DATABASE_SECRET_DATETIME
+    ./create-database-secret.py $CMS_ENV_SS database_password $KMS_KEY_ID $DATABASE_SECRET_DATETIME
     echo "*********************************************************"
-    DATABASE_PASSWORD=$(./get-database-secret.py $CMS_ENV_GE database_password $DATABASE_SECRET_DATETIME)
+    DATABASE_PASSWORD=$(./get-database-secret.py $CMS_ENV_SS database_password $DATABASE_SECRET_DATETIME)
   fi
   
   # Create or get database name secret
   
-  DATABASE_NAME=$(./get-database-secret.py $CMS_ENV_GE database_name $DATABASE_SECRET_DATETIME)
+  DATABASE_NAME=$(./get-database-secret.py $CMS_ENV_SS database_name $DATABASE_SECRET_DATETIME)
   if [ -z "${DATABASE_NAME}" ]; then
     echo "*********************************************************"
-    ./create-database-secret.py $CMS_ENV_GE database_name $KMS_KEY_ID $DATABASE_SECRET_DATETIME
+    ./create-database-secret.py $CMS_ENV_SS database_name $KMS_KEY_ID $DATABASE_SECRET_DATETIME
     echo "*********************************************************"
-    DATABASE_NAME=$(./get-database-secret.py $CMS_ENV_GE database_name $DATABASE_SECRET_DATETIME)
+    DATABASE_NAME=$(./get-database-secret.py $CMS_ENV_SS database_name $DATABASE_SECRET_DATETIME)
   fi
   
   # Create or get bfd url secret
   
-  BFD_URL=$(./get-database-secret.py $CMS_ENV_GE bfd_url $DATABASE_SECRET_DATETIME)
+  BFD_URL=$(./get-database-secret.py $CMS_ENV_SS bfd_url $DATABASE_SECRET_DATETIME)
   if [ -z "${BFD_URL}" ]; then
     echo "*********************************************************"
-    ./create-database-secret.py $CMS_ENV_GE bfd_url $KMS_KEY_ID $DATABASE_SECRET_DATETIME
+    ./create-database-secret.py $CMS_ENV_SS bfd_url $KMS_KEY_ID $DATABASE_SECRET_DATETIME
     echo "*********************************************************"
-    BFD_URL=$(./get-database-secret.py $CMS_ENV_GE bfd_url $DATABASE_SECRET_DATETIME)
+    BFD_URL=$(./get-database-secret.py $CMS_ENV_SS bfd_url $DATABASE_SECRET_DATETIME)
   fi
   
   # Create or get bfd keystore location secret
   
-  BFD_KEYSTORE_LOCATION=$(./get-database-secret.py $CMS_ENV_GE bfd_keystore_location $DATABASE_SECRET_DATETIME)
+  BFD_KEYSTORE_LOCATION=$(./get-database-secret.py $CMS_ENV_SS bfd_keystore_location $DATABASE_SECRET_DATETIME)
   if [ -z "${BFD_KEYSTORE_LOCATION}" ]; then
     echo "*********************************************************"
-    ./create-database-secret.py $CMS_ENV_GE bfd_keystore_location $KMS_KEY_ID $DATABASE_SECRET_DATETIME
+    ./create-database-secret.py $CMS_ENV_SS bfd_keystore_location $KMS_KEY_ID $DATABASE_SECRET_DATETIME
     echo "*********************************************************"
-    BFD_KEYSTORE_LOCATION=$(./get-database-secret.py $CMS_ENV_GE bfd_keystore_location $DATABASE_SECRET_DATETIME)
+    BFD_KEYSTORE_LOCATION=$(./get-database-secret.py $CMS_ENV_SS bfd_keystore_location $DATABASE_SECRET_DATETIME)
   fi
   
   # Create or get bfd keystore password secret
   
-  BFD_KEYSTORE_PASSWORD=$(./get-database-secret.py $CMS_ENV_GE bfd_keystore_password $DATABASE_SECRET_DATETIME)
+  BFD_KEYSTORE_PASSWORD=$(./get-database-secret.py $CMS_ENV_SS bfd_keystore_password $DATABASE_SECRET_DATETIME)
   if [ -z "${BFD_KEYSTORE_PASSWORD}" ]; then
     echo "*********************************************************"
-    ./create-database-secret.py $CMS_ENV_GE bfd_keystore_password $KMS_KEY_ID $DATABASE_SECRET_DATETIME
+    ./create-database-secret.py $CMS_ENV_SS bfd_keystore_password $KMS_KEY_ID $DATABASE_SECRET_DATETIME
     echo "*********************************************************"
-    BFD_KEYSTORE_PASSWORD=$(./get-database-secret.py $CMS_ENV_GE bfd_keystore_password $DATABASE_SECRET_DATETIME)
+    BFD_KEYSTORE_PASSWORD=$(./get-database-secret.py $CMS_ENV_SS bfd_keystore_password $DATABASE_SECRET_DATETIME)
   fi
   
   # Create or get hicn hash pepper secret
   
-  HICN_HASH_PEPPER=$(./get-database-secret.py $CMS_ENV_GE hicn_hash_pepper $DATABASE_SECRET_DATETIME)
+  HICN_HASH_PEPPER=$(./get-database-secret.py $CMS_ENV_SS hicn_hash_pepper $DATABASE_SECRET_DATETIME)
   if [ -z "${HICN_HASH_PEPPER}" ]; then
     echo "*********************************************************"
-    ./create-database-secret.py $CMS_ENV_GE hicn_hash_pepper $KMS_KEY_ID $DATABASE_SECRET_DATETIME
+    ./create-database-secret.py $CMS_ENV_SS hicn_hash_pepper $KMS_KEY_ID $DATABASE_SECRET_DATETIME
     echo "*********************************************************"
-    HICN_HASH_PEPPER=$(./get-database-secret.py $CMS_ENV_GE hicn_hash_pepper $DATABASE_SECRET_DATETIME)
+    HICN_HASH_PEPPER=$(./get-database-secret.py $CMS_ENV_SS hicn_hash_pepper $DATABASE_SECRET_DATETIME)
   fi
   
   # Create or get hicn hash iter secret
   
-  HICN_HASH_ITER=$(./get-database-secret.py $CMS_ENV_GE hicn_hash_iter $DATABASE_SECRET_DATETIME)
+  HICN_HASH_ITER=$(./get-database-secret.py $CMS_ENV_SS hicn_hash_iter $DATABASE_SECRET_DATETIME)
   if [ -z "${HICN_HASH_ITER}" ]; then
     echo "*********************************************************"
-    ./create-database-secret.py $CMS_ENV_GE hicn_hash_iter $KMS_KEY_ID $DATABASE_SECRET_DATETIME
+    ./create-database-secret.py $CMS_ENV_SS hicn_hash_iter $KMS_KEY_ID $DATABASE_SECRET_DATETIME
     echo "*********************************************************"
-    HICN_HASH_ITER=$(./get-database-secret.py $CMS_ENV_GE hicn_hash_iter $DATABASE_SECRET_DATETIME)
+    HICN_HASH_ITER=$(./get-database-secret.py $CMS_ENV_SS hicn_hash_iter $DATABASE_SECRET_DATETIME)
   fi
   
   # Create or get new relic app name secret
   
-  NEW_RELIC_APP_NAME=$(./get-database-secret.py $CMS_ENV_GE new_relic_app_name $DATABASE_SECRET_DATETIME)
+  NEW_RELIC_APP_NAME=$(./get-database-secret.py $CMS_ENV_SS new_relic_app_name $DATABASE_SECRET_DATETIME)
   if [ -z "${NEW_RELIC_APP_NAME}" ]; then
     echo "*********************************************************"
-    ./create-database-secret.py $CMS_ENV_GE new_relic_app_name $KMS_KEY_ID $DATABASE_SECRET_DATETIME
+    ./create-database-secret.py $CMS_ENV_SS new_relic_app_name $KMS_KEY_ID $DATABASE_SECRET_DATETIME
     echo "*********************************************************"
-    NEW_RELIC_APP_NAME=$(./get-database-secret.py $CMS_ENV_GE new_relic_app_name $DATABASE_SECRET_DATETIME)
+    NEW_RELIC_APP_NAME=$(./get-database-secret.py $CMS_ENV_SS new_relic_app_name $DATABASE_SECRET_DATETIME)
   fi
   
   # Create or get new relic license key secret
   
-  NEW_RELIC_LICENSE_KEY=$(./get-database-secret.py $CMS_ENV_GE new_relic_license_key $DATABASE_SECRET_DATETIME)
+  NEW_RELIC_LICENSE_KEY=$(./get-database-secret.py $CMS_ENV_SS new_relic_license_key $DATABASE_SECRET_DATETIME)
   if [ -z "${NEW_RELIC_LICENSE_KEY}" ]; then
     echo "*********************************************************"
-    ./create-database-secret.py $CMS_ENV_GE new_relic_license_key $KMS_KEY_ID $DATABASE_SECRET_DATETIME
+    ./create-database-secret.py $CMS_ENV_SS new_relic_license_key $KMS_KEY_ID $DATABASE_SECRET_DATETIME
     echo "*********************************************************"
-    NEW_RELIC_LICENSE_KEY=$(./get-database-secret.py $CMS_ENV_GE new_relic_license_key $DATABASE_SECRET_DATETIME)
+    NEW_RELIC_LICENSE_KEY=$(./get-database-secret.py $CMS_ENV_SS new_relic_license_key $DATABASE_SECRET_DATETIME)
   fi
   
   # Create or get private ip address CIDR range for VPN
   
-  VPN_PRIVATE_IP_ADDRESS_CIDR_RANGE=$(./get-database-secret.py $CMS_ENV_GE vpn_private_ip_address_cidr_range $DATABASE_SECRET_DATETIME)
+  VPN_PRIVATE_IP_ADDRESS_CIDR_RANGE=$(./get-database-secret.py $CMS_ENV_SS vpn_private_ip_address_cidr_range $DATABASE_SECRET_DATETIME)
   if [ -z "${VPN_PRIVATE_IP_ADDRESS_CIDR_RANGE}" ]; then
     echo "*********************************************************"
-    ./create-database-secret.py $CMS_ENV_GE vpn_private_ip_address_cidr_range $KMS_KEY_ID $DATABASE_SECRET_DATETIME
+    ./create-database-secret.py $CMS_ENV_SS vpn_private_ip_address_cidr_range $KMS_KEY_ID $DATABASE_SECRET_DATETIME
     echo "*********************************************************"
-    VPN_PRIVATE_IP_ADDRESS_CIDR_RANGE=$(./get-database-secret.py $CMS_ENV_GE vpn_private_ip_address_cidr_range $DATABASE_SECRET_DATETIME)
+    VPN_PRIVATE_IP_ADDRESS_CIDR_RANGE=$(./get-database-secret.py $CMS_ENV_SS vpn_private_ip_address_cidr_range $DATABASE_SECRET_DATETIME)
   fi
 
   # Create or get AB2D keystore location
 
-  AB2D_KEYSTORE_LOCATION=$(./get-database-secret.py $CMS_ENV_GE ab2d_keystore_location $DATABASE_SECRET_DATETIME)
+  AB2D_KEYSTORE_LOCATION=$(./get-database-secret.py $CMS_ENV_SS ab2d_keystore_location $DATABASE_SECRET_DATETIME)
   if [ -z "${AB2D_KEYSTORE_LOCATION}" ]; then
     echo "*********************************************************"
-    ./create-database-secret.py $CMS_ENV_GE ab2d_keystore_location $KMS_KEY_ID $DATABASE_SECRET_DATETIME
+    ./create-database-secret.py $CMS_ENV_SS ab2d_keystore_location $KMS_KEY_ID $DATABASE_SECRET_DATETIME
     echo "*********************************************************"
-    AB2D_KEYSTORE_LOCATION=$(./get-database-secret.py $CMS_ENV_GE ab2d_keystore_location $DATABASE_SECRET_DATETIME)
+    AB2D_KEYSTORE_LOCATION=$(./get-database-secret.py $CMS_ENV_SS ab2d_keystore_location $DATABASE_SECRET_DATETIME)
   fi
 
   # Create or get AB2D keystore password
 
-  AB2D_KEYSTORE_PASSWORD=$(./get-database-secret.py $CMS_ENV_GE ab2d_keystore_password $DATABASE_SECRET_DATETIME)
+  AB2D_KEYSTORE_PASSWORD=$(./get-database-secret.py $CMS_ENV_SS ab2d_keystore_password $DATABASE_SECRET_DATETIME)
   if [ -z "${AB2D_KEYSTORE_PASSWORD}" ]; then
     echo "*********************************************************"
-    ./create-database-secret.py $CMS_ENV_GE ab2d_keystore_password $KMS_KEY_ID $DATABASE_SECRET_DATETIME
+    ./create-database-secret.py $CMS_ENV_SS ab2d_keystore_password $KMS_KEY_ID $DATABASE_SECRET_DATETIME
     echo "*********************************************************"
-    AB2D_KEYSTORE_PASSWORD=$(./get-database-secret.py $CMS_ENV_GE ab2d_keystore_password $DATABASE_SECRET_DATETIME)
+    AB2D_KEYSTORE_PASSWORD=$(./get-database-secret.py $CMS_ENV_SS ab2d_keystore_password $DATABASE_SECRET_DATETIME)
   fi
 
   # Create or get OKTA JWT issuer
 
-  AB2D_OKTA_JWT_ISSUER=$(./get-database-secret.py $CMS_ENV_GE ab2d_okta_jwt_issuer $DATABASE_SECRET_DATETIME)
+  AB2D_OKTA_JWT_ISSUER=$(./get-database-secret.py $CMS_ENV_SS ab2d_okta_jwt_issuer $DATABASE_SECRET_DATETIME)
   if [ -z "${AB2D_OKTA_JWT_ISSUER}" ]; then
     echo "*********************************************************"
-    ./create-database-secret.py $CMS_ENV_GE ab2d_okta_jwt_issuer $KMS_KEY_ID $DATABASE_SECRET_DATETIME
+    ./create-database-secret.py $CMS_ENV_SS ab2d_okta_jwt_issuer $KMS_KEY_ID $DATABASE_SECRET_DATETIME
     echo "*********************************************************"
-    AB2D_OKTA_JWT_ISSUER=$(./get-database-secret.py $CMS_ENV_GE ab2d_okta_jwt_issuer $DATABASE_SECRET_DATETIME)
+    AB2D_OKTA_JWT_ISSUER=$(./get-database-secret.py $CMS_ENV_SS ab2d_okta_jwt_issuer $DATABASE_SECRET_DATETIME)
+  fi
+
+  # Create or get OKTA Client ID #1
+
+  OKTA_CLIENT_ID=$(./get-database-secret.py $CMS_ENV_SS okta_client_id $DATABASE_SECRET_DATETIME)
+  if [ -z "${OKTA_CLIENT_ID}" ]; then
+    echo "*********************************************************"
+    ./create-database-secret.py $CMS_ENV_SS okta_client_id $KMS_KEY_ID $DATABASE_SECRET_DATETIME
+    echo "*********************************************************"
+    OKTA_CLIENT_ID=$(./get-database-secret.py $CMS_ENV_SS okta_client_id $DATABASE_SECRET_DATETIME)
+  fi
+
+  # Create or get OKTA Client ID #1 secret
+
+  OKTA_CLIENT_PASSWORD=$(./get-database-secret.py $CMS_ENV_SS okta_client_password $DATABASE_SECRET_DATETIME)
+  if [ -z "${OKTA_CLIENT_PASSWORD}" ]; then
+    echo "*********************************************************"
+    ./create-database-secret.py $CMS_ENV_SS okta_client_password $KMS_KEY_ID $DATABASE_SECRET_DATETIME
+    echo "*********************************************************"
+    OKTA_CLIENT_PASSWORD=$(./get-database-secret.py $CMS_ENV_SS okta_client_password $DATABASE_SECRET_DATETIME)
+  fi
+
+  # Create or get OKTA Client ID #2
+
+  SECONDARY_USER_OKTA_CLIENT_ID=$(./get-database-secret.py $CMS_ENV_SS secondary_user_okta_client_id $DATABASE_SECRET_DATETIME)
+  if [ -z "${SECONDARY_USER_OKTA_CLIENT_ID}" ]; then
+    echo "*********************************************************"
+    ./create-database-secret.py $CMS_ENV_SS secondary_user_okta_client_id $KMS_KEY_ID $DATABASE_SECRET_DATETIME
+    echo "*********************************************************"
+    SECONDARY_USER_OKTA_CLIENT_ID=$(./get-database-secret.py $CMS_ENV_SS secondary_user_okta_client_id $DATABASE_SECRET_DATETIME)
+  fi
+
+  # Create or get OKTA Client ID #2 secret
+
+  SECONDARY_USER_OKTA_CLIENT_PASSWORD=$(./get-database-secret.py $CMS_ENV_SS secondary_user_okta_client_password $DATABASE_SECRET_DATETIME)
+  if [ -z "${SECONDARY_USER_OKTA_CLIENT_PASSWORD}" ]; then
+    echo "*********************************************************"
+    ./create-database-secret.py $CMS_ENV_SS secondary_user_okta_client_password $KMS_KEY_ID $DATABASE_SECRET_DATETIME
+    echo "*********************************************************"
+    SECONDARY_USER_OKTA_CLIENT_PASSWORD=$(./get-database-secret.py $CMS_ENV_SS secondary_user_okta_client_password $DATABASE_SECRET_DATETIME)
   fi
 
   # If any databse secret produced an error, exit the script
@@ -237,7 +277,11 @@ set_secrets ()
     || [ "${VPN_PRIVATE_IP_ADDRESS_CIDR_RANGE}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
     || [ "${AB2D_KEYSTORE_LOCATION}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
     || [ "${AB2D_KEYSTORE_PASSWORD}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
-    || [ "${AB2D_OKTA_JWT_ISSUER}" == "ERROR: Cannot get database secret because KMS key is disabled!" ]; then
+    || [ "${AB2D_OKTA_JWT_ISSUER}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
+    || [ "${OKTA_CLIENT_ID}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
+    || [ "${OKTA_CLIENT_PASSWORD}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
+    || [ "${SECONDARY_USER_OKTA_CLIENT_ID}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
+    || [ "${SECONDARY_USER_OKTA_CLIENT_PASSWORD}" == "ERROR: Cannot get database secret because KMS key is disabled!" ]; then
       echo "ERROR: Cannot get secrets because KMS key is disabled!"
       exit 1
   fi
