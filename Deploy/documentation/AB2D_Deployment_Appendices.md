@@ -7954,43 +7954,33 @@
    *Format:*
 
    ```
-   HTTP/2 {response code}
-   Date: Mon, 13 Apr 2020 16:35:38 GMT
+   HTTP/2 {response code} 
    content-length: 0
-   vary: Origin
-   vary: Access-Control-Request-Method
-   vary: Access-Control-Request-Headers
-   vary: Origin
-   vary: Access-Control-Request-Method
-   vary: Access-Control-Request-Headers
-   content-location: https://sandbox.ab2d.cms.gov/api/v1/fhir/Job/{job id}/$status
-   x-content-type-options: nosniff
+   content-location: https://api.ab2d.cms.gov/api/v1/fhir/Job/{job id}/$status
    x-xss-protection: 1; mode=block
-   cache-control: no-cache, no-store, max-age=0, must-revalidate
-   pragma: no-cache
-   expires: 0
    x-frame-options: DENY
+   expires: Mon, 29 Jun 2020 20:16:25 GMT
+   date: Mon, 29 Jun 2020 20:16:25 GMT
+   strict-transport-security: max-age=86400
+   x-content-type-options: nosniff
+   pragma: no-cache
+   cache-control: max-age=0, 
    ```
 
-   *Example for "Sbx" environment:*
+   *Example:*
 
    ```
-   HTTP/2 202
-   Date: Mon, 13 Apr 2020 16:35:38 GMT
+   HTTP/2 202 
    content-length: 0
-   vary: Origin
-   vary: Access-Control-Request-Method
-   vary: Access-Control-Request-Headers
-   vary: Origin
-   vary: Access-Control-Request-Method
-   vary: Access-Control-Request-Headers
-   content-location: https://api.ab2d.cms.gov/api/v1/fhir/Job/31624a77-6515-4e59-aabe-5e8a192d2d7f/$status
-   x-content-type-options: nosniff
+   content-location: https://api.ab2d.cms.gov/api/v1/fhir/Job/a4ab9339-5865-4a28-823e-8aa0a18b68b3/$status
    x-xss-protection: 1; mode=block
-   cache-control: no-cache, no-store, max-age=0, must-revalidate
-   pragma: no-cache
-   expires: 0
    x-frame-options: DENY
+   expires: Mon, 29 Jun 2020 20:16:25 GMT
+   date: Mon, 29 Jun 2020 20:16:25 GMT
+   strict-transport-security: max-age=86400
+   x-content-type-options: nosniff
+   pragma: no-cache
+   cache-control: max-age=0, 
    ```
 
 1. Note the response code and job id from the output
@@ -8028,35 +8018,39 @@
    *Format:*
 
    ```
-   HTTP/1.1 {response-code} 
-   Date: Mon, 13 Apr 2020 22:13:32 GMT
-   Content-Type: application/json
-   Transfer-Encoding: chunked
-   Connection: keep-alive
-   Vary: accept-encoding,origin,access-control-request-headers,access-control-request-method,accept-encoding
-   X-Frame-Options: DENY
-   X-XSS-Protection: 1; mode=block
-   X-Content-Type-Options: nosniff
-   Expires: Tue, 14 Apr 2020 22:11:39 GMT
-   
-   {"transactionTime":"Apr 13, 2020, 10:11:35 PM","request":"http://internal-ab2d-dev-820359992.us-east-1.elb.amazonaws.com/api/v1/fhir/Patient/$export?_outputFormat=application%252Ffhir%252Bndjson&_type=ExplanationOfBenefit","requiresAccessToken":true,"output":[{"type":"ExplanationOfBenefit","url":"http://internal-ab2d-dev-820359992.us-east-1.elb.amazonaws.com/api/v1/fhir/Job/42d7addc-0e1b-4687-a1e2-5e029f173849/file/{file to download}","extension":[{"url":"https://ab2d.cms.gov/checksum","valueString":"sha256:46ccda6384b31693c27d057500a4ee116cd6f0540b3370a7e4d50c649ea8da27"},{"url":"https://ab2d.cms.gov/file_length","valueDecimal":9194196}]}],"error":[]}
+   HTTP/2 {response-code}
+   content-type: application/json
+   x-xss-protection: 1; mode=block
+   x-frame-options: DENY
+   expires: Mon, 29 Jun 2020 21:09:59 GMT
+   date: Mon, 29 Jun 2020 21:09:59 GMT
+   content-length: 583
+   strict-transport-security: max-age=86400
+   x-content-type-options: nosniff
+   pragma: no-cache
+   cache-control: max-age=0, no-cache, no-store, must-revalidate
+   x-akamai-staging: ESSL
+
+   {"transactionTime":"Jun 29, 2020, 8:16:25 PM","request":"https://api.ab2d.cms.gov/api/v1/fhir/Patient/$export?_outputFormat=application%252Ffhir%252Bndjson&_type=ExplanationOfBenefit","requiresAccessToken":true,"output":[{"type":"ExplanationOfBenefit","url":"https://api.ab2d.cms.gov/api/v1/fhir/Job/{job id}/file/{file to download}","extension":[{"url":"https://ab2d.cms.gov/checksum","valueString":"sha256:d5f1b0d39f5310707e21e83861e121d416df1ce1d6a6e1fd497cb6bde2ea32d3"},{"url":"https://ab2d.cms.gov/file_length","valueDecimal":30841503}]}],"error":[]}
    ```
 
    *Example:*
 
    ```
-   HTTP/1.1 200 
-   Date: Mon, 13 Apr 2020 22:13:32 GMT
-   Content-Type: application/json
-   Transfer-Encoding: chunked
-   Connection: keep-alive
-   Vary: accept-encoding,origin,access-control-request-headers,access-control-request-method,accept-encoding
-   X-Frame-Options: DENY
-   X-XSS-Protection: 1; mode=block
-   X-Content-Type-Options: nosniff
-   Expires: Tue, 14 Apr 2020 22:11:39 GMT
-   
-   {"transactionTime":"Apr 13, 2020, 10:11:35 PM","request":"http://internal-ab2d-dev-820359992.us-east-1.elb.amazonaws.com/api/v1/fhir/Patient/$export?_outputFormat=application%252Ffhir%252Bndjson&_type=ExplanationOfBenefit","requiresAccessToken":true,"output":[{"type":"ExplanationOfBenefit","url":"http://internal-ab2d-dev-820359992.us-east-1.elb.amazonaws.com/api/v1/fhir/Job/42d7addc-0e1b-4687-a1e2-5e029f173849/file/S0000_0001.ndjson","extension":[{"url":"https://ab2d.cms.gov/checksum","valueString":"sha256:46ccda6384b31693c27d057500a4ee116cd6f0540b3370a7e4d50c649ea8da27"},{"url":"https://ab2d.cms.gov/file_length","valueDecimal":9194196}]}],"error":[]}   
+   HTTP/2 200 
+   content-type: application/json
+   x-xss-protection: 1; mode=block
+   x-frame-options: DENY
+   expires: Mon, 29 Jun 2020 21:09:59 GMT
+   date: Mon, 29 Jun 2020 21:09:59 GMT
+   content-length: 583
+   strict-transport-security: max-age=86400
+   x-content-type-options: nosniff
+   pragma: no-cache
+   cache-control: max-age=0, no-cache, no-store, must-revalidate
+   x-akamai-staging: ESSL
+
+   {"transactionTime":"Jun 29, 2020, 8:16:25 PM","request":"https://api.ab2d.cms.gov/api/v1/fhir/Patient/$export?_outputFormat=application%252Ffhir%252Bndjson&_type=ExplanationOfBenefit","requiresAccessToken":true,"output":[{"type":"ExplanationOfBenefit","url":"https://api.ab2d.cms.gov/api/v1/fhir/Job/a4ab9339-5865-4a28-823e-8aa0a18b68b3/file/S8067_0001.ndjson","extension":[{"url":"https://ab2d.cms.gov/checksum","valueString":"sha256:d5f1b0d39f5310707e21e83861e121d416df1ce1d6a6e1fd497cb6bde2ea32d3"},{"url":"https://ab2d.cms.gov/file_length","valueDecimal":30841503}]}],"error":[]}
    ```
 
 1. If the status is 202, do the following
@@ -8080,6 +8074,8 @@
 1. If the status is 200, download the files by doing the following:
 
    1. Set an environment variable to the first file to download
+
+      *Example:*
 
       ```ShellSession
       $ FILE=S8067_0001.ndjson
