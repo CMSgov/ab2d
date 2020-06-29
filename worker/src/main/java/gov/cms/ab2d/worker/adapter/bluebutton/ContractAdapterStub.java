@@ -20,7 +20,7 @@ import java.util.stream.Collectors;
 @Slf4j
 //@Primary    //Till the BFD api starts returning data, use this as the primary instance.
 @Component
-public class ContractAdapterStub implements ContractAdapter {
+public class ContractAdapterStub implements ContractBeneSearch {
 
     private static final String BENE_ID_FILE = "/test-stub-data/synthetic-bene-ids.csv";
     private static final int MAX_ROWS = 30_000;

@@ -1,8 +1,5 @@
 package gov.cms.ab2d.worker.adapter.bluebutton;
 
-import gov.cms.ab2d.common.model.Contract;
-import gov.cms.ab2d.common.repository.ContractRepository;
-import gov.cms.ab2d.common.service.PropertiesService;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.events.ReloadEvent;
 import gov.cms.ab2d.filter.FilterOutByDate;
@@ -10,10 +7,8 @@ import gov.cms.ab2d.filter.FilterOutByDate.DateRange;
 import gov.cms.ab2d.worker.adapter.bluebutton.ContractBeneficiaries.PatientDTO;
 import gov.cms.ab2d.worker.processor.PatientContractProcessor;
 import gov.cms.ab2d.worker.processor.domainmodel.ContractMapping;
-import gov.cms.ab2d.worker.service.BeneficiaryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
 
@@ -24,34 +19,16 @@ import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
-import static gov.cms.ab2d.common.util.Constants.CONTRACT_2_BENE_CACHING_ON;
-
 @Slf4j
 @Primary
 @Component
 @RequiredArgsConstructor
-public class ContractAdapterImpl implements ContractAdapter {
+public class ContractBeneSearchImpl implements ContractBeneSearch {
 
     private static final int SLEEP_DURATION = 250;
 
-    @Value("${contract2bene.caching.threshold:1000}")
-    private int cachingThreshold;
-
-    private final ContractRepository contractRepo;
-    private final BeneficiaryService beneficiaryService;
-    private final PropertiesService propertiesService;
     private final PatientContractProcessor patientContractProcessor;
     private final LogManager eventLogger;
-
-    @Override
-    public ContractBeneficiaries getPatients(final String contractNumber, final int currentMonth) {
-        final boolean cachingOn = isContractToBeneCachingOn();
-        if (cachingOn) {
-            return doWithCachingOn(contractNumber, currentMonth);
-        } else {
-            return doWithCachingOff(contractNumber, currentMonth);
-        }
-    }
 
     /**
      * Go to BFD to get the mapping of contract to beneficiaries. Given the current month, get all the data for up to the
@@ -62,34 +39,30 @@ public class ContractAdapterImpl implements ContractAdapter {
      * @param currentMonth   - The current month
      * @return the mapping of the contract to beneficiaries
      */
-    private ContractBeneficiaries doWithCachingOff(final String contractNumber, final int currentMonth) {
-        List<PatientDTO> patientDTOs = new ArrayList<>();
+    @Override
+    public ContractBeneficiaries getPatients(final String contractNumber, final int currentMonth) throws ExecutionException, InterruptedException {
         List<Future<ContractMapping>> futureHandles = new ArrayList<>();
         for (var month = 1; month <= currentMonth; month++) {
             futureHandles.add(patientContractProcessor.process(contractNumber, month));
         }
 
-
         List<ContractMapping> results = getAllResults(futureHandles, contractNumber);
+        ContractBeneficiaries contractBeneficiaries = ContractBeneficiaries.builder()
+                .contractNumber(contractNumber)
+                .patients(new ArrayList<PatientDTO>())
+                .build();
 
         for (ContractMapping mapping : results) {
             Set<String> patients = mapping.getPatients();
             if (patients != null && !patients.isEmpty()) {
                 DateRange monthDateRange = toDateRange(mapping.getMonth());
                 for (String bfdPatientId : patients) {
-                    buildPatientDTOs(patientDTOs, monthDateRange, bfdPatientId);
+                    addDateRangeToExistingOrNewPatient(contractBeneficiaries, monthDateRange, bfdPatientId, contractNumber);
                 }
             }
-            //if number of benes for this month exceeds cachingThreshold, cache it
-            Optional<Contract> optContract = contractRepo.findContractByContractNumber(contractNumber);
-            if (optContract.isEmpty()) {
-                return null;
-            }
-            // TODO - Should we save the data to the DB
-            beneficiaryService.storeBeneficiaries(optContract.get().getId(), patients, mapping.getMonth());
         }
 
-        return toGetPatientsByContractResponse(contractNumber, patientDTOs);
+        return contractBeneficiaries;
     }
 
     /**
@@ -99,12 +72,12 @@ public class ContractAdapterImpl implements ContractAdapter {
      * @param contractNumber - the Contract Number for context
      * @return the list of results for all threads
      */
-    private List<ContractMapping> getAllResults(List<Future<ContractMapping>> futureHandles, String contractNumber) {
+    private List<ContractMapping> getAllResults(List<Future<ContractMapping>> futureHandles, String contractNumber) throws ExecutionException, InterruptedException {
         List<ContractMapping> results = new ArrayList<>();
 
         long startTime = System.currentTimeMillis();
         // Iterate through the futures
-        var iterator = futureHandles.iterator();
+        Iterator<Future<ContractMapping>> iterator = futureHandles.iterator();
         while (!futureHandles.isEmpty()) {
             // See if there are any threads left to finish
             while (iterator.hasNext()) {
@@ -112,7 +85,6 @@ public class ContractAdapterImpl implements ContractAdapter {
                 // If it's done, claim the data and add it to the results, then remove it from the active threads
                 if (future.isDone()) {
                     results.add(getContractMapping(future, contractNumber));
-
                     iterator.remove();
                 }
             }
@@ -126,8 +98,7 @@ public class ContractAdapterImpl implements ContractAdapter {
             }
         }
         long endTime = System.currentTimeMillis();
-        long timeDifference = endTime - startTime;
-        int numMinutes = (int) timeDifference / 1000 / 60;
+        int numMinutes = (int) (endTime - startTime) / 1000 / 60;
         int totalRecords = results.stream().mapToInt(c -> c.getPatients().size()).sum();
         eventLogger.log(new ReloadEvent(null, ReloadEvent.FileType.CONTRACT_MAPPING,
                 "Contract: " + contractNumber + " retrieved " + totalRecords + " in " + numMinutes, totalRecords));
@@ -142,11 +113,12 @@ public class ContractAdapterImpl implements ContractAdapter {
      * @param contractId - the contract number
      * @return - the mapping
      */
-    private ContractMapping getContractMapping(Future<ContractMapping> future, String contractId) {
+    private ContractMapping getContractMapping(Future<ContractMapping> future, String contractId) throws ExecutionException, InterruptedException {
         try {
             return future.get();
         } catch (InterruptedException | ExecutionException e) {
             log.warn("InterruptedException while calling Future.get() - Getting Mapping for " + contractId);
+            throw e;
         } catch (CancellationException e) {
             // This could happen in the rare event that a job was cancelled mid-process.
             // due to which the futures in the queue (that were not yet in progress) were cancelled.
@@ -156,43 +128,15 @@ public class ContractAdapterImpl implements ContractAdapter {
         return null;
     }
 
-    /**
-     * Get the contract mappings from the database. Given the current month, get all the data for up to the
-     * current month. For example, in June, we want data from Jan - June.
-     *
-     * @param contractNumber - the contract number
-     * @param currentMonth   - the current month
-     * @return the contract patient mappings
-     */
-    private ContractBeneficiaries doWithCachingOn(final String contractNumber, final int currentMonth) {
-        List<PatientDTO> patientDTOs = new ArrayList<>();
-        Optional<Contract> optContract = contractRepo.findContractByContractNumber(contractNumber);
-        if (optContract.isEmpty()) {
-            return null;
+    private void addDateRangeToExistingOrNewPatient(ContractBeneficiaries beneficiaries,
+                                                    DateRange monthDateRange, String bfdPatientId, String contractNumber) {
+        if (beneficiaries == null) {
+            return;
         }
-        Contract contract = optContract.get();
+        Optional<PatientDTO> optPatient = beneficiaries.getPatients().stream()
+                .filter(patientDTO -> patientDTO.getPatientId().equals(bfdPatientId))
+                .findAny();
 
-        for (var month = 1; month <= currentMonth; month++) {
-            Set<String> bfdPatientsIds = getPatientsForMonth(contract, month);
-            DateRange monthDateRange = toDateRange(month);
-
-            for (String bfdPatientId : bfdPatientsIds) {
-                buildPatientDTOs(patientDTOs, monthDateRange, bfdPatientId);
-            }
-        }
-        return toGetPatientsByContractResponse(contractNumber, patientDTOs);
-    }
-
-    private boolean isContractToBeneCachingOn() {
-        return propertiesService.isToggleOn(CONTRACT_2_BENE_CACHING_ON);
-    }
-
-    private Set<String> getPatientsForMonth(Contract contract, int month) {
-        return beneficiaryService.findPatientIdsInDb(contract.getId(), month);
-    }
-
-    private void buildPatientDTOs(List<PatientDTO> patientDTOs, DateRange monthDateRange, String bfdPatientId) {
-        var optPatient = findPatient(patientDTOs, bfdPatientId);
         if (optPatient.isPresent()) {
             // patient id was already active on this contract in previous month(s)
             // So just add this month to the patient's dateRangesUnderContract
@@ -214,22 +158,8 @@ public class ContractAdapterImpl implements ContractAdapter {
             if (monthDateRange != null) {
                 patientDTO.getDateRangesUnderContract().add(monthDateRange);
             }
-
-            patientDTOs.add(patientDTO);
+            beneficiaries.getPatients().add(patientDTO);
         }
-    }
-
-    /**
-     * Given a patientId, searches for a PatientDTO in a list of PatientDTOs
-     *
-     * @param patientDTOs - the list of patients
-     * @param bfdPatientId - the patient ID we're looking for
-     * @return an optional found PatientDTO
-     */
-    private Optional<PatientDTO> findPatient(List<PatientDTO> patientDTOs, String bfdPatientId) {
-        return patientDTOs.stream()
-                .filter(patientDTO -> patientDTO.getPatientId().equals(bfdPatientId))
-                .findAny();
     }
 
     /**
@@ -249,12 +179,5 @@ public class ContractAdapterImpl implements ContractAdapter {
         }
 
         return dateRange;
-    }
-
-    private ContractBeneficiaries toGetPatientsByContractResponse(String contractNumber, List<PatientDTO> patientDTOs) {
-        return ContractBeneficiaries.builder()
-                .contractNumber(contractNumber)
-                .patients(patientDTOs)
-                .build();
     }
 }

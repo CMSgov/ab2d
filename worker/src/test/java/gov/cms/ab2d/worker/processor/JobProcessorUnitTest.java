@@ -9,7 +9,7 @@ import gov.cms.ab2d.common.repository.JobOutputRepository;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.filter.FilterOutByDate;
-import gov.cms.ab2d.worker.adapter.bluebutton.ContractAdapter;
+import gov.cms.ab2d.worker.adapter.bluebutton.ContractBeneSearch;
 import gov.cms.ab2d.worker.adapter.bluebutton.ContractBeneficiaries;
 import gov.cms.ab2d.worker.adapter.bluebutton.ContractBeneficiaries.PatientDTO;
 import gov.cms.ab2d.worker.service.FileService;
@@ -35,6 +35,7 @@ import java.time.OffsetDateTime;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.Random;
+import java.util.concurrent.ExecutionException;
 
 import static java.lang.Boolean.TRUE;
 import static org.hamcrest.CoreMatchers.is;
@@ -63,7 +64,7 @@ class JobProcessorUnitTest {
     @Mock private FileService fileService;
     @Mock private JobRepository jobRepository;
     @Mock private JobOutputRepository jobOutputRepository;
-    @Mock private ContractAdapter contractAdapter;
+    @Mock private ContractBeneSearch contractBeneSearch;
     @Mock private ContractProcessor contractProcessor;
     @Mock private LogManager eventLogger;
 
@@ -77,7 +78,7 @@ class JobProcessorUnitTest {
                 fileService,
                 jobRepository,
                 jobOutputRepository,
-                contractAdapter,
+                contractBeneSearch,
                 contractProcessor,
                 eventLogger
         );
@@ -93,7 +94,7 @@ class JobProcessorUnitTest {
         when(jobRepository.findByJobUuid(anyString())).thenReturn(job);
 
         patientsByContract = createPatientsByContractResponse(contract);
-        Mockito.when(contractAdapter.getPatients(anyString(), anyInt())).thenReturn(patientsByContract);
+        Mockito.when(contractBeneSearch.getPatients(anyString(), anyInt())).thenReturn(patientsByContract);
 
         final Path outputDirPath = Paths.get(efsMountTmpDir.toString(), jobUuid);
         final Path outputDir = Files.createDirectories(outputDirPath);
@@ -102,7 +103,7 @@ class JobProcessorUnitTest {
 
     @Test
     @DisplayName("When a job is in submitted status, it can be processed")
-    void processJob_happyPath() {
+    void processJob_happyPath() throws ExecutionException, InterruptedException {
 
         var processedJob = cut.process(jobUuid);
 
@@ -114,7 +115,7 @@ class JobProcessorUnitTest {
 
     @Test
     @DisplayName("When user belongs to a parent sponsor, contracts for the children sponsors are processed")
-    void whenTheUserBelongsToParent_ChildContractsAreProcessed() {
+    void whenTheUserBelongsToParent_ChildContractsAreProcessed() throws ExecutionException, InterruptedException {
         var user = job.getUser();
 
         //switch user to parent sponsor
@@ -132,7 +133,7 @@ class JobProcessorUnitTest {
 
     @Test
     @DisplayName("When a job is submitted for a specific contract, process the export file for that contract only")
-    void whenJobIsSubmittedForSpecificContract_processOnlyThatContract() {
+    void whenJobIsSubmittedForSpecificContract_processOnlyThatContract() throws ExecutionException, InterruptedException {
 
         final Sponsor sponsor = job.getUser().getSponsor();
         final Contract contract = sponsor.getAttestedContracts().get(0);
@@ -154,14 +155,14 @@ class JobProcessorUnitTest {
         doVerify();
     }
 
-    private void doVerify() {
+    private void doVerify() throws ExecutionException, InterruptedException {
         verify(fileService).createDirectory(any());
-        verify(contractAdapter).getPatients(anyString(), anyInt());
+        verify(contractBeneSearch).getPatients(anyString(), anyInt());
     }
 
     @Test
     @DisplayName("When output directory for the job already exists, delete it and create it afresh")
-    void whenOutputDirectoryAlreadyExist_DeleteItAndCreateItAfresh() throws IOException {
+    void whenOutputDirectoryAlreadyExist_DeleteItAndCreateItAfresh() throws IOException, ExecutionException, InterruptedException {
 
         //create output dir, so it already exists
         final Path outputDir = Paths.get(efsMountTmpDir.toString(), jobUuid);
@@ -187,12 +188,12 @@ class JobProcessorUnitTest {
         assertThat(processedJob.getExpiresAt(), notNullValue());
 
         verify(fileService, times(2)).createDirectory(any());
-        verify(contractAdapter).getPatients(anyString(), anyInt());
+        verify(contractBeneSearch).getPatients(anyString(), anyInt());
     }
 
     @Test
     @DisplayName("When existing output directory has a file which is not a regular file, job fails gracefully")
-    void whenExistingOutputDirectoryHasSubDirectory_JobFailsGracefully() throws IOException {
+    void whenExistingOutputDirectoryHasSubDirectory_JobFailsGracefully() throws IOException, ExecutionException, InterruptedException {
 
         //create output dir, so it already exists
         final Path outputDir = Paths.get(efsMountTmpDir.toString(), jobUuid);
@@ -205,7 +206,7 @@ class JobProcessorUnitTest {
         var uncheckedIOE = new UncheckedIOException(errMsg, new IOException(errMsg));
 
         Mockito.when(fileService.createDirectory(any())).thenThrow(uncheckedIOE);
-        Mockito.lenient().when(contractAdapter.getPatients(anyString(), anyInt())).thenReturn(patientsByContract);
+        Mockito.lenient().when(contractBeneSearch.getPatients(anyString(), anyInt())).thenReturn(patientsByContract);
 
         var processedJob = cut.process(jobUuid);
 
@@ -214,18 +215,18 @@ class JobProcessorUnitTest {
         assertThat(processedJob.getExpiresAt(), nullValue());
 
         verify(fileService).createDirectory(any());
-        verify(contractAdapter, never()).getPatients(anyString(), anyInt());
+        verify(contractBeneSearch, never()).getPatients(anyString(), anyInt());
     }
 
     @Test
     @DisplayName("When output directory creation fails due to unknown IOException, job fails gracefully")
-    void whenOutputDirectoryCreationFailsDueToUnknownReason_JobFailsGracefully() throws IOException {
+    void whenOutputDirectoryCreationFailsDueToUnknownReason_JobFailsGracefully() throws IOException, ExecutionException, InterruptedException {
 
         var errMsg = "Could not create output directory";
         var uncheckedIOE = new UncheckedIOException(errMsg, new IOException(errMsg));
 
         Mockito.when(fileService.createDirectory(any())).thenThrow(uncheckedIOE);
-        Mockito.lenient().when(contractAdapter.getPatients(anyString(), anyInt())).thenReturn(patientsByContract);
+        Mockito.lenient().when(contractBeneSearch.getPatients(anyString(), anyInt())).thenReturn(patientsByContract);
 
         var processedJob = cut.process(jobUuid);
 
@@ -234,7 +235,7 @@ class JobProcessorUnitTest {
         assertThat(processedJob.getExpiresAt(), nullValue());
 
         verify(fileService).createDirectory(any());
-        verify(contractAdapter, never()).getPatients(anyString(), anyInt());
+        verify(contractBeneSearch, never()).getPatients(anyString(), anyInt());
     }
 
     private Sponsor createParentSponsor() {

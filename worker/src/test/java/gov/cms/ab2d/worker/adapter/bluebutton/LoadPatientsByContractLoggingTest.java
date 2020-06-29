@@ -31,6 +31,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import java.time.OffsetDateTime;
 import java.util.HashSet;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -47,9 +48,6 @@ public class LoadPatientsByContractLoggingTest {
 
     @Autowired
     private DoAll doAll;
-
-    @Mock
-    private ContractRepository contractRepo;
 
     @Autowired
     private BeneficiaryService beneficiaryService;
@@ -74,10 +72,9 @@ public class LoadPatientsByContractLoggingTest {
     }
 
     @Test
-    public void testLogging() {
+    public void testLogging() throws ExecutionException, InterruptedException {
         PatientContractProcessor patientContractProcessor = new PatientContractProcessorImpl(bfdClient);
-        ContractAdapterImpl cai = new ContractAdapterImpl(contractRepo, beneficiaryService,
-                propertiesService, patientContractProcessor, logManager);
+        ContractBeneSearchImpl cai = new ContractBeneSearchImpl(patientContractProcessor, logManager);
 
         String contractId = "C1234";
         Bundle bundle = createBundle();
@@ -88,7 +85,6 @@ public class LoadPatientsByContractLoggingTest {
         contract.setContractName("1234");
         contract.setId(1L);
         contract.setCoverages(new HashSet<>());
-        lenient().when(contractRepo.findContractByContractNumber(anyString())).thenReturn(java.util.Optional.of(contract));
         cai.getPatients(contractId, 1);
 
         List<LoggableEvent> reloadEvents = doAll.load(ReloadEvent.class);
