@@ -34,7 +34,7 @@ is complete and the generated files can be downloaded.
 
 We are providing three different examples on how users can interact with the AB2D API and retrieve synthetic claims data.
 
-1. [Postman and Swagger User Guide](tutorial-postman.html)
+1. [Postman and Swagger User Guide](tutorial-postman.md)
 2. [Curl User Guide](tutorial-curl.html)
 3. [Advanced User Guide](advanced_user_guide.html)
 
