@@ -7,6 +7,12 @@
    * [Import the dev domain certificate into certificate manager](#import-the-dev-domain-certificate-into-certificate-manager)
 1. [Deploy to development](#deploy-to-development)
    * [Initialize or verify base environment](#initialize-or-verify-base-environment)
+   * [Encrypt and upload New Relic configuration file](#encrypt-and-upload-new-relic-configuration-file)
+   * [Create or update AMI with latest gold disk](#create-or-update-ami-with-latest-gold-disk)
+   * [Create or update infrastructure](#create-or-update-infrastructure)
+   * [Create or update application](#create-or-update-application)
+1. [Configure Cloud Protection Manager](#configure-cloud-protection-manager)
+   * [Ensure that all instances have CPM backup tags](#ensure-that-all-instances-have-cpm-backup-tags)
 
 ## Obtain and import dev.ab2d.cms.gov common certificate](#obtain-and-import-devab2dcmsgov-common-certificate)
 
@@ -284,8 +290,6 @@
 
 1. Set gold disk test parameters
 
-   *Example for "Prod" environment:*
-
    ```ShellSession
    $ export CMS_ENV_PARAM=ab2d-dev
    $ export DEBUG_LEVEL_PARAM=WARN
@@ -335,7 +339,7 @@
      --auto-approve
    ```
 
-### Create or update application for production
+### Create or update application
 
 1. Change to the "Deploy" directory
 
@@ -397,64 +401,92 @@
 
 ### Submit an "Internet DNS Change Request Form" to product owner for the sandbox application load balancer
 
+> *** TO DO ***
+
+## Configure Cloud Protection Manager
+
+### Ensure that all instances have CPM backup tags
+
 1. Open Chrome
 
 1. Enter the following in the address bar
 
-   > https://confluence.cms.gov/pages/viewpage.action?pageId=138595233
+   > https://cloudtamer.cms.gov/portal
 
-1. If the Confluence logon page appears, log on to Confluence
-
-1. Note that the "CNAME/DNS Change Requests" page should be displayed
-
-1. Select the **DNS change request form** link under the "Process" section
-
-1. Select the **Download** icon in the top right of the page
-
-1. Wait for the download to complete
-
-1. Open the downloaded form
+1. Select the target AWS account
 
    ```
-   Internet DNS Change Request (2).pdf
+   AB2D Dev
    ```
 
-1. Fill out the form as follows
+1. Ensure that the RDS instance has been tagged as follows
 
-   *Requestor Information:*
+   1. Select **RDS**
 
-   - **Name:** {product owner first name} {product owner last name}
+   1. Select **Databases** from the leftmost panel
 
-   - **Organization:** {product owner organization}
+   1. Select the following database instance
 
-   - **Email:** {product owner email}
+      ```
+      ab2d
+      ```
 
-   - **Phone:** {product owner phone}
+   1. Select the **Tags** tab
 
-   *CMS Business Owner Information*
+   1. Verify that the following tag and value is configured
 
-   - **Name:** {business owner first name} {business owner last name}
+      Tags      |Value
+      ----------|------------------------
+      cpm backup|Monthly
 
-   - **Organization:** {business owner organization}
+1. Ensure that the controller has been tagged as follows
 
-   - **Email:** {business owner email}
+   1. Select **EC2**
 
-   - **Phone:** {business owner phone}
+   1. Select **Instances** under he "Instances" section from the leftmost panel
 
-   - **Reason:** To support developers that will be integrating with the AB2D API
+   1. Select the following EC2 instance
 
-   *DNS Change Information*
+      ```
+      ab2d-deployment-controller
+      ```
 
-   - **DNS Zone:** cms.gov
+   1. Select the **Tags** tab
 
-   - **Type of change:** CNAME
+   1. Verify that the following tag and value is configured
 
-   - **Actual Change:** sandbox.ab2d.cms.gov CNAME ab2d-sbx-sandbox-{unique id}.us-east-1.elb.amazonaws.com
+      Tags      |Value
+      ----------|--------
+      cpm backup|NoBackup
 
-   - **Change Date & Time:** ASAP
+1. Ensure that an API node has been tagged as follows
 
-   - **Purpose of the change:** Initial launch of sandbox
+   1. Select the following EC2 instance
 
-1. Submit the completed for to the product owner
+      ```
+      ab2d-dev-api
+      ```
 
-1. Note that the product owner will complete the process
+   1. Select the **Tags** tab
+
+   1. Verify that the following tag and value is configured
+
+      Tags      |Value
+      ----------|------------------------
+      cpm backup|Monthly
+
+1. Ensure that a worker node has been tagged as follows
+
+   1. Select the following EC2 instance
+
+      ```
+      ab2d-dev-worker
+      ```
+
+   1. Select the **Tags** tab
+
+   1. Verify that the following tag and value is configured
+
+      Tags      |Value
+      ----------|------------------------
+      cpm backup|Monthly

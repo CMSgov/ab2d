@@ -18,7 +18,7 @@ lication-load-balancer)
    * [Create, encrypt, and upload BFD AB2D keystore for Prod](#create-encrypt-and-upload-bfd-ab2d-keystore-for-prod)
    * [Create or update AMI with latest gold disk](#create-or-update-ami-with-latest-gold-disk)
    * [Create or update infrastructure](#create-or-update-infrastructure)
-   * [Create or update application for production](#create-or-update-application-for-production)
+   * [Create or update application](#create-or-update-application)
 1. [Upload HPMS Reports](#upload-hpms-reports)
    * [Review HPMS Report requirements](#review-hpms-report-requirements)
    * [Get 2020 Parent Organization and Legal Entity to Contract Report](#get-2020-parent-organization-and-legal-entity-to-contract-report)
@@ -822,7 +822,7 @@ lication-load-balancer)
    $ ./deploy-infrastructure.sh
    ```
 
-### Create or update application for production
+### Create or update application
 
 1. Change to the "Deploy" directory
 

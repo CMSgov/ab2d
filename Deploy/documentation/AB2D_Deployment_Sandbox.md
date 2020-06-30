@@ -8,7 +8,8 @@
 1. [Deploy to sandbox](#deploy-to-sandbox)
    * [Initialize or verify base environment](#initialize-or-verify-base-environment)
 1. [Submit an "Internet DNS Change Request Form" to product owner for the sandbox application load balancer](#submit-an-internet-dns-change-request-form-to-product-owner-for-the-sandbox-application-load-balancer)
-
+1. [Configure Cloud Protection Manager](#configure-cloud-protection-manager)
+   * [Ensure that all instances have CPM backup tags](#ensure-that-all-instances-have-cpm-backup-tags)
 
 ## Obtain and import sandbox.ab2d.cms.gov entrust certificate](#obtain-and-import-sandboxab2dcmsgov-entrust-certificate)
 
@@ -488,3 +489,91 @@
    - **Attachment:** "Internet DNS Change Request - sandbox.ab2d.cms.gov - akamai - revised.pdf"
 
 1. Select **Create**
+
+## Configure Cloud Protection Manager
+
+### Ensure that all instances have CPM backup tags
+
+1. Open Chrome
+
+1. Enter the following in the address bar
+
+   > https://cloudtamer.cms.gov/portal
+
+1. Select the target AWS account
+
+   ```
+   AB2D Prod
+   ```
+
+1. Ensure that the RDS instance has been tagged as follows
+
+   1. Select **RDS**
+
+   1. Select **Databases** from the leftmost panel
+
+   1. Select the following database instance
+
+      ```
+      ab2d
+      ```
+
+   1. Select the **Tags** tab
+
+   1. Verify that the following tag and value is configured
+
+      Tags      |Value
+      ----------|------------------------
+      cpm backup|4HR Daily Weekly Monthly
+
+1. Ensure that the controller has been tagged as follows
+
+   1. Select **EC2**
+
+   1. Select **Instances** under he "Instances" section from the leftmost panel
+
+   1. Select the following EC2 instance
+
+      ```
+      ab2d-deployment-controller
+      ```
+
+   1. Select the **Tags** tab
+
+   1. Verify that the following tag and value is configured
+
+      Tags      |Value
+      ----------|--------
+      cpm backup|NoBackup
+
+1. Ensure that an API node has been tagged as follows
+
+   1. Select the following EC2 instance
+
+      ```
+      ab2d-sbx-sandbox-api
+      ```
+
+   1. Select the **Tags** tab
+
+   1. Verify that the following tag and value is configured
+
+      Tags      |Value
+      ----------|------------------------
+      cpm backup|4HR Daily Weekly Monthly
+
+1. Ensure that a worker node has been tagged as follows
+
+   1. Select the following EC2 instance
+
+      ```
+      ab2d-sbx-sandbox-worker
+      ```
+
+   1. Select the **Tags** tab
+
+   1. Verify that the following tag and value is configured
+
+      Tags      |Value
+      ----------|------------------------
+      cpm backup|4HR Daily Weekly Monthly

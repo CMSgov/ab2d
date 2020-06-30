@@ -11,6 +11,8 @@
    * [Create or update infrastructure](#create-or-update-infrastructure)
    * [Create or update application for production](#create-or-update-application-for-production)
 1. [Upload static website to an Akamai Upload Directory within Akamai NetStorage](#upload-static-website-to-an-akamai-upload-directory-within-akamai-netstorage)
+1. [Configure Cloud Protection Manager](#configure-cloud-protection-manager)
+   * [Ensure that all instances have CPM backup tags](#ensure-that-all-instances-have-cpm-backup-tags)
 
 ## Obtain and import impl.ab2d.cms.gov common certificate](#obtain-and-import-implab2dcmsgov-common-certificate)
 
@@ -454,3 +456,91 @@
      ```
      /971498/_site
      ```
+
+## Configure Cloud Protection Manager
+
+### Ensure that all instances have CPM backup tags
+
+1. Open Chrome
+
+1. Enter the following in the address bar
+
+   > https://cloudtamer.cms.gov/portal
+
+1. Select the target AWS account
+
+   ```
+   AB2D IMPL
+   ```
+
+1. Ensure that the RDS instance has been tagged as follows
+
+   1. Select **RDS**
+
+   1. Select **Databases** from the leftmost panel
+
+   1. Select the following database instance
+
+      ```
+      ab2d
+      ```
+
+   1. Select the **Tags** tab
+
+   1. Verify that the following tag and value is configured
+
+      Tags      |Value
+      ----------|------------------------
+      cpm backup|4HR Daily Weekly Monthly
+
+1. Ensure that the controller has been tagged as follows
+
+   1. Select **EC2**
+
+   1. Select **Instances** under he "Instances" section from the leftmost panel
+
+   1. Select the following EC2 instance
+
+      ```
+      ab2d-deployment-controller
+      ```
+
+   1. Select the **Tags** tab
+
+   1. Verify that the following tag and value is configured
+
+      Tags      |Value
+      ----------|--------
+      cpm backup|NoBackup
+
+1. Ensure that an API node has been tagged as follows
+
+   1. Select the following EC2 instance
+
+      ```
+      ab2d-east-impl-api
+      ```
+
+   1. Select the **Tags** tab
+
+   1. Verify that the following tag and value is configured
+
+      Tags      |Value
+      ----------|------------------------
+      cpm backup|4HR Daily Weekly Monthly
+
+1. Ensure that a worker node has been tagged as follows
+
+   1. Select the following EC2 instance
+
+      ```
+      ab2d-east-impl-worker
+      ```
+
+   1. Select the **Tags** tab
+
+   1. Verify that the following tag and value is configured
+
+      Tags      |Value
+      ----------|------------------------
+      cpm backup|4HR Daily Weekly Monthly
