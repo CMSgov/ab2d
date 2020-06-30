@@ -117,6 +117,8 @@
 1. [Appendix EEE: Modify the database instance type](#appendix-eee-modify-the-database-instance-type)
 1. [Appendix FFF: Run e2e tests](#appendix-fff-run-e2e-tests)
    * [Run e2e tests for production](#run-e2e-tests-for-production)
+1. [Appendix GGG: Retrieve a copy of remote terraform state file for review](#appendix-ggg-retrieve-a-copy-of-remote-terraform-state-file-for-review)
+1. [Appendix HHH: Manually change a tag on controller and update its terraform state](#appendix-hhh-manually-change-a-tag-on-controller-and-update-its-terraform-state)
 
 ## Appendix A: Access the CMS AWS console
 
@@ -10156,3 +10158,136 @@ $ sed -i "" 's%cms-ab2d[\/]prod%cms-ab2d/dev%g' _includes/head.html (edited)
    ```ShellSession
    $ java -cp e2e-test-0.0.1-SNAPSHOT-fat-tests.jar gov.cms.ab2d.e2etest.TestLauncher "${E2E_TARGET_ENV}"
    ```
+
+## Appendix GGG: Retrieve a copy of remote terraform state file for review
+
+1. Ensure that you are connected to CMS Cisco VPN
+
+1. Change to the "Deploy" directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d/Deploy
+   ```
+
+1. Set AWS environment variables using the CloudTamer API
+
+   ```ShellSession
+   $ source ./bash/set-env.sh
+   ```
+
+1. Choose desired target environment
+
+1. Change to target directory of the desired target environment
+
+   ```ShellSession
+   $ cd terraform/environments/ab2d-east-prod
+   ```
+
+1. Pull the terraform state file for the target environment from S3
+
+   ```ShellSession
+   $ terraform state pull > "${HOME}/Downloads/terraform.tfstate.${CMS_ENV}.json"
+   ```
+
+1. Examine the downloaded terraform state file
+
+   ```ShellSession
+   $ vim "${HOME}/Downloads/terraform.tfstate.${CMS_ENV}.json"
+   ```
+
+## Appendix HHH: Manually change a tag on controller and update its terraform state
+
+1. Ensure that you have added or changed the tag in the automation for the controller before proceeding
+
+1. Ensure that you are connected to CMS Cisco VPN
+
+1. Change to the "Deploy" directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d/Deploy
+   ```
+
+1. Set AWS environment variables using the CloudTamer API
+
+   ```ShellSession
+   $ source ~/code/ab2d/Deploy/bash/set-env.sh
+   ```
+
+1. Choose desired target environment
+
+1. Change to target directory of the desired target environment
+
+   ```ShellSession
+   $ cd terraform/environments/ab2d-east-prod
+   ```
+
+1. Get the terraform name for the controller's AWS instance within the terraform state
+
+   ```ShellSession
+   $ TERRAFORM_CONTROLLER_AWS_INSTANCE=$(terraform state list \
+     | grep module.controller \
+     | grep aws_instance)
+   ```
+
+1. Verify that one and one item is in the "TERRAFORM_CONTROLLER_AWS_INSTANCE" variable
+
+   ```ShellSession
+   $ echo "${TERRAFORM_CONTROLLER_AWS_INSTANCE}"
+   ```
+
+1. Temporarily remove the controller from terraform management
+
+   ```ShellSession
+   $ terraform state rm "${TERRAFORM_CONTROLLER_AWS_INSTANCE}"
+   ```
+
+1. Open Chrome
+
+1. Enter the following in the address bar
+
+   > https://cloudtamer.cms.gov/portal
+
+1. Select the target AWS account
+
+1. Manually change one of the tags associated with the instance
+
+   1. Select **EC2**
+
+   1. Select **Instances** under he "Instances" section from the leftmost panel
+
+   1. Select the following EC2 instance
+
+      ```
+      ab2d-deployment-controller
+      ```
+
+   1. Select the **Tags** tab
+
+   1. Add or configure a tag as desired
+
+      *Example:*
+
+      Tags      |Value
+      ----------|--------
+      cpm backup|NoBackup
+
+1. Return to the terminal
+
+1. Import the controller to terraform state to place it under terraform management again
+
+   1. Get the instance id of the terraform controller
+
+      ```ShellSession
+      $ CONTROLLER_INSTANCE_ID=$(aws --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-deployment-controller" \
+        --query="Reservations[*].Instances[*].InstanceId" \
+        --output text)
+      ```
+
+   1. Import the controller
+
+      ```ShellSession
+      $ terraform import "${TERRAFORM_CONTROLLER_AWS_INSTANCE}" "${CONTROLLER_INSTANCE_ID}"
+      ```
+
+1. Note that even though terraform state did not update to reflect the tag change, this is still a good example for how to put existing infrastructure under terraform management
