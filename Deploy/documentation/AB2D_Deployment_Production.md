@@ -41,6 +41,8 @@ lication-load-balancer)
    * [Create an escalation policy](#create-an-escalation-policy)
    * [Forward New Relic alerts to the VictorOps alerting service](#forward-new-relic-alerts-to-the-victorops-alerting-service)
    * [Forward AWS CloudWatch alerts to the VictorOps alerting service](#forward-aws-cloudwatch-alerts-to-the-victorops-alerting-service)
+1. [Configure Cloud Protection Manager](#configure-cloud-protection-manager)
+   * [Ensure that all instances have CPM backup tags](#ensure-that-all-instances-have-cpm-backup-tags)
 
 ## Obtain and import api.ab2d.cms.gov entrust certificate](#obtain-and-import-apiab2dcmsgov-entrust-certificate)
 
@@ -1847,3 +1849,91 @@ lication-load-balancer)
 ### Configure VictorOps alerting service to forward alerts to a dedicated Slack channel
 
 > *** TO DO ***
+
+## Configure Cloud Protection Manager
+
+### Ensure that all instances have CPM backup tags
+
+1. Open Chrome
+
+1. Enter the following in the address bar
+
+   > https://cloudtamer.cms.gov/portal
+
+1. Select the target AWS account
+
+   ```
+   AB2D Prod
+   ```
+
+1. Ensure that the RDS instance has been tagged as follows
+
+   1. Select **RDS**
+
+   1. Select **Databases** from the leftmost panel
+
+   1. Select the following database instance
+
+      ```
+      ab2d
+      ```
+
+   1. Select the **Tags** tab
+
+   1. Verify that the following tag and value is configured
+
+      Tags      |Value
+      ----------|------------------------
+      cpm backup|4HR Daily Weekly Monthly
+
+1. Ensure that the controller has been tagged as follows
+
+   1. Select **EC2**
+
+   1. Select **Instances** under he "Instances" section from the leftmost panel
+
+   1. Select the following EC2 instance
+
+      ```
+      ab2d-deployment-controller
+      ```
+
+   1. Select the **Tags** tab
+
+   1. Verify that the following tag and value is configured
+
+      Tags      |Value
+      ----------|--------
+      cpm backup|NoBackup
+
+1. Ensure that an API node has been tagged as follows
+
+   1. Select the following EC2 instance
+
+      ```
+      ab2d-east-prod-api
+      ```
+
+   1. Select the **Tags** tab
+
+   1. Verify that the following tag and value is configured
+
+      Tags      |Value
+      ----------|------------------------
+      cpm backup|4HR Daily Weekly Monthly
+
+1. Ensure that a worker node has been tagged as follows
+
+   1. Select the following EC2 instance
+
+      ```
+      ab2d-east-prod-worker
+      ```
+
+   1. Select the **Tags** tab
+
+   1. Verify that the following tag and value is configured
+
+      Tags      |Value
+      ----------|------------------------
+      cpm backup|4HR Daily Weekly Monthly
