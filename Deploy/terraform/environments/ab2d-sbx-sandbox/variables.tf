@@ -231,7 +231,19 @@ variable "db_name_secret_arn" {
   description = "Please pass this on command line and not as a value here"
 }
 
-variable "cpm_backup" {
+variable "cpm_backup_api" {
+  default = "4HR Daily Weekly Monthly"
+}
+
+variable "cpm_backup_controller" {
+  default = "NoBackup"
+}
+
+variable "cpm_backup_db" {
+  default = "4HR Daily Weekly Monthly"
+}
+
+variable "cpm_backup_worker" {
   default = "4HR Daily Weekly Monthly"
 }
 

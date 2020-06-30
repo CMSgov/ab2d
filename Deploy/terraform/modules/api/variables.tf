@@ -80,3 +80,5 @@ variable "ab2d_keystore_password" {}
 variable "ab2d_okta_jwt_issuer" {}
 
 variable "stunnel_latest_version" {}
+
+variable "cpm_backup_api" {}

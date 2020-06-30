@@ -57,7 +57,7 @@ module "db" {
   username                   = var.db_username
   password                   = var.db_password
   skip_final_snapshot        = var.db_skip_final_snapshot
-  cpm_backup                 = var.cpm_backup
+  cpm_backup_db              = var.cpm_backup_db
   jenkins_agent_sec_group_id = var.jenkins_agent_sec_group_id
 }
 
@@ -65,19 +65,20 @@ module "db" {
 # enterprise-tools-sec-group-id = var.enterprise-tools-sec-group-id
 # LSH SKIP FOR NOW END
 module "controller" {
-  source                   = "../../modules/controller"
-  env                      = var.env
-  vpc_id                   = var.vpc_id
-  controller_subnet_ids    = var.deployment_controller_subnet_ids
-  db_sec_group_id          = module.db.aws_security_group_sg_database_id
-  ami_id                   = var.ami_id
-  instance_type            = var.ec2_instance_type
-  linux_user               = var.linux_user
-  ssh_key_name             = var.ssh_key_name
-  iam_instance_profile     = var.ec2_iam_profile
-  gold_disk_name           = var.gold_image_name
-  deployer_ip_address      = var.deployer_ip_address
+  source                            = "../../modules/controller"
+  env                               = var.env
+  vpc_id                            = var.vpc_id
+  controller_subnet_ids             = var.deployment_controller_subnet_ids
+  db_sec_group_id                   = module.db.aws_security_group_sg_database_id
+  ami_id                            = var.ami_id
+  instance_type                     = var.ec2_instance_type
+  linux_user                        = var.linux_user
+  ssh_key_name                      = var.ssh_key_name
+  iam_instance_profile              = var.ec2_iam_profile
+  gold_disk_name                    = var.gold_image_name
+  deployer_ip_address               = var.deployer_ip_address
   vpn_private_ip_address_cidr_range = var.vpn_private_ip_address_cidr_range
+  cpm_backup_controller             = var.cpm_backup_controller
 }
 
 module "lonnie_access_controller" {
@@ -189,6 +190,7 @@ module "api" {
   ab2d_keystore_password            = var.ab2d_keystore_password
   ab2d_okta_jwt_issuer              = var.ab2d_okta_jwt_issuer
   stunnel_latest_version            = var.stunnel_latest_version
+  cpm_backup_api                    = var.cpm_backup_api
 }
 
 module "worker" {
@@ -246,6 +248,7 @@ module "worker" {
   ab2d_opt_out_job_schedule         = var.ab2d_opt_out_job_schedule
   ab2d_s3_optout_bucket             = var.ab2d_s3_optout_bucket
   stunnel_latest_version            = var.stunnel_latest_version
+  cpm_backup_worker                 = var.cpm_backup_worker
 }
 
 module "cloudwatch" {

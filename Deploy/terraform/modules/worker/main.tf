@@ -236,7 +236,7 @@ resource "aws_autoscaling_group" "asg" {
     },
     {
       key = "cpm backup"
-      value = "NoBackup"
+      value = "${var.cpm_backup_worker}"
       propagate_at_launch = true
     },
     {

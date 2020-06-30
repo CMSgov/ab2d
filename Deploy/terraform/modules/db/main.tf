@@ -70,6 +70,6 @@ resource "aws_db_instance" "db" {
     Name         = "${var.env}-rds"
     env          = "${var.env}"
     role         = "db"
-    "cpm backup" = "${var.cpm_backup}"
+    "cpm backup" = "${var.cpm_backup_db}"
   }
 }
