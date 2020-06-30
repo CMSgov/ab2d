@@ -173,7 +173,7 @@ class ContractProcessorUnitTest {
     void whenManyPatientIdsAreProcessed_shouldUpdatePercentageCompletedMultipleTimes() throws Exception {
         var contract = contractData.getContract();
         var patients = createPatientsByContractResponse(contract).getPatients();
-        var manyPatientIds = new ArrayList<PatientDTO>();
+        List<PatientDTO> manyPatientIds = new ArrayList<>();
         manyPatientIds.addAll(patients);
         manyPatientIds.addAll(patients);
         manyPatientIds.addAll(patients);

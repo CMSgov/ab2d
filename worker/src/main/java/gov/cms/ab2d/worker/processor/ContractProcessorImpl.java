@@ -91,7 +91,7 @@ public class ContractProcessorImpl implements ContractProcessor {
         log.info("Beginning to process contract {}", keyValue(CONTRACT_LOG, contractNumber));
 
         var progressTracker = contractData.getProgressTracker();
-        var patients = getPatientsByContract(contractNumber, progressTracker);
+        List<PatientDTO> patients = getPatientsByContract(contractNumber, progressTracker);
         int patientCount = patients.size();
         log.info("Contract [{}] has [{}] Patients", contractNumber, patientCount);
 

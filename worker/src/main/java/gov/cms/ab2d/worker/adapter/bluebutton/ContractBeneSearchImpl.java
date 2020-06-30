@@ -1,15 +1,18 @@
 package gov.cms.ab2d.worker.adapter.bluebutton;
 
+import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.events.ReloadEvent;
 import gov.cms.ab2d.filter.FilterOutByDate;
 import gov.cms.ab2d.filter.FilterOutByDate.DateRange;
 import gov.cms.ab2d.worker.adapter.bluebutton.ContractBeneficiaries.PatientDTO;
-import gov.cms.ab2d.worker.processor.PatientContractProcessor;
+import gov.cms.ab2d.worker.processor.PatientContractCallable;
 import gov.cms.ab2d.worker.processor.domainmodel.ContractMapping;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Primary;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Component;
 
 import java.text.ParseException;
@@ -27,13 +30,15 @@ public class ContractBeneSearchImpl implements ContractBeneSearch {
 
     private static final int SLEEP_DURATION = 250;
 
-    private final PatientContractProcessor patientContractProcessor;
+    private final BFDClient bfdClient;
     private final LogManager eventLogger;
+    @Qualifier("patientContractThreadPool")
+    private final ThreadPoolTaskExecutor patientContractThreadPool;
 
     /**
      * Go to BFD to get the mapping of contract to beneficiaries. Given the current month, get all the data for up to the
      * current month. For example, in June, we want data from Jan - June. This will be multi threaded through the
-     * PatientContractProcessor
+     * PatientContractCallable
      *
      * @param contractNumber - The number of the contract
      * @param currentMonth   - The current month
@@ -43,21 +48,21 @@ public class ContractBeneSearchImpl implements ContractBeneSearch {
     public ContractBeneficiaries getPatients(final String contractNumber, final int currentMonth) throws ExecutionException, InterruptedException {
         List<Future<ContractMapping>> futureHandles = new ArrayList<>();
         for (var month = 1; month <= currentMonth; month++) {
-            futureHandles.add(patientContractProcessor.process(contractNumber, month));
+            PatientContractCallable callable = new PatientContractCallable(contractNumber, month, bfdClient);
+            futureHandles.add(patientContractThreadPool.submit(callable));
         }
 
         List<ContractMapping> results = getAllResults(futureHandles, contractNumber);
-        ContractBeneficiaries contractBeneficiaries = ContractBeneficiaries.builder()
-                .contractNumber(contractNumber)
-                .patients(new ArrayList<PatientDTO>())
-                .build();
+        ContractBeneficiaries contractBeneficiaries = new ContractBeneficiaries();
+        contractBeneficiaries.setContractNumber(contractNumber);
+        contractBeneficiaries.setPatients(new ArrayList<>());
 
         for (ContractMapping mapping : results) {
             Set<String> patients = mapping.getPatients();
             if (patients != null && !patients.isEmpty()) {
                 DateRange monthDateRange = toDateRange(mapping.getMonth());
                 for (String bfdPatientId : patients) {
-                    addDateRangeToExistingOrNewPatient(contractBeneficiaries, monthDateRange, bfdPatientId, contractNumber);
+                    addDateRangeToExistingOrNewPatient(contractBeneficiaries, monthDateRange, bfdPatientId);
                 }
             }
         }
@@ -77,9 +82,9 @@ public class ContractBeneSearchImpl implements ContractBeneSearch {
 
         long startTime = System.currentTimeMillis();
         // Iterate through the futures
-        Iterator<Future<ContractMapping>> iterator = futureHandles.iterator();
         while (!futureHandles.isEmpty()) {
             // See if there are any threads left to finish
+            Iterator<Future<ContractMapping>> iterator = futureHandles.iterator();
             while (iterator.hasNext()) {
                 Future<ContractMapping> future = iterator.next();
                 // If it's done, claim the data and add it to the results, then remove it from the active threads
@@ -129,7 +134,7 @@ public class ContractBeneSearchImpl implements ContractBeneSearch {
     }
 
     private void addDateRangeToExistingOrNewPatient(ContractBeneficiaries beneficiaries,
-                                                    DateRange monthDateRange, String bfdPatientId, String contractNumber) {
+                                                    DateRange monthDateRange, String bfdPatientId) {
         if (beneficiaries == null) {
             return;
         }
@@ -141,7 +146,7 @@ public class ContractBeneSearchImpl implements ContractBeneSearch {
             // patient id was already active on this contract in previous month(s)
             // So just add this month to the patient's dateRangesUnderContract
 
-            var patientDTO = optPatient.get();
+            PatientDTO patientDTO = optPatient.get();
             if (monthDateRange != null) {
                 patientDTO.getDateRangesUnderContract().add(monthDateRange);
             }
@@ -151,8 +156,9 @@ public class ContractBeneSearchImpl implements ContractBeneSearch {
             // Create a new PatientDTO for this patient
             // And then add this month to the patient's dateRangesUnderContract
 
-            var patientDTO = PatientDTO.builder()
+            PatientDTO patientDTO = PatientDTO.builder()
                     .patientId(bfdPatientId)
+                    .dateRangesUnderContract(new ArrayList<>())
                     .build();
 
             if (monthDateRange != null) {

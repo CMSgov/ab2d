@@ -80,19 +80,6 @@ public class WorkerConfig {
     }
 
     @Bean
-    public Executor patientContractThreadPool() {
-        // Regretfully, no good way to supply a custom queue to ThreadPoolTaskExecutor
-        // other than by overriding createQueue
-        final ThreadPoolTaskExecutor taskExecutor = new ThreadPoolTaskExecutor();
-        taskExecutor.setCorePoolSize(pcpCorePoolSize);
-        // Initially we lock the pool at the minimum size; auto-scaling is done
-        // by a separate service.
-        taskExecutor.setMaxPoolSize(pcpCorePoolSize);
-        taskExecutor.setThreadNamePrefix("contractp-");
-        return taskExecutor;
-    }
-
-    @Bean
     public Executor mainJobProcessingPool() {
         final ThreadPoolTaskExecutor taskExecutor = new ThreadPoolTaskExecutor();
         taskExecutor.setCorePoolSize(jobCorePoolSize);

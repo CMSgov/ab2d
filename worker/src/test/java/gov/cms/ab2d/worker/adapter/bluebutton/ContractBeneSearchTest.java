@@ -4,8 +4,6 @@ import ca.uhn.fhir.rest.server.exceptions.InvalidRequestException;
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.eventlogger.LogManager;
-import gov.cms.ab2d.worker.processor.PatientContractProcessor;
-import gov.cms.ab2d.worker.processor.PatientContractProcessorImpl;
 import org.hl7.fhir.dstu3.model.Bundle;
 import org.hl7.fhir.dstu3.model.Bundle.BundleEntryComponent;
 import org.hl7.fhir.dstu3.model.Bundle.BundleLinkComponent;
@@ -18,30 +16,29 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 import java.time.Instant;
 import java.time.Month;
 import java.util.Calendar;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ThreadPoolExecutor;
 
+import static gov.cms.ab2d.worker.processor.BundleUtils.BENEFICIARY_ID;
 import static org.hamcrest.CoreMatchers.endsWith;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class ContractBeneSearchTest {
 
-    private static final String BENEFICIARY_ID = "https://bluebutton.cms.gov/resources/variables/bene_id";
-
     @Mock BFDClient client;
     @Mock LogManager eventLogger;
-    PatientContractProcessor patientContractProcessor;
 
     private ContractBeneSearch cut;
     private String contractNumber = "S0000";
@@ -50,8 +47,12 @@ class ContractBeneSearchTest {
 
     @BeforeEach
     void setUp() {
-        patientContractProcessor = new PatientContractProcessorImpl(client);
-        cut = new ContractBeneSearchImpl(patientContractProcessor, eventLogger);
+        final ThreadPoolTaskExecutor taskExecutor = new ThreadPoolTaskExecutor();
+        taskExecutor.setCorePoolSize(6);
+        taskExecutor.setMaxPoolSize(12);
+        taskExecutor.setRejectedExecutionHandler(new ThreadPoolExecutor.DiscardPolicy());
+        taskExecutor.initialize();
+        cut = new ContractBeneSearchImpl(client, eventLogger, taskExecutor);
 
         bundle = createBundle();
         lenient().when(client.requestPartDEnrolleesFromServer(anyString(), anyInt())).thenReturn(bundle);
@@ -107,10 +108,12 @@ class ContractBeneSearchTest {
         var entries = bundle1.getEntry();
         entries.add(createBundleEntry("ccw_patient_001"));
 
-        when(client.requestPartDEnrolleesFromServer(anyString(), anyInt()))
-                .thenReturn(bundle1)    // January - patient1 is active
-                .thenReturn(bundle)     // February - patient1 is NOT active
-                .thenReturn(bundle1);   // March  - patient1 is active again
+        when(client.requestPartDEnrolleesFromServer("S0000", 1))
+                .thenReturn(bundle1);    // January - patient1 is active
+        when(client.requestPartDEnrolleesFromServer("S0000", 2))
+                .thenReturn(bundle);    // January - patient1 is active
+        when(client.requestPartDEnrolleesFromServer("S0000", 3))
+                .thenReturn(bundle1);    // January - patient1 is active
 
         var response = cut.getPatients(contractNumber, Month.MARCH.getValue());
 

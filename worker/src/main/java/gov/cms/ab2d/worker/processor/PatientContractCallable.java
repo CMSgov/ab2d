@@ -1,35 +1,35 @@
 package gov.cms.ab2d.worker.processor;
 
-import com.newrelic.api.agent.Trace;
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.worker.processor.domainmodel.ContractMapping;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.hl7.fhir.dstu3.model.*;
-import org.springframework.scheduling.annotation.Async;
-import org.springframework.scheduling.annotation.AsyncResult;
-import org.springframework.stereotype.Component;
+import org.hl7.fhir.dstu3.model.Bundle;
+import org.hl7.fhir.dstu3.model.Identifier;
+import org.hl7.fhir.dstu3.model.Patient;
+import org.hl7.fhir.dstu3.model.ResourceType;
 
-import java.util.*;
-import java.util.concurrent.Future;
+import java.util.Set;
+import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
 
 @Slf4j
-@Component
-@RequiredArgsConstructor
-public class PatientContractProcessorImpl implements PatientContractProcessor {
+public class PatientContractCallable implements Callable<ContractMapping> {
     private static final String BENEFICIARY_ID = "https://bluebutton.cms.gov/resources/variables/bene_id";
+    private int month;
+    private String contractNumber;
+    private BFDClient bfdClient;
 
-    private final BFDClient bfdClient;
+    public PatientContractCallable(String contractNumber, int month, BFDClient bfdClient) {
+        this.month = month;
+        this.contractNumber = contractNumber;
+        this.bfdClient = bfdClient;
+    }
 
-    /**
-     * Process the retrieval of patient to contract mapping
-     */
-    @Trace(async = true)
-    @Async("patientContractThreadPool")
-    public Future<ContractMapping> process(String contractNumber, Integer month) {
+    @Override
+    public ContractMapping call() throws Exception {
+        System.out.println(Thread.currentThread().getName() + "-" + Thread.currentThread().getId());
         try {
             ContractMapping mapping = new ContractMapping();
             mapping.setMonth(month);
@@ -42,10 +42,11 @@ public class PatientContractProcessorImpl implements PatientContractProcessor {
             }
             mapping.setPatients(patientIDs);
             log.debug("finished reading [{}] Set<String>resources", patientIDs.size());
-            return new AsyncResult<>(mapping);
+            System.out.println("finished reading [" + patientIDs.size() + "] patients");
+            return mapping;
         } catch (Exception e) {
             log.error("Unable to get patient information for " + contractNumber + " for month " + month, e);
-            return AsyncResult.forExecutionException(e);
+            throw e;
         }
     }
 
@@ -60,7 +61,7 @@ public class PatientContractProcessorImpl implements PatientContractProcessor {
                 .map(Bundle.BundleEntryComponent::getResource)
                 .filter(resource -> resource.getResourceType() == ResourceType.Patient)
                 .map(resource -> (Patient) resource)
-                .map(patient -> extractPatientId(patient))
+                .map(this::extractPatientId)
                 .filter(StringUtils::isNotBlank)
                 .collect(Collectors.toSet());
     }
