@@ -61,46 +61,49 @@
 1. [Map the application load balancer for sandbox certificate](#map-the-application-load-balancer-for-sandbox-certificate)
 1. [Submit an "Internet DNS Change Request Form" to product owner for the sandbox application load balancer](#submit-an-internet-dns-change-request-form-to-product-owner-for-the-sandbox-application-load-balancer)
 1. [Create jenkins IAM users](#create-jenkins-iam-users)
-   [Create jenkins IAM user in the management AWS account](#create-jenkins-iam-user-in-the-management-aws-account)
-   [Create jenkins IAM user in the development AWS account](#create-jenkins-iam-user-in-the-development-aws-account)
+   * [Create jenkins IAM user in the management AWS account](#create-jenkins-iam-user-in-the-management-aws-account)
+   * [Create jenkins IAM user in the development AWS account](#create-jenkins-iam-user-in-the-development-aws-account)
 1. [Setup Jenkins master in management AWS account](#setup-jenkins-master-in-management-aws-account)
 1. [Configure Jenkins master](#configure-jenkins-master)
-   [Enable Jenkins](#enable-jenkins)
-   [Initialize the Jenkins GUI](#initialize-the-jenkins-gui)
-   [Configure SSH on Jenkins master](#configure-ssh-on-jenkins-master)
+   * [Enable Jenkins](#enable-jenkins)
+   * [Initialize the Jenkins GUI](#initialize-the-jenkins-gui)
+   * [Configure SSH on Jenkins master](#configure-ssh-on-jenkins-master)
 1. [Setup Jenkins agent in management AWS account](#setup-jenkins-agent-in-management-aws-account)
 1. [Configure Jenkins agent](#configure-jenkins-master)
-   [Create a local jenkins user](#create-a-local-jenkins-user)
-   [Install development tools on Jenkins agent](#install-development-tools-on-jenkins-agent)
-   [Configure AWS CLI for management environment on Jenkins agent](#configure-aws-cli-for-management-environment-on-jenkins-agent)
-   [Configure AWS CLI for Dev environment on Jenkins agent](#configure-aws-cli-for-dev-environment-on-jenkins-agent)
-   [Allow password authentication on Jenkins agent](#allow-password-authentication-on-jenkins-agent)
-   [Install python3, pip3, and required pip modules on Jenkins agent](#install-python3-pip3-and-required-pip-modules-on-jenkins-agent)
-   [Install Terraform on Jenkins agent](#install-terraform-on-jenkins-agent)
-   [Configure Terraform logging on Jenkins agent](#configure-terraform-logging-on-jenkins-agent)
-   [Install maven on Jenkins agent](#install-maven-on-jenkins-agent)
-   [Install jq on Jenkins agent](#install-jq-on-jenkins-agent)
-   [Add the jenkins user to the docker group](#add-the-jenkins-user-to-the-docker-group)
-   [Ensure jenkins can use the Unix socket for the Docker daemon](#ensure-jenkins-can-use-the-unix-socket-for-the-docker-daemon)
-   [Install packer on Jenkins agent](#install-packer-on-jenkins-agent)
-   [Setup ruby environment on Jenkins agent](#setup-ruby-environment-on-jenkins-agent)
-   [Install postgresql10-devel on Jenkins agent](#install-postgresql10-devel-on-jenkins-agent)
+   * [Create a local jenkins user](#create-a-local-jenkins-user)
+   * [Install development tools on Jenkins agent](#install-development-tools-on-jenkins-agent)
+   * [Configure AWS CLI for management environment on Jenkins agent](#configure-aws-cli-for-management-environment-on-jenkins-agent)
+   * [Configure AWS CLI for Dev environment on Jenkins agent](#configure-aws-cli-for-dev-environment-on-jenkins-agent)
+   * [Allow password authentication on Jenkins agent](#allow-password-authentication-on-jenkins-agent)
+   * [Install python3, pip3, and required pip modules on Jenkins agent](#install-python3-pip3-and-required-pip-modules-on-jenkins-agent)
+   * [Install Terraform on Jenkins agent](#install-terraform-on-jenkins-agent)
+   * [Configure Terraform logging on Jenkins agent](#configure-terraform-logging-on-jenkins-agent)
+   * [Install maven on Jenkins agent](#install-maven-on-jenkins-agent)
+   * [Install jq on Jenkins agent](#install-jq-on-jenkins-agent)
+   * [Add the jenkins user to the docker group](#add-the-jenkins-user-to-the-docker-group)
+   * [Ensure jenkins can use the Unix socket for the Docker daemon](#ensure-jenkins-can-use-the-unix-socket-for-the-docker-daemon)
+   * [Install packer on Jenkins agent](#install-packer-on-jenkins-agent)
+   * [Setup ruby environment on Jenkins agent](#setup-ruby-environment-on-jenkins-agent)
+   * [Install postgresql10-devel on Jenkins agent](#install-postgresql10-devel-on-jenkins-agent)
 1. [Create GitHub user for Jenkins automation](#create-github-user-for-jenkins-automation)
 1. [Configure Jenkins for AB2D](#configure-jenkins-for-ab2d)
-   [Configure jenkins SSH credentials](#configure-jenkins-ssh-credentials)
-   [Configure "personal access token" public GitHub credentials](#configure-personal-access-token-public-github-credentials)
-   [Configure public GitHub credentials](#configure-public-github-credentials)
-   [Install the SSH plugin](#install-the-ssh-plugin)
-   [Configure the SSH plugin](#configure-the-ssh-plugin)
-   [Install the "Scheduled Build" plugin](#install-the-scheduled-build-plugin)
-   [Configure GitHub plugin](#configure-github-plugin)
-   [Install and configure the Authorize Project plugin](#install-and-configure-the-authorize-project-plugin)
-   [Install and configure the GitHub Authentication plugin including adding GitHub users](#install-and-configure-the-github-authentication-plugin-including-adding-github-users)
-   [Add the Jenkins agent node](#add-the-jenkins-agent-node)
-   [Create a "development" folder in Jenkins](#create-a-development-folder-in-jenkins)
-   [Configure a Jenkins project for development application deploy](#configure-a-jenkins-project-for-development-application-deploy)
-   [Create a "sandbox" folder in Jenkins](#create-a-sandbox-folder-in-jenkins)
-   [Configure a Jenkins project for sandbox application deploy](#configure-a-jenkins-project-for-sandbox-application-deploy)
+   * [Configure jenkins SSH credentials](#configure-jenkins-ssh-credentials)
+   * [Configure "personal access token" public GitHub credentials](#configure-personal-access-token-public-github-credentials)
+   * [Configure public GitHub credentials](#configure-public-github-credentials)
+   * [Install the SSH plugin](#install-the-ssh-plugin)
+   * [Configure the SSH plugin](#configure-the-ssh-plugin)
+   * [Install the "Scheduled Build" plugin](#install-the-scheduled-build-plugin)
+   * [Configure GitHub plugin](#configure-github-plugin)
+   * [Install and configure the Authorize Project plugin](#install-and-configure-the-authorize-project-plugin)
+   * [Install and configure the GitHub Authentication plugin including adding GitHub users](#install-and-configure-the-github-authentication-plugin-including-adding-github-users)
+   * [Log on to Jenkins using GitHub OAuth authentication](#log-on-to-jenkins-using-github-oauth-authentication)
+   * [Add the Jenkins agent node](#add-the-jenkins-agent-node)
+   * [Create a "development" folder in Jenkins](#create-a-development-folder-in-jenkins)
+   * [Configure a Jenkins project for development application deploy](#configure-a-jenkins-project-for-development-application-deploy)
+   * [Create a "sandbox" folder in Jenkins](#create-a-sandbox-folder-in-jenkins)
+   * [Configure a Jenkins project for sandbox application deploy](#configure-a-jenkins-project-for-sandbox-application-deploy)
+   * [Configure Cloud Protection Manager](#configure-cloud-protection-manager)
+     * [Ensure that all instances have CPM backup tags](#ensure-that-all-instances-have-cpm-backup-tags)
 1. [Upgrade Jenkins](#upgrade-jenkins)
 1. [Configure Jenkins user to allow for SSH](#configure-jenkins-user-to-allow-for-ssh)
 1. [Configure executors for Jenkins master](#configure-executors-for-jenkins-master)
@@ -7934,896 +7937,6 @@
 
    1. Log on to the Jenkins GUI
 
-1. Select **Manage Jenkins** from the leftmost panel
-
-1. Select **Manage Plugins**
-
-1. Select the **Available** tab
-
-1. Select **Check now**
-
-1. Scroll down to "GitHub Authentication"
-
-1. Check **GitHub Authentication**
-
-1. Select **Download now and install after restart**
-
-1. Check **Restart Jenkins when installation is complete and no jobs are running**
-
-1. Wait for Jenkins to restart
-
-1. Log on to Jenkins
-
-1. Select **Manage Jenkins** in the leftmost panel
-
-1. Scroll down to the "Security" section
-
-1. Select **Configure Global Security** under the "Security" section
-
-1. Select the **Github Authentication Plugin** radio button under "Security Realm" within the "Authentication" section
-
-1. Configure "Global GitHub OAuth Settings" as follows
-
-   - **GitHub Web URI:** https://github.com
-
-   - **GitHub API URI:** https://api.github.com
-
-   - **Client ID:** {jenkins-github-authentication client id from 1password}
-
-   - **Client Secret:** {jenkins-github-authentication client secret from 1password}
-
-   - **OAuth Scope(s):** read:org,user:email,repo
-
-1. Select **Apply**
-
-1. Scroll down to the **Authorization** section
-
-1. Select the **Matrix-based security** radio button
-
-1. Add desired GitHub users
-
-   1. Select **Add user or group**
-
-   1. Type the desired GitHub user into the **User or group name** text box
-
-   1. Select **OK**
-
-   1. Set desired permissions for the user using the checkboxes
-
-   1. Select **Apply**
-
-   1. Repeat this step for any additional users
-
-1. Select **Save**
-
-1. Log out of Jenkins
-
-### Log on to Jenkins using GitHub OAuth authentication
-
-1. Open Jenkins again
-
-1. Note that you will be prompted to log on to GitHub, if you are not already logged in
-
-1. Log on to GitHub
-
-1. Note the following appears on the "Authorize jenkins-github-authentication" page
-
-   - **jenkins-github-authentication by lhanekam:** wants to access your {your github user} account
-
-   - **Organizations and teams:** Read-only access
-
-   - **Repositories:** Public and private
-
-   - **Personal user data:** Email addresses (read-only)
-
-   - **Organization access:** CMSgov
-
-1. Select **Authorize lhanekam**
-
-1. Verify that the Jenkins page loads
-
-### Add the Jenkins agent node
-
-1. Open a terminal
-
-1. Get and note the private IP address of Jenkins agent to the clipboard
-
-   1. Set the management AWS profile
-
-      ```ShellSession
-      $ export AWS_PROFILE=ab2d-mgmt-east-dev
-      ```
-
-   1. Copy the private IP address of Jenkins agent to the clipboard
-   
-      ```ShellSession
-      $ aws --region us-east-1 ec2 describe-instances \
-        --filters "Name=tag:Name,Values=ab2d-jenkins-agent" \
-        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
-        --output text
-      ```
-
-   1. Note the private IP address of the Jenkins agent
-
-      *Format:*
-
-      ```
-      {private ip address of the jenkins agent}
-      ```
-
-      *Example:*
-
-      ```
-      10.242.37.53
-      ```
-
-1. Get and note the number of CPUs for Jenkins agent
-
-   1. Set the management AWS profile
-
-      ```ShellSession
-      $ export AWS_PROFILE=ab2d-mgmt-east-dev
-      ```
-
-   1. Set the region
-
-      ```ShellSession
-      $ export REGION=us-east-1
-      ```
-      
-   1. Get the instance type of the Jenkins agent
-   
-      ```ShellSession
-      $ JENKINS_AGENT_INSTANCE_TYPE=$(aws --region "${REGION}" ec2 describe-instances \
-        --filters "Name=tag:Name,Values=ab2d-jenkins-agent" \
-        --query="Reservations[*].Instances[?State.Name == 'running'].InstanceType" \
-        --output text)
-      ```
-
-   1. Get the numbr of CPUs for Jenkins agent
-
-      ```ShellSession
-      $ aws --region "${REGION}" ec2 describe-instance-types \
-        --instance-types "${JENKINS_AGENT_INSTANCE_TYPE}" --query "InstanceTypes[*].VCpuInfo.DefaultVCpus" \
-        --output text
-      ```
-
-   1. Note the number that is output
-
-      *Format:*
-
-      ```
-      {cpu count for jenkins agent}
-      ```
-
-      *Example:*
-
-      ```
-      4
-      ```
-      
-1. Log on to the Jenkins GUI (if not already logged in)
-
-   1. Ensure that you are connected to the Cisco VPN
-
-   1. Open Chrome
-
-   1. Enter the following in the address bar
-
-      *Format:*
-
-      > http://{jenkins master private ip}:8080
-
-   1. Log on to the Jenkins GUI
-      
-1. Select **Manage Jenkins**
-
-1. Select **Manage Nodes and Clouds** under the "System Configuration" section
-
-1. Select **New Node** from the leftmost panel
-
-1. Type the following in the **Node name** text box
-
-   ```
-   agent01
-   ```
-
-1. Check **Permanent Agent**
-
-1. Select **OK** on the "New Node" page
-
-1. Configure the Jenkins agent node
-
-   *Format:*
-   
-   - **Name:** agent01
-
-   - **Description:** Agent 01
-
-   - **# of executors:** {cpu count for jenkins agent}
-
-   - **Remote root directory:** /home/jenkins/jenkins_agent
-
-   - **Labels:** {leave blank}
-
-   - **Usage:** Use this node as much as possible
-
-   - **Launch method:** Launch agent agents via SSH
-
-   - **Host:** {private ip address of the jenkins agent}
-
-   - **Credentials:** jenkins
-
-   - **Host Key Verification Strategy:** Known hosts file Verification Strategy
-
-   - **Availability:** Keep this agent online as much as possible
-
-   *Example:*
-   
-   - **Name:** agent01
-
-   - **Description:** Agent 01
-
-   - **# of executors:** 4
-
-   - **Remote root directory:** /home/jenkins/jenkins_agent
-
-   - **Labels:** {leave blank}
-
-   - **Usage:** Use this node as much as possible
-
-   - **Launch method:** Launch agent agents via SSH
-
-   - **Host:** 10.242.37.53
-
-   - **Credentials:** jenkins
-
-   - **Host Key Verification Strategy:** Known hosts file Verification Strategy
-
-   - **Availability:** Keep this agent online as much as possible
-
-1. Note that the "Labels" property that we are not currently using is typically used to group nodes that are used for different functions
-
-   *Examples:*
-
-   - slave01 to slave05 might all have the label "development_builds"
-
-   - slave31 to slave35 might all have the label "production_builds"
-
-1. Select **Save**
-
-1. Note that the new agent node will have an X on it which means that it is still being setup
-
-1. Select the new agent node
-
-1. Select **Log** from the leftmost panel
-
-1. Verify that the following appears at the end of the log file
-
-   ```
-   Agent successfully connected and online
-   ```
-
-1. Select **Jenkins** at the top left of the page
-
-### Create a "development" folder in Jenkins
-
-1. Log on to the Jenkins GUI (if not already logged in)
-
-   1. Ensure that you are connected to the Cisco VPN
-
-   1. Open Chrome
-
-   1. Enter the following in the address bar
-
-      *Format:*
-
-      > http://{jenkins master private ip}:8080
-
-   1. Log on to the Jenkins GUI
-
-1. Select **New Item** from the leftmost panel
-
-1. Type the following in the **Enter an item name** text box
-
-   ```
-   development
-   ```
-
-1. Select **Folder**
-
-1. Select **OK** on the "Enter an item name" page
-
-1. Select **Save**
-
-1. Select the **Jenkins** bread crumb in the top left of the page
-
-### Configure a Jenkins project for development application deploy
-
-1. Note that a Jenkins project is the same as the deprecated Jenkins job (even though job is still used in the GUI)
-
-1. Log on to the Jenkins GUI (if not already logged in)
-
-   1. Ensure that you are connected to the Cisco VPN
-
-   1. Open Chrome
-
-   1. Enter the following in the address bar
-
-      *Format:*
-
-      > http://{jenkins master private ip}:8080
-
-   1. Log on to the Jenkins GUI
-
-1. Select the **development** link
-
-1. Select **New Item** from the leftmost panel
-
-1. Type the following in the **Enter an item name** text box
-
-   ```
-   deploy-to-development
-   ```
-
-1. Select **Freestyle project**
-
-1. Select **OK** on the "Enter an item name" page
-
-1. Configure log rotation strategy for jenkins builds
-
-   1. Check **Discard old builds**
-
-   1. Configure "Discard old builds" as follows
-
-      - **Strategy:** Log Rotation
-
-      - **Days to keep builds:** 14
-
-      - **Max # of builds to keep:** 14
-
-1. Configure GitHub project
-
-   1. Check **GitHub project**
-
-   1. Type the following in the **Project url** text box
-
-      ```
-      https://github.com/CMSgov/ab2d
-      ```
-
-   1. Select **Apply**
-
-1. Check **This project is parameterized**
-
-1. Add the "CMS_ENV_PARAM" parameter
-
-   1. Select **Add Parameter**
-
-   1. Select **String Parameter**
-
-   1. Configure the "String Parameter" as follows
-
-      - **Name:** CMS_ENV_PARAM
-
-      - **Default Value:** ab2d-dev
-
-      - **Description:**
-
-        ```
-	Corresponds to the deployment environment associated with an AWS account.
-	```
-
-   1. Check **Trim the string**
-
-   1. Select **Apply**
-
-1. Add the "CMS_ECR_REPO_ENV_PARAM" parameter
-
-   1. Select **Add Parameter**
-
-   1. Select **String Parameter**
-
-   1. Configure the "String Parameter" as follows
-
-      - **Name:** CMS_ECR_REPO_ENV_PARAM
-
-      - **Default Value:** ab2d-mgmt-east-dev
-
-      - **Description:**
-
-        ```
-	Corresponds to the management environment associated with an AWS account.
-	```
-
-   1. Check **Trim the string**
-
-   1. Select **Apply**
-
-1. Add the "REGION_PARAM" parameter
-
-   1. Select **Add Parameter**
-
-   1. Select **String Parameter**
-
-   1. Configure the "String Parameter" as follows
-
-      - **Name:** REGION_PARAM
-
-      - **Default Value:** us-east-1
-
-      - **Description:**
-
-        ```
-	Corresponds to AWS region of the target VPC.
-	```
-
-   1. Check **Trim the string**
-
-   1. Select **Apply**
-
-1. Add the "VPC_ID_PARAM" parameter
-
-   1. Select **Add Parameter**
-
-   1. Select **String Parameter**
-
-   1. Configure the "String Parameter" as follows
-
-      - **Name:** VPC_ID_PARAM
-
-      - **Default Value:** vpc-0c6413ec40c5fdac3
-
-      - **Description:**
-
-        ```
-	Corresponds to the VPC ID of the target VPC.
-	```
-
-   1. Check **Trim the string**
-
-   1. Select **Apply**
-
-1. Add the "SSH_USERNAME_PARAM" parameter
-
-   1. Select **Add Parameter**
-
-   1. Select **String Parameter**
-
-   1. Configure the "String Parameter" as follows
-
-      - **Name:** SSH_USERNAME_PARAM
-
-      - **Default Value:** ec2-user
-
-      - **Description:**
-
-        ```
-	Corresponds to the main linux user for EC2 instances.
-	```
-
-   1. Check **Trim the string**
-
-   1. Select **Apply**
-
-1. Add the "EC2_INSTANCE_TYPE_API_PARAM" parameter
-
-   1. Select **Add Parameter**
-
-   1. Select **String Parameter**
-
-   1. Configure the "String Parameter" as follows
-
-      - **Name:** EC2_INSTANCE_TYPE_API_PARAM
-
-      - **Default Value:** m5.xlarge
-
-      - **Description:**
-
-        ```
-	Corresponds to the EC2 instance type of API nodes.
-	```
-
-   1. Check **Trim the string**
-
-   1. Select **Apply**
-
-1. Add the "EC2_INSTANCE_TYPE_WORKER_PARAM" parameter
-
-   1. Select **Add Parameter**
-
-   1. Select **String Parameter**
-
-   1. Configure the "String Parameter" as follows
-
-      - **Name:** EC2_INSTANCE_TYPE_WORKER_PARAM
-
-      - **Default Value:** m5.xlarge
-
-      - **Description:**
-
-        ```
-	Corresponds to the EC2 instance type of worker nodes.
-	```
-
-   1. Check **Trim the string**
-
-   1. Select **Apply**
-
-1. Add the "EC2_DESIRED_INSTANCE_COUNT_API_PARAM" parameter
-
-   1. Select **Add Parameter**
-
-   1. Select **String Parameter**
-
-   1. Configure the "String Parameter" as follows
-
-      - **Name:** EC2_DESIRED_INSTANCE_COUNT_API_PARAM
-
-      - **Default Value:** 1
-
-      - **Description:**
-
-        ```
-	Corresponds to the desired API node count.
-	```
-
-   1. Check **Trim the string**
-
-   1. Select **Apply**
-
-1. Add the "EC2_MINIMUM_INSTANCE_COUNT_API_PARAM" parameter
-
-   1. Select **Add Parameter**
-
-   1. Select **String Parameter**
-
-   1. Configure the "String Parameter" as follows
-
-      - **Name:** EC2_MINIMUM_INSTANCE_COUNT_API_PARAM
-
-      - **Default Value:** 1
-
-      - **Description:**
-
-        ```
-	Corresponds to the minumum API node(s) count.
-	```
-
-   1. Check **Trim the string**
-
-   1. Select **Apply**
-
-1. Add the "EC2_MAXIMUM_INSTANCE_COUNT_API_PARAM" parameter
-
-   1. Select **Add Parameter**
-
-   1. Select **String Parameter**
-
-   1. Configure the "String Parameter" as follows
-
-      - **Name:** EC2_MAXIMUM_INSTANCE_COUNT_API_PARAM
-
-      - **Default Value:** 1
-
-      - **Description:**
-
-        ```
-	Corresponds to the maximum API node(s) count.
-	```
-
-   1. Check **Trim the string**
-
-   1. Select **Apply**
-
-1. Add the "EC2_DESIRED_INSTANCE_COUNT_WORKER_PARAM" parameter
-
-   1. Select **Add Parameter**
-
-   1. Select **String Parameter**
-
-   1. Configure the "String Parameter" as follows
-
-      - **Name:** EC2_DESIRED_INSTANCE_COUNT_WORKER_PARAM
-
-      - **Default Value:** 1
-
-      - **Description:**
-
-        ```
-	Corresponds to the desired worker node count.
-	```
-
-   1. Check **Trim the string**
-
-   1. Select **Apply**
-
-1. Add the "EC2_MINIMUM_INSTANCE_COUNT_WORKER_PARAM" parameter
-
-   1. Select **Add Parameter**
-
-   1. Select **String Parameter**
-
-   1. Configure the "String Parameter" as follows
-
-      - **Name:** EC2_MINIMUM_INSTANCE_COUNT_WORKER_PARAM
-
-      - **Default Value:** 1
-
-      - **Description:**
-
-        ```
-	Corresponds to the minumum worker node(s) count.
-	```
-
-   1. Check **Trim the string**
-
-   1. Select **Apply**
-
-1. Add the "EC2_MAXIMUM_INSTANCE_COUNT_WORKER_PARAM" parameter
-
-   1. Select **Add Parameter**
-
-   1. Select **String Parameter**
-
-   1. Configure the "String Parameter" as follows
-
-      - **Name:** EC2_MAXIMUM_INSTANCE_COUNT_WORKER_PARAM
-
-      - **Default Value:** 1
-
-      - **Description:**
-
-        ```
-	Corresponds to the maximum worker node(s) count.
-	```
-
-   1. Check **Trim the string**
-
-   1. Select **Apply**
-
-1. Add the "DATABASE_SECRET_DATETIME_PARAM" parameter
-
-   1. Select **Add Parameter**
-
-   1. Select **String Parameter**
-
-   1. Configure the "String Parameter" as follows
-
-      - **Name:** DATABASE_SECRET_DATETIME_PARAM
-
-      - **Default Value:** 2020-01-02-09-15-01
-
-      - **Description:**
-
-        ```
-	Corresponds to a datatime string that is needed to get secrets in secrets manager.
-	```
-
-   1. Check **Trim the string**
-
-   1. Select **Apply**
-
-1. Add the "DEBUG_LEVEL_PARAM" parameter
-
-   1. Select **Add Parameter**
-
-   1. Select **String Parameter**
-
-   1. Configure the "String Parameter" as follows
-
-      - **Name:** DEBUG_LEVEL_PARAM
-
-      - **Default Value:** WARN
-
-      - **Description:**
-
-        ```
-	Corresponds to terraform logging level.
-	```
-
-   1. Check **Trim the string**
-
-   1. Select **Apply**
-
-1. Add the "INTERNET_FACING_PARAM" parameter
-
-   1. Select **Add Parameter**
-
-   1. Select **String Parameter**
-
-   1. Configure the "String Parameter" as follows
-
-      - **Name:** INTERNET_FACING_PARAM
-
-      - **Default Value:** false
-
-      - **Description:**
-
-        ```
-	Corresponds to whether the application load balancer is internet facing or only available to VPN.
-	```
-
-   1. Check **Trim the string**
-
-   1. Select **Apply**
-
-1. Restrict where the project can be run
-
-   1. Check **Restrict where this project can be run**
-
-   1. Type the following in the **Label Expression** text box
-
-      ```
-      agent01
-      ```
-
-   1. Select **Apply**
-
-1. Scroll down to the "Source Code Management" section
-
-1. Add source control management
-
-   1. Select the **Git** radio button under "Source Code Management"
-
-   1. Note that credentials are not needed since this is a public repository
-
-   1. Configure the "Repositories" section as follows
-
-      *Example for "master" branch"*
-
-      - **Repository URL:** https://github.com/CMSgov/ab2d
-
-      - **Credentials:** - none -
-
-      - **Branch Specifier:** */master
-
-   1. Select **Apply**
-
-1. Scroll down to the "Build Triggers" section
-
-1. Configure build triggers
-
-   1. Check **Poll SCM**
-
-   1. Type the following in the **Schedule** text box
-
-      ```
-      H/5 * * * *
-      ```
-
-   1. Select **Apply**
-
-1. Scroll down to the "Build Environment" section
-
-1. Check **Add timestamps to the Console Output**
-
-1. Scroll down to the "Build" section
-
-1. Configure the build
-
-   1. Select **Add build step**
-
-   1. Select **Execute shell**
-
-   1. Type the following in **Command** text box
-
-      ```
-      cd ./Deploy
-      chmod +x ./bash/deploy-application.sh
-      ./bash/deploy-application.sh
-      ```
-
-   1. Select **Apply**
-
-1. Select **Save**
-
-1. Test the deployment
-
-   1. Select **Build with Parameters**
-
-   1. Note that the parameters and their default values are displayed
-
-   1. Scroll down to the bottom of the parameters
-
-   1. Select **Build**
-
-1. View the deployment output
-
-   1. Select the build number under "Build History" for the current build
-
-      *Example:*
-
-      ```
-      #1
-      ```
-
-   1. Select **Console Output**
-
-   1. Observe the output
-
-1. If the last line of the output is "Finished: FAILURE", do the following:
-
-   1. Review the deployment output
-
-   1. Resolve the issue
-
-   1. Try running the the build again
-
-1. Verify that the last line of output is as follows:
-
-   ```
-   Finished: SUCCESS
-   ```
-
-1. Collect timing metrics based on the output and observation of the "Destroy old deployment" process
-
-   *New deployment active:* 16:41
-
-   *Total time including cleanup:* 24:01
-
-   Process                                   |Start Time|End Time|Process Time
-   ------------------------------------------|----------|--------|------------
-   Prepare for deployment                    |16:07:07  |16:07:31|00:24
-   Build API and worker                      |16:07:31  |16:08:31|01:00
-   Push API and worker images to ECR         |16:08:31  |16:09:39|01:08
-   Complete API module automation            |16:09:39  |16:10:40|01:01
-   Complete worker module automation         |16:10:40  |16:11:31|00:51
-   Complete CloudWatch, WAF, and Shield      |16:11:31  |16:11:38|00:07
-   Wait for API and Worker ECS tasks to start|16:11:38  |16:23:48|12:10
-   New deployment active                     |16:23:48  |16:23:48|00:00
-   Destroy old deployment                    |16:23:48  |16:31:08|07:20
-
-### Create a "sandbox" folder in Jenkins
-
-1. Log on to the Jenkins GUI (if not already logged in)
-
-   1. Ensure that you are connected to the Cisco VPN
-
-   1. Open Chrome
-
-   1. Enter the following in the address bar
-
-      *Format:*
-
-      > http://{jenkins master private ip}:8080
-
-   1. Log on to the Jenkins GUI
-
-1. Select **New Item** from the leftmost panel
-
-1. Type the following in the **Enter an item name** text box
-
-   ```
-   sandbox
-   ```
-
-1. Select **Folder**
-
-1. Select **OK** on the "Enter an item name" page
-
-1. Select **Save**
-
-1. Select the **Jenkins** bread crumb in the top left of the page
-
-### Configure a Jenkins project for sandbox application deploy
-
-1. Note that a Jenkins project is the same as the deprecated Jenkins job (even though job is still used in the GUI)
-
-1. Log on to the Jenkins GUI (if not already logged in)
-
-   1. Ensure that you are connected to the Cisco VPN
-
-   1. Open Chrome
-
-   1. Enter the following in the address bar
-
-      *Format:*
-
-      > http://{jenkins master private ip}:8080
-
-   1. Log on to the Jenkins GUI
-
 1. Select the **sandbox** link
 
 1. Select **New Item** from the leftmost panel
@@ -9324,6 +8437,58 @@
    Wait for API and Worker ECS tasks to start|16:34:56  |16:48:02|13:06
    New deployment active                     |16:48:02  |16:48:02|00:00
    Destroy old deployment                    |16:48:02  |16:49:30|07:44
+
+### Configure Cloud Protection Manager
+
+#### Ensure that all instances have CPM backup tags
+
+1. Open Chrome
+
+1. Enter the following in the address bar
+
+   > https://cloudtamer.cms.gov/portal
+
+1. Select the target AWS account
+
+   ```
+   AB2D Management
+   ```
+
+1. Ensure that the controller has been tagged as follows
+
+   1. Select **EC2**
+
+   1. Select **Instances** under he "Instances" section from the leftmost panel
+
+   1. Select the following EC2 instance
+
+      ```
+      ab2d-jenkins-agent
+      ```
+
+   1. Select the **Tags** tab
+
+   1. Verify that the following tag and value is configured
+
+      Tags      |Value
+      ----------|--------
+      cpm backup|4HR Daily Weekly Monthly
+
+1. Ensure that an API node has been tagged as follows
+
+   1. Select the following EC2 instance
+
+      ```
+      ab2d-jenkins-master
+      ```
+
+   1. Select the **Tags** tab
+
+   1. Verify that the following tag and value is configured
+
+      Tags      |Value
+      ----------|------------------------
+      cpm backup|4HR Daily Weekly Monthly
 
 ## Upgrade Jenkins
 
