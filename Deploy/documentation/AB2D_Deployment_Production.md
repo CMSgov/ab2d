@@ -36,9 +36,11 @@ lication-load-balancer)
    * [Request access to VictorOps](#request-access-to-victorops)
    * [Bookmark important VictorOps URLs](#bookmark-important-victorops-urls)
    * [Add users to the AB2D team](#add-users-to-the-ab2d-team)
+   * [Set up paging policy for a user](#set-up-paging-policy-for-a-user)
    * [Install the VictorOps mobile app](#install-the-victorops-mobile-app)
    * [Create on-call rotations and add relevant team members](#create-on-call-rotations-and-add-relevant-team-members)
    * [Create an escalation policy](#create-an-escalation-policy)
+   * [Create a route key and verify escalation policy](#create-a-route-key-and-verify-escalation-policy)
    * [Forward New Relic alerts to the VictorOps alerting service](#forward-new-relic-alerts-to-the-victorops-alerting-service)
    * [Forward AWS CloudWatch alerts to the VictorOps alerting service](#forward-aws-cloudwatch-alerts-to-the-victorops-alerting-service)
 1. [Configure Cloud Protection Manager](#configure-cloud-protection-manager)
@@ -1664,6 +1666,56 @@ lication-load-balancer)
 
 1. Select **Close** on the "Success" window
 
+### Set up paging policy for a user
+
+1. Note the following is an example of a three step paging policy
+
+   - **Step 1:**
+
+     ```
+     Immediately...
+     - Send an SMS to {mobile phone number}
+     - Execute the next step if I have not responded within 5 minutes
+     ```
+
+   - **Step 2:**
+
+     ```
+     Then...
+     - Send an SMS to {mobile phone number}
+     - Execute the next step if I have not responded within 5 minutes
+     ```
+
+   - **Step 3:**
+
+     ```
+     Finally...
+     - Every 5 minutes until we have reached you
+     - Make a phone call to {mobile phone number}
+     ```
+
+1. If a user wants to change his "Primary Paging Policy", he does the following
+
+   1. Log on to VictorOps
+
+   1. Select the username in the top right of the page
+
+   1. Select **Profile**
+
+   1. Configure desired primary paging policy
+
+   1. Select **Save**
+
+1. If a global admin wants to set the "Primary Paging Policy" for someone else, he does the following
+
+   1. Log on to VictorOps
+
+   1. Select the **User** tab
+
+   1. Configure desired primary paging policy
+
+   1. Select **Save**
+
 ### Install the VictorOps mobile app
 
 > *** TO DO ***: Determine if we want to use this.
@@ -1831,6 +1883,40 @@ lication-load-balancer)
    - **Third dropdown:** {devops engineer}
 
 1. Select **Save**
+
+### Create a route key and verify escalation policy
+
+1. Log on to VictorOps
+
+1. Select the **Settings** tab
+
+1. Scroll to the bottom of the page
+
+1. Select **Add Key**
+
+1. Type the following in the **Routing Key** text box
+
+1. Select the following from the **Escalation Policies** dropdown
+
+   ```
+   AB2D - Standard
+   ```
+
+1. Select the checkmark button to the right of the dropdown
+
+1. Select the **Teams** tab
+
+1. Select the following team
+
+   ```
+   AB2D
+   ```
+
+1. Select the **Escalation Policies** tab
+
+1. Expand the escalation policy
+
+1. Note that the following now appears under "Routes"
 
 ### Forward New Relic alerts to the VictorOps alerting service
 
