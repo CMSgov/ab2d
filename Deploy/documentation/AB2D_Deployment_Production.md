@@ -43,6 +43,8 @@ lication-load-balancer)
    * [Forward AWS CloudWatch alerts to the VictorOps alerting service](#forward-aws-cloudwatch-alerts-to-the-victorops-alerting-service)
 1. [Configure Cloud Protection Manager](#configure-cloud-protection-manager)
    * [Ensure that all instances have CPM backup tags](#ensure-that-all-instances-have-cpm-backup-tags)
+   * [Complete CPM questionnaire](#complete-cpm-questionnaire)
+   * [Send email to CMS Cloud Operations](#send-email-to-cms-cloud-operations)
 
 ## Obtain and import api.ab2d.cms.gov entrust certificate](#obtain-and-import-apiab2dcmsgov-entrust-certificate)
 
@@ -1937,3 +1939,111 @@ lication-load-balancer)
       Tags      |Value
       ----------|------------------------
       cpm backup|4HR Daily Weekly Monthly
+
+### Complete CPM questionnaire
+
+1. Open Chrome
+
+1. Enter the following in the addess bar
+
+   > https://confluence.cms.gov/pages/viewpage.action?spaceKey=GDITAQ&title=CPM+Backup+Setup
+
+1. Select the following under the "Getting Started" section
+
+   ```
+   CPM Onboarding Questionnaire.docx
+   ```
+
+1. Select **Download**
+
+1. Wait for the download to complete
+
+1. Open the downloaded file
+
+1. Fill out the form as follows
+
+   - **Request Date:** {today's date}
+
+   - **JIRA Ticket No:** {blank}
+
+   - **Project Name:** AB2D (under BCDA)
+
+   - **Requestor Name:** {cms product owner}
+
+   - **Requestor Organization:** {cms product owner organization}
+
+   - **Requestor Phone Number:** {cms product owner phone number}
+
+   - **Requestor Email:** {cms product owner email}
+
+   - **Number of Windows Servers:** 0
+
+   - **Number of Linux Servers:** 4
+
+   - **Provide a description of current...:**
+
+     ```
+     RDS Snapshots - Automated backups - Enabled (7 Days)
+     EBS Snapshots - Not yet configured
+     ```
+
+   - **Choose Snapshot Frequency (4 Hour):** checked
+
+   - **Choose Snapshot Frequency (Daily):** checked
+
+   - **Choose Snapshot Frequency (Weekly):** checked
+
+   - **Choose Snapshot Frequency (Monthly):** checked
+
+   - **Choose Snapshot Frequency (Annually):** unchecked
+
+   - **Backups/snapshots maintained by...:** DevOps Team
+
+   - **Provide email address for automated notification:** {ab2d team email}
+
+   - **Users Requiring Access:** {list DevOps engineer(s), backend engineer(s), and engineering lead}
+
+   - **Comments and Special Instructions:**
+
+     ```
+     Should retain snapshots for 7 years.
+     ```
+
+1. Save the form with the following name
+
+   ```
+   CPM Onboarding Questionnaire - AB2D Prod.docx
+   ```
+
+1. Close the form
+
+### Send email to CMS Cloud Operations
+
+1. Send the following email
+
+   *Format:*
+
+   ```
+   **TO:** CMSCLOUDOPERATIONS@cms.hhs.gov
+
+   **CC:** {cms product owner} {scrum master}
+
+   **BCC:** (devops engineer}
+
+   Hello,
+
+   We would like to onboard the AB2D project to Cloud Protection Manager. Andrew Harnish (copied on this email) is the CMS Product Owner.
+
+   Note the following about the AB2D project:
+
+   •	We have five AWS accounts.
+   •	The RDS and EC2 instances have “cpm backup” tags.
+
+   I have downloaded the questionnaire and filled one out for each of the five AWS accounts in preparation for the Jira tickets that you will create. I have attached one of the completed questionnaires as an example. Let me know if you see any issues with it.
+
+   Thanks for your consideration.
+
+   {devops engineer signature}
+   ```
+
+1. Wait for CMS Cloud Operations to respond
