@@ -57,6 +57,8 @@ public class ContractBeneSearchImpl implements ContractBeneSearch {
         contractBeneficiaries.setContractNumber(contractNumber);
         contractBeneficiaries.setPatients(new ArrayList<>());
 
+        long start = System.currentTimeMillis();
+
         for (ContractMapping mapping : results) {
             Set<String> patients = mapping.getPatients();
             if (patients != null && !patients.isEmpty()) {
@@ -66,6 +68,9 @@ public class ContractBeneSearchImpl implements ContractBeneSearch {
                 }
             }
         }
+
+        long end = System.currentTimeMillis();
+        log.info("Time to add date range to patients {}", end - start);
 
         return contractBeneficiaries;
     }
