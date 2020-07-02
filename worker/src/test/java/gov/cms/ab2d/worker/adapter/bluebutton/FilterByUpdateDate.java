@@ -38,7 +38,7 @@ public class FilterByUpdateDate {
     void getAll() throws ParseException {
         OffsetDateTime earliest = OffsetDateTime.parse(Constants.SINCE_EARLIEST_DATE);
         String patientId = "-19990000002901";
-        GetPatientsByContractResponse.PatientDTO patient = new GetPatientsByContractResponse.PatientDTO();
+        ContractBeneficiaries.PatientDTO patient = new ContractBeneficiaries.PatientDTO();
         patient.setPatientId(patientId);
         FilterOutByDate.DateRange d1 = new FilterOutByDate.DateRange(new Date(0), new Date());
         patient.setDateRangesUnderContract(Arrays.asList(d1));

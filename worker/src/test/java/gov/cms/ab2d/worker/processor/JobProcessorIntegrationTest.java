@@ -22,7 +22,7 @@ import gov.cms.ab2d.eventlogger.eventloggers.sql.SqlEventLogger;
 import gov.cms.ab2d.eventlogger.events.*;
 import gov.cms.ab2d.eventlogger.reports.sql.DoAll;
 import gov.cms.ab2d.eventlogger.utils.UtilMethods;
-import gov.cms.ab2d.worker.adapter.bluebutton.ContractAdapter;
+import gov.cms.ab2d.worker.adapter.bluebutton.ContractBeneSearch;
 import gov.cms.ab2d.worker.service.FileService;
 import org.hl7.fhir.dstu3.model.Bundle;
 import org.hl7.fhir.dstu3.model.ExplanationOfBenefit;
@@ -85,7 +85,7 @@ class JobProcessorIntegrationTest {
     private JobOutputRepository jobOutputRepository;
     @Autowired
     @Qualifier("contractAdapterStub")
-    private ContractAdapter contractAdapterStub;
+    private ContractBeneSearch contractBeneSearchStub;
     @Autowired
     private OptOutRepository optOutRepository;
     @Autowired
@@ -152,7 +152,7 @@ class JobProcessorIntegrationTest {
                 fileService,
                 jobRepository,
                 jobOutputRepository,
-                contractAdapterStub,
+                contractBeneSearchStub,
                 contractProcessor,
                 logManager
         );
