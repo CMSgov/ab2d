@@ -32,11 +32,7 @@ import java.nio.file.Paths;
 import java.text.ParseException;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static gov.cms.ab2d.worker.processor.StreamHelperImpl.FileOutputType.NDJSON;
@@ -171,16 +167,7 @@ class ContractProcessorUnitTest {
     @Test
     @DisplayName("When many patientId are present, 'PercentageCompleted' should be updated many times")
     void whenManyPatientIdsAreProcessed_shouldUpdatePercentageCompletedMultipleTimes() throws Exception {
-        var contract = contractData.getContract();
-        var patients = createPatientsByContractResponse(contract).getPatients();
-        List<PatientDTO> manyPatientIds = new ArrayList<>();
-        manyPatientIds.addAll(patients);
-        manyPatientIds.addAll(patients);
-        manyPatientIds.addAll(patients);
-        manyPatientIds.addAll(patients);
-        manyPatientIds.addAll(patients);
-        manyPatientIds.addAll(patients);
-        patientsByContract.setPatients(manyPatientIds);
+        patientsByContract.setPatients(createPatients(18));
         var jobOutputs = cut.process(outputDir, contractData, NDJSON);
 
         assertFalse(jobOutputs.isEmpty());
@@ -189,8 +176,7 @@ class ContractProcessorUnitTest {
     }
 
     private List<OptOut> getOptOutRows(ContractBeneficiaries patientsByContract) {
-        return patientsByContract.getPatients()
-                .stream().map(PatientDTO::getPatientId)
+        return patientsByContract.getPatients().keySet().stream()
                 .map(this::createOptOut)
                 .collect(Collectors.toList());
     }
@@ -252,12 +238,27 @@ class ContractProcessorUnitTest {
     }
 
     private ContractBeneficiaries createPatientsByContractResponse(Contract contract) throws ParseException {
+        PatientDTO p1 = toPatientDTO();
+        PatientDTO p2 = toPatientDTO();
+        PatientDTO p3 = toPatientDTO();
         return ContractBeneficiaries.builder()
                 .contractNumber(contract.getContractNumber())
-                .patient(toPatientDTO())
-                .patient(toPatientDTO())
-                .patient(toPatientDTO())
+                .patient(p1.getPatientId(), p1)
+                .patient(p2.getPatientId(), p2)
+                .patient(p3.getPatientId(), p3)
                 .build();
+    }
+
+    private Map<String, PatientDTO> createPatients(int num) throws ParseException {
+        FilterOutByDate.DateRange dateRange = new FilterOutByDate.DateRange(new Date(0), new Date());
+        Map<String, PatientDTO> patients = new HashMap<>();
+        for (int i = 0; i < num; i++) {
+            PatientDTO p = PatientDTO.builder()
+                    .dateRangesUnderContract(Collections.singletonList(dateRange))
+                    .patientId("patient_" + i).build();
+            patients.put(p.getPatientId(), p);
+        }
+        return patients;
     }
 
     private PatientDTO toPatientDTO() throws ParseException {
@@ -265,7 +266,7 @@ class ContractProcessorUnitTest {
         var dateRange = new FilterOutByDate.DateRange(new Date(0), new Date());
         return PatientDTO.builder()
                 .patientId("patient_" + anInt)
-                .dateRangesUnderContract(Arrays.asList(dateRange))
+                .dateRangesUnderContract(Collections.singletonList(dateRange))
                 .build();
     }
 }

@@ -1,14 +1,13 @@
 package gov.cms.ab2d.worker.adapter.bluebutton;
 
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
-import java.time.LocalDate;
 import java.time.Month;
+import java.util.Map;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
@@ -55,7 +54,7 @@ class ContractBeneSearchStubTest {
             "S0110, 110000"
     })
     void when_contractNumber_returns_PatientCount(String contractNumber, int patientCount) {
-        var patients = cut.getPatients(contractNumber, currentMonth).getPatients();
+        Map<String, ContractBeneficiaries.PatientDTO> patients = cut.getPatients(contractNumber, currentMonth).getPatients();
         assertThat(patients.size(), is(patientCount));
     }
 }
