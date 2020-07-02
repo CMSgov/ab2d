@@ -3,10 +3,7 @@ package gov.cms.ab2d.worker.adapter.bluebutton;
 import ca.uhn.fhir.rest.server.exceptions.InvalidRequestException;
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.model.Contract;
-import gov.cms.ab2d.common.repository.ContractRepository;
-import gov.cms.ab2d.common.service.PropertiesService;
 import gov.cms.ab2d.eventlogger.LogManager;
-import gov.cms.ab2d.worker.service.BeneficiaryService;
 import org.hl7.fhir.dstu3.model.Bundle;
 import org.hl7.fhir.dstu3.model.Bundle.BundleEntryComponent;
 import org.hl7.fhir.dstu3.model.Bundle.BundleLinkComponent;
@@ -19,49 +16,43 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 import java.time.Instant;
 import java.time.Month;
 import java.util.Calendar;
-import java.util.Optional;
-import java.util.Set;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ThreadPoolExecutor;
 
+import static gov.cms.ab2d.worker.processor.BundleUtils.BENEFICIARY_ID;
 import static org.hamcrest.CoreMatchers.endsWith;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class ContractAdapterTest {
-
-    private static final String BENEFICIARY_ID = "https://bluebutton.cms.gov/resources/variables/bene_id";
+class ContractBeneSearchTest {
 
     @Mock BFDClient client;
-    @Mock ContractRepository contractRepository;
-    @Mock BeneficiaryService beneficiaryService;
-    @Mock PropertiesService propertiesService;
     @Mock LogManager eventLogger;
 
-    private ContractAdapter cut;
+    private ContractBeneSearch cut;
     private String contractNumber = "S0000";
     private int currentMonth = Month.MARCH.getValue();
     private Bundle bundle;
 
     @BeforeEach
     void setUp() {
-        cut = new ContractAdapterImpl(
-                client,
-                contractRepository,
-                beneficiaryService,
-                propertiesService,
-                eventLogger
-        );
+        final ThreadPoolTaskExecutor taskExecutor = new ThreadPoolTaskExecutor();
+        taskExecutor.setCorePoolSize(6);
+        taskExecutor.setMaxPoolSize(12);
+        taskExecutor.setRejectedExecutionHandler(new ThreadPoolExecutor.DiscardPolicy());
+        taskExecutor.initialize();
+        cut = new ContractBeneSearchImpl(client, eventLogger, taskExecutor);
 
         bundle = createBundle();
         lenient().when(client.requestPartDEnrolleesFromServer(anyString(), anyInt())).thenReturn(bundle);
@@ -69,12 +60,11 @@ class ContractAdapterTest {
         Contract contract = new Contract();
         contract.setId(Long.valueOf(Instant.now().getNano()));
         contract.setContractNumber(contractNumber);
-        when(contractRepository.findContractByContractNumber(anyString())).thenReturn(Optional.of(contract));
     }
 
     @Test
     @DisplayName("given contractNumber, get patients from BFD API")
-    void GivenContractNumber_ShouldReturnPatients() {
+    void GivenContractNumber_ShouldReturnPatients() throws ExecutionException, InterruptedException {
         var response = cut.getPatients(contractNumber, currentMonth);
 
         assertThat(response, notNullValue());
@@ -87,7 +77,7 @@ class ContractAdapterTest {
     }
 
     @Test
-    void GivenPatientActiveInJanuary_ShouldReturnOneRowInDateRangesUnderContract() {
+    void GivenPatientActiveInJanuary_ShouldReturnOneRowInDateRangesUnderContract() throws ExecutionException, InterruptedException {
         var response = cut.getPatients(contractNumber, Month.JANUARY.getValue());
 
         var patients = response.getPatients();
@@ -101,7 +91,7 @@ class ContractAdapterTest {
     }
 
     @Test
-    void GivenPatientActiveInJanAndFeb_ShouldReturnTwoRowsInDateRangesUnderContract() {
+    void GivenPatientActiveInJanAndFeb_ShouldReturnTwoRowsInDateRangesUnderContract() throws ExecutionException, InterruptedException {
         var response = cut.getPatients(contractNumber, Month.FEBRUARY.getValue());
 
         var patient0 = response.getPatients().get(0);
@@ -112,16 +102,18 @@ class ContractAdapterTest {
     }
 
     @Test
-    void GivenPatientActiveInMonth1And3ButNot2_ShouldReturnTwoRowsInDateRangesUnderContract() {
+    void GivenPatientActiveInMonth1And3ButNot2_ShouldReturnTwoRowsInDateRangesUnderContract() throws ExecutionException, InterruptedException {
         var bundle1 = bundle.copy();
         // add 2nd patient
         var entries = bundle1.getEntry();
         entries.add(createBundleEntry("ccw_patient_001"));
 
-        when(client.requestPartDEnrolleesFromServer(anyString(), anyInt()))
-                .thenReturn(bundle1)    // January - patient1 is active
-                .thenReturn(bundle)     // February - patient1 is NOT active
-                .thenReturn(bundle1);   // March  - patient1 is active again
+        when(client.requestPartDEnrolleesFromServer("S0000", 1))
+                .thenReturn(bundle1);    // January - patient1 is active
+        when(client.requestPartDEnrolleesFromServer("S0000", 2))
+                .thenReturn(bundle);    // January - patient1 is active
+        when(client.requestPartDEnrolleesFromServer("S0000", 3))
+                .thenReturn(bundle1);    // January - patient1 is active
 
         var response = cut.getPatients(contractNumber, Month.MARCH.getValue());
 
@@ -150,7 +142,7 @@ class ContractAdapterTest {
     }
 
     @Test
-    void GivenSecondPatientJoinsInFeb_ShouldReturnOnlyOneRowsForThatPatientInDateRangesUnderContract() {
+    void GivenSecondPatientJoinsInFeb_ShouldReturnOnlyOneRowsForThatPatientInDateRangesUnderContract() throws ExecutionException, InterruptedException {
         var bundle1 = bundle.copy();
 
         // add 2nd patient
@@ -180,7 +172,7 @@ class ContractAdapterTest {
     }
 
     @Test
-    void GivenAPatientLeavesInFeb_ShouldReturnOnlyOneRowsForThatPatientInDateRangesUnderContract() {
+    void GivenAPatientLeavesInFeb_ShouldReturnOnlyOneRowsForThatPatientInDateRangesUnderContract() throws ExecutionException, InterruptedException {
         var bundle1 = bundle.copy();
 
         //bundle1 has 2 patients in January
@@ -211,7 +203,7 @@ class ContractAdapterTest {
     }
 
     @Test
-    void GivenTwoPatientsActiveInJanAndFeb_ShouldReturnTwoPatientRowsEachWithTwoRowsInDateRangesUnderContract() {
+    void GivenTwoPatientsActiveInJanAndFeb_ShouldReturnTwoPatientRowsEachWithTwoRowsInDateRangesUnderContract() throws ExecutionException, InterruptedException {
         var entries = bundle.getEntry();
         entries.add(createBundleEntry("ccw_patient_001"));
 
@@ -233,7 +225,7 @@ class ContractAdapterTest {
     }
 
     @Test
-    void GivenMultiplePages_ShouldProcessAllPages() {
+    void GivenMultiplePages_ShouldProcessAllPages() throws ExecutionException, InterruptedException {
         var bundle1 = bundle.copy();
 
         var entries = bundle1.getEntry();
@@ -267,7 +259,7 @@ class ContractAdapterTest {
     }
 
     @Test
-    void GivenDuplicatePatientRowsFromBFD_ShouldEliminateDuplicates() {
+    void GivenDuplicatePatientRowsFromBFD_ShouldEliminateDuplicates() throws ExecutionException, InterruptedException {
         var entries = bundle.getEntry();
         entries.add(createBundleEntry("ccw_patient_001"));
         //simulate duplicate patient record coming from BDF
@@ -293,64 +285,12 @@ class ContractAdapterTest {
     }
 
     @Test
-    @DisplayName("given patientid rows in db for a specific contract & month, should not call BFD contract-2-bene api")
-    void GivenPatientInLocalDb_ShouldNotCallBfdContractToBeneAPI() {
-        when(beneficiaryService.findPatientIdsInDb(anyLong(), anyInt())).thenReturn(Set.of("ccw_patient_005"));
-
-        when(propertiesService.isToggleOn("ContractToBeneCachingOn"))
-                .thenReturn(true);
-
-        cut.getPatients(contractNumber, Month.JANUARY.getValue());
-
-        verify(client, never()).requestPartDEnrolleesFromServer(anyString(), anyInt());
-        verify(beneficiaryService, never()).storeBeneficiaries(anyLong(), anySet(), anyInt());
-    }
-
-    @Test
-    @DisplayName("given patient count > cachingThreshold, should cache beneficiary data")
-    void GivenPatientCountGreaterThanCachingThreshold_ShouldCacheBeneficiaryData() {
-        var entries = bundle.getEntry();
-        entries.add(createBundleEntry("ccw_patient_001"));
-        entries.add(createBundleEntry("ccw_patient_002"));
-        entries.add(createBundleEntry("ccw_patient_003"));
-        entries.add(createBundleEntry("ccw_patient_004"));
-        entries.add(createBundleEntry("ccw_patient_005"));
-
-        ReflectionTestUtils.setField(cut, "cachingThreshold", 2);
-
-        when(propertiesService.isToggleOn("ContractToBeneCachingOn"))
-                .thenReturn(true);
-
-        cut.getPatients(contractNumber, Month.JANUARY.getValue());
-
-        verify(client).requestPartDEnrolleesFromServer(anyString(), anyInt());
-        verify(beneficiaryService).storeBeneficiaries(anyLong(), anySet(), anyInt());
-    }
-
-    @Test
-    @DisplayName("given patient count < cachingThreshold, should not cache beneficiary data")
-    void GivenPatientCountLessThanCachingThreshold_ShouldNotCacheBeneficiaryData() {
-        var entries = bundle.getEntry();
-        entries.add(createBundleEntry("ccw_patient_001"));
-        entries.add(createBundleEntry("ccw_patient_002"));
-        entries.add(createBundleEntry("ccw_patient_003"));
-        entries.add(createBundleEntry("ccw_patient_004"));
-        entries.add(createBundleEntry("ccw_patient_005"));
-
-        ReflectionTestUtils.setField(cut, "cachingThreshold", 10);
-        cut.getPatients(contractNumber, Month.JANUARY.getValue());
-
-        verify(client).requestPartDEnrolleesFromServer(anyString(), anyInt());
-        verify(beneficiaryService, never()).storeBeneficiaries(anyLong(), anySet(), anyInt());
-    }
-
-    @Test
     @DisplayName("when call to BFD API throws Invalid Request exception, throws Exception")
     void whenBfdCallThrowsInvalidRequestException_ShouldThrowRuntimeException() {
         when(client.requestPartDEnrolleesFromServer(anyString(), anyInt()))
                 .thenThrow(new InvalidRequestException("Request is invalid"));
 
-        var exceptionThrown = assertThrows(RuntimeException.class,
+        var exceptionThrown = assertThrows(ExecutionException.class,
                 () -> cut.getPatients(contractNumber, currentMonth));
 
         assertThat(exceptionThrown.getMessage(), endsWith("Request is invalid"));

@@ -79,7 +79,6 @@ public class WorkerConfig {
         return taskExecutor;
     }
 
-
     @Bean
     public Executor mainJobProcessingPool() {
         final ThreadPoolTaskExecutor taskExecutor = new ThreadPoolTaskExecutor();

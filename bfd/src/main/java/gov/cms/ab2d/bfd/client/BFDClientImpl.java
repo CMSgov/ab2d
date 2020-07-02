@@ -239,7 +239,6 @@ public class BFDClientImpl implements BFDClient {
                 .execute();
     }
 
-
     @Override
     @Retryable(
             maxAttemptsExpression = "${bfd.retry.maxAttempts:3}",
