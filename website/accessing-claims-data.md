@@ -17,6 +17,8 @@ active-nav: accessing-claims-data-nav
         'step-4-icon': 'step-4-content'
     };
     $(document).ready(function() {
+        const offset = 100;
+    
         $('.step-accessing-claims').on('click', function(event) {
             scrollLock = true;
             highlightNav($(this), true);
@@ -27,13 +29,13 @@ active-nav: accessing-claims-data-nav
                 return;
             }
                 
-            if($(this).scrollTop() >= $('#step-1-content').offset().top && $(this).scrollTop() < $('#step-2-content').offset().top) {
+            if($(this).scrollTop() < $('#step-2-content').offset().top - offset) {
                 highlightNav($('#step-1-icon'), false);
-            } else if($(this).scrollTop() >= $('#step-2-content').offset().top && $(this).scrollTop() < $('#step-3-content').offset().top) {
+            } else if($(this).scrollTop() >= $('#step-2-content').offset().top - offset && $(this).scrollTop() < $('#step-3-content').offset().top - offset) {
                 highlightNav($('#step-2-icon'), false);
-            } else if($(this).scrollTop() >= $('#step-3-content').offset().top && $(this).scrollTop() < $('#step-4-content').offset().top) {
+            } else if($(this).scrollTop() >= $('#step-3-content').offset().top - offset && $(this).scrollTop() < $('#step-4-content').offset().top - offset) {
                 highlightNav($('#step-3-icon'), false);
-            } else if($(this).scrollTop() >= $('#step-4-content').offset().top) {
+            } else if($(this).scrollTop() >= $('#step-4-content').offset().top - offset) {
                 highlightNav($('#step-4-icon'), false);
             }
         });
@@ -52,8 +54,8 @@ active-nav: accessing-claims-data-nav
             
             if(doScroll) {
                 $('html, body').animate({
-                    scrollTop: $('#' + idToShow).offset().top
-                }, 2000, function() {
+                    scrollTop: $('#' + idToShow).offset().top - offset
+                }, 1000, function() {
                   scrollLock = false;
                 });
             }
@@ -62,6 +64,11 @@ active-nav: accessing-claims-data-nav
         $('.card-header').on('click', function(event) {
             $(this).parent().find('.card-expand').toggleClass('icon-flipped');
         });
+        
+        if (isIE()) {
+            const elements = $('.step-claims-menu');
+            Stickyfill.add(elements);
+        }
     });
 </script>
 
@@ -150,7 +157,7 @@ active-nav: accessing-claims-data-nav
                   </div>
                 </div>
                 
-                <div id="affect-claims-data-accordion" class="accordion-white-bg">
+                <div id="affect-claims-data-accordion-attestation" class="accordion-white-bg">
                   <div class="card">
                     <div class="card-header" id="headingTwo" data-toggle="collapse" data-target="#collapseTwo" aria-expanded="true" aria-controls="collapseTwo">
                       <h5 class="mb-0 card-header-h5">
@@ -199,7 +206,7 @@ active-nav: accessing-claims-data-nav
                   </div>
                 </div>
                 
-                <div id="affect-claims-data-accordion" class="accordion-white-bg">
+                <div id="affect-claims-data-accordion-additional" class="accordion-white-bg">
                   <div class="card">
                     <div class="card-header" id="headingFour" data-toggle="collapse" data-target="#collapseFour" aria-expanded="true" aria-controls="collapseFour">
                       <h5 class="mb-0 card-header-h5">
