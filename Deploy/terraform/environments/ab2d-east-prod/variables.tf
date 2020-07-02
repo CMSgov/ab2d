@@ -236,7 +236,7 @@ variable "cpm_backup_api" {
 }
 
 variable "cpm_backup_controller" {
-  default = "NoBackup"
+  default = "no-backup"
 }
 
 variable "cpm_backup_db" {
