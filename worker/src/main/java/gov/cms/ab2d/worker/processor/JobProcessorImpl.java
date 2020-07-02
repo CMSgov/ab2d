@@ -298,14 +298,10 @@ public class JobProcessorImpl implements JobProcessor {
      */
     private List<ContractBeneficiaries> fetchPatientsForAllContracts(List<Contract> attestedContracts) throws ExecutionException, InterruptedException {
         int currentMonth = LocalDate.now().getMonthValue();
-        List<String> contracts = attestedContracts
-                .stream()
-                .map(contract -> contract.getContractNumber())
-                .collect(Collectors.toList());
         List<ContractBeneficiaries> contractBeneficiaries = new ArrayList<>();
-        for (String contract : contracts) {
+        for (Contract contract : attestedContracts) {
             try {
-                contractBeneficiaries.add(contractBeneSearch.getPatients(contract, currentMonth));
+                contractBeneficiaries.add(contractBeneSearch.getPatients(contract.getContractNumber(), currentMonth));
             } catch (ExecutionException | InterruptedException ex) {
                 log.error("Having issue retrieving patients for contract " + contract);
                 throw ex;
