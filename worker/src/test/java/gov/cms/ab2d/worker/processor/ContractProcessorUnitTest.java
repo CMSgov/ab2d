@@ -10,8 +10,8 @@ import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.common.repository.OptOutRepository;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.filter.FilterOutByDate;
-import gov.cms.ab2d.worker.adapter.bluebutton.GetPatientsByContractResponse;
-import gov.cms.ab2d.worker.adapter.bluebutton.GetPatientsByContractResponse.PatientDTO;
+import gov.cms.ab2d.worker.adapter.bluebutton.ContractBeneficiaries;
+import gov.cms.ab2d.worker.adapter.bluebutton.ContractBeneficiaries.PatientDTO;
 import gov.cms.ab2d.worker.processor.domainmodel.ContractData;
 import gov.cms.ab2d.worker.processor.domainmodel.ProgressTracker;
 import gov.cms.ab2d.worker.processor.stub.PatientClaimsProcessorStub;
@@ -66,7 +66,7 @@ class ContractProcessorUnitTest {
     @Mock private LogManager eventLogger;
     private PatientClaimsProcessor patientClaimsProcessor = spy(PatientClaimsProcessorStub.class);
 
-    private GetPatientsByContractResponse patientsByContract;
+    private ContractBeneficiaries patientsByContract;
     private Path outputDir;
     private ContractData contractData;
 
@@ -173,7 +173,7 @@ class ContractProcessorUnitTest {
     void whenManyPatientIdsAreProcessed_shouldUpdatePercentageCompletedMultipleTimes() throws Exception {
         var contract = contractData.getContract();
         var patients = createPatientsByContractResponse(contract).getPatients();
-        var manyPatientIds = new ArrayList<PatientDTO>();
+        List<PatientDTO> manyPatientIds = new ArrayList<>();
         manyPatientIds.addAll(patients);
         manyPatientIds.addAll(patients);
         manyPatientIds.addAll(patients);
@@ -188,7 +188,7 @@ class ContractProcessorUnitTest {
         verify(patientClaimsProcessor, atLeast(1)).process(any());
     }
 
-    private List<OptOut> getOptOutRows(GetPatientsByContractResponse patientsByContract) {
+    private List<OptOut> getOptOutRows(ContractBeneficiaries patientsByContract) {
         return patientsByContract.getPatients()
                 .stream().map(PatientDTO::getPatientId)
                 .map(this::createOptOut)
@@ -251,8 +251,8 @@ class ContractProcessorUnitTest {
         return job;
     }
 
-    private GetPatientsByContractResponse createPatientsByContractResponse(Contract contract) throws ParseException {
-        return GetPatientsByContractResponse.builder()
+    private ContractBeneficiaries createPatientsByContractResponse(Contract contract) throws ParseException {
+        return ContractBeneficiaries.builder()
                 .contractNumber(contract.getContractNumber())
                 .patient(toPatientDTO())
                 .patient(toPatientDTO())
