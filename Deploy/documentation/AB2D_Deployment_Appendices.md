@@ -10269,7 +10269,7 @@ $ sed -i "" 's%cms-ab2d[\/]prod%cms-ab2d/dev%g' _includes/head.html (edited)
 
       Tags      |Value
       ----------|--------
-      cpm backup|NoBackup
+      cpm backup|no-backup
 
 1. Return to the terminal
 

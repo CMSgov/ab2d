@@ -104,6 +104,8 @@
    * [Configure a Jenkins project for sandbox application deploy](#configure-a-jenkins-project-for-sandbox-application-deploy)
    * [Configure Cloud Protection Manager](#configure-cloud-protection-manager)
      * [Ensure that all instances have CPM backup tags](#ensure-that-all-instances-have-cpm-backup-tags)
+     * [Complete CPM questionnaire](#complete-cpm-questionnaire)
+     * [Create a CPM ticket in CMS Jira Enterprise](#create-a-cpm-ticket-in-cms-jira-enterprise)
 1. [Upgrade Jenkins](#upgrade-jenkins)
 1. [Configure Jenkins user to allow for SSH](#configure-jenkins-user-to-allow-for-ssh)
 1. [Configure executors for Jenkins master](#configure-executors-for-jenkins-master)
@@ -8489,6 +8491,170 @@
       Tags      |Value
       ----------|------------------------
       cpm backup|4HR Daily Weekly Monthly
+
+#### Complete CPM questionnaire
+
+1. Open Chrome
+
+1. Enter the following in the addess bar
+
+   > https://confluence.cms.gov/pages/viewpage.action?spaceKey=GDITAQ&title=CPM+Backup+Setup
+
+1. Select the following under the "Getting Started" section
+
+   ```
+   CPM Onboarding Questionnaire.docx
+   ```
+
+1. Select **Download**
+
+1. Wait for the download to complete
+
+1. Open the downloaded file
+
+1. Fill out the form as follows
+
+   - **Request Date:** {today's date}
+
+   - **JIRA Ticket No:** {blank} <-- will be updated after ticket is created
+
+   - **Project Name:** AB2D Management
+
+   - **Requestor Name:** {cms product owner}
+
+   - **Requestor Organization:** {cms product owner organization}
+
+   - **Requestor Phone Number:** {cms product owner phone number}
+
+   - **Requestor Email:** {cms product owner email}
+
+   - **Number of Windows Servers:** 0
+
+   - **Number of Linux Servers:** 2
+
+   - **Provide a description of current...:**
+
+     ```
+     EBS Snapshots - Not yet configured
+     ```
+
+   - **Choose Snapshot Frequency (4 Hour):** checked
+
+   - **Choose Snapshot Frequency (Daily):** checked
+
+   - **Choose Snapshot Frequency (Weekly):** checked
+
+   - **Choose Snapshot Frequency (Monthly):** checked
+
+   - **Choose Snapshot Frequency (Annually):** unchecked
+
+   - **Backups/snapshots maintained by...:** DevOps Team
+
+   - **Provide email address for automated notification:** {ab2d team email}
+
+   - **Users Requiring Access:** {list DevOps engineer(s), backend engineer(s), and engineering lead}
+
+   - **Comments and Special Instructions:**
+
+     ```
+     Should retain snapshots for 7 years.
+     ```
+
+1. Save the form with the following name
+
+   ```
+   CPM Onboarding Questionnaire - AB2D Management.docx
+   ```
+
+1. Close the form
+
+#### Create a CPM ticket in CMS Jira Enterprise
+
+1. Note the latest CPM documentation can be found here
+
+   > https://cloud.cms.gov/10789741/set-up-your-cpm-backup
+
+1. Open Chrome
+
+1. Go to CMS Cloud Support Portal in Jira Enterprise
+
+   > https://jiraent.cms.gov/servicedesk/customer/portal/13
+
+1. Select **CMS Cloud Service Request**
+
+1. Configure the "CMS Cloud Service Request" page as follows
+
+   - **Summary:** Onboard AB2D Management to Cloud Protection Manager
+
+   - **CMS Business Unit:** OIT
+
+   - **Project Name:** AB2D Management
+
+   - **Account Alias:** aws-cms-oit-iusg-acct97
+
+   - **Service Category:** Disaster Recovery Services
+
+   - **Task:** Disaster Recovery as a Service
+
+   - **Description:**
+
+     ```
+     Onboard AB2D Management to Cloud Protection Manager
+
+     See attached questionnaire.
+     ```
+
+   - **Severity:** Minimal
+
+   - **Urgency:** Low
+
+   - **Reported Source:** Self Service
+
+   - **Requested Due Date:** {blank}
+
+   - **Component/s:** {blank}
+
+   - **Attachment:**
+
+     ```
+     {blank} <-- note that questionnaire will be added after ticket is created
+     ```
+
+1. Select **Create**
+
+1. Copy the ticket number from the URL to the clipboard
+
+   *Example:*
+
+   ```
+   CLDSUPSD-9730
+   ```
+
+1. Open the following form
+
+   ```
+   CPM Onboarding Questionnaire - AB2D Management.docx
+   ```
+
+1. Update the form as follows
+
+   - **JIRA Ticket No:** {jira ticket number}
+
+1. Save and close the file
+
+1. Return to the jira ticket
+
+1. Select the ticket number link
+
+1. Scroll down to the "Attachements" section
+
+1. Select **browse**
+
+1. Select and add the following file
+
+   ```
+   CPM Onboarding Questionnaire - AB2D Management.docx
+   ```
 
 ## Upgrade Jenkins
 

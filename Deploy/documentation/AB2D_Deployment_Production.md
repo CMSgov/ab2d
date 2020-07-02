@@ -46,7 +46,7 @@ lication-load-balancer)
 1. [Configure Cloud Protection Manager](#configure-cloud-protection-manager)
    * [Ensure that all instances have CPM backup tags](#ensure-that-all-instances-have-cpm-backup-tags)
    * [Complete CPM questionnaire](#complete-cpm-questionnaire)
-   * [Send email to CMS Cloud Operations](#send-email-to-cms-cloud-operations)
+   * [Create a CPM ticket in CMS Jira Enterprise](#create-a-cpm-ticket-in-cms-jira-enterprise)
 
 ## Obtain and import api.ab2d.cms.gov entrust certificate](#obtain-and-import-apiab2dcmsgov-entrust-certificate)
 
@@ -1992,7 +1992,7 @@ lication-load-balancer)
 
       Tags      |Value
       ----------|--------
-      cpm backup|NoBackup
+      cpm backup|no-backup
 
 1. Ensure that an API node has been tagged as follows
 
@@ -2050,9 +2050,9 @@ lication-load-balancer)
 
    - **Request Date:** {today's date}
 
-   - **JIRA Ticket No:** {blank}
+   - **JIRA Ticket No:** {blank} <-- will be updated after ticket is created
 
-   - **Project Name:** AB2D (under BCDA)
+   - **Project Name:** AB2D Prod
 
    - **Requestor Name:** {cms product owner}
 
@@ -2103,33 +2103,90 @@ lication-load-balancer)
 
 1. Close the form
 
-### Send email to CMS Cloud Operations
+### Create a CPM ticket in CMS Jira Enterprise
 
-1. Send the following email
+1. Note the latest CPM documentation can be found here
 
-   *Format:*
+   > https://cloud.cms.gov/10789741/set-up-your-cpm-backup
+
+1. Open Chrome
+
+1. Go to CMS Cloud Support Portal in Jira Enterprise
+
+   > https://jiraent.cms.gov/servicedesk/customer/portal/13
+
+1. Select **CMS Cloud Service Request**
+
+1. Configure the "CMS Cloud Service Request" page as follows
+
+   - **Summary:** Onboard AB2D Prod to Cloud Protection Manager
+
+   - **CMS Business Unit:** OIT
+
+   - **Project Name:** AB2D Prod
+
+   - **Account Alias:** aws-cms-oit-iusg-acct98
+
+   - **Service Category:** Disaster Recovery Services
+
+   - **Task:** Disaster Recovery as a Service
+
+   - **Description:**
+
+     ```
+     Onboard AB2D Prod to Cloud Protection Manager
+
+     See attached questionnaire.
+     ```
+
+   - **Severity:** Minimal
+
+   - **Urgency:** Low
+
+   - **Reported Source:** Self Service
+
+   - **Requested Due Date:** {blank}
+
+   - **Component/s:** {blank}
+
+   - **Attachment:**
+
+     ```
+     {blank} <-- note that questionnaire will be added after ticket is created
+     ```
+
+1. Select **Create**
+
+1. Copy the ticket number from the URL to the clipboard
+
+   *Example:*
 
    ```
-   **TO:** CMSCLOUDOPERATIONS@cms.hhs.gov
-
-   **CC:** {cms product owner} {scrum master}
-
-   **BCC:** (devops engineer}
-
-   Hello,
-
-   We would like to onboard the AB2D project to Cloud Protection Manager. Andrew Harnish (copied on this email) is the CMS Product Owner.
-
-   Note the following about the AB2D project:
-
-   •	We have five AWS accounts.
-   •	The RDS and EC2 instances have “cpm backup” tags.
-
-   I have downloaded the questionnaire and filled one out for each of the five AWS accounts in preparation for the Jira tickets that you will create. I have attached one of the completed questionnaires as an example. Let me know if you see any issues with it.
-
-   Thanks for your consideration.
-
-   {devops engineer signature}
+   CLDSUPSD-9726
    ```
 
-1. Wait for CMS Cloud Operations to respond
+1. Open the following form
+
+   ```
+   CPM Onboarding Questionnaire - AB2D Prod.docx
+   ```
+
+1. Update the form as follows
+
+   - **JIRA Ticket No:** {jira ticket number}
+
+1. Save and close the file
+
+1. Return to the jira ticket
+
+1. Select the ticket number link
+
+1. Scroll down to the "Attachements" section
+
+1. Select **browse**
+
+1. Select and add the following file
+
+   ```
+   CPM Onboarding Questionnaire - AB2D Prod.docx
+   ```
