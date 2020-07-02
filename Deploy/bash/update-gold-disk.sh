@@ -207,7 +207,17 @@ else
   fi
 fi
 
+#
 # Create AMI for controller, api, and worker nodes
+#
+
+# Set 1 hour of polling at 1 minute intervals
+# - this was necessary to prevent a timeout error
+
+AWS_MAX_ATTEMPTS=60
+AWS_POLL_DELAY_SECONDS=60
+
+# Build the AMI
 
 UNIX_EPOCH_TIME=$(date +%s)
 cd "${START_DIR}/.."
