@@ -5,7 +5,8 @@
     "aws_session_token": "{{env `AWS_SESSION_TOKEN`}}",
     "my_ip_address": "",
     "git_commit_hash": "",
-    "gold_ami": "{{user `seed_ami`}}"
+    "gold_ami": "{{user `seed_ami`}}",
+    "gold_disk_name": "{{user `seed_ami_name`}}"
   },
   "builders": [
     {
@@ -29,7 +30,8 @@
         "application_git_hash": "{{user `git_commit_hash`}}",
         "application_name": "AB2D",
         "creator": "packer",
-        "gold_ami": "{{user `gold_ami`}}"
+        "gold_ami": "{{user `gold_ami`}}",
+        "gold_disk_name": "{{user `gold_disk_name`}}"
       },
       "launch_block_device_mappings": [
         {

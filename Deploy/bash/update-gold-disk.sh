@@ -170,6 +170,12 @@ if [ -z "${SEED_AMI}" ]; then
   exit 1
 else
   echo "SEED_AMI=${SEED_AMI}"
+  SEED_AMI_NAME=$(aws --region "${AWS_DEFAULT_REGION}" ec2 describe-images \
+    --owners "${OWNER}" \
+    --filters "Name=image-id,Values=${SEED_AMI}" \
+    --query "Images[*].Name" \
+    --output text)
+  echo "SEED_AMI_NAME=${SEED_AMI_NAME}"
 fi
 
 # Determine commit number
@@ -209,6 +215,7 @@ cd packer/app
 IP=$(curl ipinfo.io/ip)
 packer build \
   --var seed_ami="${SEED_AMI}" \
+  --var seed_ami_name="${SEED_AMI_NAME}" \
   --var environment="${CMS_ENV}" \
   --var region="${AWS_DEFAULT_REGION}" \
   --var ec2_instance_type="${EC2_INSTANCE_TYPE_PACKER}" \
