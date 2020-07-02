@@ -1,11 +1,6 @@
 package gov.cms.ab2d.worker.processor;
 
-import gov.cms.ab2d.common.model.Contract;
-import gov.cms.ab2d.common.model.Job;
-import gov.cms.ab2d.common.model.JobStatus;
-import gov.cms.ab2d.common.model.OptOut;
-import gov.cms.ab2d.common.model.Sponsor;
-import gov.cms.ab2d.common.model.User;
+import gov.cms.ab2d.common.model.*;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.common.repository.OptOutRepository;
 import gov.cms.ab2d.eventlogger.LogManager;
@@ -126,7 +121,7 @@ class ContractProcessorUnitTest {
                 .thenReturn(Arrays.asList(optOuts.get(1)))
                 .thenReturn(Arrays.asList(optOuts.get(2)));
 
-        var jobOutputs = cut.process(outputDir, contractData, NDJSON);
+        List<JobOutput> jobOutputs = cut.process(outputDir, contractData, NDJSON);
         // Verify that all outputs are returned
         assertEquals(6, jobOutputs.size());
     }
@@ -238,14 +233,10 @@ class ContractProcessorUnitTest {
     }
 
     private ContractBeneficiaries createPatientsByContractResponse(Contract contract) throws ParseException {
-        PatientDTO p1 = toPatientDTO();
-        PatientDTO p2 = toPatientDTO();
-        PatientDTO p3 = toPatientDTO();
+        Map<String, PatientDTO> patientMap = createPatients(3);
         return ContractBeneficiaries.builder()
                 .contractNumber(contract.getContractNumber())
-                .patient(p1.getPatientId(), p1)
-                .patient(p2.getPatientId(), p2)
-                .patient(p3.getPatientId(), p3)
+                .patients(patientMap)
                 .build();
     }
 
@@ -259,14 +250,5 @@ class ContractProcessorUnitTest {
             patients.put(p.getPatientId(), p);
         }
         return patients;
-    }
-
-    private PatientDTO toPatientDTO() throws ParseException {
-        int anInt = random.nextInt(11);
-        var dateRange = new FilterOutByDate.DateRange(new Date(0), new Date());
-        return PatientDTO.builder()
-                .patientId("patient_" + anInt)
-                .dateRangesUnderContract(Collections.singletonList(dateRange))
-                .build();
     }
 }
