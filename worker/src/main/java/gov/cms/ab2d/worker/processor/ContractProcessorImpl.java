@@ -11,8 +11,8 @@ import gov.cms.ab2d.common.repository.OptOutRepository;
 import gov.cms.ab2d.common.util.Constants;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.events.ErrorEvent;
-import gov.cms.ab2d.worker.adapter.bluebutton.GetPatientsByContractResponse;
-import gov.cms.ab2d.worker.adapter.bluebutton.GetPatientsByContractResponse.PatientDTO;
+import gov.cms.ab2d.worker.adapter.bluebutton.ContractBeneficiaries;
+import gov.cms.ab2d.worker.adapter.bluebutton.ContractBeneficiaries.PatientDTO;
 import gov.cms.ab2d.worker.config.RoundRobinBlockingQueue;
 import gov.cms.ab2d.worker.processor.StreamHelperImpl.FileOutputType;
 import gov.cms.ab2d.worker.processor.domainmodel.ContractData;
@@ -91,7 +91,7 @@ public class ContractProcessorImpl implements ContractProcessor {
         log.info("Beginning to process contract {}", keyValue(CONTRACT_LOG, contractNumber));
 
         var progressTracker = contractData.getProgressTracker();
-        var patients = getPatientsByContract(contractNumber, progressTracker);
+        List<PatientDTO> patients = getPatientsByContract(contractNumber, progressTracker);
         int patientCount = patients.size();
         log.info("Contract [{}] has [{}] Patients", contractNumber, patientCount);
 
@@ -227,7 +227,7 @@ public class ContractProcessorImpl implements ContractProcessor {
                 .stream()
                 .filter(byContract -> byContract.getContractNumber().equals(contractNumber))
                 .findFirst()
-                .map(GetPatientsByContractResponse::getPatients)
+                .map(ContractBeneficiaries::getPatients)
                 .orElse(Collections.emptyList());
     }
 
