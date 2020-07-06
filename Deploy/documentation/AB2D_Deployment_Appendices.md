@@ -119,6 +119,7 @@
    * [Run e2e tests for production](#run-e2e-tests-for-production)
 1. [Appendix GGG: Retrieve a copy of remote terraform state file for review](#appendix-ggg-retrieve-a-copy-of-remote-terraform-state-file-for-review)
 1. [Appendix HHH: Manually change a tag on controller and update its terraform state](#appendix-hhh-manually-change-a-tag-on-controller-and-update-its-terraform-state)
+1. [Appendix III: Issue a schedule override in VictorOps](#appendix-iii-issue-a-schedule-override-in-victorops)
 
 ## Appendix A: Access the CMS AWS console
 
@@ -10291,3 +10292,41 @@ $ sed -i "" 's%cms-ab2d[\/]prod%cms-ab2d/dev%g' _includes/head.html (edited)
       ```
 
 1. Note that even though terraform state did not update to reflect the tag change, this is still a good example for how to put existing infrastructure under terraform management
+
+## Appendix III: Issue a schedule override in VictorOps
+
+1. Open Chrome
+
+1. Log on to VictorOps
+
+1. Select the **Teams** tab
+
+1. Select **On-Call Schedule**
+
+1. Expand **Standard**
+
+1. Note that the schedule for the next four weeks is displayed
+
+1. If there are no existing overrides, all the lines are a shades of gray-blue
+
+1. Determine when the override will occur
+
+1. Select the **Scheduled Overrides** tab
+
+1. Select **Schedule an Override**
+
+1. Configure the "Create Scheduled" page as follows
+
+   - **Override for:** {user whose schedule will be overriden}
+
+   - **Timezone:** America/New York
+
+   - **Start on:** {datetime} <-- musst be in the future
+
+   - **End on:** {datetime}
+
+1. Select **Create**
+
+1. Expand the override that was created
+
+1. Select the user from the dropdown that will take the override time period
