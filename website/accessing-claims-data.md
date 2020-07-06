@@ -109,8 +109,6 @@ active-nav: accessing-claims-data-nav
                             <a href="#">Claims
                             Data Usage Protocols</a>. These protocols regulate how their organization may or may not use the Medicare claims data provided by the AB2D
                             API, including limitations associated with the reuse and disclosure of the data.
-                            What type of organizations can attest?
-                            Stand-alone Medicare Part D Plan (PDP) sponsors (PACE and MAPD are not eligible).
                         </p>
                     </div>
                     <div class="col-lg-6">
@@ -121,9 +119,9 @@ active-nav: accessing-claims-data-nav
                 <div id="what-type-accordion" class="accordion-white-bg">
                   <div class="card">
                     <div class="card-header" id="headingZero" data-toggle="collapse" data-target="#collapseZero" aria-expanded="true" aria-controls="collapseZero">
-                      <h5 class="mb-0 card-header-h5">
+                      <div class="mb-0 card-header-h5">
                           What type of organizations can attest?
-                      </h5>
+                      </div>
                       <i class="material-icons card-expand">expand_more</i>
                     </div>
                 
@@ -138,9 +136,9 @@ active-nav: accessing-claims-data-nav
                 <div id="who-can-attest-accordion" class="accordion-white-bg">
                   <div class="card">
                     <div class="card-header" id="headingOne" data-toggle="collapse" data-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
-                      <h5 class="mb-0 card-header-h5">
+                      <div class="mb-0 card-header-h5">
                           Who can attest?
-                      </h5>
+                      </div>
                       <i class="material-icons card-expand">expand_more</i>
                     </div>
                 
@@ -160,9 +158,9 @@ active-nav: accessing-claims-data-nav
                 <div id="affect-claims-data-accordion-attestation" class="accordion-white-bg">
                   <div class="card">
                     <div class="card-header" id="headingTwo" data-toggle="collapse" data-target="#collapseTwo" aria-expanded="true" aria-controls="collapseTwo">
-                      <h5 class="mb-0 card-header-h5">
+                      <div class="mb-0 card-header-h5">
                           How does attestation affect claims data?
-                      </h5>
+                      </div>
                       <i class="material-icons card-expand">expand_more</i>
                     </div>
                 
@@ -184,9 +182,9 @@ active-nav: accessing-claims-data-nav
                 <div id="initially-attest-accordion" class="accordion-white-bg">
                   <div class="card">
                     <div class="card-header" id="headingThree" data-toggle="collapse" data-target="#collapseThree" aria-expanded="true" aria-controls="collapseThree">
-                      <h5 class="mb-0 card-header-h5">
+                      <div class="mb-0 card-header-h5">
                           How to initially attest
-                      </h5>
+                      </div>
                       <i class="material-icons card-expand">expand_more</i>
                     </div>
                 
@@ -209,9 +207,9 @@ active-nav: accessing-claims-data-nav
                 <div id="affect-claims-data-accordion-additional" class="accordion-white-bg">
                   <div class="card">
                     <div class="card-header" id="headingFour" data-toggle="collapse" data-target="#collapseFour" aria-expanded="true" aria-controls="collapseFour">
-                      <h5 class="mb-0 card-header-h5">
+                      <div class="mb-0 card-header-h5">
                           How to add additional attesters
-                      </h5>
+                      </div>
                       <i class="material-icons card-expand">expand_more</i>
                     </div>
                 
