@@ -225,13 +225,28 @@ fi
 # Create "auto.tfvars" file
 #
 
-# Get AMI ID
+# Get AMI ID and gold image name
 
 AMI_ID=$(aws --region "${AWS_DEFAULT_REGION}" ec2 describe-images \
   --owners self \
   --filters "Name=tag:Name,Values=ab2d-ami" \
   --query "Images[*].[ImageId]" \
   --output text)
+
+if [ -z "${AMI_ID}" ]; then
+  echo "ERROR: AMI id not found..."
+  exit 1
+else
+
+  # Get gold image name
+
+  GOLD_IMAGE_NAME=$(aws --region "${AWS_DEFAULT_REGION}" ec2 describe-images \
+    --owners self \
+    --filters "Name=tag:Name,Values=ab2d-ami" \
+    --query "Images[*].Tags[?Key=='gold_disk_name'].Value" \
+    --output text)
+
+fi
 
 # Get deployer IP address
 
@@ -345,6 +360,7 @@ terraform apply \
   --var "db_name=${DATABASE_NAME}" \
   --var "deployer_ip_address=${DEPLOYER_IP_ADDRESS}" \
   --var "vpn_private_ip_address_cidr_range=${VPN_PRIVATE_IP_ADDRESS_CIDR_RANGE}" \
+  --var "gold_image_name=${GOLD_IMAGE_NAME}" \
   --target module.controller \
   --auto-approve
 

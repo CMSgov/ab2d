@@ -469,7 +469,7 @@ if [ -z "${SUBNET_PRIVATE_2_ID}" ]; then
 fi
 
 #
-# Get AMI id
+# Get AMI ID and gold image name
 #
 
 AMI_ID=$(aws --region "${AWS_DEFAULT_REGION}" ec2 describe-images \
@@ -481,6 +481,16 @@ AMI_ID=$(aws --region "${AWS_DEFAULT_REGION}" ec2 describe-images \
 if [ -z "${AMI_ID}" ]; then
   echo "ERROR: AMI id not found..."
   exit 1
+else
+
+  # Get gold image name
+
+  GOLD_IMAGE_NAME=$(aws --region "${AWS_DEFAULT_REGION}" ec2 describe-images \
+    --owners self \
+    --filters "Name=tag:Name,Values=ab2d-ami" \
+    --query "Images[*].Tags[?Key=='gold_disk_name'].Value" \
+    --output text)
+
 fi
 
 #
@@ -1205,6 +1215,7 @@ terraform apply \
   --var "ab2d_keystore_password=${AB2D_KEYSTORE_PASSWORD}" \
   --var "ab2d_okta_jwt_issuer=${AB2D_OKTA_JWT_ISSUER}" \
   --var "stunnel_latest_version=${STUNNEL_LATEST_VERSION}" \
+  --var "gold_image_name=${GOLD_IMAGE_NAME}" \
   --target module.api \
   --auto-approve
 
@@ -1235,6 +1246,7 @@ terraform apply \
   --var "new_relic_license_key=$NEW_RELIC_LICENSE_KEY" \
   --var "vpn_private_ip_address_cidr_range=${VPN_PRIVATE_IP_ADDRESS_CIDR_RANGE}" \
   --var "stunnel_latest_version=${STUNNEL_LATEST_VERSION}" \
+  --var "gold_image_name=${GOLD_IMAGE_NAME}" \
   --target module.worker \
   --auto-approve
 
