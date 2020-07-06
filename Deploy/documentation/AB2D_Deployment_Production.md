@@ -1922,7 +1922,111 @@ lication-load-balancer)
 
 1. Note that New Relic APM, Infrastructure, and Synthetics alerts can be forwarded to the VictorOps alerting service
 
-> *** TO DO **
+1. Log on to VictorOps
+
+1. Select the **Integrations** tab
+
+1. Type the following in the **Search** text box
+
+   ```
+   new relic
+   ```
+
+1. Verify that the following is displayed
+
+   ```
+   New Relic
+   APM
+   Enabled
+   ```
+
+1. Select **New Relic**
+
+1. Copy and save the following information for next steps
+
+   *New Relic (legacy):*
+
+   ```
+   https://alert.victorops.com/integrations/newrelic/20140115/alert/{victors ops api key for new relic}/$routing_key
+   ```
+
+   *New Relic Alerts:*
+
+   ```
+   {victors ops api key for new relic}
+   ```
+
+1. Open a new Chrome tab
+
+1. Open New Relic
+
+1. Select the **Alerts** tab
+
+1. If a "Welcome to the new Alerts" page appears, do the following:
+
+   1. Note the following information
+
+      - "We've reimagined alerting for New Relic products so you can resolve issues faster and with less noise."
+
+   1. Select **Next**
+
+   1. Note the following information
+
+      - "Monitor the metrics you care about across your entire infrastructure, including third-party-plugins."
+
+   1. Select **Next**
+
+   1. Note the following information
+
+      - "Integrate with tools your team already uses, like PagerDuty and Slack, or use webhooks to integrate with virtually any software."
+
+   1. Select **Finish**
+
+1. Select **Notification channels**
+
+1. Select **New notification channel**
+
+1. Configure the "Channel details" as follows
+
+   - **Select a channel:** VictorOps
+
+   - **Channel name:** {victors ops route key}
+
+   - **Key:** {victors ops api key for new relic}
+
+   - **Route key:** {victors ops route key}
+
+1. Select **Create channel**
+
+1. Select the **Alert policies** tab
+
+1. Select **Add alert policies**
+
+1. *** TO DO ***
+
+1. Select **Save changes**
+
+1. Ensure that the user that is going to test this configuration is the user that is currently on call
+
+   *Note that you can use a schedule overrride if the user that is testing the confifuration is not currently on call.*
+
+1. Select **Send a test notification**
+
+1. Verify that the following is displayed
+
+   ```
+   Test notification successful
+
+   {
+     response: 200,
+
+     {\n "result" : "success"\n}
+   }
+   ```
+
+1. Select **Got it**
+
+1. Select the **APM* tab
 
 ### Forward AWS CloudWatch alerts to the VictorOps alerting service
 
