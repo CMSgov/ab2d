@@ -120,7 +120,7 @@ variable "ec2_maximum_instance_count_worker" {
 }
 
 variable "gold_image_name" {
-  default = "rhel7-gi-2020-04-22T23-29-10Z"
+  default = ""
 }
 
 ## RDS specific variables ########################################################################
