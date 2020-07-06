@@ -14,7 +14,7 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class GetPatientsByContractResponse {
+public class ContractBeneficiaries {
 
     private String contractNumber;
 
@@ -30,6 +30,5 @@ public class GetPatientsByContractResponse {
 
         @Builder.Default
         private List<DateRange> dateRangesUnderContract = new ArrayList<>();
-
     }
 }

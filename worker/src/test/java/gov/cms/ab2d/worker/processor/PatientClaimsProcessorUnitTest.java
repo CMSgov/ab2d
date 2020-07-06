@@ -6,7 +6,7 @@ import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.filter.FilterOutByDate;
-import gov.cms.ab2d.worker.adapter.bluebutton.GetPatientsByContractResponse;
+import gov.cms.ab2d.worker.adapter.bluebutton.ContractBeneficiaries;
 import gov.cms.ab2d.worker.processor.domainmodel.PatientClaimsRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.hl7.fhir.dstu3.model.Bundle;
@@ -61,7 +61,7 @@ public class PatientClaimsProcessorUnitTest {
 
     private OffsetDateTime earlyAttDate = OffsetDateTime.of(1970, 1, 1, 0, 0, 0, 0, ZoneOffset.UTC);
     private OffsetDateTime laterAttDate = OffsetDateTime.of(2020, 2, 15, 0, 0, 0, 0, ZoneOffset.UTC);
-    private GetPatientsByContractResponse.PatientDTO patientDTO;
+    private ContractBeneficiaries.PatientDTO patientDTO;
 
     private Token noOpToken = new Token() {
         @Override
@@ -98,7 +98,7 @@ public class PatientClaimsProcessorUnitTest {
 
         eob = EobTestDataUtil.createEOB();
         createOutputFiles();
-        patientDTO = new GetPatientsByContractResponse.PatientDTO();
+        patientDTO = new ContractBeneficiaries.PatientDTO();
         patientDTO.setPatientId(patientId);
         patientDTO.setDateRangesUnderContract(List.of(new FilterOutByDate.DateRange(new Date(0), new Date())));
 
@@ -202,7 +202,7 @@ public class PatientClaimsProcessorUnitTest {
     void process_whenPatientHasSinglePageOfClaimsDataSince() throws ExecutionException, InterruptedException,
             FileNotFoundException, ParseException {
         // Override default behavior of setup
-        patientDTO = new GetPatientsByContractResponse.PatientDTO();
+        patientDTO = new ContractBeneficiaries.PatientDTO();
         patientDTO.setPatientId(patientId);
         patientDTO.setDateRangesUnderContract(List.of(new FilterOutByDate.DateRange(new Date(0), new Date())));
 
@@ -228,7 +228,7 @@ public class PatientClaimsProcessorUnitTest {
     void process_whenPatientHasSinglePageOfClaimsDataEarlyAttDate() throws ExecutionException, InterruptedException,
             FileNotFoundException, ParseException {
         // Override default behavior of setup
-        patientDTO = new GetPatientsByContractResponse.PatientDTO();
+        patientDTO = new ContractBeneficiaries.PatientDTO();
         patientDTO.setPatientId(patientId);
         patientDTO.setDateRangesUnderContract(List.of(new FilterOutByDate.DateRange(new Date(0), new Date())));
 
