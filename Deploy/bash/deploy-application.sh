@@ -1269,6 +1269,7 @@ terraform apply \
   --var "alb_listener_certificate_arn=$ALB_LISTENER_CERTIFICATE_ARN" \
   --var "alb_internal=$ALB_INTERNAL" \
   --var "alb_security_group_ip_range=$ALB_SECURITY_GROUP_IP_RANGE" \
+  --var "gold_image_name=${GOLD_IMAGE_NAME}" \
   --auto-approve
 
 #
