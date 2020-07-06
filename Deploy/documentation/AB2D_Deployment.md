@@ -3452,33 +3452,33 @@
    1. Uncheck **Select all**
    
    1. Check the following services
-   
+
       *Example for "Dev" environment:*
-   
+
+      - ALB/NLB
+ 
       - AutoScaling
-      
+
       - CloudFront
-   
+
       - CloudTrail
-   
+
       - EBS
-   
+
       - EC2
-   
+
       - ECS
-   
+
       - EFS
-   
-      - ELB
-   
+
       - RDS
-   
+
       - VPC
-   
+
    1. Select **Next** on the "Step 6: Select Services" page
-   
+
    1. Note the following is displayed
-   
+
       ```
       We're setting up your integration
    
@@ -3588,6 +3588,8 @@
 
       *Example for "Sbx" environment:*
 
+      - ALB/NLB
+
       - AutoScaling
 
       - CloudTrail
@@ -3599,8 +3601,6 @@
       - ECS
 
       - EFS
-
-      - ELB
 
       - RDS
 
@@ -3719,6 +3719,8 @@
 
       *Example for "Impl" environment:*
 
+      - ALB/NLB
+
       - AutoScaling
 
       - CloudFront
@@ -3733,11 +3735,144 @@
 
       - EFS
 
-      - ELB
+      - RDS
+
+      - VPC
+
+   1. Select **Next** on the "Step 6: Select Services" page
+
+   1. Note the following is displayed
+
+      ```
+      We're setting up your integration
+
+      New Relic is retrieving monitoring data from AWS account AB2D Dev and configuring
+      AWS dashboards in New Relic Insights.
+
+      This may take up to 5 minutes.
+      ```
+
+   1. Select **OK** on the "We're setting up your integration" page
+
+1. Configure the "AB2D Prod" environment
+
+   1. Open Chrome
+
+   1. Enter the following in the address bar
+
+      > https://rpm.newrelic.com/accounts/2597286/setup
+
+   1. Log on to New Relic
+
+   1. Select **Infrastructure**
+
+   1. Select the **AWS** tab
+
+   1. Select **Add an AWS account**
+
+   1. Open another Chrome tab
+
+   1. Log on to AWS account for AB2D Prod
+
+   1. Select **IAM**
+
+   1. Select **Roles** from the leftmost panel
+
+   1. Select **Create role**
+
+   1. Select **Another AWS account**
+
+   1. Configure the role as follows
+
+      - **Account ID:** {new relic aws account}
+
+      - **Require external ID:** checked
+
+      - **External ID:** {new relic external id}
+
+   1. Select **Next: Permissions**
+
+   1. Return to the new relic web page
+
+   1. Select **Next** on the "Step 1: Create a role and establish trust" page
+
+   1. Return to the AWS account
+
+   1. Enter the following in the **Search** text box
+
+      ```
+      ReadOnlyAccess
+      ```
+
+   1. Check **ReadOnlyAccess**
+
+   1. Select **Next: Tags**
+
+   1. Select **Next: Review**
+
+   1. Return to the new relic web page
+
+   1. Select **Next** on the "Step 2: Attach policy" page
+
+   1. Return to the AWS account
+
+   1. Configure the "Create role" page as follows
+
+      - **Role name:** NewRelicInfrastructure-Integrations
+
+   1. Select **Create Role**
+
+   1. Select the **NewRelicInfrastructure-Integrations** role
+
+   1. Copy and save the **Role ARN**
+
+   1. Return to the new relic web page
+
+   1. Select **Next** on the "Step 3: Set role name and review" page
+
+   1. Note that we won't be creating a budgets policy, since no budgets are defined in the AWS account
+
+   1. Select **Next** on the "Step 4: Configure Budgets policy" page
+
+   1. Return to the AWS account
+
+   1. Configure the "Step 5: Add Account Details" page as follows
+
+      - **AWS Account name:** AB2D Prod
+
+      - **ARN:** {noted NewRelicInfrastructure-Integrations role ARN}
+
+   1. Select **Next** on the "Step 5: Add Account Details" page
+
+   1. Uncheck **Select all**
+
+   1. Note that "CloudFront" is not currently used in the Sandbox but is used in the other environments
+
+   1. Check the following services
+
+      *Example for "Prod" environment:*
+
+      - ALB/NLB
+
+      - AutoScaling
+
+      - CloudFront
+
+      - CloudTrail
+
+      - EBS
+
+      - EC2
+
+      - ECS
+
+      - EFS
 
       - RDS
 
       - VPC
+
+      - WAF
 
    1. Select **Next** on the "Step 6: Select Services" page
 
