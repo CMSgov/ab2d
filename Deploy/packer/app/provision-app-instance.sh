@@ -116,6 +116,10 @@ aws kms --region "${REGION}" decrypt \
 [ -s newrelic-infra.yml ] || (echo "NewRelic file decryption failed" && exit 1)
 sudo mv newrelic-infra.yml /etc/newrelic-infra.yml
 
+# Enable New Relic infrastructure agent
+
+sudo systemctl enable newrelic-infra
+
 # Restart New Relic infrastructure agent
 
 sudo systemctl restart newrelic-infra
