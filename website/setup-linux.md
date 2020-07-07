@@ -1,16 +1,11 @@
 ---
-layout: home
-title:  "AB2D API Tutorial - Setup Linux"
+layout: tutorial_layout
+title:  "Setup Linux"
 date:   2019-11-02 09:21:12 -0500 
-description: CMS is developing a standards-based API to allow standalone Medicare Part D plan (PDP) sponsors to retrieve Medicare claims data for their enrollees.
+description: Setup Linux
 landing-page: live
-gradient: "blueberry-lime-background"
-subnav-link-gradient: "blueberry-lime-link"
-sections:
-  - Setup Linux
-ctas:
-
 ---
+
 # Setup Linux
 
 These instructions were written for CentOS/RedHat Linux.
