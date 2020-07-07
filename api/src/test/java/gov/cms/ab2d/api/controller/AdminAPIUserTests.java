@@ -30,6 +30,7 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Set;
 
@@ -218,15 +219,7 @@ public class AdminAPIUserTests {
 
     @Test
     public void testUpdateNonExistentUser() throws Exception {
-        UserDTO userDTO = new UserDTO();
-        userDTO.setUsername("test@test.com");
-        userDTO.setEmail("test@test.com");
-        userDTO.setEnabled(true);
-        userDTO.setFirstName("Test");
-        userDTO.setLastName("User");
-        Sponsor sponsor = sponsorRepository.findByHpmsIdAndOrgName(123, "Test").get();
-        userDTO.setSponsor(new SponsorDTO(sponsor.getHpmsId(), sponsor.getOrgName()));
-        userDTO.setRole(ADMIN_ROLE);
+        UserDTO userDTO = createUser();
 
         ObjectMapper mapper = new ObjectMapper();
 
@@ -237,8 +230,7 @@ public class AdminAPIUserTests {
                 .andExpect(status().is(404));
     }
 
-    @Test
-    public void testCreateUserOnAdminBehalf() throws Exception {
+    private UserDTO createUser() {
         UserDTO userDTO = new UserDTO();
         userDTO.setUsername("test@test.com");
         userDTO.setEmail("test@test.com");
@@ -249,6 +241,13 @@ public class AdminAPIUserTests {
         userDTO.setSponsor(new SponsorDTO(sponsor.getHpmsId(), sponsor.getOrgName()));
         userDTO.setRole(SPONSOR_ROLE);
 
+        return userDTO;
+    }
+
+    @Test
+    public void testCreateUsersJobOnAdminBehalf() throws Exception {
+        UserDTO userDTO = createUser();
+
         ObjectMapper mapper = new ObjectMapper();
 
         this.mockMvc.perform(
@@ -258,6 +257,32 @@ public class AdminAPIUserTests {
 
         MvcResult mvcResult = this.mockMvc.perform(
                 post(API_PREFIX + ADMIN_PREFIX + USER_URL + "/" + userDTO.getUsername() + "/job")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header("Authorization", "Bearer " + token))
+                .andReturn();
+
+        Assert.assertEquals(mvcResult.getResponse().getStatus(), 202);
+
+        String header = mvcResult.getResponse().getHeader("Content-Location");
+
+        Job job = jobRepository.findByJobUuid(header.substring(header.indexOf("/Job/") + 5, header.indexOf("/$status")));
+        User jobUser = job.getUser();
+        Assert.assertEquals(jobUser.getUsername(), userDTO.getUsername());
+    }
+
+    @Test
+    public void testCreateUsersJobByContractOnAdminBehalf() throws Exception {
+        UserDTO userDTO = createUser();
+
+        ObjectMapper mapper = new ObjectMapper();
+
+        this.mockMvc.perform(
+                post(API_PREFIX + ADMIN_PREFIX + USER_URL)
+                        .contentType(MediaType.APPLICATION_JSON).content(mapper.writeValueAsString(userDTO))
+                        .header("Authorization", "Bearer " + token));
+
+        MvcResult mvcResult = this.mockMvc.perform(
+                post(API_PREFIX + ADMIN_PREFIX + USER_URL + "/" + userDTO.getUsername() + "/job/ABC123")
                         .contentType(MediaType.APPLICATION_JSON)
                         .header("Authorization", "Bearer " + token))
                 .andReturn();
