@@ -55,7 +55,7 @@ public class ContractBeneSearchImpl implements ContractBeneSearch {
         List<ContractMapping> results = getAllResults(futureHandles, contractNumber);
         ContractBeneficiaries contractBeneficiaries = new ContractBeneficiaries();
         contractBeneficiaries.setContractNumber(contractNumber);
-        contractBeneficiaries.setPatients(new ArrayList<>());
+        contractBeneficiaries.setPatients(new HashMap<>());
 
         long start = System.currentTimeMillis();
 
@@ -111,7 +111,7 @@ public class ContractBeneSearchImpl implements ContractBeneSearch {
         int numMinutes = (int) (endTime - startTime) / 1000 / 60;
         int totalRecords = results.stream().mapToInt(c -> c.getPatients().size()).sum();
         eventLogger.log(new ReloadEvent(null, ReloadEvent.FileType.CONTRACT_MAPPING,
-                "Contract: " + contractNumber + " retrieved " + totalRecords + " in " + numMinutes, totalRecords));
+                "Contract: " + contractNumber + " retrieved " + totalRecords + " in " + numMinutes + " minutes", totalRecords));
         // Return the finished results
         return results;
     }
@@ -143,25 +143,21 @@ public class ContractBeneSearchImpl implements ContractBeneSearch {
         if (beneficiaries == null) {
             return;
         }
-        Optional<PatientDTO> optPatient = beneficiaries.getPatients().stream()
-                .filter(patientDTO -> patientDTO.getPatientId().equals(bfdPatientId))
-                .findAny();
+        Map<String, PatientDTO> patientDTOMap = beneficiaries.getPatients();
+        PatientDTO patientDTO = patientDTOMap.get(bfdPatientId);
 
-        if (optPatient.isPresent()) {
+        if (patientDTO != null) {
             // patient id was already active on this contract in previous month(s)
             // So just add this month to the patient's dateRangesUnderContract
-
-            PatientDTO patientDTO = optPatient.get();
             if (monthDateRange != null) {
                 patientDTO.getDateRangesUnderContract().add(monthDateRange);
             }
-
         } else {
             // new patient id.
             // Create a new PatientDTO for this patient
             // And then add this month to the patient's dateRangesUnderContract
 
-            PatientDTO patientDTO = PatientDTO.builder()
+            patientDTO = PatientDTO.builder()
                     .patientId(bfdPatientId)
                     .dateRangesUnderContract(new ArrayList<>())
                     .build();
@@ -169,7 +165,7 @@ public class ContractBeneSearchImpl implements ContractBeneSearch {
             if (monthDateRange != null) {
                 patientDTO.getDateRangesUnderContract().add(monthDateRange);
             }
-            beneficiaries.getPatients().add(patientDTO);
+            beneficiaries.getPatients().put(bfdPatientId, patientDTO);
         }
     }
 

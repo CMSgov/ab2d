@@ -32,6 +32,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -91,7 +92,7 @@ public class ContractProcessorImpl implements ContractProcessor {
         log.info("Beginning to process contract {}", keyValue(CONTRACT_LOG, contractNumber));
 
         var progressTracker = contractData.getProgressTracker();
-        List<PatientDTO> patients = getPatientsByContract(contractNumber, progressTracker);
+        Map<String, PatientDTO> patients = getPatientsByContract(contractNumber, progressTracker);
         int patientCount = patients.size();
         log.info("Contract [{}] has [{}] Patients", contractNumber, patientCount);
 
@@ -104,16 +105,16 @@ public class ContractProcessorImpl implements ContractProcessor {
 
             int recordsProcessedCount = 0;
             var futureHandles = new ArrayList<Future<Void>>();
-            for (PatientDTO patient : patients) {
+            for (Map.Entry<String, PatientDTO> patient : patients.entrySet()) {
                 ++recordsProcessedCount;
 
-                if (optoutUsed && isOptOutPatient(patient.getPatientId())) {
+                if (optoutUsed && isOptOutPatient(patient.getValue().getPatientId())) {
                     // this patient has opted out. skip patient record.
                     progressTracker.incrementOptOutCount();
                     continue;
                 }
 
-                futureHandles.add(processPatient(patient, contractData, helper));
+                futureHandles.add(processPatient(patient.getValue(), contractData, helper));
 
                 // Periodically check if cancelled
                 if (recordsProcessedCount % cancellationCheckFrequency == 0) {
@@ -222,13 +223,13 @@ public class ContractProcessorImpl implements ContractProcessor {
      * @param progressTracker - the progress tracker for all contracts and patients for the job
      * @return the contract's patients
      */
-    private List<PatientDTO> getPatientsByContract(String contractNumber, ProgressTracker progressTracker) {
+    private Map<String, PatientDTO> getPatientsByContract(String contractNumber, ProgressTracker progressTracker) {
         return progressTracker.getPatientsByContracts()
                 .stream()
                 .filter(byContract -> byContract.getContractNumber().equals(contractNumber))
                 .findFirst()
                 .map(ContractBeneficiaries::getPatients)
-                .orElse(Collections.emptyList());
+                .orElse(Collections.emptyMap());
     }
 
 

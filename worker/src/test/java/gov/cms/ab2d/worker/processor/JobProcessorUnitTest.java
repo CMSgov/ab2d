@@ -32,9 +32,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.ParseException;
 import java.time.OffsetDateTime;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.Random;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 
 import static java.lang.Boolean.TRUE;
@@ -288,11 +286,15 @@ class JobProcessorUnitTest {
     }
 
     private ContractBeneficiaries createPatientsByContractResponse(Contract contract) throws ParseException {
+        PatientDTO p1 = toPatientDTO();
+        PatientDTO p2 = toPatientDTO();
+        PatientDTO p3 = toPatientDTO();
+
         return ContractBeneficiaries.builder()
                 .contractNumber(contract.getContractNumber())
-                .patient(toPatientDTO())
-                .patient(toPatientDTO())
-                .patient(toPatientDTO())
+                .patient(p1.getPatientId(), p1)
+                .patient(p2.getPatientId(), p2)
+                .patient(p3.getPatientId(), p3)
                 .build();
     }
 
