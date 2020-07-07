@@ -1,15 +1,9 @@
 ---
-layout: home
-title:  "AB2D API Tutorial - Setup Mac"
+layout: tutorial_layout
+title:  "Setup Mac"
 date:   2019-11-02 09:21:12 -0500 
-description: CMS is developing a standards-based API to allow standalone Medicare Part D plan (PDP) sponsors to retrieve Medicare claims data for their enrollees.
+description: Setup Mac
 landing-page: live
-gradient: "blueberry-lime-background"
-subnav-link-gradient: "blueberry-lime-link"
-sections:
-  - Setup Mac
-ctas:
-
 ---
 # Setup Mac
 

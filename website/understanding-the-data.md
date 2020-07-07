@@ -17,7 +17,7 @@ active-nav: understanding-the-data-nav
             <div class="col-lg-6">
                 <div class="step-header">Overview</div>
                 The AB2D API is a RESTful based web service providing Medicare Parts A and B claims data using the industry-
-                standard <a href="" target="_blank">HL7 Fast Healthcare Interoperability Resources (FHIR)</a> resources, specifically the 
+                standard <a href="https://www.hl7.org/fhir/overview.html" target="_blank">HL7 Fast Healthcare Interoperability Resources (FHIR)</a> resources, specifically the 
                 <a href="https://hl7.org/fhir/uv/bulkdata/export/index.html" target="_blank">Bulk FHIR specification</a>. The AB2D API only provides data records for active enrollees that have not opted out of data sharing and excludes
                 all claims with substance abuse codes (as required by the Confidentiality of Alcohol and Drug Abuse Patient
                 Records Regulations, 42 CFR Part 2).
@@ -29,7 +29,7 @@ active-nav: understanding-the-data-nav
     </div>
 </section>         
 
-<section class="bg-light-blue page-section pt-20 pb-10">        
+<section class="bg-light-blue page-section pt-20 pb-10" role="region" aria-label="Developer Resources">        
     <svg class="shape-divider flip" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
              viewBox="0 0 1034.2 43.8" style="enable-background:new 0 0 1034.2 43.8;" xml:space="preserve" alt="divider">
         <path fill="#ffffff" d="M0,21.3c0,0,209.3-48,517.1,0s517.1,0,517.1,0v22.5H0V21.3z"/>
@@ -47,9 +47,7 @@ active-nav: understanding-the-data-nav
                     <br /><br />
                     <ul class="gray-bullets">
                     <li>
-                    <a href="">Parts A and Parts B Sample Export for a Given Contract Number (Will link to Sample Data File page-
-                    Use attachment in email to review page content. *Only minor changes were made from the content in the
-                    current website)</a>
+                    <a href="assets/downloads/sample-data.ndjson">Parts A and Parts B Sample Export</a>
                     </li>
                     </ul>
                 </div>
