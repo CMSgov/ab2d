@@ -6172,7 +6172,6 @@ article h2::after {
 }
 
 .step-accessing-claims {
-    width: 49px;
     height: 30px;
     font-family: Muli;
     font-size: 16px;
@@ -6189,7 +6188,7 @@ article h2::after {
     margin-left: 15px;
 }
 .step-accessing-claims-nonactive {
-    color: #939fad;
+    color: #69788C;
 }
 .step-claims-dash {
     width: 35px;
@@ -6208,7 +6207,7 @@ article h2::after {
     font-style: normal;
     line-height: 2.25;
     letter-spacing: 2.67px;
-    color: #de3072;
+    color: #DD276D;
     margin-bottom: 15px;
     text-transform: uppercase;
 }
@@ -6366,7 +6365,7 @@ article h2::after {
     background-color: #f1f9fe;
 }
 .card-expand {
-    color: #27a9e0;
+    color: #046B99;
     display: inline;
     position: absolute;
     right: 15px;
@@ -6459,4 +6458,12 @@ ul.gray-bullets a:hover {
 }
 .card-body {
     border-top: 1px solid rgba(0, 0, 0, .125);
+}
+
+.footer-header {
+    margin-bottom: .5em;
+}
+
+code.highlighter-rouge {
+    color: #DD276D;
 }

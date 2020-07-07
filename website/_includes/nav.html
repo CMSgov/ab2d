@@ -1,12 +1,12 @@
 <div class="container">
-    <a class="navbar-brand js-scroll-trigger" href="#page-top"><img src="assets/img/logo-horiz.svg" alt="logo"/></a>
+    <a class="navbar-brand" href="/"><img src="assets/img/logo-horiz.svg" alt="logo" /></a>
     <button class="navbar-toggler ml-auto" type="button" data-toggle="collapse" data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation"> Menu <i class="fas fa-bars"></i> </button>
     <div class="collapse navbar-collapse" id="navbarResponsive">
-        <ul class="navbar-nav mr-auto" style="width: 100%;">
+        <ul class="navbar-nav" style="width: 100%;">
             <li class="nav-item {% if page.active-nav == 'home-nav' %}{{ 'active' }}{% endif %}"> <a class="nav-link" href="/">Home</a> </li>
             <li class="nav-item {% if page.active-nav == 'overview-nav' %}{{ 'active' }}{% endif %}"> <a class="nav-link" href="overview.html">Overview</a> </li>
             <li class="dropdown dropdown-large nav-item {% if page.active-nav == 'accessing-claims-data-nav' %}{{ 'active' }}{% endif %}">
-                <a class="nav-link dropdown-toggle dropdown-medium" href="accessing-claims-data.html" data-toggle="dropdown" aria-expanded="false">
+                <a class="nav-link dropdown-toggle dropdown-medium" href="accessing-claims-data.html" data-toggle="dropdown" aria-expanded="false" onclick="javascript:location='accessing-claims-data.html'">
                     Accessing Claims Data
                     <i class="material-icons dropdown-caret">expand_more</i>
                 </a>
