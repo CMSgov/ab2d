@@ -17,7 +17,7 @@ layout: new
             <div class="divider-small-border center"></div>
             <div class="intro-subtitle">The AB2D API provides Prescription Drug Sponsors with secure Medicare parts A and B claims data for their plan enrollees.</div>
             <div class="next-section-wrap minimal-arrow" data-custom-color="true"> <a href="#start" class="js-scroll-trigger nectar-next-section skip-hash">
-                <svg class="next-arrow" width="40px" height="68px" viewBox="0 0 40 50" xml:space="preserve">
+                <svg class="next-arrow" width="40px" height="68px" viewBox="0 0 40 50" xml:space="preserve" aria-label="scroll down">
                 <path stroke="#ffffff" stroke-width="2" fill="none" d="M 20 0 L 20 51"></path>
                     <polyline stroke="#ffffff" stroke-width="2" fill="none" points="12, 44 20, 52 28, 44"></polyline>
                 </svg>
@@ -26,11 +26,14 @@ layout: new
         </div>
     </div>
 </header>
-<section class="page-section bg-gray py-5 px-3" id="start">
-    <svg preserveAspectRatio="xMidYMin slice" class="shape-divider" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
-         viewBox="0 0 1034.2 43.8" style="enable-background:new 0 0 1034.2 43.8;" xml:space="preserve" alt="divider">
-	    <path fill="#525962" d="M0,21.3c0,0,209.3-48,517.1,0s517.1,0,517.1,0v22.5H0V21.3z"/>
-    </svg>
+<section class="page-section bg-gray py-5 px-3" id="start" role="main">
+    <script type="text/javascript">
+        if (!isIE()) {
+            document.write('<svg preserveAspectRatio = "xMidYMin slice" class = "shape-divider" version = "1.1" xmlns = "http://www.w3.org/2000/svg" ' +
+                'xmlns:xlink = "http://www.w3.org/1999/xlink" x = "0px" y = "0px" viewBox = "0 0 1034.2 43.8" style = "enable-background:new 0 0 1034.2 43.8;" ' +
+                'xml:space = "preserve" alt = "divider" ><path fill = "#525962" d = "M0,21.3c0,0,209.3-48,517.1,0s517.1,0,517.1,0v22.5H0V21.3z" / > < /svg>');
+        }
+    </script>
     <div class="container">
         <div class="row">
             <div class="col-lg-12 text-center">
@@ -58,7 +61,7 @@ layout: new
         </div>
     </div>
 </section>
-<section class="bg-light-blue page-section pt-20 pb-10">
+<section class="bg-light-blue page-section pt-20 pb-10" role="region" aria-label="Accessing Claims Data">
     <!--<svg class="shape-divider" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 81.91">
       <path fill="#EAFAFF" d="M1440,83.24V69.71S1329.89,3,1134.85,23.92s-252.13,29.54-431-4.82C532.42-13.84,413.16-.47,287,31.15,210.24,50.4,125.38,72,0,41.92V83.24Z"/>
     </svg>-->
@@ -81,7 +84,7 @@ layout: new
         </div>
     </div>
 </section>
-<section class="page-section py-20">
+<section class="page-section py-20" role="region" aria-label="Understanding The Data">
     <!--<svg class="shape-divider" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 81.91">
       <path fill="#ffffff" d="M0,89.8V0S110.11,66.68,305.15,45.79s252.13-29.54,431,4.82c171.45,32.94,290.71,19.57,416.83-12,76.8-19.25,161.66-40.84,287-10.77v62Z"/>
     </svg>-->
@@ -106,7 +109,7 @@ layout: new
     </div>
 </section>
 
-<section class="page-section pt-20 pb-10" style="background: #f8fafc">
+<section class="page-section pt-20 pb-10" style="background: #f8fafc" role="region" aria-label="Support">
     <!--<svg class="shape-divider" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 81.91">
       <path fill="#EAFAFF" d="M1440,83.24V69.71S1329.89,3,1134.85,23.92s-252.13,29.54-431-4.82C532.42-13.84,413.16-.47,287,31.15,210.24,50.4,125.38,72,0,41.92V83.24Z"/>
     </svg>-->
