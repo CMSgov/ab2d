@@ -1,15 +1,9 @@
 ---
-layout: home
-title:  "AB2D API Tutorial - Setup Windows"
+layout: tutorial_layout
+title:  "Setup Windows"
 date:   2019-11-02 09:21:12 -0500 
-description: CMS is developing a standards-based API to allow standalone Medicare Part D plan (PDP) sponsors to retrieve Medicare claims data for their enrollees.
+description: Setup Windows
 landing-page: live
-gradient: "blueberry-lime-background"
-subnav-link-gradient: "blueberry-lime-link"
-sections:
-  - Setup Windows 10
-ctas:
-
 ---
 # Setup Windows 10
 In this example, we will be using the Linux subsystem for Windows 10.

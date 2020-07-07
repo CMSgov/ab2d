@@ -2,8 +2,6 @@ package gov.cms.ab2d.worker.adapter.bluebutton;
 
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.model.Contract;
-import gov.cms.ab2d.common.repository.ContractRepository;
-import gov.cms.ab2d.common.service.PropertiesService;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.LoggableEvent;
@@ -13,7 +11,6 @@ import gov.cms.ab2d.eventlogger.events.*;
 import gov.cms.ab2d.eventlogger.reports.sql.DoAll;
 import gov.cms.ab2d.eventlogger.utils.UtilMethods;
 import gov.cms.ab2d.worker.SpringBootApp;
-import gov.cms.ab2d.worker.service.BeneficiaryService;
 import org.hl7.fhir.dstu3.model.Bundle;
 import org.hl7.fhir.dstu3.model.Identifier;
 import org.hl7.fhir.dstu3.model.Patient;
@@ -22,6 +19,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -29,7 +27,9 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import java.time.OffsetDateTime;
 import java.util.HashSet;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
+import static gov.cms.ab2d.worker.processor.BundleUtils.BENEFICIARY_ID;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -38,22 +38,12 @@ import static org.mockito.Mockito.lenient;
 @SpringBootTest(classes = SpringBootApp.class)
 @Testcontainers
 public class LoadPatientsByContractLoggingTest {
-    private static final String BENEFICIARY_ID = "https://bluebutton.cms.gov/resources/variables/bene_id";
 
     @Mock
     private BFDClient bfdClient;
 
     @Autowired
     private DoAll doAll;
-
-    @Mock
-    private ContractRepository contractRepo;
-
-    @Autowired
-    private BeneficiaryService beneficiaryService;
-
-    @Autowired
-    private PropertiesService propertiesService;
 
     @Autowired
     private SqlEventLogger sqlEventLogger;
@@ -72,9 +62,13 @@ public class LoadPatientsByContractLoggingTest {
     }
 
     @Test
-    public void testLogging() {
-        ContractAdapterImpl cai = new ContractAdapterImpl(bfdClient, contractRepo, beneficiaryService,
-                propertiesService, logManager);
+    public void testLogging() throws ExecutionException, InterruptedException {
+        ThreadPoolTaskExecutor patientContractThreadPool = new ThreadPoolTaskExecutor();
+        patientContractThreadPool.setCorePoolSize(6);
+        patientContractThreadPool.setMaxPoolSize(12);
+        patientContractThreadPool.setThreadNamePrefix("contractp-");
+        patientContractThreadPool.initialize();
+        ContractBeneSearchImpl cai = new ContractBeneSearchImpl(bfdClient, logManager, patientContractThreadPool);
 
         String contractId = "C1234";
         Bundle bundle = createBundle();
@@ -85,7 +79,6 @@ public class LoadPatientsByContractLoggingTest {
         contract.setContractName("1234");
         contract.setId(1L);
         contract.setCoverages(new HashSet<>());
-        lenient().when(contractRepo.findContractByContractNumber(anyString())).thenReturn(java.util.Optional.of(contract));
         cai.getPatients(contractId, 1);
 
         List<LoggableEvent> reloadEvents = doAll.load(ReloadEvent.class);

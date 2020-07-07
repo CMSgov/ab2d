@@ -7,7 +7,7 @@ landing-page: live
 active-nav: overview-nav
 ---
 
-<section class="bg-white page-section py-5">
+<section class="bg-white page-section py-5" role="main">
     <svg preserveAspectRatio="xMidYMin slice" class="shape-divider" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
          viewBox="0 0 1034.2 43.8" style="enable-background:new 0 0 1034.2 43.8;" xml:space="preserve">
 	<path fill="#ffffff" d="M0,21.3c0,0,209.3-48,517.1,0s517.1,0,517.1,0v22.5H0V21.3z"/>
@@ -37,7 +37,7 @@ active-nav: overview-nav
         </div>
     </div>
 </section>
-<section class="bg-light-blue page-section pt-20 pb-10">
+<section class="bg-light-blue page-section pt-20 pb-10" role="region" aria-label="API Comparison">
 
   <svg preserveAspectRatio="xMidYMin slice" alt="divider" class="shape-divider flip" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
          viewBox="0 0 1034.2 43.8" style="enable-background:new 0 0 1034.2 43.8;" xml:space="preserve">

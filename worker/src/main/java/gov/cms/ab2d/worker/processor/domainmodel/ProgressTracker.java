@@ -1,6 +1,6 @@
 package gov.cms.ab2d.worker.processor.domainmodel;
 
-import gov.cms.ab2d.worker.adapter.bluebutton.GetPatientsByContractResponse;
+import gov.cms.ab2d.worker.adapter.bluebutton.ContractBeneficiaries;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
@@ -15,7 +15,7 @@ public class ProgressTracker {
     private final String jobUuid;
 
     @Singular
-    private final List<GetPatientsByContractResponse> patientsByContracts;
+    private final List<ContractBeneficiaries> patientsByContracts;
     private int totalCount;
     private int processedCount;
 
@@ -50,7 +50,7 @@ public class ProgressTracker {
     }
 
     public int getContractCount(String contractNumber) {
-        GetPatientsByContractResponse response = patientsByContracts.stream()
+        ContractBeneficiaries response = patientsByContracts.stream()
                 .filter(c -> contractNumber.equalsIgnoreCase(c.getContractNumber()))
                 .findFirst().orElse(null);
         if (response == null || response.getPatients() == null) {

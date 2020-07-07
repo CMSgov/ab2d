@@ -45,9 +45,9 @@ active-nav: support-nav
         <div id="accordion-support" class="accordion-white-bg">
           <div class="card">
             <div class="card-header" id="headingOne" data-toggle="collapse" data-target="#collapseOne" aria-expanded="false" aria-controls="collapseOne">
-              <h5 class="mb-0 card-header-h5">
+              <div class="mb-0 card-header-h5">
                   Why is CMS making claims data available to PDP sponsors?
-              </h5>
+              </div>
               <i class="material-icons card-expand">expand_more</i>
             </div>
         
@@ -66,9 +66,9 @@ active-nav: support-nav
           
           <div class="card">
             <div class="card-header" id="headingTwo" data-toggle="collapse" data-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
-              <h5 class="mb-0 card-header-h5">
+              <div class="mb-0 card-header-h5">
                   What is the Final Rule?
-              </h5>
+              </div>
               <i class="material-icons card-expand">expand_more</i>
             </div>
             <div id="collapseTwo" class="collapse" aria-labelledby="headingTwo" data-parent="#accordion">
@@ -81,9 +81,9 @@ active-nav: support-nav
           
           <div class="card">
             <div class="card-header" id="headingThree" data-toggle="collapse" data-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
-              <h5 class="mb-0 card-header-h5">
+              <div class="mb-0 card-header-h5">
                   Who is eligible to request Medicare Claims data under this process?
-              </h5>
+              </div>
               <i class="material-icons card-expand">expand_more</i>
             </div>
             <div id="collapseThree" class="collapse" aria-labelledby="headingThree" data-parent="#accordion">
@@ -95,10 +95,10 @@ active-nav: support-nav
           
           <div class="card">
               <div class="card-header" id="headingFour" data-toggle="collapse" data-target="#collapseFour" aria-expanded="false" aria-controls="collapseFour">
-                <h5 class="mb-0 card-header-h5">
+                <div class="mb-0 card-header-h5">
                     How do standalone Medicare Part D Plan (PDP) sponsors access the Medicare Parts A and B claims data as
                     mandated the BBA and Final Rule?
-                </h5>
+                </div>
                 <i class="material-icons card-expand">expand_more</i>
               </div>
               <div id="collapseFour" class="collapse" aria-labelledby="headingTwo" data-parent="#accordion">
@@ -111,10 +111,10 @@ active-nav: support-nav
           
           <div class="card">
               <div class="card-header" id="headingFive" data-toggle="collapse" data-target="#collapseFive" aria-expanded="false" aria-controls="collapseFive">
-                <h5 class="mb-0 card-header-h5">
+                <div class="mb-0 card-header-h5">
                     I'm a Standalone Medicare Part D Plan (PDP) sponsor. How does my organization receive Medicare Parts
                     A and B claims information using the AB2D API?
-                </h5>
+                </div>
                 <i class="material-icons card-expand">expand_more</i>
               </div>
               <div id="collapseFive" class="collapse" aria-labelledby="headingFive" data-parent="#accordion">
@@ -129,9 +129,9 @@ active-nav: support-nav
           
           <div class="card">
             <div class="card-header" id="headingSix" data-toggle="collapse" data-target="#collapseSix" aria-expanded="false" aria-controls="collapseSix">
-              <h5 class="mb-0 card-header-h5">
+              <div class="mb-0 card-header-h5">
                   What is Claims Data Attestation?
-              </h5>
+              </div>
               <i class="material-icons card-expand">expand_more</i>
             </div>
             <div id="collapseSix" class="collapse" aria-labelledby="headingSix">
@@ -147,9 +147,9 @@ active-nav: support-nav
           
           <div class="card">
               <div class="card-header" id="headingSeven" data-toggle="collapse" data-target="#collapseSeven" aria-expanded="false" aria-controls="collapseSeven">
-                <h5 class="mb-0 card-header-h5">
+                <div class="mb-0 card-header-h5">
                     Who within my organization can Attest?
-                </h5>
+                </div>
                 <i class="material-icons card-expand">expand_more</i>
               </div>
               <div id="collapseSeven" class="collapse" aria-labelledby="headingSeven">
@@ -163,9 +163,9 @@ active-nav: support-nav
           
           <div class="card">
             <div class="card-header" id="headingEight" data-toggle="collapse" data-target="#collapseEight" aria-expanded="false" aria-controls="collapseEight">
-              <h5 class="mb-0 card-header-h5">
+              <div class="mb-0 card-header-h5">
                   What happens if an Attestor leaves my company?
-              </h5>
+              </div>
               <i class="material-icons card-expand">expand_more</i>
             </div>
             <div id="collapseEight" class="collapse" aria-labelledby="headingEight">
@@ -184,9 +184,9 @@ active-nav: support-nav
           
           <div class="card">
               <div class="card-header" id="headingNine" data-toggle="collapse" data-target="#collapseNine" aria-expanded="false" aria-controls="collapseNine">
-                <h5 class="mb-0 card-header-h5">
+                <div class="mb-0 card-header-h5">
                     What is the permitted use of the data?
-                </h5>
+                </div>
                 <i class="material-icons card-expand">expand_more</i>
               </div>
               <div id="collapseNine" class="collapse" aria-labelledby="headingNine">
@@ -204,9 +204,9 @@ active-nav: support-nav
           
           <div class="card">
             <div class="card-header" id="headingTen" data-toggle="collapse" data-target="#collapseTen" aria-expanded="false" aria-controls="collapseTen">
-              <h5 class="mb-0 card-header-h5">
+              <div class="mb-0 card-header-h5">
                   What use of the data is not permitted?
-              </h5>
+              </div>
               <i class="material-icons card-expand">expand_more</i>
             </div>
             <div id="collapseTen" class="collapse" aria-labelledby="headingTen">
@@ -224,9 +224,9 @@ active-nav: support-nav
           
           <div class="card">
               <div class="card-header" id="headingEleven" data-toggle="collapse" data-target="#collapseEleven" aria-expanded="false" aria-controls="collapseEleven">
-                <h5 class="mb-0 card-header-h5">
+                <div class="mb-0 card-header-h5">
                     When can PDP sponsors begin requesting data?
-                </h5>
+                </div>
                 <i class="material-icons card-expand">expand_more</i>
               </div>
               <div id="collapseEleven" class="collapse" aria-labelledby="headingEleven">
@@ -239,9 +239,9 @@ active-nav: support-nav
           
           <div class="card">
             <div class="card-header" id="headingTwelve" data-toggle="collapse" data-target="#collapseTwelve" aria-expanded="false" aria-controls="collapseTwelve">
-              <h5 class="mb-0 card-header-h5">
+              <div class="mb-0 card-header-h5">
                   What is the format of the data extract?
-              </h5>
+              </div>
               <i class="material-icons card-expand">expand_more</i>
             </div>
             <div id="collapseTwelve" class="collapse" aria-labelledby="headingTwelve">
@@ -255,9 +255,9 @@ active-nav: support-nav
           
           <div class="card">
               <div class="card-header" id="headingThirteen" data-toggle="collapse" data-target="#collapseThirteen" aria-expanded="false" aria-controls="collapseThirteen">
-                <h5 class="mb-0 card-header-h5">
+                <div class="mb-0 card-header-h5">
                     What are the data elements that will be accessible through the API?
-                </h5>
+                </div>
                 <i class="material-icons card-expand">expand_more</i>
               </div>
               <div id="collapseThirteen" class="collapse" aria-labelledby="headingThirteen">
@@ -280,9 +280,9 @@ active-nav: support-nav
           
           <div class="card">
             <div class="card-header" id="headingFourteen" data-toggle="collapse" data-target="#collapseFourteen" aria-expanded="false" aria-controls="collapseFourteen">
-              <h5 class="mb-0 card-header-h5">
+              <div class="mb-0 card-header-h5">
                   Can a beneficiary opt-out of data sharing?
-              </h5>
+              </div>
               <i class="material-icons card-expand">expand_more</i>
             </div>
             <div id="collapseFourteen" class="collapse" aria-labelledby="headingFourteen">
@@ -295,9 +295,9 @@ active-nav: support-nav
           
           <div class="card">
               <div class="card-header" id="headingFifteen" data-toggle="collapse" data-target="#collapseFifteen" aria-expanded="false" aria-controls="collapseFifteen">
-                <h5 class="mb-0 card-header-h5">
+                <div class="mb-0 card-header-h5">
                     Can a PDP sponsor request historical data?
-                </h5>
+                </div>
                 <i class="material-icons card-expand">expand_more</i>
               </div>
               <div id="collapseFifteen" class="collapse" aria-labelledby="headingFifteen">
@@ -312,9 +312,9 @@ active-nav: support-nav
           
           <div class="card">
             <div class="card-header" id="headingSixteen" data-toggle="collapse" data-target="#collapseSixteen" aria-expanded="false" aria-controls="collapseSixteen">
-              <h5 class="mb-0 card-header-h5">
+              <div class="mb-0 card-header-h5">
                   How can we get more data elements in addition to what’s listed in the Final Rule?
-              </h5>
+              </div>
               <i class="material-icons card-expand">expand_more</i>
             </div>
             <div id="collapseSixteen" class="collapse" aria-labelledby="headingSixteen">
@@ -328,9 +328,9 @@ active-nav: support-nav
           
           <div class="card">
               <div class="card-header" id="headingSeventeen" data-toggle="collapse" data-target="#collapseSeventeen" aria-expanded="false" aria-controls="collapseSeventeen">
-                <h5 class="mb-0 card-header-h5">
+                <div class="mb-0 card-header-h5">
                     What are the data sources and how often is the data updated?
-                </h5>
+                </div>
                 <i class="material-icons card-expand">expand_more</i>
               </div>
               <div id="collapseSeventeen" class="collapse" aria-labelledby="headingSeventeen">
