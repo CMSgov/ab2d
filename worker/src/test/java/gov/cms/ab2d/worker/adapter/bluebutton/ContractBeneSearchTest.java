@@ -4,6 +4,7 @@ import ca.uhn.fhir.rest.server.exceptions.InvalidRequestException;
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.eventlogger.LogManager;
+import gov.cms.ab2d.filter.FilterOutByDate;
 import org.hl7.fhir.dstu3.model.Bundle;
 import org.hl7.fhir.dstu3.model.Bundle.BundleEntryComponent;
 import org.hl7.fhir.dstu3.model.Bundle.BundleLinkComponent;
@@ -21,6 +22,9 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import java.time.Instant;
 import java.time.Month;
 import java.util.Calendar;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ThreadPoolExecutor;
 
@@ -30,6 +34,7 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
@@ -65,12 +70,12 @@ class ContractBeneSearchTest {
     @Test
     @DisplayName("given contractNumber, get patients from BFD API")
     void GivenContractNumber_ShouldReturnPatients() throws ExecutionException, InterruptedException {
-        var response = cut.getPatients(contractNumber, currentMonth);
+        ContractBeneficiaries response = cut.getPatients(contractNumber, currentMonth);
 
         assertThat(response, notNullValue());
         assertThat(response.getContractNumber(), is(contractNumber));
 
-        var patients = response.getPatients();
+        Map<String, ContractBeneficiaries.PatientDTO> patients = response.getPatients();
         assertThat(patients.size(), is(1));
         verify(client, times(3)).requestPartDEnrolleesFromServer(anyString(), anyInt());
         verify(client, never()).requestNextBundleFromServer(Mockito.any(Bundle.class));
@@ -78,12 +83,13 @@ class ContractBeneSearchTest {
 
     @Test
     void GivenPatientActiveInJanuary_ShouldReturnOneRowInDateRangesUnderContract() throws ExecutionException, InterruptedException {
-        var response = cut.getPatients(contractNumber, Month.JANUARY.getValue());
+        ContractBeneficiaries response = cut.getPatients(contractNumber, Month.JANUARY.getValue());
 
-        var patients = response.getPatients();
+        Map<String, ContractBeneficiaries.PatientDTO> patients = response.getPatients();
         assertThat(patients.size(), is(1));
 
-        var patient0 = patients.get(0);
+        ContractBeneficiaries.PatientDTO patient0 = patients.values().stream()
+                .filter(c -> c.getPatientId().equalsIgnoreCase("ccw_patient_000")).findFirst().get();
         assertThat(patient0.getPatientId(), is("ccw_patient_000"));
         assertThat(patient0.getDateRangesUnderContract().size(), is(1));
         verify(client).requestPartDEnrolleesFromServer(anyString(), anyInt());
@@ -92,9 +98,9 @@ class ContractBeneSearchTest {
 
     @Test
     void GivenPatientActiveInJanAndFeb_ShouldReturnTwoRowsInDateRangesUnderContract() throws ExecutionException, InterruptedException {
-        var response = cut.getPatients(contractNumber, Month.FEBRUARY.getValue());
-
-        var patient0 = response.getPatients().get(0);
+        ContractBeneficiaries response = cut.getPatients(contractNumber, Month.FEBRUARY.getValue());
+        Collection <ContractBeneficiaries.PatientDTO> patients = response.getPatients().values();
+        ContractBeneficiaries.PatientDTO patient0 = patients.stream().filter(c -> c.getPatientId().equalsIgnoreCase("ccw_patient_000")).findFirst().get();
         assertThat(patient0.getPatientId(), is("ccw_patient_000"));
         assertThat(patient0.getDateRangesUnderContract().size(), is(2));
         verify(client, times(2)).requestPartDEnrolleesFromServer(anyString(), anyInt());
@@ -103,9 +109,9 @@ class ContractBeneSearchTest {
 
     @Test
     void GivenPatientActiveInMonth1And3ButNot2_ShouldReturnTwoRowsInDateRangesUnderContract() throws ExecutionException, InterruptedException {
-        var bundle1 = bundle.copy();
+        Bundle bundle1 = bundle.copy();
         // add 2nd patient
-        var entries = bundle1.getEntry();
+        List<BundleEntryComponent> entries = bundle1.getEntry();
         entries.add(createBundleEntry("ccw_patient_001"));
 
         when(client.requestPartDEnrolleesFromServer("S0000", 1))
@@ -115,27 +121,25 @@ class ContractBeneSearchTest {
         when(client.requestPartDEnrolleesFromServer("S0000", 3))
                 .thenReturn(bundle1);    // January - patient1 is active
 
-        var response = cut.getPatients(contractNumber, Month.MARCH.getValue());
+        ContractBeneficiaries response = cut.getPatients(contractNumber, Month.MARCH.getValue());
 
-        //expect patient0 to be active in all 3 months
-        var patient0 = response.getPatients().get(0);
-        assertThat(patient0.getPatientId(), is("ccw_patient_000"));
-        assertThat(patient0.getDateRangesUnderContract().size(), is(3));
+        for (ContractBeneficiaries.PatientDTO patient : response.getPatients().values()) {
+            if (patient.getPatientId().equalsIgnoreCase("ccw_patient_000")) {
+                //expect patient0 to be active in all 3 months
+                assertThat(patient.getDateRangesUnderContract().size(), is(3));
+            } else if (patient.getPatientId().equalsIgnoreCase("ccw_patient_001")) {
+                //expect patient1 to be active in only 2 months
+                assertThat(patient.getDateRangesUnderContract().size(), is(2));
+                List<FilterOutByDate.DateRange> dateRangesUnderContract = patient.getDateRangesUnderContract();
+                // month is January
+                assertThat(dateRangesUnderContract.get(0).getStart().getMonth(), is(Calendar.JANUARY));
+                assertThat(dateRangesUnderContract.get(0).getEnd().getMonth(), is(Calendar.JANUARY));
 
-        //expect patient1 to be active in only 2 months
-        var patient1 = response.getPatients().get(1);
-        assertThat(patient1.getPatientId(), is("ccw_patient_001"));
-        assertThat(patient1.getDateRangesUnderContract().size(), is(2));
-
-        var dateRangesUnderContract = patient1.getDateRangesUnderContract();
-
-        //month is January
-        assertThat(dateRangesUnderContract.get(0).getStart().getMonth(), is(Calendar.JANUARY));
-        assertThat(dateRangesUnderContract.get(0).getEnd().getMonth(), is(Calendar.JANUARY));
-
-        //month is March
-        assertThat(dateRangesUnderContract.get(1).getStart().getMonth(), is(Calendar.MARCH));
-        assertThat(dateRangesUnderContract.get(1).getEnd().getMonth(), is(Calendar.MARCH));
+                //month is March
+                assertThat(dateRangesUnderContract.get(1).getStart().getMonth(), is(Calendar.MARCH));
+                assertThat(dateRangesUnderContract.get(1).getEnd().getMonth(), is(Calendar.MARCH));
+            }
+        }
 
         verify(client, times(3)).requestPartDEnrolleesFromServer(anyString(), anyInt());
         verify(client, never()).requestNextBundleFromServer(Mockito.any(Bundle.class));
@@ -143,28 +147,32 @@ class ContractBeneSearchTest {
 
     @Test
     void GivenSecondPatientJoinsInFeb_ShouldReturnOnlyOneRowsForThatPatientInDateRangesUnderContract() throws ExecutionException, InterruptedException {
-        var bundle1 = bundle.copy();
+        Bundle bundle1 = bundle.copy();
 
         // add 2nd patient
-        var entries = bundle1.getEntry();
+        List<BundleEntryComponent> entries = bundle1.getEntry();
         entries.add(createBundleEntry("ccw_patient_001"));
 
         when(client.requestPartDEnrolleesFromServer(anyString(), anyInt()))
                 .thenReturn(bundle, bundle1);
 
-        var response = cut.getPatients(contractNumber, Month.FEBRUARY.getValue());
+        ContractBeneficiaries response = cut.getPatients(contractNumber, Month.FEBRUARY.getValue());
 
-        var patients = response.getPatients();
+        Map<String, ContractBeneficiaries.PatientDTO> patients = response.getPatients();
         assertThat(patients.size(), is(2));
 
-        //1st patient has 2 rows in date ranges under contract
-        var patient0 = patients.get(0);
-        assertThat(patient0.getPatientId(), is("ccw_patient_000"));
+        // 1st patient has 2 rows in date ranges under contract
+        ContractBeneficiaries.PatientDTO patient0 = patients.entrySet().stream()
+                .map(Map.Entry::getValue)
+                .filter(c -> c.getPatientId().equalsIgnoreCase("ccw_patient_000"))
+                .findFirst().get();
         assertThat(patient0.getDateRangesUnderContract().size(), is(2));
 
-        //2nd patient has 1 row in date ranges under contract
-        var patient1 = patients.get(1);
-        assertThat(patient1.getPatientId(), is("ccw_patient_001"));
+        // 2nd patient has 1 row in date ranges under contract
+        ContractBeneficiaries.PatientDTO patient1 = patients.entrySet().stream()
+                .map(Map.Entry::getValue)
+                .filter(c -> c.getPatientId().equalsIgnoreCase("ccw_patient_001"))
+                .findFirst().get();
         assertThat(patient1.getDateRangesUnderContract().size(), is(1));
 
         verify(client, times(2)).requestPartDEnrolleesFromServer(anyString(), anyInt());
@@ -173,51 +181,52 @@ class ContractBeneSearchTest {
 
     @Test
     void GivenAPatientLeavesInFeb_ShouldReturnOnlyOneRowsForThatPatientInDateRangesUnderContract() throws ExecutionException, InterruptedException {
-        var bundle1 = bundle.copy();
+        Bundle bundle1 = bundle.copy();
 
-        //bundle1 has 2 patients in January
-        var entries = bundle1.getEntry();
+        // bundle1 has 2 patients in January
+        List<BundleEntryComponent> entries = bundle1.getEntry();
         entries.add(createBundleEntry("ccw_patient_001"));
 
-        //bundle2  has 1 patient in February, coz patient_001 left and is no longer active in contract
-        var bundle2 = bundle.copy();
+        // bundle2  has 1 patient in February, coz patient_001 left and is no longer active in contract
+        Bundle bundle2 = bundle.copy();
 
         when(client.requestPartDEnrolleesFromServer(anyString(), anyInt()))
                 .thenReturn(bundle1, bundle2);
 
-        var response = cut.getPatients(contractNumber, Month.FEBRUARY.getValue());
+        ContractBeneficiaries response = cut.getPatients(contractNumber, Month.FEBRUARY.getValue());
 
-        var patients = response.getPatients();
+        Collection<ContractBeneficiaries.PatientDTO> patients = response.getPatients().values();
         assertThat(patients.size(), is(2));
 
-        var patient0 = patients.get(0);
-        assertThat(patient0.getPatientId(), is("ccw_patient_000"));
-        assertThat(patient0.getDateRangesUnderContract().size(), is(2));
-
-        var patient1 = patients.get(1);
-        assertThat(patient1.getPatientId(), is("ccw_patient_001"));
-        assertThat(patient1.getDateRangesUnderContract().size(), is(1));
-
+        for (ContractBeneficiaries.PatientDTO patient : patients) {
+            if (patient.getPatientId().equalsIgnoreCase("ccw_patient_000")) {
+                assertThat(patient.getDateRangesUnderContract().size(), is(2));
+            } else if (patient.getPatientId().equalsIgnoreCase("ccw_patient_001")) {
+                assertThat(patient.getDateRangesUnderContract().size(), is(1));
+            } else {
+                fail("Invalid patient ID: " + patient.getPatientId());
+            }
+        }
         verify(client, times(2)).requestPartDEnrolleesFromServer(anyString(), anyInt());
         verify(client, never()).requestNextBundleFromServer(Mockito.any(Bundle.class));
     }
 
     @Test
     void GivenTwoPatientsActiveInJanAndFeb_ShouldReturnTwoPatientRowsEachWithTwoRowsInDateRangesUnderContract() throws ExecutionException, InterruptedException {
-        var entries = bundle.getEntry();
+        List<BundleEntryComponent> entries = bundle.getEntry();
         entries.add(createBundleEntry("ccw_patient_001"));
 
-        var response = cut.getPatients(contractNumber, Month.FEBRUARY.getValue());
+        ContractBeneficiaries response = cut.getPatients(contractNumber, Month.FEBRUARY.getValue());
 
-        var patients = response.getPatients();
+        Collection<ContractBeneficiaries.PatientDTO> patients = response.getPatients().values();
         assertThat(patients.size(), is(2));
 
-        var patient0 = patients.get(0);
-        assertThat(patient0.getPatientId(), is("ccw_patient_000"));
+        ContractBeneficiaries.PatientDTO patient0 = patients.stream()
+                .filter(c -> c.getPatientId().equalsIgnoreCase("ccw_patient_000")).findFirst().get();
         assertThat(patient0.getDateRangesUnderContract().size(), is(2));
 
-        var patient1 = patients.get(1);
-        assertThat(patient1.getPatientId(), is("ccw_patient_001"));
+        ContractBeneficiaries.PatientDTO patient1 = patients.stream()
+                .filter(c -> c.getPatientId().equalsIgnoreCase("ccw_patient_001")).findFirst().get();
         assertThat(patient1.getDateRangesUnderContract().size(), is(2));
 
         verify(client, times(2)).requestPartDEnrolleesFromServer(anyString(), anyInt());
@@ -226,33 +235,33 @@ class ContractBeneSearchTest {
 
     @Test
     void GivenMultiplePages_ShouldProcessAllPages() throws ExecutionException, InterruptedException {
-        var bundle1 = bundle.copy();
+        Bundle bundle1 = bundle.copy();
 
-        var entries = bundle1.getEntry();
+        List<BundleEntryComponent> entries = bundle1.getEntry();
         entries.add(createBundleEntry("ccw_patient_001"));
         bundle1.addLink(addNextLink());
 
-        var bundle2 = createBundle("ccw_patient_002");
+        Bundle bundle2 = createBundle("ccw_patient_002");
 
         when(client.requestPartDEnrolleesFromServer(anyString(), anyInt())).thenReturn(bundle1);
         when(client.requestNextBundleFromServer(Mockito.any(Bundle.class))).thenReturn(bundle2);
 
-        var response = cut.getPatients(contractNumber, Month.JANUARY.getValue());
+        Map<String, ContractBeneficiaries.PatientDTO> map = cut.getPatients(contractNumber, Month.JANUARY.getValue()).getPatients();
 
-        var patients = response.getPatients();
+        Collection<ContractBeneficiaries.PatientDTO> patients = map.values();
         assertThat(patients.size(), is(3));
 
-        var patient0 = patients.get(0);
-        assertThat(patient0.getPatientId(), is("ccw_patient_000"));
-        assertThat(patient0.getDateRangesUnderContract().size(), is(1));
-
-        var patient1 = patients.get(1);
-        assertThat(patient1.getPatientId(), is("ccw_patient_001"));
-        assertThat(patient1.getDateRangesUnderContract().size(), is(1));
-
-        var patient2 = patients.get(2);
-        assertThat(patient2.getPatientId(), is("ccw_patient_002"));
-        assertThat(patient2.getDateRangesUnderContract().size(), is(1));
+        for (ContractBeneficiaries.PatientDTO patient : patients) {
+            if (patient.getPatientId().equalsIgnoreCase("ccw_patient_000")) {
+                assertThat(patient.getDateRangesUnderContract().size(), is(1));
+            } else if (patient.getPatientId().equalsIgnoreCase("ccw_patient_001")) {
+                assertThat(patient.getDateRangesUnderContract().size(), is(1));
+            } else if (patient.getPatientId().equalsIgnoreCase("ccw_patient_002")) {
+                assertThat(patient.getDateRangesUnderContract().size(), is(1));
+            } else {
+                fail("Invalid patient ID: " + patient.getPatientId());
+            }
+        }
 
         verify(client, times(1)).requestPartDEnrolleesFromServer(anyString(), anyInt());
         verify(client).requestNextBundleFromServer(Mockito.any(Bundle.class));
@@ -260,25 +269,25 @@ class ContractBeneSearchTest {
 
     @Test
     void GivenDuplicatePatientRowsFromBFD_ShouldEliminateDuplicates() throws ExecutionException, InterruptedException {
-        var entries = bundle.getEntry();
+        List<BundleEntryComponent> entries = bundle.getEntry();
         entries.add(createBundleEntry("ccw_patient_001"));
         //simulate duplicate patient record coming from BDF
         entries.add(createBundleEntry("ccw_patient_001"));
 
         when(client.requestPartDEnrolleesFromServer(anyString(), anyInt())).thenReturn(bundle);
 
-        var response = cut.getPatients(contractNumber, Month.JANUARY.getValue());
-
-        var patients = response.getPatients();
+        Collection<ContractBeneficiaries.PatientDTO> patients = cut.getPatients(contractNumber, Month.JANUARY.getValue()).getPatients().values();
         assertThat(patients.size(), is(2));
 
-        var patient0 = patients.get(0);
-        assertThat(patient0.getPatientId(), is("ccw_patient_000"));
-        assertThat(patient0.getDateRangesUnderContract().size(), is(1));
-
-        var patient1 = patients.get(1);
-        assertThat(patient1.getPatientId(), is("ccw_patient_001"));
-        assertThat(patient1.getDateRangesUnderContract().size(), is(1));
+        for (ContractBeneficiaries.PatientDTO patient : patients) {
+            if (patient.getPatientId().equalsIgnoreCase("ccw_patient_000")) {
+                assertThat(patient.getDateRangesUnderContract().size(), is(1));
+            } else if (patient.getPatientId().equalsIgnoreCase("ccw_patient_001")) {
+                assertThat(patient.getDateRangesUnderContract().size(), is(1));
+            } else {
+                fail("Invalid patient ID: " + patient.getPatientId());
+            }
+        }
 
         verify(client, times(1)).requestPartDEnrolleesFromServer(anyString(), anyInt());
         verify(client, never()).requestNextBundleFromServer(Mockito.any(Bundle.class));
@@ -301,33 +310,33 @@ class ContractBeneSearchTest {
     }
 
     private Bundle createBundle(final String patientId) {
-        var bundle = new Bundle();
-        var entries = bundle.getEntry();
+        Bundle bundle = new Bundle();
+        List<BundleEntryComponent> entries = bundle.getEntry();
         entries.add(createBundleEntry(patientId));
         return bundle;
     }
 
     private BundleEntryComponent createBundleEntry(String patientId) {
-        var component = new BundleEntryComponent();
+        BundleEntryComponent component = new BundleEntryComponent();
         component.setResource(createPatient(patientId));
         return component;
     }
 
     private Patient createPatient(String patientId) {
-        var patient = new Patient();
+        Patient patient = new Patient();
         patient.getIdentifier().add(createIdentifier(patientId));
         return patient;
     }
 
     private Identifier createIdentifier(String patientId) {
-        var identifier = new Identifier();
+        Identifier identifier = new Identifier();
         identifier.setSystem(BENEFICIARY_ID);
         identifier.setValue(patientId);
         return identifier;
     }
 
     private BundleLinkComponent addNextLink() {
-        var linkComponent = new BundleLinkComponent();
+        BundleLinkComponent linkComponent = new BundleLinkComponent();
         linkComponent.setRelation(Bundle.LINK_NEXT);
         return linkComponent;
     }

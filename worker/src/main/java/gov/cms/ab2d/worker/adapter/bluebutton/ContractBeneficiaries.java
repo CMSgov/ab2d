@@ -9,6 +9,7 @@ import lombok.Singular;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @Data
 @Builder
@@ -19,7 +20,7 @@ public class ContractBeneficiaries {
     private String contractNumber;
 
     @Singular
-    private List<PatientDTO> patients;
+    private Map<String, PatientDTO> patients;
 
     @Data
     @Builder

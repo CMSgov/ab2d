@@ -5,6 +5,7 @@ import org.hl7.fhir.dstu3.model.Bundle;
 import org.hl7.fhir.dstu3.model.Identifier;
 import org.hl7.fhir.dstu3.model.Patient;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -19,7 +20,7 @@ public class BundleUtils {
         return bundle;
     }
 
-    public static List<ContractBeneficiaries.PatientDTO> getPatient(String id, List<ContractBeneficiaries.PatientDTO> patients) {
+    public static List<ContractBeneficiaries.PatientDTO> getPatient(String id, Collection<ContractBeneficiaries.PatientDTO> patients) {
         return patients.stream().filter(c -> c.getPatientId().equalsIgnoreCase(id)).collect(Collectors.toList());
     }
 
