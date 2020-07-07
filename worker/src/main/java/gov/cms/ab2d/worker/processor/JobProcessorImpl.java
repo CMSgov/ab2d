@@ -13,8 +13,8 @@ import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.events.ContractBeneSearchEvent;
 import gov.cms.ab2d.eventlogger.events.FileEvent;
 import gov.cms.ab2d.eventlogger.events.JobStatusChangeEvent;
-import gov.cms.ab2d.worker.adapter.bluebutton.ContractAdapter;
-import gov.cms.ab2d.worker.adapter.bluebutton.GetPatientsByContractResponse;
+import gov.cms.ab2d.worker.adapter.bluebutton.ContractBeneSearch;
+import gov.cms.ab2d.worker.adapter.bluebutton.ContractBeneficiaries;
 import gov.cms.ab2d.worker.processor.StreamHelperImpl.FileOutputType;
 import gov.cms.ab2d.worker.processor.domainmodel.ContractData;
 import gov.cms.ab2d.worker.processor.domainmodel.ProgressTracker;
@@ -35,8 +35,10 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 import static gov.cms.ab2d.common.model.JobStatus.SUCCESSFUL;
@@ -62,7 +64,7 @@ public class JobProcessorImpl implements JobProcessor {
     private final FileService fileService;
     private final JobRepository jobRepository;
     private final JobOutputRepository jobOutputRepository;
-    private final ContractAdapter contractAdapter;
+    private final ContractBeneSearch contractBeneSearch;
     private final ContractProcessor contractProcessor;
     private final LogManager eventLogger;
 
@@ -117,7 +119,7 @@ public class JobProcessorImpl implements JobProcessor {
      * @param job - the job to process
      * @param outputDirPath - the output directory to put all the files
      */
-    private void processJob(Job job, Path outputDirPath) {
+    private void processJob(Job job, Path outputDirPath) throws ExecutionException, InterruptedException {
         // Create the output directory
         createOutputDirectory(outputDirPath, job);
 
@@ -279,11 +281,12 @@ public class JobProcessorImpl implements JobProcessor {
      * @param attestedContracts - the list of attested contracts
      * @return the progress tracker
      */
-    private ProgressTracker initializeProgressTracker(String jobUuid, List<Contract> attestedContracts) {
+    private ProgressTracker initializeProgressTracker(String jobUuid, List<Contract> attestedContracts) throws ExecutionException, InterruptedException {
+        List<ContractBeneficiaries> patients = fetchPatientsForAllContracts(attestedContracts);
         return ProgressTracker.builder()
                 .jobUuid(jobUuid)
                 .failureThreshold(failureThreshold)
-                .patientsByContracts(fetchPatientsForAllContracts(attestedContracts))
+                .patientsByContracts(patients)
                 .build();
     }
 
@@ -293,13 +296,22 @@ public class JobProcessorImpl implements JobProcessor {
      * @param attestedContracts - the attested contracts
      * @return the list of patients for each contract
      */
-    private List<GetPatientsByContractResponse> fetchPatientsForAllContracts(List<Contract> attestedContracts) {
+    private List<ContractBeneficiaries> fetchPatientsForAllContracts(List<Contract> attestedContracts) throws ExecutionException, InterruptedException {
         int currentMonth = LocalDate.now().getMonthValue();
-        return attestedContracts
+        List<String> contracts = attestedContracts
                 .stream()
                 .map(contract -> contract.getContractNumber())
-                .map(contractNumber -> contractAdapter.getPatients(contractNumber, currentMonth))
                 .collect(Collectors.toList());
+        List<ContractBeneficiaries> contractBeneficiaries = new ArrayList<>();
+        for (String contract : contracts) {
+            try {
+                contractBeneficiaries.add(contractBeneSearch.getPatients(contract, currentMonth));
+            } catch (ExecutionException | InterruptedException ex) {
+                log.error("Having issue retrieving patients for contract " + contract);
+                throw ex;
+            }
+        }
+        return contractBeneficiaries;
     }
 
     /**

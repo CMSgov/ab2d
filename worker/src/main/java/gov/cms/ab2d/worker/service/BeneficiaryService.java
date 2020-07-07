@@ -6,6 +6,5 @@ public interface BeneficiaryService {
 
     Set<String> findPatientIdsInDb(Long contractId, int month);
 
-
     void storeBeneficiaries(Long contractId, Set<String> bfdPatientsIds, int month);
 }
