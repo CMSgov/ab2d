@@ -261,11 +261,11 @@ types and properly advertises so by specifying  "Accept-Encoding: gzip, deflate"
 The purpose of these instructions is to provide a way for users to interact with the AB2D API. There are two main ways 
 to do that:
 
-#### Postman and Swagger. 
+### Postman and Swagger. 
 Swagger is included with the API and the free Postman application can be downloaded [here](https://www.postman.com/).
 If you want to use Postman and Swagger jump to the following page - [Use the API with Postman and Swagger](tutorial-postman.md)
 
-#### Using cURL and jq
+### Using cURL and jq
 
 If you currently don't have both curl and jq installed, jump to the setup page associated with your machine
 
@@ -280,22 +280,22 @@ If you already have your machine setup to use both curl and jq, you can jump to 
 
 While testing, common issues may come up. Here are some suggestions on how to address them:
 
-#### 401 HTTP Response - Forbidden
+### 401 HTTP Response - Forbidden
 Your token is either incorrect or has expired
 
-#### 403 HTTP response - Unauthorized
+### 403 HTTP response - Unauthorized
 
 - Your token has expired
 - You have specified a contract that is not yours
 - You are not a user authorized to use the service
 
-#### 404 HTTP Response - Page not found
+### 404 HTTP Response - Page not found
 - The page doesn't exist. Check the URL to make sure it exists. Put it in a browser and see what the error is. You will 
 not have passed credentials or necessary parameters so it will give you another error but it shouldn't give you a 404.
 - If you are using cURL at the command line, you may have to escape characters. For example, $ is used in $export and 
 $status but $ means a variable value in the bash command line.
 
-#### Unable to Download Bulk Data File
+### Unable to Download Bulk Data File
 - Your file name or job name are not correct. You can call the $status command again and verify that you have the file 
 name & job name correct.
 - You can only download the file once. If you have already done that, it no longer exists on our system
@@ -303,5 +303,5 @@ name & job name correct.
 automatically deleted (or expired) after 24 hours.
 - There was an error on our server. If this continues to happen, contact technical support
 
-#### Other
+### Other
 If none of these hints work, you can always start a new job and retrieve the information again.

@@ -24,6 +24,12 @@ textarea {
 }
 </style>
 
+<script type="text/javascript">
+    $(document).ready(function() {
+        $('.highlight').css('overflow-y', 'auto').attr('tabindex', '0');
+    });
+</script>
+
 This will provide step by step instructions on how to retrieve data the AB2D web service using Postman and the Swagger endpoint. 
 
 ## Postman

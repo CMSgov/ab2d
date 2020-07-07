@@ -9,6 +9,7 @@ import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.events.BeneficiarySearchEvent;
 import gov.cms.ab2d.filter.ExplanationOfBenefitTrimmer;
 import gov.cms.ab2d.filter.FilterOutByDate;
+import gov.cms.ab2d.worker.adapter.bluebutton.ContractBeneficiaries;
 import gov.cms.ab2d.worker.processor.domainmodel.PatientClaimsRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -118,8 +119,8 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
     }
 
     private List<Resource> getEobBundleResources(PatientClaimsRequest request) {
-        var patient = request.getPatientDTO();
-        var attTime = request.getAttTime();
+        ContractBeneficiaries.PatientDTO patient = request.getPatientDTO();
+        OffsetDateTime attTime = request.getAttTime();
 
         OffsetDateTime start = OffsetDateTime.now();
         Bundle eobBundle;

@@ -9,17 +9,18 @@ import lombok.Singular;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class GetPatientsByContractResponse {
+public class ContractBeneficiaries {
 
     private String contractNumber;
 
     @Singular
-    private List<PatientDTO> patients;
+    private Map<String, PatientDTO> patients;
 
     @Data
     @Builder
@@ -30,6 +31,5 @@ public class GetPatientsByContractResponse {
 
         @Builder.Default
         private List<DateRange> dateRangesUnderContract = new ArrayList<>();
-
     }
 }
