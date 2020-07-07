@@ -15,6 +15,7 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
@@ -24,7 +25,7 @@ import static org.mockito.Mockito.when;
 
 @SpringBootTest
 @Testcontainers
-public class MultiThreadContractSearchIntegrationTest {
+class MultiThreadContractSearchIntegrationTest {
 
     @Container
     private static final PostgreSQLContainer postgreSQLContainer= new AB2DPostgresqlContainer();
@@ -36,12 +37,12 @@ public class MultiThreadContractSearchIntegrationTest {
     private BFDClient bfdClient;
 
     @BeforeEach
-    private void init() {
+    void init() {
         ReflectionTestUtils.setField(contractBeneSearch, "bfdClient", bfdClient);
     }
 
     @Test
-    public void testMultipleContract() throws ExecutionException, InterruptedException {
+    void testMultipleContract() throws ExecutionException, InterruptedException {
         String contractNo = "0001";
         Bundle.BundleEntryComponent entry1 = BundleUtils.createBundleEntry("P1");
         Bundle.BundleEntryComponent entry2 = BundleUtils.createBundleEntry("P2");
@@ -58,7 +59,7 @@ public class MultiThreadContractSearchIntegrationTest {
         when(bfdClient.requestPartDEnrolleesFromServer(contractNo, 3)).thenReturn(bundleC);
         ContractBeneficiaries beneficiaries = contractBeneSearch.getPatients(contractNo, 3);
         assertEquals(contractNo, beneficiaries.getContractNumber());
-        List<ContractBeneficiaries.PatientDTO> patients = beneficiaries.getPatients();
+        Collection<ContractBeneficiaries.PatientDTO> patients = beneficiaries.getPatients().values();
         assertNotNull(patients);
         assertEquals(5, patients.size());
 

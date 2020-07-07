@@ -29,7 +29,6 @@ public class PatientContractCallable implements Callable<ContractMapping> {
 
     @Override
     public ContractMapping call() throws Exception {
-        System.out.println(Thread.currentThread().getName() + "-" + Thread.currentThread().getId());
         try {
             ContractMapping mapping = new ContractMapping();
             mapping.setMonth(month);
@@ -42,7 +41,6 @@ public class PatientContractCallable implements Callable<ContractMapping> {
             }
             mapping.setPatients(patientIDs);
             log.debug("finished reading [{}] Set<String>resources", patientIDs.size());
-            System.out.println("finished reading [" + patientIDs.size() + "] patients");
             return mapping;
         } catch (Exception e) {
             log.error("Unable to get patient information for " + contractNumber + " for month " + month, e);
