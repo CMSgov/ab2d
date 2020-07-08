@@ -37,6 +37,7 @@ lication-load-balancer)
      * [Create a CPU Percent above threshold alert](#create-a-cpu-percent-above-threshold-alert)
      * [Create a Memory Used percentage above threshold alert](#create-a-memory-used-percentage-above-threshold-alert)
      * [Create a Disk Used percentage above threshold alert](#create-a-disk-used-percentage-above-threshold-alert)
+1. [Configure SNS Topic for CloudWatch alarms](#configure-sns-topic-for-cloudwatch-alarms)
 1. [Configure VictorOps](#configure-victorops)
    * [Request access to VictorOps](#request-access-to-victorops)
    * [Bookmark important VictorOps URLs](#bookmark-important-victorops-urls)
@@ -47,7 +48,7 @@ lication-load-balancer)
    * [Create an escalation policy](#create-an-escalation-policy)
    * [Create a route key and verify escalation policy](#create-a-route-key-and-verify-escalation-policy)
    * [Forward New Relic alerts to the VictorOps alerting service](#forward-new-relic-alerts-to-the-victorops-alerting-service)
-   * [Forward AWS CloudWatch alerts to the VictorOps alerting service](#forward-aws-cloudwatch-alerts-to-the-victorops-alerting-service)
+   * [Forward AWS CloudWatch alarms to the VictorOps alerting service](#forward-aws-cloudwatch-alarms-to-the-victorops-alerting-service)
 1. [Configure Cloud Protection Manager](#configure-cloud-protection-manager)
    * [Ensure that all instances have CPM backup tags](#ensure-that-all-instances-have-cpm-backup-tags)
    * [Complete CPM questionnaire](#complete-cpm-questionnaire)
@@ -1793,6 +1794,24 @@ lication-load-balancer)
 
 1. Select **Create**
 
+## Configure SNS Topic for CloudWatch alarms
+
+1. Log on to the AWS account
+
+1. Select **Simple Notification Service**
+
+1. Select **Topics** from the leftmost panel
+
+1. Select **Create topic**
+
+1. Configure the "Create topic" page as follows
+
+   - **Name:** ab2d-east-prod-cloudwatch-alarms
+
+   - **Display name:** ab2d-east-prod-cloudwatch-alarms
+
+1. Select **Create topic**
+
 ## Configure VictorOps
 
 ### Request access to VictorOps
@@ -2139,16 +2158,10 @@ lication-load-balancer)
 
 1. Copy and save the following information for next steps
 
-   *New Relic (legacy):*
-
-   ```
-   https://alert.victorops.com/integrations/newrelic/20140115/alert/{victors ops api key for new relic}/$routing_key
-   ```
-
    *New Relic Alerts:*
 
    ```
-   {victors ops api key for new relic}
+   {victor ops api key for new relic}
    ```
 
 1. Open a new Chrome tab
@@ -2252,15 +2265,289 @@ lication-load-balancer)
 
 1. Note the "routing_key" that appears under "VictorOps Fields"
 
-### Forward AWS CloudWatch alerts to the VictorOps alerting service
+### Forward AWS CloudWatch alarms to the VictorOps alerting service
 
-> *** TO DO ***
+1. Log on to VictorOps
+
+1. Before proceeding, ensure you on call for on AB2D in VictorOps
+
+   1. Select the **Timeline** tab
+
+   1. Select **Users** tab under the "People" section in the leftmost panel
+
+   1. Verify that AB2D and the leaf image appears for your user
+
+1. Select the **Integrations** tab
+
+1. Type the following in the **Search** text box
+
+   ```
+   cloudwatch
+   ```
+
+1. Verify that the following is displayed
+
+   ```
+   AWS CloudWatch
+   Specialized Tools
+   Enabled
+   ```
+
+1. Select **AWS CloudWatch**
+
+1. Copy and save the following information for next steps
+
+   *Service API Endpoint:*
+
+   ```
+   {victors ops service api endpoint for aws cloudwatch}/{routing key}
+   ```
+
+1. Open a new Chrome tab
+
+1. Log on to the AWS account
+
+1. Select **Simple Notification Service**
+
+1. Select **Topics** in the leftmost panel
+
+1. Select the following
+
+   ```
+   ab2d-east-prod-cloudwatch-alarms
+   ```
+
+1. Select the **Subscriptions** tab
+
+1. Select **Create subscription**
+
+1. Configure the "Create subscription" page as follows
+
+   - **Topic ARN:** {keep default}
+
+   - **Protocol:** HTTPS
+
+   - **Endpoint:** {victors ops service api endpoint for aws cloudwatch}/{routing key}
+
+   - **Enable raw message delivery:** unchecked
+
+1. Select **Create subscription**
+
+1. Wait for "Status" to display the following
+
+   *Note that you will likely need to refesh the page to see the status change to "Confirmed".*
+
+   ```
+   Confirmed
+   ```
+
+1. Select **Topics** from the leftmost panel
+
+1. Select the following topic
+
+   ```
+   ab2d-east-prod-cloudwatch-alarms
+   ```
+
+1. Select **Publish message**
+
+1. Configure the "Message details" section as follows
+
+   - **Subject:** {keep blank}
+
+   - **Time to Live (TTL):** {keep blank}
+
+1. Configure the "Message body" section as follows
+
+   - **Message structure:** Identical payload for all delivery protocols
+
+   - **Message body to send to the endpoint:**
+
+     ```
+     {"AlarmName":"VictorOps - CloudWatch Integration TEST","NewStateValue":"ALARM","NewStateReason":"failure","StateChangeTime":"2017-12-14T01:00:00.000Z","AlarmDescription":"VictorOps - CloudWatch Integration TEST"}
+     ```
+
+1. Select **Publish message**
+
+1. Return to the VictorOps Chrome tab
+
+1. Verify that you see the following first new chronological message in the timeline
+
+   *Format of first new chronological message:*
+
+   ```
+   AWS CloudWatch
+   {datetime}
+   Critical:VictorOps - CloudWatch Integration TEST
+   / failure
+   NS:
+   Region:
+   #{incident number}
+   ```
+
+   *Example of first new chronological message:*
+
+   ```
+   AWS CloudWatch
+   Jul. 8 - 3:37 PM
+   Critical:VictorOps - CloudWatch Integration TEST
+   / failure
+   NS:
+   Region:
+   #1055
+   ```
+
+1. Verify that you see the following second new chronological message in the timeline
+
+   *Example of second new chronological message:*
+
+   ```
+   Incident #{incident number} AWS CloudWatch
+   {datetime}
+   AWS CloudWatch: VictorOps - CloudWatch Integration TEST
+   Policies: AB2D : Standard
+   ```
+
+   *Example of second new chronological message:*
+
+   ```
+   Incident #1055 AWS CloudWatch
+   Jul. 8 - 3:37 PM
+   AWS CloudWatch: VictorOps - CloudWatch Integration TEST
+   Policies: AB2D : Standard
+   ```
+
+1. Verify that you see the following third new chronological message in the timeline
+
+   *Format of third new chronological message:*
+
+   ```
+   Trying to contact {user} for #{incident number}, sending SMS
+   ```
+
+   *Example of third new chronological message:*
+
+   ```
+   Trying to contact fred.smith for #1055, sending SMS
+   ```
+
+1. Look for a message on your mobile phone
+
+1. Verify that am SMS message was received on your mobile phone that looks like this
+
+   *Format:*
+
+   ```
+   {incident number}: VictorOps - CloudWatch Integration TEST - failure (Ack: {acknowledged value}, Res: {resolved value})
+   ```
+
+   *Example:*
+
+   ```
+   1055: VictorOps - CloudWatch Integration TEST - failure (Ack: 82603, Res: 20283)
+   ```
+
+1. Text the following to acknowledge the incident
+
+   *Format:*
+
+   ```
+   {acknowledged value}
+   ```
+
+   *Example:*
+
+   ```
+   82603
+   ```
+
+1. Return to the VictorOps Chrome tab
+
+1. Note that an "acknowledged by" message appears in the timeline
+
+   *Format of "acknowledged by" message:*
+
+   ```
+   Incident #{incident number} AWS CloudWatch
+   {datetime}
+   AWS CloudWatch: VictorOps - CloudWatch Integration TEST
+   Policies: AB2D : Standard
+   Acknowledged by: {user}
+   ```
+
+   *Example of "acknowledged by" message:*
+
+   ```
+   Incident #1055 AWS CloudWatch
+   Jul. 8 - 3:40 PM
+   AWS CloudWatch: VictorOps - CloudWatch Integration TEST
+   Policies: AB2D : Standard
+   Acknowledged by: fred.smith
+   ```
+
+1. Note that a "paging cancelled" message also appears in the timeline
+
+   *Format of "paging cancelled" message:*
+
+   ```
+   Paging cancelled for fred.smith
+   {datetime}
+   ```
+
+   *Example of "paging cancelled" message:*
+
+   ```
+   Paging cancelled for fred.smith
+   Jul. 8 - 3:40 PM
+   ```
+
+1. Return to your mobile phone
+
+1. Text the following to resolve the incident
+
+   *Format:*
+
+   ```
+   {resolved value}
+   ```
+
+   *Example:*
+
+   ```
+   20283
+   ```
+
+1. Return to the VictorOps Chrome tab
+
+1. Note that a "resolved by" message appears in the timeline
+
+   *Format of "resolved by" message:*
+
+   ```
+   Incident #{incident number} AWS CloudWatch
+   {datetime}
+   AWS CloudWatch: VictorOps - CloudWatch Integration TEST
+   Policies: AB2D : Standard
+   Resolved by: {user}
+   ```
+
+   *Example of "resolved by" message:*
+
+   ```
+   Incident #1055 AWS CloudWatch
+   Jul. 8 - 4:06 PM
+   AWS CloudWatch: VictorOps - CloudWatch Integration TEST
+   Policies: AB2D : Standard
+   Resolved by: fred.smith
+   ```
 
 ### Create a dedicated CMS Slack channel for AB2D incidents
 
 1. Open Slack
 
-1. Select the CMS
+1. Select the CMS workspace
+
+> *** TO DO ***: needs documented
 
 ### Configure VictorOps alerting service to forward alerts to a dedicated Slack channel
 
