@@ -41,6 +41,10 @@ lication-load-balancer)
    * [Create on-call rotations and add relevant team members](#create-on-call-rotations-and-add-relevant-team-members)
    * [Create an escalation policy](#create-an-escalation-policy)
    * [Create a route key and verify escalation policy](#create-a-route-key-and-verify-escalation-policy)
+   * [Create New Relic alerts](#create-new-relic-alerts)
+     * [Create a CPU Percent above threshold alert](#create-a-cpu-percent-above-threshold-alert)
+     * [Create a Memory Used percentage above threshold alert](#create-a-memory-used-percentage-above-threshold-alert)
+     * [Create a Disk Used percentage above threshold alert](#create-a-disk-used-percentage-above-threshold-alert)
    * [Forward New Relic alerts to the VictorOps alerting service](#forward-new-relic-alerts-to-the-victorops-alerting-service)
    * [Forward AWS CloudWatch alerts to the VictorOps alerting service](#forward-aws-cloudwatch-alerts-to-the-victorops-alerting-service)
 1. [Configure Cloud Protection Manager](#configure-cloud-protection-manager)
@@ -1918,6 +1922,194 @@ lication-load-balancer)
 
 1. Note that the following now appears under "Routes"
 
+### Create New Relic alerts
+
+#### Create a CPU Percent above threshold alert
+
+1. Open Chrome
+
+1. Log on to New Relic
+
+1. Select the **Infrastructure** tab
+
+1. Select the **Settings** tab
+
+1. Select **Alerts** from the leftmost panel
+
+1. Select **Create alert condition**
+
+1. Type the following in the **Name this alert condition** text box
+
+   ```
+   AB2D Prod - CPU Percent Above
+   ```
+
+1. Select **Host Metrics** under the "Choose an alert type" section
+
+1. Select **FILTER HOSTS** under the "Narrow down hosts" section
+
+1. Scroll down to **ec2KeyName**
+
+1. Expand **ec2KeyName**
+
+1. Check **ab2d-east-prod**
+
+1. Collapse **ec2KeyName**
+
+1. Select **FILTER HOSTS** again to collapse attributes
+
+1. Configure the "Define thresholds" section as follows
+
+   - **First dropdown:** CPU %
+
+   - **has a value:** above
+
+   - **percent:** 85
+
+   - **time dropdown:** for at least
+
+   - **minutes:** 5
+
+1. Configure the "Configuration" section
+ 
+   - **Alert policy - Name your policy:** AB2D Prod - CPU Percent Above
+
+   - **Alert policy - Email address:** {devops engineer email}
+
+   - **Condition status - Enabled:** checked
+
+   - **Runbook:** "TO DO"
+
+   - **Violation time limit - Close open violations after:** checked
+
+   - **"Close open violations after" dropdown:** 24h
+
+1. Select **Create**
+
+#### Create a Memory Used percentage above threshold alert
+
+1. Open Chrome
+
+1. Log on to New Relic
+
+1. Select the **Infrastructure** tab
+
+1. Select the **Settings** tab
+
+1. Select **Alerts** from the leftmost panel
+
+1. Select **Create alert condition**
+
+1. Type the following in the **Name this alert condition** text box
+
+   ```
+   AB2D Prod - Memory Used Percentage Above
+   ```
+
+1. Select **Host Metrics** under the "Choose an alert type" section
+
+1. Select **FILTER HOSTS** under the "Narrow down hosts" section
+
+1. Scroll down to **ec2KeyName**
+
+1. Expand **ec2KeyName**
+
+1. Check **ab2d-east-prod**
+
+1. Collapse **ec2KeyName**
+
+1. Select **FILTER HOSTS** again to collapse attributes
+
+1. Configure the "Define thresholds" section as follows
+
+   - **First dropdown:** Memory Used %
+
+   - **has a value:** above
+
+   - **percent:** 85
+
+   - **time dropdown:** for at least
+
+   - **minutes:** 5
+
+1. Configure the "Configuration" section
+ 
+   - **Alert policy - Name your policy:** AB2D Prod - Memory Used Percentage Above
+
+   - **Alert policy - Email address:** {devops engineer email}
+
+   - **Condition status - Enabled:** checked
+
+   - **Runbook:** "TO DO"
+
+   - **Violation time limit - Close open violations after:** checked
+
+   - **"Close open violations after" dropdown:** 24h
+
+1. Select **Create**
+
+#### Create a Disk Used percentage above threshold alert
+
+1. Open Chrome
+
+1. Log on to New Relic
+
+1. Select the **Infrastructure** tab
+
+1. Select the **Settings** tab
+
+1. Select **Alerts** from the leftmost panel
+
+1. Select **Create alert condition**
+
+1. Type the following in the **Name this alert condition** text box
+
+   ```
+   AB2D Prod - Disk Used Percentage Above
+   ```
+
+1. Select **Host Metrics** under the "Choose an alert type" section
+
+1. Select **FILTER HOSTS** under the "Narrow down hosts" section
+
+1. Scroll down to **ec2KeyName**
+
+1. Expand **ec2KeyName**
+
+1. Check **ab2d-east-prod**
+
+1. Collapse **ec2KeyName**
+
+1. Select **FILTER HOSTS** again to collapse attributes
+
+1. Configure the "Define thresholds" section as follows
+
+   - **First dropdown:** Disk Used %
+
+   - **has a value:** above
+
+   - **percent:** 85
+
+   - **time dropdown:** for at least
+
+   - **minutes:** 5
+
+1. Configure the "Configuration" section
+ 
+   - **Alert policy - Name your policy:** AB2D Prod - Disk Used Percentage Above
+
+   - **Alert policy - Email address:** {devops engineer email}
+
+   - **Condition status - Enabled:** checked
+
+   - **Runbook:** "TO DO"
+
+   - **Violation time limit - Close open violations after:** checked
+
+   - **"Close open violations after" dropdown:** 24h
+
+1. Select **Create**
+
 ### Forward New Relic alerts to the VictorOps alerting service
 
 1. Note that New Relic APM, Infrastructure, and Synthetics alerts can be forwarded to the VictorOps alerting service
@@ -2002,13 +2194,17 @@ lication-load-balancer)
 
 1. Select **Add alert policies**
 
-1. *** TO DO ***
+1. Check all of the following
+
+   - AB2D Prod - CPU Percent Above
+
+   - AB2D Prod - Disk Used Percentage Above
+
+   - AB2D Prod - Memory Used Percentage Above
 
 1. Select **Save changes**
 
-1. Ensure that the user that is going to test this configuration is the user that is currently on call
-
-   *Note that you can use a schedule overrride if the user that is testing the confifuration is not currently on call.*
+1. Select the **Channel details** tab
 
 1. Select **Send a test notification**
 
@@ -2027,6 +2223,31 @@ lication-load-balancer)
 1. Select **Got it**
 
 1. Select the **APM* tab
+
+1. Open a new Chrome tab
+
+1. Open VictorOps
+
+1. Log on to VictorOps
+
+1. Select the **Timeline** tab
+
+1. Verify that a test notification from New Relic appears at the top of the Timeline that looks something like this
+
+   ```
+   New Relic        Jul. 7 - 9:01 PM
+   Info:
+   I am a test Violation -
+   https://alerts.newrelic.com/accounts/2597286/incidents/0
+   ```
+
+1. Expand the **Alert Payload** of the test notification
+
+1. Note the "Alert Data"
+
+1. Note the "VictorOps Fields"
+
+1. Note the "routing_key" that appears under "VictorOps Fields"
 
 ### Forward AWS CloudWatch alerts to the VictorOps alerting service
 
