@@ -377,16 +377,15 @@ resource "aws_autoscaling_policy" "percent_capacity" {
   autoscaling_group_name = aws_autoscaling_group.asg.name
 }
 
+# resource "aws_autoscaling_policy" "target_cpu" {
+#   name = "target_CPU"
+#   autoscaling_group_name = aws_autoscaling_group.asg.name
+#   policy_type = "TargetTrackingScaling"
 
-resource "aws_autoscaling_policy" "target_cpu" {
-  name = "target_CPU"
-  autoscaling_group_name = aws_autoscaling_group.asg.name
-  policy_type = "TargetTrackingScaling"
-
-  target_tracking_configuration {
-    predefined_metric_specification {
-      predefined_metric_type = "ASGAverageCPUUtilization"
-    }
-    target_value = 80.0
-  }
-}
+#   target_tracking_configuration {
+#     predefined_metric_specification {
+#       predefined_metric_type = "ASGAverageCPUUtilization"
+#     }
+#     target_value = 80.0
+#   }
+# }
