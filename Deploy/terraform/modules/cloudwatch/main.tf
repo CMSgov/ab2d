@@ -263,7 +263,7 @@ resource "aws_cloudwatch_metric_alarm" "postgres_transaction_logs_disk_usage" {
   namespace = "AWS/RDS"
   period = "60"
   statistic = "Average"
-  threshold = "1000000000.0"
+  threshold = "3000000000.0"
   # alarm_actions = [var.sns_arn]
   dimensions = {
     DBInstanceIdentifier = var.db_name
