@@ -37,7 +37,7 @@
         <jacoco.version>0.8.5</jacoco.version>
         <checkstyle.config>${project.root}/src/main/resources/checkstyle.xml</checkstyle.config>
         <logback-encoder.version>6.3</logback-encoder.version>
-        <testcontainers.version>1.14.2</testcontainers.version>
+        <testcontainers.version>1.14.3</testcontainers.version>
     </properties>
 
     <dependencies>

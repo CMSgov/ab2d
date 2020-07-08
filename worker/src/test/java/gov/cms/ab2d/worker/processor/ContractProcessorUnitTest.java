@@ -1,17 +1,12 @@
 package gov.cms.ab2d.worker.processor;
 
-import gov.cms.ab2d.common.model.Contract;
-import gov.cms.ab2d.common.model.Job;
-import gov.cms.ab2d.common.model.JobStatus;
-import gov.cms.ab2d.common.model.OptOut;
-import gov.cms.ab2d.common.model.Sponsor;
-import gov.cms.ab2d.common.model.User;
+import gov.cms.ab2d.common.model.*;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.common.repository.OptOutRepository;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.filter.FilterOutByDate;
-import gov.cms.ab2d.worker.adapter.bluebutton.GetPatientsByContractResponse;
-import gov.cms.ab2d.worker.adapter.bluebutton.GetPatientsByContractResponse.PatientDTO;
+import gov.cms.ab2d.worker.adapter.bluebutton.ContractBeneficiaries;
+import gov.cms.ab2d.worker.adapter.bluebutton.ContractBeneficiaries.PatientDTO;
 import gov.cms.ab2d.worker.processor.domainmodel.ContractData;
 import gov.cms.ab2d.worker.processor.domainmodel.ProgressTracker;
 import gov.cms.ab2d.worker.processor.stub.PatientClaimsProcessorStub;
@@ -32,19 +27,14 @@ import java.nio.file.Paths;
 import java.text.ParseException;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static gov.cms.ab2d.worker.processor.StreamHelperImpl.FileOutputType.NDJSON;
 import static java.lang.Boolean.TRUE;
 import static org.hamcrest.CoreMatchers.startsWith;
 import static org.junit.Assert.assertThat;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -67,7 +57,7 @@ class ContractProcessorUnitTest {
     @Mock private LogManager eventLogger;
     private PatientClaimsProcessor patientClaimsProcessor = spy(PatientClaimsProcessorStub.class);
 
-    private GetPatientsByContractResponse patientsByContract;
+    private ContractBeneficiaries patientsByContract;
     private Path outputDir;
     private ContractData contractData;
 
@@ -81,7 +71,7 @@ class ContractProcessorUnitTest {
                 optOutRepository,
                 eventLogger
         );
-
+        ReflectionTestUtils.setField(cut, "optoutUsed", true);
         ReflectionTestUtils.setField(cut, "cancellationCheckFrequency", 2);
         ReflectionTestUtils.setField(cut, "reportProgressDbFrequency", 2);
         ReflectionTestUtils.setField(cut, "reportProgressLogFrequency", 3);
@@ -111,7 +101,6 @@ class ContractProcessorUnitTest {
     @Test
     @DisplayName("When a job is cancelled while it is being processed, then attempt to stop the job gracefully without completing it")
     void whenJobIsCancelledWhileItIsBeingProcessed_ThenAttemptToStopTheJob() throws Exception {
-
         when(jobRepository.findJobStatus(anyString())).thenReturn(JobStatus.CANCELLED);
 
         var exceptionThrown = assertThrows(JobCancelledException.class,
@@ -122,11 +111,24 @@ class ContractProcessorUnitTest {
         verify(jobRepository, atLeastOnce()).updatePercentageCompleted(anyString(), anyInt());
     }
 
+    @Test
+    @DisplayName("When patient has opted out, but opt out is disabled their record will not be skipped.")
+    void processJob_whenSomePatientHasOptedOut_But_OptOut_Off_ShouldNotSkipThatPatientRecord() throws Exception {
+        ReflectionTestUtils.setField(cut, "optoutUsed", false);
+        final List<OptOut> optOuts = getOptOutRows(patientsByContract);
+        lenient().when(optOutRepository.findByCcwId(anyString()))
+                .thenReturn(new ArrayList<>())
+                .thenReturn(Arrays.asList(optOuts.get(1)))
+                .thenReturn(Arrays.asList(optOuts.get(2)));
+
+        List<JobOutput> jobOutputs = cut.process(outputDir, contractData, NDJSON);
+        // Verify that all outputs are returned
+        assertEquals(6, jobOutputs.size());
+    }
 
     @Test
     @DisplayName("When patient has opted out, their record will be skipped.")
     void processJob_whenSomePatientHasOptedOut_ShouldSkipThatPatientRecord() throws Exception {
-
         final List<OptOut> optOuts = getOptOutRows(patientsByContract);
         when(optOutRepository.findByCcwId(anyString()))
                 .thenReturn(new ArrayList<>())
@@ -142,7 +144,6 @@ class ContractProcessorUnitTest {
     @Test
     @DisplayName("When all patients have opted out, should throw exception as no jobOutput rows were created")
     void processJob_whenAllPatientsHaveOptedOut_ShouldThrowException() throws Exception {
-
         final List<OptOut> optOuts = getOptOutRows(patientsByContract);
         when(optOutRepository.findByCcwId(anyString()))
                 .thenReturn(Arrays.asList(optOuts.get(0)))
@@ -161,17 +162,7 @@ class ContractProcessorUnitTest {
     @Test
     @DisplayName("When many patientId are present, 'PercentageCompleted' should be updated many times")
     void whenManyPatientIdsAreProcessed_shouldUpdatePercentageCompletedMultipleTimes() throws Exception {
-
-        var contract = contractData.getContract();
-        var patients = createPatientsByContractResponse(contract).getPatients();
-        var manyPatientIds = new ArrayList<PatientDTO>();
-        manyPatientIds.addAll(patients);
-        manyPatientIds.addAll(patients);
-        manyPatientIds.addAll(patients);
-        manyPatientIds.addAll(patients);
-        manyPatientIds.addAll(patients);
-        manyPatientIds.addAll(patients);
-        patientsByContract.setPatients(manyPatientIds);
+        patientsByContract.setPatients(createPatients(18));
         var jobOutputs = cut.process(outputDir, contractData, NDJSON);
 
         assertFalse(jobOutputs.isEmpty());
@@ -179,9 +170,8 @@ class ContractProcessorUnitTest {
         verify(patientClaimsProcessor, atLeast(1)).process(any());
     }
 
-    private List<OptOut> getOptOutRows(GetPatientsByContractResponse patientsByContract) {
-        return patientsByContract.getPatients()
-                .stream().map(PatientDTO::getPatientId)
+    private List<OptOut> getOptOutRows(ContractBeneficiaries patientsByContract) {
+        return patientsByContract.getPatients().keySet().stream()
                 .map(this::createOptOut)
                 .collect(Collectors.toList());
     }
@@ -242,21 +232,23 @@ class ContractProcessorUnitTest {
         return job;
     }
 
-    private GetPatientsByContractResponse createPatientsByContractResponse(Contract contract) throws ParseException {
-        return GetPatientsByContractResponse.builder()
+    private ContractBeneficiaries createPatientsByContractResponse(Contract contract) throws ParseException {
+        Map<String, PatientDTO> patientMap = createPatients(3);
+        return ContractBeneficiaries.builder()
                 .contractNumber(contract.getContractNumber())
-                .patient(toPatientDTO())
-                .patient(toPatientDTO())
-                .patient(toPatientDTO())
+                .patients(patientMap)
                 .build();
     }
 
-    private PatientDTO toPatientDTO() throws ParseException {
-        int anInt = random.nextInt(11);
-        var dateRange = new FilterOutByDate.DateRange(new Date(0), new Date());
-        return PatientDTO.builder()
-                .patientId("patient_" + anInt)
-                .dateRangesUnderContract(Arrays.asList(dateRange))
-                .build();
+    private Map<String, PatientDTO> createPatients(int num) throws ParseException {
+        FilterOutByDate.DateRange dateRange = new FilterOutByDate.DateRange(new Date(0), new Date());
+        Map<String, PatientDTO> patients = new HashMap<>();
+        for (int i = 0; i < num; i++) {
+            PatientDTO p = PatientDTO.builder()
+                    .dateRangesUnderContract(Collections.singletonList(dateRange))
+                    .patientId("patient_" + i).build();
+            patients.put(p.getPatientId(), p);
+        }
+        return patients;
     }
 }

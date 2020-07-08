@@ -8,6 +8,7 @@ import gov.cms.ab2d.common.util.DataSetup;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.eventloggers.kinesis.KinesisEventLogger;
 import gov.cms.ab2d.eventlogger.eventloggers.sql.SqlEventLogger;
+import gov.cms.ab2d.eventlogger.reports.sql.DoSummary;
 import org.apache.commons.io.IOUtils;
 import org.junit.Assert;
 import org.junit.jupiter.api.Assertions;
@@ -93,6 +94,9 @@ public class JobServiceTest {
     @Mock
     private KinesisEventLogger kinesisEventLogger;
 
+    @Mock
+    private DoSummary doSummary;
+
     @Container
     private static final PostgreSQLContainer postgreSQLContainer= new AB2DPostgresqlContainer();
 
@@ -100,7 +104,7 @@ public class JobServiceTest {
     @BeforeEach
     public void setup() {
         LogManager logManager = new LogManager(sqlEventLogger, kinesisEventLogger);
-        jobService = new JobServiceImpl(userService, jobRepository, contractRepository, jobOutputService, logManager);
+        jobService = new JobServiceImpl(userService, jobRepository, contractRepository, jobOutputService, logManager, doSummary);
         ReflectionTestUtils.setField(jobService, "fileDownloadPath", tmpJobLocation);
 
         contractRepository.deleteAll();
