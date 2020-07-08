@@ -67,6 +67,8 @@ public class TestRunner {
 
     private static final int MAX_USER_JOBS = 3;
 
+    private String baseUrl = "";
+
     private Map<String, String> yamlMap;
 
     private Environment environment;
@@ -113,7 +115,7 @@ public class TestRunner {
         InputStream inputStream = getClass().getResourceAsStream("/" + environment.getConfigName());
         yamlMap = yaml.load(inputStream);
         String oktaUrl = yamlMap.get("okta-url");
-        String baseUrl = yamlMap.get("base-url");
+        baseUrl = yamlMap.get("base-url");
         AB2D_API_URL = APIClient.buildAB2DAPIUrl(baseUrl);
 
         String oktaClientId = System.getenv("OKTA_CLIENT_ID");
@@ -198,6 +200,11 @@ public class TestRunner {
         String stem = AB2D_API_URL + (contractNumber == null ? "Patient/" : "Group/" + contractNumber + "/") + "$export?_outputFormat=";
         Assert.assertTrue(request.startsWith(stem));
         JSONArray errors = json.getJSONArray("error");
+
+        if(errors.length() > 0) {
+            System.out.println(errors);
+        }
+
         Assert.assertEquals(0, errors.length());
 
         JSONArray output = json.getJSONArray("output");
@@ -391,6 +398,7 @@ public class TestRunner {
     @Test
     @Order(1)
     public void runSystemWideExport() throws IOException, InterruptedException, JSONException {
+        System.out.println("Starting test 1");
         HttpResponse<String> exportResponse = apiClient.exportRequest(FHIR_TYPE, null);
         Assert.assertEquals(202, exportResponse.statusCode());
         List<String> contentLocationList = exportResponse.headers().map().get("content-location");
@@ -402,6 +410,7 @@ public class TestRunner {
     @Test
     @Order(2)
     public void runSystemWideExportSince() throws IOException, InterruptedException, JSONException {
+        System.out.println("Starting test 2");
         HttpResponse<String> exportResponse = apiClient.exportRequest(FHIR_TYPE, earliest);
         System.out.println(earliest);
         Assert.assertEquals(202, exportResponse.statusCode());
@@ -416,6 +425,7 @@ public class TestRunner {
     @Test
     @Order(3)
     public void runErrorSince() throws IOException, InterruptedException {
+        System.out.println("Starting test 3");
         OffsetDateTime timeBeforeEarliest = earliest.minus(1, ChronoUnit.MINUTES);
         HttpResponse<String> exportResponse = apiClient.exportRequest(FHIR_TYPE, timeBeforeEarliest);
         Assert.assertEquals(400, exportResponse.statusCode());
@@ -428,6 +438,7 @@ public class TestRunner {
     @Test
     @Order(4)
     public void runSystemWideZipExport() throws IOException, InterruptedException, JSONException {
+        System.out.println("Starting test 4");
         HttpResponse<String> exportResponse = apiClient.exportRequest(ZIPFORMAT, null);
         Assert.assertEquals(400, exportResponse.statusCode());
     }
@@ -435,6 +446,7 @@ public class TestRunner {
     @Test
     @Order(5)
     public void runContractNumberExport() throws IOException, InterruptedException, JSONException {
+        System.out.println("Starting test 5");
         String contractNumber = "Z0000";
         HttpResponse<String> exportResponse = apiClient.exportByContractRequest(contractNumber, FHIR_TYPE, null);
         Assert.assertEquals(202, exportResponse.statusCode());
@@ -447,6 +459,7 @@ public class TestRunner {
     @Test
     @Order(6)
     void runContractNumberZipExport() throws IOException, InterruptedException, JSONException {
+        System.out.println("Starting test 6");
         String contractNumber = "Z0000";
         HttpResponse<String> exportResponse = apiClient.exportByContractRequest(contractNumber, ZIPFORMAT, null);
         Assert.assertEquals(400, exportResponse.statusCode());
@@ -455,6 +468,7 @@ public class TestRunner {
     @Test
     @Order(7)
     public void testDelete() throws IOException, InterruptedException {
+        System.out.println("Starting test 7");
         HttpResponse<String> exportResponse = apiClient.exportRequest(FHIR_TYPE, null);
 
         Assert.assertEquals(202, exportResponse.statusCode());
@@ -468,8 +482,8 @@ public class TestRunner {
 
     @Test
     @Order(8)
-
     public void testUserCannotDownloadOtherUsersJob() throws IOException, InterruptedException, JSONException, NoSuchAlgorithmException, KeyManagementException {
+        System.out.println("Starting test 8");
         String contractNumber = "Z0000";
         HttpResponse<String> exportResponse = apiClient.exportByContractRequest(contractNumber, FHIR_TYPE, null);
         Assert.assertEquals(202, exportResponse.statusCode());
@@ -486,6 +500,7 @@ public class TestRunner {
     @Test
     @Order(9)
     public void testUserCannotDeleteOtherUsersJob() throws IOException, InterruptedException, JSONException, NoSuchAlgorithmException, KeyManagementException {
+        System.out.println("Starting test 9");
         HttpResponse<String> exportResponse = apiClient.exportRequest(FHIR_TYPE, null);
 
         Assert.assertEquals(202, exportResponse.statusCode());
@@ -506,6 +521,7 @@ public class TestRunner {
     @Test
     @Order(10)
     public void testUserCannotCheckStatusOtherUsersJob() throws IOException, InterruptedException, JSONException, NoSuchAlgorithmException, KeyManagementException {
+        System.out.println("Starting test 10");
         HttpResponse<String> exportResponse = apiClient.exportRequest(FHIR_TYPE, null);
 
         Assert.assertEquals(202, exportResponse.statusCode());
@@ -528,12 +544,13 @@ public class TestRunner {
         String oktaClientId = System.getenv("SECONDARY_USER_OKTA_CLIENT_ID");
         String oktaPassword = System.getenv("SECONDARY_USER_OKTA_CLIENT_PASSWORD");
 
-        return new APIClient(AB2D_API_URL, oktaUrl, oktaClientId, oktaPassword);
+        return new APIClient(baseUrl, oktaUrl, oktaClientId, oktaPassword);
     }
 
     @Test
     @Order(11)
     public void testUserCannotMakeRequestWithoutToken() throws IOException, InterruptedException {
+        System.out.println("Starting test 11");
         HttpRequest exportRequest = HttpRequest.newBuilder()
                 .uri(URI.create(AB2D_API_URL + PATIENT_EXPORT_PATH))
                 .timeout(Duration.ofSeconds(30))
@@ -549,6 +566,7 @@ public class TestRunner {
     @Test
     @Order(12)
     public void testUserCannotMakeRequestWithSelfSignedToken() throws IOException, InterruptedException, JSONException {
+        System.out.println("Starting test 12");
         String clientSecret = "wefikjweglkhjwelgkjweglkwegwegewg";
         SecretKey sharedSecret = Keys.hmacShaKeyFor(clientSecret.getBytes(StandardCharsets.UTF_8));
         Instant now = Instant.now();
@@ -586,6 +604,7 @@ public class TestRunner {
     @Test
     @Order(13)
     public void testBadQueryParameterResource() throws IOException, InterruptedException {
+        System.out.println("Starting test 13");
         var params = new HashMap<>(){{
             put("_type", "BadParam");
         }};
@@ -597,6 +616,7 @@ public class TestRunner {
     @Test
     @Order(14)
     public void testBadQueryParameterOutputFormat() throws IOException, InterruptedException {
+        System.out.println("Starting test 14");
         var params = new HashMap<>(){{
             put("_outputFormat", "BadParam");
         }};
@@ -608,15 +628,18 @@ public class TestRunner {
     @Test
     @Order(15)
     public void testHealthEndPoint() throws IOException, InterruptedException {
+        System.out.println("Starting test 15");
         HttpResponse<String> healthCheckResponse = apiClient.healthCheck();
 
         Assert.assertEquals(200, healthCheckResponse.statusCode());
     }
 
     // Consider removing if tests are failing
+    /*
     @Test
     @Order(16)
     public void testOptOut() throws IOException, InterruptedException, JSONException {
+        System.out.println("Starting test 16");
         HttpResponse<String> exportResponse = apiClient.exportRequest(FHIR_TYPE, null);
 
         Assert.assertEquals(202, exportResponse.statusCode());
@@ -625,4 +648,5 @@ public class TestRunner {
         Pair<String, JSONArray> downloadDetails = performStatusRequests(contentLocationList, false, "Z0000");
         downloadFile(downloadDetails, null, "19990000002906"); // User should not be included
     }
+     */
 }

@@ -1,7 +1,6 @@
 package gov.cms.ab2d.eventlogger.eventloggers.sql;
 
 import gov.cms.ab2d.eventlogger.LoggableEvent;
-import gov.cms.ab2d.eventlogger.utils.UtilMethods;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.support.KeyHolder;
@@ -30,7 +29,7 @@ public abstract class SqlEventMapper implements RowMapper {
 
     MapSqlParameterSource addSuperParams(LoggableEvent event) {
         return new MapSqlParameterSource()
-                .addValue("time", UtilMethods.convertToUtc(event.getTimeOfEvent()))
+                .addValue("time", event.getTimeOfEvent())
                 .addValue("user", event.getUser())
                 .addValue("job", event.getJobId())
                 .addValue("awsId", event.getAwsId())

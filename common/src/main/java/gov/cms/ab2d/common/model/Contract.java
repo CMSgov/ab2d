@@ -44,6 +44,4 @@ public class Contract {
 
     @OneToMany(mappedBy = "contract")
     private Set<Coverage> coverages = new HashSet<>();
-
-
 }

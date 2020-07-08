@@ -1,6 +1,5 @@
 package gov.cms.ab2d.worker;
 
-import gov.cms.ab2d.optout.setup.OptOutQuartzSetup;
 import gov.cms.ab2d.worker.bfdhealthcheck.BFDHealthCheckQuartzSetup;
 import gov.cms.ab2d.worker.stuckjob.StuckJobQuartzSetup;
 import org.springframework.boot.SpringApplication;
@@ -10,7 +9,6 @@ import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.retry.annotation.EnableRetry;
-
 
 @SpringBootApplication(scanBasePackages = {
         "gov.cms.ab2d.common",
@@ -24,11 +22,10 @@ import org.springframework.retry.annotation.EnableRetry;
 @EnableJpaRepositories("gov.cms.ab2d.common.repository")
 @EnableRetry
 @PropertySource("classpath:application.common.properties")
-@Import({OptOutQuartzSetup.class, StuckJobQuartzSetup.class, BFDHealthCheckQuartzSetup.class})
+/* Remove Quartz job for OptOut. If we want it back, add OptOutQuartzSetup.class below */
+@Import({StuckJobQuartzSetup.class, BFDHealthCheckQuartzSetup.class})
 public class SpringBootApp {
-
     public static void main(String[] args) {
         SpringApplication.run(SpringBootApp.class, args);
     }
-
 }
