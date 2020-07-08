@@ -57,7 +57,8 @@ public class Mapping {
         modelMapper.addConverter(sponsorDTOSponsorConverter);
         modelMapper.createTypeMap(User.class, UserDTO.class)
                 .addMappings(mapper -> mapper.using(sponsorSponsorDTOConverter).map(src -> src.getSponsor(), UserDTO::setSponsor))
-                .addMappings(mapper -> mapper.using(roleToRoleDTOConverter).map(src -> src.getRoles(), UserDTO::setRole));
+                .addMappings(mapper -> mapper.using(roleToRoleDTOConverter).map(src -> src.getRoles(), UserDTO::setRole))
+                .addMappings(mapper -> mapper.map(src -> src.getSponsor().getContracts(), UserDTO::setContracts));
         modelMapper.createTypeMap(UserDTO.class, User.class)
                 .addMappings(mapper -> mapper.using(roleDTOToRoleConverter).map(src -> src.getRole(), User::addRole));
     }

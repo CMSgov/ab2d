@@ -26,4 +26,6 @@ public interface UserService {
     UserDTO enableUser(String username);
 
     UserDTO disableUser(String username);
+
+    UserDTO getUser(String username);
 }

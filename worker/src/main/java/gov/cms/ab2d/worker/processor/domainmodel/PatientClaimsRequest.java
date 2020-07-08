@@ -1,7 +1,7 @@
 package gov.cms.ab2d.worker.processor.domainmodel;
 
 import com.newrelic.api.agent.Token;
-import gov.cms.ab2d.worker.adapter.bluebutton.GetPatientsByContractResponse.PatientDTO;
+import gov.cms.ab2d.worker.adapter.bluebutton.ContractBeneficiaries.PatientDTO;
 import gov.cms.ab2d.worker.processor.StreamHelper;
 import lombok.AllArgsConstructor;
 import lombok.Getter;

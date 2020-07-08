@@ -9,6 +9,7 @@ import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.events.BeneficiarySearchEvent;
 import gov.cms.ab2d.filter.ExplanationOfBenefitTrimmer;
 import gov.cms.ab2d.filter.FilterOutByDate;
+import gov.cms.ab2d.worker.adapter.bluebutton.ContractBeneficiaries;
 import gov.cms.ab2d.worker.processor.domainmodel.PatientClaimsRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,7 +27,11 @@ import org.springframework.stereotype.Component;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -34,7 +39,9 @@ import java.util.Objects;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
+import static gov.cms.ab2d.common.util.Constants.SINCE_EARLIEST_DATE;
 import static gov.cms.ab2d.filter.EOBLoadUtilities.isPartD;
+import static java.time.format.DateTimeFormatter.ISO_DATE_TIME;
 
 @Slf4j
 @Component
@@ -47,6 +54,10 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
 
     @Value("${claims.skipBillablePeriodCheck}")
     private boolean skipBillablePeriodCheck;
+    @Value("${bfd.earliest.data.data:01/01/2020}")
+    private String startDate;
+
+    private static final OffsetDateTime START_CHECK = OffsetDateTime.parse(SINCE_EARLIEST_DATE, ISO_DATE_TIME);
 
     /**
      * Process the retrieval of patient explanation of benefit objects and write them
@@ -108,13 +119,21 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
     }
 
     private List<Resource> getEobBundleResources(PatientClaimsRequest request) {
-        var patient = request.getPatientDTO();
-        var attTime = request.getAttTime();
+        ContractBeneficiaries.PatientDTO patient = request.getPatientDTO();
+        OffsetDateTime attTime = request.getAttTime();
 
         OffsetDateTime start = OffsetDateTime.now();
         Bundle eobBundle;
         try {
-            eobBundle = bfdClient.requestEOBFromServer(patient.getPatientId(), request.getSinceTime());
+            OffsetDateTime sinceTime = null;
+            if (request.getSinceTime() == null) {
+                if (request.getAttTime().isAfter(START_CHECK)) {
+                    sinceTime = request.getAttTime();
+                }
+            } else {
+                sinceTime = request.getSinceTime();
+            }
+            eobBundle = bfdClient.requestEOBFromServer(patient.getPatientId(), sinceTime);
             logManager.log(LogManager.LogType.KINESIS,
                     new BeneficiarySearchEvent(request.getUser(), request.getJob(), request.getContractNum(),
                             start, OffsetDateTime.now(),
@@ -143,20 +162,29 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
         return resources;
     }
 
-    private List<Resource> extractResources(List<BundleEntryComponent> entries, final List<FilterOutByDate.DateRange> dateRanges,
+    List<Resource> extractResources(List<BundleEntryComponent> entries, final List<FilterOutByDate.DateRange> dateRanges,
                                             OffsetDateTime attTime) {
         if (attTime == null) {
             return new ArrayList<>();
         }
         long epochMilli = attTime.toInstant().toEpochMilli();
         Date attDate = new Date(epochMilli);
+        SimpleDateFormat sdf = new SimpleDateFormat("MM/dd/yyyy");
+        Date date;
+        try {
+            date = sdf.parse(startDate);
+        } catch (ParseException e) {
+            LocalDateTime d = LocalDateTime.of(2020, 1, 1, 0, 0, 0, 0);
+            date = new Date(d.toInstant(ZoneOffset.UTC).toEpochMilli());
+        }
+        final Date earliestDate = date;
         return entries.stream()
                 // Get the resource
                 .map(BundleEntryComponent::getResource)
                 // Get only the explanation of benefits
                 .filter(resource -> resource.getResourceType() == ResourceType.ExplanationOfBenefit)
                 // Filter by date
-                .filter(resource -> skipBillablePeriodCheck || FilterOutByDate.valid((ExplanationOfBenefit) resource, attDate, dateRanges))
+                .filter(resource -> skipBillablePeriodCheck || FilterOutByDate.valid((ExplanationOfBenefit) resource, attDate, earliestDate, dateRanges))
                 // filter it
                 .map(resource -> ExplanationOfBenefitTrimmer.getBenefit((ExplanationOfBenefit) resource))
                 // Remove any empty values

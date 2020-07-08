@@ -2,7 +2,6 @@ package gov.cms.ab2d.filter;
 
 import org.hl7.fhir.dstu3.model.ExplanationOfBenefit;
 import org.hl7.fhir.dstu3.model.Period;
-import org.hl7.fhir.dstu3.model.Resource;
 import org.junit.jupiter.api.Test;
 
 import java.text.ParseException;
@@ -35,18 +34,19 @@ class FilterOutByDateTest {
                 createEOB("10/31/2020", "11/02/2020")  // In
         );
 
-        assertEquals(6, FilterOutByDate.filterByDate(list, sdf.parse("12/01/2000"), ranges).size());
-        assertEquals(5, FilterOutByDate.filterByDate(list, sdf.parse("10/01/2018"), ranges).size());
-        assertEquals(0, FilterOutByDate.filterByDate(list, sdf.parse("12/01/2021"), ranges).size());
+        assertEquals(6, FilterOutByDate.filterByDate(list, sdf.parse("12/01/2000"), sdf.parse("01/01/2000"), ranges).size());
+        assertEquals(5, FilterOutByDate.filterByDate(list, sdf.parse("10/01/2018"), sdf.parse("01/01/2000"), ranges).size());
+        assertEquals(0, FilterOutByDate.filterByDate(list, sdf.parse("12/01/2021"), sdf.parse("01/01/2000"), ranges).size());
+        assertEquals(4, FilterOutByDate.filterByDate(list, sdf.parse("12/01/2000"), sdf.parse("12/01/2018"), ranges).size());
     }
 
     @Test
     void testAfterAttestation() throws ParseException {
         ExplanationOfBenefit b = createEOB("10/01/2020", "10/03/2020");
-        assertTrue(FilterOutByDate.afterAttestation(sdf.parse("10/01/2020"), b));
-        assertTrue(FilterOutByDate.afterAttestation(sdf.parse("10/03/2020"), b));
-        assertTrue(FilterOutByDate.afterAttestation(sdf.parse("10/03/2002"), b));
-        assertFalse(FilterOutByDate.afterAttestation(sdf.parse("10/04/2020"), b));
+        assertTrue(FilterOutByDate.afterDate(sdf.parse("10/01/2020"), b));
+        assertTrue(FilterOutByDate.afterDate(sdf.parse("10/03/2020"), b));
+        assertTrue(FilterOutByDate.afterDate(sdf.parse("10/03/2002"), b));
+        assertFalse(FilterOutByDate.afterDate(sdf.parse("10/04/2020"), b));
     }
 
     @Test
