@@ -13,6 +13,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
@@ -59,7 +60,7 @@ public class MultiThreadContractProcessTest {
         when(bfdClient.requestPartDEnrolleesFromServer(contractNo, 3)).thenReturn(bundleC);
         ContractBeneficiaries beneficiaries = contractBeneSearch.getPatients(contractNo, 3);
         assertEquals(contractNo, beneficiaries.getContractNumber());
-        List<ContractBeneficiaries.PatientDTO> patients = beneficiaries.getPatients();
+        Collection<ContractBeneficiaries.PatientDTO> patients = beneficiaries.getPatients().values();
         assertNotNull(patients);
         assertEquals(5, patients.size());
 
