@@ -8829,9 +8829,9 @@
 
 1. Scroll to the "Security" section
 
-1. Select **Manage Users**
+1. Select **Manage Credentials**
 
-1. Select the desired user
+1. Select the user with "jenkins" ID
 
 1. Select **Configure** from the leftmost panel
 
