@@ -160,7 +160,7 @@
 
 1. If there are no plugin updates listed, jump to the following section:
 
-   [Add a new GitHub user in Jenkins](#add-a-new-github-user-in-jenkins)
+   [Verify that Jenkins agent is online](#verify-that-jenkins-agent-is-online)
 
 ### Upgrade Jenkins plugins
 
