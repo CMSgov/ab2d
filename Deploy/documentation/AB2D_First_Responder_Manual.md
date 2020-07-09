@@ -18,6 +18,8 @@
    * [Examine database if applicable](#examine-database-if-applicable)
    * [Make code changes if applicable](#make-code-changes-if-applicable)
    * [Deploy the latest application from master to production](#deploy-the-latest-application-from-master-to-production)
+   * [Verify application](#verify-application)
+   * [Mark incident as resolved](#mark-incident-as-resolved)
 
 ## First responder prerequites
 
@@ -83,6 +85,15 @@
 
    ```
    82603
+   ```
+
+1. Verify that you receive a response from VictorOps
+
+   *Format:*
+
+   ```
+   Acknowledged 1 incident;
+   {victorops incident url}
    ```
 
 ### Examine incident in VictorOps
@@ -155,3 +166,34 @@
 ### Deploy the latest application from master to production
 
 > *** TO DO ***: to document
+
+### Verify application
+
+> *** TO DO ***: to document
+
+### Mark incident as resolved
+
+1. Return to your mobile phone
+
+1. Text the following to resolve the incident
+
+   *Format:*
+
+   ```
+   {resolved value}
+   ```
+
+   *Example:*
+
+   ```
+   20283
+   ```
+
+1. Verify that you receive a response from VictorOps
+
+   *Format:*
+
+   ```
+   Resolved 1 incident;
+   {victorops incident url}
+   ```
