@@ -8,6 +8,7 @@
      * [Determine if there is a newer version of Jenkins available](#determine-if-there-is-a-newer-version-of-jenkins-available)
      * [Upgrade Jenkins software](#upgrade-jenkins-software)
      * [Upgrade Jenkins plugins](#upgrade-jenkins-plugins)
+     * [Verify that Jenkins agent is online](#verify-that-jenkins-agent-is-online)
    * [Add a new GitHub user in Jenkins](#add-a-new-github-user-in-jenkins)
    * [Log on to Jenkins using GitHub OAuth authentication](#log-on-to-jenkins-using-github-oauth-authentication)
 1. [Deploy application to target environment](#deploy-application-to-target-environment)
@@ -160,7 +161,7 @@
 1. If there are no plugin updates listed, jump to the following section:
 
    [Add a new GitHub user in Jenkins](#add-a-new-github-user-in-jenkins)
-   
+
 ### Upgrade Jenkins plugins
 
 1. Open Chrome
@@ -204,6 +205,42 @@
    1. Refresh the page
 
    1. Log on to Jenkins (if not still logged in)
+
+#### Verify that Jenkins agent is online
+
+1. Open Chrome
+
+1. Log on to the Jenkins GUI (if not already logged in)
+
+   1. Ensure that you are connected to the Cisco VPN
+
+   1. Open Chrome
+
+   1. Enter the following in the address bar
+
+      *Format:*
+
+      > http://{jenkins master public ip}:8080
+
+   1. Log on to the Jenkins GUI
+
+1. Scroll to the bottom of the page
+
+1. If "agent01" is offline, do the following:
+
+   1. Select "agent01"
+
+   1. Select **See log for more details**
+
+   1. If there is an "ERROR: Server rejected the 1 private key(s) for jenkins (credentialId:jenkins/method:publickey)" error, do the following:
+
+      > *** TO DO ***: document the process that involves the following
+
+      - create a new ssh keypair that overwrites existing keypair
+
+      - do the ssh-copy-id processes on and between the jenkins master and jenkins agent
+
+   1. If there is a different error, resolve it
 
 ### Add a new GitHub user in Jenkins
 
