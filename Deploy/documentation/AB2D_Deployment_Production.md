@@ -2447,7 +2447,7 @@ lication-load-balancer)
    1055: VictorOps - CloudWatch Integration TEST - failure (Ack: 82603, Res: 20283)
    ```
 
-1. Text the following to acknowledge the incident
+1. Text the following on your mobile phone to acknowledge the incident
 
    *Format:*
 
