@@ -120,6 +120,7 @@
 1. [Appendix GGG: Retrieve a copy of remote terraform state file for review](#appendix-ggg-retrieve-a-copy-of-remote-terraform-state-file-for-review)
 1. [Appendix HHH: Manually change a tag on controller and update its terraform state](#appendix-hhh-manually-change-a-tag-on-controller-and-update-its-terraform-state)
 1. [Appendix III: Issue a schedule override in VictorOps](#appendix-iii-issue-a-schedule-override-in-victorops)
+1. [Appendix JJJ: Change the Jenkins home directory on the Jenkins agent](#appendix-jjj-change-the-jenkins-home-directory-on-the-jenkins-agent)
 
 ## Appendix A: Access the CMS AWS console
 
@@ -10330,3 +10331,156 @@ $ sed -i "" 's%cms-ab2d[\/]prod%cms-ab2d/dev%g' _includes/head.html (edited)
 1. Expand the override that was created
 
 1. Select the user from the dropdown that will take the override time period
+
+## Appendix JJJ: Change the Jenkins home directory on the Jenkins agent
+
+1. Log on to the Jenkins GUI (if not already logged in)
+
+   1. Ensure that you are connected to the Cisco VPN
+
+   1. Open Chrome
+
+   1. Enter the following in the address bar
+
+      *Format:*
+
+      > http://{jenkins master public ip}:8080
+
+   1. Log on to the Jenkins GUI
+
+1. Determine the configured Jenkins home directory from the Jenkins GUI
+
+   1. Select **Manage Jenkins**
+
+   1. Scroll down to the "Status Information" section
+
+   1. Select **System Information**
+
+   1. Scroll down to "JENKINS_HOME"
+
+   1. Note the "JENKINS_HOME" value
+
+      ```
+      /var/lib/jenkins
+      ```
+
+1. Note that Jenkins Master currently uses the same value as its Jenkins home
+
+   ```
+   /var/lib/jenkins
+   ```
+
+1. Note that Jenkins Agent currently uses a different value as its Jenkins home
+
+   ```
+   /home/jenkins
+   ```
+
+1. Note that the latest SSH plugin requires that the Jenkins home directory should be the same on both Jenkins master and Jenkins agent, so the following directions will change the Jenkins agent home to be the same as Jenkins master
+
+1. Double the size of the Jenkins agent volume in AWS
+
+   1. Note that this is needed to fix the size of the "/var" volume so that it has enough room to receive the existing file from the old jenkins home directory
+
+   1. Log on the the mangement AWS account
+
+   1. Select **EC2**
+
+   1. Select **Volumes** under "Elastic Block Store" in the leftmost panel
+
+   1. Select the following volume
+
+      ```
+      ab2d-jenkins-agent-vol
+      ```
+
+   1. Select **Actions**
+
+   1. Select **Modify Volume**
+
+   1. Type the following in the **Size** text box
+
+      ```
+      500
+      ```
+
+   1. Select **Modify**
+
+   1. Select **Yes** on the "Are you sure..." dialog
+
+   1. Select **Close** on the "Modify Volume" window
+
+1. SSH into the Jenkins agent
+
+1. Create a new partition from unallocated space
+
+   ```ShellSession
+   (
+   echo n # Add a new partition
+   echo p # Primary partition
+   echo   # Partition number (Accept default)
+   echo   # First sector (Accept default)
+   echo   # Last sector (Accept default)
+   echo w # Write changes
+   ) | sudo fdisk /dev/nvme0n1 || true
+   ```
+
+1. Request that the operating system re-reads the partition table
+
+   ```ShellSession
+   $ sudo partprobe
+   ```
+
+1. Create physical volume by initializing the partition for use by the Logical Volume Manager (LVM)
+
+   ```ShellSession
+   $ sudo pvcreate /dev/nvme0n1p4
+   ```
+
+1. Add the new physical volume to the volume group
+
+   ```ShellSession
+   $ sudo vgextend VolGroup00 /dev/nvme0n1p4
+   ```
+
+1. Extend the size of the var logical volume
+
+   ```ShellSession
+   $ sudo lvextend -l +100%FREE /dev/mapper/VolGroup00-varVol
+   ```
+
+1. Expand the existing XFS filesystem
+
+   ```ShellSession
+   $ sudo xfs_growfs -d /dev/mapper/VolGroup00-varVol
+   ```
+
+1. Switch to the root user's "/root" directory
+
+   ```ShellSession
+   $ sudo -i
+   ```
+
+1. Create the new Jenkins home directory
+
+   ```ShellSession
+   $ mkdir -p /var/lib/jenkins
+   ```
+
+1. Change the ownership of the new Jenkins home directory to the jenkins user
+
+   ```ShellSession
+   $ chown jenkins:jenkins /var/lib/jenkins
+   ```
+
+1. Copy the contents from old Jenkins home directory to the new Jenkins home directory
+
+   ```ShellSession
+   $ cp -prv /home/jenkins /var/lib/
+   ```
+
+1. Change the Jenkins user home directory
+
+   ```ShellSession
+   $ usermod -d /var/lib/jenkins jenkins
+   ```
