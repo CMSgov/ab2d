@@ -121,6 +121,7 @@
 1. [Appendix HHH: Manually change a tag on controller and update its terraform state](#appendix-hhh-manually-change-a-tag-on-controller-and-update-its-terraform-state)
 1. [Appendix III: Issue a schedule override in VictorOps](#appendix-iii-issue-a-schedule-override-in-victorops)
 1. [Appendix JJJ: Change the Jenkins home directory on the Jenkins agent](#appendix-jjj-change-the-jenkins-home-directory-on-the-jenkins-agent)
+1. [Appendix KKK: Change MFA to Google Authenticator for accessing Jira](#appendix-kkk-change-mfa-to-google-authenticator-for-accessing-jira)
 
 ## Appendix A: Access the CMS AWS console
 
@@ -10484,3 +10485,21 @@ $ sed -i "" 's%cms-ab2d[\/]prod%cms-ab2d/dev%g' _includes/head.html (edited)
    ```ShellSession
    $ usermod -d /var/lib/jenkins jenkins
    ```
+
+## Appendix KKK: Change MFA to Google Authenticator for accessing Jira
+
+1. Install Google Authenticator on your phone (if not already installed)
+
+1. Open Chrome
+
+1. Enter the following in the address bar
+
+   > https://mo-idp.cms.gov/login#showall
+
+1. Log on using your current MFA
+
+1. Select **MFA Authentication** from the leftmost panel
+
+1. Select **Google Authenticator**
+
+1. Follow the instructions that are presented
