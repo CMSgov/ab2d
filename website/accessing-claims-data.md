@@ -17,6 +17,8 @@ active-nav: accessing-claims-data-nav
         'step-4-icon': 'step-4-content'
     };
     $(document).ready(function() {
+        const offset = 100;
+    
         $('.step-accessing-claims').on('click', function(event) {
             scrollLock = true;
             highlightNav($(this), true);
@@ -27,13 +29,13 @@ active-nav: accessing-claims-data-nav
                 return;
             }
                 
-            if($(this).scrollTop() >= $('#step-1-content').offset().top && $(this).scrollTop() < $('#step-2-content').offset().top) {
+            if($(this).scrollTop() < $('#step-2-content').offset().top - offset) {
                 highlightNav($('#step-1-icon'), false);
-            } else if($(this).scrollTop() >= $('#step-2-content').offset().top && $(this).scrollTop() < $('#step-3-content').offset().top) {
+            } else if($(this).scrollTop() >= $('#step-2-content').offset().top - offset && $(this).scrollTop() < $('#step-3-content').offset().top - offset) {
                 highlightNav($('#step-2-icon'), false);
-            } else if($(this).scrollTop() >= $('#step-3-content').offset().top && $(this).scrollTop() < $('#step-4-content').offset().top) {
+            } else if($(this).scrollTop() >= $('#step-3-content').offset().top - offset && $(this).scrollTop() < $('#step-4-content').offset().top - offset) {
                 highlightNav($('#step-3-icon'), false);
-            } else if($(this).scrollTop() >= $('#step-4-content').offset().top) {
+            } else if($(this).scrollTop() >= $('#step-4-content').offset().top - offset) {
                 highlightNav($('#step-4-icon'), false);
             }
         });
@@ -52,8 +54,8 @@ active-nav: accessing-claims-data-nav
             
             if(doScroll) {
                 $('html, body').animate({
-                    scrollTop: $('#' + idToShow).offset().top
-                }, 2000, function() {
+                    scrollTop: $('#' + idToShow).offset().top - offset
+                }, 1000, function() {
                   scrollLock = false;
                 });
             }
@@ -62,6 +64,11 @@ active-nav: accessing-claims-data-nav
         $('.card-header').on('click', function(event) {
             $(this).parent().find('.card-expand').toggleClass('icon-flipped');
         });
+        
+        if (isIE()) {
+            const elements = $('.step-claims-menu');
+            Stickyfill.add(elements);
+        }
     });
 </script>
 
@@ -102,8 +109,6 @@ active-nav: accessing-claims-data-nav
                             <a href="#">Claims
                             Data Usage Protocols</a>. These protocols regulate how their organization may or may not use the Medicare claims data provided by the AB2D
                             API, including limitations associated with the reuse and disclosure of the data.
-                            What type of organizations can attest?
-                            Stand-alone Medicare Part D Plan (PDP) sponsors (PACE and MAPD are not eligible).
                         </p>
                     </div>
                     <div class="col-lg-6">
@@ -114,9 +119,9 @@ active-nav: accessing-claims-data-nav
                 <div id="what-type-accordion" class="accordion-white-bg">
                   <div class="card">
                     <div class="card-header" id="headingZero" data-toggle="collapse" data-target="#collapseZero" aria-expanded="true" aria-controls="collapseZero">
-                      <h5 class="mb-0 card-header-h5">
+                      <div class="mb-0 card-header-h5">
                           What type of organizations can attest?
-                      </h5>
+                      </div>
                       <i class="material-icons card-expand">expand_more</i>
                     </div>
                 
@@ -131,9 +136,9 @@ active-nav: accessing-claims-data-nav
                 <div id="who-can-attest-accordion" class="accordion-white-bg">
                   <div class="card">
                     <div class="card-header" id="headingOne" data-toggle="collapse" data-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
-                      <h5 class="mb-0 card-header-h5">
+                      <div class="mb-0 card-header-h5">
                           Who can attest?
-                      </h5>
+                      </div>
                       <i class="material-icons card-expand">expand_more</i>
                     </div>
                 
@@ -150,12 +155,12 @@ active-nav: accessing-claims-data-nav
                   </div>
                 </div>
                 
-                <div id="affect-claims-data-accordion" class="accordion-white-bg">
+                <div id="affect-claims-data-accordion-attestation" class="accordion-white-bg">
                   <div class="card">
                     <div class="card-header" id="headingTwo" data-toggle="collapse" data-target="#collapseTwo" aria-expanded="true" aria-controls="collapseTwo">
-                      <h5 class="mb-0 card-header-h5">
+                      <div class="mb-0 card-header-h5">
                           How does attestation affect claims data?
-                      </h5>
+                      </div>
                       <i class="material-icons card-expand">expand_more</i>
                     </div>
                 
@@ -177,9 +182,9 @@ active-nav: accessing-claims-data-nav
                 <div id="initially-attest-accordion" class="accordion-white-bg">
                   <div class="card">
                     <div class="card-header" id="headingThree" data-toggle="collapse" data-target="#collapseThree" aria-expanded="true" aria-controls="collapseThree">
-                      <h5 class="mb-0 card-header-h5">
+                      <div class="mb-0 card-header-h5">
                           How to initially attest
-                      </h5>
+                      </div>
                       <i class="material-icons card-expand">expand_more</i>
                     </div>
                 
@@ -199,12 +204,12 @@ active-nav: accessing-claims-data-nav
                   </div>
                 </div>
                 
-                <div id="affect-claims-data-accordion" class="accordion-white-bg">
+                <div id="affect-claims-data-accordion-additional" class="accordion-white-bg">
                   <div class="card">
                     <div class="card-header" id="headingFour" data-toggle="collapse" data-target="#collapseFour" aria-expanded="true" aria-controls="collapseFour">
-                      <h5 class="mb-0 card-header-h5">
+                      <div class="mb-0 card-header-h5">
                           How to add additional attesters
-                      </h5>
+                      </div>
                       <i class="material-icons card-expand">expand_more</i>
                     </div>
                 
