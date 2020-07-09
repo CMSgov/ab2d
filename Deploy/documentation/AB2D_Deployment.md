@@ -7206,6 +7206,24 @@
 
 1. Log on as your user
 
+1. Open a new Chrome tab
+
+1. Log on to the Jenkins GUI (if not already logged in)
+
+   1. Ensure that you are connected to the Cisco VPN
+
+   1. Open Chrome
+
+   1. Enter the following in the address bar
+
+      *Format:*
+
+      > http://{jenkins master private ip}:8080
+
+   1. Log on to the Jenkins GUI
+
+1. Select **Manage Jenkins** from the leftmost panel
+
 1. Scroll down to the "Security" section
 
 1. Select **Configure Global Security** under the "Security" section
@@ -8790,117 +8808,6 @@
    ```
    CPM Onboarding Questionnaire - AB2D Management.docx
    ```
-
-## Upgrade Jenkins
-
-1. Log on to the Jenkins GUI (if not already logged in)
-
-   1. Ensure that you are connected to the Cisco VPN
-
-   1. Open Chrome
-
-   1. Enter the following in the address bar
-
-      *Format:*
-
-      > http://{jenkins master private ip}:8080
-
-   1. Log on to the Jenkins GUI
-
-1. Select **Manage Jenkins** from the leftmost panel
-
-1. Connect to Jenkins master
-
-   1. Set the management AWS profile
-
-      ```ShellSession
-      $ export AWS_PROFILE=ab2d-mgmt-east-dev
-      ```
-
-   1. Get the public IP address of Jenkins master
-   
-      ```ShellSession
-      $ JENKINS_MASTER_PUBLIC_IP=$(aws --region us-east-1 ec2 describe-instances \
-        --filters "Name=tag:Name,Values=ab2d-jenkins-master" \
-        --query="Reservations[*].Instances[?State.Name == 'running'].PublicIpAddress" \
-        --output text)
-      ```
-
-   1. SSH into the instance using the public IP address
-
-      ```ShellSession
-      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_MASTER_PUBLIC_IP
-      ```
-
-1. Stop Jenkins
-
-   ```ShellSession
-   $ sudo systemctl stop jenkins
-   ```
-
-1. Clear the jenkins log
-
-   ```ShellSession
-   $ sudo cat /dev/null > /var/log/jenkins/jenkins.log
-   ```
-
-1. Upgrade Jenkins
-
-   ```ShellSession
-   $ sudo yum update jenkins -y
-   ```
-
-1. Start Jenkins
-
-   ```ShellSession
-   $ sudo systemctl start jenkins
-   ```
-
-1. Verify the status of Jenkins
-
-   ```ShellSessiion
-   $ systemctl status jenkins
-   ```
-
-1. Log on to the Jenkins GUI (if not already logged in)
-
-   1. Ensure that you are connected to the Cisco VPN
-
-   1. Open Chrome
-
-   1. Enter the following in the address bar
-
-      *Format:*
-
-      > http://{jenkins master private ip}:8080
-
-   1. Log on to the Jenkins GUI
-
-1. Verify that Jenkins has been updated to the new version
-
-1. Select **Manage Jenkins** from the leftmost panel
-
-1. Select **Manage Plugins**
-
-1. Select the **Updates** tab
-
-1. If there are updates listed, do the following:
-
-   1. Select **Check now**
-
-   1. Wait for the check to complete
-
-   1. Note any warnings for plugins to determine if you will need to make any changes to existing projects to conform with the update
-
-   1. Check all plugins listed under the "Updates" tab
-   
-   1. Select **Download now and install after restart**
-
-   1. Check **Restart Jenkins when installation is complete and no jobs are running**
-
-   1. Wait for Jenkins to restart
-
-   1. Log on to Jenkins
 
 ## Configure Jenkins user to allow for SSH
 
