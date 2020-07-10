@@ -104,11 +104,12 @@ active-nav: accessing-claims-data-nav
                 <div class="row mb-5">
                     <div class="col-lg-6">
                         <p>
-                            In order to access Medicare Parts A and B claims data, a Part D Plan (PDP) sponsor must first complete the attestation process for each of
-                            their participating Part D contracts. During this process, a Part D Plan (PDP) sponsor formally reviews and agrees to comply with the 
-                            <a href="#">Claims
-                            Data Usage Protocols</a>. These protocols regulate how their organization may or may not use the Medicare claims data provided by the AB2D
-                            API, including limitations associated with the reuse and disclosure of the data.
+                            In order to access Medicare Parts A and B claims data, a Prescription Drug Plan (PDP) Sponsor must first 
+                            complete the attestation process for each of
+                            their participating Prescription Drug Plan (PDP) Sponsor contracts. During this process, a Prescription Drug Plan (PDP) Sponsor formally 
+                            reviews and agrees to comply with the <a href="#">Claims Data Usage Protocols</a>. These 
+                            protocols regulate how their organization may or may not use the Medicare claims data provided
+                            by the AB2D API, including limitations associated with the reuse and disclosure of the data.
                         </p>
                     </div>
                     <div class="col-lg-6">

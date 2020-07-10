@@ -5,21 +5,8 @@
         <ul class="navbar-nav" style="width: 100%;">
             <li class="nav-item {% if page.active-nav == 'home-nav' %}{{ 'active' }}{% endif %}"> <a class="nav-link" href="/">Home</a> </li>
             <li class="nav-item {% if page.active-nav == 'overview-nav' %}{{ 'active' }}{% endif %}"> <a class="nav-link" href="overview.html">Overview</a> </li>
-            <li class="dropdown dropdown-large nav-item {% if page.active-nav == 'accessing-claims-data-nav' %}{{ 'active' }}{% endif %}">
-                <a class="nav-link dropdown-toggle dropdown-medium" href="accessing-claims-data.html" data-toggle="dropdown" aria-expanded="false" onclick="javascript:location='accessing-claims-data.html'">
-                    Accessing Claims Data
-                    <i class="material-icons dropdown-caret">expand_more</i>
-                </a>
-
-
-                <div class="dropdown-menu">
-                    <a class="dropdown-item" href="accessing-claims-data.html">Getting Started</a>
-                    <a class="dropdown-item" href="tutorial-postman.html">Postman and Swagger User Guide</a>
-                    <a class="dropdown-item" href="tutorial-curl.html">Curl User Guide</a>
-                    <a class="dropdown-item" href="advanced-user-guide.html">Advanced User Guide</a>
-                </div>
-            </li>
-            <li class="nav-item {% if page.active-nav == 'understanding-the-data-nav' %}{{ 'active' }}{% endif %}"> <a class="nav-link" href="understanding-the-data.html">Understanding the Data</a> </li>
+            <li class="nav-item {% if page.active-nav == 'accessing-claims-data-nav' %}{{ 'active' }}{% endif %}"><a class="nav-link" href="accessing-claims-data.html">Accessing Claims Data</a></li>
+            <li class="nav-item {% if page.active-nav == 'understanding-the-data-nav' %}{{ 'active' }}{% endif %}"> <a class="nav-link" href="understanding-ab2d-data.html">Understanding AB2D Data</a> </li>
             <li class="nav-item {% if page.active-nav == 'support-nav' %}{{ 'active' }}{% endif %}"> <a class="nav-link" href="support.html">Support &amp; FAQs</a> </li>
         </ul>
     </div>
