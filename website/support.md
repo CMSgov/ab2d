@@ -34,6 +34,15 @@ active-nav: support-nav
                         <i class="material-icons pl-1 external-icon">open_in_new</i>
                     </a>
                 </div>
+                
+                <br />
+                <br />
+                <br />
+                <br />
+                
+                <div class="header-title">
+                    Frequently Asked Questions
+                </div>
             </div>
             <div class="col-lg-7">
                 <img src="assets/img/experts.svg" alt="experts" />
@@ -53,7 +62,8 @@ active-nav: support-nav
         
             <div id="collapseOne" class="collapse" aria-labelledby="headingOne" data-parent="#accordion">
               <div class="card-body">
-                In February 2018, the Bipartisan Budget Act of 2018 (BBA) was signed into law and included a provision
+                In February 2018, the <a href="https://www.congress.gov/bill/115th-congress/house-bill/1892/text" 
+                target="_blank">Bipartisan Budget Act of 2018 (BBA)</a> was signed into law and included a provision
                 requiring the development of a process to share Medicare fee-for-services claims data with PDP sponsors.
                 Section 50354 of the BBA specifically provides that the Secretary of Health and Human Services shall
                 establish a process under which PDP sponsors may request, beginning in plan year 2020, that the
@@ -73,7 +83,10 @@ active-nav: support-nav
             </div>
             <div id="collapseTwo" class="collapse" aria-labelledby="headingTwo" data-parent="#accordion">
               <div class="card-body">
-                In response to the Bipartisan Budget Act of 2018 (BBA), CMS published a Final Rule to implement section
+                In response to the <a href="https://www.congress.gov/bill/115th-congress/house-bill/1892/text" 
+                target="_blank">Bipartisan Budget Act of 2018 (BBA)</a>, CMS published a 
+                <a href="https://www.federalregister.gov/documents/2019/04/16/2019-06822/medicare-and-medicaid-programs-policy-and-technical-changes-to-the-medicare-advantage-medicare#page-15745" target="_blank">
+                Final Rule</a> to implement section
                 50354 of the BBA, which outlines the manner in which CMS proposes to implement this requirement.
               </div>
             </div>
@@ -97,7 +110,7 @@ active-nav: support-nav
               <div class="card-header" id="headingFour" data-toggle="collapse" data-target="#collapseFour" aria-expanded="false" aria-controls="collapseFour">
                 <div class="mb-0 card-header-h5">
                     How do standalone Medicare Part D Plan (PDP) sponsors access the Medicare Parts A and B claims data as
-                    mandated the BBA and Final Rule?
+                    mandated by the BBA and Final Rule?
                 </div>
                 <i class="material-icons card-expand">expand_more</i>
               </div>
@@ -122,7 +135,7 @@ active-nav: support-nav
                   A standalone Medicare Part D Plan (PDP) sponsor must first complete the attestation process for each of
                   their participating Part D contracts. After attesting, the AB2D team will work directly with the “AB2D Data
                   Operations Specialist” and the Attestor to ensure that the (PDP) is able to retrieve Medicare Parts A and B
-                  claims data. Learn more about accessing AB2D claims data.
+                  claims data. Learn more about <a href="accessing-claims-data.html">accessing AB2D claims data</a>.
                 </div>
               </div>
           </div>
@@ -138,9 +151,10 @@ active-nav: support-nav
               <div class="card-body">
                 Attestation is a process to ensure PDP sponsors are aware of how the Medicare claims data provided by
                 AB2D may and may not be used, including limitations associated with reuse and redisclosure of data.
-                Attestation performed through the Health Plan Management System (HPMS) Claims Data Attestation
+                Attestation performed through the <a href="https://www.cms.gov/Research-Statistics-Data-and-Systems/Computer-Data-and-Systems/HPMS/Overview" target="_blank">Health Plan Management System (HPMS)</a> Claims Data Attestation
                 module affirms adherence to these permitted uses and limitations of this claims data as listed in
-                § 423.153 of the Final Rule. To attest, visit HPMS
+                § 423.153 of the <a href="https://www.federalregister.gov/documents/2019/04/16/2019-06822/medicare-and-medicaid-programs-policy-and-technical-changes-to-the-medicare-advantage-medicare#page-15745" target="_blank">Final Rule</a>. To attest, visit 
+                <a href="https://hpms.cms.gov/app/ng/home/" target="_blank">HPMS</a>
               </div>
             </div>
           </div>
@@ -191,7 +205,7 @@ active-nav: support-nav
               </div>
               <div id="collapseNine" class="collapse" aria-labelledby="headingNine">
                 <div class="card-body">
-                  Section § 423.153(c) of the Final Rule specifies that PDP sponsors receiving Medicare claims data for their
+                  Section § 423.153(c) of the <a href="https://www.federalregister.gov/documents/2019/04/16/2019-06822/medicare-and-medicaid-programs-policy-and-technical-changes-to-the-medicare-advantage-medicare#page-15745" target="_blank">Final Rule</a> specifies that PDP sponsors receiving Medicare claims data for their
                   corresponding PDP plan enrollees may use the data for:
                   (i) Optimizing therapeutic outcomes through improved medication use;
                   (ii) improving care coordination so as to prevent adverse healthcare outcomes;
@@ -211,7 +225,8 @@ active-nav: support-nav
             </div>
             <div id="collapseTen" class="collapse" aria-labelledby="headingTen">
               <div class="card-body">
-                Section § 423.153(c) of the Final Rule specifies that PDP sponsors receiving Medicare Parts A and B claims
+                Section § 423.153(c) of the <a href="https://www.federalregister.gov/documents/2019/04/16/2019-06822/medicare-and-medicaid-programs-policy-and-technical-changes-to-the-medicare-advantage-medicare#page-15745" target="_blank">Final Rule</a>
+                specifies that PDP sponsors receiving Medicare Parts A and B claims
                 data for their PDP plan enrollees may not use the data for the following purposes:
                 (i) To inform coverage determinations under Part D;
                 (ii) To conduct retroactive reviews of medically accepted indications determinations;
@@ -246,9 +261,9 @@ active-nav: support-nav
             </div>
             <div id="collapseTwelve" class="collapse" aria-labelledby="headingTwelve">
               <div class="card-body">
-                The AB2D API leverages the Bulk FHIR Specification which uses the file format: NDJSON, New Line
-                Delimited JSON. An NDJSON file provides a single record on each line, which makes it easy for various
-                tools to look at and process one record at a time before moving on to the next one.
+                The AB2D API leverages the <a href="http://build.fhir.org/ig/HL7/VhDir/bulk-data.html" target="_blank">Bulk FHIR Specification</a>
+                which uses the file format: NDJSON, <a href="http://ndjson.org/" target="_blank">New Line Delimited JSON</a>. An NDJSON file provides a single record on each line, which makes it 
+                easy for various tools to look at and process one record at a time before moving on to the next one.
               </div>
             </div>
           </div>
@@ -276,21 +291,6 @@ active-nav: support-nav
                   </ul>
                 </div>
               </div>
-          </div>
-          
-          <div class="card">
-            <div class="card-header" id="headingFourteen" data-toggle="collapse" data-target="#collapseFourteen" aria-expanded="false" aria-controls="collapseFourteen">
-              <div class="mb-0 card-header-h5">
-                  Can a beneficiary opt-out of data sharing?
-              </div>
-              <i class="material-icons card-expand">expand_more</i>
-            </div>
-            <div id="collapseFourteen" class="collapse" aria-labelledby="headingFourteen">
-              <div class="card-body">
-                Beneficiaries can opt out of having their personal data shared with Part D Plan Sponsors by calling 1800
-                Medicare (1-800-633-4227)
-              </div>
-            </div>
           </div>
           
           <div class="card">
