@@ -107,8 +107,9 @@ active-nav: accessing-claims-data-nav
                             In order to access Medicare Parts A and B claims data, a Prescription Drug Plan (PDP) Sponsor must first 
                             complete the attestation process for each of
                             their participating Prescription Drug Plan (PDP) Sponsor contracts. During this process, a Prescription Drug Plan (PDP) Sponsor formally 
-                            reviews and agrees to comply with the <a href="#">Claims Data Usage Protocols</a>. These 
-                            protocols regulate how their organization may or may not use the Medicare claims data provided
+                            reviews and agrees to comply with the 
+                            <a href="https://www.federalregister.gov/documents/2019/04/16/2019-06822/medicare-and-medicaid-programs-policy-and-technical-changes-to-the-medicare-advantage-medicare#page-15745" target="_blank">
+                            Claims Data Usage Protocols</a>. These protocols regulate how their organization may or may not use the Medicare claims data provided
                             by the AB2D API, including limitations associated with the reuse and disclosure of the data.
                         </p>
                     </div>

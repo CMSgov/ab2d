@@ -5446,11 +5446,6 @@ h1.ds-display {
     margin: 25px 10px
 }
 
-header {
-    background: #ffffff;
-    font-family: Roboto, sans-serif
-}
-
 .ds-c-desktop-nav {
     background: #f1f1f1;
     display: flex;
