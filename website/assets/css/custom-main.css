@@ -63,8 +63,16 @@ img {
     transform: translateX(-50%);
     -ms-transform-origin: 100% 0;
     -ms-transform: translateX(-50%);
-    top: -70px;
+    bottom: 100%;
     left: 50%;
+}
+@media all and (-ms-high-contrast: none), (-ms-high-contrast: active) {
+    .shape-divider {
+        bottom: auto;
+    }
+    #mainNav .navbar-nav {
+        margin-left: 10%;
+    }
 }
 
 .shape-divider.flip {
@@ -248,7 +256,8 @@ img::-moz-selection {
 }
 #mainNav .navbar-nav {
     transition: all 0.6s ease;
-    margin-left: 10%;
+    margin-left: 50%;
+    transform: translateX(-50%);
     white-space: nowrap;
 }
 
@@ -369,7 +378,7 @@ header.masthead.subpage {
 header.masthead .intro-text {
     padding-top: 150px;
     padding-bottom: 100px;
-    max-width: 535px;
+    max-width: 600px;
     margin: auto;
 }
 header.masthead .intro-text .intro-logo {

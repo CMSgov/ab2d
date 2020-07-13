@@ -1,8 +1,8 @@
 ---
 layout: subpage_layout
-title:  "Understanding the Data"
+title:  "Understanding AB2D Data"
 date:   2019-11-02 09:21:12 -0500 
-description: Understanding the Data
+description: Understanding AB2D Data
 landing-page: live
 active-nav: understanding-the-data-nav
 ---
@@ -18,7 +18,7 @@ active-nav: understanding-the-data-nav
                 <div class="step-header">Overview</div>
                 The AB2D API is a RESTful based web service providing Medicare Parts A and B claims data using the industry-
                 standard <a href="https://www.hl7.org/fhir/overview.html" target="_blank">HL7 Fast Healthcare Interoperability Resources (FHIR)</a> resources, specifically the 
-                <a href="https://hl7.org/fhir/uv/bulkdata/export/index.html" target="_blank">Bulk FHIR specification</a>. The AB2D API only provides data records for active enrollees that have not opted out of data sharing and excludes
+                <a href="https://hl7.org/fhir/uv/bulkdata/export/index.html" target="_blank">Bulk FHIR specification</a>. The AB2D API only provides data records for active enrollees and excludes
                 all claims with substance abuse codes (as required by the Confidentiality of Alcohol and Drug Abuse Patient
                 Records Regulations, 42 CFR Part 2).
             </div>
@@ -64,8 +64,14 @@ active-nav: understanding-the-data-nav
                     AB2D API users can leverage the AB2D Data Dictionary
                      for more information on the data elements.
                     <br /><br />
-                    <a href="https://ab2d.cms.gov/data/data_dictionary.html" target="_blank">View Data Dictionary
-                    <i class="fas pl-1 fa-arrow-right"></i></a>
+                    <ul class="gray-bullets">
+                        <li>
+                            <a href="https://ab2d.cms.gov/data/data_dictionary.html" target="_blank">
+                                View Data Dictionary
+                                <i class="fas pl-1 fa-arrow-right"></i>
+                            </a>
+                        </li>    
+                    </ul>
                 </div>
             </div>
         </div>

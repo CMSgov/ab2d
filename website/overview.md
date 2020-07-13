@@ -11,7 +11,7 @@ active-nav: overview-nav
     <svg preserveAspectRatio="xMidYMin slice" class="shape-divider" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
          viewBox="0 0 1034.2 43.8" style="enable-background:new 0 0 1034.2 43.8;" xml:space="preserve">
 	<path fill="#ffffff" d="M0,21.3c0,0,209.3-48,517.1,0s517.1,0,517.1,0v22.5H0V21.3z"/>
-  </svg>
+    </svg>
     <div class="container">
         <div class="row">
             <div class="col-lg-12 text-center">
@@ -22,7 +22,9 @@ active-nav: overview-nav
         <div class="row align-items-center">
             <div class="col-lg-6"> <img src="assets/img/pharmacist.svg" alt="Pharmaceuticals"/> </div>
             <div class="col-lg-6 px-5">
-                <p>The Centers for Medicare and Medicaid Services (CMS) contracts with private insurance companies, known as Medicare Part D Plan (PDP) sponsors, to provide prescription drug coverage for enrollees.</p>
+                <p>
+                    The Centers for Medicare and Medicaid Services (CMS) contracts with private insurance companies, 
+                    known as Medicare Prescription Drug Plan (PDP) sponsors, to provide prescription drug coverage for enrollees.</p>
                 <p>
                     The <a href="https://www.congress.gov/bill/115th-congress/house-bill/1892/text" target="_blank">Bipartisan Budget Act of 2018 (BBA)</a> requires the development of a process to share Medicare claims data with
                     PDP sponsors. <a target="_blank" href="https://www.federalregister.gov/documents/2019/04/16/2019-06822/medicare-and-medicaid-programs-policy-and-technical-changes-to-the-medicare-advantage-medicare">The Final Rule</a> provides additional detail on the purposes and limitations on the use of data, the data request process, and data extract content.
@@ -56,7 +58,7 @@ active-nav: overview-nav
         <div class="row align-items-center">
             <div class="col-lg-6 px-5">
                 <ol>
-                    <li>The AB2D API provides FHIR-formatted bulk claims data to stand-alone PDP sponsors for their enrollees. Beneficiaries can opt out of data sharing <a href="https://www.medicare.gov/privacy-policy" target="_blank">here</a>.</li>
+                    <li>The AB2D API provides FHIR-formatted bulk claims data to stand-alone PDP sponsors for their enrollees.</li>
                     <li><a href="https://bluebutton.cms.gov/" target="_blank">Blue Button 2.0</a> provides FHIR-formatted data for one individual Medicare beneficiary at a time, to registered applications with beneficiary authorization.</li>
                     <li><a href="https://bcda.cms.gov/" target="_blank">BCDA</a> provides FHIR-formatted bulk data files to an ACO for all of the beneficiaries eligible to a given Shared Savings Program ACO. BCDA does not require individual beneficiary authorization but does allow a process for patients to opt out of data sharing.</li>
                     <li><a href="https://dpc.cms.gov/" target="_blank">Data at the Point of Care</a> pilot provides FHIR-formatted bulk data files to fee-for-service providers for their active patients as needed for treatment purposes under HIPAA. Data at the Point of Care does not require individual beneficiary authorization but does allow a process for patients to opt out of data sharing.</li>
