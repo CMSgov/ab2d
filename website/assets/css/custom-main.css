@@ -254,7 +254,7 @@ img::-moz-selection {
 #mainNav .navbar-nav .nav-item .nav-link.active, #mainNav .navbar-nav .nav-item .nav-link:hover {
     color: #8DE4FF;
 }
-.navbar-shrink .navbar-nav {
+.navbar-shrink .navbar-nav, .navbar-subpage .navbar-nav {
     margin-left: 100%;
     transform: translateX(-100%);
 }
@@ -893,7 +893,7 @@ ul.social-buttons li a:active, ul.social-buttons li a:focus, ul.social-buttons l
         top: 0px;
         margin-left: -25%;
     }
-    #mainNav.navbar-shrink .navbar-nav {
+    #mainNav.navbar-shrink .navbar-nav, #mainNav.navbar-subpage .navbar-nav {
         margin-left: 0;
         transform: none;
         position: relative;
@@ -901,3 +901,4 @@ ul.social-buttons li a:active, ul.social-buttons li a:focus, ul.social-buttons l
         top: auto;
     }
 }
+
