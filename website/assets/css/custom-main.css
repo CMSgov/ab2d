@@ -2,6 +2,7 @@
 body {
     overflow-x: hidden;
     font-family: 'Muli', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+    font-feature-settings: "liga" 0;
 }
 p {
     line-height: 1.75;
@@ -255,8 +256,8 @@ img::-moz-selection {
     color: #8DE4FF;
 }
 .navbar-shrink .navbar-nav, .navbar-subpage .navbar-nav {
-    margin-left: 100%;
-    transform: translateX(-100%);
+    margin-left: 50%;
+    transform: translateX(-50%);
 }
 
 #mainNav.navbar-shrink .navbar-brand {
@@ -292,15 +293,16 @@ img::-moz-selection {
         margin-left: 0;
         transform: none;
     }
+    .navbar-shrink .navbar-nav, .navbar-subpage .navbar-nav {
+        margin-left: 0;
+        transform: none;
+    }
 }
 
 header.masthead {
     text-align: center;
     color: white;
     background-color: #323A45;
-    height: 100vh;
-    display: flex;
-    align-items: center;
 }
 
 header.masthead.subpage {
@@ -308,8 +310,7 @@ header.masthead.subpage {
 }
 
 .masthead > .container {
-    display: flex;
-    align-items: center;
+
     z-index: 100;
 }
 .jarallax {
@@ -322,7 +323,6 @@ header.masthead.subpage {
 }
 .jarallax .jarallax-img {
     position: absolute;
-    object-fit: cover;
     z-index: -1;
 }
 .next-section-wrap.minimal-arrow a {
