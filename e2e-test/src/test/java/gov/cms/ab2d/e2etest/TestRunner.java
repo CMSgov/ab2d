@@ -77,10 +77,16 @@ public class TestRunner {
 
     private final Set<String> acceptableIdStrings = Set.of("carrier", "dme", "hha", "hospice", "inpatient", "outpatient", "snf");
 
+    private String testContract;
+
     // Get all methods annotated with @Test and run them. This will only be called from TestLaucher when running against
     // an external environment, the regular tests that run as part of a build will be called like they normally would
     // during a build.
-    public void runTests() throws InvocationTargetException, IllegalAccessException {
+    public void runTests(String testContract) throws InvocationTargetException, IllegalAccessException {
+        this.testContract = testContract;
+        if (testContract == null) {
+            this.testContract = "Z0000";
+        }
         final Class annotation = Test.class;
         final Class<?> klass = this.getClass();
         final List<Method> allMethods = new ArrayList<>(Arrays.asList(klass.getDeclaredMethods()));
@@ -210,7 +216,7 @@ public class TestRunner {
         JSONArray output = json.getJSONArray("output");
         JSONObject outputObject = output.getJSONObject(0);
         String url = outputObject.getString("url");
-        String filestem = AB2D_API_URL + "Job/" + jobUuid + "/file/Z0000_0001.";
+        String filestem = AB2D_API_URL + "Job/" + jobUuid + "/file/" + testContract + "_0001.";
         Assert.assertTrue(url.equals(filestem + "ndjson") || (url.equals(filestem + "zip")));
         String type = outputObject.getString("type");
         Assert.assertEquals(type, "ExplanationOfBenefit");
@@ -261,7 +267,7 @@ public class TestRunner {
             Assert.assertNotNull(typeJson);
             final JSONArray codingJson = typeJson.getJSONArray("coding");
             Assert.assertNotNull(codingJson);
-            Assert.assertTrue(codingJson.length() >= 4);
+            Assert.assertTrue(codingJson.length() >= 3);
             final JSONArray identifierJson = jsonObject.getJSONArray("identifier");
             Assert.assertNotNull(identifierJson);
             Assert.assertEquals(2, identifierJson.length());
@@ -403,7 +409,7 @@ public class TestRunner {
         Assert.assertEquals(202, exportResponse.statusCode());
         List<String> contentLocationList = exportResponse.headers().map().get("content-location");
 
-        Pair<String, JSONArray> downloadDetails = performStatusRequests(contentLocationList, false, "Z0000");
+        Pair<String, JSONArray> downloadDetails = performStatusRequests(contentLocationList, false, testContract);
         downloadFile(downloadDetails, null, null);
     }
 
@@ -416,7 +422,7 @@ public class TestRunner {
         Assert.assertEquals(202, exportResponse.statusCode());
         List<String> contentLocationList = exportResponse.headers().map().get("content-location");
 
-        Pair<String, JSONArray> downloadDetails = performStatusRequests(contentLocationList, false, "Z0000");
+        Pair<String, JSONArray> downloadDetails = performStatusRequests(contentLocationList, false, testContract);
         if (downloadDetails != null) {
             downloadFile(downloadDetails, earliest, null);
         }
@@ -447,12 +453,11 @@ public class TestRunner {
     @Order(5)
     public void runContractNumberExport() throws IOException, InterruptedException, JSONException {
         System.out.println("Starting test 5");
-        String contractNumber = "Z0000";
-        HttpResponse<String> exportResponse = apiClient.exportByContractRequest(contractNumber, FHIR_TYPE, null);
+        HttpResponse<String> exportResponse = apiClient.exportByContractRequest(testContract, FHIR_TYPE, null);
         Assert.assertEquals(202, exportResponse.statusCode());
         List<String> contentLocationList = exportResponse.headers().map().get("content-location");
 
-        Pair<String, JSONArray> downloadDetails = performStatusRequests(contentLocationList, true, contractNumber);
+        Pair<String, JSONArray> downloadDetails = performStatusRequests(contentLocationList, true, testContract);
         downloadFile(downloadDetails, null, null);
     }
 
@@ -460,8 +465,7 @@ public class TestRunner {
     @Order(6)
     void runContractNumberZipExport() throws IOException, InterruptedException, JSONException {
         System.out.println("Starting test 6");
-        String contractNumber = "Z0000";
-        HttpResponse<String> exportResponse = apiClient.exportByContractRequest(contractNumber, ZIPFORMAT, null);
+        HttpResponse<String> exportResponse = apiClient.exportByContractRequest(testContract, ZIPFORMAT, null);
         Assert.assertEquals(400, exportResponse.statusCode());
     }
 
@@ -484,12 +488,11 @@ public class TestRunner {
     @Order(8)
     public void testUserCannotDownloadOtherUsersJob() throws IOException, InterruptedException, JSONException, NoSuchAlgorithmException, KeyManagementException {
         System.out.println("Starting test 8");
-        String contractNumber = "Z0000";
-        HttpResponse<String> exportResponse = apiClient.exportByContractRequest(contractNumber, FHIR_TYPE, null);
+        HttpResponse<String> exportResponse = apiClient.exportByContractRequest(testContract, FHIR_TYPE, null);
         Assert.assertEquals(202, exportResponse.statusCode());
         List<String> contentLocationList = exportResponse.headers().map().get("content-location");
 
-        Pair<String, JSONArray> downloadDetails = performStatusRequests(contentLocationList, true, contractNumber);
+        Pair<String, JSONArray> downloadDetails = performStatusRequests(contentLocationList, true, testContract);
 
         APIClient secondUserAPIClient = createSecondUserClient();
 
@@ -645,7 +648,7 @@ public class TestRunner {
         Assert.assertEquals(202, exportResponse.statusCode());
         List<String> contentLocationList = exportResponse.headers().map().get("content-location");
 
-        Pair<String, JSONArray> downloadDetails = performStatusRequests(contentLocationList, false, "Z0000");
+        Pair<String, JSONArray> downloadDetails = performStatusRequests(contentLocationList, false, testContract);
         downloadFile(downloadDetails, null, "19990000002906"); // User should not be included
     }
      */
