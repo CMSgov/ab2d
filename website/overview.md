@@ -61,7 +61,7 @@ active-nav: overview-nav
                     <li>The AB2D API provides FHIR-formatted bulk claims data to stand-alone PDP sponsors for their enrollees.</li>
                     <li><a href="https://bluebutton.cms.gov/" target="_blank">Blue Button 2.0</a> provides FHIR-formatted data for one individual Medicare beneficiary at a time, to registered applications with beneficiary authorization.</li>
                     <li><a href="https://bcda.cms.gov/" target="_blank">BCDA</a> provides FHIR-formatted bulk data files to an ACO for all of the beneficiaries eligible to a given Shared Savings Program ACO. BCDA does not require individual beneficiary authorization but does allow a process for patients to opt out of data sharing.</li>
-                    <li><a href="https://dpc.cms.gov/" target="_blank">Data at the Point of Care</a> pilot provides FHIR-formatted bulk data files to fee-for-service providers for their active patients as needed for treatment purposes under HIPAA. Data at the Point of Care does not require individual beneficiary authorization but does allow a process for patients to opt out of data sharing.</li>
+                    <li><a href="https://dpc.cms.gov/" target="_blank">Data at the Point of Care</a> pilot provides FHIR-formatted bulk data files to fee-for-service providers for their active patients as needed for treatment purposes under HIPAA. Data at the Point of Care does not require individual beneficiary authorization.</li>
                 </ol>
             </div>
             <div class="col-lg-6"> <img src="assets/img/programmer.svg" alt="Accessing Claims Data"/> </div>
