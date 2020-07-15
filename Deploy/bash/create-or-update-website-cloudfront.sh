@@ -140,12 +140,14 @@ do
 	    export CMS_ENV_AWS_ACCOUNT_NUMBER=349849222861
 	    export CMS_ENV=ab2d-dev
 	    export SSH_PRIVATE_KEY=ab2d-dev.pem
+	    export S3_BUCKET=cms-ab2d-website
 	    break
             ;;
         "Prod AWS account")
 	    export CMS_ENV_AWS_ACCOUNT_NUMBER=595094747606
 	    export CMS_ENV=ab2d-east-prod
 	    export SSH_PRIVATE_KEY=ab2d-east-prod.pem
+	    export S3_BUCKET=ab2d-east-prod-website
 	    break
             ;;
         "Quit")
@@ -232,10 +234,79 @@ rm -rf _site
 bundle install
 bundle exec jekyll build
 
+# Create or verify website backup bucket
+
+S3_WEBSITE_BACKUP_BUCKET="${S3_BUCKET}-backup"
+
+S3_WEBSITE_BACKUP_BUCKET_EXISTS=$(aws --region "${AWS_DEFAULT_REGION}" s3api list-buckets \
+  --query "Buckets[?Name=='${S3_WEBSITE_BACKUP_BUCKET}'].Name" \
+  --output text)
+
+if [ -z "${S3_WEBSITE_BACKUP_BUCKET_EXISTS}" ]; then
+  aws --region "${AWS_DEFAULT_REGION}" s3api create-bucket \
+    --bucket ${S3_WEBSITE_BACKUP_BUCKET}
+  
+  aws --region "${AWS_DEFAULT_REGION}" s3api put-public-access-block \
+    --bucket ${S3_WEBSITE_BACKUP_BUCKET} \
+    --public-access-block-configuration BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true
+fi
+
+# Create a backup of existing website
+
+S3_BACKUP_DATETIME=$(date '+%Y-%m-%d-%H%M%S')
+aws --region "${AWS_DEFAULT_REGION}" s3 sync \
+  s3://${S3_BUCKET} \
+  s3://${S3_WEBSITE_BACKUP_BUCKET}/${S3_BACKUP_DATETIME}
+
+# Delete existing website files
+
+aws --region us-east-1 s3 rm s3://${S3_BUCKET} \
+  --recursive
+
+# Invalidate the CloudFront distribution in order to clear caches on CloudFront edge nodes
+
+CLOUDFRONT_DISTRIBUTION_ID=$(aws --region us-east-1 cloudfront list-distributions \
+  --query "DistributionList.Items[*].Origins.Items[?Id=='S3-${S3_BUCKET}']" \
+  --query "DistributionList.Items[*].Id" \
+  --output text)
+
+CLOUDFRONT_INVALIDATION_ID=$(aws --region us-east-1 cloudfront create-invalidation \
+  --distribution-id "${CLOUDFRONT_DISTRIBUTION_ID}" \
+  --paths "/*" \
+  | jq '.Invalidation.Id' \
+  | tr -d '"')
+
+# Wait for CloudFront distribution invalidation to complete
+
+RETRIES_INVALIDATION=0
+
+CLOUDFRONT_INVALIDATION_STATUS=$(aws --region us-east-1 cloudfront list-invalidations \
+  --distribution-id "${CLOUDFRONT_DISTRIBUTION_ID}" \
+  --query "InvalidationList.Items[?Id=='${CLOUDFRONT_INVALIDATION_ID}'].Status" \
+  --output text)
+
+echo "CloudFront invalidation status is: ${CLOUDFRONT_INVALIDATION_STATUS}"
+
+while [ "${CLOUDFRONT_INVALIDATION_STATUS}" != "Completed" ]; do
+  if [ "$RETRIES_INVALIDATION" != "15" ]; then
+    echo "Recheck CloudFront invalidiation status in 60 seconds..."
+    sleep 60
+    RETRIES_INVALIDATION=$(expr $RETRIES_INVALIDATION + 1)
+    CLOUDFRONT_INVALIDATION_STATUS=$(aws --region us-east-1 cloudfront list-invalidations \
+      --distribution-id "${CLOUDFRONT_DISTRIBUTION_ID}" \
+      --query "InvalidationList.Items[?Id=='${CLOUDFRONT_INVALIDATION_ID}'].Status" \
+      --output text)
+    echo "CloudFront invalidation status is: ${CLOUDFRONT_INVALIDATION_STATUS}"
+  else
+    echo "ERROR: Max retries reached. Exiting checking of CloudFront invalidation status..."
+    exit 1
+  fi
+done
+
 # Upload latest website
 
 aws --region "${AWS_DEFAULT_REGION}" s3 cp \
-  --recursive _site/ s3://${CMS_ENV}-website/
+  --recursive _site/ s3://${S3_BUCKET}/
 
 # Revert head for Tealium/Google Analytics to dev setting
 
