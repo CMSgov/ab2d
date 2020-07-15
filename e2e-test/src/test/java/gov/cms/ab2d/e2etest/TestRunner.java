@@ -99,6 +99,7 @@ public class TestRunner {
 
     public TestRunner(Environment environment) throws IOException, InterruptedException, JSONException, NoSuchAlgorithmException, KeyManagementException {
         this.environment = environment;
+        this.testContract = "Z0000";
         init();
     }
 
