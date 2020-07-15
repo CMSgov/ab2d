@@ -43,3 +43,8 @@ gems:
 #   - vendor/cache/
 #   - vendor/gems/
 #   - vendor/ruby/
+
+webrick:
+  headers:
+    Cache-Control: no-cache
+    Pragma: no-cache

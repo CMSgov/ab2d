@@ -3,7 +3,27 @@ layout: new
 ---
 
 <script>
-    var $buoop = {required:{e:-6,f:-6,o:-6,s:-6,c:-6},insecure:true,api:2020.07 };
+    var $buoop = {
+        required: {
+            e:-6,f:-6,o:-6,s:-6,c:-6
+        },
+        insecure: true,
+        style: "bottom",
+        api: 2020.07,
+        text: {
+            'msg': "For improved speed, security, and viewing experience, please update your browser to the latest version or view in MS Edge, Chrome, Safari, or Firefox.",
+            'msgmore': '',
+            'bupdate': 'Update',
+            'bignore': 'Ignore',
+            'remind': 'You will be reminded in {days} days.',
+            'bnever': 'Never show again'
+        },
+        nostatistics: true,
+        no_permanent_hide: false,
+        mobile: false,
+        reminder: 24 * 365,
+        reminderClosed: 24 * 365
+    };
     function $buo_f(){
         var e = document.createElement("script");
         e.src = "//browser-update.org/update.min.js";
