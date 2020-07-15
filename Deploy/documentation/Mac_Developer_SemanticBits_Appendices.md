@@ -15,6 +15,7 @@
 1. [Appendix D: Troubleshoot VPN access](#appendix-d-troubleshoot-vpn-access)
 1. [Appendix E: Configure show file extensions in Finder](#appendix-e-configure-show-file-extensions-in-finder)
 1. [Appendix F: Register for Okta Prod credentials](#appendix-f-register-for-okta-prod-credentials)
+1. [Appendix G: Upgrade from AWS CLI 1 to AWS CLI 2](#appendix-g-upgrade-from-aws-cli-1-to-aws-cli-2)
 
 ## Appendix A: PostgreSQL 11
 
@@ -438,3 +439,42 @@
       > https://test.idp.idm.cms.gov/
 
    1. Log on
+
+## Appendix G: Upgrade from AWS CLI 1 to AWS CLI 2
+
+### Uninstall AWS CLI 1 using pip3
+
+1. Uninstall AWS CLI 1 using pip3
+
+   ```ShellSession
+   $ pip3 uninstall -y awscli
+   ```
+
+1. Backup the file that you use for setting up your shell's environment
+
+   *Example for bash:*
+
+   ```ShellSession
+   $ cp ~/.bash_profile ~/.bash_profile_backup
+   ```
+
+1. Remove the existing AWS CLI lines from your shell's environment script
+
+   1. Open your shell's environment script
+
+      *Example for bash:*
+
+      ```ShellSession
+      $ vim ~/.bash_profile
+      ```
+
+   1. Delete the following lines from the script
+
+      ```
+      # Add AWS CLI to Path
+      export PATH="$PATH:$HOME/Library/Python/3.7/bin"
+      ```
+
+   1. Save and close the file
+
+1. 
