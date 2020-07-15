@@ -17,9 +17,12 @@ public class TestLauncher {
         if(args.length > 0 && args[0] != null) {
             env = Environment.valueOf(args[0]);
         }
+        String contractNum = null;
+        if(args.length > 1 && args[1] != null) {
+            contractNum = args[1];
+        }
 
         TestRunner testRunner = new TestRunner(env);
-
-        testRunner.runTests();
+        testRunner.runTests(contractNum);
     }
 }
