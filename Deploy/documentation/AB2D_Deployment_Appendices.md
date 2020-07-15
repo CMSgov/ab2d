@@ -958,7 +958,7 @@
    ```ShellSession
    $ aws --region us-east-1 cloudfront create-invalidation \
      --distribution-id {cloudfront distribution id} \
-     --paths "/*
+     --paths "/*"
    ```
 
    *Example:*
@@ -966,7 +966,7 @@
    ```ShellSession
    $ aws --region us-east-1 cloudfront create-invalidation \
      --distribution-id E8P2KHG7IH0TG \
-     --paths "/*
+     --paths "/*"
    ```
 
 1. Note the output
