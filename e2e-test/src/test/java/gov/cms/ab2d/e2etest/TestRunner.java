@@ -77,15 +77,16 @@ public class TestRunner {
 
     private final Set<String> acceptableIdStrings = Set.of("carrier", "dme", "hha", "hospice", "inpatient", "outpatient", "snf");
 
-    private String testContract;
+    // Define default test contract
+    private String testContract = "Z0000";
 
     // Get all methods annotated with @Test and run them. This will only be called from TestLaucher when running against
     // an external environment, the regular tests that run as part of a build will be called like they normally would
     // during a build.
     public void runTests(String testContract) throws InvocationTargetException, IllegalAccessException {
-        this.testContract = testContract;
-        if (testContract == null) {
-            this.testContract = "Z0000";
+        if (testContract != null && !testContract.isEmpty()) {
+            this.testContract = testContract;
+            log.info("Running test with contract: " + testContract);
         }
         final Class annotation = Test.class;
         final Class<?> klass = this.getClass();
@@ -99,7 +100,6 @@ public class TestRunner {
 
     public TestRunner(Environment environment) throws IOException, InterruptedException, JSONException, NoSuchAlgorithmException, KeyManagementException {
         this.environment = environment;
-        this.testContract = "Z0000";
         init();
     }
 
