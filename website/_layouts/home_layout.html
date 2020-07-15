@@ -2,11 +2,15 @@
 layout: new
 ---
 
-<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/object-fit-images/3.2.4/ofi.min.js"></script>
-<script type="text/javascript">
-    $(document).ready(function () {
-        objectFitImages('img.jarallax-img');
-    });
+<script>
+    var $buoop = {required:{e:-6,f:-6,o:-6,s:-6,c:-6},insecure:true,api:2020.07 };
+    function $buo_f(){
+        var e = document.createElement("script");
+        e.src = "//browser-update.org/update.min.js";
+        document.body.appendChild(e);
+    };
+    try {document.addEventListener("DOMContentLoaded", $buo_f,false)}
+    catch(e){window.attachEvent("onload", $buo_f)}
 </script>
 
 <body id="page-top">
@@ -17,7 +21,13 @@ layout: new
 
 <!-- Header -->
 <header class="masthead">
-    <section class="jarallax" data-jarallax data-speed="0.4" data-jarallax-element="250 -100"> <img src="assets/img/hero-banner.svg" alt="Image" class="jarallax-img"/> </section>
+    <section class="jarallax" data-jarallax data-speed="0.4" data-jarallax-element="250 -100">
+        <script type="text/javascript">
+            if(!isIE()) {
+                document.write('<img src="assets/img/hero-banner.svg" alt="Image" class="jarallax-img" />');
+            }
+        </script>
+    </section>
     <div class="container">
         <div class="intro-text"> <img src="assets/img/logo-stacked.svg" class="intro-logo" alt="logo"/>
             <h1 class="intro-heading">Helping Prescription Drug Sponsors Help Patients</h1>

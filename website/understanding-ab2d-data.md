@@ -16,11 +16,13 @@ active-nav: understanding-the-data-nav
         <div class="row" style="margin-bottom: 70px;">
             <div class="col-lg-6">
                 <div class="step-header">Overview</div>
+                <p>
                 The AB2D API is a RESTful based web service providing Medicare Parts A and B claims data using the industry-
                 standard <a href="https://www.hl7.org/fhir/overview.html" target="_blank">HL7 Fast Healthcare Interoperability Resources (FHIR)</a> resources, specifically the 
                 <a href="https://hl7.org/fhir/uv/bulkdata/export/index.html" target="_blank">Bulk FHIR specification</a>. The AB2D API only provides data records for active enrollees and excludes
                 all claims with substance abuse codes (as required by the Confidentiality of Alcohol and Drug Abuse Patient
                 Records Regulations, 42 CFR Part 2).
+                </p>
             </div>
             <div class="col-lg-6">
                 <img class="mt-3" src="assets/img/data-analysis.svg" alt="data-analysis" />
