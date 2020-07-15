@@ -6462,3 +6462,15 @@ ul.gray-bullets a:hover {
 code.highlighter-rouge {
     color: #DD276D;
 }
+
+.buorg {
+    border-bottom: 1px solid #A29330;
+    color: #000;
+    background-color: #F8FAFC!important;
+    font: 18px Calibri, Helvetica, sans-serif;
+}
+
+#buorgig, #buorgul, #buorgpermanent {
+    color: #fff;
+    background: #4CCCF9!important;
+}
