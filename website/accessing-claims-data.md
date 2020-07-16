@@ -54,7 +54,7 @@ active-nav: accessing-claims-data-nav
             
             if(doScroll) {
                 $('html, body').animate({
-                    scrollTop: $('#' + idToShow).offset().top - offset
+                    scrollTop: $('#' + idToShow).offset().top - offset + 2
                 }, 1000, function() {
                   scrollLock = false;
                 });
@@ -335,7 +335,7 @@ active-nav: accessing-claims-data-nav
                     <ul>
                         <li>Using the production credentials, the Part D Plan (PDP) sponsors will connect to the AB2D API in our production environment to download
                          actual Medicare Parts A and B claims data.</li>
-                        <li>he AB2D team will work closely with the organization and its "AB2D Data Operations Specialist" to answer any questions or troubleshoot
+                        <li>The AB2D team will work closely with the organization and its "AB2D Data Operations Specialist" to answer any questions or troubleshoot
                          any issues they have connecting to the AB2D API.</li> 
                     </ul> 
                 </div>

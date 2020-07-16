@@ -6463,14 +6463,35 @@ code.highlighter-rouge {
     color: #DD276D;
 }
 
-.buorg {
-    border-bottom: 1px solid #A29330;
+.upgrade-browser {
     color: #000;
-    background-color: #F8FAFC!important;
+    background-color: #F8FAFC;
     font: 18px Calibri, Helvetica, sans-serif;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    z-index: 100000;
+    height: 85px;
+    padding: 10px 40px;
+    text-align: center;
+    width: 100%;
+}
+.upgrade-browser-close {
+    position: absolute;
+    top: 10px;
+    right: 30px;
+    cursor: pointer;
 }
 
-#buorgig, #buorgul, #buorgpermanent {
-    color: #fff;
-    background: #4CCCF9!important;
+.card-body a {
+    text-decoration: underline;
+}
+.card-body a:hover {
+    text-decoration: none;
+}
+.card-body li, .step-content li {
+    margin-bottom: 10px;
+}
+.card-body li:last-child, .step-content li:last-child {
+    margin-bottom: 0px;
 }
