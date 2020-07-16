@@ -54,7 +54,7 @@ active-nav: accessing-claims-data-nav
             
             if(doScroll) {
                 $('html, body').animate({
-                    scrollTop: $('#' + idToShow).offset().top - offset
+                    scrollTop: $('#' + idToShow).offset().top - offset + 2
                 }, 1000, function() {
                   scrollLock = false;
                 });
@@ -107,8 +107,9 @@ active-nav: accessing-claims-data-nav
                             In order to access Medicare Parts A and B claims data, a Prescription Drug Plan (PDP) Sponsor must first 
                             complete the attestation process for each of
                             their participating Prescription Drug Plan (PDP) Sponsor contracts. During this process, a Prescription Drug Plan (PDP) Sponsor formally 
-                            reviews and agrees to comply with the <a href="#">Claims Data Usage Protocols</a>. These 
-                            protocols regulate how their organization may or may not use the Medicare claims data provided
+                            reviews and agrees to comply with the 
+                            <a href="https://www.federalregister.gov/documents/2019/04/16/2019-06822/medicare-and-medicaid-programs-policy-and-technical-changes-to-the-medicare-advantage-medicare#page-15745" target="_blank">
+                            Claims Data Usage Protocols</a>. These protocols regulate how their organization may or may not use the Medicare claims data provided
                             by the AB2D API, including limitations associated with the reuse and disclosure of the data.
                         </p>
                     </div>
@@ -334,7 +335,7 @@ active-nav: accessing-claims-data-nav
                     <ul>
                         <li>Using the production credentials, the Part D Plan (PDP) sponsors will connect to the AB2D API in our production environment to download
                          actual Medicare Parts A and B claims data.</li>
-                        <li>he AB2D team will work closely with the organization and its "AB2D Data Operations Specialist" to answer any questions or troubleshoot
+                        <li>The AB2D team will work closely with the organization and its "AB2D Data Operations Specialist" to answer any questions or troubleshoot
                          any issues they have connecting to the AB2D API.</li> 
                     </ul> 
                 </div>
