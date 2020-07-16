@@ -2,35 +2,30 @@
 layout: new
 ---
 
+<script type="text/javascript" src="assets/js/js.cookie-2.2.1.min.js"></script>
 <script>
-    var $buoop = {
-        required: {
-            e:-6,f:-6,o:-6,s:-6,c:-6
-        },
-        insecure: true,
-        style: "bottom",
-        api: 2020.07,
-        text: {
-            'msg': "For improved speed, security, and viewing experience, please update your browser to the latest version or view in MS Edge, Chrome, Safari, or Firefox.",
-            'msgmore': '',
-            'bupdate': 'Update',
-            'bignore': 'Ignore',
-            'remind': 'You will be reminded in {days} days.',
-            'bnever': 'Never show again'
-        },
-        nostatistics: true,
-        no_permanent_hide: false,
-        mobile: false,
-        reminder: 24 * 365,
-        reminderClosed: 24 * 365
-    };
-    function $buo_f(){
-        var e = document.createElement("script");
-        e.src = "//browser-update.org/update.min.js";
-        document.body.appendChild(e);
-    };
-    try {document.addEventListener("DOMContentLoaded", $buo_f,false)}
-    catch(e){window.attachEvent("onload", $buo_f)}
+    $(document).ready(function () {
+        // Internet Explorer 6-11
+        var isIE611 = /*@cc_on!@*/false || !!document.documentMode;
+        var ab2dUpgradeBrowser = Cookies.get('ab2d-upgrade-browser');
+        if(isIE611 && ab2dUpgradeBrowser !== 'true') {
+            $('body').append(
+                '<div class="upgrade-browser">' +
+                '<div class="upgrade-browser-close" onclick="closeUpgradeBrowser();">' +
+                '<svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-x" fill="currentColor" xmlns="http://www.w3.org/2000/svg">\n' +
+                '  <path fill-rule="evenodd" d="M11.854 4.146a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708-.708l7-7a.5.5 0 0 1 .708 0z"/>\n' +
+                '  <path fill-rule="evenodd" d="M4.146 4.146a.5.5 0 0 0 0 .708l7 7a.5.5 0 0 0 .708-.708l-7-7a.5.5 0 0 0-.708 0z"/>\n' +
+                '</svg>' +
+                '</div>' +
+                'For improved speed, security, and viewing experience, please update your browser to the latest version or view in MS Edge, Chrome, Safari, or Firefox.</div>'
+            );
+        }
+    });
+
+    function closeUpgradeBrowser() {
+        $('.upgrade-browser').remove();
+        Cookies.set('ab2d-upgrade-browser', 'true', { expires: 365 })
+    }
 </script>
 
 <body id="page-top">
