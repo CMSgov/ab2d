@@ -64,7 +64,7 @@ img {
     transform: translateX(-50%);
     -ms-transform-origin: 100% 0;
     -ms-transform: translateX(-50%);
-    bottom: 100%;
+    bottom: calc(100% - 1px);
     left: 50%;
 }
 
@@ -256,8 +256,8 @@ img::-moz-selection {
     color: #8DE4FF;
 }
 .navbar-shrink .navbar-nav, .navbar-subpage .navbar-nav {
-    margin-left: 50%;
-    transform: translateX(-50%);
+    margin-left: 100%;
+    transform: translateX(-100%);
 }
 
 #mainNav.navbar-shrink .navbar-brand {
@@ -268,9 +268,14 @@ img::-moz-selection {
         border: none;
         background-color: transparent;
     }
+    .navbar-nav {
+        margin-left: 50%;
+        transform: translateX(-50%);
+    }
     #mainNav .navbar-brand {
         font-size: 1.75em;
         transition: all 0.3s;
+        position: absolute;
     }
     #mainNav .navbar-nav .nav-item .nav-link {
         padding: 1.8em 1em !important;
@@ -320,6 +325,7 @@ header.masthead.subpage {
     left: 0;
     width: 100%;
     height: 100vh;
+    min-height: 800px;
 }
 .jarallax .jarallax-img {
     position: absolute;
@@ -887,11 +893,9 @@ ul.social-buttons li a:active, ul.social-buttons li a:focus, ul.social-buttons l
     .shape-divider {
         bottom: auto;
     }
-    #mainNav .navbar-nav {
-        position: absolute;
-        left: 50%;
-        top: 0px;
-        margin-left: -25%;
+    #mainNav.navbar-shrink .navbar-nav {
+        margin-left: auto;
+        transform: none;
     }
     #mainNav.navbar-shrink .navbar-nav, #mainNav.navbar-subpage .navbar-nav {
         margin-left: 0;
@@ -899,6 +903,19 @@ ul.social-buttons li a:active, ul.social-buttons li a:focus, ul.social-buttons l
         position: relative;
         left: auto;
         top: auto;
+    }
+    #mainNav .navbar-nav {
+        margin-left: 0;
+        transform: none;
+    }
+    .navbar-shrink .navbar-collapse, #mainNav.navbar-subpage .navbar-collapse {
+        justify-content: flex-end;
+    }
+    .navbar-collapse {
+        justify-content: center;
+    }
+    #mainNav .navbar-brand {
+        top: 0px;
     }
 }
 
