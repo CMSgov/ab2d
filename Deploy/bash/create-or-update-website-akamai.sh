@@ -3,7 +3,7 @@
 # - this causes .bash_profile and .bashrc to be sourced which is needed for ruby items
 
 set -e #Exit on first error
-# set -x #Be verbose
+set -x #Be verbose
 
 #
 # Change to working directory
