@@ -53,7 +53,7 @@ if [ "${GENERATE_WEBSITE_FROM_CODE}" == "true" ]; then
 
   # Set website directory to be generated website directory
 
-  WEBSITE_DIRECTORY=/var/lib/jenkins/jenkins_agent/workspace/production/02-update-static-website-for-production/Deploy/bash/../../website
+  WEBSITE_DIRECTORY="${START_DIR}"/../../website/.."
 
   # Change to the repo's "website" direcory
 
