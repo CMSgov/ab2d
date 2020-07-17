@@ -53,11 +53,11 @@ if [ "${GENERATE_WEBSITE_FROM_CODE}" == "true" ]; then
 
   # Set website directory to be generated website directory
 
-  WEBSITE_DIRECTORY="${START_DIR}"/../../website/.."
+  WEBSITE_DIRECTORY="${START_DIR}/../../website/_site"
 
   # Change to the repo's "website" direcory
 
-  cd "${START_DIR}"/../../website
+  cd "${START_DIR}/../../website"
 
   # Configure head for Tealium/Google Analytics
 
