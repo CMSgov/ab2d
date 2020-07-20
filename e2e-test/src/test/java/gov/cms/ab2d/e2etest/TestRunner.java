@@ -468,7 +468,6 @@ public class TestRunner {
         System.out.println("Starting test 6");
         HttpResponse<String> exportResponse = apiClient.exportByContractRequest(testContract, ZIPFORMAT, null);
         Assert.assertEquals(400, exportResponse.statusCode());
-        System.out.println("Finishing test 6");
     }
 
     @Test
