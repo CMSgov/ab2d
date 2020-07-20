@@ -10138,12 +10138,17 @@ $ sed -i "" 's%cms-ab2d[\/]prod%cms-ab2d/dev%g' _includes/head.html (edited)
 
 1. Set first OKTA test user
 
+   *NOTE: currently using a real Okta contract with a small number of patients since the synthetic data is not working.*
+
    ```ShellSession
    $ export OKTA_CLIENT_ID={first okta client id}
    $ export OKTA_CLIENT_PASSWORD={first okta client secret}
+   $ export OKTA_CONTRACT_NUMBER={okta contract number}
    ```
 
 1. Set second OKTA test user
+
+   *NOTE: currently using a real Okta contract with a small number of patients since the synthetic data is not working.*
 
    ```ShellSession
    $ export SECONDARY_USER_OKTA_CLIENT_ID={second okta client id}
@@ -10159,7 +10164,7 @@ $ sed -i "" 's%cms-ab2d[\/]prod%cms-ab2d/dev%g' _includes/head.html (edited)
 1. Run e2e testing
 
    ```ShellSession
-   $ java -cp e2e-test-0.0.1-SNAPSHOT-fat-tests.jar gov.cms.ab2d.e2etest.TestLauncher "${E2E_TARGET_ENV}"
+   $ java -cp e2e-test-0.0.1-SNAPSHOT-fat-tests.jar gov.cms.ab2d.e2etest.TestLauncher "${E2E_TARGET_ENV}" "${OKTA_CONTRACT_NUMBER}"
    ```
 
 ## Appendix GGG: Retrieve a copy of remote terraform state file for review
