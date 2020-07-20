@@ -12,7 +12,7 @@
 
     <properties>
         <project.root>${basedir}/..</project.root>
-        <springfox.version>2.9.2</springfox.version>
+        <springfox.version>3.0.0</springfox.version>
         <okta-jwt.version>0.4.1</okta-jwt.version>
     </properties>
 
