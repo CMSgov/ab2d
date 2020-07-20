@@ -36,7 +36,7 @@ This will provide step by step instructions on how to retrieve data the AB2D web
 
 Postman is free and the download is available [here](https://www.postman.com/downloads/)
 
-The Sandbox/Swagger page does not need to be downloaded and is available [here](https://sandbox.ab2d.cms.gov/swagger-ui.html)
+The Sandbox/Swagger page does not need to be downloaded and is available [here](https://sandbox.ab2d.cms.gov/swagger-ui/index.html)
 
 ## Authorization
 
@@ -312,7 +312,7 @@ These instructions will initiate a part A & B bulk claim export job
   <i>Note that Chrome was used for our testing.</i>
 
   ```
-  https://sandbox.ab2d.cms.gov/swagger-ui.html
+  https://sandbox.ab2d.cms.gov/swagger-ui/index.html
   ```
 
 1. Select Authorize on the right side of the page
@@ -452,7 +452,7 @@ This section will show you how to initiate a Part A & B bulk claim export job fo
 
   <i>Note that Chrome was used for our testing.</i>
 
-  [https://sandbox.ab2d.cms.gov/swagger-ui.html](https://sandbox.ab2d.cms.gov/swagger-ui.html)
+  [https://sandbox.ab2d.cms.gov/swagger-ui/index.html](https://sandbox.ab2d.cms.gov/swagger-ui/index.html)
 
 1. Select <b>Authorize</b> on the right side of the page
 
