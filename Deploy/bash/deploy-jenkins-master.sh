@@ -11,25 +11,38 @@ START_DIR="$( cd "$(dirname "$0")" ; pwd -P )"
 cd "${START_DIR}/.."
 
 #
-# Set default values
+# Set  variables
 #
 
 CMS_ENV="ab2d-mgmt-east-dev"
 CMS_SHARED_ENV="ab2d-mgmt-east-dev-shared"
 DEBUG_LEVEL="WARN"
 EC2_INSTANCE_TYPE="m5.xlarge"
-OWNER="842420567215"
+OWNER="743302140042"
 REGION="us-east-1"
 SSH_USERNAME="ec2-user"
 VPC_ID="vpc-0fccd950a4ce7469b"
 
 #
-# Set environment
+# Set AWS account environment variables
 #
 
-# Set AWS profile
+# Set environment variables for management AWS account
 
-export AWS_PROFILE="${CMS_ENV}"
+CMS_MGMT_ENV_AWS_ACCOUNT_NUMBER=653916833532
+CMS_MGMT_ENV=ab2d-mgmt-east-dev
+
+#
+# Define functions
+#
+
+# Import the "get temporary AWS credentials via CloudTamer API" function
+
+source "${START_DIR}/functions/fn_get_temporary_aws_credentials_via_cloudtamer_api.sh"
+
+# Get AWS credentials for management environment
+
+fn_get_temporary_aws_credentials_via_cloudtamer_api "${CMS_MGMT_ENV_AWS_ACCOUNT_NUMBER}" "${CMS_MGMT_ENV}"
 
 # Verify that VPC ID exists
 
@@ -168,7 +181,7 @@ fi
 echo "Set JENKINS_AMI_ID if it already exists for the deployment..."
 JENKINS_AMI_ID=$(aws --region "${REGION}" ec2 describe-images \
   --owners self \
-  --filters "Name=tag:Name,Values=ab2d-jenkins-ami" \
+  --filters "Name=tag:Name,Values=ab2d-jenkins-master-ami" \
   --query "Images[*].[ImageId]" \
   --output text)
 
@@ -181,12 +194,25 @@ if [ -z "${JENKINS_AMI_ID}" ]; then
 
   SEED_AMI=$(aws --region "${REGION}" ec2 describe-images \
     --owners "${OWNER}" \
-    --filters "Name=name,Values=EAST-RH 7*" \
+    --filters "Name=name,Values=rhel7-gi-*" \
     --query "Images[*].[ImageId,CreationDate]" \
     --output text \
     | sort -k2 -r \
     | head -n1 \
     | awk '{print $1}')
+
+  if [ -z "${SEED_AMI}" ]; then
+    echo "ERROR: seed AMI not found..."
+    exit 1
+  else
+    echo "SEED_AMI=${SEED_AMI}"
+    SEED_AMI_NAME=$(aws --region "${AWS_DEFAULT_REGION}" ec2 describe-images \
+      --owners "${OWNER}" \
+      --filters "Name=image-id,Values=${SEED_AMI}" \
+      --query "Images[*].Name" \
+      --output text)
+    echo "SEED_AMI_NAME=${SEED_AMI_NAME}"
+  fi
 
   # Create AMI for Jenkins master
 
@@ -210,7 +236,7 @@ if [ -z "${JENKINS_AMI_ID}" ]; then
 
   aws --region "${REGION}" ec2 create-tags \
     --resources $JENKINS_AMI_ID \
-    --tags "Key=Name,Value=ab2d-jenkins-ami"
+    --tags "Key=Name,Value=ab2d-jenkins-master-ami"
 
 fi
 
