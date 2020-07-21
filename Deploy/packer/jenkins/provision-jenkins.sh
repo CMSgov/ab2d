@@ -19,13 +19,27 @@ case $i in
 esac
 done
 
-#
-# Use unallocated space to extend the home partition
-#
+# #
+# # Use unallocated space to extend the home partition
+# #
 
-# Create a new partition from unallocated space
+# # Install dependencies
 
-# LSH BEGIN: changed for an "m5.xlarge" instance
+# sudo yum -y install \
+#   device-mapper-persistent-data \
+#   lvm2
+
+# # Create a new partition from unallocated space
+
+# # LSH BEGIN: changed for an "m5.xlarge" instance
+# # (
+# # echo n # Add a new partition
+# # echo p # Primary partition
+# # echo   # Partition number (Accept default)
+# # echo   # First sector (Accept default)
+# # echo   # Last sector (Accept default)
+# # echo w # Write changes
+# # ) | sudo fdisk /dev/xvda || true #This is here because fdisk always non-zero code
 # (
 # echo n # Add a new partition
 # echo p # Primary partition
@@ -33,42 +47,40 @@ done
 # echo   # First sector (Accept default)
 # echo   # Last sector (Accept default)
 # echo w # Write changes
-# ) | sudo fdisk /dev/xvda || true #This is here because fdisk always non-zero code
-(
-echo n # Add a new partition
-echo p # Primary partition
-echo   # Partition number (Accept default)
-echo   # First sector (Accept default)
-echo   # Last sector (Accept default)
-echo w # Write changes
-) | sudo fdisk /dev/nvme0n1 || true #This is here because fdisk always non-zero code
-# LSH END: changed for an "m5.xlarge" instance
+# ) | sudo fdisk /dev/nvme0n1 || true #This is here because fdisk always non-zero code
+# # LSH END: changed for an "m5.xlarge" instance
 
-# Request that the operating system re-reads the partition table
+# # Request that the operating system re-reads the partition table
 
-sudo partprobe
+# sudo partprobe
 
-# Create physical volume by initializing the partition for use by the Logical Volume Manager (LVM)
+# # Create physical volume by initializing the partition for use by the Logical Volume Manager (LVM)
 
-# LSH BEGIN: changed for an "m5.xlarge" instance
-# sudo pvcreate /dev/xvda3
-sudo pvcreate /dev/nvme0n1p3
-# LSH END: changed for an "m5.xlarge" instance
+# # LSH BEGIN: changed for an "m5.xlarge" instance
+# # sudo pvcreate /dev/xvda3
+# sudo pvcreate /dev/nvme0n1p3
+# # LSH END: changed for an "m5.xlarge" instance
 
-# Add the new physical volume to the volume group
+# # Add the new physical volume to the volume group
 
-# LSH BEGIN: changed for an "m5.xlarge" instance
-# sudo vgextend VolGroup00 /dev/xvda3
-sudo vgextend VolGroup00 /dev/nvme0n1p3
-# LSH END: changed for an "m5.xlarge" instance
+# # LSH BEGIN: changed for an "m5.xlarge" instance
+# # sudo vgextend VolGroup00 /dev/xvda3
+# sudo vgextend VolGroup00 /dev/nvme0n1p3
+# # LSH END: changed for an "m5.xlarge" instance
 
-# Extend the size of the home logical volume
+# # Extend the sizes of the logical volumes
 
-sudo lvextend -l +100%FREE /dev/mapper/VolGroup00-homeVol
+# sudo lvextend -l +25%FREE /dev/mapper/VolGroup00-auditVol
+# sudo lvextend -l +25%FREE /dev/mapper/VolGroup00-homeVol
+# sudo lvextend -l +25%FREE /dev/mapper/VolGroup00-logVol
+# sudo lvextend -l +25%FREE /dev/mapper/VolGroup00-varVol
 
-# Expands the existing XFS filesystem
+# # Expand the existing XFS filesystems
 
-sudo xfs_growfs -d /dev/mapper/VolGroup00-homeVol
+# sudo xfs_growfs -d /dev/mapper/VolGroup00-auditVol
+# sudo xfs_growfs -d /dev/mapper/VolGroup00-homeVol
+# sudo xfs_growfs -d /dev/mapper/VolGroup00-logVol
+# sudo xfs_growfs -d /dev/mapper/VolGroup00-varVol
 
 #
 # Remove Nagios and Postfix
@@ -91,8 +103,6 @@ sudo yum -y install \
   vim \
   tmux \
   yum-utils \
-  device-mapper-persistent-data \
-  lvm2 \
   python-pip \
   telnet \
   nc
@@ -102,7 +112,10 @@ sudo yum -y install wget
 sudo yum -y install mlocate
 # LSH Testing environment END
 
-sudo pip install awscli
+# sudo pip install awscli
+curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+unzip awscliv2.zip
+sudo ./aws/install
 
 # LSH BEGIN: Comment this out if running within sbdemo environment
 # Disable trendmicro during builder
@@ -116,24 +129,21 @@ sudo sed -i.bak '/Defaults    requiretty/d' /etc/sudoers
 sudo touch /etc/use_dsa_with_iptables
 sudo chmod 755 /etc/use_dsa_with_iptables
 
-# Docker
+# Install Docker
+
 sudo yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
 sudo rpm --import https://download.docker.com/linux/centos/gpg
-sudo yum-config-manager --enable rhel-7-server-extras-rpms
-sudo yum-config-manager --enable rhui-REGION-rhel-server-extras
-sudo yum -y install docker-ce-3:19.03.8-3.el7
-
-# LSH Testing environment BEGIN
-# sudo usermod -aG docker ec2-user
-# sudo usermod -aG docker centos
+sudo yum-config-manager --enable 'rhel-7-server-extras-rpms'
+sudo yum-config-manager --enable 'rhui-REGION-rhel-server-extras'
+sudo rpm --import https://www.centos.org/keys/RPM-GPG-KEY-CentOS-7
+sudo yum install -y http://mirror.centos.org/centos/7/extras/x86_64/Packages/container-selinux-2.107-3.el7.noarch.rpm
+sudo yum -y install docker-ce-19.03.8-3.el7
 sudo usermod -aG docker $SSH_USERNAME
-# LSH Testing environment END
-
 sudo systemctl enable docker
 sudo systemctl start docker
 
 # Docker compose
-sudo curl -L https://github.com/docker/compose/releases/download/1.18.0/docker-compose-`uname -s`-`uname -m` -o /usr/local/bin/docker-compose
+sudo curl -L https://github.com/docker/compose/releases/download/1.26.2/docker-compose-`uname -s`-`uname -m` -o /usr/local/bin/docker-compose
 sudo chmod 755 /usr/local/bin/docker-compose
 
 # Change docker daemon configs
