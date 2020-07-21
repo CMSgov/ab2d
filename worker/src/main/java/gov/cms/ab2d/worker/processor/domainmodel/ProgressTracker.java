@@ -6,7 +6,6 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.Singular;
 
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -36,7 +35,7 @@ public class ProgressTracker {
     private int failureCount;
 
     @Setter
-    private int currentMonth = LocalDate.now().getMonthValue();
+    private int currentMonth;
 
     @Setter
     private int lastDbUpdateCount;

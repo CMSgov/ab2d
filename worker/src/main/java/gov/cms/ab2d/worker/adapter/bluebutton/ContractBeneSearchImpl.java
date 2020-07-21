@@ -115,7 +115,8 @@ public class ContractBeneSearchImpl implements ContractBeneSearch {
             }
         }
         long endTime = System.currentTimeMillis();
-        int numMinutes = Math.round((endTime - startTime) / 1000 / 60);
+        double timeDif = (double) (endTime - startTime);
+        int numMinutes = (int) Math.round(timeDif / 1000.0 / 60.0);
         int totalRecords = results.stream().mapToInt(c -> c.getPatients().size()).sum();
         eventLogger.log(new ReloadEvent(null, ReloadEvent.FileType.CONTRACT_MAPPING,
                 "Contract: " + contractNumber + " retrieved " + totalRecords + " in " + numMinutes + " minutes", totalRecords));
