@@ -217,7 +217,7 @@ if [ -z "${JENKINS_AMI_ID}" ]; then
   # Create AMI for Jenkins master
 
   cd "${START_DIR}/.."
-  cd packer/jenkins
+  cd packer/jenkins_master
   IP=$(curl ipinfo.io/ip)
   COMMIT=$(git rev-parse HEAD)
   packer build \

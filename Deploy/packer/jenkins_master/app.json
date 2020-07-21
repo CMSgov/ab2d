@@ -45,14 +45,14 @@
     },
     {
       "type": "file",
-      "source": "./provision-jenkins.sh",
-      "destination": "/tmp/provision-jenkins.sh"
+      "source": "./provision-jenkins-master.sh",
+      "destination": "/tmp/provision-jenkins-master.sh"
     },
     {
       "type": "shell",
       "inline": [
-        "sudo chmod 755 /tmp/provision-jenkins.sh",
-        "/tmp/provision-jenkins.sh --ssh-username={{user `ssh_username`}}"
+        "sudo chmod 755 /tmp/provision-jenkins-master.sh",
+        "/tmp/provision-jenkins-master.sh --ssh-username={{user `ssh_username`}}"
       ]
     }
   ]

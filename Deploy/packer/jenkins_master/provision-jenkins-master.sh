@@ -19,69 +19,6 @@ case $i in
 esac
 done
 
-# #
-# # Use unallocated space to extend the home partition
-# #
-
-# # Install dependencies
-
-# sudo yum -y install \
-#   device-mapper-persistent-data \
-#   lvm2
-
-# # Create a new partition from unallocated space
-
-# # LSH BEGIN: changed for an "m5.xlarge" instance
-# # (
-# # echo n # Add a new partition
-# # echo p # Primary partition
-# # echo   # Partition number (Accept default)
-# # echo   # First sector (Accept default)
-# # echo   # Last sector (Accept default)
-# # echo w # Write changes
-# # ) | sudo fdisk /dev/xvda || true #This is here because fdisk always non-zero code
-# (
-# echo n # Add a new partition
-# echo p # Primary partition
-# echo   # Partition number (Accept default)
-# echo   # First sector (Accept default)
-# echo   # Last sector (Accept default)
-# echo w # Write changes
-# ) | sudo fdisk /dev/nvme0n1 || true #This is here because fdisk always non-zero code
-# # LSH END: changed for an "m5.xlarge" instance
-
-# # Request that the operating system re-reads the partition table
-
-# sudo partprobe
-
-# # Create physical volume by initializing the partition for use by the Logical Volume Manager (LVM)
-
-# # LSH BEGIN: changed for an "m5.xlarge" instance
-# # sudo pvcreate /dev/xvda3
-# sudo pvcreate /dev/nvme0n1p3
-# # LSH END: changed for an "m5.xlarge" instance
-
-# # Add the new physical volume to the volume group
-
-# # LSH BEGIN: changed for an "m5.xlarge" instance
-# # sudo vgextend VolGroup00 /dev/xvda3
-# sudo vgextend VolGroup00 /dev/nvme0n1p3
-# # LSH END: changed for an "m5.xlarge" instance
-
-# # Extend the sizes of the logical volumes
-
-# sudo lvextend -l +25%FREE /dev/mapper/VolGroup00-auditVol
-# sudo lvextend -l +25%FREE /dev/mapper/VolGroup00-homeVol
-# sudo lvextend -l +25%FREE /dev/mapper/VolGroup00-logVol
-# sudo lvextend -l +25%FREE /dev/mapper/VolGroup00-varVol
-
-# # Expand the existing XFS filesystems
-
-# sudo xfs_growfs -d /dev/mapper/VolGroup00-auditVol
-# sudo xfs_growfs -d /dev/mapper/VolGroup00-homeVol
-# sudo xfs_growfs -d /dev/mapper/VolGroup00-logVol
-# sudo xfs_growfs -d /dev/mapper/VolGroup00-varVol
-
 #
 # Remove Nagios and Postfix
 #
