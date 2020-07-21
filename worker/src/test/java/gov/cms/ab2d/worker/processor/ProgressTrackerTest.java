@@ -17,18 +17,18 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 public class ProgressTrackerTest {
     @Test
     void testPercentDone() {
+        int month = LocalDate.now().getMonthValue();
         ProgressTracker tracker = ProgressTracker.builder()
                 .jobUuid("JOBID")
                 .numContracts(2)
                 .failureThreshold(3)
-                .currentMonth(2)
+                .currentMonth(month)
                 .build();
         int percDone = tracker.getPercentageCompleted();
         assertEquals(0, percDone);
 
         tracker.incrementTotalContractBeneficiariesSearchFinished();
         percDone = tracker.getPercentageCompleted();
-        int month = LocalDate.now().getMonthValue();
         double expectedPercDone = (1.0 / (2 * month)) * (1 - tracker.getEST_BEN_SEARCH_JOB_PERCENTAGE()) * 100;
         assertEquals(percDone, (int) Math.round(expectedPercDone));
 
