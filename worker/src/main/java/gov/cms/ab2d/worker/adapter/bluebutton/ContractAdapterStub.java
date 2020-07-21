@@ -29,7 +29,7 @@ public class ContractAdapterStub implements ContractBeneSearch {
 
         final int contractSno = extractContractSno(contractNumber);
 
-        final List<String> patientsPerContract = fetchPatientRecords(contractSno, tracker);
+        final List<String> patientsPerContract = fetchPatientRecords(contractSno);
         for (int i = 0; i < currentMonth; i++) {
             tracker.incrementTotalContractBeneficiariesSearchFinished();
         }
@@ -52,7 +52,7 @@ public class ContractAdapterStub implements ContractBeneSearch {
         // simple check for contractNumber with 5 digits instead of 4
         try {
             final String tmpContractNo = contractNumber.substring(contractNumber.length() - 5);
-            int contractNo = Integer.valueOf(tmpContractNo);
+            int contractNo = Integer.parseInt(tmpContractNo);
             if (sno != contractNo) {
                 sno = -1;
             }
@@ -64,7 +64,7 @@ public class ContractAdapterStub implements ContractBeneSearch {
         return sno;
     }
 
-    private List<String> fetchPatientRecords(final int contractSno, ProgressTracker tracker) {
+    private List<String> fetchPatientRecords(final int contractSno) {
         if (contractSno < 0) {
             return new ArrayList<>();
         }
@@ -100,7 +100,7 @@ public class ContractAdapterStub implements ContractBeneSearch {
     }
 
     private int determineRowsToRetrieve(int numberOfRows) {
-        return numberOfRows < MAX_ROWS ? numberOfRows : MAX_ROWS;
+        return Math.min(numberOfRows, MAX_ROWS);
     }
 
     private List<String> getFromSampleFile(int rowsToRetrieve) {

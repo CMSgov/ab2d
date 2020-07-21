@@ -162,6 +162,6 @@ public class ProgressTracker {
         int totalToSearch = this.numContracts * currentMonth;
 
         // This is the total completed threads done over the amount that needs to be done
-        return ((double) this.totalContractBeneficiariesSearchFinished)/totalToSearch;
+        return ((double) this.totalContractBeneficiariesSearchFinished) / totalToSearch;
     }
 }

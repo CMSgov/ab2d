@@ -61,7 +61,7 @@ public class ContractBeneSearchImpl implements ContractBeneSearch {
         contractBeneficiaries.setPatients(new HashMap<>());
         long end = System.currentTimeMillis();
         log.info("Time to find {} beneficiaries for contract {} for all months up to {} is {} minutes",
-                results.size(), contractNumber, currentMonth, (end - start)/1000/60);
+                results.size(), contractNumber, currentMonth, (end - start) / 1000 / 60);
 
         start = System.currentTimeMillis();
 
