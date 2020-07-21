@@ -48,7 +48,7 @@
 
 ## Setup Jenkins master in management AWS account
 
-1. If there is an existing "ab2d-jenkins-master-ami", rename it in the AWS managemenet account as follows
+1. If there is an existing "ab2d-jenkins-master-ami AMI", rename it in the AWS management account as follows
 
    *Format:*
 
@@ -60,6 +60,18 @@
 
    ```
    ab2d-jenkins-master-ami-2020-03-18
+   ```
+
+1. If there is an existing "ab2d-jenkins-master" EC2 instance, rename it in the AWS management account as follows
+
+   ```
+   ab2d-jenkins-master-old
+   ```
+
+1. If there is an existing "ab2d-jenkins-agent" EC2 instance, rename it in the AWS management account as follows
+
+   ```
+   ab2d-jenkins-agent-old
    ```
 
 1. Open a terminal
@@ -80,18 +92,18 @@
 
 1. Connect to Jenkins master
 
-   1. Set the management AWS profile
+   1. Get credentials for the Management AWS account
 
       ```ShellSession
-      $ export AWS_PROFILE=ab2d-mgmt-east-dev
+      $ source ./bash/set-env.sh
       ```
 
    1. Get the public IP address of Jenkins EC2 instance
    
       ```ShellSession
-      $ JENKINS_MASTER_PUBLIC_IP=$(aws --region us-east-1 ec2 describe-instances \
+      $ JENKINS_MASTER_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
         --filters "Name=tag:Name,Values=ab2d-jenkins-master" \
-        --query="Reservations[*].Instances[?State.Name == 'running'].PublicIpAddress" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
         --output text)
       ```
 
@@ -100,9 +112,17 @@
    1. SSH into the instance using the public IP address
 
       ```ShellSession
-      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_MASTER_PUBLIC_IP
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_MASTER_PRIVATE_IP
       ```
 
+1. Install dependencies
+
+   ```ShellSession
+   $ sudo yum -y install \
+     device-mapper-persistent-data \
+     lvm2
+   ```
+   
 1. View the available disk devices
 
    1. Enter the following
@@ -116,19 +136,11 @@
       *Example for an "m5.xlarge" instance:*
 
       ```
-      nvme0n1                  259:0    0  250G  0 disk 
-      ├─nvme0n1p1              259:1    0    1G  0 part /boot
-      ├─nvme0n1p2              259:2    0   29G  0 part 
-      │ ├─VolGroup00-auditVol  253:0    0    4G  0 lvm  /var/log/audit
-      │ ├─VolGroup00-homeVol   253:1    0  223G  0 lvm  /home
-      │ ├─VolGroup00-logVol    253:2    0    4G  0 lvm  /var/log
-      │ ├─VolGroup00-rootVol   253:3    0   10G  0 lvm  /
-      │ ├─VolGroup00-tmpVol    253:4    0    2G  0 lvm  /tmp
-      │ ├─VolGroup00-varVol    253:5    0    5G  0 lvm  /var
-      │ └─VolGroup00-vartmpVol 253:6    0    1G  0 lvm  /var/tmp
-      └─nvme0n1p3              259:3    0  220G  0 part 
-        └─VolGroup00-homeVol   253:1    0  223G  0 lvm  /home
-      ```
+      nvme0n1     259:1    0  500G  0 disk 
+      ├─nvme0n1p1 259:2    0    1M  0 part 
+      └─nvme0n1p2 259:3    0  500G  0 part /
+      nvme1n1     259:0    0  500G  0 disk
+     ```
 
    1. Note the root device in the output
 
@@ -136,7 +148,7 @@
 
       - nvme0n1
 
-   1. Note the existing partitions
+   1. Note the existing partitions under "nvme0n1"
 
       *Example for an "m5.xlarge" instance:*
 
@@ -144,17 +156,160 @@
 
       - nvme0n1p2
 
-      - nvme0n1p3
+1. View detail about the disks and partitions
 
-   1. Note the "homeVol" entries
+   1. Enter the following
+   
+      ```ShellSession
+      $ sudo parted -l
+      ```
 
-      - nvme0n1p2
+   1. Note the output
 
-        - VolGroup00-homeVol   253:1    0  223G  0 lvm  /home
+      ```
+      Model: NVMe Device (nvme)
+      Disk /dev/nvme0n1: 537GB
+      Sector size (logical/physical): 512B/512B
+      Partition Table: gpt
+      Disk Flags: 
+      
+      Number  Start   End     Size    File system  Name  Flags
+       1      1049kB  2097kB  1049kB                     bios_grub
+       2      2097kB  537GB   537GB   xfs
+      
+      
+      Error: /dev/nvme1n1: unrecognised disk label
+      Model: NVMe Device (nvme)                                                 
+      Disk /dev/nvme1n1: 537GB
+      Sector size (logical/physical): 512B/512B
+      Partition Table: unknown
+      Disk Flags: 
+      ```
 
-      - nvme0n1p3
+1. Set the partition as gpt
 
-        - VolGroup00-homeVol   253:1    0  223G  0 lvm  /home
+   ```ShellSession
+   $ sudo parted --script /dev/nvme1n1 mklabel gpt
+   ```
+
+1. View detail about the disks and partitions again
+
+   1. Enter the following
+   
+      ```ShellSession
+      $ sudo parted -l
+      ```
+
+   1. Note the output
+
+      ```
+      Model: NVMe Device (nvme)
+      Disk /dev/nvme0n1: 537GB
+      Sector size (logical/physical): 512B/512B
+      Partition Table: gpt
+      Disk Flags: 
+      
+      Number  Start   End     Size    File system  Name  Flags
+       1      1049kB  2097kB  1049kB                     bios_grub
+       2      2097kB  537GB   537GB   xfs
+      
+      
+      Model: NVMe Device (nvme)
+      Disk /dev/nvme1n1: 537GB
+      Sector size (logical/physical): 512B/512B
+      Partition Table: gpt
+      Disk Flags: 
+      
+      Number  Start  End  Size  File system  Name  Flags
+      ```
+
+1. Create a new partition on the "/dev/nvme1n1" disk
+
+   ```ShellSession
+   (
+   echo n # Add a new partition
+   echo p # Primary partition
+   echo   # Partition number (Accept default)
+   echo   # First sector (Accept default)
+   echo   # Last sector (Accept default)
+   echo w # Write changes
+   ) | sudo fdisk /dev/nvme1n1
+   ```
+
+1. Request that the operating system re-reads the partition table
+
+   ```ShellSession
+   $ sudo partprobe
+   ```
+
+1. Create physical volume by initializing the partition for use by the Logical Volume Manager (LVM)
+
+   ```ShellSession
+   $ sudo pvcreate /dev/nvme1n1p1
+   ```
+
+1. Format the "/dev/nvme1n1" disk as xfs
+
+   ```ShellSession
+   $ sudo mkfs.xfs -f /dev/nvme1n1p1
+   ```
+
+1. Stop Jenkins
+
+   ```ShellSession
+   $ sudo systemctl stop jenkins
+   ```
+
+1. Move Jenkins to a backup directory
+
+   ```ShellSession
+   $ sudo rm -rf /var/lib/jenkins-backup
+   $ sudo mv /var/lib/jenkins /var/lib/jenkins-backup
+   ```
+
+1. Create a new jenkins directory
+
+   ```ShellSession
+   $ sudo mkdir -p /var/lib/jenkins
+   ```
+
+1. Mount jenkins to the second volume
+
+   ```ShellSession
+   $ sudo mount /dev/nvme1n1p1 /var/lib/jenkins
+   ```
+
+1. Verify the mount
+
+   1. Enter the following
+
+      ```ShellSession
+      $ cat /etc/mtab | grep /dev/nvme1n1p1
+      ```
+
+   1. Note the output
+
+      ```
+      /dev/nvme1n1p1 /var/lib/jenkins xfs rw,seclabel,relatime,attr2,inode64,noquota 0 0
+      ```
+
+1. Copy jenkins files from the backup to the newly created jenkins directory
+
+   ```ShellSession
+   $ sudo rsync -aH /var/lib/jenkins-backup/ /var/lib/jenkins
+   ```
+
+1. Delete the backup directory
+
+   ```ShellSession
+   $ sudo rm -rf /var/lib/jenkins-backup
+   ```
+
+1. Start Jenkins
+
+   ```ShellSession
+   $ sudo systemctl start jenkins
+   ```
 
 ## Configure Jenkins master
 
@@ -162,18 +317,18 @@
 
 1. Connect to Jenkins master
 
-   1. Set the management AWS profile
+   1. Get credentials for the Management AWS account
 
       ```ShellSession
-      $ export AWS_PROFILE=ab2d-mgmt-east-dev
+      $ source ./bash/set-env.sh
       ```
 
    1. Get the public IP address of Jenkins EC2 instance
    
       ```ShellSession
-      $ JENKINS_MASTER_PUBLIC_IP=$(aws --region us-east-1 ec2 describe-instances \
+      $ JENKINS_MASTER_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
         --filters "Name=tag:Name,Values=ab2d-jenkins-master" \
-        --query="Reservations[*].Instances[?State.Name == 'running'].PublicIpAddress" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
         --output text)
       ```
 
@@ -182,7 +337,7 @@
    1. SSH into the instance using the public IP address
 
       ```ShellSession
-      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_MASTER_PUBLIC_IP
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_MASTER_PRIVATE_IP
       ```
 
 1. Note the default Jenkins port
@@ -279,7 +434,15 @@
    ```ShellSession
    $ exit
    ```
-   
+
+### Upgrade Jenkins
+
+1. Note that you will want to do the next step in a separate Chrome tab
+
+1. Open and complete the "Upgrade Jenkins" section of the AB2D Jenkins User Guide in a separate tab
+
+   [Upgrade Jenkins](AB2D_Jenkins_User_Guide.md#upgrade-jenkins)
+
 ### Initialize the Jenkins GUI
 
 1. Open Chrome
@@ -294,18 +457,18 @@
 
 1. Connect to Jenkins master
 
-   1. Set the management AWS profile
+   1. Get credentials for the Management AWS account
 
       ```ShellSession
-      $ export AWS_PROFILE=ab2d-mgmt-east-dev
+      $ source ./bash/set-env.sh
       ```
 
    1. Get the public IP address of Jenkins EC2 instance
    
       ```ShellSession
-      $ JENKINS_MASTER_PUBLIC_IP=$(aws --region us-east-1 ec2 describe-instances \
+      $ JENKINS_MASTER_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
         --filters "Name=tag:Name,Values=ab2d-jenkins-master" \
-        --query="Reservations[*].Instances[?State.Name == 'running'].PublicIpAddress" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
         --output text)
       ```
 
@@ -314,7 +477,7 @@
    1. SSH into the instance using the public IP address
 
       ```ShellSession
-      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_MASTER_PUBLIC_IP
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_MASTER_PRIVATE_IP
       ```
 
 1. Configure Jenkins
