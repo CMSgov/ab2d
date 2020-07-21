@@ -41,7 +41,6 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 import static gov.cms.ab2d.common.model.JobStatus.SUCCESSFUL;
-import static gov.cms.ab2d.common.service.JobServiceImpl.ZIPFORMAT;
 import static gov.cms.ab2d.worker.processor.StreamHelperImpl.FileOutputType.NDJSON;
 import static gov.cms.ab2d.worker.processor.StreamHelperImpl.FileOutputType.ZIP;
 
@@ -113,6 +112,61 @@ public class JobProcessorImpl implements JobProcessor {
     }
 
     /**
+     * Process in individual contract
+     *
+     * @param contract - the contract to process
+     * @param job - the job in which the contract belongs
+     * @param month - the month to search for beneficiaries for
+     * @param outputDirPath - the location of the job output
+     * @param progressTracker - the progress tracker which indicates how far the job is along
+     * @throws ExecutionException when there is an issue with searching
+     * @throws InterruptedException - when the search is interrupted
+     */
+    void processContract(Contract contract, Job job, int month, Path outputDirPath, ProgressTracker progressTracker) throws ExecutionException, InterruptedException {
+        log.info("Job [{}] - contract [{}] ", job.getJobUuid(), contract.getContractNumber());
+        // Retrieve the contract beneficiaries
+        try {
+            processContractBenes(job, contract, month, progressTracker);
+        } catch (ExecutionException | InterruptedException ex) {
+            log.error("Having issue retrieving patients for contract " + contract.getContractNumber());
+            throw ex;
+        }
+
+        // Create a holder for the contract, writer, progress tracker and attested date
+        ContractData contractData = new ContractData(contract, progressTracker, contract.getAttestedOn(), job.getSince(),
+                job.getUser() != null ? job.getUser().getUsername() : null);
+
+        final Segment contractSegment = NewRelic.getAgent().getTransaction().startSegment("Patient processing of contract " + contract.getContractNumber());
+        var jobOutputs = contractProcessor.process(outputDirPath, contractData, NDJSON);
+        contractSegment.end();
+
+        // For each job output, add to the job and save the result
+        jobOutputs.forEach(job::addJobOutput);
+        jobOutputRepository.saveAll(jobOutputs);
+
+        eventLogger.log(new ContractBeneSearchEvent(job.getUser() == null ? null : job.getUser().getUsername(),
+                job.getJobUuid(),
+                contract.getContractNumber(),
+                progressTracker.getContractCount(contract.getContractNumber()),
+                progressTracker.getProcessedCount(),
+                progressTracker.getOptOutCount(),
+                progressTracker.getFailureCount()));
+    }
+
+    void processContractBenes(Job job, Contract contract, int month, ProgressTracker progressTracker) throws ExecutionException, InterruptedException {
+        try {
+            progressTracker.addPatientsByContract(contractBeneSearch.getPatients(contract.getContractNumber(), month, progressTracker));
+            int progress = progressTracker.getPercentageCompleted();
+            job.setProgress(progress);
+            job.setStatusMessage(progress + "% complete");
+            jobRepository.save(job);
+        } catch (ExecutionException | InterruptedException ex) {
+            log.error("Having issue retrieving patients for contract " + contract.getContractNumber());
+            throw ex;
+        }
+    }
+
+    /**
      * Process the Job and put the contents into the output directory
      *
      * @param job - the job to process
@@ -121,43 +175,26 @@ public class JobProcessorImpl implements JobProcessor {
     private void processJob(Job job, Path outputDirPath) throws ExecutionException, InterruptedException {
         // Create the output directory
         createOutputDirectory(outputDirPath, job);
+        int month = LocalDate.now().getMonthValue();
 
         // Get all attested contracts for that job (or the one specified in the job)
         var attestedContracts = getAttestedContracts(job);
-        var jobUuid = job.getJobUuid();
-
         // Retrieve the patients for each contract and start a progress tracker
-        var progressTracker = initializeProgressTracker(jobUuid, attestedContracts);
+        ProgressTracker progressTracker = ProgressTracker.builder()
+                .jobUuid(job.getJobUuid())
+                .numContracts(attestedContracts.size())
+                .failureThreshold(failureThreshold)
+                .currentMonth(month)
+                .build();
 
         for (Contract contract : attestedContracts) {
-            log.info("Job [{}] - contract [{}] ", jobUuid, contract.getContractNumber());
-
-            // Determine the type of output
-            FileOutputType outputType =  NDJSON;
-            if (job.getOutputFormat() != null && job.getOutputFormat().equalsIgnoreCase(ZIPFORMAT)) {
-                outputType = ZIP;
+            // Retrieve the contract beneficiaries
+            try {
+                processContract(contract, job, month, outputDirPath, progressTracker);
+            } catch (ExecutionException | InterruptedException ex) {
+                log.error("Having issue retrieving patients for contract " + contract);
+                throw ex;
             }
-
-            // Create a holder for the contract, writer, progress tracker and attested date
-            var contractData = new ContractData(contract, progressTracker, contract.getAttestedOn(), job.getSince(),
-                    job.getUser() != null ? job.getUser().getUsername() : null);
-
-            final Segment contractSegment = NewRelic.getAgent().getTransaction().startSegment("Patient processing of contract " + contract.getContractNumber());
-
-            var jobOutputs = contractProcessor.process(outputDirPath, contractData, outputType);
-            contractSegment.end();
-
-            // For each job output, add to the job and save the result
-            jobOutputs.forEach(job::addJobOutput);
-            jobOutputRepository.saveAll(jobOutputs);
-
-            eventLogger.log(new ContractBeneSearchEvent(job.getUser() == null ? null : job.getUser().getUsername(),
-                    job.getJobUuid(),
-                    contract.getContractNumber(),
-                    progressTracker.getContractCount(contract.getContractNumber()),
-                    progressTracker.getProcessedCount(),
-                    progressTracker.getOptOutCount(),
-                    progressTracker.getFailureCount()));
         }
 
         completeJob(job);
@@ -220,7 +257,6 @@ public class JobProcessorImpl implements JobProcessor {
     }
 
     /**
-     *
      * @return a Filename filter for ndjson and zip files
      */
     private FilenameFilter getFilenameFilter() {
@@ -272,41 +308,6 @@ public class JobProcessorImpl implements JobProcessor {
         // Otherwise, return the list of attested contracts
         log.info("Job [{}] has [{}] attested contracts", job.getJobUuid(), attestedContracts.size());
         return attestedContracts;
-    }
-
-    /**
-     * Creates a ProgressTracker for the list of all patients in all contracts
-     *
-     * @param attestedContracts - the list of attested contracts
-     * @return the progress tracker
-     */
-    private ProgressTracker initializeProgressTracker(String jobUuid, List<Contract> attestedContracts) throws ExecutionException, InterruptedException {
-        List<ContractBeneficiaries> patients = fetchPatientsForAllContracts(attestedContracts);
-        return ProgressTracker.builder()
-                .jobUuid(jobUuid)
-                .failureThreshold(failureThreshold)
-                .patientsByContracts(patients)
-                .build();
-    }
-
-    /**
-     * Calls the BB contract adaptor and creates a list patients for each contract
-     *
-     * @param attestedContracts - the attested contracts
-     * @return the list of patients for each contract
-     */
-    private List<ContractBeneficiaries> fetchPatientsForAllContracts(List<Contract> attestedContracts) throws ExecutionException, InterruptedException {
-        int currentMonth = LocalDate.now().getMonthValue();
-        List<ContractBeneficiaries> contractBeneficiaries = new ArrayList<>();
-        for (Contract contract : attestedContracts) {
-            try {
-                contractBeneficiaries.add(contractBeneSearch.getPatients(contract.getContractNumber(), currentMonth));
-            } catch (ExecutionException | InterruptedException ex) {
-                log.error("Having issue retrieving patients for contract " + contract);
-                throw ex;
-            }
-        }
-        return contractBeneficiaries;
     }
 
     /**

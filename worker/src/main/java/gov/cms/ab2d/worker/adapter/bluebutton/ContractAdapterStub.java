@@ -1,6 +1,7 @@
 package gov.cms.ab2d.worker.adapter.bluebutton;
 
 import gov.cms.ab2d.filter.FilterOutByDate;
+import gov.cms.ab2d.worker.processor.domainmodel.ProgressTracker;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
@@ -24,11 +25,14 @@ public class ContractAdapterStub implements ContractBeneSearch {
     private static final int MAX_ROWS = 30_000;
 
     @Override
-    public ContractBeneficiaries getPatients(String contractNumber, int currentMonth) {
+    public ContractBeneficiaries getPatients(String contractNumber, int currentMonth, ProgressTracker tracker) {
 
         final int contractSno = extractContractSno(contractNumber);
 
-        final List<String> patientsPerContract = fetchPatientRecords(contractSno);
+        final List<String> patientsPerContract = fetchPatientRecords(contractSno, tracker);
+        for (int i = 0; i < currentMonth; i++) {
+            tracker.incrementTotalContractBeneficiariesSearchFinished();
+        }
 
         return toResponse(contractNumber, patientsPerContract);
     }
@@ -60,7 +64,7 @@ public class ContractAdapterStub implements ContractBeneSearch {
         return sno;
     }
 
-    private List<String> fetchPatientRecords(final int contractSno) {
+    private List<String> fetchPatientRecords(final int contractSno, ProgressTracker tracker) {
         if (contractSno < 0) {
             return new ArrayList<>();
         }

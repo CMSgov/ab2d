@@ -4,6 +4,7 @@ import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.worker.adapter.bluebutton.ContractBeneSearch;
 import gov.cms.ab2d.worker.adapter.bluebutton.ContractBeneficiaries;
+import gov.cms.ab2d.worker.processor.domainmodel.ProgressTracker;
 import org.hl7.fhir.dstu3.model.Bundle;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -26,6 +27,7 @@ import static org.mockito.Mockito.when;
 @SpringBootTest
 @Testcontainers
 class MultiThreadContractSearchIntegrationTest {
+    private ProgressTracker tracker;
 
     @Container
     private static final PostgreSQLContainer postgreSQLContainer= new AB2DPostgresqlContainer();
@@ -39,6 +41,11 @@ class MultiThreadContractSearchIntegrationTest {
     @BeforeEach
     void init() {
         ReflectionTestUtils.setField(contractBeneSearch, "bfdClient", bfdClient);
+        tracker = ProgressTracker.builder()
+                .jobUuid("JOBID")
+                .numContracts(1)
+                .failureThreshold(1)
+                .build();
     }
 
     @Test
@@ -57,7 +64,7 @@ class MultiThreadContractSearchIntegrationTest {
         when(bfdClient.requestPartDEnrolleesFromServer(contractNo, 1)).thenReturn(bundleA);
         when(bfdClient.requestPartDEnrolleesFromServer(contractNo, 2)).thenReturn(bundleB);
         when(bfdClient.requestPartDEnrolleesFromServer(contractNo, 3)).thenReturn(bundleC);
-        ContractBeneficiaries beneficiaries = contractBeneSearch.getPatients(contractNo, 3);
+        ContractBeneficiaries beneficiaries = contractBeneSearch.getPatients(contractNo, 3, tracker);
         assertEquals(contractNo, beneficiaries.getContractNumber());
         Collection<ContractBeneficiaries.PatientDTO> patients = beneficiaries.getPatients().values();
         assertNotNull(patients);
