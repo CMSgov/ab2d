@@ -16,6 +16,8 @@
 1. [Appendix E: Configure show file extensions in Finder](#appendix-e-configure-show-file-extensions-in-finder)
 1. [Appendix F: Register for Okta Prod credentials](#appendix-f-register-for-okta-prod-credentials)
 1. [Appendix G: Upgrade from AWS CLI 1 to AWS CLI 2](#appendix-g-upgrade-from-aws-cli-1-to-aws-cli-2)
+   * [Uninstall AWS CLI 1 using pip3](#uninstall-aws-cli-1-using-pip3)
+   * [Install and verify AWS CLI 2](#install-and-verify-aws-cli-2)
 
 ## Appendix A: PostgreSQL 11
 
@@ -477,4 +479,61 @@
 
    1. Save and close the file
 
-1. 
+### Install and verify AWS CLI 2
+
+1. Download the AWS CLI 2 package
+
+   ```ShellSession
+   $ cd ~/Downloads
+   $ curl "https://awscli.amazonaws.com/AWSCLIV2.pkg" -o "AWSCLIV2.pkg"
+   ```
+
+1. Install AWS CLI 2
+
+   ```ShellSession
+   $ sudo installer -pkg AWSCLIV2.pkg -target /
+   ```
+
+1. Verify where AWS CLI 2 was installed
+
+   1. Enter the following
+
+      ```ShellSession
+      $ which aws
+      ```
+
+   1. Verify that the following was displayed
+
+      ```
+      /usr/local/bin/aws
+      ```
+
+1. Verify the version of AWS CLI 2
+
+   1. Enter the following
+
+      ```ShellSession
+      $ aws --version
+      ```
+
+   1. Note the output
+
+      *Example:*
+
+      ```
+      aws-cli/2.0.31 Python/3.7.4 Darwin/18.7.0 botocore/2.0.0dev35
+      ```
+
+1. Verify that the "connect to node" script is working with the new AWS CLI 2
+
+   1. Change to the "Deploy" directory
+
+      ```ShellSession
+      $ cd ~/code/ab2d/Deploy
+      ```
+
+   1. Test the "connect to node" script
+
+      ```ShellSession
+      $ ./bash/connect-to-node.sh
+      ```
