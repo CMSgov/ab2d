@@ -88,11 +88,11 @@ class ContractProcessorUnitTest {
         var outputDirPath = Paths.get(efsMountTmpDir.toString(), jobUuid);
         outputDir = Files.createDirectories(outputDirPath);
 
-        var progressTracker = ProgressTracker.builder()
+        ProgressTracker progressTracker = ProgressTracker.builder()
                 .jobUuid(jobUuid)
-                .patientsByContract(patientsByContract)
                 .failureThreshold(10)
                 .build();
+        progressTracker.addPatientsByContract(patientsByContract);
         contractData = new ContractData(contract, progressTracker, contract.getAttestedOn(), job.getSince(),
                 job.getUser() != null ? job.getUser().getUsername() : null);
     }
