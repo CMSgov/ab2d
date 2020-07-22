@@ -5,6 +5,9 @@ pipeline {
             customWorkspace 'workspace/inspec'
         }
     }
+    triggers {
+      cron('@midnight')
+    }
     stages {
         stage('Clone cms-ars-3.1-moderate-red-hat-enterprise-linux-7-stig-overlay repo') {
             steps {
@@ -34,6 +37,9 @@ pipeline {
             steps {
                 script {
                     dir ('profiles/cms-ars-3.1-moderate-red-hat-enterprise-linux-7-stig-overlay') {
+                        sh 'bundle install'
+                    }
+                    dir ('profiles/inspec-profile-disa_stig-el7') {
                         sh 'bundle install'
                     }
                 }
