@@ -92,7 +92,7 @@ class JobProcessorUnitTest {
         when(jobRepository.findByJobUuid(anyString())).thenReturn(job);
 
         patientsByContract = createPatientsByContractResponse(contract);
-        Mockito.when(contractBeneSearch.getPatients(anyString(), anyInt())).thenReturn(patientsByContract);
+        Mockito.when(contractBeneSearch.getPatients(anyString(), anyInt(), any())).thenReturn(patientsByContract);
 
         final Path outputDirPath = Paths.get(efsMountTmpDir.toString(), jobUuid);
         final Path outputDir = Files.createDirectories(outputDirPath);
@@ -155,7 +155,7 @@ class JobProcessorUnitTest {
 
     private void doVerify() throws ExecutionException, InterruptedException {
         verify(fileService).createDirectory(any());
-        verify(contractBeneSearch).getPatients(anyString(), anyInt());
+        verify(contractBeneSearch).getPatients(anyString(), anyInt(), any());
     }
 
     @Test
@@ -186,7 +186,7 @@ class JobProcessorUnitTest {
         assertThat(processedJob.getExpiresAt(), notNullValue());
 
         verify(fileService, times(2)).createDirectory(any());
-        verify(contractBeneSearch).getPatients(anyString(), anyInt());
+        verify(contractBeneSearch).getPatients(anyString(), anyInt(), any());
     }
 
     @Test
@@ -204,7 +204,7 @@ class JobProcessorUnitTest {
         var uncheckedIOE = new UncheckedIOException(errMsg, new IOException(errMsg));
 
         Mockito.when(fileService.createDirectory(any())).thenThrow(uncheckedIOE);
-        Mockito.lenient().when(contractBeneSearch.getPatients(anyString(), anyInt())).thenReturn(patientsByContract);
+        Mockito.lenient().when(contractBeneSearch.getPatients(anyString(), anyInt(), any())).thenReturn(patientsByContract);
 
         var processedJob = cut.process(jobUuid);
 
@@ -213,7 +213,7 @@ class JobProcessorUnitTest {
         assertThat(processedJob.getExpiresAt(), nullValue());
 
         verify(fileService).createDirectory(any());
-        verify(contractBeneSearch, never()).getPatients(anyString(), anyInt());
+        verify(contractBeneSearch, never()).getPatients(anyString(), anyInt(), any());
     }
 
     @Test
@@ -224,7 +224,7 @@ class JobProcessorUnitTest {
         var uncheckedIOE = new UncheckedIOException(errMsg, new IOException(errMsg));
 
         Mockito.when(fileService.createDirectory(any())).thenThrow(uncheckedIOE);
-        Mockito.lenient().when(contractBeneSearch.getPatients(anyString(), anyInt())).thenReturn(patientsByContract);
+        Mockito.lenient().when(contractBeneSearch.getPatients(anyString(), anyInt(), any())).thenReturn(patientsByContract);
 
         var processedJob = cut.process(jobUuid);
 
@@ -233,7 +233,7 @@ class JobProcessorUnitTest {
         assertThat(processedJob.getExpiresAt(), nullValue());
 
         verify(fileService).createDirectory(any());
-        verify(contractBeneSearch, never()).getPatients(anyString(), anyInt());
+        verify(contractBeneSearch, never()).getPatients(anyString(), anyInt(), any());
     }
 
     private Sponsor createParentSponsor() {

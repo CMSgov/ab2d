@@ -11,6 +11,7 @@ import gov.cms.ab2d.eventlogger.events.*;
 import gov.cms.ab2d.eventlogger.reports.sql.DoAll;
 import gov.cms.ab2d.eventlogger.utils.UtilMethods;
 import gov.cms.ab2d.worker.SpringBootApp;
+import gov.cms.ab2d.worker.processor.domainmodel.ProgressTracker;
 import org.hl7.fhir.dstu3.model.Bundle;
 import org.hl7.fhir.dstu3.model.Identifier;
 import org.hl7.fhir.dstu3.model.Patient;
@@ -38,6 +39,7 @@ import static org.mockito.Mockito.lenient;
 @SpringBootTest(classes = SpringBootApp.class)
 @Testcontainers
 public class LoadPatientsByContractLoggingTest {
+    private ProgressTracker tracker;
 
     @Mock
     private BFDClient bfdClient;
@@ -59,6 +61,11 @@ public class LoadPatientsByContractLoggingTest {
     @BeforeEach
     void setUp() {
         logManager = new LogManager(sqlEventLogger, kinesisEventLogger);
+        tracker = ProgressTracker.builder()
+                .jobUuid("JOBID")
+                .numContracts(1)
+                .failureThreshold(1)
+                .build();
     }
 
     @Test
@@ -79,7 +86,8 @@ public class LoadPatientsByContractLoggingTest {
         contract.setContractName("1234");
         contract.setId(1L);
         contract.setCoverages(new HashSet<>());
-        cai.getPatients(contractId, 1);
+        tracker.setCurrentMonth(1);
+        cai.getPatients(contractId, 1, tracker);
 
         List<LoggableEvent> reloadEvents = doAll.load(ReloadEvent.class);
         assertEquals(1, reloadEvents.size());

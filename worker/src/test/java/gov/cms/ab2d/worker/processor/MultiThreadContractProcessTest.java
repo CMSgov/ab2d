@@ -5,6 +5,7 @@ import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.worker.adapter.bluebutton.ContractBeneSearch;
 import gov.cms.ab2d.worker.adapter.bluebutton.ContractBeneSearchImpl;
 import gov.cms.ab2d.worker.adapter.bluebutton.ContractBeneficiaries;
+import gov.cms.ab2d.worker.processor.domainmodel.ProgressTracker;
 import org.hl7.fhir.dstu3.model.Bundle;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -22,8 +23,8 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-public class MultiThreadContractProcessTest {
-    private ThreadPoolTaskExecutor patientContractThreadPool;
+class MultiThreadContractProcessTest {
+    private ProgressTracker tracker;
 
     @Mock
     private LogManager eventLogger;
@@ -33,17 +34,22 @@ public class MultiThreadContractProcessTest {
     private ContractBeneSearch contractBeneSearch;
 
     @BeforeEach
-    public void init() {
-        patientContractThreadPool = new ThreadPoolTaskExecutor();
+    void init() {
+        ThreadPoolTaskExecutor patientContractThreadPool = new ThreadPoolTaskExecutor();
         patientContractThreadPool.setCorePoolSize(6);
         patientContractThreadPool.setMaxPoolSize(12);
         patientContractThreadPool.setThreadNamePrefix("contractp-");
         patientContractThreadPool.initialize();
+        tracker = ProgressTracker.builder()
+                .jobUuid("JOBID")
+                .numContracts(1)
+                .failureThreshold(1)
+                .build();
         contractBeneSearch = new ContractBeneSearchImpl(bfdClient, eventLogger, patientContractThreadPool);
     }
 
     @Test
-    public void testMultipleContract() throws ExecutionException, InterruptedException {
+    void testMultipleContract() throws ExecutionException, InterruptedException {
         String contractNo = "0001";
         Bundle.BundleEntryComponent entry1 = BundleUtils.createBundleEntry("P1");
         Bundle.BundleEntryComponent entry2 = BundleUtils.createBundleEntry("P2");
@@ -58,7 +64,7 @@ public class MultiThreadContractProcessTest {
         when(bfdClient.requestPartDEnrolleesFromServer(contractNo, 1)).thenReturn(bundleA);
         when(bfdClient.requestPartDEnrolleesFromServer(contractNo, 2)).thenReturn(bundleB);
         when(bfdClient.requestPartDEnrolleesFromServer(contractNo, 3)).thenReturn(bundleC);
-        ContractBeneficiaries beneficiaries = contractBeneSearch.getPatients(contractNo, 3);
+        ContractBeneficiaries beneficiaries = contractBeneSearch.getPatients(contractNo, 3, tracker);
         assertEquals(contractNo, beneficiaries.getContractNumber());
         Collection<ContractBeneficiaries.PatientDTO> patients = beneficiaries.getPatients().values();
         assertNotNull(patients);
