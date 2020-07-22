@@ -12,7 +12,7 @@ pipeline {
         stage('Clone ab2d repo') {
             steps {
                 script {
-                    sh 'mkdir -p profiles/cms-ars-3.1-moderate-red-hat-enterprise-linux-7-stig-overlay; cd profiles'
+                    sh 'mkdir -p ab2d; cd ab2d'
                     dir ('profiles/cms-ars-3.1-moderate-red-hat-enterprise-linux-7-stig-overlay') {
                         git branch: 'feature/ab2d-586-automate-splunk-integration',
                         url: 'https://github.com/CMSgov/ab2d.git'
