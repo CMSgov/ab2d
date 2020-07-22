@@ -7872,7 +7872,7 @@
    1. Set an environment variable to the first file to download
 
       ```ShellSession
-      $ FILE=S0000_0001.ndjson
+      $ FILE=Z0000_0001.ndjson
       ```
 
    1. Get the Part A & B bulk claim export data by entering the following at the terminal prompt
