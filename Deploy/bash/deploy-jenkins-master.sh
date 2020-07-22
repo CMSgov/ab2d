@@ -40,11 +40,15 @@ CMS_MGMT_ENV=ab2d-mgmt-east-dev
 
 source "${START_DIR}/functions/fn_get_temporary_aws_credentials_via_cloudtamer_api.sh"
 
+#
 # Get AWS credentials for management environment
+#
 
 fn_get_temporary_aws_credentials_via_cloudtamer_api "${CMS_MGMT_ENV_AWS_ACCOUNT_NUMBER}" "${CMS_MGMT_ENV}"
 
+#
 # Verify that VPC ID exists
+#
 
 VPC_EXISTS=$(aws --region "${REGION}" ec2 describe-vpcs \
   --query "Vpcs[?VpcId=='$VPC_ID'].VpcId" \
@@ -176,10 +180,10 @@ fi
 # AMI Generation for Jenkins master node
 #
 
-# Set JENKINS_AMI_ID if it already exists for the deployment
+# Set JENKINS_MASTER_AMI_ID if it already exists for the deployment
 
-echo "Set JENKINS_AMI_ID if it already exists for the deployment..."
-JENKINS_AMI_ID=$(aws --region "${REGION}" ec2 describe-images \
+echo "Set JENKINS_MASTER_AMI_ID if it already exists for the deployment..."
+JENKINS_MASTER_AMI_ID=$(aws --region "${REGION}" ec2 describe-images \
   --owners self \
   --filters "Name=tag:Name,Values=ab2d-jenkins-master-ami" \
   --query "Images[*].[ImageId]" \
@@ -188,7 +192,7 @@ JENKINS_AMI_ID=$(aws --region "${REGION}" ec2 describe-images \
 # If no AMI is specified then create a new one
 
 echo "If no AMI is specified then create a new one..."
-if [ -z "${JENKINS_AMI_ID}" ]; then
+if [ -z "${JENKINS_MASTER_AMI_ID}" ]; then
 
   # Get the latest seed AMI
 
@@ -230,12 +234,12 @@ if [ -z "${JENKINS_AMI_ID}" ]; then
     --var ssh_username=$SSH_USERNAME \
     --var git_commit_hash=$COMMIT \
     app.json  2>&1 | tee output.txt
-  JENKINS_AMI_ID=$(cat output.txt | awk 'match($0, /ami-.*/) { print substr($0, RSTART, RLENGTH) }' | tail -1)
+  JENKINS_MASTER_AMI_ID=$(cat output.txt | awk 'match($0, /ami-.*/) { print substr($0, RSTART, RLENGTH) }' | tail -1)
   
   # Add name tag to AMI
 
   aws --region "${REGION}" ec2 create-tags \
-    --resources $JENKINS_AMI_ID \
+    --resources $JENKINS_MASTER_AMI_ID \
     --tags "Key=Name,Value=ab2d-jenkins-master-ami"
 
 fi
@@ -261,7 +265,7 @@ echo 'ec2_instance_type = "'$EC2_INSTANCE_TYPE'"' \
   >> $CMS_SHARED_ENV.auto.tfvars
 echo 'linux_user = "'$SSH_USERNAME'"' \
   >> $CMS_SHARED_ENV.auto.tfvars
-echo 'ami_id = "'$JENKINS_AMI_ID'"' \
+echo 'ami_id = "'$JENKINS_MASTER_AMI_ID'"' \
   >> $CMS_SHARED_ENV.auto.tfvars
 
 #
