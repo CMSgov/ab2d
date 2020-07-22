@@ -2,13 +2,22 @@ pipeline {
     agent {
         node {
             label 'agent01'
-            customWorkspace 'workspace/inspec'
+            customWorkspace 'workspace/production/03-run-chef-inspec-compliance-checks-for-production'
         }
     }
     triggers {
       cron('@midnight')
     }
     stages {
+        stage('Clear the working directory') {
+            steps {
+                script {
+                    dir(env.WORKSPACE) {
+                        sh 'rm -rf *'
+                    }
+                }
+            }
+        }
         stage('Clone ab2d repo') {
             steps {
                 script {
