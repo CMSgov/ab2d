@@ -40,7 +40,8 @@ pipeline {
                         sh 'bundle install'
                     }
                     dir ('profiles/inspec-profile-disa_stig-el7') {
-                        sh 'bundle install'
+                        sh "gem install bundler -v '~> 1.14.6'"
+                        sh 'bundle 1.14.6 install'
                     }
                 }
             }
