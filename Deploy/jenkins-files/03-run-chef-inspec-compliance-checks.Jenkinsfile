@@ -22,7 +22,7 @@ pipeline {
             steps {
                 script {
                     sh 'mkdir -p ab2d; cd ab2d'
-                    dir ('profiles/cms-ars-3.1-moderate-red-hat-enterprise-linux-7-stig-overlay') {
+                    dir ('ab2d') {
                         git branch: 'feature/ab2d-586-automate-splunk-integration',
                         url: 'https://github.com/CMSgov/ab2d.git'
                     }
