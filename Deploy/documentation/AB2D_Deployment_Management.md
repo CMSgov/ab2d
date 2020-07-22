@@ -6,6 +6,8 @@
 1. [Configure Jenkins master](#configure-jenkins-master)
    * [Enable Jenkins](#enable-jenkins)
    * [Initialize the Jenkins GUI](#initialize-the-jenkins-gui)
+   * [Modify the jenkins user to allow it to use a login shell](#modify-the-jenkins-user-to-allow-it-to-use-a-login-shell)
+   * [Upgrade Jenkins](#upgrade-jenkins)
    * [Configure SSH on Jenkins master](#configure-ssh-on-jenkins-master)
 1. [Setup Jenkins agent in management AWS account](#setup-jenkins-agent-in-management-aws-account)
 1. [Configure Jenkins agent](#configure-jenkins-master)
@@ -435,14 +437,6 @@
    $ exit
    ```
 
-### Upgrade Jenkins
-
-1. Note that you will want to do the next step in a separate Chrome tab
-
-1. Open and complete the "Upgrade Jenkins" section of the AB2D Jenkins User Guide in a separate tab
-
-   [Upgrade Jenkins](AB2D_Jenkins_User_Guide.md#upgrade-jenkins)
-
 ### Initialize the Jenkins GUI
 
 1. Open Chrome
@@ -522,22 +516,22 @@
 
    1. Select **Start using Jenkins**
 
-### Configure SSH on Jenkins master
+### Modify the jenkins user to allow it to use a login shell
 
 1. Connect to Jenkins master
 
-   1. Set the management AWS profile
+   1. Get credentials for the Management AWS account
 
       ```ShellSession
-      $ export AWS_PROFILE=ab2d-mgmt-east-dev
+      $ source ./bash/set-env.sh
       ```
 
    1. Get the public IP address of Jenkins EC2 instance
    
       ```ShellSession
-      $ JENKINS_MASTER_PUBLIC_IP=$(aws --region us-east-1 ec2 describe-instances \
+      $ JENKINS_MASTER_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
         --filters "Name=tag:Name,Values=ab2d-jenkins-master" \
-        --query="Reservations[*].Instances[?State.Name == 'running'].PublicIpAddress" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
         --output text)
       ```
 
@@ -546,7 +540,7 @@
    1. SSH into the instance using the public IP address
 
       ```ShellSession
-      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_MASTER_PUBLIC_IP
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_MASTER_PRIVATE_IP
       ```
       
 1. Get information about the jenkins user account
@@ -588,6 +582,16 @@
       ```
       jenkins:x:997:994:Jenkins Automation Server:/var/lib/jenkins:/bin/bash
       ```
+
+### Upgrade Jenkins
+
+1. Note that you will want to do the next step in a separate Chrome tab
+
+1. Open and complete the "Upgrade Jenkins" section of the AB2D Jenkins User Guide in a separate tab
+
+   [Upgrade Jenkins](AB2D_Jenkins_User_Guide.md#upgrade-jenkins)
+
+### Configure SSH on Jenkins master
 
 1. Give the local jenkins user a password for intial SSH connections
 

@@ -122,6 +122,7 @@
 1. [Appendix III: Issue a schedule override in VictorOps](#appendix-iii-issue-a-schedule-override-in-victorops)
 1. [Appendix JJJ: Change the Jenkins home directory on the Jenkins agent](#appendix-jjj-change-the-jenkins-home-directory-on-the-jenkins-agent)
 1. [Appendix KKK: Change MFA to Google Authenticator for accessing Jira](#appendix-kkk-change-mfa-to-google-authenticator-for-accessing-jira)
+1. [Appendix LLL: Add a volume to jenkins agent and extend the log volume to use it](#appendix-lll-add-a-volume-to-jenkins-agent-and-extend-the-log-volume-to-use-it)
 
 ## Appendix A: Access the CMS AWS console
 
@@ -10508,3 +10509,97 @@ $ sed -i "" 's%cms-ab2d[\/]prod%cms-ab2d/dev%g' _includes/head.html (edited)
 1. Select **Google Authenticator**
 
 1. Follow the instructions that are presented
+
+## Appendix LLL: Add a volume to jenkins agent and extend the log volume to use it
+
+1. Create a new volume in the same availabilty zone as Jenkins agent in the AWS console
+
+1. Attach the volume to the Jenkins agent in the AWS console
+
+1. Connect to the Jenkins agent
+
+1. Set the partition as gpt
+
+   ```ShellSession
+   $ sudo parted --script /dev/nvme1n1 mklabel gpt
+   ```
+
+1. View detail about the disks and partitions again
+
+   1. Enter the following
+   
+      ```ShellSession
+      $ sudo parted -l
+      ```
+
+   1. Note the output
+
+      ```
+      Model: NVMe Device (nvme)
+      Disk /dev/nvme0n1: 537GB
+      Sector size (logical/physical): 512B/512B
+      Partition Table: gpt
+      Disk Flags: 
+      
+      Number  Start   End     Size    File system  Name  Flags
+       1      1049kB  2097kB  1049kB                     bios_grub
+       2      2097kB  537GB   537GB   xfs
+      
+      
+      Model: NVMe Device (nvme)
+      Disk /dev/nvme1n1: 537GB
+      Sector size (logical/physical): 512B/512B
+      Partition Table: gpt
+      Disk Flags: 
+      
+      Number  Start  End  Size  File system  Name  Flags
+      ```
+
+1. Create a new partition on the "/dev/nvme1n1" disk
+
+   ```ShellSession
+   (
+   echo n # Add a new partition
+   echo p # Primary partition
+   echo   # Partition number (Accept default)
+   echo   # First sector (Accept default)
+   echo   # Last sector (Accept default)
+   echo w # Write changes
+   ) | sudo fdisk /dev/nvme1n1
+   ```
+
+1. Request that the operating system re-reads the partition table
+
+   ```ShellSession
+   $ sudo partprobe
+   ```
+
+1. Create physical volume by initializing the partition for use by the Logical Volume Manager (LVM)
+
+   ```ShellSession
+   $ sudo pvcreate /dev/nvme1n1p1
+   ```
+
+1. Format the "/dev/nvme1n1" disk as xfs
+
+   ```ShellSession
+   $ sudo mkfs.xfs -f /dev/nvme1n1p1
+   ```
+
+1. Extend the "VolGroup00" volume group to include the new volume
+
+   ```ShellSession
+   $ sudo vgextend VolGroup00 /dev/nvme1n1p1
+   ```
+
+1. Extend the size of the "log" logical volume with all the free space on the new volume
+
+   ```ShellSession
+   $ sudo lvextend -l +100%FREE /dev/mapper/VolGroup00-logVol
+   ```
+
+1. Expands the existing XFS filesystem
+
+   ```ShellSession
+   $ sudo xfs_growfs -d /dev/mapper/VolGroup00-logVol
+   ```

@@ -62,28 +62,30 @@
 #### Upgrade Jenkins software
 
 1. Open a terminal
-
-1. Target the AWS management account
-
-   ```ShellSession
-   $ source ./bash/set-env.sh
-   ```
    
 1. Connect to Jenkins master
 
-   1. Get the public IP address of Jenkins master
+   1. Get credentials for the Management AWS account
+
+      ```ShellSession
+      $ source ./bash/set-env.sh
+      ```
+
+   1. Get the public IP address of Jenkins EC2 instance
    
       ```ShellSession
-      $ JENKINS_MASTER_PUBLIC_IP=$(aws --region us-east-1 ec2 describe-instances \
+      $ JENKINS_MASTER_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
         --filters "Name=tag:Name,Values=ab2d-jenkins-master" \
-        --query="Reservations[*].Instances[?State.Name == 'running'].PublicIpAddress" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
         --output text)
       ```
+
+   1. Ensure that you are connected to the Cisco VPN
 
    1. SSH into the instance using the public IP address
 
       ```ShellSession
-      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_MASTER_PUBLIC_IP
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_MASTER_PRIVATE_IP
       ```
 
 1. Stop Jenkins
@@ -103,7 +105,7 @@
    1. Clear the Jenkins log
    
       ```ShellSession
-      $ sudo cat /dev/null > /var/log/jenkins/jenkins.log
+      $ cat /dev/null > /var/log/jenkins/jenkins.log
       ```
 
    1. Exit the jenkins user
@@ -117,7 +119,7 @@
    ```ShellSession
    $ sudo rpm --import https://pkg.jenkins.io/redhat/jenkins.io.key
    ```
-   
+
 1. Upgrade Jenkins
 
    ```ShellSession
