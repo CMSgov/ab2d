@@ -79,8 +79,12 @@ pipeline {
       }
     }
     stage('Perform Inspec Analysis on RHEL') {
-      dir ('ab2d/Deploy/bash') {
-        sh './run-inspec-for-all-ec2-instances.sh'
+      steps {
+        script {
+          dir ('ab2d/Deploy/bash') {
+            sh './run-inspec-for-all-ec2-instances.sh'
+          }
+        }
       }
     }
   }
