@@ -98,11 +98,15 @@ while [ "${PREVIOUS_EC2_INSTANCE_IP_ADDRESS}" != "${EC2_INSTANCE_IP_ADDRESS}" ];
     | head -${EC2_INSTANCE_INDEX} \
     | tail -1)
   if [ "${PREVIOUS_EC2_INSTANCE_IP_ADDRESS}" != "${EC2_INSTANCE_IP_ADDRESS}" ]; then
+    # Run Inspec profile
+    # Don't fail if error code is 0 or 101
+    # 0 - no failures and no skipped tests
+    # 101 - skipped tests but no failures
     inspec exec . \
       --sudo \
       --attrs=attributes.yml \
       -i ~/.ssh/ab2d-east-prod.pem \
       -t ssh://ec2-user@$EC2_INSTANCE_IP_ADDRESS \
-      --reporter cli junit:rhel-inspec-api-prod-results.xml json:rhel-inspec-api-prod-results.json
+      --reporter cli junit:rhel-inspec-api-prod-results.xml json:rhel-inspec-api-prod-results.json || if [ "\$?" -eq 0 -o "\$?" -eq 101 ] ; then continue; else exit 1; fi
   fi
 done
