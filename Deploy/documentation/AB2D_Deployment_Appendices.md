@@ -123,6 +123,10 @@
 1. [Appendix JJJ: Change the Jenkins home directory on the Jenkins agent](#appendix-jjj-change-the-jenkins-home-directory-on-the-jenkins-agent)
 1. [Appendix KKK: Change MFA to Google Authenticator for accessing Jira](#appendix-kkk-change-mfa-to-google-authenticator-for-accessing-jira)
 1. [Appendix LLL: Add a volume to jenkins agent and extend the log volume to use it](#appendix-lll-add-a-volume-to-jenkins-agent-and-extend-the-log-volume-to-use-it)
+1. [Appendix MMM: Upgrade Jenkins Agent from AWS CLI 1 to AWS CLI 2](#upgrade-mmm-upgrade-jenkins-agent-from-aws-cli-1-to-aws-cli-2)
+   * [Uninstall AWS CLI 1 using pip3](#uninstall-aws-cli-1-using-pip3)
+   * [Install and verify AWS CLI 2](#install-and-verify-aws-cli-2)
+1. [Appendix NNN: Manually install Chef Inspec on existing Jenkins Agent](#appendix-nnn-manually-install-chef-inspec-on-existing-jenkins-agent)
 
 ## Appendix A: Access the CMS AWS console
 
@@ -10602,4 +10606,85 @@ $ sed -i "" 's%cms-ab2d[\/]prod%cms-ab2d/dev%g' _includes/head.html (edited)
 
    ```ShellSession
    $ sudo xfs_growfs -d /dev/mapper/VolGroup00-logVol
+   ```
+
+## Appendix MMM: Upgrade Jenkins Agent from AWS CLI 1 to AWS CLI 2
+
+### Uninstall AWS CLI 1 using pip3
+
+1. Connect to the Jenkins agent
+
+1. Uninstall AWS CLI 1 using pip
+
+   ```ShellSession
+   $ sudo pip uninstall -y awscli
+   ```
+
+### Install and verify AWS CLI 2
+
+1. Connect to the Jenkins agent
+
+1. Download the AWS CLI 2 package
+
+   ```ShellSession
+   $ cd /tmp
+   $ curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+   ```
+
+1. Unzip the AWS CLI 2 package
+
+   ```ShellSession
+   $ unzip awscliv2.zip
+   ```
+
+1. Install AWS CLI 2
+
+   ```ShellSession
+   $ sudo ./aws/install
+   ```
+
+1. Verify where AWS CLI 2 was installed
+
+   1. Enter the following
+
+      ```ShellSession
+      $ which aws
+      ```
+
+   1. Verify that the following was displayed
+
+      ```
+      /usr/local/bin/aws
+      ```
+
+1. Verify the version of AWS CLI 2
+
+   1. Enter the following
+
+      ```ShellSession
+      $ aws --version
+      ```
+
+   1. Note the output
+
+      *Example:*
+
+      ```
+      aws-cli/2.0.33 Python/3.7.3 Linux/3.10.0-1062.12.1.el7.x86_64 botocore/2.0.0dev37
+      ```
+
+## Appendix NNN: Manually install Chef Inspec on existing Jenkins Agent
+
+1. Connect to the Jenkins agent
+
+1. Install Chef Inspec
+
+   ```ShellSession
+   $ curl https://omnitruck.chef.io/install.sh | sudo bash -s -- -P inspec
+   ```
+
+1. Verify Chef Inspec is installed by checking its version
+
+   ```ShellSession
+   $ inspec --version
    ```
