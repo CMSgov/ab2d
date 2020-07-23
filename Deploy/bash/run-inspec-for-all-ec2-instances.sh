@@ -79,14 +79,16 @@ fi
 
 # Get the private IP addresses of API nodes
 
-aws --region us-east-1 ec2 describe-instances \
-  --filters "Name=tag:Name,Values=${CMS_ENV}-api" \
-  --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
-  --output text \
-  > "/tmp/${CMS_ENV}-api-nodes.txt"
+EC2_INSTANCE=""
+EC2_INSTANCE_INDEX=1
 
-echo ""
-IFS=$'\n' read -d '' -r -a API_NODES < /tmp/${CMS_ENV}-api-nodes.txt
-for API_NODE in "${API_NODES[@]}"; do
-  echo "${API_NODE}"
+while [ "${PREVIOUS_EC2_INSTANCE}" != "${EC2_INSTANCE}" ]; do
+  PREVIOUS_EC2_INSTANCE="${EC2_INSTANCE}"
+  EC2_INSTANCE=$(aws --region us-east-1 ec2 describe-instances \
+    --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+    --output text \
+    | sort \
+    | head -${EC2_INSTANCE_INDEX} \
+    | tail -1)
+  EC2_INSTANCE_INDEX=$(expr $EC2_INSTANCE_INDEX + 1)
 done
