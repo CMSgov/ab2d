@@ -53,7 +53,7 @@ pipeline {
         }
       }
     }
-    stage('Install requiried Ruby gems') {
+    stage('Install required Ruby gems') {
       steps {
         script {
           dir ('profiles/inspec-profile-disa_stig-el7') {
