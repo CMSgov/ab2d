@@ -8,8 +8,6 @@
  
 ### What Does This PR Do?
 
-<!-- Summary of the PR including -->
-
 ### What Should Reviewers Watch For?
 
 ### Usage/Deployment Instructions
