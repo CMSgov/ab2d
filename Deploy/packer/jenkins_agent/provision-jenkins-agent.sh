@@ -104,3 +104,7 @@ sudo mkdir -p /usr/lib/jvm
 sudo tar -xvf /tmp/openjdk-13.0.2_linux-x64_bin.tar.gz -C /usr/lib/jvm/
 sudo ln -s /usr/lib/jvm/jdk-13.0.2 /usr/lib/jvm/java-1.13.0-openjdk-amd64
 sudo update-alternatives --install /usr/bin/java java /usr/lib/jvm/java-1.13.0-openjdk-amd64/bin/java 1131
+
+# Install Chef Inspec
+
+curl https://omnitruck.chef.io/install.sh | sudo bash -s -- -P inspec
