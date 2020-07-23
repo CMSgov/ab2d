@@ -81,15 +81,15 @@ fi
 
 PREVIOUS_EC2_INSTANCE_IP_ADDRESS=""
 EC2_INSTANCE_IP_ADDRESS="START"
-EC2_INSTANCE_INDEX=1
+EC2_INSTANCE_INDEX=0
 
 while [ "${PREVIOUS_EC2_INSTANCE_IP_ADDRESS}" != "${EC2_INSTANCE_IP_ADDRESS}" ]; do
   PREVIOUS_EC2_INSTANCE_IP_ADDRESS="${EC2_INSTANCE_IP_ADDRESS}"
+  EC2_INSTANCE_INDEX=$(expr $EC2_INSTANCE_INDEX + 1)
   EC2_INSTANCE_IP_ADDRESS=$(aws --region us-east-1 ec2 describe-instances \
     --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
     --output text \
     | sort \
     | head -${EC2_INSTANCE_INDEX} \
     | tail -1)
-  EC2_INSTANCE_INDEX=$(expr $EC2_INSTANCE_INDEX + 1)
 done
