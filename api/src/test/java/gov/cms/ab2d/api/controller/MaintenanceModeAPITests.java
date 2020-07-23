@@ -43,7 +43,6 @@ public class MaintenanceModeAPITests {
     @Test
     @Order(1)
     public void testMaintenanceModeOff() throws Exception {
-        System.out.println("Maintenance mode off");
         this.mockMvc.perform(get(STATUS_ENDPOINT)
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().is(200))
@@ -53,7 +52,6 @@ public class MaintenanceModeAPITests {
     @Test
     @Order(2)
     public void testMaintenanceModeOn() throws Exception {
-        System.out.println("Maintenance mode on");
         PropertiesDTO propertiesDTO = new PropertiesDTO();
         propertiesDTO.setKey(MAINTENANCE_MODE);
         propertiesDTO.setValue("true");
