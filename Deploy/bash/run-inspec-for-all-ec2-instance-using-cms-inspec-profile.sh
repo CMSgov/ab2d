@@ -98,6 +98,15 @@ while [ "${PREVIOUS_EC2_INSTANCE_IP_ADDRESS}" != "${EC2_INSTANCE_IP_ADDRESS}" ];
     | head -${EC2_INSTANCE_INDEX} \
     | tail -1)
   if [ "${PREVIOUS_EC2_INSTANCE_IP_ADDRESS}" != "${EC2_INSTANCE_IP_ADDRESS}" ]; then
+
+    # Install Gems
+    mkdir gem_dependencies
+    bundle install --path ./gem_dependencies/
+
+    # Make sure the profile uses relative path when referencing dependencies
+    sed -i 's/.*git:.*/  path: ..\\/inspec-profile-disa_stig-el7/g' inspec.yml
+    sed -i 's/.*branch:.*//g' inspec.yml
+
     # Run Inspec profile
     # Don't fail if error code is 0 or 101
     # 0 - no failures and no skipped tests
