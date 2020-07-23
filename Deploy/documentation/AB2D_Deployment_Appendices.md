@@ -124,7 +124,7 @@
 1. [Appendix KKK: Change MFA to Google Authenticator for accessing Jira](#appendix-kkk-change-mfa-to-google-authenticator-for-accessing-jira)
 1. [Appendix LLL: Add a volume to jenkins agent and extend the log volume to use it](#appendix-lll-add-a-volume-to-jenkins-agent-and-extend-the-log-volume-to-use-it)
 1. [Appendix MMM: Upgrade Jenkins Agent from AWS CLI 1 to AWS CLI 2](#appendix-mmm-upgrade-jenkins-agent-from-aws-cli-1-to-aws-cli-2)
-   * [Uninstall AWS CLI 1 using pip3](#uninstall-aws-cli-1-using-pip3)
+   * [Uninstall AWS CLI 1 using pip](#uninstall-aws-cli-1-using-pip)
    * [Install and verify AWS CLI 2](#install-and-verify-aws-cli-2)
 1. [Appendix NNN: Manually install Chef Inspec on existing Jenkins Agent](#appendix-nnn-manually-install-chef-inspec-on-existing-jenkins-agent)
 
@@ -10610,7 +10610,7 @@ $ sed -i "" 's%cms-ab2d[\/]prod%cms-ab2d/dev%g' _includes/head.html (edited)
 
 ## Appendix MMM: Upgrade Jenkins Agent from AWS CLI 1 to AWS CLI 2
 
-### Uninstall AWS CLI 1 using pip3
+### Uninstall AWS CLI 1 using pip
 
 1. Connect to the Jenkins agent
 
