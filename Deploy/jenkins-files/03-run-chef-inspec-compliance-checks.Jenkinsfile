@@ -66,7 +66,7 @@ pipeline {
       steps {
         script {
           dir ('ab2d/Deploy/bash') {
-            sh './run-inspec-for-all-ec2-instances.sh'
+            sh './run-inspec-for-all-ec2-instance-using-cms-inspec-profile.sh'
           }
         }
       }
