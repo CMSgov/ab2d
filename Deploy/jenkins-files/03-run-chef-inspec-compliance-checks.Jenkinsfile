@@ -57,8 +57,8 @@ pipeline {
       steps {
         script {
           dir ('profiles/cms-ars-3.1-moderate-red-hat-enterprise-linux-7-stig-overlay') {
-            sh "gem install bundler -v '~> 2.1.4'"
-            sh 'bundle _2.1.4_ install'
+	    sh 'bundle update --bundler'
+	    sh 'bundle install'
           }
         }
       }
