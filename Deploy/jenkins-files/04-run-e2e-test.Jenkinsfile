@@ -58,6 +58,15 @@ pipeline {
         }
       }
     }
+    stage('build ab2d') {
+      steps {
+        script {
+          dir ('ab2d') {
+            sh 'mvn clean package -DskipTests'
+          }
+        }
+      }
+    }
     stage('run e2e tests') {
       steps {
         script {
