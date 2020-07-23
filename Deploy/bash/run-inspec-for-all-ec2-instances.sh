@@ -76,3 +76,17 @@ if [ "${CLOUD_TAMER}" == "true" ]; then
 else
   fn_get_temporary_aws_credentials_via_aws_sts_assume_role "${CMS_ENV_AWS_ACCOUNT_NUMBER}" "${CMS_ENV}"
 fi
+
+# Get the private IP addresses of API nodes
+
+aws --region us-east-1 ec2 describe-instances \
+  --filters "Name=tag:Name,Values=${CMS_ENV}-api" \
+  --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+  --output text \
+  > "/tmp/${CMS_ENV}-api-nodes.txt"
+
+echo ""
+IFS=$'\n' read -d '' -r -a API_NODES < /tmp/${CMS_ENV}-api-nodes.txt
+for API_NODE in "${API_NODES[@]}"; do
+  echo "${API_NODE}"
+done
