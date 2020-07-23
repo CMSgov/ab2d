@@ -103,7 +103,6 @@ while [ "${PREVIOUS_EC2_INSTANCE_IP_ADDRESS}" != "${EC2_INSTANCE_IP_ADDRESS}" ];
       --attrs=attributes.yml \
       -i ~/.ssh/ab2d-east-prod.pem \
       -t ssh://ec2-user@$EC2_INSTANCE_IP_ADDRESS \
-      --reporter cli junit:rhel-inspec-api-prod-results.xml json:rhel-inspec-api-prod-results.json \
-      || if [ "\$?" -eq 0 -o "\$?" -eq 101 ] ; then continue; else exit 1; fi
+      --reporter cli junit:rhel-inspec-api-prod-results.xml json:rhel-inspec-api-prod-results.json || if [ "\$?" -eq 0 -o "\$?" -eq 101 ] ; then continue; else exit 1; fi
   fi
 done
