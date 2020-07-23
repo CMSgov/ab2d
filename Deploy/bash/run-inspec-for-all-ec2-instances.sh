@@ -79,12 +79,13 @@ fi
 
 # Get the private IP addresses of API nodes
 
-EC2_INSTANCE=""
+PREVIOUS_EC2_INSTANCE_IP_ADDRESS=""
+EC2_INSTANCE_IP_ADDRESS=""
 EC2_INSTANCE_INDEX=1
 
-while [ "${PREVIOUS_EC2_INSTANCE}" != "${EC2_INSTANCE}" ]; do
-  PREVIOUS_EC2_INSTANCE="${EC2_INSTANCE}"
-  EC2_INSTANCE=$(aws --region us-east-1 ec2 describe-instances \
+while [ "${PREVIOUS_EC2_INSTANCE}" != "${EC2_INSTANCE_IP_ADDRESS}" ]; do
+  PREVIOUS_EC2_INSTANCE_IP_ADDRESS="${EC2_INSTANCE_IP_ADDRESS}"
+  EC2_INSTANCE_IP_ADDRESS=$(aws --region us-east-1 ec2 describe-instances \
     --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
     --output text \
     | sort \
