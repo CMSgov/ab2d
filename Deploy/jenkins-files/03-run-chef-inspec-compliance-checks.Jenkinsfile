@@ -1,7 +1,7 @@
 pipeline {
   parameters {
     string(
-      defaultValue: "",
+      defaultValue: "ab2d-east-prod",
       description: 'Corresponds to the environment associated with an AWS account..',
       name: 'CMS_ENV_PARAM'
     )
