@@ -49,18 +49,18 @@ pipeline {
             git branch: 'master',
             credentialsId: 'GITHUB_CMS_GOV_HV7K_PAT',
             url: 'https://github.cms.gov/ISPG/cms-ars-3.1-moderate-red-hat-enterprise-linux-7-stig-overlay.git'
-          }                    
+          }
         }
       }
     }
-    stage('Install requiried Ruby gems') {
+    stage('Clone inspec-profile-disa_stig-el7 repo') {
       steps {
         script {
-          dir ('profiles/cms-ars-3.1-moderate-red-hat-enterprise-linux-7-stig-overlay') {
-	    sh 'gem install bundler'
-	    sh 'gem update --system'
-	    sh 'bundle install'
-	    sh 'bundle update --bundler'
+          sh 'mkdir -p profiles/inspec-profile-disa_stig-el7; cd profiles'
+          dir ('profiles/inspec-profile-disa_stig-el7') {
+            git branch: 'master',
+            credentialsId: 'GITHUB_CMS_GOV_HV7K_PAT',
+            url: 'https://github.cms.gov/ISPG/inspec-profile-disa_stig-el7.git'
           }
         }
       }
