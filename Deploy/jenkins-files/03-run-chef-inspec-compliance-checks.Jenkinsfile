@@ -41,14 +41,14 @@ pipeline {
         }
       }
     }
-    stage('Clone cms-ars-3.1-moderate-red-hat-enterprise-linux-7-stig-overlay repo') {
+    stage('Clone inspec-profile-disa_stig-el7 repo') {
       steps {
         script {
-          sh 'mkdir -p profiles/cms-ars-3.1-moderate-red-hat-enterprise-linux-7-stig-overlay; cd profiles'
-          dir ('profiles/cms-ars-3.1-moderate-red-hat-enterprise-linux-7-stig-overlay') {
+          sh 'mkdir -p profiles/inspec-profile-disa_stig-el7; cd profiles'
+          dir ('profiles/inspec-profile-disa_stig-el7') {
             git branch: 'master',
             credentialsId: 'GITHUB_CMS_GOV_HV7K_PAT',
-            url: 'https://github.cms.gov/ISPG/cms-ars-3.1-moderate-red-hat-enterprise-linux-7-stig-overlay.git'
+            url: 'https://github.cms.gov/ISPG/inspec-profile-disa_stig-el7.git'
           }                    
         }
       }
@@ -56,11 +56,9 @@ pipeline {
     stage('Install requiried Ruby gems') {
       steps {
         script {
-          dir ('profiles/cms-ars-3.1-moderate-red-hat-enterprise-linux-7-stig-overlay') {
-	    sh 'gem install bundler'
-	    sh 'gem update --system'
-	    sh 'bundle install'
-	    sh 'bundle update --bundler'
+          dir ('profiles/inspec-profile-disa_stig-el7') {
+            sh "gem install bundler -v '~> 1.14.6'"
+            sh 'bundle _1.14.6_ install'
           }
         }
       }
@@ -69,7 +67,7 @@ pipeline {
       steps {
         script {
           dir ('ab2d/Deploy/bash') {
-            sh './run-inspec-for-all-ec2-instance-using-cms-inspec-profile.sh'
+            sh './run-inspec-for-all-ec2-instances.sh'
           }
         }
       }
