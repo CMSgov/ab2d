@@ -56,9 +56,8 @@ pipeline {
     stage('Install requiried Ruby gems') {
       steps {
         script {
-          dir ('profiles/inspec-profile-disa_stig-el7') {
-            sh "gem install bundler -v '~> 1.14.6'"
-            sh 'bundle _1.14.6_ install'
+          dir ('profiles/cms-ars-3.1-moderate-red-hat-enterprise-linux-7-stig-overlay') {
+            sh 'bundle install'
           }
         }
       }
