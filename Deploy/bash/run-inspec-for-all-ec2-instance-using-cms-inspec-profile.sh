@@ -80,7 +80,7 @@ fi
 # Accept inspec license
 
 cd ../../../profiles/cms-ars-3.1-moderate-red-hat-enterprise-linux-7-stig-overlay
-# inspec vendor . --overwrite --chef-license accept-silent
+inspec vendor . --overwrite --chef-license accept-silent
 
 # Get the private IP addresses of API nodes
 
