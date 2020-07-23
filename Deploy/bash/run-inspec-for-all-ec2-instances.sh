@@ -91,6 +91,7 @@ while [ "${PREVIOUS_EC2_INSTANCE_IP_ADDRESS}" != "${EC2_INSTANCE_IP_ADDRESS}" ];
   PREVIOUS_EC2_INSTANCE_IP_ADDRESS="${EC2_INSTANCE_IP_ADDRESS}"
   EC2_INSTANCE_INDEX=$(expr $EC2_INSTANCE_INDEX + 1)
   EC2_INSTANCE_IP_ADDRESS=$(aws --region us-east-1 ec2 describe-instances \
+    --filters "Name=tag:Name,Values=${CMS_ENV}-*" \
     --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
     --output text \
     | sort \
