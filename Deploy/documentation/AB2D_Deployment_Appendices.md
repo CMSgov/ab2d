@@ -127,6 +127,7 @@
    * [Uninstall AWS CLI 1 using pip](#uninstall-aws-cli-1-using-pip)
    * [Install and verify AWS CLI 2](#install-and-verify-aws-cli-2)
 1. [Appendix NNN: Manually install Chef Inspec on existing Jenkins Agent](#appendix-nnn-manually-install-chef-inspec-on-existing-jenkins-agent)
+1. [Appendix OOO: Connect to Jenkins agent through the Jenkins master using the ProxyJump flag](#appendix-ooo-connect-to-jenkins-agent-through-the-jenkins-master-using-the-proxyjump-flag)
 
 ## Appendix A: Access the CMS AWS console
 
@@ -10687,4 +10688,40 @@ $ sed -i "" 's%cms-ab2d[\/]prod%cms-ab2d/dev%g' _includes/head.html (edited)
 
    ```ShellSession
    $ inspec --version
+   ```
+
+## Appendix OOO: Connect to Jenkins agent through the Jenkins master using the ProxyJump flag
+
+1. Ensure that you are connected to the Cisco VPN
+
+1. Get credentials for the Management AWS account
+
+   ```ShellSession
+   $ source ./bash/set-env.sh
+   ```
+
+1. Get the public IP address of Jenkins master instance
+
+   ```ShellSession
+   $ JENKINS_MASTER_PUBLIC_IP=$(aws --region us-east-1 ec2 describe-instances \
+     --filters "Name=tag:Name,Values=ab2d-jenkins-master" \
+     --query="Reservations[*].Instances[?State.Name == 'running'].PublicIpAddress" \
+     --output text)
+   ```
+
+1. Get the private IP address of Jenkins agent instance
+
+   ```ShellSession
+   $ JENKINS_AGENT_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+     --filters "Name=tag:Name,Values=ab2d-jenkins-agent" \
+     --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+     --output text)
+   ```
+
+1. SSH into the Jenkins agent through the Jenkins master using the ProxyJump flag (-J)
+
+   ```ShellSession
+   $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem -J \
+     ec2-user@$JENKINS_MASTER_PUBLIC_IP \
+	ec2-user@$JENKINS_AGENT_PRIVATE_IP
    ```
