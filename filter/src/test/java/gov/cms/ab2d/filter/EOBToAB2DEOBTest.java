@@ -30,7 +30,7 @@ class EOBToAB2DEOBTest {
 
     @Test
     public void testConvertFromFilePatient() throws IOException {
-        assertEquals(eobCarrier.getPatient().getReference(), "Patient/567834");
+        assertEquals(eobCarrier.getPatient().getReference(), "Patient/-199900000022040");
     }
 
     @Test
@@ -39,7 +39,7 @@ class EOBToAB2DEOBTest {
         assertNull(EOBToAB2DEOB.getEOBFromFileInClassPath(null));
         ExplanationOfBenefit eob = EOBToAB2DEOB.getEOBFromFileInClassPath("eobdata/EOB-for-Carrier-Claims.json");
         assertNotNull(eob);
-        assertEquals(eob.getPatient().getReference(), "Patient/567834");
+        assertEquals(eob.getPatient().getReference(), "Patient/-199900000022040");
     }
 
     @Test
@@ -173,7 +173,7 @@ class EOBToAB2DEOBTest {
         assertNull(EOBToAB2DEOB.getEOBFromReader(null));
         ExplanationOfBenefit benefit = EOBToAB2DEOB.getEOBFromReader(reader);
         assertNotNull(benefit);
-        assertEquals(benefit.getPatient().getReference(), "Patient/567834");
+        assertEquals(benefit.getPatient().getReference(), "Patient/-199900000022040");
     }
 
     @Test
@@ -185,6 +185,6 @@ class EOBToAB2DEOBTest {
         Reader reader = new java.io.InputStreamReader(inputStream);
         AB2DExplanationOfBenefit benefit = EOBToAB2DEOB.fromReader(reader);
         assertNotNull(benefit);
-        assertEquals(benefit.getPatient().getReference(), "Patient/567834");
+        assertEquals(benefit.getPatient().getReference(), "Patient/-199900000022040");
     }
 }
