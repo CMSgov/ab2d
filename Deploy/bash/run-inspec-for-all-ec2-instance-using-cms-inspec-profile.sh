@@ -77,9 +77,18 @@ else
   fn_get_temporary_aws_credentials_via_aws_sts_assume_role "${CMS_ENV_AWS_ACCOUNT_NUMBER}" "${CMS_ENV}"
 fi
 
-# Accept inspec license
+# Change to "cms-ars-3.1-moderate-red-hat-enterprise-linux-7-stig-overlay" repo
 
 cd ../../../profiles/cms-ars-3.1-moderate-red-hat-enterprise-linux-7-stig-overlay
+
+# Configure path to Ruby gems and install them
+
+mkdir -p gem_dependencies
+bundle config set path "${PWD}/gem_dependencies"
+bundle install
+
+# Accept inspec license
+
 inspec vendor . --overwrite --chef-license accept-silent
 
 # Get the private IP addresses of API nodes
@@ -98,10 +107,6 @@ while [ "${PREVIOUS_EC2_INSTANCE_IP_ADDRESS}" != "${EC2_INSTANCE_IP_ADDRESS}" ];
     | head -${EC2_INSTANCE_INDEX} \
     | tail -1)
   if [ "${PREVIOUS_EC2_INSTANCE_IP_ADDRESS}" != "${EC2_INSTANCE_IP_ADDRESS}" ]; then
-
-    # Install Gems
-    mkdir gem_dependencies
-    bundle install --path ./gem_dependencies/
 
     # Run Inspec profile
     # Don't fail if error code is 0 or 101
