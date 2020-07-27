@@ -4,6 +4,7 @@ import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.JobStatus;
 import gov.cms.ab2d.common.model.Sponsor;
 import gov.cms.ab2d.common.model.User;
+import gov.cms.ab2d.common.repository.ContractRepository;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.common.repository.SponsorRepository;
 import gov.cms.ab2d.common.repository.UserRepository;
@@ -47,6 +48,8 @@ class JobPreProcessorIntegrationTest {
     @Autowired
     private SponsorRepository sponsorRepository;
     @Autowired
+    private ContractRepository contractRepository;
+    @Autowired
     private UserRepository userRepository;
     @Autowired
     private DoAll doAll;
@@ -67,6 +70,7 @@ class JobPreProcessorIntegrationTest {
         cut = new JobPreProcessorImpl(jobRepository, manager);
         jobRepository.deleteAll();
         userRepository.deleteAll();
+        contractRepository.deleteAll();
         sponsorRepository.deleteAll();
         doAll.delete();
 
