@@ -38,6 +38,9 @@ public class MaintenanceModeAPITests {
 
     @Test
     public void testMaintenanceModeOff() throws Exception {
+        PropertiesDTO propertiesDTO = new PropertiesDTO();
+        propertiesDTO.setKey(MAINTENANCE_MODE);
+        propertiesDTO.setValue("false");
         this.mockMvc.perform(get(STATUS_ENDPOINT)
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().is(200))
