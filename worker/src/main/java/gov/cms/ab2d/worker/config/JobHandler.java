@@ -25,7 +25,7 @@ import static gov.cms.ab2d.common.util.Constants.JOB_LOG;
  */
 @Slf4j
 @Component
-public class fJobHandler implements MessageHandler {
+public class JobHandler implements MessageHandler {
 
     /**
      * Export requests must be locked globally to avoid race conditions among workers,
