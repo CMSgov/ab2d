@@ -87,7 +87,7 @@ mkdir -p gem_dependencies
 bundle config set path "${PWD}/gem_dependencies"
 bundle install
 
-# Accept inspec license
+# Accept Inspec license
 
 inspec vendor . --overwrite --chef-license accept-silent
 
