@@ -5,7 +5,10 @@ import gov.cms.ab2d.common.dto.PropertiesDTO;
 import gov.cms.ab2d.common.service.PropertiesService;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import org.hamcrest.core.Is;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -25,6 +28,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest(classes = SpringBootApp.class, webEnvironment = SpringBootTest.WebEnvironment.MOCK)
 @AutoConfigureMockMvc
 @Testcontainers
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class MaintenanceModeAPITests {
 
     @Container
@@ -37,6 +41,7 @@ public class MaintenanceModeAPITests {
     private PropertiesService propertiesService;
 
     @Test
+    @Order(1)
     public void testMaintenanceModeOff() throws Exception {
         PropertiesDTO propertiesDTO = new PropertiesDTO();
         propertiesDTO.setKey(MAINTENANCE_MODE);
@@ -48,6 +53,7 @@ public class MaintenanceModeAPITests {
     }
 
     @Test
+    @Order(2)
     public void testMaintenanceModeOn() throws Exception {
         PropertiesDTO propertiesDTO = new PropertiesDTO();
         propertiesDTO.setKey(MAINTENANCE_MODE);
