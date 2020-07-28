@@ -59,8 +59,7 @@ pipeline {
           sh 'mkdir -p profiles/cis-aws-foundations-baseline; cd profiles'
           dir ('profiles/cis-aws-foundations-baseline') {
             git branch: 'master',
-            credentialsId: 'GITHUB_CMS_GOV_HV7K_PAT',
-            url: 'https://github.cms.gov/mitre/cis-aws-foundations-baseline.git'
+            url: 'https://github.com/mitre/cis-aws-foundations-baseline.git'
           }
         }
       }
