@@ -71,7 +71,7 @@ class JobPreProcessorIntegrationTest {
         jobRepository.deleteAll();
         userRepository.deleteAll();
         contractRepository.deleteAll();
-        sponsorRepository.deleteAll();
+        //sponsorRepository.deleteAll();
         doAll.delete();
 
         var sponsor = createSponsor();
