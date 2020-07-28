@@ -208,6 +208,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
      */
     boolean validPatientInContract(ExplanationOfBenefit benefit, Map<String, ContractBeneficiaries.PatientDTO> patients) {
         if (benefit == null || patients == null) {
+            log.debug("Passed an invalid benefit or an invalid list of patients");
             return false;
         }
         String patientId = benefit.getPatient().getReference();
@@ -215,6 +216,9 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
             return false;
         }
         patientId = patientId.replaceFirst("Patient/", "");
-        return patients.get(patientId) != null;
+        if (patients.get(patientId) == null) {
+            log.error(patientId + " returned in EOB, but not a member of a contract");
+        }
+        return true;
     }
 }
