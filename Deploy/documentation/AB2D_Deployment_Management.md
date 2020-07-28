@@ -2080,15 +2080,14 @@
 1. Add rbenv initialization to "bashrc"
 
    ```ShellSession
-   $ echo 'export PATH="$HOME/.rbenv/bin:$PATH"' >> ~/.bashrc
+   $ echo 'export PATH="$HOME/.gem/ruby/2.6.0/bin:$HOME/.rbenv/bin:$PATH"' >> ~/.bashrc
    $ echo 'eval "$(rbenv init -)"' >> ~/.bashrc
    ```
 
 1. Initialize rbenv for the current session
 
    ```ShellSession
-   $ export PATH="$HOME/.rbenv/bin:$PATH"
-   $ eval "$(rbenv init -)"
+   $ source ~/.bashrc
    ```
 
 1. Install Ruby 2.6.5
@@ -2103,16 +2102,22 @@
    $ rbenv global 2.6.5
    ```
 
-1. Install bundler
+1. Install bundler to the jenkins user ".gem" directory
 
    ```ShellSession
-   $ gem install bundler
+   $ gem install --user-install bundler
+   ```
+
+1. Note that bundler is now installed where Inspec wants to see it
+
+   ```ShellSession
+   $ ls /var/lib/jenkins/.gem/ruby/2.6.0/gems
    ```
 
 1. Update Ruby Gems
 
    ```ShellSession
-   $ gem update --system
+   $ gem update --user-install --system
    ```
 
 1. Verify ruby by checking its version
