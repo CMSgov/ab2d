@@ -130,7 +130,7 @@ public class BFDClientImpl implements BFDClient {
                 " using since " + sinceTime);
         bfdSegment.setMetricName("RequestEOB");
 
-        return client.search()
+        Bundle bundle = client.search()
                 .forResource(ExplanationOfBenefit.class)
                 .where(ExplanationOfBenefit.PATIENT.hasId(patientID))
                 .and(excludeSAMHSA)
@@ -139,6 +139,10 @@ public class BFDClientImpl implements BFDClient {
                 .returnBundle(Bundle.class)
                 .encodedJson()
                 .execute();
+
+        bfdSegment.end();
+
+        return bundle;
     }
 
     /**
