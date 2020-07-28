@@ -87,6 +87,10 @@ mkdir -p gem_dependencies
 bundle config set path "${PWD}/gem_dependencies"
 bundle install
 
+# Accept Inspec license
+
+inspec vendor . --overwrite --chef-license accept-silent
+
 # Run Inspec profile
 # Don't fail if error code is 0 or 101
 # 0 - no failures and no skipped tests
