@@ -87,15 +87,15 @@ mkdir -p gem_dependencies
 bundle config set path "${PWD}/gem_dependencies"
 bundle install
 
-# Change to the AB2D overlay to set up the environment dynamically
-
-cd "${WORKSPACE}/ab2d/Deploy/inspec/ab2d-inspec-aws"
-
 # Eliminate unused regions
 
 sed -i.bak "s/.*'us-[a-z].*-[0-9]',\n//g" generate_attributes.rb
 
 cat "${WORKSPACE}/profiles/cis-aws-foundations-baseline/generate_attributes.rb"
+
+# # Change to the AB2D overlay to set up the environment dynamically
+
+# cd "${WORKSPACE}/ab2d/Deploy/inspec/ab2d-inspec-aws"
 
 # # Run the `generate_attributes.rb` to generate AWS environment specific elements to test
 
