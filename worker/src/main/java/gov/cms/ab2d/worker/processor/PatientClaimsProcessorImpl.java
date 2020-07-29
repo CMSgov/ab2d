@@ -218,6 +218,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
         patientId = patientId.replaceFirst("Patient/", "");
         if (patients.get(patientId) == null) {
             log.error(patientId + " returned in EOB, but not a member of a contract");
+            return false;
         }
         return true;
     }
