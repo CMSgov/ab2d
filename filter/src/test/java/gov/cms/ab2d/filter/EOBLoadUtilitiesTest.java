@@ -26,7 +26,7 @@ class EOBLoadUtilitiesTest {
 
     @Test
     public void testConvertFromFilePatient() throws IOException {
-        assertEquals(eobCarrier.getPatient().getReference(), "Patient/567834");
+        assertEquals(eobCarrier.getPatient().getReference(), "Patient/-199900000022040");
     }
 
     @Test
@@ -35,7 +35,7 @@ class EOBLoadUtilitiesTest {
         assertNull(EOBLoadUtilities.getEOBFromFileInClassPath(null, context));
         ExplanationOfBenefit eob = EOBLoadUtilities.getEOBFromFileInClassPath("eobdata/EOB-for-Carrier-Claims.json", context);
         assertNotNull(eob);
-        assertEquals(eob.getPatient().getReference(), "Patient/567834");
+        assertEquals(eob.getPatient().getReference(), "Patient/-199900000022040");
     }
 
     @Test
@@ -170,7 +170,7 @@ class EOBLoadUtilitiesTest {
         assertNull(EOBLoadUtilities.getEOBFromReader(null, context));
         ExplanationOfBenefit benefit = EOBLoadUtilities.getEOBFromReader(reader, context);
         assertNotNull(benefit);
-        assertEquals(benefit.getPatient().getReference(), "Patient/567834");
+        assertEquals(benefit.getPatient().getReference(), "Patient/-199900000022040");
     }
 
     @Test

@@ -85,8 +85,8 @@ First, we will prepare an "ab2d" Collection in Postman.
   <table class="ds-c-table">
   <thead>
       <tr>
-          <th>Sponsor</th>
-          <th>Contract</th> 
+          <th>Key</th>
+          <th>Value</th> 
       </tr>
   </thead>
   <tbody>
