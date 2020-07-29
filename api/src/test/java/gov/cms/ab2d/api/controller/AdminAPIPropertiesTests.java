@@ -28,6 +28,7 @@ import static gov.cms.ab2d.common.util.Constants.*;
 import static gov.cms.ab2d.common.util.Constants.ADMIN_PREFIX;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest(classes = SpringBootApp.class, webEnvironment = SpringBootTest.WebEnvironment.MOCK)
 @AutoConfigureMockMvc
@@ -158,5 +159,16 @@ public class AdminAPIPropertiesTests {
             Assert.assertNotNull(value);
             Assert.assertEquals(value.toString(), propertiesDTO.getValue());
         }
+
+        // Cleanup
+        propertiesDTOs.clear();
+        maintenanceModeDTO.setValue("false");
+        propertiesDTOs.add(maintenanceModeDTO);
+
+        this.mockMvc.perform(
+                put(API_PREFIX + ADMIN_PREFIX + PROPERTIES_URL)
+                        .contentType(MediaType.APPLICATION_JSON).content(mapper.writeValueAsString(propertiesDTOs))
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().is(200));
     }
 }
