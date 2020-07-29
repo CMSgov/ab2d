@@ -3,8 +3,8 @@ title: ab2d-inspec-aws
 summary: AB2D Inspec Overlays
 
 depends:
-- name: cms-ars3.1-cis-aws-foundations-baseline
-  path: <%= ENV['WORKSPACE'] %>/cms-ars3.1-cis-aws-foundations-baseline
+- name: cms-ars-3.1-moderate-aws-foundations-cis-overlay
+  path: <%= ENV['WORKSPACE'] %>/cms-ars-3.1-moderate-aws-foundations-cis-overlay
 
 attributes:
   - name: aws_key_age
