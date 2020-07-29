@@ -18,7 +18,6 @@ import springfox.documentation.service.ResponseMessage;
 import springfox.documentation.service.SecurityScheme;
 import springfox.documentation.spi.DocumentationType;
 import springfox.documentation.spring.web.plugins.Docket;
-import springfox.documentation.swagger2.annotations.EnableSwagger2;
 
 import java.util.*;
 
@@ -27,7 +26,6 @@ import static gov.cms.ab2d.common.util.Constants.API_PREFIX;
 import static gov.cms.ab2d.common.util.Constants.FHIR_PREFIX;
 
 @Configuration
-@EnableSwagger2
 public class SwaggerConfig {
 
     @Autowired

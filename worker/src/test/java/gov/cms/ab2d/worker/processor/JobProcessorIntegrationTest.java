@@ -50,11 +50,7 @@ import java.util.Random;
 import static gov.cms.ab2d.common.util.Constants.NDJSON_FIRE_CONTENT_TYPE;
 import static gov.cms.ab2d.eventlogger.events.ErrorEvent.ErrorType.TOO_MANY_SEARCH_ERRORS;
 import static java.lang.Boolean.TRUE;
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.Matchers.notNullValue;
-import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -92,9 +88,6 @@ class JobProcessorIntegrationTest {
     private SqlEventLogger sqlEventLogger;
     @Mock
     private KinesisEventLogger kinesisEventLogger;
-
-    private LogManager logManager;
-
     @Mock
     private BFDClient mockBfdClient;
 
@@ -118,7 +111,7 @@ class JobProcessorIntegrationTest {
         sponsorRepository.deleteAll();
         doAll.delete();
 
-        logManager = new LogManager(sqlEventLogger, kinesisEventLogger);
+        LogManager logManager = new LogManager(sqlEventLogger, kinesisEventLogger);
         sponsor = createSponsor();
         user = createUser(sponsor);
         job = createJob(user);
@@ -172,10 +165,10 @@ class JobProcessorIntegrationTest {
         Assert.assertEquals(JobStatus.SUCCESSFUL.name(), jobEvent.getNewStatus());
         Assert.assertEquals(JobStatus.IN_PROGRESS.name(), jobEvent.getOldStatus());
 
-        assertThat(processedJob.getStatus(), is(JobStatus.SUCCESSFUL));
-        assertThat(processedJob.getStatusMessage(), is("100%"));
-        assertThat(processedJob.getExpiresAt(), notNullValue());
-        assertThat(processedJob.getCompletedAt(), notNullValue());
+        assertEquals(processedJob.getStatus(), JobStatus.SUCCESSFUL);
+        assertEquals(processedJob.getStatusMessage(), "100%");
+        assertNotNull(processedJob.getExpiresAt());
+        assertNotNull(processedJob.getCompletedAt());
 
         final List<JobOutput> jobOutputs = job.getJobOutputs();
         assertFalse(jobOutputs.isEmpty());
@@ -190,10 +183,10 @@ class JobProcessorIntegrationTest {
 
         var processedJob = cut.process("S0000");
 
-        assertThat(processedJob.getStatus(), is(JobStatus.SUCCESSFUL));
-        assertThat(processedJob.getStatusMessage(), is("100%"));
-        assertThat(processedJob.getExpiresAt(), notNullValue());
-        assertThat(processedJob.getCompletedAt(), notNullValue());
+        assertEquals(processedJob.getStatus(), JobStatus.SUCCESSFUL);
+        assertEquals(processedJob.getStatusMessage(), "100%");
+        assertNotNull(processedJob.getExpiresAt());
+        assertNotNull(processedJob.getCompletedAt());
 
         final List<JobOutput> jobOutputs = job.getJobOutputs();
         assertFalse(jobOutputs.isEmpty());
@@ -218,10 +211,10 @@ class JobProcessorIntegrationTest {
 
         var processedJob = cut.process("S0000");
 
-        assertThat(processedJob.getStatus(), is(JobStatus.SUCCESSFUL));
-        assertThat(processedJob.getStatusMessage(), is("100%"));
-        assertThat(processedJob.getExpiresAt(), notNullValue());
-        assertThat(processedJob.getCompletedAt(), notNullValue());
+        assertEquals(processedJob.getStatus(), JobStatus.SUCCESSFUL);
+        assertEquals(processedJob.getStatusMessage(), "100%");
+        assertNotNull(processedJob.getExpiresAt());
+        assertNotNull(processedJob.getCompletedAt());
 
         List<LoggableEvent> beneSearchEvents = doAll.load(ContractBeneSearchEvent.class);
         assertEquals(1, beneSearchEvents.size());
@@ -273,10 +266,10 @@ class JobProcessorIntegrationTest {
                 doAll.load(ReloadEvent.class),
                 doAll.load(ContractBeneSearchEvent.class)));
 
-        assertThat(processedJob.getStatus(), is(JobStatus.FAILED));
-        assertThat(processedJob.getStatusMessage(), is("Too many patient records in the job had failures"));
-        assertThat(processedJob.getExpiresAt(), nullValue());
-        assertThat(processedJob.getCompletedAt(), notNullValue());
+        assertEquals(processedJob.getStatus(), JobStatus.FAILED);
+        assertEquals(processedJob.getStatusMessage(), "Too many patient records in the job had failures");
+        assertNull(processedJob.getExpiresAt());
+        assertNotNull(processedJob.getCompletedAt());
     }
 
     private Bundle[] getBundles() {

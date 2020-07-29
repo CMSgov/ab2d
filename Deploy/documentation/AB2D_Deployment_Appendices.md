@@ -1360,7 +1360,7 @@
 
 1. Open Chrome
 
-1. Enter the "swagger-ui.html" URL for the target environment in the address bar
+1. Enter the "swagger-ui/index.html" URL for the target environment in the address bar
 
 1. Note the list of API endpoints that are displayed
 

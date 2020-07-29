@@ -1,5 +1,6 @@
 package gov.cms.ab2d.worker.adapter.bluebutton;
 
+import gov.cms.ab2d.worker.processor.domainmodel.ProgressTracker;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -15,25 +16,31 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class ContractBeneSearchStubTest {
     private ContractAdapterStub cut;
+    private ProgressTracker tracker;
 
     private int currentMonth = Month.MARCH.getValue();
 
     @BeforeEach
     void setup() {
         cut = new ContractAdapterStub();
+        tracker = ProgressTracker.builder()
+                .jobUuid("JOBID")
+                .numContracts(1)
+                .failureThreshold(1)
+                .build();
     }
 
     @Test
     @DisplayName("when contractNumber is 0, returns 100 patient records")
     void when_0000_returns_100() {
-        var patients = cut.getPatients("S0000", currentMonth).getPatients();
+        var patients = cut.getPatients("S0000", currentMonth, tracker).getPatients();
         assertThat(patients.size(), is(100));
     }
 
     @Test
     @DisplayName("when contractNumber is greater than 9999, returns empty list")
     void whenGreaterThan_9999_returns_000() {
-        var patients = cut.getPatients("S19999", currentMonth).getPatients();
+        var patients = cut.getPatients("S19999", currentMonth, tracker).getPatients();
         assertThat(patients.size(), is(0));
     }
 
@@ -54,7 +61,7 @@ class ContractBeneSearchStubTest {
             "S0110, 110000"
     })
     void when_contractNumber_returns_PatientCount(String contractNumber, int patientCount) {
-        Map<String, ContractBeneficiaries.PatientDTO> patients = cut.getPatients(contractNumber, currentMonth).getPatients();
+        Map<String, ContractBeneficiaries.PatientDTO> patients = cut.getPatients(contractNumber, currentMonth, tracker).getPatients();
         assertThat(patients.size(), is(patientCount));
     }
 }

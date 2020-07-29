@@ -88,11 +88,11 @@ class ContractProcessorUnitTest {
         var outputDirPath = Paths.get(efsMountTmpDir.toString(), jobUuid);
         outputDir = Files.createDirectories(outputDirPath);
 
-        var progressTracker = ProgressTracker.builder()
+        ProgressTracker progressTracker = ProgressTracker.builder()
                 .jobUuid(jobUuid)
-                .patientsByContract(patientsByContract)
                 .failureThreshold(10)
                 .build();
+        progressTracker.addPatientsByContract(patientsByContract);
         contractData = new ContractData(contract, progressTracker, contract.getAttestedOn(), job.getSince(),
                 job.getUser() != null ? job.getUser().getUsername() : null);
     }
@@ -107,7 +107,7 @@ class ContractProcessorUnitTest {
                 () -> cut.process(outputDir, contractData, NDJSON));
 
         assertThat(exceptionThrown.getMessage(), startsWith("Job was cancelled while it was being processed"));
-        verify(patientClaimsProcessor, atLeast(1)).process(any());
+        verify(patientClaimsProcessor, atLeast(1)).process(any(), any());
         verify(jobRepository, atLeastOnce()).updatePercentageCompleted(anyString(), anyInt());
     }
 
@@ -138,7 +138,7 @@ class ContractProcessorUnitTest {
         var jobOutputs = cut.process(outputDir, contractData, NDJSON);
 
         assertFalse(jobOutputs.isEmpty());
-        verify(patientClaimsProcessor, atLeast(1)).process(any());
+        verify(patientClaimsProcessor, atLeast(1)).process(any(), any());
     }
 
     @Test
@@ -156,7 +156,7 @@ class ContractProcessorUnitTest {
                 () -> cut.process(outputDir, contractData, NDJSON));
 
         assertThat(exceptionThrown.getMessage(), startsWith("The export process has produced no results"));
-        verify(patientClaimsProcessor, never()).process(any());
+        verify(patientClaimsProcessor, never()).process(any(), any());
     }
 
     @Test
@@ -167,7 +167,7 @@ class ContractProcessorUnitTest {
 
         assertFalse(jobOutputs.isEmpty());
         verify(jobRepository, times(9)).updatePercentageCompleted(anyString(), anyInt());
-        verify(patientClaimsProcessor, atLeast(1)).process(any());
+        verify(patientClaimsProcessor, atLeast(1)).process(any(), any());
     }
 
     private List<OptOut> getOptOutRows(ContractBeneficiaries patientsByContract) {

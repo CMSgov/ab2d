@@ -65,7 +65,7 @@
 		]
 	},
 	"patient": {
-		"reference": "Patient/567834"
+		"reference": "Patient/-199900000022040"
 	},
 	"billablePeriod": {
 		"start": "2014-01-01",
@@ -304,7 +304,7 @@
 	],
 	"insurance": {
 		"coverage": {
-			"reference": "Coverage/part-a-567834"
+			"reference": "Coverage/part-a-199900000022040"
 		}
 	},
 	"hospitalization": {

@@ -24,32 +24,25 @@ active-nav: support-nav
     <div class="container">
         <div class="row">
             <div class="col-lg-5">
-                <div class="header-title">We are listening</div>
+                <div class="header-title">We Are Listening</div>
                 If you have a question, suggestion, or feedback please post it in the AB2D Google Group!
-                <br />
-                <br />
-                <div class="google-group-wrapper mb-3">
+
+                <div class="google-group-wrapper mb-3 mt-4">
                     <a class="join-our-google-group" href="https://groups.google.com/forum/#!forum/ab2d-api" target="_blank">
                         JOIN OUR GOOGLE GROUP
                         <i class="material-icons pl-1 external-icon">open_in_new</i>
                     </a>
                 </div>
                 
-                <br />
-                <br />
-                <br />
-                <br />
-                
-                <div class="header-title">
-                    Frequently Asked Questions
-                </div>
             </div>
             <div class="col-lg-7">
                 <img src="assets/img/experts.svg" alt="experts" />
             </div>        
         </div>
 
-        <br />
+        <div class="header-title mb-3 mt-5">
+            Frequently Asked Questions
+        </div>
 
         <div id="accordion-support" class="accordion-white-bg">
           <div class="card">
@@ -63,7 +56,7 @@ active-nav: support-nav
             <div id="collapseOne" class="collapse" aria-labelledby="headingOne" data-parent="#accordion">
               <div class="card-body">
                 In February 2018, the <a href="https://www.congress.gov/bill/115th-congress/house-bill/1892/text" 
-                target="_blank">Bipartisan Budget Act of 2018 (BBA)</a> was signed into law and included a provision
+                target="_blank">Bipartisan Budget Act of 2018 (BBA) </a> was signed into law and included a provision
                 requiring the development of a process to share Medicare fee-for-services claims data with PDP sponsors.
                 Section 50354 of the BBA specifically provides that the Secretary of Health and Human Services shall
                 establish a process under which PDP sponsors may request, beginning in plan year 2020, that the
@@ -84,9 +77,9 @@ active-nav: support-nav
             <div id="collapseTwo" class="collapse" aria-labelledby="headingTwo" data-parent="#accordion">
               <div class="card-body">
                 In response to the <a href="https://www.congress.gov/bill/115th-congress/house-bill/1892/text" 
-                target="_blank">Bipartisan Budget Act of 2018 (BBA)</a>, CMS published a 
+                target="_blank">Bipartisan Budget Act of 2018 (BBA) </a>, CMS published a 
                 <a href="https://www.federalregister.gov/documents/2019/04/16/2019-06822/medicare-and-medicaid-programs-policy-and-technical-changes-to-the-medicare-advantage-medicare#page-15745" target="_blank">
-                Final Rule</a> to implement section
+                Final Rule </a> to implement section
                 50354 of the BBA, which outlines the manner in which CMS proposes to implement this requirement.
               </div>
             </div>
@@ -151,10 +144,10 @@ active-nav: support-nav
               <div class="card-body">
                 Attestation is a process to ensure PDP sponsors are aware of how the Medicare claims data provided by
                 AB2D may and may not be used, including limitations associated with reuse and redisclosure of data.
-                Attestation performed through the <a href="https://www.cms.gov/Research-Statistics-Data-and-Systems/Computer-Data-and-Systems/HPMS/Overview" target="_blank">Health Plan Management System (HPMS)</a> Claims Data Attestation
+                Attestation performed through the <a href="https://www.cms.gov/Research-Statistics-Data-and-Systems/Computer-Data-and-Systems/HPMS/Overview" target="_blank">Health Plan Management System (HPMS) </a> Claims Data Attestation
                 module affirms adherence to these permitted uses and limitations of this claims data as listed in
-                § 423.153 of the <a href="https://www.federalregister.gov/documents/2019/04/16/2019-06822/medicare-and-medicaid-programs-policy-and-technical-changes-to-the-medicare-advantage-medicare#page-15745" target="_blank">Final Rule</a>. To attest, visit 
-                <a href="https://hpms.cms.gov/app/ng/home/" target="_blank">HPMS</a>
+                § 423.153 of the <a href="https://www.federalregister.gov/documents/2019/04/16/2019-06822/medicare-and-medicaid-programs-policy-and-technical-changes-to-the-medicare-advantage-medicare#page-15745" target="_blank">Final Rule </a>. To attest, visit 
+                <a href="https://hpms.cms.gov/app/ng/home/" target="_blank">HPMS </a>
               </div>
             </div>
           </div>
@@ -205,7 +198,7 @@ active-nav: support-nav
               </div>
               <div id="collapseNine" class="collapse" aria-labelledby="headingNine">
                 <div class="card-body">
-                  Section § 423.153(c) of the <a href="https://www.federalregister.gov/documents/2019/04/16/2019-06822/medicare-and-medicaid-programs-policy-and-technical-changes-to-the-medicare-advantage-medicare#page-15745" target="_blank">Final Rule</a> specifies that PDP sponsors receiving Medicare claims data for their
+                  Section § 423.153(c) of the <a href="https://www.federalregister.gov/documents/2019/04/16/2019-06822/medicare-and-medicaid-programs-policy-and-technical-changes-to-the-medicare-advantage-medicare#page-15745" target="_blank">Final Rule </a> specifies that PDP sponsors receiving Medicare claims data for their
                   corresponding PDP plan enrollees may use the data for:
                   (i) Optimizing therapeutic outcomes through improved medication use;
                   (ii) improving care coordination so as to prevent adverse healthcare outcomes;
@@ -225,7 +218,7 @@ active-nav: support-nav
             </div>
             <div id="collapseTen" class="collapse" aria-labelledby="headingTen">
               <div class="card-body">
-                Section § 423.153(c) of the <a href="https://www.federalregister.gov/documents/2019/04/16/2019-06822/medicare-and-medicaid-programs-policy-and-technical-changes-to-the-medicare-advantage-medicare#page-15745" target="_blank">Final Rule</a>
+                Section § 423.153(c) of the <a href="https://www.federalregister.gov/documents/2019/04/16/2019-06822/medicare-and-medicaid-programs-policy-and-technical-changes-to-the-medicare-advantage-medicare#page-15745" target="_blank">Final Rule </a>
                 specifies that PDP sponsors receiving Medicare Parts A and B claims
                 data for their PDP plan enrollees may not use the data for the following purposes:
                 (i) To inform coverage determinations under Part D;
@@ -261,8 +254,8 @@ active-nav: support-nav
             </div>
             <div id="collapseTwelve" class="collapse" aria-labelledby="headingTwelve">
               <div class="card-body">
-                The AB2D API leverages the <a href="http://build.fhir.org/ig/HL7/VhDir/bulk-data.html" target="_blank">Bulk FHIR Specification</a>
-                which uses the file format: NDJSON, <a href="http://ndjson.org/" target="_blank">New Line Delimited JSON</a>. An NDJSON file provides a single record on each line, which makes it 
+                The AB2D API leverages the <a href="http://build.fhir.org/ig/HL7/VhDir/bulk-data.html" target="_blank">Bulk FHIR Specification </a>
+                which uses the file format: NDJSON, <a href="http://ndjson.org/" target="_blank">New Line Delimited JSON </a>. An NDJSON file provides a single record on each line, which makes it 
                 easy for various tools to look at and process one record at a time before moving on to the next one.
               </div>
             </div>

@@ -35,7 +35,7 @@ was used to implement the [HL7 FHIR standard](https://www.hl7.org/fhir/overview.
 back in the [Resource OperationOutcome](errors come back in the https://www.hl7.org/fhir/operationoutcome.html) format.
 
 ### Sandbox
-The Sandbox/Swagger page is available [here](https://sandbox.ab2d.cms.gov/swagger-ui.html).
+The Sandbox/Swagger page is available [here](https://sandbox.ab2d.cms.gov/swagger-ui/index.html).
 
 ## Authentication and Authorization
 The API uses the JSON Web Tokens (JWT) to authorize use of the endpoints. The token should be sent using the 

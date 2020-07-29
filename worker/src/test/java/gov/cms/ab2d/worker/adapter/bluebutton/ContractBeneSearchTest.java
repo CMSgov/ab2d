@@ -5,6 +5,7 @@ import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.filter.FilterOutByDate;
+import gov.cms.ab2d.worker.processor.domainmodel.ProgressTracker;
 import org.hl7.fhir.dstu3.model.Bundle;
 import org.hl7.fhir.dstu3.model.Bundle.BundleEntryComponent;
 import org.hl7.fhir.dstu3.model.Bundle.BundleLinkComponent;
@@ -33,14 +34,14 @@ import static org.hamcrest.CoreMatchers.endsWith;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class ContractBeneSearchTest {
+    private ProgressTracker tracker;
 
     @Mock BFDClient client;
     @Mock LogManager eventLogger;
@@ -65,12 +66,18 @@ class ContractBeneSearchTest {
         Contract contract = new Contract();
         contract.setId(Long.valueOf(Instant.now().getNano()));
         contract.setContractNumber(contractNumber);
+        tracker = ProgressTracker.builder()
+                .jobUuid("JOBID")
+                .numContracts(1)
+                .failureThreshold(1)
+                .currentMonth(currentMonth)
+                .build();
     }
 
     @Test
     @DisplayName("given contractNumber, get patients from BFD API")
     void GivenContractNumber_ShouldReturnPatients() throws ExecutionException, InterruptedException {
-        ContractBeneficiaries response = cut.getPatients(contractNumber, currentMonth);
+        ContractBeneficiaries response = cut.getPatients(contractNumber, currentMonth, tracker);
 
         assertThat(response, notNullValue());
         assertThat(response.getContractNumber(), is(contractNumber));
@@ -83,7 +90,7 @@ class ContractBeneSearchTest {
 
     @Test
     void GivenPatientActiveInJanuary_ShouldReturnOneRowInDateRangesUnderContract() throws ExecutionException, InterruptedException {
-        ContractBeneficiaries response = cut.getPatients(contractNumber, Month.JANUARY.getValue());
+        ContractBeneficiaries response = cut.getPatients(contractNumber, Month.JANUARY.getValue(), tracker);
 
         Map<String, ContractBeneficiaries.PatientDTO> patients = response.getPatients();
         assertThat(patients.size(), is(1));
@@ -98,7 +105,7 @@ class ContractBeneSearchTest {
 
     @Test
     void GivenPatientActiveInJanAndFeb_ShouldReturnTwoRowsInDateRangesUnderContract() throws ExecutionException, InterruptedException {
-        ContractBeneficiaries response = cut.getPatients(contractNumber, Month.FEBRUARY.getValue());
+        ContractBeneficiaries response = cut.getPatients(contractNumber, Month.FEBRUARY.getValue(), tracker);
         Collection <ContractBeneficiaries.PatientDTO> patients = response.getPatients().values();
         ContractBeneficiaries.PatientDTO patient0 = patients.stream().filter(c -> c.getPatientId().equalsIgnoreCase("ccw_patient_000")).findFirst().get();
         assertThat(patient0.getPatientId(), is("ccw_patient_000"));
@@ -121,7 +128,7 @@ class ContractBeneSearchTest {
         when(client.requestPartDEnrolleesFromServer("S0000", 3))
                 .thenReturn(bundle1);    // January - patient1 is active
 
-        ContractBeneficiaries response = cut.getPatients(contractNumber, Month.MARCH.getValue());
+        ContractBeneficiaries response = cut.getPatients(contractNumber, Month.MARCH.getValue(), tracker);
 
         for (ContractBeneficiaries.PatientDTO patient : response.getPatients().values()) {
             if (patient.getPatientId().equalsIgnoreCase("ccw_patient_000")) {
@@ -156,7 +163,7 @@ class ContractBeneSearchTest {
         when(client.requestPartDEnrolleesFromServer(anyString(), anyInt()))
                 .thenReturn(bundle, bundle1);
 
-        ContractBeneficiaries response = cut.getPatients(contractNumber, Month.FEBRUARY.getValue());
+        ContractBeneficiaries response = cut.getPatients(contractNumber, Month.FEBRUARY.getValue(), tracker);
 
         Map<String, ContractBeneficiaries.PatientDTO> patients = response.getPatients();
         assertThat(patients.size(), is(2));
@@ -193,7 +200,8 @@ class ContractBeneSearchTest {
         when(client.requestPartDEnrolleesFromServer(anyString(), anyInt()))
                 .thenReturn(bundle1, bundle2);
 
-        ContractBeneficiaries response = cut.getPatients(contractNumber, Month.FEBRUARY.getValue());
+        ContractBeneficiaries response = cut.getPatients(contractNumber, Month.FEBRUARY.getValue(), tracker);
+        assertEquals(30, tracker.getPercentageCompleted());
 
         Collection<ContractBeneficiaries.PatientDTO> patients = response.getPatients().values();
         assertThat(patients.size(), is(2));
@@ -216,7 +224,7 @@ class ContractBeneSearchTest {
         List<BundleEntryComponent> entries = bundle.getEntry();
         entries.add(createBundleEntry("ccw_patient_001"));
 
-        ContractBeneficiaries response = cut.getPatients(contractNumber, Month.FEBRUARY.getValue());
+        ContractBeneficiaries response = cut.getPatients(contractNumber, Month.FEBRUARY.getValue(), tracker);
 
         Collection<ContractBeneficiaries.PatientDTO> patients = response.getPatients().values();
         assertThat(patients.size(), is(2));
@@ -246,7 +254,8 @@ class ContractBeneSearchTest {
         when(client.requestPartDEnrolleesFromServer(anyString(), anyInt())).thenReturn(bundle1);
         when(client.requestNextBundleFromServer(Mockito.any(Bundle.class))).thenReturn(bundle2);
 
-        Map<String, ContractBeneficiaries.PatientDTO> map = cut.getPatients(contractNumber, Month.JANUARY.getValue()).getPatients();
+        Map<String, ContractBeneficiaries.PatientDTO> map = cut.getPatients(contractNumber, Month.JANUARY.getValue(), tracker).getPatients();
+        assertEquals(30, tracker.getPercentageCompleted());
 
         Collection<ContractBeneficiaries.PatientDTO> patients = map.values();
         assertThat(patients.size(), is(3));
@@ -276,7 +285,7 @@ class ContractBeneSearchTest {
 
         when(client.requestPartDEnrolleesFromServer(anyString(), anyInt())).thenReturn(bundle);
 
-        Collection<ContractBeneficiaries.PatientDTO> patients = cut.getPatients(contractNumber, Month.JANUARY.getValue()).getPatients().values();
+        Collection<ContractBeneficiaries.PatientDTO> patients = cut.getPatients(contractNumber, Month.JANUARY.getValue(), tracker).getPatients().values();
         assertThat(patients.size(), is(2));
 
         for (ContractBeneficiaries.PatientDTO patient : patients) {
@@ -300,7 +309,7 @@ class ContractBeneSearchTest {
                 .thenThrow(new InvalidRequestException("Request is invalid"));
 
         var exceptionThrown = assertThrows(ExecutionException.class,
-                () -> cut.getPatients(contractNumber, currentMonth));
+                () -> cut.getPatients(contractNumber, currentMonth, tracker));
 
         assertThat(exceptionThrown.getMessage(), endsWith("Request is invalid"));
     }
