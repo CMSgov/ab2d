@@ -1,5 +1,7 @@
 package gov.cms.ab2d.worker.adapter.bluebutton;
 
+import com.newrelic.api.agent.NewRelic;
+import com.newrelic.api.agent.Segment;
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.events.ReloadEvent;
@@ -48,7 +50,10 @@ public class ContractBeneSearchImpl implements ContractBeneSearch {
      */
     @Override
     public ContractBeneficiaries getPatients(final String contractNumber, final int currentMonth, ProgressTracker tracker) throws ExecutionException, InterruptedException {
-        long start = System.currentTimeMillis();
+        final Segment patientSegment = NewRelic.getAgent().getTransaction().startSegment("Start of gathering patients for contract " +
+                contractNumber + " for months up to " + currentMonth);
+        patientSegment.setMetricName("GatherPatients");
+
         List<Future<ContractMapping>> futureHandles = new ArrayList<>();
         tracker.setCurrentMonth(currentMonth);
         for (var month = 1; month <= currentMonth; month++) {
@@ -59,11 +64,13 @@ public class ContractBeneSearchImpl implements ContractBeneSearch {
         ContractBeneficiaries contractBeneficiaries = new ContractBeneficiaries();
         contractBeneficiaries.setContractNumber(contractNumber);
         contractBeneficiaries.setPatients(new HashMap<>());
-        long end = System.currentTimeMillis();
-        log.info("Time to find {} beneficiaries for contract {} for all months up to {} is {} minutes",
-                results.size(), contractNumber, currentMonth, (end - start) / 1000 / 60);
 
-        start = System.currentTimeMillis();
+        patientSegment.end();
+        log.info("Found {} beneficiaries for contract {} for all months up to {}", results.size(), contractNumber, currentMonth);
+
+        final Segment dateRangePatientSegment = NewRelic.getAgent().getTransaction().startSegment("Adding date range to existing/new " +
+                "patients for contract " + contractNumber + " for months up to " + currentMonth);
+        patientSegment.setMetricName("DateRangePatients");
 
         for (ContractMapping mapping : results) {
             Set<String> patients = mapping.getPatients();
@@ -75,8 +82,7 @@ public class ContractBeneSearchImpl implements ContractBeneSearch {
             }
         }
 
-        end = System.currentTimeMillis();
-        log.info("Time to add date range to patients {}", end - start);
+        dateRangePatientSegment.end();
 
         return contractBeneficiaries;
     }
