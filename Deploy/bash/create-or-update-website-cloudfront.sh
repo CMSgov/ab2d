@@ -223,7 +223,7 @@ cd "${START_DIR}"/../../website
 # Configure head for Tealium/Google Analytics
 
 if [ "$opt" == "Prod AWS account" ]; then
-  sed -i "" 's%cms-ab2d[\/]dev%cms-ab2d/prod%g' _includes/head.html
+  sed -i "" 's%cms-ab2d[\/]prod%cms-ab2d/dev%g' _includes/head.html
 else
   sed -i "" 's%cms-ab2d[\/]prod%cms-ab2d/dev%g' _includes/head.html
 fi
