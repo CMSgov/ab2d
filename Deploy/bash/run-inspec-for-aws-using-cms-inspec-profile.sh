@@ -95,6 +95,8 @@ bundle install
 # - CMS approved regions: us-east-1, us-west-2, and us-gov-west-1
 # - unapproved regions will cause "generate_attributes.rb" to fail
 
+cd "${WORKSPACE}/profiles/cis-aws-foundations-baseline"
+
 sed -i.bak "/.*'us-east-2'.*/d" generate_attributes.rb
 sed -i.bak "/.*'us-west-1'.*/d" generate_attributes.rb
 sed -i.bak "/.*'us-west-2'.*/d" generate_attributes.rb
