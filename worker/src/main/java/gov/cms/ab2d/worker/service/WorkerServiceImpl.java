@@ -1,5 +1,8 @@
 package gov.cms.ab2d.worker.service;
 
+import gov.cms.ab2d.common.model.Properties;
+import gov.cms.ab2d.common.service.PropertiesService;
+import gov.cms.ab2d.common.util.Constants;
 import gov.cms.ab2d.worker.processor.JobPreProcessor;
 import gov.cms.ab2d.worker.processor.JobProcessor;
 import lombok.RequiredArgsConstructor;
@@ -10,6 +13,8 @@ import javax.annotation.PreDestroy;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
+import static gov.cms.ab2d.worker.service.WorkerDrive.fromString;
 
 /**
  * This class is responsible for actually processing the job and preparing bulk downloads for users.
@@ -22,6 +27,7 @@ public class WorkerServiceImpl implements WorkerService {
     private final JobPreProcessor jobPreprocessor;
     private final JobProcessor jobProcessor;
     private final ShutDownService shutDownService;
+    private final PropertiesService propertiesService;
 
     private List<String> activeJobs = Collections.synchronizedList(new ArrayList<>());
 
@@ -39,6 +45,12 @@ public class WorkerServiceImpl implements WorkerService {
         } finally {
             activeJobs.remove(jobUuid);
         }
+    }
+
+    @Override
+    public WorkerDrive getEngagement() {
+        Properties engagementProp =  propertiesService.getPropertiesByKey(Constants.WORKER_ENGAGEMENT);
+        return (engagementProp == null) ? fromString(null) : fromString(engagementProp.getValue());
     }
 
     @PreDestroy

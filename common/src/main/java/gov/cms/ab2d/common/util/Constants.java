@@ -49,6 +49,9 @@ public final class Constants {
 
     public static final String MAINTENANCE_MODE = "maintenance.mode";
 
+    // Accepted values: engaged, idle
+    public static final String WORKER_ENGAGEMENT = "worker.engaged";
+
     public static final String CONTRACT_2_BENE_CACHING_ON = "ContractToBeneCachingOn";
 
     public static final String ZIP_SUPPORT_ON = "ZipSupportOn";

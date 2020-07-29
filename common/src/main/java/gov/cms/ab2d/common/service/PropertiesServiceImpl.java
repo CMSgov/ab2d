@@ -68,25 +68,39 @@ public class PropertiesServiceImpl implements PropertiesService {
         for (PropertiesDTO propertiesDTO : propertiesDTOs) {
             checkNameOfPropertyKey(propertiesDTO);
             String key = propertiesDTO.getKey();
-
-            // If this becomes more extensive, consider having a table that contains a mapping of keys to validation expressions
-            if (key.equals(PCP_CORE_POOL_SIZE)) {
-                validateInt(key, propertiesDTO, 1, 100);
-                addUpdatedPropertiesToList(propertiesDTOsReturn, propertiesDTO);
-            } else if (key.equals(PCP_MAX_POOL_SIZE)) {
-                validateInt(key, propertiesDTO, 1, 500);
-                addUpdatedPropertiesToList(propertiesDTOsReturn, propertiesDTO);
-            } else if (key.equals(PCP_SCALE_TO_MAX_TIME)) {
-                validateInt(key, propertiesDTO, 1, 3600);
-                addUpdatedPropertiesToList(propertiesDTOsReturn, propertiesDTO);
-            } else if (propertiesDTO.getKey().equals(MAINTENANCE_MODE) ||
-                propertiesDTO.getKey().equals(CONTRACT_2_BENE_CACHING_ON) ||
-                propertiesDTO.getKey().equals(ZIP_SUPPORT_ON)) {
-                validateBoolean(key, propertiesDTO);
-                addUpdatedPropertiesToList(propertiesDTOsReturn, propertiesDTO);
-            }
+            validateProperty(propertiesDTOsReturn, propertiesDTO, key);
         }
         return propertiesDTOsReturn;
+    }
+
+    private void validateProperty(List<PropertiesDTO> propertiesDTOsReturn, PropertiesDTO propertiesDTO, String key) {
+        // If this becomes more extensive, consider having a table that contains a mapping of keys to validation expressions
+        switch (key) {
+        case PCP_CORE_POOL_SIZE:
+            validateInt(key, propertiesDTO, 1, 100);
+            addUpdatedPropertiesToList(propertiesDTOsReturn, propertiesDTO);
+            break;
+
+        case PCP_MAX_POOL_SIZE:
+            validateInt(key, propertiesDTO, 1, 500);
+            addUpdatedPropertiesToList(propertiesDTOsReturn, propertiesDTO);
+            break;
+
+        case PCP_SCALE_TO_MAX_TIME:
+            validateInt(key, propertiesDTO, 1, 3600);
+            addUpdatedPropertiesToList(propertiesDTOsReturn, propertiesDTO);
+            break;
+
+        case MAINTENANCE_MODE:
+        case CONTRACT_2_BENE_CACHING_ON:
+        case ZIP_SUPPORT_ON:
+            validateBoolean(key, propertiesDTO);
+            addUpdatedPropertiesToList(propertiesDTOsReturn, propertiesDTO);
+            break;
+
+        default:
+            break;
+        }
     }
 
     void validateInt(String var, PropertiesDTO property, int min, int max) {
