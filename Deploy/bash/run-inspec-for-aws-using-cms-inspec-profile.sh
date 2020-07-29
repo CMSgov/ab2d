@@ -87,6 +87,14 @@ mkdir -p gem_dependencies
 bundle config set path "${PWD}/gem_dependencies"
 bundle install
 
+# Change to the AB2D overlay to set up the environment dynamically
+
+cd "${START_DIR}/../../../ab2d/Deploy/inspec/ab2d-inspec-aws"
+
+# Run the `generate_attributes.rb` to generate AWS environment specific elements to test
+
+ruby $WORKSPACE/cis-aws-foundations-baseline/generate_attributes.rb >> attributes_aws.yml
+
 # Accept Inspec license
 
 inspec vendor . --overwrite --chef-license accept-silent
@@ -96,7 +104,7 @@ inspec vendor . --overwrite --chef-license accept-silent
 # 0 - no failures and no skipped tests
 # 101 - skipped tests but no failures
 
-# inspec exec . \
-#   -t aws:// \
-#   --attrs=attributes_aws.yml \
-#   --reporter cli junit:aws-inspec-results.xml json:aws-inspec-results.json || if [ $? -eq 0 -o $? -eq 101 ]; then continue; else exit 1; fi
+inspec exec . \
+  -t aws:// \
+  --attrs=attributes_aws.yml \
+  --reporter cli junit:aws-inspec-results.xml json:aws-inspec-results.json || if [ $? -eq 0 -o $? -eq 101 ]; then continue; else exit 1; fi
