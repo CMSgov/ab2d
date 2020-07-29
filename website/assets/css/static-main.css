@@ -6248,7 +6248,7 @@ article h2::after {
 }
 
 .step-content {
-    margin-bottom: 50px;
+    margin-bottom: 100px;
 }
 
 .google-group-wrapper a {
@@ -6329,7 +6329,7 @@ article h2::after {
 }
 
 .btn-link {
-    color: #35414f;
+    color: #0071bc;
 }
 
 .card-header {
@@ -6494,4 +6494,16 @@ code.highlighter-rouge {
 }
 .card-body li:last-child, .step-content li:last-child {
     margin-bottom: 0px;
+}
+
+a[target^='_blank']::after {
+    content: '\e89e';
+    display: inline-block;
+    font-family: 'Material Icons';
+    font-size: 1em;
+    margin-left: 0.25em;
+    vertical-align: middle;
+}
+a.join-our-google-group[target^='_blank']::after, footer a[target^='_blank']::after {
+    display: none;
 }

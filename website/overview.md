@@ -26,14 +26,14 @@ active-nav: overview-nav
                     The Centers for Medicare and Medicaid Services (CMS) contracts with private insurance companies, 
                     known as Medicare Prescription Drug Plan (PDP) sponsors, to provide prescription drug coverage for enrollees.</p>
                 <p>
-                    The <a href="https://www.congress.gov/bill/115th-congress/house-bill/1892/text" target="_blank">Bipartisan Budget Act of 2018 (BBA)</a> requires the development of a process to share Medicare claims data with
-                    PDP sponsors. <a target="_blank" href="https://www.federalregister.gov/documents/2019/04/16/2019-06822/medicare-and-medicaid-programs-policy-and-technical-changes-to-the-medicare-advantage-medicare">The Final Rule</a> provides additional detail on the purposes and limitations on the use of data, the data request process, and data extract content.
+                    The <a href="https://www.congress.gov/bill/115th-congress/house-bill/1892/text" target="_blank">Bipartisan Budget Act of 2018 (BBA) </a> requires the development of a process to share Medicare claims data with
+                    PDP sponsors. <a target="_blank" href="https://www.federalregister.gov/documents/2019/04/16/2019-06822/medicare-and-medicaid-programs-policy-and-technical-changes-to-the-medicare-advantage-medicare">The Final Rule </a> provides additional detail on the purposes and limitations on the use of data, the data request process, and data extract content.
                 </p>
                 <p>
                     In response to the BBA, CMS has developed an Application Programming Interface (API) known as the AB2D API. The AB2D API securely provides 
                     stand-alone PDP sponsors with Medicare Parts A and B claims data for their active enrollees. PDP sponsors will be able to utilize this claims data 
                     to promote the appropriate use of medications and to improve health outcomes for their beneficiaries. The bulk claims data provided by the AB2D API 
-                    is formatted in <a href="https://hl7.org/fhir/uv/bulkdata/export/index.html" target="_blank">Fast Healthcare Interoperability Resources (FHIR)</a> a standard for exchanging healthcare information electronically.
+                    is formatted in <a href="https://hl7.org/fhir/uv/bulkdata/export/index.html" target="_blank">Fast Healthcare Interoperability Resources (FHIR) </a> a standard for exchanging healthcare information electronically.
                 </p>
             </div>
         </div>
@@ -59,9 +59,9 @@ active-nav: overview-nav
             <div class="col-lg-6 px-5">
                 <ol>
                     <li>The AB2D API provides FHIR-formatted bulk claims data to stand-alone PDP sponsors for their enrollees.</li>
-                    <li><a href="https://bluebutton.cms.gov/" target="_blank">Blue Button 2.0</a> provides FHIR-formatted data for one individual Medicare beneficiary at a time, to registered applications with beneficiary authorization.</li>
-                    <li><a href="https://bcda.cms.gov/" target="_blank">BCDA</a> provides FHIR-formatted bulk data files to an ACO for all of the beneficiaries eligible to a given Shared Savings Program ACO. BCDA does not require individual beneficiary authorization but does allow a process for patients to opt out of data sharing.</li>
-                    <li><a href="https://dpc.cms.gov/" target="_blank">Data at the Point of Care</a> pilot provides FHIR-formatted bulk data files to fee-for-service providers for their active patients as needed for treatment purposes under HIPAA. Data at the Point of Care does not require individual beneficiary authorization.</li>
+                    <li><a href="https://bluebutton.cms.gov/" target="_blank">Blue Button 2.0 </a> provides FHIR-formatted data for one individual Medicare beneficiary at a time, to registered applications with beneficiary authorization.</li>
+                    <li><a href="https://bcda.cms.gov/" target="_blank">BCDA </a> provides FHIR-formatted bulk data files to an ACO for all of the beneficiaries eligible to a given Shared Savings Program ACO. BCDA does not require individual beneficiary authorization but does allow a process for patients to opt out of data sharing.</li>
+                    <li><a href="https://dpc.cms.gov/" target="_blank">Data at the Point of Care </a> pilot provides FHIR-formatted bulk data files to fee-for-service providers for their active patients as needed for treatment purposes under HIPAA. Data at the Point of Care does not require individual beneficiary authorization.</li>
                 </ol>
             </div>
             <div class="col-lg-6"> <img src="assets/img/programmer.svg" alt="Accessing Claims Data"/> </div>
