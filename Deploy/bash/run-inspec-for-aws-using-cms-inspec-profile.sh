@@ -89,7 +89,7 @@ bundle install
 
 # Eliminate unused regions
 
-sed -i.bak "s/.*'us-[a-z].*-[0-9]',\n//g" generate_attributes.rb
+sed -i.bak "s/.*'us-[a-z].*-[0-9]',//g" generate_attributes.rb
 
 cat "${WORKSPACE}/profiles/cis-aws-foundations-baseline/generate_attributes.rb"
 
