@@ -114,7 +114,7 @@ public class ContractProcessorImpl implements ContractProcessor {
                     continue;
                 }
 
-                futureHandles.add(processPatient(patient.getValue(), contractData, helper));
+                futureHandles.add(processPatient(patient.getValue(), contractData, helper, patients));
 
                 // Periodically check if cancelled
                 if (recordsProcessedCount % cancellationCheckFrequency == 0) {
@@ -195,7 +195,7 @@ public class ContractProcessorImpl implements ContractProcessor {
      * @param helper - the helper used to write to the file
      * @return a Future<Void>
      */
-    private Future<Void> processPatient(PatientDTO patient, ContractData contractData, StreamHelper helper) {
+    private Future<Void> processPatient(PatientDTO patient, ContractData contractData, StreamHelper helper, Map<String, PatientDTO> map) {
         final Token token = NewRelic.getAgent().getTransaction().getToken();
 
         // Using a ThreadLocal to communicate contract number to RoundRobinBlockingQueue
@@ -209,7 +209,7 @@ public class ContractProcessorImpl implements ContractProcessor {
             var patientClaimsRequest = new PatientClaimsRequest(patient, helper, attestedOn, sinceTime,
                     contractData.getUserId(), jobUuid,
                     contractData.getContract() != null ? contractData.getContract().getContractNumber() : null, token);
-            return patientClaimsProcessor.process(patientClaimsRequest);
+            return patientClaimsProcessor.process(patientClaimsRequest, map);
 
         } finally {
             RoundRobinBlockingQueue.CATEGORY_HOLDER.remove();
