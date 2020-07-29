@@ -91,20 +91,26 @@ bundle install
 
 cd "${WORKSPACE}/ab2d/Deploy/inspec/ab2d-inspec-aws"
 
-# Run the `generate_attributes.rb` to generate AWS environment specific elements to test
+# Eliminate unused regions
 
-ruby "${WORKSPACE}/profiles/cis-aws-foundations-baseline/generate_attributes.rb" >> attributes_aws.yml
+sed -i.bak "s/.*'us-[a-z].*-[0-9]',\n//g" generate_attributes.rb
 
-# Accept Inspec license
+cat "${WORKSPACE}/profiles/cis-aws-foundations-baseline/generate_attributes.rb"
 
-inspec vendor . --overwrite --chef-license accept-silent
+# # Run the `generate_attributes.rb` to generate AWS environment specific elements to test
 
-# Run Inspec profile
-# Don't fail if error code is 0 or 101
-# 0 - no failures and no skipped tests
-# 101 - skipped tests but no failures
+# ruby "${WORKSPACE}/profiles/cis-aws-foundations-baseline/generate_attributes.rb" >> attributes_aws.yml
 
-inspec exec . \
-  -t aws:// \
-  --attrs=attributes_aws.yml \
-  --reporter cli junit:aws-inspec-results.xml json:aws-inspec-results.json || if [ $? -eq 0 -o $? -eq 101 ]; then continue; else exit 1; fi
+# # Accept Inspec license
+
+# inspec vendor . --overwrite --chef-license accept-silent
+
+# # Run Inspec profile
+# # Don't fail if error code is 0 or 101
+# # 0 - no failures and no skipped tests
+# # 101 - skipped tests but no failures
+
+# inspec exec . \
+#   -t aws:// \
+#   --attrs=attributes_aws.yml \
+#   --reporter cli junit:aws-inspec-results.xml json:aws-inspec-results.json || if [ $? -eq 0 -o $? -eq 101 ]; then continue; else exit 1; fi
