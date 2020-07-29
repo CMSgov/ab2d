@@ -81,7 +81,7 @@ fi
 
 # Change to "cms-ars-3.1-moderate-aws-foundations-cis-overlay" repo
 
-cd "${WORKSPACE}/profiles/cms-ars-3.1-moderate-aws-foundations-cis-overlay"
+cd "${WORKSPACE}/cms-ars-3.1-moderate-aws-foundations-cis-overlay"
 
 # Configure path to Ruby gems and install them
 
@@ -95,7 +95,7 @@ bundle install
 # - CMS approved regions: us-east-1, us-west-2, and us-gov-west-1
 # - unapproved regions will cause "generate_attributes.rb" to fail
 
-cd "${WORKSPACE}/profiles/cis-aws-foundations-baseline"
+cd "${WORKSPACE}/cis-aws-foundations-baseline"
 
 sed -i.bak "/.*'us-east-2'.*/d" generate_attributes.rb
 sed -i.bak "/.*'us-west-1'.*/d" generate_attributes.rb
@@ -108,7 +108,7 @@ cd "${WORKSPACE}/ab2d/Deploy/inspec/ab2d-inspec-aws"
 
 # Run the `generate_attributes.rb` to generate AWS environment specific elements to test
 
-ruby "${WORKSPACE}/profiles/cis-aws-foundations-baseline/generate_attributes.rb" >> attributes_aws.yml
+ruby "${WORKSPACE}/cis-aws-foundations-baseline/generate_attributes.rb" >> attributes_aws.yml
 
 # Accept Inspec license
 

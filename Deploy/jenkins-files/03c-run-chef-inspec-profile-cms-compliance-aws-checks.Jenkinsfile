@@ -44,8 +44,8 @@ pipeline {
     stage('Clone cms-ars-3.1-moderate-aws-foundations-cis-overlay repo') {
       steps {
         script {
-          sh 'mkdir -p profiles/cms-ars-3.1-moderate-aws-foundations-cis-overlay; cd profiles'
-          dir ('profiles/cms-ars-3.1-moderate-aws-foundations-cis-overlay') {
+          sh 'mkdir -p cms-ars-3.1-moderate-aws-foundations-cis-overlay; cd cms-ars-3.1-moderate-aws-foundations-cis-overlay'
+          dir ('cms-ars-3.1-moderate-aws-foundations-cis-overlay') {
             git branch: 'master',
             credentialsId: 'GITHUB_CMS_GOV_HV7K_PAT',
             url: 'https://github.cms.gov/ISPG/cms-ars-3.1-moderate-aws-foundations-cis-overlay.git'
@@ -56,8 +56,8 @@ pipeline {
     stage('Clone cis-aws-foundations-baseline repo') {
       steps {
         script {
-          sh 'mkdir -p profiles/cis-aws-foundations-baseline; cd profiles'
-          dir ('profiles/cis-aws-foundations-baseline') {
+          sh 'mkdir -p cis-aws-foundations-baseline; cd cis-aws-foundations-baseline'
+          dir ('cis-aws-foundations-baseline') {
             git branch: 'master',
             url: 'https://github.com/mitre/cis-aws-foundations-baseline.git'
           }
