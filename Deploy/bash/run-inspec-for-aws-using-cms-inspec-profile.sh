@@ -87,30 +87,35 @@ mkdir -p gem_dependencies
 bundle config set path "${PWD}/gem_dependencies"
 bundle install
 
-# Eliminate unused regions
+# Eliminate unused regions from generate_attributes.rb
+# - note that only us-east-1 region is used for AB2D
+# - note that approved regions are defined in the "CMSCloudApprovedRegions" policy for Greenfield
+# - CMS approved regions: us-east-1, us-west-2, and us-gov-west-1
+# - unapproved regions will cause "generate_attributes.rb" to fail
 
-sed -i.bak "s/.*'us-[a-z].*-[0-9]',//g" generate_attributes.rb
+sed -i.bak "/.*'us-east-2'.*/d" generate_attributes.rb
+sed -i.bak "/.*'us-west-1'.*/d" generate_attributes.rb
+sed -i.bak "/.*'us-west-2'.*/d" generate_attributes.rb
+sed -i.bak "s/'us-east-1',/'us-east-1'/g" generate_attributes.rb
 
-cat "${WORKSPACE}/profiles/cis-aws-foundations-baseline/generate_attributes.rb"
+# Change to the AB2D overlay to set up the environment dynamically
 
-# # Change to the AB2D overlay to set up the environment dynamically
+cd "${WORKSPACE}/ab2d/Deploy/inspec/ab2d-inspec-aws"
 
-# cd "${WORKSPACE}/ab2d/Deploy/inspec/ab2d-inspec-aws"
+# Run the `generate_attributes.rb` to generate AWS environment specific elements to test
 
-# # Run the `generate_attributes.rb` to generate AWS environment specific elements to test
+ruby "${WORKSPACE}/profiles/cis-aws-foundations-baseline/generate_attributes.rb" >> attributes_aws.yml
 
-# ruby "${WORKSPACE}/profiles/cis-aws-foundations-baseline/generate_attributes.rb" >> attributes_aws.yml
+# Accept Inspec license
 
-# # Accept Inspec license
+inspec vendor . --overwrite --chef-license accept-silent
 
-# inspec vendor . --overwrite --chef-license accept-silent
+# Run Inspec profile
+# Don't fail if error code is 0 or 101
+# 0 - no failures and no skipped tests
+# 101 - skipped tests but no failures
 
-# # Run Inspec profile
-# # Don't fail if error code is 0 or 101
-# # 0 - no failures and no skipped tests
-# # 101 - skipped tests but no failures
-
-# inspec exec . \
-#   -t aws:// \
-#   --attrs=attributes_aws.yml \
-#   --reporter cli junit:aws-inspec-results.xml json:aws-inspec-results.json || if [ $? -eq 0 -o $? -eq 101 ]; then continue; else exit 1; fi
+inspec exec . \
+  -t aws:// \
+  --attrs=attributes_aws.yml \
+  --reporter cli junit:aws-inspec-results.xml json:aws-inspec-results.json || if [ $? -eq 0 -o $? -eq 101 ]; then continue; else exit 1; fi
