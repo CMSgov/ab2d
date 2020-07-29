@@ -79,7 +79,7 @@ fi
 
 # Change to "cms-ars-3.1-moderate-aws-foundations-cis-overlay" repo
 
-cd "${START_DIR}/../../../profiles/cms-ars-3.1-moderate-aws-foundations-cis-overlay"
+cd "${WORKSPACE}/profiles/cms-ars-3.1-moderate-aws-foundations-cis-overlay"
 
 # Configure path to Ruby gems and install them
 
@@ -89,11 +89,11 @@ bundle install
 
 # Change to the AB2D overlay to set up the environment dynamically
 
-cd "${START_DIR}/../../../ab2d/Deploy/inspec/ab2d-inspec-aws"
+cd "${WORKSPACE}/ab2d/Deploy/inspec/ab2d-inspec-aws"
 
 # Run the `generate_attributes.rb` to generate AWS environment specific elements to test
 
-ruby $WORKSPACE/cis-aws-foundations-baseline/generate_attributes.rb >> attributes_aws.yml
+ruby "${WORKSPACE}/profiles/cis-aws-foundations-baseline/generate_attributes.rb" >> attributes_aws.yml
 
 # Accept Inspec license
 
