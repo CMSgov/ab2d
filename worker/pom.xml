@@ -12,7 +12,6 @@
 
     <properties>
         <project.root>${basedir}/..</project.root>
-        <newrelic.version>5.13.0</newrelic.version>
     </properties>
 
     <dependencies>
