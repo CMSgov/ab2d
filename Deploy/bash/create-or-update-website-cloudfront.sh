@@ -311,3 +311,13 @@ aws --region "${AWS_DEFAULT_REGION}" s3 cp \
 # Revert head for Tealium/Google Analytics to dev setting
 
 sed -i "" 's%cms-ab2d[\/]prod%cms-ab2d/dev%g' _includes/head.html
+
+# Output website URL
+
+CLOUDFRONT_DISTRIBUTION_DOMAIN_NAME=$(aws --region us-east-1 cloudfront list-distributions \
+  --query "DistributionList.Items[?Id == 'E2E49VI82F50PL'" \
+  --query "DistributionList.Items[*].DomainName" \
+  --output text)
+
+echo ""
+echo "https://${CLOUDFRONT_DISTRIBUTION_DOMAIN_NAME}"
