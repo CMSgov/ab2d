@@ -61,9 +61,17 @@
    
 #### Upgrade Jenkins software
 
+1. Ensure that you are connected to the Cisco VPN
+
 1. Open a terminal
    
 1. Connect to Jenkins master
+
+   1. Change to the "Deploy" directory
+
+      ```ShellSession
+      $ cd ~/code/ab2d/Deploy
+      ```
 
    1. Get credentials for the Management AWS account
 
@@ -79,8 +87,6 @@
         --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
         --output text)
       ```
-
-   1. Ensure that you are connected to the Cisco VPN
 
    1. SSH into the instance using the public IP address
 
@@ -137,6 +143,8 @@
    ```ShellSessiion
    $ systemctl status jenkins
    ```
+
+1. Wait for about one minute
 
 1. Log on to the Jenkins GUI (if not already logged in)
 
