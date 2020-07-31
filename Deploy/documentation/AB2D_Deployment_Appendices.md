@@ -10147,9 +10147,9 @@ $ sed -i "" 's%cms-ab2d[\/]prod%cms-ab2d/dev%g' _includes/head.html (edited)
    *NOTE: currently using a real Okta contract with a small number of patients since the synthetic data is not working.*
 
    ```ShellSession
+   $ export OKTA_CONTRACT_NUMBER={okta contract number}
    $ export OKTA_CLIENT_ID={first okta client id}
    $ export OKTA_CLIENT_PASSWORD={first okta client secret}
-   $ export OKTA_CONTRACT_NUMBER={okta contract number}
    ```
 
 1. Set second OKTA test user
