@@ -7,6 +7,7 @@ import lombok.Setter;
 import lombok.Singular;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 @Getter
@@ -64,12 +65,25 @@ public class ProgressTracker {
         ++optOutCount;
     }
 
-    public void addPatientsByContract(ContractBeneficiaries bene) {
-        this.patientsByContracts.add(bene);
+    public void addPatientByContract(String contractNum, ContractBeneficiaries.PatientDTO dto) {
+        ContractBeneficiaries response = getContractBeneficiariesByContractNum(contractNum);
+        if (response == null) {
+            return;
+        }
+        if (response.getPatients() == null) {
+            response.setPatients(new HashMap<>());
+        }
+        response.getPatients().put(dto.getPatientId(), dto);
     }
 
     public void incrementTotalContractBeneficiariesSearchFinished() {
         ++totalContractBeneficiariesSearchFinished;
+    }
+
+    private ContractBeneficiaries getContractBeneficiariesByContractNum(String contractNum) {
+        return patientsByContracts.stream()
+                .filter(c -> contractNum.equalsIgnoreCase(c.getContractNumber()))
+                .findFirst().orElse(null);
     }
 
     public int getContractCount(String contractNumber) {

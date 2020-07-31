@@ -1,50 +1,68 @@
 package gov.cms.ab2d.worker.processor;
 
 import com.newrelic.api.agent.NewRelic;
-import com.newrelic.api.agent.Segment;
+import com.newrelic.api.agent.Token;
 import com.newrelic.api.agent.Trace;
-import gov.cms.ab2d.common.model.Contract;
-import gov.cms.ab2d.common.model.Job;
-import gov.cms.ab2d.common.model.JobStatus;
-import gov.cms.ab2d.common.model.Sponsor;
+import gov.cms.ab2d.bfd.client.BFDClient;
+import gov.cms.ab2d.common.model.*;
 import gov.cms.ab2d.common.repository.JobOutputRepository;
 import gov.cms.ab2d.common.repository.JobRepository;
+import gov.cms.ab2d.common.util.Constants;
 import gov.cms.ab2d.eventlogger.LogManager;
-import gov.cms.ab2d.eventlogger.events.ContractBeneSearchEvent;
-import gov.cms.ab2d.eventlogger.events.FileEvent;
-import gov.cms.ab2d.eventlogger.events.JobStatusChangeEvent;
-import gov.cms.ab2d.worker.adapter.bluebutton.ContractBeneSearch;
+import gov.cms.ab2d.eventlogger.events.*;
+import gov.cms.ab2d.filter.FilterOutByDate;
+import gov.cms.ab2d.worker.adapter.bluebutton.ContractBeneficiaries;
+import gov.cms.ab2d.worker.config.RoundRobinBlockingQueue;
 import gov.cms.ab2d.worker.processor.domainmodel.ContractData;
+import gov.cms.ab2d.worker.processor.domainmodel.ContractMapping;
+import gov.cms.ab2d.worker.processor.domainmodel.PatientClaimsRequest;
 import gov.cms.ab2d.worker.processor.domainmodel.ProgressTracker;
 import gov.cms.ab2d.worker.service.FileService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.File;
-import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.text.ParseException;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.stream.Collectors;
 
+import static gov.cms.ab2d.common.model.JobStatus.CANCELLED;
 import static gov.cms.ab2d.common.model.JobStatus.SUCCESSFUL;
+import static gov.cms.ab2d.common.util.Constants.EOB;
+import static gov.cms.ab2d.worker.adapter.bluebutton.ContractBeneficiaries.*;
 import static gov.cms.ab2d.worker.processor.StreamHelperImpl.FileOutputType.NDJSON;
-import static gov.cms.ab2d.worker.processor.StreamHelperImpl.FileOutputType.ZIP;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class JobProcessorImpl implements JobProcessor {
+    private static final int SLEEP_DURATION = 250;
+
+    @Value("${report.progress.log.frequency:100}")
+    private int reportProgressLogFrequency;
+
+    @Value("${report.progress.db.frequency:100}")
+    private int reportProgressDbFrequency;
+
+    @Value("${job.file.rollover.ndjson:200}")
+    private long ndjsonRollOver;
 
     @Value("${efs.mount}")
     private String efsMount;
@@ -56,13 +74,21 @@ public class JobProcessorImpl implements JobProcessor {
     @Value("${failure.threshold}")
     private int failureThreshold;
 
+    @Value("${cancellation.check.frequency:10}")
+    private int cancellationCheckFrequency;
+
+    @Value("${file.try.lock.timeout}")
+    private int tryLockTimeout;
+
     private final FileService fileService;
     private final JobRepository jobRepository;
     private final JobOutputRepository jobOutputRepository;
-    private final ContractBeneSearch contractBeneSearch;
-    private final ContractProcessor contractProcessor;
     private final LogManager eventLogger;
+    private final BFDClient bfdClient;
+    private final PatientClaimsProcessor patientClaimsProcessor;
 
+    @Qualifier("patientContractThreadPool")
+    private final ThreadPoolTaskExecutor patientContractThreadPool;
     /**
      * Load the job and process it
      *
@@ -87,8 +113,10 @@ public class JobProcessorImpl implements JobProcessor {
         } catch (JobCancelledException e) {
             log.warn("Job: [{}] CANCELLED", jobUuid);
 
-            log.info("Deleting output directory : {} ", outputDirPath.toAbsolutePath());
-            deleteExistingDirectory(outputDirPath, job);
+            if (outputDirPath != null) {
+                log.info("Deleting output directory : {} ", outputDirPath.toAbsolutePath());
+                deleteExistingDirectory(outputDirPath, job);
+            }
 
         } catch (Exception e) {
             eventLogger.log(new JobStatusChangeEvent(
@@ -111,7 +139,7 @@ public class JobProcessorImpl implements JobProcessor {
     /**
      * Process in individual contract
      *
-     * @param contract - the contract to process
+     * @param contracts - all the contract to process
      * @param job - the job in which the contract belongs
      * @param month - the month to search for beneficiaries for
      * @param outputDirPath - the location of the job output
@@ -119,48 +147,239 @@ public class JobProcessorImpl implements JobProcessor {
      * @throws ExecutionException when there is an issue with searching
      * @throws InterruptedException - when the search is interrupted
      */
-    void processContract(Contract contract, Job job, int month, Path outputDirPath, ProgressTracker progressTracker) throws ExecutionException, InterruptedException {
-        log.info("Job [{}] - contract [{}] ", job.getJobUuid(), contract.getContractNumber());
-        // Retrieve the contract beneficiaries
-        try {
-            processContractBenes(job, contract, month, progressTracker);
-        } catch (ExecutionException | InterruptedException ex) {
-            log.error("Having issue retrieving patients for contract " + contract.getContractNumber());
-            throw ex;
+    private void processContracts(List<Contract> contracts, Job job, int month, Path outputDirPath, ProgressTracker progressTracker) throws ExecutionException, InterruptedException {
+        List<ContractData> cData = new ArrayList<>();
+        for (Contract contract : contracts) {
+
+            // Retrieve the contract beneficiaries
+            //for (Contract contract : contracts) {
+            try {
+                // Init objects
+                StreamHelper helper = new TextStreamHelperImpl(outputDirPath, contract.getContractNumber(), ndjsonRollOver * Constants.ONE_MEGA_BYTE, tryLockTimeout, eventLogger, job);
+                ContractData contractData = new ContractData(contract, progressTracker, contract.getAttestedOn(), job.getSince(),
+                        job.getUser() != null ? job.getUser().getUsername() : null, helper);
+                cData.add(contractData);
+
+                ContractBeneficiaries contractBeneficiaries = buildCB(contract.getContractNumber());
+
+                progressTracker.setCurrentMonth(month);
+
+                List<Future<ContractMapping>> contractBeneFutureHandles = createAllContractMappingFutures(month, contract.getContractNumber());
+                List<Future<Void>> eobFutureHandles = new ArrayList<>();
+
+                 // Iterate through the futures
+                while (!contractBeneFutureHandles.isEmpty() && !eobFutureHandles.isEmpty()) {
+                    // See if there are any threads left to finish
+                    Iterator<Future<ContractMapping>> contactBeneSearchIterator = contractBeneFutureHandles.iterator();
+                    while (contactBeneSearchIterator.hasNext()) {
+                        Future<ContractMapping> future = contactBeneSearchIterator.next();
+                        // If it's done, claim the data and add it to the results, then remove it from the active threads
+                        if (future.isDone()) {
+                            contactBeneSearchIterator.remove();
+                            ContractMapping contractMapping = getContractMappingFromFuture(future, contract.getContractNumber());
+                            if (contractMapping == null) {
+                                continue;
+                            }
+                            progressTracker.incrementTotalContractBeneficiariesSearchFinished();
+                            updateJobStatus(job, progressTracker);
+                            Set<String> patients = contractMapping.getPatients();
+                            eventLogger.log(new ReloadEvent(null, ReloadEvent.FileType.CONTRACT_MAPPING,
+                                    "Contract: " + contract.getContractNumber() +
+                                            " retrieved " + patients.size() + " contract beneficiaries for month " +
+                                            contractMapping.getMonth(), patients.size()));
+                            if (!patients.isEmpty()) {
+                                List<PatientDTO> newPatients = addDateRangeToExistingOrNewPatient(contractBeneficiaries,
+                                        toDateRange(contractMapping.getMonth()), patients);
+                                newPatients.forEach(p -> {
+                                    progressTracker.addPatientByContract(contract.getContractNumber(), p);
+                                    eobFutureHandles.add(addPatientSearch(p, contractData, helper, contractBeneficiaries.getPatients()));
+                                });
+                            }
+                        }
+                    }
+                    processBeneFuturesList(eobFutureHandles, progressTracker);
+                    updateJobStatus(job, progressTracker);
+                    // If we haven't removed all items from the running futures lists, sleep for a bit
+                    if (!contractBeneFutureHandles.isEmpty() && !eobFutureHandles.isEmpty()) {
+                        sleepABit();
+                    }
+                }
+                final JobStatus jobStatus = jobRepository.findJobStatus(progressTracker.getJobUuid());
+                if (CANCELLED.equals(jobStatus)) {
+                    cancelIt(contractBeneFutureHandles, eobFutureHandles, progressTracker.getJobUuid());
+                }
+                updateJobStatus(job, progressTracker);
+            } catch (ExecutionException | InterruptedException ex) {
+                log.error("Having issue retrieving patients for contract " + contract.getContractNumber());
+                throw ex;
+            } catch (IOException e) {
+                cData.forEach(c -> close(c.getHelper()));
+                throw new UncheckedIOException(e);
+            }
+            eventLogger.log(new ContractBeneSearchEvent(job.getUser() == null ? null : job.getUser().getUsername(),
+                    job.getJobUuid(),
+                    contract.getContractNumber(),
+                    progressTracker.getContractCount(contract.getContractNumber()),
+                    progressTracker.getProcessedCount(),
+                    progressTracker.getOptOutCount(),
+                    progressTracker.getFailureCount()));
         }
+        // final Segment contractSegment = NewRelic.getAgent().getTransaction().startSegment("Patient processing of contract " + contract.getContractNumber());
+        // contractSegment.end();
 
-        // Create a holder for the contract, writer, progress tracker and attested date
-        ContractData contractData = new ContractData(contract, progressTracker, contract.getAttestedOn(), job.getSince(),
-                job.getUser() != null ? job.getUser().getUsername() : null);
-
-        final Segment contractSegment = NewRelic.getAgent().getTransaction().startSegment("Patient processing of contract " + contract.getContractNumber());
-        var jobOutputs = contractProcessor.process(outputDirPath, contractData, NDJSON);
-        contractSegment.end();
+        // All jobs are done, return the job output records
+        List<JobOutput> jobOutputs = new ArrayList<>();
+        cData.forEach(c -> jobOutputs.addAll(createJobOutputs(c.getHelper().getDataFiles(), false)));
+        cData.forEach(c -> jobOutputs.addAll(createJobOutputs(c.getHelper().getErrorFiles(), true)));
+        if (jobOutputs.isEmpty()) {
+            var errMsg = "The export process has produced no results";
+            throw new RuntimeException(errMsg);
+        }
 
         // For each job output, add to the job and save the result
         jobOutputs.forEach(job::addJobOutput);
         jobOutputRepository.saveAll(jobOutputs);
-
-        eventLogger.log(new ContractBeneSearchEvent(job.getUser() == null ? null : job.getUser().getUsername(),
-                job.getJobUuid(),
-                contract.getContractNumber(),
-                progressTracker.getContractCount(contract.getContractNumber()),
-                progressTracker.getProcessedCount(),
-                progressTracker.getOptOutCount(),
-                progressTracker.getFailureCount()));
+        cData.forEach(c -> close(c.getHelper()));
     }
 
-    void processContractBenes(Job job, Contract contract, int month, ProgressTracker progressTracker) throws ExecutionException, InterruptedException {
+    private void cancelIt(List<Future<ContractMapping>> contractBeneFutureHandles, List<Future<Void>> eobFutureHandles,
+                          String jobId) {
+        log.warn("Job [{}] has been cancelled. Attempting to stop processing the job shortly ... ", jobId);
+        contractBeneFutureHandles.parallelStream().forEach(f -> f.cancel(false));
+        eobFutureHandles.parallelStream().forEach(f -> f.cancel(false));
+        final String errMsg = "Job was cancelled while it was being processed";
+        log.warn("{}", errMsg);
+        throw new JobCancelledException(errMsg);
+    }
+
+    private void sleepABit() {
         try {
-            progressTracker.addPatientsByContract(contractBeneSearch.getPatients(contract.getContractNumber(), month, progressTracker));
-            int progress = progressTracker.getPercentageCompleted();
-            job.setProgress(progress);
-            job.setStatusMessage(progress + "% complete");
-            jobRepository.save(job);
-        } catch (ExecutionException | InterruptedException ex) {
-            log.error("Having issue retrieving patients for contract " + contract.getContractNumber());
-            throw ex;
+            Thread.sleep(SLEEP_DURATION);
+        } catch (InterruptedException e) {
+            log.warn("interrupted exception in thread.sleep(). Ignoring");
         }
+    }
+
+    private ContractBeneficiaries buildCB(String contractNumber) {
+        ContractBeneficiaries contractBeneficiaries = new ContractBeneficiaries();
+        contractBeneficiaries.setContractNumber(contractNumber);
+        contractBeneficiaries.setPatients(new HashMap<>());
+        return contractBeneficiaries;
+    }
+
+    List<Future<ContractMapping>> createAllContractMappingFutures(int month, String contractNumber) {
+        List<Future<ContractMapping>> contractBeneFutureHandles = new ArrayList<>();
+        for (var m = 1; m <= month; month++) {
+            PatientContractCallable callable = new PatientContractCallable(m, contractNumber, bfdClient);
+            contractBeneFutureHandles.add(patientContractThreadPool.submit(callable));
+        }
+        return contractBeneFutureHandles;
+    }
+
+    private void processBeneFuturesList(List<Future<Void>> benes, ProgressTracker progressTracker) {
+        var beneIterator = benes.iterator();
+        while (beneIterator.hasNext()) {
+            var future = beneIterator.next();
+            if (future.isDone()) {
+                progressTracker.incrementProcessedCount();
+                try {
+                    future.get();
+                } catch (InterruptedException | ExecutionException e) {
+                    progressTracker.incrementFailureCount();
+                    if (progressTracker.isErrorCountBelowThreshold()) {
+                        final Throwable rootCause = ExceptionUtils.getRootCause(e);
+                        log.error("exception while processing patient {}", rootCause.getMessage(), rootCause);
+                        // log exception, but continue processing job as errorCount is below threshold
+                    } else {
+                        benes.parallelStream().forEach(f -> f.cancel(false));
+                        String description = progressTracker.getFailureCount() + " out of " + progressTracker.getTotalCount() + " records failed. Stopping job";
+                        eventLogger.log(new ErrorEvent(null, progressTracker.getJobUuid(),
+                                ErrorEvent.ErrorType.TOO_MANY_SEARCH_ERRORS, description));
+                        log.error("{} out of {} records failed. Stopping job", progressTracker.getFailureCount(), progressTracker.getTotalCount());
+                        throw new RuntimeException("Too many patient records in the job had failures");
+                    }
+                } catch (CancellationException e) {
+                    // This could happen in the rare event that a job was cancelled mid-process.
+                    // due to which the futures in the queue (that were not yet in progress) were cancelled.
+                    // Nothing to be done here
+                    log.warn("CancellationException while calling Future.get() - Job may have been cancelled");
+                }
+                beneIterator.remove();
+            }
+        }
+    }
+
+    private void close(StreamHelper helper) {
+        if (helper != null) {
+            try {
+                helper.close();
+            } catch (Exception ex) {
+                log.error("Unable to close the helper", ex);
+            }
+        }
+    }
+
+    /**
+     * Create a token from newRelic for the transaction.
+     *
+     * On using new-relic tokens with async calls
+     * See https://docs.newrelic.com/docs/agents/java-agent/async-instrumentation/java-agent-api-asynchronous-applications
+     *
+     * @param patient - process to process
+     * @param contractData - the contract data information
+     * @param helper - the helper used to write to the file
+     * @return a Future<Void>
+     */
+    private Future<Void> addPatientSearch(PatientDTO patient, ContractData contractData, StreamHelper helper, Map<String, PatientDTO> map) {
+        final Token token = NewRelic.getAgent().getTransaction().getToken();
+
+        // Using a ThreadLocal to communicate contract number to RoundRobinBlockingQueue
+        // could be viewed as a hack by many; but on the other hand it saves us from writing
+        // tons of extra code.
+        var jobUuid = contractData.getProgressTracker().getJobUuid();
+        RoundRobinBlockingQueue.CATEGORY_HOLDER.set(jobUuid);
+        try {
+            var patientClaimsRequest = new PatientClaimsRequest(patient, helper,
+                    contractData.getContract().getAttestedOn(),
+                    contractData.getSinceTime(),
+                    contractData.getUserId(),
+                    jobUuid,
+                    contractData.getContract() != null ? contractData.getContract().getContractNumber() : null,
+                    token);
+            return patientClaimsProcessor.process(patientClaimsRequest, map);
+
+        } finally {
+            RoundRobinBlockingQueue.CATEGORY_HOLDER.remove();
+        }
+    }
+
+    private void updateJobStatus(Job job, ProgressTracker tracker) {
+        int progress = tracker.getPercentageCompleted();
+        job.setProgress(progress);
+        job.setStatusMessage(progress + "% complete");
+        jobRepository.save(job);
+    }
+
+    /**
+     * Once the job writer is finished, create a list of job output objects with
+     * the data files and the error files
+     *
+     * @param files - the results of writing the contract
+     * @param isError - If we are creating an error output list
+     * @return the list of job output objects
+     */
+    private List<JobOutput> createJobOutputs(List<Path> files, boolean isError) {
+        final List<JobOutput> jobOutputs = new ArrayList<>();
+        for (Path p : files) {
+            JobOutput jobOutput = new JobOutput();
+            jobOutput.setFilePath(p.getFileName().toString());
+            jobOutput.setFhirResourceType(EOB);
+            jobOutput.setError(isError);
+            jobOutput.setChecksum(fileService.generateChecksum(p.toFile()));
+            jobOutput.setFileLength(p.toFile().length());
+            jobOutputs.add(jobOutput);
+        }
+        return jobOutputs;
     }
 
     /**
@@ -184,27 +403,36 @@ public class JobProcessorImpl implements JobProcessor {
                 .currentMonth(month)
                 .build();
 
-        for (Contract contract : attestedContracts) {
-            // Retrieve the contract beneficiaries
-            try {
-                processContract(contract, job, month, outputDirPath, progressTracker);
-            } catch (ExecutionException | InterruptedException ex) {
-                log.error("Having issue retrieving patients for contract " + contract);
-                throw ex;
-            }
+        // Retrieve the contract beneficiaries
+        try {
+            processContracts(attestedContracts, job, month, outputDirPath, progressTracker);
+        } catch (ExecutionException | InterruptedException ex) {
+            log.error("Having issue retrieving patients for contract " + attestedContracts.stream().map(Contract::getContractNumber).collect(Collectors.joining()));
+            throw ex;
         }
 
-        completeJob(job);
+        eventLogger.log(new JobStatusChangeEvent(
+                job.getUser() == null ? null : job.getUser().getUsername(),
+                job.getJobUuid(),
+                job.getStatus() == null ? null : job.getStatus().name(),
+                JobStatus.SUCCESSFUL.name(), "Job Finished"));
+        job.setStatus(SUCCESSFUL);
+        job.setStatusMessage("100%");
+        job.setProgress(100);
+        job.setExpiresAt(OffsetDateTime.now().plusHours(auditFilesTTLHours));
+        job.setCompletedAt(OffsetDateTime.now());
+
+        jobRepository.save(job);
+        log.info("Job: [{}] is DONE", job.getJobUuid());
     }
 
     /**
      * Given a path to a directory, create it. If it already exists, delete it and its contents and recreate it
      *
      * @param outputDirPath - the path to the output directory you want to create
-     * @return the path to the newly created directory
      */
-    private Path createOutputDirectory(Path outputDirPath, Job job) {
-        Path directory = null;
+    private void createOutputDirectory(Path outputDirPath, Job job) {
+        Path directory;
         try {
             directory = fileService.createDirectory(outputDirPath);
         } catch (UncheckedIOException e) {
@@ -219,7 +447,6 @@ public class JobProcessorImpl implements JobProcessor {
         }
 
         log.info("Created job output directory: {}", directory.toAbsolutePath());
-        return directory;
     }
 
     /**
@@ -230,8 +457,10 @@ public class JobProcessorImpl implements JobProcessor {
      * @param outputDirPath - the directory to delete
      */
     private void deleteExistingDirectory(Path outputDirPath, Job job) {
-        final File[] files = outputDirPath.toFile().listFiles(getFilenameFilter());
-
+        final File[] files = outputDirPath.toFile().listFiles((dir, name) -> name.toLowerCase().endsWith(NDJSON.getSuffix()));
+        if (files == null) {
+            return;
+        }
         for (File file : files) {
             final Path filePath = file.toPath();
             if (file.isDirectory() || Files.isSymbolicLink(filePath)) {
@@ -251,18 +480,6 @@ public class JobProcessorImpl implements JobProcessor {
         }
 
         doDelete(outputDirPath);
-    }
-
-    /**
-     * @return a Filename filter for ndjson and zip files
-     */
-    private FilenameFilter getFilenameFilter() {
-        return (dir, name) -> {
-            final String filename = name.toLowerCase();
-            final String ndjson = NDJSON.getSuffix();
-            final String zip = ZIP.getSuffix();
-            return filename.endsWith(ndjson) || filename.endsWith(zip);
-        };
     }
 
     private void doDelete(Path path) {
@@ -308,23 +525,78 @@ public class JobProcessorImpl implements JobProcessor {
     }
 
     /**
-     * Set the job as complete in the database
+     * Given the ordinal for a month,
+     * creates a date range from the start of the month to the end of the month for the current year
      *
-     * @param job - The job to set as complete
+     * @param month - the month of the year, 1-12
+     * @return a DateRange - the date range created
      */
-    private void completeJob(Job job) {
-        eventLogger.log(new JobStatusChangeEvent(
-                job.getUser() == null ? null : job.getUser().getUsername(),
-                job.getJobUuid(),
-                job.getStatus() == null ? null : job.getStatus().name(),
-                JobStatus.SUCCESSFUL.name(), "Job Finished"));
-        job.setStatus(SUCCESSFUL);
-        job.setStatusMessage("100%");
-        job.setProgress(100);
-        job.setExpiresAt(OffsetDateTime.now().plusHours(auditFilesTTLHours));
-        job.setCompletedAt(OffsetDateTime.now());
+    private FilterOutByDate.DateRange toDateRange(int month) {
+        FilterOutByDate.DateRange dateRange = null;
+        try {
+            dateRange = FilterOutByDate.getDateRange(month, LocalDate.now().getYear());
+        } catch (ParseException e) {
+            log.error("unable to create Date Range ", e);
+            //ignore
+        }
 
-        jobRepository.save(job);
-        log.info("Job: [{}] is DONE", job.getJobUuid());
+        return dateRange;
+    }
+
+    /**
+     * Retrieve the data from the future after it's "done"
+     *
+     * @param future     - the future
+     * @param contractId - the contract number
+     * @return - the mapping
+     */
+    private ContractMapping getContractMappingFromFuture(Future<ContractMapping> future, String contractId) throws ExecutionException, InterruptedException {
+        try {
+            return future.get();
+        } catch (InterruptedException | ExecutionException e) {
+            log.warn("InterruptedException while calling Future.get() - Getting Mapping for " + contractId);
+            throw e;
+        } catch (CancellationException e) {
+            // This could happen in the rare event that a job was cancelled mid-process.
+            // due to which the futures in the queue (that were not yet in progress) were cancelled.
+            // Nothing to be done here
+            log.warn("CancellationException while calling Future.get() - Getting Mapping for " + contractId);
+        }
+        return null;
+    }
+
+    private List<PatientDTO> addDateRangeToExistingOrNewPatient(ContractBeneficiaries beneficiaries,
+                                                    FilterOutByDate.DateRange monthDateRange, Set<String> bfdPatientIds) {
+        if (beneficiaries == null) {
+            return new ArrayList<>();
+        }
+        List<PatientDTO> newPatients = new ArrayList<>();
+        Map<String, PatientDTO> patientDTOMap = beneficiaries.getPatients();
+        for (String patientId : bfdPatientIds) {
+            PatientDTO patientDTO = patientDTOMap.get(patientId);
+
+            if (patientDTO != null) {
+                // patient id was already active on this contract in previous month(s)
+                // So just add this month to the patient's dateRangesUnderContract
+                if (monthDateRange != null) {
+                    patientDTO.getDateRangesUnderContract().add(monthDateRange);
+                }
+            } else {
+                // new patient id.
+                // Create a new PatientDTO for this patient
+                // And then add this month to the patient's dateRangesUnderContract
+
+                patientDTO = PatientDTO.builder()
+                        .patientId(patientId)
+                        .dateRangesUnderContract(new ArrayList<>())
+                        .build();
+                newPatients.add(patientDTO);
+                if (monthDateRange != null) {
+                    patientDTO.getDateRangesUnderContract().add(monthDateRange);
+                }
+                beneficiaries.getPatients().put(patientId, patientDTO);
+            }
+        }
+        return newPatients;
     }
 }

@@ -1,6 +1,7 @@
 package gov.cms.ab2d.worker.processor.domainmodel;
 
 import gov.cms.ab2d.common.model.Contract;
+import gov.cms.ab2d.worker.processor.StreamHelper;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -14,4 +15,5 @@ public class ContractData {
     private final OffsetDateTime attestedTime;
     private final OffsetDateTime sinceTime;
     private final String userId;
+    private final StreamHelper helper;
 }

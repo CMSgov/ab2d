@@ -2,6 +2,7 @@ package gov.cms.ab2d.worker.processor;
 
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.worker.processor.domainmodel.ContractMapping;
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
@@ -15,17 +16,13 @@ import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
 
 @Slf4j
+@AllArgsConstructor
 public class PatientContractCallable implements Callable<ContractMapping> {
     private static final String BENEFICIARY_ID = "https://bluebutton.cms.gov/resources/variables/bene_id";
-    private int month;
-    private String contractNumber;
-    private BFDClient bfdClient;
 
-    public PatientContractCallable(String contractNumber, int month, BFDClient bfdClient) {
-        this.month = month;
-        this.contractNumber = contractNumber;
-        this.bfdClient = bfdClient;
-    }
+    private final int month;
+    private final String contractNumber;
+    private final BFDClient bfdClient;
 
     @Override
     public ContractMapping call() throws Exception {
