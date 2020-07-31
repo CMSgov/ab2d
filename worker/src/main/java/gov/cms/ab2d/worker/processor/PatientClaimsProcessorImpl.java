@@ -55,8 +55,12 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
 
     @Value("${claims.skipBillablePeriodCheck}")
     private boolean skipBillablePeriodCheck;
-    @Value("${bfd.earliest.data.data:01/01/2020}")
+    @Value("${bfd.earliest.data.date:01/01/2020}")
     private String startDate;
+    @Value("${bfd.earliest.data.date.special.contracts}")
+    private String startDateSpecialContracts;
+    @Value("${bfd.special.contracts}")
+    private List<String> specialContracts;
 
     private static final OffsetDateTime START_CHECK = OffsetDateTime.parse(SINCE_EARLIEST_DATE, ISO_DATE_TIME);
 
@@ -151,19 +155,41 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
         }
 
         final List<BundleEntryComponent> entries = eobBundle.getEntry();
-        final List<Resource> resources = extractResources(entries, patient.getDateRangesUnderContract(), attTime, map);
+        final List<Resource> resources = extractResources(request.getContractNum(), entries, patient.getDateRangesUnderContract(), attTime, map);
 
         while (eobBundle.getLink(Bundle.LINK_NEXT) != null) {
             eobBundle = bfdClient.requestNextBundleFromServer(eobBundle);
             final List<BundleEntryComponent> nextEntries = eobBundle.getEntry();
-            resources.addAll(extractResources(nextEntries, patient.getDateRangesUnderContract(), attTime, map));
+            resources.addAll(extractResources(request.getContractNum(), nextEntries, patient.getDateRangesUnderContract(), attTime, map));
         }
 
         log.debug("Bundle - Total: {} - Entries: {} ", eobBundle.getTotal(), entries.size());
         return resources;
     }
 
-    List<Resource> extractResources(List<BundleEntryComponent> entries, final List<FilterOutByDate.DateRange> dateRanges,
+    private Date getStartDate(String contract) {
+        SimpleDateFormat sdf = new SimpleDateFormat("MM/dd/yyyy");
+
+        String dateToUse = startDate;
+        if (isContractSpecial(contract)) {
+            dateToUse = startDateSpecialContracts;
+        }
+        Date date;
+        try {
+            date = sdf.parse(dateToUse);
+        } catch (ParseException e) {
+            LocalDateTime d = LocalDateTime.of(2020, 1, 1, 0, 0, 0, 0);
+            date = new Date(d.toInstant(ZoneOffset.UTC).toEpochMilli());
+        }
+        return date;
+    }
+
+    private boolean isContractSpecial(String contract) {
+        return this.specialContracts != null && !this.specialContracts.isEmpty() && specialContracts.contains(contract);
+    }
+
+    List<Resource> extractResources(String contractNum, List<BundleEntryComponent> entries,
+                                    final List<FilterOutByDate.DateRange> dateRanges,
                                     OffsetDateTime attTime, Map<String, ContractBeneficiaries.PatientDTO> patientsMap) {
         if (attTime == null) {
             return new ArrayList<>();
@@ -171,14 +197,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
         long epochMilli = attTime.toInstant().toEpochMilli();
         Date attDate = new Date(epochMilli);
         SimpleDateFormat sdf = new SimpleDateFormat("MM/dd/yyyy");
-        Date date;
-        try {
-            date = sdf.parse(startDate);
-        } catch (ParseException e) {
-            LocalDateTime d = LocalDateTime.of(2020, 1, 1, 0, 0, 0, 0);
-            date = new Date(d.toInstant(ZoneOffset.UTC).toEpochMilli());
-        }
-        final Date earliestDate = date;
+        final Date earliestDate = getStartDate(contractNum);
         return entries.stream()
                 // Get the resource
                 .map(BundleEntryComponent::getResource)
