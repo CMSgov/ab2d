@@ -196,7 +196,6 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
         }
         long epochMilli = attTime.toInstant().toEpochMilli();
         Date attDate = new Date(epochMilli);
-        SimpleDateFormat sdf = new SimpleDateFormat("MM/dd/yyyy");
         final Date earliestDate = getStartDate(contractNum);
         return entries.stream()
                 // Get the resource
