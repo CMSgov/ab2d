@@ -1,4 +1,5 @@
 variable "env" {}
+variable "execution_env" {}
 variable "aws_account_number" {}
 variable "vpc_id" {}
 variable "db_sec_group_id" {}
@@ -10,11 +11,11 @@ variable "linux_user" {}
 variable "ssh_key_name" {}
 variable "node_subnet_ids" {type=list(string)}
 variable "logging_bucket" {}
-variable "healthcheck_url" {}
+# variable "healthcheck_url" {}
 variable "iam_instance_profile" {}
 variable "iam_role_arn" {}
 
-variable "container_port" {default=8080}
+variable "container_port" {default=8443}
 # variable "ecs_task_definition_host_port" {default=443}
 # variable "host_port" {default=443}
 variable "ecs_task_definition_host_port" {type = number}
@@ -72,3 +73,12 @@ variable "new_relic_license_key" {}
 
 variable "alb_security_group_ip_range" {}
 variable "vpn_private_ip_address_cidr_range" {}
+
+variable "ab2d_keystore_location" {}
+variable "ab2d_keystore_password" {}
+
+variable "ab2d_okta_jwt_issuer" {}
+
+variable "stunnel_latest_version" {}
+
+variable "cpm_backup_api" {}

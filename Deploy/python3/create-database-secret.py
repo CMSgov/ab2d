@@ -31,7 +31,7 @@ secret_name = 'ab2d/' + environment + '/module/db/' \
 
 # Prompt for secret
 
-secret = input("Enter desired " + secret_item + ": ")
+secret = input("Enter desired " + secret_item + " for " + environment + ": ")
 
 # Create database user secret in AWS Secrets Manager
 
