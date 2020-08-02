@@ -1,6 +1,6 @@
 variable "env" {}
 variable "autoscaling_arn" {}
-# variable "sns_arn" {}
+variable "sns_arn" {}
 variable "autoscaling_name" {}
 variable "controller_server_id" {}
 variable "s3_bucket_name" {}
