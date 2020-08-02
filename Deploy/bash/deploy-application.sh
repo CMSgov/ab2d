@@ -633,11 +633,9 @@ cd terraform/environments/$CMS_ECR_REPO_ENV
 echo "Build and push API and worker to ECR..."
 
 # Log on to ECR
-    
-read -sra cmd < <(aws --region "${AWS_DEFAULT_REGION}" ecr get-login --no-include-email)
-pass="${cmd[5]}"
-unset cmd[4] cmd[5]
-"${cmd[@]}" --password-stdin <<< "$pass"
+
+aws --region "${AWS_DEFAULT_REGION}" ecr get-login-password \
+  | docker login --username AWS --password-stdin "${CMS_ECR_REPO_ENV_AWS_ACCOUNT_NUMBER}.dkr.ecr.us-east-1.amazonaws.com"
 
 # Build API and worker (if creating a new image)
 
