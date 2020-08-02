@@ -11,23 +11,31 @@ sudo hostname "$(hostname -s).${env}"
 #
 # Setup EFS realted items 
 #
- 
-# Build and install amazon-efs-utils as an RPM package
+
+# Build amazon-efs-utils as an RPM package
+
 sudo yum -y install git
 sudo yum -y install rpm-build
 cd /tmp
 git clone https://github.com/aws/efs-utils
 cd efs-utils
 sudo make rpm
-sudo yum -y install ./build/amazon-efs-utils*rpm
 
+# Install amazon-efs-utils as an RPM package
+# - note that '--nogpgcheck' is now required for installing locally built rpm
+
+sudo yum -y install ./build/amazon-efs-utils*rpm --nogpgcheck
+
+#
 # Upgrade stunnel for using EFS mount helper with TLS
 # - by default, it enforces certificate hostname checking
+#
+
 sudo yum install gcc openssl-devel tcp_wrappers-devel -y
 cd /tmp
-curl -o stunnel-5.55.tar.gz https://www.stunnel.org/downloads/stunnel-5.55.tar.gz
-tar xvfz stunnel-5.55.tar.gz
-cd stunnel-5.55
+curl -o "${stunnel_latest_version}.tar.gz" "https://www.stunnel.org/downloads/${stunnel_latest_version}.tar.gz"
+tar xvfz "${stunnel_latest_version}.tar.gz"
+cd "${stunnel_latest_version}"
 sudo ./configure
 sudo make
 sudo rm -f /bin/stunnel
@@ -36,15 +44,26 @@ if [[ -f /bin/stunnel ]]; then sudo mv /bin/stunnel /root; fi
 sudo ln -s /usr/local/bin/stunnel /bin/stunnel
 
 # Configure running container instances to use an Amazon EFS file system
+#
+# Mounting Your Amazon EFS File System Automatically
+# https://docs.aws.amazon.com/efs/latest/ug/mount-fs-auto-mount-onreboot.html
+
 sudo mkdir /mnt/efs
 sudo cp /etc/fstab /etc/fstab.bak
 
 #####
-# *** TO DO ***: resolve TLS issue
-# echo '${efs_id} /mnt/efs efs _netdev,tls 0 0' | sudo tee -a /etc/fstab
-# sudo mount -a
+# -----------
+# Without TLS
+# -----------
 echo '${efs_id}:/ /mnt/efs efs _netdev 0 0' | sudo tee -a /etc/fstab
 sudo mount -a
+#
+# --------
+# With TLS
+# --------
+# Mount with IAM authorization to an Amazon EC2 instance that has an instance profile
+# echo '${efs_id}:/ /mnt/efs efs _netdev,tls,iam 0 0' | sudo tee -a /etc/fstab
+# sudo mount -a
 #####
 
 #
@@ -53,6 +72,7 @@ sudo mount -a
 
 # ECS config file
 # https://github.com/aws/amazon-ecs-agent
+
 sudo mkdir -p /etc/ecs
 sudo sh -c 'echo "
 ECS_DATADIR=/data
@@ -71,6 +91,7 @@ ECS_CLUSTER="${cluster_name}"
 ECS_LOGLEVEL=info" > /etc/ecs/ecs.config'
 
 # Autostart the ecs client
+
 sudo docker run --name ecs-agent \
 --detach=true \
 --restart=on-failure:10 \

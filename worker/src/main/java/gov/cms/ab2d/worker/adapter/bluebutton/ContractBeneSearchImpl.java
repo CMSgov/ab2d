@@ -1,5 +1,7 @@
 package gov.cms.ab2d.worker.adapter.bluebutton;
 
+import com.newrelic.api.agent.NewRelic;
+import com.newrelic.api.agent.Segment;
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.events.ReloadEvent;
@@ -8,6 +10,7 @@ import gov.cms.ab2d.filter.FilterOutByDate.DateRange;
 import gov.cms.ab2d.worker.adapter.bluebutton.ContractBeneficiaries.PatientDTO;
 import gov.cms.ab2d.worker.processor.PatientContractCallable;
 import gov.cms.ab2d.worker.processor.domainmodel.ContractMapping;
+import gov.cms.ab2d.worker.processor.domainmodel.ProgressTracker;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -42,22 +45,32 @@ public class ContractBeneSearchImpl implements ContractBeneSearch {
      *
      * @param contractNumber - The number of the contract
      * @param currentMonth   - The current month
+     * @param tracker        - Updates the progress of loading the beneficiary data
      * @return the mapping of the contract to beneficiaries
      */
     @Override
-    public ContractBeneficiaries getPatients(final String contractNumber, final int currentMonth) throws ExecutionException, InterruptedException {
+    public ContractBeneficiaries getPatients(final String contractNumber, final int currentMonth, ProgressTracker tracker) throws ExecutionException, InterruptedException {
+        final Segment patientSegment = NewRelic.getAgent().getTransaction().startSegment("Start of gathering patients for contract " +
+                contractNumber + " for months up to " + currentMonth);
+        patientSegment.setMetricName("GatherPatients");
+
         List<Future<ContractMapping>> futureHandles = new ArrayList<>();
+        tracker.setCurrentMonth(currentMonth);
         for (var month = 1; month <= currentMonth; month++) {
             PatientContractCallable callable = new PatientContractCallable(contractNumber, month, bfdClient);
             futureHandles.add(patientContractThreadPool.submit(callable));
         }
-
-        List<ContractMapping> results = getAllResults(futureHandles, contractNumber);
+        List<ContractMapping> results = getAllResults(futureHandles, contractNumber, tracker);
         ContractBeneficiaries contractBeneficiaries = new ContractBeneficiaries();
         contractBeneficiaries.setContractNumber(contractNumber);
         contractBeneficiaries.setPatients(new HashMap<>());
 
-        long start = System.currentTimeMillis();
+        patientSegment.end();
+        log.info("Found {} beneficiaries for contract {} for all months up to {}", results.size(), contractNumber, currentMonth);
+
+        final Segment dateRangePatientSegment = NewRelic.getAgent().getTransaction().startSegment("Adding date range to existing/new " +
+                "patients for contract " + contractNumber + " for months up to " + currentMonth);
+        patientSegment.setMetricName("DateRangePatients");
 
         for (ContractMapping mapping : results) {
             Set<String> patients = mapping.getPatients();
@@ -69,8 +82,7 @@ public class ContractBeneSearchImpl implements ContractBeneSearch {
             }
         }
 
-        long end = System.currentTimeMillis();
-        log.info("Time to add date range to patients {}", end - start);
+        dateRangePatientSegment.end();
 
         return contractBeneficiaries;
     }
@@ -82,7 +94,7 @@ public class ContractBeneSearchImpl implements ContractBeneSearch {
      * @param contractNumber - the Contract Number for context
      * @return the list of results for all threads
      */
-    private List<ContractMapping> getAllResults(List<Future<ContractMapping>> futureHandles, String contractNumber) throws ExecutionException, InterruptedException {
+    private List<ContractMapping> getAllResults(List<Future<ContractMapping>> futureHandles, String contractNumber, ProgressTracker tracker) throws ExecutionException, InterruptedException {
         List<ContractMapping> results = new ArrayList<>();
 
         long startTime = System.currentTimeMillis();
@@ -95,6 +107,7 @@ public class ContractBeneSearchImpl implements ContractBeneSearch {
                 // If it's done, claim the data and add it to the results, then remove it from the active threads
                 if (future.isDone()) {
                     results.add(getContractMapping(future, contractNumber));
+                    tracker.incrementTotalContractBeneficiariesSearchFinished();
                     iterator.remove();
                 }
             }
@@ -108,7 +121,8 @@ public class ContractBeneSearchImpl implements ContractBeneSearch {
             }
         }
         long endTime = System.currentTimeMillis();
-        int numMinutes = (int) (endTime - startTime) / 1000 / 60;
+        double timeDif = (double) (endTime - startTime);
+        int numMinutes = (int) Math.round(timeDif / 1000.0 / 60.0);
         int totalRecords = results.stream().mapToInt(c -> c.getPatients().size()).sum();
         eventLogger.log(new ReloadEvent(null, ReloadEvent.FileType.CONTRACT_MAPPING,
                 "Contract: " + contractNumber + " retrieved " + totalRecords + " in " + numMinutes + " minutes", totalRecords));

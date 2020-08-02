@@ -1,6 +1,7 @@
 package gov.cms.ab2d.worker.adapter.bluebutton;
 
 import gov.cms.ab2d.filter.FilterOutByDate;
+import gov.cms.ab2d.worker.processor.domainmodel.ProgressTracker;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
@@ -24,11 +25,14 @@ public class ContractAdapterStub implements ContractBeneSearch {
     private static final int MAX_ROWS = 30_000;
 
     @Override
-    public ContractBeneficiaries getPatients(String contractNumber, int currentMonth) {
+    public ContractBeneficiaries getPatients(String contractNumber, int currentMonth, ProgressTracker tracker) {
 
         final int contractSno = extractContractSno(contractNumber);
 
         final List<String> patientsPerContract = fetchPatientRecords(contractSno);
+        for (int i = 0; i < currentMonth; i++) {
+            tracker.incrementTotalContractBeneficiariesSearchFinished();
+        }
 
         return toResponse(contractNumber, patientsPerContract);
     }
@@ -48,7 +52,7 @@ public class ContractAdapterStub implements ContractBeneSearch {
         // simple check for contractNumber with 5 digits instead of 4
         try {
             final String tmpContractNo = contractNumber.substring(contractNumber.length() - 5);
-            int contractNo = Integer.valueOf(tmpContractNo);
+            int contractNo = Integer.parseInt(tmpContractNo);
             if (sno != contractNo) {
                 sno = -1;
             }
@@ -96,7 +100,7 @@ public class ContractAdapterStub implements ContractBeneSearch {
     }
 
     private int determineRowsToRetrieve(int numberOfRows) {
-        return numberOfRows < MAX_ROWS ? numberOfRows : MAX_ROWS;
+        return Math.min(numberOfRows, MAX_ROWS);
     }
 
     private List<String> getFromSampleFile(int rowsToRetrieve) {

@@ -8,7 +8,8 @@
                 "AWS": [
 		    "arn:aws:iam::349849222861:root",
 		    "arn:aws:iam::777200079629:root",
-		    "arn:aws:iam::330810004472:root"
+		    "arn:aws:iam::330810004472:root",
+		    "arn:aws:iam::595094747606:root"
 		]
             },
             "Action": [

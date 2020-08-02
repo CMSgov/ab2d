@@ -19,9 +19,10 @@ data "aws_security_group" "ab2d_jenkins_master_sg" {
 }
 
 module "kms" {
-  source             = "../../modules/kms"
-  env                = var.env
-  aws_account_number = var.aws_account_number
+  source                  = "../../modules/kms"
+  env                     = var.env
+  aws_account_number      = var.aws_account_number
+  ab2d_instance_role_name = "Ab2dInstanceRole"
 }
 
 module "jenkins_master" {

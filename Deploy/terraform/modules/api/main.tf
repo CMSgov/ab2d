@@ -76,6 +76,23 @@ resource "aws_security_group" "load_balancer" {
   }
 }
 
+data "aws_security_group" "cms_cloud_vpn" {
+  filter {
+    name   = "group-name"
+    values = ["cmscloud-vpn"]
+  }
+}
+
+resource "aws_security_group_rule" "cms_cloud_vpn_access" {
+  type        = "ingress"
+  description = "CMS Cloud VPN Access"
+  from_port   = "-1"
+  to_port     = "-1"
+  protocol    = "-1"
+  source_security_group_id = data.aws_security_group.cms_cloud_vpn.id
+  security_group_id = aws_security_group.load_balancer.id
+}
+
 resource "aws_security_group_rule" "load_balancer_access" {
   type        = "ingress"
   description = "${lower(var.env)} website access"
@@ -124,6 +141,7 @@ resource "aws_ecs_task_definition" "api" {
       "name": "ab2d-api",
       "image": "${var.ecr_repo_aws_account}.dkr.ecr.us-east-1.amazonaws.com/ab2d_api:${lower(var.env)}-latest",
       "essential": true,
+      "cpu": ${var.ecs_task_def_cpu},
       "memory": ${var.ecs_task_def_memory},
       "portMappings": [
         {
@@ -163,6 +181,26 @@ resource "aws_ecs_task_definition" "api" {
 	  "value" : "/mnt/efs"
 	},
         {
+	  "name" : "AB2D_EXECUTION_ENV",
+	  "value" : "${lower(var.execution_env)}"
+	},
+        {
+	  "name" : "AB2D_DB_SSL_MODE",
+	  "value" : "require"
+	},
+        {
+	  "name" : "AB2D_KEYSTORE_LOCATION",
+	  "value" : "${var.ab2d_keystore_location}"
+	},
+        {
+	  "name" : "AB2D_KEYSTORE_PASSWORD",
+	  "value" : "${var.ab2d_keystore_password}"
+	},
+        {
+	  "name" : "AB2D_OKTA_JWT_ISSUER",
+	  "value" : "${var.ab2d_okta_jwt_issuer}"
+	},
+        {
 	  "name" : "NEW_RELIC_APP_NAME",
 	  "value" : "${var.new_relic_app_name}"
 	},
@@ -180,8 +218,6 @@ resource "aws_ecs_task_definition" "api" {
 JSON
   requires_compatibilities = ["EC2"]
   network_mode = "bridge"
-  cpu = var.ecs_task_def_cpu
-  memory = var.ecs_task_def_memory
   execution_role_arn = "arn:aws:iam::${var.aws_account_number}:role/Ab2dInstanceRole"
 }
 
@@ -202,15 +238,16 @@ resource "aws_lb" "api" {
 }
 
 resource "aws_lb_target_group" "api" {
-  name = "${lower(var.env)}-api-tg"
+  name = "${lower(var.env)}-api-tg-${substr(uuid(),0, 3)}"
   port = var.host_port
-  protocol = "HTTP"
+  protocol = "HTTPS"
   vpc_id = var.vpc_id
-
+    
   health_check {
     healthy_threshold = 5
     unhealthy_threshold = 2
     timeout = 2
+    protocol = "HTTPS"
     path = "/health"
     interval = 5
   }
@@ -254,7 +291,7 @@ resource "aws_launch_configuration" "launch_config" {
   iam_instance_profile = var.iam_instance_profile
   key_name = var.ssh_key_name
   security_groups = [aws_security_group.api.id]  
-  user_data = templatefile("${path.module}/userdata.tpl",{ env = "${lower(var.env)}", cluster_name = "${lower(var.env)}-api", efs_id = var.efs_id })
+  user_data = templatefile("${path.module}/userdata.tpl",{ env = "${lower(var.env)}", cluster_name = "${lower(var.env)}-api", efs_id = var.efs_id, stunnel_latest_version = var.stunnel_latest_version })
   lifecycle { create_before_destroy = true }
 }
 
@@ -306,7 +343,7 @@ resource "aws_autoscaling_group" "asg" {
     },
     {
       key = "cpm backup"
-      value = "NoBackup"
+      value = "${var.cpm_backup_api}"
       propagate_at_launch = true
     },
     {
@@ -340,16 +377,15 @@ resource "aws_autoscaling_policy" "percent_capacity" {
   autoscaling_group_name = aws_autoscaling_group.asg.name
 }
 
+# resource "aws_autoscaling_policy" "target_cpu" {
+#   name = "target_CPU"
+#   autoscaling_group_name = aws_autoscaling_group.asg.name
+#   policy_type = "TargetTrackingScaling"
 
-resource "aws_autoscaling_policy" "target_cpu" {
-  name = "target_CPU"
-  autoscaling_group_name = aws_autoscaling_group.asg.name
-  policy_type = "TargetTrackingScaling"
-
-  target_tracking_configuration {
-    predefined_metric_specification {
-      predefined_metric_type = "ASGAverageCPUUtilization"
-    }
-    target_value = 80.0
-  }
-}
+#   target_tracking_configuration {
+#     predefined_metric_specification {
+#       predefined_metric_type = "ASGAverageCPUUtilization"
+#     }
+#     target_value = 80.0
+#   }
+# }

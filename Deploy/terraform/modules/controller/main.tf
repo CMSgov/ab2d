@@ -56,7 +56,7 @@ resource "aws_instance" "deployment_controller" {
   volume_tags = {
     Name = "ab2d-deployment-controller-vol"
   }
-  
+
   tags = {
     Name = "ab2d-deployment-controller"
     application = "ab2d"
@@ -64,7 +64,7 @@ resource "aws_instance" "deployment_controller" {
     purpose = "ECS container instance"
     sensitivity = "Public"
     maintainer = "lonnie.hanekamp@semanticbits.com"
-    cpm_backup = "NoBackup"
+    "cpm backup" = "${var.cpm_backup_controller}"
     purchase_type = "On-Demand"
     os_license = "Red Hat Enterprise Linux"
     gold_disk_name = var.gold_disk_name
@@ -93,99 +93,107 @@ resource "null_resource" "wait" {
   
 }
 
-resource "null_resource" "list-api-instances-script" {
+#######################################################
+# LSH 2020-06-11 *** TO DO ***: Consider removing BEGIN 
+#######################################################
 
-  depends_on = ["null_resource.wait"]
-  triggers = {controller_id = aws_instance.deployment_controller.id}
+# resource "null_resource" "list-api-instances-script" {
 
-  provisioner "local-exec" {
-    command = "scp -i ~/.ssh/${var.ssh_key_name}.pem ${path.cwd}/../../environments/${var.env}/list-api-instances.sh ${var.linux_user}@${aws_eip.deployment_controller.private_ip}:/home/${var.linux_user}"
-  }
+#   depends_on = ["null_resource.wait"]
+#   triggers = {controller_id = aws_instance.deployment_controller.id}
 
-  provisioner "local-exec" {
-    command = "ssh -i ~/.ssh/${var.ssh_key_name}.pem ${var.linux_user}@${aws_eip.deployment_controller.private_ip} 'chmod +x /home/${var.linux_user}/list-api-instances.sh'"
-  }
+#   provisioner "local-exec" {
+#     command = "scp -i ~/.ssh/${var.ssh_key_name}.pem ${path.cwd}/../../environments/${var.env}/list-api-instances.sh ${var.linux_user}@${aws_eip.deployment_controller.private_ip}:/home/${var.linux_user}"
+#   }
+
+#   provisioner "local-exec" {
+#     command = "ssh -i ~/.ssh/${var.ssh_key_name}.pem ${var.linux_user}@${aws_eip.deployment_controller.private_ip} 'chmod +x /home/${var.linux_user}/list-api-instances.sh'"
+#   }
   
-}
+# }
 
-resource "null_resource" "list-worker-instances-script" {
+# resource "null_resource" "list-worker-instances-script" {
 
-  depends_on = ["null_resource.wait"]
-  triggers = {controller_id = aws_instance.deployment_controller.id}
+#   depends_on = ["null_resource.wait"]
+#   triggers = {controller_id = aws_instance.deployment_controller.id}
 
-  provisioner "local-exec" {
-    command = "scp -i ~/.ssh/${var.ssh_key_name}.pem ${path.cwd}/../../environments/${var.env}/list-worker-instances.sh ${var.linux_user}@${aws_eip.deployment_controller.private_ip}:/home/${var.linux_user}"
-  }
+#   provisioner "local-exec" {
+#     command = "scp -i ~/.ssh/${var.ssh_key_name}.pem ${path.cwd}/../../environments/${var.env}/list-worker-instances.sh ${var.linux_user}@${aws_eip.deployment_controller.private_ip}:/home/${var.linux_user}"
+#   }
 
-  provisioner "local-exec" {
-    command = "ssh -i ~/.ssh/${var.ssh_key_name}.pem ${var.linux_user}@${aws_eip.deployment_controller.private_ip} 'chmod +x /home/${var.linux_user}/list-worker-instances.sh'"
-  }
+#   provisioner "local-exec" {
+#     command = "ssh -i ~/.ssh/${var.ssh_key_name}.pem ${var.linux_user}@${aws_eip.deployment_controller.private_ip} 'chmod +x /home/${var.linux_user}/list-worker-instances.sh'"
+#   }
 
-}
+# }
 
-resource "null_resource" "set-hostname" {
+# resource "null_resource" "set-hostname" {
 
-  depends_on = ["null_resource.wait"]
-  triggers = {controller_id = aws_instance.deployment_controller.id}
+#   depends_on = ["null_resource.wait"]
+#   triggers = {controller_id = aws_instance.deployment_controller.id}
 
-  provisioner "local-exec" {
-    command = "ssh -tt -i ~/.ssh/${var.ssh_key_name}.pem ${var.linux_user}@${aws_eip.deployment_controller.private_ip} 'echo \"ab2d-controller\" > /tmp/hostname && sudo mv /tmp/hostname /etc/hostname && sudo hostname \"ab2d-controller\"'"
-  }
+#   provisioner "local-exec" {
+#     command = "ssh -tt -i ~/.ssh/${var.ssh_key_name}.pem ${var.linux_user}@${aws_eip.deployment_controller.private_ip} 'echo \"ab2d-controller\" > /tmp/hostname && sudo mv /tmp/hostname /etc/hostname && sudo hostname \"ab2d-controller\"'"
+#   }
   
-}
+# }
 
-resource "null_resource" "deployment_contoller_private_key" {
+# resource "null_resource" "deployment_contoller_private_key" {
 
-  depends_on = ["null_resource.wait"]
-  triggers = {controller_id = aws_instance.deployment_controller.id}
+#   depends_on = ["null_resource.wait"]
+#   triggers = {controller_id = aws_instance.deployment_controller.id}
   
-  provisioner "local-exec" {
-    command = "scp -i ~/.ssh/${var.ssh_key_name}.pem ~/.ssh/${var.ssh_key_name}.pem ${var.linux_user}@${aws_eip.deployment_controller.private_ip}:/tmp/id.rsa"
-  }
+#   provisioner "local-exec" {
+#     command = "scp -i ~/.ssh/${var.ssh_key_name}.pem ~/.ssh/${var.ssh_key_name}.pem ${var.linux_user}@${aws_eip.deployment_controller.private_ip}:/tmp/id.rsa"
+#   }
 
-  provisioner "local-exec" {
-    command = "ssh -i ~/.ssh/${var.ssh_key_name}.pem ${var.linux_user}@${aws_eip.deployment_controller.private_ip} 'chmod 600 /tmp/id.rsa && mv /tmp/id.rsa ~/.ssh/'"
-  }
+#   provisioner "local-exec" {
+#     command = "ssh -i ~/.ssh/${var.ssh_key_name}.pem ${var.linux_user}@${aws_eip.deployment_controller.private_ip} 'chmod 600 /tmp/id.rsa && mv /tmp/id.rsa ~/.ssh/'"
+#   }
   
-}
+# }
 
-resource "null_resource" "ssh_client_config" {
+# resource "null_resource" "ssh_client_config" {
 
-  depends_on = ["null_resource.wait"]
-  triggers = {controller_id = aws_instance.deployment_controller.id}
+#   depends_on = ["null_resource.wait"]
+#   triggers = {controller_id = aws_instance.deployment_controller.id}
   
-  provisioner "local-exec" {
-    command = "scp -i ~/.ssh/${var.ssh_key_name}.pem ../../environments/${var.env}/client_config ${var.linux_user}@${aws_eip.deployment_controller.private_ip}:/home/${var.linux_user}/.ssh/config"
-  }
+#   provisioner "local-exec" {
+#     command = "scp -i ~/.ssh/${var.ssh_key_name}.pem ../../environments/${var.env}/client_config ${var.linux_user}@${aws_eip.deployment_controller.private_ip}:/home/${var.linux_user}/.ssh/config"
+#   }
 
-  provisioner "local-exec" {
-    command = "ssh -i ~/.ssh/${var.ssh_key_name}.pem ${var.linux_user}@${aws_eip.deployment_controller.private_ip} 'chmod 640 /home/${var.linux_user}/.ssh/config'"
-  }
+#   provisioner "local-exec" {
+#     command = "ssh -i ~/.ssh/${var.ssh_key_name}.pem ${var.linux_user}@${aws_eip.deployment_controller.private_ip} 'chmod 640 /home/${var.linux_user}/.ssh/config'"
+#   }
   
-}
+# }
 
-resource "null_resource" "remove_docker_from_controller" {
+# resource "null_resource" "remove_docker_from_controller" {
 
-  depends_on = ["null_resource.wait"]
-  triggers = {controller_id = aws_instance.deployment_controller.id}
+#   depends_on = ["null_resource.wait"]
+#   triggers = {controller_id = aws_instance.deployment_controller.id}
   
-  provisioner "local-exec" {
-    command = "ssh -tt -i ~/.ssh/${var.ssh_key_name}.pem ${var.linux_user}@${aws_eip.deployment_controller.private_ip} 'sudo yum -y remove docker-ce-*'"
-  }
+#   provisioner "local-exec" {
+#     command = "ssh -tt -i ~/.ssh/${var.ssh_key_name}.pem ${var.linux_user}@${aws_eip.deployment_controller.private_ip} 'sudo yum -y remove docker-ce-*'"
+#   }
   
-}
+# }
 
-resource "null_resource" "pgpass" {
+# resource "null_resource" "pgpass" {
 
-  depends_on = ["null_resource.wait"]
-  triggers = {controller_id = aws_instance.deployment_controller.id}
+#   depends_on = ["null_resource.wait"]
+#   triggers = {controller_id = aws_instance.deployment_controller.id}
   
-  provisioner "local-exec" {
-    command = "scp -i ~/.ssh/${var.ssh_key_name}.pem ../../environments/${var.env}/generated/.pgpass ${var.linux_user}@${aws_eip.deployment_controller.private_ip}:/home/${var.linux_user}/.pgpass"
-  }
+#   provisioner "local-exec" {
+#     command = "scp -i ~/.ssh/${var.ssh_key_name}.pem ../../environments/${var.env}/generated/.pgpass ${var.linux_user}@${aws_eip.deployment_controller.private_ip}:/home/${var.linux_user}/.pgpass"
+#   }
 
-  provisioner "local-exec" {
-    command = "ssh -i ~/.ssh/${var.ssh_key_name}.pem ${var.linux_user}@${aws_eip.deployment_controller.private_ip} 'chmod 600 /home/${var.linux_user}/.pgpass'"
-  }
+#   provisioner "local-exec" {
+#     command = "ssh -i ~/.ssh/${var.ssh_key_name}.pem ${var.linux_user}@${aws_eip.deployment_controller.private_ip} 'chmod 600 /home/${var.linux_user}/.pgpass'"
+#   }
 
-}
+# }
+
+#####################################################
+# LSH 2020-06-11 *** TO DO ***: Consider removing END 
+#####################################################

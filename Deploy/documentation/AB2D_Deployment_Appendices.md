@@ -52,13 +52,82 @@
 1. [Appendix FF: Manually add JDK 13 to a node that already has JDK 8](#appendix-ff-manually-add-jdk-13-to-a-node-that-already-has-jdk8)
 1. [Appendix GG: Destroy Jenkins agent](#appendix-gg-destroy-jenkins-agent)
 1. [Appendix HH: Manual test of Splunk configuration](#appendix-hh-manual-test-of-splunk-configuration)
-   * [Request Splunk HEC URL and Splunk HEC Token](#request-splunk-hec-url-and-splunk-hec-token)
    * [Verify or create a "cwlg_lambda_splunk_hec_role" role](#verify-or-create-a-cwlglambdasplunkhecrole-role)
-   * [Configure CloudWatch Log agent and onboard \/var\/log\/messages](#configure-cloudwatch-log-agent-and-onboard-varlogmessages)
-   * [Verify logging to the \/aws\/ec2\/var\/log\/messages CloudWatch Log Group](#verify-logging-to-the-awsec2varlogmessages-cloudwatch-log-group)
-   * [Configure the \/aws\/ec2\/var\/log\/messages CloudWatch Log Group to Splunk HEC Lambda Configuration](#configure-the-awsec2varlogmessages-cloudwatch-log-group-to-splunk-hec-lambda-configuration)
-   * [Onboard additional CloudWatch log groups](#onboard-additional-cloudwatch-log-groups)
+   * [Prepare IAM policies and roles for CloudWatch Log groups](#prepare-iam-policies-and-roles-for-cloudwatch-log-groups)
+   * [Configure CloudWatch Log groups](#configure-cloudwatch-log-groups)
+   * [Configure CloudWatch Log groups for management environment](#configure-cloudwatch-log-groups-for-management-environment)
+     * [Configure CloudTrail CloudWatch Log group for management environment](#configure-cloudtrail-cloudwatch-log-group-for-management-environment)
+     * [Configure VPC flow log CloudWatch Log group for management environment](#configure-vpc-flow-log-cloudwatch-log-group-for-management-environment)
+     * [Onboard first Jenkins master log to CloudWatch Log groups](#onboard-first-jenkins-master-log-to-cloudwatch-log-groups)
+     * [Onboard additional CloudWatch log groups for Jenkins master](#onboard-additional-cloudwatch-log-groups-for-jenkins-master)
+     * [Onboard first Jenkins agent log to CloudWatch Log groups](#onboard-first-jenkins-agent-log-to-cloudwatch-log-groups)
+     * [Onboard additional CloudWatch log groups for Jenkins agent](#onboard-additional-cloudwatch-log-groups-for-jenkins-agent)
+     * [Verify logging to CloudWatch Log Group for management environment](#verify-logging-to-cloudwatch-log-group-for-management-environment)
+   * [Configure CloudWatch Log groups for development environment](#configure-cloudwatch-log-groups-for-development-environment)
+     * [Configure CloudTrail CloudWatch Log group for development environment](#configure-cloudtrail-cloudwatch-log-group-for-development-environment)
+     * [Configure VPC flow log CloudWatch Log group for development environment](#configure-vpc-flow-log-cloudwatch-log-group-for-development-environment)
+     * [Onboard first deployment controller log to CloudWatch Log groups for development environment](#onboard-first-deployment-controller-log-to-cloudwatch-log-groups-for-development-environment)
+     * [Onboard additional CloudWatch log groups for deployment controller log for development environment](#onboard-additional-cloudwatch-log-groups-for-deployment-controller-log-for-development-environment)
+     * [Onboard first api node log to CloudWatch Log groups for development environment](#onboard-first-api-node-log-to-cloudwatch-log-groups-for-development-environment)
+     * [Onboard additional CloudWatch log groups for first api node log for development environment](#onboard-additional-cloudwatch-log-groups-for-first-api-node-log-for-development-environment)
+   * [Configure CloudWatch Log groups for sandbox environment](#configure-cloudwatch-log-groups-for-sandbox-environment)
+     * [Configure CloudTrail CloudWatch Log group for sandbox environment](#configure-cloudtrail-cloudwatch-log-group-for-sandbox-environment)
+     * [Configure VPC flow log CloudWatch Log group for sandbox environment](#configure-vpc-flow-log-cloudwatch-log-group-for-sandbox-environment)
+     * [Onboard first deployment controller log to CloudWatch Log groups for sandbox environment](#onboard-first-deployment-controller-log-to-cloudwatch-log-groups-for-sandbox-environment)
+     * [Onboard additional CloudWatch log groups for deployment controller log for sandbox environment](#onboard-additional-cloudwatch-log-groups-for-deployment-controller-log-for-sandbox-environment)
+     * [Onboard first api node log to CloudWatch Log groups for sandbox environment](#onboard-first-api-node-log-to-cloudwatch-log-groups-for-sandbox-environment)
+     * [Onboard additional CloudWatch log groups for first api node log for sandbox environment](#onboard-additional-cloudwatch-log-groups-for-first-api-node-log-for-sandbox-environment)
+   * [Configure CloudWatch Log groups for impl environment](#configure-cloudwatch-log-groups-for-impl-environment)
+     * [Configure CloudTrail CloudWatch Log group for impl environment](#configure-cloudtrail-cloudwatch-log-group-for-impl-environment)
+     * [Configure VPC flow log CloudWatch Log group for impl environment](#configure-vpc-flow-log-cloudwatch-log-group-for-impl-environment)
+     * [Onboard first deployment controller log to CloudWatch Log groups for impl environment](#onboard-first-deployment-controller-log-to-cloudwatch-log-groups-for-impl-environment)
+     * [Onboard additional CloudWatch log groups for deployment controller log for impl environment](#onboard-additional-cloudwatch-log-groups-for-deployment-controller-log-for-impl-environment)
+     * [Onboard first api node log to CloudWatch Log groups for impl environment](#onboard-first-api-node-log-to-cloudwatch-log-groups-for-impl-environment)
+     * [Onboard additional CloudWatch log groups for first api node log for impl environment](#onboard-additional-cloudwatch-log-groups-for-first-api-node-log-for-impl-environment)
 1. [Appendix II: Get application load balancer access logs](#appendix-ii-get-application-load-balancer-access-logs)
+1. [Appendix JJ: Export CloudWatch Log Group data to S3](#appendix-jj-export-cloudwatch-log-group-data-to-s3)
+1. [Appendix KK: Change the BFD certificate in AB2D keystores](#appendix-kk-change-the-bfd-certificate-in-ab2d-keystores)
+1. [Appendix LL: Update existing WAF](#appendix-ll-update-existing-waf)
+1. [Appendix MM: Create new AMI from latest gold disk image](#appendix-mm-create-new-ami-from-latest-gold-disk-image)
+1. [Appendix NN: Manually test the deployment](#appendix-nn-manually-test-the-deployment)
+   * [Manually test the deployment for sandbox](#manually-test-the-deployment-for-sandbox)
+   * [Manually test the deployment for production](#manually-test-the-deployment-for-production)
+1. [Appendix OO: Merge a specific commit from master into your branch](#appendix-oo-merge-a-specific-commit-from-master-into-your-branch)
+1. [Appendix PP: Test running development automation from development machine](#appendix-pp-test-running-development-automation-from-development-machine)
+1. [Appendix QQ: Set up demonstration of cross account access of an encrypted S3 bucket](#appendix-qq-set-up-demonstration-of-cross-account-access-of-an-encrypted-s3-bucket)
+1. [Appendix RR: Tealium and Google Analytics notes](#appendix-rr-tealium-and-google-analytics-notes)
+1. [Appendix SS: Destroy API and Worker clusters](#appendix-ss-destroy-api-and-worker-clusters)
+1. [Appendix TT: Migrate terraform state from shared environment to main environment](#appendix-tt-migrate-terraform-state-from-shared-environment-to-main-environment)
+1. [Appendix UU: Access Health Plan Management System (HPMS)](#appendix-uu-access-health-plan-management-system-hpms)
+1. [Appendix VV: Import an existing resource using terraform](#appendix-vv-import-an-existing-resource-using-terraform)
+   * [Import an existing IAM role](#import-an-existing-iam-role)
+   * [Import an existing IAM Instance Profile](#import-an-existing-iam-instance-profile)
+   * [Import an existing KMS key](#import-an-existing-kms-key)
+1. [Appendix WW: Use an SSH tunnel to query production database from local machine](#appendix-ww-use-an-ssh-tunnel-to-query-production-database-from-local-machine)
+1. [Appendix XX: Create a self-signed certificate for an EC2 load balancer](#appendix-xx-create-a-self-signed-certificate-for-an-ec2-load-balancer)
+1. [Appendix YY: Review VictorOps documentation](#appendix-yy-review-victorops-documentation)
+   * [VictorOps Sources](#victorops-sources)
+   * [VictorOps Overview](#victorops-overview)
+1. [Appendix AAA: Upload static website to an Akamai Upload Directory within Akamai NetStorage](#appendix-aaa-upload-static-website-to-an-akamai-upload-directory-within-akamai-netstorage)
+1. [Appendix BBB: Delete all files in an Akamai Upload Directory within Akamai NetStorage](#appendix-zz-delete-all-files-in-an-akamai-upload-directory-within-akamai-netstorage)
+1. [Appendix CCC: Reconcile terraform state between two environments](#appendix-ccc-reconcile-terraform-state-between-two-environments)
+   * [Reconcile terraform state of development environment with terraform state of implementation environment](#reconcile-terraform-state-of-development-environment-with-terraform-state-of-implementation-environment)
+   * [Reconcile terraform state of sandbox environment with terraform state of implementation environment](#reconcile-terraform-state-of-sandbox-environment-with-terraform-state-of-implementation-environment)
+1. [Appendix DDD: Backup and recovery](#appendix-ddd-backup-and-recovery)
+1. [Appendix EEE: Modify the database instance type](#appendix-eee-modify-the-database-instance-type)
+1. [Appendix FFF: Run e2e tests](#appendix-fff-run-e2e-tests)
+   * [Run e2e tests for production](#run-e2e-tests-for-production)
+1. [Appendix GGG: Retrieve a copy of remote terraform state file for review](#appendix-ggg-retrieve-a-copy-of-remote-terraform-state-file-for-review)
+1. [Appendix HHH: Manually change a tag on controller and update its terraform state](#appendix-hhh-manually-change-a-tag-on-controller-and-update-its-terraform-state)
+1. [Appendix III: Issue a schedule override in VictorOps](#appendix-iii-issue-a-schedule-override-in-victorops)
+1. [Appendix JJJ: Change the Jenkins home directory on the Jenkins agent](#appendix-jjj-change-the-jenkins-home-directory-on-the-jenkins-agent)
+1. [Appendix KKK: Change MFA to Google Authenticator for accessing Jira](#appendix-kkk-change-mfa-to-google-authenticator-for-accessing-jira)
+1. [Appendix LLL: Add a volume to jenkins agent and extend the log volume to use it](#appendix-lll-add-a-volume-to-jenkins-agent-and-extend-the-log-volume-to-use-it)
+1. [Appendix MMM: Upgrade Jenkins Agent from AWS CLI 1 to AWS CLI 2](#appendix-mmm-upgrade-jenkins-agent-from-aws-cli-1-to-aws-cli-2)
+   * [Uninstall AWS CLI 1 using pip](#uninstall-aws-cli-1-using-pip)
+   * [Install and verify AWS CLI 2](#install-and-verify-aws-cli-2)
+1. [Appendix NNN: Manually install Chef Inspec on existing Jenkins Agent](#appendix-nnn-manually-install-chef-inspec-on-existing-jenkins-agent)
+1. [Appendix OOO: Connect to Jenkins agent through the Jenkins master using the ProxyJump flag](#appendix-ooo-connect-to-jenkins-agent-through-the-jenkins-master-using-the-proxyjump-flag)
 
 ## Appendix A: Access the CMS AWS console
 
@@ -673,7 +742,7 @@
 1. Connect to the controller
 
    *Format:*
-   
+
    ```ShellSession
    $ ssh -i ~/.ssh/${TARGET_ENVIRONMENT}.pem ${SSH_USER_NAME}@${CONTROLLER_PUBLIC_IP}
    ```
@@ -681,13 +750,13 @@
 1. Set node variables
 
    *Example for "Dev" environment:*
-   
+
    ```ShellSession
    $ export TARGET_ENVIRONMENT=ab2d-dev
    $ export NODE_PRIVATE_IP=10.242.26.231
    $ export SSH_USER_NAME=ec2-user
    ```
-   
+
 1. Connect to a node
 
    *Format:*
@@ -895,7 +964,7 @@
    ```ShellSession
    $ aws --region us-east-1 cloudfront create-invalidation \
      --distribution-id {cloudfront distribution id} \
-     --paths "/*
+     --paths "/*"
    ```
 
    *Example:*
@@ -903,7 +972,7 @@
    ```ShellSession
    $ aws --region us-east-1 cloudfront create-invalidation \
      --distribution-id E8P2KHG7IH0TG \
-     --paths "/*
+     --paths "/*"
    ```
 
 1. Note the output
@@ -1291,7 +1360,7 @@
 
 1. Open Chrome
 
-1. Enter the "swagger-ui.html" URL for the target environment in the address bar
+1. Enter the "swagger-ui/index.html" URL for the target environment in the address bar
 
 1. Note the list of API endpoints that are displayed
 
@@ -3358,19 +3427,74 @@
 
 ## Appendix CC: Fix bad terraform component
 
-1. Note that the following component was failing to refresh when automation was rerun
+1. Note the component that was failing to refresh when automation was rerun
 
    *Example of a component that was failing to refresh:*
    
    ```
    module.controller.random_shuffle.public_subnets
    ```
-   
+
 1. Change to the "Deploy" directory
 
    ```ShellSession
    $ cd ~/code/ab2d/Deploy
    ```
+
+1. Get temporary AWS credentials for target environment
+
+   1. Set AWS account number
+
+      *Example for Dev:*
+
+      ```ShellSession
+      $ export AWS_ACCOUNT_NUMBER=349849222861
+      ```
+
+      *Example for Sbx:*
+
+      ```ShellSession
+      $ export AWS_ACCOUNT_NUMBER=777200079629
+      ```
+
+      *Example for Impl:*
+
+      ```ShellSession
+      $ export AWS_ACCOUNT_NUMBER=330810004472
+      ```
+
+   1. Get bearer token
+
+      ```ShellSession
+      $ BEARER_TOKEN=$(curl --location --request POST 'https://cloudtamer.cms.gov/api/v2/token' \
+          --header 'Accept: application/json' \
+          --header 'Accept-Language: en-US,en;q=0.5' \
+          --header 'Content-Type: application/json' \
+          --data-raw "{\"username\":\"${CLOUDTAMER_USER_NAME}\",\"password\":\"${CLOUDTAMER_PASSWORD}\",\"idms\":{\"id\":2}}" \
+          | jq --raw-output ".data.access.token")
+      ```
+
+   1. Get JSON output for temporary credentials
+
+      ```ShellSession
+      $ JSON_OUTPUT=$(curl --location --request POST 'https://cloudtamer.cms.gov/api/v3/temporary-credentials' \
+          --header 'Accept: application/json' \
+          --header 'Accept-Language: en-US,en;q=0.5' \
+          --header 'Content-Type: application/json' \
+          --header "Authorization: Bearer ${BEARER_TOKEN}" \
+          --header 'Content-Type: application/json' \
+          --data-raw "{\"account_number\":\"${AWS_ACCOUNT_NUMBER}\",\"iam_role_name\":\"ab2d-spe-developer\"}" \
+          | jq --raw-output ".data")
+      ```
+
+   1. Get temporary AWS credentials
+
+      ```ShellSession
+      $ export AWS_DEFAULT_REGION=us-east-1
+      $ export AWS_ACCESS_KEY_ID=$(echo $JSON_OUTPUT | jq --raw-output ".access_key")
+      $ export AWS_SECRET_ACCESS_KEY=$(echo $JSON_OUTPUT | jq --raw-output ".secret_access_key")
+      $ export AWS_SESSION_TOKEN=$(echo $JSON_OUTPUT | jq --raw-output ".session_token")
+      ```
    
 1. Change to the environment where the existing component is failing to refresh
 
@@ -3544,6 +3668,7 @@
    $ export DATABASE_SECRET_DATETIME_PARAM=2020-01-02-09-15-01
    $ export DEBUG_LEVEL_PARAM=WARN
    $ export INTERNET_FACING_PARAM=false
+   $ export CLOUD_TAMER_PARAM=true
    ```
 
 1. Run application deployment automation
@@ -3693,110 +3818,243 @@
 
 ## Appendix HH: Manual test of Splunk configuration
 
-### Request Splunk HEC URL and Splunk HEC Token
+### Prepare IAM policies and roles for CloudWatch Log groups
 
-> *** TO DO ***
+1. Note that the following IAM policy has been created in Mgmt, Dev, Sbx, and Impl
 
-1. Open Chrome
-
-1. Enter the following in the address bar
-
-   > https://jiraent.cms.gov/servicedesk/customer/portal/13
-
-1. Configure the request as follows
-
-   - **Summary:** Request Splunk HEC URL and Splunk HEC Token for AB2D project
-
-   - **Project Name:** Project 058 BCDA
-
-   - **Account Alias:** None
-
-   - **Service Category:** Central Logging
-
-   - **Task:** Onboarding and Data Ingestion
-
-   - **Description:**
-
-     ```
-     Hello,
-     
-     I am requesting a Splunk HEC URL and Splunk HEC Token.
-     
-     Note that this is for the AB2D project.
-     
-     Thanks for your consideration.
-     
-     Lonnie Hanekamp
-     ```
-
-   - **Severity:** Minimal
-
-   - **Urgency:** Low
-
-   - **Reported Source:** Self Service
-
-   - **Requested Due Date:** {3 working days from now}
-
-1. Select **Create**
-
-### Verify or create a "cwlg_lambda_splunk_hec_role" role
-
-1. Open Chrome
-
-1. Log on to the development AWS account
-
-1. Select "IAM"
-
-1. Select **Roles**
-
-1. Determine if the "cwlg_lambda_splunk_hec_role" role alredy exists
-
-   1. Type the following in the **Search** text box under "Create role"
-
-      ```
-      cwlg_lambda_splunk_hec_role
-      ```
-
-   1. If the role already exists, jump to the following section
-
-      [Configure CloudWatch Log agent and onboard \/var\/log\/messages](#configure-cloudwatch-log-agent-and-onboard-varlogmessages)
-      
-1. Select **Create role**
-
-1. Select the **AWS service** tab
-
-1. Select **Lambda**
-
-1. Select **Next: Permissions**
-
-1. Type the following in the **Search** text box
+   **Policy:** Ab2dCloudWatchLogsPolicy
 
    ```
-   AWSLambdaBasicExecutionRole
+   {
+       "Version": "2012-10-17",
+       "Statement": [
+           {
+               "Sid": "Stmt1584652230001",
+               "Effect": "Allow",
+               "Action": [
+                   "logs:CreateLogGroup",
+                   "logs:CreateLogStream",
+                   "logs:PutLogEvents",
+		   "logs:DescribeLogGroups",
+                   "logs:DescribeLogStreams"
+               ],
+               "Resource": [
+                   "arn:aws:logs:*:*:*"
+               ]
+           }
+       ]
+   }
    ```
 
-1. Select the checkbox beside "AWSLambdaBasicExecutionRole"
+1. Note that the "Ab2dCloudWatchLogsPolicy" IAM policy has been attached to the "Ab2dInstanceRole" role in Mgmt, Dev, Sbx, and Impl
 
-1. Select **Next: Tags**
+1. Set trust relationship between the "Ab2dInstanceRole" role and the VPC flow log service
 
-1. Select **Next: Review**
+   1. Select the following IAM role
 
-1. Configure the "Review" page as follows
+      ```
+      Ab2dInstanceRole
+      ```
 
-   - **Role name:** cwlg_lambda_splunk_hec_role
+   1. Select the **Trust relationships** tab
 
-1. Select **Create role**
+   1. Select **Edit trust relationship**
 
-### Configure CloudWatch Log agent and onboard \/var\/log\/messages
+   1. Modify the trust relationship to include the VPC flow logs service
 
-1. Connect to an API node in development
+      *Example:*
+
+      ```
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Sid": "",
+            "Effect": "Allow",
+            "Principal": {
+              "Service": [
+                "ecs-tasks.amazonaws.com",
+                "lambda.amazonaws.com",
+                "ec2.amazonaws.com",
+		"vpc-flow-logs.amazonaws.com"
+              ]
+            },
+            "Action": "sts:AssumeRole"
+          }
+        ]
+      }
+      ```
+
+   1. Select **Update Trust Policy**
+
+### Configure CloudWatch Log groups
+
+#### Configure CloudWatch Log groups for management environment
+
+##### Configure CloudTrail CloudWatch Log group for management environment
+
+1. Log on to the AWS management account
+
+1. Create a CloudTrail CloudWatch Log group
+
+   1. Select **Log groups** from the leftmost panel
+
+   1. Select **Actions**
+
+   1. Select **Create log group**
+
+   1. Configure the "Create log group" page as follows
+
+      - **Log Group Name:** cloudtrail-logs
+
+   1. Select **Create log group**
+
+1. Create a trail in CloudTrail
+
+   1. Select **CloudTrail**
+
+   1. Select **Create trail**
+
+   1. Configure "Create Trail"
+
+      - **Trail name:** cloudtrail-default
+
+      - **Apply trail to all regions:** No
+
+   1. Configure "Management events"
+
+      - **Read/Write events:** All
+
+      - **Log AWS KMS events:** Yes
+
+   1. Configure "Insights events"
+
+      - **Log Insights events:** No
+
+   1. Configure "Data Events" for the "S3" tab
+
+      - **Select all S3 buckets in your account:** Checked
+
+   1. Configure "Storage location"
+
+      - **Create a new S3 bucket:** No
+
+      - **S3 bucket:** ab2d-mgmt-east-dev-cloudtrail
+
+   1. Select **Create**
+
+1. Create a role for CloudTrail
+
+   1. Set the AWS profile
+
+      ```ShellSession
+      $ export AWS_PROFILE=ab2d-mgmt-east-dev
+      ```
+
+   1. Change to the "Deploy" directory
+
+      ```ShellSession
+      $ cd ~/code/ab2d/Deploy
+      ```
+
+   1. Change to the shared directory
+
+      ```ShellSession
+      $ cd terraform/environments/ab2d-mgmt-east-dev-shared
+      ```
+
+   1. Create the "Ab2dCloudTrailAssumeRole" role
+
+      ```ShellSession
+      $ aws --region us-east-1 iam create-role \
+        --role-name Ab2dCloudTrailAssumeRole \
+        --assume-role-policy-document file://ab2d-cloudtrail-assume-role-policy.json
+      ```
+
+   1. Add a CloudWatch log group policy to the CloudTrail role
+
+      ```ShellSession
+      $ aws --region us-east-1 iam put-role-policy \
+        --role-name Ab2dCloudTrailAssumeRole \
+	--policy-name Ab2dCloudTrailPolicy \
+	--policy-document file://ab2d-cloudtrail-cloudwatch-policy.json
+      ```
+
+1. Update the trail in CloudTrail with the log group and role information
+
+   ```ShellSession
+   $ aws --region us-east-1 cloudtrail update-trail \
+     --name cloudtrail-default \
+     --cloud-watch-logs-log-group-arn arn:aws:logs:us-east-1:653916833532:log-group:cloudtrail-logs:* \
+     --cloud-watch-logs-role-arn arn:aws:iam::653916833532:role/Ab2dCloudTrailAssumeRole
+   ```
+
+##### Configure VPC flow log CloudWatch Log group for management environment
+
+1. Log on to the AWS management account
+
+1. Create a VPC flow log CloudWatch Log group
+
+   1. Select **CloudWatch**
+
+   1. Select **Log groups** from the leftmost panel
+
+   1. Select **Actions**
+
+   1. Select **Create log group**
+
+   1. Configure the "Create log group" page as follows
+
+      - **Log Group Name:** vpc-flowlogs
+
+   1. Select **Create log group**
+
+1. Create a VPC flow log
+
+   1. Select **VPC**
+
+   1. Select **Your VPCs** from the leftmost panel
+
+   1. Select the following VPC
+
+      ```
+      ab2d-mgmt-east-dev
+      ```
+
+   1. Select the **Flow Logs** tab
+
+   1. Select **Create flow log**
+
+   1. Configure the "Create flow log" page
+
+      *Format:*
+
+      - **Filter:** All
+
+      - **Maximum aggregation interval:** 10 minutes
+
+      - **Destination:** Send to CloudWatch Logs
+
+      - **Destination log group:** vpc-flowlogs
+
+      - **IAM role:** Ab2dInstanceRole
+
+   1. Select **Create**
+
+   1. Select **Close** on the "Create flow log" page
+
+##### Onboard first Jenkins master log to CloudWatch Log groups
+
+1. Connect to Jenkins master
 
    1. Ensure that you are connected to the Cisco VPN
 
    1. Set the dev AWS profile
 
+      *Example for Mgmt environment:*
+
       ```ShellSession
-      $ export AWS_PROFILE=ab2d-dev
+      $ export AWS_PROFILE=ab2d-mgmt-east-dev
       ```
 
    1. Connect to the development controller
@@ -3804,20 +4062,9 @@
       ```ShellSession
       $ ssh -i ~/.ssh/${AWS_PROFILE}.pem ec2-user@$(aws \
         --region us-east-1 ec2 describe-instances \
-        --filters "Name=tag:Name,Values=ab2d-deployment-controller" \
+        --filters "Name=tag:Name,Values=ab2d-jenkins-master" \
         --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
         --output text)
-      ```
-
-   1. Connect to the desired API node
-
-      *Example for connecting to the first API node:*
-
-      ```ShellSession
-      $ ssh ec2-user@$(./list-api-instances.sh \
-        | grep 10. \
-        | awk '{print $2}' \
-        | head -n 1)
       ```
 
 1. Switch to the root user
@@ -3843,84 +4090,14 @@
    /var/opt/ds_agent/diag/ds_agent-err.log |yes   |/aws/ec2/var/opt/ds_agent/diag/ds_agent-err.log
    /var/opt/ds_agent/diag/ds_agent.log     |yes   |/aws/ec2/var/opt/ds_agent/diag/ds_agent.log
    /var/opt/ds_agent/diag/ds_am.log        |yes   |/aws/ec2/var/opt/ds_agent/diag/ds_am.log
-   N/A                                     |N/A   |CloudTrail/DefaultLogGroup
-   N/A                                     |N/A   |<accountId>-west-dev-vpc-flowlogs
+   N/A                                     |N/A   |cloudtrail-logs
+   N/A                                     |N/A   |vpc-flowlogs
 
 1. Exit the root user
 
    ```ShellSession
    $ exit
    ```
-
-1. Exit the API node
-
-   ```ShellSession
-   $ exit
-   ```
-
-1. Exit the controler
-
-   ```ShellSession
-   $ exit
-   ```
-
-1. Note that the following IAM policy has been created in Mgmt, Dev, Sbx, and Impl
-
-   **Policy:** Ab2dCloudWatchLogsPolicy
-
-   ```
-   {
-       "Version": "2012-10-17",
-       "Statement": [
-           {
-               "Sid": "Stmt1584652230001",
-               "Effect": "Allow",
-               "Action": [
-                   "logs:CreateLogGroup",
-                   "logs:CreateLogStream",
-                   "logs:PutLogEvents",
-                   "logs:DescribeLogStreams"
-               ],
-               "Resource": [
-                   "arn:aws:logs:*:*:*"
-               ]
-           }
-       ]
-   }
-   ```
-
-1. Note that the "Ab2dCloudWatchLogsPolicy" IAM policy to the "Ab2dInstanceRole" role in Mgmt, Dev, Sbx, and Impl
-
-1. Connect to an API node in development
-
-   1. Ensure that you are connected to the Cisco VPN
-
-   1. Set the dev AWS profile
-
-      ```ShellSession
-      $ export AWS_PROFILE=ab2d-dev
-      ```
-
-   1. Connect to the development controller
-
-      ```ShellSession
-      $ ssh -i ~/.ssh/${AWS_PROFILE}.pem ec2-user@$(aws \
-        --region us-east-1 ec2 describe-instances \
-        --filters "Name=tag:Name,Values=ab2d-deployment-controller" \
-        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
-        --output text)
-      ```
-
-   1. Connect to the desired API node
-
-      *Example for connecting to the first API node:*
-
-      ```ShellSession
-      $ ssh ec2-user@$(./list-api-instances.sh \
-        | grep 10. \
-        | awk '{print $2}' \
-        | head -n 1)
-      ```
 
 1. Download the CloudWatch Log agent
 
@@ -4106,6 +4283,1066 @@
 1. View the "/var/log/messages" entry in the newly created CloudWatch Log agent
 
    1. Enter the following
+
+      ```ShellSession
+      $ sudo cat /var/awslogs/etc/awslogs.conf | tail -7
+      ```
+
+   1. Note the output
+
+      ```
+      [/var/log/messages]
+      datetime_format = %Y-%m-%d %H:%M:%S
+      file = /var/log/messages
+      buffer_duration = 5000
+      log_stream_name = {instance_id}
+      initial_position = start_of_file
+      log_group_name = /aws/ec2/var/log/messages
+      ```
+
+1. Ensure the CloudWatch Log Agent is running
+
+   1. Check the status of the CloudWatch Log Agent
+
+      ```ShellSession
+      $ service awslogs status
+      ```
+
+   1. If the CloudWatch Log Agent is not running, start it by entering the following
+
+      ```ShellSession
+      $ sudo service awslogs start
+      ```
+
+1. Exit Jenkins master
+
+   ```ShellSession
+   $ exit
+   ```
+
+##### Onboard additional CloudWatch log groups for Jenkins master
+
+1. Connect to Jenkins master
+
+   1. Ensure that you are connected to the Cisco VPN
+
+   1. Set the dev AWS profile
+
+      *Example for Mgmt environment:*
+
+      ```ShellSession
+      $ export AWS_PROFILE=ab2d-mgmt-east-dev
+      ```
+
+   1. Connect to the development controller
+
+      ```ShellSession
+      $ ssh -i ~/.ssh/${AWS_PROFILE}.pem ec2-user@$(aws \
+        --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-jenkins-master" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+        --output text)
+      ```
+
+1. Onboard additional log groups
+
+   1. Change to the "/tmp" directory
+
+      ```ShellSession
+      $ cd /tmp
+      ```
+
+   1. Run the interactive setup for the CloudWatch Log agent
+
+      ```ShellSession
+      $ sudo python ./awslogs-agent-setup.py \
+        --region us-east-1 \
+        --only-generate-config
+      ```
+
+   1. Note that the following is displayed
+
+      ```
+      Step 3 of 5: Configuring AWS CLI ...
+      ```
+
+   1. Press **return** on the keyboard to accept the default at the "AWS Access Key ID" prompt
+
+   1. Press **return** on the keyboard to accept the default at the "AWS Secret Access Key" prompt
+
+   1. Press **return** on the keyboard to accept the default at the "Default region name" prompt
+
+   1. Press **return** on the keyboard to accept the default at the "Default output format" prompt
+
+   1. Note that the following is displayed
+
+      ```
+      Step 4 of 5: Configuring the CloudWatch Logs Agent ...
+      ```
+
+   1. Add the following log by entering the following at the prompts
+
+      - **Path of log file to upload:** /var/log/amazon/ssm/amazon-ssm-agent.log
+
+      - **Destination Log Group name:** /aws/ec2/var/log/amazon/ssm/amazon-ssm-agent.log
+
+      - **Choose Log Stream Name:** 1 *Use EC2 instance id*
+
+      - **Choose Log Event timestamp format:** 3 *%Y-%m-%d %H:%M:%S (2008-09-08 11:52:54)*
+
+      - **Choose initial position of upload:** 1 *From start of file.*
+
+      - **More log files to configure:** Y
+
+   1. Add the following log by entering the following at the prompts
+
+      - **Path of log file to upload:** /var/log/audit/audit.log
+
+      - **Destination Log Group name:** /aws/ec2/var/log/audit/audit.log
+
+      - **Choose Log Stream Name:** 1 *Use EC2 instance id*
+
+      - **Choose Log Event timestamp format:** 3 *%Y-%m-%d %H:%M:%S (2008-09-08 11:52:54)*
+
+      - **Choose initial position of upload:** 1 *From start of file.*
+
+      - **More log files to configure:** Y
+
+   1. Add the following log by entering the following at the prompts
+
+      - **Path of log file to upload:** /var/log/awslogs.log
+
+      - **Destination Log Group name:** /aws/ec2/var/log/awslogs.log
+
+      - **Choose Log Stream Name:** 1 *Use EC2 instance id*
+
+      - **Choose Log Event timestamp format:** 3 *%Y-%m-%d %H:%M:%S (2008-09-08 11:52:54)*
+
+      - **Choose initial position of upload:** 1 *From start of file.*
+
+      - **More log files to configure:** Y
+
+   1. Add the following log by entering the following at the prompts
+
+      - **Path of log file to upload:** /var/log/cloud-init-output.log
+
+      - **Destination Log Group name:** /aws/ec2/var/log/cloud-init-output.log
+
+      - **Choose Log Stream Name:** 1 *Use EC2 instance id*
+
+      - **Choose Log Event timestamp format:** 3 *%Y-%m-%d %H:%M:%S (2008-09-08 11:52:54)*
+
+      - **Choose initial position of upload:** 1 *From start of file.*
+
+      - **More log files to configure:** Y
+
+   1. Add the following log by entering the following at the prompts
+
+      - **Path of log file to upload:** /var/log/cloud-init.log
+
+      - **Destination Log Group name:** /aws/ec2/var/log/cloud-init.log
+
+      - **Choose Log Stream Name:** 1 *Use EC2 instance id*
+
+      - **Choose Log Event timestamp format:** 3 *%Y-%m-%d %H:%M:%S (2008-09-08 11:52:54)*
+
+      - **Choose initial position of upload:** 1 *From start of file.*
+
+      - **More log files to configure:** Y
+
+   1. Add the following log by entering the following at the prompts
+
+      - **Path of log file to upload:** /var/log/cron
+
+      - **Destination Log Group name:** /aws/ec2/var/log/cron
+
+      - **Choose Log Stream Name:** 1 *Use EC2 instance id*
+
+      - **Choose Log Event timestamp format:** 3 *%Y-%m-%d %H:%M:%S (2008-09-08 11:52:54)*
+
+      - **Choose initial position of upload:** 1 *From start of file.*
+
+      - **More log files to configure:** Y
+
+   1. Add the following log by entering the following at the prompts
+
+      - **Path of log file to upload:** /var/log/dmesg
+
+      - **Destination Log Group name:** /aws/ec2/var/log/dmesg
+
+      - **Choose Log Stream Name:** 1 *Use EC2 instance id*
+
+      - **Choose Log Event timestamp format:** 3 *%Y-%m-%d %H:%M:%S (2008-09-08 11:52:54)*
+
+      - **Choose initial position of upload:** 1 *From start of file.*
+
+      - **More log files to configure:** Y
+
+   1. Add the following log by entering the following at the prompts
+
+      - **Path of log file to upload:** /var/log/maillog
+
+      - **Destination Log Group name:** /aws/ec2/var/log/maillog
+
+      - **Choose Log Stream Name:** 1 *Use EC2 instance id*
+
+      - **Choose Log Event timestamp format:** 3 *%Y-%m-%d %H:%M:%S (2008-09-08 11:52:54)*
+
+      - **Choose initial position of upload:** 1 *From start of file.*
+
+      - **More log files to configure:** Y
+
+   1. Add the following log by entering the following at the prompts
+
+      - **Path of log file to upload:** /var/log/secure
+
+      - **Destination Log Group name:** /aws/ec2/var/log/secure
+
+      - **Choose Log Stream Name:** 1 *Use EC2 instance id*
+
+      - **Choose Log Event timestamp format:** 3 *%Y-%m-%d %H:%M:%S (2008-09-08 11:52:54)*
+
+      - **Choose initial position of upload:** 1 *From start of file.*
+
+      - **More log files to configure:** Y
+
+   1. Add the following log by entering the following at the prompts
+
+      - **Path of log file to upload:** /var/opt/ds_agent/diag/ds_agent-err.log
+
+      - **Destination Log Group name:** /aws/ec2/var/opt/ds_agent/diag/ds_agent-err.log
+
+      - **Choose Log Stream Name:** 1 *Use EC2 instance id*
+
+      - **Choose Log Event timestamp format:** 3 *%Y-%m-%d %H:%M:%S (2008-09-08 11:52:54)*
+
+      - **Choose initial position of upload:** 1 *From start of file.*
+
+      - **More log files to configure:** Y
+
+   1. Add the following log by entering the following at the prompts
+
+      - **Path of log file to upload:** /var/opt/ds_agent/diag/ds_agent.log
+
+      - **Destination Log Group name:** /aws/ec2/var/opt/ds_agent/diag/ds_agent.log
+
+      - **Choose Log Stream Name:** 1 *Use EC2 instance id*
+
+      - **Choose Log Event timestamp format:** 3 *%Y-%m-%d %H:%M:%S (2008-09-08 11:52:54)*
+
+      - **Choose initial position of upload:** 1 *From start of file.*
+
+      - **More log files to configure:** Y
+
+   1. Add the following log by entering the following at the prompts
+
+      - **Path of log file to upload:** /var/opt/ds_agent/diag/ds_am.log
+
+      - **Destination Log Group name:** /aws/ec2/var/opt/ds_agent/diag/ds_am.log
+
+      - **Choose Log Stream Name:** 1 *Use EC2 instance id*
+
+      - **Choose Log Event timestamp format:** 3 *%Y-%m-%d %H:%M:%S (2008-09-08 11:52:54)*
+
+      - **Choose initial position of upload:** 1 *From start of file.*
+
+      - **More log files to configure:** N
+
+   1. Note all the new CloudWatch log groups configurations are appended after the first "/var/log/messages" section in the configuaration file
+
+      ```ShellSession
+      $ sudo cat /var/awslogs/etc/awslogs.conf
+      ```
+
+1. Restart the awslogs service
+
+   ```ShellSession
+   $ sudo service awslogs restart
+   ```
+
+1. Reload systemd configuration
+
+   ```ShellSession
+   $ sudo systemctl daemon-reload
+   ```
+
+1. Exit Jenkins master
+
+   ```ShellSession
+   $ exit
+   ```
+
+1. Verify that all expected CloudWatch Log groups are present
+
+   1. Log on to the AWS develoment environment account
+
+   1. Select **CloudWatch**
+
+   1. Select **Log groups** from the leftmost panel
+
+   1. Verify that all of the following log groups are displayed
+
+      - /aws/ec2/var/log/amazon/ssm/amazon-ssm-agent.log
+
+      - /aws/ec2/var/log/audit/audit.log
+
+      - /aws/ec2/var/log/awslogs.log
+
+      - /aws/ec2/var/log/cloud-init-output.log
+
+      - /aws/ec2/var/log/cloud-init.log
+
+      - /aws/ec2/var/log/cron
+
+      - /aws/ec2/var/log/dmesg
+
+      - /aws/ec2/var/log/messages
+
+      - /aws/ec2/var/log/secure
+
+      - /aws/ec2/var/opt/ds_agent/diag/ds_agent-err.log
+
+      - /aws/ec2/var/opt/ds_agent/diag/ds_agent.log
+
+      - /aws/ec2/var/opt/ds_agent/diag/ds_am.log
+
+      - vpc-flowlogs
+
+      - cloudtrail-logs
+
+1. If any of the log groups are missing, do the following:
+
+   1. Note the missing group(s) so that you can later investigate why it is missing
+
+      *Noted missing groups when creating on 2020-04-07:*
+
+      - NONE
+
+   1. Select **Actions**
+
+   1. Select **Create log group**
+
+   1. Configure the "Create log group" page as follows
+
+      - **Log group name:** {missing log group}
+
+   1. Select **Create log group**
+
+   1. Repeat this process for all missing groups
+
+1. Select each log group and note which ones have no data
+
+   *Noted log groups with no data when checking on 2020-04-07:*
+
+   - NONE
+
+##### Onboard first Jenkins agent log to CloudWatch Log groups
+
+1. Connect to Jenkins agent through the Jenkins master using the ProxyJump flag (-J)
+
+   1. Ensure that you are connected to the Cisco VPN
+
+   1. Set the management AWS agent
+
+      ```ShellSession
+      $ export AWS_PROFILE=ab2d-mgmt-east-dev
+      ```
+
+   1. Get the public IP address of Jenkins master instance
+
+      ```ShellSession
+      $ JENKINS_MASTER_PUBLIC_IP=$(aws --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-jenkins-master" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PublicIpAddress" \
+        --output text)
+      ```
+
+   1. Get the private IP address of Jenkins agent instance
+
+      ```ShellSession
+      $ JENKINS_AGENT_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-jenkins-agent" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+        --output text)
+      ```
+
+   1. SSH into the Jenkins agent through the Jenkins master using the ProxyJump flag (-J)
+
+      ```ShellSession
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem -J \
+        ec2-user@$JENKINS_MASTER_PUBLIC_IP \
+	ec2-user@$JENKINS_AGENT_PRIVATE_IP
+      ```
+
+1. Download the CloudWatch Log agent
+
+   1. Change to the "/tmp" directory
+
+      ```ShellSession
+      $ cd /tmp
+      ```
+
+   1. Download the CloudWatch Log Agent
+
+      ```ShellSession
+      $ curl -O https://s3.amazonaws.com/aws-cloudwatch/downloads/latest/awslogs-agent-setup.py
+      ```
+
+1. Configure the CloudWatch Log Agent and start logging "/var/log/messages"
+
+   1. Enter the following
+
+      ```ShellSession
+      $ sudo python /tmp/awslogs-agent-setup.py --region us-east-1
+      ```
+
+   1. Wait for the following to display
+
+      ```
+      Step 1 of 5: Installing pip ...DONE
+      ```
+
+   1. Wait for the following to display
+
+      *Note that this may take a while.*
+
+      ```
+      Step 2 of 5: Downloading the latest CloudWatch Logs agent bits ...DONE
+      ```
+
+   1. Note that the following is displayed
+
+      ```
+      Step 3 of 5: Configuring AWS CLI ...
+      ```
+
+   1. Press **return** on the keyboard to accept the default at the "AWS Access Key ID" prompt
+
+   1. Press **return** on the keyboard to accept the default at the "AWS Secret Access Key" prompt
+
+   1. Press **return** on the keyboard to accept the default at the "Default region name" prompt
+
+   1. Press **return** on the keyboard to accept the default at the "Default output format" prompt
+
+   1. Note that the following is displayed
+
+      ```
+      Step 4 of 5: Configuring the CloudWatch Logs Agent ...
+      ```
+
+   1. Add the following log by entering the following at the prompts
+
+      - **Path of log file to upload:** /var/log/messages
+
+      - **Destination Log Group name:** /aws/ec2/var/log/messages
+
+      - **Choose Log Stream Name:** 1 *Use EC2 instance id*
+
+      - **Choose Log Event timestamp format:** 3 *%Y-%m-%d %H:%M:%S (2008-09-08 11:52:54)*
+
+      - **Choose initial position of upload:** 1 *From start of file.*
+
+      - **More log files to configure:** N
+
+   1. Wait for the following to display
+
+      ```
+      Step 5 of 5: Setting up agent as a daemon ...DONE
+      ```
+
+   1. Note the following output
+
+      ------------------------------------------------------
+      - Configuration file successfully saved at: /var/awslogs/etc/awslogs.conf
+      - You can begin accessing new log events after a few moments at https://console.aws.amazon.com/cloudwatch/home?region=us-east-1#logs:
+      - You can use 'sudo service awslogs start|stop|status|restart' to control the daemon.
+      - To see diagnostic information for the CloudWatch Logs Agent, see /var/log/awslogs.log
+      - You can rerun interactive setup using 'sudo python ./awslogs-agent-setup.py --region us-east-1 --only-generate-config'
+      ------------------------------------------------------
+
+1. View the "/var/log/messages" entry in the newly created CloudWatch Log agent
+
+   1. Enter the following
+
+      ```ShellSession
+      $ sudo cat /var/awslogs/etc/awslogs.conf | tail -7
+      ```
+
+   1. Note the output
+
+      ```
+      [/var/log/messages]
+      datetime_format = %Y-%m-%d %H:%M:%S
+      file = /var/log/messages
+      buffer_duration = 5000
+      log_stream_name = {instance_id}
+      initial_position = start_of_file
+      log_group_name = /aws/ec2/var/log/messages
+      ```
+
+1. Ensure the CloudWatch Log Agent is running
+
+   1. Check the status of the CloudWatch Log Agent
+
+      ```ShellSession
+      $ service awslogs status
+      ```
+
+   1. If the CloudWatch Log Agent is not running, start it by entering the following
+
+      ```ShellSession
+      $ sudo service awslogs start
+      ```
+
+1. Exit Jenkins agent
+
+   ```ShellSession
+   $ exit
+   ```
+
+##### Onboard additional CloudWatch log groups for Jenkins agent
+
+1. Connect to Jenkins agent
+
+   1. Ensure that you are connected to the Cisco VPN
+
+   1. Set the dev AWS profile
+
+      *Example for Mgmt environment:*
+
+      ```ShellSession
+      $ export AWS_PROFILE=ab2d-mgmt-east-dev
+      ```
+
+   1. Connect to the development controller
+
+      ```ShellSession
+      $ ssh -i ~/.ssh/${AWS_PROFILE}.pem ec2-user@$(aws \
+        --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-jenkins-agent" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+        --output text)
+      ```
+
+1. Onboard additional log groups
+
+   1. Change to the "/tmp" directory
+
+      ```ShellSession
+      $ cd /tmp
+      ```
+
+   1. Run the interactive setup for the CloudWatch Log agent
+
+      ```ShellSession
+      $ sudo python ./awslogs-agent-setup.py \
+        --region us-east-1 \
+        --only-generate-config
+      ```
+
+   1. Note that the following is displayed
+
+      ```
+      Step 3 of 5: Configuring AWS CLI ...
+      ```
+
+   1. Press **return** on the keyboard to accept the default at the "AWS Access Key ID" prompt
+
+   1. Press **return** on the keyboard to accept the default at the "AWS Secret Access Key" prompt
+
+   1. Press **return** on the keyboard to accept the default at the "Default region name" prompt
+
+   1. Press **return** on the keyboard to accept the default at the "Default output format" prompt
+
+   1. Note that the following is displayed
+
+      ```
+      Step 4 of 5: Configuring the CloudWatch Logs Agent ...
+      ```
+
+   1. Add the following log by entering the following at the prompts
+
+      - **Path of log file to upload:** /var/log/amazon/ssm/amazon-ssm-agent.log
+
+      - **Destination Log Group name:** /aws/ec2/var/log/amazon/ssm/amazon-ssm-agent.log
+
+      - **Choose Log Stream Name:** 1 *Use EC2 instance id*
+
+      - **Choose Log Event timestamp format:** 3 *%Y-%m-%d %H:%M:%S (2008-09-08 11:52:54)*
+
+      - **Choose initial position of upload:** 1 *From start of file.*
+
+      - **More log files to configure:** Y
+
+   1. Add the following log by entering the following at the prompts
+
+      - **Path of log file to upload:** /var/log/audit/audit.log
+
+      - **Destination Log Group name:** /aws/ec2/var/log/audit/audit.log
+
+      - **Choose Log Stream Name:** 1 *Use EC2 instance id*
+
+      - **Choose Log Event timestamp format:** 3 *%Y-%m-%d %H:%M:%S (2008-09-08 11:52:54)*
+
+      - **Choose initial position of upload:** 1 *From start of file.*
+
+      - **More log files to configure:** Y
+
+   1. Add the following log by entering the following at the prompts
+
+      - **Path of log file to upload:** /var/log/awslogs.log
+
+      - **Destination Log Group name:** /aws/ec2/var/log/awslogs.log
+
+      - **Choose Log Stream Name:** 1 *Use EC2 instance id*
+
+      - **Choose Log Event timestamp format:** 3 *%Y-%m-%d %H:%M:%S (2008-09-08 11:52:54)*
+
+      - **Choose initial position of upload:** 1 *From start of file.*
+
+      - **More log files to configure:** Y
+
+   1. Add the following log by entering the following at the prompts
+
+      - **Path of log file to upload:** /var/log/cloud-init-output.log
+
+      - **Destination Log Group name:** /aws/ec2/var/log/cloud-init-output.log
+
+      - **Choose Log Stream Name:** 1 *Use EC2 instance id*
+
+      - **Choose Log Event timestamp format:** 3 *%Y-%m-%d %H:%M:%S (2008-09-08 11:52:54)*
+
+      - **Choose initial position of upload:** 1 *From start of file.*
+
+      - **More log files to configure:** Y
+
+   1. Add the following log by entering the following at the prompts
+
+      - **Path of log file to upload:** /var/log/cloud-init.log
+
+      - **Destination Log Group name:** /aws/ec2/var/log/cloud-init.log
+
+      - **Choose Log Stream Name:** 1 *Use EC2 instance id*
+
+      - **Choose Log Event timestamp format:** 3 *%Y-%m-%d %H:%M:%S (2008-09-08 11:52:54)*
+
+      - **Choose initial position of upload:** 1 *From start of file.*
+
+      - **More log files to configure:** Y
+
+   1. Add the following log by entering the following at the prompts
+
+      - **Path of log file to upload:** /var/log/cron
+
+      - **Destination Log Group name:** /aws/ec2/var/log/cron
+
+      - **Choose Log Stream Name:** 1 *Use EC2 instance id*
+
+      - **Choose Log Event timestamp format:** 3 *%Y-%m-%d %H:%M:%S (2008-09-08 11:52:54)*
+
+      - **Choose initial position of upload:** 1 *From start of file.*
+
+      - **More log files to configure:** Y
+
+   1. Add the following log by entering the following at the prompts
+
+      - **Path of log file to upload:** /var/log/dmesg
+
+      - **Destination Log Group name:** /aws/ec2/var/log/dmesg
+
+      - **Choose Log Stream Name:** 1 *Use EC2 instance id*
+
+      - **Choose Log Event timestamp format:** 3 *%Y-%m-%d %H:%M:%S (2008-09-08 11:52:54)*
+
+      - **Choose initial position of upload:** 1 *From start of file.*
+
+      - **More log files to configure:** Y
+
+   1. Add the following log by entering the following at the prompts
+
+      - **Path of log file to upload:** /var/log/maillog
+
+      - **Destination Log Group name:** /aws/ec2/var/log/maillog
+
+      - **Choose Log Stream Name:** 1 *Use EC2 instance id*
+
+      - **Choose Log Event timestamp format:** 3 *%Y-%m-%d %H:%M:%S (2008-09-08 11:52:54)*
+
+      - **Choose initial position of upload:** 1 *From start of file.*
+
+      - **More log files to configure:** Y
+
+   1. Add the following log by entering the following at the prompts
+
+      - **Path of log file to upload:** /var/log/secure
+
+      - **Destination Log Group name:** /aws/ec2/var/log/secure
+
+      - **Choose Log Stream Name:** 1 *Use EC2 instance id*
+
+      - **Choose Log Event timestamp format:** 3 *%Y-%m-%d %H:%M:%S (2008-09-08 11:52:54)*
+
+      - **Choose initial position of upload:** 1 *From start of file.*
+
+      - **More log files to configure:** Y
+
+   1. Add the following log by entering the following at the prompts
+
+      - **Path of log file to upload:** /var/opt/ds_agent/diag/ds_agent-err.log
+
+      - **Destination Log Group name:** /aws/ec2/var/opt/ds_agent/diag/ds_agent-err.log
+
+      - **Choose Log Stream Name:** 1 *Use EC2 instance id*
+
+      - **Choose Log Event timestamp format:** 3 *%Y-%m-%d %H:%M:%S (2008-09-08 11:52:54)*
+
+      - **Choose initial position of upload:** 1 *From start of file.*
+
+      - **More log files to configure:** Y
+
+   1. Add the following log by entering the following at the prompts
+
+      - **Path of log file to upload:** /var/opt/ds_agent/diag/ds_agent.log
+
+      - **Destination Log Group name:** /aws/ec2/var/opt/ds_agent/diag/ds_agent.log
+
+      - **Choose Log Stream Name:** 1 *Use EC2 instance id*
+
+      - **Choose Log Event timestamp format:** 3 *%Y-%m-%d %H:%M:%S (2008-09-08 11:52:54)*
+
+      - **Choose initial position of upload:** 1 *From start of file.*
+
+      - **More log files to configure:** Y
+
+   1. Add the following log by entering the following at the prompts
+
+      - **Path of log file to upload:** /var/opt/ds_agent/diag/ds_am.log
+
+      - **Destination Log Group name:** /aws/ec2/var/opt/ds_agent/diag/ds_am.log
+
+      - **Choose Log Stream Name:** 1 *Use EC2 instance id*
+
+      - **Choose Log Event timestamp format:** 3 *%Y-%m-%d %H:%M:%S (2008-09-08 11:52:54)*
+
+      - **Choose initial position of upload:** 1 *From start of file.*
+
+      - **More log files to configure:** N
+
+   1. Note all the new CloudWatch log groups configurations are appended after the first "/var/log/messages" section in the configuaration file
+
+      ```ShellSession
+      $ sudo cat /var/awslogs/etc/awslogs.conf
+      ```
+
+1. Restart the awslogs service
+
+   ```ShellSession
+   $ sudo service awslogs restart
+   ```
+
+1. Reload systemd configuration
+
+   ```ShellSession
+   $ sudo systemctl daemon-reload
+   ```
+
+1. Exit Jenkins agent
+
+   ```ShellSession
+   $ exit
+   ```
+
+##### Verify logging to CloudWatch Log Group for management environment
+
+1. Open Chrome
+
+1. Log on to the development AWS account
+
+1. Select **CloudWatch**
+
+1. Select **Log groups** under the "Logs" section in the leftmost panel
+
+1. Select the following
+
+   ```
+   /aws/ec2/var/log/messages
+   ```
+
+1. Select the instance id
+
+   *Example:*
+
+   ```
+   i-01fbbfdf09d80d874
+   ```
+
+1. Note the list of events that appear within the main page
+
+#### Configure CloudWatch Log groups for development environment
+
+##### Configure CloudTrail CloudWatch Log group for development environment
+
+1. Log on to the AWS development account
+
+1. Create a CloudTrail CloudWatch Log group
+
+   1. Select **Log groups** from the leftmost panel
+
+   1. Select **Actions**
+
+   1. Select **Create log group**
+
+   1. Configure the "Create log group" page as follows
+
+      - **Log Group Name:** cloudtrail-logs
+
+   1. Select **Create log group**
+
+1. Create a trail in CloudTrail
+
+   1. Select **CloudTrail**
+
+   1. Select **Create trail**
+
+   1. Configure "Create Trail"
+
+      - **Trail name:** cloudtrail-default
+
+      - **Apply trail to all regions:** No
+
+   1. Configure "Management events"
+
+      - **Read/Write events:** All
+
+      - **Log AWS KMS events:** Yes
+
+   1. Configure "Insights events"
+
+      - **Log Insights events:** No
+
+   1. Configure "Data Events" for the "S3" tab
+
+      - **Select all S3 buckets in your account:** Checked
+
+   1. Configure "Storage location"
+
+      - **Create a new S3 bucket:** No
+
+      - **S3 bucket:** ab2d-dev-cloudtrail
+
+   1. Select **Create**
+
+1. Create a role for CloudTrail
+
+   1. Set the AWS profile
+
+      ```ShellSession
+      $ export AWS_PROFILE=ab2d-dev
+      ```
+
+   1. Change to the "Deploy" directory
+
+      ```ShellSession
+      $ cd ~/code/ab2d/Deploy
+      ```
+
+   1. Change to the shared directory
+
+      ```ShellSession
+      $ cd terraform/environments/ab2d-dev-shared
+      ```
+
+   1. Create the "Ab2dCloudTrailAssumeRole" role
+
+      ```ShellSession
+      $ aws --region us-east-1 iam create-role \
+        --role-name Ab2dCloudTrailAssumeRole \
+        --assume-role-policy-document file://ab2d-cloudtrail-assume-role-policy.json
+      ```
+
+   1. Add a CloudWatch log group policy to the CloudTrail role
+
+      ```ShellSession
+      $ aws --region us-east-1 iam put-role-policy \
+        --role-name Ab2dCloudTrailAssumeRole \
+	--policy-name Ab2dCloudTrailPolicy \
+	--policy-document file://ab2d-cloudtrail-cloudwatch-policy.json
+      ```
+
+1. Update the trail in CloudTrail with the log group and role information
+
+   ```ShellSession
+   $ aws --region us-east-1 cloudtrail update-trail \
+     --name cloudtrail-default \
+     --cloud-watch-logs-log-group-arn arn:aws:logs:us-east-1:349849222861:log-group:cloudtrail-logs:* \
+     --cloud-watch-logs-role-arn arn:aws:iam::349849222861:role/Ab2dCloudTrailAssumeRole
+   ```
+
+##### Configure VPC flow log CloudWatch Log group for development environment
+
+1. Log on to the AWS development account
+
+1. Create a VPC flow log CloudWatch Log group
+
+   1. Select **CloudWatch**
+
+   1. Select **Log groups** from the leftmost panel
+
+   1. Select **Actions**
+
+   1. Select **Create log group**
+
+   1. Configure the "Create log group" page as follows
+
+      - **Log Group Name:** vpc-flowlogs
+
+   1. Select **Create log group**
+
+1. Create a VPC flow log
+
+   1. Select **VPC**
+
+   1. Select **Your VPCs** from the leftmost panel
+
+   1. Select the following VPC
+
+      ```
+      ab2d-dev
+      ```
+
+   1. Select the **Flow Logs** tab
+
+   1. Select **Create flow log**
+
+   1. Configure the "Create flow log" page
+
+      *Format:*
+
+      - **Filter:** All
+
+      - **Maximum aggregation interval:** 10 minutes
+
+      - **Destination:** Send to CloudWatch Logs
+
+      - **Destination log group:** vpc-flowlogs
+
+      - **IAM role:** Ab2dInstanceRole
+
+   1. Select **Create**
+
+   1. Select **Close** on the "Create flow log" page
+
+##### Onboard first deployment controller log to CloudWatch Log groups for development environment
+
+1. Connect to an API node in development
+
+   1. Ensure that you are connected to the Cisco VPN
+
+   1. Set the dev AWS profile
+
+      ```ShellSession
+      $ export AWS_PROFILE=ab2d-dev
+      ```
+
+   1. Connect to the deployment controller
+
+      ```ShellSession
+      $ ssh -i ~/.ssh/${AWS_PROFILE}.pem ec2-user@$(aws \
+        --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-deployment-controller" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+        --output text)
+      ```
+
+1. Download the CloudWatch Log agent
+
+   1. Change to the "/tmp" directory
+
+      ```ShellSession
+      $ cd /tmp
+      ```
+
+   1. Download the CloudWatch Log Agent
+
+      ```ShellSession
+      $ curl -O https://s3.amazonaws.com/aws-cloudwatch/downloads/latest/awslogs-agent-setup.py
+      ```
+
+1. Configure the CloudWatch Log Agent and start logging "/var/log/messages"
+
+   1. Enter the following
+
+      ```ShellSession
+      $ sudo python /tmp/awslogs-agent-setup.py --region us-east-1
+      ```
+
+   1. Wait for the following to display
+
+      ```
+      Step 1 of 5: Installing pip ...DONE
+      ```
+
+   1. Wait for the following to display
+
+      *Note that this may take a while.*
+
+      ```
+      Step 2 of 5: Downloading the latest CloudWatch Logs agent bits ...DONE
+      ```
+
+   1. Note that the following is displayed
+
+      ```
+      Step 3 of 5: Configuring AWS CLI ...
+      ```
+
+   1. Press **return** on the keyboard to accept the default at the "AWS Access Key ID" prompt
+
+   1. Press **return** on the keyboard to accept the default at the "AWS Secret Access Key" prompt
+
+   1. Press **return** on the keyboard to accept the default at the "Default region name" prompt
+
+   1. Press **return** on the keyboard to accept the default at the "Default output format" prompt
+
+   1. Note that the following is displayed
+
+      ```
+      Step 4 of 5: Configuring the CloudWatch Logs Agent ...
+      ```
+
+   1. Add the following log by entering the following at the prompts
+
+      - **Path of log file to upload:** /var/log/messages
+
+      - **Destination Log Group name:** /aws/ec2/var/log/messages
+
+      - **Choose Log Stream Name:** 1 *Use EC2 instance id*
+
+      - **Choose Log Event timestamp format:** 3 *%Y-%m-%d %H:%M:%S (2008-09-08 11:52:54)*
+
+      - **Choose initial position of upload:** 1 *From start of file.*
+
+      - **More log files to configure:** N
+
+   1. Wait for the following to display
+
+      ```
+      Step 5 of 5: Setting up agent as a daemon ...DONE
+      ```
+
+   1. Note the following output
+
+      ------------------------------------------------------
+      - Configuration file successfully saved at: /var/awslogs/etc/awslogs.conf
+      - You can begin accessing new log events after a few moments at https://console.aws.amazon.com/cloudwatch/home?region=us-east-1#logs:
+      - You can use 'sudo service awslogs start|stop|status|restart' to control the daemon.
+      - To see diagnostic information for the CloudWatch Logs Agent, see /var/log/awslogs.log
+      - You can rerun interactive setup using 'sudo python ./awslogs-agent-setup.py --region us-east-1 --only-generate-config'
+      ------------------------------------------------------
+
+1. View the "/var/log/messages" entry in the newly created CloudWatch Log agent
+
+   1. Enter the following
    
       ```ShellSession
       $ sudo cat /var/awslogs/etc/awslogs.conf | tail -7
@@ -4136,12 +5373,6 @@
       ```ShellSession
       $ sudo service awslogs start
       ```
-      
-1. Exit the API node
-
-   ```ShellSession
-   $ exit
-   ```
 
 1. Exit the controler
 
@@ -4149,102 +5380,1803 @@
    $ exit
    ```
 
-### Verify logging to the \/aws\/ec2\/var\/log\/messages CloudWatch Log Group
+##### Onboard additional CloudWatch log groups for deployment controller log for development environment
 
-1. Open Chrome
+1. Connect to deployment controller
 
-1. Log on to the development AWS account
+   1. Ensure that you are connected to the Cisco VPN
 
-1. Select **CloudWatch**
+   1. Set the dev AWS profile
 
-1. Select **Log groups** under the "Logs" section in the leftmost panel
+      *Example for Mgmt environment:*
 
-1. Select the following
+      ```ShellSession
+      $ export AWS_PROFILE=ab2d-dev
+      ```
 
+   1. Connect to the development controller
+
+      ```ShellSession
+      $ ssh -i ~/.ssh/${AWS_PROFILE}.pem ec2-user@$(aws \
+        --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-deployment-controller" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+        --output text)
+      ```
+
+1. Onboard additional log groups
+
+   1. Change to the "/tmp" directory
+
+      ```ShellSession
+      $ cd /tmp
+      ```
+
+   1. Run the interactive setup for the CloudWatch Log agent
+
+      ```ShellSession
+      $ sudo python ./awslogs-agent-setup.py \
+        --region us-east-1 \
+        --only-generate-config
+      ```
+
+   1. Note that the following is displayed
+
+      ```
+      Step 3 of 5: Configuring AWS CLI ...
+      ```
+
+   1. Press **return** on the keyboard to accept the default at the "AWS Access Key ID" prompt
+
+   1. Press **return** on the keyboard to accept the default at the "AWS Secret Access Key" prompt
+
+   1. Press **return** on the keyboard to accept the default at the "Default region name" prompt
+
+   1. Press **return** on the keyboard to accept the default at the "Default output format" prompt
+
+   1. Note that the following is displayed
+
+      ```
+      Step 4 of 5: Configuring the CloudWatch Logs Agent ...
+      ```
+
+   1. Add the following log by entering the following at the prompts
+
+      - **Path of log file to upload:** /var/log/amazon/ssm/amazon-ssm-agent.log
+
+      - **Destination Log Group name:** /aws/ec2/var/log/amazon/ssm/amazon-ssm-agent.log
+
+      - **Choose Log Stream Name:** 1 *Use EC2 instance id*
+
+      - **Choose Log Event timestamp format:** 3 *%Y-%m-%d %H:%M:%S (2008-09-08 11:52:54)*
+
+      - **Choose initial position of upload:** 1 *From start of file.*
+
+      - **More log files to configure:** Y
+
+   1. Add the following log by entering the following at the prompts
+
+      - **Path of log file to upload:** /var/log/audit/audit.log
+
+      - **Destination Log Group name:** /aws/ec2/var/log/audit/audit.log
+
+      - **Choose Log Stream Name:** 1 *Use EC2 instance id*
+
+      - **Choose Log Event timestamp format:** 3 *%Y-%m-%d %H:%M:%S (2008-09-08 11:52:54)*
+
+      - **Choose initial position of upload:** 1 *From start of file.*
+
+      - **More log files to configure:** Y
+
+   1. Add the following log by entering the following at the prompts
+
+      - **Path of log file to upload:** /var/log/awslogs.log
+
+      - **Destination Log Group name:** /aws/ec2/var/log/awslogs.log
+
+      - **Choose Log Stream Name:** 1 *Use EC2 instance id*
+
+      - **Choose Log Event timestamp format:** 3 *%Y-%m-%d %H:%M:%S (2008-09-08 11:52:54)*
+
+      - **Choose initial position of upload:** 1 *From start of file.*
+
+      - **More log files to configure:** Y
+
+   1. Add the following log by entering the following at the prompts
+
+      - **Path of log file to upload:** /var/log/cloud-init-output.log
+
+      - **Destination Log Group name:** /aws/ec2/var/log/cloud-init-output.log
+
+      - **Choose Log Stream Name:** 1 *Use EC2 instance id*
+
+      - **Choose Log Event timestamp format:** 3 *%Y-%m-%d %H:%M:%S (2008-09-08 11:52:54)*
+
+      - **Choose initial position of upload:** 1 *From start of file.*
+
+      - **More log files to configure:** Y
+
+   1. Add the following log by entering the following at the prompts
+
+      - **Path of log file to upload:** /var/log/cloud-init.log
+
+      - **Destination Log Group name:** /aws/ec2/var/log/cloud-init.log
+
+      - **Choose Log Stream Name:** 1 *Use EC2 instance id*
+
+      - **Choose Log Event timestamp format:** 3 *%Y-%m-%d %H:%M:%S (2008-09-08 11:52:54)*
+
+      - **Choose initial position of upload:** 1 *From start of file.*
+
+      - **More log files to configure:** Y
+
+   1. Add the following log by entering the following at the prompts
+
+      - **Path of log file to upload:** /var/log/cron
+
+      - **Destination Log Group name:** /aws/ec2/var/log/cron
+
+      - **Choose Log Stream Name:** 1 *Use EC2 instance id*
+
+      - **Choose Log Event timestamp format:** 3 *%Y-%m-%d %H:%M:%S (2008-09-08 11:52:54)*
+
+      - **Choose initial position of upload:** 1 *From start of file.*
+
+      - **More log files to configure:** Y
+
+   1. Add the following log by entering the following at the prompts
+
+      - **Path of log file to upload:** /var/log/dmesg
+
+      - **Destination Log Group name:** /aws/ec2/var/log/dmesg
+
+      - **Choose Log Stream Name:** 1 *Use EC2 instance id*
+
+      - **Choose Log Event timestamp format:** 3 *%Y-%m-%d %H:%M:%S (2008-09-08 11:52:54)*
+
+      - **Choose initial position of upload:** 1 *From start of file.*
+
+      - **More log files to configure:** Y
+
+   1. Add the following log by entering the following at the prompts
+
+      - **Path of log file to upload:** /var/log/maillog
+
+      - **Destination Log Group name:** /aws/ec2/var/log/maillog
+
+      - **Choose Log Stream Name:** 1 *Use EC2 instance id*
+
+      - **Choose Log Event timestamp format:** 3 *%Y-%m-%d %H:%M:%S (2008-09-08 11:52:54)*
+
+      - **Choose initial position of upload:** 1 *From start of file.*
+
+      - **More log files to configure:** Y
+
+   1. Add the following log by entering the following at the prompts
+
+      - **Path of log file to upload:** /var/log/secure
+
+      - **Destination Log Group name:** /aws/ec2/var/log/secure
+
+      - **Choose Log Stream Name:** 1 *Use EC2 instance id*
+
+      - **Choose Log Event timestamp format:** 3 *%Y-%m-%d %H:%M:%S (2008-09-08 11:52:54)*
+
+      - **Choose initial position of upload:** 1 *From start of file.*
+
+      - **More log files to configure:** Y
+
+   1. Add the following log by entering the following at the prompts
+
+      - **Path of log file to upload:** /var/opt/ds_agent/diag/ds_agent-err.log
+
+      - **Destination Log Group name:** /aws/ec2/var/opt/ds_agent/diag/ds_agent-err.log
+
+      - **Choose Log Stream Name:** 1 *Use EC2 instance id*
+
+      - **Choose Log Event timestamp format:** 3 *%Y-%m-%d %H:%M:%S (2008-09-08 11:52:54)*
+
+      - **Choose initial position of upload:** 1 *From start of file.*
+
+      - **More log files to configure:** Y
+
+   1. Add the following log by entering the following at the prompts
+
+      - **Path of log file to upload:** /var/opt/ds_agent/diag/ds_agent.log
+
+      - **Destination Log Group name:** /aws/ec2/var/opt/ds_agent/diag/ds_agent.log
+
+      - **Choose Log Stream Name:** 1 *Use EC2 instance id*
+
+      - **Choose Log Event timestamp format:** 3 *%Y-%m-%d %H:%M:%S (2008-09-08 11:52:54)*
+
+      - **Choose initial position of upload:** 1 *From start of file.*
+
+      - **More log files to configure:** Y
+
+   1. Add the following log by entering the following at the prompts
+
+      - **Path of log file to upload:** /var/opt/ds_agent/diag/ds_am.log
+
+      - **Destination Log Group name:** /aws/ec2/var/opt/ds_agent/diag/ds_am.log
+
+      - **Choose Log Stream Name:** 1 *Use EC2 instance id*
+
+      - **Choose Log Event timestamp format:** 3 *%Y-%m-%d %H:%M:%S (2008-09-08 11:52:54)*
+
+      - **Choose initial position of upload:** 1 *From start of file.*
+
+      - **More log files to configure:** N
+
+   1. Note all the new CloudWatch log groups configurations are appended after the first "/var/log/messages" section in the configuaration file
+
+      ```ShellSession
+      $ sudo cat /var/awslogs/etc/awslogs.conf
+      ```
+
+1. Restart the awslogs service
+
+   ```ShellSession
+   $ sudo service awslogs restart
    ```
-   /aws/ec2/var/log/messages
+
+1. Reload systemd configuration
+
+   ```ShellSession
+   $ sudo systemctl daemon-reload
    ```
 
-1. Select the instance id
+1. Exit deployment controller
 
-   *Example:*
-
-   ```
-   i-01fbbfdf09d80d874
+   ```ShellSession
+   $ exit
    ```
 
-1. Note the list of events that appear within the main page
+1. Verify that all expected CloudWatch Log groups are present
 
-### Configure the \/aws\/ec2\/var\/log\/messages CloudWatch Log Group to Splunk HEC Lambda Configuration
-
-> *** TO DO ***: Waiting for Splunk HEC URL AND Splunk HEC Token
-
-1. Verify that the \/aws\/ec2\/var\/log\/messages CloudWatch Log Group has no subscription configured
-
-   1. Open Chrome
-
-   1. Log to to the development AWS account
+   1. Log on to the AWS develoment environment account
 
    1. Select **CloudWatch**
 
-   1. Select **Log groups** under the "Logs" section in the leftmost panel
+   1. Select **Log groups** from the leftmost panel
 
-   1. Select the radio button beside the following
+   1. Verify that all of the following log groups are displayed
+	
+      - /aws/ec2/var/log/amazon/ssm/amazon-ssm-agent.log
 
-      ```
-      /aws/ec2/var/log/messages
-      ```
+      - /aws/ec2/var/log/audit/audit.log
+
+      - /aws/ec2/var/log/awslogs.log
+
+      - /aws/ec2/var/log/cloud-init-output.log
+
+      - /aws/ec2/var/log/cloud-init.log
+
+      - /aws/ec2/var/log/cron
+
+      - /aws/ec2/var/log/dmesg
+
+      - /aws/ec2/var/log/messages
+
+      - /aws/ec2/var/log/secure
+
+      - /aws/ec2/var/opt/ds_agent/diag/ds_agent-err.log
+
+      - /aws/ec2/var/opt/ds_agent/diag/ds_agent.log
+
+      - /aws/ec2/var/opt/ds_agent/diag/ds_am.log
+
+      - vpc-flowlogs
+
+      - cloudtrail-logs
+
+1. If any of the log groups are missing, do the following:
+
+   1. Note the missing group(s) so that you can later investigate why it is missing
+
+      *Noted missing groups when creating on 2020-04-07:*
+
+      - /aws/ec2/var/log/amazon/ssm/amazon-ssm-agent.log
+
+      - /aws/ec2/var/log/cloud-init.log
 
    1. Select **Actions**
 
-   1. If **Remove Subscription Filter** is enabled, select it and remove the subscription
+   1. Select **Create log group**
 
-1. Create a Lambda logger function for the \/aws\/ec2\/var\/log\/messages CloudWatch Log Group
+   1. Configure the "Create log group" page as follows
 
-   1. Open Chrome
+      - **Log group name:** {missing log group}
 
-   1. Log to to the development AWS account
+   1. Select **Create log group**
 
-   1. Select **Lambda**
+   1. Repeat this process for all missing groups
 
-   1. Select **Create function**
+1. Select each log group and note which ones have no data
 
-   1. Select **Use a blueprint**
+   *Noted log groups with no data when checking on 2020-04-07:*
 
-   1. Enter the following in the **Filter by tags and attributes or search by keyword** text box
+   - /aws/ec2/var/log/amazon/ssm/amazon-ssm-agent.log
+
+   - /aws/ec2/var/log/cloud-init.log
+
+   - vpc-flowlogs
+
+##### Onboard first api node log to CloudWatch Log groups for development environment
+
+> *** TO DO ***
+
+1. Connect to an API node in development
+
+   1. Ensure that you are connected to the Cisco VPN
+
+   1. Set the dev AWS profile
+
+      ```ShellSession
+      $ export AWS_PROFILE=ab2d-dev
+      ```
+
+   1. Connect to the development controller
+
+      ```ShellSession
+      $ ssh -i ~/.ssh/${AWS_PROFILE}.pem ec2-user@$(aws \
+        --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-deployment-controller" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+        --output text)
+      ```
+
+   1. Connect to the desired API node
+
+      *Example for connecting to the first API node:*
+
+      ```ShellSession
+      $ ssh ec2-user@$(./list-api-instances.sh \
+        | grep 10. \
+        | awk '{print $2}' \
+        | head -n 1)
+      ```
+
+> *** TO DO ***
+
+##### Onboard additional CloudWatch log groups for first api node log for development environment
+
+> *** TO DO ***
+
+1. Connect to an API node in sandbox
+
+   1. Ensure that you are connected to the Cisco VPN
+
+   1. Set the dev AWS profile
+
+      ```ShellSession
+      $ export AWS_PROFILE=ab2d-dev
+      ```
+
+   1. Connect to the sandbox controller
+
+      ```ShellSession
+      $ ssh -i ~/.ssh/${AWS_PROFILE}.pem ec2-user@$(aws \
+        --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-deployment-controller" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+        --output text)
+      ```
+
+   1. Connect to the desired API node
+
+      *Example for connecting to the first API node:*
+
+      ```ShellSession
+      $ ssh ec2-user@$(./list-api-instances.sh \
+        | grep 10. \
+        | awk '{print $2}' \
+        | head -n 1)
+      ```
+
+> *** TO DO ***
+
+#### Configure CloudWatch Log groups for sandbox environment
+
+##### Configure CloudTrail CloudWatch Log group for sandbox environment
+
+1. Note that I am skipping this section since Splunk team already created a CloudTrail
+
+> *** TO DO ***: Verify this with Splunk team
+
+1. Log on to the AWS sandbox account
+
+1. Create a CloudTrail CloudWatch Log group
+
+   1. Select **Log groups** from the leftmost panel
+
+   1. Select **Actions**
+
+   1. Select **Create log group**
+
+   1. Configure the "Create log group" page as follows
+
+      - **Log Group Name:** cloudtrail-logs
+
+   1. Select **Create log group**
+
+1. Create a trail in CloudTrail
+
+   1. Select **CloudTrail**
+
+   1. Select **Create trail**
+
+   1. Configure "Create Trail"
+
+      - **Trail name:** cloudtrail-default
+
+      - **Apply trail to all regions:** No
+
+   1. Configure "Management events"
+
+      - **Read/Write events:** All
+
+      - **Log AWS KMS events:** Yes
+
+   1. Configure "Insights events"
+
+      - **Log Insights events:** No
+
+   1. Configure "Data Events" for the "S3" tab
+
+      - **Select all S3 buckets in your account:** Checked
+
+   1. Configure "Storage location"
+
+      - **Create a new S3 bucket:** No
+
+      - **S3 bucket:** ab2d-sbx-sandbox-cloudtrail
+
+   1. Select **Create**
+
+1. Create a role for CloudTrail
+
+   1. Set the AWS profile
+
+      ```ShellSession
+      $ export AWS_PROFILE=ab2d-sbx-sandbox
+      ```
+
+   1. Change to the "Deploy" directory
+
+      ```ShellSession
+      $ cd ~/code/ab2d/Deploy
+      ```
+
+   1. Change to the shared directory
+
+      ```ShellSession
+      $ cd terraform/environments/ab2d-sbx-sandbox-shared
+      ```
+
+   1. Create the "Ab2dCloudTrailAssumeRole" role
+
+      ```ShellSession
+      $ aws --region us-east-1 iam create-role \
+        --role-name Ab2dCloudTrailAssumeRole \
+        --assume-role-policy-document file://ab2d-cloudtrail-assume-role-policy.json
+      ```
+
+   1. Add a CloudWatch log group policy to the CloudTrail role
+
+      ```ShellSession
+      $ aws --region us-east-1 iam put-role-policy \
+        --role-name Ab2dCloudTrailAssumeRole \
+	--policy-name Ab2dCloudTrailPolicy \
+	--policy-document file://ab2d-cloudtrail-cloudwatch-policy.json
+      ```
+
+1. Update the trail in CloudTrail with the log group and role information
+
+   ```ShellSession
+   $ aws --region us-east-1 cloudtrail update-trail \
+     --name cloudtrail-default \
+     --cloud-watch-logs-log-group-arn arn:aws:logs:us-east-1:777200079629:log-group:cloudtrail-logs:* \
+     --cloud-watch-logs-role-arn arn:aws:iam::777200079629:role/Ab2dCloudTrailAssumeRole
+   ```
+
+##### Configure VPC flow log CloudWatch Log group for sandbox environment
+
+1. Note that I am skipping this section since Splunk team already had a flow log created
+
+   - /aws/lambda/client-logging-east-VPCFlowLogsFunction-1WH14LVH8S998
+
+> *** TO DO ***: Verify this with Splunk team
+
+1. Log on to the AWS sandbox account
+
+1. Create a VPC flow log CloudWatch Log group
+
+   1. Select **CloudWatch**
+
+   1. Select **Log groups** from the leftmost panel
+
+   1. Select **Actions**
+
+   1. Select **Create log group**
+
+   1. Configure the "Create log group" page as follows
+
+      - **Log Group Name:** vpc-flowlogs
+
+   1. Select **Create log group**
+
+1. Create a VPC flow log
+
+   1. Select **VPC**
+
+   1. Select **Your VPCs** from the leftmost panel
+
+   1. Select the following VPC
 
       ```
-      splunk
+      ab2d-sbx-sandbox
       ```
 
-   1. Select the following
+   1. Select the **Flow Logs** tab
+
+   1. Select **Create flow log**
+
+   1. Configure the "Create flow log" page
+
+      *Format:*
+
+      - **Filter:** All
+
+      - **Maximum aggregation interval:** 10 minutes
+
+      - **Destination:** Send to CloudWatch Logs
+
+      - **Destination log group:** vpc-flowlogs
+
+      - **IAM role:** Ab2dInstanceRole
+
+   1. Select **Create**
+
+   1. Select **Close** on the "Create flow log" page
+
+##### Onboard first deployment controller log to CloudWatch Log groups for sandbox environment
+
+1. Connect to an API node in sandbox
+
+   1. Ensure that you are connected to the Cisco VPN
+
+   1. Set the dev AWS profile
+
+      ```ShellSession
+      $ export AWS_PROFILE=ab2d-sbx-sandbox
+      ```
+
+   1. Connect to the deployment controller
+
+      ```ShellSession
+      $ ssh -i ~/.ssh/${AWS_PROFILE}.pem ec2-user@$(aws \
+        --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-deployment-controller" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+        --output text)
+      ```
+
+1. Download the CloudWatch Log agent
+
+   1. Change to the "/tmp" directory
+
+      ```ShellSession
+      $ cd /tmp
+      ```
+
+   1. Download the CloudWatch Log Agent
+
+      ```ShellSession
+      $ curl -O https://s3.amazonaws.com/aws-cloudwatch/downloads/latest/awslogs-agent-setup.py
+      ```
+
+1. Configure the CloudWatch Log Agent and start logging "/var/log/messages"
+
+   1. Enter the following
+
+      ```ShellSession
+      $ sudo python /tmp/awslogs-agent-setup.py --region us-east-1
+      ```
+
+   1. Wait for the following to display
 
       ```
-      splunk-cloudwatch-logs-procesesor
+      Step 1 of 5: Installing pip ...DONE
       ```
 
-   1. Select **Configure**
+   1. Wait for the following to display
 
-   1. Configure the "Basic Information" section as follows
+      *Note that this may take a while.*
 
-      - **Function name:** clwg-logger-aws-ec2-var-log-messages
+      ```
+      Step 2 of 5: Downloading the latest CloudWatch Logs agent bits ...DONE
+      ```
 
-      - **Execution role radio button:** {selected}
+   1. Note that the following is displayed
 
-      - **Execution role dropdown:** cwg_lambda_splunk_hec_role
+      ```
+      Step 3 of 5: Configuring AWS CLI ...
+      ```
 
-   1. Configure the "CloudWatch Logs Trigger" section
+   1. Press **return** on the keyboard to accept the default at the "AWS Access Key ID" prompt
 
-      - **Log group:** /aws/ec2/var/log/messages
+   1. Press **return** on the keyboard to accept the default at the "AWS Secret Access Key" prompt
 
-      - **Filter name:** clwg_logging_filter_aws_ec2_var_log_messages
+   1. Press **return** on the keyboard to accept the default at the "Default region name" prompt
 
-      - **Enable trigger:** {checked}
+   1. Press **return** on the keyboard to accept the default at the "Default output format" prompt
 
-      > *** TO DO ***: Waiting for Splunk HEC URL AND Splunk HEC Token
+   1. Note that the following is displayed
 
+      ```
+      Step 4 of 5: Configuring the CloudWatch Logs Agent ...
+      ```
 
-### Onboard additional CloudWatch log groups
+   1. Add the following log by entering the following at the prompts
+
+      - **Path of log file to upload:** /var/log/messages
+
+      - **Destination Log Group name:** /aws/ec2/var/log/messages
+
+      - **Choose Log Stream Name:** 1 *Use EC2 instance id*
+
+      - **Choose Log Event timestamp format:** 3 *%Y-%m-%d %H:%M:%S (2008-09-08 11:52:54)*
+
+      - **Choose initial position of upload:** 1 *From start of file.*
+
+      - **More log files to configure:** N
+
+   1. Wait for the following to display
+
+      ```
+      Step 5 of 5: Setting up agent as a daemon ...DONE
+      ```
+
+   1. Note the following output
+
+      ------------------------------------------------------
+      - Configuration file successfully saved at: /var/awslogs/etc/awslogs.conf
+      - You can begin accessing new log events after a few moments at https://console.aws.amazon.com/cloudwatch/home?region=us-east-1#logs:
+      - You can use 'sudo service awslogs start|stop|status|restart' to control the daemon.
+      - To see diagnostic information for the CloudWatch Logs Agent, see /var/log/awslogs.log
+      - You can rerun interactive setup using 'sudo python ./awslogs-agent-setup.py --region us-east-1 --only-generate-config'
+      ------------------------------------------------------
+
+1. View the "/var/log/messages" entry in the newly created CloudWatch Log agent
+
+   1. Enter the following
+   
+      ```ShellSession
+      $ sudo cat /var/awslogs/etc/awslogs.conf | tail -7
+      ```
+
+   1. Note the output
+
+      ```
+      [/var/log/messages]
+      datetime_format = %Y-%m-%d %H:%M:%S
+      file = /var/log/messages
+      buffer_duration = 5000
+      log_stream_name = {instance_id}
+      initial_position = start_of_file
+      log_group_name = /aws/ec2/var/log/messages
+      ```
+
+1. Ensure the CloudWatch Log Agent is running
+
+   1. Check the status of the CloudWatch Log Agent
+
+      ```ShellSession
+      $ service awslogs status
+      ```
+
+   1. If the CloudWatch Log Agent is not running, start it by entering the following
+
+      ```ShellSession
+      $ sudo service awslogs start
+      ```
+
+1. Exit the controler
+
+   ```ShellSession
+   $ exit
+   ```
+
+##### Onboard additional CloudWatch log groups for deployment controller log for sandbox environment
+
+1. Connect to deployment controller
+
+   1. Ensure that you are connected to the Cisco VPN
+
+   1. Set the dev AWS profile
+
+      *Example for Mgmt environment:*
+
+      ```ShellSession
+      $ export AWS_PROFILE=ab2d-sbx-sandbox
+      ```
+
+   1. Connect to the sandbox controller
+
+      ```ShellSession
+      $ ssh -i ~/.ssh/${AWS_PROFILE}.pem ec2-user@$(aws \
+        --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-deployment-controller" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+        --output text)
+      ```
+
+1. Onboard additional log groups
+
+   1. Change to the "/tmp" directory
+
+      ```ShellSession
+      $ cd /tmp
+      ```
+
+   1. Run the interactive setup for the CloudWatch Log agent
+
+      ```ShellSession
+      $ sudo python ./awslogs-agent-setup.py \
+        --region us-east-1 \
+        --only-generate-config
+      ```
+
+   1. Note that the following is displayed
+
+      ```
+      Step 3 of 5: Configuring AWS CLI ...
+      ```
+
+   1. Press **return** on the keyboard to accept the default at the "AWS Access Key ID" prompt
+
+   1. Press **return** on the keyboard to accept the default at the "AWS Secret Access Key" prompt
+
+   1. Press **return** on the keyboard to accept the default at the "Default region name" prompt
+
+   1. Press **return** on the keyboard to accept the default at the "Default output format" prompt
+
+   1. Note that the following is displayed
+
+      ```
+      Step 4 of 5: Configuring the CloudWatch Logs Agent ...
+      ```
+
+   1. Add the following log by entering the following at the prompts
+
+      - **Path of log file to upload:** /var/log/amazon/ssm/amazon-ssm-agent.log
+
+      - **Destination Log Group name:** /aws/ec2/var/log/amazon/ssm/amazon-ssm-agent.log
+
+      - **Choose Log Stream Name:** 1 *Use EC2 instance id*
+
+      - **Choose Log Event timestamp format:** 3 *%Y-%m-%d %H:%M:%S (2008-09-08 11:52:54)*
+
+      - **Choose initial position of upload:** 1 *From start of file.*
+
+      - **More log files to configure:** Y
+
+   1. Add the following log by entering the following at the prompts
+
+      - **Path of log file to upload:** /var/log/audit/audit.log
+
+      - **Destination Log Group name:** /aws/ec2/var/log/audit/audit.log
+
+      - **Choose Log Stream Name:** 1 *Use EC2 instance id*
+
+      - **Choose Log Event timestamp format:** 3 *%Y-%m-%d %H:%M:%S (2008-09-08 11:52:54)*
+
+      - **Choose initial position of upload:** 1 *From start of file.*
+
+      - **More log files to configure:** Y
+
+   1. Add the following log by entering the following at the prompts
+
+      - **Path of log file to upload:** /var/log/awslogs.log
+
+      - **Destination Log Group name:** /aws/ec2/var/log/awslogs.log
+
+      - **Choose Log Stream Name:** 1 *Use EC2 instance id*
+
+      - **Choose Log Event timestamp format:** 3 *%Y-%m-%d %H:%M:%S (2008-09-08 11:52:54)*
+
+      - **Choose initial position of upload:** 1 *From start of file.*
+
+      - **More log files to configure:** Y
+
+   1. Add the following log by entering the following at the prompts
+
+      - **Path of log file to upload:** /var/log/cloud-init-output.log
+
+      - **Destination Log Group name:** /aws/ec2/var/log/cloud-init-output.log
+
+      - **Choose Log Stream Name:** 1 *Use EC2 instance id*
+
+      - **Choose Log Event timestamp format:** 3 *%Y-%m-%d %H:%M:%S (2008-09-08 11:52:54)*
+
+      - **Choose initial position of upload:** 1 *From start of file.*
+
+      - **More log files to configure:** Y
+
+   1. Add the following log by entering the following at the prompts
+
+      - **Path of log file to upload:** /var/log/cloud-init.log
+
+      - **Destination Log Group name:** /aws/ec2/var/log/cloud-init.log
+
+      - **Choose Log Stream Name:** 1 *Use EC2 instance id*
+
+      - **Choose Log Event timestamp format:** 3 *%Y-%m-%d %H:%M:%S (2008-09-08 11:52:54)*
+
+      - **Choose initial position of upload:** 1 *From start of file.*
+
+      - **More log files to configure:** Y
+
+   1. Add the following log by entering the following at the prompts
+
+      - **Path of log file to upload:** /var/log/cron
+
+      - **Destination Log Group name:** /aws/ec2/var/log/cron
+
+      - **Choose Log Stream Name:** 1 *Use EC2 instance id*
+
+      - **Choose Log Event timestamp format:** 3 *%Y-%m-%d %H:%M:%S (2008-09-08 11:52:54)*
+
+      - **Choose initial position of upload:** 1 *From start of file.*
+
+      - **More log files to configure:** Y
+
+   1. Add the following log by entering the following at the prompts
+
+      - **Path of log file to upload:** /var/log/dmesg
+
+      - **Destination Log Group name:** /aws/ec2/var/log/dmesg
+
+      - **Choose Log Stream Name:** 1 *Use EC2 instance id*
+
+      - **Choose Log Event timestamp format:** 3 *%Y-%m-%d %H:%M:%S (2008-09-08 11:52:54)*
+
+      - **Choose initial position of upload:** 1 *From start of file.*
+
+      - **More log files to configure:** Y
+
+   1. Add the following log by entering the following at the prompts
+
+      - **Path of log file to upload:** /var/log/maillog
+
+      - **Destination Log Group name:** /aws/ec2/var/log/maillog
+
+      - **Choose Log Stream Name:** 1 *Use EC2 instance id*
+
+      - **Choose Log Event timestamp format:** 3 *%Y-%m-%d %H:%M:%S (2008-09-08 11:52:54)*
+
+      - **Choose initial position of upload:** 1 *From start of file.*
+
+      - **More log files to configure:** Y
+
+   1. Add the following log by entering the following at the prompts
+
+      - **Path of log file to upload:** /var/log/secure
+
+      - **Destination Log Group name:** /aws/ec2/var/log/secure
+
+      - **Choose Log Stream Name:** 1 *Use EC2 instance id*
+
+      - **Choose Log Event timestamp format:** 3 *%Y-%m-%d %H:%M:%S (2008-09-08 11:52:54)*
+
+      - **Choose initial position of upload:** 1 *From start of file.*
+
+      - **More log files to configure:** Y
+
+   1. Add the following log by entering the following at the prompts
+
+      - **Path of log file to upload:** /var/opt/ds_agent/diag/ds_agent-err.log
+
+      - **Destination Log Group name:** /aws/ec2/var/opt/ds_agent/diag/ds_agent-err.log
+
+      - **Choose Log Stream Name:** 1 *Use EC2 instance id*
+
+      - **Choose Log Event timestamp format:** 3 *%Y-%m-%d %H:%M:%S (2008-09-08 11:52:54)*
+
+      - **Choose initial position of upload:** 1 *From start of file.*
+
+      - **More log files to configure:** Y
+
+   1. Add the following log by entering the following at the prompts
+
+      - **Path of log file to upload:** /var/opt/ds_agent/diag/ds_agent.log
+
+      - **Destination Log Group name:** /aws/ec2/var/opt/ds_agent/diag/ds_agent.log
+
+      - **Choose Log Stream Name:** 1 *Use EC2 instance id*
+
+      - **Choose Log Event timestamp format:** 3 *%Y-%m-%d %H:%M:%S (2008-09-08 11:52:54)*
+
+      - **Choose initial position of upload:** 1 *From start of file.*
+
+      - **More log files to configure:** Y
+
+   1. Add the following log by entering the following at the prompts
+
+      - **Path of log file to upload:** /var/opt/ds_agent/diag/ds_am.log
+
+      - **Destination Log Group name:** /aws/ec2/var/opt/ds_agent/diag/ds_am.log
+
+      - **Choose Log Stream Name:** 1 *Use EC2 instance id*
+
+      - **Choose Log Event timestamp format:** 3 *%Y-%m-%d %H:%M:%S (2008-09-08 11:52:54)*
+
+      - **Choose initial position of upload:** 1 *From start of file.*
+
+      - **More log files to configure:** N
+
+   1. Note all the new CloudWatch log groups configurations are appended after the first "/var/log/messages" section in the configuaration file
+
+      ```ShellSession
+      $ sudo cat /var/awslogs/etc/awslogs.conf
+      ```
+
+1. Restart the awslogs service
+
+   ```ShellSession
+   $ sudo service awslogs restart
+   ```
+
+1. Reload systemd configuration
+
+   ```ShellSession
+   $ sudo systemctl daemon-reload
+   ```
+
+1. Exit deployment controller
+
+   ```ShellSession
+   $ exit
+   ```
+
+1. Verify that all expected CloudWatch Log groups are present
+
+   1. Log on to the AWS sandbox environment account
+
+   1. Select **CloudWatch**
+
+   1. Select **Log groups** from the leftmost panel
+
+   1. Verify that all of the following log groups are displayed
+	
+      - /aws/ec2/var/log/amazon/ssm/amazon-ssm-agent.log
+
+      - /aws/ec2/var/log/audit/audit.log
+
+      - /aws/ec2/var/log/awslogs.log
+
+      - /aws/ec2/var/log/cloud-init-output.log
+
+      - /aws/ec2/var/log/cloud-init.log
+
+      - /aws/ec2/var/log/cron
+
+      - /aws/ec2/var/log/dmesg
+
+      - /aws/ec2/var/log/messages
+
+      - /aws/ec2/var/log/secure
+
+      - /aws/ec2/var/opt/ds_agent/diag/ds_agent-err.log
+
+      - /aws/ec2/var/opt/ds_agent/diag/ds_agent.log
+
+      - /aws/ec2/var/opt/ds_agent/diag/ds_am.log
+
+      - vpc-flowlogs
+
+      - cloudtrail-logs
+
+1. If any of the log groups are missing, do the following:
+
+   1. Note the missing group(s) so that you can later investigate why it is missing
+
+      *Noted missing groups when creating on 2020-04-07:*
+
+      - /aws/ec2/var/log/amazon/ssm/amazon-ssm-agent.log
+
+      - /aws/ec2/var/log/cloud-init.log
+
+   1. Select **Actions**
+
+   1. Select **Create log group**
+
+   1. Configure the "Create log group" page as follows
+
+      - **Log group name:** {missing log group}
+
+   1. Select **Create log group**
+
+   1. Repeat this process for all missing groups
+
+1. Select each log group and note which ones have no data
+
+   *Noted log groups with no data when checking on 2020-04-07:*
+
+   - /aws/ec2/var/log/amazon/ssm/amazon-ssm-agent.log
+
+   - /aws/ec2/var/log/cloud-init.log
+
+##### Onboard first api node log to CloudWatch Log groups for sandbox environment
+
+> *** TO DO ***
+
+1. Connect to an API node in sandbox
+
+   1. Ensure that you are connected to the Cisco VPN
+
+   1. Set the dev AWS profile
+
+      ```ShellSession
+      $ export AWS_PROFILE=ab2d-dev
+      ```
+
+   1. Connect to the sandbox controller
+
+      ```ShellSession
+      $ ssh -i ~/.ssh/${AWS_PROFILE}.pem ec2-user@$(aws \
+        --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-deployment-controller" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+        --output text)
+      ```
+
+   1. Connect to the desired API node
+
+      *Example for connecting to the first API node:*
+
+      ```ShellSession
+      $ ssh ec2-user@$(./list-api-instances.sh \
+        | grep 10. \
+        | awk '{print $2}' \
+        | head -n 1)
+      ```
+
+> *** TO DO ***
+
+##### Onboard additional CloudWatch log groups for first api node log for sandbox environment
+
+> *** TO DO ***
+
+1. Connect to an API node in sandbox
+
+   1. Ensure that you are connected to the Cisco VPN
+
+   1. Set the dev AWS profile
+
+      ```ShellSession
+      $ export AWS_PROFILE=ab2d-dev
+      ```
+
+   1. Connect to the sandbox controller
+
+      ```ShellSession
+      $ ssh -i ~/.ssh/${AWS_PROFILE}.pem ec2-user@$(aws \
+        --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-deployment-controller" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+        --output text)
+      ```
+
+   1. Connect to the desired API node
+
+      *Example for connecting to the first API node:*
+
+      ```ShellSession
+      $ ssh ec2-user@$(./list-api-instances.sh \
+        | grep 10. \
+        | awk '{print $2}' \
+        | head -n 1)
+      ```
+
+> *** TO DO ***
+
+#### Configure CloudWatch Log groups for impl environment
+
+##### Configure CloudTrail CloudWatch Log group for impl environment
+
+1. Log on to the AWS impl account
+
+1. Create a CloudTrail CloudWatch Log group
+
+   1. Select **Log groups** from the leftmost panel
+
+   1. Select **Actions**
+
+   1. Select **Create log group**
+
+   1. Configure the "Create log group" page as follows
+
+      - **Log Group Name:** cloudtrail-logs
+
+   1. Select **Create log group**
+
+1. Create a trail in CloudTrail
+
+   1. Select **CloudTrail**
+
+   1. Select **Create trail**
+
+   1. Configure "Create Trail"
+
+      - **Trail name:** cloudtrail-default
+
+      - **Apply trail to all regions:** No
+
+   1. Configure "Management events"
+
+      - **Read/Write events:** All
+
+      - **Log AWS KMS events:** Yes
+
+   1. Configure "Insights events"
+
+      - **Log Insights events:** No
+
+   1. Configure "Data Events" for the "S3" tab
+
+      - **Select all S3 buckets in your account:** Checked
+
+   1. Configure "Storage location"
+
+      - **Create a new S3 bucket:** No
+
+      - **S3 bucket:** ab2d-sbx-impl-cloudtrail
+
+   1. Select **Create**
+
+1. Create a role for CloudTrail
+
+   1. Set the AWS profile
+
+      ```ShellSession
+      $ export AWS_PROFILE=ab2d-east-impl
+      ```
+
+   1. Change to the "Deploy" directory
+
+      ```ShellSession
+      $ cd ~/code/ab2d/Deploy
+      ```
+
+   1. Change to the shared directory
+
+      ```ShellSession
+      $ cd terraform/environments/ab2d-east-impl-shared
+      ```
+
+   1. Create the "Ab2dCloudTrailAssumeRole" role
+
+      ```ShellSession
+      $ aws --region us-east-1 iam create-role \
+        --role-name Ab2dCloudTrailAssumeRole \
+        --assume-role-policy-document file://ab2d-cloudtrail-assume-role-policy.json
+      ```
+
+   1. Add a CloudWatch log group policy to the CloudTrail role
+
+      ```ShellSession
+      $ aws --region us-east-1 iam put-role-policy \
+        --role-name Ab2dCloudTrailAssumeRole \
+	--policy-name Ab2dCloudTrailPolicy \
+	--policy-document file://ab2d-cloudtrail-cloudwatch-policy.json
+      ```
+
+1. Update the trail in CloudTrail with the log group and role information
+
+   ```ShellSession
+   $ aws --region us-east-1 cloudtrail update-trail \
+     --name cloudtrail-default \
+     --cloud-watch-logs-log-group-arn arn:aws:logs:us-east-1:330810004472:log-group:cloudtrail-logs:* \
+     --cloud-watch-logs-role-arn arn:aws:iam::330810004472:role/Ab2dCloudTrailAssumeRole
+   ```
+
+##### Configure VPC flow log CloudWatch Log group for impl environment
+
+1. Log on to the AWS impl account
+
+1. Create a VPC flow log CloudWatch Log group
+
+   1. Select **CloudWatch**
+
+   1. Select **Log groups** from the leftmost panel
+
+   1. Select **Actions**
+
+   1. Select **Create log group**
+
+   1. Configure the "Create log group" page as follows
+
+      - **Log Group Name:** vpc-flowlogs
+
+   1. Select **Create log group**
+
+1. Create a VPC flow log
+
+   1. Select **VPC**
+
+   1. Select **Your VPCs** from the leftmost panel
+
+   1. Select the following VPC
+
+      ```
+      ab2d-east-impl
+      ```
+
+   1. Select the **Flow Logs** tab
+
+   1. Select **Create flow log**
+
+   1. Configure the "Create flow log" page
+
+      *Format:*
+
+      - **Filter:** All
+
+      - **Maximum aggregation interval:** 10 minutes
+
+      - **Destination:** Send to CloudWatch Logs
+
+      - **Destination log group:** vpc-flowlogs
+
+      - **IAM role:** Ab2dInstanceRole
+
+   1. Select **Create**
+
+   1. Select **Close** on the "Create flow log" page
+
+##### Onboard first deployment controller log to CloudWatch Log groups for impl environment
+
+1. Connect to an API node in impl
+
+   1. Ensure that you are connected to the Cisco VPN
+
+   1. Set the dev AWS profile
+
+      ```ShellSession
+      $ export AWS_PROFILE=ab2d-east-impl
+      ```
+
+   1. Connect to the deployment controller
+
+      ```ShellSession
+      $ ssh -i ~/.ssh/${AWS_PROFILE}.pem ec2-user@$(aws \
+        --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-deployment-controller" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+        --output text)
+      ```
+
+1. Download the CloudWatch Log agent
+
+   1. Change to the "/tmp" directory
+
+      ```ShellSession
+      $ cd /tmp
+      ```
+
+   1. Download the CloudWatch Log Agent
+
+      ```ShellSession
+      $ curl -O https://s3.amazonaws.com/aws-cloudwatch/downloads/latest/awslogs-agent-setup.py
+      ```
+
+1. Configure the CloudWatch Log Agent and start logging "/var/log/messages"
+
+   1. Enter the following
+
+      ```ShellSession
+      $ sudo python /tmp/awslogs-agent-setup.py --region us-east-1
+      ```
+
+   1. Wait for the following to display
+
+      ```
+      Step 1 of 5: Installing pip ...DONE
+      ```
+
+   1. Wait for the following to display
+
+      *Note that this may take a while.*
+
+      ```
+      Step 2 of 5: Downloading the latest CloudWatch Logs agent bits ...DONE
+      ```
+
+   1. Note that the following is displayed
+
+      ```
+      Step 3 of 5: Configuring AWS CLI ...
+      ```
+
+   1. Press **return** on the keyboard to accept the default at the "AWS Access Key ID" prompt
+
+   1. Press **return** on the keyboard to accept the default at the "AWS Secret Access Key" prompt
+
+   1. Press **return** on the keyboard to accept the default at the "Default region name" prompt
+
+   1. Press **return** on the keyboard to accept the default at the "Default output format" prompt
+
+   1. Note that the following is displayed
+
+      ```
+      Step 4 of 5: Configuring the CloudWatch Logs Agent ...
+      ```
+
+   1. Add the following log by entering the following at the prompts
+
+      - **Path of log file to upload:** /var/log/messages
+
+      - **Destination Log Group name:** /aws/ec2/var/log/messages
+
+      - **Choose Log Stream Name:** 1 *Use EC2 instance id*
+
+      - **Choose Log Event timestamp format:** 3 *%Y-%m-%d %H:%M:%S (2008-09-08 11:52:54)*
+
+      - **Choose initial position of upload:** 1 *From start of file.*
+
+      - **More log files to configure:** N
+
+   1. Wait for the following to display
+
+      ```
+      Step 5 of 5: Setting up agent as a daemon ...DONE
+      ```
+
+   1. Note the following output
+
+      ------------------------------------------------------
+      - Configuration file successfully saved at: /var/awslogs/etc/awslogs.conf
+      - You can begin accessing new log events after a few moments at https://console.aws.amazon.com/cloudwatch/home?region=us-east-1#logs:
+      - You can use 'sudo service awslogs start|stop|status|restart' to control the daemon.
+      - To see diagnostic information for the CloudWatch Logs Agent, see /var/log/awslogs.log
+      - You can rerun interactive setup using 'sudo python ./awslogs-agent-setup.py --region us-east-1 --only-generate-config'
+      ------------------------------------------------------
+
+1. View the "/var/log/messages" entry in the newly created CloudWatch Log agent
+
+   1. Enter the following
+   
+      ```ShellSession
+      $ sudo cat /var/awslogs/etc/awslogs.conf | tail -7
+      ```
+
+   1. Note the output
+
+      ```
+      [/var/log/messages]
+      datetime_format = %Y-%m-%d %H:%M:%S
+      file = /var/log/messages
+      buffer_duration = 5000
+      log_stream_name = {instance_id}
+      initial_position = start_of_file
+      log_group_name = /aws/ec2/var/log/messages
+      ```
+
+1. Ensure the CloudWatch Log Agent is running
+
+   1. Check the status of the CloudWatch Log Agent
+
+      ```ShellSession
+      $ service awslogs status
+      ```
+
+   1. If the CloudWatch Log Agent is not running, start it by entering the following
+
+      ```ShellSession
+      $ sudo service awslogs start
+      ```
+
+1. Exit the controler
+
+   ```ShellSession
+   $ exit
+   ```
+
+##### Onboard additional CloudWatch log groups for deployment controller log for impl environment
+
+1. Connect to deployment controller
+
+   1. Ensure that you are connected to the Cisco VPN
+
+   1. Set the dev AWS profile
+
+      *Example for Mgmt environment:*
+
+      ```ShellSession
+      $ export AWS_PROFILE=ab2d-east-impl
+      ```
+
+   1. Connect to the impl controller
+
+      ```ShellSession
+      $ ssh -i ~/.ssh/${AWS_PROFILE}.pem ec2-user@$(aws \
+        --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-deployment-controller" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+        --output text)
+      ```
+
+1. Onboard additional log groups
+
+   1. Change to the "/tmp" directory
+
+      ```ShellSession
+      $ cd /tmp
+      ```
+
+   1. Run the interactive setup for the CloudWatch Log agent
+
+      ```ShellSession
+      $ sudo python ./awslogs-agent-setup.py \
+        --region us-east-1 \
+        --only-generate-config
+      ```
+
+   1. Note that the following is displayed
+
+      ```
+      Step 3 of 5: Configuring AWS CLI ...
+      ```
+
+   1. Press **return** on the keyboard to accept the default at the "AWS Access Key ID" prompt
+
+   1. Press **return** on the keyboard to accept the default at the "AWS Secret Access Key" prompt
+
+   1. Press **return** on the keyboard to accept the default at the "Default region name" prompt
+
+   1. Press **return** on the keyboard to accept the default at the "Default output format" prompt
+
+   1. Note that the following is displayed
+
+      ```
+      Step 4 of 5: Configuring the CloudWatch Logs Agent ...
+      ```
+
+   1. Add the following log by entering the following at the prompts
+
+      - **Path of log file to upload:** /var/log/amazon/ssm/amazon-ssm-agent.log
+
+      - **Destination Log Group name:** /aws/ec2/var/log/amazon/ssm/amazon-ssm-agent.log
+
+      - **Choose Log Stream Name:** 1 *Use EC2 instance id*
+
+      - **Choose Log Event timestamp format:** 3 *%Y-%m-%d %H:%M:%S (2008-09-08 11:52:54)*
+
+      - **Choose initial position of upload:** 1 *From start of file.*
+
+      - **More log files to configure:** Y
+
+   1. Add the following log by entering the following at the prompts
+
+      - **Path of log file to upload:** /var/log/audit/audit.log
+
+      - **Destination Log Group name:** /aws/ec2/var/log/audit/audit.log
+
+      - **Choose Log Stream Name:** 1 *Use EC2 instance id*
+
+      - **Choose Log Event timestamp format:** 3 *%Y-%m-%d %H:%M:%S (2008-09-08 11:52:54)*
+
+      - **Choose initial position of upload:** 1 *From start of file.*
+
+      - **More log files to configure:** Y
+
+   1. Add the following log by entering the following at the prompts
+
+      - **Path of log file to upload:** /var/log/awslogs.log
+
+      - **Destination Log Group name:** /aws/ec2/var/log/awslogs.log
+
+      - **Choose Log Stream Name:** 1 *Use EC2 instance id*
+
+      - **Choose Log Event timestamp format:** 3 *%Y-%m-%d %H:%M:%S (2008-09-08 11:52:54)*
+
+      - **Choose initial position of upload:** 1 *From start of file.*
+
+      - **More log files to configure:** Y
+
+   1. Add the following log by entering the following at the prompts
+
+      - **Path of log file to upload:** /var/log/cloud-init-output.log
+
+      - **Destination Log Group name:** /aws/ec2/var/log/cloud-init-output.log
+
+      - **Choose Log Stream Name:** 1 *Use EC2 instance id*
+
+      - **Choose Log Event timestamp format:** 3 *%Y-%m-%d %H:%M:%S (2008-09-08 11:52:54)*
+
+      - **Choose initial position of upload:** 1 *From start of file.*
+
+      - **More log files to configure:** Y
+
+   1. Add the following log by entering the following at the prompts
+
+      - **Path of log file to upload:** /var/log/cloud-init.log
+
+      - **Destination Log Group name:** /aws/ec2/var/log/cloud-init.log
+
+      - **Choose Log Stream Name:** 1 *Use EC2 instance id*
+
+      - **Choose Log Event timestamp format:** 3 *%Y-%m-%d %H:%M:%S (2008-09-08 11:52:54)*
+
+      - **Choose initial position of upload:** 1 *From start of file.*
+
+      - **More log files to configure:** Y
+
+   1. Add the following log by entering the following at the prompts
+
+      - **Path of log file to upload:** /var/log/cron
+
+      - **Destination Log Group name:** /aws/ec2/var/log/cron
+
+      - **Choose Log Stream Name:** 1 *Use EC2 instance id*
+
+      - **Choose Log Event timestamp format:** 3 *%Y-%m-%d %H:%M:%S (2008-09-08 11:52:54)*
+
+      - **Choose initial position of upload:** 1 *From start of file.*
+
+      - **More log files to configure:** Y
+
+   1. Add the following log by entering the following at the prompts
+
+      - **Path of log file to upload:** /var/log/dmesg
+
+      - **Destination Log Group name:** /aws/ec2/var/log/dmesg
+
+      - **Choose Log Stream Name:** 1 *Use EC2 instance id*
+
+      - **Choose Log Event timestamp format:** 3 *%Y-%m-%d %H:%M:%S (2008-09-08 11:52:54)*
+
+      - **Choose initial position of upload:** 1 *From start of file.*
+
+      - **More log files to configure:** Y
+
+   1. Add the following log by entering the following at the prompts
+
+      - **Path of log file to upload:** /var/log/maillog
+
+      - **Destination Log Group name:** /aws/ec2/var/log/maillog
+
+      - **Choose Log Stream Name:** 1 *Use EC2 instance id*
+
+      - **Choose Log Event timestamp format:** 3 *%Y-%m-%d %H:%M:%S (2008-09-08 11:52:54)*
+
+      - **Choose initial position of upload:** 1 *From start of file.*
+
+      - **More log files to configure:** Y
+
+   1. Add the following log by entering the following at the prompts
+
+      - **Path of log file to upload:** /var/log/secure
+
+      - **Destination Log Group name:** /aws/ec2/var/log/secure
+
+      - **Choose Log Stream Name:** 1 *Use EC2 instance id*
+
+      - **Choose Log Event timestamp format:** 3 *%Y-%m-%d %H:%M:%S (2008-09-08 11:52:54)*
+
+      - **Choose initial position of upload:** 1 *From start of file.*
+
+      - **More log files to configure:** Y
+
+   1. Add the following log by entering the following at the prompts
+
+      - **Path of log file to upload:** /var/opt/ds_agent/diag/ds_agent-err.log
+
+      - **Destination Log Group name:** /aws/ec2/var/opt/ds_agent/diag/ds_agent-err.log
+
+      - **Choose Log Stream Name:** 1 *Use EC2 instance id*
+
+      - **Choose Log Event timestamp format:** 3 *%Y-%m-%d %H:%M:%S (2008-09-08 11:52:54)*
+
+      - **Choose initial position of upload:** 1 *From start of file.*
+
+      - **More log files to configure:** Y
+
+   1. Add the following log by entering the following at the prompts
+
+      - **Path of log file to upload:** /var/opt/ds_agent/diag/ds_agent.log
+
+      - **Destination Log Group name:** /aws/ec2/var/opt/ds_agent/diag/ds_agent.log
+
+      - **Choose Log Stream Name:** 1 *Use EC2 instance id*
+
+      - **Choose Log Event timestamp format:** 3 *%Y-%m-%d %H:%M:%S (2008-09-08 11:52:54)*
+
+      - **Choose initial position of upload:** 1 *From start of file.*
+
+      - **More log files to configure:** Y
+
+   1. Add the following log by entering the following at the prompts
+
+      - **Path of log file to upload:** /var/opt/ds_agent/diag/ds_am.log
+
+      - **Destination Log Group name:** /aws/ec2/var/opt/ds_agent/diag/ds_am.log
+
+      - **Choose Log Stream Name:** 1 *Use EC2 instance id*
+
+      - **Choose Log Event timestamp format:** 3 *%Y-%m-%d %H:%M:%S (2008-09-08 11:52:54)*
+
+      - **Choose initial position of upload:** 1 *From start of file.*
+
+      - **More log files to configure:** N
+
+   1. Note all the new CloudWatch log groups configurations are appended after the first "/var/log/messages" section in the configuaration file
+
+      ```ShellSession
+      $ sudo cat /var/awslogs/etc/awslogs.conf
+      ```
+
+1. Restart the awslogs service
+
+   ```ShellSession
+   $ sudo service awslogs restart
+   ```
+
+1. Reload systemd configuration
+
+   ```ShellSession
+   $ sudo systemctl daemon-reload
+   ```
+
+1. Exit deployment controller
+
+   ```ShellSession
+   $ exit
+   ```
+
+1. Verify that all expected CloudWatch Log groups are present
+
+   1. Log on to the AWS impl environment account
+
+   1. Select **CloudWatch**
+
+   1. Select **Log groups** from the leftmost panel
+
+   1. Verify that all of the following log groups are displayed
+	
+      - /aws/ec2/var/log/amazon/ssm/amazon-ssm-agent.log
+
+      - /aws/ec2/var/log/audit/audit.log
+
+      - /aws/ec2/var/log/awslogs.log
+
+      - /aws/ec2/var/log/cloud-init-output.log
+
+      - /aws/ec2/var/log/cloud-init.log
+
+      - /aws/ec2/var/log/cron
+
+      - /aws/ec2/var/log/dmesg
+
+      - /aws/ec2/var/log/messages
+
+      - /aws/ec2/var/log/secure
+
+      - /aws/ec2/var/opt/ds_agent/diag/ds_agent-err.log
+
+      - /aws/ec2/var/opt/ds_agent/diag/ds_agent.log
+
+      - /aws/ec2/var/opt/ds_agent/diag/ds_am.log
+
+      - vpc-flowlogs
+
+      - cloudtrail-logs
+
+1. If any of the log groups are missing, do the following:
+
+   1. Note the missing group(s) so that you can later investigate why it is missing
+
+      *Noted missing groups when creating on 2020-04-07:*
+
+      - /aws/ec2/var/log/amazon/ssm/amazon-ssm-agent.log
+
+      - /aws/ec2/var/log/cloud-init.log
+
+   1. Select **Actions**
+
+   1. Select **Create log group**
+
+   1. Configure the "Create log group" page as follows
+
+      - **Log group name:** {missing log group}
+
+   1. Select **Create log group**
+
+   1. Repeat this process for all missing groups
+
+1. Select each log group and note which ones have no data
+
+   *Noted log groups with no data when checking on 2020-04-07:*
+
+   - /aws/ec2/var/log/amazon/ssm/amazon-ssm-agent.log
+
+   - /aws/ec2/var/log/cloud-init.log
+
+   - vpc-flowlogs
+
+##### Onboard first api node log to CloudWatch Log groups for impl environment
+
+> *** TO DO ***
+
+1. Connect to an API node in impl
+
+   1. Ensure that you are connected to the Cisco VPN
+
+   1. Set the dev AWS profile
+
+      ```ShellSession
+      $ export AWS_PROFILE=ab2d-east-impl
+      ```
+
+   1. Connect to the impl controller
+
+      ```ShellSession
+      $ ssh -i ~/.ssh/${AWS_PROFILE}.pem ec2-user@$(aws \
+        --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-deployment-controller" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+        --output text)
+      ```
+
+   1. Connect to the desired API node
+
+      *Example for connecting to the first API node:*
+
+      ```ShellSession
+      $ ssh ec2-user@$(./list-api-instances.sh \
+        | grep 10. \
+        | awk '{print $2}' \
+        | head -n 1)
+      ```
+
+> *** TO DO ***
+
+##### Onboard additional CloudWatch log groups for first api node log for impl environment
+
+> *** TO DO ***
+
+1. Connect to an API node in impl
+
+   1. Ensure that you are connected to the Cisco VPN
+
+   1. Set the dev AWS profile
+
+      ```ShellSession
+      $ export AWS_PROFILE=ab2d-dev
+      ```
+
+   1. Connect to the impl controller
+
+      ```ShellSession
+      $ ssh -i ~/.ssh/${AWS_PROFILE}.pem ec2-user@$(aws \
+        --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-deployment-controller" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+        --output text)
+      ```
+
+   1. Connect to the desired API node
+
+      *Example for connecting to the first API node:*
+
+      ```ShellSession
+      $ ssh ec2-user@$(./list-api-instances.sh \
+        | grep 10. \
+        | awk '{print $2}' \
+        | head -n 1)
+      ```
 
 > *** TO DO ***
 
@@ -4272,4 +7204,3524 @@
 
    ```ShellSession
    $ aws s3api list-objects --bucket ab2d-sbx-sandbox-cloudtrail --query "Contents[*].Key"
+   ```
+
+## Appendix JJ: Export CloudWatch Log Group data to S3
+
+1. Set the desired AWS profile
+
+   *Set the Mgmt profile:*
+
+   ```ShellSession
+   $ export AWS_PROFILE=ab2d-mgmt-east-dev
+   ```
+
+1. Create an Amazon S3 Bucket
+
+   ```ShellSession
+   $ aws --region us-east-1 s3api create-bucket \
+     --bucket ab2d-vpc-flow-log-backup-2020-04-03
+   ```
+
+1. Create a "cwl-export-user" IAM user
+
+   ```ShellSession
+   $ aws --region us-east-1 iam create-user \
+     --user-name cwl-export-user
+   ```
+
+1. Get the IAM policy ARN for "AmazonS3FullAccess"
+
+   ```ShellSession
+   $ export S3_POLICY_ARN=$(aws --region us-east-1 iam list-policies \
+     --query 'Policies[?PolicyName==`AmazonS3FullAccess`].{ARN:Arn}' \
+     --output text)
+   ```
+
+1. Attach the "AmazonS3FullAccess" policy to the "cwl-export-user" IAM user
+
+   ```ShellSession
+   $ aws --region us-east-1 iam attach-user-policy \
+    --user-name cwl-export-user \
+    --policy-arn $S3_POLICY_ARN
+   ```
+
+1. Get the IAM policy ARN for "CloudWatchLogsFullAccess"
+
+   ```ShellSession
+   $ export CWL_POLICY_ARN=$(aws --region us-east-1 iam list-policies \
+     --query 'Policies[?PolicyName==`CloudWatchLogsFullAccess`].{ARN:Arn}' \
+     --output text)
+   ```
+
+1. Attach the "CloudWatchLogsFullAccess" policy to the "cwl-export-user" IAM user
+
+   ```ShellSession
+   $ aws --region us-east-1 iam attach-user-policy \
+     --user-name cwl-export-user \
+     --policy-arn $CWL_POLICY_ARN
+   ```
+
+1. Verify that the two managed policies are attached to the "cwl-export-user" user
+
+   ```ShellSession
+   $ aws --region us-east-1 iam list-attached-user-policies \
+     --user-name cwl-export-user
+   ```
+
+1. Change to the "Deploy" directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d/Deploy
+   ```
+
+1. Change to the target environment directory
+
+   ```ShellSession
+   $ cd terraform/environments/ab2d-mgmt-east-dev
+   ```
+
+1. Set the bucket policy
+
+   ```ShellSession
+   $ aws --region us-east-1 s3api put-bucket-policy \
+     --bucket ab2d-vpc-flow-log-backup-2020-04-03 \
+     --policy file://ab2d-vpc-flow-log-backup-2020-04-03.json
+   ```
+
+1. Create an export task
+
+   ```ShellSession
+   $ aws --region us-east-1 logs create-export-task \
+     --profile ab2d-mgmt-east-dev \
+     --task-name "ab2d-vpc-flow-log-backup-2020-04-03" \
+     --log-group-name "vpc-flow-log" \
+     --from 1585789200000 \
+     --to 1585962000000 \
+     --destination "ab2d-vpc-flow-log-backup-2020-04-03" \
+     --destination-prefix "export-task-output"
+   ```
+
+1. Note the output
+
+   *Example:*
+
+   ```
+   {
+     "taskId": "17ab8418-d69b-45b9-8c16-3fe77f339585"
+   }
+   ```
+
+1. Check the status of the task
+
+   *Format:*
+
+   ```ShellSession
+   $ aws --region us-east-1 logs describe-export-tasks \
+     --profile ab2d-mgmt-east-dev  \
+     --task-id "{task id}"
+   ```
+
+   *Example:*
+
+   ```ShellSession
+   $ aws --region us-east-1 logs describe-export-tasks \
+     --profile ab2d-mgmt-east-dev  \
+     --task-id "17ab8418-d69b-45b9-8c16-3fe77f339585"
+   ```
+
+1. Keep checking the status until the following is true
+
+   ```
+   "code": "COMPLETED",
+   ```
+
+## Appendix KK: Change the BFD certificate in AB2D keystores
+
+1. Remove temporary directory (if exists)
+
+   ```ShellSession
+   $ rm -rf ~/Downloads/bfd-integration
+   ```
+
+1. Create a temporary directory
+
+   ```ShellSession
+   $ mkdir -p ~/Downloads/bfd-integration
+   ```
+
+1. Change to the temporary directory
+
+   ```ShellSession
+   $ cd ~/Downloads/bfd-integration
+   ```
+
+1. Download the following files from 1Password and copy them to "~/Downloads/bfd-integration"
+
+   *Example for "Dev" environment:*
+   
+   - client_data_server_ab2d_dev_certificate.key
+
+   - client_data_server_ab2d_dev_certificate.pem
+
+   *Example for "Sbx" environment:*
+   
+   - client_data_server_ab2d_sbx_certificate.key
+
+   - client_data_server_ab2d_sbx_certificate.pem
+
+   *Example for "Impl" environment:*
+   
+   - client_data_server_ab2d_imp_certificate.key
+
+   - client_data_server_ab2d_imp_certificate.pem
+
+1. Create a keystore that includes the self-signed SSL certificate for AB2D client to BFD sandbox
+
+   *Example for "Dev" environment:*
+
+   ```ShellSession
+   $ openssl pkcs12 -export \
+     -in client_data_server_ab2d_dev_certificate.pem \
+     -inkey client_data_server_ab2d_dev_certificate.key \
+     -out ab2d_dev_keystore \
+     -name client_data_server_ab2d_dev_certificate
+   ```
+
+   *Example for "Sbx" environment:*
+
+   ```ShellSession
+   $ openssl pkcs12 -export \
+     -in client_data_server_ab2d_sbx_certificate.pem \
+     -inkey client_data_server_ab2d_sbx_certificate.key \
+     -out ab2d_sbx_keystore \
+     -name client_data_server_ab2d_sbx_certificate
+   ```
+
+   *Example for "Impl" environment:*
+
+   ```ShellSession
+   $ openssl pkcs12 -export \
+     -in client_data_server_ab2d_imp_certificate.pem \
+     -inkey client_data_server_ab2d_imp_certificate.key \
+     -out ab2d_imp_keystore \
+     -name client_data_server_ab2d_imp_certificate
+   ```
+
+1. Copy and paste the following password entry from 1Password at the "Enter Export Password" prompt
+
+   *Example for "Dev" environment:*
+   
+   - **1Password entry:** AB2D Keystore for Dev: Password
+
+   *Example for "Sbx" environment:*
+   
+   - **1Password entry:** AB2D Keystore for Sandbox: Password
+
+   *Example for "Impl" environment:*
+   
+   - **1Password entry:** AB2D Keystore for Impl: Password
+   
+1. Note that the following file has been created
+
+   *Example for "Dev" environment:*
+
+   - ab2d_dev_keystore (keystore)
+
+   *Example for "Sbx" environment:*
+
+   - ab2d_sbx_keystore (keystore)
+
+   *Example for "Impl" environment:*
+
+   - ab2d_imp_keystore (keystore)
+
+1. Send output from "prod-sbx.bfd.cms.gov" that includes only the certificate to a file
+
+   ```ShellSession
+   $ openssl s_client -connect prod-sbx.bfd.cms.gov:443 \
+     2>/dev/null | openssl x509 -text \
+     | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' \
+     > prod-sbx.bfdcloud.pem
+   ```
+
+1. Note that the following file has been created
+
+   - prod-sbx.bfdcloud.pem (certificate from the bfd sandbox server)
+
+1. Import "prod-sbx.bfd.cms.gov" certificate into the keystore
+
+   *Example for "Dev" environment:*
+   
+   ```ShellSession
+   $ keytool -import \
+     -alias bfd-prod-sbx-selfsigned \
+     -file prod-sbx.bfdcloud.pem \
+     -storetype PKCS12 \
+     -keystore ab2d_dev_keystore
+   ```
+
+   *Example for "Sbx" environment:*
+   
+   ```ShellSession
+   $ keytool -import \
+     -alias bfd-prod-sbx-selfsigned \
+     -file prod-sbx.bfdcloud.pem \
+     -storetype PKCS12 \
+     -keystore ab2d_sbx_keystore
+   ```
+
+   *Example for "Impl" environment:*
+   
+   ```ShellSession
+   $ keytool -import \
+     -alias bfd-prod-sbx-selfsigned \
+     -file prod-sbx.bfdcloud.pem \
+     -storetype PKCS12 \
+     -keystore ab2d_imp_keystore
+   ```
+
+1. Copy and paste the following password entry from 1Password at the "Enter keystore password" prompt
+
+   *Example for "Dev" environment:*
+   
+   - **1Password entry:** AB2D Keystore for Dev: Password
+
+   *Example for "Sbx" environment:*
+   
+   - **1Password entry:** AB2D Keystore for Sandbox: Password
+
+   *Example for "Impl" environment:*
+   
+   - **1Password entry:** AB2D Keystore for Impl: Password
+
+1. Enter the following at the "Trust this certificate" prompt
+
+   ```
+   yes
+   ```
+
+1. Verify that both the bfd sandbox and client certificates are present
+
+   *Example for "Dev" environment:*
+   
+   ```ShellSession
+   $ keytool -list -v -keystore ab2d_dev_keystore
+   ```
+
+   *Example for "Sbx" environment:*
+   
+   ```ShellSession
+   $ keytool -list -v -keystore ab2d_sbx_keystore
+   ```
+
+   *Example for "Impl" environment:*
+   
+   ```ShellSession
+   $ keytool -list -v -keystore ab2d_imp_keystore
+   ```
+
+1. Copy and paste the following password entry from 1Password at the "Enter keystore password" prompt
+
+   *Example for "Dev" environment:*
+   
+   - **1Password entry:** AB2D Keystore for Dev: Password
+
+   *Example for "Sbx" environment:*
+   
+   - **1Password entry:** AB2D Keystore for Sandbox: Password
+
+   *Example for "Impl" environment:*
+   
+   - **1Password entry:** AB2D Keystore for Impl: Password
+
+1. Upload the keystore as a document in 1Password
+
+   *Example for "Dev" environment:*
+   
+   - **1Password entry:** AB2D Keystore for Dev
+   
+   *Example for "Sbx" environment:*
+   
+   - **1Password entry:** AB2D Keystore for Sandbox
+
+   *Example for "Impl" environment:*
+   
+   - **1Password entry:** AB2D Keystore for Impl
+
+## Appendix LL: Update existing WAF
+
+1. Change to the "Deploy" directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d/Deploy
+   ```
+
+1. Set test parameters
+
+   *Example for "Dev" environment:*
+
+   ```ShellSession
+   $ export CMS_ENV_PARAM=ab2d-dev
+   $ export REGION_PARAM=us-east-1
+   $ export DEBUG_LEVEL_PARAM=WARN
+   $ export INTERNET_FACING_PARAM=false
+   ```
+
+1. Run application deployment automation
+
+   ```ShellSession
+   $ ./bash/update-waf.sh
+   ```
+
+## Appendix MM: Create new AMI from latest gold disk image
+
+1. Ensure that your are connected to CMS Cisco VPN before proceeding
+
+1. Change to the "Deploy" directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d/Deploy
+   ```
+
+1. Set AWS environment variables using the CloudTamer API
+
+   ```ShellSession
+   $ source ./bash/set-env.sh
+   ```
+
+1. Enter the number of the desired AWS account where the desired logs reside
+
+   *Example for Dev:*
+
+   ```
+   1 (Dev AWS account)
+   ```
+
+   *Example for Sbx:*
+
+   ```
+   2 (Sbx AWS account)
+   ```
+
+   *Example for Impl:*
+
+   ```
+   3 (Impl AWS account)
+   ```
+
+   *Example for Prod:*
+
+   ```
+   4 (Prod AWS account)
+   ```
+
+   *Example for Mgmt:*
+
+   ```
+   5 (Mgmt AWS account)
+   ```
+
+1. Note that temporary AWS credentials from CloudTamer will expire after an hour
+
+1. Set gold disk test parameters
+
+   *Example for "Dev":*
+
+   ```ShellSession
+   $ export CMS_ENV_PARAM=ab2d-dev
+   $ export DEBUG_LEVEL_PARAM=WARN
+   $ export EC2_INSTANCE_TYPE_PACKER_PARAM=m5.xlarge
+   $ export OWNER_PARAM=743302140042
+   $ export REGION_PARAM=us-east-1
+   $ export SSH_USERNAME_PARAM=ec2-user
+   $ export VPC_ID_PARAM=vpc-0c6413ec40c5fdac3
+   ```
+
+   *Example for "Sbx":*
+
+   ```ShellSession
+   $ export CMS_ENV_PARAM=ab2d-sbx-sandbox
+   $ export DEBUG_LEVEL_PARAM=WARN
+   $ export EC2_INSTANCE_TYPE_PACKER_PARAM=m5.xlarge
+   $ export OWNER_PARAM=743302140042
+   $ export REGION_PARAM=us-east-1
+   $ export SSH_USERNAME_PARAM=ec2-user
+   $ export VPC_ID_PARAM=vpc-08dbf3fa96684151c
+   ```
+
+   *Example for "Prod":*
+
+   ```ShellSession
+   $ export CMS_ENV_PARAM=ab2d-east-prod
+   $ export DEBUG_LEVEL_PARAM=WARN
+   $ export EC2_INSTANCE_TYPE_PACKER_PARAM=m5.xlarge
+   $ export OWNER_PARAM=743302140042
+   $ export REGION_PARAM=us-east-1
+   $ export SSH_USERNAME_PARAM=ec2-user
+   $ export VPC_ID_PARAM=vpc-0c9d55c3d85f46a65
+   ```
+
+1. Run application deployment automation
+
+   ```ShellSession
+   $ ./bash/update-gold-disk.sh
+   ```
+
+## Appendix NN: Manually test the deployment
+
+### Manually test the deployment for sandbox
+
+1. Retrieve a JSON Web Token (JWT)
+
+   1. Set the authorization for the test user
+
+      *Example for test user 0oa2t0lsrdZw5uWRx297:*
+
+      ```ShellSession
+      $ AUTH=MG9hMnQwbHNyZFp3NXVXUngyOTc6SEhkdVdHNkxvZ0l2RElRdVdncDNabG85T1lNVmFsVHRINU9CY3VIdw==
+      ```
+
+   1. Retrieve a JWT bearer token by entering the following at the terminal prompt
+
+      ```ShellSession
+      $ BEARER_TOKEN=$(curl -X POST "https://test.idp.idm.cms.gov/oauth2/aus2r7y3gdaFMKBol297/v1/token?grant_type=client_credentials&scope=clientCreds" \
+        -H "Content-Type: application/x-www-form-urlencoded" \
+        -H "Accept: application/json" \
+        -H "Authorization: Basic ${AUTH}" \
+        | jq --raw-output ".access_token")
+      ```
+
+   1. Ensure that you have a "BEARER_TOKEN" environment variable before proceeding
+
+      ```ShellSession
+      $ echo $BEARER_TOKEN
+      ```
+
+1. Create an export job
+
+   *Example for "Dev" environment:*
+   
+   ```ShellSession
+   $ curl "https://internal-ab2d-dev-820359992.us-east-1.elb.amazonaws.com/api/v1/fhir/Patient/\$export?_outputFormat=application%2Ffhir%2Bndjson&_type=ExplanationOfBenefit" \
+     -sD - \
+     -H "accept: application/json" \
+     -H "Accept: application/fhir+json" \
+     -H "Prefer: respond-async" \
+     -H "Authorization: Bearer ${BEARER_TOKEN}"
+   ```
+
+   *Example for "Sbx" environment:*
+
+   ```ShellSession
+   $ curl "https://sandbox.ab2d.cms.gov/api/v1/fhir/Patient/\$export?_outputFormat=application%2Ffhir%2Bndjson&_type=ExplanationOfBenefit" \
+     -sD - \
+     -H "accept: application/json" \
+     -H "Accept: application/fhir+json" \
+     -H "Prefer: respond-async" \
+     -H "Authorization: Bearer ${BEARER_TOKEN}"
+   ```
+
+1. Note the output
+
+   *Format:*
+
+   ```
+   HTTP/2 {response code}
+   Date: Mon, 13 Apr 2020 16:35:38 GMT
+   content-length: 0
+   vary: Origin
+   vary: Access-Control-Request-Method
+   vary: Access-Control-Request-Headers
+   vary: Origin
+   vary: Access-Control-Request-Method
+   vary: Access-Control-Request-Headers
+   content-location: https://sandbox.ab2d.cms.gov/api/v1/fhir/Job/{job id}/$status
+   x-content-type-options: nosniff
+   x-xss-protection: 1; mode=block
+   cache-control: no-cache, no-store, max-age=0, must-revalidate
+   pragma: no-cache
+   expires: 0
+   x-frame-options: DENY
+   ```
+
+   *Example for "Dev" environment:*
+
+   ```
+   HTTP/1.1 202
+   Date: Mon, 13 Apr 2020 16:35:38 GMT
+   Content-Length: 0
+   Connection: keep-alive
+   Vary: Origin
+   Vary: Access-Control-Request-Method
+   Vary: Access-Control-Request-Headers
+   Vary: Origin
+   Vary: Access-Control-Request-Method
+   Vary: Access-Control-Request-Headers
+   Content-Location: http://internal-ab2d-dev-820359992.us-east-1.elb.amazonaws.com/api/v1/fhir/Job/42d7addc-0e1b-4687-a1e2-5e029f173849/$status
+   X-Content-Type-Options: nosniff
+   X-XSS-Protection: 1; mode=block
+   Cache-Control: no-cache, no-store, max-age=0, must-revalidate
+   Pragma: no-cache
+   Expires: 0
+   X-Frame-Options: DENY
+   ```
+
+   *Example for "Sbx" environment:*
+
+   ```
+   HTTP/2 202
+   Date: Mon, 13 Apr 2020 16:35:38 GMT
+   content-length: 0
+   vary: Origin
+   vary: Access-Control-Request-Method
+   vary: Access-Control-Request-Headers
+   vary: Origin
+   vary: Access-Control-Request-Method
+   vary: Access-Control-Request-Headers
+   content-location: https://sandbox.ab2d.cms.gov/api/v1/fhir/Job/09b4d5e6-92f7-4dcb-8b49-dbdd2e22dc69/$status
+   x-content-type-options: nosniff
+   x-xss-protection: 1; mode=block
+   cache-control: no-cache, no-store, max-age=0, must-revalidate
+   pragma: no-cache
+   expires: 0
+   x-frame-options: DENY
+   ```
+
+1. Note the response code and job id from the output
+
+   ```
+   {response-code} = 202 
+   {job id} = 42d7addc-0e1b-4687-a1e2-5e029f173849
+   ```
+
+1. If the response code is 202, set an environment variable for the job by entering the following at the terminal prompt
+
+   *Format:*
+
+   ```ShellSession
+   $ JOB={job id}
+   ```
+   
+   *Example:*
+
+   ```ShellSession
+   $ JOB=42d7addc-0e1b-4687-a1e2-5e029f173849
+   ```
+
+1. Check the status of the job by entering the following at the terminal prompt
+   
+   ```ShellSession
+   $ curl "https://sandbox.ab2d.cms.gov/api/v1/fhir/Job/${JOB}/\$status" \
+     -sD - \
+     -H "accept: application/json" \
+     -H "Authorization: Bearer ${BEARER_TOKEN}"
+   ```
+
+1. Note the output
+
+   *Format:*
+
+   ```
+   HTTP/1.1 {response-code} 
+   Date: Mon, 13 Apr 2020 22:13:32 GMT
+   Content-Type: application/json
+   Transfer-Encoding: chunked
+   Connection: keep-alive
+   Vary: accept-encoding,origin,access-control-request-headers,access-control-request-method,accept-encoding
+   X-Frame-Options: DENY
+   X-XSS-Protection: 1; mode=block
+   X-Content-Type-Options: nosniff
+   Expires: Tue, 14 Apr 2020 22:11:39 GMT
+   
+   {"transactionTime":"Apr 13, 2020, 10:11:35 PM","request":"http://internal-ab2d-dev-820359992.us-east-1.elb.amazonaws.com/api/v1/fhir/Patient/$export?_outputFormat=application%252Ffhir%252Bndjson&_type=ExplanationOfBenefit","requiresAccessToken":true,"output":[{"type":"ExplanationOfBenefit","url":"http://internal-ab2d-dev-820359992.us-east-1.elb.amazonaws.com/api/v1/fhir/Job/42d7addc-0e1b-4687-a1e2-5e029f173849/file/{file to download}","extension":[{"url":"https://ab2d.cms.gov/checksum","valueString":"sha256:46ccda6384b31693c27d057500a4ee116cd6f0540b3370a7e4d50c649ea8da27"},{"url":"https://ab2d.cms.gov/file_length","valueDecimal":9194196}]}],"error":[]}
+   ```
+
+   *Example:*
+
+   ```
+   HTTP/1.1 200 
+   Date: Mon, 13 Apr 2020 22:13:32 GMT
+   Content-Type: application/json
+   Transfer-Encoding: chunked
+   Connection: keep-alive
+   Vary: accept-encoding,origin,access-control-request-headers,access-control-request-method,accept-encoding
+   X-Frame-Options: DENY
+   X-XSS-Protection: 1; mode=block
+   X-Content-Type-Options: nosniff
+   Expires: Tue, 14 Apr 2020 22:11:39 GMT
+   
+   {"transactionTime":"Apr 13, 2020, 10:11:35 PM","request":"http://internal-ab2d-dev-820359992.us-east-1.elb.amazonaws.com/api/v1/fhir/Patient/$export?_outputFormat=application%252Ffhir%252Bndjson&_type=ExplanationOfBenefit","requiresAccessToken":true,"output":[{"type":"ExplanationOfBenefit","url":"http://internal-ab2d-dev-820359992.us-east-1.elb.amazonaws.com/api/v1/fhir/Job/42d7addc-0e1b-4687-a1e2-5e029f173849/file/S0000_0001.ndjson","extension":[{"url":"https://ab2d.cms.gov/checksum","valueString":"sha256:46ccda6384b31693c27d057500a4ee116cd6f0540b3370a7e4d50c649ea8da27"},{"url":"https://ab2d.cms.gov/file_length","valueDecimal":9194196}]}],"error":[]}   
+   ```
+
+1. If the status is 202, do the following
+
+   1. Note the following in the output, for example:
+
+      *Format:*
+      
+      ```
+      x-progress: {percentage} complete
+      ```
+
+      *Example:*
+      
+      ```
+      x-progress: 7% complete
+      ```
+
+   1. Based on the progress, you can a wait a period of time and try the status check again until you see a status of 200
+
+1. If the status is 200, download the files by doing the following:
+
+   1. Set an environment variable to the first file to download
+
+      ```ShellSession
+      $ FILE=Z0000_0001.ndjson
+      ```
+
+   1. Get the Part A & B bulk claim export data by entering the following at the terminal prompt
+
+      ```ShellSession
+      $ curl "https://sandbox.ab2d.cms.gov/api/v1/fhir/Job/${JOB}/file/${FILE}" \
+        -H "accept: application/json" \
+        -H "Accept: application/fhir+json" \
+        -H "Authorization: Bearer ${BEARER_TOKEN}" \
+        > ${FILE}
+      ```
+
+1. View the downloaded file
+
+   ```ShellSession
+   $ cat $FILE
+   ```
+
+1. Try the download opeartion a second time
+
+   ```ShellSession
+   $ curl "https://sandbox.ab2d.cms.gov/api/v1/fhir/Job/${JOB}/file/${FILE}" \
+     -H "accept: application/json" \
+     -H "Accept: application/fhir+json" \
+     -H "Authorization: Bearer ${BEARER_TOKEN}"
+   ```
+
+1. Verify that the following error message is displayed
+
+   ```
+   {"resourceType":"OperationOutcome","issue":[{"severity":"error","code":"invalid","details":{"text":"The file is not present as it has already been downloaded. Please resubmit the job."}}]}
+   ```
+
+### Manually test the deployment for production
+
+1. Retrieve a JSON Web Token (JWT)
+
+   1. Set "AB2D Prod : OKTA Prod : AB2D - PDP-1000 : Client ID" from 1Password
+
+      ```ShellSession
+      $ OKTA_CLIENT_ID={okta ab2d admin client id}
+      ```
+
+   1. Set "AB2D Prod : OKTA Prod : AB2D - PDP-1000 : Client Secret" from 1Password
+
+      ```ShellSession
+      $ OKTA_CLIENT_PASSWORD={okta ab2d admin client secret}
+      ```
+
+   1. Set the authorization for the test user
+
+      ```ShellSession
+      $ AUTH=$(echo -n "${OKTA_CLIENT_ID}:${OKTA_CLIENT_PASSWORD}" | base64)
+      ```
+
+   1. Retrieve a JWT bearer token by entering the following at the terminal prompt
+
+      ```ShellSession
+      $ BEARER_TOKEN=$(curl -X POST "https://idm.cms.gov/oauth2/aus2ytanytjdaF9cr297/v1/token?grant_type=client_credentials&scope=clientCreds" \
+        -H "Content-Type: application/x-www-form-urlencoded" \
+        -H "Accept: application/json" \
+        -H "Authorization: Basic ${AUTH}" \
+        | jq --raw-output ".access_token")
+      ```
+
+   1. Ensure that you have a "BEARER_TOKEN" environment variable before proceeding
+
+      ```ShellSession
+      $ echo $BEARER_TOKEN
+      ```
+
+1. Create an export job
+
+   ```ShellSession
+   $ curl "https://api.ab2d.cms.gov/api/v1/fhir/Patient/\$export?_outputFormat=application%2Ffhir%2Bndjson&_type=ExplanationOfBenefit" \
+     -sD - \
+     -H "accept: application/json" \
+     -H "Accept: application/fhir+json" \
+     -H "Prefer: respond-async" \
+     -H "Authorization: Bearer ${BEARER_TOKEN}"
+   ```
+
+1. Note the output
+
+   *Format:*
+
+   ```
+   HTTP/2 {response code} 
+   content-length: 0
+   content-location: https://api.ab2d.cms.gov/api/v1/fhir/Job/{job id}/$status
+   x-xss-protection: 1; mode=block
+   x-frame-options: DENY
+   expires: Mon, 29 Jun 2020 20:16:25 GMT
+   date: Mon, 29 Jun 2020 20:16:25 GMT
+   strict-transport-security: max-age=86400
+   x-content-type-options: nosniff
+   pragma: no-cache
+   cache-control: max-age=0, 
+   ```
+
+   *Example:*
+
+   ```
+   HTTP/2 202 
+   content-length: 0
+   content-location: https://api.ab2d.cms.gov/api/v1/fhir/Job/a4ab9339-5865-4a28-823e-8aa0a18b68b3/$status
+   x-xss-protection: 1; mode=block
+   x-frame-options: DENY
+   expires: Mon, 29 Jun 2020 20:16:25 GMT
+   date: Mon, 29 Jun 2020 20:16:25 GMT
+   strict-transport-security: max-age=86400
+   x-content-type-options: nosniff
+   pragma: no-cache
+   cache-control: max-age=0, 
+   ```
+
+1. Note the response code and job id from the output
+
+   ```
+   {response-code} = 202 
+   {job id} = 31624a77-6515-4e59-aabe-5e8a192d2d7f
+   ```
+
+1. If the response code is 202, set an environment variable for the job by entering the following at the terminal prompt
+
+   *Format:*
+
+   ```ShellSession
+   $ JOB={job id}
+   ```
+   
+   *Example:*
+
+   ```ShellSession
+   $ JOB=31624a77-6515-4e59-aabe-5e8a192d2d7f
+   ```
+
+1. Check the status of the job by entering the following at the terminal prompt
+   
+   ```ShellSession
+   $ curl "https://api.ab2d.cms.gov/api/v1/fhir/Job/${JOB}/\$status" \
+     -sD - \
+     -H "accept: application/json" \
+     -H "Authorization: Bearer ${BEARER_TOKEN}"
+   ```
+
+1. Note the output
+
+   *Format:*
+
+   ```
+   HTTP/2 {response-code}
+   content-type: application/json
+   x-xss-protection: 1; mode=block
+   x-frame-options: DENY
+   expires: Mon, 29 Jun 2020 21:09:59 GMT
+   date: Mon, 29 Jun 2020 21:09:59 GMT
+   content-length: 583
+   strict-transport-security: max-age=86400
+   x-content-type-options: nosniff
+   pragma: no-cache
+   cache-control: max-age=0, no-cache, no-store, must-revalidate
+   x-akamai-staging: ESSL
+
+   {"transactionTime":"Jun 29, 2020, 8:16:25 PM","request":"https://api.ab2d.cms.gov/api/v1/fhir/Patient/$export?_outputFormat=application%252Ffhir%252Bndjson&_type=ExplanationOfBenefit","requiresAccessToken":true,"output":[{"type":"ExplanationOfBenefit","url":"https://api.ab2d.cms.gov/api/v1/fhir/Job/{job id}/file/{file to download}","extension":[{"url":"https://ab2d.cms.gov/checksum","valueString":"sha256:d5f1b0d39f5310707e21e83861e121d416df1ce1d6a6e1fd497cb6bde2ea32d3"},{"url":"https://ab2d.cms.gov/file_length","valueDecimal":30841503}]}],"error":[]}
+   ```
+
+   *Example:*
+
+   ```
+   HTTP/2 200 
+   content-type: application/json
+   x-xss-protection: 1; mode=block
+   x-frame-options: DENY
+   expires: Mon, 29 Jun 2020 21:09:59 GMT
+   date: Mon, 29 Jun 2020 21:09:59 GMT
+   content-length: 583
+   strict-transport-security: max-age=86400
+   x-content-type-options: nosniff
+   pragma: no-cache
+   cache-control: max-age=0, no-cache, no-store, must-revalidate
+   x-akamai-staging: ESSL
+
+   {"transactionTime":"Jun 29, 2020, 8:16:25 PM","request":"https://api.ab2d.cms.gov/api/v1/fhir/Patient/$export?_outputFormat=application%252Ffhir%252Bndjson&_type=ExplanationOfBenefit","requiresAccessToken":true,"output":[{"type":"ExplanationOfBenefit","url":"https://api.ab2d.cms.gov/api/v1/fhir/Job/a4ab9339-5865-4a28-823e-8aa0a18b68b3/file/S8067_0001.ndjson","extension":[{"url":"https://ab2d.cms.gov/checksum","valueString":"sha256:d5f1b0d39f5310707e21e83861e121d416df1ce1d6a6e1fd497cb6bde2ea32d3"},{"url":"https://ab2d.cms.gov/file_length","valueDecimal":30841503}]}],"error":[]}
+   ```
+
+1. If the status is 202, do the following
+
+   1. Note the following in the output, for example:
+
+      *Format:*
+      
+      ```
+      x-progress: {percentage} complete
+      ```
+
+      *Example:*
+      
+      ```
+      x-progress: 7% complete
+      ```
+
+   1. Based on the progress, you can a wait a period of time and try the status check again until you see a status of 200
+
+1. If the status is 200, download the files by doing the following:
+
+   1. Set an environment variable to the first file to download
+
+      *Example:*
+
+      ```ShellSession
+      $ FILE=S8067_0001.ndjson
+      ```
+
+   1. Get the Part A & B bulk claim export data by entering the following at the terminal prompt
+
+      ```ShellSession
+      $ curl "https://api.ab2d.cms.gov/api/v1/fhir/Job/${JOB}/file/${FILE}" \
+        -H "accept: application/json" \
+        -H "Accept: application/fhir+json" \
+        -H "Authorization: Bearer ${BEARER_TOKEN}" \
+        > ${FILE}
+      ```
+
+1. View the downloaded file
+
+   ```ShellSession
+   $ cat $FILE
+   ```
+
+1. Try the download opeartion a second time
+
+   ```ShellSession
+   $ curl "https://api.ab2d.cms.gov/api/v1/fhir/Job/${JOB}/file/${FILE}" \
+     -H "accept: application/json" \
+     -H "Accept: application/fhir+json" \
+     -H "Authorization: Bearer ${BEARER_TOKEN}"
+   ```
+
+1. Verify that the following error message is displayed
+
+   ```
+   {"resourceType":"OperationOutcome","issue":[{"severity":"error","code":"invalid","details":{"text":"The file is not present as it has already been downloaded. Please resubmit the job."}}]}
+   ```
+
+## Appendix OO: Merge a specific commit from master into your branch
+
+1. Ensure that you have committed or stashed any changes in your current branch
+
+1. Update "origin/master"
+
+   ```ShellSession
+   $ git fetch --all
+   ```
+
+1. Change to the master branch
+
+   ```ShellSession
+   $ git checkout master
+   ```
+
+1. Update master with the latest from GitHub
+
+   ```ShellSession
+   $ git pull
+   ```
+
+1. Create a temporary release branch
+
+   *Format:*
+   
+   ```ShellSession
+   $ git checkout -b temporary-release-branch {desired commit number}
+   ```
+
+1. Checkout your deployment branch
+
+   *Format:*
+   
+   ```ShellSession
+   $ git checkout {your deployment branch}
+   ```
+
+1. Merge the temporary release branch into your deployment branch
+
+   ```ShellSession
+   $ git merge temporary-release-branch
+   ```
+
+1. Handle any conflicts, commit, and push
+
+1. Delete the temorary release branch
+
+   ```ShellSession
+   $ git branch -D temporary-release-branch
+   ```
+
+## Appendix PP: Test running development automation from development machine
+
+1. Change to the "Deploy" directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d/Deploy
+   ```
+
+1. Set test parameters
+
+   ```ShellSession
+   $ export CMS_ENV_PARAM=ab2d-dev \
+     && export CMS_ECR_REPO_ENV_PARAM=ab2d-mgmt-east-dev \
+     && export REGION_PARAM=us-east-1 \
+     && export VPC_ID_PARAM=vpc-0c6413ec40c5fdac3 \
+     && export SSH_USERNAME_PARAM=ec2-user \
+     && export EC2_INSTANCE_TYPE_API_PARAM=m5.xlarge \
+     && export EC2_INSTANCE_TYPE_WORKER_PARAM=m5.xlarge \
+     && export EC2_DESIRED_INSTANCE_COUNT_API_PARAM=1 \
+     && export EC2_MINIMUM_INSTANCE_COUNT_API_PARAM=1 \
+     && export EC2_MAXIMUM_INSTANCE_COUNT_API_PARAM=1 \
+     && export EC2_DESIRED_INSTANCE_COUNT_WORKER_PARAM=1 \
+     && export EC2_MINIMUM_INSTANCE_COUNT_WORKER_PARAM=1 \
+     && export EC2_MAXIMUM_INSTANCE_COUNT_WORKER_PARAM=1 \
+     && export DATABASE_SECRET_DATETIME_PARAM=2020-01-02-09-15-01 \
+     && export DEBUG_LEVEL_PARAM=WARN \
+     && export INTERNET_FACING_PARAM=false \
+     && export CLOUD_TAMER_PARAM=true
+   ```
+
+1. Run application deployment automation
+
+   ```ShellSession
+   $ ./bash/deploy-application.sh
+   ```
+
+## Appendix QQ: Set up demonstration of cross account access of an encrypted S3 bucket
+
+1. Open a new terminal
+
+1. Set AWS credentials to the SemanticBits demo account
+
+   ```ShellSession
+   $ export AWS_PROFILE=sbdemo-shared
+   ```
+
+1. Set default AWS region
+
+   ```ShellSession
+   $ export AWS_DEFAULT_REGION=us-east-1
+   ```
+   
+1. Set test bucket name
+
+   *Example:*
+   
+   ```ShellSession
+   $ S3_TEST_BUCKET_NAME="ab2d-optout"
+   ```
+
+1. Determine if bucket already exists
+
+   ```ShellSession
+   $ S3_TEST_BUCKET_EXISTS=$(aws --region "${AWS_DEFAULT_REGION}" s3api list-buckets \
+     --query "Buckets[?Name=='${S3_TEST_BUCKET_NAME}'].Name" \
+     --output text)
+   ```
+
+1. Create the bucket (if doesn't exist)
+
+   ```ShellSession
+   $ if [ -z "${S3_AUTOMATION_BUCKET_EXISTS}" ]; then \
+     aws --region "${AWS_DEFAULT_REGION}" s3api create-bucket \
+       --bucket ${S3_TEST_BUCKET_NAME}; \
+     fi
+   ```
+
+1. Block public access on the bucket
+
+   ```ShellSession
+   $ aws --region "${AWS_DEFAULT_REGION}" s3api put-public-access-block \
+    --bucket ${S3_TEST_BUCKET_NAME} \
+    --public-access-block-configuration BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true
+   ```
+
+1. Set kms key name
+
+   ```ShellSession
+   $ S3_TEST_BUCKET_KEY_NAME="${S3_TEST_BUCKET_NAME}-key"
+   ```
+   
+1. Create a kms key for the bucket
+
+   ```ShellSession
+   $ S3_TEST_BUCKET_KEY_ID=$(aws --region "${AWS_DEFAULT_REGION}" kms create-key \
+     | jq --raw-output ".KeyMetadata.KeyId")
+   ```
+
+1. Create an alias for the kms key for the bucket
+
+   ```ShellSession
+   $ aws --region "${AWS_DEFAULT_REGION}" kms create-alias \
+     --alias-name "alias/${S3_TEST_BUCKET_NAME}" \
+     --target-key-id "${S3_TEST_BUCKET_KEY_ID}"
+   ```
+
+> *** TO DO ***
+
+## Appendix RR: Tealium and Google Analytics notes
+
+*Here is the service desk ticket that we created:*
+
+> https://jira.cms.gov/browse/WHSD-24539
+
+*Here is documentation that CMS support created that let us know what to add to the website pages:*
+
+> https://confluence.cms.gov/display/BLSTANALYT/Tealium+Implementation+Documentation#TealiumImplementationDocumentation-ab2d.cms.gov
+
+*This is part we added for our development version of our Jekyll static website:*
+
+> https://github.com/CMSgov/ab2d/blob/master/website/_includes/head.html#L26-L49
+
+*For the production static website, I just changed the "head.html" from dev to prod like this:*
+
+```ShellSession
+$ sed -i "" 's%cms-ab2d[\/]prod%cms-ab2d/dev%g' _includes/head.html (edited)
+```
+
+## Appendix SS: Destroy application
+
+1. Change to the "Deploy" directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d/Deploy
+   ```
+
+1. Set the target environment
+
+   ```ShellSession
+   $ source ./bash/set-env.sh
+   ```
+
+1. Select the target environment by entering the corresponding number on the keyboard
+
+1. Change to the target environment
+
+   ```ShellSession
+   $ cd "terraform/environments/${CMS_ENV}"
+   ```
+
+1. Destroy WAF
+
+   ```ShellSession
+   $ terraform destroy \
+     --target module.waf \
+     --auto-approve
+   ```
+
+1. Destroy CloudWatch
+
+   ```ShellSession
+   $ terraform destroy \
+     --target module.cloudwatch \
+     --auto-approve
+   ```
+
+1. Destroy Worker
+
+   ```ShellSession
+   $ terraform destroy \
+     --target module.worker \
+     --auto-approve
+   ```
+
+1. Take delete protection off the load balancer
+
+   > *** TO DO ***
+   
+1. Destroy API
+
+   ```ShellSession
+   $ terraform destroy \
+     --target module.api \
+     --auto-approve
+   ```
+
+## Appendix TT: Migrate terraform state from shared environment to main environment
+
+1. Ensure that you are connected to CMS Cisco VPN
+
+1. Change to the "Deploy" directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d/Deploy
+   ```
+
+1. Set AWS environment variables using the CloudTamer API
+
+   ```ShellSession
+   $ source ./bash/set-env.sh
+   ```
+
+1. Choose desired environment
+
+   *Example for "Dev" environment:*
+
+   ```
+   1 (Dev AWS account)
+   ```
+
+1. Change to target directory
+
+   *Example for "Dev" environment:*
+
+   ```ShellSession
+   $ cd terraform/environments/ab2d-dev
+   ```
+
+1. List and note the current modules under the target environment
+
+   ```ShellSession
+   $ terraform state list
+   ```
+
+1. Pull the terraform state file for the target environment from S3
+
+   ```ShellSession
+   $ terraform state pull > terraform.tfstate
+   ```
+
+1. Change to the "Deploy" directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d/Deploy
+   ```
+
+1. Change to source directory
+
+   *Example for "Dev" environment:*
+
+   ```ShellSession
+   $ cd terraform/environments/ab2d-dev-shared
+   ```
+
+1. List and note the current modules under the source environment
+
+   ```ShellSession
+   $ terraform state list
+   ```
+
+1. Move the state of a module from the source environment to the target environment state file
+
+   *Example #1:*
+   
+   ```ShellSession
+   $ terraform state mv \
+     -state-out=../ab2d-dev/terraform.tfstate \
+     null_resource.authorized_keys_file \
+     null_resource.authorized_keys_file
+   ```
+
+   *Example #2:*
+   
+   ```ShellSession
+   $ terraform state mv \
+     -state-out=../ab2d-dev/terraform.tfstate \
+     module.controller.aws_eip.deployment_controller \
+     module.controller.aws_eip.deployment_controller
+   ```
+
+1. Change to the "Deploy" directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d/Deploy
+   ```
+
+1. Change to target directory
+
+   *Example for "Dev" environment:*
+
+   ```ShellSession
+   $ cd terraform/environments/ab2d-dev
+   ```
+
+1. Push the modified terraform state file to S3
+
+   ```ShellSession
+   $ terraform state push terraform.tfstate
+   ```
+
+1. Delete the ".terraform" directory
+
+   ```ShellSession
+   $ rm -rf .terraform
+   ```
+   
+1. Backup the local terraform state file and its backup files
+
+   1. Create a backup directory
+   
+      ```ShellSession
+      $ mkdir -p ~/Downloads/backup
+      ```
+
+   1. Move local terraform state file and its backup files to backup directory
+
+      ```ShellSession
+      $ mv terraform.tfstate* ~/Downloads/backup
+      ```
+
+1. Change to the "Deploy" directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d/Deploy
+   ```
+
+1. Deploy infrastructure
+
+   *Example for "Dev" environment:*
+   
+   ```ShellSession
+   $ ./deploy-infrastructure.sh \
+     --environment=ab2d-dev \
+     --ecr-repo-environment=ab2d-mgmt-east-dev \
+     --region=us-east-1 \
+     --vpc-id=vpc-0c6413ec40c5fdac3 \
+     --ssh-username=ec2-user \
+     --owner=743302140042 \
+     --ec2_instance_type_api=m5.xlarge \
+     --ec2_instance_type_worker=m5.xlarge \
+     --ec2_instance_type_other=m5.xlarge \
+     --ec2_desired_instance_count_api=1 \
+     --ec2_minimum_instance_count_api=1 \
+     --ec2_maximum_instance_count_api=1 \
+     --ec2_desired_instance_count_worker=1 \
+     --ec2_minimum_instance_count_worker=1 \
+     --ec2_maximum_instance_count_worker=1 \
+     --database-secret-datetime=2020-01-02-09-15-01 \
+     --build-new-images \
+     --internet-facing=false \
+     --auto-approve
+   ```
+
+1. Set parameters
+
+   *Example for "Dev" environment:*
+   
+   ```ShellSession
+   $ export CMS_ENV_PARAM=ab2d-dev
+   $ export CMS_ECR_REPO_ENV_PARAM=ab2d-mgmt-east-dev
+   $ export REGION_PARAM=us-east-1
+   $ export VPC_ID_PARAM=vpc-0c6413ec40c5fdac3
+   $ export SSH_USERNAME_PARAM=ec2-user
+   $ export EC2_INSTANCE_TYPE_API_PARAM=m5.xlarge
+   $ export EC2_INSTANCE_TYPE_WORKER_PARAM=m5.xlarge
+   $ export EC2_DESIRED_INSTANCE_COUNT_API_PARAM=1
+   $ export EC2_MINIMUM_INSTANCE_COUNT_API_PARAM=1
+   $ export EC2_MAXIMUM_INSTANCE_COUNT_API_PARAM=1
+   $ export EC2_DESIRED_INSTANCE_COUNT_WORKER_PARAM=1
+   $ export EC2_MINIMUM_INSTANCE_COUNT_WORKER_PARAM=1
+   $ export EC2_MAXIMUM_INSTANCE_COUNT_WORKER_PARAM=1
+   $ export DATABASE_SECRET_DATETIME_PARAM=2020-01-02-09-15-01
+   $ export DEBUG_LEVEL_PARAM=WARN
+   $ export INTERNET_FACING_PARAM=false
+   $ export CLOUD_TAMER_PARAM=true
+   ``` 
+
+1. Deploy application
+
+   ```ShellSession
+   $ ./bash/deploy-application.sh
+   ```
+   
+> *** TO DO ***: Complete moving modules from ab2d-sbx-sandbox-shared to ab2d-sbx-sandbox
+
+> *** TO DO ***: Complete moving modules from ab2d-east-impl-shared to ab2d-east-impl
+
+> *** TO DO ***: Eliminate shared environments from branch
+
+## Appendix UU: Access Health Plan Management System (HPMS)
+
+1. Request aprroval for the following EUA job code
+
+   ```
+   HPMS_Prod_AWS
+   ```
+
+1. Wait to be approved for the "HPMS_Prod_AWS" job code
+
+1. Open Chrome
+
+1. Enter the following in the address bar
+
+   > https://hpms.cms.gov
+
+1. Log on with your standard EUA credentials
+
+1. Scroll down to the bottom of the page
+
+1. Select the **Accept** radio button
+
+1. Select **Submit**
+
+1. Complete required fields on the "User Account Management" page
+
+1. Select **Save**
+
+## Appendix VV: Import an existing resource using terraform
+
+### Import an existing IAM role
+
+1. Get credentials to the target AWS environment
+
+   1. Enter the following
+
+      ```ShellSession
+      $ source ~/code/ab2d/Deploy/bash/set-env.sh
+      ```
+
+   1. Respond to the prompts to change to the desired AWS environment
+
+1. Change to the target terraform environment
+
+   *Example for "Impl" environment:*
+
+    ```ShellSession
+    $ cd ~/code/ab2d/Deploy/terraform/environments/ab2d-east-impl
+    ```
+
+1. Import an existing IAM role that is not currently managed by terraform
+
+   *Note that the IAM role must already be defined in terraform.*
+
+   *Example of importing existing "Ab2dInstanceRole" IAM role:"
+
+   ```ShellSession
+   $ terraform import module.iam.aws_iam_role.ab2d_instance_role Ab2dInstanceRole
+   ```
+
+1. Verify that the import was successful based on expected output
+
+   ```
+   module.iam.aws_iam_role.ab2d_instance_role: Importing from ID "Ab2dInstanceRole"...
+   module.iam.aws_iam_role.ab2d_instance_role: Import prepared!
+     Prepared aws_iam_role for import
+   module.iam.aws_iam_role.ab2d_instance_role: Refreshing state... [id=Ab2dInstanceRole]
+
+   Import successful!
+
+   The resources that were imported are shown above. These resources are now in
+   your Terraform state and will henceforth be managed by Terraform.
+   ```
+
+### Import an existing IAM Instance Profile
+
+1. Get credentials to the target AWS environment
+
+   1. Enter the following
+
+      ```ShellSession
+      $ source ~/code/ab2d/Deploy/bash/set-env.sh
+      ```
+
+   1. Respond to the prompts to change to the desired AWS environment
+
+1. Change to the target terraform environment
+
+   *Example for "Impl" environment:*
+
+    ```ShellSession
+    $ cd ~/code/ab2d/Deploy/terraform/environments/ab2d-east-impl
+    ```
+
+1. Import an existing IAM instance profile that is not currently managed by terraform
+
+   *Note that the IAM instance profile must already be defined in terraform.*
+
+   *Example of importing existing "Ab2dInstanceProfile" IAM instance profile:"
+
+   ```ShellSession
+   $ terraform import module.iam.aws_iam_instance_profile.test_profile Ab2dInstanceProfile
+   ```
+
+1. Verify that the import was successful based on expected output
+
+   ```
+   module.iam.aws_iam_instance_profile.test_profile: Import prepared!
+     Prepared aws_iam_instance_profile for import
+   module.iam.aws_iam_instance_profile.test_profile: Refreshing state... [id=Ab2dInstanceProfile]
+   
+   Import successful!
+   
+   The resources that were imported are shown above. These resources are now in
+   your Terraform state and will henceforth be managed by Terraform.
+   ```
+
+### Import an existing KMS key
+
+1. Get credentials to the target AWS environment
+
+   1. Enter the following
+
+      ```ShellSession
+      $ source ~/code/ab2d/Deploy/bash/set-env.sh
+      ```
+
+   1. Respond to the prompts to change to the desired AWS environment
+
+1. Change to the target terraform environment
+
+   *Example for "Impl" environment:*
+
+    ```ShellSession
+    $ cd ~/code/ab2d/Deploy/terraform/environments/ab2d-east-impl
+    ```
+
+1. Get the KMS key id
+
+   ```ShellSession
+   $ KMS_KEY_ID=$(aws --region "${AWS_DEFAULT_REGION}" kms list-aliases \
+     --query="Aliases[?AliasName=='alias/ab2d-kms'].TargetKeyId" \
+     --output text)
+   ```
+
+1. Import an existing KMS key that is not currently managed by terraform
+
+   *Note that the KMS key must already be defined in terraform.*
+
+   *Example of importing existing "Ab2dInstanceProfile" IAM instance profile:"
+
+   ```ShellSession
+   $ terraform import module.kms.aws_kms_key.a "${KMS_KEY_ID}"
+   ```
+
+1. Verify that the import was successful
+
+## Appendix WW: Use an SSH tunnel to query production database from local machine
+
+1. Ensure that you are connected to VPN
+
+1. Download "AB2D Prod - EC2 Instances - Private Key" from 1Password
+
+   ```
+   ab2d-east-prod.pem
+   ```
+   
+1. Save the key to the "~/.ssh" directory
+
+1. Change the permissions on the key
+
+   ```ShellSession
+   $ chmod 600 ~/.ssh/ab2d-east-prod.pem
+   ```
+
+1. Change to the "Deploy" directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d/Deploy
+   ```
+
+1. Set the production environment
+
+   ```ShellSession
+   $ source ./bash/set-env.sh
+   ```
+
+1. Choose a local port that you want to use for the SSH tunnel and set an environment variable
+
+   *Example:*
+
+   ```ShellSession
+   $ LOCAL_DB_PORT=1234
+   ```
+
+1. Set controller private IP address
+
+   ```ShellSession
+   $ CONTROLLER_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+     --filters "Name=tag:Name,Values=ab2d-deployment-controller" \
+     --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+     --output text)
+   ```
+
+1. Get database host
+
+   ```ShellSession
+   $ DATABASE_SECRET_DATETIME="2020-01-02-09-15-01" \
+     && DATABASE_HOST=$(./python3/get-database-secret.py $CMS_ENV database_host $DATABASE_SECRET_DATETIME)
+   ```
+
+1. Start the SSH tunnel to the production database
+
+   ```ShellSession
+   $ ssh -N -L \
+     "${LOCAL_DB_PORT}:${DATABASE_HOST}:5432" \
+     ec2-user@"${CONTROLLER_PRIVATE_IP}" \
+     -i "~/.ssh/${SSH_PRIVATE_KEY}"
+   ```
+
+1. Note that the terminal tab will not return to the prompt while the tunnel is running, so don't close the terminal tab while using the tunnel
+
+1. Connect to the production database using your desired method (I tested it with pgAdmin)
+
+   - **host:** 127.0.0.1
+   
+   - **port:** 1234
+   
+   - **username:** {database username}
+   
+   - **password:** {database password}
+   
+1. Note the following:
+
+   - if you don't maintain your connection to the database, the EC2 instance that you are tunneling through will auto-logout (this is due to the inactivity timeout set on the gold disks)
+
+   - if your tunnel closes, you will need to rerun the SSH tunnel command
+
+## Appendix XX: Create a self-signed certificate for an EC2 load balancer
+
+1. Remove existing directory (if exists)
+
+   ```ShellSession
+   $ rm -rf ~/Downloads/ab2dtemp
+   ```
+
+1. Create the working directory
+
+   ```ShellSession
+   $ mkdir -p ~/Downloads/ab2dtemp
+   ```
+
+1. Change to the working directory
+
+   ```ShellSession
+   $ cd ~/Downloads/ab2dtemp
+   ```
+
+1. Set common name
+
+   ```ShellSession
+   $ export COMMON_NAME="ab2dtemp_com"
+   ```
+
+1. Set certificate name
+
+   ```ShellSession
+   $ export CERTIFICATE_NAME="Ab2dTempCom"
+   ```
+
+1. Create private key and self-sig
+
+   ```ShellSession
+   $ openssl req \
+     -nodes -x509 \
+     -days 1825 \
+     -newkey rsa:4096 \
+     -keyout "${COMMON_NAME}.key" \
+     -subj "/CN=${COMMON_NAME}" \
+     -out "${COMMON_NAME}_certificate.pem"
+   ```
+
+1. Note the following files were created
+
+   - ab2dtemp_com.key
+
+   - ab2dtemp_com_certificate.pem
+
+1. Set target environment
+
+   ```ShellSession
+   $ source ~/code/ab2d/Deploy/bash/set-env.sh
+   ```
+
+1. Create an IAM server certificate
+
+   ```ShellSession
+   $ aws --region "${AWS_DEFAULT_REGION}" iam upload-server-certificate \
+     --server-certificate-name "${CERTIFICATE_NAME}" \
+     --certificate-body "file://${COMMON_NAME}_certificate.pem" \
+     --private-key "file://${COMMON_NAME}.key"
+   ```
+
+1. Note the output
+
+   ```
+   {
+       "ServerCertificateMetadata": {
+           "Path": "/",
+           "ServerCertificateName": "{certificate name}",
+           "ServerCertificateId": "{server certificate id}",
+           "Arn": "arn:aws:iam::{aws account number}:server-certificate/{certificate name}",
+           "UploadDate": "YYYY-MM-DDThh:mm:ssZ",
+           "Expiration": "YYYY-MM-DDThh:mm:ssZ"
+       }
+   }
+   ```
+
+1. View the server cerificate in certificate list
+
+   ```ShellSession
+   $ aws --region "${AWS_DEFAULT_REGION}" iam list-server-certificates
+   ```
+
+## Appendix YY: Review VictorOps documentation
+
+### VictorOps Sources
+
+1. Note "VictorOps" page in "MCT" Confluence space:*
+
+   > https://confluence.cms.gov/pages/viewpage.action?spaceKey=MCT&title=VictorOps
+
+### VictorOps Overview
+
+1. Note the following about VictorOps
+
+   - VictorOps is a tool to notify engineers and stakeholders of an incident
+
+   - VictorOps provides a platform for incident reporting and escalation
+
+1.  VictorOps configuration
+
+   - define multiple team rotations based on need
+
+   - define multiple escalations policies based on need
+
+1. Defining teams
+
+   - Engineering team
+
+     - DevOps engineer
+
+     - Backend developers
+
+   - Product team
+
+     - Scrum master
+
+     - Business analyst
+
+1. Defining escalation policies
+
+   - 
+
+1. Overview of a VictorOps process
+
+   - VictorOps is notified of a problematic event
+
+   - VictorOps pages on-call users (following a defined escalation policy) until someone is able to acknowledge the incident and begin investigating
+
+## Appendix AAA: Upload static website to an Akamai Upload Directory within Akamai NetStorage
+
+1. Change to the directory where the "_site" directory exists
+
+   *Example where you are uploading the latest generated website:*
+
+   ```ShellSession
+   $ cd ~/code/ab2d/website
+   ```
+
+   *Example where the website directory was downloaded from S3:*
+
+   ```ShellSession
+   $ cd ~/akamai
+   ```
+
+1. Verify that that the website directory exists
+
+   ```ShellSession
+   $ [ -d "_site" ] \
+     && echo -e "\nDirectory '_site' exists.\n" \
+     || echo -e "\nError: Directory '_site' does not exist.\n"
+   ```
+
+1. Set a variable that points to your Akamai SSH key
+
+   ```ShellSession
+   $ NETSTORAGE_SSH_KEY="$HOME/.ssh/ab2d-akamai"
+   ```
+
+1. Set the target Akamai Upload Directory within Akamai Net Storage
+
+   *Akamai Stage:*
+
+   ```ShellSession
+   $ AKAMAI_UPLOAD_DIRECTORY="971498"
+   ```
+
+1. Set the Akama Rsync domain
+
+   ```ShellSession
+   $ AKAMAI_RSYNC_DOMAIN=ab2d.rsync.upload.akamai.com
+   ```
+
+1. Set timestamp
+
+   ```ShellSession
+   $ TIMESTAMP=`date +%Y-%m-%d_%H-%M-%S`
+   ```
+
+1. Upload a timestamped website directory backup to the target Akamai Upload Directory
+
+   ```ShellSession
+   $ rsync \
+     --progress \
+     --partial \
+     --archive \
+     --verbose \
+     --rsh="ssh -v -oStrictHostKeyChecking=no -oHostKeyAlgorithms=+ssh-dss -i ${NETSTORAGE_SSH_KEY}" \
+     _site/* \
+     "sshacs@${AKAMAI_RSYNC_DOMAIN}:/${AKAMAI_UPLOAD_DIRECTORY}/_site_${TIMESTAMP}"
+   ```
+
+1. Create or update the website directory in the target Akamai Upload Directory
+
+   ```ShellSession
+   $ rsync \
+     --progress \
+     --partial \
+     --archive \
+     --verbose \
+     --force \
+     --rsh="ssh -v -oStrictHostKeyChecking=no -oHostKeyAlgorithms=+ssh-dss -i ${NETSTORAGE_SSH_KEY}" \
+     _site/* \
+     "sshacs@${AKAMAI_RSYNC_DOMAIN}:/${AKAMAI_UPLOAD_DIRECTORY}/_site"
+   ```
+
+## Appendix BBB: Delete all files in an Akamai Upload Directory within Akamai NetStorage
+
+1. Set a variable that points to your Akamai SSH key
+
+   ```ShellSession
+   $ NETSTORAGE_SSH_KEY="$HOME/.ssh/ab2d-akamai"
+   ```
+
+1. Set the target Akamai Upload Directory within Akamai Net Storage
+
+   *Akamai Stage:*
+
+   ```ShellSession
+   $ AKAMAI_UPLOAD_DIRECTORY="971498"
+   ```
+
+1. Set the Akama Rsync domain
+
+   ```ShellSession
+   $ AKAMAI_RSYNC_DOMAIN=ab2d.rsync.upload.akamai.com
+   ```
+
+1. Create an empty directory to use with rsync
+
+   ```ShellSession
+   $ rm -rf /tmp/empty_dir \
+     && mkdir /tmp/empty_dir
+   ```
+
+1. Change to the "/tmp" directory
+
+   ```ShellSession
+   $ cd /tmp
+   ```
+
+1. Delete everything in target Akamai Upload Directory
+
+   ```ShellSession
+   $ rsync \
+     --progress \
+     --partial \
+     --archive \
+     --verbose \
+     --omit-dir-times \
+     --force \
+     --rsh="ssh -v -oStrictHostKeyChecking=no -oHostKeyAlgorithms=+ssh-dss -i ${NETSTORAGE_SSH_KEY}" \
+     --delete empty_dir/ "sshacs@${AKAMAI_RSYNC_DOMAIN}:/${AKAMAI_UPLOAD_DIRECTORY}/"
+   ```
+
+## Appendix CCC: Reconcile terraform state between two environments
+
+### Reconcile terraform state of development environment with terraform state of implementation environment
+
+1. Copy terraform state of the implementation environment to a file
+
+   1. Open a new terminal tab
+
+   1. Get credentials for the implementation environment
+
+      ```ShellSession
+      $ source ~/code/ab2d/Deploy/bash/set-env.sh
+      ```
+
+   1. Change to the implementation terraform environment directory
+
+      ```ShellSession
+      $ cd ~/code/ab2d/Deploy/terraform/environments/ab2d-east-impl
+      ```
+
+   1. Copy terraform state to a file
+
+      ```ShellSession
+      $ terraform state list > ~/temp/impl.txt
+      ```
+
+1. Copy terraform state of the development environment to a file
+
+   1. Open a new terminal tab
+
+   1. Get credentials for the development environment
+
+      ```ShellSession
+      $ source ~/code/ab2d/Deploy/bash/set-env.sh
+      ```
+
+   1. Change to the development terraform environment directory
+
+      ```ShellSession
+      $ cd ~/code/ab2d/Deploy/terraform/environments/ab2d-dev
+      ```
+
+   1. Copy terraform state to a file
+
+      ```ShellSession
+      $ terraform state list > ~/temp/dev.txt
+      ```
+
+1. Note any items that are in "dev.txt" file but not in "impl.txt" file
+
+   *Example:*
+
+   ```
+   data.aws_db_instance.ab2d
+   null_resource.authorized_keys_file
+   module.controller.null_resource.deployment_contoller_private_key
+   module.controller.null_resource.list-api-instances-script
+   module.controller.null_resource.list-worker-instances-script
+   module.controller.null_resource.pgpass
+   module.controller.null_resource.remove_docker_from_controller
+   module.controller.null_resource.set-hostname
+   module.controller.null_resource.ssh_client_config
+   module.management_target.aws_iam_role_policy_attachment.mgmt_role_assume_policy_attach["arn:aws:iam::349849222861:policy/CMSApprovedAWSServices"]
+   module.management_target.aws_iam_role_policy_attachment.mgmt_role_assume_policy_attach["arn:aws:iam::349849222861:policy/CMSCloudApprovedRegions"]
+   module.management_target.aws_iam_role_policy_attachment.mgmt_role_assume_policy_attach["arn:aws:iam::349849222861:policy/ct-iamCreateUserRestrictionPolicy"]
+   ```
+
+1. Remove any items from dev that I no longer created by terraform
+
+   1. Select the development environment terminal tab
+
+   1. Refresh credentials for the development environment
+
+      ```ShellSession
+      $ source ~/code/ab2d/Deploy/bash/set-env.sh
+      ```
+
+   1. Remove the following from terraform state of development environment
+
+      ```ShellSession
+      $ terraform state rm data.aws_db_instance.ab2d
+      $ terraform state rm null_resource.authorized_keys_file
+      $ terraform state rm module.controller.null_resource.deployment_contoller_private_key
+      $ terraform state rm module.controller.null_resource.list-api-instances-script
+      $ terraform state rm module.controller.null_resource.list-worker-instances-script
+      $ terraform state rm module.controller.null_resource.pgpass
+      $ terraform state rm module.controller.null_resource.remove_docker_from_controller
+      $ terraform state rm module.controller.null_resource.set-hostname
+      $ terraform state rm module.controller.null_resource.ssh_client_config
+      ```
+
+1. Note any items that are in "impl.txt" file but not in "dev.txt" file
+
+   *Example:*
+
+   ```
+   module.db.aws_security_group_rule.db_access_from_jenkins_agent
+   module.kms.aws_kms_alias.a
+   module.management_target.aws_iam_role_policy_attachment.mgmt_role_assume_policy_attach["arn:aws:iam::330810004472:policy/CMSApprovedAWSServices"]
+   module.management_target.aws_iam_role_policy_attachment.mgmt_role_assume_policy_attach["arn:aws:iam::330810004472:policy/CMSCloudApprovedRegions"]
+   module.management_target.aws_iam_role_policy_attachment.mgmt_role_assume_policy_attach["arn:aws:iam::330810004472:policy/ct-iamCreateUserRestrictionPolicy"]
+   ```
+
+1. Add missing KMS alias
+
+   1. Select the development environment terminal tab
+
+   1. Refresh credentials for the development environment
+
+      ```ShellSession
+      $ source ~/code/ab2d/Deploy/bash/set-env.sh
+      ```
+
+   1. Import the missing KMS alias to put it under terraform management
+
+      ```ShellSession
+      $ terraform import module.kms.aws_kms_alias.a alias/ab2d-kms
+      ```
+
+1. Note that the following item that does not yet exist in development will be created when deploy-infrastructure.sh is run
+
+   ```
+   module.db.aws_security_group_rule.db_access_from_jenkins_agent
+   ```
+
+1. Run the following from Jenkins
+
+   ```
+   devops-engineer-only/01a-run-initialize-environment-only-for-development
+   ```
+
+1. Run the following from Jenkins
+
+   ```
+   devops-engineer-only/01b-run-update-gold-disk-only-for-development
+   ```
+
+
+1. Run the following from Jenkins
+
+   ```
+   devops-engineer-only/01c-run-deploy-infrastructure-only-for-development
+   ```
+
+1. Run the following from Jenkins
+
+   ```
+   01-update-application-only-for-development
+   ```
+
+1. Note the following error
+
+   ```
+   16:19:11 [1m[31mError: [0m[0m[1mError creating EFS file system: FileSystemAlreadyExists: File system 'fs-f7d2d376' already exists with creation token 'ab2d-dev-efs'
+   16:19:11 {
+   16:19:11   RespMetadata: {
+   16:19:11     StatusCode: 409,
+   16:19:11     RequestID: "3d0730d7-87ad-4cb6-b86d-170b0a30cffa"
+   16:19:11   },
+   16:19:11   ErrorCode: "FileSystemAlreadyExists",
+   16:19:11   FileSystemId: "fs-f7d2d376",
+   16:19:11   Message_: "File system 'fs-f7d2d376' already exists with creation token 'ab2d-dev-efs'"
+   16:19:11 }[0m
+   16:19:11 
+   16:19:11 [0m  on ../../modules/efs/main.tf line 1, in resource "aws_efs_file_system" "efs":
+   16:19:11    1: resource "aws_efs_file_system" "efs" [4m{[0m
+   16:19:11 [0m
+   16:19:11 [0m[0m
+   16:19:11 Build step 'Execute shell' marked build as failure
+   16:19:11 Finished: FAILURE
+   ```
+
+1. To fix the EFS error, do the following:
+
+   1. Open the AWS Console
+
+   1. Select **EFS**
+
+   1. Select the radio button beside the following
+
+      ```
+      ab2d-dev-efs
+      ```
+
+   1. Select **Actions**
+
+   1. Select **Delete file system**
+
+   1. Enter the file id in the "Enter File System ID" text box
+
+   1. Select **Delete File System**
+
+   1. Wait for file system to delete
+
+   1. Select **EC2**
+
+   1. Select **Security Groups** from the leftmost panel
+
+   1. Select the following security group
+
+      ```
+      ab2d-dev-efs-sg
+      ```
+
+   1. Select **Actions**
+
+   1. Select **Delete security group**
+
+   1. Select **Delete**
+
+   1. Select the development terminal tab
+
+   1. List and note EFS-related components that are currently in terraform state
+
+      ```ShellSession
+      $ terraform state list | grep efs
+      ```
+
+   1. Remove all listed EFS-related components from terraform state
+
+      *Example:*
+
+      ```ShellSession
+      $ terraform state rm module.api.aws_security_group_rule.efs_ingress
+      $ terraform state rm module.efs.aws_efs_file_system.efs
+      $ terraform state rm module.efs.aws_security_group.efs
+      $ terraform state rm module.worker.aws_security_group_rule.efs_ingress
+      ```
+
+   1. Re-run the following from Jenkins
+
+      ```
+      devops-engineer-only/01c-run-deploy-infrastructure-only-for-development
+      ```
+
+   1. Run the following from Jenkins
+
+      ```
+      01-update-application-only-for-development
+      ```
+
+### Reconcile terraform state of sandbox environment with terraform state of implementation environment
+
+1. Copy terraform state of the implementation environment to a file
+
+   1. Open a new terminal tab
+
+   1. Get credentials for the implementation environment
+
+      ```ShellSession
+      $ source ~/code/ab2d/Deploy/bash/set-env.sh
+      ```
+
+   1. Change to the implementation terraform environment directory
+
+      ```ShellSession
+      $ cd ~/code/ab2d/Deploy/terraform/environments/ab2d-east-impl
+      ```
+
+   1. Copy terraform state to a file
+
+      ```ShellSession
+      $ terraform state list > ~/temp/impl.txt
+      ```
+
+1. Copy terraform state of the sandbox environment to a file
+
+   1. Open a new terminal tab
+
+   1. Get credentials for the sandbox environment
+
+      ```ShellSession
+      $ source ~/code/ab2d/Deploy/bash/set-env.sh
+      ```
+
+   1. Change to the sandbox terraform environment directory
+
+      ```ShellSession
+      $ cd ~/code/ab2d/Deploy/terraform/environments/ab2d-sbx-sandbox
+      ```
+
+   1. Copy terraform state to a file
+
+      ```ShellSession
+      $ terraform state list > ~/temp/sbx.txt
+      ```
+
+1. Note any items that are in "sbx.txt" file but not in "impl.txt" file
+
+   *Example:*
+
+   ```
+   data.aws_db_instance.ab2d
+   module.management_target.aws_iam_role_policy_attachment.mgmt_role_assume_policy_attach["arn:aws:iam::777200079629:policy/CMSApprovedAWSServices"]
+   module.management_target.aws_iam_role_policy_attachment.mgmt_role_assume_policy_attach["arn:aws:iam::777200079629:policy/CMSCloudApprovedRegions"]
+   module.management_target.aws_iam_role_policy_attachment.mgmt_role_assume_policy_attach["arn:aws:iam::777200079629:policy/ct-iamCreateUserRestrictionPolicy"]   
+   ```
+
+1. Remove any items from sbx that I no longer created by terraform
+
+   1. Select the sandbox environment terminal tab
+
+   1. Refresh credentials for the sandbox environment
+
+      ```ShellSession
+      $ source ~/code/ab2d/Deploy/bash/set-env.sh
+      ```
+
+   1. Remove the following from terraform state of sandbox environment
+
+      ```ShellSession
+      $ terraform state rm data.aws_db_instance.ab2d
+      ```
+
+1. Note any items that are in "impl.txt" file but not in "sbx.txt" file
+
+   *Example:*
+
+   ```
+   module.api.data.aws_security_group.cms_cloud_vpn
+   module.api.aws_security_group_rule.cms_cloud_vpn_access
+   module.controller.aws_eip.deployment_controller
+   module.controller.aws_instance.deployment_controller
+   module.controller.aws_security_group.deployment_controller
+   module.controller.aws_security_group_rule.db_access_from_controller
+   module.controller.aws_security_group_rule.egress_controller
+   module.controller.aws_security_group_rule.vpn_access_controller
+   module.controller.null_resource.wait
+   module.controller.random_shuffle.public_subnets
+   module.db.aws_db_instance.db
+   module.db.aws_db_parameter_group.default
+   module.db.aws_db_subnet_group.subnet_group
+   module.db.aws_security_group.sg_database
+   module.db.aws_security_group_rule.db_access_from_jenkins_agent
+   module.db.aws_security_group_rule.egress
+   module.iam.aws_iam_instance_profile.test_profile
+   module.iam.aws_iam_policy.cloud_watch_logs_policy
+   module.iam.aws_iam_policy.packer_policy
+   module.iam.aws_iam_policy.s3_access_policy
+   module.iam.aws_iam_role.ab2d_instance_role
+   module.iam.aws_iam_role.ab2d_mgmt_role
+   module.iam.aws_iam_role_policy_attachment.amazon_ec2_container_service_for_ec2_role_attach
+   module.iam.aws_iam_role_policy_attachment.cms_approved_aws_services_attach
+   module.iam.aws_iam_role_policy_attachment.instance_role_bfd_opt_out_policy_attach
+   module.iam.aws_iam_role_policy_attachment.instance_role_cloud_watch_logs_policy_attach
+   module.iam.aws_iam_role_policy_attachment.instance_role_packer_policy_attach
+   module.iam.aws_iam_role_policy_attachment.instance_role_s3_access_policy_attach
+   module.kms.data.aws_iam_policy_document.instance_role_kms_policy
+   module.kms.aws_iam_policy.kms_policy
+   module.kms.aws_iam_role_policy_attachment.instance_role_kms_policy_attach
+   module.kms.aws_kms_alias.a
+   module.kms.aws_kms_key.a
+   module.management_target.aws_iam_role_policy_attachment.mgmt_role_assume_policy_attach["arn:aws:iam::330810004472:policy/CMSApprovedAWSServices"]
+   module.management_target.aws_iam_role_policy_attachment.mgmt_role_assume_policy_attach["arn:aws:iam::330810004472:policy/CMSCloudApprovedRegions"]
+   module.management_target.aws_iam_role_policy_attachment.mgmt_role_assume_policy_attach["arn:aws:iam::330810004472:policy/ct-iamCreateUserRestrictionPolicy"]
+   ```
+
+1. Add missing IAM terraform components that already exist
+
+   1. Select the sandbox environment terminal tab
+
+   1. Refresh credentials for the sandbox environment
+
+      ```ShellSession
+      $ source ~/code/ab2d/Deploy/bash/set-env.sh
+      ```
+
+   1. Import the missing IAM components to put it under terraform management
+
+      ```ShellSession
+      $ terraform import module.iam.aws_iam_role.ab2d_instance_role Ab2dInstanceRole
+      $ terraform import module.iam.aws_iam_role.ab2d_mgmt_role Ab2dMgmtRole
+      $ terraform import module.iam.aws_iam_instance_profile.test_profile Ab2dInstanceProfile
+      $ terraform import module.iam.aws_iam_policy.cloud_watch_logs_policy arn:aws:iam::777200079629:policy/Ab2dCloudWatchLogsPolicy
+      $ terraform import module.iam.aws_iam_policy.packer_policy arn:aws:iam::777200079629:policy/Ab2dPackerPolicy
+      $ terraform import module.iam.aws_iam_policy.s3_access_policy arn:aws:iam::777200079629:policy/Ab2dS3AccessPolicy
+      $ terraform import module.iam.aws_iam_role_policy_attachment.amazon_ec2_container_service_for_ec2_role_attach Ab2dInstanceRole/arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role
+      $ terraform import module.iam.aws_iam_role_policy_attachment.instance_role_cloud_watch_logs_policy_attach Ab2dInstanceRole/arn:aws:iam::777200079629:policy/Ab2dCloudWatchLogsPolicy
+      $ terraform import module.iam.aws_iam_role_policy_attachment.instance_role_packer_policy_attach Ab2dInstanceRole/arn:aws:iam::777200079629:policy/Ab2dPackerPolicy
+      $ terraform import module.iam.aws_iam_role_policy_attachment.instance_role_s3_access_policy_attach Ab2dInstanceRole/arn:aws:iam::777200079629:policy/Ab2dS3AccessPolicy
+
+      ??????????
+      $ terraform import module.iam.aws_iam_role_policy_attachment.cms_approved_aws_services_attach
+      ??????????
+      $ terraform import module.iam.aws_iam_role_policy_attachment.instance_role_bfd_opt_out_policy_attach
+      ```
+
+1. Add missing KMS components
+
+   1. Select the sandbox environment terminal tab
+
+   1. Refresh credentials for the sandbox environment
+
+      ```ShellSession
+      $ source ~/code/ab2d/Deploy/bash/set-env.sh
+      ```
+
+   1. Import the missing KMS components to put it under terraform management
+
+      ```ShellSession
+      $ KMS_KEY_ID=$(aws --region "${AWS_DEFAULT_REGION}" kms list-aliases \
+        --query="Aliases[?AliasName=='alias/ab2d-kms'].TargetKeyId" \
+        --output text)
+      $ terraform import module.kms.aws_kms_key.a "${KMS_KEY_ID}"
+      $ terraform import module.kms.aws_kms_alias.a alias/ab2d-kms
+      $ KMS_IAM_POLICY_ARN=$(aws --region "${AWS_DEFAULT_REGION}" iam list-policies \
+        --query "Policies[?PolicyName=='Ab2dKmsPolicy'].Arn" \
+        --output text)
+      $ terraform import module.kms.aws_iam_policy.kms_policy "${KMS_IAM_POLICY_ARN}"
+      $ terraform import module.kms.aws_iam_role_policy_attachment.instance_role_kms_policy_attach Ab2dInstanceRole/arn:aws:iam::777200079629:policy/Ab2dKmsPolicy
+
+      ???????????   
+      module.kms.data.aws_iam_policy_document.instance_role_kms_policy
+      ```
+
+1. Add missing db components
+
+   1. Select the sandbox environment terminal tab
+
+   1. Refresh credentials for the sandbox environment
+
+      ```ShellSession
+      $ source ~/code/ab2d/Deploy/bash/set-env.sh
+      ```
+
+   1. Import the missing db components to put it under terraform management
+
+      ```ShellSession
+      $ AB2D_DATABASE_SG=$(aws --region "${AWS_DEFAULT_REGION}" ec2 describe-security-groups \
+        --query "SecurityGroups[?GroupName=='ab2d-database-sg'].GroupId" \
+        --output text)
+      $ terraform import module.db.aws_security_group.sg_database "${AB2D_DATABASE_SG}"
+      $ terraform import module.db.aws_db_subnet_group.subnet_group ab2d-rds-subnet-group
+      $ terraform import module.db.aws_db_parameter_group.default ab2d-rds-parameter-group
+      $ terraform import module.db.aws_security_group_rule.egress "${AB2D_DATABASE_SG}_egress_all_0_65536_0.0.0.0/0"
+      $ terraform import module.db.aws_db_instance.db ab2d
+      ```
+
+1. Note that the following item that does not yet exist in development will be created when deploy-infrastructure.sh is run
+
+   ```
+   module.db.aws_security_group_rule.db_access_from_jenkins_agent
+   ```
+
+1. Add missing controller components
+
+   1. Select the sandbox environment terminal tab
+
+   1. Refresh credentials for the sandbox environment
+
+      ```ShellSession
+      $ source ~/code/ab2d/Deploy/bash/set-env.sh
+      ```
+
+   1. Import the missing controller components to put it under terraform management
+
+      ```ShellSession
+      $ AB2D_DEPLOYMENT_CONTROLLER_SG=$(aws --region "${AWS_DEFAULT_REGION}" ec2 describe-security-groups \
+  --query "SecurityGroups[?GroupName=='ab2d-deployment-controller-sg'].GroupId" \
+  --output text)
+      $ terraform import module.controller.aws_security_group.deployment_controller "${AB2D_DEPLOYMENT_CONTROLLER_SG}"
+      $ terraform import module.controller.aws_eip.deployment_controller eipalloc-066af1aaceecd5b70
+      $ terraform import module.controller.aws_security_group_rule.db_access_from_controller sg-0e0f230b719384463_ingress_tcp_5432_5432_sg-0b2eaf3ed92a7448d
+      $ terraform import module.controller.aws_security_group_rule.vpn_access_controller sg-0b2eaf3ed92a7448d_ingress_all_0_65536_10.232.32.0/19
+      $ terraform import module.controller.aws_security_group_rule.egress_controller sg-0b2eaf3ed92a7448d_egress_all_0_65536_0.0.0.0/0
+      ```
+
+1. Remove auto-added secuity group rules
+
+   ```ShellSession
+   $ terraform state rm module.db.aws_security_group_rule.sg_database
+   $ terraform state rm module.db.aws_security_group_rule.sg_database-1
+   $ terraform state rm module.db.aws_security_group_rule.sg_database-2
+   $ terraform state rm module.db.aws_security_group_rule.sg_database-3
+   $ terraform state rm module.controller.aws_security_group_rule.deployment_controller
+   $ terraform state rm module.controller.aws_security_group_rule.deployment_controller-1
+   $ terraform state rm module.controller.aws_security_group_rule.deployment_controller-2
+   ```
+
+1. Manually add a "CMS Cloud VPN Access" ingress rule to the "ab2d-east-prod-load-balancer-sg" security group with the following settings in the AWS console
+
+   ```
+   All traffic
+   All
+   All
+   sg-0ba0fa6edce74b231 (cmscloud-vpn)
+   CMS Cloud VPN Access
+   ```
+
+1. Import the "CMS Cloud VPN Access" ingress rule into terraform state
+
+   ```ShellSession
+   $ terraform import module.api.aws_security_group_rule.cms_cloud_vpn_access sg-0372341978a0c7caf_ingress_all_0_65536_sg-0ba0fa6edce74b231
+   ```
+
+1. Manually add a "Jenkins Agent Access" ingress rule to the "ab2d-database-sg" security group with the following settings in the AWS console
+
+   ```
+   PostgreSQL
+   TCP
+   5432
+   Custom
+   653916833532/sg-0e370f9dcfe051ed0
+   Jenkins Agent Access
+   ```
+
+1. Import the "Jenkins Agent Access" ingress rule into terraform state
+
+   ```ShellSession
+   $ terraform import module.db.aws_security_group_rule.db_access_from_jenkins_agent sg-0e0f230b719384463_ingress_tcp_5432_5432_653916833532/sg-0e370f9dcfe051ed0
+   ```
+
+1. Run "deploy-infrastructure.sh" from Jenkins for the sandbox environment
+
+   > *** TO DO ***
+
+## Appendix DDD: Backup and recovery
+
+1. Stop API nodes via an autoscaling group schedule
+
+   1. Log on to the target AWS account
+
+   1. Select **EC2**
+
+   1. Select **Auto Scaling Groups** form the leftmost panel
+
+   1. Select the API auto scaling group
+
+      *Example:*
+
+      ```
+      ab2d-sbx-sandbox-api-20200414203112829500000001
+      ```
+
+   1. Select the **Schedule Actions** tab
+
+   1. Select **Create Scheduled Action**
+
+   1. Configure the "Create Scheduled Action" page as follows
+
+      *Format:*
+
+      - **Name:** Stop API nodes
+
+      - **Min:** 0
+
+      - **Max:** 0
+
+      - **Desired Capacity:** 0
+
+      - **Recurrence:** Once
+
+      - **Start Time:** {utc time two minutes from now}
+
+1. Stop worker nodes via an autoscaling group schedule
+
+   1. Log on to the target AWS account
+
+   1. Select **EC2**
+
+   1. Select **Auto Scaling Groups** form the leftmost panel
+
+   1. Select the API auto scaling group
+
+      *Example:*
+
+      ```
+      ab2d-sbx-sandbox-worker-20200414203214104900000001
+      ```
+
+   1. Select the **Schedule Actions** tab
+
+   1. Select **Create Scheduled Action**
+
+   1. Configure the "Create Scheduled Action" page as follows
+
+      *Format:*
+
+      - **Name:** Stop worker nodes
+
+      - **Min:** 0
+
+      - **Max:** 0
+
+      - **Desired Capacity:** 0
+
+      - **Recurrence:** Once
+
+      - **Start Time:** {utc time two minutes from now}
+
+1. Wait for API and worker nodes to stop
+
+1. Take a database snapshot
+
+   1. Log on to the target AWS account
+
+   1. Select **RDS**
+
+   1. Select **Databases** from the leftmost panel
+
+   1. Select the radio button beside the following database
+
+      ```
+      ab2d
+      ```
+
+   1. Select **Actions**
+
+   1. Select **Take snapshot**
+
+   1. Type the following in the **Snapshot name** text box
+
+      *Format:*
+
+      ```
+      ab2d-{unix time}
+      ```
+
+   1. Select **Take Snapshot**
+
+   1. Wait for "Snapshot creation time" to appear
+
+      *Notes:*
+
+      - Note that this may take a while
+
+      - Note that if you select the snapshot you will see the status as "Creating", which is why the snapshot creation time has not yet been updated
+
+      - Note that you may need to refresh the page to see the snapshot creation time
+
+1. Backup the current state of data by running the following Jenkins job
+
+   ```
+   devops-engineer-only/02-backup-data-as-csv-for-sandbox
+   ```
+
+1. Make a backup of CSV backup files
+
+   1. Get credentials for the management AWS account
+
+      ```ShellSession
+      $ source ~/code/ab2d/Deploy/bash/set-env.sh
+      ```
+
+   1. Get the private IP address of Jenkins agent instance
+
+      ```ShellSession
+      $ JENKINS_AGENT_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-jenkins-agent" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+        --output text)
+      ```
+
+   1. Connect to the Jenkins agent
+
+      ```ShellSession
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem "ec2-user@${JENKINS_AGENT_PRIVATE_IP}"
+      ```
+
+   1. Switch to the jenkins user
+
+      ```ShellSession
+      $ sudo su - jenkins
+      ```
+
+   1. List the csv files
+
+      *Example for the "Sbx" environment:*
+
+      ```ShellSession
+      $ ls -al ~/database_backup/ab2d-sbx-sandbox/csv
+      ```
+
+   1. Backup the csv directory
+
+      *Example for the "Sbx" environment:*
+
+      ```ShellSession
+      $ cd ~
+      $ DATETIME=`date +%Y-%m-%d-%H%M%S`
+      $ mkdir -p "csv-backup/${DATETIME}"
+      $ cp -r database_backup/ab2d-sbx-sandbox/csv "csv-backup/${DATETIME}"
+      ```
+
+1. Run the initialize environment Jenkins job
+
+   ```
+   devops-engineer-only/01a-run-initialize-environment-only-for-sandbox
+   ```
+
+1. Run the update gold disk Jenkins job
+
+   ```
+   devops-engineer-only/01b-run-update-gold-disk-only-for-sandbox
+   ```
+
+1. Run the deploy infrastructre Jenkins job
+
+   ```
+   devops-engineer-only/01c-run-deploy-infrastructure-only-for-sandbox
+   ```
+
+1. Run the update application Jenkins job
+
+   ```
+   devops-engineer-only/01-update-application-only-for-sandbox
+   ```
+
+## Appendix EEE: Modify the database instance type
+
+1. Stop API nodes via an autoscaling group schedule
+
+   1. Log on to the target AWS account
+
+   1. Select **EC2**
+
+   1. Select **Auto Scaling Groups** form the leftmost panel
+
+   1. Select the API auto scaling group
+
+      *Example:*
+
+      ```
+      ab2d-sbx-sandbox-api-20200414203112829500000001
+      ```
+
+   1. Select the **Schedule Actions** tab
+
+   1. Select **Create Scheduled Action**
+
+   1. Configure the "Create Scheduled Action" page as follows
+
+      *Format example for "Sbx" environment:*
+
+      - **Name:** Stop API nodes
+
+      - **Min:** 0
+
+      - **Max:** 0
+
+      - **Desired Capacity:** 0
+
+      - **Recurrence:** Once
+
+      - **Start Time:** {utc time two minutes from now}
+
+1. Stop worker nodes via an autoscaling group schedule
+
+   1. Log on to the target AWS account
+
+   1. Select **EC2**
+
+   1. Select **Auto Scaling Groups** form the leftmost panel
+
+   1. Select the API auto scaling group
+
+      *Example:*
+
+      ```
+      ab2d-sbx-sandbox-worker-20200414203214104900000001
+      ```
+
+   1. Select the **Schedule Actions** tab
+
+   1. Select **Create Scheduled Action**
+
+   1. Configure the "Create Scheduled Action" page as follows
+
+      *Format example for "Sbx" environment:*
+
+      - **Name:** Stop worker nodes
+
+      - **Min:** 0
+
+      - **Max:** 0
+
+      - **Desired Capacity:** 0
+
+      - **Recurrence:** Once
+
+      - **Start Time:** {utc time two minutes from now}
+
+1. Wait for API and worker nodes to stop
+
+1. Take a database snapshot
+
+   1. Log on to the target AWS account
+
+   1. Select **RDS**
+
+   1. Select **Databases** from the leftmost panel
+
+   1. Select the radio button beside the following database
+
+      ```
+      ab2d
+      ```
+
+   1. Select **Actions**
+
+   1. Select **Take snapshot**
+
+   1. Type the following in the **Snapshot name** text box
+
+      *Format:*
+
+      ```
+      ab2d-{unix time}
+      ```
+
+   1. Select **Take Snapshot**
+
+   1. Wait for "Snapshot creation time" to appear
+
+      *Notes:*
+
+      - Note that this may take a while
+
+      - Note that if you select the snapshot you will see the status as "Creating", which is why the snapshot creation time has not yet been updated
+
+      - Note that you may need to refresh the page to see the snapshot creation time
+
+1. Backup the current state of data by running the following Jenkins job
+
+   ```
+   devops-engineer-only/02-backup-data-as-csv-for-sandbox
+   ```
+
+1. Make a backup of CSV backup files
+
+   1. Get credentials for the management AWS account
+
+      ```ShellSession
+      $ source ~/code/ab2d/Deploy/bash/set-env.sh
+      ```
+
+   1. Get the private IP address of Jenkins agent instance
+
+      ```ShellSession
+      $ JENKINS_AGENT_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-jenkins-agent" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+        --output text)
+      ```
+
+   1. Connect to the Jenkins agent
+
+      ```ShellSession
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem "ec2-user@${JENKINS_AGENT_PRIVATE_IP}"
+      ```
+
+   1. Switch to the jenkins user
+
+      ```ShellSession
+      $ sudo su - jenkins
+      ```
+
+   1. List the csv files
+
+      *Example for the "Sbx" environment:*
+
+      ```ShellSession
+      $ ls -al ~/database_backup/ab2d-sbx-sandbox/csv
+      ```
+
+   1. Backup the csv directory
+
+      *Example for the "Sbx" environment:*
+
+      ```ShellSession
+      $ cd ~
+      $ DATETIME=`date +%Y-%m-%d-%H%M%S`
+      $ mkdir -p "csv-backup/${DATETIME}"
+      $ cp -r database_backup/ab2d-sbx-sandbox/csv "csv-backup/${DATETIME}"
+      ```
+
+1. Remove the database from terraform management prior to modifying database instance
+
+   1. Switch to the sandbox directory
+
+      *Example for "Sbx" environment:*
+
+      ```ShellSession
+      $ cd ~/code/ab2d/Deploy/terraform/environments/ab2d-sbx-sandbox
+      ```
+
+   1. Get credentials for the sandbox environment
+   
+      ```ShellSession
+      $ source ~/code/ab2d/Deploy/bash/set-env.sh
+      ```
+   
+   1. Remove the database terraform module
+   
+      ```ShellSession
+      $ terraform state rm module.db.aws_db_instance.db
+      ```
+
+1. Modify the database instance in the AWS console
+
+   1. Log on to the target AWS account
+
+   1. Select **RDS**
+
+   1. Select **Databases** from the leftmost panel
+
+   1. Select the radio button beside the following database
+
+      ```
+      ab2d
+      ```
+
+   1. Select **Modify**
+
+   1. Modify the database as follows
+
+      - **DB engine version:** PostgreSQL 11.5-R1
+
+      - **DB instance class:** db.m4.2xlarge
+
+      - **Multi-AZ deployment:** Yes
+
+      - **Storage type:** Provisioned IOPS (SSD)
+
+      - **Allocated Storage:** 500 GiB
+
+      - **Provisioned IOPS:** 5000
+
+      - **DB instance identifier:** ab2d
+
+   1. Scroll to the bottom of the page
+
+   1. Select **Continue**
+
+   1. Select the **Apply immediately** radio button
+
+   1. Select **Modify DB Instance**
+
+1. Wait for the database modification to complete
+
+   *Notes:*
+
+   - it may take a short period of time to see the status change to "Modifying"
+
+   - you may need to refresh the page to see the status changes
+
+1. Backup the current state of data by running the following Jenkins job again
+
+   ```
+   devops-engineer-only/02-backup-data-as-csv-for-sandbox
+   ```
+
+1. Import the new database configuration into terraform
+
+   1. Switch to the sandbox directory
+
+      *Example for "Sbx" environment:*
+
+      ```ShellSession
+      $ cd ~/code/ab2d/Deploy/terraform/environments/ab2d-sbx-sandbox
+      ```
+
+   1. Get credentials for the sandbox environment
+   
+      ```ShellSession
+      $ source ~/code/ab2d/Deploy/bash/set-env.sh
+      ```
+
+   1. Import the latest database instance into terraform
+
+      ```ShellSession
+      $ terraform import module.db.aws_db_instance.db ab2d
+      ```
+
+1. Restart the API nodes
+
+   1. Log on to the target AWS account
+
+   1. Select **EC2**
+
+   1. Select **Auto Scaling Groups** form the leftmost panel
+
+   1. Select the API auto scaling group
+
+      *Example:*
+
+      ```
+      ab2d-sbx-sandbox-api-20200414203112829500000001
+      ```
+
+   1. Select the **Schedule Actions** tab
+
+   1. Select **Create Scheduled Action**
+
+   1. Configure the "Create Scheduled Action" page as follows
+
+      *Format example for "Sbx" environment:*
+
+      - **Name:** Start API nodes
+
+      - **Min:** 2
+
+      - **Max:** 2
+
+      - **Desired Capacity:** 2
+
+      - **Recurrence:** Once
+
+      - **Start Time:** {utc time two minutes from now}
+
+1. Restart the worker nodes
+
+   1. Log on to the target AWS account
+
+   1. Select **EC2**
+
+   1. Select **Auto Scaling Groups** form the leftmost panel
+
+   1. Select the API auto scaling group
+
+      *Example:*
+
+      ```
+      ab2d-sbx-sandbox-worker-20200414203214104900000001
+      ```
+
+   1. Select the **Schedule Actions** tab
+
+   1. Select **Create Scheduled Action**
+
+   1. Configure the "Create Scheduled Action" page as follows
+
+      *Format example for "Sbx" environment:*
+
+      - **Name:** Start worker nodes
+
+      - **Min:** 2
+
+      - **Max:** 2
+
+      - **Desired Capacity:** 2
+
+      - **Recurrence:** Once
+
+      - **Start Time:** {utc time two minutes from now}
+
+## Appendix FFF: Run e2e tests
+
+### Run e2e tests for production
+
+1. Switch to the repo directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d
+   ```
+
+1. Set configuration prefix
+
+   ```ShellSession
+   $ export E2E_ENV_CONFIG_PREFIX=prod
+   ```
+
+1. Set e2e test environment target
+
+   ```ShellSession
+   $ export E2E_TARGET_ENV=PROD
+   ```
+
+1. Examine the configuration file for production
+
+   ```ShellSession
+   $ cat "./e2e-test/src/test/resources/${E2E_ENV_CONFIG_PREFIX}-config.yml" ; echo
+   ```
+
+1. If the settings are not correct, do the following
+
+   1. Open the configuration file
+
+      ```ShellSession
+      $ vim "./e2e-test/src/test/resources/${E2E_ENV_CONFIG_PREFIX}-config.yml"
+      ```
+
+   1. Modify the settings to make them correct
+
+   1. Save and close the file
+
+1. Build the application and skip tests
+
+   ```ShellSession
+   $ mvn clean package -DskipTests
+   ```
+
+1. Set first OKTA test user
+
+   *NOTE: currently using a real Okta contract with a small number of patients since the synthetic data is not working.*
+
+   ```ShellSession
+   $ export OKTA_CONTRACT_NUMBER={okta contract number}
+   $ export OKTA_CLIENT_ID={first okta client id}
+   $ export OKTA_CLIENT_PASSWORD={first okta client secret}
+   ```
+
+1. Set second OKTA test user
+
+   *NOTE: currently using a real Okta contract with a small number of patients since the synthetic data is not working.*
+
+   ```ShellSession
+   $ export SECONDARY_USER_OKTA_CLIENT_ID={second okta client id}
+   $ export SECONDARY_USER_OKTA_CLIENT_PASSWORD={second okta client secret}
+   ```
+
+1. Change to the target directory
+
+   ```ShellSession
+   $ cd ./e2e-test/target
+   ```
+
+1. Run e2e testing
+
+   ```ShellSession
+   $ java -cp e2e-test-0.0.1-SNAPSHOT-fat-tests.jar gov.cms.ab2d.e2etest.TestLauncher "${E2E_TARGET_ENV}" "${OKTA_CONTRACT_NUMBER}"
+   ```
+
+## Appendix GGG: Retrieve a copy of remote terraform state file for review
+
+1. Ensure that you are connected to CMS Cisco VPN
+
+1. Change to the "Deploy" directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d/Deploy
+   ```
+
+1. Set AWS environment variables using the CloudTamer API
+
+   ```ShellSession
+   $ source ./bash/set-env.sh
+   ```
+
+1. Choose desired target environment
+
+1. Change to target directory of the desired target environment
+
+   ```ShellSession
+   $ cd terraform/environments/ab2d-east-prod
+   ```
+
+1. Pull the terraform state file for the target environment from S3
+
+   ```ShellSession
+   $ terraform state pull > "${HOME}/Downloads/terraform.tfstate.${CMS_ENV}.json"
+   ```
+
+1. Examine the downloaded terraform state file
+
+   ```ShellSession
+   $ vim "${HOME}/Downloads/terraform.tfstate.${CMS_ENV}.json"
+   ```
+
+## Appendix HHH: Manually change a tag on controller and update its terraform state
+
+1. Ensure that you have added or changed the tag in the automation for the controller before proceeding
+
+1. Ensure that you are connected to CMS Cisco VPN
+
+1. Change to the "Deploy" directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d/Deploy
+   ```
+
+1. Set AWS environment variables using the CloudTamer API
+
+   ```ShellSession
+   $ source ~/code/ab2d/Deploy/bash/set-env.sh
+   ```
+
+1. Choose desired target environment
+
+1. Change to target directory of the desired target environment
+
+   ```ShellSession
+   $ cd terraform/environments/ab2d-east-prod
+   ```
+
+1. Get the terraform name for the controller's AWS instance within the terraform state
+
+   ```ShellSession
+   $ TERRAFORM_CONTROLLER_AWS_INSTANCE=$(terraform state list \
+     | grep module.controller \
+     | grep aws_instance)
+   ```
+
+1. Verify that one and one item is in the "TERRAFORM_CONTROLLER_AWS_INSTANCE" variable
+
+   ```ShellSession
+   $ echo "${TERRAFORM_CONTROLLER_AWS_INSTANCE}"
+   ```
+
+1. Temporarily remove the controller from terraform management
+
+   ```ShellSession
+   $ terraform state rm "${TERRAFORM_CONTROLLER_AWS_INSTANCE}"
+   ```
+
+1. Open Chrome
+
+1. Enter the following in the address bar
+
+   > https://cloudtamer.cms.gov/portal
+
+1. Select the target AWS account
+
+1. Manually change one of the tags associated with the instance
+
+   1. Select **EC2**
+
+   1. Select **Instances** under he "Instances" section from the leftmost panel
+
+   1. Select the following EC2 instance
+
+      ```
+      ab2d-deployment-controller
+      ```
+
+   1. Select the **Tags** tab
+
+   1. Add or configure a tag as desired
+
+      *Example:*
+
+      Tags      |Value
+      ----------|--------
+      cpm backup|no-backup
+
+1. Return to the terminal
+
+1. Import the controller to terraform state to place it under terraform management again
+
+   1. Get the instance id of the terraform controller
+
+      ```ShellSession
+      $ CONTROLLER_INSTANCE_ID=$(aws --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-deployment-controller" \
+        --query="Reservations[*].Instances[*].InstanceId" \
+        --output text)
+      ```
+
+   1. Import the controller
+
+      ```ShellSession
+      $ terraform import "${TERRAFORM_CONTROLLER_AWS_INSTANCE}" "${CONTROLLER_INSTANCE_ID}"
+      ```
+
+1. Note that even though terraform state did not update to reflect the tag change, this is still a good example for how to put existing infrastructure under terraform management
+
+## Appendix III: Issue a schedule override in VictorOps
+
+1. Open Chrome
+
+1. Log on to VictorOps
+
+1. Select the **Teams** tab
+
+1. Select **On-Call Schedule**
+
+1. Expand **Standard**
+
+1. Note that the schedule for the next four weeks is displayed
+
+1. If there are no existing overrides, all the lines are a shades of gray-blue
+
+1. Determine when the override will occur
+
+1. Select the **Scheduled Overrides** tab
+
+1. Select **Schedule an Override**
+
+1. Configure the "Create Scheduled" page as follows
+
+   - **Override for:** {user whose schedule will be overriden}
+
+   - **Timezone:** America/New York
+
+   - **Start on:** {datetime} <-- musst be in the future
+
+   - **End on:** {datetime}
+
+1. Select **Create**
+
+1. Expand the override that was created
+
+1. Select the user from the dropdown that will take the override time period
+
+## Appendix JJJ: Change the Jenkins home directory on the Jenkins agent
+
+1. Log on to the Jenkins GUI (if not already logged in)
+
+   1. Ensure that you are connected to the Cisco VPN
+
+   1. Open Chrome
+
+   1. Enter the following in the address bar
+
+      *Format:*
+
+      > http://{jenkins master public ip}:8080
+
+   1. Log on to the Jenkins GUI
+
+1. Determine the configured Jenkins home directory from the Jenkins GUI
+
+   1. Select **Manage Jenkins**
+
+   1. Scroll down to the "Status Information" section
+
+   1. Select **System Information**
+
+   1. Scroll down to "JENKINS_HOME"
+
+   1. Note the "JENKINS_HOME" value
+
+      ```
+      /var/lib/jenkins
+      ```
+
+1. Note that Jenkins Master currently uses the same value as its Jenkins home
+
+   ```
+   /var/lib/jenkins
+   ```
+
+1. Note that Jenkins Agent currently uses a different value as its Jenkins home
+
+   ```
+   /home/jenkins
+   ```
+
+1. Note that the latest SSH plugin requires that the Jenkins home directory should be the same on both Jenkins master and Jenkins agent, so the following directions will change the Jenkins agent home to be the same as Jenkins master
+
+1. Double the size of the Jenkins agent volume in AWS
+
+   1. Note that this is needed to fix the size of the "/var" volume so that it has enough room to receive the existing file from the old jenkins home directory
+
+   1. Log on the the mangement AWS account
+
+   1. Select **EC2**
+
+   1. Select **Volumes** under "Elastic Block Store" in the leftmost panel
+
+   1. Select the following volume
+
+      ```
+      ab2d-jenkins-agent-vol
+      ```
+
+   1. Select **Actions**
+
+   1. Select **Modify Volume**
+
+   1. Type the following in the **Size** text box
+
+      ```
+      500
+      ```
+
+   1. Select **Modify**
+
+   1. Select **Yes** on the "Are you sure..." dialog
+
+   1. Select **Close** on the "Modify Volume" window
+
+1. SSH into the Jenkins agent
+
+1. Create a new partition from unallocated space
+
+   ```ShellSession
+   (
+   echo n # Add a new partition
+   echo p # Primary partition
+   echo   # Partition number (Accept default)
+   echo   # First sector (Accept default)
+   echo   # Last sector (Accept default)
+   echo w # Write changes
+   ) | sudo fdisk /dev/nvme0n1 || true
+   ```
+
+1. Request that the operating system re-reads the partition table
+
+   ```ShellSession
+   $ sudo partprobe
+   ```
+
+1. Create physical volume by initializing the partition for use by the Logical Volume Manager (LVM)
+
+   ```ShellSession
+   $ sudo pvcreate /dev/nvme0n1p4
+   ```
+
+1. Add the new physical volume to the volume group
+
+   ```ShellSession
+   $ sudo vgextend VolGroup00 /dev/nvme0n1p4
+   ```
+
+1. Extend the size of the var logical volume
+
+   ```ShellSession
+   $ sudo lvextend -l +100%FREE /dev/mapper/VolGroup00-varVol
+   ```
+
+1. Expand the existing XFS filesystem
+
+   ```ShellSession
+   $ sudo xfs_growfs -d /dev/mapper/VolGroup00-varVol
+   ```
+
+1. Switch to the root user's "/root" directory
+
+   ```ShellSession
+   $ sudo -i
+   ```
+
+1. Create the new Jenkins home directory
+
+   ```ShellSession
+   $ mkdir -p /var/lib/jenkins
+   ```
+
+1. Change the ownership of the new Jenkins home directory to the jenkins user
+
+   ```ShellSession
+   $ chown jenkins:jenkins /var/lib/jenkins
+   ```
+
+1. Copy the contents from old Jenkins home directory to the new Jenkins home directory
+
+   ```ShellSession
+   $ cp -prv /home/jenkins /var/lib/
+   ```
+
+1. Change the Jenkins user home directory
+
+   ```ShellSession
+   $ usermod -d /var/lib/jenkins jenkins
+   ```
+
+## Appendix KKK: Change MFA to Google Authenticator for accessing Jira
+
+1. Install Google Authenticator on your phone (if not already installed)
+
+1. Open Chrome
+
+1. Enter the following in the address bar
+
+   > https://mo-idp.cms.gov/login#showall
+
+1. Log on using your current MFA
+
+1. Select **MFA Authentication** from the leftmost panel
+
+1. Select **Google Authenticator**
+
+1. Follow the instructions that are presented
+
+## Appendix LLL: Add a volume to jenkins agent and extend the log volume to use it
+
+1. Create a new volume in the same availabilty zone as Jenkins agent in the AWS console
+
+1. Attach the volume to the Jenkins agent in the AWS console
+
+1. Connect to the Jenkins agent
+
+1. Set the partition as gpt
+
+   ```ShellSession
+   $ sudo parted --script /dev/nvme1n1 mklabel gpt
+   ```
+
+1. View detail about the disks and partitions again
+
+   1. Enter the following
+   
+      ```ShellSession
+      $ sudo parted -l
+      ```
+
+   1. Note the output
+
+      ```
+      Model: NVMe Device (nvme)
+      Disk /dev/nvme0n1: 537GB
+      Sector size (logical/physical): 512B/512B
+      Partition Table: gpt
+      Disk Flags: 
+      
+      Number  Start   End     Size    File system  Name  Flags
+       1      1049kB  2097kB  1049kB                     bios_grub
+       2      2097kB  537GB   537GB   xfs
+      
+      
+      Model: NVMe Device (nvme)
+      Disk /dev/nvme1n1: 537GB
+      Sector size (logical/physical): 512B/512B
+      Partition Table: gpt
+      Disk Flags: 
+      
+      Number  Start  End  Size  File system  Name  Flags
+      ```
+
+1. Create a new partition on the "/dev/nvme1n1" disk
+
+   ```ShellSession
+   (
+   echo n # Add a new partition
+   echo p # Primary partition
+   echo   # Partition number (Accept default)
+   echo   # First sector (Accept default)
+   echo   # Last sector (Accept default)
+   echo w # Write changes
+   ) | sudo fdisk /dev/nvme1n1
+   ```
+
+1. Request that the operating system re-reads the partition table
+
+   ```ShellSession
+   $ sudo partprobe
+   ```
+
+1. Create physical volume by initializing the partition for use by the Logical Volume Manager (LVM)
+
+   ```ShellSession
+   $ sudo pvcreate /dev/nvme1n1p1
+   ```
+
+1. Format the "/dev/nvme1n1" disk as xfs
+
+   ```ShellSession
+   $ sudo mkfs.xfs -f /dev/nvme1n1p1
+   ```
+
+1. Extend the "VolGroup00" volume group to include the new volume
+
+   ```ShellSession
+   $ sudo vgextend VolGroup00 /dev/nvme1n1p1
+   ```
+
+1. Extend the size of the "log" logical volume with all the free space on the new volume
+
+   ```ShellSession
+   $ sudo lvextend -l +100%FREE /dev/mapper/VolGroup00-logVol
+   ```
+
+1. Expands the existing XFS filesystem
+
+   ```ShellSession
+   $ sudo xfs_growfs -d /dev/mapper/VolGroup00-logVol
+   ```
+
+## Appendix MMM: Upgrade Jenkins Agent from AWS CLI 1 to AWS CLI 2
+
+### Uninstall AWS CLI 1 using pip
+
+1. Connect to the Jenkins agent
+
+1. Uninstall AWS CLI 1 using pip
+
+   ```ShellSession
+   $ sudo pip uninstall -y awscli
+   ```
+
+### Install and verify AWS CLI 2
+
+1. Connect to the Jenkins agent
+
+1. Download the AWS CLI 2 package
+
+   ```ShellSession
+   $ cd /tmp
+   $ curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+   ```
+
+1. Unzip the AWS CLI 2 package
+
+   ```ShellSession
+   $ unzip awscliv2.zip
+   ```
+
+1. Install AWS CLI 2
+
+   ```ShellSession
+   $ sudo ./aws/install
+   ```
+
+1. Verify where AWS CLI 2 was installed
+
+   1. Enter the following
+
+      ```ShellSession
+      $ which aws
+      ```
+
+   1. Verify that the following was displayed
+
+      ```
+      /usr/local/bin/aws
+      ```
+
+1. Verify the version of AWS CLI 2
+
+   1. Enter the following
+
+      ```ShellSession
+      $ aws --version
+      ```
+
+   1. Note the output
+
+      *Example:*
+
+      ```
+      aws-cli/2.0.33 Python/3.7.3 Linux/3.10.0-1062.12.1.el7.x86_64 botocore/2.0.0dev37
+      ```
+
+## Appendix NNN: Manually install Chef Inspec on existing Jenkins Agent
+
+1. Connect to the Jenkins agent
+
+1. Install Chef Inspec
+
+   ```ShellSession
+   $ curl https://omnitruck.chef.io/install.sh | sudo bash -s -- -P inspec
+   ```
+
+1. Verify Chef Inspec is installed by checking its version
+
+   ```ShellSession
+   $ inspec --version
+   ```
+
+## Appendix OOO: Connect to Jenkins agent through the Jenkins master using the ProxyJump flag
+
+1. Ensure that you are connected to the Cisco VPN
+
+1. Get credentials for the Management AWS account
+
+   ```ShellSession
+   $ source ./bash/set-env.sh
+   ```
+
+1. Get the public IP address of Jenkins master instance
+
+   ```ShellSession
+   $ JENKINS_MASTER_PUBLIC_IP=$(aws --region us-east-1 ec2 describe-instances \
+     --filters "Name=tag:Name,Values=ab2d-jenkins-master" \
+     --query="Reservations[*].Instances[?State.Name == 'running'].PublicIpAddress" \
+     --output text)
+   ```
+
+1. Get the private IP address of Jenkins agent instance
+
+   ```ShellSession
+   $ JENKINS_AGENT_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+     --filters "Name=tag:Name,Values=ab2d-jenkins-agent" \
+     --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+     --output text)
+   ```
+
+1. SSH into the Jenkins agent through the Jenkins master using the ProxyJump flag (-J)
+
+   ```ShellSession
+   $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem -J \
+     ec2-user@$JENKINS_MASTER_PUBLIC_IP \
+	ec2-user@$JENKINS_AGENT_PRIVATE_IP
    ```

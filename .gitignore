@@ -89,3 +89,10 @@ build/
 .checkstyle
 
 common/jacoco/**
+
+### .DS_Store in "src/test" ###
+### This is needed due to this .gitignore entry: "!**/src/test/**" ###
+**/src/test/**/.DS_Store
+
+### DevOps website
+Deploy/website-temp
