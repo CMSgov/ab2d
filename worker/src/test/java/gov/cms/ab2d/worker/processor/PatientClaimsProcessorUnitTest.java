@@ -162,6 +162,42 @@ public class PatientClaimsProcessorUnitTest {
     }
 
     @Test
+    void process_whenContractIsSpecialContract() throws ParseException {
+        SimpleDateFormat sdf = new SimpleDateFormat("MM/dd/yyyy");
+        Date d1 = sdf.parse("01/02/2020");
+        Date d2 = sdf.parse("12/02/2019");
+        ReflectionTestUtils.setField(cut, "startDate", "01/01/2020");
+        ReflectionTestUtils.setField(cut, "startDateSpecialContracts", "01/01/2019");
+        ReflectionTestUtils.setField(cut, "specialContracts", List.of("Z0001"));
+
+        Bundle bundle1 = EobTestDataUtil.createBundle(eob.copy());
+        ExplanationOfBenefit eob = (ExplanationOfBenefit) bundle1.getEntry().get(0).getResource();
+
+        eob.getBillablePeriod().setStart(d1);
+        eob.getBillablePeriod().setEnd(d1);
+        List<Resource> resources = cut.extractResources("CONTRACT1", bundle1.getEntry(),
+                List.of(new DateRange(new Date(0), new Date())), OffsetDateTime.now().minusYears(10),
+                patientPTOMap);
+        assertEquals(1, resources.size());
+
+        resources = cut.extractResources("Z0001", bundle1.getEntry(),
+                List.of(new DateRange(new Date(0), new Date())), OffsetDateTime.now().minusYears(10),
+                patientPTOMap);
+        assertEquals(1, resources.size());
+
+        eob.getBillablePeriod().setStart(d2);
+        eob.getBillablePeriod().setEnd(d2);
+        resources = cut.extractResources("CONTRACT1", bundle1.getEntry(),
+                List.of(new DateRange(new Date(0), new Date())), OffsetDateTime.now().minusYears(10),
+                patientPTOMap);
+        assertEquals(0, resources.size());
+        resources = cut.extractResources("Z0001", bundle1.getEntry(),
+                List.of(new DateRange(new Date(0), new Date())), OffsetDateTime.now().minusYears(10),
+                patientPTOMap);
+        assertEquals(1, resources.size());
+    }
+
+    @Test
     void process_whenPDPhasAttestedBeforeBeginDate() throws ParseException {
         // Set the earliest date to Jan 1
         Bundle bundle1 = EobTestDataUtil.createBundle(eob.copy());

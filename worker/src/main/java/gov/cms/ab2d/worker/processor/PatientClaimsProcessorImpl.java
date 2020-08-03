@@ -59,7 +59,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
     private String startDate;
     @Value("${bfd.earliest.data.date.special.contracts}")
     private String startDateSpecialContracts;
-    @Value("${bfd.special.contracts}")
+    @Value("#{'${bfd.special.contracts}'.split(',')}")
     private List<String> specialContracts;
 
     private static final OffsetDateTime START_CHECK = OffsetDateTime.parse(SINCE_EARLIEST_DATE, ISO_DATE_TIME);
