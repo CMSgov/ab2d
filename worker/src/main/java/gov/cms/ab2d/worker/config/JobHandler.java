@@ -44,7 +44,7 @@ public class JobHandler implements MessageHandler {
 
         // Worker is not able to be engaged in processing
         if (workerService.getEngagement() == WorkerDrive.NEUTRAL) {
-            return;
+//   TODO for test verification         return;
         }
 
         final String jobId = getJobId(message);
