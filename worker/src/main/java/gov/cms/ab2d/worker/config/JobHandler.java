@@ -43,9 +43,12 @@ public class JobHandler implements MessageHandler {
     public void handleMessage(Message<?> message) throws MessagingException {
 
         // Worker is not able to be engaged in processing
+        workerService.getEngagement();
+        /*
         if (workerService.getEngagement() == WorkerDrive.NEUTRAL) {
-//   TODO for test verification         return;
+            return;
         }
+         */
 
         final String jobId = getJobId(message);
 
