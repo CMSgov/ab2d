@@ -1,6 +1,7 @@
 package gov.cms.ab2d.worker.service;
 
 import gov.cms.ab2d.common.service.PropertiesService;
+import gov.cms.ab2d.common.util.Constants;
 import gov.cms.ab2d.worker.processor.JobPreProcessor;
 import gov.cms.ab2d.worker.processor.JobProcessor;
 import lombok.RequiredArgsConstructor;
@@ -45,6 +46,8 @@ public class WorkerServiceImpl implements WorkerService {
 
     @Override
     public WorkerDrive getEngagement() {
+          propertiesService.getPropertiesByKey(Constants.WORKER_ENGAGEMENT);
+
 //        Properties engagementProp =  propertiesService.getPropertiesByKey(Constants.WORKER_ENGAGEMENT);
 //        return (engagementProp == null) ? fromString(null) : fromString(engagementProp.getValue());
 
