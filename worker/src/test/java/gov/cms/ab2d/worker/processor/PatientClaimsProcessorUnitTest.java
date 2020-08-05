@@ -56,7 +56,8 @@ public class PatientClaimsProcessorUnitTest {
 
     private ExplanationOfBenefit eob;
     private Map<String, ContractBeneficiaries.PatientDTO> patientPTOMap;
-    private String patientId = "1234567890";
+    private static String patientId = "1234567890";
+    private static String SAMPLE_CONTRACT_ID = "CONTRACT1";
 
     private OffsetDateTime earlyAttDate = OffsetDateTime.of(1970, 1, 1, 0, 0, 0, 0, ZoneOffset.UTC);
     private OffsetDateTime laterAttDate = OffsetDateTime.of(2020, 2, 15, 0, 0, 0, 0, ZoneOffset.UTC);
@@ -122,7 +123,7 @@ public class PatientClaimsProcessorUnitTest {
         Bundle bundle1 = EobTestDataUtil.createBundle(eob.copy());
         ExplanationOfBenefit eob = (ExplanationOfBenefit) bundle1.getEntry().get(0).getResource();
         eob.getPatient().setReference("Patient/BADPATID");
-        List<Resource> resources = cut.extractResources(bundle1.getEntry(),
+        List<Resource> resources = cut.extractResources(SAMPLE_CONTRACT_ID, bundle1.getEntry(),
                 List.of(new DateRange(new Date(0), new Date())), OffsetDateTime.now().minusYears(10),
                 patientPTOMap);
         assertEquals(resources.size(), 0);
@@ -133,7 +134,7 @@ public class PatientClaimsProcessorUnitTest {
         // Empty the patient list
         Bundle bundle1 = EobTestDataUtil.createBundle(eob.copy());
         patientPTOMap.clear();
-        List<Resource> resources = cut.extractResources(bundle1.getEntry(),
+        List<Resource> resources = cut.extractResources(SAMPLE_CONTRACT_ID, bundle1.getEntry(),
                 List.of(new DateRange(new Date(0), new Date())), OffsetDateTime.now().minusYears(10),
                 patientPTOMap);
         assertEquals(resources.size(), 0);
@@ -143,7 +144,7 @@ public class PatientClaimsProcessorUnitTest {
         badPatient.setPatientId("BADPATID");
         badPatient.setDateRangesUnderContract(List.of(new DateRange(new Date(0), new Date())));
         patientPTOMap.put("BADPATID", badPatient);
-        resources = cut.extractResources(bundle1.getEntry(),
+        resources = cut.extractResources(SAMPLE_CONTRACT_ID, bundle1.getEntry(),
                 List.of(new DateRange(new Date(0), new Date())), OffsetDateTime.now().minusYears(10),
                 patientPTOMap);
         assertEquals(resources.size(), 0);
@@ -155,10 +156,46 @@ public class PatientClaimsProcessorUnitTest {
         goodPatient.setDateRangesUnderContract(List.of(new DateRange(new Date(0), new Date())));
         assertEquals(resources.size(), 0);
         patientPTOMap.put(goodPatientId, goodPatient);
-        resources = cut.extractResources(bundle1.getEntry(),
+        resources = cut.extractResources(SAMPLE_CONTRACT_ID, bundle1.getEntry(),
                 List.of(new DateRange(new Date(0), new Date())), OffsetDateTime.now().minusYears(10),
                 patientPTOMap);
         assertEquals(resources.size(), 1);
+    }
+
+    @Test
+    void process_whenContractIsSpecialContract() throws ParseException {
+        SimpleDateFormat sdf = new SimpleDateFormat("MM/dd/yyyy");
+        Date d1 = sdf.parse("01/02/2020");
+        Date d2 = sdf.parse("12/02/2019");
+        ReflectionTestUtils.setField(cut, "startDate", "01/01/2020");
+        ReflectionTestUtils.setField(cut, "startDateSpecialContracts", "01/01/2019");
+        ReflectionTestUtils.setField(cut, "specialContracts", List.of("Z0001"));
+
+        Bundle bundle1 = EobTestDataUtil.createBundle(eob.copy());
+        ExplanationOfBenefit eob = (ExplanationOfBenefit) bundle1.getEntry().get(0).getResource();
+
+        eob.getBillablePeriod().setStart(d1);
+        eob.getBillablePeriod().setEnd(d1);
+        List<Resource> resources = cut.extractResources(SAMPLE_CONTRACT_ID, bundle1.getEntry(),
+                List.of(new DateRange(new Date(0), new Date())), OffsetDateTime.now().minusYears(10),
+                patientPTOMap);
+        assertEquals(1, resources.size());
+
+        resources = cut.extractResources("Z0001", bundle1.getEntry(),
+                List.of(new DateRange(new Date(0), new Date())), OffsetDateTime.now().minusYears(10),
+                patientPTOMap);
+        assertEquals(1, resources.size());
+
+        eob.getBillablePeriod().setStart(d2);
+        eob.getBillablePeriod().setEnd(d2);
+        resources = cut.extractResources(SAMPLE_CONTRACT_ID, bundle1.getEntry(),
+                List.of(new DateRange(new Date(0), new Date())), OffsetDateTime.now().minusYears(10),
+                patientPTOMap);
+        assertEquals(0, resources.size());
+        resources = cut.extractResources("Z0001", bundle1.getEntry(),
+                List.of(new DateRange(new Date(0), new Date())), OffsetDateTime.now().minusYears(10),
+                patientPTOMap);
+        assertEquals(1, resources.size());
     }
 
     @Test
@@ -167,7 +204,7 @@ public class PatientClaimsProcessorUnitTest {
         Bundle bundle1 = EobTestDataUtil.createBundle(eob.copy());
         ReflectionTestUtils.setField(cut, "startDate", "01/01/2020");
         // Attestation time is 10 years ago, eob date is 01/02/2020
-        List<Resource> resources = cut.extractResources(bundle1.getEntry(),
+        List<Resource> resources = cut.extractResources(SAMPLE_CONTRACT_ID, bundle1.getEntry(),
                 List.of(new DateRange(new Date(0), new Date())), OffsetDateTime.now().minusYears(10),
                 patientPTOMap);
         assertEquals(1, resources.size());
@@ -175,7 +212,7 @@ public class PatientClaimsProcessorUnitTest {
         ExplanationOfBenefit eob = (ExplanationOfBenefit) bundle1.getEntry().get(0).getResource();
         eob.getBillablePeriod().setStart(new Date(10));
         eob.getBillablePeriod().setEnd(new Date(10));
-        resources = cut.extractResources(bundle1.getEntry(),
+        resources = cut.extractResources(SAMPLE_CONTRACT_ID, bundle1.getEntry(),
                 List.of(new DateRange(new Date(0), new Date())), OffsetDateTime.now().minusYears(100),
                 patientPTOMap);
         assertEquals(0, resources.size());
@@ -183,20 +220,20 @@ public class PatientClaimsProcessorUnitTest {
         SimpleDateFormat sdf = new SimpleDateFormat("MM/dd/yyyy");
         eob.getBillablePeriod().setStart(sdf.parse("12/29/2019"));
         eob.getBillablePeriod().setEnd(sdf.parse("12/30/2019"));
-        resources = cut.extractResources(bundle1.getEntry(),
+        resources = cut.extractResources(SAMPLE_CONTRACT_ID, bundle1.getEntry(),
                 List.of(new DateRange(new Date(0), new Date())), OffsetDateTime.now().minusYears(100),
                 patientPTOMap);
         assertEquals(0, resources.size());
         // Set billable period to early 2020, attestation date in 2019, should return 1
         eob.getBillablePeriod().setStart(sdf.parse("01/02/2020"));
         eob.getBillablePeriod().setEnd(sdf.parse("01/03/2020"));
-        resources = cut.extractResources(bundle1.getEntry(),
+        resources = cut.extractResources(SAMPLE_CONTRACT_ID, bundle1.getEntry(),
                 List.of(new DateRange(new Date(0), new Date())), OffsetDateTime.of(2019, 1, 1,
                         1, 1, 1, 1, ZoneOffset.UTC),
                 patientPTOMap);
         assertEquals(1, resources.size());
         // billable period is early 2020, attestation date is today, should return 0
-        resources = cut.extractResources(bundle1.getEntry(),
+        resources = cut.extractResources(SAMPLE_CONTRACT_ID, bundle1.getEntry(),
                 List.of(new DateRange(new Date(0), new Date())), OffsetDateTime.now(),
                 patientPTOMap);
         assertEquals(0, resources.size());
