@@ -26,7 +26,7 @@ public class WorkerServiceImpl implements WorkerService {
     private final ShutDownService shutDownService;
     private final PropertiesService propertiesService;
 
-    private List<String> activeJobs = Collections.synchronizedList(new ArrayList<>());
+    private final List<String> activeJobs = Collections.synchronizedList(new ArrayList<>());
 
     @Override
     public void process(String jobUuid) {
@@ -46,12 +46,7 @@ public class WorkerServiceImpl implements WorkerService {
 
     @Override
     public WorkerDrive getEngagement() {
-          propertiesService.getPropertiesByKey(Constants.WORKER_ENGAGEMENT);
-
-//        Properties engagementProp =  propertiesService.getPropertiesByKey(Constants.WORKER_ENGAGEMENT);
-//        return (engagementProp == null) ? fromString(null) : fromString(engagementProp.getValue());
-
-        return WorkerDrive.IN_GEAR;
+        return WorkerDrive.fromString(propertiesService.getPropertiesByKey(Constants.WORKER_ENGAGEMENT).getValue());
     }
 
     @PreDestroy

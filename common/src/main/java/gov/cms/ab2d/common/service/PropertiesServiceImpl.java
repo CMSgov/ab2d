@@ -15,13 +15,7 @@ import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 
-import static gov.cms.ab2d.common.util.Constants.PCP_CORE_POOL_SIZE;
-import static gov.cms.ab2d.common.util.Constants.PCP_MAX_POOL_SIZE;
-import static gov.cms.ab2d.common.util.Constants.MAINTENANCE_MODE;
-import static gov.cms.ab2d.common.util.Constants.PCP_SCALE_TO_MAX_TIME;
-import static gov.cms.ab2d.common.util.Constants.CONTRACT_2_BENE_CACHING_ON;
-import static gov.cms.ab2d.common.util.Constants.ZIP_SUPPORT_ON;
-import static gov.cms.ab2d.common.util.Constants.ALLOWED_PROPERTY_NAMES;
+import static gov.cms.ab2d.common.util.Constants.*;
 import static java.lang.Boolean.FALSE;
 
 @Service
@@ -98,8 +92,20 @@ public class PropertiesServiceImpl implements PropertiesService {
             addUpdatedPropertiesToList(propertiesDTOsReturn, propertiesDTO);
             break;
 
+        case WORKER_ENGAGEMENT:
+            validateString(key, propertiesDTO);
+            addUpdatedPropertiesToList(propertiesDTOsReturn, propertiesDTO);
+            break;
+
         default:
             break;
+        }
+    }
+
+    // Seems wrong to validate the specific values of the enum in a common class, so just do a null check
+    private void validateString(String key, PropertiesDTO property) {
+        if (property.getValue() == null) {
+            logErrorAndThrowException(key, property.getValue());
         }
     }
 
