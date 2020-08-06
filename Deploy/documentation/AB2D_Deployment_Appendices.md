@@ -783,24 +783,18 @@
 
 ## Appendix J: Delete and recreate database
 
-1. Set the target AWS profile
+1. Ensure that your are connected to CMS Cisco VPN before proceeding
 
-   *Example for "Dev" environment:*
+1. Change to the "Deploy" directory
 
    ```ShellSession
-   $ export AWS_PROFILE=ab2d-dev
+   $ cd ~/code/ab2d/Deploy
    ```
 
-   *Example for "Sbx" environment:*
+1. Set AWS environment variables using the CloudTamer API
 
    ```ShellSession
-   $ export AWS_PROFILE=ab2d-sbx-sandbox
-   ```
-
-   *Example for "Impl" environment:*
-
-   ```ShellSession
-   $ export AWS_PROFILE=ab2d-east-impl
+   $ source ./bash/set-env.sh
    ```
 
 1. Set target environment
