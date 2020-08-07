@@ -38,7 +38,7 @@
         <checkstyle.config>${project.root}/src/main/resources/checkstyle.xml</checkstyle.config>
         <logback-encoder.version>6.4</logback-encoder.version>
         <testcontainers.version>1.14.3</testcontainers.version>
-        <newrelic.version>5.13.0</newrelic.version>
+        <newrelic.version>5.14.0</newrelic.version>
     </properties>
 
     <dependencies>
