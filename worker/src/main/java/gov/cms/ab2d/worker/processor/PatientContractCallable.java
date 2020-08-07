@@ -11,6 +11,7 @@ import org.hl7.fhir.dstu3.model.Identifier;
 import org.hl7.fhir.dstu3.model.Patient;
 import org.hl7.fhir.dstu3.model.ResourceType;
 
+import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
@@ -30,6 +31,10 @@ public class PatientContractCallable implements Callable<ContractMapping> {
             ContractMapping mapping = new ContractMapping();
             mapping.setMonth(month);
             Bundle bundle = getBundle(contractNumber, month);
+            if (bundle == null) {
+                mapping.setPatients(new HashSet<>());
+                return mapping;
+            }
             final Set<String> patientIDs = extractPatientIDs(bundle);
 
             while (bundle.getLink(Bundle.LINK_NEXT) != null) {

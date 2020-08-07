@@ -36,6 +36,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.integration.test.context.SpringIntegrationTest;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
@@ -52,8 +53,7 @@ import static gov.cms.ab2d.eventlogger.events.ErrorEvent.ErrorType.TOO_MANY_SEAR
 import static java.lang.Boolean.TRUE;
 import static org.junit.Assert.assertFalse;
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.when;
 
 @SpringBootTest
@@ -120,11 +120,21 @@ class JobProcessorIntegrationTest {
         jobRepository.save(job);
         createContract(sponsor);
 
+        ThreadPoolTaskExecutor patientContractThreadPool = new ThreadPoolTaskExecutor();
+        patientContractThreadPool.setCorePoolSize(6);
+        patientContractThreadPool.setMaxPoolSize(12);
+        patientContractThreadPool.setThreadNamePrefix("jobproc-");
+        patientContractThreadPool.initialize();
         ExplanationOfBenefit eob = EobTestDataUtil.createEOB();
         bundle1 = EobTestDataUtil.createBundle(eob.copy());
         bundles = getBundles();
         when(mockBfdClient.requestEOBFromServer(anyString())).thenReturn(bundle1);
         when(mockBfdClient.requestEOBFromServer(anyString(), any())).thenReturn(bundle1);
+
+        Bundle.BundleEntryComponent entry1 = BundleUtils.createBundleEntry("P1");
+        Bundle.BundleEntryComponent entry2 = BundleUtils.createBundleEntry("P2");
+        Bundle bundlePatient = BundleUtils.createBundle(entry1, entry2);
+        when(mockBfdClient.requestPartDEnrolleesFromServer(anyString(), anyInt())).thenReturn(bundlePatient);
 
         fail = new RuntimeException("TEST EXCEPTION");
 
@@ -145,10 +155,12 @@ class JobProcessorIntegrationTest {
                 fileService,
                 jobRepository,
                 jobOutputRepository,
-                contractBeneSearchStub,
-                contractProcessor,
-                logManager
+                logManager,
+                mockBfdClient,
+                patientClaimsProcessor,
+                patientContractThreadPool
         );
+        // FileService fileService, JobRepository jobRepository, JobOutputRepository jobOutputRepository, LogManager eventLogger, BFDClient bfdClient, PatientClaimsProcessor patientClaimsProcessor, ThreadPoolTaskExecutor patientContractThreadPool
 
         ReflectionTestUtils.setField(cut, "efsMount", tmpEfsMountDir.toString());
         ReflectionTestUtils.setField(cut, "failureThreshold", 10);

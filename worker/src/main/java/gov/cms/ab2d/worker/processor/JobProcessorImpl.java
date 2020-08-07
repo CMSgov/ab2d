@@ -1,5 +1,6 @@
 package gov.cms.ab2d.worker.processor;
 
+import ca.uhn.fhir.context.FhirContext;
 import com.newrelic.api.agent.NewRelic;
 import com.newrelic.api.agent.Token;
 import com.newrelic.api.agent.Trace;
@@ -13,14 +14,12 @@ import gov.cms.ab2d.eventlogger.events.*;
 import gov.cms.ab2d.filter.FilterOutByDate;
 import gov.cms.ab2d.worker.adapter.bluebutton.ContractBeneficiaries;
 import gov.cms.ab2d.worker.config.RoundRobinBlockingQueue;
-import gov.cms.ab2d.worker.processor.domainmodel.ContractData;
-import gov.cms.ab2d.worker.processor.domainmodel.ContractMapping;
-import gov.cms.ab2d.worker.processor.domainmodel.PatientClaimsRequest;
-import gov.cms.ab2d.worker.processor.domainmodel.ProgressTracker;
+import gov.cms.ab2d.worker.processor.domainmodel.*;
 import gov.cms.ab2d.worker.service.FileService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.hl7.fhir.dstu3.model.ExplanationOfBenefit;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
@@ -35,8 +34,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.*;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
@@ -55,12 +57,6 @@ import static gov.cms.ab2d.worker.processor.StreamHelperImpl.FileOutputType.NDJS
 public class JobProcessorImpl implements JobProcessor {
     private static final int SLEEP_DURATION = 250;
 
-    @Value("${report.progress.log.frequency:100}")
-    private int reportProgressLogFrequency;
-
-    @Value("${report.progress.db.frequency:100}")
-    private int reportProgressDbFrequency;
-
     @Value("${job.file.rollover.ndjson:200}")
     private long ndjsonRollOver;
 
@@ -74,11 +70,18 @@ public class JobProcessorImpl implements JobProcessor {
     @Value("${failure.threshold}")
     private int failureThreshold;
 
-    @Value("${cancellation.check.frequency:10}")
-    private int cancellationCheckFrequency;
+    @Value("${claims.skipBillablePeriodCheck}")
+    private boolean skipBillablePeriodCheck;
 
     @Value("${file.try.lock.timeout}")
     private int tryLockTimeout;
+
+    @Value("${bfd.earliest.data.date:01/01/2020}")
+    private String startDate;
+    @Value("${bfd.earliest.data.date.special.contracts}")
+    private String startDateSpecialContracts;
+    @Value("#{'${bfd.special.contracts}'.split(',')}")
+    private List<String> specialContracts;
 
     private final FileService fileService;
     private final JobRepository jobRepository;
@@ -86,6 +89,7 @@ public class JobProcessorImpl implements JobProcessor {
     private final LogManager eventLogger;
     private final BFDClient bfdClient;
     private final PatientClaimsProcessor patientClaimsProcessor;
+    private final FhirContext fhirContext;
 
     @Qualifier("patientContractThreadPool")
     private final ThreadPoolTaskExecutor patientContractThreadPool;
@@ -147,36 +151,41 @@ public class JobProcessorImpl implements JobProcessor {
      * @throws ExecutionException when there is an issue with searching
      * @throws InterruptedException - when the search is interrupted
      */
-    private void processContracts(List<Contract> contracts, Job job, int month, Path outputDirPath, ProgressTracker progressTracker) throws ExecutionException, InterruptedException {
+    private void processContracts(List<Contract> contracts, Job job, int month, Path outputDirPath,
+                                  ProgressTracker progressTracker) throws ExecutionException, InterruptedException {
         List<ContractData> cData = new ArrayList<>();
+        List<JobOutput> jobOutputs = new ArrayList<>();
+
         for (Contract contract : contracts) {
+            String contractNum = contract.getContractNumber();
+            ContractEobManager contractEobManager = new ContractEobManager(fhirContext, skipBillablePeriodCheck,
+                    getStartDate(contractNum), contract.getAttestedOn());
 
             // Retrieve the contract beneficiaries
             //for (Contract contract : contracts) {
             try {
                 // Init objects
-                StreamHelper helper = new TextStreamHelperImpl(outputDirPath, contract.getContractNumber(), ndjsonRollOver * Constants.ONE_MEGA_BYTE, tryLockTimeout, eventLogger, job);
+                StreamHelper helper = new TextStreamHelperImpl(outputDirPath, contractNum, ndjsonRollOver * Constants.ONE_MEGA_BYTE, tryLockTimeout, eventLogger, job);
                 ContractData contractData = new ContractData(contract, progressTracker, contract.getAttestedOn(), job.getSince(),
                         job.getUser() != null ? job.getUser().getUsername() : null, helper);
                 cData.add(contractData);
 
-                ContractBeneficiaries contractBeneficiaries = buildCB(contract.getContractNumber());
+                ContractBeneficiaries contractBeneficiaries = buildCB(contractNum);
 
                 progressTracker.setCurrentMonth(month);
 
-                List<Future<ContractMapping>> contractBeneFutureHandles = createAllContractMappingFutures(month, contract.getContractNumber());
-                List<Future<Void>> eobFutureHandles = new ArrayList<>();
+                List<Future<ContractMapping>> contractBeneFutureHandles = createAllContractMappingFutures(month, contractNum, contract.getAttestedOn());
+                List<Future<EobSearchResponse>> eobFutureHandles = new ArrayList<>();
 
                  // Iterate through the futures
-                while (!contractBeneFutureHandles.isEmpty() && !eobFutureHandles.isEmpty()) {
+                while (!contractBeneFutureHandles.isEmpty() || !eobFutureHandles.isEmpty()) {
                     // See if there are any threads left to finish
                     Iterator<Future<ContractMapping>> contactBeneSearchIterator = contractBeneFutureHandles.iterator();
                     while (contactBeneSearchIterator.hasNext()) {
                         Future<ContractMapping> future = contactBeneSearchIterator.next();
                         // If it's done, claim the data and add it to the results, then remove it from the active threads
                         if (future.isDone()) {
-                            contactBeneSearchIterator.remove();
-                            ContractMapping contractMapping = getContractMappingFromFuture(future, contract.getContractNumber());
+                            ContractMapping contractMapping = getContractMappingFromFuture(future, contractNum);
                             if (contractMapping == null) {
                                 continue;
                             }
@@ -184,23 +193,24 @@ public class JobProcessorImpl implements JobProcessor {
                             updateJobStatus(job, progressTracker);
                             Set<String> patients = contractMapping.getPatients();
                             eventLogger.log(new ReloadEvent(null, ReloadEvent.FileType.CONTRACT_MAPPING,
-                                    "Contract: " + contract.getContractNumber() +
+                                    "Contract: " + contractNum +
                                             " retrieved " + patients.size() + " contract beneficiaries for month " +
                                             contractMapping.getMonth(), patients.size()));
                             if (!patients.isEmpty()) {
                                 List<PatientDTO> newPatients = addDateRangeToExistingOrNewPatient(contractBeneficiaries,
                                         toDateRange(contractMapping.getMonth()), patients);
                                 newPatients.forEach(p -> {
-                                    progressTracker.addPatientByContract(contract.getContractNumber(), p);
-                                    eobFutureHandles.add(addPatientSearch(p, contractData, helper, contractBeneficiaries.getPatients()));
+                                    progressTracker.addPatientByContract(contractNum, p);
+                                    eobFutureHandles.add(addPatientSearch(p, contractData));
                                 });
                             }
+                            contactBeneSearchIterator.remove();
                         }
                     }
-                    processBeneFuturesList(eobFutureHandles, progressTracker);
+                    processBeneFuturesList(eobFutureHandles, progressTracker, contractEobManager, helper);
                     updateJobStatus(job, progressTracker);
                     // If we haven't removed all items from the running futures lists, sleep for a bit
-                    if (!contractBeneFutureHandles.isEmpty() && !eobFutureHandles.isEmpty()) {
+                    if (!contractBeneFutureHandles.isEmpty() || !eobFutureHandles.isEmpty()) {
                         sleepABit();
                     }
                 }
@@ -210,7 +220,7 @@ public class JobProcessorImpl implements JobProcessor {
                 }
                 updateJobStatus(job, progressTracker);
             } catch (ExecutionException | InterruptedException ex) {
-                log.error("Having issue retrieving patients for contract " + contract.getContractNumber());
+                log.error("Having issue retrieving patients for contract " + contractNum);
                 throw ex;
             } catch (IOException e) {
                 cData.forEach(c -> close(c.getHelper()));
@@ -218,31 +228,32 @@ public class JobProcessorImpl implements JobProcessor {
             }
             eventLogger.log(new ContractBeneSearchEvent(job.getUser() == null ? null : job.getUser().getUsername(),
                     job.getJobUuid(),
-                    contract.getContractNumber(),
-                    progressTracker.getContractCount(contract.getContractNumber()),
+                    contractNum,
+                    progressTracker.getContractCount(contractNum),
                     progressTracker.getProcessedCount(),
                     progressTracker.getOptOutCount(),
                     progressTracker.getFailureCount()));
         }
-        // final Segment contractSegment = NewRelic.getAgent().getTransaction().startSegment("Patient processing of contract " + contract.getContractNumber());
+        // final Segment contractSegment = NewRelic.getAgent().getTransaction().startSegment("Patient processing of contract " + contractNum);
         // contractSegment.end();
 
-        // All jobs are done, return the job output records
-        List<JobOutput> jobOutputs = new ArrayList<>();
-        cData.forEach(c -> jobOutputs.addAll(createJobOutputs(c.getHelper().getDataFiles(), false)));
-        cData.forEach(c -> jobOutputs.addAll(createJobOutputs(c.getHelper().getErrorFiles(), true)));
-        if (jobOutputs.isEmpty()) {
-            var errMsg = "The export process has produced no results";
-            throw new RuntimeException(errMsg);
-        }
+        if (contracts.size() > 0) {
+            cData.forEach(c -> close(c.getHelper()));
 
-        // For each job output, add to the job and save the result
-        jobOutputs.forEach(job::addJobOutput);
-        jobOutputRepository.saveAll(jobOutputs);
-        cData.forEach(c -> close(c.getHelper()));
+            // All jobs are done, return the job output records
+            cData.forEach(c -> jobOutputs.addAll(createJobOutputs(c.getHelper().getDataFiles(), false)));
+            cData.forEach(c -> jobOutputs.addAll(createJobOutputs(c.getHelper().getErrorFiles(), true)));
+            if (jobOutputs.isEmpty()) {
+                var errMsg = "The export process has produced no results";
+                throw new RuntimeException(errMsg);
+            }
+            // For each job output, add to the job and save the result
+            jobOutputs.forEach(job::addJobOutput);
+            jobOutputRepository.saveAll(jobOutputs);
+        }
     }
 
-    private void cancelIt(List<Future<ContractMapping>> contractBeneFutureHandles, List<Future<Void>> eobFutureHandles,
+    private void cancelIt(List<Future<ContractMapping>> contractBeneFutureHandles, List<Future<EobSearchResponse>> eobFutureHandles,
                           String jobId) {
         log.warn("Job [{}] has been cancelled. Attempting to stop processing the job shortly ... ", jobId);
         contractBeneFutureHandles.parallelStream().forEach(f -> f.cancel(false));
@@ -267,23 +278,37 @@ public class JobProcessorImpl implements JobProcessor {
         return contractBeneficiaries;
     }
 
-    List<Future<ContractMapping>> createAllContractMappingFutures(int month, String contractNumber) {
+    List<Future<ContractMapping>> createAllContractMappingFutures(int month, String contractNumber, OffsetDateTime attestDate) {
         List<Future<ContractMapping>> contractBeneFutureHandles = new ArrayList<>();
-        for (var m = 1; m <= month; month++) {
-            PatientContractCallable callable = new PatientContractCallable(m, contractNumber, bfdClient);
-            contractBeneFutureHandles.add(patientContractThreadPool.submit(callable));
+
+        OffsetDateTime dateStub = OffsetDateTime.now().withDayOfMonth(1);
+        for (var m = 1; m <= month; m++) {
+            OffsetDateTime dateToCheck = dateStub.withMonth(m);
+            if (attestDate.isBefore(dateToCheck)) {
+                PatientContractCallable callable = new PatientContractCallable(m, contractNumber, bfdClient);
+                contractBeneFutureHandles.add(patientContractThreadPool.submit(callable));
+            }
         }
         return contractBeneFutureHandles;
     }
 
-    private void processBeneFuturesList(List<Future<Void>> benes, ProgressTracker progressTracker) {
-        var beneIterator = benes.iterator();
+    private void processBeneFuturesList(List<Future<EobSearchResponse>> benes, ProgressTracker progressTracker,
+                                                  ContractEobManager contractEobManager, StreamHelper helper) {
+        EobSearchResponse response = null;
+        Iterator<Future<EobSearchResponse>> beneIterator = benes.iterator();
         while (beneIterator.hasNext()) {
             var future = beneIterator.next();
             if (future.isDone()) {
                 progressTracker.incrementProcessedCount();
                 try {
-                    future.get();
+                    response = future.get();
+                    contractEobManager.addResources(response);
+                    contractEobManager.validateResources();
+                    contractEobManager.writeValidEobs(helper);
+                } catch (IOException e) {
+                    String errorMsg = "Unable to write to EOB data file " + e.getLocalizedMessage();
+                    log.error(errorMsg, e);
+                    throw new RuntimeException(errorMsg);
                 } catch (InterruptedException | ExecutionException e) {
                     progressTracker.incrementFailureCount();
                     if (progressTracker.isErrorCountBelowThreshold()) {
@@ -327,10 +352,9 @@ public class JobProcessorImpl implements JobProcessor {
      *
      * @param patient - process to process
      * @param contractData - the contract data information
-     * @param helper - the helper used to write to the file
      * @return a Future<Void>
      */
-    private Future<Void> addPatientSearch(PatientDTO patient, ContractData contractData, StreamHelper helper, Map<String, PatientDTO> map) {
+    private Future<EobSearchResponse> addPatientSearch(PatientDTO patient, ContractData contractData) {
         final Token token = NewRelic.getAgent().getTransaction().getToken();
 
         // Using a ThreadLocal to communicate contract number to RoundRobinBlockingQueue
@@ -339,14 +363,12 @@ public class JobProcessorImpl implements JobProcessor {
         var jobUuid = contractData.getProgressTracker().getJobUuid();
         RoundRobinBlockingQueue.CATEGORY_HOLDER.set(jobUuid);
         try {
-            var patientClaimsRequest = new PatientClaimsRequest(patient, helper,
-                    contractData.getContract().getAttestedOn(),
-                    contractData.getSinceTime(),
+            var patientClaimsRequest = new PatientClaimsRequest(patient,
                     contractData.getUserId(),
                     jobUuid,
                     contractData.getContract() != null ? contractData.getContract().getContractNumber() : null,
                     token);
-            return patientClaimsProcessor.process(patientClaimsRequest, map);
+            return patientClaimsProcessor.process(patientClaimsRequest);
 
         } finally {
             RoundRobinBlockingQueue.CATEGORY_HOLDER.remove();
@@ -598,5 +620,51 @@ public class JobProcessorImpl implements JobProcessor {
             }
         }
         return newPatients;
+    }
+
+    /**
+     * returns true if the patient is a valid member of a contract, false otherwise. If either value is empty,
+     * it returns false
+     *
+     * @param benefit - The benefit to check
+     * @param patients - the patient map containing the patient id & patient object
+     * @return true if this patient is a member of the correct contract
+     */
+    boolean validPatientInContract(ExplanationOfBenefit benefit, Map<String, ContractBeneficiaries.PatientDTO> patients) {
+        if (benefit == null || patients == null) {
+            log.debug("Passed an invalid benefit or an invalid list of patients");
+            return false;
+        }
+        String patientId = benefit.getPatient().getReference();
+        if (patientId == null) {
+            return false;
+        }
+        patientId = patientId.replaceFirst("Patient/", "");
+        if (patients.get(patientId) == null) {
+            log.error(patientId + " returned in EOB, but not a member of a contract");
+            return false;
+        }
+        return true;
+    }
+
+    private Date getStartDate(String contract) {
+        SimpleDateFormat sdf = new SimpleDateFormat("MM/dd/yyyy");
+
+        String dateToUse = startDate;
+        if (isContractSpecial(contract)) {
+            dateToUse = startDateSpecialContracts;
+        }
+        Date date;
+        try {
+            date = sdf.parse(dateToUse);
+        } catch (ParseException e) {
+            LocalDateTime d = LocalDateTime.of(2020, 1, 1, 0, 0, 0, 0);
+            date = new Date(d.toInstant(ZoneOffset.UTC).toEpochMilli());
+        }
+        return date;
+    }
+
+    private boolean isContractSpecial(String contract) {
+        return this.specialContracts != null && !this.specialContracts.isEmpty() && specialContracts.contains(contract);
     }
 }

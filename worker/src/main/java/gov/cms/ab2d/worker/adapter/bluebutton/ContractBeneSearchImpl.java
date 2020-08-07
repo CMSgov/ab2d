@@ -57,7 +57,7 @@ public class ContractBeneSearchImpl implements ContractBeneSearch {
         List<Future<ContractMapping>> futureHandles = new ArrayList<>();
         tracker.setCurrentMonth(currentMonth);
         for (var month = 1; month <= currentMonth; month++) {
-            PatientContractCallable callable = new PatientContractCallable(contractNumber, month, bfdClient);
+            PatientContractCallable callable = new PatientContractCallable(month, contractNumber, bfdClient);
             futureHandles.add(patientContractThreadPool.submit(callable));
         }
         List<ContractMapping> results = getAllResults(futureHandles, contractNumber, tracker);

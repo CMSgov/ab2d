@@ -12,9 +12,6 @@ import java.time.OffsetDateTime;
 @AllArgsConstructor
 public class PatientClaimsRequest {
     private final PatientDTO patientDTO;
-    private final StreamHelper helper;
-    private final OffsetDateTime attTime;
-    private final OffsetDateTime sinceTime;
     private final String user;
     private final String job;
     private final String contractNum;

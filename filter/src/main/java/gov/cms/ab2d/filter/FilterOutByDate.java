@@ -6,6 +6,7 @@ import org.hl7.fhir.dstu3.model.Period;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.OffsetDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -222,7 +223,7 @@ public final class FilterOutByDate {
      * @throws ParseException - if there is an issue parsing the dates
      */
     public static List<ExplanationOfBenefit> filterByDate(List<ExplanationOfBenefit> benes,
-                                              Date attestationDate,
+                                              OffsetDateTime attestationDate,
                                               Date earliestDate,
                                               List<DateRange> dateRanges) throws ParseException {
         if (benes == null || benes.isEmpty()) {
@@ -231,12 +232,14 @@ public final class FilterOutByDate {
         return benes.stream().filter(b -> valid(b, attestationDate, earliestDate, dateRanges)).collect(Collectors.toList());
     }
 
-    public static boolean valid(ExplanationOfBenefit bene, Date attestationDate, Date earliestDate, List<DateRange> dateRanges) {
+    public static boolean valid(ExplanationOfBenefit bene, OffsetDateTime attestationDate, Date earliestDate, List<DateRange> dateRanges) {
         if (bene == null) {
             return false;
         }
+        long epochMilli = attestationDate.toInstant().toEpochMilli();
+        Date attDate = new Date(epochMilli);
         try {
-            if (afterDate(attestationDate, bene) && afterDate(earliestDate, bene)) {
+            if (afterDate(attDate, bene) && afterDate(earliestDate, bene)) {
                 for (DateRange r : dateRanges) {
                     if (withinDateRange(bene, r)) {
                         return true;

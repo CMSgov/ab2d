@@ -1,6 +1,5 @@
 package gov.cms.ab2d.worker.processor;
 
-import ca.uhn.fhir.context.FhirContext;
 import com.newrelic.api.agent.Token;
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.model.Contract;
@@ -59,10 +58,9 @@ public class PatientClaimsProcessorUnitTest {
     private String patientId = "1234567890";
 
     private OffsetDateTime earlyAttDate = OffsetDateTime.of(1970, 1, 1, 0, 0, 0, 0, ZoneOffset.UTC);
-    private OffsetDateTime laterAttDate = OffsetDateTime.of(2020, 2, 15, 0, 0, 0, 0, ZoneOffset.UTC);
     private ContractBeneficiaries.PatientDTO patientDTO;
 
-    private Token noOpToken = new Token() {
+    private final Token noOpToken = new Token() {
         @Override
         public boolean link() {
             return false;
@@ -87,10 +85,8 @@ public class PatientClaimsProcessorUnitTest {
 
     @BeforeEach
     void setUp() throws Exception {
-        FhirContext fhirContext = ca.uhn.fhir.context.FhirContext.forDstu3();
         cut = new PatientClaimsProcessorImpl(
                 mockBfdClient,
-                fhirContext,
                 eventLogger
         );
 
@@ -113,8 +109,7 @@ public class PatientClaimsProcessorUnitTest {
         StreamHelper helper = new TextStreamHelperImpl(tmpEfsMountDir.toPath(), contract.getContractNumber(),
                 30, 120, eventLogger, null);
 
-        request = new PatientClaimsRequest(patientDTO, helper, laterAttDate, null, "user", "job",
-                "contractNum", noOpToken);
+        request = new PatientClaimsRequest(patientDTO, null, "job", "contractNum", noOpToken);
     }
 
     @Test
@@ -122,9 +117,7 @@ public class PatientClaimsProcessorUnitTest {
         Bundle bundle1 = EobTestDataUtil.createBundle(eob.copy());
         ExplanationOfBenefit eob = (ExplanationOfBenefit) bundle1.getEntry().get(0).getResource();
         eob.getPatient().setReference("Patient/BADPATID");
-        List<Resource> resources = cut.extractResources(bundle1.getEntry(),
-                List.of(new DateRange(new Date(0), new Date())), OffsetDateTime.now().minusYears(10),
-                patientPTOMap);
+        List<Resource> resources = cut.extractResources(bundle1.getEntry());
         assertEquals(resources.size(), 0);
     }
 
@@ -133,9 +126,7 @@ public class PatientClaimsProcessorUnitTest {
         // Empty the patient list
         Bundle bundle1 = EobTestDataUtil.createBundle(eob.copy());
         patientPTOMap.clear();
-        List<Resource> resources = cut.extractResources(bundle1.getEntry(),
-                List.of(new DateRange(new Date(0), new Date())), OffsetDateTime.now().minusYears(10),
-                patientPTOMap);
+        List<Resource> resources = cut.extractResources(bundle1.getEntry());
         assertEquals(resources.size(), 0);
 
         // Enter an invalid patient list
@@ -143,9 +134,7 @@ public class PatientClaimsProcessorUnitTest {
         badPatient.setPatientId("BADPATID");
         badPatient.setDateRangesUnderContract(List.of(new DateRange(new Date(0), new Date())));
         patientPTOMap.put("BADPATID", badPatient);
-        resources = cut.extractResources(bundle1.getEntry(),
-                List.of(new DateRange(new Date(0), new Date())), OffsetDateTime.now().minusYears(10),
-                patientPTOMap);
+        resources = cut.extractResources(bundle1.getEntry());
         assertEquals(resources.size(), 0);
 
         // Add a correct patient and verify it comes over
@@ -155,9 +144,7 @@ public class PatientClaimsProcessorUnitTest {
         goodPatient.setDateRangesUnderContract(List.of(new DateRange(new Date(0), new Date())));
         assertEquals(resources.size(), 0);
         patientPTOMap.put(goodPatientId, goodPatient);
-        resources = cut.extractResources(bundle1.getEntry(),
-                List.of(new DateRange(new Date(0), new Date())), OffsetDateTime.now().minusYears(10),
-                patientPTOMap);
+        resources = cut.extractResources(bundle1.getEntry());
         assertEquals(resources.size(), 1);
     }
 
@@ -167,49 +154,38 @@ public class PatientClaimsProcessorUnitTest {
         Bundle bundle1 = EobTestDataUtil.createBundle(eob.copy());
         ReflectionTestUtils.setField(cut, "startDate", "01/01/2020");
         // Attestation time is 10 years ago, eob date is 01/02/2020
-        List<Resource> resources = cut.extractResources(bundle1.getEntry(),
-                List.of(new DateRange(new Date(0), new Date())), OffsetDateTime.now().minusYears(10),
-                patientPTOMap);
+        List<Resource> resources = cut.extractResources(bundle1.getEntry());
         assertEquals(1, resources.size());
         // Set the billable date to 1970 and attestation date to 1920, should return no results
         ExplanationOfBenefit eob = (ExplanationOfBenefit) bundle1.getEntry().get(0).getResource();
         eob.getBillablePeriod().setStart(new Date(10));
         eob.getBillablePeriod().setEnd(new Date(10));
-        resources = cut.extractResources(bundle1.getEntry(),
-                List.of(new DateRange(new Date(0), new Date())), OffsetDateTime.now().minusYears(100),
-                patientPTOMap);
+        resources = cut.extractResources(bundle1.getEntry());
         assertEquals(0, resources.size());
         // Set billable date to late year and attestation date to a hundred years ago, shouldn't return results
         SimpleDateFormat sdf = new SimpleDateFormat("MM/dd/yyyy");
         eob.getBillablePeriod().setStart(sdf.parse("12/29/2019"));
         eob.getBillablePeriod().setEnd(sdf.parse("12/30/2019"));
-        resources = cut.extractResources(bundle1.getEntry(),
-                List.of(new DateRange(new Date(0), new Date())), OffsetDateTime.now().minusYears(100),
-                patientPTOMap);
+        resources = cut.extractResources(bundle1.getEntry());
         assertEquals(0, resources.size());
         // Set billable period to early 2020, attestation date in 2019, should return 1
         eob.getBillablePeriod().setStart(sdf.parse("01/02/2020"));
         eob.getBillablePeriod().setEnd(sdf.parse("01/03/2020"));
-        resources = cut.extractResources(bundle1.getEntry(),
-                List.of(new DateRange(new Date(0), new Date())), OffsetDateTime.of(2019, 1, 1,
-                        1, 1, 1, 1, ZoneOffset.UTC),
-                patientPTOMap);
+        resources = cut.extractResources(bundle1.getEntry());
         assertEquals(1, resources.size());
         // billable period is early 2020, attestation date is today, should return 0
-        resources = cut.extractResources(bundle1.getEntry(),
-                List.of(new DateRange(new Date(0), new Date())), OffsetDateTime.now(),
-                patientPTOMap);
+        resources = cut.extractResources(bundle1.getEntry());
         assertEquals(0, resources.size());
     }
 
     @Test
     void process_whenPatientHasSinglePageOfClaimsData() throws ExecutionException, InterruptedException {
         Bundle bundle1 = EobTestDataUtil.createBundle(eob.copy());
-        when(mockBfdClient.requestEOBFromServer(patientId, request.getAttTime())).thenReturn(bundle1);
+        when(mockBfdClient.requestEOBFromServer(patientId)).thenReturn(bundle1);
 
-        cut.process(request, patientPTOMap).get();
+        cut.process(request).get();
 
-        verify(mockBfdClient).requestEOBFromServer(patientId, request.getAttTime());
+        verify(mockBfdClient).requestEOBFromServer(patientId);
         verify(mockBfdClient, never()).requestNextBundleFromServer(bundle1);
     }
 
@@ -220,37 +196,37 @@ public class PatientClaimsProcessorUnitTest {
 
         Bundle bundle2 = EobTestDataUtil.createBundle(eob.copy());
 
-        when(mockBfdClient.requestEOBFromServer(patientId, request.getAttTime())).thenReturn(bundle1);
+        when(mockBfdClient.requestEOBFromServer(patientId, OffsetDateTime.MIN)).thenReturn(bundle1);
         when(mockBfdClient.requestNextBundleFromServer(bundle1)).thenReturn(bundle2);
 
-        cut.process(request, patientPTOMap).get();
+        cut.process(request).get();
 
-        verify(mockBfdClient).requestEOBFromServer(patientId, request.getAttTime());
+        verify(mockBfdClient).requestEOBFromServer(patientId, OffsetDateTime.MIN);
         verify(mockBfdClient).requestNextBundleFromServer(bundle1);
     }
 
     @Test
     void process_whenBfdClientThrowsException() {
         Bundle bundle1 = EobTestDataUtil.createBundle(eob.copy());
-        when(mockBfdClient.requestEOBFromServer(patientId, request.getAttTime())).thenThrow(new RuntimeException("Test Exception"));
+        when(mockBfdClient.requestEOBFromServer(patientId, OffsetDateTime.MIN)).thenThrow(new RuntimeException("Test Exception"));
 
         var exceptionThrown = assertThrows(ExecutionException.class,
-                () -> cut.process(request, patientPTOMap).get());
+                () -> cut.process(request).get());
 
         assertThat(exceptionThrown.getCause().getMessage(), startsWith("Test Exception"));
 
-        verify(mockBfdClient).requestEOBFromServer(patientId, request.getAttTime());
+        verify(mockBfdClient).requestEOBFromServer(patientId, OffsetDateTime.MIN);
         verify(mockBfdClient, never()).requestNextBundleFromServer(bundle1);
     }
 
     @Test
     void process_whenPatientHasNoEOBClaimsData() throws ExecutionException, InterruptedException {
         Bundle bundle1 = new Bundle();
-        when(mockBfdClient.requestEOBFromServer(patientId, request.getAttTime())).thenReturn(bundle1);
+        when(mockBfdClient.requestEOBFromServer(patientId, OffsetDateTime.MIN)).thenReturn(bundle1);
 
-        cut.process(request, patientPTOMap).get();
+        cut.process(request).get();
 
-        verify(mockBfdClient).requestEOBFromServer(patientId, request.getAttTime());
+        verify(mockBfdClient).requestEOBFromServer(patientId, OffsetDateTime.MIN);
         verify(mockBfdClient, never()).requestNextBundleFromServer(bundle1);
     }
 
@@ -268,15 +244,13 @@ public class PatientClaimsProcessorUnitTest {
 
         OffsetDateTime sinceDate = earlyAttDate.plusDays(1);
 
-        request = new PatientClaimsRequest(patientDTO, helper, laterAttDate, sinceDate, "user", "job",
-                "contractNum", noOpToken);
+        request = new PatientClaimsRequest(patientDTO, "user", "job", "contractNum", noOpToken);
+         Bundle bundle1 = EobTestDataUtil.createBundle(eob.copy());
+        when(mockBfdClient.requestEOBFromServer(patientId, OffsetDateTime.MIN)).thenReturn(bundle1);
 
-        Bundle bundle1 = EobTestDataUtil.createBundle(eob.copy());
-        when(mockBfdClient.requestEOBFromServer(patientId, request.getSinceTime())).thenReturn(bundle1);
+        cut.process(request).get();
 
-        cut.process(request, patientPTOMap).get();
-
-        verify(mockBfdClient).requestEOBFromServer(patientId, request.getSinceTime());
+        verify(mockBfdClient).requestEOBFromServer(patientId, OffsetDateTime.MIN);
         verify(mockBfdClient, never()).requestNextBundleFromServer(bundle1);
     }
 
@@ -292,13 +266,13 @@ public class PatientClaimsProcessorUnitTest {
         StreamHelper helper = new TextStreamHelperImpl(tmpEfsMountDir.toPath(), contract.getContractNumber(),
                 30, 120, eventLogger, null);
 
-        request = new PatientClaimsRequest(patientDTO, helper, earlyAttDate, null, "user", "job",
+        request = new PatientClaimsRequest(patientDTO, "user", "job",
                 "contractNum", noOpToken);
 
         Bundle bundle1 = EobTestDataUtil.createBundle(eob.copy());
         when(mockBfdClient.requestEOBFromServer(patientId, null)).thenReturn(bundle1);
 
-        cut.process(request, patientPTOMap).get();
+        cut.process(request).get();
 
         verify(mockBfdClient).requestEOBFromServer(patientId, null);
         verify(mockBfdClient, never()).requestNextBundleFromServer(bundle1);

@@ -1,5 +1,6 @@
 package gov.cms.ab2d.worker.processor;
 
+import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.JobStatus;
@@ -13,7 +14,6 @@ import gov.cms.ab2d.worker.adapter.bluebutton.ContractBeneSearch;
 import gov.cms.ab2d.worker.adapter.bluebutton.ContractBeneficiaries;
 import gov.cms.ab2d.worker.adapter.bluebutton.ContractBeneficiaries.PatientDTO;
 import gov.cms.ab2d.worker.service.FileService;
-import org.hamcrest.CoreMatchers;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -23,6 +23,7 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.io.IOException;
@@ -36,10 +37,7 @@ import java.util.*;
 import java.util.concurrent.ExecutionException;
 
 import static java.lang.Boolean.TRUE;
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.Matchers.notNullValue;
-import static org.hamcrest.Matchers.nullValue;
-import static org.junit.Assert.assertThat;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -63,8 +61,9 @@ class JobProcessorUnitTest {
     @Mock private JobRepository jobRepository;
     @Mock private JobOutputRepository jobOutputRepository;
     @Mock private ContractBeneSearch contractBeneSearch;
-    @Mock private ContractProcessor contractProcessor;
+    @Mock private PatientClaimsProcessor patientClaimsProcessor;
     @Mock private LogManager eventLogger;
+    @Mock private BFDClient bfdClient;
 
     private Job job;
     private ContractBeneficiaries patientsByContract;
@@ -72,13 +71,20 @@ class JobProcessorUnitTest {
     @BeforeEach
     void setUp() throws Exception {
         MockitoAnnotations.initMocks(this);
+        ThreadPoolTaskExecutor patientContractThreadPool = new ThreadPoolTaskExecutor();
+        patientContractThreadPool.setCorePoolSize(6);
+        patientContractThreadPool.setMaxPoolSize(12);
+        patientContractThreadPool.setThreadNamePrefix("jobproc-");
+        patientContractThreadPool.initialize();
+
         cut = new JobProcessorImpl(
                 fileService,
                 jobRepository,
                 jobOutputRepository,
-                contractBeneSearch,
-                contractProcessor,
-                eventLogger
+                eventLogger,
+                bfdClient,
+                patientClaimsProcessor,
+                patientContractThreadPool
         );
 
         ReflectionTestUtils.setField(cut, "efsMount", efsMountTmpDir.toString());
@@ -105,9 +111,9 @@ class JobProcessorUnitTest {
 
         var processedJob = cut.process(jobUuid);
 
-        assertThat(processedJob.getStatus(), is(JobStatus.SUCCESSFUL));
-        assertThat(processedJob.getStatusMessage(), is("100%"));
-        assertThat(processedJob.getExpiresAt(), notNullValue());
+        assertEquals(processedJob.getStatus(), JobStatus.SUCCESSFUL);
+        assertEquals(processedJob.getStatusMessage(), "100%");
+        assertNotNull(processedJob.getExpiresAt());
         doVerify();
     }
 
@@ -123,9 +129,9 @@ class JobProcessorUnitTest {
 
         var processedJob = cut.process(jobUuid);
 
-        assertThat(processedJob.getStatus(), is(JobStatus.SUCCESSFUL));
-        assertThat(processedJob.getStatusMessage(), is("100%"));
-        assertThat(processedJob.getExpiresAt(), notNullValue());
+        assertEquals(processedJob.getStatus(), JobStatus.SUCCESSFUL);
+        assertEquals(processedJob.getStatusMessage(), "100%");
+        assertNotNull(processedJob.getExpiresAt());
         doVerify();
     }
 
@@ -138,18 +144,18 @@ class JobProcessorUnitTest {
 
         // create 3 additional contracts for the sponsor.
         // But associate the submitted job with the (original) contract for which PatientsByContractResponse test data was setup
-        final Contract contract1 = createContract(sponsor);
-        final Contract contract2 = createContract(sponsor);
-        final Contract contract3 = createContract(sponsor);
+        createContract(sponsor);
+        createContract(sponsor);
+        createContract(sponsor);
         job.setContract(contract);
 
         when(jobRepository.findByJobUuid(anyString())).thenReturn(job);
 
         var processedJob = cut.process(jobUuid);
 
-        assertThat(processedJob.getStatus(), is(JobStatus.SUCCESSFUL));
-        assertThat(processedJob.getStatusMessage(), is("100%"));
-        assertThat(processedJob.getExpiresAt(), notNullValue());
+        assertEquals(processedJob.getStatus(), JobStatus.SUCCESSFUL);
+        assertEquals(processedJob.getStatusMessage(), "100%");
+        assertNotNull(processedJob.getExpiresAt());
         doVerify();
     }
 
@@ -181,9 +187,9 @@ class JobProcessorUnitTest {
 
         var processedJob = cut.process(jobUuid);
 
-        assertThat(processedJob.getStatus(), is(JobStatus.SUCCESSFUL));
-        assertThat(processedJob.getStatusMessage(), is("100%"));
-        assertThat(processedJob.getExpiresAt(), notNullValue());
+        assertEquals(processedJob.getStatus(), JobStatus.SUCCESSFUL);
+        assertEquals(processedJob.getStatusMessage(), "100%");
+        assertNotNull(processedJob.getExpiresAt());
 
         verify(fileService, times(2)).createDirectory(any());
         verify(contractBeneSearch).getPatients(anyString(), anyInt(), any());
@@ -208,9 +214,9 @@ class JobProcessorUnitTest {
 
         var processedJob = cut.process(jobUuid);
 
-        assertThat(processedJob.getStatus(), is(JobStatus.FAILED));
-        assertThat(processedJob.getStatusMessage(), CoreMatchers.startsWith("Could not delete"));
-        assertThat(processedJob.getExpiresAt(), nullValue());
+        assertEquals(processedJob.getStatus(), JobStatus.FAILED);
+        assertTrue(processedJob.getStatusMessage().startsWith("Could not delete"));
+        assertNull(processedJob.getExpiresAt());
 
         verify(fileService).createDirectory(any());
         verify(contractBeneSearch, never()).getPatients(anyString(), anyInt(), any());
@@ -218,7 +224,7 @@ class JobProcessorUnitTest {
 
     @Test
     @DisplayName("When output directory creation fails due to unknown IOException, job fails gracefully")
-    void whenOutputDirectoryCreationFailsDueToUnknownReason_JobFailsGracefully() throws IOException, ExecutionException, InterruptedException {
+    void whenOutputDirectoryCreationFailsDueToUnknownReason_JobFailsGracefully() throws ExecutionException, InterruptedException {
 
         var errMsg = "Could not create output directory";
         var uncheckedIOE = new UncheckedIOException(errMsg, new IOException(errMsg));
@@ -228,9 +234,9 @@ class JobProcessorUnitTest {
 
         var processedJob = cut.process(jobUuid);
 
-        assertThat(processedJob.getStatus(), is(JobStatus.FAILED));
-        assertThat(processedJob.getStatusMessage(), CoreMatchers.startsWith("Could not create output directory"));
-        assertThat(processedJob.getExpiresAt(), nullValue());
+        assertEquals(processedJob.getStatus(), JobStatus.FAILED);
+        assertTrue(processedJob.getStatusMessage().startsWith("Could not create output directory"));
+        assertNull(processedJob.getExpiresAt());
 
         verify(fileService).createDirectory(any());
         verify(contractBeneSearch, never()).getPatients(anyString(), anyInt(), any());
@@ -303,7 +309,7 @@ class JobProcessorUnitTest {
         var dateRange = new FilterOutByDate.DateRange(new Date(0), new Date());
         return PatientDTO.builder()
                 .patientId("patient_" + anInt)
-                .dateRangesUnderContract(Arrays.asList(dateRange))
+                .dateRangesUnderContract(Collections.singletonList(dateRange))
                 .build();
     }
 }

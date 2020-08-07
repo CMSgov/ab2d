@@ -126,10 +126,8 @@ public class WorkerServiceTest {
         return random.nextInt(100);
     }
 
-
     private void checkResult(Job processedJob) {
         assertThat(processedJob.getStatus(), equalTo(SUCCESSFUL));
         assertThat(processedJob.getStatusMessage(), equalTo("100%"));
     }
-
 }

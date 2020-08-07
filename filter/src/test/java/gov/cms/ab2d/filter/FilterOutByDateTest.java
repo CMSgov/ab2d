@@ -6,13 +6,15 @@ import org.junit.jupiter.api.Test;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.Date;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 class FilterOutByDateTest {
-    private SimpleDateFormat sdf = new SimpleDateFormat("MM/dd/yyyy");
+    private final SimpleDateFormat sdf = new SimpleDateFormat("MM/dd/yyyy");
 
     @Test
     void filterByDate() throws ParseException {
@@ -34,10 +36,14 @@ class FilterOutByDateTest {
                 createEOB("10/31/2020", "11/02/2020")  // In
         );
 
-        assertEquals(6, FilterOutByDate.filterByDate(list, sdf.parse("12/01/2000"), sdf.parse("01/01/2000"), ranges).size());
-        assertEquals(5, FilterOutByDate.filterByDate(list, sdf.parse("10/01/2018"), sdf.parse("01/01/2000"), ranges).size());
-        assertEquals(0, FilterOutByDate.filterByDate(list, sdf.parse("12/01/2021"), sdf.parse("01/01/2000"), ranges).size());
-        assertEquals(4, FilterOutByDate.filterByDate(list, sdf.parse("12/01/2000"), sdf.parse("12/01/2018"), ranges).size());
+        assertEquals(6, FilterOutByDate.filterByDate(list, getDateTime(12, 1, 2000), sdf.parse("01/01/2000"), ranges).size());
+        assertEquals(5, FilterOutByDate.filterByDate(list, getDateTime(10, 1, 2018), sdf.parse("01/01/2000"), ranges).size());
+        assertEquals(0, FilterOutByDate.filterByDate(list, getDateTime(12, 1, 2021), sdf.parse("01/01/2000"), ranges).size());
+        assertEquals(4, FilterOutByDate.filterByDate(list, getDateTime(12, 1, 2000), sdf.parse("12/01/2018"), ranges).size());
+    }
+
+    private OffsetDateTime getDateTime(int month, int day, int year) {
+        return OffsetDateTime.of(year, month, day, 0, 0, 0, 0, ZoneOffset.UTC);
     }
 
     @Test
