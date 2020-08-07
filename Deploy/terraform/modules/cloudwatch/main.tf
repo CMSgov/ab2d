@@ -7,7 +7,7 @@ resource "aws_cloudwatch_metric_alarm" "app_cpu_alarm" {
   period = "300"
   statistic = "Average"
   threshold = "90.0"
-  # alarm_actions = [var.autoscaling_arn, var.sns_arn]
+  alarm_actions = [var.autoscaling_arn, var.sns_arn]
   dimensions = {
     AutoScalingGroupName = var.autoscaling_name
   }
@@ -22,7 +22,7 @@ resource "aws_cloudwatch_metric_alarm" "target_response_time" {
   period = "900"
   statistic = "Average"
   threshold = "1.4"
-  # alarm_actions = [var.autoscaling_arn, var.sns_arn]
+  alarm_actions = [var.autoscaling_arn, var.sns_arn]
   dimensions = {
     TargetGroup = var.target_group_arn_suffix
     LoadBalancer = var.loadbalancer_arn_suffix
@@ -38,7 +38,7 @@ resource "aws_cloudwatch_metric_alarm" "healthy_host_count" {
   period = "60"
   statistic = "Minimum"
   threshold = "1.0"
-  # alarm_actions = [var.sns_arn]
+  alarm_actions = [var.sns_arn]
   dimensions = {
     TargetGroup = var.target_group_arn_suffix
     LoadBalancer = var.loadbalancer_arn_suffix
@@ -54,7 +54,7 @@ resource "aws_cloudwatch_metric_alarm" "app_status_check_alarm" {
   period = "60"
   statistic = "Maximum"
   threshold = "1.0"
-  # alarm_actions = [var.sns_arn]
+  alarm_actions = [var.sns_arn]
   dimensions = {
     AutoScalingGroupName = var.autoscaling_name
   }
@@ -69,7 +69,7 @@ resource "aws_cloudwatch_metric_alarm" "controller_cpu_alarm" {
   period = "300"
   statistic = "Average"
   threshold = "90.0"
-  # alarm_actions = [var.sns_arn]
+  alarm_actions = [var.sns_arn]
   dimensions = {
     InstanceId = var.controller_server_id
   }
@@ -84,7 +84,7 @@ resource "aws_cloudwatch_metric_alarm" "controller_status_check_alarm" {
   period = "180"
   statistic = "Maximum"
   threshold = "1.0"
-  # alarm_actions = [var.sns_arn]
+  alarm_actions = [var.sns_arn]
   dimensions = {
     InstanceId = var.controller_server_id
   }
@@ -99,7 +99,7 @@ resource "aws_cloudwatch_metric_alarm" "high_db_connections" {
   period = "300"
   statistic = "Average"
   threshold = "10000.0"
-  # alarm_actions = [var.sns_arn]
+  alarm_actions = [var.sns_arn]
   dimensions = {
     DBInstanceIdentifier = var.db_name
   }
@@ -114,7 +114,7 @@ resource "aws_cloudwatch_metric_alarm" "db_high_queue_depth" {
   period = "300"
   statistic = "Average"
   threshold = "4.0"
-  # alarm_actions = [var.sns_arn]
+  alarm_actions = [var.sns_arn]
   dimensions = {
     DBInstanceIdentifier = var.db_name
   }
@@ -129,7 +129,7 @@ resource "aws_cloudwatch_metric_alarm" "db_high_read_iops" {
   period = "300"
   statistic = "Average"
   threshold = "800.0"
-  # alarm_actions = [var.sns_arn]
+  alarm_actions = [var.sns_arn]
   dimensions = {
     DBInstanceIdentifier = var.db_name
   }
@@ -144,7 +144,7 @@ resource "aws_cloudwatch_metric_alarm" "db_high_read_latency" {
   period = "300"
   statistic = "Average"
   threshold = "0.004"
-  # alarm_actions = [var.sns_arn]
+  alarm_actions = [var.sns_arn]
   dimensions = {
     DBInstanceIdentifier = var.db_name
   }
@@ -159,7 +159,7 @@ resource "aws_cloudwatch_metric_alarm" "db_high_read_throughput" {
   period = "300"
   statistic = "Average"
   threshold = "10485760.0"
-  # alarm_actions = [var.sns_arn]
+  alarm_actions = [var.sns_arn]
   dimensions = {
     DBInstanceIdentifier = var.db_name
   }
@@ -174,7 +174,7 @@ resource "aws_cloudwatch_metric_alarm" "db_high_write_iops" {
   period = "300"
   statistic = "Average"
   threshold = "1500.0"
-  # alarm_actions = [var.sns_arn]
+  alarm_actions = [var.sns_arn]
   dimensions = {
     DBInstanceIdentifier = var.db_name
   }
@@ -189,7 +189,7 @@ resource "aws_cloudwatch_metric_alarm" "db_very_high_write_iops" {
   period = "300"
   statistic = "Average"
   threshold = "4500.0"
-  # alarm_actions = [var.sns_arn]
+  alarm_actions = [var.sns_arn]
   dimensions = {
     DBInstanceIdentifier = var.db_name
   }
@@ -204,7 +204,7 @@ resource "aws_cloudwatch_metric_alarm" "db_high_write_latency" {
   period = "300"
   statistic = "Average"
   threshold = "0.04"
-  # alarm_actions = [var.sns_arn]
+  alarm_actions = [var.sns_arn]
   dimensions = {
     DBInstanceIdentifier = var.db_name
   }
@@ -219,7 +219,7 @@ resource "aws_cloudwatch_metric_alarm" "db_high_write_throughput" {
   period = "300"
   statistic = "Average"
   threshold = "41943040.0"
-  # alarm_actions = [var.sns_arn]
+  alarm_actions = [var.sns_arn]
   dimensions = {
     DBInstanceIdentifier = var.db_name
   }
@@ -234,7 +234,7 @@ resource "aws_cloudwatch_metric_alarm" "app_elb_http_code_elb_4xx_count" {
   period = "60"
   statistic = "Average"
   threshold = "10.0"
-  # alarm_actions = [var.sns_arn]
+  alarm_actions = [var.sns_arn]
   dimensions = {
     LoadBalancer = var.loadbalancer_arn_suffix
   }
@@ -249,7 +249,7 @@ resource "aws_cloudwatch_metric_alarm" "http_code_elb_5xx_count" {
   period = "60"
   statistic = "Average"
   threshold = "10.0"
-  # alarm_actions = [var.sns_arn]
+  alarm_actions = [var.sns_arn]
   dimensions = {
     LoadBalancer = var.loadbalancer_arn_suffix
   }
@@ -264,7 +264,7 @@ resource "aws_cloudwatch_metric_alarm" "postgres_transaction_logs_disk_usage" {
   period = "60"
   statistic = "Average"
   threshold = "3000000000.0"
-  # alarm_actions = [var.sns_arn]
+  alarm_actions = [var.sns_arn]
   dimensions = {
     DBInstanceIdentifier = var.db_name
   }
@@ -279,7 +279,7 @@ resource "aws_cloudwatch_metric_alarm" "db_cpu_utilization" {
   period = "60"
   statistic = "Average"
   threshold = "70.0"
-  # alarm_actions = [var.sns_arn]
+  alarm_actions = [var.sns_arn]
   dimensions = {
     DBInstanceIdentifier = var.db_name
   }
@@ -294,7 +294,7 @@ resource "aws_cloudwatch_metric_alarm" "db_free_storage_space" {
   period = "3600"
   statistic = "Average"
   threshold = "100000000000.0"
-  # alarm_actions = [var.sns_arn]
+  alarm_actions = [var.sns_arn]
   dimensions = {
     DBInstanceIdentifier = var.db_name
   }
@@ -309,7 +309,7 @@ resource "aws_cloudwatch_metric_alarm" "db_swap_usage" {
   period = "300"
   statistic = "Average"
   threshold = "1.0"
-  # alarm_actions = [var.sns_arn]
+  alarm_actions = [var.sns_arn]
   dimensions = {
     DBInstanceIdentifier = var.db_name
   }
