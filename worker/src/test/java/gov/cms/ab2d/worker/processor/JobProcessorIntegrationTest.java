@@ -61,7 +61,7 @@ import static org.mockito.Mockito.when;
 @SpringIntegrationTest(noAutoStartup = {"inboundChannelAdapter", "*Source*"})
 @Transactional
 class JobProcessorIntegrationTest {
-    private Random random = new Random();
+    private final Random random = new Random();
 
     private JobProcessor cut;       // class under test
 
@@ -79,11 +79,6 @@ class JobProcessorIntegrationTest {
     private ContractRepository contractRepository;
     @Autowired
     private JobOutputRepository jobOutputRepository;
-    @Autowired
-    @Qualifier("contractAdapterStub")
-    private ContractBeneSearch contractBeneSearchStub;
-    @Autowired
-    private OptOutRepository optOutRepository;
     @Autowired
     private SqlEventLogger sqlEventLogger;
     @Mock
@@ -139,18 +134,8 @@ class JobProcessorIntegrationTest {
         fail = new RuntimeException("TEST EXCEPTION");
 
         FhirContext fhirContext = FhirContext.forDstu3();
-        PatientClaimsProcessor patientClaimsProcessor = new PatientClaimsProcessorImpl(mockBfdClient, fhirContext, logManager);
+        PatientClaimsProcessor patientClaimsProcessor = new PatientClaimsProcessorImpl(mockBfdClient, logManager);
         ReflectionTestUtils.setField(patientClaimsProcessor, "startDate", "01/01/1900");
-        ContractProcessor contractProcessor = new ContractProcessorImpl(
-                fileService,
-                jobRepository,
-                patientClaimsProcessor,
-                optOutRepository,
-                logManager
-        );
-
-        ReflectionTestUtils.setField(contractProcessor, "cancellationCheckFrequency", 10);
-
         cut = new JobProcessorImpl(
                 fileService,
                 jobRepository,
@@ -158,6 +143,7 @@ class JobProcessorIntegrationTest {
                 logManager,
                 mockBfdClient,
                 patientClaimsProcessor,
+                fhirContext,
                 patientContractThreadPool
         );
         // FileService fileService, JobRepository jobRepository, JobOutputRepository jobOutputRepository, LogManager eventLogger, BFDClient bfdClient, PatientClaimsProcessor patientClaimsProcessor, ThreadPoolTaskExecutor patientContractThreadPool
@@ -314,7 +300,7 @@ class JobProcessorIntegrationTest {
         return userRepository.save(user);
     }
 
-    private Contract createContract(Sponsor sponsor) {
+    private void createContract(Sponsor sponsor) {
         Contract contract = new Contract();
         contract.setContractName("CONTRACT_0000");
         contract.setContractNumber("CONTRACT_0000");
@@ -322,7 +308,7 @@ class JobProcessorIntegrationTest {
         contract.setSponsor(sponsor);
 
         sponsor.getContracts().add(contract);
-        return contractRepository.save(contract);
+        contractRepository.save(contract);
     }
 
     private Job createJob(User user) {

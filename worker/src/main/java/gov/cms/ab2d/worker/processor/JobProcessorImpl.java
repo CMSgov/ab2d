@@ -622,31 +622,6 @@ public class JobProcessorImpl implements JobProcessor {
         return newPatients;
     }
 
-    /**
-     * returns true if the patient is a valid member of a contract, false otherwise. If either value is empty,
-     * it returns false
-     *
-     * @param benefit - The benefit to check
-     * @param patients - the patient map containing the patient id & patient object
-     * @return true if this patient is a member of the correct contract
-     */
-    boolean validPatientInContract(ExplanationOfBenefit benefit, Map<String, ContractBeneficiaries.PatientDTO> patients) {
-        if (benefit == null || patients == null) {
-            log.debug("Passed an invalid benefit or an invalid list of patients");
-            return false;
-        }
-        String patientId = benefit.getPatient().getReference();
-        if (patientId == null) {
-            return false;
-        }
-        patientId = patientId.replaceFirst("Patient/", "");
-        if (patients.get(patientId) == null) {
-            log.error(patientId + " returned in EOB, but not a member of a contract");
-            return false;
-        }
-        return true;
-    }
-
     private Date getStartDate(String contract) {
         SimpleDateFormat sdf = new SimpleDateFormat("MM/dd/yyyy");
 

@@ -1,5 +1,6 @@
 package gov.cms.ab2d.worker.processor;
 
+import ca.uhn.fhir.context.FhirContext;
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.Job;
@@ -84,6 +85,7 @@ class JobProcessorUnitTest {
                 eventLogger,
                 bfdClient,
                 patientClaimsProcessor,
+                FhirContext.forDstu3(),
                 patientContractThreadPool
         );
 
