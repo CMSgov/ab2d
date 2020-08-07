@@ -12,6 +12,7 @@ import gov.cms.ab2d.common.repository.UserRepository;
 import gov.cms.ab2d.common.service.PropertiesService;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.Constants;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -31,9 +32,7 @@ import static gov.cms.ab2d.common.model.JobStatus.SUBMITTED;
 import static gov.cms.ab2d.common.model.JobStatus.SUCCESSFUL;
 import static gov.cms.ab2d.common.util.Constants.EOB;
 import static gov.cms.ab2d.common.util.Constants.NDJSON_FIRE_CONTENT_TYPE;
-import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThat;
 
 
 /**
@@ -60,6 +59,11 @@ public class WorkerServiceDisengagementTest {
         coverageRepository.deleteAll();
         sponsorRepository.deleteAll();
         disableWorker();
+    }
+
+    @AfterEach
+    public void cleanup() {
+        enableWorker();
     }
 
     private void disableWorker() {
@@ -91,8 +95,14 @@ public class WorkerServiceDisengagementTest {
 
         Thread.sleep(6000L);
 
-        final Job processedJob = jobRepository.findByJobUuid(submittedJob.getJobUuid());
+        Job processedJob = jobRepository.findByJobUuid(submittedJob.getJobUuid());
         checkIdleResult(processedJob);
+
+        // Now confirm that switching workers back on ... works!
+        enableWorker();
+        Thread.sleep(6000L);
+        processedJob = jobRepository.findByJobUuid(submittedJob.getJobUuid());
+        checkEngagedResult(processedJob);
     }
 
     @Test
@@ -107,11 +117,21 @@ public class WorkerServiceDisengagementTest {
         // So if the result for two jobs comes before 10 seconds, it implies they were not processed sequentially
         Thread.sleep(10000L);
 
-        final Job processedJob1 = jobRepository.findByJobUuid(submittedJob1.getJobUuid());
+        Job processedJob1 = jobRepository.findByJobUuid(submittedJob1.getJobUuid());
         checkIdleResult(processedJob1);
 
-        final Job processedJob2 = jobRepository.findByJobUuid(submittedJob2.getJobUuid());
+        Job processedJob2 = jobRepository.findByJobUuid(submittedJob2.getJobUuid());
         checkIdleResult(processedJob2);
+
+        // Now confirm that switching workers back on ... works!
+        enableWorker();
+        Thread.sleep(10000L);
+
+        processedJob1 = jobRepository.findByJobUuid(submittedJob1.getJobUuid());
+        checkEngagedResult(processedJob1);
+
+        processedJob2 = jobRepository.findByJobUuid(submittedJob2.getJobUuid());
+        checkEngagedResult(processedJob2);
     }
 
     private Job createJob(final User user) {
@@ -162,8 +182,8 @@ public class WorkerServiceDisengagementTest {
     }
 
     private void checkEngagedResult(Job processedJob) {
-        assertThat(processedJob.getStatus(), equalTo(SUCCESSFUL));
-        assertThat(processedJob.getStatusMessage(), equalTo("100%"));
+        assertEquals(processedJob.getStatus(), SUCCESSFUL);
+        assertEquals(processedJob.getStatusMessage(), "100%");
     }
 
 }
