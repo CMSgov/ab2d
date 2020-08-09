@@ -130,6 +130,7 @@
    * [Install and verify AWS CLI 2](#install-and-verify-aws-cli-2)
 1. [Appendix NNN: Manually install Chef Inspec on existing Jenkins Agent](#appendix-nnn-manually-install-chef-inspec-on-existing-jenkins-agent)
 1. [Appendix OOO: Connect to Jenkins agent through the Jenkins master using the ProxyJump flag](#appendix-ooo-connect-to-jenkins-agent-through-the-jenkins-master-using-the-proxyjump-flag)
+1. [Appendix PPP: Migrate to reserved RDS instance](#appendix-ppp-migrate-to-reserved-rds-instance)
 
 ## Appendix A: Access the CMS AWS console
 
@@ -10919,3 +10920,96 @@ $ sed -i "" 's%cms-ab2d[\/]prod%cms-ab2d/dev%g' _includes/head.html (edited)
      ec2-user@$JENKINS_MASTER_PUBLIC_IP \
 	ec2-user@$JENKINS_AGENT_PRIVATE_IP
    ```
+
+## Appendix PPP: Migrate to reserved RDS instance
+
+1. Backup existing data for target environment
+
+   1. Open Chrome
+
+   1. Open Jenkins
+
+   1. Select target environment folder
+
+   1. Select "devops-engineer-only" folder
+
+   1. Select "02-backup-data-as-csv-for-production"
+
+   1. Select **Build with Parameters**
+
+   1. Select **Build**
+
+   1. Wait for jenkins job to complete
+
+1. Retrieve CSV data from the Jenkins agent
+
+   1. Change to the "bash" directory
+
+      ```ShellSession
+      $ cd ~/code/ab2d/Deploy/bash
+      ```
+
+   1. Set target environment
+
+      ```ShellSession
+      $ source ./set-env.sh
+      ```
+
+   1. Set the Jenkins agent name
+
+      *Example for current Jenkins agent:*
+
+      ```ShellSession
+      JENKINS_AGENT_NAME=ab2d-jenkins-agent-old
+      ```
+
+      *Example for new in-progress Jenkins agent:*
+
+      ```ShellSession
+      JENKINS_AGENT_NAME=ab2d-jenkins-agent
+      ```
+
+   1. Get IP address of Jenkins agent
+
+      ```ShellSession
+      $ JENKINS_AGENT_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=${JENKINS_AGENT_NAME}" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+        --output text)
+      ```
+
+   1. Copy the database backup file to the "ec2-user" home directory
+
+      ```ShellSession
+      $ ssh -tt -i "~/.ssh/ab2d-mgmt-east-dev.pem" \
+        "ec2-user@${JENKINS_AGENT_PRIVATE_IP}" \
+        "sudo cp /var/lib/jenkins/database_backup/ab2d-east-prod.tar.gz /home/ec2-user"
+      ```
+
+   1. Change ownership on the database backup file
+
+      ```ShellSession
+      $ ssh -tt -i "~/.ssh/ab2d-mgmt-east-dev.pem" \
+        "ec2-user@${JENKINS_AGENT_PRIVATE_IP}" \
+        "sudo chown ec2-user:ec2-user /home/ec2-user/ab2d-east-prod.tar.gz"
+      ```
+
+   1. Change to the do "Downloads" directory
+
+      ```ShellSession
+      $ cd ~/Downloads
+      ```
+
+   1. Download the database backup file
+
+      ```ShellSession
+      $ scp -i ~/.ssh/ab2d-mgmt-east-dev.pem \
+        "ec2-user@${JENKINS_AGENT_PRIVATE_IP}:~/ab2d-east-prod.tar.gz" \
+	.
+      ```
+
+   1. Uncompress the database backup file
+
+      ```ShellSession
+      $ tar -xzvf --strip-components=4 ab2d-east-prod.tar.gz
+      ```
