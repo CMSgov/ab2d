@@ -199,7 +199,5 @@ bundle exec rake database_public_get_data
 # Compress the database backup
 
 cd "${HOME}/database_backup"
-
-DATETIME=$(date '+%Y-%m-%d_%H:%M:%S')
-
-tar -czvf "${CMS_ENV}_${DATETIME}.tar.gz" "/var/lib/jenkins/database_backup/${CMS_ENV}"
+rm -f "${CMS_ENV}.tar.gz"
+tar -czvf "${CMS_ENV}.tar.gz" "/var/lib/jenkins/database_backup/${CMS_ENV}"
