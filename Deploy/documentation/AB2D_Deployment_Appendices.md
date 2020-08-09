@@ -10096,6 +10096,54 @@ $ sed -i "" 's%cms-ab2d[\/]prod%cms-ab2d/dev%g' _includes/head.html (edited)
 
 ### Run e2e tests for development
 
+1. Add "dev.ab2d.cms.gov" mapping to hosts file as a temporary workaround until domain is onboarded to Akamai
+
+   1. Change to the "bash" directory
+
+      ```ShellSession
+      $ cd ~/code/ab2d/Deploy/bash
+      ```
+
+   1. Set the target environment
+
+      ```ShellSession
+      $ source ./set-env.sh
+      ```
+
+   1. Determine the line to be added to hosts file
+
+      ```ShellSession
+      $ aws --region us-east-1 ec2 describe-network-interfaces \
+        --filters Name=requester-id,Values=amazon-elb \
+        --query "NetworkInterfaces[*].PrivateIpAddress" \
+        --output json \
+        | jq '.[0]' \
+        | tr -d '"' \
+	| awk '{print $1" dev.ab2d.cms.gov"}'
+      ```
+
+   1. Note the dev.ab2d.cms.gov domain mapping line that is output
+
+      *Format:*
+
+      ```
+      {one load balancer private ip address} dev.ab2d.cms.gov
+      ```
+
+   1. Open the hosts file
+
+      ```ShellSession
+      $ sudo vim /etc/hosts
+      ```
+
+   1. Add the following line to the hosts file
+
+      ```
+      {one load balancer private ip address} dev.ab2d.cms.gov
+      ```
+
+   1. Save and close the file
+
 1. Switch to the repo directory
 
    ```ShellSession
