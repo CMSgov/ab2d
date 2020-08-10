@@ -41,7 +41,7 @@ import static gov.cms.ab2d.common.util.Constants.*;
         "once the job is complete and an endpoint to cancel a job",
         tags = {"Status"})
 @RestController
-@RequestMapping(path = API_PREFIX + FHIR_PREFIX, produces = {"application/json", NDJSON_FIRE_CONTENT_TYPE})
+@RequestMapping(path = API_PREFIX + FHIR_PREFIX, produces = {"application/json"})
 @SuppressWarnings("PMD.TooManyStaticImports")
 /**
  * The sole REST controller for AB2D's implementation of the FHIR Bulk Data API Status (both GET & DELETE).
@@ -82,7 +82,7 @@ public class StatusAPI {
                     @ResponseHeader(name = "Retry-After", description =
                             "A delay time in seconds before another status request will be " +
                                     "accepted.",
-                            response = Integer.class)}, response = Void.class),
+                            response = Integer.class)}),
             @ApiResponse(code = 200, message = "The job is completed.", responseHeaders = {
                     @ResponseHeader(name = "Expires", description =
                             "Indicates when (an HTTP-date timestamp) the files " +
@@ -92,7 +92,7 @@ public class StatusAPI {
             @ApiResponse(code = 404, message = "Job not found. " + GENERIC_FHIR_ERR_MSG, response =
                     SwaggerConfig.OperationOutcome.class)}
     )
-    @GetMapping(value = "/Job/{jobUuid}/$status")
+    @GetMapping(value = "/Job/{jobUuid}/$status", produces = "application/json")
     @ResponseStatus(value = HttpStatus.OK)
     public ResponseEntity<JobCompletedResponse> getJobStatus(HttpServletRequest request,
             @ApiParam(value = "A job identifier", required = true) @PathVariable @NotBlank String jobUuid) {
@@ -193,7 +193,7 @@ public class StatusAPI {
     )
     @DeleteMapping(value = "/Job/{jobUuid}/$status")
     @ResponseStatus(value = HttpStatus.ACCEPTED)
-    public ResponseEntity<Void> deleteRequest(
+    public ResponseEntity deleteRequest(
             HttpServletRequest request,
             @ApiParam(value = "A job identifier", required = true)
             @PathVariable @NotBlank String jobUuid) {

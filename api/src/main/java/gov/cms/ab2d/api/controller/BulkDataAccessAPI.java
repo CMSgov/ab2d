@@ -57,7 +57,7 @@ import static java.time.format.DateTimeFormatter.ISO_OFFSET_DATE_TIME;
 @Slf4j
 @Api(value = "Bulk Data Access API", description = SwaggerConstants.BULK_MAIN, tags = {"Export"})
 @RestController
-@RequestMapping(path = API_PREFIX + FHIR_PREFIX, produces = {"application/json", NDJSON_FIRE_CONTENT_TYPE})
+@RequestMapping(path = API_PREFIX + FHIR_PREFIX, produces = {"application/json"})
 @SuppressWarnings("PMD.TooManyStaticImports")
 public class BulkDataAccessAPI {
 
@@ -86,8 +86,6 @@ public class BulkDataAccessAPI {
                     @AuthorizationScope(description = "Export Patient Information", scope = "Authorization") })
         })
     @ApiImplicitParams(value = {
-            @ApiImplicitParam(name = "Accept", required = true, paramType = "header", value =
-                    BULK_ACCEPT, defaultValue = "application/fhir+json"),
             @ApiImplicitParam(name = "Prefer", required = true, paramType = "header", value =
                     BULK_PREFER, defaultValue = "respond-async")}
     )
@@ -215,9 +213,7 @@ public class BulkDataAccessAPI {
                             @AuthorizationScope(description = "Export Claim Data", scope = "Authorization") })
             })
     @ApiImplicitParams(value = {
-            @ApiImplicitParam(name = "Accept", required = true, paramType = "header", value =
-                    BULK_ACCEPT, defaultValue = "application/fhir+json"),
-            @ApiImplicitParam(name = "Prefer", required = true, paramType = "header", value =
+            @ApiImplicitParam(name = "Prefer", required = true, paramType = "header", type = "string", value =
                     BULK_PREFER, defaultValue = "respond-async")}
     )
     @ApiResponses(
