@@ -1,5 +1,7 @@
 package gov.cms.ab2d.worker.service;
 
+import gov.cms.ab2d.common.service.PropertiesService;
+import gov.cms.ab2d.common.util.Constants;
 import gov.cms.ab2d.worker.processor.JobPreProcessor;
 import gov.cms.ab2d.worker.processor.JobProcessor;
 import lombok.RequiredArgsConstructor;
@@ -22,8 +24,9 @@ public class WorkerServiceImpl implements WorkerService {
     private final JobPreProcessor jobPreprocessor;
     private final JobProcessor jobProcessor;
     private final ShutDownService shutDownService;
+    private final PropertiesService propertiesService;
 
-    private List<String> activeJobs = Collections.synchronizedList(new ArrayList<>());
+    private final List<String> activeJobs = Collections.synchronizedList(new ArrayList<>());
 
     @Override
     public void process(String jobUuid) {
@@ -39,6 +42,11 @@ public class WorkerServiceImpl implements WorkerService {
         } finally {
             activeJobs.remove(jobUuid);
         }
+    }
+
+    @Override
+    public WorkerDrive getEngagement() {
+        return WorkerDrive.fromString(propertiesService.getPropertiesByKey(Constants.WORKER_ENGAGEMENT).getValue());
     }
 
     @PreDestroy

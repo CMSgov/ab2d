@@ -85,6 +85,7 @@ public class AdminAPIPropertiesTests {
             put(MAINTENANCE_MODE, "false");
             put(CONTRACT_2_BENE_CACHING_ON, "false");
             put(ZIP_SUPPORT_ON, "false");
+            put(WORKER_ENGAGEMENT, "engaged");
         }};
 
         MvcResult mvcResult = this.mockMvc.perform(
@@ -99,7 +100,7 @@ public class AdminAPIPropertiesTests {
         ObjectMapper mapper = new ObjectMapper();
         List<PropertiesDTO> propertiesDTOs = mapper.readValue(result, new TypeReference<List<PropertiesDTO>>() { } );
 
-        Assert.assertEquals(6, propertiesDTOs.size());
+        Assert.assertEquals(7, propertiesDTOs.size());
         for(PropertiesDTO propertiesDTO : propertiesDTOs) {
             Object value = propertyMap.get(propertiesDTO.getKey());
 
