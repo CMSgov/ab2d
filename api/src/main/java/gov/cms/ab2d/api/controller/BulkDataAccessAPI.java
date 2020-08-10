@@ -93,7 +93,7 @@ public class BulkDataAccessAPI {
             @ApiResponse(code = 202, message = "Export request has started", responseHeaders =
             @ResponseHeader(name = "Content-Location", description = "Absolute URL of an endpoint" +
                     " for subsequent status requests (polling location)",
-                    response = String.class))
+                    response = String.class), response = String.class)
     )
     @ResponseStatus(value = HttpStatus.ACCEPTED)
     @GetMapping("/Patient/$export")
@@ -220,7 +220,7 @@ public class BulkDataAccessAPI {
             @ApiResponse(code = 202, message = "Export request has started", responseHeaders =
             @ResponseHeader(name = "Content-Location", description = "Absolute URL of an endpoint" +
                     " for subsequent status requests (polling location)",
-                    response = String.class))
+                    response = String.class), response = String.class)
     )
     @ResponseStatus(value = HttpStatus.ACCEPTED)
     @GetMapping("/Group/{contractNumber}/$export")

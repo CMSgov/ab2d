@@ -61,7 +61,7 @@ public class FileDownloadAPI {
     )
     @ResponseStatus(value = HttpStatus.OK)
     @GetMapping(value = "/Job/{jobUuid}/file/{filename}", produces = { NDJSON_FIRE_CONTENT_TYPE })
-    public ResponseEntity<Void> downloadFile(
+    public ResponseEntity downloadFile(
             HttpServletRequest request,
             @ApiParam(value = "A job identifier", required = true) @PathVariable @NotBlank String jobUuid,
             @ApiParam(value = "A file name", required = true) @PathVariable @NotBlank String filename) throws IOException {
