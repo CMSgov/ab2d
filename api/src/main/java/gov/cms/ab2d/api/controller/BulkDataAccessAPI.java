@@ -19,17 +19,11 @@ import io.swagger.annotations.AuthorizationScope;
 import io.swagger.annotations.ResponseHeader;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseStatus;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
@@ -40,12 +34,11 @@ import java.time.OffsetDateTime;
 import java.util.Set;
 
 import static gov.cms.ab2d.api.util.Constants.GENERIC_FHIR_ERR_MSG;
-import static gov.cms.ab2d.api.util.SwaggerConstants.BULK_ACCEPT;
-import static gov.cms.ab2d.api.util.SwaggerConstants.BULK_CONTRACT_EXPORT;
 import static gov.cms.ab2d.api.util.SwaggerConstants.BULK_EXPORT;
+import static gov.cms.ab2d.api.util.SwaggerConstants.BULK_PREFER;
 import static gov.cms.ab2d.api.util.SwaggerConstants.BULK_EXPORT_TYPE;
 import static gov.cms.ab2d.api.util.SwaggerConstants.BULK_OUTPUT_FORMAT;
-import static gov.cms.ab2d.api.util.SwaggerConstants.BULK_PREFER;
+import static gov.cms.ab2d.api.util.SwaggerConstants.BULK_CONTRACT_EXPORT;
 import static gov.cms.ab2d.common.service.JobService.ZIPFORMAT;
 import static gov.cms.ab2d.common.util.Constants.*;
 import static java.time.format.DateTimeFormatter.ISO_DATE_TIME;
@@ -57,7 +50,7 @@ import static java.time.format.DateTimeFormatter.ISO_OFFSET_DATE_TIME;
 @Slf4j
 @Api(value = "Bulk Data Access API", description = SwaggerConstants.BULK_MAIN, tags = {"Export"})
 @RestController
-@RequestMapping(path = API_PREFIX + FHIR_PREFIX, produces = {"application/json", NDJSON_FIRE_CONTENT_TYPE})
+@RequestMapping(path = API_PREFIX + FHIR_PREFIX, produces = {"application/json"})
 @SuppressWarnings("PMD.TooManyStaticImports")
 public class BulkDataAccessAPI {
 
@@ -71,14 +64,15 @@ public class BulkDataAccessAPI {
 
     static final String JOB_CANCELLED_MSG = "Job canceled";
 
-    @Autowired
-    private JobService jobService;
+    private final JobService jobService;
+    private final PropertiesService propertiesService;
+    private final LogManager eventLogger;
 
-    @Autowired
-    private PropertiesService propertiesService;
-
-    @Autowired
-    private LogManager eventLogger;
+    public BulkDataAccessAPI(JobService jobService, PropertiesService propertiesService, LogManager eventLogger) {
+        this.jobService = jobService;
+        this.propertiesService = propertiesService;
+        this.eventLogger = eventLogger;
+    }
 
     @ApiOperation(value = BULK_EXPORT,
         authorizations = {
@@ -86,21 +80,20 @@ public class BulkDataAccessAPI {
                     @AuthorizationScope(description = "Export Patient Information", scope = "Authorization") })
         })
     @ApiImplicitParams(value = {
-            @ApiImplicitParam(name = "Accept", required = true, paramType = "header", value =
-                    BULK_ACCEPT, defaultValue = "application/fhir+json"),
             @ApiImplicitParam(name = "Prefer", required = true, paramType = "header", value =
-                    BULK_PREFER, defaultValue = "respond-async")}
+                    BULK_PREFER, allowableValues = "respond-async", defaultValue = "respond-async", type = "string")}
     )
     @ApiResponses(
             @ApiResponse(code = 202, message = "Export request has started", responseHeaders =
             @ResponseHeader(name = "Content-Location", description = "Absolute URL of an endpoint" +
                     " for subsequent status requests (polling location)",
-                    response = String.class))
+                    response = String.class), response = String.class)
     )
     @ResponseStatus(value = HttpStatus.ACCEPTED)
     @GetMapping("/Patient/$export")
     public ResponseEntity<Void> exportAllPatients(
             HttpServletRequest request,
+            @RequestHeader(name = "Prefer", defaultValue = "respond-async")
             @ApiParam(value = BULK_EXPORT_TYPE, allowableValues = EOB, defaultValue = EOB)
             @RequestParam(required = false, name = "_type", defaultValue = EOB) String resourceTypes,
             @ApiParam(value = BULK_OUTPUT_FORMAT,
@@ -214,17 +207,11 @@ public class BulkDataAccessAPI {
                     @Authorization(value = "Authorization", scopes = {
                             @AuthorizationScope(description = "Export Claim Data", scope = "Authorization") })
             })
-    @ApiImplicitParams(value = {
-            @ApiImplicitParam(name = "Accept", required = true, paramType = "header", value =
-                    BULK_ACCEPT, defaultValue = "application/fhir+json"),
-            @ApiImplicitParam(name = "Prefer", required = true, paramType = "header", value =
-                    BULK_PREFER, defaultValue = "respond-async")}
-    )
     @ApiResponses(
             @ApiResponse(code = 202, message = "Export request has started", responseHeaders =
             @ResponseHeader(name = "Content-Location", description = "Absolute URL of an endpoint" +
                     " for subsequent status requests (polling location)",
-                    response = String.class))
+                    response = String.class), response = String.class)
     )
     @ResponseStatus(value = HttpStatus.ACCEPTED)
     @GetMapping("/Group/{contractNumber}/$export")
@@ -239,6 +226,7 @@ public class BulkDataAccessAPI {
                     "+ndjson"
             )
             @RequestParam(required = false, name = "_outputFormat") String outputFormat,
+            @RequestHeader(value = "respond-async")
             @ApiParam(value = "Beginning time of query. Returns all records \"since\" this time. At this time, it must be after " + SINCE_EARLIEST_DATE,
                       example = SINCE_EARLIEST_DATE)
             @RequestParam(required = false, name = "_since") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime since) {
