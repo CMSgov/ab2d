@@ -38,8 +38,8 @@ public class HpmsMockController {
     }
 
     @GetMapping("/contracts/status")
-    public ResponseEntity<String> getAttestation(@RequestParam List<String> contractIds) {
-        List<String> attestations = attestationService.retrieveAttestations(contractIds);
+    public ResponseEntity<String> getAttestation(@RequestParam() JsonStringArray contractIds) {
+        List<String> attestations = attestationService.retrieveAttestations(contractIds.getValues());
         if (attestations.isEmpty()) {
             return errorAttestationResponse();
         }
