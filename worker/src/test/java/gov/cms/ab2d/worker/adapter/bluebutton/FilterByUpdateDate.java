@@ -5,7 +5,7 @@ import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.Constants;
 import gov.cms.ab2d.filter.FilterOutByDate;
 import org.hl7.fhir.dstu3.model.Bundle;
-import org.junit.Ignore;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -24,7 +24,7 @@ import java.util.stream.Collectors;
 import static org.junit.jupiter.api.Assertions.*;
 
 // Because it has an outside dependency, ignore it but wanted to actually test that it works
-@Ignore
+@Disabled
 @SpringBootTest
 @Testcontainers
 public class FilterByUpdateDate {

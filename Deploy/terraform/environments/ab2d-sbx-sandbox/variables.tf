@@ -415,6 +415,7 @@ variable "kinesis_firehose_delivery_streams" {
     "error_event",
     "file_event",
     "job_status_change_event",
+    "job_summary_event",
     "reload_event"
   ]
 }

@@ -116,6 +116,8 @@
 1. [Appendix DDD: Backup and recovery](#appendix-ddd-backup-and-recovery)
 1. [Appendix EEE: Modify the database instance type](#appendix-eee-modify-the-database-instance-type)
 1. [Appendix FFF: Run e2e tests](#appendix-fff-run-e2e-tests)
+   * [Run e2e tests for development](#run-e2e-tests-for-development)
+   * [Run e2e tests for sandbox](#run-e2e-tests-for-sandbox)
    * [Run e2e tests for production](#run-e2e-tests-for-production)
 1. [Appendix GGG: Retrieve a copy of remote terraform state file for review](#appendix-ggg-retrieve-a-copy-of-remote-terraform-state-file-for-review)
 1. [Appendix HHH: Manually change a tag on controller and update its terraform state](#appendix-hhh-manually-change-a-tag-on-controller-and-update-its-terraform-state)
@@ -781,24 +783,18 @@
 
 ## Appendix J: Delete and recreate database
 
-1. Set the target AWS profile
+1. Ensure that your are connected to CMS Cisco VPN before proceeding
 
-   *Example for "Dev" environment:*
+1. Change to the "Deploy" directory
 
    ```ShellSession
-   $ export AWS_PROFILE=ab2d-dev
+   $ cd ~/code/ab2d/Deploy
    ```
 
-   *Example for "Sbx" environment:*
+1. Set AWS environment variables using the CloudTamer API
 
    ```ShellSession
-   $ export AWS_PROFILE=ab2d-sbx-sandbox
-   ```
-
-   *Example for "Impl" environment:*
-
-   ```ShellSession
-   $ export AWS_PROFILE=ab2d-east-impl
+   $ source ./bash/set-env.sh
    ```
 
 1. Set target environment
@@ -10092,6 +10088,204 @@ $ sed -i "" 's%cms-ab2d[\/]prod%cms-ab2d/dev%g' _includes/head.html (edited)
       - **Start Time:** {utc time two minutes from now}
 
 ## Appendix FFF: Run e2e tests
+
+### Run e2e tests for development
+
+1. Add "dev.ab2d.cms.gov" mapping to hosts file as a temporary workaround until domain is onboarded to Akamai
+
+   1. Change to the "bash" directory
+
+      ```ShellSession
+      $ cd ~/code/ab2d/Deploy/bash
+      ```
+
+   1. Set the target environment
+
+      ```ShellSession
+      $ source ./set-env.sh
+      ```
+
+   1. Determine the line to be added to hosts file
+
+      ```ShellSession
+      $ aws --region us-east-1 ec2 describe-network-interfaces \
+        --filters Name=requester-id,Values=amazon-elb \
+        --query "NetworkInterfaces[*].PrivateIpAddress" \
+        --output json \
+        | jq '.[0]' \
+        | tr -d '"' \
+	| awk '{print $1" dev.ab2d.cms.gov"}'
+      ```
+
+   1. Note the dev.ab2d.cms.gov domain mapping line that is output
+
+      *Format:*
+
+      ```
+      {one load balancer private ip address} dev.ab2d.cms.gov
+      ```
+
+   1. Open the hosts file
+
+      ```ShellSession
+      $ sudo vim /etc/hosts
+      ```
+
+   1. Add the following line to the hosts file
+
+      ```
+      {one load balancer private ip address} dev.ab2d.cms.gov
+      ```
+
+   1. Save and close the file
+
+1. Switch to the repo directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d
+   ```
+
+1. Set configuration prefix
+
+   ```ShellSession
+   $ export E2E_ENV_CONFIG_PREFIX=dev
+   ```
+
+1. Set e2e test environment target
+
+   ```ShellSession
+   $ export E2E_TARGET_ENV=DEV
+   ```
+
+1. Examine the configuration file
+
+   ```ShellSession
+   $ cat "./e2e-test/src/test/resources/${E2E_ENV_CONFIG_PREFIX}-config.yml" ; echo
+   ```
+
+1. If the settings are not correct, do the following
+
+   1. Open the configuration file
+
+      ```ShellSession
+      $ vim "./e2e-test/src/test/resources/${E2E_ENV_CONFIG_PREFIX}-config.yml"
+      ```
+
+   1. Modify the settings to make them correct
+
+   1. Save and close the file
+
+1. Build the application and skip tests
+
+   ```ShellSession
+   $ mvn clean package -DskipTests
+   ```
+
+1. Set first OKTA test user
+
+   *NOTE: currently using a real Okta contract with a small number of patients since the synthetic data is not working.*
+
+   ```ShellSession
+   $ export OKTA_CONTRACT_NUMBER={okta contract number}
+   $ export OKTA_CLIENT_ID={first okta client id}
+   $ export OKTA_CLIENT_PASSWORD={first okta client secret}
+   ```
+
+1. Set second OKTA test user
+
+   *NOTE: currently using a real Okta contract with a small number of patients since the synthetic data is not working.*
+
+   ```ShellSession
+   $ export SECONDARY_USER_OKTA_CLIENT_ID={second okta client id}
+   $ export SECONDARY_USER_OKTA_CLIENT_PASSWORD={second okta client secret}
+   ```
+
+1. Change to the target directory
+
+   ```ShellSession
+   $ cd ./e2e-test/target
+   ```
+
+1. Run e2e testing
+
+   ```ShellSession
+   $ java -cp e2e-test-0.0.1-SNAPSHOT-fat-tests.jar gov.cms.ab2d.e2etest.TestLauncher "${E2E_TARGET_ENV}" "${OKTA_CONTRACT_NUMBER}"
+   ```
+
+### Run e2e tests for sandbox
+
+1. Switch to the repo directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d
+   ```
+
+1. Set configuration prefix
+
+   ```ShellSession
+   $ export E2E_ENV_CONFIG_PREFIX=sbx
+   ```
+
+1. Set e2e test environment target
+
+   ```ShellSession
+   $ export E2E_TARGET_ENV=SBX
+   ```
+
+1. Examine the configuration file
+
+   ```ShellSession
+   $ cat "./e2e-test/src/test/resources/${E2E_ENV_CONFIG_PREFIX}-config.yml" ; echo
+   ```
+
+1. If the settings are not correct, do the following
+
+   1. Open the configuration file
+
+      ```ShellSession
+      $ vim "./e2e-test/src/test/resources/${E2E_ENV_CONFIG_PREFIX}-config.yml"
+      ```
+
+   1. Modify the settings to make them correct
+
+   1. Save and close the file
+
+1. Build the application and skip tests
+
+   ```ShellSession
+   $ mvn clean package -DskipTests
+   ```
+
+1. Set first OKTA test user
+
+   *NOTE: currently using a real Okta contract with a small number of patients since the synthetic data is not working.*
+
+   ```ShellSession
+   $ export OKTA_CONTRACT_NUMBER={okta contract number}
+   $ export OKTA_CLIENT_ID={first okta client id}
+   $ export OKTA_CLIENT_PASSWORD={first okta client secret}
+   ```
+
+1. Set second OKTA test user
+
+   *NOTE: currently using a real Okta contract with a small number of patients since the synthetic data is not working.*
+
+   ```ShellSession
+   $ export SECONDARY_USER_OKTA_CLIENT_ID={second okta client id}
+   $ export SECONDARY_USER_OKTA_CLIENT_PASSWORD={second okta client secret}
+   ```
+
+1. Change to the target directory
+
+   ```ShellSession
+   $ cd ./e2e-test/target
+   ```
+
+1. Run e2e testing
+
+   ```ShellSession
+   $ java -cp e2e-test-0.0.1-SNAPSHOT-fat-tests.jar gov.cms.ab2d.e2etest.TestLauncher "${E2E_TARGET_ENV}" "${OKTA_CONTRACT_NUMBER}"
+   ```
 
 ### Run e2e tests for production
 
