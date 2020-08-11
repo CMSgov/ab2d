@@ -51,6 +51,28 @@ else
 fi
 
 #
+# Define functions
+#
+
+# Import the "get temporary AWS credentials via CloudTamer API" function
+
+source "${START_DIR}/functions/fn_get_temporary_aws_credentials_via_cloudtamer_api.sh"
+
+# Import the "get temporary AWS credentials via AWS STS assume role" function
+
+source "${START_DIR}/functions/fn_get_temporary_aws_credentials_via_aws_sts_assume_role.sh"
+
+#
+# Set AWS target environment
+#
+
+if [ "${CLOUD_TAMER}" == "true" ]; then
+  fn_get_temporary_aws_credentials_via_cloudtamer_api "${CMS_ENV_AWS_ACCOUNT_NUMBER}" "${CMS_ENV}"
+else
+  fn_get_temporary_aws_credentials_via_aws_sts_assume_role "${CMS_ENV_AWS_ACCOUNT_NUMBER}" "${CMS_ENV}"
+fi
+
+#
 # Get secrets
 #
 
