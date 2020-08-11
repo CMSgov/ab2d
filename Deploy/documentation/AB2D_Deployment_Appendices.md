@@ -1398,8 +1398,6 @@
 
    1. Configure the "Parameters" as follows
 
-      - **Accept:** application/fhir+json
-      
       - **Prefer:** respond-async
       
       - **_outputFormat:** application/fhir_ndjson
@@ -7705,8 +7703,7 @@
    ```ShellSession
    $ curl "https://internal-ab2d-dev-820359992.us-east-1.elb.amazonaws.com/api/v1/fhir/Patient/\$export?_outputFormat=application%2Ffhir%2Bndjson&_type=ExplanationOfBenefit" \
      -sD - \
-     -H "accept: application/json" \
-     -H "Accept: application/fhir+json" \
+     -H "Accept: application/json" \
      -H "Prefer: respond-async" \
      -H "Authorization: Bearer ${BEARER_TOKEN}"
    ```
@@ -7716,8 +7713,7 @@
    ```ShellSession
    $ curl "https://sandbox.ab2d.cms.gov/api/v1/fhir/Patient/\$export?_outputFormat=application%2Ffhir%2Bndjson&_type=ExplanationOfBenefit" \
      -sD - \
-     -H "accept: application/json" \
-     -H "Accept: application/fhir+json" \
+     -H "Accept: application/json" \
      -H "Prefer: respond-async" \
      -H "Authorization: Bearer ${BEARER_TOKEN}"
    ```
@@ -7896,7 +7892,7 @@
    $ cat $FILE
    ```
 
-1. Try the download opeartion a second time
+1. Try the download operation a second time
 
    ```ShellSession
    $ curl "https://sandbox.ab2d.cms.gov/api/v1/fhir/Job/${JOB}/file/${FILE}" \
@@ -7954,8 +7950,7 @@
    ```ShellSession
    $ curl "https://api.ab2d.cms.gov/api/v1/fhir/Patient/\$export?_outputFormat=application%2Ffhir%2Bndjson&_type=ExplanationOfBenefit" \
      -sD - \
-     -H "accept: application/json" \
-     -H "Accept: application/fhir+json" \
+     -H "Accept: application/json" \
      -H "Prefer: respond-async" \
      -H "Authorization: Bearer ${BEARER_TOKEN}"
    ```
@@ -8108,7 +8103,7 @@
    $ cat $FILE
    ```
 
-1. Try the download opeartion a second time
+1. Try the download operation a second time
 
    ```ShellSession
    $ curl "https://api.ab2d.cms.gov/api/v1/fhir/Job/${JOB}/file/${FILE}" \

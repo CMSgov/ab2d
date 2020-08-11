@@ -42,15 +42,11 @@ public class FileDownloadAPI {
     private LogManager eventLogger;
 
     @ApiOperation(value = "Downloads a file produced by an export job.", response = String.class,
-            produces = NDJSON_FIRE_CONTENT_TYPE + " or " + ZIPFORMAT,
+            produces = NDJSON_FIRE_CONTENT_TYPE,
             authorizations = {
                     @Authorization(value = "Authorization", scopes = {
                             @AuthorizationScope(description = "Downloads Export File", scope = "Authorization") })
             })
-    @ApiImplicitParams(value = {
-            @ApiImplicitParam(name = "Accept", required = false, paramType = "header", value =
-                    NDJSON_FIRE_CONTENT_TYPE + " or " + ZIPFORMAT, defaultValue = NDJSON_FIRE_CONTENT_TYPE)}
-    )
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Returns the requested file as " +
                     NDJSON_FIRE_CONTENT_TYPE + " or " + ZIPFORMAT, responseHeaders = {
@@ -64,8 +60,8 @@ public class FileDownloadAPI {
                     SwaggerConfig.OperationOutcome.class)}
     )
     @ResponseStatus(value = HttpStatus.OK)
-    @GetMapping(value = "/Job/{jobUuid}/file/{filename}")
-    public ResponseEntity<Void> downloadFile(
+    @GetMapping(value = "/Job/{jobUuid}/file/{filename}", produces = { NDJSON_FIRE_CONTENT_TYPE })
+    public ResponseEntity downloadFile(
             HttpServletRequest request,
             @ApiParam(value = "A job identifier", required = true) @PathVariable @NotBlank String jobUuid,
             @ApiParam(value = "A file name", required = true) @PathVariable @NotBlank String filename) throws IOException {
