@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StreamUtils;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -26,11 +27,10 @@ public class AttestationService {
 
     private String loadContract(String contractId) {
         String location = "classpath:attestations/" + contractId + ".json";
-        try {
-            return StreamUtils.copyToString(
-                    resourceLoader.getResource(location).getInputStream(), Charset.defaultCharset());
+        try (InputStream is = resourceLoader.getResource(location).getInputStream()) {
+            return StreamUtils.copyToString(is, Charset.defaultCharset());
         } catch (IOException e) {
-            throw new IllegalArgumentException("contractId");
+            throw new IllegalArgumentException("Could not load contract id:" + contractId);
         }
     }
 }
