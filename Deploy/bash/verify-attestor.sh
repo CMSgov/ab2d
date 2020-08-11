@@ -160,7 +160,7 @@ fi
 RESULT=$(psql \
   --host "${DATABASE_HOST}" \
   --username "${DATABASE_USER}" \
-  --dbname "${DATABASE_NAME} \
+  --dbname "${DATABASE_NAME}" \
   --tuples-only \
   --command "select status from job where job_uuid = '${JOB_ID}';")
 
