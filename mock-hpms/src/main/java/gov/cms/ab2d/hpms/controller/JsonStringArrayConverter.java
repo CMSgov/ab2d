@@ -14,7 +14,7 @@ public class JsonStringArrayConverter implements Converter<String, JsonStringArr
 
     public JsonStringArray convert(@SuppressWarnings("NullableProblems") String source) {
         try {
-            return new JsonStringArray(Arrays.asList((jsonMapper.readValue(source, String[].class))));
+            return new JsonStringArray(Arrays.asList(jsonMapper.readValue(source, String[].class)));
         } catch (JsonProcessingException jpe) {
             throw new RuntimeException(jpe);
         }
