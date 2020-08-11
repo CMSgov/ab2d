@@ -250,7 +250,8 @@ module "cloudwatch" {
   source                  = "../../modules/cloudwatch"
   env                     = var.env
   autoscaling_arn         = module.api.aws_autoscaling_policy_percent_capacity_arn
-  # sns_arn                 = module.sns.aws_sns_topic_AB2D-Alarms_arn
+  # sns_arn                 = module.sns.aws_sns_topic_ab2d_alarms_arn
+  sns_arn                 = "arn:aws:sns:us-east-1:${var.aws_account_number}:ab2d-east-prod-cloudwatch-alarms"
   autoscaling_name        = module.api.aws_autoscaling_group_name
   controller_server_id    = "${data.aws_instance.ab2d_deployment_controller.instance_id}"
   s3_bucket_name          = var.file_bucket_name
