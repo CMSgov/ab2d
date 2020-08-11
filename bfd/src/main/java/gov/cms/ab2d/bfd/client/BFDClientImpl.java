@@ -16,6 +16,7 @@ import org.hl7.fhir.dstu3.model.Bundle;
 import org.hl7.fhir.dstu3.model.CapabilityStatement;
 import org.hl7.fhir.dstu3.model.ExplanationOfBenefit;
 import org.hl7.fhir.dstu3.model.Patient;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.retry.annotation.Backoff;
@@ -64,9 +65,8 @@ public class BFDClientImpl implements BFDClient {
     @Value("${bfd.hash.iter}")
     private int bfdHashIter;
 
-    public BFDClientImpl(IGenericClient bfdFhirRestClient) {
-        this.client = bfdFhirRestClient;
-    }
+    @Autowired
+    private BFDSearch bfdSearch;
 
     /**
      * Queries Blue Button server for Explanations of Benefit associated with a given patient
