@@ -155,6 +155,10 @@ if [ -z "${DATABASE_NAME}" ]; then
   exit 1
 fi
 
+# Set PostgreSQL password
+
+export PGPASSWORD="${DATABASE_PASSWORD}"
+
 # Determine if customer export was successful
 
 RESULT=$(psql \
