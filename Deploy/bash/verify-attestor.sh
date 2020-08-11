@@ -51,6 +51,25 @@ else
 fi
 
 #
+# Set AWS account numbers
+#
+
+CMS_ECR_REPO_ENV_AWS_ACCOUNT_NUMBER=653916833532
+
+if [ "${CMS_ENV}" == "ab2d-dev" ]; then
+  CMS_ENV_AWS_ACCOUNT_NUMBER=349849222861
+elif [ "${CMS_ENV}" == "ab2d-sbx-sandbox" ]; then
+  CMS_ENV_AWS_ACCOUNT_NUMBER=777200079629
+elif [ "${CMS_ENV}" == "ab2d-east-impl" ]; then
+  CMS_ENV_AWS_ACCOUNT_NUMBER=330810004472
+elif [ "${CMS_ENV}" == "ab2d-east-prod" ]; then
+  CMS_ENV_AWS_ACCOUNT_NUMBER=595094747606
+else
+  echo "ERROR: 'CMS_ENV' environment is unknown."
+  exit 1
+fi
+
+#
 # Define functions
 #
 
