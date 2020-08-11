@@ -95,6 +95,11 @@ fi
 # Get secrets
 #
 
+# Change to "python3" directory
+
+cd "${START_DIR}/.."
+cd python3
+
 # Get database host secret
 
 DATABASE_HOST=$(./get-database-secret.py $CMS_ENV database_host $DATABASE_SECRET_DATETIME)
