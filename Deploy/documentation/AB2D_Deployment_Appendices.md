@@ -10918,6 +10918,99 @@ $ sed -i "" 's%cms-ab2d[\/]prod%cms-ab2d/dev%g' _includes/head.html (edited)
 
 ## Appendix PPP: Migrate to reserved RDS instance
 
+1. Connect to Cisco VPN
+
+1. Set target environment variable
+
+   *Example for "Dev" environment:*
+
+   ```ShellSession
+   $ TARGET_ENVIRONMENT=ab2d-dev
+   ```
+
+   *Example for "Sbx" environment:*
+
+   ```ShellSession
+   $ TARGET_ENVIRONMENT=ab2d-sbx-sandbox
+   ```
+
+   *Example for "Impl" environment:*
+
+   ```ShellSession
+   $ TARGET_ENVIRONMENT=ab2d-east-impl
+   ```
+
+   *Example for "Prod" environment:*
+
+   ```ShellSession
+   $ TARGET_ENVIRONMENT=ab2d-east-prod
+   ```
+
+1. Change to the "bash" directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d/Deploy/bash
+   ```
+
+1. Set target environment
+
+   ```ShellSession
+   $ source ./set-env.sh
+   ```
+
+1. Get a count of the autoscaling groups in the target environment
+
+   ```ShellSession
+   $ aws --region "${AWS_DEFAULT_REGION}" autoscaling describe-auto-scaling-groups \
+     --query "AutoScalingGroups[*].AutoScalingGroupName" \
+     --output json \
+     | jq 'length'
+   ```
+
+1. If the number of autscaling groups is not 2, stop and redeploy before proceeding
+
+1. Shut down API nodes
+
+   *Note that adding 75 seconds with "-v+75S" is a Mac-only way of doing this.*
+
+   ```ShellSession
+   $ API_AUTOSCALING_GROUP_NAME=$(aws --region "${AWS_DEFAULT_REGION}" autoscaling describe-auto-scaling-groups \
+     --query "AutoScalingGroups[*].AutoScalingGroupName" \
+     --output json \
+     | jq 'sort' \
+     | jq '.[0]' \
+     | tr -d '"') \
+     && START_TIME=$(date -u -v+75S +%Y-%m-%dT%H:%M:%SZ) \
+     && aws --region "${AWS_DEFAULT_REGION}" autoscaling put-scheduled-update-group-action \
+     --auto-scaling-group-name "${API_AUTOSCALING_GROUP_NAME}" \
+     --scheduled-action-name shutdown-nodes \
+     --start-time "${START_TIME}" \
+     --min-size 0 \
+     --max-size 0 \
+     --desired-capacity 0
+   ```
+
+1. Shut down worker nodes
+
+   *Note that adding 75 seconds with "-v+75S" is a Mac-only way of doing this.*
+
+   ```ShellSession
+   $ WORKER_AUTOSCALING_GROUP_NAME=$(aws --region "${AWS_DEFAULT_REGION}" autoscaling describe-auto-scaling-groups \
+     --query "AutoScalingGroups[*].AutoScalingGroupName" \
+     --output json \
+     | jq 'sort' \
+     | jq '.[1]' \
+     | tr -d '"') \
+     && START_TIME=$(date -u -v+75S +%Y-%m-%dT%H:%M:%SZ) \
+     && aws --region "${AWS_DEFAULT_REGION}" autoscaling put-scheduled-update-group-action \
+     --auto-scaling-group-name "${WORKER_AUTOSCALING_GROUP_NAME}" \
+     --scheduled-action-name shutdown-nodes \
+     --start-time "${START_TIME}" \
+     --min-size 0 \
+     --max-size 0 \
+     --desired-capacity 0
+   ```
+
 1. Backup existing data for target environment
 
    1. Open Chrome
@@ -10937,18 +11030,6 @@ $ sed -i "" 's%cms-ab2d[\/]prod%cms-ab2d/dev%g' _includes/head.html (edited)
    1. Wait for jenkins job to complete
 
 1. Retrieve CSV data from the Jenkins agent
-
-   1. Change to the "bash" directory
-
-      ```ShellSession
-      $ cd ~/code/ab2d/Deploy/bash
-      ```
-
-   1. Set target environment
-
-      ```ShellSession
-      $ source ./set-env.sh
-      ```
 
    1. Set the Jenkins agent name
 
@@ -11008,3 +11089,37 @@ $ sed -i "" 's%cms-ab2d[\/]prod%cms-ab2d/dev%g' _includes/head.html (edited)
       ```ShellSession
       $ tar -xzvf --strip-components=4 ab2d-east-prod.tar.gz
       ```
+
+1. Protect the existing RDS database
+
+   1. Change to the "bash" directory
+
+      ```ShellSession
+      $ cd ~/code/ab2d/Deploy/bash
+      ```
+
+   1. Set target environment
+
+      ```ShellSession
+      $ source ./set-env.sh
+      ```
+
+   1. Apply delete protection to the existing RDS instance
+
+      ```ShellSession
+      $ aws --region "${AWS_DEFAULT_REGION}" rds modify-db-instance \
+        --db-instance-identifier 'ab2d' \
+	--deletion-protection
+      ```
+
+   1. Verify that delete protection is true
+
+      ```ShellSession
+      $ aws --region "${AWS_DEFAULT_REGION}" rds describe-db-instances \
+        --query "DBInstances[?DBInstanceIdentifier=='ab2d'].DeletionProtection" \
+	--output text
+      ```
+
+1. Remove the existing RDS database from terraform state
+
+   > *** TO DO ***
