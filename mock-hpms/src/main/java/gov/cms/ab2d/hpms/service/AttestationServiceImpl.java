@@ -1,5 +1,6 @@
 package gov.cms.ab2d.hpms.service;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
@@ -11,6 +12,9 @@ import java.nio.charset.Charset;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static java.util.Collections.emptyList;
+
+@Slf4j
 @Service
 public class AttestationServiceImpl implements AttestationService {
 
@@ -22,14 +26,19 @@ public class AttestationServiceImpl implements AttestationService {
     }
 
     public List<String> retrieveAttestations(List<String> contractIds) {
-        return contractIds.stream().map(this::loadContract).collect(Collectors.toList());
+        try {
+            return contractIds.stream().map(this::loadContract).collect(Collectors.toList());
+        } catch (IllegalArgumentException iae) {
+            return emptyList();
+        }
     }
 
     private String loadContract(String contractId) {
         String location = "classpath:attestations/" + contractId + ".json";
         try (InputStream is = resourceLoader.getResource(location).getInputStream()) {
             return StreamUtils.copyToString(is, Charset.defaultCharset());
-        } catch (IOException e) {
+        } catch (IOException ioe) {
+            log.warn("Could not load contract id:" + contractId);
             throw new IllegalArgumentException("Could not load contract id:" + contractId);
         }
     }

@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.util.List;
 import java.util.StringJoiner;
@@ -24,7 +25,10 @@ public class HpmsMockController {
     private final AttestationService attestationService;
 
     @Value("classpath:organizations.json")
-    private Resource resource;
+    private Resource organizationData;
+
+    @Value("classpath:attestations/attest_error.json")
+    private Resource attestError;
 
     public HpmsMockController(AttestationService attestationService) {
         this.attestationService = attestationService;
@@ -32,13 +36,16 @@ public class HpmsMockController {
 
     @GetMapping("/orgs/info")
     public ResponseEntity<String> getOrganizationInfo() throws IOException {
-        String response = StreamUtils.copyToString(resource.getInputStream(), Charset.defaultCharset());
-
+        String response = loadDataFile(organizationData.getInputStream());
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
+    private String loadDataFile(InputStream inputStream) throws IOException {
+        return StreamUtils.copyToString(inputStream, Charset.defaultCharset());
+    }
+
     @GetMapping("/contracts/status")
-    public ResponseEntity<String> getAttestation(@RequestParam() JsonStringArray contractIds) {
+    public ResponseEntity<String> getAttestation(@RequestParam() JsonStringArray contractIds) throws IOException {
         List<String> attestations = attestationService.retrieveAttestations(contractIds.getValues());
         if (attestations.isEmpty()) {
             return errorAttestationResponse();
@@ -46,8 +53,9 @@ public class HpmsMockController {
         return new ResponseEntity<>(formatAttestationPayload(attestations), HttpStatus.OK);
     }
 
-    private ResponseEntity<String> errorAttestationResponse() {
-        return new ResponseEntity<>("42", HttpStatus.BAD_REQUEST);
+    private ResponseEntity<String> errorAttestationResponse() throws IOException {
+        String errorResponse = loadDataFile(attestError.getInputStream());
+        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
     }
 
     String formatAttestationPayload(List<String> jsonEntries) {
