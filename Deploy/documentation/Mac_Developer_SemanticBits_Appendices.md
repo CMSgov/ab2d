@@ -5,7 +5,7 @@
 1. [Appendix A: PostgreSQL 11](#appendix-a-postgresql-11)
    * [Install PostgreSQL 11](#install-postgresql-11)
    * [Uninstall PostgreSQL 11](#uninstall-postgresql-11)
-1. [Appendix B: CMS VPN access](#appendix-b-cms-vpn-access)
+1. [Appendix B: CMS VPN and CloudTamer access](#appendix-b-cms-vpn-and-cloudtamer-access)
    * [Create a Jira ticket for CMS VPN ticket access](#create-a-jira-ticket-for-cms-vpn-ticket-access)
    * [Install and configure Google Authenticator](#install-and-configure-google-authenticator)
    * [Install and configure Cisco AnyConnect VPN](#install-and-configure-cisco-anyconnect-vpn)
@@ -137,7 +137,7 @@
    $ netstat -an | grep 5432
    ```
 
-## Appendix B: CMS VPN access
+## Appendix B: CMS VPN and CloudTamer access
 
 ### Create a Jira ticket for CMS VPN ticket access
 
@@ -153,41 +153,30 @@
 
    *Format:*
    
-   **Summary:** AWS VPN access for {your eua id}
+   **Summary:** Establish VPN and CloudTamer access for Fred Smith
 
-   **Project Name:** Project 058 BCDA
+   **CMS Business Unit:** 
 
-   **Account Alias:** None
+   **Project Name:** AB2D Sandbox
+
+   **Account Alias:** aws-cms-oit-iusg-acct95
 
    **Types of Access/Resets:** Cisco AnyConnect Access
 
-   **Approvers:** Andrew Harnish
+   **Approvers:** Stephen Walter
 
    **Description:**
 
    ```
-   I'm an engineer working on the AB2D project at CMS. Can I have AWS VPN access?
-
-   User ID: {your eua id}
-
-   Cellphone: {your cellphone number}
-
-   Full name: {your first and last name}
-
-   Email: {your semanticbits email}
-
-   Thanks,
-
-   {your first name}
+   Copy, paste, and edit description from this ticket:
+   https://jiraent.cms.gov/browse/CLDSUPSD-11984
    ```
 
    **Severity:** Minimal
 
    **Urgency:** Medium
 
-   **Reported Source:** Self Service
-
-   **Requested Due Date:** {3 business days from today's date}
+   **Requested Due Date:** {tomorrow}
 
 1. Select **Create**
 
