@@ -1,6 +1,7 @@
 package gov.cms.ab2d.common.health;
 
 import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang3.SystemUtils;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
@@ -15,7 +16,7 @@ class FileSystemCheckTest {
     @Test
     void canWriteFile() throws IOException {
         assertFalse(FileSystemCheck.canWriteFile(null, false));
-        assertTrue(FileSystemCheck.canWriteFile("/tmp", false));
+        assertTrue(FileSystemCheck.canWriteFile(System.getProperty("java.io.tmpdir"), false));
         assertTrue(FileSystemCheck.canWriteFile(".", false));
         assertFalse(FileSystemCheck.canWriteFile("/notarealdir", false));
         String newTestDir = "/tmp/healthTestDir";
@@ -26,10 +27,13 @@ class FileSystemCheckTest {
     @Test
     void unableToWriteToDir() {
         String randomDirName = RandomStringUtils.randomAlphabetic(20);
-        File newDir = new File("./" + randomDirName);
+        File newDir = new File("." + File.separator + randomDirName);
         assertTrue(newDir.mkdir());
-        assertTrue(newDir.setReadOnly());
-        assertFalse(FileSystemCheck.canWriteFile(randomDirName, false));
+        // Windows does not support the ability to turn off creating files in a directory
+        if (!SystemUtils.IS_OS_WINDOWS) {
+            assertTrue(newDir.setReadOnly());
+            assertFalse(FileSystemCheck.canWriteFile(randomDirName, false));
+        }
         assertTrue(newDir.delete());
     }
 
