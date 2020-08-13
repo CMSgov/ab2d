@@ -1,5 +1,6 @@
 package gov.cms.ab2d.bfd.client;
 
+import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.rest.client.api.IGenericClient;
 import ca.uhn.fhir.rest.gclient.ICriterion;
 import ca.uhn.fhir.rest.gclient.TokenClientParam;
@@ -8,6 +9,7 @@ import ca.uhn.fhir.rest.server.exceptions.InvalidRequestException;
 import ca.uhn.fhir.rest.server.exceptions.ResourceNotFoundException;
 import com.newrelic.api.agent.NewRelic;
 import com.newrelic.api.agent.Segment;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Hex;
@@ -50,6 +52,7 @@ public class BFDClientImpl implements BFDClient {
     @Value("${bfd.contract.to.bene.pagesize}")
     private int contractToBenePageSize;
 
+    @Autowired
     private IGenericClient client;
 
     @Value("${bfd.hicn.hash}")
@@ -67,6 +70,9 @@ public class BFDClientImpl implements BFDClient {
 
     @Autowired
     private BFDSearch bfdSearch;
+
+    @Autowired
+    private FhirContext fhirContext;
 
     /**
      * Queries Blue Button server for Explanations of Benefit associated with a given patient
@@ -112,6 +118,7 @@ public class BFDClientImpl implements BFDClient {
      * objects
      * @throws ResourceNotFoundException when the requested patient does not exist
      */
+    @SneakyThrows
     @Override
     @Retryable(
             maxAttemptsExpression = "${bfd.retry.maxAttempts:3}",
@@ -119,18 +126,11 @@ public class BFDClientImpl implements BFDClient {
             exclude = { ResourceNotFoundException.class }
     )
     public Bundle requestEOBFromServer(String patientID, OffsetDateTime sinceTime) {
-        var excludeSAMHSA = new TokenClientParam("excludeSAMHSA").exactly().code("true");
-        DateRangeParam updatedSince = null;
-        if (sinceTime != null) {
-            Date d = Date.from(sinceTime.toInstant());
-            updatedSince = new DateRangeParam(d, null);
-        }
-
         final Segment bfdSegment = NewRelic.getAgent().getTransaction().startSegment("BFD Call for patient with patient ID " + patientID +
                 " using since " + sinceTime);
         bfdSegment.setMetricName("RequestEOB");
 
-        Bundle bundle = client.search()
+        /*Bundle bundle = client.search()
                 .forResource(ExplanationOfBenefit.class)
                 .where(ExplanationOfBenefit.PATIENT.hasId(patientID))
                 .and(excludeSAMHSA)
@@ -138,7 +138,11 @@ public class BFDClientImpl implements BFDClient {
                 .count(pageSize)
                 .returnBundle(Bundle.class)
                 .encodedJson()
-                .execute();
+                .execute();*/
+        String result = bfdSearch.searchEOB(patientID, sinceTime);
+
+        var jsonParser = fhirContext.newJsonParser();
+        Bundle bundle = jsonParser.parseResource(Bundle.class, result);
 
         bfdSegment.end();
 

@@ -1,6 +1,9 @@
 package gov.cms.ab2d.bfd.client;
 
+import java.io.IOException;
+import java.time.OffsetDateTime;
+
 public interface BFDSearch {
 
-    AB2DBundle searchEOB();
+    String searchEOB(String patientId, OffsetDateTime since) throws IOException, InterruptedException;
 }
