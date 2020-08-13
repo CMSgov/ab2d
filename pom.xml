@@ -13,6 +13,7 @@
         <module>optout</module>
         <module>audit</module>
         <module>hpms</module>
+        <module>mock-hpms</module>
         <module>e2e-test</module>
         <module>load-test</module>
     </modules>
@@ -97,6 +98,10 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-pmd-plugin</artifactId>
                 <version>3.13.0</version>
+                <configuration>
+                    <!-- Get rid of the PMD plugin warnings for: "Unable to locate Source XRef to link to - DISABLED" -->
+                    <linkXRef>false</linkXRef>
+                </configuration>
                 <executions>
                     <execution>
                         <id>validate</id>
