@@ -13,21 +13,23 @@ import gov.cms.ab2d.eventlogger.utils.UtilMethods;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
-
+import javax.annotation.PostConstruct;
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.List;
 import java.util.UUID;
+import java.util.function.Predicate;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
-import static gov.cms.ab2d.common.util.Constants.USERNAME;
-import static gov.cms.ab2d.common.util.Constants.REQUEST_ID;
-import static gov.cms.ab2d.common.util.Constants.HEALTH_ENDPOINT;
-import static gov.cms.ab2d.common.util.Constants.STATUS_ENDPOINT;
+import static gov.cms.ab2d.common.util.Constants.*;
 
 @Slf4j
 @Component
@@ -46,15 +48,41 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
     @Autowired
     private LogManager eventLogger;
 
+    @Value("#{'${api.requestlogging.filter}'.split(',')}")
+    private List<String> uriFilters;
+
+    private Predicate<String> uriFilter;
+
+    @PostConstruct
+    private void constructFilters() {
+
+        // Check whether no filters were provided
+        if (uriFilters == null) {
+            log.warn("no filters provided so all api requests will be logged ");
+            uriFilter = uri -> false;
+            return;
+        }
+
+        // Compiled filters, much quicker if patterns are pre-compiled
+        List<Predicate<String>> compiledFilters = uriFilters.stream()
+                .map(Pattern::compile).map(Pattern::asPredicate)
+                .collect(Collectors.toList());
+
+        // Reduce filters to single predicate statement
+        uriFilter = compiledFilters.stream().reduce(Predicate::or).orElse(uri -> false).negate();
+    }
+
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
             throws ServletException, IOException {
 
         String jobId = UtilMethods.parseJobId(request.getRequestURI());
+        String requestUri = request.getRequestURI();
 
         if (shouldBePublic(request.getRequestURI())) {
-            String requestId = logApiRequestEvent(request, null, null, jobId);
-            request.setAttribute(REQUEST_ID, requestId);
+//            if (uriFilter.test(requestUri)) {
+                logApiRequestEvent(request, null, null, jobId);
+//            }
             chain.doFilter(request, response);
             return;
         }
@@ -65,13 +93,12 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
             token = getToken(request);
             username = getUserName(token);
         } catch (Exception ex) {
-            String requestId = logApiRequestEvent(request, token, username, jobId);
-            request.setAttribute(REQUEST_ID, requestId);
+            // Always log a failing request?
+            logApiRequestEvent(request, token, username, jobId);
             throw ex;
         }
 
-        String requestId = logApiRequestEvent(request, token, username, jobId);
-        request.setAttribute(REQUEST_ID, requestId);
+        logApiRequestEvent(request, token, username, jobId);
 
         if (username != null) {
             MDC.put(USERNAME, username);
@@ -88,13 +115,14 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
         chain.doFilter(request, response);
     }
 
-    private String logApiRequestEvent(HttpServletRequest request, String token, String username, String jobId) {
+    private void logApiRequestEvent(HttpServletRequest request, String token, String username, String jobId) {
         String url = UtilMethods.getURL(request);
         String uniqueId = UUID.randomUUID().toString();
         ApiRequestEvent requestEvent = new ApiRequestEvent(username, jobId, url, UtilMethods.getIpAddress(request),
                 token, uniqueId);
         eventLogger.log(requestEvent);
-        return uniqueId;
+
+        request.setAttribute(REQUEST_ID, uniqueId);
     }
 
     /**
