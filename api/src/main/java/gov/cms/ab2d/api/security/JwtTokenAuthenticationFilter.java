@@ -48,9 +48,13 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
     @Autowired
     private LogManager eventLogger;
 
+    // Filters for public URIs
     @Value("#{'${api.requestlogging.filter}'.split(',')}")
     private List<String> uriFilters;
 
+    // Predicate used for filtering public uris
+    // If predicate.test("uri") -> true then URI does not match any regex filters and should be logged
+    // If predicate.test("uri") -> false then URI does match at least one regex filter and should not be logged
     private Predicate<String> uriFilter;
 
     @PostConstruct
@@ -77,12 +81,11 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
             throws ServletException, IOException {
 
         String jobId = UtilMethods.parseJobId(request.getRequestURI());
-        String requestUri = request.getRequestURI();
 
         if (shouldBePublic(request.getRequestURI())) {
-//            if (uriFilter.test(requestUri)) {
+            if (uriFilter.test(request.getRequestURI())) {
                 logApiRequestEvent(request, null, null, jobId);
-//            }
+            }
             chain.doFilter(request, response);
             return;
         }

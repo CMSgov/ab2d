@@ -10,13 +10,12 @@ import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.eventlogger.LoggableEvent;
 import gov.cms.ab2d.eventlogger.events.ApiRequestEvent;
 import gov.cms.ab2d.eventlogger.reports.sql.DoAll;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
@@ -26,10 +25,8 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-import static gov.cms.ab2d.api.util.Constants.ADMIN_ROLE;
 import static gov.cms.ab2d.common.util.Constants.*;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -63,23 +60,19 @@ class JwtAuthenticationFilterTest {
     @Container
     private static final PostgreSQLContainer postgreSQLContainer = new AB2DPostgresqlContainer();
 
-    private String token;
-
-    @BeforeEach
-    public void before() {
-        try {
-            token = testUtil.setupToken(List.of(ADMIN_ROLE));
-        } catch (Exception exception) {
-            fail("could not create token for tests", exception);
-        }
+    @AfterEach
+    public void after() {
+        doAll.delete();
     }
 
     @Test
-    void filterPublicRequests() {
-
+    void testMatchFilters() {
 
         try {
-            mockMvc.perform(get(API_PREFIX + HEALTH_ENDPOINT))
+            mockMvc.perform(get(HEALTH_ENDPOINT))
+                    .andExpect(status().is(200));
+
+            mockMvc.perform(get(STATUS_ENDPOINT))
                     .andExpect(status().is(200));
         } catch (Exception exception) {
             fail("could not perform basic health check", exception);
@@ -93,32 +86,24 @@ class JwtAuthenticationFilterTest {
 
             ApiRequestEvent lastRequest = (ApiRequestEvent) currentEvents.get(0);
             assertFalse(lastRequest.getUrl().contains(HEALTH_ENDPOINT), "health endpoint should be filtered");
+            assertFalse(lastRequest.getUrl().contains(STATUS_ENDPOINT), "status endpoint should be filtered");
         }
     }
 
     @Test
-    void filterAuthenticatedRequests() {
-
-
+    void testNotMatchFilters() {
         try {
-            mockMvc.perform(get(API_PREFIX + FHIR_PREFIX + "/Patient/$export")
-                    .contentType(MediaType.APPLICATION_JSON))
-                    .andExpect(status().is(401));
+            // Expect a 404 because the static site is not yet included in the constructed JAR/resources
+            // However, this URI is whitelisted as public so it serves for the test
+            mockMvc.perform(get("/swagger-ui"))
+                    .andExpect(status().is(404));
 
         } catch (Exception exception) {
-            fail("could not perform basic health check");
+            fail("mock mvc call to pull swagger-ui returned unexpected status code", exception);
         }
 
         List<LoggableEvent> currentEvents = doAll.load(ApiRequestEvent.class);
-    }
 
-    @Test
-    public void logRequests() {
-
-    }
-
-    @Test
-    public void emptyFilterListIsValid() {
-
+        assertEquals(1, currentEvents.size(), "should have allowed request for swagger docs to pass through");
     }
 }
