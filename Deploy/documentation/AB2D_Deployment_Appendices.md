@@ -131,6 +131,7 @@
 1. [Appendix NNN: Manually install Chef Inspec on existing Jenkins Agent](#appendix-nnn-manually-install-chef-inspec-on-existing-jenkins-agent)
 1. [Appendix OOO: Connect to Jenkins agent through the Jenkins master using the ProxyJump flag](#appendix-ooo-connect-to-jenkins-agent-through-the-jenkins-master-using-the-proxyjump-flag)
 1. [Appendix PPP: Migrate to reserved RDS instance](#appendix-ppp-migrate-to-reserved-rds-instance)
+1. [Appendix QQQ: Get private IP address](#appendix-qqq-get-private-ip-address)
 
 ## Appendix A: Access the CMS AWS console
 
@@ -849,12 +850,12 @@
 
    ```ShellSession
    $ psql --host  "${DB_HOST}" \
-       --username "${DB_USER}" \
-       --dbname "${MAIN_DB_NAME}" \
-       --command "SELECT pg_terminate_backend(pg_stat_activity.pid) \
-         FROM pg_stat_activity \
-         WHERE pg_stat_activity.datname = '${TARGET_DB_NAME}' \
-         AND pid <> pg_backend_pid();"
+     --username "${DB_USER}" \
+     --dbname "${MAIN_DB_NAME}" \
+     --command "SELECT pg_terminate_backend(pg_stat_activity.pid) \
+       FROM pg_stat_activity \
+       WHERE pg_stat_activity.datname = '${TARGET_DB_NAME}' \
+       AND pid <> pg_backend_pid();"
    ```
 
 1. Delete the database
@@ -10946,16 +10947,10 @@ $ sed -i "" 's%cms-ab2d[\/]prod%cms-ab2d/dev%g' _includes/head.html (edited)
    $ TARGET_ENVIRONMENT=ab2d-east-prod
    ```
 
-1. Change to the "bash" directory
-
-   ```ShellSession
-   $ cd ~/code/ab2d/Deploy/bash
-   ```
-
 1. Set target environment
 
    ```ShellSession
-   $ source ./set-env.sh
+   $ source ~/code/ab2d/Deploy/bash/set-env.sh
    ```
 
 1. Get a count of the autoscaling groups in the target environment
@@ -11059,7 +11054,7 @@ $ sed -i "" 's%cms-ab2d[\/]prod%cms-ab2d/dev%g' _includes/head.html (edited)
       ```ShellSession
       $ ssh -tt -i "~/.ssh/ab2d-mgmt-east-dev.pem" \
         "ec2-user@${JENKINS_AGENT_PRIVATE_IP}" \
-        "sudo cp /var/lib/jenkins/database_backup/ab2d-east-prod.tar.gz /home/ec2-user"
+        "sudo cp /var/lib/jenkins/database_backup/${TARGET_ENVIRONMENT}.tar.gz /home/ec2-user"
       ```
 
    1. Change ownership on the database backup file
@@ -11067,7 +11062,7 @@ $ sed -i "" 's%cms-ab2d[\/]prod%cms-ab2d/dev%g' _includes/head.html (edited)
       ```ShellSession
       $ ssh -tt -i "~/.ssh/ab2d-mgmt-east-dev.pem" \
         "ec2-user@${JENKINS_AGENT_PRIVATE_IP}" \
-        "sudo chown ec2-user:ec2-user /home/ec2-user/ab2d-east-prod.tar.gz"
+        "sudo chown ec2-user:ec2-user /home/ec2-user/${TARGET_ENVIRONMENT}.tar.gz"
       ```
 
    1. Change to the do "Downloads" directory
@@ -11080,14 +11075,16 @@ $ sed -i "" 's%cms-ab2d[\/]prod%cms-ab2d/dev%g' _includes/head.html (edited)
 
       ```ShellSession
       $ scp -i ~/.ssh/ab2d-mgmt-east-dev.pem \
-        "ec2-user@${JENKINS_AGENT_PRIVATE_IP}:~/ab2d-east-prod.tar.gz" \
+        "ec2-user@${JENKINS_AGENT_PRIVATE_IP}:~/${TARGET_ENVIRONMENT}.tar.gz" \
 	.
       ```
 
    1. Uncompress the database backup file
 
+      *Note that "--strip-components=4" must appear at end on command.*
+
       ```ShellSession
-      $ tar -xzvf --strip-components=4 ab2d-east-prod.tar.gz
+      $ tar -xzvf "${TARGET_ENVIRONMENT}.tar.gz" --strip-components=4
       ```
 
 1. Protect the existing RDS database
@@ -11122,4 +11119,63 @@ $ sed -i "" 's%cms-ab2d[\/]prod%cms-ab2d/dev%g' _includes/head.html (edited)
 
 1. Remove the existing RDS database from terraform state
 
+   1. Change to terraform target environment
+   
+      ```ShellSession
+      $ cd "${HOME}/code/ab2d/Deploy/terraform/environments/${TARGET_ENVIRONMENT}"
+      ```
+
    > *** TO DO ***
+
+
+1. Start API nodes
+
+   *Note that adding 75 seconds with "-v+75S" is a Mac-only way of doing this.*
+
+   ```ShellSession
+   $ API_AUTOSCALING_GROUP_NAME=$(aws --region "${AWS_DEFAULT_REGION}" autoscaling describe-auto-scaling-groups \
+     --query "AutoScalingGroups[*].AutoScalingGroupName" \
+     --output json \
+     | jq 'sort' \
+     | jq '.[0]' \
+     | tr -d '"') \
+     && START_TIME=$(date -u -v+75S +%Y-%m-%dT%H:%M:%SZ) \
+     && aws --region "${AWS_DEFAULT_REGION}" autoscaling put-scheduled-update-group-action \
+     --auto-scaling-group-name "${API_AUTOSCALING_GROUP_NAME}" \
+     --scheduled-action-name startup-nodes \
+     --start-time "${START_TIME}" \
+     --min-size 2 \
+     --max-size 4 \
+     --desired-capacity 2
+   ```
+
+1. Start worker nodes
+
+   *Note that adding 75 seconds with "-v+75S" is a Mac-only way of doing this.*
+
+   ```ShellSession
+   $ WORKER_AUTOSCALING_GROUP_NAME=$(aws --region "${AWS_DEFAULT_REGION}" autoscaling describe-auto-scaling-groups \
+     --query "AutoScalingGroups[*].AutoScalingGroupName" \
+     --output json \
+     | jq 'sort' \
+     | jq '.[1]' \
+     | tr -d '"') \
+     && START_TIME=$(date -u -v+75S +%Y-%m-%dT%H:%M:%SZ) \
+     && aws --region "${AWS_DEFAULT_REGION}" autoscaling put-scheduled-update-group-action \
+     --auto-scaling-group-name "${WORKER_AUTOSCALING_GROUP_NAME}" \
+     --scheduled-action-name startup-nodes \
+     --start-time "${START_TIME}" \
+     --min-size 2 \
+     --max-size 4 \
+     --desired-capacity 2
+   ```
+
+## Appendix QQQ: Get private IP address
+
+1. Get private IP address on Mac
+
+   ```ShellSession
+   $ ipconfig getifaddr en0
+   ```
+
+1. Note the private address that is output
