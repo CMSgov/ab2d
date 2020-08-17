@@ -9,8 +9,8 @@ import javax.validation.constraints.NotNull;
  * Holder class for what is returned by the HMS Organizations endpoint
  */
 @Data
-public class HMSOrganizations {
+public class HPMSOrganizations {
 
     @NotNull
-    private Set<HMSOrganizationInfo> orgs;
+    private Set<HPMSOrganizationInfo> orgs;
 }

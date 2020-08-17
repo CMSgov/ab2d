@@ -1,6 +1,6 @@
 package gov.cms.ab2d.hpms.service;
 
-import gov.cms.ab2d.hpms.hmsapi.HMSOrganizations;
+import gov.cms.ab2d.hpms.hmsapi.HPMSOrganizations;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -26,15 +26,15 @@ public class AttestationUpdaterService {
 
     private void pollOrganizations() {
 
-        Flux<HMSOrganizations> orgInfoFlux = WebClient.create("http://localhost:8080/api/cda/orgs/info")
+        Flux<HPMSOrganizations> orgInfoFlux = WebClient.create("http://localhost:8080/api/cda/orgs/info")
                 .get()
                 .retrieve()
-                .bodyToFlux(HMSOrganizations.class);
+                .bodyToFlux(HPMSOrganizations.class);
 
         orgInfoFlux.subscribe(this::processOrgInfo);
     }
 
-    private void processOrgInfo(HMSOrganizations orgInfo) {
+    private void processOrgInfo(HPMSOrganizations orgInfo) {
         if (orgInfo.getOrgs().isEmpty()) {
             return;
         }

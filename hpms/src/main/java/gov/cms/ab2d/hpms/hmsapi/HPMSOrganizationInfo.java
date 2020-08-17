@@ -3,7 +3,7 @@ package gov.cms.ab2d.hpms.hmsapi;
 import lombok.Data;
 
 @Data
-public class HMSOrganizationInfo {
+public class HPMSOrganizationInfo {
 
     private String parentOrgName;
     private Integer parentOrgId;
