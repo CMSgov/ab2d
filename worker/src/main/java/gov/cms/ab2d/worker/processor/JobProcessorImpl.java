@@ -14,12 +14,16 @@ import gov.cms.ab2d.eventlogger.events.*;
 import gov.cms.ab2d.filter.FilterOutByDate;
 import gov.cms.ab2d.worker.adapter.bluebutton.ContractBeneficiaries;
 import gov.cms.ab2d.worker.config.RoundRobinBlockingQueue;
-import gov.cms.ab2d.worker.processor.domainmodel.*;
+import gov.cms.ab2d.worker.processor.domainmodel.ProgressTracker;
+import gov.cms.ab2d.worker.processor.domainmodel.ContractMapping;
+import gov.cms.ab2d.worker.processor.domainmodel.ContractData;
+import gov.cms.ab2d.worker.processor.domainmodel.EobSearchResponse;
+import gov.cms.ab2d.worker.processor.domainmodel.ContractEobManager;
+import gov.cms.ab2d.worker.processor.domainmodel.PatientClaimsRequest;
 import gov.cms.ab2d.worker.service.FileService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.hl7.fhir.dstu3.model.ExplanationOfBenefit;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
@@ -48,12 +52,13 @@ import java.util.stream.Collectors;
 import static gov.cms.ab2d.common.model.JobStatus.CANCELLED;
 import static gov.cms.ab2d.common.model.JobStatus.SUCCESSFUL;
 import static gov.cms.ab2d.common.util.Constants.EOB;
-import static gov.cms.ab2d.worker.adapter.bluebutton.ContractBeneficiaries.*;
+import static gov.cms.ab2d.worker.adapter.bluebutton.ContractBeneficiaries.PatientDTO;
 import static gov.cms.ab2d.worker.processor.StreamHelperImpl.FileOutputType.NDJSON;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
+@SuppressWarnings("PMD.TooManyStaticImports")
 public class JobProcessorImpl implements JobProcessor {
     private static final int SLEEP_DURATION = 250;
 
@@ -106,7 +111,7 @@ public class JobProcessorImpl implements JobProcessor {
 
         // Load the job
         final Job job = jobRepository.findByJobUuid(jobUuid);
-        log.info("Found job");
+        log.info("Found job " + job.getJobUuid());
 
         // Determine the output directory based on the job id
         Path outputDirPath = null;
@@ -158,6 +163,7 @@ public class JobProcessorImpl implements JobProcessor {
 
         for (Contract contract : contracts) {
             String contractNum = contract.getContractNumber();
+            progressTracker.addContract(contractNum);
             ContractEobManager contractEobManager = new ContractEobManager(fhirContext, skipBillablePeriodCheck,
                     getStartDate(contractNum), contract.getAttestedOn());
 
@@ -207,7 +213,7 @@ public class JobProcessorImpl implements JobProcessor {
                             contactBeneSearchIterator.remove();
                         }
                     }
-                    processBeneFuturesList(eobFutureHandles, progressTracker, contractEobManager, helper);
+                    processBeneFuturesList(eobFutureHandles, progressTracker, contractEobManager, helper, contractBeneficiaries);
                     updateJobStatus(job, progressTracker);
                     // If we haven't removed all items from the running futures lists, sleep for a bit
                     if (!contractBeneFutureHandles.isEmpty() || !eobFutureHandles.isEmpty()) {
@@ -281,7 +287,7 @@ public class JobProcessorImpl implements JobProcessor {
     List<Future<ContractMapping>> createAllContractMappingFutures(int month, String contractNumber, OffsetDateTime attestDate) {
         List<Future<ContractMapping>> contractBeneFutureHandles = new ArrayList<>();
 
-        OffsetDateTime dateStub = OffsetDateTime.now().withDayOfMonth(1);
+        OffsetDateTime dateStub = OffsetDateTime.now().withDayOfMonth(1).plusMonths(1).minusDays(1);
         for (var m = 1; m <= month; m++) {
             OffsetDateTime dateToCheck = dateStub.withMonth(m);
             if (attestDate.isBefore(dateToCheck)) {
@@ -293,7 +299,7 @@ public class JobProcessorImpl implements JobProcessor {
     }
 
     private void processBeneFuturesList(List<Future<EobSearchResponse>> benes, ProgressTracker progressTracker,
-                                                  ContractEobManager contractEobManager, StreamHelper helper) {
+                                                  ContractEobManager contractEobManager, StreamHelper helper, ContractBeneficiaries contractBeneficiaries) {
         EobSearchResponse response = null;
         Iterator<Future<EobSearchResponse>> beneIterator = benes.iterator();
         while (beneIterator.hasNext()) {
@@ -303,7 +309,7 @@ public class JobProcessorImpl implements JobProcessor {
                 try {
                     response = future.get();
                     contractEobManager.addResources(response);
-                    contractEobManager.validateResources();
+                    contractEobManager.validateResources(contractBeneficiaries.getPatients().get(response.getPatient().getPatientId()));
                     contractEobManager.writeValidEobs(helper);
                 } catch (IOException e) {
                     String errorMsg = "Unable to write to EOB data file " + e.getLocalizedMessage();
@@ -364,6 +370,8 @@ public class JobProcessorImpl implements JobProcessor {
         RoundRobinBlockingQueue.CATEGORY_HOLDER.set(jobUuid);
         try {
             var patientClaimsRequest = new PatientClaimsRequest(patient,
+                    contractData.getAttestedTime(),
+                    contractData.getSinceTime(),
                     contractData.getUserId(),
                     jobUuid,
                     contractData.getContract() != null ? contractData.getContract().getContractNumber() : null,

@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.OffsetDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Slf4j
 public class ContractEobManager {
@@ -66,31 +67,30 @@ public class ContractEobManager {
 
     public void addResources(EobSearchResponse response) {
         unknownEobs.put(response.getPatient().getPatientId(), response);
-        validEobs.put(response.getPatient().getPatientId(), new EobSearchResponse(response.getPatient(), new ArrayList<>()));
+        if (validEobs.get(response.getPatient().getPatientId()) == null) {
+            validEobs.put(response.getPatient().getPatientId(), new EobSearchResponse(response.getPatient(), new ArrayList<>()));
+        }
     }
 
-    public void validateResources() {
+    public void validateResources(ContractBeneficiaries.PatientDTO patient) {
         for (Map.Entry<String, EobSearchResponse> entry : unknownEobs.entrySet()) {
-            String patientId = entry.getKey();
-            EobSearchResponse eobSearchResponse = entry.getValue();
-            Iterator<Resource> resourceIter = eobSearchResponse.getResources().iterator();
-            while (resourceIter.hasNext()) {
-                Resource r = resourceIter.next();
-                ResourceStatus validStatus = validResource(r, eobSearchResponse.getPatient());
-                switch (validStatus) {
-                    // We know that the EOB is in the right time for a patient in the right date range
-                    case VALID:
-                        validEobs.get(patientId).getResources().add(r);
-                        resourceIter.remove();
-                        break;
-                    case INVALID:
-                        resourceIter.remove();
-                        break;
-                    case UNKNOWN:
-                    default:
-                        break;
-                }
-            }
+            List<Resource> resources = entry.getValue().getResources();
+            entry.getValue().setResources(resources.stream().filter(r -> updateData(r, patient)).collect(Collectors.toList()));
+        }
+    }
+
+    private boolean updateData(Resource resource, ContractBeneficiaries.PatientDTO patient) {
+        ResourceStatus validStatus = validResource(resource, patient);
+        switch (validStatus) {
+            // We know that the EOB is in the right time for a patient in the right date range
+            case VALID:
+                validEobs.get(patient.getPatientId()).getResources().add(resource);
+                return true;
+            case INVALID:
+                return false;
+            case UNKNOWN:
+            default:
+                return true;
         }
     }
 
@@ -101,6 +101,7 @@ public class ContractEobManager {
         if (resource == null) {
             return ResourceStatus.INVALID;
         }
+
         // If we've found the patient in the contract, it's valid, otherwise, we may not yet know (all patients have not been returned)
         if (validPatientInContract((ExplanationOfBenefit) resource, patient)) {
             status = ResourceStatus.VALID;
@@ -147,6 +148,6 @@ public class ContractEobManager {
             return false;
         }
         patientId = patientId.replaceFirst("Patient/", "");
-        return (patientId.equalsIgnoreCase(patient.getPatientId()));
+        return patientId.equalsIgnoreCase(patient.getPatientId());
     }
 }

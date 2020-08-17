@@ -11,7 +11,6 @@ import gov.cms.ab2d.common.model.User;
 import gov.cms.ab2d.common.repository.ContractRepository;
 import gov.cms.ab2d.common.repository.JobOutputRepository;
 import gov.cms.ab2d.common.repository.JobRepository;
-import gov.cms.ab2d.common.repository.OptOutRepository;
 import gov.cms.ab2d.common.repository.SponsorRepository;
 import gov.cms.ab2d.common.repository.UserRepository;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
@@ -22,18 +21,21 @@ import gov.cms.ab2d.eventlogger.eventloggers.sql.SqlEventLogger;
 import gov.cms.ab2d.eventlogger.events.*;
 import gov.cms.ab2d.eventlogger.reports.sql.DoAll;
 import gov.cms.ab2d.eventlogger.utils.UtilMethods;
-import gov.cms.ab2d.worker.adapter.bluebutton.ContractBeneSearch;
+import gov.cms.ab2d.filter.FilterOutByDate;
+import gov.cms.ab2d.worker.adapter.bluebutton.ContractBeneficiaries;
+import gov.cms.ab2d.worker.processor.domainmodel.EobSearchResponse;
 import gov.cms.ab2d.worker.service.FileService;
 import org.hl7.fhir.dstu3.model.Bundle;
 import org.hl7.fhir.dstu3.model.ExplanationOfBenefit;
+import org.hl7.fhir.dstu3.model.Resource;
 import org.junit.Assert;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.integration.test.context.SpringIntegrationTest;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
@@ -44,9 +46,12 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 import javax.transaction.Transactional;
 import java.io.File;
+import java.text.ParseException;
 import java.time.OffsetDateTime;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.stream.Collectors;
 
 import static gov.cms.ab2d.common.util.Constants.NDJSON_FIRE_CONTENT_TYPE;
 import static gov.cms.ab2d.eventlogger.events.ErrorEvent.ErrorType.TOO_MANY_SEARCH_ERRORS;
@@ -54,6 +59,7 @@ import static java.lang.Boolean.TRUE;
 import static org.junit.Assert.assertFalse;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 @SpringBootTest
@@ -85,6 +91,8 @@ class JobProcessorIntegrationTest {
     private KinesisEventLogger kinesisEventLogger;
     @Mock
     private BFDClient mockBfdClient;
+    @Mock
+    private PatientClaimsProcessorImpl patientClaimsProcessor;
 
     @TempDir
     File tmpEfsMountDir;
@@ -92,15 +100,18 @@ class JobProcessorIntegrationTest {
     private Sponsor sponsor;
     private User user;
     private Job job;
+    private Future<EobSearchResponse> future;
 
     @Container
     private static final PostgreSQLContainer postgreSQLContainer = new AB2DPostgresqlContainer();
     private Bundle bundle1;
-    private Bundle[] bundles;
     private RuntimeException fail;
+    private List<Resource> bundle1Resources;
+    private List<Resource> resources;
+    ContractBeneficiaries.PatientDTO patientDTO;
 
     @BeforeEach
-    void setUp() {
+    void setUp() throws ExecutionException, InterruptedException, NoSuchFieldException, ParseException {
         jobRepository.deleteAll();
         userRepository.deleteAll();
         sponsorRepository.deleteAll();
@@ -120,21 +131,45 @@ class JobProcessorIntegrationTest {
         patientContractThreadPool.setMaxPoolSize(12);
         patientContractThreadPool.setThreadNamePrefix("jobproc-");
         patientContractThreadPool.initialize();
+
         ExplanationOfBenefit eob = EobTestDataUtil.createEOB();
         bundle1 = EobTestDataUtil.createBundle(eob.copy());
-        bundles = getBundles();
-        when(mockBfdClient.requestEOBFromServer(anyString())).thenReturn(bundle1);
-        when(mockBfdClient.requestEOBFromServer(anyString(), any())).thenReturn(bundle1);
+        bundle1Resources = bundle1.getEntry().stream().map(Bundle.BundleEntryComponent::getResource).collect(Collectors.toList());
+        resources = getResources();
+        future = mock(Future.class);
 
-        Bundle.BundleEntryComponent entry1 = BundleUtils.createBundleEntry("P1");
-        Bundle.BundleEntryComponent entry2 = BundleUtils.createBundleEntry("P2");
-        Bundle bundlePatient = BundleUtils.createBundle(entry1, entry2);
-        when(mockBfdClient.requestPartDEnrolleesFromServer(anyString(), anyInt())).thenReturn(bundlePatient);
+        patientDTO = new ContractBeneficiaries.PatientDTO();
+        patientDTO.setPatientId("-199900000022040");
+        patientDTO.setDateRangesUnderContract(Collections.singletonList(
+                new FilterOutByDate.DateRange(new Date(0), new Date())));
+
+        ContractBeneficiaries.PatientDTO patientDTO2 = new ContractBeneficiaries.PatientDTO();
+        patientDTO2.setPatientId("-199900000022041");
+        patientDTO2.setDateRangesUnderContract(Collections.singletonList(
+                new FilterOutByDate.DateRange(new Date(0), new Date())));
+
+        Mockito.lenient().when(patientClaimsProcessor.process(any())).thenReturn(future);
+        Mockito.lenient().when(future.get()).thenReturn(new EobSearchResponse(patientDTO, bundle1Resources));
+        Mockito.lenient().when(future.isDone()).thenReturn(true);
+
+        when(mockBfdClient.requestPartDEnrolleesFromServer(anyString(), anyInt())).thenReturn(getNumPatients(
+                new String[] {
+                        "-199900000022040", "-199900000022041", "-199900000022042", "-199900000022043", "-199900000022044", "-199900000022045", "-199900000022046", "-199900000022047", "-199900000022048", "-199900000022049",
+                        "-199900000022050", "-199900000022051", "-199900000022052", "-199900000022053", "-199900000022054", "-199900000022055", "-199900000022056", "-199900000022057", "-199900000022058", "-199900000022059",
+                        "-199900000022060", "-199900000022061", "-199900000022062", "-199900000022063", "-199900000022064", "-199900000022065", "-199900000022066", "-199900000022067", "-199900000022068", "-199900000022069",
+                        "-199900000022070", "-199900000022071", "-199900000022072", "-199900000022073", "-199900000022074", "-199900000022047", "-199900000022076", "-199900000022077", "-199900000022078", "-199900000022079",
+                        "-199900000022080", "-199900000022081", "-199900000022082", "-199900000022083", "-199900000022084", "-199900000022085", "-199900000022086", "-199900000022087", "-199900000022088", "-199900000022089",
+                        "-199900000022090", "-199900000022091", "-199900000022092", "-199900000022093", "-199900000022094", "-199900000022095", "-199900000022096", "-199900000022097", "-199900000022098", "-199900000022099",
+                        "-199900000022000", "-199900000022001", "-199900000022002", "-199900000022003", "-199900000022004", "-199900000022005", "-199900000022006", "-199900000022007", "-199900000022008", "-199900000022009",
+                        "-199900000022010", "-199900000022011", "-199900000022012", "-199900000022013", "-199900000022014", "-199900000022015", "-199900000022016", "-199900000022017", "-199900000022018", "-199900000022019",
+                        "-199900000022020", "-199900000022021", "-199900000022022", "-199900000022023", "-199900000022024", "-199900000022025", "-199900000022026", "-199900000022027", "-199900000022028", "-199900000022029",
+                        "-199900000022030", "-199900000022031", "-199900000022032", "-199900000022033", "-199900000022034", "-199900000022035", "-199900000022036", "-199900000022037", "-199900000022038", "-199900000022039"
+                }
+        ));
 
         fail = new RuntimeException("TEST EXCEPTION");
 
         FhirContext fhirContext = FhirContext.forDstu3();
-        PatientClaimsProcessor patientClaimsProcessor = new PatientClaimsProcessorImpl(mockBfdClient, logManager);
         ReflectionTestUtils.setField(patientClaimsProcessor, "startDate", "01/01/1900");
         cut = new JobProcessorImpl(
                 fileService,
@@ -146,10 +181,22 @@ class JobProcessorIntegrationTest {
                 fhirContext,
                 patientContractThreadPool
         );
-        // FileService fileService, JobRepository jobRepository, JobOutputRepository jobOutputRepository, LogManager eventLogger, BFDClient bfdClient, PatientClaimsProcessor patientClaimsProcessor, ThreadPoolTaskExecutor patientContractThreadPool
+        ReflectionTestUtils.setField(cut, "startDate", "01/01/1990");
+        ReflectionTestUtils.setField(cut, "startDateSpecialContracts",
+                "01/01/1900");
+        ReflectionTestUtils.setField(cut, "specialContracts", Collections.singletonList("Z0001"));
 
         ReflectionTestUtils.setField(cut, "efsMount", tmpEfsMountDir.toString());
         ReflectionTestUtils.setField(cut, "failureThreshold", 10);
+    }
+
+    Bundle getNumPatients(String[] patients) {
+        Bundle bundlePatient = new Bundle();
+        for (int i = 0; i < patients.length; i++) {
+            Bundle.BundleEntryComponent entry = BundleUtils.createBundleEntry(patients[i]);
+            bundlePatient.addEntry(entry);
+        }
+        return bundlePatient;
     }
 
     @Test
@@ -192,20 +239,21 @@ class JobProcessorIntegrationTest {
 
     @Test
     @DisplayName("When the error count is below threshold, job does not fail")
-    void when_errorCount_is_below_threshold_do_not_fail_job() {
-        when(mockBfdClient.requestEOBFromServer(anyString()))
-                .thenReturn(bundle1, bundles)
-                .thenReturn(bundle1, bundles)
-                .thenReturn(bundle1, bundles)
-                .thenReturn(bundle1, bundles)
-                .thenReturn(bundle1, bundles)
-                .thenReturn(bundle1, bundles)
-                .thenReturn(bundle1, bundles)
-                .thenReturn(bundle1, bundles)
-                .thenReturn(bundle1, bundles)
-                .thenReturn(bundle1, bundle1, bundle1, bundle1, bundle1)
+    void when_errorCount_is_below_threshold_do_not_fail_job() throws ExecutionException, InterruptedException {
+        EobSearchResponse response = new EobSearchResponse(patientDTO, resources);
+        Mockito.when(future.get())
+                .thenReturn(response, response, response, response, response, response, response, response, response, response)
+                .thenReturn(response, response, response, response, response, response, response, response, response, response)
+                .thenReturn(response, response, response, response, response, response, response, response, response, response)
+                .thenReturn(response, response, response, response, response, response, response, response, response, response)
+                .thenReturn(response, response, response, response, response, response, response, response, response, response)
+                .thenReturn(response, response, response, response, response, response, response, response, response, response)
+                .thenReturn(response, response, response, response, response, response, response, response, response, response)
+                .thenReturn(response, response, response, response, response, response, response, response, response, response)
+                .thenReturn(response, response, response, response, response, response, response, response, response, response)
+                .thenReturn(response, response, response, response, response)
                 .thenThrow(fail, fail, fail, fail, fail)
-                ;
+        ;
 
         var processedJob = cut.process("S0000");
 
@@ -228,12 +276,19 @@ class JobProcessorIntegrationTest {
 
     @Test
     @DisplayName("When the error count is greater than or equal to threshold, job should fail")
-    void when_errorCount_is_not_below_threshold_fail_job() {
-        when(mockBfdClient.requestEOBFromServer(anyString(), any()))
-                .thenReturn(bundle1, bundles)
-                .thenReturn(bundle1, bundles)
+    void when_errorCount_is_not_below_threshold_fail_job() throws ExecutionException, InterruptedException {
+        EobSearchResponse response = new EobSearchResponse(patientDTO, resources);
+        Mockito.when(future.get())
+                .thenReturn(response, response, response, response, response, response, response, response, response, response)
+                .thenReturn(response, response, response, response, response, response, response, response, response, response)
                 .thenThrow(fail, fail, fail, fail, fail, fail, fail, fail, fail, fail)
-                .thenReturn(bundle1, bundles)
+                .thenReturn(response, response, response, response, response, response, response, response, response, response)
+                .thenReturn(response, response, response, response, response, response, response, response, response, response)
+                .thenReturn(response, response, response, response, response, response, response, response, response, response)
+                .thenReturn(response, response, response, response, response, response, response, response, response, response)
+                .thenReturn(response, response, response, response, response, response, response, response, response, response)
+                .thenReturn(response, response, response, response, response, response, response, response, response, response)
+                .thenThrow(fail, fail, fail, fail, fail, fail, fail, fail, fail, fail)
         ;
         var processedJob = cut.process("S0000");
 
@@ -270,8 +325,12 @@ class JobProcessorIntegrationTest {
         assertNotNull(processedJob.getCompletedAt());
     }
 
-    private Bundle[] getBundles() {
-        return new Bundle[]{bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1};
+    private List<Resource> getResources() {
+        List<Resource> allResources = new ArrayList<>();
+        for (int i = 0; i < 8; i++) {
+            allResources.addAll(bundle1Resources);
+        }
+        return allResources;
     }
 
     private Sponsor createSponsor() {

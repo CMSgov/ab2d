@@ -178,4 +178,15 @@ public class ProgressTracker {
         // This is the total completed threads done over the amount that needs to be done
         return ((double) this.totalContractBeneficiariesSearchFinished) / totalToSearch;
     }
+
+    public void addContract(String contractNum) {
+        ContractBeneficiaries contractBeneficiaries =
+                getContractBeneficiariesByContractNum(contractNum);
+        if (contractBeneficiaries == null) {
+            contractBeneficiaries = new ContractBeneficiaries();
+            contractBeneficiaries.setContractNumber(contractNum);
+            contractBeneficiaries.setPatients(new HashMap<>());
+            this.patientsByContracts.add(contractBeneficiaries);
+        }
+    }
 }

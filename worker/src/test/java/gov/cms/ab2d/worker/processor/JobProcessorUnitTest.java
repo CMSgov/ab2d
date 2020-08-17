@@ -11,10 +11,11 @@ import gov.cms.ab2d.common.repository.JobOutputRepository;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.filter.FilterOutByDate;
-import gov.cms.ab2d.worker.adapter.bluebutton.ContractBeneSearch;
 import gov.cms.ab2d.worker.adapter.bluebutton.ContractBeneficiaries;
 import gov.cms.ab2d.worker.adapter.bluebutton.ContractBeneficiaries.PatientDTO;
+import gov.cms.ab2d.worker.processor.domainmodel.EobSearchResponse;
 import gov.cms.ab2d.worker.service.FileService;
+import org.hl7.fhir.dstu3.model.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -36,16 +37,14 @@ import java.text.ParseException;
 import java.time.OffsetDateTime;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 
 import static java.lang.Boolean.TRUE;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class JobProcessorUnitTest {
@@ -61,7 +60,6 @@ class JobProcessorUnitTest {
     @Mock private FileService fileService;
     @Mock private JobRepository jobRepository;
     @Mock private JobOutputRepository jobOutputRepository;
-    @Mock private ContractBeneSearch contractBeneSearch;
     @Mock private PatientClaimsProcessor patientClaimsProcessor;
     @Mock private LogManager eventLogger;
     @Mock private BFDClient bfdClient;
@@ -90,6 +88,7 @@ class JobProcessorUnitTest {
         );
 
         ReflectionTestUtils.setField(cut, "efsMount", efsMountTmpDir.toString());
+        ReflectionTestUtils.setField(cut, "startDate", "01/01/1990");
 
         final Sponsor parentSponsor = createParentSponsor();
         final Sponsor childSponsor = createChildSponsor(parentSponsor);
@@ -100,11 +99,32 @@ class JobProcessorUnitTest {
         when(jobRepository.findByJobUuid(anyString())).thenReturn(job);
 
         patientsByContract = createPatientsByContractResponse(contract);
-        Mockito.when(contractBeneSearch.getPatients(anyString(), anyInt(), any())).thenReturn(patientsByContract);
+        Bundle bundle = createBundle(patientsByContract);
+        Mockito.lenient().when(bfdClient.requestPartDEnrolleesFromServer(anyString(), anyInt())).thenReturn(bundle);
+
+        Mockito.lenient().when(bfdClient.requestPartDEnrolleesFromServer(anyString(), anyInt())).thenReturn(createBundle(patientsByContract));
+        Future<EobSearchResponse> future = mock(Future.class);
+        Mockito.lenient().when(patientClaimsProcessor.process(any())).thenReturn(future);
+        PatientDTO patientDTO = new PatientDTO();
+        String patientId = ((Patient) bundle.getEntry().get(0).getResource()).getIdentifier().get(0).getValue();
+        patientDTO.setPatientId(patientId);
+        ExplanationOfBenefit b = createEobForPatient(patientId);
+        Mockito.lenient().when(future.get()).thenReturn(new EobSearchResponse(patientDTO, Collections.singletonList(b)));
+        Mockito.lenient().when(future.isDone()).thenReturn(true);
+
 
         final Path outputDirPath = Paths.get(efsMountTmpDir.toString(), jobUuid);
         final Path outputDir = Files.createDirectories(outputDirPath);
         Mockito.lenient().when(fileService.createDirectory(any(Path.class))).thenReturn(outputDir);
+    }
+
+    private Bundle createBundle(ContractBeneficiaries patientsByContract) {
+        Bundle bundle = new Bundle();
+        for (String pId : patientsByContract.getPatients().keySet()) {
+            Bundle.BundleEntryComponent entry = BundleUtils.createBundleEntry(pId);
+            bundle.addEntry(entry);
+        }
+        return bundle;
     }
 
     @Test
@@ -119,14 +139,27 @@ class JobProcessorUnitTest {
         doVerify();
     }
 
+    ExplanationOfBenefit createEobForPatient(String patient) {
+        ExplanationOfBenefit e = new ExplanationOfBenefit();
+        Patient patientObj = new Patient();
+        patientObj.setId("Patient/" + patient);
+        e.getPatient().setReference(patient);
+        Date d = new Date();
+        Period p = new Period();
+        p.setStart(d);
+        p.setEnd(d);
+        e.setBillablePeriod(p);
+        return e;
+    }
+
     @Test
     @DisplayName("When user belongs to a parent sponsor, contracts for the children sponsors are processed")
     void whenTheUserBelongsToParent_ChildContractsAreProcessed() throws ExecutionException, InterruptedException {
-        var user = job.getUser();
+        User user = job.getUser();
 
         //switch user to parent sponsor
-        var childSponsor = user.getSponsor();
-        var parent = childSponsor.getParent();
+        Sponsor childSponsor = user.getSponsor();
+        Sponsor parent = childSponsor.getParent();
         user.setSponsor(parent);
 
         var processedJob = cut.process(jobUuid);
@@ -163,7 +196,7 @@ class JobProcessorUnitTest {
 
     private void doVerify() throws ExecutionException, InterruptedException {
         verify(fileService).createDirectory(any());
-        verify(contractBeneSearch).getPatients(anyString(), anyInt(), any());
+        verify(bfdClient).requestPartDEnrolleesFromServer(anyString(), anyInt());
     }
 
     @Test
@@ -194,7 +227,7 @@ class JobProcessorUnitTest {
         assertNotNull(processedJob.getExpiresAt());
 
         verify(fileService, times(2)).createDirectory(any());
-        verify(contractBeneSearch).getPatients(anyString(), anyInt(), any());
+        verify(bfdClient).requestPartDEnrolleesFromServer(anyString(), anyInt());
     }
 
     @Test
@@ -212,7 +245,6 @@ class JobProcessorUnitTest {
         var uncheckedIOE = new UncheckedIOException(errMsg, new IOException(errMsg));
 
         Mockito.when(fileService.createDirectory(any())).thenThrow(uncheckedIOE);
-        Mockito.lenient().when(contractBeneSearch.getPatients(anyString(), anyInt(), any())).thenReturn(patientsByContract);
 
         var processedJob = cut.process(jobUuid);
 
@@ -221,7 +253,6 @@ class JobProcessorUnitTest {
         assertNull(processedJob.getExpiresAt());
 
         verify(fileService).createDirectory(any());
-        verify(contractBeneSearch, never()).getPatients(anyString(), anyInt(), any());
     }
 
     @Test
@@ -232,7 +263,6 @@ class JobProcessorUnitTest {
         var uncheckedIOE = new UncheckedIOException(errMsg, new IOException(errMsg));
 
         Mockito.when(fileService.createDirectory(any())).thenThrow(uncheckedIOE);
-        Mockito.lenient().when(contractBeneSearch.getPatients(anyString(), anyInt(), any())).thenReturn(patientsByContract);
 
         var processedJob = cut.process(jobUuid);
 
@@ -241,7 +271,7 @@ class JobProcessorUnitTest {
         assertNull(processedJob.getExpiresAt());
 
         verify(fileService).createDirectory(any());
-        verify(contractBeneSearch, never()).getPatients(anyString(), anyInt(), any());
+        verify(bfdClient, never()).requestPartDEnrolleesFromServer(anyString(), anyInt());
     }
 
     private Sponsor createParentSponsor() {
