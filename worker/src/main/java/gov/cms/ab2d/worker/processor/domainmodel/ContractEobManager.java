@@ -9,6 +9,7 @@ import gov.cms.ab2d.worker.processor.StreamHelper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.hl7.fhir.dstu3.model.ExplanationOfBenefit;
+import org.hl7.fhir.dstu3.model.OperationOutcome;
 import org.hl7.fhir.dstu3.model.Resource;
 
 import java.io.ByteArrayOutputStream;
@@ -30,8 +31,8 @@ public class ContractEobManager {
 
     private final OffsetDateTime attTime;
 
-    private final Map<String, EobSearchResponse> unknownEobs = Collections.synchronizedMap(new HashMap<>());
-    private final Map<String, EobSearchResponse> validEobs = Collections.synchronizedMap(new HashMap<>());
+    private Map<String, EobSearchResponse> unknownEobs = Collections.synchronizedMap(new HashMap<>());
+    private Map<String, EobSearchResponse> validEobs = Collections.synchronizedMap(new HashMap<>());
 
     private final boolean skipBillablePeriodCheck;
     private final Date earliestDate;
@@ -45,37 +46,44 @@ public class ContractEobManager {
 
     public void writeValidEobs(StreamHelper helper) throws IOException {
         IParser jsonParser = fhirContext.newJsonParser();
-        Iterator<Map.Entry<String, EobSearchResponse>> resourceIterable = validEobs.entrySet().iterator();
         String payload = "";
         int count = 0;
-        while (resourceIterable.hasNext()) {
-            try {
-                Map.Entry<String, EobSearchResponse> resource = resourceIterable.next();
-                for (Resource r : resource.getValue().getResources()) {
+        try {
+            for (Map.Entry<String, EobSearchResponse> response : validEobs.entrySet()) {
+                Iterator<Resource> resources = response.getValue().getResources().iterator();
+                while (resources.hasNext()) {
+                    Resource r = resources.next();
                     payload = jsonParser.encodeResourceToString(r) + System.lineSeparator();
                     count++;
                     helper.addData(payload.getBytes(StandardCharsets.UTF_8));
+                    resources.remove();
                 }
-                resourceIterable.remove();
-            } catch (Exception e) {
-                // log.warn("Encountered exception while processing job resources: {}", e.getMessage());
-                handleException(helper, payload, e);
             }
+        } catch (Exception e) {
+                handleException(helper, payload, e);
         }
         log.debug("finished writing [{}] resources", count);
     }
 
     public void addResources(EobSearchResponse response) {
-        unknownEobs.put(response.getPatient().getPatientId(), response);
-        if (validEobs.get(response.getPatient().getPatientId()) == null) {
-            validEobs.put(response.getPatient().getPatientId(), new EobSearchResponse(response.getPatient(), new ArrayList<>()));
+        String patientId = response.getPatient().getPatientId();
+        if (unknownEobs.get(patientId) == null) {
+            unknownEobs.put(patientId, response);
+        } else {
+            List<Resource> resources = new ArrayList<>(unknownEobs.get(patientId).getResources());
+            resources.addAll(response.getResources());
+            EobSearchResponse newResponse = new EobSearchResponse(response.getPatient(), resources);
+            unknownEobs.put(patientId, newResponse);
+        }
+        if (validEobs.get(patientId) == null) {
+            validEobs.put(patientId, new EobSearchResponse(response.getPatient(), new ArrayList<>()));
         }
     }
 
     public void validateResources(ContractBeneficiaries.PatientDTO patient) {
         for (Map.Entry<String, EobSearchResponse> entry : unknownEobs.entrySet()) {
             List<Resource> resources = entry.getValue().getResources();
-            entry.getValue().setResources(resources.stream().filter(r -> updateData(r, patient)).collect(Collectors.toList()));
+            entry.getValue().setResources(resources.stream().filter(r -> !updateData(r, patient)).collect(Collectors.toList()));
         }
     }
 
@@ -90,7 +98,7 @@ public class ContractEobManager {
                 return false;
             case UNKNOWN:
             default:
-                return true;
+                return false;
         }
     }
 
@@ -118,14 +126,12 @@ public class ContractEobManager {
         return status;
     }
 
-    private void handleException(StreamHelper helper, String data, Exception e) throws IOException {
-        var errMsg = ExceptionUtils.getRootCauseMessage(e);
-        var operationOutcome = FHIRUtil.getErrorOutcome(errMsg);
-
-        var jsonParser = fhirContext.newJsonParser();
-        var payload = jsonParser.encodeResourceToString(operationOutcome) + System.lineSeparator();
-
-        var byteArrayOutputStream = new ByteArrayOutputStream();
+    void handleException(StreamHelper helper, String data, Exception e) throws IOException {
+        String errMsg = ExceptionUtils.getRootCauseMessage(e);
+        OperationOutcome operationOutcome = FHIRUtil.getErrorOutcome(errMsg);
+        IParser jsonParser = fhirContext.newJsonParser();
+        String payload = jsonParser.encodeResourceToString(operationOutcome) + System.lineSeparator();
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         byteArrayOutputStream.write(payload.getBytes(StandardCharsets.UTF_8));
         helper.addError(data);
     }
@@ -149,5 +155,13 @@ public class ContractEobManager {
         }
         patientId = patientId.replaceFirst("Patient/", "");
         return patientId.equalsIgnoreCase(patient.getPatientId());
+    }
+
+    Map<String, EobSearchResponse> getUnknownEobs() {
+        return unknownEobs;
+    }
+
+    Map<String, EobSearchResponse> getValidEobs() {
+        return validEobs;
     }
 }
