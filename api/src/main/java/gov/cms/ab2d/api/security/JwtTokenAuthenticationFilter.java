@@ -52,7 +52,7 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
     @Value("#{'${api.requestlogging.filter}'.split(',')}")
     private List<String> uriFilters;
 
-    // Predicate used for filtering public urisls
+    // Predicate used for filtering public uris
     // If predicate.test("uri") -> true then URI does not match any regex filters and should be logged
     // If predicate.test("uri") -> false then URI does match at least one regex filter and should not be logged
     private Predicate<String> uriFilter;
@@ -63,7 +63,7 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
         // Check whether no filters were provided
         if (uriFilters == null) {
             log.warn("no filters provided so all api requests will be logged ");
-            uriFilter = uri -> false;
+            uriFilter = uri -> true;
             return;
         }
 
@@ -96,7 +96,6 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
             token = getToken(request);
             username = getUserName(token);
         } catch (Exception ex) {
-            // Always log a failing request?
             logApiRequestEvent(request, token, username, jobId);
             throw ex;
         }

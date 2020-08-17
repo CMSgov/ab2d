@@ -1,39 +1,38 @@
 package gov.cms.ab2d.api.security;
 
+import com.okta.jwt.JwtVerificationException;
 import gov.cms.ab2d.api.SpringBootApp;
 import gov.cms.ab2d.api.controller.TestUtil;
-import gov.cms.ab2d.common.repository.JobRepository;
-import gov.cms.ab2d.common.repository.RoleRepository;
-import gov.cms.ab2d.common.repository.SponsorRepository;
-import gov.cms.ab2d.common.repository.UserRepository;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.eventlogger.LoggableEvent;
 import gov.cms.ab2d.eventlogger.events.ApiRequestEvent;
 import gov.cms.ab2d.eventlogger.reports.sql.DoAll;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.MediaType;
+import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 
+import static gov.cms.ab2d.api.util.Constants.ADMIN_ROLE;
 import static gov.cms.ab2d.common.util.Constants.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@Disabled
 @SpringBootTest(classes = SpringBootApp.class, webEnvironment = SpringBootTest.WebEnvironment.MOCK)
 @AutoConfigureMockMvc
 @Testcontainers
+@DirtiesContext(classMode =  DirtiesContext.ClassMode.AFTER_CLASS)
 class JwtAuthenticationFilterTest {
 
     @Autowired
@@ -43,16 +42,7 @@ class JwtAuthenticationFilterTest {
     private TestUtil testUtil;
 
     @Autowired
-    private SponsorRepository sponsorRepository;
-
-    @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
-    private RoleRepository roleRepository;
-
-    @Autowired
-    private JobRepository jobRepository;
+    private JwtTokenAuthenticationFilter filter;
 
     @Autowired
     private DoAll doAll;
@@ -66,7 +56,31 @@ class JwtAuthenticationFilterTest {
     }
 
     @Test
+    void testDefaultMatchesHealthOnly() {
+
+        List<String> regexes = List.of("^/health$");
+        rebuildFilters(regexes);
+
+        try {
+            mockMvc.perform(get(HEALTH_ENDPOINT))
+                    .andExpect(status().is(200));
+
+            mockMvc.perform(get("/healthy"))
+                    .andExpect(status().is(403));
+        } catch (Exception exception) {
+            fail("could not perform basic health check", exception);
+        }
+
+        List<LoggableEvent> currentEvents = doAll.load(ApiRequestEvent.class);
+
+        assertEquals(1, currentEvents.size(), "healthy should still be logged");
+    }
+
+    @Test
     void testMatchFilters() {
+
+        List<String> regexes = List.of("/health.*", "/status.*");
+        rebuildFilters(regexes);
 
         try {
             mockMvc.perform(get(HEALTH_ENDPOINT))
@@ -79,19 +93,33 @@ class JwtAuthenticationFilterTest {
         }
 
         List<LoggableEvent> currentEvents = doAll.load(ApiRequestEvent.class);
+        assertEquals(0, currentEvents.size(), "no events should be logged");
+    }
 
-        if (!currentEvents.isEmpty()) {
-            currentEvents.sort(Comparator.comparing(LoggableEvent::getTimeOfEvent));
-            Collections.reverse(currentEvents);
+    @Test
+    void testRegexFunctions() {
 
-            ApiRequestEvent lastRequest = (ApiRequestEvent) currentEvents.get(0);
-            assertFalse(lastRequest.getUrl().contains(HEALTH_ENDPOINT), "health endpoint should be filtered");
-            assertFalse(lastRequest.getUrl().contains(STATUS_ENDPOINT), "status endpoint should be filtered");
+        List<String> regexes = List.of("/heal*");
+        rebuildFilters(regexes);
+
+        try {
+            mockMvc.perform(get(HEALTH_ENDPOINT))
+                    .andExpect(status().is(200));
+
+        } catch (Exception exception) {
+            fail("could not perform basic health check", exception);
         }
+
+        List<LoggableEvent> currentEvents = doAll.load(ApiRequestEvent.class);
+        assertEquals(0, currentEvents.size(), "health endpoint should match regex");
     }
 
     @Test
     void testNotMatchFilters() {
+
+        List<String> regexes = List.of("/health.*");
+        rebuildFilters(regexes);
+
         try {
             // Expect a 404 because the static site is not yet included in the constructed JAR/resources
             // However, this URI is whitelisted as public so it serves for the test
@@ -103,7 +131,93 @@ class JwtAuthenticationFilterTest {
         }
 
         List<LoggableEvent> currentEvents = doAll.load(ApiRequestEvent.class);
+        assertEquals(1, currentEvents.size(), "request for swagger docs not logged");
+    }
 
-        assertEquals(1, currentEvents.size(), "should have allowed request for swagger docs to pass through");
+    @Test
+    void testAuthenticatedNotFiltered() {
+
+        List<String> regexes = List.of(".*");
+        rebuildFilters(regexes);
+
+        try {
+            String token = testUtil.setupToken(List.of(ADMIN_ROLE));
+
+            // Expect call to fail but just want to check that event was logged
+            this.mockMvc.perform(
+                    get(API_PREFIX + ADMIN_PREFIX + "/user/userNotFound")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .header("Authorization", "Bearer " + token))
+                    .andReturn();
+
+            List<LoggableEvent> currentEvents = doAll.load(ApiRequestEvent.class);
+            assertEquals(1, currentEvents.size(), "request for user not logged");
+        } catch (JwtVerificationException exception) {
+            fail("jwt token for test could not be retrieved");
+        } catch (Exception exception) {
+            fail("despite filtering all public uris, authenticated requests should be processed", exception);
+        }
+    }
+
+    @Test
+    void testEmptyFiltersNothingApplied() {
+
+        rebuildFilters(Collections.emptyList());
+
+        try {
+            String token = testUtil.setupToken(List.of(ADMIN_ROLE));
+
+            // Expect call to fail but just want to check that event was logged
+            this.mockMvc.perform(
+                    get(API_PREFIX + ADMIN_PREFIX + "/user/userNotFound")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .header("Authorization", "Bearer " + token))
+                    .andReturn();
+
+            // Expect call to fail but just want to check that event was logged
+            mockMvc.perform(get("/swagger-ui"))
+                    .andExpect(status().is(404));
+
+            List<LoggableEvent> currentEvents = doAll.load(ApiRequestEvent.class);
+            assertEquals(2, currentEvents.size(), "request for user not logged");
+        } catch (JwtVerificationException exception) {
+            fail("jwt token for test could not be retrieved");
+        } catch (Exception exception) {
+            fail("despite filtering all public uris, authenticated requests should be processed", exception);
+        }
+    }
+
+    @Test
+    void testNullFiltersNothingApplied() {
+
+        rebuildFilters(null);
+
+        try {
+            String token = testUtil.setupToken(List.of(ADMIN_ROLE));
+
+            // Expect call to fail but just want to check that event was logged
+            this.mockMvc.perform(
+                    get(API_PREFIX + ADMIN_PREFIX + "/user/userNotFound")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .header("Authorization", "Bearer " + token))
+                    .andReturn();
+
+            // Expect call to fail but just want to check that event was logged
+            mockMvc.perform(get("/swagger-ui"))
+                    .andExpect(status().is(404));
+
+            List<LoggableEvent> currentEvents = doAll.load(ApiRequestEvent.class);
+            assertEquals(2, currentEvents.size(), "request for user not logged");
+        } catch (JwtVerificationException exception) {
+            fail("jwt token for test could not be retrieved");
+        } catch (Exception exception) {
+            fail("despite filtering all public uris, authenticated requests should be processed", exception);
+        }
+    }
+
+
+    private void rebuildFilters(List<String> regexes) {
+        ReflectionTestUtils.setField(filter, "uriFilters", regexes);
+        ReflectionTestUtils.invokeMethod(filter, "constructFilters");
     }
 }
