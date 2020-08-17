@@ -33,7 +33,7 @@ import static gov.cms.ab2d.common.util.Constants.*;
 
 @Slf4j
 @Component
-@SuppressWarnings("PMD.TooManyStaticImports")
+@SuppressWarnings({"PMD.TooManyStaticImports", "PMD.UnusedPrivateMethod"})
 public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
 
     @Autowired
@@ -52,7 +52,7 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
     @Value("#{'${api.requestlogging.filter}'.split(',')}")
     private List<String> uriFilters;
 
-    // Predicate used for filtering public uris
+    // Predicate used for filtering public urisls
     // If predicate.test("uri") -> true then URI does not match any regex filters and should be logged
     // If predicate.test("uri") -> false then URI does match at least one regex filter and should not be logged
     private Predicate<String> uriFilter;
