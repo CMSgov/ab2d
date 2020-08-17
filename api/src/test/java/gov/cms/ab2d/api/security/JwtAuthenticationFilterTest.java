@@ -8,6 +8,7 @@ import gov.cms.ab2d.eventlogger.LoggableEvent;
 import gov.cms.ab2d.eventlogger.events.ApiRequestEvent;
 import gov.cms.ab2d.eventlogger.reports.sql.DoAll;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -25,10 +26,16 @@ import java.util.List;
 
 import static gov.cms.ab2d.api.util.Constants.ADMIN_ROLE;
 import static gov.cms.ab2d.common.util.Constants.*;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+/**
+ * Uses {@link DirtiesContext} to indicate that all components/services need to be reloaded after these tests are run.
+ * The default uri filters for the JwtTokenAuthenticationFilter are repeatedly modified
+ * which could cause unexpected behavior in other tests.
+ */
 @SpringBootTest(classes = SpringBootApp.class, webEnvironment = SpringBootTest.WebEnvironment.MOCK)
 @AutoConfigureMockMvc
 @Testcontainers
@@ -50,8 +57,14 @@ class JwtAuthenticationFilterTest {
     @Container
     private static final PostgreSQLContainer postgreSQLContainer = new AB2DPostgresqlContainer();
 
+    /**
+     * Depending on the order that other test classes are run in these tests can fail because of residual
+     * events in the PostgresSQLContainer. Using a {@link BeforeEach} is unnecessary after the first test but allows
+     * Spring to autowire in dependencies which a static {@link org.junit.jupiter.api.BeforeAll} would not allow.
+     */
+    @BeforeEach
     @AfterEach
-    public void after() {
+    public void cleanup() {
         doAll.delete();
     }
 
