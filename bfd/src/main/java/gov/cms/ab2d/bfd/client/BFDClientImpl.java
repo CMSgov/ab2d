@@ -1,6 +1,7 @@
 package gov.cms.ab2d.bfd.client;
 
 import ca.uhn.fhir.context.FhirContext;
+import ca.uhn.fhir.parser.IParser;
 import ca.uhn.fhir.rest.client.api.IGenericClient;
 import ca.uhn.fhir.rest.gclient.ICriterion;
 import ca.uhn.fhir.rest.gclient.TokenClientParam;
@@ -71,8 +72,7 @@ public class BFDClientImpl implements BFDClient {
     @Autowired
     private BFDSearch bfdSearch;
 
-    @Autowired
-    private FhirContext fhirContext;
+
 
     /**
      * Queries Blue Button server for Explanations of Benefit associated with a given patient
@@ -139,14 +139,17 @@ public class BFDClientImpl implements BFDClient {
                 .returnBundle(Bundle.class)
                 .encodedJson()
                 .execute();*/
-        String result = bfdSearch.searchEOB(patientID, sinceTime);
 
-        var jsonParser = fhirContext.newJsonParser();
-        Bundle bundle = jsonParser.parseResource(Bundle.class, result);
+        //long start = System.currentTimeMillis();
+
+        Bundle result = bfdSearch.searchEOB(patientID, sinceTime);
+
+        //long end = System.currentTimeMillis() - start;
+        //log.info("**********************Time elapsed: " + end);
 
         bfdSegment.end();
 
-        return bundle;
+        return result;
     }
 
     /**
