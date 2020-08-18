@@ -369,7 +369,7 @@ public class JobProcessorImpl implements JobProcessor {
      *
      * @param patient - process to process
      * @param contractData - the contract data information
-     * @return a Future<Void>
+     * @return a Future<EobSearchResponse>
      */
     private Future<EobSearchResponse> addPatientSearch(PatientDTO patient, ContractData contractData) {
         final Token token = NewRelic.getAgent().getTransaction().getToken();
