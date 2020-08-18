@@ -74,6 +74,7 @@ public class ProgressTracker {
             response.setPatients(new HashMap<>());
         }
         response.getPatients().put(dto.getPatientId(), dto);
+        totalCount++;
     }
 
     public void incrementTotalContractBeneficiariesSearchFinished() {

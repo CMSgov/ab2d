@@ -101,13 +101,19 @@ class JobProcessorIntegrationTest {
     private User user;
     private Job job;
     private Future<EobSearchResponse> future;
+    private String[] testBenes = new String[] {
+        "-199900000022040", "-199900000022041", "-199900000022042", "-199900000022043", "-199900000022044", "-199900000022045", "-199900000022046", "-199900000022047", "-199900000022048", "-199900000022049",
+                "-199900000022050", "-199900000022051", "-199900000022052", "-199900000022053", "-199900000022054", "-199900000022055", "-199900000022056", "-199900000022057", "-199900000022058", "-199900000022059",
+                "-199900000022060", "-199900000022061", "-199900000022062", "-199900000022063", "-199900000022064", "-199900000022065", "-199900000022066", "-199900000022067", "-199900000022068", "-199900000022069",
+                "-199900000022070", "-199900000022071", "-199900000022072", "-199900000022073", "-199900000022074", "-199900000022075", "-199900000022076", "-199900000022077", "-199900000022078", "-199900000022079",
+                "-199900000022030", "-199900000022031", "-199900000022032", "-199900000022033", "-199900000022034", "-199900000022035", "-199900000022036", "-199900000022037", "-199900000022038", "-199900000022039"
+    };
 
     @Container
     private static final PostgreSQLContainer postgreSQLContainer = new AB2DPostgresqlContainer();
     private Bundle bundle1;
     private RuntimeException fail;
     private List<Resource> bundle1Resources;
-    private List<Resource> resources;
     ContractBeneficiaries.PatientDTO patientDTO;
 
     @BeforeEach
@@ -135,13 +141,7 @@ class JobProcessorIntegrationTest {
         ExplanationOfBenefit eob = EobTestDataUtil.createEOB();
         bundle1 = EobTestDataUtil.createBundle(eob.copy());
         bundle1Resources = bundle1.getEntry().stream().map(Bundle.BundleEntryComponent::getResource).collect(Collectors.toList());
-        resources = getResources();
         future = mock(Future.class);
-
-        patientDTO = new ContractBeneficiaries.PatientDTO();
-        patientDTO.setPatientId("-199900000022040");
-        patientDTO.setDateRangesUnderContract(Collections.singletonList(
-                new FilterOutByDate.DateRange(new Date(0), new Date())));
 
         ContractBeneficiaries.PatientDTO patientDTO2 = new ContractBeneficiaries.PatientDTO();
         patientDTO2.setPatientId("-199900000022041");
@@ -152,20 +152,7 @@ class JobProcessorIntegrationTest {
         Mockito.lenient().when(future.get()).thenReturn(new EobSearchResponse(patientDTO, bundle1Resources));
         Mockito.lenient().when(future.isDone()).thenReturn(true);
 
-        when(mockBfdClient.requestPartDEnrolleesFromServer(anyString(), anyInt())).thenReturn(getNumPatients(
-                new String[] {
-                        "-199900000022040", "-199900000022041", "-199900000022042", "-199900000022043", "-199900000022044", "-199900000022045", "-199900000022046", "-199900000022047", "-199900000022048", "-199900000022049",
-                        "-199900000022050", "-199900000022051", "-199900000022052", "-199900000022053", "-199900000022054", "-199900000022055", "-199900000022056", "-199900000022057", "-199900000022058", "-199900000022059",
-                        "-199900000022060", "-199900000022061", "-199900000022062", "-199900000022063", "-199900000022064", "-199900000022065", "-199900000022066", "-199900000022067", "-199900000022068", "-199900000022069",
-                        "-199900000022070", "-199900000022071", "-199900000022072", "-199900000022073", "-199900000022074", "-199900000022047", "-199900000022076", "-199900000022077", "-199900000022078", "-199900000022079",
-                        "-199900000022080", "-199900000022081", "-199900000022082", "-199900000022083", "-199900000022084", "-199900000022085", "-199900000022086", "-199900000022087", "-199900000022088", "-199900000022089",
-                        "-199900000022090", "-199900000022091", "-199900000022092", "-199900000022093", "-199900000022094", "-199900000022095", "-199900000022096", "-199900000022097", "-199900000022098", "-199900000022099",
-                        "-199900000022000", "-199900000022001", "-199900000022002", "-199900000022003", "-199900000022004", "-199900000022005", "-199900000022006", "-199900000022007", "-199900000022008", "-199900000022009",
-                        "-199900000022010", "-199900000022011", "-199900000022012", "-199900000022013", "-199900000022014", "-199900000022015", "-199900000022016", "-199900000022017", "-199900000022018", "-199900000022019",
-                        "-199900000022020", "-199900000022021", "-199900000022022", "-199900000022023", "-199900000022024", "-199900000022025", "-199900000022026", "-199900000022027", "-199900000022028", "-199900000022029",
-                        "-199900000022030", "-199900000022031", "-199900000022032", "-199900000022033", "-199900000022034", "-199900000022035", "-199900000022036", "-199900000022037", "-199900000022038", "-199900000022039"
-                }
-        ));
+        when(mockBfdClient.requestPartDEnrolleesFromServer(anyString(), anyInt())).thenReturn(getNumPatients(testBenes));
 
         fail = new RuntimeException("TEST EXCEPTION");
 
@@ -182,12 +169,11 @@ class JobProcessorIntegrationTest {
                 patientContractThreadPool
         );
         ReflectionTestUtils.setField(cut, "startDate", "01/01/1990");
-        ReflectionTestUtils.setField(cut, "startDateSpecialContracts",
-                "01/01/1900");
+        ReflectionTestUtils.setField(cut, "startDateSpecialContracts", "01/01/1900");
         ReflectionTestUtils.setField(cut, "specialContracts", Collections.singletonList("Z0001"));
-
         ReflectionTestUtils.setField(cut, "efsMount", tmpEfsMountDir.toString());
         ReflectionTestUtils.setField(cut, "failureThreshold", 10);
+        ReflectionTestUtils.setField(cut, "ndjsonRollOver", 200);
     }
 
     Bundle getNumPatients(String[] patients) {
@@ -201,7 +187,19 @@ class JobProcessorIntegrationTest {
 
     @Test
     @DisplayName("When a job is in submitted status, it can be processed")
-    void processJob() {
+    void processJob() throws ExecutionException, InterruptedException {
+        Mockito.when(future.get())
+                .thenReturn(
+                        getResources(testBenes[0]), getResources(testBenes[1]), getResources(testBenes[2]), getResources(testBenes[3]), getResources(testBenes[4]),
+                        getResources(testBenes[5]), getResources(testBenes[6]), getResources(testBenes[7]), getResources(testBenes[8]), getResources(testBenes[9]),
+                        getResources(testBenes[10]), getResources(testBenes[11]), getResources(testBenes[12]), getResources(testBenes[13]), getResources(testBenes[14]),
+                        getResources(testBenes[15]), getResources(testBenes[16]), getResources(testBenes[17]), getResources(testBenes[18]), getResources(testBenes[19]),
+                        getResources(testBenes[20]), getResources(testBenes[21]), getResources(testBenes[22]), getResources(testBenes[23]), getResources(testBenes[24]),
+                        getResources(testBenes[25]), getResources(testBenes[26]), getResources(testBenes[27]), getResources(testBenes[28]), getResources(testBenes[29]),
+                        getResources(testBenes[30]), getResources(testBenes[31]), getResources(testBenes[32]), getResources(testBenes[33]), getResources(testBenes[34]),
+                        getResources(testBenes[35]), getResources(testBenes[36]), getResources(testBenes[37]), getResources(testBenes[38]), getResources(testBenes[39]),
+                        getResources(testBenes[40]), getResources(testBenes[41]), getResources(testBenes[42]), getResources(testBenes[43]), getResources(testBenes[44]),
+                        getResources(testBenes[45]), getResources(testBenes[46]), getResources(testBenes[47]), getResources(testBenes[48]), getResources(testBenes[49]));
         var processedJob = cut.process("S0000");
 
         List<LoggableEvent> jobStatusChange = doAll.load(JobStatusChangeEvent.class);
@@ -221,7 +219,20 @@ class JobProcessorIntegrationTest {
 
     @Test
     @DisplayName("When a job is in submitted by the parent user, it process the contracts for the children")
-    void whenJobSubmittedByParentUser_ProcessAllContractsForChildrenSponsors() {
+    void whenJobSubmittedByParentUser_ProcessAllContractsForChildrenSponsors() throws ExecutionException, InterruptedException {
+        Mockito.when(future.get())
+                .thenReturn(
+                        getResources(testBenes[0]), getResources(testBenes[1]), getResources(testBenes[2]), getResources(testBenes[3]), getResources(testBenes[4]),
+                        getResources(testBenes[5]), getResources(testBenes[6]), getResources(testBenes[7]), getResources(testBenes[8]), getResources(testBenes[9]),
+                        getResources(testBenes[10]), getResources(testBenes[11]), getResources(testBenes[12]), getResources(testBenes[13]), getResources(testBenes[14]),
+                        getResources(testBenes[15]), getResources(testBenes[16]), getResources(testBenes[17]), getResources(testBenes[18]), getResources(testBenes[19]),
+                        getResources(testBenes[20]), getResources(testBenes[21]), getResources(testBenes[22]), getResources(testBenes[23]), getResources(testBenes[24]),
+                        getResources(testBenes[25]), getResources(testBenes[26]), getResources(testBenes[27]), getResources(testBenes[28]), getResources(testBenes[29]),
+                        getResources(testBenes[30]), getResources(testBenes[31]), getResources(testBenes[32]), getResources(testBenes[33]), getResources(testBenes[34]),
+                        getResources(testBenes[35]), getResources(testBenes[36]), getResources(testBenes[37]), getResources(testBenes[38]), getResources(testBenes[39]),
+                        getResources(testBenes[40]), getResources(testBenes[41]), getResources(testBenes[42]), getResources(testBenes[43]), getResources(testBenes[44]),
+                        getResources(testBenes[45]), getResources(testBenes[46]), getResources(testBenes[47]), getResources(testBenes[48]), getResources(testBenes[49]));
+
         // switch the user to the parent sponsor
         user.setSponsor(sponsor.getParent());
         userRepository.save(user);
@@ -237,23 +248,28 @@ class JobProcessorIntegrationTest {
         assertFalse(jobOutputs.isEmpty());
     }
 
+    private ContractBeneficiaries.PatientDTO getPatient(String id) {
+        ContractBeneficiaries.PatientDTO patient = new ContractBeneficiaries.PatientDTO();
+        patient.setPatientId(id);
+        return patient;
+    }
+
     @Test
     @DisplayName("When the error count is below threshold, job does not fail")
     void when_errorCount_is_below_threshold_do_not_fail_job() throws ExecutionException, InterruptedException {
-        EobSearchResponse response = new EobSearchResponse(patientDTO, resources);
         Mockito.when(future.get())
-                .thenReturn(response, response, response, response, response, response, response, response, response, response)
-                .thenReturn(response, response, response, response, response, response, response, response, response, response)
-                .thenReturn(response, response, response, response, response, response, response, response, response, response)
-                .thenReturn(response, response, response, response, response, response, response, response, response, response)
-                .thenReturn(response, response, response, response, response, response, response, response, response, response)
-                .thenReturn(response, response, response, response, response, response, response, response, response, response)
-                .thenReturn(response, response, response, response, response, response, response, response, response, response)
-                .thenReturn(response, response, response, response, response, response, response, response, response, response)
-                .thenReturn(response, response, response, response, response, response, response, response, response, response)
-                .thenReturn(response, response, response, response, response)
-                .thenThrow(fail, fail, fail, fail, fail)
-        ;
+                .thenReturn(
+                        getResources(testBenes[0]), getResources(testBenes[1]), getResources(testBenes[2]), getResources(testBenes[3]), getResources(testBenes[4]),
+                        getResources(testBenes[5]), getResources(testBenes[6]), getResources(testBenes[7]), getResources(testBenes[8]), getResources(testBenes[9]),
+                        getResources(testBenes[10]), getResources(testBenes[11]), getResources(testBenes[12]), getResources(testBenes[13]), getResources(testBenes[14]),
+                        getResources(testBenes[15]), getResources(testBenes[16]), getResources(testBenes[17]), getResources(testBenes[18]), getResources(testBenes[19]),
+                        getResources(testBenes[20]), getResources(testBenes[21]), getResources(testBenes[22]), getResources(testBenes[23]), getResources(testBenes[24]),
+                        getResources(testBenes[25]), getResources(testBenes[26]), getResources(testBenes[27]), getResources(testBenes[28]), getResources(testBenes[29]),
+                        getResources(testBenes[30]), getResources(testBenes[31]), getResources(testBenes[32]), getResources(testBenes[33]), getResources(testBenes[34]),
+                        getResources(testBenes[35]), getResources(testBenes[36]), getResources(testBenes[37]), getResources(testBenes[38]), getResources(testBenes[39]),
+                        getResources(testBenes[40]), getResources(testBenes[41]), getResources(testBenes[42]), getResources(testBenes[43]), getResources(testBenes[44]),
+                        getResources(testBenes[45]))
+                .thenThrow(fail, fail, fail, fail);
 
         var processedJob = cut.process("S0000");
 
@@ -266,9 +282,9 @@ class JobProcessorIntegrationTest {
         assertEquals(1, beneSearchEvents.size());
         ContractBeneSearchEvent event = (ContractBeneSearchEvent) beneSearchEvents.get(0);
         assertEquals("S0000", event.getJobId());
-        assertEquals(100, event.getNumInContract());
+        assertEquals(50, event.getNumInContract());
         assertEquals("CONTRACT_0000", event.getContractNumber());
-        assertEquals(100, event.getNumSearched());
+        assertEquals(50, event.getNumSearched());
 
         final List<JobOutput> jobOutputs = job.getJobOutputs();
         assertFalse(jobOutputs.isEmpty());
@@ -277,19 +293,15 @@ class JobProcessorIntegrationTest {
     @Test
     @DisplayName("When the error count is greater than or equal to threshold, job should fail")
     void when_errorCount_is_not_below_threshold_fail_job() throws ExecutionException, InterruptedException {
-        EobSearchResponse response = new EobSearchResponse(patientDTO, resources);
         Mockito.when(future.get())
-                .thenReturn(response, response, response, response, response, response, response, response, response, response)
-                .thenReturn(response, response, response, response, response, response, response, response, response, response)
+                .thenReturn(getResources(testBenes[0]), getResources(testBenes[1]), getResources(testBenes[2]), getResources(testBenes[3]), getResources(testBenes[4]),
+                        getResources(testBenes[5]), getResources(testBenes[6]), getResources(testBenes[7]), getResources(testBenes[8]), getResources(testBenes[9]),
+                        getResources(testBenes[10]), getResources(testBenes[11]), getResources(testBenes[12]), getResources(testBenes[13]), getResources(testBenes[14]),
+                        getResources(testBenes[15]), getResources(testBenes[16]), getResources(testBenes[17]), getResources(testBenes[18]), getResources(testBenes[19]))
                 .thenThrow(fail, fail, fail, fail, fail, fail, fail, fail, fail, fail)
-                .thenReturn(response, response, response, response, response, response, response, response, response, response)
-                .thenReturn(response, response, response, response, response, response, response, response, response, response)
-                .thenReturn(response, response, response, response, response, response, response, response, response, response)
-                .thenReturn(response, response, response, response, response, response, response, response, response, response)
-                .thenReturn(response, response, response, response, response, response, response, response, response, response)
-                .thenReturn(response, response, response, response, response, response, response, response, response, response)
-                .thenThrow(fail, fail, fail, fail, fail, fail, fail, fail, fail, fail)
-        ;
+                .thenReturn(getResources(testBenes[30]), getResources(testBenes[31]), getResources(testBenes[32]), getResources(testBenes[33]), getResources(testBenes[34]),
+                        getResources(testBenes[35]), getResources(testBenes[36]), getResources(testBenes[37]), getResources(testBenes[38]), getResources(testBenes[39]))
+                .thenThrow(fail, fail, fail, fail, fail, fail, fail, fail, fail, fail);
         var processedJob = cut.process("S0000");
 
         List<LoggableEvent> errorEvents = doAll.load(ErrorEvent.class);
@@ -306,17 +318,15 @@ class JobProcessorIntegrationTest {
         List<LoggableEvent> fileEvents = doAll.load(FileEvent.class);
         // Since the max size of the file is not set here (so it's 0), every second write creates a new file since
         // the file is no longer empty after the first write. This means, there were 20 files created so 40 events
-        assertEquals(40, fileEvents.size());
-        assertEquals(20, fileEvents.stream().filter(e -> ((FileEvent) e).getStatus() == FileEvent.FileStatus.OPEN).count());
-        assertEquals(20, fileEvents.stream().filter(e -> ((FileEvent) e).getStatus() == FileEvent.FileStatus.CLOSE).count());
-        assertTrue(((FileEvent) fileEvents.get(39)).getFileName().contains("0020.ndjson"));
+        assertEquals(2, fileEvents.size());
+        assertEquals(1, fileEvents.stream().filter(e -> ((FileEvent) e).getStatus() == FileEvent.FileStatus.OPEN).count());
+        assertEquals(1, fileEvents.stream().filter(e -> ((FileEvent) e).getStatus() == FileEvent.FileStatus.CLOSE).count());
         assertTrue(((FileEvent) fileEvents.get(0)).getFileName().contains("0001.ndjson"));
-        assertEquals(20, fileEvents.stream().filter(e -> ((FileEvent) e).getFileHash().length() > 0).count());
+        assertEquals(1, fileEvents.stream().filter(e -> ((FileEvent) e).getFileHash().length() > 0).count());
 
         assertTrue(UtilMethods.allEmpty(
                 doAll.load(ApiRequestEvent.class),
                 doAll.load(ApiResponseEvent.class),
-                doAll.load(ReloadEvent.class),
                 doAll.load(ContractBeneSearchEvent.class)));
 
         assertEquals(processedJob.getStatus(), JobStatus.FAILED);
@@ -325,12 +335,14 @@ class JobProcessorIntegrationTest {
         assertNotNull(processedJob.getCompletedAt());
     }
 
-    private List<Resource> getResources() {
+    private EobSearchResponse getResources(String id) {
         List<Resource> allResources = new ArrayList<>();
+        ExplanationOfBenefit eob = EobTestDataUtil.createEOB();
+        eob.getPatient().setReference("Patient/" + id);
         for (int i = 0; i < 8; i++) {
-            allResources.addAll(bundle1Resources);
+            allResources.add(eob.copy());
         }
-        return allResources;
+        return new EobSearchResponse(getPatient(id), allResources);
     }
 
     private Sponsor createSponsor() {

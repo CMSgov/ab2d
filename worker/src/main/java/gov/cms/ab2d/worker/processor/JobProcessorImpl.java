@@ -9,6 +9,7 @@ import gov.cms.ab2d.common.model.*;
 import gov.cms.ab2d.common.repository.JobOutputRepository;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.common.util.Constants;
+import gov.cms.ab2d.common.util.FHIRUtil;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.events.*;
 import gov.cms.ab2d.filter.FilterOutByDate;
@@ -157,7 +158,7 @@ public class JobProcessorImpl implements JobProcessor {
      * @throws InterruptedException - when the search is interrupted
      */
     private void processContracts(List<Contract> contracts, Job job, int month, Path outputDirPath,
-                                  ProgressTracker progressTracker) throws ExecutionException, InterruptedException {
+                                  ProgressTracker progressTracker) throws Exception {
         List<ContractData> cData = new ArrayList<>();
         List<JobOutput> jobOutputs = new ArrayList<>();
 
@@ -213,7 +214,7 @@ public class JobProcessorImpl implements JobProcessor {
                             contactBeneSearchIterator.remove();
                         }
                     }
-                    processBeneFuturesList(eobFutureHandles, progressTracker, contractEobManager, helper, contractBeneficiaries);
+                    processBeneFuturesList(eobFutureHandles, progressTracker, contractEobManager, helper, contractBeneficiaries, contractBeneFutureHandles);
                     updateJobStatus(job, progressTracker);
                     // If we haven't removed all items from the running futures lists, sleep for a bit
                     if (!contractBeneFutureHandles.isEmpty() || !eobFutureHandles.isEmpty()) {
@@ -225,12 +226,10 @@ public class JobProcessorImpl implements JobProcessor {
                     cancelIt(contractBeneFutureHandles, eobFutureHandles, progressTracker.getJobUuid());
                 }
                 updateJobStatus(job, progressTracker);
-            } catch (ExecutionException | InterruptedException ex) {
+            } catch (Exception ex) {
+                cData.forEach(c -> close(c.getHelper()));
                 log.error("Having issue retrieving patients for contract " + contractNum);
                 throw ex;
-            } catch (IOException e) {
-                cData.forEach(c -> close(c.getHelper()));
-                throw new UncheckedIOException(e);
             }
             eventLogger.log(new ContractBeneSearchEvent(job.getUser() == null ? null : job.getUser().getUsername(),
                     job.getJobUuid(),
@@ -299,7 +298,8 @@ public class JobProcessorImpl implements JobProcessor {
     }
 
     private void processBeneFuturesList(List<Future<EobSearchResponse>> benes, ProgressTracker progressTracker,
-                                                  ContractEobManager contractEobManager, StreamHelper helper, ContractBeneficiaries contractBeneficiaries) {
+                                        ContractEobManager contractEobManager, StreamHelper helper,
+                                        ContractBeneficiaries contractBeneficiaries, List<Future<ContractMapping>> contractMappings) {
         EobSearchResponse response = null;
         Iterator<Future<EobSearchResponse>> beneIterator = benes.iterator();
         while (beneIterator.hasNext()) {
@@ -311,32 +311,43 @@ public class JobProcessorImpl implements JobProcessor {
                     contractEobManager.addResources(response);
                     contractEobManager.validateResources(contractBeneficiaries.getPatients().get(response.getPatient().getPatientId()));
                     contractEobManager.writeValidEobs(helper);
-                } catch (IOException e) {
-                    String errorMsg = "Unable to write to EOB data file " + e.getLocalizedMessage();
-                    log.error(errorMsg, e);
-                    throw new RuntimeException(errorMsg);
-                } catch (InterruptedException | ExecutionException e) {
+                } catch (CancellationException e) {
+                    // This could happen in the rare event that a job was cancelled mid-process.
+                    // due to which the futures in the queue (that were not yet in progress) were cancelled.
+                    // Nothing to be done here
+                    log.warn("CancellationException while calling Future.get() - Job may have been cancelled");
+                } catch (Exception e) {
                     progressTracker.incrementFailureCount();
+                    handleException(contractBeneficiaries.getContractNumber(), helper, response == null ? "Encountered exception while processing job resources: " + e.getMessage() : response.toString(), e);
                     if (progressTracker.isErrorCountBelowThreshold()) {
                         final Throwable rootCause = ExceptionUtils.getRootCause(e);
                         log.error("exception while processing patient {}", rootCause.getMessage(), rootCause);
                         // log exception, but continue processing job as errorCount is below threshold
                     } else {
                         benes.parallelStream().forEach(f -> f.cancel(false));
+                        contractMappings.parallelStream().forEach(f -> f.cancel(false));
                         String description = progressTracker.getFailureCount() + " out of " + progressTracker.getTotalCount() + " records failed. Stopping job";
                         eventLogger.log(new ErrorEvent(null, progressTracker.getJobUuid(),
                                 ErrorEvent.ErrorType.TOO_MANY_SEARCH_ERRORS, description));
                         log.error("{} out of {} records failed. Stopping job", progressTracker.getFailureCount(), progressTracker.getTotalCount());
                         throw new RuntimeException("Too many patient records in the job had failures");
                     }
-                } catch (CancellationException e) {
-                    // This could happen in the rare event that a job was cancelled mid-process.
-                    // due to which the futures in the queue (that were not yet in progress) were cancelled.
-                    // Nothing to be done here
-                    log.warn("CancellationException while calling Future.get() - Job may have been cancelled");
                 }
                 beneIterator.remove();
             }
+        }
+    }
+
+    private void handleException(String contractNum, StreamHelper helper, String data, Exception e) {
+        var errMsg = ExceptionUtils.getRootCauseMessage(e);
+        var operationOutcome = FHIRUtil.getErrorOutcome(errMsg);
+
+        var jsonParser = fhirContext.newJsonParser();
+        String payload = jsonParser.encodeResourceToString(operationOutcome);
+        try {
+            helper.addError(payload + " - " + data + System.lineSeparator());
+        } catch (Exception ex) {
+            log.error("Cannot log to error file for contract " + contractNum);
         }
     }
 
@@ -418,7 +429,7 @@ public class JobProcessorImpl implements JobProcessor {
      * @param job - the job to process
      * @param outputDirPath - the output directory to put all the files
      */
-    private void processJob(Job job, Path outputDirPath) throws ExecutionException, InterruptedException {
+    private void processJob(Job job, Path outputDirPath) throws Exception {
         // Create the output directory
         createOutputDirectory(outputDirPath, job);
         int month = LocalDate.now().getMonthValue();
@@ -436,7 +447,7 @@ public class JobProcessorImpl implements JobProcessor {
         // Retrieve the contract beneficiaries
         try {
             processContracts(attestedContracts, job, month, outputDirPath, progressTracker);
-        } catch (ExecutionException | InterruptedException ex) {
+        } catch (Exception ex) {
             log.error("Having issue retrieving patients for contract " + attestedContracts.stream().map(Contract::getContractNumber).collect(Collectors.joining()));
             throw ex;
         }
