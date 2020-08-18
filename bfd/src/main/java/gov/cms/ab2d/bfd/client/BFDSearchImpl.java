@@ -2,39 +2,26 @@ package gov.cms.ab2d.bfd.client;
 
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.IParser;
-import ca.uhn.fhir.rest.gclient.TokenClientParam;
 import ca.uhn.fhir.rest.param.DateRangeParam;
-import com.google.common.base.Charsets;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.IOUtils;
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpRequest;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
-import org.apache.http.client.ResponseHandler;
+import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpUriRequest;
-import org.apache.http.util.EntityUtils;
 import org.hl7.fhir.dstu3.model.Bundle;
-import org.hl7.fhir.instance.model.api.IBaseBinary;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 
+import java.io.InputStream;
 import java.time.OffsetDateTime;
 import java.util.Date;
-import java.util.concurrent.TimeUnit;
 
 @Component
 @Slf4j
 public class BFDSearchImpl implements BFDSearch {
 
     private final HttpClient httpClient;
-
-    private final FhirContext fhirContext;
 
     private final IParser jsonParser;
 
@@ -43,33 +30,28 @@ public class BFDSearchImpl implements BFDSearch {
 
     public BFDSearchImpl(HttpClient httpClient, FhirContext fhirContext) {
         this.httpClient = httpClient;
-        this.fhirContext = fhirContext;
         this.jsonParser = fhirContext.newJsonParser();
     }
 
-    private ResponseHandler<String> responseHandler = new ResponseHandler<String>() {
+    /*private ResponseHandler<Bundle> responseHandler = new ResponseHandler<>() {
 
         @Override
-        public String handleResponse(
+        public Bundle handleResponse(
                 final HttpResponse response) throws IOException {
             int status = response.getStatusLine().getStatusCode();
             if (status >= 200 && status < 300) {
-                HttpEntity entity = response.getEntity();
-                if(entity != null) {
-                    try {
-                        return IOUtils.toString(entity.getContent(), Charsets.UTF_8);
-                    } finally {
-                        entity.getContent().close();
-                    }
-                } else {
-                    return null;
+                InputStream instream = response.getEntity().getContent();
+                try {
+                    return jsonParser.parseResource(Bundle.class, instream);
+                }  finally {
+                    instream.close();
                 }
             } else {
                 throw new ClientProtocolException("Unexpected response status: " + status);
             }
         }
 
-    };
+    };*/
 
     @Override
     public Bundle searchEOB(String patientId, OffsetDateTime since) throws IOException, InterruptedException {
@@ -83,10 +65,19 @@ public class BFDSearchImpl implements BFDSearch {
         String url = serverBaseUrl + "ExplanationOfBenefit?patient=" + patientId + "&excludeSAMHSA=true" +
                 "&_format=json";
 
-        HttpGet httpget = new HttpGet(url);
-        // Create a custom response handler
-        String body = httpClient.execute(httpget, responseHandler);
-
-        return jsonParser.parseResource(Bundle.class, body);
+        HttpGet request = new HttpGet(url);
+        try(CloseableHttpResponse response = (CloseableHttpResponse) httpClient.execute(request)) {
+            int status = response.getStatusLine().getStatusCode();
+            if (status >= 200 && status < 300) {
+                InputStream instream = response.getEntity().getContent();
+                try {
+                    return jsonParser.parseResource(Bundle.class, instream);
+                }  finally {
+                    instream.close();
+                }
+            } else {
+                return null;
+            }
+        }
     }
 }
