@@ -41,6 +41,7 @@ lication-load-balancer)
 1. [Configure VictorOps](#configure-victorops)
    * [Request access to VictorOps](#request-access-to-victorops)
    * [Bookmark important VictorOps URLs](#bookmark-important-victorops-urls)
+   * [Add users to the VictorOps account](#add-users-to-the-victorops-account)
    * [Add users to the AB2D team](#add-users-to-the-ab2d-team)
    * [Set up paging policy for a user](#set-up-paging-policy-for-a-user)
    * [Install the VictorOps mobile app](#install-the-victorops-mobile-app)
@@ -51,7 +52,7 @@ lication-load-balancer)
    * [Forward New Relic alerts to the VictorOps alerting service](#forward-new-relic-alerts-to-the-victorops-alerting-service)
    * [Forward AWS CloudWatch alarms to the VictorOps alerting service](#forward-aws-cloudwatch-alarms-to-the-victorops-alerting-service)
    * [Create a dedicated SemanticBits Slack channel for AB2D incidents](#create-a-dedicated-semanticbits-slack-channel-for-ab2d-incidents)
-   * [Configure VictorOps alerting service to forward alerts to a dedicated Slack channel](#configure-victorops-alerting-service-to-forward-alerts-to-a-dedicated-slack-channel)
+   * [Configure VictorOps alerting service to forward alerts to a dedicated Slack channel using Slack integration](#configure-victorops-alerting-service-to-forward-alerts-to-a-dedicated-slack-channel-using-slack-integration)
 1. [Configure Cloud Protection Manager](#configure-cloud-protection-manager)
    * [Ensure that all instances have CPM backup tags](#ensure-that-all-instances-have-cpm-backup-tags)
    * [Complete CPM questionnaire](#complete-cpm-questionnaire)
@@ -1821,9 +1822,9 @@ lication-load-balancer)
 
 1. Request access to the following VictorOps
 
-   > https://portal.victorops.com/client/bcda
+   > https://portal.victorops.com/client/cms-ccxp
 
-1. When you receive an email invitation, click the link in the email to create a username and password for VictorOps
+1. If you have never been added to any VictorOps account before, click the link in the email that you receive to create a username and password for VictorOps
 
 ### Bookmark important VictorOps URLs
 
@@ -1831,9 +1832,9 @@ lication-load-balancer)
 
 1. Add the following bookmarks for VictorOps
 
-   *VictorOps - AB2D:*
+   *VictorOps - AB2D on CCXP:*
 
-   > https://portal.victorops.com/client/cms-ab2d
+   > https://portal.victorops.com/client/cms-ccxp
 
    *VictorOps - Blog:*
 
@@ -1847,13 +1848,31 @@ lication-load-balancer)
 
    > https://victorops.com/contact/
 
+### Add users to the VictorOps account
+
+1. Open Chrome
+
+1. Enter the following in the address bar
+
+   > https://portal.victorops.com/client/cms-ccxp
+
+1. Log on to VictorOps (if not already logged in)
+
+1. Select the **Users** tab
+
+1. Select **Invite User**
+
+1. Enter a comma-separated list of the emails of users to add in the **Enter and email address** text box
+
+1. Select **Add User**
+
 ### Add users to the AB2D team
 
 1. Open Chrome
 
 1. Enter the following in the address bar
 
-   > https://portal.victorops.com/client/cms-ab2d
+   > https://portal.victorops.com/client/cms-ccxp
 
 1. Log on to VictorOps (if not already logged in)
 
@@ -1943,7 +1962,7 @@ lication-load-balancer)
 
 1. Enter the following in the address bar
 
-   > https://portal.victorops.com/client/cms-ab2d
+   > https://portal.victorops.com/client/cms-ccxp
 
 1. Log on (if not already logged in)
 
@@ -2047,7 +2066,7 @@ lication-load-balancer)
 
 1. Enter the following in the address bar
 
-   > https://portal.victorops.com/client/cms-ab2d
+   > https://portal.victorops.com/client/cms-ccxp
 
 1. Log on (if not already logged in)
 
@@ -2103,7 +2122,13 @@ lication-load-balancer)
 
 ### Create a route key and verify escalation policy
 
-1. Log on to VictorOps
+1. Open Chrome
+
+1. Enter the following in the address bar
+
+   > https://portal.victorops.com/client/cms-ccxp
+
+1. Log on (if not already logged in)
 
 1. Select the **Settings** tab
 
@@ -2114,7 +2139,7 @@ lication-load-balancer)
 1. Type the following in the **Routing Key** text box
 
    ```
-   AB2D
+   ab2d-prod
    ```
 
 1. Select the following from the **Escalation Policies** dropdown
@@ -2140,34 +2165,22 @@ lication-load-balancer)
 1. Note that the following now appears under "Routes"
 
    ```
-   AB2D
+   ab2d-prod
    ```
 
 ### Set the default routing policy
 
-1. Log on to VictorOps
+1. Open Chrome
+
+1. Enter the following in the address bar
+
+   > https://portal.victorops.com/client/cms-ccxp
+
+1. Log on (if not already logged in)
 
 1. Select the **Settings** tab
 
-1. Select the pencil icon beside the "Default Routing Policy"
-
-1. Select the following escalation policy
-
-   ```
-   AB2D:Standard
-   ```
-
-1. Select the checkmark button to the right of the dropdown
-
-1. Select the **Escalation Policies** tab
-
-1. Expand the escalation policy
-
-1. Note that the following now appears under "Routes"
-
-   ```
-   Default   AB2D
-   ```
+1. Note that CCXP owns the "Default Routing Policy", so we will not be making any changes to this
 
 ### Forward New Relic alerts to the VictorOps alerting service
 
@@ -2249,11 +2262,11 @@ lication-load-balancer)
 
    - **Select a channel:** VictorOps
 
-   - **Channel name:** {victors ops route key}
+   - **Channel name:** ab2d-prod
 
    - **Key:** {victors ops api key for new relic}
 
-   - **Route key:** {victors ops route key}
+   - **Route key:** ab2d-prod
 
 1. Select **Create channel**
 
@@ -2318,7 +2331,13 @@ lication-load-balancer)
 
 ### Forward AWS CloudWatch alarms to the VictorOps alerting service
 
-1. Log on to VictorOps
+1. Open Chrome
+
+1. Enter the following in the address bar
+
+   > https://portal.victorops.com/client/cms-ccxp
+
+1. Log on (if not already logged in)
 
 1. Before proceeding, ensure you on call for on AB2D in VictorOps
 
@@ -2327,6 +2346,8 @@ lication-load-balancer)
    1. Select **Users** tab under the "People" section in the leftmost panel
 
    1. Verify that AB2D and the leaf image appears for your user
+
+   1. If your are not on call, override the current user so that you are on call
 
 1. Select the **Integrations** tab
 
@@ -2618,17 +2639,68 @@ lication-load-balancer)
    p-ab2d-incident-response
    ```
 
-### Configure VictorOps alerting service to forward alerts to a dedicated Slack channel
+### Link slack user with VictorOps
 
-1. Log on to VictorOps
+1. Open Chrome
 
-1. Before proceeding, ensure you on call for on AB2D in VictorOps
+1. Enter the following in the address bar
 
-   1. Select the **Timeline** tab
+   > https://portal.victorops.com/client/cms-ccxp
 
-   1. Select **Users** tab under the "People" section in the leftmost panel
+1. Log on (if not already logged in)
 
-   1. Verify that AB2D and the leaf image appears for your user
+1. Open Slack
+
+1. Scroll down to "Apps" in the leftmost panel
+
+1. Select "+" beside "Apps" in the leftmost panel
+
+1. Type the following in the **Search by name or category** text box
+
+   ```
+   victorops
+   ```
+
+1. Select **VictorOps**
+
+1. Enter the following in the "victorops" channel
+
+   ```
+   /victor-linkuser @{slack user}
+   ```
+
+1. Select "Linking your Slack user"
+
+1. Note that VictorOps opens in Chrome
+
+1. Note that the following is displayed
+
+   *Format:*
+
+   ```
+   Slack and VictorOps Connected!
+   Your Slack user ({slack user}) and VictorOps user ({victorops user}) accounts have been successfully linked. Now you can take action on incidents from Slack.
+   ```
+
+1. Select **OK** on the "Slack and VictorOps Connected!" window
+
+1. Make sure each technical user links their slack user to VictorOps
+
+### Configure VictorOps alerting service to forward alerts to a dedicated Slack channel using Slack integration
+
+1. Add the person that first integrated SemanticBits with VictorOps to the "p-ab2d-incident-response" slack channel by entering the following in the "p-ab2d-incident-response" slack channel
+
+   ```
+   @Clarence
+   ```
+
+1. Open Chrome
+
+1. Enter the following in the address bar
+
+   > https://portal.victorops.com/client/cms-ccxp
+
+1. Log on (if not already logged in)
 
 1. Select the **Integrations** tab
 
@@ -2638,110 +2710,63 @@ lication-load-balancer)
    slack
    ```
 
-1. If Slack does not display "enabled", do the following
+1. Note that since we are using CCXP account, Slack is already enabled
 
-   1. Select **Slack**
+1. Note that since we are using CCXP account, the default channel is owned bt CCXP
 
-   1. Select **Enable Integration**
+1. Select **Add Mapping**
 
-   1. Note that the following appears
+1. Configure the "Add Channel Mapping" page as follows
 
-      ```
-      You are not authorized to install VictorOps on cmsgov
-      VictorOps is restricted for this workspace. Please reach out to one of your App Managers if you would like additional information or to ask them to install this app.
-      ```
+   - **Select an Escalation Policy:** AB2D - Standard
 
-   1. Select "SemanticBits" from the dropdown in the the top right of the page
+   - **Select a channel to send VictorOps messages to:** p-ab2d-incident-response
 
-   1. Note the following information
+   - **Chat Messages (Synced with VictorOps timeline):** checked
 
-      - VictorOps is requesting permission to access the SemanticBits Slack workspace
+   - **On-Call change notifications:** checked
 
-      - What will VictorOps be able to view?
+   - **Paging notifications:** checked
 
-        - View information about your identity
+   - **Incidents:** checked
 
-        - View basic information about public channels in your workspace
+1. Select **Save**
 
-        - View basic information about your private channels
+1. Open a new Chrome tab
 
-        - View messages and other content in public channels, private channels, direct messages, and group direct messages that VictorOps has been added to
+1. Log on to production AWS account
 
-        - View basic information about direct and group direct messages that VictorOps has been added to
+1. Select **SNS**
 
-        - View basic information about private channels that VictorOps has been added to
+1. Select **Topics** from the leftmost panel
 
-        - View files shared in channels and conversations that VictorOps has been added to
-
-        - View pinned content in channels and conversations that VictorOps has been added to
-
-        - View messages and files that VictorOps has starred
-
-        - View emoji reactions and their associated content in channels and conversations that VictorOps has been added to
-
-        - View the name, email domain, and icon for workspaces VictorOps is connected to
-
-        - View people in your workspace
-
-        - View email addresses of people in your workspace
-
-        - View user groups in your workspace
-
-        - View custom emoji in your workspace
-
-        - View Do Not Disturb settings for people in your workspace
-
-      - What will VictorOps be able to do?
-
-        - Manage your public and private channels and create new ones on your behalf
-
-        - Send messages as VictorOps
-
-        - Start direct and group direct messages with people
-
-        - Upload, edit, and delete files as VictorOps
-
-        - Add and remove pinned messages and files
-
-        - Add or remove stars
-
-        - Add and edit emoji reactions
-
-        - Add the ability for people to direct message or mention @victorops
-
-        - Add shortcuts and/or slash commands that people can use
-
-        - Provide VictorOps with a stream of all activity in Slack for the conversations and people it can see
-
-        - Set presence for VictorOps
-
-   1. Select **Allow**
-
-1. Select the **Integrations** tab
-
-1. Type the following in the **Search** text box again
+1. Select the following topic
 
    ```
-   cloudwatch
+   ab2d-east-prod-cloudwatch-alarms
    ```
 
-1. Verify that the following is displayed
+1. Select **Publish message**
 
-   ```
-   AWS CloudWatch
-   Specialized Tools
-   enabled
-   ```
+1. Configure the "Message details" section as follows
 
-1. Select **AWS CloudWatch**
+   - **Subject:** {keep blank}
 
-1. Copy and save the following information for next steps
+   - **Time to Live (TTL):** {keep blank}
 
-   *Service API Endpoint:*
+1. Configure the "Message body" section as follows
 
-   ```
-   {victors ops service api endpoint for aws cloudwatch}/{routing key}
-   ```
+   - **Message structure:** Identical payload for all delivery protocols
+
+   - **Message body to send to the endpoint:**
+
+     ```
+     {"AlarmName":"VictorOps - CloudWatch Integration TEST","NewStateValue":"ALARM","NewStateReason":"failure","StateChangeTime":"2017-12-14T01:00:00.000Z","AlarmDescription":"VictorOps - CloudWatch Integration TEST"}
+     ```
+
+1. Select **Publish message**
+
+1. Verify that the incident appears in the "p-ab2d-incident-response" slack channel
 
 ## Configure Cloud Protection Manager
 
