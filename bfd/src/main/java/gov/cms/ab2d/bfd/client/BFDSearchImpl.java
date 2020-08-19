@@ -1,6 +1,5 @@
 package gov.cms.ab2d.bfd.client;
 
-import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.IParser;
 import ca.uhn.fhir.rest.server.exceptions.ResourceNotFoundException;
 import lombok.extern.slf4j.Slf4j;
@@ -22,14 +21,14 @@ public class BFDSearchImpl implements BFDSearch {
 
     private final HttpClient httpClient;
 
-    private final IParser jsonParser;
+    private final IParser parser;
 
     @Value("${bfd.serverBaseUrl}")
     private String serverBaseUrl;
 
-    public BFDSearchImpl(HttpClient httpClient, FhirContext fhirContext) {
+    public BFDSearchImpl(HttpClient httpClient, IParser iParser) {
         this.httpClient = httpClient;
-        this.jsonParser = fhirContext.newJsonParser();
+        this.parser = iParser;
     }
 
     @Override
@@ -55,7 +54,7 @@ public class BFDSearchImpl implements BFDSearch {
             if (status >= 200 && status < 300) {
                 InputStream instream = response.getEntity().getContent();
                 try {
-                    return jsonParser.parseResource(Bundle.class, instream);
+                    return parser.parseResource(Bundle.class, instream);
                 } finally {
                     instream.close();
                 }
