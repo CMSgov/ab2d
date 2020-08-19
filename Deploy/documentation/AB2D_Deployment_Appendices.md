@@ -130,8 +130,10 @@
    * [Install and verify AWS CLI 2](#install-and-verify-aws-cli-2)
 1. [Appendix NNN: Manually install Chef Inspec on existing Jenkins Agent](#appendix-nnn-manually-install-chef-inspec-on-existing-jenkins-agent)
 1. [Appendix OOO: Connect to Jenkins agent through the Jenkins master using the ProxyJump flag](#appendix-ooo-connect-to-jenkins-agent-through-the-jenkins-master-using-the-proxyjump-flag)
-1. [Appendix PPP: Migrate to reserved RDS instance](#appendix-ppp-migrate-to-reserved-rds-instance)
+1. [Appendix PPP: Retrieve CSV database backup](#appendix-ppp-retrieve-csv-database-backup)
 1. [Appendix QQQ: Get private IP address](#appendix-qqq-get-private-ip-address)
+1. [Appendix RRR: Protect the existing RDS database using AWS CLI](#appendix-rrr-protect-the-existing-rds-database-using-aws-cli)
+1. [Appendix SSS: Review RDS reserved instance utilization from AWS console](#appendix-sss-review-rds-reserved-instance-utilization-from-aws-console)
 
 ## Appendix A: Access the CMS AWS console
 
@@ -10917,7 +10919,7 @@ $ sed -i "" 's%cms-ab2d[\/]prod%cms-ab2d/dev%g' _includes/head.html (edited)
 	ec2-user@$JENKINS_AGENT_PRIVATE_IP
    ```
 
-## Appendix PPP: Migrate to reserved RDS instance
+## Appendix PPP: Retrieve CSV database backup
 
 1. Connect to Cisco VPN
 
@@ -11006,6 +11008,10 @@ $ sed -i "" 's%cms-ab2d[\/]prod%cms-ab2d/dev%g' _includes/head.html (edited)
      --desired-capacity 0
    ```
 
+1. Wait about ten minutes
+
+1. Verify that the API and Worker autoscaling groups have a status of "-" in the AWS console before proceeding
+   
 1. Backup existing data for target environment
 
    1. Open Chrome
@@ -11025,6 +11031,14 @@ $ sed -i "" 's%cms-ab2d[\/]prod%cms-ab2d/dev%g' _includes/head.html (edited)
    1. Wait for jenkins job to complete
 
 1. Retrieve CSV data from the Jenkins agent
+
+   1. Open a new terminal
+
+   1. Set AWS target environment to management
+
+      ```ShellSession
+      $ source ~/code/ab2d/Deploy/bash/set-env.sh
+      ```
 
    1. Set the Jenkins agent name
 
@@ -11049,6 +11063,32 @@ $ sed -i "" 's%cms-ab2d[\/]prod%cms-ab2d/dev%g' _includes/head.html (edited)
         --output text)
       ```
 
+   1. Set target environment variable
+
+      *Example for "Dev" environment:*
+
+      ```ShellSession
+      $ TARGET_ENVIRONMENT=ab2d-dev
+      ```
+
+      *Example for "Sbx" environment:*
+   
+      ```ShellSession
+      $ TARGET_ENVIRONMENT=ab2d-sbx-sandbox
+      ```
+   
+      *Example for "Impl" environment:*
+   
+      ```ShellSession
+      $ TARGET_ENVIRONMENT=ab2d-east-impl
+      ```
+   
+      *Example for "Prod" environment:*
+   
+      ```ShellSession
+      $ TARGET_ENVIRONMENT=ab2d-east-prod
+      ```
+
    1. Copy the database backup file to the "ec2-user" home directory
 
       ```ShellSession
@@ -11071,6 +11111,12 @@ $ sed -i "" 's%cms-ab2d[\/]prod%cms-ab2d/dev%g' _includes/head.html (edited)
       $ cd ~/Downloads
       ```
 
+   1. Delete existing target environment directory
+
+      ```ShellSession
+      $ rm -rf "${TARGET_ENVIRONMENT}"
+      ```
+      
    1. Download the database backup file
 
       ```ShellSession
@@ -11087,89 +11133,6 @@ $ sed -i "" 's%cms-ab2d[\/]prod%cms-ab2d/dev%g' _includes/head.html (edited)
       $ tar -xzvf "${TARGET_ENVIRONMENT}.tar.gz" --strip-components=4
       ```
 
-1. Protect the existing RDS database
-
-   1. Change to the "bash" directory
-
-      ```ShellSession
-      $ cd ~/code/ab2d/Deploy/bash
-      ```
-
-   1. Set target environment
-
-      ```ShellSession
-      $ source ./set-env.sh
-      ```
-
-   1. Apply delete protection to the existing RDS instance
-
-      ```ShellSession
-      $ aws --region "${AWS_DEFAULT_REGION}" rds modify-db-instance \
-        --db-instance-identifier 'ab2d' \
-	--deletion-protection
-      ```
-
-   1. Verify that delete protection is true
-
-      ```ShellSession
-      $ aws --region "${AWS_DEFAULT_REGION}" rds describe-db-instances \
-        --query "DBInstances[?DBInstanceIdentifier=='ab2d'].DeletionProtection" \
-	--output text
-      ```
-
-1. Remove the existing RDS database from terraform state
-
-   1. Change to terraform target environment
-   
-      ```ShellSession
-      $ cd "${HOME}/code/ab2d/Deploy/terraform/environments/${TARGET_ENVIRONMENT}"
-      ```
-
-   > *** TO DO ***
-
-
-1. Start API nodes
-
-   *Note that adding 75 seconds with "-v+75S" is a Mac-only way of doing this.*
-
-   ```ShellSession
-   $ API_AUTOSCALING_GROUP_NAME=$(aws --region "${AWS_DEFAULT_REGION}" autoscaling describe-auto-scaling-groups \
-     --query "AutoScalingGroups[*].AutoScalingGroupName" \
-     --output json \
-     | jq 'sort' \
-     | jq '.[0]' \
-     | tr -d '"') \
-     && START_TIME=$(date -u -v+75S +%Y-%m-%dT%H:%M:%SZ) \
-     && aws --region "${AWS_DEFAULT_REGION}" autoscaling put-scheduled-update-group-action \
-     --auto-scaling-group-name "${API_AUTOSCALING_GROUP_NAME}" \
-     --scheduled-action-name startup-nodes \
-     --start-time "${START_TIME}" \
-     --min-size 2 \
-     --max-size 4 \
-     --desired-capacity 2
-   ```
-
-1. Start worker nodes
-
-   *Note that adding 75 seconds with "-v+75S" is a Mac-only way of doing this.*
-
-   ```ShellSession
-   $ WORKER_AUTOSCALING_GROUP_NAME=$(aws --region "${AWS_DEFAULT_REGION}" autoscaling describe-auto-scaling-groups \
-     --query "AutoScalingGroups[*].AutoScalingGroupName" \
-     --output json \
-     | jq 'sort' \
-     | jq '.[1]' \
-     | tr -d '"') \
-     && START_TIME=$(date -u -v+75S +%Y-%m-%dT%H:%M:%SZ) \
-     && aws --region "${AWS_DEFAULT_REGION}" autoscaling put-scheduled-update-group-action \
-     --auto-scaling-group-name "${WORKER_AUTOSCALING_GROUP_NAME}" \
-     --scheduled-action-name startup-nodes \
-     --start-time "${START_TIME}" \
-     --min-size 2 \
-     --max-size 4 \
-     --desired-capacity 2
-   ```
-
 ## Appendix QQQ: Get private IP address
 
 1. Get private IP address on Mac
@@ -11179,3 +11142,81 @@ $ sed -i "" 's%cms-ab2d[\/]prod%cms-ab2d/dev%g' _includes/head.html (edited)
    ```
 
 1. Note the private address that is output
+
+## Appendix RRR: Protect the existing RDS database using AWS CLI
+
+1. Change to the "bash" directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d/Deploy/bash
+   ```
+
+1. Set target environment
+
+   ```ShellSession
+   $ source ./set-env.sh
+   ```
+
+1. Apply delete protection to the existing RDS instance
+
+   ```ShellSession
+   $ aws --region "${AWS_DEFAULT_REGION}" rds modify-db-instance \
+     --db-instance-identifier 'ab2d' \
+	--deletion-protection
+   ```
+
+1. Verify that delete protection is true
+
+   ```ShellSession
+   $ aws --region "${AWS_DEFAULT_REGION}" rds describe-db-instances \
+     --query "DBInstances[?DBInstanceIdentifier=='ab2d'].DeletionProtection" \
+	--output text
+   ```
+
+## Appendix SSS: Review RDS reserved instance utilization from AWS console
+
+### Create a "RDS Reserved Instance Utilization" report
+
+1. Log on to AWS console for the target environment
+
+1. Select **Cost Explorer**
+
+1. Select **Utilization report** under "Reservations" in the leftmost panel
+
+1. Select **Service** under "Filters" in the rightmost panel
+
+1. Select the **Relational Database Service (RDS)** radio button
+
+1. Select **Apply Filters**
+
+1. Note the solid blue line starting on June 19th that shows 100% utilization of the reserved RDS instance
+
+1. Select **Save as**
+
+1. Type the following in the "Save as new report" text box
+
+   ```
+   RDS Reserved Instance Utilization
+   ```
+
+1. Select **Save Report**
+
+### Run the "RDS Reserved Instance Utilization" report
+
+1. Log on to AWS console for the target environment
+
+1. Select **Cost Explorer**
+
+1. Select **Reports** in the leftmost panel
+
+1. Enter the following in the "Search" text box
+
+   ```
+   rds
+   ```
+
+1. Select the following report
+
+   ```
+   RDS Reserved Instance Utilization
+   ```
