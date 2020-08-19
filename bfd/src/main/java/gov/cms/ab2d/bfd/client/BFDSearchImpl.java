@@ -66,6 +66,10 @@ public class BFDSearchImpl implements BFDSearch {
                 "&_format=json";
 
         HttpGet request = new HttpGet(url);
+        request.addHeader("Accept", "application/fhir+json;q=1.0, application/json+fhir;q=0.9");
+        request.addHeader("Accept-Encoding", "gzip");
+        request.addHeader("Accept-Charset", "utf-8");
+
         try(CloseableHttpResponse response = (CloseableHttpResponse) httpClient.execute(request)) {
             int status = response.getStatusLine().getStatusCode();
             if (status >= 200 && status < 300) {
