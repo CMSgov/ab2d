@@ -161,6 +161,7 @@ public class JobProcessorImpl implements JobProcessor {
                                   ProgressTracker progressTracker) throws Exception {
         List<ContractData> cData = new ArrayList<>();
         List<JobOutput> jobOutputs = new ArrayList<>();
+        List<Integer> monthsDone = new ArrayList<>();
 
         for (Contract contract : contracts) {
             String contractNum = contract.getContractNumber();
@@ -211,10 +212,12 @@ public class JobProcessorImpl implements JobProcessor {
                                     eobFutureHandles.add(addPatientSearch(p, contractData));
                                 });
                             }
+                            monthsDone.add(contractMapping.getMonth());
                             contactBeneSearchIterator.remove();
                         }
                     }
                     processBeneFuturesList(eobFutureHandles, progressTracker, contractEobManager, helper, contractBeneficiaries, contractBeneFutureHandles);
+                    contractEobManager.cleanUpKnownInvalidPatients(monthsDone);
                     updateJobStatus(job, progressTracker);
                     // If we haven't removed all items from the running futures lists, sleep for a bit
                     if (!contractBeneFutureHandles.isEmpty() || !eobFutureHandles.isEmpty()) {

@@ -9,6 +9,7 @@ import gov.cms.ab2d.worker.processor.StreamHelper;
 import gov.cms.ab2d.worker.processor.TextStreamHelperImpl;
 import org.apache.commons.io.FileUtils;
 import org.hl7.fhir.dstu3.model.ExplanationOfBenefit;
+import org.hl7.fhir.dstu3.model.Period;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -23,9 +24,12 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.time.OffsetDateTime;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -144,5 +148,83 @@ class ContractEobManagerTest {
         cem.handleException(helper, "Test Exception", exception);
         String data = getFileData(errorFilePath);
         assertEquals(val, data);
+    }
+
+    @Test
+    void testGetYearMonth() throws ParseException {
+        SimpleDateFormat sdf = new SimpleDateFormat("MM/dd/yyyy");
+        Date d = sdf.parse("12/31/1999");
+        assertEquals(1999, ContractEobManager.getYear(d));
+        assertEquals(12, ContractEobManager.getMonth(d));
+    }
+
+    @Test
+    void testGetCoveredMonth() throws ParseException {
+        Period p = new Period();
+        SimpleDateFormat sdf = new SimpleDateFormat("MM/dd/yyyy");
+        p.setStart(sdf.parse("12/31/1999"));
+        p.setEnd(sdf.parse("01/01/2000"));
+        List<Integer> covered = ContractEobManager.getCoveredMonths(p);
+        assertTrue(covered.size() == 2 && covered.contains(12) && covered.contains(1));
+
+        p.setStart(sdf.parse("02/01/1999"));
+        p.setEnd(sdf.parse("02/28/1999"));
+        covered = ContractEobManager.getCoveredMonths(p);
+        assertTrue(covered.size() == 1 && covered.contains(2));
+
+        p.setStart(sdf.parse("02/01/1999"));
+        p.setEnd(sdf.parse("04/01/1999"));
+        covered = ContractEobManager.getCoveredMonths(p);
+        assertTrue(covered.size() == 3 && covered.contains(2) && covered.contains(3) && covered.contains(4));
+
+        p.setStart(sdf.parse("02/01/1999"));
+        p.setEnd(sdf.parse("04/01/2000"));
+        covered = ContractEobManager.getCoveredMonths(p);
+        assertTrue(covered.size() == 12);
+
+        p.setStart(sdf.parse("12/31/2000"));
+        p.setEnd(sdf.parse("01/01/2002"));
+        covered = ContractEobManager.getCoveredMonths(p);
+        assertTrue(covered.size() == 12);
+    }
+
+    @Test
+    void testCovered() throws ParseException {
+        SimpleDateFormat sdf = new SimpleDateFormat("MM/dd/yyyy");
+        ExplanationOfBenefit eob = EobTestDataUtil.createEOB();
+        eob.getPatient().setReference("Patient/" + defaultPatientId);
+        eob.getBillablePeriod().setStart(sdf.parse("01/01/2020"));
+        eob.getBillablePeriod().setEnd(sdf.parse("01/05/2020"));
+        assertTrue(ContractEobManager.covered(eob, List.of(1)));
+        assertFalse(ContractEobManager.covered(eob, List.of(2, 3, 4, 5, 6, 7)));
+        eob.getBillablePeriod().setStart(sdf.parse("01/01/2020"));
+        eob.getBillablePeriod().setEnd(sdf.parse("03/05/2020"));
+        assertTrue(ContractEobManager.covered(eob, List.of(2, 3, 4, 5, 6, 7)));
+        eob.getBillablePeriod().setStart(sdf.parse("03/01/2020"));
+        eob.getBillablePeriod().setEnd(sdf.parse("08/05/2020"));
+        assertTrue(ContractEobManager.covered(eob, List.of(4)));
+    }
+
+    @Test
+    void testRemoveInvalidPatients() throws ParseException {
+        SimpleDateFormat sdf = new SimpleDateFormat("MM/dd/yyyy");
+        ExplanationOfBenefit eob = EobTestDataUtil.createEOB();
+        eob.getPatient().setReference("Patient/" + defaultPatientId);
+        eob.getBillablePeriod().setStart(sdf.parse("01/01/2020"));
+        eob.getBillablePeriod().setEnd(sdf.parse("01/05/2020"));
+        ContractEobManager cem = new ContractEobManager(context, false, earliestDate, attTime);
+        response = new EobSearchResponse(patient, Collections.singletonList(eob));
+        cem.addResources(response);
+        cem.cleanUpKnownInvalidPatients(Arrays.asList(1));
+        assertEquals(0, cem.getUnknownEobs().get(defaultPatientId).getResources().size());
+
+        response = new EobSearchResponse(patient, Collections.singletonList(eob));
+        cem.addResources(response);
+        cem.cleanUpKnownInvalidPatients(Arrays.asList(2));
+        assertEquals(1, cem.getUnknownEobs().get(defaultPatientId).getResources().size());
+        cem.cleanUpKnownInvalidPatients(Arrays.asList(2, 3, 4, 5, 6, 7, 8));
+        assertEquals(1, cem.getUnknownEobs().get(defaultPatientId).getResources().size());
+        cem.cleanUpKnownInvalidPatients(Arrays.asList(1, 2, 3));
+        assertEquals(0, cem.getUnknownEobs().get(defaultPatientId).getResources().size());
     }
 }
