@@ -183,7 +183,7 @@ public class BlueButtonClientTest {
 
     @Test
     public void shouldGetTimedOutOnSlowResponse() {
-        var exception = Assertions.assertThrows(FhirClientConnectionException.class, () -> {
+        var exception = Assertions.assertThrows(SocketTimeoutException.class, () -> {
             bbc.requestEOBFromServer(TEST_SLOW_PATIENT_ID);
         });
 

@@ -1,11 +1,8 @@
 package gov.cms.ab2d.bfd.client;
 
-import ca.uhn.fhir.context.FhirContext;
-import ca.uhn.fhir.parser.IParser;
 import ca.uhn.fhir.rest.client.api.IGenericClient;
 import ca.uhn.fhir.rest.gclient.ICriterion;
 import ca.uhn.fhir.rest.gclient.TokenClientParam;
-import ca.uhn.fhir.rest.param.DateRangeParam;
 import ca.uhn.fhir.rest.server.exceptions.InvalidRequestException;
 import ca.uhn.fhir.rest.server.exceptions.ResourceNotFoundException;
 import com.newrelic.api.agent.NewRelic;
@@ -17,7 +14,6 @@ import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.lang3.StringUtils;
 import org.hl7.fhir.dstu3.model.Bundle;
 import org.hl7.fhir.dstu3.model.CapabilityStatement;
-import org.hl7.fhir.dstu3.model.ExplanationOfBenefit;
 import org.hl7.fhir.dstu3.model.Patient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -34,7 +30,6 @@ import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.KeySpec;
 import java.time.OffsetDateTime;
-import java.util.Date;
 
 /**
  * Credits: most of the code in this class has been copied over from https://github
@@ -130,22 +125,7 @@ public class BFDClientImpl implements BFDClient {
                 " using since " + sinceTime);
         bfdSegment.setMetricName("RequestEOB");
 
-        /*Bundle bundle = client.search()
-                .forResource(ExplanationOfBenefit.class)
-                .where(ExplanationOfBenefit.PATIENT.hasId(patientID))
-                .and(excludeSAMHSA)
-                .lastUpdated(updatedSince)
-                .count(pageSize)
-                .returnBundle(Bundle.class)
-                .encodedJson()
-                .execute();*/
-
-        //long start = System.currentTimeMillis();
-
-        Bundle result = bfdSearch.searchEOB(patientID, sinceTime);
-
-        //long end = System.currentTimeMillis() - start;
-        //log.info("**********************Time elapsed: " + end);
+        Bundle result = bfdSearch.searchEOB(patientID, sinceTime, pageSize);
 
         bfdSegment.end();
 
