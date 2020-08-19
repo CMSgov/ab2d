@@ -87,6 +87,7 @@ public class BlueButtonClientTest {
 
     private static ClientAndServer mockServer;
 
+    // The test data is in XML format, so change the parse so that it can
     @Profile("test")
     @Configuration
     public static class TestConfig {

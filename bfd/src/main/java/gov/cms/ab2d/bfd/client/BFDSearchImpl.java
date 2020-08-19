@@ -33,8 +33,7 @@ public class BFDSearchImpl implements BFDSearch {
 
     @Override
     public Bundle searchEOB(String patientId, OffsetDateTime since, int pageSize) throws IOException {
-        StringBuilder url = new StringBuilder(serverBaseUrl + "ExplanationOfBenefit?patient=" + patientId + "&excludeSAMHSA=true" +
-                "");
+        StringBuilder url = new StringBuilder(serverBaseUrl + "ExplanationOfBenefit?patient=" + patientId + "&excludeSAMHSA=true");
 
         if (since != null) {
             url.append("&_lastUpdated=ge").append(since);
@@ -45,7 +44,6 @@ public class BFDSearchImpl implements BFDSearch {
         }
 
         HttpGet request = new HttpGet(url.toString());
-        //request.addHeader("Accept", "application/fhir+json;q=1.0, application/json+fhir;q=0.9");
         request.addHeader("Accept-Encoding", "gzip");
         request.addHeader("Accept-Charset", "utf-8");
 
