@@ -8,6 +8,7 @@ import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.hl7.fhir.dstu3.model.Bundle;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
@@ -23,12 +24,15 @@ public class BFDSearchImpl implements BFDSearch {
 
     private final IParser parser;
 
+    private final Environment environment;
+
     @Value("${bfd.serverBaseUrl}")
     private String serverBaseUrl;
 
-    public BFDSearchImpl(HttpClient httpClient, IParser iParser) {
+    public BFDSearchImpl(HttpClient httpClient, IParser iParser, Environment environment) {
         this.httpClient = httpClient;
         this.parser = iParser;
+        this.environment = environment;
     }
 
     @Override
@@ -44,6 +48,11 @@ public class BFDSearchImpl implements BFDSearch {
         }
 
         HttpGet request = new HttpGet(url.toString());
+        // No active profiles means use JSON
+        if(environment.getActiveProfiles().length == 0) {
+            request.addHeader("Accept", "application/fhir+json;q=1.0, application/json+fhir;q=0.9");
+        }
+
         request.addHeader("Accept-Encoding", "gzip");
         request.addHeader("Accept-Charset", "utf-8");
 
