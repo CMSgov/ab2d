@@ -26,6 +26,7 @@ public class AttestationUpdaterService {
 
     private void pollOrganizations() {
 
+        // todo: move url into property
         Flux<HPMSOrganizations> orgInfoFlux = WebClient.create("http://localhost:8080/api/cda/orgs/info")
                 .get()
                 .retrieve()
@@ -45,4 +46,18 @@ public class AttestationUpdaterService {
         }
         // do something else
     }
+    /*
+    Get set of organizations as map from hpms.
+    Get set of active organizations from table.
+        Iterate through -
+            create set of Organizations that rows need to be updated
+                if active in table but missing from hpms, mark inactive
+                else update any changed fields
+            compute organizations that need to be inserted
+
+         From active set of organizations, query each contract and receive the collection of attestations.
+
+
+
+     */
 }
