@@ -118,9 +118,10 @@ public class ContractEobManager {
         // Check against dates (if we're checking it)
         if (skipBillablePeriodCheck) {
             status = ResourceStatus.VALID;
-        }
-        if (!FilterOutByDate.valid((ExplanationOfBenefit) resource, attTime, earliestDate, patient.getDateRangesUnderContract())) {
-            status = ResourceStatus.INVALID;
+        } else {
+            if (!FilterOutByDate.valid((ExplanationOfBenefit) resource, attTime, earliestDate, patient.getDateRangesUnderContract())) {
+                status = ResourceStatus.INVALID;
+            }
         }
 
         return status;

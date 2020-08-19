@@ -258,7 +258,7 @@ public class JobProcessorImpl implements JobProcessor {
         }
     }
 
-    private void cancelIt(List<Future<ContractMapping>> contractBeneFutureHandles, List<Future<EobSearchResponse>> eobFutureHandles,
+    void cancelIt(List<Future<ContractMapping>> contractBeneFutureHandles, List<Future<EobSearchResponse>> eobFutureHandles,
                           String jobId) {
         log.warn("Job [{}] has been cancelled. Attempting to stop processing the job shortly ... ", jobId);
         contractBeneFutureHandles.parallelStream().forEach(f -> f.cancel(false));

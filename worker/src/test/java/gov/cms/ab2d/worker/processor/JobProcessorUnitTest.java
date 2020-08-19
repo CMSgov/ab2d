@@ -96,7 +96,7 @@ class JobProcessorUnitTest {
         job = createJob(user);
 
         var contract = createContract(childSponsor);
-        when(jobRepository.findByJobUuid(anyString())).thenReturn(job);
+        lenient().when(jobRepository.findByJobUuid(anyString())).thenReturn(job);
 
         patientsByContract = createPatientsByContractResponse(contract);
         Bundle bundle = createBundle(patientsByContract);
@@ -111,7 +111,6 @@ class JobProcessorUnitTest {
         ExplanationOfBenefit b = createEobForPatient(patientId);
         Mockito.lenient().when(future.get()).thenReturn(new EobSearchResponse(patientDTO, Collections.singletonList(b)));
         Mockito.lenient().when(future.isDone()).thenReturn(true);
-
 
         final Path outputDirPath = Paths.get(efsMountTmpDir.toString(), jobUuid);
         final Path outputDir = Files.createDirectories(outputDirPath);
@@ -343,5 +342,12 @@ class JobProcessorUnitTest {
                 .patientId("patient_" + anInt)
                 .dateRangesUnderContract(Collections.singletonList(dateRange))
                 .build();
+    }
+
+    @Test
+    void testCancelIt() {
+        JobProcessorImpl impl = (JobProcessorImpl) cut;
+        assertThrows(JobCancelledException.class,
+                () -> impl.cancelIt(new ArrayList(), new ArrayList<>(), "ABC"));
     }
 }
