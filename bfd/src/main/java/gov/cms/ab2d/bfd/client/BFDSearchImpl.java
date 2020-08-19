@@ -56,7 +56,7 @@ public class BFDSearchImpl implements BFDSearch {
                 InputStream instream = response.getEntity().getContent();
                 try {
                     return jsonParser.parseResource(Bundle.class, instream);
-                }  finally {
+                } finally {
                     instream.close();
                 }
             } else if (status == 404) {
