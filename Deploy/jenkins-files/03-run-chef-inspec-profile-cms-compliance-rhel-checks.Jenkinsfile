@@ -35,7 +35,7 @@ pipeline {
         script {
           sh 'mkdir -p ab2d; cd ab2d'
           dir ('ab2d') {
-            git branch: 'feature/ab2d-586-automate-splunk-integration',
+            git branch: 'master',
             url: 'https://github.com/CMSgov/ab2d.git'
           }
         }
@@ -61,19 +61,6 @@ pipeline {
             git branch: 'master',
             credentialsId: 'GITHUB_CMS_GOV_HV7K_PAT',
             url: 'https://github.cms.gov/ISPG/inspec-profile-disa_stig-el7.git'
-          }                    
-        }
-      }
-    }
-    stage('Install requiried Ruby gems') {
-      steps {
-        script {
-          dir ('profiles/cms-ars-3.1-moderate-red-hat-enterprise-linux-7-stig-overlay') {
-            sh 'bundle install'
-          }
-          dir ('profiles/inspec-profile-disa_stig-el7') {
-            sh "gem install bundler -v '~> 1.14.6'"
-            sh 'bundle _1.14.6_ install'
           }
         }
       }
@@ -82,7 +69,7 @@ pipeline {
       steps {
         script {
           dir ('ab2d/Deploy/bash') {
-            sh './run-inspec-for-all-ec2-instances.sh'
+            sh './run-inspec-for-all-ec2-instance-using-cms-inspec-profile.sh'
           }
         }
       }

@@ -35,7 +35,7 @@ pipeline {
         script {
           sh 'mkdir -p ab2d; cd ab2d'
           dir ('ab2d') {
-            git branch: 'feature/ab2d-586-automate-splunk-integration',
+            git branch: 'master',
             url: 'https://github.com/CMSgov/ab2d.git'
           }
         }

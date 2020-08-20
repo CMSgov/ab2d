@@ -193,7 +193,7 @@ active-nav: accessing-claims-data-nav
                     <div id="collapseThree" class="collapse" aria-labelledby="headingOne" data-parent="#accordion">
                       <div class="card-body">
                         <ol>
-                            <li>Log into HPMS</li>
+                            <li>Log into <a href="https://hpms.cms.gov/app/ng/home/" target="_blank">HPMS </a></li>
                             <li>Click on “Claims Data Attestation” (under Contract Management)</li>
                             <li>Select the checkbox(es) next to one, multiple, or all contracts within the 'Contracts Without Attestation' window</li>
                             <li>Click on the "Attest" button</li>
@@ -218,7 +218,7 @@ active-nav: accessing-claims-data-nav
                     <div id="collapseFour" class="collapse" aria-labelledby="headingFour" data-parent="#accordion">
                       <div class="card-body">
                         <ol>
-                            <li>Log into HPMS</li>
+                            <li>Log into <a href="https://hpms.cms.gov/app/ng/home/" target="_blank">HPMS </a></li>
                             <li>Click on "Claims Data Attestation" (under Contract Management)</li>
                             <li>Select the checkbox(es) next to one, multiple, or all contracts within the 'Attested Contract' window</li>
                             <li>Click on the "Re-Attest" button</li>
