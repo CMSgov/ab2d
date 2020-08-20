@@ -78,8 +78,7 @@ public class BFDClientConfiguration {
     @Bean
     public KeyStore bfdKeyStore() {
         // First try to load the keystore from the classpath, if that doesn't work, try the filesystem
-        try (InputStream keyStoreStream = this.getClass().getResourceAsStream(keystorePath) == null ?
-                new FileInputStream(keystorePath) : this.getClass().getResourceAsStream(keystorePath)) {
+        try (InputStream keyStoreStream = getKeyStoreStream()) {
             KeyStore keyStore = KeyStore.getInstance(JKS);
 
             // keyStore.load will NOT throw an exception in case of a null keystore stream :shrug:
@@ -89,6 +88,15 @@ public class BFDClientConfiguration {
             log.error(ex.getMessage(), ex);
             throw new BeanInstantiationException(KeyStore.class, ex.getMessage());
         }
+    }
+
+    private InputStream getKeyStoreStream() throws IOException {
+        InputStream keyStoreStream = this.getClass().getResourceAsStream(keystorePath);
+        if (keyStoreStream == null) {
+            keyStoreStream = new FileInputStream(keystorePath);
+        }
+
+        return keyStoreStream;
     }
 
     /**

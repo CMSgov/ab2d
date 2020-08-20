@@ -13,6 +13,7 @@ import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 import software.amazon.awssdk.services.s3.model.ListObjectsRequest;
 
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -81,7 +82,7 @@ public class S3GatewayImpl implements S3Gateway {
 
         try {
             final ResponseInputStream<GetObjectResponse> responseInputStream = s3Client.getObject(getObjectRequest);
-            return new InputStreamReader(responseInputStream);
+            return new InputStreamReader(responseInputStream, StandardCharsets.UTF_8);
         } catch (SdkServiceException e) {
             log.error("Server error upon calling AWS  : ", e);
             throw e;
