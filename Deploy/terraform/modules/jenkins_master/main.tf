@@ -44,7 +44,7 @@ resource "aws_instance" "jenkins_master" {
     purpose = "ECS container instance"
     sensitivity = "Public"
     maintainer = "lonnie.hanekamp@semanticbits.com"
-    cpm_backup = "NoBackup"
+    "cpm backup" = "4HR Daily Weekly Monthly"
     purchase_type = "On-Demand"
     os_license = "Red Hat Enterprise Linux"
     business = "CMS"

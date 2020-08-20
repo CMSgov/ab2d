@@ -103,6 +103,7 @@ public class PatientClaimsProcessorUnitTest {
         patientPTOMap.put(fileDTO.getPatientId(), fileDTO);
         earlyDate = OffsetDateTime.of(1990, 1, 1, 0, 0, 0, 0, ZoneOffset.UTC);
         request = new PatientClaimsRequest(patientDTO, earlyDate, earlyDate, null, "job", "contractNum", noOpToken);
+
     }
 
     @Test

@@ -17,6 +17,16 @@ resource "aws_security_group_rule" "egress" {
   security_group_id = aws_security_group.sg_database.id
 }
 
+resource "aws_security_group_rule" "db_access_from_jenkins_agent" {
+  type        = "ingress"
+  description = "Jenkins Agent Access"
+  from_port   = "5432"
+  to_port     = "5432"
+  protocol    = "tcp"
+  source_security_group_id = var.jenkins_agent_sec_group_id
+  security_group_id = aws_security_group.sg_database.id
+}
+
 resource "aws_db_subnet_group" "subnet_group" {
   name = var.subnet_group_name
   subnet_ids = var.db_instance_subnet_ids
@@ -46,6 +56,7 @@ resource "aws_db_instance" "db" {
   backup_window           = var.backup_window
   copy_tags_to_snapshot   = var.copy_tags_to_snapshot
   iops                    = var.iops
+  apply_immediately       = true
   kms_key_id              = var.kms_key_id
   maintenance_window      = var.maintenance_window
   multi_az                = var.multi_az
@@ -54,4 +65,11 @@ resource "aws_db_instance" "db" {
   username                = var.username
   password                = var.password
   skip_final_snapshot     = var.skip_final_snapshot
+
+  tags = {
+    Name         = "${var.env}-rds"
+    env          = "${var.env}"
+    role         = "db"
+    "cpm backup" = "${var.cpm_backup_db}"
+  }
 }

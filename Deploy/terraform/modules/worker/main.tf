@@ -73,6 +73,7 @@ resource "aws_ecs_task_definition" "worker" {
       "name": "${lower(var.env)}-worker",
       "image": "${var.ecr_repo_aws_account}.dkr.ecr.us-east-1.amazonaws.com/ab2d_worker:${lower(var.env)}-latest",
       "essential": true,
+      "cpu": ${var.ecs_task_def_cpu},
       "memory": ${var.ecs_task_def_memory},
       "mountPoints": [
         {
@@ -92,6 +93,10 @@ resource "aws_ecs_task_definition" "worker" {
 	{
 	  "name" : "AB2D_BFD_URL",
 	  "value" : "${var.bfd_url}"
+	},
+	{
+	  "name" : "AB2D_CLAIMS_SKIP_BILLABLE_PERIOD_CHECK",
+	  "value" : "${var.claims_skip_billable_period_check}"
 	},
 	{
 	  "name" : "AB2D_DB_DATABASE",
@@ -118,12 +123,28 @@ resource "aws_ecs_task_definition" "worker" {
 	  "value" : "/mnt/efs"
 	},
 	{
+	  "name" : "AB2D_EXECUTION_ENV",
+	  "value" : "${lower(var.execution_env)}"
+	},
+	{
+	  "name" : "AB2D_DB_SSL_MODE",
+	  "value" : "require"
+	},
+	{
 	  "name" : "AB2D_HICN_HASH_PEPPER",
 	  "value" : "${var.hicn_hash_pepper}"
 	},
 	{
 	  "name" : "AB2D_HICN_HASH_ITER",
 	  "value" : "${var.hicn_hash_iter}"
+	},
+	{
+	  "name" : "AB2D_OPT_OUT_JOB_SCHEDULE",
+	  "value" : "${var.ab2d_opt_out_job_schedule}"
+	},
+	{
+	  "name" : "AB2D_S3_OPTOUT_BUCKET",
+	  "value" : "${var.ab2d_s3_optout_bucket}"
 	},
         {
 	  "name" : "NEW_RELIC_APP_NAME",
@@ -143,8 +164,6 @@ resource "aws_ecs_task_definition" "worker" {
 JSON
   requires_compatibilities = ["EC2"]
   network_mode = "bridge"
-  cpu = var.ecs_task_def_cpu
-  memory = var.ecs_task_def_memory
   execution_role_arn = "arn:aws:iam::${var.aws_account_number}:role/Ab2dInstanceRole"
 }
 
@@ -167,7 +186,7 @@ resource "aws_launch_configuration" "launch_config" {
   iam_instance_profile = var.iam_instance_profile
   key_name = var.ssh_key_name
   security_groups = [aws_security_group.worker.id]
-  user_data = templatefile("${path.module}/userdata.tpl",{ env = "${lower(var.env)}", cluster_name = "${lower(var.env)}-worker", efs_id = var.efs_id, bfd_keystore_file_name = var.bfd_keystore_file_name })
+  user_data = templatefile("${path.module}/userdata.tpl",{ env = "${lower(var.env)}", cluster_name = "${lower(var.env)}-worker", efs_id = var.efs_id, stunnel_latest_version = var.stunnel_latest_version, bfd_keystore_file_name = var.bfd_keystore_file_name })
   lifecycle { create_before_destroy = true }
 }
 
@@ -217,7 +236,7 @@ resource "aws_autoscaling_group" "asg" {
     },
     {
       key = "cpm backup"
-      value = "NoBackup"
+      value = "${var.cpm_backup_worker}"
       propagate_at_launch = true
     },
     {
@@ -251,15 +270,15 @@ resource "aws_autoscaling_policy" "percent_capacity" {
   autoscaling_group_name = aws_autoscaling_group.asg.name
 }
 
-resource "aws_autoscaling_policy" "target_cpu" {
-  name = "target_CPU"
-  autoscaling_group_name = aws_autoscaling_group.asg.name
-  policy_type = "TargetTrackingScaling"
+# resource "aws_autoscaling_policy" "target_cpu" {
+#   name = "target_CPU"
+#   autoscaling_group_name = aws_autoscaling_group.asg.name
+#   policy_type = "TargetTrackingScaling"
 
-  target_tracking_configuration {
-    predefined_metric_specification {
-      predefined_metric_type = "ASGAverageCPUUtilization"
-    }
-    target_value = 80.0
-  }
-}
+#   target_tracking_configuration {
+#     predefined_metric_specification {
+#       predefined_metric_type = "ASGAverageCPUUtilization"
+#     }
+#     target_value = 80.0
+#   }
+# }

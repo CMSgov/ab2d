@@ -10,7 +10,7 @@ import java.nio.file.Paths;
 import java.util.List;
 
 @Slf4j
-/**
+/*
  * This class has helps verify that you can write to the file system correctly
  */
 public class FileSystemCheck {
@@ -41,7 +41,7 @@ public class FileSystemCheck {
         }
         long currentTime = System.nanoTime();
         try {
-            String file = dir + "/" + getRandomFileName(20, "txt");
+            String file = dir + File.separator + getRandomFileName(20, "txt");
             Path destination = Paths.get(file);
             String correctContent = "" + currentTime;
             Files.write(destination, correctContent.getBytes());

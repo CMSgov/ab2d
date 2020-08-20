@@ -124,6 +124,14 @@ public class UserServiceTest {
         assertThat(exceptionThrown.getMessage(), is("could not execute statement; SQL [n/a]; constraint [uc_user_account_email]; nested exception is org.hibernate.exception.ConstraintViolationException: could not execute statement"));
     }
 
+    static private final String EXPECTED_BAD_SPONSOR =
+            "ModelMapper mapping errors:" + System.lineSeparator() + System.lineSeparator() +
+                    "1) Converter Converter<class gov.cms.ab2d.common.dto.SponsorDTO, " +
+                    "class gov.cms.ab2d.common.model.Sponsor> failed to convert " +
+                    "gov.cms.ab2d.common.dto.SponsorDTO to gov.cms.ab2d.common.model.Sponsor." +
+                    System.lineSeparator() + System.lineSeparator() +"1 error";
+
+
     @Test
     public void testCreateUserBadSponsor() {
         UserDTO user = new UserDTO();
@@ -138,7 +146,7 @@ public class UserServiceTest {
         var exceptionThrown = Assertions.assertThrows(MappingException.class, () -> {
             userService.createUser(user);
         });
-        assertThat(exceptionThrown.getMessage(), is("ModelMapper mapping errors:\n\n1) Converter Converter<class gov.cms.ab2d.common.dto.SponsorDTO, class gov.cms.ab2d.common.model.Sponsor> failed to convert gov.cms.ab2d.common.dto.SponsorDTO to gov.cms.ab2d.common.model.Sponsor.\n\n1 error"));
+        assertEquals(EXPECTED_BAD_SPONSOR, exceptionThrown.getMessage());
     }
 
     private UserDTO createUser(Sponsor sponsor, @Nullable String roleName) {
@@ -220,6 +228,12 @@ public class UserServiceTest {
         Assert.assertNull(updatedUser.getRole());
     }
 
+    private static final String EXPECTED_REMOVE_MESSAGE =
+            "ModelMapper mapping errors:" + System.lineSeparator() + System.lineSeparator() +
+            "1) Converter Converter<class gov.cms.ab2d.common.dto.SponsorDTO, class gov.cms.ab2d.common.model.Sponsor> " +
+            "failed to convert gov.cms.ab2d.common.dto.SponsorDTO to gov.cms.ab2d.common.model.Sponsor." +
+            System.lineSeparator() + System.lineSeparator() + "1 error";
+
     @Test
     public void testUpdateUserRemoveSponsor() {
         Sponsor sponsor = dataSetup.createSponsor("Parent Corp.", 456, "Test", 123);
@@ -233,8 +247,7 @@ public class UserServiceTest {
         var exceptionThrown = Assertions.assertThrows(MappingException.class, () -> {
             userService.updateUser(createdUser);
         });
-        assertThat(exceptionThrown.getMessage(), is("ModelMapper mapping errors:\n\n1) Converter Converter<class gov.cms.ab2d.common.dto.SponsorDTO, class gov.cms.ab2d.common.model.Sponsor> failed to convert gov.cms.ab2d.common.dto.SponsorDTO to gov.cms.ab2d.common.model.Sponsor.\n\n1 error"
-        ));
+        assertEquals(EXPECTED_REMOVE_MESSAGE, exceptionThrown.getMessage());
     }
 
     @Test

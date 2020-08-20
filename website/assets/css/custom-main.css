@@ -387,6 +387,7 @@ header.masthead .intro-text {
     max-width: 600px;
     margin: auto;
     height: calc(100vh - 40px);
+    min-height: 690px;
 }
 header.masthead .intro-text .intro-logo {
     width: 300px;

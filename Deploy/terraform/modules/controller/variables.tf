@@ -10,3 +10,4 @@ variable "gold_disk_name" {}
 variable "db_sec_group_id" {}
 variable "deployer_ip_address" {}
 variable "vpn_private_ip_address_cidr_range" {}
+variable "cpm_backup_controller" {}

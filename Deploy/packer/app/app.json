@@ -1,21 +1,26 @@
 {
   "variables": {
-    "aws_profile": "{{env `AWS_PROFILE`}}",
+    "aws_access_key_id": "{{env `AWS_ACCESS_KEY_ID`}}",
+    "aws_secret_access_key": "{{env `AWS_SECRET_ACCESS_KEY`}}",
+    "aws_session_token": "{{env `AWS_SESSION_TOKEN`}}",
     "my_ip_address": "",
     "git_commit_hash": "",
-    "gold_ami": "{{user `seed_ami`}}"
+    "gold_ami": "{{user `seed_ami`}}",
+    "gold_disk_name": "{{user `seed_ami_name`}}"
   },
   "builders": [
     {
       "ssh_pty": true,
       "type": "amazon-ebs",
-      "profile": "{{ user `aws_profile`}}",
+      "access_key": "{{ user `aws_access_key_id`}}",
+      "secret_key": "{{ user `aws_secret_access_key`}}",
+      "token": "{{ user `aws_session_token`}}",
       "iam_instance_profile": "Ab2dInstanceProfile",
       "region": "{{ user `region`}}",
       "instance_type": "{{user `ec2_instance_type`}}",
       "subnet_id": "{{user `subnet_public_1_id`}}",
       "vpc_id": "{{user `vpc_id`}}",
-      "ami_name": "ab2d-{{user `git_commit_hash`}}",
+      "ami_name": "ab2d-{{user `git_commit_hash`}}-{{user `unix_epoch_time`}}",
       "source_ami": "{{user `gold_ami`}}",
       "ami_virtualization_type": "hvm",
       "associate_public_ip_address": "true",
@@ -25,18 +30,26 @@
         "application_git_hash": "{{user `git_commit_hash`}}",
         "application_name": "AB2D",
         "creator": "packer",
-        "gold_ami": "{{user `gold_ami`}}"
+        "gold_ami": "{{user `gold_ami`}}",
+        "gold_disk_name": "{{user `gold_disk_name`}}"
       },
       "launch_block_device_mappings": [
         {
         "device_name": "/dev/sda1",
         "volume_type": "gp2",
+	"volume_size": 100,
         "delete_on_termination": true,
         "encrypted": true
         }
       ]
     }],
   "provisioners": [
+    {
+      "type": "shell","inline": [
+        "sudo mkdir -p /deployment",
+	"sudo chmod -R 777 /deployment"
+      ]
+    },
     {
       "type": "file",
       "source": "./splunk-deploymentclient.conf",
@@ -60,12 +73,17 @@
     {
       "type": "file",
       "source": "../../ruby/Gemfile",
-      "destination": "/tmp/Gemfile"
+      "destination": "/deployment/Gemfile"
     },
     {
       "type": "file",
       "source": "../../ruby/Rakefile",
-      "destination": "/tmp/Rakefile"
+      "destination": "/deployment/Rakefile"
+    },
+    {
+      "type": "file",
+      "source": "./logrotate-var-log-messages-config-snippet",
+      "destination": "/deployment/logrotate-var-log-messages-config-snippet"
     },
     {
       "type": "shell","inline": [
