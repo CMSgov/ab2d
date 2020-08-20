@@ -3,6 +3,8 @@ package gov.cms.ab2d.bfd.client;
 import ca.uhn.fhir.parser.IParser;
 import ca.uhn.fhir.rest.server.exceptions.ResourceNotFoundException;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.http.HttpHeaders;
+import org.apache.http.HttpStatus;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -53,19 +55,16 @@ public class BFDSearchImpl implements BFDSearch {
             request.addHeader("Accept", "application/fhir+json;q=1.0, application/json+fhir;q=0.9");
         }
 
-        request.addHeader("Accept-Encoding", "gzip");
-        request.addHeader("Accept-Charset", "utf-8");
+        request.addHeader(HttpHeaders.ACCEPT, "gzip");
+        request.addHeader(HttpHeaders.ACCEPT_CHARSET, "utf-8");
 
         try (CloseableHttpResponse response = (CloseableHttpResponse) httpClient.execute(request)) {
             int status = response.getStatusLine().getStatusCode();
-            if (status >= 200 && status < 300) {
-                InputStream instream = response.getEntity().getContent();
-                try {
+            if (status >= HttpStatus.SC_OK && status < HttpStatus.SC_MULTIPLE_CHOICES) {
+                try (InputStream instream = response.getEntity().getContent()) {
                     return parser.parseResource(Bundle.class, instream);
-                } finally {
-                    instream.close();
                 }
-            } else if (status == 404) {
+            } else if (status == HttpStatus.SC_NOT_FOUND) {
                 throw new ResourceNotFoundException("Patient " + patientId + " was not found");
             } else {
                 throw new RuntimeException("Server error occurred");
