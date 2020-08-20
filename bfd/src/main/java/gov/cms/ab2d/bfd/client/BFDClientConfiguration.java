@@ -70,7 +70,6 @@ public class BFDClientConfiguration {
         return client;
     }
 
-
     @Bean
     public FhirContext fhirContext() {
         return FhirContext.forDstu3();
