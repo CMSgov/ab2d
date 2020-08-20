@@ -1,11 +1,16 @@
 package gov.cms.ab2d.bfd.client;
 
-import ca.uhn.fhir.rest.client.exceptions.FhirClientConnectionException;
+import ca.uhn.fhir.context.FhirContext;
+import ca.uhn.fhir.parser.IParser;
 import ca.uhn.fhir.rest.server.exceptions.ResourceNotFoundException;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.http.HttpStatus;
-import org.hl7.fhir.dstu3.model.*;
+import org.hl7.fhir.dstu3.model.Bundle;
+import org.hl7.fhir.dstu3.model.CapabilityStatement;
+import org.hl7.fhir.dstu3.model.Enumerations;
+import org.hl7.fhir.dstu3.model.Patient;
+import org.hl7.fhir.dstu3.model.ResourceType;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
@@ -19,6 +24,12 @@ import org.mockserver.model.HttpRequest;
 import org.mockserver.model.Parameter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
+import org.springframework.context.annotation.Profile;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.io.IOException;
@@ -40,6 +51,8 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(classes = SpringBootApp.class)
+@ActiveProfiles("test")
+@ContextConfiguration(classes = { BlueButtonClientTest.TestConfig.class })
 /**
  * Credits: most of the code in this class has been adopted from https://github.com/CMSgov/dpc-app
  */
@@ -73,6 +86,21 @@ public class BlueButtonClientTest {
     private static int mockServerPort = 8083;
 
     private static ClientAndServer mockServer;
+
+    // The test data is in XML format, so change the parse so that it can
+    @Profile("test")
+    @Configuration
+    public static class TestConfig {
+
+        @Autowired
+        private FhirContext fhirContext;
+
+        @Bean
+        @Primary
+        public IParser testBeanDefinition() {
+            return fhirContext.newXmlParser();
+        }
+    }
 
 
     @BeforeAll
@@ -183,7 +211,7 @@ public class BlueButtonClientTest {
 
     @Test
     public void shouldGetTimedOutOnSlowResponse() {
-        var exception = Assertions.assertThrows(FhirClientConnectionException.class, () -> {
+        var exception = Assertions.assertThrows(SocketTimeoutException.class, () -> {
             bbc.requestEOBFromServer(TEST_SLOW_PATIENT_ID);
         });
 
