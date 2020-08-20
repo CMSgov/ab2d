@@ -291,8 +291,12 @@
          "start": "2000-10-01",
          "end": "2000-10-01"
        },
-       "locationAddress": {
-         "state": "FL"
+       "locationCodeableConcept": {
+         "coding": [{
+           "code": "32",
+           "display": "Nursing Facility",
+           "system": "https://bluebutton.cms.gov/resources/variables/line_place_of_srvc_cd",
+         }],
        },
        "quantity": {
          "value": 477
