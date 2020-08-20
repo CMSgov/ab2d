@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FindBugsFilter>
+    <!-->Ignore everywhere<-->
+    <!-->This NPE error exception is almost exclusively thrown by<-->
+    <!-->Java bytecode unwrapping try with resources into bytecode<-->
+    <Match>
+        <Package name="~gov\.cms\.ab2d.*"/>
+        <Bug pattern="RCN_REDUNDANT_NULLCHECK_WOULD_HAVE_BEEN_A_NPE"/>
+    </Match>
+
+    <!-->mkdirs check is not necessary<-->
+    <Match>
+        <Class name="~gov\.cms\.ab2d\.common\.health\.FileSystemCheck"/>
+        <Bug pattern="RV_RETURN_VALUE_IGNORED_BAD_PRACTICE"/>
+    </Match>
+
+    <!-->Getting id will return null if not found anyway<-->
+    <Match>
+        <Class name="~gov\.cms\.ab2d\.eventlogger\.eventloggers\.sql\.SqlEventMapper"/>
+        <Bug pattern="NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE"/>
+    </Match>
+
+    <!-->Side effect of lombok<-->
+    <Match>
+        <Class name="~gov\.cms\.ab2d\.filter\.FilterOutByDate\$DateRange"/>
+        <Bug pattern="EI_EXPOSE_REP"/>
+    </Match>
+
+    <!-->Side effect of lombok<-->
+    <Match>
+        <Class name="~gov\.cms\.ab2d\.filter\.FilterOutByDate\$DateRange"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
+</FindBugsFilter>

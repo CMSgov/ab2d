@@ -7,7 +7,6 @@ import lombok.extern.slf4j.Slf4j;
 /**
  * Health check on memory - make sure you aren't running to low
  */
-@SuppressFBWarnings
 public final class MemoryUtilization {
 
     private MemoryUtilization() { }
@@ -22,6 +21,7 @@ public final class MemoryUtilization {
      * @param numMBToCreate - the number of megabytes to create
      * @return if the JVM runs out of memory while trying to allocate the array
      */
+    @SuppressFBWarnings
     public static boolean outOfMemory(int numMBToCreate) {
         try {
 

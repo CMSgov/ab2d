@@ -44,10 +44,10 @@ public class AttestationReportProcessor implements ExcelReportProcessor {
     private static final String ATTESTATION_OFFSET_DATE_TIME_PATTERN = "M/d/y h:m a Z";
 
     @Value
-    private class AttestationReportData {
-        private Contract contract;
-        private String attestationStatus;
-        private OffsetDateTime attestedDateTime;
+    private static class AttestationReportData {
+        private final Contract contract;
+        private final String attestationStatus;
+        private final OffsetDateTime attestedDateTime;
     }
 
     @Override
