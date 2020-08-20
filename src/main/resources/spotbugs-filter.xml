@@ -31,4 +31,10 @@
         <Class name="~gov\.cms\.ab2d\.filter\.FilterOutByDate\$DateRange"/>
         <Bug pattern="EI_EXPOSE_REP2"/>
     </Match>
+
+    <!--getRequest, getResponse may throw NPEs but are never reasonably anticipated-->
+    <Match>
+        <Package name="~gov\.cms\.ab2d\.api\.controller"/>
+        <Bug pattern="NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE"/>
+    </Match>
 </FindBugsFilter>
