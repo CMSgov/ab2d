@@ -112,7 +112,7 @@ public class JobProcessorImpl implements JobProcessor {
 
         // Load the job
         final Job job = jobRepository.findByJobUuid(jobUuid);
-        log.info("Found job " + job.getJobUuid());
+        log.info("Found job");
 
         // Determine the output directory based on the job id
         Path outputDirPath = null;
@@ -171,9 +171,8 @@ public class JobProcessorImpl implements JobProcessor {
 
             // Retrieve the contract beneficiaries
             //for (Contract contract : contracts) {
-            try {
+            try (TextStreamHelperImpl helper = new TextStreamHelperImpl(outputDirPath, contractNum, ndjsonRollOver * Constants.ONE_MEGA_BYTE, tryLockTimeout, eventLogger, job)) {
                 // Init objects
-                StreamHelper helper = new TextStreamHelperImpl(outputDirPath, contractNum, ndjsonRollOver * Constants.ONE_MEGA_BYTE, tryLockTimeout, eventLogger, job);
                 ContractData contractData = new ContractData(contract, progressTracker, contract.getAttestedOn(), job.getSince(),
                         job.getUser() != null ? job.getUser().getUsername() : null, helper);
                 cData.add(contractData);
@@ -230,7 +229,6 @@ public class JobProcessorImpl implements JobProcessor {
                 }
                 updateJobStatus(job, progressTracker);
             } catch (Exception ex) {
-                cData.forEach(c -> close(c.getHelper()));
                 log.error("Having issue retrieving patients for contract " + contractNum);
                 throw ex;
             }
@@ -246,8 +244,6 @@ public class JobProcessorImpl implements JobProcessor {
         // contractSegment.end();
 
         if (contracts.size() > 0) {
-            cData.forEach(c -> close(c.getHelper()));
-
             // All jobs are done, return the job output records
             cData.forEach(c -> jobOutputs.addAll(createJobOutputs(c.getHelper().getDataFiles(), false)));
             cData.forEach(c -> jobOutputs.addAll(createJobOutputs(c.getHelper().getErrorFiles(), true)));
@@ -351,16 +347,6 @@ public class JobProcessorImpl implements JobProcessor {
             helper.addError(payload + " - " + data + System.lineSeparator());
         } catch (Exception ex) {
             log.error("Cannot log to error file for contract " + contractNum);
-        }
-    }
-
-    private void close(StreamHelper helper) {
-        if (helper != null) {
-            try {
-                helper.close();
-            } catch (Exception ex) {
-                log.error("Unable to close the helper", ex);
-            }
         }
     }
 

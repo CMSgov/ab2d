@@ -27,13 +27,14 @@ public class ContractEobManager {
         VALID,
         UNKNOWN
     }
+    static final List<Integer> ALL_MONTHS = List.of(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12);
 
     private final FhirContext fhirContext;
 
     private final OffsetDateTime attTime;
 
-    private Map<String, EobSearchResponse> unknownEobs = Collections.synchronizedMap(new HashMap<>());
-    private Map<String, EobSearchResponse> validEobs = Collections.synchronizedMap(new HashMap<>());
+    private final Map<String, EobSearchResponse> unknownEobs = Collections.synchronizedMap(new HashMap<>());
+    private final Map<String, EobSearchResponse> validEobs = Collections.synchronizedMap(new HashMap<>());
 
     private final boolean skipBillablePeriodCheck;
     private final Date earliestDate;
@@ -96,7 +97,6 @@ public class ContractEobManager {
                 validEobs.get(patient.getPatientId()).getResources().add(resource);
                 return true;
             case INVALID:
-                return false;
             case UNKNOWN:
             default:
                 return false;
@@ -180,13 +180,12 @@ public class ContractEobManager {
     static boolean covered(Resource resource, List<Integer> monthsDone) {
         ExplanationOfBenefit eob = (ExplanationOfBenefit) resource;
         List<Integer> coveredMonths = getCoveredMonths(eob.getBillablePeriod());
-        boolean done = false;
-        for (int i = 0; i < coveredMonths.size(); i++) {
-            if (monthsDone.contains(coveredMonths.get(i))) {
-                done = true;
+        for (Integer coveredMonth : coveredMonths) {
+            if (monthsDone.contains(coveredMonth)) {
+                return true;
             }
         }
-        return done;
+        return false;
     }
 
     static List<Integer> getCoveredMonths(Period period) {
@@ -196,11 +195,10 @@ public class ContractEobManager {
         Date endDate = period.getEnd();
         int endMonth = getMonth(endDate);
         int endYear = getYear(endDate);
-        List<Integer> allMonths = List.of(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12);
         List<Integer> results = new ArrayList<>();
         if (startYear != endYear) {
             if (endYear - startYear > 1 || endMonth > startMonth) {
-                return allMonths;
+                return ALL_MONTHS;
             } else {
                 results = new ArrayList<>();
                 for (int i = startMonth; i <= 12; i++) {
