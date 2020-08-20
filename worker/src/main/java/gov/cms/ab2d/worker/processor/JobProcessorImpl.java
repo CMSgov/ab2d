@@ -296,7 +296,7 @@ public class JobProcessorImpl implements JobProcessor {
         return contractBeneFutureHandles;
     }
 
-    private void processBeneFuturesList(List<Future<EobSearchResponse>> benes, ProgressTracker progressTracker,
+    void processBeneFuturesList(List<Future<EobSearchResponse>> benes, ProgressTracker progressTracker,
                                         ContractEobManager contractEobManager, StreamHelper helper,
                                         ContractBeneficiaries contractBeneficiaries, List<Future<ContractMapping>> contractMappings) {
         EobSearchResponse response = null;
