@@ -52,19 +52,25 @@ public class ContractEobManager {
         int count = 0;
         try {
             for (Map.Entry<String, EobSearchResponse> response : validEobs.entrySet()) {
-                Iterator<Resource> resources = response.getValue().getResources().iterator();
-                while (resources.hasNext()) {
-                    Resource r = resources.next();
-                    payload = jsonParser.encodeResourceToString(r) + System.lineSeparator();
-                    count++;
-                    helper.addData(payload.getBytes(StandardCharsets.UTF_8));
-                    resources.remove();
-                }
-            }
+                count += writeEntry(helper, response.getValue().getResources(), jsonParser);
+             }
         } catch (Exception e) {
                 handleException(helper, payload, e);
         }
         log.debug("finished writing [{}] resources", count);
+    }
+
+    private int writeEntry(StreamHelper helper, List<Resource> resourceList, IParser jsonParser) throws IOException {
+        int count = 0;
+        Iterator<Resource> resources = resourceList.iterator();
+        while (resources.hasNext()) {
+            Resource r = resources.next();
+            String payload = jsonParser.encodeResourceToString(r) + System.lineSeparator();
+            count++;
+            helper.addData(payload.getBytes(StandardCharsets.UTF_8));
+            resources.remove();
+        }
+        return count;
     }
 
     public void addResources(EobSearchResponse response) {

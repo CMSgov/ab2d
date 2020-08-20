@@ -118,16 +118,12 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
                 .map(Bundle.BundleEntryComponent::getResource)
                 // Get only the explanation of benefits
                 .filter(resource -> resource.getResourceType() == ResourceType.ExplanationOfBenefit)
-                // Filter by date
-                // .filter(resource -> skipBillablePeriodCheck || FilterOutByDate.valid((ExplanationOfBenefit) resource, attDate, earliestDate, dateRanges))
-                // filter it
+                // map it to the actual type of Resource
                 .map(resource -> ExplanationOfBenefitTrimmer.getBenefit((ExplanationOfBenefit) resource))
                 // Remove any empty values
                 .filter(Objects::nonNull)
                 // Remove Plan D
                 .filter(resource -> !isPartD(resource))
-                // Make sure the returned patient ID is actually part of the contract
-                //.filter(resource -> validPatientInContract(resource, patientsMap))
                 // compile the list
                 .collect(Collectors.toList());
     }
