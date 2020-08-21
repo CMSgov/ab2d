@@ -92,11 +92,7 @@ public class BFDClientConfiguration {
 
     private InputStream getKeyStoreStream() throws IOException {
         InputStream keyStoreStream = this.getClass().getResourceAsStream(keystorePath);
-        if (keyStoreStream == null) {
-            keyStoreStream = new FileInputStream(keystorePath);
-        }
-
-        return keyStoreStream;
+        return keyStoreStream != null ? keyStoreStream : new FileInputStream(keystorePath);
     }
 
     /**
