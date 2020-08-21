@@ -7,6 +7,7 @@ import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.MockBfdServiceUtils;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.runner.RunWith;
 import org.mockserver.integration.ClientAndServer;
@@ -27,6 +28,7 @@ import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+@Disabled
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = SpringBootApp.class)
 @Testcontainers

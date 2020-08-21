@@ -13,6 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.Before;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.mockserver.integration.ClientAndServer;
 import org.quartz.Scheduler;
@@ -41,6 +42,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+@Disabled
 @Slf4j
 @SpringBootTest(classes = SpringBootApp.class)
 @Testcontainers
