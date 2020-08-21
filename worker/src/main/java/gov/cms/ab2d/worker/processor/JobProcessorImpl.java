@@ -166,37 +166,43 @@ public class JobProcessorImpl implements JobProcessor {
         for (Contract contract : contracts) {
             String contractNum = contract.getContractNumber();
             progressTracker.addContract(contractNum);
+            // Create the object which manages the validation and writing valid data to the files
             ContractEobManager contractEobManager = new ContractEobManager(fhirContext, skipBillablePeriodCheck,
                     getStartDate(contractNum), contract.getAttestedOn());
 
-            // Retrieve the contract beneficiaries
-            //for (Contract contract : contracts) {
+            // Create the stream helper for this contract
             try (TextStreamHelperImpl helper = new TextStreamHelperImpl(outputDirPath, contractNum, ndjsonRollOver * Constants.ONE_MEGA_BYTE, tryLockTimeout, eventLogger, job)) {
-                // Init objects
+                // Initialize the contract descriptor
                 ContractData contractData = new ContractData(contract, progressTracker, contract.getAttestedOn(), job.getSince(),
                         job.getUser() != null ? job.getUser().getUsername() : null, helper);
                 cData.add(contractData);
 
+                // Create the object that holds all the beneficiares
                 ContractBeneficiaries contractBeneficiaries = buildCB(contractNum);
 
+                // Set the month we are retrieving beneficiaries up to (current month)
                 progressTracker.setCurrentMonth(month);
 
+                // Create futures for all the contract beneficiary searches for this contract
                 List<Future<ContractMapping>> contractBeneFutureHandles = createAllContractMappingFutures(month, contractNum, contract.getAttestedOn());
+
+                // Create a list to hold EOB search futures
                 List<Future<EobSearchResponse>> eobFutureHandles = new ArrayList<>();
 
-                 // Iterate through the futures
+                 // Iterate through the futures and don't exit until both the contract bene searches and eob searches are done
                 while (!contractBeneFutureHandles.isEmpty() || !eobFutureHandles.isEmpty()) {
-                    // See if there are any threads left to finish
+                    // Iterate through the contract bene searches
                     Iterator<Future<ContractMapping>> contactBeneSearchIterator = contractBeneFutureHandles.iterator();
                     while (contactBeneSearchIterator.hasNext()) {
                         Future<ContractMapping> future = contactBeneSearchIterator.next();
-                        // If it's done, claim the data and add it to the results, then remove it from the active threads
+                        // If it's done, create eob searches for all the new beneficiaries retrieved from the search
                         if (future.isDone()) {
                             ContractMapping contractMapping = getContractMappingFromFuture(future, contractNum);
                             if (contractMapping == null) {
                                 continue;
                             }
                             progressTracker.incrementTotalContractBeneficiariesSearchFinished();
+                            // Update the job status in the DB
                             updateJobStatus(job, progressTracker);
                             Set<String> patients = contractMapping.getPatients();
                             eventLogger.log(new ReloadEvent(null, ReloadEvent.FileType.CONTRACT_MAPPING,
@@ -204,29 +210,39 @@ public class JobProcessorImpl implements JobProcessor {
                                             " retrieved " + patients.size() + " contract beneficiaries for month " +
                                             contractMapping.getMonth(), patients.size()));
                             if (!patients.isEmpty()) {
+                                // Add dates to the patient's coverage and return any "new" beneficiaries not found in previous contract mapping searches
                                 List<PatientDTO> newPatients = addDateRangeToExistingOrNewPatient(contractBeneficiaries,
                                         toDateRange(contractMapping.getMonth()), patients);
+                                // For each new patient, add them to the contract mapping and create an eob search thread
                                 newPatients.forEach(p -> {
                                     progressTracker.addPatientByContract(contractNum, p);
                                     eobFutureHandles.add(addPatientSearch(p, contractData));
                                 });
                             }
+                            // Mark that this month was done
                             monthsDone.add(contractMapping.getMonth());
+                            // Remove the future from the list
                             contactBeneSearchIterator.remove();
                         }
                     }
+                    // Process any finished eob searches
                     processBeneFuturesList(eobFutureHandles, progressTracker, contractEobManager, helper, contractBeneficiaries, contractBeneFutureHandles);
+                    // Remove any eobs that were returned that we know should be removed (the occurred during a month we know
+                    // the beneficiary wasn't a member of a contract)
                     contractEobManager.cleanUpKnownInvalidPatients(monthsDone);
+                    // Update job status
                     updateJobStatus(job, progressTracker);
+                    // Before we iterate again, check to see if we've cancelled the job
+                    final JobStatus jobStatus = jobRepository.findJobStatus(progressTracker.getJobUuid());
+                    if (CANCELLED.equals(jobStatus)) {
+                        cancelIt(contractBeneFutureHandles, eobFutureHandles, progressTracker.getJobUuid());
+                    }
                     // If we haven't removed all items from the running futures lists, sleep for a bit
                     if (!contractBeneFutureHandles.isEmpty() || !eobFutureHandles.isEmpty()) {
                         sleepABit();
                     }
                 }
-                final JobStatus jobStatus = jobRepository.findJobStatus(progressTracker.getJobUuid());
-                if (CANCELLED.equals(jobStatus)) {
-                    cancelIt(contractBeneFutureHandles, eobFutureHandles, progressTracker.getJobUuid());
-                }
+                // update the job status
                 updateJobStatus(job, progressTracker);
             } catch (Exception ex) {
                 log.error("Having issue retrieving patients for contract " + contractNum);
@@ -240,9 +256,8 @@ public class JobProcessorImpl implements JobProcessor {
                     progressTracker.getOptOutCount(),
                     progressTracker.getFailureCount()));
         }
-        // final Segment contractSegment = NewRelic.getAgent().getTransaction().startSegment("Patient processing of contract " + contractNum);
-        // contractSegment.end();
 
+        // Create contract outputs for the job to return to the user
         if (contracts.size() > 0) {
             // All jobs are done, return the job output records
             cData.forEach(c -> jobOutputs.addAll(createJobOutputs(c.getHelper().getDataFiles(), false)));
@@ -257,6 +272,13 @@ public class JobProcessorImpl implements JobProcessor {
         }
     }
 
+    /**
+     * If a job is cancelled, cancel all the threads
+     *
+     * @param contractBeneFutureHandles - the contract beneficiary membership threads
+     * @param eobFutureHandles - the eob search threads
+     * @param jobId - the job to cancel
+     */
     void cancelIt(List<Future<ContractMapping>> contractBeneFutureHandles, List<Future<EobSearchResponse>> eobFutureHandles,
                           String jobId) {
         log.warn("Job [{}] has been cancelled. Attempting to stop processing the job shortly ... ", jobId);
@@ -282,12 +304,20 @@ public class JobProcessorImpl implements JobProcessor {
         return contractBeneficiaries;
     }
 
+    /**
+     * Create all threads for a contract's beneficiary members
+     *
+     * @param month - the last month to search
+     * @param contractNumber - the contract number
+     * @param attestDate - the attestation date
+     * @return the list of futures
+     */
     List<Future<ContractMapping>> createAllContractMappingFutures(int month, String contractNumber, OffsetDateTime attestDate) {
         List<Future<ContractMapping>> contractBeneFutureHandles = new ArrayList<>();
-
-        OffsetDateTime dateStub = OffsetDateTime.now().withDayOfMonth(1).plusMonths(1).minusDays(1);
         for (var m = 1; m <= month; m++) {
-            OffsetDateTime dateToCheck = dateStub.withMonth(m);
+            // Get the last day of the month (whether it's the 28th or the 31st)
+            OffsetDateTime dateToCheck = getLastDayOfTheMonth(month);
+            // If the attestion date is before the last day of the month, create a thread
             if (attestDate.isBefore(dateToCheck)) {
                 PatientContractCallable callable = new PatientContractCallable(m, contractNumber, bfdClient);
                 contractBeneFutureHandles.add(patientContractThreadPool.submit(callable));
@@ -296,19 +326,47 @@ public class JobProcessorImpl implements JobProcessor {
         return contractBeneFutureHandles;
     }
 
+    /**
+     * Given a month, return the last moment of a month in this year. For example, if today is March 4, 2020 and the
+     * passed month is 2, it will return 2020-02-29T23:59:59.999999999Z
+     *
+     * @param month - the month to find the end of
+     * @return - the value of the last moment of the month
+     */
+    static OffsetDateTime getLastDayOfTheMonth(int month) {
+        OffsetDateTime t = OffsetDateTime.now();
+        return t.withOffsetSameInstant(ZoneOffset.UTC).withMonth(month).withDayOfMonth(1).plusMonths(1)
+                .minusDays(1).withHour(23).withMinute(59).withSecond(59).withNano(999999999);
+    }
+
+    /**
+     * Process the EOB search results
+     *
+     * @param benes - the eob search futures
+     * @param progressTracker - the progress tracker
+     * @param contractEobManager - the manager of the list of eobs for a contract
+     * @param helper - the data file writer
+     * @param contractBeneficiaries - the container of the contract beneficiary mapping
+     * @param contractMappings - the futures for the contract beneficiary searches
+     */
     void processBeneFuturesList(List<Future<EobSearchResponse>> benes, ProgressTracker progressTracker,
                                         ContractEobManager contractEobManager, StreamHelper helper,
                                         ContractBeneficiaries contractBeneficiaries, List<Future<ContractMapping>> contractMappings) {
         EobSearchResponse response = null;
+        // Iterate over the beneficiaries
         Iterator<Future<EobSearchResponse>> beneIterator = benes.iterator();
         while (beneIterator.hasNext()) {
             var future = beneIterator.next();
+            // If the search is done
             if (future.isDone()) {
                 progressTracker.incrementProcessedCount();
                 try {
                     response = future.get();
+                    // Add the eobs
                     contractEobManager.addResources(response);
+                    // Validate the eobs
                     contractEobManager.validateResources(contractBeneficiaries.getPatients().get(response.getPatient().getPatientId()));
+                    // Write valid eobs
                     contractEobManager.writeValidEobs(helper);
                 } catch (CancellationException e) {
                     // This could happen in the rare event that a job was cancelled mid-process.
@@ -317,12 +375,15 @@ public class JobProcessorImpl implements JobProcessor {
                     log.warn("CancellationException while calling Future.get() - Job may have been cancelled");
                 } catch (Exception e) {
                     progressTracker.incrementFailureCount();
+                    // Write error to contract error file
                     handleException(contractBeneficiaries.getContractNumber(), helper, response == null ? "Encountered exception while processing job resources: " + e.getMessage() : response.toString(), e);
+                    // If we've only had a few errors, contine on
                     if (progressTracker.isErrorCountBelowThreshold()) {
                         final Throwable rootCause = ExceptionUtils.getRootCause(e);
-                        log.error("exception while processing patient {}", rootCause.getMessage(), rootCause);
                         // log exception, but continue processing job as errorCount is below threshold
+                        log.error("exception while processing patient {}", rootCause.getMessage(), rootCause);
                     } else {
+                        // If we've topped the amount of allowed failures in a job, clean up threads and throw an error
                         benes.parallelStream().forEach(f -> f.cancel(false));
                         contractMappings.parallelStream().forEach(f -> f.cancel(false));
                         String description = progressTracker.getFailureCount() + " out of " + progressTracker.getTotalCount() + " records failed. Stopping job";
@@ -337,6 +398,14 @@ public class JobProcessorImpl implements JobProcessor {
         }
     }
 
+    /**
+     * Write errors in eob searches to the JSON error file
+     *
+     * @param contractNum - the contract number
+     * @param helper - the file writer helper
+     * @param data - the data to write
+     * @param e - the exception thrown
+     */
     private void handleException(String contractNum, StreamHelper helper, String data, Exception e) {
         var errMsg = ExceptionUtils.getRootCauseMessage(e);
         var operationOutcome = FHIRUtil.getErrorOutcome(errMsg);
@@ -383,6 +452,11 @@ public class JobProcessorImpl implements JobProcessor {
         }
     }
 
+    /**
+     * Update the job progress in the database
+     * @param job - the job
+     * @param tracker - the tracker who manages the progress tracking
+     */
     private void updateJobStatus(Job job, ProgressTracker tracker) {
         int progress = tracker.getPercentageCompleted();
         job.setProgress(progress);

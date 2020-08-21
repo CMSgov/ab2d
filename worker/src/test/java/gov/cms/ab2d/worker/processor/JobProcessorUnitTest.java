@@ -350,4 +350,15 @@ class JobProcessorUnitTest {
         assertThrows(JobCancelledException.class,
                 () -> impl.cancelIt(new ArrayList(), new ArrayList<>(), "ABC"));
     }
+
+    @Test
+    void testLastDayOfTheMonth() {
+        OffsetDateTime jan = JobProcessorImpl.getLastDayOfTheMonth(1);
+        assertEquals(31, jan.getDayOfMonth());
+        assertEquals(1, jan.getMonthValue());
+        OffsetDateTime jun = JobProcessorImpl.getLastDayOfTheMonth(6);
+        assertEquals(30, jun.getDayOfMonth());
+        assertEquals(6, jun.getMonthValue());
+        System.out.println(jun);
+    }
 }
