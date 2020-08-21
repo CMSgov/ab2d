@@ -195,7 +195,8 @@ class JobProcessorUnitTest {
 
     private void doVerify() throws ExecutionException, InterruptedException {
         verify(fileService).createDirectory(any());
-        verify(bfdClient).requestPartDEnrolleesFromServer(anyString(), anyInt());
+        OffsetDateTime tm = OffsetDateTime.now();
+        verify(bfdClient, times(tm.getMonthValue())).requestPartDEnrolleesFromServer(anyString(), anyInt());
     }
 
     @Test
@@ -226,7 +227,8 @@ class JobProcessorUnitTest {
         assertNotNull(processedJob.getExpiresAt());
 
         verify(fileService, times(2)).createDirectory(any());
-        verify(bfdClient).requestPartDEnrolleesFromServer(anyString(), anyInt());
+        OffsetDateTime dt = OffsetDateTime.now();
+        verify(bfdClient, times(dt.getMonthValue())).requestPartDEnrolleesFromServer(anyString(), anyInt());
     }
 
     @Test

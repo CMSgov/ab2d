@@ -27,6 +27,7 @@ import gov.cms.ab2d.worker.processor.domainmodel.EobSearchResponse;
 import gov.cms.ab2d.worker.service.FileService;
 import org.hl7.fhir.dstu3.model.Bundle;
 import org.hl7.fhir.dstu3.model.ExplanationOfBenefit;
+import org.hl7.fhir.dstu3.model.Period;
 import org.hl7.fhir.dstu3.model.Resource;
 import org.junit.Assert;
 import org.junit.jupiter.api.BeforeEach;
@@ -102,11 +103,11 @@ class JobProcessorIntegrationTest {
     private Job job;
     private Future<EobSearchResponse> future;
     private String[] testBenes = new String[] {
-        "-199900000022040", "-199900000022041", "-199900000022042", "-199900000022043", "-199900000022044", "-199900000022045", "-199900000022046", "-199900000022047", "-199900000022048", "-199900000022049",
-                "-199900000022050", "-199900000022051", "-199900000022052", "-199900000022053", "-199900000022054", "-199900000022055", "-199900000022056", "-199900000022057", "-199900000022058", "-199900000022059",
-                "-199900000022060", "-199900000022061", "-199900000022062", "-199900000022063", "-199900000022064", "-199900000022065", "-199900000022066", "-199900000022067", "-199900000022068", "-199900000022069",
-                "-199900000022070", "-199900000022071", "-199900000022072", "-199900000022073", "-199900000022074", "-199900000022075", "-199900000022076", "-199900000022077", "-199900000022078", "-199900000022079",
-                "-199900000022030", "-199900000022031", "-199900000022032", "-199900000022033", "-199900000022034", "-199900000022035", "-199900000022036", "-199900000022037", "-199900000022038", "-199900000022039"
+            "-199900000022040", "-199900000022041", "-199900000022042", "-199900000022043", "-199900000022044", "-199900000022045", "-199900000022046", "-199900000022047", "-199900000022048", "-199900000022049",
+            "-199900000022050", "-199900000022051", "-199900000022052", "-199900000022053", "-199900000022054", "-199900000022055", "-199900000022056", "-199900000022057", "-199900000022058", "-199900000022059",
+            "-199900000022060", "-199900000022061", "-199900000022062", "-199900000022063", "-199900000022064", "-199900000022065", "-199900000022066", "-199900000022067", "-199900000022068", "-199900000022069",
+            "-199900000022070", "-199900000022071", "-199900000022072", "-199900000022073", "-199900000022074", "-199900000022075", "-199900000022076", "-199900000022077", "-199900000022078", "-199900000022079",
+            "-199900000022030", "-199900000022031", "-199900000022032", "-199900000022033", "-199900000022034", "-199900000022035", "-199900000022036", "-199900000022037", "-199900000022038", "-199900000022039"
     };
 
     @Container
@@ -114,7 +115,8 @@ class JobProcessorIntegrationTest {
     private Bundle bundle1;
     private RuntimeException fail;
     private List<Resource> bundle1Resources;
-    ContractBeneficiaries.PatientDTO patientDTO;
+    private ContractBeneficiaries.PatientDTO patientDTO;
+    private Contract contract;
 
     @BeforeEach
     void setUp() throws ExecutionException, InterruptedException, NoSuchFieldException, ParseException {
@@ -130,7 +132,7 @@ class JobProcessorIntegrationTest {
 
         job.setStatus(JobStatus.IN_PROGRESS);
         jobRepository.save(job);
-        createContract(sponsor);
+        contract = createContract(sponsor);
 
         ThreadPoolTaskExecutor patientContractThreadPool = new ThreadPoolTaskExecutor();
         patientContractThreadPool.setCorePoolSize(6);
@@ -338,9 +340,19 @@ class JobProcessorIntegrationTest {
     private EobSearchResponse getResources(String id) {
         List<Resource> allResources = new ArrayList<>();
         ExplanationOfBenefit eob = EobTestDataUtil.createEOB();
-        eob.getPatient().setReference("Patient/" + id);
-        for (int i = 0; i < 8; i++) {
-            allResources.add(eob.copy());
+        try {
+            Date d1 = new Date(new Date().getTime() - 10000000);
+            Date d2 = new Date(new Date().getTime() - 8000000);
+            Period period = new Period();
+            period.setStart(d1);
+            period.setEnd(d2);
+            eob.setBillablePeriod(period);
+            eob.getPatient().setReference("Patient/" + id);
+            for (int i = 0; i < 8; i++) {
+                allResources.add(eob.copy());
+            }
+        } catch (Exception ex) {
+            fail(ex);
         }
         return new EobSearchResponse(getPatient(id), allResources);
     }
@@ -371,7 +383,7 @@ class JobProcessorIntegrationTest {
         return userRepository.save(user);
     }
 
-    private void createContract(Sponsor sponsor) {
+    private Contract createContract(Sponsor sponsor) {
         Contract contract = new Contract();
         contract.setContractName("CONTRACT_0000");
         contract.setContractNumber("CONTRACT_0000");
@@ -380,6 +392,7 @@ class JobProcessorIntegrationTest {
 
         sponsor.getContracts().add(contract);
         contractRepository.save(contract);
+        return contract;
     }
 
     private Job createJob(User user) {
