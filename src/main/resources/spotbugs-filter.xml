@@ -10,8 +10,20 @@
 
     <!-->mkdirs check is not necessary<-->
     <Match>
-        <Class name="~gov\.cms\.ab2d\.common\.health\.FileSystemCheck"/>
+        <Package name="~gov\.cms\.ab2d.*"/>
         <Bug pattern="RV_RETURN_VALUE_IGNORED_BAD_PRACTICE"/>
+    </Match>
+
+    <!-- IntelliJ or PMD will capture this if necessary-->
+    <Match>
+        <Package name="~gov\.cms\.ab2d.*"/>
+        <Bug pattern="SF_SWITCH_NO_DEFAULT"/>
+    </Match>
+
+    <!-- Logged as a potential bug to investigate -->
+    <Match>
+        <Package name="~gov\.cms\.ab2d.*"/>
+        <Bug pattern="VO_VOLATILE_INCREMENT"/>
     </Match>
 
     <!-->Getting id will return null if not found anyway<-->
