@@ -887,8 +887,6 @@
 
 ### Forward AWS CloudWatch alarms to the VictorOps alerting service
 
-> *** TO DO ***: STOPPING POINT
-
 1. Open Chrome
 
 1. Enter the following in the address bar
@@ -1008,7 +1006,7 @@
    - **Message body to send to the endpoint:**
 
      ```
-     {"AlarmName":"VictorOps - CloudWatch Integration TEST","NewStateValue":"ALARM","NewStateReason":"failure","StateChangeTime":"2017-12-14T01:00:00.000Z","AlarmDescription":"VictorOps - CloudWatch Integration TEST"}
+     {"AlarmName":"AB2D Dev - VictorOps - CloudWatch Integration TEST","NewStateValue":"ALARM","NewStateReason":"failure","StateChangeTime":"2017-12-14T01:00:00.000Z","AlarmDescription":"VictorOps - CloudWatch Integration TEST"}
      ```
 
 1. Select **Publish message**
