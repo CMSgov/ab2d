@@ -14,5 +14,6 @@ ALTER TABLE properties ADD CONSTRAINT "pk_properties" PRIMARY KEY (id);
 INSERT INTO properties (id, key, value) VALUES((select nextval('hibernate_sequence')), 'pcp.core.pool.size', 10);
 INSERT INTO properties (id, key, value) VALUES((select nextval('hibernate_sequence')), 'pcp.max.pool.size', 150);
 INSERT INTO properties (id, key, value) VALUES((select nextval('hibernate_sequence')), 'pcp.scaleToMax.time', 900);
+INSERT INTO properties (id, key, value) VALUES((select nextval('hibernate_sequence')), 'worker.chaos', 'engaged');
 
 --rollback  DROP TABLE properties;
