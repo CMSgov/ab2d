@@ -4,7 +4,6 @@ import gov.cms.ab2d.common.model.OptOut;
 import gov.cms.ab2d.common.repository.OptOutRepository;
 import gov.cms.ab2d.eventlogger.LogManager;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -17,11 +16,8 @@ import java.time.LocalDate;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
-@Disabled
 @ExtendWith(MockitoExtension.class)
 class OptOutImporterUnitTest {
 

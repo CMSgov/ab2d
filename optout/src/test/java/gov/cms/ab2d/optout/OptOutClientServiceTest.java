@@ -2,12 +2,10 @@ package gov.cms.ab2d.optout;
 
 import gov.cms.ab2d.common.model.OptOut;
 import gov.cms.ab2d.common.repository.OptOutRepository;
-
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.MockBfdServiceUtils;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.runner.RunWith;
 import org.mockserver.integration.ClientAndServer;
@@ -26,9 +24,9 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-@Disabled
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = SpringBootApp.class)
 @Testcontainers
