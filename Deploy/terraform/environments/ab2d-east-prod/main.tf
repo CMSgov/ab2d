@@ -261,7 +261,8 @@ module "cloudwatch" {
   controller_server_id    = "${data.aws_instance.ab2d_deployment_controller.instance_id}"
   s3_bucket_name          = var.file_bucket_name
   db_name                 = var.db_identifier
-  target_group_arn_suffix = module.api.alb_target_group_arn_suffix
+  # target_group_arn_suffix = module.api.alb_target_group_arn_suffix
+  target_group_arn_suffix = var.target_group_arn_suffix
   loadbalancer_arn_suffix = module.api.alb_arn_suffix
 }
 

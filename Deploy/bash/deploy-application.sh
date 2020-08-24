@@ -1249,6 +1249,15 @@ terraform apply \
   --auto-approve
 
 #
+# Get the correct target group arn for CloudWatch
+#
+
+TARGET_GROUP_ARN_SUFFIX=$(aws --region us-east-1 elbv2 describe-target-groups \
+  --query 'TargetGroups[?length(LoadBalancerArns)>`0`].TargetGroupArn' \
+  --output text \
+  | awk 'BEGIN { FS = ":" } ; {print $6}')
+
+#
 # Deploy CloudWatch
 #
 
@@ -1268,6 +1277,7 @@ terraform apply \
   --var "alb_internal=$ALB_INTERNAL" \
   --var "alb_security_group_ip_range=$ALB_SECURITY_GROUP_IP_RANGE" \
   --var "gold_image_name=${GOLD_IMAGE_NAME}" \
+  --var "target_group_arn_suffix=${TARGET_GROUP_ARN_SUFFIX}" \
   --auto-approve
 
 #
