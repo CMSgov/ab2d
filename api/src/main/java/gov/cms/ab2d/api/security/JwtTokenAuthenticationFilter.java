@@ -11,6 +11,7 @@ import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.events.ApiRequestEvent;
 import gov.cms.ab2d.eventlogger.utils.UtilMethods;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -49,8 +50,8 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
     private LogManager eventLogger;
 
     // Filters for public URIs
-    @Value("#{'${api.requestlogging.filter}'.split(',')}")
-    private List<String> uriFilters;
+    @Value("${api.requestlogging.filter:#{null}}")
+    private String uriFilters;
 
     // Predicate used for filtering public uris
     // If predicate.test("uri") -> true then URI does not match any regex filters and should be logged
@@ -61,14 +62,24 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
     private void constructFilters() {
 
         // Check whether no filters were provided
-        if (uriFilters == null) {
-            log.warn("no filters provided so all api requests will be logged ");
+        if (StringUtils.isBlank(uriFilters)) {
+            log.warn("no filters provided so all api requests will be logged");
+            uriFilter = uri -> true;
+            return;
+        }
+
+        List<String> filters = List.of(uriFilters.split(",")).stream()
+                .filter(StringUtils::isNotBlank).collect(Collectors.toList());
+
+        if (filters.isEmpty()) {
+            log.warn("all filters provided are empty so all api requests will be logged");
             uriFilter = uri -> true;
             return;
         }
 
         // Compiled filters, much quicker if patterns are pre-compiled
-        List<Predicate<String>> compiledFilters = uriFilters.stream()
+        List<Predicate<String>> compiledFilters = filters.stream()
+                .filter(StringUtils::isNotBlank)
                 .map(Pattern::compile).map(Pattern::asPredicate)
                 .collect(Collectors.toList());
 
