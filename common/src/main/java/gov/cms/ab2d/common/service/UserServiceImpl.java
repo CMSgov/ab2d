@@ -77,9 +77,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public void setupUserImpersonation(String username, HttpServletRequest request) {
         User user = getUserByUsername(username);
-
         log.info("Admin user is impersonating user {}", username);
-
         setupUserAndRolesInSecurityContext(user, request);
     }
 
@@ -112,26 +110,24 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserDTO enableUser(String username) {
-        User user = getUserByUsername(username);
-        user.setEnabled(true);
-
-        User updatedUser = userRepository.saveAndFlush(user);
-        return mapping.getModelMapper().map(updatedUser, UserDTO.class);
+        return updateUserStatus(username, true);
     }
 
     @Override
     public UserDTO disableUser(String username) {
-        User user = getUserByUsername(username);
-        user.setEnabled(false);
-
-        User updatedUser = userRepository.saveAndFlush(user);
-        return mapping.getModelMapper().map(updatedUser, UserDTO.class);
+        return updateUserStatus(username, false);
     }
 
     @Override
     public UserDTO getUser(String username) {
         User user = getUserByUsername(username);
-
         return mapping.getModelMapper().map(user, UserDTO.class);
+    }
+
+    private UserDTO updateUserStatus(String username, boolean enabled) {
+        User user = getUserByUsername(username);
+        user.setEnabled(enabled);
+        User updatedUser = userRepository.saveAndFlush(user);
+        return mapping.getModelMapper().map(updatedUser, UserDTO.class);
     }
 }
