@@ -134,6 +134,9 @@
 1. [Appendix QQQ: Get private IP address](#appendix-qqq-get-private-ip-address)
 1. [Appendix RRR: Protect the existing RDS database using AWS CLI](#appendix-rrr-protect-the-existing-rds-database-using-aws-cli)
 1. [Appendix SSS: Review RDS reserved instance utilization from AWS console](#appendix-sss-review-rds-reserved-instance-utilization-from-aws-console)
+1. [Appendix TTT: Reset master to a specific commit](#appendix-ttt-reset-master-to-a-specific-commit)
+   * [Force push to master](#force-push-to-master)
+   * [Rebase an existing branch to reconcile it with a master that has been reset](#rebase-an-existing-branch-to-reconcile-it-with-a-master-that-has-been-reset)
 
 ## Appendix A: Access the CMS AWS console
 
@@ -11219,4 +11222,139 @@ $ sed -i "" 's%cms-ab2d[\/]prod%cms-ab2d/dev%g' _includes/head.html (edited)
 
    ```
    RDS Reserved Instance Utilization
+   ```
+
+## Appendix TTT: Reset master to a specific commit
+
+### Force push to master
+
+1. Temporarily configure master branch to allow force push
+
+   1. Note that you need to be an administrator of the repo to do this
+
+   1. Open Chrome
+
+   1. Enter the following in the address bar
+
+      > https://github.com/CMSgov/ab2d
+
+   1. Select **Settings**
+
+   1. Select **Branches** from the leftmost panel
+
+   1. Select **Edit** beside "master" under the "Branch protection rules" section
+
+   1. Uncheck **Require pull request reviews before merging**
+
+   1. Uncheck **Require status checks to pass before merging**
+
+   1. Check **Allow force pushes**
+
+   1. Select **Save changes**
+
+1. Be sure to stash or check-in any changes that you have in your current branch
+
+1. Update your local origin branches
+
+   ```ShellSession
+   $ git fetch --all
+   ```
+
+1. Checkout the master branch
+
+   ```ShellSession
+   $ git checkout master
+   ```
+
+1. Do a hard reset to desired commit number
+
+   *Format:*
+
+   ```ShellSession
+   $ git reset --hard {commit number}
+   ```
+
+1. Force push to master
+
+   ```ShellSession
+   $ git push --force
+   ```
+
+1. Re-configure master branch to original settings
+
+   1. Note that you need to be an administrator of the repo to do this
+
+   1. Open Chrome
+
+   1. Enter the following in the address bar
+
+      > https://github.com/CMSgov/ab2d
+
+   1. Select **Settings**
+
+   1. Select **Branches** from the leftmost panel
+
+   1. Select **Edit** beside "master" under the "Branch protection rules" section
+
+   1. Uncheck **Require pull request reviews before merging**
+
+   1. Uncheck **Require status checks to pass before merging**
+
+   1. Check **Allow force pushes**
+
+   1. Select **Save changes**
+
+### Rebase an existing branch to reconcile it with a master that has been reset
+
+1. Get the number of commits that have been committed to your branch after the current master commit
+
+   ```ShellSession
+   $ COMMIT_NUMBER_OF_ORIGIN_MASTER=$(git rev-parse origin/master | cut -c1-8) \
+     && NUMBER_OF_COMMITS_AFTER_MASTER=$(git log --oneline \
+     | awk '{ print $1 }' \
+     | awk "/${COMMIT_NUMBER_OF_ORIGIN_MASTER}/ {exit} {print}" \
+     | wc -l \
+     | tr -d ' ')
+   ```
+
+2. Rebase your branch
+
+   ```ShellSession
+   $ git rebase -i "HEAD~${NUMBER_OF_COMMITS_AFTER_MASTER}"
+   ```
+
+3. Note that vim opens with the list of commits that include the most recent commits to your branch (some additional commits might show up, but that is normal)
+
+4. Change the commits that are not yours by changing "pick" to "drop"
+
+   Notes:
+
+   - only do the most recent commits that occurred after the master commit
+
+   - identify the commits that are not yours by looking at your branch in GitHub
+
+5. Save and close the vim editor
+
+6. If the rebase is successful, force push the changes to your branch
+
+   ```ShellSession
+   $ git push --force-with-lease
+   ```
+
+7. Update your local "origin/master"
+
+   ```ShellSession
+   $ git fetch --all
+   ```
+
+8. Merge from your local "origin/master"
+
+   ```ShellSession
+   $ git merge origin/master
+   ```
+
+9. Push the changes
+
+   ```ShellSession
+   $ git push
    ```
