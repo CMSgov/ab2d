@@ -136,6 +136,7 @@
 1. [Appendix SSS: Review RDS reserved instance utilization from AWS console](#appendix-sss-review-rds-reserved-instance-utilization-from-aws-console)
 1. [Appendix TTT: Reset master to a specific commit](#appendix-ttt-reset-master-to-a-specific-commit)
    * [Force push to master](#force-push-to-master)
+   * [Reconcile your master branch with a remote branch that was force pushed by someone else](#reconcile-your-master-branch-with-a-remote-branch-that-was-force-pushed-by-someone-else)
    * [Rebase an existing branch to reconcile it with a master that has been reset](#rebase-an-existing-branch-to-reconcile-it-with-a-master-that-has-been-reset)
 
 ## Appendix A: Access the CMS AWS console
@@ -11296,14 +11297,58 @@ $ sed -i "" 's%cms-ab2d[\/]prod%cms-ab2d/dev%g' _includes/head.html (edited)
 
    1. Select **Edit** beside "master" under the "Branch protection rules" section
 
-   1. Uncheck **Require pull request reviews before merging**
+   1. Check **Require pull request reviews before merging**
 
-   1. Uncheck **Require status checks to pass before merging**
+   1. Select "2" from the **Required approving reviews** dropdown
 
-   1. Check **Allow force pushes**
+   1. Check **Dismiss stale pull request approvals when new commits are pushed**
+
+   1. Check **Require status checks to pass before merging**
+
+   1. Check **Require branches to be up to date before merging**
+
+   1. Check **LGTM analysis: Java**
+
+   1. Check **continuous-integration/travis-ci**
+
+   1. Uncheck **Allow force pushes**
 
    1. Select **Save changes**
 
+### Reconcile your master branch with a remote branch that was force pushed by someone else
+
+1. If you are currently on the master branch, checkout a different branch
+
+   *Format:*
+   
+   ```ShellSession
+   $ git checkout {a branch other than master}
+   ```
+
+1. Delete your local working master branch
+
+   ```ShellSession
+   $ git branch -D master
+   ```
+
+1. Update your local "origin/master" branch
+
+   ```ShellSession
+   $ git fetch --all
+   ```
+
+1. Checkout your new local working master branch
+
+   ```ShellSession
+   $ git checkout master
+   ```
+
+1. Return to the branch that you are working on
+
+   ```ShellSession
+   $ git checkout {a branch other than master}
+   ```
+   
 ### Rebase an existing branch to reconcile it with a master that has been reset
 
 1. Get the number of commits that have been committed to your branch after the current master commit
