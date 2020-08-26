@@ -28,9 +28,9 @@ public class AttestationUpdaterServiceTest {
 
     @Test
     public void bogusTest() throws InterruptedException {
-        aus.pollHmsData();
+        aus.pollOrganizations();
         assertNotNull(aus);
-        sleep(10*1000);
+        sleep(2*1000);
         assertTrue(true);
     }
 }

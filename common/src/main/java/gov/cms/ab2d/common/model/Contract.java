@@ -22,6 +22,7 @@ import java.util.Set;
 @Setter
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class Contract {
+    public enum ContractState { UNATTESTED, VALID, ATTESTATION_WITHDRAWN, DELETED };
 
     @Id
     @GeneratedValue
@@ -44,4 +45,15 @@ public class Contract {
 
     @OneToMany(mappedBy = "contract")
     private Set<Coverage> coverages = new HashSet<>();
+
+    @Transient
+    private ContractState contractState;
+
+    public boolean isDeleted() {
+        return ContractState.DELETED == contractState;
+    }
+
+    public void markDeleted() {
+        contractState = ContractState.DELETED;
+    }
 }
