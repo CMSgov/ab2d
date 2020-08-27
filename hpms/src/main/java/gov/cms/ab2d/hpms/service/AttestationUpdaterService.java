@@ -4,6 +4,7 @@ import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.Sponsor;
 import gov.cms.ab2d.common.repository.ContractRepository;
 import gov.cms.ab2d.common.repository.SponsorRepository;
+import gov.cms.ab2d.hpms.hmsapi.ContractHolder;
 import gov.cms.ab2d.hpms.hmsapi.HPMSOrganizationInfo;
 import gov.cms.ab2d.hpms.hmsapi.HPMSOrganizations;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -67,11 +68,25 @@ public class AttestationUpdaterService {
         Map<String, HPMSOrganizationInfo> refreshed = buildRefreshedMap(orgInfo);
         existingMap.forEach((contractId, contract) ->
                 considerContract(contractAttestList, contract, refreshed.get(contractId)));
-        processAttestations(contractAttestList);
+
+        processAttestations(contractAttestList.stream().map(Contract::getContractNumber).collect(Collectors.toList()));
     }
 
-    private void processAttestations(List<Contract> contractAttestList) {
-        throw new UnsupportedOperationException();
+    private void processAttestations(List<String> contractAttestList) {
+        // todo: chunk these requests to avoid a too long URL
+//        String contractIdStr = String.join(",", contractAttestList);
+        String contractIdStr = "[\"S1234\",\"S2341\"]";
+        Flux<ContractHolder> contractsFlux = WebClient.create("http://localhost:8080/api/cda/contracts/status")
+                .get().uri(uriBuilder -> uriBuilder.queryParam("contractIds", contractIdStr).build())
+                .retrieve()
+                .bodyToFlux(ContractHolder.class);
+
+        contractsFlux.subscribe(this::processContracts);
+
+    }
+
+    private void processContracts(ContractHolder contractHolder) {
+        System.out.println(contractHolder);
     }
 
     private List<Contract> addNewContracts(List<HPMSOrganizationInfo> newContracts) {

@@ -12,6 +12,7 @@ import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
+import javax.persistence.Transient;
 import javax.validation.constraints.NotNull;
 import java.time.OffsetDateTime;
 import java.util.HashSet;
@@ -22,7 +23,7 @@ import java.util.Set;
 @Setter
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class Contract {
-    public enum ContractState { UNATTESTED, VALID, ATTESTATION_WITHDRAWN, DELETED };
+    public enum ContractState { UNATTESTED, VALID, ATTESTATION_WITHDRAWN, DELETED }
 
     @Id
     @GeneratedValue

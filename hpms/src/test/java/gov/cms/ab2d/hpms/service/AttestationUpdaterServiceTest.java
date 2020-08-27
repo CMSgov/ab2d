@@ -30,7 +30,7 @@ public class AttestationUpdaterServiceTest {
     public void bogusTest() throws InterruptedException {
         aus.pollOrganizations();
         assertNotNull(aus);
-        sleep(2*1000);
+        sleep(30*1000);
         assertTrue(true);
     }
 }
