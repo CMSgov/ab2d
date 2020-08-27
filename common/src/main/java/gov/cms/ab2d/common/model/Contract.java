@@ -12,9 +12,12 @@ import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
-import javax.persistence.Transient;
 import javax.validation.constraints.NotNull;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -23,7 +26,6 @@ import java.util.Set;
 @Setter
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class Contract {
-    public enum ContractState { UNATTESTED, VALID, ATTESTATION_WITHDRAWN, DELETED }
 
     @Id
     @GeneratedValue
@@ -47,14 +49,34 @@ public class Contract {
     @OneToMany(mappedBy = "contract")
     private Set<Coverage> coverages = new HashSet<>();
 
-    @Transient
-    private ContractState contractState;
-
-    public boolean isDeleted() {
-        return ContractState.DELETED == contractState;
+    public boolean hasAttestation() {
+        return attestedOn != null;
     }
 
-    public void markDeleted() {
-        contractState = ContractState.DELETED;
+    public void clearAttestation() {
+        attestedOn = null;
+    }
+
+    public void markAttested(OffsetDateTime attestedOnDate) {
+        attestedOn = attestedOnDate;
+    }
+
+    /*
+     * Returns true if new state differs from existing which requires a save.
+     */
+    public boolean updateAttestation(boolean attested, String attestationDate, DateTimeFormatter formatter) {
+        boolean hasAttestation = hasAttestation();
+        if (attested == hasAttestation) {
+            return false;   // No changes needed
+        }
+
+        if (hasAttestation) {
+            clearAttestation();
+            return true;
+        }
+
+        LocalDateTime ldt = LocalDate.parse(attestationDate, formatter).atStartOfDay();
+        markAttested(OffsetDateTime.of(ldt, ZoneOffset.UTC)); // todo: make sure offset is correct.
+        return true;
     }
 }
