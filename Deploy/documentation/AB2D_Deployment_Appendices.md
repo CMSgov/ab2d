@@ -138,6 +138,8 @@
    * [Force push to master](#force-push-to-master)
    * [Reconcile your master branch with a remote branch that was force pushed by someone else](#reconcile-your-master-branch-with-a-remote-branch-that-was-force-pushed-by-someone-else)
    * [Rebase an existing branch to reconcile it with a master that has been reset](#rebase-an-existing-branch-to-reconcile-it-with-a-master-that-has-been-reset)
+1. [Appendix UUU: Migrate VictorOps-Slack integration from a real slack user to slack service user](#appendix-uuu-migrate-victorops-slack-integration-from-a-real-slack-user-to-slack-service-user)
+1. [Appendix VVV: Add a volume to jenkins agent and extend the root volume to use it](#appendix-vvv-add-a-volume-to-jenkins-agent-and-extend-the-root-volume-to-use-it)
 
 ## Appendix A: Access the CMS AWS console
 
@@ -11402,4 +11404,120 @@ $ sed -i "" 's%cms-ab2d[\/]prod%cms-ab2d/dev%g' _includes/head.html (edited)
 
    ```ShellSession
    $ git push
+   ```
+
+## Appendix UUU: Migrate VictorOps-Slack integration from a real slack user to slack service user
+
+1. Create an "sb victorops admin slack" slack user for the SemanticBits Slack workspace
+
+   *A SemanticBits Slack workspace administrator must do this step.*
+
+> *** TO DO ***
+
+## Appendix VVV: Add a volume to jenkins agent and extend the root volume to use it
+
+1. Note that these directions assume that you already have two volumes and want to add a third volume
+
+1. Create a new volume in the same availabilty zone as Jenkins agent in the AWS console
+
+1. Attach the volume to the Jenkins agent in the AWS console
+
+1. Connect to the Jenkins agent
+
+1. Set the partition as gpt
+
+   ```ShellSession
+   $ sudo parted --script /dev/nvme2n1 mklabel gpt
+   ```
+
+1. View detail about the disks and partitions again
+
+   1. Enter the following
+
+      ```ShellSession
+      $ sudo parted -l
+      ```
+
+   1. Note the output
+
+      ```
+      Model: NVMe Device (nvme)
+      Disk /dev/nvme0n1: 805GB
+      Sector size (logical/physical): 512B/512B
+      Partition Table: msdos
+      Disk Flags:
+
+      Number  Start   End     Size    Type     File system  Flags
+       1      1049kB  1075MB  1074MB  primary  xfs
+       2      1075MB  32.2GB  31.1GB  primary               lvm
+       3      32.2GB  268GB   236GB   primary
+       4      268GB   537GB   268GB   primary
+
+
+      Model: NVMe Device (nvme)
+      Disk /dev/nvme1n1: 537GB
+      Sector size (logical/physical): 512B/512B
+      Partition Table: gpt
+      Disk Flags:
+
+      Number  Start   End    Size   File system  Name  Flags
+       1      1049kB  537GB  537GB
+
+
+      Model: NVMe Device (nvme)
+      Disk /dev/nvme2n1: 537GB
+      Sector size (logical/physical): 512B/512B
+      Partition Table: gpt
+      Disk Flags:
+
+      Number  Start  End  Size  File system  Name  Flags
+      ```
+
+1. Create a new partition on the "/dev/nvme2n1" disk
+
+   ```ShellSession
+   (
+   echo n # Add a new partition
+   echo p # Primary partition
+   echo   # Partition number (Accept default)
+   echo   # First sector (Accept default)
+   echo   # Last sector (Accept default)
+   echo w # Write changes
+   ) | sudo fdisk /dev/nvme2n1
+   ```
+
+1. Request that the operating system re-reads the partition table
+
+   ```ShellSession
+   $ sudo partprobe
+   ```
+
+1. Create physical volume by initializing the partition for use by the Logical Volume Manager (LVM)
+
+   ```ShellSession
+   $ sudo pvcreate /dev/nvme2n1p1
+   ```
+
+1. Format the "/dev/nvme2n1" disk as xfs
+
+   ```ShellSession
+   $ sudo mkfs.xfs -f /dev/nvme2n1p1
+   ```
+
+1. Extend the "VolGroup00" volume group to include the new volume
+
+   ```ShellSession
+   $ sudo vgextend VolGroup00 /dev/nvme2n1p1
+   ```
+
+1. Extend the size of the "log" logical volume with all the free space on the new volume
+
+   ```ShellSession
+   $ sudo lvextend -l +100%FREE /dev/mapper/VolGroup00-rootVol
+   ```
+
+1. Expands the existing XFS filesystem
+
+   ```ShellSession
+   $ sudo xfs_growfs -d /dev/mapper/VolGroup00-rootVol
    ```
