@@ -1249,6 +1249,15 @@ terraform apply \
   --auto-approve
 
 #
+# Get the correct target group arn for CloudWatch
+#
+
+TARGET_GROUP_ARN_SUFFIX=$(aws --region us-east-1 elbv2 describe-target-groups \
+  --query 'TargetGroups[?length(LoadBalancerArns)>`0`].TargetGroupArn' \
+  --output text \
+  | awk 'BEGIN { FS = ":" } ; {print $6}')
+
+#
 # Deploy CloudWatch
 #
 
@@ -1268,6 +1277,7 @@ terraform apply \
   --var "alb_internal=$ALB_INTERNAL" \
   --var "alb_security_group_ip_range=$ALB_SECURITY_GROUP_IP_RANGE" \
   --var "gold_image_name=${GOLD_IMAGE_NAME}" \
+  --var "target_group_arn_suffix=${TARGET_GROUP_ARN_SUFFIX}" \
   --auto-approve
 
 #
@@ -1364,24 +1374,6 @@ else
     sleep 60
   fi
 fi
-
-# # Remove old Autoscaling groups
-
-# if [ -z "${CLUSTER_ARNS}" ]; then
-#   echo "Skipping removing old autoscaling groups, since there are no existing clusters"
-# else
-#   OLD_API_ASG=$(echo $OLD_API_ASG \
-#     | awk -F"/" '{print $2}')
-#   OLD_WORKER_ASG=$(echo $OLD_WORKER_ASG \
-#     | awk -F"/" '{print $2}')
-#   aws --region "${AWS_DEFAULT_REGION}" autoscaling delete-auto-scaling-group \
-#     --auto-scaling-group-name $OLD_API_ASG \
-#     --force-delete || true
-#   aws --region "${AWS_DEFAULT_REGION}" autoscaling delete-auto-scaling-group \
-#     --auto-scaling-group-name $OLD_WORKER_ASG \
-#     --force-delete || true
-#   sleep 60
-# fi
 
 # Remove any duplicative API autoscaling groups
 

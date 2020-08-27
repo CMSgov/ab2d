@@ -195,3 +195,9 @@ bundle install
 # Get the public schema script and its data as csv files
 
 bundle exec rake database_public_get_data
+
+# Compress the database backup
+
+cd "${HOME}/database_backup"
+rm -f "${CMS_ENV}.tar.gz"
+tar -czvf "${CMS_ENV}.tar.gz" "/var/lib/jenkins/database_backup/${CMS_ENV}"

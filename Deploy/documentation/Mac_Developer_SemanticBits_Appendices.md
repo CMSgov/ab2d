@@ -5,7 +5,7 @@
 1. [Appendix A: PostgreSQL 11](#appendix-a-postgresql-11)
    * [Install PostgreSQL 11](#install-postgresql-11)
    * [Uninstall PostgreSQL 11](#uninstall-postgresql-11)
-1. [Appendix B: CMS VPN access](#appendix-b-cms-vpn-access)
+1. [Appendix B: CMS VPN and CloudTamer access](#appendix-b-cms-vpn-and-cloudtamer-access)
    * [Create a Jira ticket for CMS VPN ticket access](#create-a-jira-ticket-for-cms-vpn-ticket-access)
    * [Install and configure Google Authenticator](#install-and-configure-google-authenticator)
    * [Install and configure Cisco AnyConnect VPN](#install-and-configure-cisco-anyconnect-vpn)
@@ -15,9 +15,12 @@
 1. [Appendix D: Troubleshoot VPN access](#appendix-d-troubleshoot-vpn-access)
 1. [Appendix E: Configure show file extensions in Finder](#appendix-e-configure-show-file-extensions-in-finder)
 1. [Appendix F: Register for Okta Prod credentials](#appendix-f-register-for-okta-prod-credentials)
-1. [Appendix G: Upgrade from AWS CLI 1 to AWS CLI 2](#appendix-g-upgrade-from-aws-cli-1-to-aws-cli-2)
+1. [Appendix G: Install AWS CLI 1](#appendix-g-install-aws-cli-1)
+1. [Appendix H: Upgrade from AWS CLI 1 to AWS CLI 2](#appendix-g-upgrade-from-aws-cli-1-to-aws-cli-2)
    * [Uninstall AWS CLI 1 using pip3](#uninstall-aws-cli-1-using-pip3)
    * [Install and verify AWS CLI 2](#install-and-verify-aws-cli-2)
+1. [Appendix I: Install MesiterTask](#appendix-h-install-mesitertask)
+1. [Appendix J: Configure semanticbitsdemo AWS account](#appendix-i-configure-semanticbitsdemo-aws-account)
 
 ## Appendix A: PostgreSQL 11
 
@@ -134,7 +137,7 @@
    $ netstat -an | grep 5432
    ```
 
-## Appendix B: CMS VPN access
+## Appendix B: CMS VPN and CloudTamer access
 
 ### Create a Jira ticket for CMS VPN ticket access
 
@@ -150,41 +153,30 @@
 
    *Format:*
    
-   **Summary:** AWS VPN access for {your eua id}
+   **Summary:** Establish VPN and CloudTamer access for Fred Smith
 
-   **Project Name:** Project 058 BCDA
+   **CMS Business Unit:** 
 
-   **Account Alias:** None
+   **Project Name:** AB2D Sandbox
+
+   **Account Alias:** aws-cms-oit-iusg-acct95
 
    **Types of Access/Resets:** Cisco AnyConnect Access
 
-   **Approvers:** Andrew Harnish
+   **Approvers:** Stephen Walter
 
    **Description:**
 
    ```
-   I'm an engineer working on the AB2D project at CMS. Can I have AWS VPN access?
-
-   User ID: {your eua id}
-
-   Cellphone: {your cellphone number}
-
-   Full name: {your first and last name}
-
-   Email: {your semanticbits email}
-
-   Thanks,
-
-   {your first name}
+   Copy, paste, and edit description from this ticket:
+   https://jiraent.cms.gov/browse/CLDSUPSD-11984
    ```
 
    **Severity:** Minimal
 
    **Urgency:** Medium
 
-   **Reported Source:** Self Service
-
-   **Requested Due Date:** {3 business days from today's date}
+   **Requested Due Date:** {tomorrow}
 
 1. Select **Create**
 
@@ -442,7 +434,50 @@
 
    1. Log on
 
-## Appendix G: Upgrade from AWS CLI 1 to AWS CLI 2
+## Appendix G: Install AWS CLI 1
+
+1. Install the AWS CLI using pip3
+
+   ```ShellSession
+   $ pip3 install awscli --upgrade --user --no-warn-script-location
+   ```
+
+1. Check AWS CLI version
+
+   ```ShellSession
+   $ aws --version
+   ```
+
+1. Backup the file that you use for setting up your shell's environment
+
+   *Example for bash:*
+
+   ```ShellSession
+   $ cp ~/.bash_profile ~/.bash_profile_backup
+   ```
+
+1. Add AWS CLI path to your interactive shell script
+
+   *Example for bash:*
+
+   ```ShellSession
+   $ printf '\n# Add AWS CLI to Path' >> ~/.bash_profile
+   $ printf '\nexport PATH="$PATH:$HOME/Library/Python/3.7/bin"' >> ~/.bash_profile
+   ```
+
+1. Load updated profile in the current terminal
+
+   ```ShellSession
+   $ source ~/.bash_profile
+   ```
+
+1. Check the AWS version
+
+   ```ShellSession
+   $ aws --version
+   ```
+
+## Appendix H: Upgrade from AWS CLI 1 to AWS CLI 2
 
 ### Uninstall AWS CLI 1 using pip3
 
@@ -537,3 +572,39 @@
       ```ShellSession
       $ ./bash/connect-to-node.sh
       ```
+
+## Appendix I: Install MesiterTask
+
+> https://www.meistertask.com/apps
+
+## Appendix J: Configure semanticbitsdemo AWS account
+
+1. Configure AWS CLI
+
+   *Example for "semanticbitsdemo" AWS account:*
+
+   ```ShellSession
+   $ aws configure --profile=sbdemo-dev
+   ```
+
+1. Enter {your aws access key} at the **AWS Access Key ID** prompt
+
+1. Enter {your aws secret access key} at the AWS Secret Access Key prompt
+
+1. Enter the following at the **Default region name** prompt
+
+   ```
+   us-east-1
+   ```
+
+1. Enter the following at the **Default output format** prompt
+
+   ```
+   json
+   ```
+
+1. Examine the contents of your AWS credentials file
+
+   ```ShellSession
+   $ cat ~/.aws/credentials
+   ```
