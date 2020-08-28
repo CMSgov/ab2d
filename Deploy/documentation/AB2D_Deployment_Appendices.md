@@ -130,6 +130,10 @@
    * [Install and verify AWS CLI 2](#install-and-verify-aws-cli-2)
 1. [Appendix NNN: Manually install Chef Inspec on existing Jenkins Agent](#appendix-nnn-manually-install-chef-inspec-on-existing-jenkins-agent)
 1. [Appendix OOO: Connect to Jenkins agent through the Jenkins master using the ProxyJump flag](#appendix-ooo-connect-to-jenkins-agent-through-the-jenkins-master-using-the-proxyjump-flag)
+1. [Appendix PPP: Retrieve CSV database backup](#appendix-ppp-retrieve-csv-database-backup)
+1. [Appendix QQQ: Get private IP address](#appendix-qqq-get-private-ip-address)
+1. [Appendix RRR: Protect the existing RDS database using AWS CLI](#appendix-rrr-protect-the-existing-rds-database-using-aws-cli)
+1. [Appendix SSS: Review RDS reserved instance utilization from AWS console](#appendix-sss-review-rds-reserved-instance-utilization-from-aws-console)
 
 ## Appendix A: Access the CMS AWS console
 
@@ -848,12 +852,12 @@
 
    ```ShellSession
    $ psql --host  "${DB_HOST}" \
-       --username "${DB_USER}" \
-       --dbname "${MAIN_DB_NAME}" \
-       --command "SELECT pg_terminate_backend(pg_stat_activity.pid) \
-         FROM pg_stat_activity \
-         WHERE pg_stat_activity.datname = '${TARGET_DB_NAME}' \
-         AND pid <> pg_backend_pid();"
+     --username "${DB_USER}" \
+     --dbname "${MAIN_DB_NAME}" \
+     --command "SELECT pg_terminate_backend(pg_stat_activity.pid) \
+       FROM pg_stat_activity \
+       WHERE pg_stat_activity.datname = '${TARGET_DB_NAME}' \
+       AND pid <> pg_backend_pid();"
    ```
 
 1. Delete the database
@@ -10913,4 +10917,306 @@ $ sed -i "" 's%cms-ab2d[\/]prod%cms-ab2d/dev%g' _includes/head.html (edited)
    $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem -J \
      ec2-user@$JENKINS_MASTER_PUBLIC_IP \
 	ec2-user@$JENKINS_AGENT_PRIVATE_IP
+   ```
+
+## Appendix PPP: Retrieve CSV database backup
+
+1. Connect to Cisco VPN
+
+1. Set target environment variable
+
+   *Example for "Dev" environment:*
+
+   ```ShellSession
+   $ TARGET_ENVIRONMENT=ab2d-dev
+   ```
+
+   *Example for "Sbx" environment:*
+
+   ```ShellSession
+   $ TARGET_ENVIRONMENT=ab2d-sbx-sandbox
+   ```
+
+   *Example for "Impl" environment:*
+
+   ```ShellSession
+   $ TARGET_ENVIRONMENT=ab2d-east-impl
+   ```
+
+   *Example for "Prod" environment:*
+
+   ```ShellSession
+   $ TARGET_ENVIRONMENT=ab2d-east-prod
+   ```
+
+1. Set target environment
+
+   ```ShellSession
+   $ source ~/code/ab2d/Deploy/bash/set-env.sh
+   ```
+
+1. Get a count of the autoscaling groups in the target environment
+
+   ```ShellSession
+   $ aws --region "${AWS_DEFAULT_REGION}" autoscaling describe-auto-scaling-groups \
+     --query "AutoScalingGroups[*].AutoScalingGroupName" \
+     --output json \
+     | jq 'length'
+   ```
+
+1. If the number of autscaling groups is not 2, stop and redeploy before proceeding
+
+1. Shut down API nodes
+
+   *Note that adding 75 seconds with "-v+75S" is a Mac-only way of doing this.*
+
+   ```ShellSession
+   $ API_AUTOSCALING_GROUP_NAME=$(aws --region "${AWS_DEFAULT_REGION}" autoscaling describe-auto-scaling-groups \
+     --query "AutoScalingGroups[*].AutoScalingGroupName" \
+     --output json \
+     | jq 'sort' \
+     | jq '.[0]' \
+     | tr -d '"') \
+     && START_TIME=$(date -u -v+75S +%Y-%m-%dT%H:%M:%SZ) \
+     && aws --region "${AWS_DEFAULT_REGION}" autoscaling put-scheduled-update-group-action \
+     --auto-scaling-group-name "${API_AUTOSCALING_GROUP_NAME}" \
+     --scheduled-action-name shutdown-nodes \
+     --start-time "${START_TIME}" \
+     --min-size 0 \
+     --max-size 0 \
+     --desired-capacity 0
+   ```
+
+1. Shut down worker nodes
+
+   *Note that adding 75 seconds with "-v+75S" is a Mac-only way of doing this.*
+
+   ```ShellSession
+   $ WORKER_AUTOSCALING_GROUP_NAME=$(aws --region "${AWS_DEFAULT_REGION}" autoscaling describe-auto-scaling-groups \
+     --query "AutoScalingGroups[*].AutoScalingGroupName" \
+     --output json \
+     | jq 'sort' \
+     | jq '.[1]' \
+     | tr -d '"') \
+     && START_TIME=$(date -u -v+75S +%Y-%m-%dT%H:%M:%SZ) \
+     && aws --region "${AWS_DEFAULT_REGION}" autoscaling put-scheduled-update-group-action \
+     --auto-scaling-group-name "${WORKER_AUTOSCALING_GROUP_NAME}" \
+     --scheduled-action-name shutdown-nodes \
+     --start-time "${START_TIME}" \
+     --min-size 0 \
+     --max-size 0 \
+     --desired-capacity 0
+   ```
+
+1. Wait about ten minutes
+
+1. Verify that the API and Worker autoscaling groups have a status of "-" in the AWS console before proceeding
+   
+1. Backup existing data for target environment
+
+   1. Open Chrome
+
+   1. Open Jenkins
+
+   1. Select target environment folder
+
+   1. Select "devops-engineer-only" folder
+
+   1. Select "02-backup-data-as-csv-for-production"
+
+   1. Select **Build with Parameters**
+
+   1. Select **Build**
+
+   1. Wait for jenkins job to complete
+
+1. Retrieve CSV data from the Jenkins agent
+
+   1. Open a new terminal
+
+   1. Set AWS target environment to management
+
+      ```ShellSession
+      $ source ~/code/ab2d/Deploy/bash/set-env.sh
+      ```
+
+   1. Set the Jenkins agent name
+
+      *Example for current Jenkins agent:*
+
+      ```ShellSession
+      JENKINS_AGENT_NAME=ab2d-jenkins-agent-old
+      ```
+
+      *Example for new in-progress Jenkins agent:*
+
+      ```ShellSession
+      JENKINS_AGENT_NAME=ab2d-jenkins-agent
+      ```
+
+   1. Get IP address of Jenkins agent
+
+      ```ShellSession
+      $ JENKINS_AGENT_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=${JENKINS_AGENT_NAME}" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+        --output text)
+      ```
+
+   1. Set target environment variable
+
+      *Example for "Dev" environment:*
+
+      ```ShellSession
+      $ TARGET_ENVIRONMENT=ab2d-dev
+      ```
+
+      *Example for "Sbx" environment:*
+   
+      ```ShellSession
+      $ TARGET_ENVIRONMENT=ab2d-sbx-sandbox
+      ```
+   
+      *Example for "Impl" environment:*
+   
+      ```ShellSession
+      $ TARGET_ENVIRONMENT=ab2d-east-impl
+      ```
+   
+      *Example for "Prod" environment:*
+   
+      ```ShellSession
+      $ TARGET_ENVIRONMENT=ab2d-east-prod
+      ```
+
+   1. Copy the database backup file to the "ec2-user" home directory
+
+      ```ShellSession
+      $ ssh -tt -i "~/.ssh/ab2d-mgmt-east-dev.pem" \
+        "ec2-user@${JENKINS_AGENT_PRIVATE_IP}" \
+        "sudo cp /var/lib/jenkins/database_backup/${TARGET_ENVIRONMENT}.tar.gz /home/ec2-user"
+      ```
+
+   1. Change ownership on the database backup file
+
+      ```ShellSession
+      $ ssh -tt -i "~/.ssh/ab2d-mgmt-east-dev.pem" \
+        "ec2-user@${JENKINS_AGENT_PRIVATE_IP}" \
+        "sudo chown ec2-user:ec2-user /home/ec2-user/${TARGET_ENVIRONMENT}.tar.gz"
+      ```
+
+   1. Change to the do "Downloads" directory
+
+      ```ShellSession
+      $ cd ~/Downloads
+      ```
+
+   1. Delete existing target environment directory
+
+      ```ShellSession
+      $ rm -rf "${TARGET_ENVIRONMENT}"
+      ```
+      
+   1. Download the database backup file
+
+      ```ShellSession
+      $ scp -i ~/.ssh/ab2d-mgmt-east-dev.pem \
+        "ec2-user@${JENKINS_AGENT_PRIVATE_IP}:~/${TARGET_ENVIRONMENT}.tar.gz" \
+	.
+      ```
+
+   1. Uncompress the database backup file
+
+      *Note that "--strip-components=4" must appear at end on command.*
+
+      ```ShellSession
+      $ tar -xzvf "${TARGET_ENVIRONMENT}.tar.gz" --strip-components=4
+      ```
+
+## Appendix QQQ: Get private IP address
+
+1. Get private IP address on Mac
+
+   ```ShellSession
+   $ ipconfig getifaddr en0
+   ```
+
+1. Note the private address that is output
+
+## Appendix RRR: Protect the existing RDS database using AWS CLI
+
+1. Change to the "bash" directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d/Deploy/bash
+   ```
+
+1. Set target environment
+
+   ```ShellSession
+   $ source ./set-env.sh
+   ```
+
+1. Apply delete protection to the existing RDS instance
+
+   ```ShellSession
+   $ aws --region "${AWS_DEFAULT_REGION}" rds modify-db-instance \
+     --db-instance-identifier 'ab2d' \
+	--deletion-protection
+   ```
+
+1. Verify that delete protection is true
+
+   ```ShellSession
+   $ aws --region "${AWS_DEFAULT_REGION}" rds describe-db-instances \
+     --query "DBInstances[?DBInstanceIdentifier=='ab2d'].DeletionProtection" \
+	--output text
+   ```
+
+## Appendix SSS: Review RDS reserved instance utilization from AWS console
+
+### Create a "RDS Reserved Instance Utilization" report
+
+1. Log on to AWS console for the target environment
+
+1. Select **Cost Explorer**
+
+1. Select **Utilization report** under "Reservations" in the leftmost panel
+
+1. Select **Service** under "Filters" in the rightmost panel
+
+1. Select the **Relational Database Service (RDS)** radio button
+
+1. Select **Apply Filters**
+
+1. Note the solid blue line starting on June 19th that shows 100% utilization of the reserved RDS instance
+
+1. Select **Save as**
+
+1. Type the following in the "Save as new report" text box
+
+   ```
+   RDS Reserved Instance Utilization
+   ```
+
+1. Select **Save Report**
+
+### Run the "RDS Reserved Instance Utilization" report
+
+1. Log on to AWS console for the target environment
+
+1. Select **Cost Explorer**
+
+1. Select **Reports** in the leftmost panel
+
+1. Enter the following in the "Search" text box
+
+   ```
+   rds
+   ```
+
+1. Select the following report
+
+   ```
+   RDS Reserved Instance Utilization
    ```
