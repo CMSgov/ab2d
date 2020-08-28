@@ -12,7 +12,10 @@ import java.util.List;
 /**
  * Does health checks on URLs
  */
-public class UrlAvailable {
+public final class UrlAvailable {
+
+    private UrlAvailable() { }
+
     /**
      * Given a URL, test to see if you can open a socket to that domain on the specified or default port
      *
