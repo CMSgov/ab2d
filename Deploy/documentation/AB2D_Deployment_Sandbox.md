@@ -12,6 +12,7 @@
    * [Ensure that all instances have CPM backup tags](#ensure-that-all-instances-have-cpm-backup-tags)
    * [Complete CPM questionnaire](#complete-cpm-questionnaire)
    * [Create a CPM ticket in CMS Jira Enterprise](#create-a-cpm-ticket-in-cms-jira-enterprise)
+1. [Configure SNS Topic for CloudWatch alarms](#configure-sns-topic-for-cloudwatch-alarms)
 
 ## Obtain and import sandbox.ab2d.cms.gov entrust certificate](#obtain-and-import-sandboxab2dcmsgov-entrust-certificate)
 
@@ -744,3 +745,21 @@
    ```
    CPM Onboarding Questionnaire - AB2D Sandbox.docx
    ```
+
+## Configure SNS Topic for CloudWatch alarms
+
+1. Log on to the AWS account
+
+1. Select **Simple Notification Service**
+
+1. Select **Topics** from the leftmost panel
+
+1. Select **Create topic**
+
+1. Configure the "Create topic" page as follows
+
+   - **Name:** ab2d-sbx-sandbox-cloudwatch-alarms
+
+   - **Display name:** ab2d-sbx-sandbox-cloudwatch-alarms
+
+1. Select **Create topic**

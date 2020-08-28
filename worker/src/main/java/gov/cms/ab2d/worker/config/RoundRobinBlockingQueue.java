@@ -260,9 +260,9 @@ public class RoundRobinBlockingQueue<E> implements BlockingQueue<E> {
     @Override
     public String toString() {
         StringBuilder builder = new StringBuilder();
-        builder.append(this.getClass().getSimpleName() + ": ");
-        for (String category : categoryQueues.keySet()) {
-            builder.append(category).append(" with ").append(categoryQueues.get(category).size())
+        builder.append(this.getClass().getSimpleName()).append(": ");
+        for (Map.Entry<String, Deque<E>> category : categoryQueues.entrySet()) {
+            builder.append(category.getKey()).append(" with ").append(category.getValue().size())
                     .append(" Futures; ");
         }
         return builder.toString();

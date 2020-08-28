@@ -58,3 +58,5 @@ databaseChangeLog:
       file: db/changelog/v001/ab2d-1377-add-env-id.sql
   - include:
       file: db/changelog/v001/create_opt_out_file_table.sql
+  - include:
+      file: db/changelog/v001/add_properties_data_01.sql

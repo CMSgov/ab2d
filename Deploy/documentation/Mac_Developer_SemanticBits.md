@@ -31,12 +31,10 @@
    * [Install or update jq](#install-or-update-jq)
 1. [Install Packer](#install-packer)
 1. [Install Terraform](#install-terraform)
-1. [Install the AWS CLI using pip3](#install-the-aws-cli-using-pip3)
-1. [Create an AWS IAM user](#create-an-aws-iam-user)
-1. [Configure AWS CLI](#configure-aws-cli)
-   * [Configure semanticbitsdemo AWS account](#configure-semanticbitsdemo-aws-account)
+1. [Install tflint](#install-tflint)
+1. [Install flake8](#install-flake8)
+1. [Install AWS CLI](#install-aws-cli)
 1. [Install Docker Desktop on Mac](#install-docker-desktop-on-mac)
-1. [Install MesiterTask](#install-mesitertask)
 1. [Install ECS CLI](#install-ecs-cli)
 1. [Install Xcode](#install-xcode)
 1. [Install and configure Ruby](#install-and-configure-ruby)
@@ -802,7 +800,7 @@
    ```ShellSession
    $ jq --version
    ```
-   
+
 ## Install Packer
 
 1. Install Packer using HomeBrew
@@ -863,18 +861,42 @@
    $ flake8 --version
    ```
 
-## Install the AWS CLI using pip3
+## Install AWS CLI
 
-1. Install the AWS CLI using pip3
+### Determine if AWS CLI is installed
 
-   ```ShellSession
-   $ pip3 install awscli --upgrade --user --no-warn-script-location
-   ```
-
-1. Check AWS CLI version
+1. Check to see what version of AWS is installed (if any)
 
    ```ShellSession
    $ aws --version
+   ```
+
+1. If AWS CLI is not installed, jump to the following section
+
+   [Install AWS CLI 2](#install-aws-cli-2)
+
+1. If AWS CLI 1 is installed, jump to the following section
+
+   [Uninstall AWS CLI 1](#uninstall-aws-cli-1)
+
+1. If AWS CLI 2 is installed, jump to the following section
+
+   [Install Docker Desktop on Mac](#install-docker-desktop-on-mac)
+
+### Uninstall AWS CLI 1
+
+1. Note the following:
+
+   - AWS CLI 1 can be installed multiple ways
+
+   - these instructions show how to uninstall AWS CLI 1 using pip3
+
+   - these instructions may not work and may require another method to uninstall AWS CLI 1
+
+1. Uninstall AWS CLI 1 using pip3
+
+   ```ShellSession
+   $ pip3 uninstall -y awscli
    ```
 
 1. Backup the file that you use for setting up your shell's environment
@@ -885,76 +907,69 @@
    $ cp ~/.bash_profile ~/.bash_profile_backup
    ```
 
-1. Add AWS CLI path to your interactive shell script
+1. Remove the existing AWS CLI lines from your shell's environment script
 
-   *Example for bash:*
-   
-   ```ShellSession
-   $ printf '\n# Add AWS CLI to Path' >> ~/.bash_profile
-   $ printf '\nexport PATH="$PATH:$HOME/Library/Python/3.7/bin"' >> ~/.bash_profile
-   ```
+   1. Open your shell's environment script
 
-1. Load updated profile in the current terminal
+      *Example for bash:*
 
-   ```ShellSession
-   $ source ~/.bash_profile
-   ```
+      ```ShellSession
+      $ vim ~/.bash_profile
+      ```
 
-1. Check the AWS version
+   1. Delete the following lines from the script
 
-   ```ShellSession
-   $ aws --version
-   ```
-   
-## Create an AWS IAM user
+      ```
+      # Add AWS CLI to Path
+      export PATH="$PATH:$HOME/Library/Python/3.7/bin"
+      ```
 
-1. Request AWS administrator to create a user that has both console and programmatic access
+   1. Save and close the file
 
-1. Note that the administrator will provide you with a "credentials.csv" file that will include the following information
-   
-   - User name
+### Install AWS CLI 2
 
-   - Password
-
-   - Access key ID
-
-   - Secret access key
-
-   - Console login link
-
-## Configure AWS CLI
-
-### Configure semanticbitsdemo AWS account
-
-1. Configure AWS CLI
-
-   *Example for "semanticbitsdemo" AWS account:*
-   
-   ```ShellSession
-   $ aws configure --profile=sbdemo-dev
-   ```
-
-1. Enter {your aws access key} at the **AWS Access Key ID** prompt
-
-1. Enter {your aws secret access key} at the AWS Secret Access Key prompt
-
-1. Enter the following at the **Default region name** prompt
-
-   ```
-   us-east-1
-   ```
-
-1. Enter the following at the **Default output format** prompt
-
-   ```
-   json
-   ```
-
-1. Examine the contents of your AWS credentials file
+1. Download the AWS CLI 2 package
 
    ```ShellSession
-   $ cat ~/.aws/credentials
+   $ cd ~/Downloads
+   $ curl "https://awscli.amazonaws.com/AWSCLIV2.pkg" -o "AWSCLIV2.pkg"
    ```
+
+1. Install AWS CLI 2
+
+   ```ShellSession
+   $ sudo installer -pkg AWSCLIV2.pkg -target /
+   ```
+
+1. Verify where AWS CLI 2 was installed
+
+   1. Enter the following
+
+      ```ShellSession
+      $ which aws
+      ```
+
+   1. Verify that the following was displayed
+
+      ```
+      /usr/local/bin/aws
+      ```
+
+1. Verify the version of AWS CLI 2
+
+   1. Enter the following
+
+      ```ShellSession
+      $ aws --version
+      ```
+
+   1. Note the output
+
+      *Example:*
+
+      ```
+      aws-cli/2.0.31 Python/3.7.4 Darwin/18.7.0 botocore/2.0.0dev35
+      ```
 
 ## Install Docker Desktop on Mac
 
@@ -1009,10 +1024,6 @@
 1. Wait for the "Docker Desktop is now up and running" message to appear in the docker top right system bar window
 
 1. Close the docker top right system bar window
-
-## Install MesiterTask
-
-> https://www.meistertask.com/apps
 
 ## Install ECS CLI
 
@@ -1355,11 +1366,11 @@
    $ printf '\n# Add jmeter home variable' >> ~/.bash_profile
    $ printf '\nexport AB2D_JMETER_HOME="/opt/apache-jmeter"' >> ~/.bash_profile
    ```
-   
+
 1. Add jmeter path to the file that you use for setting up your shell's environment
 
    *Example for bash:*
-   
+
    ```ShellSession
    $ printf '\n# Add jmeter to Path' >> ~/.bash_profile
    $ printf '\nexport PATH="$PATH:$AB2D_JMETER_HOME/bin"' >> ~/.bash_profile
