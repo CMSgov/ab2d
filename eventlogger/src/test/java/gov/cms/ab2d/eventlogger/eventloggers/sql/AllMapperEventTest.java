@@ -74,19 +74,25 @@ public class AllMapperEventTest {
     void logApiRequest() {
         ApiRequestEvent jsce = new ApiRequestEvent("laila", "job123", "http://localhost",
                 "127.0.0.1", "token", "123");
+        jsce.setAwsId("ABC");
+
         sqlEventLogger.log(jsce);
-        sqlEventLogger.updateAwsId("ABC", jsce);
+
         assertEquals("dev", jsce.getEnvironment());
-        long id = jsce.getId();
+
         OffsetDateTime val = jsce.getTimeOfEvent();
         List<LoggableEvent> events = doAll.load(ApiRequestEvent.class);
         assertEquals(1, events.size());
+
         List<LoggableEvent> events2 = doAll.load();
         assertEquals(events.size(), events2.size());
+
         ApiRequestEvent event = (ApiRequestEvent) events.get(0);
         assertEquals(event.getAwsId(), "ABC");
+
         jsce.setId(event.getId());
-        assertTrue(jsce.equals(event));
+        assertEquals(event, jsce);
+
         assertEquals("dev", event.getEnvironment());
         assertTrue(event.getId() > 0);
         assertEquals(event.getId(), jsce.getId());
@@ -97,7 +103,9 @@ public class AllMapperEventTest {
         assertEquals("127.0.0.1", event.getIpAddress());
         assertEquals(UtilMethods.hashIt("token"), event.getTokenHash());
         assertEquals("123", event.getRequestId());
+
         doAll.delete(ApiRequestEvent.class);
+
         events = doAll.load(ApiRequestEvent.class);
         assertEquals(0, events.size());
     }

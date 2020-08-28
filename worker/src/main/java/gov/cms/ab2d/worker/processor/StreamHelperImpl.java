@@ -10,6 +10,7 @@ import org.apache.commons.lang3.StringUtils;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.UncheckedIOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -177,7 +178,7 @@ public abstract class StreamHelperImpl implements StreamHelper, AutoCloseable {
             if (errorFile == null) {
                 createErrorFile();
             }
-            appendToFile(errorFile, data.getBytes());
+            appendToFile(errorFile, data.getBytes(StandardCharsets.UTF_8));
         } finally {
             errorFileLock.unlock();
         }

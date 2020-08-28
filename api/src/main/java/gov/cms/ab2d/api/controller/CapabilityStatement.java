@@ -1,5 +1,6 @@
 package gov.cms.ab2d.api.controller;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.RequiredArgsConstructor;
 
 import java.time.LocalDate;
@@ -11,6 +12,7 @@ import static gov.cms.ab2d.api.util.Constants.FHIR_SANDBOX_URL;
 
 // These are being transformed to JSON so it looks like they aren't being used, but they do get translated
 @SuppressWarnings("PMD.UnusedPrivateField")
+@SuppressFBWarnings
 class CapabilityStatement {
 
     private final String resourceType = "CapabilityStatement";
