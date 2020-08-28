@@ -3,6 +3,7 @@ package gov.cms.ab2d.worker.processor;
 import gov.cms.ab2d.filter.FilterOutByDate;
 import gov.cms.ab2d.worker.adapter.bluebutton.ContractBeneficiaries;
 import gov.cms.ab2d.worker.processor.domainmodel.ProgressTracker;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.text.ParseException;
@@ -88,5 +89,32 @@ public class ProgressTrackerTest {
         }
         beneficiaries.setPatients(map);
         return beneficiaries;
+    }
+
+    @Test
+    @DisplayName("When you don't have all the contract mappings, how can you estimate percent done")
+    void testPercentageDoneWithoutAllContractMappings() throws ParseException {
+        int month = LocalDate.now().getMonthValue();
+        ProgressTracker tracker = ProgressTracker.builder()
+                .jobUuid("JOBID")
+                .numContracts(3)
+                .failureThreshold(3)
+                .currentMonth(month)
+                .build();
+        ContractBeneficiaries cb1 = getAContractBeneficiary("C1", "A1", "A2", "A3", "A4");
+        ContractBeneficiaries cb2 = getAContractBeneficiary("C2", "B1", "B2", "B3", "B4", "B5", "B6", "B7", "B8");
+        tracker.addPatientsByContract(cb1);
+        tracker.addPatientsByContract(cb2);
+        assertEquals(6, tracker.getTotalAverageNumber());
+        assertEquals(18, tracker.getTotalPossibleCount());
+        assertEquals(0, tracker.getPercentageCompleted());
+        tracker.incrementProcessedCount();
+        for (int i=0; i<month; i++) {
+            tracker.incrementTotalContractBeneficiariesSearchFinished();
+        }
+        tracker.incrementTotalContractBeneficiariesSearchFinished();
+        double amountEobProc = (double) 1/18 * 100 * 0.7;
+        double amountMappingProc = (double) tracker.getTotalContractBeneficiariesSearchFinished()/(3*month) * 100 * 0.3;
+        assertEquals((int) Math.round(amountEobProc + amountMappingProc), tracker.getPercentageCompleted());
     }
 }
