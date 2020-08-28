@@ -140,6 +140,7 @@
    * [Rebase an existing branch to reconcile it with a master that has been reset](#rebase-an-existing-branch-to-reconcile-it-with-a-master-that-has-been-reset)
 1. [Appendix UUU: Migrate VictorOps-Slack integration from a real slack user to slack service user](#appendix-uuu-migrate-victorops-slack-integration-from-a-real-slack-user-to-slack-service-user)
 1. [Appendix VVV: Add a volume to jenkins agent and extend the root volume to use it](#appendix-vvv-add-a-volume-to-jenkins-agent-and-extend-the-root-volume-to-use-it)
+1. [Appendix WWW: Whitelist IP addresses in Akamai for Prod](#whitelist-ip-addresses-in-akamai-for-prod)
 
 ## Appendix A: Access the CMS AWS console
 
@@ -11408,11 +11409,153 @@ $ sed -i "" 's%cms-ab2d[\/]prod%cms-ab2d/dev%g' _includes/head.html (edited)
 
 ## Appendix UUU: Migrate VictorOps-Slack integration from a real slack user to slack service user
 
-1. Create an "sb victorops admin slack" slack user for the SemanticBits Slack workspace
+1. Create an "sb victorops admin slack" slack service user for the SemanticBits Slack workspace
 
    *A SemanticBits Slack workspace administrator must do this step.*
 
-> *** TO DO ***
+1. Add the slack service user to the "p-ab2d-incident-response" channel
+
+1. Add the slack service user to the "p-ccxp-alerts" channel
+
+   *A CCXP user must do this step.*
+
+1. Log out of SemanticBits slack workspace
+
+1. Log on to SemanticBits slack workspace as the slack service user
+
+1. Log on to VictorOps
+
+1. Select the **Integrations** tab
+
+1. Type "slack" in the **Search** text box
+
+1. Select **Slack**
+
+1. Select **Revoke Integration**
+
+1. Re-enable the slack integration using the "sb victorops admin slack" slack user
+
+   1. Select **Enable Integration**
+
+   1. Select **Allow**
+
+   1. Select the following from the **Select a channel to send VictorOps messages to** dropdown
+
+      ```
+      p-ccxp-alerts
+      ```
+
+   1. Check **Chat Messages (Synced with VictorOps Timeline)**
+
+   1. Check **On-Call change notifications**
+
+   1. Check **Paging notifications**
+
+   1. Check **Incidents**
+
+   1. Select **Save** in the "Default Channel" page
+
+   1. Select **OK** on the "Success" dialog
+
+   1. Select **Add Mapping**
+
+   1. Select "AB2D - Standard" from the **Select an Escalation Policy** dropdown
+
+   1. Select the following from the **Select a channel to send VictorOps messages to** dropdown
+
+      ```
+      p-ab2d-incident-response
+      ```
+
+   1. Check **Chat Messages (Synced with VictorOps Timeline)**
+
+   1. Check **On-Call change notifications**
+
+   1. Check **Paging notifications**
+
+   1. Check **Incidents**
+
+   1. Select **Save** in the "Default Channel" page
+
+1. Log out of slack service user
+
+1. Log on with your real user
+
+1. Test using SNS/CloudWatch
+
+   1. Temporarily make yourself on-call in VictorOps for the next available 30 minute block
+   
+   1. Open a new Chrome tab
+   
+   1. Log on to the AWS account
+   
+   1. Select **Simple Notification Service**
+   
+   1. Select **Topics** in the leftmost panel
+   
+   1. Select the following
+   
+      ```
+      ab2d-east-prod-cloudwatch-alarms
+      ```
+   
+   1. Select the **Subscriptions** tab
+   
+   1. Select **Create subscription**
+   
+   1. Configure the "Create subscription" page as follows
+   
+      - **Topic ARN:** {keep default}
+   
+      - **Protocol:** HTTPS
+   
+      - **Endpoint:** {victors ops service api endpoint for aws cloudwatch}/{routing key}
+   
+      - **Enable raw message delivery:** unchecked
+   
+   1. Select **Create subscription**
+   
+   1. Wait for "Status" to display the following
+   
+      *Note that you will likely need to refesh the page to see the status change to "Confirmed".*
+   
+      ```
+      Confirmed
+      ```
+   
+   1. Select **Topics** from the leftmost panel
+   
+   1. Select the following topic
+   
+      ```
+      ab2d-east-prod-cloudwatch-alarms
+      ```
+   
+   1. Select **Publish message**
+   
+   1. Configure the "Message details" section as follows
+   
+      - **Subject:** {keep blank}
+   
+      - **Time to Live (TTL):** {keep blank}
+   
+   1. Configure the "Message body" section as follows
+   
+      - **Message structure:** Identical payload for all delivery protocols
+   
+      - **Message body to send to the endpoint:**
+   
+        ```
+        {"AlarmName":"AB2D Prod - VictorOps - CloudWatch Integration TEST","NewStateValue":"ALARM","NewStateReason":"failure","StateChangeTime":"2017-12-14T01:00:00.000Z","AlarmDescription":"VictorOps - CloudWatch Integration TEST"}
+        ```
+   
+   1. Select **Publish message**
+   
+   1. Verify that the message is received in VictorOps
+
+   1. Acknowledge the incident via cell phone, slack, or VictorOps
+
+   1. Resolve the incident via cell phone, slack, or VictorOps
 
 ## Appendix VVV: Add a volume to jenkins agent and extend the root volume to use it
 
@@ -11521,3 +11664,45 @@ $ sed -i "" 's%cms-ab2d[\/]prod%cms-ab2d/dev%g' _includes/head.html (edited)
    ```ShellSession
    $ sudo xfs_growfs -d /dev/mapper/VolGroup00-rootVol
    ```
+
+## Appendix WWW: Whitelist IP addresses in Akamai for Prod
+
+1. Log on to Akamai
+
+1. Select the three bar icon in the top left of the page
+
+1. Scroll down to the "WEB & DATA CENTER SECURITY" section
+
+1. Expand the **Security Configurations** node
+
+1. Select **Network Lists**
+
+1. Note that there are currently four whitelists associated with AB2D Prod
+
+   - AB2D_PROD_VPN_WHITELIST <-- lists CMS VPN ip addresses
+
+   - AB2D_PROD_NEWRELIC_WHITELIST <-- not currently used
+
+   - AB2D_PROD_SHAREDSERVICES_WHITELIST <-- not currently used
+
+   - AB2D_PROD_ACO_WHITLEIST <-- lists Accountable Care Organization (ACO) ip addresses
+   
+1. Expand the **AB2D_PROD_ACO_WHITLEIST** node
+
+1. Type or copy and IP address into the **Add Items** text box
+
+1. Tab away from the text box
+
+1. Note that the IP address now appears in the **Items in the list** text box
+
+1. Select **Save Changes**
+
+1. Collapse the **AB2D_PROD_ACO_WHITLEIST** node
+
+1. Select **...** beside the "AB2D_PROD_ACO_WHITLEIST" node
+
+1. Select **Activate** from the context menu
+
+1. Select the **Production** radio button
+
+1. Select **Activate List**
