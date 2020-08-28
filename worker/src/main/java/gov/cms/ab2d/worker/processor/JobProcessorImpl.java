@@ -6,14 +6,13 @@ import com.newrelic.api.agent.Trace;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.Job;
-import gov.cms.ab2d.common.model.JobStatus;
 import gov.cms.ab2d.common.model.Sponsor;
 import gov.cms.ab2d.common.repository.JobOutputRepository;
 import gov.cms.ab2d.common.repository.JobRepository;
+import gov.cms.ab2d.common.util.EventUtils;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.events.ContractBeneSearchEvent;
 import gov.cms.ab2d.eventlogger.events.FileEvent;
-import gov.cms.ab2d.eventlogger.events.JobStatusChangeEvent;
 import gov.cms.ab2d.worker.adapter.bluebutton.ContractBeneSearch;
 import gov.cms.ab2d.worker.processor.domainmodel.ContractData;
 import gov.cms.ab2d.worker.processor.domainmodel.ProgressTracker;
@@ -38,6 +37,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
+import static gov.cms.ab2d.common.model.JobStatus.FAILED;
 import static gov.cms.ab2d.common.model.JobStatus.SUCCESSFUL;
 import static gov.cms.ab2d.worker.processor.StreamHelperImpl.FileOutputType.NDJSON;
 import static gov.cms.ab2d.worker.processor.StreamHelperImpl.FileOutputType.ZIP;
@@ -92,14 +92,9 @@ public class JobProcessorImpl implements JobProcessor {
             deleteExistingDirectory(outputDirPath, job);
 
         } catch (Exception e) {
-            eventLogger.log(new JobStatusChangeEvent(
-                    job.getUser() == null ? null : job.getUser().getUsername(),
-                    job.getJobUuid(),
-                    job.getStatus() == null ? null : job.getStatus().name(),
-                    JobStatus.FAILED.name(), "Job Failed - " + e.getMessage()));
-
+            eventLogger.log(EventUtils.getJobChangeEvent(job, FAILED, "Job Failed - " + e.getMessage()));
             log.error("Unexpected exception ", e);
-            job.setStatus(JobStatus.FAILED);
+            job.setStatus(FAILED);
             job.setStatusMessage(e.getMessage());
             job.setCompletedAt(OffsetDateTime.now());
             jobRepository.save(job);
@@ -243,11 +238,7 @@ public class JobProcessorImpl implements JobProcessor {
             }
 
             if (Files.isRegularFile(filePath)) {
-                eventLogger.log(new FileEvent(
-                        job == null || job.getUser() == null ? null : job.getUser().getUsername(),
-                        job == null ? null : job.getJobUuid(),
-                        filePath.toFile(), FileEvent.FileStatus.DELETE));
-
+                eventLogger.log(EventUtils.getFileEvent(job, filePath.toFile(), FileEvent.FileStatus.DELETE));
                 doDelete(filePath);
             }
         }
@@ -315,11 +306,7 @@ public class JobProcessorImpl implements JobProcessor {
      * @param job - The job to set as complete
      */
     private void completeJob(Job job) {
-        eventLogger.log(new JobStatusChangeEvent(
-                job.getUser() == null ? null : job.getUser().getUsername(),
-                job.getJobUuid(),
-                job.getStatus() == null ? null : job.getStatus().name(),
-                JobStatus.SUCCESSFUL.name(), "Job Finished"));
+        eventLogger.log(EventUtils.getJobChangeEvent(job, SUCCESSFUL, "Job Finished"));
         job.setStatus(SUCCESSFUL);
         job.setStatusMessage("100%");
         job.setProgress(100);

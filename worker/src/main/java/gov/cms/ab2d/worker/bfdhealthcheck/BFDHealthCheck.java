@@ -61,22 +61,20 @@ class BFDHealthCheck {
         }
 
         if (consecutiveSuccesses >= consecutiveSuccessesToBringUp && bfdStatus == Status.DOWN) {
-            bfdStatus = Status.UP;
-            consecutiveSuccesses = 0;
-            PropertiesDTO propertiesDTO = new PropertiesDTO();
-            propertiesDTO.setKey(MAINTENANCE_MODE);
-            propertiesDTO.setValue("false");
-            propertiesService.updateProperties(List.of(propertiesDTO));
-            log.info("Updated the {} property to false", MAINTENANCE_MODE);
+            updateMaintenanceStatus(Status.UP, "false");
         } else if (consecutiveFailures >= consecutiveFailuresToTakeDown && bfdStatus == Status.UP) {
-            bfdStatus = Status.DOWN;
-            consecutiveFailures = 0;
-            PropertiesDTO propertiesDTO = new PropertiesDTO();
-            propertiesDTO.setKey(MAINTENANCE_MODE);
-            propertiesDTO.setValue("true");
-            propertiesService.updateProperties(List.of(propertiesDTO));
-            log.info("Updated the {} property to true", MAINTENANCE_MODE);
+            updateMaintenanceStatus(Status.DOWN, "true");
         }
+    }
+
+    private void updateMaintenanceStatus(Status status, String statusString) {
+        bfdStatus = status;
+        consecutiveFailures = 0;
+        PropertiesDTO propertiesDTO = new PropertiesDTO();
+        propertiesDTO.setKey(MAINTENANCE_MODE);
+        propertiesDTO.setValue(statusString);
+        propertiesService.updateProperties(List.of(propertiesDTO));
+        log.info("Updated the {} property to {}", MAINTENANCE_MODE, statusString);
     }
 
     private void markFailure() {
@@ -86,6 +84,6 @@ class BFDHealthCheck {
     }
 
     private enum Status {
-        UP, DOWN;
+        UP, DOWN
     }
 }
