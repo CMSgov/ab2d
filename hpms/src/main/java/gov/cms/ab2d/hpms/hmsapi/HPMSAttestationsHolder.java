@@ -6,7 +6,7 @@ import javax.validation.constraints.NotNull;
 import java.util.Set;
 
 @Data
-public class ContractHolder {
+public class HPMSAttestationsHolder {
 
     @NotNull
     private Set<HPMSAttestation> contracts;

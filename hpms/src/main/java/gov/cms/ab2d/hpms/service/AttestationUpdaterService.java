@@ -4,15 +4,13 @@ import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.Sponsor;
 import gov.cms.ab2d.common.repository.ContractRepository;
 import gov.cms.ab2d.common.repository.SponsorRepository;
-import gov.cms.ab2d.hpms.hmsapi.ContractHolder;
 import gov.cms.ab2d.hpms.hmsapi.HPMSAttestation;
+import gov.cms.ab2d.hpms.hmsapi.HPMSAttestationsHolder;
 import gov.cms.ab2d.hpms.hmsapi.HPMSOrganizationInfo;
 import gov.cms.ab2d.hpms.hmsapi.HPMSOrganizations;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-import org.springframework.web.reactive.function.client.WebClient;
-import reactor.core.publisher.Flux;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -26,6 +24,8 @@ import static gov.cms.ab2d.hpms.hmsapi.HPMSAttestation.FORMATTER;
 @Service
 public class AttestationUpdaterService {
 
+    private final HPMSFetcher hpmsFetcher;
+
     private final SponsorRepository sponsorRepository;
 
     private final ContractRepository contractRepository;
@@ -33,9 +33,11 @@ public class AttestationUpdaterService {
     private static final String HOURLY = "0 0 0/1 1/1 * ?";
 
     @Autowired
-    public AttestationUpdaterService(SponsorRepository sponsorRepository, ContractRepository contractRepository) {
+    public AttestationUpdaterService(SponsorRepository sponsorRepository, ContractRepository contractRepository,
+                                     HPMSFetcher hpmsFetcher) {
         this.sponsorRepository = sponsorRepository;
         this.contractRepository = contractRepository;
+        this.hpmsFetcher = hpmsFetcher;
     }
 
     @Scheduled(cron = "*/5 * * * * ?")
@@ -50,14 +52,7 @@ public class AttestationUpdaterService {
     }
 
     void pollOrganizations() {
-
-        // todo: move url into property
-        Flux<HPMSOrganizations> orgInfoFlux = WebClient.create("http://localhost:8080/api/cda/orgs/info")
-                .get()
-                .retrieve()
-                .bodyToFlux(HPMSOrganizations.class);
-
-        orgInfoFlux.subscribe(this::processOrgInfo);
+        hpmsFetcher.retrieveSponsorInfo(this::processOrgInfo);
     }
 
     private void processOrgInfo(HPMSOrganizations orgInfo) {
@@ -78,17 +73,11 @@ public class AttestationUpdaterService {
     private void processAttestations(List<String> contractAttestList) {
         // todo: chunk these requests to avoid a too long URL
         String contractIdStr = contractAttestList.stream().collect(Collectors.joining("\",\"", "[\"", "\"]"));
-//        String contractIdStr = "[\"S1234\",\"S2341\"]";
-        Flux<ContractHolder> contractsFlux = WebClient.create("http://localhost:8080/api/cda/contracts/status")
-                .get().uri(uriBuilder -> uriBuilder.queryParam("contractIds", contractIdStr).build())
-                .retrieve()
-                .bodyToFlux(ContractHolder.class);
-
-        contractsFlux.subscribe(this::processContracts);
+        hpmsFetcher.retrieveAttestationInfo(this::processContracts, contractIdStr);
     }
 
 //    @SuppressWarnings("PMD")
-    private void processContracts(ContractHolder contractHolder) {
+    private void processContracts(HPMSAttestationsHolder contractHolder) {
         Map<String, Contract> existingMap = buildExistingContractMap();
         contractHolder.getContracts()
                 .forEach(attest -> updateContractIfChanged(attest, existingMap.get(attest.getContractId())));
