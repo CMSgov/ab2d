@@ -102,7 +102,7 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
 
         logApiRequestEvent(request, token, username, jobId);
 
-        if (username != null) {
+        if (!username.isEmpty()) {
             MDC.put(USERNAME, username);
             User user = getUser(username);
 

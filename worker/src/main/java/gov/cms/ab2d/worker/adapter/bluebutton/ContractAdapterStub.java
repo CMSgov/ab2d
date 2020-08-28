@@ -9,6 +9,7 @@ import org.springframework.util.Assert;
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -109,7 +110,7 @@ public class ContractAdapterStub implements ContractBeneSearch {
         try (InputStream inputStream = this.getClass().getResourceAsStream(BENE_ID_FILE)) {
             Assert.notNull(inputStream, "error getting resource as stream :  " + BENE_ID_FILE);
 
-            try (BufferedReader br =  new BufferedReader(new InputStreamReader(inputStream))) {
+            try (BufferedReader br =  new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {
                 Assert.notNull(br, "Could not create buffered reader from input stream :  " + BENE_ID_FILE);
 
                 final List<String> rows = br.lines()

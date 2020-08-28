@@ -46,6 +46,5 @@ public class SqlEventLogger implements EventLogger {
             this.template.update("UPDATE " + mapperConfig.getTableMapper(event.getClass()) +
                     " SET aws_id = ? WHERE id = ?", awsId, event.getId());
         }
-        event.setAwsId(awsId);
     }
 }

@@ -3,7 +3,10 @@ package gov.cms.ab2d.common.health;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class LoggingAvailable {
+public final class LoggingAvailable {
+
+    private LoggingAvailable() { }
+
     public static boolean canLog() {
         try {
             if (!log.isErrorEnabled()) {

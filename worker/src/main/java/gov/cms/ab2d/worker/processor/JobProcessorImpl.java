@@ -3,6 +3,7 @@ package gov.cms.ab2d.worker.processor;
 import com.newrelic.api.agent.NewRelic;
 import com.newrelic.api.agent.Segment;
 import com.newrelic.api.agent.Trace;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.Sponsor;
@@ -164,6 +165,7 @@ public class JobProcessorImpl implements JobProcessor {
      * @param job - the job to process
      * @param outputDirPath - the output directory to put all the files
      */
+    @SuppressFBWarnings("REC_CATCH_EXCEPTION")
     private void processJob(Job job, Path outputDirPath) throws ExecutionException, InterruptedException {
         // Create the output directory
         createOutputDirectory(outputDirPath, job);
