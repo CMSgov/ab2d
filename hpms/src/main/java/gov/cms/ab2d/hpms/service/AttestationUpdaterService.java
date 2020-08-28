@@ -24,6 +24,8 @@ import static gov.cms.ab2d.hpms.hmsapi.HPMSAttestation.FORMATTER;
 @Service
 public class AttestationUpdaterService {
 
+    private static final int BATCH_SIZE = 100;
+
     private final HPMSFetcher hpmsFetcher;
 
     private final SponsorRepository sponsorRepository;
@@ -67,12 +69,28 @@ public class AttestationUpdaterService {
         existingMap.forEach((contractId, contract) ->
                 considerContract(contractAttestList, contract, refreshed.get(contractId)));
 
-        processAttestations(contractAttestList.stream().map(Contract::getContractNumber).collect(Collectors.toList()));
+        batchAttestations(contractAttestList.stream().map(Contract::getContractNumber).collect(Collectors.toList()));
     }
 
-    private void processAttestations(List<String> contractAttestList) {
-        // todo: chunk these requests to avoid a too long URL
-        String contractIdStr = contractAttestList.stream().collect(Collectors.joining("\",\"", "[\"", "\"]"));
+    // Limit the size of the request to BATCH_SIZE, avoiding URLs that are too long and keeping the burden down
+    // on the invoked service.
+    private void batchAttestations(List<String> contractAttestList) {
+        final int size = contractAttestList.size();
+        int startIdx = 0;
+        for (; startIdx < size - BATCH_SIZE; startIdx += BATCH_SIZE) {
+            List<String> currentChunk = contractAttestList.subList(startIdx, startIdx + BATCH_SIZE);
+            processAttestations(currentChunk);
+        }
+
+        // process the remainder (if any) - i.e. smaller than a batch
+        if (size % BATCH_SIZE != 0) {
+            List<String> currentChunk = contractAttestList.subList(startIdx, size);
+            processAttestations(currentChunk);
+        }
+    }
+
+    private void processAttestations(List<String> currentChunk) {
+        String contractIdStr = currentChunk.stream().collect(Collectors.joining("\",\"", "[\"", "\"]"));
         hpmsFetcher.retrieveAttestationInfo(this::processContracts, contractIdStr);
     }
 
