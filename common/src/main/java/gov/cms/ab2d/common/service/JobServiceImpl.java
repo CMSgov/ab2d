@@ -10,10 +10,10 @@ import gov.cms.ab2d.common.model.JobStatus;
 import gov.cms.ab2d.common.model.Sponsor;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.repository.ContractRepository;
+import gov.cms.ab2d.common.util.EventUtils;
+import gov.cms.ab2d.eventlogger.events.FileEvent;
 import gov.cms.ab2d.common.util.JobUtil;
 import gov.cms.ab2d.eventlogger.LogManager;
-import gov.cms.ab2d.eventlogger.events.FileEvent;
-import gov.cms.ab2d.eventlogger.events.JobStatusChangeEvent;
 import gov.cms.ab2d.eventlogger.reports.sql.DoSummary;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -70,7 +70,6 @@ public class JobServiceImpl implements JobService {
         job.setResourceTypes(resourceTypes);
         job.setJobUuid(UUID.randomUUID().toString());
         job.setRequestUrl(url);
-        job.setStatus(JobStatus.SUBMITTED);
         job.setStatusMessage(INITIAL_JOB_STATUS_MESSAGE);
         job.setCreatedAt(OffsetDateTime.now());
         job.setOutputFormat(outputFormat);
@@ -96,10 +95,8 @@ public class JobServiceImpl implements JobService {
                 throw new ContractNotFoundException("Contract " + contractNumber + " was not found");
             });
         }
-        eventLogger.log(new JobStatusChangeEvent(
-                job.getUser() == null ? null : job.getUser().getUsername(),
-                job.getJobUuid(), null, JobStatus.SUBMITTED.name(), "Job Created"));
-
+        eventLogger.log(EventUtils.getJobChangeEvent(job, JobStatus.SUBMITTED, "Job Created"));
+        job.setStatus(JobStatus.SUBMITTED);
         return jobRepository.save(job);
     }
 
@@ -111,12 +108,7 @@ public class JobServiceImpl implements JobService {
             log.error("Job had a status of {} so it was not able to be cancelled", job.getStatus());
             throw new InvalidJobStateTransition("Job has a status of " + job.getStatus() + ", so it cannot be cancelled");
         }
-        eventLogger.log(new JobStatusChangeEvent(
-                job.getUser() == null ? null : job.getUser().getUsername(),
-                job.getJobUuid(),
-                job.getStatus() == null ? null : job.getStatus().name(),
-                JobStatus.CANCELLED.name(), "Job Cancelled"));
-
+        eventLogger.log(EventUtils.getJobChangeEvent(job, JobStatus.CANCELLED, "Job Cancelled"));
         jobRepository.cancelJobByJobUuid(jobUuid);
     }
 
@@ -210,9 +202,7 @@ public class JobServiceImpl implements JobService {
         JobOutput jobOutput = jobOutputService.findByFilePathAndJob(fileName, job);
         jobOutput.setDownloaded(true);
         jobOutputService.updateJobOutput(jobOutput);
-        eventLogger.log(new FileEvent(
-                job == null || job.getUser() == null ? null : job.getUser().getUsername(),
-                jobUuid, file, FileEvent.FileStatus.DELETE));
+        eventLogger.log(EventUtils.getFileEvent(job, file, FileEvent.FileStatus.DELETE));
         if (JobUtil.isJobDone(job)) {
             eventLogger.log(LogManager.LogType.KINESIS, doSummary.getSummary(job.getJobUuid()));
         }
