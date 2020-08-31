@@ -2,6 +2,7 @@ package gov.cms.ab2d.hpms.service;
 
 import gov.cms.ab2d.hpms.hmsapi.HPMSAttestationsHolder;
 import gov.cms.ab2d.hpms.hmsapi.HPMSOrganizations;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
@@ -11,11 +12,15 @@ import java.util.function.Consumer;
 @Service
 public class HPMSFetcherImpl implements HPMSFetcher {
 
+    @Value("${hpms.base.url}/api/cda/orgs/info")
+    private String organizationBaseUrl;
+
+    @Value("${hpms.base.url}/api/cda/contracts/status")
+    private String attestationBaseUrl;
+
     @Override
     public void retrieveSponsorInfo(Consumer<HPMSOrganizations> hpmsOrgCallback) {
-
-        // todo: move url into property
-        Flux<HPMSOrganizations> orgInfoFlux = WebClient.create("http://localhost:8080/api/cda/orgs/info")
+        Flux<HPMSOrganizations> orgInfoFlux = WebClient.create(organizationBaseUrl)
                 .get()
                 .retrieve()
                 .bodyToFlux(HPMSOrganizations.class);
@@ -25,8 +30,7 @@ public class HPMSFetcherImpl implements HPMSFetcher {
 
     @Override
     public void retrieveAttestationInfo(Consumer<HPMSAttestationsHolder> hpmsAttestationCallback, String contractIds) {
-//        String contractIdStr = "[\"S1234\",\"S2341\"]";
-        Flux<HPMSAttestationsHolder> contractsFlux = WebClient.create("http://localhost:8080/api/cda/contracts/status")
+        Flux<HPMSAttestationsHolder> contractsFlux = WebClient.create(attestationBaseUrl)
                 .get().uri(uriBuilder -> uriBuilder.queryParam("contractIds", contractIds).build())
                 .retrieve()
                 .bodyToFlux(HPMSAttestationsHolder.class);
