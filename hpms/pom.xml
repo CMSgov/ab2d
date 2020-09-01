@@ -93,6 +93,11 @@
                                     </limits>
                                 </rule>
                             </rules>
+                            <excludes>
+<!--                                <exclude>**/*gov/cms/ab2d/hpms/service/HPMSFetcherImpl</exclude>-->
+                                <!-- Purely wiring for http call, mocked out in testing.  -->
+                                <exclude>**/HPMSFetcherImpl.class</exclude>
+                            </excludes>
                         </configuration>
                     </execution>
                 </executions>
