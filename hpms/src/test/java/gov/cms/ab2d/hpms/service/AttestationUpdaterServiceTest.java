@@ -1,5 +1,7 @@
 package gov.cms.ab2d.hpms.service;
 
+import gov.cms.ab2d.common.model.Sponsor;
+import gov.cms.ab2d.common.repository.SponsorRepository;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.hpms.SpringBootApp;
 import org.junit.jupiter.api.Test;
@@ -10,27 +12,34 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-import static java.lang.Thread.sleep;
+import java.util.Optional;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SpringBootTest(classes = SpringBootApp.class)
 @TestPropertySource(locations = "/application.hpms.properties")
 @Testcontainers
 public class AttestationUpdaterServiceTest {
 
+    @Autowired
+    SponsorRepository sponsorRepository;
+
     @SuppressWarnings({"rawtypes", "unused"})
     @Container
-    private static final PostgreSQLContainer postgreSQLContainer= new AB2DPostgresqlContainer();
+    private static final PostgreSQLContainer postgreSQLContainer = new AB2DPostgresqlContainer();
 
     @Autowired
     AttestationUpdaterService aus;
 
     @Test
-    public void bogusTest() throws InterruptedException {
-        aus.pollOrganizations();
+    public void contractUpdated() {
         assertNotNull(aus);
-        sleep(30*1000);
-        assertTrue(true);
+        aus.pollOrganizations();
+        Optional<Sponsor> optSponser = sponsorRepository.findByHpmsIdAndOrgName(5, "ABC Org");
+        assertTrue(optSponser.isPresent());
+        Sponsor sponsor = optSponser.get();
+        assertEquals(1, sponsor.getContracts().size());
     }
 }

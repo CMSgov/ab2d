@@ -9,11 +9,10 @@ import gov.cms.ab2d.hpms.hmsapi.HPMSAttestationsHolder;
 import gov.cms.ab2d.hpms.hmsapi.HPMSOrganizationInfo;
 import gov.cms.ab2d.hpms.hmsapi.HPMSOrganizations;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.scheduling.annotation.Scheduled;
+//import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -32,7 +31,7 @@ public class AttestationUpdaterService {
 
     private final ContractRepository contractRepository;
 
-    private static final String HOURLY = "0 0 0/1 1/1 * ?";
+//    private static final String HOURLY = "0 0 0/1 1/1 * ?";
 
     @Autowired
     public AttestationUpdaterService(SponsorRepository sponsorRepository, ContractRepository contractRepository,
@@ -42,16 +41,12 @@ public class AttestationUpdaterService {
         this.hpmsFetcher = hpmsFetcher;
     }
 
-    @Scheduled(cron = "*/5 * * * * ?")
-    public void demoServiceMethod() {
-        System.out.println("Method executed at every 5 seconds. Current time is :: " + new Date());
-    }
-
+/*  todo: remove the comments and enable this code when integrating with the real hpms service
     @Scheduled(cron = AttestationUpdaterService.HOURLY)
     public void pollHmsData() {
-        System.out.println("HMS polling");
         pollOrganizations();
     }
+ */
 
     void pollOrganizations() {
         hpmsFetcher.retrieveSponsorInfo(this::processOrgInfo);
@@ -94,13 +89,10 @@ public class AttestationUpdaterService {
         hpmsFetcher.retrieveAttestationInfo(this::processContracts, contractIdStr);
     }
 
-//    @SuppressWarnings("PMD")
     private void processContracts(HPMSAttestationsHolder contractHolder) {
         Map<String, Contract> existingMap = buildExistingContractMap();
         contractHolder.getContracts()
                 .forEach(attest -> updateContractIfChanged(attest, existingMap.get(attest.getContractId())));
-//        List<Contract> recentContracts = contractRepository.findAll();
-//        int idx = 57;
     }
 
     private void updateContractIfChanged(HPMSAttestation attest, Contract contract) {
