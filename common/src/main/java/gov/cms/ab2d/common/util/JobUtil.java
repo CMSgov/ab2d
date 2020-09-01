@@ -45,16 +45,11 @@ public class JobUtil {
             JobOutput aRemaining = jobOutputs.stream()
                     .filter(c -> c.getError() == null || !c.getError())
                     .filter(c -> !c.getDownloaded()).findAny().orElse(null);
-            if (aRemaining != null) {
-                return false;
-            }
-            return true;
+
+            return aRemaining == null;
         } catch (Exception ex) {
             // Logging should never break anything
-            String jobId = "";
-            if (job != null) {
-                jobId = job.getJobUuid();
-            }
+            String jobId = job.getJobUuid();
             log.error("Unable to determine if job " + jobId + " is done", ex);
             return false;
         }

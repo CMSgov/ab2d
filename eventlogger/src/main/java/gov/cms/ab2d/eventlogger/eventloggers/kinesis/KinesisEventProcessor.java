@@ -12,6 +12,7 @@ import org.codehaus.jettison.json.JSONObject;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
@@ -83,8 +84,9 @@ public class KinesisEventProcessor implements Callable<Void> {
         String json = null;
         try {
             json = getJsonString(event) + "\n";
-            Record record = new Record()
-                    .withData(ByteBuffer.wrap(json.getBytes()));
+
+            ByteBuffer asBytes = ByteBuffer.wrap(json.getBytes(StandardCharsets.UTF_8));
+            Record record = new Record().withData(asBytes);
 
             PutRecordRequest putRecordRequest = new PutRecordRequest();
             String className = camelCaseToUnderscore(event.getClass().getSimpleName());

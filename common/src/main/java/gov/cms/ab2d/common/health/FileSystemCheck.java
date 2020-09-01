@@ -13,7 +13,10 @@ import java.util.List;
 /*
  * This class has helps verify that you can write to the file system correctly
  */
-public class FileSystemCheck {
+public final class FileSystemCheck {
+
+    private FileSystemCheck() { }
+
     /**
      * Returns true if you can write to the file system in a particular directory or false if you can't.
      * This is done by creating a random file name, putting the current nano time in the file and verifying
@@ -44,7 +47,7 @@ public class FileSystemCheck {
             String file = dir + File.separator + getRandomFileName(20, "txt");
             Path destination = Paths.get(file);
             String correctContent = "" + currentTime;
-            Files.write(destination, correctContent.getBytes());
+            Files.writeString(destination, correctContent);
             List<String> lines = Files.readAllLines(destination);
             if (lines.size() != 1 || !lines.get(0).equalsIgnoreCase(correctContent)) {
                 return false;
