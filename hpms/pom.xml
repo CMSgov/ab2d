@@ -78,7 +78,7 @@
                     <excludes>
                         <excludes>
                             <exclude>**/gov/cms/ab2d/hpms/hpmsapi/**</exclude>
-                            <exclude>**/*gov/cms/ab2d/hpms/service/HPMSFetcherImpl*</exclude>
+                            <exclude>**/gov/cms/ab2d/hpms/service/HPMSFetcherImpl*</exclude>
                         </excludes>
                     </excludes>
                 </configuration>
