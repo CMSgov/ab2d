@@ -101,7 +101,7 @@ public class AttestationUpdaterService {
         }
     }
 
-    private List<Contract> addNewContracts(List<HPMSOrganizationInfo> newContracts) {
+    List<Contract> addNewContracts(List<HPMSOrganizationInfo> newContracts) {
         if (newContracts.isEmpty()) {
             return new ArrayList<>();
         }

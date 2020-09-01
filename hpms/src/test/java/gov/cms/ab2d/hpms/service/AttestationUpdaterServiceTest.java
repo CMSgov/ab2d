@@ -1,9 +1,11 @@
 package gov.cms.ab2d.hpms.service;
 
+import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.Sponsor;
 import gov.cms.ab2d.common.repository.SponsorRepository;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.hpms.SpringBootTestApp;
+import org.assertj.core.util.Lists;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -12,6 +14,7 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.Assert.assertEquals;
@@ -41,5 +44,11 @@ public class AttestationUpdaterServiceTest {
         assertTrue(optSponser.isPresent());
         Sponsor sponsor = optSponser.get();
         assertEquals(1, sponsor.getContracts().size());
+    }
+
+    @Test
+    public void noNewContracts() {
+        List<Contract> result = aus.addNewContracts(Lists.emptyList());
+        assertTrue(result.isEmpty());
     }
 }
