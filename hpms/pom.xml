@@ -74,6 +74,14 @@
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
                 <version>${jacoco.version}</version>
+                <configuration>
+                    <excludes>
+                        <excludes>
+                            <exclude>**/gov/cms/ab2d/hpms/hpmsapi/**</exclude>
+                            <exclude>**/*gov/cms/ab2d/hpms/service/HPMSFetcherImpl*</exclude>
+                        </excludes>
+                    </excludes>
+                </configuration>
                 <executions>
                     <execution>
                         <id>jacoco-check</id>
@@ -93,11 +101,6 @@
                                     </limits>
                                 </rule>
                             </rules>
-                            <excludes>
-<!--                                <exclude>**/*gov/cms/ab2d/hpms/service/HPMSFetcherImpl</exclude>-->
-                                <!-- Purely wiring for http call, mocked out in testing.  -->
-                                <exclude>**/HPMSFetcherImpl.class</exclude>
-                            </excludes>
                         </configuration>
                     </execution>
                 </executions>
