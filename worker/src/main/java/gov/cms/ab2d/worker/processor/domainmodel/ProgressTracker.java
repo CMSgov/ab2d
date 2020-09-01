@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.Singular;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
 import java.util.IntSummaryStatistics;
@@ -12,6 +13,7 @@ import java.util.List;
 
 @Getter
 @Builder
+@Slf4j
 public class ProgressTracker {
 
     private final String jobUuid;
@@ -144,9 +146,19 @@ public class ProgressTracker {
         double percentBenesDone = 0;
         int totalPossibleCount = getTotalPossibleCount();
         if (totalPossibleCount != 0) {
-            percentBenesDone = ((double) processedCount / totalPossibleCount) * EST_BEN_SEARCH_JOB_PERCENTAGE;
+            double percentBenesDonePart = ((double) processedCount / totalPossibleCount);
+            if (percentBenesDonePart > 1.0) {
+                log.error("Percent of beneficiaries done is more than 100%");
+                percentBenesDonePart = 1.0;
+            }
+            percentBenesDone =  percentBenesDonePart * EST_BEN_SEARCH_JOB_PERCENTAGE;
         }
-        double percentContractBeneSearchDone = getPercentContractBeneSearchCompleted() * (1 - EST_BEN_SEARCH_JOB_PERCENTAGE);
+        double percentContractBeneSearchDonePart = getPercentContractBeneSearchCompleted();
+        if (percentContractBeneSearchDonePart > 1.0) {
+            log.error("Percent of contract beneficiaries done is more than 100%");
+            percentContractBeneSearchDonePart = 1.0;
+        }
+        double percentContractBeneSearchDone = percentContractBeneSearchDonePart * (1 - EST_BEN_SEARCH_JOB_PERCENTAGE);
         double amountCompleted = percentBenesDone + percentContractBeneSearchDone;
 
         final int percentCompleted = (int) Math.round(amountCompleted * 100);
