@@ -3,7 +3,7 @@ package gov.cms.ab2d.hpms.service;
 import gov.cms.ab2d.common.model.Sponsor;
 import gov.cms.ab2d.common.repository.SponsorRepository;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
-import gov.cms.ab2d.hpms.SpringBootApp;
+import gov.cms.ab2d.hpms.SpringBootTestApp;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -18,7 +18,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-@SpringBootTest(classes = SpringBootApp.class)
+@SpringBootTest(classes = SpringBootTestApp.class)
 @TestPropertySource(locations = "/application.hpms.properties")
 @Testcontainers
 public class AttestationUpdaterServiceTest {

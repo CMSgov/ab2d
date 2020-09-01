@@ -16,9 +16,9 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 @EntityScan(basePackages = {"gov.cms.ab2d.common.model"})
 @EnableJpaRepositories("gov.cms.ab2d.common.repository")
 @PropertySource("classpath:application.common.properties")
-public class SpringBootApp {
+public class SpringBootTestApp {
 
     public static void main(String [] args) {
-        SpringApplication.run(SpringBootApp.class, args);
+        SpringApplication.run(SpringBootTestApp.class, args);
     }
 }
