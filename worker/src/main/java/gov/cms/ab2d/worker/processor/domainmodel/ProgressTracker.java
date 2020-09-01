@@ -5,12 +5,15 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.Singular;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
+import java.util.IntSummaryStatistics;
 import java.util.List;
 
 @Getter
 @Builder
+@Slf4j
 public class ProgressTracker {
 
     private final String jobUuid;
@@ -97,6 +100,21 @@ public class ProgressTracker {
         return totalCount;
     }
 
+    public int getTotalPossibleCount() {
+        int remainingToBeDefined = numContracts - patientsByContracts.size();
+        return getTotalCount() + (remainingToBeDefined * getTotalAverageNumber());
+    }
+
+    public int getTotalAverageNumber() {
+        // If we don't have any contract mappings, assume that it's max value so the denominator will underestimate amount done
+        if (getTotalCount() == 0) {
+            return Integer.MAX_VALUE;
+        }
+        // return the average number of patients in known contracts
+        IntSummaryStatistics stats = patientsByContracts.stream().mapToInt(c -> c.getPatients().size()).summaryStatistics();
+        return (int) Math.round(stats.getAverage());
+    }
+
     /**
      * If it's been a long time (by frequency of processed patients) since we've updated the DB
      *
@@ -126,15 +144,28 @@ public class ProgressTracker {
      */
     public int getPercentageCompleted() {
         double percentBenesDone = 0;
-        int totalCount = getTotalCount();
-        if (totalCount != 0) {
-            percentBenesDone = ((double) processedCount / totalCount) * EST_BEN_SEARCH_JOB_PERCENTAGE;
+        int totalPossibleCount = getTotalPossibleCount();
+        if (totalPossibleCount != 0) {
+            double percentBenesDonePart = (double) processedCount / totalPossibleCount;
+            if (percentBenesDonePart > 1.0) {
+                log.error("Percent of beneficiaries done is more than 100%");
+                percentBenesDonePart = 1.0;
+            }
+            percentBenesDone =  percentBenesDonePart * EST_BEN_SEARCH_JOB_PERCENTAGE;
         }
-        double percentContractBeneSearchDone = getPercentContractBeneSearchCompleted() * (1 - EST_BEN_SEARCH_JOB_PERCENTAGE);
+        double percentContractBeneSearchDonePart = getPercentContractBeneSearchCompleted();
+        if (percentContractBeneSearchDonePart > 1.0) {
+            log.error("Percent of contract beneficiaries done is more than 100%");
+            percentContractBeneSearchDonePart = 1.0;
+        }
+        double percentContractBeneSearchDone = percentContractBeneSearchDonePart * (1 - EST_BEN_SEARCH_JOB_PERCENTAGE);
         double amountCompleted = percentBenesDone + percentContractBeneSearchDone;
 
         final int percentCompleted = (int) Math.round(amountCompleted * 100);
         lastDbUpdateCount = processedCount;
+        if (percentCompleted > 100) {
+            return 99;
+        }
         return percentCompleted;
     }
 
