@@ -146,7 +146,7 @@ public class ProgressTracker {
         double percentBenesDone = 0;
         int totalPossibleCount = getTotalPossibleCount();
         if (totalPossibleCount != 0) {
-            double percentBenesDonePart = ((double) processedCount / totalPossibleCount);
+            double percentBenesDonePart = (double) processedCount / totalPossibleCount;
             if (percentBenesDonePart > 1.0) {
                 log.error("Percent of beneficiaries done is more than 100%");
                 percentBenesDonePart = 1.0;
