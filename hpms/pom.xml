@@ -76,10 +76,8 @@
                 <version>${jacoco.version}</version>
                 <configuration>
                     <excludes>
-                        <excludes>
-                            <exclude>**/gov/cms/ab2d/hpms/hpmsapi/**</exclude>
-                            <exclude>**/gov/cms/ab2d/hpms/service/HPMSFetcherImpl*</exclude>
-                        </excludes>
+                        <exclude>**/gov/cms/ab2d/hpms/hpmsapi/**</exclude>
+                        <exclude>**/gov/cms/ab2d/hpms/service/HPMSFetcherImpl*</exclude>
                     </excludes>
                 </configuration>
                 <executions>
