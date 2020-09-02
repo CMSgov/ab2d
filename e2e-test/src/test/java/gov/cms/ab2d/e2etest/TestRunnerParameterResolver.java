@@ -1,5 +1,6 @@
 package gov.cms.ab2d.e2etest;
 
+import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.api.extension.ParameterContext;
 import org.junit.jupiter.api.extension.ParameterResolutionException;
@@ -18,6 +19,13 @@ public class TestRunnerParameterResolver implements ParameterResolver {
     @Override
     public Environment resolveParameter(ParameterContext parameterContext,
                                    ExtensionContext extensionContext) throws ParameterResolutionException {
-        return Environment.LOCAL;
+
+        String environment = System.getenv("E2E_ENVIRONMENT");
+
+        if (StringUtils.isBlank(environment)) {
+            return Environment.LOCAL;
+        }
+
+        return Environment.valueOf(environment);
     }
 }

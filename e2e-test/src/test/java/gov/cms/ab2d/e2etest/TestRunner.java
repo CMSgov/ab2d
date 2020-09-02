@@ -37,6 +37,7 @@ import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.stream.Collectors;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -104,17 +105,20 @@ public class TestRunner {
     }
 
     public void init() throws IOException, InterruptedException, JSONException, KeyManagementException, NoSuchAlgorithmException {
-        if (environment.isUsesDockerCompose()) {
-            DockerComposeContainer container = new DockerComposeContainer(
-                    new File("../docker-compose.yml"))
+        if(environment.hasComposeFiles()) {
+
+            File[] composeFiles = environment.getComposeFiles();
+
+            DockerComposeContainer container = new DockerComposeContainer(composeFiles)
                     .withEnv(System.getenv())
                     .withLocalCompose(true)
                     .withScaledService("worker", 2)
                     .withExposedService("db", 5432)
                     .withExposedService("api", 8443, new HostPortWaitStrategy()
-                    .withStartupTimeout(Duration.of(200, SECONDS)));
-//                    .withLogConsumer("worker", new Slf4jLogConsumer(log)) // Use to debug, for now there's too much log data
-//                    .withLogConsumer("api", new Slf4jLogConsumer(log));
+                        .withStartupTimeout(Duration.of(200, SECONDS)));
+                     //.withLogConsumer("worker", new Slf4jLogConsumer(log)) // Use to debug, for now there's too much log data
+                     //.withLogConsumer("api", new Slf4jLogConsumer(log));
+
             container.start();
         }
 

@@ -30,8 +30,7 @@ public class HealthCheck {
                 DatabaseAvailable.isDbAvailable(dataSource) &&
                 // EFS Mount can be written to
                 FileSystemCheck.canWriteFile(efsMount, true) &&
-                // Can write to home directory
-                FileSystemCheck.canWriteFile(".", false) &&
+
                 // We're not out of memory
                 !MemoryUtilization.outOfMemory(memory) &&
                 // Internet is accessible

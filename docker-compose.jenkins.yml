@@ -1,0 +1,36 @@
+version: '3'
+
+
+#Override container names so there are no conflicts
+services:
+  db:
+    # Docker compose health check from https://github.com/peter-evans/docker-compose-healthcheck
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  build:
+    user: "${JENKINS_UID}:${JENKINS_GID}"
+
+  api:
+    user: "${JENKINS_UID}:${JENKINS_GID}"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  worker:
+    user: "${JENKINS_UID}:${JENKINS_GID}"
+    depends_on:
+      db:
+        condition: service_healthy
+
+# Override shared volume with environment variable
+volumes:
+  tmp-volume:
+    driver: local
+    driver_opts:
+      type: none
+      device: ${AB2D_HOME}
+      o: bind
