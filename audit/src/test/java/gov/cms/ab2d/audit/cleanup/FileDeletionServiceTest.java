@@ -21,6 +21,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -71,6 +72,9 @@ public class FileDeletionServiceTest {
 
     @Autowired
     private DoAll doAll;
+
+    @Value("${ab2d.home}")
+    private String ab2dHome;
 
     private static final String TEST_FILE = "testFile.ndjson";
 
@@ -286,7 +290,7 @@ public class FileDeletionServiceTest {
 
     @Test
     public void testEFSMountOptAb2d() {
-        ReflectionTestUtils.setField(fileDeletionService, "efsMount", "/opt/ab2d");
+        ReflectionTestUtils.setField(fileDeletionService, "efsMount", ab2dHome);
 
         // Confirm no exceptions thrown
         fileDeletionService.deleteFiles();
