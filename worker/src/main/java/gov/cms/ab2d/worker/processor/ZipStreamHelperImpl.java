@@ -1,6 +1,7 @@
 package gov.cms.ab2d.worker.processor;
 
 import gov.cms.ab2d.common.model.Job;
+import gov.cms.ab2d.common.util.EventUtils;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.events.FileEvent;
 import lombok.Getter;
@@ -63,10 +64,7 @@ public class ZipStreamHelperImpl extends StreamHelperImpl {
         String zipFileName = getPath().toString() + "/" + createZipFileName();
         File f = new File(zipFileName);
         currentFile = f;
-        getLogManager().log(new FileEvent(
-                getJob() == null || getJob().getUser() == null ? null : getJob().getUser().getUsername(),
-                getJob() == null ? null : getJob().getJobUuid(), f, FileEvent.FileStatus.OPEN));
-
+        getLogManager().log(EventUtils.getFileEvent(getJob(), f, FileEvent.FileStatus.OPEN));
         f.getParentFile().mkdirs();
         Path currentFile = Path.of(zipFileName);
         FileOutputStream fos = new FileOutputStream(zipFileName);
@@ -179,10 +177,7 @@ public class ZipStreamHelperImpl extends StreamHelperImpl {
      */
     private void resetZipFile() throws IOException {
         getCurrentStream().close();
-        getLogManager().log(new FileEvent(
-                getJob() == null || getJob().getUser() == null ? null : getJob().getUser().getUsername(),
-                getJob() == null ? null : getJob().getJobUuid(), currentFile, FileEvent.FileStatus.CLOSE));
-
+        getLogManager().log(EventUtils.getFileEvent(getJob(), currentFile, FileEvent.FileStatus.CLOSE));
         setCurrentStream(createStream());
     }
 
@@ -213,10 +208,7 @@ public class ZipStreamHelperImpl extends StreamHelperImpl {
                 }
                 addPartToFile();
             }
-            getLogManager().log(new FileEvent(
-                    getJob() == null || getJob().getUser() == null ? null : getJob().getUser().getUsername(),
-                    getJob() == null ? null : getJob().getJobUuid(), currentFile, FileEvent.FileStatus.CLOSE));
-
+            getLogManager().log(EventUtils.getFileEvent(getJob(), currentFile, FileEvent.FileStatus.CLOSE));
             getCurrentStream().close();
             int numFiles = getFilesCreated().size();
             if (getFilesCreated().get(numFiles - 1).toFile().length() == 0) {

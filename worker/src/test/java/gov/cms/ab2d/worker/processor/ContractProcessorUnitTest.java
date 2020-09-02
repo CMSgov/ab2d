@@ -90,6 +90,7 @@ class ContractProcessorUnitTest {
 
         ProgressTracker progressTracker = ProgressTracker.builder()
                 .jobUuid(jobUuid)
+                .numContracts(1)
                 .failureThreshold(10)
                 .build();
         progressTracker.addPatientsByContract(patientsByContract);

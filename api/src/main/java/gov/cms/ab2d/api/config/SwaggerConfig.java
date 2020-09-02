@@ -87,7 +87,7 @@ public class SwaggerConfig {
     @JsonPropertyOrder({
             "text"
     })
-    class Details {
+    static class Details {
 
         @JsonProperty("text")
         private String text;
@@ -122,7 +122,7 @@ public class SwaggerConfig {
             "code",
             "details"
     })
-    class Issue {
+    static class Issue {
         @JsonProperty("severity")
         private String severity;
         @JsonProperty("code")

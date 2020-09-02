@@ -3,6 +3,7 @@ package gov.cms.ab2d.audit.cleanup;
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.service.JobService;
 import gov.cms.ab2d.common.service.ResourceNotFoundException;
+import gov.cms.ab2d.common.util.EventUtils;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.events.FileEvent;
 import gov.cms.ab2d.eventlogger.reports.sql.DoSummary;
@@ -121,9 +122,7 @@ public class FileDeletionServiceImpl implements FileDeletionService {
 
                 if (deleteCheckTime.isBefore(oldestDeletableTime) && filenameHasValidExtension) {
                     // Create the event here while we still have the file data
-                    fileEvent = new FileEvent(
-                            job == null || job.getUser() == null ? null : job.getUser().getUsername(),
-                            jobUuid, new File(path.toUri()), FileEvent.FileStatus.DELETE);
+                    fileEvent = EventUtils.getFileEvent(job, new File(path.toUri()), FileEvent.FileStatus.DELETE);
 
                     Files.delete(path);
                     log.info("Deleted file {}", path);

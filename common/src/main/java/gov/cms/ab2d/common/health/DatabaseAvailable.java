@@ -7,7 +7,10 @@ import java.sql.Statement;
 /**
  * Does a health check on a database
  */
-public class DatabaseAvailable {
+public final class DatabaseAvailable {
+
+    private DatabaseAvailable() { }
+
     /**
      * Returns true if you can connect to the database and do a simple select
      *
