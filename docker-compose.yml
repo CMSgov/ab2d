@@ -42,13 +42,14 @@ services:
       - NEW_RELIC_LICENSE_KEY="${NEW_RELIC_LICENSE_KEY}"
       - NEW_RELIC_APP_NAME="${NEW_RELIC_APP_NAME}"
       - AB2D_EXECUTION_ENV=${AB2D_EXECUTION_ENV}
+      # Generate temporary credentials before running the e2e-test locally
       - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
       - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
       - AWS_SESSION_TOKEN=${AWS_SESSION_TOKEN}
       - AB2D_HPMS_URL=${AB2D_HPMS_URL}
     ports:
       # Set port as an environment variable
-      # The e2e-test forcefully sets this itself
+      # The e2e-test forcefully sets this itself otherwise set via command line
       - "${API_PORT}:8443"
     depends_on:
       db:
@@ -74,6 +75,7 @@ services:
       - NEW_RELIC_APP_NAME="${NEW_RELIC_APP_NAME}"
       - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
       - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      # Generate temporary credentials before running the e2e-test locally
       - AWS_SESSION_TOKEN=${AWS_SESSION_TOKEN}
       - AB2D_HICN_HASH_PEPPER=${AB2D_HICN_HASH_PEPPER}
       - AB2D_HICN_HASH_ITER=${AB2D_HICN_HASH_ITER}

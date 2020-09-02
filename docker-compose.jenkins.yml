@@ -1,7 +1,13 @@
 version: '3'
 
+##################
+# Overrides specific properties of original compose for CI environment
+# * Changes user from root to Jenkins to prevent issues with file permissions on server
+# * Forces api and worker to wait for the postgres database to fully initialize before querying
+# * Overrides the directory tmp-volume maps to on the file system with an environment variable because each branch
+#   in Jenkins has a separate directory and must be isolated from other concurrently running jobs on the file system
+##################
 
-#Override container names so there are no conflicts
 services:
   db:
     # Docker compose health check from https://github.com/peter-evans/docker-compose-healthcheck

@@ -38,3 +38,17 @@ installed Jenkins on the agent.
 
 If you have multiple agents make sure the Java and Maven installations are to the same directory.
 
+## Docker Upgrades
+
+Docker should be upgraded to the latest release
+
+## DNS Resolution Issues
+
+Often when builds fail totally it is because of environmental issues with Jenkins. If it seems that the containers
+cannot resolve any domains on the internet (Google, Facebook, CMS IDP, etc.) there are two potential fixes.
+
+1) Restart docker on the Jenkins agents `systemctl restart docker`
+2) Check that the domain `test.idp.idm.cms.gov` is available and name resolution works from the Jenkins agents. Sometimes
+this IDP goes down and the tests rely on it.
+
+

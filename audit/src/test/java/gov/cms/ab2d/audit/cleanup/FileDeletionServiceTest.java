@@ -73,6 +73,8 @@ public class FileDeletionServiceTest {
     @Autowired
     private DoAll doAll;
 
+    // Allow the ab2d directory to change based on whether tests are run
+    // in a local or CI environment
     @Value("${ab2d.home}")
     private String ab2dHome;
 

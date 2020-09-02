@@ -78,15 +78,15 @@ pipeline {
 
         }
 
-//         stage('Run unit and integration tests') {
-//
-//             steps {
-//                 sh '''
-//                     export AB2D_EFS_MOUNT="${AB2D_HOME}"
-//                     mvn test -pl eventlogger,common,api,worker,bfd,filter,optout,audit,hpms,mock-hpms
-//                 '''
-//             }
-//         }
+        stage('Run unit and integration tests') {
+
+            steps {
+                sh '''
+                    export AB2D_EFS_MOUNT="${AB2D_HOME}"
+                    mvn test -pl eventlogger,common,api,worker,bfd,filter,optout,audit,hpms,mock-hpms
+                '''
+            }
+        }
 
         stage('Run e2e-test on merge commit and on master branch') {
             when {
@@ -155,21 +155,21 @@ pipeline {
 
     }
 
-//     post {
-//
-//         always {
-//             sh '''
-//                 docker-compose -f docker-compose.yml -f docker-compose.jenkins.yml down
-//
-//                 docker volume prune --force
-//
-//                 rm -rf "$WORKSPACE/opt/ab2d" 2> /dev/null
-//
-//                 rm -rf "$WORKSPACE/.m2/repository/gov/cms/ab2d" 2> /dev/null
-//
-//                 rm -rf target **/target 2> /dev/null
-//             '''
-//         }
-//     }
+    post {
+
+        always {
+            sh '''
+                docker-compose -f docker-compose.yml -f docker-compose.jenkins.yml down
+
+                docker volume prune --force
+
+                rm -rf "$WORKSPACE/opt/ab2d" 2> /dev/null
+
+                rm -rf "$WORKSPACE/.m2/repository/gov/cms/ab2d" 2> /dev/null
+
+                rm -rf target **/target 2> /dev/null
+            '''
+        }
+    }
 
 }
