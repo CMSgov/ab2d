@@ -13,19 +13,20 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.validation.constraints.NotNull;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.HashSet;
 import java.util.Set;
+
+import static gov.cms.ab2d.common.util.DateUtil.getESTOffset;
 
 @Entity
 @Getter
 @Setter
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class Contract {
+
+    public static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("MM/dd/yyyy H:m Z");
 
     @Id
     @GeneratedValue
@@ -57,14 +58,10 @@ public class Contract {
         attestedOn = null;
     }
 
-    public void markAttested(OffsetDateTime attestedOnDate) {
-        attestedOn = attestedOnDate;
-    }
-
     /*
      * Returns true if new state differs from existing which requires a save.
      */
-    public boolean updateAttestation(boolean attested, String attestationDate, DateTimeFormatter formatter) {
+    public boolean updateAttestation(boolean attested, String attestationDate) {
         boolean hasAttestation = hasAttestation();
         if (attested == hasAttestation) {
             return false;   // No changes needed
@@ -75,8 +72,8 @@ public class Contract {
             return true;
         }
 
-        LocalDateTime ldt = LocalDate.parse(attestationDate, formatter).atStartOfDay();
-        markAttested(OffsetDateTime.of(ldt, ZoneOffset.UTC)); // todo: make sure offset is correct.
+        String dateWithTZ = attestationDate + " 0:0 " + getESTOffset();
+        attestedOn = OffsetDateTime.parse(dateWithTZ, FORMATTER);
         return true;
     }
 }

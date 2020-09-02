@@ -18,8 +18,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static gov.cms.ab2d.hpms.hmsapi.HPMSAttestation.FORMATTER;
-
 @Service
 public class AttestationUpdaterService {
 
@@ -96,7 +94,7 @@ public class AttestationUpdaterService {
     }
 
     private void updateContractIfChanged(HPMSAttestation attest, Contract contract) {
-        if (contract.updateAttestation(attest.isAttested(), attest.getAttestationDate(), FORMATTER)) {
+        if (contract.updateAttestation(attest.isAttested(), attest.getAttestationDate())) {
             contractRepository.save(contract);
         }
     }
