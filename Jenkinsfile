@@ -136,16 +136,13 @@ pipeline {
                     ./codeclimate/cc-test-reporter format-coverage ./audit/target/site/jacoco/jacoco.xml --input-type jacoco -o codeclimate.audit.json
 
                     export JACOCO_SOURCE_PATH=./common/src/main/java
-                   ./codeclimate/cc-test-reporter format-coverage ./common/jacoco/jacoco.xml --input-type jacoco -o codeclimate.common.json
+                   ./codeclimate/cc-test-reporter format-coverage ./common/target/site/jacoco/jacoco.xml --input-type jacoco -o codeclimate.common.json
 
                     export JACOCO_SOURCE_PATH=./filter/src/main/java
                     ./codeclimate/cc-test-reporter format-coverage ./filter/target/site/jacoco/jacoco.xml --input-type jacoco -o codeclimate.filter.json
 
                     export JACOCO_SOURCE_PATH=./hpms/src/main/java
                     ./codeclimate/cc-test-reporter format-coverage ./hpms/target/site/jacoco/jacoco.xml --input-type jacoco -o codeclimate.hpms.json
-
-                    export JACOCO_SOURCE_PATH=./optout/src/main/java
-                    ./codeclimate/cc-test-reporter format-coverage ./optout/target/site/jacoco/jacoco.xml --input-type jacoco -o codeclimate.optout.json
 
                     export JACOCO_SOURCE_PATH=./bfd/src/main/java
                     ./codeclimate/cc-test-reporter format-coverage ./bfd/target/site/jacoco/jacoco.xml --input-type jacoco -o codeclimate.bfd.json
