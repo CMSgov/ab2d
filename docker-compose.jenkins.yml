@@ -26,7 +26,7 @@ services:
       db:
         condition: service_healthy
 
-# Override shared volume with environment variable
+# Override directory on machine which is the main volume mapped into each containers
 volumes:
   tmp-volume:
     driver: local

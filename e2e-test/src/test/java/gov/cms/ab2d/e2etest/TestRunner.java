@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.net.ServerSocket;
 import java.net.URI;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
@@ -68,6 +69,8 @@ public class TestRunner {
 
     private static final int MAX_USER_JOBS = 3;
 
+    private static final int DEFAULT_API_PORT = 8443;
+
     private String baseUrl = "";
 
     private Map<String, String> yamlMap;
@@ -105,28 +108,80 @@ public class TestRunner {
     }
 
     public void init() throws IOException, InterruptedException, JSONException, KeyManagementException, NoSuchAlgorithmException {
+
+        // In the CI environment load a random port otherwise use a default port
+        int apiPort = getApiPort();
+
+        log.info("Expecting API to be available at port {}", apiPort);
+
         if(environment.hasComposeFiles()) {
-
-            File[] composeFiles = environment.getComposeFiles();
-
-            DockerComposeContainer container = new DockerComposeContainer(composeFiles)
-                    .withEnv(System.getenv())
-                    .withLocalCompose(true)
-                    .withScaledService("worker", 2)
-                    .withExposedService("db", 5432)
-                    .withExposedService("api", 8443, new HostPortWaitStrategy()
-                        .withStartupTimeout(Duration.of(200, SECONDS)));
-                     //.withLogConsumer("worker", new Slf4jLogConsumer(log)) // Use to debug, for now there's too much log data
-                     //.withLogConsumer("api", new Slf4jLogConsumer(log));
-
-            container.start();
+            loadDockerComposeContainers(apiPort);
         }
+
+        loadApiClientConfiguration(apiPort);
+    }
+
+    /**
+     * Get the api port that is either a default or random based on the environment the end
+     * to end tests are running in.
+     *
+     * Use a random port to prevent issues when CI jobs share a VM in Jenkins.
+     *
+     * @return port to expose api on
+     * @throws IOException on failure to find an open port
+     */
+    private int getApiPort() throws IOException {
+
+        // https://stackoverflow.com/questions/2675362/how-to-find-an-available-port
+        // Causes race condition that may extremely rarely cause a collision between randomly
+        // generated ports
+        if (environment == Environment.CI) {
+            try (ServerSocket socket = new ServerSocket(0)) {
+                return socket.getLocalPort();
+            }
+        }
+
+        return DEFAULT_API_PORT;
+    }
+
+    /**
+     * Load docker-compose containers to support e2e tests locally.
+     * @param apiPort the port to expose the api on
+     */
+    private void loadDockerComposeContainers(int apiPort) {
+        File[] composeFiles = environment.getComposeFiles();
+
+        DockerComposeContainer container = new DockerComposeContainer(composeFiles)
+                .withEnv(System.getenv())
+                // Add api variable to environment to populate docker-compose port variable
+                .withEnv("API_PORT", "" + apiPort)
+                .withLocalCompose(true)
+                .withScaledService("worker", 2)
+                .withExposedService("api", DEFAULT_API_PORT, new HostPortWaitStrategy()
+                    .withStartupTimeout(Duration.of(200, SECONDS)));
+        //.withLogConsumer("worker", new Slf4jLogConsumer(log)) // Use to debug, for now there's too much log data
+        //.withLogConsumer("api", new Slf4jLogConsumer(log));
+
+        container.start();
+    }
+
+    /**
+     * Load api client by retrieving JSON web token using environment variables for keystore and password.
+     * @param apiPort api port to connect client to, only used in local or CI environments
+     */
+    private void loadApiClientConfiguration(int apiPort) throws IOException, InterruptedException, JSONException, NoSuchAlgorithmException, KeyManagementException {
 
         Yaml yaml = new Yaml();
         InputStream inputStream = getClass().getResourceAsStream("/" + environment.getConfigName());
         yamlMap = yaml.load(inputStream);
         String oktaUrl = yamlMap.get("okta-url");
         baseUrl = yamlMap.get("base-url");
+
+        // With a local url attach to the API port and not just the domain name
+        if (environment == Environment.CI || environment == Environment.LOCAL) {
+            baseUrl += ":" + apiPort;
+        }
+
         AB2D_API_URL = APIClient.buildAB2DAPIUrl(baseUrl);
 
         String oktaClientId = System.getenv("OKTA_CLIENT_ID");
