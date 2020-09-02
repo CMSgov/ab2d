@@ -69,6 +69,7 @@ public class TestRunner {
 
     private static final int MAX_USER_JOBS = 3;
 
+    // Default API port exposed on local environments
     private static final int DEFAULT_API_PORT = 8443;
 
     private String baseUrl = "";
@@ -133,8 +134,8 @@ public class TestRunner {
     private int getApiPort() throws IOException {
 
         // https://stackoverflow.com/questions/2675362/how-to-find-an-available-port
-        // Causes race condition that may extremely rarely cause a collision between randomly
-        // generated ports
+        // Causes a race condition that should be extremely rarely which may cause more than one job
+        // to attempt to use the same port
         if (environment == Environment.CI) {
             try (ServerSocket socket = new ServerSocket(0)) {
                 return socket.getLocalPort();
@@ -177,7 +178,7 @@ public class TestRunner {
         String oktaUrl = yamlMap.get("okta-url");
         baseUrl = yamlMap.get("base-url");
 
-        // With a local url attach to the API port and not just the domain name
+        // With a local url add the API port to the domain name (localhost)
         if (environment == Environment.CI || environment == Environment.LOCAL) {
             baseUrl += ":" + apiPort;
         }

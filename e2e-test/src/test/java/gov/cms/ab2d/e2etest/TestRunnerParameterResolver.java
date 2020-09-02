@@ -8,6 +8,8 @@ import org.junit.jupiter.api.extension.ParameterResolver;
 
 // This causes the default to run as LOCAL when TestRunner is ran as a JUnit test, when it's ran from TestLauncher,
 // a custom parameter can be supplied to the constructor
+// Additionally an environment variable can be set which dictates which Environment
+// the tests are being run in
 public class TestRunnerParameterResolver implements ParameterResolver {
 
     @Override
@@ -16,6 +18,11 @@ public class TestRunnerParameterResolver implements ParameterResolver {
         return parameterContext.getParameter().getType() == Environment.class;
     }
 
+    /**
+     * Resolve the {@link Environment} that tests are running in using an environment variable
+     * if present otherwise default to {@link Environment#LOCAL}
+     * @throws ParameterResolutionException inherited but should not be thrown
+     */
     @Override
     public Environment resolveParameter(ParameterContext parameterContext,
                                    ExtensionContext extensionContext) throws ParameterResolutionException {
