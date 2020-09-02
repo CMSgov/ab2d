@@ -6,7 +6,7 @@ Create new multibranch pipeline pointed at current project with the expected Git
 
 ## Space Requirements
 
-One of the integration testing tools we use, called Testcontainers requires that the 
+One of the integration testing tools we use, called Testcontainers, requires that the 
 root volume `/` have at least 2GB of free space. If this is not the case mount an additional
 volume to give it at least that much space.
 
@@ -18,8 +18,6 @@ Add the following credentials to the global credentials store
 | ----- | ----- | ------ |
 | Text | SANDBOX_BFD_KEYSTORE_PASSWORD | password to keystore
 | File | SANDBOX_BFD_KEYSTORE | keystore file
-| Text | AWS_ACCESS_KEY_ID | access key id for testing credentials
-| Text | AWS_SECRET_ACCESS_KEY | access key for testing credentials
 | Text | HICN_HASH_PEPPER | 
 | Text | CC_TEST_REPORTER_ID | code climate test reporter id for running code climate checks
 | Text | OKTA_CLIENT_ID | 
@@ -40,7 +38,10 @@ If you have multiple agents make sure the Java and Maven installations are to th
 
 ## Docker Upgrades
 
-Docker should be upgraded to the latest release
+* Docker should be upgraded to the latest release.
+* docker-compose must be upgraded to at least 1.27.0.rc2 or the latest release.
+
+Like with Java and Maven, you should set the Docker installation at the following url: `<jenkins_ip>:8080/configureTools`.
 
 ## DNS Resolution Issues
 
