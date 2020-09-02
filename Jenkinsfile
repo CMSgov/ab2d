@@ -158,7 +158,9 @@ pipeline {
     post {
 
         always {
+            // Setting api port won't cause problems because the containers are only ever torn down
             sh '''
+                export API_PORT=8443
                 docker-compose -f docker-compose.yml -f docker-compose.jenkins.yml down
 
                 docker volume prune --force
