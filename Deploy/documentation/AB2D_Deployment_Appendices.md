@@ -10125,7 +10125,7 @@ $ sed -i "" 's%cms-ab2d[\/]prod%cms-ab2d/dev%g' _includes/head.html (edited)
         --output json \
         | jq '.[0]' \
         | tr -d '"' \
-	| awk '{print $1" dev.ab2d.cms.gov"}'
+        | awk '{print $1" dev.ab2d.cms.gov"}'
       ```
 
    1. Note the dev.ab2d.cms.gov domain mapping line that is output
