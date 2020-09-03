@@ -23,8 +23,8 @@ services:
     working_dir: /usr/src/mymaven
     command: mvn clean package
     volumes:
-      - .:/usr/src/mymaven
-      - ${HOME}/.m2:/root/.m2
+      - "${PWD}:/usr/src/mymaven"
+      - "${HOME}/.m2:/root/.m2"
   api:
     build:
       context: ./api
