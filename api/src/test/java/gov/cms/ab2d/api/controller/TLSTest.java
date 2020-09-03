@@ -15,6 +15,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.web.server.LocalServerPort;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -41,9 +42,12 @@ import static gov.cms.ab2d.common.util.Constants.FHIR_PREFIX;
 import static gov.cms.ab2d.common.util.Constants.SPONSOR_ROLE;
 import static org.junit.Assert.assertEquals;
 
-@SpringBootTest(classes = SpringBootApp.class, webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT)
+@SpringBootTest(classes = SpringBootApp.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @Testcontainers
 public class TLSTest {
+
+    @LocalServerPort
+    private int serverPort;
 
     @Value("${server.ssl.key-store}")
     private Resource trustStore;
@@ -92,7 +96,7 @@ public class TLSTest {
         String token = testUtil.setupToken(List.of(SPONSOR_ROLE));
         headers.add("Authorization", "Bearer " + token);
         HttpEntity<String> entity = new HttpEntity<>("parameters", headers);
-        ResponseEntity<String> response = restTemplate.exchange("https://localhost:8443" + API_PREFIX + FHIR_PREFIX + "/metadata",
+        ResponseEntity<String> response = restTemplate.exchange("https://localhost:" + serverPort + API_PREFIX + FHIR_PREFIX + "/metadata",
                 HttpMethod.GET, entity, String.class);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
