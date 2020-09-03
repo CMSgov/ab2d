@@ -337,6 +337,8 @@ These instructions will initiate a part A & B bulk claim export job
 
 1. Select <b>Try it out</b>
 
+1. For the "Prefer" header, enter the only allowed value, "respond-async" 
+
 1. Select <b>Execute</b>
 
 1. Scroll down to the "Server response" section and note the "Code"
