@@ -110,6 +110,7 @@ public class AttestationUpdaterService {
         Sponsor sponsor = new Sponsor();
         sponsor.setHpmsId(hpmsInfo.getParentOrgId());
         sponsor.setOrgName(hpmsInfo.getParentOrgName());
+        sponsor.setLegalName(hpmsInfo.getOrgMarketingName());
         Sponsor savedSponser = sponsorRepository.save(sponsor);
 
         Contract retContract = new Contract();
