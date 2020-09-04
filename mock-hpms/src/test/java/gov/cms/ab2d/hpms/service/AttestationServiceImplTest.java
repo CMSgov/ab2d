@@ -21,8 +21,8 @@ public class AttestationServiceImplTest {
         List<String> contractIds = new ArrayList<>(List.of("S1234", "S2341"));
         List<String> results = attestationService.retrieveAttestations(contractIds);
         assertEquals(2, results.size());
-        assertTrue(results.get(0).contains("\"attestationDate\": \"1/31/2020\""));
-        assertTrue(results.get(1).contains("\"attestationDate\": \"2/13/2020\""));
+        assertTrue(results.get(0).contains("\"attestationDate\": \"01/31/2020\""));
+        assertTrue(results.get(1).contains("\"attestationDate\": \"02/13/2020\""));
     }
 
     @Test
