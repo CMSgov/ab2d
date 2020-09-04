@@ -9,7 +9,7 @@ import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.common.repository.RoleRepository;
 import gov.cms.ab2d.common.service.SponsorService;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
-import gov.cms.ab2d.hpms.SpringBootApp;
+import gov.cms.ab2d.hpms.SpringBootTestApp;
 import org.junit.Assert;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -29,7 +29,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-@SpringBootTest(classes = SpringBootApp.class)
+@SpringBootTest(classes = SpringBootTestApp.class)
 @TestPropertySource(locations = "/application.hpms.properties")
 @Testcontainers
 public class AttestationReportProcessorTests {

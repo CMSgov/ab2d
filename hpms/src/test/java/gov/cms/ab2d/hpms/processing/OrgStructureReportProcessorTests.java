@@ -8,7 +8,7 @@ import gov.cms.ab2d.common.repository.UserRepository;
 import gov.cms.ab2d.common.repository.RoleRepository;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
-import gov.cms.ab2d.hpms.SpringBootApp;
+import gov.cms.ab2d.hpms.SpringBootTestApp;
 import lombok.Value;
 import org.junit.Assert;
 import org.junit.jupiter.api.BeforeEach;
@@ -28,7 +28,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-@SpringBootTest(classes = SpringBootApp.class)
+@SpringBootTest(classes = SpringBootTestApp.class)
 @TestPropertySource(locations = "/application.hpms.properties")
 @Testcontainers
 public class OrgStructureReportProcessorTests {
