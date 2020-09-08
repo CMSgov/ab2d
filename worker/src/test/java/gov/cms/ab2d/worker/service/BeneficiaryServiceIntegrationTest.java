@@ -129,6 +129,7 @@ class BeneficiaryServiceIntegrationTest {
         coverage.setBeneficiary(bene);
         coverage.setContract(contract);
         coverage.setPartDMonth(partDMonth);
+        coverage.setLastUpdated(OffsetDateTime.now());
         return coverageRepo.save(coverage);
     }
 

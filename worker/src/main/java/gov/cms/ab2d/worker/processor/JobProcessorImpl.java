@@ -88,9 +88,10 @@ public class JobProcessorImpl implements JobProcessor {
         } catch (JobCancelledException e) {
             log.warn("Job: [{}] CANCELLED", jobUuid);
 
-            log.info("Deleting output directory : {} ", outputDirPath.toAbsolutePath());
-            deleteExistingDirectory(outputDirPath, job);
-
+            if (outputDirPath != null) {
+                log.info("Deleting output directory : {} ", outputDirPath.toAbsolutePath());
+                deleteExistingDirectory(outputDirPath, job);
+            }
         } catch (Exception e) {
             eventLogger.log(EventUtils.getJobChangeEvent(job, FAILED, "Job Failed - " + e.getMessage()));
             log.error("Unexpected exception ", e);
@@ -226,6 +227,7 @@ public class JobProcessorImpl implements JobProcessor {
      *
      * @param outputDirPath - the directory to delete
      */
+    @SuppressFBWarnings
     private void deleteExistingDirectory(Path outputDirPath, Job job) {
         final File[] files = outputDirPath.toFile().listFiles(getFilenameFilter());
 

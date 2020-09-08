@@ -14,6 +14,12 @@
         <Bug pattern="RV_RETURN_VALUE_IGNORED_BAD_PRACTICE"/>
     </Match>
 
+    <!-- Ignore because of lombok issues -->
+    <Match>
+        <Package name="~gov\.cms\.ab2d.*"/>
+        <Bug pattern="SE_BAD_FIELD"/>
+    </Match>
+
     <!-- IntelliJ or PMD will capture this if necessary-->
     <Match>
         <Package name="~gov\.cms\.ab2d.*"/>

@@ -21,6 +21,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.time.Instant;
 import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -37,6 +38,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 class CacheServiceImplTest {
     @Container
     private static final PostgreSQLContainer postgreSQLContainer= new AB2DPostgresqlContainer();
+    public static final int YEAR = 2020;
 
     @Autowired CacheService cut;
     @Autowired BeneficiaryRepository beneRepo;
@@ -64,11 +66,11 @@ class CacheServiceImplTest {
         sponsor = createSponsor();
         contract = createContract(sponsor, contractNumber);
 
-        createCoverage(contract, createBeneficiary(), january);
-        createCoverage(contract, createBeneficiary(), january);
-        createCoverage(contract, createBeneficiary(), january);
-        createCoverage(contract, createBeneficiary(), january);
-        createCoverage(contract, createBeneficiary(), january);
+        createCoverage(contract, createBeneficiary(), january, YEAR);
+        createCoverage(contract, createBeneficiary(), january, YEAR);
+        createCoverage(contract, createBeneficiary(), january, YEAR);
+        createCoverage(contract, createBeneficiary(), january, YEAR);
+        createCoverage(contract, createBeneficiary(), january, YEAR);
     }
 
     @Test
@@ -119,10 +121,10 @@ class CacheServiceImplTest {
     @Test
     void given_contractNumber_only_should_clear_cache() {
         //given
-        createCoverage(contract, createBeneficiary(), february);
-        createCoverage(contract, createBeneficiary(), march);
-        createCoverage(contract, createBeneficiary(), april);
-        createCoverage(contract, createBeneficiary(), may);
+        createCoverage(contract, createBeneficiary(), february, YEAR);
+        createCoverage(contract, createBeneficiary(), march, YEAR);
+        createCoverage(contract, createBeneficiary(), april, YEAR);
+        createCoverage(contract, createBeneficiary(), may, YEAR);
 
         assertThat(getAllActivePatientIds().size(), is(9));
 
@@ -149,9 +151,9 @@ class CacheServiceImplTest {
     @Test
     void given_month_only_should_clear_cache() {
         //given
-        createContractAndCoverage(january);
-        createContractAndCoverage(january);
-        createContractAndCoverage(january);
+        createContractAndCoverage(january, YEAR);
+        createContractAndCoverage(january, YEAR);
+        createContractAndCoverage(january, YEAR);
 
         //when
         ClearCoverageCacheRequest request = new ClearCoverageCacheRequest();
@@ -167,15 +169,15 @@ class CacheServiceImplTest {
     @Test
     void when_month_and_contractNumber_is_omitted_clear_all_rows_from_table() {
         //given multiple months for a specific contract
-        createCoverage(contract, createBeneficiary(), february);
-        createCoverage(contract, createBeneficiary(), march);
-        createCoverage(contract, createBeneficiary(), april);
-        createCoverage(contract, createBeneficiary(), may);
+        createCoverage(contract, createBeneficiary(), february, YEAR);
+        createCoverage(contract, createBeneficiary(), march, YEAR);
+        createCoverage(contract, createBeneficiary(), april, YEAR);
+        createCoverage(contract, createBeneficiary(), may, YEAR);
 
         //given multiple contracts for a specific month
-        createContractAndCoverage(january);
-        createContractAndCoverage(january);
-        createContractAndCoverage(january);
+        createContractAndCoverage(january, YEAR);
+        createContractAndCoverage(january, YEAR);
+        createContractAndCoverage(january, YEAR);
 
         assertThat(coverageRepo.findAll().size(), is(24));
 
@@ -187,15 +189,15 @@ class CacheServiceImplTest {
         assertTrue(coverageRepo.findAll().isEmpty());
     }
 
-    private void createContractAndCoverage(final int month) {
+    private void createContractAndCoverage(final int month, final int year) {
         final String contractNumber = "CONTRACT_" + Instant.now().getNano();
         final Contract contract = createContract(sponsor, contractNumber);
 
-        createCoverage(contract, createBeneficiary(), month);
-        createCoverage(contract, createBeneficiary(), month);
-        createCoverage(contract, createBeneficiary(), month);
-        createCoverage(contract, createBeneficiary(), month);
-        createCoverage(contract, createBeneficiary(), month);
+        createCoverage(contract, createBeneficiary(), month, year);
+        createCoverage(contract, createBeneficiary(), month, year);
+        createCoverage(contract, createBeneficiary(), month, year);
+        createCoverage(contract, createBeneficiary(), month, year);
+        createCoverage(contract, createBeneficiary(), month, year);
     }
 
 
@@ -205,11 +207,13 @@ class CacheServiceImplTest {
         return beneRepo.save(beneficiary);
     }
 
-    private Coverage createCoverage(Contract contract, Beneficiary bene, int partDMonth) {
+    private Coverage createCoverage(Contract contract, Beneficiary bene, int partDMonth, int year) {
         Coverage coverage = new Coverage();
         coverage.setBeneficiary(bene);
         coverage.setContract(contract);
         coverage.setPartDMonth(partDMonth);
+        coverage.setPartDYear(year);
+        coverage.setLastUpdated(OffsetDateTime.now());
         return coverageRepo.save(coverage);
     }
 
