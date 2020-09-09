@@ -63,13 +63,13 @@ class EventUtilsTest {
 
         File f = null;
         try {
-            f = new File("/tmp/abcd");
+            f = File.createTempFile("abcd", "");
             f.createNewFile();
             FileUtils.writeStringToFile(f, "Hello World");
 
             event = EventUtils.getFileEvent(job, f, FileEvent.FileStatus.CLOSE);
             assertNotNull(event.getFileHash());
-            assertEquals("/tmp/abcd", event.getFileName());
+            assertTrue(event.getFileName().contains("abcd"));
             assertEquals(11, event.getFileSize());
             assertEquals(FileEvent.FileStatus.CLOSE, event.getStatus());
             assertEquals(jobId, event.getJobId());
