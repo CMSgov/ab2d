@@ -32,6 +32,7 @@ services:
       - NEW_RELIC_LICENSE_KEY="${NEW_RELIC_LICENSE_KEY}"
       - NEW_RELIC_APP_NAME="${NEW_RELIC_APP_NAME}"
       - AB2D_EXECUTION_ENV=${AB2D_EXECUTION_ENV}
+      - AB2D_HPMS_URL=${AB2D_HPMS_URL}
     ports:
       - "8443:8443"
     depends_on:
