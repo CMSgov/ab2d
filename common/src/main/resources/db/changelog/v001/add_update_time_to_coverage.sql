@@ -60,5 +60,5 @@ CREATE TABLE coverage
 
 ALTER TABLE coverage ADD CONSTRAINT "pk_coverage" PRIMARY KEY (id);
 ALTER TABLE coverage ADD CONSTRAINT "fk_coverage_to_bene_coverage_search" FOREIGN KEY (bene_coverage_search_id) REFERENCES bene_coverage_search(id);
-ALTER TABLE coverage ADD CONSTRAINT "fk_coverage_to_bene_coverage_search_event" FOREIGN KEY (bene_coverage_search_event_id) REFERENCES bene_coverage_search(id);
+ALTER TABLE coverage ADD CONSTRAINT "fk_coverage_to_bene_coverage_search_event" FOREIGN KEY (bene_coverage_search_event_id) REFERENCES event_bene_coverage_search_status_change(id);
 CREATE INDEX "ix_coverage_search_and_event_id" ON coverage(bene_coverage_search_id, bene_coverage_search_event_id);

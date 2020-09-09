@@ -48,7 +48,7 @@ public class Contract extends TimestampBase {
     private OffsetDateTime attestedOn;
 
     @OneToMany(mappedBy = "contract")
-    private Set<Coverage> coverages = new HashSet<>();
+    private Set<CoverageSearch> coverageSearches = new HashSet<>();
 
     public boolean hasAttestation() {
         return attestedOn != null;
