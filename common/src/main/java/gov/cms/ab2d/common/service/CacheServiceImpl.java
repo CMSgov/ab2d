@@ -44,21 +44,24 @@ public class CacheServiceImpl implements CacheService {
         int deletedCount = 0;
         if (hasMonth && hasContractNumber && hasYear) {
             CoverageSearch coverageSearch = coverageSearchRepo.getByContractIdAndMonthAndYear(contractId, month, year);
-            deletedCount = coverageRepo.deleteByCoverageSearchId(coverageSearch);
+            deletedCount = coverageRepo.removeAllByCoverageSearch(coverageSearch);
             log.info("[{}] {} contractNumber:[{}] and month-year:[{}-{}]", deletedCount, DEFAULT_MESG, contractNumber, month, year);
 
         } else if (hasContractNumber) {
             List<CoverageSearch> coverageSearchIds = coverageSearchRepo.findAllByContractId(contractId);
 
             for (CoverageSearch coverageSearch : coverageSearchIds) {
-                deletedCount = coverageRepo.deleteByCoverageSearchId(coverageSearch);
+                deletedCount = coverageRepo.removeAllByCoverageSearch(coverageSearch);
                 log.info("[{}] {} contractNumber:[{}]", deletedCount, DEFAULT_MESG, contractNumber);
             }
 
         } else if (hasMonth && hasYear) {
             List<CoverageSearch> coverageSearches = coverageSearchRepo.findAllByMonthAndYear(month, year);
-            deletedCount = coverageRepo.deleteByCoverageId(coverageSearches);
-            log.info("[{}] {} month-year:[{}-{}]", deletedCount, DEFAULT_MESG, month, year);
+
+            for (CoverageSearch coverageSearch : coverageSearches) {
+                deletedCount = coverageRepo.removeAllByCoverageSearch(coverageSearch);
+                log.info("[{}] {} month-year:[{}-{}]", deletedCount, DEFAULT_MESG, month, year);
+            }
         }
 
         if (deletedCount == 0) {

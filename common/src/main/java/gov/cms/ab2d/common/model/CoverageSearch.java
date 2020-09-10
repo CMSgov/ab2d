@@ -5,7 +5,6 @@ import lombok.Getter;
 import lombok.Setter;
 
 import javax.persistence.*;
-import javax.validation.constraints.NotNull;
 
 import static javax.persistence.EnumType.STRING;
 
@@ -25,12 +24,10 @@ public class CoverageSearch {
     private Contract contract;
 
     @Column
-    @NotNull
-    private Integer month;
+    private int month;
 
     @Column
-    @NotNull
-    private Integer year;
+    private int year;
 
     @Enumerated(STRING)
     private JobStatus status;
