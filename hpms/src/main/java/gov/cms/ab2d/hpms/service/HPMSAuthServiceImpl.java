@@ -87,7 +87,7 @@ public class HPMSAuthServiceImpl implements HPMSAuthService {
         return tokenExpires;
     }
 
-    void setTokenExpires(long tokenExpires) {
-        this.tokenExpires = tokenExpires;
+    void clearTokenExpires() {
+        this.tokenExpires = 0;
     }
 }

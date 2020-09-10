@@ -55,7 +55,7 @@ public class HPMSAuthServiceTest {
         // Force an expiry and see a new token is retrieved, can't depend upon the actual token being physically
         // refreshed (without inserting a 500 ms pause), so just check expiry hear (which with 1 clock tick, will be
         // different.
-        authService.setTokenExpires(0L);
+        authService.clearTokenExpires();
         headers = new HttpHeaders();
         authService.buildAuthHeaders(headers);
         assertNotEquals(tokenExpiry, authService.getTokenExpires());
