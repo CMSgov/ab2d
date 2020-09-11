@@ -67,4 +67,4 @@ databaseChangeLog:
   - include:
       file: db/changelog/v001/add_ip_table.sql
   - include:
-      file: db/changelog/v001/add_update_time_to_coverage.sql
+      file: db/changelog/v001/modify_coverage_schema.sql
