@@ -36,8 +36,7 @@ class CacheServiceImplTest {
 
     @Autowired CacheService cut;
     @Autowired CoverageRepository coverageRepo;
-    @Autowired
-    CoveragePeriodRepository coverageSearchRepo;
+    @Autowired CoveragePeriodRepository coveragePeriodRepo;
     @Autowired CoverageSearchEventRepository coverageSearchEventRepo;
     @Autowired ContractRepository contractRepo;
     @Autowired SponsorRepository sponsorRepo;
@@ -57,7 +56,7 @@ class CacheServiceImplTest {
     void setUp() {
         coverageRepo.deleteAll();
         coverageSearchEventRepo.deleteAll();
-        coverageSearchRepo.deleteAll();
+        coveragePeriodRepo.deleteAll();
 
         final int nowNano = Instant.now().getNano();
         contractNumber = "CONTRACT_" + nowNano + "0000";
@@ -117,7 +116,7 @@ class CacheServiceImplTest {
 
         cut.clearCache(request);
 
-        CoveragePeriod coveragePeriod = coverageSearchRepo.getByContractIdAndMonthAndYear(contract.getId(), january, YEAR);
+        CoveragePeriod coveragePeriod = coveragePeriodRepo.getByContractIdAndMonthAndYear(contract.getId(), january, YEAR);
         final List<String> activePatientIds = coverageRepo.findActiveBeneficiaryIds(coveragePeriod);
         assertTrue(activePatientIds.isEmpty());
     }
@@ -157,19 +156,19 @@ class CacheServiceImplTest {
     private List<String> getAllActivePatientIds() {
         final List<String> patientIds = new ArrayList<>();
 
-        CoveragePeriod coveragePeriod = coverageSearchRepo.getByContractIdAndMonthAndYear(contract.getId(), january, YEAR);
+        CoveragePeriod coveragePeriod = coveragePeriodRepo.getByContractIdAndMonthAndYear(contract.getId(), january, YEAR);
         patientIds.addAll(coverageRepo.findActiveBeneficiaryIds(coveragePeriod));
 
-        coveragePeriod = coverageSearchRepo.getByContractIdAndMonthAndYear(contract.getId(), february, YEAR);
+        coveragePeriod = coveragePeriodRepo.getByContractIdAndMonthAndYear(contract.getId(), february, YEAR);
         patientIds.addAll(coverageRepo.findActiveBeneficiaryIds(coveragePeriod));
 
-        coveragePeriod = coverageSearchRepo.getByContractIdAndMonthAndYear(contract.getId(), march, YEAR);
+        coveragePeriod = coveragePeriodRepo.getByContractIdAndMonthAndYear(contract.getId(), march, YEAR);
         patientIds.addAll(coverageRepo.findActiveBeneficiaryIds(coveragePeriod));
 
-        coveragePeriod = coverageSearchRepo.getByContractIdAndMonthAndYear(contract.getId(), april, YEAR);
+        coveragePeriod = coveragePeriodRepo.getByContractIdAndMonthAndYear(contract.getId(), april, YEAR);
         patientIds.addAll(coverageRepo.findActiveBeneficiaryIds(coveragePeriod));
 
-        coveragePeriod = coverageSearchRepo.getByContractIdAndMonthAndYear(contract.getId(), may, YEAR);
+        coveragePeriod = coveragePeriodRepo.getByContractIdAndMonthAndYear(contract.getId(), may, YEAR);
         patientIds.addAll(coverageRepo.findActiveBeneficiaryIds(coveragePeriod));
 
         return patientIds;
@@ -189,7 +188,7 @@ class CacheServiceImplTest {
         cut.clearCache(request);
 
         //then
-        CoveragePeriod coveragePeriod = coverageSearchRepo.getByContractIdAndMonthAndYear(contract.getId(), january, YEAR);
+        CoveragePeriod coveragePeriod = coveragePeriodRepo.getByContractIdAndMonthAndYear(contract.getId(), january, YEAR);
         final List<String> activePatientIds = coverageRepo.findActiveBeneficiaryIds(coveragePeriod);
         assertTrue(activePatientIds.isEmpty());
     }
@@ -246,7 +245,7 @@ class CacheServiceImplTest {
         coveragePeriod.setMonth(month);
         coveragePeriod.setYear(year);
 
-        return coverageSearchRepo.save(coveragePeriod);
+        return coveragePeriodRepo.save(coveragePeriod);
     }
 
     private CoverageSearchEvent createCoverageSearchEvent(CoveragePeriod coveragePeriod, String description) {

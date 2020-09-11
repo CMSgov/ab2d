@@ -11,7 +11,7 @@ import lombok.Data;
 @AllArgsConstructor
 public class CoverageSearchDiff {
 
-    private CoverageSearch coverageSearch;
+    private CoveragePeriod coveragePeriod;
 
     private int previousCount;
     private int currentCount;

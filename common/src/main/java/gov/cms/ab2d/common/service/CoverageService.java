@@ -8,118 +8,118 @@ import java.util.Optional;
 public interface CoverageService {
 
     /**
-     * Get {@link CoverageSearch} in database matching provided triple
+     * Get {@link CoveragePeriod} in database matching provided triple
      * @param contractId existing {@link Contract#getId()}
      * @param month valid month
      * @param year valid year (not later than current year)
      */
-    CoverageSearch getCoverageSearch(long contractId, int month, int year);
+    CoveragePeriod getCoveragePeriod(long contractId, int month, int year);
 
     /**
-     * Check current status of a {@link CoverageSearch}
-     * @param searchId {@link CoverageSearch#getId()} of the relevant search
-     * @return true if search {@link CoverageSearch#getStatus()} is {@link JobStatus#IN_PROGRESS}
+     * Check current status of a {@link CoveragePeriod}
+     * @param periodId {@link CoveragePeriod#getId()} of the relevant search
+     * @return true if search {@link CoveragePeriod#getStatus()} is {@link JobStatus#IN_PROGRESS}
      */
-    boolean isCoverageSearchInProgress(int searchId);
+    boolean isCoveragePeriodInProgress(int periodId);
 
     /**
      * Can an EOB search be started based on whether a contract mapping is in progress
-     * @return true if search {@link CoverageSearch#getStatus()} is not {@link JobStatus#IN_PROGRESS}
+     * @return true if search {@link CoveragePeriod#getStatus()} is not {@link JobStatus#IN_PROGRESS}
      */
-    boolean canEOBSearchBeStarted(int searchId);
+    boolean canEOBSearchBeStarted(int periodId);
 
     /**
      * Get search status {@link JobStatus}
-     * @param searchId {@link CoverageSearch#getId()}
+     * @param periodId {@link CoveragePeriod#getId()}
      * @return search status or null
      */
-    JobStatus getSearchStatus(int searchId);
+    JobStatus getSearchStatus(int periodId);
 
     /**
-     * Find the last {@link CoverageSearchEvent} associated with a {@link CoverageSearch}
-     * @param searchId {@link CoverageSearch#getId()}
+     * Find the last {@link CoverageSearchEvent} associated with a {@link CoveragePeriod}
+     * @param periodId {@link CoveragePeriod#getId()}
      * @return may return empty if no events associated with search have been recorded yet
      */
-    Optional<CoverageSearchEvent> findLastEvent(int searchId);
+    Optional<CoverageSearchEvent> findLastEvent(int periodId);
 
     /**
-     * Find the last {@link CoverageSearchEvent} associated with a {@link CoverageSearch}
-     * @param searchId {@link CoverageSearch#getId()}
+     * Find the last {@link CoverageSearchEvent} associated with a {@link CoveragePeriod}
+     * @param periodId {@link CoveragePeriod#getId()} ()}
      * @return search
      */
-    CoverageSearchEvent getLastEvent(int searchId);
+    CoverageSearchEvent getLastEvent(int periodId);
 
     /**
      * Insert new coverage information for beneficiaries
-     * @param searchId {@link CoverageSearch#getId()}
+     * @param periodId {@link CoveragePeriod#getId()}
      * @param searchEventId {@link CoverageSearchEvent#getId()} for the specific search event being performed.
      * This is used specifically for auditing and gauging the effect of
      * @param beneficiaryIds list of beneficiaries for this coverage period and this specific search event
      * @return relevant
      */
-    CoverageSearchEvent insertCoverage(int searchId, long searchEventId, Collection<String> beneficiaryIds);
+    CoverageSearchEvent insertCoverage(int periodId, long searchEventId, Collection<String> beneficiaryIds);
 
     /**
-     * Delete all data from previous coverage search conducted for a given {@link CoverageSearch}.
+     * Delete all data from previous coverage search conducted for a given {@link CoveragePeriod}.
      *
      * Finds all {@link CoverageSearchEvent}s that have the {@link CoverageSearchEvent#getNewStatus()} as {@link JobStatus#IN_PROGRESS}
      * and deletes the second most recent one.
      *
-     * @param searchId {@link CoverageSearch#getId()}
+     * @param periodId {@link CoveragePeriod#getId()}
      */
-    void deletePreviousSearch(int searchId);
+    void deletePreviousSearch(int periodId);
 
     /**
      * Get difference in beneficiary membership between last two searches conducted for a given coverage search
-     * @param searchId
+     * @param periodId
      * @return
      */
-    CoverageSearchDiff searchDiff(int searchId);
+    CoverageSearchDiff searchDiff(int periodId);
 
     /**
      * Change a coverage search to {@link JobStatus#SUBMITTED} and log an event.
-     * @param searchId unique id of a coverage search
+     * @param periodId unique id of a coverage search
      * @param description reason or explanation for change
      * @return resulting coverage search event
      * @throws InvalidJobStateTransition if job is {@link JobStatus#IN_PROGRESS} already
      */
-    CoverageSearchEvent submitCoverageSearch(int searchId, String description);
+    CoverageSearchEvent submitCoverageSearch(int periodId, String description);
 
     /**
      * Change a coverage search to {@link JobStatus#IN_PROGRESS} and log an event.
-     * @param searchId unique id of a coverage search
+     * @param periodId unique id of a coverage search
      * @param description reason or explanation for change
      * @return resulting coverage search event
      * @throws InvalidJobStateTransition if job is not in the {@link JobStatus#SUBMITTED} state when this job is received
      */
-    CoverageSearchEvent startCoverageSearch(int searchId, String description);
+    CoverageSearchEvent startCoverageSearch(int periodId, String description);
 
     /**
      * Change a coverage search to {@link JobStatus#CANCELLED} and log an event.
-     * @param searchId unique id of a coverage search
+     * @param periodId unique id of a coverage search
      * @param description reason or explanation for change
      * @return resulting coverage search event
      * @throws InvalidJobStateTransition if job is not in the {@link JobStatus#SUBMITTED} or {@link JobStatus#IN_PROGRESS}
      * state when this job is received
      */
-    CoverageSearchEvent cancelCoverageSearch(int searchId, String description);
+    CoverageSearchEvent cancelCoverageSearch(int periodId, String description);
 
     /**
      * Change a coverage search to {@link JobStatus#FAILED} and log an event.
-     * @param searchId unique id of a coverage search
+     * @param periodId unique id of a coverage search
      * @param description reason or explanation for change
      * @return resulting coverage search event
      * @throws InvalidJobStateTransition if job is not {@link JobStatus#SUBMITTED} or {@link JobStatus#IN_PROGRESS}
      * state when this job is received
      */
-    CoverageSearchEvent failCoverageSearch(int searchId, String description);
+    CoverageSearchEvent failCoverageSearch(int periodId, String description);
 
     /**
      * Change a coverage search to {@link JobStatus#SUCCESSFUL} and log an event.
-     * @param searchId unique id of a coverage search
+     * @param periodId unique id of a coverage search
      * @param description reason or explanation for change
      * @return resulting coverage search event
      * @throws InvalidJobStateTransition if job is not in the {@link JobStatus#IN_PROGRESS} state when this job is received
      */
-    CoverageSearchEvent completeCoverageSearch(int searchId, String description);
+    CoverageSearchEvent completeCoverageSearch(int periodId, String description);
 }

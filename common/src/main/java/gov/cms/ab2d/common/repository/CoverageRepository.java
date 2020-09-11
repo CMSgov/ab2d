@@ -28,7 +28,7 @@ public interface CoverageRepository extends JpaRepository<Coverage, Long> {
 
     int removeAllByCoveragePeriod(CoveragePeriod coveragePeriod);
 
-    int removeAllByCoverageSearchAndCoverageSearchEvent(CoverageSearch search, CoverageSearchEvent searchEvent);
+    int removeAllByCoveragePeriodAndCoverageSearchEvent(CoveragePeriod search, CoverageSearchEvent searchEvent);
 
 
 }
