@@ -54,7 +54,7 @@ CREATE TABLE coverage
 (
     id BIGSERIAL NOT NULL,
     bene_coverage_period_id INTEGER NOT NULL,
-    bene_coverage_search_event_id INTEGER NOT NULL,
+    bene_coverage_search_event_id BIGINT NOT NULL,
     beneficiary_id VARCHAR(255) NOT NULL
 );
 
