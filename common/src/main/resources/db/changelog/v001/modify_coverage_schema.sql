@@ -36,7 +36,7 @@ DROP TABLE beneficiary;
 
 CREATE TABLE event_bene_coverage_search_status_change
 (
-    id SERIAL,
+    id BIGSERIAL,
     bene_coverage_period_id INTEGER NOT NULL,
     time_of_event TIMESTAMP WITH TIME ZONE,
     old_status VARCHAR(255),
