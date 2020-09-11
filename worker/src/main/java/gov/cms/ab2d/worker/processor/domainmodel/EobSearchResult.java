@@ -7,7 +7,7 @@ import java.util.List;
 
 @Data
 public class EobSearchResult {
-    String jobId;
-    String contractNum;
-    List<ExplanationOfBenefit> eobs;
+    private String jobId;
+    private String contractNum;
+    private List<ExplanationOfBenefit> eobs;
 }
