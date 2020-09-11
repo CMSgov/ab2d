@@ -1,6 +1,6 @@
 package gov.cms.ab2d.common.model;
 
-import gov.cms.ab2d.common.repository.RoleRepository;
+import gov.cms.ab2d.common.repository.BeneficiaryRepository;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -23,41 +23,42 @@ import static org.junit.Assert.assertNull;
 @TestPropertySource(locations = "/application.common.properties")
 public class CreateUpdateTimestampTest {
 
-    private static final String ROLE_NAME = "Timestamp Test Role";
-    private static final String ROLE_NAME_TOO = "Timestamp Test Role 2";
+    private static final String PATIENT_ID_STR = "Timestamp Test Beneficiary";
+    private static final String PATIENT_ID_STR_TOO = "Timestamp Test Beneficiary 2";
 
 
     @Autowired
-    RoleRepository roleRepository;
+    BeneficiaryRepository beneficiaryRepository;
 
-    @SuppressWarnings("rawtypes")
+    @SuppressWarnings({"rawtypes", "unused"})
     @Container
     private static final PostgreSQLContainer postgreSQLContainer = new AB2DPostgresqlContainer();
 
     @Test
     public void testTimestamps() {
-        Role role = new Role();
-        role.setName(ROLE_NAME);
-        assertNull(role.getId());
-        assertNull(role.getCreated());
-        assertNull(role.getModified());
+        Beneficiary bene = new Beneficiary();
+        bene.setPatientId(PATIENT_ID_STR);
+        assertNull(bene.getId());
+        assertNull(bene.getCreated());
+        assertNull(bene.getModified());
 
-        Role savedRole = roleRepository.save(role);
-        assertEquals(ROLE_NAME, savedRole.getName());
-        assertNotNull(savedRole.getId());
-        assertNotNull(savedRole.getCreated());
-        assertNotNull(savedRole.getModified());
+        Beneficiary savedBeneficiary = beneficiaryRepository.save(bene);
+        assertEquals(PATIENT_ID_STR, savedBeneficiary.getPatientId());
+        assertNotNull(savedBeneficiary.getId());
+        assertNotNull(savedBeneficiary.getCreated());
+        assertNotNull(savedBeneficiary.getModified());
 
-        LocalDateTime created = savedRole.getCreated();
-        LocalDateTime modified = savedRole.getModified();
-        savedRole.setName(ROLE_NAME_TOO);
-        Role finaleRole = roleRepository.save(savedRole);
-        assertEquals(created, finaleRole.getCreated());
-        assertNotEquals(modified, finaleRole.getModified());
+        LocalDateTime created = savedBeneficiary.getCreated();
+        LocalDateTime modified = savedBeneficiary.getModified();
+        savedBeneficiary.setPatientId(PATIENT_ID_STR_TOO);
+        Beneficiary finaleBeneficiary = beneficiaryRepository.save(savedBeneficiary);
+        assertEquals(created, finaleBeneficiary.getCreated());
+        assertNotEquals(modified, finaleBeneficiary.getModified());
     }
 
+    @SuppressWarnings("unused")
     @AfterEach
     private void tearDown() {
-        roleRepository.deleteAll();
+        beneficiaryRepository.deleteAll();
     }
 }

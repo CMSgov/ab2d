@@ -15,7 +15,7 @@ import java.util.Set;
 @Entity
 @Getter
 @Setter
-public class Beneficiary {
+public class Beneficiary extends TimestampBase {
 
     @Id
     @GeneratedValue
