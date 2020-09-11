@@ -23,13 +23,6 @@ ALTER TABLE coverage
 -- noinspection SqlWithoutWhere
 UPDATE coverage SET created='2000-01-01', modified='2000-01-01';
 
-ALTER TABLE coverage
-    ADD COLUMN created timestamp,
-    ADD COLUMN modified timestamp;
-
--- noinspection SqlWithoutWhere
-UPDATE coverage SET created='2000-01-01', modified='2000-01-01';
-
 ALTER TABLE opt_out
     ADD COLUMN created timestamp,
     ADD COLUMN modified timestamp;
