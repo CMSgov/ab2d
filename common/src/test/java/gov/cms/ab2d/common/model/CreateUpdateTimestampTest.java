@@ -54,11 +54,8 @@ public class CreateUpdateTimestampTest {
         Beneficiary finaleBeneficiary = beneficiaryRepository.save(savedBeneficiary);
         assertEquals(created, finaleBeneficiary.getCreated());
         assertNotEquals(modified, finaleBeneficiary.getModified());
-    }
 
-    @SuppressWarnings("unused")
-    @AfterEach
-    private void tearDown() {
-        beneficiaryRepository.deleteAll();
+        // Cleanup
+        beneficiaryRepository.delete(finaleBeneficiary);
     }
 }
