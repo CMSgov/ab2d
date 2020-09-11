@@ -1,36 +1,36 @@
 package gov.cms.ab2d.worker.processor;
 
+import ca.uhn.fhir.context.FhirContext;
 import com.newrelic.api.agent.NewRelic;
 import com.newrelic.api.agent.Token;
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.JobOutput;
 import gov.cms.ab2d.common.model.JobStatus;
-import gov.cms.ab2d.common.model.OptOut;
 import gov.cms.ab2d.common.repository.JobRepository;
-import gov.cms.ab2d.common.repository.OptOutRepository;
 import gov.cms.ab2d.common.util.Constants;
+import gov.cms.ab2d.common.util.FHIRUtil;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.events.ErrorEvent;
 import gov.cms.ab2d.worker.adapter.bluebutton.ContractBeneficiaries;
 import gov.cms.ab2d.worker.adapter.bluebutton.ContractBeneficiaries.PatientDTO;
 import gov.cms.ab2d.worker.config.RoundRobinBlockingQueue;
-import gov.cms.ab2d.worker.processor.StreamHelperImpl.FileOutputType;
 import gov.cms.ab2d.worker.processor.domainmodel.ContractData;
+import gov.cms.ab2d.worker.processor.domainmodel.EobSearchResult;
 import gov.cms.ab2d.worker.processor.domainmodel.PatientClaimsRequest;
 import gov.cms.ab2d.worker.processor.domainmodel.ProgressTracker;
 import gov.cms.ab2d.worker.service.FileService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.hl7.fhir.dstu3.model.ExplanationOfBenefit;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.UncheckedIOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
-import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CancellationException;
@@ -41,7 +41,6 @@ import java.util.stream.Collectors;
 import static gov.cms.ab2d.common.model.JobStatus.CANCELLED;
 import static gov.cms.ab2d.common.util.Constants.CONTRACT_LOG;
 import static gov.cms.ab2d.common.util.Constants.EOB;
-import static gov.cms.ab2d.worker.processor.StreamHelperImpl.FileOutputType.ZIP;
 import static net.logstash.logback.argument.StructuredArguments.keyValue;
 
 @Slf4j
@@ -53,9 +52,6 @@ public class ContractProcessorImpl implements ContractProcessor {
 
     @Value("${job.file.rollover.ndjson:200}")
     private long ndjsonRollOver;
-
-    @Value("${job.file.rollover.zip:200}")
-    private long zipRollOver;
 
     @Value("${cancellation.check.frequency:10}")
     private int cancellationCheckFrequency;
@@ -69,14 +65,11 @@ public class ContractProcessorImpl implements ContractProcessor {
     @Value("${file.try.lock.timeout}")
     private int tryLockTimeout;
 
-    @Value("${optout.used}")
-    private boolean optoutUsed;
-
     private final FileService fileService;
     private final JobRepository jobRepository;
     private final PatientClaimsProcessor patientClaimsProcessor;
-    private final OptOutRepository optOutRepository;
     private final LogManager eventLogger;
+    private final FhirContext fhirContext;
 
     /**
      * Process the contract - retrieve all the patients for the contract and create a thread in the
@@ -87,115 +80,67 @@ public class ContractProcessorImpl implements ContractProcessor {
      * @param contractData - the contract data (contract, progress tracker, attested time, writer)
      * @return - the job output records containing the file information
      */
-    public List<JobOutput> process(Path outputDirPath, ContractData contractData, FileOutputType outputType) {
+    public List<JobOutput> process(Path outputDirPath, ContractData contractData) {
         var contractNumber = contractData.getContract().getContractNumber();
         log.info("Beginning to process contract {}", keyValue(CONTRACT_LOG, contractNumber));
 
-        var progressTracker = contractData.getProgressTracker();
-        Map<String, PatientDTO> patients = getPatientsByContract(contractNumber, progressTracker);
+        ProgressTracker progressTracker = contractData.getProgressTracker();
+        Map<String, PatientDTO> patients = progressTracker.getPatientsByContract(contractNumber);
         int patientCount = patients.size();
         log.info("Contract [{}] has [{}] Patients", contractNumber, patientCount);
 
-        boolean isCancelled = false;
-        StreamHelper helper = null;
-        try {
-            var jobUuid = contractData.getProgressTracker().getJobUuid();
-            Job job = jobRepository.findByJobUuid(jobUuid);
-            helper = createOutputHelper(outputDirPath, contractNumber, outputType, job);
-
-            int recordsProcessedCount = 0;
-            var futureHandles = new ArrayList<Future<Void>>();
+        long numberOfEobs = 0;
+        var jobUuid = progressTracker.getJobUuid();
+        Job job = jobRepository.findByJobUuid(jobUuid);
+        int recordsProcessedCount = 0;
+        try (StreamHelper helper = new TextStreamHelperImpl(outputDirPath, contractNumber, getRollOverThreshold(), tryLockTimeout,
+                eventLogger, job)) {
+            var futureHandles = new ArrayList<Future<EobSearchResult>>();
             for (Map.Entry<String, PatientDTO> patient : patients.entrySet()) {
                 ++recordsProcessedCount;
+                futureHandles.add(processPatient(patient.getValue(), contractData));
 
-                if (optoutUsed && isOptOutPatient(patient.getValue().getPatientId())) {
-                    // this patient has opted out. skip patient record.
-                    progressTracker.incrementOptOutCount();
-                    continue;
-                }
-
-                futureHandles.add(processPatient(patient.getValue(), contractData, helper, patients));
-
-                // Periodically check if cancelled
+                // Periodically check if cancelled                if (recordsProcessedCount % cancellationCheckFrequency == 0) {
                 if (recordsProcessedCount % cancellationCheckFrequency == 0) {
-                    isCancelled = hasJobBeenCancelled(progressTracker.getJobUuid());
-                    if (isCancelled) {
-                        log.warn("Job [{}] has been cancelled. Attempting to stop processing the job shortly ... ", progressTracker.getJobUuid());
+                    if (hasJobBeenCancelled(jobUuid)) {
+                        log.warn("Job [{}] has been cancelled. Attempting to stop processing the job shortly ... ", jobUuid);
                         cancelFuturesInQueue(futureHandles);
                         break;
                     }
-
-                    processHandles(futureHandles, progressTracker);
+                    numberOfEobs += processHandles(futureHandles, progressTracker, patients, helper);
                 }
             }
-            awaitTermination(futureHandles, progressTracker);
-
-        } finally {
-            close(helper);
-        }
-
-        handleCancellation(isCancelled);
-
-        // All jobs are done, return the job output records
-        return createJobOutputs(helper.getDataFiles(), helper.getErrorFiles());
-    }
-
-    private StreamHelper createOutputHelper(Path outputDirPath, String contractNumber, FileOutputType outputType, Job job) {
-        try {
-            if (outputType == ZIP) {
-                return new ZipStreamHelperImpl(outputDirPath, contractNumber, getZipRolloverThreshold(),
-                        getRollOverThreshold(), tryLockTimeout, eventLogger, job);
-            } else {
-                return new TextStreamHelperImpl(outputDirPath, contractNumber, getRollOverThreshold(), tryLockTimeout,
-                        eventLogger, job);
+            while (!futureHandles.isEmpty()) {
+                sleep();
+                numberOfEobs += processHandles(futureHandles, progressTracker, patients, helper);
+                if (hasJobBeenCancelled(jobUuid)) {
+                    cancelFuturesInQueue(futureHandles);
+                    final String errMsg = "Job was cancelled while it was being processed";
+                    log.warn("{}", errMsg);
+                    throw new JobCancelledException(errMsg);
+                }
             }
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
-        }
-    }
 
-    /**
-     * While there are still patient records in progress, sleep for a bit and check progress
-     * @param futureHandles - the running threads
-     * @param progressTracker - the object maintaining the progress of the job
-     */
-    private void awaitTermination(ArrayList<Future<Void>> futureHandles, ProgressTracker progressTracker) {
-        while (!futureHandles.isEmpty()) {
-            sleep();
-            processHandles(futureHandles, progressTracker);
+            log.info("Finished writing {} EOBs for contract {}", numberOfEobs, contractNumber);
+            // All jobs are done, return the job output records
+            return createJobOutputs(helper.getDataFiles(), helper.getErrorFiles());
+        } catch (IOException ex) {
+            log.error("Unable to open output file");
         }
-    }
-
-    private void close(StreamHelper helper) {
-        if (helper != null) {
-            try {
-                helper.close();
-            } catch (Exception ex) {
-                log.error("Unable to close the helper", ex);
-            }
-        }
-    }
-
-    private void handleCancellation(boolean isCancelled) {
-        if (isCancelled) {
-            final String errMsg = "Job was cancelled while it was being processed";
-            log.warn("{}", errMsg);
-            throw new JobCancelledException(errMsg);
-        }
+        return null;
     }
 
     /**
      * Create a token from newRelic for the transaction.
-     *
+     * <p>
      * On using new-relic tokens with async calls
      * See https://docs.newrelic.com/docs/agents/java-agent/async-instrumentation/java-agent-api-asynchronous-applications
      *
-     * @param patient - process to process
+     * @param patient      - process to process
      * @param contractData - the contract data information
-     * @param helper - the helper used to write to the file
-     * @return a Future<Void>
+     * @return a Future<EobSearchResult>
      */
-    private Future<Void> processPatient(PatientDTO patient, ContractData contractData, StreamHelper helper, Map<String, PatientDTO> map) {
+    private Future<EobSearchResult> processPatient(PatientDTO patient, ContractData contractData) {
         final Token token = NewRelic.getAgent().getTransaction().getToken();
 
         // Using a ThreadLocal to communicate contract number to RoundRobinBlockingQueue
@@ -204,42 +149,16 @@ public class ContractProcessorImpl implements ContractProcessor {
         var jobUuid = contractData.getProgressTracker().getJobUuid();
         RoundRobinBlockingQueue.CATEGORY_HOLDER.set(jobUuid);
         try {
-            var attestedOn = contractData.getContract().getAttestedOn();
-            var sinceTime = contractData.getSinceTime();
-            var patientClaimsRequest = new PatientClaimsRequest(patient, helper, attestedOn, sinceTime,
+            var patientClaimsRequest = new PatientClaimsRequest(patient,
+                    contractData.getContract().getAttestedOn(),
+                    contractData.getSinceTime(),
                     contractData.getUserId(), jobUuid,
                     contractData.getContract() != null ? contractData.getContract().getContractNumber() : null, token);
-            return patientClaimsProcessor.process(patientClaimsRequest, map);
+            return patientClaimsProcessor.process(patientClaimsRequest);
 
         } finally {
             RoundRobinBlockingQueue.CATEGORY_HOLDER.remove();
         }
-    }
-
-    /**
-     * Retrieve the patients by contract
-     *
-     * @param contractNumber - the contract number
-     * @param progressTracker - the progress tracker for all contracts and patients for the job
-     * @return the contract's patients
-     */
-    private Map<String, PatientDTO> getPatientsByContract(String contractNumber, ProgressTracker progressTracker) {
-        return progressTracker.getPatientsByContracts()
-                .stream()
-                .filter(byContract -> byContract.getContractNumber().equals(contractNumber))
-                .findFirst()
-                .map(ContractBeneficiaries::getPatients)
-                .orElse(Collections.emptyMap());
-    }
-
-
-    /**
-     * Return the number of bytes when to rollover given the number of megabytes in a zip file if used
-     *
-     * @return the number of bytes
-     */
-    private long getZipRolloverThreshold() {
-        return zipRollOver * Constants.ONE_MEGA_BYTE;
     }
 
     /**
@@ -252,32 +171,11 @@ public class ContractProcessorImpl implements ContractProcessor {
     }
 
     /**
-     * Check the opt out repository to see if a patient has opted out of data services
-     *
-     * @param patientId - the patient id
-     * @return true if the patient has opted out
-     */
-    private boolean isOptOutPatient(String patientId) {
-
-        final List<OptOut> optOuts = optOutRepository.findByCcwId(patientId);
-        if (optOuts.isEmpty()) {
-            // No opt-out record found for this patient - Opt-In by default.
-            return false;
-        }
-
-        // opt-out record has an effective date.
-        // if any of the opt-out records for a patient is effective as of today or earlier, the patient has opted-out
-        final LocalDate tomorrow = LocalDate.now().plusDays(1);
-        return optOuts.stream()
-                .anyMatch(optOut -> optOut.getEffectiveDate().isBefore(tomorrow));
-    }
-
-    /**
      * Cancel threads
      *
      * @param futureHandles - the running threads
      */
-    private void cancelFuturesInQueue(List<Future<Void>> futureHandles) {
+    private void cancelFuturesInQueue(List<Future<EobSearchResult>> futureHandles) {
 
         // cancel any futures that have not started processing and are waiting in the queue.
         futureHandles.parallelStream().forEach(future -> future.cancel(false));
@@ -299,51 +197,118 @@ public class ContractProcessorImpl implements ContractProcessor {
         return CANCELLED.equals(jobStatus);
     }
 
-
     /**
      * For each future, check to see if it's done. If it is, remove it from the list of future handles
      * and increment the number processed
      *
-     * @param futureHandles - the thread futures
+     * @param futureHandles   - the thread futures
      * @param progressTracker - the tracker with updated tracker information
      */
-    private void processHandles(List<Future<Void>> futureHandles, ProgressTracker progressTracker) {
+    private int processHandles(List<Future<EobSearchResult>> futureHandles, ProgressTracker progressTracker,
+                               Map<String, PatientDTO> patients, StreamHelper helper) {
+        int numberOfEobs = 0;
         var iterator = futureHandles.iterator();
         while (iterator.hasNext()) {
             var future = iterator.next();
             if (future.isDone()) {
-                processFuture(futureHandles, progressTracker, future);
+                EobSearchResult result = processFuture(futureHandles, progressTracker, future, patients);
+                if (result != null) {
+                    numberOfEobs += writeOutResource(result.getEobs(), helper);
+                }
                 iterator.remove();
             }
         }
 
         // update the progress in the DB & logs periodically
         trackProgress(progressTracker);
+        return numberOfEobs;
+    }
+
+    private int writeOutResource(List<ExplanationOfBenefit> eobs, StreamHelper helper) {
+        var jsonParser = fhirContext.newJsonParser();
+
+        String payload = "";
+        int resourceCount = 0;
+        try {
+            for (ExplanationOfBenefit resource : eobs) {
+                ++resourceCount;
+                try {
+                    payload = jsonParser.encodeResourceToString(resource) + System.lineSeparator();
+                    helper.addData(payload.getBytes(StandardCharsets.UTF_8));
+                } catch (Exception e) {
+                    log.warn("Encountered exception while processing job resources: {}", e.getMessage());
+                    writeExceptionToContractErrorFile(helper, payload, e);
+                }
+            }
+        } catch (Exception e) {
+            try {
+                writeExceptionToContractErrorFile(helper, payload, e);
+            } catch (IOException e1) {
+                //should not happen - original exception will be thrown
+                log.error("error during exception handling to write error record");
+            }
+
+            throw new RuntimeException(e.getMessage(), e);
+        }
+        return resourceCount;
     }
 
     /**
      * process the future that is marked as done.
      * On doing a get(), if an exception is thrown, analyze it to decide whether to stop the batch or not.
-     * @param futureHandles - List of Futures
+     *
+     * @param futureHandles   - List of Futures
      * @param progressTracker - progress tracker instance
-     * @param future - a specific future
+     * @param future          - a specific future
      */
-    private void processFuture(List<Future<Void>> futureHandles, ProgressTracker progressTracker, Future<Void> future) {
+    private EobSearchResult processFuture(List<Future<EobSearchResult>> futureHandles, ProgressTracker progressTracker,
+                                          Future<EobSearchResult> future, Map<String, PatientDTO> patients) {
         progressTracker.incrementProcessedCount();
         try {
-            future.get();
-        } catch (InterruptedException | ExecutionException e) {
-            analyzeException(futureHandles, progressTracker, e);
-
+            EobSearchResult result = future.get();
+            if (result != null) {
+                result.setEobs(result.getEobs().stream().filter(c -> validPatientInContract(c, patients)).collect(Collectors.toList()));
+            }
+            return result;
         } catch (CancellationException e) {
             // This could happen in the rare event that a job was cancelled mid-process.
             // due to which the futures in the queue (that were not yet in progress) were cancelled.
             // Nothing to be done here
             log.warn("CancellationException while calling Future.get() - Job may have been cancelled");
+        } catch (InterruptedException | ExecutionException | RuntimeException e) {
+            analyzeException(futureHandles, progressTracker, e);
+        } catch (Exception ex) {
+            System.out.println("Other");
         }
+        return null;
     }
 
-    private void analyzeException(List<Future<Void>> futureHandles, ProgressTracker progressTracker, Exception e) {
+    /**
+     * returns true if the patient is a valid member of a contract, false otherwise. If either value is empty,
+     * it returns false
+     *
+     * @param benefit  - The benefit to check
+     * @param patients - the patient map containing the patient id & patient object
+     * @return true if this patient is a member of the correct contract
+     */
+    boolean validPatientInContract(ExplanationOfBenefit benefit, Map<String, ContractBeneficiaries.PatientDTO> patients) {
+        if (benefit == null || patients == null) {
+            log.debug("Passed an invalid benefit or an invalid list of patients");
+            return false;
+        }
+        String patientId = benefit.getPatient().getReference();
+        if (patientId == null) {
+            return false;
+        }
+        patientId = patientId.replaceFirst("Patient/", "");
+        if (patients.get(patientId) == null) {
+            log.error(patientId + " returned in EOB, but not a member of a contract");
+            return false;
+        }
+        return true;
+    }
+
+    private void analyzeException(List<Future<EobSearchResult>> futureHandles, ProgressTracker progressTracker, Exception e) {
         progressTracker.incrementFailureCount();
 
         if (progressTracker.isErrorCountBelowThreshold()) {
@@ -358,6 +323,18 @@ public class ContractProcessorImpl implements ContractProcessor {
             log.error("{} out of {} records failed. Stopping job", progressTracker.getFailureCount(), progressTracker.getTotalCount());
             throw new RuntimeException("Too many patient records in the job had failures");
         }
+    }
+
+    private void writeExceptionToContractErrorFile(StreamHelper helper, String data, Exception e) throws IOException {
+        var errMsg = ExceptionUtils.getRootCauseMessage(e);
+        var operationOutcome = FHIRUtil.getErrorOutcome(errMsg);
+
+        var jsonParser = fhirContext.newJsonParser();
+        var payload = jsonParser.encodeResourceToString(operationOutcome) + System.lineSeparator();
+
+        var byteArrayOutputStream = new ByteArrayOutputStream();
+        byteArrayOutputStream.write(payload.getBytes(StandardCharsets.UTF_8));
+        helper.addError(data);
     }
 
     /**
@@ -390,7 +367,7 @@ public class ContractProcessorImpl implements ContractProcessor {
      * Once the job writer is finished, create a list of job output objects with
      * the data files and the error files
      *
-     * @param dataFiles - the results of writing the contract
+     * @param dataFiles  - the results of writing the contract
      * @param errorFiles - any errors that arose due to writing the contract
      * @return the list of job output objects
      */
@@ -418,8 +395,8 @@ public class ContractProcessorImpl implements ContractProcessor {
      * From a file, return the JobOutput object
      *
      * @param outputFile - the output file from the job
-     * @param isError - if there was an error
-     * @return - the joub output object
+     * @param isError    - if there was an error
+     * @return - the job output object
      */
     private JobOutput createJobOutput(Path outputFile, boolean isError) {
         JobOutput jobOutput = new JobOutput();

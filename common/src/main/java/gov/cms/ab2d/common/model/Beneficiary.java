@@ -16,7 +16,6 @@ import java.util.Set;
 @Getter
 @Setter
 public class Beneficiary {
-
     @Id
     @GeneratedValue
     private Long id;
@@ -27,6 +26,4 @@ public class Beneficiary {
 
     @OneToMany(mappedBy = "beneficiary")
     private Set<Coverage> coverages = new HashSet<>();
-
-
 }

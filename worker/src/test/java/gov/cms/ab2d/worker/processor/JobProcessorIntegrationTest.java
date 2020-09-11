@@ -11,7 +11,6 @@ import gov.cms.ab2d.common.model.User;
 import gov.cms.ab2d.common.repository.ContractRepository;
 import gov.cms.ab2d.common.repository.JobOutputRepository;
 import gov.cms.ab2d.common.repository.JobRepository;
-import gov.cms.ab2d.common.repository.OptOutRepository;
 import gov.cms.ab2d.common.repository.SponsorRepository;
 import gov.cms.ab2d.common.repository.UserRepository;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
@@ -61,7 +60,7 @@ import static org.mockito.Mockito.when;
 @SpringIntegrationTest(noAutoStartup = {"inboundChannelAdapter", "*Source*"})
 @Transactional
 class JobProcessorIntegrationTest {
-    private Random random = new Random();
+    private final Random random = new Random();
 
     private JobProcessor cut;       // class under test
 
@@ -82,8 +81,6 @@ class JobProcessorIntegrationTest {
     @Autowired
     @Qualifier("contractAdapterStub")
     private ContractBeneSearch contractBeneSearchStub;
-    @Autowired
-    private OptOutRepository optOutRepository;
     @Autowired
     private SqlEventLogger sqlEventLogger;
     @Mock
@@ -129,14 +126,14 @@ class JobProcessorIntegrationTest {
         fail = new RuntimeException("TEST EXCEPTION");
 
         FhirContext fhirContext = FhirContext.forDstu3();
-        PatientClaimsProcessor patientClaimsProcessor = new PatientClaimsProcessorImpl(mockBfdClient, fhirContext, logManager);
+        PatientClaimsProcessor patientClaimsProcessor = new PatientClaimsProcessorImpl(mockBfdClient, logManager);
         ReflectionTestUtils.setField(patientClaimsProcessor, "startDate", "01/01/1900");
         ContractProcessor contractProcessor = new ContractProcessorImpl(
                 fileService,
                 jobRepository,
                 patientClaimsProcessor,
-                optOutRepository,
-                logManager
+                logManager,
+                fhirContext
         );
 
         ReflectionTestUtils.setField(contractProcessor, "cancellationCheckFrequency", 10);
