@@ -8,11 +8,11 @@ import javax.persistence.*;
 
 import static javax.persistence.EnumType.STRING;
 
-@Entity(name = "bene_coverage_search")
+@Entity(name = "bene_coverage_period")
 @Getter
 @Setter
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
-public class CoverageSearch {
+public class CoveragePeriod {
 
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)

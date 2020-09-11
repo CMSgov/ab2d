@@ -19,8 +19,8 @@ public class Coverage extends TimestampBase {
     private Long id;
 
     @ManyToOne
-    @JoinColumn(name = "bene_coverage_search_id")
-    private CoverageSearch coverageSearch;
+    @JoinColumn(name = "bene_coverage_period_id")
+    private CoveragePeriod coveragePeriod;
 
     @ManyToOne
     @JoinColumn(name = "bene_coverage_search_event_id")

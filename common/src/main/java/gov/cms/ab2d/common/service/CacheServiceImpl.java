@@ -2,10 +2,10 @@ package gov.cms.ab2d.common.service;
 
 import gov.cms.ab2d.common.dto.ClearCoverageCacheRequest;
 import gov.cms.ab2d.common.model.Contract;
-import gov.cms.ab2d.common.model.CoverageSearch;
+import gov.cms.ab2d.common.model.CoveragePeriod;
 import gov.cms.ab2d.common.repository.ContractRepository;
 import gov.cms.ab2d.common.repository.CoverageRepository;
-import gov.cms.ab2d.common.repository.CoverageSearchRepository;
+import gov.cms.ab2d.common.repository.CoveragePeriodRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -26,7 +26,7 @@ public class CacheServiceImpl implements CacheService {
 
     private final ContractRepository contractRepo;
     private final CoverageRepository coverageRepo;
-    private final CoverageSearchRepository coverageSearchRepo;
+    private final CoveragePeriodRepository coverageSearchRepo;
 
     @Override
     @Transactional
@@ -43,23 +43,23 @@ public class CacheServiceImpl implements CacheService {
 
         int deletedCount = 0;
         if (hasMonth && hasContractNumber && hasYear) {
-            CoverageSearch coverageSearch = coverageSearchRepo.getByContractIdAndMonthAndYear(contractId, month, year);
-            deletedCount = coverageRepo.removeAllByCoverageSearch(coverageSearch);
+            CoveragePeriod coveragePeriod = coverageSearchRepo.getByContractIdAndMonthAndYear(contractId, month, year);
+            deletedCount = coverageRepo.removeAllByCoveragePeriod(coveragePeriod);
             log.info("[{}] {} contractNumber:[{}] and month-year:[{}-{}]", deletedCount, DEFAULT_MESG, contractNumber, month, year);
 
         } else if (hasContractNumber) {
-            List<CoverageSearch> coverageSearchIds = coverageSearchRepo.findAllByContractId(contractId);
+            List<CoveragePeriod> coveragePeriodIds = coverageSearchRepo.findAllByContractId(contractId);
 
-            for (CoverageSearch coverageSearch : coverageSearchIds) {
-                deletedCount = coverageRepo.removeAllByCoverageSearch(coverageSearch);
+            for (CoveragePeriod coveragePeriod : coveragePeriodIds) {
+                deletedCount = coverageRepo.removeAllByCoveragePeriod(coveragePeriod);
                 log.info("[{}] {} contractNumber:[{}]", deletedCount, DEFAULT_MESG, contractNumber);
             }
 
         } else if (hasMonth && hasYear) {
-            List<CoverageSearch> coverageSearches = coverageSearchRepo.findAllByMonthAndYear(month, year);
+            List<CoveragePeriod> coveragePeriods = coverageSearchRepo.findAllByMonthAndYear(month, year);
 
-            for (CoverageSearch coverageSearch : coverageSearches) {
-                deletedCount = coverageRepo.removeAllByCoverageSearch(coverageSearch);
+            for (CoveragePeriod coveragePeriod : coveragePeriods) {
+                deletedCount = coverageRepo.removeAllByCoveragePeriod(coveragePeriod);
                 log.info("[{}] {} month-year:[{}-{}]", deletedCount, DEFAULT_MESG, month, year);
             }
         }

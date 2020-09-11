@@ -36,7 +36,8 @@ class CacheServiceImplTest {
 
     @Autowired CacheService cut;
     @Autowired CoverageRepository coverageRepo;
-    @Autowired CoverageSearchRepository coverageSearchRepo;
+    @Autowired
+    CoveragePeriodRepository coverageSearchRepo;
     @Autowired CoverageSearchEventRepository coverageSearchEventRepo;
     @Autowired ContractRepository contractRepo;
     @Autowired SponsorRepository sponsorRepo;
@@ -64,14 +65,14 @@ class CacheServiceImplTest {
         sponsor = createSponsor();
         contract = createContract(sponsor, contractNumber);
 
-        CoverageSearch coverageSearch = createCoverageSearch(contract, january, YEAR);
-        CoverageSearchEvent coverageSearchEvent = createCoverageSearchEvent(coverageSearch, "testing");
+        CoveragePeriod coveragePeriod = createCoverageSearch(contract, january, YEAR);
+        CoverageSearchEvent coverageSearchEvent = createCoverageSearchEvent(coveragePeriod, "testing");
 
-        createCoverage(coverageSearch, coverageSearchEvent, createBeneId());
-        createCoverage(coverageSearch, coverageSearchEvent, createBeneId());
-        createCoverage(coverageSearch, coverageSearchEvent, createBeneId());
-        createCoverage(coverageSearch, coverageSearchEvent, createBeneId());
-        createCoverage(coverageSearch, coverageSearchEvent, createBeneId());
+        createCoverage(coveragePeriod, coverageSearchEvent, createBeneId());
+        createCoverage(coveragePeriod, coverageSearchEvent, createBeneId());
+        createCoverage(coveragePeriod, coverageSearchEvent, createBeneId());
+        createCoverage(coveragePeriod, coverageSearchEvent, createBeneId());
+        createCoverage(coveragePeriod, coverageSearchEvent, createBeneId());
     }
 
     @Test
@@ -116,8 +117,8 @@ class CacheServiceImplTest {
 
         cut.clearCache(request);
 
-        CoverageSearch coverageSearch = coverageSearchRepo.getByContractIdAndMonthAndYear(contract.getId(), january, YEAR);
-        final List<String> activePatientIds = coverageRepo.findActiveBeneficiaryIds(coverageSearch);
+        CoveragePeriod coveragePeriod = coverageSearchRepo.getByContractIdAndMonthAndYear(contract.getId(), january, YEAR);
+        final List<String> activePatientIds = coverageRepo.findActiveBeneficiaryIds(coveragePeriod);
         assertTrue(activePatientIds.isEmpty());
     }
 
@@ -125,16 +126,16 @@ class CacheServiceImplTest {
     void given_contractNumber_only_should_clear_cache() {
         //given
         //given multiple months for a specific contract
-        CoverageSearch febCoverage = createCoverageSearch(contract, february, YEAR);
+        CoveragePeriod febCoverage = createCoverageSearch(contract, february, YEAR);
         CoverageSearchEvent febEvent = createCoverageSearchEvent(febCoverage, "testing");
 
-        CoverageSearch marchCoverage = createCoverageSearch(contract, march, YEAR);
+        CoveragePeriod marchCoverage = createCoverageSearch(contract, march, YEAR);
         CoverageSearchEvent marchEvent = createCoverageSearchEvent(marchCoverage, "testing");
 
-        CoverageSearch aprilCoverage = createCoverageSearch(contract, april, YEAR);
+        CoveragePeriod aprilCoverage = createCoverageSearch(contract, april, YEAR);
         CoverageSearchEvent aprilEvent = createCoverageSearchEvent(aprilCoverage, "testing");
 
-        CoverageSearch mayCoverage = createCoverageSearch(contract, may, YEAR);
+        CoveragePeriod mayCoverage = createCoverageSearch(contract, may, YEAR);
         CoverageSearchEvent mayEvent = createCoverageSearchEvent(mayCoverage, "testing");
 
         createCoverage(febCoverage, febEvent, createBeneId());
@@ -156,20 +157,20 @@ class CacheServiceImplTest {
     private List<String> getAllActivePatientIds() {
         final List<String> patientIds = new ArrayList<>();
 
-        CoverageSearch coverageSearch = coverageSearchRepo.getByContractIdAndMonthAndYear(contract.getId(), january, YEAR);
-        patientIds.addAll(coverageRepo.findActiveBeneficiaryIds(coverageSearch));
+        CoveragePeriod coveragePeriod = coverageSearchRepo.getByContractIdAndMonthAndYear(contract.getId(), january, YEAR);
+        patientIds.addAll(coverageRepo.findActiveBeneficiaryIds(coveragePeriod));
 
-        coverageSearch = coverageSearchRepo.getByContractIdAndMonthAndYear(contract.getId(), february, YEAR);
-        patientIds.addAll(coverageRepo.findActiveBeneficiaryIds(coverageSearch));
+        coveragePeriod = coverageSearchRepo.getByContractIdAndMonthAndYear(contract.getId(), february, YEAR);
+        patientIds.addAll(coverageRepo.findActiveBeneficiaryIds(coveragePeriod));
 
-        coverageSearch = coverageSearchRepo.getByContractIdAndMonthAndYear(contract.getId(), march, YEAR);
-        patientIds.addAll(coverageRepo.findActiveBeneficiaryIds(coverageSearch));
+        coveragePeriod = coverageSearchRepo.getByContractIdAndMonthAndYear(contract.getId(), march, YEAR);
+        patientIds.addAll(coverageRepo.findActiveBeneficiaryIds(coveragePeriod));
 
-        coverageSearch = coverageSearchRepo.getByContractIdAndMonthAndYear(contract.getId(), april, YEAR);
-        patientIds.addAll(coverageRepo.findActiveBeneficiaryIds(coverageSearch));
+        coveragePeriod = coverageSearchRepo.getByContractIdAndMonthAndYear(contract.getId(), april, YEAR);
+        patientIds.addAll(coverageRepo.findActiveBeneficiaryIds(coveragePeriod));
 
-        coverageSearch = coverageSearchRepo.getByContractIdAndMonthAndYear(contract.getId(), may, YEAR);
-        patientIds.addAll(coverageRepo.findActiveBeneficiaryIds(coverageSearch));
+        coveragePeriod = coverageSearchRepo.getByContractIdAndMonthAndYear(contract.getId(), may, YEAR);
+        patientIds.addAll(coverageRepo.findActiveBeneficiaryIds(coveragePeriod));
 
         return patientIds;
     }
@@ -188,8 +189,8 @@ class CacheServiceImplTest {
         cut.clearCache(request);
 
         //then
-        CoverageSearch coverageSearch = coverageSearchRepo.getByContractIdAndMonthAndYear(contract.getId(), january, YEAR);
-        final List<String> activePatientIds = coverageRepo.findActiveBeneficiaryIds(coverageSearch);
+        CoveragePeriod coveragePeriod = coverageSearchRepo.getByContractIdAndMonthAndYear(contract.getId(), january, YEAR);
+        final List<String> activePatientIds = coverageRepo.findActiveBeneficiaryIds(coveragePeriod);
         assertTrue(activePatientIds.isEmpty());
     }
 
@@ -197,16 +198,16 @@ class CacheServiceImplTest {
     @Test
     void when_month_and_contractNumber_is_omitted_clear_all_rows_from_table() {
         //given multiple months for a specific contract
-        CoverageSearch febCoverage = createCoverageSearch(contract, february, YEAR);
+        CoveragePeriod febCoverage = createCoverageSearch(contract, february, YEAR);
         CoverageSearchEvent febEvent = createCoverageSearchEvent(febCoverage, "testing");
 
-        CoverageSearch marchCoverage = createCoverageSearch(contract, march, YEAR);
+        CoveragePeriod marchCoverage = createCoverageSearch(contract, march, YEAR);
         CoverageSearchEvent marchEvent = createCoverageSearchEvent(marchCoverage, "testing");
 
-        CoverageSearch aprilCoverage = createCoverageSearch(contract, april, YEAR);
+        CoveragePeriod aprilCoverage = createCoverageSearch(contract, april, YEAR);
         CoverageSearchEvent aprilEvent = createCoverageSearchEvent(aprilCoverage, "testing");
 
-        CoverageSearch mayCoverage = createCoverageSearch(contract, may, YEAR);
+        CoveragePeriod mayCoverage = createCoverageSearch(contract, may, YEAR);
         CoverageSearchEvent mayEvent = createCoverageSearchEvent(mayCoverage, "testing");
 
         createCoverage(febCoverage, febEvent, createBeneId());
@@ -225,32 +226,32 @@ class CacheServiceImplTest {
     private void createContractAndCoverage(final int month, final int year) {
         final String contractNumber = "CONTRACT_" + Instant.now().getNano();
         final Contract contract = createContract(sponsor, contractNumber);
-        final CoverageSearch coverageSearch = createCoverageSearch(contract, month, year);
-        final CoverageSearchEvent coverageSearchEvent = createCoverageSearchEvent(coverageSearch, "testing");
+        final CoveragePeriod coveragePeriod = createCoverageSearch(contract, month, year);
+        final CoverageSearchEvent coverageSearchEvent = createCoverageSearchEvent(coveragePeriod, "testing");
 
-        createCoverage(coverageSearch, coverageSearchEvent, createBeneId());
-        createCoverage(coverageSearch, coverageSearchEvent, createBeneId());
-        createCoverage(coverageSearch, coverageSearchEvent, createBeneId());
-        createCoverage(coverageSearch, coverageSearchEvent, createBeneId());
-        createCoverage(coverageSearch, coverageSearchEvent, createBeneId());
+        createCoverage(coveragePeriod, coverageSearchEvent, createBeneId());
+        createCoverage(coveragePeriod, coverageSearchEvent, createBeneId());
+        createCoverage(coveragePeriod, coverageSearchEvent, createBeneId());
+        createCoverage(coveragePeriod, coverageSearchEvent, createBeneId());
+        createCoverage(coveragePeriod, coverageSearchEvent, createBeneId());
     }
 
     private String createBeneId() {
         return "patientId_" + Instant.now().getNano();
     }
 
-    private CoverageSearch createCoverageSearch(Contract contract, int month, int year) {
-        CoverageSearch coverageSearch = new CoverageSearch();
-        coverageSearch.setContract(contract);
-        coverageSearch.setMonth(month);
-        coverageSearch.setYear(year);
+    private CoveragePeriod createCoverageSearch(Contract contract, int month, int year) {
+        CoveragePeriod coveragePeriod = new CoveragePeriod();
+        coveragePeriod.setContract(contract);
+        coveragePeriod.setMonth(month);
+        coveragePeriod.setYear(year);
 
-        return coverageSearchRepo.save(coverageSearch);
+        return coverageSearchRepo.save(coveragePeriod);
     }
 
-    private CoverageSearchEvent createCoverageSearchEvent(CoverageSearch coverageSearch, String description) {
+    private CoverageSearchEvent createCoverageSearchEvent(CoveragePeriod coveragePeriod, String description) {
         CoverageSearchEvent coverageSearchEvent = new CoverageSearchEvent();
-        coverageSearchEvent.setCoverageSearch(coverageSearch);
+        coverageSearchEvent.setCoveragePeriod(coveragePeriod);
         coverageSearchEvent.setNewStatus(JobStatus.SUBMITTED);
         coverageSearchEvent.setOccuredAt(OffsetDateTime.now(ZoneOffset.UTC));
         coverageSearchEvent.setDescription(description);
@@ -258,9 +259,9 @@ class CacheServiceImplTest {
         return coverageSearchEventRepo.save(coverageSearchEvent);
     }
 
-    private Coverage createCoverage(CoverageSearch coverageSearch, CoverageSearchEvent coverageSearchEvent, String bene) {
+    private Coverage createCoverage(CoveragePeriod coveragePeriod, CoverageSearchEvent coverageSearchEvent, String bene) {
         Coverage coverage = new Coverage();
-        coverage.setCoverageSearch(coverageSearch);
+        coverage.setCoveragePeriod(coveragePeriod);
         coverage.setCoverageSearchEvent(coverageSearchEvent);
         coverage.setBeneficiaryId(bene);
         return coverageRepo.save(coverage);

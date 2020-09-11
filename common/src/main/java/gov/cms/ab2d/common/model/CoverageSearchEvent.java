@@ -19,8 +19,8 @@ public class CoverageSearchEvent {
     private Long id;
 
     @ManyToOne
-    @JoinColumn(name = "bene_coverage_search_id")
-    private CoverageSearch coverageSearch;
+    @JoinColumn(name = "bene_coverage_period_id")
+    private CoveragePeriod coveragePeriod;
 
     @Column(name = "time_of_event")
     private OffsetDateTime occuredAt;
