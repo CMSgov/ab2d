@@ -277,8 +277,6 @@ public class ContractProcessorImpl implements ContractProcessor {
             log.warn("CancellationException while calling Future.get() - Job may have been cancelled");
         } catch (InterruptedException | ExecutionException | RuntimeException e) {
             analyzeException(futureHandles, progressTracker, e);
-        } catch (Exception ex) {
-            System.out.println("Other");
         }
         return null;
     }
@@ -325,7 +323,7 @@ public class ContractProcessorImpl implements ContractProcessor {
         }
     }
 
-    private void writeExceptionToContractErrorFile(StreamHelper helper, String data, Exception e) throws IOException {
+    void writeExceptionToContractErrorFile(StreamHelper helper, String data, Exception e) throws IOException {
         var errMsg = ExceptionUtils.getRootCauseMessage(e);
         var operationOutcome = FHIRUtil.getErrorOutcome(errMsg);
 
