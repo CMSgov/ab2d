@@ -23,8 +23,8 @@ import static gov.cms.ab2d.common.util.DateUtil.getESTOffset;
 @Entity
 @Getter
 @Setter
-@EqualsAndHashCode(onlyExplicitlyIncluded = true)
-public class Contract {
+@EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = false)
+public class Contract extends TimestampBase {
 
     public static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("MM/dd/yyyy H:m Z");
 

@@ -21,7 +21,7 @@ import java.util.stream.Collectors;
 @Entity
 @Getter
 @Setter
-public class Sponsor {
+public class Sponsor extends TimestampBase {
 
     @Id
     @GeneratedValue
