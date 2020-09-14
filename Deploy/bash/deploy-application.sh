@@ -399,7 +399,7 @@ fi
 
 # Get HPMS URL
 
-AB2D_HPMS_URL=$(./get-database-secret.py $CMS_ENV_SS ab2d_hpms_url $DATABASE_SECRET_DATETIME)
+AB2D_HPMS_URL=$(./get-database-secret.py $CMS_ENV ab2d_hpms_url $DATABASE_SECRET_DATETIME)
 
 if [ -z "${AB2D_HPMS_URL}" ]; then
   echo "**************************************"
@@ -410,7 +410,7 @@ fi
 
 # Get HPMS AUTH URL
 
-AB2D_HPMS_AUTH_URL=$(./get-database-secret.py $CMS_ENV_SS ab2d_hpms_auth_url $DATABASE_SECRET_DATETIME)
+AB2D_HPMS_AUTH_URL=$(./get-database-secret.py $CMS_ENV ab2d_hpms_auth_url $DATABASE_SECRET_DATETIME)
 
 if [ -z "${AB2D_HPMS_AUTH_URL}" ]; then
   echo "*******************************************"
@@ -421,7 +421,7 @@ fi
 
 # Get HPMS AUTH key id
 
-AB2D_HPMS_AUTH_KEY_ID=$(./get-database-secret.py $CMS_ENV_SS ab2d_hpms_auth_key_id $DATABASE_SECRET_DATETIME)
+AB2D_HPMS_AUTH_KEY_ID=$(./get-database-secret.py $CMS_ENV ab2d_hpms_auth_key_id $DATABASE_SECRET_DATETIME)
 
 if [ -z "${AB2D_HPMS_AUTH_KEY_ID}" ]; then
   echo "**********************************************"
@@ -432,7 +432,7 @@ fi
 
 # Get HPMS AUTH key secret
 
-AB2D_HPMS_AUTH_KEY_SECRET=$(./get-database-secret.py $CMS_ENV_SS ab2d_hpms_auth_key_secret $DATABASE_SECRET_DATETIME)
+AB2D_HPMS_AUTH_KEY_SECRET=$(./get-database-secret.py $CMS_ENV ab2d_hpms_auth_key_secret $DATABASE_SECRET_DATETIME)
 
 if [ -z "${AB2D_HPMS_AUTH_KEY_SECRET}" ]; then
   echo "**************************************************"
