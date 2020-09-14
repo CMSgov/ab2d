@@ -92,6 +92,8 @@ public class ContractProcessorImpl implements ContractProcessor {
         long numberOfEobs = 0;
         var jobUuid = progressTracker.getJobUuid();
         Job job = jobRepository.findByJobUuid(jobUuid);
+        List<Path> dataFiles = new ArrayList<>();
+        List<Path> errorFiles = new ArrayList<>();
         int recordsProcessedCount = 0;
         try (StreamHelper helper = new TextStreamHelperImpl(outputDirPath, contractNumber, getRollOverThreshold(), tryLockTimeout,
                 eventLogger, job)) {
@@ -123,11 +125,12 @@ public class ContractProcessorImpl implements ContractProcessor {
 
             log.info("Finished writing {} EOBs for contract {}", numberOfEobs, contractNumber);
             // All jobs are done, return the job output records
-            return createJobOutputs(helper.getDataFiles(), helper.getErrorFiles());
+            dataFiles = helper.getDataFiles();
+            errorFiles = helper.getErrorFiles();
         } catch (IOException ex) {
             log.error("Unable to open output file");
         }
-        return null;
+        return createJobOutputs(dataFiles, errorFiles);
     }
 
     /**
