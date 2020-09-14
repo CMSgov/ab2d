@@ -8,6 +8,7 @@ import gov.cms.ab2d.common.repository.*;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.DataSetup;
 import org.junit.Assert;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -63,17 +64,20 @@ public class JobOutputServiceTest {
     // Be safe and make sure nothing from another test will impact current test
     @BeforeEach
     public void setup() {
-        contractRepository.deleteAll();
-        jobRepository.deleteAll();
-        userRepository.deleteAll();
-        sponsorRepository.deleteAll();
-
         dataSetup.setupUser(List.of());
 
         SecurityContextHolder.getContext().setAuthentication(
                 new UsernamePasswordAuthenticationToken(
                         new org.springframework.security.core.userdetails.User(TEST_USER,
                                 "test", new ArrayList<>()), "pass"));
+    }
+
+    @AfterEach
+    public void tearDown() {
+        contractRepository.deleteAll();
+        jobRepository.deleteAll();
+        userRepository.deleteAll();
+        sponsorRepository.deleteAll();
     }
 
     @Test

@@ -46,7 +46,7 @@ public class HpmsMockControllerTest {
         assertEquals(HttpStatus.OK, response.getStatusCode());
         String body = response.getBody();
         assertNotNull(body);
-        assertTrue(body.contains("\"attestationDate\": \"2/13/2020\""));
+        assertTrue(body.contains("\"attestationDate\": \"02/13/2020\""));
     }
 
 }
