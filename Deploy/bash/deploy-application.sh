@@ -455,11 +455,11 @@ if [ "${DATABASE_USER}" == "ERROR: Cannot get database secret because KMS key is
   || [ "${NEW_RELIC_LICENSE_KEY}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
   || [ "${VPN_PRIVATE_IP_ADDRESS_CIDR_RANGE}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
   || [ "${AB2D_KEYSTORE_LOCATION}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
-  || [ "${AB2D_KEYSTORE_PASSWORD}" == "ERROR: Cannot get database secret because KMS key is disabled!" ]
-  || [ "${AB2D_OKTA_JWT_ISSUER}" == "ERROR: Cannot get database secret because KMS key is disabled!" ]
-  || [ "${AB2D_HPMS_URL}" == "ERROR: Cannot get database secret because KMS key is disabled!" ]
-  || [ "${AB2D_HPMS_AUTH_URL}" == "ERROR: Cannot get database secret because KMS key is disabled!" ]
-  || [ "${AB2D_HPMS_AUTH_KEY_ID}" == "ERROR: Cannot get database secret because KMS key is disabled!" ]
+  || [ "${AB2D_KEYSTORE_PASSWORD}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
+  || [ "${AB2D_OKTA_JWT_ISSUER}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
+  || [ "${AB2D_HPMS_URL}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
+  || [ "${AB2D_HPMS_AUTH_URL}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
+  || [ "${AB2D_HPMS_AUTH_KEY_ID}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
   || [ "${AB2D_HPMS_AUTH_KEY_SECRET}" == "ERROR: Cannot get database secret because KMS key is disabled!" ]; then
     echo "ERROR: Cannot get secrets because KMS key is disabled!"
     exit 1
