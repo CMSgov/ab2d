@@ -262,6 +262,46 @@ set_secrets ()
     SECONDARY_USER_OKTA_CLIENT_PASSWORD=$(./get-database-secret.py $CMS_ENV_SS secondary_user_okta_client_password $DATABASE_SECRET_DATETIME)
   fi
 
+  # Create or get HPMS URL
+
+  AB2D_HPMS_URL=$(./get-database-secret.py $CMS_ENV_SS ab2d_hpms_url $DATABASE_SECRET_DATETIME)
+  if [ -z "${AB2D_HPMS_URL}" ]; then
+    echo "*********************************************************"
+    ./create-database-secret.py $CMS_ENV_SS ab2d_hpms_url $KMS_KEY_ID $DATABASE_SECRET_DATETIME
+    echo "*********************************************************"
+    AB2D_HPMS_URL=$(./get-database-secret.py $CMS_ENV_SS ab2d_hpms_url $DATABASE_SECRET_DATETIME)
+  fi
+
+  # Create or get HPMS AUTH URL
+
+  AB2D_HPMS_AUTH_URL=$(./get-database-secret.py $CMS_ENV_SS ab2d_hpms_auth_url $DATABASE_SECRET_DATETIME)
+  if [ -z "${AB2D_HPMS_AUTH_URL}" ]; then
+    echo "*********************************************************"
+    ./create-database-secret.py $CMS_ENV_SS ab2d_hpms_auth_url $KMS_KEY_ID $DATABASE_SECRET_DATETIME
+    echo "*********************************************************"
+    AB2D_HPMS_AUTH_URL=$(./get-database-secret.py $CMS_ENV_SS ab2d_hpms_auth_url $DATABASE_SECRET_DATETIME)
+  fi
+
+  # Create or get HPMS AUTH key id
+
+  AB2D_HPMS_AUTH_KEY_ID=$(./get-database-secret.py $CMS_ENV_SS ab2d_hpms_auth_key_id $DATABASE_SECRET_DATETIME)
+  if [ -z "${AB2D_HPMS_AUTH_KEY_ID}" ]; then
+    echo "*********************************************************"
+    ./create-database-secret.py $CMS_ENV_SS ab2d_hpms_auth_key_id $KMS_KEY_ID $DATABASE_SECRET_DATETIME
+    echo "*********************************************************"
+    AB2D_HPMS_AUTH_KEY_ID=$(./get-database-secret.py $CMS_ENV_SS ab2d_hpms_auth_key_id $DATABASE_SECRET_DATETIME)
+  fi
+
+  # Create or get HPMS AUTH key secret
+
+  AB2D_HPMS_AUTH_KEY_SECRET=$(./get-database-secret.py $CMS_ENV_SS ab2d_hpms_auth_key_secret $DATABASE_SECRET_DATETIME)
+  if [ -z "${AB2D_HPMS_AUTH_KEY_SECRET}" ]; then
+    echo "*********************************************************"
+    ./create-database-secret.py $CMS_ENV_SS ab2d_hpms_auth_key_secret $KMS_KEY_ID $DATABASE_SECRET_DATETIME
+    echo "*********************************************************"
+    AB2D_HPMS_AUTH_KEY_SECRET=$(./get-database-secret.py $CMS_ENV_SS ab2d_hpms_auth_key_secret $DATABASE_SECRET_DATETIME)
+  fi
+  
   # If any databse secret produced an error, exit the script
 
   if [ "${DATABASE_USER}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
@@ -281,7 +321,11 @@ set_secrets ()
     || [ "${OKTA_CLIENT_ID}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
     || [ "${OKTA_CLIENT_PASSWORD}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
     || [ "${SECONDARY_USER_OKTA_CLIENT_ID}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
-    || [ "${SECONDARY_USER_OKTA_CLIENT_PASSWORD}" == "ERROR: Cannot get database secret because KMS key is disabled!" ]; then
+    || [ "${SECONDARY_USER_OKTA_CLIENT_PASSWORD}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
+    || [ "${AB2D_HPMS_URL}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
+    || [ "${AB2D_HPMS_AUTH_URL}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
+    || [ "${AB2D_HPMS_AUTH_KEY_ID}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
+    || [ "${AB2D_HPMS_AUTH_KEY_SECRET}" == "ERROR: Cannot get database secret because KMS key is disabled!" ]; then
       echo "ERROR: Cannot get secrets because KMS key is disabled!"
       exit 1
   fi
@@ -321,14 +365,14 @@ configure_greenfield_environment ()
   
   terraform validate
 
-  # Get the policies that are attached to the "ab2d-spe-developer" role
-  # - the "ab2d-spe-developer" role is controlled by GDIT automation
-  # - any modifications to the "ab2d-spe-developer" role are wiped out by GDIT automation
+  # Get the policies that are attached to the federated login role
+  # - the federated login role is controlled by ITOPS automation
+  # - any modifications to the federated login role are wiped out by ITOPS automation
   # - therefore, we are creating our own role that has the same policies but that also allows us
   #   to set trust relationships
   
   AB2D_SPE_DEVELOPER_POLICIES=$(aws --region "${AWS_DEFAULT_REGION}" iam list-attached-role-policies \
-    --role-name ab2d-spe-developer \
+    --role-name ct-ado-ab2d-application-admin \
     --query "AttachedPolicies[*].PolicyArn" \
     | tr -d '[:space:]\n')
 
