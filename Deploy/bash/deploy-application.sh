@@ -397,6 +397,50 @@ if [ -z "${AB2D_OKTA_JWT_ISSUER}" ]; then
   exit 1
 fi
 
+# Get HPMS URL
+
+AB2D_HPMS_URL=$(./get-database-secret.py $CMS_ENV_SS ab2d_hpms_url $DATABASE_SECRET_DATETIME)
+
+if [ -z "${AB2D_HPMS_URL}" ]; then
+  echo "**************************************"
+  echo "ERROR: AB2D HPMS URL secret not found."
+  echo "**************************************"
+  exit 1
+fi
+
+# Get HPMS AUTH URL
+
+AB2D_HPMS_AUTH_URL=$(./get-database-secret.py $CMS_ENV_SS ab2d_hpms_auth_url $DATABASE_SECRET_DATETIME)
+
+if [ -z "${AB2D_HPMS_AUTH_URL}" ]; then
+  echo "*******************************************"
+  echo "ERROR: AB2D HPMS AUTH URL secret not found."
+  echo "*******************************************"
+  exit 1
+fi
+
+# Get HPMS AUTH key id
+
+AB2D_HPMS_AUTH_KEY_ID=$(./get-database-secret.py $CMS_ENV_SS ab2d_hpms_auth_key_id $DATABASE_SECRET_DATETIME)
+
+if [ -z "${AB2D_HPMS_AUTH_KEY_ID}" ]; then
+  echo "**********************************************"
+  echo "ERROR: AB2D HPMS AUTH KEY ID secret not found."
+  echo "**********************************************"
+  exit 1
+fi
+
+# Get HPMS AUTH key secret
+
+AB2D_HPMS_AUTH_KEY_SECRET=$(./get-database-secret.py $CMS_ENV_SS ab2d_hpms_auth_key_secret $DATABASE_SECRET_DATETIME)
+
+if [ -z "${AB2D_HPMS_AUTH_KEY_SECRET}" ]; then
+  echo "**************************************************"
+  echo "ERROR: AB2D HPMS AUTH KEY SECRET secret not found."
+  echo "**************************************************"
+  exit 1
+fi
+
 # If any databse secret produced an error, exit the script
 
 if [ "${DATABASE_USER}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
@@ -411,7 +455,12 @@ if [ "${DATABASE_USER}" == "ERROR: Cannot get database secret because KMS key is
   || [ "${NEW_RELIC_LICENSE_KEY}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
   || [ "${VPN_PRIVATE_IP_ADDRESS_CIDR_RANGE}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
   || [ "${AB2D_KEYSTORE_LOCATION}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
-  || [ "${AB2D_KEYSTORE_PASSWORD}" == "ERROR: Cannot get database secret because KMS key is disabled!" ]; then
+  || [ "${AB2D_KEYSTORE_PASSWORD}" == "ERROR: Cannot get database secret because KMS key is disabled!" ]
+  || [ "${AB2D_OKTA_JWT_ISSUER}" == "ERROR: Cannot get database secret because KMS key is disabled!" ]
+  || [ "${AB2D_HPMS_URL}" == "ERROR: Cannot get database secret because KMS key is disabled!" ]
+  || [ "${AB2D_HPMS_AUTH_URL}" == "ERROR: Cannot get database secret because KMS key is disabled!" ]
+  || [ "${AB2D_HPMS_AUTH_KEY_ID}" == "ERROR: Cannot get database secret because KMS key is disabled!" ]
+  || [ "${AB2D_HPMS_AUTH_KEY_SECRET}" == "ERROR: Cannot get database secret because KMS key is disabled!" ]; then
     echo "ERROR: Cannot get secrets because KMS key is disabled!"
     exit 1
 fi
@@ -1212,6 +1261,10 @@ terraform apply \
   --var "ab2d_keystore_location=${AB2D_KEYSTORE_LOCATION}" \
   --var "ab2d_keystore_password=${AB2D_KEYSTORE_PASSWORD}" \
   --var "ab2d_okta_jwt_issuer=${AB2D_OKTA_JWT_ISSUER}" \
+  --var "ab2d_hpms_url=${AB2D_HPMS_URL}" \
+  --var "ab2d_hpms_auth_url=${AB2D_HPMS_AUTH_URL}" \
+  --var "ab2d_hpms_auth_key_id=${AB2D_HPMS_AUTH_KEY_ID}" \
+  --var "ab2d_hpms_auth_key_secret=${AB2D_HPMS_AUTH_KEY_SECRET}" \
   --var "stunnel_latest_version=${STUNNEL_LATEST_VERSION}" \
   --var "gold_image_name=${GOLD_IMAGE_NAME}" \
   --target module.api \
