@@ -140,7 +140,7 @@
    ```ShellShession
    $ cd ~/code/ab2d/Deploy \
      && export DATABASE_SECRET_DATETIME_PARAM=2020-01-02-09-15-01 \
-     && ./bash/initialize-greenfield-environment.sh
+     && ./bash/initialize-greenfield-environment-v2.sh
    ```
 
 1. If prompted, set secrets for the target environment
