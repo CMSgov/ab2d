@@ -369,7 +369,7 @@ public class ContractProcessorImpl implements ContractProcessor {
      * @param errorFiles - any errors that arose due to writing the contract
      * @return the list of job output objects
      */
-    private List<JobOutput> createJobOutputs(List<Path> dataFiles, List<Path> errorFiles) {
+    List<JobOutput> createJobOutputs(List<Path> dataFiles, List<Path> errorFiles) {
 
         // create Job Output records for data files from the job writer
         final List<JobOutput> jobOutputs = dataFiles.stream()

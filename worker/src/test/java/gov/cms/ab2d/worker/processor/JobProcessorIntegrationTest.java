@@ -23,6 +23,7 @@ import gov.cms.ab2d.eventlogger.reports.sql.DoAll;
 import gov.cms.ab2d.eventlogger.utils.UtilMethods;
 import gov.cms.ab2d.worker.adapter.bluebutton.ContractBeneSearch;
 import gov.cms.ab2d.worker.service.FileService;
+import gov.cms.ab2d.worker.util.HealthCheck;
 import org.hl7.fhir.dstu3.model.Bundle;
 import org.hl7.fhir.dstu3.model.ExplanationOfBenefit;
 import org.junit.Assert;
@@ -83,6 +84,8 @@ class JobProcessorIntegrationTest {
     private ContractBeneSearch contractBeneSearchStub;
     @Autowired
     private SqlEventLogger sqlEventLogger;
+    @Autowired
+    private HealthCheck healthCheck;
     @Mock
     private KinesisEventLogger kinesisEventLogger;
     @Mock
@@ -223,6 +226,11 @@ class JobProcessorIntegrationTest {
 
         final List<JobOutput> jobOutputs = job.getJobOutputs();
         assertFalse(jobOutputs.isEmpty());
+    }
+
+    @Test
+    void testHealth() {
+        assertTrue(healthCheck.healthy());
     }
 
     @Test
