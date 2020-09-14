@@ -141,6 +141,7 @@
 1. [Appendix UUU: Migrate VictorOps-Slack integration from a real slack user to slack service user](#appendix-uuu-migrate-victorops-slack-integration-from-a-real-slack-user-to-slack-service-user)
 1. [Appendix VVV: Add a volume to jenkins agent and extend the root volume to use it](#appendix-vvv-add-a-volume-to-jenkins-agent-and-extend-the-root-volume-to-use-it)
 1. [Appendix WWW: Whitelist IP addresses in Akamai for Prod](#whitelist-ip-addresses-in-akamai-for-prod)
+1. [Appendix XXX: Fix CloudTamer scripts broken by ITOPS role change](#appendix-xxx-fix-cloudtamer-scripts-broken-by-itops-role-change)
 
 ## Appendix A: Access the CMS AWS console
 
@@ -11706,3 +11707,38 @@ $ sed -i "" 's%cms-ab2d[\/]prod%cms-ab2d/dev%g' _includes/head.html (edited)
 1. Select the **Production** radio button
 
 1. Select **Activate List**
+
+## Appendix XXX: Fix CloudTamer scripts broken by ITOPS role change
+
+1. Ensure that you are on CMS VPN
+
+1. Open Chrome
+
+1. Log on to CloudTamer
+
+1. Select your logon dropdown near the upper right of the page
+
+1. Note the value under "Federated Login"
+
+   *Format:*
+
+   ```
+   {role}/{your eua id}
+   ```
+
+1. At the time of writing, the role is the following:
+
+   ```
+   ct-ado-ab2d-application-admin
+   ```
+
+1. If ITOPS automation has changed the name of this role, you must update the role name in two places
+
+   - within the previous step of this documentation
+
+   - within the following function
+
+     ```
+     ./Deploy/bash/functions/fn_get_temporary_aws_credentials_via_cloudtamer_api.sh
+     ```
+ 
