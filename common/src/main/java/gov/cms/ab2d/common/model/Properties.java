@@ -11,7 +11,7 @@ import javax.validation.constraints.NotNull;
 @Entity
 @Getter
 @Setter
-public class Properties {
+public class Properties extends TimestampBase {
 
     @Id
     @GeneratedValue
