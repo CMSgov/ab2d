@@ -1,6 +1,9 @@
 package gov.cms.ab2d.common.service;
 
-import gov.cms.ab2d.common.model.*;
+import gov.cms.ab2d.common.model.CoveragePeriod;
+import gov.cms.ab2d.common.model.CoverageSearchDiff;
+import gov.cms.ab2d.common.model.CoverageSearchEvent;
+import gov.cms.ab2d.common.model.JobStatus;
 
 import java.util.Collection;
 import java.util.Optional;
@@ -9,7 +12,7 @@ public interface CoverageService {
 
     /**
      * Get {@link CoveragePeriod} in database matching provided triple
-     * @param contractId existing {@link Contract#getId()}
+     * @param contractId existing {@link gov.cms.ab2d.common.model.Contract#getId()}
      * @param month valid month
      * @param year valid year (not later than current year)
      */

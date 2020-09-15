@@ -1,6 +1,10 @@
 package gov.cms.ab2d.common.service;
 
-import gov.cms.ab2d.common.model.*;
+import gov.cms.ab2d.common.model.Coverage;
+import gov.cms.ab2d.common.model.CoveragePeriod;
+import gov.cms.ab2d.common.model.CoverageSearchDiff;
+import gov.cms.ab2d.common.model.CoverageSearchEvent;
+import gov.cms.ab2d.common.model.JobStatus;
 import gov.cms.ab2d.common.repository.CoverageRepository;
 import gov.cms.ab2d.common.repository.CoverageSearchEventRepository;
 import gov.cms.ab2d.common.repository.CoveragePeriodRepository;
@@ -9,7 +13,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.OffsetDateTime;
 import java.util.Collection;
 import java.util.Optional;
 
@@ -28,9 +31,6 @@ public class CoverageServiceImpl implements CoverageService {
 
     @Autowired
     private CoverageSearchEventRepository coverageSearchEventRepo;
-
-    @Autowired
-    private JobService jobService;
 
     @Override
     public CoveragePeriod getCoveragePeriod(long contractId, int month, int year) {
@@ -206,7 +206,6 @@ public class CoverageServiceImpl implements CoverageService {
 
         CoverageSearchEvent newStatus = new CoverageSearchEvent();
         newStatus.setCoveragePeriod(period);
-        newStatus.setOccuredAt(OffsetDateTime.now());
         newStatus.setOldStatus(oldStatus);
         newStatus.setNewStatus(status);
         newStatus.setDescription(description);
