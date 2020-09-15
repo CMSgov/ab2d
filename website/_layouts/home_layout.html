@@ -20,6 +20,21 @@ layout: new
                 'For improved speed, security, and viewing experience, please update your browser to the latest version or view in MS Edge, Chrome, Safari, or Firefox.</div>'
             );
         }
+
+        $.ajax({
+            url: 'https://api.ab2d.cms.gov/health',
+            crossDomain: true,
+            success: function() {
+                $('#api-up-down-icon').addClass('success-api');
+                $('#api-status-text').text('Online');
+                $('.api-status').show();
+            },
+            error: function() {
+                $('#api-up-down-icon').addClass('fail-api');
+                $('#api-status-text').text('Offline');
+                $('.api-status').show();
+            }
+        })
     });
 
     function closeUpgradeBrowser() {
@@ -36,18 +51,21 @@ layout: new
 
 <!-- Header -->
 <header class="masthead">
-    <section class="jarallax" data-jarallax data-speed="0.4" data-jarallax-element="250 -100">
+    <section class="jarallax" data-jarallax data-speed="0.4" data-jarallax-element="250 -100" style="background-color: #333A45;">
         <script type="text/javascript">
             if(!isIE()) {
                 document.write('<img src="assets/img/hero-banner.svg" alt="Image" class="jarallax-img" />');
             }
         </script>
     </section>
-    <div class="container">
+    <div class="container" style="z-index: 100; position: relative;">
         <div class="intro-text"> <img src="assets/img/logo-stacked.svg" class="intro-logo" alt="logo"/>
             <h1 class="intro-heading">Helping Prescription Drug Sponsors Help Patients</h1>
             <div class="divider-small-border center"></div>
             <div class="intro-subtitle">The AB2D API provides Prescription Drug Sponsors with secure Medicare parts A and B claims data for their plan enrollees.</div>
+            <div class="api-status d-flex align-items-center justify-content-center mt-5">
+                <span class="label mr-2">API Status:</span> <span class="value d-flex align-items-center"><i id="api-up-down-icon" class="fas fa-circle fa-xs mr-1"></i><span id="api-status-text"></span></span>
+            </div>
             <div class="next-section-wrap minimal-arrow" data-custom-color="true"> <a href="#start" class="js-scroll-trigger nectar-next-section skip-hash">
                 <svg class="next-arrow" width="40px" height="68px" viewBox="0 0 40 50" xml:space="preserve" aria-label="scroll down">
                 <path stroke="#ffffff" stroke-width="2" fill="none" d="M 20 0 L 20 51"></path>
@@ -58,7 +76,7 @@ layout: new
         </div>
     </div>
 </header>
-<section class="page-section bg-gray py-5 px-3" id="start" role="main">
+<section class="page-section bg-gray py-5 px-3 home-patient-health-section" id="start" role="main">
     <script type="text/javascript">
         if (!isIE()) {
             document.write('<svg preserveAspectRatio = "xMidYMin slice" class = "shape-divider" version = "1.1" xmlns = "http://www.w3.org/2000/svg" ' +
