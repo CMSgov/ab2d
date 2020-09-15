@@ -9,7 +9,9 @@ public class PGInet implements Serializable {
 
     private InetAddress address;
 
-    public PGInet() {}
+    public PGInet() {
+
+    }
 
     public PGInet(InetAddress address) {
         this.address = address;

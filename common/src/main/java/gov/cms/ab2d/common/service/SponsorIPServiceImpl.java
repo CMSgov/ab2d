@@ -41,14 +41,14 @@ public class SponsorIPServiceImpl implements SponsorIPService {
         sponsorIPDTOReturn.setSponsor(sponsorIPDTO.getSponsor());
 
         SponsorIP sponsorIPRetrieved = null;
-        for(String ip : sponsorIPDTO.getIps()) {
+        for (String ip : sponsorIPDTO.getIps()) {
             sponsorIPRetrieved = sponsorIPRepository.save(new SponsorIP(new SponsorIPID(sponsor, createPGInet(ip))));
             sponsorIPDTOReturn.getIps().add(ip);
         }
 
         Sponsor sponsorRetrieved = sponsorIPRetrieved.getSponsorIPID().getSponsor();
 
-        for(SponsorIP sponsorIP : sponsorRetrieved.getSponsorIPs()) {
+        for (SponsorIP sponsorIP : sponsorRetrieved.getSponsorIPs()) {
             sponsorIPDTOReturn.getIps().add(sponsorIP.getSponsorIPID().getIpAddress().getAddress().getHostAddress());
         }
 
@@ -61,7 +61,7 @@ public class SponsorIPServiceImpl implements SponsorIPService {
 
         Sponsor sponsor = getSponsor(sponsorIPDTO.getSponsor());
 
-        for(String ip : sponsorIPDTO.getIps()) {
+        for (String ip : sponsorIPDTO.getIps()) {
             SponsorIPID sponsorIPID = new SponsorIPID(sponsor, createPGInet(ip));
             try {
                 sponsorIPRepository.deleteById(sponsorIPID);
@@ -75,7 +75,7 @@ public class SponsorIPServiceImpl implements SponsorIPService {
 
         SponsorIPDTO sponsorIPDTOReturn = new SponsorIPDTO();
         sponsorIPDTOReturn.setSponsor(sponsorIPDTO.getSponsor());
-        for(SponsorIP sponsorIP : sponsor.getSponsorIPs()) {
+        for (SponsorIP sponsorIP : sponsor.getSponsorIPs()) {
             sponsorIPDTOReturn.getIps().add(sponsorIP.getSponsorIPID().getIpAddress().getAddress().getHostAddress());
         }
 
@@ -90,7 +90,7 @@ public class SponsorIPServiceImpl implements SponsorIPService {
 
         SponsorIPDTO sponsorIPDTO = new SponsorIPDTO();
         sponsorIPDTO.setSponsor(sponsorDTO);
-        for(SponsorIP sponsorIP : sponsorIPs) {
+        for (SponsorIP sponsorIP : sponsorIPs) {
             sponsorIPDTO.getIps().add(sponsorIP.getSponsorIPID().getIpAddress().getAddress().getHostAddress());
         }
 
@@ -117,7 +117,7 @@ public class SponsorIPServiceImpl implements SponsorIPService {
     }
 
     private void checkIPs(SponsorIPDTO sponsorIPDTO) {
-        if(sponsorIPDTO.getIps().isEmpty()) {
+        if (sponsorIPDTO.getIps().isEmpty()) {
             throw new InvalidUserInputException("IPs cannot be empty");
         }
     }
