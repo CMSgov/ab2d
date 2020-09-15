@@ -10,6 +10,8 @@ import lombok.extern.slf4j.Slf4j;
 import java.util.ArrayList;
 import java.util.IntSummaryStatistics;
 import java.util.List;
+import java.util.Map;
+import java.util.Collections;
 
 @Getter
 @Builder
@@ -194,5 +196,14 @@ public class ProgressTracker {
 
         // This is the total completed threads done over the amount that needs to be done
         return ((double) this.totalContractBeneficiariesSearchFinished) / totalToSearch;
+    }
+
+    public Map<String, ContractBeneficiaries.PatientDTO> getPatientsByContract(String contractNumber) {
+        return getPatientsByContracts()
+                .stream()
+                .filter(byContract -> byContract.getContractNumber().equals(contractNumber))
+                .findFirst()
+                .map(ContractBeneficiaries::getPatients)
+                .orElse(Collections.emptyMap());
     }
 }

@@ -126,11 +126,11 @@ public class JobProcessorImpl implements JobProcessor {
         }
 
         // Create a holder for the contract, writer, progress tracker and attested date
-        ContractData contractData = new ContractData(contract, progressTracker, contract.getAttestedOn(), job.getSince(),
+        ContractData contractData = new ContractData(contract, progressTracker, job.getSince(),
                 job.getUser() != null ? job.getUser().getUsername() : null);
 
         final Segment contractSegment = NewRelic.getAgent().getTransaction().startSegment("Patient processing of contract " + contract.getContractNumber());
-        var jobOutputs = contractProcessor.process(outputDirPath, contractData, NDJSON);
+        var jobOutputs = contractProcessor.process(outputDirPath, contractData);
         contractSegment.end();
 
         // For each job output, add to the job and save the result
