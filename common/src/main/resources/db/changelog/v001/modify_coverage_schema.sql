@@ -10,7 +10,9 @@ CREATE TABLE bene_coverage_period
     contract_id BIGINT NOT NULL,
     month INTEGER NOT NULL,
     year INTEGER NOT NULL,
-    status VARCHAR(255)
+    status VARCHAR(255),
+    created TIMESTAMP WITH TIME ZONE,
+    modified TIMESTAMP WITH TIME ZONE
 );
 
 ALTER TABLE bene_coverage_period ADD CONSTRAINT "pk_bene_coverage_period" PRIMARY KEY (id);
@@ -41,6 +43,8 @@ CREATE TABLE event_bene_coverage_search_status_change
     time_of_event TIMESTAMP WITH TIME ZONE,
     old_status VARCHAR(255),
     new_status VARCHAR(255) NOT NULL,
+    created TIMESTAMP WITH TIME ZONE,
+    modified TIMESTAMP WITH TIME ZONE,
     description TEXT
 );
 

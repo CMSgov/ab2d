@@ -10,8 +10,8 @@ import javax.persistence.*;
 @Entity
 @Getter
 @Setter
-@EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = false)
-public class Coverage extends TimestampBase {
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
+public class Coverage {
 
     @Id
     @GeneratedValue

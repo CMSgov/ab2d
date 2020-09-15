@@ -253,7 +253,6 @@ class CacheServiceImplTest {
         CoverageSearchEvent coverageSearchEvent = new CoverageSearchEvent();
         coverageSearchEvent.setCoveragePeriod(coveragePeriod);
         coverageSearchEvent.setNewStatus(JobStatus.SUBMITTED);
-        coverageSearchEvent.setOccuredAt(OffsetDateTime.now(ZoneOffset.UTC));
         coverageSearchEvent.setDescription(description);
 
         return coverageSearchEventRepo.save(coverageSearchEvent);

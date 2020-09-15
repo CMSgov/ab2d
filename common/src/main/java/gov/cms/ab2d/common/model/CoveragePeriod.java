@@ -11,8 +11,8 @@ import static javax.persistence.EnumType.STRING;
 @Entity(name = "bene_coverage_period")
 @Getter
 @Setter
-@EqualsAndHashCode(onlyExplicitlyIncluded = true)
-public class CoveragePeriod {
+@EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = false)
+public class CoveragePeriod extends TimestampBase {
 
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
