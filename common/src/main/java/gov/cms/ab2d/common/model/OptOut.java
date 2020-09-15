@@ -11,7 +11,7 @@ import java.time.LocalDate;
 @Entity
 @Getter
 @Setter
-public class OptOut {
+public class OptOut extends TimestampBase {
 
     @Id
     @GeneratedValue

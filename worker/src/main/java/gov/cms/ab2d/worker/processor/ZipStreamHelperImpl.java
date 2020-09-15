@@ -61,7 +61,7 @@ public class ZipStreamHelperImpl extends StreamHelperImpl {
      * @throws FileNotFoundException if there was an error writing to the file system
      */
     private ZipOutputStream createStream() throws FileNotFoundException {
-        String zipFileName = getPath().toString() + "/" + createZipFileName();
+        String zipFileName = getPath().toString() + File.separator + createZipFileName();
         File f = new File(zipFileName);
         currentFile = f;
         getLogManager().log(EventUtils.getFileEvent(getJob(), f, FileEvent.FileStatus.OPEN));

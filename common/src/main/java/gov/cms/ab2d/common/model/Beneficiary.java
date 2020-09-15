@@ -15,8 +15,7 @@ import java.util.Set;
 @Entity
 @Getter
 @Setter
-public class Beneficiary {
-
+public class Beneficiary extends TimestampBase {
     @Id
     @GeneratedValue
     private Long id;
@@ -27,6 +26,4 @@ public class Beneficiary {
 
     @OneToMany(mappedBy = "beneficiary")
     private Set<Coverage> coverages = new HashSet<>();
-
-
 }

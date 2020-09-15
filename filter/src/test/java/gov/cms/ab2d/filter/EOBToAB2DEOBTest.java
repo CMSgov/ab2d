@@ -18,7 +18,7 @@ class EOBToAB2DEOBTest {
     static AB2DExplanationOfBenefit eobCarrier = null;
     static AB2DExplanationOfBenefit eobSNF = null;
     static {
-        eobCarrier = EOBToAB2DEOB.fromFileInClasspath("eobdata/EOB-for-Carrier-Claims.json");;
+        eobCarrier = EOBToAB2DEOB.fromFileInClasspath("eobdata/EOB-for-Carrier-Claims.json");
         eobSNF = EOBToAB2DEOB.fromFileInClasspath("eobdata/EOB-for-SNF-Claims.json");
     }
 

@@ -98,7 +98,7 @@ fn_get_temporary_aws_credentials_via_cloudtamer_api ()
     --header 'Content-Type: application/json' \
     --header "Authorization: Bearer ${BEARER_TOKEN}" \
     --header 'Content-Type: application/json' \
-    --data-raw "{\"account_number\":\"${IN_AWS_ACCOUNT_NUMBER_CT_API}\",\"iam_role_name\":\"ab2d-spe-developer\"}" \
+    --data-raw "{\"account_number\":\"${IN_AWS_ACCOUNT_NUMBER_CT_API}\",\"iam_role_name\":\"ct-ado-ab2d-application-admin\"}" \
     | jq --raw-output ".data")
 
   # Get temporary AWS credentials
