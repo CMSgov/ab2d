@@ -71,6 +71,7 @@ public class AdminAPIIPTests {
 
     private static final String IP_URL = "/ip";
 
+    // todo Delete me once test teardown is complete
     @BeforeEach
     public void setup() throws JwtVerificationException {
         contractRepository.deleteAll();
