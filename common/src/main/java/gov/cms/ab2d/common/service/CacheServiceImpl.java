@@ -17,12 +17,13 @@ import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Optional;
 
+import static gov.cms.ab2d.common.util.Constants.AB2D_EPOCH;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class CacheServiceImpl implements CacheService {
     private static final String DEFAULT_MESG = "rows deleted from coverage table for";
-    public static final int AB2D_EPOCH = 2020;
 
     private final ContractRepository contractRepo;
     private final CoverageRepository coverageRepo;
@@ -73,7 +74,7 @@ public class CacheServiceImpl implements CacheService {
         final Integer month = request.getMonth();
         if (month != null && (month < 1 || month > 12)) {
             final String errMsg = "invalid value for month. Month must be between 1 and 12";
-            log.error("{} - invalid month  :[{}]", errMsg, month);
+            log.error("{} - invalid month :[{}]", errMsg, month);
             throw new InvalidUserInputException(errMsg);
         }
         return month;
@@ -86,7 +87,7 @@ public class CacheServiceImpl implements CacheService {
 
         if (year != null && (year < AB2D_EPOCH || year > currentYear)) {
             final String errMsg = "invalid value for year. Year must be between " + AB2D_EPOCH + " and " + currentYear;
-            log.error("{} - invalid month  :[{}]", errMsg, year);
+            log.error("{} - invalid month :[{}]", errMsg, year);
             throw new InvalidUserInputException(errMsg);
         }
         return year;

@@ -15,9 +15,9 @@ public interface CoverageRepository extends JpaRepository<Coverage, Long> {
     int countByCoverageSearchEvent(CoverageSearchEvent searchEvent);
 
     @Query(value = "SELECT COUNT(*) FROM (" +
-                            " SELECT id FROM coverage WHERE bene_coverage_search_event_id = ? " +
+                            " SELECT beneficiary_id FROM coverage WHERE bene_coverage_search_event_id = ? " +
                             " INTERSECT " +
-                            " SELECT id FROM coverage WHERE bene_coverage_search_event_id = ? " +
+                            " SELECT beneficiary_id FROM coverage WHERE bene_coverage_search_event_id = ? " +
                     ") I", nativeQuery = true)
     int countIntersection(long searchEventId1, long searchEventId2);
 

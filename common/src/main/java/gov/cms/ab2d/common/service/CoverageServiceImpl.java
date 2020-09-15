@@ -5,17 +5,20 @@ import gov.cms.ab2d.common.model.CoveragePeriod;
 import gov.cms.ab2d.common.model.CoverageSearchDiff;
 import gov.cms.ab2d.common.model.CoverageSearchEvent;
 import gov.cms.ab2d.common.model.JobStatus;
+import gov.cms.ab2d.common.repository.CoveragePeriodRepository;
 import gov.cms.ab2d.common.repository.CoverageRepository;
 import gov.cms.ab2d.common.repository.CoverageSearchEventRepository;
-import gov.cms.ab2d.common.repository.CoveragePeriodRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.Collection;
 import java.util.Optional;
 
+import static gov.cms.ab2d.common.util.Constants.AB2D_EPOCH;
 import static java.util.stream.Collectors.toList;
 
 @Slf4j
@@ -34,6 +37,7 @@ public class CoverageServiceImpl implements CoverageService {
 
     @Override
     public CoveragePeriod getCoveragePeriod(long contractId, int month, int year) {
+        checkMonthAndYear(month, year);
         return coveragePeriodRepo.getByContractIdAndMonthAndYear(contractId, month, year);
     }
 
@@ -59,11 +63,16 @@ public class CoverageServiceImpl implements CoverageService {
 
     @Override
     public Optional<CoverageSearchEvent> findLastEvent(int searchId) {
-        return Optional.empty();
+        CoveragePeriod period = coveragePeriodRepo.getOne(searchId);
+        return findLastEvent(period);
     }
 
-    public CoverageSearchEvent getLastEvent(int searchId) {
-        return findLastEvent(searchId).orElse(null);
+    private Optional<CoverageSearchEvent> findLastEvent(CoveragePeriod period) {
+        return coverageSearchEventRepo.findFirstByCoveragePeriodOrderByCreatedDesc(period);
+    }
+
+    private CoverageSearchEvent getLastEvent(CoveragePeriod period) {
+        return findLastEvent(period).orElse(null);
     }
 
     @Transactional
@@ -86,26 +95,34 @@ public class CoverageServiceImpl implements CoverageService {
         JobStatus status = getSearchStatus(searchId);
         if (status == JobStatus.IN_PROGRESS) {
             coverageRepo.saveAll(coverages);
+        } else {
+            throw new InvalidJobAccessException("cannot update coverages if coverage search is not in progress (current status " + status + " )");
         }
 
-        throw new InvalidJobAccessException("cannot update coverages if coverage search is not in progress (current status " + status + " )");
+        return searchEvent;
     }
 
     @Transactional
     @Override
     public void deletePreviousSearch(int searchId) {
         CoveragePeriod period = coveragePeriodRepo.getOne(searchId);
-        Optional<CoverageSearchEvent> searchEvent = coverageSearchEventRepo.findSearch(searchId, 1);
+        Optional<CoverageSearchEvent> searchEvent = coverageSearchEventRepo.findPreviousSearch(searchId);
 
-        searchEvent.ifPresent(coverageSearchEvent -> coverageRepo.removeAllByCoveragePeriodAndCoverageSearchEvent(period, coverageSearchEvent));
+        searchEvent.ifPresent(coverageSearchEvent ->
+                coverageRepo.removeAllByCoveragePeriodAndCoverageSearchEvent(period, coverageSearchEvent));
     }
 
     @Override
     public CoverageSearchDiff searchDiff(int searchId) {
 
         CoveragePeriod period = coveragePeriodRepo.getOne(searchId);
-        Optional<CoverageSearchEvent> previousSearch = coverageSearchEventRepo.findSearch(searchId, 1);
-        Optional<CoverageSearchEvent> currentSearch = coverageSearchEventRepo.findSearch(searchId, 0);
+
+        if (period.getStatus() != JobStatus.IN_PROGRESS) {
+            throw new InvalidJobStateTransition("");
+        }
+
+        Optional<CoverageSearchEvent> previousSearch = coverageSearchEventRepo.findPreviousSearch(searchId);
+        Optional<CoverageSearchEvent> currentSearch = coverageSearchEventRepo.findCurrentSearch(searchId);
 
         int previousCount = 0;
         if (previousSearch.isPresent()) {
@@ -159,7 +176,7 @@ public class CoverageServiceImpl implements CoverageService {
         CoveragePeriod period = coveragePeriodRepo.getOne(searchId);
         JobStatus jobStatus = period.getStatus();
 
-        if (jobStatus == JobStatus.FAILED || jobStatus == JobStatus.SUCCESSFUL) {
+        if (jobStatus != JobStatus.SUBMITTED) {
             throw new InvalidJobStateTransition("cannot change from " + jobStatus
                     + " to " + JobStatus.CANCELLED);
         }
@@ -174,7 +191,7 @@ public class CoverageServiceImpl implements CoverageService {
         CoveragePeriod period = coveragePeriodRepo.getOne(searchId);
         JobStatus jobStatus = period.getStatus();
 
-        if (jobStatus == JobStatus.CANCELLED || jobStatus == JobStatus.SUCCESSFUL) {
+        if (jobStatus != JobStatus.IN_PROGRESS) {
             throw new InvalidJobStateTransition("cannot change from " + jobStatus
                     + " to " + JobStatus.FAILED);
         }
@@ -197,8 +214,25 @@ public class CoverageServiceImpl implements CoverageService {
         return updateStatus(period, description, JobStatus.SUCCESSFUL);
     }
 
+    private static void checkMonthAndYear(int month, int year) {
+        if (month < 1 || month > 12) {
+            final String errMsg = "invalid value for month. Month must be between 1 and 12";
+            log.error("{} - invalid month :[{}]", errMsg, month);
+            throw new IllegalArgumentException(errMsg);
+        }
+
+        OffsetDateTime time = OffsetDateTime.now(ZoneOffset.UTC);
+        int currentYear = time.getYear();
+
+        if (year < AB2D_EPOCH || year > currentYear) {
+            final String errMsg = "invalid value for year. Year must be between " + AB2D_EPOCH + " and " + currentYear;
+            log.error("{} - invalid year :[{}]", errMsg, year);
+            throw new IllegalArgumentException(errMsg);
+        }
+    }
+
     private CoverageSearchEvent updateStatus(CoveragePeriod period, String description, JobStatus status) {
-        CoverageSearchEvent currentStatus = getLastEvent(period.getId());
+        CoverageSearchEvent currentStatus = getLastEvent(period);
 
         logStatusChange(period, description, status);
 

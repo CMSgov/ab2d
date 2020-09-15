@@ -6,6 +6,9 @@ import lombok.Setter;
 
 import javax.persistence.*;
 
+/**
+ * Defines a coverage period for a single contract. This mapping is artifici
+ */
 @Entity(name = "event_bene_coverage_search_status_change")
 @Getter
 @Setter
@@ -17,7 +20,8 @@ public class CoverageSearchEvent extends TimestampBase {
     @EqualsAndHashCode.Include
     private Long id;
 
-    @ManyToOne
+    // Do not run a
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "bene_coverage_period_id")
     private CoveragePeriod coveragePeriod;
 

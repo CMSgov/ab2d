@@ -46,13 +46,6 @@ public interface CoverageService {
     Optional<CoverageSearchEvent> findLastEvent(int periodId);
 
     /**
-     * Find the last {@link CoverageSearchEvent} associated with a {@link CoveragePeriod}
-     * @param periodId {@link CoveragePeriod#getId()} ()}
-     * @return search
-     */
-    CoverageSearchEvent getLastEvent(int periodId);
-
-    /**
      * Insert new coverage information for beneficiaries
      * @param periodId {@link CoveragePeriod#getId()}
      * @param searchEventId {@link CoverageSearchEvent#getId()} for the specific search event being performed.
