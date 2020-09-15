@@ -46,7 +46,7 @@ public class TextStreamHelperImpl extends StreamHelperImpl {
      * @throws FileNotFoundException if you can't create the stream
      */
     private OutputStream createStream() throws FileNotFoundException {
-        String fileName = getPath().toString() + "/" + createFileName();
+        String fileName = getPath().toString() + File.separator + createFileName();
         File f = new File(fileName);
         f.getParentFile().mkdirs();
         currentFile = f;
