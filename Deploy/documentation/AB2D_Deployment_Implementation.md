@@ -3,13 +3,15 @@
 ## Table of Contents
 
 1. [Obtain and import impl.ab2d.cms.gov common certificate](#obtain-and-import-implab2dcmsgov-common-certificate)
+   * [Download the impl domain certificates and get private key from CMS](#download-the-impl-domain-certificates-and-get-private-key-from-cms)
+   * [Import the impl domain certificate into certificate manager](#import-the-impl-domain-certificate-into-certificate-manager)
 1. [Deploy to implementation](#deploy-to-implementation)
    * [Initialize or verify base environment](#initialize-or-verify-base-environment)
    * [Encrypt and upload New Relic configuration file](#encrypt-and-upload-new-relic-configuration-file)
    * [Create, encrypt, and upload BFD AB2D keystore](#create-encrypt-and-upload-bfd-ab2d-keystore)
    * [Create or update AMI with latest gold disk](#create-or-update-ami-with-latest-gold-disk)
    * [Create or update infrastructure](#create-or-update-infrastructure)
-   * [Create or update application for production](#create-or-update-application-for-production)
+   * [Create or update application for impl](#create-or-update-application-for-impl)
 1. [Upload static website to an Akamai Upload Directory within Akamai NetStorage](#upload-static-website-to-an-akamai-upload-directory-within-akamai-netstorage)
 1. [Configure Cloud Protection Manager](#configure-cloud-protection-manager)
    * [Ensure that all instances have CPM backup tags](#ensure-that-all-instances-have-cpm-backup-tags)
@@ -18,9 +20,156 @@
 
 ## Obtain and import impl.ab2d.cms.gov common certificate](#obtain-and-import-implab2dcmsgov-common-certificate)
 
-*Note that I am temporarily using "Appendix XX: Create a self-signed certificate for an EC2 load balancer"*
+### Download the impl domain certificates and get private key from CMS
 
-> *** TO DO ***: get real common cerificate
+1. Note that CMS will request a domain certificate from Entrust for the following domain
+
+   ```
+   impl.ab2d.cms.gov
+   ```
+
+1. Wait for the email from Entrust
+
+1. Wait for CMS to provide the following
+
+   - private key used to make the domain certificate request
+
+   - forwarded email from Entrust to download the certificate
+
+1. After receiving the private key save it under "~/Downloads"
+
+   ```
+   impl_ab2d_cms_gov.key
+   ```
+
+1. Select the link under "Use the following URL to pick up and install your certificate" in the email
+
+1. Select "Other" from the "...server type" dropdown
+
+1. Select **Next** on the "Select Server Type" page
+
+1. Select **Download Certificates**
+
+1. Wait for the download to complete
+
+1. Change to the downloads directory
+
+   ```ShellSession
+   $ cd ~/Downloads
+   ```
+
+1. Note the following file has been downloaded
+
+   ```
+   entrust.zip
+   ```
+
+1. Create a "impl" directory
+
+   ```ShellSession
+   $ mkdir -p impl
+   ```
+
+1. Move the zip file to the "impl" directory
+
+   ```ShellSession
+   $ mv entrust.zip impl
+   ```
+
+1. Move the private key to the "impl" directory
+
+   ```ShellSession
+   $ mv impl_ab2d_cms_gov.key impl
+   ```
+
+1. Save the "entrust.zip" file and private key in 1Password as follows
+
+   Label                                       |File
+   --------------------------------------------|--------------------
+   AB2D Impl : Domain Certificate : Private Key|impl_ab2d_cms_gov.key
+   AB2D Impl : Domain Certificate : Zip        |entrust.zip
+
+1. Change to the "impl" directory
+
+   ```ShellSession
+   $ cd impl
+   ```
+
+1. Unzip "entrust.zip"
+
+   ```ShellSession
+   $ 7z x entrust.zip
+   ```
+
+1. Note the that following files have been added to the "impl" directory
+
+   - Intermediate.crt
+
+   - ServerCertificate.crt
+
+   - Root.crt
+
+### Import the impl domain certificate into certificate manager
+
+1. Open Chrome
+
+1. Log on to AWS
+
+1. Select **Certificate Manager**
+
+1. If the "Get Started" page is displayed, select **Get Started** under "Provision certificates"
+
+1. Select **Import a certificate**
+
+1. Open a terminal
+
+1. Copy the contents of "ServerCertificate.crt" to the clipboard
+
+   ```ShellSession
+   $ cat ~/Downloads/impl/ServerCertificate.crt | pbcopy
+   ```
+
+1. Return to the "Import a Certificate" page in Chrome
+
+1. Paste the contents of the "ServerCertificate.crt" into the **Certificate body** text box
+
+1. Return to the terminal
+
+1. Copy the contents of the private key to the clipboard
+
+   ```ShellSession
+   $ cat ~/Downloads/impl/impl_ab2d_cms_gov.key | pbcopy
+   ```
+
+1. Paste the contents of the the private key that was provided separately by CMS into the **Certificate private key** text box
+
+1. Return to the terminal
+
+1. Copy the certificate key chain (Intermediate.crt + Root.crt) to the clipboard
+
+   ```ShellSession
+   $ echo -ne "$(cat ~/Downloads/impl/Intermediate.crt)\n$(cat ~/Downloads/impl/Root.crt)" | pbcopy
+   ```
+
+1. Paste the combined intermediate and root certificates into the **Certificate chain** text box
+
+1. Select **Next** on the "Import certificate" page
+
+1. Select **Review and import**
+
+1. Note that the following information should be displayed
+
+   *Format:*
+
+   **Domains:** impl.ab2d.cms.gov
+
+   **Expires in:** {number} Days
+
+   **Public key info:** RSA-2048
+
+   **Signature algorithm:** SHA256WITHRSA
+
+1. Select **Import**
 
 ## Deploy to implementation
 
@@ -369,7 +518,7 @@
    $ ./deploy-infrastructure.sh
    ```
 
-### Create or update application for production
+### Create or update application for impl
 
 1. Change to the "Deploy" directory
 
