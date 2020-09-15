@@ -7,6 +7,7 @@ import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -22,6 +23,8 @@ public class HealthAPI {
     @Autowired
     private LogManager eventLogger;
 
+    // Add exceptions for testing and prod site
+    @CrossOrigin(origins = {"http://127.0.0.1:4000", "https://ab2d.cms.gov", "http://ab2d.cms.gov"})
     @GetMapping(HEALTH_ENDPOINT)
     public ResponseEntity<Void> getHealth(HttpServletRequest request) {
         if (healthCheck.healthy()) {
