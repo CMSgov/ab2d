@@ -168,7 +168,7 @@ title = "gitleaks config"
 	    regex = '''(.*01-public-schema.sql)'''
 	    description = "Ignore arg reference containing high entropy string to this sql file"
   [[rules.whitelist]]
-      	    regex = '''(.*\$\{CMS_ECR_REPO_ENV_AWS_ACCOUNT_NUMBER\}.*)'''
+      	    regex = '''(.*\$\{.*\}.*)'''
       
 
 [[rules]]
