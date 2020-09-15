@@ -45,7 +45,7 @@ class ContractProcessorUnitTest {
     @Mock private FileService fileService;
     @Mock private JobRepository jobRepository;
     @Mock private LogManager eventLogger;
-    private final PatientClaimsProcessor patientClaimsProcessor = spy(PatientClaimsProcessorStub.class);
+    private PatientClaimsProcessor patientClaimsProcessor = spy(PatientClaimsProcessorStub.class);
 
     private ContractBeneficiaries patientsByContract;
     private Path outputDir;
@@ -111,13 +111,6 @@ class ContractProcessorUnitTest {
         assertFalse(jobOutputs.isEmpty());
         verify(jobRepository, times(9)).updatePercentageCompleted(anyString(), anyInt());
         verify(patientClaimsProcessor, atLeast(1)).process(any());
-    }
-
-    @Test
-    @DisplayName("When a patient is not a member of a contract, filter them out")
-    void filterOutInvalidPatients() {
-        var jobOutputs = cut.process(outputDir, contractData);
-        assertFalse(jobOutputs.isEmpty());
     }
 
     @Test

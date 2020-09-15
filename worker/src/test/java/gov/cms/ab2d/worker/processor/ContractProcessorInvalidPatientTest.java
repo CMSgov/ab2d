@@ -110,8 +110,8 @@ public class ContractProcessorInvalidPatientTest {
         String output2 = outputs.get(1).getFilePath();
         assertTrue(output1.equalsIgnoreCase(fileName1) || output1.equalsIgnoreCase(fileName2));
         assertTrue(output2.equalsIgnoreCase(fileName1) || output2.equalsIgnoreCase(fileName2));
-        String actual1 = Files.readString(Path.of(tmpDirFolder.getAbsolutePath() + "/" + output1));
-        String actual2 = Files.readString(Path.of(tmpDirFolder.getAbsolutePath() + "/" + output2));
+        String actual1 = Files.readString(Path.of(tmpDirFolder.getAbsolutePath() + File.separator + output1));
+        String actual2 = Files.readString(Path.of(tmpDirFolder.getAbsolutePath() + File.separator + output2));
         assertTrue(actual1.contains("Patient/1") || actual1.contains("Patient/2"));
         assertTrue(actual2.contains("Patient/1") || actual2.contains("Patient/2"));
     }
@@ -125,7 +125,7 @@ public class ContractProcessorInvalidPatientTest {
                 tmpDirFolder.toPath(), contractId, 2000, 10, eventLogger, job);
         ((ContractProcessorImpl) cut).writeExceptionToContractErrorFile(
                 helper, val, new RuntimeException("Exception"));
-        String result = Files.readString(Path.of(tmpDirFolder.getAbsolutePath() + "/" + contractId + "_error.ndjson"));
+        String result = Files.readString(Path.of(tmpDirFolder.getAbsolutePath() + File.separator + contractId + "_error.ndjson"));
         assertEquals(val, result);
     }
 
@@ -137,7 +137,7 @@ public class ContractProcessorInvalidPatientTest {
                 tmpDirFolder.toPath(), contractId, 2000, 10, eventLogger, job);
         ((ContractProcessorImpl) cut).writeExceptionToContractErrorFile(
                 helper, null, new RuntimeException("Exception"));
-        assertThrows(NoSuchFileException.class, () -> Files.readString(Path.of(tmpDirFolder.getAbsolutePath() + "/" + contractId + "_error.ndjson")));
+        assertThrows(NoSuchFileException.class, () -> Files.readString(Path.of(tmpDirFolder.getAbsolutePath() + File.separator + contractId + "_error.ndjson")));
     }
 
     private static ExplanationOfBenefit createEOB(String patientId) {
