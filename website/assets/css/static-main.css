@@ -6507,3 +6507,19 @@ a[target^='_blank']::after {
 a.join-our-google-group[target^='_blank']::after, footer a[target^='_blank']::after {
     display: none;
 }
+
+.api-status {
+    font-family: montserrat;
+    font-size: 14px;
+    display: none;
+}
+.api-status .label {
+    color: #c2c2c2;
+    font-weight: bold;
+}
+.fail-api {
+    color: #FF6257;
+}
+.success-api {
+    color: #68b475;
+}
