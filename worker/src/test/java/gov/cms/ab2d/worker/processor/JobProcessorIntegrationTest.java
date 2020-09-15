@@ -11,7 +11,6 @@ import gov.cms.ab2d.common.model.User;
 import gov.cms.ab2d.common.repository.ContractRepository;
 import gov.cms.ab2d.common.repository.JobOutputRepository;
 import gov.cms.ab2d.common.repository.JobRepository;
-import gov.cms.ab2d.common.repository.OptOutRepository;
 import gov.cms.ab2d.common.repository.SponsorRepository;
 import gov.cms.ab2d.common.repository.UserRepository;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
@@ -24,6 +23,7 @@ import gov.cms.ab2d.eventlogger.reports.sql.DoAll;
 import gov.cms.ab2d.eventlogger.utils.UtilMethods;
 import gov.cms.ab2d.worker.adapter.bluebutton.ContractBeneSearch;
 import gov.cms.ab2d.worker.service.FileService;
+import gov.cms.ab2d.worker.util.HealthCheck;
 import org.hl7.fhir.dstu3.model.Bundle;
 import org.hl7.fhir.dstu3.model.ExplanationOfBenefit;
 import org.junit.Assert;
@@ -61,7 +61,7 @@ import static org.mockito.Mockito.when;
 @SpringIntegrationTest(noAutoStartup = {"inboundChannelAdapter", "*Source*"})
 @Transactional
 class JobProcessorIntegrationTest {
-    private Random random = new Random();
+    private final Random random = new Random();
 
     private JobProcessor cut;       // class under test
 
@@ -83,9 +83,9 @@ class JobProcessorIntegrationTest {
     @Qualifier("contractAdapterStub")
     private ContractBeneSearch contractBeneSearchStub;
     @Autowired
-    private OptOutRepository optOutRepository;
-    @Autowired
     private SqlEventLogger sqlEventLogger;
+    @Autowired
+    private HealthCheck healthCheck;
     @Mock
     private KinesisEventLogger kinesisEventLogger;
     @Mock
@@ -129,14 +129,14 @@ class JobProcessorIntegrationTest {
         fail = new RuntimeException("TEST EXCEPTION");
 
         FhirContext fhirContext = FhirContext.forDstu3();
-        PatientClaimsProcessor patientClaimsProcessor = new PatientClaimsProcessorImpl(mockBfdClient, fhirContext, logManager);
+        PatientClaimsProcessor patientClaimsProcessor = new PatientClaimsProcessorImpl(mockBfdClient, logManager);
         ReflectionTestUtils.setField(patientClaimsProcessor, "startDate", "01/01/1900");
         ContractProcessor contractProcessor = new ContractProcessorImpl(
                 fileService,
                 jobRepository,
                 patientClaimsProcessor,
-                optOutRepository,
-                logManager
+                logManager,
+                fhirContext
         );
 
         ReflectionTestUtils.setField(contractProcessor, "cancellationCheckFrequency", 10);
@@ -226,6 +226,11 @@ class JobProcessorIntegrationTest {
 
         final List<JobOutput> jobOutputs = job.getJobOutputs();
         assertFalse(jobOutputs.isEmpty());
+    }
+
+    @Test
+    void testHealth() {
+        assertTrue(healthCheck.healthy());
     }
 
     @Test

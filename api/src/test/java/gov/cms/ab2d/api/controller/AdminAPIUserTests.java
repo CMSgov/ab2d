@@ -90,7 +90,7 @@ public class AdminAPIUserTests {
         roleRepository.deleteAll();
         sponsorRepository.deleteAll();
 
-        token = testUtil.setupToken(List.of(ADMIN_ROLE, SPONSOR_ROLE));
+        token = testUtil.setupToken(List.of(ADMIN_ROLE, SPONSOR_ROLE, ATTESTOR_ROLE));
     }
 
     @Test
@@ -105,6 +105,41 @@ public class AdminAPIUserTests {
         userDTO.setSponsor(new SponsorDTO(sponsor.getHpmsId(), sponsor.getOrgName()));
         userDTO.setRole(ADMIN_ROLE);
         Role role = roleService.findRoleByName(ADMIN_ROLE);
+        userDTO.setRole(role.getName());
+
+        ObjectMapper mapper = new ObjectMapper();
+
+        MvcResult mvcResult = this.mockMvc.perform(
+                post(API_PREFIX + ADMIN_PREFIX + USER_URL)
+                        .contentType(MediaType.APPLICATION_JSON).content(mapper.writeValueAsString(userDTO))
+                        .header("Authorization", "Bearer " + token))
+                .andReturn();
+
+        Assert.assertEquals(201, mvcResult.getResponse().getStatus());
+
+        String result = mvcResult.getResponse().getContentAsString();
+        UserDTO createdUserDTO = mapper.readValue(result, UserDTO.class);
+        Assert.assertEquals(createdUserDTO.getEmail(), userDTO.getEmail());
+        Assert.assertEquals(createdUserDTO.getUsername(), userDTO.getUsername());
+        Assert.assertEquals(createdUserDTO.getFirstName(), userDTO.getFirstName());
+        Assert.assertEquals(createdUserDTO.getLastName(), userDTO.getLastName());
+        Assert.assertEquals(createdUserDTO.getEnabled(), userDTO.getEnabled());
+        Assert.assertEquals(createdUserDTO.getSponsor().getHpmsId(), userDTO.getSponsor().getHpmsId());
+        Assert.assertEquals(createdUserDTO.getSponsor().getOrgName(), userDTO.getSponsor().getOrgName());
+        Assert.assertEquals(createdUserDTO.getRole(), userDTO.getRole());
+    }
+
+    @Test
+    public void testCreateUserAttestor() throws Exception {
+        UserDTO userDTO = new UserDTO();
+        userDTO.setUsername("test@test.com");
+        userDTO.setEmail("test@test.com");
+        userDTO.setEnabled(true);
+        userDTO.setFirstName("Test");
+        userDTO.setLastName("User");
+        Sponsor sponsor = sponsorRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
+        userDTO.setSponsor(new SponsorDTO(sponsor.getHpmsId(), sponsor.getOrgName()));
+        Role role = roleService.findRoleByName(ATTESTOR_ROLE);
         userDTO.setRole(role.getName());
 
         ObjectMapper mapper = new ObjectMapper();

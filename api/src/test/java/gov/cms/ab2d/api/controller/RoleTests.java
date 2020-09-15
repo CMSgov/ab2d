@@ -82,10 +82,36 @@ public class RoleTests {
                 .andExpect(status().is(202));
     }
 
+    // This will test the API using a role that should not be able to access sponsor URLs
+    @Test
+    public void testAttestorRoleAccessingSponsorApi() throws Exception {
+        token = testUtil.setupToken(List.of(ATTESTOR_ROLE));
+
+        this.mockMvc.perform(get(API_PREFIX + FHIR_PREFIX + "/Patient/$export")
+                .contentType(MediaType.APPLICATION_JSON)
+                .header("Authorization", "Bearer " + token))
+                .andExpect(status().is(403));
+    }
+
     // This will test the API using a role that should not be able to access admin URLs
     @Test
     public void testWrongRoleAdminApi() throws Exception {
         token = testUtil.setupToken(List.of(SPONSOR_ROLE));
+
+        String fileName = "parent_org_and_legal_entity_20191031_111812.xls";
+        InputStream inputStream = this.getClass().getResourceAsStream("/" + fileName);
+
+        MockMultipartFile mockMultipartFile = new MockMultipartFile("file", fileName, "application/vnd.ms-excel", inputStream);
+        this.mockMvc.perform(MockMvcRequestBuilders.multipart(API_PREFIX + ADMIN_PREFIX + "/uploadOrgStructureReport")
+                .file(mockMultipartFile).contentType(MediaType.MULTIPART_FORM_DATA)
+                .header("Authorization", "Bearer " + token))
+                .andExpect(status().is(403));
+    }
+
+    // This will test the API using a role that should not be able to access admin URLs
+    @Test
+    public void testWrongRoleAttestorAdminApi() throws Exception {
+        token = testUtil.setupToken(List.of(ATTESTOR_ROLE));
 
         String fileName = "parent_org_and_legal_entity_20191031_111812.xls";
         InputStream inputStream = this.getClass().getResourceAsStream("/" + fileName);

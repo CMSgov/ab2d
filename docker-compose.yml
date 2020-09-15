@@ -27,11 +27,14 @@ services:
       - AB2D_DB_SSL_MODE=allow
       - AB2D_DB_USER=ab2d
       - AB2D_DB_PASSWORD=ab2d
+      - HPMS_AUTH_KEY_ID="${HPMS_AUTH_KEY_ID}"
+      - HPMS_AUTH_KEY_SECRET="${HPMS_AUTH_KEY_SECRET}"
       - AB2D_EFS_MOUNT=/opt/ab2d
       - AB2D_EXECUTION_ENV=local
       - NEW_RELIC_LICENSE_KEY="${NEW_RELIC_LICENSE_KEY}"
       - NEW_RELIC_APP_NAME="${NEW_RELIC_APP_NAME}"
       - AB2D_EXECUTION_ENV=${AB2D_EXECUTION_ENV}
+      - AB2D_HPMS_URL=${AB2D_HPMS_URL}
     ports:
       - "8443:8443"
     depends_on:

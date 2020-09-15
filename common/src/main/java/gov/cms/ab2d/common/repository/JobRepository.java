@@ -41,7 +41,6 @@ public interface JobRepository extends JpaRepository<Job, Long> {
     @Query("UPDATE Job j SET j.status = 'SUBMITTED' WHERE j.jobUuid IN :jobUuids ")
     void resetJobsToSubmittedStatus(List<String> jobUuids);
 
-
     @Modifying
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     @Query("UPDATE Job j SET j.progress = :percentageCompleted WHERE j.jobUuid = :jobUuid ")

@@ -23,7 +23,7 @@ import java.util.stream.Collectors;
 @Getter
 @Setter
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
-public class Sponsor {
+public class Sponsor extends TimestampBase {
 
     @Id
     @GeneratedValue
@@ -58,13 +58,7 @@ public class Sponsor {
     private Set<SponsorIP> sponsorIPs = new HashSet<>();
 
     public boolean hasContract(String contractNum) {
-        for (Contract contract : contracts) {
-            if (contractNum.equalsIgnoreCase(contract.getContractNumber())) {
-                return true;
-            }
-        }
-
-        return false;
+        return contracts.stream().anyMatch(contract -> contractNum.equalsIgnoreCase(contract.getContractNumber()));
     }
 
     public List<Contract> getAggregatedAttestedContracts() {
@@ -75,7 +69,7 @@ public class Sponsor {
 
     private List<Contract> getAttestedContractsOfChildren() {
         return children.stream()
-                .map(child -> child.getAttestedContracts())
+                .map(Sponsor::getAttestedContracts)
                 .flatMap(Collection::stream)
                 .collect(Collectors.toList());
     }
@@ -83,7 +77,7 @@ public class Sponsor {
     /**
      * Every attested contract must have an attestedOn date.
      *
-     * @return
+     * @return List of contracts
      */
     public List<Contract> getAttestedContracts() {
         return getContracts().stream()

@@ -16,8 +16,6 @@ public class CancelStuckJob extends QuartzJobBean {
 
     @Override
     protected void executeInternal(JobExecutionContext context) throws JobExecutionException {
-
         processor.process();
-
     }
 }

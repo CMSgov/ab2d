@@ -11,7 +11,7 @@ import javax.validation.constraints.NotNull;
 @Entity
 @Getter
 @Setter
-public class OptOutFile {
+public class OptOutFile extends TimestampBase {
 
     @Id
     @GeneratedValue

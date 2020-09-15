@@ -1,8 +1,8 @@
 package gov.cms.ab2d.worker.processor;
 
+import ca.uhn.fhir.context.FhirContext;
 import gov.cms.ab2d.common.model.*;
 import gov.cms.ab2d.common.repository.JobRepository;
-import gov.cms.ab2d.common.repository.OptOutRepository;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.filter.FilterOutByDate;
 import gov.cms.ab2d.worker.adapter.bluebutton.ContractBeneficiaries;
@@ -25,15 +25,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.ParseException;
-import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.*;
-import java.util.stream.Collectors;
 
-import static gov.cms.ab2d.worker.processor.StreamHelperImpl.FileOutputType.NDJSON;
 import static java.lang.Boolean.TRUE;
-import static org.hamcrest.CoreMatchers.startsWith;
-import static org.junit.Assert.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -45,15 +40,10 @@ class ContractProcessorUnitTest {
     // class under test
     private ContractProcessor cut;
 
-    private String jobUuid = "6d08bf08-f926-4e19-8d89-ad67ef89f17e";
-
-    private Random random = new Random();
-
     @TempDir Path efsMountTmpDir;
 
     @Mock private FileService fileService;
     @Mock private JobRepository jobRepository;
-    @Mock private OptOutRepository optOutRepository;
     @Mock private LogManager eventLogger;
     private PatientClaimsProcessor patientClaimsProcessor = spy(PatientClaimsProcessorStub.class);
 
@@ -64,14 +54,15 @@ class ContractProcessorUnitTest {
     @BeforeEach
     void setUp() throws Exception {
         MockitoAnnotations.initMocks(this);
+        String jobUuid = "6d08bf08-f926-4e19-8d89-ad67ef89f17e";
+        FhirContext fhirContext = ca.uhn.fhir.context.FhirContext.forDstu3();
         cut = new ContractProcessorImpl(
                 fileService,
                 jobRepository,
                 patientClaimsProcessor,
-                optOutRepository,
-                eventLogger
+                eventLogger,
+                fhirContext
         );
-        ReflectionTestUtils.setField(cut, "optoutUsed", true);
         ReflectionTestUtils.setField(cut, "cancellationCheckFrequency", 2);
         ReflectionTestUtils.setField(cut, "reportProgressDbFrequency", 2);
         ReflectionTestUtils.setField(cut, "reportProgressLogFrequency", 3);
@@ -94,94 +85,37 @@ class ContractProcessorUnitTest {
                 .failureThreshold(10)
                 .build();
         progressTracker.addPatientsByContract(patientsByContract);
-        contractData = new ContractData(contract, progressTracker, contract.getAttestedOn(), job.getSince(),
+        contractData = new ContractData(contract, progressTracker, job.getSince(),
                 job.getUser() != null ? job.getUser().getUsername() : null);
     }
 
-
     @Test
     @DisplayName("When a job is cancelled while it is being processed, then attempt to stop the job gracefully without completing it")
-    void whenJobIsCancelledWhileItIsBeingProcessed_ThenAttemptToStopTheJob() throws Exception {
+    void whenJobIsCancelledWhileItIsBeingProcessed_ThenAttemptToStopTheJob() {
         when(jobRepository.findJobStatus(anyString())).thenReturn(JobStatus.CANCELLED);
 
         var exceptionThrown = assertThrows(JobCancelledException.class,
-                () -> cut.process(outputDir, contractData, NDJSON));
+                () -> cut.process(outputDir, contractData));
 
-        assertThat(exceptionThrown.getMessage(), startsWith("Job was cancelled while it was being processed"));
-        verify(patientClaimsProcessor, atLeast(1)).process(any(), any());
+        assertTrue(exceptionThrown.getMessage().startsWith("Job was cancelled while it was being processed"));
+        verify(patientClaimsProcessor, atLeast(1)).process(any());
         verify(jobRepository, atLeastOnce()).updatePercentageCompleted(anyString(), anyInt());
-    }
-
-    @Test
-    @DisplayName("When patient has opted out, but opt out is disabled their record will not be skipped.")
-    void processJob_whenSomePatientHasOptedOut_But_OptOut_Off_ShouldNotSkipThatPatientRecord() throws Exception {
-        ReflectionTestUtils.setField(cut, "optoutUsed", false);
-        final List<OptOut> optOuts = getOptOutRows(patientsByContract);
-        lenient().when(optOutRepository.findByCcwId(anyString()))
-                .thenReturn(new ArrayList<>())
-                .thenReturn(Arrays.asList(optOuts.get(1)))
-                .thenReturn(Arrays.asList(optOuts.get(2)));
-
-        List<JobOutput> jobOutputs = cut.process(outputDir, contractData, NDJSON);
-        // Verify that all outputs are returned
-        assertEquals(6, jobOutputs.size());
-    }
-
-    @Test
-    @DisplayName("When patient has opted out, their record will be skipped.")
-    void processJob_whenSomePatientHasOptedOut_ShouldSkipThatPatientRecord() throws Exception {
-        final List<OptOut> optOuts = getOptOutRows(patientsByContract);
-        when(optOutRepository.findByCcwId(anyString()))
-                .thenReturn(new ArrayList<>())
-                .thenReturn(Arrays.asList(optOuts.get(1)))
-                .thenReturn(Arrays.asList(optOuts.get(2)));
-
-        var jobOutputs = cut.process(outputDir, contractData, NDJSON);
-
-        assertFalse(jobOutputs.isEmpty());
-        verify(patientClaimsProcessor, atLeast(1)).process(any(), any());
-    }
-
-    @Test
-    @DisplayName("When all patients have opted out, should throw exception as no jobOutput rows were created")
-    void processJob_whenAllPatientsHaveOptedOut_ShouldThrowException() throws Exception {
-        final List<OptOut> optOuts = getOptOutRows(patientsByContract);
-        when(optOutRepository.findByCcwId(anyString()))
-                .thenReturn(Arrays.asList(optOuts.get(0)))
-                .thenReturn(Arrays.asList(optOuts.get(1)))
-                .thenReturn(Arrays.asList(optOuts.get(2)));
-
-        // Test data has 3 patientIds each of whom has opted out.
-        // So the patientsClaimsProcessor should never be called.
-        var exceptionThrown = assertThrows(RuntimeException.class,
-                () -> cut.process(outputDir, contractData, NDJSON));
-
-        assertThat(exceptionThrown.getMessage(), startsWith("The export process has produced no results"));
-        verify(patientClaimsProcessor, never()).process(any(), any());
     }
 
     @Test
     @DisplayName("When many patientId are present, 'PercentageCompleted' should be updated many times")
     void whenManyPatientIdsAreProcessed_shouldUpdatePercentageCompletedMultipleTimes() throws Exception {
         patientsByContract.setPatients(createPatients(18));
-        var jobOutputs = cut.process(outputDir, contractData, NDJSON);
+        var jobOutputs = cut.process(outputDir, contractData);
 
         assertFalse(jobOutputs.isEmpty());
         verify(jobRepository, times(9)).updatePercentageCompleted(anyString(), anyInt());
-        verify(patientClaimsProcessor, atLeast(1)).process(any(), any());
+        verify(patientClaimsProcessor, atLeast(1)).process(any());
     }
 
-    private List<OptOut> getOptOutRows(ContractBeneficiaries patientsByContract) {
-        return patientsByContract.getPatients().keySet().stream()
-                .map(this::createOptOut)
-                .collect(Collectors.toList());
-    }
-
-    private OptOut createOptOut(String patientId) {
-        OptOut optOut = new OptOut();
-        optOut.setHicn(patientId);
-        optOut.setEffectiveDate(LocalDate.now().minusDays(10));
-        return optOut;
+    @Test
+    void testInvalidJobOutput() {
+        assertThrows(RuntimeException.class, () -> ((ContractProcessorImpl) cut).createJobOutputs(Collections.EMPTY_LIST, Collections.EMPTY_LIST));
     }
 
     private Sponsor createParentSponsor() {

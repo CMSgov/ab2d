@@ -9,6 +9,7 @@ import org.hl7.fhir.dstu3.model.ExplanationOfBenefit;
 import org.hl7.fhir.dstu3.model.Period;
 import org.hl7.fhir.dstu3.model.Resource;
 
+import java.io.File;
 import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
@@ -21,7 +22,7 @@ public final class EobTestDataUtil {
 
         SimpleDateFormat sdf = new SimpleDateFormat("MM/dd/yyyy");
         final String testInputFile = "test-data/EOB-for-Carrier-Claims.json";
-        final InputStream inputStream = EobTestDataUtil.class.getResourceAsStream("/" + testInputFile);
+        final InputStream inputStream = EobTestDataUtil.class.getResourceAsStream(File.separator + testInputFile);
 
         final EncodingEnum respType = EncodingEnum.forContentType(EncodingEnum.JSON_PLAIN_STRING);
         final IParser parser = respType.newParser(FhirContext.forDstu3());
