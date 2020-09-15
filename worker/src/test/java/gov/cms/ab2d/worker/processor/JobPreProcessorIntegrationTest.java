@@ -82,7 +82,7 @@ class JobPreProcessorIntegrationTest {
     @DisplayName("When a job is in submitted status, it can be put into progress upon starting processing")
     void whenJobIsInSubmittedStatus_ThenJobShouldBePutInProgress() {
         var processedJob = cut.preprocess("S0000");
-        assertThat(processedJob.getStatus(), is(JobStatus.IN_PROGRESS));
+        assertEquals(processedJob.getStatus(), JobStatus.IN_PROGRESS);
 
         List<LoggableEvent> jobStatusChange = doAll.load(JobStatusChangeEvent.class);
         assertEquals(1, jobStatusChange.size());

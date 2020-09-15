@@ -1,32 +1,26 @@
 package gov.cms.ab2d.worker.processor;
 
-import ca.uhn.fhir.context.FhirContext;
 import com.newrelic.api.agent.Token;
 import com.newrelic.api.agent.Trace;
 import gov.cms.ab2d.bfd.client.BFDClient;
-import gov.cms.ab2d.common.util.FHIRUtil;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.events.BeneficiarySearchEvent;
 import gov.cms.ab2d.filter.ExplanationOfBenefitTrimmer;
 import gov.cms.ab2d.filter.FilterOutByDate;
 import gov.cms.ab2d.worker.adapter.bluebutton.ContractBeneficiaries;
+import gov.cms.ab2d.worker.processor.domainmodel.EobSearchResult;
 import gov.cms.ab2d.worker.processor.domainmodel.PatientClaimsRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.hl7.fhir.dstu3.model.Bundle;
 import org.hl7.fhir.dstu3.model.Bundle.BundleEntryComponent;
 import org.hl7.fhir.dstu3.model.ExplanationOfBenefit;
-import org.hl7.fhir.dstu3.model.Resource;
 import org.hl7.fhir.dstu3.model.ResourceType;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.AsyncResult;
 import org.springframework.stereotype.Component;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
@@ -36,7 +30,6 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
-import java.util.Map;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
@@ -50,7 +43,6 @@ import static java.time.format.DateTimeFormatter.ISO_DATE_TIME;
 public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
 
     private final BFDClient bfdClient;
-    private final FhirContext fhirContext;
     private final LogManager logManager;
 
     @Value("${claims.skipBillablePeriodCheck}")
@@ -70,60 +62,22 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
      */
     @Trace(async = true)
     @Async("patientProcessorThreadPool")
-    public Future<Void> process(PatientClaimsRequest request, Map<String, ContractBeneficiaries.PatientDTO> map) {
+    public Future<EobSearchResult> process(PatientClaimsRequest request) {
         final Token token = request.getToken();
         token.link();
-
-        int resourceCount = 0;
-
-        String payload = "";
+        EobSearchResult result = new EobSearchResult();
+        result.setJobId(request.getJob());
+        result.setContractNum(request.getContractNum());
         try {
-            // Retrieve the resource bundle of EOB objects
-            var resources = getEobBundleResources(request, map);
-
-            var jsonParser = fhirContext.newJsonParser();
-
-            for (var resource : resources) {
-                ++resourceCount;
-                try {
-                    payload = jsonParser.encodeResourceToString(resource) + System.lineSeparator();
-                    request.getHelper().addData(payload.getBytes(StandardCharsets.UTF_8));
-                } catch (Exception e) {
-                    log.warn("Encountered exception while processing job resources: {}", e.getMessage());
-                    handleException(request.getHelper(), payload, e);
-                }
-            }
-        } catch (Exception e) {
-            try {
-                handleException(request.getHelper(), payload, e);
-            } catch (IOException e1) {
-                //should not happen - original exception will be thrown
-                log.error("error during exception handling to write error record");
-            }
-
-            token.expire();
-            return AsyncResult.forExecutionException(e);
+            result.setEobs(getEobBundleResources(request));
+        } catch (Exception ex) {
+            return AsyncResult.forExecutionException(ex);
         }
-
-        log.debug("finished writing [{}] resources", resourceCount);
-
         token.expire();
-        return new AsyncResult<>(null);
+        return new AsyncResult<>(result);
     }
 
-    private void handleException(StreamHelper helper, String data, Exception e) throws IOException {
-        var errMsg = ExceptionUtils.getRootCauseMessage(e);
-        var operationOutcome = FHIRUtil.getErrorOutcome(errMsg);
-
-        var jsonParser = fhirContext.newJsonParser();
-        var payload = jsonParser.encodeResourceToString(operationOutcome) + System.lineSeparator();
-
-        var byteArrayOutputStream = new ByteArrayOutputStream();
-        byteArrayOutputStream.write(payload.getBytes(StandardCharsets.UTF_8));
-        helper.addError(data);
-    }
-
-    private List<Resource> getEobBundleResources(PatientClaimsRequest request, Map<String, ContractBeneficiaries.PatientDTO> map) {
+    private List<ExplanationOfBenefit> getEobBundleResources(PatientClaimsRequest request) {
         ContractBeneficiaries.PatientDTO patient = request.getPatientDTO();
         OffsetDateTime attTime = request.getAttTime();
 
@@ -155,12 +109,12 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
         }
 
         final List<BundleEntryComponent> entries = eobBundle.getEntry();
-        final List<Resource> resources = extractResources(request.getContractNum(), entries, patient.getDateRangesUnderContract(), attTime, map);
+        final List<ExplanationOfBenefit> resources = extractResources(request.getContractNum(), entries, patient.getDateRangesUnderContract(), attTime);
 
         while (eobBundle.getLink(Bundle.LINK_NEXT) != null) {
             eobBundle = bfdClient.requestNextBundleFromServer(eobBundle);
             final List<BundleEntryComponent> nextEntries = eobBundle.getEntry();
-            resources.addAll(extractResources(request.getContractNum(), nextEntries, patient.getDateRangesUnderContract(), attTime, map));
+            resources.addAll(extractResources(request.getContractNum(), nextEntries, patient.getDateRangesUnderContract(), attTime));
         }
 
         log.debug("Bundle - Total: {} - Entries: {} ", eobBundle.getTotal(), entries.size());
@@ -188,9 +142,9 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
         return this.specialContracts != null && !this.specialContracts.isEmpty() && specialContracts.contains(contract);
     }
 
-    List<Resource> extractResources(String contractNum, List<BundleEntryComponent> entries,
-                                    final List<FilterOutByDate.DateRange> dateRanges,
-                                    OffsetDateTime attTime, Map<String, ContractBeneficiaries.PatientDTO> patientsMap) {
+    List<ExplanationOfBenefit> extractResources(String contractNum, List<BundleEntryComponent> entries,
+                                                final List<FilterOutByDate.DateRange> dateRanges,
+                                                OffsetDateTime attTime) {
         if (attTime == null) {
             return new ArrayList<>();
         }
@@ -210,34 +164,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
                 .filter(Objects::nonNull)
                 // Remove Plan D
                 .filter(resource -> !isPartD(resource))
-                // Make sure the returned patient ID is actually part of the contract
-                .filter(resource -> validPatientInContract(resource, patientsMap))
                 // compile the list
                 .collect(Collectors.toList());
-    }
-
-    /**
-     * returns true if the patient is a valid member of a contract, false otherwise. If either value is empty,
-     * it returns false
-     *
-     * @param benefit - The benefit to check
-     * @param patients - the patient map containing the patient id & patient object
-     * @return true if this patient is a member of the correct contract
-     */
-    boolean validPatientInContract(ExplanationOfBenefit benefit, Map<String, ContractBeneficiaries.PatientDTO> patients) {
-        if (benefit == null || patients == null) {
-            log.debug("Passed an invalid benefit or an invalid list of patients");
-            return false;
-        }
-        String patientId = benefit.getPatient().getReference();
-        if (patientId == null) {
-            return false;
-        }
-        patientId = patientId.replaceFirst("Patient/", "");
-        if (patients.get(patientId) == null) {
-            log.error(patientId + " returned in EOB, but not a member of a contract");
-            return false;
-        }
-        return true;
     }
 }

@@ -5,21 +5,14 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.Arrays;
-import java.util.List;
 
 import static org.hamcrest.CoreMatchers.startsWith;
-import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
-import static org.junit.jupiter.api.Assertions.assertAll;
-import static org.junit.jupiter.api.Assertions.assertLinesMatch;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class FileServiceIntegrationTest {
@@ -51,5 +44,10 @@ public class FileServiceIntegrationTest {
                 () -> cut.createDirectory(tmpEfsMountDir.toPath()));
 
         assertThat(exceptionThrown.getMessage(), startsWith("Could not create output directory"));
+    }
+
+    @Test
+    void testGenerateChecksum() {
+        assertThrows(UncheckedIOException.class, () -> cut.generateChecksum(new File("/invalid/file")));
     }
 }

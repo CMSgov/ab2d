@@ -11,7 +11,6 @@ import java.time.OffsetDateTime;
 public class ContractData {
     private final Contract contract;
     private final ProgressTracker progressTracker;
-    private final OffsetDateTime attestedTime;
     private final OffsetDateTime sinceTime;
     private final String userId;
 }
