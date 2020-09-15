@@ -13,6 +13,7 @@ import gov.cms.ab2d.common.repository.SponsorRepository;
 import gov.cms.ab2d.common.repository.UserRepository;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import org.junit.Assert;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -210,5 +211,14 @@ public class AdminAPIIPTests {
                 .andReturn();
 
         Assert.assertEquals(404, mvcResult.getResponse().getStatus());
+    }
+
+    @AfterEach
+    public void tearDown() {
+        contractRepository.deleteAll();
+        jobRepository.deleteAll();
+        userRepository.deleteAll();
+        roleRepository.deleteAll();
+        sponsorRepository.deleteAll();
     }
 }

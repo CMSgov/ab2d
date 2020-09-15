@@ -44,9 +44,7 @@ public class PGInet implements Serializable {
         }
         PGInet other = (PGInet) obj;
         if (address == null) {
-            if (other.address != null) {
-                return false;
-            }
+            return other.address == null;
         } else if (!address.equals(other.address)) {
             return false;
         }
