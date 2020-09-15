@@ -15,8 +15,8 @@ import java.util.*;
 @Table(name = "user_account")
 @Getter
 @Setter
-@EqualsAndHashCode(onlyExplicitlyIncluded = true)
-public class User implements UserDetails {
+@EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = false)
+public class User extends TimestampBase implements UserDetails {
 
     @Id
     @GeneratedValue
@@ -52,6 +52,7 @@ public class User implements UserDetails {
         roles.add(role);
     }
 
+    @SuppressWarnings("unused")
     public void removeRole(Role role) {
         roles.remove(role);
     }

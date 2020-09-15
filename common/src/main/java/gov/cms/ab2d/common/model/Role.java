@@ -13,8 +13,8 @@ import javax.persistence.Id;
 @Entity
 @Getter
 @Setter
-@EqualsAndHashCode(onlyExplicitlyIncluded = true)
-public class Role {
+@EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = false)
+public class Role extends TimestampBase {
 
     @Id
     @GeneratedValue

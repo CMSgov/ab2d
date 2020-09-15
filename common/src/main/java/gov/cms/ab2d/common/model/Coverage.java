@@ -15,8 +15,8 @@ import javax.persistence.ManyToOne;
 @Entity
 @Getter
 @Setter
-@EqualsAndHashCode(onlyExplicitlyIncluded = true)
-public class Coverage {
+@EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = false)
+public class Coverage extends TimestampBase {
 
     @Id
     @GeneratedValue
