@@ -169,7 +169,10 @@ title = "gitleaks config"
 	    description = "Ignore arg reference containing high entropy string to this sql file"
   [[rules.whitelist]]
       	    regex = '''(.*\$\{.*\}.*)'''
-      
+	    description = "Ignore vars that match ${}"
+	    [[rules.whitelist]]
+	    regex = '''.*\${AB2D_HPMS_AUTH_KEY_SECRET}.*'''
+
 
 [[rules]]
 	description = "Entropy plus Generic Credential"
