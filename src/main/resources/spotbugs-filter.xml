@@ -32,6 +32,11 @@
         <Bug pattern="VO_VOLATILE_INCREMENT"/>
     </Match>
 
+    <Match>
+        <Package name="~gov\.cms\.ab2d.*"/>
+        <Bug pattern="VA_FORMAT_STRING_USES_NEWLINE"/>
+    </Match>
+
     <!-->Getting id will return null if not found anyway<-->
     <Match>
         <Class name="~gov\.cms\.ab2d\.eventlogger\.eventloggers\.sql\.SqlEventMapper"/>
