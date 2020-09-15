@@ -2,6 +2,9 @@
 
 ## Table of Contents
 
+1. [Configure Akamai](#configure-akamai)
+   * [TO DO](#to-do)
+   * [Subscribe to Akamai firewall notifications](#subscribe-to-akamai-firewall-notifications)
 1. [Configure VictorOps](#configure-victorops)
    * [Request access to VictorOps](#request-access-to-victorops)
    * [Bookmark important VictorOps URLs](#bookmark-important-victorops-urls)
@@ -13,6 +16,63 @@
    * [Create an escalation policy](#create-an-escalation-policy)
    * [Set the default routing policy](#set-the-default-routing-policy)
    * [Configure New Relic integration](#configure-new-relic-integration)
+1. [On-board engineers](#on-board-engineers)
+
+## Configure Akamai
+
+### TO DO
+
+> *** TO DO ***: Migrate Akamai configuration here
+
+### Subscribe to Akamai firewall notifications
+
+1. Log on to Akamai
+
+1. Select the three bar icon in the top left of the page
+
+1. Scroll down to the "COMMON SERVICES" section of the leftmost tab
+
+1. Select **Origin firewall change notifications**
+
+1. Select the **Manage Subscriptions** tab
+
+1. Select **Subscribe Users**
+
+1. Type the following in the **Email addresses** text box
+
+   *Format:*
+   
+   ```
+   {ab2d group email}
+   ```
+   
+1. Check the following
+
+   - Global Traffic Management
+
+   - Log Delivery
+
+   - Site Snapshot
+
+   - Edge DNS Zone Transfer Agenets
+
+   - Edge Staging Network
+
+   - Secure Edge Staging Network
+
+   - Performance / Monitoring / SLA Agents
+
+   - NetStorage Content Mgmt: FileStore
+
+   - Development Test IPs
+
+   - FTP Non Anonymous Download
+
+   - Content Control Utility
+
+   - NetStorage Content Mgmt:ObjectStore & Aspera
+
+1. Select **Subscribe**
 
 ## Configure VictorOps
 
@@ -376,4 +436,16 @@
 
    ```
    {victor ops api key for new relic}
+   ```
+
+## On-board engineers
+
+### Add engineers to Okta Prod
+
+1. TO DOCUMENT
+
+   ```
+   New Service Requests need to be enter via the CMS SNOW system (aka CMS SD) so it can go through the normal approval process.
+   Below is the IDM SR process. Please let us know if you have any questions. You will also need your CMS Application Owner/GTL/POC contact and approval noted in the request. I see they are on this email.
+   -          https://confluenceent.cms.gov/display/IDM/Service+Request+Process+for+IDM
    ```
