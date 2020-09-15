@@ -134,6 +134,14 @@
 1. [Appendix QQQ: Get private IP address](#appendix-qqq-get-private-ip-address)
 1. [Appendix RRR: Protect the existing RDS database using AWS CLI](#appendix-rrr-protect-the-existing-rds-database-using-aws-cli)
 1. [Appendix SSS: Review RDS reserved instance utilization from AWS console](#appendix-sss-review-rds-reserved-instance-utilization-from-aws-console)
+1. [Appendix TTT: Reset master to a specific commit](#appendix-ttt-reset-master-to-a-specific-commit)
+   * [Force push to master](#force-push-to-master)
+   * [Reconcile your master branch with a remote branch that was force pushed by someone else](#reconcile-your-master-branch-with-a-remote-branch-that-was-force-pushed-by-someone-else)
+   * [Rebase an existing branch to reconcile it with a master that has been reset](#rebase-an-existing-branch-to-reconcile-it-with-a-master-that-has-been-reset)
+1. [Appendix UUU: Migrate VictorOps-Slack integration from a real slack user to slack service user](#appendix-uuu-migrate-victorops-slack-integration-from-a-real-slack-user-to-slack-service-user)
+1. [Appendix VVV: Add a volume to jenkins agent and extend the root volume to use it](#appendix-vvv-add-a-volume-to-jenkins-agent-and-extend-the-root-volume-to-use-it)
+1. [Appendix WWW: Whitelist IP addresses in Akamai for Prod](#whitelist-ip-addresses-in-akamai-for-prod)
+1. [Appendix XXX: Fix CloudTamer scripts broken by ITOPS role change](#appendix-xxx-fix-cloudtamer-scripts-broken-by-itops-role-change)
 
 ## Appendix A: Access the CMS AWS console
 
@@ -10118,7 +10126,7 @@ $ sed -i "" 's%cms-ab2d[\/]prod%cms-ab2d/dev%g' _includes/head.html (edited)
         --output json \
         | jq '.[0]' \
         | tr -d '"' \
-	| awk '{print $1" dev.ab2d.cms.gov"}'
+        | awk '{print $1" dev.ab2d.cms.gov"}'
       ```
 
    1. Note the dev.ab2d.cms.gov domain mapping line that is output
@@ -11220,3 +11228,517 @@ $ sed -i "" 's%cms-ab2d[\/]prod%cms-ab2d/dev%g' _includes/head.html (edited)
    ```
    RDS Reserved Instance Utilization
    ```
+
+## Appendix TTT: Reset master to a specific commit
+
+### Force push to master
+
+1. Temporarily configure master branch to allow force push
+
+   1. Note that you need to be an administrator of the repo to do this
+
+   1. Open Chrome
+
+   1. Enter the following in the address bar
+
+      > https://github.com/CMSgov/ab2d
+
+   1. Select **Settings**
+
+   1. Select **Branches** from the leftmost panel
+
+   1. Select **Edit** beside "master" under the "Branch protection rules" section
+
+   1. Uncheck **Require pull request reviews before merging**
+
+   1. Uncheck **Require status checks to pass before merging**
+
+   1. Check **Allow force pushes**
+
+   1. Select **Save changes**
+
+1. Be sure to stash or check-in any changes that you have in your current branch
+
+1. Update your local origin branches
+
+   ```ShellSession
+   $ git fetch --all
+   ```
+
+1. Checkout the master branch
+
+   ```ShellSession
+   $ git checkout master
+   ```
+
+1. Do a hard reset to desired commit number
+
+   *Format:*
+
+   ```ShellSession
+   $ git reset --hard {commit number}
+   ```
+
+1. Force push to master
+
+   ```ShellSession
+   $ git push --force
+   ```
+
+1. Re-configure master branch to original settings
+
+   1. Note that you need to be an administrator of the repo to do this
+
+   1. Open Chrome
+
+   1. Enter the following in the address bar
+
+      > https://github.com/CMSgov/ab2d
+
+   1. Select **Settings**
+
+   1. Select **Branches** from the leftmost panel
+
+   1. Select **Edit** beside "master" under the "Branch protection rules" section
+
+   1. Check **Require pull request reviews before merging**
+
+   1. Select "2" from the **Required approving reviews** dropdown
+
+   1. Check **Dismiss stale pull request approvals when new commits are pushed**
+
+   1. Check **Require status checks to pass before merging**
+
+   1. Check **Require branches to be up to date before merging**
+
+   1. Check **LGTM analysis: Java**
+
+   1. Check **continuous-integration/travis-ci**
+
+   1. Uncheck **Allow force pushes**
+
+   1. Select **Save changes**
+
+### Reconcile your master branch with a remote branch that was force pushed by someone else
+
+1. If you are currently on the master branch, checkout a different branch
+
+   *Format:*
+   
+   ```ShellSession
+   $ git checkout {a branch other than master}
+   ```
+
+1. Delete your local working master branch
+
+   ```ShellSession
+   $ git branch -D master
+   ```
+
+1. Update your local "origin/master" branch
+
+   ```ShellSession
+   $ git fetch --all
+   ```
+
+1. Checkout your new local working master branch
+
+   ```ShellSession
+   $ git checkout master
+   ```
+
+1. Return to the branch that you are working on
+
+   ```ShellSession
+   $ git checkout {a branch other than master}
+   ```
+   
+### Rebase an existing branch to reconcile it with a master that has been reset
+
+1. Get the number of commits that have been committed to your branch after the current master commit
+
+   ```ShellSession
+   $ COMMIT_NUMBER_OF_ORIGIN_MASTER=$(git rev-parse origin/master | cut -c1-8) \
+     && NUMBER_OF_COMMITS_AFTER_MASTER=$(git log --oneline \
+     | awk '{ print $1 }' \
+     | awk "/${COMMIT_NUMBER_OF_ORIGIN_MASTER}/ {exit} {print}" \
+     | wc -l \
+     | tr -d ' ')
+   ```
+
+2. Rebase your branch
+
+   ```ShellSession
+   $ git rebase -i "HEAD~${NUMBER_OF_COMMITS_AFTER_MASTER}"
+   ```
+
+3. Note that vim opens with the list of commits that include the most recent commits to your branch (some additional commits might show up, but that is normal)
+
+4. Change the commits that are not yours by changing "pick" to "drop"
+
+   Notes:
+
+   - only do the most recent commits that occurred after the master commit
+
+   - identify the commits that are not yours by looking at your branch in GitHub
+
+5. Save and close the vim editor
+
+6. If the rebase is successful, force push the changes to your branch
+
+   ```ShellSession
+   $ git push --force-with-lease
+   ```
+
+7. Update your local "origin/master"
+
+   ```ShellSession
+   $ git fetch --all
+   ```
+
+8. Merge from your local "origin/master"
+
+   ```ShellSession
+   $ git merge origin/master
+   ```
+
+9. Push the changes
+
+   ```ShellSession
+   $ git push
+   ```
+
+## Appendix UUU: Migrate VictorOps-Slack integration from a real slack user to slack service user
+
+1. Create an "sb victorops admin slack" slack service user for the SemanticBits Slack workspace
+
+   *A SemanticBits Slack workspace administrator must do this step.*
+
+1. Add the slack service user to the "p-ab2d-incident-response" channel
+
+1. Add the slack service user to the "p-ccxp-alerts" channel
+
+   *A CCXP user must do this step.*
+
+1. Log out of SemanticBits slack workspace
+
+1. Log on to SemanticBits slack workspace as the slack service user
+
+1. Log on to VictorOps
+
+1. Select the **Integrations** tab
+
+1. Type "slack" in the **Search** text box
+
+1. Select **Slack**
+
+1. Select **Revoke Integration**
+
+1. Re-enable the slack integration using the "sb victorops admin slack" slack user
+
+   1. Select **Enable Integration**
+
+   1. Select **Allow**
+
+   1. Select the following from the **Select a channel to send VictorOps messages to** dropdown
+
+      ```
+      p-ccxp-alerts
+      ```
+
+   1. Check **Chat Messages (Synced with VictorOps Timeline)**
+
+   1. Check **On-Call change notifications**
+
+   1. Check **Paging notifications**
+
+   1. Check **Incidents**
+
+   1. Select **Save** in the "Default Channel" page
+
+   1. Select **OK** on the "Success" dialog
+
+   1. Select **Add Mapping**
+
+   1. Select "AB2D - Standard" from the **Select an Escalation Policy** dropdown
+
+   1. Select the following from the **Select a channel to send VictorOps messages to** dropdown
+
+      ```
+      p-ab2d-incident-response
+      ```
+
+   1. Check **Chat Messages (Synced with VictorOps Timeline)**
+
+   1. Check **On-Call change notifications**
+
+   1. Check **Paging notifications**
+
+   1. Check **Incidents**
+
+   1. Select **Save** in the "Default Channel" page
+
+1. Log out of slack service user
+
+1. Log on with your real user
+
+1. Test using SNS/CloudWatch
+
+   1. Temporarily make yourself on-call in VictorOps for the next available 30 minute block
+   
+   1. Open a new Chrome tab
+   
+   1. Log on to the AWS account
+   
+   1. Select **Simple Notification Service**
+   
+   1. Select **Topics** in the leftmost panel
+   
+   1. Select the following
+   
+      ```
+      ab2d-east-prod-cloudwatch-alarms
+      ```
+   
+   1. Select the **Subscriptions** tab
+   
+   1. Select **Create subscription**
+   
+   1. Configure the "Create subscription" page as follows
+   
+      - **Topic ARN:** {keep default}
+   
+      - **Protocol:** HTTPS
+   
+      - **Endpoint:** {victors ops service api endpoint for aws cloudwatch}/{routing key}
+   
+      - **Enable raw message delivery:** unchecked
+   
+   1. Select **Create subscription**
+   
+   1. Wait for "Status" to display the following
+   
+      *Note that you will likely need to refesh the page to see the status change to "Confirmed".*
+   
+      ```
+      Confirmed
+      ```
+   
+   1. Select **Topics** from the leftmost panel
+   
+   1. Select the following topic
+   
+      ```
+      ab2d-east-prod-cloudwatch-alarms
+      ```
+   
+   1. Select **Publish message**
+   
+   1. Configure the "Message details" section as follows
+   
+      - **Subject:** {keep blank}
+   
+      - **Time to Live (TTL):** {keep blank}
+   
+   1. Configure the "Message body" section as follows
+   
+      - **Message structure:** Identical payload for all delivery protocols
+   
+      - **Message body to send to the endpoint:**
+   
+        ```
+        {"AlarmName":"AB2D Prod - VictorOps - CloudWatch Integration TEST","NewStateValue":"ALARM","NewStateReason":"failure","StateChangeTime":"2017-12-14T01:00:00.000Z","AlarmDescription":"VictorOps - CloudWatch Integration TEST"}
+        ```
+   
+   1. Select **Publish message**
+   
+   1. Verify that the message is received in VictorOps
+
+   1. Acknowledge the incident via cell phone, slack, or VictorOps
+
+   1. Resolve the incident via cell phone, slack, or VictorOps
+
+## Appendix VVV: Add a volume to jenkins agent and extend the root volume to use it
+
+1. Note that these directions assume that you already have two volumes and want to add a third volume
+
+1. Create a new volume in the same availabilty zone as Jenkins agent in the AWS console
+
+1. Attach the volume to the Jenkins agent in the AWS console
+
+1. Connect to the Jenkins agent
+
+1. Set the partition as gpt
+
+   ```ShellSession
+   $ sudo parted --script /dev/nvme2n1 mklabel gpt
+   ```
+
+1. View detail about the disks and partitions again
+
+   1. Enter the following
+
+      ```ShellSession
+      $ sudo parted -l
+      ```
+
+   1. Note the output
+
+      ```
+      Model: NVMe Device (nvme)
+      Disk /dev/nvme0n1: 805GB
+      Sector size (logical/physical): 512B/512B
+      Partition Table: msdos
+      Disk Flags:
+
+      Number  Start   End     Size    Type     File system  Flags
+       1      1049kB  1075MB  1074MB  primary  xfs
+       2      1075MB  32.2GB  31.1GB  primary               lvm
+       3      32.2GB  268GB   236GB   primary
+       4      268GB   537GB   268GB   primary
+
+
+      Model: NVMe Device (nvme)
+      Disk /dev/nvme1n1: 537GB
+      Sector size (logical/physical): 512B/512B
+      Partition Table: gpt
+      Disk Flags:
+
+      Number  Start   End    Size   File system  Name  Flags
+       1      1049kB  537GB  537GB
+
+
+      Model: NVMe Device (nvme)
+      Disk /dev/nvme2n1: 537GB
+      Sector size (logical/physical): 512B/512B
+      Partition Table: gpt
+      Disk Flags:
+
+      Number  Start  End  Size  File system  Name  Flags
+      ```
+
+1. Create a new partition on the "/dev/nvme2n1" disk
+
+   ```ShellSession
+   (
+   echo n # Add a new partition
+   echo p # Primary partition
+   echo   # Partition number (Accept default)
+   echo   # First sector (Accept default)
+   echo   # Last sector (Accept default)
+   echo w # Write changes
+   ) | sudo fdisk /dev/nvme2n1
+   ```
+
+1. Request that the operating system re-reads the partition table
+
+   ```ShellSession
+   $ sudo partprobe
+   ```
+
+1. Create physical volume by initializing the partition for use by the Logical Volume Manager (LVM)
+
+   ```ShellSession
+   $ sudo pvcreate /dev/nvme2n1p1
+   ```
+
+1. Format the "/dev/nvme2n1" disk as xfs
+
+   ```ShellSession
+   $ sudo mkfs.xfs -f /dev/nvme2n1p1
+   ```
+
+1. Extend the "VolGroup00" volume group to include the new volume
+
+   ```ShellSession
+   $ sudo vgextend VolGroup00 /dev/nvme2n1p1
+   ```
+
+1. Extend the size of the "log" logical volume with all the free space on the new volume
+
+   ```ShellSession
+   $ sudo lvextend -l +100%FREE /dev/mapper/VolGroup00-rootVol
+   ```
+
+1. Expands the existing XFS filesystem
+
+   ```ShellSession
+   $ sudo xfs_growfs -d /dev/mapper/VolGroup00-rootVol
+   ```
+
+## Appendix WWW: Whitelist IP addresses in Akamai for Prod
+
+1. Log on to Akamai
+
+1. Select the three bar icon in the top left of the page
+
+1. Scroll down to the "WEB & DATA CENTER SECURITY" section
+
+1. Expand the **Security Configurations** node
+
+1. Select **Network Lists**
+
+1. Note that there are currently four whitelists associated with AB2D Prod
+
+   - AB2D_PROD_VPN_WHITELIST <-- lists CMS VPN ip addresses
+
+   - AB2D_PROD_NEWRELIC_WHITELIST <-- not currently used
+
+   - AB2D_PROD_SHAREDSERVICES_WHITELIST <-- not currently used
+
+   - AB2D_PROD_ACO_WHITLEIST <-- lists Accountable Care Organization (ACO) ip addresses
+   
+1. Expand the **AB2D_PROD_ACO_WHITLEIST** node
+
+1. Type or copy and IP address into the **Add Items** text box
+
+1. Tab away from the text box
+
+1. Note that the IP address now appears in the **Items in the list** text box
+
+1. Select **Save Changes**
+
+1. Collapse the **AB2D_PROD_ACO_WHITLEIST** node
+
+1. Select **...** beside the "AB2D_PROD_ACO_WHITLEIST" node
+
+1. Select **Activate** from the context menu
+
+1. Select the **Production** radio button
+
+1. Select **Activate List**
+
+## Appendix XXX: Fix CloudTamer scripts broken by ITOPS role change
+
+1. Ensure that you are on CMS VPN
+
+1. Open Chrome
+
+1. Log on to CloudTamer
+
+1. Select your logon dropdown near the upper right of the page
+
+1. Note the value under "Federated Login"
+
+   *Format:*
+
+   ```
+   {role}/{your eua id}
+   ```
+
+1. At the time of writing, the role is the following:
+
+   ```
+   ct-ado-ab2d-application-admin
+   ```
+
+1. If ITOPS automation has changed the name of this role, you must update the role name in two places
+
+   - within the previous step of this documentation
+
+   - within the following function
+
+     ```
+     ./Deploy/bash/functions/fn_get_temporary_aws_credentials_via_cloudtamer_api.sh
+     ```
+ 
