@@ -142,6 +142,7 @@
 1. [Appendix VVV: Add a volume to jenkins agent and extend the root volume to use it](#appendix-vvv-add-a-volume-to-jenkins-agent-and-extend-the-root-volume-to-use-it)
 1. [Appendix WWW: Whitelist IP addresses in Akamai for Prod](#whitelist-ip-addresses-in-akamai-for-prod)
 1. [Appendix XXX: Fix CloudTamer scripts broken by ITOPS role change](#appendix-xxx-fix-cloudtamer-scripts-broken-by-itops-role-change)
+1. [Appendix YYY: Add IAM components under the new ITOPS restrictions](#appendix-yyy-add-iam-components-under-the-new-itops-restrictions)
 
 ## Appendix A: Access the CMS AWS console
 
@@ -11692,3 +11693,45 @@ $ sed -i "" 's%cms-ab2d[\/]prod%cms-ab2d/dev%g' _includes/head.html (edited)
      - ./Deploy/bash/functions/fn_get_temporary_aws_credentials_via_cloudtamer_api.sh
 
      - ./Deploy/terraform/modules/kms/main.tf
+
+## Appendix YYY: Add IAM components under the new ITOPS restrictions
+
+1. Change to the "ab2d" repo directory
+
+   *Example:*
+
+   ```ShellSession
+   $ cd ~/code/ab2d
+   ```
+
+1. Set the target environment
+
+   ```ShellSession
+   $ source ./Deploy/bash/set-env.sh
+   ```
+
+1. Create a test policy
+
+   ```ShellSession
+   $ aws --region $AWS_DEFAULT_REGION iam create-policy \
+     --policy-name Ab2dTestPolicy \
+     --path "/delegatedadmin/developer/" \
+     --policy-document "file://Deploy/test-files/ab2d-cloudtrail-cloudwatch-policy.json"
+   ```
+
+1. Create a test role
+
+   ```ShellSession
+   $ aws --region $AWS_DEFAULT_REGION iam create-role \
+     --role-name Ab2dTestRole \
+     --path "/delegatedadmin/developer/" \
+     --assume-role-policy-document "file://Deploy/test-files/ab2d-cloudtrail-assume-role-policy.json"
+   ```
+
+1. Get policy ARN of test policy
+
+   ```ShellSession
+   $ AB2D_TEST_POLICY_ARN=$(aws --region us-east-1 iam list-policies \
+     --query 'Policies[?PolicyName==`Ab2dTestPolicy`].{ARN:Arn}' \
+     --output text)
+   ```
