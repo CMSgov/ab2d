@@ -7,4 +7,5 @@ public class ClearCoverageCacheRequest {
 
     private String contractNumber;
     private Integer month;
+    private Integer year;
 }
