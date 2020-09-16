@@ -3,6 +3,7 @@ package gov.cms.ab2d.worker.processor;
 import ca.uhn.fhir.context.FhirContext;
 import com.newrelic.api.agent.NewRelic;
 import com.newrelic.api.agent.Token;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.JobOutput;
 import gov.cms.ab2d.common.model.JobStatus;
@@ -399,6 +400,7 @@ public class ContractProcessorImpl implements ContractProcessor {
      * @param isError    - if there was an error
      * @return - the job output object
      */
+    @SuppressFBWarnings
     private JobOutput createJobOutput(Path outputFile, boolean isError) {
         JobOutput jobOutput = new JobOutput();
         jobOutput.setFilePath(outputFile.getFileName().toString());
