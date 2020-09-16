@@ -1,6 +1,6 @@
 package gov.cms.ab2d.common.model;
 
-import gov.cms.ab2d.common.repository.BeneficiaryRepository;
+import gov.cms.ab2d.common.repository.SponsorRepository;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,36 +25,38 @@ public class CreateUpdateTimestampTest {
     private static final String PATIENT_ID_STR = "Timestamp Test Beneficiary";
     private static final String PATIENT_ID_STR_TOO = "Timestamp Test Beneficiary 2";
 
-
-    @Autowired
-    BeneficiaryRepository beneficiaryRepository;
-
     @SuppressWarnings({"rawtypes", "unused"})
     @Container
     private static final PostgreSQLContainer postgreSQLContainer = new AB2DPostgresqlContainer();
 
+    @Autowired
+    private SponsorRepository sponsorRepository;
+
     @Test
     public void testTimestamps() {
-        Beneficiary bene = new Beneficiary();
-        bene.setPatientId(PATIENT_ID_STR);
-        assertNull(bene.getId());
-        assertNull(bene.getCreated());
-        assertNull(bene.getModified());
+        Sponsor sponsor = new Sponsor();
+        sponsor.setHpmsId(52);
+        sponsor.setOrgName("TEST");
 
-        Beneficiary savedBeneficiary = beneficiaryRepository.save(bene);
-        assertEquals(PATIENT_ID_STR, savedBeneficiary.getPatientId());
-        assertNotNull(savedBeneficiary.getId());
-        assertNotNull(savedBeneficiary.getCreated());
-        assertNotNull(savedBeneficiary.getModified());
+        assertNotNull(sponsor.getHpmsId());
+        assertNotNull(sponsor.getOrgName());
+        assertNull(sponsor.getCreated());
+        assertNull(sponsor.getModified());
 
-        LocalDateTime created = savedBeneficiary.getCreated();
-        LocalDateTime modified = savedBeneficiary.getModified();
-        savedBeneficiary.setPatientId(PATIENT_ID_STR_TOO);
-        Beneficiary finaleBeneficiary = beneficiaryRepository.save(savedBeneficiary);
-        assertEquals(created, finaleBeneficiary.getCreated());
-        assertNotEquals(modified, finaleBeneficiary.getModified());
+        Sponsor savedSponsor = sponsorRepository.save(sponsor);
+        assertEquals("TEST", savedSponsor.getOrgName());
+        assertNotNull(savedSponsor.getId());
+        assertNotNull(savedSponsor.getCreated());
+        assertNotNull(savedSponsor.getModified());
+
+        LocalDateTime created = savedSponsor.getCreated();
+        LocalDateTime modified = savedSponsor.getModified();
+        savedSponsor.setOrgName("TEST2");
+        Sponsor finaleSponsor = sponsorRepository.save(savedSponsor);
+        assertEquals(created, finaleSponsor.getCreated());
+        assertNotEquals(modified, finaleSponsor.getModified());
 
         // Cleanup
-        beneficiaryRepository.delete(finaleBeneficiary);
+        sponsorRepository.delete(finaleSponsor);
     }
 }
