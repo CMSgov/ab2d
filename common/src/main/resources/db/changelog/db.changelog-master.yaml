@@ -64,3 +64,6 @@ databaseChangeLog:
       file: db/changelog/v001/add_attestor_role.sql
   - include:
       file: db/changelog/v001/add_created_modified_date.sql
+  - include:
+      file: db/changelog/v001/add_ip_table.sql
+
