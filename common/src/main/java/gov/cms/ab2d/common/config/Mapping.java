@@ -1,9 +1,11 @@
 package gov.cms.ab2d.common.config;
 
 import gov.cms.ab2d.common.dto.SponsorDTO;
+import gov.cms.ab2d.common.dto.SponsorIPDTO;
 import gov.cms.ab2d.common.dto.UserDTO;
 import gov.cms.ab2d.common.model.Role;
 import gov.cms.ab2d.common.model.Sponsor;
+import gov.cms.ab2d.common.model.SponsorIP;
 import gov.cms.ab2d.common.model.User;
 import gov.cms.ab2d.common.service.RoleService;
 import gov.cms.ab2d.common.service.SponsorService;
@@ -61,6 +63,8 @@ public class Mapping {
                 .addMappings(mapper -> mapper.map(src -> src.getSponsor().getContracts(), UserDTO::setContracts));
         modelMapper.createTypeMap(UserDTO.class, User.class)
                 .addMappings(mapper -> mapper.using(roleDTOToRoleConverter).map(src -> src.getRole(), User::addRole));
+        modelMapper.createTypeMap(SponsorIP.class, SponsorIPDTO.class)
+                .addMappings(mapper -> mapper.using(sponsorSponsorDTOConverter).map(src -> src.getSponsorIPID().getSponsor(), SponsorIPDTO::setSponsor));
     }
 
     public ModelMapper getModelMapper() {

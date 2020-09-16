@@ -1,5 +1,6 @@
 package gov.cms.ab2d.common.model;
 
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -21,6 +22,7 @@ import java.util.stream.Collectors;
 @Entity
 @Getter
 @Setter
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class Sponsor extends TimestampBase {
 
     @Id
@@ -28,9 +30,11 @@ public class Sponsor extends TimestampBase {
     private Long id;
 
     @NotNull
+    @EqualsAndHashCode.Include
     private Integer hpmsId;
 
     @NotNull
+    @EqualsAndHashCode.Include
     private String orgName;
     private String legalName;
 
@@ -46,6 +50,12 @@ public class Sponsor extends TimestampBase {
             orphanRemoval = true,
             fetch = FetchType.EAGER)
     private Set<Contract> contracts = new HashSet<>();
+
+    @OneToMany(cascade = CascadeType.ALL,
+            mappedBy = "sponsorIPID.sponsor",
+            orphanRemoval = true,
+            fetch = FetchType.EAGER)
+    private Set<SponsorIP> sponsorIPs = new HashSet<>();
 
     public boolean hasContract(String contractNum) {
         return contracts.stream().anyMatch(contract -> contractNum.equalsIgnoreCase(contract.getContractNumber()));
