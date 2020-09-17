@@ -64,11 +64,8 @@ class CoverageServiceImplTest {
 
     private CoveragePeriod period1Jan;
     private CoveragePeriod period1Feb;
-    private CoveragePeriod period1March;
 
     private CoveragePeriod period2Jan;
-    private CoveragePeriod period2Feb;
-    private CoveragePeriod period2March;
 
     @BeforeEach
     public void insertContractAndDefaultCoveragePeriod() {
@@ -79,11 +76,8 @@ class CoverageServiceImplTest {
 
         period1Jan = createCoveragePeriod(coveragePeriodRepo, contract1, JANUARY, YEAR);
         period1Feb = createCoveragePeriod(coveragePeriodRepo, contract1, FEBRUARY, YEAR);
-        period1March = createCoveragePeriod(coveragePeriodRepo, contract1, MARCH, YEAR);
 
         period2Jan = createCoveragePeriod(coveragePeriodRepo, contract2, JANUARY, YEAR);
-        period2Feb = createCoveragePeriod(coveragePeriodRepo, contract2, FEBRUARY, YEAR);
-        period2March = createCoveragePeriod(coveragePeriodRepo, contract2, MARCH, YEAR);
     }
 
     @AfterEach
