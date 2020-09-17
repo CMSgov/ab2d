@@ -82,3 +82,8 @@ variable "ab2d_okta_jwt_issuer" {}
 variable "stunnel_latest_version" {}
 
 variable "cpm_backup_api" {}
+
+variable "ab2d_hpms_url" {}
+variable "ab2d_hpms_auth_url" {}
+variable "ab2d_hpms_auth_key_id" {}
+variable "ab2d_hpms_auth_key_secret" {}

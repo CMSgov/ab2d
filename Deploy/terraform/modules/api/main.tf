@@ -207,6 +207,22 @@ resource "aws_ecs_task_definition" "api" {
         {
 	  "name" : "NEW_RELIC_LICENSE_KEY",
 	  "value" : "${var.new_relic_license_key}"
+	},
+        {
+	  "name" : "AB2D_HPMS_URL",
+	  "value" : "${var.ab2d_hpms_url}"
+	},
+        {
+	  "name" : "AB2D_HPMS_AUTH_URL",
+	  "value" : "${var.ab2d_hpms_auth_url}"
+	},
+        {
+	  "name" : "HPMS_AUTH_KEY_ID",
+	  "value" : "${var.ab2d_hpms_auth_key_id}"
+	},
+        {
+	  "name" : "HPMS_AUTH_KEY_SECRET",
+	  "value" : "${var.ab2d_hpms_auth_key_secret}"
 	}
       ],
       "logConfiguration": {

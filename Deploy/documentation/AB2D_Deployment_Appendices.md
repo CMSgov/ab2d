@@ -142,6 +142,7 @@
 1. [Appendix VVV: Add a volume to jenkins agent and extend the root volume to use it](#appendix-vvv-add-a-volume-to-jenkins-agent-and-extend-the-root-volume-to-use-it)
 1. [Appendix WWW: Whitelist IP addresses in Akamai for Prod](#whitelist-ip-addresses-in-akamai-for-prod)
 1. [Appendix XXX: Fix CloudTamer scripts broken by ITOPS role change](#appendix-xxx-fix-cloudtamer-scripts-broken-by-itops-role-change)
+1. [Appendix YYY: Add IAM components under the new ITOPS restrictions](#appendix-yyy-add-iam-components-under-the-new-itops-restrictions)
 
 ## Appendix A: Access the CMS AWS console
 
@@ -3447,60 +3448,11 @@
    $ cd ~/code/ab2d/Deploy
    ```
 
-1. Get temporary AWS credentials for target environment
+1. Set AWS environment variables using the CloudTamer API
 
-   1. Set AWS account number
-
-      *Example for Dev:*
-
-      ```ShellSession
-      $ export AWS_ACCOUNT_NUMBER=349849222861
-      ```
-
-      *Example for Sbx:*
-
-      ```ShellSession
-      $ export AWS_ACCOUNT_NUMBER=777200079629
-      ```
-
-      *Example for Impl:*
-
-      ```ShellSession
-      $ export AWS_ACCOUNT_NUMBER=330810004472
-      ```
-
-   1. Get bearer token
-
-      ```ShellSession
-      $ BEARER_TOKEN=$(curl --location --request POST 'https://cloudtamer.cms.gov/api/v2/token' \
-          --header 'Accept: application/json' \
-          --header 'Accept-Language: en-US,en;q=0.5' \
-          --header 'Content-Type: application/json' \
-          --data-raw "{\"username\":\"${CLOUDTAMER_USER_NAME}\",\"password\":\"${CLOUDTAMER_PASSWORD}\",\"idms\":{\"id\":2}}" \
-          | jq --raw-output ".data.access.token")
-      ```
-
-   1. Get JSON output for temporary credentials
-
-      ```ShellSession
-      $ JSON_OUTPUT=$(curl --location --request POST 'https://cloudtamer.cms.gov/api/v3/temporary-credentials' \
-          --header 'Accept: application/json' \
-          --header 'Accept-Language: en-US,en;q=0.5' \
-          --header 'Content-Type: application/json' \
-          --header "Authorization: Bearer ${BEARER_TOKEN}" \
-          --header 'Content-Type: application/json' \
-          --data-raw "{\"account_number\":\"${AWS_ACCOUNT_NUMBER}\",\"iam_role_name\":\"ab2d-spe-developer\"}" \
-          | jq --raw-output ".data")
-      ```
-
-   1. Get temporary AWS credentials
-
-      ```ShellSession
-      $ export AWS_DEFAULT_REGION=us-east-1
-      $ export AWS_ACCESS_KEY_ID=$(echo $JSON_OUTPUT | jq --raw-output ".access_key")
-      $ export AWS_SECRET_ACCESS_KEY=$(echo $JSON_OUTPUT | jq --raw-output ".secret_access_key")
-      $ export AWS_SESSION_TOKEN=$(echo $JSON_OUTPUT | jq --raw-output ".session_token")
-      ```
+   ```ShellSession
+   $ source ./bash/set-env.sh
+   ```
    
 1. Change to the environment where the existing component is failing to refresh
 
@@ -11736,9 +11688,50 @@ $ sed -i "" 's%cms-ab2d[\/]prod%cms-ab2d/dev%g' _includes/head.html (edited)
 
    - within the previous step of this documentation
 
-   - within the following function
+   - within the following scripts
 
-     ```
-     ./Deploy/bash/functions/fn_get_temporary_aws_credentials_via_cloudtamer_api.sh
-     ```
- 
+     - ./Deploy/bash/functions/fn_get_temporary_aws_credentials_via_cloudtamer_api.sh
+
+     - ./Deploy/terraform/modules/kms/main.tf
+
+## Appendix YYY: Add IAM components under the new ITOPS restrictions
+
+1. Change to the "ab2d" repo directory
+
+   *Example:*
+
+   ```ShellSession
+   $ cd ~/code/ab2d
+   ```
+
+1. Set the target environment
+
+   ```ShellSession
+   $ source ./Deploy/bash/set-env.sh
+   ```
+
+1. Create a test policy
+
+   ```ShellSession
+   $ aws --region $AWS_DEFAULT_REGION iam create-policy \
+     --policy-name Ab2dTestPolicy \
+     --path "/delegatedadmin/developer/" \
+     --policy-document "file://Deploy/test-files/ab2d-cloudtrail-cloudwatch-policy.json"
+   ```
+
+1. Create a test role
+
+   ```ShellSession
+   $ aws --region $AWS_DEFAULT_REGION iam create-role \
+     --role-name Ab2dTestRole \
+     --path "/delegatedadmin/developer/" \
+     --assume-role-policy-document "file://Deploy/test-files/ab2d-cloudtrail-assume-role-policy.json"
+   ```
+
+1. Get policy ARN of test policy
+
+   ```ShellSession
+   $ AB2D_TEST_POLICY_ARN=$(aws --region us-east-1 iam list-policies \
+     --query 'Policies[?PolicyName==`Ab2dTestPolicy`].{ARN:Arn}' \
+     --output text)
+   ```
