@@ -73,11 +73,6 @@ class CoverageServiceImplTest {
     @BeforeEach
     public void insertContractAndDefaultCoveragePeriod() {
 
-        coverageRepo.deleteAll();
-        coverageSearchEventRepo.deleteAll();
-        coveragePeriodRepo.deleteAll();
-        contractRepo.deleteAll();
-
         sponsor = createSponsor(sponsorRepo);
         contract1 = createContract(contractRepo, sponsor, "TST-123");
         contract2 = createContract(contractRepo, sponsor, "TST-456");
