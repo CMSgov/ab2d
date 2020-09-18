@@ -30,8 +30,6 @@ import static java.util.stream.Collectors.toList;
  * to another context which may not have a {@link Transactional} context.
  *
  * To prevent issues getOne is not used in this service at all.
- *
- * TODO: bulk inserts, selects, and deletes using plain jdbc
  */
 @Slf4j
 @Service
