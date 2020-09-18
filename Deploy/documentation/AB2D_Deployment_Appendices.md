@@ -11719,15 +11719,6 @@ $ sed -i "" 's%cms-ab2d[\/]prod%cms-ab2d/dev%g' _includes/head.html (edited)
      --policy-document "file://Deploy/test-files/ab2d-cloudtrail-cloudwatch-policy.json"
    ```
 
-1. Create a test role
-
-   ```ShellSession
-   $ aws --region $AWS_DEFAULT_REGION iam create-role \
-     --role-name Ab2dTestRole \
-     --path "/delegatedadmin/developer/" \
-     --assume-role-policy-document "file://Deploy/test-files/ab2d-cloudtrail-assume-role-policy.json"
-   ```
-
 1. Get policy ARN of test policy
 
    ```ShellSession
