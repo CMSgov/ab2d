@@ -46,11 +46,11 @@ fn_get_temporary_aws_credentials_via_cloudtamer_api ()
   echo "--------------------"
   echo ""
 
-  BEARER_TOKEN=$(curl --location --request POST 'https://cloudtamer.cms.gov/api/v2/token' \
+  BEARER_TOKEN=$(curl --location --request POST 'https://cloudtamer.cms.gov/api/v3/token' \
     --header 'Accept: application/json' \
     --header 'Accept-Language: en-US,en;q=0.5' \
     --header 'Content-Type: application/json' \
-    --data-raw "{\"username\":\"${CLOUDTAMER_USER_NAME}\",\"password\":\"${CLOUDTAMER_PASSWORD}\",\"idms\":{\"id\":2}}" \
+    --data-raw "{\"username\":\"${CLOUDTAMER_USER_NAME}\",\"password\":\"${CLOUDTAMER_PASSWORD}\",\"idms\":2}" \
     | jq --raw-output ".data.access.token")
 
   if [ "${BEARER_TOKEN}" == "null" ]; then
