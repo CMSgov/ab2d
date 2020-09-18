@@ -23,7 +23,7 @@ public class CoverageSearchEvent extends TimestampBase {
     @EqualsAndHashCode.Include
     private Long id;
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne
     @JoinColumn(name = "bene_coverage_period_id")
     private CoveragePeriod coveragePeriod;
 
