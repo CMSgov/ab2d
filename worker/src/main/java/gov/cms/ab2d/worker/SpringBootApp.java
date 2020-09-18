@@ -25,26 +25,6 @@ import org.springframework.retry.annotation.EnableRetry;
 /* Remove Quartz job for OptOut. If we want it back, add OptOutQuartzSetup.class below */
 @Import({StuckJobQuartzSetup.class, BFDHealthCheckQuartzSetup.class})
 public class SpringBootApp {
-
-    // Why do you have to know every month?
-
-    // 1000
-    // 999 - january of a new patient
-    // 1000 - february of a new patient
-
-    // SELECT year, month, beneficiary FROM Coverage INNER JOIN CoveragePeriod
-    // WHERE coveragePeriodId IN(list pertaining to date range and contract)
-    // ORDER BY year, month
-    // GROUP BY beneficiaryId
-
-    // SELECT DISTINCT COUNT(beneficiaryId)
-    // FROM coverage
-    // WHERE coveragePeriodId IN(list pertaining to date range and contract)
-
-    // SELECT month,year,beneficiaryId
-    // FROM Coverage INNER JOIN CoveragePeriod
-    // WHERE beneficiaryId IN (........)
-
     public static void main(String[] args) {
         SpringApplication.run(SpringBootApp.class, args);
     }
