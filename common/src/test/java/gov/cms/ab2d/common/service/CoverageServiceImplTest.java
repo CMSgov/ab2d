@@ -69,7 +69,6 @@ class CoverageServiceImplTest {
 
     @BeforeEach
     public void insertContractAndDefaultCoveragePeriod() {
-
         sponsor = dataSetup.createSponsor("Cal Ripken", 200, "Cal Ripken Jr.", 201);
         contract1 = dataSetup.setupContract(sponsor, "TST-123");
         contract2 = dataSetup.setupContract(sponsor, "TST-456");
@@ -183,7 +182,7 @@ class CoverageServiceImplTest {
 
         assertEquals(inProgress, savedTo);
 
-        List<String> savedBeneficiaryIds = coverageRepo.findActiveBeneficiaryIds(period1Jan);
+        List<String> savedBeneficiaryIds = coverageRepo.findActiveBeneficiaryIds(Collections.singletonList(period1Jan));
 
         assertTrue(savedBeneficiaryIds.containsAll(beneficiaryIds));
         assertTrue(beneficiaryIds.containsAll(savedBeneficiaryIds));
@@ -195,13 +194,7 @@ class CoverageServiceImplTest {
         List<String> results1 = List.of("testing-123-1", "testing-456-1", "testing-789-1");
 
         coverageService.submitCoverageSearch(period1Jan.getId(), "testing");
-
-        assertEquals(1L, coverageSearchEventRepo.count());
-
         CoverageSearchEvent inProgress1 = coverageService.startCoverageSearch(period1Jan.getId(), "testing");
-
-        assertEquals(2L, coverageSearchEventRepo.count());
-
         CoverageSearchEvent savedTo1 = coverageService.insertCoverage(period1Jan.getId(), inProgress1.getId(), results1);
 
         assertEquals(inProgress1, savedTo1);

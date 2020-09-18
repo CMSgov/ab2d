@@ -1,11 +1,12 @@
 package gov.cms.ab2d.common.service;
 
 import gov.cms.ab2d.common.model.CoveragePeriod;
-import gov.cms.ab2d.common.model.CoverageSearchDiff;
 import gov.cms.ab2d.common.model.CoverageSearchEvent;
+import gov.cms.ab2d.common.model.CoverageSearchDiff;
+import gov.cms.ab2d.common.model.CoverageSummary;
 import gov.cms.ab2d.common.model.JobStatus;
 
-import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 
 public interface CoverageService {
@@ -53,7 +54,7 @@ public interface CoverageService {
      * @param beneficiaryIds list of beneficiaries for this coverage period and this specific search event
      * @return relevant
      */
-    CoverageSearchEvent insertCoverage(int periodId, long searchEventId, Collection<String> beneficiaryIds);
+    CoverageSearchEvent insertCoverage(int periodId, long searchEventId, List<String> beneficiaryIds);
 
     /**
      * Delete all data from previous coverage search conducted for a given {@link CoveragePeriod}.
@@ -64,6 +65,28 @@ public interface CoverageService {
      * @param periodId {@link CoveragePeriod#getId()}
      */
     void deletePreviousSearch(int periodId);
+
+    /**
+     * Pull coverage information for the given page and pageSize number of beneficiaries.
+     *
+     * If the page size is 1000 then the first page will get records 0 - 99, 7th page will get records 6000 - 6999
+     * @param pageNumber page through results by pageSize records at a time.
+     * @param pageSize max number of beneficiaries in each page
+     * @param coveragePeriods list of ids of coverage periods to search over
+     * @return coverage summary for page of beneficiaries
+     */
+    List<CoverageSummary> pageCoverage(int pageNumber, int pageSize, List<Integer> coveragePeriods);
+
+    /**
+     * Pull coverage information for the given page and pageSize number of beneficiaries.
+     *
+     * If the page size is 1000 then the first page will get records 0 - 99, 7th page will get records 6000 - 6999
+     * @param pageNumber page through results by pageSize records at a time.
+     * @param pageSize max number of beneficiaries in each page
+     * @param coveragePeriods list of ids of coverage periods to search over
+     * @return coverage summary for page of beneficiaries
+     */
+    List<CoverageSummary> pageCoverage(int pageNumber, int pageSize, Integer... coveragePeriods);
 
     /**
      * Get difference in beneficiary membership between last two searches conducted for a given coverage search
