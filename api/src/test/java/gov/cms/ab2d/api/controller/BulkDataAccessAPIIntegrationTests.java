@@ -104,8 +104,8 @@ public class BulkDataAccessAPIIntegrationTests {
 
     @BeforeEach
     public void setup() throws JwtVerificationException {
-        contractRepository.deleteAll();
         jobRepository.deleteAll();
+        contractRepository.deleteAll();
         userRepository.deleteAll();
         roleRepository.deleteAll();
         sponsorRepository.deleteAll();

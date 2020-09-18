@@ -3,6 +3,7 @@ package gov.cms.ab2d.common.service;
 import gov.cms.ab2d.common.model.*;
 import gov.cms.ab2d.common.repository.*;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
+import gov.cms.ab2d.common.util.DataSetup;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -10,7 +11,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.TestPropertySource;
-import org.springframework.transaction.annotation.Transactional;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -20,7 +20,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import static gov.cms.ab2d.common.EntityUtils.*;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
 import static org.junit.jupiter.api.Assertions.*;
@@ -28,13 +27,11 @@ import static org.junit.jupiter.api.Assertions.*;
 @SpringBootTest
 @Testcontainers
 @TestPropertySource(locations = "/application.common.properties")
-@Transactional
 class CoverageServiceImplTest {
 
     private static final int YEAR = 2020;
     private static final int JANUARY = 1;
     private static final int FEBRUARY = 2;
-    private static final int MARCH = 3;
 
     @Container
     private static final PostgreSQLContainer postgreSQLContainer= new AB2DPostgresqlContainer();
@@ -57,6 +54,9 @@ class CoverageServiceImplTest {
     @Autowired
     CoverageService coverageService;
 
+    @Autowired
+    DataSetup dataSetup;
+
     private Sponsor sponsor;
 
     private Contract contract1;
@@ -70,14 +70,14 @@ class CoverageServiceImplTest {
     @BeforeEach
     public void insertContractAndDefaultCoveragePeriod() {
 
-        sponsor = createSponsor(sponsorRepo);
-        contract1 = createContract(contractRepo, sponsor, "TST-123");
-        contract2 = createContract(contractRepo, sponsor, "TST-456");
+        sponsor = dataSetup.createSponsor("Cal Ripken", 200, "Cal Ripken Jr.", 201);
+        contract1 = dataSetup.setupContract(sponsor, "TST-123");
+        contract2 = dataSetup.setupContract(sponsor, "TST-456");
 
-        period1Jan = createCoveragePeriod(coveragePeriodRepo, contract1, JANUARY, YEAR);
-        period1Feb = createCoveragePeriod(coveragePeriodRepo, contract1, FEBRUARY, YEAR);
+        period1Jan = dataSetup.createCoveragePeriod(contract1, JANUARY, YEAR);
+        period1Feb = dataSetup.createCoveragePeriod(contract1, FEBRUARY, YEAR);
 
-        period2Jan = createCoveragePeriod(coveragePeriodRepo, contract2, JANUARY, YEAR);
+        period2Jan = dataSetup.createCoveragePeriod(contract2, JANUARY, YEAR);
     }
 
     @AfterEach
@@ -85,7 +85,9 @@ class CoverageServiceImplTest {
         coverageRepo.deleteAll();
         coverageSearchEventRepo.deleteAll();
         coveragePeriodRepo.deleteAll();
-        contractRepo.deleteAll();
+        contractRepo.delete(contract1);
+        contractRepo.delete(contract2);
+        contractRepo.flush();
 
         if (sponsor != null) {
             sponsorRepo.delete(sponsor);
@@ -131,7 +133,7 @@ class CoverageServiceImplTest {
 
         assertNotNull(cs1.getId());
 
-        CoverageSearchEvent csCopy = coverageSearchEventRepo.getOne(cs1.getId());
+        CoverageSearchEvent csCopy = coverageSearchEventRepo.findById(cs1.getId()).get();
 
         assertNotNull(csCopy.getCoveragePeriod());
         assertNull(csCopy.getOldStatus());
@@ -191,10 +193,15 @@ class CoverageServiceImplTest {
     @Test
     void diffCoverageWhenFirstSearch() {
         List<String> results1 = List.of("testing-123-1", "testing-456-1", "testing-789-1");
-        List<String> results2 = List.of("testing-123-1", "testing-456-2", "testing-789-2");
 
         coverageService.submitCoverageSearch(period1Jan.getId(), "testing");
+
+        assertEquals(1L, coverageSearchEventRepo.count());
+
         CoverageSearchEvent inProgress1 = coverageService.startCoverageSearch(period1Jan.getId(), "testing");
+
+        assertEquals(2L, coverageSearchEventRepo.count());
+
         CoverageSearchEvent savedTo1 = coverageService.insertCoverage(period1Jan.getId(), inProgress1.getId(), results1);
 
         assertEquals(inProgress1, savedTo1);
@@ -290,7 +297,7 @@ class CoverageServiceImplTest {
     void submitSearches() {
         CoverageSearchEvent cs1 = coverageService.submitCoverageSearch(period1Jan.getId(), "testing");
 
-        CoverageSearchEvent cs1Copy = coverageSearchEventRepo.getOne(cs1.getId());
+        CoverageSearchEvent cs1Copy = coverageSearchEventRepo.findById(cs1.getId()).get();
 
         assertEquals(JobStatus.SUBMITTED, cs1Copy.getNewStatus());
     }
@@ -306,7 +313,7 @@ class CoverageServiceImplTest {
         assertThrows(InvalidJobStateTransition.class, () -> coverageService.startCoverageSearch(period1Feb.getId(), "testing"));
 
         CoverageSearchEvent started = coverageService.startCoverageSearch(period1Jan.getId(), "testing");
-        CoverageSearchEvent startedCopy = coverageSearchEventRepo.getOne(started.getId());
+        CoverageSearchEvent startedCopy = coverageSearchEventRepo.findById(started.getId()).get();
 
         assertEquals(JobStatus.SUBMITTED, startedCopy.getOldStatus());
         assertEquals(JobStatus.IN_PROGRESS, startedCopy.getNewStatus());
@@ -325,13 +332,13 @@ class CoverageServiceImplTest {
         failed.setOldStatus(JobStatus.IN_PROGRESS);
         failed.setDescription("testing");
 
-        coverageSearchEventRepo.save(cancel);
-        coverageSearchEventRepo.save(failed);
+        coverageSearchEventRepo.saveAndFlush(cancel);
+        coverageSearchEventRepo.saveAndFlush(failed);
 
         period1Jan.setStatus(JobStatus.CANCELLED);
         period2Jan.setStatus(JobStatus.FAILED);
-        coveragePeriodRepo.save(period1Jan);
-        coveragePeriodRepo.save(period2Jan);
+        coveragePeriodRepo.saveAndFlush(period1Jan);
+        coveragePeriodRepo.saveAndFlush(period2Jan);
 
         assertThrows(InvalidJobStateTransition.class, () -> coverageService.startCoverageSearch(period1Jan.getId(), "testing"));
         assertThrows(InvalidJobStateTransition.class, () -> coverageService.startCoverageSearch(period2Jan.getId(), "testing"));
@@ -350,7 +357,7 @@ class CoverageServiceImplTest {
         coverageService.startCoverageSearch(period1Jan.getId(), "testing");
 
         CoverageSearchEvent completed = coverageService.completeCoverageSearch(period1Jan.getId(), "testing");
-        CoverageSearchEvent completedCopy = coverageSearchEventRepo.getOne(completed.getId());
+        CoverageSearchEvent completedCopy = coverageSearchEventRepo.findById(completed.getId()).get();
 
         assertEquals(JobStatus.IN_PROGRESS, completedCopy.getOldStatus());
         assertEquals(JobStatus.SUCCESSFUL, completedCopy.getNewStatus());
@@ -396,7 +403,7 @@ class CoverageServiceImplTest {
 
         // Cannot complete search that has not been started
         CoverageSearchEvent cancelled = coverageService.cancelCoverageSearch(period1Jan.getId(), "testing");
-        CoverageSearchEvent cancelledCopy = coverageSearchEventRepo.getOne(cancelled.getId());
+        CoverageSearchEvent cancelledCopy = coverageSearchEventRepo.findById(cancelled.getId()).get();
 
         assertEquals(JobStatus.SUBMITTED, cancelledCopy.getOldStatus());
         assertEquals(JobStatus.CANCELLED, cancelledCopy.getNewStatus());
@@ -425,7 +432,7 @@ class CoverageServiceImplTest {
         coverageService.startCoverageSearch(period1Jan.getId(), "testing");
 
         CoverageSearchEvent failed = coverageService.failCoverageSearch(period1Jan.getId(), "testing");
-        CoverageSearchEvent failedCopy = coverageSearchEventRepo.getOne(failed.getId());
+        CoverageSearchEvent failedCopy = coverageSearchEventRepo.findById(failed.getId()).get();
 
         assertEquals(JobStatus.IN_PROGRESS, failedCopy.getOldStatus());
         assertEquals(JobStatus.FAILED, failedCopy.getNewStatus());

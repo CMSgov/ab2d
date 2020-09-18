@@ -4,6 +4,7 @@ import gov.cms.ab2d.common.dto.ClearCoverageCacheRequest;
 import gov.cms.ab2d.common.model.*;
 import gov.cms.ab2d.common.repository.*;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
+import gov.cms.ab2d.common.util.DataSetup;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,7 +19,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-import static gov.cms.ab2d.common.EntityUtils.*;
 import static java.time.Month.*;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
@@ -39,6 +39,7 @@ class CacheServiceImplTest {
     @Autowired CoverageSearchEventRepository coverageSearchEventRepo;
     @Autowired ContractRepository contractRepo;
     @Autowired SponsorRepository sponsorRepo;
+    @Autowired DataSetup dataSetup;
 
     private final int january = JANUARY.getValue();
     private final int february = FEBRUARY.getValue();;
@@ -60,17 +61,17 @@ class CacheServiceImplTest {
         final int nowNano = Instant.now().getNano();
         contractNumber = "CONTRACT_" + nowNano + "0000";
 
-        sponsor = createSponsor(sponsorRepo);
-        contract = createContract(contractRepo, sponsor, contractNumber);
+        sponsor = dataSetup.createSponsor("Cal Ripken", 200, "Cal Ripken Jr.", 201);
+        contract = dataSetup.setupContract(sponsor, contractNumber);
 
-        CoveragePeriod coveragePeriod = createCoveragePeriod(coveragePeriodRepo, contract, january, YEAR);
-        CoverageSearchEvent coverageSearchEvent = createCoverageSearchEvent(coverageSearchEventRepo, coveragePeriod, "testing");
+        CoveragePeriod coveragePeriod = dataSetup.createCoveragePeriod(contract, january, YEAR);
+        CoverageSearchEvent coverageSearchEvent = dataSetup.createCoverageSearchEvent(coveragePeriod, "testing");
 
-        createCoverage(coverageRepo, coveragePeriod, coverageSearchEvent, createBeneId());
-        createCoverage(coverageRepo, coveragePeriod, coverageSearchEvent, createBeneId());
-        createCoverage(coverageRepo, coveragePeriod, coverageSearchEvent, createBeneId());
-        createCoverage(coverageRepo, coveragePeriod, coverageSearchEvent, createBeneId());
-        createCoverage(coverageRepo, coveragePeriod, coverageSearchEvent, createBeneId());
+        dataSetup.createCoverage(coveragePeriod, coverageSearchEvent, DataSetup.createBeneId());
+        dataSetup.createCoverage(coveragePeriod, coverageSearchEvent, DataSetup.createBeneId());
+        dataSetup.createCoverage(coveragePeriod, coverageSearchEvent, DataSetup.createBeneId());
+        dataSetup.createCoverage(coveragePeriod, coverageSearchEvent, DataSetup.createBeneId());
+        dataSetup.createCoverage(coveragePeriod, coverageSearchEvent, DataSetup.createBeneId());
     }
 
     @Test
@@ -124,22 +125,22 @@ class CacheServiceImplTest {
     void given_contractNumber_only_should_clear_cache() {
         //given
         //given multiple months for a specific contract
-        CoveragePeriod febCoverage = createCoveragePeriod(coveragePeriodRepo, contract, february, YEAR);
-        CoverageSearchEvent febEvent = createCoverageSearchEvent(coverageSearchEventRepo, febCoverage, "testing");
+        CoveragePeriod febCoverage = dataSetup.createCoveragePeriod(contract, february, YEAR);
+        CoverageSearchEvent febEvent = dataSetup.createCoverageSearchEvent(febCoverage, "testing");
 
-        CoveragePeriod marchCoverage = createCoveragePeriod(coveragePeriodRepo, contract, march, YEAR);
-        CoverageSearchEvent marchEvent = createCoverageSearchEvent(coverageSearchEventRepo, marchCoverage, "testing");
+        CoveragePeriod marchCoverage = dataSetup.createCoveragePeriod(contract, march, YEAR);
+        CoverageSearchEvent marchEvent = dataSetup.createCoverageSearchEvent(marchCoverage, "testing");
 
-        CoveragePeriod aprilCoverage = createCoveragePeriod(coveragePeriodRepo, contract, april, YEAR);
-        CoverageSearchEvent aprilEvent = createCoverageSearchEvent(coverageSearchEventRepo, aprilCoverage, "testing");
+        CoveragePeriod aprilCoverage = dataSetup.createCoveragePeriod(contract, april, YEAR);
+        CoverageSearchEvent aprilEvent = dataSetup.createCoverageSearchEvent(aprilCoverage, "testing");
 
-        CoveragePeriod mayCoverage = createCoveragePeriod(coveragePeriodRepo, contract, may, YEAR);
-        CoverageSearchEvent mayEvent = createCoverageSearchEvent(coverageSearchEventRepo, mayCoverage, "testing");
+        CoveragePeriod mayCoverage = dataSetup.createCoveragePeriod(contract, may, YEAR);
+        CoverageSearchEvent mayEvent = dataSetup.createCoverageSearchEvent(mayCoverage, "testing");
 
-        createCoverage(coverageRepo, febCoverage, febEvent, createBeneId());
-        createCoverage(coverageRepo, marchCoverage, marchEvent, createBeneId());
-        createCoverage(coverageRepo, aprilCoverage, aprilEvent, createBeneId());
-        createCoverage(coverageRepo, mayCoverage, mayEvent, createBeneId());
+        dataSetup.createCoverage(febCoverage, febEvent, DataSetup.createBeneId());
+        dataSetup.createCoverage(marchCoverage, marchEvent, DataSetup.createBeneId());
+        dataSetup.createCoverage(aprilCoverage, aprilEvent, DataSetup.createBeneId());
+        dataSetup.createCoverage(mayCoverage, mayEvent, DataSetup.createBeneId());
 
         assertThat(getAllActivePatientIds().size(), is(9));
 
@@ -196,22 +197,22 @@ class CacheServiceImplTest {
     @Test
     void when_month_and_contractNumber_is_omitted_clear_all_rows_from_table() {
         //given multiple months for a specific contract
-        CoveragePeriod febCoverage = createCoveragePeriod(coveragePeriodRepo, contract, february, YEAR);
-        CoverageSearchEvent febEvent = createCoverageSearchEvent(coverageSearchEventRepo, febCoverage, "testing");
+        CoveragePeriod febCoverage = dataSetup.createCoveragePeriod(contract, february, YEAR);
+        CoverageSearchEvent febEvent = dataSetup.createCoverageSearchEvent(febCoverage, "testing");
 
-        CoveragePeriod marchCoverage = createCoveragePeriod(coveragePeriodRepo, contract, march, YEAR);
-        CoverageSearchEvent marchEvent = createCoverageSearchEvent(coverageSearchEventRepo, marchCoverage, "testing");
+        CoveragePeriod marchCoverage = dataSetup.createCoveragePeriod(contract, march, YEAR);
+        CoverageSearchEvent marchEvent = dataSetup.createCoverageSearchEvent(marchCoverage, "testing");
 
-        CoveragePeriod aprilCoverage = createCoveragePeriod(coveragePeriodRepo, contract, april, YEAR);
-        CoverageSearchEvent aprilEvent = createCoverageSearchEvent(coverageSearchEventRepo, aprilCoverage, "testing");
+        CoveragePeriod aprilCoverage = dataSetup.createCoveragePeriod(contract, april, YEAR);
+        CoverageSearchEvent aprilEvent = dataSetup.createCoverageSearchEvent(aprilCoverage, "testing");
 
-        CoveragePeriod mayCoverage = createCoveragePeriod(coveragePeriodRepo, contract, may, YEAR);
-        CoverageSearchEvent mayEvent = createCoverageSearchEvent(coverageSearchEventRepo, mayCoverage, "testing");
+        CoveragePeriod mayCoverage = dataSetup.createCoveragePeriod(contract, may, YEAR);
+        CoverageSearchEvent mayEvent = dataSetup.createCoverageSearchEvent(mayCoverage, "testing");
 
-        createCoverage(coverageRepo, febCoverage, febEvent, createBeneId());
-        createCoverage(coverageRepo, marchCoverage, marchEvent, createBeneId());
-        createCoverage(coverageRepo, aprilCoverage, aprilEvent, createBeneId());
-        createCoverage(coverageRepo, mayCoverage, mayEvent, createBeneId());
+        dataSetup.createCoverage(febCoverage, febEvent, DataSetup.createBeneId());
+        dataSetup.createCoverage(marchCoverage, marchEvent, DataSetup.createBeneId());
+        dataSetup.createCoverage(aprilCoverage, aprilEvent, DataSetup.createBeneId());
+        dataSetup.createCoverage(mayCoverage, mayEvent, DataSetup.createBeneId());
 
         //given multiple contracts for a specific month
         createContractAndCoverage(january, YEAR);
@@ -223,14 +224,14 @@ class CacheServiceImplTest {
 
     private void createContractAndCoverage(final int month, final int year) {
         final String contractNumber = "CONTRACT_" + Instant.now().getNano();
-        final Contract contract = createContract(contractRepo, sponsor, contractNumber);
-        final CoveragePeriod coveragePeriod = createCoveragePeriod(coveragePeriodRepo, contract, month, year);
-        final CoverageSearchEvent coverageSearchEvent = createCoverageSearchEvent(coverageSearchEventRepo, coveragePeriod, "testing");
+        final Contract contract = dataSetup.setupContract(sponsor, contractNumber);
+        final CoveragePeriod coveragePeriod = dataSetup.createCoveragePeriod(contract, month, year);
+        final CoverageSearchEvent coverageSearchEvent = dataSetup.createCoverageSearchEvent(coveragePeriod, "testing");
 
-        createCoverage(coverageRepo, coveragePeriod, coverageSearchEvent, createBeneId());
-        createCoverage(coverageRepo, coveragePeriod, coverageSearchEvent, createBeneId());
-        createCoverage(coverageRepo, coveragePeriod, coverageSearchEvent, createBeneId());
-        createCoverage(coverageRepo, coveragePeriod, coverageSearchEvent, createBeneId());
-        createCoverage(coverageRepo, coveragePeriod, coverageSearchEvent, createBeneId());
+        dataSetup.createCoverage(coveragePeriod, coverageSearchEvent, DataSetup.createBeneId());
+        dataSetup.createCoverage(coveragePeriod, coverageSearchEvent, DataSetup.createBeneId());
+        dataSetup.createCoverage(coveragePeriod, coverageSearchEvent, DataSetup.createBeneId());
+        dataSetup.createCoverage(coveragePeriod, coverageSearchEvent, DataSetup.createBeneId());
+        dataSetup.createCoverage(coveragePeriod, coverageSearchEvent, DataSetup.createBeneId());
     }
 }
