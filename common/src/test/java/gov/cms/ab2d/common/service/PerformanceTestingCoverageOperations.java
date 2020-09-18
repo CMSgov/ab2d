@@ -29,7 +29,13 @@ import static org.junit.jupiter.api.Assertions.fail;
 
 /**
  * Test preformance of coverage service bulk read and write operations to make sure that
- * speed is preserved
+ * speed is preserved.
+ *
+ * To perform these tests run "docker-compose up db" and make sure the container started
+ * is exposed on port 5432. Then manually start each test.
+ *
+ * Most of the variables in the test are hard coded and can be changed to make the performance tests
+ * more rigorous or simpler.
  */
 @SpringBootTest
 @TestPropertySource(locations = "/application.common.properties")
@@ -63,6 +69,13 @@ class PerformanceTestingCoverageOperations {
     private Contract contract;
     private CoveragePeriod period;
 
+    /*
+     * Set the database connection information including the username, password, database name,
+     * and most importantly port that the database is present on.
+     *
+     * Only use this when using the docker-compose db container for testing. If using testcontainers
+     * this is unnecessary.
+     */
     static {
         System.setProperty("DB_USERNAME", "ab2d");
         System.setProperty("DB_PASSWORD", "ab2d");
