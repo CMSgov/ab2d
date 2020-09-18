@@ -132,6 +132,7 @@
 1. [Appendix OOO: Connect to Jenkins agent through the Jenkins master using the ProxyJump flag](#appendix-ooo-connect-to-jenkins-agent-through-the-jenkins-master-using-the-proxyjump-flag)
 1. [Appendix PPP: Create and work with CSV database backup](#appendix-ppp-create-and-work-with-csv-database-backup)
    * [Retrieve CSV database backup](#retrieve-csv-database-backup)
+   * [Create a second schema that uses CSV database backup](#create-a-second-schema-that-uses-csv-database-backup)
 1. [Appendix QQQ: Get private IP address](#appendix-qqq-get-private-ip-address)
 1. [Appendix RRR: Protect the existing RDS database using AWS CLI](#appendix-rrr-protect-the-existing-rds-database-using-aws-cli)
 1. [Appendix SSS: Review RDS reserved instance utilization from AWS console](#appendix-sss-review-rds-reserved-instance-utilization-from-aws-console)
@@ -8256,7 +8257,7 @@
 *For the production static website, I just changed the "head.html" from dev to prod like this:*
 
 ```ShellSession
-$ sed -i "" 's%cms-ab2d[\/]prod%cms-ab2d/dev%g' _includes/head.html (edited)
+$ sed -i "" 's%cms-ab2d[\/]prod%cms-ab2d/dev%g' _includes/head.html
 ```
 
 ## Appendix SS: Destroy application
@@ -11126,6 +11127,14 @@ $ sed -i "" 's%cms-ab2d[\/]prod%cms-ab2d/dev%g' _includes/head.html (edited)
 
    ```ShellSession
    $ cp 01-public-schema.sql 01-backup-schema.sql
+   ```
+
+1. Change the schema name to "backup" in the "01-backup-schema.sql" file
+
+   ```ShellSession
+   $ sed -i "" 's%public[\.]%backup[\.]%g' 01-backup-schema.sql \
+     && sed -i "" 's%[ ]public[ ]%[ ]backup[ ]%g' 01-backup-schema.sql \
+     && sed -i "" 's%public[;]%backup[;]%g' 01-backup-schema.sql
    ```
 
 > *** TO DO ***
