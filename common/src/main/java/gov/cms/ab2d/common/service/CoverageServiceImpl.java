@@ -67,7 +67,6 @@ public class CoverageServiceImpl implements CoverageService {
     public JobStatus getSearchStatus(int searchId) {
         CoveragePeriod coverageSearch = findCoveragePeriod(searchId);
         return coverageSearch.getStatus();
-
     }
 
     @Override
@@ -112,6 +111,8 @@ public class CoverageServiceImpl implements CoverageService {
         return coverage;
     }
 
+    // todo: add in appropriate location either the completeCoverageSearch method or within the EOB Search on conclusion
+    //      of the current search. This needs to run after the completion of every search
     @Override
     public void deletePreviousSearch(int searchId) {
         CoveragePeriod period = findCoveragePeriod(searchId);
@@ -121,6 +122,8 @@ public class CoverageServiceImpl implements CoverageService {
                 coverageRepo.removeAllByCoveragePeriodAndCoverageSearchEvent(period, coverageSearchEvent));
     }
 
+    // todo: create diff and log on completion of every search. This information may be logged to both
+    //      kinesis and sql as part of a subsequent issue.
     @Override
     public CoverageSearchDiff searchDiff(int searchId) {
 
