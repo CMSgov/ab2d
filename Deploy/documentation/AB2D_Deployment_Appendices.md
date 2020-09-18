@@ -130,7 +130,8 @@
    * [Install and verify AWS CLI 2](#install-and-verify-aws-cli-2)
 1. [Appendix NNN: Manually install Chef Inspec on existing Jenkins Agent](#appendix-nnn-manually-install-chef-inspec-on-existing-jenkins-agent)
 1. [Appendix OOO: Connect to Jenkins agent through the Jenkins master using the ProxyJump flag](#appendix-ooo-connect-to-jenkins-agent-through-the-jenkins-master-using-the-proxyjump-flag)
-1. [Appendix PPP: Retrieve CSV database backup](#appendix-ppp-retrieve-csv-database-backup)
+1. [Appendix PPP: Create and work with CSV database backup](#appendix-ppp-create-and-work-with-csv-database-backup)
+   * [Retrieve CSV database backup](#retrieve-csv-database-backup)
 1. [Appendix QQQ: Get private IP address](#appendix-qqq-get-private-ip-address)
 1. [Appendix RRR: Protect the existing RDS database using AWS CLI](#appendix-rrr-protect-the-existing-rds-database-using-aws-cli)
 1. [Appendix SSS: Review RDS reserved instance utilization from AWS console](#appendix-sss-review-rds-reserved-instance-utilization-from-aws-console)
@@ -10879,7 +10880,9 @@ $ sed -i "" 's%cms-ab2d[\/]prod%cms-ab2d/dev%g' _includes/head.html (edited)
 	ec2-user@$JENKINS_AGENT_PRIVATE_IP
    ```
 
-## Appendix PPP: Retrieve CSV database backup
+## Appendix PPP: Create and work with CSV database backup
+
+### Retrieve CSV database backup
 
 1. Connect to Cisco VPN
 
@@ -11092,6 +11095,40 @@ $ sed -i "" 's%cms-ab2d[\/]prod%cms-ab2d/dev%g' _includes/head.html (edited)
       ```ShellSession
       $ tar -xzvf "${TARGET_ENVIRONMENT}.tar.gz" --strip-components=4
       ```
+
+### Create a second schema that uses CSV database backup
+
+1. Change to the Downloads directory
+
+   *Example for sandbox:*
+
+   ```ShellSession
+   $ cd ~/Downloads
+   ```
+
+1. Backup the existing database backup
+
+   *Example for sandbox:*
+
+   ```ShellSession
+   $ cp -r ~/Downloads/ab2d-sbx-sandbox ~/Downloads/ab2d-sbx-sandbox-backup
+   ```
+
+1. Change to the directory where you have your CSV database backup
+
+   *Example for sandbox:*
+
+   ```ShellSession
+   $ cd ~/Downloads/ab2d-sbx-sandbox
+   ```
+
+1. Copy the public schema file to a backup schema file
+
+   ```ShellSession
+   $ cp 01-public-schema.sql 01-backup-schema.sql
+   ```
+
+> *** TO DO ***
 
 ## Appendix QQQ: Get private IP address
 
