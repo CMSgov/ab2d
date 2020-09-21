@@ -470,7 +470,7 @@ class CoverageServiceImplTest {
         CoverageSearchEvent inProgressApril = coverageService.startCoverageSearch(period1April.getId(), "testing");
 
 
-        coverageService.insertCoverage(period1Feb.getId(), inProgressFeb.getId(), List.of("testing-3"));
+        coverageService.insertCoverage(period1Feb.getId(), inProgressFeb.getId(), List.of("testing-1"));
 
         List<CoverageSummary> coverageSummaries = coverageService.pageCoverage(0, 3,
                 period1Jan.getId(), period1Feb.getId(), period1March.getId(), period1April.getId());
