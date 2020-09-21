@@ -167,13 +167,20 @@ public class CoverageServiceImpl implements CoverageService {
         return pageCoverage(pageNumber, pageSize, List.of(coveragePeriodIds));
     }
 
+    /**
+     * Find page of beneficiaries then look up all of their coverage information for a range of identified coverage
+     * periods.
+     */
     private Map<String, List<Object[]>> findCoverageMemberships(int pageNumber, int pageSize, List<Integer> coveragePeriodIds) {
         List<CoveragePeriod> coveragePeriods = coveragePeriodRepo.findAllById(coveragePeriodIds);
 
+        // Look up a page of beneficiaries sorted by id
         Page<String> beneficiaryPage = coverageRepo.findActiveBeneficiaryIds(coveragePeriods, PageRequest.of(pageNumber, pageSize));
         List<String> beneficiaries = beneficiaryPage.getContent();
 
-        Map<String, List<Object[]>> coverageMemberships = new HashMap<>(beneficiaries.size() * coveragePeriodIds.size());
+        // Look up coverage information for BATCH_SELECT_SIZE beneficiaries at a time
+        // and populate into hash map
+        Map<String, List<Object[]>> coverageMemberships = new HashMap<>(beneficiaries.size());
         int startIndex = 0;
         while (startIndex < beneficiaries.size()) {
             int endIndex = Math.min(startIndex + BATCH_SELECT_SIZE, beneficiaries.size());
@@ -188,6 +195,9 @@ public class CoverageServiceImpl implements CoverageService {
         return coverageMemberships;
     }
 
+    /**
+     * Summarize the coverage of one beneficiary for
+     */
     private CoverageSummary summarizeCoverageMembership(Contract contract, Map.Entry<String, List<Object[]>> membershipInfo) {
 
         String beneficiaryId = membershipInfo.getKey();
@@ -207,7 +217,7 @@ public class CoverageServiceImpl implements CoverageService {
             for (Object[] membership : membershipMonths) {
                 LocalDate next = fromRawResults(membership);
 
-                if (!next.isEqual(last)) {
+                if (!next.isEqual(last.plusMonths(1))) {
                     dateRanges.add(new DateRange(begin, last.plusMonths(1)));
                     begin = next;
                     last = next;
@@ -227,6 +237,9 @@ public class CoverageServiceImpl implements CoverageService {
         }
     }
 
+    /**
+     * Convert raw array results into object
+     */
     private LocalDate fromRawResults(Object[] result) {
         int year = (int) result[1];
         int month = (int) result[2];

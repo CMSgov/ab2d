@@ -30,7 +30,7 @@ class DateRangeTest {
         assertFalse(dateRange.inRange(LocalDateTime.now().minusDays(1)));
     }
 
-    @DisplayName("")
+    @DisplayName("Make sure date range is exclusive at edge")
     @Test
     void edgeCases() {
 

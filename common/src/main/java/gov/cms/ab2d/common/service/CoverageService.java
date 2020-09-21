@@ -69,7 +69,7 @@ public interface CoverageService {
     /**
      * Pull coverage information for the given page and pageSize number of beneficiaries.
      *
-     * If the page size is 1000 then the first page will get records 0 - 99, 7th page will get records 6000 - 6999
+     * If the page size is 1000 then the first page will get records 0 - 999, 7th page will get records 6000 - 6999
      * @param pageNumber page through results by pageSize records at a time.
      * @param pageSize max number of beneficiaries in each page
      * @param coveragePeriods list of ids of coverage periods to search over
@@ -80,7 +80,7 @@ public interface CoverageService {
     /**
      * Pull coverage information for the given page and pageSize number of beneficiaries.
      *
-     * If the page size is 1000 then the first page will get records 0 - 99, 7th page will get records 6000 - 6999
+     * If the page size is 1000 then the first page will get records 0 - 999, 7th page will get records 6000 - 6999
      * @param pageNumber page through results by pageSize records at a time.
      * @param pageSize max number of beneficiaries in each page
      * @param coveragePeriods list of ids of coverage periods to search over
@@ -90,8 +90,8 @@ public interface CoverageService {
 
     /**
      * Get difference in beneficiary membership between last two searches conducted for a given coverage search
-     * @param periodId
-     * @return
+     * @param periodId the search period to find the last two searches for
+     * @return difference between the two searches
      */
     CoverageSearchDiff searchDiff(int periodId);
 
