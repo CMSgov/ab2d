@@ -6,6 +6,12 @@ import lombok.Setter;
 
 import javax.persistence.*;
 
+/**
+ * Encapsulates a single contract beneficiary search event triggered by a worker.
+ *
+ * For IN_PROGRESS searches these events are related via foreign key to actual
+ * Coverage information.
+ */
 @Entity(name = "event_bene_coverage_search_status_change")
 @Getter
 @Setter

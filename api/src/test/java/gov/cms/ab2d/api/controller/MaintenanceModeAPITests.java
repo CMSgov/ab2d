@@ -5,10 +5,7 @@ import gov.cms.ab2d.common.dto.PropertiesDTO;
 import gov.cms.ab2d.common.service.PropertiesService;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import org.hamcrest.core.Is;
-import org.junit.jupiter.api.MethodOrderer;
-import org.junit.jupiter.api.Order;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestMethodOrder;
+import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -18,6 +15,7 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import java.util.Collections;
 import java.util.List;
 
 import static gov.cms.ab2d.common.util.Constants.*;
@@ -39,6 +37,15 @@ public class MaintenanceModeAPITests {
 
     @Autowired
     private PropertiesService propertiesService;
+
+    @AfterEach
+    void tearDown() {
+        PropertiesDTO propertiesDTO = new PropertiesDTO();
+        propertiesDTO.setKey(MAINTENANCE_MODE);
+        propertiesDTO.setValue("false");
+
+        propertiesService.updateProperties(Collections.singletonList(propertiesDTO));
+    }
 
     @Test
     @Order(1)
