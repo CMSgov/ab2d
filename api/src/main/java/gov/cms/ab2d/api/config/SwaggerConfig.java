@@ -34,7 +34,7 @@ public class SwaggerConfig {
     @Bean
     public Docket api() {
         List<SecurityScheme> auth = List.of(apiKey());
-        return new Docket(DocumentationType.SWAGGER_2)
+        return new Docket(DocumentationType.OAS_30)
                 .select()
                 .apis(RequestHandlerSelectors.basePackage("gov.cms.ab2d.api.controller"))
                 .paths(PathSelectors.ant(API_PREFIX + FHIR_PREFIX + "/**"))
