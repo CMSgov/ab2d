@@ -31,7 +31,8 @@ public interface CoverageRepository extends JpaRepository<Coverage, Long> {
 
     @Query(value = " SELECT DISTINCT c.beneficiaryId " +
             "  FROM Coverage c " +
-            " WHERE c.coveragePeriod IN :coveragePeriods ",
+            " WHERE c.coveragePeriod IN :coveragePeriods " +
+            " ORDER BY c.beneficiaryId",
             countQuery = " SELECT DISTINCT COUNT(c.beneficiaryId) " +
                     "  FROM Coverage c " +
                     " WHERE c.coveragePeriod IN :coveragePeriods ")

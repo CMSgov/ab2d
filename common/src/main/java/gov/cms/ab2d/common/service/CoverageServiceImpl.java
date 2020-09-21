@@ -21,6 +21,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.*;
@@ -345,6 +346,11 @@ public class CoverageServiceImpl implements CoverageService {
             final String errMsg = "invalid value for year. Year must be between " + AB2D_EPOCH + " and " + currentYear;
             log.error("{} - invalid year :[{}]", errMsg, year);
             throw new IllegalArgumentException(errMsg);
+        }
+
+        OffsetDateTime proposed = OffsetDateTime.of(LocalDate.of(year, month, 1), LocalTime.of(0, 0, 0), ZoneOffset.UTC);
+        if (proposed.isAfter(time)) {
+            throw new IllegalArgumentException("Pulling coverage period from future. Current time " + time + " is before proposed time " + proposed);
         }
     }
 
