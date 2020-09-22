@@ -3,7 +3,7 @@
 ## Table of Contents
 
 1. [Setup Jenkins master in management AWS account](#setup-jenkins-master-in-management-aws-account)
-1. [Setup Jenkins agent in management AWS account](#setup-jenkins-agent-in-management-aws-account)
+1. [Setup Jenkins agents in management AWS account](#setup-jenkins-agent-in-management-aws-account)
 1. [Allow jenkins users to use a login shell](#allow-jenkins-users-to-use-a-login-shell)
    * [Modify the jenkins user on Jenkins master to allow it to use a login shell](#modify-the-jenkins-user-on-jenkins-master-to-allow-it-to-use-a-login-shell)
    * [Create a jenkins user on Jenkins agent and allow it to use a login shell](#create-a-jenkins-user-on-jenkins-agent-and-allow-it-to-use-a-login-shell)
@@ -72,21 +72,37 @@
 
 1. Open a terminal
 
-1. Change to the "Deploy" directory
+1. Change to the "ab2d" repo directory
+
+1. Set the target environment to the "Mgmt AWS account"
 
    ```ShellSession
-   $ cd ~/code/ab2d/Deploy
+   $ source ./Deploy/bash/set-env.sh
    ```
+
+1. Change to the management terraform directory
+
+   ```ShellSession
+   $ cd ./Deploy/terraform/environments/ab2d-mgmt-east-dev-shared
+   ```
+
+1. Remove the Jenkins master instance from terraform state
+
+   ```ShellSesssion
+   $ terraform state rm module.jenkins_master.aws_instance.jenkins_master
+   ```
+
+1. Change to the "ab2d" repo directory again
 
 1. Create EC2 instance for Jenkins master
 
    ```ShellSession
-   $ ./bash/deploy-jenkins-master.sh
+   $ ./Deploy/bash/deploy-jenkins-master.sh
    ```
    
 1. Wait for the automation to complete
 
-## Setup Jenkins agent in management AWS account
+## Setup Jenkins agents in management AWS account
 
 1. If there is an existing "ab2d-jenkins-master-ami AMI", rename it in the AWS management account as follows
 
