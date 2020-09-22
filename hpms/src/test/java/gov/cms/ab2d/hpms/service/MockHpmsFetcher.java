@@ -4,7 +4,6 @@ import gov.cms.ab2d.hpms.hmsapi.HPMSAttestation;
 import gov.cms.ab2d.hpms.hmsapi.HPMSAttestationsHolder;
 import gov.cms.ab2d.hpms.hmsapi.HPMSOrganizationInfo;
 import gov.cms.ab2d.hpms.hmsapi.HPMSOrganizations;
-import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -12,7 +11,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
 
-@Service
 public class MockHpmsFetcher implements HPMSFetcher {
 
     private static final Set<HPMSOrganizationInfo> orgSet = new HashSet<>();
