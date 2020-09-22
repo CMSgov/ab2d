@@ -39,6 +39,12 @@
   ],
   "provisioners": [
     {
+      "type": "shell","inline": [
+        "sudo mkdir -p /deployment",
+	"sudo chmod -R 777 /deployment"
+      ]
+    },
+    {
       "type": "file",
       "source": "./docker-daemon.json",
       "destination": "/tmp/docker-daemon.json"
@@ -47,6 +53,11 @@
       "type": "file",
       "source": "./provision-jenkins-master.sh",
       "destination": "/tmp/provision-jenkins-master.sh"
+    },
+    {
+      "type": "file",
+      "source": "./logrotate-var-log-messages-config-snippet",
+      "destination": "/deployment/logrotate-var-log-messages-config-snippet"
     },
     {
       "type": "shell",
