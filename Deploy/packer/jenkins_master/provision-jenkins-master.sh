@@ -69,6 +69,10 @@ sudo sed -i.bak '/Defaults    requiretty/d' /etc/sudoers
 sudo touch /etc/use_dsa_with_iptables
 sudo chmod 755 /etc/use_dsa_with_iptables
 
+# Configure log rotation for '/var/log/messages'
+
+sudo sed -i.bak '/messages/ r /deployment/logrotate-var-log-messages-config-snippet' /etc/logrotate.d/syslog
+
 # Install Docker
 
 sudo yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
@@ -107,4 +111,4 @@ sudo rpm --import https://pkg.jenkins.io/redhat/jenkins.io.key
 
 # Install Jenkins
 
-sudo yum install jenkins -y
+# sudo yum install jenkins -y
