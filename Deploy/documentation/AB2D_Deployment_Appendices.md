@@ -11175,7 +11175,13 @@ $ sed -i "" 's%cms-ab2d[\/]prod%cms-ab2d/dev%g' _includes/head.html
 
 1. Open a terminal
 
-1. Import the backed up CSV files to the backup schema
+1. Start a database tunnel (if not already running)
+
+1. Open another terminal
+
+1. Connect to database via a psql shell
+
+1. Import the backed up CSV files to the backup schema by running the following in the psl shell
 
    *Example for sandbox:*
 
@@ -11197,8 +11203,6 @@ $ sed -i "" 's%cms-ab2d[\/]prod%cms-ab2d/dev%g' _includes/head.html
    \COPY backup.job FROM '/tmp/ab2d-sbx-sandbox/csv/public.job.csv' WITH (FORMAT CSV);
    \COPY backup.job_output FROM '/tmp/ab2d-sbx-sandbox/csv/public.job_output.csv' WITH (FORMAT CSV);
    ```
-
-1. Start a database tunnel (if not already running)
 
 1. Open pgAdmin (if not already open)
 
