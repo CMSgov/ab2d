@@ -288,5 +288,4 @@ module "kinesis_firehose" {
 module "management_target" {
   source                      = "../../modules/management_target"
   mgmt_aws_account_number     = var.mgmt_aws_account_number
-  ab2d_spe_developer_policies = var.ab2d_spe_developer_policies
 }

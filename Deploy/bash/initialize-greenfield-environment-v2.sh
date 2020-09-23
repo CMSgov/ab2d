@@ -341,11 +341,43 @@ configure_greenfield_environment ()
   AWS_ACCOUNT_NUMBER_GE="$1"   # Options: 349849222861|777200079629|330810004472|595094747606|653916833532
   CMS_ENV_GE="$2"              # Options: ab2d-dev|ab2d-sbx-sandbox|ab2d-east-impl|ab2d-east-prod|ab2d-mgmt-east-dev
   MODULE="$3"                  # Options: management_target|management_account
-    
+
   # Get AWS credentials for target environment
-  
+
   fn_get_temporary_aws_credentials_via_cloudtamer_api "${AWS_ACCOUNT_NUMBER_GE}" "${CMS_ENV_GE}"
-  
+
+  # Initialize and validate terraform for the target environment
+
+  echo "******************************************************************************"
+  echo "Initialize and validate terraform for the ${CMS_ENV_GE} environment..."
+  echo "******************************************************************************"
+
+  cd "${START_DIR}/.."
+  cd terraform/environments/$CMS_ENV_GE
+
+  rm -f *.tfvars
+
+  terraform init \
+    -backend-config="bucket=${CMS_ENV_GE}-automation" \
+    -backend-config="key=${CMS_ENV_GE}/terraform/terraform.tfstate" \
+    -backend-config="region=${AWS_DEFAULT_REGION}" \
+    -backend-config="encrypt=true"
+
+  terraform validate
+
+  # Get the policies that are attached to the federated login role
+  # - the federated login role is controlled by ITOPS automation
+  # - any modifications to the federated login role are wiped out by ITOPS automation
+  # - therefore, we are creating our own role that has the same policies but that also allows us
+  #   to set trust relationships
+
+  # Create or verify greenfield components
+
+  terraform apply \
+    --var "mgmt_aws_account_number=${CMS_MGMT_ENV_AWS_ACCOUNT_NUMBER}" \
+    --target "module.${MODULE}" \
+    --auto-approve
+
   # Create of verify key pair
 
   KEY_NAME=$(aws --region "${AWS_DEFAULT_REGION}" ec2 describe-key-pairs \
