@@ -1,0 +1,18 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "",
+      "Effect": "Allow",
+      "Principal": {
+          "Service": [
+	      "ec2.amazonaws.com",
+	      "ecs-tasks.amazonaws.com",
+	      "s3.amazonaws.com",
+	      "vpc-flow-logs.amazonaws.com"
+	  ]
+      },
+      "Action": "sts:AssumeRole"
+    }
+  ]
+}
