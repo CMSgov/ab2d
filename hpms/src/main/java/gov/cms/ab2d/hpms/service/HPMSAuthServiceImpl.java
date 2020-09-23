@@ -5,18 +5,25 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.util.UriComponentsBuilder;
 import reactor.core.publisher.Flux;
 
+import javax.annotation.PostConstruct;
+import java.net.URI;
 import java.time.Duration;
 
-import static org.springframework.http.HttpHeaders.*;
+import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 
 @Service
 public class HPMSAuthServiceImpl implements HPMSAuthService {
 
-    @Value("${hpms.auth.url}")
+    @Value("${hpms.base.url}/api/idm/oauth/token")
     private String authURL;
+
+    @Value("#{${hpms.api.params}}")
+    private MultiValueMap<String, String> params;
 
     @Value("${HPMS_AUTH_KEY_ID}")
     private String hpmsAPIKeyId;
@@ -24,9 +31,22 @@ public class HPMSAuthServiceImpl implements HPMSAuthService {
     @Value("${HPMS_AUTH_KEY_SECRET}")
     private String hpmsSecret;
 
+    private URI fullAuthURI;
+
     private volatile String authToken;
 
     private volatile long tokenExpires;
+
+    @PostConstruct
+    private void buildFullAuthURL() {
+        UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromUriString(authURL);
+
+        if (!params.isEmpty()) {
+            uriBuilder.queryParams(params);
+        }
+
+        fullAuthURI = uriBuilder.build().toUri();
+    }
 
     @Override
     public void buildAuthHeaders(HttpHeaders headers) {
@@ -46,8 +66,8 @@ public class HPMSAuthServiceImpl implements HPMSAuthService {
     private void refreshToken(long currentTimestamp) {
         authToken = null;
 
-        Flux<HPMSAuthResponse> orgInfoFlux = WebClient.create(authURL)
-                .post()
+        Flux<HPMSAuthResponse> orgInfoFlux = WebClient.create()
+                .post().uri(fullAuthURI)
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(retrieveAuthRequestPayload())
                 .accept(MediaType.APPLICATION_JSON)
