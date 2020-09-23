@@ -5,9 +5,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
-import org.springframework.util.MultiValueMap;
 import org.springframework.web.reactive.function.client.WebClient;
-import org.springframework.web.util.UriComponentsBuilder;
 import reactor.core.publisher.Flux;
 
 import javax.annotation.PostConstruct;
@@ -17,13 +15,10 @@ import java.time.Duration;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 
 @Service
-public class HPMSAuthServiceImpl implements HPMSAuthService {
+public class HPMSAuthServiceImpl extends AbstractHPMSService implements HPMSAuthService {
 
     @Value("${hpms.base.url}/api/idm/oauth/token")
     private String authURL;
-
-    @Value("#{${hpms.api.params}}")
-    private MultiValueMap<String, String> params;
 
     @Value("${HPMS_AUTH_KEY_ID}")
     private String hpmsAPIKeyId;
@@ -38,14 +33,8 @@ public class HPMSAuthServiceImpl implements HPMSAuthService {
     private volatile long tokenExpires;
 
     @PostConstruct
-    private void buildFullAuthURL() {
-        UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromUriString(authURL);
-
-        if (!params.isEmpty()) {
-            uriBuilder.queryParams(params);
-        }
-
-        fullAuthURI = uriBuilder.build().toUri();
+    private void buildFullAuthURI() {
+        fullAuthURI = buildFullURI(authURL);
     }
 
     @Override

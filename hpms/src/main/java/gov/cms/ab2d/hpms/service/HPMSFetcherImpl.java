@@ -6,18 +6,21 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.util.UriComponentsBuilder;
 import reactor.core.publisher.Flux;
 
+import javax.annotation.PostConstruct;
+import java.net.URI;
 import java.util.function.Consumer;
 
 @Service
-public class HPMSFetcherImpl implements HPMSFetcher {
+public class HPMSFetcherImpl extends AbstractHPMSService implements HPMSFetcher {
 
-    @Value("${hpms.base.url}/api/cda/orgs/info")
-    private String organizationBaseUrl;
+    @Value("${hpms.base.url}")
+    private String hpmsBaseURI;
 
-    @Value("${hpms.base.url}/api/cda/contracts/status")
-    private String attestationBaseUrl;
+    private URI organizationBaseUri;
+    private URI attestationBaseUri;
 
     private final HPMSAuthService authService;
 
@@ -26,10 +29,16 @@ public class HPMSFetcherImpl implements HPMSFetcher {
         this.authService = authService;
     }
 
+    @PostConstruct
+    private void buildURI() {
+        organizationBaseUri = buildFullURI(hpmsBaseURI + "/api/cda/orgs/info");
+        attestationBaseUri = buildFullURI(hpmsBaseURI + "/api/cda/contracts/status");
+    }
+
     @Override
     public void retrieveSponsorInfo(Consumer<HPMSOrganizations> hpmsOrgCallback) {
-        Flux<HPMSOrganizations> orgInfoFlux = WebClient.create(organizationBaseUrl)
-                .get()
+        Flux<HPMSOrganizations> orgInfoFlux = WebClient.create()
+                .get().uri(organizationBaseUri)
                 .headers(authService::buildAuthHeaders)
                 .retrieve()
                 .bodyToFlux(HPMSOrganizations.class);
@@ -39,11 +48,18 @@ public class HPMSFetcherImpl implements HPMSFetcher {
 
     @Override
     public void retrieveAttestationInfo(Consumer<HPMSAttestationsHolder> hpmsAttestationCallback, String contractIds) {
-        Flux<HPMSAttestationsHolder> contractsFlux = WebClient.create(attestationBaseUrl)
-                .get().uri(uriBuilder -> uriBuilder.queryParam("contractIds", contractIds).build())
+        Flux<HPMSAttestationsHolder> contractsFlux = WebClient.create()
+                .get().uri(buildAttestationURI(contractIds))
                 .retrieve()
                 .bodyToFlux(HPMSAttestationsHolder.class);
 
         contractsFlux.subscribe(hpmsAttestationCallback);
+    }
+
+    private URI buildAttestationURI(String contractIds) {
+        return UriComponentsBuilder
+                .fromUri(attestationBaseUri)
+                .queryParam("contractIds", contractIds)
+                .build().toUri();
     }
 }
