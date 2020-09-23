@@ -5,15 +5,17 @@ import gov.cms.ab2d.hpms.hmsapi.HPMSAttestationsHolder;
 import gov.cms.ab2d.hpms.hmsapi.HPMSOrganizationInfo;
 import gov.cms.ab2d.hpms.hmsapi.HPMSOrganizations;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
 
 public class MockHpmsFetcher implements HPMSFetcher {
 
-    private static final Set<HPMSOrganizationInfo> orgSet = new HashSet<>();
+    private static final List<HPMSOrganizationInfo> orgSet = new ArrayList<>();
 
     private static final Map<String, HPMSAttestation> attests = new HashMap<>();
 
