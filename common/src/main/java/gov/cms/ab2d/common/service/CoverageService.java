@@ -89,6 +89,15 @@ public interface CoverageService {
     List<CoverageSummary> pageCoverage(int pageNumber, int pageSize, Integer... coveragePeriods);
 
     /**
+     * Find a subset of active beneficiary ids by
+     * @param pageNumber page number in results
+     * @param pageSize number of records per page
+     * @param coveragePeriods coverage periods to filter ids on
+     * @return page of beneficiary ids
+     */
+    List<String> findActiveBeneficiaryIds(int pageNumber, int pageSize, List<Integer> coveragePeriods);
+
+    /**
      * Get difference in beneficiary membership between last two searches conducted for a given coverage search
      * @param periodId the search period to find the last two searches for
      * @return difference between the two searches

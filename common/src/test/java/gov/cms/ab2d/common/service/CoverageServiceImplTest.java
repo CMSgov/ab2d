@@ -18,6 +18,8 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import java.time.LocalDateTime;
 import java.util.*;
 
+import static java.util.Collections.disjoint;
+import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
 import static org.junit.jupiter.api.Assertions.*;
@@ -211,7 +213,8 @@ class CoverageServiceImplTest {
 
         assertEquals(inProgress, savedTo);
 
-        List<String> savedBeneficiaryIds = coverageRepo.findActiveBeneficiaryIds(Collections.singletonList(period1Jan));
+        List<String> savedBeneficiaryIds = coverageService.findActiveBeneficiaryIds(0, 1000,
+                singletonList(period1Jan.getId()));
 
         assertTrue(savedBeneficiaryIds.containsAll(beneficiaryIds));
         assertTrue(beneficiaryIds.containsAll(savedBeneficiaryIds));
@@ -562,7 +565,7 @@ class CoverageServiceImplTest {
 
         List<String> coverages = coverageRepo.findAll().stream().map(Coverage::getBeneficiaryId).collect(toList());
 
-        assertTrue(Collections.disjoint(results1, coverages));
+        assertTrue(disjoint(results1, coverages));
         assertTrue(coverages.containsAll(results2));
 
         Set<CoverageSearchEvent> distinctSearchEvents = coverageRepo.findAll().stream()

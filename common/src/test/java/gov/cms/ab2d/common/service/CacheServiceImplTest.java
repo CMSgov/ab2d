@@ -16,11 +16,11 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
 import static java.time.Month.*;
+import static java.util.Collections.singletonList;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
@@ -40,6 +40,7 @@ class CacheServiceImplTest {
     @Autowired CoverageSearchEventRepository coverageSearchEventRepo;
     @Autowired ContractRepository contractRepo;
     @Autowired SponsorRepository sponsorRepo;
+    @Autowired CoverageService coverageService;
     @Autowired DataSetup dataSetup;
 
     private final int january = JANUARY.getValue();
@@ -118,7 +119,8 @@ class CacheServiceImplTest {
         cut.clearCache(request);
 
         CoveragePeriod coveragePeriod = coveragePeriodRepo.getByContractIdAndMonthAndYear(contract.getId(), january, YEAR);
-        final List<String> activePatientIds = coverageRepo.findActiveBeneficiaryIds(Collections.singletonList(coveragePeriod));
+        final List<String> activePatientIds = coverageService.findActiveBeneficiaryIds(0, 1000,
+                singletonList(coveragePeriod.getId()));
         assertTrue(activePatientIds.isEmpty());
     }
 
@@ -158,19 +160,24 @@ class CacheServiceImplTest {
         final List<String> patientIds = new ArrayList<>();
 
         CoveragePeriod coveragePeriod = coveragePeriodRepo.getByContractIdAndMonthAndYear(contract.getId(), january, YEAR);
-        patientIds.addAll(coverageRepo.findActiveBeneficiaryIds(Collections.singletonList(coveragePeriod)));
+        patientIds.addAll(coverageService.findActiveBeneficiaryIds(0, 1000,
+                singletonList(coveragePeriod.getId())));
 
         coveragePeriod = coveragePeriodRepo.getByContractIdAndMonthAndYear(contract.getId(), february, YEAR);
-        patientIds.addAll(coverageRepo.findActiveBeneficiaryIds(Collections.singletonList(coveragePeriod)));
+        patientIds.addAll(coverageService.findActiveBeneficiaryIds(0, 1000,
+                singletonList(coveragePeriod.getId())));
 
         coveragePeriod = coveragePeriodRepo.getByContractIdAndMonthAndYear(contract.getId(), march, YEAR);
-        patientIds.addAll(coverageRepo.findActiveBeneficiaryIds(Collections.singletonList(coveragePeriod)));
+        patientIds.addAll(coverageService.findActiveBeneficiaryIds(0, 1000,
+                singletonList(coveragePeriod.getId())));
 
         coveragePeriod = coveragePeriodRepo.getByContractIdAndMonthAndYear(contract.getId(), april, YEAR);
-        patientIds.addAll(coverageRepo.findActiveBeneficiaryIds(Collections.singletonList(coveragePeriod)));
+        patientIds.addAll(coverageService.findActiveBeneficiaryIds(0, 1000,
+                singletonList(coveragePeriod.getId())));
 
         coveragePeriod = coveragePeriodRepo.getByContractIdAndMonthAndYear(contract.getId(), may, YEAR);
-        patientIds.addAll(coverageRepo.findActiveBeneficiaryIds(Collections.singletonList(coveragePeriod)));
+        patientIds.addAll(coverageService.findActiveBeneficiaryIds(0, 1000,
+                singletonList(coveragePeriod.getId())));
 
         return patientIds;
     }
@@ -190,7 +197,8 @@ class CacheServiceImplTest {
 
         //then
         CoveragePeriod coveragePeriod = coveragePeriodRepo.getByContractIdAndMonthAndYear(contract.getId(), january, YEAR);
-        final List<String> activePatientIds = coverageRepo.findActiveBeneficiaryIds(Collections.singletonList(coveragePeriod));
+        final List<String> activePatientIds = coverageService.findActiveBeneficiaryIds(0, 1000,
+                singletonList(coveragePeriod.getId()));
         assertTrue(activePatientIds.isEmpty());
     }
 

@@ -3,32 +3,30 @@ package gov.cms.ab2d.common.service;
 import gov.cms.ab2d.common.model.*;
 import gov.cms.ab2d.common.repository.*;
 import gov.cms.ab2d.common.util.DataSetup;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.test.context.TestPropertySource;
 
 import javax.sql.DataSource;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.function.Supplier;
 import java.util.stream.IntStream;
 
+import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.joining;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Test preformance of coverage service bulk read and write operations to make sure that
+ * Test performance of coverage service bulk read and write operations to make sure that
  * speed is preserved.
  *
  * To perform these tests run "docker-compose up db" and make sure the container started
@@ -37,6 +35,7 @@ import static org.junit.jupiter.api.Assertions.fail;
  * Most of the variables in the test are hard coded and can be changed to make the performance tests
  * more rigorous or simpler.
  */
+@Slf4j
 @SpringBootTest
 @TestPropertySource(locations = "/application.common.properties")
 class PerformanceTestingCoverageOperations {
@@ -84,11 +83,11 @@ class PerformanceTestingCoverageOperations {
 
     @BeforeEach
     public void insertContractAndDefaultCoveragePeriod() {
-
-        coverageRepo.deleteAll();
-        coverageSearchEventRepo.deleteAll();
-        coveragePeriodRepo.deleteAll();
-        contractRepo.deleteAll();
+// If you kill the integration test early uncomment this
+//        coverageRepo.deleteAll();
+//        coverageSearchEventRepo.deleteAll();
+//        coveragePeriodRepo.deleteAll();
+//        contractRepo.deleteAll();
 
         sponsor = dataSetup.createSponsor("Cal Ripken", 200, "Cal Ripken Jr.", 201);
         contract = dataSetup.setupContract(sponsor, "TST-123");
@@ -98,7 +97,7 @@ class PerformanceTestingCoverageOperations {
 
     @AfterEach
     public void cleanUp() {
-        coverageRepo.deleteAll();
+        deleteCoverage();
         coverageSearchEventRepo.deleteAll();
         coveragePeriodRepo.deleteAll();
         contractRepo.deleteAll();
@@ -106,16 +105,6 @@ class PerformanceTestingCoverageOperations {
         if (sponsor != null) {
             sponsorRepo.delete(sponsor);
         }
-    }
-
-    @Test
-    void testing() {
-        try {
-            coverageRepo.findCoverageInformation(Collections.singletonList(106), List.of("test-999", "test-1000"));
-        } catch (Exception exception) {
-            exception.printStackTrace();
-        }
-        System.out.println("woohoo");
     }
 
     /**
@@ -135,7 +124,7 @@ class PerformanceTestingCoverageOperations {
         coverageSearchEventRepo.saveAndFlush(inProgress);
 
         // Raise datapoints to stress database
-        List<Long> timings = insertData(inProgress, 1_000_000, 10, true);
+        List<Long> timings = insertData(inProgress, 1_000_000, 5, true);
 
         long averageTime = timings.stream().reduce(0L, Long::sum) / timings.size();
         System.out.println("Average milliseconds " + averageTime);
@@ -150,39 +139,45 @@ class PerformanceTestingCoverageOperations {
     @Test
     void readPerformanceWithJPAPaging() {
 
-        loadDBWithFakeData(2_000_000);
 
-        int queries = 100;
-        int threads = 16;
-        int pageSize = 10000;
-        int pages = 2_000_000 / 10000;
+
+        int dataPoints = 5_000_000;
+        int queries = 200;
+        int threads = 6;
+        int pageSize = 5000;
+        int pages = dataPoints / pageSize;
+
+        loadDBWithFakeData(dataPoints);
+
+        System.out.println("Done loading data");
 
         ExecutorService executor = Executors.newFixedThreadPool(threads);
 
         Random random = new Random();
 
-        List<Long> timing = new ArrayList<>(queries * threads);
+        final List<Long> timing = new ArrayList<>(queries * threads);
 
         Runnable select = () -> {
-            int i = 0;
 
-            while (i < queries) {
+            String name = Thread.currentThread().getName();
+            for (int queryNumber = 0; queryNumber < queries; queryNumber++) {
                 int page = random.nextInt(pages);
                 Instant start = Instant.now();
-                Page<String> pageRet = coverageRepo.findActiveBeneficiaryIds(Collections.singletonList(period), PageRequest.of(page, pageSize));
-                List<String> content = pageRet.getContent();
+                List<CoverageSummary> content = coverageService.pageCoverage(page, pageSize, singletonList(period.getId()));
 
                 assertFalse(content.isEmpty());
-
+                assertEquals(pageSize, content.size());
                 Instant stop = Instant.now();
 
+                if (queryNumber % 10 == 0) {
+                    log.info("{} query {} took {}", name, queryNumber, Duration.between(start, stop).toNanos());
+                }
                 timing.add(Duration.between(start, stop).toNanos());
-                i++;
             }
         };
 
         List<Future> futures = new ArrayList<>();
-        for (int i = 0; i < 16; i++) {
+        for (int i = 0; i < threads; i++) {
             futures.add(executor.submit(select));
         }
 
@@ -194,10 +189,48 @@ class PerformanceTestingCoverageOperations {
             fail("failed to run all select threads", exception);
         }
 
-        long sumNanos = timing.stream().mapToLong(i -> i).sum();
-        long sumMillis = sumNanos / (1_000_000);
+        for (int i = 0; i < timing.size(); i++) {
+            timing.set(i, timing.get(i) / 1_000_000);
+        }
+        timing.sort((a, b) -> Long.valueOf(b - a).intValue());
+
+        long sumMillis = timing.stream().mapToLong(i -> i).sum();
 
         System.out.println("Average millis per select: " + (sumMillis / (queries * threads)));
+        System.out.println("Max times " + timing.stream().limit(30).map(Objects::toString).collect(joining(", ")));
+    }
+
+    @Disabled
+    @DisplayName("delete previous search performance")
+    @Test
+    void deletePreviousSearch() {
+
+        coverageService.submitCoverageSearch(period.getId(), "testing");
+        CoverageSearchEvent inProgress1 = coverageService.startCoverageSearch(period.getId(), "testing");
+
+        coverageSearchEventRepo.saveAndFlush(inProgress1);
+        insertData(inProgress1, 100_000, 1, false);
+
+        coverageService.completeCoverageSearch(period.getId(), "testing");
+
+        coverageService.submitCoverageSearch(period.getId(), "testing");
+        CoverageSearchEvent inProgress2 = coverageService.startCoverageSearch(period.getId(), "testing");
+
+        coverageSearchEventRepo.saveAndFlush(inProgress2);
+        insertData(inProgress2, 100_000, 1, false);
+
+        coverageService.completeCoverageSearch(period.getId(), "testing");
+
+
+        System.out.println("Records present before delete " + coverageRepo.countByCoverageSearchEvent(inProgress1));
+
+        Instant start = Instant.now();
+        coverageService.deletePreviousSearch(period.getId());
+        Instant end = Instant.now();
+
+        System.out.println("Records present after delete " + coverageRepo.countByCoverageSearchEvent(inProgress1));
+
+        System.out.println("Time to delete previous search in milliseconds " + Duration.between(start, end).toMillis());
     }
 
 
@@ -215,7 +248,8 @@ class PerformanceTestingCoverageOperations {
 
             coverageSearchEventRepo.saveAndFlush(inProgress);
 
-            insertData(inProgress, dataPoints, 1, false);
+            List<Long> timings = insertData(inProgress, dataPoints, 1, false);
+            System.out.println("Insertion took " + timings.get(0));
         }
     }
 
@@ -235,20 +269,15 @@ class PerformanceTestingCoverageOperations {
 
         List<Long> timings = new ArrayList<>();
 
-        String INSERT = "INSERT INTO coverage (bene_coverage_period_id, bene_coverage_search_event_id, beneficiary_id)" +
-                " VALUES(?,?,?)";
-
-
         int i = 0;
         while (i < experiments) {
 
             Instant start = Instant.now();
-            conductBatchInsert(supplier, inProgress.getId(), INSERT, dataPoints);
+            conductBatchInsert(supplier, inProgress.getId(), dataPoints);
             Instant end = Instant.now();
 
             if (erase) {
-                coverageRepo.deleteAll();
-                coverageRepo.flush();
+                deleteCoverage();
             }
 
             timings.add(Duration.between(start, end).toMillis());
@@ -257,10 +286,10 @@ class PerformanceTestingCoverageOperations {
         return timings;
     }
 
-    private void conductBatchInsert(BeneficiaryIdSupplier supplier, long searchEventId, String INSERT, int dataPoints) {
+    private void conductBatchInsert(BeneficiaryIdSupplier supplier, long searchEventId, int dataPoints) {
 
         int written = 0;
-        int chunkSize = 1000;
+        int chunkSize = 50000;
 
         while (written < dataPoints) {
 
@@ -270,6 +299,15 @@ class PerformanceTestingCoverageOperations {
             coverageService.insertCoverage(period.getId(), searchEventId, batch);
 
             written += chunkSize;
+        }
+    }
+
+    private void deleteCoverage() {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement("DELETE FROM coverage")) {
+            statement.execute();
+        } catch (Exception exception) {
+            exception.printStackTrace();
         }
     }
 }
