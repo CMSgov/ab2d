@@ -280,33 +280,33 @@ public class CoverageServiceImpl implements CoverageService {
             LocalDate start = fromRawResults(membershipMonths.get(0));
             DateRange range = new DateRange(start, start.plusMonths(1));
             return new CoverageSummary(beneficiaryId, contract, Collections.singletonList(range));
-        } else {
-
-            List<DateRange> dateRanges = new ArrayList<>();
-
-            // Remove is dangerous but more efficient than subList or skip
-            LocalDate begin = fromRawResults(membershipMonths.remove(0));
-            LocalDate last = begin;
-            for (CoverageMembership membership : membershipMonths) {
-                LocalDate next = fromRawResults(membership);
-
-                if (!next.isEqual(last.plusMonths(1))) {
-                    dateRanges.add(new DateRange(begin, last.plusMonths(1)));
-                    begin = next;
-                    // Extend the date range by one month
-                }
-
-                last = next;
-            }
-
-            if (begin.equals(last)) {
-                dateRanges.add(new DateRange(begin, begin.plusMonths(1)));
-            } else {
-                dateRanges.add(new DateRange(begin, last.plusMonths(1)));
-            }
-
-            return new CoverageSummary(beneficiaryId, contract, dateRanges);
         }
+
+        List<DateRange> dateRanges = new ArrayList<>();
+
+        // Remove is dangerous but more efficient than subList or skip
+        LocalDate begin = fromRawResults(membershipMonths.remove(0));
+        LocalDate last = begin;
+        for (CoverageMembership membership : membershipMonths) {
+            LocalDate next = fromRawResults(membership);
+
+            if (!next.isEqual(last.plusMonths(1))) {
+                dateRanges.add(new DateRange(begin, last.plusMonths(1)));
+                begin = next;
+                // Extend the date range by one month
+            }
+
+            last = next;
+        }
+
+        if (begin.equals(last)) {
+            dateRanges.add(new DateRange(begin, begin.plusMonths(1)));
+        } else {
+            dateRanges.add(new DateRange(begin, last.plusMonths(1)));
+        }
+
+        return new CoverageSummary(beneficiaryId, contract, dateRanges);
+
     }
 
     /**
