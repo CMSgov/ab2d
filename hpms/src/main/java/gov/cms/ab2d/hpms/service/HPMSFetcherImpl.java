@@ -16,6 +16,8 @@ import java.util.function.Consumer;
 @Service
 public class HPMSFetcherImpl extends AbstractHPMSService implements HPMSFetcher {
 
+    static private final String HPMS_BASE_PATH = "/api/cda";
+
     @Value("${hpms.base.url}")
     private String hpmsBaseURI;
 
@@ -32,8 +34,8 @@ public class HPMSFetcherImpl extends AbstractHPMSService implements HPMSFetcher 
     @SuppressWarnings("PMD.UnusedPrivateMethod")
     @PostConstruct
     private void buildURI() {
-        organizationBaseUri = buildFullURI(hpmsBaseURI + "/api/cda/orgs/info");
-        attestationBaseUri = buildFullURI(hpmsBaseURI + "/api/cda/contracts/status");
+        organizationBaseUri = buildFullURI(hpmsBaseURI + HPMS_BASE_PATH + "/orgs/info");
+        attestationBaseUri = buildFullURI(hpmsBaseURI + HPMS_BASE_PATH + "/contracts/status");
     }
 
     @Override
