@@ -1,23 +1,20 @@
 package gov.cms.ab2d.common.util;
 
-import gov.cms.ab2d.common.model.Contract;
-import gov.cms.ab2d.common.model.Role;
-import gov.cms.ab2d.common.model.Sponsor;
-import gov.cms.ab2d.common.model.User;
-import gov.cms.ab2d.common.repository.ContractRepository;
-import gov.cms.ab2d.common.repository.RoleRepository;
-import gov.cms.ab2d.common.repository.SponsorRepository;
-import gov.cms.ab2d.common.repository.UserRepository;
+import gov.cms.ab2d.common.model.*;
+import gov.cms.ab2d.common.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.Random;
 
 @Component
 public class DataSetup {
 
+    public static final Random RANDOM = new Random();
     @Autowired
     private ContractRepository contractRepository;
 
@@ -30,11 +27,50 @@ public class DataSetup {
     @Autowired
     private SponsorRepository sponsorRepository;
 
+    @Autowired
+    private CoverageRepository coverageRepo;
+
+    @Autowired
+    private CoveragePeriodRepository coveragePeriodRepo;
+
+    @Autowired
+    private CoverageSearchEventRepository coverageSearchEventRepo;
+
     public static final String TEST_USER = "EileenCFrierson@example.com";
 
     public static final String BAD_CONTRACT_NUMBER = "WrongContract";
 
     public static final String VALID_CONTRACT_NUMBER = "ABC123";
+
+    public static String createBeneId() {
+        return "patientId_" + Instant.now().getNano();
+    }
+
+    public CoveragePeriod createCoveragePeriod(Contract contract, int month, int year) {
+        CoveragePeriod coveragePeriod = new CoveragePeriod();
+        coveragePeriod.setContract(contract);
+        coveragePeriod.setMonth(month);
+        coveragePeriod.setYear(year);
+
+        return coveragePeriodRepo.saveAndFlush(coveragePeriod);
+    }
+
+    public CoverageSearchEvent createCoverageSearchEvent(CoveragePeriod coveragePeriod, String description) {
+        CoverageSearchEvent coverageSearchEvent = new CoverageSearchEvent();
+        coverageSearchEvent.setCoveragePeriod(coveragePeriod);
+        coverageSearchEvent.setNewStatus(JobStatus.SUBMITTED);
+        coverageSearchEvent.setDescription(description);
+
+        return coverageSearchEventRepo.saveAndFlush(coverageSearchEvent);
+    }
+
+    public Coverage createCoverage(CoveragePeriod coveragePeriod, CoverageSearchEvent coverageSearchEvent, String bene) {
+        Coverage coverage = new Coverage();
+        coverage.setCoveragePeriod(coveragePeriod);
+        coverage.setCoverageSearchEvent(coverageSearchEvent);
+        coverage.setBeneficiaryId(bene);
+        return coverageRepo.saveAndFlush(coverage);
+    }
 
     public Sponsor createSponsor(String parentName, int parentHpmsId, String childName, int childHpmsId) {
         Sponsor parent = new Sponsor();
@@ -59,7 +95,7 @@ public class DataSetup {
 
         contract.setSponsor(sponsor);
 
-        Contract persistedContract = contractRepository.saveAndFlush(contract);
+        Contract persistedContract = contractRepository.save(contract);
 
         return persistedContract;
     }

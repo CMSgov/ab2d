@@ -195,7 +195,7 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
      */
     private boolean shouldBePublic(String requestUri) {
         if (requestUri.startsWith("/swagger-ui") || requestUri.startsWith("/webjars") || requestUri.startsWith("/swagger-resources") ||
-                requestUri.startsWith("/v2/api-docs") || requestUri.startsWith("/configuration")) {
+                requestUri.startsWith("/v3/api-docs") || requestUri.startsWith("/configuration")) {
             log.info("Swagger requested");
             return true;
         }
