@@ -16,7 +16,7 @@ import java.util.function.Consumer;
 @Service
 public class HPMSFetcherImpl extends AbstractHPMSService implements HPMSFetcher {
 
-    static private final String HPMS_BASE_PATH = "/api/cda";
+    private static final String HPMS_BASE_PATH = "/api/cda";
 
     @Value("${hpms.base.url}")
     private String hpmsBaseURI;
