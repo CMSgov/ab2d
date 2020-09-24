@@ -155,7 +155,7 @@
    
    **Summary:** Establish VPN and CloudTamer access for Fred Smith
 
-   **CMS Business Unit:** 
+   **CMS Business Unit:** OIT
 
    **Project Name:** AB2D Sandbox
 
@@ -176,11 +176,13 @@
 
    **Urgency:** Medium
 
-   **Requested Due Date:** {tomorrow}
+   **Requested Due Date:** {next business day}
 
 1. Select **Create**
 
 1. Verify that you receive an email regarding the issue
+
+   *Note that this may take a while due to email lag time.*
 
 ### Install and configure Google Authenticator
 
