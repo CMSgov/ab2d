@@ -16,7 +16,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
@@ -53,10 +52,9 @@ public class HPMSFetcherTest {
         List<String> top3Contracts = extractTopContractIDs(NUM_CONTRACTS);
         assertNotNull(top3Contracts);
         assertFalse(top3Contracts.isEmpty());
-        String contractIdStr = top3Contracts.stream().collect(Collectors.joining("\",\"", "[\"", "\"]"));
 
         lock = new CountDownLatch(1);
-        fetcher.retrieveAttestationInfo(this::processAttestations, contractIdStr);
+        fetcher.retrieveAttestationInfo(this::processAttestations, top3Contracts);
         waitForCallback();
         assertNotNull(attestations);
         assertFalse(attestations.getContracts().isEmpty());

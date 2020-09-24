@@ -85,8 +85,7 @@ public class AttestationUpdaterServiceImpl implements AttestationUpdaterService 
     }
 
     private void processAttestations(List<String> currentChunk) {
-        String contractIdStr = currentChunk.stream().collect(Collectors.joining("\",\"", "[\"", "\"]"));
-        hpmsFetcher.retrieveAttestationInfo(this::processContracts, contractIdStr);
+        hpmsFetcher.retrieveAttestationInfo(this::processContracts, currentChunk);
     }
 
     private void processContracts(HPMSAttestationsHolder contractHolder) {

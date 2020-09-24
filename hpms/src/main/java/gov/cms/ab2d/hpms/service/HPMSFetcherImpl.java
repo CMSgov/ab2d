@@ -11,7 +11,9 @@ import reactor.core.publisher.Flux;
 
 import javax.annotation.PostConstruct;
 import java.net.URI;
+import java.util.List;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 @Service
 public class HPMSFetcherImpl extends AbstractHPMSService implements HPMSFetcher {
@@ -50,14 +52,26 @@ public class HPMSFetcherImpl extends AbstractHPMSService implements HPMSFetcher 
     }
 
     @Override
-    public void retrieveAttestationInfo(Consumer<HPMSAttestationsHolder> hpmsAttestationCallback, String contractIds) {
+    public void retrieveAttestationInfo(Consumer<HPMSAttestationsHolder> hpmsAttestationCallback, List<String> contractIds) {
         Flux<HPMSAttestationsHolder> contractsFlux = WebClient.create()
-                .get().uri(buildAttestationURI(contractIds))
+                .get().uri(buildAttestationURI(serializeContractIds(contractIds)))
                 .headers(authService::buildAuthHeaders)
                 .retrieve()
                 .bodyToFlux(HPMSAttestationsHolder.class);
 
         contractsFlux.subscribe(hpmsAttestationCallback);
+    }
+
+    /*
+     * Format for contracts variable defined by
+     * https://confluence.cms.gov/pages/viewpage.action?spaceKey=HPMSMCTAPI&title=CDA+CY+2021+API+Data+Contract+and+Validations
+     *
+     * Simple example from that page: ["S0001","S0002"]
+     *
+     * This is a helper method to convert form a list of contract ids to that form.
+     */
+    private String serializeContractIds(List<String> contracts) {
+        return contracts.stream().collect(Collectors.joining("\",\"", "[\"", "\"]"));
     }
 
     private URI buildAttestationURI(String contractIds) {

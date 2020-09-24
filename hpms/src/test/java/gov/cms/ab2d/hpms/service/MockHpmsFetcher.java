@@ -45,8 +45,7 @@ public class MockHpmsFetcher implements HPMSFetcher {
     }
 
     @Override
-    public void retrieveAttestationInfo(Consumer<HPMSAttestationsHolder> hpmsAttestationCallback, String jsonContractIds) {
-        String[] contractIds = jsonContractIds.replaceAll("[^,a-zA-Z0-9]","").split(",");
+    public void retrieveAttestationInfo(Consumer<HPMSAttestationsHolder> hpmsAttestationCallback, List<String> contractIds) {
         Set<HPMSAttestation> retAttests = new HashSet<>();
         for (String contractId : contractIds) {
             if (!attests.containsKey(contractId)) {
