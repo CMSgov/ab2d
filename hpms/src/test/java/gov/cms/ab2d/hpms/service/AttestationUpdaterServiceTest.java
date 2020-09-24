@@ -2,13 +2,17 @@ package gov.cms.ab2d.hpms.service;
 
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.Sponsor;
+import gov.cms.ab2d.common.repository.ContractRepository;
 import gov.cms.ab2d.common.repository.SponsorRepository;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.hpms.SpringBootTestApp;
 import org.assertj.core.util.Lists;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.context.annotation.Bean;
 import org.springframework.test.context.TestPropertySource;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
@@ -33,8 +37,9 @@ public class AttestationUpdaterServiceTest {
     @Container
     private static final PostgreSQLContainer postgreSQLContainer = new AB2DPostgresqlContainer();
 
+    @Qualifier("for_testing")
     @Autowired
-    AttestationUpdaterService aus;
+    private AttestationUpdaterServiceImpl aus;
 
     @Test
     public void contractUpdated() {
@@ -51,4 +56,22 @@ public class AttestationUpdaterServiceTest {
         List<Contract> result = aus.addNewContracts(Lists.emptyList());
         assertTrue(result.isEmpty());
     }
+
+    @TestConfiguration
+    static class MockHpmsFetcherConfig {
+
+        @Autowired
+        private SponsorRepository sponsorRepository;
+
+        @Autowired
+        private ContractRepository contractRepository;
+
+        @Qualifier("for_testing")
+        @Bean()
+        public AttestationUpdaterServiceImpl getMockService()
+        {
+            return new AttestationUpdaterServiceImpl(sponsorRepository, contractRepository, new MockHpmsFetcher());
+        }
+    }
+
 }
