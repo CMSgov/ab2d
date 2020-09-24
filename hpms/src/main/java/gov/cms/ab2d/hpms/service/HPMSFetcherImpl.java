@@ -51,6 +51,7 @@ public class HPMSFetcherImpl extends AbstractHPMSService implements HPMSFetcher 
     public void retrieveAttestationInfo(Consumer<HPMSAttestationsHolder> hpmsAttestationCallback, String contractIds) {
         Flux<HPMSAttestationsHolder> contractsFlux = WebClient.create()
                 .get().uri(buildAttestationURI(contractIds))
+                .headers(authService::buildAuthHeaders)
                 .retrieve()
                 .bodyToFlux(HPMSAttestationsHolder.class);
 
