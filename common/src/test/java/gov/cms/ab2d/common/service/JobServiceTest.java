@@ -11,6 +11,7 @@ import gov.cms.ab2d.eventlogger.eventloggers.sql.SqlEventLogger;
 import gov.cms.ab2d.eventlogger.reports.sql.DoSummary;
 import org.apache.commons.io.IOUtils;
 import org.junit.Assert;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -107,8 +108,8 @@ public class JobServiceTest {
         jobService = new JobServiceImpl(userService, jobRepository, contractRepository, jobOutputService, logManager, doSummary);
         ReflectionTestUtils.setField(jobService, "fileDownloadPath", tmpJobLocation);
 
-        contractRepository.deleteAll();
         jobRepository.deleteAll();
+        contractRepository.deleteAll();
         userRepository.deleteAll();
         sponsorRepository.deleteAll();
 

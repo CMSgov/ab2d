@@ -70,8 +70,8 @@ public class BulkDataAccessAPIUnusualDataTests {
 
     @BeforeEach
     public void clearUser() {
-        contractRepository.deleteAll();
         jobRepository.deleteAll();
+        contractRepository.deleteAll();
         userRepository.deleteAll();
         roleRepository.deleteAll();
         sponsorRepository.deleteAll();

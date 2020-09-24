@@ -8,7 +8,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       REPO: https://github.com/CMSgov/ab2d
-      REMOTE_EXCLUDES_URL: https://raw.githubusercontent.com/CMSgov/ab2d/master/.github/gitleaks.toml
+      REMOTE_EXCLUDES_URL: https://raw.githubusercontent.com/semanticbits/ab2d-gitleaks-automation/master/gitleaks.toml
       GITLEAKS_VERSION: v3.0.3
     steps:
     - name: Execute Gitleaks
