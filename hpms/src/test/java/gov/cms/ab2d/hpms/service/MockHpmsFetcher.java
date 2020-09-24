@@ -4,18 +4,18 @@ import gov.cms.ab2d.hpms.hmsapi.HPMSAttestation;
 import gov.cms.ab2d.hpms.hmsapi.HPMSAttestationsHolder;
 import gov.cms.ab2d.hpms.hmsapi.HPMSOrganizationInfo;
 import gov.cms.ab2d.hpms.hmsapi.HPMSOrganizations;
-import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
 
-@Service
 public class MockHpmsFetcher implements HPMSFetcher {
 
-    private static final Set<HPMSOrganizationInfo> orgSet = new HashSet<>();
+    private static final List<HPMSOrganizationInfo> orgSet = new ArrayList<>();
 
     private static final Map<String, HPMSAttestation> attests = new HashMap<>();
 
@@ -45,8 +45,7 @@ public class MockHpmsFetcher implements HPMSFetcher {
     }
 
     @Override
-    public void retrieveAttestationInfo(Consumer<HPMSAttestationsHolder> hpmsAttestationCallback, String jsonContractIds) {
-        String[] contractIds = jsonContractIds.replaceAll("[^,a-zA-Z0-9]","").split(",");
+    public void retrieveAttestationInfo(Consumer<HPMSAttestationsHolder> hpmsAttestationCallback, List<String> contractIds) {
         Set<HPMSAttestation> retAttests = new HashSet<>();
         for (String contractId : contractIds) {
             if (!attests.containsKey(contractId)) {
