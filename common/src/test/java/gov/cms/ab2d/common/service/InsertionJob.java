@@ -32,6 +32,7 @@ public class InsertionJob implements Runnable {
     private final CoverageSearchEventRepository eventRepo;
     private final int dataPoints;
     private final int experiments;
+    public static final int CHUNK_SIZE = 50000;
 
     public static class BeneficiaryIdSupplier implements Supplier<String> {
 
@@ -89,8 +90,7 @@ public class InsertionJob implements Runnable {
 
         List<Long> timings = new ArrayList<>();
 
-        int i = 0;
-        while (i < experiments) {
+        for (int experiment = 0; experiment < experiments; experiment++) {
 
             Instant start = Instant.now();
             conductBatchInserts(supplier, period.getId(), inProgress.getId(), dataPoints);
@@ -102,7 +102,6 @@ public class InsertionJob implements Runnable {
             }
 
             timings.add(Duration.between(start, end).toMillis());
-            i++;
         }
         return timings;
     }
@@ -116,17 +115,11 @@ public class InsertionJob implements Runnable {
      */
     private void conductBatchInserts(BeneficiaryIdSupplier supplier, int periodId, long searchEventId, int dataPoints) {
 
-        int written = 0;
-        int chunkSize = 50000;
-
-        while (written < dataPoints) {
-
-            List<String> batch = new ArrayList<>(chunkSize);
-            IntStream.iterate(0, i -> i + 1).limit(chunkSize).forEach(i -> batch.add(supplier.get()));
+        for (int written = 0; written < dataPoints; written += CHUNK_SIZE) {
+            List<String> batch = new ArrayList<>(CHUNK_SIZE);
+            IntStream.iterate(0, i -> i + 1).limit(CHUNK_SIZE).forEach(i -> batch.add(supplier.get()));
 
             coverageService.insertCoverage(periodId, searchEventId, batch);
-
-            written += chunkSize;
         }
     }
 
