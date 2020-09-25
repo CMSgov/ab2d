@@ -65,7 +65,6 @@ public class DoSummary {
                     searches.add((ContractBeneSearchEvent) event);
                 }
                 jobSummaryEvent.setSuccessfullySearched(searches.stream().map(ContractBeneSearchEvent::getNumSearched).reduce(0, Integer::sum));
-                jobSummaryEvent.setNumOptedOut(searches.stream().map(ContractBeneSearchEvent::getNumOptedOut).reduce(0, Integer::sum));
                 jobSummaryEvent.setErrorSearched(searches.stream().map(ContractBeneSearchEvent::getNumErrors).reduce(0, Integer::sum));
                 jobSummaryEvent.setTotalNum(searches.stream().map(ContractBeneSearchEvent::getNumInContract).reduce(0, Integer::sum));
             }

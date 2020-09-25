@@ -10,7 +10,6 @@
         <module>worker</module>
         <module>bfd</module>
         <module>filter</module>
-        <module>optout</module>
         <module>audit</module>
         <module>hpms</module>
         <module>mock-hpms</module>

@@ -1,2 +1,2 @@
 okta-url: 'https://test.idp.idm.cms.gov/oauth2/aus2r7y3gdaFMKBol297/v1/token'
-base-url: 'https://localhost:8443'
+base-url: 'http://localhost:8090'

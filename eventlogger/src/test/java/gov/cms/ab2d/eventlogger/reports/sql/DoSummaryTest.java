@@ -51,7 +51,7 @@ class DoSummaryTest {
         LoggableEvent e4 = new FileEvent(usr, jobId, file1, FileEvent.FileStatus.OPEN);
         e4.setTimeOfEvent(firstTime.plusDays(3));
         logger.log(e4);
-        LoggableEvent e5 = new ContractBeneSearchEvent(usr, jobId, "CONTRACT1", 100, 97, 1, 2);
+        LoggableEvent e5 = new ContractBeneSearchEvent(usr, jobId, "CONTRACT1", 100, 98, 2);
         e5.setTimeOfEvent(firstTime.plusDays(4));
         logger.log(e5);
         LoggableEvent e6 = new FileEvent(usr, jobId, file1, FileEvent.FileStatus.CLOSE);
@@ -82,8 +82,7 @@ class DoSummaryTest {
         assertEquals(1, summary.getNumFilesDeleted());
         assertEquals(1, summary.getNumFilesDownloaded());
         assertEquals(100, summary.getTotalNum());
-        assertEquals(97, summary.getSuccessfullySearched());
-        assertEquals(1, summary.getNumOptedOut());
+        assertEquals(98, summary.getSuccessfullySearched());
         assertEquals(2, summary.getErrorSearched());
     }
 

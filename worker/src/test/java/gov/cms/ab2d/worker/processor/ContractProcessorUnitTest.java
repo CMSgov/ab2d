@@ -2,7 +2,6 @@ package gov.cms.ab2d.worker.processor;
 
 import gov.cms.ab2d.common.model.*;
 import gov.cms.ab2d.common.repository.JobRepository;
-import gov.cms.ab2d.common.repository.OptOutRepository;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.filter.FilterOutByDate;
 import gov.cms.ab2d.worker.adapter.bluebutton.ContractBeneficiaries;
@@ -25,10 +24,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.ParseException;
-import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import static gov.cms.ab2d.worker.processor.StreamHelperImpl.FileOutputType.NDJSON;
 import static java.lang.Boolean.TRUE;
@@ -53,7 +50,6 @@ class ContractProcessorUnitTest {
 
     @Mock private FileService fileService;
     @Mock private JobRepository jobRepository;
-    @Mock private OptOutRepository optOutRepository;
     @Mock private LogManager eventLogger;
     private PatientClaimsProcessor patientClaimsProcessor = spy(PatientClaimsProcessorStub.class);
 
@@ -68,10 +64,8 @@ class ContractProcessorUnitTest {
                 fileService,
                 jobRepository,
                 patientClaimsProcessor,
-                optOutRepository,
                 eventLogger
         );
-        ReflectionTestUtils.setField(cut, "optoutUsed", true);
         ReflectionTestUtils.setField(cut, "cancellationCheckFrequency", 2);
         ReflectionTestUtils.setField(cut, "reportProgressDbFrequency", 2);
         ReflectionTestUtils.setField(cut, "reportProgressLogFrequency", 3);
@@ -113,54 +107,6 @@ class ContractProcessorUnitTest {
     }
 
     @Test
-    @DisplayName("When patient has opted out, but opt out is disabled their record will not be skipped.")
-    void processJob_whenSomePatientHasOptedOut_But_OptOut_Off_ShouldNotSkipThatPatientRecord() throws Exception {
-        ReflectionTestUtils.setField(cut, "optoutUsed", false);
-        final List<OptOut> optOuts = getOptOutRows(patientsByContract);
-        lenient().when(optOutRepository.findByCcwId(anyString()))
-                .thenReturn(new ArrayList<>())
-                .thenReturn(Arrays.asList(optOuts.get(1)))
-                .thenReturn(Arrays.asList(optOuts.get(2)));
-
-        List<JobOutput> jobOutputs = cut.process(outputDir, contractData, NDJSON);
-        // Verify that all outputs are returned
-        assertEquals(6, jobOutputs.size());
-    }
-
-    @Test
-    @DisplayName("When patient has opted out, their record will be skipped.")
-    void processJob_whenSomePatientHasOptedOut_ShouldSkipThatPatientRecord() throws Exception {
-        final List<OptOut> optOuts = getOptOutRows(patientsByContract);
-        when(optOutRepository.findByCcwId(anyString()))
-                .thenReturn(new ArrayList<>())
-                .thenReturn(Arrays.asList(optOuts.get(1)))
-                .thenReturn(Arrays.asList(optOuts.get(2)));
-
-        var jobOutputs = cut.process(outputDir, contractData, NDJSON);
-
-        assertFalse(jobOutputs.isEmpty());
-        verify(patientClaimsProcessor, atLeast(1)).process(any(), any());
-    }
-
-    @Test
-    @DisplayName("When all patients have opted out, should throw exception as no jobOutput rows were created")
-    void processJob_whenAllPatientsHaveOptedOut_ShouldThrowException() throws Exception {
-        final List<OptOut> optOuts = getOptOutRows(patientsByContract);
-        when(optOutRepository.findByCcwId(anyString()))
-                .thenReturn(Arrays.asList(optOuts.get(0)))
-                .thenReturn(Arrays.asList(optOuts.get(1)))
-                .thenReturn(Arrays.asList(optOuts.get(2)));
-
-        // Test data has 3 patientIds each of whom has opted out.
-        // So the patientsClaimsProcessor should never be called.
-        var exceptionThrown = assertThrows(RuntimeException.class,
-                () -> cut.process(outputDir, contractData, NDJSON));
-
-        assertThat(exceptionThrown.getMessage(), startsWith("The export process has produced no results"));
-        verify(patientClaimsProcessor, never()).process(any(), any());
-    }
-
-    @Test
     @DisplayName("When many patientId are present, 'PercentageCompleted' should be updated many times")
     void whenManyPatientIdsAreProcessed_shouldUpdatePercentageCompletedMultipleTimes() throws Exception {
         patientsByContract.setPatients(createPatients(18));
@@ -169,19 +115,6 @@ class ContractProcessorUnitTest {
         assertFalse(jobOutputs.isEmpty());
         verify(jobRepository, times(9)).updatePercentageCompleted(anyString(), anyInt());
         verify(patientClaimsProcessor, atLeast(1)).process(any(), any());
-    }
-
-    private List<OptOut> getOptOutRows(ContractBeneficiaries patientsByContract) {
-        return patientsByContract.getPatients().keySet().stream()
-                .map(this::createOptOut)
-                .collect(Collectors.toList());
-    }
-
-    private OptOut createOptOut(String patientId) {
-        OptOut optOut = new OptOut();
-        optOut.setHicn(patientId);
-        optOut.setEffectiveDate(LocalDate.now().minusDays(10));
-        return optOut;
     }
 
     private Sponsor createParentSponsor() {

@@ -5,9 +5,7 @@ import com.newrelic.api.agent.Token;
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.JobOutput;
 import gov.cms.ab2d.common.model.JobStatus;
-import gov.cms.ab2d.common.model.OptOut;
 import gov.cms.ab2d.common.repository.JobRepository;
-import gov.cms.ab2d.common.repository.OptOutRepository;
 import gov.cms.ab2d.common.util.Constants;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.events.ErrorEvent;
@@ -28,7 +26,6 @@ import org.springframework.stereotype.Service;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Path;
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -69,13 +66,9 @@ public class ContractProcessorImpl implements ContractProcessor {
     @Value("${file.try.lock.timeout}")
     private int tryLockTimeout;
 
-    @Value("${optout.used}")
-    private boolean optoutUsed;
-
     private final FileService fileService;
     private final JobRepository jobRepository;
     private final PatientClaimsProcessor patientClaimsProcessor;
-    private final OptOutRepository optOutRepository;
     private final LogManager eventLogger;
 
     /**
@@ -107,12 +100,6 @@ public class ContractProcessorImpl implements ContractProcessor {
             var futureHandles = new ArrayList<Future<Void>>();
             for (Map.Entry<String, PatientDTO> patient : patients.entrySet()) {
                 ++recordsProcessedCount;
-
-                if (optoutUsed && isOptOutPatient(patient.getValue().getPatientId())) {
-                    // this patient has opted out. skip patient record.
-                    progressTracker.incrementOptOutCount();
-                    continue;
-                }
 
                 futureHandles.add(processPatient(patient.getValue(), contractData, helper, patients));
 
@@ -251,26 +238,6 @@ public class ContractProcessorImpl implements ContractProcessor {
         return ndjsonRollOver * Constants.ONE_MEGA_BYTE;
     }
 
-    /**
-     * Check the opt out repository to see if a patient has opted out of data services
-     *
-     * @param patientId - the patient id
-     * @return true if the patient has opted out
-     */
-    private boolean isOptOutPatient(String patientId) {
-
-        final List<OptOut> optOuts = optOutRepository.findByCcwId(patientId);
-        if (optOuts.isEmpty()) {
-            // No opt-out record found for this patient - Opt-In by default.
-            return false;
-        }
-
-        // opt-out record has an effective date.
-        // if any of the opt-out records for a patient is effective as of today or earlier, the patient has opted-out
-        final LocalDate tomorrow = LocalDate.now().plusDays(1);
-        return optOuts.stream()
-                .anyMatch(optOut -> optOut.getEffectiveDate().isBefore(tomorrow));
-    }
 
     /**
      * Cancel threads
@@ -298,7 +265,6 @@ public class ContractProcessorImpl implements ContractProcessor {
         final JobStatus jobStatus = jobRepository.findJobStatus(jobUuid);
         return CANCELLED.equals(jobStatus);
     }
-
 
     /**
      * For each future, check to see if it's done. If it is, remove it from the list of future handles

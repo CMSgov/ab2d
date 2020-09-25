@@ -11,7 +11,6 @@ import gov.cms.ab2d.common.model.User;
 import gov.cms.ab2d.common.repository.ContractRepository;
 import gov.cms.ab2d.common.repository.JobOutputRepository;
 import gov.cms.ab2d.common.repository.JobRepository;
-import gov.cms.ab2d.common.repository.OptOutRepository;
 import gov.cms.ab2d.common.repository.SponsorRepository;
 import gov.cms.ab2d.common.repository.UserRepository;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
@@ -83,8 +82,6 @@ class JobProcessorIntegrationTest {
     @Qualifier("contractAdapterStub")
     private ContractBeneSearch contractBeneSearchStub;
     @Autowired
-    private OptOutRepository optOutRepository;
-    @Autowired
     private SqlEventLogger sqlEventLogger;
     @Mock
     private KinesisEventLogger kinesisEventLogger;
@@ -135,7 +132,6 @@ class JobProcessorIntegrationTest {
                 fileService,
                 jobRepository,
                 patientClaimsProcessor,
-                optOutRepository,
                 logManager
         );
 
