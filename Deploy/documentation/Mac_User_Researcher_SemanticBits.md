@@ -37,7 +37,7 @@
 
 1. Install jq (see Mac_Developer_SemanticBits.md)
 
-## Use an SSH tunnel to query production database from local machine
+## Use an SSH tunnel to query sandbox database from local machine
 
 1. Select **Lauuchpad**
 
