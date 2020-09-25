@@ -1,24 +1,32 @@
 package gov.cms.ab2d.common.service;
-
-import gov.cms.ab2d.common.model.Coverage;
+import gov.cms.ab2d.common.model.Contract;
+import gov.cms.ab2d.common.model.CoverageMembership;
 import gov.cms.ab2d.common.model.CoveragePeriod;
 import gov.cms.ab2d.common.model.CoverageSearchDiff;
 import gov.cms.ab2d.common.model.CoverageSearchEvent;
+import gov.cms.ab2d.common.model.CoverageSummary;
+import gov.cms.ab2d.common.model.DateRange;
 import gov.cms.ab2d.common.model.JobStatus;
 import gov.cms.ab2d.common.repository.CoveragePeriodRepository;
 import gov.cms.ab2d.common.repository.CoverageRepository;
 import gov.cms.ab2d.common.repository.CoverageSearchEventRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
-import java.util.Collection;
-import java.util.Optional;
+import javax.sql.DataSource;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.time.*;
+import java.util.*;
 
 import static gov.cms.ab2d.common.util.Constants.AB2D_EPOCH;
+import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toList;
 
 /**
@@ -34,7 +42,28 @@ import static java.util.stream.Collectors.toList;
 @Slf4j
 @Service
 @Transactional
+@SuppressWarnings("PMD.UnusedImports")
 public class CoverageServiceImpl implements CoverageService {
+
+    private static final int BATCH_INSERT_SIZE = 10000;
+    private static final int BATCH_SELECT_SIZE = 5000;
+
+    private static final String INSERT_COVERAGE = "INSERT INTO coverage " +
+            "(bene_coverage_period_id, bene_coverage_search_event_id, beneficiary_id) VALUES(?,?,?)";
+
+    private static final String SELECT_BENEFICIARIES_BATCH = "SELECT DISTINCT cov.beneficiary_id FROM coverage cov " +
+            " WHERE cov.bene_coverage_period_id IN (:ids) " +
+            " ORDER BY cov.beneficiary_id " +
+            " OFFSET :offset " +
+            " LIMIT :limit";
+
+    private static final String SELECT_COVERAGE_INFORMATION = "SELECT cov.beneficiary_id, period.year, period.month " +
+            " FROM bene_coverage_period period INNER JOIN " +
+            "       (SELECT cov.beneficiary_id, cov.bene_coverage_period_id " +
+            "        FROM coverage cov" +
+            "        WHERE cov.bene_coverage_period_id IN (:coveragePeriods) " +
+            "           AND cov.beneficiary_id IN (:beneficiaryIds) " +
+             "       ) AS cov ON cov.bene_coverage_period_id = period.id ";
 
     @Autowired
     private CoverageRepository coverageRepo;
@@ -45,6 +74,9 @@ public class CoverageServiceImpl implements CoverageService {
     @Autowired
     private CoverageSearchEventRepository coverageSearchEventRepo;
 
+    @Autowired
+    private DataSource dataSource;
+
     @Override
     public CoveragePeriod getCoveragePeriod(long contractId, int month, int year) {
         checkMonthAndYear(month, year);
@@ -52,26 +84,26 @@ public class CoverageServiceImpl implements CoverageService {
     }
 
     @Override
-    public boolean isCoveragePeriodInProgress(int searchId) {
-        CoveragePeriod period = findCoveragePeriod(searchId);
+    public boolean isCoveragePeriodInProgress(int periodId) {
+        CoveragePeriod period = findCoveragePeriod(periodId);
         JobStatus jobStatus = period.getStatus();
         return jobStatus == JobStatus.IN_PROGRESS;
     }
 
     @Override
-    public boolean canEOBSearchBeStarted(int searchId) {
-        return !isCoveragePeriodInProgress(searchId);
+    public boolean canEOBSearchBeStarted(int periodId) {
+        return !isCoveragePeriodInProgress(periodId);
     }
 
     @Override
-    public JobStatus getSearchStatus(int searchId) {
-        CoveragePeriod coverageSearch = findCoveragePeriod(searchId);
+    public JobStatus getSearchStatus(int periodId) {
+        CoveragePeriod coverageSearch = findCoveragePeriod(periodId);
         return coverageSearch.getStatus();
     }
 
     @Override
-    public Optional<CoverageSearchEvent> findLastEvent(int searchId) {
-        CoveragePeriod period = findCoveragePeriod(searchId);
+    public Optional<CoverageSearchEvent> findLastEvent(int periodId) {
+        CoveragePeriod period = findCoveragePeriod(periodId);
         return findLastEvent(period);
     }
 
@@ -84,78 +116,240 @@ public class CoverageServiceImpl implements CoverageService {
     }
 
     @Override
-    public CoverageSearchEvent insertCoverage(int searchId, long searchEventId, Collection<String> beneficiaryIds) {
+    public CoverageSearchEvent insertCoverage(int periodId, long searchEventId, List<String> beneficiaryIds) {
 
-        CoveragePeriod period = findCoveragePeriod(searchId);
+        // Make sure that coverage period and searchEvent actually exist in the database before inserting
+        findCoveragePeriod(periodId);
         CoverageSearchEvent searchEvent = findCoverageSearchEvent(searchEventId);
 
-        Collection<Coverage> coverages = beneficiaryIds.stream()
-                .map(bene -> buildCoverage(period, searchEvent, bene)).collect(toList());
+        for (int subListStart = 0; subListStart < beneficiaryIds.size(); subListStart += BATCH_INSERT_SIZE) {
 
-        JobStatus status = getSearchStatus(searchId);
-        if (status == JobStatus.IN_PROGRESS) {
-            coverageRepo.saveAll(coverages);
-        } else {
-            throw new InvalidJobAccessException("cannot update coverages if coverage search is not in progress (current status " + status + " )");
+            int subListEnd = Math.min(subListStart + BATCH_INSERT_SIZE, beneficiaryIds.size());
+
+            List<String> batch = beneficiaryIds.subList(subListStart, subListEnd);
+
+            insertBatch(periodId, searchEventId, batch);
         }
 
         return searchEvent;
     }
 
-    private Coverage buildCoverage(CoveragePeriod period, CoverageSearchEvent searchEvent, String bene) {
-        Coverage coverage = new Coverage();
-        coverage.setCoveragePeriod(period);
-        coverage.setCoverageSearchEvent(searchEvent);
-        coverage.setBeneficiaryId(bene);
+    /**
+     * Insert a batch of ids as {@link gov.cms.ab2d.common.model.Coverage} objects using plain jdbc
+     * @param periodId coverage period id (foreign key)
+     * @param searchEventId coverage search event id (foreign key)
+     * @param batch list of beneficiary ids to be added as a batch
+     */
+    private void insertBatch(int periodId, long searchEventId, List<String> batch) {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(INSERT_COVERAGE)) {
 
-        return coverage;
+            // Prepare a batch of beneficiary ids to be inserted
+            for (String beneficiaryId : batch) {
+                statement.setInt(1, periodId);
+                statement.setLong(2, searchEventId);
+                statement.setString(3, beneficiaryId);
+
+                statement.addBatch();
+            }
+
+            statement.executeBatch();
+
+        } catch (SQLException sqlException) {
+            throw new RuntimeException("failed to insert coverage information", sqlException);
+        }
+    }
+
+    @Override
+    public void deletePreviousSearch(int periodId) {
+
+        CoveragePeriod period = findCoveragePeriod(periodId);
+        Optional<CoverageSearchEvent> searchEvent = coverageSearchEventRepo.findSearchWithOffset(periodId, 1);
+
+
+        if (searchEvent.isPresent()) {
+            try (Connection connection = dataSource.getConnection();
+                 PreparedStatement statement = connection.prepareStatement("DELETE FROM coverage cov WHERE " +
+                         " cov.bene_coverage_period_id = ? AND cov.bene_coverage_search_event_id = ?")) {
+                statement.setLong(1, period.getId());
+                statement.setLong(2, searchEvent.get().getId());
+                statement.execute();
+            } catch (Exception exception) {
+                exception.printStackTrace();
+            }
+        }
     }
 
     // todo: add in appropriate location either the completeCoverageSearch method or within the EOB Search on conclusion
     //      of the current search. This needs to run after the completion of every search
     @Override
-    public void deletePreviousSearch(int searchId) {
-        CoveragePeriod period = findCoveragePeriod(searchId);
-        Optional<CoverageSearchEvent> searchEvent = coverageSearchEventRepo.findSearchWithOffset(searchId, 1);
+    public List<CoverageSummary> pageCoverage(int pageNumber, int pageSize, List<Integer> coveragePeriodIds) {
 
-        searchEvent.ifPresent(coverageSearchEvent ->
-                coverageRepo.removeAllByCoveragePeriodAndCoverageSearchEvent(period, coverageSearchEvent));
+        CoveragePeriod coveragePeriod = coveragePeriodRepo.getOne(coveragePeriodIds.get(0));
+
+        Map<String, List<CoverageMembership>> coverageMembership = findCoverageMemberships(pageNumber, pageSize, coveragePeriodIds);
+
+        return coverageMembership.entrySet().stream()
+                .map(obj -> summarizeCoverageMembership(coveragePeriod.getContract(), obj))
+                .collect(toList());
+    }
+
+    @Override
+    public List<CoverageSummary> pageCoverage(int pageNumber, int pageSize, Integer... coveragePeriodIds) {
+        return pageCoverage(pageNumber, pageSize, List.of(coveragePeriodIds));
+    }
+
+    /**
+     * Find page of beneficiaries then look up all of their coverage information for a range of identified coverage
+     * periods.
+     */
+    private Map<String, List<CoverageMembership>> findCoverageMemberships(int pageNumber, int pageSize, List<Integer> coveragePeriodIds) {
+        List<CoveragePeriod> coveragePeriods = coveragePeriodRepo.findAllById(coveragePeriodIds);
+
+        if (coveragePeriods.size() != coveragePeriodIds.size()) {
+            throw new IllegalArgumentException("at least one coverage period id not found in database");
+        }
+
+        // Look up a page of beneficiaries sorted by id
+        List<String> beneficiaries = findActiveBeneficiaryIds(pageNumber, pageSize, coveragePeriodIds);
+
+        // Look up coverage information for BATCH_SELECT_SIZE beneficiaries at a time
+        // and populate into hash map
+        Map<String, List<CoverageMembership>> coverageMemberships = new HashMap<>(beneficiaries.size());
+
+        for (int subListStart = 0; subListStart < beneficiaries.size(); subListStart += BATCH_SELECT_SIZE) {
+
+            int subListEnd = Math.min(subListStart + BATCH_SELECT_SIZE, beneficiaries.size());
+
+            // Find all coverage membership information for a batch of beneficiary ids
+            // over the range [subListStart, subListEnd)
+
+            List<String> subList = beneficiaries.subList(subListStart, subListEnd);
+            List<CoverageMembership> membershipInfo = findCoverageInformation(coveragePeriodIds, subList);
+
+            // Group the raw coverage information by beneficiary id
+            Map<String, List<CoverageMembership>> coverages = membershipInfo.stream()
+                    .collect(groupingBy(CoverageMembership::getBeneficiaryId));
+
+            coverageMemberships.putAll(coverages);
+        }
+
+        return coverageMemberships;
+    }
+
+    @Override
+    public List<String> findActiveBeneficiaryIds(int pageNumber, int pageSize, List<Integer> coveragePeriods) {
+
+        SqlParameterSource parameters = new MapSqlParameterSource()
+                .addValue("ids", coveragePeriods)
+                .addValue("offset", pageNumber * pageSize)
+                .addValue("limit", pageSize);
+
+        NamedParameterJdbcTemplate template = new NamedParameterJdbcTemplate(dataSource);
+
+        return template.query(SELECT_BENEFICIARIES_BATCH, parameters,
+                (results, rowNum) -> results.getString(1));
+    }
+
+    private List<CoverageMembership> findCoverageInformation(List<Integer> coveragePeriodIds, List<String> beneficiaryIds) {
+
+        SqlParameterSource parameters = new MapSqlParameterSource()
+                .addValue("coveragePeriods", coveragePeriodIds)
+                .addValue("beneficiaryIds", beneficiaryIds);
+
+        NamedParameterJdbcTemplate template = new NamedParameterJdbcTemplate(dataSource);
+
+        return template.query(SELECT_COVERAGE_INFORMATION, parameters,
+                (rs, rowNum) -> new CoverageMembership(
+                        rs.getString(1),
+                        rs.getInt(2),
+                        rs.getInt(3)
+                ));
+    }
+
+    /**
+     * Summarize the coverage of one beneficiary for
+     */
+    private CoverageSummary summarizeCoverageMembership(Contract contract,
+                                                        Map.Entry<String, List<CoverageMembership>> membershipInfo) {
+
+        String beneficiaryId = membershipInfo.getKey();
+        List<CoverageMembership> membershipMonths = membershipInfo.getValue();
+
+        if (membershipMonths.size() == 1) {
+            LocalDate start = fromRawResults(membershipMonths.get(0));
+            DateRange range = new DateRange(start, start.plusMonths(1));
+            return new CoverageSummary(beneficiaryId, contract, Collections.singletonList(range));
+        }
+
+        List<DateRange> dateRanges = new ArrayList<>();
+
+        // Remove is dangerous but more efficient than subList or skip
+        LocalDate begin = fromRawResults(membershipMonths.remove(0));
+        LocalDate last = begin;
+        for (CoverageMembership membership : membershipMonths) {
+            LocalDate next = fromRawResults(membership);
+
+            if (!next.isEqual(last.plusMonths(1))) {
+                dateRanges.add(new DateRange(begin, last.plusMonths(1)));
+                begin = next;
+                // Extend the date range by one month
+            }
+
+            last = next;
+        }
+
+        if (begin.equals(last)) {
+            dateRanges.add(new DateRange(begin, begin.plusMonths(1)));
+        } else {
+            dateRanges.add(new DateRange(begin, last.plusMonths(1)));
+        }
+
+        return new CoverageSummary(beneficiaryId, contract, dateRanges);
+
+    }
+
+    /**
+     * Convert raw array results into object
+     */
+    private LocalDate fromRawResults(CoverageMembership result) {
+        return LocalDate.of(result.getYear(), result.getMonth(), 1);
     }
 
     // todo: create diff and log on completion of every search. This information may be logged to both
     //      kinesis and sql as part of a subsequent issue.
     @Override
-    public CoverageSearchDiff searchDiff(int searchId) {
+    public CoverageSearchDiff searchDiff(int periodId) {
 
-        CoveragePeriod period = findCoveragePeriod(searchId);
+        CoveragePeriod period = findCoveragePeriod(periodId);
 
         if (period.getStatus() != JobStatus.IN_PROGRESS) {
             throw new InvalidJobStateTransition("Cannot diff a currently running search against previous search because results may be added");
         }
 
-        Optional<CoverageSearchEvent> previousSearch = coverageSearchEventRepo.findSearchWithOffset(searchId, 1);
-        Optional<CoverageSearchEvent> currentSearch = coverageSearchEventRepo.findSearchWithOffset(searchId, 0);
+        Optional<CoverageSearchEvent> previousSearch = coverageSearchEventRepo.findSearchWithOffset(periodId, 1);
+        Optional<CoverageSearchEvent> currentSearch = coverageSearchEventRepo.findSearchWithOffset(periodId, 0);
 
         int previousCount = 0;
         if (previousSearch.isPresent()) {
             previousCount = coverageRepo.countByCoverageSearchEvent(previousSearch.get());
         }
 
-        CoverageSearchEvent current = currentSearch.get();
+        CoverageSearchEvent current = currentSearch.orElseThrow(() -> new RuntimeException("could not find latest in progress search event"));
         int currentCount = coverageRepo.countByCoverageSearchEvent(current);
 
         int unchanged = 0;
         if (previousCount > 0) {
-            unchanged = coverageRepo.countIntersection(previousSearch.get().getId(), currentSearch.get().getId());
+            unchanged = coverageRepo.countIntersection(previousSearch.get().getId(), current.getId());
         }
 
         return new CoverageSearchDiff(period, previousCount, currentCount, unchanged);
     }
 
     @Override
-    public CoverageSearchEvent submitCoverageSearch(int searchId, String description) {
+    public CoverageSearchEvent submitCoverageSearch(int periodId, String description) {
 
-        CoveragePeriod period = findCoveragePeriod(searchId);
+        CoveragePeriod period = findCoveragePeriod(periodId);
         JobStatus jobStatus = period.getStatus();
 
         if (jobStatus == JobStatus.IN_PROGRESS) {
@@ -166,9 +360,9 @@ public class CoverageServiceImpl implements CoverageService {
     }
 
     @Override
-    public CoverageSearchEvent startCoverageSearch(int searchId, String description) {
+    public CoverageSearchEvent startCoverageSearch(int periodId, String description) {
 
-        CoveragePeriod period = findCoveragePeriod(searchId);
+        CoveragePeriod period = findCoveragePeriod(periodId);
         JobStatus jobStatus = period.getStatus();
 
         if (jobStatus != JobStatus.SUBMITTED) {
@@ -180,9 +374,9 @@ public class CoverageServiceImpl implements CoverageService {
     }
 
     @Override
-    public CoverageSearchEvent cancelCoverageSearch(int searchId, String description) {
+    public CoverageSearchEvent cancelCoverageSearch(int periodId, String description) {
 
-        CoveragePeriod period = findCoveragePeriod(searchId);
+        CoveragePeriod period = findCoveragePeriod(periodId);
         JobStatus jobStatus = period.getStatus();
 
         if (jobStatus != JobStatus.SUBMITTED) {
@@ -194,9 +388,9 @@ public class CoverageServiceImpl implements CoverageService {
     }
 
     @Override
-    public CoverageSearchEvent failCoverageSearch(int searchId, String description) {
+    public CoverageSearchEvent failCoverageSearch(int periodId, String description) {
 
-        CoveragePeriod period = findCoveragePeriod(searchId);
+        CoveragePeriod period = findCoveragePeriod(periodId);
         JobStatus jobStatus = period.getStatus();
 
         if (jobStatus != JobStatus.IN_PROGRESS) {
@@ -208,9 +402,9 @@ public class CoverageServiceImpl implements CoverageService {
     }
 
     @Override
-    public CoverageSearchEvent completeCoverageSearch(int searchId, String description) {
+    public CoverageSearchEvent completeCoverageSearch(int periodId, String description) {
 
-        CoveragePeriod period = findCoveragePeriod(searchId);
+        CoveragePeriod period = findCoveragePeriod(periodId);
         JobStatus jobStatus = period.getStatus();
 
         if (jobStatus != JobStatus.IN_PROGRESS) {
@@ -219,6 +413,20 @@ public class CoverageServiceImpl implements CoverageService {
         }
 
         return updateStatus(period, description, JobStatus.SUCCESSFUL);
+    }
+
+    // todo: decide whether to call vacuumCoverage internally in the service on completeCoverageSearch
+    //      and/or deletePerviousSearch, or wait until all search jobs are done.
+    //      This especially applies to bulk deletes which may invalidate the pg_visibility map in Postgres
+    //      thus making all SELECT queries hit disk instead of memory.
+    @Override
+    public void vacuumCoverage() {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement("VACUUM coverage")) {
+            statement.execute();
+        } catch (SQLException exception) {
+            throw new RuntimeException("Could not vacuum coverage table", exception);
+        }
     }
 
     private static void checkMonthAndYear(int month, int year) {
@@ -235,6 +443,11 @@ public class CoverageServiceImpl implements CoverageService {
             final String errMsg = "invalid value for year. Year must be between " + AB2D_EPOCH + " and " + currentYear;
             log.error("{} - invalid year :[{}]", errMsg, year);
             throw new IllegalArgumentException(errMsg);
+        }
+
+        OffsetDateTime proposed = OffsetDateTime.of(LocalDate.of(year, month, 1), LocalTime.of(0, 0, 0), ZoneOffset.UTC);
+        if (proposed.isAfter(time)) {
+            throw new IllegalArgumentException("Pulling coverage period from future. Current time " + time + " is before proposed time " + proposed);
         }
     }
 
@@ -265,17 +478,17 @@ public class CoverageServiceImpl implements CoverageService {
 
     /**
      * Eagerly load a {@link CoveragePeriod} by id.
-     * @param searchId coverage period id to load
+     * @param periodId coverage period id to load
      * @return coverage period if found
      * @throws ResourceNotFoundException if coverage period is not found
      */
-    private CoveragePeriod findCoveragePeriod(int searchId) {
-        return coveragePeriodRepo.findById(searchId)
+    private CoveragePeriod findCoveragePeriod(int periodId) {
+        return coveragePeriodRepo.findById(periodId)
                 .orElseThrow(() -> new ResourceNotFoundException("coverage period with id not found"));
     }
 
-    private CoverageSearchEvent findCoverageSearchEvent(long searchId) {
-        return coverageSearchEventRepo.findById(searchId)
+    private CoverageSearchEvent findCoverageSearchEvent(long periodId) {
+        return coverageSearchEventRepo.findById(periodId)
                 .orElseThrow(() -> new ResourceNotFoundException("coverage period with id not found"));
     }
 }
