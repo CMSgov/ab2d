@@ -109,7 +109,7 @@
 
    1. Select **Projects** from the leftmost panel
 
-   1. Select **Account Access** beside "AB2D Production"
+   1. Select **Account Access** beside "AB2D Prod"
 
    1. Select **aws-cms-oit-iusg-acct98 (595094747606)**
 
