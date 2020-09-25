@@ -45,7 +45,7 @@
 
 1. Open Chrome
 
-1. Get temporary credentials for Production
+1. Get temporary credentials for sandbox
 
    1. Open CloudTamer
 
@@ -53,7 +53,7 @@
 
    1. Select **Projects** from the leftmost panel
 
-   1. Select **Account Access** beside "AB2D Production"
+   1. Select **Account Access** beside "AB2D Sandbox"
 
    1. Select **aws-cms-oit-iusg-acct95 (777200079629)**
 
