@@ -90,7 +90,7 @@
      && ssh -N -L \
      "${LOCAL_DB_PORT}:${DATABASE_HOST}:5432" \
      ec2-user@"${CONTROLLER_PRIVATE_IP}" \
-     -i "~/.ssh/ab2d-east-prod.pem"
+     -i "~/.ssh/ab2d-sbx-sandbox.pem"
    ```
 
 ## Use an SSH tunnel to query production database from local machine
