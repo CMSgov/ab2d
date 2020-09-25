@@ -30,13 +30,11 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Set;
 
 import static gov.cms.ab2d.common.util.Constants.*;
 import static gov.cms.ab2d.common.util.Constants.ADMIN_ROLE;
-import static gov.cms.ab2d.common.util.DataSetup.TEST_USER;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -86,8 +84,8 @@ public class AdminAPIUserTests {
 
     @BeforeEach
     public void setup() throws JwtVerificationException {
-        contractRepository.deleteAll();
         jobRepository.deleteAll();
+        contractRepository.deleteAll();
         userRepository.deleteAll();
         roleRepository.deleteAll();
         sponsorRepository.deleteAll();

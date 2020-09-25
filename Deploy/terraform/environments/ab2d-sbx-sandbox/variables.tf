@@ -500,3 +500,27 @@ variable "target_group_arn_suffix" {
   default     = ""
   description = "Please pass this on command line and not as a value here"
 }
+
+#
+# HPMS
+#
+
+variable "ab2d_hpms_url" {
+  default     = ""
+  description = "Please pass this on command line and not as a value here"
+}
+
+variable "ab2d_hpms_auth_url" {
+  default     = ""
+  description = "Please pass this on command line and not as a value here"
+}
+
+variable "ab2d_hpms_auth_key_id" {
+  default     = ""
+  description = "Please pass this on command line and not as a value here"
+}
+
+variable "ab2d_hpms_auth_key_secret" {
+  default     = ""
+  description = "Please pass this on command line and not as a value here"
+}

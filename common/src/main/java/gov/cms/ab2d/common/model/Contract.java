@@ -12,6 +12,7 @@ import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
+import javax.persistence.PreRemove;
 import javax.validation.constraints.NotNull;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
@@ -48,7 +49,7 @@ public class Contract extends TimestampBase {
     private OffsetDateTime attestedOn;
 
     @OneToMany(mappedBy = "contract")
-    private Set<Coverage> coverages = new HashSet<>();
+    private Set<CoveragePeriod> coveragePeriods = new HashSet<>();
 
     public boolean hasAttestation() {
         return attestedOn != null;
@@ -75,5 +76,19 @@ public class Contract extends TimestampBase {
         String dateWithTZ = attestationDate + " 0:0 " + getESTOffset();
         attestedOn = OffsetDateTime.parse(dateWithTZ, FORMATTER);
         return true;
+    }
+
+    /**
+     * Trigger removal of contract from sponsor parent relationship. If this is not triggered then deleting a contract
+     * will not work because hibernate persistence will recognize that {@link Sponsor#getContracts()} still has a
+     * relationship to this contract instance.
+     */
+    @SuppressWarnings("PMD.UnusedPrivateMethod")
+    @PreRemove
+    private void removeContractFromSponsors() {
+
+        if (sponsor != null) {
+            sponsor.getContracts().remove(this);
+        }
     }
 }

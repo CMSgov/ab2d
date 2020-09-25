@@ -46,11 +46,11 @@ fn_get_temporary_aws_credentials_via_cloudtamer_api ()
   echo "--------------------"
   echo ""
 
-  BEARER_TOKEN=$(curl --location --request POST 'https://cloudtamer.cms.gov/api/v2/token' \
+  BEARER_TOKEN=$(curl --location --request POST 'https://cloudtamer.cms.gov/api/v3/token' \
     --header 'Accept: application/json' \
     --header 'Accept-Language: en-US,en;q=0.5' \
     --header 'Content-Type: application/json' \
-    --data-raw "{\"username\":\"${CLOUDTAMER_USER_NAME}\",\"password\":\"${CLOUDTAMER_PASSWORD}\",\"idms\":{\"id\":2}}" \
+    --data-raw "{\"username\":\"${CLOUDTAMER_USER_NAME}\",\"password\":\"${CLOUDTAMER_PASSWORD}\",\"idms\":2}" \
     | jq --raw-output ".data.access.token")
 
   if [ "${BEARER_TOKEN}" == "null" ]; then
@@ -98,7 +98,7 @@ fn_get_temporary_aws_credentials_via_cloudtamer_api ()
     --header 'Content-Type: application/json' \
     --header "Authorization: Bearer ${BEARER_TOKEN}" \
     --header 'Content-Type: application/json' \
-    --data-raw "{\"account_number\":\"${IN_AWS_ACCOUNT_NUMBER_CT_API}\",\"iam_role_name\":\"ab2d-spe-developer\"}" \
+    --data-raw "{\"account_number\":\"${IN_AWS_ACCOUNT_NUMBER_CT_API}\",\"iam_role_name\":\"ct-ado-ab2d-application-admin\"}" \
     | jq --raw-output ".data")
 
   # Get temporary AWS credentials

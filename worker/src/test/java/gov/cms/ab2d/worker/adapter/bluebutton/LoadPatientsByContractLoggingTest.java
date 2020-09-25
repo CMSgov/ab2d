@@ -85,7 +85,7 @@ public class LoadPatientsByContractLoggingTest {
         contract.setAttestedOn(OffsetDateTime.MIN);
         contract.setContractName("1234");
         contract.setId(1L);
-        contract.setCoverages(new HashSet<>());
+        contract.setCoveragePeriods(new HashSet<>());
         tracker.setCurrentMonth(1);
         cai.getPatients(contractId, 1, tracker);
 

@@ -1,5 +1,6 @@
 package gov.cms.ab2d.worker.processor;
 
+import ca.uhn.fhir.context.FhirContext;
 import gov.cms.ab2d.common.model.*;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.eventlogger.LogManager;
@@ -27,10 +28,7 @@ import java.text.ParseException;
 import java.time.OffsetDateTime;
 import java.util.*;
 
-import static gov.cms.ab2d.worker.processor.StreamHelperImpl.FileOutputType.NDJSON;
 import static java.lang.Boolean.TRUE;
-import static org.hamcrest.CoreMatchers.startsWith;
-import static org.junit.Assert.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -41,10 +39,6 @@ import static org.mockito.Mockito.*;
 class ContractProcessorUnitTest {
     // class under test
     private ContractProcessor cut;
-
-    private String jobUuid = "6d08bf08-f926-4e19-8d89-ad67ef89f17e";
-
-    private Random random = new Random();
 
     @TempDir Path efsMountTmpDir;
 
@@ -60,6 +54,8 @@ class ContractProcessorUnitTest {
     @BeforeEach
     void setUp() throws Exception {
         MockitoAnnotations.initMocks(this);
+        String jobUuid = "6d08bf08-f926-4e19-8d89-ad67ef89f17e";
+        FhirContext fhirContext = ca.uhn.fhir.context.FhirContext.forDstu3();
         cut = new ContractProcessorImpl(
                 fileService,
                 jobRepository,
@@ -88,21 +84,20 @@ class ContractProcessorUnitTest {
                 .failureThreshold(10)
                 .build();
         progressTracker.addPatientsByContract(patientsByContract);
-        contractData = new ContractData(contract, progressTracker, contract.getAttestedOn(), job.getSince(),
+        contractData = new ContractData(contract, progressTracker, job.getSince(),
                 job.getUser() != null ? job.getUser().getUsername() : null);
     }
 
-
     @Test
     @DisplayName("When a job is cancelled while it is being processed, then attempt to stop the job gracefully without completing it")
-    void whenJobIsCancelledWhileItIsBeingProcessed_ThenAttemptToStopTheJob() throws Exception {
+    void whenJobIsCancelledWhileItIsBeingProcessed_ThenAttemptToStopTheJob() {
         when(jobRepository.findJobStatus(anyString())).thenReturn(JobStatus.CANCELLED);
 
         var exceptionThrown = assertThrows(JobCancelledException.class,
-                () -> cut.process(outputDir, contractData, NDJSON));
+                () -> cut.process(outputDir, contractData));
 
-        assertThat(exceptionThrown.getMessage(), startsWith("Job was cancelled while it was being processed"));
-        verify(patientClaimsProcessor, atLeast(1)).process(any(), any());
+        assertTrue(exceptionThrown.getMessage().startsWith("Job was cancelled while it was being processed"));
+        verify(patientClaimsProcessor, atLeast(1)).process(any());
         verify(jobRepository, atLeastOnce()).updatePercentageCompleted(anyString(), anyInt());
     }
 
@@ -110,7 +105,7 @@ class ContractProcessorUnitTest {
     @DisplayName("When many patientId are present, 'PercentageCompleted' should be updated many times")
     void whenManyPatientIdsAreProcessed_shouldUpdatePercentageCompletedMultipleTimes() throws Exception {
         patientsByContract.setPatients(createPatients(18));
-        var jobOutputs = cut.process(outputDir, contractData, NDJSON);
+        var jobOutputs = cut.process(outputDir, contractData);
 
         assertFalse(jobOutputs.isEmpty());
         verify(jobRepository, times(9)).updatePercentageCompleted(anyString(), anyInt());

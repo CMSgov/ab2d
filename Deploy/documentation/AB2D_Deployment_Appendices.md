@@ -130,10 +130,22 @@
    * [Install and verify AWS CLI 2](#install-and-verify-aws-cli-2)
 1. [Appendix NNN: Manually install Chef Inspec on existing Jenkins Agent](#appendix-nnn-manually-install-chef-inspec-on-existing-jenkins-agent)
 1. [Appendix OOO: Connect to Jenkins agent through the Jenkins master using the ProxyJump flag](#appendix-ooo-connect-to-jenkins-agent-through-the-jenkins-master-using-the-proxyjump-flag)
-1. [Appendix PPP: Retrieve CSV database backup](#appendix-ppp-retrieve-csv-database-backup)
+1. [Appendix PPP: Create and work with CSV database backup](#appendix-ppp-create-and-work-with-csv-database-backup)
+   * [Create and retrieve CSV database backup](#create-and-retrieve-csv-database-backup)
+   * [Create a second schema that uses CSV database backup](#create-a-second-schema-that-uses-csv-database-backup)
+   * [Reconcile backup data with current data](#reconcile-backup-data-with-current-data)
 1. [Appendix QQQ: Get private IP address](#appendix-qqq-get-private-ip-address)
 1. [Appendix RRR: Protect the existing RDS database using AWS CLI](#appendix-rrr-protect-the-existing-rds-database-using-aws-cli)
 1. [Appendix SSS: Review RDS reserved instance utilization from AWS console](#appendix-sss-review-rds-reserved-instance-utilization-from-aws-console)
+1. [Appendix TTT: Reset master to a specific commit](#appendix-ttt-reset-master-to-a-specific-commit)
+   * [Force push to master](#force-push-to-master)
+   * [Reconcile your master branch with a remote branch that was force pushed by someone else](#reconcile-your-master-branch-with-a-remote-branch-that-was-force-pushed-by-someone-else)
+   * [Rebase an existing branch to reconcile it with a master that has been reset](#rebase-an-existing-branch-to-reconcile-it-with-a-master-that-has-been-reset)
+1. [Appendix UUU: Migrate VictorOps-Slack integration from a real slack user to slack service user](#appendix-uuu-migrate-victorops-slack-integration-from-a-real-slack-user-to-slack-service-user)
+1. [Appendix VVV: Add a volume to jenkins agent and extend the root volume to use it](#appendix-vvv-add-a-volume-to-jenkins-agent-and-extend-the-root-volume-to-use-it)
+1. [Appendix WWW: Whitelist IP addresses in Akamai for Prod](#whitelist-ip-addresses-in-akamai-for-prod)
+1. [Appendix XXX: Fix CloudTamer scripts broken by ITOPS role change](#appendix-xxx-fix-cloudtamer-scripts-broken-by-itops-role-change)
+1. [Appendix YYY: Add IAM components under the new ITOPS restrictions](#appendix-yyy-add-iam-components-under-the-new-itops-restrictions)
 
 ## Appendix A: Access the CMS AWS console
 
@@ -3439,60 +3451,11 @@
    $ cd ~/code/ab2d/Deploy
    ```
 
-1. Get temporary AWS credentials for target environment
+1. Set AWS environment variables using the CloudTamer API
 
-   1. Set AWS account number
-
-      *Example for Dev:*
-
-      ```ShellSession
-      $ export AWS_ACCOUNT_NUMBER=349849222861
-      ```
-
-      *Example for Sbx:*
-
-      ```ShellSession
-      $ export AWS_ACCOUNT_NUMBER=777200079629
-      ```
-
-      *Example for Impl:*
-
-      ```ShellSession
-      $ export AWS_ACCOUNT_NUMBER=330810004472
-      ```
-
-   1. Get bearer token
-
-      ```ShellSession
-      $ BEARER_TOKEN=$(curl --location --request POST 'https://cloudtamer.cms.gov/api/v2/token' \
-          --header 'Accept: application/json' \
-          --header 'Accept-Language: en-US,en;q=0.5' \
-          --header 'Content-Type: application/json' \
-          --data-raw "{\"username\":\"${CLOUDTAMER_USER_NAME}\",\"password\":\"${CLOUDTAMER_PASSWORD}\",\"idms\":{\"id\":2}}" \
-          | jq --raw-output ".data.access.token")
-      ```
-
-   1. Get JSON output for temporary credentials
-
-      ```ShellSession
-      $ JSON_OUTPUT=$(curl --location --request POST 'https://cloudtamer.cms.gov/api/v3/temporary-credentials' \
-          --header 'Accept: application/json' \
-          --header 'Accept-Language: en-US,en;q=0.5' \
-          --header 'Content-Type: application/json' \
-          --header "Authorization: Bearer ${BEARER_TOKEN}" \
-          --header 'Content-Type: application/json' \
-          --data-raw "{\"account_number\":\"${AWS_ACCOUNT_NUMBER}\",\"iam_role_name\":\"ab2d-spe-developer\"}" \
-          | jq --raw-output ".data")
-      ```
-
-   1. Get temporary AWS credentials
-
-      ```ShellSession
-      $ export AWS_DEFAULT_REGION=us-east-1
-      $ export AWS_ACCESS_KEY_ID=$(echo $JSON_OUTPUT | jq --raw-output ".access_key")
-      $ export AWS_SECRET_ACCESS_KEY=$(echo $JSON_OUTPUT | jq --raw-output ".secret_access_key")
-      $ export AWS_SESSION_TOKEN=$(echo $JSON_OUTPUT | jq --raw-output ".session_token")
-      ```
+   ```ShellSession
+   $ source ./bash/set-env.sh
+   ```
    
 1. Change to the environment where the existing component is failing to refresh
 
@@ -8295,7 +8258,7 @@
 *For the production static website, I just changed the "head.html" from dev to prod like this:*
 
 ```ShellSession
-$ sed -i "" 's%cms-ab2d[\/]prod%cms-ab2d/dev%g' _includes/head.html (edited)
+$ sed -i "" 's%cms-ab2d[\/]prod%cms-ab2d/dev%g' _includes/head.html
 ```
 
 ## Appendix SS: Destroy application
@@ -8724,16 +8687,12 @@ $ sed -i "" 's%cms-ab2d[\/]prod%cms-ab2d/dev%g' _includes/head.html (edited)
    $ chmod 600 ~/.ssh/ab2d-east-prod.pem
    ```
 
-1. Change to the "Deploy" directory
-
-   ```ShellSession
-   $ cd ~/code/ab2d/Deploy
-   ```
+1. Change to your "ab2d" repo directory
 
 1. Set the production environment
 
    ```ShellSession
-   $ source ./bash/set-env.sh
+   $ source ./Deploy/bash/set-env.sh
    ```
 
 1. Choose a local port that you want to use for the SSH tunnel and set an environment variable
@@ -8757,7 +8716,7 @@ $ sed -i "" 's%cms-ab2d[\/]prod%cms-ab2d/dev%g' _includes/head.html (edited)
 
    ```ShellSession
    $ DATABASE_SECRET_DATETIME="2020-01-02-09-15-01" \
-     && DATABASE_HOST=$(./python3/get-database-secret.py $CMS_ENV database_host $DATABASE_SECRET_DATETIME)
+     && DATABASE_HOST=$(./Deploy/python3/get-database-secret.py $CMS_ENV database_host $DATABASE_SECRET_DATETIME)
    ```
 
 1. Start the SSH tunnel to the production database
@@ -10118,7 +10077,7 @@ $ sed -i "" 's%cms-ab2d[\/]prod%cms-ab2d/dev%g' _includes/head.html (edited)
         --output json \
         | jq '.[0]' \
         | tr -d '"' \
-	| awk '{print $1" dev.ab2d.cms.gov"}'
+        | awk '{print $1" dev.ab2d.cms.gov"}'
       ```
 
    1. Note the dev.ab2d.cms.gov domain mapping line that is output
@@ -10919,7 +10878,9 @@ $ sed -i "" 's%cms-ab2d[\/]prod%cms-ab2d/dev%g' _includes/head.html (edited)
 	ec2-user@$JENKINS_AGENT_PRIVATE_IP
    ```
 
-## Appendix PPP: Retrieve CSV database backup
+## Appendix PPP: Create and work with CSV database backup
+
+### Create and retrieve CSV database backup
 
 1. Connect to Cisco VPN
 
@@ -11133,6 +11094,816 @@ $ sed -i "" 's%cms-ab2d[\/]prod%cms-ab2d/dev%g' _includes/head.html (edited)
       $ tar -xzvf "${TARGET_ENVIRONMENT}.tar.gz" --strip-components=4
       ```
 
+### Create a second schema that uses CSV database backup
+
+1. Change to the Downloads directory
+
+   *Example for sandbox:*
+
+   ```ShellSession
+   $ cd ~/Downloads
+   ```
+
+1. Backup the existing database backup
+
+   *Example for sandbox:*
+
+   ```ShellSession
+   $ cp -r ~/Downloads/ab2d-sbx-sandbox /tmp/ab2d-sbx-sandbox
+   ```
+
+1. Change to the directory where you have your CSV database backup
+
+   *Example for sandbox:*
+
+   ```ShellSession
+   $ cd /tmp/ab2d-sbx-sandbox
+   ```
+
+1. Copy the public schema file to a backup schema file
+
+   ```ShellSession
+   $ cp 01-public-schema.sql 01-backup-schema.sql
+   ```
+
+1. Change the schema name to "backup" in the "01-backup-schema.sql" file
+
+   ```ShellSession
+   $ sed -i "" 's%public\.%backup\.%g' 01-backup-schema.sql \
+     && sed -i "" 's% public % backup %g' 01-backup-schema.sql \
+     && sed -i "" 's%public;%backup;%g' 01-backup-schema.sql
+   ```
+
+1. Start a database tunnel
+
+1. Open pgAdmin
+
+1. Select the database for the target environment
+
+1. Select the **Tools** menu
+
+1. Select **Query Tool**
+
+1. Execute the following in the "Query Editor"
+
+   ```
+   CREATE SCHEMA backup
+    AUTHORIZATION cmsadmin;
+
+   GRANT ALL ON SCHEMA backup TO PUBLIC;
+
+   GRANT ALL ON SCHEMA backup TO cmsadmin;
+   ```
+
+1. Refesh the target database node in the leftmost panel
+
+1. Select the "Open" icon
+
+1. Select **Yes** to discard changes in the editor
+
+1. Open the following file
+
+   ```
+   /tmp/01-backup-schema.sql
+   ```
+
+1. Execute the "01-backup-schema.sql" script
+
+1. Close the "01-backup-schema.sql" script
+
+### Reconcile backup data with current data
+
+1. Open a terminal
+
+1. Start a database tunnel (if not already running)
+
+1. Open another terminal
+
+1. Connect to database via a psql shell
+
+1. Import the backed up CSV files to the backup schema by running the following in the psl shell
+
+   *Example for sandbox:*
+
+   ```ShellSession
+   \COPY backup.event_api_request FROM '/tmp/ab2d-sbx-sandbox/csv/public.event_api_request_part01.csv' WITH (FORMAT CSV);
+   \COPY backup.event_api_request FROM '/tmp/ab2d-sbx-sandbox/csv/public.event_api_request_part02.csv' WITH (FORMAT CSV);
+   \COPY backup.event_api_request FROM '/tmp/ab2d-sbx-sandbox/csv/public.event_api_request_part03.csv' WITH (FORMAT CSV);
+   \COPY backup.event_api_request FROM '/tmp/ab2d-sbx-sandbox/csv/public.event_api_request_part04.csv' WITH (FORMAT CSV);
+   \COPY backup.event_api_request FROM '/tmp/ab2d-sbx-sandbox/csv/public.event_api_request_part05.csv' WITH (FORMAT CSV);
+   \COPY backup.event_api_request FROM '/tmp/ab2d-sbx-sandbox/csv/public.event_api_request_part06.csv' WITH (FORMAT CSV);
+   \COPY backup.event_api_request FROM '/tmp/ab2d-sbx-sandbox/csv/public.event_api_request_part07.csv' WITH (FORMAT CSV);
+   \COPY backup.event_api_request FROM '/tmp/ab2d-sbx-sandbox/csv/public.event_api_request_part08.csv' WITH (FORMAT CSV);
+   \COPY backup.event_api_response FROM '/tmp/ab2d-sbx-sandbox/csv/public.event_api_response.csv' WITH (FORMAT CSV);
+   \COPY backup.event_bene_reload FROM '/tmp/ab2d-sbx-sandbox/csv/public.event_bene_reload.csv' WITH (FORMAT CSV);
+   \COPY backup.event_bene_search FROM '/tmp/ab2d-sbx-sandbox/csv/public.event_bene_search.csv' WITH (FORMAT CSV);
+   \COPY backup.event_error FROM '/tmp/ab2d-sbx-sandbox/csv/public.event_error.csv' WITH (FORMAT CSV);
+   \COPY backup.event_file FROM '/tmp/ab2d-sbx-sandbox/csv/public.event_file.csv' WITH (FORMAT CSV);
+   \COPY backup.event_job_status_change FROM '/tmp/ab2d-sbx-sandbox/csv/public.event_job_status_change.csv' WITH (FORMAT CSV);
+   \COPY backup.job FROM '/tmp/ab2d-sbx-sandbox/csv/public.job.csv' WITH (FORMAT CSV);
+   \COPY backup.job_output FROM '/tmp/ab2d-sbx-sandbox/csv/public.job_output.csv' WITH (FORMAT CSV);
+   ```
+
+1. Open pgAdmin (if not already open)
+
+1. Select the database for the target environment
+
+1. Select the **Tools** menu
+
+1. Select **Query Tool**
+
+1. Import missing records from "event_api_request"
+
+   1. Check current record count of "event_api_request" table in public schema
+
+      ```
+      SELECT COUNT(*)
+        FROM public.event_api_request;
+      ```
+
+   1. Note the record count for the "event_api_request" table in public schema
+
+      *Example:*
+
+      ```
+      7955
+      ```
+
+   1. Check current record count of "event_api_request" table in backup schema
+
+      ```
+      SELECT COUNT(*)
+        FROM backup.event_api_request;
+      ```
+
+   1. Note the record count for the "event_api_request" table in backup schema
+
+      *Example:*
+
+      ```
+      4188
+      ```
+
+   1. Get query count of the records to be inserted
+
+      ```
+      SELECT COUNT(*)
+      FROM backup.event_api_request a
+      WHERE a.request_id NOT IN (
+        SELECT request_id
+        FROM public.event_api_request);
+      ```
+
+   1. Verify that the query count equals the "event_api_request" record count in backup schema
+
+      *Example:*
+
+      ```
+      4188
+      ```
+
+   1. Insert the missing records into the "event_api_request" table
+
+      ```
+      INSERT into public.event_api_request(time_of_event, job_id, user_id, url, ip_address, token_hash, request_id, aws_id, environment)
+      SELECT time_of_event, job_id, user_id, url, ip_address, token_hash, request_id, aws_id, environment
+      FROM backup.event_api_request a
+      WHERE a.request_id NOT IN (
+        SELECT request_id
+        FROM public.event_api_request);
+      ```
+
+   1. Re-query the "event_api_request" table
+
+      ```
+      SELECT COUNT(*)
+        FROM public.event_api_request;
+      ```
+
+   1. Verify that the new record count equals the sum of the "event_api_request" original backup and public schemas
+
+      *Example:*
+
+      ```
+      12143
+      ```
+
+1. Import missing records from "event_api_response"
+
+   1. Check current record count of "event_api_response" table in public schema
+
+      ```
+      SELECT COUNT(*)
+        FROM public.event_api_response;
+      ```
+
+   1. Note the record count for the "event_api_response" table in public schema
+
+      *Example:*
+
+      ```
+      6755
+      ```
+
+   1. Check current record count of "event_api_response" table in backup schema
+
+      ```
+      SELECT COUNT(*)
+        FROM backup.event_api_response;
+      ```
+
+   1. Note the record count for the "event_api_response" table in backup schema
+
+      *Example:*
+
+      ```
+      3116
+      ```
+
+   1. Get query count of the records to be inserted
+
+      ```
+      SELECT COUNT(*)
+      FROM backup.event_api_response a
+      WHERE a.request_id NOT IN (
+        SELECT request_id
+        FROM public.event_api_response);
+      ```
+
+   1. Verify that the query count equals the "event_api_response" record count in backup schema
+
+      *Example:*
+
+      ```
+      3116
+      ```
+
+   1. Insert the missing records into the "event_api_response" table
+
+      ```
+      INSERT into public.event_api_response(time_of_event, user_id, job_id, response_code, response_string, description, request_id, aws_id, environment)
+      SELECT time_of_event, user_id, job_id, response_code, response_string, description, request_id, aws_id, environment
+      FROM backup.event_api_response a
+      WHERE a.request_id NOT IN (
+        SELECT request_id
+        FROM public.event_api_response);
+      ```
+
+   1. Re-query the "event_api_response" table
+
+      ```
+      SELECT COUNT(*)
+        FROM public.event_api_response;
+      ```
+
+   1. Verify that the new record count equals the sum of the "event_api_response" original backup and public schemas
+
+      *Example:*
+
+      ```
+      9891
+      ```
+
+1. Import missing records from "event_bene_reload"
+
+   1. Check current record count of "event_bene_reload" table in public schema
+
+      ```
+      SELECT COUNT(*)
+        FROM public.event_bene_reload;
+      ```
+
+   1. Note the record count for the "event_bene_reload" table in public schema
+
+      *Example:*
+
+      ```
+      395
+      ```
+
+   1. Check current record count of "event_bene_reload" table in backup schema
+
+      ```
+      SELECT COUNT(*)
+        FROM backup.event_bene_reload;
+      ```
+
+   1. Note the record count for the "event_bene_reload" table in backup schema
+
+      *Example:*
+
+      ```
+      91
+      ```
+
+   1. Get query count of the records to be inserted
+
+      ```
+      SELECT time_of_event, user_id, job_id, file_type, file_name, number_loaded, aws_id, environment
+      FROM backup.event_bene_reload a
+      WHERE a.time_of_event NOT IN (
+        SELECT time_of_event
+        FROM public.event_bene_reload);
+      ```
+
+   1. Verify that the query count equals the "event_bene_reload" record count in backup schema
+
+      *Example:*
+
+      ```
+      91
+      ```
+
+   1. Insert the missing records into the "event_bene_reload" table
+
+      ```
+      INSERT into public.event_bene_reload(time_of_event, user_id, job_id, file_type, file_name, number_loaded, aws_id, environment)
+      SELECT time_of_event, user_id, job_id, file_type, file_name, number_loaded, aws_id, environment
+      FROM backup.event_bene_reload a
+      WHERE a.time_of_event NOT IN (
+        SELECT time_of_event
+        FROM public.event_bene_reload);
+      ```
+
+   1. Re-query the "event_bene_reload" table
+
+      ```
+      SELECT COUNT(*)
+        FROM public.event_bene_reload;
+      ```
+
+   1. Verify that the new record count equals the sum of the "event_bene_reload" original backup and public schemas
+
+      *Example:*
+
+      ```
+      486
+      ```
+
+1. Import missing records from "event_bene_search"
+
+   1. Check current record count of "event_bene_search" table in public schema
+
+      ```
+      SELECT COUNT(*)
+        FROM public.event_bene_search;
+      ```
+
+   1. Note the record count for the "event_bene_search" table in public schema
+
+      *Example:*
+
+      ```
+      72
+      ```
+
+   1. Check current record count of "event_bene_search" table in backup schema
+
+      ```
+      SELECT COUNT(*)
+        FROM backup.event_bene_search;
+      ```
+
+   1. Note the record count for the "event_bene_search" table in backup schema
+
+      *Example:*
+
+      ```
+      87
+      ```
+
+   1. Get query count of the records to be inserted
+
+      ```
+      SELECT COUNT(*)
+      FROM backup.event_bene_search a
+      WHERE a.time_of_event NOT IN (
+        SELECT time_of_event
+        FROM public.event_bene_search);
+      ```
+
+   1. Verify that the query count equals the "event_bene_search" record count in backup schema
+
+      *Example:*
+
+      ```
+      87
+      ```
+
+   1. Insert the missing records into the "event_bene_search" table
+
+      ```
+      INSERT into public.event_bene_search(time_of_event, user_id, job_id, contract_number, num_in_contract, num_searched, num_opted_out, num_errors, aws_id, environment)
+      SELECT time_of_event, user_id, job_id, contract_number, num_in_contract, num_searched, num_opted_out, num_errors, aws_id, environment
+      FROM backup.event_bene_search a
+      WHERE a.time_of_event NOT IN (
+        SELECT time_of_event
+        FROM public.event_bene_search);
+      ```
+
+   1. Re-query the "event_bene_search" table
+
+      ```
+      SELECT COUNT(*)
+        FROM public.event_bene_search;
+      ```
+
+   1. Verify that the new record count equals the sum of the "event_bene_search" original backup and public schemas
+
+      *Example:*
+
+      ```
+      159
+      ```
+
+1. Import missing records from "event_error"
+
+   1. Check current record count of "event_error" table in public schema
+
+      ```
+      SELECT COUNT(*)
+        FROM public.event_error;
+      ```
+
+   1. Note the record count for the "event_error" table in public schema
+
+      *Example:*
+
+      ```
+      19
+      ```
+
+   1. Check current record count of "event_error" table in backup schema
+
+      ```
+      SELECT COUNT(*)
+        FROM backup.event_error;
+      ```
+
+   1. Note the record count for the "event_error" table in backup schema
+
+      *Example:*
+
+      ```
+      11
+      ```
+
+   1. Get query count of the records to be inserted
+
+      ```
+      SELECT COUNT(*)
+      FROM backup.event_error a
+      WHERE a.time_of_event NOT IN (
+        SELECT time_of_event
+        FROM public.event_error);
+      ```
+
+   1. Verify that the query count equals the "event_error" record count in backup schema
+
+      *Example:*
+
+      ```
+      11
+      ```
+
+   1. Insert the missing records into the "event_error" table
+
+      ```
+      INSERT into public.event_error(time_of_event, user_id, job_id, error_type, description, aws_id, environment)
+      SELECT time_of_event, user_id, job_id, error_type, description, aws_id, environment
+      FROM backup.event_error a
+      WHERE a.time_of_event NOT IN (
+        SELECT time_of_event
+        FROM public.event_error);
+      ```
+
+   1. Re-query the "event_error" table
+
+      ```
+      SELECT COUNT(*)
+        FROM public.event_error;
+      ```
+
+   1. Verify that the new record count equals the sum of the "event_error" original backup and public schemas
+
+      *Example:*
+
+      ```
+      30
+      ```
+
+1. Import missing records from "event_file"
+
+   1. Check current record count of "event_file" table in public schema
+
+      ```
+      SELECT COUNT(*)
+        FROM public.event_file;
+      ```
+
+   1. Note the record count for the "event_file" table in public schema
+
+      *Example:*
+
+      ```
+      222
+      ```
+
+   1. Check current record count of "event_file" table in backup schema
+
+      ```
+      SELECT COUNT(*)
+        FROM backup.event_file;
+      ```
+
+   1. Note the record count for the "event_file" table in backup schema
+
+      *Example:*
+
+      ```
+      276
+      ```
+
+   1. Get query count of the records to be inserted
+
+      ```
+      SELECT COUNT(*)
+      FROM backup.event_file a
+      WHERE a.time_of_event NOT IN (
+        SELECT time_of_event
+        FROM public.event_file);
+      ```
+
+   1. Verify that the query count equals the "event_file" record count in backup schema
+
+      *Example:*
+
+      ```
+      276
+      ```
+
+   1. Insert the missing records into the "event_file" table
+
+      ```
+      INSERT into public.event_file(time_of_event, user_id, job_id, file_name, status, file_size, file_hash, aws_id, environment)
+      SELECT time_of_event, user_id, job_id, file_name, status, file_size, file_hash, aws_id, environment
+      FROM backup.event_file a
+      WHERE a.time_of_event NOT IN (
+        SELECT time_of_event
+        FROM public.event_file);
+      ```
+
+   1. Re-query the "event_file" table
+
+      ```
+      SELECT COUNT(*)
+        FROM public.event_file;
+      ```
+
+   1. Verify that the new record count equals the sum of the "event_file" original backup and public schemas
+
+      *Example:*
+
+      ```
+      498
+      ```
+
+1. Import missing records from "event_job_status_change"
+
+   1. Check current record count of "event_job_status_change" table in public schema
+
+      ```
+      SELECT COUNT(*)
+        FROM public.event_job_status_change;
+      ```
+
+   1. Note the record count for the "event_job_status_change" table in public schema
+
+      *Example:*
+
+      ```
+      229
+      ```
+
+   1. Check current record count of "event_job_status_change" table in backup schema
+
+      ```
+      SELECT COUNT(*)
+        FROM backup.event_job_status_change;
+      ```
+
+   1. Note the record count for the "event_job_status_change" table in backup schema
+
+      *Example:*
+
+      ```
+      278
+      ```
+
+   1. Get query count of the records to be inserted
+
+      ```
+      SELECT COUNT(*)
+      FROM backup.event_job_status_change a
+      WHERE a.time_of_event NOT IN (
+        SELECT time_of_event
+        FROM public.event_job_status_change);
+      ```
+
+   1. Verify that the query count equals the "event_job_status_change" record count in backup schema
+
+      *Example:*
+
+      ```
+      278
+      ```
+
+   1. Insert the missing records into the "event_job_status_change" table
+
+      ```
+      INSERT into public.event_job_status_change(time_of_event, user_id, job_id, old_status, new_status, description, aws_id, environment)
+      SELECT time_of_event, user_id, job_id, old_status, new_status, description, aws_id, environment
+      FROM backup.event_job_status_change a
+      WHERE a.time_of_event NOT IN (
+        SELECT time_of_event
+        FROM public.event_job_status_change);
+      ```
+
+   1. Re-query the "event_job_status_change" table
+
+      ```
+      SELECT COUNT(*)
+        FROM public.event_job_status_change;
+      ```
+
+   1. Verify that the new record count equals the sum of the "event_job_status_change" original backup and public schemas
+
+      *Example:*
+
+      ```
+      507
+      ```
+
+1. Import missing records from "job"
+
+   1. Check current record count of "job" table in public schema
+
+      ```
+      SELECT COUNT(*)
+        FROM public.job;
+      ```
+
+   1. Note the record count for the "job" table in public schema
+
+      *Example:*
+
+      ```
+      76
+      ```
+
+   1. Check current record count of "job" table in backup schema
+
+      ```
+      SELECT COUNT(*)
+        FROM backup.job;
+      ```
+
+   1. Note the record count for the "job" table in backup schema
+
+      *Example:*
+
+      ```
+      92
+      ```
+
+   1. Get query count of the records to be inserted
+
+      ```
+      SELECT COUNT(*)
+      FROM backup.job a
+      WHERE a.job_uuid NOT IN (
+        SELECT job_uuid
+        FROM public.job);
+      ```
+
+   1. Verify that the query count equals the "job" record count in backup schema
+
+      *Example:*
+
+      ```
+      92
+      ```
+
+   1. Insert the missing records into the "job" table
+
+      ```
+      INSERT into public.job(id, job_uuid, user_account_id, created_at, expires_at, resource_types, status, status_message, request_url, progress, last_poll_time, completed_at, contract_id, output_format, since)
+      SELECT nextval('hibernate_sequence'), job_uuid, user_account_id, created_at, expires_at, resource_types, status, status_message, request_url, progress, last_poll_time, completed_at, contract_id, output_format, since
+      FROM backup.job a
+      WHERE a.job_uuid NOT IN (
+        SELECT job_uuid
+        FROM public.job);
+      ```
+
+   1. Re-query the "job" table
+
+      ```
+      SELECT COUNT(*)
+        FROM public.job;
+      ```
+
+   1. Verify that the new record count equals the sum of the "job" original backup and public schemas
+
+      *Example:*
+
+      ```
+      168
+      ```
+
+1. Import missing records from "job_output"
+
+   1. Check current record count of "job_output" table in public schema
+
+      ```
+      SELECT COUNT(*)
+        FROM public.job_output;
+      ```
+
+   1. Note the record count for the "job_output" table in public schema
+
+      *Example:*
+
+      ```
+      72
+      ```
+
+   1. Check current record count of "job_output" table in backup schema
+
+      ```
+      SELECT COUNT(*)
+        FROM backup.job_output;
+      ```
+
+   1. Note the record count for the "job_output" table in backup schema
+
+      *Example:*
+
+      ```
+      88
+      ```
+
+   1. Get query count of the records to be inserted
+
+      ```
+      SELECT COUNT(*)
+      FROM public.job a
+      LEFT OUTER JOIN backup.job b
+      ON a.job_uuid = b.job_uuid
+      INNER JOIN backup.job_output c
+      ON b.id = c.job_id
+      WHERE a.job_uuid IN (
+        SELECT job_uuid
+        FROM backup.job);
+      ```
+
+   1. Verify that the query count equals the "job_output" record count in backup schema
+
+      *Example:*
+
+      ```
+      88
+      ```
+
+   1. Insert the missing records into the "job_output" table
+
+      ```
+      INSERT into public.job_output(id, job_id, file_path, fhir_resource_type, error, downloaded, checksum, file_length)
+      SELECT nextval('hibernate_sequence'), a.id AS job_id, c.file_path, c.fhir_resource_type, c.error, c.downloaded, c.checksum, c.file_length
+      FROM public.job a
+      LEFT OUTER JOIN backup.job b
+      ON a.job_uuid = b.job_uuid
+      INNER JOIN backup.job_output c
+      ON b.id = c.job_id
+      WHERE a.job_uuid IN (
+        SELECT job_uuid
+        FROM backup.job);
+      ```
+
+   1. Re-query the "job_output" table
+
+      ```
+      SELECT COUNT(*)
+        FROM public.job_output;
+      ```
+
+   1. Verify that the new record count equals the sum of the "job_output" original backup and public schemas
+
+      *Example:*
+
+      ```
+      160
+      ```
+
 ## Appendix QQQ: Get private IP address
 
 1. Get private IP address on Mac
@@ -11219,4 +11990,550 @@ $ sed -i "" 's%cms-ab2d[\/]prod%cms-ab2d/dev%g' _includes/head.html (edited)
 
    ```
    RDS Reserved Instance Utilization
+   ```
+
+## Appendix TTT: Reset master to a specific commit
+
+### Force push to master
+
+1. Temporarily configure master branch to allow force push
+
+   1. Note that you need to be an administrator of the repo to do this
+
+   1. Open Chrome
+
+   1. Enter the following in the address bar
+
+      > https://github.com/CMSgov/ab2d
+
+   1. Select **Settings**
+
+   1. Select **Branches** from the leftmost panel
+
+   1. Select **Edit** beside "master" under the "Branch protection rules" section
+
+   1. Uncheck **Require pull request reviews before merging**
+
+   1. Uncheck **Require status checks to pass before merging**
+
+   1. Check **Allow force pushes**
+
+   1. Select **Save changes**
+
+1. Be sure to stash or check-in any changes that you have in your current branch
+
+1. Update your local origin branches
+
+   ```ShellSession
+   $ git fetch --all
+   ```
+
+1. Checkout the master branch
+
+   ```ShellSession
+   $ git checkout master
+   ```
+
+1. Do a hard reset to desired commit number
+
+   *Format:*
+
+   ```ShellSession
+   $ git reset --hard {commit number}
+   ```
+
+1. Force push to master
+
+   ```ShellSession
+   $ git push --force
+   ```
+
+1. Re-configure master branch to original settings
+
+   1. Note that you need to be an administrator of the repo to do this
+
+   1. Open Chrome
+
+   1. Enter the following in the address bar
+
+      > https://github.com/CMSgov/ab2d
+
+   1. Select **Settings**
+
+   1. Select **Branches** from the leftmost panel
+
+   1. Select **Edit** beside "master" under the "Branch protection rules" section
+
+   1. Check **Require pull request reviews before merging**
+
+   1. Select "2" from the **Required approving reviews** dropdown
+
+   1. Check **Dismiss stale pull request approvals when new commits are pushed**
+
+   1. Check **Require status checks to pass before merging**
+
+   1. Check **Require branches to be up to date before merging**
+
+   1. Check **LGTM analysis: Java**
+
+   1. Check **continuous-integration/travis-ci**
+
+   1. Uncheck **Allow force pushes**
+
+   1. Select **Save changes**
+
+### Reconcile your master branch with a remote branch that was force pushed by someone else
+
+1. If you are currently on the master branch, checkout a different branch
+
+   *Format:*
+   
+   ```ShellSession
+   $ git checkout {a branch other than master}
+   ```
+
+1. Delete your local working master branch
+
+   ```ShellSession
+   $ git branch -D master
+   ```
+
+1. Update your local "origin/master" branch
+
+   ```ShellSession
+   $ git fetch --all
+   ```
+
+1. Checkout your new local working master branch
+
+   ```ShellSession
+   $ git checkout master
+   ```
+
+1. Return to the branch that you are working on
+
+   ```ShellSession
+   $ git checkout {a branch other than master}
+   ```
+   
+### Rebase an existing branch to reconcile it with a master that has been reset
+
+1. Get the number of commits that have been committed to your branch after the current master commit
+
+   ```ShellSession
+   $ COMMIT_NUMBER_OF_ORIGIN_MASTER=$(git rev-parse origin/master | cut -c1-8) \
+     && NUMBER_OF_COMMITS_AFTER_MASTER=$(git log --oneline \
+     | awk '{ print $1 }' \
+     | awk "/${COMMIT_NUMBER_OF_ORIGIN_MASTER}/ {exit} {print}" \
+     | wc -l \
+     | tr -d ' ')
+   ```
+
+2. Rebase your branch
+
+   ```ShellSession
+   $ git rebase -i "HEAD~${NUMBER_OF_COMMITS_AFTER_MASTER}"
+   ```
+
+3. Note that vim opens with the list of commits that include the most recent commits to your branch (some additional commits might show up, but that is normal)
+
+4. Change the commits that are not yours by changing "pick" to "drop"
+
+   Notes:
+
+   - only do the most recent commits that occurred after the master commit
+
+   - identify the commits that are not yours by looking at your branch in GitHub
+
+5. Save and close the vim editor
+
+6. If the rebase is successful, force push the changes to your branch
+
+   ```ShellSession
+   $ git push --force-with-lease
+   ```
+
+7. Update your local "origin/master"
+
+   ```ShellSession
+   $ git fetch --all
+   ```
+
+8. Merge from your local "origin/master"
+
+   ```ShellSession
+   $ git merge origin/master
+   ```
+
+9. Push the changes
+
+   ```ShellSession
+   $ git push
+   ```
+
+## Appendix UUU: Migrate VictorOps-Slack integration from a real slack user to slack service user
+
+1. Create an "sb victorops admin slack" slack service user for the SemanticBits Slack workspace
+
+   *A SemanticBits Slack workspace administrator must do this step.*
+
+1. Add the slack service user to the "p-ab2d-incident-response" channel
+
+1. Add the slack service user to the "p-ccxp-alerts" channel
+
+   *A CCXP user must do this step.*
+
+1. Log out of SemanticBits slack workspace
+
+1. Log on to SemanticBits slack workspace as the slack service user
+
+1. Log on to VictorOps
+
+1. Select the **Integrations** tab
+
+1. Type "slack" in the **Search** text box
+
+1. Select **Slack**
+
+1. Select **Revoke Integration**
+
+1. Re-enable the slack integration using the "sb victorops admin slack" slack user
+
+   1. Select **Enable Integration**
+
+   1. Select **Allow**
+
+   1. Select the following from the **Select a channel to send VictorOps messages to** dropdown
+
+      ```
+      p-ccxp-alerts
+      ```
+
+   1. Check **Chat Messages (Synced with VictorOps Timeline)**
+
+   1. Check **On-Call change notifications**
+
+   1. Check **Paging notifications**
+
+   1. Check **Incidents**
+
+   1. Select **Save** in the "Default Channel" page
+
+   1. Select **OK** on the "Success" dialog
+
+   1. Select **Add Mapping**
+
+   1. Select "AB2D - Standard" from the **Select an Escalation Policy** dropdown
+
+   1. Select the following from the **Select a channel to send VictorOps messages to** dropdown
+
+      ```
+      p-ab2d-incident-response
+      ```
+
+   1. Check **Chat Messages (Synced with VictorOps Timeline)**
+
+   1. Check **On-Call change notifications**
+
+   1. Check **Paging notifications**
+
+   1. Check **Incidents**
+
+   1. Select **Save** in the "Default Channel" page
+
+1. Log out of slack service user
+
+1. Log on with your real user
+
+1. Test using SNS/CloudWatch
+
+   1. Temporarily make yourself on-call in VictorOps for the next available 30 minute block
+   
+   1. Open a new Chrome tab
+   
+   1. Log on to the AWS account
+   
+   1. Select **Simple Notification Service**
+   
+   1. Select **Topics** in the leftmost panel
+   
+   1. Select the following
+   
+      ```
+      ab2d-east-prod-cloudwatch-alarms
+      ```
+   
+   1. Select the **Subscriptions** tab
+   
+   1. Select **Create subscription**
+   
+   1. Configure the "Create subscription" page as follows
+   
+      - **Topic ARN:** {keep default}
+   
+      - **Protocol:** HTTPS
+   
+      - **Endpoint:** {victors ops service api endpoint for aws cloudwatch}/{routing key}
+   
+      - **Enable raw message delivery:** unchecked
+   
+   1. Select **Create subscription**
+   
+   1. Wait for "Status" to display the following
+   
+      *Note that you will likely need to refesh the page to see the status change to "Confirmed".*
+   
+      ```
+      Confirmed
+      ```
+   
+   1. Select **Topics** from the leftmost panel
+   
+   1. Select the following topic
+   
+      ```
+      ab2d-east-prod-cloudwatch-alarms
+      ```
+   
+   1. Select **Publish message**
+   
+   1. Configure the "Message details" section as follows
+   
+      - **Subject:** {keep blank}
+   
+      - **Time to Live (TTL):** {keep blank}
+   
+   1. Configure the "Message body" section as follows
+   
+      - **Message structure:** Identical payload for all delivery protocols
+   
+      - **Message body to send to the endpoint:**
+   
+        ```
+        {"AlarmName":"AB2D Prod - VictorOps - CloudWatch Integration TEST","NewStateValue":"ALARM","NewStateReason":"failure","StateChangeTime":"2017-12-14T01:00:00.000Z","AlarmDescription":"VictorOps - CloudWatch Integration TEST"}
+        ```
+   
+   1. Select **Publish message**
+   
+   1. Verify that the message is received in VictorOps
+
+   1. Acknowledge the incident via cell phone, slack, or VictorOps
+
+   1. Resolve the incident via cell phone, slack, or VictorOps
+
+## Appendix VVV: Add a volume to jenkins agent and extend the root volume to use it
+
+1. Note that these directions assume that you already have two volumes and want to add a third volume
+
+1. Create a new volume in the same availabilty zone as Jenkins agent in the AWS console
+
+1. Attach the volume to the Jenkins agent in the AWS console
+
+1. Connect to the Jenkins agent
+
+1. Set the partition as gpt
+
+   ```ShellSession
+   $ sudo parted --script /dev/nvme2n1 mklabel gpt
+   ```
+
+1. View detail about the disks and partitions again
+
+   1. Enter the following
+
+      ```ShellSession
+      $ sudo parted -l
+      ```
+
+   1. Note the output
+
+      ```
+      Model: NVMe Device (nvme)
+      Disk /dev/nvme0n1: 805GB
+      Sector size (logical/physical): 512B/512B
+      Partition Table: msdos
+      Disk Flags:
+
+      Number  Start   End     Size    Type     File system  Flags
+       1      1049kB  1075MB  1074MB  primary  xfs
+       2      1075MB  32.2GB  31.1GB  primary               lvm
+       3      32.2GB  268GB   236GB   primary
+       4      268GB   537GB   268GB   primary
+
+
+      Model: NVMe Device (nvme)
+      Disk /dev/nvme1n1: 537GB
+      Sector size (logical/physical): 512B/512B
+      Partition Table: gpt
+      Disk Flags:
+
+      Number  Start   End    Size   File system  Name  Flags
+       1      1049kB  537GB  537GB
+
+
+      Model: NVMe Device (nvme)
+      Disk /dev/nvme2n1: 537GB
+      Sector size (logical/physical): 512B/512B
+      Partition Table: gpt
+      Disk Flags:
+
+      Number  Start  End  Size  File system  Name  Flags
+      ```
+
+1. Create a new partition on the "/dev/nvme2n1" disk
+
+   ```ShellSession
+   (
+   echo n # Add a new partition
+   echo p # Primary partition
+   echo   # Partition number (Accept default)
+   echo   # First sector (Accept default)
+   echo   # Last sector (Accept default)
+   echo w # Write changes
+   ) | sudo fdisk /dev/nvme2n1
+   ```
+
+1. Request that the operating system re-reads the partition table
+
+   ```ShellSession
+   $ sudo partprobe
+   ```
+
+1. Create physical volume by initializing the partition for use by the Logical Volume Manager (LVM)
+
+   ```ShellSession
+   $ sudo pvcreate /dev/nvme2n1p1
+   ```
+
+1. Format the "/dev/nvme2n1" disk as xfs
+
+   ```ShellSession
+   $ sudo mkfs.xfs -f /dev/nvme2n1p1
+   ```
+
+1. Extend the "VolGroup00" volume group to include the new volume
+
+   ```ShellSession
+   $ sudo vgextend VolGroup00 /dev/nvme2n1p1
+   ```
+
+1. Extend the size of the "log" logical volume with all the free space on the new volume
+
+   ```ShellSession
+   $ sudo lvextend -l +100%FREE /dev/mapper/VolGroup00-rootVol
+   ```
+
+1. Expands the existing XFS filesystem
+
+   ```ShellSession
+   $ sudo xfs_growfs -d /dev/mapper/VolGroup00-rootVol
+   ```
+
+## Appendix WWW: Whitelist IP addresses in Akamai for Prod
+
+1. Log on to Akamai
+
+1. Select the three bar icon in the top left of the page
+
+1. Scroll down to the "WEB & DATA CENTER SECURITY" section
+
+1. Expand the **Security Configurations** node
+
+1. Select **Network Lists**
+
+1. Note that there are currently four whitelists associated with AB2D Prod
+
+   - AB2D_PROD_VPN_WHITELIST <-- lists CMS VPN ip addresses
+
+   - AB2D_PROD_NEWRELIC_WHITELIST <-- not currently used
+
+   - AB2D_PROD_SHAREDSERVICES_WHITELIST <-- not currently used
+
+   - AB2D_PROD_ACO_WHITLEIST <-- lists Accountable Care Organization (ACO) ip addresses
+   
+1. Expand the **AB2D_PROD_ACO_WHITLEIST** node
+
+1. Type or copy and IP address into the **Add Items** text box
+
+1. Tab away from the text box
+
+1. Note that the IP address now appears in the **Items in the list** text box
+
+1. Select **Save Changes**
+
+1. Collapse the **AB2D_PROD_ACO_WHITLEIST** node
+
+1. Select **...** beside the "AB2D_PROD_ACO_WHITLEIST" node
+
+1. Select **Activate** from the context menu
+
+1. Select the **Production** radio button
+
+1. Select **Activate List**
+
+## Appendix XXX: Fix CloudTamer scripts broken by ITOPS role change
+
+1. Ensure that you are on CMS VPN
+
+1. Open Chrome
+
+1. Log on to CloudTamer
+
+1. Select your logon dropdown near the upper right of the page
+
+1. Note the value under "Federated Login"
+
+   *Format:*
+
+   ```
+   {role}/{your eua id}
+   ```
+
+1. At the time of writing, the role is the following:
+
+   ```
+   ct-ado-ab2d-application-admin
+   ```
+
+1. If ITOPS automation has changed the name of this role, you must update the role name in two places
+
+   - within the previous step of this documentation
+
+   - within the following scripts
+
+     - ./Deploy/bash/functions/fn_get_temporary_aws_credentials_via_cloudtamer_api.sh
+
+     - ./Deploy/terraform/modules/kms/main.tf
+
+## Appendix YYY: Add IAM components under the new ITOPS restrictions
+
+1. Change to the "ab2d" repo directory
+
+   *Example:*
+
+   ```ShellSession
+   $ cd ~/code/ab2d
+   ```
+
+1. Set the target environment
+
+   ```ShellSession
+   $ source ./Deploy/bash/set-env.sh
+   ```
+
+1. Create a test policy
+
+   ```ShellSession
+   $ aws --region $AWS_DEFAULT_REGION iam create-policy \
+     --policy-name Ab2dTestPolicy \
+     --path "/delegatedadmin/developer/" \
+     --policy-document "file://Deploy/test-files/ab2d-cloudtrail-cloudwatch-policy.json"
+   ```
+
+1. Get policy ARN of test policy
+
+   ```ShellSession
+   $ AB2D_TEST_POLICY_ARN=$(aws --region us-east-1 iam list-policies \
+     --query 'Policies[?PolicyName==`Ab2dTestPolicy`].{ARN:Arn}' \
+     --output text)
    ```

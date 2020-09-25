@@ -18,7 +18,7 @@ resource "aws_kms_key" "a" {
             "Principal": {
                 "AWS": [
 		    "arn:aws:iam::${var.aws_account_number}:root",
-		    "arn:aws:iam::${var.aws_account_number}:role/ab2d-spe-developer",
+		    "arn:aws:iam::${var.aws_account_number}:role/ct-ado-ab2d-application-admin",
                     "arn:aws:iam::${var.aws_account_number}:role/Ab2dInstanceRole"
                 ]
             },

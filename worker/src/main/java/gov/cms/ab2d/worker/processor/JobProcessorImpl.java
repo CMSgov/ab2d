@@ -88,9 +88,10 @@ public class JobProcessorImpl implements JobProcessor {
         } catch (JobCancelledException e) {
             log.warn("Job: [{}] CANCELLED", jobUuid);
 
-            log.info("Deleting output directory : {} ", outputDirPath.toAbsolutePath());
-            deleteExistingDirectory(outputDirPath, job);
-
+            if (outputDirPath != null) {
+                log.info("Deleting output directory : {} ", outputDirPath.toAbsolutePath());
+                deleteExistingDirectory(outputDirPath, job);
+            }
         } catch (Exception e) {
             eventLogger.log(EventUtils.getJobChangeEvent(job, FAILED, "Job Failed - " + e.getMessage()));
             log.error("Unexpected exception ", e);
@@ -126,11 +127,11 @@ public class JobProcessorImpl implements JobProcessor {
         }
 
         // Create a holder for the contract, writer, progress tracker and attested date
-        ContractData contractData = new ContractData(contract, progressTracker, contract.getAttestedOn(), job.getSince(),
+        ContractData contractData = new ContractData(contract, progressTracker, job.getSince(),
                 job.getUser() != null ? job.getUser().getUsername() : null);
 
         final Segment contractSegment = NewRelic.getAgent().getTransaction().startSegment("Patient processing of contract " + contract.getContractNumber());
-        var jobOutputs = contractProcessor.process(outputDirPath, contractData, NDJSON);
+        var jobOutputs = contractProcessor.process(outputDirPath, contractData);
         contractSegment.end();
 
         // For each job output, add to the job and save the result
@@ -225,6 +226,7 @@ public class JobProcessorImpl implements JobProcessor {
      *
      * @param outputDirPath - the directory to delete
      */
+    @SuppressFBWarnings
     private void deleteExistingDirectory(Path outputDirPath, Job job) {
         final File[] files = outputDirPath.toFile().listFiles(getFilenameFilter());
 
