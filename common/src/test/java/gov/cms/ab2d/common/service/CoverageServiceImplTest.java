@@ -15,11 +15,11 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.time.LocalDateTime;
+import java.util.*;
 
+import static java.util.Collections.disjoint;
+import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
 import static org.junit.jupiter.api.Assertions.*;
@@ -32,6 +32,33 @@ class CoverageServiceImplTest {
     private static final int YEAR = 2020;
     private static final int JANUARY = 1;
     private static final int FEBRUARY = 2;
+    private static final int MARCH = 3;
+    private static final int APRIL = 4;
+
+    // Used to test the coverage summary code
+
+    private static final LocalDateTime START_JAN =
+            LocalDateTime.of(2020, 1, 1, 0, 0, 0);
+    private static final LocalDateTime START_FEB =
+            LocalDateTime.of(2020, 2, 1, 0, 0, 0);
+    private static final LocalDateTime START_MARCH =
+            LocalDateTime.of(2020, 3, 1, 0, 0, 0);
+    private static final LocalDateTime START_APRIL =
+            LocalDateTime.of(2020, 4, 1, 0, 0, 0);
+    private static final LocalDateTime START_MAY =
+            LocalDateTime.of(2020, 5, 1, 0, 0, 0);
+
+    // February was a leap month
+    private static final LocalDateTime END_DEC =
+            LocalDateTime.of(2020, 12, 31, 23, 59, 59);
+    private static final LocalDateTime END_JAN =
+            LocalDateTime.of(2020, 1, 31, 23, 59, 59);
+    private static final LocalDateTime END_FEB =
+            LocalDateTime.of(2020, 2, 29, 23, 59, 59);
+    private static final LocalDateTime END_MARCH =
+            LocalDateTime.of(2020, 3, 31, 23, 59, 59);
+    private static final LocalDateTime END_APRIL =
+            LocalDateTime.of(2020, 4, 30, 23, 59, 59);
 
     @Container
     private static final PostgreSQLContainer postgreSQLContainer= new AB2DPostgresqlContainer();
@@ -64,18 +91,21 @@ class CoverageServiceImplTest {
 
     private CoveragePeriod period1Jan;
     private CoveragePeriod period1Feb;
+    private CoveragePeriod period1March;
+    private CoveragePeriod period1April;
 
     private CoveragePeriod period2Jan;
 
     @BeforeEach
     public void insertContractAndDefaultCoveragePeriod() {
-
         sponsor = dataSetup.createSponsor("Cal Ripken", 200, "Cal Ripken Jr.", 201);
         contract1 = dataSetup.setupContract(sponsor, "TST-123");
         contract2 = dataSetup.setupContract(sponsor, "TST-456");
 
         period1Jan = dataSetup.createCoveragePeriod(contract1, JANUARY, YEAR);
         period1Feb = dataSetup.createCoveragePeriod(contract1, FEBRUARY, YEAR);
+        period1March = dataSetup.createCoveragePeriod(contract1, MARCH, YEAR);
+        period1April = dataSetup.createCoveragePeriod(contract1, APRIL, YEAR);
 
         period2Jan = dataSetup.createCoveragePeriod(contract2, JANUARY, YEAR);
     }
@@ -183,10 +213,280 @@ class CoverageServiceImplTest {
 
         assertEquals(inProgress, savedTo);
 
-        List<String> savedBeneficiaryIds = coverageRepo.findActiveBeneficiaryIds(period1Jan);
+        List<String> savedBeneficiaryIds = coverageService.findActiveBeneficiaryIds(0, 1000,
+                singletonList(period1Jan.getId()));
 
         assertTrue(savedBeneficiaryIds.containsAll(beneficiaryIds));
         assertTrue(beneficiaryIds.containsAll(savedBeneficiaryIds));
+    }
+
+    @DisplayName("Coverage summary whole period or nothing")
+    @Test
+    void coverageSummaryWholePeriod() {
+
+        /*
+         * testing-1  is a member for all months (January to April)
+         * testing-2 is a member for no periods
+         */
+
+        // Bootstrap coverage periods
+
+        coverageService.submitCoverageSearch(period1Jan.getId(), "testing");
+        CoverageSearchEvent inProgressJan = coverageService.startCoverageSearch(period1Jan.getId(), "testing");
+
+        coverageService.submitCoverageSearch(period1Feb.getId(), "testing");
+        CoverageSearchEvent inProgressFeb = coverageService.startCoverageSearch(period1Feb.getId(), "testing");
+
+        coverageService.submitCoverageSearch(period1March.getId(), "testing");
+        CoverageSearchEvent inProgressMarch = coverageService.startCoverageSearch(period1March.getId(), "testing");
+
+        coverageService.submitCoverageSearch(period1April.getId(), "testing");
+        CoverageSearchEvent inProgressApril = coverageService.startCoverageSearch(period1April.getId(), "testing");
+
+
+        coverageService.insertCoverage(period1Jan.getId(), inProgressJan.getId(), List.of("testing-1"));
+        coverageService.insertCoverage(period1Feb.getId(), inProgressFeb.getId(), List.of("testing-1"));
+        coverageService.insertCoverage(period1March.getId(), inProgressMarch.getId(), List.of("testing-1"));
+        coverageService.insertCoverage(period1April.getId(), inProgressApril.getId(), List.of("testing-1"));
+
+
+        List<CoverageSummary> coverageSummaries = coverageService.pageCoverage(0, 2,
+                period1Jan.getId(), period1Feb.getId(), period1March.getId(), period1April.getId());
+
+        assertEquals(1, coverageSummaries.size());
+
+        CoverageSummary summary = coverageSummaries.get(0);
+        assertEquals("testing-1", summary.getBeneficiaryId());
+
+        assertTrue(summary.getDateRanges().stream().anyMatch(dr -> dr.inRange(START_JAN)));
+        assertFalse(summary.getDateRanges().stream().anyMatch(dr -> dr.inRange(END_DEC)));
+
+        assertTrue(summary.getDateRanges().stream().anyMatch(dr -> dr.inRange(END_APRIL)));
+        assertFalse(summary.getDateRanges().stream().anyMatch(dr -> dr.inRange(START_MAY)));
+
+    }
+
+    @DisplayName("Coverage summary for most months")
+    @Test
+    void selectCoverageAllButOneMonth() {
+
+        /*
+         * testing-1 is a member for three months (January to March)
+         * testing-2 is a member for three months (February to April)
+         */
+
+        // Bootstrap coverage periods
+
+        coverageService.submitCoverageSearch(period1Jan.getId(), "testing");
+        CoverageSearchEvent inProgressJan = coverageService.startCoverageSearch(period1Jan.getId(), "testing");
+
+        coverageService.submitCoverageSearch(period1Feb.getId(), "testing");
+        CoverageSearchEvent inProgressFeb = coverageService.startCoverageSearch(period1Feb.getId(), "testing");
+
+        coverageService.submitCoverageSearch(period1March.getId(), "testing");
+        CoverageSearchEvent inProgressMarch = coverageService.startCoverageSearch(period1March.getId(), "testing");
+
+        coverageService.submitCoverageSearch(period1April.getId(), "testing");
+        CoverageSearchEvent inProgressApril = coverageService.startCoverageSearch(period1April.getId(), "testing");
+
+        coverageService.insertCoverage(period1Jan.getId(), inProgressJan.getId(), List.of("testing-1"));
+        coverageService.insertCoverage(period1Feb.getId(), inProgressFeb.getId(), List.of("testing-1", "testing-2"));
+        coverageService.insertCoverage(period1March.getId(), inProgressMarch.getId(), List.of("testing-1", "testing-2"));
+        coverageService.insertCoverage(period1April.getId(), inProgressApril.getId(), List.of("testing-2"));
+
+
+        List<CoverageSummary> coverageSummaries = coverageService.pageCoverage(0, 2,
+                period1Jan.getId(), period1Feb.getId(), period1March.getId(), period1April.getId());
+
+        coverageSummaries.sort(Comparator.comparing(CoverageSummary::getBeneficiaryId));
+
+        assertEquals(2, coverageSummaries.size());
+
+        CoverageSummary summary1 = coverageSummaries.get(0);
+        assertEquals("testing-1", summary1.getBeneficiaryId());
+
+        assertTrue(summary1.getDateRanges().stream().anyMatch(dr -> dr.inRange(START_JAN)));
+        assertFalse(summary1.getDateRanges().stream().anyMatch(dr -> dr.inRange(END_DEC)));
+
+        assertTrue(summary1.getDateRanges().stream().anyMatch(dr -> dr.inRange(END_MARCH)));
+        assertFalse(summary1.getDateRanges().stream().anyMatch(dr -> dr.inRange(START_APRIL)));
+
+        CoverageSummary summary2 = coverageSummaries.get(1);
+        assertEquals("testing-2", summary2.getBeneficiaryId());
+
+        assertTrue(summary2.getDateRanges().stream().anyMatch(dr -> dr.inRange(START_FEB)));
+        assertFalse(summary2.getDateRanges().stream().anyMatch(dr -> dr.inRange(END_JAN)));
+
+        assertTrue(summary2.getDateRanges().stream().anyMatch(dr -> dr.inRange(END_APRIL)));
+        assertFalse(summary2.getDateRanges().stream().anyMatch(dr -> dr.inRange(START_MAY)));
+
+    }
+
+    @DisplayName("Coverage summary where individual months are in range")
+    @Test
+    void selectCoverageDisjointMonths() {
+
+        /*
+         * testing-1 is a member for two months (January and March)
+         * testing-2 is a member for two months (February and April)
+         */
+
+        // Bootstrap coverage periods
+
+        coverageService.submitCoverageSearch(period1Jan.getId(), "testing");
+        CoverageSearchEvent inProgressJan = coverageService.startCoverageSearch(period1Jan.getId(), "testing");
+
+        coverageService.submitCoverageSearch(period1Feb.getId(), "testing");
+        CoverageSearchEvent inProgressFeb = coverageService.startCoverageSearch(period1Feb.getId(), "testing");
+
+        coverageService.submitCoverageSearch(period1March.getId(), "testing");
+        CoverageSearchEvent inProgressMarch = coverageService.startCoverageSearch(period1March.getId(), "testing");
+
+        coverageService.submitCoverageSearch(period1April.getId(), "testing");
+        CoverageSearchEvent inProgressApril = coverageService.startCoverageSearch(period1April.getId(), "testing");
+
+
+        coverageService.insertCoverage(period1Jan.getId(), inProgressJan.getId(), List.of("testing-1"));
+        coverageService.insertCoverage(period1Feb.getId(), inProgressFeb.getId(), List.of("testing-2"));
+        coverageService.insertCoverage(period1March.getId(), inProgressMarch.getId(), List.of("testing-1"));
+        coverageService.insertCoverage(period1April.getId(), inProgressApril.getId(), List.of("testing-2"));
+
+
+        List<CoverageSummary> coverageSummaries = coverageService.pageCoverage(0, 2,
+                period1Jan.getId(), period1Feb.getId(), period1March.getId(), period1April.getId());
+
+        coverageSummaries.sort(Comparator.comparing(CoverageSummary::getBeneficiaryId));
+
+        assertEquals(2, coverageSummaries.size());
+
+        CoverageSummary summary1 = coverageSummaries.get(0);
+        assertEquals("testing-1", summary1.getBeneficiaryId());
+
+        assertTrue(summary1.getDateRanges().stream().anyMatch(dr -> dr.inRange(START_JAN)));
+        assertFalse(summary1.getDateRanges().stream().anyMatch(dr -> dr.inRange(END_DEC)));
+        assertFalse(summary1.getDateRanges().stream().anyMatch(dr -> dr.inRange(START_FEB)));
+
+        assertTrue(summary1.getDateRanges().stream().anyMatch(dr -> dr.inRange(START_MARCH)));
+        assertFalse(summary1.getDateRanges().stream().anyMatch(dr -> dr.inRange(END_FEB)));
+        assertFalse(summary1.getDateRanges().stream().anyMatch(dr -> dr.inRange(START_APRIL)));
+
+        CoverageSummary summary2 = coverageSummaries.get(1);
+        assertEquals("testing-2", summary2.getBeneficiaryId());
+
+        assertTrue(summary2.getDateRanges().stream().anyMatch(dr -> dr.inRange(START_FEB)));
+        assertFalse(summary2.getDateRanges().stream().anyMatch(dr -> dr.inRange(END_JAN)));
+        assertFalse(summary2.getDateRanges().stream().anyMatch(dr -> dr.inRange(START_MARCH)));
+
+        assertTrue(summary2.getDateRanges().stream().anyMatch(dr -> dr.inRange(START_APRIL)));
+        assertFalse(summary2.getDateRanges().stream().anyMatch(dr -> dr.inRange(END_MARCH)));
+        assertFalse(summary2.getDateRanges().stream().anyMatch(dr -> dr.inRange(START_MAY)));
+
+    }
+
+    @DisplayName("Coverage summary for odd groupings of months")
+    @Test
+    void selectCoverageOddMembership() {
+
+        /*
+         * testing-1 is a member for three months (January, February, April)
+         * testing-2 is a member for three months (January, March, April)
+         * testing-3 is a member for two months (February, March)
+         */
+
+        // Bootstrap coverage periods
+
+        coverageService.submitCoverageSearch(period1Jan.getId(), "testing");
+        CoverageSearchEvent inProgressJan = coverageService.startCoverageSearch(period1Jan.getId(), "testing");
+
+        coverageService.submitCoverageSearch(period1Feb.getId(), "testing");
+        CoverageSearchEvent inProgressFeb = coverageService.startCoverageSearch(period1Feb.getId(), "testing");
+
+        coverageService.submitCoverageSearch(period1March.getId(), "testing");
+        CoverageSearchEvent inProgressMarch = coverageService.startCoverageSearch(period1March.getId(), "testing");
+
+        coverageService.submitCoverageSearch(period1April.getId(), "testing");
+        CoverageSearchEvent inProgressApril = coverageService.startCoverageSearch(period1April.getId(), "testing");
+
+
+        coverageService.insertCoverage(period1Jan.getId(), inProgressJan.getId(), List.of("testing-1", "testing-2"));
+        coverageService.insertCoverage(period1Feb.getId(), inProgressFeb.getId(), List.of("testing-1", "testing-3"));
+        coverageService.insertCoverage(period1March.getId(), inProgressMarch.getId(), List.of("testing-2", "testing-3"));
+        coverageService.insertCoverage(period1April.getId(), inProgressApril.getId(), List.of("testing-1", "testing-2"));
+
+
+        List<CoverageSummary> coverageSummaries = coverageService.pageCoverage(0, 3,
+                period1Jan.getId(), period1Feb.getId(), period1March.getId(), period1April.getId());
+
+        coverageSummaries.sort(Comparator.comparing(CoverageSummary::getBeneficiaryId));
+
+        assertEquals(3, coverageSummaries.size());
+
+        CoverageSummary summary1 = coverageSummaries.get(0);
+        assertEquals("testing-1", summary1.getBeneficiaryId());
+
+        assertTrue(summary1.getDateRanges().stream().anyMatch(dr -> dr.inRange(START_JAN)));
+        assertTrue(summary1.getDateRanges().stream().anyMatch(dr -> dr.inRange(START_FEB)));
+        assertFalse(summary1.getDateRanges().stream().anyMatch(dr -> dr.inRange(START_MARCH)));
+        assertTrue(summary1.getDateRanges().stream().anyMatch(dr -> dr.inRange(START_APRIL)));
+        assertFalse(summary1.getDateRanges().stream().anyMatch(dr -> dr.inRange(START_MAY)));
+
+        CoverageSummary summary2 = coverageSummaries.get(1);
+        assertEquals("testing-2", summary2.getBeneficiaryId());
+
+        assertTrue(summary2.getDateRanges().stream().anyMatch(dr -> dr.inRange(START_JAN)));
+        assertFalse(summary2.getDateRanges().stream().anyMatch(dr -> dr.inRange(START_FEB)));
+        assertTrue(summary2.getDateRanges().stream().anyMatch(dr -> dr.inRange(START_MARCH)));
+        assertTrue(summary2.getDateRanges().stream().anyMatch(dr -> dr.inRange(START_APRIL)));
+        assertFalse(summary2.getDateRanges().stream().anyMatch(dr -> dr.inRange(START_MAY)));
+
+        CoverageSummary summary3 = coverageSummaries.get(2);
+        assertEquals("testing-3", summary3.getBeneficiaryId());
+
+        assertFalse(summary3.getDateRanges().stream().anyMatch(dr -> dr.inRange(START_JAN)));
+        assertTrue(summary3.getDateRanges().stream().anyMatch(dr -> dr.inRange(START_FEB)));
+        assertTrue(summary3.getDateRanges().stream().anyMatch(dr -> dr.inRange(START_MARCH)));
+        assertFalse(summary3.getDateRanges().stream().anyMatch(dr -> dr.inRange(START_APRIL)));
+        assertFalse(summary3.getDateRanges().stream().anyMatch(dr -> dr.inRange(START_MAY)));
+
+    }
+
+    @DisplayName("Coverage summary for one month")
+    @Test
+    void selectCoverageOneMonth() {
+
+        /*
+         * testing-1 is a member for three months (February)
+         */
+
+        // Bootstrap coverage periods
+
+        coverageService.submitCoverageSearch(period1Jan.getId(), "testing");
+        CoverageSearchEvent inProgressJan = coverageService.startCoverageSearch(period1Jan.getId(), "testing");
+
+        coverageService.submitCoverageSearch(period1Feb.getId(), "testing");
+        CoverageSearchEvent inProgressFeb = coverageService.startCoverageSearch(period1Feb.getId(), "testing");
+
+        coverageService.submitCoverageSearch(period1March.getId(), "testing");
+        CoverageSearchEvent inProgressMarch = coverageService.startCoverageSearch(period1March.getId(), "testing");
+
+        coverageService.submitCoverageSearch(period1April.getId(), "testing");
+        CoverageSearchEvent inProgressApril = coverageService.startCoverageSearch(period1April.getId(), "testing");
+
+
+        coverageService.insertCoverage(period1Feb.getId(), inProgressFeb.getId(), List.of("testing-1"));
+
+        List<CoverageSummary> coverageSummaries = coverageService.pageCoverage(0, 3,
+                period1Jan.getId(), period1Feb.getId(), period1March.getId(), period1April.getId());
+
+        assertEquals(1, coverageSummaries.size());
+
+        CoverageSummary summary1 = coverageSummaries.get(0);
+        assertEquals("testing-1", summary1.getBeneficiaryId());
+
+        assertFalse(summary1.getDateRanges().stream().anyMatch(dr -> dr.inRange(START_JAN)));
+        assertTrue(summary1.getDateRanges().stream().anyMatch(dr -> dr.inRange(START_FEB)));
+        assertFalse(summary1.getDateRanges().stream().anyMatch(dr -> dr.inRange(START_MARCH)));
+
     }
 
     @DisplayName("Get differences between first search and empty")
@@ -195,13 +495,7 @@ class CoverageServiceImplTest {
         List<String> results1 = List.of("testing-123-1", "testing-456-1", "testing-789-1");
 
         coverageService.submitCoverageSearch(period1Jan.getId(), "testing");
-
-        assertEquals(1L, coverageSearchEventRepo.count());
-
         CoverageSearchEvent inProgress1 = coverageService.startCoverageSearch(period1Jan.getId(), "testing");
-
-        assertEquals(2L, coverageSearchEventRepo.count());
-
         CoverageSearchEvent savedTo1 = coverageService.insertCoverage(period1Jan.getId(), inProgress1.getId(), results1);
 
         assertEquals(inProgress1, savedTo1);
@@ -230,6 +524,10 @@ class CoverageServiceImplTest {
         assertEquals(inProgress1, savedTo1);
 
         coverageService.submitCoverageSearch(period1Jan.getId(), "testing");
+
+        // Search must currently be in progress or exception is thrown
+        assertThrows(InvalidJobStateTransition.class, () -> coverageService.searchDiff(period1Jan.getId()));
+
         CoverageSearchEvent inProgress2 = coverageService.startCoverageSearch(period1Jan.getId(), "testing");
         CoverageSearchEvent savedTo2 = coverageService.insertCoverage(period1Jan.getId(), inProgress2.getId(), results2);
 
@@ -267,7 +565,7 @@ class CoverageServiceImplTest {
 
         List<String> coverages = coverageRepo.findAll().stream().map(Coverage::getBeneficiaryId).collect(toList());
 
-        assertTrue(Collections.disjoint(results1, coverages));
+        assertTrue(disjoint(results1, coverages));
         assertTrue(coverages.containsAll(results2));
 
         Set<CoverageSearchEvent> distinctSearchEvents = coverageRepo.findAll().stream()
@@ -300,6 +598,10 @@ class CoverageServiceImplTest {
         CoverageSearchEvent cs1Copy = coverageSearchEventRepo.findById(cs1.getId()).get();
 
         assertEquals(JobStatus.SUBMITTED, cs1Copy.getNewStatus());
+
+        coverageService.startCoverageSearch(period1Jan.getId(), "testing");
+
+        assertThrows(InvalidJobStateTransition.class, () -> coverageService.submitCoverageSearch(period1Jan.getId(), "testing"));
     }
 
     @DisplayName("Coverage period searches are successfully started")
@@ -427,7 +729,8 @@ class CoverageServiceImplTest {
         coverageService.submitCoverageSearch(period2Jan.getId(), "testing");
 
         // Cannot fail search that has not been started
-        assertThrows(InvalidJobStateTransition.class, () -> coverageService.failCoverageSearch(period1Jan.getId(), "testing"));
+        assertThrows(InvalidJobStateTransition.class,
+                () -> coverageService.failCoverageSearch(period1Jan.getId(), "testing"));
 
         coverageService.startCoverageSearch(period1Jan.getId(), "testing");
 
@@ -436,5 +739,22 @@ class CoverageServiceImplTest {
 
         assertEquals(JobStatus.IN_PROGRESS, failedCopy.getOldStatus());
         assertEquals(JobStatus.FAILED, failedCopy.getNewStatus());
+    }
+
+    @DisplayName("Coverage period month and year are checked correctly")
+    @Test
+    void checkMonthAndYear() {
+
+        assertThrows(IllegalArgumentException.class,
+                () -> coverageService.getCoveragePeriod(contract1.getId(), 0, 2020));
+
+        assertThrows(IllegalArgumentException.class,
+                () -> coverageService.getCoveragePeriod(contract1.getId(), 13, 2020));
+
+        assertThrows(IllegalArgumentException.class,
+                () -> coverageService.getCoveragePeriod(contract1.getId(), 12, 2020));
+
+        assertThrows(IllegalArgumentException.class,
+                () -> coverageService.getCoveragePeriod(contract1.getId(), 12, 2019));
     }
 }
