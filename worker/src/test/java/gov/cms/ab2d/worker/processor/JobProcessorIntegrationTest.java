@@ -135,7 +135,8 @@ class JobProcessorIntegrationTest {
                 fileService,
                 jobRepository,
                 patientClaimsProcessor,
-                logManager
+                logManager,
+                fhirContext
         );
 
         ReflectionTestUtils.setField(contractProcessor, "cancellationCheckFrequency", 10);

@@ -60,7 +60,8 @@ class ContractProcessorUnitTest {
                 fileService,
                 jobRepository,
                 patientClaimsProcessor,
-                eventLogger
+                eventLogger,
+                fhirContext
         );
         ReflectionTestUtils.setField(cut, "cancellationCheckFrequency", 2);
         ReflectionTestUtils.setField(cut, "reportProgressDbFrequency", 2);
@@ -109,7 +110,7 @@ class ContractProcessorUnitTest {
 
         assertFalse(jobOutputs.isEmpty());
         verify(jobRepository, times(9)).updatePercentageCompleted(anyString(), anyInt());
-        verify(patientClaimsProcessor, atLeast(1)).process(any(), any());
+        verify(patientClaimsProcessor, atLeast(1)).process(any());
     }
 
     private Sponsor createParentSponsor() {
