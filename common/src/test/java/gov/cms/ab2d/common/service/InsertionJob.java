@@ -13,6 +13,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Callable;
 import java.util.function.Supplier;
 import java.util.stream.IntStream;
 
@@ -24,7 +25,7 @@ import static java.util.stream.Collectors.joining;
  *
  * Note: this job does not clean up after itself and anticipates artifacts being wiped between tests
  */
-public class InsertionJob implements Runnable {
+public class InsertionJob implements Callable<CoverageSearchEvent> {
 
     private final CoveragePeriod period;
     private final DataSource dataSource;
@@ -63,14 +64,10 @@ public class InsertionJob implements Runnable {
         this.experiments = experiments;
     }
 
-    public void run() {
+    public CoverageSearchEvent call() {
         // Add in progress event as foreign key for all inserts
-        CoverageSearchEvent inProgress = new CoverageSearchEvent();
-        inProgress.setOldStatus(JobStatus.SUBMITTED);
-        inProgress.setNewStatus(JobStatus.IN_PROGRESS);
-        inProgress.setDescription("testing");
-        inProgress.setCoveragePeriod(period);
-        eventRepo.saveAndFlush(inProgress);
+        coverageService.submitCoverageSearch(period.getId(), "testing");
+        CoverageSearchEvent inProgress = coverageService.startCoverageSearch(period.getId(), "testing");
 
         // Run inserts
         // If number of experiments is greater than 1 then data will be erased after each experiment
@@ -80,6 +77,8 @@ public class InsertionJob implements Runnable {
         long averageTime = timings.stream().reduce(0L, Long::sum) / timings.size();
         System.out.println("Average milliseconds " + averageTime);
         System.out.println("Times " + timings.stream().map(Object::toString).collect(joining(", ")));
+
+        return inProgress;
     }
 
     /**

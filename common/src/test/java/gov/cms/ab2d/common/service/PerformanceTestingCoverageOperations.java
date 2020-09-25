@@ -93,6 +93,7 @@ class PerformanceTestingCoverageOperations {
 //            sponsorRepo.delete(sponsor);
 //        }
 
+// You will have to find the sponsor repo id manually
 //        sponsor = sponsorRepo.findById(136L).get();
 //        contract = contractRepo.findContractByContractNumber("TST-12").get();
 //        contract = contractRepo.findContractByContractNumber("TST-34").get();
@@ -128,28 +129,19 @@ class PerformanceTestingCoverageOperations {
     /**
      * Performance test for inserts, jack this number up really high
      */
-    @Disabled
+    @Disabled("Performance test only for use manually")
     @DisplayName("Performance testing for inserts")
     @Test
     void insertPerformanceUsingConnection() {
-
-        CoverageSearchEvent inProgress = new CoverageSearchEvent();
-        inProgress.setOldStatus(JobStatus.SUBMITTED);
-        inProgress.setNewStatus(JobStatus.IN_PROGRESS);
-        inProgress.setDescription("testing");
-        inProgress.setCoveragePeriod(period1);
-
-        coverageSearchEventRepo.saveAndFlush(inProgress);
-
-        // Raise datapoints to stress database
+        // Raise number of datapoints to stress database
         InsertionJob job = new InsertionJob(period1, dataSource, coverageService, coverageSearchEventRepo, 1_000_000, 5);
-        job.run();
+        job.call();
     }
 
     /**
      * Performance test for inserts, jack this number up really high
      */
-    @Disabled
+    @Disabled("Performance test only for use manually")
     @DisplayName("Performance testing for reads")
     @Test
     void readPerformanceWithJPAPaging() {
@@ -197,6 +189,8 @@ class PerformanceTestingCoverageOperations {
 
         loadDBWithFakeData(dataPoints, periods);
 
+        coverageService.vacuumCoverage();
+
         System.out.println("Done loading data");
 
         ExecutorService executor = Executors.newFixedThreadPool(threads);
@@ -218,7 +212,7 @@ class PerformanceTestingCoverageOperations {
                 Instant stop = Instant.now();
 
                 if (queryNumber % 10 == 0) {
-                    log.info("{} query {} took {}", name, queryNumber, Duration.between(start, stop).toNanos());
+                    log.info("{} query {} took {}", name, queryNumber, Duration.between(start, stop).toMillis());
                 }
                 timing.add(Duration.between(start, stop).toNanos());
             }
@@ -248,38 +242,36 @@ class PerformanceTestingCoverageOperations {
         System.out.println("Max times " + timing.stream().limit(30).map(Objects::toString).collect(joining(", ")));
     }
 
-//    @Disabled
-//    @DisplayName("delete previous search performance")
-//    @Test
-//    void deletePreviousSearch() {
-//
-//        coverageService.submitCoverageSearch(period1.getId(), "testing");
-//        CoverageSearchEvent inProgress1 = coverageService.startCoverageSearch(period1.getId(), "testing");
-//
-//        coverageSearchEventRepo.saveAndFlush(inProgress1);
-//        insertData(period1, inProgress1, 100_000, 1, false);
-//
-//        coverageService.completeCoverageSearch(period1.getId(), "testing");
-//
-//        coverageService.submitCoverageSearch(period1.getId(), "testing");
-//        CoverageSearchEvent inProgress2 = coverageService.startCoverageSearch(period1.getId(), "testing");
-//
-//        coverageSearchEventRepo.saveAndFlush(inProgress2);
-//        insertData(period1, inProgress2, 100_000, 1, false);
-//
-//        coverageService.completeCoverageSearch(period1.getId(), "testing");
-//
-//
-//        System.out.println("Records present before delete " + coverageRepo.countByCoverageSearchEvent(inProgress1));
-//
-//        Instant start = Instant.now();
-//        coverageService.deletePreviousSearch(period1.getId());
-//        Instant end = Instant.now();
-//
-//        System.out.println("Records present after delete " + coverageRepo.countByCoverageSearchEvent(inProgress1));
-//
-//        System.out.println("Time to delete previous search in milliseconds " + Duration.between(start, end).toMillis());
-//    }
+    @Disabled("Performance test only for use manually")
+    @DisplayName("delete previous search performance")
+    @Test
+    void deletePreviousSearch() {
+
+        InsertionJob first = new InsertionJob(period1, dataSource, coverageService,
+                coverageSearchEventRepo, 100_000, 1);
+        CoverageSearchEvent inProgress1 = first.call();
+
+        coverageService.completeCoverageSearch(period1.getId(), "testing");
+
+        InsertionJob second = new InsertionJob(period1, dataSource, coverageService,
+                coverageSearchEventRepo, 100_000, 1);
+        CoverageSearchEvent inProgress2 = second.call();
+
+        coverageService.completeCoverageSearch(period1.getId(), "testing");
+
+
+        System.out.println("Records present before delete " + coverageRepo.countByCoverageSearchEvent(inProgress1));
+
+        Instant start = Instant.now();
+        coverageService.deletePreviousSearch(period1.getId());
+        Instant end = Instant.now();
+
+        assertEquals(0, coverageRepo.countByCoverageSearchEvent(inProgress1));
+        assertEquals(100_000L, coverageRepo.countByCoverageSearchEvent(inProgress2));
+        System.out.println("Records present after delete " + coverageRepo.countByCoverageSearchEvent(inProgress1));
+
+        System.out.println("Time to delete previous search in milliseconds " + Duration.between(start, end).toMillis());
+    }
 
 
     /**

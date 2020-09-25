@@ -55,7 +55,7 @@ public class CoverageServiceImpl implements CoverageService {
             " WHERE cov.bene_coverage_period_id IN (:ids) " +
             " ORDER BY cov.beneficiary_id " +
             " OFFSET :offset " +
-            " LIMIT :limit ";
+            " LIMIT :limit";
 
     private static final String SELECT_COVERAGE_INFORMATION = "SELECT cov.beneficiary_id, period.year, period.month " +
             " FROM bene_coverage_period period INNER JOIN " +
@@ -156,7 +156,7 @@ public class CoverageServiceImpl implements CoverageService {
             statement.executeBatch();
 
         } catch (SQLException sqlException) {
-            throw new RuntimeException("failed to insert coverage information", sqlException);
+            throw new CoverageRuntimeException("failed to insert coverage information", sqlException);
         }
     }
 
@@ -335,12 +335,12 @@ public class CoverageServiceImpl implements CoverageService {
             previousCount = coverageRepo.countByCoverageSearchEvent(previousSearch.get());
         }
 
-        CoverageSearchEvent current = currentSearch.get();
+        CoverageSearchEvent current = currentSearch.orElseThrow(() -> new CoverageRuntimeException("could not find latest in progress search event"));
         int currentCount = coverageRepo.countByCoverageSearchEvent(current);
 
         int unchanged = 0;
         if (previousCount > 0) {
-            unchanged = coverageRepo.countIntersection(previousSearch.get().getId(), currentSearch.get().getId());
+            unchanged = coverageRepo.countIntersection(previousSearch.get().getId(), current.getId());
         }
 
         return new CoverageSearchDiff(period, previousCount, currentCount, unchanged);
@@ -413,6 +413,20 @@ public class CoverageServiceImpl implements CoverageService {
         }
 
         return updateStatus(period, description, JobStatus.SUCCESSFUL);
+    }
+
+    // todo: decide whether to call vacuumCoverage internally in the service on completeCoverageSearch
+    //      and/or deletePerviousSearch, or wait until all search jobs are done.
+    //      This especially applies to bulk deletes which may invalidate the pg_visibility map in Postgres
+    //      thus making all SELECT queries hit disk instead of memory.
+    @Override
+    public void vacuumCoverage() {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement("VACUUM coverage")) {
+            statement.execute();
+        } catch (SQLException exception) {
+            throw new CoverageRuntimeException("Could not vacuum coverage table", exception);
+        }
     }
 
     private static void checkMonthAndYear(int month, int year) {

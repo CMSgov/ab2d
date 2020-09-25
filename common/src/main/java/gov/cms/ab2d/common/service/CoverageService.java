@@ -150,4 +150,10 @@ public interface CoverageService {
      * @throws InvalidJobStateTransition if job is not in the {@link JobStatus#IN_PROGRESS} state when this job is received
      */
     CoverageSearchEvent completeCoverageSearch(int periodId, String description);
+
+    /**
+     * Clean pg_visibility table so that query planner uses faster index only scans instead of a sequential
+     * search.
+     */
+    void vacuumCoverage();
 }

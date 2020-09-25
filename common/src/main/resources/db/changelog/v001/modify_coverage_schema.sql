@@ -3,7 +3,7 @@
 
 --changeset wnyffenegger:modify_coverage_schema failOnError:true
 
--- Every coverage job is uniquely identified by a contract_id, month, and year
+-- Every coverage mapping is uniquely identified by a contract_id, month, and year
 CREATE TABLE bene_coverage_period
 (
     id SERIAL NOT NULL,
@@ -35,7 +35,7 @@ DROP TABLE coverage;
 DROP TABLE beneficiary;
 
 -- Create table tracking coverage events for history
-
+-- Every time a mapping is started/stopped/completed an event is logged to this table
 CREATE TABLE event_bene_coverage_search_status_change
 (
     id BIGSERIAL,
@@ -51,8 +51,9 @@ ALTER TABLE event_bene_coverage_search_status_change ADD CONSTRAINT "pk_event_be
 ALTER TABLE event_bene_coverage_search_status_change ADD CONSTRAINT "fk_bene_coverage_search_update_to_bene_coverage_period" FOREIGN KEY (bene_coverage_period_id) REFERENCES bene_coverage_period (id);
 CREATE INDEX "ix_bene_coverage_search_status_job_id" ON event_bene_coverage_search_status_change(bene_coverage_period_id);
 
--- Instead of writing out year, month, and contract id use a foreign key to bene_coverage_search
-
+-- Instead of writing out year, month, and contract id use a foreign key to bene_coverage_period to identify the
+-- coverage mapping and a foreign key to event_bene_coverage_search_status_change to track when the row was created
+-- and why it was created
 CREATE TABLE coverage
 (
     id BIGSERIAL NOT NULL,
@@ -64,5 +65,8 @@ CREATE TABLE coverage
 ALTER TABLE coverage ADD CONSTRAINT "pk_coverage" PRIMARY KEY (id);
 ALTER TABLE coverage ADD CONSTRAINT "fk_coverage_to_bene_coverage_period" FOREIGN KEY (bene_coverage_period_id) REFERENCES bene_coverage_period (id);
 ALTER TABLE coverage ADD CONSTRAINT "fk_coverage_to_bene_coverage_search_event" FOREIGN KEY (bene_coverage_search_event_id) REFERENCES event_bene_coverage_search_status_change(id);
+
+-- These two indexes are used for index only searches of the coverage table (B-Tree in memory instead of table on disk)
+-- While these indexes slow down insertions they are absolutely vital for the selects (1 minute for a select to 1 second)
 CREATE INDEX "ix_coverage_period_beneficiary_id_index" ON coverage(bene_coverage_period_id, beneficiary_id);
 CREATE INDEX "ix_coverage_period_beneficiary_id_index_inverted" ON coverage(beneficiary_id, bene_coverage_period_id);
