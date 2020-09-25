@@ -156,7 +156,7 @@ public class CoverageServiceImpl implements CoverageService {
             statement.executeBatch();
 
         } catch (SQLException sqlException) {
-            throw new CoverageRuntimeException("failed to insert coverage information", sqlException);
+            throw new RuntimeException("failed to insert coverage information", sqlException);
         }
     }
 
@@ -335,7 +335,7 @@ public class CoverageServiceImpl implements CoverageService {
             previousCount = coverageRepo.countByCoverageSearchEvent(previousSearch.get());
         }
 
-        CoverageSearchEvent current = currentSearch.orElseThrow(() -> new CoverageRuntimeException("could not find latest in progress search event"));
+        CoverageSearchEvent current = currentSearch.orElseThrow(() -> new RuntimeException("could not find latest in progress search event"));
         int currentCount = coverageRepo.countByCoverageSearchEvent(current);
 
         int unchanged = 0;
@@ -425,7 +425,7 @@ public class CoverageServiceImpl implements CoverageService {
              PreparedStatement statement = connection.prepareStatement("VACUUM coverage")) {
             statement.execute();
         } catch (SQLException exception) {
-            throw new CoverageRuntimeException("Could not vacuum coverage table", exception);
+            throw new RuntimeException("Could not vacuum coverage table", exception);
         }
     }
 
