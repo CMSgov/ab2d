@@ -505,7 +505,7 @@ variable "ab2d_hpms_url" {
   description = "Please pass this on command line and not as a value here"
 }
 
-variable "ab2d_hpms_auth_url" {
+variable "ab2d_hpms_api_params" {
   default     = ""
   description = "Please pass this on command line and not as a value here"
 }
