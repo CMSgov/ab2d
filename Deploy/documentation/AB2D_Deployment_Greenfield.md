@@ -135,12 +135,19 @@
 
 1. Ensure that you are connected to CMS Cisco VPN
 
+1. Change to the "ab2d" repo directory
+
+   *Example:*
+
+   ```ShellSession
+   $ cd ~/code/ab2d
+   ```
+
 1. Initialize or verify environment
 
    ```ShellShession
-   $ cd ~/code/ab2d/Deploy \
-     && export DATABASE_SECRET_DATETIME_PARAM=2020-01-02-09-15-01 \
-     && ./bash/initialize-greenfield-environment-v2.sh
+   $ export DATABASE_SECRET_DATETIME_PARAM=2020-01-02-09-15-01 \
+     && ./Deploy/bash/initialize-greenfield-environment-v2.sh
    ```
 
 1. If prompted, set secrets for the target environment
