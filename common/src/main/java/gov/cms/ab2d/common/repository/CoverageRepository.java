@@ -7,8 +7,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
-
 @Repository
 public interface CoverageRepository extends JpaRepository<Coverage, Long> {
 
@@ -20,11 +18,6 @@ public interface CoverageRepository extends JpaRepository<Coverage, Long> {
                             " SELECT DISTINCT beneficiary_id FROM coverage WHERE bene_coverage_search_event_id = :searchEventId2 " +
                     ") I", nativeQuery = true)
     int countIntersection(long searchEventId1, long searchEventId2);
-
-    @Query(" SELECT c.beneficiaryId " +
-            "  FROM Coverage c " +
-            " WHERE c.coveragePeriod = :coveragePeriod ")
-    List<String> findActiveBeneficiaryIds(CoveragePeriod coveragePeriod);
 
     int removeAllByCoveragePeriod(CoveragePeriod coveragePeriod);
 
