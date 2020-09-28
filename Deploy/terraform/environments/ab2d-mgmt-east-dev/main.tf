@@ -13,6 +13,6 @@ terraform {
 module "management_account" {
   source                             = "../../modules/management_account"
   mgmt_aws_account_number            = var.mgmt_aws_account_number
+  aws_account_number                 = var.aws_account_number
   mgmt_target_aws_account_mgmt_roles = var.mgmt_target_aws_account_mgmt_roles
-  ab2d_spe_developer_policies        = var.ab2d_spe_developer_policies
 }
