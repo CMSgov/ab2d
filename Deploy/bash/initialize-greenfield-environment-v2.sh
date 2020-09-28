@@ -25,6 +25,7 @@ fi
 #
 
 DATABASE_SECRET_DATETIME="${DATABASE_SECRET_DATETIME_PARAM}"
+DEBUG_LEVEL="WARN"
 
 #
 # Set AWS account environment variables
@@ -54,6 +55,17 @@ CMS_PROD_ENV=ab2d-east-prod
 
 CMS_MGMT_ENV_AWS_ACCOUNT_NUMBER=653916833532
 CMS_MGMT_ENV=ab2d-mgmt-east-dev
+
+#
+# Configure terraform
+#
+
+# Reset logging
+
+echo "Setting terraform debug level to $DEBUG_LEVEL..."
+export TF_LOG=$DEBUG_LEVEL
+export TF_LOG_PATH=/var/log/terraform/tf.log
+rm -f /var/log/terraform/tf.log
 
 #
 # Define functions
@@ -375,6 +387,7 @@ configure_greenfield_environment ()
 
   terraform apply \
     --var "mgmt_aws_account_number=${CMS_MGMT_ENV_AWS_ACCOUNT_NUMBER}" \
+    --var "aws_account_number=${AWS_ACCOUNT_NUMBER_GE}" \
     --target "module.${MODULE}" \
     --auto-approve
 
@@ -405,54 +418,54 @@ configure_greenfield_environment ()
     set_secrets "${CMS_ENV_GE}"
   fi
 
-  # Upload or verify private key on Jenkins agent (for non-management environments)
+  # # Upload or verify private key on Jenkins agent (for non-management environments)
 
-  if [ "${AWS_ACCOUNT_NUMBER_GE}" != "${CMS_MGMT_ENV_AWS_ACCOUNT_NUMBER}" ]; then
+  # if [ "${AWS_ACCOUNT_NUMBER_GE}" != "${CMS_MGMT_ENV_AWS_ACCOUNT_NUMBER}" ]; then
     
-    # Get AWS credentials for management environment
+  #   # Get AWS credentials for management environment
       
-    fn_get_temporary_aws_credentials_via_cloudtamer_api "${CMS_MGMT_ENV_AWS_ACCOUNT_NUMBER}" "${CMS_MGMT_ENV}"
+  #   fn_get_temporary_aws_credentials_via_cloudtamer_api "${CMS_MGMT_ENV_AWS_ACCOUNT_NUMBER}" "${CMS_MGMT_ENV}"
 
-    # Get the private IP address of Jenkins agent instance
+  #   # Get the private IP address of Jenkins agent instance
     
-    JENKINS_AGENT_PRIVATE_IP=$(aws --region "${AWS_DEFAULT_REGION}" ec2 describe-instances \
-      --filters "Name=tag:Name,Values=ab2d-jenkins-agent" \
-      --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
-      --output text)
+  #   JENKINS_AGENT_PRIVATE_IP=$(aws --region "${AWS_DEFAULT_REGION}" ec2 describe-instances \
+  #     --filters "Name=tag:Name,Values=ab2d-jenkins-agent" \
+  #     --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+  #     --output text)
 
-    # Upload or verify private key on Jenkins agent
+  #   # Upload or verify private key on Jenkins agent
 
-    PRIVATE_KEY_EXISTS=$(ssh -i ~/.ssh/${CMS_MGMT_ENV}.pem ec2-user@$JENKINS_AGENT_PRIVATE_IP \
-      sudo ls /home/jenkins/.ssh/${CMS_ENV_GE}.pem)
+  #   PRIVATE_KEY_EXISTS=$(ssh -i ~/.ssh/${CMS_MGMT_ENV}.pem ec2-user@$JENKINS_AGENT_PRIVATE_IP \
+  #     sudo ls /home/jenkins/.ssh/${CMS_ENV_GE}.pem)
 
-    # Copy the private key of the target environment to the Jenkins agent
+  #   # Copy the private key of the target environment to the Jenkins agent
 
-    if [ -z "${PRIVATE_KEY_EXISTS}" ]; then
-      scp -i ~/.ssh/${CMS_MGMT_ENV}.pem ~/.ssh/${CMS_ENV_GE}.pem ec2-user@$JENKINS_AGENT_PRIVATE_IP:~/.ssh \
-        && ssh -i ~/.ssh/${CMS_MGMT_ENV}.pem ec2-user@$JENKINS_AGENT_PRIVATE_IP \
-          sudo cp /home/ec2-user/.ssh/${CMS_ENV_GE}.pem /home/jenkins/.ssh/${CMS_ENV_GE}.pem \
-        && ssh -i ~/.ssh/${CMS_MGMT_ENV}.pem ec2-user@$JENKINS_AGENT_PRIVATE_IP \
-          sudo chown jenkins:jenkins /home/jenkins/.ssh/${CMS_ENV_GE}.pem
-    fi
+  #   if [ -z "${PRIVATE_KEY_EXISTS}" ]; then
+  #     scp -i ~/.ssh/${CMS_MGMT_ENV}.pem ~/.ssh/${CMS_ENV_GE}.pem ec2-user@$JENKINS_AGENT_PRIVATE_IP:~/.ssh \
+  #       && ssh -i ~/.ssh/${CMS_MGMT_ENV}.pem ec2-user@$JENKINS_AGENT_PRIVATE_IP \
+  #         sudo cp /home/ec2-user/.ssh/${CMS_ENV_GE}.pem /home/jenkins/.ssh/${CMS_ENV_GE}.pem \
+  #       && ssh -i ~/.ssh/${CMS_MGMT_ENV}.pem ec2-user@$JENKINS_AGENT_PRIVATE_IP \
+  #         sudo chown jenkins:jenkins /home/jenkins/.ssh/${CMS_ENV_GE}.pem
+  #   fi
 
-  else # if management account
+  # else # if management account
 
-    # Upload or verify private key on Jenkins agent
+  #   # Upload or verify private key on Jenkins agent
 
-    PRIVATE_KEY_EXISTS=$(ssh -i ~/.ssh/${CMS_MGMT_ENV}.pem ec2-user@$JENKINS_AGENT_PRIVATE_IP \
-      sudo ls /home/jenkins/.ssh/${CMS_ENV_GE}.pem)
+  #   PRIVATE_KEY_EXISTS=$(ssh -i ~/.ssh/${CMS_MGMT_ENV}.pem ec2-user@$JENKINS_AGENT_PRIVATE_IP \
+  #     sudo ls /home/jenkins/.ssh/${CMS_ENV_GE}.pem)
 
-    # Copy the Akamai private SSH key to the Jenkins agent
+  #   # Copy the Akamai private SSH key to the Jenkins agent
 
-    if [ -z "${PRIVATE_KEY_EXISTS}" ]; then
-      scp -i ~/.ssh/${CMS_MGMT_ENV}.pem ~/.ssh/ab2d-akamai ec2-user@$JENKINS_AGENT_PRIVATE_IP:~/.ssh \
-        && ssh -i ~/.ssh/${CMS_MGMT_ENV}.pem ec2-user@$JENKINS_AGENT_PRIVATE_IP \
-          sudo cp /home/ec2-user/.ssh/ab2d-akamai /home/jenkins/.ssh/ab2d-akamai \
-        && ssh -i ~/.ssh/${CMS_MGMT_ENV}.pem ec2-user@$JENKINS_AGENT_PRIVATE_IP \
-          sudo chown jenkins:jenkins /home/jenkins/.ssh/ab2d-akamai
-    fi
+  #   if [ -z "${PRIVATE_KEY_EXISTS}" ]; then
+  #     scp -i ~/.ssh/${CMS_MGMT_ENV}.pem ~/.ssh/ab2d-akamai ec2-user@$JENKINS_AGENT_PRIVATE_IP:~/.ssh \
+  #       && ssh -i ~/.ssh/${CMS_MGMT_ENV}.pem ec2-user@$JENKINS_AGENT_PRIVATE_IP \
+  #         sudo cp /home/ec2-user/.ssh/ab2d-akamai /home/jenkins/.ssh/ab2d-akamai \
+  #       && ssh -i ~/.ssh/${CMS_MGMT_ENV}.pem ec2-user@$JENKINS_AGENT_PRIVATE_IP \
+  #         sudo chown jenkins:jenkins /home/jenkins/.ssh/ab2d-akamai
+  #   fi
 
-  fi
+  # fi
 
   echo ""
   echo "**********************************************************"
