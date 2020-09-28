@@ -43,8 +43,8 @@ services:
     ports:
       - "8443:8443"
     depends_on:
-      - db
-        condition: service_health
+      db
+        condition: service_healthy
     volumes:
       - tmp-volume:/opt/ab2d
   worker:
@@ -74,8 +74,8 @@ services:
       - AB2D_KEY_ALIAS=${AB2D_KEY_ALIAS}
       - AB2D_EXECUTION_ENV=${AB2D_EXECUTION_ENV}
     depends_on:
-      - db
-        condition: service_health
+      db
+        condition: service_healthy
     volumes:
       - tmp-volume:/opt/ab2d
 
