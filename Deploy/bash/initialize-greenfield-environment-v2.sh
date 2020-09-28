@@ -284,14 +284,14 @@ set_secrets ()
     AB2D_HPMS_URL=$(./get-database-secret.py $CMS_ENV_SS ab2d_hpms_url $DATABASE_SECRET_DATETIME)
   fi
 
-  # Create or get HPMS AUTH URL
+  # Create or get HPMS API PARAMS
 
-  AB2D_HPMS_AUTH_URL=$(./get-database-secret.py $CMS_ENV_SS ab2d_hpms_auth_url $DATABASE_SECRET_DATETIME)
-  if [ -z "${AB2D_HPMS_AUTH_URL}" ]; then
+  AB2D_HPMS_API_PARAMS=$(./get-database-secret.py $CMS_ENV_SS ab2d_hpms_api_params $DATABASE_SECRET_DATETIME)
+  if [ -z "${AB2D_HPMS_API_PARAMS}" ]; then
     echo "*********************************************************"
-    ./create-database-secret.py $CMS_ENV_SS ab2d_hpms_auth_url $KMS_KEY_ID $DATABASE_SECRET_DATETIME
+    ./create-database-secret.py $CMS_ENV_SS ab2d_hpms_api_params $KMS_KEY_ID $DATABASE_SECRET_DATETIME
     echo "*********************************************************"
-    AB2D_HPMS_AUTH_URL=$(./get-database-secret.py $CMS_ENV_SS ab2d_hpms_auth_url $DATABASE_SECRET_DATETIME)
+    AB2D_HPMS_API_PARAMS=$(./get-database-secret.py $CMS_ENV_SS ab2d_hpms_api_params $DATABASE_SECRET_DATETIME)
   fi
 
   # Create or get HPMS AUTH key id
@@ -335,7 +335,7 @@ set_secrets ()
     || [ "${SECONDARY_USER_OKTA_CLIENT_ID}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
     || [ "${SECONDARY_USER_OKTA_CLIENT_PASSWORD}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
     || [ "${AB2D_HPMS_URL}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
-    || [ "${AB2D_HPMS_AUTH_URL}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
+    || [ "${AB2D_HPMS_API_PARAMS}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
     || [ "${AB2D_HPMS_AUTH_KEY_ID}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
     || [ "${AB2D_HPMS_AUTH_KEY_SECRET}" == "ERROR: Cannot get database secret because KMS key is disabled!" ]; then
       echo "ERROR: Cannot get secrets because KMS key is disabled!"

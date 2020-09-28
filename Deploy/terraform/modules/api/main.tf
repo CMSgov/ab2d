@@ -213,8 +213,8 @@ resource "aws_ecs_task_definition" "api" {
 	  "value" : "${var.ab2d_hpms_url}"
 	},
         {
-	  "name" : "AB2D_HPMS_AUTH_URL",
-	  "value" : "${var.ab2d_hpms_auth_url}"
+	  "name" : "AB2D_HPMS_API_PARAMS",
+	  "value" : "${var.ab2d_hpms_api_params}"
 	},
         {
 	  "name" : "HPMS_AUTH_KEY_ID",
