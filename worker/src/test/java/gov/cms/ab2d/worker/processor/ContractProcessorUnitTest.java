@@ -113,11 +113,6 @@ class ContractProcessorUnitTest {
         verify(patientClaimsProcessor, atLeast(1)).process(any());
     }
 
-    @Test
-    void testInvalidJobOutput() {
-        assertThrows(RuntimeException.class, () -> ((ContractProcessorImpl) cut).createJobOutputs(Collections.EMPTY_LIST, Collections.EMPTY_LIST));
-    }
-
     private Sponsor createParentSponsor() {
         Sponsor parentSponsor = new Sponsor();
         parentSponsor.setOrgName("PARENT");

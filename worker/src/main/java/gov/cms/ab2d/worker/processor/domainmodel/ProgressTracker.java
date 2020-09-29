@@ -51,9 +51,6 @@ public class ProgressTracker {
     @Setter
     private int lastUpdatedPercentage;
 
-    @Setter
-    private int optOutCount;
-
     /**
      * Increment the number of patients processed
      */
@@ -63,10 +60,6 @@ public class ProgressTracker {
 
     public void incrementFailureCount() {
         ++failureCount;
-    }
-
-    public void incrementOptOutCount() {
-        ++optOutCount;
     }
 
     public void addPatientsByContract(ContractBeneficiaries bene) {

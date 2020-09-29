@@ -102,8 +102,7 @@ public class ContractProcessorImpl implements ContractProcessor {
             for (Map.Entry<String, PatientDTO> patient : patients.entrySet()) {
                 ++recordsProcessedCount;
                 futureHandles.add(processPatient(patient.getValue(), contractData));
-
-                // Periodically check if cancelled                if (recordsProcessedCount % cancellationCheckFrequency == 0) {
+                // Periodically check if cancelled
                 if (recordsProcessedCount % cancellationCheckFrequency == 0) {
                     if (hasJobBeenCancelled(jobUuid)) {
                         log.warn("Job [{}] has been cancelled. Attempting to stop processing the job shortly ... ", jobUuid);

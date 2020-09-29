@@ -153,7 +153,7 @@ public class AllMapperEventTest {
     @Test
     void logContractSearch() {
         ContractBeneSearchEvent cbse = new ContractBeneSearchEvent(
-                "laila", "jobIdVal", "Contract123", 100, 95, 3, 2);
+                "laila", "jobIdVal", "Contract123", 100, 98, 2);
         sqlEventLogger.log(cbse);
         assertEquals("dev", cbse.getEnvironment());
         long id = cbse.getId();
@@ -171,8 +171,7 @@ public class AllMapperEventTest {
         assertEquals("jobIdVal", event.getJobId());
         assertEquals("Contract123", event.getContractNumber());
         assertEquals(100, event.getNumInContract());
-        assertEquals(95, event.getNumSearched());
-        assertEquals(3, event.getNumOptedOut());
+        assertEquals(98, event.getNumSearched());
         assertEquals(2, event.getNumErrors());
         assertEquals(val.getNano(), event.getTimeOfEvent().getNano());
         doAll.delete(ContractBeneSearchEvent.class);
@@ -329,7 +328,7 @@ public class AllMapperEventTest {
         sqlEventLogger.log(new ApiResponseEvent("laila", "job123", HttpStatus.NOT_FOUND,
                 "Not Found", "Description", "123"));
         sqlEventLogger.log(new ContractBeneSearchEvent(
-                "laila", "jobIdVal", "Contract123", 100, 95, 3, 2));
+                "laila", "jobIdVal", "Contract123", 100, 98, 2));
         sqlEventLogger.log(new ErrorEvent("laila", "job123", ErrorEvent.ErrorType.CONTRACT_NOT_FOUND,
                 "Description"));
         Path p = Path.of(tmpDir.toString(), "testFile");

@@ -2,7 +2,7 @@ env:
   global:
   - secure: OY3JWzy8JxPXXqT/YOnYcwFGm46DgQdGMV5dkhDjrBeKgfb2H7ohY6GkAStQv8vV6LE/yu3N6f+XGuPwH2q27Q3I8daYeNY2MtGMt+wokkqhkJWG/XdqQodr+RbkUYN7BHiYQC6ZQKdh9NIA4JIWsNdh8TKrc7cFxy4WM5ACGO9pf6y96GRVT1CHIlwaYzXna+dE0Khbg3EGSa0tcEwLUmYdPGwK+6hiMeX0wTbhDr4YEh5kdnIAFuDDfj+KKmT9FJeTJXywFc9I6YuuYLL+z1g4GMAWCV7PoZdBOLVZQXzP/A8IE1jN7bSNean2risBRXi+PBKohZuvjpLb4UbTTp1+HR5FzPCKpkNvkLmyHpqaDCbDXfXSzMEwWxbj/6vmDK+hO5fqZrI/iO0rNugixxOKEl/ZPXga2Zf1nVxEGzfI86BVNHMegSL1AfLJ5kI+P/0HGnUBbnSAD/kH8k8Rd7r/PHCqoN7VwUhuirI5C9Ulbd6iMm1C8sgq7lOogJvVoS939lP3IcrtNhqmS3Wyc2YsWUE3RlIiJizOQB4K925el41o8qQmDvxIbB8tiDaqfkas3OjDVCr+JjzczXHgjV6Uze5EQovIQ4SvgNidZkjNyei+piJ+lwHx/34jBAC4GNs7uFgkA+RTrNtZCyHK2f2lv7OyNNzWyC3XMRIyQsM=
   - codeclimate: true
-  - DOCKER_COMPOSE_VERSION: 1.24.1
+  - DOCKER_COMPOSE_VERSION: 1.27.4
   - secure: n1NNXk+OkWTys5pLxwH+o1m0LT53HYBMxJz0negjampyLjPg0xPhdnGqdFITejHQ/fUYDdAFfkoJ/2sX2EZppya8B+X8YovqfxVms2F18e3/3zQhutmw3vxFgVuy/Lp5NkzQYDVoggzQOPNLfSJrCCSIo2FVdaKNjLnjCx3V1IFPq2HzFuUoFNliOpgiox6PICgg0HSysifRjhZygnSnlS0t7yTs5F3hipmPyQOhdyos/f7ut0x0ugW6cENDL8Bk+nR2znXzLqsdC6Y/+xjrpOubTdhQQyOHGTgdsHFTYSgfqBgTNiMzh8OorKfHs1gALnGjUtd4zzJg7lXqnHCkAM8RlFGg1aq7AMxLvuNYz+q84xNIfAxdpRjU2xukdMFke0+c2wR4x2eJHit691wMcezoaiJ5py7D3slmsdhEzyWLNOd86fWPpbebS7S18/p9kOwFpvS73YhGPKD/8M7ot/k78ota/2prBRih94RknXYnDj49HGLLzJu5UbXwf/juLdJK4t3ItapsmHef7hoZnrsPt9Nj0ZkWDI1ePVremFfQWbNGBPwIh/mQ4P+V44FAn3gkAjyPkklgC9slpfqZ254djsfejmMCc2QZTqVzJ1lMxrjxU0K1leVQNnvJFDafWgfVTIguhlgeLW7CC1IXB8bp3aJTp0GnbwikExVPOWs=
   - secure: XHSp3OzOdu54rD01RuYmOTsgwby7N4cc2GaUyUar3CfogvqBZBlD0rE1Ntu4msq6MhCxJxAaPy0ef7rIGz4ikVscyyvV2BJj5d+8Or1ILBNky9KCgHexe0+U5ZqGfeKwOu9NpfOChYZXhhpxemheXhGkkP4odaXt4VuYeCRv2oLgT0Vjr+D/rsQ3eP7dfqqc/7mKhLdZbrFUeEQe5anXfdswVyHBJeDb5Cm3YcqHK3cCk9kxoKazKUmadBSFS5vNSUuIl21t5T1Y7wTgLnZHvNMdZFHw0e2ziTYNCy4HGaoBk7CLdXWJob2mPwNNz2EBDnezRVjwlwWr534YN+AvlwIgtuKjOAGjhfGibKLUn4TOzmxEAI79gHtp03DHY7r2gtsFLhhor2chtownEx9EO0AB4X/ER2+JKVlm6d6PNQNFsI501ANfotKEnOlfINfVaUdRMCZiB2pds/qQUXHK5xXChVKNofb7JZjY856Ckt9hv8hcGLTGlnm55DiXFUKZ6xpLFiQdUZT89gDA1P0f8c1wpL8cI05mloF1Fkv2fsPG/FBjd0ug3iI/ZrUimOrg33Eg+Df1Q159Cf3ci00wHwfdVVwEMN69TRner+Gc0Zj2fIRRcOumezfE+3cWbLfLhtkOT515Y+PsEZewQMEhe8FGbQW8cZKiGLDwe/nMFgo=
   - secure: AUnRb6K9675dTJKL8arl7NpNAAxQZniqgNHBL+8IysNu015t/hAHtIqe33ENclc9SebdaHHHZkNdeCNQ+4AehOUwaeooJjDQXJeF7xglp+jQ6wYEZlO+yVuvKciTT6nTQ0mx/O9pneI22xENYHN8z0tKhiuJl7jgJXg/oNspUw1QDlaGyHTbH0crA5qZPcsTsK6Xy/ytv4lK7oKBScU1EwimUlFOhMNeTRh3k+csCA5Jhw0blbpQyp3wM2PmG0Xn7zJ+R2p6m26xERAOxVFaUSmKKIxedu8uG1SXpI/+7MPypCI0peVai38qiRurUVU3dGd+9U7KnHEGCw1tmYmTafOmyO8tYgx1xuD6PsSYz9BLEnTPSvFb47QfskwNk8gDwoxY3t2rieaCsyYReP0VOdYMW5WlBEkUmfGQa37ghPSDdL0K5+sTQSSF7o21PpDFS8rPIYNn2WxrdsnI/xahzO58Y64mxYhV4TcwkKkbqyPeKEEsplMjLsOWIZF2a0qE8FQgosJsZQOq15Aii43ICoKa0iyW2esIzwZbzWEj0bAyyBo/g23dgPZTyi35LC9pJOsO/JxRBpsZEwhRlDLl+sgYCPvApkTRDRZwRZLP1uzLotr+M4DHmODMjO4hvK1E9qJ/fmvOuTBfaW4XLi/cgvuFw9DTsz77V+npZDZR/Q4=
@@ -36,11 +36,9 @@ before_install:
 - export OKTA_CLIENT_PASSWORD=HHduWG6LogIvDIQuWgp3Zlo9OYMValTtH5OBcuHw
 - export SECONDARY_USER_OKTA_CLIENT_ID=0oa2t0lc65ErV8OmY297
 - export SECONDARY_USER_OKTA_CLIENT_PASSWORD=1Bl3HGO6eglkXUDtjVjto3L-3C0offzTMk2qlz9r
-- export AB2D_OPT_OUT_JOB_SCHEDULE='*/15 * * * * ?'
 - export AB2D_HICN_HASH_PEPPER=`cat bfd_sbx_hash_pepper`
 - export AB2D_HICN_HASH_ITER=1000
 - export AB2D_CLAIMS_SKIP_BILLABLE_PERIOD_CHECK=true
-- export AB2D_OPT_OUT_ENABLED=true
 install: true
 before_script:
 - curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64
@@ -60,8 +58,6 @@ after_script:
   ./filter/target/site/jacoco/jacoco.xml --input-type jacoco -o codeclimate.filter.json
 - export JACOCO_SOURCE_PATH=./hpms/src/main/java; ./cc-test-reporter format-coverage
   ./hpms/target/site/jacoco/jacoco.xml --input-type jacoco -o codeclimate.hpms.json
-- export JACOCO_SOURCE_PATH=./optout/src/main/java; ./cc-test-reporter format-coverage
-  ./optout/target/site/jacoco/jacoco.xml --input-type jacoco -o codeclimate.optout.json
 - export JACOCO_SOURCE_PATH=./bfd/src/main/java; ./cc-test-reporter format-coverage
   ./bfd/target/site/jacoco/jacoco.xml --input-type jacoco -o codeclimate.bfd.json
 - export JACOCO_SOURCE_PATH=./worker/src/main/java; ./cc-test-reporter format-coverage
