@@ -290,13 +290,6 @@ public final class FilterOutByDate {
             return false;
         }
 
-
-        // May 1st - June 1st
-        // They are a member in April
-
-        // April 1st - April 30th
-
-        // DateRange April 1st <= x < May 1st
         return range.inRange(start) || range.inRange(end);
     }
 }
