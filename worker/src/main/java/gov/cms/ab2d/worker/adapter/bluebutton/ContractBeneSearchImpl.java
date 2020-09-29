@@ -18,7 +18,6 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Component;
 
-import java.text.ParseException;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.concurrent.CancellationException;
