@@ -74,7 +74,7 @@
 1. Get status URL
 
    ```ShellSession
-   $STATUS_URL = $response.Headers[‘Content-Location’]
+   $STATUS_URL = $response.Headers['Content-Location']
    $STATUS_URL
    ```
    
@@ -82,9 +82,9 @@
 
    ```ShellSession
    $headers = New-Object “System.Collections.Generic.Dictionary[[String],[String]]”
-   $headers.Add(“Accept”, “application/json”)
-   $headers.Add(“Authorization”, “Bearer $BEARER_TOKEN”)
-   $response = Invoke-WebRequest “$STATUS_URL” -Method ‘GET’ -Headers $headers -Body $body
+   $headers.Add("Accept", "application/json")
+   $headers.Add("Authorization", "Bearer $BEARER_TOKEN")
+   $response = Invoke-WebRequest "$STATUS_URL" -Method 'GET' -Headers $headers -Body $body
    $response.StatusCode
    ```
    
@@ -94,7 +94,7 @@
    $NUMBER_OF_FILES = ($response | ConvertFrom-Json).output.Count
    $FIRST_FILE_INDEX = 0
    $LAST_FILE_INDEX = ($response | ConvertFrom-Json).output.Count - 1
-   Write-Host “There are $NUMBER_OF_FILES file(s) with array index(es) ranging from $FIRST_FILE_INDEX to $LAST_FILE_INDEX.”
+   Write-Host "There are $NUMBER_OF_FILES file(s) with array index(es) ranging from $FIRST_FILE_INDEX to $LAST_FILE_INDEX."
    ```
    
 1. Download file(s) incrementing the file index after each file is downloaded until the last file index is reached
@@ -103,9 +103,9 @@
    $FILE_INDEX = 0
    $FILE_URL = ($response | ConvertFrom-Json).output[$FILE_INDEX].url
    $FILE_URL
-   $FILE = $FILE_URL.split(“/”)[9]
+   $FILE = $FILE_URL.split("/")[9]
    $FILE
-   $headers = New-Object “System.Collections.Generic.Dictionary[[String],[String]]”
-   $headers.Add(“Authorization”, “Bearer $BEARER_TOKEN”)
-   Invoke-WebRequest “$FILE_URL” -Method ‘GET’ -Headers $headers -Body $body -Outfile $FILE
+   $headers = New-Object "System.Collections.Generic.Dictionary[[String],[String]]"
+   $headers.Add("Authorization", "Bearer $BEARER_TOKEN")
+   Invoke-WebRequest "$FILE_URL" -Method 'GET' -Headers $headers -Body $body -Outfile $FILE
    ```
