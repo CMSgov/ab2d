@@ -21,6 +21,7 @@ import org.yaml.snakeyaml.Yaml;
 
 import javax.crypto.SecretKey;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
@@ -173,7 +174,7 @@ public class TestRunner {
     private void loadApiClientConfiguration(int apiPort) throws IOException, InterruptedException, JSONException, NoSuchAlgorithmException, KeyManagementException {
 
         Yaml yaml = new Yaml();
-        InputStream inputStream = getClass().getResourceAsStream("/" + environment.getConfigName());
+        InputStream inputStream = new FileInputStream("src/test/resources/" + environment.getConfigName());
         yamlMap = yaml.load(inputStream);
         String oktaUrl = yamlMap.get("okta-url");
         baseUrl = yamlMap.get("base-url");
