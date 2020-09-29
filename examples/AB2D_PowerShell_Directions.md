@@ -30,13 +30,13 @@
    $AB2D_API_URL='https://sandbox.ab2d.cms.gov/api'
    ```
 
-  *Production (replace {variable} with your settings):*
+   *Production (replace {variable} with your settings):*
 
-  ```ShellSession
-  $BASE64_ENCODED_ID_PASSWORD='{Base64-encoded id:password}'
-  $AUTHENTICATION_URL='{Authentication URL}'
-  $AB2D_API_URL='{AB2D API URL}'
-  ```
+   ```ShellSession
+   $BASE64_ENCODED_ID_PASSWORD='{Base64-encoded id:password}'
+   $AUTHENTICATION_URL='{Authentication URL}'
+   $AB2D_API_URL='{AB2D API URL}'
+   ```
 
 1. Set API variables
 
