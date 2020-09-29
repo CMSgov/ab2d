@@ -22,10 +22,7 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 import java.time.Instant;
 import java.time.Month;
-import java.util.Calendar;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ThreadPoolExecutor;
 
@@ -121,6 +118,12 @@ class ContractBeneSearchTest {
         List<BundleEntryComponent> entries = bundle1.getEntry();
         entries.add(createBundleEntry("ccw_patient_001"));
 
+        Date startJanuary = FilterOutByDate.getStartOfMonth(1, 2020);
+        Date endJanuary = FilterOutByDate.getEndOfMonth(1, 2020);
+
+        Date startMarch = FilterOutByDate.getStartOfMonth(3, 2020);
+        Date endMarch = FilterOutByDate.getEndOfMonth(3, 2020);
+
         when(client.requestPartDEnrolleesFromServer("S0000", 1))
                 .thenReturn(bundle1);    // January - patient1 is active
         when(client.requestPartDEnrolleesFromServer("S0000", 2))
@@ -139,12 +142,12 @@ class ContractBeneSearchTest {
                 assertThat(patient.getDateRangesUnderContract().size(), is(2));
                 List<FilterOutByDate.DateRange> dateRangesUnderContract = patient.getDateRangesUnderContract();
                 // month is January
-                assertThat(dateRangesUnderContract.get(0).getStart().getMonth(), is(Calendar.JANUARY));
-                assertThat(dateRangesUnderContract.get(0).getEnd().getMonth(), is(Calendar.JANUARY));
+                assertThat(dateRangesUnderContract.get(0).getStart().getTime(), is(startJanuary.getTime()));
+                assertThat(dateRangesUnderContract.get(0).getEnd().getTime(), is(endJanuary.getTime()));
 
                 //month is March
-                assertThat(dateRangesUnderContract.get(1).getStart().getMonth(), is(Calendar.MARCH));
-                assertThat(dateRangesUnderContract.get(1).getEnd().getMonth(), is(Calendar.MARCH));
+                assertThat(dateRangesUnderContract.get(1).getStart().getTime(), is(startMarch.getTime()));
+                assertThat(dateRangesUnderContract.get(1).getEnd().getTime(), is(endMarch.getTime()));
             }
         }
 
