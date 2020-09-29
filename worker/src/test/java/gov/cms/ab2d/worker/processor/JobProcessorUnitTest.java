@@ -8,7 +8,7 @@ import gov.cms.ab2d.common.model.User;
 import gov.cms.ab2d.common.repository.JobOutputRepository;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.eventlogger.LogManager;
-import gov.cms.ab2d.filter.FilterOutByDate;
+import gov.cms.ab2d.worker.TestUtil;
 import gov.cms.ab2d.worker.adapter.bluebutton.ContractBeneSearch;
 import gov.cms.ab2d.worker.adapter.bluebutton.ContractBeneficiaries;
 import gov.cms.ab2d.worker.adapter.bluebutton.ContractBeneficiaries.PatientDTO;
@@ -298,9 +298,9 @@ class JobProcessorUnitTest {
                 .build();
     }
 
-    private PatientDTO toPatientDTO() throws ParseException {
+    private PatientDTO toPatientDTO() {
         int anInt = random.nextInt(11);
-        var dateRange = new FilterOutByDate.DateRange(new Date(0), new Date());
+        var dateRange =  TestUtil.getOpenRange();
         return PatientDTO.builder()
                 .patientId("patient_" + anInt)
                 .dateRangesUnderContract(Arrays.asList(dateRange))

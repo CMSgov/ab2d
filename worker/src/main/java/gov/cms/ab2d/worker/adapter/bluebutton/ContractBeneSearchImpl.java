@@ -5,8 +5,8 @@ import com.newrelic.api.agent.Segment;
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.events.ReloadEvent;
-import gov.cms.ab2d.filter.FilterOutByDate;
-import gov.cms.ab2d.filter.FilterOutByDate.DateRange;
+import gov.cms.ab2d.common.util.FilterOutByDate;
+import gov.cms.ab2d.common.util.FilterOutByDate.DateRange;
 import gov.cms.ab2d.worker.adapter.bluebutton.ContractBeneficiaries.PatientDTO;
 import gov.cms.ab2d.worker.processor.PatientContractCallable;
 import gov.cms.ab2d.worker.processor.domainmodel.ContractMapping;
@@ -191,14 +191,6 @@ public class ContractBeneSearchImpl implements ContractBeneSearch {
      * @return a DateRange - the date range created
      */
     private DateRange toDateRange(int month) {
-        DateRange dateRange = null;
-        try {
-            dateRange = FilterOutByDate.getDateRange(month, LocalDate.now().getYear());
-        } catch (ParseException e) {
-            log.error("unable to create Date Range ", e);
-            //ignore
-        }
-
-        return dateRange;
+        return FilterOutByDate.getDateRange(month, LocalDate.now().getYear());
     }
 }

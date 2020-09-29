@@ -4,10 +4,8 @@ import gov.cms.ab2d.common.model.*;
 import gov.cms.ab2d.common.repository.*;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.DataSetup;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
+import gov.cms.ab2d.common.util.FilterOutByDate;
+import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.TestPropertySource;
@@ -37,28 +35,17 @@ class CoverageServiceImplTest {
 
     // Used to test the coverage summary code
 
-    private static final LocalDateTime START_JAN =
-            LocalDateTime.of(2020, 1, 1, 0, 0, 0);
-    private static final LocalDateTime START_FEB =
-            LocalDateTime.of(2020, 2, 1, 0, 0, 0);
-    private static final LocalDateTime START_MARCH =
-            LocalDateTime.of(2020, 3, 1, 0, 0, 0);
-    private static final LocalDateTime START_APRIL =
-            LocalDateTime.of(2020, 4, 1, 0, 0, 0);
-    private static final LocalDateTime START_MAY =
-            LocalDateTime.of(2020, 5, 1, 0, 0, 0);
+    private static final Date START_JAN = FilterOutByDate.getStartOfMonth(1, 2020);
+    private static final Date START_FEB = FilterOutByDate.getStartOfMonth(2, 2020);
+    private static final Date START_MARCH = FilterOutByDate.getStartOfMonth(3, 2020);
+    private static final Date START_APRIL = FilterOutByDate.getStartOfMonth(4, 2020);
+    private static final Date START_MAY = FilterOutByDate.getStartOfMonth(5, 2020);
 
-    // February was a leap month
-    private static final LocalDateTime END_DEC =
-            LocalDateTime.of(2020, 12, 31, 23, 59, 59);
-    private static final LocalDateTime END_JAN =
-            LocalDateTime.of(2020, 1, 31, 23, 59, 59);
-    private static final LocalDateTime END_FEB =
-            LocalDateTime.of(2020, 2, 29, 23, 59, 59);
-    private static final LocalDateTime END_MARCH =
-            LocalDateTime.of(2020, 3, 31, 23, 59, 59);
-    private static final LocalDateTime END_APRIL =
-            LocalDateTime.of(2020, 4, 30, 23, 59, 59);
+    private static final Date END_DEC = FilterOutByDate.getEndOfMonth(12, 2019);
+    private static final Date END_JAN = FilterOutByDate.getEndOfMonth(1, 2020);
+    private static final Date END_FEB = FilterOutByDate.getEndOfMonth(2, 2020);
+    private static final Date END_MARCH = FilterOutByDate.getEndOfMonth(3, 2020);
+    private static final Date END_APRIL = FilterOutByDate.getEndOfMonth(4, 2020);
 
     @Container
     private static final PostgreSQLContainer postgreSQLContainer= new AB2DPostgresqlContainer();

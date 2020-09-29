@@ -4,7 +4,7 @@ import com.newrelic.api.agent.Token;
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.eventlogger.LogManager;
-import gov.cms.ab2d.filter.FilterOutByDate.DateRange;
+import gov.cms.ab2d.worker.TestUtil;
 import gov.cms.ab2d.worker.adapter.bluebutton.ContractBeneficiaries;
 import gov.cms.ab2d.worker.processor.domainmodel.PatientClaimsRequest;
 import lombok.extern.slf4j.Slf4j;
@@ -96,13 +96,13 @@ public class PatientClaimsProcessorUnitTest {
         createOutputFiles();
         patientDTO = new ContractBeneficiaries.PatientDTO();
         patientDTO.setPatientId(patientId);
-        patientDTO.setDateRangesUnderContract(List.of(new DateRange(new Date(0), new Date())));
+        patientDTO.setDateRangesUnderContract(List.of(TestUtil.getOpenRange()));
 
         patientPTOMap = new HashMap<>();
         patientPTOMap.put(patientId, patientDTO);
         ContractBeneficiaries.PatientDTO fileDTO = new ContractBeneficiaries.PatientDTO();
         fileDTO.setPatientId("-199900000022040");
-        fileDTO.setDateRangesUnderContract(Collections.singletonList(new DateRange(new Date(0), new Date())));
+        fileDTO.setDateRangesUnderContract(Collections.singletonList(TestUtil.getOpenRange()));
         patientPTOMap.put(fileDTO.getPatientId(), fileDTO);
 
         Contract contract = new Contract();
@@ -128,20 +128,20 @@ public class PatientClaimsProcessorUnitTest {
         eob.getBillablePeriod().setStart(d1);
         eob.getBillablePeriod().setEnd(d1);
         List<ExplanationOfBenefit> resources = cut.extractResources(SAMPLE_CONTRACT_ID, bundle1.getEntry(),
-                List.of(new DateRange(new Date(0), new Date())), OffsetDateTime.now().minusYears(10));
+                List.of(TestUtil.getOpenRange()), OffsetDateTime.now().minusYears(10));
         assertEquals(1, resources.size());
 
         resources = cut.extractResources("Z0001", bundle1.getEntry(),
-                List.of(new DateRange(new Date(0), new Date())), OffsetDateTime.now().minusYears(10));
+                List.of(TestUtil.getOpenRange()), OffsetDateTime.now().minusYears(10));
         assertEquals(1, resources.size());
 
         eob.getBillablePeriod().setStart(d2);
         eob.getBillablePeriod().setEnd(d2);
         resources = cut.extractResources(SAMPLE_CONTRACT_ID, bundle1.getEntry(),
-                List.of(new DateRange(new Date(0), new Date())), OffsetDateTime.now().minusYears(10));
+                List.of(TestUtil.getOpenRange()), OffsetDateTime.now().minusYears(10));
         assertEquals(0, resources.size());
         resources = cut.extractResources("Z0001", bundle1.getEntry(),
-                List.of(new DateRange(new Date(0), new Date())), OffsetDateTime.now().minusYears(10));
+                List.of(TestUtil.getOpenRange()), OffsetDateTime.now().minusYears(10));
         assertEquals(1, resources.size());
     }
 
@@ -152,32 +152,32 @@ public class PatientClaimsProcessorUnitTest {
         ReflectionTestUtils.setField(cut, "startDate", "01/01/2020");
         // Attestation time is 10 years ago, eob date is 01/02/2020
         List<ExplanationOfBenefit> resources = cut.extractResources(SAMPLE_CONTRACT_ID, bundle1.getEntry(),
-                List.of(new DateRange(new Date(0), new Date())), OffsetDateTime.now().minusYears(10));
+                List.of(TestUtil.getOpenRange()), OffsetDateTime.now().minusYears(10));
         assertEquals(1, resources.size());
         // Set the billable date to 1970 and attestation date to 1920, should return no results
         ExplanationOfBenefit eob = (ExplanationOfBenefit) bundle1.getEntry().get(0).getResource();
         eob.getBillablePeriod().setStart(new Date(10));
         eob.getBillablePeriod().setEnd(new Date(10));
         resources = cut.extractResources(SAMPLE_CONTRACT_ID, bundle1.getEntry(),
-                List.of(new DateRange(new Date(0), new Date())), OffsetDateTime.now().minusYears(100));
+                List.of(TestUtil.getOpenRange()), OffsetDateTime.now().minusYears(100));
         assertEquals(0, resources.size());
         // Set billable date to late year and attestation date to a hundred years ago, shouldn't return results
         SimpleDateFormat sdf = new SimpleDateFormat("MM/dd/yyyy");
         eob.getBillablePeriod().setStart(sdf.parse("12/29/2019"));
         eob.getBillablePeriod().setEnd(sdf.parse("12/30/2019"));
         resources = cut.extractResources(SAMPLE_CONTRACT_ID, bundle1.getEntry(),
-                List.of(new DateRange(new Date(0), new Date())), OffsetDateTime.now().minusYears(100));
+                List.of(TestUtil.getOpenRange()), OffsetDateTime.now().minusYears(100));
         assertEquals(0, resources.size());
         // Set billable period to early 2020, attestation date in 2019, should return 1
         eob.getBillablePeriod().setStart(sdf.parse("01/02/2020"));
         eob.getBillablePeriod().setEnd(sdf.parse("01/03/2020"));
         resources = cut.extractResources(SAMPLE_CONTRACT_ID, bundle1.getEntry(),
-                List.of(new DateRange(new Date(0), new Date())), OffsetDateTime.of(2019, 1, 1,
+                List.of(TestUtil.getOpenRange()), OffsetDateTime.of(2019, 1, 1,
                         1, 1, 1, 1, ZoneOffset.UTC));
         assertEquals(1, resources.size());
         // billable period is early 2020, attestation date is today, should return 0
         resources = cut.extractResources(SAMPLE_CONTRACT_ID, bundle1.getEntry(),
-                List.of(new DateRange(new Date(0), new Date())), OffsetDateTime.now());
+                List.of(TestUtil.getOpenRange()), OffsetDateTime.now());
         assertEquals(0, resources.size());
     }
 
@@ -239,7 +239,7 @@ public class PatientClaimsProcessorUnitTest {
         // Override default behavior of setup
         patientDTO = new ContractBeneficiaries.PatientDTO();
         patientDTO.setPatientId(patientId);
-        patientDTO.setDateRangesUnderContract(List.of(new DateRange(new Date(0), new Date())));
+        patientDTO.setDateRangesUnderContract(List.of(TestUtil.getOpenRange()));
 
         Contract contract = new Contract();
         StreamHelper helper = new TextStreamHelperImpl(tmpEfsMountDir.toPath(), contract.getContractNumber(),
@@ -265,7 +265,7 @@ public class PatientClaimsProcessorUnitTest {
         // Override default behavior of setup
         patientDTO = new ContractBeneficiaries.PatientDTO();
         patientDTO.setPatientId(patientId);
-        patientDTO.setDateRangesUnderContract(List.of(new DateRange(new Date(0), new Date())));
+        patientDTO.setDateRangesUnderContract(List.of(TestUtil.getOpenRange()));
 
         Contract contract = new Contract();
         StreamHelper helper = new TextStreamHelperImpl(tmpEfsMountDir.toPath(), contract.getContractNumber(),

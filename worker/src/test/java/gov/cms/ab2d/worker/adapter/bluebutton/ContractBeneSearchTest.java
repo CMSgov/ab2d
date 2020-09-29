@@ -4,7 +4,7 @@ import ca.uhn.fhir.rest.server.exceptions.InvalidRequestException;
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.eventlogger.LogManager;
-import gov.cms.ab2d.filter.FilterOutByDate;
+import gov.cms.ab2d.common.util.FilterOutByDate;
 import gov.cms.ab2d.worker.processor.domainmodel.ProgressTracker;
 import org.hl7.fhir.dstu3.model.Bundle;
 import org.hl7.fhir.dstu3.model.Bundle.BundleEntryComponent;

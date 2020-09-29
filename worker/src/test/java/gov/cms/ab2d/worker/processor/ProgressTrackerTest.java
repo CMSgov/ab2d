@@ -1,6 +1,7 @@
 package gov.cms.ab2d.worker.processor;
 
-import gov.cms.ab2d.filter.FilterOutByDate;
+import gov.cms.ab2d.common.util.FilterOutByDate;
+import gov.cms.ab2d.worker.TestUtil;
 import gov.cms.ab2d.worker.adapter.bluebutton.ContractBeneficiaries;
 import gov.cms.ab2d.worker.processor.domainmodel.ProgressTracker;
 import org.junit.jupiter.api.DisplayName;
@@ -9,7 +10,6 @@ import org.junit.jupiter.api.Test;
 import java.text.ParseException;
 import java.time.LocalDate;
 import java.util.Collections;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -75,8 +75,8 @@ public class ProgressTrackerTest {
         assertEquals(100, tracker.getPercentageCompleted());
     }
 
-    private ContractBeneficiaries getAContractBeneficiary(String contractId, String ... patientIds) throws ParseException {
-        FilterOutByDate.DateRange dr = new FilterOutByDate.DateRange(new Date(0), new Date());
+    private ContractBeneficiaries getAContractBeneficiary(String contractId, String ... patientIds) {
+        FilterOutByDate.DateRange dr = TestUtil.getOpenRange();
         ContractBeneficiaries beneficiaries = ContractBeneficiaries.builder()
                 .contractNumber(contractId).build();
         Map<String, ContractBeneficiaries.PatientDTO> map = new HashMap<>();

@@ -1,5 +1,6 @@
 package gov.cms.ab2d.common.model;
 
+import gov.cms.ab2d.common.util.FilterOutByDate.DateRange;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.ToString;

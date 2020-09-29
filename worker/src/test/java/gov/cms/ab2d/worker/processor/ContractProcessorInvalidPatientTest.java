@@ -7,7 +7,8 @@ import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.JobOutput;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.eventlogger.LogManager;
-import gov.cms.ab2d.filter.FilterOutByDate;
+import gov.cms.ab2d.common.util.FilterOutByDate;
+import gov.cms.ab2d.worker.TestUtil;
 import gov.cms.ab2d.worker.adapter.bluebutton.ContractBeneficiaries;
 import gov.cms.ab2d.worker.processor.domainmodel.ContractData;
 import gov.cms.ab2d.worker.processor.domainmodel.ProgressTracker;
@@ -84,7 +85,7 @@ public class ContractProcessorInvalidPatientTest {
         cb.setContractNumber(contractId);
         Map<String, ContractBeneficiaries.PatientDTO> map = new HashMap<>();
         cb.setPatients(map);
-        List<FilterOutByDate.DateRange> dates = Collections.singletonList(new FilterOutByDate.DateRange(new Date(0), new Date()));
+        List<FilterOutByDate.DateRange> dates = Collections.singletonList(TestUtil.getOpenRange());
         map.put("1", ContractBeneficiaries.PatientDTO.builder().patientId("1").dateRangesUnderContract(dates).build());
         map.put("2", ContractBeneficiaries.PatientDTO.builder().patientId("2").dateRangesUnderContract(dates).build());
         map.put("3", ContractBeneficiaries.PatientDTO.builder().patientId("3").dateRangesUnderContract(dates).build());
