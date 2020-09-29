@@ -38,7 +38,7 @@ import static org.mockito.Mockito.lenient;
 
 @SpringBootTest(classes = SpringBootApp.class)
 @Testcontainers
-public class LoadPatientsByContractLoggingTest {
+ class LoadPatientsByContractLoggingTest {
     private ProgressTracker tracker;
 
     @Mock

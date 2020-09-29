@@ -6,7 +6,7 @@ import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.events.BeneficiarySearchEvent;
 import gov.cms.ab2d.filter.ExplanationOfBenefitTrimmer;
-import gov.cms.ab2d.filter.FilterOutByDate;
+import gov.cms.ab2d.common.util.FilterOutByDate;
 import gov.cms.ab2d.worker.adapter.bluebutton.ContractBeneficiaries;
 import gov.cms.ab2d.worker.processor.domainmodel.EobSearchResult;
 import gov.cms.ab2d.worker.processor.domainmodel.PatientClaimsRequest;

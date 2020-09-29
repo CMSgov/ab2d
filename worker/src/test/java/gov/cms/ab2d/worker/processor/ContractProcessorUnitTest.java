@@ -4,7 +4,8 @@ import ca.uhn.fhir.context.FhirContext;
 import gov.cms.ab2d.common.model.*;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.eventlogger.LogManager;
-import gov.cms.ab2d.filter.FilterOutByDate;
+import gov.cms.ab2d.common.util.FilterOutByDate;
+import gov.cms.ab2d.worker.TestUtil;
 import gov.cms.ab2d.worker.adapter.bluebutton.ContractBeneficiaries;
 import gov.cms.ab2d.worker.adapter.bluebutton.ContractBeneficiaries.PatientDTO;
 import gov.cms.ab2d.worker.processor.domainmodel.ContractData;
@@ -171,7 +172,7 @@ class ContractProcessorUnitTest {
     }
 
     private Map<String, PatientDTO> createPatients(int num) throws ParseException {
-        FilterOutByDate.DateRange dateRange = new FilterOutByDate.DateRange(new Date(0), new Date());
+        FilterOutByDate.DateRange dateRange = TestUtil.getOpenRange();
         Map<String, PatientDTO> patients = new HashMap<>();
         for (int i = 0; i < num; i++) {
             PatientDTO p = PatientDTO.builder()
