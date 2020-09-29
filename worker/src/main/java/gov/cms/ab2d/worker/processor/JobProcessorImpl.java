@@ -143,7 +143,6 @@ public class JobProcessorImpl implements JobProcessor {
                 contract.getContractNumber(),
                 progressTracker.getContractCount(contract.getContractNumber()),
                 progressTracker.getProcessedCount(),
-                progressTracker.getOptOutCount(),
                 progressTracker.getFailureCount()));
     }
 

@@ -104,7 +104,7 @@ public class TestRunner {
     }
 
     public void init() throws IOException, InterruptedException, JSONException, KeyManagementException, NoSuchAlgorithmException {
-        if(environment.isUsesDockerCompose()) {
+        if (environment.isUsesDockerCompose()) {
             DockerComposeContainer container = new DockerComposeContainer(
                     new File("../docker-compose.yml"))
                     .withEnv(System.getenv())
@@ -112,9 +112,9 @@ public class TestRunner {
                     .withScaledService("worker", 2)
                     .withExposedService("db", 5432)
                     .withExposedService("api", 8443, new HostPortWaitStrategy()
-                        .withStartupTimeout(Duration.of(150, SECONDS)));
-//                     .withLogConsumer("worker", new Slf4jLogConsumer(log)) // Use to debug, for now there's too much log data
-//                     .withLogConsumer("api", new Slf4jLogConsumer(log));
+                    .withStartupTimeout(Duration.of(200, SECONDS)));
+//                    .withLogConsumer("worker", new Slf4jLogConsumer(log)) // Use to debug, for now there's too much log data
+//                    .withLogConsumer("api", new Slf4jLogConsumer(log));
             container.start();
         }
 
@@ -227,7 +227,7 @@ public class TestRunner {
         return Pair.of(url, extension);
     }
 
-    private void verifyJsonFromfileDownload(String fileContent, JSONArray extension, OffsetDateTime since, String optOut) throws JSONException {
+    private void verifyJsonFromfileDownload(String fileContent, JSONArray extension, OffsetDateTime since) throws JSONException {
         // Some of the data that is returned will be variable and will change from request to request, so not every
         // JSON object can be verified
         String[] jsonLines = fileContent.split("\n");
@@ -260,9 +260,6 @@ public class TestRunner {
             Assert.assertTrue(referenceString.startsWith("Patient"));
 
             String patientId = referenceString.substring(referenceString.indexOf('-') + 1);
-            if(optOut != null && patientId.equals(optOut)) {
-                Assert.fail("Patient ID opted out, but showed up in the download");
-            }
 
             final JSONObject typeJson = jsonObject.getJSONObject("type");
             Assert.assertNotNull(typeJson);
@@ -335,7 +332,7 @@ public class TestRunner {
         return true;
     }
 
-    private void downloadFile(Pair<String, JSONArray> downloadDetails, OffsetDateTime since, String optOut) throws IOException, InterruptedException, JSONException {
+    private void downloadFile(Pair<String, JSONArray> downloadDetails, OffsetDateTime since) throws IOException, InterruptedException, JSONException {
         HttpResponse<InputStream> downloadResponse = apiClient.fileDownloadRequest(downloadDetails.getFirst());
 
         Assert.assertEquals(200, downloadResponse.statusCode());
@@ -347,7 +344,7 @@ public class TestRunner {
             downloadString = IOUtils.toString(gzipInputStream, Charset.defaultCharset());
         }
 
-        verifyJsonFromfileDownload(downloadString, downloadDetails.getSecond(), since, optOut);
+        verifyJsonFromfileDownload(downloadString, downloadDetails.getSecond(), since);
     }
 
     private void downloadZipFile(String url, JSONArray extension, OffsetDateTime since) throws IOException, InterruptedException, JSONException {
@@ -360,7 +357,7 @@ public class TestRunner {
             zipIn.closeEntry();
             entry = zipIn.getNextEntry();
         }
-        verifyJsonFromfileDownload(downloadString.toString(), extension, since, null);
+        verifyJsonFromfileDownload(downloadString.toString(), extension, since);
     }
 
     public static String extractZipFileData(ZipEntry entry, ZipInputStream zipIn) throws IOException {
@@ -411,7 +408,7 @@ public class TestRunner {
         List<String> contentLocationList = exportResponse.headers().map().get("content-location");
 
         Pair<String, JSONArray> downloadDetails = performStatusRequests(contentLocationList, false, testContract);
-        downloadFile(downloadDetails, null, null);
+        downloadFile(downloadDetails, null);
     }
 
     @Test
@@ -425,7 +422,7 @@ public class TestRunner {
 
         Pair<String, JSONArray> downloadDetails = performStatusRequests(contentLocationList, false, testContract);
         if (downloadDetails != null) {
-            downloadFile(downloadDetails, earliest, null);
+            downloadFile(downloadDetails, earliest);
         }
     }
 
@@ -459,7 +456,7 @@ public class TestRunner {
         List<String> contentLocationList = exportResponse.headers().map().get("content-location");
 
         Pair<String, JSONArray> downloadDetails = performStatusRequests(contentLocationList, true, testContract);
-        downloadFile(downloadDetails, null, null);
+        downloadFile(downloadDetails, null);
     }
 
     @Test
@@ -637,20 +634,4 @@ public class TestRunner {
 
         Assert.assertEquals(200, healthCheckResponse.statusCode());
     }
-
-    // Consider removing if tests are failing
-    /*
-    @Test
-    @Order(16)
-    public void testOptOut() throws IOException, InterruptedException, JSONException {
-        System.out.println("Starting test 16");
-        HttpResponse<String> exportResponse = apiClient.exportRequest(FHIR_TYPE, null);
-
-        Assert.assertEquals(202, exportResponse.statusCode());
-        List<String> contentLocationList = exportResponse.headers().map().get("content-location");
-
-        Pair<String, JSONArray> downloadDetails = performStatusRequests(contentLocationList, false, testContract);
-        downloadFile(downloadDetails, null, "19990000002906"); // User should not be included
-    }
-     */
 }

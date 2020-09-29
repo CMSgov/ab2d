@@ -19,20 +19,17 @@ public class ContractBeneSearchEvent extends LoggableEvent {
     private int numInContract;
     // The number successfully searched
     private int numSearched;
-    // The number of beneficiaries who opted out
-    private int numOptedOut;
     // The number of errors that occured during searching
     private int numErrors;
 
     public ContractBeneSearchEvent() { }
 
     public ContractBeneSearchEvent(String user, String jobId, String contractNumber, int numInContract, int numbSearched,
-                                   int numOptedOut, int numErrors) {
+                                   int numErrors) {
         super(OffsetDateTime.now(), user, jobId);
         this.contractNumber = contractNumber;
         this.numSearched = numbSearched;
         this.numInContract = numInContract;
-        this.numOptedOut = numOptedOut;
         this.numErrors = numErrors;
     }
 }
