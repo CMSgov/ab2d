@@ -1,6 +1,6 @@
 package gov.cms.ab2d.worker.adapter.bluebutton;
 
-import gov.cms.ab2d.filter.FilterOutByDate;
+import gov.cms.ab2d.common.util.FilterOutByDate;
 import gov.cms.ab2d.worker.processor.domainmodel.ProgressTracker;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -139,7 +139,7 @@ public class ContractAdapterStub implements ContractBeneSearch {
         List<FilterOutByDate.DateRange> monthsUnderContract;
         try {
             // returns all 12 months in the list.
-            monthsUnderContract = Arrays.asList(new FilterOutByDate.DateRange(new Date(0), new Date()));
+            monthsUnderContract = Collections.singletonList(FilterOutByDate.getDateRange(1, 2020, 12, 2020));
         } catch (Exception ex) {
             monthsUnderContract = new ArrayList<>();
         }

@@ -5,11 +5,12 @@ import gov.cms.ab2d.common.model.CoveragePeriod;
 import gov.cms.ab2d.common.model.CoverageSearchDiff;
 import gov.cms.ab2d.common.model.CoverageSearchEvent;
 import gov.cms.ab2d.common.model.CoverageSummary;
-import gov.cms.ab2d.common.model.DateRange;
 import gov.cms.ab2d.common.model.JobStatus;
 import gov.cms.ab2d.common.repository.CoveragePeriodRepository;
 import gov.cms.ab2d.common.repository.CoverageRepository;
 import gov.cms.ab2d.common.repository.CoverageSearchEventRepository;
+import gov.cms.ab2d.common.util.FilterOutByDate;
+import gov.cms.ab2d.common.util.FilterOutByDate.DateRange;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
@@ -278,7 +279,7 @@ public class CoverageServiceImpl implements CoverageService {
 
         if (membershipMonths.size() == 1) {
             LocalDate start = fromRawResults(membershipMonths.get(0));
-            DateRange range = new DateRange(start, start.plusMonths(1));
+            DateRange range = asDateRange(start, start);
             return new CoverageSummary(beneficiaryId, contract, Collections.singletonList(range));
         }
 
@@ -291,7 +292,7 @@ public class CoverageServiceImpl implements CoverageService {
             LocalDate next = fromRawResults(membership);
 
             if (!next.isEqual(last.plusMonths(1))) {
-                dateRanges.add(new DateRange(begin, last.plusMonths(1)));
+                dateRanges.add(asDateRange(begin, last));
                 begin = next;
                 // Extend the date range by one month
             }
@@ -300,9 +301,9 @@ public class CoverageServiceImpl implements CoverageService {
         }
 
         if (begin.equals(last)) {
-            dateRanges.add(new DateRange(begin, begin.plusMonths(1)));
+            dateRanges.add(asDateRange(begin, begin));
         } else {
-            dateRanges.add(new DateRange(begin, last.plusMonths(1)));
+            dateRanges.add(asDateRange(begin, last));
         }
 
         return new CoverageSummary(beneficiaryId, contract, dateRanges);
@@ -314,6 +315,11 @@ public class CoverageServiceImpl implements CoverageService {
      */
     private LocalDate fromRawResults(CoverageMembership result) {
         return LocalDate.of(result.getYear(), result.getMonth(), 1);
+    }
+
+    private DateRange asDateRange(LocalDate localStartDate, LocalDate localEndDate)  {
+        return FilterOutByDate.getDateRange(localStartDate.getMonthValue(), localStartDate.getYear(),
+                localEndDate.getMonthValue(), localEndDate.getYear());
     }
 
     // todo: create diff and log on completion of every search. This information may be logged to both

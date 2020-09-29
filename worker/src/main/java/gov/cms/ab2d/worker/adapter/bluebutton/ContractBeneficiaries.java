@@ -1,6 +1,6 @@
 package gov.cms.ab2d.worker.adapter.bluebutton;
 
-import gov.cms.ab2d.filter.FilterOutByDate.DateRange;
+import gov.cms.ab2d.common.util.FilterOutByDate.DateRange;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

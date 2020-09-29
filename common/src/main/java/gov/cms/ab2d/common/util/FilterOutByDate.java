@@ -1,11 +1,13 @@
-package gov.cms.ab2d.filter;
+package gov.cms.ab2d.common.util;
 
-import lombok.Data;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import lombok.Getter;
 import org.hl7.fhir.dstu3.model.ExplanationOfBenefit;
 import org.hl7.fhir.dstu3.model.Period;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.ZoneId;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -18,42 +20,37 @@ import java.util.stream.Collectors;
  */
 public final class FilterOutByDate {
     private static final String SHORT = "MM/dd/yyyy";
-    private static final String FULL = "MM/dd/yyyy HH:mm:ss";
+    private static final String FULL = "MM/dd/yyyy HH:mm:ss:SSS";
+
+    public static final TimeZone TIMEZONE = TimeZone.getTimeZone("America/New_York");
+    public static final ZoneId ZONE_ID = ZoneId.of("America/New_York");
 
     /**
      * Date range class used to define a from and to date for a subscribers membership.
-     * We only deal with days, not hours or minutes. If the date range is 10/01/2020 - 10/02/2020,
-     * the range is 10/01/2020 00:00:00 - 10/02/2020 23:59:59. If the start date is after the end date
-     * nothing will resolve to being in that range
+     * We only deal with date ranges consisting of months and eliminate the ability to construct other
+     * ranges. A date range is from the start of a month to the end of that same or other month only.
      */
-    @Data
-    public static class DateRange {
-        private Date start;
-        private Date end;
+    @SuppressFBWarnings
+    @Getter
+    public static final class DateRange {
+
+        private final Date start;
+        private final Date end;
 
         /**
-         * Populate the date range
-         *
-         * @param start - the start date of the range
-         * @param end   - the end date of the range
-         * @throws ParseException if there was an error constructing the Date objects
+         * Create date range from the beginning of the startMonth during startYear to the end of the endMonth during endYear
          */
-        public DateRange(Date start, Date end) throws ParseException {
-            SimpleDateFormat fullDateFormat = new SimpleDateFormat(FULL);
-            SimpleDateFormat shortDateFormat = new SimpleDateFormat(SHORT);
-            if (start == null) {
-                start = new Date(0);
-            }
-            if (end == null) {
-                end = new Date(Long.MAX_VALUE);
-            }
-            this.start = shortDateFormat.parse(shortDateFormat.format(start));
-            // we're only dealing with dates, not times, so max out time
-            this.end = fullDateFormat.parse(shortDateFormat.format(end) + " 23:59:59");
+        private DateRange(int startMonth, int startYear, int endMonth, int endYear) {
+            this.start = getStartOfMonth(startMonth, startYear);
+            this.end = getEndOfMonth(endMonth, endYear);
         }
 
         /**
-         * True if a date is in range between the start date and the end date
+         * True if a date is in range between the start date and the end date.
+         *
+         * This inRange function is inclusive meaning if the end date is May 31st at 11:59:59.999 and someone
+         * enters that date in, the function will return true. But if someone enters June 1st at exactly midnight
+         * it will return false.
          *
          * @param d - the date to compare
          * @return true if the date is in range
@@ -77,9 +74,8 @@ public final class FilterOutByDate {
      * @param months - the list of months to include
      * @param year - the year to include
      * @return the list of date ranges
-     * @throws ParseException if a date manipulation error occurs
      */
-    public static List<DateRange> getDateRanges(List<Integer> months, int year) throws ParseException {
+    public static List<DateRange> getDateRanges(List<Integer> months, int year) {
         if (months == null || months.isEmpty() || year == 0) {
             return new ArrayList<>();
         }
@@ -87,7 +83,7 @@ public final class FilterOutByDate {
         return getRanges(monthList, year);
     }
 
-    private static List<DateRange> getRanges(List<Integer> monthList, int year) throws ParseException {
+    private static List<DateRange> getRanges(List<Integer> monthList, int year) {
         List<DateRange> ranges = new ArrayList<>();
         int startVal = -1;
         int endVal = -1;
@@ -142,9 +138,11 @@ public final class FilterOutByDate {
      * @param year  - year to choose
      * @return the beginning of the month
      */
-    static Date getStartOfMonth(int month, int year) {
+    public static Date getStartOfMonth(int month, int year) {
         Calendar c = Calendar.getInstance();
-        c.set(getYearToUse(year), month - 1, 1, 0, 0);
+        c.setTimeZone(TIMEZONE);
+        c.set(getYearToUse(year), month - 1, 1, 0, 0, 0);
+        c.set(Calendar.MILLISECOND, 0);
         return c.getTime();
     }
 
@@ -175,10 +173,12 @@ public final class FilterOutByDate {
      * @param year  - the year
      * @return the end of the month in days, hours, minutes and seconds
      */
-    static Date getEndOfMonth(int month, int year) {
+    public static Date getEndOfMonth(int month, int year) {
         Calendar c = Calendar.getInstance();
-        c.set(getYearToUse(year), month - 1, 1, 23, 59);
+        c.setTimeZone(TIMEZONE);
+        c.set(getYearToUse(year), month - 1, 1, 23, 59, 59);
         c.set(Calendar.DAY_OF_MONTH, c.getActualMaximum(Calendar.DAY_OF_MONTH));
+        c.set(Calendar.MILLISECOND, 999);
         return c.getTime();
     }
 
@@ -193,8 +193,8 @@ public final class FilterOutByDate {
      * @return the date range
      * @throws ParseException if there is an issue parsing the date information
      */
-    public static DateRange getDateRange(int startMonth, int startYear, int endMonth, int endYear) throws ParseException {
-        return new DateRange(getStartOfMonth(startMonth, startYear), getEndOfMonth(endMonth, endYear));
+    public static DateRange getDateRange(int startMonth, int startYear, int endMonth, int endYear) {
+        return new DateRange(startMonth, startYear, endMonth, endYear);
     }
 
     /**
@@ -206,8 +206,8 @@ public final class FilterOutByDate {
      * @return the date range
      * @throws ParseException if there is an issue parsing the date information
      */
-    public static DateRange getDateRange(int month, int year) throws ParseException {
-        return new DateRange(getStartOfMonth(month, year), getEndOfMonth(month, year));
+    public static DateRange getDateRange(int month, int year) {
+        return new DateRange(month, year, month, year);
     }
 
     /**
@@ -224,7 +224,7 @@ public final class FilterOutByDate {
     public static List<ExplanationOfBenefit> filterByDate(List<ExplanationOfBenefit> benes,
                                               Date attestationDate,
                                               Date earliestDate,
-                                              List<DateRange> dateRanges) throws ParseException {
+                                              List<DateRange> dateRanges) {
         if (benes == null || benes.isEmpty()) {
             return new ArrayList<>();
         }
@@ -266,7 +266,8 @@ public final class FilterOutByDate {
         if (ben == null || ben.getBillablePeriod() == null || dateVal == null) {
             return false;
         }
-        Date attToUse = fullDateFormat.parse(shortDateFormat.format(dateVal) + " 00:00:00");
+
+        Date attToUse = fullDateFormat.parse(shortDateFormat.format(dateVal) + " 00:00:00:000");
         Period p = ben.getBillablePeriod();
         Date end = p.getEnd();
         return end != null && end.getTime() >= attToUse.getTime();
@@ -288,6 +289,7 @@ public final class FilterOutByDate {
         if (start == null || end == null) {
             return false;
         }
+
         return range.inRange(start) || range.inRange(end);
     }
 }

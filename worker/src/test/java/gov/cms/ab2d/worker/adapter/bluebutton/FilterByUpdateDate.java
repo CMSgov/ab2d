@@ -3,7 +3,7 @@ package gov.cms.ab2d.worker.adapter.bluebutton;
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.Constants;
-import gov.cms.ab2d.filter.FilterOutByDate;
+import gov.cms.ab2d.common.util.FilterOutByDate;
 import org.hl7.fhir.dstu3.model.Bundle;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -27,7 +27,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @Disabled
 @SpringBootTest
 @Testcontainers
-public class FilterByUpdateDate {
+class FilterByUpdateDate {
     @Autowired
     private BFDClient bfdClient;
 
@@ -35,16 +35,20 @@ public class FilterByUpdateDate {
     private static final PostgreSQLContainer postgreSQLContainer= new AB2DPostgresqlContainer();
 
     @Test
-    void getAll() throws ParseException {
+    void getAll() {
         OffsetDateTime earliest = OffsetDateTime.parse(Constants.SINCE_EARLIEST_DATE);
+
         String patientId = "-19990000002901";
         ContractBeneficiaries.PatientDTO patient = new ContractBeneficiaries.PatientDTO();
         patient.setPatientId(patientId);
-        FilterOutByDate.DateRange d1 = new FilterOutByDate.DateRange(new Date(0), new Date());
-        patient.setDateRangesUnderContract(Arrays.asList(d1));
+
+        FilterOutByDate.DateRange d1 = FilterOutByDate.getDateRange(1, 2020, 12, 2020);
+        patient.setDateRangesUnderContract(Collections.singletonList(d1));
         Bundle resourcesAll = bfdClient.requestEOBFromServer(patientId);
+
         assertNotNull(resourcesAll);
         assertEquals(26, resourcesAll.getEntry().size());
+
         List<Bundle.BundleEntryComponent> manuallyFiltered = resourcesAll.getEntry().stream()
                 .filter(c -> updatedTimeAfter(c, earliest))
                 .collect(Collectors.toList());
@@ -53,6 +57,7 @@ public class FilterByUpdateDate {
         Bundle resourcesAfter = bfdClient.requestEOBFromServer(patientId, earliest);
         assertNotNull(resourcesAfter);
         assertEquals(4, resourcesAfter.getEntry().size());
+
         List<String> listOne = manuallyFiltered.stream().map(c -> c.getResource().getId()).collect(Collectors.toList());
         List<String> listTwo = resourcesAfter.getEntry().stream().map(c -> c.getResource().getId()).collect(Collectors.toList());
         Collections.sort(listOne);
