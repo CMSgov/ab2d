@@ -69,11 +69,6 @@
    $headers.Add("Prefer", "respond-async")
    $headers.Add("Authorization", "Bearer $BEARER_TOKEN")
    $response = Invoke-WebRequest "$EXPORT_URL" -Method 'GET' -Headers $headers -Body $body
-   ```
-
-1. Get status URL
-
-   ```ShellSession
    $STATUS_URL = $response.Headers['Content-Location']
    $STATUS_URL
    ```
