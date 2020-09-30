@@ -7843,8 +7843,6 @@
 
       ```ShellSession
       $ curl "https://sandbox.ab2d.cms.gov/api/v1/fhir/Job/${JOB}/file/${FILE}" \
-        -sD - \
-        -H "Accept: application/fhir+ndjson" \
         -H "Authorization: Bearer ${BEARER_TOKEN}" \
         > ${FILE}
       ```
