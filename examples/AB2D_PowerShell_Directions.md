@@ -70,16 +70,21 @@
    $headers.Add("Authorization", "Bearer $BEARER_TOKEN")
    $response = Invoke-WebRequest "$EXPORT_URL" -Method 'GET' -Headers $headers -Body $body
    ```
-   
-1. Check job status until you get a status of 200
+
+1. Get status URL
 
    ```ShellSession
    $STATUS_URL = $response.Headers['Content-Location']
+   $STATUS_URL
+   ```
+
+1. Check job status until you get a status of 200
+
+   ```ShellSession
    $headers = New-Object "System.Collections.Generic.Dictionary[[String],[String]]"
    $headers.Add("Accept", "application/json")
    $headers.Add("Authorization", "Bearer $BEARER_TOKEN")
    $response = Invoke-WebRequest "$STATUS_URL" -Method 'GET' -Headers $headers -Body $body
-   $STATUS_URL
    $response.StatusCode
    ```
    
