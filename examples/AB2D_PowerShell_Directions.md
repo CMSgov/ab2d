@@ -101,7 +101,6 @@
    $FILE = $FILE_URL.split("/")[9]
    $FILE
    $headers = New-Object "System.Collections.Generic.Dictionary[[String],[String]]"
-   $headers.Add("Accept", "application/fhir+ndjson")
    $headers.Add("Authorization", "Bearer $BEARER_TOKEN")
    Invoke-WebRequest "$FILE_URL" -Method 'GET' -Headers $headers -Body $body -Outfile $FILE
    ```
