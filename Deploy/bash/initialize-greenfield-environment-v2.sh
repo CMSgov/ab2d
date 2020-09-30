@@ -386,6 +386,7 @@ configure_greenfield_environment ()
   # Create or verify greenfield components
 
   terraform apply \
+    --var "env=${CMS_ENV_GE}" \
     --var "mgmt_aws_account_number=${CMS_MGMT_ENV_AWS_ACCOUNT_NUMBER}" \
     --var "aws_account_number=${AWS_ACCOUNT_NUMBER_GE}" \
     --target "module.${MODULE}" \
