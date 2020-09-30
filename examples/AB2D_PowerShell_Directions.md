@@ -89,7 +89,7 @@
    $NUMBER_OF_FILES = ($response | ConvertFrom-Json).output.Count
    $FIRST_FILE_INDEX = 0
    $LAST_FILE_INDEX = ($response | ConvertFrom-Json).output.Count - 1
-   Write-Host "There are $NUMBER_OF_FILES file(s) with array index(es) ranging from $FIRST_FILE_INDEX to $LAST_FILE_INDEX."
+   Write-Host "There are $NUMBER_OF_FILES file(s) with index(es) ranging from $FIRST_FILE_INDEX to $LAST_FILE_INDEX."
    ```
    
 1. Download file(s) incrementing the file index after each file is downloaded until the last file index is reached
