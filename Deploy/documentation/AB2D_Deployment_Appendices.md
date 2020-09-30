@@ -7843,8 +7843,8 @@
 
       ```ShellSession
       $ curl "https://sandbox.ab2d.cms.gov/api/v1/fhir/Job/${JOB}/file/${FILE}" \
-        -H "accept: application/json" \
-        -H "Accept: application/fhir+json" \
+        -sD - \
+	-H "Accept: application/fhir+ndjson" \
         -H "Authorization: Bearer ${BEARER_TOKEN}" \
         > ${FILE}
       ```
@@ -7859,8 +7859,8 @@
 
    ```ShellSession
    $ curl "https://sandbox.ab2d.cms.gov/api/v1/fhir/Job/${JOB}/file/${FILE}" \
-     -H "accept: application/json" \
-     -H "Accept: application/fhir+json" \
+     -sD - \
+     -H "Accept: application/fhir+ndjson" \
      -H "Authorization: Bearer ${BEARER_TOKEN}"
    ```
 
@@ -8054,8 +8054,7 @@
 
       ```ShellSession
       $ curl "https://api.ab2d.cms.gov/api/v1/fhir/Job/${JOB}/file/${FILE}" \
-        -H "accept: application/json" \
-        -H "Accept: application/fhir+json" \
+        -H "Accept: application/fhir+ndjson" \
         -H "Authorization: Bearer ${BEARER_TOKEN}" \
         > ${FILE}
       ```
@@ -8070,8 +8069,7 @@
 
    ```ShellSession
    $ curl "https://api.ab2d.cms.gov/api/v1/fhir/Job/${JOB}/file/${FILE}" \
-     -H "accept: application/json" \
-     -H "Accept: application/fhir+json" \
+     -H "Accept: application/fhir+ndjson" \
      -H "Authorization: Bearer ${BEARER_TOKEN}"
    ```
 

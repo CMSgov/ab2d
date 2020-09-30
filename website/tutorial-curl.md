@@ -391,8 +391,7 @@ opening ubuntu or some other terminal that supports curl and jq. See [Windows 10
 
     ```
     curl "https://sandbox.ab2d.cms.gov/api/v1/fhir/Job/${JOB}/file/${FILE}" \
-        -H "accept: application/json" \
-        -H "Accept: application/fhir+json" \
+        -H "Accept: application/fhir+ndjson" \
         -H "Authorization: Bearer ${BEARER_TOKEN}" \
     > ${FILE}
     ```
