@@ -81,7 +81,7 @@
 1. Check job status until you get a status of 200
 
    ```ShellSession
-   $headers = New-Object “System.Collections.Generic.Dictionary[[String],[String]]”
+   $headers = New-Object "System.Collections.Generic.Dictionary[[String],[String]]"
    $headers.Add("Accept", "application/json")
    $headers.Add("Authorization", "Bearer $BEARER_TOKEN")
    $response = Invoke-WebRequest "$STATUS_URL" -Method 'GET' -Headers $headers -Body $body
