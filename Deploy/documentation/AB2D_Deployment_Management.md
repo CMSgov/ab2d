@@ -74,6 +74,12 @@
 
 1. Change to the "ab2d" repo directory
 
+   *Example:*
+
+   ```ShellSession
+   $ cd ~/code/ab2d
+   ```
+
 1. Set the target environment to the "Mgmt AWS account"
 
    ```ShellSession
@@ -83,7 +89,7 @@
 1. Change to the management terraform directory
 
    ```ShellSession
-   $ cd ./Deploy/terraform/environments/ab2d-mgmt-east-dev-shared
+   $ cd ./Deploy/terraform/environments/ab2d-mgmt-east-dev
    ```
 
 1. Remove the Jenkins master instance from terraform state
@@ -93,6 +99,12 @@
    ```
 
 1. Change to the "ab2d" repo directory again
+
+   *Example:*
+
+   ```ShellSession
+   $ cd ~/code/ab2d
+   ```
 
 1. Create EC2 instance for Jenkins master
 
@@ -118,27 +130,65 @@
    ab2d-jenkins-agent-ami-2020-03-18
    ```
 
-1. If there is an existing "ab2d-jenkins-agent" EC2 instance, rename it in the AWS management account as follows
+1. If there is an existing "ab2d-jenkins-agent-XX" EC2 instance that you want to replace, rename it in the AWS management account as follows
+
+   *Format:*
 
    ```
-   ab2d-jenkins-agent-old
+   ab2d-jenkins-agent-XX-old
+   ```
+
+   *Example:*
+
+   ```
+   ab2d-jenkins-agent-01-old
    ```
 
 1. Open a terminal
 
-1. Change to the "Deploy" directory
+1. Change to the "ab2d" repo directory again
+
+   *Example:*
 
    ```ShellSession
-   $ cd ~/code/ab2d/Deploy
+   $ cd ~/code/ab2d
    ```
 
-1. Create EC2 instance for Jenkins master
+1. Create EC2 instance for Jenkins agent 01 (used for deployments)
 
    ```ShellSession
-   $ ./bash/deploy-jenkins-agent.sh
+   $ export EC2_INSTANCE_TAG_PARAM="ab2d-jenkins-agent-01" \
+     && export EC2_INSTANCE_TYPE_PARAM="m5.xlarge" \
+     && ./Deploy/bash/deploy-jenkins-agent.sh
    ```
-   
+
 1. Wait for the automation to complete
+
+1. Create EC2 instance for Jenkins agent 02 (used for builds)
+
+   ```ShellSession
+   $ export EC2_INSTANCE_TAG_PARAM="ab2d-jenkins-agent-02" \
+     && export EC2_INSTANCE_TYPE_PARAM="m5.large" \
+     && ./Deploy/bash/deploy-jenkins-agent.sh
+   ```
+
+1. Wait for the automation to complete
+
+1. Create EC2 instance for Jenkins agent 03 (used for builds)
+
+   ```ShellSession
+   $ export EC2_INSTANCE_TAG_PARAM="ab2d-jenkins-agent-03" \
+     && export EC2_INSTANCE_TYPE_PARAM="m5.large" \
+     && ./Deploy/bash/deploy-jenkins-agent.sh
+   ```
+
+1. Wait for the automation to complete
+
+## Configure ELB volumes for Jenkins nodes
+
+### Configure Jenkins master ELB volumes
+
+> *** TO DO ***
 
 ## Allow jenkins users to use a login shell
 
