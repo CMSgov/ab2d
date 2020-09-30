@@ -7844,7 +7844,7 @@
       ```ShellSession
       $ curl "https://sandbox.ab2d.cms.gov/api/v1/fhir/Job/${JOB}/file/${FILE}" \
         -sD - \
-	-H "Accept: application/fhir+ndjson" \
+        -H "Accept: application/fhir+ndjson" \
         -H "Authorization: Bearer ${BEARER_TOKEN}" \
         > ${FILE}
       ```
@@ -8686,6 +8686,12 @@ $ sed -i "" 's%cms-ab2d[\/]prod%cms-ab2d/dev%g' _includes/head.html
    ```
 
 1. Change to your "ab2d" repo directory
+
+   *Example:*
+
+   ```ShellSession
+   $ cd ~/code/ab2d
+   ```
 
 1. Set the production environment
 
