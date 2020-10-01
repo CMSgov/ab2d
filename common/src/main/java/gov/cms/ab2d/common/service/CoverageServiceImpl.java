@@ -1,4 +1,5 @@
 package gov.cms.ab2d.common.service;
+
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.CoverageMembership;
 import gov.cms.ab2d.common.model.CoveragePeriod;
@@ -6,6 +7,7 @@ import gov.cms.ab2d.common.model.CoverageSearchDiff;
 import gov.cms.ab2d.common.model.CoverageSearchEvent;
 import gov.cms.ab2d.common.model.CoverageSummary;
 import gov.cms.ab2d.common.model.JobStatus;
+import gov.cms.ab2d.common.repository.ContractRepository;
 import gov.cms.ab2d.common.repository.CoveragePeriodRepository;
 import gov.cms.ab2d.common.repository.CoverageRepository;
 import gov.cms.ab2d.common.repository.CoverageSearchEventRepository;
@@ -76,6 +78,9 @@ public class CoverageServiceImpl implements CoverageService {
     private CoverageSearchEventRepository coverageSearchEventRepo;
 
     @Autowired
+    private ContractRepository contractRepo;
+
+    @Autowired
     private DataSource dataSource;
 
     @Override
@@ -117,9 +122,10 @@ public class CoverageServiceImpl implements CoverageService {
     }
 
     @Override
-    public CoverageSearchEvent insertCoverage(int periodId, long searchEventId, List<String> beneficiaryIds) {
+    public CoverageSearchEvent insertCoverage(int periodId, long searchEventId, Set<String> beneficiaryIds) {
 
         // Make sure that coverage period and searchEvent actually exist in the database before inserting
+        List<String> beneficiariesList = new ArrayList<>(beneficiaryIds);
         findCoveragePeriod(periodId);
         CoverageSearchEvent searchEvent = findCoverageSearchEvent(searchEventId);
 
@@ -127,10 +133,13 @@ public class CoverageServiceImpl implements CoverageService {
 
             int subListEnd = Math.min(subListStart + BATCH_INSERT_SIZE, beneficiaryIds.size());
 
-            List<String> batch = beneficiaryIds.subList(subListStart, subListEnd);
+            List<String> batch = beneficiariesList.subList(subListStart, subListEnd);
 
             insertBatch(periodId, searchEventId, batch);
         }
+
+        // Update indices after every batch of insertions to make sure speed of database is preserved
+        vacuumCoverage();
 
         return searchEvent;
     }
@@ -163,11 +172,25 @@ public class CoverageServiceImpl implements CoverageService {
 
     @Override
     public void deletePreviousSearch(int periodId) {
+        // Delete previous in progress search before this one
+        deletePreviousSearch(periodId, 1);
+    }
 
+    /**
+     * Delete all coverage information related to the results of a search defined by an offset into the past.
+     *
+     * An offset of 0 finds the current IN_PROGRESS search event and deletes all coverage information associated
+     * with that event.
+     *
+     * @param periodId given coverage period (contractId, month, year) to delete search info for
+     * @param offset offset into the past 0 is last search done successfully, 1 is search before that, etc.
+     */
+    private void deletePreviousSearch(int periodId, int offset) {
         CoveragePeriod period = findCoveragePeriod(periodId);
-        Optional<CoverageSearchEvent> searchEvent = coverageSearchEventRepo.findSearchWithOffset(periodId, 1);
+        Optional<CoverageSearchEvent> searchEvent = coverageSearchEventRepo
+                .findSearchEventWithOffset(periodId, JobStatus.IN_PROGRESS.name(), offset);
 
-
+        // Only delete previous search if a previous search exists.
         if (searchEvent.isPresent()) {
             try (Connection connection = dataSource.getConnection();
                  PreparedStatement statement = connection.prepareStatement("DELETE FROM coverage cov WHERE " +
@@ -333,8 +356,8 @@ public class CoverageServiceImpl implements CoverageService {
             throw new InvalidJobStateTransition("Cannot diff a currently running search against previous search because results may be added");
         }
 
-        Optional<CoverageSearchEvent> previousSearch = coverageSearchEventRepo.findSearchWithOffset(periodId, 1);
-        Optional<CoverageSearchEvent> currentSearch = coverageSearchEventRepo.findSearchWithOffset(periodId, 0);
+        Optional<CoverageSearchEvent> previousSearch = coverageSearchEventRepo.findSearchEventWithOffset(periodId, JobStatus.IN_PROGRESS.name(), 1);
+        Optional<CoverageSearchEvent> currentSearch = coverageSearchEventRepo.findSearchEventWithOffset(periodId, JobStatus.IN_PROGRESS.name(), 0);
 
         int previousCount = 0;
         if (previousSearch.isPresent()) {
@@ -353,12 +376,37 @@ public class CoverageServiceImpl implements CoverageService {
     }
 
     @Override
+    public List<CoveragePeriod> findNeverSearched() {
+        return coveragePeriodRepo.findAllByStatusIsNull();
+    }
+
+    @Override
+    public List<CoveragePeriod> coverageNotUpdatedSince(int month, int year, OffsetDateTime lastSuccessful) {
+        List<CoveragePeriod> allCoveragePeriodsForMonth = coveragePeriodRepo.findAllByMonthAndYear(month, year);
+
+        return allCoveragePeriodsForMonth.stream()
+                .filter(period -> period.getStatus() != JobStatus.SUBMITTED)
+                .filter(period -> {
+                    Optional<CoverageSearchEvent>  search = coverageSearchEventRepo.findSearchEventWithOffset(period.getId(), JobStatus.SUCCESSFUL.name(), 0);
+
+                    if (search.isPresent()) {
+                        OffsetDateTime created = search.get().getCreated();
+                        return !created.isAfter(lastSuccessful);
+                    }
+
+                    // Never been searched and we need to do the search now
+                    return true;
+                }).collect(toList());
+
+    }
+
+    @Override
     public CoverageSearchEvent submitCoverageSearch(int periodId, String description) {
 
         CoveragePeriod period = findCoveragePeriod(periodId);
         JobStatus jobStatus = period.getStatus();
 
-        if (jobStatus == JobStatus.IN_PROGRESS) {
+        if (jobStatus == JobStatus.IN_PROGRESS || jobStatus == JobStatus.SUBMITTED) {
             throw new InvalidJobStateTransition("cannot change an " + JobStatus.IN_PROGRESS
                     + " contract mapping job to " + JobStatus.SUBMITTED);
         }
@@ -404,6 +452,9 @@ public class CoverageServiceImpl implements CoverageService {
                     + " to " + JobStatus.FAILED);
         }
 
+        // Delete all results from current search that is failing
+        deletePreviousSearch(periodId, 0);
+
         return updateStatus(period, description, JobStatus.FAILED);
     }
 
@@ -417,6 +468,8 @@ public class CoverageServiceImpl implements CoverageService {
             throw new InvalidJobStateTransition("cannot change from " + jobStatus
                     + " to " + JobStatus.SUCCESSFUL);
         }
+
+        deletePreviousSearch(periodId);
 
         return updateStatus(period, description, JobStatus.SUCCESSFUL);
     }

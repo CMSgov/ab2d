@@ -16,17 +16,19 @@ public class CoveragePeriod extends TimestampBase {
 
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
-    @EqualsAndHashCode.Include
     private Integer id;
 
     @ManyToOne
     @JoinColumn(name = "contract_id")
+    @EqualsAndHashCode.Include
     private Contract contract;
 
     @Column
+    @EqualsAndHashCode.Include
     private int month;
 
     @Column
+    @EqualsAndHashCode.Include
     private int year;
 
     @Enumerated(STRING)

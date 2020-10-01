@@ -12,6 +12,7 @@ import java.sql.PreparedStatement;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.function.Supplier;
@@ -118,7 +119,7 @@ public class InsertionJob implements Callable<CoverageSearchEvent> {
             List<String> batch = new ArrayList<>(CHUNK_SIZE);
             IntStream.iterate(0, i -> i + 1).limit(CHUNK_SIZE).forEach(i -> batch.add(supplier.get()));
 
-            coverageService.insertCoverage(periodId, searchEventId, batch);
+            coverageService.insertCoverage(periodId, searchEventId, new HashSet<>(batch));
         }
     }
 

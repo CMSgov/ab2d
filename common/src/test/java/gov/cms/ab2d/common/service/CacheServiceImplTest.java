@@ -5,6 +5,7 @@ import gov.cms.ab2d.common.model.*;
 import gov.cms.ab2d.common.repository.*;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.DataSetup;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -56,9 +57,6 @@ class CacheServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        coverageRepo.deleteAll();
-        coverageSearchEventRepo.deleteAll();
-        coveragePeriodRepo.deleteAll();
 
         final int nowNano = Instant.now().getNano();
         contractNumber = "CONTRACT_" + nowNano + "0000";
@@ -74,6 +72,13 @@ class CacheServiceImplTest {
         dataSetup.createCoverage(coveragePeriod, coverageSearchEvent, DataSetup.createBeneId());
         dataSetup.createCoverage(coveragePeriod, coverageSearchEvent, DataSetup.createBeneId());
         dataSetup.createCoverage(coveragePeriod, coverageSearchEvent, DataSetup.createBeneId());
+    }
+
+    @AfterEach
+    void teardDown() {
+        coverageRepo.deleteAll();
+        coverageSearchEventRepo.deleteAll();
+        coveragePeriodRepo.deleteAll();
     }
 
     @Test

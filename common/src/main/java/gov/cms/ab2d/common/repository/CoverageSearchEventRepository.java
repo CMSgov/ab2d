@@ -17,15 +17,15 @@ public interface CoverageSearchEventRepository extends JpaRepository<CoverageSea
 
     /**
      * Get a single IN_PROGRESS search event from the past
-     * @param searchId id of a coverage period identifying a contractId, month, year triple
+     * @param periodId id of a coverage period identifying a contractId, month, year triple
      * @param offset offset in search basically get nth result
      * @return search event found at offset
      */
     @Query(value = "SELECT * FROM event_bene_coverage_search_status_change as ebc " +
-            "   WHERE ebc.bene_coverage_period_id = :searchId AND ebc.new_status = 'IN_PROGRESS'" +
+            "   WHERE ebc.bene_coverage_period_id = :periodId AND ebc.new_status = :status" +
             "   ORDER BY ebc.created DESC LIMIT 1 OFFSET :offset",
             nativeQuery = true)
-    Optional<CoverageSearchEvent> findSearchWithOffset(int searchId, int offset);
+    Optional<CoverageSearchEvent> findSearchEventWithOffset(int periodId, String status, int offset);
 
     Optional<CoverageSearchEvent> findFirstByCoveragePeriodOrderByCreatedDesc(CoveragePeriod period);
 }

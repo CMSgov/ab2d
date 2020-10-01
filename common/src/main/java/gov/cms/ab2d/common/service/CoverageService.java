@@ -6,8 +6,10 @@ import gov.cms.ab2d.common.model.CoverageSearchDiff;
 import gov.cms.ab2d.common.model.CoverageSummary;
 import gov.cms.ab2d.common.model.JobStatus;
 
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 public interface CoverageService {
 
@@ -54,7 +56,7 @@ public interface CoverageService {
      * @param beneficiaryIds list of beneficiaries for this coverage period and this specific search event
      * @return relevant
      */
-    CoverageSearchEvent insertCoverage(int periodId, long searchEventId, List<String> beneficiaryIds);
+    CoverageSearchEvent insertCoverage(int periodId, long searchEventId, Set<String> beneficiaryIds);
 
     /**
      * Delete all data from previous coverage search conducted for a given {@link CoveragePeriod}.
@@ -103,6 +105,20 @@ public interface CoverageService {
      * @return difference between the two searches
      */
     CoverageSearchDiff searchDiff(int periodId);
+
+    /**
+     * Find all coverage periods that have never been searched
+     */
+    List<CoveragePeriod> findNeverSearched();
+
+    /**
+     * Find all coverage periods for a given month since
+     * @param month month to search
+     * @param year year to search
+     * @param lastSuccessful last search that successfully completed
+     * @return matching coverage periods
+     */
+    List<CoveragePeriod> coverageNotUpdatedSince(int month, int year, OffsetDateTime lastSuccessful);
 
     /**
      * Change a coverage search to {@link JobStatus#SUBMITTED} and log an event.

@@ -13,7 +13,7 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.*;
 
 import static java.util.Collections.disjoint;
@@ -194,7 +194,7 @@ class CoverageServiceImplTest {
         coverageService.submitCoverageSearch(period1Jan.getId(), "testing");
         CoverageSearchEvent inProgress = coverageService.startCoverageSearch(period1Jan.getId(), "testing");
 
-        List<String> beneficiaryIds = List.of("testing-123", "testing-456", "testing-789");
+        Set<String> beneficiaryIds = Set.of("testing-123", "testing-456", "testing-789");
 
         CoverageSearchEvent savedTo = coverageService.insertCoverage(period1Jan.getId(), inProgress.getId(), beneficiaryIds);
 
@@ -231,10 +231,10 @@ class CoverageServiceImplTest {
         CoverageSearchEvent inProgressApril = coverageService.startCoverageSearch(period1April.getId(), "testing");
 
 
-        coverageService.insertCoverage(period1Jan.getId(), inProgressJan.getId(), List.of("testing-1"));
-        coverageService.insertCoverage(period1Feb.getId(), inProgressFeb.getId(), List.of("testing-1"));
-        coverageService.insertCoverage(period1March.getId(), inProgressMarch.getId(), List.of("testing-1"));
-        coverageService.insertCoverage(period1April.getId(), inProgressApril.getId(), List.of("testing-1"));
+        coverageService.insertCoverage(period1Jan.getId(), inProgressJan.getId(), Set.of("testing-1"));
+        coverageService.insertCoverage(period1Feb.getId(), inProgressFeb.getId(), Set.of("testing-1"));
+        coverageService.insertCoverage(period1March.getId(), inProgressMarch.getId(), Set.of("testing-1"));
+        coverageService.insertCoverage(period1April.getId(), inProgressApril.getId(), Set.of("testing-1"));
 
 
         List<CoverageSummary> coverageSummaries = coverageService.pageCoverage(0, 2,
@@ -276,10 +276,10 @@ class CoverageServiceImplTest {
         coverageService.submitCoverageSearch(period1April.getId(), "testing");
         CoverageSearchEvent inProgressApril = coverageService.startCoverageSearch(period1April.getId(), "testing");
 
-        coverageService.insertCoverage(period1Jan.getId(), inProgressJan.getId(), List.of("testing-1"));
-        coverageService.insertCoverage(period1Feb.getId(), inProgressFeb.getId(), List.of("testing-1", "testing-2"));
-        coverageService.insertCoverage(period1March.getId(), inProgressMarch.getId(), List.of("testing-1", "testing-2"));
-        coverageService.insertCoverage(period1April.getId(), inProgressApril.getId(), List.of("testing-2"));
+        coverageService.insertCoverage(period1Jan.getId(), inProgressJan.getId(), Set.of("testing-1"));
+        coverageService.insertCoverage(period1Feb.getId(), inProgressFeb.getId(), Set.of("testing-1", "testing-2"));
+        coverageService.insertCoverage(period1March.getId(), inProgressMarch.getId(), Set.of("testing-1", "testing-2"));
+        coverageService.insertCoverage(period1April.getId(), inProgressApril.getId(), Set.of("testing-2"));
 
 
         List<CoverageSummary> coverageSummaries = coverageService.pageCoverage(0, 2,
@@ -333,10 +333,10 @@ class CoverageServiceImplTest {
         CoverageSearchEvent inProgressApril = coverageService.startCoverageSearch(period1April.getId(), "testing");
 
 
-        coverageService.insertCoverage(period1Jan.getId(), inProgressJan.getId(), List.of("testing-1"));
-        coverageService.insertCoverage(period1Feb.getId(), inProgressFeb.getId(), List.of("testing-2"));
-        coverageService.insertCoverage(period1March.getId(), inProgressMarch.getId(), List.of("testing-1"));
-        coverageService.insertCoverage(period1April.getId(), inProgressApril.getId(), List.of("testing-2"));
+        coverageService.insertCoverage(period1Jan.getId(), inProgressJan.getId(), Set.of("testing-1"));
+        coverageService.insertCoverage(period1Feb.getId(), inProgressFeb.getId(), Set.of("testing-2"));
+        coverageService.insertCoverage(period1March.getId(), inProgressMarch.getId(), Set.of("testing-1"));
+        coverageService.insertCoverage(period1April.getId(), inProgressApril.getId(), Set.of("testing-2"));
 
 
         List<CoverageSummary> coverageSummaries = coverageService.pageCoverage(0, 2,
@@ -395,10 +395,10 @@ class CoverageServiceImplTest {
         CoverageSearchEvent inProgressApril = coverageService.startCoverageSearch(period1April.getId(), "testing");
 
 
-        coverageService.insertCoverage(period1Jan.getId(), inProgressJan.getId(), List.of("testing-1", "testing-2"));
-        coverageService.insertCoverage(period1Feb.getId(), inProgressFeb.getId(), List.of("testing-1", "testing-3"));
-        coverageService.insertCoverage(period1March.getId(), inProgressMarch.getId(), List.of("testing-2", "testing-3"));
-        coverageService.insertCoverage(period1April.getId(), inProgressApril.getId(), List.of("testing-1", "testing-2"));
+        coverageService.insertCoverage(period1Jan.getId(), inProgressJan.getId(), Set.of("testing-1", "testing-2"));
+        coverageService.insertCoverage(period1Feb.getId(), inProgressFeb.getId(), Set.of("testing-1", "testing-3"));
+        coverageService.insertCoverage(period1March.getId(), inProgressMarch.getId(), Set.of("testing-2", "testing-3"));
+        coverageService.insertCoverage(period1April.getId(), inProgressApril.getId(), Set.of("testing-1", "testing-2"));
 
 
         List<CoverageSummary> coverageSummaries = coverageService.pageCoverage(0, 3,
@@ -460,7 +460,7 @@ class CoverageServiceImplTest {
         CoverageSearchEvent inProgressApril = coverageService.startCoverageSearch(period1April.getId(), "testing");
 
 
-        coverageService.insertCoverage(period1Feb.getId(), inProgressFeb.getId(), List.of("testing-1"));
+        coverageService.insertCoverage(period1Feb.getId(), inProgressFeb.getId(), Set.of("testing-1"));
 
         List<CoverageSummary> coverageSummaries = coverageService.pageCoverage(0, 3,
                 period1Jan.getId(), period1Feb.getId(), period1March.getId(), period1April.getId());
@@ -479,7 +479,7 @@ class CoverageServiceImplTest {
     @DisplayName("Get differences between first search and empty")
     @Test
     void diffCoverageWhenFirstSearch() {
-        List<String> results1 = List.of("testing-123-1", "testing-456-1", "testing-789-1");
+        Set<String> results1 = Set.of("testing-123-1", "testing-456-1", "testing-789-1");
 
         coverageService.submitCoverageSearch(period1Jan.getId(), "testing");
         CoverageSearchEvent inProgress1 = coverageService.startCoverageSearch(period1Jan.getId(), "testing");
@@ -500,8 +500,8 @@ class CoverageServiceImplTest {
     @DisplayName("Get differences between two searches")
     @Test
     void diffCoverageBetweenTwoSearches() {
-        List<String> results1 = List.of("testing-123-1", "testing-456-1", "testing-789-1");
-        List<String> results2 = List.of("testing-123-1", "testing-456-2", "testing-789-2");
+        Set<String> results1 = Set.of("testing-123-1", "testing-456-1", "testing-789-1");
+        Set<String> results2 = Set.of("testing-123-1", "testing-456-2", "testing-789-2");
 
         coverageService.submitCoverageSearch(period1Jan.getId(), "testing");
         CoverageSearchEvent inProgress1 = coverageService.startCoverageSearch(period1Jan.getId(), "testing");
@@ -532,8 +532,8 @@ class CoverageServiceImplTest {
     @DisplayName("Delete previous search")
     @Test
     void deletePreviousSearch() {
-        List<String> results1 = List.of("testing-123-1", "testing-456-1", "testing-789-1");
-        List<String> results2 = List.of("testing-123-2", "testing-456-2", "testing-789-2");
+        Set<String> results1 = Set.of("testing-123-1", "testing-456-1", "testing-789-1");
+        Set<String> results2 = Set.of("testing-123-2", "testing-456-2", "testing-789-2");
 
         coverageService.submitCoverageSearch(period1Jan.getId(), "testing");
         CoverageSearchEvent inProgress1 = coverageService.startCoverageSearch(period1Jan.getId(), "testing");
@@ -575,6 +575,43 @@ class CoverageServiceImplTest {
         status = coverageService.getSearchStatus(period1Jan.getId());
 
         assertEquals(JobStatus.SUBMITTED, status);
+    }
+
+    @DisplayName("Find all coverage periods that have never had mapping completed")
+    @Test
+    void getNeverSearched() {
+        List<CoveragePeriod> coveragePeriods = coverageService.findNeverSearched();
+
+        assertEquals(5, coveragePeriods.size());
+
+        coverageService.submitCoverageSearch(period1Jan.getId(), "testing");
+
+        coveragePeriods = coverageService.findNeverSearched();
+
+        assertEquals(4, coveragePeriods.size());
+    }
+
+    @DisplayName("Find all coverage periods that have not been searched since x time")
+    @Test
+    void findSearchedSince() {
+
+        OffsetDateTime startTest = OffsetDateTime.now();
+
+        // Both January periods have never been searched so both should be returned
+        List<CoveragePeriod> coveragePeriods = coverageService.coverageNotUpdatedSince(1, 2020, startTest.minusDays(1));
+        assertEquals(2, coveragePeriods.size());
+
+        coverageService.submitCoverageSearch(period1Jan.getId(), "testing");
+        coverageService.startCoverageSearch(period1Jan.getId(), "testing");
+        CoverageSearchEvent completedEvent = coverageService.completeCoverageSearch(period1Jan.getId(), "testing");
+
+        // Searching using future date should return all (2) January periods
+        coveragePeriods = coverageService.coverageNotUpdatedSince(1, 2020, completedEvent.getCreated().plusSeconds(1));
+        assertEquals(2, coveragePeriods.size());
+
+        // Searching using past date should return never searched period only
+        coveragePeriods = coverageService.coverageNotUpdatedSince(1, 2020, startTest.minusDays(1));
+        assertEquals(1, coveragePeriods.size());
     }
 
     @DisplayName("Coverage period searches are successfully submitted")
