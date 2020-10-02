@@ -1,7 +1,7 @@
 package gov.cms.ab2d.worker.processor;
 
 import gov.cms.ab2d.bfd.client.BFDClient;
-import gov.cms.ab2d.worker.processor.domainmodel.CoverageMapping;
+import gov.cms.ab2d.common.model.CoverageMapping;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
@@ -40,7 +40,7 @@ public class CoverageMappingCallable implements Callable<CoverageMapping> {
     @Override
     public CoverageMapping call() {
 
-        int month = coverageMapping.getCoveragePeriod().getMonth();
+        int month = coverageMapping.getPeriod().getMonth();
         String contractNumber = coverageMapping.getContract().getContractNumber();
 
         try {
@@ -56,14 +56,11 @@ public class CoverageMappingCallable implements Callable<CoverageMapping> {
             coverageMapping.addBeneficiaries(patientIDs);
             log.debug("finished reading [{}] Set<String>resources", patientIDs.size());
 
-            coverageMapping.completed("finished reading patient ids");
+            coverageMapping.completed();
             return coverageMapping;
         } catch (Throwable e) {
             log.error("Unable to get patient information for " + contractNumber + " for month " + month, e);
-
-            coverageMapping.failed("Unable toget patient information for "
-                    + contractNumber + " for month " + month + " " + e.getMessage());
-
+            coverageMapping.failed();
             throw e;
         } finally {
             completed.set(true);

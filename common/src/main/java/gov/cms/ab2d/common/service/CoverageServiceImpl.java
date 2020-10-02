@@ -1,7 +1,18 @@
 package gov.cms.ab2d.common.service;
 
-import gov.cms.ab2d.common.model.*;
-import gov.cms.ab2d.common.repository.*;
+import gov.cms.ab2d.common.model.Contract;
+import gov.cms.ab2d.common.model.CoverageMapping;
+import gov.cms.ab2d.common.model.CoverageMembership;
+import gov.cms.ab2d.common.model.CoveragePeriod;
+import gov.cms.ab2d.common.model.CoverageSearch;
+import gov.cms.ab2d.common.model.CoverageSearchDiff;
+import gov.cms.ab2d.common.model.CoverageSearchEvent;
+import gov.cms.ab2d.common.model.CoverageSummary;
+import gov.cms.ab2d.common.model.JobStatus;
+import gov.cms.ab2d.common.repository.CoverageRepository;
+import gov.cms.ab2d.common.repository.CoveragePeriodRepository;
+import gov.cms.ab2d.common.repository.CoverageSearchRepository;
+import gov.cms.ab2d.common.repository.CoverageSearchEventRepository;
 import gov.cms.ab2d.common.util.FilterOutByDate;
 import gov.cms.ab2d.common.util.FilterOutByDate.DateRange;
 import lombok.extern.slf4j.Slf4j;
@@ -70,9 +81,6 @@ public class CoverageServiceImpl implements CoverageService {
 
     @Autowired
     private CoverageSearchRepository coverageSearchRepo;
-
-    @Autowired
-    private ContractRepository contractRepo;
 
     @Autowired
     private DataSource dataSource;
@@ -396,6 +404,11 @@ public class CoverageServiceImpl implements CoverageService {
 
     @Override
     public CoverageSearchEvent submitSearch(int periodId, String description) {
+        return submitSearch(periodId, 0, description);
+    }
+
+    @Override
+    public CoverageSearchEvent submitSearch(int periodId, int attempts, String description) {
 
         CoveragePeriod period = findCoveragePeriod(periodId);
         JobStatus jobStatus = period.getStatus();
@@ -408,13 +421,20 @@ public class CoverageServiceImpl implements CoverageService {
         // Add to queue of jobs to do
         CoverageSearch search = new CoverageSearch();
         search.setPeriod(period);
+        search.setAttempts(attempts);
         coverageSearchRepo.saveAndFlush(search);
 
         return updateStatus(period, description, JobStatus.SUBMITTED);
     }
 
+
     @Override
     public CoverageSearchEvent prioritizeSearch(int periodId, String description) {
+        return submitSearch(periodId, 0, description);
+    }
+
+    @Override
+    public CoverageSearchEvent prioritizeSearch(int periodId, int attempts, String description) {
 
         CoveragePeriod period = findCoveragePeriod(periodId);
         JobStatus jobStatus = period.getStatus();
@@ -427,6 +447,7 @@ public class CoverageServiceImpl implements CoverageService {
         // Add to queue of jobs to do
         CoverageSearch search = new CoverageSearch();
         search.setPeriod(period);
+        search.setAttempts(attempts);
         search.setCreated(OffsetDateTime.of(2000, 1, 1,
                 0, 0, 0, 0, ZoneOffset.UTC));
         coverageSearchRepo.saveAndFlush(search);

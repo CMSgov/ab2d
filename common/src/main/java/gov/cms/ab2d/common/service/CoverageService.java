@@ -1,6 +1,11 @@
 package gov.cms.ab2d.common.service;
 
-import gov.cms.ab2d.common.model.*;
+import gov.cms.ab2d.common.model.CoverageMapping;
+import gov.cms.ab2d.common.model.CoveragePeriod;
+import gov.cms.ab2d.common.model.CoverageSearchDiff;
+import gov.cms.ab2d.common.model.CoverageSearchEvent;
+import gov.cms.ab2d.common.model.CoverageSummary;
+import gov.cms.ab2d.common.model.JobStatus;
 
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -126,6 +131,16 @@ public interface CoverageService {
     CoverageSearchEvent submitSearch(int periodId, String description);
 
     /**
+     * Change a coverage search to {@link JobStatus#SUBMITTED} and log an event.
+     * @param periodId unique id of a coverage search
+     * @param attempts number of attempts already conducted
+     * @param description reason or explanation for change
+     * @return resulting coverage search event
+     * @throws InvalidJobStateTransition if job is {@link JobStatus#IN_PROGRESS} already
+     */
+    CoverageSearchEvent submitSearch(int periodId, int attempts, String description);
+
+    /**
      * Change a coverage search to {@link JobStatus#SUBMITTED}, log an event, and make sure this search is given high
      * priority to execute as soon as possible
      * @param periodId unique id of a coverage search
@@ -134,6 +149,17 @@ public interface CoverageService {
      * @throws InvalidJobStateTransition if job is {@link JobStatus#IN_PROGRESS} already
      */
     CoverageSearchEvent prioritizeSearch(int periodId, String description);
+
+    /**
+     * Change a coverage search to {@link JobStatus#SUBMITTED}, log an event, and make sure this search is given high
+     * priority to execute as soon as possible
+     * @param periodId unique id of a coverage search
+     * @param attempts number of attempts already conducted
+     * @param description reason or explanation for change
+     * @return resulting coverage search event
+     * @throws InvalidJobStateTransition if job is {@link JobStatus#IN_PROGRESS} already
+     */
+    CoverageSearchEvent prioritizeSearch(int periodId, int attempts, String description);
 
     /**
      * Find next coverage search to start, change coverage search to {@link JobStatus#IN_PROGRESS}, and log an event.

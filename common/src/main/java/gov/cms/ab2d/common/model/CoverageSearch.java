@@ -6,8 +6,6 @@ import lombok.EqualsAndHashCode;
 
 import javax.persistence.*;
 import java.time.OffsetDateTime;
-import java.util.ArrayList;
-import java.util.List;
 
 @Entity
 @Data

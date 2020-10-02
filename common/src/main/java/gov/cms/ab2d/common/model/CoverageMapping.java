@@ -25,6 +25,14 @@ public class CoverageMapping {
         return coverageSearchEvent.getCoveragePeriod().getContract();
     }
 
+    public CoveragePeriod getPeriod() {
+        return coverageSearchEvent.getCoveragePeriod();
+    }
+
+    public int getPeriodId() {
+        return coverageSearchEvent.getCoveragePeriod().getId();
+    }
+
     /**
      * Set the {@link CoverageSearchEvent} to an in progress search event before triggering the callable for each attempt
      * @param event event to tie coverage information back to
@@ -38,11 +46,11 @@ public class CoverageMapping {
     }
 
     public void completed() {
-        attempt( true);
+        attempt(true);
     }
 
     public void failed() {
-        attempt( false);
+        attempt(false);
     }
 
     private void attempt(boolean successful) {

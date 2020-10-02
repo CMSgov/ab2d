@@ -1,7 +1,6 @@
 package gov.cms.ab2d.worker.processor;
 
 import gov.cms.ab2d.common.model.CoveragePeriod;
-import gov.cms.ab2d.worker.processor.domainmodel.CoverageMapping;
 
 import java.util.Collection;
 
@@ -44,6 +43,14 @@ public interface CoverageProcessor {
      * @param periods coverage period to add
      */
     void queueCoveragePeriod(Collection<CoveragePeriod> periods);
+
+    /**
+     * Add a coverage period to the list of periods to be searched
+     * @param period period to be queued
+     * @param attempts number of previous attempts made to fill in coverage information
+     * @param prioritize if true place at front of queue
+     */
+    void queueCoveragePeriod(CoveragePeriod period, int attempts, boolean prioritize);
 
     // Crisis big red button self destruct
     // Scheduled check for shutdown
