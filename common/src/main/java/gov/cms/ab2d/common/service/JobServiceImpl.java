@@ -60,11 +60,6 @@ public class JobServiceImpl implements JobService {
     }
 
     @Override
-    public Job createJob(String resourceTypes, String url, String outputFormat) {
-        return createJob(resourceTypes, url, null, outputFormat, null);
-    }
-
-    @Override
     public Job createJob(String resourceTypes, String url, String contractNumber, String outputFormat, OffsetDateTime since) {
         Job job = new Job();
         job.setResourceTypes(resourceTypes);
