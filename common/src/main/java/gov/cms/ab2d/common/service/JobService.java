@@ -10,8 +10,6 @@ import java.time.OffsetDateTime;
 public interface JobService {
     String ZIPFORMAT = "application/zip";
 
-    Job createJob(String resourceTypes, String url, String outputFormat);
-
     Job createJob(String resourceTypes, String url, String contractNumber, String outputFormat, OffsetDateTime since);
 
     void cancelJob(String jobUuid);
