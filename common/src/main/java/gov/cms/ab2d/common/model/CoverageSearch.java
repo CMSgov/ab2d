@@ -1,5 +1,6 @@
 package gov.cms.ab2d.common.model;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.hibernate.annotations.CreationTimestamp;
@@ -9,6 +10,7 @@ import java.time.OffsetDateTime;
 
 @Entity
 @Data
+@AllArgsConstructor
 public class CoverageSearch {
     @Id
     @GeneratedValue
@@ -22,4 +24,6 @@ public class CoverageSearch {
     // We can use this to search for the earliest search request
     @CreationTimestamp
     private OffsetDateTime created;
+
+    public CoverageSearch() {}
 }
