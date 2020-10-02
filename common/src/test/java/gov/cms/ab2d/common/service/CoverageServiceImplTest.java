@@ -151,7 +151,7 @@ class CoverageServiceImplTest {
     @Test
     void verifyDBStructure() {
 
-        CoverageSearchEvent cs1 = coverageService.submitSearch(period1Jan.getId(), "testing");
+        CoverageSearchEvent cs1 = coverageService.submitSearch(period1Jan.getId(), "testing").get();
 
         assertNotNull(cs1.getId());
 
@@ -182,7 +182,7 @@ class CoverageServiceImplTest {
 
         assertTrue(lastEvent.isEmpty());
 
-        CoverageSearchEvent submission = coverageService.submitSearch(period1Jan.getId(), "testing");
+        CoverageSearchEvent submission = coverageService.submitSearch(period1Jan.getId(), "testing").get();
         lastEvent = coverageService.findLastEvent(period1Jan.getId());
 
         assertTrue(lastEvent.isPresent());
@@ -629,7 +629,7 @@ class CoverageServiceImplTest {
     @DisplayName("Coverage period searches are successfully submitted")
     @Test
     void submitSearches() {
-        CoverageSearchEvent cs1 = coverageService.submitSearch(period1Jan.getId(), "testing");
+        CoverageSearchEvent cs1 = coverageService.submitSearch(period1Jan.getId(), "testing").get();
 
         CoverageSearchEvent cs1Copy = coverageSearchEventRepo.findById(cs1.getId()).get();
         CoverageSearch coverageSearch = coverageSearchRepo.findFirstByOrderByCreatedAsc().get();
@@ -639,8 +639,6 @@ class CoverageServiceImplTest {
         assertEquals(cs1Copy.getCoveragePeriod(), coverageSearch.getPeriod());
 
         startSearchAndPullEvent();
-
-        assertThrows(InvalidJobStateTransition.class, () -> coverageService.submitSearch(period1Jan.getId(), "testing"));
     }
 
     @DisplayName("Coverage period searches are successfully started")

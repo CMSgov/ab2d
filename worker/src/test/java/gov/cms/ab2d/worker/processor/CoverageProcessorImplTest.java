@@ -51,6 +51,9 @@ class CoverageProcessorImplTest {
     private CoveragePeriodRepository coveragePeriodRepo;
 
     @Autowired
+    private CoverageSearchRepository coverageSearchRepo;
+
+    @Autowired
     private CoverageSearchEventRepository coverageSearchEventRepo;
 
     @Autowired
@@ -92,6 +95,7 @@ class CoverageProcessorImplTest {
     void after() {
         coverageRepo.deleteAll();
         coverageSearchEventRepo.deleteAll();
+        coverageSearchRepo.deleteAll();
         coveragePeriodRepo.deleteAll();
         contractRepo.delete(contract);
         contractRepo.flush();
@@ -108,7 +112,11 @@ class CoverageProcessorImplTest {
 
         coverageService.submitSearch(period1Jan.getId(), "testing");
 
-        assertThrows(InvalidJobStateTransition.class, () -> processor.queueCoveragePeriod(period1Jan, false));
+        assertEquals(1, coverageSearchRepo.count());
+
+        processor.queueCoveragePeriod(period1Jan, false);
+
+        assertEquals(1, coverageSearchRepo.count());
     }
 
     @DisplayName("Normal workflow functions")
@@ -122,7 +130,6 @@ class CoverageProcessorImplTest {
 
         when(bfdClient.requestPartDEnrolleesFromServer(anyString(), anyInt())).thenReturn(bundle1);
         when(bfdClient.requestNextBundleFromServer(any(Bundle.class))).thenReturn(bundle2);
-
 
         processor.queueCoveragePeriod(period1Jan, false);
         JobStatus status = coverageService.getSearchStatus(period1Jan.getId());

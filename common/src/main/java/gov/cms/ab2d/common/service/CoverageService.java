@@ -128,7 +128,7 @@ public interface CoverageService {
      * @return resulting coverage search event
      * @throws InvalidJobStateTransition if job is {@link JobStatus#IN_PROGRESS} already
      */
-    CoverageSearchEvent submitSearch(int periodId, String description);
+    Optional<CoverageSearchEvent> submitSearch(int periodId, String description);
 
     /**
      * Change a coverage search to {@link JobStatus#SUBMITTED} and log an event.
@@ -138,7 +138,7 @@ public interface CoverageService {
      * @return resulting coverage search event
      * @throws InvalidJobStateTransition if job is {@link JobStatus#IN_PROGRESS} already
      */
-    CoverageSearchEvent submitSearch(int periodId, int attempts, String description);
+    Optional<CoverageSearchEvent> submitSearch(int periodId, int attempts, String description);
 
     /**
      * Change a coverage search to {@link JobStatus#SUBMITTED}, log an event, and make sure this search is given high
@@ -148,7 +148,7 @@ public interface CoverageService {
      * @return resulting coverage search event
      * @throws InvalidJobStateTransition if job is {@link JobStatus#IN_PROGRESS} already
      */
-    CoverageSearchEvent prioritizeSearch(int periodId, String description);
+    Optional<CoverageSearchEvent> prioritizeSearch(int periodId, String description);
 
     /**
      * Change a coverage search to {@link JobStatus#SUBMITTED}, log an event, and make sure this search is given high
@@ -159,7 +159,7 @@ public interface CoverageService {
      * @return resulting coverage search event
      * @throws InvalidJobStateTransition if job is {@link JobStatus#IN_PROGRESS} already
      */
-    CoverageSearchEvent prioritizeSearch(int periodId, int attempts, String description);
+    Optional<CoverageSearchEvent> prioritizeSearch(int periodId, int attempts, String description);
 
     /**
      * Find next coverage search to start, change coverage search to {@link JobStatus#IN_PROGRESS}, and log an event.

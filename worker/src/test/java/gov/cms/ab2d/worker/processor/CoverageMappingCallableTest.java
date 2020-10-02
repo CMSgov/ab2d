@@ -1,9 +1,7 @@
 package gov.cms.ab2d.worker.processor;
 
 import gov.cms.ab2d.bfd.client.BFDClient;
-import gov.cms.ab2d.common.model.Contract;
-import gov.cms.ab2d.common.model.CoveragePeriod;
-import gov.cms.ab2d.worker.processor.domainmodel.CoverageMapping;
+import gov.cms.ab2d.common.model.*;
 import org.hl7.fhir.dstu3.model.Bundle;
 import org.hl7.fhir.dstu3.model.Identifier;
 import org.hl7.fhir.dstu3.model.Patient;
@@ -51,7 +49,13 @@ class CoverageMappingCallableTest {
         period.setYear(2020);
         period.setMonth(1);
 
-        CoverageMapping mapping = new CoverageMapping(period);
+        CoverageSearchEvent cse = new CoverageSearchEvent();
+        cse.setCoveragePeriod(period);
+
+        CoverageSearch search = new CoverageSearch();
+        search.setPeriod(period);
+
+        CoverageMapping mapping = new CoverageMapping(cse, search);
         CoverageMappingCallable callable = new CoverageMappingCallable(mapping, bfdClient);
 
         assertFalse(callable.isCompleted());
@@ -79,7 +83,13 @@ class CoverageMappingCallableTest {
         period.setYear(2020);
         period.setMonth(1);
 
-        CoverageMapping mapping = new CoverageMapping(period);
+        CoverageSearchEvent cse = new CoverageSearchEvent();
+        cse.setCoveragePeriod(period);
+
+        CoverageSearch search = new CoverageSearch();
+        search.setPeriod(period);
+
+        CoverageMapping mapping = new CoverageMapping(cse, search);
         CoverageMappingCallable callable = new CoverageMappingCallable(mapping, bfdClient);
 
         try {
@@ -90,7 +100,6 @@ class CoverageMappingCallableTest {
 
         assertFalse(mapping.isSuccessful());
         assertTrue(callable.isCompleted());
-        assertTrue(mapping.getLastLog().contains("Unable"));
     }
 
     private Bundle buildBundle(int startIndex, int endIndex) {

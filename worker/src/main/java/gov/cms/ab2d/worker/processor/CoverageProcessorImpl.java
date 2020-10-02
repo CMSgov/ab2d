@@ -3,7 +3,6 @@ package gov.cms.ab2d.worker.processor;
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.model.CoverageMapping;
 import gov.cms.ab2d.common.model.CoveragePeriod;
-import gov.cms.ab2d.common.model.CoverageSearchEvent;
 import gov.cms.ab2d.common.service.CoverageService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -92,7 +91,7 @@ public class CoverageProcessorImpl implements CoverageProcessor {
 
     @Override
     public void queueCoveragePeriod(CoveragePeriod period, boolean prioritize) {
-        this.queueCoveragePeriod(period, prioritize);
+        this.queueCoveragePeriod(period, 0, prioritize);
     }
 
     @Override
@@ -112,9 +111,8 @@ public class CoverageProcessorImpl implements CoverageProcessor {
 
         if (!inShutdown.get()) {
 
-            Optional<CoverageSearchEvent> lastEvent = coverageService.findLastEvent(period.getId());
-
             String eventLog = "manually queued coverage period search at " + (prioritize ? "front of queue" : "back of queue");
+            log.info(eventLog);
             if (prioritize) {
                 coverageService.prioritizeSearch(period.getId(), attempts, eventLog);
             } else {
@@ -127,6 +125,9 @@ public class CoverageProcessorImpl implements CoverageProcessor {
         synchronized (inProgressMappings) {
 
             if (!inShutdown.get()) {
+
+                log.debug("starting search for {} during {}-{}", mapping.getContract().getContractName(),
+                        mapping.getPeriod().getMonth(), mapping.getPeriod().getYear());
 
                 CoverageMappingCallable callable = new CoverageMappingCallable(mapping, bfdClient);
                 executor.submit(callable);
@@ -145,15 +146,24 @@ public class CoverageProcessorImpl implements CoverageProcessor {
                 && executor.getActiveCount() != executor.getMaxPoolSize()) {
 
             Optional<CoverageMapping> maybeSearch = coverageService.startSearch("starting a job");
-
             if (maybeSearch.isPresent()) {
 
                 CoverageMapping mapping = maybeSearch.get();
+
+                log.debug("found a search in queue for contract {} during {}-{}, attempting to search",
+                        mapping.getContract().getContractName(), mapping.getPeriod().getMonth(),
+                        mapping.getPeriod().getYear());
+
                 if (!startJob(mapping)) {
                     coverageService.cancelSearch(mapping.getPeriodId(), "failed to start job");
+                    queueMapping(mapping, false);
                 }
             }
         }
+    }
+
+    private void queueMapping(CoverageMapping mapping, boolean b) {
+        queueCoveragePeriod(mapping.getPeriod(), mapping.getCoverageSearch().getAttempts(), b);
     }
 
     @Scheduled(fixedDelay = 10000)
@@ -162,6 +172,8 @@ public class CoverageProcessorImpl implements CoverageProcessor {
         synchronized (inProgressMappings) {
             if (!inShutdown.get()) {
                 Iterator<CoverageMappingCallable> mappingCallableIterator = inProgressMappings.iterator();
+
+                log.debug("Checking running jobs for changes in state");
 
                 while (mappingCallableIterator.hasNext()) {
 
@@ -180,17 +192,23 @@ public class CoverageProcessorImpl implements CoverageProcessor {
 
     public void evaluateJob(CoverageMapping mapping) {
         if (mapping.isSuccessful()) {
+            log.debug("finished a search for contract {} during {}-{}", mapping.getContract().getContractNumber(),
+                    mapping.getPeriod().getMonth(), mapping.getPeriod().getYear());
+
             coverageInsertionQueue.add(mapping);
         } else if (mapping.getCoverageSearch().getAttempts() > maxAttempts){
 
-            log.error("could not complete coverage mapping job due to multiple failed attempts");
+            log.error("could not complete coverage mapping job due to multiple failed attempts and will not re-attempt");
+
+            coverageService.failSearch(mapping.getPeriodId(),
+                    "could not complete coverage mapping due to error will not re-attempt");
+        } else {
+
+            log.warn("could not complete coverage mapping job but will re-attempt");
 
             coverageService.failSearch(mapping.getPeriodId(),
                     "could not complete coverage mapping due to error");
-        } else {
-            coverageService.failSearch(mapping.getPeriodId(),
-                    "could not complete coverage mapping due to error");
-            queueCoveragePeriod(mapping.getPeriod(), mapping.getCoverageSearch().getAttempts(), false);
+            queueMapping(mapping, false);
         }
     }
 
@@ -205,12 +223,22 @@ public class CoverageProcessorImpl implements CoverageProcessor {
                 int periodId = result.getPeriodId();
                 long eventId = result.getCoverageSearchEvent().getId();
 
+                log.debug("inserting coverage mapping for contract {} during {}-{}",
+                        result.getContract().getContractNumber(), result.getPeriod().getMonth(),
+                        result.getPeriod().getYear());
+
                 coverageService.insertCoverage(periodId, eventId, result.getBeneficiaryIds());
 
                 coverageService.completeSearch(periodId, "successfully inserted all data for in progress search");
             } else {
+
+                log.debug("shutting down before inserting for contract {} during {}-{}, will re-attempt",
+                        result.getContract().getContractNumber(), result.getPeriod().getMonth(),
+                        result.getPeriod().getYear());
+
                 coverageService.failSearch(result.getPeriodId(),
                         "shutting down coverage processor before beneficiary data can be inserted into database");
+                queueMapping(result, true);
             }
         }
 
@@ -218,6 +246,8 @@ public class CoverageProcessorImpl implements CoverageProcessor {
 
     @PreDestroy
     public void shutdown() {
+
+        log.debug("shutting down coverage processor");
 
         // Notify all threads that we are shutting down and that work should not progress through pipeline
         synchronized (inProgressMappings) {
@@ -230,8 +260,13 @@ public class CoverageProcessorImpl implements CoverageProcessor {
         coverageInsertionQueue.clear();
 
         for (CoverageMapping insertedMapping : inserting) {
-            coverageService.cancelSearch(insertedMapping.getPeriodId(),
+            log.debug("shutting down before inserting for contract {} during {}-{}, will re-attempt",
+                    insertedMapping.getContract().getContractNumber(), insertedMapping.getPeriod().getMonth(),
+                    insertedMapping.getPeriod().getYear());
+
+            coverageService.failSearch(insertedMapping.getPeriodId(),
                     "shutting down coverage processor before results could be inserted into database");
+            queueMapping(insertedMapping, false);
         }
 
         // Force shutdown all running bfd queries
@@ -242,8 +277,13 @@ public class CoverageProcessorImpl implements CoverageProcessor {
 
             inProgressMappings.forEach(callable -> {
                 CoverageMapping mapping = callable.getCoverageMapping();
+                log.debug("shutting down in progress search for contract {} during {}-{}",
+                        mapping.getContract().getContractNumber(), mapping.getPeriod().getMonth(),
+                        mapping.getPeriod().getYear());
+
                 coverageService.failSearch(mapping.getPeriodId(),
                         "shutting down coverage processor before bfd query completed");
+                queueMapping(mapping, false);
             });
         }
     }

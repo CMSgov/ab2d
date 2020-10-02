@@ -403,56 +403,56 @@ public class CoverageServiceImpl implements CoverageService {
     }
 
     @Override
-    public CoverageSearchEvent submitSearch(int periodId, String description) {
+    public Optional<CoverageSearchEvent> submitSearch(int periodId, String description) {
         return submitSearch(periodId, 0, description);
     }
 
     @Override
-    public CoverageSearchEvent submitSearch(int periodId, int attempts, String description) {
+    public Optional<CoverageSearchEvent> submitSearch(int periodId, int attempts, String description) {
 
         CoveragePeriod period = findCoveragePeriod(periodId);
         JobStatus jobStatus = period.getStatus();
 
-        if (jobStatus == JobStatus.IN_PROGRESS || jobStatus == JobStatus.SUBMITTED) {
-            throw new InvalidJobStateTransition("cannot change an " + JobStatus.IN_PROGRESS
-                    + " contract mapping job to " + JobStatus.SUBMITTED);
+        if (jobStatus != JobStatus.IN_PROGRESS && jobStatus != JobStatus.SUBMITTED) {
+
+            // Add to queue of jobs to do
+            CoverageSearch search = new CoverageSearch();
+            search.setPeriod(period);
+            search.setAttempts(attempts);
+            coverageSearchRepo.saveAndFlush(search);
+
+            return Optional.of(updateStatus(period, description, JobStatus.SUBMITTED));
         }
 
-        // Add to queue of jobs to do
-        CoverageSearch search = new CoverageSearch();
-        search.setPeriod(period);
-        search.setAttempts(attempts);
-        coverageSearchRepo.saveAndFlush(search);
-
-        return updateStatus(period, description, JobStatus.SUBMITTED);
+        return Optional.empty();
     }
 
 
     @Override
-    public CoverageSearchEvent prioritizeSearch(int periodId, String description) {
-        return submitSearch(periodId, 0, description);
+    public Optional<CoverageSearchEvent> prioritizeSearch(int periodId, String description) {
+        return prioritizeSearch(periodId, 0, description);
     }
 
     @Override
-    public CoverageSearchEvent prioritizeSearch(int periodId, int attempts, String description) {
+    public Optional<CoverageSearchEvent> prioritizeSearch(int periodId, int attempts, String description) {
 
         CoveragePeriod period = findCoveragePeriod(periodId);
         JobStatus jobStatus = period.getStatus();
 
-        if (jobStatus == JobStatus.IN_PROGRESS || jobStatus == JobStatus.SUBMITTED) {
-            throw new InvalidJobStateTransition("cannot change an " + JobStatus.IN_PROGRESS
-                    + " contract mapping job to " + JobStatus.SUBMITTED);
+        if (jobStatus != JobStatus.IN_PROGRESS && jobStatus != JobStatus.SUBMITTED) {
+
+            // Add to queue of jobs to do
+            CoverageSearch search = new CoverageSearch();
+            search.setPeriod(period);
+            search.setAttempts(attempts);
+            search.setCreated(OffsetDateTime.of(2000, 1, 1,
+                    0, 0, 0, 0, ZoneOffset.UTC));
+            coverageSearchRepo.saveAndFlush(search);
+
+            return Optional.of(updateStatus(period, description, JobStatus.SUBMITTED));
         }
 
-        // Add to queue of jobs to do
-        CoverageSearch search = new CoverageSearch();
-        search.setPeriod(period);
-        search.setAttempts(attempts);
-        search.setCreated(OffsetDateTime.of(2000, 1, 1,
-                0, 0, 0, 0, ZoneOffset.UTC));
-        coverageSearchRepo.saveAndFlush(search);
-
-        return updateStatus(period, description, JobStatus.SUBMITTED);
+        return Optional.empty();
     }
 
     @Override
