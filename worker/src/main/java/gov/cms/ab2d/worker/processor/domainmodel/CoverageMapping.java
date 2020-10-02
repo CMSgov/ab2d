@@ -3,7 +3,6 @@ package gov.cms.ab2d.worker.processor.domainmodel;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.CoveragePeriod;
 import gov.cms.ab2d.common.model.CoverageSearchEvent;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 import java.time.OffsetDateTime;
@@ -11,7 +10,6 @@ import java.time.ZoneId;
 import java.util.*;
 
 @Getter
-@AllArgsConstructor
 public class CoverageMapping {
 
     private final CoveragePeriod coveragePeriod;

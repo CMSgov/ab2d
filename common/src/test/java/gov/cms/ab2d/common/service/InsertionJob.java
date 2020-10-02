@@ -3,7 +3,6 @@ package gov.cms.ab2d.common.service;
 import gov.cms.ab2d.common.model.Coverage;
 import gov.cms.ab2d.common.model.CoveragePeriod;
 import gov.cms.ab2d.common.model.CoverageSearchEvent;
-import gov.cms.ab2d.common.model.JobStatus;
 import gov.cms.ab2d.common.repository.CoverageSearchEventRepository;
 
 import javax.sql.DataSource;
@@ -67,8 +66,8 @@ public class InsertionJob implements Callable<CoverageSearchEvent> {
 
     public CoverageSearchEvent call() {
         // Add in progress event as foreign key for all inserts
-        coverageService.submitCoverageSearch(period.getId(), "testing");
-        CoverageSearchEvent inProgress = coverageService.startCoverageSearch(period.getId(), "testing");
+        coverageService.submitSearch(period.getId(), "testing");
+        CoverageSearchEvent inProgress = coverageService.startSearch("testing").get();
 
         // Run inserts
         // If number of experiments is greater than 1 then data will be erased after each experiment

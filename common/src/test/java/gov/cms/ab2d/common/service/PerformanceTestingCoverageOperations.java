@@ -19,7 +19,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
-import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.joining;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -251,13 +250,13 @@ class PerformanceTestingCoverageOperations {
                 coverageSearchEventRepo, 100_000, 1);
         CoverageSearchEvent inProgress1 = first.call();
 
-        coverageService.completeCoverageSearch(period1.getId(), "testing");
+        coverageService.completeSearch(period1.getId(), "testing");
 
         InsertionJob second = new InsertionJob(period1, dataSource, coverageService,
                 coverageSearchEventRepo, 100_000, 1);
         CoverageSearchEvent inProgress2 = second.call();
 
-        coverageService.completeCoverageSearch(period1.getId(), "testing");
+        coverageService.completeSearch(period1.getId(), "testing");
 
 
         System.out.println("Records present before delete " + coverageRepo.countByCoverageSearchEvent(inProgress1));

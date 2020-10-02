@@ -1,7 +1,6 @@
 package gov.cms.ab2d.worker.processor;
 
 import gov.cms.ab2d.bfd.client.BFDClient;
-import gov.cms.ab2d.worker.processor.domainmodel.ContractMapping;
 import gov.cms.ab2d.worker.processor.domainmodel.CoverageMapping;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -13,18 +12,29 @@ import org.hl7.fhir.dstu3.model.ResourceType;
 
 import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 @Slf4j
 public class CoverageMappingCallable implements Callable<CoverageMapping> {
-    private static final String BENEFICIARY_ID = "https://bluebutton.cms.gov/resources/variables/bene_id";
+    static final String BENEFICIARY_ID = "https://bluebutton.cms.gov/resources/variables/bene_id";
 
     private final CoverageMapping coverageMapping;
     private final BFDClient bfdClient;
+    private final AtomicBoolean completed;
 
     public CoverageMappingCallable(CoverageMapping coverageMapping, BFDClient bfdClient) {
         this.coverageMapping = coverageMapping;
         this.bfdClient = bfdClient;
+        this.completed = new AtomicBoolean(false);
+    }
+
+    public boolean isCompleted() {
+        return completed.get();
+    }
+
+    public CoverageMapping getCoverageMapping() {
+        return coverageMapping;
     }
 
     @Override
@@ -45,11 +55,20 @@ public class CoverageMappingCallable implements Callable<CoverageMapping> {
 
             coverageMapping.addBeneficiaries(patientIDs);
             log.debug("finished reading [{}] Set<String>resources", patientIDs.size());
+
+            coverageMapping.completed("finished reading patient ids");
             return coverageMapping;
-        } catch (Exception e) {
+        } catch (Throwable e) {
             log.error("Unable to get patient information for " + contractNumber + " for month " + month, e);
+
+            coverageMapping.failed("Unable toget patient information for "
+                    + contractNumber + " for month " + month + " " + e.getMessage());
+
             throw e;
+        } finally {
+            completed.set(true);
         }
+
     }
 
     /**

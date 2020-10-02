@@ -4,9 +4,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.hibernate.annotations.CreationTimestamp;
 
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
+import javax.persistence.*;
 import java.time.OffsetDateTime;
 
 @Entity
@@ -17,14 +15,9 @@ public class CoverageSearch {
     @EqualsAndHashCode.Include
     private Long id;
 
-    // The contract to search for mapping
-    private String contract;
-
-    // The month to search
-    private Integer month;
-
-    // The year to search (we're not always able to pass this to the search, but gives context)
-    private Integer year;
+    @OneToOne
+    @JoinColumn(name = "bene_coverage_period_id", referencedColumnName = "id")
+    private CoveragePeriod period;
 
     // We can use this to search for the earliest search request
     @CreationTimestamp

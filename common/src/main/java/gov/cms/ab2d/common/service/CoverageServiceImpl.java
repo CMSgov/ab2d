@@ -1,16 +1,7 @@
 package gov.cms.ab2d.common.service;
 
-import gov.cms.ab2d.common.model.Contract;
-import gov.cms.ab2d.common.model.CoverageMembership;
-import gov.cms.ab2d.common.model.CoveragePeriod;
-import gov.cms.ab2d.common.model.CoverageSearchDiff;
-import gov.cms.ab2d.common.model.CoverageSearchEvent;
-import gov.cms.ab2d.common.model.CoverageSummary;
-import gov.cms.ab2d.common.model.JobStatus;
-import gov.cms.ab2d.common.repository.ContractRepository;
-import gov.cms.ab2d.common.repository.CoveragePeriodRepository;
-import gov.cms.ab2d.common.repository.CoverageRepository;
-import gov.cms.ab2d.common.repository.CoverageSearchEventRepository;
+import gov.cms.ab2d.common.model.*;
+import gov.cms.ab2d.common.repository.*;
 import gov.cms.ab2d.common.util.FilterOutByDate;
 import gov.cms.ab2d.common.util.FilterOutByDate.DateRange;
 import lombok.extern.slf4j.Slf4j;
@@ -76,6 +67,9 @@ public class CoverageServiceImpl implements CoverageService {
 
     @Autowired
     private CoverageSearchEventRepository coverageSearchEventRepo;
+
+    @Autowired
+    private CoverageSearchRepository coverageSearchRepo;
 
     @Autowired
     private ContractRepository contractRepo;
@@ -401,7 +395,7 @@ public class CoverageServiceImpl implements CoverageService {
     }
 
     @Override
-    public CoverageSearchEvent submitCoverageSearch(int periodId, String description) {
+    public CoverageSearchEvent submitSearch(int periodId, String description) {
 
         CoveragePeriod period = findCoveragePeriod(periodId);
         JobStatus jobStatus = period.getStatus();
@@ -410,25 +404,55 @@ public class CoverageServiceImpl implements CoverageService {
             throw new InvalidJobStateTransition("cannot change an " + JobStatus.IN_PROGRESS
                     + " contract mapping job to " + JobStatus.SUBMITTED);
         }
+
+        // Add to queue of jobs to do
+        CoverageSearch search = new CoverageSearch();
+        search.setPeriod(period);
+        coverageSearchRepo.saveAndFlush(search);
+
         return updateStatus(period, description, JobStatus.SUBMITTED);
     }
 
     @Override
-    public CoverageSearchEvent startCoverageSearch(int periodId, String description) {
+    public CoverageSearchEvent prioritizeSearch(int periodId, String description) {
 
         CoveragePeriod period = findCoveragePeriod(periodId);
         JobStatus jobStatus = period.getStatus();
 
-        if (jobStatus != JobStatus.SUBMITTED) {
-            throw new InvalidJobStateTransition("cannot change from " + period.getStatus()
-                    + " to " + JobStatus.IN_PROGRESS);
+        if (jobStatus == JobStatus.IN_PROGRESS || jobStatus == JobStatus.SUBMITTED) {
+            throw new InvalidJobStateTransition("cannot change an " + JobStatus.IN_PROGRESS
+                    + " contract mapping job to " + JobStatus.SUBMITTED);
         }
 
-        return updateStatus(period, description, JobStatus.IN_PROGRESS);
+        // Add to queue of jobs to do
+        CoverageSearch search = new CoverageSearch();
+        search.setPeriod(period);
+        search.setCreated(OffsetDateTime.of(2000, 1, 1,
+                0, 0, 0, 0, ZoneOffset.UTC));
+        coverageSearchRepo.saveAndFlush(search);
+
+        return updateStatus(period, description, JobStatus.SUBMITTED);
     }
 
     @Override
-    public CoverageSearchEvent cancelCoverageSearch(int periodId, String description) {
+    public Optional<CoverageSearchEvent> startSearch(String description) {
+
+        Optional<CoverageSearch> submittedSearch = coverageSearchRepo.findFirstByOrderByCreatedAsc();
+
+        if (submittedSearch.isEmpty()) {
+            return Optional.empty();
+        }
+
+        CoveragePeriod period = submittedSearch.get().getPeriod();
+
+        coverageSearchRepo.delete(submittedSearch.get());
+        coverageSearchRepo.flush();
+
+        return Optional.of(updateStatus(period, description, JobStatus.IN_PROGRESS));
+    }
+
+    @Override
+    public CoverageSearchEvent cancelSearch(int periodId, String description) {
 
         CoveragePeriod period = findCoveragePeriod(periodId);
         JobStatus jobStatus = period.getStatus();
@@ -438,11 +462,13 @@ public class CoverageServiceImpl implements CoverageService {
                     + " to " + JobStatus.CANCELLED);
         }
 
+        coverageSearchRepo.deleteCoverageSearchByPeriod(period);
+
         return updateStatus(period, description, JobStatus.CANCELLED);
     }
 
     @Override
-    public CoverageSearchEvent failCoverageSearch(int periodId, String description) {
+    public CoverageSearchEvent failSearch(int periodId, String description) {
 
         CoveragePeriod period = findCoveragePeriod(periodId);
         JobStatus jobStatus = period.getStatus();
@@ -459,7 +485,7 @@ public class CoverageServiceImpl implements CoverageService {
     }
 
     @Override
-    public CoverageSearchEvent completeCoverageSearch(int periodId, String description) {
+    public CoverageSearchEvent completeSearch(int periodId, String description) {
 
         CoveragePeriod period = findCoveragePeriod(periodId);
         JobStatus jobStatus = period.getStatus();

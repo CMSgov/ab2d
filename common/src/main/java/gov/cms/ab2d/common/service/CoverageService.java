@@ -127,16 +127,25 @@ public interface CoverageService {
      * @return resulting coverage search event
      * @throws InvalidJobStateTransition if job is {@link JobStatus#IN_PROGRESS} already
      */
-    CoverageSearchEvent submitCoverageSearch(int periodId, String description);
+    CoverageSearchEvent submitSearch(int periodId, String description);
 
     /**
-     * Change a coverage search to {@link JobStatus#IN_PROGRESS} and log an event.
+     * Change a coverage search to {@link JobStatus#SUBMITTED}, log an event, and make sure this search is given high
+     * priority to execute as soon as possible
      * @param periodId unique id of a coverage search
      * @param description reason or explanation for change
      * @return resulting coverage search event
+     * @throws InvalidJobStateTransition if job is {@link JobStatus#IN_PROGRESS} already
+     */
+    CoverageSearchEvent prioritizeSearch(int periodId, String description);
+
+    /**
+     * Find next coverage search to start, change coverage search to {@link JobStatus#IN_PROGRESS}, and log an event.
+     * @param description reason or explanation for change
+     * @return resulting coverage search event if there is a search in the queu
      * @throws InvalidJobStateTransition if job is not in the {@link JobStatus#SUBMITTED} state when this job is received
      */
-    CoverageSearchEvent startCoverageSearch(int periodId, String description);
+    Optional<CoverageSearchEvent> startSearch(String description);
 
     /**
      * Change a coverage search to {@link JobStatus#CANCELLED} and log an event.
@@ -146,7 +155,7 @@ public interface CoverageService {
      * @throws InvalidJobStateTransition if job is not in the {@link JobStatus#SUBMITTED} or {@link JobStatus#IN_PROGRESS}
      * state when this job is received
      */
-    CoverageSearchEvent cancelCoverageSearch(int periodId, String description);
+    CoverageSearchEvent cancelSearch(int periodId, String description);
 
     /**
      * Change a coverage search to {@link JobStatus#FAILED} and log an event.
@@ -156,7 +165,7 @@ public interface CoverageService {
      * @throws InvalidJobStateTransition if job is not {@link JobStatus#SUBMITTED} or {@link JobStatus#IN_PROGRESS}
      * state when this job is received
      */
-    CoverageSearchEvent failCoverageSearch(int periodId, String description);
+    CoverageSearchEvent failSearch(int periodId, String description);
 
     /**
      * Change a coverage search to {@link JobStatus#SUCCESSFUL} and log an event.
@@ -165,7 +174,7 @@ public interface CoverageService {
      * @return resulting coverage search event
      * @throws InvalidJobStateTransition if job is not in the {@link JobStatus#IN_PROGRESS} state when this job is received
      */
-    CoverageSearchEvent completeCoverageSearch(int periodId, String description);
+    CoverageSearchEvent completeSearch(int periodId, String description);
 
     /**
      * Clean pg_visibility table so that query planner uses faster index only scans instead of a sequential

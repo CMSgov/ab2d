@@ -14,8 +14,8 @@ public class CoverageQueueConfig {
 
     @Bean(name = "patientCoverageThreadPool")
     public ThreadPoolTaskExecutor patientContractThreadPool(
-            @Value("contract.core.pool.size") int corePoolSize,
-            @Value("contract.max.pool.size") int maxPoolSize) {
+            @Value("#{new Integer('${contract.core.pool.size}')}") int corePoolSize,
+            @Value("#{new Integer('${contract.max.pool.size}')}") int maxPoolSize) {
         final ThreadPoolTaskExecutor taskExecutor = new ThreadPoolTaskExecutor();
         taskExecutor.setCorePoolSize(corePoolSize);
         taskExecutor.setMaxPoolSize(maxPoolSize);

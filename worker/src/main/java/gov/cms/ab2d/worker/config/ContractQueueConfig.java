@@ -13,8 +13,8 @@ public class ContractQueueConfig {
 
     @Bean(name = "patientContractThreadPool")
     public ThreadPoolTaskExecutor patientContractThreadPool(
-            @Value("contract.core.pool.size") int corePoolSize,
-            @Value("contract.max.pool.size") int maxPoolSize) {
+            @Value("${contract.core.pool.size}") Integer corePoolSize,
+            @Value("${contract.max.pool.size}") Integer maxPoolSize) {
         final ThreadPoolTaskExecutor taskExecutor = new ThreadPoolTaskExecutor();
         taskExecutor.setCorePoolSize(corePoolSize);
         taskExecutor.setMaxPoolSize(maxPoolSize);
