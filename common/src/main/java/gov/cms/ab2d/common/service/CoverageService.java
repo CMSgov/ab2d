@@ -1,10 +1,6 @@
 package gov.cms.ab2d.common.service;
 
-import gov.cms.ab2d.common.model.CoveragePeriod;
-import gov.cms.ab2d.common.model.CoverageSearchEvent;
-import gov.cms.ab2d.common.model.CoverageSearchDiff;
-import gov.cms.ab2d.common.model.CoverageSummary;
-import gov.cms.ab2d.common.model.JobStatus;
+import gov.cms.ab2d.common.model.*;
 
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -145,7 +141,7 @@ public interface CoverageService {
      * @return resulting coverage search event if there is a search in the queu
      * @throws InvalidJobStateTransition if job is not in the {@link JobStatus#SUBMITTED} state when this job is received
      */
-    Optional<CoverageSearchEvent> startSearch(String description);
+    Optional<CoverageMapping> startSearch(String description);
 
     /**
      * Change a coverage search to {@link JobStatus#CANCELLED} and log an event.

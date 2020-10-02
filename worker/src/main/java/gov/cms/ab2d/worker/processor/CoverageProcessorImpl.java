@@ -1,6 +1,7 @@
 package gov.cms.ab2d.worker.processor;
 
 import gov.cms.ab2d.bfd.client.BFDClient;
+import gov.cms.ab2d.common.model.CoverageMapping;
 import gov.cms.ab2d.common.model.CoveragePeriod;
 import gov.cms.ab2d.common.model.CoverageSearchEvent;
 import gov.cms.ab2d.common.service.CoverageService;
@@ -35,9 +36,6 @@ public class CoverageProcessorImpl implements CoverageProcessor {
 
     // Maximum attempts to complete mapping before failure
     private final int maxAttempts;
-
-    // Queue for jobs that need to be run
-    private final BlockingDeque<CoverageMapping> coverageMappingDeque = new LinkedBlockingDeque<>();
 
     private final List<CoverageMappingCallable> inProgressMappings = new ArrayList<>();
 
@@ -118,23 +116,20 @@ public class CoverageProcessorImpl implements CoverageProcessor {
             Optional<CoverageSearchEvent> lastEvent = coverageService.findLastEvent(mapping.getCoveragePeriod().getId());
 
             String eventLog = "manually queued coverage period search at " + (prioritize ? "front of queue" : "back of queue");
-            CoverageSearchEvent event = coverageService.submitSearch(mapping.getCoveragePeriod().getId(), eventLog);
-
-            mapping.setCoverageSearchEvent(event);
-
             if (prioritize) {
-                coverageMappingDeque.addFirst(mapping);
+                coverageService.prioritizeSearch(mapping.getCoveragePeriod().getId(), eventLog);
             } else {
-                coverageMappingDeque.addLast(mapping);
+                coverageService.submitSearch(mapping.getCoveragePeriod().getId(), eventLog);
             }
         }
     }
 
-    public boolean startJob(CoverageMapping mapping) {
+    public boolean startJob() {
         synchronized (inProgressMappings) {
 
             if (!inShutdown.get()) {
-                CoverageSearchEvent started = coverageService.startSearch(mapping.getCoveragePeriod().getId(), "staritng the job");
+                CoverageSearchEvent started = coverageService.startSearch("starting the job");
+                CoverageMapping mapping = new CoverageMapping(started);
                 mapping.setCoverageSearchEvent(started);
 
                 CoverageMappingCallable callable = new CoverageMappingCallable(mapping, bfdClient);

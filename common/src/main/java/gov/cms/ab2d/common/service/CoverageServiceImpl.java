@@ -435,7 +435,7 @@ public class CoverageServiceImpl implements CoverageService {
     }
 
     @Override
-    public Optional<CoverageSearchEvent> startSearch(String description) {
+    public Optional<CoverageMapping> startSearch(String description) {
 
         Optional<CoverageSearch> submittedSearch = coverageSearchRepo.findFirstByOrderByCreatedAsc();
 
@@ -448,7 +448,9 @@ public class CoverageServiceImpl implements CoverageService {
         coverageSearchRepo.delete(submittedSearch.get());
         coverageSearchRepo.flush();
 
-        return Optional.of(updateStatus(period, description, JobStatus.IN_PROGRESS));
+        CoverageSearchEvent coverageSearchEvent = updateStatus(period, description, JobStatus.IN_PROGRESS);
+
+        return Optional.of(new CoverageMapping(coverageSearchEvent, submittedSearch.get()));
     }
 
     @Override

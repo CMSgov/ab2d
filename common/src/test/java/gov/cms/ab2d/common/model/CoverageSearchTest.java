@@ -74,8 +74,8 @@ class CoverageSearchTest {
             CoveragePeriod period1 = dataSetup.createCoveragePeriod(contract1, 10, 2020);
             CoveragePeriod period2 = dataSetup.createCoveragePeriod(contract2, 10, 2020);
 
-            CoverageSearch search1 = new CoverageSearch(null, period1, OffsetDateTime.now());
-            CoverageSearch search2 = new CoverageSearch(null, period2, OffsetDateTime.now().minusDays(2));
+            CoverageSearch search1 = new CoverageSearch(null, period1, OffsetDateTime.now(), 0);
+            CoverageSearch search2 = new CoverageSearch(null, period2, OffsetDateTime.now().minusDays(2), 0);
 
             CoverageSearch savedSearch1 = coverageSearchRepository.save(search1);
 

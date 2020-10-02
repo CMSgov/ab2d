@@ -67,7 +67,7 @@ public class InsertionJob implements Callable<CoverageSearchEvent> {
     public CoverageSearchEvent call() {
         // Add in progress event as foreign key for all inserts
         coverageService.submitSearch(period.getId(), "testing");
-        CoverageSearchEvent inProgress = coverageService.startSearch("testing").get();
+        CoverageSearchEvent inProgress = coverageService.startSearch("testing").get().getCoverageSearchEvent();
 
         // Run inserts
         // If number of experiments is greater than 1 then data will be erased after each experiment

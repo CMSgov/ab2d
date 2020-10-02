@@ -6,6 +6,8 @@ import lombok.EqualsAndHashCode;
 
 import javax.persistence.*;
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Data
@@ -23,7 +25,14 @@ public class CoverageSearch {
     // We can use this to search for the earliest search request
     private OffsetDateTime created;
 
+    private int attempts;
+
     public CoverageSearch() {
+        attempts = 0;
         created = OffsetDateTime.now();
+    }
+
+    public void incrementAttempts() {
+        attempts += 1;
     }
 }

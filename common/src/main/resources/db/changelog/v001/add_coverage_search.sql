@@ -5,6 +5,7 @@
 CREATE TABLE coverage_search (
     id BIGINT NOT NULL,
     bene_coverage_period_id INTEGER NOT NULL,
+    attempts INTEGER NOT NULL DEFAULT 0,
     created timestamp
 );
 
