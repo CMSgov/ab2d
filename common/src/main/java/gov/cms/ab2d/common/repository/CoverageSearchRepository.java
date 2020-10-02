@@ -12,7 +12,5 @@ public interface CoverageSearchRepository extends JpaRepository<CoverageSearch, 
 
     void deleteCoverageSearchByPeriod(CoveragePeriod period);
 
-    Optional<CoverageSearch> findFirstByPeriodOrderByCreatedAsc(CoveragePeriod period);
-
     Optional<CoverageSearch> findFirstByOrderByCreatedAsc();
 }

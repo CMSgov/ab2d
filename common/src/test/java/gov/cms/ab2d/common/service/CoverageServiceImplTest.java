@@ -168,7 +168,7 @@ class CoverageServiceImplTest {
 
         // Submitting a coverage search added row to coverage search table
 
-        Optional<CoverageSearch> search = coverageSearchRepo.findFirstByPeriodOrderByCreatedAsc(period1Jan);
+        Optional<CoverageSearch> search = coverageSearchRepo.findFirstByOrderByCreatedAsc();
         assertTrue(search.isPresent());
         assertNotNull(search.get().getCreated());
         assertEquals(period1Jan, search.get().getPeriod());
@@ -632,7 +632,7 @@ class CoverageServiceImplTest {
         CoverageSearchEvent cs1 = coverageService.submitSearch(period1Jan.getId(), "testing");
 
         CoverageSearchEvent cs1Copy = coverageSearchEventRepo.findById(cs1.getId()).get();
-        CoverageSearch coverageSearch = coverageSearchRepo.findFirstByPeriodOrderByCreatedAsc(period1Jan).get();
+        CoverageSearch coverageSearch = coverageSearchRepo.findFirstByOrderByCreatedAsc().get();
 
         assertEquals(JobStatus.SUBMITTED, cs1Copy.getNewStatus());
         // Make sure that coverage search and search event match
