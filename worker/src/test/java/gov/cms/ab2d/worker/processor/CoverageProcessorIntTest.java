@@ -65,7 +65,6 @@ class CoverageProcessorIntTest {
     }
 
     @Disabled
-    @DisplayName("")
     @Test
     void integrationTest() {
 
@@ -93,8 +92,6 @@ class CoverageProcessorIntTest {
         assertEquals(4, coverageRepo.findAll()
                 .stream().map(c -> c.getCoveragePeriod().getMonth())
                 .collect(toSet()).size());
-
-        System.out.println("Finished yay");
     }
 
     private void sleep(int seconds) {

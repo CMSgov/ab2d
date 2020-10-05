@@ -146,8 +146,6 @@ public class CoverageProcessorImpl implements CoverageProcessor {
     @Scheduled(fixedDelay = THIRTY_SECONDS)
     public void loadMappingJob() {
 
-        log.info("load called");
-
         if (isProcessorBusy()) {
             log.debug("not starting any new coverage mapping jobs because service is full. " +
                     "Currently executing {}. Currently inserting {}", executor.getActiveCount(), coverageInsertionQueue.size());
@@ -172,8 +170,6 @@ public class CoverageProcessorImpl implements CoverageProcessor {
                 queueMapping(mapping, false);
             }
         }
-
-        log.info("load exited");
     }
 
     private boolean isProcessorBusy() {
@@ -187,8 +183,6 @@ public class CoverageProcessorImpl implements CoverageProcessor {
 
     @Scheduled(fixedDelay = THIRTY_SECONDS)
     public void monitorMappingJobs() {
-
-        log.info("monitoring called");
 
         synchronized (inProgressMappings) {
             if (!inShutdown.get()) {
@@ -209,8 +203,6 @@ public class CoverageProcessorImpl implements CoverageProcessor {
                 }
             }
         }
-
-        log.info("monitoring exited");
     }
 
     public void evaluateJob(CoverageMapping mapping) {
@@ -238,8 +230,6 @@ public class CoverageProcessorImpl implements CoverageProcessor {
     @Scheduled(fixedDelay = ONE_SECOND)
     public void insertJobResults() {
 
-        log.info("insert called");
-
         try {
             CoverageMapping result = coverageInsertionQueue.poll(THIRTY_SECONDS, TimeUnit.MILLISECONDS);
 
@@ -254,7 +244,6 @@ public class CoverageProcessorImpl implements CoverageProcessor {
             int year = result.getPeriod().getYear();
 
             if (!inShutdown.get()) {
-
 
                 log.debug("inserting coverage mapping for contract {} during {}-{}",
                         contractNumber, month, year);
@@ -274,8 +263,6 @@ public class CoverageProcessorImpl implements CoverageProcessor {
         } catch (InterruptedException ie) {
             log.debug("polling for data to insert failed due to interruption", ie);
         }
-
-        log.info("insert exited");
     }
 
     @PreDestroy
