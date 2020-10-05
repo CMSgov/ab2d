@@ -580,7 +580,7 @@ public class CoverageServiceImpl implements CoverageService {
     }
 
     private void logStatusChange(CoveragePeriod period, String description, JobStatus jobStatus) {
-        log.info("Updating job state for search {}-{}-{} from {} to {} due to {}", period.getContract().getId(),
+        log.info("Updating job state for search {}-{}-{} from {} to {} due to {}", period.getContract().getContractNumber(),
                 period.getMonth(), period.getYear(), period.getStatus(), jobStatus, description);
     }
 
