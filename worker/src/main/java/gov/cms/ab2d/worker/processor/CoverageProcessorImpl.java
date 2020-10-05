@@ -126,7 +126,7 @@ public class CoverageProcessorImpl implements CoverageProcessor {
 
             if (!inShutdown.get()) {
 
-                log.debug("starting search for {} during {}-{}", mapping.getContract().getContractName(),
+                log.debug("starting search for {} during {}-{}", mapping.getContract().getContractNumber(),
                         mapping.getPeriod().getMonth(), mapping.getPeriod().getYear());
 
                 CoverageMappingCallable callable = new CoverageMappingCallable(mapping, bfdClient);
@@ -151,7 +151,7 @@ public class CoverageProcessorImpl implements CoverageProcessor {
                 CoverageMapping mapping = maybeSearch.get();
 
                 log.debug("found a search in queue for contract {} during {}-{}, attempting to search",
-                        mapping.getContract().getContractName(), mapping.getPeriod().getMonth(),
+                        mapping.getContract().getContractNumber(), mapping.getPeriod().getMonth(),
                         mapping.getPeriod().getYear());
 
                 if (!startJob(mapping)) {
