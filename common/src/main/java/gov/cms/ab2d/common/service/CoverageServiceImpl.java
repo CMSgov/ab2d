@@ -201,7 +201,7 @@ public class CoverageServiceImpl implements CoverageService {
                 statement.setLong(2, searchEvent.get().getId());
                 statement.execute();
             } catch (Exception exception) {
-                exception.printStackTrace();
+                throw new RuntimeException(exception);
             }
         }
     }
@@ -378,18 +378,20 @@ public class CoverageServiceImpl implements CoverageService {
     }
 
     @Override
-    public List<CoveragePeriod> findNeverSearched() {
+    public List<CoveragePeriod> coveragePeriodNeverSearched() {
         return coveragePeriodRepo.findAllByStatusIsNull();
     }
 
     @Override
-    public List<CoveragePeriod> coverageNotUpdatedSince(int month, int year, OffsetDateTime lastSuccessful) {
+    public List<CoveragePeriod> coveragePeriodNotUpdatedSince(int month, int year, OffsetDateTime lastSuccessful) {
         List<CoveragePeriod> allCoveragePeriodsForMonth = coveragePeriodRepo.findAllByMonthAndYear(month, year);
 
         return allCoveragePeriodsForMonth.stream()
-                .filter(period -> period.getStatus() != JobStatus.SUBMITTED)
+                .filter(period -> period.getStatus() != JobStatus.SUBMITTED
+                        && period.getStatus() != JobStatus.IN_PROGRESS)
                 .filter(period -> {
-                    Optional<CoverageSearchEvent>  search = coverageSearchEventRepo.findSearchEventWithOffset(period.getId(), JobStatus.SUCCESSFUL.name(), 0);
+                    Optional<CoverageSearchEvent>  search = coverageSearchEventRepo
+                            .findSearchEventWithOffset(period.getId(), JobStatus.SUCCESSFUL.name(), 0);
 
                     if (search.isPresent()) {
                         OffsetDateTime created = search.get().getCreated();
@@ -400,6 +402,15 @@ public class CoverageServiceImpl implements CoverageService {
                     return true;
                 }).collect(toList());
 
+    }
+
+    @Override
+    public List<CoveragePeriod> coveragePeriodStuckJobs(OffsetDateTime startedBefore) {
+        List<CoverageSearchEvent> events = coverageSearchEventRepo
+                .findStuckAtStatus(JobStatus.IN_PROGRESS.name(), startedBefore);
+
+        return events.stream().map(CoverageSearchEvent::getCoveragePeriod)
+                .collect(toList());
     }
 
     @Override

@@ -12,7 +12,6 @@ import org.hl7.fhir.dstu3.model.Patient;
 import org.junit.jupiter.api.*;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
@@ -24,7 +23,6 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import java.util.Collections;
 
 import static gov.cms.ab2d.worker.processor.CoverageMappingCallable.BENEFICIARY_ID;
-import static java.util.stream.Collectors.toSet;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
@@ -63,13 +61,6 @@ class CoverageProcessorImplTest {
     @Autowired
     private DataSetup dataSetup;
 
-    @Autowired
-    @Qualifier(value = "patientCoverageThreadPool")
-    private ThreadPoolTaskExecutor taskExecutor;
-
-    @Autowired
-    private BFDClient actualClient;
-
     private Sponsor sponsor;
     private Contract contract;
     private CoveragePeriod january;
@@ -78,6 +69,7 @@ class CoverageProcessorImplTest {
 
     private BFDClient bfdClient;
 
+    private ThreadPoolTaskExecutor taskExecutor;
     private CoverageProcessorImpl processor;
 
     @BeforeEach
@@ -92,12 +84,19 @@ class CoverageProcessorImplTest {
 
         bfdClient = mock(BFDClient.class);
 
+        taskExecutor = new ThreadPoolTaskExecutor();
+        taskExecutor.setMaxPoolSize(6);
+        taskExecutor.setCorePoolSize(3);
+        taskExecutor.initialize();
+
         processor = new CoverageProcessorImpl(coverageService, bfdClient, taskExecutor,
-                3, 3, 3);
+                3, 3, 3, 24);
     }
 
     @AfterEach
     void after() {
+        processor.shutdown();
+
         coverageRepo.deleteAll();
         coverageSearchEventRepo.deleteAll();
         coverageSearchRepo.deleteAll();

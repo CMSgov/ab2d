@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import javax.annotation.PreDestroy;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -38,6 +39,9 @@ public class CoverageProcessorImpl implements CoverageProcessor {
     // Maximum attempts to complete mapping before failure
     private final int maxAttempts;
 
+    // Number of days that job is running
+    private final int stuckHours;
+
     private final List<CoverageMappingCallable> inProgressMappings = new ArrayList<>();
 
     // Queue for results of jobs that have already completed
@@ -50,28 +54,55 @@ public class CoverageProcessorImpl implements CoverageProcessor {
                                  @Qualifier("patientCoverageThreadPool") ThreadPoolTaskExecutor executor,
                                  @Value("${coverage.update.months.past}") int pastMonthsToUpdate,
                                  @Value("${coverage.update.stale.days}") int staleDays,
-                                 @Value("${coverage.update.max.attempts}") int maxAttempts) {
+                                 @Value("${coverage.update.max.attempts}") int maxAttempts,
+                                 @Value("${coverage.update.stuck.hours}") int stuckHours) {
         this.coverageService = coverageService;
         this.bfdClient = bfdClient;
         this.executor = executor;
         this.pastMonthsToUpdate = pastMonthsToUpdate;
         this.staleDays = staleDays;
         this.maxAttempts = maxAttempts;
+        this.stuckHours = stuckHours;
     }
 
-    /*
-     * 1. Query for all stale coverage periods
-     * 2. Insert into new table (has to be created with schema file) which is a list of todo items
-     * 3. Delete coverageMappingDeque completely and pull from this list of todo items. Update the mappingLoop to
-     *    handle shutdown correctly with this in mind. Marked as submitted
-     * 4. Determine whether use of submitted is correct and modify accordingly (see queryCoverageMapping)
+    /**
+     * Find all work that needs to be done including new coverage periods, jobs that have been running too long,
+     * and coverage information that is too old.
+     *
+     * todo annotate as quartz job
      */
     @Override
     public void queueStaleCoveragePeriods() {
         // Use a linked hash set to order by discovery
+        // Add all new coverage periods that have never been mapped/searched
+        Set<CoveragePeriod> outOfDateInfo = new LinkedHashSet<>(coverageService.coveragePeriodNeverSearched());
 
-        Set<CoveragePeriod> stalePeriods = new LinkedHashSet<>(coverageService.findNeverSearched());
+        // Find all stuck coverage searches and cancel them
+        outOfDateInfo.addAll(findAndCancelStuckCoverageJobs());
 
+        // For all months into the past find old coverage searches
+        outOfDateInfo.addAll(findStaleCoverageInformation());
+
+        for (CoveragePeriod period : outOfDateInfo) {
+            queueCoveragePeriod(period, false);
+        }
+    }
+
+    private Set<CoveragePeriod> findAndCancelStuckCoverageJobs() {
+
+        Set<CoveragePeriod> stuckJobs = new LinkedHashSet<>(
+                coverageService.coveragePeriodStuckJobs(OffsetDateTime.now(ZoneOffset.UTC).minusDays(1)));
+
+        for (CoveragePeriod period : stuckJobs) {
+            coverageService.failSearch(period.getId(), "coverage period current job has been stuck for at least "
+                    + stuckHours + " hours and is now considered failed.");
+        }
+
+        return stuckJobs;
+    }
+
+    private Set<CoveragePeriod> findStaleCoverageInformation() {
+        Set<CoveragePeriod> stalePeriods = new LinkedHashSet<>();
         int monthsInPast = 0;
         OffsetDateTime dateTime = OffsetDateTime.now(ZoneId.of("America/New_York"));
         do {
@@ -83,13 +114,11 @@ public class CoverageProcessorImpl implements CoverageProcessor {
             // Look for coverage periods that have not been updated
             OffsetDateTime lastUpdatedAfter = dateTime.minusDays(staleDays * (monthsInPast + 1));
 
-            stalePeriods.addAll(coverageService.coverageNotUpdatedSince(month, year, lastUpdatedAfter));
+            stalePeriods.addAll(coverageService.coveragePeriodNotUpdatedSince(month, year, lastUpdatedAfter));
             monthsInPast++;
         } while (monthsInPast < pastMonthsToUpdate);
 
-        for (CoveragePeriod period : stalePeriods) {
-            queueCoveragePeriod(period, false);
-        }
+        return stalePeriods;
     }
 
     @Override
@@ -211,7 +240,7 @@ public class CoverageProcessorImpl implements CoverageProcessor {
                     mapping.getPeriod().getMonth(), mapping.getPeriod().getYear());
 
             coverageInsertionQueue.add(mapping);
-        } else if (mapping.getCoverageSearch().getAttempts() > maxAttempts){
+        } else if (mapping.getCoverageSearch().getAttempts() > maxAttempts) {
 
             log.error("could not complete coverage mapping job due to multiple failed attempts and will not re-attempt");
 

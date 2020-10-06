@@ -110,7 +110,7 @@ public interface CoverageService {
     /**
      * Find all coverage periods that have never been searched
      */
-    List<CoveragePeriod> findNeverSearched();
+    List<CoveragePeriod> coveragePeriodNeverSearched();
 
     /**
      * Find all coverage periods for a given month since
@@ -119,7 +119,15 @@ public interface CoverageService {
      * @param lastSuccessful last search that successfully completed
      * @return matching coverage periods
      */
-    List<CoveragePeriod> coverageNotUpdatedSince(int month, int year, OffsetDateTime lastSuccessful);
+    List<CoveragePeriod> coveragePeriodNotUpdatedSince(int month, int year, OffsetDateTime lastSuccessful);
+
+    /**
+     * Find jobs that have been in progress for too long. This catches when jobs crash
+     * or fail and the status is not updated to failed.
+     * @param startedBefore started before
+     * @return coverage periods with jobs stuck in progress
+     */
+    List<CoveragePeriod> coveragePeriodStuckJobs(OffsetDateTime startedBefore);
 
     /**
      * Change a coverage search to {@link JobStatus#SUBMITTED} and log an event.

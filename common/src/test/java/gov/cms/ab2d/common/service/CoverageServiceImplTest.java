@@ -592,13 +592,13 @@ class CoverageServiceImplTest {
     @DisplayName("Find all coverage periods that have never had mapping completed")
     @Test
     void getNeverSearched() {
-        List<CoveragePeriod> coveragePeriods = coverageService.findNeverSearched();
+        List<CoveragePeriod> coveragePeriods = coverageService.coveragePeriodNeverSearched();
 
         assertEquals(5, coveragePeriods.size());
 
         coverageService.submitSearch(period1Jan.getId(), "testing");
 
-        coveragePeriods = coverageService.findNeverSearched();
+        coveragePeriods = coverageService.coveragePeriodNeverSearched();
 
         assertEquals(4, coveragePeriods.size());
     }
@@ -610,7 +610,7 @@ class CoverageServiceImplTest {
         OffsetDateTime startTest = OffsetDateTime.now();
 
         // Both January periods have never been searched so both should be returned
-        List<CoveragePeriod> coveragePeriods = coverageService.coverageNotUpdatedSince(1, 2020, startTest.minusDays(1));
+        List<CoveragePeriod> coveragePeriods = coverageService.coveragePeriodNotUpdatedSince(1, 2020, startTest.minusDays(1));
         assertEquals(2, coveragePeriods.size());
 
         coverageService.submitSearch(period1Jan.getId(), "testing");
@@ -618,12 +618,55 @@ class CoverageServiceImplTest {
         CoverageSearchEvent completedEvent = coverageService.completeSearch(period1Jan.getId(), "testing");
 
         // Searching using future date should return all (2) January periods
-        coveragePeriods = coverageService.coverageNotUpdatedSince(1, 2020, completedEvent.getCreated().plusSeconds(1));
+        coveragePeriods = coverageService.coveragePeriodNotUpdatedSince(1, 2020, completedEvent.getCreated().plusSeconds(1));
         assertEquals(2, coveragePeriods.size());
 
         // Searching using past date should return never searched period only
-        coveragePeriods = coverageService.coverageNotUpdatedSince(1, 2020, startTest.minusDays(1));
+        coveragePeriods = coverageService.coveragePeriodNotUpdatedSince(1, 2020, startTest.minusDays(1));
         assertEquals(1, coveragePeriods.size());
+    }
+
+    @DisplayName("Find all stuck jobs")
+    @Test
+    void findStuckJobs() {
+
+        OffsetDateTime startTest = OffsetDateTime.now();
+
+        coverageService.submitSearch(period1Jan.getId(), "testing");
+        coverageService.startSearch("testing");
+
+        coverageService.submitSearch(period2Jan.getId(), "testing");
+        coverageService.startSearch("testing");
+        coverageService.completeSearch(period2Jan.getId(), "testing");
+
+        coverageService.submitSearch(period1Feb.getId(), "testing");
+        coverageService.startSearch("testing");
+
+        OffsetDateTime midTest = OffsetDateTime.now();
+
+        coverageService.submitSearch(period1March.getId(), "testing");
+        coverageService.startSearch("testing");
+
+        coverageService.submitSearch(period1April.getId(), "testing");
+        coverageService.startSearch("testing");
+
+        OffsetDateTime afterTest = OffsetDateTime.now();
+
+        List<CoveragePeriod> stuckJobs = coverageService.coveragePeriodStuckJobs(afterTest);
+        assertEquals(4, stuckJobs.size());
+        assertFalse(stuckJobs.stream().anyMatch(p -> p.getId().equals(period2Jan.getId())));
+        assertTrue(stuckJobs.stream().anyMatch(p -> p.getId().equals(period1Jan.getId())));
+        assertTrue(stuckJobs.stream().anyMatch(p -> p.getId().equals(period1Feb.getId())));
+        assertTrue(stuckJobs.stream().anyMatch(p -> p.getId().equals(period1March.getId())));
+        assertTrue(stuckJobs.stream().anyMatch(p -> p.getId().equals(period1April.getId())));
+
+        stuckJobs = coverageService.coveragePeriodStuckJobs(midTest);
+        assertEquals(2, stuckJobs.size());
+        assertTrue(stuckJobs.stream().anyMatch(p -> p.equals(period1Jan)));
+        assertTrue(stuckJobs.stream().anyMatch(p -> p.equals(period1Feb)));
+
+        stuckJobs = coverageService.coveragePeriodStuckJobs(startTest);
+        assertEquals(0, stuckJobs.size());
     }
 
     @DisplayName("Coverage period searches are successfully submitted")

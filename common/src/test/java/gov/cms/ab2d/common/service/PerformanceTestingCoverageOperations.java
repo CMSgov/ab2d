@@ -50,6 +50,9 @@ class PerformanceTestingCoverageOperations {
     private CoveragePeriodRepository coveragePeriodRepo;
 
     @Autowired
+    private CoverageSearchRepository coverageSearchRepo;
+
+    @Autowired
     private CoverageSearchEventRepository coverageSearchEventRepo;
 
     @Autowired
@@ -85,6 +88,7 @@ class PerformanceTestingCoverageOperations {
 // If you kill the integration test early uncomment this and comment the code below
 //
 //        deleteCoverage();
+//        coverageSearchRepo.deleteAll();
 //        coverageSearchEventRepo.deleteAll();
 //        coveragePeriodRepo.deleteAll();
 //        contractRepo.deleteAll();
@@ -116,12 +120,15 @@ class PerformanceTestingCoverageOperations {
     @AfterEach
     public void cleanUp() {
         deleteCoverage();
+        coverageSearchRepo.deleteAll();
         coverageSearchEventRepo.deleteAll();
         coveragePeriodRepo.deleteAll();
-        contractRepo.deleteAll();
+        contractRepo.delete(contract);
+        contractRepo.flush();
 
         if (sponsor != null) {
             sponsorRepo.delete(sponsor);
+            sponsorRepo.flush();
         }
     }
 
@@ -145,11 +152,11 @@ class PerformanceTestingCoverageOperations {
     @Test
     void readPerformanceWithJPAPaging() {
 
-        int dataPoints = 1_000_000;
+        int dataPoints = 1_000;
         int queries = 200;
         int threads = 10;
         int pageSize = 5000;
-        int pages = dataPoints / pageSize;
+        int pages = dataPoints > pageSize ? dataPoints / pageSize : 1;
 
         List<CoveragePeriod> periods = new ArrayList<>();
         periods.add(period1);
@@ -280,7 +287,7 @@ class PerformanceTestingCoverageOperations {
 
         if (coverageRepo.count() == 0) {
 
-            ExecutorService executor = Executors.newFixedThreadPool(5);
+            ExecutorService executor = Executors.newFixedThreadPool(1);
             List<Future> insertions = new ArrayList<>();
 
             for (CoveragePeriod period : periods) {

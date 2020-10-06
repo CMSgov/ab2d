@@ -8,7 +8,6 @@ import gov.cms.ab2d.common.util.DataSetup;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.testcontainers.containers.PostgreSQLContainer;
@@ -24,12 +23,6 @@ class CoverageProcessorIntTest {
 
     @Container
     private static final PostgreSQLContainer postgres = new AB2DPostgresqlContainer();
-
-    @Value("${coverage.update.max.attempts}")
-    private int maxRetries;
-
-    @Autowired
-    private SponsorRepository sponsorRepo;
 
     @Autowired
     private ContractRepository contractRepo;
