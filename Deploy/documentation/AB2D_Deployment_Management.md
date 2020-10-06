@@ -31,16 +31,68 @@
    * [Configure Terraform logging on Jenkins agent 01](#configure-terraform-logging-on-jenkins-agent-01)
    * [Install maven on Jenkins agent 01](#install-maven-on-jenkins-agent-01)
    * [Install jq on Jenkins agent 01](#install-jq-on-jenkins-agent-01)
-   * [Add the jenkins user to the docker group](#add-the-jenkins-user-to-the-docker-group)
+   * [Add the jenkins user to the docker group on Jenkins agent 01](#add-the-jenkins-user-to-the-docker-group-on-jenkins-agent-01)
    * [Ensure jenkins agent 01 can use the Unix socket for the Docker daemon](#ensure-jenkins-agent-01-can-use-the-unix-socket-for-the-docker-daemon)
    * [Install packer on Jenkins agent 01](#install-packer-on-jenkins-agent-01)
    * [Install Postgres 11 on Jenkins agent 01](#install-postgres-11-on-jenkins-agent-01)
    * [Setup ruby environment on Jenkins agent 01](#setup-ruby-environment-on-jenkins-agent-01)
    * [Install postgresql10-devel on Jenkins agent 01](#install-postgresql10-devel-on-jenkins-agent-01)
 1. [Configure Jenkins agent 02](#configure-jenkins-agent-02)
+   * [Install development tools on Jenkins agent 02](#install-development-tools-on-jenkins-agent-02)
+   * [Create a directory for jobs on Jenkins agent 02](#create-a-directory-for-jobs-on-jenkins-agent-02)
+   * [Install python3, pip3, and required pip modules on Jenkins agent 02](#install-python3-pip3-and-required-pip-modules-on-jenkins-agent-02)
+   * [Install Terraform on Jenkins agent 02](#install-terraform-on-jenkins-agent-02)
+   * [Configure Terraform logging on Jenkins agent 02](#configure-terraform-logging-on-jenkins-agent-02)
+   * [Install maven on Jenkins agent 02](#install-maven-on-jenkins-agent-02)
+   * [Install jq on Jenkins agent 02](#install-jq-on-jenkins-agent-02)
+   * [Add the jenkins user to the docker group on Jenkins agent 02](#add-the-jenkins-user-to-the-docker-group-on-jenkins-agent-02)
+   * [Ensure jenkins agent 02 can use the Unix socket for the Docker daemon](#ensure-jenkins-agent-02-can-use-the-unix-socket-for-the-docker-daemon)
+   * [Install packer on Jenkins agent 02](#install-packer-on-jenkins-agent-02)
+   * [Install Postgres 11 on Jenkins agent 02](#install-postgres-11-on-jenkins-agent-02)
+   * [Setup ruby environment on Jenkins agent 02](#setup-ruby-environment-on-jenkins-agent-02)
+   * [Install postgresql10-devel on Jenkins agent 02](#install-postgresql10-devel-on-jenkins-agent-02)
 1. [Configure Jenkins agent 03](#configure-jenkins-agent-03)
+   * [Install development tools on Jenkins agent 03](#install-development-tools-on-jenkins-agent-03)
+   * [Create a directory for jobs on Jenkins agent 03](#create-a-directory-for-jobs-on-jenkins-agent-03)
+   * [Install python3, pip3, and required pip modules on Jenkins agent 03](#install-python3-pip3-and-required-pip-modules-on-jenkins-agent-03)
+   * [Install Terraform on Jenkins agent 03](#install-terraform-on-jenkins-agent-03)
+   * [Configure Terraform logging on Jenkins agent 03](#configure-terraform-logging-on-jenkins-agent-03)
+   * [Install maven on Jenkins agent 03](#install-maven-on-jenkins-agent-03)
+   * [Install jq on Jenkins agent 03](#install-jq-on-jenkins-agent-03)
+   * [Add the jenkins user to the docker group on Jenkins agent 03](#add-the-jenkins-user-to-the-docker-group-on-jenkins-agent-03)
+   * [Ensure jenkins agent 03 can use the Unix socket for the Docker daemon](#ensure-jenkins-agent-03-can-use-the-unix-socket-for-the-docker-daemon)
+   * [Install packer on Jenkins agent 03](#install-packer-on-jenkins-agent-03)
+   * [Install Postgres 11 on Jenkins agent 03](#install-postgres-11-on-jenkins-agent-03)
+   * [Setup ruby environment on Jenkins agent 03](#setup-ruby-environment-on-jenkins-agent-03)
+   * [Install postgresql10-devel on Jenkins agent 03](#install-postgresql10-devel-on-jenkins-agent-03)
 1. [Configure Jenkins agent 04](#configure-jenkins-agent-04)
+   * [Install development tools on Jenkins agent 04](#install-development-tools-on-jenkins-agent-04)
+   * [Create a directory for jobs on Jenkins agent 04](#create-a-directory-for-jobs-on-jenkins-agent-04)
+   * [Install python3, pip3, and required pip modules on Jenkins agent 04](#install-python3-pip3-and-required-pip-modules-on-jenkins-agent-04)
+   * [Install Terraform on Jenkins agent 04](#install-terraform-on-jenkins-agent-04)
+   * [Configure Terraform logging on Jenkins agent 04](#configure-terraform-logging-on-jenkins-agent-04)
+   * [Install maven on Jenkins agent 04](#install-maven-on-jenkins-agent-04)
+   * [Install jq on Jenkins agent 04](#install-jq-on-jenkins-agent-04)
+   * [Add the jenkins user to the docker group on Jenkins agent 04](#add-the-jenkins-user-to-the-docker-group-on-jenkins-agent-04)
+   * [Ensure jenkins agent 04 can use the Unix socket for the Docker daemon](#ensure-jenkins-agent-04-can-use-the-unix-socket-for-the-docker-daemon)
+   * [Install packer on Jenkins agent 04](#install-packer-on-jenkins-agent-04)
+   * [Install Postgres 11 on Jenkins agent 04](#install-postgres-11-on-jenkins-agent-04)
+   * [Setup ruby environment on Jenkins agent 04](#setup-ruby-environment-on-jenkins-agent-04)
+   * [Install postgresql10-devel on Jenkins agent 04](#install-postgresql10-devel-on-jenkins-agent-04)
 1. [Configure Jenkins agent 05](#configure-jenkins-agent-05)
+   * [Install development tools on Jenkins agent 05](#install-development-tools-on-jenkins-agent-05)
+   * [Create a directory for jobs on Jenkins agent 05](#create-a-directory-for-jobs-on-jenkins-agent-05)
+   * [Install python3, pip3, and required pip modules on Jenkins agent 05](#install-python3-pip3-and-required-pip-modules-on-jenkins-agent-05)
+   * [Install Terraform on Jenkins agent 05](#install-terraform-on-jenkins-agent-05)
+   * [Configure Terraform logging on Jenkins agent 05](#configure-terraform-logging-on-jenkins-agent-05)
+   * [Install maven on Jenkins agent 05](#install-maven-on-jenkins-agent-05)
+   * [Install jq on Jenkins agent 05](#install-jq-on-jenkins-agent-05)
+   * [Add the jenkins user to the docker group on Jenkins agent 05](#add-the-jenkins-user-to-the-docker-group-on-jenkins-agent-05)
+   * [Ensure jenkins agent 05 can use the Unix socket for the Docker daemon](#ensure-jenkins-agent-05-can-use-the-unix-socket-for-the-docker-daemon)
+   * [Install packer on Jenkins agent 05](#install-packer-on-jenkins-agent-05)
+   * [Install Postgres 11 on Jenkins agent 05](#install-postgres-11-on-jenkins-agent-05)
+   * [Setup ruby environment on Jenkins agent 05](#setup-ruby-environment-on-jenkins-agent-05)
+   * [Install postgresql10-devel on Jenkins agent 05](#install-postgresql10-devel-on-jenkins-agent-05)
 1. [Create GitHub user for Jenkins automation](#create-github-user-for-jenkins-automation)
 1. [Configure Jenkins for AB2D](#configure-jenkins-for-ab2d)
    * [Configure jenkins SSH credentials](#configure-jenkins-ssh-credentials)
@@ -5465,7 +5517,7 @@
    $ exit
    ```
 
-### Add the jenkins user to the docker group
+### Add the jenkins user to the docker group on Jenkins agent 01
 
 1. Open a terminal
 
@@ -5908,19 +5960,4159 @@
 
 ## Configure Jenkins agent 02
 
-> *** TO DO ***
+### Install development tools on Jenkins agent 02
+
+1. Ensure that you are connected to the Cisco VPN
+
+1. Open a terminal
+
+1. Change to the "ab2d" repo directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d
+   ```
+
+1. Get credentials for the Management AWS account
+
+   ```ShellSession
+   $ source ./Deploy/bash/set-env.sh
+   ```
+
+1. Connect to Jenkins agent 02
+
+   1. Get the public IP address of Jenkins EC2 instance
+   
+      ```ShellSession
+      $ JENKINS_AGENT_02_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-jenkins-agent-02" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+        --output text)
+      ```
+
+   1. SSH into the instance using the public IP address
+
+      ```ShellSession
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_AGENT_02_PRIVATE_IP
+      ```
+
+1. Install development tools
+
+   ```ShellSession
+   $ sudo yum group install "Development Tools" -y
+   ```
+
+### Create a directory for jobs on Jenkins agent 02
+
+1. Ensure that you are connected to the Cisco VPN
+
+1. Open a terminal
+
+1. Change to the "Deploy" directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d/Deploy
+   ```
+
+1. Get credentials for the Management AWS account
+
+   ```ShellSession
+   $ source ./bash/set-env.sh
+   ```
+
+1. Connect to Jenkins agent 02
+
+   1. Get the public IP address of Jenkins EC2 instance
+   
+      ```ShellSession
+      $ JENKINS_AGENT_02_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-jenkins-agent-02" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+        --output text)
+      ```
+
+   1. SSH into the instance using the public IP address
+
+      ```ShellSession
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_AGENT_02_PRIVATE_IP
+      ```
+
+1. Switch to the jenkins user
+
+   ```ShellSession
+   $ sudo su - jenkins
+   ```
+   
+1. Create a directory for jobs that are built on the Jenkins agent on behalf of the Jenkins Master
+
+   ```ShellSession
+   $ mkdir -p ~/jenkins_agent
+   ```
+
+1. Exit the jenkins user
+
+   ```ShellSession
+   $ exit
+   ```
+   
+1. Exit the Jenkins agent
+
+   ```ShellSession
+   $ exit
+   ```
+   
+### Install python3, pip3, and required pip modules on Jenkins agent 02
+
+1. Ensure that you are connected to the Cisco VPN
+
+1. Open a terminal
+
+1. Change to the "Deploy" directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d/Deploy
+   ```
+
+1. Get credentials for the Management AWS account
+
+   ```ShellSession
+   $ source ./bash/set-env.sh
+   ```
+
+1. Connect to Jenkins agent 02
+
+   1. Get the public IP address of Jenkins EC2 instance
+   
+      ```ShellSession
+      $ JENKINS_AGENT_02_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-jenkins-agent-02" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+        --output text)
+      ```
+
+   1. SSH into the instance using the public IP address
+
+      ```ShellSession
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_AGENT_02_PRIVATE_IP
+      ```
+
+1. Check to see if python3 is already installed by entering the following
+
+   ```ShellSession
+   $ python3 --version
+   ```
+
+1. If python3 is not installed, do the following:
+
+   1. Install python3 requirements
+
+      ```ShellSession
+      $ sudo yum install gcc openssl-devel bzip2-devel libffi-devel -y
+      ```
+
+   1. Change to the "src" directory
+
+      ```ShellSession
+      $ cd /usr/src
+      ```
+
+   1. Get the desired version of Python 3
+
+      ```ShellSession
+      $ sudo wget https://www.python.org/ftp/python/3.7.5/Python-3.7.5.tgz
+      ```
+
+   1. Unzip the Python 3 package
+
+      ```ShellSession
+      $ sudo tar xzf Python-3.7.5.tgz
+      ```
+
+   1. Install Python 3
+
+      ```ShellSession
+      $ cd Python-3.7.5
+      $ sudo ./configure --enable-optimizations
+      $ sudo make altinstall
+      ```
+
+   1. Delete the python 3 package
+
+      ```ShellSession
+      $ sudo rm -f Python-3.7.5.tgz
+      ```
+
+   1. Verify that Python 3 is installed by checking its version
+
+      ```ShellSession
+      $ python3.7 --version
+      ```
+
+   1. Create a python3 symlink
+
+      ```ShellSession
+      $ sudo rm -f /usr/local/bin/python3
+      $ sudo ln -s /usr/local/bin/python3.7 /usr/local/bin/python3
+      ```
+
+   1. Create a pip3 symlink
+
+      ```ShellSession
+      $ sudo rm -f /usr/local/bin/pip3
+      $ sudo ln -s /usr/local/bin/pip3.7 /usr/local/bin/pip3
+      ```
+
+1. Upgrade pip
+
+   ```ShellSession
+   $ sudo pip install --upgrade pip
+   ```
+
+1. Upgrade pip3
+
+   ```ShellSession
+   $ sudo /usr/local/bin/pip3.7 install --upgrade pip
+   ```
+
+1. Upgrade pip3 site packages for user
+
+   ```ShellSession
+   $ pip3 install --upgrade pip --user
+   ```
+
+1. Install required pip modules for jenkins user
+
+   1. Switch to the jenkins user
+
+      ```ShellSession
+      $ sudo su - jenkins
+      ```
+
+   1. Install lxml
+
+      *Note that "lxml" is a library for parsing XML and HTML.*
+
+      ```ShellSession
+      $ pip3 install lxml
+      ```
+
+   1. Install requests
+
+      ```ShellSession
+      $ pip3 install requests
+      ```
+
+   1. Install boto3
+
+      ```ShellSession
+      $ pip3 install boto3
+      ```
+
+   1. Exit the Jenkins user
+
+      ```ShellSession
+      $ exit
+      ```
+
+1. Exit the Jenkins agent 02
+
+   ```ShellSession
+   $ exit
+   ```
+
+### Install Terraform on Jenkins agent 02
+
+1. Check the version of terraform that is installed on your development machine
+
+   ```ShellSession
+   $ terraform --version
+   ```
+
+1. Note the terraform version
+
+   *Format:*
+
+   ```
+   Terraform v{terraform version}
+   ```
+
+   *Example:*
+
+   ```
+   Terraform v0.12.9
+   ```
+   
+1. Ensure that you are connected to the Cisco VPN
+
+1. Open a terminal
+
+1. Change to the "ab2d" repo directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d
+   ```
+
+1. Get credentials for the Management AWS account
+
+   ```ShellSession
+   $ source ./Deploy/bash/set-env.sh
+   ```
+
+1. Connect to Jenkins agent
+
+   1. Get the public IP address of Jenkins EC2 instance
+
+      ```ShellSession
+      $ JENKINS_AGENT_02_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-jenkins-agent-02" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+        --output text)
+      ```
+
+   1. SSH into the instance using the public IP address
+
+      ```ShellSession
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_AGENT_02_PRIVATE_IP
+      ```
+
+1. Set desired terraform version
+
+   *Format:*
+   
+   ```ShellSession
+   $ TERRAFORM_VERSION={terraform version}
+   ```
+
+   *Example:*
+   
+   ```ShellSession
+   $ TERRAFORM_VERSION=0.12.9
+   ```
+
+1. Change to the "/tmp" directory
+
+   ```ShellSession
+   $ cd /tmp
+   ```
+   
+1. Download terraform
+
+   ```ShellSession
+   $ sudo wget "https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip"
+   ```
+
+1. Extract the downloaded file
+
+   ```ShellSession
+   $ sudo unzip ./terraform_${TERRAFORM_VERSION}_linux_amd64.zip -d /usr/local/bin
+   ```
+
+1. Check the terraform version
+
+   ```ShellSession
+   $ terraform --version
+   ```
+
+1. Exit the Jenkins agent 02
+
+   ```ShellSession
+   $ exit
+   ```
+
+### Configure Terraform logging on Jenkins agent 02
+
+1. Open a terminal
+
+1. Change to the "ab2d" repo directory
+
+   *Example:*
+   
+   ```ShellSession
+   $ cd ~/code/ab2d
+   ```
+
+1. Get credentials for the Management AWS account
+
+   ```ShellSession
+   $ source ./Deploy/bash/set-env.sh
+   ```
+
+1. Connect to Jenkins agent
+
+   1. Get the public IP address of Jenkins EC2 instance
+
+      ```ShellSession
+      $ JENKINS_AGENT_02_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-jenkins-agent-02" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+        --output text)
+      ```
+
+   1. SSH into the instance using the public IP address
+
+      ```ShellSession
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_AGENT_02_PRIVATE_IP
+      ```
+
+1. Create or modify the SSH config file
+
+   1. Open the SSH config file
+
+      ```ShellSession
+      $ vim ~/.ssh/config
+      ```
+
+   1. Create of modify SSH config file to include the following line at the end of the file
+
+      ```
+      StrictHostKeyChecking no
+      ```
+
+   1. Save and close the file
+
+1. Ensure terraform log directory exists
+
+   ```ShellSession
+   $ sudo mkdir -p /var/log/terraform
+   $ sudo chown -R jenkins:jenkins /var/log/terraform
+   ```
+
+1. Exit the Jenkins agent 02
+
+   ```ShellSession
+   $ exit
+   ```
+
+### Install maven on Jenkins agent 02
+
+1. Check the version of maven that is installed on your development machine
+
+   ```ShellSession
+   $ mvn --version
+   ```
+
+1. Note the terraform version
+
+   *Format:*
+
+   ```
+   Apache Maven {maven version}
+   ```
+
+   *Example:*
+
+   ```
+   Apache Maven 3.6.3
+   ```
+
+1. Open a terminal
+
+1. Change to the "ab2d" repo directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d
+   ```
+
+1. Get credentials for the Management AWS account
+
+   ```ShellSession
+   $ source ./Deploy/bash/set-env.sh
+   ```
+
+1. Connect to Jenkins agent
+
+   1. Get the public IP address of Jenkins EC2 instance
+
+      ```ShellSession
+      $ JENKINS_AGENT_02_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-jenkins-agent-02" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+        --output text)
+      ```
+
+   1. SSH into the instance using the public IP address
+
+      ```ShellSession
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_AGENT_02_PRIVATE_IP
+      ```
+
+1. Change to the "/opt" directory
+
+   ```ShellSession
+   $ cd /opt
+   ```
+
+1. Set desired maven version
+
+   ```ShellSession
+   MAVEN_VERSION=3.6.3
+   ```
+
+1. Download maven
+
+   ```ShellSession
+   $ sudo wget https://downloads.apache.org/maven/maven-3/${MAVEN_VERSION}/binaries/apache-maven-${MAVEN_VERSION}-bin.tar.gz
+   ```
+
+1. Extract maven from the archive
+
+   ```ShellSession
+   $ sudo tar xzf apache-maven-${MAVEN_VERSION}-bin.tar.gz
+   ```
+
+1. Delete the maven archive
+
+   ```ShellSession
+   $ sudo rm -f apache-maven-${MAVEN_VERSION}-bin.tar.gz
+   ```
+   
+1. Create a symbolic link for maven
+
+   ```ShellSession
+   $ sudo ln -s apache-maven-${MAVEN_VERSION} maven
+   ```
+
+1. Setup M2_HOME environment variable
+
+   ```ShellSession
+   $ echo 'export M2_HOME=/opt/maven' \
+     | sudo tee --append /etc/profile.d/maven.sh \
+     > /dev/null
+   ```
+
+1. Add the M2_HOME environment variable to PATH
+
+   ```ShellSession
+   $ echo 'export PATH=${M2_HOME}/bin:${PATH}' \
+     | sudo tee --append /etc/profile.d/maven.sh \
+     > /dev/null
+   ```
+
+1. Load the maven environment variables
+
+   ```ShellSession
+   $ source /etc/profile.d/maven.sh
+   ```
+
+1. Verify the maven version
+
+   ```ShellSession
+   $ mvn --version
+   ```
+
+1. Exit the Jenkins agent 02
+
+   ```ShellSession
+   $ exit
+   ```
+
+### Install jq on Jenkins agent 02
+
+1. Open a terminal
+
+1. Change to the "ab2d" repo directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d
+   ```
+
+1. Get credentials for the Management AWS account
+
+   ```ShellSession
+   $ source ./Deploy/bash/set-env.sh
+   ```
+
+1. Connect to Jenkins agent
+
+   1. Get the public IP address of Jenkins EC2 instance
+
+      ```ShellSession
+      $ JENKINS_AGENT_02_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-jenkins-agent-02" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+        --output text)
+      ```
+
+   1. SSH into the instance using the public IP address
+
+      ```ShellSession
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_AGENT_02_PRIVATE_IP
+      ```
+
+1. Install jq
+
+   ```ShellSession
+   $ sudo yum install jq -y
+   ```
+
+1. Verify jq by checking its version
+
+   ```ShellSession
+   $ jq --version
+   ```
+
+1. Exit the Jenkins agent 02
+
+   ```ShellSession
+   $ exit
+   ```
+
+### Add the jenkins user to the docker group on Jenkins agent 02
+
+1. Open a terminal
+
+1. Change to the "Deploy" directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d/Deploy
+   ```
+
+1. Get credentials for the Management AWS account
+
+   ```ShellSession
+   $ source ./bash/set-env.sh
+   ```
+
+1. Connect to Jenkins agent
+
+   1. Get the public IP address of Jenkins EC2 instance
+
+      ```ShellSession
+      $ JENKINS_AGENT_02_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-jenkins-agent-02" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+        --output text)
+      ```
+
+   1. SSH into the instance using the public IP address
+
+      ```ShellSession
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_AGENT_02_PRIVATE_IP
+      ```
+
+1. Determine if the jenkins user is already part of the docker group
+
+   ```ShellSession
+   $ cat /etc/group | grep docker | grep jenkins
+   ```
+
+1. If there is no output, add the jenkins user to the docker group
+
+   ```ShellSession
+   $ sudo usermod -a -G docker jenkins
+   ```
+
+1. Verify that the jenkins user is now a part of the docker group
+
+   ```ShellSession
+   $ cat /etc/group | grep docker | grep jenkins
+   ```
+
+1. Note the output
+
+   *Example:*
+
+   ```
+   docker:x:988:ec2-user,jenkins
+   ```
+
+1. Exit the Jenkins agent 02
+
+   ```ShellSession
+   $ exit
+   ```
+
+### Ensure jenkins agent 02 can use the Unix socket for the Docker daemon
+
+1. Open a terminal
+
+1. Change to the "ab2d" repo directory
+
+   *Example:*
+   
+   ```ShellSession
+   $ cd ~/code/ab2d
+   ```
+
+1. Get credentials for the Management AWS account
+
+   ```ShellSession
+   $ source ./Deploy/bash/set-env.sh
+   ```
+
+1. Connect to Jenkins agent
+
+   1. Get the public IP address of Jenkins EC2 instance
+
+      ```ShellSession
+      $ JENKINS_AGENT_02_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-jenkins-agent-02" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+        --output text)
+      ```
+
+   1. SSH into the instance using the public IP address
+
+      ```ShellSession
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_AGENT_02_PRIVATE_IP
+      ```
+
+1. Note the default permissions for the Unix socket for the Docker daemon
+
+   1. Enter the following
+
+      ```ShellSession
+      $ ls -al /var/run/docker.sock
+      ```
+
+   1. Note the default permissions
+
+      ```
+      srw-rw----
+      ```
+
+1. Give "other" read and write permissions so that Jenkins build will work
+
+   1. Enter the following
+
+      ```ShellSession
+      $ sudo chmod 666 /var/run/docker.sock
+      ```
+
+   1. Enter the following
+
+      ```ShellSession
+      $ ls -al /var/run/docker.sock
+      ```
+
+   1. Note the modified permissions
+
+      ```
+      srw-rw-rw-
+      ```
+
+1. Exit the Jenkins agent 02
+
+   ```ShellSession
+   $ exit
+   ```
+
+### Install packer on Jenkins agent 02
+
+1. Open a terminal
+
+1. Change to the "ab2d" repo directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d
+   ```
+
+1. Get credentials for the Management AWS account
+
+   ```ShellSession
+   $ source ./Deploy/bash/set-env.sh
+   ```
+
+1. Connect to Jenkins agent
+
+   1. Get the public IP address of Jenkins EC2 instance
+
+      ```ShellSession
+      $ JENKINS_AGENT_02_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-jenkins-agent-02" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+        --output text)
+      ```
+
+   1. SSH into the instance using the public IP address
+
+      ```ShellSession
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_AGENT_02_PRIVATE_IP
+      ```
+
+1. Set desired packer version
+
+   *Format:*
+   
+   ```ShellSession
+   $ PACKER_VERSION={terraform version}
+   ```
+
+   *Example:*
+   
+   ```ShellSession
+   $ PACKER_VERSION=1.4.3
+   ```
+
+1. Change to the "/tmp" directory
+
+   ```ShellSession
+   $ cd /tmp
+   ```
+
+1. Download packer
+
+   ```ShellSession
+   $ sudo wget "https://releases.hashicorp.com/packer/${PACKER_VERSION}/packer_${PACKER_VERSION}_linux_amd64.zip"
+   ```
+   
+1. Extract the downloaded file
+
+   ```ShellSession
+   $ sudo unzip ./packer_${PACKER_VERSION}_linux_amd64.zip -d /usr/local/bin
+   ```
+
+1. Check the terraform version
+
+   ```ShellSession
+   $ packer --version
+   ```
+
+1. Exit the Jenkins agent 02
+
+   ```ShellSession
+   $ exit
+   ```
+
+### Install Postgres 11 on Jenkins agent 02
+
+1. Open a terminal
+
+1. Change to the "ab2d" repo directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d
+   ```
+
+1. Get credentials for the Management AWS account
+
+   ```ShellSession
+   $ source ./Deploy/bash/set-env.sh
+   ```
+
+1. Connect to Jenkins agent
+
+   1. Get the public IP address of Jenkins EC2 instance
+
+      ```ShellSession
+      $ JENKINS_AGENT_02_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-jenkins-agent-02" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+        --output text)
+      ```
+
+   1. SSH into the instance using the public IP address
+
+      ```ShellSession
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_AGENT_02_PRIVATE_IP
+      ```
+
+1. Change to the "/tmp" directory
+
+   ```ShellSession
+   $ cd /tmp
+   ```
+
+1. Get the RPM GPG key for PostgreSQL 11
+
+   ```ShellSession
+   $ wget https://download.postgresql.org/pub/repos/yum/RPM-GPG-KEY-PGDG-11
+   ```
+
+1. Import the RPM GPG key for PostgreSQL 11
+
+   ```ShellSession
+   $ sudo rpm --import RPM-GPG-KEY-PGDG-11
+   ```
+
+1. Install PostgreSQL 11 RPM
+
+   ```ShellSession
+   $ sudo yum -y install https://download.postgresql.org/pub/repos/yum/11/redhat/rhel-7-x86_64/pgdg-redhat-repo-latest.noarch.rpm
+   ```
+
+1. Install PostgreSQL 11
+
+   ```ShellSession
+   $ sudo yum -y install postgresql11
+   ```
+
+1. Exit the Jenkins agent 02
+
+   ```ShellSession
+   $ exit
+   ```
+
+### Setup ruby environment on Jenkins agent 02
+
+1. Open a terminal
+
+1. Change to the "ab2d" repo directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d
+   ```
+
+1. Get credentials for the Management AWS account
+
+   ```ShellSession
+   $ source ./Deploy/bash/set-env.sh
+   ```
+
+1. Connect to Jenkins agent
+
+   1. Get the public IP address of Jenkins EC2 instance
+
+      ```ShellSession
+      $ JENKINS_AGENT_02_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-jenkins-agent-02" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+        --output text)
+      ```
+
+   1. SSH into the instance using the public IP address
+
+      ```ShellSession
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_AGENT_02_PRIVATE_IP
+      ```
+      
+1. Install rbenv dependencies
+
+   ```ShellSession
+   $ sudo yum install -y git-core zlib zlib-devel gcc-c++ patch readline \
+     readline-devel libyaml-devel libffi-devel openssl-devel make bzip2 \
+     autoconf automake libtool bison curl sqlite-devel
+   ```
+
+1. Switch to the Jenkins user
+
+   ```ShellSession
+   $ sudo su - jenkins
+   ```
+
+1. Install rbenv and ruby-build
+
+   ```ShellSession
+   $ curl -sL https://github.com/rbenv/rbenv-installer/raw/master/bin/rbenv-installer | bash -
+   ```
+
+1. Add rbenv initialization to "bashrc"
+
+   ```ShellSession
+   $ echo 'export PATH="$HOME/.gem/ruby/2.6.0/bin:$HOME/.rbenv/bin:$PATH"' >> ~/.bashrc
+   $ echo 'eval "$(rbenv init -)"' >> ~/.bashrc
+   ```
+
+1. Initialize rbenv for the current session
+
+   ```ShellSession
+   $ source ~/.bashrc
+   ```
+
+1. Install Ruby 2.6.5
+
+   ```ShellSession
+   $ rbenv install 2.6.5
+   ```
+
+1. Set the global version of Ruby
+
+   ```SehellSession
+   $ rbenv global 2.6.5
+   ```
+
+1. Install bundler to the jenkins user ".gem" directory
+
+   ```ShellSession
+   $ gem install --user-install bundler
+   ```
+
+1. Note that bundler is now installed where Inspec wants to see it
+
+   ```ShellSession
+   $ ls /var/lib/jenkins/.gem/ruby/2.6.0/gems
+   ```
+
+1. Update Ruby Gems
+
+   ```ShellSession
+   $ gem update --user-install --system
+   ```
+
+1. Verify ruby by checking its version
+
+   ```ShellSession
+   $ ruby --version
+   ```
+
+1. Exit the jenkins user
+
+   ```ShellSession
+   $ exit
+   ```
+
+1. Exit the Jenkins agent 02
+
+   ```ShellSession
+   $ exit
+   ```
+
+### Install postgresql10-devel on Jenkins agent 02
+
+1. Note that I couldn't install postgresql11-devel due to dependencies that could not be installed, so I am using "postgresql10-devel" instead
+
+1. Open a terminal
+
+1. Change to the "ab2d" repo directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d
+   ```
+
+1. Get credentials for the Management AWS account
+
+   ```ShellSession
+   $ source ./Deploy/bash/set-env.sh
+   ```
+
+1. Connect to Jenkins agent
+
+   1. Get the public IP address of Jenkins EC2 instance
+
+      ```ShellSession
+      $ JENKINS_AGENT_02_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-jenkins-agent-02" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+        --output text)
+      ```
+
+   1. SSH into the instance using the public IP address
+
+      ```ShellSession
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_AGENT_02_PRIVATE_IP
+      ```
+      
+1. Install postgresql10-devel
+
+   ```ShellSession
+   $ sudo yum -y install postgresql10-devel
+   ```
 
 ## Configure Jenkins agent 03
 
-> *** TO DO ***
+### Install development tools on Jenkins agent 03
+
+1. Ensure that you are connected to the Cisco VPN
+
+1. Open a terminal
+
+1. Change to the "ab2d" repo directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d
+   ```
+
+1. Get credentials for the Management AWS account
+
+   ```ShellSession
+   $ source ./Deploy/bash/set-env.sh
+   ```
+
+1. Connect to Jenkins agent 03
+
+   1. Get the public IP address of Jenkins EC2 instance
+   
+      ```ShellSession
+      $ JENKINS_AGENT_03_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-jenkins-agent-03" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+        --output text)
+      ```
+
+   1. SSH into the instance using the public IP address
+
+      ```ShellSession
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_AGENT_03_PRIVATE_IP
+      ```
+
+1. Install development tools
+
+   ```ShellSession
+   $ sudo yum group install "Development Tools" -y
+   ```
+
+### Create a directory for jobs on Jenkins agent 03
+
+1. Ensure that you are connected to the Cisco VPN
+
+1. Open a terminal
+
+1. Change to the "Deploy" directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d/Deploy
+   ```
+
+1. Get credentials for the Management AWS account
+
+   ```ShellSession
+   $ source ./bash/set-env.sh
+   ```
+
+1. Connect to Jenkins agent 03
+
+   1. Get the public IP address of Jenkins EC2 instance
+   
+      ```ShellSession
+      $ JENKINS_AGENT_03_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-jenkins-agent-03" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+        --output text)
+      ```
+
+   1. SSH into the instance using the public IP address
+
+      ```ShellSession
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_AGENT_03_PRIVATE_IP
+      ```
+
+1. Switch to the jenkins user
+
+   ```ShellSession
+   $ sudo su - jenkins
+   ```
+   
+1. Create a directory for jobs that are built on the Jenkins agent on behalf of the Jenkins Master
+
+   ```ShellSession
+   $ mkdir -p ~/jenkins_agent
+   ```
+
+1. Exit the jenkins user
+
+   ```ShellSession
+   $ exit
+   ```
+   
+1. Exit the Jenkins agent
+
+   ```ShellSession
+   $ exit
+   ```
+   
+### Install python3, pip3, and required pip modules on Jenkins agent 03
+
+1. Ensure that you are connected to the Cisco VPN
+
+1. Open a terminal
+
+1. Change to the "Deploy" directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d/Deploy
+   ```
+
+1. Get credentials for the Management AWS account
+
+   ```ShellSession
+   $ source ./bash/set-env.sh
+   ```
+
+1. Connect to Jenkins agent 03
+
+   1. Get the public IP address of Jenkins EC2 instance
+   
+      ```ShellSession
+      $ JENKINS_AGENT_03_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-jenkins-agent-03" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+        --output text)
+      ```
+
+   1. SSH into the instance using the public IP address
+
+      ```ShellSession
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_AGENT_03_PRIVATE_IP
+      ```
+
+1. Check to see if python3 is already installed by entering the following
+
+   ```ShellSession
+   $ python3 --version
+   ```
+
+1. If python3 is not installed, do the following:
+
+   1. Install python3 requirements
+
+      ```ShellSession
+      $ sudo yum install gcc openssl-devel bzip2-devel libffi-devel -y
+      ```
+
+   1. Change to the "src" directory
+
+      ```ShellSession
+      $ cd /usr/src
+      ```
+
+   1. Get the desired version of Python 3
+
+      ```ShellSession
+      $ sudo wget https://www.python.org/ftp/python/3.7.5/Python-3.7.5.tgz
+      ```
+
+   1. Unzip the Python 3 package
+
+      ```ShellSession
+      $ sudo tar xzf Python-3.7.5.tgz
+      ```
+
+   1. Install Python 3
+
+      ```ShellSession
+      $ cd Python-3.7.5
+      $ sudo ./configure --enable-optimizations
+      $ sudo make altinstall
+      ```
+
+   1. Delete the python 3 package
+
+      ```ShellSession
+      $ sudo rm -f Python-3.7.5.tgz
+      ```
+
+   1. Verify that Python 3 is installed by checking its version
+
+      ```ShellSession
+      $ python3.7 --version
+      ```
+
+   1. Create a python3 symlink
+
+      ```ShellSession
+      $ sudo rm -f /usr/local/bin/python3
+      $ sudo ln -s /usr/local/bin/python3.7 /usr/local/bin/python3
+      ```
+
+   1. Create a pip3 symlink
+
+      ```ShellSession
+      $ sudo rm -f /usr/local/bin/pip3
+      $ sudo ln -s /usr/local/bin/pip3.7 /usr/local/bin/pip3
+      ```
+
+1. Upgrade pip
+
+   ```ShellSession
+   $ sudo pip install --upgrade pip
+   ```
+
+1. Upgrade pip3
+
+   ```ShellSession
+   $ sudo /usr/local/bin/pip3.7 install --upgrade pip
+   ```
+
+1. Upgrade pip3 site packages for user
+
+   ```ShellSession
+   $ pip3 install --upgrade pip --user
+   ```
+
+1. Install required pip modules for jenkins user
+
+   1. Switch to the jenkins user
+
+      ```ShellSession
+      $ sudo su - jenkins
+      ```
+
+   1. Install lxml
+
+      *Note that "lxml" is a library for parsing XML and HTML.*
+
+      ```ShellSession
+      $ pip3 install lxml
+      ```
+
+   1. Install requests
+
+      ```ShellSession
+      $ pip3 install requests
+      ```
+
+   1. Install boto3
+
+      ```ShellSession
+      $ pip3 install boto3
+      ```
+
+   1. Exit the Jenkins user
+
+      ```ShellSession
+      $ exit
+      ```
+
+1. Exit the Jenkins agent 03
+
+   ```ShellSession
+   $ exit
+   ```
+
+### Install Terraform on Jenkins agent 03
+
+1. Check the version of terraform that is installed on your development machine
+
+   ```ShellSession
+   $ terraform --version
+   ```
+
+1. Note the terraform version
+
+   *Format:*
+
+   ```
+   Terraform v{terraform version}
+   ```
+
+   *Example:*
+
+   ```
+   Terraform v0.12.9
+   ```
+   
+1. Ensure that you are connected to the Cisco VPN
+
+1. Open a terminal
+
+1. Change to the "ab2d" repo directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d
+   ```
+
+1. Get credentials for the Management AWS account
+
+   ```ShellSession
+   $ source ./Deploy/bash/set-env.sh
+   ```
+
+1. Connect to Jenkins agent
+
+   1. Get the public IP address of Jenkins EC2 instance
+
+      ```ShellSession
+      $ JENKINS_AGENT_03_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-jenkins-agent-03" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+        --output text)
+      ```
+
+   1. SSH into the instance using the public IP address
+
+      ```ShellSession
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_AGENT_03_PRIVATE_IP
+      ```
+
+1. Set desired terraform version
+
+   *Format:*
+   
+   ```ShellSession
+   $ TERRAFORM_VERSION={terraform version}
+   ```
+
+   *Example:*
+   
+   ```ShellSession
+   $ TERRAFORM_VERSION=0.12.9
+   ```
+
+1. Change to the "/tmp" directory
+
+   ```ShellSession
+   $ cd /tmp
+   ```
+   
+1. Download terraform
+
+   ```ShellSession
+   $ sudo wget "https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip"
+   ```
+
+1. Extract the downloaded file
+
+   ```ShellSession
+   $ sudo unzip ./terraform_${TERRAFORM_VERSION}_linux_amd64.zip -d /usr/local/bin
+   ```
+
+1. Check the terraform version
+
+   ```ShellSession
+   $ terraform --version
+   ```
+
+1. Exit the Jenkins agent 03
+
+   ```ShellSession
+   $ exit
+   ```
+
+### Configure Terraform logging on Jenkins agent 03
+
+1. Open a terminal
+
+1. Change to the "ab2d" repo directory
+
+   *Example:*
+   
+   ```ShellSession
+   $ cd ~/code/ab2d
+   ```
+
+1. Get credentials for the Management AWS account
+
+   ```ShellSession
+   $ source ./Deploy/bash/set-env.sh
+   ```
+
+1. Connect to Jenkins agent
+
+   1. Get the public IP address of Jenkins EC2 instance
+
+      ```ShellSession
+      $ JENKINS_AGENT_03_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-jenkins-agent-03" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+        --output text)
+      ```
+
+   1. SSH into the instance using the public IP address
+
+      ```ShellSession
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_AGENT_03_PRIVATE_IP
+      ```
+
+1. Create or modify the SSH config file
+
+   1. Open the SSH config file
+
+      ```ShellSession
+      $ vim ~/.ssh/config
+      ```
+
+   1. Create of modify SSH config file to include the following line at the end of the file
+
+      ```
+      StrictHostKeyChecking no
+      ```
+
+   1. Save and close the file
+
+1. Ensure terraform log directory exists
+
+   ```ShellSession
+   $ sudo mkdir -p /var/log/terraform
+   $ sudo chown -R jenkins:jenkins /var/log/terraform
+   ```
+
+1. Exit the Jenkins agent 03
+
+   ```ShellSession
+   $ exit
+   ```
+
+### Install maven on Jenkins agent 03
+
+1. Check the version of maven that is installed on your development machine
+
+   ```ShellSession
+   $ mvn --version
+   ```
+
+1. Note the terraform version
+
+   *Format:*
+
+   ```
+   Apache Maven {maven version}
+   ```
+
+   *Example:*
+
+   ```
+   Apache Maven 3.6.3
+   ```
+
+1. Open a terminal
+
+1. Change to the "ab2d" repo directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d
+   ```
+
+1. Get credentials for the Management AWS account
+
+   ```ShellSession
+   $ source ./Deploy/bash/set-env.sh
+   ```
+
+1. Connect to Jenkins agent
+
+   1. Get the public IP address of Jenkins EC2 instance
+
+      ```ShellSession
+      $ JENKINS_AGENT_03_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-jenkins-agent-03" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+        --output text)
+      ```
+
+   1. SSH into the instance using the public IP address
+
+      ```ShellSession
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_AGENT_03_PRIVATE_IP
+      ```
+
+1. Change to the "/opt" directory
+
+   ```ShellSession
+   $ cd /opt
+   ```
+
+1. Set desired maven version
+
+   ```ShellSession
+   MAVEN_VERSION=3.6.3
+   ```
+
+1. Download maven
+
+   ```ShellSession
+   $ sudo wget https://downloads.apache.org/maven/maven-3/${MAVEN_VERSION}/binaries/apache-maven-${MAVEN_VERSION}-bin.tar.gz
+   ```
+
+1. Extract maven from the archive
+
+   ```ShellSession
+   $ sudo tar xzf apache-maven-${MAVEN_VERSION}-bin.tar.gz
+   ```
+
+1. Delete the maven archive
+
+   ```ShellSession
+   $ sudo rm -f apache-maven-${MAVEN_VERSION}-bin.tar.gz
+   ```
+   
+1. Create a symbolic link for maven
+
+   ```ShellSession
+   $ sudo ln -s apache-maven-${MAVEN_VERSION} maven
+   ```
+
+1. Setup M2_HOME environment variable
+
+   ```ShellSession
+   $ echo 'export M2_HOME=/opt/maven' \
+     | sudo tee --append /etc/profile.d/maven.sh \
+     > /dev/null
+   ```
+
+1. Add the M2_HOME environment variable to PATH
+
+   ```ShellSession
+   $ echo 'export PATH=${M2_HOME}/bin:${PATH}' \
+     | sudo tee --append /etc/profile.d/maven.sh \
+     > /dev/null
+   ```
+
+1. Load the maven environment variables
+
+   ```ShellSession
+   $ source /etc/profile.d/maven.sh
+   ```
+
+1. Verify the maven version
+
+   ```ShellSession
+   $ mvn --version
+   ```
+
+1. Exit the Jenkins agent 03
+
+   ```ShellSession
+   $ exit
+   ```
+
+### Install jq on Jenkins agent 03
+
+1. Open a terminal
+
+1. Change to the "ab2d" repo directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d
+   ```
+
+1. Get credentials for the Management AWS account
+
+   ```ShellSession
+   $ source ./Deploy/bash/set-env.sh
+   ```
+
+1. Connect to Jenkins agent
+
+   1. Get the public IP address of Jenkins EC2 instance
+
+      ```ShellSession
+      $ JENKINS_AGENT_03_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-jenkins-agent-03" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+        --output text)
+      ```
+
+   1. SSH into the instance using the public IP address
+
+      ```ShellSession
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_AGENT_03_PRIVATE_IP
+      ```
+
+1. Install jq
+
+   ```ShellSession
+   $ sudo yum install jq -y
+   ```
+
+1. Verify jq by checking its version
+
+   ```ShellSession
+   $ jq --version
+   ```
+
+1. Exit the Jenkins agent 03
+
+   ```ShellSession
+   $ exit
+   ```
+
+### Add the jenkins user to the docker group on Jenkins agent 03
+
+1. Open a terminal
+
+1. Change to the "Deploy" directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d/Deploy
+   ```
+
+1. Get credentials for the Management AWS account
+
+   ```ShellSession
+   $ source ./bash/set-env.sh
+   ```
+
+1. Connect to Jenkins agent
+
+   1. Get the public IP address of Jenkins EC2 instance
+
+      ```ShellSession
+      $ JENKINS_AGENT_03_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-jenkins-agent-03" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+        --output text)
+      ```
+
+   1. SSH into the instance using the public IP address
+
+      ```ShellSession
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_AGENT_03_PRIVATE_IP
+      ```
+
+1. Determine if the jenkins user is already part of the docker group
+
+   ```ShellSession
+   $ cat /etc/group | grep docker | grep jenkins
+   ```
+
+1. If there is no output, add the jenkins user to the docker group
+
+   ```ShellSession
+   $ sudo usermod -a -G docker jenkins
+   ```
+
+1. Verify that the jenkins user is now a part of the docker group
+
+   ```ShellSession
+   $ cat /etc/group | grep docker | grep jenkins
+   ```
+
+1. Note the output
+
+   *Example:*
+
+   ```
+   docker:x:988:ec2-user,jenkins
+   ```
+
+1. Exit the Jenkins agent 03
+
+   ```ShellSession
+   $ exit
+   ```
+
+### Ensure jenkins agent 03 can use the Unix socket for the Docker daemon
+
+1. Open a terminal
+
+1. Change to the "ab2d" repo directory
+
+   *Example:*
+   
+   ```ShellSession
+   $ cd ~/code/ab2d
+   ```
+
+1. Get credentials for the Management AWS account
+
+   ```ShellSession
+   $ source ./Deploy/bash/set-env.sh
+   ```
+
+1. Connect to Jenkins agent
+
+   1. Get the public IP address of Jenkins EC2 instance
+
+      ```ShellSession
+      $ JENKINS_AGENT_03_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-jenkins-agent-03" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+        --output text)
+      ```
+
+   1. SSH into the instance using the public IP address
+
+      ```ShellSession
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_AGENT_03_PRIVATE_IP
+      ```
+
+1. Note the default permissions for the Unix socket for the Docker daemon
+
+   1. Enter the following
+
+      ```ShellSession
+      $ ls -al /var/run/docker.sock
+      ```
+
+   1. Note the default permissions
+
+      ```
+      srw-rw----
+      ```
+
+1. Give "other" read and write permissions so that Jenkins build will work
+
+   1. Enter the following
+
+      ```ShellSession
+      $ sudo chmod 666 /var/run/docker.sock
+      ```
+
+   1. Enter the following
+
+      ```ShellSession
+      $ ls -al /var/run/docker.sock
+      ```
+
+   1. Note the modified permissions
+
+      ```
+      srw-rw-rw-
+      ```
+
+1. Exit the Jenkins agent 03
+
+   ```ShellSession
+   $ exit
+   ```
+
+### Install packer on Jenkins agent 03
+
+1. Open a terminal
+
+1. Change to the "ab2d" repo directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d
+   ```
+
+1. Get credentials for the Management AWS account
+
+   ```ShellSession
+   $ source ./Deploy/bash/set-env.sh
+   ```
+
+1. Connect to Jenkins agent
+
+   1. Get the public IP address of Jenkins EC2 instance
+
+      ```ShellSession
+      $ JENKINS_AGENT_03_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-jenkins-agent-03" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+        --output text)
+      ```
+
+   1. SSH into the instance using the public IP address
+
+      ```ShellSession
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_AGENT_03_PRIVATE_IP
+      ```
+
+1. Set desired packer version
+
+   *Format:*
+   
+   ```ShellSession
+   $ PACKER_VERSION={terraform version}
+   ```
+
+   *Example:*
+   
+   ```ShellSession
+   $ PACKER_VERSION=1.4.3
+   ```
+
+1. Change to the "/tmp" directory
+
+   ```ShellSession
+   $ cd /tmp
+   ```
+
+1. Download packer
+
+   ```ShellSession
+   $ sudo wget "https://releases.hashicorp.com/packer/${PACKER_VERSION}/packer_${PACKER_VERSION}_linux_amd64.zip"
+   ```
+   
+1. Extract the downloaded file
+
+   ```ShellSession
+   $ sudo unzip ./packer_${PACKER_VERSION}_linux_amd64.zip -d /usr/local/bin
+   ```
+
+1. Check the terraform version
+
+   ```ShellSession
+   $ packer --version
+   ```
+
+1. Exit the Jenkins agent 03
+
+   ```ShellSession
+   $ exit
+   ```
+
+### Install Postgres 11 on Jenkins agent 03
+
+1. Open a terminal
+
+1. Change to the "ab2d" repo directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d
+   ```
+
+1. Get credentials for the Management AWS account
+
+   ```ShellSession
+   $ source ./Deploy/bash/set-env.sh
+   ```
+
+1. Connect to Jenkins agent
+
+   1. Get the public IP address of Jenkins EC2 instance
+
+      ```ShellSession
+      $ JENKINS_AGENT_03_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-jenkins-agent-03" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+        --output text)
+      ```
+
+   1. SSH into the instance using the public IP address
+
+      ```ShellSession
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_AGENT_03_PRIVATE_IP
+      ```
+
+1. Change to the "/tmp" directory
+
+   ```ShellSession
+   $ cd /tmp
+   ```
+
+1. Get the RPM GPG key for PostgreSQL 11
+
+   ```ShellSession
+   $ wget https://download.postgresql.org/pub/repos/yum/RPM-GPG-KEY-PGDG-11
+   ```
+
+1. Import the RPM GPG key for PostgreSQL 11
+
+   ```ShellSession
+   $ sudo rpm --import RPM-GPG-KEY-PGDG-11
+   ```
+
+1. Install PostgreSQL 11 RPM
+
+   ```ShellSession
+   $ sudo yum -y install https://download.postgresql.org/pub/repos/yum/11/redhat/rhel-7-x86_64/pgdg-redhat-repo-latest.noarch.rpm
+   ```
+
+1. Install PostgreSQL 11
+
+   ```ShellSession
+   $ sudo yum -y install postgresql11
+   ```
+
+1. Exit the Jenkins agent 03
+
+   ```ShellSession
+   $ exit
+   ```
+
+### Setup ruby environment on Jenkins agent 03
+
+1. Open a terminal
+
+1. Change to the "ab2d" repo directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d
+   ```
+
+1. Get credentials for the Management AWS account
+
+   ```ShellSession
+   $ source ./Deploy/bash/set-env.sh
+   ```
+
+1. Connect to Jenkins agent
+
+   1. Get the public IP address of Jenkins EC2 instance
+
+      ```ShellSession
+      $ JENKINS_AGENT_03_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-jenkins-agent-03" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+        --output text)
+      ```
+
+   1. SSH into the instance using the public IP address
+
+      ```ShellSession
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_AGENT_03_PRIVATE_IP
+      ```
+      
+1. Install rbenv dependencies
+
+   ```ShellSession
+   $ sudo yum install -y git-core zlib zlib-devel gcc-c++ patch readline \
+     readline-devel libyaml-devel libffi-devel openssl-devel make bzip2 \
+     autoconf automake libtool bison curl sqlite-devel
+   ```
+
+1. Switch to the Jenkins user
+
+   ```ShellSession
+   $ sudo su - jenkins
+   ```
+
+1. Install rbenv and ruby-build
+
+   ```ShellSession
+   $ curl -sL https://github.com/rbenv/rbenv-installer/raw/master/bin/rbenv-installer | bash -
+   ```
+
+1. Add rbenv initialization to "bashrc"
+
+   ```ShellSession
+   $ echo 'export PATH="$HOME/.gem/ruby/2.6.0/bin:$HOME/.rbenv/bin:$PATH"' >> ~/.bashrc
+   $ echo 'eval "$(rbenv init -)"' >> ~/.bashrc
+   ```
+
+1. Initialize rbenv for the current session
+
+   ```ShellSession
+   $ source ~/.bashrc
+   ```
+
+1. Install Ruby 2.6.5
+
+   ```ShellSession
+   $ rbenv install 2.6.5
+   ```
+
+1. Set the global version of Ruby
+
+   ```SehellSession
+   $ rbenv global 2.6.5
+   ```
+
+1. Install bundler to the jenkins user ".gem" directory
+
+   ```ShellSession
+   $ gem install --user-install bundler
+   ```
+
+1. Note that bundler is now installed where Inspec wants to see it
+
+   ```ShellSession
+   $ ls /var/lib/jenkins/.gem/ruby/2.6.0/gems
+   ```
+
+1. Update Ruby Gems
+
+   ```ShellSession
+   $ gem update --user-install --system
+   ```
+
+1. Verify ruby by checking its version
+
+   ```ShellSession
+   $ ruby --version
+   ```
+
+1. Exit the jenkins user
+
+   ```ShellSession
+   $ exit
+   ```
+
+1. Exit the Jenkins agent 03
+
+   ```ShellSession
+   $ exit
+   ```
+
+### Install postgresql10-devel on Jenkins agent 03
+
+1. Note that I couldn't install postgresql11-devel due to dependencies that could not be installed, so I am using "postgresql10-devel" instead
+
+1. Open a terminal
+
+1. Change to the "ab2d" repo directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d
+   ```
+
+1. Get credentials for the Management AWS account
+
+   ```ShellSession
+   $ source ./Deploy/bash/set-env.sh
+   ```
+
+1. Connect to Jenkins agent
+
+   1. Get the public IP address of Jenkins EC2 instance
+
+      ```ShellSession
+      $ JENKINS_AGENT_03_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-jenkins-agent-03" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+        --output text)
+      ```
+
+   1. SSH into the instance using the public IP address
+
+      ```ShellSession
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_AGENT_03_PRIVATE_IP
+      ```
+      
+1. Install postgresql10-devel
+
+   ```ShellSession
+   $ sudo yum -y install postgresql10-devel
+   ```
 
 ## Configure Jenkins agent 04
 
-> *** TO DO ***
+### Install development tools on Jenkins agent 04
+
+1. Ensure that you are connected to the Cisco VPN
+
+1. Open a terminal
+
+1. Change to the "ab2d" repo directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d
+   ```
+
+1. Get credentials for the Management AWS account
+
+   ```ShellSession
+   $ source ./Deploy/bash/set-env.sh
+   ```
+
+1. Connect to Jenkins agent 04
+
+   1. Get the public IP address of Jenkins EC2 instance
+   
+      ```ShellSession
+      $ JENKINS_AGENT_04_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-jenkins-agent-04" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+        --output text)
+      ```
+
+   1. SSH into the instance using the public IP address
+
+      ```ShellSession
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_AGENT_04_PRIVATE_IP
+      ```
+
+1. Install development tools
+
+   ```ShellSession
+   $ sudo yum group install "Development Tools" -y
+   ```
+
+### Create a directory for jobs on Jenkins agent 04
+
+1. Ensure that you are connected to the Cisco VPN
+
+1. Open a terminal
+
+1. Change to the "Deploy" directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d/Deploy
+   ```
+
+1. Get credentials for the Management AWS account
+
+   ```ShellSession
+   $ source ./bash/set-env.sh
+   ```
+
+1. Connect to Jenkins agent 04
+
+   1. Get the public IP address of Jenkins EC2 instance
+   
+      ```ShellSession
+      $ JENKINS_AGENT_04_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-jenkins-agent-04" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+        --output text)
+      ```
+
+   1. SSH into the instance using the public IP address
+
+      ```ShellSession
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_AGENT_04_PRIVATE_IP
+      ```
+
+1. Switch to the jenkins user
+
+   ```ShellSession
+   $ sudo su - jenkins
+   ```
+   
+1. Create a directory for jobs that are built on the Jenkins agent on behalf of the Jenkins Master
+
+   ```ShellSession
+   $ mkdir -p ~/jenkins_agent
+   ```
+
+1. Exit the jenkins user
+
+   ```ShellSession
+   $ exit
+   ```
+   
+1. Exit the Jenkins agent
+
+   ```ShellSession
+   $ exit
+   ```
+   
+### Install python3, pip3, and required pip modules on Jenkins agent 04
+
+1. Ensure that you are connected to the Cisco VPN
+
+1. Open a terminal
+
+1. Change to the "Deploy" directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d/Deploy
+   ```
+
+1. Get credentials for the Management AWS account
+
+   ```ShellSession
+   $ source ./bash/set-env.sh
+   ```
+
+1. Connect to Jenkins agent 04
+
+   1. Get the public IP address of Jenkins EC2 instance
+   
+      ```ShellSession
+      $ JENKINS_AGENT_04_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-jenkins-agent-04" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+        --output text)
+      ```
+
+   1. SSH into the instance using the public IP address
+
+      ```ShellSession
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_AGENT_04_PRIVATE_IP
+      ```
+
+1. Check to see if python3 is already installed by entering the following
+
+   ```ShellSession
+   $ python3 --version
+   ```
+
+1. If python3 is not installed, do the following:
+
+   1. Install python3 requirements
+
+      ```ShellSession
+      $ sudo yum install gcc openssl-devel bzip2-devel libffi-devel -y
+      ```
+
+   1. Change to the "src" directory
+
+      ```ShellSession
+      $ cd /usr/src
+      ```
+
+   1. Get the desired version of Python 3
+
+      ```ShellSession
+      $ sudo wget https://www.python.org/ftp/python/3.7.5/Python-3.7.5.tgz
+      ```
+
+   1. Unzip the Python 3 package
+
+      ```ShellSession
+      $ sudo tar xzf Python-3.7.5.tgz
+      ```
+
+   1. Install Python 3
+
+      ```ShellSession
+      $ cd Python-3.7.5
+      $ sudo ./configure --enable-optimizations
+      $ sudo make altinstall
+      ```
+
+   1. Delete the python 3 package
+
+      ```ShellSession
+      $ sudo rm -f Python-3.7.5.tgz
+      ```
+
+   1. Verify that Python 3 is installed by checking its version
+
+      ```ShellSession
+      $ python3.7 --version
+      ```
+
+   1. Create a python3 symlink
+
+      ```ShellSession
+      $ sudo rm -f /usr/local/bin/python3
+      $ sudo ln -s /usr/local/bin/python3.7 /usr/local/bin/python3
+      ```
+
+   1. Create a pip3 symlink
+
+      ```ShellSession
+      $ sudo rm -f /usr/local/bin/pip3
+      $ sudo ln -s /usr/local/bin/pip3.7 /usr/local/bin/pip3
+      ```
+
+1. Upgrade pip
+
+   ```ShellSession
+   $ sudo pip install --upgrade pip
+   ```
+
+1. Upgrade pip3
+
+   ```ShellSession
+   $ sudo /usr/local/bin/pip3.7 install --upgrade pip
+   ```
+
+1. Upgrade pip3 site packages for user
+
+   ```ShellSession
+   $ pip3 install --upgrade pip --user
+   ```
+
+1. Install required pip modules for jenkins user
+
+   1. Switch to the jenkins user
+
+      ```ShellSession
+      $ sudo su - jenkins
+      ```
+
+   1. Install lxml
+
+      *Note that "lxml" is a library for parsing XML and HTML.*
+
+      ```ShellSession
+      $ pip3 install lxml
+      ```
+
+   1. Install requests
+
+      ```ShellSession
+      $ pip3 install requests
+      ```
+
+   1. Install boto3
+
+      ```ShellSession
+      $ pip3 install boto3
+      ```
+
+   1. Exit the Jenkins user
+
+      ```ShellSession
+      $ exit
+      ```
+
+1. Exit the Jenkins agent 04
+
+   ```ShellSession
+   $ exit
+   ```
+
+### Install Terraform on Jenkins agent 04
+
+1. Check the version of terraform that is installed on your development machine
+
+   ```ShellSession
+   $ terraform --version
+   ```
+
+1. Note the terraform version
+
+   *Format:*
+
+   ```
+   Terraform v{terraform version}
+   ```
+
+   *Example:*
+
+   ```
+   Terraform v0.12.9
+   ```
+   
+1. Ensure that you are connected to the Cisco VPN
+
+1. Open a terminal
+
+1. Change to the "ab2d" repo directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d
+   ```
+
+1. Get credentials for the Management AWS account
+
+   ```ShellSession
+   $ source ./Deploy/bash/set-env.sh
+   ```
+
+1. Connect to Jenkins agent
+
+   1. Get the public IP address of Jenkins EC2 instance
+
+      ```ShellSession
+      $ JENKINS_AGENT_04_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-jenkins-agent-04" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+        --output text)
+      ```
+
+   1. SSH into the instance using the public IP address
+
+      ```ShellSession
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_AGENT_04_PRIVATE_IP
+      ```
+
+1. Set desired terraform version
+
+   *Format:*
+   
+   ```ShellSession
+   $ TERRAFORM_VERSION={terraform version}
+   ```
+
+   *Example:*
+   
+   ```ShellSession
+   $ TERRAFORM_VERSION=0.12.9
+   ```
+
+1. Change to the "/tmp" directory
+
+   ```ShellSession
+   $ cd /tmp
+   ```
+   
+1. Download terraform
+
+   ```ShellSession
+   $ sudo wget "https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip"
+   ```
+
+1. Extract the downloaded file
+
+   ```ShellSession
+   $ sudo unzip ./terraform_${TERRAFORM_VERSION}_linux_amd64.zip -d /usr/local/bin
+   ```
+
+1. Check the terraform version
+
+   ```ShellSession
+   $ terraform --version
+   ```
+
+1. Exit the Jenkins agent 04
+
+   ```ShellSession
+   $ exit
+   ```
+
+### Configure Terraform logging on Jenkins agent 04
+
+1. Open a terminal
+
+1. Change to the "ab2d" repo directory
+
+   *Example:*
+   
+   ```ShellSession
+   $ cd ~/code/ab2d
+   ```
+
+1. Get credentials for the Management AWS account
+
+   ```ShellSession
+   $ source ./Deploy/bash/set-env.sh
+   ```
+
+1. Connect to Jenkins agent
+
+   1. Get the public IP address of Jenkins EC2 instance
+
+      ```ShellSession
+      $ JENKINS_AGENT_04_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-jenkins-agent-04" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+        --output text)
+      ```
+
+   1. SSH into the instance using the public IP address
+
+      ```ShellSession
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_AGENT_04_PRIVATE_IP
+      ```
+
+1. Create or modify the SSH config file
+
+   1. Open the SSH config file
+
+      ```ShellSession
+      $ vim ~/.ssh/config
+      ```
+
+   1. Create of modify SSH config file to include the following line at the end of the file
+
+      ```
+      StrictHostKeyChecking no
+      ```
+
+   1. Save and close the file
+
+1. Ensure terraform log directory exists
+
+   ```ShellSession
+   $ sudo mkdir -p /var/log/terraform
+   $ sudo chown -R jenkins:jenkins /var/log/terraform
+   ```
+
+1. Exit the Jenkins agent 04
+
+   ```ShellSession
+   $ exit
+   ```
+
+### Install maven on Jenkins agent 04
+
+1. Check the version of maven that is installed on your development machine
+
+   ```ShellSession
+   $ mvn --version
+   ```
+
+1. Note the terraform version
+
+   *Format:*
+
+   ```
+   Apache Maven {maven version}
+   ```
+
+   *Example:*
+
+   ```
+   Apache Maven 3.6.3
+   ```
+
+1. Open a terminal
+
+1. Change to the "ab2d" repo directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d
+   ```
+
+1. Get credentials for the Management AWS account
+
+   ```ShellSession
+   $ source ./Deploy/bash/set-env.sh
+   ```
+
+1. Connect to Jenkins agent
+
+   1. Get the public IP address of Jenkins EC2 instance
+
+      ```ShellSession
+      $ JENKINS_AGENT_04_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-jenkins-agent-04" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+        --output text)
+      ```
+
+   1. SSH into the instance using the public IP address
+
+      ```ShellSession
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_AGENT_04_PRIVATE_IP
+      ```
+
+1. Change to the "/opt" directory
+
+   ```ShellSession
+   $ cd /opt
+   ```
+
+1. Set desired maven version
+
+   ```ShellSession
+   MAVEN_VERSION=3.6.3
+   ```
+
+1. Download maven
+
+   ```ShellSession
+   $ sudo wget https://downloads.apache.org/maven/maven-3/${MAVEN_VERSION}/binaries/apache-maven-${MAVEN_VERSION}-bin.tar.gz
+   ```
+
+1. Extract maven from the archive
+
+   ```ShellSession
+   $ sudo tar xzf apache-maven-${MAVEN_VERSION}-bin.tar.gz
+   ```
+
+1. Delete the maven archive
+
+   ```ShellSession
+   $ sudo rm -f apache-maven-${MAVEN_VERSION}-bin.tar.gz
+   ```
+   
+1. Create a symbolic link for maven
+
+   ```ShellSession
+   $ sudo ln -s apache-maven-${MAVEN_VERSION} maven
+   ```
+
+1. Setup M2_HOME environment variable
+
+   ```ShellSession
+   $ echo 'export M2_HOME=/opt/maven' \
+     | sudo tee --append /etc/profile.d/maven.sh \
+     > /dev/null
+   ```
+
+1. Add the M2_HOME environment variable to PATH
+
+   ```ShellSession
+   $ echo 'export PATH=${M2_HOME}/bin:${PATH}' \
+     | sudo tee --append /etc/profile.d/maven.sh \
+     > /dev/null
+   ```
+
+1. Load the maven environment variables
+
+   ```ShellSession
+   $ source /etc/profile.d/maven.sh
+   ```
+
+1. Verify the maven version
+
+   ```ShellSession
+   $ mvn --version
+   ```
+
+1. Exit the Jenkins agent 04
+
+   ```ShellSession
+   $ exit
+   ```
+
+### Install jq on Jenkins agent 04
+
+1. Open a terminal
+
+1. Change to the "ab2d" repo directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d
+   ```
+
+1. Get credentials for the Management AWS account
+
+   ```ShellSession
+   $ source ./Deploy/bash/set-env.sh
+   ```
+
+1. Connect to Jenkins agent
+
+   1. Get the public IP address of Jenkins EC2 instance
+
+      ```ShellSession
+      $ JENKINS_AGENT_04_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-jenkins-agent-04" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+        --output text)
+      ```
+
+   1. SSH into the instance using the public IP address
+
+      ```ShellSession
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_AGENT_04_PRIVATE_IP
+      ```
+
+1. Install jq
+
+   ```ShellSession
+   $ sudo yum install jq -y
+   ```
+
+1. Verify jq by checking its version
+
+   ```ShellSession
+   $ jq --version
+   ```
+
+1. Exit the Jenkins agent 04
+
+   ```ShellSession
+   $ exit
+   ```
+
+### Add the jenkins user to the docker group on Jenkins agent 04
+
+1. Open a terminal
+
+1. Change to the "Deploy" directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d/Deploy
+   ```
+
+1. Get credentials for the Management AWS account
+
+   ```ShellSession
+   $ source ./bash/set-env.sh
+   ```
+
+1. Connect to Jenkins agent
+
+   1. Get the public IP address of Jenkins EC2 instance
+
+      ```ShellSession
+      $ JENKINS_AGENT_04_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-jenkins-agent-04" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+        --output text)
+      ```
+
+   1. SSH into the instance using the public IP address
+
+      ```ShellSession
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_AGENT_04_PRIVATE_IP
+      ```
+
+1. Determine if the jenkins user is already part of the docker group
+
+   ```ShellSession
+   $ cat /etc/group | grep docker | grep jenkins
+   ```
+
+1. If there is no output, add the jenkins user to the docker group
+
+   ```ShellSession
+   $ sudo usermod -a -G docker jenkins
+   ```
+
+1. Verify that the jenkins user is now a part of the docker group
+
+   ```ShellSession
+   $ cat /etc/group | grep docker | grep jenkins
+   ```
+
+1. Note the output
+
+   *Example:*
+
+   ```
+   docker:x:988:ec2-user,jenkins
+   ```
+
+1. Exit the Jenkins agent 04
+
+   ```ShellSession
+   $ exit
+   ```
+
+### Ensure jenkins agent 04 can use the Unix socket for the Docker daemon
+
+1. Open a terminal
+
+1. Change to the "ab2d" repo directory
+
+   *Example:*
+   
+   ```ShellSession
+   $ cd ~/code/ab2d
+   ```
+
+1. Get credentials for the Management AWS account
+
+   ```ShellSession
+   $ source ./Deploy/bash/set-env.sh
+   ```
+
+1. Connect to Jenkins agent
+
+   1. Get the public IP address of Jenkins EC2 instance
+
+      ```ShellSession
+      $ JENKINS_AGENT_04_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-jenkins-agent-04" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+        --output text)
+      ```
+
+   1. SSH into the instance using the public IP address
+
+      ```ShellSession
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_AGENT_04_PRIVATE_IP
+      ```
+
+1. Note the default permissions for the Unix socket for the Docker daemon
+
+   1. Enter the following
+
+      ```ShellSession
+      $ ls -al /var/run/docker.sock
+      ```
+
+   1. Note the default permissions
+
+      ```
+      srw-rw----
+      ```
+
+1. Give "other" read and write permissions so that Jenkins build will work
+
+   1. Enter the following
+
+      ```ShellSession
+      $ sudo chmod 666 /var/run/docker.sock
+      ```
+
+   1. Enter the following
+
+      ```ShellSession
+      $ ls -al /var/run/docker.sock
+      ```
+
+   1. Note the modified permissions
+
+      ```
+      srw-rw-rw-
+      ```
+
+1. Exit the Jenkins agent 04
+
+   ```ShellSession
+   $ exit
+   ```
+
+### Install packer on Jenkins agent 04
+
+1. Open a terminal
+
+1. Change to the "ab2d" repo directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d
+   ```
+
+1. Get credentials for the Management AWS account
+
+   ```ShellSession
+   $ source ./Deploy/bash/set-env.sh
+   ```
+
+1. Connect to Jenkins agent
+
+   1. Get the public IP address of Jenkins EC2 instance
+
+      ```ShellSession
+      $ JENKINS_AGENT_04_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-jenkins-agent-04" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+        --output text)
+      ```
+
+   1. SSH into the instance using the public IP address
+
+      ```ShellSession
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_AGENT_04_PRIVATE_IP
+      ```
+
+1. Set desired packer version
+
+   *Format:*
+   
+   ```ShellSession
+   $ PACKER_VERSION={terraform version}
+   ```
+
+   *Example:*
+   
+   ```ShellSession
+   $ PACKER_VERSION=1.4.3
+   ```
+
+1. Change to the "/tmp" directory
+
+   ```ShellSession
+   $ cd /tmp
+   ```
+
+1. Download packer
+
+   ```ShellSession
+   $ sudo wget "https://releases.hashicorp.com/packer/${PACKER_VERSION}/packer_${PACKER_VERSION}_linux_amd64.zip"
+   ```
+   
+1. Extract the downloaded file
+
+   ```ShellSession
+   $ sudo unzip ./packer_${PACKER_VERSION}_linux_amd64.zip -d /usr/local/bin
+   ```
+
+1. Check the terraform version
+
+   ```ShellSession
+   $ packer --version
+   ```
+
+1. Exit the Jenkins agent 04
+
+   ```ShellSession
+   $ exit
+   ```
+
+### Install Postgres 11 on Jenkins agent 04
+
+1. Open a terminal
+
+1. Change to the "ab2d" repo directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d
+   ```
+
+1. Get credentials for the Management AWS account
+
+   ```ShellSession
+   $ source ./Deploy/bash/set-env.sh
+   ```
+
+1. Connect to Jenkins agent
+
+   1. Get the public IP address of Jenkins EC2 instance
+
+      ```ShellSession
+      $ JENKINS_AGENT_04_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-jenkins-agent-04" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+        --output text)
+      ```
+
+   1. SSH into the instance using the public IP address
+
+      ```ShellSession
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_AGENT_04_PRIVATE_IP
+      ```
+
+1. Change to the "/tmp" directory
+
+   ```ShellSession
+   $ cd /tmp
+   ```
+
+1. Get the RPM GPG key for PostgreSQL 11
+
+   ```ShellSession
+   $ wget https://download.postgresql.org/pub/repos/yum/RPM-GPG-KEY-PGDG-11
+   ```
+
+1. Import the RPM GPG key for PostgreSQL 11
+
+   ```ShellSession
+   $ sudo rpm --import RPM-GPG-KEY-PGDG-11
+   ```
+
+1. Install PostgreSQL 11 RPM
+
+   ```ShellSession
+   $ sudo yum -y install https://download.postgresql.org/pub/repos/yum/11/redhat/rhel-7-x86_64/pgdg-redhat-repo-latest.noarch.rpm
+   ```
+
+1. Install PostgreSQL 11
+
+   ```ShellSession
+   $ sudo yum -y install postgresql11
+   ```
+
+1. Exit the Jenkins agent 04
+
+   ```ShellSession
+   $ exit
+   ```
+
+### Setup ruby environment on Jenkins agent 04
+
+1. Open a terminal
+
+1. Change to the "ab2d" repo directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d
+   ```
+
+1. Get credentials for the Management AWS account
+
+   ```ShellSession
+   $ source ./Deploy/bash/set-env.sh
+   ```
+
+1. Connect to Jenkins agent
+
+   1. Get the public IP address of Jenkins EC2 instance
+
+      ```ShellSession
+      $ JENKINS_AGENT_04_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-jenkins-agent-04" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+        --output text)
+      ```
+
+   1. SSH into the instance using the public IP address
+
+      ```ShellSession
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_AGENT_04_PRIVATE_IP
+      ```
+      
+1. Install rbenv dependencies
+
+   ```ShellSession
+   $ sudo yum install -y git-core zlib zlib-devel gcc-c++ patch readline \
+     readline-devel libyaml-devel libffi-devel openssl-devel make bzip2 \
+     autoconf automake libtool bison curl sqlite-devel
+   ```
+
+1. Switch to the Jenkins user
+
+   ```ShellSession
+   $ sudo su - jenkins
+   ```
+
+1. Install rbenv and ruby-build
+
+   ```ShellSession
+   $ curl -sL https://github.com/rbenv/rbenv-installer/raw/master/bin/rbenv-installer | bash -
+   ```
+
+1. Add rbenv initialization to "bashrc"
+
+   ```ShellSession
+   $ echo 'export PATH="$HOME/.gem/ruby/2.6.0/bin:$HOME/.rbenv/bin:$PATH"' >> ~/.bashrc
+   $ echo 'eval "$(rbenv init -)"' >> ~/.bashrc
+   ```
+
+1. Initialize rbenv for the current session
+
+   ```ShellSession
+   $ source ~/.bashrc
+   ```
+
+1. Install Ruby 2.6.5
+
+   ```ShellSession
+   $ rbenv install 2.6.5
+   ```
+
+1. Set the global version of Ruby
+
+   ```SehellSession
+   $ rbenv global 2.6.5
+   ```
+
+1. Install bundler to the jenkins user ".gem" directory
+
+   ```ShellSession
+   $ gem install --user-install bundler
+   ```
+
+1. Note that bundler is now installed where Inspec wants to see it
+
+   ```ShellSession
+   $ ls /var/lib/jenkins/.gem/ruby/2.6.0/gems
+   ```
+
+1. Update Ruby Gems
+
+   ```ShellSession
+   $ gem update --user-install --system
+   ```
+
+1. Verify ruby by checking its version
+
+   ```ShellSession
+   $ ruby --version
+   ```
+
+1. Exit the jenkins user
+
+   ```ShellSession
+   $ exit
+   ```
+
+1. Exit the Jenkins agent 04
+
+   ```ShellSession
+   $ exit
+   ```
+
+### Install postgresql10-devel on Jenkins agent 04
+
+1. Note that I couldn't install postgresql11-devel due to dependencies that could not be installed, so I am using "postgresql10-devel" instead
+
+1. Open a terminal
+
+1. Change to the "ab2d" repo directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d
+   ```
+
+1. Get credentials for the Management AWS account
+
+   ```ShellSession
+   $ source ./Deploy/bash/set-env.sh
+   ```
+
+1. Connect to Jenkins agent
+
+   1. Get the public IP address of Jenkins EC2 instance
+
+      ```ShellSession
+      $ JENKINS_AGENT_04_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-jenkins-agent-04" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+        --output text)
+      ```
+
+   1. SSH into the instance using the public IP address
+
+      ```ShellSession
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_AGENT_04_PRIVATE_IP
+      ```
+      
+1. Install postgresql10-devel
+
+   ```ShellSession
+   $ sudo yum -y install postgresql10-devel
+   ```
 
 ## Configure Jenkins agent 05
 
-> *** TO DO ***
+### Install development tools on Jenkins agent 05
+
+1. Ensure that you are connected to the Cisco VPN
+
+1. Open a terminal
+
+1. Change to the "ab2d" repo directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d
+   ```
+
+1. Get credentials for the Management AWS account
+
+   ```ShellSession
+   $ source ./Deploy/bash/set-env.sh
+   ```
+
+1. Connect to Jenkins agent 05
+
+   1. Get the public IP address of Jenkins EC2 instance
+   
+      ```ShellSession
+      $ JENKINS_AGENT_05_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-jenkins-agent-05" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+        --output text)
+      ```
+
+   1. SSH into the instance using the public IP address
+
+      ```ShellSession
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_AGENT_05_PRIVATE_IP
+      ```
+
+1. Install development tools
+
+   ```ShellSession
+   $ sudo yum group install "Development Tools" -y
+   ```
+
+### Create a directory for jobs on Jenkins agent 05
+
+1. Ensure that you are connected to the Cisco VPN
+
+1. Open a terminal
+
+1. Change to the "Deploy" directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d/Deploy
+   ```
+
+1. Get credentials for the Management AWS account
+
+   ```ShellSession
+   $ source ./bash/set-env.sh
+   ```
+
+1. Connect to Jenkins agent 05
+
+   1. Get the public IP address of Jenkins EC2 instance
+   
+      ```ShellSession
+      $ JENKINS_AGENT_05_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-jenkins-agent-05" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+        --output text)
+      ```
+
+   1. SSH into the instance using the public IP address
+
+      ```ShellSession
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_AGENT_05_PRIVATE_IP
+      ```
+
+1. Switch to the jenkins user
+
+   ```ShellSession
+   $ sudo su - jenkins
+   ```
+   
+1. Create a directory for jobs that are built on the Jenkins agent on behalf of the Jenkins Master
+
+   ```ShellSession
+   $ mkdir -p ~/jenkins_agent
+   ```
+
+1. Exit the jenkins user
+
+   ```ShellSession
+   $ exit
+   ```
+   
+1. Exit the Jenkins agent
+
+   ```ShellSession
+   $ exit
+   ```
+   
+### Install python3, pip3, and required pip modules on Jenkins agent 05
+
+1. Ensure that you are connected to the Cisco VPN
+
+1. Open a terminal
+
+1. Change to the "Deploy" directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d/Deploy
+   ```
+
+1. Get credentials for the Management AWS account
+
+   ```ShellSession
+   $ source ./bash/set-env.sh
+   ```
+
+1. Connect to Jenkins agent 05
+
+   1. Get the public IP address of Jenkins EC2 instance
+   
+      ```ShellSession
+      $ JENKINS_AGENT_05_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-jenkins-agent-05" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+        --output text)
+      ```
+
+   1. SSH into the instance using the public IP address
+
+      ```ShellSession
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_AGENT_05_PRIVATE_IP
+      ```
+
+1. Check to see if python3 is already installed by entering the following
+
+   ```ShellSession
+   $ python3 --version
+   ```
+
+1. If python3 is not installed, do the following:
+
+   1. Install python3 requirements
+
+      ```ShellSession
+      $ sudo yum install gcc openssl-devel bzip2-devel libffi-devel -y
+      ```
+
+   1. Change to the "src" directory
+
+      ```ShellSession
+      $ cd /usr/src
+      ```
+
+   1. Get the desired version of Python 3
+
+      ```ShellSession
+      $ sudo wget https://www.python.org/ftp/python/3.7.5/Python-3.7.5.tgz
+      ```
+
+   1. Unzip the Python 3 package
+
+      ```ShellSession
+      $ sudo tar xzf Python-3.7.5.tgz
+      ```
+
+   1. Install Python 3
+
+      ```ShellSession
+      $ cd Python-3.7.5
+      $ sudo ./configure --enable-optimizations
+      $ sudo make altinstall
+      ```
+
+   1. Delete the python 3 package
+
+      ```ShellSession
+      $ sudo rm -f Python-3.7.5.tgz
+      ```
+
+   1. Verify that Python 3 is installed by checking its version
+
+      ```ShellSession
+      $ python3.7 --version
+      ```
+
+   1. Create a python3 symlink
+
+      ```ShellSession
+      $ sudo rm -f /usr/local/bin/python3
+      $ sudo ln -s /usr/local/bin/python3.7 /usr/local/bin/python3
+      ```
+
+   1. Create a pip3 symlink
+
+      ```ShellSession
+      $ sudo rm -f /usr/local/bin/pip3
+      $ sudo ln -s /usr/local/bin/pip3.7 /usr/local/bin/pip3
+      ```
+
+1. Upgrade pip
+
+   ```ShellSession
+   $ sudo pip install --upgrade pip
+   ```
+
+1. Upgrade pip3
+
+   ```ShellSession
+   $ sudo /usr/local/bin/pip3.7 install --upgrade pip
+   ```
+
+1. Upgrade pip3 site packages for user
+
+   ```ShellSession
+   $ pip3 install --upgrade pip --user
+   ```
+
+1. Install required pip modules for jenkins user
+
+   1. Switch to the jenkins user
+
+      ```ShellSession
+      $ sudo su - jenkins
+      ```
+
+   1. Install lxml
+
+      *Note that "lxml" is a library for parsing XML and HTML.*
+
+      ```ShellSession
+      $ pip3 install lxml
+      ```
+
+   1. Install requests
+
+      ```ShellSession
+      $ pip3 install requests
+      ```
+
+   1. Install boto3
+
+      ```ShellSession
+      $ pip3 install boto3
+      ```
+
+   1. Exit the Jenkins user
+
+      ```ShellSession
+      $ exit
+      ```
+
+1. Exit the Jenkins agent 05
+
+   ```ShellSession
+   $ exit
+   ```
+
+### Install Terraform on Jenkins agent 05
+
+1. Check the version of terraform that is installed on your development machine
+
+   ```ShellSession
+   $ terraform --version
+   ```
+
+1. Note the terraform version
+
+   *Format:*
+
+   ```
+   Terraform v{terraform version}
+   ```
+
+   *Example:*
+
+   ```
+   Terraform v0.12.9
+   ```
+   
+1. Ensure that you are connected to the Cisco VPN
+
+1. Open a terminal
+
+1. Change to the "ab2d" repo directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d
+   ```
+
+1. Get credentials for the Management AWS account
+
+   ```ShellSession
+   $ source ./Deploy/bash/set-env.sh
+   ```
+
+1. Connect to Jenkins agent
+
+   1. Get the public IP address of Jenkins EC2 instance
+
+      ```ShellSession
+      $ JENKINS_AGENT_05_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-jenkins-agent-05" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+        --output text)
+      ```
+
+   1. SSH into the instance using the public IP address
+
+      ```ShellSession
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_AGENT_05_PRIVATE_IP
+      ```
+
+1. Set desired terraform version
+
+   *Format:*
+   
+   ```ShellSession
+   $ TERRAFORM_VERSION={terraform version}
+   ```
+
+   *Example:*
+   
+   ```ShellSession
+   $ TERRAFORM_VERSION=0.12.9
+   ```
+
+1. Change to the "/tmp" directory
+
+   ```ShellSession
+   $ cd /tmp
+   ```
+   
+1. Download terraform
+
+   ```ShellSession
+   $ sudo wget "https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip"
+   ```
+
+1. Extract the downloaded file
+
+   ```ShellSession
+   $ sudo unzip ./terraform_${TERRAFORM_VERSION}_linux_amd64.zip -d /usr/local/bin
+   ```
+
+1. Check the terraform version
+
+   ```ShellSession
+   $ terraform --version
+   ```
+
+1. Exit the Jenkins agent 05
+
+   ```ShellSession
+   $ exit
+   ```
+
+### Configure Terraform logging on Jenkins agent 05
+
+1. Open a terminal
+
+1. Change to the "ab2d" repo directory
+
+   *Example:*
+   
+   ```ShellSession
+   $ cd ~/code/ab2d
+   ```
+
+1. Get credentials for the Management AWS account
+
+   ```ShellSession
+   $ source ./Deploy/bash/set-env.sh
+   ```
+
+1. Connect to Jenkins agent
+
+   1. Get the public IP address of Jenkins EC2 instance
+
+      ```ShellSession
+      $ JENKINS_AGENT_05_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-jenkins-agent-05" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+        --output text)
+      ```
+
+   1. SSH into the instance using the public IP address
+
+      ```ShellSession
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_AGENT_05_PRIVATE_IP
+      ```
+
+1. Create or modify the SSH config file
+
+   1. Open the SSH config file
+
+      ```ShellSession
+      $ vim ~/.ssh/config
+      ```
+
+   1. Create of modify SSH config file to include the following line at the end of the file
+
+      ```
+      StrictHostKeyChecking no
+      ```
+
+   1. Save and close the file
+
+1. Ensure terraform log directory exists
+
+   ```ShellSession
+   $ sudo mkdir -p /var/log/terraform
+   $ sudo chown -R jenkins:jenkins /var/log/terraform
+   ```
+
+1. Exit the Jenkins agent 05
+
+   ```ShellSession
+   $ exit
+   ```
+
+### Install maven on Jenkins agent 05
+
+1. Check the version of maven that is installed on your development machine
+
+   ```ShellSession
+   $ mvn --version
+   ```
+
+1. Note the terraform version
+
+   *Format:*
+
+   ```
+   Apache Maven {maven version}
+   ```
+
+   *Example:*
+
+   ```
+   Apache Maven 3.6.3
+   ```
+
+1. Open a terminal
+
+1. Change to the "ab2d" repo directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d
+   ```
+
+1. Get credentials for the Management AWS account
+
+   ```ShellSession
+   $ source ./Deploy/bash/set-env.sh
+   ```
+
+1. Connect to Jenkins agent
+
+   1. Get the public IP address of Jenkins EC2 instance
+
+      ```ShellSession
+      $ JENKINS_AGENT_05_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-jenkins-agent-05" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+        --output text)
+      ```
+
+   1. SSH into the instance using the public IP address
+
+      ```ShellSession
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_AGENT_05_PRIVATE_IP
+      ```
+
+1. Change to the "/opt" directory
+
+   ```ShellSession
+   $ cd /opt
+   ```
+
+1. Set desired maven version
+
+   ```ShellSession
+   MAVEN_VERSION=3.6.3
+   ```
+
+1. Download maven
+
+   ```ShellSession
+   $ sudo wget https://downloads.apache.org/maven/maven-3/${MAVEN_VERSION}/binaries/apache-maven-${MAVEN_VERSION}-bin.tar.gz
+   ```
+
+1. Extract maven from the archive
+
+   ```ShellSession
+   $ sudo tar xzf apache-maven-${MAVEN_VERSION}-bin.tar.gz
+   ```
+
+1. Delete the maven archive
+
+   ```ShellSession
+   $ sudo rm -f apache-maven-${MAVEN_VERSION}-bin.tar.gz
+   ```
+   
+1. Create a symbolic link for maven
+
+   ```ShellSession
+   $ sudo ln -s apache-maven-${MAVEN_VERSION} maven
+   ```
+
+1. Setup M2_HOME environment variable
+
+   ```ShellSession
+   $ echo 'export M2_HOME=/opt/maven' \
+     | sudo tee --append /etc/profile.d/maven.sh \
+     > /dev/null
+   ```
+
+1. Add the M2_HOME environment variable to PATH
+
+   ```ShellSession
+   $ echo 'export PATH=${M2_HOME}/bin:${PATH}' \
+     | sudo tee --append /etc/profile.d/maven.sh \
+     > /dev/null
+   ```
+
+1. Load the maven environment variables
+
+   ```ShellSession
+   $ source /etc/profile.d/maven.sh
+   ```
+
+1. Verify the maven version
+
+   ```ShellSession
+   $ mvn --version
+   ```
+
+1. Exit the Jenkins agent 05
+
+   ```ShellSession
+   $ exit
+   ```
+
+### Install jq on Jenkins agent 05
+
+1. Open a terminal
+
+1. Change to the "ab2d" repo directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d
+   ```
+
+1. Get credentials for the Management AWS account
+
+   ```ShellSession
+   $ source ./Deploy/bash/set-env.sh
+   ```
+
+1. Connect to Jenkins agent
+
+   1. Get the public IP address of Jenkins EC2 instance
+
+      ```ShellSession
+      $ JENKINS_AGENT_05_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-jenkins-agent-05" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+        --output text)
+      ```
+
+   1. SSH into the instance using the public IP address
+
+      ```ShellSession
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_AGENT_05_PRIVATE_IP
+      ```
+
+1. Install jq
+
+   ```ShellSession
+   $ sudo yum install jq -y
+   ```
+
+1. Verify jq by checking its version
+
+   ```ShellSession
+   $ jq --version
+   ```
+
+1. Exit the Jenkins agent 05
+
+   ```ShellSession
+   $ exit
+   ```
+
+### Add the jenkins user to the docker group on Jenkins agent 05
+
+1. Open a terminal
+
+1. Change to the "Deploy" directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d/Deploy
+   ```
+
+1. Get credentials for the Management AWS account
+
+   ```ShellSession
+   $ source ./bash/set-env.sh
+   ```
+
+1. Connect to Jenkins agent
+
+   1. Get the public IP address of Jenkins EC2 instance
+
+      ```ShellSession
+      $ JENKINS_AGENT_05_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-jenkins-agent-05" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+        --output text)
+      ```
+
+   1. SSH into the instance using the public IP address
+
+      ```ShellSession
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_AGENT_05_PRIVATE_IP
+      ```
+
+1. Determine if the jenkins user is already part of the docker group
+
+   ```ShellSession
+   $ cat /etc/group | grep docker | grep jenkins
+   ```
+
+1. If there is no output, add the jenkins user to the docker group
+
+   ```ShellSession
+   $ sudo usermod -a -G docker jenkins
+   ```
+
+1. Verify that the jenkins user is now a part of the docker group
+
+   ```ShellSession
+   $ cat /etc/group | grep docker | grep jenkins
+   ```
+
+1. Note the output
+
+   *Example:*
+
+   ```
+   docker:x:988:ec2-user,jenkins
+   ```
+
+1. Exit the Jenkins agent 05
+
+   ```ShellSession
+   $ exit
+   ```
+
+### Ensure jenkins agent 05 can use the Unix socket for the Docker daemon
+
+1. Open a terminal
+
+1. Change to the "ab2d" repo directory
+
+   *Example:*
+   
+   ```ShellSession
+   $ cd ~/code/ab2d
+   ```
+
+1. Get credentials for the Management AWS account
+
+   ```ShellSession
+   $ source ./Deploy/bash/set-env.sh
+   ```
+
+1. Connect to Jenkins agent
+
+   1. Get the public IP address of Jenkins EC2 instance
+
+      ```ShellSession
+      $ JENKINS_AGENT_05_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-jenkins-agent-05" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+        --output text)
+      ```
+
+   1. SSH into the instance using the public IP address
+
+      ```ShellSession
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_AGENT_05_PRIVATE_IP
+      ```
+
+1. Note the default permissions for the Unix socket for the Docker daemon
+
+   1. Enter the following
+
+      ```ShellSession
+      $ ls -al /var/run/docker.sock
+      ```
+
+   1. Note the default permissions
+
+      ```
+      srw-rw----
+      ```
+
+1. Give "other" read and write permissions so that Jenkins build will work
+
+   1. Enter the following
+
+      ```ShellSession
+      $ sudo chmod 666 /var/run/docker.sock
+      ```
+
+   1. Enter the following
+
+      ```ShellSession
+      $ ls -al /var/run/docker.sock
+      ```
+
+   1. Note the modified permissions
+
+      ```
+      srw-rw-rw-
+      ```
+
+1. Exit the Jenkins agent 05
+
+   ```ShellSession
+   $ exit
+   ```
+
+### Install packer on Jenkins agent 05
+
+1. Open a terminal
+
+1. Change to the "ab2d" repo directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d
+   ```
+
+1. Get credentials for the Management AWS account
+
+   ```ShellSession
+   $ source ./Deploy/bash/set-env.sh
+   ```
+
+1. Connect to Jenkins agent
+
+   1. Get the public IP address of Jenkins EC2 instance
+
+      ```ShellSession
+      $ JENKINS_AGENT_05_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-jenkins-agent-05" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+        --output text)
+      ```
+
+   1. SSH into the instance using the public IP address
+
+      ```ShellSession
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_AGENT_05_PRIVATE_IP
+      ```
+
+1. Set desired packer version
+
+   *Format:*
+   
+   ```ShellSession
+   $ PACKER_VERSION={terraform version}
+   ```
+
+   *Example:*
+   
+   ```ShellSession
+   $ PACKER_VERSION=1.4.3
+   ```
+
+1. Change to the "/tmp" directory
+
+   ```ShellSession
+   $ cd /tmp
+   ```
+
+1. Download packer
+
+   ```ShellSession
+   $ sudo wget "https://releases.hashicorp.com/packer/${PACKER_VERSION}/packer_${PACKER_VERSION}_linux_amd64.zip"
+   ```
+   
+1. Extract the downloaded file
+
+   ```ShellSession
+   $ sudo unzip ./packer_${PACKER_VERSION}_linux_amd64.zip -d /usr/local/bin
+   ```
+
+1. Check the terraform version
+
+   ```ShellSession
+   $ packer --version
+   ```
+
+1. Exit the Jenkins agent 05
+
+   ```ShellSession
+   $ exit
+   ```
+
+### Install Postgres 11 on Jenkins agent 05
+
+1. Open a terminal
+
+1. Change to the "ab2d" repo directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d
+   ```
+
+1. Get credentials for the Management AWS account
+
+   ```ShellSession
+   $ source ./Deploy/bash/set-env.sh
+   ```
+
+1. Connect to Jenkins agent
+
+   1. Get the public IP address of Jenkins EC2 instance
+
+      ```ShellSession
+      $ JENKINS_AGENT_05_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-jenkins-agent-05" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+        --output text)
+      ```
+
+   1. SSH into the instance using the public IP address
+
+      ```ShellSession
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_AGENT_05_PRIVATE_IP
+      ```
+
+1. Change to the "/tmp" directory
+
+   ```ShellSession
+   $ cd /tmp
+   ```
+
+1. Get the RPM GPG key for PostgreSQL 11
+
+   ```ShellSession
+   $ wget https://download.postgresql.org/pub/repos/yum/RPM-GPG-KEY-PGDG-11
+   ```
+
+1. Import the RPM GPG key for PostgreSQL 11
+
+   ```ShellSession
+   $ sudo rpm --import RPM-GPG-KEY-PGDG-11
+   ```
+
+1. Install PostgreSQL 11 RPM
+
+   ```ShellSession
+   $ sudo yum -y install https://download.postgresql.org/pub/repos/yum/11/redhat/rhel-7-x86_64/pgdg-redhat-repo-latest.noarch.rpm
+   ```
+
+1. Install PostgreSQL 11
+
+   ```ShellSession
+   $ sudo yum -y install postgresql11
+   ```
+
+1. Exit the Jenkins agent 05
+
+   ```ShellSession
+   $ exit
+   ```
+
+### Setup ruby environment on Jenkins agent 05
+
+1. Open a terminal
+
+1. Change to the "ab2d" repo directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d
+   ```
+
+1. Get credentials for the Management AWS account
+
+   ```ShellSession
+   $ source ./Deploy/bash/set-env.sh
+   ```
+
+1. Connect to Jenkins agent
+
+   1. Get the public IP address of Jenkins EC2 instance
+
+      ```ShellSession
+      $ JENKINS_AGENT_05_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-jenkins-agent-05" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+        --output text)
+      ```
+
+   1. SSH into the instance using the public IP address
+
+      ```ShellSession
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_AGENT_05_PRIVATE_IP
+      ```
+      
+1. Install rbenv dependencies
+
+   ```ShellSession
+   $ sudo yum install -y git-core zlib zlib-devel gcc-c++ patch readline \
+     readline-devel libyaml-devel libffi-devel openssl-devel make bzip2 \
+     autoconf automake libtool bison curl sqlite-devel
+   ```
+
+1. Switch to the Jenkins user
+
+   ```ShellSession
+   $ sudo su - jenkins
+   ```
+
+1. Install rbenv and ruby-build
+
+   ```ShellSession
+   $ curl -sL https://github.com/rbenv/rbenv-installer/raw/master/bin/rbenv-installer | bash -
+   ```
+
+1. Add rbenv initialization to "bashrc"
+
+   ```ShellSession
+   $ echo 'export PATH="$HOME/.gem/ruby/2.6.0/bin:$HOME/.rbenv/bin:$PATH"' >> ~/.bashrc
+   $ echo 'eval "$(rbenv init -)"' >> ~/.bashrc
+   ```
+
+1. Initialize rbenv for the current session
+
+   ```ShellSession
+   $ source ~/.bashrc
+   ```
+
+1. Install Ruby 2.6.5
+
+   ```ShellSession
+   $ rbenv install 2.6.5
+   ```
+
+1. Set the global version of Ruby
+
+   ```SehellSession
+   $ rbenv global 2.6.5
+   ```
+
+1. Install bundler to the jenkins user ".gem" directory
+
+   ```ShellSession
+   $ gem install --user-install bundler
+   ```
+
+1. Note that bundler is now installed where Inspec wants to see it
+
+   ```ShellSession
+   $ ls /var/lib/jenkins/.gem/ruby/2.6.0/gems
+   ```
+
+1. Update Ruby Gems
+
+   ```ShellSession
+   $ gem update --user-install --system
+   ```
+
+1. Verify ruby by checking its version
+
+   ```ShellSession
+   $ ruby --version
+   ```
+
+1. Exit the jenkins user
+
+   ```ShellSession
+   $ exit
+   ```
+
+1. Exit the Jenkins agent 05
+
+   ```ShellSession
+   $ exit
+   ```
+
+### Install postgresql10-devel on Jenkins agent 05
+
+1. Note that I couldn't install postgresql11-devel due to dependencies that could not be installed, so I am using "postgresql10-devel" instead
+
+1. Open a terminal
+
+1. Change to the "ab2d" repo directory
+
+   ```ShellSession
+   $ cd ~/code/ab2d
+   ```
+
+1. Get credentials for the Management AWS account
+
+   ```ShellSession
+   $ source ./Deploy/bash/set-env.sh
+   ```
+
+1. Connect to Jenkins agent
+
+   1. Get the public IP address of Jenkins EC2 instance
+
+      ```ShellSession
+      $ JENKINS_AGENT_05_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-jenkins-agent-05" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+        --output text)
+      ```
+
+   1. SSH into the instance using the public IP address
+
+      ```ShellSession
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_AGENT_05_PRIVATE_IP
+      ```
+      
+1. Install postgresql10-devel
+
+   ```ShellSession
+   $ sudo yum -y install postgresql10-devel
+   ```
 
 > *** TO DO ***: Stopping point for new Jenkins setup
 
