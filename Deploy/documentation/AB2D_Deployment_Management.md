@@ -4,28 +4,43 @@
 
 1. [Setup Jenkins master in management AWS account](#setup-jenkins-master-in-management-aws-account)
 1. [Setup Jenkins agents in management AWS account](#setup-jenkins-agent-in-management-aws-account)
+1. [Configure second ELB volumes for Jenkins nodes](#configure-second-elb-volumes-for-jenkins-nodes)
+   * [Configure Jenkins master second ELB volume](#configure-jenkins-master-second-elb-volume)
+   * [Configure Jenkins agent 01 second ELB volume](#configure-jenkins-agent-01-second-elb-volume)
+   * [Configure Jenkins agent 02 second ELB volume](#configure-jenkins-agent-02-second-elb-volume)
+   * [Configure Jenkins agent 03 second ELB volume](#configure-jenkins-agent-03-second-elb-volume)
+   * [Configure Jenkins agent 04 second ELB volume](#configure-jenkins-agent-04-second-elb-volume)
+   * [Configure Jenkins agent 05 second ELB volume](#configure-jenkins-agent-05-second-elb-volume)
+1. [Install Jenkins](#install-jenkins)
 1. [Allow jenkins users to use a login shell](#allow-jenkins-users-to-use-a-login-shell)
    * [Modify the jenkins user on Jenkins master to allow it to use a login shell](#modify-the-jenkins-user-on-jenkins-master-to-allow-it-to-use-a-login-shell)
-   * [Create a jenkins user on Jenkins agent and allow it to use a login shell](#create-a-jenkins-user-on-jenkins-agent-and-allow-it-to-use-a-login-shell)
+   * [Create a jenkins user on Jenkins agent 01 and allow it to use a login shell](#create-a-jenkins-user-on-jenkins-agent-01-and-allow-it-to-use-a-login-shell)
+   * [Create a jenkins user on Jenkins agent 02 and allow it to use a login shell](#create-a-jenkins-user-on-jenkins-agent-02-and-allow-it-to-use-a-login-shell)
+   * [Create a jenkins user on Jenkins agent 03 and allow it to use a login shell](#create-a-jenkins-user-on-jenkins-agent-03-and-allow-it-to-use-a-login-shell)
+   * [Create a jenkins user on Jenkins agent 04 and allow it to use a login shell](#create-a-jenkins-user-on-jenkins-agent-04-and-allow-it-to-use-a-login-shell)
+   * [Create a jenkins user on Jenkins agent 05 and allow it to use a login shell](#create-a-jenkins-user-on-jenkins-agent-05-and-allow-it-to-use-a-login-shell)
 1. [Set up SSH communication for jenkins](#set-up-ssh-communication-for-jenkins)
 1. [Configure Jenkins master](#configure-jenkins-master)
    * [Enable Jenkins](#enable-jenkins)
    * [Initialize the Jenkins GUI](#initialize-the-jenkins-gui)
-1. [Configure Jenkins agent](#configure-jenkins-master)
-   * [Install development tools on Jenkins agent](#install-development-tools-on-jenkins-agent)
-   * [Configure AWS CLI for management environment on Jenkins agent](#configure-aws-cli-for-management-environment-on-jenkins-agent)
-   * [Configure AWS CLI for Dev environment on Jenkins agent](#configure-aws-cli-for-dev-environment-on-jenkins-agent)
-   * [Create a directory for jobs on the Jenkins agent](#create-a-directory-for-jobs-on-the-jenkins-agent)
-   * [Install python3, pip3, and required pip modules on Jenkins agent](#install-python3-pip3-and-required-pip-modules-on-jenkins-agent)
-   * [Install Terraform on Jenkins agent](#install-terraform-on-jenkins-agent)
-   * [Configure Terraform logging on Jenkins agent](#configure-terraform-logging-on-jenkins-agent)
-   * [Install maven on Jenkins agent](#install-maven-on-jenkins-agent)
-   * [Install jq on Jenkins agent](#install-jq-on-jenkins-agent)
+1. [Configure Jenkins agent 01](#configure-jenkins-agent-01)
+   * [Install development tools on Jenkins agent 01](#install-development-tools-on-jenkins-agent-01)
+   * [Create a directory for jobs on Jenkins agent 01](#create-a-directory-for-jobs-on-jenkins-agent-01)
+   * [Install python3, pip3, and required pip modules on Jenkins agent 01](#install-python3-pip3-and-required-pip-modules-on-jenkins-agent-01)
+   * [Install Terraform on Jenkins agent 01](#install-terraform-on-jenkins-agent-01)
+   * [Configure Terraform logging on Jenkins agent 01](#configure-terraform-logging-on-jenkins-agent-01)
+   * [Install maven on Jenkins agent 01](#install-maven-on-jenkins-agent-01)
+   * [Install jq on Jenkins agent 01](#install-jq-on-jenkins-agent-01)
    * [Add the jenkins user to the docker group](#add-the-jenkins-user-to-the-docker-group)
-   * [Ensure jenkins can use the Unix socket for the Docker daemon](#ensure-jenkins-can-use-the-unix-socket-for-the-docker-daemon)
-   * [Install packer on Jenkins agent](#install-packer-on-jenkins-agent)
-   * [Setup ruby environment on Jenkins agent](#setup-ruby-environment-on-jenkins-agent)
-   * [Install postgresql10-devel on Jenkins agent](#install-postgresql10-devel-on-jenkins-agent)
+   * [Ensure jenkins agent 01 can use the Unix socket for the Docker daemon](#ensure-jenkins-agent-01-can-use-the-unix-socket-for-the-docker-daemon)
+   * [Install packer on Jenkins agent 01](#install-packer-on-jenkins-agent-01)
+   * [Install Postgres 11 on Jenkins agent 01](#install-postgres-11-on-jenkins-agent-01)
+   * [Setup ruby environment on Jenkins agent 01](#setup-ruby-environment-on-jenkins-agent-01)
+   * [Install postgresql10-devel on Jenkins agent 01](#install-postgresql10-devel-on-jenkins-agent-01)
+1. [Configure Jenkins agent 02](#configure-jenkins-agent-02)
+1. [Configure Jenkins agent 03](#configure-jenkins-agent-03)
+1. [Configure Jenkins agent 04](#configure-jenkins-agent-04)
+1. [Configure Jenkins agent 05](#configure-jenkins-agent-05)
 1. [Create GitHub user for Jenkins automation](#create-github-user-for-jenkins-automation)
 1. [Configure Jenkins for AB2D](#configure-jenkins-for-ab2d)
    * [Configure jenkins SSH credentials](#configure-jenkins-ssh-credentials)
@@ -73,32 +88,6 @@
 1. Open a terminal
 
 1. Change to the "ab2d" repo directory
-
-   *Example:*
-
-   ```ShellSession
-   $ cd ~/code/ab2d
-   ```
-
-1. Set the target environment to the "Mgmt AWS account"
-
-   ```ShellSession
-   $ source ./Deploy/bash/set-env.sh
-   ```
-
-1. Change to the management terraform directory
-
-   ```ShellSession
-   $ cd ./Deploy/terraform/environments/ab2d-mgmt-east-dev
-   ```
-
-1. Remove the Jenkins master instance from terraform state
-
-   ```ShellSesssion
-   $ terraform state rm module.jenkins_master.aws_instance.jenkins_master
-   ```
-
-1. Change to the "ab2d" repo directory again
 
    *Example:*
 
@@ -162,7 +151,65 @@
      && ./Deploy/bash/deploy-jenkins-agent.sh
    ```
 
-1. Wait for the automation to complete
+1. Set AWS environment to the management account
+
+   ```ShellSession
+   $ source ./Deploy/bash/set-env.sh
+   ```
+
+1. Get EC2 instance id of Jenkins agent 01
+
+   ```ShellSession
+   $ EC2_INSTANCE_ID=$(aws --region "${AWS_DEFAULT_REGION}" ec2 describe-instances \
+     --filters "Name=tag:Name,Values=ab2d-jenkins-agent-01" \
+     --query "Reservations[*].Instances[*].InstanceId" \
+     --output text)
+   ```
+   
+1. Ensure that Jenkins agent 01 is running and has passed status checks before proceeding
+
+   1. Enter the following
+   
+      ```ShellSession
+      $ echo "*************" \
+        && echo "InstanceState" \
+        && echo "*************" \
+        && aws ec2 describe-instance-status \
+        --instance-ids "${EC2_INSTANCE_ID}" \
+        --query "InstanceStatuses[*].InstanceState.Name" \
+        --output text \
+        && echo "**************" \
+        && echo "InstanceStatus" \
+        && echo "**************" \
+        && aws ec2 describe-instance-status \
+           --instance-ids "${EC2_INSTANCE_ID}" \
+           --query "InstanceStatuses[*].InstanceStatus.Details[*].Status" \
+           --output text \
+        && echo "**************" \
+        && echo "SystemStatus" \
+        && echo "**************" \
+        && aws ec2 describe-instance-status \
+           --instance-ids "${EC2_INSTANCE_ID}" \
+           --query "InstanceStatuses[*].SystemStatus.Details[*].Status" \
+           --output text
+      ```
+
+   1. Verify that you get the following output
+
+      ```
+      *************
+      InstanceState
+      *************
+      running
+      **************
+      InstanceStatus
+      **************
+      passed
+      **************
+      SystemStatus
+      **************
+      passed
+      ```
 
 1. Create EC2 instance for Jenkins agent 02 (used for builds)
 
@@ -172,7 +219,65 @@
      && ./Deploy/bash/deploy-jenkins-agent.sh
    ```
 
-1. Wait for the automation to complete
+1. Set AWS environment to the management account
+
+   ```ShellSession
+   $ source ./Deploy/bash/set-env.sh
+   ```
+
+1. Get EC2 instance id of Jenkins agent 02
+
+   ```ShellSession
+   $ EC2_INSTANCE_ID=$(aws --region "${AWS_DEFAULT_REGION}" ec2 describe-instances \
+     --filters "Name=tag:Name,Values=ab2d-jenkins-agent-02" \
+     --query "Reservations[*].Instances[*].InstanceId" \
+     --output text)
+   ```
+   
+1. Ensure that Jenkins agent 02 is running and has passed status checks before proceeding
+
+   1. Enter the following
+   
+      ```ShellSession
+      $ echo "*************" \
+        && echo "InstanceState" \
+        && echo "*************" \
+        && aws ec2 describe-instance-status \
+        --instance-ids "${EC2_INSTANCE_ID}" \
+        --query "InstanceStatuses[*].InstanceState.Name" \
+        --output text \
+        && echo "**************" \
+        && echo "InstanceStatus" \
+        && echo "**************" \
+        && aws ec2 describe-instance-status \
+           --instance-ids "${EC2_INSTANCE_ID}" \
+           --query "InstanceStatuses[*].InstanceStatus.Details[*].Status" \
+           --output text \
+        && echo "**************" \
+        && echo "SystemStatus" \
+        && echo "**************" \
+        && aws ec2 describe-instance-status \
+           --instance-ids "${EC2_INSTANCE_ID}" \
+           --query "InstanceStatuses[*].SystemStatus.Details[*].Status" \
+           --output text
+      ```
+
+   1. Verify that you get the following output
+
+      ```
+      *************
+      InstanceState
+      *************
+      running
+      **************
+      InstanceStatus
+      **************
+      passed
+      **************
+      SystemStatus
+      **************
+      passed
+      ```
 
 1. Create EC2 instance for Jenkins agent 03 (used for builds)
 
@@ -182,13 +287,2483 @@
      && ./Deploy/bash/deploy-jenkins-agent.sh
    ```
 
-1. Wait for the automation to complete
+1. Set AWS environment to the management account
 
-## Configure ELB volumes for Jenkins nodes
+   ```ShellSession
+   $ source ./Deploy/bash/set-env.sh
+   ```
 
-### Configure Jenkins master ELB volumes
+1. Get EC2 instance id of Jenkins agent 03
 
-> *** TO DO ***
+   ```ShellSession
+   $ EC2_INSTANCE_ID=$(aws --region "${AWS_DEFAULT_REGION}" ec2 describe-instances \
+     --filters "Name=tag:Name,Values=ab2d-jenkins-agent-03" \
+     --query "Reservations[*].Instances[*].InstanceId" \
+     --output text)
+   ```
+   
+1. Ensure that Jenkins agent 03 is running and has passed status checks before proceeding
+
+   1. Enter the following
+   
+      ```ShellSession
+      $ echo "*************" \
+        && echo "InstanceState" \
+        && echo "*************" \
+        && aws ec2 describe-instance-status \
+        --instance-ids "${EC2_INSTANCE_ID}" \
+        --query "InstanceStatuses[*].InstanceState.Name" \
+        --output text \
+        && echo "**************" \
+        && echo "InstanceStatus" \
+        && echo "**************" \
+        && aws ec2 describe-instance-status \
+           --instance-ids "${EC2_INSTANCE_ID}" \
+           --query "InstanceStatuses[*].InstanceStatus.Details[*].Status" \
+           --output text \
+        && echo "**************" \
+        && echo "SystemStatus" \
+        && echo "**************" \
+        && aws ec2 describe-instance-status \
+           --instance-ids "${EC2_INSTANCE_ID}" \
+           --query "InstanceStatuses[*].SystemStatus.Details[*].Status" \
+           --output text
+      ```
+
+   1. Verify that you get the following output
+
+      ```
+      *************
+      InstanceState
+      *************
+      running
+      **************
+      InstanceStatus
+      **************
+      passed
+      **************
+      SystemStatus
+      **************
+      passed
+      ```
+
+1. Create EC2 instance for Jenkins agent 04 (used for builds)
+
+   ```ShellSession
+   $ export EC2_INSTANCE_TAG_PARAM="ab2d-jenkins-agent-04" \
+     && export EC2_INSTANCE_TYPE_PARAM="m5.large" \
+     && ./Deploy/bash/deploy-jenkins-agent.sh
+   ```
+
+1. Set AWS environment to the management account
+
+   ```ShellSession
+   $ source ./Deploy/bash/set-env.sh
+   ```
+
+1. Get EC2 instance id of Jenkins agent 04
+
+   ```ShellSession
+   $ EC2_INSTANCE_ID=$(aws --region "${AWS_DEFAULT_REGION}" ec2 describe-instances \
+     --filters "Name=tag:Name,Values=ab2d-jenkins-agent-04" \
+     --query "Reservations[*].Instances[*].InstanceId" \
+     --output text)
+   ```
+   
+1. Ensure that Jenkins agent 04 is running and has passed status checks before proceeding
+
+   1. Enter the following
+   
+      ```ShellSession
+      $ echo "*************" \
+        && echo "InstanceState" \
+        && echo "*************" \
+        && aws ec2 describe-instance-status \
+        --instance-ids "${EC2_INSTANCE_ID}" \
+        --query "InstanceStatuses[*].InstanceState.Name" \
+        --output text \
+        && echo "**************" \
+        && echo "InstanceStatus" \
+        && echo "**************" \
+        && aws ec2 describe-instance-status \
+           --instance-ids "${EC2_INSTANCE_ID}" \
+           --query "InstanceStatuses[*].InstanceStatus.Details[*].Status" \
+           --output text \
+        && echo "**************" \
+        && echo "SystemStatus" \
+        && echo "**************" \
+        && aws ec2 describe-instance-status \
+           --instance-ids "${EC2_INSTANCE_ID}" \
+           --query "InstanceStatuses[*].SystemStatus.Details[*].Status" \
+           --output text
+      ```
+
+   1. Verify that you get the following output
+
+      ```
+      *************
+      InstanceState
+      *************
+      running
+      **************
+      InstanceStatus
+      **************
+      passed
+      **************
+      SystemStatus
+      **************
+      passed
+      ```
+
+1. Create EC2 instance for Jenkins agent 05 (used for builds)
+
+   ```ShellSession
+   $ export EC2_INSTANCE_TAG_PARAM="ab2d-jenkins-agent-05" \
+     && export EC2_INSTANCE_TYPE_PARAM="m5.large" \
+     && ./Deploy/bash/deploy-jenkins-agent.sh
+   ```
+
+1. Set AWS environment to the management account
+
+   ```ShellSession
+   $ source ./Deploy/bash/set-env.sh
+   ```
+
+1. Get EC2 instance id of Jenkins agent 05
+
+   ```ShellSession
+   $ EC2_INSTANCE_ID=$(aws --region "${AWS_DEFAULT_REGION}" ec2 describe-instances \
+     --filters "Name=tag:Name,Values=ab2d-jenkins-agent-05" \
+     --query "Reservations[*].Instances[*].InstanceId" \
+     --output text)
+   ```
+   
+1. Ensure that Jenkins agent 05 is running and has passed status checks before proceeding
+
+   1. Enter the following
+   
+      ```ShellSession
+      $ echo "*************" \
+        && echo "InstanceState" \
+        && echo "*************" \
+        && aws ec2 describe-instance-status \
+        --instance-ids "${EC2_INSTANCE_ID}" \
+        --query "InstanceStatuses[*].InstanceState.Name" \
+        --output text \
+        && echo "**************" \
+        && echo "InstanceStatus" \
+        && echo "**************" \
+        && aws ec2 describe-instance-status \
+           --instance-ids "${EC2_INSTANCE_ID}" \
+           --query "InstanceStatuses[*].InstanceStatus.Details[*].Status" \
+           --output text \
+        && echo "**************" \
+        && echo "SystemStatus" \
+        && echo "**************" \
+        && aws ec2 describe-instance-status \
+           --instance-ids "${EC2_INSTANCE_ID}" \
+           --query "InstanceStatuses[*].SystemStatus.Details[*].Status" \
+           --output text
+      ```
+
+   1. Verify that you get the following output
+
+      ```
+      *************
+      InstanceState
+      *************
+      running
+      **************
+      InstanceStatus
+      **************
+      passed
+      **************
+      SystemStatus
+      **************
+      passed
+      ```
+
+## Configure second ELB volumes for Jenkins nodes
+
+### Configure Jenkins master second ELB volume
+
+1. Set AWS environment to the management account
+
+   ```ShellSession
+   $ source ./Deploy/bash/set-env.sh
+   ```
+
+1. Get availability zone of Jenkins master
+
+   ```ShellSession
+   $ JENKINS_MASTER_AZ=$(aws --region "${AWS_DEFAULT_REGION}" ec2 describe-instances \
+     --filters "Name=tag:Name,Values=ab2d-jenkins-master" \
+     --query "Reservations[*].Instances[*].Placement.AvailabilityZone" \
+     --output text)
+   ```
+
+1. Create volume for Jenkins master
+
+   ```ShellSession
+   $ aws --region "${AWS_DEFAULT_REGION}" ec2 create-volume \
+     --size 250 \
+     --availability-zone "${JENKINS_MASTER_AZ}" \
+     --tag-specifications 'ResourceType=volume,Tags=[{Key=Name,Value=ab2d-jenkins-master-second-vol}]'
+   ```
+
+1. Ensure the status of "ab2d-jenkins-master-second-vol" volume is "available" before proceeding
+
+   ```ShellSession
+   $ aws --region "${AWS_DEFAULT_REGION}" ec2 describe-volumes \
+     --filters "Name=tag:Name,Values=ab2d-jenkins-master-second-vol" \
+     --query "Volumes[*].State" \
+     --output text
+   ```
+
+1. Get EC2 instance id of Jenkins master
+
+   ```ShellSession
+   $ EC2_INSTANCE_ID=$(aws --region "${AWS_DEFAULT_REGION}" ec2 describe-instances \
+     --filters "Name=tag:Name,Values=ab2d-jenkins-master" \
+     --query "Reservations[*].Instances[*].InstanceId" \
+     --output text)
+   ```
+
+1. Get volume ID of "ab2d-jenkins-master-second-vol" volume
+
+   ```ShellSession
+   $ VOLUME_ID=$(aws --region "${AWS_DEFAULT_REGION}" ec2 describe-volumes \
+     --filters "Name=tag:Name,Values=ab2d-jenkins-master-second-vol" \
+     --query "Volumes[*].VolumeId" \
+     --output text)
+   ```
+
+1. Attach "ab2d-jenkins-master-second-vol" volume to Jenkins master
+
+   ```ShellSession
+   $ aws --region "${AWS_DEFAULT_REGION}" ec2 attach-volume \
+     --device "/dev/sdf" \
+     --instance-id "${EC2_INSTANCE_ID}" \
+     --volume-id "${VOLUME_ID}"
+   ```
+
+1. Ensure the status of "ab2d-jenkins-master-second-vol" volume is "attached" before proceeding
+
+   ```ShellSession
+   $ aws --region "${AWS_DEFAULT_REGION}" ec2 describe-volumes \
+     --filters "Name=tag:Name,Values=ab2d-jenkins-master-second-vol" \
+     --query "Volumes[*].Attachments[*].State" \
+     --output text
+   ```
+
+1. Get private ip address of Jenkins master
+
+   ```ShellSession
+   $ JENKINS_MASTER_PRIVATE_IP=$(aws --region "${AWS_DEFAULT_REGION}" ec2 describe-instances \
+     --filters "Name=tag:Name,Values=ab2d-jenkins-master" \
+     --query "Reservations[*].Instances[*].PrivateIpAddress" \
+     --output text)
+   ```
+
+1. Connect to Jenkins master
+
+   ```ShellSession
+   $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem "ec2-user@${JENKINS_MASTER_PRIVATE_IP}"
+   ```
+
+1. Create a new partition on the "/dev/nvme1n1" disk
+
+   ```ShellSession
+   (
+   echo n # Add a new partition
+   echo p # Primary partition
+   echo   # Partition number (Accept default)
+   echo   # First sector (Accept default)
+   echo   # Last sector (Accept default)
+   echo w # Write changes
+   ) | sudo fdisk /dev/nvme1n1
+   ```
+
+1. Request that the operating system re-reads the partition table
+
+   ```ShellSession
+   $ sudo partprobe
+   ```
+
+1. Create physical volume by initializing the partition for use by the Logical Volume Manager (LVM)
+
+   ```ShellSession
+   $ sudo pvcreate /dev/nvme1n1p1
+   ```
+
+1. Create volume group
+   
+   ```ShellSession
+   $ sudo vgcreate VolGroup00 /dev/nvme1n1p1
+   ```
+
+1. Create new "/var/log" mount
+
+   1. Create log logical volume
+   
+      ```ShellSession
+      $ sudo lvcreate -L 145G -n logVol VolGroup00
+      ```
+   
+   1. Create file system on log logical volume
+   
+      ```ShellSession
+      $ sudo mkfs.xfs -f /dev/VolGroup00/logVol
+      ```
+   
+   1. Create a temporary mount point for log
+   
+      ```ShellSession
+      $ sudo mkdir -p /mnt/log
+      ```
+   
+   1. Mount logical volume to temporary mount point for log
+   
+      ```ShellSession
+      $ sudo mount /dev/VolGroup00/logVol /mnt/log
+      ```
+   
+   1. Stop rsyslog
+   
+      ```ShellSession
+      $ sudo systemctl stop rsyslog
+      ```
+      
+   1. Sync existing log directory to temporary log directory
+   
+      ```ShellSession
+      $ sudo rsync -avz /var/log/* /mnt/log/
+      ```
+   
+   1. Move the original log directory out of the way
+   
+      ```ShellSession
+      $ sudo mv /var/log /var/log.deleteme
+      ```
+   
+   1. Create new log directory
+   
+      ```ShellSession
+      $ sudo mkdir -p /var/log
+      ```
+   
+   1. Mount logical volume to the new log directory
+   
+      ```ShellSession
+      $ sudo mount /dev/VolGroup00/logVol /var/log
+      ```
+   
+   1. Sync the backup log data to the new log directory
+   
+      ```ShellSession
+      $ sudo rsync -avz /var/log.deleteme/* /var/log/
+      ```
+   
+   1. Restore SELinux Context for log
+   
+      ```ShellSession
+      $ sudo restorecon -rv /var/log
+      ```
+   
+   1. Restart rsyslog
+   
+      ```ShellSession
+      $ sudo systemctl start rsyslog
+      ```
+   
+   1. Add the log mount to the "/etc/fstab" file
+   
+      1. Open the "/etc/fstab" file
+   
+         ```ShellSession
+         $ sudo vim /etc/fstab
+         ```
+   
+      1. Add the following line to the file
+      
+         ```
+         /dev/mapper/VolGroup00-logVol            /var/log                 xfs    defaults,noatime 0 2
+         ```
+   
+      1. Save and close the file
+   
+1. Create new "/var/lib" mount
+
+   1. Create lib logical volume
+   
+      ```ShellSession
+      $ sudo lvcreate -L 100G -n libVol VolGroup00
+      ```
+   
+   1. Create file system on lib logical volume
+   
+      ```ShellSession
+      $ sudo mkfs.xfs -f /dev/VolGroup00/libVol
+      ```
+   
+   1. Create a temporary mount point for lib
+   
+      ```ShellSession
+      $ sudo mkdir -p /mnt/lib
+      ```
+   
+   1. Mount logical volume to temporary mount point for lib
+   
+      ```ShellSession
+      $ sudo mount /dev/VolGroup00/libVol /mnt/lib
+      ```
+       
+   1. Sync existing lib directory to temporary lib directory
+   
+      ```ShellSession
+      $ sudo rsync -avz /var/lib/* /mnt/lib/
+      ```
+   
+   1. Move the original lib directory out of the way
+   
+      ```ShellSession
+      $ sudo mv /var/lib /var/lib.deleteme
+      ```
+   
+   1. Create new lib directory
+   
+      ```ShellSession
+      $ sudo mkdir -p /var/lib
+      ```
+   
+   1. Mount logical volume to the new lib directory
+   
+      ```ShellSession
+      $ sudo mount /dev/VolGroup00/libVol /var/lib
+      ```
+   
+   1. Sync the backup lib data to the new lib directory
+   
+      ```ShellSession
+      $ sudo rsync -avz /var/lib.deleteme/* /var/lib/
+      ```
+   
+   1. Restore SELinux Context for lib
+   
+      ```ShellSession
+      $ sudo restorecon -rv /var/lib
+      ```
+   
+   1. Add the lib mount to the "/etc/fstab" file
+   
+      1. Open the "/etc/fstab" file
+   
+         ```ShellSession
+         $ sudo vim /etc/fstab
+         ```
+   
+      1. Add the following line to the file
+      
+         ```
+         /dev/mapper/VolGroup00-libVol            /var/lib                 xfs    defaults,noatime 0 2
+         ```
+   
+      1. Save and close the file
+
+1. Create new "/var/log/audit" mount
+
+   1. Create audit logical volume
+   
+      ```ShellSession
+      $ sudo lvcreate -l +100%FREE -n auditVol VolGroup00
+      ```
+   
+   1. Create file system on audit logical volume
+   
+      ```ShellSession
+      $ sudo mkfs.xfs -f /dev/VolGroup00/auditVol
+      ```
+   
+   1. Create a temporary mount point for audit
+   
+      ```ShellSession
+      $ sudo mkdir -p /mnt/audit
+      ```
+   
+   1. Mount logical volume to temporary mount point for audit
+   
+      ```ShellSession
+      $ sudo mount /dev/VolGroup00/auditVol /mnt/audit
+      ```
+       
+   1. Sync existing audit directory to temporary audit directory
+   
+      ```ShellSession
+      $ sudo rsync -avz /var/log/audit/ /mnt/audit/
+      ```
+   
+   1. Move the original audit directory out of the way
+   
+      ```ShellSession
+      $ sudo mv /var/log/audit /var/log/audit.deleteme
+      ```
+   
+   1. Create new audit directory
+   
+      ```ShellSession
+      $ sudo mkdir -p /var/log/audit
+      ```
+   
+   1. Mount logical volume to the new audit directory
+   
+      ```ShellSession
+      $ sudo mount /dev/VolGroup00/auditVol /var/log/audit
+      ```
+   
+   1. Sync the backup audit data to the new audit directory
+   
+      ```ShellSession
+      $ sudo rsync -avz /var/log/audit.deleteme/ /var/log/audit/
+      ```
+   
+   1. Restore SELinux Context for audit
+   
+      ```ShellSession
+      $ sudo restorecon -rv /var/log/audit
+      ```
+   
+   1. Add the audit mount to the "/etc/fstab" file
+   
+      1. Open the "/etc/fstab" file
+   
+         ```ShellSession
+         $ sudo vim /etc/fstab
+         ```
+   
+      1. Add the following line to the file
+      
+         ```
+         /dev/mapper/VolGroup00-auditVol          /var/log/audit     xfs    defaults,noatime 0 2
+         ```
+   
+      1. Save and close the file
+
+1. Exit Jenkins master
+
+   ```ShellSession
+   $ exit
+   ```
+
+### Configure Jenkins agent 01 second ELB volume
+
+1. Set AWS environment to the management account
+
+   ```ShellSession
+   $ source ./Deploy/bash/set-env.sh
+   ```
+
+1. Get availability zone of Jenkins agent 01
+
+   ```ShellSession
+   $ JENKINS_AGENT_01_AZ=$(aws --region "${AWS_DEFAULT_REGION}" ec2 describe-instances \
+     --filters "Name=tag:Name,Values=ab2d-jenkins-agent-01" \
+     --query "Reservations[*].Instances[*].Placement.AvailabilityZone" \
+     --output text)
+   ```
+
+1. Create volume for Jenkins agent 01
+
+   ```ShellSession
+   $ aws --region "${AWS_DEFAULT_REGION}" ec2 create-volume \
+     --size 1000 \
+     --availability-zone "${JENKINS_AGENT_01_AZ}" \
+     --tag-specifications 'ResourceType=volume,Tags=[{Key=Name,Value=ab2d-jenkins-agent-01-second-vol}]'
+   ```
+
+1. Note the output
+
+   ```
+   {
+       "AvailabilityZone": "us-east-1a",
+       "CreateTime": "2020-10-05T18:42:14+00:00",
+       "Encrypted": false,
+       "Size": 1000,
+       "SnapshotId": "",
+       "State": "creating",
+       "VolumeId": "vol-0fd3fc15c5deddb87",
+       "Iops": 3000,
+       "Tags": [
+           {
+               "Key": "Name",
+               "Value": "ab2d-jenkins-agent-01-second-vol"
+           }
+       ],
+       "VolumeType": "gp2",
+       "MultiAttachEnabled": false
+   }
+   ```
+
+1. Ensure the status of "ab2d-jenkins-agent-01-second-vol" volume is "available" before proceeding
+
+   ```ShellSession
+   $ aws --region "${AWS_DEFAULT_REGION}" ec2 describe-volumes \
+     --filters "Name=tag:Name,Values=ab2d-jenkins-agent-01-second-vol" \
+     --query "Volumes[*].State" \
+     --output text
+   ```
+
+1. Get EC2 instance id of Jenkins agent 01
+
+   ```ShellSession
+   $ EC2_INSTANCE_ID=$(aws --region "${AWS_DEFAULT_REGION}" ec2 describe-instances \
+     --filters "Name=tag:Name,Values=ab2d-jenkins-agent-01" \
+     --query "Reservations[*].Instances[*].InstanceId" \
+     --output text)
+   ```
+
+1. Get volume ID of "ab2d-jenkins-agent-01-second-vol" volume
+
+   ```ShellSession
+   $ VOLUME_ID=$(aws --region "${AWS_DEFAULT_REGION}" ec2 describe-volumes \
+     --filters "Name=tag:Name,Values=ab2d-jenkins-agent-01-second-vol" \
+     --query "Volumes[*].VolumeId" \
+     --output text)
+   ```
+
+1. Attach "ab2d-jenkins-agent-01-second-vol" volume to Jenkins agent 01
+
+   ```ShellSession
+   $ aws --region "${AWS_DEFAULT_REGION}" ec2 attach-volume \
+     --device "/dev/sdf" \
+     --instance-id "${EC2_INSTANCE_ID}" \
+     --volume-id "${VOLUME_ID}"
+   ```
+
+1. Ensure the status of "ab2d-jenkins-agent-01-second-vol" volume is "attached" before proceeding
+
+   ```ShellSession
+   $ aws --region "${AWS_DEFAULT_REGION}" ec2 describe-volumes \
+     --filters "Name=tag:Name,Values=ab2d-jenkins-agent-01-second-vol" \
+     --query "Volumes[*].Attachments[*].State" \
+     --output text
+   ```
+
+1. Get private ip address of Jenkins agent 01
+
+   ```ShellSession
+   $ JENKINS_AGENT_01_PRIVATE_IP=$(aws --region "${AWS_DEFAULT_REGION}" ec2 describe-instances \
+     --filters "Name=tag:Name,Values=ab2d-jenkins-agent-01" \
+     --query "Reservations[*].Instances[*].PrivateIpAddress" \
+     --output text)
+   ```
+
+1. Connect to Jenkins agent 01
+
+   ```ShellSession
+   $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem "ec2-user@${JENKINS_AGENT_01_PRIVATE_IP}"
+   ```
+
+1. Create a new partition on the "/dev/nvme1n1" disk
+
+   ```ShellSession
+   (
+   echo n # Add a new partition
+   echo p # Primary partition
+   echo   # Partition number (Accept default)
+   echo   # First sector (Accept default)
+   echo   # Last sector (Accept default)
+   echo w # Write changes
+   ) | sudo fdisk /dev/nvme1n1
+   ```
+
+1. Request that the operating system re-reads the partition table
+
+   ```ShellSession
+   $ sudo partprobe
+   ```
+
+1. Create physical volume by initializing the partition for use by the Logical Volume Manager (LVM)
+
+   ```ShellSession
+   $ sudo pvcreate /dev/nvme1n1p1
+   ```
+
+1. Create volume group
+   
+   ```ShellSession
+   $ sudo vgcreate VolGroup00 /dev/nvme1n1p1
+   ```
+
+1. Create new "/var/log" mount
+
+   1. Create log logical volume
+   
+      ```ShellSession
+      $ sudo lvcreate -L 895G -n logVol VolGroup00
+      ```
+   
+   1. Create file system on log logical volume
+   
+      ```ShellSession
+      $ sudo mkfs.xfs -f /dev/VolGroup00/logVol
+      ```
+   
+   1. Create a temporary mount point for log
+   
+      ```ShellSession
+      $ sudo mkdir -p /mnt/log
+      ```
+   
+   1. Mount logical volume to temporary mount point for log
+   
+      ```ShellSession
+      $ sudo mount /dev/VolGroup00/logVol /mnt/log
+      ```
+   
+   1. Stop rsyslog
+   
+      ```ShellSession
+      $ sudo systemctl stop rsyslog
+      ```
+      
+   1. Sync existing log directory to temporary log directory
+   
+      ```ShellSession
+      $ sudo rsync -avz /var/log/* /mnt/log/
+      ```
+   
+   1. Move the original log directory out of the way
+   
+      ```ShellSession
+      $ sudo mv /var/log /var/log.deleteme
+      ```
+   
+   1. Create new log directory
+   
+      ```ShellSession
+      $ sudo mkdir -p /var/log
+      ```
+   
+   1. Mount logical volume to the new log directory
+   
+      ```ShellSession
+      $ sudo mount /dev/VolGroup00/logVol /var/log
+      ```
+   
+   1. Sync the backup log data to the new log directory
+   
+      ```ShellSession
+      $ sudo rsync -avz /var/log.deleteme/* /var/log/
+      ```
+   
+   1. Restore SELinux Context for log
+   
+      ```ShellSession
+      $ sudo restorecon -rv /var/log
+      ```
+   
+   1. Restart rsyslog
+   
+      ```ShellSession
+      $ sudo systemctl start rsyslog
+      ```
+   
+   1. Add the log mount to the "/etc/fstab" file
+   
+      1. Open the "/etc/fstab" file
+   
+         ```ShellSession
+         $ sudo vim /etc/fstab
+         ```
+   
+      1. Add the following line to the file
+      
+         ```
+         /dev/mapper/VolGroup00-logVol            /var/log           xfs    defaults,noatime 0 2
+         ```
+   
+      1. Save and close the file
+   
+1. Create new "/var/lib" mount
+
+   1. Create lib logical volume
+   
+      ```ShellSession
+      $ sudo lvcreate -L 100G -n libVol VolGroup00
+      ```
+   
+   1. Create file system on lib logical volume
+   
+      ```ShellSession
+      $ sudo mkfs.xfs -f /dev/VolGroup00/libVol
+      ```
+   
+   1. Create a temporary mount point for lib
+   
+      ```ShellSession
+      $ sudo mkdir -p /mnt/lib
+      ```
+   
+   1. Mount logical volume to temporary mount point for lib
+   
+      ```ShellSession
+      $ sudo mount /dev/VolGroup00/libVol /mnt/lib
+      ```
+       
+   1. Sync existing lib directory to temporary lib directory
+   
+      ```ShellSession
+      $ sudo rsync -avz /var/lib/* /mnt/lib/
+      ```
+   
+   1. Move the original lib directory out of the way
+   
+      ```ShellSession
+      $ sudo mv /var/lib /var/lib.deleteme
+      ```
+   
+   1. Create new lib directory
+   
+      ```ShellSession
+      $ sudo mkdir -p /var/lib
+      ```
+   
+   1. Mount logical volume to the new lib directory
+   
+      ```ShellSession
+      $ sudo mount /dev/VolGroup00/libVol /var/lib
+      ```
+   
+   1. Sync the backup lib data to the new lib directory
+   
+      ```ShellSession
+      $ sudo rsync -avz /var/lib.deleteme/* /var/lib/
+      ```
+   
+   1. Restore SELinux Context for lib
+   
+      ```ShellSession
+      $ sudo restorecon -rv /var/lib
+      ```
+   
+   1. Add the lib mount to the "/etc/fstab" file
+   
+      1. Open the "/etc/fstab" file
+   
+         ```ShellSession
+         $ sudo vim /etc/fstab
+         ```
+   
+      1. Add the following line to the file
+      
+         ```
+         /dev/mapper/VolGroup00-libVol            /var/lib           xfs    defaults,noatime 0 2
+         ```
+   
+      1. Save and close the file
+
+1. Create new "/var/log/audit" mount
+
+   1. Create audit logical volume
+   
+      ```ShellSession
+      $ sudo lvcreate -l +100%FREE -n auditVol VolGroup00
+      ```
+   
+   1. Create file system on audit logical volume
+   
+      ```ShellSession
+      $ sudo mkfs.xfs -f /dev/VolGroup00/auditVol
+      ```
+   
+   1. Create a temporary mount point for audit
+   
+      ```ShellSession
+      $ sudo mkdir -p /mnt/audit
+      ```
+   
+   1. Mount logical volume to temporary mount point for audit
+   
+      ```ShellSession
+      $ sudo mount /dev/VolGroup00/auditVol /mnt/audit
+      ```
+       
+   1. Sync existing audit directory to temporary audit directory
+   
+      ```ShellSession
+      $ sudo rsync -avz /var/log/audit/ /mnt/audit/
+      ```
+   
+   1. Move the original audit directory out of the way
+   
+      ```ShellSession
+      $ sudo mv /var/log/audit /var/log/audit.deleteme
+      ```
+   
+   1. Create new audit directory
+   
+      ```ShellSession
+      $ sudo mkdir -p /var/log/audit
+      ```
+   
+   1. Mount logical volume to the new audit directory
+   
+      ```ShellSession
+      $ sudo mount /dev/VolGroup00/auditVol /var/log/audit
+      ```
+   
+   1. Sync the backup audit data to the new audit directory
+   
+      ```ShellSession
+      $ sudo rsync -avz /var/log/audit.deleteme/ /var/log/audit/
+      ```
+   
+   1. Restore SELinux Context for audit
+   
+      ```ShellSession
+      $ sudo restorecon -rv /var/log/audit
+      ```
+   
+   1. Add the audit mount to the "/etc/fstab" file
+   
+      1. Open the "/etc/fstab" file
+   
+         ```ShellSession
+         $ sudo vim /etc/fstab
+         ```
+   
+      1. Add the following line to the file
+      
+         ```
+         /dev/mapper/VolGroup00-auditVol          /var/log/audit     xfs    defaults,noatime 0 2
+         ```
+   
+      1. Save and close the file
+
+1. Exit Jenkins agent 01 node
+
+   ```ShellSession
+   $ exit
+   ```
+
+### Configure Jenkins agent 02 second ELB volume
+
+1. Set AWS environment to the management account
+
+   ```ShellSession
+   $ source ./Deploy/bash/set-env.sh
+   ```
+
+1. Get availability zone of Jenkins agent 02
+
+   ```ShellSession
+   $ JENKINS_AGENT_02_AZ=$(aws --region "${AWS_DEFAULT_REGION}" ec2 describe-instances \
+     --filters "Name=tag:Name,Values=ab2d-jenkins-agent-02" \
+     --query "Reservations[*].Instances[*].Placement.AvailabilityZone" \
+     --output text)
+   ```
+
+1. Create volume for Jenkins agent 02
+
+   ```ShellSession
+   $ aws --region "${AWS_DEFAULT_REGION}" ec2 create-volume \
+     --size 1000 \
+     --availability-zone "${JENKINS_AGENT_02_AZ}" \
+     --tag-specifications 'ResourceType=volume,Tags=[{Key=Name,Value=ab2d-jenkins-agent-02-second-vol}]'
+   ```
+
+1. Ensure the status of "ab2d-jenkins-agent-02-second-vol" volume is "available" before proceeding
+
+   ```ShellSession
+   $ aws --region "${AWS_DEFAULT_REGION}" ec2 describe-volumes \
+     --filters "Name=tag:Name,Values=ab2d-jenkins-agent-02-second-vol" \
+     --query "Volumes[*].State" \
+     --output text
+   ```
+
+1. Get EC2 instance id of Jenkins agent 02
+
+   ```ShellSession
+   $ EC2_INSTANCE_ID=$(aws --region "${AWS_DEFAULT_REGION}" ec2 describe-instances \
+     --filters "Name=tag:Name,Values=ab2d-jenkins-agent-02" \
+     --query "Reservations[*].Instances[*].InstanceId" \
+     --output text)
+   ```
+
+1. Get volume ID of "ab2d-jenkins-agent-02-second-vol" volume
+
+   ```ShellSession
+   $ VOLUME_ID=$(aws --region "${AWS_DEFAULT_REGION}" ec2 describe-volumes \
+     --filters "Name=tag:Name,Values=ab2d-jenkins-agent-02-second-vol" \
+     --query "Volumes[*].VolumeId" \
+     --output text)
+   ```
+
+1. Attach "ab2d-jenkins-agent-02-second-vol" volume to Jenkins agent 02
+
+   ```ShellSession
+   $ aws --region "${AWS_DEFAULT_REGION}" ec2 attach-volume \
+     --device "/dev/sdf" \
+     --instance-id "${EC2_INSTANCE_ID}" \
+     --volume-id "${VOLUME_ID}"
+   ```
+
+1. Ensure the status of "ab2d-jenkins-agent-02-second-vol" volume is "attached" before proceeding
+
+   ```ShellSession
+   $ aws --region "${AWS_DEFAULT_REGION}" ec2 describe-volumes \
+     --filters "Name=tag:Name,Values=ab2d-jenkins-agent-02-second-vol" \
+     --query "Volumes[*].Attachments[*].State" \
+     --output text
+   ```
+
+1. Get private ip address of Jenkins agent 02
+
+   ```ShellSession
+   $ JENKINS_AGENT_02_PRIVATE_IP=$(aws --region "${AWS_DEFAULT_REGION}" ec2 describe-instances \
+     --filters "Name=tag:Name,Values=ab2d-jenkins-agent-02" \
+     --query "Reservations[*].Instances[*].PrivateIpAddress" \
+     --output text)
+   ```
+
+1. Connect to Jenkins agent 02
+
+   ```ShellSession
+   $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem "ec2-user@${JENKINS_AGENT_02_PRIVATE_IP}"
+   ```
+
+1. Create a new partition on the "/dev/nvme1n1" disk
+
+   ```ShellSession
+   (
+   echo n # Add a new partition
+   echo p # Primary partition
+   echo   # Partition number (Accept default)
+   echo   # First sector (Accept default)
+   echo   # Last sector (Accept default)
+   echo w # Write changes
+   ) | sudo fdisk /dev/nvme1n1
+   ```
+
+1. Request that the operating system re-reads the partition table
+
+   ```ShellSession
+   $ sudo partprobe
+   ```
+
+1. Create physical volume by initializing the partition for use by the Logical Volume Manager (LVM)
+
+   ```ShellSession
+   $ sudo pvcreate /dev/nvme1n1p1
+   ```
+
+1. Create volume group
+   
+   ```ShellSession
+   $ sudo vgcreate VolGroup00 /dev/nvme1n1p1
+   ```
+
+1. Create new "/var/log" mount
+
+   1. Create log logical volume
+   
+      ```ShellSession
+      $ sudo lvcreate -L 895G -n logVol VolGroup00
+      ```
+   
+   1. Create file system on log logical volume
+   
+      ```ShellSession
+      $ sudo mkfs.xfs -f /dev/VolGroup00/logVol
+      ```
+   
+   1. Create a temporary mount point for log
+   
+      ```ShellSession
+      $ sudo mkdir -p /mnt/log
+      ```
+   
+   1. Mount logical volume to temporary mount point for log
+   
+      ```ShellSession
+      $ sudo mount /dev/VolGroup00/logVol /mnt/log
+      ```
+   
+   1. Stop rsyslog
+   
+      ```ShellSession
+      $ sudo systemctl stop rsyslog
+      ```
+      
+   1. Sync existing log directory to temporary log directory
+   
+      ```ShellSession
+      $ sudo rsync -avz /var/log/* /mnt/log/
+      ```
+   
+   1. Move the original log directory out of the way
+   
+      ```ShellSession
+      $ sudo mv /var/log /var/log.deleteme
+      ```
+   
+   1. Create new log directory
+   
+      ```ShellSession
+      $ sudo mkdir -p /var/log
+      ```
+   
+   1. Mount logical volume to the new log directory
+   
+      ```ShellSession
+      $ sudo mount /dev/VolGroup00/logVol /var/log
+      ```
+   
+   1. Sync the backup log data to the new log directory
+   
+      ```ShellSession
+      $ sudo rsync -avz /var/log.deleteme/* /var/log/
+      ```
+   
+   1. Restore SELinux Context for log
+   
+      ```ShellSession
+      $ sudo restorecon -rv /var/log
+      ```
+   
+   1. Restart rsyslog
+   
+      ```ShellSession
+      $ sudo systemctl start rsyslog
+      ```
+   
+   1. Add the log mount to the "/etc/fstab" file
+   
+      1. Open the "/etc/fstab" file
+   
+         ```ShellSession
+         $ sudo vim /etc/fstab
+         ```
+   
+      1. Add the following line to the file
+      
+         ```
+         /dev/mapper/VolGroup00-logVol            /var/log           xfs    defaults,noatime 0 2
+         ```
+   
+      1. Save and close the file
+   
+1. Create new "/var/lib" mount
+
+   1. Create lib logical volume
+   
+      ```ShellSession
+      $ sudo lvcreate -L 100G -n libVol VolGroup00
+      ```
+   
+   1. Create file system on lib logical volume
+   
+      ```ShellSession
+      $ sudo mkfs.xfs -f /dev/VolGroup00/libVol
+      ```
+   
+   1. Create a temporary mount point for lib
+   
+      ```ShellSession
+      $ sudo mkdir -p /mnt/lib
+      ```
+   
+   1. Mount logical volume to temporary mount point for lib
+   
+      ```ShellSession
+      $ sudo mount /dev/VolGroup00/libVol /mnt/lib
+      ```
+       
+   1. Sync existing lib directory to temporary lib directory
+   
+      ```ShellSession
+      $ sudo rsync -avz /var/lib/* /mnt/lib/
+      ```
+   
+   1. Move the original lib directory out of the way
+   
+      ```ShellSession
+      $ sudo mv /var/lib /var/lib.deleteme
+      ```
+   
+   1. Create new lib directory
+   
+      ```ShellSession
+      $ sudo mkdir -p /var/lib
+      ```
+   
+   1. Mount logical volume to the new lib directory
+   
+      ```ShellSession
+      $ sudo mount /dev/VolGroup00/libVol /var/lib
+      ```
+   
+   1. Sync the backup lib data to the new lib directory
+   
+      ```ShellSession
+      $ sudo rsync -avz /var/lib.deleteme/* /var/lib/
+      ```
+   
+   1. Restore SELinux Context for lib
+   
+      ```ShellSession
+      $ sudo restorecon -rv /var/lib
+      ```
+   
+   1. Add the lib mount to the "/etc/fstab" file
+   
+      1. Open the "/etc/fstab" file
+   
+         ```ShellSession
+         $ sudo vim /etc/fstab
+         ```
+   
+      1. Add the following line to the file
+      
+         ```
+         /dev/mapper/VolGroup00-libVol            /var/lib           xfs    defaults,noatime 0 2
+         ```
+   
+      1. Save and close the file
+
+1. Create new "/var/log/audit" mount
+
+   1. Create audit logical volume
+   
+      ```ShellSession
+      $ sudo lvcreate -l +100%FREE -n auditVol VolGroup00
+      ```
+   
+   1. Create file system on audit logical volume
+   
+      ```ShellSession
+      $ sudo mkfs.xfs -f /dev/VolGroup00/auditVol
+      ```
+   
+   1. Create a temporary mount point for audit
+   
+      ```ShellSession
+      $ sudo mkdir -p /mnt/audit
+      ```
+   
+   1. Mount logical volume to temporary mount point for audit
+   
+      ```ShellSession
+      $ sudo mount /dev/VolGroup00/auditVol /mnt/audit
+      ```
+       
+   1. Sync existing audit directory to temporary audit directory
+   
+      ```ShellSession
+      $ sudo rsync -avz /var/log/audit/ /mnt/audit/
+      ```
+   
+   1. Move the original audit directory out of the way
+   
+      ```ShellSession
+      $ sudo mv /var/log/audit /var/log/audit.deleteme
+      ```
+   
+   1. Create new audit directory
+   
+      ```ShellSession
+      $ sudo mkdir -p /var/log/audit
+      ```
+   
+   1. Mount logical volume to the new audit directory
+   
+      ```ShellSession
+      $ sudo mount /dev/VolGroup00/auditVol /var/log/audit
+      ```
+   
+   1. Sync the backup audit data to the new audit directory
+   
+      ```ShellSession
+      $ sudo rsync -avz /var/log/audit.deleteme/ /var/log/audit/
+      ```
+   
+   1. Restore SELinux Context for audit
+   
+      ```ShellSession
+      $ sudo restorecon -rv /var/log/audit
+      ```
+   
+   1. Add the audit mount to the "/etc/fstab" file
+   
+      1. Open the "/etc/fstab" file
+   
+         ```ShellSession
+         $ sudo vim /etc/fstab
+         ```
+   
+      1. Add the following line to the file
+      
+         ```
+         /dev/mapper/VolGroup00-auditVol          /var/log/audit     xfs    defaults,noatime 0 2
+         ```
+   
+      1. Save and close the file
+
+1. Exit Jenkins agent 02 node
+
+   ```ShellSession
+   $ exit
+   ```
+
+### Configure Jenkins agent 03 second ELB volume
+
+1. Set AWS environment to the management account
+
+   ```ShellSession
+   $ source ./Deploy/bash/set-env.sh
+   ```
+
+1. Get availability zone of Jenkins agent 03
+
+   ```ShellSession
+   $ JENKINS_AGENT_03_AZ=$(aws --region "${AWS_DEFAULT_REGION}" ec2 describe-instances \
+     --filters "Name=tag:Name,Values=ab2d-jenkins-agent-03" \
+     --query "Reservations[*].Instances[*].Placement.AvailabilityZone" \
+     --output text)
+   ```
+
+1. Create volume for Jenkins agent 03
+
+   ```ShellSession
+   $ aws --region "${AWS_DEFAULT_REGION}" ec2 create-volume \
+     --size 1000 \
+     --availability-zone "${JENKINS_AGENT_03_AZ}" \
+     --tag-specifications 'ResourceType=volume,Tags=[{Key=Name,Value=ab2d-jenkins-agent-03-second-vol}]'
+   ```
+
+1. Ensure the status of "ab2d-jenkins-agent-03-second-vol" volume is "available" before proceeding
+
+   ```ShellSession
+   $ aws --region "${AWS_DEFAULT_REGION}" ec2 describe-volumes \
+     --filters "Name=tag:Name,Values=ab2d-jenkins-agent-03-second-vol" \
+     --query "Volumes[*].State" \
+     --output text
+   ```
+
+1. Get EC2 instance id of Jenkins agent 03
+
+   ```ShellSession
+   $ EC2_INSTANCE_ID=$(aws --region "${AWS_DEFAULT_REGION}" ec2 describe-instances \
+     --filters "Name=tag:Name,Values=ab2d-jenkins-agent-03" \
+     --query "Reservations[*].Instances[*].InstanceId" \
+     --output text)
+   ```
+
+1. Get volume ID of "ab2d-jenkins-agent-03-second-vol" volume
+
+   ```ShellSession
+   $ VOLUME_ID=$(aws --region "${AWS_DEFAULT_REGION}" ec2 describe-volumes \
+     --filters "Name=tag:Name,Values=ab2d-jenkins-agent-03-second-vol" \
+     --query "Volumes[*].VolumeId" \
+     --output text)
+   ```
+
+1. Attach "ab2d-jenkins-agent-03-second-vol" volume to Jenkins agent 03
+
+   ```ShellSession
+   $ aws --region "${AWS_DEFAULT_REGION}" ec2 attach-volume \
+     --device "/dev/sdf" \
+     --instance-id "${EC2_INSTANCE_ID}" \
+     --volume-id "${VOLUME_ID}"
+   ```
+
+1. Ensure the status of "ab2d-jenkins-agent-03-second-vol" volume is "attached" before proceeding
+
+   ```ShellSession
+   $ aws --region "${AWS_DEFAULT_REGION}" ec2 describe-volumes \
+     --filters "Name=tag:Name,Values=ab2d-jenkins-agent-03-second-vol" \
+     --query "Volumes[*].Attachments[*].State" \
+     --output text
+   ```
+
+1. Get private ip address of Jenkins agent 03
+
+   ```ShellSession
+   $ JENKINS_AGENT_03_PRIVATE_IP=$(aws --region "${AWS_DEFAULT_REGION}" ec2 describe-instances \
+     --filters "Name=tag:Name,Values=ab2d-jenkins-agent-03" \
+     --query "Reservations[*].Instances[*].PrivateIpAddress" \
+     --output text)
+   ```
+
+1. Connect to Jenkins agent 03
+
+   ```ShellSession
+   $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem "ec2-user@${JENKINS_AGENT_03_PRIVATE_IP}"
+   ```
+
+1. Create a new partition on the "/dev/nvme1n1" disk
+
+   ```ShellSession
+   (
+   echo n # Add a new partition
+   echo p # Primary partition
+   echo   # Partition number (Accept default)
+   echo   # First sector (Accept default)
+   echo   # Last sector (Accept default)
+   echo w # Write changes
+   ) | sudo fdisk /dev/nvme1n1
+   ```
+
+1. Request that the operating system re-reads the partition table
+
+   ```ShellSession
+   $ sudo partprobe
+   ```
+
+1. Create physical volume by initializing the partition for use by the Logical Volume Manager (LVM)
+
+   ```ShellSession
+   $ sudo pvcreate /dev/nvme1n1p1
+   ```
+
+1. Create volume group
+   
+   ```ShellSession
+   $ sudo vgcreate VolGroup00 /dev/nvme1n1p1
+   ```
+
+1. Create new "/var/log" mount
+
+   1. Create log logical volume
+   
+      ```ShellSession
+      $ sudo lvcreate -L 895G -n logVol VolGroup00
+      ```
+   
+   1. Create file system on log logical volume
+   
+      ```ShellSession
+      $ sudo mkfs.xfs -f /dev/VolGroup00/logVol
+      ```
+   
+   1. Create a temporary mount point for log
+   
+      ```ShellSession
+      $ sudo mkdir -p /mnt/log
+      ```
+   
+   1. Mount logical volume to temporary mount point for log
+   
+      ```ShellSession
+      $ sudo mount /dev/VolGroup00/logVol /mnt/log
+      ```
+   
+   1. Stop rsyslog
+   
+      ```ShellSession
+      $ sudo systemctl stop rsyslog
+      ```
+      
+   1. Sync existing log directory to temporary log directory
+   
+      ```ShellSession
+      $ sudo rsync -avz /var/log/* /mnt/log/
+      ```
+   
+   1. Move the original log directory out of the way
+   
+      ```ShellSession
+      $ sudo mv /var/log /var/log.deleteme
+      ```
+   
+   1. Create new log directory
+   
+      ```ShellSession
+      $ sudo mkdir -p /var/log
+      ```
+   
+   1. Mount logical volume to the new log directory
+   
+      ```ShellSession
+      $ sudo mount /dev/VolGroup00/logVol /var/log
+      ```
+   
+   1. Sync the backup log data to the new log directory
+   
+      ```ShellSession
+      $ sudo rsync -avz /var/log.deleteme/* /var/log/
+      ```
+   
+   1. Restore SELinux Context for log
+   
+      ```ShellSession
+      $ sudo restorecon -rv /var/log
+      ```
+   
+   1. Restart rsyslog
+   
+      ```ShellSession
+      $ sudo systemctl start rsyslog
+      ```
+   
+   1. Add the log mount to the "/etc/fstab" file
+   
+      1. Open the "/etc/fstab" file
+   
+         ```ShellSession
+         $ sudo vim /etc/fstab
+         ```
+   
+      1. Add the following line to the file
+      
+         ```
+         /dev/mapper/VolGroup00-logVol            /var/log           xfs    defaults,noatime 0 2
+         ```
+   
+      1. Save and close the file
+   
+1. Create new "/var/lib" mount
+
+   1. Create lib logical volume
+   
+      ```ShellSession
+      $ sudo lvcreate -L 100G -n libVol VolGroup00
+      ```
+   
+   1. Create file system on lib logical volume
+   
+      ```ShellSession
+      $ sudo mkfs.xfs -f /dev/VolGroup00/libVol
+      ```
+   
+   1. Create a temporary mount point for lib
+   
+      ```ShellSession
+      $ sudo mkdir -p /mnt/lib
+      ```
+   
+   1. Mount logical volume to temporary mount point for lib
+   
+      ```ShellSession
+      $ sudo mount /dev/VolGroup00/libVol /mnt/lib
+      ```
+       
+   1. Sync existing lib directory to temporary lib directory
+   
+      ```ShellSession
+      $ sudo rsync -avz /var/lib/* /mnt/lib/
+      ```
+   
+   1. Move the original lib directory out of the way
+   
+      ```ShellSession
+      $ sudo mv /var/lib /var/lib.deleteme
+      ```
+   
+   1. Create new lib directory
+   
+      ```ShellSession
+      $ sudo mkdir -p /var/lib
+      ```
+   
+   1. Mount logical volume to the new lib directory
+   
+      ```ShellSession
+      $ sudo mount /dev/VolGroup00/libVol /var/lib
+      ```
+   
+   1. Sync the backup lib data to the new lib directory
+   
+      ```ShellSession
+      $ sudo rsync -avz /var/lib.deleteme/* /var/lib/
+      ```
+   
+   1. Restore SELinux Context for lib
+   
+      ```ShellSession
+      $ sudo restorecon -rv /var/lib
+      ```
+   
+   1. Add the lib mount to the "/etc/fstab" file
+   
+      1. Open the "/etc/fstab" file
+   
+         ```ShellSession
+         $ sudo vim /etc/fstab
+         ```
+   
+      1. Add the following line to the file
+      
+         ```
+         /dev/mapper/VolGroup00-libVol            /var/lib           xfs    defaults,noatime 0 2
+         ```
+   
+      1. Save and close the file
+
+1. Create new "/var/log/audit" mount
+
+   1. Create audit logical volume
+   
+      ```ShellSession
+      $ sudo lvcreate -l +100%FREE -n auditVol VolGroup00
+      ```
+   
+   1. Create file system on audit logical volume
+   
+      ```ShellSession
+      $ sudo mkfs.xfs -f /dev/VolGroup00/auditVol
+      ```
+   
+   1. Create a temporary mount point for audit
+   
+      ```ShellSession
+      $ sudo mkdir -p /mnt/audit
+      ```
+   
+   1. Mount logical volume to temporary mount point for audit
+   
+      ```ShellSession
+      $ sudo mount /dev/VolGroup00/auditVol /mnt/audit
+      ```
+       
+   1. Sync existing audit directory to temporary audit directory
+   
+      ```ShellSession
+      $ sudo rsync -avz /var/log/audit/ /mnt/audit/
+      ```
+   
+   1. Move the original audit directory out of the way
+   
+      ```ShellSession
+      $ sudo mv /var/log/audit /var/log/audit.deleteme
+      ```
+   
+   1. Create new audit directory
+   
+      ```ShellSession
+      $ sudo mkdir -p /var/log/audit
+      ```
+   
+   1. Mount logical volume to the new audit directory
+   
+      ```ShellSession
+      $ sudo mount /dev/VolGroup00/auditVol /var/log/audit
+      ```
+   
+   1. Sync the backup audit data to the new audit directory
+   
+      ```ShellSession
+      $ sudo rsync -avz /var/log/audit.deleteme/ /var/log/audit/
+      ```
+   
+   1. Restore SELinux Context for audit
+   
+      ```ShellSession
+      $ sudo restorecon -rv /var/log/audit
+      ```
+   
+   1. Add the audit mount to the "/etc/fstab" file
+   
+      1. Open the "/etc/fstab" file
+   
+         ```ShellSession
+         $ sudo vim /etc/fstab
+         ```
+   
+      1. Add the following line to the file
+      
+         ```
+         /dev/mapper/VolGroup00-auditVol          /var/log/audit     xfs    defaults,noatime 0 2
+         ```
+   
+      1. Save and close the file
+
+1. Exit Jenkins agent 03 node
+
+   ```ShellSession
+   $ exit
+   ```
+
+### Configure Jenkins agent 04 second ELB volume
+
+1. Set AWS environment to the management account
+
+   ```ShellSession
+   $ source ./Deploy/bash/set-env.sh
+   ```
+
+1. Get availability zone of Jenkins agent 04
+
+   ```ShellSession
+   $ JENKINS_AGENT_04_AZ=$(aws --region "${AWS_DEFAULT_REGION}" ec2 describe-instances \
+     --filters "Name=tag:Name,Values=ab2d-jenkins-agent-04" \
+     --query "Reservations[*].Instances[*].Placement.AvailabilityZone" \
+     --output text)
+   ```
+
+1. Create volume for Jenkins agent 04
+
+   ```ShellSession
+   $ aws --region "${AWS_DEFAULT_REGION}" ec2 create-volume \
+     --size 1000 \
+     --availability-zone "${JENKINS_AGENT_04_AZ}" \
+     --tag-specifications 'ResourceType=volume,Tags=[{Key=Name,Value=ab2d-jenkins-agent-04-second-vol}]'
+   ```
+
+1. Ensure the status of "ab2d-jenkins-agent-04-second-vol" volume is "available" before proceeding
+
+   ```ShellSession
+   $ aws --region "${AWS_DEFAULT_REGION}" ec2 describe-volumes \
+     --filters "Name=tag:Name,Values=ab2d-jenkins-agent-04-second-vol" \
+     --query "Volumes[*].State" \
+     --output text
+   ```
+
+1. Get EC2 instance id of Jenkins agent 04
+
+   ```ShellSession
+   $ EC2_INSTANCE_ID=$(aws --region "${AWS_DEFAULT_REGION}" ec2 describe-instances \
+     --filters "Name=tag:Name,Values=ab2d-jenkins-agent-04" \
+     --query "Reservations[*].Instances[*].InstanceId" \
+     --output text)
+   ```
+
+1. Get volume ID of "ab2d-jenkins-agent-04-second-vol" volume
+
+   ```ShellSession
+   $ VOLUME_ID=$(aws --region "${AWS_DEFAULT_REGION}" ec2 describe-volumes \
+     --filters "Name=tag:Name,Values=ab2d-jenkins-agent-04-second-vol" \
+     --query "Volumes[*].VolumeId" \
+     --output text)
+   ```
+
+1. Attach "ab2d-jenkins-agent-04-second-vol" volume to Jenkins agent 04
+
+   ```ShellSession
+   $ aws --region "${AWS_DEFAULT_REGION}" ec2 attach-volume \
+     --device "/dev/sdf" \
+     --instance-id "${EC2_INSTANCE_ID}" \
+     --volume-id "${VOLUME_ID}"
+   ```
+
+1. Ensure the status of "ab2d-jenkins-agent-04-second-vol" volume is "attached" before proceeding
+
+   ```ShellSession
+   $ aws --region "${AWS_DEFAULT_REGION}" ec2 describe-volumes \
+     --filters "Name=tag:Name,Values=ab2d-jenkins-agent-04-second-vol" \
+     --query "Volumes[*].Attachments[*].State" \
+     --output text
+   ```
+
+1. Get private ip address of Jenkins agent 04
+
+   ```ShellSession
+   $ JENKINS_AGENT_04_PRIVATE_IP=$(aws --region "${AWS_DEFAULT_REGION}" ec2 describe-instances \
+     --filters "Name=tag:Name,Values=ab2d-jenkins-agent-04" \
+     --query "Reservations[*].Instances[*].PrivateIpAddress" \
+     --output text)
+   ```
+
+1. Connect to Jenkins agent 04
+
+   ```ShellSession
+   $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem "ec2-user@${JENKINS_AGENT_04_PRIVATE_IP}"
+   ```
+
+1. Create a new partition on the "/dev/nvme1n1" disk
+
+   ```ShellSession
+   (
+   echo n # Add a new partition
+   echo p # Primary partition
+   echo   # Partition number (Accept default)
+   echo   # First sector (Accept default)
+   echo   # Last sector (Accept default)
+   echo w # Write changes
+   ) | sudo fdisk /dev/nvme1n1
+   ```
+
+1. Request that the operating system re-reads the partition table
+
+   ```ShellSession
+   $ sudo partprobe
+   ```
+
+1. Create physical volume by initializing the partition for use by the Logical Volume Manager (LVM)
+
+   ```ShellSession
+   $ sudo pvcreate /dev/nvme1n1p1
+   ```
+
+1. Create volume group
+   
+   ```ShellSession
+   $ sudo vgcreate VolGroup00 /dev/nvme1n1p1
+   ```
+
+1. Create new "/var/log" mount
+
+   1. Create log logical volume
+   
+      ```ShellSession
+      $ sudo lvcreate -L 895G -n logVol VolGroup00
+      ```
+   
+   1. Create file system on log logical volume
+   
+      ```ShellSession
+      $ sudo mkfs.xfs -f /dev/VolGroup00/logVol
+      ```
+   
+   1. Create a temporary mount point for log
+   
+      ```ShellSession
+      $ sudo mkdir -p /mnt/log
+      ```
+   
+   1. Mount logical volume to temporary mount point for log
+   
+      ```ShellSession
+      $ sudo mount /dev/VolGroup00/logVol /mnt/log
+      ```
+   
+   1. Stop rsyslog
+   
+      ```ShellSession
+      $ sudo systemctl stop rsyslog
+      ```
+      
+   1. Sync existing log directory to temporary log directory
+   
+      ```ShellSession
+      $ sudo rsync -avz /var/log/* /mnt/log/
+      ```
+   
+   1. Move the original log directory out of the way
+   
+      ```ShellSession
+      $ sudo mv /var/log /var/log.deleteme
+      ```
+   
+   1. Create new log directory
+   
+      ```ShellSession
+      $ sudo mkdir -p /var/log
+      ```
+   
+   1. Mount logical volume to the new log directory
+   
+      ```ShellSession
+      $ sudo mount /dev/VolGroup00/logVol /var/log
+      ```
+   
+   1. Sync the backup log data to the new log directory
+   
+      ```ShellSession
+      $ sudo rsync -avz /var/log.deleteme/* /var/log/
+      ```
+   
+   1. Restore SELinux Context for log
+   
+      ```ShellSession
+      $ sudo restorecon -rv /var/log
+      ```
+   
+   1. Restart rsyslog
+   
+      ```ShellSession
+      $ sudo systemctl start rsyslog
+      ```
+   
+   1. Add the log mount to the "/etc/fstab" file
+   
+      1. Open the "/etc/fstab" file
+   
+         ```ShellSession
+         $ sudo vim /etc/fstab
+         ```
+   
+      1. Add the following line to the file
+      
+         ```
+         /dev/mapper/VolGroup00-logVol            /var/log           xfs    defaults,noatime 0 2
+         ```
+   
+      1. Save and close the file
+   
+1. Create new "/var/lib" mount
+
+   1. Create lib logical volume
+   
+      ```ShellSession
+      $ sudo lvcreate -L 100G -n libVol VolGroup00
+      ```
+   
+   1. Create file system on lib logical volume
+   
+      ```ShellSession
+      $ sudo mkfs.xfs -f /dev/VolGroup00/libVol
+      ```
+   
+   1. Create a temporary mount point for lib
+   
+      ```ShellSession
+      $ sudo mkdir -p /mnt/lib
+      ```
+   
+   1. Mount logical volume to temporary mount point for lib
+   
+      ```ShellSession
+      $ sudo mount /dev/VolGroup00/libVol /mnt/lib
+      ```
+       
+   1. Sync existing lib directory to temporary lib directory
+   
+      ```ShellSession
+      $ sudo rsync -avz /var/lib/* /mnt/lib/
+      ```
+   
+   1. Move the original lib directory out of the way
+   
+      ```ShellSession
+      $ sudo mv /var/lib /var/lib.deleteme
+      ```
+   
+   1. Create new lib directory
+   
+      ```ShellSession
+      $ sudo mkdir -p /var/lib
+      ```
+   
+   1. Mount logical volume to the new lib directory
+   
+      ```ShellSession
+      $ sudo mount /dev/VolGroup00/libVol /var/lib
+      ```
+   
+   1. Sync the backup lib data to the new lib directory
+   
+      ```ShellSession
+      $ sudo rsync -avz /var/lib.deleteme/* /var/lib/
+      ```
+   
+   1. Restore SELinux Context for lib
+   
+      ```ShellSession
+      $ sudo restorecon -rv /var/lib
+      ```
+   
+   1. Add the lib mount to the "/etc/fstab" file
+   
+      1. Open the "/etc/fstab" file
+   
+         ```ShellSession
+         $ sudo vim /etc/fstab
+         ```
+   
+      1. Add the following line to the file
+      
+         ```
+         /dev/mapper/VolGroup00-libVol            /var/lib           xfs    defaults,noatime 0 2
+         ```
+   
+      1. Save and close the file
+
+1. Create new "/var/log/audit" mount
+
+   1. Create audit logical volume
+   
+      ```ShellSession
+      $ sudo lvcreate -l +100%FREE -n auditVol VolGroup00
+      ```
+   
+   1. Create file system on audit logical volume
+   
+      ```ShellSession
+      $ sudo mkfs.xfs -f /dev/VolGroup00/auditVol
+      ```
+   
+   1. Create a temporary mount point for audit
+   
+      ```ShellSession
+      $ sudo mkdir -p /mnt/audit
+      ```
+   
+   1. Mount logical volume to temporary mount point for audit
+   
+      ```ShellSession
+      $ sudo mount /dev/VolGroup00/auditVol /mnt/audit
+      ```
+       
+   1. Sync existing audit directory to temporary audit directory
+   
+      ```ShellSession
+      $ sudo rsync -avz /var/log/audit/ /mnt/audit/
+      ```
+   
+   1. Move the original audit directory out of the way
+   
+      ```ShellSession
+      $ sudo mv /var/log/audit /var/log/audit.deleteme
+      ```
+   
+   1. Create new audit directory
+   
+      ```ShellSession
+      $ sudo mkdir -p /var/log/audit
+      ```
+   
+   1. Mount logical volume to the new audit directory
+   
+      ```ShellSession
+      $ sudo mount /dev/VolGroup00/auditVol /var/log/audit
+      ```
+   
+   1. Sync the backup audit data to the new audit directory
+   
+      ```ShellSession
+      $ sudo rsync -avz /var/log/audit.deleteme/ /var/log/audit/
+      ```
+   
+   1. Restore SELinux Context for audit
+   
+      ```ShellSession
+      $ sudo restorecon -rv /var/log/audit
+      ```
+   
+   1. Add the audit mount to the "/etc/fstab" file
+   
+      1. Open the "/etc/fstab" file
+   
+         ```ShellSession
+         $ sudo vim /etc/fstab
+         ```
+   
+      1. Add the following line to the file
+      
+         ```
+         /dev/mapper/VolGroup00-auditVol          /var/log/audit     xfs    defaults,noatime 0 2
+         ```
+   
+      1. Save and close the file
+
+1. Exit Jenkins agent 04 node
+
+   ```ShellSession
+   $ exit
+   ```
+
+### Configure Jenkins agent 05 second ELB volume
+
+1. Set AWS environment to the management account
+
+   ```ShellSession
+   $ source ./Deploy/bash/set-env.sh
+   ```
+
+1. Get availability zone of Jenkins agent 05
+
+   ```ShellSession
+   $ JENKINS_AGENT_05_AZ=$(aws --region "${AWS_DEFAULT_REGION}" ec2 describe-instances \
+     --filters "Name=tag:Name,Values=ab2d-jenkins-agent-05" \
+     --query "Reservations[*].Instances[*].Placement.AvailabilityZone" \
+     --output text)
+   ```
+
+1. Create volume for Jenkins agent 05
+
+   ```ShellSession
+   $ aws --region "${AWS_DEFAULT_REGION}" ec2 create-volume \
+     --size 1000 \
+     --availability-zone "${JENKINS_AGENT_05_AZ}" \
+     --tag-specifications 'ResourceType=volume,Tags=[{Key=Name,Value=ab2d-jenkins-agent-05-second-vol}]'
+   ```
+
+1. Ensure the status of "ab2d-jenkins-agent-05-second-vol" volume is "available" before proceeding
+
+   ```ShellSession
+   $ aws --region "${AWS_DEFAULT_REGION}" ec2 describe-volumes \
+     --filters "Name=tag:Name,Values=ab2d-jenkins-agent-05-second-vol" \
+     --query "Volumes[*].State" \
+     --output text
+   ```
+
+1. Get EC2 instance id of Jenkins agent 05
+
+   ```ShellSession
+   $ EC2_INSTANCE_ID=$(aws --region "${AWS_DEFAULT_REGION}" ec2 describe-instances \
+     --filters "Name=tag:Name,Values=ab2d-jenkins-agent-05" \
+     --query "Reservations[*].Instances[*].InstanceId" \
+     --output text)
+   ```
+
+1. Get volume ID of "ab2d-jenkins-agent-05-second-vol" volume
+
+   ```ShellSession
+   $ VOLUME_ID=$(aws --region "${AWS_DEFAULT_REGION}" ec2 describe-volumes \
+     --filters "Name=tag:Name,Values=ab2d-jenkins-agent-05-second-vol" \
+     --query "Volumes[*].VolumeId" \
+     --output text)
+   ```
+
+1. Attach "ab2d-jenkins-agent-05-second-vol" volume to Jenkins agent 05
+
+   ```ShellSession
+   $ aws --region "${AWS_DEFAULT_REGION}" ec2 attach-volume \
+     --device "/dev/sdf" \
+     --instance-id "${EC2_INSTANCE_ID}" \
+     --volume-id "${VOLUME_ID}"
+   ```
+
+1. Ensure the status of "ab2d-jenkins-agent-05-second-vol" volume is "attached" before proceeding
+
+   ```ShellSession
+   $ aws --region "${AWS_DEFAULT_REGION}" ec2 describe-volumes \
+     --filters "Name=tag:Name,Values=ab2d-jenkins-agent-05-second-vol" \
+     --query "Volumes[*].Attachments[*].State" \
+     --output text
+   ```
+
+1. Get private ip address of Jenkins agent 05
+
+   ```ShellSession
+   $ JENKINS_AGENT_05_PRIVATE_IP=$(aws --region "${AWS_DEFAULT_REGION}" ec2 describe-instances \
+     --filters "Name=tag:Name,Values=ab2d-jenkins-agent-05" \
+     --query "Reservations[*].Instances[*].PrivateIpAddress" \
+     --output text)
+   ```
+
+1. Connect to Jenkins agent 05
+
+   ```ShellSession
+   $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem "ec2-user@${JENKINS_AGENT_05_PRIVATE_IP}"
+   ```
+
+1. Create a new partition on the "/dev/nvme1n1" disk
+
+   ```ShellSession
+   (
+   echo n # Add a new partition
+   echo p # Primary partition
+   echo   # Partition number (Accept default)
+   echo   # First sector (Accept default)
+   echo   # Last sector (Accept default)
+   echo w # Write changes
+   ) | sudo fdisk /dev/nvme1n1
+   ```
+
+1. Request that the operating system re-reads the partition table
+
+   ```ShellSession
+   $ sudo partprobe
+   ```
+
+1. Create physical volume by initializing the partition for use by the Logical Volume Manager (LVM)
+
+   ```ShellSession
+   $ sudo pvcreate /dev/nvme1n1p1
+   ```
+
+1. Create volume group
+   
+   ```ShellSession
+   $ sudo vgcreate VolGroup00 /dev/nvme1n1p1
+   ```
+
+1. Create new "/var/log" mount
+
+   1. Create log logical volume
+   
+      ```ShellSession
+      $ sudo lvcreate -L 895G -n logVol VolGroup00
+      ```
+   
+   1. Create file system on log logical volume
+   
+      ```ShellSession
+      $ sudo mkfs.xfs -f /dev/VolGroup00/logVol
+      ```
+   
+   1. Create a temporary mount point for log
+   
+      ```ShellSession
+      $ sudo mkdir -p /mnt/log
+      ```
+   
+   1. Mount logical volume to temporary mount point for log
+   
+      ```ShellSession
+      $ sudo mount /dev/VolGroup00/logVol /mnt/log
+      ```
+   
+   1. Stop rsyslog
+   
+      ```ShellSession
+      $ sudo systemctl stop rsyslog
+      ```
+      
+   1. Sync existing log directory to temporary log directory
+   
+      ```ShellSession
+      $ sudo rsync -avz /var/log/* /mnt/log/
+      ```
+   
+   1. Move the original log directory out of the way
+   
+      ```ShellSession
+      $ sudo mv /var/log /var/log.deleteme
+      ```
+   
+   1. Create new log directory
+   
+      ```ShellSession
+      $ sudo mkdir -p /var/log
+      ```
+   
+   1. Mount logical volume to the new log directory
+   
+      ```ShellSession
+      $ sudo mount /dev/VolGroup00/logVol /var/log
+      ```
+   
+   1. Sync the backup log data to the new log directory
+   
+      ```ShellSession
+      $ sudo rsync -avz /var/log.deleteme/* /var/log/
+      ```
+   
+   1. Restore SELinux Context for log
+   
+      ```ShellSession
+      $ sudo restorecon -rv /var/log
+      ```
+   
+   1. Restart rsyslog
+   
+      ```ShellSession
+      $ sudo systemctl start rsyslog
+      ```
+   
+   1. Add the log mount to the "/etc/fstab" file
+   
+      1. Open the "/etc/fstab" file
+   
+         ```ShellSession
+         $ sudo vim /etc/fstab
+         ```
+   
+      1. Add the following line to the file
+      
+         ```
+         /dev/mapper/VolGroup00-logVol            /var/log           xfs    defaults,noatime 0 2
+         ```
+   
+      1. Save and close the file
+   
+1. Create new "/var/lib" mount
+
+   1. Create lib logical volume
+   
+      ```ShellSession
+      $ sudo lvcreate -L 100G -n libVol VolGroup00
+      ```
+   
+   1. Create file system on lib logical volume
+   
+      ```ShellSession
+      $ sudo mkfs.xfs -f /dev/VolGroup00/libVol
+      ```
+   
+   1. Create a temporary mount point for lib
+   
+      ```ShellSession
+      $ sudo mkdir -p /mnt/lib
+      ```
+   
+   1. Mount logical volume to temporary mount point for lib
+   
+      ```ShellSession
+      $ sudo mount /dev/VolGroup00/libVol /mnt/lib
+      ```
+       
+   1. Sync existing lib directory to temporary lib directory
+   
+      ```ShellSession
+      $ sudo rsync -avz /var/lib/* /mnt/lib/
+      ```
+   
+   1. Move the original lib directory out of the way
+   
+      ```ShellSession
+      $ sudo mv /var/lib /var/lib.deleteme
+      ```
+   
+   1. Create new lib directory
+   
+      ```ShellSession
+      $ sudo mkdir -p /var/lib
+      ```
+   
+   1. Mount logical volume to the new lib directory
+   
+      ```ShellSession
+      $ sudo mount /dev/VolGroup00/libVol /var/lib
+      ```
+   
+   1. Sync the backup lib data to the new lib directory
+   
+      ```ShellSession
+      $ sudo rsync -avz /var/lib.deleteme/* /var/lib/
+      ```
+   
+   1. Restore SELinux Context for lib
+   
+      ```ShellSession
+      $ sudo restorecon -rv /var/lib
+      ```
+   
+   1. Add the lib mount to the "/etc/fstab" file
+   
+      1. Open the "/etc/fstab" file
+   
+         ```ShellSession
+         $ sudo vim /etc/fstab
+         ```
+   
+      1. Add the following line to the file
+      
+         ```
+         /dev/mapper/VolGroup00-libVol            /var/lib           xfs    defaults,noatime 0 2
+         ```
+   
+      1. Save and close the file
+
+1. Create new "/var/log/audit" mount
+
+   1. Create audit logical volume
+   
+      ```ShellSession
+      $ sudo lvcreate -l +100%FREE -n auditVol VolGroup00
+      ```
+   
+   1. Create file system on audit logical volume
+   
+      ```ShellSession
+      $ sudo mkfs.xfs -f /dev/VolGroup00/auditVol
+      ```
+   
+   1. Create a temporary mount point for audit
+   
+      ```ShellSession
+      $ sudo mkdir -p /mnt/audit
+      ```
+   
+   1. Mount logical volume to temporary mount point for audit
+   
+      ```ShellSession
+      $ sudo mount /dev/VolGroup00/auditVol /mnt/audit
+      ```
+       
+   1. Sync existing audit directory to temporary audit directory
+   
+      ```ShellSession
+      $ sudo rsync -avz /var/log/audit/ /mnt/audit/
+      ```
+   
+   1. Move the original audit directory out of the way
+   
+      ```ShellSession
+      $ sudo mv /var/log/audit /var/log/audit.deleteme
+      ```
+   
+   1. Create new audit directory
+   
+      ```ShellSession
+      $ sudo mkdir -p /var/log/audit
+      ```
+   
+   1. Mount logical volume to the new audit directory
+   
+      ```ShellSession
+      $ sudo mount /dev/VolGroup00/auditVol /var/log/audit
+      ```
+   
+   1. Sync the backup audit data to the new audit directory
+   
+      ```ShellSession
+      $ sudo rsync -avz /var/log/audit.deleteme/ /var/log/audit/
+      ```
+   
+   1. Restore SELinux Context for audit
+   
+      ```ShellSession
+      $ sudo restorecon -rv /var/log/audit
+      ```
+   
+   1. Add the audit mount to the "/etc/fstab" file
+   
+      1. Open the "/etc/fstab" file
+   
+         ```ShellSession
+         $ sudo vim /etc/fstab
+         ```
+   
+      1. Add the following line to the file
+      
+         ```
+         /dev/mapper/VolGroup00-auditVol          /var/log/audit     xfs    defaults,noatime 0 2
+         ```
+   
+      1. Save and close the file
+
+1. Exit Jenkins agent 05 node
+
+   ```ShellSession
+   $ exit
+   ```
+
+## Install Jenkins
+
+1. Ensure that you are connected to the Cisco VPN
+
+1. Open a terminal
+
+1. Change to the "ab2d" repo directory
+
+   *Example:*
+   
+   ```ShellSession
+   $ cd ~/code/ab2d
+   ```
+
+1. Get credentials for the Management AWS account
+
+   ```ShellSession
+   $ source ./Deploy/bash/set-env.sh
+   ```
+
+1. Connect to Jenkins master
+
+   1. Get the private IP address of Jenkins EC2 instance
+   
+      ```ShellSession
+      $ JENKINS_MASTER_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-jenkins-master" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+        --output text)
+      ```
+
+   1. SSH into the instance using the public IP address
+
+      ```ShellSession
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_MASTER_PRIVATE_IP
+      ```
+
+1. Install Jenkins
+
+   ```ShellSession
+   $ sudo yum install jenkins -y
+   ```
 
 ## Allow jenkins users to use a login shell
 
@@ -198,16 +2773,18 @@
 
 1. Open a terminal
 
-1. Change to the "Deploy" directory
+1. Change to the "ab2d" repo directory
 
+   *Example:*
+   
    ```ShellSession
-   $ cd ~/code/ab2d/Deploy
+   $ cd ~/code/ab2d
    ```
 
 1. Get credentials for the Management AWS account
 
    ```ShellSession
-   $ source ./bash/set-env.sh
+   $ source ./Deploy/bash/set-env.sh
    ```
 
 1. Connect to Jenkins master
@@ -371,31 +2948,33 @@
    $ exit
    ```
 
-### Create a jenkins user on Jenkins agent and allow it to use a login shell
+### Create a jenkins user on Jenkins agent 01 and allow it to use a login shell
 
 1. Ensure that you are connected to the Cisco VPN
 
 1. Open a terminal
 
-1. Change to the "Deploy" directory
+1. Change to the "ab2d" repo directory
 
+   *Example:*
+   
    ```ShellSession
-   $ cd ~/code/ab2d/Deploy
+   $ cd ~/code/ab2d
    ```
 
 1. Get credentials for the Management AWS account
 
    ```ShellSession
-   $ source ./bash/set-env.sh
+   $ source ./Deploy/bash/set-env.sh
    ```
 
-1. Connect to Jenkins agent
+1. Connect to Jenkins agent 01
 
    1. Get the public IP address of Jenkins EC2 instance
    
       ```ShellSession
-      $ JENKINS_AGENT_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
-        --filters "Name=tag:Name,Values=ab2d-jenkins-agent" \
+      $ JENKINS_AGENT_01_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-jenkins-agent-01" \
         --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
         --output text)
       ```
@@ -403,7 +2982,639 @@
    1. SSH into the instance using the public IP address
 
       ```ShellSession
-      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_AGENT_PRIVATE_IP
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem "ec2-user@${JENKINS_AGENT_01_PRIVATE_IP}"
+      ```
+
+1. Add a jenkins user
+
+   ```ShellSession
+   $ sudo useradd -d /var/lib/jenkins -s /bin/bash jenkins
+   ```
+
+1. Set ownership of the jenkins home directory
+
+   ```ShellSession
+   $ sudo chown -R jenkins:jenkins /var/lib/jenkins
+   ```
+   
+1. Give the local jenkins user a password
+
+   1. Create a "jenkins agent redhat user" entry in 1Password that meets the following requirements
+      - at least 15 characeters
+
+      - at least 1 special character
+      
+   1. Enter the following
+   
+      ```ShellSession
+      $ sudo passwd jenkins
+      ```
+
+   1. Copy the password from the following 1Password entry to the clipboard
+
+      ```
+      jenkins agent redhat user
+      ```
+      
+   1. Paste the password at the **New password** prompt
+
+   1. Paste the password at the **Retype new password** prompt
+
+1. Add jenkins user to sudoers file
+
+   1. Enter the following
+
+      ```ShellSession
+      $ sudo visudo
+      ```
+
+   1. Modify this section as follows
+
+      ```
+      ## Allow root to run any commands anywhere
+      root    ALL=(ALL)       ALL
+      jenkins ALL=(ALL)       NOPASSWD: ALL
+      ```
+
+    1. Note that the above setting for the jenkins user is not ideal since it means that the jenkins user will be able to do "sudo" on all commands
+
+    1. Note that it would be better to lock down the jenkins user so that it can only do "sudo" on a certain subset of commands based on the requirements
+
+1. Set up SSH keys for jenkins user
+
+   1. Switch to the jenkins user
+   
+      ```ShellSession
+      $ sudo su - jenkins
+      ```
+
+   1. View the jenkins user home directory
+
+      ```ShellSession
+      $ pwd
+      ```
+
+   1. Note the home directory
+
+      ```
+      /var/lib/jenkins
+      ```
+
+   1. Initiate creation of SSH keys
+
+      ```ShellSession
+      $ ssh-keygen
+      ```
+
+   1. Press **return** on the keyboard at the "Enter file in which to save the key (/var/lib/jenkins/.ssh/id_rsa)" prompt
+
+   1. Press **return** on the keyboard at the "Enter passphrase (empty for no passphrase)" prompt
+
+   1. Press **return** on the keyboard at the "Enter same passphrase again" prompt
+
+1. Exit jenkins user session
+
+   ```ShellSession
+   $ exit
+   ```
+
+1. Temporarily allow password authentication
+
+   1. Open the "sshd_config" file
+
+      ```ShellSession
+      $ sudo vim /etc/ssh/sshd_config
+      ```
+
+   1. Change the following line to look like this
+
+      ```
+      PasswordAuthentication yes
+      ```
+
+   1. Save and close the file
+   
+   1. Restart sshd
+
+      ```ShellSession
+      $ sudo systemctl restart sshd
+      ```
+
+1. Exit the Jenkins agent
+
+   ```ShellSession
+   $ exit
+   ```
+
+### Create a jenkins user on Jenkins agent 02 and allow it to use a login shell
+
+1. Ensure that you are connected to the Cisco VPN
+
+1. Open a terminal
+
+1. Change to the "ab2d" repo directory
+
+   *Example:*
+   
+   ```ShellSession
+   $ cd ~/code/ab2d
+   ```
+
+1. Get credentials for the Management AWS account
+
+   ```ShellSession
+   $ source ./Deploy/bash/set-env.sh
+   ```
+
+1. Connect to Jenkins agent 02
+
+   1. Get the public IP address of Jenkins EC2 instance
+   
+      ```ShellSession
+      $ JENKINS_AGENT_02_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-jenkins-agent-02" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+        --output text)
+      ```
+
+   1. SSH into the instance using the public IP address
+
+      ```ShellSession
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem "ec2-user@${JENKINS_AGENT_02_PRIVATE_IP}"
+      ```
+
+1. Add a jenkins user
+
+   ```ShellSession
+   $ sudo useradd -d /var/lib/jenkins -s /bin/bash jenkins
+   ```
+
+1. Set ownership of the jenkins home directory
+
+   ```ShellSession
+   $ sudo chown -R jenkins:jenkins /var/lib/jenkins
+   ```
+   
+1. Give the local jenkins user a password
+
+   1. Create a "jenkins agent redhat user" entry in 1Password that meets the following requirements
+      - at least 15 characeters
+
+      - at least 1 special character
+      
+   1. Enter the following
+   
+      ```ShellSession
+      $ sudo passwd jenkins
+      ```
+
+   1. Copy the password from the following 1Password entry to the clipboard
+
+      ```
+      jenkins agent redhat user
+      ```
+      
+   1. Paste the password at the **New password** prompt
+
+   1. Paste the password at the **Retype new password** prompt
+
+1. Add jenkins user to sudoers file
+
+   1. Enter the following
+
+      ```ShellSession
+      $ sudo visudo
+      ```
+
+   1. Modify this section as follows
+
+      ```
+      ## Allow root to run any commands anywhere
+      root    ALL=(ALL)       ALL
+      jenkins ALL=(ALL)       NOPASSWD: ALL
+      ```
+
+    1. Note that the above setting for the jenkins user is not ideal since it means that the jenkins user will be able to do "sudo" on all commands
+
+    1. Note that it would be better to lock down the jenkins user so that it can only do "sudo" on a certain subset of commands based on the requirements
+
+1. Set up SSH keys for jenkins user
+
+   1. Switch to the jenkins user
+   
+      ```ShellSession
+      $ sudo su - jenkins
+      ```
+
+   1. View the jenkins user home directory
+
+      ```ShellSession
+      $ pwd
+      ```
+
+   1. Note the home directory
+
+      ```
+      /var/lib/jenkins
+      ```
+
+   1. Initiate creation of SSH keys
+
+      ```ShellSession
+      $ ssh-keygen
+      ```
+
+   1. Press **return** on the keyboard at the "Enter file in which to save the key (/var/lib/jenkins/.ssh/id_rsa)" prompt
+
+   1. Press **return** on the keyboard at the "Enter passphrase (empty for no passphrase)" prompt
+
+   1. Press **return** on the keyboard at the "Enter same passphrase again" prompt
+
+1. Exit jenkins user session
+
+   ```ShellSession
+   $ exit
+   ```
+
+1. Temporarily allow password authentication
+
+   1. Open the "sshd_config" file
+
+      ```ShellSession
+      $ sudo vim /etc/ssh/sshd_config
+      ```
+
+   1. Change the following line to look like this
+
+      ```
+      PasswordAuthentication yes
+      ```
+
+   1. Save and close the file
+   
+   1. Restart sshd
+
+      ```ShellSession
+      $ sudo systemctl restart sshd
+      ```
+
+1. Exit the Jenkins agent
+
+   ```ShellSession
+   $ exit
+   ```
+
+### Create a jenkins user on Jenkins agent 03 and allow it to use a login shell
+
+1. Ensure that you are connected to the Cisco VPN
+
+1. Open a terminal
+
+1. Change to the "ab2d" repo directory
+
+   *Example:*
+   
+   ```ShellSession
+   $ cd ~/code/ab2d
+   ```
+
+1. Get credentials for the Management AWS account
+
+   ```ShellSession
+   $ source ./Deploy/bash/set-env.sh
+   ```
+
+1. Connect to Jenkins agent 03
+
+   1. Get the public IP address of Jenkins EC2 instance
+   
+      ```ShellSession
+      $ JENKINS_AGENT_03_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-jenkins-agent-03" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+        --output text)
+      ```
+
+   1. SSH into the instance using the public IP address
+
+      ```ShellSession
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem "ec2-user@${JENKINS_AGENT_03_PRIVATE_IP}"
+      ```
+
+1. Add a jenkins user
+
+   ```ShellSession
+   $ sudo useradd -d /var/lib/jenkins -s /bin/bash jenkins
+   ```
+
+1. Set ownership of the jenkins home directory
+
+   ```ShellSession
+   $ sudo chown -R jenkins:jenkins /var/lib/jenkins
+   ```
+   
+1. Give the local jenkins user a password
+
+   1. Create a "jenkins agent redhat user" entry in 1Password that meets the following requirements
+      - at least 15 characeters
+
+      - at least 1 special character
+      
+   1. Enter the following
+   
+      ```ShellSession
+      $ sudo passwd jenkins
+      ```
+
+   1. Copy the password from the following 1Password entry to the clipboard
+
+      ```
+      jenkins agent redhat user
+      ```
+      
+   1. Paste the password at the **New password** prompt
+
+   1. Paste the password at the **Retype new password** prompt
+
+1. Add jenkins user to sudoers file
+
+   1. Enter the following
+
+      ```ShellSession
+      $ sudo visudo
+      ```
+
+   1. Modify this section as follows
+
+      ```
+      ## Allow root to run any commands anywhere
+      root    ALL=(ALL)       ALL
+      jenkins ALL=(ALL)       NOPASSWD: ALL
+      ```
+
+    1. Note that the above setting for the jenkins user is not ideal since it means that the jenkins user will be able to do "sudo" on all commands
+
+    1. Note that it would be better to lock down the jenkins user so that it can only do "sudo" on a certain subset of commands based on the requirements
+
+1. Set up SSH keys for jenkins user
+
+   1. Switch to the jenkins user
+   
+      ```ShellSession
+      $ sudo su - jenkins
+      ```
+
+   1. View the jenkins user home directory
+
+      ```ShellSession
+      $ pwd
+      ```
+
+   1. Note the home directory
+
+      ```
+      /var/lib/jenkins
+      ```
+
+   1. Initiate creation of SSH keys
+
+      ```ShellSession
+      $ ssh-keygen
+      ```
+
+   1. Press **return** on the keyboard at the "Enter file in which to save the key (/var/lib/jenkins/.ssh/id_rsa)" prompt
+
+   1. Press **return** on the keyboard at the "Enter passphrase (empty for no passphrase)" prompt
+
+   1. Press **return** on the keyboard at the "Enter same passphrase again" prompt
+
+1. Exit jenkins user session
+
+   ```ShellSession
+   $ exit
+   ```
+
+1. Temporarily allow password authentication
+
+   1. Open the "sshd_config" file
+
+      ```ShellSession
+      $ sudo vim /etc/ssh/sshd_config
+      ```
+
+   1. Change the following line to look like this
+
+      ```
+      PasswordAuthentication yes
+      ```
+
+   1. Save and close the file
+   
+   1. Restart sshd
+
+      ```ShellSession
+      $ sudo systemctl restart sshd
+      ```
+
+1. Exit the Jenkins agent
+
+   ```ShellSession
+   $ exit
+   ```
+
+### Create a jenkins user on Jenkins agent 04 and allow it to use a login shell
+
+1. Ensure that you are connected to the Cisco VPN
+
+1. Open a terminal
+
+1. Change to the "ab2d" repo directory
+
+   *Example:*
+   
+   ```ShellSession
+   $ cd ~/code/ab2d
+   ```
+
+1. Get credentials for the Management AWS account
+
+   ```ShellSession
+   $ source ./Deploy/bash/set-env.sh
+   ```
+
+1. Connect to Jenkins agent 04
+
+   1. Get the public IP address of Jenkins EC2 instance
+   
+      ```ShellSession
+      $ JENKINS_AGENT_04_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-jenkins-agent-04" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+        --output text)
+      ```
+
+   1. SSH into the instance using the public IP address
+
+      ```ShellSession
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem "ec2-user@${JENKINS_AGENT_04_PRIVATE_IP}"
+      ```
+
+1. Add a jenkins user
+
+   ```ShellSession
+   $ sudo useradd -d /var/lib/jenkins -s /bin/bash jenkins
+   ```
+
+1. Set ownership of the jenkins home directory
+
+   ```ShellSession
+   $ sudo chown -R jenkins:jenkins /var/lib/jenkins
+   ```
+   
+1. Give the local jenkins user a password
+
+   1. Create a "jenkins agent redhat user" entry in 1Password that meets the following requirements
+      - at least 15 characeters
+
+      - at least 1 special character
+      
+   1. Enter the following
+   
+      ```ShellSession
+      $ sudo passwd jenkins
+      ```
+
+   1. Copy the password from the following 1Password entry to the clipboard
+
+      ```
+      jenkins agent redhat user
+      ```
+      
+   1. Paste the password at the **New password** prompt
+
+   1. Paste the password at the **Retype new password** prompt
+
+1. Add jenkins user to sudoers file
+
+   1. Enter the following
+
+      ```ShellSession
+      $ sudo visudo
+      ```
+
+   1. Modify this section as follows
+
+      ```
+      ## Allow root to run any commands anywhere
+      root    ALL=(ALL)       ALL
+      jenkins ALL=(ALL)       NOPASSWD: ALL
+      ```
+
+    1. Note that the above setting for the jenkins user is not ideal since it means that the jenkins user will be able to do "sudo" on all commands
+
+    1. Note that it would be better to lock down the jenkins user so that it can only do "sudo" on a certain subset of commands based on the requirements
+
+1. Set up SSH keys for jenkins user
+
+   1. Switch to the jenkins user
+   
+      ```ShellSession
+      $ sudo su - jenkins
+      ```
+
+   1. View the jenkins user home directory
+
+      ```ShellSession
+      $ pwd
+      ```
+
+   1. Note the home directory
+
+      ```
+      /var/lib/jenkins
+      ```
+
+   1. Initiate creation of SSH keys
+
+      ```ShellSession
+      $ ssh-keygen
+      ```
+
+   1. Press **return** on the keyboard at the "Enter file in which to save the key (/var/lib/jenkins/.ssh/id_rsa)" prompt
+
+   1. Press **return** on the keyboard at the "Enter passphrase (empty for no passphrase)" prompt
+
+   1. Press **return** on the keyboard at the "Enter same passphrase again" prompt
+
+1. Exit jenkins user session
+
+   ```ShellSession
+   $ exit
+   ```
+
+1. Temporarily allow password authentication
+
+   1. Open the "sshd_config" file
+
+      ```ShellSession
+      $ sudo vim /etc/ssh/sshd_config
+      ```
+
+   1. Change the following line to look like this
+
+      ```
+      PasswordAuthentication yes
+      ```
+
+   1. Save and close the file
+   
+   1. Restart sshd
+
+      ```ShellSession
+      $ sudo systemctl restart sshd
+      ```
+
+1. Exit the Jenkins agent
+
+   ```ShellSession
+   $ exit
+   ```
+
+### Create a jenkins user on Jenkins agent 05 and allow it to use a login shell
+
+1. Ensure that you are connected to the Cisco VPN
+
+1. Open a terminal
+
+1. Change to the "ab2d" repo directory
+
+   *Example:*
+   
+   ```ShellSession
+   $ cd ~/code/ab2d
+   ```
+
+1. Get credentials for the Management AWS account
+
+   ```ShellSession
+   $ source ./Deploy/bash/set-env.sh
+   ```
+
+1. Connect to Jenkins agent 05
+
+   1. Get the public IP address of Jenkins EC2 instance
+   
+      ```ShellSession
+      $ JENKINS_AGENT_05_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-jenkins-agent-05" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+        --output text)
+      ```
+
+   1. SSH into the instance using the public IP address
+
+      ```ShellSession
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem "ec2-user@${JENKINS_AGENT_05_PRIVATE_IP}"
       ```
 
 1. Add a jenkins user
@@ -529,20 +3740,22 @@
 
 ## Set up SSH communication for jenkins
 
+### Set up SSH communication for Jenkins master
+
 1. Ensure that you are connected to the Cisco VPN
 
 1. Open a terminal
 
-1. Change to the "Deploy" directory
+1. Change to the "ab2d" repo directory
 
    ```ShellSession
-   $ cd ~/code/ab2d/Deploy
+   $ cd ~/code/ab2d
    ```
 
 1. Get credentials for the Management AWS account
 
    ```ShellSession
-   $ source ./bash/set-env.sh
+   $ source ./Deploy/bash/set-env.sh
    ```
 
 1. Connect to Jenkins master
@@ -682,150 +3895,740 @@
       $ exit
       ```
 
-1. Authorize jenkins master to SSH into jenkins agent
+1. Set up SSH communication for Jenkins agent 01
 
-   1. Switch to the jenkins user
-
-      ```ShellSession
-      $ sudo su - jenkins
-      ```
-
-   1. Get the private IP address of Jenkins EC2 instance
+   1. Authorize jenkins master to SSH into jenkins agent 01
+   
+      1. Switch to the jenkins user
+   
+         ```ShellSession
+         $ sudo su - jenkins
+         ```
+   
+      1. Get the private IP address of Jenkins EC2 instance
+      
+         ```ShellSession
+         $ JENKINS_AGENT_01_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+           --filters "Name=tag:Name,Values=ab2d-jenkins-agent-01" \
+           --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+           --output text)
+         ```
+   
+      1. Allow the machine to SSH into itself
+   
+         ```ShellSession
+         $ ssh-copy-id jenkins@$JENKINS_AGENT_01_PRIVATE_IP
+         ```
+      
+      1. Enter the following at the "Are you sure you want to continue connecting (yes/no)" prompt
+   
+         ```
+         yes
+         ```
+   
+      1. Copy the password from the following 1Password entry to the clipboard
+   
+         ```
+         jenkins agent redhat user
+         ```
+         
+      1. Paste the jenkins agent redhat user password at the "jenkins@{jenkins agent private ip}'s password" prompt
+   
+      1. Test ssh from jenkins user session
+   
+         ```ShellSession
+         $ ssh jenkins@$JENKINS_AGENT_01_PRIVATE_IP
+         ```
+   
+      1. Switch back to jenkins master
+   
+         ```ShellSession
+         $ exit
+         ```
+   
+   1. Exit the jenkins user session on jenkins master
    
       ```ShellSession
-      $ JENKINS_AGENT_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
-        --filters "Name=tag:Name,Values=ab2d-jenkins-agent" \
-        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
-        --output text)
-      ```
-
-   1. Allow the machine to SSH into itself
-
-      ```ShellSession
-      $ ssh-copy-id jenkins@$JENKINS_AGENT_PRIVATE_IP
+      $ exit
       ```
    
-   1. Enter the following at the "Are you sure you want to continue connecting (yes/no)" prompt
-
+   1. Exit the jenkins master
+   
+      ```ShellSession
+      $ exit
       ```
-      yes
+   
+   1. Connect to Jenkins agent 01
+   
+      1. Get the private IP address of Jenkins EC2 instance
+      
+         ```ShellSession
+         $ JENKINS_AGENT_01_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+           --filters "Name=tag:Name,Values=ab2d-jenkins-agent-01" \
+           --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+           --output text)
+         ```
+   
+      1. SSH into the instance using the public IP address
+   
+         ```ShellSession
+         $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_AGENT_01_PRIVATE_IP
+         ```
+   
+   1. Disallow password authentication on jenkins agent
+   
+      1. Open the "sshd_config" file
+   
+         ```ShellSession
+         $ sudo vim /etc/ssh/sshd_config
+         ```
+   
+      1. Change the following line to look like this
+   
+         ```
+         PasswordAuthentication no
+         ```
+   
+      1. Restart sshd
+   
+         ```ShellSession
+         $ sudo systemctl restart sshd
+         ```
+   
+   1. Exit Jenkins agent
+   
+      ```ShellSession
+      $ exit
       ```
-
-   1. Copy the password from the following 1Password entry to the clipboard
-
-      ```
-      jenkins agent redhat user
+   
+   1. Connect to Jenkins master
+   
+      ```ShellSession
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_MASTER_PRIVATE_IP
       ```
       
-   1. Paste the jenkins master redhat user password at the "jenkins@{jenkins agent private ip}'s password" prompt
-
-   1. Test ssh from jenkins user session
-
+   1. Verify that Jenkins master can SSH into Jenkins agent
+   
+      1. Switch to the jenkins user
+   
+         ```ShellSession
+         $ sudo su - jenkins
+         ```
+      
+      1. Get the private IP address of Jenkins EC2 instance
+      
+         ```ShellSession
+         $ JENKINS_AGENT_01_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+           --filters "Name=tag:Name,Values=ab2d-jenkins-agent-01" \
+           --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+           --output text)
+         ```
+   
+      1. Allow the machine to SSH into itself
+   
+         ```ShellSession
+         $ ssh jenkins@$JENKINS_AGENT_01_PRIVATE_IP
+         ```
+   
+   1. Exit Jenkins agent 01
+   
       ```ShellSession
-      $ ssh jenkins@$JENKINS_AGENT_PRIVATE_IP
+      $ exit
       ```
 
-   1. Switch back to jenkins master
+   1. Exit jenkins user on Jenkins master
 
       ```ShellSession
       $ exit
       ```
 
-1. Exit the jenkins user session on jenkins master
+1. Set up SSH communication for Jenkins agent 02
 
-   ```ShellSession
-   $ exit
-   ```
-
-1. Exit the jenkins master
-
-   ```ShellSession
-   $ exit
-   ```
-
-1. Connect to Jenkins agent
-
-   1. Get the private IP address of Jenkins EC2 instance
+   1. Authorize jenkins master to SSH into jenkins agent 02
+   
+      1. Switch to the jenkins user
+   
+         ```ShellSession
+         $ sudo su - jenkins
+         ```
+   
+      1. Get the private IP address of Jenkins EC2 instance
+      
+         ```ShellSession
+         $ JENKINS_AGENT_02_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+           --filters "Name=tag:Name,Values=ab2d-jenkins-agent-02" \
+           --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+           --output text)
+         ```
+   
+      1. Allow the machine to SSH into itself
+   
+         ```ShellSession
+         $ ssh-copy-id jenkins@$JENKINS_AGENT_02_PRIVATE_IP
+         ```
+      
+      1. Enter the following at the "Are you sure you want to continue connecting (yes/no)" prompt
+   
+         ```
+         yes
+         ```
+   
+      1. Copy the password from the following 1Password entry to the clipboard
+   
+         ```
+         jenkins agent redhat user
+         ```
+         
+      1. Paste the jenkins agent redhat user password at the "jenkins@{jenkins agent private ip}'s password" prompt
+   
+      1. Test ssh from jenkins user session
+   
+         ```ShellSession
+         $ ssh jenkins@$JENKINS_AGENT_02_PRIVATE_IP
+         ```
+   
+      1. Switch back to jenkins master
+   
+         ```ShellSession
+         $ exit
+         ```
+   
+   1. Exit the jenkins user session on jenkins master
    
       ```ShellSession
-      $ JENKINS_AGENT_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
-        --filters "Name=tag:Name,Values=ab2d-jenkins-agent" \
-        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
-        --output text)
-      ```
-
-   1. SSH into the instance using the public IP address
-
-      ```ShellSession
-      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_AGENT_PRIVATE_IP
-      ```
-
-1. Disallow password authentication on jenkins agent
-
-   1. Open the "sshd_config" file
-
-      ```ShellSession
-      $ sudo vim /etc/ssh/sshd_config
-      ```
-
-   1. Change the following line to look like this
-
-      ```
-      PasswordAuthentication no
-      ```
-
-   1. Restart sshd
-
-      ```ShellSession
-      $ sudo systemctl restart sshd
-      ```
-
-1. Exit Jenkins agent
-
-   ```ShellSession
-   $ exit
-   ```
-
-1. Connect to Jenkins master
-
-   ```ShellSession
-   $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_MASTER_PRIVATE_IP
-   ```
-   
-1. Verify that Jenkins master can SSH into Jenkins agent
-
-   1. Switch to the jenkins user
-
-      ```ShellSession
-      $ sudo su - jenkins
+      $ exit
       ```
    
-   1. Get the private IP address of Jenkins EC2 instance
+   1. Exit the jenkins master
    
       ```ShellSession
-      $ JENKINS_AGENT_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
-        --filters "Name=tag:Name,Values=ab2d-jenkins-agent" \
-        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
-        --output text)
+      $ exit
+      ```
+   
+   1. Connect to Jenkins agent 02
+   
+      1. Get the private IP address of Jenkins EC2 instance
+      
+         ```ShellSession
+         $ JENKINS_AGENT_02_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+           --filters "Name=tag:Name,Values=ab2d-jenkins-agent-02" \
+           --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+           --output text)
+         ```
+   
+      1. SSH into the instance using the public IP address
+   
+         ```ShellSession
+         $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_AGENT_02_PRIVATE_IP
+         ```
+   
+   1. Disallow password authentication on jenkins agent
+   
+      1. Open the "sshd_config" file
+   
+         ```ShellSession
+         $ sudo vim /etc/ssh/sshd_config
+         ```
+   
+      1. Change the following line to look like this
+   
+         ```
+         PasswordAuthentication no
+         ```
+   
+      1. Restart sshd
+   
+         ```ShellSession
+         $ sudo systemctl restart sshd
+         ```
+   
+   1. Exit Jenkins agent
+   
+      ```ShellSession
+      $ exit
+      ```
+   
+   1. Connect to Jenkins master
+   
+      ```ShellSession
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_MASTER_PRIVATE_IP
+      ```
+      
+   1. Verify that Jenkins master can SSH into Jenkins agent
+   
+      1. Switch to the jenkins user
+   
+         ```ShellSession
+         $ sudo su - jenkins
+         ```
+      
+      1. Get the private IP address of Jenkins EC2 instance
+      
+         ```ShellSession
+         $ JENKINS_AGENT_02_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+           --filters "Name=tag:Name,Values=ab2d-jenkins-agent-02" \
+           --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+           --output text)
+         ```
+   
+      1. Allow the machine to SSH into itself
+   
+         ```ShellSession
+         $ ssh jenkins@$JENKINS_AGENT_02_PRIVATE_IP
+         ```
+   
+   1. Exit Jenkins agent 02
+   
+      ```ShellSession
+      $ exit
       ```
 
-   1. Allow the machine to SSH into itself
+   1. Exit jenkins user on Jenkins master
 
       ```ShellSession
-      $ ssh jenkins@$JENKINS_AGENT_PRIVATE_IP
+      $ exit
       ```
 
-1. Exit Jenkins agent
+1. Set up SSH communication for Jenkins agent 03
 
-   ```ShellSession
-   $ exit
-   ```
+   1. Authorize jenkins master to SSH into jenkins agent 03
+   
+      1. Switch to the jenkins user
+   
+         ```ShellSession
+         $ sudo su - jenkins
+         ```
+   
+      1. Get the private IP address of Jenkins EC2 instance
+      
+         ```ShellSession
+         $ JENKINS_AGENT_03_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+           --filters "Name=tag:Name,Values=ab2d-jenkins-agent-03" \
+           --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+           --output text)
+         ```
+   
+      1. Allow the machine to SSH into itself
+   
+         ```ShellSession
+         $ ssh-copy-id jenkins@$JENKINS_AGENT_03_PRIVATE_IP
+         ```
+      
+      1. Enter the following at the "Are you sure you want to continue connecting (yes/no)" prompt
+   
+         ```
+         yes
+         ```
+   
+      1. Copy the password from the following 1Password entry to the clipboard
+   
+         ```
+         jenkins agent redhat user
+         ```
+         
+      1. Paste the jenkins agent redhat user password at the "jenkins@{jenkins agent private ip}'s password" prompt
+   
+      1. Test ssh from jenkins user session
+   
+         ```ShellSession
+         $ ssh jenkins@$JENKINS_AGENT_03_PRIVATE_IP
+         ```
+   
+      1. Switch back to jenkins master
+   
+         ```ShellSession
+         $ exit
+         ```
+   
+   1. Exit the jenkins user session on jenkins master
+   
+      ```ShellSession
+      $ exit
+      ```
+   
+   1. Exit the jenkins master
+   
+      ```ShellSession
+      $ exit
+      ```
+   
+   1. Connect to Jenkins agent 03
+   
+      1. Get the private IP address of Jenkins EC2 instance
+      
+         ```ShellSession
+         $ JENKINS_AGENT_03_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+           --filters "Name=tag:Name,Values=ab2d-jenkins-agent-03" \
+           --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+           --output text)
+         ```
+   
+      1. SSH into the instance using the public IP address
+   
+         ```ShellSession
+         $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_AGENT_03_PRIVATE_IP
+         ```
+   
+   1. Disallow password authentication on jenkins agent
+   
+      1. Open the "sshd_config" file
+   
+         ```ShellSession
+         $ sudo vim /etc/ssh/sshd_config
+         ```
+   
+      1. Change the following line to look like this
+   
+         ```
+         PasswordAuthentication no
+         ```
+   
+      1. Restart sshd
+   
+         ```ShellSession
+         $ sudo systemctl restart sshd
+         ```
+   
+   1. Exit Jenkins agent
+   
+      ```ShellSession
+      $ exit
+      ```
+   
+   1. Connect to Jenkins master
+   
+      ```ShellSession
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_MASTER_PRIVATE_IP
+      ```
+      
+   1. Verify that Jenkins master can SSH into Jenkins agent
+   
+      1. Switch to the jenkins user
+   
+         ```ShellSession
+         $ sudo su - jenkins
+         ```
+      
+      1. Get the private IP address of Jenkins EC2 instance
+      
+         ```ShellSession
+         $ JENKINS_AGENT_03_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+           --filters "Name=tag:Name,Values=ab2d-jenkins-agent-03" \
+           --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+           --output text)
+         ```
+   
+      1. Allow the machine to SSH into itself
+   
+         ```ShellSession
+         $ ssh jenkins@$JENKINS_AGENT_03_PRIVATE_IP
+         ```
+   
+   1. Exit Jenkins agent 03
+   
+      ```ShellSession
+      $ exit
+      ```
 
-1. Exit jenkins user on Jenkins master
+   1. Exit jenkins user on Jenkins master
 
-   ```ShellSession
-   $ exit
-   ```
+      ```ShellSession
+      $ exit
+      ```
+
+1. Set up SSH communication for Jenkins agent 04
+
+   1. Authorize jenkins master to SSH into jenkins agent 04
+   
+      1. Switch to the jenkins user
+   
+         ```ShellSession
+         $ sudo su - jenkins
+         ```
+   
+      1. Get the private IP address of Jenkins EC2 instance
+      
+         ```ShellSession
+         $ JENKINS_AGENT_04_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+           --filters "Name=tag:Name,Values=ab2d-jenkins-agent-04" \
+           --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+           --output text)
+         ```
+   
+      1. Allow the machine to SSH into itself
+   
+         ```ShellSession
+         $ ssh-copy-id jenkins@$JENKINS_AGENT_04_PRIVATE_IP
+         ```
+      
+      1. Enter the following at the "Are you sure you want to continue connecting (yes/no)" prompt
+   
+         ```
+         yes
+         ```
+   
+      1. Copy the password from the following 1Password entry to the clipboard
+   
+         ```
+         jenkins agent redhat user
+         ```
+         
+      1. Paste the jenkins agent redhat user password at the "jenkins@{jenkins agent private ip}'s password" prompt
+   
+      1. Test ssh from jenkins user session
+   
+         ```ShellSession
+         $ ssh jenkins@$JENKINS_AGENT_04_PRIVATE_IP
+         ```
+   
+      1. Switch back to jenkins master
+   
+         ```ShellSession
+         $ exit
+         ```
+   
+   1. Exit the jenkins user session on jenkins master
+   
+      ```ShellSession
+      $ exit
+      ```
+   
+   1. Exit the jenkins master
+   
+      ```ShellSession
+      $ exit
+      ```
+   
+   1. Connect to Jenkins agent 04
+   
+      1. Get the private IP address of Jenkins EC2 instance
+      
+         ```ShellSession
+         $ JENKINS_AGENT_04_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+           --filters "Name=tag:Name,Values=ab2d-jenkins-agent-04" \
+           --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+           --output text)
+         ```
+   
+      1. SSH into the instance using the public IP address
+   
+         ```ShellSession
+         $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_AGENT_04_PRIVATE_IP
+         ```
+   
+   1. Disallow password authentication on jenkins agent
+   
+      1. Open the "sshd_config" file
+   
+         ```ShellSession
+         $ sudo vim /etc/ssh/sshd_config
+         ```
+   
+      1. Change the following line to look like this
+   
+         ```
+         PasswordAuthentication no
+         ```
+   
+      1. Restart sshd
+   
+         ```ShellSession
+         $ sudo systemctl restart sshd
+         ```
+   
+   1. Exit Jenkins agent
+   
+      ```ShellSession
+      $ exit
+      ```
+   
+   1. Connect to Jenkins master
+   
+      ```ShellSession
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_MASTER_PRIVATE_IP
+      ```
+      
+   1. Verify that Jenkins master can SSH into Jenkins agent
+   
+      1. Switch to the jenkins user
+   
+         ```ShellSession
+         $ sudo su - jenkins
+         ```
+      
+      1. Get the private IP address of Jenkins EC2 instance
+      
+         ```ShellSession
+         $ JENKINS_AGENT_04_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+           --filters "Name=tag:Name,Values=ab2d-jenkins-agent-04" \
+           --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+           --output text)
+         ```
+   
+      1. Allow the machine to SSH into itself
+   
+         ```ShellSession
+         $ ssh jenkins@$JENKINS_AGENT_04_PRIVATE_IP
+         ```
+   
+   1. Exit Jenkins agent 04
+   
+      ```ShellSession
+      $ exit
+      ```
+
+   1. Exit jenkins user on Jenkins master
+
+      ```ShellSession
+      $ exit
+      ```
+
+1. Set up SSH communication for Jenkins agent 05
+
+   1. Authorize jenkins master to SSH into jenkins agent 05
+   
+      1. Switch to the jenkins user
+   
+         ```ShellSession
+         $ sudo su - jenkins
+         ```
+   
+      1. Get the private IP address of Jenkins EC2 instance
+      
+         ```ShellSession
+         $ JENKINS_AGENT_05_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+           --filters "Name=tag:Name,Values=ab2d-jenkins-agent-05" \
+           --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+           --output text)
+         ```
+   
+      1. Allow the machine to SSH into itself
+   
+         ```ShellSession
+         $ ssh-copy-id jenkins@$JENKINS_AGENT_05_PRIVATE_IP
+         ```
+      
+      1. Enter the following at the "Are you sure you want to continue connecting (yes/no)" prompt
+   
+         ```
+         yes
+         ```
+   
+      1. Copy the password from the following 1Password entry to the clipboard
+   
+         ```
+         jenkins agent redhat user
+         ```
+         
+      1. Paste the jenkins agent redhat user password at the "jenkins@{jenkins agent private ip}'s password" prompt
+   
+      1. Test ssh from jenkins user session
+   
+         ```ShellSession
+         $ ssh jenkins@$JENKINS_AGENT_05_PRIVATE_IP
+         ```
+   
+      1. Switch back to jenkins master
+   
+         ```ShellSession
+         $ exit
+         ```
+   
+   1. Exit the jenkins user session on jenkins master
+   
+      ```ShellSession
+      $ exit
+      ```
+   
+   1. Exit the jenkins master
+   
+      ```ShellSession
+      $ exit
+      ```
+   
+   1. Connect to Jenkins agent 05
+   
+      1. Get the private IP address of Jenkins EC2 instance
+      
+         ```ShellSession
+         $ JENKINS_AGENT_05_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+           --filters "Name=tag:Name,Values=ab2d-jenkins-agent-05" \
+           --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+           --output text)
+         ```
+   
+      1. SSH into the instance using the public IP address
+   
+         ```ShellSession
+         $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_AGENT_05_PRIVATE_IP
+         ```
+   
+   1. Disallow password authentication on jenkins agent
+   
+      1. Open the "sshd_config" file
+   
+         ```ShellSession
+         $ sudo vim /etc/ssh/sshd_config
+         ```
+   
+      1. Change the following line to look like this
+   
+         ```
+         PasswordAuthentication no
+         ```
+   
+      1. Restart sshd
+   
+         ```ShellSession
+         $ sudo systemctl restart sshd
+         ```
+   
+   1. Exit Jenkins agent
+   
+      ```ShellSession
+      $ exit
+      ```
+   
+   1. Connect to Jenkins master
+   
+      ```ShellSession
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_MASTER_PRIVATE_IP
+      ```
+      
+   1. Verify that Jenkins master can SSH into Jenkins agent
+   
+      1. Switch to the jenkins user
+   
+         ```ShellSession
+         $ sudo su - jenkins
+         ```
+      
+      1. Get the private IP address of Jenkins EC2 instance
+      
+         ```ShellSession
+         $ JENKINS_AGENT_05_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+           --filters "Name=tag:Name,Values=ab2d-jenkins-agent-05" \
+           --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+           --output text)
+         ```
+   
+      1. Allow the machine to SSH into itself
+   
+         ```ShellSession
+         $ ssh jenkins@$JENKINS_AGENT_05_PRIVATE_IP
+         ```
+   
+   1. Exit Jenkins agent 05
+   
+      ```ShellSession
+      $ exit
+      ```
+
+   1. Exit jenkins user on Jenkins master
+
+      ```ShellSession
+      $ exit
+      ```
 
 1. Exit Jenkins master
 
@@ -841,16 +4644,18 @@
 
 1. Open a terminal
 
-1. Change to the "Deploy" directory
+1. Change to the "ab2d" repo directory
 
+   *Example:*
+   
    ```ShellSession
-   $ cd ~/code/ab2d/Deploy
+   $ cd ~/code/ab2d
    ```
 
 1. Get credentials for the Management AWS account
 
    ```ShellSession
-   $ source ./bash/set-env.sh
+   $ source ./Deploy/bash/set-env.sh
    ```
 
 1. Connect to Jenkins master
@@ -916,7 +4721,11 @@
       ```
    
    1. Re-check the current status of Jenkins
- 
+
+      ```ShellSession
+      $ systemctl status jenkins -l
+      ```
+
    1. Note that you should see the following in the output
  
       ```
@@ -981,16 +4790,16 @@
 
 1. Open a terminal
 
-1. Change to the "Deploy" directory
+1. Change to the "ab2d" repo directory
 
    ```ShellSession
-   $ cd ~/code/ab2d/Deploy
+   $ cd ~/code/ab2d
    ```
 
 1. Get credentials for the Management AWS account
 
    ```ShellSession
-   $ source ./bash/set-env.sh
+   $ source ./Deploy/bash/set-env.sh
    ```
 
 1. Connect to Jenkins master
@@ -1011,8 +4820,6 @@
       ```
 
 1. Configure Jenkins
-
-   1. Return to the terminal
 
    1. Get the Jenkins administrator password
 
@@ -1060,33 +4867,33 @@
    $ exit
    ```
    
-## Configure Jenkins agent
+## Configure Jenkins agent 01
 
-### Install development tools on Jenkins agent
+### Install development tools on Jenkins agent 01
 
 1. Ensure that you are connected to the Cisco VPN
 
 1. Open a terminal
 
-1. Change to the "Deploy" directory
+1. Change to the "ab2d" repo directory
 
    ```ShellSession
-   $ cd ~/code/ab2d/Deploy
+   $ cd ~/code/ab2d
    ```
 
 1. Get credentials for the Management AWS account
 
    ```ShellSession
-   $ source ./bash/set-env.sh
+   $ source ./Deploy/bash/set-env.sh
    ```
 
-1. Connect to Jenkins agent
+1. Connect to Jenkins agent 01
 
    1. Get the public IP address of Jenkins EC2 instance
    
       ```ShellSession
-      $ JENKINS_AGENT_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
-        --filters "Name=tag:Name,Values=ab2d-jenkins-agent" \
+      $ JENKINS_AGENT_01_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-jenkins-agent-01" \
         --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
         --output text)
       ```
@@ -1094,7 +4901,7 @@
    1. SSH into the instance using the public IP address
 
       ```ShellSession
-      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_AGENT_PRIVATE_IP
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_AGENT_01_PRIVATE_IP
       ```
 
 1. Install development tools
@@ -1103,193 +4910,7 @@
    $ sudo yum group install "Development Tools" -y
    ```
 
-1. Note that the following tools were installed
-
-   - autoconf
-
-   - automake
-
-   - bison
-
-   - byacc
-
-   - cscope
-
-   - ctags
-
-   - diffstat
-
-   - doxygen
-
-   - elfutils
-   
-   - flex
-
-   - gcc
-
-   - gcc-c++
-
-   - gcc-gfortran
-
-   - indent
-
-   - intltool
-
-   - libtool
-
-   - patch
-
-   - patchutils
-
-   - rcs
-
-   - redhat-rpm-config
-
-   - rpm-build
-
-   - rpm-sign
-
-   - subversion
-
-   - swig
-
-   - systemtap
-
-### Configure AWS CLI for management environment on Jenkins agent
-
-> *** TO TO ***: Remove this section after verification
-
-1. Connect to Jenkins agent
-
-   1. Ensure that you are connected to the Cisco VPN
-
-   1. Get credentials for the Management AWS account
-
-      ```ShellSession
-      $ source ./bash/set-env.sh
-      ```
-
-   1. Get the private IP address of Jenkins EC2 instance
-   
-      ```ShellSession
-      $ JENKINS_AGENT_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
-        --filters "Name=tag:Name,Values=ab2d-jenkins-agent" \
-        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
-        --output text)
-      ```
-
-   1. SSH into the instance using the private IP address
-
-      ```ShellSession
-      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_AGENT_PRIVATE_IP
-      ```
-
-1. Switch to the jenkins user
-
-   ```ShellSession
-   $ sudo su - jenkins
-   ```
-
-1. Configure AWS CLI
-   
-   ```ShellSession
-   $ aws configure --profile=ab2d-mgmt-east-dev
-   ```
-
-1. Enter {your aws access key} at the **AWS Access Key ID** prompt
-
-1. Enter {your aws secret access key} at the AWS Secret Access Key prompt
-
-1. Enter the following at the **Default region name** prompt
-
-   ```
-   us-east-1
-   ```
-
-1. Enter the following at the **Default output format** prompt
-
-   ```
-   json
-   ```
-
-1. Examine the contents of your AWS credentials file
-
-   ```ShellSession
-   $ cat ~/.aws/credentials
-   ```
-
-1. Exit the Jenkins agent node
-
-   ```ShellSession
-   $ exit
-   ```
-   
-### Configure AWS CLI for Dev environment on Jenkins agent
-
-> *** TO TO ***: Remove this section after verification
-
-1. Connect to Jenkins agent
-
-   1. Ensure that you are connected to the Cisco VPN
-
-   1. Set the management AWS profile
-
-      ```ShellSession
-      $ export AWS_PROFILE=ab2d-mgmt-east-dev
-      ```
-
-   1. Get the private IP address of Jenkins EC2 instance
-   
-      ```ShellSession
-      $ JENKINS_AGENT_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
-        --filters "Name=tag:Name,Values=ab2d-jenkins-agent" \
-        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
-        --output text)
-      ```
-
-   1. Ensure that you are connected to the Cisco VPN
-
-   1. SSH into the instance using the private IP address
-
-      ```ShellSession
-      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_AGENT_PRIVATE_IP
-      ```
-
-1. Configure AWS CLI
-   
-   ```ShellSession
-   $ aws configure --profile=ab2d-dev
-   ```
-
-1. Enter {your aws access key} at the **AWS Access Key ID** prompt
-
-1. Enter {your aws secret access key} at the AWS Secret Access Key prompt
-
-1. Enter the following at the **Default region name** prompt
-
-   ```
-   us-east-1
-   ```
-
-1. Enter the following at the **Default output format** prompt
-
-   ```
-   json
-   ```
-
-1. Examine the contents of your AWS credentials file
-
-   ```ShellSession
-   $ cat ~/.aws/credentials
-   ```
-
-1. Exit the Jenkins agent node
-
-   ```ShellSession
-   $ exit
-   ```
-
-### Create a directory for jobs on the Jenkins agent
+### Create a directory for jobs on Jenkins agent 01
 
 1. Ensure that you are connected to the Cisco VPN
 
@@ -1307,13 +4928,13 @@
    $ source ./bash/set-env.sh
    ```
 
-1. Connect to Jenkins agent
+1. Connect to Jenkins agent 01
 
    1. Get the public IP address of Jenkins EC2 instance
    
       ```ShellSession
-      $ JENKINS_AGENT_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
-        --filters "Name=tag:Name,Values=ab2d-jenkins-agent" \
+      $ JENKINS_AGENT_01_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-jenkins-agent-01" \
         --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
         --output text)
       ```
@@ -1321,7 +4942,7 @@
    1. SSH into the instance using the public IP address
 
       ```ShellSession
-      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_AGENT_PRIVATE_IP
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_AGENT_01_PRIVATE_IP
       ```
 
 1. Switch to the jenkins user
@@ -1348,7 +4969,7 @@
    $ exit
    ```
    
-### Install python3, pip3, and required pip modules on Jenkins agent
+### Install python3, pip3, and required pip modules on Jenkins agent 01
 
 1. Ensure that you are connected to the Cisco VPN
 
@@ -1366,13 +4987,13 @@
    $ source ./bash/set-env.sh
    ```
 
-1. Connect to Jenkins agent
+1. Connect to Jenkins agent 01
 
    1. Get the public IP address of Jenkins EC2 instance
    
       ```ShellSession
-      $ JENKINS_AGENT_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
-        --filters "Name=tag:Name,Values=ab2d-jenkins-agent" \
+      $ JENKINS_AGENT_01_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-jenkins-agent-01" \
         --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
         --output text)
       ```
@@ -1380,7 +5001,7 @@
    1. SSH into the instance using the public IP address
 
       ```ShellSession
-      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_AGENT_PRIVATE_IP
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_AGENT_01_PRIVATE_IP
       ```
 
 1. Check to see if python3 is already installed by entering the following
@@ -1501,13 +5122,13 @@
       $ exit
       ```
 
-1. Exit the Jenkins agent node
+1. Exit the Jenkins agent 01
 
    ```ShellSession
    $ exit
    ```
 
-### Install Terraform on Jenkins agent
+### Install Terraform on Jenkins agent 01
 
 1. Check the version of terraform that is installed on your development machine
 
@@ -1533,16 +5154,16 @@
 
 1. Open a terminal
 
-1. Change to the "Deploy" directory
+1. Change to the "ab2d" repo directory
 
    ```ShellSession
-   $ cd ~/code/ab2d/Deploy
+   $ cd ~/code/ab2d
    ```
 
 1. Get credentials for the Management AWS account
 
    ```ShellSession
-   $ source ./bash/set-env.sh
+   $ source ./Deploy/bash/set-env.sh
    ```
 
 1. Connect to Jenkins agent
@@ -1550,8 +5171,8 @@
    1. Get the public IP address of Jenkins EC2 instance
 
       ```ShellSession
-      $ JENKINS_AGENT_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
-        --filters "Name=tag:Name,Values=ab2d-jenkins-agent" \
+      $ JENKINS_AGENT_01_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-jenkins-agent-01" \
         --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
         --output text)
       ```
@@ -1559,7 +5180,7 @@
    1. SSH into the instance using the public IP address
 
       ```ShellSession
-      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_AGENT_PRIVATE_IP
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_AGENT_01_PRIVATE_IP
       ```
 
 1. Set desired terraform version
@@ -1600,26 +5221,28 @@
    $ terraform --version
    ```
 
-1. Exit the Jenkins agent node
+1. Exit the Jenkins agent 01
 
    ```ShellSession
    $ exit
    ```
 
-### Configure Terraform logging on Jenkins agent
+### Configure Terraform logging on Jenkins agent 01
 
 1. Open a terminal
 
-1. Change to the "Deploy" directory
+1. Change to the "ab2d" repo directory
 
+   *Example:*
+   
    ```ShellSession
-   $ cd ~/code/ab2d/Deploy
+   $ cd ~/code/ab2d
    ```
 
 1. Get credentials for the Management AWS account
 
    ```ShellSession
-   $ source ./bash/set-env.sh
+   $ source ./Deploy/bash/set-env.sh
    ```
 
 1. Connect to Jenkins agent
@@ -1627,8 +5250,8 @@
    1. Get the public IP address of Jenkins EC2 instance
 
       ```ShellSession
-      $ JENKINS_AGENT_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
-        --filters "Name=tag:Name,Values=ab2d-jenkins-agent" \
+      $ JENKINS_AGENT_01_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-jenkins-agent-01" \
         --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
         --output text)
       ```
@@ -1636,7 +5259,7 @@
    1. SSH into the instance using the public IP address
 
       ```ShellSession
-      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_AGENT_PRIVATE_IP
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_AGENT_01_PRIVATE_IP
       ```
 
 1. Create or modify the SSH config file
@@ -1662,7 +5285,13 @@
    $ sudo chown -R jenkins:jenkins /var/log/terraform
    ```
 
-### Install maven on Jenkins agent
+1. Exit the Jenkins agent 01
+
+   ```ShellSession
+   $ exit
+   ```
+
+### Install maven on Jenkins agent 01
 
 1. Check the version of maven that is installed on your development machine
 
@@ -1686,16 +5315,16 @@
 
 1. Open a terminal
 
-1. Change to the "Deploy" directory
+1. Change to the "ab2d" repo directory
 
    ```ShellSession
-   $ cd ~/code/ab2d/Deploy
+   $ cd ~/code/ab2d
    ```
 
 1. Get credentials for the Management AWS account
 
    ```ShellSession
-   $ source ./bash/set-env.sh
+   $ source ./Deploy/bash/set-env.sh
    ```
 
 1. Connect to Jenkins agent
@@ -1703,8 +5332,8 @@
    1. Get the public IP address of Jenkins EC2 instance
 
       ```ShellSession
-      $ JENKINS_AGENT_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
-        --filters "Name=tag:Name,Values=ab2d-jenkins-agent" \
+      $ JENKINS_AGENT_01_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-jenkins-agent-01" \
         --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
         --output text)
       ```
@@ -1712,7 +5341,7 @@
    1. SSH into the instance using the public IP address
 
       ```ShellSession
-      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_AGENT_PRIVATE_IP
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_AGENT_01_PRIVATE_IP
       ```
 
 1. Change to the "/opt" directory
@@ -1779,20 +5408,26 @@
    $ mvn --version
    ```
 
-### Install jq on Jenkins agent
+1. Exit the Jenkins agent 01
+
+   ```ShellSession
+   $ exit
+   ```
+
+### Install jq on Jenkins agent 01
 
 1. Open a terminal
 
-1. Change to the "Deploy" directory
+1. Change to the "ab2d" repo directory
 
    ```ShellSession
-   $ cd ~/code/ab2d/Deploy
+   $ cd ~/code/ab2d
    ```
 
 1. Get credentials for the Management AWS account
 
    ```ShellSession
-   $ source ./bash/set-env.sh
+   $ source ./Deploy/bash/set-env.sh
    ```
 
 1. Connect to Jenkins agent
@@ -1800,8 +5435,8 @@
    1. Get the public IP address of Jenkins EC2 instance
 
       ```ShellSession
-      $ JENKINS_AGENT_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
-        --filters "Name=tag:Name,Values=ab2d-jenkins-agent" \
+      $ JENKINS_AGENT_01_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-jenkins-agent-01" \
         --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
         --output text)
       ```
@@ -1809,7 +5444,7 @@
    1. SSH into the instance using the public IP address
 
       ```ShellSession
-      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_AGENT_PRIVATE_IP
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_AGENT_01_PRIVATE_IP
       ```
 
 1. Install jq
@@ -1822,6 +5457,12 @@
 
    ```ShellSession
    $ jq --version
+   ```
+
+1. Exit the Jenkins agent 01
+
+   ```ShellSession
+   $ exit
    ```
 
 ### Add the jenkins user to the docker group
@@ -1845,8 +5486,8 @@
    1. Get the public IP address of Jenkins EC2 instance
 
       ```ShellSession
-      $ JENKINS_AGENT_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
-        --filters "Name=tag:Name,Values=ab2d-jenkins-agent" \
+      $ JENKINS_AGENT_01_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-jenkins-agent-01" \
         --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
         --output text)
       ```
@@ -1854,7 +5495,7 @@
    1. SSH into the instance using the public IP address
 
       ```ShellSession
-      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_AGENT_PRIVATE_IP
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_AGENT_01_PRIVATE_IP
       ```
 
 1. Determine if the jenkins user is already part of the docker group
@@ -1883,20 +5524,28 @@
    docker:x:988:ec2-user,jenkins
    ```
 
-### Ensure jenkins can use the Unix socket for the Docker daemon
+1. Exit the Jenkins agent 01
+
+   ```ShellSession
+   $ exit
+   ```
+
+### Ensure jenkins agent 01 can use the Unix socket for the Docker daemon
 
 1. Open a terminal
 
-1. Change to the "Deploy" directory
+1. Change to the "ab2d" repo directory
 
+   *Example:*
+   
    ```ShellSession
-   $ cd ~/code/ab2d/Deploy
+   $ cd ~/code/ab2d
    ```
 
 1. Get credentials for the Management AWS account
 
    ```ShellSession
-   $ source ./bash/set-env.sh
+   $ source ./Deploy/bash/set-env.sh
    ```
 
 1. Connect to Jenkins agent
@@ -1904,8 +5553,8 @@
    1. Get the public IP address of Jenkins EC2 instance
 
       ```ShellSession
-      $ JENKINS_AGENT_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
-        --filters "Name=tag:Name,Values=ab2d-jenkins-agent" \
+      $ JENKINS_AGENT_01_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-jenkins-agent-01" \
         --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
         --output text)
       ```
@@ -1913,7 +5562,7 @@
    1. SSH into the instance using the public IP address
 
       ```ShellSession
-      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_AGENT_PRIVATE_IP
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_AGENT_01_PRIVATE_IP
       ```
 
 1. Note the default permissions for the Unix socket for the Docker daemon
@@ -1950,20 +5599,26 @@
       srw-rw-rw-
       ```
 
-### Install packer on Jenkins agent
+1. Exit the Jenkins agent 01
+
+   ```ShellSession
+   $ exit
+   ```
+
+### Install packer on Jenkins agent 01
 
 1. Open a terminal
 
-1. Change to the "Deploy" directory
+1. Change to the "ab2d" repo directory
 
    ```ShellSession
-   $ cd ~/code/ab2d/Deploy
+   $ cd ~/code/ab2d
    ```
 
 1. Get credentials for the Management AWS account
 
    ```ShellSession
-   $ source ./bash/set-env.sh
+   $ source ./Deploy/bash/set-env.sh
    ```
 
 1. Connect to Jenkins agent
@@ -1971,8 +5626,8 @@
    1. Get the public IP address of Jenkins EC2 instance
 
       ```ShellSession
-      $ JENKINS_AGENT_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
-        --filters "Name=tag:Name,Values=ab2d-jenkins-agent" \
+      $ JENKINS_AGENT_01_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-jenkins-agent-01" \
         --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
         --output text)
       ```
@@ -1980,7 +5635,7 @@
    1. SSH into the instance using the public IP address
 
       ```ShellSession
-      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_AGENT_PRIVATE_IP
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_AGENT_01_PRIVATE_IP
       ```
 
 1. Set desired packer version
@@ -2003,7 +5658,7 @@
    $ cd /tmp
    ```
 
-1. Download paker
+1. Download packer
 
    ```ShellSession
    $ sudo wget "https://releases.hashicorp.com/packer/${PACKER_VERSION}/packer_${PACKER_VERSION}_linux_amd64.zip"
@@ -2021,26 +5676,26 @@
    $ packer --version
    ```
 
-1. Exit the Jenkins agent node
+1. Exit the Jenkins agent 01
 
    ```ShellSession
    $ exit
    ```
 
-### Install Postgres 11 on Jenkins agent
+### Install Postgres 11 on Jenkins agent 01
 
 1. Open a terminal
 
-1. Change to the "Deploy" directory
+1. Change to the "ab2d" repo directory
 
    ```ShellSession
-   $ cd ~/code/ab2d/Deploy
+   $ cd ~/code/ab2d
    ```
 
 1. Get credentials for the Management AWS account
 
    ```ShellSession
-   $ source ./bash/set-env.sh
+   $ source ./Deploy/bash/set-env.sh
    ```
 
 1. Connect to Jenkins agent
@@ -2048,8 +5703,8 @@
    1. Get the public IP address of Jenkins EC2 instance
 
       ```ShellSession
-      $ JENKINS_AGENT_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
-        --filters "Name=tag:Name,Values=ab2d-jenkins-agent" \
+      $ JENKINS_AGENT_01_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-jenkins-agent-01" \
         --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
         --output text)
       ```
@@ -2057,7 +5712,7 @@
    1. SSH into the instance using the public IP address
 
       ```ShellSession
-      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_AGENT_PRIVATE_IP
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_AGENT_01_PRIVATE_IP
       ```
 
 1. Change to the "/tmp" directory
@@ -2090,20 +5745,26 @@
    $ sudo yum -y install postgresql11
    ```
 
-### Setup ruby environment on Jenkins agent
+1. Exit the Jenkins agent 01
+
+   ```ShellSession
+   $ exit
+   ```
+
+### Setup ruby environment on Jenkins agent 01
 
 1. Open a terminal
 
-1. Change to the "Deploy" directory
+1. Change to the "ab2d" repo directory
 
    ```ShellSession
-   $ cd ~/code/ab2d/Deploy
+   $ cd ~/code/ab2d
    ```
 
 1. Get credentials for the Management AWS account
 
    ```ShellSession
-   $ source ./bash/set-env.sh
+   $ source ./Deploy/bash/set-env.sh
    ```
 
 1. Connect to Jenkins agent
@@ -2111,8 +5772,8 @@
    1. Get the public IP address of Jenkins EC2 instance
 
       ```ShellSession
-      $ JENKINS_AGENT_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
-        --filters "Name=tag:Name,Values=ab2d-jenkins-agent" \
+      $ JENKINS_AGENT_01_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-jenkins-agent-01" \
         --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
         --output text)
       ```
@@ -2120,7 +5781,7 @@
    1. SSH into the instance using the public IP address
 
       ```ShellSession
-      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_AGENT_PRIVATE_IP
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_AGENT_01_PRIVATE_IP
       ```
       
 1. Install rbenv dependencies
@@ -2198,28 +5859,28 @@
    $ exit
    ```
 
-1. Exit the Jenkins agent
+1. Exit the Jenkins agent 01
 
    ```ShellSession
    $ exit
    ```
 
-### Install postgresql10-devel on Jenkins agent
+### Install postgresql10-devel on Jenkins agent 01
 
 1. Note that I couldn't install postgresql11-devel due to dependencies that could not be installed, so I am using "postgresql10-devel" instead
 
 1. Open a terminal
 
-1. Change to the "Deploy" directory
+1. Change to the "ab2d" repo directory
 
    ```ShellSession
-   $ cd ~/code/ab2d/Deploy
+   $ cd ~/code/ab2d
    ```
 
 1. Get credentials for the Management AWS account
 
    ```ShellSession
-   $ source ./bash/set-env.sh
+   $ source ./Deploy/bash/set-env.sh
    ```
 
 1. Connect to Jenkins agent
@@ -2227,8 +5888,8 @@
    1. Get the public IP address of Jenkins EC2 instance
 
       ```ShellSession
-      $ JENKINS_AGENT_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
-        --filters "Name=tag:Name,Values=ab2d-jenkins-agent" \
+      $ JENKINS_AGENT_01_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-jenkins-agent-01" \
         --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
         --output text)
       ```
@@ -2236,7 +5897,7 @@
    1. SSH into the instance using the public IP address
 
       ```ShellSession
-      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_AGENT_PRIVATE_IP
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_AGENT_01_PRIVATE_IP
       ```
       
 1. Install postgresql10-devel
@@ -2244,6 +5905,22 @@
    ```ShellSession
    $ sudo yum -y install postgresql10-devel
    ```
+
+## Configure Jenkins agent 02
+
+> *** TO DO ***
+
+## Configure Jenkins agent 03
+
+> *** TO DO ***
+
+## Configure Jenkins agent 04
+
+> *** TO DO ***
+
+## Configure Jenkins agent 05
+
+> *** TO DO ***
 
 > *** TO DO ***: Stopping point for new Jenkins setup
 
