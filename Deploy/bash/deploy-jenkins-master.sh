@@ -272,8 +272,16 @@ echo 'ami_id = "'$JENKINS_MASTER_AMI_ID'"' \
 # Deploy jenkins master
 #
 
+# Change to management directory
+
 cd "${START_DIR}/.."
 cd terraform/environments/$CMS_ENV
+
+# Remove jenkins_agent module EC2 instance from terraform state so that new jenkins agent can be created
+
+terraform state rm module.jenkins_master.aws_instance.jenkins_master
+
+# Create Jenkins master
 
 echo "Create or update jenkins master..."
 terraform apply \
