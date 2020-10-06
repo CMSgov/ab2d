@@ -3800,6 +3800,8 @@
 
 1. Change to the "ab2d" repo directory
 
+   *Example:*
+
    ```ShellSession
    $ cd ~/code/ab2d
    ```
@@ -4844,6 +4846,8 @@
 
 1. Change to the "ab2d" repo directory
 
+   *Example:*
+
    ```ShellSession
    $ cd ~/code/ab2d
    ```
@@ -4928,6 +4932,8 @@
 1. Open a terminal
 
 1. Change to the "ab2d" repo directory
+
+   *Example:*
 
    ```ShellSession
    $ cd ~/code/ab2d
@@ -5208,6 +5214,8 @@
 
 1. Change to the "ab2d" repo directory
 
+   *Example:*
+
    ```ShellSession
    $ cd ~/code/ab2d
    ```
@@ -5369,6 +5377,8 @@
 
 1. Change to the "ab2d" repo directory
 
+   *Example:*
+
    ```ShellSession
    $ cd ~/code/ab2d
    ```
@@ -5471,6 +5481,8 @@
 1. Open a terminal
 
 1. Change to the "ab2d" repo directory
+
+   *Example:*
 
    ```ShellSession
    $ cd ~/code/ab2d
@@ -5663,6 +5675,8 @@
 
 1. Change to the "ab2d" repo directory
 
+   *Example:*
+
    ```ShellSession
    $ cd ~/code/ab2d
    ```
@@ -5740,6 +5754,8 @@
 
 1. Change to the "ab2d" repo directory
 
+   *Example:*
+
    ```ShellSession
    $ cd ~/code/ab2d
    ```
@@ -5808,6 +5824,8 @@
 1. Open a terminal
 
 1. Change to the "ab2d" repo directory
+
+   *Example:*
 
    ```ShellSession
    $ cd ~/code/ab2d
@@ -5925,6 +5943,8 @@
 
 1. Change to the "ab2d" repo directory
 
+   *Example:*
+
    ```ShellSession
    $ cd ~/code/ab2d
    ```
@@ -5967,6 +5987,8 @@
 1. Open a terminal
 
 1. Change to the "ab2d" repo directory
+
+   *Example:*
 
    ```ShellSession
    $ cd ~/code/ab2d
@@ -6066,16 +6088,18 @@
 
 1. Open a terminal
 
-1. Change to the "Deploy" directory
+1. Change to the "ab2d" repo directory
+
+   *Example:*
 
    ```ShellSession
-   $ cd ~/code/ab2d/Deploy
+   $ cd ~/code/ab2d
    ```
 
 1. Get credentials for the Management AWS account
 
    ```ShellSession
-   $ source ./bash/set-env.sh
+   $ source ./Deploy/bash/set-env.sh
    ```
 
 1. Connect to Jenkins agent 02
@@ -6247,6 +6271,8 @@
 
 1. Change to the "ab2d" repo directory
 
+   *Example:*
+
    ```ShellSession
    $ cd ~/code/ab2d
    ```
@@ -6408,6 +6434,8 @@
 
 1. Change to the "ab2d" repo directory
 
+   *Example:*
+
    ```ShellSession
    $ cd ~/code/ab2d
    ```
@@ -6510,6 +6538,8 @@
 1. Open a terminal
 
 1. Change to the "ab2d" repo directory
+
+   *Example:*
 
    ```ShellSession
    $ cd ~/code/ab2d
@@ -6702,6 +6732,8 @@
 
 1. Change to the "ab2d" repo directory
 
+   *Example:*
+
    ```ShellSession
    $ cd ~/code/ab2d
    ```
@@ -6779,6 +6811,8 @@
 
 1. Change to the "ab2d" repo directory
 
+   *Example:*
+
    ```ShellSession
    $ cd ~/code/ab2d
    ```
@@ -6847,6 +6881,8 @@
 1. Open a terminal
 
 1. Change to the "ab2d" repo directory
+
+   *Example:*
 
    ```ShellSession
    $ cd ~/code/ab2d
@@ -6964,6 +7000,8 @@
 
 1. Change to the "ab2d" repo directory
 
+   *Example:*
+
    ```ShellSession
    $ cd ~/code/ab2d
    ```
@@ -7006,6 +7044,8 @@
 1. Open a terminal
 
 1. Change to the "ab2d" repo directory
+
+   *Example:*
 
    ```ShellSession
    $ cd ~/code/ab2d
@@ -7286,6 +7326,8 @@
 
 1. Change to the "ab2d" repo directory
 
+   *Example:*
+
    ```ShellSession
    $ cd ~/code/ab2d
    ```
@@ -7447,6 +7489,8 @@
 
 1. Change to the "ab2d" repo directory
 
+   *Example:*
+
    ```ShellSession
    $ cd ~/code/ab2d
    ```
@@ -7549,6 +7593,8 @@
 1. Open a terminal
 
 1. Change to the "ab2d" repo directory
+
+   *Example:*
 
    ```ShellSession
    $ cd ~/code/ab2d
@@ -7741,6 +7787,8 @@
 
 1. Change to the "ab2d" repo directory
 
+   *Example:*
+
    ```ShellSession
    $ cd ~/code/ab2d
    ```
@@ -7818,6 +7866,8 @@
 
 1. Change to the "ab2d" repo directory
 
+   *Example:*
+
    ```ShellSession
    $ cd ~/code/ab2d
    ```
@@ -7886,6 +7936,8 @@
 1. Open a terminal
 
 1. Change to the "ab2d" repo directory
+
+   *Example:*
 
    ```ShellSession
    $ cd ~/code/ab2d
@@ -8003,6 +8055,8 @@
 
 1. Change to the "ab2d" repo directory
 
+   *Example:*
+
    ```ShellSession
    $ cd ~/code/ab2d
    ```
@@ -8045,6 +8099,8 @@
 1. Open a terminal
 
 1. Change to the "ab2d" repo directory
+
+   *Example:*
 
    ```ShellSession
    $ cd ~/code/ab2d
@@ -8325,6 +8381,8 @@
 
 1. Change to the "ab2d" repo directory
 
+   *Example:*
+
    ```ShellSession
    $ cd ~/code/ab2d
    ```
@@ -8486,6 +8544,8 @@
 
 1. Change to the "ab2d" repo directory
 
+   *Example:*
+
    ```ShellSession
    $ cd ~/code/ab2d
    ```
@@ -8588,6 +8648,8 @@
 1. Open a terminal
 
 1. Change to the "ab2d" repo directory
+
+   *Example:*
 
    ```ShellSession
    $ cd ~/code/ab2d
@@ -8780,6 +8842,8 @@
 
 1. Change to the "ab2d" repo directory
 
+   *Example:*
+
    ```ShellSession
    $ cd ~/code/ab2d
    ```
@@ -8857,6 +8921,8 @@
 
 1. Change to the "ab2d" repo directory
 
+   *Example:*
+
    ```ShellSession
    $ cd ~/code/ab2d
    ```
@@ -8925,6 +8991,8 @@
 1. Open a terminal
 
 1. Change to the "ab2d" repo directory
+
+   *Example:*
 
    ```ShellSession
    $ cd ~/code/ab2d
@@ -9042,6 +9110,8 @@
 
 1. Change to the "ab2d" repo directory
 
+   *Example:*
+
    ```ShellSession
    $ cd ~/code/ab2d
    ```
@@ -9084,6 +9154,8 @@
 1. Open a terminal
 
 1. Change to the "ab2d" repo directory
+
+   *Example:*
 
    ```ShellSession
    $ cd ~/code/ab2d
@@ -9364,6 +9436,8 @@
 
 1. Change to the "ab2d" repo directory
 
+   *Example:*
+
    ```ShellSession
    $ cd ~/code/ab2d
    ```
@@ -9525,6 +9599,8 @@
 
 1. Change to the "ab2d" repo directory
 
+   *Example:*
+
    ```ShellSession
    $ cd ~/code/ab2d
    ```
@@ -9627,6 +9703,8 @@
 1. Open a terminal
 
 1. Change to the "ab2d" repo directory
+
+   *Example:*
 
    ```ShellSession
    $ cd ~/code/ab2d
@@ -9819,6 +9897,8 @@
 
 1. Change to the "ab2d" repo directory
 
+   *Example:*
+
    ```ShellSession
    $ cd ~/code/ab2d
    ```
@@ -9896,6 +9976,8 @@
 
 1. Change to the "ab2d" repo directory
 
+   *Example:*
+
    ```ShellSession
    $ cd ~/code/ab2d
    ```
@@ -9964,6 +10046,8 @@
 1. Open a terminal
 
 1. Change to the "ab2d" repo directory
+
+   *Example:*
 
    ```ShellSession
    $ cd ~/code/ab2d
@@ -10080,6 +10164,8 @@
 1. Open a terminal
 
 1. Change to the "ab2d" repo directory
+
+   *Example:*
 
    ```ShellSession
    $ cd ~/code/ab2d
