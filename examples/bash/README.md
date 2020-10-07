@@ -1,4 +1,4 @@
-# Running Jobs Locally
+# Bash Client
 
 ```
 Usage: 
@@ -53,10 +53,10 @@ For this example the job is being run against sandbox
 ### Running Scripts Individually
 
 1. Set the OKTA_CLIENT_ID and OKTA_CLIENT_PASSWORD
-```bash
-OKTA_CLIENT_ID=<client id>
-OKTA_CLIENT_PASSWORD=<client password>
-```
+   ```bash
+   OKTA_CLIENT_ID=<client id>
+   OKTA_CLIENT_PASSWORD=<client password>
+   ```
 1. Create the AUTH token `AUTH=$(echo -n "${OKTA_CLIENT_ID}:${OKTA_CLIENT_PASSWORD}" | base64)`
 1. Run `source bootstrap -sandbox --auth $AUTH` to set environment variables for a job.
 1. Run `./start-job` to start a job. If successful a file containing
@@ -67,9 +67,9 @@ finished the full HTTP response will be saved to `<directory>/response.json`
 
 ### Running Aggregate Script
 1. Set the OKTA_CLIENT_ID and OKTA_CLIENT_PASSWORD
-```bash
-OKTA_CLIENT_ID=<client id>
-OKTA_CLIENT_PASSWORD=<client password>
-```
+   ```bash
+   OKTA_CLIENT_ID=<client id>
+   OKTA_CLIENT_PASSWORD=<client password>
+   ```
 2. Create the AUTH token `AUTH=$(echo -n "${OKTA_CLIENT_ID}:${OKTA_CLIENT_PASSWORD}" | base64)`
 3. Run `./run-job -sandbox --auth $AUTH` to start, monitor, and download results from a job.

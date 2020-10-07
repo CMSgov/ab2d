@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-source bootstrap "$@"
+source bootstrap.sh "$@"
 
 if [ "$BEARER_TOKEN" == "null" ]
 then
@@ -15,13 +15,13 @@ echo "Optional contract parameter: $CONTRACT"
 
 echo "Starting job"
 
-./start-job
+./start-job.sh
 
 echo "Monitoring job"
 
-./monitor-job
+./monitor-job.sh
 
 echo "Download results for job"
 
-./download-results
+./download-results.sh
 

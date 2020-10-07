@@ -4,7 +4,7 @@
 #   2 - Base64 encoded clientId:clientPassword
 #   3 - The contract number (Optional)
 
-source fn_get_token
+source fn_get_token.sh
 
 # Refresh bearer token
 BEARER_TOKEN=$(fn_get_token "$IDP_URL" "$AUTH")

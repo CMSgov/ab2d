@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-source fn_get_token
+source fn_get_token.sh
 
 BEARER_TOKEN=$(fn_get_token "$IDP_URL" "$AUTH")
 if [ "$BEARER_TOKEN" == "null" ]
