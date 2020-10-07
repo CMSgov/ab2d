@@ -15,6 +15,10 @@ pipeline {
         // Get code climate id
         CC_TEST_REPORTER_ID = credentials('CC_TEST_REPORTER_ID')
 
+        // HPMS key id and secret
+        HPMS_AUTH_KEY_ID = credentials('HPMS_AUTH_KEY_ID')
+        HPMS_AUTH_KEY_SECRET = credentials('HPMS_AUTH_KEY_SECRET')
+
         // Tell e2e test that it should override the docker compose it normally uses locally
         // with docker-compose.jenkins.yml
         E2E_ENVIRONMENT = 'CI'
@@ -22,9 +26,7 @@ pipeline {
     }
 
     agent {
-        node {
-            label 'agent01'
-        }
+        label 'build'
     }
 
     tools {
@@ -60,13 +62,13 @@ pipeline {
         stage('Clean maven') {
 
             steps {
-                    sh '''
-                        mvn --version
+                sh '''
+                    mvn --version
 
-                        echo $WORKSPACE
+                    echo $WORKSPACE
 
-                        mvn clean
-                    '''
+                    mvn clean
+                '''
             }
         }
 
@@ -75,7 +77,6 @@ pipeline {
             steps {
                 sh 'mvn package -DskipTests'
             }
-
         }
 
         stage('Run unit and integration tests') {
@@ -83,7 +84,7 @@ pipeline {
             steps {
                 sh '''
                     export AB2D_EFS_MOUNT="${AB2D_HOME}"
-                    mvn test -pl eventlogger,common,api,worker,bfd,filter,optout,audit,hpms,mock-hpms
+                    mvn test -pl eventlogger,common,api,worker,bfd,filter,audit,hpms,mock-hpms
                 '''
             }
         }
@@ -118,11 +119,10 @@ pipeline {
 
                         fn_get_temporary_aws_credentials_via_aws_sts_assume_role 349849222861 ab2d-dev
 
-                        mvn test -pl e2e-test
+                        mvn test -pl e2e-test -am -Dtest=TestRunner -DfailIfNoTests=false
                     '''
                 }
             }
-
         }
 
         stage('Run codeclimate tests') {

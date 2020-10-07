@@ -157,6 +157,8 @@ public class TestRunner {
                 .withEnv(System.getenv())
                 // Add api variable to environment to populate docker-compose port variable
                 .withEnv("API_PORT", "" + apiPort)
+                // Force environment to be local so that the Kinesis eventlogger is switched off
+                .withEnv("AB2D_EXECUTION_ENV", "LOCAL")
                 .withLocalCompose(true)
                 .withScaledService("worker", 2)
                 .withExposedService("api", DEFAULT_API_PORT, new HostPortWaitStrategy()
@@ -231,8 +233,16 @@ public class TestRunner {
         Set<Integer> statusesBetween0And100 = Sets.newHashSet();
         while(status != 200 && status != 500) {
             Thread.sleep(DELAY * 1000 + 2000);
+
+            log.info("polling for status at url start {}", statusUrl);
+
             statusResponse = apiClient.statusRequest(statusUrl);
+
+            log.info("polling for status at url end {} {}", statusUrl, statusResponse);
+
             status = statusResponse.statusCode();
+
+            log.info("polling for status at url status {} {}", statusUrl, status);
 
             List<String> xProgressList = statusResponse.headers().map().get("x-progress");
             if(xProgressList != null && !xProgressList.isEmpty()) {
@@ -477,6 +487,7 @@ public class TestRunner {
     public void runSystemWideExportSince() throws IOException, InterruptedException, JSONException {
         System.out.println("Starting test 2");
         HttpResponse<String> exportResponse = apiClient.exportRequest(FHIR_TYPE, earliest);
+        log.info("run system wide export since {}", exportResponse);
         System.out.println(earliest);
         Assert.assertEquals(202, exportResponse.statusCode());
         List<String> contentLocationList = exportResponse.headers().map().get("content-location");
@@ -505,6 +516,7 @@ public class TestRunner {
     public void runSystemWideZipExport() throws IOException, InterruptedException, JSONException {
         System.out.println("Starting test 4");
         HttpResponse<String> exportResponse = apiClient.exportRequest(ZIPFORMAT, null);
+        log.info("run system wide zip export {}", exportResponse);
         Assert.assertEquals(400, exportResponse.statusCode());
     }
 
@@ -513,6 +525,7 @@ public class TestRunner {
     public void runContractNumberExport() throws IOException, InterruptedException, JSONException {
         System.out.println("Starting test 5");
         HttpResponse<String> exportResponse = apiClient.exportByContractRequest(testContract, FHIR_TYPE, null);
+        log.info("run contract number export {}", exportResponse);
         Assert.assertEquals(202, exportResponse.statusCode());
         List<String> contentLocationList = exportResponse.headers().map().get("content-location");
 
@@ -525,6 +538,7 @@ public class TestRunner {
     void runContractNumberZipExport() throws IOException, InterruptedException, JSONException {
         System.out.println("Starting test 6");
         HttpResponse<String> exportResponse = apiClient.exportByContractRequest(testContract, ZIPFORMAT, null);
+        log.info("run contract number zip export {}", exportResponse);
         Assert.assertEquals(400, exportResponse.statusCode());
     }
 
@@ -672,6 +686,7 @@ public class TestRunner {
         }};
         HttpResponse<String> exportResponse = apiClient.exportRequest(params);
 
+        log.info("bad query parameter resource {}", exportResponse);
         Assert.assertEquals(400, exportResponse.statusCode());
     }
 
@@ -683,6 +698,8 @@ public class TestRunner {
             put("_outputFormat", "BadParam");
         }};
         HttpResponse<String> exportResponse = apiClient.exportRequest(params);
+
+        log.info("bad query output format {}", exportResponse);
 
         Assert.assertEquals(400, exportResponse.statusCode());
     }

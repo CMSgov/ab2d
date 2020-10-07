@@ -24,6 +24,8 @@ Add the following credentials to the global credentials store
 | Text | OKTA_CLIENT_PASSWORD | 
 | Text | SECONDARY_USER_OKTA_CLIENT_ID | 
 | Text | SECONDARY_USER_OKTA_CLIENT_PASSWORD | 
+| Text | HPMS_AUTH_KEY_ID | use the dev/impl/sandbox one
+| Text | HPMS_AUTH_KEY_SECRET | use the dev/impl/sandbox one
 
 
 ## Tools Configuration
