@@ -9,6 +9,7 @@ import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 @Component
 public class DataSetup {
@@ -53,6 +54,10 @@ public class DataSetup {
         return coveragePeriodRepo.saveAndFlush(coveragePeriod);
     }
 
+    public void deleteCoveragePeriod(CoveragePeriod coveragePeriod) {
+        coveragePeriodRepo.delete(coveragePeriod);
+    }
+
     public CoverageSearchEvent createCoverageSearchEvent(CoveragePeriod coveragePeriod, String description) {
         CoverageSearchEvent coverageSearchEvent = new CoverageSearchEvent();
         coverageSearchEvent.setCoveragePeriod(coveragePeriod);
@@ -62,12 +67,20 @@ public class DataSetup {
         return coverageSearchEventRepo.saveAndFlush(coverageSearchEvent);
     }
 
+    public void deleteCoverageSearchEvent(CoverageSearchEvent event) {
+        coverageSearchEventRepo.delete(event);
+    }
+
     public Coverage createCoverage(CoveragePeriod coveragePeriod, CoverageSearchEvent coverageSearchEvent, String bene) {
         Coverage coverage = new Coverage();
         coverage.setCoveragePeriod(coveragePeriod);
         coverage.setCoverageSearchEvent(coverageSearchEvent);
         coverage.setBeneficiaryId(bene);
         return coverageRepo.saveAndFlush(coverage);
+    }
+
+    public void deleteCoverage(Coverage coverage) {
+        coverageRepo.delete(coverage);
     }
 
     public Sponsor createSponsor(String parentName, int parentHpmsId, String childName, int childHpmsId) {
@@ -84,6 +97,13 @@ public class DataSetup {
         return sponsorRepository.save(sponsor);
     }
 
+    public void deleteSponsor(Sponsor sponsor) {
+        sponsorRepository.delete(sponsor);
+        if (sponsor.getParent() != null) {
+            deleteSponsor(sponsor.getParent());
+        }
+    }
+
     public Contract setupContract(Sponsor sponsor, String contractNumber) {
         Contract contract = new Contract();
         contract.setAttestedOn(OffsetDateTime.now());
@@ -94,6 +114,10 @@ public class DataSetup {
         contract.setSponsor(sponsor);
 
         return contractRepository.save(contract);
+    }
+
+    public void deleteContract(Contract contract) {
+        contractRepository.delete(contract);
     }
 
     public void setupContractWithNoAttestation(List<String> userRoles) {
@@ -144,6 +168,12 @@ public class DataSetup {
         }
 
         return userRepository.save(user);
+    }
+
+    public void deleteUser(User user) {
+        Set<Role> roles = user.getRoles();
+        roles.forEach(c -> roleRepository.delete(c));
+        userRepository.delete(user);
     }
 
     public User setupUser(List<String> userRoles) {

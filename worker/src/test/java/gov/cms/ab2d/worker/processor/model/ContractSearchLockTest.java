@@ -4,8 +4,6 @@ import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.CoveragePeriod;
 import gov.cms.ab2d.common.model.CoverageSearch;
 import gov.cms.ab2d.common.model.Sponsor;
-import gov.cms.ab2d.common.repository.ContractRepository;
-import gov.cms.ab2d.common.repository.CoveragePeriodRepository;
 import gov.cms.ab2d.common.repository.CoverageSearchRepository;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.DataSetup;
@@ -18,6 +16,7 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.time.OffsetDateTime;
+import java.util.Optional;
 import java.util.concurrent.*;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -33,12 +32,6 @@ class ContractSearchLockTest {
     private CoverageSearchRepository coverageSearchRepository;
 
     @Autowired
-    private ContractRepository contractRepository;
-
-    @Autowired
-    private CoveragePeriodRepository coveragePeriodRepository;
-
-    @Autowired
     private ContractSearchLock contractSearchLock;
 
     @Autowired
@@ -50,17 +43,21 @@ class ContractSearchLockTest {
      */
     @Test
     void getNextSearch() {
-        assertNull(contractSearchLock.getNextSearch());
+        assertTrue(contractSearchLock.getNextSearch().isEmpty());
 
         Sponsor sponsor = dataSetup.createSponsor("Cal Ripken", 200, "Cal Ripken Jr.", 201);
         Contract contract1 = dataSetup.setupContract(sponsor, "c123");
         CoveragePeriod period1 = dataSetup.createCoveragePeriod(contract1, 10, 2020);
         CoverageSearch search1 = new CoverageSearch(null, period1, OffsetDateTime.now(), 0);
         CoverageSearch savedSearch1 = coverageSearchRepository.save(search1);
-        CoverageSearch returnedSearch = contractSearchLock.getNextSearch();
-        assertEquals(savedSearch1.getPeriod().getMonth(), returnedSearch.getPeriod().getMonth());
-        assertEquals(savedSearch1.getPeriod().getYear(), returnedSearch.getPeriod().getYear());
-        assertNull(contractSearchLock.getNextSearch());
+        Optional<CoverageSearch> returnedSearch = contractSearchLock.getNextSearch();
+        assertEquals(savedSearch1.getPeriod().getMonth(), returnedSearch.get().getPeriod().getMonth());
+        assertEquals(savedSearch1.getPeriod().getYear(), returnedSearch.get().getPeriod().getYear());
+        assertTrue(contractSearchLock.getNextSearch().isEmpty());
+
+        dataSetup.deleteCoveragePeriod(period1);
+        dataSetup.deleteContract(contract1);
+        dataSetup.deleteSponsor(sponsor);
     }
 
     /**

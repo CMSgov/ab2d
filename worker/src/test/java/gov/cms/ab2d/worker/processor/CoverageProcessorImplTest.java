@@ -6,6 +6,7 @@ import gov.cms.ab2d.common.repository.*;
 import gov.cms.ab2d.common.service.CoverageService;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.DataSetup;
+import gov.cms.ab2d.worker.processor.domainmodel.ContractSearchLock;
 import org.hl7.fhir.dstu3.model.Bundle;
 import org.hl7.fhir.dstu3.model.Identifier;
 import org.hl7.fhir.dstu3.model.Patient;
@@ -61,6 +62,9 @@ class CoverageProcessorImplTest {
     @Autowired
     private DataSetup dataSetup;
 
+    @Autowired
+    private ContractSearchLock searchLock;
+
     private Sponsor sponsor;
     private Contract contract;
     private CoveragePeriod january;
@@ -90,7 +94,7 @@ class CoverageProcessorImplTest {
         taskExecutor.initialize();
 
         processor = new CoverageProcessorImpl(coverageService, bfdClient, taskExecutor,
-                3, 3, 3, 24);
+                3, 3, 3, 24, searchLock);
     }
 
     @AfterEach

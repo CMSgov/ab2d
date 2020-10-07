@@ -467,22 +467,17 @@ public class CoverageServiceImpl implements CoverageService {
     }
 
     @Override
-    public Optional<CoverageMapping> startSearch(String description) {
+    public Optional<CoverageMapping> startSearch(CoverageSearch submittedSearch, String description) {
 
-        Optional<CoverageSearch> submittedSearch = coverageSearchRepo.findFirstByOrderByCreatedAsc();
-
-        if (submittedSearch.isEmpty()) {
+        if (submittedSearch == null) {
             return Optional.empty();
         }
 
-        CoveragePeriod period = submittedSearch.get().getPeriod();
-
-        coverageSearchRepo.delete(submittedSearch.get());
-        coverageSearchRepo.flush();
+        CoveragePeriod period = submittedSearch.getPeriod();
 
         CoverageSearchEvent coverageSearchEvent = updateStatus(period, description, JobStatus.IN_PROGRESS);
 
-        return Optional.of(new CoverageMapping(coverageSearchEvent, submittedSearch.get()));
+        return Optional.of(new CoverageMapping(coverageSearchEvent, submittedSearch));
     }
 
     @Override

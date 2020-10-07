@@ -3,7 +3,9 @@ package gov.cms.ab2d.worker.processor;
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.model.CoverageMapping;
 import gov.cms.ab2d.common.model.CoveragePeriod;
+import gov.cms.ab2d.common.model.CoverageSearch;
 import gov.cms.ab2d.common.service.CoverageService;
+import gov.cms.ab2d.worker.processor.domainmodel.ContractSearchLock;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -29,6 +31,7 @@ public class CoverageProcessorImpl implements CoverageProcessor {
     private final CoverageService coverageService;
     private final BFDClient bfdClient;
     private final ThreadPoolTaskExecutor executor;
+    private final ContractSearchLock searchLock;
 
     // Number of months into the past to go looking to update
     private final int pastMonthsToUpdate;
@@ -55,7 +58,8 @@ public class CoverageProcessorImpl implements CoverageProcessor {
                                  @Value("${coverage.update.months.past}") int pastMonthsToUpdate,
                                  @Value("${coverage.update.stale.days}") int staleDays,
                                  @Value("${coverage.update.max.attempts}") int maxAttempts,
-                                 @Value("${coverage.update.stuck.hours}") int stuckHours) {
+                                 @Value("${coverage.update.stuck.hours}") int stuckHours,
+                                 ContractSearchLock searchLock) {
         this.coverageService = coverageService;
         this.bfdClient = bfdClient;
         this.executor = executor;
@@ -63,6 +67,7 @@ public class CoverageProcessorImpl implements CoverageProcessor {
         this.staleDays = staleDays;
         this.maxAttempts = maxAttempts;
         this.stuckHours = stuckHours;
+        this.searchLock = searchLock;
     }
 
     /**
@@ -181,9 +186,11 @@ public class CoverageProcessorImpl implements CoverageProcessor {
         }
 
         while (!isProcessorBusy()) {
-
-            Optional<CoverageMapping> maybeSearch = coverageService.startSearch("starting a job");
-
+            Optional<CoverageSearch> search = searchLock.getNextSearch();
+            if (search.isEmpty()) {
+                break;
+            }
+            Optional<CoverageMapping> maybeSearch = coverageService.startSearch(search.get(), "starting a job");
             if (maybeSearch.isEmpty()) {
                 break;
             }

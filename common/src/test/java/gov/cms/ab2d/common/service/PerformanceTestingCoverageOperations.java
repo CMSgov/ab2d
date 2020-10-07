@@ -64,6 +64,8 @@ class PerformanceTestingCoverageOperations {
     @Autowired
     private DataSource dataSource;
 
+    @Autowired CoverageSearchRepository coverageSearchRepository;
+
     private Sponsor sponsor;
     private Contract contract;
     private CoveragePeriod period1;
@@ -140,7 +142,8 @@ class PerformanceTestingCoverageOperations {
     @Test
     void insertPerformanceUsingConnection() {
         // Raise number of datapoints to stress database
-        InsertionJob job = new InsertionJob(period1, dataSource, coverageService, coverageSearchEventRepo, 1_000_000, 5);
+        InsertionJob job = new InsertionJob(period1, dataSource, coverageService, coverageSearchEventRepo,
+                1_000_000, 5, coverageSearchRepository);
         job.call();
     }
 
@@ -254,13 +257,13 @@ class PerformanceTestingCoverageOperations {
     void deletePreviousSearch() {
 
         InsertionJob first = new InsertionJob(period1, dataSource, coverageService,
-                coverageSearchEventRepo, 100_000, 1);
+                coverageSearchEventRepo, 100_000, 1, coverageSearchRepository);
         CoverageSearchEvent inProgress1 = first.call();
 
         coverageService.completeSearch(period1.getId(), "testing");
 
         InsertionJob second = new InsertionJob(period1, dataSource, coverageService,
-                coverageSearchEventRepo, 100_000, 1);
+                coverageSearchEventRepo, 100_000, 1, coverageSearchRepository);
         CoverageSearchEvent inProgress2 = second.call();
 
         coverageService.completeSearch(period1.getId(), "testing");
@@ -291,7 +294,8 @@ class PerformanceTestingCoverageOperations {
             List<Future> insertions = new ArrayList<>();
 
             for (CoveragePeriod period : periods) {
-                InsertionJob job = new InsertionJob(period, dataSource, coverageService, coverageSearchEventRepo, dataPoints, 1);
+                InsertionJob job = new InsertionJob(period, dataSource, coverageService, coverageSearchEventRepo,
+                        dataPoints, 1, coverageSearchRepository);
                 insertions.add(executor.submit(job));
             }
 

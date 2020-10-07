@@ -2,8 +2,10 @@ package gov.cms.ab2d.common.service;
 
 import gov.cms.ab2d.common.model.Coverage;
 import gov.cms.ab2d.common.model.CoveragePeriod;
+import gov.cms.ab2d.common.model.CoverageSearch;
 import gov.cms.ab2d.common.model.CoverageSearchEvent;
 import gov.cms.ab2d.common.repository.CoverageSearchEventRepository;
+import gov.cms.ab2d.common.repository.CoverageSearchRepository;
 
 import javax.sql.DataSource;
 import java.sql.Connection;
@@ -13,6 +15,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.Callable;
 import java.util.function.Supplier;
 import java.util.stream.IntStream;
@@ -31,6 +34,7 @@ public class InsertionJob implements Callable<CoverageSearchEvent> {
     private final DataSource dataSource;
     private final CoverageService coverageService;
     private final CoverageSearchEventRepository eventRepo;
+    private final CoverageSearchRepository coverageSearchRepository;
     private final int dataPoints;
     private final int experiments;
     public static final int CHUNK_SIZE = 50000;
@@ -55,19 +59,23 @@ public class InsertionJob implements Callable<CoverageSearchEvent> {
      * @param dataPoints number of beneficiaries to insert
      * @param experiments number of times to repeat insertion
      */
-    public InsertionJob(CoveragePeriod period, DataSource dataSource, CoverageService coverageService, CoverageSearchEventRepository eventRepo, int dataPoints, int experiments) {
+    public InsertionJob(CoveragePeriod period, DataSource dataSource, CoverageService coverageService,
+                        CoverageSearchEventRepository eventRepo, int dataPoints, int experiments,
+                        CoverageSearchRepository coverageSearchRepository) {
         this.period = period;
         this.dataSource = dataSource;
         this.coverageService = coverageService;
         this.eventRepo = eventRepo;
         this.dataPoints = dataPoints;
         this.experiments = experiments;
+        this.coverageSearchRepository = coverageSearchRepository;
     }
 
     public CoverageSearchEvent call() {
         // Add in progress event as foreign key for all inserts
         coverageService.submitSearch(period.getId(), "testing");
-        CoverageSearchEvent inProgress = coverageService.startSearch("testing").get().getCoverageSearchEvent();
+        Optional<CoverageSearch> search = coverageSearchRepository.findFirstByOrderByCreatedAsc();
+        CoverageSearchEvent inProgress = coverageService.startSearch(search.get(), "testing").get().getCoverageSearchEvent();
 
         // Run inserts
         // If number of experiments is greater than 1 then data will be erased after each experiment

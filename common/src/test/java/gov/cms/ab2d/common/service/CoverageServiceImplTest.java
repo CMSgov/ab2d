@@ -136,7 +136,8 @@ class CoverageServiceImplTest {
         assertTrue(coverageService.canEOBSearchBeStarted(period1Jan.getId()));
         assertFalse(coverageService.isCoveragePeriodInProgress(period1Jan.getId()));
 
-        coverageService.startSearch("testing");
+        Optional<CoverageSearch> search = coverageSearchRepo.findFirstByOrderByCreatedAsc();
+        coverageService.startSearch(search.get(), "testing");
 
         assertFalse(coverageService.canEOBSearchBeStarted(period1Jan.getId()));
         assertTrue(coverageService.isCoveragePeriodInProgress(period1Jan.getId()));
@@ -633,22 +634,27 @@ class CoverageServiceImplTest {
         OffsetDateTime startTest = OffsetDateTime.now();
 
         coverageService.submitSearch(period1Jan.getId(), "testing");
-        coverageService.startSearch("testing");
+        Optional<CoverageSearch> search1 = coverageSearchRepo.findFirstByOrderByCreatedAsc();
+        coverageService.startSearch(search1.get(), "testing");
 
         coverageService.submitSearch(period2Jan.getId(), "testing");
-        coverageService.startSearch("testing");
+        Optional<CoverageSearch> search2 = coverageSearchRepo.findFirstByOrderByCreatedAsc();
+        coverageService.startSearch(search2.get(), "testing");
         coverageService.completeSearch(period2Jan.getId(), "testing");
 
         coverageService.submitSearch(period1Feb.getId(), "testing");
-        coverageService.startSearch("testing");
+        Optional<CoverageSearch> search3 = coverageSearchRepo.findFirstByOrderByCreatedAsc();
+        coverageService.startSearch(search3.get(), "testing");
 
         OffsetDateTime midTest = OffsetDateTime.now();
 
         coverageService.submitSearch(period1March.getId(), "testing");
-        coverageService.startSearch("testing");
+        Optional<CoverageSearch> search4 = coverageSearchRepo.findFirstByOrderByCreatedAsc();
+        coverageService.startSearch(search4.get(), "testing");
 
         coverageService.submitSearch(period1April.getId(), "testing");
-        coverageService.startSearch("testing");
+        Optional<CoverageSearch> search5 = coverageSearchRepo.findFirstByOrderByCreatedAsc();
+        coverageService.startSearch(search5.get(), "testing");
 
         OffsetDateTime afterTest = OffsetDateTime.now();
 
@@ -699,7 +705,8 @@ class CoverageServiceImplTest {
     }
 
     private CoverageSearchEvent startSearchAndPullEvent() {
-        return coverageService.startSearch("testing").get().getCoverageSearchEvent();
+        Optional<CoverageSearch> search = coverageSearchRepo.findFirstByOrderByCreatedAsc();
+        return coverageService.startSearch(search.get(), "testing").get().getCoverageSearchEvent();
     }
 
     @DisplayName("Coverage period searches can be marked successful")

@@ -58,25 +58,26 @@ public class ContractSearchLock {
      *
      * @return the next search or else null if there are none or if the table is locked
      */
-    public CoverageSearch getNextSearch() {
+    public Optional<CoverageSearch> getNextSearch() {
         Lock lock = getLock(SEARCH_LOCK_NAME);
         if (lock.tryLock()) {
             try {
                 // manipulate protected state
                 Optional<CoverageSearch> searchOpt = coverageSearchRepository.findFirstByOrderByCreatedAsc();
                 if (searchOpt.isEmpty()) {
-                    return null;
+                    return searchOpt;
                 }
                 CoverageSearch search = searchOpt.get();
                 coverageSearchRepository.delete(search);
+                coverageSearchRepository.flush();
                 search.setId(null);
-                return search;
+                return Optional.of(search);
             } finally {
                 lock.unlock();
             }
         } else {
             // perform alternative actions
-            return null;
+            return Optional.empty();
         }
     }
 }
