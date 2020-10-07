@@ -15,6 +15,10 @@ pipeline {
         // Get code climate id
         CC_TEST_REPORTER_ID = credentials('CC_TEST_REPORTER_ID')
 
+        // HPMS key id and secret
+        HPMS_AUTH_KEY_ID = credentials('HPMS_AUTH_KEY_ID')
+        HPMS_AUTH_KEY_SECRET = credentials('HPMS_AUTH_KEY_SECRET')
+
         // Tell e2e test that it should override the docker compose it normally uses locally
         // with docker-compose.jenkins.yml
         E2E_ENVIRONMENT = 'CI'
