@@ -24,8 +24,8 @@ public class PatientContractCallable implements Callable<ContractMapping> {
     private final String contractNumber;
     private final BFDClient bfdClient;
 
-    private int missingIdentifier = 0;
-    private int pastYear = 0;
+    private int missingIdentifier;
+    private int pastYear;
 
     public PatientContractCallable(String contractNumber, int month, int year, BFDClient bfdClient) {
         this.contractNumber = contractNumber;
@@ -55,11 +55,9 @@ public class PatientContractCallable implements Callable<ContractMapping> {
             log.error("Unable to get patient information for " + contractNumber + " for month " + month, e);
             throw e;
         } finally {
-
             int total = patientIds.size() + pastYear + missingIdentifier;
             log.info("Search discarded {} entries not meeting year filter criteria out of {}", pastYear, total);
             log.info("Search discarded {} entries missing an identifier out of {}", missingIdentifier, total);
-
         }
     }
 
@@ -67,7 +65,7 @@ public class PatientContractCallable implements Callable<ContractMapping> {
         return getPatientStream(bundle)
                 .filter(this::filterByYear)
                 .map(this::extractPatientId)
-                .filter(this::notMissingIdentifier)
+                .filter(this::isValidIdentifier)
                 .collect(toSet());
     }
 
@@ -82,25 +80,25 @@ public class PatientContractCallable implements Callable<ContractMapping> {
 
         if (referenceYearList.isEmpty()) {
             log.error("patient returned without reference year violating assumptions");
-            pastYear += 1;
+            pastYear++;
             return false;
-        } else {
-            DateType refYear = (DateType) (referenceYearList.get(0).getValue());
-
-            if (refYear.getYear() != this.year) {
-                pastYear += 1;
-                return false;
-            }
-            return true;
         }
+
+        DateType refYear = (DateType) (referenceYearList.get(0).getValue());
+
+        if (refYear.getYear() != this.year) {
+            pastYear++;
+            return false;
+        }
+        return true;
     }
 
-    private boolean notMissingIdentifier(String id) {
+    private boolean isValidIdentifier(String id) {
         boolean blankId = StringUtils.isBlank(id);
 
         // If blank increment count to log issues
         if (blankId) {
-            missingIdentifier += 1;
+            missingIdentifier++;
         }
 
         return !blankId;

@@ -29,7 +29,6 @@ import static org.mockito.Mockito.when;
 @Testcontainers
 class MultiThreadContractSearchIntegrationTest {
 
-
     private ProgressTracker tracker;
 
     @Container
