@@ -21,17 +21,19 @@ public class PatientContractCallable implements Callable<ContractMapping> {
 
     private final int month;
     private final int year;
+    private final boolean skipBillablePeriodCheck;
     private final String contractNumber;
     private final BFDClient bfdClient;
 
     private int missingIdentifier;
     private int pastYear;
 
-    public PatientContractCallable(String contractNumber, int month, int year, BFDClient bfdClient) {
+    public PatientContractCallable(String contractNumber, int month, int year, BFDClient bfdClient, boolean skipBillablePeriodCheck) {
         this.contractNumber = contractNumber;
         this.month = month;
         this.year = year;
         this.bfdClient = bfdClient;
+        this.skipBillablePeriodCheck = skipBillablePeriodCheck;
     }
 
     @Override
@@ -63,7 +65,7 @@ public class PatientContractCallable implements Callable<ContractMapping> {
 
     private Set<String> extractAndFilter(Bundle bundle) {
         return getPatientStream(bundle)
-                .filter(this::filterByYear)
+                .filter(patient -> skipBillablePeriodCheck || filterByYear(patient))
                 .map(this::extractPatientId)
                 .filter(this::isValidIdentifier)
                 .collect(toSet());

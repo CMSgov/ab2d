@@ -44,7 +44,7 @@ class PatientContractCallableTest {
         contract.setContractNumber("TESTING");
         contract.setContractName("TESTING");
 
-        PatientContractCallable patientContractCallable = new PatientContractCallable("TESTING", 1, 2020, bfdClient);
+        PatientContractCallable patientContractCallable = new PatientContractCallable("TESTING", 1, 2020, bfdClient, false);
 
         try {
             ContractMapping mapping = patientContractCallable.call();
@@ -72,7 +72,7 @@ class PatientContractCallableTest {
         contract.setContractNumber("TESTING");
         contract.setContractName("TESTING");
 
-        PatientContractCallable patientContractCallable = new PatientContractCallable("TESTING", 1, 2020, bfdClient);
+        PatientContractCallable patientContractCallable = new PatientContractCallable("TESTING", 1, 2020, bfdClient, false);
 
         try {
             ContractMapping mapping = patientContractCallable.call();
@@ -108,7 +108,7 @@ class PatientContractCallableTest {
         contract.setContractNumber("TESTING");
         contract.setContractName("TESTING");
 
-        PatientContractCallable patientContractCallable = new PatientContractCallable("TESTING", 1, 2020, bfdClient);
+        PatientContractCallable patientContractCallable = new PatientContractCallable("TESTING", 1, 2020, bfdClient, false);
 
         try {
             ContractMapping mapping = patientContractCallable.call();
@@ -134,7 +134,7 @@ class PatientContractCallableTest {
         contract.setContractNumber("TESTING");
         contract.setContractName("TESTING");
 
-        PatientContractCallable callable = new PatientContractCallable("TESTING", 1, 2020, bfdClient);
+        PatientContractCallable callable = new PatientContractCallable("TESTING", 1, 2020, bfdClient, false);
         assertThrows(RuntimeException.class, callable::call);
     }
 

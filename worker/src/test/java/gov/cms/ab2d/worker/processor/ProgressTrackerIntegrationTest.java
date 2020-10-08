@@ -77,7 +77,7 @@ public class ProgressTrackerIntegrationTest {
         patientContractThreadPool.setMaxPoolSize(12);
         patientContractThreadPool.setThreadNamePrefix("contractp-");
         patientContractThreadPool.initialize();
-        contractBeneSearch = new ContractBeneSearchImpl(bfdClient, eventLogger, patientContractThreadPool, "2020");
+        contractBeneSearch = new ContractBeneSearchImpl(bfdClient, eventLogger, patientContractThreadPool, false);
         cut = new JobProcessorImpl(fileService, jobRepository, jobOutputRepository, contractBeneSearch, contractProcessor, eventLogger);
     }
 

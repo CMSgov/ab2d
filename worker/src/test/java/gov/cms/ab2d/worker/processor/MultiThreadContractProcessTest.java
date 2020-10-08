@@ -49,7 +49,7 @@ class MultiThreadContractProcessTest {
                 .numContracts(1)
                 .failureThreshold(1)
                 .build();
-        contractBeneSearch = new ContractBeneSearchImpl(bfdClient, eventLogger, patientContractThreadPool, "2020");
+        contractBeneSearch = new ContractBeneSearchImpl(bfdClient, eventLogger, patientContractThreadPool, false);
     }
 
     @Test

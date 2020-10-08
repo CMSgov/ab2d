@@ -31,24 +31,20 @@ import java.util.concurrent.Future;
 public class ContractBeneSearchImpl implements ContractBeneSearch {
 
     private static final int SLEEP_DURATION = 250;
+    private static final int YEAR = LocalDate.now().getYear();
 
     private final BFDClient bfdClient;
     private final LogManager eventLogger;
     private final ThreadPoolTaskExecutor patientContractThreadPool;
-    private final int year;
+    private final boolean skipBillablePeriodCheck;
 
     public ContractBeneSearchImpl(BFDClient bfdClient, LogManager eventLogger,
                                   @Qualifier("patientContractThreadPool") ThreadPoolTaskExecutor patientPool,
-                                  @Value("${patient.contract.year:}") String year) {
+                                  @Value("${claims.skipBillablePeriodCheck}") boolean skipBillablePeriodCheck) {
         this.bfdClient = bfdClient;
         this.eventLogger = eventLogger;
         this.patientContractThreadPool = patientPool;
-
-        if (StringUtils.isBlank(year)) {
-            this.year = LocalDate.now().getYear();
-        } else {
-            this.year = Integer.parseInt(year);
-        }
+        this.skipBillablePeriodCheck = skipBillablePeriodCheck;
     }
 
     /**
@@ -72,7 +68,7 @@ public class ContractBeneSearchImpl implements ContractBeneSearch {
         tracker.setCurrentMonth(currentMonth);
 
         for (var month = 1; month <= currentMonth; month++) {
-            PatientContractCallable callable = new PatientContractCallable(contractNumber, month, year, bfdClient);
+            PatientContractCallable callable = new PatientContractCallable(contractNumber, month, YEAR, bfdClient, skipBillablePeriodCheck);
             futureHandles.add(patientContractThreadPool.submit(callable));
         }
 

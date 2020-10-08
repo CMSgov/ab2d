@@ -2,6 +2,7 @@ package gov.cms.ab2d.worker.processor;
 
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.model.*;
+import gov.cms.ab2d.worker.adapter.bluebutton.ContractBeneSearchImpl;
 import gov.cms.ab2d.worker.processor.domainmodel.ContractMapping;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
@@ -33,6 +34,9 @@ import static org.junit.jupiter.api.Assertions.*;
 class PatientContractCallableLiveTest {
 
     @Autowired
+    ContractBeneSearchImpl contractBeneSearch;
+
+    @Autowired
     BFDClient bfdClient;
 
     @DisplayName("With Year C.E. 3 returns all data available")
@@ -43,7 +47,27 @@ class PatientContractCallableLiveTest {
         contract.setContractNumber("Z0001");
         contract.setContractName("Z0001");
 
-        PatientContractCallable callable = new PatientContractCallable("Z0001", 1, 3, bfdClient);
+        PatientContractCallable callable = new PatientContractCallable("Z0001", 1, 3, bfdClient, true);
+
+        try {
+            ContractMapping results = callable.call();
+
+            assertFalse(results.getPatients().isEmpty());
+            assertEquals(1000, results.getPatients().size());
+        } catch (Exception exception) {
+            fail("could not execute against sandbox", exception);
+        }
+    }
+
+    @DisplayName("With Year 2020 and filter set to false still return all (sandbox scenario)")
+    @Test
+    void findAllEvenWithYear() {
+
+        Contract contract = new Contract();
+        contract.setContractNumber("Z0001");
+        contract.setContractName("Z0001");
+
+        PatientContractCallable callable = new PatientContractCallable("Z0001", 1, 2020, bfdClient, true);
 
         try {
             ContractMapping results = callable.call();
@@ -63,7 +87,7 @@ class PatientContractCallableLiveTest {
         contract.setContractNumber("Z0001");
         contract.setContractName("Z0001");
 
-        PatientContractCallable callable = new PatientContractCallable("Z0001", 1, 2020, bfdClient);
+        PatientContractCallable callable = new PatientContractCallable("Z0001", 1, 2020, bfdClient, false);
 
         try {
             ContractMapping results = callable.call();

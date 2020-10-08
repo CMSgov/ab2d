@@ -58,7 +58,7 @@ class ContractBeneSearchTest {
         taskExecutor.setMaxPoolSize(12);
         taskExecutor.setRejectedExecutionHandler(new ThreadPoolExecutor.DiscardPolicy());
         taskExecutor.initialize();
-        cut = new ContractBeneSearchImpl(client, eventLogger, taskExecutor, "2020");
+        cut = new ContractBeneSearchImpl(client, eventLogger, taskExecutor, false);
 
         bundle = createBundle();
         lenient().when(client.requestPartDEnrolleesFromServer(anyString(), anyInt())).thenReturn(bundle);
