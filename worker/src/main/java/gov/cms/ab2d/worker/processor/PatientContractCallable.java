@@ -5,63 +5,105 @@ import gov.cms.ab2d.worker.processor.domainmodel.ContractMapping;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.hl7.fhir.dstu3.model.Bundle;
-import org.hl7.fhir.dstu3.model.Identifier;
-import org.hl7.fhir.dstu3.model.Patient;
-import org.hl7.fhir.dstu3.model.ResourceType;
+import org.hl7.fhir.dstu3.model.*;
 
+import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Callable;
-import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import static java.util.stream.Collectors.toSet;
 
 @Slf4j
 public class PatientContractCallable implements Callable<ContractMapping> {
     private static final String BENEFICIARY_ID = "https://bluebutton.cms.gov/resources/variables/bene_id";
-    private int month;
-    private String contractNumber;
-    private BFDClient bfdClient;
 
-    public PatientContractCallable(String contractNumber, int month, BFDClient bfdClient) {
-        this.month = month;
+    private final int month;
+    private final int year;
+    private final boolean skipBillablePeriodCheck;
+    private final String contractNumber;
+    private final BFDClient bfdClient;
+
+    private int missingIdentifier;
+    private int pastYear;
+
+    public PatientContractCallable(String contractNumber, int month, int year, BFDClient bfdClient, boolean skipBillablePeriodCheck) {
         this.contractNumber = contractNumber;
+        this.month = month;
+        this.year = year;
         this.bfdClient = bfdClient;
+        this.skipBillablePeriodCheck = skipBillablePeriodCheck;
     }
 
     @Override
     public ContractMapping call() throws Exception {
+
+        final Set<String> patientIds = new HashSet<>();
         try {
             ContractMapping mapping = new ContractMapping();
             mapping.setMonth(month);
             Bundle bundle = getBundle(contractNumber, month);
-            final Set<String> patientIDs = extractPatientIDs(bundle);
+            patientIds.addAll(extractAndFilter(bundle));
 
             while (bundle.getLink(Bundle.LINK_NEXT) != null) {
                 bundle = bfdClient.requestNextBundleFromServer(bundle);
-                patientIDs.addAll(extractPatientIDs(bundle));
+                patientIds.addAll(extractAndFilter(bundle));
             }
-            mapping.setPatients(patientIDs);
-            log.debug("finished reading [{}] Set<String>resources", patientIDs.size());
+            mapping.setPatients(patientIds);
+            log.debug("finished reading [{}] Set<String>resources", patientIds.size());
             return mapping;
         } catch (Exception e) {
             log.error("Unable to get patient information for " + contractNumber + " for month " + month, e);
             throw e;
+        } finally {
+            int total = patientIds.size() + pastYear + missingIdentifier;
+            log.info("Search discarded {} entries not meeting year filter criteria out of {}", pastYear, total);
+            log.info("Search discarded {} entries missing an identifier out of {}", missingIdentifier, total);
         }
     }
 
-    /**
-     * Given a Bundle, filters resources of type Patient and returns a list of patientIds
-     *
-     * @param bundle the bundle to extract data from
-     * @return a list of patientIds
-     */
-    private Set<String> extractPatientIDs(Bundle bundle) {
-        return bundle.getEntry().stream()
-                .map(Bundle.BundleEntryComponent::getResource)
-                .filter(resource -> resource.getResourceType() == ResourceType.Patient)
-                .map(resource -> (Patient) resource)
+    private Set<String> extractAndFilter(Bundle bundle) {
+        return getPatientStream(bundle)
+                .filter(patient -> skipBillablePeriodCheck || filterByYear(patient))
                 .map(this::extractPatientId)
-                .filter(StringUtils::isNotBlank)
-                .collect(Collectors.toSet());
+                .filter(this::isValidIdentifier)
+                .collect(toSet());
+    }
+
+    private Stream<Patient> getPatientStream(Bundle bundle) {
+        return bundle.getEntry().stream().map(Bundle.BundleEntryComponent::getResource)
+                .filter(resource -> resource.getResourceType() == ResourceType.Patient)
+                .map(resource -> (Patient) resource);
+    }
+
+    private boolean filterByYear(Patient patient) {
+        List<Extension> referenceYearList = patient.getExtensionsByUrl("https://bluebutton.cms.gov/resources/variables/rfrnc_yr");
+
+        if (referenceYearList.isEmpty()) {
+            log.error("patient returned without reference year violating assumptions");
+            pastYear++;
+            return false;
+        }
+
+        DateType refYear = (DateType) (referenceYearList.get(0).getValue());
+
+        if (refYear.getYear() != this.year) {
+            pastYear++;
+            return false;
+        }
+        return true;
+    }
+
+    private boolean isValidIdentifier(String id) {
+        boolean blankId = StringUtils.isBlank(id);
+
+        // If blank increment count to log issues
+        if (blankId) {
+            missingIdentifier++;
+        }
+
+        return !blankId;
     }
 
     /**
@@ -72,7 +114,7 @@ public class PatientContractCallable implements Callable<ContractMapping> {
      */
     private String extractPatientId(Patient patient) {
         return patient.getIdentifier().stream()
-                .filter(identifier -> isBeneficiaryId(identifier))
+                .filter(this::isBeneficiaryId)
                 .map(Identifier::getValue)
                 .findFirst()
                 .orElse(null);

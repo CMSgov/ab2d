@@ -11,9 +11,9 @@ import gov.cms.ab2d.worker.adapter.bluebutton.ContractBeneficiaries.PatientDTO;
 import gov.cms.ab2d.worker.processor.PatientContractCallable;
 import gov.cms.ab2d.worker.processor.domainmodel.ContractMapping;
 import gov.cms.ab2d.worker.processor.domainmodel.ProgressTracker;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Primary;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Component;
@@ -27,15 +27,24 @@ import java.util.concurrent.Future;
 @Slf4j
 @Primary
 @Component
-@RequiredArgsConstructor
 public class ContractBeneSearchImpl implements ContractBeneSearch {
 
     private static final int SLEEP_DURATION = 250;
+    private static final int YEAR = LocalDate.now().getYear();
 
     private final BFDClient bfdClient;
     private final LogManager eventLogger;
-    @Qualifier("patientContractThreadPool")
     private final ThreadPoolTaskExecutor patientContractThreadPool;
+    private final boolean skipBillablePeriodCheck;
+
+    public ContractBeneSearchImpl(BFDClient bfdClient, LogManager eventLogger,
+                                  @Qualifier("patientContractThreadPool") ThreadPoolTaskExecutor patientPool,
+                                  @Value("${claims.skipBillablePeriodCheck}") boolean skipBillablePeriodCheck) {
+        this.bfdClient = bfdClient;
+        this.eventLogger = eventLogger;
+        this.patientContractThreadPool = patientPool;
+        this.skipBillablePeriodCheck = skipBillablePeriodCheck;
+    }
 
     /**
      * Go to BFD to get the mapping of contract to beneficiaries. Given the current month, get all the data for up to the
@@ -54,12 +63,16 @@ public class ContractBeneSearchImpl implements ContractBeneSearch {
         patientSegment.setMetricName("GatherPatients");
 
         List<Future<ContractMapping>> futureHandles = new ArrayList<>();
+
         tracker.setCurrentMonth(currentMonth);
+
         for (var month = 1; month <= currentMonth; month++) {
-            PatientContractCallable callable = new PatientContractCallable(contractNumber, month, bfdClient);
+            PatientContractCallable callable = new PatientContractCallable(contractNumber, month, YEAR, bfdClient, skipBillablePeriodCheck);
             futureHandles.add(patientContractThreadPool.submit(callable));
         }
+
         List<ContractMapping> results = getAllResults(futureHandles, contractNumber, tracker);
+
         ContractBeneficiaries contractBeneficiaries = new ContractBeneficiaries();
         contractBeneficiaries.setContractNumber(contractNumber);
         contractBeneficiaries.setPatients(new HashMap<>());
