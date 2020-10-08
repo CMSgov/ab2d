@@ -8,6 +8,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -67,6 +68,8 @@ class PatientContractCallableLiveTest {
         try {
             ContractMapping results = callable.call();
 
+            int discarded = (int) ReflectionTestUtils.getField(callable, "pastYear");
+            assertEquals(1000, discarded);
             assertTrue(results.getPatients().isEmpty());
         } catch (Exception exception) {
             fail("could not execute against sandbox", exception);
