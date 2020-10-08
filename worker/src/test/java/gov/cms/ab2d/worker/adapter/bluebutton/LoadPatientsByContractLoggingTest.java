@@ -78,7 +78,7 @@ import static org.mockito.Mockito.lenient;
         patientContractThreadPool.setMaxPoolSize(12);
         patientContractThreadPool.setThreadNamePrefix("contractp-");
         patientContractThreadPool.initialize();
-        ContractBeneSearchImpl cai = new ContractBeneSearchImpl(bfdClient, logManager, patientContractThreadPool, "2020-01-01");
+        ContractBeneSearchImpl cai = new ContractBeneSearchImpl(bfdClient, logManager, patientContractThreadPool, "2020");
 
         String contractId = "C1234";
         Bundle bundle = createBundle();
