@@ -14,6 +14,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
+import java.time.LocalDate;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -24,6 +25,9 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class MultiThreadContractProcessTest {
+
+    private static final int YEAR = 2020;
+
     private ProgressTracker tracker;
 
     @Mock
@@ -45,17 +49,17 @@ class MultiThreadContractProcessTest {
                 .numContracts(1)
                 .failureThreshold(1)
                 .build();
-        contractBeneSearch = new ContractBeneSearchImpl(bfdClient, eventLogger, patientContractThreadPool);
+        contractBeneSearch = new ContractBeneSearchImpl(bfdClient, eventLogger, patientContractThreadPool, false);
     }
 
     @Test
     void testMultipleContract() throws ExecutionException, InterruptedException {
         String contractNo = "0001";
-        Bundle.BundleEntryComponent entry1 = BundleUtils.createBundleEntry("P1");
-        Bundle.BundleEntryComponent entry2 = BundleUtils.createBundleEntry("P2");
-        Bundle.BundleEntryComponent entry3 = BundleUtils.createBundleEntry("P3");
-        Bundle.BundleEntryComponent entry4 = BundleUtils.createBundleEntry("P4");
-        Bundle.BundleEntryComponent entry5 = BundleUtils.createBundleEntry("P5");
+        Bundle.BundleEntryComponent entry1 = BundleUtils.createBundleEntry("P1", YEAR);
+        Bundle.BundleEntryComponent entry2 = BundleUtils.createBundleEntry("P2", YEAR);
+        Bundle.BundleEntryComponent entry3 = BundleUtils.createBundleEntry("P3", YEAR);
+        Bundle.BundleEntryComponent entry4 = BundleUtils.createBundleEntry("P4", YEAR);
+        Bundle.BundleEntryComponent entry5 = BundleUtils.createBundleEntry("P5", YEAR);
 
         Bundle bundleA = BundleUtils.createBundle(entry1, entry2, entry3);
         Bundle bundleB = BundleUtils.createBundle(entry2, entry3, entry4);

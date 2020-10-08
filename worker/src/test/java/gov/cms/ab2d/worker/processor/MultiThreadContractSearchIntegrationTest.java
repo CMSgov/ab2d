@@ -10,6 +10,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.testcontainers.containers.PostgreSQLContainer;
@@ -27,6 +28,7 @@ import static org.mockito.Mockito.when;
 @SpringBootTest
 @Testcontainers
 class MultiThreadContractSearchIntegrationTest {
+
     private ProgressTracker tracker;
 
     @Container
@@ -34,6 +36,10 @@ class MultiThreadContractSearchIntegrationTest {
 
     @Autowired
     private ContractBeneSearch contractBeneSearch;
+
+    // Only year of data being accepted right now
+    @Value("${patient.contract.year}")
+    private int year;
 
     @Mock
     private BFDClient bfdClient;
@@ -51,11 +57,11 @@ class MultiThreadContractSearchIntegrationTest {
     @Test
     void testMultipleContract() throws ExecutionException, InterruptedException {
         String contractNo = "0001";
-        Bundle.BundleEntryComponent entry1 = BundleUtils.createBundleEntry("P1");
-        Bundle.BundleEntryComponent entry2 = BundleUtils.createBundleEntry("P2");
-        Bundle.BundleEntryComponent entry3 = BundleUtils.createBundleEntry("P3");
-        Bundle.BundleEntryComponent entry4 = BundleUtils.createBundleEntry("P4");
-        Bundle.BundleEntryComponent entry5 = BundleUtils.createBundleEntry("P5");
+        Bundle.BundleEntryComponent entry1 = BundleUtils.createBundleEntry("P1", year);
+        Bundle.BundleEntryComponent entry2 = BundleUtils.createBundleEntry("P2", year);
+        Bundle.BundleEntryComponent entry3 = BundleUtils.createBundleEntry("P3", year);
+        Bundle.BundleEntryComponent entry4 = BundleUtils.createBundleEntry("P4", year);
+        Bundle.BundleEntryComponent entry5 = BundleUtils.createBundleEntry("P5", year);
 
         Bundle bundleA = BundleUtils.createBundle(entry1, entry2, entry3);
         Bundle bundleB = BundleUtils.createBundle(entry2, entry3, entry4);
