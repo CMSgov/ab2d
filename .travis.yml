@@ -48,7 +48,7 @@ before_script:
 script:
 # todo simplify back to original once fix is issued for coverage mapping
 - mvn clean package -DskipTests
-# - mvn test -pl eventlogger,common,api,worker,bfd,filter,audit,hpms,mock-hpms
+- mvn test -pl eventlogger,common,api,worker,bfd,filter,audit,hpms,mock-hpms
 - mvn test -pl e2e-test
 after_script:
 - export JACOCO_SOURCE_PATH=./api/src/main/java; ./cc-test-reporter format-coverage
