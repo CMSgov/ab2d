@@ -12,6 +12,7 @@ import gov.cms.ab2d.worker.processor.PatientContractCallable;
 import gov.cms.ab2d.worker.processor.domainmodel.ContractMapping;
 import gov.cms.ab2d.worker.processor.domainmodel.ProgressTracker;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Primary;
@@ -38,11 +39,16 @@ public class ContractBeneSearchImpl implements ContractBeneSearch {
 
     public ContractBeneSearchImpl(BFDClient bfdClient, LogManager eventLogger,
                                   @Qualifier("patientContractThreadPool") ThreadPoolTaskExecutor patientPool,
-                                  @Value("${patient.contract.year}") int year) {
+                                  @Value("${patient.contract.year:}") String year) {
         this.bfdClient = bfdClient;
         this.eventLogger = eventLogger;
         this.patientContractThreadPool = patientPool;
-        this.year = year;
+
+        if (StringUtils.isBlank(year)) {
+            this.year = LocalDate.now().getYear();
+        } else {
+            this.year = Integer.parseInt(year);
+        }
     }
 
     /**

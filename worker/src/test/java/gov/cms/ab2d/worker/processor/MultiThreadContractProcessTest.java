@@ -14,6 +14,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
+import java.time.LocalDate;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -48,7 +49,7 @@ class MultiThreadContractProcessTest {
                 .numContracts(1)
                 .failureThreshold(1)
                 .build();
-        contractBeneSearch = new ContractBeneSearchImpl(bfdClient, eventLogger, patientContractThreadPool, YEAR);
+        contractBeneSearch = new ContractBeneSearchImpl(bfdClient, eventLogger, patientContractThreadPool, "2020-01-01");
     }
 
     @Test

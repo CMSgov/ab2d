@@ -20,6 +20,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.Month;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
@@ -57,7 +58,7 @@ class ContractBeneSearchTest {
         taskExecutor.setMaxPoolSize(12);
         taskExecutor.setRejectedExecutionHandler(new ThreadPoolExecutor.DiscardPolicy());
         taskExecutor.initialize();
-        cut = new ContractBeneSearchImpl(client, eventLogger, taskExecutor, YEAR);
+        cut = new ContractBeneSearchImpl(client, eventLogger, taskExecutor, "2020-01-01");
 
         bundle = createBundle();
         lenient().when(client.requestPartDEnrolleesFromServer(anyString(), anyInt())).thenReturn(bundle);

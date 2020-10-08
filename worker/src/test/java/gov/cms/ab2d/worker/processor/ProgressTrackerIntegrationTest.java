@@ -23,6 +23,7 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import javax.transaction.Transactional;
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.concurrent.ExecutionException;
 
@@ -76,7 +77,7 @@ public class ProgressTrackerIntegrationTest {
         patientContractThreadPool.setMaxPoolSize(12);
         patientContractThreadPool.setThreadNamePrefix("contractp-");
         patientContractThreadPool.initialize();
-        contractBeneSearch = new ContractBeneSearchImpl(bfdClient, eventLogger, patientContractThreadPool, 2020);
+        contractBeneSearch = new ContractBeneSearchImpl(bfdClient, eventLogger, patientContractThreadPool, "2020-01-01");
         cut = new JobProcessorImpl(fileService, jobRepository, jobOutputRepository, contractBeneSearch, contractProcessor, eventLogger);
     }
 

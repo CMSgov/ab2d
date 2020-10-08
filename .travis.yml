@@ -48,7 +48,7 @@ before_script:
 script:
 - mvn clean package -DskipTests
 - mvn test -pl eventlogger,common,api,worker,bfd,filter,audit,hpms,mock-hpms
-- export PATIENT_COVERAGE_YEAR=3
+- export PATIENT_CONTRACT_YEAR=3
 - mvn test -pl e2e-test
 after_script:
 - export JACOCO_SOURCE_PATH=./api/src/main/java; ./cc-test-reporter format-coverage
