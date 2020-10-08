@@ -15,6 +15,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.testcontainers.containers.PostgreSQLContainer;
@@ -50,6 +51,9 @@ public class ProgressTrackerIntegrationTest {
     @Autowired
     private ContractBeneSearch contractBeneSearch;
 
+    @Value("${patient.contract.year}")
+    private int year;
+
     @Mock
     private LogManager eventLogger;
 
@@ -72,7 +76,7 @@ public class ProgressTrackerIntegrationTest {
         patientContractThreadPool.setMaxPoolSize(12);
         patientContractThreadPool.setThreadNamePrefix("contractp-");
         patientContractThreadPool.initialize();
-        contractBeneSearch = new ContractBeneSearchImpl(bfdClient, eventLogger, patientContractThreadPool);
+        contractBeneSearch = new ContractBeneSearchImpl(bfdClient, eventLogger, patientContractThreadPool, 2020);
         cut = new JobProcessorImpl(fileService, jobRepository, jobOutputRepository, contractBeneSearch, contractProcessor, eventLogger);
     }
 
@@ -92,10 +96,10 @@ public class ProgressTrackerIntegrationTest {
                 .currentMonth(2)
                 .build();
 
-        Bundle.BundleEntryComponent entry1 = BundleUtils.createBundleEntry("P1");
-        Bundle.BundleEntryComponent entry2 = BundleUtils.createBundleEntry("P2");
-        Bundle.BundleEntryComponent entry3 = BundleUtils.createBundleEntry("P3");
-        Bundle.BundleEntryComponent entry4 = BundleUtils.createBundleEntry("P4");
+        Bundle.BundleEntryComponent entry1 = BundleUtils.createBundleEntry("P1", year);
+        Bundle.BundleEntryComponent entry2 = BundleUtils.createBundleEntry("P2", year);
+        Bundle.BundleEntryComponent entry3 = BundleUtils.createBundleEntry("P3", year);
+        Bundle.BundleEntryComponent entry4 = BundleUtils.createBundleEntry("P4", year);
 
         Bundle bundleA = BundleUtils.createBundle(entry1, entry2, entry3);
         Bundle bundleB = BundleUtils.createBundle(entry1, entry2, entry3, entry4);
