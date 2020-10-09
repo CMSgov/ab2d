@@ -138,6 +138,7 @@
    * [Configure a Jenkins project for sandbox application deploy](#configure-a-jenkins-project-for-sandbox-application-deploy)
 1. [Dismiss Jenkins SYSTEM user warning](#dismiss-jenkins-system-user-warning)
 1. [Configure executors for Jenkins master](#configure-executors-for-jenkins-master)
+1. [Configure Multibranch Pipeline](#configure-multibranch-pipeline)
 1. [Configure Jenkins CLI](#configure-jenkins-cli)
 
 ## Setup Jenkins master in management AWS account
@@ -14417,11 +14418,89 @@
 
    - typically you will want the number of executors to match the number of cores
 
-1. Type the following in the **# of executors** text box
+1. Configure the "master" node as follows
+
+   - **# of executors:** 4
+
+   - **Labels:** deployment
+
+   - **Usage:** Only build jobs with label expressions matching this node
+
+1. Select **Save**
+
+## Configure Multibranch Pipeline
+
+1. Log on to the Jenkins GUI (if not already logged in)
+
+   1. Ensure that you are connected to the Cisco VPN
+
+   1. Open Chrome
+
+   1. Enter the following in the address bar
+
+      *Format:*
+
+      > http://{jenkins master public ip}:8080
+
+   1. Log on to the Jenkins GUI
+
+1. Select **Manage Jenkins** in the leftmost panel
+
+1. Select **New Item** from the leftmost panel
+
+1. Enter the following in the **Enter an item name** text box
 
    ```
-   4
+   AB2D Repo V3
    ```
+
+1. Select **Multibranch Pipeline**
+
+1. Select **OK** on the "Enter an item name" page
+
+1. Conigure the "General" tab as follows
+
+   - **Display Name:** AB2D Repo V3
+
+   - **Description:** AB2D Main repository
+
+   - **Disable:** unchecked
+
+1. Select the **Branch Sources** tab
+
+1. Select the following from the **Add source** dropdown
+
+   ```
+   GitHub
+   ```
+
+1. Configure the "Branch Sources" section as follows
+
+   - **Credentials:** ab2d-jenkins/******
+
+   - **Repository HTTPS URL:** {radio button selected}
+
+   - **Repository HTTPS URL:** https://github.com/CMSgov/ab2d
+
+   - **Behaviors - Discover branches - Strategy:** All branches
+
+   - **Behaviors - Discover pull requests from origin - Strategy:** Merging the pull request with the current target branch revision
+
+   - **Behaviors - Discover pull requests from forks - Strategy:** Merging the pull request with the current target branch revision
+
+   - **Behaviors - Discover pull requests from forks - Trust:** From users with Admin or Write permission
+
+   - **Property strategy:** All branches get the same properties
+
+1. Select **Apply**
+
+1. Select the **Build Configuration** tab
+
+1. Configure the "Build Configuration" section as follows
+
+   - **Mode:** by Jenkinsfile
+
+   - **Script Path:** Jenkinsfile
 
 1. Select **Apply**
 
