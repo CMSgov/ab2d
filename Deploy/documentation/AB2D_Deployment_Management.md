@@ -12714,7 +12714,7 @@
 
    - **Labels:** deployment
 
-   - **Usage:** Use this node as much as possible
+   - **Usage:** Only build jobs with label expressions matching this node
 
    - **Launch method:** Launch agent agents via SSH
 
@@ -12838,7 +12838,7 @@
 
    - **Labels:** build
 
-   - **Usage:** Use this node as much as possible
+   - **Usage:** Only build jobs with label expressions matching this node
 
    - **Launch method:** Launch agent agents via SSH
 
@@ -12962,7 +12962,7 @@
 
    - **Labels:** build
 
-   - **Usage:** Use this node as much as possible
+   - **Usage:** Only build jobs with label expressions matching this node
 
    - **Launch method:** Launch agent agents via SSH
 
@@ -13086,7 +13086,7 @@
 
    - **Labels:** build
 
-   - **Usage:** Use this node as much as possible
+   - **Usage:** Only build jobs with label expressions matching this node
 
    - **Launch method:** Launch agent agents via SSH
 
@@ -13210,7 +13210,7 @@
 
    - **Labels:** build
 
-   - **Usage:** Use this node as much as possible
+   - **Usage:** Only build jobs with label expressions matching this node
 
    - **Launch method:** Launch agent agents via SSH
 
@@ -14451,7 +14451,7 @@
 1. Enter the following in the **Enter an item name** text box
 
    ```
-   AB2D Repo V3
+   AB2D Repo
    ```
 
 1. Select **Multibranch Pipeline**
@@ -14460,7 +14460,7 @@
 
 1. Conigure the "General" tab as follows
 
-   - **Display Name:** AB2D Repo V3
+   - **Display Name:** AB2D Repo
 
    - **Description:** AB2D Main repository
 
