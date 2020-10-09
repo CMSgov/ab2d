@@ -26,9 +26,7 @@ pipeline {
     }
 
     agent {
-        node {
-            label 'build'
-        }
+        label 'build'
     }
 
     tools {
