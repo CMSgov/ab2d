@@ -34,8 +34,7 @@ Example:
 *Run the following command:*
 
 ```bash
-source ./bootstrap.sh -prod --auth $AUTH --contract ABCDE --directory /opt/foo &&
- ./start-job.sh
+source ./bootstrap.sh -prod --auth $AUTH --contract ABCDE --directory /opt/foo && ./start-job.sh
 ```
 
 ## Scripts Included
