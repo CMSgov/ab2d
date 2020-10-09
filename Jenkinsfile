@@ -72,10 +72,10 @@ pipeline {
             }
         }
 
-        stage('Package without tests') {
+        stage('Package and install without tests') {
 
             steps {
-                sh 'mvn package -DskipTests'
+                sh 'mvn install -DskipTests'
             }
 
         }
@@ -120,9 +120,9 @@ pipeline {
 
                         fn_get_temporary_aws_credentials_via_aws_sts_assume_role 349849222861 ab2d-dev
 
-                        ls -la "$WORKSPACE/.m2/repository/gov/cms/ab2d"
-
                         ls -la worker/target/
+
+                        ls -la "$WORKSPACE/.m2/repository/gov/cms/ab2d"
 
                         mvn test -pl e2e-test
                     '''
