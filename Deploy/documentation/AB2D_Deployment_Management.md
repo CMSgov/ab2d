@@ -14422,7 +14422,7 @@
 
    - **# of executors:** 4
 
-   - **Labels:** deployment
+   - **Labels:** master
 
    - **Usage:** Only build jobs with label expressions matching this node
 
