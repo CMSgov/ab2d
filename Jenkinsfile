@@ -65,6 +65,8 @@ pipeline {
                     sh '''
                         mvn --version
 
+                        mvn help:evaluate -Dexpression=settings.localRepository -q -DforceStdout
+
                         echo $WORKSPACE
 
                         mvn clean
@@ -119,10 +121,6 @@ pipeline {
                         source Deploy/bash/functions/fn_get_temporary_aws_credentials_via_aws_sts_assume_role.sh
 
                         fn_get_temporary_aws_credentials_via_aws_sts_assume_role 349849222861 ab2d-dev
-
-                        ls -la worker/target/
-
-                        ls -la "$WORKSPACE/.m2/repository/gov/cms/ab2d"
 
                         mvn test -pl e2e-test
                     '''
