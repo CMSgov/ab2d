@@ -22,4 +22,13 @@ public class CoverageQueueConfig {
         taskExecutor.setThreadNamePrefix("coveragep-");
         return taskExecutor;
     }
+
+    @Bean
+    public CoverageMappingConfig coverageMappingConfig(
+            @Value("${coverage.update.months.past}") int pastMonthsToUpdate,
+            @Value("${coverage.update.stale.days}") int staleDays,
+            @Value("${coverage.update.max.attempts}") int maxAttempts,
+            @Value("${coverage.update.stuck.hours}") int stuckHours) {
+        return new CoverageMappingConfig(pastMonthsToUpdate, staleDays, maxAttempts, stuckHours);
+    }
 }

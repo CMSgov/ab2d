@@ -6,6 +6,7 @@ import gov.cms.ab2d.common.repository.*;
 import gov.cms.ab2d.common.service.CoverageService;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.DataSetup;
+import gov.cms.ab2d.worker.config.CoverageMappingConfig;
 import gov.cms.ab2d.worker.processor.domainmodel.ContractSearchLock;
 import org.hl7.fhir.dstu3.model.Bundle;
 import org.hl7.fhir.dstu3.model.Identifier;
@@ -93,8 +94,9 @@ class CoverageProcessorImplTest {
         taskExecutor.setCorePoolSize(3);
         taskExecutor.initialize();
 
-        processor = new CoverageProcessorImpl(coverageService, bfdClient, taskExecutor,
-                3, 3, 3, 24, searchLock);
+        CoverageMappingConfig config = new CoverageMappingConfig(3, 3, 3, 24);
+
+        processor = new CoverageProcessorImpl(coverageService, bfdClient, taskExecutor, config, searchLock);
     }
 
     @AfterEach

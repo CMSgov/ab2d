@@ -635,6 +635,7 @@ class CoverageServiceImplTest {
 
         coverageService.submitSearch(period1Jan.getId(), "testing");
         Optional<CoverageSearch> search1 = coverageSearchRepo.findFirstByOrderByCreatedAsc();
+        coverageSearchRepo.delete(search1.get());
         coverageService.startSearch(search1.get(), "testing");
 
         coverageService.submitSearch(period2Jan.getId(), "testing");

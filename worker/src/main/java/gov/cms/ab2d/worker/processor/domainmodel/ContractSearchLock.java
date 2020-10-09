@@ -43,11 +43,11 @@ public class ContractSearchLock {
         return defaultLockRepository;
     }
 
-    public Lock getLock(String lock_id) {
+    public Lock getLock(String lockId) {
         if (lockRegistry == null) {
             lockRegistry = contractLockRegistry(contractLockRepository());
         }
-        Lock lock = lockRegistry.obtain(lock_id);
+        Lock lock = lockRegistry.obtain(lockId);
         return lock;
     }
 
