@@ -639,21 +639,25 @@ class CoverageServiceImplTest {
 
         coverageService.submitSearch(period2Jan.getId(), "testing");
         Optional<CoverageSearch> search2 = coverageSearchRepo.findFirstByOrderByCreatedAsc();
-        coverageService.startSearch(search2.get(), "testing");
-        coverageService.completeSearch(period2Jan.getId(), "testing");
+        coverageSearchRepo.delete(search2.get());
+        Optional<CoverageMapping> coverageMapping = coverageService.startSearch(search2.get(), "testing");
+        coverageService.completeSearch(coverageMapping.get().getPeriodId(), "testing");
 
         coverageService.submitSearch(period1Feb.getId(), "testing");
         Optional<CoverageSearch> search3 = coverageSearchRepo.findFirstByOrderByCreatedAsc();
+        coverageSearchRepo.delete(search3.get());
         coverageService.startSearch(search3.get(), "testing");
 
         OffsetDateTime midTest = OffsetDateTime.now();
 
         coverageService.submitSearch(period1March.getId(), "testing");
         Optional<CoverageSearch> search4 = coverageSearchRepo.findFirstByOrderByCreatedAsc();
+        coverageSearchRepo.delete(search4.get());
         coverageService.startSearch(search4.get(), "testing");
 
         coverageService.submitSearch(period1April.getId(), "testing");
         Optional<CoverageSearch> search5 = coverageSearchRepo.findFirstByOrderByCreatedAsc();
+        coverageSearchRepo.delete(search5.get());
         coverageService.startSearch(search5.get(), "testing");
 
         OffsetDateTime afterTest = OffsetDateTime.now();
