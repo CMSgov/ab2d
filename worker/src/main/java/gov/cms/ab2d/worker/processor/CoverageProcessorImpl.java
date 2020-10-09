@@ -153,7 +153,7 @@ public class CoverageProcessorImpl implements CoverageProcessor {
             log.debug("starting search for {} during {}-{}", mapping.getContract().getContractNumber(),
                     mapping.getPeriod().getMonth(), mapping.getPeriod().getYear());
 
-            CoverageMappingCallable callable = new CoverageMappingCallable(mapping, bfdClient);
+            CoverageMappingCallable callable = new CoverageMappingCallable(mapping, bfdClient, false);
             executor.submit(callable);
             inProgressMappings.add(callable);
 

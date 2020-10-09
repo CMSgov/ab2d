@@ -12,6 +12,7 @@ import org.mockito.Mockito;
 
 import java.util.Collections;
 
+import static gov.cms.ab2d.worker.processor.BundleUtils.createPatient;
 import static gov.cms.ab2d.worker.processor.CoverageMappingCallable.BENEFICIARY_ID;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -32,10 +33,10 @@ class CoverageMappingCallableTest {
     @Test
     void callableFunctions() {
 
-        Bundle bundle1 = buildBundle(0, 10);
+        Bundle bundle1 = buildBundle(0, 10, 2020);
         bundle1.setLink(Collections.singletonList(new Bundle.BundleLinkComponent().setRelation(Bundle.LINK_NEXT)));
 
-        Bundle bundle2 = buildBundle(10, 20);
+        Bundle bundle2 = buildBundle(10, 20, 2020);
 
         when(bfdClient.requestPartDEnrolleesFromServer(anyString(), anyInt())).thenReturn(bundle1);
         when(bfdClient.requestNextBundleFromServer(any(Bundle.class))).thenReturn(bundle2);
@@ -56,7 +57,7 @@ class CoverageMappingCallableTest {
         search.setPeriod(period);
 
         CoverageMapping mapping = new CoverageMapping(cse, search);
-        CoverageMappingCallable callable = new CoverageMappingCallable(mapping, bfdClient);
+        CoverageMappingCallable callable = new CoverageMappingCallable(mapping, bfdClient, false);
 
         assertFalse(callable.isCompleted());
 
@@ -90,7 +91,7 @@ class CoverageMappingCallableTest {
         search.setPeriod(period);
 
         CoverageMapping mapping = new CoverageMapping(cse, search);
-        CoverageMappingCallable callable = new CoverageMappingCallable(mapping, bfdClient);
+        CoverageMappingCallable callable = new CoverageMappingCallable(mapping, bfdClient, false);
 
         try {
             callable.call();
@@ -102,20 +103,12 @@ class CoverageMappingCallableTest {
         assertTrue(callable.isCompleted());
     }
 
-    private Bundle buildBundle(int startIndex, int endIndex) {
+    private Bundle buildBundle(int startIndex, int endIndex, int year) {
         Bundle bundle1 = new Bundle();
-
         for (int i = startIndex; i < endIndex; i++) {
             Bundle.BundleEntryComponent component = new Bundle.BundleEntryComponent();
-            Patient patient = new Patient();
-
-            Identifier identifier = new Identifier();
-            identifier.setSystem(BENEFICIARY_ID);
-            identifier.setValue("test-" + i);
-
-            patient.setIdentifier(Collections.singletonList(identifier));
+            Patient patient = createPatient("test-" + i, year);
             component.setResource(patient);
-
             bundle1.addEntry(component);
         }
         return bundle1;
