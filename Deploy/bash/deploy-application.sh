@@ -408,13 +408,13 @@ if [ -z "${AB2D_HPMS_URL}" ]; then
   exit 1
 fi
 
-# Get HPMS AUTH URL
+# Get HPMS API PARAMS
 
-AB2D_HPMS_AUTH_URL=$(./get-database-secret.py $CMS_ENV ab2d_hpms_auth_url $DATABASE_SECRET_DATETIME)
+AB2D_HPMS_API_PARAMS=$(./get-database-secret.py $CMS_ENV ab2d_hpms_api_params $DATABASE_SECRET_DATETIME)
 
-if [ -z "${AB2D_HPMS_AUTH_URL}" ]; then
+if [ -z "${AB2D_HPMS_API_PARAMS}" ]; then
   echo "*******************************************"
-  echo "ERROR: AB2D HPMS AUTH URL secret not found."
+  echo "ERROR: AB2D HPMS API PARAMS secret not found."
   echo "*******************************************"
   exit 1
 fi
@@ -458,7 +458,7 @@ if [ "${DATABASE_USER}" == "ERROR: Cannot get database secret because KMS key is
   || [ "${AB2D_KEYSTORE_PASSWORD}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
   || [ "${AB2D_OKTA_JWT_ISSUER}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
   || [ "${AB2D_HPMS_URL}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
-  || [ "${AB2D_HPMS_AUTH_URL}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
+  || [ "${AB2D_HPMS_API_PARAMS}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
   || [ "${AB2D_HPMS_AUTH_KEY_ID}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
   || [ "${AB2D_HPMS_AUTH_KEY_SECRET}" == "ERROR: Cannot get database secret because KMS key is disabled!" ]; then
     echo "ERROR: Cannot get secrets because KMS key is disabled!"
@@ -1262,7 +1262,7 @@ terraform apply \
   --var "ab2d_keystore_password=${AB2D_KEYSTORE_PASSWORD}" \
   --var "ab2d_okta_jwt_issuer=${AB2D_OKTA_JWT_ISSUER}" \
   --var "ab2d_hpms_url=${AB2D_HPMS_URL}" \
-  --var "ab2d_hpms_auth_url=${AB2D_HPMS_AUTH_URL}" \
+  --var "ab2d_hpms_api_params=${AB2D_HPMS_API_PARAMS}" \
   --var "ab2d_hpms_auth_key_id=${AB2D_HPMS_AUTH_KEY_ID}" \
   --var "ab2d_hpms_auth_key_secret=${AB2D_HPMS_AUTH_KEY_SECRET}" \
   --var "stunnel_latest_version=${STUNNEL_LATEST_VERSION}" \

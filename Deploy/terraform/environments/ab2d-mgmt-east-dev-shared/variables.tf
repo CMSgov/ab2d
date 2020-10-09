@@ -46,7 +46,7 @@ variable "ssh_key_name" {
 }
 
 variable "ec2_iam_profile" {
-  default = "Ab2dInstanceProfile"
+  default = "Ab2dInstanceV2Profile"
 }
 
 variable "vpn_private_sec_group_id" {

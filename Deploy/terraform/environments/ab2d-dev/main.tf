@@ -185,7 +185,7 @@ module "api" {
   ab2d_keystore_password            = var.ab2d_keystore_password
   ab2d_okta_jwt_issuer              = var.ab2d_okta_jwt_issuer
   ab2d_hpms_url                     = var.ab2d_hpms_url
-  ab2d_hpms_auth_url                = var.ab2d_hpms_auth_url
+  ab2d_hpms_api_params              = var.ab2d_hpms_api_params
   ab2d_hpms_auth_key_id             = var.ab2d_hpms_auth_key_id
   ab2d_hpms_auth_key_secret         = var.ab2d_hpms_auth_key_secret
   stunnel_latest_version            = var.stunnel_latest_version
@@ -286,7 +286,7 @@ module "kinesis_firehose" {
 # Management Target
 
 module "management_target" {
-  source                      = "../../modules/management_target"
-  mgmt_aws_account_number     = var.mgmt_aws_account_number
-  ab2d_spe_developer_policies = var.ab2d_spe_developer_policies
+  source                  = "../../modules/management_target"
+  mgmt_aws_account_number = var.mgmt_aws_account_number
+  aws_account_number      = var.aws_account_number
 }
