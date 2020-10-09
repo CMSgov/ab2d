@@ -120,6 +120,10 @@ pipeline {
 
                         fn_get_temporary_aws_credentials_via_aws_sts_assume_role 349849222861 ab2d-dev
 
+                        ls -la "$WORKSPACE/.m2/repository/gov/cms/ab2d"
+
+                        ls -la worker/target/
+
                         mvn test -pl e2e-test
                     '''
                 }
