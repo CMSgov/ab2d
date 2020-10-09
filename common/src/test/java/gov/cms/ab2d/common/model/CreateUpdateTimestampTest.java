@@ -11,6 +11,9 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
@@ -20,10 +23,7 @@ import static org.junit.Assert.assertNull;
 @SpringBootTest
 @Testcontainers
 @TestPropertySource(locations = "/application.common.properties")
-public class CreateUpdateTimestampTest {
-
-    private static final String PATIENT_ID_STR = "Timestamp Test Beneficiary";
-    private static final String PATIENT_ID_STR_TOO = "Timestamp Test Beneficiary 2";
+class CreateUpdateTimestampTest {
 
     @SuppressWarnings({"rawtypes", "unused"})
     @Container
@@ -33,7 +33,7 @@ public class CreateUpdateTimestampTest {
     private SponsorRepository sponsorRepository;
 
     @Test
-    public void testTimestamps() {
+    void testTimestamps() {
         Sponsor sponsor = new Sponsor();
         sponsor.setHpmsId(52);
         sponsor.setOrgName("TEST");
@@ -49,8 +49,8 @@ public class CreateUpdateTimestampTest {
         assertNotNull(savedSponsor.getCreated());
         assertNotNull(savedSponsor.getModified());
 
-        LocalDateTime created = savedSponsor.getCreated();
-        LocalDateTime modified = savedSponsor.getModified();
+        OffsetDateTime created = savedSponsor.getCreated();
+        OffsetDateTime modified = savedSponsor.getModified();
         savedSponsor.setOrgName("TEST2");
         Sponsor finaleSponsor = sponsorRepository.save(savedSponsor);
         assertEquals(created, finaleSponsor.getCreated());

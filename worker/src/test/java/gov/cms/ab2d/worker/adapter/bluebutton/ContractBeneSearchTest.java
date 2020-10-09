@@ -5,12 +5,11 @@ import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.common.util.FilterOutByDate;
+import gov.cms.ab2d.worker.processor.BundleUtils;
 import gov.cms.ab2d.worker.processor.domainmodel.ProgressTracker;
 import org.hl7.fhir.dstu3.model.Bundle;
 import org.hl7.fhir.dstu3.model.Bundle.BundleEntryComponent;
 import org.hl7.fhir.dstu3.model.Bundle.BundleLinkComponent;
-import org.hl7.fhir.dstu3.model.Identifier;
-import org.hl7.fhir.dstu3.model.Patient;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -21,12 +20,13 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.Month;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ThreadPoolExecutor;
 
-import static gov.cms.ab2d.worker.processor.BundleUtils.BENEFICIARY_ID;
+import static gov.cms.ab2d.worker.processor.BundleUtils.createBundleEntry;
 import static org.hamcrest.CoreMatchers.endsWith;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
@@ -38,6 +38,9 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class ContractBeneSearchTest {
+
+    private static final int YEAR = 2020;
+
     private ProgressTracker tracker;
 
     @Mock BFDClient client;
@@ -55,7 +58,7 @@ class ContractBeneSearchTest {
         taskExecutor.setMaxPoolSize(12);
         taskExecutor.setRejectedExecutionHandler(new ThreadPoolExecutor.DiscardPolicy());
         taskExecutor.initialize();
-        cut = new ContractBeneSearchImpl(client, eventLogger, taskExecutor);
+        cut = new ContractBeneSearchImpl(client, eventLogger, taskExecutor, false);
 
         bundle = createBundle();
         lenient().when(client.requestPartDEnrolleesFromServer(anyString(), anyInt())).thenReturn(bundle);
@@ -116,13 +119,13 @@ class ContractBeneSearchTest {
         Bundle bundle1 = bundle.copy();
         // add 2nd patient
         List<BundleEntryComponent> entries = bundle1.getEntry();
-        entries.add(createBundleEntry("ccw_patient_001"));
+        entries.add(createBundleEntry("ccw_patient_001", YEAR));
 
-        Date startJanuary = FilterOutByDate.getStartOfMonth(1, 2020);
-        Date endJanuary = FilterOutByDate.getEndOfMonth(1, 2020);
+        Date startJanuary = FilterOutByDate.getStartOfMonth(1, YEAR);
+        Date endJanuary = FilterOutByDate.getEndOfMonth(1, YEAR);
 
-        Date startMarch = FilterOutByDate.getStartOfMonth(3, 2020);
-        Date endMarch = FilterOutByDate.getEndOfMonth(3, 2020);
+        Date startMarch = FilterOutByDate.getStartOfMonth(3, YEAR);
+        Date endMarch = FilterOutByDate.getEndOfMonth(3, YEAR);
 
         when(client.requestPartDEnrolleesFromServer("S0000", 1))
                 .thenReturn(bundle1);    // January - patient1 is active
@@ -161,7 +164,7 @@ class ContractBeneSearchTest {
 
         // add 2nd patient
         List<BundleEntryComponent> entries = bundle1.getEntry();
-        entries.add(createBundleEntry("ccw_patient_001"));
+        entries.add(createBundleEntry("ccw_patient_001", YEAR));
 
         when(client.requestPartDEnrolleesFromServer(anyString(), anyInt()))
                 .thenReturn(bundle, bundle1);
@@ -195,7 +198,7 @@ class ContractBeneSearchTest {
 
         // bundle1 has 2 patients in January
         List<BundleEntryComponent> entries = bundle1.getEntry();
-        entries.add(createBundleEntry("ccw_patient_001"));
+        entries.add(createBundleEntry("ccw_patient_001", YEAR));
 
         // bundle2  has 1 patient in February, coz patient_001 left and is no longer active in contract
         Bundle bundle2 = bundle.copy();
@@ -225,7 +228,7 @@ class ContractBeneSearchTest {
     @Test
     void GivenTwoPatientsActiveInJanAndFeb_ShouldReturnTwoPatientRowsEachWithTwoRowsInDateRangesUnderContract() throws ExecutionException, InterruptedException {
         List<BundleEntryComponent> entries = bundle.getEntry();
-        entries.add(createBundleEntry("ccw_patient_001"));
+        entries.add(createBundleEntry("ccw_patient_001", YEAR));
 
         ContractBeneficiaries response = cut.getPatients(contractNumber, Month.FEBRUARY.getValue(), tracker);
 
@@ -249,10 +252,10 @@ class ContractBeneSearchTest {
         Bundle bundle1 = bundle.copy();
 
         List<BundleEntryComponent> entries = bundle1.getEntry();
-        entries.add(createBundleEntry("ccw_patient_001"));
+        entries.add(createBundleEntry("ccw_patient_001", YEAR));
         bundle1.addLink(addNextLink());
 
-        Bundle bundle2 = createBundle("ccw_patient_002");
+        Bundle bundle2 = createBundle("ccw_patient_002", YEAR);
 
         when(client.requestPartDEnrolleesFromServer(anyString(), anyInt())).thenReturn(bundle1);
         when(client.requestNextBundleFromServer(Mockito.any(Bundle.class))).thenReturn(bundle2);
@@ -282,9 +285,9 @@ class ContractBeneSearchTest {
     @Test
     void GivenDuplicatePatientRowsFromBFD_ShouldEliminateDuplicates() throws ExecutionException, InterruptedException {
         List<BundleEntryComponent> entries = bundle.getEntry();
-        entries.add(createBundleEntry("ccw_patient_001"));
+        entries.add(createBundleEntry("ccw_patient_001", YEAR));
         //simulate duplicate patient record coming from BDF
-        entries.add(createBundleEntry("ccw_patient_001"));
+        entries.add(createBundleEntry("ccw_patient_001", YEAR));
 
         when(client.requestPartDEnrolleesFromServer(anyString(), anyInt())).thenReturn(bundle);
 
@@ -318,33 +321,13 @@ class ContractBeneSearchTest {
     }
 
     private Bundle createBundle() {
-        return createBundle("ccw_patient_000");
+        BundleEntryComponent component = createBundleEntry("ccw_patient_000", YEAR);
+        return BundleUtils.createBundle(component);
     }
 
-    private Bundle createBundle(final String patientId) {
-        Bundle bundle = new Bundle();
-        List<BundleEntryComponent> entries = bundle.getEntry();
-        entries.add(createBundleEntry(patientId));
-        return bundle;
-    }
-
-    private BundleEntryComponent createBundleEntry(String patientId) {
-        BundleEntryComponent component = new BundleEntryComponent();
-        component.setResource(createPatient(patientId));
-        return component;
-    }
-
-    private Patient createPatient(String patientId) {
-        Patient patient = new Patient();
-        patient.getIdentifier().add(createIdentifier(patientId));
-        return patient;
-    }
-
-    private Identifier createIdentifier(String patientId) {
-        Identifier identifier = new Identifier();
-        identifier.setSystem(BENEFICIARY_ID);
-        identifier.setValue(patientId);
-        return identifier;
+    private Bundle createBundle(String id, int year) {
+        BundleEntryComponent component = createBundleEntry(id, year);
+        return BundleUtils.createBundle(component);
     }
 
     private BundleLinkComponent addNextLink() {
