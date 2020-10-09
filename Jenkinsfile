@@ -82,15 +82,15 @@ pipeline {
 
         }
 
-        stage('Run unit and integration tests') {
-
-            steps {
-                sh '''
-                    export AB2D_EFS_MOUNT="${AB2D_HOME}"
-                    mvn test -pl eventlogger,common,api,worker,bfd,filter,audit,hpms,mock-hpms
-                '''
-            }
-        }
+//         stage('Run unit and integration tests') {
+//
+//             steps {
+//                 sh '''
+//                     export AB2D_EFS_MOUNT="${AB2D_HOME}"
+//                     mvn test -pl eventlogger,common,api,worker,bfd,filter,audit,hpms,mock-hpms
+//                 '''
+//             }
+//         }
 
         stage('Run e2e-test on merge commit and on master branch') {
             when {
@@ -124,7 +124,7 @@ pipeline {
 
                         ls -la common/target
 
-                        mvn test -pl e2e-test
+                        mvn test -pl e2e-test -am -Dtest=TestRunner -DfailIfNoTests=false
                     '''
                 }
             }
