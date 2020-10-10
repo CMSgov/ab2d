@@ -128,6 +128,7 @@
    * [Register a new OAuth application with GitHub](#register-a-new-oauth-application-with-github)
    * [Install and configure the GitHub Authentication plugin including adding GitHub users](#install-and-configure-the-github-authentication-plugin-including-adding-github-users)
    * [Log on to Jenkins using GitHub OAuth authentication](#log-on-to-jenkins-using-github-oauth-authentication)
+   * [Install the "Parameterized Trigger" plugin](#install-the-parameterized-trigger-plugin)
    * [Add Jenkins agent 01](#add-jenkins-agent-01)
    * [Add Jenkins agent 02](#add-jenkins-agent-02)
    * [Add Jenkins agent 03](#add-jenkins-agent-03)
@@ -12766,7 +12767,7 @@
 
 ### Log on to Jenkins using GitHub OAuth authentication
 
-1. Open Jenkins again
+1. Log on to Jenkins
 
 1. Note that you will be prompted to log on to GitHub, if you are not already logged in
 
@@ -12787,6 +12788,34 @@
 1. Select **Authorize lhanekam**
 
 1. Verify that the Jenkins page loads
+
+### Install the "Parameterized Trigger" plugin
+
+1. Log on to Jenkins
+
+1. Select **Manage Jenkins** from the leftmost panel
+
+1. Select **Manage Plugins**
+
+1. Select the **Available** tab
+
+1. Type the following in the **search** text box
+
+   ```
+   parameterized trigger
+   ```
+
+1. Check **Parameterized Trigger**
+
+1. Select **Download now and install after restart**
+
+1. Note that if there are no jobs running, you can safely restart Jenkins
+
+1. Check **Restart Jenkins when installation is complete and no jobs are running
+
+1. Wait for "Running" to be blinking beside "Restarting Jenkins"
+
+1. Select **Jenkins** in the top left of the page
 
 ### Add Jenkins agent 01
 
