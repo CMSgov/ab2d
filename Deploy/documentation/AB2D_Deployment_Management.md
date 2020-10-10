@@ -41,6 +41,7 @@
      * [Authorize jenkins master to SSH into Jenkins agent 05 with Jenkins compatible key](#authorize-jenkins-master-to-ssh-into-jenkins-agent-05-with-jenkins-compatible-key)
      * [Verify that jenkins master can SSH into Jenkins agent 05](#verify-that-jenkins-master-can-ssh-into-jenkins-agent-05)
 1. [Upgrade docker compose on all Jenkins nodes to the latest version](#upgrade-docker-compose-on-all-jenkins-nodes-to-the-latest-version)
+1. [Install htop on Jenkins agents](#install-htop-on-jenkins-agents)
 1. [Configure Jenkins master](#configure-jenkins-master)
    * [Enable Jenkins](#enable-jenkins)
    * [Initialize the Jenkins GUI](#initialize-the-jenkins-gui)
@@ -6108,6 +6109,171 @@
         && sudo curl -L https://github.com/docker/compose/releases/download/$DOCKER_COMPOSE_VERSION/docker-compose-`uname -s`-`uname -m` -o /usr/local/bin/docker-compose \
         && sudo chmod 755 /usr/local/bin/docker-compose \
         && docker-compose --version
+      ```
+
+   1. Exit Jenkins agent 05
+
+      ```ShellSession
+      $ exit
+      ```
+
+## Install htop on Jenkins agents
+
+1. Ensure that you are connected to the Cisco VPN
+
+1. Open a terminal
+
+1. Change to the "ab2d" repo directory
+
+   *Example:*
+
+   ```ShellSession
+   $ cd ~/code/ab2d
+   ```
+
+1. Get credentials for the Management AWS account
+
+   ```ShellSession
+   $ source ./Deploy/bash/set-env.sh
+   ```
+
+1. Upgrade the docker compose version on Jenkins agent 01
+
+   1. Get the private IP address of Jenkins EC2 instance
+
+      ```ShellSession
+      $ JENKINS_AGENT_01_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-jenkins-agent-01" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+        --output text)
+      ```
+
+   1. SSH into the instance using the public IP address
+
+      ```ShellSession
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_AGENT_01_PRIVATE_IP
+      ```
+
+   1. Install htop
+
+      ```ShellSession
+      $ sudo yum install htop -y
+      ```
+
+   1. Exit Jenkins agent 01
+
+      ```ShellSession
+      $ exit
+      ```
+
+1. Upgrade the docker compose version on Jenkins agent 02
+
+   1. Get the private IP address of Jenkins EC2 instance
+
+      ```ShellSession
+      $ JENKINS_AGENT_02_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-jenkins-agent-02" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+        --output text)
+      ```
+
+   1. SSH into the instance using the public IP address
+
+      ```ShellSession
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_AGENT_02_PRIVATE_IP
+      ```
+
+   1. Install htop
+
+      ```ShellSession
+      $ sudo yum install htop -y
+      ```
+
+   1. Exit Jenkins agent 02
+
+      ```ShellSession
+      $ exit
+      ```
+
+1. Upgrade the docker compose version on Jenkins agent 03
+
+   1. Get the private IP address of Jenkins EC2 instance
+
+      ```ShellSession
+      $ JENKINS_AGENT_03_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-jenkins-agent-03" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+        --output text)
+      ```
+
+   1. SSH into the instance using the public IP address
+
+      ```ShellSession
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_AGENT_03_PRIVATE_IP
+      ```
+
+   1. Install htop
+
+      ```ShellSession
+      $ sudo yum install htop -y
+      ```
+
+   1. Exit Jenkins agent 03
+
+      ```ShellSession
+      $ exit
+      ```
+
+1. Upgrade the docker compose version on Jenkins agent 04
+
+   1. Get the private IP address of Jenkins EC2 instance
+
+      ```ShellSession
+      $ JENKINS_AGENT_04_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-jenkins-agent-04" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+        --output text)
+      ```
+
+   1. SSH into the instance using the public IP address
+
+      ```ShellSession
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_AGENT_04_PRIVATE_IP
+      ```
+
+   1. Install htop
+
+      ```ShellSession
+      $ sudo yum install htop -y
+      ```
+
+   1. Exit Jenkins agent 04
+
+      ```ShellSession
+      $ exit
+      ```
+
+1. Upgrade the docker compose version on Jenkins agent 05
+
+   1. Get the private IP address of Jenkins EC2 instance
+
+      ```ShellSession
+      $ JENKINS_AGENT_05_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
+        --filters "Name=tag:Name,Values=ab2d-jenkins-agent-05" \
+        --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+        --output text)
+      ```
+
+   1. SSH into the instance using the public IP address
+
+      ```ShellSession
+      $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_AGENT_05_PRIVATE_IP
+      ```
+
+   1. Install htop
+
+      ```ShellSession
+      $ sudo yum install htop -y
       ```
 
    1. Exit Jenkins agent 05
