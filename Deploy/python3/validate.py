@@ -1,8 +1,10 @@
 import datetime
+import glob
 import json
 import os
-import sys
 import re
+import sys
+
 VERBOSE = False
 def to_year(date_string):
     return datetime.datetime.strptime(date_string, '%Y-%m-%d').year
@@ -70,20 +72,13 @@ total_bill_start = 0
 total_bill_end = 0
 total_service_start = 0
 total_service_end = 0
+ndjson_files_count = len(glob.glob1(directory,"*.ndjson"))
 print("")
-print("----------------------------")
-print("      Files Downloaded")
-print("----------------------------")
+print("--------------------------------")
+print("         Files processed")
+print("--------------------------------")
 print("")
-for results_file in files:
-    if not regex.match(results_file):
-        continue
-    print(results_file)
-print("")
-print("----------------------------")
-print("      Files Processed")
-print("----------------------------")
-print("")
+ndjson_files_processed_count = 0
 for results_file in files:
     if not regex.match(results_file):
         continue
@@ -99,10 +94,18 @@ for results_file in files:
     total_service_start = service_start
     total_service_end = service_end
     print(results_file)
+    ndjson_files_processed_count += 1
 print("")
-print("----------------------------")
-print("   Total issues detected")
-print("----------------------------")
+print("--------------------------------")
+print("File download and process counts")
+print("--------------------------------")
+print("")
+print("Files downloaded: %d") % (ndjson_files_count)
+print("Files processed: %d") % (ndjson_files_processed_count)
+print("")
+print("--------------------------------")
+print("     Total issues detected")
+print("--------------------------------")
 print("")
 print("last_updated: %d\nbill_start: %d\nbill_end: %d\nservice_start: %d\nservice_end: %d\n"
       % (total_last_updated, total_bill_start, total_bill_end, total_service_start, total_service_end))
