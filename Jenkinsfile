@@ -65,6 +65,8 @@ pipeline {
                     sh '''
                         mvn --version
 
+                        mvn help:evaluate -Dexpression=settings.localRepository -q -DforceStdout
+
                         echo $WORKSPACE
 
                         mvn clean
@@ -80,15 +82,15 @@ pipeline {
 
         }
 
-        stage('Run unit and integration tests') {
-
-            steps {
-                sh '''
-                    export AB2D_EFS_MOUNT="${AB2D_HOME}"
-                    mvn test -pl eventlogger,common,api,worker,bfd,filter,audit,hpms,mock-hpms
-                '''
-            }
-        }
+//         stage('Run unit and integration tests') {
+//
+//             steps {
+//                 sh '''
+//                     export AB2D_EFS_MOUNT="${AB2D_HOME}"
+//                     mvn test -pl eventlogger,common,api,worker,bfd,filter,audit,hpms,mock-hpms
+//                 '''
+//             }
+//         }
 
         stage('Run e2e-test on merge commit and on master branch') {
             when {
@@ -120,7 +122,9 @@ pipeline {
 
                         fn_get_temporary_aws_credentials_via_aws_sts_assume_role 349849222861 ab2d-dev
 
-                        mvn test -pl e2e-test
+                        ls -la common/target
+
+                        mvn test -pl e2e-test -am -Dtest=TestRunner -DfailIfNoTests=false
                     '''
                 }
             }
