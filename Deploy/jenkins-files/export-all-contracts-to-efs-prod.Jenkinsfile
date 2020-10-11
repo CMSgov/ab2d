@@ -3,32 +3,18 @@ pipeline {
     label 'deployment'
   }
   stages {
-    stage('Bootstrap the process') {
+    stage('Run and monitor export job') {
       steps {
         script {
           dir ('examples/bash') {
-            sh 'source ./bootstrap.sh -prod --auth $AUTH --directory .'
+	    sh '''
+              source ./bootstrap.sh -prod --auth $AUTH --directory .
+	      ./start-job.sh
+	      ./monitor-job.sh
+	    sh '''
           }
         }
       }
     }
-    stage('Start export job') {
-      steps {
-        script {
-          dir ('examples/bash') {
-            sh './start-job.sh'
-          }
-        }
-      }
-    }
-    stage('Monitor job') {
-      steps {
-        script {
-          dir ('examples/bash') {
-            sh './monitor-job.sh'
-          }
-        }
-      }
-    }    
   }
 }
