@@ -28,7 +28,7 @@ pipeline {
       steps {
         script {
           dir ('examples/bash') {
-            ./start-job.sh
+            sh './start-job.sh'
           }
         }
       }
@@ -37,7 +37,7 @@ pipeline {
       steps {
         script {
           dir ('examples/bash') {
-            ./monitor-job.sh
+            sh './monitor-job.sh'
           }
         }
       }
