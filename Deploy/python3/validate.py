@@ -73,11 +73,9 @@ total_bill_end = 0
 total_service_start = 0
 total_service_end = 0
 ndjson_files_count = len(glob.glob1(directory,"*.ndjson"))
-print("")
-print("--------------------------------")
+print("\n--------------------------------")
 print("         Files processed")
 print("--------------------------------")
-print("")
 ndjson_files_processed_count = 0
 for results_file in files:
     if not regex.match(results_file):
@@ -88,24 +86,21 @@ for results_file in files:
     if issue:
         print("\n%s has issues\t\tlast_updated: %d\tbill_start: %d\tbill_end: %d\tservice_start: %d\tservice_end: %d" %
               (results_file, last_updated, bill_start, bill_end, service_start, service_end))
+    else:
+        print("\n%s OK") % (results_file)
     total_last_updated += last_updated
     total_bill_start += bill_start
     total_bill_end = bill_end
     total_service_start = service_start
     total_service_end = service_end
-    print(results_file)
     ndjson_files_processed_count += 1
-print("")
-print("--------------------------------")
+print("\n--------------------------------")
 print("File download and process counts")
-print("--------------------------------")
-print("")
+print("--------------------------------\n")
 print("Files downloaded: %d") % (ndjson_files_count)
 print("Files processed: %d") % (ndjson_files_processed_count)
-print("")
-print("--------------------------------")
+print("\n--------------------------------")
 print("     Total issues detected")
-print("--------------------------------")
-print("")
+print("--------------------------------\n")
 print("last_updated: %d\nbill_start: %d\nbill_end: %d\nservice_start: %d\nservice_end: %d\n"
       % (total_last_updated, total_bill_start, total_bill_end, total_service_start, total_service_end))
