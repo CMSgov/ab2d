@@ -8,7 +8,7 @@ pipeline {
         script {
           dir ('examples/bash') {
 	    sh '''
-              source ./bootstrap.sh -prod --auth $AUTH --directory .
+              source ./bootstrap.sh -prod --auth $params.AUTH --directory .
 	      ./start-job.sh
 	      ./monitor-job.sh
 	    sh '''
