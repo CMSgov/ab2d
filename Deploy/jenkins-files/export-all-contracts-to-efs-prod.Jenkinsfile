@@ -3,21 +3,11 @@ pipeline {
     label 'deployment'
   }
   stages {
-    stage('Create working directory') {
-      steps {
-        script {
-          dir('.') {
-	    sh 'rm -rf ./export-all-contracts-to-efs-prod/$WORKSPACE_DIR'
-	    sh 'mkdir -p ./export-all-contracts-to-efs-prod/$WORKSPACE_DIR'
-          }
-        }
-      } 
-    }
     stage('Bootstrap the process') {
       steps {
         script {
           dir ('examples/bash') {
-            sh 'source ./bootstrap.sh -prod --auth $AUTH --directory ./export-all-contracts-to-efs-prod/$WORKSPACE_DIR'
+            sh 'source ./bootstrap.sh -prod --auth $AUTH --directory .'
           }
         }
       }
