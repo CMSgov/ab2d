@@ -41,13 +41,4 @@ pipeline {
       }
     }    
   }
-  post {
-    always {
-      script {
-        dir('.') {
-          sh 'rm -rf ./export-all-contracts-to-efs-prod/$WORKSPACE_DIR'
-        }
-      }
-    }
-  }
 }
