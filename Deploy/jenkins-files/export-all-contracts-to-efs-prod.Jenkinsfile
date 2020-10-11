@@ -39,18 +39,14 @@ pipeline {
           }
         }
       }
-    }
-    post {
-      always {
-        stage('Delete working directory') {
-	  steps {
-            script {
-              dir('.') {
-                sh 'rm -rf ./export-all-contracts-to-efs-prod/${params.WORKSPACE_DIR}'
-              }
-	    }
-          }
-	}
+    }    
+  }
+  post {
+    always {
+      script {
+        dir('.') {
+          sh 'rm -rf ./export-all-contracts-to-efs-prod/${params.WORKSPACE_DIR}'
+        }
       }
     }
   }
