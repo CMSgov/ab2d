@@ -12546,7 +12546,11 @@
 
 1. Select **Project default Build Authorization**
 
-1. Select "Run as SYSTEM" from the **Strategy** dropdown
+1. *** TO DO ***: Determine correct setting; will the new jenkins server work for all processes?
+
+   - OLD JENKINS SERVER: Select "Run as SYSTEM" from the **Strategy** dropdown
+
+   - NEW JENKINS SERVER: Select "Run as User who Triggered Build" from the **Strategy** dropdown
 
 1. Select **Apply**
 
