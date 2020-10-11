@@ -7,8 +7,8 @@ pipeline {
       steps {
         script {
           dir('.') {
-	    sh 'rm -rf ./export-all-contracts-to-efs-prod/${params.WORKSPACE_DIR}'
-	    sh 'mkdir -p ./export-all-contracts-to-efs-prod/${params.WORKSPACE_DIR}'
+	    sh 'rm -rf ./export-all-contracts-to-efs-prod/$WORKSPACE_DIR'
+	    sh 'mkdir -p ./export-all-contracts-to-efs-prod/$WORKSPACE_DIR'
           }
         }
       } 
@@ -17,7 +17,7 @@ pipeline {
       steps {
         script {
           dir ('examples/bash') {
-            sh 'source ./bootstrap.sh -prod --auth $params.AUTH --directory ./export-all-contracts-to-efs-prod/${params.WORKSPACE_DIR}'
+            sh 'source ./bootstrap.sh -prod --auth $AUTH --directory ./export-all-contracts-to-efs-prod/$WORKSPACE_DIR'
           }
         }
       }
@@ -45,7 +45,7 @@ pipeline {
     always {
       script {
         dir('.') {
-          sh 'rm -rf ./export-all-contracts-to-efs-prod/${params.WORKSPACE_DIR}'
+          sh 'rm -rf ./export-all-contracts-to-efs-prod/$WORKSPACE_DIR'
         }
       }
     }
