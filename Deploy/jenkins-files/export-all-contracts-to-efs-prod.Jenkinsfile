@@ -1,4 +1,7 @@
 pipeline {
+  environment {
+    AUTH_ENV = credentials("${AUTH}")
+  }
   agent {
     label 'deployment'
   }
@@ -8,7 +11,7 @@ pipeline {
         script {
           dir ('examples/bash') {
 	    sh '''
-              source ./bootstrap.sh -prod --auth $params.AUTH --directory .
+              source ./bootstrap.sh -prod --auth $AUTH_ENV --directory .
 	      ./start-job.sh
 	      ./monitor-job.sh
 	    sh '''
