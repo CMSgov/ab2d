@@ -90,9 +90,9 @@ for results_file in files:
         print("\n%s OK") % (results_file)
     total_last_updated += last_updated
     total_bill_start += bill_start
-    total_bill_end = bill_end
-    total_service_start = service_start
-    total_service_end = service_end
+    total_bill_end += bill_end
+    total_service_start += service_start
+    total_service_end += service_end
     ndjson_files_processed_count += 1
 print("\n--------------------------------")
 print("File download and process counts")
