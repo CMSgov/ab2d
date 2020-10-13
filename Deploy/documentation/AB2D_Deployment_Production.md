@@ -997,11 +997,15 @@ lication-load-balancer)
 
 1. Set "AB2D Prod : OKTA Prod : AB2D - Admin : Client ID" from 1Password
 
+   *Format:*
+
    ```ShellSession
    $ OKTA_AB2D_ADMIN_CLIENT_ID={okta ab2d admin client id}
    ```
 
 1. Set "AB2D Prod : OKTA Prod : AB2D - Admin : Client Secret" from 1Password
+
+   *Format:*
 
    ```ShellSession
    $ OKTA_AB2D_ADMIN_CLIENT_SECRET={okta ab2d admin client secret}
@@ -1058,7 +1062,7 @@ lication-load-balancer)
      --form "file=@${FILE}"
    ```
 
-1. Verify that you get a "202" reponse
+1. Verify that you get a "202" response
 
 1. Change to the "Deploy" directory
 
@@ -1072,7 +1076,7 @@ lication-load-balancer)
    $ ./bash/connect-to-node.sh
    ```
 
-1. Get database secerets
+1. Get database secrets
 
    ```ShellSession
    $ export DATABASE_HOST=$(docker exec -it $(docker ps -aqf "name=ecs-worker-*" --filter "status=running") bash -c 'echo "$AB2D_DB_HOST"' | tr -d '\r') \
@@ -1118,15 +1122,29 @@ lication-load-balancer)
 
 1. Select **Claims Data Attestation**
 
-1. Select **Report** from the leftmost panel
+1. Expand the **Reports** node in the leftmost panel
 
-1. Select **Select All Contracts**
+1. Select the **Claims Data Attestation Report** node in the leftmost panel
 
-1. Scroll down to the bottom of the page
+1. Select the following from the **Select Contracts** dropdown
+
+   ```
+   Select All
+   ```
+
+1. Click into a whitespace are of the form to close the dropdown
+
+1. Note that the dropdown should now display the following
+
+   ```
+   All Selected
+   ```
 
 1. Select **Create Report**
 
-1. Select **Download to Excel** at the bottom of the page
+1. Scroll down to the bottom of the page
+
+1. Select **Download to Excel**
 
 1. Wait for the download to complete
 
@@ -1135,7 +1153,7 @@ lication-load-balancer)
    *Example:*
 
    ```
-   Attestation_Report1591039077734.xlsx
+   Attestation_Report10122020_1609.xlsx
    ```
 
 1. Close Excel
@@ -1188,11 +1206,15 @@ lication-load-balancer)
 
 1. Set "AB2D Prod : OKTA Prod : AB2D - Admin : Client ID" from 1Password
 
+   *Format:*
+
    ```ShellSession
    $ OKTA_AB2D_ADMIN_CLIENT_ID={okta ab2d admin client id}
    ```
 
 1. Set "AB2D Prod : OKTA Prod : AB2D - Admin : Client Secret" from 1Password
+
+   *Format:*
 
    ```ShellSession
    $ OKTA_AB2D_ADMIN_CLIENT_SECRET={okta ab2d admin client secret}
@@ -1238,7 +1260,7 @@ lication-load-balancer)
    $ FILE=$(ls Attestation_Report*.xlsx | tr -d '\r')
    ```
 
-1. Upload 2020 Parent Organization and Legal Entity to Contract Report data
+1. Upload the {current year} Attestation Report data
    
    ```ShellSession
    $ curl \
@@ -1249,7 +1271,7 @@ lication-load-balancer)
      --form "file=@${FILE}"
    ```
 
-1. Verify that you get a "202" reponse
+1. Verify that you get a "202" response
 
 1. Change to the "Deploy" directory
 
@@ -1263,7 +1285,7 @@ lication-load-balancer)
    $ ./bash/connect-to-node.sh
    ```
 
-1. Get database secerets
+1. Get database secrets
 
    ```ShellSession
    $ export DATABASE_HOST=$(docker exec -it $(docker ps -aqf "name=ecs-worker-*" --filter "status=running") bash -c 'echo "$AB2D_DB_HOST"' | tr -d '\r') \
