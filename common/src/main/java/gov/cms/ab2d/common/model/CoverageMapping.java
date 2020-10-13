@@ -9,8 +9,8 @@ public class CoverageMapping {
 
     private final Set<String> beneficiaryIds;
 
-    private CoverageSearchEvent coverageSearchEvent;
-    private CoverageSearch coverageSearch;
+    private final CoverageSearchEvent coverageSearchEvent;
+    private final CoverageSearch coverageSearch;
 
     private boolean successful;
 
@@ -31,14 +31,6 @@ public class CoverageMapping {
 
     public int getPeriodId() {
         return coverageSearchEvent.getCoveragePeriod().getId();
-    }
-
-    /**
-     * Set the {@link CoverageSearchEvent} to an in progress search event before triggering the callable for each attempt
-     * @param event event to tie coverage information back to
-     */
-    public void setCoverageSearchEvent(CoverageSearchEvent event) {
-        this.coverageSearchEvent = event;
     }
 
     public void addBeneficiaries(Collection<String> beneficiaries) {

@@ -57,7 +57,7 @@ class CoverageProcessorIntTest {
         coveragePeriodRepo.deleteAll();
     }
 
-    @Disabled
+    @Disabled("Performance test meant to run against the sandbox, do not run as part of CI.")
     @Test
     void integrationTest() {
 
@@ -89,7 +89,7 @@ class CoverageProcessorIntTest {
 
     private void sleep(int seconds) {
         try {
-            Thread.sleep(seconds * 1000);
+            Thread.sleep(seconds * 1000L);
         } catch (InterruptedException ie) {
 
         }

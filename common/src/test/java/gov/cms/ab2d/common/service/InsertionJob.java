@@ -100,7 +100,7 @@ public class InsertionJob implements Callable<CoverageSearchEvent> {
         for (int experiment = 0; experiment < experiments; experiment++) {
 
             Instant start = Instant.now();
-            conductBatchInserts(supplier, period.getId(), inProgress.getId(), dataPoints);
+            conductBatchInserts(supplier, inProgress.getId(), dataPoints);
             Instant end = Instant.now();
 
             // Only wipe data between tests if more than one experiment is being performed
@@ -116,17 +116,16 @@ public class InsertionJob implements Callable<CoverageSearchEvent> {
     /**
      * Insert records in batches until dataPoints records have been inserted
      * @param supplier id supplier giving beneficiary ids
-     * @param periodId period which is foreign key for coverage
      * @param searchEventId search event id which is foreign key for coverage
      * @param dataPoints list of data points to insert
      */
-    private void conductBatchInserts(BeneficiaryIdSupplier supplier, int periodId, long searchEventId, int dataPoints) {
+    private void conductBatchInserts(BeneficiaryIdSupplier supplier, long searchEventId, int dataPoints) {
 
         for (int written = 0; written < dataPoints; written += CHUNK_SIZE) {
             List<String> batch = new ArrayList<>(CHUNK_SIZE);
             IntStream.iterate(0, i -> i + 1).limit(CHUNK_SIZE).forEach(i -> batch.add(supplier.get()));
 
-            coverageService.insertCoverage(periodId, searchEventId, new HashSet<>(batch));
+            coverageService.insertCoverage(searchEventId, new HashSet<>(batch));
         }
     }
 

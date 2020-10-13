@@ -52,13 +52,12 @@ public interface CoverageService {
 
     /**
      * Insert new coverage information for beneficiaries
-     * @param periodId {@link CoveragePeriod#getId()}
      * @param searchEventId {@link CoverageSearchEvent#getId()} for the specific search event being performed.
      * This is used specifically for auditing and gauging the effect of
      * @param beneficiaryIds list of beneficiaries for this coverage period and this specific search event
      * @return relevant
      */
-    CoverageSearchEvent insertCoverage(int periodId, long searchEventId, Set<String> beneficiaryIds);
+    CoverageSearchEvent insertCoverage(long searchEventId, Set<String> beneficiaryIds);
 
     /**
      * Delete all data from previous coverage search conducted for a given {@link CoveragePeriod}.
@@ -91,15 +90,6 @@ public interface CoverageService {
      * @return coverage summary for page of beneficiaries
      */
     List<CoverageSummary> pageCoverage(int pageNumber, int pageSize, Integer... coveragePeriods);
-
-    /**
-     * Find a subset of active beneficiary ids by
-     * @param pageNumber page number in results
-     * @param pageSize number of records per page
-     * @param coveragePeriods coverage periods to filter ids on
-     * @return page of beneficiary ids
-     */
-    List<String> findActiveBeneficiaryIds(int pageNumber, int pageSize, List<Integer> coveragePeriods);
 
     /**
      * Get difference in beneficiary membership between last two searches conducted for a given coverage search
@@ -206,10 +196,4 @@ public interface CoverageService {
      * @throws InvalidJobStateTransition if job is not in the {@link JobStatus#IN_PROGRESS} state when this job is received
      */
     CoverageSearchEvent completeSearch(int periodId, String description);
-
-    /**
-     * Clean pg_visibility table so that query planner uses faster index only scans instead of a sequential
-     * search.
-     */
-    void vacuumCoverage();
 }

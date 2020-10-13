@@ -59,6 +59,9 @@ class PerformanceTestingCoverageOperations {
     private CoverageService coverageService;
 
     @Autowired
+    private CoverageServiceRepository coverageServiceRepo;
+
+    @Autowired
     private DataSetup dataSetup;
 
     @Autowired
@@ -198,7 +201,7 @@ class PerformanceTestingCoverageOperations {
 
         loadDBWithFakeData(dataPoints, periods);
 
-        coverageService.vacuumCoverage();
+        coverageServiceRepo.vacuumCoverage();
 
         System.out.println("Done loading data");
 

@@ -29,6 +29,16 @@ public interface CoverageSearchEventRepository extends JpaRepository<CoverageSea
             nativeQuery = true)
     Optional<CoverageSearchEvent> findSearchEventWithOffset(int periodId, String status, int offset);
 
+    /**
+     * Look for all jobs currently in the provided {@link JobStatus} which have been in that status since
+     * some point in time.
+     *
+     * Basically, if today is Tuesday and a job has been in the status IN_PROGRESS since Sunday, then the job
+     * is "stuck" in its current status.
+     * @param status status to search for
+     * @param since point in time that a job that we are checking status of job against
+     * @return list of {@link CoverageSearchEvent} that are stuck in the provided status
+     */
     @Query(value = "SELECT * FROM ( " +
             "                  SELECT DISTINCT ON (cov_event.bene_coverage_period_id) cov_event.* " +
             "                  FROM event_bene_coverage_search_status_change cov_event " +

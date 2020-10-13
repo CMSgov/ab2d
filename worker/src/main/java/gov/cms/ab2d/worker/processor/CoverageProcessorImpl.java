@@ -101,7 +101,8 @@ public class CoverageProcessorImpl implements CoverageProcessor {
             int year = pastMonthTime.getDayOfYear();
 
             // Look for coverage periods that have not been updated
-            OffsetDateTime lastUpdatedAfter = dateTime.minusDays(config.getStaleDays() * (monthsInPast + 1));
+            long daysInPast = config.getStaleDays() * (monthsInPast + 1);
+            OffsetDateTime lastUpdatedAfter = dateTime.minusDays(daysInPast);
 
             stalePeriods.addAll(coverageService.coveragePeriodNotUpdatedSince(month, year, lastUpdatedAfter));
             monthsInPast++;
@@ -268,7 +269,7 @@ public class CoverageProcessorImpl implements CoverageProcessor {
                 log.debug("inserting coverage mapping for contract {} during {}-{}",
                         contractNumber, month, year);
 
-                coverageService.insertCoverage(periodId, eventId, result.getBeneficiaryIds());
+                coverageService.insertCoverage(eventId, result.getBeneficiaryIds());
 
                 coverageService.completeSearch(periodId, "successfully inserted all data for in progress search");
             } else {
