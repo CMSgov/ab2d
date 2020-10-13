@@ -72,7 +72,7 @@ services:
       # Limit RAM usage of each container because containers share a VM
       - JVM_INITIAL_RAM=${JVM_INITIAL_RAM:-5.0}
       - JVM_MIN_RAM=${JVM_MIN_RAM:-5.0}
-      - JVM_MAX_RAM=${JVM_MAX_RAM:-10.0}
+      - JVM_MAX_RAM=${JVM_MAX_RAM:-15.0}
       # DB credentials
       - AB2D_DB_HOST=db
       - AB2D_DB_PORT=5432
