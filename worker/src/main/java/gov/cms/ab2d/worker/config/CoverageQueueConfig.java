@@ -20,6 +20,7 @@ public class CoverageQueueConfig {
         taskExecutor.setCorePoolSize(corePoolSize);
         taskExecutor.setMaxPoolSize(maxPoolSize);
         taskExecutor.setThreadNamePrefix("coveragep-");
+        taskExecutor.initialize();
         return taskExecutor;
     }
 

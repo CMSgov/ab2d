@@ -66,6 +66,9 @@ class CoverageProcessorImplTest {
     @Autowired
     private ContractSearchLock searchLock;
 
+    @Autowired
+    private CoverageProcessorImpl runningProcessor;
+
     private Sponsor sponsor;
     private Contract contract;
     private CoveragePeriod january;
@@ -74,11 +77,13 @@ class CoverageProcessorImplTest {
 
     private BFDClient bfdClient;
 
-    private ThreadPoolTaskExecutor taskExecutor;
     private CoverageProcessorImpl processor;
 
     @BeforeEach
     void before() {
+
+        // Hack to shut down running service so that we can run coverage processor with much more predictable behavior
+        runningProcessor.shutdown();
 
         sponsor = dataSetup.createSponsor("Cal Ripken", 200, "Cal Ripken Jr.", 201);
         contract = dataSetup.setupContract(sponsor, "TST-123");
@@ -89,7 +94,7 @@ class CoverageProcessorImplTest {
 
         bfdClient = mock(BFDClient.class);
 
-        taskExecutor = new ThreadPoolTaskExecutor();
+        ThreadPoolTaskExecutor taskExecutor = new ThreadPoolTaskExecutor();
         taskExecutor.setMaxPoolSize(6);
         taskExecutor.setCorePoolSize(3);
         taskExecutor.initialize();
