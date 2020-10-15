@@ -11,9 +11,7 @@ import gov.cms.ab2d.eventlogger.eventloggers.sql.SqlEventLogger;
 import gov.cms.ab2d.eventlogger.reports.sql.DoSummary;
 import org.apache.commons.io.IOUtils;
 import org.junit.Assert;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -112,6 +110,8 @@ public class JobServiceTest {
         jobService = new JobServiceImpl(userService, jobRepository, contractRepository, jobOutputService, logManager, doSummary);
         ReflectionTestUtils.setField(jobService, "fileDownloadPath", tmpJobLocation);
 
+        // todo: very bizarre behavior happens if these are moved to an @AfterEach method instead.  Doing deleteAll()
+        // in a setup method is definitely a code smell.
         jobRepository.deleteAll();
         contractRepository.deleteAll();
         userRepository.deleteAll();
@@ -181,6 +181,20 @@ public class JobServiceTest {
     }
 
     @Test
+    public void createJobWithSpecificContractNoAttestation() {
+        dataSetup.setupContractWithNoAttestation(List.of());
+        Assertions.assertThrows(InvalidContractException.class,
+                () -> jobService.createJob(EOB, LOCAL_HOST, DataSetup.VALID_CONTRACT_NUMBER, NDJSON_FIRE_CONTENT_TYPE, null));
+    }
+
+    @Test
+    public void createJobWithAllContractsNoAttestation() {
+        dataSetup.setupContractWithNoAttestation(List.of());
+        Assertions.assertThrows(InvalidContractException.class,
+                () -> jobService.createJob(EOB, LOCAL_HOST, null, NDJSON_FIRE_CONTENT_TYPE, null));
+    }
+
+    @Test
     public void failedValidation() {
         Assertions.assertThrows(TransactionSystemException.class,
                 () -> jobService.createJob("Patient,ExplanationOfBenefit,Coverage", LOCAL_HOST,
@@ -247,8 +261,9 @@ public class JobServiceTest {
         Role role = roleService.findRoleByName(ADMIN_ROLE);
         user.addRole(role);
 
-        Sponsor sponsor = dataSetup.createSponsor("Parent Corp. #2", 12345, "Test #2", 6789);
-
+        Sponsor sponsor = buildSecondSponsor();
+        Contract contract = dataSetup.setupContract(sponsor, "Y0000");
+        sponsor.setContracts(Set.of(contract));
         user.setSponsor(sponsor);
 
         userRepository.saveAndFlush(user);
@@ -402,7 +417,7 @@ public class JobServiceTest {
         user.setUsername("BadUser");
         user.setEnabled(true);
 
-        Sponsor savedSponsor = dataSetup.createSponsor("Parent Corp. #2", 12345, "Test #2", 6789);
+        Sponsor savedSponsor = buildSecondSponsor();
 
         dataSetup.setupContract(savedSponsor, "New Contract");
 
@@ -419,6 +434,10 @@ public class JobServiceTest {
                 () -> jobService.getResourceForJob(job.getJobUuid(), testFile));
 
         Assert.assertEquals(exceptionThrown.getMessage(), "Unauthorized");
+    }
+
+    private Sponsor buildSecondSponsor() {
+        return dataSetup.createSponsor("Parent Corp. #2", 12345, "Test #2", 6789);
     }
 
     private void createNDJSONFile(String file, String destinationStr) throws IOException {
