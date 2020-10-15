@@ -57,10 +57,6 @@ public class AdminAPI {
     private ExcelReportProcessor orgStructureReportProcessor;
 
     @Autowired
-    @Qualifier("attestationReportProcessor")
-    private ExcelReportProcessor attestationReportProcessor;
-
-    @Autowired
     private CacheService cacheService;
 
     @Autowired
@@ -93,27 +89,6 @@ public class AdminAPI {
         eventLogger.log(new ApiResponseEvent(MDC.get(USERNAME), null,
                 HttpStatus.ACCEPTED,
                 "UploadOrgStructureReport Success",
-                success,
-                (String) request.getAttribute(REQUEST_ID)));
-        return new ResponseEntity<>(null, null,
-                HttpStatus.ACCEPTED);
-    }
-
-    @ResponseStatus(value = HttpStatus.ACCEPTED)
-    @PostMapping("/uploadAttestationReport")
-    public ResponseEntity<Void> uploadAttestationReport(HttpServletRequest request, @RequestParam("file") MultipartFile attestationFile) throws IOException {
-        MDC.put(FILE_LOG, attestationFile.getOriginalFilename());
-        log.info("Request submitted to upload attestation report");
-
-        attestationReportProcessor.processReport(attestationFile.getOriginalFilename(),
-                attestationFile.getInputStream(), ExcelType.fromFileType(attestationFile.getOriginalFilename()));
-
-        String success = "Attestation report successfully uploaded";
-        log.info(success);
-
-        eventLogger.log(new ApiResponseEvent(MDC.get(USERNAME), null,
-                HttpStatus.ACCEPTED,
-                "uploadAttestationReport Success",
                 success,
                 (String) request.getAttribute(REQUEST_ID)));
         return new ResponseEntity<>(null, null,
