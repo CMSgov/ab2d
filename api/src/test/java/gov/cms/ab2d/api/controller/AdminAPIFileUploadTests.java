@@ -120,48 +120,6 @@ public class AdminAPIFileUploadTests {
         ));
     }
 
-    @Test
-    public void testUploadAttestationFile() throws Exception {
-        createData("S1234", "Med Contract", "Ins. Co.", 789);
-        createData("S5660", "MEDCO CONTAINMENT LIFE AND MEDCO CONTAINMENT NY", "Ins. Co. 1", 321);
-        createData("S5617", "CIGNA HEALTH AND LIFE INSURANCE COMPANY", "Ins. Co. 2", 456);
-
-        // Simple test to test API, more detailed test is found in service test
-        String fileName = "Attestation_Report_Sample.xlsx";
-        InputStream inputStream = this.getClass().getResourceAsStream("/" + fileName);
-
-        MockMultipartFile mockMultipartFile = new MockMultipartFile("file", fileName, "application/vnd.ms-excel", inputStream);
-        this.mockMvc.perform(MockMvcRequestBuilders.multipart(API_PREFIX + ADMIN_PREFIX + "/uploadAttestationReport")
-                .file(mockMultipartFile).contentType(MediaType.MULTIPART_FORM_DATA)
-                .header("Authorization", "Bearer " + token))
-                .andExpect(status().is(202));
-
-        List<LoggableEvent> apiReqEvents = doAll.load(ApiRequestEvent.class);
-        assertEquals(1, apiReqEvents.size());
-        ApiRequestEvent requestEvent = (ApiRequestEvent) apiReqEvents.get(0);
-
-        List<LoggableEvent> apiResEvents = doAll.load(ApiResponseEvent.class);
-        assertEquals(1, apiResEvents.size());
-        ApiResponseEvent responseEvent = (ApiResponseEvent) apiResEvents.get(0);
-
-        List<LoggableEvent> reloadEvents = doAll.load(ReloadEvent.class);
-        assertEquals(1, reloadEvents.size());
-        ReloadEvent reloadEvent = (ReloadEvent) reloadEvents.get(0);
-        assertEquals(ReloadEvent.FileType.ATTESTATION_REPORT, reloadEvent.getFileType());
-        assertEquals(fileName, reloadEvent.getFileName());
-
-        assertTrue(reloadEvent.getTimeOfEvent().isAfter(requestEvent.getTimeOfEvent()));
-        assertTrue(responseEvent.getTimeOfEvent().isAfter(reloadEvent.getTimeOfEvent()));
-
-        assertTrue(UtilMethods.allEmpty(
-                doAll.load(ContractBeneSearchEvent.class),
-                doAll.load(ErrorEvent.class),
-                doAll.load(FileEvent.class),
-                doAll.load(JobStatusChangeEvent.class)
-        ));
-
-    }
-
     // There has to be an existing contract in order for this report to be able to process data
     private void createData(String contractId, String contractName, String sponsorName, int hpmsId) {
         Contract contract = new Contract();
