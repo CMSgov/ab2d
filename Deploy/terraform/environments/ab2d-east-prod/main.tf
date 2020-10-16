@@ -19,11 +19,16 @@ module "iam" {
   ab2d_s3_optout_bucket   = var.ab2d_s3_optout_bucket
 }
 
+data "aws_iam_role" "ab2d_instance_role_name" {
+  name = "Ab2dInstanceV2Role"
+  path = "/delegatedadmin/developer/"
+}
+
 module "kms" {
   source                  = "../../modules/kms"
   aws_account_number      = var.aws_account_number
   env                     = var.env
-  ab2d_instance_role_name = module.iam.ab2d_instance_role_name
+  ab2d_instance_role_name = data.aws_iam_role.ab2d_instance_role_name
 }
 
 module "static_website" {
@@ -292,6 +297,7 @@ module "kinesis_firehose" {
 
 module "management_target" {
   source                  = "../../modules/management_target"
+  env                     = var.env
   mgmt_aws_account_number = var.mgmt_aws_account_number
   aws_account_number      = var.aws_account_number
 }
