@@ -6,6 +6,7 @@ SELECT
   'N/A' AS "End Date",
   concat(e.first_name, ' ', e.last_name) AS "Attesting User",
   e.username,
+  e.email,
   e.enabled,
   e.sponsor_id
 FROM public.sponsor a
