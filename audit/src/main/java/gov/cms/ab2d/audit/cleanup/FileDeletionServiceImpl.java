@@ -1,6 +1,7 @@
 package gov.cms.ab2d.audit.cleanup;
 
 import gov.cms.ab2d.common.model.Job;
+import gov.cms.ab2d.common.model.JobStatus;
 import gov.cms.ab2d.common.service.JobService;
 import gov.cms.ab2d.common.service.ResourceNotFoundException;
 import gov.cms.ab2d.common.util.EventUtils;
@@ -82,31 +83,40 @@ public class FileDeletionServiceImpl implements FileDeletionService {
         }
     }
 
-    private void deleteEmptyDirectories(List<Path> emptyDirectories) throws IOException {
+    void deleteEmptyDirectories(List<Path> emptyDirectories) {
         for (Path directory : emptyDirectories) {
-            if (isEmptyDirectory(directory) && isExpiredDirectory(directory)) {
-                Files.delete(directory);
+            try {
+                if (isEmptyDirectory(directory) && isExpiredDirectory(directory)) {
+                    Files.delete(directory);
 
-                // Log deleting a folder
-                var jobUuid = new File(directory.toUri()).getName();
-                log.info("delete directory {} for job {}", directory.toUri().toString(), jobUuid);
-            } else {
-                logFolderNotEligibleForDeletion(directory);
+                    // Log deleting a folder
+                    var jobUuid = new File(directory.toUri()).getName();
+                    log.info("delete directory {} for job {}", directory.toUri().toString(), jobUuid);
+                } else {
+                    logFolderNotEligibleForDeletion(directory);
+                }
+            } catch (Exception exception) {
+                log.error("failed to delete or process a directory {}", directory.toUri().toString(), exception);
             }
         }
     }
 
-    private void deleteExpiredJobFiles(List<Path> validFiles) {
+    void deleteExpiredJobFiles(List<Path> validFiles) {
         // The list of jobs that were expired
         Set<String> jobsDeleted = new HashSet<>();
         for (Path file : validFiles) {
-            // Get the JobId from the name
-            var jobUuid = getJobFromFile(file);
-            // See if the file should be deleted
-            boolean deleted = deleteFile(file);
-            if (deleted) {
-                // If it was deleted
-                jobsDeleted.add(jobUuid);
+
+            try {
+                // Get the JobId from the name
+                var jobUuid = getJobFromFile(file);
+                // See if the file should be deleted
+                boolean deleted = deleteFile(file);
+                if (deleted) {
+                    // If it was deleted add it to the list of jobs with deleted files
+                    jobsDeleted.add(jobUuid);
+                }
+            } catch (Exception exception) {
+                log.error("failed to delete or process a regular file {}", file.toUri().toString(), exception);
             }
         }
         for (String job : jobsDeleted) {
@@ -254,16 +264,26 @@ public class FileDeletionServiceImpl implements FileDeletionService {
         return path.toString().endsWith(FILE_EXTENSION.toLowerCase());
     }
 
-
     private Instant getDeleteCheckTime(Path path, Job job)  throws IOException {
-        Instant deleteCheckTime = null;
-        if (job != null && job.getStatus().isFinished()) {
-            deleteCheckTime = job.getCompletedAt().toInstant();
-        } else if (job == null) {
+
+        if (job == null) {
             FileTime creationTime = (FileTime) Files.getAttribute(path, "creationTime");
-            deleteCheckTime = creationTime.toInstant();
+            return creationTime.toInstant();
         }
-        return deleteCheckTime;
+
+        if (!job.getStatus().isFinished()) {
+            return null;
+        }
+
+        JobStatus status = job.getStatus();
+
+        // If job status is cancelled then force deletion of folder immediately
+        // because any data present will be removed
+        if (status == JobStatus.CANCELLED || status == JobStatus.FAILED) {
+            return Instant.now().minus(2L * auditFilesTTLHours, ChronoUnit.HOURS);
+        }
+
+        return job.getCompletedAt().toInstant();
     }
 
     private void logFileNotEligibleForDeletion(Path path) {

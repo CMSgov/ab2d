@@ -105,6 +105,8 @@ class FileDeletionServiceTest {
     private Job job;
     private Job jobInProgress;
     private Job jobNotExpiredYet;
+    private Job jobCancelled;
+    private Job jobFailed;
     private String efsMount;
 
     private List<Path> pathsToDelete;
@@ -141,6 +143,20 @@ class FileDeletionServiceTest {
         jobNotExpiredYet.setCompletedAt(OffsetDateTime.now().minusHours(5));
         jobNotExpiredYet.setExpiresAt(OffsetDateTime.now().plusHours(19));
         jobNotExpiredYet.setUser(user);
+
+        jobCancelled = new Job();
+        jobCancelled.setStatus(JobStatus.CANCELLED);
+        jobCancelled.setJobUuid(UUID.randomUUID().toString());
+        jobCancelled.setCreatedAt(OffsetDateTime.now().minusHours(1));
+        jobCancelled.setUser(user);
+        jobService.updateJob(jobCancelled);
+
+        jobFailed = new Job();
+        jobFailed.setStatus(JobStatus.FAILED);
+        jobFailed.setJobUuid(UUID.randomUUID().toString());
+        jobFailed.setCreatedAt(OffsetDateTime.now().minusHours(1));
+        jobFailed.setUser(user);
+        jobService.updateJob(jobFailed);
 
         efsMount = tmpDirFolder.toPath().toString();
         ReflectionTestUtils.setField(fileDeletionService, "efsMount", efsMount);
@@ -319,11 +335,67 @@ class FileDeletionServiceTest {
         checkNoOtherEventsLogged();
     }
 
-    @DisplayName("Delete job files after they have expired")
+    @DisplayName("Delete job files for successful jobs after they have expired")
     @Test
     void deleteCompletedAndExpiredJobFiles() throws IOException, URISyntaxException {
 
         Path jobPath = Paths.get(efsMount, job.getJobUuid());
+        File jobDir = new File(jobPath.toString());
+        if (!jobDir.exists()) jobDir.mkdirs();
+        pathsToDelete.add(jobPath);
+
+        Path destinationJobConnection = Paths.get(jobPath.toString(), "S0000_0001.ndjson");
+        URL urlJobConnection = this.getClass().getResource("/" + TEST_FILE);
+        Path sourceJobConnection = Paths.get(urlJobConnection.toURI());
+        Files.copy(sourceJobConnection, destinationJobConnection, StandardCopyOption.REPLACE_EXISTING);
+
+        changeFileCreationDate(destinationJobConnection);
+
+        fileDeletionService.deleteFiles();
+
+        assertTrue(Files.notExists(jobPath));
+        assertTrue(Files.notExists(destinationJobConnection));
+
+        List<LoggableEvent> fileEvents = doAll.load(FileEvent.class);
+        FileEvent e1 = (FileEvent) fileEvents.get(0);
+        assertTrue(e1.getFileName().equalsIgnoreCase(destinationJobConnection.toString()));
+
+        checkNoOtherEventsLogged();
+    }
+
+    @DisplayName("Delete job files for cancelled jobs immediately")
+    @Test
+    void deleteCancelledAndExpiredJobFiles() throws IOException, URISyntaxException {
+
+        Path jobPath = Paths.get(efsMount, jobCancelled.getJobUuid());
+        File jobDir = new File(jobPath.toString());
+        if (!jobDir.exists()) jobDir.mkdirs();
+        pathsToDelete.add(jobPath);
+
+        Path destinationJobConnection = Paths.get(jobPath.toString(), "S0000_0001.ndjson");
+        URL urlJobConnection = this.getClass().getResource("/" + TEST_FILE);
+        Path sourceJobConnection = Paths.get(urlJobConnection.toURI());
+        Files.copy(sourceJobConnection, destinationJobConnection, StandardCopyOption.REPLACE_EXISTING);
+
+        changeFileCreationDate(destinationJobConnection);
+
+        fileDeletionService.deleteFiles();
+
+        assertTrue(Files.notExists(jobPath));
+        assertTrue(Files.notExists(destinationJobConnection));
+
+        List<LoggableEvent> fileEvents = doAll.load(FileEvent.class);
+        FileEvent e1 = (FileEvent) fileEvents.get(0);
+        assertTrue(e1.getFileName().equalsIgnoreCase(destinationJobConnection.toString()));
+
+        checkNoOtherEventsLogged();
+    }
+
+    @DisplayName("Delete job files for failed jobs immediately")
+    @Test
+    void deleteFailedAndExpiredJobFiles() throws IOException, URISyntaxException {
+
+        Path jobPath = Paths.get(efsMount, jobFailed.getJobUuid());
         File jobDir = new File(jobPath.toString());
         if (!jobDir.exists()) jobDir.mkdirs();
         pathsToDelete.add(jobPath);
@@ -380,6 +452,16 @@ class FileDeletionServiceTest {
         assertTrue(Files.exists(jobInProgressPath));
 
         checkNoOtherEventsLogged();
+    }
+
+    private void checkNoOtherEventsLogged() {
+        assertTrue(UtilMethods.allEmpty(
+                doAll.load(ApiRequestEvent.class),
+                doAll.load(ApiResponseEvent.class),
+                doAll.load(ReloadEvent.class),
+                doAll.load(ContractBeneSearchEvent.class),
+                doAll.load(ErrorEvent.class),
+                doAll.load(JobStatusChangeEvent.class)));
     }
 
     @DisplayName("Ignore recently completed job files")
@@ -443,15 +525,5 @@ class FileDeletionServiceTest {
 
         // Confirm no exceptions thrown
         fileDeletionService.deleteFiles();
-    }
-
-    private void checkNoOtherEventsLogged() {
-        assertTrue(UtilMethods.allEmpty(
-                doAll.load(ApiRequestEvent.class),
-                doAll.load(ApiResponseEvent.class),
-                doAll.load(ReloadEvent.class),
-                doAll.load(ContractBeneSearchEvent.class),
-                doAll.load(ErrorEvent.class),
-                doAll.load(JobStatusChangeEvent.class)));
     }
 }
