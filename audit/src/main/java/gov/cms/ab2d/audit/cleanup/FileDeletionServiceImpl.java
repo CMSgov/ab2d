@@ -24,7 +24,6 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Slf4j
@@ -65,6 +64,8 @@ public class FileDeletionServiceImpl implements FileDeletionService {
             List<Path> validFiles = new ArrayList<>();
             List<Path> directories = new ArrayList<>();
 
+            // Split into regular files
+            // and writable directories
             filePaths.forEach(path -> {
                 if (Files.isRegularFile(path)) {
                     validFiles.add(path);
@@ -85,6 +86,10 @@ public class FileDeletionServiceImpl implements FileDeletionService {
         for (Path directory : emptyDirectories) {
             if (isEmptyDirectory(directory) && isExpiredDirectory(directory)) {
                 Files.delete(directory);
+
+                // Log deleting a folder
+                var jobUuid = new File(directory.toUri()).getName();
+                log.info("delete directory {} for job {}", directory.toUri().toString(), jobUuid);
             } else {
                 logFolderNotEligibleForDeletion(directory);
             }
@@ -113,13 +118,26 @@ public class FileDeletionServiceImpl implements FileDeletionService {
         return new File(file.toUri()).getParentFile().getName();
     }
 
+    /**
+     * Check whether directory contains any files
+     * @param directory directory to check which must exist
+     * @return true if a file is found in directory
+     * @throws IOException on failure to read directory
+     */
     private boolean isEmptyDirectory(Path directory) throws IOException {
         // Lazily look for first child
-        try(Stream<Path> children =  Files.list(directory)) {
+        try (Stream<Path> children =  Files.list(directory)) {
             return children.findAny().isEmpty();
         }
     }
 
+    /**
+     * Check whether a directory is associated with a job, if the directory is check that the job has completed more
+     * than x hours ago.
+     * @param directory directory to check
+     * @return true if directory belongs to a job that has finished long enough ago
+     * @throws IOException should not throw ever because getDeleteCheckTime does not hit edge case
+     */
     private boolean isExpiredDirectory(Path directory) throws IOException {
         var jobUuid = new File(directory.toUri()).getName();
         var job = findJob(jobUuid, directory);
@@ -128,6 +146,7 @@ public class FileDeletionServiceImpl implements FileDeletionService {
             return false;
         }
 
+        // Does not throw IO Exception because else clause is never hit
         Instant deletedAt = getDeleteCheckTime(directory, job);
         if (deletedAt == null) {
             return false;
