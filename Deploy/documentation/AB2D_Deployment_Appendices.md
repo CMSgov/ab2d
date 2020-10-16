@@ -146,6 +146,7 @@
 1. [Appendix WWW: Whitelist IP addresses in Akamai for Prod](#whitelist-ip-addresses-in-akamai-for-prod)
 1. [Appendix XXX: Fix CloudTamer scripts broken by ITOPS role change](#appendix-xxx-fix-cloudtamer-scripts-broken-by-itops-role-change)
 1. [Appendix YYY: Add IAM components under the new ITOPS restrictions](#appendix-yyy-add-iam-components-under-the-new-itops-restrictions)
+1. [Appendix ZZZ: Revert your branch to a previous commit and force push to GitHub](#appendix-zzz-revert-your-branch-to-a-previous-commit-and-force-push-to-github)
 
 ## Appendix A: Access the CMS AWS console
 
@@ -12538,4 +12539,22 @@ $ sed -i "" 's%cms-ab2d[\/]prod%cms-ab2d/dev%g' _includes/head.html
    $ AB2D_TEST_POLICY_ARN=$(aws --region us-east-1 iam list-policies \
      --query 'Policies[?PolicyName==`Ab2dTestPolicy`].{ARN:Arn}' \
      --output text)
+   ```
+
+## Appendix ZZZ: Revert your branch to a previous commit and force push to GitHub
+
+1. Ensure you stash or commit any changes in your branch
+
+1. Do a hard reset to the desired commit number
+
+   *Format:*
+
+   ```ShellSession
+   $ git reset --hard {desired commit number}
+   ```
+
+1. Do a force push to GitHub
+
+   ```ShellSession
+   $ git push --force
    ```
