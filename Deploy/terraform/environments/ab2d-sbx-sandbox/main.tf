@@ -21,15 +21,14 @@ module "iam" {
 
 data "aws_iam_role" "ab2d_instance_role_name" {
   name = "Ab2dInstanceV2Role"
-  path = "/delegatedadmin/developer/"
 }
 
-module "kms" {
-  source                  = "../../modules/kms"
-  aws_account_number      = var.aws_account_number
-  env                     = var.env
-  ab2d_instance_role_name = data.aws_iam_role.ab2d_instance_role_name
-}
+# module "kms" {
+#   source                  = "../../modules/kms"
+#   aws_account_number      = var.aws_account_number
+#   env                     = var.env
+#   ab2d_instance_role_name = data.aws_iam_role.ab2d_instance_role_name.id
+# }
 
 data "aws_kms_key" "ab2d_kms" {
   key_id = "alias/ab2d-kms"

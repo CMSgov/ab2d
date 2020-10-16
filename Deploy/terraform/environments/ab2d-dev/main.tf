@@ -21,7 +21,6 @@ module "iam" {
 
 data "aws_iam_role" "ab2d_instance_role_name" {
   name = "Ab2dInstanceV2Role"
-  path = "/delegatedadmin/developer/"
 }
 
 module "kms" {
