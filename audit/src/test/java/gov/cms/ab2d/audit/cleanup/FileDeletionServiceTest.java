@@ -156,13 +156,7 @@ public class FileDeletionServiceTest {
         FileEvent e1 = (FileEvent) fileEvents.get(0);
         assertTrue(e1.getFileName().equalsIgnoreCase(destination.toString()));
 
-        assertTrue(UtilMethods.allEmpty(
-                doAll.load(ApiRequestEvent.class),
-                doAll.load(ApiResponseEvent.class),
-                doAll.load(ReloadEvent.class),
-                doAll.load(ContractBeneSearchEvent.class),
-                doAll.load(ErrorEvent.class),
-                doAll.load(JobStatusChangeEvent.class)));
+        checkNoOtherEventsLogged();
     }
 
     @DisplayName("Ignore unrelated ndjson file that was just created")
@@ -180,13 +174,7 @@ public class FileDeletionServiceTest {
 
         Files.delete(destinationNotDeleted);
 
-        assertTrue(UtilMethods.allEmpty(
-                doAll.load(ApiRequestEvent.class),
-                doAll.load(ApiResponseEvent.class),
-                doAll.load(ReloadEvent.class),
-                doAll.load(ContractBeneSearchEvent.class),
-                doAll.load(ErrorEvent.class),
-                doAll.load(JobStatusChangeEvent.class)));
+        checkNoOtherEventsLogged();
     }
 
     @DisplayName("Delete nested ndjson file not attached to a job")
@@ -215,13 +203,7 @@ public class FileDeletionServiceTest {
 
         FileSystemUtils.deleteRecursively(dir);
 
-        assertTrue(UtilMethods.allEmpty(
-                doAll.load(ApiRequestEvent.class),
-                doAll.load(ApiResponseEvent.class),
-                doAll.load(ReloadEvent.class),
-                doAll.load(ContractBeneSearchEvent.class),
-                doAll.load(ErrorEvent.class),
-                doAll.load(JobStatusChangeEvent.class)));
+        checkNoOtherEventsLogged();
     }
 
     @DisplayName("Ignore regular files without ndjson extension")
@@ -241,13 +223,7 @@ public class FileDeletionServiceTest {
 
         Files.delete(regularFileDestination);
 
-        assertTrue(UtilMethods.allEmpty(
-                doAll.load(ApiRequestEvent.class),
-                doAll.load(ApiResponseEvent.class),
-                doAll.load(ReloadEvent.class),
-                doAll.load(ContractBeneSearchEvent.class),
-                doAll.load(ErrorEvent.class),
-                doAll.load(JobStatusChangeEvent.class)));
+        checkNoOtherEventsLogged();
     }
 
     @DisplayName("Ignore directory if no permissions")
@@ -274,19 +250,11 @@ public class FileDeletionServiceTest {
         noPermissionsDir.setWritable(true);
         FileSystemUtils.deleteRecursively(noPermissionsDir);
 
-        assertTrue(UtilMethods.allEmpty(
-                doAll.load(ApiRequestEvent.class),
-                doAll.load(ApiResponseEvent.class),
-                doAll.load(ReloadEvent.class),
-                doAll.load(ContractBeneSearchEvent.class),
-                doAll.load(ErrorEvent.class),
-                doAll.load(JobStatusChangeEvent.class)));
+        checkNoOtherEventsLogged();
     }
 
     @Test
     void deleteCompletedAndExpiredJobFiles() throws IOException, URISyntaxException {
-        String efsMount = tmpDirFolder.toPath().toString();
-        ReflectionTestUtils.setField(fileDeletionService, "efsMount", efsMount);
 
         Path jobPath = Paths.get(efsMount, job.getJobUuid());
         File jobDir = new File(jobPath.toString());
@@ -306,13 +274,7 @@ public class FileDeletionServiceTest {
         FileEvent e1 = (FileEvent) fileEvents.get(0);
         assertTrue(e1.getFileName().equalsIgnoreCase(destinationJobConnection.toString()));
 
-        assertTrue(UtilMethods.allEmpty(
-                doAll.load(ApiRequestEvent.class),
-                doAll.load(ApiResponseEvent.class),
-                doAll.load(ReloadEvent.class),
-                doAll.load(ContractBeneSearchEvent.class),
-                doAll.load(ErrorEvent.class),
-                doAll.load(JobStatusChangeEvent.class)));
+        checkNoOtherEventsLogged();
     }
 
     @DisplayName("Ignore in progress job files")
@@ -329,13 +291,7 @@ public class FileDeletionServiceTest {
 
         assertTrue(Files.exists(destinationJobInProgressConnection));
 
-        assertTrue(UtilMethods.allEmpty(
-                doAll.load(ApiRequestEvent.class),
-                doAll.load(ApiResponseEvent.class),
-                doAll.load(ReloadEvent.class),
-                doAll.load(ContractBeneSearchEvent.class),
-                doAll.load(ErrorEvent.class),
-                doAll.load(JobStatusChangeEvent.class)));
+        checkNoOtherEventsLogged();
 
         Files.delete(destinationJobInProgressConnection);
     }
@@ -357,6 +313,18 @@ public class FileDeletionServiceTest {
 
         assertTrue(Files.exists(destinationJobNotExpiredYetConnection));
     }
+//
+//    @DisplayName("Delete all empty directories")
+//    @Test
+//    void deleteAllExpiredEmptyDirectories() throws IOException, URISyntaxException {
+//        Path jobPath = Paths.get(efsMount, job.getJobUuid());
+//        File jobDir = new File(jobPath.toString());
+//        if (!jobDir.exists()) jobDir.mkdirs();
+//
+//        changeFileCreationDate(jobPath);
+//
+//        fileDeletionService.deleteFiles();
+//    }
 
     @Test
     public void testEFSMountSlash() {
@@ -400,5 +368,15 @@ public class FileDeletionServiceTest {
         var exceptionThrown = assertThrows(EFSMountFormatException.class, () ->
                 fileDeletionService.deleteFiles());
         assertThat(exceptionThrown.getMessage(), is("EFS mount must be at least 5 characters"));
+    }
+
+    private void checkNoOtherEventsLogged() {
+        assertTrue(UtilMethods.allEmpty(
+                doAll.load(ApiRequestEvent.class),
+                doAll.load(ApiResponseEvent.class),
+                doAll.load(ReloadEvent.class),
+                doAll.load(ContractBeneSearchEvent.class),
+                doAll.load(ErrorEvent.class),
+                doAll.load(JobStatusChangeEvent.class)));
     }
 }

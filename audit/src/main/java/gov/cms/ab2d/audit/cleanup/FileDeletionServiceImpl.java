@@ -20,6 +20,7 @@ import java.nio.file.Paths;
 import java.nio.file.attribute.FileTime;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -42,7 +43,7 @@ public class FileDeletionServiceImpl implements FileDeletionService {
 
     private static final String FILE_EXTENSION = ".ndjson";
 
-    private static Set<String> disallowedDirectories = Set.of("/bin", "/boot", "/dev", "/etc", "/home", "/lib",
+    private static final Set<String> DISALLOWED_DIRECTORIES = Set.of("/bin", "/boot", "/dev", "/etc", "/home", "/lib",
             "/opt", "/root", "/sbin", "/sys", "/usr", "/Applications", "/Library", "/Network", "/System", "/Users", "/Volumes");
 
     public FileDeletionServiceImpl(JobService jobService, LogManager eventLogger, DoSummary doSummary) {
@@ -60,25 +61,80 @@ public class FileDeletionServiceImpl implements FileDeletionService {
         validateEfsMount();
 
         try (Stream<Path> filePaths = Files.walk(Paths.get(efsMount), FileVisitOption.FOLLOW_LINKS)) {
-            List<Path> validFiles = filePaths.filter(Files::isRegularFile).collect(Collectors.toList());
-            // The list of jobs that were expired
-            Set<String> jobsDeleted = new HashSet<>();
-            for (Path file : validFiles) {
-                // Get the JobId from the name
-                var jobUuid = new File(file.toUri()).getParentFile().getName();
-                // See if the file should be deleted
-                boolean deleted = deleteFile(file);
-                if (deleted) {
-                    // If it was deleted
-                    jobsDeleted.add(jobUuid);
+
+            List<Path> validFiles = new ArrayList<>();
+            List<Path> directories = new ArrayList<>();
+
+            filePaths.forEach(path -> {
+                if (Files.isRegularFile(path)) {
+                    validFiles.add(path);
+                } else if (Files.isDirectory(path) && Files.isWritable(path)) {
+                    directories.add(path);
                 }
-            }
-            for (String job : jobsDeleted) {
-                eventLogger.log(LogManager.LogType.KINESIS, doSummary.getSummary(job));
-            }
+            });
+
+            deleteExpiredJobFiles(validFiles);
+            deleteEmptyDirectories(directories);
+
         } catch (IOException e) {
             log.error("Encountered exception while trying to gather the list of files to delete", e);
         }
+    }
+
+    private void deleteEmptyDirectories(List<Path> emptyDirectories) throws IOException {
+        for (Path directory : emptyDirectories) {
+            if (isEmptyDirectory(directory) && isExpiredDirectory(directory)) {
+                Files.delete(directory);
+            } else {
+                logFolderNotEligibleForDeletion(directory);
+            }
+        }
+    }
+
+    private void deleteExpiredJobFiles(List<Path> validFiles) {
+        // The list of jobs that were expired
+        Set<String> jobsDeleted = new HashSet<>();
+        for (Path file : validFiles) {
+            // Get the JobId from the name
+            var jobUuid = getJobFromFile(file);
+            // See if the file should be deleted
+            boolean deleted = deleteFile(file);
+            if (deleted) {
+                // If it was deleted
+                jobsDeleted.add(jobUuid);
+            }
+        }
+        for (String job : jobsDeleted) {
+            eventLogger.log(LogManager.LogType.KINESIS, doSummary.getSummary(job));
+        }
+    }
+
+    private String getJobFromFile(Path file) {
+        return new File(file.toUri()).getParentFile().getName();
+    }
+
+    private boolean isEmptyDirectory(Path directory) throws IOException {
+        // Lazily look for first child
+        try(Stream<Path> children =  Files.list(directory)) {
+            return children.findAny().isEmpty();
+        }
+    }
+
+    private boolean isExpiredDirectory(Path directory) throws IOException {
+        var jobUuid = new File(directory.toUri()).getName();
+        var job = findJob(jobUuid, directory);
+
+        if (job == null) {
+            return false;
+        }
+
+        Instant deletedAt = getDeleteCheckTime(directory, job);
+        if (deletedAt == null) {
+            return false;
+        }
+
+        Instant oldestDeletableTime = calculateOldestDeletableTime();
+        return deletedAt.isBefore(oldestDeletableTime);
     }
 
     /**
@@ -93,7 +149,7 @@ public class FileDeletionServiceImpl implements FileDeletionService {
             throw new EFSMountFormatException("EFS mount must be at least 5 characters");
         }
 
-        for (String directory : disallowedDirectories) {
+        for (String directory : DISALLOWED_DIRECTORIES) {
             if (efsMount.startsWith(directory) && !efsMount.startsWith("/opt/ab2d")) {
                 throw new EFSMountFormatException("EFS mount must not start with a directory that contains important files");
             }
@@ -107,7 +163,7 @@ public class FileDeletionServiceImpl implements FileDeletionService {
      * @return true if it is a valid job and it was deleted
      */
     private boolean deleteFile(Path path) {
-        var jobUuid = new File(path.toUri()).getParentFile().getName();
+        var jobUuid = getJobFromFile(path);
         var job = findJob(jobUuid, path);
 
         boolean deletedJobFile = false;
@@ -133,7 +189,7 @@ public class FileDeletionServiceImpl implements FileDeletionService {
                     logFileNotEligibleForDeletion(path);
                 }
             }
-            // Actually log here because if we've gotten here with an exception, we deleted it.
+            // Actually log here because if we've gotten here without an exception, we deleted it.
             if (fileEvent != null) {
                 eventLogger.log(fileEvent);
             }
@@ -192,6 +248,10 @@ public class FileDeletionServiceImpl implements FileDeletionService {
     }
 
     private void logFileNotEligibleForDeletion(Path path) {
+        log.info("File not eligible for deletion {}", path);
+    }
+
+    private void logFolderNotEligibleForDeletion(Path path) {
         log.info("File not eligible for deletion {}", path);
     }
 }
