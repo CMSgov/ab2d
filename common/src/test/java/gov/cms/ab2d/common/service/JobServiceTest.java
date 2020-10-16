@@ -110,7 +110,7 @@ public class JobServiceTest {
         jobService = new JobServiceImpl(userService, jobRepository, contractRepository, jobOutputService, logManager, doSummary);
         ReflectionTestUtils.setField(jobService, "fileDownloadPath", tmpJobLocation);
 
-        // todo: very bizarre behavior happens if these are moved to an @AfterEach method instead.  Doing deleteAll()
+        // todo: Very bizarre behavior happens if these are moved to an @AfterEach method instead.  Doing deleteAll()
         // in a setup method is definitely a code smell.
         jobRepository.deleteAll();
         contractRepository.deleteAll();
