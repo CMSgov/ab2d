@@ -9,12 +9,10 @@ import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
-import java.util.Random;
 
 @Component
 public class DataSetup {
 
-    public static final Random RANDOM = new Random();
     @Autowired
     private ContractRepository contractRepository;
 
@@ -95,15 +93,14 @@ public class DataSetup {
 
         contract.setSponsor(sponsor);
 
-        Contract persistedContract = contractRepository.save(contract);
-
-        return persistedContract;
+        return contractRepository.save(contract);
     }
 
     public void setupContractWithNoAttestation(List<String> userRoles) {
         setupUser(userRoles);
 
         Optional<Contract> contractOptional = contractRepository.findContractByContractNumber(VALID_CONTRACT_NUMBER);
+        @SuppressWarnings("OptionalGetWithoutIsPresent")
         Contract contract = contractOptional.get();
         contract.setAttestedOn(null);
 
@@ -151,7 +148,7 @@ public class DataSetup {
 
     public User setupUser(List<String> userRoles) {
         User testUser = userRepository.findByUsername(TEST_USER);
-        if(testUser != null) {
+        if (testUser != null) {
             return testUser;
         }
 
