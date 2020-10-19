@@ -170,8 +170,8 @@ public class FileDeletionServiceImpl implements FileDeletionService {
      * validates the EFS mount.
      */
     private void validateEfsMount() {
-        if (!efsMount.startsWith("/")) {
-            throw new EFSMountFormatException("EFS Mount must start with a /");
+        if (!efsMount.startsWith(File.separator)) {
+            throw new EFSMountFormatException("EFS Mount must start with a " + File.separator);
         }
 
         if (efsMount.length() < 5) {

@@ -21,11 +21,12 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledOnOs;
+import org.junit.jupiter.api.condition.OS;
 import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.TestPropertySource;
@@ -87,11 +88,11 @@ class FileDeletionServiceTest {
 
     private static final String TEST_DIRECTORY_NO_PERMISSIONS = "testDirectoryNoPermissions";
 
-    private static final String TEST_FILE_NO_PERMISSIONS = TEST_DIRECTORY_NO_PERMISSIONS + "/testFileNoPermissions.ndjson";
+    private static final String TEST_FILE_NO_PERMISSIONS = TEST_DIRECTORY_NO_PERMISSIONS + File.separator + "testFileNoPermissions.ndjson";
 
     private static final String TEST_DIRECTORY = "testDirectory";
 
-    private static final String TEST_FILE_NESTED = TEST_DIRECTORY + "/testFileInDirectory.ndjson";
+    private static final String TEST_FILE_NESTED = TEST_DIRECTORY + File.separator + "testFileInDirectory.ndjson";
 
     private static final String REGULAR_FILE = "regularFile.txt";
 
@@ -184,7 +185,7 @@ class FileDeletionServiceTest {
         Path destination = Paths.get(efsMount, TEST_FILE);
         pathsToDelete.add(destination);
 
-        URL url = this.getClass().getResource("/" + TEST_FILE);
+        URL url = this.getClass().getResource(File.separator + TEST_FILE);
         Path source = Paths.get(url.toURI());
         Files.copy(source, destination, StandardCopyOption.REPLACE_EXISTING);
 
@@ -208,7 +209,7 @@ class FileDeletionServiceTest {
         Path destinationNotDeleted = Paths.get(efsMount, TEST_FILE_NOT_DELETED);
         pathsToDelete.add(destinationNotDeleted);
 
-        URL urlNotDeletedFile = this.getClass().getResource("/" + TEST_FILE_NOT_DELETED);
+        URL urlNotDeletedFile = this.getClass().getResource(File.separator + TEST_FILE_NOT_DELETED);
         Path sourceNotDeleted = Paths.get(urlNotDeletedFile.toURI());
         Files.copy(sourceNotDeleted, destinationNotDeleted, StandardCopyOption.REPLACE_EXISTING);
 
@@ -230,7 +231,7 @@ class FileDeletionServiceTest {
 
         // Not connected to a job
         Path nestedFileDestination = Paths.get(efsMount, TEST_FILE_NESTED);
-        URL nestedFileUrl = this.getClass().getResource("/" + TEST_FILE_NESTED);
+        URL nestedFileUrl = this.getClass().getResource(File.separator + TEST_FILE_NESTED);
         Path nestedFileSource = Paths.get(nestedFileUrl.toURI());
         Files.copy(nestedFileSource, nestedFileDestination, StandardCopyOption.REPLACE_EXISTING);
 
@@ -255,7 +256,7 @@ class FileDeletionServiceTest {
         Path regularFileDestination = Paths.get(efsMount, REGULAR_FILE);
         pathsToDelete.add(regularFileDestination);
 
-        URL regularFileUrl = this.getClass().getResource("/" + REGULAR_FILE);
+        URL regularFileUrl = this.getClass().getResource(File.separator + REGULAR_FILE);
         Path regularFileSource = Paths.get(regularFileUrl.toURI());
         Files.copy(regularFileSource, regularFileDestination, StandardCopyOption.REPLACE_EXISTING);
 
@@ -275,7 +276,7 @@ class FileDeletionServiceTest {
         Path regularFolder = Paths.get(efsMount, TEST_DIRECTORY);
         pathsToDelete.add(regularFolder);
 
-        URL regularFileUrl = this.getClass().getResource("/" + REGULAR_FILE);
+        URL regularFileUrl = this.getClass().getResource(File.separator + REGULAR_FILE);
         Path regularFileSource = Paths.get(regularFileUrl.toURI());
         Files.copy(regularFileSource, regularFolder, StandardCopyOption.REPLACE_EXISTING);
 
@@ -299,7 +300,7 @@ class FileDeletionServiceTest {
         if (!noPermissionsDir.exists()) noPermissionsDir.mkdirs();
 
         Path noPermissionsFileDestination = Paths.get(efsMount, TEST_FILE_NO_PERMISSIONS);
-        URL noPermissionsFileUrl = this.getClass().getResource("/" + TEST_FILE_NO_PERMISSIONS);
+        URL noPermissionsFileUrl = this.getClass().getResource(File.separator + TEST_FILE_NO_PERMISSIONS);
         Path noPermissionsFileSource = Paths.get(noPermissionsFileUrl.toURI());
         Files.copy(noPermissionsFileSource, noPermissionsFileDestination, StandardCopyOption.REPLACE_EXISTING);
 
@@ -345,7 +346,7 @@ class FileDeletionServiceTest {
         pathsToDelete.add(jobPath);
 
         Path destinationJobConnection = Paths.get(jobPath.toString(), "S0000_0001.ndjson");
-        URL urlJobConnection = this.getClass().getResource("/" + TEST_FILE);
+        URL urlJobConnection = this.getClass().getResource(File.separator + TEST_FILE);
         Path sourceJobConnection = Paths.get(urlJobConnection.toURI());
         Files.copy(sourceJobConnection, destinationJobConnection, StandardCopyOption.REPLACE_EXISTING);
 
@@ -373,7 +374,7 @@ class FileDeletionServiceTest {
         pathsToDelete.add(jobPath);
 
         Path destinationJobConnection = Paths.get(jobPath.toString(), "S0000_0001.ndjson");
-        URL urlJobConnection = this.getClass().getResource("/" + TEST_FILE);
+        URL urlJobConnection = this.getClass().getResource(File.separator + TEST_FILE);
         Path sourceJobConnection = Paths.get(urlJobConnection.toURI());
         Files.copy(sourceJobConnection, destinationJobConnection, StandardCopyOption.REPLACE_EXISTING);
 
@@ -401,7 +402,7 @@ class FileDeletionServiceTest {
         pathsToDelete.add(jobPath);
 
         Path destinationJobConnection = Paths.get(jobPath.toString(), "S0000_0001.ndjson");
-        URL urlJobConnection = this.getClass().getResource("/" + TEST_FILE);
+        URL urlJobConnection = this.getClass().getResource(File.separator + TEST_FILE);
         Path sourceJobConnection = Paths.get(urlJobConnection.toURI());
         Files.copy(sourceJobConnection, destinationJobConnection, StandardCopyOption.REPLACE_EXISTING);
 
@@ -429,7 +430,7 @@ class FileDeletionServiceTest {
 
         if (!jobInProgressDir.exists()) jobInProgressDir.mkdirs();
         Path destinationJobInProgressConnection = Paths.get(jobInProgressPath.toString(), "S0000_0001.ndjson");
-        URL urlJobInProgressConnection = this.getClass().getResource("/" + TEST_FILE);
+        URL urlJobInProgressConnection = this.getClass().getResource(File.separator + TEST_FILE);
         Path sourceJobInProgressConnection = Paths.get(urlJobInProgressConnection.toURI());
         Files.copy(sourceJobInProgressConnection, destinationJobInProgressConnection, StandardCopyOption.REPLACE_EXISTING);
 
@@ -475,7 +476,7 @@ class FileDeletionServiceTest {
         pathsToDelete.add(jobNotExpiredYetPath);
 
         Path destinationJobNotExpiredYetConnection = Paths.get(jobNotExpiredYetPath.toString(), "S0000_0001.ndjson");
-        URL urlJobNotExpiredYetConnection = this.getClass().getResource("/" + TEST_FILE);
+        URL urlJobNotExpiredYetConnection = this.getClass().getResource(File.separator + TEST_FILE);
         Path sourceJobNotExpiredYetConnection = Paths.get(urlJobNotExpiredYetConnection.toURI());
         Files.copy(sourceJobNotExpiredYetConnection, destinationJobNotExpiredYetConnection, StandardCopyOption.REPLACE_EXISTING);
 
@@ -499,6 +500,8 @@ class FileDeletionServiceTest {
         assertTrue(Files.exists(jobNotExpiredYetPath));
     }
 
+    // Folder checking only works on unix systems
+    @EnabledOnOs(value = {OS.LINUX, OS.MAC})
     @ParameterizedTest
     @MethodSource("directoryAndMessage")
     void testEFSMountChecks(String dirToSet, String exceptionMessage) {
@@ -519,6 +522,8 @@ class FileDeletionServiceTest {
         );
     }
 
+    // Only a useful check on unix systems
+    @EnabledOnOs(value = {OS.LINUX, OS.MAC})
     @Test
     void testEFSMountOptAb2d() {
         ReflectionTestUtils.setField(fileDeletionService, "efsMount", "/opt/ab2d");
