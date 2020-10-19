@@ -162,8 +162,9 @@ public class CoverageProcessorImpl implements CoverageProcessor {
         }
     }
 
-    @Scheduled(fixedDelay = THIRTY_SECONDS)
+    @Scheduled(fixedDelay = THIRTY_SECONDS, initialDelayString = "${coverage.update.initial.delay}")
     public void loadMappingJob() {
+        log.info("Loading stuff yay!");
 
         if (isProcessorBusy()) {
             log.debug("not starting any new coverage mapping jobs because service is full. " +
@@ -202,7 +203,7 @@ public class CoverageProcessorImpl implements CoverageProcessor {
         queueCoveragePeriod(mapping.getPeriod(), mapping.getCoverageSearch().getAttempts(), b);
     }
 
-    @Scheduled(fixedDelay = THIRTY_SECONDS)
+    @Scheduled(fixedDelay = THIRTY_SECONDS, initialDelayString = "${coverage.update.initial.delay}")
     public void monitorMappingJobs() {
 
         synchronized (inProgressMappings) {
@@ -248,7 +249,7 @@ public class CoverageProcessorImpl implements CoverageProcessor {
         }
     }
 
-    @Scheduled(fixedDelay = ONE_SECOND)
+    @Scheduled(fixedDelay = ONE_SECOND, initialDelayString = "${coverage.update.initial.delay}")
     public void insertJobResults() {
 
         try {

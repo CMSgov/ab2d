@@ -29,7 +29,8 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
-@SpringBootTest
+// Never run internal coverage processor so this coverage processor runs unimpeded
+@SpringBootTest(properties = "coverage.update.initial.delay=1000000")
 @Testcontainers
 class CoverageProcessorImplTest {
 
@@ -66,9 +67,6 @@ class CoverageProcessorImplTest {
     @Autowired
     private ContractSearchLock searchLock;
 
-    @Autowired
-    private CoverageProcessorImpl runningProcessor;
-
     private Sponsor sponsor;
     private Contract contract;
     private CoveragePeriod january;
@@ -81,9 +79,6 @@ class CoverageProcessorImplTest {
 
     @BeforeEach
     void before() {
-
-        // Hack to shut down running service so that we can run coverage processor with much more predictable behavior
-        runningProcessor.shutdown();
 
         sponsor = dataSetup.createSponsor("Cal Ripken", 200, "Cal Ripken Jr.", 201);
         contract = dataSetup.setupContract(sponsor, "TST-123");
