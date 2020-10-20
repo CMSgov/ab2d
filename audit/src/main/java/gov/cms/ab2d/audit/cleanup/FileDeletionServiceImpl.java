@@ -109,12 +109,22 @@ public class FileDeletionServiceImpl implements FileDeletionService {
             try {
                 // Get the JobId from the name
                 var jobUuid = getJobFromFile(file);
-                // See if the file should be deleted
-                boolean deleted = deleteFile(file);
-                if (deleted) {
-                    // If it was deleted add it to the list of jobs with deleted files
-                    jobsDeleted.add(jobUuid);
+                var job = findJob(jobUuid, file);
+                var currentFileAge = getPathAge(file, job);
+                final Instant deleteBoundary = calculateOldestDeletableTime();
+
+                if (currentFileAge.isBefore(deleteBoundary) && matchesFilenameExtension(file)) {
+                    deleteFile(file, job);
+
+                    // If a job file was deleted make sure we capture that
+                    if (job != null) {
+                        jobsDeleted.add(jobUuid);
+                    }
+                } else {
+                    logFileNotEligibleForDeletion(file);
                 }
+            } catch (IOException io) {
+                log.error("Encountered exception trying to delete a file {}, moving onto next one", file, io);
             } catch (Exception exception) {
                 log.error("failed to delete or process a regular file {}", file.toUri().toString(), exception);
             }
@@ -152,18 +162,17 @@ public class FileDeletionServiceImpl implements FileDeletionService {
         var jobUuid = new File(directory.toUri()).getName();
         var job = findJob(jobUuid, directory);
 
+        // If no job is found then we are not going to delete the file
         if (job == null) {
             return false;
         }
 
-        // Does not throw IO Exception because else clause is never hit
-        Instant deletedAt = getDeleteCheckTime(directory, job);
-        if (deletedAt == null) {
-            return false;
-        }
+        // The only way getPathAge throws an IOException is if the job is null,
+        // because that is never the case getPathAge should never throw an IOException
+        Instant currentAge = getPathAge(directory, job);
 
-        Instant oldestDeletableTime = calculateOldestDeletableTime();
-        return deletedAt.isBefore(oldestDeletableTime);
+        Instant deleteBoundary = calculateOldestDeletableTime();
+        return currentAge.isBefore(deleteBoundary);
     }
 
     /**
@@ -185,47 +194,14 @@ public class FileDeletionServiceImpl implements FileDeletionService {
         }
     }
 
-    /**
-     * Given a file path, checks to make sure it is eligible for deletion and then deletes it.
-     *
-     * @param path - path of the file to be deleted
-     * @return true if it is a valid job and it was deleted
-     */
-    private boolean deleteFile(Path path) {
-        var jobUuid = getJobFromFile(path);
-        var job = findJob(jobUuid, path);
+    private void deleteFile(Path path, Job job) throws IOException {
+        FileEvent fileEvent = EventUtils.getFileEvent(job, new File(path.toUri()), FileEvent.FileStatus.DELETE);
 
-        boolean deletedJobFile = false;
-        FileEvent fileEvent = null;
-        try {
-            var deleteCheckTime = getDeleteCheckTime(path, job);
-            if (deleteCheckTime == null) {
-                logFileNotEligibleForDeletion(path);
-            } else {
-                final Instant oldestDeletableTime = calculateOldestDeletableTime();
-                final boolean filenameHasValidExtension = isFilenameExtensionValid(path);
+        Files.delete(path);
+        log.info("Deleted file {}", path);
 
-                if (deleteCheckTime.isBefore(oldestDeletableTime) && filenameHasValidExtension) {
-                    // Create the event here while we still have the file data
-                    fileEvent = EventUtils.getFileEvent(job, new File(path.toUri()), FileEvent.FileStatus.DELETE);
-
-                    Files.delete(path);
-                    log.info("Deleted file {}", path);
-                    if (job != null) {
-                        deletedJobFile = true;
-                    }
-                } else {
-                    logFileNotEligibleForDeletion(path);
-                }
-            }
-            // Actually log here because if we've gotten here without an exception, we deleted it.
-            if (fileEvent != null) {
-                eventLogger.log(fileEvent);
-            }
-        } catch (IOException e) {
-            log.error("Encountered exception trying to delete a file {}, moving onto next one", path, e);
-        }
-        return deletedJobFile;
+        // If we reach this point then file was deleted without an exception so log it to Kinesis and SQL
+        eventLogger.log(fileEvent);
     }
 
     /**
@@ -260,24 +236,39 @@ public class FileDeletionServiceImpl implements FileDeletionService {
      * @param path - the file
      * @return true if the filename has a valid extension (.ndjson)
      */
-    private boolean isFilenameExtensionValid(Path path) {
+    private boolean matchesFilenameExtension(Path path) {
         return path.toString().endsWith(FILE_EXTENSION.toLowerCase());
     }
 
-    private Instant getDeleteCheckTime(Path path, Job job)  throws IOException {
+    /**
+     * File age is dictated by the answer to three questions: Is the file tied to a specific job? If so,
+     * is the job a file is associated with complete? If so, when did it complete?
+     *
+     * 1. If the file is not tied to a specific job then just pull the creation time of the file.
+     * 2. If the file is tied to a job then the file age is tied to the job age
+     *      1. If the job is running the file is considered brand new
+     *      2. If the job failed or was cancelled it is considered old and needs deletion
+     *      3. If the job succeeded then the age of the file is considered the time the job completed
+     * @param path path representing file
+     * @param job job, if relevant, that path belongs to
+     * @return age of the file as an instant
+     * @throws IOException on failure to get creation time of file, only thrown when no job is associated with the file
+     */
+    private Instant getPathAge(Path path, Job job)  throws IOException {
 
         if (job == null) {
             FileTime creationTime = (FileTime) Files.getAttribute(path, "creationTime");
             return creationTime.toInstant();
         }
 
+        // If job is currently running ignore this file for now
         if (!job.getStatus().isFinished()) {
-            return null;
+            return Instant.now();
         }
 
         JobStatus status = job.getStatus();
 
-        // If job status is cancelled then force deletion of folder immediately
+        // If job status is cancelled or failed then force deletion of folder immediately
         // because any data present will be removed
         if (status == JobStatus.CANCELLED || status == JobStatus.FAILED) {
             return Instant.now().minus(2L * auditFilesTTLHours, ChronoUnit.HOURS);
