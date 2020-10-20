@@ -44,27 +44,29 @@ resource "aws_db_parameter_group" "default" {
 }
 
 resource "aws_db_instance" "db" {
-  allocated_storage       = var.allocated_storage_size
-  engine                  = "postgres"
-  engine_version          = var.engine_version
-  instance_class          = var.instance_class
-  identifier              = var.identifier
-  snapshot_identifier     = var.snapshot_id
-  db_subnet_group_name    = aws_db_subnet_group.subnet_group.id
-  parameter_group_name    = aws_db_parameter_group.default.name
-  backup_retention_period = var.backup_retention_period
-  backup_window           = var.backup_window
-  copy_tags_to_snapshot   = var.copy_tags_to_snapshot
-  iops                    = var.iops
-  apply_immediately       = true
-  kms_key_id              = var.kms_key_id
-  maintenance_window      = var.maintenance_window
-  multi_az                = var.multi_az
-  storage_encrypted       = true
-  vpc_security_group_ids  = [aws_security_group.sg_database.id]
-  username                = var.username
-  password                = var.password
-  skip_final_snapshot     = var.skip_final_snapshot
+  allocated_storage               = var.allocated_storage_size
+  engine                          = "postgres"
+  engine_version                  = var.engine_version
+  instance_class                  = var.instance_class
+  identifier                      = var.identifier
+  snapshot_identifier             = var.snapshot_id
+  db_subnet_group_name            = aws_db_subnet_group.subnet_group.id
+  parameter_group_name            = aws_db_parameter_group.default.name
+  backup_retention_period         = var.backup_retention_period
+  backup_window                   = var.backup_window
+  copy_tags_to_snapshot           = var.copy_tags_to_snapshot
+  iops                            = var.iops
+  apply_immediately               = true
+  kms_key_id                      = var.kms_key_id
+  maintenance_window              = var.maintenance_window
+  multi_az                        = var.multi_az
+  storage_encrypted               = true
+  vpc_security_group_ids          = [aws_security_group.sg_database.id]
+  username                        = var.username
+  password                        = var.password
+  skip_final_snapshot             = var.skip_final_snapshot
+  deletion_protection             = true
+  enabled_cloudwatch_logs_exports = ["postgresql", "upgrade"]
 
   tags = {
     Name         = "${var.env}-rds"

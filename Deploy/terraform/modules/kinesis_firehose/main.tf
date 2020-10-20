@@ -15,7 +15,7 @@ resource "aws_kinesis_firehose_delivery_stream" "main" {
   } 
 
   extended_s3_configuration {
-    role_arn            = "arn:aws:iam::${var.aws_account_number}:role/${var.kinesis_firehose_role}"
+    role_arn            = "arn:aws:iam::${var.aws_account_number}:role/delegatedadmin/developer/${var.kinesis_firehose_role}"
     bucket_arn          = "arn:aws:s3:::${var.kinesis_firehose_bucket}"
     kms_key_arn         = "${var.kinesis_firehose_kms_key_arn}" # Encrypt on delivery
     buffer_size         = 5

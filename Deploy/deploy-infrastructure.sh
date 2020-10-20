@@ -378,7 +378,7 @@ terraform apply \
   --auto-approve
 
 #
-# Create database
+# Create or verify database
 #
 
 cd "${START_DIR}"
@@ -392,25 +392,27 @@ CONTROLLER_PRIVATE_IP=$(aws --region "${AWS_DEFAULT_REGION}" ec2 describe-instan
 
 if [ "${CLOUD_TAMER}" == "true" ]; then
 
-  # Determine if the database for the environment exists
+  echo "NOTE: This section commented out since it doesn't work from development machine."
+    
+  # # Determine if the database for the environment exists
 
-  DB_NAME_IF_EXISTS=$(ssh -tt -i "~/.ssh/${CMS_ENV}.pem" \
-    "${SSH_USERNAME}@${CONTROLLER_PRIVATE_IP}" \
-    "psql -t --host "${DB_ENDPOINT}" --username "${DATABASE_USER}" --dbname postgres --command='SELECT datname FROM pg_catalog.pg_database'" \
-    | grep "${DATABASE_NAME}" \
-    | sort \
-    | head -n 1 \
-    | xargs \
-    | tr -d '\r')
+  # DB_NAME_IF_EXISTS=$(ssh -tt -i "~/.ssh/${CMS_ENV}.pem" \
+  #   "${SSH_USERNAME}@${CONTROLLER_PRIVATE_IP}" \
+  #   "psql -t --host "${DB_ENDPOINT}" --username "${DATABASE_USER}" --dbname postgres --command='SELECT datname FROM pg_catalog.pg_database'" \
+  #   | grep "${DATABASE_NAME}" \
+  #   | sort \
+  #   | head -n 1 \
+  #   | xargs \
+  #   | tr -d '\r')
 
-  # Create the database for the environment if it doesn't exist
+  # # Create the database for the environment if it doesn't exist
 
-  if [ -n "${CONTROLLER_PRIVATE_IP}" ] && [ -n "${DB_ENDPOINT}" ] && [ "${DB_NAME_IF_EXISTS}" != "${DATABASE_NAME}" ]; then
-    echo "Creating database..."
-    ssh -tt -i "~/.ssh/${CMS_ENV}.pem" \
-      "${SSH_USERNAME}@${CONTROLLER_PRIVATE_IP}" \
-      "createdb ${DATABASE_NAME} --host ${DB_ENDPOINT} --username ${DATABASE_USER}"
-  fi
+  # if [ -n "${CONTROLLER_PRIVATE_IP}" ] && [ -n "${DB_ENDPOINT}" ] && [ "${DB_NAME_IF_EXISTS}" != "${DATABASE_NAME}" ]; then
+  #   echo "Creating database..."
+  #   ssh -tt -i "~/.ssh/${CMS_ENV}.pem" \
+  #     "${SSH_USERNAME}@${CONTROLLER_PRIVATE_IP}" \
+  #     "createdb ${DATABASE_NAME} --host ${DB_ENDPOINT} --username ${DATABASE_USER}"
+  # fi
 
 else # Running from Jenkins agent
 
@@ -445,28 +447,36 @@ fi
 cd "${START_DIR}"
 cd python3
 
-# Create or get database host secret
+# Get AB2D_BFD_INSIGHTS_S3_BUCKET secret
 
-DATABASE_HOST=$(./get-database-secret.py $CMS_ENV database_host $DATABASE_SECRET_DATETIME)
-if [ -z "${DATABASE_HOST}" ]; then
-  aws secretsmanager create-secret \
-    --name "ab2d/${CMS_ENV}/module/db/database_host/${DATABASE_SECRET_DATETIME}" \
-    --secret-string "${DB_ENDPOINT}"
-  DATABASE_HOST=$(./get-database-secret.py $CMS_ENV database_host $DATABASE_SECRET_DATETIME)
+AB2D_BFD_INSIGHTS_S3_BUCKET=$(./get-database-secret.py $CMS_ENV ab2d_bfd_insights_s3_bucket $DATABASE_SECRET_DATETIME)
+if [ -z "${AB2D_BFD_INSIGHTS_S3_BUCKET}" ]; then
+  echo "**********************************************************************************"
+  echo "ERROR: The environment variable could not be retrieved."
+  echo ""
+  echo "Did you run the 'initialize-greenfield-environment.sh' script to set the variable?"
+  echo "**********************************************************************************"
+  exit 1
 fi
 
-# Create or get database port secret
+# Get AB2D_BFD_KMS_ARN secret
 
-DB_PORT=$(aws --region "${AWS_DEFAULT_REGION}" rds describe-db-instances \
-  --query="DBInstances[?DBInstanceIdentifier=='ab2d'].Endpoint.Port" \
-  --output=text)
+AB2D_BFD_KMS_ARN=$(./get-database-secret.py $CMS_ENV ab2d_bfd_kms_arn $DATABASE_SECRET_DATETIME)
+if [ -z "${AB2D_BFD_KMS_ARN}" ]; then
+  echo "**********************************************************************************"
+  echo "ERROR: The environment variable could not be retrieved."
+  echo ""
+  echo "Did you run the 'initialize-greenfield-environment.sh' script to set the variable?"
+  echo "**********************************************************************************"
+  exit 1
+fi
 
-DATABASE_PORT=$(./get-database-secret.py $CMS_ENV database_port $DATABASE_SECRET_DATETIME)
-if [ -z "${DATABASE_PORT}" ]; then
-  aws secretsmanager create-secret \
-    --name "ab2d/${CMS_ENV}/module/db/database_port/${DATABASE_SECRET_DATETIME}" \
-    --secret-string "${DB_PORT}"
-  DATABASE_PORT=$(./get-database-secret.py $CMS_ENV database_port $DATABASE_SECRET_DATETIME)
+# If any databse secret produced an error, exit the script
+
+if [ "${AB2D_BFD_INSIGHTS_S3_BUCKET}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
+  || [ "${AB2D_BFD_KMS_ARN}" == "ERROR: Cannot get database secret because KMS key is disabled!" ]; then
+    echo "ERROR: Cannot get secrets because KMS key is disabled!"
+    exit 1
 fi
 
 # Create Kinesis Firehose for lower environments only
@@ -478,6 +488,8 @@ if [ "${CMS_ENV}" != "ab2d-east-prod" ]; then
   terraform apply \
     --var "env=${CMS_ENV}" \
     --var "aws_account_number=${CMS_ENV_AWS_ACCOUNT_NUMBER}" \
+    --var "kinesis_firehose_bucket=${AB2D_BFD_INSIGHTS_S3_BUCKET}" \
+    --var "kinesis_firehose_kms_key_arn=${AB2D_BFD_KMS_ARN}" \
     --target module.kinesis_firehose \
     --auto-approve
 fi

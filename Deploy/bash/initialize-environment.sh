@@ -188,28 +188,7 @@ terraform init \
 terraform validate
 
 #
-# Create or refresh IAM components for target environment
-#
-
-terraform apply \
-  --var "env=${CMS_ENV}" \
-  --var "mgmt_aws_account_number=${CMS_ECR_REPO_ENV_AWS_ACCOUNT_NUMBER}" \
-  --var "aws_account_number=${CMS_ENV_AWS_ACCOUNT_NUMBER}" \
-  --target module.iam \
-  --auto-approve
-
-#
-# Create or verify KMS components
-#
-
-terraform apply \
-  --var "env=${CMS_ENV}" \
-  --var "aws_account_number=${CMS_ENV_AWS_ACCOUNT_NUMBER}" \
-  --target module.kms \
-  --auto-approve
-
-#
-# Create or get secrets
+# Get secrets
 #
 
 # Get target KMS key id
@@ -223,10 +202,10 @@ KMS_KEY_ID=$(aws --region "${AWS_DEFAULT_REGION}" kms list-aliases \
 cd "${START_DIR}/.."
 cd python3
 
-# Get database user secret
+# Get AB2D_BFD_INSIGHTS_S3_BUCKET secret
 
-DATABASE_USER=$(./get-database-secret.py $CMS_ENV database_user $DATABASE_SECRET_DATETIME)
-if [ -z "${DATABASE_USER}" ]; then
+AB2D_BFD_INSIGHTS_S3_BUCKET=$(./get-database-secret.py $CMS_ENV ab2d_bfd_insights_s3_bucket $DATABASE_SECRET_DATETIME)
+if [ -z "${AB2D_BFD_INSIGHTS_S3_BUCKET}" ]; then
   echo "**********************************************************************************"
   echo "ERROR: The environment variable could not be retrieved."
   echo ""
@@ -235,152 +214,10 @@ if [ -z "${DATABASE_USER}" ]; then
   exit 1
 fi
 
-# Get database password secret
+# Get AB2D_BFD_KMS_ARN secret
 
-DATABASE_PASSWORD=$(./get-database-secret.py $CMS_ENV database_password $DATABASE_SECRET_DATETIME)
-if [ -z "${DATABASE_PASSWORD}" ]; then
-  echo "**********************************************************************************"
-  echo "ERROR: The environment variable could not be retrieved."
-  echo ""
-  echo "Did you run the 'initialize-greenfield-environment.sh' script to set the variable?"
-  echo "**********************************************************************************"
-  exit 1
-fi
-
-# Get database name secret
-
-DATABASE_NAME=$(./get-database-secret.py $CMS_ENV database_name $DATABASE_SECRET_DATETIME)
-if [ -z "${DATABASE_NAME}" ]; then
-  echo "**********************************************************************************"
-  echo "ERROR: The environment variable could not be retrieved."
-  echo ""
-  echo "Did you run the 'initialize-greenfield-environment.sh' script to set the variable?"
-  echo "**********************************************************************************"
-  exit 1
-fi
-
-# Get bfd url secret
-
-BFD_URL=$(./get-database-secret.py $CMS_ENV bfd_url $DATABASE_SECRET_DATETIME)
-if [ -z "${BFD_URL}" ]; then
-  echo "**********************************************************************************"
-  echo "ERROR: The environment variable could not be retrieved."
-  echo ""
-  echo "Did you run the 'initialize-greenfield-environment.sh' script to set the variable?"
-  echo "**********************************************************************************"
-  exit 1
-fi
-
-# Get bfd keystore location secret
-
-BFD_KEYSTORE_LOCATION=$(./get-database-secret.py $CMS_ENV bfd_keystore_location $DATABASE_SECRET_DATETIME)
-if [ -z "${BFD_KEYSTORE_LOCATION}" ]; then
-  echo "**********************************************************************************"
-  echo "ERROR: The environment variable could not be retrieved."
-  echo ""
-  echo "Did you run the 'initialize-greenfield-environment.sh' script to set the variable?"
-  echo "**********************************************************************************"
-  exit 1
-fi
-
-# Get bfd keystore password secret
-
-BFD_KEYSTORE_PASSWORD=$(./get-database-secret.py $CMS_ENV bfd_keystore_password $DATABASE_SECRET_DATETIME)
-if [ -z "${BFD_KEYSTORE_PASSWORD}" ]; then
-  echo "**********************************************************************************"
-  echo "ERROR: The environment variable could not be retrieved."
-  echo ""
-  echo "Did you run the 'initialize-greenfield-environment.sh' script to set the variable?"
-  echo "**********************************************************************************"
-  exit 1
-fi
-
-# Get hicn hash pepper secret
-
-HICN_HASH_PEPPER=$(./get-database-secret.py $CMS_ENV hicn_hash_pepper $DATABASE_SECRET_DATETIME)
-if [ -z "${HICN_HASH_PEPPER}" ]; then
-  echo "**********************************************************************************"
-  echo "ERROR: The environment variable could not be retrieved."
-  echo ""
-  echo "Did you run the 'initialize-greenfield-environment.sh' script to set the variable?"
-  echo "**********************************************************************************"
-  exit 1
-fi
-
-# Get hicn hash iter secret
-
-HICN_HASH_ITER=$(./get-database-secret.py $CMS_ENV hicn_hash_iter $DATABASE_SECRET_DATETIME)
-if [ -z "${HICN_HASH_ITER}" ]; then
-  echo "**********************************************************************************"
-  echo "ERROR: The environment variable could not be retrieved."
-  echo ""
-  echo "Did you run the 'initialize-greenfield-environment.sh' script to set the variable?"
-  echo "**********************************************************************************"
-  exit 1
-fi
-
-# Get new relic app name secret
-
-NEW_RELIC_APP_NAME=$(./get-database-secret.py $CMS_ENV new_relic_app_name $DATABASE_SECRET_DATETIME)
-if [ -z "${NEW_RELIC_APP_NAME}" ]; then
-  echo "**********************************************************************************"
-  echo "ERROR: The environment variable could not be retrieved."
-  echo ""
-  echo "Did you run the 'initialize-greenfield-environment.sh' script to set the variable?"
-  echo "**********************************************************************************"
-  exit 1
-fi
-
-# Get new relic license key secret
-
-NEW_RELIC_LICENSE_KEY=$(./get-database-secret.py $CMS_ENV new_relic_license_key $DATABASE_SECRET_DATETIME)
-if [ -z "${NEW_RELIC_LICENSE_KEY}" ]; then
-  echo "**********************************************************************************"
-  echo "ERROR: The environment variable could not be retrieved."
-  echo ""
-  echo "Did you run the 'initialize-greenfield-environment.sh' script to set the variable?"
-  echo "**********************************************************************************"
-  exit 1
-fi
-
-# Get private ip address CIDR range for VPN
-
-VPN_PRIVATE_IP_ADDRESS_CIDR_RANGE=$(./get-database-secret.py $CMS_ENV vpn_private_ip_address_cidr_range $DATABASE_SECRET_DATETIME)
-if [ -z "${VPN_PRIVATE_IP_ADDRESS_CIDR_RANGE}" ]; then
-  echo "**********************************************************************************"
-  echo "ERROR: The environment variable could not be retrieved."
-  echo ""
-  echo "Did you run the 'initialize-greenfield-environment.sh' script to set the variable?"
-  echo "**********************************************************************************"
-  exit 1
-fi
-
-# Get AB2D keystore location
-
-AB2D_KEYSTORE_LOCATION=$(./get-database-secret.py $CMS_ENV ab2d_keystore_location $DATABASE_SECRET_DATETIME)
-if [ -z "${AB2D_KEYSTORE_LOCATION}" ]; then
-  echo "**********************************************************************************"
-  echo "ERROR: The environment variable could not be retrieved."
-  echo ""
-  echo "Did you run the 'initialize-greenfield-environment.sh' script to set the variable?"
-  echo "**********************************************************************************"
-  exit 1
-fi
-
-# Get AB2D keystore password
-
-AB2D_KEYSTORE_PASSWORD=$(./get-database-secret.py $CMS_ENV ab2d_keystore_password $DATABASE_SECRET_DATETIME)
-if [ -z "${AB2D_KEYSTORE_PASSWORD}" ]; then
-  echo "**********************************************************************************"
-  echo "ERROR: The environment variable could not be retrieved."
-  echo ""
-  echo "Did you run the 'initialize-greenfield-environment.sh' script to set the variable?"
-  echo "**********************************************************************************"
-  exit 1
-fi
-
-AB2D_OKTA_JWT_ISSUER=$(./get-database-secret.py $CMS_ENV ab2d_okta_jwt_issuer $DATABASE_SECRET_DATETIME)
-if [ -z "${AB2D_OKTA_JWT_ISSUER}" ]; then
+AB2D_BFD_KMS_ARN=$(./get-database-secret.py $CMS_ENV ab2d_bfd_kms_arn $DATABASE_SECRET_DATETIME)
+if [ -z "${AB2D_BFD_KMS_ARN}" ]; then
   echo "**********************************************************************************"
   echo "ERROR: The environment variable could not be retrieved."
   echo ""
@@ -391,23 +228,40 @@ fi
 
 # If any databse secret produced an error, exit the script
 
-if [ "${DATABASE_USER}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
-  || [ "${DATABASE_PASSWORD}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
-  || [ "${DATABASE_NAME}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
-  || [ "${BFD_URL}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
-  || [ "${BFD_KEYSTORE_LOCATION}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
-  || [ "${BFD_KEYSTORE_PASSWORD}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
-  || [ "${HICN_HASH_PEPPER}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
-  || [ "${HICN_HASH_ITER}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
-  || [ "${NEW_RELIC_APP_NAME}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
-  || [ "${NEW_RELIC_LICENSE_KEY}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
-  || [ "${VPN_PRIVATE_IP_ADDRESS_CIDR_RANGE}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
-  || [ "${AB2D_KEYSTORE_LOCATION}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
-  || [ "${AB2D_KEYSTORE_PASSWORD}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
-  || [ "${AB2D_OKTA_JWT_ISSUER}" == "ERROR: Cannot get database secret because KMS key is disabled!" ]; then
+if [ "${AB2D_BFD_INSIGHTS_S3_BUCKET}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
+  || [ "${AB2D_BFD_KMS_ARN}" == "ERROR: Cannot get database secret because KMS key is disabled!" ]; then
     echo "ERROR: Cannot get secrets because KMS key is disabled!"
     exit 1
 fi
+
+#
+# Create or refresh IAM components for target environment
+#
+
+cd "${START_DIR}/.."
+cd terraform/environments/$CMS_ENV
+
+terraform apply \
+  --var "env=${CMS_ENV}" \
+  --var "mgmt_aws_account_number=${CMS_ECR_REPO_ENV_AWS_ACCOUNT_NUMBER}" \
+  --var "aws_account_number=${CMS_ENV_AWS_ACCOUNT_NUMBER}" \
+  --var "ab2d_bfd_insights_s3_bucket=${AB2D_BFD_INSIGHTS_S3_BUCKET}" \
+  --var "ab2d_bfd_kms_arn=${AB2D_BFD_KMS_ARN}" \
+  --target module.iam \
+  --auto-approve
+
+#
+# Create or verify KMS components
+#
+
+cd "${START_DIR}/.."
+cd terraform/environments/$CMS_ENV
+
+terraform apply \
+  --var "env=${CMS_ENV}" \
+  --var "aws_account_number=${CMS_ENV_AWS_ACCOUNT_NUMBER}" \
+  --target module.kms \
+  --auto-approve
 
 #
 # Configure networking

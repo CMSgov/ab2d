@@ -313,7 +313,27 @@ set_secrets ()
     echo "*********************************************************"
     AB2D_HPMS_AUTH_KEY_SECRET=$(./get-database-secret.py $CMS_ENV_SS ab2d_hpms_auth_key_secret $DATABASE_SECRET_DATETIME)
   fi
-  
+
+  # Create or get BFD insights S3 bucket secret
+
+  AB2D_BFD_INSIGHTS_S3_BUCKET=$(./get-database-secret.py $CMS_ENV_SS ab2d_bfd_insights_s3_bucket $DATABASE_SECRET_DATETIME)
+  if [ -z "${AB2D_BFD_INSIGHTS_S3_BUCKET}" ]; then
+    echo "*********************************************************"
+    ./create-database-secret.py $CMS_ENV_SS ab2d_bfd_insights_s3_bucket $KMS_KEY_ID $DATABASE_SECRET_DATETIME
+    echo "*********************************************************"
+    AB2D_BFD_INSIGHTS_S3_BUCKET=$(./get-database-secret.py $CMS_ENV_SS ab2d_bfd_insights_s3_bucket $DATABASE_SECRET_DATETIME)
+  fi
+
+  # Create or get BFD KMS ARN secret
+
+  AB2D_BFD_KMS_ARN=$(./get-database-secret.py $CMS_ENV_SS ab2d_bfd_kms_arn $DATABASE_SECRET_DATETIME)
+  if [ -z "${AB2D_BFD_KMS_ARN}" ]; then
+    echo "*********************************************************"
+    ./create-database-secret.py $CMS_ENV_SS ab2d_bfd_kms_arn $KMS_KEY_ID $DATABASE_SECRET_DATETIME
+    echo "*********************************************************"
+    AB2D_BFD_KMS_ARN=$(./get-database-secret.py $CMS_ENV_SS ab2d_bfd_kms_arn $DATABASE_SECRET_DATETIME)
+  fi
+
   # If any databse secret produced an error, exit the script
 
   if [ "${DATABASE_USER}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
@@ -337,7 +357,9 @@ set_secrets ()
     || [ "${AB2D_HPMS_URL}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
     || [ "${AB2D_HPMS_API_PARAMS}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
     || [ "${AB2D_HPMS_AUTH_KEY_ID}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
-    || [ "${AB2D_HPMS_AUTH_KEY_SECRET}" == "ERROR: Cannot get database secret because KMS key is disabled!" ]; then
+    || [ "${AB2D_HPMS_AUTH_KEY_SECRET}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
+    || [ "${AB2D_BFD_INSIGHTS_S3_BUCKET}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
+    || [ "${AB2D_BFD_KMS_ARN}" == "ERROR: Cannot get database secret because KMS key is disabled!" ]; then
       echo "ERROR: Cannot get secrets because KMS key is disabled!"
       exit 1
   fi

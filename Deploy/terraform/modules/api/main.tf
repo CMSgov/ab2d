@@ -234,7 +234,7 @@ resource "aws_ecs_task_definition" "api" {
 JSON
   requires_compatibilities = ["EC2"]
   network_mode = "bridge"
-  execution_role_arn = "arn:aws:iam::${var.aws_account_number}:role/Ab2dInstanceRole"
+  execution_role_arn = "arn:aws:iam::${var.aws_account_number}:role/delegatedadmin/developer/Ab2dInstanceV2Role"
 }
 
 resource "aws_lb" "api" {
