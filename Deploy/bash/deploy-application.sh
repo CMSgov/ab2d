@@ -698,35 +698,38 @@ sleep 5
 # USE EXISTING BUILD #2 END
 #
 
-# Get image version based on a master commit number
+# # Get image version based on a master commit number
 
-CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
-COMMIT_NUMBER_OF_CURRENT_BRANCH=$(git rev-parse "${CURRENT_BRANCH}" | cut -c1-7)
-COMMIT_NUMBER_OF_ORIGIN_MASTER=$(git rev-parse origin/master | cut -c1-7)
+# CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+# COMMIT_NUMBER_OF_CURRENT_BRANCH=$(git rev-parse "${CURRENT_BRANCH}" | cut -c1-7)
+# COMMIT_NUMBER_OF_ORIGIN_MASTER=$(git rev-parse origin/master | cut -c1-7)
 
-if [ "${COMMIT_NUMBER_OF_CURRENT_BRANCH}" == "${COMMIT_NUMBER_OF_ORIGIN_MASTER}" ]; then
-  echo "NOTE: The current branch is the master branch."
-  echo "Using commit number of origin/master branch as the image version."
-  COMMIT_NUMBER="${COMMIT_NUMBER_OF_ORIGIN_MASTER}"
-else
-  echo "NOTE: Assuming this is a DevOps branch that has only DevOps changes."
-  COMPARE_BRANCH_WITH_MASTER=$(git log \
-    --decorate \
-    --graph \
-    --oneline \
-    --cherry-mark \
-    --boundary origin/master..."${BRANCH}")
-  if [ -z "${COMPARE_BRANCH_WITH_MASTER}" ]; then
-    echo "NOTE: DevOps branch is the same as origin/master."
-    echo "Using commit number of origin/master branch as the image version."
-    COMMIT_NUMBER="${COMMIT_NUMBER_OF_ORIGIN_MASTER}"
-  else
-    echo "NOTE: DevOps branch is different from origin/master."
-    echo "Using commit number of latest merge from origin/master into the current branch as the image version."
-    COMMIT_NUMBER=$(git log --merges | head -n 2 | tail -n 1 | cut -d" " -f 3 | cut -c1-7)
-  fi
-fi
+# if [ "${COMMIT_NUMBER_OF_CURRENT_BRANCH}" == "${COMMIT_NUMBER_OF_ORIGIN_MASTER}" ]; then
+#   echo "NOTE: The current branch is the master branch."
+#   echo "Using commit number of origin/master branch as the image version."
+#   COMMIT_NUMBER="${COMMIT_NUMBER_OF_ORIGIN_MASTER}"
+# else
+#   echo "NOTE: Assuming this is a DevOps branch that has only DevOps changes."
+#   COMPARE_BRANCH_WITH_MASTER=$(git log \
+#     --decorate \
+#     --graph \
+#     --oneline \
+#     --cherry-mark \
+#     --boundary origin/master..."${BRANCH}")
+#   if [ -z "${COMPARE_BRANCH_WITH_MASTER}" ]; then
+#     echo "NOTE: DevOps branch is the same as origin/master."
+#     echo "Using commit number of origin/master branch as the image version."
+#     COMMIT_NUMBER="${COMMIT_NUMBER_OF_ORIGIN_MASTER}"
+#   else
+#     echo "NOTE: DevOps branch is different from origin/master."
+#     echo "Using commit number of latest merge from origin/master into the current branch as the image version."
+#     COMMIT_NUMBER=$(git log --merges | head -n 2 | tail -n 1 | cut -d" " -f 3 | cut -c1-7)
+#   fi
+# fi
 
+# IMAGE_VERSION="${CMS_ENV}-latest-${COMMIT_NUMBER}"
+
+COMMIT_NUMBER=$(git rev-parse "${CURRENT_BRANCH}" | cut -c1-7)
 IMAGE_VERSION="${CMS_ENV}-latest-${COMMIT_NUMBER}"
 
 #
