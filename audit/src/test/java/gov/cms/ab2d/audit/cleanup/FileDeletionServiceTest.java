@@ -17,9 +17,16 @@ import gov.cms.ab2d.eventlogger.events.JobStatusChangeEvent;
 import gov.cms.ab2d.eventlogger.events.ReloadEvent;
 import gov.cms.ab2d.eventlogger.reports.sql.DoAll;
 import gov.cms.ab2d.eventlogger.utils.UtilMethods;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledOnOs;
+import org.junit.jupiter.api.condition.OS;
 import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.TestPropertySource;
@@ -42,17 +49,20 @@ import java.nio.file.attribute.FileTime;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.params.provider.Arguments.arguments;
 
 @SpringBootTest(classes = SpringBootApp.class)
 @TestPropertySource(locations = "/application.audit.properties")
 @Testcontainers
-public class FileDeletionServiceTest {
+class FileDeletionServiceTest {
 
     @TempDir
     File tmpDirFolder;
@@ -78,11 +88,11 @@ public class FileDeletionServiceTest {
 
     private static final String TEST_DIRECTORY_NO_PERMISSIONS = "testDirectoryNoPermissions";
 
-    private static final String TEST_FILE_NO_PERMISSIONS = TEST_DIRECTORY_NO_PERMISSIONS + "/testFileNoPermissions.ndjson";
+    private static final String TEST_FILE_NO_PERMISSIONS = TEST_DIRECTORY_NO_PERMISSIONS + File.separator + "testFileNoPermissions.ndjson";
 
     private static final String TEST_DIRECTORY = "testDirectory";
 
-    private static final String TEST_FILE_NESTED = TEST_DIRECTORY + "/testFileInDirectory.ndjson";
+    private static final String TEST_FILE_NESTED = TEST_DIRECTORY + File.separator + "testFileInDirectory.ndjson";
 
     private static final String REGULAR_FILE = "regularFile.txt";
 
@@ -93,36 +103,23 @@ public class FileDeletionServiceTest {
         attributes.setTimes(time, time, time);
     }
 
+    private Job job;
+    private Job jobInProgress;
+    private Job jobNotExpiredYet;
+    private Job jobCancelled;
+    private Job jobFailed;
+    private String efsMount;
+
+    private List<Path> pathsToDelete;
+
     @BeforeEach
     public void init() {
-        doAll.delete();
-    }
-
-    @Test
-    public void checkToEnsureFilesDeleted() throws IOException, URISyntaxException {
-        String efsMount = tmpDirFolder.toPath().toString();
-
-        // other tests set this value, so set it to the correct one, JUnit ordering annotations don't seem to be respected
-        ReflectionTestUtils.setField(fileDeletionService, "efsMount", efsMount);
-
-        // Don't change the creation date on this file, but do so on the next ones
-        Path destinationNotDeleted = Paths.get(efsMount, TEST_FILE_NOT_DELETED);
-        URL urlNotDeletedFile = this.getClass().getResource("/" + TEST_FILE_NOT_DELETED);
-        Path sourceNotDeleted = Paths.get(urlNotDeletedFile.toURI());
-        Files.copy(sourceNotDeleted, destinationNotDeleted, StandardCopyOption.REPLACE_EXISTING);
-
-        // Not connected to a job
-        Path destination = Paths.get(efsMount, TEST_FILE);
-        URL url = this.getClass().getResource("/" + TEST_FILE);
-        Path source = Paths.get(url.toURI());
-        Files.copy(source, destination, StandardCopyOption.REPLACE_EXISTING);
-
-        changeFileCreationDate(destination);
+        pathsToDelete = new ArrayList<>();
 
         User user = dataSetup.setupUser(List.of());
 
         // Connected to a job that is finished and has expired
-        Job job = new Job();
+        job = new Job();
         job.setStatus(JobStatus.SUCCESSFUL);
         job.setJobUuid(UUID.randomUUID().toString());
         job.setCreatedAt(OffsetDateTime.now().minusDays(3));
@@ -130,77 +127,136 @@ public class FileDeletionServiceTest {
         job.setExpiresAt(OffsetDateTime.now().minusDays(1));
         job.setUser(user);
         jobService.updateJob(job);
-        Path jobPath = Paths.get(efsMount, job.getJobUuid());
-        File jobDir = new File(jobPath.toString());
-        if (!jobDir.exists()) jobDir.mkdirs();
-        Path destinationJobConnection = Paths.get(jobPath.toString(), "S0000_0001.ndjson");
-        URL urlJobConnection = this.getClass().getResource("/" + TEST_FILE);
-        Path sourceJobConnection = Paths.get(urlJobConnection.toURI());
-        Files.copy(sourceJobConnection, destinationJobConnection, StandardCopyOption.REPLACE_EXISTING);
-
-        changeFileCreationDate(destinationJobConnection);
 
         // Connected to a job, but in progress
-        Job jobInProgress = new Job();
+        jobInProgress = new Job();
         jobInProgress.setStatus(JobStatus.IN_PROGRESS);
         jobInProgress.setJobUuid(UUID.randomUUID().toString());
         jobInProgress.setCreatedAt(OffsetDateTime.now().minusHours(1));
         jobInProgress.setUser(user);
         jobService.updateJob(jobInProgress);
-        Path jobInProgressPath = Paths.get(efsMount, jobInProgress.getJobUuid());
-        File jobInProgressDir = new File(jobInProgressPath.toString());
-        if (!jobInProgressDir.exists()) jobInProgressDir.mkdirs();
-        Path destinationJobInProgressConnection = Paths.get(jobInProgressPath.toString(), "S0000_0001.ndjson");
-        URL urlJobInProgressConnection = this.getClass().getResource("/" + TEST_FILE);
-        Path sourceJobInProgressConnection = Paths.get(urlJobInProgressConnection.toURI());
-        Files.copy(sourceJobInProgressConnection, destinationJobInProgressConnection, StandardCopyOption.REPLACE_EXISTING);
-
-        changeFileCreationDate(destinationJobInProgressConnection);
 
         // Connected to a job that is finished where the file has yet to expire
-        Job jobNotExpiredYet = new Job();
+        jobNotExpiredYet = new Job();
         jobNotExpiredYet.setStatus(JobStatus.SUCCESSFUL);
         jobNotExpiredYet.setJobUuid(UUID.randomUUID().toString());
         jobNotExpiredYet.setCreatedAt(OffsetDateTime.now().minusHours(10));
         jobNotExpiredYet.setCompletedAt(OffsetDateTime.now().minusHours(5));
         jobNotExpiredYet.setExpiresAt(OffsetDateTime.now().plusHours(19));
         jobNotExpiredYet.setUser(user);
-        jobService.updateJob(jobNotExpiredYet);
-        Path jobNotExpiredYetPath = Paths.get(efsMount, jobNotExpiredYet.getJobUuid());
-        File jobNotExpiredYetDir = new File(jobNotExpiredYetPath.toString());
-        if (!jobNotExpiredYetDir.exists()) jobNotExpiredYetDir.mkdirs();
-        Path destinationJobNotExpiredYetConnection = Paths.get(jobNotExpiredYetPath.toString(), "S0000_0001.ndjson");
-        URL urlJobNotExpiredYetConnection = this.getClass().getResource("/" + TEST_FILE);
-        Path sourceJobNotExpiredYetConnection = Paths.get(urlJobNotExpiredYetConnection.toURI());
-        Files.copy(sourceJobNotExpiredYetConnection, destinationJobNotExpiredYetConnection, StandardCopyOption.REPLACE_EXISTING);
 
-        // A directory with no permissions that isn't going to be deleted
-        final Path noPermissionsDirPath = Paths.get(efsMount, TEST_DIRECTORY_NO_PERMISSIONS);
-        File noPermissionsDir = new File(noPermissionsDirPath.toString());
-        if (!noPermissionsDir.exists()) noPermissionsDir.mkdirs();
+        jobCancelled = new Job();
+        jobCancelled.setStatus(JobStatus.CANCELLED);
+        jobCancelled.setJobUuid(UUID.randomUUID().toString());
+        jobCancelled.setCreatedAt(OffsetDateTime.now().minusHours(1));
+        jobCancelled.setUser(user);
+        jobService.updateJob(jobCancelled);
 
-        Path noPermissionsFileDestination = Paths.get(efsMount, TEST_FILE_NO_PERMISSIONS);
-        URL noPermissionsFileUrl = this.getClass().getResource("/" + TEST_FILE_NO_PERMISSIONS);
-        Path noPermissionsFileSource = Paths.get(noPermissionsFileUrl.toURI());
-        Files.copy(noPermissionsFileSource, noPermissionsFileDestination, StandardCopyOption.REPLACE_EXISTING);
+        jobFailed = new Job();
+        jobFailed.setStatus(JobStatus.FAILED);
+        jobFailed.setJobUuid(UUID.randomUUID().toString());
+        jobFailed.setCreatedAt(OffsetDateTime.now().minusHours(1));
+        jobFailed.setUser(user);
+        jobService.updateJob(jobFailed);
 
-        changeFileCreationDate(noPermissionsFileDestination);
+        efsMount = tmpDirFolder.toPath().toString();
+        ReflectionTestUtils.setField(fileDeletionService, "efsMount", efsMount);
+    }
 
-        noPermissionsDir.setWritable(false);
+    @AfterEach
+    void cleanUp() throws IOException {
+        doAll.delete();
+
+        for (Path toDelete : pathsToDelete) {
+
+            if (Files.isDirectory(toDelete) && Files.exists(toDelete)) {
+                FileSystemUtils.deleteRecursively(toDelete);
+            } else if (Files.exists(toDelete)){
+                Files.delete(toDelete);
+            }
+        }
+    }
+
+    @DisplayName("Delete unrelated top level ndjson file")
+    @Test
+    void deleteUnrelatedTopLevelNdjson() throws IOException, URISyntaxException {
+
+        // Not connected to a job
+        Path destination = Paths.get(efsMount, TEST_FILE);
+        pathsToDelete.add(destination);
+
+        URL url = this.getClass().getResource(File.separator + TEST_FILE);
+        Path source = Paths.get(url.toURI());
+        Files.copy(source, destination, StandardCopyOption.REPLACE_EXISTING);
+
+        changeFileCreationDate(destination);
+
+        fileDeletionService.deleteFiles();
+
+        assertTrue(Files.notExists(destination));
+
+        List<LoggableEvent> fileEvents = doAll.load(FileEvent.class);
+        FileEvent e1 = (FileEvent) fileEvents.get(0);
+        assertTrue(e1.getFileName().equalsIgnoreCase(destination.toString()));
+
+        checkNoOtherEventsLogged();
+    }
+
+    @DisplayName("Ignore unrelated ndjson file that was just created")
+    @Test
+    void ignoreNewlyCreatedNestedNdjson() throws IOException, URISyntaxException {
+        // Don't change the creation date on this file, but do so on the next ones
+        Path destinationNotDeleted = Paths.get(efsMount, TEST_FILE_NOT_DELETED);
+        pathsToDelete.add(destinationNotDeleted);
+
+        URL urlNotDeletedFile = this.getClass().getResource(File.separator + TEST_FILE_NOT_DELETED);
+        Path sourceNotDeleted = Paths.get(urlNotDeletedFile.toURI());
+        Files.copy(sourceNotDeleted, destinationNotDeleted, StandardCopyOption.REPLACE_EXISTING);
+
+        fileDeletionService.deleteFiles();
+
+        assertTrue(Files.exists(destinationNotDeleted));
+
+        checkNoOtherEventsLogged();
+    }
+
+    @DisplayName("Delete nested ndjson file not attached to a job")
+    @Test
+    void deleteNestedNdjson() throws IOException, URISyntaxException {
 
         final Path dirPath = Paths.get(efsMount, TEST_DIRECTORY);
         File dir = new File(dirPath.toString());
         if (!dir.exists()) dir.mkdirs();
+        pathsToDelete.add(dirPath);
 
+        // Not connected to a job
         Path nestedFileDestination = Paths.get(efsMount, TEST_FILE_NESTED);
-        URL nestedFileUrl = this.getClass().getResource("/" + TEST_FILE_NESTED);
+        URL nestedFileUrl = this.getClass().getResource(File.separator + TEST_FILE_NESTED);
         Path nestedFileSource = Paths.get(nestedFileUrl.toURI());
         Files.copy(nestedFileSource, nestedFileDestination, StandardCopyOption.REPLACE_EXISTING);
 
         changeFileCreationDate(nestedFileDestination);
 
+        fileDeletionService.deleteFiles();
+
+        assertTrue(Files.notExists(nestedFileDestination));
+        assertTrue(Files.exists(dirPath));
+
+        List<LoggableEvent> fileEvents = doAll.load(FileEvent.class);
+        FileEvent e1 = (FileEvent) fileEvents.get(0);
+        assertTrue(e1.getFileName().equalsIgnoreCase(nestedFileDestination.toString()));
+
+        checkNoOtherEventsLogged();
+    }
+
+    @DisplayName("Ignore regular files without ndjson extension")
+    @Test
+    void ignoreRegularFiles() throws IOException, URISyntaxException {
+
         Path regularFileDestination = Paths.get(efsMount, REGULAR_FILE);
-        URL regularFileUrl = this.getClass().getResource("/" + REGULAR_FILE);
+        pathsToDelete.add(regularFileDestination);
+
+        URL regularFileUrl = this.getClass().getResource(File.separator + REGULAR_FILE);
         Path regularFileSource = Paths.get(regularFileUrl.toURI());
         Files.copy(regularFileSource, regularFileDestination, StandardCopyOption.REPLACE_EXISTING);
 
@@ -208,36 +264,198 @@ public class FileDeletionServiceTest {
 
         fileDeletionService.deleteFiles();
 
-        assertTrue(Files.notExists(destination));
+        assertTrue(Files.exists(regularFileDestination));
 
-        assertTrue(Files.notExists(nestedFileDestination));
+        checkNoOtherEventsLogged();
+    }
 
-        assertTrue(Files.notExists(destinationJobConnection));
+    @DisplayName("Ignore empty directories not associated with a job")
+    @Test
+    void ignoreEmptyDirectories() throws IOException, URISyntaxException {
 
-        assertTrue(Files.exists(destinationJobInProgressConnection));
+        Path regularFolder = Paths.get(efsMount, TEST_DIRECTORY);
+        pathsToDelete.add(regularFolder);
 
-        assertTrue(Files.exists(destinationJobNotExpiredYetConnection));
+        URL regularFileUrl = this.getClass().getResource(File.separator + REGULAR_FILE);
+        Path regularFileSource = Paths.get(regularFileUrl.toURI());
+        Files.copy(regularFileSource, regularFolder, StandardCopyOption.REPLACE_EXISTING);
 
-        assertTrue(Files.exists(destinationNotDeleted));
+        changeFileCreationDate(regularFolder);
+
+        fileDeletionService.deleteFiles();
+
+        assertTrue(Files.exists(regularFolder));
+
+        checkNoOtherEventsLogged();
+    }
+
+    @DisplayName("Ignore directory if no permissions")
+    @Test
+    void ignoreIfNoPermissions() throws IOException, URISyntaxException {
+        // A directory with no permissions that isn't going to be deleted
+        final Path noPermissionsDirPath = Paths.get(efsMount, TEST_DIRECTORY_NO_PERMISSIONS);
+        pathsToDelete.add(noPermissionsDirPath);
+
+        File noPermissionsDir = new File(noPermissionsDirPath.toString());
+        if (!noPermissionsDir.exists()) noPermissionsDir.mkdirs();
+
+        Path noPermissionsFileDestination = Paths.get(efsMount, TEST_FILE_NO_PERMISSIONS);
+        URL noPermissionsFileUrl = this.getClass().getResource(File.separator + TEST_FILE_NO_PERMISSIONS);
+        Path noPermissionsFileSource = Paths.get(noPermissionsFileUrl.toURI());
+        Files.copy(noPermissionsFileSource, noPermissionsFileDestination, StandardCopyOption.REPLACE_EXISTING);
+
+        changeFileCreationDate(noPermissionsFileDestination);
+
+        noPermissionsDir.setWritable(false);
+
+        fileDeletionService.deleteFiles();
 
         assertTrue(Files.exists(noPermissionsFileDestination));
 
-        assertTrue(Files.exists(regularFileDestination));
-        List<LoggableEvent> fileEvents = doAll.load(FileEvent.class);
-        assertEquals(3, fileEvents.size());
-        FileEvent e1 = (FileEvent) fileEvents.get(0);
-        FileEvent e2 = (FileEvent) fileEvents.get(1);
-        FileEvent e3 = (FileEvent) fileEvents.get(2);
-        assertTrue(e1.getFileName().equalsIgnoreCase(destination.toString()) ||
-                e2.getFileName().equalsIgnoreCase(destination.toString()) ||
-                e3.getFileName().equalsIgnoreCase(destination.toString()));
-        assertTrue(e1.getFileName().equalsIgnoreCase(nestedFileDestination.toString()) ||
-                e2.getFileName().equalsIgnoreCase(nestedFileDestination.toString()) ||
-                e3.getFileName().equalsIgnoreCase(nestedFileDestination.toString()));
-        assertTrue(e1.getFileName().equalsIgnoreCase(destinationJobConnection.toString()) ||
-                e2.getFileName().equalsIgnoreCase(destinationJobConnection.toString()) ||
-                e3.getFileName().equalsIgnoreCase(destinationJobConnection.toString()));
+        noPermissionsDir.setWritable(true);
 
+        checkNoOtherEventsLogged();
+    }
+
+    @DisplayName("Delete empty folder after job files are deleted")
+    @Test
+    void deleteCompletedAndExpiredJobFolder() throws IOException, URISyntaxException {
+
+        Path jobPath = Paths.get(efsMount, job.getJobUuid());
+        pathsToDelete.add(jobPath);
+
+        File jobDir = new File(jobPath.toString());
+        if (!jobDir.exists()) jobDir.mkdirs();
+
+        changeFileCreationDate(jobPath);
+
+        fileDeletionService.deleteFiles();
+
+        assertTrue(Files.notExists(jobPath));
+
+        checkNoOtherEventsLogged();
+    }
+
+    @DisplayName("Delete job files for successful jobs after they have expired")
+    @Test
+    void deleteCompletedAndExpiredJobFiles() throws IOException, URISyntaxException {
+
+        Path jobPath = Paths.get(efsMount, job.getJobUuid());
+        File jobDir = new File(jobPath.toString());
+        if (!jobDir.exists()) jobDir.mkdirs();
+        pathsToDelete.add(jobPath);
+
+        Path destinationJobConnection = Paths.get(jobPath.toString(), "S0000_0001.ndjson");
+        URL urlJobConnection = this.getClass().getResource(File.separator + TEST_FILE);
+        Path sourceJobConnection = Paths.get(urlJobConnection.toURI());
+        Files.copy(sourceJobConnection, destinationJobConnection, StandardCopyOption.REPLACE_EXISTING);
+
+        changeFileCreationDate(destinationJobConnection);
+
+        fileDeletionService.deleteFiles();
+
+        assertTrue(Files.notExists(jobPath));
+        assertTrue(Files.notExists(destinationJobConnection));
+
+        List<LoggableEvent> fileEvents = doAll.load(FileEvent.class);
+        FileEvent e1 = (FileEvent) fileEvents.get(0);
+        assertTrue(e1.getFileName().equalsIgnoreCase(destinationJobConnection.toString()));
+
+        checkNoOtherEventsLogged();
+    }
+
+    @DisplayName("Delete job files for cancelled jobs immediately")
+    @Test
+    void deleteCancelledAndExpiredJobFiles() throws IOException, URISyntaxException {
+
+        Path jobPath = Paths.get(efsMount, jobCancelled.getJobUuid());
+        File jobDir = new File(jobPath.toString());
+        if (!jobDir.exists()) jobDir.mkdirs();
+        pathsToDelete.add(jobPath);
+
+        Path destinationJobConnection = Paths.get(jobPath.toString(), "S0000_0001.ndjson");
+        URL urlJobConnection = this.getClass().getResource(File.separator + TEST_FILE);
+        Path sourceJobConnection = Paths.get(urlJobConnection.toURI());
+        Files.copy(sourceJobConnection, destinationJobConnection, StandardCopyOption.REPLACE_EXISTING);
+
+        changeFileCreationDate(destinationJobConnection);
+
+        fileDeletionService.deleteFiles();
+
+        assertTrue(Files.notExists(jobPath));
+        assertTrue(Files.notExists(destinationJobConnection));
+
+        List<LoggableEvent> fileEvents = doAll.load(FileEvent.class);
+        FileEvent e1 = (FileEvent) fileEvents.get(0);
+        assertTrue(e1.getFileName().equalsIgnoreCase(destinationJobConnection.toString()));
+
+        checkNoOtherEventsLogged();
+    }
+
+    @DisplayName("Delete job files for failed jobs immediately")
+    @Test
+    void deleteFailedAndExpiredJobFiles() throws IOException, URISyntaxException {
+
+        Path jobPath = Paths.get(efsMount, jobFailed.getJobUuid());
+        File jobDir = new File(jobPath.toString());
+        if (!jobDir.exists()) jobDir.mkdirs();
+        pathsToDelete.add(jobPath);
+
+        Path destinationJobConnection = Paths.get(jobPath.toString(), "S0000_0001.ndjson");
+        URL urlJobConnection = this.getClass().getResource(File.separator + TEST_FILE);
+        Path sourceJobConnection = Paths.get(urlJobConnection.toURI());
+        Files.copy(sourceJobConnection, destinationJobConnection, StandardCopyOption.REPLACE_EXISTING);
+
+        changeFileCreationDate(destinationJobConnection);
+
+        fileDeletionService.deleteFiles();
+
+        assertTrue(Files.notExists(jobPath));
+        assertTrue(Files.notExists(destinationJobConnection));
+
+        List<LoggableEvent> fileEvents = doAll.load(FileEvent.class);
+        FileEvent e1 = (FileEvent) fileEvents.get(0);
+        assertTrue(e1.getFileName().equalsIgnoreCase(destinationJobConnection.toString()));
+
+        checkNoOtherEventsLogged();
+    }
+
+    @DisplayName("Ignore in progress job files")
+    @Test
+    void ignoreInProgressJobFiles() throws IOException, URISyntaxException {
+
+        Path jobInProgressPath = Paths.get(efsMount, jobInProgress.getJobUuid());
+        File jobInProgressDir = new File(jobInProgressPath.toString());
+        pathsToDelete.add(jobInProgressPath);
+
+        if (!jobInProgressDir.exists()) jobInProgressDir.mkdirs();
+        Path destinationJobInProgressConnection = Paths.get(jobInProgressPath.toString(), "S0000_0001.ndjson");
+        URL urlJobInProgressConnection = this.getClass().getResource(File.separator + TEST_FILE);
+        Path sourceJobInProgressConnection = Paths.get(urlJobInProgressConnection.toURI());
+        Files.copy(sourceJobInProgressConnection, destinationJobInProgressConnection, StandardCopyOption.REPLACE_EXISTING);
+
+        assertTrue(Files.exists(destinationJobInProgressConnection));
+
+        checkNoOtherEventsLogged();
+    }
+
+    @DisplayName("Ignore in progress job files")
+    @Test
+    void ignoreInProgressJobFolders() throws IOException {
+
+        Path jobInProgressPath = Paths.get(efsMount, jobInProgress.getJobUuid());
+        File jobInProgressDir = new File(jobInProgressPath.toString());
+        if (!jobInProgressDir.exists()) jobInProgressDir.mkdirs();
+        pathsToDelete.add(jobInProgressPath);
+
+        fileDeletionService.deleteFiles();
+
+        assertTrue(Files.exists(jobInProgressPath));
+
+        checkNoOtherEventsLogged();
+    }
+
+    private void checkNoOtherEventsLogged() {
         assertTrue(UtilMethods.allEmpty(
                 doAll.load(ApiRequestEvent.class),
                 doAll.load(ApiResponseEvent.class),
@@ -245,59 +463,72 @@ public class FileDeletionServiceTest {
                 doAll.load(ContractBeneSearchEvent.class),
                 doAll.load(ErrorEvent.class),
                 doAll.load(JobStatusChangeEvent.class)));
-
-        // Cleanup
-        Files.delete(destinationNotDeleted);
-
-        noPermissionsDir.setWritable(true);
-        FileSystemUtils.deleteRecursively(noPermissionsDir);
-
-        FileSystemUtils.deleteRecursively(dir);
-
-        Files.delete(regularFileDestination);
     }
 
+    @DisplayName("Ignore recently completed job files")
     @Test
-    public void testEFSMountSlash() {
-        ReflectionTestUtils.setField(fileDeletionService, "efsMount", "~/UsersDir");
+    void ignoreRecentlyCompletedJobFiles() throws IOException, URISyntaxException {
+
+        jobService.updateJob(jobNotExpiredYet);
+        Path jobNotExpiredYetPath = Paths.get(efsMount, jobNotExpiredYet.getJobUuid());
+        File jobNotExpiredYetDir = new File(jobNotExpiredYetPath.toString());
+        if (!jobNotExpiredYetDir.exists()) jobNotExpiredYetDir.mkdirs();
+        pathsToDelete.add(jobNotExpiredYetPath);
+
+        Path destinationJobNotExpiredYetConnection = Paths.get(jobNotExpiredYetPath.toString(), "S0000_0001.ndjson");
+        URL urlJobNotExpiredYetConnection = this.getClass().getResource(File.separator + TEST_FILE);
+        Path sourceJobNotExpiredYetConnection = Paths.get(urlJobNotExpiredYetConnection.toURI());
+        Files.copy(sourceJobNotExpiredYetConnection, destinationJobNotExpiredYetConnection, StandardCopyOption.REPLACE_EXISTING);
+
+        fileDeletionService.deleteFiles();
+
+        assertTrue(Files.exists(destinationJobNotExpiredYetConnection));
+    }
+
+    @DisplayName("Ignore recently completed job folders")
+    @Test
+    void ignoreRecentlyCompletedJobFolders() throws IOException, URISyntaxException {
+
+        jobService.updateJob(jobNotExpiredYet);
+        Path jobNotExpiredYetPath = Paths.get(efsMount, jobNotExpiredYet.getJobUuid());
+        File jobNotExpiredYetDir = new File(jobNotExpiredYetPath.toString());
+        if (!jobNotExpiredYetDir.exists()) jobNotExpiredYetDir.mkdirs();
+        pathsToDelete.add(jobNotExpiredYetPath);
+
+        fileDeletionService.deleteFiles();
+
+        assertTrue(Files.exists(jobNotExpiredYetPath));
+    }
+
+    // Folder checking only works on unix systems
+    @EnabledOnOs(value = {OS.LINUX, OS.MAC})
+    @ParameterizedTest
+    @MethodSource("directoryAndMessage")
+    void testEFSMountChecks(String dirToSet, String exceptionMessage) {
+        ReflectionTestUtils.setField(fileDeletionService, "efsMount", dirToSet);
 
         var exceptionThrown = assertThrows(EFSMountFormatException.class, () ->
                 fileDeletionService.deleteFiles());
-        assertThat(exceptionThrown.getMessage(), is("EFS Mount must start with a /"));
+        assertThat(exceptionThrown.getMessage(), is(exceptionMessage));
     }
 
-    @Test
-    public void testEFSMountDirectorySize() {
-        ReflectionTestUtils.setField(fileDeletionService, "efsMount", "/a");
-
-        var exceptionThrown = assertThrows(EFSMountFormatException.class, () ->
-                fileDeletionService.deleteFiles());
-        assertThat(exceptionThrown.getMessage(), is("EFS mount must be at least 5 characters"));
+    static Stream<Arguments> directoryAndMessage() {
+        return Stream.of(
+                arguments("~/UsersDir", "EFS Mount must start with a /"),
+                arguments("/a", "EFS mount must be at least 5 characters"),
+                arguments("/usr/baddirectory",
+                        "EFS mount must not start with a directory that contains important files"),
+                arguments("/opt","EFS mount must be at least 5 characters")
+        );
     }
 
+    // Only a useful check on unix systems
+    @EnabledOnOs(value = {OS.LINUX, OS.MAC})
     @Test
-    public void testEFSMountDirectoryBlacklist() {
-        ReflectionTestUtils.setField(fileDeletionService, "efsMount", "/usr/baddirectory");
-
-        var exceptionThrown = assertThrows(EFSMountFormatException.class, () ->
-                fileDeletionService.deleteFiles());
-        assertThat(exceptionThrown.getMessage(), is("EFS mount must not start with a directory that contains important files"));
-    }
-
-    @Test
-    public void testEFSMountOptAb2d() {
+    void testEFSMountOptAb2d() {
         ReflectionTestUtils.setField(fileDeletionService, "efsMount", "/opt/ab2d");
 
         // Confirm no exceptions thrown
         fileDeletionService.deleteFiles();
-    }
-
-    @Test
-    public void testEFSMountOpt() {
-        ReflectionTestUtils.setField(fileDeletionService, "efsMount", "/opt");
-
-        var exceptionThrown = assertThrows(EFSMountFormatException.class, () ->
-                fileDeletionService.deleteFiles());
-        assertThat(exceptionThrown.getMessage(), is("EFS mount must be at least 5 characters"));
     }
 }
