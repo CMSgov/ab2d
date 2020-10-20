@@ -28,27 +28,27 @@ If you want to:
 3. And save all results for this job to the directory /opt/foo
 
 Then run the following command
-`./bootstrap -prod --auth $AUTH --contract ABCDE --directory /opt/foo &&
- ./start-job`
+`./bootstrap.sh -prod --auth $AUTH --contract ABCDE --directory /opt/foo &&
+ ./start-job.sh && ./monitor-job.sh && ./download-results.sh`
+
 
 ## Scripts Included
 
-1. start-job: start a job given an auth token, contract, and environment
-2. monitor-job: monitor a running job until it completes
-3. download-results: download results from a job that has been run
-4. run-job: aggregation of the first three scripts
+1. bootstrap.sh: prepare environment variables necessary for other scripts using command line arguments
+1. start-job.sh: start a job given an auth token, contract, and environment
+1. monitor-job.sh: monitor a running job until it completes
+1. download-results.sh: download results from a job that has been run
+1. run-job.sh: aggregation of the first three scripts
 
-The last script combines the first three steps into one script.
+The last script combines the first four steps into one script.
 
 ### Other resources included
 
-1. fn_get_token: take a base64 encoded secret and retrieve a JWT token
-2. bootstrap: take command line arguments and export variables necessary for other scripts
-(called individually in start-job, monitor-job, and download-results)
+1. fn_get_token.sh: take a base64 encoded secret and retrieve a JWT token
 
 ## Extended Example Instructions
 
-For this example the job is being run against sandbox
+For this example the job is run against sandbox.
 
 ### Running Scripts Individually
 
@@ -58,12 +58,13 @@ For this example the job is being run against sandbox
    OKTA_CLIENT_PASSWORD=<client password>
    ```
 1. Create the AUTH token `AUTH=$(echo -n "${OKTA_CLIENT_ID}:${OKTA_CLIENT_PASSWORD}" | base64)`
-1. Run `source bootstrap -sandbox --auth $AUTH` to set environment variables for a job.
-1. Run `./start-job` to start a job. If successful a file containing
+1. Run `source bootstrap.sh -sandbox --auth $AUTH` to set environment variables for a job.
+1. Run `./start-job.sh` to start a job. If successful a file containing
 the job id will be saved in `<directory>/jobId.txt`
-1. Run `./monitor-job` which will monitor the state of the running job. When the job
+1. Run `./monitor-job.sh` which will monitor the state of the running job. When the job
 finished the full HTTP response will be saved to `<directory>/response.json`
-1. Run `./download-results`
+1. Run `./download-results.sh` to get the files. This will only download the files once. Running again
+will not overwrite the files but will also not download anything.
 
 ### Running Aggregate Script
 1. Set the OKTA_CLIENT_ID and OKTA_CLIENT_PASSWORD
@@ -72,4 +73,4 @@ finished the full HTTP response will be saved to `<directory>/response.json`
    OKTA_CLIENT_PASSWORD=<client password>
    ```
 2. Create the AUTH token `AUTH=$(echo -n "${OKTA_CLIENT_ID}:${OKTA_CLIENT_PASSWORD}" | base64)`
-3. Run `./run-job -sandbox --auth $AUTH` to start, monitor, and download results from a job.
+3. Run `./run-job.sh -sandbox --auth $AUTH` to start, monitor, and download results from a job.
