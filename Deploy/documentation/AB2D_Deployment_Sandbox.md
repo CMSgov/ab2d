@@ -342,38 +342,40 @@
 
 ### Create or update application for production
 
-1. Change to the "Deploy" directory
+1. Change to your "ab2d" repo directory
+
+   *Example:*
 
    ```ShellSession
-   $ cd ~/code/ab2d/Deploy
+   $ cd ~/code/ab2d
    ```
 
 1. Set parameters
 
    ```ShellSession
-   $ export CMS_ENV_PARAM=ab2d-sbx-sandbox
-   $ export CMS_ECR_REPO_ENV_PARAM=ab2d-mgmt-east-dev
-   $ export REGION_PARAM=us-east-1
-   $ export VPC_ID_PARAM=vpc-08dbf3fa96684151c
-   $ export SSH_USERNAME_PARAM=ec2-user
-   $ export EC2_INSTANCE_TYPE_API_PARAM=m5.xlarge
-   $ export EC2_INSTANCE_TYPE_WORKER_PARAM=m5.4xlarge
-   $ export EC2_DESIRED_INSTANCE_COUNT_API_PARAM=2
-   $ export EC2_MINIMUM_INSTANCE_COUNT_API_PARAM=2
-   $ export EC2_MAXIMUM_INSTANCE_COUNT_API_PARAM=2
-   $ export EC2_DESIRED_INSTANCE_COUNT_WORKER_PARAM=2
-   $ export EC2_MINIMUM_INSTANCE_COUNT_WORKER_PARAM=2
-   $ export EC2_MAXIMUM_INSTANCE_COUNT_WORKER_PARAM=2
-   $ export DATABASE_SECRET_DATETIME_PARAM=2020-01-02-09-15-01
-   $ export DEBUG_LEVEL_PARAM=WARN
-   $ export INTERNET_FACING_PARAM=false
-   $ export CLOUD_TAMER_PARAM=true
+   $ export CMS_ENV_PARAM=ab2d-sbx-sandbox \
+     && export CMS_ECR_REPO_ENV_PARAM=ab2d-mgmt-east-dev \
+     && export REGION_PARAM=us-east-1 \
+     && export VPC_ID_PARAM=vpc-08dbf3fa96684151c \
+     && export SSH_USERNAME_PARAM=ec2-user \
+     && export EC2_INSTANCE_TYPE_API_PARAM=m5.xlarge \
+     && export EC2_INSTANCE_TYPE_WORKER_PARAM=m5.4xlarge \
+     && export EC2_DESIRED_INSTANCE_COUNT_API_PARAM=2 \
+     && export EC2_MINIMUM_INSTANCE_COUNT_API_PARAM=2 \
+     && export EC2_MAXIMUM_INSTANCE_COUNT_API_PARAM=2 \
+     && export EC2_DESIRED_INSTANCE_COUNT_WORKER_PARAM=2 \
+     && export EC2_MINIMUM_INSTANCE_COUNT_WORKER_PARAM=2 \
+     && export EC2_MAXIMUM_INSTANCE_COUNT_WORKER_PARAM=2 \
+     && export DATABASE_SECRET_DATETIME_PARAM=2020-01-02-09-15-01 \
+     && export DEBUG_LEVEL_PARAM=WARN \
+     && export INTERNET_FACING_PARAM=false \
+     && export CLOUD_TAMER_PARAM=true
    ``` 
 
 1. Deploy application
 
    ```ShellSession
-   $ ./bash/deploy-application.sh
+   $ ./Deploy/bash/deploy-application.sh
    ```
 
 ## Submit an "Internet DNS Change Request Form" to product owner for the sandbox application load balancer
