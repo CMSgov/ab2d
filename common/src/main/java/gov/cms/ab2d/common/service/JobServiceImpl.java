@@ -72,27 +72,40 @@ public class JobServiceImpl implements JobService {
         job.setSince(since);
         job.setUser(userService.getCurrentUser());
 
+        // Check to see if there is any attestation
+        User user = userService.getCurrentUser();
+        Sponsor userSponsor = user.getSponsor();
+        List<Contract> contracts = userSponsor.getAggregatedAttestedContracts();
+        if (contracts.isEmpty()) {
+            String errorMsg = (contractNumber == null) ?
+                "No attested contracts found for the user." :
+                "No attested contract with contract number {} found for the user" + contractNumber;
+            log.error(errorMsg);
+            throw new InvalidContractException(errorMsg);
+        }
+
         if (contractNumber != null) {
-            contractRepository.findContractByContractNumber(contractNumber).ifPresentOrElse(contractFound -> {
-                User user = userService.getCurrentUser();
-                Sponsor userSponsor = user.getSponsor();
-
-                List<Contract> contracts = userSponsor.getAggregatedAttestedContracts();
-                if (!contracts.contains(contractFound)) {
-                    log.error("No attested contract with contract number {} found for the user", contractFound.getContractNumber());
-                    throw new InvalidContractException("No attested contract with contract number " + contractFound.getContractNumber() +
-                        " found for the user");
-                }
-
-                job.setContract(contractFound);
-            }, () -> {
-                log.error("Contract {} was not found", contractNumber);
-                throw new ContractNotFoundException("Contract " + contractNumber + " was not found");
-            });
+            contractRepository.findContractByContractNumber(contractNumber).ifPresentOrElse(contractFound ->
+                processFoundContract(job, contracts, contractFound), () -> contractNotFound(contractNumber));
         }
         eventLogger.log(EventUtils.getJobChangeEvent(job, JobStatus.SUBMITTED, "Job Created"));
         job.setStatus(JobStatus.SUBMITTED);
         return jobRepository.save(job);
+    }
+
+    private void contractNotFound(String contractNumber) {
+        log.error("Contract {} was not found", contractNumber);
+        throw new ContractNotFoundException("Contract " + contractNumber + " was not found");
+    }
+
+    private void processFoundContract(Job job, List<Contract> contracts, Contract contractFound) {
+        if (!contracts.contains(contractFound)) {
+            log.error("No attested contract with contract number {} found for the user", contractFound.getContractNumber());
+            throw new InvalidContractException("No attested contract with contract number " + contractFound.getContractNumber() +
+                " found for the user");
+        }
+
+        job.setContract(contractFound);
     }
 
     @Override
