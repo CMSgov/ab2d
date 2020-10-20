@@ -149,6 +149,8 @@ class CoverageProcessorImplTest {
         status = coverageService.getSearchStatus(january.getId());
         assertEquals(JobStatus.IN_PROGRESS, status);
 
+        sleep(3000);
+
         processor.monitorMappingJobs();
         status = coverageService.getSearchStatus(january.getId());
         assertEquals(JobStatus.IN_PROGRESS, status);
@@ -172,6 +174,8 @@ class CoverageProcessorImplTest {
         status = coverageService.getSearchStatus(january.getId());
         assertEquals(JobStatus.IN_PROGRESS, status);
 
+        sleep(1000);
+
         processor.monitorMappingJobs();
         assertTrue(coverageSearchEventRepo.findAll().stream().anyMatch(event -> event.getNewStatus() == JobStatus.FAILED));
 
@@ -191,11 +195,11 @@ class CoverageProcessorImplTest {
 
         processor.loadMappingJob();
 
-        sleep();
+        sleep(1000);
 
         processor.monitorMappingJobs();
 
-        sleep();
+        sleep(1000);
 
         processor.insertJobResults();
 
@@ -276,7 +280,9 @@ class CoverageProcessorImplTest {
 
         processor.loadMappingJob();
         processor.loadMappingJob();
-        sleep();
+
+        sleep(1000);
+
         processor.monitorMappingJobs();
 
         processor.loadMappingJob();
@@ -290,7 +296,7 @@ class CoverageProcessorImplTest {
         status = coverageService.getSearchStatus(january.getId());
         assertEquals(JobStatus.IN_PROGRESS, status);
 
-        sleep();
+        sleep(1000);
 
         processor.monitorMappingJobs();
         status = coverageService.getSearchStatus(january.getId());
@@ -316,9 +322,9 @@ class CoverageProcessorImplTest {
         return bundle1;
     }
 
-    private void sleep() {
+    private void sleep(int milliseconds) {
         try {
-            Thread.sleep(1000);
+            Thread.sleep(milliseconds);
         } catch (InterruptedException ie) {
 
         }
