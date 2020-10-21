@@ -101,7 +101,7 @@ public interface CoverageService {
     /**
      * Find all coverage periods that have never been searched
      */
-    List<CoveragePeriod> coveragePeriodNeverSearched();
+    List<CoveragePeriod> coveragePeriodNeverSearchedSuccessfully();
 
     /**
      * Find all coverage periods for a given month since

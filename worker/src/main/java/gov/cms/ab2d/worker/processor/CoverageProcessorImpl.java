@@ -64,7 +64,7 @@ public class CoverageProcessorImpl implements CoverageProcessor {
     public void queueStaleCoveragePeriods() {
         // Use a linked hash set to order by discovery
         // Add all new coverage periods that have never been mapped/searched
-        Set<CoveragePeriod> outOfDateInfo = new LinkedHashSet<>(coverageService.coveragePeriodNeverSearched());
+        Set<CoveragePeriod> outOfDateInfo = new LinkedHashSet<>(coverageService.coveragePeriodNeverSearchedSuccessfully());
 
         // Find all stuck coverage searches and cancel them
         outOfDateInfo.addAll(findAndCancelStuckCoverageJobs());
@@ -80,7 +80,7 @@ public class CoverageProcessorImpl implements CoverageProcessor {
     private Set<CoveragePeriod> findAndCancelStuckCoverageJobs() {
 
         Set<CoveragePeriod> stuckJobs = new LinkedHashSet<>(
-                coverageService.coveragePeriodStuckJobs(OffsetDateTime.now(ZoneOffset.UTC).minusDays(1)));
+                coverageService.coveragePeriodStuckJobs(OffsetDateTime.now(ZoneOffset.UTC).minusHours(config.getStuckHours())));
 
         for (CoveragePeriod period : stuckJobs) {
             coverageService.failSearch(period.getId(), "coverage period current job has been stuck for at least "
@@ -97,8 +97,8 @@ public class CoverageProcessorImpl implements CoverageProcessor {
         do {
             // Get past month and year
             OffsetDateTime pastMonthTime = dateTime.minusMonths(monthsInPast);
-            int month = pastMonthTime.getDayOfMonth();
-            int year = pastMonthTime.getDayOfYear();
+            int month = pastMonthTime.getMonthValue();
+            int year = pastMonthTime.getYear();
 
             // Look for coverage periods that have not been updated
             long daysInPast = config.getStaleDays() * (monthsInPast + 1);

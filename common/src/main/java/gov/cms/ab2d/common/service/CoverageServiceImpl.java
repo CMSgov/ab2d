@@ -169,32 +169,13 @@ public class CoverageServiceImpl implements CoverageService {
     }
 
     @Override
-    public List<CoveragePeriod> coveragePeriodNeverSearched() {
-        return coveragePeriodRepo.findAllByStatusIsNull();
+    public List<CoveragePeriod> coveragePeriodNeverSearchedSuccessfully() {
+        return coveragePeriodRepo.findAllByLastSuccessfulJobIsNull();
     }
 
     @Override
     public List<CoveragePeriod> coveragePeriodNotUpdatedSince(int month, int year, OffsetDateTime lastSuccessful) {
-        List<CoveragePeriod> allCoveragePeriodsForMonth = coveragePeriodRepo.findAllByMonthAndYear(month, year);
-
-        return allCoveragePeriodsForMonth.stream()
-                .filter(period -> period.getStatus() != JobStatus.SUBMITTED && period.getStatus() != JobStatus.IN_PROGRESS)
-                .filter(period -> staleCoverageInformation(lastSuccessful, period))
-                .collect(toList());
-
-    }
-
-    private boolean staleCoverageInformation(OffsetDateTime lastSuccessful, CoveragePeriod period) {
-        Optional<CoverageSearchEvent>  search = coverageSearchEventRepo
-                .findSearchEventWithOffset(period.getId(), JobStatus.SUCCESSFUL.name(), 0);
-
-        // Never been searched and we need to do the search now
-        if (search.isEmpty()) {
-            return true;
-        }
-
-        OffsetDateTime created = search.get().getCreated();
-        return !created.isAfter(lastSuccessful);
+        return coveragePeriodRepo.findAllByMonthAndYearAndLastSuccessfulJobLessThanEqual(month, year, lastSuccessful);
     }
 
     @Override
@@ -356,6 +337,10 @@ public class CoverageServiceImpl implements CoverageService {
         newStatus.setDescription(description);
 
         period.setStatus(status);
+
+        if (status == JobStatus.SUCCESSFUL) {
+            period.setLastSuccessfulJob(OffsetDateTime.now());
+        }
 
         coveragePeriodRepo.saveAndFlush(period);
 

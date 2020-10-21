@@ -74,3 +74,5 @@ databaseChangeLog:
       file: db/changelog/v001/add_hpms_info_to_contract.sql
   - include:
       file: db/changelog/v001/add_coverage_search.sql
+  - include:
+      file: db/changelog/v001/add_last_success_to_coverage_period.sql

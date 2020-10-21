@@ -593,41 +593,28 @@ class CoverageServiceImplTest {
         assertEquals(JobStatus.SUBMITTED, status);
     }
 
-    @DisplayName("Find all coverage periods that have never had mapping completed")
-    @Test
-    void getNeverSearched() {
-        List<CoveragePeriod> coveragePeriods = coverageService.coveragePeriodNeverSearched();
-
-        assertEquals(5, coveragePeriods.size());
-
-        coverageService.submitSearch(period1Jan.getId(), "testing");
-
-        coveragePeriods = coverageService.coveragePeriodNeverSearched();
-
-        assertEquals(4, coveragePeriods.size());
-    }
-
     @DisplayName("Find all coverage periods that have not been searched since x time")
     @Test
     void findSearchedSince() {
 
         OffsetDateTime startTest = OffsetDateTime.now();
 
-        // Both January periods have never been searched so both should be returned
+        // Both January periods have never been searched so neither will be returned but
+        // this call doesn't check for null values
         List<CoveragePeriod> coveragePeriods = coverageService.coveragePeriodNotUpdatedSince(1, 2020, startTest.minusDays(1));
-        assertEquals(2, coveragePeriods.size());
+        assertEquals(0, coveragePeriods.size());
 
         coverageService.submitSearch(period1Jan.getId(), "testing");
         startSearchAndPullEvent();
         CoverageSearchEvent completedEvent = coverageService.completeSearch(period1Jan.getId(), "testing");
 
-        // Searching using future date should return all (2) January periods
+        // Searching using future date should return stale january coverage period
         coveragePeriods = coverageService.coveragePeriodNotUpdatedSince(1, 2020, completedEvent.getCreated().plusSeconds(1));
-        assertEquals(2, coveragePeriods.size());
-
-        // Searching using past date should return never searched period only
-        coveragePeriods = coverageService.coveragePeriodNotUpdatedSince(1, 2020, startTest.minusDays(1));
         assertEquals(1, coveragePeriods.size());
+
+        // Searching using past date should return nothing because january period was searched recently
+        coveragePeriods = coverageService.coveragePeriodNotUpdatedSince(1, 2020, startTest.minusDays(1));
+        assertEquals(0, coveragePeriods.size());
     }
 
     @DisplayName("Find all stuck jobs")
@@ -735,6 +722,9 @@ class CoverageServiceImplTest {
 
         assertEquals(JobStatus.IN_PROGRESS, completedCopy.getOldStatus());
         assertEquals(JobStatus.SUCCESSFUL, completedCopy.getNewStatus());
+
+        // Check that last successful job is updated
+        assertNotNull(completedCopy.getCoveragePeriod().getLastSuccessfulJob());
 
         // Cannot complete job twice
         assertThrows(InvalidJobStateTransition.class, () -> coverageService.completeSearch(period1Jan.getId(), "testing"));

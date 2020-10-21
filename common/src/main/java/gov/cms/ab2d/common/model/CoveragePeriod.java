@@ -7,6 +7,8 @@ import lombok.ToString;
 
 import javax.persistence.*;
 
+import java.time.OffsetDateTime;
+
 import static javax.persistence.EnumType.STRING;
 
 @Entity(name = "bene_coverage_period")
@@ -35,4 +37,7 @@ public class CoveragePeriod extends TimestampBase {
 
     @Enumerated(STRING)
     private JobStatus status;
+
+    @Column
+    private OffsetDateTime lastSuccessfulJob;
 }
