@@ -27,7 +27,7 @@ import static gov.cms.ab2d.common.util.DateUtil.getESTOffset;
 @EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = false)
 public class Contract extends TimestampBase {
 
-    public static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("MM/dd/yyyy H:m Z");
+    public static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd H:m:s Z");
 
     @Id
     @GeneratedValue
@@ -73,7 +73,7 @@ public class Contract extends TimestampBase {
             return true;
         }
 
-        String dateWithTZ = attestationDate + " 0:0 " + getESTOffset();
+        String dateWithTZ = attestationDate + " " + getESTOffset();
         attestedOn = OffsetDateTime.parse(dateWithTZ, FORMATTER);
         return true;
     }
