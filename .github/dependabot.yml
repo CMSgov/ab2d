@@ -3,22 +3,22 @@
 # Please see the documentation for all configuration options:
 # https://help.github.com/github/administering-a-repository/configuration-options-for-dependency-updates
 
+
 version: 2
 updates:
-  - package-ecosystem: "github-actions" 
+  - package-ecosystem: "github-actions"
     directory: "/" # Location of package manifests
     schedule:
       interval: "weekly"
 
-updates:
-  - package-ecosystem: "maven" 
+  - package-ecosystem: "maven"
     directory: "/" # Location of package manifests
     schedule:
       interval: "weekly"
-updates:
-  - package-ecosystem: "terraform" 
-    directory: "/Deploy/terraform" # Location of package manifests
-    schedule:
-      interval: "weekly"
 
+#Terraform not working because we use vars.
+  #- package-ecosystem: "terraform"
+    #directory: "Deploy/terraform/environments/ab2d-east-prod/"
+    #schedule:
+      #interval: "weekly"
 
