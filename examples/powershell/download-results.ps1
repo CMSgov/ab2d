@@ -2,6 +2,8 @@
 # download-results.ps1
 ######################
 
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+
 function Get-Bearer-Token {
   $headers = New-Object "System.Collections.Generic.Dictionary[[String],[String]]"
   $headers.Add("Authorization", "Basic $AUTH")
@@ -45,6 +47,6 @@ while ($FILE_INDEX -ne ($LAST_FILE_INDEX + 1)) {
   Write-Host ''
   $headers = New-Object "System.Collections.Generic.Dictionary[[String],[String]]"
   $headers.Add("Authorization", "Bearer $BEARER_TOKEN")
-  Invoke-WebRequest "$FILE_URL" -Method 'GET' -Headers $headers -Body $body -Outfile $FILE
+  Invoke-WebRequest "$FILE_URL" -Method 'GET' -Headers $headers -Body $body -TimeoutSec 1800 -Outfile $FILE
   $FILE_INDEX++
 }

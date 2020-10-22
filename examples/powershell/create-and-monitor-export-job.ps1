@@ -1,6 +1,8 @@
-#################
-# monitor-job.ps1
-#################
+###################################
+# create-and-monitor-export-job.ps1
+###################################
+
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
 function Get-Bearer-Token {
   $headers = New-Object "System.Collections.Generic.Dictionary[[String],[String]]"
