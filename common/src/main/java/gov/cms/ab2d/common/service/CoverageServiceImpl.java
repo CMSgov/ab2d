@@ -170,7 +170,11 @@ public class CoverageServiceImpl implements CoverageService {
 
     @Override
     public List<CoveragePeriod> coveragePeriodNeverSearchedSuccessfully() {
-        return coveragePeriodRepo.findAllByLastSuccessfulJobIsNull();
+        List<CoveragePeriod> neverSuccessful = coveragePeriodRepo.findAllByLastSuccessfulJobIsNull();
+
+        return neverSuccessful.stream().filter(period ->
+                period.getStatus() != JobStatus.SUBMITTED && period.getStatus() != JobStatus.IN_PROGRESS)
+                .collect(toList());
     }
 
     @Override

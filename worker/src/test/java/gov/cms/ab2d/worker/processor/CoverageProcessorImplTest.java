@@ -140,6 +140,15 @@ class CoverageProcessorImplTest {
     @Test
     void queueStaleCoverageNeverSearched() {
 
+        january.setStatus(null);
+        coveragePeriodRepo.saveAndFlush(january);
+
+        february.setStatus(null);
+        coveragePeriodRepo.saveAndFlush(february);
+
+        march.setStatus(null);
+        coveragePeriodRepo.saveAndFlush(march);
+
         processor.queueStaleCoveragePeriods();
 
         assertEquals(3, coverageSearchRepo.findAll().size());
@@ -150,13 +159,13 @@ class CoverageProcessorImplTest {
         january.setLastSuccessfulJob(OffsetDateTime.now());
         coveragePeriodRepo.saveAndFlush(january);
 
+        createEvent(january, JobStatus.SUCCESSFUL, OffsetDateTime.now());
+
         february.setStatus(null);
         coveragePeriodRepo.saveAndFlush(february);
 
         march.setStatus(null);
         coveragePeriodRepo.saveAndFlush(march);
-
-        createEvent(january, JobStatus.SUCCESSFUL, OffsetDateTime.now());
 
         processor.queueStaleCoveragePeriods();
         assertEquals(2, coverageSearchRepo.findAll().size());
