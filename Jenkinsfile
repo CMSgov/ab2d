@@ -9,8 +9,6 @@ pipeline {
         AB2D_HICN_HASH_ITER = 1000
 
         AB2D_CLAIMS_SKIP_BILLABLE_PERIOD_CHECK = true
-        AB2D_OPT_OUT_JOB_SCHEDULE = "*/15 * * * * ?"
-        AB2D_OPT_OUT_ENABLED = true
 
         // Get code climate id
         CC_TEST_REPORTER_ID = credentials('CC_TEST_REPORTER_ID')
