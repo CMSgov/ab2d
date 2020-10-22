@@ -24,14 +24,15 @@ do
 
     # If response is unauthorized refresh token and try again
     HTTP_CODE=$(echo "$RESPONSE" | grep "HTTP/" | awk  '{print $2}')
+
     if [ "$HTTP_CODE" == 403 ]
     then
         echo "Token expired refreshing and then attempting to check status again"
         BEARER_TOKEN=$(fn_get_token "$IDP_URL" "$AUTH")
         sleep 30
-    elif [ "$HTTP_CODE" != 202 ] || [ "$HTTP_CODE" != 200 ]
+    elif [ "$HTTP_CODE" != 202 ] && [ "$HTTP_CODE" != 200 ]
     then
-        echo "Error making rest call"
+        echo "Error making rest call $HTTP_CODE"
         echo "Exiting without saving results"
         exit 1
     else
