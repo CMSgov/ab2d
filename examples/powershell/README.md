@@ -1,24 +1,24 @@
-# AB2D PoweShell Diections
+# AB2D PowerShell Directions
 
 1. Note the following
 
-   - these diections assume that you ae on a Windows machine with PoweShell
+   - these directions assume that you are on a Windows machine with PowerShell
 
    - sandbox is publically available
 
-   - poduction is only accessible if you machine has been whitelisted to use it
+   - production is only accessible if you machine has been whitelisted to use it
 
-1. Open PoweShell
+1. Open PowerShell
 
-1. Ceate a download diectoy whee you will be saving the AB2D data
+1. Create a download directory where you will be saving the AB2D data
 
    *Example:*
 
    ```ShellSession
-   New-Item -ItemType diectoy -Path $home\documents\2020-10-22
+   New-Item -ItemType directory -Path $home\documents\2020-10-22
    ```
 
-1. Change to the download diectoy
+1. Change to the download directory
 
    *Example:*
 
@@ -26,45 +26,45 @@
    Set-Location -Path $home\documents\2020-10-22
    ```
 
-1. Note that unde each of the following steps, you do the following:
+1. Note that under each of the following steps, you do the following:
 
-   - copy all lines to the clipboad
+   - copy all lines to the clipboard
 
-   - paste all lines into PoweShell
+   - paste all lines into PowerShell
 
-   - pesss Ente on the keyboad
+   - press Enter on the keyboard
 
-1. Set taget envionment vaiables fo taget envionment
+1. Set target environment variables for target environment
 
-   *Sandbox (woking example):*
+   *Sandbox (working example):*
 
    ```ShellSession
-   $BASE64_ENCODED_ID_PASSWORD='MG9hMnQwbHNyZFp3NXVXUngyOTc6SEhkdVdHNkxvZ0l2RElRdVdncDNabG85T1lNVmFsVHRINU9CY3VIdw='
-   $AUTHENTICATION_URL='https://test.idp.idm.cms.gov/oauth2/aus27y3gdaFMKBol297/v1/token'
+   $BASE64_ENCODED_ID_PASSWORD='MG9hMnQwbHNyZFp3NXVXUngyOTc6SEhkdVdHNkxvZ0l2RElRdVdncDNabG85T1lNVmFsVHRINU9CY3VIdw=='
+   $AUTHENTICATION_URL='https://test.idp.idm.cms.gov/oauth2/aus2r7y3gdaFMKBol297/v1/token'
    $AB2D_API_URL='https://sandbox.ab2d.cms.gov/api'
    ```
 
-   *Poduction (eplace {vaiable} with you settings):*
+   *Production (replace {variable} with your settings):*
 
    ```ShellSession
-   $BASE64_ENCODED_ID_PASSWORD='{Base64-encoded id:passwod}'
-   $AUTHENTICATION_URL='https://idm.cms.gov/oauth2/aus2ytanytjdaF9c297/v1/token'
+   $BASE64_ENCODED_ID_PASSWORD='{Base64-encoded id:password}'
+   $AUTHENTICATION_URL='https://idm.cms.gov/oauth2/aus2ytanytjdaF9cr297/v1/token'
    $AB2D_API_URL='https://api.ab2d.cms.gov/api'
    ```
    
-1. Ceate an expot job and monito the status
+1. Create an export job and monitor the status
 
    ```ShellSession
-   $JOB_RESULTS = &.\ceate-and-monito-expot-job.ps1 | select -Last 1
+   $JOB_RESULTS = &.\create-and-monitor-export-job.ps1 | select -Last 1
    ```
 
 1. Download file(s)
 
    ```ShellSession
-   .\download-esults.ps1
+   .\download-results.ps1
    ```
 
-1. Open you downloaded file(s) in an edito to view the data
+1. Open your downloaded file(s) in an editor to view the data
 
    *Sandbox example of the downloaded file:*
 
