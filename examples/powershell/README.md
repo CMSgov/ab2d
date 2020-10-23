@@ -69,5 +69,5 @@
    *Sandbox example of the downloaded file:*
 
    ```
-   C:\ab2d\2020-10-01\Z0000_0001.ndjson
+   $home\documents\2020-10-22\Z0000_0001.ndjson
    ```
