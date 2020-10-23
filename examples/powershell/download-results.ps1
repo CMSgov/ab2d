@@ -45,8 +45,15 @@ while ($FILE_INDEX -ne ($LAST_FILE_INDEX + 1)) {
   Write-Host "Downloading $($FILE)..."
   Write-Host '---------------------------------------------------------------------------------------------------------------------'
   Write-Host ''
-  $headers = New-Object "System.Collections.Generic.Dictionary[[String],[String]]"
-  $headers.Add("Authorization", "Bearer $BEARER_TOKEN")
-  Invoke-WebRequest "$FILE_URL" -Method 'GET' -Headers $headers -Body $body -TimeoutSec 1800 -Outfile $FILE
+  $client = New-Object System.Net.WebClient
+  $client.headers["Authorization"] = "Bearer $BEARER_TOKEN"
+  $client.headers["Accept"] = "application/fhir+ndjson"
+  try {
+    Add-Content -Path $FILE -Value $client.DownloadString("$FILE_URL")
+  } catch [System.Net.WebException] {
+    $result = $_.Exception.Response
+    Write-Host $result
+    Write-Host ''
+  }
   $FILE_INDEX++
 }
