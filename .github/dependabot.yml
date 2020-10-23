@@ -15,6 +15,7 @@ updates:
     directory: "/" # Location of package manifests
     schedule:
       interval: "weekly"
+    open-pull-requests-limit: 25
 
 #Terraform not working because we use vars.
   #- package-ecosystem: "terraform"
