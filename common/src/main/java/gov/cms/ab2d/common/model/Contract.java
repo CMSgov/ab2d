@@ -40,6 +40,15 @@ public class Contract extends TimestampBase {
 
     private String contractName;
 
+    @Column(name = "hpms_parent_org_id")
+    private Long hpmsParentOrgId;
+
+    @Column(name = "hpms_parent_org_name")
+    private String hpmsParentOrg;
+
+    @Column(name = "hpms_org_marketing_name")
+    private String hpmsOrgMarketingName;
+
     @ManyToOne
     @JoinColumn(name = "sponsor_id")
     @NotNull
