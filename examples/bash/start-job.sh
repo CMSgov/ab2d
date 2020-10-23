@@ -35,16 +35,23 @@ fi
 
 echo "$RESULT"
 
-JOB=$(echo "$RESULT" | grep "content-location" | sed 's/.*Job.//' | sed 's/..status//' | tr -d '[:space:]')
-
-if [ "$JOB" == '' ]
+HTTP_CODE=$(echo "$RESULT" | grep "HTTP/" | awk  '{print $2}')
+if [ "$HTTP_CODE" != 202 ]
 then
-  echo "Could not create job"
-  exit 1
+    echo "Could not export job"
+else
+    JOB=$(echo "$RESULT" | grep "\(content-location\|Content-Location\)" | sed 's/.*Job.//' | sed 's/..status//' | tr -d '[:space:]')
+
+    if [ "$JOB" == '' ]
+    then
+      echo "Could not parse response for job id. Make sure to save the job id located on the line with 'content-location'"
+      exit 1
+    fi
+
+    echo "$JOB created"
+
+    echo "$JOB" > "$DIRECTORY/jobId.txt"
+
+    echo "Saved job id to $DIRECTORY/jobId.txt"
 fi
 
-echo "$JOB created"
-
-echo "$JOB" > "$DIRECTORY/jobId.txt"
-
-echo "Saved job id to $DIRECTORY/jobId.txt"
