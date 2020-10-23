@@ -157,8 +157,6 @@ public class TestRunner {
                 .withEnv(System.getenv())
                 // Add api variable to environment to populate docker-compose port variable
                 .withEnv("API_PORT", "" + apiPort)
-                // Force environment to be local so that the Kinesis eventlogger is switched off
-                .withEnv("AB2D_EXECUTION_ENV", "LOCAL")
                 .withLocalCompose(true)
                 .withScaledService("worker", 2)
                 .withExposedService("api", DEFAULT_API_PORT, new HostPortWaitStrategy()
