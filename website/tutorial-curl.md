@@ -92,11 +92,11 @@ The basic authorization encoded user names and passwords for each of those 5 use
         </tr>
         <tr>
             <td>0oa2t0l6c1tQbTikz297</td>
-            <td>nQwbDZjMXRRYlRpa3oyOTc6ODB6WC03R2VpTWlpQTZ6VmdoaXFZWkw4Mm9MQVdTeGhnZkJrZm8wVA==</td>
+            <td>MG9hMnQwbDZjMXRRYlRpa3oyOTc6ODB6WC03R2VpTWlpQTZ6VmdoaXFZWkw4Mm9MQVdTeGhnZkJrZm8wVA==</td>
         </tr>
         <tr>
             <td>0oa2t0lm9qoAtJHqC297</td>
-            <td>nQwbG05cW9BdEpIcUMyOTc6eWJSNjBKbXRjcFJ0NlNBZUxtdmJxNmwtM1lEUkNaUC1XTjFBdDZ0Xw==</td>
+            <td>MG9hMnQwbG05cW9BdEpIcUMyOTc6eWJSNjBKbXRjcFJ0NlNBZUxtdmJxNmwtM1lEUkNaUC1XTjFBdDZ0Xw==</td>
         </tr>
     </tbody>
 </table>
