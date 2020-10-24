@@ -57,6 +57,7 @@ public class AdminAPIPropertiesTests {
     @Autowired
     private ContractRepository contractRepository;
 
+    @SuppressWarnings("rawtypes")
     @Container
     private static final PostgreSQLContainer postgreSQLContainer= new AB2DPostgresqlContainer();
 
@@ -86,6 +87,7 @@ public class AdminAPIPropertiesTests {
             put(CONTRACT_2_BENE_CACHING_ON, "false");
             put(ZIP_SUPPORT_ON, "false");
             put(WORKER_ENGAGEMENT, "engaged");
+            put(HPMS_INGESTION_ENGAGEMENT, "engaged");
         }};
 
         MvcResult mvcResult = this.mockMvc.perform(
@@ -98,7 +100,7 @@ public class AdminAPIPropertiesTests {
 
         String result = mvcResult.getResponse().getContentAsString();
         ObjectMapper mapper = new ObjectMapper();
-        List<PropertiesDTO> propertiesDTOs = mapper.readValue(result, new TypeReference<List<PropertiesDTO>>() { } );
+        List<PropertiesDTO> propertiesDTOs = mapper.readValue(result, new TypeReference<>() {} );
 
         Assert.assertEquals(7, propertiesDTOs.size());
         for(PropertiesDTO propertiesDTO : propertiesDTOs) {
@@ -151,7 +153,7 @@ public class AdminAPIPropertiesTests {
         Assert.assertEquals(200, mvcResult.getResponse().getStatus());
 
         String result = mvcResult.getResponse().getContentAsString();
-        List<PropertiesDTO> propertiesDTOsRetrieved = mapper.readValue(result, new TypeReference<List<PropertiesDTO>>() { } );
+        List<PropertiesDTO> propertiesDTOsRetrieved = mapper.readValue(result, new TypeReference<>() {} );
 
         Assert.assertEquals(4, propertiesDTOsRetrieved.size());
         for(PropertiesDTO propertiesDTO : propertiesDTOsRetrieved) {

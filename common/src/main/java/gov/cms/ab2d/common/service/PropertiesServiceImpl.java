@@ -15,14 +15,7 @@ import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 
-import static gov.cms.ab2d.common.util.Constants.PCP_CORE_POOL_SIZE;
-import static gov.cms.ab2d.common.util.Constants.PCP_MAX_POOL_SIZE;
-import static gov.cms.ab2d.common.util.Constants.MAINTENANCE_MODE;
-import static gov.cms.ab2d.common.util.Constants.PCP_SCALE_TO_MAX_TIME;
-import static gov.cms.ab2d.common.util.Constants.CONTRACT_2_BENE_CACHING_ON;
-import static gov.cms.ab2d.common.util.Constants.WORKER_ENGAGEMENT;
-import static gov.cms.ab2d.common.util.Constants.ZIP_SUPPORT_ON;
-import static gov.cms.ab2d.common.util.Constants.ALLOWED_PROPERTY_NAMES;
+import static gov.cms.ab2d.common.util.Constants.*;
 import static java.lang.Boolean.FALSE;
 
 @Service
@@ -100,6 +93,7 @@ public class PropertiesServiceImpl implements PropertiesService {
             break;
 
         case WORKER_ENGAGEMENT:
+        case HPMS_INGESTION_ENGAGEMENT:
             validateString(key, propertiesDTO);
             addUpdatedPropertiesToList(propertiesDTOsReturn, propertiesDTO);
             break;

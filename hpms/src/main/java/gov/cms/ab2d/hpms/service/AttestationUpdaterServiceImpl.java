@@ -4,18 +4,15 @@ import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.Sponsor;
 import gov.cms.ab2d.common.repository.ContractRepository;
 import gov.cms.ab2d.common.repository.SponsorRepository;
-import gov.cms.ab2d.hpms.hmsapi.HPMSAttestation;
-import gov.cms.ab2d.hpms.hmsapi.HPMSAttestationsHolder;
-import gov.cms.ab2d.hpms.hmsapi.HPMSOrganizationInfo;
-import gov.cms.ab2d.hpms.hmsapi.HPMSOrganizations;
+import gov.cms.ab2d.common.service.PropertiesService;
+import gov.cms.ab2d.common.util.Constants;
+import gov.cms.ab2d.hpms.hmsapi.*;
+import gov.cms.ab2d.common.service.WorkerDrive;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Primary
@@ -30,22 +27,32 @@ public class AttestationUpdaterServiceImpl implements AttestationUpdaterService 
 
     private final ContractRepository contractRepository;
 
+    private final PropertiesService propertiesService;
+
 //    private static final String HOURLY = "0 0 0/1 1/1 * ?";
 
     @Autowired
     public AttestationUpdaterServiceImpl(SponsorRepository sponsorRepository, ContractRepository contractRepository,
-                                         HPMSFetcher hpmsFetcher) {
+                                         HPMSFetcher hpmsFetcher, PropertiesService propertiesService) {
         this.sponsorRepository = sponsorRepository;
         this.contractRepository = contractRepository;
         this.hpmsFetcher = hpmsFetcher;
+        this.propertiesService = propertiesService;
+    }
+
+    public WorkerDrive getEngagement() {
+        return WorkerDrive.fromString(propertiesService.getPropertiesByKey(Constants.HPMS_INGESTION_ENGAGEMENT).getValue());
     }
 
 /*  todo: remove the comments and enable this code when integrating with the real hpms service
     @Scheduled(cron = AttestationUpdaterService.HOURLY)
-    public void pollHmsData() {
-        pollOrganizations();
-    }
  */
+@SuppressWarnings("unused")
+public void pollHmsData() {
+        if (WorkerDrive.IN_GEAR == getEngagement()) {
+            pollOrganizations();
+        }
+    }
 
     @Override
     public void pollOrganizations() {
@@ -104,16 +111,16 @@ public class AttestationUpdaterServiceImpl implements AttestationUpdaterService 
         if (newContracts.isEmpty()) {
             return new ArrayList<>();
         }
-        return newContracts.stream().map(this::sponserAdd).collect(Collectors.toList());
+        return newContracts.stream().map(this::sponsorAdd).collect(Collectors.toList());
     }
 
-    private Contract sponserAdd(HPMSOrganizationInfo hpmsInfo) {
-        Sponsor savedSponser =
+    private Contract sponsorAdd(HPMSOrganizationInfo hpmsInfo) {
+        Sponsor savedSponsor =
                 sponsorRepository.save(new Sponsor(hpmsInfo.getParentOrgName(), hpmsInfo.getOrgMarketingName()));
 
         Contract retContract = new Contract(hpmsInfo.getContractId(), hpmsInfo.getContractName(),
                 hpmsInfo.getParentOrgId().longValue(), hpmsInfo.getParentOrgName(), hpmsInfo.getOrgMarketingName(),
-                savedSponser);
+                savedSponsor);
         return contractRepository.save(retContract);
     }
 

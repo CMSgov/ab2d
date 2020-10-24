@@ -4,6 +4,7 @@ import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.Sponsor;
 import gov.cms.ab2d.common.repository.ContractRepository;
 import gov.cms.ab2d.common.repository.SponsorRepository;
+import gov.cms.ab2d.common.service.PropertiesService;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.hpms.SpringBootTestApp;
 import org.assertj.core.util.Lists;
@@ -66,11 +67,15 @@ public class AttestationUpdaterServiceTest {
         @Autowired
         private ContractRepository contractRepository;
 
+        @Autowired
+        private PropertiesService propertiesService;
+
         @Qualifier("for_testing")
         @Bean()
         public AttestationUpdaterServiceImpl getMockService()
         {
-            return new AttestationUpdaterServiceImpl(sponsorRepository, contractRepository, new MockHpmsFetcher());
+            return new AttestationUpdaterServiceImpl(sponsorRepository, contractRepository,
+                    new MockHpmsFetcher(), propertiesService);
         }
     }
 
