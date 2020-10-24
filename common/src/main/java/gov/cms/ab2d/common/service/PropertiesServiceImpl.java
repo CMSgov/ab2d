@@ -15,7 +15,7 @@ import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 
-import static gov.cms.ab2d.common.util.Constants.*;
+import static gov.cms.ab2d.common.util.Constants.*; // NOPMD
 import static java.lang.Boolean.FALSE;
 
 @Service

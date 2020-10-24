@@ -6,7 +6,7 @@ import gov.cms.ab2d.common.repository.ContractRepository;
 import gov.cms.ab2d.common.repository.SponsorRepository;
 import gov.cms.ab2d.common.service.PropertiesService;
 import gov.cms.ab2d.common.util.Constants;
-import gov.cms.ab2d.hpms.hmsapi.*;
+import gov.cms.ab2d.hpms.hmsapi.*;  // NOPMD
 import gov.cms.ab2d.common.service.WorkerDrive;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Primary;
