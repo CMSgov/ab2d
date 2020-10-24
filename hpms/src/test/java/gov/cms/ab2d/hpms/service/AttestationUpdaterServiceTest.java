@@ -46,9 +46,11 @@ public class AttestationUpdaterServiceTest {
     public void contractUpdated() {
         assertNotNull(aus);
         aus.pollOrganizations();
-        Optional<Sponsor> optSponser = sponsorRepository.findByHpmsIdAndOrgName(5, "ABC Org");
-        assertTrue(optSponser.isPresent());
-        Sponsor sponsor = optSponser.get();
+        Optional<Sponsor> optSponsor =
+            sponsorRepository.findAll().stream()
+                    .filter(sponsor -> sponsor.getOrgName().equals("ABC Org")).findFirst();
+        assertTrue(optSponsor.isPresent());
+        Sponsor sponsor = optSponsor.get();
         assertEquals(1, sponsor.getContracts().size());
     }
 
