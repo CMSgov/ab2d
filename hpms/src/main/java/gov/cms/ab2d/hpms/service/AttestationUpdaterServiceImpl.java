@@ -108,16 +108,12 @@ public class AttestationUpdaterServiceImpl implements AttestationUpdaterService 
     }
 
     private Contract sponserAdd(HPMSOrganizationInfo hpmsInfo) {
-        Sponsor sponsor = new Sponsor();
-        sponsor.setHpmsId(hpmsInfo.getParentOrgId());
-        sponsor.setOrgName(hpmsInfo.getParentOrgName());
-        sponsor.setLegalName(hpmsInfo.getOrgMarketingName());
-        Sponsor savedSponser = sponsorRepository.save(sponsor);
+        Sponsor savedSponser =
+                sponsorRepository.save(new Sponsor(hpmsInfo.getParentOrgName(), hpmsInfo.getOrgMarketingName()));
 
-        Contract retContract = new Contract();
-        retContract.setContractName(hpmsInfo.getContractName());
-        retContract.setContractNumber(hpmsInfo.getContractId());
-        retContract.setSponsor(savedSponser);
+        Contract retContract = new Contract(hpmsInfo.getContractId(), hpmsInfo.getContractName(),
+                hpmsInfo.getParentOrgId().longValue(), hpmsInfo.getParentOrgName(), hpmsInfo.getOrgMarketingName(),
+                savedSponser);
         return contractRepository.save(retContract);
     }
 

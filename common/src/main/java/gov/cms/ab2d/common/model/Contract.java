@@ -1,9 +1,7 @@
 package gov.cms.ab2d.common.model;
 
 
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -24,6 +22,7 @@ import static gov.cms.ab2d.common.util.DateUtil.getESTOffset;
 @Entity
 @Getter
 @Setter
+@NoArgsConstructor
 @EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = false)
 public class Contract extends TimestampBase {
 
@@ -48,6 +47,16 @@ public class Contract extends TimestampBase {
 
     @Column(name = "hpms_org_marketing_name")
     private String hpmsOrgMarketingName;
+
+    public Contract(@NotNull String contractNumber, String contractName, Long hpmsParentOrgId, String hpmsParentOrg,
+                    String hpmsOrgMarketingName, @NotNull Sponsor sponsor) {
+        this.contractNumber = contractNumber;
+        this.contractName = contractName;
+        this.hpmsParentOrgId = hpmsParentOrgId;
+        this.hpmsParentOrg = hpmsParentOrg;
+        this.hpmsOrgMarketingName = hpmsOrgMarketingName;
+        this.sponsor = sponsor;
+    }
 
     @ManyToOne
     @JoinColumn(name = "sponsor_id")
