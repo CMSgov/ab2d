@@ -9,8 +9,6 @@ pipeline {
         AB2D_HICN_HASH_ITER = 1000
 
         AB2D_CLAIMS_SKIP_BILLABLE_PERIOD_CHECK = true
-        AB2D_OPT_OUT_JOB_SCHEDULE = "*/15 * * * * ?"
-        AB2D_OPT_OUT_ENABLED = true
 
         // Get code climate id
         CC_TEST_REPORTER_ID = credentials('CC_TEST_REPORTER_ID')
@@ -62,15 +60,13 @@ pipeline {
         stage('Clean maven') {
 
             steps {
-                    sh '''
-                        mvn --version
+                sh '''
+                    mvn --version
 
-                        mvn help:evaluate -Dexpression=settings.localRepository -q -DforceStdout
+                    echo $WORKSPACE
 
-                        echo $WORKSPACE
-
-                        mvn clean
-                    '''
+                    mvn clean
+                '''
             }
         }
 
@@ -79,22 +75,21 @@ pipeline {
             steps {
                 sh 'mvn package -DskipTests'
             }
-
         }
 
-//         stage('Run unit and integration tests') {
-//
-//             steps {
-//                 sh '''
-//                     export AB2D_EFS_MOUNT="${AB2D_HOME}"
-//                     mvn test -pl eventlogger,common,api,worker,bfd,filter,audit,hpms,mock-hpms
-//                 '''
-//             }
-//         }
+        stage('Run unit and integration tests') {
+
+            steps {
+                sh '''
+                    export AB2D_EFS_MOUNT="${AB2D_HOME}"
+                    mvn test -pl eventlogger,common,api,worker,bfd,filter,audit,hpms,mock-hpms
+                '''
+            }
+        }
 
         stage('Run e2e-test on merge commit and on master branch') {
             when {
-                branch 'feature/ab2d-2270-implement-jenkins-ci-builds'
+                branch 'feature/ab2d-2013-travis-dsl-to-jenkins-dsl'
             }
 
             steps {
@@ -118,17 +113,10 @@ pipeline {
 
                         ls -la $KEYSTORE_LOCATION
 
-                        source Deploy/bash/functions/fn_get_temporary_aws_credentials_via_aws_sts_assume_role.sh
-
-                        fn_get_temporary_aws_credentials_via_aws_sts_assume_role 349849222861 ab2d-dev
-
-                        ls -la common/target
-
                         mvn test -pl e2e-test -am -Dtest=TestRunner -DfailIfNoTests=false
                     '''
                 }
             }
-
         }
 
         stage('Run codeclimate tests') {
