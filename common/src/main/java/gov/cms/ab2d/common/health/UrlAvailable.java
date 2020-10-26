@@ -51,6 +51,9 @@ public final class UrlAvailable {
                 return true;
             }
         }
+
+        log.info("No URLs available");
+
         return false;
     }
 }
