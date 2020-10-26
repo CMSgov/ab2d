@@ -70,3 +70,5 @@ databaseChangeLog:
       file: db/changelog/v001/modify_coverage_schema.sql
   - include:
       file: db/changelog/v001/remove_opt_out.sql
+  - include:
+      file: db/changelog/v001/add_hpms_info_to_contract.sql

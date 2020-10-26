@@ -10,6 +10,7 @@ import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.common.repository.SponsorRepository;
 import gov.cms.ab2d.common.repository.UserRepository;
 import gov.cms.ab2d.common.service.PropertiesService;
+import gov.cms.ab2d.common.service.WorkerDrive;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.Constants;
 import org.junit.jupiter.api.AfterEach;
@@ -49,6 +50,7 @@ public class WorkerServiceDisengagementTest {
     @Autowired private UserRepository userRepository;
     @Autowired private PropertiesService propertiesService;
 
+    @SuppressWarnings("rawtypes")
     @Container
     private static final PostgreSQLContainer postgreSQLContainer= new AB2DPostgresqlContainer();
 
