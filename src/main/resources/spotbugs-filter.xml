@@ -11,6 +11,12 @@
     <!-->mkdirs check is not necessary<-->
     <Match>
         <Package name="~gov\.cms\.ab2d.*"/>
+        <Bug pattern="SE_BAD_FIELD"/>
+    </Match>
+
+    <!-- Too many bad field exceptions from spotbugs -->
+    <Match>
+        <Package name="~gov\.cms\.ab2d.*"/>
         <Bug pattern="RV_RETURN_VALUE_IGNORED_BAD_PRACTICE"/>
     </Match>
 
@@ -40,6 +46,11 @@
     <!-->Getting id will return null if not found anyway<-->
     <Match>
         <Class name="~gov\.cms\.ab2d\.eventlogger\.eventloggers\.sql\.SqlEventMapper"/>
+        <Bug pattern="NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE"/>
+    </Match>
+
+    <Match>
+        <Class name="~gov\.cms\.ab2d\.worker\.processor\.ContractProcessorImpl"/>
         <Bug pattern="NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE"/>
     </Match>
 

@@ -32,6 +32,9 @@ public final class FileSystemCheck {
             return false;
         }
         Path dirPath = Paths.get(dir);
+
+        log.info("Dir path is {}", dirPath.toAbsolutePath().toString());
+
         if (Files.notExists(dirPath)) {
             if (createDir) {
                 File directory = new File(dir);

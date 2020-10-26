@@ -1,11 +1,17 @@
 FROM openjdk:13
 WORKDIR /usr/src/ab2d-api
 ADD target /usr/src/ab2d-api
+
+# When running in production with one container per EC2 instance these values are acceptable
+ENV JVM_INITIAL_RAM=40.0
+ENV JVM_MIN_RAM=20.0
+ENV JVM_MAX_RAM=80.0
+
 CMD java \
     -XX:+UseContainerSupport \
-    -XX:InitialRAMPercentage=40.0 \
-    -XX:MinRAMPercentage=20.0 \
-    -XX:MaxRAMPercentage=80.0 \
+    -XX:InitialRAMPercentage=${JVM_INITIAL_RAM} \
+    -XX:MinRAMPercentage=${JVM_MIN_RAM} \
+    -XX:MaxRAMPercentage=${JVM_MAX_RAM} \
     -javaagent:/usr/src/ab2d-api/newrelic/newrelic.jar \
     -jar api-*-SNAPSHOT.jar
 EXPOSE 8443

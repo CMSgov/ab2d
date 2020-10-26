@@ -21,10 +21,12 @@ import org.yaml.snakeyaml.Yaml;
 
 import javax.crypto.SecretKey;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.net.ServerSocket;
 import java.net.URI;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
@@ -37,6 +39,7 @@ import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.stream.Collectors;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -66,6 +69,9 @@ public class TestRunner {
     private static final int JOB_TIMEOUT = 300;
 
     private static final int MAX_USER_JOBS = 3;
+
+    // Default API port exposed on local environments
+    private static final int DEFAULT_API_PORT = 8443;
 
     private String baseUrl = "";
 
@@ -104,25 +110,80 @@ public class TestRunner {
     }
 
     public void init() throws IOException, InterruptedException, JSONException, KeyManagementException, NoSuchAlgorithmException {
-        if (environment.isUsesDockerCompose()) {
-            DockerComposeContainer container = new DockerComposeContainer(
-                    new File("../docker-compose.yml"))
-                    .withEnv(System.getenv())
-                    .withLocalCompose(true)
-                    .withScaledService("worker", 2)
-                    .withExposedService("db", 5432)
-                    .withExposedService("api", 8443, new HostPortWaitStrategy()
-                    .withStartupTimeout(Duration.of(200, SECONDS)));
-//                    .withLogConsumer("worker", new Slf4jLogConsumer(log)) // Use to debug, for now there's too much log data
-//                    .withLogConsumer("api", new Slf4jLogConsumer(log));
-            container.start();
+
+        // In the CI environment load a random port otherwise use a default port
+        int apiPort = getApiPort();
+
+        log.info("Expecting API to be available at port {}", apiPort);
+
+        if(environment.hasComposeFiles()) {
+            loadDockerComposeContainers(apiPort);
         }
 
+        loadApiClientConfiguration(apiPort);
+    }
+
+    /**
+     * Get the api port that is either a default or random based on the environment the end
+     * to end tests are running in.
+     *
+     * Use a random port to prevent issues when CI jobs share a VM in Jenkins.
+     *
+     * @return port to expose api on
+     * @throws IOException on failure to find an open port
+     */
+    private int getApiPort() throws IOException {
+
+        // https://stackoverflow.com/questions/2675362/how-to-find-an-available-port
+        // Causes a race condition that should be extremely rarely which may cause more than one job
+        // to attempt to use the same port
+        if (environment == Environment.CI) {
+            try (ServerSocket socket = new ServerSocket(0)) {
+                return socket.getLocalPort();
+            }
+        }
+
+        return DEFAULT_API_PORT;
+    }
+
+    /**
+     * Load docker-compose containers to support e2e tests locally.
+     * @param apiPort the port to expose the api on
+     */
+    private void loadDockerComposeContainers(int apiPort) {
+        File[] composeFiles = environment.getComposeFiles();
+
+        DockerComposeContainer container = new DockerComposeContainer(composeFiles)
+                .withEnv(System.getenv())
+                // Add api variable to environment to populate docker-compose port variable
+                .withEnv("API_PORT", "" + apiPort)
+                .withLocalCompose(true)
+                .withScaledService("worker", 2)
+                .withExposedService("api", DEFAULT_API_PORT, new HostPortWaitStrategy()
+                    .withStartupTimeout(Duration.of(200, SECONDS)));
+        //.withLogConsumer("worker", new Slf4jLogConsumer(log)) // Use to debug, for now there's too much log data
+        //.withLogConsumer("api", new Slf4jLogConsumer(log));
+
+        container.start();
+    }
+
+    /**
+     * Load api client by retrieving JSON web token using environment variables for keystore and password.
+     * @param apiPort api port to connect client to, only used in local or CI environments
+     */
+    private void loadApiClientConfiguration(int apiPort) throws IOException, InterruptedException, JSONException, NoSuchAlgorithmException, KeyManagementException {
+
         Yaml yaml = new Yaml();
-        InputStream inputStream = getClass().getResourceAsStream("/" + environment.getConfigName());
+        InputStream inputStream = new FileInputStream("src/test/resources/" + environment.getConfigName());
         yamlMap = yaml.load(inputStream);
         String oktaUrl = yamlMap.get("okta-url");
         baseUrl = yamlMap.get("base-url");
+
+        // With a local url add the API port to the domain name (localhost)
+        if (environment == Environment.CI || environment == Environment.LOCAL) {
+            baseUrl += ":" + apiPort;
+        }
+
         AB2D_API_URL = APIClient.buildAB2DAPIUrl(baseUrl);
 
         String oktaClientId = System.getenv("OKTA_CLIENT_ID");
@@ -170,8 +231,16 @@ public class TestRunner {
         Set<Integer> statusesBetween0And100 = Sets.newHashSet();
         while(status != 200 && status != 500) {
             Thread.sleep(DELAY * 1000 + 2000);
+
+            log.info("polling for status at url start {}", statusUrl);
+
             statusResponse = apiClient.statusRequest(statusUrl);
+
+            log.info("polling for status at url end {} {}", statusUrl, statusResponse);
+
             status = statusResponse.statusCode();
+
+            log.info("polling for status at url status {} {}", statusUrl, status);
 
             List<String> xProgressList = statusResponse.headers().map().get("x-progress");
             if(xProgressList != null && !xProgressList.isEmpty()) {
@@ -416,6 +485,7 @@ public class TestRunner {
     public void runSystemWideExportSince() throws IOException, InterruptedException, JSONException {
         System.out.println("Starting test 2");
         HttpResponse<String> exportResponse = apiClient.exportRequest(FHIR_TYPE, earliest);
+        log.info("run system wide export since {}", exportResponse);
         System.out.println(earliest);
         Assert.assertEquals(202, exportResponse.statusCode());
         List<String> contentLocationList = exportResponse.headers().map().get("content-location");
@@ -444,6 +514,7 @@ public class TestRunner {
     public void runSystemWideZipExport() throws IOException, InterruptedException, JSONException {
         System.out.println("Starting test 4");
         HttpResponse<String> exportResponse = apiClient.exportRequest(ZIPFORMAT, null);
+        log.info("run system wide zip export {}", exportResponse);
         Assert.assertEquals(400, exportResponse.statusCode());
     }
 
@@ -452,6 +523,7 @@ public class TestRunner {
     public void runContractNumberExport() throws IOException, InterruptedException, JSONException {
         System.out.println("Starting test 5");
         HttpResponse<String> exportResponse = apiClient.exportByContractRequest(testContract, FHIR_TYPE, null);
+        log.info("run contract number export {}", exportResponse);
         Assert.assertEquals(202, exportResponse.statusCode());
         List<String> contentLocationList = exportResponse.headers().map().get("content-location");
 
@@ -464,6 +536,7 @@ public class TestRunner {
     void runContractNumberZipExport() throws IOException, InterruptedException, JSONException {
         System.out.println("Starting test 6");
         HttpResponse<String> exportResponse = apiClient.exportByContractRequest(testContract, ZIPFORMAT, null);
+        log.info("run contract number zip export {}", exportResponse);
         Assert.assertEquals(400, exportResponse.statusCode());
     }
 
@@ -611,6 +684,7 @@ public class TestRunner {
         }};
         HttpResponse<String> exportResponse = apiClient.exportRequest(params);
 
+        log.info("bad query parameter resource {}", exportResponse);
         Assert.assertEquals(400, exportResponse.statusCode());
     }
 
@@ -622,6 +696,8 @@ public class TestRunner {
             put("_outputFormat", "BadParam");
         }};
         HttpResponse<String> exportResponse = apiClient.exportRequest(params);
+
+        log.info("bad query output format {}", exportResponse);
 
         Assert.assertEquals(400, exportResponse.statusCode());
     }

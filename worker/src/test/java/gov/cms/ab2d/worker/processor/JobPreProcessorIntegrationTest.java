@@ -16,6 +16,7 @@ import gov.cms.ab2d.eventlogger.eventloggers.sql.SqlEventLogger;
 import gov.cms.ab2d.eventlogger.events.*;
 import gov.cms.ab2d.eventlogger.reports.sql.DoAll;
 import gov.cms.ab2d.eventlogger.utils.UtilMethods;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -59,6 +60,8 @@ class JobPreProcessorIntegrationTest {
     @Mock
     private KinesisEventLogger kinesisEventLogger;
 
+    private Sponsor sponsor;
+    private User user;
     private Job job;
 
     @Container
@@ -67,15 +70,30 @@ class JobPreProcessorIntegrationTest {
     @BeforeEach
     void setUp() {
         LogManager manager = new LogManager(sqlEventLogger, kinesisEventLogger);
+
         cut = new JobPreProcessorImpl(jobRepository, manager);
-        jobRepository.deleteAll();
-        userRepository.deleteAll();
-        contractRepository.deleteAll();
+
+        sponsor = createSponsor();
+        user = createUser(sponsor);
+        job = createJob(user);
+    }
+
+    @AfterEach
+    void clear() {
+
         doAll.delete();
 
-        var sponsor = createSponsor();
-        var user = createUser(sponsor);
-        job = createJob(user);
+        jobRepository.deleteAll();
+
+        if (user != null) {
+            userRepository.delete(user);
+            userRepository.flush();
+        }
+
+        if (sponsor != null) {
+            sponsorRepository.delete(sponsor);
+            sponsorRepository.flush();
+        }
     }
 
     @Test

@@ -44,6 +44,7 @@ import java.util.List;
 import java.util.MissingResourceException;
 import java.util.concurrent.TimeUnit;
 
+import static gov.cms.ab2d.bfd.client.BFDMockServerConfigurationUtil.MOCK_SERVER_PORT;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.junit.Assert.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
@@ -52,7 +53,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(classes = SpringBootApp.class)
 @ActiveProfiles("test")
-@ContextConfiguration(classes = { BlueButtonClientTest.TestConfig.class })
+@ContextConfiguration(initializers = {BFDMockServerConfigurationUtil.PropertyOverrider.class}, classes = { BlueButtonClientTest.TestConfig.class })
 /**
  * Credits: most of the code in this class has been adopted from https://github.com/CMSgov/dpc-app
  */
@@ -83,8 +84,6 @@ public class BlueButtonClientTest {
     @Autowired
     private BFDClient bbc;
 
-    private static int mockServerPort = 8083;
-
     private static ClientAndServer mockServer;
 
     // The test data is in XML format, so change the parse so that it can
@@ -102,10 +101,9 @@ public class BlueButtonClientTest {
         }
     }
 
-
     @BeforeAll
     public static void setupBFDClient() throws IOException {
-        mockServer = ClientAndServer.startClientAndServer(mockServerPort);
+        mockServer = ClientAndServer.startClientAndServer(MOCK_SERVER_PORT);
         createMockServerExpectation("/v1/fhir/metadata", HttpStatus.SC_OK,
                 getRawXML(METADATA_PATH), List
                         .of());
@@ -267,6 +265,13 @@ public class BlueButtonClientTest {
         assertNotNull(response, "The demo patient should have a non-null EOB bundle");
         assertNotNull(response.getLink(Bundle.LINK_NEXT),
                 "Should have no next link since all the resources are in the bundle");
+
+        // Change url to point to random mock server port instead of default port
+        response.getLink().forEach(link -> {
+            String url = link.getUrl().replace("localhost:8083", "localhost:" + MOCK_SERVER_PORT);
+            link.setUrl(url);
+        });
+
         Bundle nextResponse = bbc.requestNextBundleFromServer(response);
         assertNotNull(nextResponse, "Should have a next bundle");
         assertEquals(10, nextResponse.getEntry().size());
@@ -364,7 +369,7 @@ public class BlueButtonClientTest {
 
     private static void createMockServerExpectation(String path, int respCode, String payload,
                                                     List<Parameter> qStringParams, int delayMs) {
-        new MockServerClient("localhost", mockServerPort)
+        new MockServerClient("localhost", MOCK_SERVER_PORT)
                 .when(
                         HttpRequest.request()
                                 .withMethod("GET")
