@@ -1,9 +1,7 @@
 package gov.cms.ab2d.common.model;
 
 
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -24,10 +22,11 @@ import static gov.cms.ab2d.common.util.DateUtil.getESTOffset;
 @Entity
 @Getter
 @Setter
+@NoArgsConstructor
 @EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = false)
 public class Contract extends TimestampBase {
 
-    public static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("MM/dd/yyyy H:m Z");
+    public static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd H:m:s Z");
 
     @Id
     @GeneratedValue
@@ -39,6 +38,25 @@ public class Contract extends TimestampBase {
     private String contractNumber;
 
     private String contractName;
+
+    @Column(name = "hpms_parent_org_id")
+    private Long hpmsParentOrgId;
+
+    @Column(name = "hpms_parent_org_name")
+    private String hpmsParentOrg;
+
+    @Column(name = "hpms_org_marketing_name")
+    private String hpmsOrgMarketingName;
+
+    public Contract(@NotNull String contractNumber, String contractName, Long hpmsParentOrgId, String hpmsParentOrg,
+                    String hpmsOrgMarketingName, @NotNull Sponsor sponsor) {
+        this.contractNumber = contractNumber;
+        this.contractName = contractName;
+        this.hpmsParentOrgId = hpmsParentOrgId;
+        this.hpmsParentOrg = hpmsParentOrg;
+        this.hpmsOrgMarketingName = hpmsOrgMarketingName;
+        this.sponsor = sponsor;
+    }
 
     @ManyToOne
     @JoinColumn(name = "sponsor_id")
@@ -73,7 +91,7 @@ public class Contract extends TimestampBase {
             return true;
         }
 
-        String dateWithTZ = attestationDate + " 0:0 " + getESTOffset();
+        String dateWithTZ = attestationDate + " " + getESTOffset();
         attestedOn = OffsetDateTime.parse(dateWithTZ, FORMATTER);
         return true;
     }

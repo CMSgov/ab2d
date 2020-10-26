@@ -1,4 +1,4 @@
-package gov.cms.ab2d.worker.service;
+package gov.cms.ab2d.common.service;
 
 public enum WorkerDrive {
     IN_GEAR("engaged"), // default - worker is ready to process jobs

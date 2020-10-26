@@ -52,6 +52,7 @@ public class PropertiesServiceTest {
             put(CONTRACT_2_BENE_CACHING_ON, "false");
             put(ZIP_SUPPORT_ON, "false");
             put(WORKER_ENGAGEMENT, "engaged");
+            put(HPMS_INGESTION_ENGAGEMENT, "engaged");
         }};
 
         List<Properties> propertyListBeforeInsert = propertiesService.getAllProperties();
