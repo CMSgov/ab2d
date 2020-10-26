@@ -102,7 +102,7 @@ public class AdminAPIPropertiesTests {
         ObjectMapper mapper = new ObjectMapper();
         List<PropertiesDTO> propertiesDTOs = mapper.readValue(result, new TypeReference<>() {} );
 
-        Assert.assertEquals(7, propertiesDTOs.size());
+        Assert.assertEquals(8, propertiesDTOs.size());
         for(PropertiesDTO propertiesDTO : propertiesDTOs) {
             Object value = propertyMap.get(propertiesDTO.getKey());
 
