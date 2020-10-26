@@ -13,6 +13,7 @@ import org.mockserver.integration.ClientAndServer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ContextConfiguration;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -20,8 +21,10 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import java.io.IOException;
 
 import static gov.cms.ab2d.common.util.Constants.MAINTENANCE_MODE;
+import static gov.cms.ab2d.worker.bfdhealthcheck.BFDMockServerConfigurationUtil.MOCK_SERVER_PORT;
 
-@SpringBootTest(classes = SpringBootApp.class, properties = "bfd.serverBaseUrl=http://localhost:8083/v1/fhir/")
+@SpringBootTest(classes = SpringBootApp.class)
+@ContextConfiguration(initializers = BFDMockServerConfigurationUtil.PropertyOverrider.class)
 @Testcontainers
 public class BFDHealthCheckTest {
 
@@ -40,7 +43,6 @@ public class BFDHealthCheckTest {
     @Value("${bfd.health.check.consecutive.successes}")
     private int consecutiveSuccessesToBringUp;
 
-    private static final int MOCK_SERVER_PORT = 8083;
     private static ClientAndServer mockServer;
     private static final String TEST_DIR = "test-data/";
 
