@@ -140,9 +140,9 @@
    * [Configure a Jenkins project for sandbox application deploy](#configure-a-jenkins-project-for-sandbox-application-deploy)
 1. [Dismiss Jenkins SYSTEM user warning](#dismiss-jenkins-system-user-warning)
 1. [Configure executors for Jenkins master](#configure-executors-for-jenkins-master)
-1. [Configure Multibranch Pipeline](#configure-multibranch-pipeline)
 1. [Configure Jenkins CLI](#configure-jenkins-cli)
 1. [Setup Webhook payload delivery service as an intermediary between firewalled Jenkins and GitHub](#setup-webhook-payload-delivery-service-as-an-intermediary-between-firewalled-jenkins-and-github)
+1. [Configure Multibranch Pipeline](#configure-multibranch-pipeline)
 
 ## Setup Jenkins master in management AWS account
 
@@ -12123,9 +12123,9 @@
 
    - **Scope:** Global (Jenkins, nodes, items, all child items, etc)
 
-   - **Username:** ab2d-jenkins
+   - **Username:** ab2d-jenkins (switched to lhanekam until ab2d-jenkins can be added to repo)
 
-   - **Password:** {personal access token for ab2d-jenkins}
+   - **Password:** {personal access token for ab2d-jenkins} (switched to lhanekam PAT until ab2d-jenkins can be added to repo)
 
    - **ID:** GITHUB_AB2D_JENKINS_PAT
 
@@ -14628,84 +14628,6 @@
 
 1. Select **Save**
 
-## Configure Multibranch Pipeline
-
-1. Log on to the Jenkins GUI (if not already logged in)
-
-   1. Ensure that you are connected to the Cisco VPN
-
-   1. Open Chrome
-
-   1. Enter the following in the address bar
-
-      *Format:*
-
-      > http://{jenkins master public ip}:8080
-
-   1. Log on to the Jenkins GUI
-
-1. Select **Manage Jenkins** in the leftmost panel
-
-1. Select **New Item** from the leftmost panel
-
-1. Enter the following in the **Enter an item name** text box
-
-   ```
-   AB2D Repo
-   ```
-
-1. Select **Multibranch Pipeline**
-
-1. Select **OK** on the "Enter an item name" page
-
-1. Conigure the "General" tab as follows
-
-   - **Display Name:** AB2D Repo
-
-   - **Description:** AB2D Main repository
-
-   - **Disable:** unchecked
-
-1. Select the **Branch Sources** tab
-
-1. Select the following from the **Add source** dropdown
-
-   ```
-   GitHub
-   ```
-
-1. Configure the "Branch Sources" section as follows
-
-   - **Credentials:** ab2d-jenkins/******
-
-   - **Repository HTTPS URL:** {radio button selected}
-
-   - **Repository HTTPS URL:** https://github.com/CMSgov/ab2d
-
-   - **Behaviors - Discover branches - Strategy:** All branches
-
-   - **Behaviors - Discover pull requests from origin - Strategy:** Merging the pull request with the current target branch revision
-
-   - **Behaviors - Discover pull requests from forks - Strategy:** Merging the pull request with the current target branch revision
-
-   - **Behaviors - Discover pull requests from forks - Trust:** From users with Admin or Write permission
-
-   - **Property strategy:** All branches get the same properties
-
-1. Select **Apply**
-
-1. Select the **Build Configuration** tab
-
-1. Configure the "Build Configuration" section as follows
-
-   - **Mode:** by Jenkinsfile
-
-   - **Script Path:** Jenkinsfile
-
-1. Select **Apply**
-
-1. Select **Save**
-
 ## Configure Jenkins CLI
 
 1. Log on to the Jenkins GUI (if not already logged in)
@@ -15104,5 +15026,93 @@
    ```
 
 1. Select **Apply**
+
+1. Select **Save**
+
+## Configure Multibranch Pipeline
+
+1. Log on to the Jenkins GUI (if not already logged in)
+
+   1. Ensure that you are connected to the Cisco VPN
+
+   1. Open Chrome
+
+   1. Enter the following in the address bar
+
+      *Format:*
+
+      > http://{jenkins master public ip}:8080
+
+   1. Log on to the Jenkins GUI
+
+1. Select **Manage Jenkins** in the leftmost panel
+
+1. Select **New Item** from the leftmost panel
+
+1. Enter the following in the **Enter an item name** text box
+
+   ```
+   AB2D Repo
+   ```
+
+1. Select **Multibranch Pipeline**
+
+1. Select **OK** on the "Enter an item name" page
+
+1. Conigure the "General" tab as follows
+
+   - **Display Name:** AB2D Repo
+
+   - **Description:** AB2D Main repository
+
+   - **Disable:** unchecked
+
+1. Select the **Branch Sources** tab
+
+1. Select the following from the **Add source** dropdown
+
+   ```
+   GitHub
+   ```
+
+1. Configure the "Branch Sources" section as follows
+
+   - **Credentials:** ab2d-jenkins/******
+
+   - **Repository HTTPS URL:** {radio button selected}
+
+   - **Repository HTTPS URL:** https://github.com/CMSgov/ab2d
+
+   - **Behaviors - Discover branches - Strategy:** All branches
+
+   - **Behaviors - Discover pull requests from origin - Strategy:** Merging the pull request with the current target branch revision
+
+   - **Behaviors - Discover pull requests from forks - Strategy:** Merging the pull request with the current target branch revision
+
+   - **Behaviors - Discover pull requests from forks - Trust:** From users with Admin or Write permission
+
+   - **Property strategy:** All branches get the same properties
+
+1. Select **Apply**
+
+1. Select the **Build Configuration** tab
+
+1. Configure the "Build Configuration" section as follows
+
+   - **Mode:** by Jenkinsfile
+
+   - **Script Path:** Jenkinsfile
+
+1. Select **Apply**
+
+1. Select the **Scan Repository Triggers** tab
+
+1. Check **Periodically if not otherwise run**
+
+1. Select the following from the **Interval** dropdown
+
+   ```
+   2 minutes
+   ```
 
 1. Select **Save**
