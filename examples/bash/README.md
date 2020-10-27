@@ -1,5 +1,11 @@
 # Bash Client
 
+A simple client for starting a job in sandbox or production, monitor that job,
+and download the results. To prevent issues these scripts persist the job
+id and list of files generated.
+
+This script will not overwrite already existing export files.
+
 ```
 Usage: 
   bootstrap (-prod | -sandbox) --auth <base64 username:password> [--contract <contract number>] [--directory <dir>]
@@ -7,6 +13,7 @@ Usage:
   start-job
   monitor-job
   download-results
+
 Arguments:
   -sandbox -- if running against ab2d sandbox environment
   -prod -- if running against ab2d production environment
@@ -14,6 +21,12 @@ Arguments:
   --contract -- if searching specific contract then give contract number ex. Z0001
   --directory -- if you want files and job info saved to specific directory
 ```
+
+Files:
+
+1. /directory/jobId.txt -- id of the job created
+2. /directory/response.json -- list of files created 
+3. /directory/*.ndjson -- downloaded results of exports 
 
 Limitations:
 
