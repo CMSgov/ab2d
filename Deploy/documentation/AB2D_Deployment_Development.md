@@ -397,28 +397,30 @@
 
 ### Create or update AMI with latest gold disk
 
-1. Change to the "Deploy" directory
+1. Change to your "ab2d" repo directory
+
+   *Example:*
 
    ```ShellSession
-   $ cd ~/code/ab2d/Deploy
+   $ cd ~/code/ab2d
    ```
 
 1. Set gold disk test parameters
 
    ```ShellSession
-   $ export CMS_ENV_PARAM=ab2d-dev
-   $ export DEBUG_LEVEL_PARAM=WARN
-   $ export EC2_INSTANCE_TYPE_PACKER_PARAM=m5.xlarge
-   $ export OWNER_PARAM=743302140042
-   $ export REGION_PARAM=us-east-1
-   $ export SSH_USERNAME_PARAM=ec2-user
-   $ export VPC_ID_PARAM=vpc-0c6413ec40c5fdac3
+   $ export CMS_ENV_PARAM=ab2d-dev \
+     && export DEBUG_LEVEL_PARAM=WARN \
+     && export EC2_INSTANCE_TYPE_PACKER_PARAM=m5.xlarge \
+     && export OWNER_PARAM=743302140042 \
+     && export REGION_PARAM=us-east-1 \
+     && export SSH_USERNAME_PARAM=ec2-user \
+     && export VPC_ID_PARAM=vpc-0c6413ec40c5fdac3
    ```
 
 1. Create or update AMI with latest gold disk
 
    ```ShellSession
-   $ ./bash/update-gold-disk.sh
+   $ ./Deploy/bash/update-gold-disk.sh
    ```
 
 ### Create or update infrastructure
