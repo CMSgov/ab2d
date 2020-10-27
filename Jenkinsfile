@@ -147,7 +147,12 @@ pipeline {
     }
 
     post {
-
+        success {
+            setBuildStatus("Build succeeded", "SUCCESS");
+        }
+        failure {
+            setBuildStatus("Build failed", "FAILURE");
+        }
         always {
             lock(resource: 'docker') {
                 // Setting api port won't cause problems because the containers are only ever torn down
