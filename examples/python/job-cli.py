@@ -1,3 +1,4 @@
+
 import argparse
 import os
 import re
@@ -12,7 +13,7 @@ class ApiError(Exception):
 class Action:
     EXPIRATION_BUFFER=90
 
-    def __init__(self, idp_url, api_url, auth, verbose=False):
+    def __init__(self, idp_url, api_url, auth):
         """
         :param idp_url: url of okta identity provider
         :type idp_url: str
@@ -24,7 +25,6 @@ class Action:
         self.idp_url = idp_url
         self.api_url = api_url
         self.auth = auth
-        self.verbose = verbose
         self.token = None
         self.token_generated = None
 
@@ -266,7 +266,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("-prod", action="store_true", help="run a job against the AB2D production environment")
 parser.add_argument("-sandbox", action="store_true", help="run a job against the AB2D sandbox environment")
 parser.add_argument("--contract", help="pull data for a specific contract")
-parser.add_argument("--directory", default="./",
+parser.add_argument("--directory", default="." + os.sep,
                     help="set the directory to save results to, defaults to current directory")
 parser.add_argument("--auth", required=True, help="base64 encoding of okta client id and okta client secret")
 parser.add_argument("--only_start", action="store_true", help="only start a job don't monitor it")

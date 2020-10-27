@@ -75,6 +75,16 @@ to start, monitor, and download results from a job.
 
 ## Bundling Python and Script
 
+### Setup
+
+Before zipping up Python we need to create a virtual environment. This part assumes access to IntelliJ or PyCharm.
+
+In IntelliJ these are the steps
+
+1. Go to File -> Project Structure
+2. Look for Platform Settings -> SDKs and click on it
+3. Add a new Python SDK and set the `venv` home as `examples/python/venv`
+
 ### Zip
 
 1. Change directory `cd examples`
