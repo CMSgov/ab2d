@@ -69,6 +69,19 @@ This will only download the files once. Running again will not overwrite the fil
    OKTA_CLIENT_ID=<client id>
    OKTA_CLIENT_PASSWORD=<client password>
    ```
-2. Create the AUTH token `AUTH=$(echo -n "${OKTA_CLIENT_ID}:${OKTA_CLIENT_PASSWORD}" | base64)`
-3. Run `python job-cli.py -sandbox --auth $AUTH --directory <directory>`
+1. Create the AUTH token `AUTH=$(echo -n "${OKTA_CLIENT_ID}:${OKTA_CLIENT_PASSWORD}" | base64)`
+1. Run `python job-cli.py -sandbox --auth $AUTH --directory <directory>`
 to start, monitor, and download results from a job.
+
+## Bundling Python and Script
+
+### Zip
+
+1. Change directory `cd examples`
+1. `zip -r client.zip python`
+
+### Unzip and Run
+
+1. Unzip `unzip client.zip`
+1. Change directory to the python directory
+1. Run a job by using `/venv/bin/python3.8 job-cli.py ...`
