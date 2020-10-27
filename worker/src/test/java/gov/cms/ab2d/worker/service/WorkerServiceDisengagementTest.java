@@ -10,7 +10,7 @@ import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.common.repository.SponsorRepository;
 import gov.cms.ab2d.common.repository.UserRepository;
 import gov.cms.ab2d.common.service.PropertiesService;
-import gov.cms.ab2d.common.service.WorkerDrive;
+import gov.cms.ab2d.common.service.FeatureEngagement;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.Constants;
 import org.junit.jupiter.api.AfterEach;
@@ -69,14 +69,14 @@ public class WorkerServiceDisengagementTest {
     }
 
     private void disableWorker() {
-        setEngagement(WorkerDrive.NEUTRAL);
+        setEngagement(FeatureEngagement.NEUTRAL);
     }
 
     private void enableWorker() {
-        setEngagement(WorkerDrive.IN_GEAR);
+        setEngagement(FeatureEngagement.IN_GEAR);
     }
 
-    private void setEngagement(WorkerDrive drive) {
+    private void setEngagement(FeatureEngagement drive) {
         List<PropertiesDTO> propertiesDTOS = propertiesService.getAllPropertiesDTO();
         Optional<PropertiesDTO> dto = propertiesDTOS.stream()
                 .filter(tmpDto -> tmpDto.getKey().equals(Constants.WORKER_ENGAGEMENT))

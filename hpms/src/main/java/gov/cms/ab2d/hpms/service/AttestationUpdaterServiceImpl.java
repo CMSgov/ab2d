@@ -7,7 +7,7 @@ import gov.cms.ab2d.common.repository.SponsorRepository;
 import gov.cms.ab2d.common.service.PropertiesService;
 import gov.cms.ab2d.common.util.Constants;
 import gov.cms.ab2d.hpms.hmsapi.*;  // NOPMD
-import gov.cms.ab2d.common.service.WorkerDrive;
+import gov.cms.ab2d.common.service.FeatureEngagement;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
@@ -40,8 +40,8 @@ public class AttestationUpdaterServiceImpl implements AttestationUpdaterService 
         this.propertiesService = propertiesService;
     }
 
-    public WorkerDrive getEngagement() {
-        return WorkerDrive.fromString(propertiesService.getPropertiesByKey(Constants.HPMS_INGESTION_ENGAGEMENT).getValue());
+    public FeatureEngagement getEngagement() {
+        return FeatureEngagement.fromString(propertiesService.getPropertiesByKey(Constants.HPMS_INGESTION_ENGAGEMENT).getValue());
     }
 
 /*  todo: remove the comments and enable this code when integrating with the real hpms service
@@ -49,7 +49,7 @@ public class AttestationUpdaterServiceImpl implements AttestationUpdaterService 
  */
 @SuppressWarnings("unused")
 public void pollHmsData() {
-        if (WorkerDrive.IN_GEAR == getEngagement()) {
+        if (FeatureEngagement.IN_GEAR == getEngagement()) {
             pollOrganizations();
         }
     }
