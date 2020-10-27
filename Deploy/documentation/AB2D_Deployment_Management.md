@@ -142,6 +142,7 @@
 1. [Configure executors for Jenkins master](#configure-executors-for-jenkins-master)
 1. [Configure Multibranch Pipeline](#configure-multibranch-pipeline)
 1. [Configure Jenkins CLI](#configure-jenkins-cli)
+1. [Setup Webhook payload delivery service as an intermediary between firewalled Jenkins and GitHub](#setup-webhook-payload-delivery-service-as-an-intermediary-between-firewalled-jenkins-and-github)
 
 ## Setup Jenkins master in management AWS account
 
@@ -14775,3 +14776,333 @@
      -auth {your github user}:{your personal access token} \
      list-jobs development
    ```
+
+## Setup Webhook payload delivery service as an intermediary between firewalled Jenkins and GitHub
+
+1. Note the following about the webhook payload delivery service that will be used
+
+   - smee.io will act as the webhook payload delivery service between firewalled Jenkins and GitHub
+
+   - GitHub pushes an event to smee.io
+
+   - Jenkins subscribes to smee.io via an outgoing connection
+
+1. Prepare and save the following 1Password entry for smee.io webhook proxy URL
+
+   - **1Password Entry Type:** Secure Note
+
+   - **1Password Entry:** AB2D Mgmt - Smee.io - Webhooks Proxy URL
+
+   - **Note:** {nothing yet}
+
+1. Open Chrome
+
+1. Enter the following in the address bar
+
+   > https://smee.io
+
+1. Select **Start a new channel**
+
+1. Copy the **Webhook Proxy URL** value to the clipboard
+
+1. Edit and save the following 1Password entry for smee.io webhook proxy URL
+
+   - **1Password Entry Type:** Secure Note
+
+   - **1Password Entry:** AB2D Mgmt - Smee.io - Webhooks Proxy URL
+
+   - **Note:** {smee.io webhooks proxy url}
+
+1. Open a terminal
+
+1. Change to your "ab2d" repo directory
+
+   *Example:*
+
+   ```ShellSession
+   $ cd ~/code/ab2d
+   ```
+
+1. Set AWS environment to the management account
+
+   ```ShellSession
+   $ source ./Deploy/bash/set-env.sh
+   ```
+
+1. Get private ip address of Jenkins master
+
+   ```ShellSession
+   $ JENKINS_MASTER_PRIVATE_IP=$(aws --region "${AWS_DEFAULT_REGION}" ec2 describe-instances \
+     --filters "Name=tag:Name,Values=ab2d-jenkins-master" \
+     --query "Reservations[*].Instances[*].PrivateIpAddress" \
+     --output text)
+   ```
+
+1. Connect to Jenkins master
+
+   ```ShellSession
+   $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem "ec2-user@${JENKINS_MASTER_PRIVATE_IP}"
+   ```
+
+1. Install Node.js and npm on Jenkins master
+
+   ```ShellSession
+   $ sudo yum install nodejs -y
+   ```
+
+1. Return to the terminal
+
+1. Switch to root
+
+   ```ShellSesssion
+   $ sudo su
+   ```
+
+1. Open Chrome
+
+1. Enter the following in the address bar
+
+   > https://github.com/nodesource/distributions
+
+1. Select "Installation instructions" under "Enterprise Linux based distributions" in the "Table of Contents"
+
+1. Copy the line under "# As root" for the latest version of Node.js to the clipboard
+
+1. Return to the terminal
+
+1. Paste and the line at the terminal prompt
+
+   *Example for Node.js v15.x:*
+
+   ```ShellSession
+   $ curl -sL https://rpm.nodesource.com/setup_15.x | bash -
+   ```
+
+1. Exit the root shell
+
+   ```ShellSession
+   $ exit
+   ```
+
+1. Uninstall the old versions of Node.js and npm
+
+   ```ShellSession
+   $ sudo yum remove -y nodejs npm
+   ```
+
+1. Install the latest versions of Node.js and npm
+
+   ```ShellSession
+   $ sudo yum install -y nodejs
+   ```
+
+1. Install the smee.io client
+
+   ```ShellSession
+   $ sudo npm install --global smee-client
+   ```
+
+1. Install lsb
+
+   ```ShellSession
+   $ sudo yum install redhat-lsb -y
+   ```
+
+1. Get the following value from 1Password
+
+   - **1Password Entry Type:** Secure Note
+
+   - **1Password Entry:** AB2D Mgmt - Smee.io - Webhooks Proxy URL
+
+1. Set an environment variable for the
+
+   *Format:*
+
+   ```ShellSession
+   $ SMEE_IO_WEBHOOKS_PROXY_URL={ab2d mgmt - smee.io - webhooks proxy url}
+   ```
+
+1. Start the smee client and point it to Jenkins master port 8080
+
+   ```ShellSession
+   $ smee --url "${SMEE_IO_WEBHOOKS_PROXY_URL}" --path /github-webhook/ --port 8080
+   ```
+
+1. Verify that the following is displayed
+
+   *Format:*
+
+   ```
+   Forwarding {ab2d mgmt - smee.io - webhooks proxy url} to http://127.0.0.1:8080/github-webhook/
+   Connected {ab2d mgmt - smee.io - webhooks proxy url}
+   ```
+
+1. Note that it does not return to the dollar sign prompt while running this way
+
+1. Stop the service from running by pressing **control+c** on the keyboard
+
+   *Note that we are stopping smee because we will need to run it as a service instead.*
+
+1. Exit Jenkins master
+
+   ```ShellSession
+   $ exit
+   ```
+
+1. Copy "smee" file to Jenkins master
+
+   ```ShellSession
+   $ scp -i ~/.ssh/ab2d-mgmt-east-dev.pem ./Deploy/smee.io/smee "ec2-user@${JENKINS_MASTER_PRIVATE_IP}":~
+   ```
+
+1. Copy "smee.service" file to Jenkins master
+
+   ```ShellSession
+   $ scp -i ~/.ssh/ab2d-mgmt-east-dev.pem ./Deploy/smee.io/smee.service "ec2-user@${JENKINS_MASTER_PRIVATE_IP}":~
+   ```
+
+1. Connect to Jenkins master
+
+   ```ShellSession
+   $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem "ec2-user@${JENKINS_MASTER_PRIVATE_IP}"
+   ```
+
+1. Open the "smee.service" file
+
+   ```ShellSession
+   $ vim smee.service
+   ```
+
+1. Edit the following line as follows
+
+   *Format:*
+
+   ```
+   ExecStart=/usr/bin/smee -u {smee.io webhooks proxy url} --path /github-webhook/ --port 8080
+   ```
+
+1. Save and close the file
+
+1. Move the "smee" file to the "/etc/init.d" directory
+
+   ```ShellSession
+   $ sudo mv smee /etc/init.d/
+   ```
+
+1. Change ownership of the smee file
+
+   ```ShellSession
+   $ sudo chown root:root /etc/init.d/smee
+   ```
+
+1. Change the permissions on the smee file
+
+   ```ShellSession
+   $ sudo chmod 755 /etc/init.d/smee
+   ```
+
+1. Move the "smee.service" file to the "/etc/systemd/system" directory
+
+   ```ShellSession
+   $ sudo mv smee.service /etc/systemd/system/
+   ```
+
+1. Change ownership of the smee file
+
+   ```ShellSession
+   $ sudo chown root:root /etc/systemd/system/smee.service
+   ```
+
+1. Change the permissions on the smee file
+
+   ```ShellSession
+   $ sudo chmod 755 /etc/systemd/system/smee.service
+   ```
+
+1. Start the "smee" service
+
+   ```ShellSession
+   $ sudo /etc/init.d/smee start
+   ```
+
+1. Exit Jenkins master
+
+   ```ShellSession
+   $ exit
+   ```
+
+1. Open Chrome
+
+1. Enter the following in the address bar
+
+   > https://github.com/CMSgov/ab2d
+
+1. Select the **Settings** tab
+
+1. Select **Webhooks** from the leftmost panel
+
+1. Select **Add webhook**
+
+1. Log on to GitHub
+
+1. Configure the "Webhooks / Add webhook" page as follows
+
+   - **Payload URL:** {ab2d mgmt - smee.io - webhooks proxy url}
+
+   - **Content type:** application/json
+
+   - **Secret:** {blank}
+
+   - **SSL verification:** Enable SSL verification
+
+   - **Which events would you like to trigger this webhook?:** Send me everything.
+
+   - **Active:** {checked}
+
+1. Select **Add webhook**
+
+1. Notice that GitHub displays the following message on the top of the page
+
+   ```
+   Okay, that hook was successfully created. We sent a ping payload to test it out! Read more about it at https://docs.github.com/webhooks/#ping-event.
+   ```
+
+1. Open a Chrome tab
+
+1. Enter the following in the address bar
+
+   ```
+   {ab2d mgmt - smee.io - webhooks proxy url}
+   ```
+
+1. Verify that a "ping" message appears in smee under the "All" section
+
+   *Example:*
+
+   ```
+   ping          less than a minute ago
+   ```
+
+1. Open a Chrome tab
+
+1. Open Jenkins
+
+1. Select **Manage Jenkins**
+
+1. Select **Configure System** under the "System Configuration" section
+
+1. Scroll down to the "GitHub" section
+
+1. Select the second **Advanced**
+
+1. Check **Specify another hook URL for GitHub configuration**
+
+1. Change **Specify another hook URL for GitHub configuration** text box to the following
+
+   ```
+   http://localhost:8080/github-webhook/
+   ```
+
+1. Select **Apply**
+
+1. Select **Save**
