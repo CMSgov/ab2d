@@ -15083,7 +15083,7 @@
 
    - **Repository HTTPS URL:** https://github.com/CMSgov/ab2d
 
-   - **Behaviors - Discover branches - Strategy:** All branches
+   - **Behaviors - Discover branches - Strategy:** Exclude branches that are also filed as PRs
 
    - **Behaviors - Discover pull requests from origin - Strategy:** Merging the pull request with the current target branch revision
 
@@ -15116,3 +15116,23 @@
    ```
 
 1. Select **Save**
+
+1. Open a Chrome tab
+
+1. Enter the following in the address bar
+
+   > https://github.com/CMSgov/ab2d
+
+1. Select the **Settings** tab
+
+1. Select **Branches** in the leftmost panel
+
+1. Select **Edit** beside "master" under the "Branch protection rules" section
+
+1. Check **Require status checks to pass before merging**
+
+1. Check **Require branches to be up to date before merging**
+
+1. Check **continuous-integration/jenkins/branch** within the "Status checks found in the last week for this repository" list box
+
+1. Select **Save changes**
