@@ -1,8 +1,6 @@
 package gov.cms.ab2d.common.model;
 
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
@@ -22,7 +20,8 @@ import java.util.stream.Collectors;
 @Entity
 @Getter
 @Setter
-@EqualsAndHashCode(onlyExplicitlyIncluded = true)
+@NoArgsConstructor
+@EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = false)
 public class Sponsor extends TimestampBase {
 
     @Id
@@ -56,6 +55,12 @@ public class Sponsor extends TimestampBase {
             orphanRemoval = true,
             fetch = FetchType.EAGER)
     private Set<SponsorIP> sponsorIPs = new HashSet<>();
+
+    public Sponsor(@NotNull String orgName, String legalName) {
+        this.hpmsId = Integer.MAX_VALUE;    // We only have the parent id in the hpms feed
+        this.orgName = orgName;
+        this.legalName = legalName;
+    }
 
     public boolean hasContract(String contractNum) {
         return contracts.stream().anyMatch(contract -> contractNum.equalsIgnoreCase(contract.getContractNumber()));
