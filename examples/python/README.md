@@ -75,15 +75,30 @@ to start, monitor, and download results from a job.
 
 ## Bundling Python and Script
 
-### Setup
+
+### Build Python in Source
+
+1. Download the latest version of Python as a tar file 
+1. Unpack the tar file `tar -xvf python-tar`
+1. Change directory to the folder created `cd python-tar`
+1. Configure the installer `./configurer --prefix /path/to/ab2d/examples/python/python --with-openssl=$(brew --prefix openssl)`
+1. Run `make`
+1. Run `make install`
+1. Check that the following directories exist in `/path/to/ab2d/examples/python/python`:
+`bin, lib, share, include`
+
+### Setup Virtual Environment
 
 Before zipping up Python we need to create a virtual environment. This part assumes access to IntelliJ or PyCharm.
 
 In IntelliJ these are the steps
 
 1. Go to File -> Project Structure
-2. Look for Platform Settings -> SDKs and click on it
-3. Add a new Python SDK and set the `venv` home as `examples/python/venv`
+1. Look for Platform Settings -> SDKs and click on it
+1. Add a new Python SDK, set the python interpreter as `ab2d/examples/python/python/bin/python3`,
+and set the `venv` home as `examples/python/venv`
+1. Open a terminal in IntelliJ and in that terminal change directories to `ab2d/examples/python/`
+1. Then install the `requests` library by running `venv/bin/pip3 install requests`
 
 ### Zip
 
@@ -92,6 +107,10 @@ In IntelliJ these are the steps
 
 ### Unzip and Run
 
+**When developing move `/path/to/ab2d/examples/python/python` and `/path/to/ab2d/examples/python/venv` to different
+directories to check that no symbolic links**
+
 1. Unzip `unzip client.zip`
 1. Change directory to the python directory
-1. Run a job by using `/venv/bin/python3.8 job-cli.py ...`
+1. Export the path to the python folder `PYTHONPATH=./python`
+1. Run a job by using `/venv/bin/python3 job-cli.py ...`
