@@ -104,5 +104,6 @@ public class HPMSAuthServiceImpl extends AbstractHPMSService implements HPMSAuth
     @Override
     public void cleanup() {
         clearTokenExpires();
+        authToken = null;
     }
 }
