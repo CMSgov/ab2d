@@ -15423,7 +15423,7 @@
 
 1. Configure the "Branch Sources" section as follows
 
-   - **Credentials:** ab2d-jenkins/******
+   - **Credentials:** ab2d-jenkins/****** (temporarily lhanekam/****** until we get approval to move ab2d-jenkins into the github org)
 
    - **Repository HTTPS URL:** {radio button selected}
 
@@ -15431,9 +15431,9 @@
 
    - **Behaviors - Discover branches - Strategy:** Exclude branches that are also filed as PRs
 
-   - **Behaviors - Discover pull requests from origin - Strategy:** Merging the pull request with the current target branch revision
+   - **Behaviors - Discover pull requests from origin - Strategy:** The current pull request revision
 
-   - **Behaviors - Discover pull requests from forks - Strategy:** Merging the pull request with the current target branch revision
+   - **Behaviors - Discover pull requests from forks - Strategy:** The current pull request revision
 
    - **Behaviors - Discover pull requests from forks - Trust:** From users with Admin or Write permission
 
@@ -15460,6 +15460,20 @@
    ```
    2 minutes
    ```
+
+1. Select **Apply**
+
+1. Select the **Orphaned Item Strategy** tab
+
+1. Configure the "Orphaned Item Strategy" section as follows
+
+   - **Discard old items:** checked
+
+   - **Days to keep old items:** 3
+
+   - **Max # of old items to keep:** 30
+
+1. Select **Apply**
 
 1. Select **Save**
 
