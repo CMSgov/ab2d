@@ -2,6 +2,7 @@ package gov.cms.ab2d.hpms.service;
 
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.hpms.SpringBootTestApp;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -58,5 +59,10 @@ public class HPMSAuthServiceTest {
         headers = new HttpHeaders();
         authService.buildAuthHeaders(headers);
         assertNotEquals(tokenExpiry, authService.getTokenExpires());
+    }
+
+    @AfterEach
+    public void shutdown() {
+        authService.cleanup();
     }
 }
