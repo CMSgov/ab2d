@@ -100,4 +100,9 @@ public class HPMSAuthServiceImpl extends AbstractHPMSService implements HPMSAuth
     void clearTokenExpires() {
         this.tokenExpires = 0;
     }
+
+    void cleanup() {
+        clearTokenExpires();
+        authToken = null;
+    }
 }
