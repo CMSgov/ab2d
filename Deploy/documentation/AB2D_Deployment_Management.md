@@ -127,8 +127,12 @@
    * [Install and configure the Authorize Project plugin](#install-and-configure-the-authorize-project-plugin)
    * [Register a new OAuth application with GitHub](#register-a-new-oauth-application-with-github)
    * [Install and configure the GitHub Authentication plugin including adding GitHub users](#install-and-configure-the-github-authentication-plugin-including-adding-github-users)
+   * [Configure global tool configuration](#configure-global-tool-configuration)
    * [Log on to Jenkins using GitHub OAuth authentication](#log-on-to-jenkins-using-github-oauth-authentication)
    * [Install the "Parameterized Trigger" plugin](#install-the-parameterized-trigger-plugin)
+   * [Install or verify the Docker Commons plugin](#install-or-verify-the-docker-commons-plugin)
+   * [Install or verify the Docker Pipeline plugin](#install-or-verify-the-docker-pipeline-plugin)
+   * [Configure Jenkins secrets used by builds](#configure-jenkins-secrets-used-by-builds)
    * [Add Jenkins agent 01](#add-jenkins-agent-01)
    * [Add Jenkins agent 02](#add-jenkins-agent-02)
    * [Add Jenkins agent 03](#add-jenkins-agent-03)
@@ -12821,6 +12825,348 @@
 1. Wait for "Running" to be blinking beside "Restarting Jenkins"
 
 1. Select **Jenkins** in the top left of the page
+
+### Install or verify the Docker Commons plugin
+
+1. Log on to Jenkins
+
+1. Select **Manage Jenkins** from the leftmost panel
+
+1. Select **Manage Plugins**
+
+1. Select the **Installed** tab
+
+1. Type the following in the **filter** text box
+
+   ```
+   docker commons
+   ```
+
+1. If the "Docker Commons Plugin" does not appear in the list, do the following:
+
+   1. Select the **Available** tab
+
+   1. Enter the following in the **search** text box
+
+      ```
+      docker commons
+      ```
+
+   1. Check **Docker Commons Plugin**
+
+   1. Select **Download now and install after restart**
+
+   1. Note that if there are no jobs running, you can safely restart Jenkins
+
+   1. Check **Restart Jenkins when installation is complete and no jobs are running
+
+   1. Wait for "Running" to be blinking beside "Restarting Jenkins"
+
+   1. Select **Jenkins** in the top left of the page
+
+### Install or verify the Docker Pipeline plugin
+
+1. Log on to Jenkins
+
+1. Select **Manage Jenkins** from the leftmost panel
+
+1. Select **Manage Plugins**
+
+1. Select the **Installed** tab
+
+1. Type the following in the **filter** text box
+
+   ```
+   docker pipeline
+   ```
+
+1. If the "Docker Pipeline" does not appear in the list, do the following:
+
+   1. Select the **Available** tab
+
+   1. Enter the following in the **search** text box
+
+      ```
+      docker pipeline
+      ```
+
+   1. Check **Docker Pipeline**
+
+   1. Select **Download now and install after restart**
+
+   1. Note that if there are no jobs running, you can safely restart Jenkins
+
+   1. Check **Restart Jenkins when installation is complete and no jobs are running
+
+   1. Wait for "Running" to be blinking beside "Restarting Jenkins"
+
+   1. Select **Jenkins** in the top left of the page
+
+### Configure global tool configuration
+
+1. Log on to the Jenkins GUI (if not already logged in)
+
+   1. Ensure that you are connected to the Cisco VPN
+
+   1. Open Chrome
+
+   1. Enter the following in the address bar
+
+      *Format:*
+
+      > http://{jenkins master private ip}:8080
+
+   1. Log on to the Jenkins GUI
+
+1. Select **Manage Jenkins** from the leftmost panel
+
+1. Select **Global Tool Configuration**
+
+1. Select **JDK installations**
+
+1. Select **Add JDK**
+
+1. Configure the JDK as follows
+
+   *Note that you will be configuring the exact version installed on the Jenkins agents.*
+
+   - **Name:** adoptjdk13
+
+   - **JAVA_HOME:** /usr/lib/jvm/jdk-13.0.2
+
+   - **Install automatically:** {unchecked}
+
+1. Ignore the "/usr/lib/jvm/jdk-13.0.2 is not a directory on the Jenkins master (but perhaps it exists on some agents)" message
+
+1. Scroll down to the "Maven" section
+
+1. Select **Maven installations**
+
+1. Select **Add Maven**
+
+1. Configure Maven as follows
+
+   *Note that you will be configuring the exact version installed on the Jenkins agents.*
+
+   - **Name:** maven-3.6.3
+
+   - **JAVA_HOME:** /opt/maven
+
+   - **Install automatically:** {unchecked}
+
+1. Scroll down to the "Docker" section
+
+1. Select **Docker installations**
+
+1. Select **Add Docker**
+
+1. Configure Docker as follows
+
+   *Note that you will be configuring the exact version installed on the Jenkins agents.*
+
+   - **Name:** docker
+
+   - **JAVA_HOME:** /usr/bin/docker
+
+   - **Install automatically:** {unchecked}
+
+1. Select **Apply**
+
+1. Select **Save**
+
+### Configure Jenkins secrets used by builds
+
+1. Open Jenkins
+
+1. Select **Manage Jenkins** from the leftmost panel
+
+1. Select **Manage Credentials** under the "Security" section
+
+1. Scroll down to the "Stores scoped to Jenkins" section
+
+1. Select **Jenkins** under the "Stores scoped to Jenkins" section
+
+1. Select **Global credentials (unresticted)**
+
+1. Add "CC_TEST_REPORTER_ID" secret
+
+   1. Select **Add Credentials**
+
+   1. Configure the credentials page as follows
+
+      - **Kind:** Secret text
+
+      - **Scope:** Global (Jenkins, nodes, items, all child items, etc)
+
+      - **Secret:** {"CC_TEST_REPORTER_ID" from 1Password}
+
+      - **ID:** CC_TEST_REPORTER_ID
+
+      - **Description:** code climate test reporter id for running code climate checks
+
+   1. Select **OK**
+
+1. Add "HICN_HASH_PEPPER" secret
+
+   1. Select **Add Credentials**
+
+   1. Configure the credentials page as follows
+
+      - **Kind:** Secret text
+
+      - **Scope:** Global (Jenkins, nodes, items, all child items, etc)
+
+      - **Secret:** {"AB2D Dev : BFD Prod Sbx : HICN Hash Pepper" from 1Password}
+
+      - **ID:** HICN_HASH_PEPPER
+
+      - **Description:**
+
+   1. Select **OK**
+
+1. Add "HPMS_AUTH_KEY_ID" secret
+
+   1. Select **Add Credentials**
+
+   1. Configure the credentials page as follows
+
+      - **Kind:** Secret text
+
+      - **Scope:** Global (Jenkins, nodes, items, all child items, etc)
+
+      - **Secret:** {"AB2D Dev : HPMS IMPL/staging : API Key ID" from 1Password}
+
+      - **ID:** HPMS_AUTH_KEY_ID
+
+      - **Description:** hpms auth key id for dev
+
+   1. Select **OK**
+
+1. Add "HPMS_AUTH_KEY_SECRET" secret
+
+   1. Select **Add Credentials**
+
+   1. Configure the credentials page as follows
+
+      - **Kind:** Secret text
+
+      - **Scope:** Global (Jenkins, nodes, items, all child items, etc)
+
+      - **Secret:** {"AB2D Dev : HPMS IMPL/staging : API Key Secret" from 1Password}
+
+      - **ID:** HPMS_AUTH_KEY_SECRET
+
+      - **Description:** hpms auth key secret for dev
+
+   1. Select **OK**
+
+1. Add "OKTA_CLIENT_ID" secret
+
+   1. Select **Add Credentials**
+
+   1. Configure the credentials page as follows
+
+      - **Kind:** Secret text
+
+      - **Scope:** Global (Jenkins, nodes, items, all child items, etc)
+
+      - **Secret:** {"AB2D Dev : OKTA Test : PDP-100 : Client ID (PUBLIC)" from 1Password}
+
+      - **ID:** OKTA_CLIENT_ID
+
+      - **Description:** Test idp okta client id
+
+   1. Select **OK**
+
+1. Add "OKTA_CLIENT_PASSWORD" secret
+
+   1. Select **Add Credentials**
+
+   1. Configure the credentials page as follows
+
+      - **Kind:** Secret text
+
+      - **Scope:** Global (Jenkins, nodes, items, all child items, etc)
+
+      - **Secret:** {"AB2D Dev : OKTA Test : PDP-100 : Client Secret (PUBLIC)" from 1Password}
+
+      - **ID:** OKTA_CLIENT_PASSWORD
+
+      - **Description:** Test idp okta client password
+
+   1. Select **OK**
+
+1. Add "SANDBOX_BFD_KEYSTORE" secret
+
+   1. Select **Add Credentials**
+
+   1. Configure the credentials page as follows
+
+      - **Kind:** Secret file
+
+      - **Scope:** Global (Jenkins, nodes, items, all child items, etc)
+
+      - **Secret:** {"AB2D Dev : BFD Prod Sbx : Keystore" from 1Password}
+
+      - **ID:** SANDBOX_BFD_KEYSTORE
+
+      - **Description:** bfd prod sandbox keystore file
+
+   1. Select **OK**
+
+1. Add "SANDBOX_BFD_KEYSTORE_PASSWORD" secret
+
+   1. Select **Add Credentials**
+
+   1. Configure the credentials page as follows
+
+      - **Kind:** Secret text
+
+      - **Scope:** Global (Jenkins, nodes, items, all child items, etc)
+
+      - **Secret:** {"AB2D Dev : BFD Prod Sbx : Keystore Password" from 1Password}
+
+      - **ID:** SANDBOX_BFD_KEYSTORE_PASSWORD
+
+      - **Description:** bfd prod sandbox keystore password
+
+   1. Select **OK**
+
+1. Add "SECONDARY_USER_OKTA_CLIENT_ID" secret
+
+   1. Select **Add Credentials**
+
+   1. Configure the credentials page as follows
+
+      - **Kind:** Secret text
+
+      - **Scope:** Global (Jenkins, nodes, items, all child items, etc)
+
+      - **Secret:** {"AB2D Dev : OKTA Test : PDP-1000 : Client ID (PUBLIC)" from 1Password}
+
+      - **ID:** SECONDARY_USER_OKTA_CLIENT_ID
+
+      - **Description:** Test idp second okta client id
+
+   1. Select **OK**
+
+1. Add "SECONDARY_USER_OKTA_CLIENT_PASSWORD" secret
+
+   1. Select **Add Credentials**
+
+   1. Configure the credentials page as follows
+
+      - **Kind:** Secret text
+
+      - **Scope:** Global (Jenkins, nodes, items, all child items, etc)
+
+      - **Secret:** {"AB2D Dev : OKTA Test : PDP-1000 : Client Secret (PUBLIC)" from 1Password}
+
+      - **ID:** SECONDARY_USER_OKTA_CLIENT_PASSWORD
+
+      - **Description:** Test idp second okta client password
+
+   1. Select **OK**
 
 ### Add Jenkins agent 01
 
