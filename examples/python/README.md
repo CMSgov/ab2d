@@ -48,6 +48,22 @@ Then run the following command:
 
 For this example the job is run against sandbox.
 
+### Dependencies
+
+If you are not using a bundled version of this script then you first need to install the required dependencies
+using the following steps.
+
+1. Python 3.x: any version of Python3
+    1. Check that Python has been added to your path by opening a Terminal, typing `python3`, and hitting enter.
+1. Install Pip3: any version of pip3
+    1. Check that pip3 has been added to your path by opening a Terminal, typing `pip3`, and hitting enter
+    1. If `pip3` does not work check whether it has been aliased to `pip`
+    by opening a Terminal, typing `pip --version`, and hitting enter
+1. Install the Python requests library by running either of the following commands:
+    1. `pip3 install requests`
+    1. `pip install requests`
+
+
 ### Running Stages Individually
 
 1. Set the OKTA_CLIENT_ID and OKTA_CLIENT_PASSWORD
@@ -74,7 +90,6 @@ This will only download the files once. Running again will not overwrite the fil
 to start, monitor, and download results from a job.
 
 ## Bundling Python and Script
-
 
 ### Build Python in Source
 
