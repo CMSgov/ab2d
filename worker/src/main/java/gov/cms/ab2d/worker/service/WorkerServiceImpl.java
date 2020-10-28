@@ -1,7 +1,7 @@
 package gov.cms.ab2d.worker.service;
 
 import gov.cms.ab2d.common.service.PropertiesService;
-import gov.cms.ab2d.common.service.WorkerDrive;
+import gov.cms.ab2d.common.service.FeatureEngagement;
 import gov.cms.ab2d.common.util.Constants;
 import gov.cms.ab2d.worker.processor.JobPreProcessor;
 import gov.cms.ab2d.worker.processor.JobProcessor;
@@ -46,8 +46,8 @@ public class WorkerServiceImpl implements WorkerService {
     }
 
     @Override
-    public WorkerDrive getEngagement() {
-        return WorkerDrive.fromString(propertiesService.getPropertiesByKey(Constants.WORKER_ENGAGEMENT).getValue());
+    public FeatureEngagement getEngagement() {
+        return FeatureEngagement.fromString(propertiesService.getPropertiesByKey(Constants.WORKER_ENGAGEMENT).getValue());
     }
 
     @PreDestroy
