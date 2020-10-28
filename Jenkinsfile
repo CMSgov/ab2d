@@ -87,10 +87,7 @@ pipeline {
             }
         }
 
-        stage('Run e2e-test on merge commit and on master branch') {
-            when {
-                branch 'feature/ab2d-2013-travis-dsl-to-jenkins-dsl'
-            }
+        stage('Run e2e-test') {
 
             steps {
 
