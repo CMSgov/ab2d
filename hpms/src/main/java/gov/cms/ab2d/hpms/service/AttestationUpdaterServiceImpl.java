@@ -17,7 +17,7 @@ import java.util.stream.Collectors;
 
 @Primary
 @Service
-public class AttestationUpdaterServiceImpl implements AttestationUpdaterService {
+public class AttestationUpdaterServiceImpl implements AttestationUpdaterService, HPMSCleanupTest {
 
     private static final int BATCH_SIZE = 100;
 
@@ -150,5 +150,10 @@ public void pollHmsData() {
         Map<String, HPMSOrganizationInfo> refreshed = new HashMap<>();
         orgInfo.getOrgs().forEach(hpmsOrg -> refreshed.put(hpmsOrg.getContractId(), hpmsOrg));
         return refreshed;
+    }
+
+    @Override
+    public void cleanup() {
+        ((HPMSCleanupTest) hpmsFetcher).cleanup();
     }
 }

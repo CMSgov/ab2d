@@ -16,7 +16,7 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 @Service
-public class HPMSFetcherImpl extends AbstractHPMSService implements HPMSFetcher {
+public class HPMSFetcherImpl extends AbstractHPMSService implements HPMSFetcher, HPMSCleanupTest {
 
     private static final String HPMS_BASE_PATH = "/api/cda";
 
@@ -79,5 +79,10 @@ public class HPMSFetcherImpl extends AbstractHPMSService implements HPMSFetcher 
                 .fromUri(attestationBaseUri)
                 .queryParam("contractIds", contractIds)
                 .build().toUri();
+    }
+
+    @Override
+    public void cleanup() {
+        ((HPMSCleanupTest) authService).cleanup();
     }
 }

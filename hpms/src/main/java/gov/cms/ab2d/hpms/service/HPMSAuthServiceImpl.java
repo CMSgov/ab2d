@@ -15,7 +15,7 @@ import java.time.Duration;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 
 @Service
-public class HPMSAuthServiceImpl extends AbstractHPMSService implements HPMSAuthService {
+public class HPMSAuthServiceImpl extends AbstractHPMSService implements HPMSAuthService, HPMSCleanupTest {
 
     @Value("${hpms.base.url}/api/idm/oauth/token")
     private String authURL;
@@ -99,5 +99,10 @@ public class HPMSAuthServiceImpl extends AbstractHPMSService implements HPMSAuth
 
     void clearTokenExpires() {
         this.tokenExpires = 0;
+    }
+
+    @Override
+    public void cleanup() {
+        clearTokenExpires();
     }
 }

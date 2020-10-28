@@ -8,6 +8,7 @@ import gov.cms.ab2d.common.service.PropertiesService;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.hpms.SpringBootTestApp;
 import org.assertj.core.util.Lists;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -81,4 +82,8 @@ public class AttestationUpdaterServiceTest {
         }
     }
 
+    @AfterEach
+    public void cleanup() {
+        aus.cleanup();
+    }
 }

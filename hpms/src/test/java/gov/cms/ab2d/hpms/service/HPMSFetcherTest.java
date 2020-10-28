@@ -4,6 +4,7 @@ import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.hpms.SpringBootTestApp;
 import gov.cms.ab2d.hpms.hmsapi.HPMSAttestationsHolder;
 import gov.cms.ab2d.hpms.hmsapi.HPMSOrganizations;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -87,5 +88,10 @@ public class HPMSFetcherTest {
     private void processAttestations(HPMSAttestationsHolder hpmsAttestationsHolder) {
         attestations = hpmsAttestationsHolder;
         lock.countDown();
+    }
+
+    @AfterEach
+    public void cleanup() {
+        ((HPMSCleanupTest) fetcher).cleanup();
     }
 }

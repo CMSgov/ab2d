@@ -13,7 +13,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
 
-public class MockHpmsFetcher implements HPMSFetcher {
+public class MockHpmsFetcher implements HPMSFetcher, HPMSCleanupTest {
 
     private static final List<HPMSOrganizationInfo> orgSet = new ArrayList<>();
 
@@ -54,5 +54,9 @@ public class MockHpmsFetcher implements HPMSFetcher {
             retAttests.add(attests.get(contractId));
         }
         hpmsAttestationCallback.accept(new HPMSAttestationsHolder(retAttests));
+    }
+
+    @Override
+    public void cleanup() {
     }
 }
