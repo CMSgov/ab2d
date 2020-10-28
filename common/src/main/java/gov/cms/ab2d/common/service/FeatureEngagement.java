@@ -1,12 +1,12 @@
 package gov.cms.ab2d.common.service;
 
-public enum WorkerDrive {
-    IN_GEAR("engaged"), // default - worker is ready to process jobs
-    NEUTRAL("idle");  // out of gear in order to allow for something else
+public enum FeatureEngagement {
+    IN_GEAR("engaged"), // default - feature is fully contributing
+    NEUTRAL("idle");  // out of gear - feature is not in play
 
     private String serialValue;
 
-    WorkerDrive(String propValue) {
+    FeatureEngagement(String propValue) {
         serialValue = propValue;
     }
 
@@ -15,7 +15,7 @@ public enum WorkerDrive {
     }
 
     // Defaults to being IN_GEAR.
-    public static WorkerDrive fromString(String rawValue) {
+    public static FeatureEngagement fromString(String rawValue) {
         return "idle".equals(rawValue) ? NEUTRAL : IN_GEAR;
     }
 }

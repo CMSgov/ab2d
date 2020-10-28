@@ -1,6 +1,6 @@
 package gov.cms.ab2d.worker.config;
 
-import gov.cms.ab2d.common.service.WorkerDrive;
+import gov.cms.ab2d.common.service.FeatureEngagement;
 import gov.cms.ab2d.worker.service.WorkerService;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
@@ -43,7 +43,7 @@ public class JobHandler implements MessageHandler {
     public void handleMessage(Message<?> message) throws MessagingException {
 
         // Worker is not able to be engaged in processing
-        if (workerService.getEngagement() == WorkerDrive.NEUTRAL) {
+        if (workerService.getEngagement() == FeatureEngagement.NEUTRAL) {
             return;
         }
 
