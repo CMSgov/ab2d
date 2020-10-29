@@ -20,8 +20,6 @@ URLS=$(echo "$RESPONSE" | grep ExplanationOfBenefit)
 # If there are no results, wait x seconds and try again
 while [ "$URLS" == '' ]
 do
-    RESPONSE=$(curl "${API_URL}/Job/${JOB}/\$status" -sD - -H "accept: application/json" -H "Authorization: Bearer ${BEARER_TOKEN}")
-
     # If response is unauthorized refresh token and try again
     HTTP_CODE=$(echo "$RESPONSE" | grep "HTTP/" | awk  '{print $2}')
 
@@ -55,6 +53,8 @@ do
         fi
 
     fi
+
+    RESPONSE=$(curl "${API_URL}/Job/${JOB}/\$status" -sD - -H "accept: application/json" -H "Authorization: Bearer ${BEARER_TOKEN}")
 done
 
 
