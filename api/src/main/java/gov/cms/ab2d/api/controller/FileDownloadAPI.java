@@ -85,10 +85,10 @@ public class FileDownloadAPI {
         try (OutputStream out = response.getOutputStream(); FileInputStream in = new FileInputStream(downloadResource.getFile())) {
             IOUtils.copy(in, out);
 
-            jobService.deleteFileForJob(downloadResource.getFile(), jobUuid);
-
             eventLogger.log(new ApiResponseEvent(MDC.get(USERNAME), jobUuid, HttpStatus.OK, "File Download",
                     "File " + filename + " was downloaded", (String) request.getAttribute(REQUEST_ID)));
+
+            jobService.deleteFileForJob(downloadResource.getFile(), jobUuid);
 
             return new ResponseEntity<>(null, null, HttpStatus.OK);
         }
