@@ -7663,10 +7663,20 @@
 1. Create an export job
 
    *Example for "Dev" environment:*
+
+   *Temporarily using "--insecure" parameter until onboarded for DNS routing:*
    
    ```ShellSession
    $ curl "https://internal-ab2d-dev-820359992.us-east-1.elb.amazonaws.com/api/v1/fhir/Patient/\$export?_outputFormat=application%2Ffhir%2Bndjson&_type=ExplanationOfBenefit" \
      -sD - \
+     --insecure \
+     -H "Accept: application/json" \
+     -H "Prefer: respond-async" \
+     -H "Authorization: Bearer ${BEARER_TOKEN}"
+
+   $ curl "https://dev.ab2d.cms.gov/api/v1/fhir/Patient/\$export?_outputFormat=application%2Ffhir%2Bndjson&_type=ExplanationOfBenefit" \
+     -sD - \
+     --insecure \
      -H "Accept: application/json" \
      -H "Prefer: respond-async" \
      -H "Authorization: Bearer ${BEARER_TOKEN}"
