@@ -253,7 +253,7 @@ Then run the following command:
    TODAYS_DATE=2020-10-30
    ```
 
-   *On Windows from command prompt:*
+   *Example on Windows from command prompt:*
 
    ```ShellSession
    SET TODAYS_DATE=2020-10-30
