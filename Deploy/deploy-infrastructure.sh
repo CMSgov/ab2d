@@ -381,8 +381,6 @@ terraform apply \
 # Create or verify database
 #
 
-cd "${START_DIR}"
-
 # Get the private ip address of the controller
 
 CONTROLLER_PRIVATE_IP=$(aws --region "${AWS_DEFAULT_REGION}" ec2 describe-instances \
@@ -393,7 +391,16 @@ CONTROLLER_PRIVATE_IP=$(aws --region "${AWS_DEFAULT_REGION}" ec2 describe-instan
 if [ "${CLOUD_TAMER}" == "true" ]; then
 
   echo "NOTE: This section commented out since it doesn't work from development machine."
-    
+
+  # *** TO DO *** BEGIN: IN PROGRESS PULL REQUEST FIX IN ORDER TO UNCOMMENT THE SECTIONS BELOW
+
+  # cd "${START_DIR}"
+  # cd ./terraform/environments/$CMS_ENV
+
+  # scp -i "~/.ssh/${CMS_ENV}.pem" "${SSH_USERNAME}@${CONTROLLER_PRIVATE_IP}":
+
+  # *** TO DO *** END: IN PROGRESS PULL REQUEST FIX IN ORDER TO UNCOMMENT THE SECTIONS BELOW
+
   # # Determine if the database for the environment exists
 
   # DB_NAME_IF_EXISTS=$(ssh -tt -i "~/.ssh/${CMS_ENV}.pem" \
