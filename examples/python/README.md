@@ -91,11 +91,11 @@ Then run the following command:
 
 1. If you only had one line of "...\WindowsApps\python3.exe" output, jump to the following section:
 
-   [Install python3](#install-python-3)
+   [Install python 3 on Windows](#install-python-3-on-windows)
 
 1. If more that one line was displayed in the output and includes a "...\Python\Python3{version}\python.exe" line, jump to the following section:
 
-   [Verify python and pip work from the command prompt](#verify-python-and-pip-work-from-the-command-prompt)
+   [Verify python and pip work from the command prompt on Windows](#verify-python-and-pip-work-from-the-command-prompt-on-windows)
 
 #### Install python 3 on Windows
 
