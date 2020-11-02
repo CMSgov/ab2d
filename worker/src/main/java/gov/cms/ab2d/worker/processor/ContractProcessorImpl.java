@@ -233,7 +233,6 @@ public class ContractProcessorImpl implements ContractProcessor {
     }
 
     void addMbiIdToEobs(List<ExplanationOfBenefit> eobs, Map<String, PatientDTO> patients) {
-        String idType = MBI_ID;
         if (eobs == null || eobs.isEmpty()) {
             return;
         }
