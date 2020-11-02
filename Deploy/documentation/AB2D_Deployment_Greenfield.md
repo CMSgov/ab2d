@@ -147,7 +147,7 @@
 
    ```ShellShession
    $ export DATABASE_SECRET_DATETIME_PARAM=2020-01-02-09-15-01 \
-     && ./Deploy/bash/initialize-greenfield-environment-v2.sh
+     && ./Deploy/bash/initialize-greenfield-environment-v3.sh
    ```
 
 1. If prompted, set secrets for the target environment
