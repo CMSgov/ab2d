@@ -24,6 +24,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.hl7.fhir.dstu3.model.ExplanationOfBenefit;
+import org.hl7.fhir.dstu3.model.Extension;
+import org.hl7.fhir.dstu3.model.Identifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -42,6 +44,7 @@ import java.util.stream.Collectors;
 import static gov.cms.ab2d.common.model.JobStatus.CANCELLED;
 import static gov.cms.ab2d.common.util.Constants.CONTRACT_LOG;
 import static gov.cms.ab2d.common.util.Constants.EOB;
+import static gov.cms.ab2d.worker.processor.PatientContractCallable.MBI_ID;
 import static net.logstash.logback.argument.StructuredArguments.keyValue;
 
 @Slf4j
@@ -50,6 +53,7 @@ import static net.logstash.logback.argument.StructuredArguments.keyValue;
 @SuppressWarnings("PMD.TooManyStaticImports")
 public class ContractProcessorImpl implements ContractProcessor {
     private static final int SLEEP_DURATION = 250;
+    static final String ID_EXT = "http://hl7.org/fhir/StructureDefinition/elementdefinition-identifier";
 
     @Value("${job.file.rollover.ndjson:200}")
     private long ndjsonRollOver;
@@ -215,6 +219,7 @@ public class ContractProcessorImpl implements ContractProcessor {
             var future = iterator.next();
             if (future.isDone()) {
                 EobSearchResult result = processFuture(futureHandles, progressTracker, future, patients);
+                addMbiIdToEobs(result.getEobs(), patients);
                 if (result != null) {
                     numberOfEobs += writeOutResource(result.getEobs(), helper);
                 }
@@ -225,6 +230,27 @@ public class ContractProcessorImpl implements ContractProcessor {
         // update the progress in the DB & logs periodically
         trackProgress(progressTracker);
         return numberOfEobs;
+    }
+
+    void addMbiIdToEobs(List<ExplanationOfBenefit> eobs, Map<String, PatientDTO> patients) {
+        String idType = MBI_ID;
+        if (eobs == null || eobs.isEmpty()) {
+            return;
+        }
+        // Get first EOB Bene ID
+        ExplanationOfBenefit eob = eobs.get(0);
+        String mbi = null;
+        String benId = getPatientIdFromEOB(eob);
+        if (benId != null) {
+            mbi = patients.get(benId).getMbiId();
+        }
+        Extension extension = createExtension(mbi);
+        eobs.stream().forEach(e -> e.addExtension(extension));
+    }
+
+    Extension createExtension(String mbi) {
+        Identifier identifier = new Identifier().setSystem(MBI_ID).setValue(mbi);
+        return new Extension().setUrl(ID_EXT).setValue(identifier);
     }
 
     private int writeOutResource(List<ExplanationOfBenefit> eobs, StreamHelper helper) {
@@ -284,6 +310,17 @@ public class ContractProcessorImpl implements ContractProcessor {
         return null;
     }
 
+    public String getPatientIdFromEOB(ExplanationOfBenefit eob) {
+        if (eob == null) {
+            return null;
+        }
+        String patientId = eob.getPatient().getReference();
+        if (patientId == null) {
+            return null;
+        }
+        return patientId.replaceFirst("Patient/", "");
+    }
+
     /**
      * returns true if the patient is a valid member of a contract, false otherwise. If either value is empty,
      * it returns false
@@ -297,12 +334,8 @@ public class ContractProcessorImpl implements ContractProcessor {
             log.debug("Passed an invalid benefit or an invalid list of patients");
             return false;
         }
-        String patientId = benefit.getPatient().getReference();
-        if (patientId == null) {
-            return false;
-        }
-        patientId = patientId.replaceFirst("Patient/", "");
-        if (patients.get(patientId) == null) {
+        String patientId = getPatientIdFromEOB(benefit);
+        if (patientId == null || patients.get(patientId) == null) {
             log.error(patientId + " returned in EOB, but not a member of a contract");
             return false;
         }

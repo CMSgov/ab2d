@@ -16,7 +16,7 @@ import static java.util.stream.Collectors.toSet;
 @Slf4j
 public class PatientContractCallable implements Callable<ContractMapping> {
     private static final String BENEFICIARY_ID = "https://bluebutton.cms.gov/resources/variables/bene_id";
-    private static final String MBI_ID = "http://hl7.org/fhir/sid/us-mbi";
+    public static final String MBI_ID = "http://hl7.org/fhir/sid/us-mbi";
 
     private final int month;
     private final int year;
