@@ -827,10 +827,12 @@ lication-load-balancer)
 
 ### Create or update application
 
-1. Change to the "Deploy" directory
+1. Change to your "ab2d" repo directory
+
+   *Example:*
 
    ```ShellSession
-   $ cd ~/code/ab2d/Deploy
+   $ cd ~/code/ab2d
    ```
 
 1. Set parameters
@@ -858,7 +860,7 @@ lication-load-balancer)
 1. Deploy application
 
    ```ShellSession
-   $ ./bash/deploy-application.sh
+   $ ./Deploy/bash/deploy-application.sh
    ```
 
 ## Upload HPMS Reports
