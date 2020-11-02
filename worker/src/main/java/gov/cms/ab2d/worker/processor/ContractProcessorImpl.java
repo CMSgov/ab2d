@@ -219,7 +219,9 @@ public class ContractProcessorImpl implements ContractProcessor {
             var future = iterator.next();
             if (future.isDone()) {
                 EobSearchResult result = processFuture(futureHandles, progressTracker, future, patients);
-                addMbiIdToEobs(result.getEobs(), patients);
+                if (result != null) {
+                    addMbiIdToEobs(result.getEobs(), patients);
+                }
                 if (result != null) {
                     numberOfEobs += writeOutResource(result.getEobs(), helper);
                 }
