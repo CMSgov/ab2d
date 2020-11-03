@@ -342,6 +342,13 @@ public class TestRunner {
             Assert.assertNotNull(diagnosisJson);
             final JSONArray itemJson = jsonObject.getJSONArray("item");
             Assert.assertNotNull(itemJson);
+            final JSONArray extensions = jsonObject.getJSONArray("extension");
+            Assert.assertNotNull(extensions);
+            Assert.assertEquals(1, extensions.length());
+            JSONObject idObj = extensions.getJSONObject(0);
+            Assert.assertNotNull(idObj);
+            String mbi = idObj.getString("value");
+            Assert.assertNotNull(mbi);
 
             final JSONObject metaJson = jsonObject.getJSONObject("meta");
             final String lastUpdated = metaJson.getString("lastUpdated");
@@ -371,9 +378,9 @@ public class TestRunner {
     private boolean validFields(JSONObject jsonObject) {
         Set<String> allowedFields = Set.of("identifier", "item", "meta", "patient", "billablePeriod", "diagnosis",
                 "provider", "id", "type", "precedence", "resourceType", "organization", "facility", "careTeam",
-                "procedure");
+                "procedure", "extension");
 
-        Set<String> disallowedFields = Set.of("status", "extension", "patientTarget", "created", "enterer",
+        Set<String> disallowedFields = Set.of("status", "patientTarget", "created", "enterer",
             "entererTarget", "insurer", "insurerTarget", "providerTarget", "organizationTarget", "referral",
             "referralTarget", "facilityTarget", "claim", "claimTarget", "claimResponse", "claimResponseTarget",
             "outcome", "disposition", "related", "prescription", "prescriptionTarget", "originalPrescription",
