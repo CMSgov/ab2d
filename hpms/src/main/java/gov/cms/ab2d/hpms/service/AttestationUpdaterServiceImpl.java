@@ -104,6 +104,11 @@ public class AttestationUpdaterServiceImpl implements AttestationUpdaterService 
 
     private void considerContract(List<Contract> contractAttestList, Contract contract,
                                   HPMSOrganizationInfo hpmsOrganizationInfo) {
+        // Ignore Test contracts
+        if (contract.getContractNumber().startsWith("Z")) {
+            return;
+        }
+
         if (hpmsOrganizationInfo == null) {
             // Missing in refresh, need to update as having no attestation.
             if (contract.hasAttestation()) {
