@@ -28,7 +28,7 @@ active-nav: support-nav
                 If you have a question, suggestion, or feedback please post it in the AB2D Google Group!
 
                 <div class="google-group-wrapper mb-3 mt-4">
-                    <a class="join-our-google-group" href="https://groups.google.com/forum/#!forum/ab2d-api" target="_blank">
+                    <a class="join-our-google-group" href="https://groups.google.com/u/1/g/cms-ab2d-api" target="_blank">
                         JOIN OUR GOOGLE GROUP
                         <i class="material-icons pl-1 external-icon">open_in_new</i>
                     </a>
