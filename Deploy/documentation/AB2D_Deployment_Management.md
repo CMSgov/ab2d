@@ -15323,7 +15323,11 @@
 
    - **SSL verification:** Enable SSL verification
 
-   - **Which events would you like to trigger this webhook?:** Send me everything.
+   - **Which events would you like to trigger this webhook?:** Let me select individual events.
+
+     - **Pull requests:** checked
+
+     - **Pushes:** checked
 
    - **Active:** {checked}
 
