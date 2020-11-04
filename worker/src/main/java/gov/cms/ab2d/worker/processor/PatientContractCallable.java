@@ -24,7 +24,8 @@ public class PatientContractCallable implements Callable<ContractMapping> {
     private final String contractNumber;
     private final BFDClient bfdClient;
 
-    private int missingIdentifier;
+    private int missingBeneId;
+    private int missingMbi;
     private int pastYear;
 
     public PatientContractCallable(String contractNumber, int month, int year, BFDClient bfdClient, boolean skipBillablePeriodCheck) {
@@ -58,9 +59,10 @@ public class PatientContractCallable implements Callable<ContractMapping> {
             log.error("Unable to get patient information for " + contractNumber + " for month " + month, e);
             throw e;
         } finally {
-            int total = patientIds.size() + pastYear + missingIdentifier;
+            int total = patientIds.size() + pastYear + missingBeneId;
             log.info("Search discarded {} entries not meeting year filter criteria out of {}", pastYear, total);
-            log.info("Search discarded {} entries missing an identifier out of {}", missingIdentifier, total);
+            log.info("Search discarded {} entries missing a beneficiary identifier out of {}", missingBeneId, total);
+            log.info("Search found {} entries missing an mbi out of {}", missingMbi, total);
         }
     }
 
@@ -116,18 +118,15 @@ public class PatientContractCallable implements Callable<ContractMapping> {
                 .findFirst();
 
         if (beneId.isEmpty()) {
-            log.warn("missing a beneficiary id on a patient so patient will not be searched");
-            missingIdentifier += 1;
+            missingBeneId += 1;
             return null;
         }
 
         if (mbiId.isEmpty()) {
-            log.warn("missing an mbi id on a patient so patient will not be searched");
-            missingIdentifier += 1;
-            return null;
+            missingMbi += 1;
         }
 
-        return new Identifiers(beneId.get(), mbiId.get());
+        return new Identifiers(beneId.get(), mbiId.orElse(null));
     }
 
     private boolean isBeneficiaryId(Identifier identifier) {
