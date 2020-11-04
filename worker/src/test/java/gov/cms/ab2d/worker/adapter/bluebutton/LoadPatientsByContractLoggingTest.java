@@ -24,7 +24,6 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.HashSet;
 import java.util.List;
@@ -109,13 +108,9 @@ import static org.mockito.Mockito.lenient;
     }
 
     private Bundle createBundle() {
-        return createBundle("ccw_patient_000");
-    }
-
-    private Bundle createBundle(final String patientId) {
         var bundle = new Bundle();
         var entries = bundle.getEntry();
-        entries.add(createBundleEntry(patientId, year));
+        entries.add(createBundleEntry("ccw_patient_000", "mbi0", year));
         return bundle;
     }
 }
