@@ -7,6 +7,7 @@ import lombok.Data;
 @AllArgsConstructor
 public class CoverageMembership {
     private String beneficiaryId;
+    private String mbiId;
     private int year;
     private int month;
 }

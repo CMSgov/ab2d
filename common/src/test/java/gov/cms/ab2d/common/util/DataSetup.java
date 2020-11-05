@@ -45,6 +45,10 @@ public class DataSetup {
         return "patientId_" + Instant.now().getNano();
     }
 
+    public static String createMbiId() {
+        return "mbi_" + Instant.now().getNano();
+    }
+
     public CoveragePeriod createCoveragePeriod(Contract contract, int month, int year) {
         CoveragePeriod coveragePeriod = new CoveragePeriod();
         coveragePeriod.setContract(contract);
@@ -71,11 +75,12 @@ public class DataSetup {
         coverageSearchEventRepo.delete(event);
     }
 
-    public Coverage createCoverage(CoveragePeriod coveragePeriod, CoverageSearchEvent coverageSearchEvent, String bene) {
+    public Coverage createCoverage(CoveragePeriod coveragePeriod, CoverageSearchEvent coverageSearchEvent, String bene, String mbi) {
         Coverage coverage = new Coverage();
         coverage.setCoveragePeriod(coveragePeriod);
         coverage.setCoverageSearchEvent(coverageSearchEvent);
         coverage.setBeneficiaryId(bene);
+        coverage.setMbi(mbi);
         return coverageRepo.saveAndFlush(coverage);
     }
 

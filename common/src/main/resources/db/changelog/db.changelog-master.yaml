@@ -76,3 +76,5 @@ databaseChangeLog:
       file: db/changelog/v001/add_coverage_search.sql
   - include:
       file: db/changelog/v001/add_last_success_to_coverage_period.sql
+  - include:
+      file: db/changelog/v001/add_mbi_to_coverage.sql

@@ -1,9 +1,6 @@
 package gov.cms.ab2d.common.service;
 
-import gov.cms.ab2d.common.model.Coverage;
-import gov.cms.ab2d.common.model.CoveragePeriod;
-import gov.cms.ab2d.common.model.CoverageSearch;
-import gov.cms.ab2d.common.model.CoverageSearchEvent;
+import gov.cms.ab2d.common.model.*;
 import gov.cms.ab2d.common.repository.CoverageSearchEventRepository;
 import gov.cms.ab2d.common.repository.CoverageSearchRepository;
 
@@ -33,20 +30,20 @@ public class InsertionJob implements Callable<CoverageSearchEvent> {
     private final CoveragePeriod period;
     private final DataSource dataSource;
     private final CoverageService coverageService;
-    private final CoverageSearchEventRepository eventRepo;
     private final CoverageSearchRepository coverageSearchRepository;
     private final int dataPoints;
     private final int experiments;
     public static final int CHUNK_SIZE = 50000;
 
-    public static class BeneficiaryIdSupplier implements Supplier<String> {
+    public static class BeneficiaryIdSupplier implements Supplier<Identifiers> {
 
         private int id = 0;
 
         public BeneficiaryIdSupplier() {}
 
-        public String get() {
-            return "test-" + id++;
+        public Identifiers get() {
+            int generated = id++;
+            return new Identifiers("test-" + generated, "mbi-" + generated);
         }
     }
 
@@ -55,17 +52,14 @@ public class InsertionJob implements Callable<CoverageSearchEvent> {
      * @param period period that all beneficiaries are active for
      * @param dataSource driver to build sql templates off of for deletes
      * @param coverageService service to use for inserts
-     * @param eventRepo necessary to create event mapping inserts
      * @param dataPoints number of beneficiaries to insert
      * @param experiments number of times to repeat insertion
      */
     public InsertionJob(CoveragePeriod period, DataSource dataSource, CoverageService coverageService,
-                        CoverageSearchEventRepository eventRepo, int dataPoints, int experiments,
-                        CoverageSearchRepository coverageSearchRepository) {
+                        int dataPoints, int experiments, CoverageSearchRepository coverageSearchRepository) {
         this.period = period;
         this.dataSource = dataSource;
         this.coverageService = coverageService;
-        this.eventRepo = eventRepo;
         this.dataPoints = dataPoints;
         this.experiments = experiments;
         this.coverageSearchRepository = coverageSearchRepository;
@@ -122,7 +116,7 @@ public class InsertionJob implements Callable<CoverageSearchEvent> {
     private void conductBatchInserts(BeneficiaryIdSupplier supplier, long searchEventId, int dataPoints) {
 
         for (int written = 0; written < dataPoints; written += CHUNK_SIZE) {
-            List<String> batch = new ArrayList<>(CHUNK_SIZE);
+            List<Identifiers> batch = new ArrayList<>(CHUNK_SIZE);
             IntStream.iterate(0, i -> i + 1).limit(CHUNK_SIZE).forEach(i -> batch.add(supplier.get()));
 
             coverageService.insertCoverage(searchEventId, new HashSet<>(batch));

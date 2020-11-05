@@ -7,7 +7,7 @@ import java.util.*;
 @Getter
 public class CoverageMapping {
 
-    private final Set<String> beneficiaryIds;
+    private final Set<Identifiers> beneficiaryIds;
 
     private final CoverageSearchEvent coverageSearchEvent;
     private final CoverageSearch coverageSearch;
@@ -33,7 +33,7 @@ public class CoverageMapping {
         return coverageSearchEvent.getCoveragePeriod().getId();
     }
 
-    public void addBeneficiaries(Collection<String> beneficiaries) {
+    public void addBeneficiaries(Collection<Identifiers> beneficiaries) {
         beneficiaryIds.addAll(beneficiaries);
     }
 

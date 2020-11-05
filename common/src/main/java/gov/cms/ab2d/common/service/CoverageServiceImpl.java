@@ -6,6 +6,7 @@ import gov.cms.ab2d.common.model.CoverageSearch;
 import gov.cms.ab2d.common.model.CoverageSearchDiff;
 import gov.cms.ab2d.common.model.CoverageSearchEvent;
 import gov.cms.ab2d.common.model.CoverageSummary;
+import gov.cms.ab2d.common.model.Identifiers;
 import gov.cms.ab2d.common.model.JobStatus;
 import gov.cms.ab2d.common.repository.CoverageRepository;
 import gov.cms.ab2d.common.repository.CoveragePeriodRepository;
@@ -98,7 +99,7 @@ public class CoverageServiceImpl implements CoverageService {
     }
 
     @Override
-    public CoverageSearchEvent insertCoverage(long searchEventId, Set<String> beneficiaryIds) {
+    public CoverageSearchEvent insertCoverage(long searchEventId, Set<Identifiers> beneficiaryIds) {
 
         // Make sure that coverage period and searchEvent actually exist in the database before inserting
         CoverageSearchEvent searchEvent = findCoverageSearchEvent(searchEventId);

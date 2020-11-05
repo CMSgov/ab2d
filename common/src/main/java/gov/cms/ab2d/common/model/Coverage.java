@@ -29,4 +29,7 @@ public class Coverage {
     @Column
     private String beneficiaryId;
 
+    @Column
+    private String mbi;
+
 }

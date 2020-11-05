@@ -6,6 +6,7 @@ import gov.cms.ab2d.common.model.CoveragePeriod;
 import gov.cms.ab2d.common.model.CoverageSearchEvent;
 import gov.cms.ab2d.common.model.CoverageSummary;
 import gov.cms.ab2d.common.model.JobStatus;
+import gov.cms.ab2d.common.model.Identifiers;
 import gov.cms.ab2d.common.util.FilterOutByDate;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -29,7 +30,7 @@ public class CoverageServiceRepository {
     private static final int BATCH_SELECT_SIZE = 5000;
 
     private static final String INSERT_COVERAGE = "INSERT INTO coverage " +
-            "(bene_coverage_period_id, bene_coverage_search_event_id, beneficiary_id) VALUES(?,?,?)";
+            "(bene_coverage_period_id, bene_coverage_search_event_id, beneficiary_id, mbi) VALUES(?,?,?,?)";
 
     private static final String SELECT_BENEFICIARIES_BATCH = "SELECT DISTINCT cov.beneficiary_id FROM coverage cov " +
             " WHERE cov.bene_coverage_period_id IN (:ids) " +
@@ -37,9 +38,9 @@ public class CoverageServiceRepository {
             " OFFSET :offset " +
             " LIMIT :limit";
 
-    private static final String SELECT_COVERAGE_INFORMATION = "SELECT cov.beneficiary_id, period.year, period.month " +
+    private static final String SELECT_COVERAGE_INFORMATION = "SELECT cov.beneficiary_id, cov.mbi, period.year, period.month " +
             " FROM bene_coverage_period period INNER JOIN " +
-            "       (SELECT cov.beneficiary_id, cov.bene_coverage_period_id " +
+            "       (SELECT cov.beneficiary_id, cov.mbi, cov.bene_coverage_period_id " +
             "        FROM coverage cov" +
             "        WHERE cov.bene_coverage_period_id IN (:coveragePeriods) " +
             "           AND cov.beneficiary_id IN (:beneficiaryIds) " +
@@ -62,7 +63,7 @@ public class CoverageServiceRepository {
      * @param searchEvent the search event to add coverage in relation to
      * @param beneIds Collection of beneficiary ids to be added as a batch
      */
-    public void insertBatches(CoverageSearchEvent searchEvent, Iterable<String> beneIds) {
+    public void insertBatches(CoverageSearchEvent searchEvent, Iterable<Identifiers> beneIds) {
 
 
 
@@ -71,11 +72,12 @@ public class CoverageServiceRepository {
             int processingCount = 0;
 
             // Prepare a batch of beneficiary ids to be inserted
-            for (String beneficiaryId : beneIds) {
+            for (Identifiers beneficiary : beneIds) {
                 processingCount++;
                 statement.setInt(1, searchEvent.getCoveragePeriod().getId());
                 statement.setLong(2, searchEvent.getId());
-                statement.setString(3, beneficiaryId);
+                statement.setString(3, beneficiary.getBeneficiaryId());
+                statement.setString(4, beneficiary.getMbi());
 
                 statement.addBatch();
 
@@ -196,7 +198,7 @@ public class CoverageServiceRepository {
                 (results, rowNum) -> results.getString(1));
     }
 
-    private List<CoverageMembership> findCoverageInformation(List<Integer> coveragePeriodIds, List<String> beneficiaryIds) {
+    public List<CoverageMembership> findCoverageInformation(List<Integer> coveragePeriodIds, List<String> beneficiaryIds) {
 
         SqlParameterSource parameters = new MapSqlParameterSource()
                 .addValue("coveragePeriods", coveragePeriodIds)
@@ -207,8 +209,9 @@ public class CoverageServiceRepository {
         return template.query(SELECT_COVERAGE_INFORMATION, parameters,
                 (rs, rowNum) -> new CoverageMembership(
                         rs.getString(1),
-                        rs.getInt(2),
-                        rs.getInt(3)
+                        rs.getString(2),
+                        rs.getInt(3),
+                        rs.getInt(4)
                 ));
     }
 
@@ -219,12 +222,15 @@ public class CoverageServiceRepository {
                                                         Map.Entry<String, List<CoverageMembership>> membershipInfo) {
 
         String beneficiaryId = membershipInfo.getKey();
+
         List<CoverageMembership> membershipMonths = membershipInfo.getValue();
+        String mbi = membershipInfo.getValue().get(0).getMbiId();
 
         if (membershipMonths.size() == 1) {
             LocalDate start = fromRawResults(membershipMonths.get(0));
             FilterOutByDate.DateRange range = asDateRange(start, start);
-            return new CoverageSummary(beneficiaryId, contract, Collections.singletonList(range));
+            return new CoverageSummary(beneficiaryId, mbi,
+                    contract, Collections.singletonList(range));
         }
 
         List<FilterOutByDate.DateRange> dateRanges = new ArrayList<>();
@@ -250,7 +256,7 @@ public class CoverageServiceRepository {
             dateRanges.add(asDateRange(begin, last));
         }
 
-        return new CoverageSummary(beneficiaryId, contract, dateRanges);
+        return new CoverageSummary(beneficiaryId, mbi, contract, dateRanges);
 
     }
 

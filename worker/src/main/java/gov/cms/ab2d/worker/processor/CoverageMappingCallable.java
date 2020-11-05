@@ -2,13 +2,14 @@ package gov.cms.ab2d.worker.processor;
 
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.model.CoverageMapping;
+import gov.cms.ab2d.common.model.Identifiers;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.hl7.fhir.dstu3.model.*;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -18,7 +19,10 @@ import static java.util.stream.Collectors.toSet;
 
 @Slf4j
 public class CoverageMappingCallable implements Callable<CoverageMapping> {
+
     static final String BENEFICIARY_ID = "https://bluebutton.cms.gov/resources/variables/bene_id";
+    public static final String MBI_ID = "http://hl7.org/fhir/sid/us-mbi";
+
 
     private final CoverageMapping coverageMapping;
     private final BFDClient bfdClient;
@@ -51,7 +55,7 @@ public class CoverageMappingCallable implements Callable<CoverageMapping> {
         int month = coverageMapping.getPeriod().getMonth();
         String contractNumber = coverageMapping.getContract().getContractNumber();
 
-        final Set<String> patientIds = new HashSet<>();
+        final Set<Identifiers> patientIds = new HashSet<>();
         try {
 
             Bundle bundle = getBundle(contractNumber, month);
@@ -81,11 +85,10 @@ public class CoverageMappingCallable implements Callable<CoverageMapping> {
 
     }
 
-    private Set<String> extractAndFilter(Bundle bundle) {
+    private Set<Identifiers> extractAndFilter(Bundle bundle) {
         return getPatientStream(bundle)
                 .filter(patient -> skipBillablePeriodCheck || filterByYear(patient))
                 .map(this::extractPatientId)
-                .filter(this::isValidIdentifier)
                 .collect(toSet());
     }
 
@@ -113,33 +116,46 @@ public class CoverageMappingCallable implements Callable<CoverageMapping> {
         return true;
     }
 
-    private boolean isValidIdentifier(String id) {
-        boolean blankId = StringUtils.isBlank(id);
-
-        // If blank increment count to log issues
-        if (blankId) {
-            missingIdentifier++;
-        }
-
-        return !blankId;
-    }
-
     /**
      * Given a patient, extract the patientId
      *
      * @param patient - the patient id
      * @return patientId if present, null otherwise
      */
-    private String extractPatientId(Patient patient) {
-        return patient.getIdentifier().stream()
+    private Identifiers extractPatientId(Patient patient) {
+        List<Identifier> identifiers = patient.getIdentifier();
+
+        Optional<String> beneId =  identifiers.stream()
                 .filter(this::isBeneficiaryId)
                 .map(Identifier::getValue)
-                .findFirst()
-                .orElse(null);
+                .findFirst();
+
+        Optional<String> mbiId = identifiers.stream()
+                .filter(this::isMbiId)
+                .map(Identifier::getValue)
+                .findFirst();
+
+        if (beneId.isEmpty()) {
+            log.warn("missing a beneficiary id on a patient so patient will not be searched");
+            missingIdentifier += 1;
+            return null;
+        }
+
+        if (mbiId.isEmpty()) {
+            log.warn("missing an mbi id on a patient so patient will not be searched");
+            missingIdentifier += 1;
+            return null;
+        }
+
+        return new Identifiers(beneId.get(), mbiId.get());
     }
 
     private boolean isBeneficiaryId(Identifier identifier) {
         return identifier.getSystem().equalsIgnoreCase(BENEFICIARY_ID);
+    }
+
+    private boolean isMbiId(Identifier identifier) {
+        return identifier.getSystem().equalsIgnoreCase(MBI_ID);
     }
 
     /**

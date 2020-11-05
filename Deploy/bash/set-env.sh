@@ -19,17 +19,17 @@ INVOKED_COMMAND="$(printf %q "$BASH_SOURCE")$((($#)) && printf ' %q' "$@")"
 # Ensure script is sourced
 #
 
-if [ "$0" != "-bash" ]; then
-  echo ""
-  echo "*********************************************"
-  echo "ERROR: This script must be run using 'source'"
-  echo "---------------------------------------------"
-  echo "EXPECTED FORMAT:"
-  echo "source ${INVOKED_COMMAND}"
-  echo "*********************************************"
-  echo ""
-  exit 1
-fi
+#if [ "$0" != "-bash" ]; then
+#  echo ""
+#  echo "*********************************************"
+#  echo "ERROR: This script must be run using 'source'"
+#  echo "---------------------------------------------"
+#  echo "EXPECTED FORMAT:"
+#  echo "source ${INVOKED_COMMAND}"
+#  echo "*********************************************"
+#  echo ""
+#  exit 1
+#fi
 
 #
 # Define functions

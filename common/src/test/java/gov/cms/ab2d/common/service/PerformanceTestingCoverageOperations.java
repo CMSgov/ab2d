@@ -145,7 +145,7 @@ class PerformanceTestingCoverageOperations {
     @Test
     void insertPerformanceUsingConnection() {
         // Raise number of datapoints to stress database
-        InsertionJob job = new InsertionJob(period1, dataSource, coverageService, coverageSearchEventRepo,
+        InsertionJob job = new InsertionJob(period1, dataSource, coverageService,
                 1_000_000, 5, coverageSearchRepository);
         job.call();
     }
@@ -260,13 +260,13 @@ class PerformanceTestingCoverageOperations {
     void deletePreviousSearch() {
 
         InsertionJob first = new InsertionJob(period1, dataSource, coverageService,
-                coverageSearchEventRepo, 100_000, 1, coverageSearchRepository);
+                100_000, 1, coverageSearchRepository);
         CoverageSearchEvent inProgress1 = first.call();
 
         coverageService.completeSearch(period1.getId(), "testing");
 
         InsertionJob second = new InsertionJob(period1, dataSource, coverageService,
-                coverageSearchEventRepo, 100_000, 1, coverageSearchRepository);
+                100_000, 1, coverageSearchRepository);
         CoverageSearchEvent inProgress2 = second.call();
 
         coverageService.completeSearch(period1.getId(), "testing");
@@ -297,7 +297,7 @@ class PerformanceTestingCoverageOperations {
             List<Future> insertions = new ArrayList<>();
 
             for (CoveragePeriod period : periods) {
-                InsertionJob job = new InsertionJob(period, dataSource, coverageService, coverageSearchEventRepo,
+                InsertionJob job = new InsertionJob(period, dataSource, coverageService,
                         dataPoints, 1, coverageSearchRepository);
                 insertions.add(executor.submit(job));
             }

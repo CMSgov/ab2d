@@ -1,5 +1,6 @@
 package gov.cms.ab2d.worker.processor.domainmodel;
 
+import gov.cms.ab2d.common.model.Identifiers;
 import lombok.*;
 
 import java.util.Set;

@@ -6,6 +6,7 @@ import gov.cms.ab2d.common.model.CoverageSearchDiff;
 import gov.cms.ab2d.common.model.CoverageSearchEvent;
 import gov.cms.ab2d.common.model.CoverageSearch;
 import gov.cms.ab2d.common.model.CoverageSummary;
+import gov.cms.ab2d.common.model.Identifiers;
 import gov.cms.ab2d.common.model.JobStatus;
 
 import java.time.OffsetDateTime;
@@ -57,7 +58,7 @@ public interface CoverageService {
      * @param beneficiaryIds list of beneficiaries for this coverage period and this specific search event
      * @return relevant
      */
-    CoverageSearchEvent insertCoverage(long searchEventId, Set<String> beneficiaryIds);
+    CoverageSearchEvent insertCoverage(long searchEventId, Set<Identifiers> beneficiaryIds);
 
     /**
      * Delete all data from previous coverage search conducted for a given {@link CoveragePeriod}.

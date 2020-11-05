@@ -179,7 +179,7 @@ class CoverageMappingCallableTest {
         Bundle bundle1 = new Bundle();
         for (int i = startIndex; i < endIndex; i++) {
             Bundle.BundleEntryComponent component = new Bundle.BundleEntryComponent();
-            Patient patient = createPatient("test-" + i, year);
+            Patient patient = createPatient("test-" + i, "mbi-" + i, year);
             component.setResource(patient);
             bundle1.addEntry(component);
         }

@@ -15,6 +15,7 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import javax.xml.crypto.Data;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -68,11 +69,11 @@ class CacheServiceImplTest {
         CoveragePeriod coveragePeriod = dataSetup.createCoveragePeriod(contract, january, YEAR);
         CoverageSearchEvent coverageSearchEvent = dataSetup.createCoverageSearchEvent(coveragePeriod, "testing");
 
-        dataSetup.createCoverage(coveragePeriod, coverageSearchEvent, DataSetup.createBeneId());
-        dataSetup.createCoverage(coveragePeriod, coverageSearchEvent, DataSetup.createBeneId());
-        dataSetup.createCoverage(coveragePeriod, coverageSearchEvent, DataSetup.createBeneId());
-        dataSetup.createCoverage(coveragePeriod, coverageSearchEvent, DataSetup.createBeneId());
-        dataSetup.createCoverage(coveragePeriod, coverageSearchEvent, DataSetup.createBeneId());
+        dataSetup.createCoverage(coveragePeriod, coverageSearchEvent, DataSetup.createBeneId(), DataSetup.createMbiId());
+        dataSetup.createCoverage(coveragePeriod, coverageSearchEvent, DataSetup.createBeneId(), DataSetup.createMbiId());
+        dataSetup.createCoverage(coveragePeriod, coverageSearchEvent, DataSetup.createBeneId(), DataSetup.createMbiId());
+        dataSetup.createCoverage(coveragePeriod, coverageSearchEvent, DataSetup.createBeneId(), DataSetup.createMbiId());
+        dataSetup.createCoverage(coveragePeriod, coverageSearchEvent, DataSetup.createBeneId(), DataSetup.createMbiId());
     }
 
     @AfterEach
@@ -146,10 +147,10 @@ class CacheServiceImplTest {
         CoveragePeriod mayCoverage = dataSetup.createCoveragePeriod(contract, may, YEAR);
         CoverageSearchEvent mayEvent = dataSetup.createCoverageSearchEvent(mayCoverage, "testing");
 
-        dataSetup.createCoverage(febCoverage, febEvent, DataSetup.createBeneId());
-        dataSetup.createCoverage(marchCoverage, marchEvent, DataSetup.createBeneId());
-        dataSetup.createCoverage(aprilCoverage, aprilEvent, DataSetup.createBeneId());
-        dataSetup.createCoverage(mayCoverage, mayEvent, DataSetup.createBeneId());
+        dataSetup.createCoverage(febCoverage, febEvent, DataSetup.createBeneId(), DataSetup.createMbiId());
+        dataSetup.createCoverage(marchCoverage, marchEvent, DataSetup.createBeneId(), DataSetup.createMbiId());
+        dataSetup.createCoverage(aprilCoverage, aprilEvent, DataSetup.createBeneId(), DataSetup.createMbiId());
+        dataSetup.createCoverage(mayCoverage, mayEvent, DataSetup.createBeneId(), DataSetup.createMbiId());
 
         assertThat(getAllActivePatientIds().size(), is(9));
 
@@ -224,10 +225,10 @@ class CacheServiceImplTest {
         CoveragePeriod mayCoverage = dataSetup.createCoveragePeriod(contract, may, YEAR);
         CoverageSearchEvent mayEvent = dataSetup.createCoverageSearchEvent(mayCoverage, "testing");
 
-        dataSetup.createCoverage(febCoverage, febEvent, DataSetup.createBeneId());
-        dataSetup.createCoverage(marchCoverage, marchEvent, DataSetup.createBeneId());
-        dataSetup.createCoverage(aprilCoverage, aprilEvent, DataSetup.createBeneId());
-        dataSetup.createCoverage(mayCoverage, mayEvent, DataSetup.createBeneId());
+        dataSetup.createCoverage(febCoverage, febEvent, DataSetup.createBeneId(), DataSetup.createMbiId());
+        dataSetup.createCoverage(marchCoverage, marchEvent, DataSetup.createBeneId(), DataSetup.createMbiId());
+        dataSetup.createCoverage(aprilCoverage, aprilEvent, DataSetup.createBeneId(), DataSetup.createMbiId());
+        dataSetup.createCoverage(mayCoverage, mayEvent, DataSetup.createBeneId(), DataSetup.createMbiId());
 
         //given multiple contracts for a specific month
         createContractAndCoverage(january, YEAR);
@@ -243,10 +244,10 @@ class CacheServiceImplTest {
         final CoveragePeriod coveragePeriod = dataSetup.createCoveragePeriod(contract, month, year);
         final CoverageSearchEvent coverageSearchEvent = dataSetup.createCoverageSearchEvent(coveragePeriod, "testing");
 
-        dataSetup.createCoverage(coveragePeriod, coverageSearchEvent, DataSetup.createBeneId());
-        dataSetup.createCoverage(coveragePeriod, coverageSearchEvent, DataSetup.createBeneId());
-        dataSetup.createCoverage(coveragePeriod, coverageSearchEvent, DataSetup.createBeneId());
-        dataSetup.createCoverage(coveragePeriod, coverageSearchEvent, DataSetup.createBeneId());
-        dataSetup.createCoverage(coveragePeriod, coverageSearchEvent, DataSetup.createBeneId());
+        dataSetup.createCoverage(coveragePeriod, coverageSearchEvent, DataSetup.createBeneId(), DataSetup.createMbiId());
+        dataSetup.createCoverage(coveragePeriod, coverageSearchEvent, DataSetup.createBeneId(), DataSetup.createMbiId());
+        dataSetup.createCoverage(coveragePeriod, coverageSearchEvent, DataSetup.createBeneId(), DataSetup.createMbiId());
+        dataSetup.createCoverage(coveragePeriod, coverageSearchEvent, DataSetup.createBeneId(), DataSetup.createMbiId());
+        dataSetup.createCoverage(coveragePeriod, coverageSearchEvent, DataSetup.createBeneId(), DataSetup.createMbiId());
     }
 }

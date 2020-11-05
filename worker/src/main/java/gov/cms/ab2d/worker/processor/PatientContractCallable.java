@@ -2,8 +2,8 @@ package gov.cms.ab2d.worker.processor;
 
 import ca.uhn.fhir.rest.server.exceptions.InternalErrorException;
 import gov.cms.ab2d.bfd.client.BFDClient;
+import gov.cms.ab2d.common.model.Identifiers;
 import gov.cms.ab2d.worker.processor.domainmodel.ContractMapping;
-import gov.cms.ab2d.worker.processor.domainmodel.Identifiers;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
