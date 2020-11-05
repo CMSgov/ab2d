@@ -55,11 +55,11 @@ class MultiThreadContractProcessTest {
     @Test
     void testMultipleContract() throws ExecutionException, InterruptedException {
         String contractNo = "0001";
-        Bundle.BundleEntryComponent entry1 = BundleUtils.createBundleEntry("P1", YEAR);
-        Bundle.BundleEntryComponent entry2 = BundleUtils.createBundleEntry("P2", YEAR);
-        Bundle.BundleEntryComponent entry3 = BundleUtils.createBundleEntry("P3", YEAR);
-        Bundle.BundleEntryComponent entry4 = BundleUtils.createBundleEntry("P4", YEAR);
-        Bundle.BundleEntryComponent entry5 = BundleUtils.createBundleEntry("P5", YEAR);
+        Bundle.BundleEntryComponent entry1 = BundleUtils.createBundleEntry("P1", "mbi1", YEAR);
+        Bundle.BundleEntryComponent entry2 = BundleUtils.createBundleEntry("P2", "mbi2", YEAR);
+        Bundle.BundleEntryComponent entry3 = BundleUtils.createBundleEntry("P3", "mbi3", YEAR);
+        Bundle.BundleEntryComponent entry4 = BundleUtils.createBundleEntry("P4", "mbi4", YEAR);
+        Bundle.BundleEntryComponent entry5 = BundleUtils.createBundleEntry("P5", "mbi5", YEAR);
 
         Bundle bundleA = BundleUtils.createBundle(entry1, entry2, entry3);
         Bundle bundleB = BundleUtils.createBundle(entry2, entry3, entry4);

@@ -10,6 +10,7 @@ import gov.cms.ab2d.common.util.FilterOutByDate.DateRange;
 import gov.cms.ab2d.worker.adapter.bluebutton.ContractBeneficiaries.PatientDTO;
 import gov.cms.ab2d.worker.processor.PatientContractCallable;
 import gov.cms.ab2d.worker.processor.domainmodel.ContractMapping;
+import gov.cms.ab2d.worker.processor.domainmodel.Identifiers;
 import gov.cms.ab2d.worker.processor.domainmodel.ProgressTracker;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -85,11 +86,11 @@ public class ContractBeneSearchImpl implements ContractBeneSearch {
         patientSegment.setMetricName("DateRangePatients");
 
         for (ContractMapping mapping : results) {
-            Set<String> patients = mapping.getPatients();
+            Set<Identifiers> patients = mapping.getPatients();
             if (patients != null && !patients.isEmpty()) {
                 DateRange monthDateRange = toDateRange(mapping.getMonth());
-                for (String bfdPatientId : patients) {
-                    addDateRangeToExistingOrNewPatient(contractBeneficiaries, monthDateRange, bfdPatientId);
+                for (Identifiers patient : patients) {
+                    addDateRangeToExistingOrNewPatient(contractBeneficiaries, monthDateRange, patient);
                 }
             }
         }
@@ -165,10 +166,15 @@ public class ContractBeneSearchImpl implements ContractBeneSearch {
     }
 
     private void addDateRangeToExistingOrNewPatient(ContractBeneficiaries beneficiaries,
-                                                    DateRange monthDateRange, String bfdPatientId) {
+                                                    DateRange monthDateRange, Identifiers patient) {
+
         if (beneficiaries == null) {
             return;
         }
+
+        String bfdPatientId = patient.getBeneficiaryId();
+        String mbiId = patient.getMbi();
+
         Map<String, PatientDTO> patientDTOMap = beneficiaries.getPatients();
         PatientDTO patientDTO = patientDTOMap.get(bfdPatientId);
 
@@ -185,12 +191,14 @@ public class ContractBeneSearchImpl implements ContractBeneSearch {
 
             patientDTO = PatientDTO.builder()
                     .patientId(bfdPatientId)
+                    .mbiId(mbiId)
                     .dateRangesUnderContract(new ArrayList<>())
                     .build();
 
             if (monthDateRange != null) {
                 patientDTO.getDateRangesUnderContract().add(monthDateRange);
             }
+
             beneficiaries.getPatients().put(bfdPatientId, patientDTO);
         }
     }
