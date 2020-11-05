@@ -16,11 +16,11 @@ cd "${START_DIR}"
 
 echo "Check vars are not empty before proceeding..."
 if [ -z "${DATABASE_SECRET_DATETIME_PARAM}" ] \
-    || [ -z {CMS_DEV_ENV_AWS_ACCOUNT_NUMBER} ] \
-    || [ -z {CMS_SBX_ENV_AWS_ACCOUNT_NUMBER} ] \
-    || [ -z {CMS_IMPL_ENV_AWS_ACCOUNT_NUMBER} ] \
-    || [ -z {CMS_PROD_ENV_AWS_ACCOUNT_NUMBER} ] \
-    || [ -z {CMS_MGMT_ENV_AWS_ACCOUNT_NUMBER} ]; then
+    || [ -z "${CMS_DEV_ENV_AWS_ACCOUNT_NUMBER}" ] \
+    || [ -z "${CMS_SBX_ENV_AWS_ACCOUNT_NUMBER}" ] \
+    || [ -z "${CMS_IMPL_ENV_AWS_ACCOUNT_NUMBER}" ] \
+    || [ -z "${CMS_PROD_ENV_AWS_ACCOUNT_NUMBER}" ] \
+    || [ -z "${CMS_MGMT_ENV_AWS_ACCOUNT_NUMBER}" ]; then
   echo "ERROR: All parameters must be set."
   exit 1
 fi
