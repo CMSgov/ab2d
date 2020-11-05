@@ -1,5 +1,6 @@
 package gov.cms.ab2d.worker.processor;
 
+import ca.uhn.fhir.rest.server.exceptions.InternalErrorException;
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.worker.processor.domainmodel.ContractMapping;
 import gov.cms.ab2d.worker.processor.domainmodel.Identifiers;
@@ -17,6 +18,7 @@ import static java.util.stream.Collectors.toSet;
 public class PatientContractCallable implements Callable<ContractMapping> {
     private static final String BENEFICIARY_ID = "https://bluebutton.cms.gov/resources/variables/bene_id";
     public static final String MBI_ID = "http://hl7.org/fhir/sid/us-mbi";
+    private static final String EXTRA_PAGE_EXCEPTION_MESSAGE = "could not extract ResultSet";
 
     private final int month;
     private final int year;
@@ -46,9 +48,21 @@ public class PatientContractCallable implements Callable<ContractMapping> {
             Bundle bundle = getBundle(contractNumber, month);
             patientIds.addAll(extractAndFilter(bundle));
 
-            while (bundle.getLink(Bundle.LINK_NEXT) != null) {
-                bundle = bfdClient.requestNextBundleFromServer(bundle);
-                patientIds.addAll(extractAndFilter(bundle));
+            try {
+                while (bundle.getLink(Bundle.LINK_NEXT) != null) {
+                    bundle = bfdClient.requestNextBundleFromServer(bundle);
+                    patientIds.addAll(extractAndFilter(bundle));
+                }
+            } catch (InternalErrorException ie) {
+                // Catch edge case bug where (number patients) mod (bundle size) == 0
+                // Extra bundle link returned that has no data in it which causes exception
+                // when attempting to retrieve
+                if (!ie.getMessage().contains(EXTRA_PAGE_EXCEPTION_MESSAGE)) {
+                    log.warn("exception caught not caused by pulling extra page, will be re-thrown");
+                    throw ie;
+                }
+
+                log.warn("exception caught caused by extra page included as NEXT bundle, ignoring exception", ie);
             }
 
             mapping.setPatients(patientIds);
@@ -56,7 +70,7 @@ public class PatientContractCallable implements Callable<ContractMapping> {
             log.debug("finished reading [{}] Set<String>resources", patientIds.size());
             return mapping;
         } catch (Exception e) {
-            log.error("Unable to get patient information for " + contractNumber + " for month " + month, e);
+            log.error("unable to get patient information for " + contractNumber + " for month " + month, e);
             throw e;
         } finally {
             int total = patientIds.size() + pastYear + missingBeneId;
