@@ -11,9 +11,6 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import java.util.Comparator;
-import java.util.stream.Stream;
-
 import static gov.cms.ab2d.worker.processor.BundleUtils.createPatient;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
@@ -127,7 +124,7 @@ class PatientContractCallableTest {
 
             assertEquals(10, mapping.getPatients().size());
 
-            int missingIdentifier = (int) ReflectionTestUtils.getField(patientContractCallable, "missingIdentifier");
+            int missingIdentifier = (int) ReflectionTestUtils.getField(patientContractCallable, "missingBeneId");
 
             assertEquals(10, missingIdentifier);
         } catch (Exception exception) {

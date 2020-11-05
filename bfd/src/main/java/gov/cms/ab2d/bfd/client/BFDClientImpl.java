@@ -212,6 +212,7 @@ public class BFDClientImpl implements BFDClient {
         return client
                 .loadPage()
                 .next(bundle)
+                .withAdditionalHeader("IncludeIdentifiers", "mbi")
                 .encodedJson()
                 .execute();
     }
