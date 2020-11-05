@@ -1,10 +1,9 @@
 package gov.cms.ab2d.worker.processor;
 
+import ca.uhn.fhir.rest.server.exceptions.InternalErrorException;
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.model.*;
-import gov.cms.ab2d.worker.processor.domainmodel.ContractMapping;
 import org.hl7.fhir.dstu3.model.Bundle;
-import org.hl7.fhir.dstu3.model.Identifier;
 import org.hl7.fhir.dstu3.model.Patient;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -15,7 +14,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import java.util.Collections;
 
 import static gov.cms.ab2d.worker.processor.BundleUtils.createPatient;
-import static gov.cms.ab2d.worker.processor.CoverageMappingCallable.BENEFICIARY_ID;
+import static gov.cms.ab2d.worker.processor.CoverageMappingCallable.EXTRA_PAGE_EXCEPTION_MESSAGE;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static org.junit.jupiter.api.Assertions.*;
@@ -89,14 +88,28 @@ class CoverageMappingCallableTest {
         contract.setContractNumber("TESTING");
         contract.setContractName("TESTING");
 
-        PatientContractCallable patientContractCallable = new PatientContractCallable("TESTING", 1, 2020, bfdClient, false);
+        CoveragePeriod period = new CoveragePeriod();
+        period.setContract(contract);
+        period.setYear(2020);
+        period.setMonth(1);
+
+        CoverageSearchEvent cse = new CoverageSearchEvent();
+        cse.setCoveragePeriod(period);
+
+        CoverageSearch search = new CoverageSearch();
+        search.setPeriod(period);
+
+        CoverageMapping mapping = new CoverageMapping(cse, search);
+
+        CoverageMappingCallable coverageCallable =
+                new CoverageMappingCallable(mapping, bfdClient, false);
 
         try {
-            ContractMapping mapping = patientContractCallable.call();
+            mapping = coverageCallable.call();
 
-            assertEquals(10, mapping.getPatients().size());
+            assertEquals(10, mapping.getBeneficiaryIds().size());
 
-            int pastYear = (int) ReflectionTestUtils.getField(patientContractCallable, "pastYear");
+            int pastYear = (int) ReflectionTestUtils.getField(coverageCallable, "pastYear");
 
             assertEquals(10, pastYear);
         } catch (Exception exception) {
@@ -125,18 +138,77 @@ class CoverageMappingCallableTest {
         contract.setContractNumber("TESTING");
         contract.setContractName("TESTING");
 
-        PatientContractCallable patientContractCallable = new PatientContractCallable("TESTING", 1, 2020, bfdClient, false);
+        CoveragePeriod period = new CoveragePeriod();
+        period.setContract(contract);
+        period.setYear(2020);
+        period.setMonth(1);
+
+        CoverageSearchEvent cse = new CoverageSearchEvent();
+        cse.setCoveragePeriod(period);
+
+        CoverageSearch search = new CoverageSearch();
+        search.setPeriod(period);
+
+        CoverageMapping mapping = new CoverageMapping(cse, search);
+
+        CoverageMappingCallable coverageCallable =
+                new CoverageMappingCallable(mapping, bfdClient, false);
 
         try {
-            ContractMapping mapping = patientContractCallable.call();
+            mapping = coverageCallable.call();
 
-            assertEquals(10, mapping.getPatients().size());
+            assertEquals(10, mapping.getBeneficiaryIds().size());
 
-            int missingIdentifier = (int) ReflectionTestUtils.getField(patientContractCallable, "missingIdentifier");
+            int missingIdentifier = (int) ReflectionTestUtils.getField(coverageCallable, "missingBeneId");
 
             assertEquals(10, missingIdentifier);
         } catch (Exception exception) {
             fail("could not execute basic job with mock client", exception);
+        }
+
+    }
+
+    /**
+     * Protects against an issue with BFD api where an edge case can cause
+     */
+    @DisplayName("Ignore InternalErrorException and exit loop if exception message matches expected value")
+    @Test
+    void internalErrorException() {
+
+
+        Bundle bundle1 = buildBundle(0, 10, 2020);
+        bundle1.setLink(singletonList(new Bundle.BundleLinkComponent().setRelation(Bundle.LINK_NEXT)));
+
+        when(bfdClient.requestPartDEnrolleesFromServer(anyString(), anyInt())).thenReturn(bundle1);
+
+        when(bfdClient.requestNextBundleFromServer(any(Bundle.class)))
+                .thenThrow(new InternalErrorException(EXTRA_PAGE_EXCEPTION_MESSAGE));
+
+        Contract contract = new Contract();
+        contract.setContractNumber("TESTING");
+        contract.setContractName("TESTING");
+
+        CoveragePeriod period = new CoveragePeriod();
+        period.setContract(contract);
+        period.setYear(2020);
+        period.setMonth(1);
+
+        CoverageSearchEvent cse = new CoverageSearchEvent();
+        cse.setCoveragePeriod(period);
+
+        CoverageSearch search = new CoverageSearch();
+        search.setPeriod(period);
+
+        CoverageMapping mapping = new CoverageMapping(cse, search);
+
+        CoverageMappingCallable coverageCallabe =
+                new CoverageMappingCallable(mapping, bfdClient, false);
+
+        try {
+            mapping = coverageCallabe.call();
+            assertEquals(10, mapping.getBeneficiaryIds().size());
+        } catch (Exception e) {
+            fail("InternalErrorException expected and should be caught");
         }
 
     }

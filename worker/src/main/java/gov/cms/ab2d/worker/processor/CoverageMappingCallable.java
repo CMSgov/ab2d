@@ -1,5 +1,6 @@
 package gov.cms.ab2d.worker.processor;
 
+import ca.uhn.fhir.rest.server.exceptions.InternalErrorException;
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.model.CoverageMapping;
 import gov.cms.ab2d.common.model.Identifiers;
@@ -7,10 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.hl7.fhir.dstu3.model.*;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Stream;
@@ -22,7 +20,7 @@ public class CoverageMappingCallable implements Callable<CoverageMapping> {
 
     static final String BENEFICIARY_ID = "https://bluebutton.cms.gov/resources/variables/bene_id";
     public static final String MBI_ID = "http://hl7.org/fhir/sid/us-mbi";
-
+    static final String EXTRA_PAGE_EXCEPTION_MESSAGE = "could not extract ResultSet";
 
     private final CoverageMapping coverageMapping;
     private final BFDClient bfdClient;
@@ -30,7 +28,8 @@ public class CoverageMappingCallable implements Callable<CoverageMapping> {
     private final int year;
     private final boolean skipBillablePeriodCheck;
 
-    private int missingIdentifier;
+    private int missingBeneId;
+    private int missingMbi;
     private int pastYear;
 
     public CoverageMappingCallable(CoverageMapping coverageMapping, BFDClient bfdClient, boolean skipBillablePeriodCheck) {
@@ -61,9 +60,21 @@ public class CoverageMappingCallable implements Callable<CoverageMapping> {
             Bundle bundle = getBundle(contractNumber, month);
             patientIds.addAll(extractAndFilter(bundle));
 
-            while (bundle.getLink(Bundle.LINK_NEXT) != null) {
-                bundle = bfdClient.requestNextBundleFromServer(bundle);
-                patientIds.addAll(extractAndFilter(bundle));
+            try {
+                while (bundle.getLink(Bundle.LINK_NEXT) != null) {
+                    bundle = bfdClient.requestNextBundleFromServer(bundle);
+                    patientIds.addAll(extractAndFilter(bundle));
+                }
+            } catch (InternalErrorException ie) {
+                // Catch edge case bug where (number patients) mod (bundle size) == 0
+                // Extra bundle link returned that has no data in it which causes exception
+                // when attempting to retrieve
+                if (!ie.getMessage().contains(EXTRA_PAGE_EXCEPTION_MESSAGE)) {
+                    log.warn("exception caught not caused by pulling extra page, will be re-thrown");
+                    throw ie;
+                }
+
+                log.warn("exception caught caused by extra page included as NEXT bundle, ignoring exception", ie);
             }
 
             coverageMapping.addBeneficiaries(patientIds);
@@ -76,9 +87,10 @@ public class CoverageMappingCallable implements Callable<CoverageMapping> {
             coverageMapping.failed();
             throw e;
         } finally {
-            int total = patientIds.size() + pastYear + missingIdentifier;
+            int total = patientIds.size() + pastYear + missingBeneId;
             log.info("Search discarded {} entries not meeting year filter criteria out of {}", pastYear, total);
-            log.info("Search discarded {} entries missing an identifier out of {}", missingIdentifier, total);
+            log.info("Search discarded {} entries missing a beneficiary identifier out of {}", missingBeneId, total);
+            log.info("Search found {} entries missing an mbi out of {}", missingMbi, total);
 
             completed.set(true);
         }
@@ -89,6 +101,7 @@ public class CoverageMappingCallable implements Callable<CoverageMapping> {
         return getPatientStream(bundle)
                 .filter(patient -> skipBillablePeriodCheck || filterByYear(patient))
                 .map(this::extractPatientId)
+                .filter(Objects::nonNull)
                 .collect(toSet());
     }
 
@@ -136,18 +149,15 @@ public class CoverageMappingCallable implements Callable<CoverageMapping> {
                 .findFirst();
 
         if (beneId.isEmpty()) {
-            log.warn("missing a beneficiary id on a patient so patient will not be searched");
-            missingIdentifier += 1;
+            missingBeneId += 1;
             return null;
         }
 
         if (mbiId.isEmpty()) {
-            log.warn("missing an mbi id on a patient so patient will not be searched");
-            missingIdentifier += 1;
-            return null;
+            missingMbi += 1;
         }
 
-        return new Identifiers(beneId.get(), mbiId.get());
+        return new Identifiers(beneId.get(), mbiId.orElse(null));
     }
 
     private boolean isBeneficiaryId(Identifier identifier) {
