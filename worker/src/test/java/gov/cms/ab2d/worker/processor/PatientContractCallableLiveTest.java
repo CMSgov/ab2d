@@ -28,9 +28,12 @@ import static org.junit.jupiter.api.Assertions.*;
  * DB_PASSWORD=ab2d
  * AB2D_BFD_KEYSTORE_LOCATION (machine dependent)
  * AB2D_BFD_KEYSTORE_PASSWORD
+ *
+ * Change the bundle size to test for edge cases in the BFD api related
+ * to the last bundle.
  */
 @Disabled
-@SpringBootTest
+@SpringBootTest(properties = {"bfd.contract.to.bene.pagesize=500"})
 class PatientContractCallableLiveTest {
 
     @Autowired

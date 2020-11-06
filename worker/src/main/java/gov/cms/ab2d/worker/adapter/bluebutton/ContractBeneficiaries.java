@@ -28,6 +28,7 @@ public class ContractBeneficiaries {
     @AllArgsConstructor
     public static class PatientDTO {
         private String patientId;
+        private String mbiId;
 
         @Builder.Default
         private List<DateRange> dateRangesUnderContract = new ArrayList<>();

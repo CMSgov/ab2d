@@ -1,15 +1,14 @@
 package gov.cms.ab2d.worker.processor;
 
+import ca.uhn.fhir.rest.server.exceptions.InternalErrorException;
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.worker.processor.domainmodel.ContractMapping;
+import gov.cms.ab2d.worker.processor.domainmodel.Identifiers;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.hl7.fhir.dstu3.model.*;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.stream.Stream;
 
@@ -18,6 +17,8 @@ import static java.util.stream.Collectors.toSet;
 @Slf4j
 public class PatientContractCallable implements Callable<ContractMapping> {
     private static final String BENEFICIARY_ID = "https://bluebutton.cms.gov/resources/variables/bene_id";
+    public static final String MBI_ID = "http://hl7.org/fhir/sid/us-mbi";
+    private static final String EXTRA_PAGE_EXCEPTION_MESSAGE = "could not extract ResultSet";
 
     private final int month;
     private final int year;
@@ -25,7 +26,8 @@ public class PatientContractCallable implements Callable<ContractMapping> {
     private final String contractNumber;
     private final BFDClient bfdClient;
 
-    private int missingIdentifier;
+    private int missingBeneId;
+    private int missingMbi;
     private int pastYear;
 
     public PatientContractCallable(String contractNumber, int month, int year, BFDClient bfdClient, boolean skipBillablePeriodCheck) {
@@ -39,35 +41,50 @@ public class PatientContractCallable implements Callable<ContractMapping> {
     @Override
     public ContractMapping call() throws Exception {
 
-        final Set<String> patientIds = new HashSet<>();
+        final Set<Identifiers> patientIds = new HashSet<>();
         try {
             ContractMapping mapping = new ContractMapping();
             mapping.setMonth(month);
             Bundle bundle = getBundle(contractNumber, month);
             patientIds.addAll(extractAndFilter(bundle));
 
-            while (bundle.getLink(Bundle.LINK_NEXT) != null) {
-                bundle = bfdClient.requestNextBundleFromServer(bundle);
-                patientIds.addAll(extractAndFilter(bundle));
+            try {
+                while (bundle.getLink(Bundle.LINK_NEXT) != null) {
+                    bundle = bfdClient.requestNextBundleFromServer(bundle);
+                    patientIds.addAll(extractAndFilter(bundle));
+                }
+            } catch (InternalErrorException ie) {
+                // Catch edge case bug where (number patients) mod (bundle size) == 0
+                // Extra bundle link returned that has no data in it which causes exception
+                // when attempting to retrieve
+                if (!ie.getMessage().contains(EXTRA_PAGE_EXCEPTION_MESSAGE)) {
+                    log.warn("exception caught not caused by pulling extra page, will be re-thrown");
+                    throw ie;
+                }
+
+                log.warn("exception caught caused by extra page included as NEXT bundle, ignoring exception", ie);
             }
+
             mapping.setPatients(patientIds);
+
             log.debug("finished reading [{}] Set<String>resources", patientIds.size());
             return mapping;
         } catch (Exception e) {
-            log.error("Unable to get patient information for " + contractNumber + " for month " + month, e);
+            log.error("unable to get patient information for " + contractNumber + " for month " + month, e);
             throw e;
         } finally {
-            int total = patientIds.size() + pastYear + missingIdentifier;
+            int total = patientIds.size() + pastYear + missingBeneId;
             log.info("Search discarded {} entries not meeting year filter criteria out of {}", pastYear, total);
-            log.info("Search discarded {} entries missing an identifier out of {}", missingIdentifier, total);
+            log.info("Search discarded {} entries missing a beneficiary identifier out of {}", missingBeneId, total);
+            log.info("Search found {} entries missing an mbi out of {}", missingMbi, total);
         }
     }
 
-    private Set<String> extractAndFilter(Bundle bundle) {
+    private Set<Identifiers> extractAndFilter(Bundle bundle) {
         return getPatientStream(bundle)
                 .filter(patient -> skipBillablePeriodCheck || filterByYear(patient))
                 .map(this::extractPatientId)
-                .filter(this::isValidIdentifier)
+                .filter(Objects::nonNull)
                 .collect(toSet());
     }
 
@@ -95,33 +112,43 @@ public class PatientContractCallable implements Callable<ContractMapping> {
         return true;
     }
 
-    private boolean isValidIdentifier(String id) {
-        boolean blankId = StringUtils.isBlank(id);
-
-        // If blank increment count to log issues
-        if (blankId) {
-            missingIdentifier++;
-        }
-
-        return !blankId;
-    }
-
     /**
      * Given a patient, extract the patientId
      *
      * @param patient - the patient id
      * @return patientId if present, null otherwise
      */
-    private String extractPatientId(Patient patient) {
-        return patient.getIdentifier().stream()
+    private Identifiers extractPatientId(Patient patient) {
+        List<Identifier> identifiers = patient.getIdentifier();
+
+        Optional<String> beneId =  identifiers.stream()
                 .filter(this::isBeneficiaryId)
                 .map(Identifier::getValue)
-                .findFirst()
-                .orElse(null);
+                .findFirst();
+
+        Optional<String> mbiId = identifiers.stream()
+                .filter(this::isMbiId)
+                .map(Identifier::getValue)
+                .findFirst();
+
+        if (beneId.isEmpty()) {
+            missingBeneId += 1;
+            return null;
+        }
+
+        if (mbiId.isEmpty()) {
+            missingMbi += 1;
+        }
+
+        return new Identifiers(beneId.get(), mbiId.orElse(null));
     }
 
     private boolean isBeneficiaryId(Identifier identifier) {
         return identifier.getSystem().equalsIgnoreCase(BENEFICIARY_ID);
+    }
+
+    private boolean isMbiId(Identifier identifier) {
+        return identifier.getSystem().equalsIgnoreCase(MBI_ID);
     }
 
     /**
