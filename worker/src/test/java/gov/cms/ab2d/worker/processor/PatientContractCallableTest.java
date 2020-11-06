@@ -3,6 +3,7 @@ package gov.cms.ab2d.worker.processor;
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.worker.processor.domainmodel.ContractMapping;
+import gov.cms.ab2d.worker.processor.domainmodel.Identifiers;
 import org.hl7.fhir.dstu3.model.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -48,6 +49,14 @@ class PatientContractCallableTest {
 
         try {
             ContractMapping mapping = patientContractCallable.call();
+
+            for (Identifiers patient : mapping.getPatients()) {
+                assertNotNull(patient.getBeneficiaryId());
+                assertTrue(patient.getBeneficiaryId().contains("test-"));
+
+                assertNotNull(patient.getMbi());
+                assertTrue(patient.getMbi().contains("mbi-"));
+            }
 
             assertEquals(20, mapping.getPatients().size());
         } catch (Exception exception) {
@@ -115,7 +124,7 @@ class PatientContractCallableTest {
 
             assertEquals(10, mapping.getPatients().size());
 
-            int missingIdentifier = (int) ReflectionTestUtils.getField(patientContractCallable, "missingIdentifier");
+            int missingIdentifier = (int) ReflectionTestUtils.getField(patientContractCallable, "missingBeneId");
 
             assertEquals(10, missingIdentifier);
         } catch (Exception exception) {
@@ -143,7 +152,7 @@ class PatientContractCallableTest {
 
         for (int i = startIndex; i < endIndex; i++) {
             Bundle.BundleEntryComponent component = new Bundle.BundleEntryComponent();
-            Patient patient = createPatient("test-" + i, year);
+            Patient patient = createPatient("test-" + i, "mbi-" + i, year);
             component.setResource(patient);
             bundle1.addEntry(component);
         }
