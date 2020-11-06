@@ -49,25 +49,26 @@ public class PatientContractCallable implements Callable<ContractMapping> {
             ContractMapping mapping = new ContractMapping();
             mapping.setMonth(month);
 
-            log.info("retrieving contract membership for Contract {}-{}-{} bundle #{}",
-                        contractNumber, year, month, bundleNo);
-
-            Bundle bundle = getBundle(contractNumber, month);
-
-            String availableLinks = bundle.getLink().stream()
-                    .map(link -> link.getRelation() + " -> " + link.getUrl())
-                    .collect(joining(" , "));
-            log.info("retrieving contract membership for Contract {}-{}-{} bundle #{}, available links {}",
-                    contractNumber, year, month, bundleNo, availableLinks);
-
-            if (bundle.getLink(Bundle.LINK_NEXT) == null) {
-                log.warn("retrieving contract membership for Contract {}-{}-{} bundle #{}, does not have a next link",
-                        contractNumber, year, month, bundleNo);
-            }
-
-            patientIds.addAll(extractAndFilter(bundle));
-
             try {
+
+                log.info("retrieving contract membership for Contract {}-{}-{} bundle #{}",
+                        contractNumber, year, month, bundleNo);
+
+                Bundle bundle = getBundle(contractNumber, month);
+
+                String availableLinks = bundle.getLink().stream()
+                        .map(link -> link.getRelation() + " -> " + link.getUrl())
+                        .collect(joining(" , "));
+                log.info("retrieving contract membership for Contract {}-{}-{} bundle #{}, available links {}",
+                        contractNumber, year, month, bundleNo, availableLinks);
+
+                if (bundle.getLink(Bundle.LINK_NEXT) == null) {
+                    log.warn("retrieving contract membership for Contract {}-{}-{} bundle #{}, does not have a next link",
+                            contractNumber, year, month, bundleNo);
+                }
+
+                patientIds.addAll(extractAndFilter(bundle));
+
                 while (bundle.getLink(Bundle.LINK_NEXT) != null) {
 
                     bundleNo += 1;
@@ -77,7 +78,10 @@ public class PatientContractCallable implements Callable<ContractMapping> {
 
                     bundle = bfdClient.requestNextBundleFromServer(bundle);
 
-                    availableLinks = bundle.getLink().stream().map(Bundle.BundleLinkComponent::getRelation).collect(joining(","));
+                    availableLinks = bundle.getLink().stream()
+                            .map(link -> link.getRelation() + " -> " + link.getUrl())
+                            .collect(joining(" , "));
+
                     log.info("retrieving contract membership for Contract {}-{}-{} bundle #{}, available links {}",
                             contractNumber, year, month, bundleNo, availableLinks);
 
@@ -102,9 +106,8 @@ public class PatientContractCallable implements Callable<ContractMapping> {
                 log.warn("exception caught caused by extra page included as NEXT bundle, ignoring exception", ie);
             }
 
-            log.info("retrieving contract membership for Contract {}-{}-{}" +
-                            "with skipBillablePeriodCheck {}. #{} bundles received.",
-                    contractNumber, year, month, skipBillablePeriodCheck, bundleNo);
+            log.info("retrieving contract membership for Contract {}-{}-{}, #{} bundles received.",
+                    contractNumber, year, month, bundleNo);
 
             mapping.setPatients(patientIds);
 
