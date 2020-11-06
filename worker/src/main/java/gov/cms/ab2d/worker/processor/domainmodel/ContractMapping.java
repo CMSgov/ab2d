@@ -8,6 +8,6 @@ import java.util.Set;
 @Data
 @EqualsAndHashCode
 public class ContractMapping {
-    private Set<String> patients;
+    private Set<Identifiers> patients;
     private int month;
 }

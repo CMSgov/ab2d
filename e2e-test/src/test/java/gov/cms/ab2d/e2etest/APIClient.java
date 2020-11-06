@@ -83,7 +83,8 @@ public class APIClient {
         this.ab2dUrl = ab2dUrl;
         this.ab2dApiUrl = buildAB2DAPIUrl(ab2dUrl);
         this.oktaUrl = oktaUrl;
-        authEncoded = Base64.getEncoder().encodeToString((oktaClientId + ":" + oktaPassword).getBytes());
+        String clientIdAndSecret = oktaClientId + ":" + oktaPassword;
+        authEncoded = Base64.getEncoder().encodeToString(clientIdAndSecret.getBytes());
 
         generateToken();
     }
