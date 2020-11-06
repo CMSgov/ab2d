@@ -13,6 +13,8 @@ JOB=$(cat "$DIRECTORY/jobId.txt")
 
 echo "Id of job being monitored $JOB"
 
+sleep 5
+
 # Get the status
 RESPONSE=$(curl "${API_URL}/Job/${JOB}/\$status" -sD - -H "accept: application/json" -H "Authorization: Bearer ${BEARER_TOKEN}")
 URLS=$(echo "$RESPONSE" | grep ExplanationOfBenefit)
