@@ -12,6 +12,7 @@ import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.stream.Stream;
 
+import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toSet;
 
 @Slf4j
@@ -42,17 +43,57 @@ public class PatientContractCallable implements Callable<ContractMapping> {
     public ContractMapping call() throws Exception {
 
         final Set<Identifiers> patientIds = new HashSet<>();
+        int bundleNo = 1;
+
         try {
             ContractMapping mapping = new ContractMapping();
             mapping.setMonth(month);
-            Bundle bundle = getBundle(contractNumber, month);
-            patientIds.addAll(extractAndFilter(bundle));
 
             try {
+
+                log.info("retrieving contract membership for Contract {}-{}-{} bundle #{}",
+                        contractNumber, year, month, bundleNo);
+
+                Bundle bundle = getBundle(contractNumber, month);
+
+                String availableLinks = bundle.getLink().stream()
+                        .map(link -> link.getRelation() + " -> " + link.getUrl())
+                        .collect(joining(" , "));
+                log.info("retrieving contract membership for Contract {}-{}-{} bundle #{}, available links {}",
+                        contractNumber, year, month, bundleNo, availableLinks);
+
+                if (bundle.getLink(Bundle.LINK_NEXT) == null) {
+                    log.warn("retrieving contract membership for Contract {}-{}-{} bundle #{}, does not have a next link",
+                            contractNumber, year, month, bundleNo);
+                }
+
+                patientIds.addAll(extractAndFilter(bundle));
+
                 while (bundle.getLink(Bundle.LINK_NEXT) != null) {
+
+                    bundleNo += 1;
+
+                    log.info("retrieving contract membership for Contract {}-{}-{} bundle #{}",
+                            contractNumber, year, month, bundleNo);
+
                     bundle = bfdClient.requestNextBundleFromServer(bundle);
+
+                    availableLinks = bundle.getLink().stream()
+                            .map(link -> link.getRelation() + " -> " + link.getUrl())
+                            .collect(joining(" , "));
+
+                    log.info("retrieving contract membership for Contract {}-{}-{} bundle #{}, available links {}",
+                            contractNumber, year, month, bundleNo, availableLinks);
+
+                    if (bundle.getLink(Bundle.LINK_NEXT) == null) {
+                        log.info("retrieving contract membership for Contract {}-{}-{} bundle #{}, does not have a next link",
+                                contractNumber, year, month, bundleNo);
+                    }
+
                     patientIds.addAll(extractAndFilter(bundle));
                 }
+
+
             } catch (InternalErrorException ie) {
                 // Catch edge case bug where (number patients) mod (bundle size) == 0
                 // Extra bundle link returned that has no data in it which causes exception
@@ -64,6 +105,9 @@ public class PatientContractCallable implements Callable<ContractMapping> {
 
                 log.warn("exception caught caused by extra page included as NEXT bundle, ignoring exception", ie);
             }
+
+            log.info("retrieving contract membership for Contract {}-{}-{}, #{} bundles received.",
+                    contractNumber, year, month, bundleNo);
 
             mapping.setPatients(patientIds);
 
