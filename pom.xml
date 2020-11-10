@@ -33,12 +33,12 @@
         <project.root>${basedir}</project.root>
         <java.version>13</java.version>
         <hapi.version>5.1.0</hapi.version>
-        <mockserver.version>5.11.1</mockserver.version>
+        <mockserver.version>5.11.2</mockserver.version>
         <jacoco.version>0.8.6</jacoco.version>
         <checkstyle.config>${project.root}/src/main/resources/checkstyle.xml</checkstyle.config>
         <maven.resources.plugin.version>3.2.0</maven.resources.plugin.version>
         <logback-encoder.version>6.4</logback-encoder.version>
-        <testcontainers.version>1.14.3</testcontainers.version>
+        <testcontainers.version>1.15.0</testcontainers.version>
         <newrelic.version>6.1.0</newrelic.version>
     </properties>
 
