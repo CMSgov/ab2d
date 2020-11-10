@@ -467,10 +467,12 @@
 
 ### Create or update AMI with latest gold disk
 
-1. Change to the "Deploy" directory
+1. Change to the "ab2d" repo directory
 
+   *Example:*
+   
    ```ShellSession
-   $ cd ~/code/ab2d/Deploy
+   $ cd ~/code/ab2d
    ```
 
 1. Set gold disk test parameters
@@ -489,7 +491,7 @@
 1. Create or update AMI with latest gold disk
 
    ```ShellSession
-   $ ./bash/update-gold-disk.sh
+   $ ./Deploy/bash/update-gold-disk.sh
    ```
 
 ### Create or update infrastructure
