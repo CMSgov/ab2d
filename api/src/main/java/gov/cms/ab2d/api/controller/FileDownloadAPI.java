@@ -93,4 +93,37 @@ public class FileDownloadAPI {
             return new ResponseEntity<>(null, null, HttpStatus.OK);
         }
     }
+
+    @ResponseStatus(value = HttpStatus.OK)
+    @GetMapping(value = "/Job/{jobUuid}/crosswalk", produces = { CSV_TYPE })
+    public ResponseEntity downloadCrosswalk(
+            HttpServletRequest request,
+            @ApiParam(value = "A job identifier", required = true) @PathVariable @NotBlank String jobUuid) throws IOException {
+        MDC.put(JOB_LOG, jobUuid);
+        log.info("Request submitted to download file");
+
+        Resource downloadResource = jobService.getResourceForJob(jobUuid, "crosswalk.csv");
+
+        RequestAttributes requestAttributes = RequestContextHolder.getRequestAttributes();
+        HttpServletResponse response = ((ServletRequestAttributes) requestAttributes).getResponse();
+
+        log.info("Sending crosswalk.csv file to client");
+
+        String mimeType = CSV_TYPE;
+        if (downloadResource.getFilename().endsWith("zip")) {
+            mimeType = ZIPFORMAT;
+        }
+        response.setHeader(HttpHeaders.CONTENT_TYPE, mimeType);
+
+        try (OutputStream out = response.getOutputStream(); FileInputStream in = new FileInputStream(downloadResource.getFile())) {
+            IOUtils.copy(in, out);
+
+            eventLogger.log(new ApiResponseEvent(MDC.get(USERNAME), jobUuid, HttpStatus.OK, "File Download",
+                    "File crosswalk.csv was downloaded", (String) request.getAttribute(REQUEST_ID)));
+
+            jobService.deleteFileForJob(downloadResource.getFile(), jobUuid);
+
+            return new ResponseEntity<>(null, null, HttpStatus.OK);
+        }
+    }
 }
