@@ -37,8 +37,6 @@ import static gov.cms.ab2d.common.util.Constants.ADMIN_ROLE;
 @Transactional
 public class JobServiceImpl implements JobService {
 
-    private static final String CSV = ".csv";
-
     private final UserService userService;
     private final JobRepository jobRepository;
     private final ContractRepository contractRepository;
@@ -209,18 +207,12 @@ public class JobServiceImpl implements JobService {
     public void deleteFileForJob(File file, String jobUuid) {
         String fileName = file.getName();
         Job job = jobRepository.findByJobUuid(jobUuid);
-
-        // todo remove when crosswalk is no longer necessary
-        // for now ignore logging the deletion of crosswalk csv to avoid issues with Kinesis dashboards?
-        if (!file.getName().endsWith(CSV)) {
-            JobOutput jobOutput = jobOutputService.findByFilePathAndJob(fileName, job);
-            jobOutput.setDownloaded(true);
-            jobOutputService.updateJobOutput(jobOutput);
-
-            eventLogger.log(EventUtils.getFileEvent(job, file, FileEvent.FileStatus.DELETE));
-            if (JobUtil.isJobDone(job)) {
-                eventLogger.log(LogManager.LogType.KINESIS, doSummary.getSummary(job.getJobUuid()));
-            }
+        JobOutput jobOutput = jobOutputService.findByFilePathAndJob(fileName, job);
+        jobOutput.setDownloaded(true);
+        jobOutputService.updateJobOutput(jobOutput);
+        eventLogger.log(EventUtils.getFileEvent(job, file, FileEvent.FileStatus.DELETE));
+        if (JobUtil.isJobDone(job)) {
+            eventLogger.log(LogManager.LogType.KINESIS, doSummary.getSummary(job.getJobUuid()));
         }
         boolean deleted = file.delete();
         if (!deleted) {
