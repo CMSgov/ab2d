@@ -212,7 +212,9 @@ public class BFDClientImpl implements BFDClient {
         return client
                 .loadPage()
                 .next(bundle)
-                .withAdditionalHeader("IncludeIdentifiers", "mbi")
+// todo uncomment when issue regarding retrieving mbis is complete
+//
+//                .withAdditionalHeader("IncludeIdentifiers", "mbi")
                 .encodedJson()
                 .execute();
     }
@@ -232,7 +234,9 @@ public class BFDClientImpl implements BFDClient {
         return client.search()
                 .forResource(Patient.class)
                 .where(theCriterion)
-                .withAdditionalHeader("IncludeIdentifiers", "mbi")
+// todo uncomment when issue regarding retrieving mbis is complete
+//
+//                .withAdditionalHeader("IncludeIdentifiers", "mbi")
                 .count(contractToBenePageSize)
                 .returnBundle(Bundle.class)
                 .encodedJson()
