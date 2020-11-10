@@ -95,7 +95,7 @@
 	    <dependency>
             <groupId>com.newrelic.agent.java</groupId>
             <artifactId>newrelic-java</artifactId>
-            <version>6.1.0</version>
+            <version>${newrelic.version}</version>
             <scope>provided</scope>
             <type>zip</type>
 	    </dependency>

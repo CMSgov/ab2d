@@ -1,6 +1,8 @@
 package gov.cms.ab2d.e2etest;
 
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.impl.DefaultClaims;
 import io.jsonwebtoken.security.Keys;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Hex;
@@ -698,6 +700,43 @@ public class TestRunner {
         SecretKey sharedSecret = Keys.hmacShaKeyFor(clientSecret.getBytes(StandardCharsets.UTF_8));
         Instant now = Instant.now();
 
+        Map<String, Object> claimsMap = new HashMap<>();
+        claimsMap.put("exp", now.toEpochMilli() + 3600);
+        claimsMap.put("iat", now.toEpochMilli());
+        claimsMap.put("issuer", "https://sandbox.ab2d.cms.gov");
+        Claims claims = new DefaultClaims(claimsMap);
+
+        String jwtStr = Jwts.builder()
+                .setAudience(System.getenv("AB2D_OKTA_JWT_AUDIENCE"))
+                .setIssuedAt(Date.from(now))
+                .setExpiration(Date.from(now.plus(2L, ChronoUnit.HOURS)))
+                .setIssuer(System.getenv("AB2D_OKTA_JWT_ISSUER"))
+                .setId(UUID.randomUUID().toString())
+                .setClaims(claims)
+                .signWith(sharedSecret)
+                .compact();
+
+        HttpRequest exportRequest = HttpRequest.newBuilder()
+                .uri(URI.create(AB2D_API_URL + PATIENT_EXPORT_PATH))
+                .timeout(Duration.ofSeconds(30))
+                .header("Content-Type", "application/json")
+                .header("Authorization", "Bearer " + jwtStr)
+                .GET()
+                .build();
+
+        HttpResponse<String> response = apiClient.getHttpClient().send(exportRequest, HttpResponse.BodyHandlers.ofString());
+
+        Assert.assertEquals(403, response.statusCode());
+    }
+
+    @Test
+    @Order(13)
+    public void testUserCannotMakeRequestWithNullClaims() throws IOException, InterruptedException, JSONException {
+        System.out.println("Starting test 12");
+        String clientSecret = "wefikjweglkhjwelgkjweglkwegwegewg";
+        SecretKey sharedSecret = Keys.hmacShaKeyFor(clientSecret.getBytes(StandardCharsets.UTF_8));
+        Instant now = Instant.now();
+
         String jwtStr = Jwts.builder()
                 .setAudience(System.getenv("AB2D_OKTA_JWT_AUDIENCE"))
                 .setIssuedAt(Date.from(now))
@@ -717,19 +756,11 @@ public class TestRunner {
 
         HttpResponse<String> response = apiClient.getHttpClient().send(exportRequest, HttpResponse.BodyHandlers.ofString());
 
-        Assert.assertEquals(500, response.statusCode());
-
-        final JSONObject json = new JSONObject(response.body());
-        JSONArray issueJsonArr = json.getJSONArray("issue");
-        JSONObject issueJson = issueJsonArr.getJSONObject(0);
-        JSONObject detailsJson = issueJson.getJSONObject("details");
-        String text = detailsJson.getString("text");
-
-        Assert.assertEquals(text, "An internal error occurred");
+        Assert.assertEquals(403, response.statusCode());
     }
 
     @Test
-    @Order(13)
+    @Order(14)
     public void testBadQueryParameterResource() throws IOException, InterruptedException {
         System.out.println("Starting test 13");
         var params = new HashMap<>(){{
@@ -742,7 +773,7 @@ public class TestRunner {
     }
 
     @Test
-    @Order(14)
+    @Order(15)
     public void testBadQueryParameterOutputFormat() throws IOException, InterruptedException {
         System.out.println("Starting test 14");
         var params = new HashMap<>(){{
@@ -756,7 +787,7 @@ public class TestRunner {
     }
 
     @Test
-    @Order(15)
+    @Order(16)
     public void testHealthEndPoint() throws IOException, InterruptedException {
         System.out.println("Starting test 15");
         HttpResponse<String> healthCheckResponse = apiClient.healthCheck();
