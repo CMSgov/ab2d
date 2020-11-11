@@ -324,6 +324,12 @@
    $ pip3 install boto3
    ```
 
+1. Install j2cli
+
+   ```ShellSession
+   $ pip3 install j2cli
+   ```
+
 ## Install and configure Java
 
 ### Uninstall any existing versions of Java
