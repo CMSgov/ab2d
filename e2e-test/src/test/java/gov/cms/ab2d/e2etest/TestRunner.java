@@ -162,11 +162,12 @@ public class TestRunner {
                 // Add api variable to environment to populate docker-compose port variable
                 .withEnv("API_PORT", "" + apiPort)
                 .withLocalCompose(true)
-                .withScaledService("worker", 2)
                 .withExposedService("api", DEFAULT_API_PORT, new HostPortWaitStrategy()
-                    .withStartupTimeout(Duration.of(200, SECONDS)));
-        //.withLogConsumer("worker", new Slf4jLogConsumer(log)) // Use to debug, for now there's too much log data
-        //.withLogConsumer("api", new Slf4jLogConsumer(log));
+                    .withStartupTimeout(Duration.of(200, SECONDS)))
+                .withScaledService("api", 1)
+                .withScaledService("worker", 2);
+//        .withLogConsumer("worker", new Slf4jLogConsumer(log)) // Use to debug, for now there's too much log data
+//        .withLogConsumer("api", new Slf4jLogConsumer(log));
 
         container.start();
     }
