@@ -1,3 +1,5 @@
+# Experimental currently unused module
+
 data "aws_iam_policy_document" "test_terraform_state_kms_key_policy" {
   statement {
     sid    = "Enable IAM User Permissions"
@@ -28,22 +30,6 @@ resource "aws_kms_key" "test_terraform_state_kms_key" {
   deletion_window_in_days = 10
   enable_key_rotation     = true
 }
-
-  # {
-  #   "Version": "2012-10-17",
-  #   "Id": "key-default-1",
-  #   "Statement": [
-  #       {
-  #           "Sid": "Enable IAM User Permissions",
-  #           "Effect": "Allow",
-  #           "Principal": {
-  #               "AWS": "arn:aws:iam::595094747606:root"
-  #           },
-  #           "Action": "kms:*",
-  #           "Resource": "*"
-  #       }
-  #   ]
-  # }
 
 resource "aws_kms_alias" "test_terraform_state_kms_key_alias" {
   name          = "alias/${var.env}-terraform-state-kms"
@@ -107,23 +93,6 @@ data "aws_iam_policy_document" "test_terraform_state_bucket_policy" {
   }
 }
 
-   #  principals {
-   #    type        = "*"
-   #    identifiers = [
-   #      "*"
-   #    ]
-   #  }
-
-   # condition {
-   #    test     = "ArnEquals"
-   #    variable = "aws:userid"
-
-   #    values = [
-   #      "arn:aws:iam::${var.aws_account_number}:role/delegatedadmin/developer/Ab2dMgmtV2Role",
-   #      "arn:aws:iam::${var.aws_account_number}:role/ct-ado-ab2d-application-admin"
-   #    ]
-   #  }
-
 resource "aws_s3_bucket" "test_terraform_state_bucket" {
   bucket = "${var.env}-terraform-state"
   acl    = "private"
@@ -164,48 +133,3 @@ resource "aws_dynamodb_table" "test_terraform_state_table" {
     type = "S"
   }
 }
-
-#   policy = <<EOF
-# {
-#     "Version": "2012-10-17",
-#     "Id": "PutObjPolicy",
-#     "Statement": [
-#         {
-#             "Sid": "DenyUnEncryptedObjectUploads",
-#             "Effect": "Deny",
-#             "Principal": "*",
-#             "Action": "s3:PutObject",
-#             "Resource": "arn:aws:s3:::${var.env}-terraform-state/*",
-#             "Condition": {
-#                 "StringNotEquals": {
-#                     "s3:x-amz-server-side-encryption": "aws:kms"
-#                 }
-#             }
-#         },
-#         {
-#             "Sid": "ManagementRole",
-#             "Effect": "Allow",
-#             "Principal": "*",
-#             "Action": "s3:GetObject",
-#             "Resource": "arn:aws:s3:::${var.env}-terraform-state/*",
-#             "Condition": {
-#                 "ArnEquals": {
-#                     "aws:userid": "arn:aws:iam::${var.aws_account_number}:role/delegatedadmin/developer/Ab2dMgmtV2Role"
-#                 }
-#             }
-#         },
-#         {
-#             "Sid": "FederatedLoginRole",
-#             "Effect": "Allow",
-#             "Principal": "*",
-#             "Action": "s3:GetObject",
-#             "Resource": "arn:aws:s3:::${var.env}-terraform-state/*",
-#             "Condition": {
-#                 "ArnEquals": {
-#                     "aws:userid": "arn:aws:iam::${var.aws_account_number}:role/ct-ado-ab2d-application-admin"
-#                 }
-#             }
-#         }
-#     ]
-# }
-# EOF

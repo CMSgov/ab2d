@@ -6,7 +6,7 @@ data "aws_iam_policy" "amazon_ec2_container_service_for_ec2_role" {
   arn = "arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role"
 }
 
-# Create Ab2dPackerProdTestPolicy
+# Create Ab2dProdTestPackerPolicy
 
 data "aws_iam_policy_document" "instance_role_packer_policy" {
   statement {
@@ -52,12 +52,12 @@ data "aws_iam_policy_document" "instance_role_packer_policy" {
 }
 
 resource "aws_iam_policy" "packer_policy" {
-  name   = "Ab2dPackerProdTestPolicy"
+  name   = "Ab2dProdTestPackerPolicy"
   path   = "/delegatedadmin/developer/"
-  policy = "${data.aws_iam_policy_document.instance_role_packer_policy.json}"
+  policy = data.aws_iam_policy_document.instance_role_packer_policy.json
 }
 
-# Create Ab2dS3AccessProdTestPolicy
+# Create Ab2dProdTestS3AccessPolicy
 
 data "aws_iam_policy_document" "instance_role_s3_access_policy" {
   statement {
@@ -77,20 +77,19 @@ data "aws_iam_policy_document" "instance_role_s3_access_policy" {
     ]
 
     resources = [
-      "arn:aws:s3:::${var.env}-automation/*",
-      "arn:aws:s3:::${var.env}-cloudtrail/*",
-      "arn:aws:s3:::${var.env}/*",
+      "arn:aws:s3:::${var.env}-tfstate/*",
+      "arn:aws:s3:::${var.parent_env}-cloudtrail/*"
     ]
   }
 }
 
 resource "aws_iam_policy" "s3_access_policy" {
-  name   = "Ab2dS3AccessV2Policy"
+  name   = "Ab2dProdTestS3AccessPolicy"
   path   = "/delegatedadmin/developer/"
-  policy = "${data.aws_iam_policy_document.instance_role_s3_access_policy.json}"
+  policy = data.aws_iam_policy_document.instance_role_s3_access_policy.json
 }
 
-# Create Ab2dCloudWatchLogsPolicy
+# Create Ab2dProdTestCloudWatchLogsPolicy
 
 data "aws_iam_policy_document" "instance_role_cloud_watch_logs_policy" {
   statement {
@@ -109,163 +108,12 @@ data "aws_iam_policy_document" "instance_role_cloud_watch_logs_policy" {
 }
 
 resource "aws_iam_policy" "cloud_watch_logs_policy" {
-  name   = "Ab2dCloudWatchLogsV2Policy"
+  name   = "Ab2dProdTestCloudWatchLogsPolicy"
   path   = "/delegatedadmin/developer/"
-  policy = "${data.aws_iam_policy_document.instance_role_cloud_watch_logs_policy.json}"
+  policy = data.aws_iam_policy_document.instance_role_cloud_watch_logs_policy.json
 }
 
-#######################################
-#
-# END #1
-#
-#######################################
-
-########################
-# For Dev, Sbx, and Impl
-########################
-
-# # Create Ab2dBfdProdSbxPolicy
-
-# data "aws_iam_policy_document" "instance_role_bfd_prod_sbx_policy" {
-#   statement {
-#     actions = [
-#       "kms:Decrypt",
-#       "kms:Encrypt",
-#       "kms:DescribeKey",
-#       "kms:ReEncrypt*",
-#       "kms:GenerateDataKey*"
-#     ]
-
-#     resources = [
-#       "arn:aws:kms:us-east-1:577373831711:key/20e853ce-f7c6-42f7-b75b-4017b215bd0d"
-#     ]
-#   }
-
-#   statement {
-#     actions = [
-#       "s3:GetObject",
-#       "s3:ListBucket",
-#       "s3:HeadBucket"
-#     ]
-
-#     resources = [
-#       "arn:aws:s3:::bfd-prod-sbx-medicare-opt-out-577373831711/*",
-#       "arn:aws:s3:::bfd-prod-sbx-medicare-opt-out-577373831711"
-#     ]
-#   }
-# }
-
-# resource "aws_iam_policy" "bfd_prod_sbx_policy" {
-#   name   = "Ab2dBfdProdSbxPolicy"
-#   policy = "${data.aws_iam_policy_document.instance_role_bfd_prod_sbx_policy.json}"
-# }
-
-########################
-
-###########################################################################
-# Replace Ab2dBfdProdSbxPolicy with Ab2dBfdOptOutPolicy in all environments
-###########################################################################
-
-# # Create Ab2dBfdOptOutPolicy
-
-# data "aws_iam_policy_document" "instance_role_bfd_opt_out_policy" {
-#   statement {
-#     sid = "BfdS3BucketPart01"
-    
-#     actions = [
-#       "s3:GetObject",
-#       "s3:GetObjectVersion*",
-#       "s3:ListBucket",
-#       "s3:ListBucketVersions"
-#     ]
-
-#     resources = [
-#       "arn:aws:s3:::${var.ab2d_s3_optout_bucket}/*",
-#       "arn:aws:s3:::${var.ab2d_s3_optout_bucket}"
-#     ]
-#   }
-
-#   statement {
-#     sid = "BfdS3BucketPart02"
-    
-#     actions = [
-#       "s3:HeadBucket"
-#     ]
-
-#     resources = [
-#       "*"
-#     ]
-#   }
-
-#   statement {
-#     sid = "BfdKms"
-    
-#     actions = [
-#       "kms:Decrypt",
-#       "kms:DescribeKey",
-#       "kms:Encrypt",
-#       "kms:GenerateDataKey*",
-#       "kms:ReEncrypt*"
-#     ]
-
-#     resources = [
-#       "${var.bfd_opt_out_kms_arn}"
-#     ]
-#   }
-# }
-
-# resource "aws_iam_policy" "bfd_opt_out_policy" {
-#   name   = "Ab2dBfdOptOutPolicy"
-#   policy = "${data.aws_iam_policy_document.instance_role_bfd_opt_out_policy.json}"
-# }
-
-##########
-
-#########################################
-#
-# BEGIN #2 - Migrate to management target
-#
-#########################################
-
-# # Create Ab2dInstanceRole
-
-# data "aws_iam_policy_document" "instance_role_assume_role_policy" {
-#   statement {
-#     actions = ["sts:AssumeRole"]
-
-#     principals {
-#       type        = "Service"
-#       identifiers = [
-#         "ec2.amazonaws.com",
-#         "ecs-tasks.amazonaws.com",
-# 	"s3.amazonaws.com",
-# 	"vpc-flow-logs.amazonaws.com"
-#       ]
-#     }
-#   }
-# }
-
-# resource "aws_iam_role" "ab2d_instance_role" {
-#   name               = "Ab2dInstanceRole"
-#   assume_role_policy = "${data.aws_iam_policy_document.instance_role_assume_role_policy.json}"
-# }
-
-# resource "aws_iam_role_policy_attachment" "instance_role_packer_policy_attach" {
-#   role       = "${aws_iam_role.ab2d_instance_role.name}"
-#   policy_arn = "${aws_iam_policy.packer_policy.arn}"
-# }
-
-# resource "aws_iam_role_policy_attachment" "instance_role_s3_access_policy_attach" {
-#   role       = "${aws_iam_role.ab2d_instance_role.name}"
-#   policy_arn = "${aws_iam_policy.s3_access_policy.arn}"
-# }
-
-# resource "aws_iam_role_policy_attachment" "instance_role_cloud_watch_logs_policy_attach" {
-#   role       = "${aws_iam_role.ab2d_instance_role.name}"
-#   policy_arn = "${aws_iam_policy.cloud_watch_logs_policy.arn}"
-# }
-
-# Create Ab2dInstanceRole
+# Create Ab2dProdTestInstanceRole
 
 data "aws_iam_policy_document" "instance_role_assume_role_policy" {
   statement {
@@ -276,193 +124,44 @@ data "aws_iam_policy_document" "instance_role_assume_role_policy" {
       identifiers = [
         "ec2.amazonaws.com",
         "ecs-tasks.amazonaws.com",
-	"s3.amazonaws.com",
-	"vpc-flow-logs.amazonaws.com"
+        "s3.amazonaws.com",
+        "vpc-flow-logs.amazonaws.com"
       ]
     }
   }
 }
 
 resource "aws_iam_role" "ab2d_instance_role" {
-  name               = "Ab2dInstanceV2Role"
+  name               = "Ab2dProdTestInstanceRole"
   path               = "/delegatedadmin/developer/"
-  assume_role_policy = "${data.aws_iam_policy_document.instance_role_assume_role_policy.json}"
+  assume_role_policy = data.aws_iam_policy_document.instance_role_assume_role_policy.json
   permissions_boundary = "arn:aws:iam::${var.aws_account_number}:policy/cms-cloud-admin/developer-boundary-policy"
 }
 
 resource "aws_iam_role_policy_attachment" "instance_role_packer_policy_attach" {
-  role       = "${aws_iam_role.ab2d_instance_role.name}"
-  policy_arn = "${aws_iam_policy.packer_policy.arn}"
+  role       = aws_iam_role.ab2d_instance_role.name
+  policy_arn = aws_iam_policy.packer_policy.arn
 }
 
 resource "aws_iam_role_policy_attachment" "instance_role_s3_access_policy_attach" {
-  role       = "${aws_iam_role.ab2d_instance_role.name}"
-  policy_arn = "${aws_iam_policy.s3_access_policy.arn}"
+  role       = aws_iam_role.ab2d_instance_role.name
+  policy_arn = aws_iam_policy.s3_access_policy.arn
 }
 
 resource "aws_iam_role_policy_attachment" "instance_role_cloud_watch_logs_policy_attach" {
-  role       = "${aws_iam_role.ab2d_instance_role.name}"
-  policy_arn = "${aws_iam_policy.cloud_watch_logs_policy.arn}"
+  role       = aws_iam_role.ab2d_instance_role.name
+  policy_arn = aws_iam_policy.cloud_watch_logs_policy.arn
 }
-
-#######################################
-#
-# END #2
-#
-#######################################
-
-# resource "aws_iam_role_policy_attachment" "instance_role_bfd_opt_out_policy_attach" {
-#   role       = "${aws_iam_role.ab2d_instance_role.name}"
-#   policy_arn = "${aws_iam_policy.bfd_opt_out_policy.arn}"
-# }
-
-########################
-# For Dev, Sbx, and Impl
-########################
-
-# resource "aws_iam_role_policy_attachment" "instance_role_bfd_prod_sbx_policy_attach" {
-#   role       = "${aws_iam_role.ab2d_instance_role.name}"
-#   policy_arn = "${aws_iam_policy.bfd_prod_sbx_policy.arn}"
-# }
-
-########################
-
-#########################################
-#
-# BEGIN #3
-#
-#########################################
-
-# resource "aws_iam_role_policy_attachment" "amazon_ec2_container_service_for_ec2_role_attach" {
-#   role       = "${aws_iam_role.ab2d_instance_role.name}"
-#   policy_arn = "${data.aws_iam_policy.amazon_ec2_container_service_for_ec2_role.arn}"
-# }
-
-# resource "aws_iam_instance_profile" "test_profile" {
-#   name = "Ab2dInstanceProfile"
-#   role = "${aws_iam_role.ab2d_instance_role.name}"
-# }
 
 resource "aws_iam_role_policy_attachment" "amazon_ec2_container_service_for_ec2_role_attach" {
-  role       = "${aws_iam_role.ab2d_instance_role.name}"
-  policy_arn = "${data.aws_iam_policy.amazon_ec2_container_service_for_ec2_role.arn}"
+  role       = aws_iam_role.ab2d_instance_role.name
+  policy_arn = data.aws_iam_policy.amazon_ec2_container_service_for_ec2_role.arn
 }
+
+# Create Ab2dProdTestInstanceRole
 
 resource "aws_iam_instance_profile" "ab2d_instance_profile" {
-  name = "Ab2dInstanceV2Profile"
+  name = "Ab2dProdTestInstanceProfile"
   path = "/delegatedadmin/developer/"
-  role = "${aws_iam_role.ab2d_instance_role.name}"
-}
-
-#######################################
-#
-# END #3
-#
-#######################################
-
-#
-# BFD Insights
-#
-
-# Create Ab2dBfdInsightsV2Policy
-
-data "aws_iam_policy_document" "bfd_insights_policy_document" {
-  statement {
-    actions = [
-      "glue:GetTable",
-      "glue:GetTableVersion",
-      "glue:GetTableVersions"
-    ]
-    resources = [
-      "*"
-    ]
-  }
-  statement {
-    actions = [
-      "s3:AbortMultipartUpload",
-      "s3:GetBucketLocation",
-      "s3:GetObject",
-      "s3:ListBucket",
-      "s3:ListBucketMultipartUploads",
-      "s3:PutObjectAcl",
-      "s3:PutObject"
-    ]
-    resources = [
-      "arn:aws:s3:::${var.ab2d_bfd_insights_s3_bucket}",
-      "arn:aws:s3:::${var.ab2d_bfd_insights_s3_bucket}/*"
-    ]
-  }
-  statement {
-    actions = [
-      "kms:Encrypt",
-      "kms:Decrypt",
-      "kms:ReEncrypt*",
-      "kms:GenerateDataKey*",
-      "kms:DescribeKey"
-    ]
-    resources = [
-      "${var.ab2d_bfd_kms_arn}"
-    ]
-  }
-  statement {
-    actions = [
-      "logs:PutLogEvents"
-    ]
-    resources = [
-      "arn:aws:logs:us-east-1:${var.aws_account_number}:log-group:/aws/kinesisfirehose/bfd-insights-ab2d:log-stream:*"
-    ]
-  }
-  statement {
-    actions = [
-      "kinesis:DescribeStream",
-      "kinesis:GetShardIterator",
-      "kinesis:GetRecords",
-      "kinesis:ListShards"
-    ]
-    resources = [
-      "*"
-    ]
-  }
-}
-
-resource "aws_iam_policy" "bfd_insights_policy" {
-  name   = "Ab2dBfdInsightsV2Policy"
-  path   = "/delegatedadmin/developer/"
-  policy = "${data.aws_iam_policy_document.bfd_insights_policy_document.json}"
-}
-
-# Create Ab2dBfdInsightsV2Role
-
-data "aws_iam_policy_document" "bfd_insights_role_assume_role_policy" {
-  statement {
-    actions = ["sts:AssumeRole"]
-
-    principals {
-      type        = "Service"
-      identifiers = [
-        "firehose.amazonaws.com"
-      ]
-    }
-  }
-}
-
-resource "aws_iam_role" "ab2d_bfd_insights_role" {
-  name               = "Ab2dBfdInsightsV2Role"
-  path               = "/delegatedadmin/developer/"
-  assume_role_policy = "${data.aws_iam_policy_document.bfd_insights_role_assume_role_policy.json}"
-  permissions_boundary = "arn:aws:iam::${var.aws_account_number}:policy/cms-cloud-admin/developer-boundary-policy"
-}
-
-# Attach Ab2dBfdInsightsV2Policy to Ab2dInstanceV2Role
-
-resource "aws_iam_role_policy_attachment" "instance_role_bfd_insights_policy_attach" {
-  role       = "${aws_iam_role.ab2d_bfd_insights_role.name}"
-  policy_arn = "${aws_iam_policy.bfd_insights_policy.arn}"
-}
-
-# Attach Ab2dBfdInsightsV2Policy to Ab2dBfdInsightsV2Role
-
-resource "aws_iam_role_policy_attachment" "bfd_insights_role_bfd_insights_policy_attach" {
-  role       = "${aws_iam_role.ab2d_instance_role.name}"
-  policy_arn = "${aws_iam_policy.bfd_insights_policy.arn}"
+  role = aws_iam_role.ab2d_instance_role.name
 }

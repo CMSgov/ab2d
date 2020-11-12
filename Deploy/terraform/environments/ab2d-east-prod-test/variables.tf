@@ -14,6 +14,11 @@ variable "aws_account_number" {
   description = "Please pass this on command line and not as a value here"
 }
 
+variable "parent_env" {
+  type        = string
+  default     = ""
+  description = "Please pass this on command line and not as a value here"
+}
 
 
 

@@ -16,6 +16,7 @@ cd "${START_DIR}"
 
 echo "Check vars are not empty before proceeding..."
 if  [ -z "${CMS_ENV_PARAM}" ] \
+    || [ -z "${PARENT_ENV_PARAM}" ] \
     || [ -z "${DEBUG_LEVEL_PARAM}" ] \
     || [ -z "${REGION_PARAM}" ] \
     || [ -z "${AWS_ACCOUNT_NUMBER_PARAM}" ] \
@@ -31,9 +32,9 @@ fi
 
 CMS_ENV="${CMS_ENV_PARAM}"
 
-export DEBUG_LEVEL="${DEBUG_LEVEL_PARAM}"
+PARENT_ENV="${PARENT_ENV_PARAM}"
 
-REGION="${REGION_PARAM}"
+export DEBUG_LEVEL="${DEBUG_LEVEL_PARAM}"
 
 AWS_ACCOUNT_NUMBER="${AWS_ACCOUNT_NUMBER_PARAM}"
 
@@ -52,11 +53,23 @@ fi
 
 # Import the "get temporary AWS credentials via CloudTamer API" function
 
+# shellcheck source=./functions/fn_get_temporary_aws_credentials_via_cloudtamer_api.sh
 source "${START_DIR}/functions/fn_get_temporary_aws_credentials_via_cloudtamer_api.sh"
 
 # Import the "get temporary AWS credentials via AWS STS assume role" function
 
+# shellcheck source=./functions/fn_get_temporary_aws_credentials_via_aws_sts_assume_role.sh
 source "${START_DIR}/functions/fn_get_temporary_aws_credentials_via_aws_sts_assume_role.sh"
+
+#
+# Set AWS target environment
+#
+
+if [ "${CLOUD_TAMER}" == "true" ]; then
+  fn_get_temporary_aws_credentials_via_cloudtamer_api "${AWS_ACCOUNT_NUMBER}" "${CMS_ENV}"
+else
+  fn_get_temporary_aws_credentials_via_aws_sts_assume_role "${AWS_ACCOUNT_NUMBER}" "${CMS_ENV}"
+fi
 
 #
 # Configure terraform
@@ -74,11 +87,11 @@ rm -f /var/log/terraform/tf.log
 #
 
 cd "${START_DIR}/.."
-cd terraform/environments/$CMS_ENV
+cd "terraform/environments/${CMS_ENV}"
 
 terraform apply \
   --var "env=${CMS_ENV}" \
-  --var "mgmt_aws_account_number=${CMS_ECR_REPO_ENV_AWS_ACCOUNT_NUMBER}" \
+  --var "parent_env=${PARENT_ENV}" \
   --var "aws_account_number=${AWS_ACCOUNT_NUMBER}" \
   --target module.test_iam \
   --auto-approve

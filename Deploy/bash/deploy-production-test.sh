@@ -33,17 +33,13 @@ if  [ -z "${AWS_ACCOUNT_NUMBER_PARAM}" ] \
   exit 1
 fi
 
-# Deploy or update S3 automation bucket
+# Deploy or update S3 terraform backend
 
 cd "${START_DIR}"
-source ./deploy-test-s3-automation-bucket-module.sh
-
-# Deploy or update test Terraform initialization
-
-# cd "${START_DIR}"
-# source ./deploy-test-terraform-initialization.sh
+source ./deploy-s3-terraform-backend.sh
 
 # Deploy or update test IAM module
 
-# cd "${START_DIR}"
-# source ./deploy-test-iam-module.sh
+cd "${START_DIR}"
+source ./deploy-test-iam-module.sh
+
