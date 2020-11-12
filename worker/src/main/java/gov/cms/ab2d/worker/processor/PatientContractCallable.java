@@ -12,8 +12,7 @@ import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.stream.Stream;
 
-import static java.util.stream.Collectors.joining;
-import static java.util.stream.Collectors.toSet;
+import static java.util.stream.Collectors.*;
 
 @Slf4j
 public class PatientContractCallable implements Callable<ContractMapping> {
@@ -176,21 +175,21 @@ public class PatientContractCallable implements Callable<ContractMapping> {
                 .map(Identifier::getValue)
                 .findFirst();
 
-        Optional<String> mbiId = identifiers.stream()
+        List<String> mbis = identifiers.stream()
                 .filter(this::isMbiId)
                 .map(Identifier::getValue)
-                .findFirst();
+                .collect(toList());
 
         if (beneId.isEmpty()) {
             missingBeneId += 1;
             return null;
         }
 
-        if (mbiId.isEmpty()) {
+        if (mbis.isEmpty()) {
             missingMbi += 1;
         }
 
-        return new Identifiers(beneId.get(), mbiId.orElse(null));
+        return new Identifiers(beneId.get(), mbis);
     }
 
     private boolean isBeneficiaryId(Identifier identifier) {

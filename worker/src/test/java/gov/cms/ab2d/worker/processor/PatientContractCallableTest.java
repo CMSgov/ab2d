@@ -56,8 +56,8 @@ class PatientContractCallableTest {
                 assertNotNull(patient.getBeneficiaryId());
                 assertTrue(patient.getBeneficiaryId().contains("test-"));
 
-                assertNotNull(patient.getMbi());
-                assertTrue(patient.getMbi().contains("mbi-"));
+                assertNotNull(patient.getMbis());
+                assertEquals(1, patient.getMbis().size());
             }
 
             assertEquals(20, mapping.getPatients().size());

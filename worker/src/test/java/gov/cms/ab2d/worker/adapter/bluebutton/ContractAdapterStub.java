@@ -13,6 +13,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static gov.cms.ab2d.worker.processor.BundleUtils.createIdentifierWithoutMbi;
+
 /**
  * This is a stub implementation that we can use till the BFD API becomes available.
  * The rightmost 3 characters of the contractNumber being passed in must be numeric.
@@ -146,7 +148,7 @@ public class ContractAdapterStub implements ContractBeneSearch {
         beneficiaries.setPatients(patientsMap);
         for (String row : rows) {
             ContractBeneficiaries.PatientDTO patientDTO = ContractBeneficiaries.PatientDTO.builder()
-                    .patientId(row)
+                    .identifiers(createIdentifierWithoutMbi(row))
                     .dateRangesUnderContract(monthsUnderContract)
                     .build();
             patientsMap.put(row, patientDTO);

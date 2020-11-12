@@ -95,10 +95,10 @@ class ContractBeneSearchTest {
         assertThat(patients.size(), is(1));
 
         ContractBeneficiaries.PatientDTO patient0 = patients.values().stream()
-                .filter(c -> c.getPatientId().equalsIgnoreCase("ccw_patient_000")).findFirst().get();
+                .filter(c -> c.getBeneficiaryId().equalsIgnoreCase("ccw_patient_000")).findFirst().get();
 
-        assertThat(patient0.getPatientId(), is("ccw_patient_000"));
-        assertThat(patient0.getMbiId(), is("mbi0"));
+        assertThat(patient0.getBeneficiaryId(), is("ccw_patient_000"));
+        assertTrue(patient0.getIdentifiers().getMbis().contains("mbi0"));
         assertThat(patient0.getDateRangesUnderContract().size(), is(1));
 
         verify(client).requestPartDEnrolleesFromServer(anyString(), anyInt());
@@ -109,9 +109,9 @@ class ContractBeneSearchTest {
     void GivenPatientActiveInJanAndFeb_ShouldReturnTwoRowsInDateRangesUnderContract() throws ExecutionException, InterruptedException {
         ContractBeneficiaries response = cut.getPatients(contractNumber, Month.FEBRUARY.getValue(), tracker);
         Collection <ContractBeneficiaries.PatientDTO> patients = response.getPatients().values();
-        ContractBeneficiaries.PatientDTO patient0 = patients.stream().filter(c -> c.getPatientId().equalsIgnoreCase("ccw_patient_000")).findFirst().get();
+        ContractBeneficiaries.PatientDTO patient0 = patients.stream().filter(c -> c.getBeneficiaryId().equalsIgnoreCase("ccw_patient_000")).findFirst().get();
 
-        assertThat(patient0.getPatientId(), is("ccw_patient_000"));
+        assertThat(patient0.getBeneficiaryId(), is("ccw_patient_000"));
         assertThat(patient0.getDateRangesUnderContract().size(), is(2));
 
         verify(client, times(2)).requestPartDEnrolleesFromServer(anyString(), anyInt());
@@ -141,10 +141,10 @@ class ContractBeneSearchTest {
         ContractBeneficiaries response = cut.getPatients(contractNumber, Month.MARCH.getValue(), tracker);
 
         for (ContractBeneficiaries.PatientDTO patient : response.getPatients().values()) {
-            if (patient.getPatientId().equalsIgnoreCase("ccw_patient_000")) {
+            if (patient.getBeneficiaryId().equalsIgnoreCase("ccw_patient_000")) {
                 //expect patient0 to be active in all 3 months
                 assertThat(patient.getDateRangesUnderContract().size(), is(3));
-            } else if (patient.getPatientId().equalsIgnoreCase("ccw_patient_001")) {
+            } else if (patient.getBeneficiaryId().equalsIgnoreCase("ccw_patient_001")) {
                 //expect patient1 to be active in only 2 months
                 assertThat(patient.getDateRangesUnderContract().size(), is(2));
                 List<FilterOutByDate.DateRange> dateRangesUnderContract = patient.getDateRangesUnderContract();
@@ -181,14 +181,14 @@ class ContractBeneSearchTest {
         // 1st patient has 2 rows in date ranges under contract
         ContractBeneficiaries.PatientDTO patient0 = patients.entrySet().stream()
                 .map(Map.Entry::getValue)
-                .filter(c -> c.getPatientId().equalsIgnoreCase("ccw_patient_000"))
+                .filter(c -> c.getBeneficiaryId().equalsIgnoreCase("ccw_patient_000"))
                 .findFirst().get();
         assertThat(patient0.getDateRangesUnderContract().size(), is(2));
 
         // 2nd patient has 1 row in date ranges under contract
         ContractBeneficiaries.PatientDTO patient1 = patients.entrySet().stream()
                 .map(Map.Entry::getValue)
-                .filter(c -> c.getPatientId().equalsIgnoreCase("ccw_patient_001"))
+                .filter(c -> c.getBeneficiaryId().equalsIgnoreCase("ccw_patient_001"))
                 .findFirst().get();
         assertThat(patient1.getDateRangesUnderContract().size(), is(1));
 
@@ -217,12 +217,12 @@ class ContractBeneSearchTest {
         assertThat(patients.size(), is(2));
 
         for (ContractBeneficiaries.PatientDTO patient : patients) {
-            if (patient.getPatientId().equalsIgnoreCase("ccw_patient_000")) {
+            if (patient.getBeneficiaryId().equalsIgnoreCase("ccw_patient_000")) {
                 assertThat(patient.getDateRangesUnderContract().size(), is(2));
-            } else if (patient.getPatientId().equalsIgnoreCase("ccw_patient_001")) {
+            } else if (patient.getBeneficiaryId().equalsIgnoreCase("ccw_patient_001")) {
                 assertThat(patient.getDateRangesUnderContract().size(), is(1));
             } else {
-                fail("Invalid patient ID: " + patient.getPatientId());
+                fail("Invalid patient ID: " + patient.getBeneficiaryId());
             }
         }
         verify(client, times(2)).requestPartDEnrolleesFromServer(anyString(), anyInt());
@@ -240,11 +240,11 @@ class ContractBeneSearchTest {
         assertThat(patients.size(), is(2));
 
         ContractBeneficiaries.PatientDTO patient0 = patients.stream()
-                .filter(c -> c.getPatientId().equalsIgnoreCase("ccw_patient_000")).findFirst().get();
+                .filter(c -> c.getBeneficiaryId().equalsIgnoreCase("ccw_patient_000")).findFirst().get();
         assertThat(patient0.getDateRangesUnderContract().size(), is(2));
 
         ContractBeneficiaries.PatientDTO patient1 = patients.stream()
-                .filter(c -> c.getPatientId().equalsIgnoreCase("ccw_patient_001")).findFirst().get();
+                .filter(c -> c.getBeneficiaryId().equalsIgnoreCase("ccw_patient_001")).findFirst().get();
         assertThat(patient1.getDateRangesUnderContract().size(), is(2));
 
         verify(client, times(2)).requestPartDEnrolleesFromServer(anyString(), anyInt());
@@ -271,14 +271,14 @@ class ContractBeneSearchTest {
         assertThat(patients.size(), is(3));
 
         for (ContractBeneficiaries.PatientDTO patient : patients) {
-            if (patient.getPatientId().equalsIgnoreCase("ccw_patient_000")) {
+            if (patient.getBeneficiaryId().equalsIgnoreCase("ccw_patient_000")) {
                 assertThat(patient.getDateRangesUnderContract().size(), is(1));
-            } else if (patient.getPatientId().equalsIgnoreCase("ccw_patient_001")) {
+            } else if (patient.getBeneficiaryId().equalsIgnoreCase("ccw_patient_001")) {
                 assertThat(patient.getDateRangesUnderContract().size(), is(1));
-            } else if (patient.getPatientId().equalsIgnoreCase("ccw_patient_002")) {
+            } else if (patient.getBeneficiaryId().equalsIgnoreCase("ccw_patient_002")) {
                 assertThat(patient.getDateRangesUnderContract().size(), is(1));
             } else {
-                fail("Invalid patient ID: " + patient.getPatientId());
+                fail("Invalid patient ID: " + patient.getBeneficiaryId());
             }
         }
 
@@ -299,12 +299,12 @@ class ContractBeneSearchTest {
         assertThat(patients.size(), is(2));
 
         for (ContractBeneficiaries.PatientDTO patient : patients) {
-            if (patient.getPatientId().equalsIgnoreCase("ccw_patient_000")) {
+            if (patient.getBeneficiaryId().equalsIgnoreCase("ccw_patient_000")) {
                 assertThat(patient.getDateRangesUnderContract().size(), is(1));
-            } else if (patient.getPatientId().equalsIgnoreCase("ccw_patient_001")) {
+            } else if (patient.getBeneficiaryId().equalsIgnoreCase("ccw_patient_001")) {
                 assertThat(patient.getDateRangesUnderContract().size(), is(1));
             } else {
-                fail("Invalid patient ID: " + patient.getPatientId());
+                fail("Invalid patient ID: " + patient.getBeneficiaryId());
             }
         }
 

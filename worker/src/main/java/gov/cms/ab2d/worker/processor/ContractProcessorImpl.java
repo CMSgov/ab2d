@@ -15,10 +15,7 @@ import gov.cms.ab2d.eventlogger.events.ErrorEvent;
 import gov.cms.ab2d.worker.adapter.bluebutton.ContractBeneficiaries;
 import gov.cms.ab2d.worker.adapter.bluebutton.ContractBeneficiaries.PatientDTO;
 import gov.cms.ab2d.worker.config.RoundRobinBlockingQueue;
-import gov.cms.ab2d.worker.processor.domainmodel.ContractData;
-import gov.cms.ab2d.worker.processor.domainmodel.EobSearchResult;
-import gov.cms.ab2d.worker.processor.domainmodel.PatientClaimsRequest;
-import gov.cms.ab2d.worker.processor.domainmodel.ProgressTracker;
+import gov.cms.ab2d.worker.processor.domainmodel.*;
 import gov.cms.ab2d.worker.service.FileService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -240,13 +237,18 @@ public class ContractProcessorImpl implements ContractProcessor {
         }
         // Get first EOB Bene ID
         ExplanationOfBenefit eob = eobs.get(0);
-        String mbi = null;
+
+        // Add extesions only if beneficiary id is present and known to memberships
         String benId = getPatientIdFromEOB(eob);
-        if (benId != null) {
-            mbi = patients.get(benId).getMbiId();
+        if (benId != null && patients.containsKey(benId) ) {
+            Identifiers patient = patients.get(benId).getIdentifiers();
+
+            // Add each mbi to each eob
+            for (String mbi : patient.getMbis()) {
+                Extension mbiExtension = createExtension(mbi);
+                eobs.forEach(e -> e.addExtension(mbiExtension));
+            }
         }
-        Extension extension = createExtension(mbi);
-        eobs.stream().forEach(e -> e.addExtension(extension));
     }
 
     Extension createExtension(String mbi) {

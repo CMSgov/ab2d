@@ -1,17 +1,24 @@
 package gov.cms.ab2d.worker.processor;
 
 import gov.cms.ab2d.worker.adapter.bluebutton.ContractBeneficiaries;
+import gov.cms.ab2d.worker.processor.domainmodel.Identifiers;
 import org.hl7.fhir.dstu3.model.*;
 
-import java.util.Calendar;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class BundleUtils {
 
     public static final String BENEFICIARY_ID = "https://bluebutton.cms.gov/resources/variables/bene_id";
     public static final String MBI_ID = "http://hl7.org/fhir/sid/us-mbi";
+
+    public static Identifiers createIdentifierWithoutMbi(String beneficiaryId) {
+        return new Identifiers(beneficiaryId, Collections.emptyList());
+    }
+
+    public static Identifiers createIdentifier(String beneficiaryId, String... mbis) {
+        return new Identifiers(beneficiaryId, List.of(mbis));
+    }
 
     public static Bundle createBundle(Bundle.BundleEntryComponent ... bundleEntries) {
         var bundle = new Bundle();
@@ -23,7 +30,7 @@ public class BundleUtils {
     }
 
     public static List<ContractBeneficiaries.PatientDTO> getPatient(String id, Collection<ContractBeneficiaries.PatientDTO> patients) {
-        return patients.stream().filter(c -> c.getPatientId().equalsIgnoreCase(id)).collect(Collectors.toList());
+        return patients.stream().filter(c -> c.getBeneficiaryId().equalsIgnoreCase(id)).collect(Collectors.toList());
     }
 
     public static Bundle.BundleEntryComponent createBundleEntry(String patientId, String mbi, int year) {
