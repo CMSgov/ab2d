@@ -46,8 +46,8 @@ associated with your machine.
        <tr>
          <td>PDP-1000</td>
          <td>Z0001</td>
-         <td>0lc65ErV8OmY297</td>
-         <td>GO6eglkXUDtjVjto3L-3C0offzTMk2qlz9r</td>
+         <td>0oa2t0lc65ErV8OmY297</td>
+         <td>1Bl3HGO6eglkXUDtjVjto3L-3C0offzTMk2qlz9r</td>
        </tr>
        <tr>
          <td>PDP-2000</td>

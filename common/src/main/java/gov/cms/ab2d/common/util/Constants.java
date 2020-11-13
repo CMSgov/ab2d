@@ -10,6 +10,8 @@ public final class Constants {
 
     public static final String NDJSON_FIRE_CONTENT_TYPE = "application/fhir+ndjson";
 
+    public static final String CSV_TYPE = "text/csv";
+
     public static final String JOB_LOG = "job";
 
     public static final String USERNAME = "username";
