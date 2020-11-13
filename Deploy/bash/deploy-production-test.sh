@@ -38,8 +38,12 @@ fi
 cd "${START_DIR}"
 source ./deploy-s3-terraform-backend.sh
 
-# Deploy or update test IAM module
+# Deploy or update core module
 
 cd "${START_DIR}"
-source ./deploy-test-iam-module.sh
+source ./deploy-core-module.sh
 
+# Deploy or update data module
+
+cd "${START_DIR}"
+source ./deploy-data-module.sh

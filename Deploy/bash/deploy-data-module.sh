@@ -18,7 +18,6 @@ echo "Check vars are not empty before proceeding..."
 if  [ -z "${CMS_ENV_PARAM}" ] \
     || [ -z "${PARENT_ENV_PARAM}" ] \
     || [ -z "${DEBUG_LEVEL_PARAM}" ] \
-    || [ -z "${REGION_PARAM}" ] \
     || [ -z "${AWS_ACCOUNT_NUMBER_PARAM}" ] \
     || [ -z "${JENKINS_AGENT_SEC_GROUP_ID}" ] \
     || [ -z "${CLOUD_TAMER_PARAM}" ]; then
@@ -83,15 +82,40 @@ export TF_LOG_PATH=/var/log/terraform/tf.log
 rm -f /var/log/terraform/tf.log
 
 #
+# Initialize and validate terraform
+#
+
+# Initialize and validate terraform for the target environment
+
+echo "***************************************************************"
+echo "Initialize and validate terraform for the target environment..."
+echo "***************************************************************"
+
+cd "${START_DIR}/.."
+cd "terraform/environments/${CMS_ENV}/data"
+
+rm -f ./*.tfvars
+
+terraform init \
+  -backend-config="region=${AWS_DEFAULT_REGION}" \
+  -backend-config="bucket=${S3_TFSTATE_BUCKET}" \
+  -backend-config="key=${CMS_ENV}/terraform/data/terraform.tfstate" \
+  -backend-config="encrypt=true" \
+  -backend-config="kms_key_id=${TFSTATE_KMS_KEY_ID}" \
+  -backend-config="dynamodb_table=${CMS_ENV}-data-tfstate-table"
+
+terraform validate
+
+#
 # Create or refresh IAM components for target environment
 #
 
 cd "${START_DIR}/.."
-cd "terraform/environments/${CMS_ENV}"
+cd "terraform/environments/${CMS_ENV}/data"
 
 terraform apply \
+  --var "aws_account_number=${AWS_ACCOUNT_NUMBER}" \
   --var "env=${CMS_ENV}" \
   --var "parent_env=${PARENT_ENV}" \
-  --var "aws_account_number=${AWS_ACCOUNT_NUMBER}" \
-  --target module.test_iam \
+  --var "region=${AWS_DEFAULT_REGION}" \
   --auto-approve

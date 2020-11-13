@@ -280,13 +280,11 @@ if [ "${BUCKET_ENCRYPTION_STATUS}" != "0" ]; then
     --server-side-encryption-configuration file://generated/tfstate_bucket_server_side_encryption.json
 fi
 
-# Create or verify dynamodb table
-
-# Table.TableName
+# Create or verify dynamodb table for data module
 
 set +e # Turn off exit on error
 aws --region "${AWS_DEFAULT_REGION}" dynamodb describe-table \
-  --table-name "${CMS_ENV}-tfstate-table" \
+  --table-name "${CMS_ENV}-data-tfstate-table" \
   1> /dev/null \
   2> /dev/null
 DYNAMODB_TABLE_STATUS=$?
@@ -294,34 +292,9 @@ set -e # Turn on exit on error
 
 if [ "${DYNAMODB_TABLE_STATUS}" != "0" ]; then
   aws --region "${AWS_DEFAULT_REGION}" dynamodb create-table \
-    --table-name "${CMS_ENV}-tfstate-table" \
+    --table-name "${CMS_ENV}-data-tfstate-table" \
     --attribute-definitions AttributeName=LockID,AttributeType=S \
     --key-schema AttributeName=LockID,KeyType=HASH \
     --provisioned-throughput ReadCapacityUnits=5,WriteCapacityUnits=5 \
     1> /dev/null
 fi
-
-#
-# Initialize and validate terraform
-#
-
-# Initialize and validate terraform for the target environment
-
-echo "***************************************************************"
-echo "Initialize and validate terraform for the target environment..."
-echo "***************************************************************"
-
-cd "${START_DIR}/.."
-cd "terraform/environments/${CMS_ENV}"
-
-rm -f ./*.tfvars
-
-terraform init \
-  -backend-config="region=${AWS_DEFAULT_REGION}" \
-  -backend-config="bucket=${S3_TFSTATE_BUCKET}" \
-  -backend-config="key=${CMS_ENV}/terraform/terraform.tfstate" \
-  -backend-config="encrypt=true" \
-  -backend-config="kms_key_id=${TFSTATE_KMS_KEY_ID}" \
-  -backend-config="dynamodb_table=${CMS_ENV}-tfstate-table"
-
-terraform validate

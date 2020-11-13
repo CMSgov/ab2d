@@ -1,0 +1,28 @@
+provider "aws" {
+  region  = "us-east-1"
+  version = "~> 2.21"
+}
+
+module "data" {
+  source                      = "../../../modules/data"
+  aws_account_number          = var.aws_account_number
+  env                         = var.env
+  parent_env                  = var.parent_env
+  region                      = var.region
+}
+
+# Had to pass "-backend-config" parameters to "terraform init" since "Variables
+# may not be used here"
+terraform {
+  backend "s3" {
+  }
+}
+
+data "terraform_remote_state" "core" {
+  backend = "s3"
+  config  = {
+    region         = var.region
+    bucket         = "${var.env}-tfstate"
+    key            = "${var.env}/terraform/core/terraform.tfstate"
+  }
+}

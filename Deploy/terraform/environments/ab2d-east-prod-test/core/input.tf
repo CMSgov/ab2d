@@ -2,13 +2,13 @@
 # Target environment variables
 #
 
-variable "env" {
+variable "aws_account_number" {
   type        = string
   default     = ""
   description = "Please pass this on command line and not as a value here"
 }
 
-variable "aws_account_number" {
+variable "env" {
   type        = string
   default     = ""
   description = "Please pass this on command line and not as a value here"
@@ -20,6 +20,11 @@ variable "parent_env" {
   description = "Please pass this on command line and not as a value here"
 }
 
+variable "region" {
+  type        = string
+  default     = ""
+  description = "Please pass this on command line and not as a value here"
+}
 
 
 # #
