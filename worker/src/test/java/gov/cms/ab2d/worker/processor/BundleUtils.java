@@ -47,6 +47,18 @@ public class BundleUtils {
         return patient;
     }
 
+    public static Patient createPatientWithMultipleMbis(String patientId, int numMbis, int year) {
+        var patient = new Patient();
+        patient.getIdentifier().add(createBeneficiaryIdentifier(patientId));
+
+        for (int i = 0; i < numMbis; i++) {
+            patient.getIdentifier().add(createMbiIdentifier(patientId + "mbi-" + i));
+        }
+
+        patient.getExtension().add(createReferenceYearExtension(year));
+        return patient;
+    }
+
     public static Identifier createBeneficiaryIdentifier(String beneficiaryId) {
         var identifier = new Identifier();
         identifier.setSystem(BENEFICIARY_ID);

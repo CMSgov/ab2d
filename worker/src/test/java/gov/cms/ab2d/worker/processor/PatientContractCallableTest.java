@@ -12,6 +12,7 @@ import org.mockito.Mockito;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import static gov.cms.ab2d.worker.processor.BundleUtils.createPatient;
+import static gov.cms.ab2d.worker.processor.BundleUtils.createPatientWithMultipleMbis;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static org.junit.jupiter.api.Assertions.*;
@@ -58,6 +59,42 @@ class PatientContractCallableTest {
 
                 assertNotNull(patient.getMbis());
                 assertEquals(1, patient.getMbis().size());
+            }
+
+            assertEquals(20, mapping.getPatients().size());
+        } catch (Exception exception) {
+            fail("could not execute basic job with mock client", exception);
+        }
+
+    }
+
+    @DisplayName("Multiple mbis captured")
+    @Test
+    void multipleMbis() {
+
+        Bundle bundle1 = buildBundle(0, 10, 3,2020);
+        bundle1.setLink(singletonList(new Bundle.BundleLinkComponent().setRelation(Bundle.LINK_NEXT)));
+
+        Bundle bundle2 = buildBundle(10, 20, 3,2020);
+
+        when(bfdClient.requestPartDEnrolleesFromServer(anyString(), anyInt())).thenReturn(bundle1);
+        when(bfdClient.requestNextBundleFromServer(any(Bundle.class))).thenReturn(bundle2);
+
+        Contract contract = new Contract();
+        contract.setContractNumber("TESTING");
+        contract.setContractName("TESTING");
+
+        PatientContractCallable patientContractCallable = new PatientContractCallable("TESTING", 1, 2020, bfdClient, false);
+
+        try {
+            ContractMapping mapping = patientContractCallable.call();
+
+            for (Identifiers patient : mapping.getPatients()) {
+                assertNotNull(patient.getBeneficiaryId());
+                assertTrue(patient.getBeneficiaryId().contains("test-"));
+
+                assertNotNull(patient.getMbis());
+                assertEquals(3, patient.getMbis().size());
             }
 
             assertEquals(20, mapping.getPatients().size());
@@ -158,6 +195,18 @@ class PatientContractCallableTest {
         for (int i = startIndex; i < endIndex; i++) {
             Bundle.BundleEntryComponent component = new Bundle.BundleEntryComponent();
             Patient patient = createPatient("test-" + i, "mbi-" + i, year);
+            component.setResource(patient);
+            bundle1.addEntry(component);
+        }
+        return bundle1;
+    }
+
+    private Bundle buildBundle(int startIndex, int endIndex, int numMbis, int year) {
+        Bundle bundle1 = new Bundle();
+
+        for (int i = startIndex; i < endIndex; i++) {
+            Bundle.BundleEntryComponent component = new Bundle.BundleEntryComponent();
+            Patient patient = createPatientWithMultipleMbis("test-" + i, numMbis, year);
             component.setResource(patient);
             bundle1.addEntry(component);
         }
