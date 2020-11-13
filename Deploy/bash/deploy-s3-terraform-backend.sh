@@ -61,6 +61,30 @@ source "${START_DIR}/functions/fn_get_temporary_aws_credentials_via_cloudtamer_a
 # shellcheck source=./functions/fn_get_temporary_aws_credentials_via_aws_sts_assume_role.sh
 source "${START_DIR}/functions/fn_get_temporary_aws_credentials_via_aws_sts_assume_role.sh"
 
+fn_create_or_verify_dynamodb_table_for_module ()
+{
+  # Set parameters
+
+  IN_MODULE="$1"
+
+  set +e # Turn off exit on error
+  aws --region "${AWS_DEFAULT_REGION}" dynamodb describe-table \
+    --table-name "${CMS_ENV}-${IN_MODULE}-tfstate-table" \
+    1> /dev/null \
+    2> /dev/null
+  DYNAMODB_TABLE_STATUS=$?
+  set -e # Turn on exit on error
+
+  if [ "${DYNAMODB_TABLE_STATUS}" != "0" ]; then
+    aws --region "${AWS_DEFAULT_REGION}" dynamodb create-table \
+      --table-name "${CMS_ENV}-${IN_MODULE}-tfstate-table" \
+      --attribute-definitions AttributeName=LockID,AttributeType=S \
+      --key-schema AttributeName=LockID,KeyType=HASH \
+      --provisioned-throughput ReadCapacityUnits=5,WriteCapacityUnits=5 \
+      1> /dev/null
+  fi
+}
+
 #
 # Set AWS target environment
 #
@@ -280,21 +304,10 @@ if [ "${BUCKET_ENCRYPTION_STATUS}" != "0" ]; then
     --server-side-encryption-configuration file://generated/tfstate_bucket_server_side_encryption.json
 fi
 
+# Create or verify dynamodb table for core module
+
+fn_create_or_verify_dynamodb_table_for_module "core"
+
 # Create or verify dynamodb table for data module
 
-set +e # Turn off exit on error
-aws --region "${AWS_DEFAULT_REGION}" dynamodb describe-table \
-  --table-name "${CMS_ENV}-data-tfstate-table" \
-  1> /dev/null \
-  2> /dev/null
-DYNAMODB_TABLE_STATUS=$?
-set -e # Turn on exit on error
-
-if [ "${DYNAMODB_TABLE_STATUS}" != "0" ]; then
-  aws --region "${AWS_DEFAULT_REGION}" dynamodb create-table \
-    --table-name "${CMS_ENV}-data-tfstate-table" \
-    --attribute-definitions AttributeName=LockID,AttributeType=S \
-    --key-schema AttributeName=LockID,KeyType=HASH \
-    --provisioned-throughput ReadCapacityUnits=5,WriteCapacityUnits=5 \
-    1> /dev/null
-fi
+fn_create_or_verify_dynamodb_table_for_module "data"
