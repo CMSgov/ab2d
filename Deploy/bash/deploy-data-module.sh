@@ -37,6 +37,8 @@ export DEBUG_LEVEL="${DEBUG_LEVEL_PARAM}"
 
 AWS_ACCOUNT_NUMBER="${AWS_ACCOUNT_NUMBER_PARAM}"
 
+MODULE="data"
+
 # Set whether CloudTamer API should be used
 
 if [ "${CLOUD_TAMER_PARAM}" != "false" ] && [ "${CLOUD_TAMER_PARAM}" != "true" ]; then
@@ -92,17 +94,17 @@ echo "Initialize and validate terraform for the target environment..."
 echo "***************************************************************"
 
 cd "${START_DIR}/.."
-cd "terraform/environments/${CMS_ENV}/data"
+cd "terraform/environments/${CMS_ENV}/${MODULE}"
 
 rm -f ./*.tfvars
 
 terraform init \
   -backend-config="region=${AWS_DEFAULT_REGION}" \
   -backend-config="bucket=${S3_TFSTATE_BUCKET}" \
-  -backend-config="key=${CMS_ENV}/terraform/data/terraform.tfstate" \
+  -backend-config="key=${CMS_ENV}/terraform/${MODULE}/terraform.tfstate" \
   -backend-config="encrypt=true" \
   -backend-config="kms_key_id=${TFSTATE_KMS_KEY_ID}" \
-  -backend-config="dynamodb_table=${CMS_ENV}-data-tfstate-table"
+  -backend-config="dynamodb_table=${CMS_ENV}-${MODULE}-tfstate-table"
 
 terraform validate
 
@@ -111,7 +113,7 @@ terraform validate
 #
 
 cd "${START_DIR}/.."
-cd "terraform/environments/${CMS_ENV}/data"
+cd "terraform/environments/${CMS_ENV}/${MODULE}"
 
 terraform apply \
   --var "aws_account_number=${AWS_ACCOUNT_NUMBER}" \
