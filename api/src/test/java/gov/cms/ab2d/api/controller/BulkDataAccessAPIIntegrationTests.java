@@ -1,6 +1,8 @@
 package gov.cms.ab2d.api.controller;
 
-import com.google.gson.Gson;
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.PropertyAccessor;
+import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.jayway.jsonpath.JsonPath;
 import com.okta.jwt.JwtVerificationException;
 import gov.cms.ab2d.api.SpringBootApp;
@@ -1299,8 +1301,9 @@ public class BulkDataAccessAPIIntegrationTests {
 
         String body = mvcResult.getResponse().getContentAsString();
 
-        assertEquals(body, new Gson().toJson(new CapabilityStatement()));
-    }
+        assertEquals(body, new JsonMapper()
+                .setVisibility(PropertyAccessor.FIELD, JsonAutoDetect.Visibility.ANY)
+                .writeValueAsString(new CapabilityStatement()));    }
 
     @Test
     public void tlsTest() throws Exception {
@@ -1310,6 +1313,7 @@ public class BulkDataAccessAPIIntegrationTests {
 
         String body = mvcResult.getResponse().getContentAsString();
 
-        assertEquals(body, new Gson().toJson(new CapabilityStatement()));
-    }
+        assertEquals(body, new JsonMapper()
+                .setVisibility(PropertyAccessor.FIELD, JsonAutoDetect.Visibility.ANY)
+                .writeValueAsString(new CapabilityStatement()));    }
 }
