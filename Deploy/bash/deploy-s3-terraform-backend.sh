@@ -15,13 +15,12 @@ cd "${START_DIR}"
 #
 
 echo "Check vars are not empty before proceeding..."
-if  [ -z "${CMS_ENV_PARAM}" ] \
+if  [ -z "${AWS_ACCOUNT_NUMBER_PARAM}" ] \
+    || [ -z "${CLOUD_TAMER_PARAM}" ] \
+    || [ -z "${CMS_ENV_PARAM}" ] \
     || [ -z "${DEBUG_LEVEL_PARAM}" ] \
     || [ -z "${REGION_PARAM}" ] \
-    || [ -z "${VPC_ID_PARAM}" ] \
-    || [ -z "${AWS_ACCOUNT_NUMBER_PARAM}" ] \
-    || [ -z "${JENKINS_AGENT_SEC_GROUP_ID}" ] \
-    || [ -z "${CLOUD_TAMER_PARAM}" ]; then
+    || [ -z "${JENKINS_AGENT_SEC_GROUP_ID}" ]; then
   echo "ERROR: All parameters must be set."
   exit 1
 fi

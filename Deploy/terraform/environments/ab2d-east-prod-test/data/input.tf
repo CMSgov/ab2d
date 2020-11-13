@@ -1,7 +1,23 @@
 variable "aws_account_number" {}
+variable "db_allocated_storage_size" {}
+variable "db_backup_retention_period" {}
+variable "db_backup_window" {}
+variable "db_copy_tags_to_snapshot" {}
+variable "db_identifier" {}
+variable "db_instance_class" {}
+variable "db_iops" {}
+variable "db_maintenance_window" {}
+variable "db_multi_az" {}
+variable "db_parameter_group_name" {}
+variable "db_snapshot_id" {}
+variable "db_subnet_group_name" {}
 variable "env" {}
+variable "jenkins_agent_sec_group_id" {}
 variable "parent_env" {}
+variable "postgres_engine_version" {}
 variable "region" {}
+
+
 
 //variable "allocated_storage_size" {}
 //variable "engine_version" {}

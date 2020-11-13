@@ -16,6 +16,7 @@ cd "${START_DIR}"
 
 echo "Check vars are not empty before proceeding..."
 if  [ -z "${CMS_ENV_PARAM}" ] \
+    || [ -z "${ENV_PASCAL_CASE_PARAM}" ] \
     || [ -z "${PARENT_ENV_PARAM}" ] \
     || [ -z "${DEBUG_LEVEL_PARAM}" ] \
     || [ -z "${AWS_ACCOUNT_NUMBER_PARAM}" ] \
@@ -30,6 +31,8 @@ fi
 #
 
 CMS_ENV="${CMS_ENV_PARAM}"
+
+ENV_PASCAL_CASE="${ENV_PASCAL_CASE_PARAM}"
 
 PARENT_ENV="${PARENT_ENV_PARAM}"
 
@@ -118,6 +121,7 @@ cd "terraform/environments/${CMS_ENV}/${MODULE}"
 terraform apply \
   --var "aws_account_number=${AWS_ACCOUNT_NUMBER}" \
   --var "env=${CMS_ENV}" \
+  --var "env_pascal_case=${ENV_PASCAL_CASE}" \
   --var "parent_env=${PARENT_ENV}" \
   --var "region=${AWS_DEFAULT_REGION}" \
   --auto-approve

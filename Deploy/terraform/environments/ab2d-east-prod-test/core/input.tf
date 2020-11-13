@@ -14,6 +14,12 @@ variable "env" {
   description = "Please pass this on command line and not as a value here"
 }
 
+variable "env_pascal_case" {
+  type        = string
+  default     = ""
+  description = "Please pass this on command line and not as a value here"
+}
+
 variable "parent_env" {
   type        = string
   default     = ""
@@ -209,10 +215,6 @@ variable "region" {
 #   default = "true"
 # }
 
-# variable "db_subnet_group_name" {
-#   default = "ab2d-rds-subnet-group"
-# }
-
 # variable "db_parameter_group_name" {
 #   default = "ab2d-rds-parameter-group"
 # }
@@ -333,21 +335,6 @@ variable "region" {
 
 # variable "victorops_url_endpoint" {
 #   default = ""
-# }
-
-# #
-# # VPC variables
-# #
-
-# variable "vpc_id" {
-#   default = ""
-#   description = "Please pass this on command line and not as a value here"
-# }
-
-# variable "private_subnet_ids" {
-#   type        = list(string)
-#   default     = []
-#   description = "App instances and DB go here"
 # }
 
 # #

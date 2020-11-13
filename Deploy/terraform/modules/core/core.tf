@@ -1,12 +1,33 @@
-#
-# Create instance role
-#
+# Get target VPC data
+
+data "aws_vpc" "target_vpc" {
+  filter {
+    name   = "tag:Name"
+    values = [var.parent_env]
+  }
+}
+
+data "aws_subnet" "private_subnet_a" {
+  filter {
+    name   = "tag:Name"
+    values = ["${var.parent_env}-private-a"]
+  }
+}
+
+data "aws_subnet" "private_subnet_b" {
+  filter {
+    name   = "tag:Name"
+    values = ["${var.parent_env}-private-b"]
+  }
+}
+
+# Reference AmazonEC2ContainerServiceforEC2Role
 
 data "aws_iam_policy" "amazon_ec2_container_service_for_ec2_role" {
   arn = "arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role"
 }
 
-# Create Ab2dProdTestPackerPolicy
+# Create packer policy
 
 data "aws_iam_policy_document" "instance_role_packer_policy" {
   statement {
@@ -52,12 +73,12 @@ data "aws_iam_policy_document" "instance_role_packer_policy" {
 }
 
 resource "aws_iam_policy" "packer_policy" {
-  name   = "Ab2dProdTestPackerPolicy"
+  name   = "${var.env_pascal_case}PackerPolicy"
   path   = "/delegatedadmin/developer/"
   policy = data.aws_iam_policy_document.instance_role_packer_policy.json
 }
 
-# Create Ab2dProdTestS3AccessPolicy
+# Create S3 access policy
 
 data "aws_iam_policy_document" "instance_role_s3_access_policy" {
   statement {
@@ -84,12 +105,12 @@ data "aws_iam_policy_document" "instance_role_s3_access_policy" {
 }
 
 resource "aws_iam_policy" "s3_access_policy" {
-  name   = "Ab2dProdTestS3AccessPolicy"
+  name   = "${var.env_pascal_case}S3AccessPolicy"
   path   = "/delegatedadmin/developer/"
   policy = data.aws_iam_policy_document.instance_role_s3_access_policy.json
 }
 
-# Create Ab2dProdTestCloudWatchLogsPolicy
+# Create CloudWatch logs policy
 
 data "aws_iam_policy_document" "instance_role_cloud_watch_logs_policy" {
   statement {
@@ -108,12 +129,12 @@ data "aws_iam_policy_document" "instance_role_cloud_watch_logs_policy" {
 }
 
 resource "aws_iam_policy" "cloud_watch_logs_policy" {
-  name   = "Ab2dProdTestCloudWatchLogsPolicy"
+  name   = "${var.env_pascal_case}CloudWatchLogsPolicy"
   path   = "/delegatedadmin/developer/"
   policy = data.aws_iam_policy_document.instance_role_cloud_watch_logs_policy.json
 }
 
-# Create Ab2dProdTestInstanceRole
+# Create instance role
 
 data "aws_iam_policy_document" "instance_role_assume_role_policy" {
   statement {
@@ -132,7 +153,7 @@ data "aws_iam_policy_document" "instance_role_assume_role_policy" {
 }
 
 resource "aws_iam_role" "ab2d_instance_role" {
-  name               = "Ab2dProdTestInstanceRole"
+  name               = "${var.env_pascal_case}InstanceRole"
   path               = "/delegatedadmin/developer/"
   assume_role_policy = data.aws_iam_policy_document.instance_role_assume_role_policy.json
   permissions_boundary = "arn:aws:iam::${var.aws_account_number}:policy/cms-cloud-admin/developer-boundary-policy"
@@ -158,10 +179,10 @@ resource "aws_iam_role_policy_attachment" "amazon_ec2_container_service_for_ec2_
   policy_arn = data.aws_iam_policy.amazon_ec2_container_service_for_ec2_role.arn
 }
 
-# Create Ab2dProdTestInstanceRole
+# Create instance profile
 
 resource "aws_iam_instance_profile" "ab2d_instance_profile" {
-  name = "Ab2dProdTestInstanceProfile"
+  name = "${var.env_pascal_case}InstanceProfile"
   path = "/delegatedadmin/developer/"
   role = aws_iam_role.ab2d_instance_role.name
 }
