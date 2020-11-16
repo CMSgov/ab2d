@@ -46,7 +46,6 @@ import java.util.stream.Collectors;
 import static gov.cms.ab2d.common.model.JobStatus.CANCELLED;
 import static gov.cms.ab2d.common.util.Constants.CONTRACT_LOG;
 import static gov.cms.ab2d.common.util.Constants.EOB;
-import static gov.cms.ab2d.worker.processor.PatientContractCallable.*;
 import static net.logstash.logback.argument.StructuredArguments.keyValue;
 
 @Slf4j
@@ -268,10 +267,10 @@ public class ContractProcessorImpl implements ContractProcessor {
      * @return mbi extension
      */
     Extension createExtension(String mbi, boolean current) {
-        Identifier identifier = new Identifier().setSystem(MBI_ID).setValue(mbi);
+        Identifier identifier = new Identifier().setSystem(PatientContractCallable.MBI_ID).setValue(mbi);
 
         Coding coding = new Coding()
-                .setCode(current ? CURRENT : HISTORIC);
+                .setCode(current ? PatientContractCallable.CURRENT : PatientContractCallable.HISTORIC);
 
         Extension currencyExtension = new Extension()
                 .setUrl(PatientContractCallable.CURRENCY_IDENTIFIER)
