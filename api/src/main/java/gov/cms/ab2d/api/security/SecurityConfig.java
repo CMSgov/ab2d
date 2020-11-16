@@ -44,9 +44,6 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     @Value("${api.okta-connection-timeout}")
     private int oktaConnectionTimeout;
 
-    @Value("${api.okta-read-timeout}")
-    private int oktaReadTimeout;
-
     @Override
     public void configure(WebSecurity web) {
         web.ignoring().antMatchers("/swagger-ui/**", "/configuration/**",
@@ -81,7 +78,6 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .setIssuer(oktaJwtIssuer)
                 .setAudience(oktaJwtAudience)
                 .setConnectionTimeout(Duration.ofSeconds(oktaConnectionTimeout))
-                .setReadTimeout(Duration.ofSeconds(oktaReadTimeout))
                 .build();
 
         return jwtVerifier;
