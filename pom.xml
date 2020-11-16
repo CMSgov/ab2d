@@ -33,7 +33,7 @@
         <project.root>${basedir}</project.root>
         <java.version>13</java.version>
         <hapi.version>4.2.0</hapi.version>
-        <mockserver.version>5.11.1</mockserver.version>
+        <mockserver.version>5.11.2</mockserver.version>
         <checkstyle.config>${project.root}/src/main/resources/checkstyle.xml</checkstyle.config>
         <logback-encoder.version>6.4</logback-encoder.version>
         <testcontainers.version>1.14.3</testcontainers.version>
