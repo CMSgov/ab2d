@@ -4,8 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 
-import java.util.List;
-import java.util.Set;
+import java.util.LinkedHashSet;
 
 @Getter
 @AllArgsConstructor
@@ -15,5 +14,9 @@ public class Identifiers {
     @EqualsAndHashCode.Include
     private final String beneficiaryId;
 
-    private final List<String> mbis;
+    private final String currentMbi;
+
+    // LinkedHashSet maintains order of mbis as they are added
+    // we always add the current mbi first
+    private final LinkedHashSet<String> historicMbis;
 }

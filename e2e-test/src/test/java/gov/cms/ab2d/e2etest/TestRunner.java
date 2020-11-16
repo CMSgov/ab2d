@@ -51,6 +51,7 @@ import static gov.cms.ab2d.e2etest.APIClient.PATIENT_EXPORT_PATH;
 import static java.time.format.DateTimeFormatter.ISO_DATE_TIME;
 import static java.time.temporal.ChronoUnit.SECONDS;
 import static org.hamcrest.Matchers.matchesPattern;
+import static org.junit.jupiter.api.Assertions.*;
 
 // Unit tests here can be run from the IDE and will use LOCAL as the default, they can also be run from the TestLauncher
 // class to specify a custom environment
@@ -63,6 +64,9 @@ public class TestRunner {
     public static final String MBI_ID = "http://hl7.org/fhir/sid/us-mbi";
 
     private static final String FHIR_TYPE = "application/fhir+ndjson";
+
+    private static final String CURRENCY_IDENTIFIER =
+            "https://bluebutton.cms.gov/resources/codesystem/identifier-currency";
 
     private static APIClient apiClient;
 
@@ -337,8 +341,7 @@ public class TestRunner {
             checkStandardEOBFields(jsonObject);
 
             // Check whether extensions are correct
-            // todo uncomment when mbi search issue is fixed
-//            checkEOBExtensions(jsonObject);
+            checkEOBExtensions(jsonObject);
 
             // Check correctness of metadata
             checkMetadata(since, jsonObject);
@@ -421,6 +424,17 @@ public class TestRunner {
         // Check that mbi is present and not empty
         String mbi = valueIdentifier.getString("value");
         Assert.assertFalse(StringUtils.isBlank(mbi));
+
+        JSONArray extensionsArray = valueIdentifier.getJSONArray("extension");
+        assertEquals(1, extensionsArray.length());
+
+        JSONObject currencyExtension = extensionsArray.getJSONObject(0);
+        assertEquals(CURRENCY_IDENTIFIER, currencyExtension.getString("url"));
+        assertTrue(currencyExtension.has("valueCoding"));
+
+        JSONObject valueCoding = currencyExtension.getJSONObject("valueCoding");
+        assertTrue(valueCoding.has("code"));
+        assertEquals("current", valueCoding.getString("code"));
     }
 
     private boolean validFields(JSONObject jsonObject) {

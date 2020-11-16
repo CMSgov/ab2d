@@ -4,12 +4,15 @@ import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.worker.processor.domainmodel.ContractMapping;
 import gov.cms.ab2d.worker.processor.domainmodel.Identifiers;
+import org.apache.commons.lang3.StringUtils;
 import org.hl7.fhir.dstu3.model.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.test.util.ReflectionTestUtils;
+
+import java.util.Collections;
 
 import static gov.cms.ab2d.worker.processor.BundleUtils.createPatient;
 import static gov.cms.ab2d.worker.processor.BundleUtils.createPatientWithMultipleMbis;
@@ -57,8 +60,9 @@ class PatientContractCallableTest {
                 assertNotNull(patient.getBeneficiaryId());
                 assertTrue(patient.getBeneficiaryId().contains("test-"));
 
-                assertNotNull(patient.getMbis());
-                assertEquals(1, patient.getMbis().size());
+                assertNotNull(patient.getCurrentMbi());
+                assertTrue(StringUtils.isNotBlank(patient.getCurrentMbi()));
+                assertTrue(patient.getHistoricMbis().isEmpty());
             }
 
             assertEquals(20, mapping.getPatients().size());
@@ -93,8 +97,50 @@ class PatientContractCallableTest {
                 assertNotNull(patient.getBeneficiaryId());
                 assertTrue(patient.getBeneficiaryId().contains("test-"));
 
-                assertNotNull(patient.getMbis());
-                assertEquals(3, patient.getMbis().size());
+                assertNotNull(patient.getCurrentMbi());
+                assertEquals(2, patient.getHistoricMbis().size());
+            }
+
+            assertEquals(20, mapping.getPatients().size());
+        } catch (Exception exception) {
+            fail("could not execute basic job with mock client", exception);
+        }
+
+    }
+
+    @DisplayName("Current mbi always appears first")
+    @Test
+    void currentMibAppearsFirst() {
+
+        Bundle bundle1 = buildBundle(0, 10, 3,2020);
+        bundle1.setLink(singletonList(new Bundle.BundleLinkComponent().setRelation(Bundle.LINK_NEXT)));
+
+        bundle1.getEntry().forEach(bec -> {
+            Patient patient = (Patient) bec.getResource();
+            Collections.reverse(patient.getIdentifier());
+        });
+
+        Bundle bundle2 = buildBundle(10, 20, 3,2020);
+
+        when(bfdClient.requestPartDEnrolleesFromServer(anyString(), anyInt())).thenReturn(bundle1);
+        when(bfdClient.requestNextBundleFromServer(any(Bundle.class))).thenReturn(bundle2);
+
+        Contract contract = new Contract();
+        contract.setContractNumber("TESTING");
+        contract.setContractName("TESTING");
+
+        PatientContractCallable patientContractCallable = new PatientContractCallable("TESTING", 1, 2020, bfdClient, false);
+
+        try {
+            ContractMapping mapping = patientContractCallable.call();
+
+            for (Identifiers patient : mapping.getPatients()) {
+                assertNotNull(patient.getBeneficiaryId());
+                assertTrue(patient.getBeneficiaryId().contains("test-"));
+
+                assertNotNull(patient.getCurrentMbi());
+                assertTrue(patient.getCurrentMbi().endsWith("mbi-0"));
+                assertEquals(2, patient.getHistoricMbis().size());
             }
 
             assertEquals(20, mapping.getPatients().size());
@@ -128,7 +174,7 @@ class PatientContractCallableTest {
 
             assertEquals(10, mapping.getPatients().size());
 
-            int pastYear = (int) ReflectionTestUtils.getField(patientContractCallable, "pastYear");
+            int pastYear = (int) ReflectionTestUtils.getField(patientContractCallable, "filteredByYear");
 
             assertEquals(10, pastYear);
         } catch (Exception exception) {

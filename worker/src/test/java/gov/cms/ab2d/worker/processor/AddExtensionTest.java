@@ -69,7 +69,7 @@ public class AddExtensionTest {
         Map<String, ContractBeneficiaries.PatientDTO> patients = new HashMap<>();
         patients.put(beneId, patientDTO);
 
-        cut.addMbiIdToEobs(eobs, patients);
+        cut.addMbiIdsToEobs(eobs, patients);
 
         List<Extension> extensions = b.getExtension();
 
@@ -106,7 +106,7 @@ public class AddExtensionTest {
         Map<String, ContractBeneficiaries.PatientDTO> patients = new HashMap<>();
         patients.put(beneId, patientDTO);
 
-        cut.addMbiIdToEobs(eobs, patients);
+        cut.addMbiIdsToEobs(eobs, patients);
 
         List<Extension> extensions = b.getExtension();
 

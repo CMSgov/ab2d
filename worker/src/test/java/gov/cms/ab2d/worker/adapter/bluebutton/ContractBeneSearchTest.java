@@ -98,7 +98,7 @@ class ContractBeneSearchTest {
                 .filter(c -> c.getBeneficiaryId().equalsIgnoreCase("ccw_patient_000")).findFirst().get();
 
         assertThat(patient0.getBeneficiaryId(), is("ccw_patient_000"));
-        assertTrue(patient0.getIdentifiers().getMbis().contains("mbi0"));
+        assertTrue(patient0.getIdentifiers().getCurrentMbi().contains("mbi0"));
         assertThat(patient0.getDateRangesUnderContract().size(), is(1));
 
         verify(client).requestPartDEnrolleesFromServer(anyString(), anyInt());
