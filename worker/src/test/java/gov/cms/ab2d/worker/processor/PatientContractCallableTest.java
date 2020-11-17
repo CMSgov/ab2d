@@ -88,7 +88,9 @@ class PatientContractCallableTest {
         contract.setContractNumber("TESTING");
         contract.setContractName("TESTING");
 
-        PatientContractCallable patientContractCallable = new PatientContractCallable("TESTING", 1, 2020, bfdClient, false);
+        PatientContractCallable patientContractCallable =
+                new PatientContractCallable("TESTING", 1, 2020, bfdClient,
+                        false, TESTING_JOB_ID);
 
         try {
             ContractMapping mapping = patientContractCallable.call();
@@ -129,7 +131,9 @@ class PatientContractCallableTest {
         contract.setContractNumber("TESTING");
         contract.setContractName("TESTING");
 
-        PatientContractCallable patientContractCallable = new PatientContractCallable("TESTING", 1, 2020, bfdClient, false);
+        PatientContractCallable patientContractCallable =
+                new PatientContractCallable("TESTING", 1, 2020, bfdClient,
+                        false, TESTING_JOB_ID);
 
         try {
             ContractMapping mapping = patientContractCallable.call();
