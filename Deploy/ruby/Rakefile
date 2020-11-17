@@ -48,18 +48,30 @@ end
 
 desc 'Encrypt and put file into S3'
 task :encrypt_and_put_file_into_s3, [:param1, :param2] do |t, args|
+
+  if "#{args.param2}" == "ab2d-east-prod-test-main"
+    kms_key_id = "alias/ab2d-east-prod-test-main-kms"
+  else
+    kms_key_id = "alias/ab2d-kms"
+  end
+
   source_path_and_file = "#{args.param1}"
   s3_bucket = "#{args.param2}"
-  kms_key_id = "alias/ab2d-kms"
   s3 = SecureS3Objects.new
   s3.encrypt_and_put_file_into_s3("#{source_path_and_file}", "#{s3_bucket}", 'encrypted-files', 'us-east-1', "#{kms_key_id}")
 end
 
 desc 'Get file from S3 and decrypt'
 task :get_file_from_s3_and_decrypt, [:param1, :param2] do |t, args|
+
+  if "#{args.param2}" == "ab2d-east-prod-test-main"
+    kms_key_id = "alias/ab2d-east-prod-test-main-kms"
+  else
+    kms_key_id = "alias/ab2d-kms"
+  end
+
   source_path_and_file = "#{args.param1}"
   s3_bucket = "#{args.param2}"
-  kms_key_id = "alias/ab2d-kms"
   s3 = SecureS3Objects.new
   s3.get_file_from_s3_and_decrypt("#{source_path_and_file}", "#{s3_bucket}", 'encrypted-files', 'us-east-1', "#{kms_key_id}", '/tmp')
 end
