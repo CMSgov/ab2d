@@ -733,7 +733,7 @@ lication-load-balancer)
 
 ### Create or update AMI with latest gold disk
 
-1. Change to the "ab2d" repo directory
+1. Change to your "ab2d" repo directory
 
    *Example:*
    
@@ -741,7 +741,7 @@ lication-load-balancer)
    $ cd ~/code/ab2d
    ```
 
-1. Set gold disk test parameters
+1. Set gold disk parameters
 
    ```ShellSession
    $ export CMS_ENV_PARAM=ab2d-east-prod \
