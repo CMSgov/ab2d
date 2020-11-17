@@ -36,6 +36,8 @@ import static org.junit.jupiter.api.Assertions.*;
 @SpringBootTest(properties = {"bfd.contract.to.bene.pagesize=500"})
 class PatientContractCallableLiveTest {
 
+    public static final String TESTING_JOB_ID = "TESTING_JOB_ID";
+
     @Autowired
     ContractBeneSearchImpl contractBeneSearch;
 
@@ -50,7 +52,8 @@ class PatientContractCallableLiveTest {
         contract.setContractNumber("Z0001");
         contract.setContractName("Z0001");
 
-        PatientContractCallable callable = new PatientContractCallable("Z0001", 1, 3, bfdClient, true);
+        PatientContractCallable callable = new PatientContractCallable("Z0001", 1, 3, bfdClient,
+                true, TESTING_JOB_ID);
 
         try {
             ContractMapping results = callable.call();
@@ -70,7 +73,8 @@ class PatientContractCallableLiveTest {
         contract.setContractNumber("Z0001");
         contract.setContractName("Z0001");
 
-        PatientContractCallable callable = new PatientContractCallable("Z0001", 1, 2020, bfdClient, true);
+        PatientContractCallable callable = new PatientContractCallable("Z0001", 1, 2020,
+                bfdClient, true, TESTING_JOB_ID);
 
         try {
             ContractMapping results = callable.call();
@@ -90,11 +94,13 @@ class PatientContractCallableLiveTest {
         contract.setContractNumber("Z0001");
         contract.setContractName("Z0001");
 
-        PatientContractCallable callable = new PatientContractCallable("Z0001", 1, 2020, bfdClient, false);
+        PatientContractCallable callable = new PatientContractCallable("Z0001", 1, 2020,
+                bfdClient, false, TESTING_JOB_ID);
 
         try {
             ContractMapping results = callable.call();
 
+            @SuppressWarnings("ConstantConditions")
             int discarded = (int) ReflectionTestUtils.getField(callable, "pastYear");
             assertEquals(1000, discarded);
             assertTrue(results.getPatients().isEmpty());
