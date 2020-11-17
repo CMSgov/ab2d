@@ -35,6 +35,7 @@ import java.time.OffsetDateTime;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 
+import static gov.cms.ab2d.worker.processor.BundleUtils.createIdentifierWithoutMbi;
 import static java.lang.Boolean.TRUE;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.Matchers.notNullValue;
@@ -292,9 +293,9 @@ class JobProcessorUnitTest {
 
         return ContractBeneficiaries.builder()
                 .contractNumber(contract.getContractNumber())
-                .patient(p1.getPatientId(), p1)
-                .patient(p2.getPatientId(), p2)
-                .patient(p3.getPatientId(), p3)
+                .patient(p1.getBeneficiaryId(), p1)
+                .patient(p2.getBeneficiaryId(), p2)
+                .patient(p3.getBeneficiaryId(), p3)
                 .build();
     }
 
@@ -302,7 +303,7 @@ class JobProcessorUnitTest {
         int anInt = random.nextInt(11);
         var dateRange =  TestUtil.getOpenRange();
         return PatientDTO.builder()
-                .patientId("patient_" + anInt)
+                .identifiers(createIdentifierWithoutMbi("patient_" + anInt))
                 .dateRangesUnderContract(Arrays.asList(dateRange))
                 .build();
     }

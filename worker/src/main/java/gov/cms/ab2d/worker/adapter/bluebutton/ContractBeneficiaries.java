@@ -1,6 +1,7 @@
 package gov.cms.ab2d.worker.adapter.bluebutton;
 
 import gov.cms.ab2d.common.util.FilterOutByDate.DateRange;
+import gov.cms.ab2d.worker.processor.domainmodel.Identifiers;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -27,10 +28,13 @@ public class ContractBeneficiaries {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class PatientDTO {
-        private String patientId;
-        private String mbiId;
+        private Identifiers identifiers;
 
         @Builder.Default
         private List<DateRange> dateRangesUnderContract = new ArrayList<>();
+
+        public String getBeneficiaryId() {
+            return identifiers.getBeneficiaryId();
+        }
     }
 }

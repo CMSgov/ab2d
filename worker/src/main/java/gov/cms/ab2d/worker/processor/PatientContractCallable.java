@@ -5,6 +5,7 @@ import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.worker.processor.domainmodel.ContractMapping;
 import gov.cms.ab2d.worker.processor.domainmodel.Identifiers;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.hl7.fhir.dstu3.model.*;
 
@@ -12,13 +13,18 @@ import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.stream.Stream;
 
-import static java.util.stream.Collectors.joining;
-import static java.util.stream.Collectors.toSet;
+import static java.util.stream.Collectors.*;
 
 @Slf4j
 public class PatientContractCallable implements Callable<ContractMapping> {
     private static final String BENEFICIARY_ID = "https://bluebutton.cms.gov/resources/variables/bene_id";
+    public static final String CURRENCY_IDENTIFIER =
+            "https://bluebutton.cms.gov/resources/codesystem/identifier-currency";
+    public static final String CURRENT_MBI = "current";
+    public static final String HISTORIC_MBI = "historic";
+
     public static final String MBI_ID = "http://hl7.org/fhir/sid/us-mbi";
+
     private static final String EXTRA_PAGE_EXCEPTION_MESSAGE = "could not extract ResultSet";
 
     private final int month;
@@ -29,8 +35,9 @@ public class PatientContractCallable implements Callable<ContractMapping> {
     private final String bulkJobId;     // Tracing support within BFD
 
     private int missingBeneId;
-    private int missingMbi;
-    private int pastYear;
+    private int missingCurrentMbi;
+    private int hasHistoricalMbi;
+    private int filteredByYear;
 
     public PatientContractCallable(String contractNumber, int month, int year, BFDClient bfdClient,
                                    boolean skipBillablePeriodCheck, String bulkJobId) {
@@ -121,11 +128,11 @@ public class PatientContractCallable implements Callable<ContractMapping> {
             log.error("unable to get patient information for " + contractNumber + " for month " + month, e);
             throw e;
         } finally {
-            int total = patientIds.size() + pastYear + missingBeneId;
-            log.info("Search discarded {} entries not meeting year filter criteria out of {}", pastYear, total);
+            int total = patientIds.size() + filteredByYear + missingBeneId;
+            log.info("Search discarded {} entries not meeting year filter criteria out of {}", filteredByYear, total);
             log.info("Search discarded {} entries missing a beneficiary identifier out of {}", missingBeneId, total);
-            log.info("Search found {} entries missing an mbi out of {}", missingMbi, total);
-
+            log.info("Search found {} entries missing a current mbi out of {}", missingCurrentMbi, total);
+            log.info("Search found {} entries with a historical mbi out of {}", hasHistoricalMbi, total);
             BFDClient.BFD_BULK_JOB_ID.remove();
         }
     }
@@ -149,14 +156,14 @@ public class PatientContractCallable implements Callable<ContractMapping> {
 
         if (referenceYearList.isEmpty()) {
             log.error("patient returned without reference year violating assumptions");
-            pastYear++;
+            filteredByYear++;
             return false;
         }
 
         DateType refYear = (DateType) (referenceYearList.get(0).getValue());
 
         if (refYear.getYear() != this.year) {
-            pastYear++;
+            filteredByYear++;
             return false;
         }
         return true;
@@ -171,34 +178,95 @@ public class PatientContractCallable implements Callable<ContractMapping> {
     private Identifiers extractPatientId(Patient patient) {
         List<Identifier> identifiers = patient.getIdentifier();
 
-        Optional<String> beneId =  identifiers.stream()
-                .filter(this::isBeneficiaryId)
-                .map(Identifier::getValue)
-                .findFirst();
-
-        Optional<String> mbiId = identifiers.stream()
-                .filter(this::isMbiId)
-                .map(Identifier::getValue)
-                .findFirst();
-
+        // Get patient beneficiary id
+        // if not found eobs cannot be looked up so do not return a meaningful list
+        Optional<String> beneId = getBeneficiaryId(identifiers);
         if (beneId.isEmpty()) {
             missingBeneId += 1;
             return null;
         }
 
-        if (mbiId.isEmpty()) {
-            missingMbi += 1;
+        // Get current mbi if present or else log not present
+        String currentMbi = getCurrentMbi(identifiers);
+        if (currentMbi == null) {
+            missingCurrentMbi += 1;
         }
 
-        return new Identifiers(beneId.get(), mbiId.orElse(null));
+        LinkedHashSet<String> historicMbis = getHistoricMbis(identifiers, currentMbi);
+        if (!historicMbis.isEmpty()) {
+            hasHistoricalMbi += 1;
+        }
+
+        return new Identifiers(beneId.get(), currentMbi, historicMbis);
+    }
+
+    private Optional<String> getBeneficiaryId(List<Identifier> identifiers) {
+        return identifiers.stream()
+                .filter(this::isBeneficiaryId)
+                .map(Identifier::getValue)
+                .findFirst();
+    }
+
+    private String getCurrentMbi(List<Identifier> identifiers) {
+        return identifiers.stream()
+                .filter(this::isCurrentMbi)
+                .map(Identifier::getValue)
+                .findFirst().orElse(null);
+    }
+
+    private LinkedHashSet<String> getHistoricMbis(List<Identifier> identifiers, String currentMbi) {
+        return identifiers.stream()
+                .filter(this::isHistoricalMbi)
+                .map(Identifier::getValue)
+                .filter(historicMbi -> !historicMbi.equals(currentMbi))
+                .collect(toCollection(LinkedHashSet::new));
     }
 
     private boolean isBeneficiaryId(Identifier identifier) {
+        if (StringUtils.isAnyBlank(identifier.getSystem(), identifier.getValue())) {
+            return false;
+        }
+
         return identifier.getSystem().equalsIgnoreCase(BENEFICIARY_ID);
     }
 
-    private boolean isMbiId(Identifier identifier) {
-        return identifier.getSystem().equalsIgnoreCase(MBI_ID);
+    private boolean isCurrentMbi(Identifier identifier) {
+        return isMatchingMbi(identifier, CURRENT_MBI);
+    }
+
+    private boolean isHistoricalMbi(Identifier identifier) {
+        return isMatchingMbi(identifier, HISTORIC_MBI);
+    }
+
+    private boolean isMatchingMbi(Identifier identifier, String historic) {
+
+        if (StringUtils.isAnyBlank(identifier.getSystem(), identifier.getValue())) {
+            return false;
+        }
+
+        if (!identifier.getSystem().equals(MBI_ID)) {
+            return false;
+        }
+
+        Optional<Extension> currencyExtension = getCurrencyExtension(identifier);
+
+        // Assume historical if no extension found
+        if (currencyExtension.isEmpty()) {
+            return false;
+        }
+
+        Coding code = (Coding) currencyExtension.get().getValue();
+        return code.getCode().equals(historic);
+    }
+
+    private Optional<Extension> getCurrencyExtension(Identifier identifier) {
+        if (identifier.getExtension().isEmpty()) {
+            return Optional.empty();
+        }
+
+        return identifier.getExtension().stream().filter(
+                extension -> extension.getUrl().equals(CURRENCY_IDENTIFIER)
+        ).findFirst();
     }
 
     /**

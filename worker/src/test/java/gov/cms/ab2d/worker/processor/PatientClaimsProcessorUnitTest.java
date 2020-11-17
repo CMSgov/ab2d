@@ -32,6 +32,7 @@ import java.time.ZoneOffset;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 
+import static gov.cms.ab2d.worker.processor.BundleUtils.createIdentifierWithoutMbi;
 import static org.junit.Assert.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -95,15 +96,15 @@ public class PatientClaimsProcessorUnitTest {
         eob = EobTestDataUtil.createEOB();
         createOutputFiles();
         patientDTO = new ContractBeneficiaries.PatientDTO();
-        patientDTO.setPatientId(patientId);
+        patientDTO.setIdentifiers(createIdentifierWithoutMbi(patientId));
         patientDTO.setDateRangesUnderContract(List.of(TestUtil.getOpenRange()));
 
         patientPTOMap = new HashMap<>();
         patientPTOMap.put(patientId, patientDTO);
         ContractBeneficiaries.PatientDTO fileDTO = new ContractBeneficiaries.PatientDTO();
-        fileDTO.setPatientId("-199900000022040");
+        fileDTO.setIdentifiers(createIdentifierWithoutMbi("-199900000022040"));
         fileDTO.setDateRangesUnderContract(Collections.singletonList(TestUtil.getOpenRange()));
-        patientPTOMap.put(fileDTO.getPatientId(), fileDTO);
+        patientPTOMap.put(fileDTO.getBeneficiaryId(), fileDTO);
 
         Contract contract = new Contract();
         StreamHelper helper = new TextStreamHelperImpl(tmpEfsMountDir.toPath(), contract.getContractNumber(),
@@ -238,7 +239,7 @@ public class PatientClaimsProcessorUnitTest {
             FileNotFoundException, ParseException {
         // Override default behavior of setup
         patientDTO = new ContractBeneficiaries.PatientDTO();
-        patientDTO.setPatientId(patientId);
+        patientDTO.setIdentifiers(createIdentifierWithoutMbi(patientId));
         patientDTO.setDateRangesUnderContract(List.of(TestUtil.getOpenRange()));
 
         Contract contract = new Contract();
@@ -264,7 +265,7 @@ public class PatientClaimsProcessorUnitTest {
             FileNotFoundException, ParseException {
         // Override default behavior of setup
         patientDTO = new ContractBeneficiaries.PatientDTO();
-        patientDTO.setPatientId(patientId);
+        patientDTO.setIdentifiers(createIdentifierWithoutMbi(patientId));
         patientDTO.setDateRangesUnderContract(List.of(TestUtil.getOpenRange()));
 
         Contract contract = new Contract();

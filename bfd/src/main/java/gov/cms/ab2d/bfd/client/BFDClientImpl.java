@@ -216,9 +216,7 @@ public class BFDClientImpl implements BFDClient {
                 .next(bundle)
                 .withAdditionalHeader(BFDClient.BFD_HDR_BULK_CLIENTID, BFDClient.BFD_CLIENT_ID)
                 .withAdditionalHeader(BFDClient.BFD_HDR_BULK_JOBID, getJobId())
-// todo uncomment when issue regarding retrieving mbis is complete
-//
-//                .withAdditionalHeader("IncludeIdentifiers", "mbi")
+                .withAdditionalHeader("IncludeIdentifiers", "mbi")
                 .encodedJson()
                 .execute();
     }
@@ -249,9 +247,7 @@ public class BFDClientImpl implements BFDClient {
                 .where(theCriterion)
                 .withAdditionalHeader(BFDClient.BFD_HDR_BULK_CLIENTID, BFDClient.BFD_CLIENT_ID)
                 .withAdditionalHeader(BFDClient.BFD_HDR_BULK_JOBID, getJobId())
-// todo uncomment when issue regarding retrieving mbis is complete
-//
-//                .withAdditionalHeader("IncludeIdentifiers", "mbi")
+                .withAdditionalHeader("IncludeIdentifiers", "mbi")
                 .count(contractToBenePageSize)
                 .returnBundle(Bundle.class)
                 .encodedJson()

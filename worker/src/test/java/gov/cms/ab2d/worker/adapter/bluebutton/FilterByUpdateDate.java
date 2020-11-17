@@ -13,14 +13,12 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-import java.text.ParseException;
 import java.time.OffsetDateTime;
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static gov.cms.ab2d.worker.processor.BundleUtils.createIdentifierWithoutMbi;
 import static org.junit.jupiter.api.Assertions.*;
 
 // Because it has an outside dependency, ignore it but wanted to actually test that it works
@@ -40,7 +38,7 @@ class FilterByUpdateDate {
 
         String patientId = "-19990000002901";
         ContractBeneficiaries.PatientDTO patient = new ContractBeneficiaries.PatientDTO();
-        patient.setPatientId(patientId);
+        patient.setIdentifiers(createIdentifierWithoutMbi(patientId));
 
         FilterOutByDate.DateRange d1 = FilterOutByDate.getDateRange(1, 2020, 12, 2020);
         patient.setDateRangesUnderContract(Collections.singletonList(d1));

@@ -29,6 +29,7 @@ import java.text.ParseException;
 import java.time.OffsetDateTime;
 import java.util.*;
 
+import static gov.cms.ab2d.worker.processor.BundleUtils.createIdentifierWithoutMbi;
 import static java.lang.Boolean.TRUE;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -177,8 +178,8 @@ class ContractProcessorUnitTest {
         for (int i = 0; i < num; i++) {
             PatientDTO p = PatientDTO.builder()
                     .dateRangesUnderContract(Collections.singletonList(dateRange))
-                    .patientId("patient_" + i).build();
-            patients.put(p.getPatientId(), p);
+                    .identifiers(createIdentifierWithoutMbi("patient_" + i)).build();
+            patients.put(p.getBeneficiaryId(), p);
         }
         return patients;
     }
