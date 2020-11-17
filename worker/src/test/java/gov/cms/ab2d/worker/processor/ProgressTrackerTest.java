@@ -13,6 +13,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+import static gov.cms.ab2d.worker.processor.BundleUtils.createIdentifierWithoutMbi;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class ProgressTrackerTest {
@@ -82,7 +83,7 @@ public class ProgressTrackerTest {
         Map<String, ContractBeneficiaries.PatientDTO> map = new HashMap<>();
         for (String pId : patientIds) {
             ContractBeneficiaries.PatientDTO patient = ContractBeneficiaries.PatientDTO.builder()
-                    .patientId(pId)
+                    .identifiers(createIdentifierWithoutMbi(pId))
                     .dateRangesUnderContract(Collections.singletonList(dr))
                     .build();
             map.put(pId, patient);

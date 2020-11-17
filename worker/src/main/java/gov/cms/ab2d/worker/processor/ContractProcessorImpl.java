@@ -17,12 +17,14 @@ import gov.cms.ab2d.worker.adapter.bluebutton.ContractBeneficiaries.PatientDTO;
 import gov.cms.ab2d.worker.config.RoundRobinBlockingQueue;
 import gov.cms.ab2d.worker.processor.domainmodel.ContractData;
 import gov.cms.ab2d.worker.processor.domainmodel.EobSearchResult;
+import gov.cms.ab2d.worker.processor.domainmodel.Identifiers;
 import gov.cms.ab2d.worker.processor.domainmodel.PatientClaimsRequest;
 import gov.cms.ab2d.worker.processor.domainmodel.ProgressTracker;
 import gov.cms.ab2d.worker.service.FileService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.hl7.fhir.dstu3.model.Coding;
 import org.hl7.fhir.dstu3.model.ExplanationOfBenefit;
 import org.hl7.fhir.dstu3.model.Extension;
 import org.hl7.fhir.dstu3.model.Identifier;
@@ -44,7 +46,6 @@ import java.util.stream.Collectors;
 import static gov.cms.ab2d.common.model.JobStatus.CANCELLED;
 import static gov.cms.ab2d.common.util.Constants.CONTRACT_LOG;
 import static gov.cms.ab2d.common.util.Constants.EOB;
-import static gov.cms.ab2d.worker.processor.PatientContractCallable.MBI_ID;
 import static net.logstash.logback.argument.StructuredArguments.keyValue;
 
 @Slf4j
@@ -220,7 +221,7 @@ public class ContractProcessorImpl implements ContractProcessor {
             if (future.isDone()) {
                 EobSearchResult result = processFuture(futureHandles, progressTracker, future, patients);
                 if (result != null) {
-                    addMbiIdToEobs(result.getEobs(), patients);
+                    addMbiIdsToEobs(result.getEobs(), patients);
                 }
                 if (result != null) {
                     numberOfEobs += writeOutResource(result.getEobs(), helper);
@@ -234,23 +235,48 @@ public class ContractProcessorImpl implements ContractProcessor {
         return numberOfEobs;
     }
 
-    void addMbiIdToEobs(List<ExplanationOfBenefit> eobs, Map<String, PatientDTO> patients) {
+    void addMbiIdsToEobs(List<ExplanationOfBenefit> eobs, Map<String, PatientDTO> patients) {
         if (eobs == null || eobs.isEmpty()) {
             return;
         }
         // Get first EOB Bene ID
         ExplanationOfBenefit eob = eobs.get(0);
-        String mbi = null;
+
+        // Add extesions only if beneficiary id is present and known to memberships
         String benId = getPatientIdFromEOB(eob);
-        if (benId != null) {
-            mbi = patients.get(benId).getMbiId();
+        if (benId != null && patients.containsKey(benId)) {
+            Identifiers patient = patients.get(benId).getIdentifiers();
+
+            // Add each mbi to each eob
+            if (patient.getCurrentMbi() != null) {
+                Extension currentMbiExtension = createExtension(patient.getCurrentMbi(), true);
+                eobs.forEach(e -> e.addExtension(currentMbiExtension));
+            }
+
+            for (String mbi : patient.getHistoricMbis()) {
+                Extension mbiExtension = createExtension(mbi, false);
+                eobs.forEach(e -> e.addExtension(mbiExtension));
+            }
         }
-        Extension extension = createExtension(mbi);
-        eobs.stream().forEach(e -> e.addExtension(extension));
     }
 
-    Extension createExtension(String mbi) {
-        Identifier identifier = new Identifier().setSystem(MBI_ID).setValue(mbi);
+    /**
+     * Create an extension for the EOB containing a patient's mbi
+     * @param mbi the mbi (value) to set the extension to
+     * @param current whether the mbi is currently active (true) or historical (false)
+     * @return mbi extension
+     */
+    Extension createExtension(String mbi, boolean current) {
+        Identifier identifier = new Identifier().setSystem(PatientContractCallable.MBI_ID).setValue(mbi);
+
+        Coding coding = new Coding()
+                .setCode(current ? PatientContractCallable.CURRENT_MBI : PatientContractCallable.HISTORIC_MBI);
+
+        Extension currencyExtension = new Extension()
+                .setUrl(PatientContractCallable.CURRENCY_IDENTIFIER)
+                .setValue(coding);
+        identifier.setExtension(List.of(currencyExtension));
+
         return new Extension().setUrl(ID_EXT).setValue(identifier);
     }
 
