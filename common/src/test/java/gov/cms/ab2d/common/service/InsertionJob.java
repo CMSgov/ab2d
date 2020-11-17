@@ -9,10 +9,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.function.Supplier;
 import java.util.stream.IntStream;
@@ -43,7 +40,10 @@ public class InsertionJob implements Callable<CoverageSearchEvent> {
 
         public Identifiers get() {
             int generated = id++;
-            return new Identifiers("test-" + generated, "mbi-" + generated);
+            LinkedHashSet<String> historic = new LinkedHashSet<>();
+            historic.add("historic-mbi-1");
+            historic.add("historic-mbi-2");
+            return new Identifiers("test-" + generated, "mbi-" + generated, historic);
         }
     }
 

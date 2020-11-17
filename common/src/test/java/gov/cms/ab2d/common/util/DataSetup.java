@@ -27,9 +27,6 @@ public class DataSetup {
     private SponsorRepository sponsorRepository;
 
     @Autowired
-    private CoverageRepository coverageRepo;
-
-    @Autowired
     private CoveragePeriodRepository coveragePeriodRepo;
 
     @Autowired

@@ -8,7 +8,6 @@ import gov.cms.ab2d.common.model.CoverageSearchEvent;
 import gov.cms.ab2d.common.model.CoverageSummary;
 import gov.cms.ab2d.common.model.Identifiers;
 import gov.cms.ab2d.common.model.JobStatus;
-import gov.cms.ab2d.common.repository.CoverageRepository;
 import gov.cms.ab2d.common.repository.CoveragePeriodRepository;
 import gov.cms.ab2d.common.repository.CoverageSearchRepository;
 import gov.cms.ab2d.common.repository.CoverageSearchEventRepository;
@@ -39,7 +38,6 @@ import static java.util.stream.Collectors.toList;
 @SuppressWarnings("PMD.UnusedImports")
 public class CoverageServiceImpl implements CoverageService {
 
-    private final CoverageRepository coverageRepo;
 
     private final CoveragePeriodRepository coveragePeriodRepo;
 
@@ -49,11 +47,10 @@ public class CoverageServiceImpl implements CoverageService {
 
     private final CoverageServiceRepository coverageServiceRepo;
 
-    public CoverageServiceImpl(CoverageRepository coverageRepo, CoveragePeriodRepository coveragePeriodRepo,
+    public CoverageServiceImpl(CoveragePeriodRepository coveragePeriodRepo,
                                CoverageSearchEventRepository coverageSearchEventRepo,
                                CoverageSearchRepository coverageSearchRepo,
                                CoverageServiceRepository coverageServiceRepo) {
-        this.coverageRepo = coverageRepo;
         this.coveragePeriodRepo = coveragePeriodRepo;
         this.coverageSearchEventRepo = coverageSearchEventRepo;
         this.coverageSearchRepo = coverageSearchRepo;
@@ -155,15 +152,15 @@ public class CoverageServiceImpl implements CoverageService {
 
         int previousCount = 0;
         if (previousSearch.isPresent()) {
-            previousCount = coverageRepo.countByCoverageSearchEvent(previousSearch.get());
+            previousCount = coverageServiceRepo.countBySearchEvent(previousSearch.get());
         }
 
         CoverageSearchEvent current = currentSearch.orElseThrow(() -> new RuntimeException("could not find latest in progress search event"));
-        int currentCount = coverageRepo.countByCoverageSearchEvent(current);
+        int currentCount = coverageServiceRepo.countBySearchEvent(current);
 
         int unchanged = 0;
         if (previousCount > 0) {
-            unchanged = coverageRepo.countIntersection(previousSearch.get().getId(), current.getId());
+            unchanged = coverageServiceRepo.countIntersection(previousSearch.get(), current);
         }
 
         return new CoverageSearchDiff(period, previousCount, currentCount, unchanged);

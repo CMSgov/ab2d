@@ -1,11 +1,9 @@
 package gov.cms.ab2d.api.controller;
 
-import gov.cms.ab2d.common.dto.ClearCoverageCacheRequest;
 import gov.cms.ab2d.common.dto.PropertiesDTO;
 import gov.cms.ab2d.common.dto.SponsorDTO;
 import gov.cms.ab2d.common.dto.SponsorIPDTO;
 import gov.cms.ab2d.common.dto.UserDTO;
-import gov.cms.ab2d.common.service.CacheService;
 import gov.cms.ab2d.common.service.PropertiesService;
 import gov.cms.ab2d.common.service.SponsorIPService;
 import gov.cms.ab2d.common.service.UserService;
@@ -43,9 +41,6 @@ import static gov.cms.ab2d.common.util.Constants.USERNAME;
 @SuppressWarnings("PMD.TooManyStaticImports")
 @RequestMapping(path = API_PREFIX + ADMIN_PREFIX, produces = "application/json")
 public class AdminAPI {
-
-    @Autowired
-    private CacheService cacheService;
 
     @Autowired
     private UserService userService;
@@ -90,12 +85,6 @@ public class AdminAPI {
         eventLogger.log(new ReloadEvent(MDC.get(USERNAME), ReloadEvent.FileType.PROPERTIES, null,
                 propertiesDTOs.size()));
         return new ResponseEntity<>(propertiesService.updateProperties(propertiesDTOs), null, HttpStatus.OK);
-    }
-
-    @PostMapping("/coverage/clearCache")
-    public ResponseEntity<Void> clearCoverageCache(@RequestBody ClearCoverageCacheRequest request) {
-        cacheService.clearCache(request);
-        return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/user/{username}/job")

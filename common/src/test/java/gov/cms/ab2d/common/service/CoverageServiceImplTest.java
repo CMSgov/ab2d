@@ -281,7 +281,7 @@ class CoverageServiceImplTest {
 
         CoverageSummary summary = coverageSummaries.get(0);
         assertEquals(testing1.getBeneficiaryId(), summary.getIdentifiers().getBeneficiaryId());
-        assertEquals(testing1.getMbi(), summary.getIdentifiers().getMbi());
+        assertEquals(testing1.getCurrentMbi(), summary.getIdentifiers().getCurrentMbi());
 
         assertTrue(summary.getDateRanges().stream().anyMatch(dr -> dr.inRange(START_JAN)));
         assertFalse(summary.getDateRanges().stream().anyMatch(dr -> dr.inRange(END_DEC)));
@@ -857,6 +857,6 @@ class CoverageServiceImplTest {
     }
 
     private Identifiers createIdentifier(String suffix) {
-        return new Identifiers("testing-" + suffix, "mbi-" + suffix);
+        return new Identifiers("testing-" + suffix, "mbi-" + suffix, new LinkedHashSet<>());
     }
 }

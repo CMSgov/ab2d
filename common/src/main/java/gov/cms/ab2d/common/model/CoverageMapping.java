@@ -49,4 +49,8 @@ public class CoverageMapping {
         this.coverageSearch.incrementAttempts();
         this.successful = successful;
     }
+
+    public String getJobId() {
+        return "membership-search-" + coverageSearchEvent.getId();
+    }
 }

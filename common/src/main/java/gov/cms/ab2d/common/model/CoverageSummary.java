@@ -20,8 +20,8 @@ public class CoverageSummary {
     private final Contract contract;
     private final List<DateRange> dateRanges;
 
-    public CoverageSummary(String beneficiaryId, String mbi, Contract contract, List<DateRange> dateRanges) {
-        this.identifiers = new Identifiers(beneficiaryId, mbi);
+    public CoverageSummary(Identifiers identifiers, Contract contract, List<DateRange> dateRanges) {
+        this.identifiers = identifiers;
         this.contract = contract;
         this.dateRanges = dateRanges;
     }
