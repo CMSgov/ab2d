@@ -334,7 +334,7 @@ set_secrets ()
     AB2D_BFD_KMS_ARN=$(./get-database-secret.py $CMS_ENV_SS ab2d_bfd_kms_arn $DATABASE_SECRET_DATETIME)
   fi
 
-  # If any databse secret produced an error, exit the script
+  # If any secret produced an error, exit the script
 
   if [ "${DATABASE_USER}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
     || [ "${DATABASE_PASSWORD}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
