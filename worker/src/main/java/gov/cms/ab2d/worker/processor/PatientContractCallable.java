@@ -26,26 +26,30 @@ public class PatientContractCallable implements Callable<ContractMapping> {
     private final boolean skipBillablePeriodCheck;
     private final String contractNumber;
     private final BFDClient bfdClient;
+    private final String bulkJobId;     // Tracing support within BFD
 
     private int missingBeneId;
     private int missingMbi;
     private int pastYear;
 
-    public PatientContractCallable(String contractNumber, int month, int year, BFDClient bfdClient, boolean skipBillablePeriodCheck) {
+    public PatientContractCallable(String contractNumber, int month, int year, BFDClient bfdClient,
+                                   boolean skipBillablePeriodCheck, String bulkJobId) {
         this.contractNumber = contractNumber;
         this.month = month;
         this.year = year;
         this.bfdClient = bfdClient;
         this.skipBillablePeriodCheck = skipBillablePeriodCheck;
+        this.bulkJobId = bulkJobId;
     }
 
     @Override
-    public ContractMapping call() throws Exception {
+    public ContractMapping call() {
 
         final Set<Identifiers> patientIds = new HashSet<>();
         int bundleNo = 1;
 
         try {
+            BFDClient.BFD_BULK_JOB_ID.set(bulkJobId);
             ContractMapping mapping = new ContractMapping();
             mapping.setMonth(month);
 
@@ -121,6 +125,8 @@ public class PatientContractCallable implements Callable<ContractMapping> {
             log.info("Search discarded {} entries not meeting year filter criteria out of {}", pastYear, total);
             log.info("Search discarded {} entries missing a beneficiary identifier out of {}", missingBeneId, total);
             log.info("Search found {} entries missing an mbi out of {}", missingMbi, total);
+
+            BFDClient.BFD_BULK_JOB_ID.remove();
         }
     }
 

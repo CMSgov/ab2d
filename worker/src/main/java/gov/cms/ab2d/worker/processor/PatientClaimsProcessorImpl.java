@@ -92,6 +92,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
             } else {
                 sinceTime = request.getSinceTime();
             }
+            BFDClient.BFD_BULK_JOB_ID.set(request.getJob());
             eobBundle = bfdClient.requestEOBFromServer(patient.getPatientId(), sinceTime);
             logManager.log(LogManager.LogType.KINESIS,
                     new BeneficiarySearchEvent(request.getUser(), request.getJob(), request.getContractNum(),
@@ -106,6 +107,8 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
                             request.getPatientDTO() != null ? request.getPatientDTO().getPatientId() : null,
                             "ERROR: " + ex.getMessage()));
             throw ex;
+        } finally {
+            BFDClient.BFD_BULK_JOB_ID.remove();
         }
 
         final List<BundleEntryComponent> entries = eobBundle.getEntry();
