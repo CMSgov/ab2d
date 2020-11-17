@@ -1,4 +1,5 @@
 variable "aws_account_number" {}
+variable "cpm_backup_db" {}
 variable "db_allocated_storage_size" {}
 variable "db_backup_retention_period" {}
 variable "db_backup_window" {}
@@ -9,8 +10,10 @@ variable "db_iops" {}
 variable "db_maintenance_window" {}
 variable "db_multi_az" {}
 variable "db_parameter_group_name" {}
+variable "db_password" {}
 variable "db_snapshot_id" {}
 variable "db_subnet_group_name" {}
+variable "db_username" {}
 variable "env" {}
 variable "jenkins_agent_sec_group_id" {}
 variable "parent_env" {}

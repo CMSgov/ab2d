@@ -1,5 +1,4 @@
-
-# Create
+# Create database security group
 
 resource "aws_security_group" "sg_database" {
   name        = "${var.env}-database-sg"
@@ -30,10 +29,14 @@ resource "aws_security_group_rule" "db_access_from_jenkins_agent" {
   security_group_id = aws_security_group.sg_database.id
 }
 
+# Create database subnet group
+
 resource "aws_db_subnet_group" "subnet_group" {
   name = var.db_subnet_group_name
   subnet_ids = [var.private_subnet_a_id,var.private_subnet_b_id]
 }
+
+# Create database parameter group
 
 resource "aws_db_parameter_group" "parameter_group" {
   name   = var.db_parameter_group_name
@@ -45,6 +48,8 @@ resource "aws_db_parameter_group" "parameter_group" {
     apply_method = "immediate"
   }
 }
+
+# Create database instance
 
 resource "aws_db_instance" "db" {
   allocated_storage               = var.db_allocated_storage_size
@@ -60,21 +65,21 @@ resource "aws_db_instance" "db" {
   copy_tags_to_snapshot           = var.db_copy_tags_to_snapshot
   iops                            = var.db_iops
   apply_immediately               = true
-  kms_key_id                      = var.kms_key_id
+  kms_key_id                      = var.main_kms_key_arn
   maintenance_window              = var.db_maintenance_window
   multi_az                        = var.db_multi_az
   storage_encrypted               = true
   vpc_security_group_ids          = [aws_security_group.sg_database.id]
-  username                        = var.username
-  password                        = var.password
-  skip_final_snapshot             = var.skip_final_snapshot
+  username                        = var.db_username
+  password                        = var.db_password
+  skip_final_snapshot             = true
   deletion_protection             = true
   enabled_cloudwatch_logs_exports = ["postgresql", "upgrade"]
 
   tags = {
     Name         = "${var.env}-rds"
-    env          = "${var.env}"
+    env          = var.env
     role         = "db"
-    "cpm backup" = "${var.cpm_backup_db}"
+    "cpm backup" = var.cpm_backup_db
   }
 }

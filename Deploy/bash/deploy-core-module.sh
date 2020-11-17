@@ -15,13 +15,12 @@ cd "${START_DIR}"
 #
 
 echo "Check vars are not empty before proceeding..."
-if  [ -z "${CMS_ENV_PARAM}" ] \
-    || [ -z "${ENV_PASCAL_CASE_PARAM}" ] \
-    || [ -z "${PARENT_ENV_PARAM}" ] \
+if [ -z "${AWS_ACCOUNT_NUMBER_PARAM}" ] \
+    || [ -z "${CLOUD_TAMER_PARAM}" ] \
+    || [ -z "${CMS_ENV_PARAM}" ] \
     || [ -z "${DEBUG_LEVEL_PARAM}" ] \
-    || [ -z "${AWS_ACCOUNT_NUMBER_PARAM}" ] \
-    || [ -z "${JENKINS_AGENT_SEC_GROUP_ID}" ] \
-    || [ -z "${CLOUD_TAMER_PARAM}" ]; then
+    || [ -z "${ENV_PASCAL_CASE_PARAM}" ] \
+    || [ -z "${PARENT_ENV_PARAM}" ]; then
   echo "ERROR: All parameters must be set."
   exit 1
 fi
@@ -30,17 +29,17 @@ fi
 # Set variables
 #
 
+AWS_ACCOUNT_NUMBER="${AWS_ACCOUNT_NUMBER_PARAM}"
+
 CMS_ENV="${CMS_ENV_PARAM}"
-
-ENV_PASCAL_CASE="${ENV_PASCAL_CASE_PARAM}"
-
-PARENT_ENV="${PARENT_ENV_PARAM}"
 
 export DEBUG_LEVEL="${DEBUG_LEVEL_PARAM}"
 
-AWS_ACCOUNT_NUMBER="${AWS_ACCOUNT_NUMBER_PARAM}"
+ENV_PASCAL_CASE="${ENV_PASCAL_CASE_PARAM}"
 
 MODULE="core"
+
+PARENT_ENV="${PARENT_ENV_PARAM}"
 
 # Set whether CloudTamer API should be used
 
@@ -112,7 +111,7 @@ terraform init \
 terraform validate
 
 #
-# Create or refresh IAM components for target environment
+# Create or refresh core components for target environment
 #
 
 cd "${START_DIR}/.."
@@ -125,3 +124,26 @@ terraform apply \
   --var "parent_env=${PARENT_ENV}" \
   --var "region=${AWS_DEFAULT_REGION}" \
   --auto-approve
+
+# Create of verify key pair
+
+KEY_NAME=$(aws --region "${AWS_DEFAULT_REGION}" ec2 describe-key-pairs \
+  --filters "Name=key-name,Values=${CMS_ENV}" \
+  --query "KeyPairs[*].KeyName" \
+  --output text)
+
+if [ -z "${KEY_NAME}" ]; then
+
+  # Create private key
+
+  aws --region "${AWS_DEFAULT_REGION}" ec2 create-key-pair \
+    --key-name "${CMS_ENV}" \
+    --query 'KeyMaterial' \
+    --output text \
+    > "${HOME}/.ssh/${CMS_ENV}.pem"
+
+  # Set permissions on private key
+
+  chmod 600 "${HOME}/.ssh/${CMS_ENV}.pem"
+
+fi

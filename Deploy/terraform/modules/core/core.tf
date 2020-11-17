@@ -21,10 +21,93 @@ data "aws_subnet" "private_subnet_b" {
   }
 }
 
+# Create instance role
+
+data "aws_iam_policy_document" "instance_role_assume_role_policy" {
+  statement {
+    actions = ["sts:AssumeRole"]
+
+    principals {
+      type        = "Service"
+      identifiers = [
+        "ec2.amazonaws.com",
+        "ecs-tasks.amazonaws.com",
+        "s3.amazonaws.com",
+        "vpc-flow-logs.amazonaws.com"
+      ]
+    }
+  }
+}
+
+resource "aws_iam_role" "ab2d_instance_role" {
+  name               = "${var.env_pascal_case}InstanceRole"
+  path               = "/delegatedadmin/developer/"
+  assume_role_policy = data.aws_iam_policy_document.instance_role_assume_role_policy.json
+  permissions_boundary = "arn:aws:iam::${var.aws_account_number}:policy/cms-cloud-admin/developer-boundary-policy"
+}
+
+# Create main KMS key
+
+data "aws_iam_policy_document" "main_kms_key_policy" {
+  statement {
+    sid    = "Enable IAM Role Permissions to main kms key"
+    effect = "Allow"
+
+    principals {
+      type        = "AWS"
+      identifiers = [
+        "arn:aws:iam::${var.aws_account_number}:role/delegatedadmin/developer/${var.env_pascal_case}InstanceRole",
+	    "arn:aws:iam::${var.aws_account_number}:role/ct-ado-ab2d-application-admin"
+      ]
+    }
+
+    actions = [
+      "kms:*"
+    ]
+
+    resources = [
+      "*"
+    ]
+
+  }
+}
+
+resource "aws_kms_key" "main_kms_key" {
+  description             = "${var.env}-main-kms"
+  policy                  = data.aws_iam_policy_document.main_kms_key_policy.json
+  deletion_window_in_days = 10
+  enable_key_rotation     = true
+}
+
+resource "aws_kms_alias" "main_kms_key_alias" {
+  name          = "alias/${var.env}-main-kms"
+  target_key_id = aws_kms_key.main_kms_key.key_id
+}
+
 # Reference AmazonEC2ContainerServiceforEC2Role
 
 data "aws_iam_policy" "amazon_ec2_container_service_for_ec2_role" {
   arn = "arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role"
+}
+
+# Create KMS policy
+
+data "aws_iam_policy_document" "instance_role_kms_policy" {
+  statement {
+    actions = [
+      "kms:Decrypt"
+    ]
+
+    resources = [
+      aws_kms_key.main_kms_key.arn
+    ]
+  }
+}
+
+resource "aws_iam_policy" "kms_policy" {
+  name   = "${var.env_pascal_case}KmsPolicy"
+  path   = "/delegatedadmin/developer/"
+  policy = data.aws_iam_policy_document.instance_role_kms_policy.json
 }
 
 # Create packer policy
@@ -134,29 +217,11 @@ resource "aws_iam_policy" "cloud_watch_logs_policy" {
   policy = data.aws_iam_policy_document.instance_role_cloud_watch_logs_policy.json
 }
 
-# Create instance role
+# Attach policies to Instance Role
 
-data "aws_iam_policy_document" "instance_role_assume_role_policy" {
-  statement {
-    actions = ["sts:AssumeRole"]
-
-    principals {
-      type        = "Service"
-      identifiers = [
-        "ec2.amazonaws.com",
-        "ecs-tasks.amazonaws.com",
-        "s3.amazonaws.com",
-        "vpc-flow-logs.amazonaws.com"
-      ]
-    }
-  }
-}
-
-resource "aws_iam_role" "ab2d_instance_role" {
-  name               = "${var.env_pascal_case}InstanceRole"
-  path               = "/delegatedadmin/developer/"
-  assume_role_policy = data.aws_iam_policy_document.instance_role_assume_role_policy.json
-  permissions_boundary = "arn:aws:iam::${var.aws_account_number}:policy/cms-cloud-admin/developer-boundary-policy"
+resource "aws_iam_role_policy_attachment" "instance_role_kms_policy_attach" {
+  role       = aws_iam_role.ab2d_instance_role.name
+  policy_arn = aws_iam_policy.kms_policy.arn
 }
 
 resource "aws_iam_role_policy_attachment" "instance_role_packer_policy_attach" {
@@ -185,4 +250,96 @@ resource "aws_iam_instance_profile" "ab2d_instance_profile" {
   name = "${var.env_pascal_case}InstanceProfile"
   path = "/delegatedadmin/developer/"
   role = aws_iam_role.ab2d_instance_role.name
+}
+
+# Create main bucket
+
+resource "aws_s3_bucket" "main_log_bucket" {
+  bucket = "${var.env}-main-server-access-logs"
+  acl    = "log-delivery-write"
+}
+
+//resource "aws_s3_bucket_public_access_block" "main_log_bucket" {
+//  bucket = aws_s3_bucket.main_log_bucket.id
+//  block_public_acls   = true
+//  block_public_policy = true
+//  ignore_public_acls = true
+//  restrict_public_buckets = true
+//}
+
+data "aws_iam_policy_document" "main_bucket_policy" {
+  statement {
+    sid    = "RoleAccess"
+    effect = "Allow"
+
+    resources = [
+      "arn:aws:s3:::${var.env}-main/*"
+    ]
+
+    actions = [
+      "s3:*"
+    ]
+
+    principals {
+      type        = "AWS"
+      identifiers = [
+        "arn:aws:iam::${var.aws_account_number}:role/delegatedadmin/developer/Ab2dMgmtV2Role",
+	    "arn:aws:iam::${var.aws_account_number}:role/ct-ado-ab2d-application-admin"
+      ]
+    }
+  }
+}
+
+resource "aws_s3_bucket" "main_bucket" {
+  bucket = "${var.env}-main"
+  acl    = "private"
+
+  logging {
+    target_bucket = aws_s3_bucket.main_log_bucket.id
+    target_prefix = "log/"
+  }
+
+  policy = data.aws_iam_policy_document.main_bucket_policy.json
+
+  versioning {
+    enabled = true
+  }
+
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+
+resource "aws_s3_bucket_public_access_block" "main_bucket" {
+  bucket = aws_s3_bucket.main_bucket.id
+  block_public_acls   = true
+  block_public_policy = true
+  ignore_public_acls = true
+  restrict_public_buckets = true
+}
+
+resource "aws_s3_bucket_public_access_block" "main_log_bucket" {
+  bucket = aws_s3_bucket.main_log_bucket.id
+  block_public_acls   = true
+  block_public_policy = true
+  ignore_public_acls = true
+  restrict_public_buckets = true
+}
+
+resource "aws_efs_file_system" "efs" {
+  creation_token = "${lower(var.env)}-efs"
+  encrypted      = "true"
+  kms_key_id     = aws_kms_key.main_kms_key.arn
+  tags = {
+    Name = "${lower(var.env)}-efs"
+  }
+}
+
+resource "aws_security_group" "efs" {
+  name        = "${lower(var.env)}-efs-sg"
+  description = "EFS"
+  vpc_id      = data.aws_vpc.target_vpc.id
+  tags = {
+    Name = "${lower(var.env)}-efs-sg"
+  }
 }

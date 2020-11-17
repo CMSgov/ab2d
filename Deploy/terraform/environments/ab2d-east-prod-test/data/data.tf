@@ -22,6 +22,7 @@ data "terraform_remote_state" "core" {
 module "data" {
   source                     = "../../../modules/data"
   aws_account_number         = var.aws_account_number
+  cpm_backup_db              = var.cpm_backup_db
   db_allocated_storage_size  = var.db_allocated_storage_size
   db_backup_retention_period = var.db_backup_retention_period
   db_backup_window           = var.db_backup_window
@@ -32,10 +33,13 @@ module "data" {
   db_maintenance_window      = var.db_maintenance_window
   db_multi_az                = var.db_multi_az
   db_parameter_group_name    = var.db_parameter_group_name
+  db_password                = var.db_password
   db_snapshot_id             = var.db_snapshot_id
   db_subnet_group_name       = var.db_subnet_group_name
+  db_username                = var.db_username
   env                        = var.env
   jenkins_agent_sec_group_id = var.jenkins_agent_sec_group_id
+  main_kms_key_arn           = data.terraform_remote_state.core.outputs.main_kms_key_arn
   parent_env                 = var.parent_env
   postgres_engine_version    = var.postgres_engine_version
   private_subnet_a_id        = data.terraform_remote_state.core.outputs.private_subnet_a_id

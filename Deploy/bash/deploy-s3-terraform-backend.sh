@@ -35,8 +35,6 @@ export DEBUG_LEVEL="${DEBUG_LEVEL_PARAM}"
 
 export AWS_ACCOUNT_NUMBER="${AWS_ACCOUNT_NUMBER_PARAM}"
 
-VPC_ID="${VPC_ID_PARAM}"
-
 # Set whether CloudTamer API should be used
 
 if [ "${CLOUD_TAMER_PARAM}" != "false" ] && [ "${CLOUD_TAMER_PARAM}" != "true" ]; then
@@ -106,26 +104,11 @@ export TF_LOG_PATH=/var/log/terraform/tf.log
 rm -f /var/log/terraform/tf.log
 
 #
-# Verify that VPC ID exists
-#
-
-VPC_EXISTS=$(aws --region "${AWS_DEFAULT_REGION}" ec2 describe-vpcs \
-  --query "Vpcs[?VpcId=='$VPC_ID'].VpcId" \
-  --output text)
-
-if [ -z "${VPC_EXISTS}" ]; then
-  echo "*********************************************************"
-  echo "ERROR: VPC ID does not exist for the target AWS profile."
-  echo "*********************************************************"
-  exit 1
-fi
-
-#
 # Create or verify backend components
 #
 
 cd "${START_DIR}/.."
-cd "terraform/environments/${CMS_ENV}"
+cd "terraform/environments/${CMS_ENV}/core"
 
 # Create or verify tfstate KMS key
 
@@ -163,24 +146,24 @@ if [ "${KMS_KEY_ROTATION_ENABLED}" == "false" ]; then
     --key-id "${TFSTATE_KMS_KEY_ID}"
 fi
 
-# Create or verify S3 server-access-logs bucket
+# Create or verify S3 tfstate-server-access-logs bucket
 
 GET_S3_SERVER_ACCESS_LOGS_BUCKET=$(aws --region "${AWS_DEFAULT_REGION}" s3api list-buckets \
-  --query "Buckets[?Name == '${CMS_ENV}-server-access-logs'].Name" \
+  --query "Buckets[?Name == '${CMS_ENV}-tfstate-server-access-logs'].Name" \
   --output text)
 
 if [ -z "${GET_S3_SERVER_ACCESS_LOGS_BUCKET}" ]; then
-  # Create S3 server-access-logs bucket
+  # Create S3 tfstate-server-access-logs bucket
   aws --region "${AWS_DEFAULT_REGION}" s3api create-bucket \
-    --bucket "${CMS_ENV}-server-access-logs"
-  GET_S3_SERVER_ACCESS_LOGS_BUCKET="${CMS_ENV}-server-access-logs"
+    --bucket "${CMS_ENV}-tfstate-server-access-logs"
+  GET_S3_SERVER_ACCESS_LOGS_BUCKET="${CMS_ENV}-tfstate-server-access-logs"
 else
   echo "NOTE: The ${GET_S3_SERVER_ACCESS_LOGS_BUCKET} bucket exists."
 fi
 
 export S3_SERVER_ACCESS_LOGS_BUCKET="${GET_S3_SERVER_ACCESS_LOGS_BUCKET}"
 
-# Block public access on the S3 server-access-logs bucket
+# Block public access on the S3 tfstate-server-access-logs bucket
 
 set +e # Turn off exit on error
 aws --region "${AWS_DEFAULT_REGION}" s3api get-bucket-policy \
@@ -195,7 +178,7 @@ if [ "${BUCKET_POLICY_STATUS}" != "0" ]; then
     --public-access-block-configuration BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true
 fi
 
-# Add or verify that the log-delivery group has WRITE and READ_ACP permissions on the server-access-logs bucket
+# Add or verify that the log-delivery group has WRITE and READ_ACP permissions on the tfstate-server-access-logs bucket
 
 LOG_DELIVERY_GROUP_PERMISSION_COUNT=$(aws --region "${AWS_DEFAULT_REGION}" s3api get-bucket-acl \
   --bucket "${S3_SERVER_ACCESS_LOGS_BUCKET}" \
@@ -250,6 +233,8 @@ S3_TFSTATE_BUCKET_LOGGING=$(aws --region "${AWS_DEFAULT_REGION}" s3api get-bucke
 
 if [ -z "${S3_TFSTATE_BUCKET_LOGGING}" ]; then
 
+  mkdir -p generated
+
   j2 tfstate_bucket_logging.json.j2 -o generated/tfstate_bucket_logging.json
 
   aws --region "${AWS_DEFAULT_REGION}" s3api put-bucket-logging \
@@ -277,7 +262,9 @@ BUCKET_POLICY_STATUS=$?
 set -e # Turn on exit on error
 
 if [ "${BUCKET_POLICY_STATUS}" != "0" ]; then
-    
+
+  mkdir -p generated
+
   j2 tfstate_bucket_policy.json.j2 -o generated/tfstate_bucket_policy.json
     
   aws --region "${AWS_DEFAULT_REGION}" s3api put-bucket-policy \
@@ -296,6 +283,8 @@ set -e # Turn on exit on error
 
 if [ "${BUCKET_ENCRYPTION_STATUS}" != "0" ]; then
 
+  mkdir -p generated
+
   j2 tfstate_bucket_server_side_encryption.json.j2 -o generated/tfstate_bucket_server_side_encryption.json
     
   aws --region "${AWS_DEFAULT_REGION}" s3api put-bucket-encryption \
@@ -310,3 +299,7 @@ fn_create_or_verify_dynamodb_table_for_module "core"
 # Create or verify dynamodb table for data module
 
 fn_create_or_verify_dynamodb_table_for_module "data"
+
+# Create or verify dynamodb table for data module
+
+fn_create_or_verify_dynamodb_table_for_module "worker_test"

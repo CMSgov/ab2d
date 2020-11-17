@@ -10,12 +10,44 @@ output "ab2d_instance_role_name" {
   value = module.core.ab2d_instance_role_name
 }
 
+output "ab2d_kms_policy_name" {
+  value = module.core.ab2d_kms_policy_name
+}
+
 output "ab2d_packer_policy_name" {
   value = module.core.ab2d_packer_policy_name
 }
 
 output "ab2d_s3_access_policy_name" {
   value = module.core.ab2d_s3_access_policy_name
+}
+
+output "efs_id" {
+  value = module.core.efs_id
+}
+
+output "efs_sg_id" {
+  value = module.core.efs_sg_id
+}
+
+output "main_bucket_name" {
+  value = module.core.main_bucket_name
+}
+
+output "main_kms_key_alias" {
+  value = module.core.main_kms_key_alias
+}
+
+output "main_kms_key_arn" {
+  value = module.core.main_kms_key_arn
+}
+
+output "main_kms_key_id" {
+  value = module.core.main_kms_key_id
+}
+
+output "main_log_bucket_name" {
+  value = module.core.main_log_bucket_name
 }
 
 output "private_subnet_a_id" {
