@@ -18,7 +18,7 @@ public class PatientClaimsProcessorStub implements PatientClaimsProcessor {
     public Future<EobSearchResult> process(PatientClaimsRequest request) {
         EobSearchResult result = new EobSearchResult();
         ExplanationOfBenefit eob = new ExplanationOfBenefit();
-        Reference ref = new Reference("Patient/" + request.getPatientDTO().getPatientId());
+        Reference ref = new Reference("Patient/" + request.getPatientDTO().getBeneficiaryId());
         eob.setPatient(ref);
         Period period = new Period();
         period.setStart(new Date(0));

@@ -1,17 +1,25 @@
 package gov.cms.ab2d.worker.processor;
 
 import gov.cms.ab2d.worker.adapter.bluebutton.ContractBeneficiaries;
+import gov.cms.ab2d.worker.processor.domainmodel.Identifiers;
 import org.hl7.fhir.dstu3.model.*;
 
-import java.util.Calendar;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
+
+import static gov.cms.ab2d.worker.processor.PatientContractCallable.*;
 
 public class BundleUtils {
 
     public static final String BENEFICIARY_ID = "https://bluebutton.cms.gov/resources/variables/bene_id";
-    public static final String MBI_ID = "http://hl7.org/fhir/sid/us-mbi";
+
+    public static Identifiers createIdentifierWithoutMbi(String beneficiaryId) {
+        return new Identifiers(beneficiaryId, null, new LinkedHashSet<>());
+    }
+
+    public static Identifiers createIdentifier(String beneficiaryId, String currentMbi, String... historicMbis) {
+        return new Identifiers(beneficiaryId, currentMbi, new LinkedHashSet<>(Set.of(historicMbis)));
+    }
 
     public static Bundle createBundle(Bundle.BundleEntryComponent ... bundleEntries) {
         var bundle = new Bundle();
@@ -23,7 +31,7 @@ public class BundleUtils {
     }
 
     public static List<ContractBeneficiaries.PatientDTO> getPatient(String id, Collection<ContractBeneficiaries.PatientDTO> patients) {
-        return patients.stream().filter(c -> c.getPatientId().equalsIgnoreCase(id)).collect(Collectors.toList());
+        return patients.stream().filter(c -> c.getBeneficiaryId().equalsIgnoreCase(id)).collect(Collectors.toList());
     }
 
     public static Bundle.BundleEntryComponent createBundleEntry(String patientId, String mbi, int year) {
@@ -33,9 +41,27 @@ public class BundleUtils {
     }
 
     public static Patient createPatient(String patientId, String mbi, int year) {
+        return createPatient(patientId, mbi, year, true);
+    }
+
+    public static Patient createPatientWithMultipleMbis(String patientId, int numMbis, int year) {
         var patient = new Patient();
         patient.getIdentifier().add(createBeneficiaryIdentifier(patientId));
-        patient.getIdentifier().add(createMbiIdentifier(mbi));
+
+        patient.getIdentifier().add(createMbiIdentifier(patientId + "mbi-" + 0, true));
+
+        for (int idx = 1; idx < numMbis; idx++) {
+            patient.getIdentifier().add(createMbiIdentifier(patientId + "mbi-" + idx, false));
+        }
+
+        patient.getExtension().add(createReferenceYearExtension(year));
+        return patient;
+    }
+
+    private static Patient createPatient(String patientId, String mbi, int year, boolean current) {
+        var patient = new Patient();
+        patient.getIdentifier().add(createBeneficiaryIdentifier(patientId));
+        patient.getIdentifier().add(createMbiIdentifier(mbi, current));
         patient.getExtension().add(createReferenceYearExtension(year));
         return patient;
     }
@@ -47,10 +73,24 @@ public class BundleUtils {
         return identifier;
     }
 
-    public static Identifier createMbiIdentifier(String mbi) {
+    public static Identifier createMbiIdentifier(String mbi, boolean current) {
         var identifier = new Identifier();
         identifier.setSystem(MBI_ID);
         identifier.setValue(mbi);
+
+        Coding coding = new Coding();
+
+        if (current) {
+            coding.setCode(CURRENT_MBI);
+        } else {
+            coding.setCode(HISTORIC_MBI);
+        }
+
+        Extension extension = new Extension();
+        extension.setUrl(CURRENCY_IDENTIFIER);
+        extension.setValue(coding);
+        identifier.setExtension(Collections.singletonList(extension));
+
         return identifier;
     }
 

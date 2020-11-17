@@ -12,10 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.lang3.StringUtils;
-import org.hl7.fhir.dstu3.model.Bundle;
-import org.hl7.fhir.dstu3.model.CapabilityStatement;
-import org.hl7.fhir.dstu3.model.Patient;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.hl7.fhir.dstu3.model.*;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.retry.annotation.Backoff;
@@ -48,8 +45,7 @@ public class BFDClientImpl implements BFDClient {
     @Value("${bfd.contract.to.bene.pagesize}")
     private int contractToBenePageSize;
 
-    @Autowired
-    private IGenericClient client;
+    private final IGenericClient client;
 
     @Value("${bfd.hicn.hash}")
     private String hicnHash;
@@ -64,9 +60,12 @@ public class BFDClientImpl implements BFDClient {
     @Value("${bfd.hash.iter}")
     private int bfdHashIter;
 
-    @Autowired
-    private BFDSearch bfdSearch;
+    private final BFDSearch bfdSearch;
 
+    public BFDClientImpl(IGenericClient client, BFDSearch bfdSearch) {
+        this.client = client;
+        this.bfdSearch = bfdSearch;
+    }
 
 
     /**
@@ -125,7 +124,7 @@ public class BFDClientImpl implements BFDClient {
                 " using since " + sinceTime);
         bfdSegment.setMetricName("RequestEOB");
 
-        Bundle result = bfdSearch.searchEOB(patientID, sinceTime, pageSize);
+        Bundle result = bfdSearch.searchEOB(patientID, sinceTime, pageSize, getJobId());
 
         bfdSegment.end();
 
@@ -146,20 +145,23 @@ public class BFDClientImpl implements BFDClient {
     )
     public Bundle requestPatientByHICN(String hicn) {
         String hicnHashVal = hashIdentifier(hicn, bfdHashPepper, bfdHashIter);
-        ICriterion hicnHashEquals = generateHash(hicnHash, hicnHashVal);
+        var hicnHashEquals = generateHash(hicnHash, hicnHashVal);
         return clientSearch(hicnHashEquals);
     }
 
-    private Bundle clientSearch(ICriterion hashEquals) {
+    private Bundle clientSearch(@SuppressWarnings("rawtypes") ICriterion hashEquals) {
         return client.search()
                 .forResource(Patient.class)
                 .where(hashEquals)
+                .withAdditionalHeader(BFDClient.BFD_HDR_BULK_CLIENTID, BFDClient.BFD_CLIENT_ID)
+                .withAdditionalHeader(BFDClient.BFD_HDR_BULK_JOBID, getJobId())
                 .withAdditionalHeader("IncludeIdentifiers", "true")
                 .returnBundle(Bundle.class)
                 .encodedJson()
                 .execute();
     }
 
+    @SuppressWarnings("rawtypes")
     private ICriterion generateHash(String hash, String hashVal) {
         return new TokenClientParam("identifier").exactly()
                 .systemAndCode(hash, hashVal);
@@ -179,7 +181,7 @@ public class BFDClientImpl implements BFDClient {
     )
     public Bundle requestPatientByMBI(String mbi) {
         String hashVal = hashIdentifier(mbi, bfdHashPepper, bfdHashIter);
-        ICriterion mbiHashEquals = generateHash(mbiHash, hashVal);
+        var mbiHashEquals = generateHash(mbiHash, hashVal);
         return clientSearch(mbiHashEquals);
     }
 
@@ -212,11 +214,20 @@ public class BFDClientImpl implements BFDClient {
         return client
                 .loadPage()
                 .next(bundle)
-// todo uncomment when issue regarding retrieving mbis is complete
-//
-//                .withAdditionalHeader("IncludeIdentifiers", "mbi")
+                .withAdditionalHeader(BFDClient.BFD_HDR_BULK_CLIENTID, BFDClient.BFD_CLIENT_ID)
+                .withAdditionalHeader(BFDClient.BFD_HDR_BULK_JOBID, getJobId())
+                .withAdditionalHeader("IncludeIdentifiers", "mbi")
                 .encodedJson()
                 .execute();
+    }
+
+    private String getJobId() {
+        var jobId = BFDClient.BFD_BULK_JOB_ID.get();
+        if (jobId == null) {
+            log.warn("BFD Bulk Job Id not set: " + new Throwable());  // Capture the stack trace for diagnosis
+            jobId = "UNKNOWN";
+        }
+        return jobId;
     }
 
     @Override
@@ -234,9 +245,9 @@ public class BFDClientImpl implements BFDClient {
         return client.search()
                 .forResource(Patient.class)
                 .where(theCriterion)
-// todo uncomment when issue regarding retrieving mbis is complete
-//
-//                .withAdditionalHeader("IncludeIdentifiers", "mbi")
+                .withAdditionalHeader(BFDClient.BFD_HDR_BULK_CLIENTID, BFDClient.BFD_CLIENT_ID)
+                .withAdditionalHeader(BFDClient.BFD_HDR_BULK_JOBID, getJobId())
+                .withAdditionalHeader("IncludeIdentifiers", "mbi")
                 .count(contractToBenePageSize)
                 .returnBundle(Bundle.class)
                 .encodedJson()
