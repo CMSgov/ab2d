@@ -270,7 +270,7 @@ public class ContractProcessorImpl implements ContractProcessor {
         Identifier identifier = new Identifier().setSystem(PatientContractCallable.MBI_ID).setValue(mbi);
 
         Coding coding = new Coding()
-                .setCode(current ? PatientContractCallable.CURRENT : PatientContractCallable.HISTORIC);
+                .setCode(current ? PatientContractCallable.CURRENT_MBI : PatientContractCallable.HISTORIC_MBI);
 
         Extension currencyExtension = new Extension()
                 .setUrl(PatientContractCallable.CURRENCY_IDENTIFIER)

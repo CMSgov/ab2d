@@ -14,8 +14,9 @@ import org.mockito.Mock;
 
 import java.util.*;
 
-import static gov.cms.ab2d.worker.processor.BundleUtils.*;
 import static gov.cms.ab2d.worker.processor.ContractProcessorImpl.ID_EXT;
+import static gov.cms.ab2d.worker.processor.PatientContractCallable.*;
+import static gov.cms.ab2d.worker.processor.PatientContractCallable.MBI_ID;
 import static org.junit.jupiter.api.Assertions.*;
 
 class ContractProcessorImplTest {
@@ -94,7 +95,7 @@ class ContractProcessorImplTest {
         assertFalse(currentId.getExtension().isEmpty());
         Extension currentExtension = currentId.getExtension().get(0);
         assertEquals(CURRENCY_IDENTIFIER, currentExtension.getUrl());
-        assertEquals(CURRENT, ((Coding) currentExtension.getValue()).getCode());
+        assertEquals(CURRENT_MBI, ((Coding) currentExtension.getValue()).getCode());
     }
 
     private void checkHistoricalMbi(Extension historicalExtension, String id) {
@@ -105,6 +106,6 @@ class ContractProcessorImplTest {
         assertFalse(historicalId.getExtension().isEmpty());
         Extension historicExtension = historicalId.getExtension().get(0);
         assertEquals(CURRENCY_IDENTIFIER, historicExtension.getUrl());
-        assertEquals(HISTORIC, ((Coding) historicExtension.getValue()).getCode());
+        assertEquals(HISTORIC_MBI, ((Coding) historicExtension.getValue()).getCode());
     }
 }

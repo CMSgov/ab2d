@@ -18,10 +18,10 @@ import static java.util.stream.Collectors.*;
 @Slf4j
 public class PatientContractCallable implements Callable<ContractMapping> {
     private static final String BENEFICIARY_ID = "https://bluebutton.cms.gov/resources/variables/bene_id";
-    static final String CURRENCY_IDENTIFIER =
+    public static final String CURRENCY_IDENTIFIER =
             "https://bluebutton.cms.gov/resources/codesystem/identifier-currency";
-    static final String CURRENT = "current";
-    static final String HISTORIC = "historic";
+    public static final String CURRENT_MBI = "current";
+    public static final String HISTORIC_MBI = "historic";
 
     public static final String MBI_ID = "http://hl7.org/fhir/sid/us-mbi";
 
@@ -231,11 +231,11 @@ public class PatientContractCallable implements Callable<ContractMapping> {
     }
 
     private boolean isCurrentMbi(Identifier identifier) {
-        return isMatchingMbi(identifier, CURRENT);
+        return isMatchingMbi(identifier, CURRENT_MBI);
     }
 
     private boolean isHistoricalMbi(Identifier identifier) {
-        return isMatchingMbi(identifier, HISTORIC);
+        return isMatchingMbi(identifier, HISTORIC_MBI);
     }
 
     private boolean isMatchingMbi(Identifier identifier, String historic) {

@@ -17,9 +17,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.*;
 
-import static gov.cms.ab2d.worker.processor.BundleUtils.MBI_ID;
 import static gov.cms.ab2d.worker.processor.BundleUtils.createIdentifier;
 import static gov.cms.ab2d.worker.processor.ContractProcessorImpl.ID_EXT;
+import static gov.cms.ab2d.worker.processor.PatientContractCallable.MBI_ID;
 import static org.junit.jupiter.api.Assertions.*;
 
 @ExtendWith(MockitoExtension.class)

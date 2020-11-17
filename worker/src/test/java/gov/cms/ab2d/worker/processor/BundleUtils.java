@@ -7,15 +7,11 @@ import org.hl7.fhir.dstu3.model.*;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static gov.cms.ab2d.worker.processor.PatientContractCallable.*;
+
 public class BundleUtils {
 
     public static final String BENEFICIARY_ID = "https://bluebutton.cms.gov/resources/variables/bene_id";
-    public static final String MBI_ID = "http://hl7.org/fhir/sid/us-mbi";
-
-    public static final String CURRENCY_IDENTIFIER =
-            "https://bluebutton.cms.gov/resources/codesystem/identifier-currency";
-    public static final String CURRENT = "current";
-    public static final String HISTORIC = "historic";
 
     public static Identifiers createIdentifierWithoutMbi(String beneficiaryId) {
         return new Identifiers(beneficiaryId, null, new LinkedHashSet<>());
@@ -85,9 +81,9 @@ public class BundleUtils {
         Coding coding = new Coding();
 
         if (current) {
-            coding.setCode(CURRENT);
+            coding.setCode(CURRENT_MBI);
         } else {
-            coding.setCode(HISTORIC);
+            coding.setCode(HISTORIC_MBI);
         }
 
         Extension extension = new Extension();
