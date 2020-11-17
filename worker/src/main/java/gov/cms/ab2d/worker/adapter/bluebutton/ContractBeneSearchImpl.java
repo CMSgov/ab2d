@@ -68,7 +68,8 @@ public class ContractBeneSearchImpl implements ContractBeneSearch {
         tracker.setCurrentMonth(currentMonth);
 
         for (var month = 1; month <= currentMonth; month++) {
-            PatientContractCallable callable = new PatientContractCallable(contractNumber, month, YEAR, bfdClient, skipBillablePeriodCheck);
+            PatientContractCallable callable = new PatientContractCallable(contractNumber, month, YEAR, bfdClient,
+                    skipBillablePeriodCheck, tracker.getJobUuid());
             futureHandles.add(patientContractThreadPool.submit(callable));
         }
 

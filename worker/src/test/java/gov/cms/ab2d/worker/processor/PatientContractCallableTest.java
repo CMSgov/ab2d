@@ -20,6 +20,7 @@ import static org.mockito.Mockito.when;
 
 class PatientContractCallableTest {
 
+    public static final String TESTING_JOB_ID = "TESTING_JOB_ID";
     private BFDClient bfdClient;
 
     @BeforeEach
@@ -45,7 +46,8 @@ class PatientContractCallableTest {
         contract.setContractNumber("TESTING");
         contract.setContractName("TESTING");
 
-        PatientContractCallable patientContractCallable = new PatientContractCallable("TESTING", 1, 2020, bfdClient, false);
+        PatientContractCallable patientContractCallable = new PatientContractCallable("TESTING", 1,
+                2020, bfdClient, false, TESTING_JOB_ID);
 
         try {
             ContractMapping mapping = patientContractCallable.call();
@@ -81,7 +83,8 @@ class PatientContractCallableTest {
         contract.setContractNumber("TESTING");
         contract.setContractName("TESTING");
 
-        PatientContractCallable patientContractCallable = new PatientContractCallable("TESTING", 1, 2020, bfdClient, false);
+        PatientContractCallable patientContractCallable = new PatientContractCallable("TESTING", 1,
+                2020, bfdClient, false, TESTING_JOB_ID);
 
         try {
             ContractMapping mapping = patientContractCallable.call();
@@ -117,7 +120,8 @@ class PatientContractCallableTest {
         contract.setContractNumber("TESTING");
         contract.setContractName("TESTING");
 
-        PatientContractCallable patientContractCallable = new PatientContractCallable("TESTING", 1, 2020, bfdClient, false);
+        PatientContractCallable patientContractCallable = new PatientContractCallable("TESTING", 1,
+                2020, bfdClient, false, TESTING_JOB_ID);
 
         try {
             ContractMapping mapping = patientContractCallable.call();
@@ -143,7 +147,8 @@ class PatientContractCallableTest {
         contract.setContractNumber("TESTING");
         contract.setContractName("TESTING");
 
-        PatientContractCallable callable = new PatientContractCallable("TESTING", 1, 2020, bfdClient, false);
+        PatientContractCallable callable = new PatientContractCallable("TESTING", 1,
+                2020, bfdClient, false, TESTING_JOB_ID);
         assertThrows(RuntimeException.class, callable::call);
     }
 
