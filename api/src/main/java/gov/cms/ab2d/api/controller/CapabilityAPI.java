@@ -50,16 +50,24 @@ public class CapabilityAPI {
     )
     @ResponseStatus(value = HttpStatus.OK)
     @GetMapping(value = "/metadata")
-    public ResponseEntity<String> capabilityStatement(HttpServletRequest request) throws IOException {
-        CapabilityStatement capabilityStatement = new CapabilityStatement();
-        String json = new JsonMapper()
-                .setVisibility(PropertyAccessor.FIELD, JsonAutoDetect.Visibility.ANY)
-                .writeValueAsString(capabilityStatement);
+    public ResponseEntity<String> capabilityStatement(HttpServletRequest request) {
+        String json = getCapabilityStatement();
 
         eventLogger.log(new ApiResponseEvent(MDC.get(USERNAME), null, HttpStatus.OK,
                 "FHIR Capability Statement",
                 "FHIR Capability Statement Returned", (String) request.getAttribute(REQUEST_ID)));
 
         return new ResponseEntity<>(json, null, HttpStatus.OK);
+    }
+
+    private String getCapabilityStatement() {
+        try {
+            CapabilityStatement capabilityStatement = new CapabilityStatement();
+            return new JsonMapper()
+                    .setVisibility(PropertyAccessor.FIELD, JsonAutoDetect.Visibility.ANY)
+                    .writeValueAsString(capabilityStatement);
+        } catch (IOException re) {
+            throw new RuntimeException("could not serialize capability statement, should never happen", re);
+        }
     }
 }
