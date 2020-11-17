@@ -54,8 +54,8 @@ public class BundleUtils {
 
         patient.getIdentifier().add(createMbiIdentifier(patientId + "mbi-" + 0, true));
 
-        for (int i = 1; i < numMbis; i++) {
-            patient.getIdentifier().add(createMbiIdentifier(patientId + "mbi-" + i, false));
+        for (int idx = 1; idx < numMbis; idx++) {
+            patient.getIdentifier().add(createMbiIdentifier(patientId + "mbi-" + idx, false));
         }
 
         patient.getExtension().add(createReferenceYearExtension(year));
