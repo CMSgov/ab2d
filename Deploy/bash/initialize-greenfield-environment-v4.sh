@@ -123,7 +123,17 @@ set_secrets ()
     echo "*********************************************************"
     DATABASE_NAME=$(./get-database-secret.py $CMS_ENV_SS database_name $DATABASE_SECRET_DATETIME)
   fi
-  
+
+  # Create or get database schema name secret
+
+  DATABASE_SCHEMA_NAME=$(./get-database-secret.py $CMS_ENV_SS database_schema_name $DATABASE_SECRET_DATETIME)
+  if [ -z "${DATABASE_SCHEMA_NAME}" ]; then
+    echo "*********************************************************"
+    ./create-database-secret.py $CMS_ENV_SS database_schema_name $KMS_KEY_ID $DATABASE_SECRET_DATETIME
+    echo "*********************************************************"
+    DATABASE_SCHEMA_NAME=$(./get-database-secret.py $CMS_ENV_SS database_schema_name $DATABASE_SECRET_DATETIME)
+  fi
+
   # Create or get bfd url secret
   
   BFD_URL=$(./get-database-secret.py $CMS_ENV_SS bfd_url $DATABASE_SECRET_DATETIME)
