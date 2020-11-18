@@ -47,6 +47,18 @@ resource "aws_security_group_rule" "efs_ingress" {
   security_group_id = var.efs_security_group_id
 }
 
+resource "aws_efs_mount_target" "alpha" {
+  file_system_id  = var.efs_id
+  subnet_id       = var.alpha
+  security_groups = [var.efs_security_group_id]
+}
+
+resource "aws_efs_mount_target" "beta" {
+  file_system_id  = var.efs_id
+  subnet_id      =  var.beta
+  security_groups = [var.efs_security_group_id]
+}
+
 resource "aws_ecs_cluster" "ab2d_worker" {
   name = "${lower(var.env)}-worker"
 }
@@ -177,7 +189,7 @@ resource "aws_launch_configuration" "launch_config" {
 }
 
 resource "aws_autoscaling_group" "asg" {
-  depends_on = ["aws_launch_configuration.launch_config"]
+  depends_on = [aws_launch_configuration.launch_config]
   availability_zones = ["us-east-1a","us-east-1b","us-east-1c","us-east-1d","us-east-1e"]
   name = aws_launch_configuration.launch_config.name
   max_size = var.worker_max_instances

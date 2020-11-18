@@ -1,6 +1,8 @@
+variable "alpha" {}
 variable "ami_id" {}
 variable "autoscale_group_wait" {}
 variable "aws_account_number" {}
+variable "beta" {}
 variable "bfd_keystore_file_name" {} # Used in userdata.tpl
 variable "bfd_keystore_location" {}
 variable "bfd_keystore_password" {}

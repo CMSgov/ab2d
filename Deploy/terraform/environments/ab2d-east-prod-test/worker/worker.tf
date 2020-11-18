@@ -30,9 +30,11 @@ data "terraform_remote_state" "data" {
 
 module "worker" {
   source                            = "../../../modules/terraservices_pattern/worker"
+  alpha                             = data.terraform_remote_state.core.outputs.private_subnet_a_id
   ami_id                            = var.ami_id
   autoscale_group_wait              = "0" #Change this later for 0 downtime deployment
   aws_account_number                = var.aws_account_number
+  beta                              = data.terraform_remote_state.core.outputs.private_subnet_b_id
   bfd_keystore_file_name            = var.bfd_keystore_file_name
   bfd_keystore_location             = var.bfd_keystore_location
   bfd_keystore_password             = var.bfd_keystore_password
