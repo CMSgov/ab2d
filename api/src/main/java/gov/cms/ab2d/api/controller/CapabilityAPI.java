@@ -1,6 +1,8 @@
 package gov.cms.ab2d.api.controller;
 
-import com.google.gson.Gson;
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.PropertyAccessor;
+import com.fasterxml.jackson.databind.json.JsonMapper;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.events.ApiResponseEvent;
 import io.swagger.annotations.*;
@@ -15,6 +17,8 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.http.HttpServletRequest;
+
+import java.io.IOException;
 
 import static gov.cms.ab2d.common.util.Constants.API_PREFIX;
 import static gov.cms.ab2d.common.util.Constants.FHIR_PREFIX;
@@ -47,11 +51,23 @@ public class CapabilityAPI {
     @ResponseStatus(value = HttpStatus.OK)
     @GetMapping(value = "/metadata")
     public ResponseEntity<String> capabilityStatement(HttpServletRequest request) {
-        CapabilityStatement capabilityStatement = new CapabilityStatement();
-        String json = new Gson().toJson(capabilityStatement);
+        String json = getCapabilityStatement();
+
         eventLogger.log(new ApiResponseEvent(MDC.get(USERNAME), null, HttpStatus.OK,
                 "FHIR Capability Statement",
                 "FHIR Capability Statement Returned", (String) request.getAttribute(REQUEST_ID)));
+
         return new ResponseEntity<>(json, null, HttpStatus.OK);
+    }
+
+    private String getCapabilityStatement() {
+        try {
+            CapabilityStatement capabilityStatement = new CapabilityStatement();
+            return new JsonMapper()
+                    .setVisibility(PropertyAccessor.FIELD, JsonAutoDetect.Visibility.ANY)
+                    .writeValueAsString(capabilityStatement);
+        } catch (IOException re) {
+            throw new RuntimeException("could not serialize capability statement, should never happen", re);
+        }
     }
 }
