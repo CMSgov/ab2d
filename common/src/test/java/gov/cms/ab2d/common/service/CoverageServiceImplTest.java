@@ -3,6 +3,7 @@ package gov.cms.ab2d.common.service;
 import gov.cms.ab2d.common.model.*;
 import gov.cms.ab2d.common.repository.*;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
+import gov.cms.ab2d.common.util.Coverage;
 import gov.cms.ab2d.common.util.DataSetup;
 import gov.cms.ab2d.common.util.FilterOutByDate;
 import org.junit.jupiter.api.*;
@@ -15,7 +16,6 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.time.OffsetDateTime;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import static java.util.Collections.disjoint;
 import static java.util.Collections.singletonList;
@@ -51,9 +51,6 @@ class CoverageServiceImplTest {
 
     @Container
     private static final PostgreSQLContainer postgreSQLContainer= new AB2DPostgresqlContainer();
-
-    @Autowired
-    CoverageRepository coverageRepo;
 
     @Autowired
     CoveragePeriodRepository coveragePeriodRepo;
@@ -107,7 +104,7 @@ class CoverageServiceImplTest {
 
     @AfterEach
     public void cleanUp() {
-        coverageRepo.deleteAll();
+        dataSetup.deleteCoverage();
         coverageSearchEventRepo.deleteAll();
         coverageSearchRepo.deleteAll();
         coveragePeriodRepo.deleteAll();
@@ -230,11 +227,11 @@ class CoverageServiceImplTest {
 
         // Check that MBIs are correctly preserved
 
-        List<Coverage> coverage = coverageRepo.findAll();
+        List<Coverage> coverage = dataSetup.findCoverage();
 
         coverage.forEach(cov -> {
             String beneId = cov.getBeneficiaryId();
-            String mbi = cov.getMbi();
+            String mbi = cov.getCurrentMbi();
 
             String beneNumber = beneId.substring(beneId.indexOf('-') + 1);
             String mbiNumber = mbi.substring(mbi.indexOf('-') + 1);
@@ -603,16 +600,17 @@ class CoverageServiceImplTest {
 
         coverageService.deletePreviousSearch(period1Jan.getId());
 
-        List<String> coverages = coverageRepo.findAll().stream().map(Coverage::getBeneficiaryId).collect(toList());
+        List<String> coverages = dataSetup.findCoverage()
+                .stream().map(Coverage::getBeneficiaryId).collect(toList());
 
         assertTrue(disjoint(results1, coverages));
         assertTrue(coverages.containsAll(beneIds2));
 
-        Set<CoverageSearchEvent> distinctSearchEvents = coverageRepo.findAll().stream()
-                .map(Coverage::getCoverageSearchEvent).collect(toSet());
+        Set<Long> distinctSearchEvents = dataSetup.findCoverage().stream()
+                .map(Coverage::getSearchEventId).collect(toSet());
 
-        assertFalse(distinctSearchEvents.contains(inProgress1));
-        assertTrue(distinctSearchEvents.contains(inProgress2));
+        assertFalse(distinctSearchEvents.contains(inProgress1.getId()));
+        assertTrue(distinctSearchEvents.contains(inProgress2.getId()));
     }
 
     @DisplayName("Check search status on CoveragePeriod")

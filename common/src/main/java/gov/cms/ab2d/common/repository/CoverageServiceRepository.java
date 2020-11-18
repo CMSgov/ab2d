@@ -36,12 +36,12 @@ public class CoverageServiceRepository {
             "VALUES(?,?,?,?,?)";
 
     private static final String SELECT_COUNT = "SELECT COUNT(*) FROM coverage " +
-            " WHERE bene_coverage_search_event_id = :searchEventId";
+            " WHERE bene_coverage_search_event_id = ?";
 
     private static final String SELECT_INTERSECTION = "SELECT COUNT(*) FROM (" +
-            " SELECT DISTINCT beneficiary_id FROM coverage WHERE bene_coverage_search_event_id = :searchEventId1 " +
+            " SELECT DISTINCT beneficiary_id FROM coverage WHERE bene_coverage_search_event_id = ? " +
             " INTERSECT " +
-            " SELECT DISTINCT beneficiary_id FROM coverage WHERE bene_coverage_search_event_id = :searchEventId2 " +
+            " SELECT DISTINCT beneficiary_id FROM coverage WHERE bene_coverage_search_event_id = ? " +
             ") I";
 
     private static final String SELECT_BENEFICIARIES_BATCH = "SELECT DISTINCT cov.beneficiary_id FROM coverage cov " +
@@ -75,9 +75,12 @@ public class CoverageServiceRepository {
         try (Connection connection = dataSource.getConnection();
              PreparedStatement statement = connection.prepareStatement(SELECT_COUNT)) {
             statement.setLong(1, searchEvent.getId());
-            return statement.executeQuery().getInt(1);
+            try (ResultSet rs = statement.executeQuery()) {
+                rs.next();
+                return rs.getInt(1);
+            }
         } catch (SQLException sqlException) {
-            throw new RuntimeException("failed to insert coverage information", sqlException);
+            throw new RuntimeException("failed to count by search event", sqlException);
         }
     }
 
@@ -86,20 +89,22 @@ public class CoverageServiceRepository {
              PreparedStatement statement = connection.prepareStatement(SELECT_INTERSECTION)) {
             statement.setLong(1, searchEvent1.getId());
             statement.setLong(2, searchEvent2.getId());
-            return statement.executeQuery().getInt(1);
+
+            try (ResultSet rs = statement.executeQuery()) {
+                rs.next();
+                return rs.getInt(1);
+            }
         } catch (SQLException sqlException) {
-            throw new RuntimeException("failed to insert coverage information", sqlException);
+            throw new RuntimeException("failed to count intersection between searches", sqlException);
         }
     }
 
     /**
-     * Insert a batch of ids as {@link gov.cms.ab2d.common.model.Coverage} objects using plain jdbc
+     * Insert a batch of patients using plain jdbc
      * @param searchEvent the search event to add coverage in relation to
      * @param beneIds Collection of beneficiary ids to be added as a batch
      */
     public void insertBatches(CoverageSearchEvent searchEvent, Iterable<Identifiers> beneIds) {
-
-
 
         try (Connection connection = dataSource.getConnection();
              PreparedStatement statement = connection.prepareStatement(INSERT_COVERAGE)) {
@@ -252,7 +257,7 @@ public class CoverageServiceRepository {
     }
 
     @SuppressWarnings("PMD.UnusedFormalParameter")
-    private static CoverageMembership asMembership(ResultSet rs, int rowNum) throws SQLException {
+    public static CoverageMembership asMembership(ResultSet rs, int rowNum) throws SQLException {
         Identifiers identifiers = asIdentifiers(rs);
         return new CoverageMembership(identifiers, rs.getInt(4), rs.getInt(5));
     }
@@ -265,9 +270,7 @@ public class CoverageServiceRepository {
         if (StringUtils.isNotBlank(historicMbiString)) {
             String[] mbis = historicMbiString.split(",");
 
-            for (String mbi : mbis) {
-                historicMbis.add(mbi);
-            }
+            historicMbis.addAll(Arrays.asList(mbis));
         }
 
         return new Identifiers(rs.getString(1), rs.getString(2), historicMbis);

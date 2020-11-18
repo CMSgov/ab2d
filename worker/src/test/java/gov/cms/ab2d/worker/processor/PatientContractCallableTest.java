@@ -110,7 +110,7 @@ class PatientContractCallableTest {
 
     }
 
-    @DisplayName("Current mbi always appears first")
+    @DisplayName("Current and historic mbis always captured")
     @Test
     void currentMibAppearsFirst() {
 

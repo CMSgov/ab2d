@@ -5,14 +5,23 @@ import gov.cms.ab2d.common.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import javax.sql.DataSource;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.time.Instant;
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
 @Component
 public class DataSetup {
+
+    @Autowired
+    private DataSource dataSource;
 
     @Autowired
     private ContractRepository contractRepository;
@@ -59,6 +68,50 @@ public class DataSetup {
         coveragePeriodRepo.delete(coveragePeriod);
     }
 
+    public int countCoverage() {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement("SELECT COUNT(*) FROM COVERAGE")) {
+            ResultSet rs = statement.executeQuery();
+
+            rs.next();
+            return rs.getInt(1);
+        } catch (SQLException sqlException) {
+            throw new RuntimeException(sqlException);
+        }
+    }
+
+    public void deleteCoverage() {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement("DELETE FROM coverage")) {
+            statement.execute();
+        } catch (SQLException sqlException) {
+            throw new RuntimeException(sqlException);
+        }
+    }
+
+    public List<Coverage> findCoverage() {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement("SELECT * FROM coverage")) {
+            ResultSet rs = statement.executeQuery();
+
+            List<Coverage> memberships = new ArrayList<>();
+            while (rs.next()) {
+                long id = rs.getLong(1);
+                int periodId = rs.getInt(2);
+                long searchEventId = rs.getInt(3);
+                String beneficiaryId = rs.getString(4);
+                String currentMbi = rs.getString(5);
+                String historicalMbis = rs.getString(6);
+
+                memberships.add(new Coverage(id, periodId, searchEventId, beneficiaryId, currentMbi, historicalMbis));
+            }
+
+            return memberships;
+        } catch (SQLException sqlException) {
+            throw new RuntimeException(sqlException);
+        }
+    }
+
     public CoverageSearchEvent createCoverageSearchEvent(CoveragePeriod coveragePeriod, String description) {
         CoverageSearchEvent coverageSearchEvent = new CoverageSearchEvent();
         coverageSearchEvent.setCoveragePeriod(coveragePeriod);
@@ -72,18 +125,6 @@ public class DataSetup {
         coverageSearchEventRepo.delete(event);
     }
 
-    public Coverage createCoverage(CoveragePeriod coveragePeriod, CoverageSearchEvent coverageSearchEvent, String bene, String mbi) {
-        Coverage coverage = new Coverage();
-        coverage.setCoveragePeriod(coveragePeriod);
-        coverage.setCoverageSearchEvent(coverageSearchEvent);
-        coverage.setBeneficiaryId(bene);
-        coverage.setMbi(mbi);
-        return coverageRepo.saveAndFlush(coverage);
-    }
-
-    public void deleteCoverage(Coverage coverage) {
-        coverageRepo.delete(coverage);
-    }
 
     public Sponsor createSponsor(String parentName, int parentHpmsId, String childName, int childHpmsId) {
         Sponsor parent = new Sponsor();

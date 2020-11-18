@@ -17,7 +17,7 @@ import java.util.stream.IntStream;
 import static java.util.stream.Collectors.joining;
 
 /**
- * Use for performance testing the {@link Coverage} tables performance with large inserts, selects, and deletes
+ * Use for performance testing the coverage table's performance with large inserts, selects, and deletes
  * done by the {@link CoverageService}
  *
  * Note: this job does not clean up after itself and anticipates artifacts being wiped between tests

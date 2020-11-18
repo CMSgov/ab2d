@@ -4,6 +4,7 @@ import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.CoveragePeriod;
 import gov.cms.ab2d.common.repository.*;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
+import gov.cms.ab2d.common.util.Coverage;
 import gov.cms.ab2d.common.util.DataSetup;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,9 +38,6 @@ class CoverageProcessorIntTest {
     private CoverageSearchEventRepository coverageSearchEventRepo;
 
     @Autowired
-    private CoverageRepository coverageRepo;
-
-    @Autowired
     private DataSetup dataSetup;
 
     @Autowired
@@ -51,7 +49,7 @@ class CoverageProcessorIntTest {
 
     @AfterEach
     void after() {
-        coverageRepo.deleteAll();
+        dataSetup.deleteCoverage();
         coverageSearchEventRepo.deleteAll();
         coverageSearchRepo.deleteAll();
         coveragePeriodRepo.deleteAll();
@@ -81,9 +79,9 @@ class CoverageProcessorIntTest {
             sleep(2);
         }
 
-        assertEquals(40000, coverageRepo.count());
-        assertEquals(4, coverageRepo.findAll()
-                .stream().map(c -> c.getCoveragePeriod().getMonth())
+        assertEquals(40000, dataSetup.countCoverage());
+        assertEquals(4, dataSetup.findCoverage()
+                .stream().map(Coverage::getPeriodId)
                 .collect(toSet()).size());
     }
 

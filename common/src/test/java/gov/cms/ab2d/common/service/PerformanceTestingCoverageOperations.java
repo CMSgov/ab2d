@@ -44,9 +44,6 @@ class PerformanceTestingCoverageOperations {
     private SponsorRepository sponsorRepo;
 
     @Autowired
-    private CoverageRepository coverageRepo;
-
-    @Autowired
     private CoveragePeriodRepository coveragePeriodRepo;
 
     @Autowired
@@ -124,7 +121,7 @@ class PerformanceTestingCoverageOperations {
 
     @AfterEach
     public void cleanUp() {
-        deleteCoverage();
+        dataSetup.deleteCoverage();
         coverageSearchRepo.deleteAll();
         coverageSearchEventRepo.deleteAll();
         coveragePeriodRepo.deleteAll();
@@ -272,15 +269,15 @@ class PerformanceTestingCoverageOperations {
         coverageService.completeSearch(period1.getId(), "testing");
 
 
-        System.out.println("Records present before delete " + coverageRepo.countByCoverageSearchEvent(inProgress1));
+        System.out.println("Records present before delete " + coverageServiceRepo.countBySearchEvent(inProgress1));
 
         Instant start = Instant.now();
         coverageService.deletePreviousSearch(period1.getId());
         Instant end = Instant.now();
 
-        assertEquals(0, coverageRepo.countByCoverageSearchEvent(inProgress1));
-        assertEquals(100_000L, coverageRepo.countByCoverageSearchEvent(inProgress2));
-        System.out.println("Records present after delete " + coverageRepo.countByCoverageSearchEvent(inProgress1));
+        assertEquals(0, coverageServiceRepo.countBySearchEvent(inProgress1));
+        assertEquals(100_000L, coverageServiceRepo.countBySearchEvent(inProgress2));
+        System.out.println("Records present after delete " + coverageServiceRepo.countBySearchEvent(inProgress1));
 
         System.out.println("Time to delete previous search in milliseconds " + Duration.between(start, end).toMillis());
     }
@@ -291,7 +288,7 @@ class PerformanceTestingCoverageOperations {
      */
     private void loadDBWithFakeData(int dataPoints, List<CoveragePeriod> periods) {
 
-        if (coverageRepo.count() == 0) {
+        if (dataSetup.countCoverage() == 0) {
 
             ExecutorService executor = Executors.newFixedThreadPool(1);
             List<Future> insertions = new ArrayList<>();
@@ -309,15 +306,6 @@ class PerformanceTestingCoverageOperations {
             } catch (Exception exception) {
                 fail("failed to run all select threads", exception);
             }
-        }
-    }
-
-    private void deleteCoverage() {
-        try (Connection connection = dataSource.getConnection();
-             PreparedStatement statement = connection.prepareStatement("DELETE FROM coverage")) {
-            statement.execute();
-        } catch (Exception exception) {
-            exception.printStackTrace();
         }
     }
 }

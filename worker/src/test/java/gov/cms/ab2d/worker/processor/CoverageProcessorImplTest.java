@@ -63,9 +63,6 @@ class CoverageProcessorImplTest {
     private CoverageSearchEventRepository coverageSearchEventRepo;
 
     @Autowired
-    private CoverageRepository coverageRepo;
-
-    @Autowired
     private CoverageService coverageService;
 
     @Autowired
@@ -110,7 +107,7 @@ class CoverageProcessorImplTest {
     void after() {
         processor.shutdown();
 
-        coverageRepo.deleteAll();
+        dataSetup.deleteCoverage();
         coverageSearchEventRepo.deleteAll();
         coverageSearchRepo.deleteAll();
         coveragePeriodRepo.deleteAll();
