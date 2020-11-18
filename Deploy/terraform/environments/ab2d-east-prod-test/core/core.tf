@@ -4,7 +4,7 @@ provider "aws" {
 }
 
 module "core" {
-  source             = "../../../modules/core"
+  source             = "../../../modules/terraservices_pattern/core"
   aws_account_number = var.aws_account_number
   env                = var.env
   env_pascal_case    = var.env_pascal_case

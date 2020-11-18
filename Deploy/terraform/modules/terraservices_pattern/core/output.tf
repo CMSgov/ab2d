@@ -22,6 +22,10 @@ output "ab2d_s3_access_policy_name" {
   value = aws_iam_policy.s3_access_policy.name
 }
 
+output "efs_dns_name" {
+  value = aws_efs_file_system.efs.dns_name
+}
+
 output "efs_id" {
   value = aws_efs_file_system.efs.id
 }

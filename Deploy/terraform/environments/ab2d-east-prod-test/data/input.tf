@@ -1,4 +1,5 @@
 variable "aws_account_number" {}
+variable "controller_sg_id" {}
 variable "cpm_backup_db" {}
 variable "db_allocated_storage_size" {}
 variable "db_backup_retention_period" {}
@@ -20,8 +21,6 @@ variable "parent_env" {}
 variable "postgres_engine_version" {}
 variable "region" {}
 
-
-
 //variable "allocated_storage_size" {}
 //variable "engine_version" {}
 //variable "instance_class" {}
@@ -31,7 +30,6 @@ variable "region" {}
 //variable "iops" {}
 //variable "maintenance_window" {}
 //variable "copy_tags_to_snapshot" {}
-//variable "vpc_id" {}
 //variable "backup_retention_period" {}
 //variable "backup_window" {}
 //variable "kms_key_id" {}
@@ -43,3 +41,4 @@ variable "region" {}
 //variable "skip_final_snapshot" {}
 //variable "cpm_backup_db" {}
 //variable "jenkins_agent_sec_group_id" {}
+//variable "vpc_id" {}

@@ -7,8 +7,8 @@ set -x #Be verbose
 # Change to working directory
 #
 
-START_DIR="$( cd "$(dirname "$0")" ; pwd -P )"
-cd "${START_DIR}"
+# START_DIR="$( cd "$(dirname "$0")" ; pwd -P )"
+# cd "${START_DIR}"
 
 #
 # Check vars are not empty before proceeding

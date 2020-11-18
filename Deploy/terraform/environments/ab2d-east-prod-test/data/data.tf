@@ -20,8 +20,9 @@ data "terraform_remote_state" "core" {
 }
 
 module "data" {
-  source                     = "../../../modules/data"
+  source                     = "../../../modules/terraservices_pattern/data"
   aws_account_number         = var.aws_account_number
+  controller_sg_id           = var.controller_sg_id
   cpm_backup_db              = var.cpm_backup_db
   db_allocated_storage_size  = var.db_allocated_storage_size
   db_backup_retention_period = var.db_backup_retention_period

@@ -22,6 +22,10 @@ output "ab2d_s3_access_policy_name" {
   value = module.core.ab2d_s3_access_policy_name
 }
 
+output "efs_dns_name" {
+  value = module.core.efs_dns_name
+}
+
 output "efs_id" {
   value = module.core.efs_id
 }

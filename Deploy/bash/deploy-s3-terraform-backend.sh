@@ -7,8 +7,7 @@ set -x # Turn on verbosity
 # Change to working directory
 #
 
-START_DIR="$( cd "$(dirname "$0")" ; pwd -P )"
-cd "${START_DIR}"
+# START_DIR="$( cd "$(dirname "$0")" ; pwd -P )"
 
 #
 # Check vars are not empty before proceeding
@@ -19,8 +18,7 @@ if  [ -z "${AWS_ACCOUNT_NUMBER_PARAM}" ] \
     || [ -z "${CLOUD_TAMER_PARAM}" ] \
     || [ -z "${CMS_ENV_PARAM}" ] \
     || [ -z "${DEBUG_LEVEL_PARAM}" ] \
-    || [ -z "${REGION_PARAM}" ] \
-    || [ -z "${JENKINS_AGENT_SEC_GROUP_ID}" ]; then
+    || [ -z "${REGION_PARAM}" ]; then
   echo "ERROR: All parameters must be set."
   exit 1
 fi
@@ -302,4 +300,4 @@ fn_create_or_verify_dynamodb_table_for_module "data"
 
 # Create or verify dynamodb table for data module
 
-fn_create_or_verify_dynamodb_table_for_module "worker_test"
+fn_create_or_verify_dynamodb_table_for_module "worker"

@@ -1,4 +1,5 @@
 variable "aws_account_number" {}
+variable "controller_sg_id" {}
 variable "cpm_backup_db" {}
 variable "db_allocated_storage_size" {}
 variable "db_backup_retention_period" {}

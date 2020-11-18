@@ -729,6 +729,7 @@ sleep 5
 
 # IMAGE_VERSION="${CMS_ENV}-latest-${COMMIT_NUMBER}"
 
+CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
 COMMIT_NUMBER=$(git rev-parse "${CURRENT_BRANCH}" | cut -c1-7)
 IMAGE_VERSION="${CMS_ENV}-latest-${COMMIT_NUMBER}"
 
@@ -803,7 +804,7 @@ docker push "${API_ECR_REPO_URI}:${IMAGE_VERSION}"
 docker tag "ab2d_api:${CMS_ENV}-latest" "${API_ECR_REPO_URI}:${CMS_ENV}-latest"
 docker push "${API_ECR_REPO_URI}:${CMS_ENV}-latest"
 
-# Get or create api repo
+# Get or create worker repo
 
 WORKER_ECR_REPO_URI=$(aws --region "${AWS_DEFAULT_REGION}" ecr describe-repositories \
   --query "repositories[?repositoryName == 'ab2d_worker'].repositoryUri" \

@@ -7,8 +7,8 @@ set -x #Be verbose
 # Change to working directory
 #
 
-START_DIR="$( cd "$(dirname "$0")" ; pwd -P )"
-cd "${START_DIR}"
+# START_DIR="$( cd "$(dirname "$0")" ; pwd -P )"
+# cd "${START_DIR}"
 
 #
 # Check vars are not empty before proceeding
@@ -28,11 +28,13 @@ if [ -z "${AWS_ACCOUNT_NUMBER_PARAM}" ] \
     || [ -z "${DB_IOPS_PARAM}" ] \
     || [ -z "${DB_MAINTENANCE_WINDOW_PARAM}" ] \
     || [ -z "${DB_MULTI_AZ_PARAM}" ] \
+    || [ -z "${DB_NAME_PARAM}" ] \
     || [ -z "${DB_SNAPSHOT_ID_PARAM}" ] \
     || [ -z "${DEBUG_LEVEL_PARAM}" ] \
     || [ -z "${JENKINS_AGENT_SEC_GROUP_ID_PARAM}" ] \
     || [ -z "${PARENT_ENV_PARAM}" ] \
-    || [ -z "${POSTGRES_ENGINE_VERSION_PARAM}" ]; then
+    || [ -z "${POSTGRES_ENGINE_VERSION_PARAM}" ] \
+    || [ -z "${SSH_USERNAME_PARAM}" ]; then
   echo "ERROR: All parameters must be set."
   exit 1
 fi
@@ -65,6 +67,8 @@ DB_MAINTENANCE_WINDOW="${DB_MAINTENANCE_WINDOW_PARAM}"
 
 DB_MULTI_AZ="${DB_MULTI_AZ_PARAM}"
 
+DB_NAME="${DB_NAME_PARAM}"
+
 DB_SNAPSHOT_ID="${DB_SNAPSHOT_ID_PARAM}"
 
 export DEBUG_LEVEL="${DEBUG_LEVEL_PARAM}"
@@ -76,6 +80,8 @@ MODULE="data"
 PARENT_ENV="${PARENT_ENV_PARAM}"
 
 POSTGRES_ENGINE_VERSION="${POSTGRES_ENGINE_VERSION_PARAM}"
+
+SSH_USERNAME="${SSH_USERNAME_PARAM}"
 
 # Set whether CloudTamer API should be used
 
@@ -196,8 +202,14 @@ fi
 cd "${START_DIR}/.."
 cd "terraform/environments/${CMS_ENV}/${MODULE}"
 
+CONTROLLER_SG_ID=$(aws ec2 describe-security-groups \
+  --filters Name=tag:Name,Values=ab2d-deployment-controller-sg \
+  --query "SecurityGroups[*].GroupId" \
+  --output text)
+
 terraform apply \
   --var "aws_account_number=${AWS_ACCOUNT_NUMBER}" \
+  --var "controller_sg_id=${CONTROLLER_SG_ID}" \
   --var "cpm_backup_db=${CPM_BACKUP_DB}" \
   --var "db_allocated_storage_size=${DB_ALLOCATED_STORAGE_SIZE}" \
   --var "db_backup_retention_period=${DB_BACKUP_RETENTION_PERIOD}" \
@@ -219,3 +231,97 @@ terraform apply \
   --var "postgres_engine_version=${POSTGRES_ENGINE_VERSION}" \
   --var "region=${AWS_DEFAULT_REGION}" \
   --auto-approve
+
+#
+# Create or verify database
+#
+
+# Get the private ip address of the controller
+
+CONTROLLER_PRIVATE_IP=$(aws --region "${AWS_DEFAULT_REGION}" ec2 describe-instances \
+  --filters "Name=tag:Name,Values=ab2d-deployment-controller" \
+  --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+  --output text)
+
+if [ "${CLOUD_TAMER}" == "true" ]; then
+
+  echo "NOTE: This section commented out since it doesn't work from development machine."
+
+  cd "${START_DIR}/.."
+  cd "terraform/environments/${CMS_ENV}/${MODULE}"
+
+  # Get database host and port
+
+  DB_ENDPOINT=$(aws --region "${AWS_DEFAULT_REGION}" rds describe-db-instances \
+    --query="DBInstances[?DBInstanceIdentifier=='${CMS_ENV}'].Endpoint.Address" \
+    --output=text)
+
+  DB_PORT=$(aws --region "${AWS_DEFAULT_REGION}" rds describe-db-instances \
+    --query="DBInstances[?DBInstanceIdentifier=='${CMS_ENV}'].Endpoint.Port" \
+    --output=text)
+
+  rm -f generated/.pgpass
+
+  # Generate ".pgpass" file
+
+  mkdir -p generated
+
+  # Add default database
+
+  echo "${DB_ENDPOINT}:${DB_PORT}:postgres:${AB2D_DB_USER}:${AB2D_DB_PASSWORD}" > generated/.pgpass
+
+  # Set the ".pgpass" file
+
+  chmod 600 generated/.pgpass
+
+  # Upload .pgpass file to controller
+
+  scp -i "${HOME}/.ssh/${PARENT_ENV}.pem" "generated/.pgpass" "${SSH_USERNAME}@${CONTROLLER_PRIVATE_IP}":~
+
+  # Determine if the database for the environment exists
+
+  DB_NAME_IF_EXISTS=$(ssh -tt -i "${HOME}/.ssh/${PARENT_ENV}.pem" \
+    "${SSH_USERNAME}@${CONTROLLER_PRIVATE_IP}" \
+    "psql -t --host ${DB_ENDPOINT} --username ${AB2D_DB_USER} --dbname postgres --command='SELECT datname FROM pg_catalog.pg_database'" \
+    | grep "${DB_NAME}" \
+    | sort \
+    | head -n 1 \
+    | xargs \
+    | tr -d '\r')
+
+  # Create the database for the environment if it doesn't exist
+
+  if [ -n "${CONTROLLER_PRIVATE_IP}" ] && [ -n "${DB_ENDPOINT}" ] && [ "${DB_NAME_IF_EXISTS}" != "${DB_NAME}" ]; then
+    echo "Creating database..."
+    ssh -tt -i "${HOME}/.ssh/${PARENT_ENV}.pem" \
+      "${SSH_USERNAME}@${CONTROLLER_PRIVATE_IP}" \
+      "createdb ${DB_NAME} --host ${DB_ENDPOINT} --username ${AB2D_DB_USER}"
+  fi
+
+else # Running from Jenkins agent
+
+  # Set PostgreSQL password
+
+  PGPASSWORD="${DATABASE_PASSWORD}"
+
+  # Determine if the database for the environment exists
+
+  DB_NAME_IF_EXISTS=$(psql -t \
+    --host "${DB_ENDPOINT}" \
+    --username "${AB2D_DB_USER}" \
+    --dbname postgres \
+    --command='SELECT datname FROM pg_catalog.pg_database' \
+    | grep "${DB_NAME}" \
+    | sort \
+    | head -n 1 \
+    | xargs \
+    | tr -d '\r')
+
+  # Create the database for the environment if it doesn't exist
+
+  if [ -n "${DB_ENDPOINT}" ] && [ "${DB_NAME_IF_EXISTS}" != "${DB_NAME}" ]; then
+    echo "Creating database..."
+    createdb "${DB_NAME}" --host "${DB_ENDPOINT}" --username "${AB2D_DB_USER}"
+  fi
+
+fi

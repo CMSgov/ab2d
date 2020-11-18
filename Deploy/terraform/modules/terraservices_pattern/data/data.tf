@@ -29,6 +29,16 @@ resource "aws_security_group_rule" "db_access_from_jenkins_agent" {
   security_group_id = aws_security_group.sg_database.id
 }
 
+resource "aws_security_group_rule" "db_access_from_controller" {
+  type        = "ingress"
+  description = "Controller Access"
+  from_port   = "5432"
+  to_port     = "5432"
+  protocol    = "tcp"
+  source_security_group_id = var.controller_sg_id
+  security_group_id = aws_security_group.sg_database.id
+}
+
 # Create database subnet group
 
 resource "aws_db_subnet_group" "subnet_group" {
