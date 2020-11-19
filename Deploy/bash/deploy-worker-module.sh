@@ -220,6 +220,16 @@ if [ -z "${AB2D_DB_DATABASE}" ]; then
   AB2D_DB_DATABASE=$(./get-database-secret.py "${CMS_ENV}" database_name "${DATABASE_SECRET_DATETIME}")
 fi
 
+# Create or get database schema name secret
+
+AB2D_DB_SCHEMA=$(./get-database-secret.py "${CMS_ENV}" database_schema_name "${DATABASE_SECRET_DATETIME}")
+if [ -z "${AB2D_DB_SCHEMA}" ]; then
+  echo "*********************************************************"
+  ./create-database-secret.py "${CMS_ENV}" database_schema_name "${KMS_KEY_ID}" "${DATABASE_SECRET_DATETIME}"
+  echo "*********************************************************"
+  AB2D_DB_SCHEMA=$(./get-database-secret.py "${CMS_ENV}" database_schema_name "${DATABASE_SECRET_DATETIME}")
+fi
+
 # Create or get database host secret
 
 AB2D_DB_HOST=$(./get-database-secret.py "${CMS_ENV}" database_host "${DATABASE_SECRET_DATETIME}")
