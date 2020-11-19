@@ -1,0 +1,56 @@
+pipeline {
+  agent {
+    label 'deployment'
+  }
+  stages {
+    stage('Get required data as CSV files from Production') {
+      steps {
+        script {
+	      dir ('Deploy/bash') {
+	        sh '''
+	          ./backup-database-as-csv.sh
+	        sh '''
+	      }
+	    }
+      }
+    }
+  }
+  stages {
+    stage('Import CSV files into a temporary schema in Production Validation') {
+      steps {
+        script {
+	      dir ('Deploy/bash') {
+	        sh '''
+	          # ./restore-csv-data-to-temporary-schema.sh
+	        sh '''
+	      }
+	    }
+      }
+    }
+  }
+  stages {
+    stage('Reconcile Production Validation data with Production data') {
+      steps {
+        script {
+	      dir ('Deploy/bash') {
+	        sh '''
+	          # ./reconcile-prod-validation-with-prod.sh
+	        sh '''
+	      }
+	    }
+      }
+    }
+  }
+  post {
+    always {
+      script {
+        dir('Deploy/bash') {
+	      // Cleanup
+	      sh '''
+            # cleanup
+	      sh '''
+        }
+      }
+    }
+  } 
+}
