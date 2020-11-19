@@ -82,7 +82,7 @@ task :database_get_data do
   # Get environment variables
 
   home = `printf ${HOME}`
-  cms_env = `printf $CMS_ENV`
+  cms_env = `printf $SOURCE_CMS_ENV`
   database_user = `printf $DATABASE_USER`
   PGPASSWORD = `printf $PGPASSWORD`
   database_name = `printf $DATABASE_NAME`
