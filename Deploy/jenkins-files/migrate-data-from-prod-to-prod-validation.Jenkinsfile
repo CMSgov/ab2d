@@ -14,8 +14,6 @@ pipeline {
 	    }
       }
     }
-  }
-  stages {
     stage('Import CSV files into a temporary schema in Production Validation') {
       steps {
         script {
@@ -27,8 +25,6 @@ pipeline {
 	    }
       }
     }
-  }
-  stages {
     stage('Reconcile Production Validation data with Production data') {
       steps {
         script {
