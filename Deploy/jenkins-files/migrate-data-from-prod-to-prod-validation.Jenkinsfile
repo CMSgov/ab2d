@@ -1,4 +1,7 @@
 pipeline {
+  environment {
+    SOURCE_AWS_ACCOUNT_NUMBER_PARAM = credentials("${SOURCE_AWS_ACCOUNT_NUMBER_PARAM}")
+  }
   agent {
     label 'deployment'
   }
