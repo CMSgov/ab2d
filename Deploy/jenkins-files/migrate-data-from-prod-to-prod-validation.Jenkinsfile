@@ -1,6 +1,5 @@
 pipeline {
   environment {
-    DATABASE_SECRET_DATETIME_PARAM = credentials("${DATABASE_SECRET_DATETIME_PARAM}")
     SOURCE_AWS_ACCOUNT_NUMBER_PARAM = credentials("${SOURCE_AWS_ACCOUNT_NUMBER_PARAM}")
   }
   agent {
