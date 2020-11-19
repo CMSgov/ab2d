@@ -99,39 +99,39 @@ class PerformanceTestingCoverageOperations {
 //        }
 
 // You will have to find the sponsor repo id manually
-//        sponsor = sponsorRepo.findById(136L).get();
-//        contract = contractRepo.findContractByContractNumber("TST-12").get();
+        sponsor = sponsorRepo.findById(90L).get();
+        contract = contractRepo.findContractByContractNumber("TST-12").get();
 //        contract = contractRepo.findContractByContractNumber("TST-34").get();
 //        contract = contractRepo.findContractByContractNumber("TST-56").get();
 //        contract = contractRepo.findContractByContractNumber("TST-78").get();
 //        contract = contractRepo.findContractByContractNumber("TST-90").get();
 
-//        period1 = coveragePeriodRepo.getByContractIdAndMonthAndYear(contract.getId(), 1, 2020);
-//        period2 = coveragePeriodRepo.getByContractIdAndMonthAndYear(contract.getId(), 2, 2020);
-//        period3 = coveragePeriodRepo.getByContractIdAndMonthAndYear(contract.getId(), 3, 2020);
+        period1 = coveragePeriodRepo.getByContractIdAndMonthAndYear(contract.getId(), 1, 2020);
+        period2 = coveragePeriodRepo.getByContractIdAndMonthAndYear(contract.getId(), 2, 2020);
+        period3 = coveragePeriodRepo.getByContractIdAndMonthAndYear(contract.getId(), 3, 2020);
 
-        sponsor = dataSetup.createSponsor("Cal Ripken", 200, "Cal Ripken Jr.", 201);
-        contract = dataSetup.setupContract(sponsor, "TST-12");
+//        sponsor = dataSetup.createSponsor("Cal Ripken", 200, "Cal Ripken Jr.", 201);
+//        contract = dataSetup.setupContract(sponsor, "TST-12");
 
-        period1 = dataSetup.createCoveragePeriod(contract, 1, 2020);
-        period2 = dataSetup.createCoveragePeriod(contract, 2, 2020);
-        period3 = dataSetup.createCoveragePeriod(contract, 3, 2020);
+//        period1 = dataSetup.createCoveragePeriod(contract, 1, 2020);
+//        period2 = dataSetup.createCoveragePeriod(contract, 2, 2020);
+//        period3 = dataSetup.createCoveragePeriod(contract, 3, 2020);
 
     }
 
     @AfterEach
     public void cleanUp() {
-        dataSetup.deleteCoverage();
-        coverageSearchRepo.deleteAll();
-        coverageSearchEventRepo.deleteAll();
-        coveragePeriodRepo.deleteAll();
-        contractRepo.delete(contract);
-        contractRepo.flush();
-
-        if (sponsor != null) {
-            sponsorRepo.delete(sponsor);
-            sponsorRepo.flush();
-        }
+//        dataSetup.deleteCoverage();
+//        coverageSearchRepo.deleteAll();
+//        coverageSearchEventRepo.deleteAll();
+//        coveragePeriodRepo.deleteAll();
+//        contractRepo.delete(contract);
+//        contractRepo.flush();
+//
+//        if (sponsor != null) {
+//            sponsorRepo.delete(sponsor);
+//            sponsorRepo.flush();
+//        }
     }
 
     /**
@@ -155,7 +155,7 @@ class PerformanceTestingCoverageOperations {
     @Test
     void readPerformanceWithJPAPaging() {
 
-        int dataPoints = 1_000;
+        int dataPoints = 20_000_000;
         int queries = 200;
         int threads = 10;
         int pageSize = 5000;
@@ -196,9 +196,9 @@ class PerformanceTestingCoverageOperations {
 //        periods.add(dataSetup.createCoveragePeriod(contract5, 3, 2020));
 //        periods.add(dataSetup.createCoveragePeriod(contract5, 4, 2020));
 
-        loadDBWithFakeData(dataPoints, periods);
+//        loadDBWithFakeData(dataPoints, periods);
 
-        coverageServiceRepo.vacuumCoverage();
+//        coverageServiceRepo.vacuumCoverage();
 
         System.out.println("Done loading data");
 
@@ -214,14 +214,17 @@ class PerformanceTestingCoverageOperations {
             for (int queryNumber = 0; queryNumber < queries; queryNumber++) {
                 int page = random.nextInt(pages);
                 Instant start = Instant.now();
-                List<CoverageSummary> content = coverageService.pageCoverage(page, pageSize, List.of(period1.getId(), period2.getId()));
+                CoveragePagingRequest pagingRequest = new CoveragePagingRequest(pageSize,
+                        "test-" + page * pageSize + 1, period1.getId(), period2.getId());
+                CoveragePagingResult pagingResult = coverageService.pageCoverage(pagingRequest);
+                List<CoverageSummary> content = pagingResult.getCoverageSummaries();
 
                 assertFalse(content.isEmpty());
                 assertEquals(pageSize, content.size());
                 Instant stop = Instant.now();
 
                 if (queryNumber % 10 == 0) {
-                    log.info("{} query {} took {}", name, queryNumber, Duration.between(start, stop).toMillis());
+                    log.info("{} query {} took {} starting index {}", name, queryNumber, Duration.between(start, stop).toMillis(), page * pageSize);
                 }
                 timing.add(Duration.between(start, stop).toNanos());
             }
@@ -237,6 +240,7 @@ class PerformanceTestingCoverageOperations {
                 f.get();
             }
         } catch (Exception exception) {
+            exception.printStackTrace();
             fail("failed to run all select threads", exception);
         }
 
@@ -290,7 +294,7 @@ class PerformanceTestingCoverageOperations {
 
         if (dataSetup.countCoverage() == 0) {
 
-            ExecutorService executor = Executors.newFixedThreadPool(1);
+            ExecutorService executor = Executors.newFixedThreadPool(3);
             List<Future> insertions = new ArrayList<>();
 
             for (CoveragePeriod period : periods) {

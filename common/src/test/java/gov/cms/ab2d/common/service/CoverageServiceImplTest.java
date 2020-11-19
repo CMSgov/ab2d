@@ -219,8 +219,8 @@ class CoverageServiceImplTest {
 
         assertEquals(inProgress, savedTo);
 
-        List<String> savedBeneficiaryIds = coverageServiceRepo.findActiveBeneficiaryIds(0, 1000,
-                singletonList(period1Jan.getId()));
+        CoveragePagingRequest pagingRequest = new CoveragePagingRequest(1000, null, singletonList(period1Jan.getId()));
+        List<String> savedBeneficiaryIds = coverageServiceRepo.findActiveBeneficiaryIds(pagingRequest);
 
         assertTrue(savedBeneficiaryIds.containsAll(originalBeneIds));
         assertTrue(originalBeneIds.containsAll(savedBeneficiaryIds));
@@ -238,6 +238,100 @@ class CoverageServiceImplTest {
 
             assertEquals(beneNumber, mbiNumber);
         });
+    }
+
+    @DisplayName("Page coverage from database correctly provides next requests")
+    @Test
+    void pageCoverage() {
+        coverageService.submitSearch(period1Jan.getId(), "testing");
+        CoverageSearchEvent inProgress = startSearchAndPullEvent();
+
+        // Last page will have only one id
+        int totalBeneficiaries = 501;
+        int pageSize = 250;
+
+        // Add 700 beneficiaries to
+        Set<Identifiers> identifiers = new LinkedHashSet<>();
+        for (int idx = 0; idx < totalBeneficiaries; idx++) {
+            identifiers.add(createIdentifier("" + idx));
+        }
+
+        CoverageSearchEvent savedTo = coverageService.insertCoverage(inProgress.getId(), identifiers);
+
+        assertEquals(inProgress, savedTo);
+
+        CoveragePagingRequest pagingRequest = new CoveragePagingRequest(pageSize, null, singletonList(period1Jan.getId()));
+
+        // Complete first request which should return exactly 333 results, and the next
+        CoveragePagingResult pagingResult = coverageServiceRepo.pageCoverage(period1Jan.getContract(), pagingRequest);
+        List<CoverageSummary> coverageSummaries = pagingResult.getCoverageSummaries();
+
+        assertEquals(pageSize, coverageSummaries.size());
+        assertTrue(pagingResult.getNextRequest().isPresent());
+
+        pagingRequest = pagingResult.getNextRequest().get();
+        assertTrue(pagingRequest.getCursor().isPresent());
+
+        assertEquals(pageSize, pagingRequest.getPageSize());
+        assertEquals(1, pagingRequest.getCoveragePeriodIds().size());
+
+
+        // Complete second request which should return exactly 333
+        String cursor = pagingRequest.getCursor().get();
+        pagingResult = coverageServiceRepo.pageCoverage(period1Jan.getContract(), pagingRequest);
+        coverageSummaries = pagingResult.getCoverageSummaries();
+        coverageSummaries.sort(Comparator.comparing(summary -> summary.getIdentifiers().getBeneficiaryId()));
+
+        assertEquals(cursor, coverageSummaries.get(0).getIdentifiers().getBeneficiaryId());
+        assertEquals(pageSize, coverageSummaries.size());
+        assertTrue(pagingResult.getNextRequest().isPresent());
+
+        pagingRequest = pagingResult.getNextRequest().get();
+        assertTrue(pagingRequest.getCursor().isPresent());
+
+        assertEquals(pageSize, pagingRequest.getPageSize());
+        assertEquals(1, pagingRequest.getCoveragePeriodIds().size());
+
+        // Complete third request should return one record with no next cursor
+        cursor = pagingRequest.getCursor().get();
+        pagingResult = coverageServiceRepo.pageCoverage(period1Jan.getContract(), pagingRequest);
+        coverageSummaries = pagingResult.getCoverageSummaries();
+        coverageSummaries.sort(Comparator.comparing(summary -> summary.getIdentifiers().getBeneficiaryId()));
+
+        assertEquals(cursor, coverageSummaries.get(0).getIdentifiers().getBeneficiaryId());
+        assertEquals(1, coverageSummaries.size());
+        assertTrue(pagingResult.getNextRequest().isEmpty());
+    }
+
+    @DisplayName("Page coverage when database ")
+    @Test
+    void pageCoverageEdgeCase() {
+        coverageService.submitSearch(period1Jan.getId(), "testing");
+        CoverageSearchEvent inProgress = startSearchAndPullEvent();
+
+        // Last page will have only one id
+        int totalBeneficiaries = 500;
+        int pageSize = 500;
+
+        // Add 700 beneficiaries to
+        Set<Identifiers> identifiers = new LinkedHashSet<>();
+        for (int idx = 0; idx < totalBeneficiaries; idx++) {
+            identifiers.add(createIdentifier("" + idx));
+        }
+
+        CoverageSearchEvent savedTo = coverageService.insertCoverage(inProgress.getId(), identifiers);
+
+        assertEquals(inProgress, savedTo);
+
+        CoveragePagingRequest pagingRequest = new CoveragePagingRequest(pageSize, null, singletonList(period1Jan.getId()));
+
+        // Complete third request should return one record with no next cursor
+        CoveragePagingResult pagingResult = coverageServiceRepo.pageCoverage(period1Jan.getContract(), pagingRequest);
+        List<CoverageSummary> coverageSummaries = pagingResult.getCoverageSummaries();
+        coverageSummaries.sort(Comparator.comparing(summary -> summary.getIdentifiers().getBeneficiaryId()));
+
+        assertEquals(pageSize, coverageSummaries.size());
+        assertTrue(pagingResult.getNextRequest().isEmpty());
     }
 
     @DisplayName("Coverage summary whole period or nothing")
@@ -271,8 +365,10 @@ class CoverageServiceImplTest {
         coverageService.insertCoverage(inProgressApril.getId(), Set.of(testing1));
 
 
-        List<CoverageSummary> coverageSummaries = coverageService.pageCoverage(0, 2,
+        CoveragePagingRequest pagingRequest = new CoveragePagingRequest(2, null,
                 period1Jan.getId(), period1Feb.getId(), period1March.getId(), period1April.getId());
+        CoveragePagingResult pagingResult = coverageService.pageCoverage(pagingRequest);
+        List<CoverageSummary> coverageSummaries = pagingResult.getCoverageSummaries();
 
         assertEquals(1, coverageSummaries.size());
 
@@ -319,8 +415,10 @@ class CoverageServiceImplTest {
         coverageService.insertCoverage(inProgressApril.getId(), Set.of(testing2));
 
 
-        List<CoverageSummary> coverageSummaries = coverageService.pageCoverage(0, 2,
+        CoveragePagingRequest pagingRequest = new CoveragePagingRequest(2, null,
                 period1Jan.getId(), period1Feb.getId(), period1March.getId(), period1April.getId());
+        CoveragePagingResult pagingResult = coverageService.pageCoverage(pagingRequest);
+        List<CoverageSummary> coverageSummaries = pagingResult.getCoverageSummaries();
 
         coverageSummaries.sort(Comparator.comparing(summary -> summary.getIdentifiers().getBeneficiaryId()));
 
@@ -376,9 +474,10 @@ class CoverageServiceImplTest {
         coverageService.insertCoverage(inProgressMarch.getId(), Set.of(createIdentifier("1")));
         coverageService.insertCoverage(inProgressApril.getId(), Set.of(createIdentifier("2")));
 
-
-        List<CoverageSummary> coverageSummaries = coverageService.pageCoverage(0, 2,
+        CoveragePagingRequest pagingRequest = new CoveragePagingRequest(2, null,
                 period1Jan.getId(), period1Feb.getId(), period1March.getId(), period1April.getId());
+        CoveragePagingResult pagingResult = coverageService.pageCoverage(pagingRequest);
+        List<CoverageSummary> coverageSummaries = pagingResult.getCoverageSummaries();
 
         coverageSummaries.sort(Comparator.comparing(summary -> summary.getIdentifiers().getBeneficiaryId()));
 
@@ -443,8 +542,10 @@ class CoverageServiceImplTest {
         coverageService.insertCoverage(inProgressApril.getId(), Set.of(testing1, testing2));
 
 
-        List<CoverageSummary> coverageSummaries = coverageService.pageCoverage(0, 3,
+        CoveragePagingRequest pagingRequest = new CoveragePagingRequest(3, null,
                 period1Jan.getId(), period1Feb.getId(), period1March.getId(), period1April.getId());
+        CoveragePagingResult pagingResult = coverageService.pageCoverage(pagingRequest);
+        List<CoverageSummary> coverageSummaries = pagingResult.getCoverageSummaries();
 
         coverageSummaries.sort(Comparator.comparing(summary -> summary.getIdentifiers().getBeneficiaryId()));
 
@@ -504,8 +605,10 @@ class CoverageServiceImplTest {
 
         coverageService.insertCoverage(inProgressFeb.getId(), Set.of(createIdentifier("1")));
 
-        List<CoverageSummary> coverageSummaries = coverageService.pageCoverage(0, 3,
+        CoveragePagingRequest pagingRequest = new CoveragePagingRequest(3, null,
                 period1Jan.getId(), period1Feb.getId(), period1March.getId(), period1April.getId());
+        CoveragePagingResult pagingResult = coverageService.pageCoverage(pagingRequest);
+        List<CoverageSummary> coverageSummaries = pagingResult.getCoverageSummaries();
 
         assertEquals(1, coverageSummaries.size());
 

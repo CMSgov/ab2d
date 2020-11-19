@@ -2,6 +2,8 @@ package gov.cms.ab2d.common.repository;
 
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.CoverageMembership;
+import gov.cms.ab2d.common.model.CoveragePagingRequest;
+import gov.cms.ab2d.common.model.CoveragePagingResult;
 import gov.cms.ab2d.common.model.CoveragePeriod;
 import gov.cms.ab2d.common.model.CoverageSearchEvent;
 import gov.cms.ab2d.common.model.CoverageSummary;
@@ -45,9 +47,13 @@ public class CoverageServiceRepository {
             ") I";
 
     private static final String SELECT_BENEFICIARIES_BATCH = "SELECT DISTINCT cov.beneficiary_id FROM coverage cov " +
-            " WHERE cov.bene_coverage_period_id IN (:ids) " +
+            " WHERE cov.bene_coverage_period_id IN (:ids)" +
             " ORDER BY cov.beneficiary_id " +
-            " OFFSET :offset " +
+            " LIMIT :limit";
+
+    private static final String SELECT_BENEFICIARIES_BATCH_WITH_CURSOR = "SELECT DISTINCT cov.beneficiary_id FROM coverage cov " +
+            " WHERE cov.bene_coverage_period_id IN (:ids) AND cov.beneficiary_id >= :cursor" +
+            " ORDER BY cov.beneficiary_id " +
             " LIMIT :limit";
 
     private static final String SELECT_COVERAGE_INFORMATION =
@@ -178,28 +184,49 @@ public class CoverageServiceRepository {
         }
     }
 
-    public List<CoverageSummary> pageCoverage(int pageNumber, int pageSize, Contract contract, List<Integer> coveragePeriodIds) {
-        Map<String, List<CoverageMembership>> coverageMembership =
-                findCoverageMemberships(pageNumber, pageSize, coveragePeriodIds);
+    public CoveragePagingResult pageCoverage(Contract contract, CoveragePagingRequest page) {
 
-        return coverageMembership.entrySet().stream()
-                .map(obj -> summarizeCoverageMembership(contract, obj))
-                .collect(toList());
-    }
-
-    /**
-     * Find page of beneficiaries then look up all of their coverage information for a range of identified coverage
-     * periods.
-     */
-    private Map<String, List<CoverageMembership>> findCoverageMemberships(int pageNumber, int pageSize, List<Integer> coveragePeriodIds) {
+        List<Integer> coveragePeriodIds = page.getCoveragePeriodIds();
         List<CoveragePeriod> coveragePeriods = coveragePeriodRepo.findAllById(coveragePeriodIds);
 
         if (coveragePeriods.size() != coveragePeriodIds.size()) {
             throw new IllegalArgumentException("at least one coverage period id not found in database");
         }
 
-        // Look up a page of beneficiaries sorted by id
-        List<String> beneficiaries = findActiveBeneficiaryIds(pageNumber, pageSize, coveragePeriodIds);
+        /*
+         * Look up a page of beneficiaries sorted by beneficiary id
+         *
+         * Grab one extra id to check whether another page of ids exists or not
+         */
+        List<String> beneficiaries = findActiveBeneficiaryIds(page);
+
+        // If another page exists, the last beneficiary will be the first beneficiary
+        // of the next page so ignore it
+        Map<String, List<CoverageMembership>> coverageMembership;
+        if (beneficiaries.size() > page.getPageSize()) {
+            coverageMembership = findCoverageMemberships(beneficiaries.subList(0, beneficiaries.size() - 1), coveragePeriodIds);
+        } else {
+            coverageMembership = findCoverageMemberships(beneficiaries, coveragePeriodIds);
+        }
+
+        List<CoverageSummary> beneficiarySummaries = coverageMembership.entrySet().stream()
+                .map(membershipEntry -> summarizeCoverageMembership(contract, membershipEntry))
+                .collect(toList());
+
+        CoveragePagingRequest request = null;
+        if (beneficiaries.size() > page.getPageSize()) {
+            request = new CoveragePagingRequest(page.getPageSize(),
+                    beneficiaries.get(beneficiaries.size() - 1), coveragePeriodIds);
+        }
+
+        return new CoveragePagingResult(beneficiarySummaries, request);
+    }
+
+    /**
+     * Find page of beneficiaries then look up all of their coverage information for a range of identified coverage
+     * periods.
+     */
+    private Map<String, List<CoverageMembership>> findCoverageMemberships(List<String> beneficiaries, List<Integer> coveragePeriodIds) {
 
         // Look up coverage information for BATCH_SELECT_SIZE beneficiaries at a time
         // and populate into hash map
@@ -227,21 +254,41 @@ public class CoverageServiceRepository {
 
     /**
      * Find a subset of active beneficiary ids by
-     * @param pageNumber page number in results
-     * @param pageSize number of records per page
-     * @param coveragePeriods coverage periods to filter ids on
      * @return page of beneficiary ids
      */
-    public List<String> findActiveBeneficiaryIds(int pageNumber, int pageSize, List<Integer> coveragePeriods) {
+    public List<String> findActiveBeneficiaryIds(CoveragePagingRequest page) {
 
+        List<Integer> coveragePeriodIds = page.getCoveragePeriodIds();
+        int pageSize = page.getPageSize();
+        Optional<String> cursor = page.getCursor();
+
+        if (cursor.isEmpty()) {
+            return findActiveBeneficiaryIdsWithoutCursor(coveragePeriodIds, pageSize);
+        }
+
+        return findActiveBeneficiaryIdsWithCursor(coveragePeriodIds, cursor.get(), pageSize);
+    }
+
+    private List<String> findActiveBeneficiaryIdsWithoutCursor(List<Integer> coveragePeriodIds, int pageSize) {
         SqlParameterSource parameters = new MapSqlParameterSource()
-                .addValue("ids", coveragePeriods)
-                .addValue("offset", pageNumber * pageSize)
-                .addValue("limit", pageSize);
+                .addValue("ids", coveragePeriodIds)
+                .addValue("limit", pageSize + 1);
 
         NamedParameterJdbcTemplate template = new NamedParameterJdbcTemplate(dataSource);
 
         return template.query(SELECT_BENEFICIARIES_BATCH, parameters,
+                (results, rowNum) -> results.getString(1));
+    }
+
+    private List<String> findActiveBeneficiaryIdsWithCursor(List<Integer> coveragePeriodIds, String cursor, int pageSize) {
+        SqlParameterSource parameters = new MapSqlParameterSource()
+                .addValue("ids", coveragePeriodIds)
+                .addValue("limit", pageSize + 1)
+                .addValue("cursor", cursor);
+
+        NamedParameterJdbcTemplate template = new NamedParameterJdbcTemplate(dataSource);
+
+        return template.query(SELECT_BENEFICIARIES_BATCH_WITH_CURSOR, parameters,
                 (results, rowNum) -> results.getString(1));
     }
 

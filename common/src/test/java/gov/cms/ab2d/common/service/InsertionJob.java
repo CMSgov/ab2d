@@ -9,6 +9,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.OffsetDateTime;
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.function.Supplier;
@@ -68,8 +69,12 @@ public class InsertionJob implements Callable<CoverageSearchEvent> {
     public CoverageSearchEvent call() {
         // Add in progress event as foreign key for all inserts
         coverageService.submitSearch(period.getId(), "testing");
-        Optional<CoverageSearch> search = coverageSearchRepository.findFirstByOrderByCreatedAsc();
-        CoverageSearchEvent inProgress = coverageService.startSearch(search.get(), "testing").get().getCoverageSearchEvent();
+
+        CoverageSearch search = new CoverageSearch();
+        search.setPeriod(period);
+        search.setAttempts(0);
+        search.setCreated(OffsetDateTime.now());
+        CoverageSearchEvent inProgress = coverageService.startSearch(search, "testing").get().getCoverageSearchEvent();
 
         // Run inserts
         // If number of experiments is greater than 1 then data will be erased after each experiment

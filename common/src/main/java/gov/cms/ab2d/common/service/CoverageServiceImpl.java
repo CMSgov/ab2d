@@ -1,11 +1,12 @@
 package gov.cms.ab2d.common.service;
 
 import gov.cms.ab2d.common.model.CoverageMapping;
+import gov.cms.ab2d.common.model.CoveragePagingRequest;
+import gov.cms.ab2d.common.model.CoveragePagingResult;
 import gov.cms.ab2d.common.model.CoveragePeriod;
 import gov.cms.ab2d.common.model.CoverageSearch;
 import gov.cms.ab2d.common.model.CoverageSearchDiff;
 import gov.cms.ab2d.common.model.CoverageSearchEvent;
-import gov.cms.ab2d.common.model.CoverageSummary;
 import gov.cms.ab2d.common.model.Identifiers;
 import gov.cms.ab2d.common.model.JobStatus;
 import gov.cms.ab2d.common.repository.CoveragePeriodRepository;
@@ -119,21 +120,16 @@ public class CoverageServiceImpl implements CoverageService {
     // todo: add in appropriate location either the completeCoverageSearch method or within the EOB Search on conclusion
     //      of the current search. This needs to run after the completion of every search
     @Override
-    public List<CoverageSummary> pageCoverage(int pageNumber, int pageSize, List<Integer> coveragePeriodIds) {
+    public CoveragePagingResult pageCoverage(CoveragePagingRequest pagingRequest) {
 
-
+        List<Integer> coveragePeriodIds = pagingRequest.getCoveragePeriodIds();
         if (coveragePeriodIds.isEmpty()) {
             log.error("cannot page coverage if no coverage period ids provided");
             throw new IllegalArgumentException("must provide more than one period id");
         }
 
         CoveragePeriod coveragePeriod = findCoveragePeriod(coveragePeriodIds.get(0));
-        return coverageServiceRepo.pageCoverage(pageNumber, pageSize, coveragePeriod.getContract(), coveragePeriodIds);
-    }
-
-    @Override
-    public List<CoverageSummary> pageCoverage(int pageNumber, int pageSize, Integer... coveragePeriodIds) {
-        return pageCoverage(pageNumber, pageSize, List.of(coveragePeriodIds));
+        return coverageServiceRepo.pageCoverage(coveragePeriod.getContract(), pagingRequest);
     }
 
     // todo: create diff and log on completion of every search. This information may be logged to both
