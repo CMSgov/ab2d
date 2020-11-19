@@ -4,10 +4,16 @@ set -e #Exit on first error
 set -x #Be verbose
 
 #
+# Set variables
+#
+
+export START_DIR=""
+
+#
 # Change to working directory
 #
 
-export START_DIR="$( cd "$(dirname "$0")" ; pwd -P )"
+START_DIR="$( cd "$(dirname "$0")" ; pwd -P )"
 
 # Check vars are not empty before proceeding
 
