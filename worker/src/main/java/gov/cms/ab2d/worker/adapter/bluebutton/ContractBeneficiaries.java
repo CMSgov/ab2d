@@ -1,7 +1,7 @@
 package gov.cms.ab2d.worker.adapter.bluebutton;
 
+import gov.cms.ab2d.common.model.Identifiers;
 import gov.cms.ab2d.common.util.FilterOutByDate.DateRange;
-import gov.cms.ab2d.worker.processor.domainmodel.Identifiers;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

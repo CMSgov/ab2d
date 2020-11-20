@@ -115,6 +115,7 @@ class JobPreProcessorIntegrationTest {
                 doAll.load(ContractBeneSearchEvent.class),
                 doAll.load(ErrorEvent.class),
                 doAll.load(FileEvent.class)));
+        doAll.delete();
     }
 
     @Test

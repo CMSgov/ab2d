@@ -1,7 +1,7 @@
 package gov.cms.ab2d.worker.processor;
 
+import gov.cms.ab2d.common.model.Identifiers;
 import gov.cms.ab2d.worker.adapter.bluebutton.ContractBeneficiaries;
-import gov.cms.ab2d.worker.processor.domainmodel.Identifiers;
 import org.hl7.fhir.dstu3.model.*;
 
 import java.util.*;
