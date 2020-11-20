@@ -186,7 +186,7 @@ psql \
   --dbname="${DATABASE_NAME}" \
   --host="${DATABASE_HOST}" \
   --username="${DATABASE_USER}" \
-  --file="CREATE TABLE temporary.contract (like ${DATABASE_SCHEMA_NAME}.contract);"
+  --file="CREATE TABLE temporary.contract (LIKE ${DATABASE_SCHEMA_NAME}.contract);"
 
 psql \
   --dbname="${DATABASE_NAME}" \
