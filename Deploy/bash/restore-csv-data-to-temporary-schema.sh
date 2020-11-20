@@ -192,19 +192,19 @@ psql \
   --dbname="${DATABASE_NAME}" \
   --host="${DATABASE_HOST}" \
   --username="${DATABASE_USER}" \
-  --file="CREATE TABLE temporary.sponsor (like ${DATABASE_SCHEMA_NAME}.sponsor);"
+  --file="CREATE TABLE temporary.sponsor (LIKE ${DATABASE_SCHEMA_NAME}.sponsor);"
 
 psql \
   --dbname="${DATABASE_NAME}" \
   --host="${DATABASE_HOST}" \
   --username="${DATABASE_USER}" \
-  --file="CREATE TABLE temporary.user_account (like ${DATABASE_SCHEMA_NAME}.user_account);"
+  --file="CREATE TABLE temporary.user_account (LIKE ${DATABASE_SCHEMA_NAME}.user_account);"
 
 psql \
   --dbname="${DATABASE_NAME}" \
   --host="${DATABASE_HOST}" \
   --username="${DATABASE_USER}" \
-  --file="CREATE TABLE temporary.user_role (like ${DATABASE_SCHEMA_NAME}.user_role);"
+  --file="CREATE TABLE temporary.user_role (LIKE ${DATABASE_SCHEMA_NAME}.user_role);"
 
 # Restore from CSVs
 
