@@ -23,7 +23,7 @@ pipeline {
         script {
 	      dir ('Deploy/bash') {
 	        sh '''
-	          # ./restore-csv-data-to-temporary-schema.sh
+	          ./restore-csv-data-to-temporary-schema.sh
 	        sh '''
 	      }
 	    }
