@@ -209,3 +209,5 @@ bundle exec rake database_get_data
 cd "${HOME}/database_backup"
 rm -f "${SOURCE_CMS_ENV}.tar.gz"
 tar -czvf "${SOURCE_CMS_ENV}.tar.gz" "/var/lib/jenkins/database_backup/${SOURCE_CMS_ENV}"
+rm -f "${SOURCE_CMS_ENV}.tar.gz"
+
