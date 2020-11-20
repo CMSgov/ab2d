@@ -1,6 +1,5 @@
 package gov.cms.ab2d.worker.processor;
 
-import ca.uhn.fhir.rest.server.exceptions.InternalErrorException;
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.model.Identifiers;
 import gov.cms.ab2d.worker.processor.domainmodel.ContractMapping;
@@ -24,8 +23,6 @@ public class PatientContractCallable implements Callable<ContractMapping> {
     public static final String HISTORIC_MBI = "historic";
 
     public static final String MBI_ID = "http://hl7.org/fhir/sid/us-mbi";
-
-    private static final String EXTRA_PAGE_EXCEPTION_MESSAGE = "could not extract ResultSet";
 
     private final int month;
     private final int year;

@@ -1,6 +1,5 @@
 package gov.cms.ab2d.worker.processor;
 
-import ca.uhn.fhir.rest.server.exceptions.InternalErrorException;
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.model.CoverageMapping;
 import gov.cms.ab2d.common.model.Identifiers;
@@ -31,7 +30,6 @@ public class CoverageMappingCallable implements Callable<CoverageMapping> {
     public static final String CURRENT_MBI = "current";
     public static final String HISTORIC_MBI = "historic";
     public static final String MBI_ID = "http://hl7.org/fhir/sid/us-mbi";
-    static final String EXTRA_PAGE_EXCEPTION_MESSAGE = "could not extract ResultSet";
 
     private final CoverageMapping coverageMapping;
     private final BFDClient bfdClient;
