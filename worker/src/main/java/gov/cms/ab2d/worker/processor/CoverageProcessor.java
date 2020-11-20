@@ -2,8 +2,6 @@ package gov.cms.ab2d.worker.processor;
 
 import gov.cms.ab2d.common.model.CoveragePeriod;
 
-import java.util.Collection;
-
 public interface CoverageProcessor {
 
     /**
@@ -22,12 +20,6 @@ public interface CoverageProcessor {
      * @param prioritize if true insert in front of the queue
      */
     void queueCoveragePeriod(CoveragePeriod period, boolean prioritize);
-
-    /**
-     * Add a collection of {@link CoveragePeriod}s to the queue of periods to be mapped
-     * @param periods coverage period to add
-     */
-    void queueCoveragePeriod(Collection<CoveragePeriod> periods);
 
     /**
      * Add a coverage period to the list of periods to be searched

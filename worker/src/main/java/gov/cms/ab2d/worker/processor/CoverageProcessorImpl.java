@@ -40,7 +40,7 @@ public class CoverageProcessorImpl implements CoverageProcessor {
     // Queue for results of jobs that have already completed
     private final BlockingQueue<CoverageMapping> coverageInsertionQueue = new LinkedBlockingQueue<>();
 
-    private AtomicBoolean inShutdown = new AtomicBoolean(false);
+    private final AtomicBoolean inShutdown = new AtomicBoolean(false);
 
     public CoverageProcessorImpl(CoverageService coverageService,
                                  BFDClient bfdClient,
@@ -113,14 +113,7 @@ public class CoverageProcessorImpl implements CoverageProcessor {
 
     @Override
     public void queueCoveragePeriod(CoveragePeriod period, boolean prioritize) {
-        this.queueCoveragePeriod(period, 0, prioritize);
-    }
-
-    @Override
-    public void queueCoveragePeriod(Collection<CoveragePeriod> periods) {
-        for (CoveragePeriod period : periods) {
-            queueCoveragePeriod(period, false);
-        }
+        queueCoveragePeriod(period, 0, prioritize);
     }
 
     /**
@@ -131,15 +124,16 @@ public class CoverageProcessorImpl implements CoverageProcessor {
     @Override
     public void queueCoveragePeriod(CoveragePeriod period, int attempts, boolean prioritize) {
 
-        if (!inShutdown.get()) {
+        if (inShutdown.get()) {
+            return;
+        }
 
-            String eventLog = "manually queued coverage period search at " + (prioritize ? "front of queue" : "back of queue");
-            log.info(eventLog);
-            if (prioritize) {
-                coverageService.prioritizeSearch(period.getId(), attempts, eventLog);
-            } else {
-                coverageService.submitSearch(period.getId(), attempts, eventLog);
-            }
+        String eventLog = "manually queued coverage period search at " + (prioritize ? "front of queue" : "back of queue");
+        log.info(eventLog);
+        if (prioritize) {
+            coverageService.prioritizeSearch(period.getId(), attempts, eventLog);
+        } else {
+            coverageService.submitSearch(period.getId(), attempts, eventLog);
         }
     }
 

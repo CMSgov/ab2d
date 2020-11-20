@@ -38,16 +38,13 @@ public class CoverageMapping {
     }
 
     public void completed() {
-        attempt(true);
+        coverageSearch.incrementAttempts();
+        successful = true;
     }
 
     public void failed() {
-        attempt(false);
-    }
-
-    private void attempt(boolean successful) {
-        this.coverageSearch.incrementAttempts();
-        this.successful = successful;
+        coverageSearch.incrementAttempts();
+        successful = false;
     }
 
     public String getJobId() {

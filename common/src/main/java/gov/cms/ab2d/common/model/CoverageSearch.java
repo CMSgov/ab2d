@@ -23,6 +23,13 @@ public class CoverageSearch {
     // We can use this to search for the earliest search request
     private OffsetDateTime created;
 
+    /**
+     * Number of attempts made to retrieve membership information from BFD. This is used to create a circuit breaker
+     * where a configured number of failures to retrieve membership information from BFD will trigger an exception
+     * and warning.
+     *
+     * When a search against BFD fails this number of attempts is incremented and saved.
+     */
     private int attempts;
 
     public CoverageSearch() {

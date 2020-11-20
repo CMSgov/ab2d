@@ -16,6 +16,12 @@ import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.*;
 
+/**
+ * Queries BFD for all of the members of a contract during a given month.
+ *
+ * todo remove PatientContractCallable and replace with this class which will load the data
+ *      before a job runs.
+ */
 @Slf4j
 public class CoverageMappingCallable implements Callable<CoverageMapping> {
 
@@ -64,20 +70,38 @@ public class CoverageMappingCallable implements Callable<CoverageMapping> {
         final Set<Identifiers> patientIds = new HashSet<>();
         int bundleNo = 1;
         try {
-
-
             log.info("retrieving contract membership for Contract {}-{}-{} bundle #{}",
                     contractNumber, year, month, bundleNo);
 
             BFDClient.BFD_BULK_JOB_ID.set(coverageMapping.getJobId());
 
-            try {
-                Bundle bundle = getBundle(contractNumber, month);
-                patientIds.addAll(extractAndFilter(bundle));
+            Bundle bundle = getBundle(contractNumber, month);
+            patientIds.addAll(extractAndFilter(bundle));
 
-                String availableLinks = bundle.getLink().stream()
-                        .map(link -> link.getRelation())
+            String availableLinks = bundle.getLink().stream()
+                    .map(Bundle.BundleLinkComponent::getRelation)
+                    .collect(joining(" , "));
+            log.info("retrieving contract membership for Contract {}-{}-{} bundle #{}, available links {}",
+                    contractNumber, year, month, bundleNo, availableLinks);
+
+            if (bundle.getLink(Bundle.LINK_NEXT) == null) {
+                log.info("retrieving contract membership for Contract {}-{}-{} bundle #{}, does not have a next link",
+                        contractNumber, year, month, bundleNo);
+            }
+
+            while (bundle.getLink(Bundle.LINK_NEXT) != null) {
+
+                bundleNo += 1;
+
+                log.info("retrieving contract membership for Contract {}-{}-{} bundle #{}",
+                        contractNumber, year, month, bundleNo);
+
+                bundle = bfdClient.requestNextBundleFromServer(bundle);
+
+                availableLinks = bundle.getLink().stream()
+                        .map(link -> link.getRelation() + " -> " + link.getUrl())
                         .collect(joining(" , "));
+
                 log.info("retrieving contract membership for Contract {}-{}-{} bundle #{}, available links {}",
                         contractNumber, year, month, bundleNo, availableLinks);
 
@@ -86,39 +110,7 @@ public class CoverageMappingCallable implements Callable<CoverageMapping> {
                             contractNumber, year, month, bundleNo);
                 }
 
-                while (bundle.getLink(Bundle.LINK_NEXT) != null) {
-
-                    bundleNo += 1;
-
-                    log.info("retrieving contract membership for Contract {}-{}-{} bundle #{}",
-                            contractNumber, year, month, bundleNo);
-
-                    bundle = bfdClient.requestNextBundleFromServer(bundle);
-
-                    availableLinks = bundle.getLink().stream()
-                            .map(link -> link.getRelation() + " -> " + link.getUrl())
-                            .collect(joining(" , "));
-
-                    log.info("retrieving contract membership for Contract {}-{}-{} bundle #{}, available links {}",
-                            contractNumber, year, month, bundleNo, availableLinks);
-
-                    if (bundle.getLink(Bundle.LINK_NEXT) == null) {
-                        log.info("retrieving contract membership for Contract {}-{}-{} bundle #{}, does not have a next link",
-                                contractNumber, year, month, bundleNo);
-                    }
-
-                    patientIds.addAll(extractAndFilter(bundle));
-                }
-            } catch (InternalErrorException ie) {
-                // Catch edge case bug where (number patients) mod (bundle size) == 0
-                // Extra bundle link returned that has no data in it which causes exception
-                // when attempting to retrieve
-                if (!ie.getMessage().contains(EXTRA_PAGE_EXCEPTION_MESSAGE)) {
-                    log.warn("exception caught not caused by pulling extra page, will be re-thrown");
-                    throw ie;
-                }
-
-                log.warn("exception caught caused by extra page included as NEXT bundle, ignoring exception", ie);
+                patientIds.addAll(extractAndFilter(bundle));
             }
 
             log.info("retrieving contract membership for Contract {}-{}-{}, #{} bundles received.",

@@ -273,51 +273,6 @@ class CoverageMappingCallableTest {
 
     }
 
-    /**
-     * Protects against an issue with BFD api where an edge case can cause
-     */
-    @DisplayName("Ignore InternalErrorException and exit loop if exception message matches expected value")
-    @Test
-    void internalErrorException() {
-
-
-        Bundle bundle1 = buildBundle(0, 10, 2020);
-        bundle1.setLink(singletonList(new Bundle.BundleLinkComponent().setRelation(Bundle.LINK_NEXT)));
-
-        when(bfdClient.requestPartDEnrolleesFromServer(anyString(), anyInt())).thenReturn(bundle1);
-
-        when(bfdClient.requestNextBundleFromServer(any(Bundle.class)))
-                .thenThrow(new InternalErrorException(EXTRA_PAGE_EXCEPTION_MESSAGE));
-
-        Contract contract = new Contract();
-        contract.setContractNumber("TESTING");
-        contract.setContractName("TESTING");
-
-        CoveragePeriod period = new CoveragePeriod();
-        period.setContract(contract);
-        period.setYear(2020);
-        period.setMonth(1);
-
-        CoverageSearchEvent cse = new CoverageSearchEvent();
-        cse.setCoveragePeriod(period);
-
-        CoverageSearch search = new CoverageSearch();
-        search.setPeriod(period);
-
-        CoverageMapping mapping = new CoverageMapping(cse, search);
-
-        CoverageMappingCallable coverageCallabe =
-                new CoverageMappingCallable(mapping, bfdClient, false);
-
-        try {
-            mapping = coverageCallabe.call();
-            assertEquals(10, mapping.getBeneficiaryIds().size());
-        } catch (Exception e) {
-            fail("InternalErrorException expected and should be caught");
-        }
-
-    }
-
     @DisplayName("Exceptional behavior leads to failure")
     @Test
     void exceptionCaught() {
