@@ -19,8 +19,6 @@ cd "${START_DIR}"
 echo "Check vars are not empty before proceeding..."
 if [ -z "${CLOUD_TAMER_PARAM}" ] \
     || [ -z "${DATABASE_SECRET_DATETIME_PARAM}" ] \
-    || [ -z "${MANAGEMENT_AWS_ACCOUNT_NUMBER_PARAM}" ] \
-    || [ -z "${SOURCE_AWS_ACCOUNT_NUMBER_PARAM}" ] \
     || [ -z "${SOURCE_CMS_ENV_PARAM}" ] \
     || [ -z "${TARGET_AWS_ACCOUNT_NUMBER_PARAM}" ] \
     || [ -z "${TARGET_CMS_ENV_PARAM}" ]; then
@@ -47,10 +45,6 @@ export DATABASE_SCHEMA_NAME=""
 DATABASE_SECRET_DATETIME="${DATABASE_SECRET_DATETIME_PARAM}"
 
 export DATABASE_USER=""
-
-MANAGEMENT_AWS_ACCOUNT_NUMBER="${MANAGEMENT_AWS_ACCOUNT_NUMBER_PARAM}"
-
-SOURCE_AWS_ACCOUNT_NUMBER="${SOURCE_AWS_ACCOUNT_NUMBER_PARAM}"
 
 SOURCE_CMS_ENV="${SOURCE_CMS_ENV_PARAM}"
 
@@ -215,5 +209,5 @@ psql \
 # Restore from CSVs
 
 # cd "${HOME}/database_backup"
-# rm -f "${CMS_ENV}.tar.gz"
-# tar -czvf "${CMS_ENV}.tar.gz" "/var/lib/jenkins/database_backup/${CMS_ENV}"
+# rm -f "${SOURCE_CMS_ENV}.tar.gz"
+# tar -czvf "${CMS_ENV}.tar.gz" "/var/lib/jenkins/database_backup/${SOURCE_CMS_ENV}"
