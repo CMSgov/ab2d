@@ -160,19 +160,14 @@ if [ -z "${DATABASE_PORT}" ]; then
 fi
 
 #
-# Backup database tables as csv files
-#
-
-# Create a database_backup directory for the target environment
-
-rm -rf "${HOME}/database_backup/${CMS_ENV}"
-mkdir -p "${HOME}/database_backup/${CMS_ENV}/csv"
-
 # Set PostgreSQL password
+#
 
 export PGPASSWORD="${DATABASE_PASSWORD}"
 
+#
 # Create temporary schema
+#
 
 psql \
   --dbname="${DATABASE_NAME}" \
@@ -206,8 +201,14 @@ psql \
   --username="${DATABASE_USER}" \
   --command="CREATE TABLE temporary.user_role (LIKE ${DATABASE_SCHEMA_NAME}.user_role);"
 
-# Restore from CSVs
+#
+# Restore data from CSVs to temporary tables
+#
 
-# cd "${HOME}/database_backup"
-# rm -f "${SOURCE_CMS_ENV}.tar.gz"
-# tar -czvf "${CMS_ENV}.tar.gz" "/var/lib/jenkins/database_backup/${SOURCE_CMS_ENV}"
+cd "${HOME}/database_backup/${SOURCE_CMS_ENV}"
+
+#psql \
+#  --dbname="${DATABASE_NAME}" \
+#  --host="${DATABASE_HOST}" \
+#  --username="${DATABASE_USER}" \
+#  --command="\\COPY temporary.contract FROM '#{csv_file_name}' WITH (FORMAT CSV);"
