@@ -178,7 +178,7 @@ psql \
   --dbname="${DATABASE_NAME}" \
   --host="${DATABASE_HOST}" \
   --username="${DATABASE_USER}" \
-  --command="CREATE SCHEMA temporary;"
+  --command="CREATE SCHEMA IF NOT EXISTS temporary AUTHORIZATION ${DATABASE_USER};"
 
 # Create tables in temporary schema
 
