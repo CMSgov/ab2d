@@ -211,7 +211,7 @@ psql \
 # Restore data from CSVs to temporary tables
 #
 
-cd "${HOME}/database_backup/${SOURCE_CMS_ENV}"
+cd "${HOME}/database_backup/${SOURCE_CMS_ENV}/csv"
 
 psql \
   --dbname="${DATABASE_NAME}" \
