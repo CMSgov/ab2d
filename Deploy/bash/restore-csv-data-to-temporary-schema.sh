@@ -186,25 +186,25 @@ psql \
   --dbname="${DATABASE_NAME}" \
   --host="${DATABASE_HOST}" \
   --username="${DATABASE_USER}" \
-  --file="CREATE TABLE temporary.contract (LIKE ${DATABASE_SCHEMA_NAME}.contract);"
+  --command="CREATE TABLE temporary.contract (LIKE ${DATABASE_SCHEMA_NAME}.contract);"
 
 psql \
   --dbname="${DATABASE_NAME}" \
   --host="${DATABASE_HOST}" \
   --username="${DATABASE_USER}" \
-  --file="CREATE TABLE temporary.sponsor (LIKE ${DATABASE_SCHEMA_NAME}.sponsor);"
+  --command="CREATE TABLE temporary.sponsor (LIKE ${DATABASE_SCHEMA_NAME}.sponsor);"
 
 psql \
   --dbname="${DATABASE_NAME}" \
   --host="${DATABASE_HOST}" \
   --username="${DATABASE_USER}" \
-  --file="CREATE TABLE temporary.user_account (LIKE ${DATABASE_SCHEMA_NAME}.user_account);"
+  --command="CREATE TABLE temporary.user_account (LIKE ${DATABASE_SCHEMA_NAME}.user_account);"
 
 psql \
   --dbname="${DATABASE_NAME}" \
   --host="${DATABASE_HOST}" \
   --username="${DATABASE_USER}" \
-  --file="CREATE TABLE temporary.user_role (LIKE ${DATABASE_SCHEMA_NAME}.user_role);"
+  --command="CREATE TABLE temporary.user_role (LIKE ${DATABASE_SCHEMA_NAME}.user_role);"
 
 # Restore from CSVs
 
