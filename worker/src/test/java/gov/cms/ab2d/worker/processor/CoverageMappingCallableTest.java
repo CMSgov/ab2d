@@ -1,10 +1,9 @@
 package gov.cms.ab2d.worker.processor;
 
+import ca.uhn.fhir.rest.server.exceptions.InternalErrorException;
 import gov.cms.ab2d.bfd.client.BFDClient;
+import gov.cms.ab2d.common.model.*;
 import gov.cms.ab2d.common.model.Contract;
-import gov.cms.ab2d.common.model.Identifiers;
-import gov.cms.ab2d.worker.processor.domainmodel.ContractMapping;
-import org.apache.commons.lang3.StringUtils;
 import org.hl7.fhir.dstu3.model.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -22,9 +21,8 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.when;
 
-class PatientContractCallableTest {
+class CoverageMappingCallableTest {
 
-    public static final String TESTING_JOB_ID = "TESTING_JOB_ID";
     private BFDClient bfdClient;
 
     @BeforeEach
@@ -50,26 +48,28 @@ class PatientContractCallableTest {
         contract.setContractNumber("TESTING");
         contract.setContractName("TESTING");
 
-        PatientContractCallable patientContractCallable = new PatientContractCallable("TESTING", 1,
-                2020, bfdClient, false, TESTING_JOB_ID);
+        CoveragePeriod period = new CoveragePeriod();
+        period.setContract(contract);
+        period.setYear(2020);
+        period.setMonth(1);
 
-        try {
-            ContractMapping mapping = patientContractCallable.call();
+        CoverageSearchEvent cse = new CoverageSearchEvent();
+        cse.setCoveragePeriod(period);
 
-            for (Identifiers patient : mapping.getPatients()) {
-                assertNotNull(patient.getBeneficiaryId());
-                assertTrue(patient.getBeneficiaryId().contains("test-"));
+        CoverageSearch search = new CoverageSearch();
+        search.setPeriod(period);
 
-                assertNotNull(patient.getCurrentMbi());
-                assertTrue(StringUtils.isNotBlank(patient.getCurrentMbi()));
-                assertTrue(patient.getHistoricMbis().isEmpty());
-            }
+        CoverageMapping mapping = new CoverageMapping(cse, search);
+        CoverageMappingCallable callable = new CoverageMappingCallable(mapping, bfdClient, false);
 
-            assertEquals(20, mapping.getPatients().size());
-        } catch (Exception exception) {
-            fail("could not execute basic job with mock client", exception);
-        }
+        assertFalse(callable.isCompleted());
 
+        CoverageMapping results = callable.call();
+        assertEquals(mapping, results);
+
+        assertTrue(callable.isCompleted());
+        assertTrue(mapping.isSuccessful());
+        assertEquals(20, results.getBeneficiaryIds().size());
     }
 
     @DisplayName("Multiple mbis captured")
@@ -88,14 +88,24 @@ class PatientContractCallableTest {
         contract.setContractNumber("TESTING");
         contract.setContractName("TESTING");
 
-        PatientContractCallable patientContractCallable =
-                new PatientContractCallable("TESTING", 1, 2020, bfdClient,
-                        false, TESTING_JOB_ID);
+        CoveragePeriod period = new CoveragePeriod();
+        period.setContract(contract);
+        period.setYear(2020);
+        period.setMonth(1);
+
+        CoverageSearchEvent cse = new CoverageSearchEvent();
+        cse.setCoveragePeriod(period);
+
+        CoverageSearch search = new CoverageSearch();
+        search.setPeriod(period);
+
+        CoverageMapping mapping = new CoverageMapping(cse, search);
+        CoverageMappingCallable callable = new CoverageMappingCallable(mapping, bfdClient, false);
 
         try {
-            ContractMapping mapping = patientContractCallable.call();
+            callable.call();
 
-            for (Identifiers patient : mapping.getPatients()) {
+            for (Identifiers patient : mapping.getBeneficiaryIds()) {
                 assertNotNull(patient.getBeneficiaryId());
                 assertTrue(patient.getBeneficiaryId().contains("test-"));
 
@@ -103,7 +113,7 @@ class PatientContractCallableTest {
                 assertEquals(2, patient.getHistoricMbis().size());
             }
 
-            assertEquals(20, mapping.getPatients().size());
+            assertEquals(20, mapping.getBeneficiaryIds().size());
         } catch (Exception exception) {
             fail("could not execute basic job with mock client", exception);
         }
@@ -131,14 +141,25 @@ class PatientContractCallableTest {
         contract.setContractNumber("TESTING");
         contract.setContractName("TESTING");
 
-        PatientContractCallable patientContractCallable =
-                new PatientContractCallable("TESTING", 1, 2020, bfdClient,
-                        false, TESTING_JOB_ID);
+        CoveragePeriod period = new CoveragePeriod();
+        period.setContract(contract);
+        period.setYear(2020);
+        period.setMonth(1);
+
+        CoverageSearchEvent cse = new CoverageSearchEvent();
+        cse.setCoveragePeriod(period);
+
+        CoverageSearch search = new CoverageSearch();
+        search.setPeriod(period);
+
+        CoverageMapping mapping = new CoverageMapping(cse, search);
+        CoverageMappingCallable callable = new CoverageMappingCallable(mapping, bfdClient, false);
+
 
         try {
-            ContractMapping mapping = patientContractCallable.call();
+            callable.call();
 
-            for (Identifiers patient : mapping.getPatients()) {
+            for (Identifiers patient : mapping.getBeneficiaryIds()) {
                 assertNotNull(patient.getBeneficiaryId());
                 assertTrue(patient.getBeneficiaryId().contains("test-"));
 
@@ -147,12 +168,13 @@ class PatientContractCallableTest {
                 assertEquals(2, patient.getHistoricMbis().size());
             }
 
-            assertEquals(20, mapping.getPatients().size());
+            assertEquals(20, mapping.getBeneficiaryIds().size());
         } catch (Exception exception) {
             fail("could not execute basic job with mock client", exception);
         }
 
     }
+
 
     @DisplayName("Filter out years that do not match the provided year")
     @Test
@@ -170,15 +192,28 @@ class PatientContractCallableTest {
         contract.setContractNumber("TESTING");
         contract.setContractName("TESTING");
 
-        PatientContractCallable patientContractCallable = new PatientContractCallable("TESTING", 1,
-                2020, bfdClient, false, TESTING_JOB_ID);
+        CoveragePeriod period = new CoveragePeriod();
+        period.setContract(contract);
+        period.setYear(2020);
+        period.setMonth(1);
+
+        CoverageSearchEvent cse = new CoverageSearchEvent();
+        cse.setCoveragePeriod(period);
+
+        CoverageSearch search = new CoverageSearch();
+        search.setPeriod(period);
+
+        CoverageMapping mapping = new CoverageMapping(cse, search);
+
+        CoverageMappingCallable coverageCallable =
+                new CoverageMappingCallable(mapping, bfdClient, false);
 
         try {
-            ContractMapping mapping = patientContractCallable.call();
+            mapping = coverageCallable.call();
 
-            assertEquals(10, mapping.getPatients().size());
+            assertEquals(10, mapping.getBeneficiaryIds().size());
 
-            int pastYear = (int) ReflectionTestUtils.getField(patientContractCallable, "filteredByYear");
+            int pastYear = (int) ReflectionTestUtils.getField(coverageCallable, "filteredByYear");
 
             assertEquals(10, pastYear);
         } catch (Exception exception) {
@@ -207,15 +242,28 @@ class PatientContractCallableTest {
         contract.setContractNumber("TESTING");
         contract.setContractName("TESTING");
 
-        PatientContractCallable patientContractCallable = new PatientContractCallable("TESTING", 1,
-                2020, bfdClient, false, TESTING_JOB_ID);
+        CoveragePeriod period = new CoveragePeriod();
+        period.setContract(contract);
+        period.setYear(2020);
+        period.setMonth(1);
+
+        CoverageSearchEvent cse = new CoverageSearchEvent();
+        cse.setCoveragePeriod(period);
+
+        CoverageSearch search = new CoverageSearch();
+        search.setPeriod(period);
+
+        CoverageMapping mapping = new CoverageMapping(cse, search);
+
+        CoverageMappingCallable coverageCallable =
+                new CoverageMappingCallable(mapping, bfdClient, false);
 
         try {
-            ContractMapping mapping = patientContractCallable.call();
+            mapping = coverageCallable.call();
 
-            assertEquals(10, mapping.getPatients().size());
+            assertEquals(10, mapping.getBeneficiaryIds().size());
 
-            int missingIdentifier = (int) ReflectionTestUtils.getField(patientContractCallable, "missingBeneId");
+            int missingIdentifier = (int) ReflectionTestUtils.getField(coverageCallable, "missingBeneId");
 
             assertEquals(10, missingIdentifier);
         } catch (Exception exception) {
@@ -234,14 +282,32 @@ class PatientContractCallableTest {
         contract.setContractNumber("TESTING");
         contract.setContractName("TESTING");
 
-        PatientContractCallable callable = new PatientContractCallable("TESTING", 1,
-                2020, bfdClient, false, TESTING_JOB_ID);
-        assertThrows(RuntimeException.class, callable::call);
+        CoveragePeriod period = new CoveragePeriod();
+        period.setContract(contract);
+        period.setYear(2020);
+        period.setMonth(1);
+
+        CoverageSearchEvent cse = new CoverageSearchEvent();
+        cse.setCoveragePeriod(period);
+
+        CoverageSearch search = new CoverageSearch();
+        search.setPeriod(period);
+
+        CoverageMapping mapping = new CoverageMapping(cse, search);
+        CoverageMappingCallable callable = new CoverageMappingCallable(mapping, bfdClient, false);
+
+        try {
+            callable.call();
+        } catch (Exception exception) {
+            // ignore exception for sake of test
+        }
+
+        assertFalse(mapping.isSuccessful());
+        assertTrue(callable.isCompleted());
     }
 
     private Bundle buildBundle(int startIndex, int endIndex, int year) {
         Bundle bundle1 = new Bundle();
-
         for (int i = startIndex; i < endIndex; i++) {
             Bundle.BundleEntryComponent component = new Bundle.BundleEntryComponent();
             Patient patient = createPatient("test-" + i, "mbi-" + i, year);

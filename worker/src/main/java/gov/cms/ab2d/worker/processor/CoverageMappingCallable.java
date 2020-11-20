@@ -1,8 +1,8 @@
 package gov.cms.ab2d.worker.processor;
 
 import gov.cms.ab2d.bfd.client.BFDClient;
+import gov.cms.ab2d.common.model.CoverageMapping;
 import gov.cms.ab2d.common.model.Identifiers;
-import gov.cms.ab2d.worker.processor.domainmodel.ContractMapping;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
@@ -10,70 +10,82 @@ import org.hl7.fhir.dstu3.model.*;
 
 import java.util.*;
 import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.*;
 
+/**
+ * Queries BFD for all of the members of a contract during a given month.
+ *
+ * todo remove PatientContractCallable and replace with this class which will load the data
+ *      before a job runs.
+ */
 @Slf4j
-public class PatientContractCallable implements Callable<ContractMapping> {
-    private static final String BENEFICIARY_ID = "https://bluebutton.cms.gov/resources/variables/bene_id";
+public class CoverageMappingCallable implements Callable<CoverageMapping> {
+
+    static final String BENEFICIARY_ID = "https://bluebutton.cms.gov/resources/variables/bene_id";
     public static final String CURRENCY_IDENTIFIER =
             "https://bluebutton.cms.gov/resources/codesystem/identifier-currency";
     public static final String CURRENT_MBI = "current";
     public static final String HISTORIC_MBI = "historic";
-
     public static final String MBI_ID = "http://hl7.org/fhir/sid/us-mbi";
 
-    private final int month;
+    private final CoverageMapping coverageMapping;
+    private final BFDClient bfdClient;
+    private final AtomicBoolean completed;
     private final int year;
     private final boolean skipBillablePeriodCheck;
-    private final String contractNumber;
-    private final BFDClient bfdClient;
-    private final String bulkJobId;     // Tracing support within BFD
+
 
     private int missingBeneId;
     private int missingCurrentMbi;
     private int hasHistoricalMbi;
     private int filteredByYear;
 
-    public PatientContractCallable(String contractNumber, int month, int year, BFDClient bfdClient,
-                                   boolean skipBillablePeriodCheck, String bulkJobId) {
-        this.contractNumber = contractNumber;
-        this.month = month;
-        this.year = year;
+    public CoverageMappingCallable(CoverageMapping coverageMapping, BFDClient bfdClient, boolean skipBillablePeriodCheck) {
+        this.coverageMapping = coverageMapping;
         this.bfdClient = bfdClient;
+        this.completed = new AtomicBoolean(false);
+        this.year = coverageMapping.getPeriod().getYear();
         this.skipBillablePeriodCheck = skipBillablePeriodCheck;
-        this.bulkJobId = bulkJobId;
+    }
+
+    public boolean isCompleted() {
+        return completed.get();
+    }
+
+    public CoverageMapping getCoverageMapping() {
+        return coverageMapping;
     }
 
     @Override
-    public ContractMapping call() {
+    public CoverageMapping call() {
+
+        int month = coverageMapping.getPeriod().getMonth();
+        String contractNumber = coverageMapping.getContract().getContractNumber();
 
         final Set<Identifiers> patientIds = new HashSet<>();
         int bundleNo = 1;
-
         try {
-            BFDClient.BFD_BULK_JOB_ID.set(bulkJobId);
-            ContractMapping mapping = new ContractMapping();
-            mapping.setMonth(month);
-
             log.info("retrieving contract membership for Contract {}-{}-{} bundle #{}",
                     contractNumber, year, month, bundleNo);
 
+            BFDClient.BFD_BULK_JOB_ID.set(coverageMapping.getJobId());
+
             Bundle bundle = getBundle(contractNumber, month);
+            patientIds.addAll(extractAndFilter(bundle));
 
             String availableLinks = bundle.getLink().stream()
-                    .map(link -> link.getRelation() + " -> " + link.getUrl())
+                    .map(Bundle.BundleLinkComponent::getRelation)
                     .collect(joining(" , "));
             log.info("retrieving contract membership for Contract {}-{}-{} bundle #{}, available links {}",
                     contractNumber, year, month, bundleNo, availableLinks);
 
             if (bundle.getLink(Bundle.LINK_NEXT) == null) {
-                log.warn("retrieving contract membership for Contract {}-{}-{} bundle #{}, does not have a next link",
+                log.info("retrieving contract membership for Contract {}-{}-{} bundle #{}, does not have a next link",
                         contractNumber, year, month, bundleNo);
             }
-
-            patientIds.addAll(extractAndFilter(bundle));
 
             while (bundle.getLink(Bundle.LINK_NEXT) != null) {
 
@@ -102,12 +114,14 @@ public class PatientContractCallable implements Callable<ContractMapping> {
             log.info("retrieving contract membership for Contract {}-{}-{}, #{} bundles received.",
                     contractNumber, year, month, bundleNo);
 
-            mapping.setPatients(patientIds);
-
+            coverageMapping.addBeneficiaries(patientIds);
             log.debug("finished reading [{}] Set<String>resources", patientIds.size());
-            return mapping;
+
+            coverageMapping.completed();
+            return coverageMapping;
         } catch (Exception e) {
-            log.error("unable to get patient information for " + contractNumber + " for month " + month, e);
+            log.error("Unable to get patient information for " + contractNumber + " for month " + month, e);
+            coverageMapping.failed();
             throw e;
         } finally {
             int total = patientIds.size() + filteredByYear + missingBeneId;
@@ -115,8 +129,11 @@ public class PatientContractCallable implements Callable<ContractMapping> {
             log.info("Search discarded {} entries missing a beneficiary identifier out of {}", missingBeneId, total);
             log.info("Search found {} entries missing a current mbi out of {}", missingCurrentMbi, total);
             log.info("Search found {} entries with a historical mbi out of {}", hasHistoricalMbi, total);
+
+            completed.set(true);
             BFDClient.BFD_BULK_JOB_ID.remove();
         }
+
     }
 
     private Set<Identifiers> extractAndFilter(Bundle bundle) {
@@ -250,7 +267,6 @@ public class PatientContractCallable implements Callable<ContractMapping> {
                 extension -> extension.getUrl().equals(CURRENCY_IDENTIFIER)
         ).findFirst();
     }
-
     /**
      * given a contractNumber & a month, calls BFD API to find all patients active in the contract during the month
      *

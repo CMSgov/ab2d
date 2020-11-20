@@ -1,4 +1,4 @@
-package gov.cms.ab2d.worker.processor.domainmodel;
+package gov.cms.ab2d.common.model;
 
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;

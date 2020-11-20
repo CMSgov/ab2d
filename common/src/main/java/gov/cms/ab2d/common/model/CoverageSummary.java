@@ -1,7 +1,6 @@
 package gov.cms.ab2d.common.model;
 
 import gov.cms.ab2d.common.util.FilterOutByDate.DateRange;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.ToString;
 
@@ -15,10 +14,15 @@ import java.util.List;
  */
 @Getter
 @ToString
-@AllArgsConstructor
 public class CoverageSummary {
 
-    private String beneficiaryId;
-    private Contract contract;
-    private List<DateRange> dateRanges;
+    private final Identifiers identifiers;
+    private final Contract contract;
+    private final List<DateRange> dateRanges;
+
+    public CoverageSummary(Identifiers identifiers, Contract contract, List<DateRange> dateRanges) {
+        this.identifiers = identifiers;
+        this.contract = contract;
+        this.dateRanges = dateRanges;
+    }
 }

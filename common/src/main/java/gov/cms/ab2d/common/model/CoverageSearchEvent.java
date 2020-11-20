@@ -3,6 +3,7 @@ package gov.cms.ab2d.common.model;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
 
 import javax.persistence.*;
 
@@ -15,6 +16,7 @@ import javax.persistence.*;
 @Entity(name = "event_bene_coverage_search_status_change")
 @Getter
 @Setter
+@ToString
 @EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = false)
 public class CoverageSearchEvent extends TimestampBase {
 

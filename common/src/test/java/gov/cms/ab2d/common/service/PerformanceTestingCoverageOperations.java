@@ -19,7 +19,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
-import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.joining;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -45,10 +44,10 @@ class PerformanceTestingCoverageOperations {
     private SponsorRepository sponsorRepo;
 
     @Autowired
-    private CoverageRepository coverageRepo;
+    private CoveragePeriodRepository coveragePeriodRepo;
 
     @Autowired
-    private CoveragePeriodRepository coveragePeriodRepo;
+    private CoverageSearchRepository coverageSearchRepo;
 
     @Autowired
     private CoverageSearchEventRepository coverageSearchEventRepo;
@@ -57,10 +56,15 @@ class PerformanceTestingCoverageOperations {
     private CoverageService coverageService;
 
     @Autowired
+    private CoverageServiceRepository coverageServiceRepo;
+
+    @Autowired
     private DataSetup dataSetup;
 
     @Autowired
     private DataSource dataSource;
+
+    @Autowired CoverageSearchRepository coverageSearchRepository;
 
     private Sponsor sponsor;
     private Contract contract;
@@ -86,6 +90,7 @@ class PerformanceTestingCoverageOperations {
 // If you kill the integration test early uncomment this and comment the code below
 //
 //        deleteCoverage();
+//        coverageSearchRepo.deleteAll();
 //        coverageSearchEventRepo.deleteAll();
 //        coveragePeriodRepo.deleteAll();
 //        contractRepo.deleteAll();
@@ -94,36 +99,39 @@ class PerformanceTestingCoverageOperations {
 //        }
 
 // You will have to find the sponsor repo id manually
-//        sponsor = sponsorRepo.findById(136L).get();
-//        contract = contractRepo.findContractByContractNumber("TST-12").get();
+        sponsor = sponsorRepo.findById(90L).get();
+        contract = contractRepo.findContractByContractNumber("TST-12").get();
 //        contract = contractRepo.findContractByContractNumber("TST-34").get();
 //        contract = contractRepo.findContractByContractNumber("TST-56").get();
 //        contract = contractRepo.findContractByContractNumber("TST-78").get();
 //        contract = contractRepo.findContractByContractNumber("TST-90").get();
 
-//        period1 = coveragePeriodRepo.getByContractIdAndMonthAndYear(contract.getId(), 1, 2020);
-//        period2 = coveragePeriodRepo.getByContractIdAndMonthAndYear(contract.getId(), 2, 2020);
-//        period3 = coveragePeriodRepo.getByContractIdAndMonthAndYear(contract.getId(), 3, 2020);
+        period1 = coveragePeriodRepo.getByContractIdAndMonthAndYear(contract.getId(), 1, 2020);
+        period2 = coveragePeriodRepo.getByContractIdAndMonthAndYear(contract.getId(), 2, 2020);
+        period3 = coveragePeriodRepo.getByContractIdAndMonthAndYear(contract.getId(), 3, 2020);
 
-        sponsor = dataSetup.createSponsor("Cal Ripken", 200, "Cal Ripken Jr.", 201);
-        contract = dataSetup.setupContract(sponsor, "TST-12");
+//        sponsor = dataSetup.createSponsor("Cal Ripken", 200, "Cal Ripken Jr.", 201);
+//        contract = dataSetup.setupContract(sponsor, "TST-12");
 
-        period1 = dataSetup.createCoveragePeriod(contract, 1, 2020);
-        period2 = dataSetup.createCoveragePeriod(contract, 2, 2020);
-        period3 = dataSetup.createCoveragePeriod(contract, 3, 2020);
+//        period1 = dataSetup.createCoveragePeriod(contract, 1, 2020);
+//        period2 = dataSetup.createCoveragePeriod(contract, 2, 2020);
+//        period3 = dataSetup.createCoveragePeriod(contract, 3, 2020);
 
     }
 
     @AfterEach
     public void cleanUp() {
-        deleteCoverage();
-        coverageSearchEventRepo.deleteAll();
-        coveragePeriodRepo.deleteAll();
-        contractRepo.deleteAll();
-
-        if (sponsor != null) {
-            sponsorRepo.delete(sponsor);
-        }
+//        dataSetup.deleteCoverage();
+//        coverageSearchRepo.deleteAll();
+//        coverageSearchEventRepo.deleteAll();
+//        coveragePeriodRepo.deleteAll();
+//        contractRepo.delete(contract);
+//        contractRepo.flush();
+//
+//        if (sponsor != null) {
+//            sponsorRepo.delete(sponsor);
+//            sponsorRepo.flush();
+//        }
     }
 
     /**
@@ -134,7 +142,8 @@ class PerformanceTestingCoverageOperations {
     @Test
     void insertPerformanceUsingConnection() {
         // Raise number of datapoints to stress database
-        InsertionJob job = new InsertionJob(period1, dataSource, coverageService, coverageSearchEventRepo, 1_000_000, 5);
+        InsertionJob job = new InsertionJob(period1, dataSource, coverageService,
+                1_000_000, 5, coverageSearchRepository);
         job.call();
     }
 
@@ -146,11 +155,11 @@ class PerformanceTestingCoverageOperations {
     @Test
     void readPerformanceWithJPAPaging() {
 
-        int dataPoints = 1_000_000;
+        int dataPoints = 20_000_000;
         int queries = 200;
         int threads = 10;
         int pageSize = 5000;
-        int pages = dataPoints / pageSize;
+        int pages = dataPoints > pageSize ? dataPoints / pageSize : 1;
 
         List<CoveragePeriod> periods = new ArrayList<>();
         periods.add(period1);
@@ -187,9 +196,9 @@ class PerformanceTestingCoverageOperations {
 //        periods.add(dataSetup.createCoveragePeriod(contract5, 3, 2020));
 //        periods.add(dataSetup.createCoveragePeriod(contract5, 4, 2020));
 
-        loadDBWithFakeData(dataPoints, periods);
+//        loadDBWithFakeData(dataPoints, periods);
 
-        coverageService.vacuumCoverage();
+//        coverageServiceRepo.vacuumCoverage();
 
         System.out.println("Done loading data");
 
@@ -205,14 +214,17 @@ class PerformanceTestingCoverageOperations {
             for (int queryNumber = 0; queryNumber < queries; queryNumber++) {
                 int page = random.nextInt(pages);
                 Instant start = Instant.now();
-                List<CoverageSummary> content = coverageService.pageCoverage(page, pageSize, List.of(period1.getId(), period2.getId()));
+                CoveragePagingRequest pagingRequest = new CoveragePagingRequest(pageSize,
+                        "test-" + page * pageSize + 1, period1.getId(), period2.getId());
+                CoveragePagingResult pagingResult = coverageService.pageCoverage(pagingRequest);
+                List<CoverageSummary> content = pagingResult.getCoverageSummaries();
 
                 assertFalse(content.isEmpty());
                 assertEquals(pageSize, content.size());
                 Instant stop = Instant.now();
 
                 if (queryNumber % 10 == 0) {
-                    log.info("{} query {} took {}", name, queryNumber, Duration.between(start, stop).toMillis());
+                    log.info("{} query {} took {} starting index {}", name, queryNumber, Duration.between(start, stop).toMillis(), page * pageSize);
                 }
                 timing.add(Duration.between(start, stop).toNanos());
             }
@@ -228,6 +240,7 @@ class PerformanceTestingCoverageOperations {
                 f.get();
             }
         } catch (Exception exception) {
+            exception.printStackTrace();
             fail("failed to run all select threads", exception);
         }
 
@@ -248,27 +261,27 @@ class PerformanceTestingCoverageOperations {
     void deletePreviousSearch() {
 
         InsertionJob first = new InsertionJob(period1, dataSource, coverageService,
-                coverageSearchEventRepo, 100_000, 1);
+                100_000, 1, coverageSearchRepository);
         CoverageSearchEvent inProgress1 = first.call();
 
-        coverageService.completeCoverageSearch(period1.getId(), "testing");
+        coverageService.completeSearch(period1.getId(), "testing");
 
         InsertionJob second = new InsertionJob(period1, dataSource, coverageService,
-                coverageSearchEventRepo, 100_000, 1);
+                100_000, 1, coverageSearchRepository);
         CoverageSearchEvent inProgress2 = second.call();
 
-        coverageService.completeCoverageSearch(period1.getId(), "testing");
+        coverageService.completeSearch(period1.getId(), "testing");
 
 
-        System.out.println("Records present before delete " + coverageRepo.countByCoverageSearchEvent(inProgress1));
+        System.out.println("Records present before delete " + coverageServiceRepo.countBySearchEvent(inProgress1));
 
         Instant start = Instant.now();
         coverageService.deletePreviousSearch(period1.getId());
         Instant end = Instant.now();
 
-        assertEquals(0, coverageRepo.countByCoverageSearchEvent(inProgress1));
-        assertEquals(100_000L, coverageRepo.countByCoverageSearchEvent(inProgress2));
-        System.out.println("Records present after delete " + coverageRepo.countByCoverageSearchEvent(inProgress1));
+        assertEquals(0, coverageServiceRepo.countBySearchEvent(inProgress1));
+        assertEquals(100_000L, coverageServiceRepo.countBySearchEvent(inProgress2));
+        System.out.println("Records present after delete " + coverageServiceRepo.countBySearchEvent(inProgress1));
 
         System.out.println("Time to delete previous search in milliseconds " + Duration.between(start, end).toMillis());
     }
@@ -279,13 +292,14 @@ class PerformanceTestingCoverageOperations {
      */
     private void loadDBWithFakeData(int dataPoints, List<CoveragePeriod> periods) {
 
-        if (coverageRepo.count() == 0) {
+        if (dataSetup.countCoverage() == 0) {
 
-            ExecutorService executor = Executors.newFixedThreadPool(5);
+            ExecutorService executor = Executors.newFixedThreadPool(3);
             List<Future> insertions = new ArrayList<>();
 
             for (CoveragePeriod period : periods) {
-                InsertionJob job = new InsertionJob(period, dataSource, coverageService, coverageSearchEventRepo, dataPoints, 1);
+                InsertionJob job = new InsertionJob(period, dataSource, coverageService,
+                        dataPoints, 1, coverageSearchRepository);
                 insertions.add(executor.submit(job));
             }
 
@@ -296,15 +310,6 @@ class PerformanceTestingCoverageOperations {
             } catch (Exception exception) {
                 fail("failed to run all select threads", exception);
             }
-        }
-    }
-
-    private void deleteCoverage() {
-        try (Connection connection = dataSource.getConnection();
-             PreparedStatement statement = connection.prepareStatement("DELETE FROM coverage")) {
-            statement.execute();
-        } catch (Exception exception) {
-            exception.printStackTrace();
         }
     }
 }
