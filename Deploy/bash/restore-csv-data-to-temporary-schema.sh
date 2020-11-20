@@ -173,7 +173,13 @@ psql \
   --dbname="${DATABASE_NAME}" \
   --host="${DATABASE_HOST}" \
   --username="${DATABASE_USER}" \
-  --command="CREATE SCHEMA IF NOT EXISTS temporary AUTHORIZATION ${DATABASE_USER};"
+  --command="DROP SCHEMA IF EXISTS temporary CASCADE;"
+
+psql \
+  --dbname="${DATABASE_NAME}" \
+  --host="${DATABASE_HOST}" \
+  --username="${DATABASE_USER}" \
+  --command="CREATE SCHEMA temporary AUTHORIZATION ${DATABASE_USER};"
 
 # Create tables in temporary schema
 
@@ -207,8 +213,8 @@ psql \
 
 cd "${HOME}/database_backup/${SOURCE_CMS_ENV}"
 
-#psql \
-#  --dbname="${DATABASE_NAME}" \
-#  --host="${DATABASE_HOST}" \
-#  --username="${DATABASE_USER}" \
-#  --command="\\COPY temporary.contract FROM '#{csv_file_name}' WITH (FORMAT CSV);"
+psql \
+  --dbname="${DATABASE_NAME}" \
+  --host="${DATABASE_HOST}" \
+  --username="${DATABASE_USER}" \
+  --command="\\COPY temporary.contract FROM '${DATABASE_SCHEMA_NAME}.contract.csv' WITH (FORMAT CSV);"
