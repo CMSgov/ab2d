@@ -128,7 +128,7 @@ fi
 
 # Get database schema name secret
 
-DATABASE_SCHEMA_NAME=$(./get-database-secret.py "${CMS_ENV}" database_schema_name "${DATABASE_SECRET_DATETIME}")
+DATABASE_SCHEMA_NAME=$(./get-database-secret.py "${TARGET_CMS_ENV}" database_schema_name "${DATABASE_SECRET_DATETIME}")
 
 if [ -z "${DATABASE_SCHEMA_NAME}" ]; then
   echo "***************************************"
