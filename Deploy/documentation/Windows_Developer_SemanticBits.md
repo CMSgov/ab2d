@@ -2,6 +2,8 @@
 
 ## Table of Contents
 
+[Implement a Docker on Ubuntu setup](#implement-a-docker-on-ubuntu-setup)
+
 ## Implement a Docker on Ubuntu setup
 
 1. Disconnect from VPN
