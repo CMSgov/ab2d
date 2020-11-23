@@ -8,7 +8,8 @@ SELECT
   e.username,
   e.email,
   e.enabled,
-  e.sponsor_id
+  e.sponsor_id,
+  e.max_parallel_jobs
 FROM public.sponsor a
 INNER JOIN public.contract d
 ON a.id = d.sponsor_id
