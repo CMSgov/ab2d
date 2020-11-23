@@ -229,6 +229,12 @@ psql \
   --dbname="${DATABASE_NAME}" \
   --host="${DATABASE_HOST}" \
   --username="${DATABASE_USER}" \
+  --command="\\COPY temporary.role FROM '${DATABASE_SCHEMA_NAME}.role.csv' WITH (FORMAT CSV);"
+
+psql \
+  --dbname="${DATABASE_NAME}" \
+  --host="${DATABASE_HOST}" \
+  --username="${DATABASE_USER}" \
   --command="\\COPY temporary.sponsor FROM '${DATABASE_SCHEMA_NAME}.sponsor.csv' WITH (FORMAT CSV);"
 
 psql \
