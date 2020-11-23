@@ -86,8 +86,6 @@ source "${START_DIR}/functions/fn_get_temporary_aws_credentials_via_aws_sts_assu
 
 fn_get_temporary_aws_credentials_via_aws_sts_assume_role "${TARGET_AWS_ACCOUNT_NUMBER}" "${TARGET_CMS_ENV}"
 
-# Get secrets
-
 # Change to "python3" directory
 
 cd "${START_DIR}/.."
@@ -159,15 +157,11 @@ if [ -z "${DATABASE_PORT}" ]; then
   exit 1
 fi
 
-#
 # Set PostgreSQL password
-#
 
 export PGPASSWORD="${DATABASE_PASSWORD}"
 
-#
 # Create temporary schema
-#
 
 psql \
   --dbname="${DATABASE_NAME}" \
