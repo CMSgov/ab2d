@@ -35,7 +35,7 @@ pipeline {
         script {
 	      dir ('Deploy/bash') {
 	        sh '''
-	          # ./reconcile-prod-validation-with-prod.sh
+	          ./reconcile-prod-validation-with-prod.sh
 	        sh '''
 	      }
 	    }
