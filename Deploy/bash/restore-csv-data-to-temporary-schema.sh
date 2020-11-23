@@ -193,6 +193,12 @@ psql \
   --dbname="${DATABASE_NAME}" \
   --host="${DATABASE_HOST}" \
   --username="${DATABASE_USER}" \
+  --command="CREATE TABLE temporary.role (LIKE ${DATABASE_SCHEMA_NAME}.role);"
+
+psql \
+  --dbname="${DATABASE_NAME}" \
+  --host="${DATABASE_HOST}" \
+  --username="${DATABASE_USER}" \
   --command="CREATE TABLE temporary.sponsor (LIKE ${DATABASE_SCHEMA_NAME}.sponsor);"
 
 psql \
