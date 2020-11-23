@@ -139,26 +139,26 @@
  
 1. If ubuntu is not listed as version 2, do the following
 
-   - Convert Ubuntu to version 2 in the already open PowerShell (this takes a while)
+   1. Convert Ubuntu to version 2 in the already open PowerShell (this takes a while)
 
-     ```ShellSession
-     $ wsl --set-version Ubuntu 2
-     ```
+      ```ShellSession
+      $ wsl --set-version Ubuntu 2
+      ```
 
-   - Wait fo the conversion to complete
+   1. Wait fo the conversion to complete
 
-   - List the distributions again in the already open PowerShell
+   1. List the distributions again in the already open PowerShell
 
-     ```ShellSession
-     $ wsl -l -v
-     ```
+      ```ShellSession
+      $ wsl -l -v
+      ```
 
-   - Note the changed output
+   1. Note the changed output
 
-     ```
-     NAME                            STATE           VERSION
-     * Ubuntu                        Stopped         2
-     ```
+      ```
+      NAME                            STATE           VERSION
+      * Ubuntu                        Stopped         2
+      ```
 
 1. Set v2 as the default version for future installations in the already open PowerShell
 
@@ -182,44 +182,44 @@
 
 1. After you are done working with docker for the day, do the following:
 
-   - Return to the ubuntu window that is running docker
+   1. Return to the ubuntu window that is running docker
 
-   - Click on the ubuntu window so that it has focus
+   1. Click on the ubuntu window so that it has focus
 
-   - Press **Ctrl+c** on the keyboard to kill the docker daemon
+   1. Press **Ctrl+c** on the keyboard to kill the docker daemon
 
 1. If Ctrl+c fails to stop the docker daemon, do the following:
 
-   - Close the ubuntu window
+   1. Close the ubuntu window
 
-   - Restart Windows
+   1. Restart Windows
 
-   - Open Ubuntu as an administrator
+   1. Open Ubuntu as an administrator
 
-   - Delete the "docker.pid" file
+   1. Delete the "docker.pid" file
 
-     ```ShellSession
-     $ sudo rm -f /var/run/docker.pid
-     ```
+      ```ShellSession
+      $ sudo rm -f /var/run/docker.pid
+      ```
 
 1. After you have everything setup, you can start your day as follows
 
-   - Log on to Windows and give it time to do all its initial behind the scenes setup
+   1. Log on to Windows and give it time to do all its initial behind the scenes setup
 
-   - Open Ubuntu as an administrator
+   1. Open Ubuntu as an administrator
 
-   - Start the Docker dameon and leave it running
+   1. Start the Docker dameon and leave it running
 
-     ```ShellSession
-     $ sudo dockerd
-     ```
+      ```ShellSession
+      $ sudo dockerd
+      ```
 
-   - Verify that the following is displayed in the last line of the output
+   1. Verify that the following is displayed in the last line of the output
 
-     ```
-     API listen on /var/run/docker.sock
-     ```
+      ```
+      API listen on /var/run/docker.sock
+      ```
 
-   - Minimize this ubuntu windows so that it is out of your way
+   1.  Minimize this ubuntu windows so that it is out of your way
 
-   - Don't forget to shut it down correctly at the end of your day as documented above
+   1. Don't forget to shut it down correctly at the end of your day with Ctrl+c as documented above
