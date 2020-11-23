@@ -30,12 +30,12 @@ pipeline {
 	    }
       }
     }
-    stage('Reconcile Production Validation data with Production data') {
+    stage('Reconcile databases') {
       steps {
         script {
 	      dir ('Deploy/bash') {
 	        sh '''
-	          ./reconcile-prod-validation-with-prod.sh
+	          ./reconcile-databases.sh
 	        sh '''
 	      }
 	    }

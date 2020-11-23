@@ -86,9 +86,18 @@ source "${START_DIR}/functions/fn_get_temporary_aws_credentials_via_aws_sts_assu
 
 fn_get_temporary_aws_credentials_via_aws_sts_assume_role "${TARGET_AWS_ACCOUNT_NUMBER}" "${TARGET_CMS_ENV}"
 
+# Reconcile databases
+
+psql \
+  --dbname="${DATABASE_NAME}" \
+  --host="${DATABASE_HOST}" \
+  --username="${DATABASE_USER}" \
+  --file="../sql/reconcile-databases.sql"
+
+# Delete temporary schema
+
 psql \
   --dbname="${DATABASE_NAME}" \
   --host="${DATABASE_HOST}" \
   --username="${DATABASE_USER}" \
   --command="DROP SCHEMA IF EXISTS temporary CASCADE;"
-
