@@ -486,9 +486,9 @@ terraform apply \
   --var "ami_id=${AMI_ID}" \
   --var "aws_account_number=${AWS_ACCOUNT_NUMBER}" \
   --var "bfd_keystore_file_name=${BFD_KEYSTORE_FILE_NAME}" \
-  --var "bfd_keystore_location=${BFD_KEYSTORE_LOCATION}" \
-  --var "bfd_keystore_password=${BFD_KEYSTORE_PASSWORD}" \
-  --var "bfd_url=${BFD_URL}" \
+  --var "bfd_keystore_location=${AB2D_BFD_KEYSTORE_LOCATION}" \
+  --var "bfd_keystore_password=${AB2D_BFD_KEYSTORE_PASSWORD}" \
+  --var "bfd_url=${AB2D_BFD_URL}" \
   --var "claims_skip_billable_period_check=${CLAIMS_SKIP_BILLABLE_PERIOD_CHECK}" \
   --var "cpm_backup_worker=${CPM_BACKUP_WORKER}" \
   --var "db_host=${AB2D_DB_HOST}" \
@@ -503,8 +503,8 @@ terraform apply \
   --var "ecs_task_def_memory=${WORKER_MEMORY}" \
   --var "env=${CMS_ENV}" \
   --var "gold_image_name=${GOLD_IMAGE_NAME}" \
-  --var "hicn_hash_iter=${HICN_HASH_ITER}" \
-  --var "hicn_hash_pepper=${HICN_HASH_PEPPER}" \
+  --var "hicn_hash_iter=${AB2D_HICN_HASH_ITER}" \
+  --var "hicn_hash_pepper=${AB2D_HICN_HASH_PEPPER}" \
   --var "iam_instance_profile=${IAM_INSTANCE_PROFILE}" \
   --var "iam_instance_role=${IAM_INSTANCE_ROLE}" \
   --var "image_version=${IMAGE_VERSION}" \
