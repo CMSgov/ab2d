@@ -86,6 +86,81 @@ source "${START_DIR}/functions/fn_get_temporary_aws_credentials_via_aws_sts_assu
 
 fn_get_temporary_aws_credentials_via_aws_sts_assume_role "${TARGET_AWS_ACCOUNT_NUMBER}" "${TARGET_CMS_ENV}"
 
+# Change to "python3" directory
+
+cd "${START_DIR}/.."
+cd python3
+
+# Get database user secret
+
+DATABASE_USER=$(./get-database-secret.py "${TARGET_CMS_ENV}" database_user "${DATABASE_SECRET_DATETIME}")
+
+if [ -z "${DATABASE_USER}" ]; then
+  echo "**************************************"
+  echo "ERROR: database user secret not found."
+  echo "**************************************"
+  exit 1
+fi
+
+# Get database password secret
+
+DATABASE_PASSWORD=$(./get-database-secret.py "${TARGET_CMS_ENV}" database_password "${DATABASE_SECRET_DATETIME}")
+
+if [ -z "${DATABASE_PASSWORD}" ]; then
+  echo "******************************************"
+  echo "ERROR: database password secret not found."
+  echo "******************************************"
+  exit 1
+fi
+
+# Get database name secret
+
+DATABASE_NAME=$(./get-database-secret.py "${TARGET_CMS_ENV}" database_name "${DATABASE_SECRET_DATETIME}")
+
+if [ -z "${DATABASE_NAME}" ]; then
+  echo "***************************************"
+  echo "ERROR: database name secret not found."
+  echo "**************************************"
+  exit 1
+fi
+
+# Get database schema name secret
+
+DATABASE_SCHEMA_NAME=$(./get-database-secret.py "${TARGET_CMS_ENV}" database_schema_name "${DATABASE_SECRET_DATETIME}")
+
+if [ -z "${DATABASE_SCHEMA_NAME}" ]; then
+  echo "***************************************"
+  echo "ERROR: database name secret not found."
+  echo "**************************************"
+  exit 1
+fi
+
+# Get database host secret
+
+DATABASE_HOST=$(./get-database-secret.py "${TARGET_CMS_ENV}" database_host "${DATABASE_SECRET_DATETIME}")
+
+if [ -z "${DATABASE_HOST}" ]; then
+  echo "***************************************************"
+  echo "ERROR: database host secret not found."
+  echo "***************************************************"
+  exit 1
+fi
+
+# Get database port secret
+
+DATABASE_PORT=$(./get-database-secret.py "${TARGET_CMS_ENV}" database_port "${DATABASE_SECRET_DATETIME}")
+
+if [ -z "${DATABASE_PORT}" ]; then
+  echo "***************************************************"
+  echo "ERROR: database port secret not found."
+  echo "***************************************************"
+  exit 1
+fi
+
+# Set PostgreSQL password
+
+export PGPASSWORD="${DATABASE_PASSWORD}"
+
 # Reconcile databases
 
 psql \
