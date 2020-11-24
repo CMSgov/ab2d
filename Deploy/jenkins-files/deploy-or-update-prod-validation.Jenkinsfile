@@ -8,6 +8,17 @@ pipeline {
     label 'deployment'
   }
   stages {
+    stage('Deploy S3 terraform backend') {
+      steps {
+        script {
+	      dir ('Deploy/bash') {
+	        sh '''
+	          ./deploy-s3-terraform-backend.sh
+	        sh '''
+	      }
+	    }
+      }
+    }
     stage('Deploy or update core module') {
       steps {
         script {
