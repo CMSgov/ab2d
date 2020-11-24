@@ -19,6 +19,8 @@ cd "${START_DIR}"
 echo "Check vars are not empty before proceeding..."
 if [ -z "${CLOUD_TAMER_PARAM}" ] \
     || [ -z "${DATABASE_SECRET_DATETIME_PARAM}" ] \
+    || [ -z "${EXCLUDE_PROD_CMS_ENV_AS_TARGET_OF_DATABASE_MIGRATION_PARAM}" ] \
+    || [ -z "${EXCLUDE_SBX_CMS_ENV_AS_TARGET_OF_DATABASE_MIGRATION_PARAM}" ] \
     || [ -z "${SOURCE_CMS_ENV_PARAM}" ] \
     || [ -z "${TARGET_AWS_ACCOUNT_NUMBER_PARAM}" ] \
     || [ -z "${TARGET_CMS_ENV_PARAM}" ]; then
@@ -46,7 +48,9 @@ DATABASE_SECRET_DATETIME="${DATABASE_SECRET_DATETIME_PARAM}"
 
 export DATABASE_USER=""
 
-SOURCE_CMS_ENV="${SOURCE_CMS_ENV_PARAM}"
+EXCLUDE_PROD_CMS_ENV_AS_TARGET_OF_DATABASE_MIGRATION="${EXCLUDE_PROD_CMS_ENV_AS_TARGET_OF_DATABASE_MIGRATION_PARAM}"
+
+EXCLUDE_SBX_CMS_ENV_AS_TARGET_OF_DATABASE_MIGRATION="${EXCLUDE_SBX_CMS_ENV_AS_TARGET_OF_DATABASE_MIGRATION_PARAM}"
 
 TARGET_CMS_ENV="${TARGET_CMS_ENV_PARAM}"
 
@@ -67,6 +71,28 @@ if [ "${CLOUD_TAMER}" != "false" ]; then
   exit 1
 else
   echo "NOTE: Cloudtamer is not being used."
+fi
+
+# Exit with error if the target is production
+
+if [ "${TARGET_CMS_ENV}" == "${EXCLUDE_PROD_CMS_ENV_AS_TARGET_OF_DATABASE_MIGRATION}" ]; then
+  echo ""
+  echo "*********************************************************"
+  echo "ERROR: TARGET_CMS_ENV cannot be production"
+  echo "*********************************************************"
+  echo ""
+  exit 1
+fi
+
+# Exit with error if the target is production
+
+if [ "${TARGET_CMS_ENV}" == "${EXCLUDE_SBX_CMS_ENV_AS_TARGET_OF_DATABASE_MIGRATION}" ]; then
+  echo ""
+  echo "*********************************************************"
+  echo "ERROR: TARGET_CMS_ENV cannot be sandbox"
+  echo "*********************************************************"
+  echo ""
+  exit 1
 fi
 
 #
