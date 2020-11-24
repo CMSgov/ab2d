@@ -272,6 +272,20 @@
       $ sudo apt-get install docker-ce="${UBUNTU_DOCKER_VERSION}" docker-ce-cli="${UBUNTU_DOCKER_VERSION}" containerd.io
       ```
 
+   1. Verify the docker version
+
+      ```ShellSession
+      $ docker --version
+      ```
+
+   1. Note the output
+
+      *Example:*
+
+      ```
+      Docker version 19.03.12, build 48a66213fe
+      ```
+   
    1. Run the docker daemon
 
       1. Open an new Ubuntu window as administrator
