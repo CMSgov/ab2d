@@ -1,16 +1,12 @@
 pipeline {
-  environment {
-    AWS_ACCOUNT_NUMBER_PARAM = credentials("${AWS_ACCOUNT_NUMBER_PARAM}")
-    CMS_ECR_REPO_ENV_AWS_ACCOUNT_NUMBER_PARAM = credentials("${CMS_ECR_REPO_ENV_AWS_ACCOUNT_NUMBER_PARAM}")
-    DATABASE_SECRET_DATETIME_PARAM = credentials("${DATABASE_SECRET_DATETIME_PARAM}")
-    TARGET_AWS_ACCOUNT_NUMBER_PARAM = credentials("${TARGET_AWS_ACCOUNT_NUMBER_PARAM}")
-  }
   parameters {
-    credentials(name: 'AWS_ACCOUNT_NUMBER_PARAM', description: '', defaultValue: '',
-      credentialType: "com.cloudbees.plugins.credentials.impl.StringCredentialsImpl", required: true )
+    credentials(name: 'AWS_ACCOUNT_NUMBER_PARAM', description: '', defaultValue: '', required: true )
     string(name: 'API_URL_PREFIX_PARAM', defaultValue: '', description: '')
     string(name: 'CLOUD_TAMER_PARAM', defaultValue: 'false', description: '')
+    credentials(name: 'CMS_ECR_REPO_ENV_AWS_ACCOUNT_NUMBER_PARAM', description: '', defaultValue: '', required: true )
     string(name: 'CONTRACT_NUMBER_PARAM', defaultValue: '', description: '')
+    credentials(name: 'DATABASE_SECRET_DATETIME_PARAM', description: '', defaultValue: '', required: true )
+    credentials(name: 'TARGET_AWS_ACCOUNT_NUMBER_PARAM', description: '', defaultValue: '', required: true )
     string(name: 'TARGET_CMS_ENV_PARAM', defaultValue: '', description: '')
   }
   agent {
