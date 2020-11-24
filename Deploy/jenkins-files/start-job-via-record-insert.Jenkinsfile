@@ -6,7 +6,8 @@ pipeline {
     TARGET_AWS_ACCOUNT_NUMBER_PARAM = credentials("${TARGET_AWS_ACCOUNT_NUMBER_PARAM}")
   }
   parameters {
-    credentials(name: 'AWS_ACCOUNT_NUMBER_PARAM', description: '', defaultValue: '', credentialType: "Secret text", required: true )
+    credentials(name: 'AWS_ACCOUNT_NUMBER_PARAM', description: '', defaultValue: '',
+      credentialType: "com.cloudbees.plugins.credentials.impl.StringCredentialsImpl", required: true )
     string(name: 'API_URL_PREFIX_PARAM', defaultValue: '', description: '')
     string(name: 'CLOUD_TAMER_PARAM', defaultValue: 'false', description: '')
     string(name: 'CONTRACT_NUMBER_PARAM', defaultValue: '', description: '')
