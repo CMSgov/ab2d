@@ -57,7 +57,8 @@ data "aws_iam_policy_document" "main_kms_key_policy" {
       type        = "AWS"
       identifiers = [
         "arn:aws:iam::${var.aws_account_number}:role/delegatedadmin/developer/${var.env_pascal_case}InstanceRole",
-	    "arn:aws:iam::${var.aws_account_number}:role/ct-ado-ab2d-application-admin"
+        "arn:aws:iam::${var.aws_account_number}:role/ct-ado-ab2d-application-admin",
+        "arn:aws:iam::${var.aws_account_number}:role/delegatedadmin/developer/Ab2dMgmtV2Role"
       ]
     }
 
