@@ -52,22 +52,6 @@ else
   CLOUD_TAMER="${CLOUD_TAMER_PARAM}"
 fi
 
-# If S3_TFSTATE_BUCKET is not set by a previous module, set it via the aws cli
-
-if [ -z "${S3_TFSTATE_BUCKET}" ]; then
-  S3_TFSTATE_BUCKET=$(aws --region "${AWS_DEFAULT_REGION}" s3api list-buckets \
-    --query "Buckets[?Name == '${CMS_ENV}-tfstate'].Name" \
-    --output text)
-fi
-
-# If TFSTATE_KMS_KEY_ID is not set by a previous module, set it via the aws cli
-
-if [ -z "${TFSTATE_KMS_KEY_ID}" ]; then
-  TFSTATE_KMS_KEY_ID=$(aws --region "${AWS_DEFAULT_REGION}" kms list-aliases \
-    --query "Aliases[?AliasName=='alias/${CMS_ENV}-main-kms'].TargetKeyId" \
-    --output text)
-fi
-
 #
 # Define functions
 #
@@ -90,6 +74,22 @@ if [ "${CLOUD_TAMER}" == "true" ]; then
   fn_get_temporary_aws_credentials_via_cloudtamer_api "${AWS_ACCOUNT_NUMBER}" "${CMS_ENV}"
 else
   fn_get_temporary_aws_credentials_via_aws_sts_assume_role "${AWS_ACCOUNT_NUMBER}" "${CMS_ENV}"
+fi
+
+# If S3_TFSTATE_BUCKET is not set by a previous module, set it via the aws cli
+
+if [ -z "${S3_TFSTATE_BUCKET}" ]; then
+  S3_TFSTATE_BUCKET=$(aws --region "${AWS_DEFAULT_REGION}" s3api list-buckets \
+    --query "Buckets[?Name == '${CMS_ENV}-tfstate'].Name" \
+    --output text)
+fi
+
+# If TFSTATE_KMS_KEY_ID is not set by a previous module, set it via the aws cli
+
+if [ -z "${TFSTATE_KMS_KEY_ID}" ]; then
+  TFSTATE_KMS_KEY_ID=$(aws --region "${AWS_DEFAULT_REGION}" kms list-aliases \
+    --query "Aliases[?AliasName=='alias/${CMS_ENV}-main-kms'].TargetKeyId" \
+    --output text)
 fi
 
 #
