@@ -1,9 +1,7 @@
 pipeline {
   parameters {
-    credentials(name: 'AWS_ACCOUNT_NUMBER_PARAM', description: '', defaultValue: '', required: true )
     string(name: 'API_URL_PREFIX_PARAM', defaultValue: '', description: '')
     string(name: 'CLOUD_TAMER_PARAM', defaultValue: 'false', description: '')
-    credentials(name: 'CMS_ECR_REPO_ENV_AWS_ACCOUNT_NUMBER_PARAM', description: '', defaultValue: '', required: true )
     string(name: 'CONTRACT_NUMBER_PARAM', defaultValue: '', description: '')
     credentials(name: 'DATABASE_SECRET_DATETIME_PARAM', description: '', defaultValue: '', required: true )
     credentials(name: 'TARGET_AWS_ACCOUNT_NUMBER_PARAM', description: '', defaultValue: '', required: true )
