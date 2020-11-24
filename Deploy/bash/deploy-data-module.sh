@@ -136,7 +136,7 @@ fi
 
 if [ -z "${TFSTATE_KMS_KEY_ID}" ]; then
   TFSTATE_KMS_KEY_ID=$(aws --region "${AWS_DEFAULT_REGION}" kms list-aliases \
-    --query "Aliases[?AliasName=='alias/${CMS_ENV}-main-kms'].TargetKeyId" \
+    --query="Aliases[?AliasName=='alias/${CMS_ENV}-tfstate-kms'].TargetKeyId" \
     --output text)
 fi
 
