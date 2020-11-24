@@ -4,10 +4,13 @@ set -e # Turn on exit on error
 set -x # Turn on verbosity
 
 #
-# Change to working directory
+# Change to working directory (if not set by a parent script)
 #
 
-# START_DIR="$( cd "$(dirname "$0")" ; pwd -P )"
+if [ -z "${START_DIR}" ]; then
+  START_DIR="$( cd "$(dirname "$0")" ; pwd -P )"
+  cd "${START_DIR}"
+fi
 
 #
 # Check vars are not empty before proceeding
