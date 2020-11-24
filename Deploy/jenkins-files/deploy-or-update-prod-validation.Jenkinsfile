@@ -13,7 +13,7 @@ pipeline {
         script {
 	      dir ('Deploy/bash') {
 	        sh '''
-	          ../deploy-core-module.sh
+	          ./deploy-core-module.sh
 	        sh '''
 	      }
 	    }
@@ -24,7 +24,7 @@ pipeline {
         script {
 	      dir ('Deploy/bash') {
 	        sh '''
-	          ../deploy-data-module.sh
+	          ./deploy-data-module.sh
 	        sh '''
 	      }
 	    }
@@ -35,7 +35,7 @@ pipeline {
         script {
 	      dir ('Deploy/bash') {
 	        sh '''
-	          ../deploy-worker-module.sh
+	          ./deploy-worker-module.sh
 	        sh '''
 	      }
 	    }
