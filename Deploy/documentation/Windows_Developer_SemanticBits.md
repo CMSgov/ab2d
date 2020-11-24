@@ -236,6 +236,8 @@
 
       1. Close this Ubuntu window
 
+   1. Open an ubuntu window as administrator
+   
    1. Set the desired docker version
 
       *Example:*
