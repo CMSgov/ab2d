@@ -220,6 +220,72 @@
       API listen on /var/run/docker.sock
       ```
 
-   1.  Minimize this ubuntu windows so that it is out of your way
+   1. Minimize this ubuntu windows so that it is out of your way
 
    1. Don't forget to shut it down correctly at the end of your day with Ctrl+c as documented above
+
+1. If you need to change to a different version of Docker, do the following:
+
+   1. If Docker is running in another Ubuntu window, do the following:
+
+      1. Return to the Ubuntu window that is running docker
+
+      1. Click on the Ubuntu window so that it has focus
+
+      1. Press **Ctrl+c** on the keyboard to kill the docker daemon
+
+      1. Close this Ubuntu window
+
+   1. Set the desired docker version
+
+      *Example:*
+
+      ```ShellSession
+      $ DOCKER_VERSION=19.03.12
+      ```
+
+   1. Get the ubuntu docker version
+
+      ```ShellSession
+      $ UBUNTU_DOCKER_VERSION=$(apt-cache madison docker-ce | grep "${DOCKER_VERSION}" | awk -F"|" '{print $2}' | tr -d '[:space:]')
+      ```
+
+   1. Verify that there is an Ubuntu docker version for that version of docker
+
+      ```ShellSession
+      $ echo "${UBUNTU_DOCKER_VERSION}"
+      ```
+
+   1. Verity that the Ubuntu docker version was displyed
+
+      *Example:*
+
+      ```
+      5:19.03.12~3-0~ubuntu-focal
+      ```
+
+   1. Install the desired docker version
+
+      ```ShelSession
+      $ sudo apt-get install docker-ce="${UBUNTU_DOCKER_VERSION}" docker-ce-cli="${UBUNTU_DOCKER_VERSION}" containerd.io
+      ```
+
+   1. Run the docker daemon
+
+      1. Open an new Ubuntu window as administrator
+
+      1. Start the Docker dameon and leave it running
+
+         ```ShellSession
+         $ sudo dockerd
+         ```
+
+      1. Verify that the following is displayed in the last line of the output
+
+         ```
+         API listen on /var/run/docker.sock
+         ```
+
+      1. Minimize this ubuntu windows so that it is out of your way
+
+      1. Don't forget to shut it down correctly at the end of your day with Ctrl+c as documented above
