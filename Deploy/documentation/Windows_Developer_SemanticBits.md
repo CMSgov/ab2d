@@ -320,7 +320,7 @@
 1. Backup ".bashrc"
 
    ```ShellSession
-   $ cp ~/.bashrc ~/.bashrc
+   $ cp ~/.bashrc ~/.bashrc_backup
    ```
 
 1. Set JAVA_HOME environment variable
