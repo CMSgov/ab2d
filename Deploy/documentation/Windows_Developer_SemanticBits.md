@@ -2,7 +2,8 @@
 
 ## Table of Contents
 
-[Implement a Docker on Ubuntu setup](#implement-a-docker-on-ubuntu-setup)
+1. [Implement a Docker on Ubuntu setup](#implement-a-docker-on-ubuntu-setup)
+1. [Install other development tools on ubuntu](#install-other-development-tools-on-ubuntu)
 
 ## Implement a Docker on Ubuntu setup
 
@@ -305,3 +306,44 @@
       1. Minimize this ubuntu windows so that it is out of your way
 
       1. Don't forget to shut it down correctly at the end of your day with Ctrl+c as documented above
+
+## Install other development tools on ubuntu
+
+1. Open Ubuntu as administrator
+
+1. Install Java Development Kit (JDK) 13
+
+   ```ShellSession
+   $ sudo apt-get install openjdk-13-jdk
+   ```
+
+1. Backup ".bashrc"
+
+   ```ShellSession
+   $ cp ~/.bashrc ~/.bashrc
+   ```
+
+1. Set JAVA_HOME environment variable
+
+   ```ShellSession
+   $ printf '\n# Set JAVA_HOME environment variable' >> ~/.bash_profile \
+     && printf '\nexport JAVA_HOME="/usr/lib/jvm/openjdk-13-jdk"' >> ~/.bash_profile
+   ```
+
+1. Apply the ".bashrc" change to the current terminal session
+
+   ```ShellSession
+   $ source ~/.bashrc
+   ```
+
+1. Install make
+
+   ```ShellSession
+   $ sudo apt install make
+   ```
+
+1. Install maven
+
+   ```ShellSession
+   $ sudo apt install maven
+   ```
