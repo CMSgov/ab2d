@@ -327,7 +327,7 @@
 
    ```ShellSession
    $ printf '\n# Set JAVA_HOME environment variable' >> ~/.bashrc \
-     && printf '\nexport JAVA_HOME="/usr/lib/jvm/openjdk-13-jdk"' >> ~/.bashrc
+     && printf '\nexport JAVA_HOME="/usr/lib/jvm/java-13-openjdk-amd64"' >> ~/.bashrc
    ```
 
 1. Apply the ".bashrc" change to the current terminal session
