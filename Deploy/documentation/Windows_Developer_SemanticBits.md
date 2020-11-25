@@ -391,12 +391,6 @@
    $ ls /opt/ab2d
    ```
 
-1. Set ownership recursively on the "/opt/ab2d" directory
-
-   ```ShellSession
-   $ sudo chown -R $(id -un):$(id -gn) /opt/ab2d
-   ```
-
 1. Set permissions on the "ab2d_prod_keystore" file
 
    ```ShellSession
