@@ -4,6 +4,7 @@
 
 1. [Implement a Docker on Ubuntu setup](#implement-a-docker-on-ubuntu-setup)
 1. [Install other development tools on ubuntu](#install-other-development-tools-on-ubuntu)
+1. [Configure AB2D](#configure-ab2d)
 
 ## Implement a Docker on Ubuntu setup
 
@@ -347,3 +348,61 @@
    ```ShellSession
    $ sudo apt install maven
    ```
+
+## Configure AB2D
+
+1. Create a "share" directory on your Windows machine
+
+   1. Open the command prompt (not ubuntu)
+
+   1. Create a "share" directory
+
+      ```ShellSession
+      mkdir "C:\share"
+      ```
+
+   1. Close the command prompt
+
+1. Copy "AB2D Dev : BFD Prod Sbx : Keystore" from 1Password to the "C:\share" directory
+
+1. Open ubuntu as an administrator
+
+1. Create "/opt/ab2d" directory
+
+   ```ShellSession
+   $ sudo mkdir -p /opt/ab2d
+   ```
+
+1. Set permissions on the "/opt/ab2d" directory
+
+   ```ShellSession
+   $ sudo chown -R $(id -un):$(id -gn) /opt/ab2d
+   ```
+
+1. Copy ab2d_dev_keystore to the /opt/ab2d directory
+
+   ```ShellSession
+   $ cp /mnt/c/share/ab2d_dev_keystore /opt/ab2d
+   ```
+   
+1. Verify that the keystore has been copied to the "/opt/ab2d" directory
+
+   ```
+   $ ls /opt/ab2d
+   ```
+
+1. Set ownership recursively on the "/opt/ab2d" directory
+
+   ```ShellSession
+   $ sudo chown -R $(id -un):$(id -gn) /opt/ab2d
+   ```
+
+1. Set permissions on the "ab2d_prod_keystore" file
+
+   ```ShellSession
+   $ sudo chmod 600 /opt/ab2d/ab2d_dev_keystore
+   ```
+
+
+
+   
