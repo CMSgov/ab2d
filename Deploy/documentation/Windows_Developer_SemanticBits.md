@@ -397,6 +397,37 @@
    $ sudo chmod 600 /opt/ab2d/ab2d_dev_keystore
    ```
 
+1. Open your ".bashrc" file
 
+   ```ShellSession
+   $ vim ~/.bashrc
+   ```
 
-   
+1. Copy and paste the following at the end of your ".bashrc" file
+
+   *Format:*
+
+   ```
+   # AB2D Development Settings
+   export HPMS_AUTH_KEY_ID="{'AB2D Dev : HPMS IMPL/staging : API Key ID' from 1Password}"
+   export HPMS_AUTH_KEY_SECRET="{'AB2D Dev : HPMS IMPL/staging : API Key Secret' from 1Password}"
+   export AB2D_HPMS_URL="{HPMS URL}"
+   export NEW_RELIC_LICENSE_KEY="{AB2D New Relic}"
+   export NEW_RELIC_APP_NAME="AB2D for {your first name}.{your last name}"
+   export AB2D_BFD_KEYSTORE_PASSWORD="{'AB2D Dev : BFD Prod Sbx : Keystore Password' from 1Password}"
+   export AB2D_BFD_KEYSTORE_LOCATION="/opt/ab2d/ab2d_dev_keystore"
+   export AB2D_HICN_HASH_PEPPER="{'AB2D Dev : BFD Prod Sbx : HICN Hash Pepper' from 1Password}"
+   export AB2D_HICN_HASH_ITER="{'AB2D Dev : BFD Prod Sbx : HICN Hash Iter' from 1Password}"
+   export AB2D_CLAIMS_SKIP_BILLABLE_PERIOD_CHECK=true
+   export AB2D_KEYSTORE_LOCATION="{'AB2D Dev : API : Keystore' from 1Password}"
+   export AB2D_KEYSTORE_PASSWORD="{'AB2D Dev : API : Keystore Password' from 1Password}"
+   export AB2D_KEY_ALIAS="{'AB2D Dev : API : Key Alias' from 1Password}"
+   ```
+
+1. Save and close the file
+
+1. Apply the ".bashrc" changes to the current terminal session
+
+   ```ShellSession
+   $ source ~/.bashrc
+   ```
