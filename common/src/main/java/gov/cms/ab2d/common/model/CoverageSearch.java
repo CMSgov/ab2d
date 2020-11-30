@@ -21,6 +21,7 @@ public class CoverageSearch {
     private CoveragePeriod period;
 
     // We can use this to search for the earliest search request
+    @EqualsAndHashCode.Exclude  // id and period are sufficient, breaks on Windows due sub-seconds not matching
     private OffsetDateTime created;
 
     /**
