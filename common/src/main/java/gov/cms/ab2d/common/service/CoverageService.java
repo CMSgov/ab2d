@@ -1,13 +1,19 @@
 package gov.cms.ab2d.common.service;
 
+import gov.cms.ab2d.common.model.CoverageMapping;
+import gov.cms.ab2d.common.model.CoveragePagingRequest;
+import gov.cms.ab2d.common.model.CoveragePagingResult;
 import gov.cms.ab2d.common.model.CoveragePeriod;
-import gov.cms.ab2d.common.model.CoverageSearchEvent;
 import gov.cms.ab2d.common.model.CoverageSearchDiff;
-import gov.cms.ab2d.common.model.CoverageSummary;
+import gov.cms.ab2d.common.model.CoverageSearchEvent;
+import gov.cms.ab2d.common.model.CoverageSearch;
+import gov.cms.ab2d.common.model.Identifiers;
 import gov.cms.ab2d.common.model.JobStatus;
 
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 public interface CoverageService {
 
@@ -48,13 +54,12 @@ public interface CoverageService {
 
     /**
      * Insert new coverage information for beneficiaries
-     * @param periodId {@link CoveragePeriod#getId()}
      * @param searchEventId {@link CoverageSearchEvent#getId()} for the specific search event being performed.
      * This is used specifically for auditing and gauging the effect of
      * @param beneficiaryIds list of beneficiaries for this coverage period and this specific search event
      * @return relevant
      */
-    CoverageSearchEvent insertCoverage(int periodId, long searchEventId, List<String> beneficiaryIds);
+    CoverageSearchEvent insertCoverage(long searchEventId, Set<Identifiers> beneficiaryIds);
 
     /**
      * Delete all data from previous coverage search conducted for a given {@link CoveragePeriod}.
@@ -69,33 +74,13 @@ public interface CoverageService {
     /**
      * Pull coverage information for the given page and pageSize number of beneficiaries.
      *
-     * If the page size is 1000 then the first page will get records 0 - 999, 7th page will get records 6000 - 6999
-     * @param pageNumber page through results by pageSize records at a time.
-     * @param pageSize max number of beneficiaries in each page
-     * @param coveragePeriods list of ids of coverage periods to search over
-     * @return coverage summary for page of beneficiaries
-     */
-    List<CoverageSummary> pageCoverage(int pageNumber, int pageSize, List<Integer> coveragePeriods);
-
-    /**
-     * Pull coverage information for the given page and pageSize number of beneficiaries.
+     * If the page size is 1000 then the first page will get all information for beneficiaries 0 - 999
+     * for the provided coverage periods.
      *
-     * If the page size is 1000 then the first page will get records 0 - 999, 7th page will get records 6000 - 6999
-     * @param pageNumber page through results by pageSize records at a time.
-     * @param pageSize max number of beneficiaries in each page
-     * @param coveragePeriods list of ids of coverage periods to search over
-     * @return coverage summary for page of beneficiaries
+     * @param pagingRequest with details of page including page size, cursor, and coverage periods
+     * @return coverage summary for page of beneficiaries and a pre-formatted request for the next set of beneficiaries
      */
-    List<CoverageSummary> pageCoverage(int pageNumber, int pageSize, Integer... coveragePeriods);
-
-    /**
-     * Find a subset of active beneficiary ids by
-     * @param pageNumber page number in results
-     * @param pageSize number of records per page
-     * @param coveragePeriods coverage periods to filter ids on
-     * @return page of beneficiary ids
-     */
-    List<String> findActiveBeneficiaryIds(int pageNumber, int pageSize, List<Integer> coveragePeriods);
+    CoveragePagingResult pageCoverage(CoveragePagingRequest pagingRequest);
 
     /**
      * Get difference in beneficiary membership between last two searches conducted for a given coverage search
@@ -105,22 +90,78 @@ public interface CoverageService {
     CoverageSearchDiff searchDiff(int periodId);
 
     /**
+     * Find all coverage periods that have never been searched
+     */
+    List<CoveragePeriod> coveragePeriodNeverSearchedSuccessfully();
+
+    /**
+     * Find all coverage periods for a given month since
+     * @param month month to search
+     * @param year year to search
+     * @param lastSuccessful last search that successfully completed
+     * @return matching coverage periods
+     */
+    List<CoveragePeriod> coveragePeriodNotUpdatedSince(int month, int year, OffsetDateTime lastSuccessful);
+
+    /**
+     * Find jobs that have been in progress for too long. This catches when jobs crash
+     * or fail and the status is not updated to failed.
+     * @param startedBefore started before
+     * @return coverage periods with jobs stuck in progress
+     */
+    List<CoveragePeriod> coveragePeriodStuckJobs(OffsetDateTime startedBefore);
+
+    /**
      * Change a coverage search to {@link JobStatus#SUBMITTED} and log an event.
+     *
+     * todo not in use in current code but intended for use when we scan for coverage periods that need
+     *      updates in the future
+     *
      * @param periodId unique id of a coverage search
      * @param description reason or explanation for change
      * @return resulting coverage search event
      * @throws InvalidJobStateTransition if job is {@link JobStatus#IN_PROGRESS} already
      */
-    CoverageSearchEvent submitCoverageSearch(int periodId, String description);
+    Optional<CoverageSearchEvent> submitSearch(int periodId, String description);
 
     /**
-     * Change a coverage search to {@link JobStatus#IN_PROGRESS} and log an event.
+     * Change a coverage search to {@link JobStatus#SUBMITTED} and log an event.
+     * @param periodId unique id of a coverage search
+     * @param attempts number of attempts already conducted
+     * @param description reason or explanation for change
+     * @return resulting coverage search event
+     * @throws InvalidJobStateTransition if job is {@link JobStatus#IN_PROGRESS} already
+     */
+    Optional<CoverageSearchEvent> submitSearch(int periodId, int attempts, String description);
+
+    /**
+     * Change a coverage search to {@link JobStatus#SUBMITTED}, log an event, and make sure this search is given high
+     * priority to execute as soon as possible
      * @param periodId unique id of a coverage search
      * @param description reason or explanation for change
      * @return resulting coverage search event
+     * @throws InvalidJobStateTransition if job is {@link JobStatus#IN_PROGRESS} already
+     */
+    Optional<CoverageSearchEvent> prioritizeSearch(int periodId, String description);
+
+    /**
+     * Change a coverage search to {@link JobStatus#SUBMITTED}, log an event, and make sure this search is given high
+     * priority to execute as soon as possible
+     * @param periodId unique id of a coverage search
+     * @param attempts number of attempts already conducted
+     * @param description reason or explanation for change
+     * @return resulting coverage search event
+     * @throws InvalidJobStateTransition if job is {@link JobStatus#IN_PROGRESS} already
+     */
+    Optional<CoverageSearchEvent> prioritizeSearch(int periodId, int attempts, String description);
+
+    /**
+     * Find next coverage search to start, change coverage search to {@link JobStatus#IN_PROGRESS}, and log an event.
+     * @param description reason or explanation for change
+     * @return resulting coverage search event if there is a search in the queu
      * @throws InvalidJobStateTransition if job is not in the {@link JobStatus#SUBMITTED} state when this job is received
      */
-    CoverageSearchEvent startCoverageSearch(int periodId, String description);
+    Optional<CoverageMapping> startSearch(CoverageSearch search, String description);
 
     /**
      * Change a coverage search to {@link JobStatus#CANCELLED} and log an event.
@@ -130,7 +171,7 @@ public interface CoverageService {
      * @throws InvalidJobStateTransition if job is not in the {@link JobStatus#SUBMITTED} or {@link JobStatus#IN_PROGRESS}
      * state when this job is received
      */
-    CoverageSearchEvent cancelCoverageSearch(int periodId, String description);
+    CoverageSearchEvent cancelSearch(int periodId, String description);
 
     /**
      * Change a coverage search to {@link JobStatus#FAILED} and log an event.
@@ -140,7 +181,7 @@ public interface CoverageService {
      * @throws InvalidJobStateTransition if job is not {@link JobStatus#SUBMITTED} or {@link JobStatus#IN_PROGRESS}
      * state when this job is received
      */
-    CoverageSearchEvent failCoverageSearch(int periodId, String description);
+    CoverageSearchEvent failSearch(int periodId, String description);
 
     /**
      * Change a coverage search to {@link JobStatus#SUCCESSFUL} and log an event.
@@ -149,11 +190,5 @@ public interface CoverageService {
      * @return resulting coverage search event
      * @throws InvalidJobStateTransition if job is not in the {@link JobStatus#IN_PROGRESS} state when this job is received
      */
-    CoverageSearchEvent completeCoverageSearch(int periodId, String description);
-
-    /**
-     * Clean pg_visibility table so that query planner uses faster index only scans instead of a sequential
-     * search.
-     */
-    void vacuumCoverage();
+    CoverageSearchEvent completeSearch(int periodId, String description);
 }

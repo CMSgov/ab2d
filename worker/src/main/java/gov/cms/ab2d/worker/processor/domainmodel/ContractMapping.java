@@ -1,12 +1,14 @@
 package gov.cms.ab2d.worker.processor.domainmodel;
 
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import gov.cms.ab2d.common.model.Identifiers;
+import lombok.*;
 
 import java.util.Set;
 
-@Data
-@EqualsAndHashCode
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class ContractMapping {
     private Set<Identifiers> patients;
     private int month;

@@ -4,11 +4,11 @@ import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.JobStatus;
 import gov.cms.ab2d.common.model.Sponsor;
 import gov.cms.ab2d.common.model.User;
-import gov.cms.ab2d.common.repository.CoverageRepository;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.common.repository.SponsorRepository;
 import gov.cms.ab2d.common.repository.UserRepository;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
+import gov.cms.ab2d.common.util.DataSetup;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -37,9 +37,9 @@ import static org.junit.Assert.assertThat;
 public class WorkerServiceTest {
     private final Random random = new Random();
 
+    @Autowired private DataSetup dataSetup;
     @Autowired private JobRepository jobRepository;
     @Autowired private SponsorRepository sponsorRepository;
-    @Autowired private CoverageRepository coverageRepository;
     @Autowired private UserRepository userRepository;
 
     @Container
@@ -49,7 +49,7 @@ public class WorkerServiceTest {
     public void init() {
         jobRepository.deleteAll();
         userRepository.deleteAll();
-        coverageRepository.deleteAll();
+        dataSetup.deleteCoverage();
         sponsorRepository.deleteAll();
     }
 

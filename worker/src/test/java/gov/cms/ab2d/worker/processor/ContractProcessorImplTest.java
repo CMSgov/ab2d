@@ -1,10 +1,10 @@
 package gov.cms.ab2d.worker.processor;
 
 import ca.uhn.fhir.context.FhirContext;
+import gov.cms.ab2d.common.model.Identifiers;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.worker.adapter.bluebutton.ContractBeneficiaries;
-import gov.cms.ab2d.worker.processor.domainmodel.Identifiers;
 import gov.cms.ab2d.worker.service.FileService;
 import org.hl7.fhir.dstu3.model.*;
 import org.junit.jupiter.api.BeforeEach;
