@@ -87,7 +87,6 @@ CUSTOMER_BUCKET_EXISTS=$(aws --region "${AWS_DEFAULT_REGION}" s3api list-buckets
   --output text)
 
 if [ -z "${CUSTOMER_BUCKET_EXISTS}" ]; then
-  # Create S3 tfstate-server-access-logs bucket
   aws --region "${AWS_DEFAULT_REGION}" s3api create-bucket \
     --bucket "${CUSTOMER_BUCKET_NAME}"
 else
