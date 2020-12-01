@@ -951,7 +951,7 @@ class CoverageServiceImplTest {
                 () -> coverageService.getCoveragePeriod(contract1.getId(), 13, 2020));
 
         assertThrows(IllegalArgumentException.class,
-                () -> coverageService.getCoveragePeriod(contract1.getId(), 12, 2020));
+                () -> coverageService.getCoveragePeriod(contract1.getId(), 12, 2040));
 
         assertThrows(IllegalArgumentException.class,
                 () -> coverageService.getCoveragePeriod(contract1.getId(), 12, 2019));
