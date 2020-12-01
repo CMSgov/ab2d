@@ -1,10 +1,13 @@
 package gov.cms.ab2d.worker.processor;
 
 import gov.cms.ab2d.bfd.client.BFDClient;
+import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.CoverageMapping;
 import gov.cms.ab2d.common.model.CoveragePeriod;
 import gov.cms.ab2d.common.model.CoverageSearch;
+import gov.cms.ab2d.common.service.ContractService;
 import gov.cms.ab2d.common.service.CoverageService;
+import gov.cms.ab2d.common.util.DateUtil;
 import gov.cms.ab2d.worker.config.CoverageMappingConfig;
 import gov.cms.ab2d.worker.processor.domainmodel.ContractSearchLock;
 import lombok.extern.slf4j.Slf4j;
@@ -15,11 +18,13 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.PreDestroy;
 import java.time.OffsetDateTime;
-import java.time.ZoneId;
 import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+
+import static gov.cms.ab2d.common.util.DateUtil.getAB2DEpoch;
 
 @Slf4j
 @Service
@@ -28,6 +33,7 @@ public class CoverageProcessorImpl implements CoverageProcessor {
     private static final long ONE_SECOND = 1000;
     private static final long THIRTY_SECONDS = 30000;
 
+    private final ContractService contractService;
     private final CoverageService coverageService;
     private final BFDClient bfdClient;
     private final ThreadPoolTaskExecutor executor;
@@ -42,11 +48,11 @@ public class CoverageProcessorImpl implements CoverageProcessor {
 
     private final AtomicBoolean inShutdown = new AtomicBoolean(false);
 
-    public CoverageProcessorImpl(CoverageService coverageService,
+    public CoverageProcessorImpl(ContractService contractService, CoverageService coverageService,
                                  BFDClient bfdClient,
                                  @Qualifier("patientCoverageThreadPool") ThreadPoolTaskExecutor executor,
-                                 CoverageMappingConfig coverageMappingConfig,
-                                 ContractSearchLock searchLock) {
+                                 CoverageMappingConfig coverageMappingConfig, ContractSearchLock searchLock) {
+        this.contractService = contractService;
         this.coverageService = coverageService;
         this.bfdClient = bfdClient;
         this.executor = executor;
@@ -77,6 +83,35 @@ public class CoverageProcessorImpl implements CoverageProcessor {
         }
     }
 
+    /**
+     * Discover any nonexistent coverage periods and add them to the list of coverage periods
+     */
+    @Override
+    public void discoverCoveragePeriods() {
+
+        List<Contract> attestedContracts = contractService.getAllAttestedContracts();
+
+        ZonedDateTime now = ZonedDateTime.now();
+
+        ZonedDateTime epoch = getAB2DEpoch();
+
+        for (Contract contract : attestedContracts) {
+            ZonedDateTime attestationTime = contract.getESTAttestationTime();
+
+            // Force first coverage period to be after
+            // January 1st 2020 which is the first moment we report data for
+            if (attestationTime.isBefore(epoch)) {
+                attestationTime = getAB2DEpoch();
+            }
+
+            while (attestationTime.isBefore(now)) {
+                coverageService.getOrCreateCoveragePeriod(contract, attestationTime.getMonthValue(), attestationTime.getYear());
+
+                attestationTime = attestationTime.plusMonths(1);
+            }
+        }
+    }
+
     private Set<CoveragePeriod> findAndCancelStuckCoverageJobs() {
 
         Set<CoveragePeriod> stuckJobs = new LinkedHashSet<>(
@@ -93,7 +128,7 @@ public class CoverageProcessorImpl implements CoverageProcessor {
     private Set<CoveragePeriod> findStaleCoverageInformation() {
         Set<CoveragePeriod> stalePeriods = new LinkedHashSet<>();
         int monthsInPast = 0;
-        OffsetDateTime dateTime = OffsetDateTime.now(ZoneId.of("America/New_York"));
+        OffsetDateTime dateTime = OffsetDateTime.now(DateUtil.AB2D_ZONE);
         do {
             // Get past month and year
             OffsetDateTime pastMonthTime = dateTime.minusMonths(monthsInPast);

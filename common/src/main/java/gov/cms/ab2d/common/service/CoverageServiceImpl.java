@@ -1,5 +1,6 @@
 package gov.cms.ab2d.common.service;
 
+import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.CoverageMapping;
 import gov.cms.ab2d.common.model.CoveragePagingRequest;
 import gov.cms.ab2d.common.model.CoveragePagingResult;
@@ -20,7 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.*;
 import java.util.*;
 
-import static gov.cms.ab2d.common.util.Constants.AB2D_EPOCH;
+import static gov.cms.ab2d.common.util.DateUtil.AB2D_EPOCH;
 import static java.util.stream.Collectors.toList;
 
 /**
@@ -59,9 +60,27 @@ public class CoverageServiceImpl implements CoverageService {
     }
 
     @Override
-    public CoveragePeriod getCoveragePeriod(long contractId, int month, int year) {
+    public CoveragePeriod getCoveragePeriod(Contract contract, int month, int year) {
         checkMonthAndYear(month, year);
-        return coveragePeriodRepo.getByContractIdAndMonthAndYear(contractId, month, year);
+        return coveragePeriodRepo.getByContractIdAndMonthAndYear(contract.getId(), month, year);
+    }
+
+    @Override
+    public CoveragePeriod getOrCreateCoveragePeriod(Contract contract, int month, int year) {
+        checkMonthAndYear(month, year);
+
+        Optional<CoveragePeriod> existing = coveragePeriodRepo.findByContractIdAndMonthAndYear(contract.getId(), month, year);
+
+        if (existing.isPresent()) {
+            return existing.get();
+        }
+
+        CoveragePeriod period = new CoveragePeriod();
+        period.setContract(contract);
+        period.setMonth(month);
+        period.setYear(year);
+
+        return coveragePeriodRepo.save(period);
     }
 
     @Override

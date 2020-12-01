@@ -1,11 +1,13 @@
 package gov.cms.ab2d.common.model;
 
 
+import gov.cms.ab2d.common.util.DateUtil;
 import lombok.*;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import java.time.OffsetDateTime;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
@@ -93,6 +95,13 @@ public class Contract extends TimestampBase {
         hpmsParentOrg = parentOrgName;
         hpmsOrgMarketingName = orgMarketingName;
         return this;
+    }
+
+    /**
+     * Get time zone in EST time which is the standard for CMS
+     */
+    public ZonedDateTime getESTAttestationTime() {
+        return hasAttestation() ? attestedOn.atZoneSameInstant(DateUtil.AB2D_ZONE) : null;
     }
 
     /*

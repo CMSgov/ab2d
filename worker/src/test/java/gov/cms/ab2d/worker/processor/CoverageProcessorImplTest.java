@@ -3,9 +3,11 @@ package gov.cms.ab2d.worker.processor;
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.model.*;
 import gov.cms.ab2d.common.repository.*;
+import gov.cms.ab2d.common.service.ContractService;
 import gov.cms.ab2d.common.service.CoverageService;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.DataSetup;
+import gov.cms.ab2d.common.util.DateUtil;
 import gov.cms.ab2d.worker.config.CoverageMappingConfig;
 import gov.cms.ab2d.worker.processor.domainmodel.ContractSearchLock;
 import org.hl7.fhir.dstu3.model.Bundle;
@@ -23,9 +25,13 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.time.OffsetDateTime;
-import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 
+import static gov.cms.ab2d.common.util.DateUtil.getAB2DEpoch;
 import static gov.cms.ab2d.worker.processor.CoverageMappingCallable.BENEFICIARY_ID;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -63,6 +69,9 @@ class CoverageProcessorImplTest {
     private CoverageSearchEventRepository coverageSearchEventRepo;
 
     @Autowired
+    private ContractService contractService;
+
+    @Autowired
     private CoverageService coverageService;
 
     @Autowired
@@ -81,11 +90,19 @@ class CoverageProcessorImplTest {
 
     private CoverageProcessorImpl processor;
 
+    private List<Contract> contractsToDelete;
+
     @BeforeEach
     void before() {
 
+        contractsToDelete = new ArrayList<>();
+
         sponsor = dataSetup.createSponsor("Cal Ripken", 200, "Cal Ripken Jr.", 201);
         contract = dataSetup.setupContract(sponsor, "TST-123");
+        contract.setAttestedOn(getAB2DEpoch().toOffsetDateTime());
+        contractRepo.saveAndFlush(contract);
+
+        contractsToDelete.add(contract);
 
         january = dataSetup.createCoveragePeriod(contract, 1, 2020);
         february = dataSetup.createCoveragePeriod(contract, 2, 2020);
@@ -100,7 +117,7 @@ class CoverageProcessorImplTest {
 
         CoverageMappingConfig config = new CoverageMappingConfig(PAST_MONTHS, STALE_DAYS, MAX_ATTEMPTS, STUCK_HOURS);
 
-        processor = new CoverageProcessorImpl(coverageService, bfdClient, taskExecutor, config, searchLock);
+        processor = new CoverageProcessorImpl(contractService, coverageService, bfdClient, taskExecutor, config, searchLock);
     }
 
     @AfterEach
@@ -111,13 +128,50 @@ class CoverageProcessorImplTest {
         coverageSearchEventRepo.deleteAll();
         coverageSearchRepo.deleteAll();
         coveragePeriodRepo.deleteAll();
-        contractRepo.delete(contract);
-        contractRepo.flush();
+
+        for (Contract contract : contractsToDelete) {
+            contractRepo.delete(contract);
+            contractRepo.flush();
+        }
 
         if (sponsor != null) {
             sponsorRepo.delete(sponsor);
             sponsorRepo.flush();
         }
+    }
+
+    @DisplayName("Loading coverage periods")
+    @Test
+    void discoverCoveragePeriods() {
+
+        Contract attestedAfterEpoch = dataSetup.setupContract(sponsor, "TST-AFTER-EPOCH");
+        attestedAfterEpoch.setAttestedOn(getAB2DEpoch().toOffsetDateTime().plusMonths(3));
+        contractRepo.saveAndFlush(attestedAfterEpoch);
+        contractsToDelete.add(attestedAfterEpoch);
+
+        Contract attestedBeforeEpoch = dataSetup.setupContract(sponsor, "TST-BEFORE-EPOCH");
+        attestedBeforeEpoch.setAttestedOn(getAB2DEpoch().toOffsetDateTime().minusNanos(1));
+        contractRepo.saveAndFlush(attestedBeforeEpoch);
+        contractsToDelete.add(attestedBeforeEpoch);
+
+        ZonedDateTime epoch = getAB2DEpoch();
+        long months = ChronoUnit.MONTHS.between(epoch, OffsetDateTime.now());
+        long expectedNumPeriods = months + 1;
+
+        processor.discoverCoveragePeriods();
+
+        List<CoveragePeriod> periods = coveragePeriodRepo.findAllByContractId(contract.getId());
+        assertFalse(periods.isEmpty());
+        assertEquals(expectedNumPeriods, periods.size());
+
+        periods = coveragePeriodRepo.findAllByContractId(attestedAfterEpoch.getId());
+        assertFalse(periods.isEmpty());
+        assertEquals(expectedNumPeriods - 3, periods.size());
+
+        periods = coveragePeriodRepo.findAllByContractId(attestedBeforeEpoch.getId());
+        assertFalse(periods.isEmpty());
+        assertEquals(expectedNumPeriods, periods.size());
+
     }
 
     @DisplayName("Cannot submit twice")
@@ -194,7 +248,7 @@ class CoverageProcessorImplTest {
 
         coveragePeriodRepo.deleteAll();
 
-        OffsetDateTime currentDate = OffsetDateTime.now(ZoneId.of("America/New_York"));
+        OffsetDateTime currentDate = OffsetDateTime.now(DateUtil.AB2D_ZONE);
 
         OffsetDateTime oneMonthAgo = currentDate.minusMonths(1);
         OffsetDateTime twoMonthsAgo = currentDate.minusMonths(2);
@@ -229,7 +283,7 @@ class CoverageProcessorImplTest {
 
         coveragePeriodRepo.deleteAll();
 
-        OffsetDateTime currentDate = OffsetDateTime.now(ZoneId.of("America/New_York"));
+        OffsetDateTime currentDate = OffsetDateTime.now(DateUtil.AB2D_ZONE);
 
         OffsetDateTime oneMonthAgo = currentDate.minusMonths(1);
         OffsetDateTime twoMonthsAgo = currentDate.minusMonths(2);
@@ -272,7 +326,7 @@ class CoverageProcessorImplTest {
 
         coveragePeriodRepo.deleteAll();
 
-        OffsetDateTime currentDate = OffsetDateTime.now(ZoneId.of("America/New_York"));
+        OffsetDateTime currentDate = OffsetDateTime.now(DateUtil.AB2D_ZONE);
 
         CoveragePeriod currentMonth = dataSetup.createCoveragePeriod(contract, currentDate.getMonthValue(), currentDate.getYear());
         currentMonth.setStatus(JobStatus.IN_PROGRESS);
@@ -299,7 +353,7 @@ class CoverageProcessorImplTest {
 
         // Test whether queue stale coverage ignores regular in progress jobs
 
-        OffsetDateTime currentDate = OffsetDateTime.now(ZoneId.of("America/New_York"));
+        OffsetDateTime currentDate = OffsetDateTime.now(DateUtil.AB2D_ZONE);
 
         CoveragePeriod currentMonth = dataSetup.createCoveragePeriod(contract, currentDate.getMonthValue(), currentDate.getYear());
         currentMonth.setStatus(JobStatus.IN_PROGRESS);

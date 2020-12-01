@@ -152,7 +152,6 @@ public class DataSetup {
         contract.setAttestedOn(OffsetDateTime.now());
         contract.setContractName("Test Contract");
         contract.setContractNumber(contractNumber);
-        contract.setAttestedOn(OffsetDateTime.now());
 
         contract.setSponsor(sponsor);
 

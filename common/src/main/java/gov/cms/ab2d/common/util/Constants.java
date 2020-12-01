@@ -72,5 +72,4 @@ public final class Constants {
     // constant at compile time so I put it here.
     public static final String SINCE_EARLIEST_DATE = "2020-02-13T00:00:00.000-05:00";
 
-    public static final int AB2D_EPOCH = 2020;
 }
