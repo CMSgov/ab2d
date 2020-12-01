@@ -167,6 +167,7 @@ public class TestRunner {
                 .withEnv("API_PORT", "" + apiPort)
                 .withLocalCompose(true)
                 .withScaledService("worker", 2)
+                .withScaledService("api", 1)
                 .withExposedService("api", DEFAULT_API_PORT, new HostPortWaitStrategy()
                     .withStartupTimeout(Duration.of(200, SECONDS)));
         //.withLogConsumer("worker", new Slf4jLogConsumer(log)) // Use to debug, for now there's too much log data
