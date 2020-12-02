@@ -105,7 +105,7 @@ public class AttestationUpdaterServiceImpl implements AttestationUpdaterService 
     private void considerContract(List<Contract> contractAttestList, Contract contract,
                                   HPMSOrganizationInfo hpmsOrganizationInfo) {
         // Ignore Test contracts
-        if (contract.getContractNumber().startsWith("Z")) {
+        if (contract.isTestContract()) {
             return;
         }
 
