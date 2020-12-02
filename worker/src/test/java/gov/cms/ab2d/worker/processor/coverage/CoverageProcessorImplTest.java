@@ -1,10 +1,11 @@
-package gov.cms.ab2d.worker.processor;
+package gov.cms.ab2d.worker.processor.coverage;
 
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.model.*;
 import gov.cms.ab2d.common.repository.*;
 import gov.cms.ab2d.common.service.ContractService;
 import gov.cms.ab2d.common.service.CoverageService;
+import gov.cms.ab2d.common.service.PropertiesService;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.DataSetup;
 import gov.cms.ab2d.common.util.DateUtil;
@@ -30,9 +31,10 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.ThreadPoolExecutor;
 
 import static gov.cms.ab2d.common.util.DateUtil.getAB2DEpoch;
-import static gov.cms.ab2d.worker.processor.CoverageMappingCallable.BENEFICIARY_ID;
+import static gov.cms.ab2d.worker.processor.coverage.CoverageMappingCallable.BENEFICIARY_ID;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
@@ -73,6 +75,9 @@ class CoverageProcessorImplTest {
 
     @Autowired
     private CoverageService coverageService;
+
+    @Autowired
+    private PropertiesService propertiesService;
 
     @Autowired
     private DataSetup dataSetup;
@@ -117,7 +122,8 @@ class CoverageProcessorImplTest {
 
         CoverageMappingConfig config = new CoverageMappingConfig(PAST_MONTHS, STALE_DAYS, MAX_ATTEMPTS, STUCK_HOURS);
 
-        processor = new CoverageProcessorImpl(contractService, coverageService, bfdClient, taskExecutor, config, searchLock);
+        processor = new CoverageProcessorImpl(contractService, coverageService, propertiesService,
+                bfdClient, taskExecutor, config, searchLock);
     }
 
     @AfterEach
@@ -482,34 +488,6 @@ class CoverageProcessorImplTest {
 
         status = iterateFailingJob();
         assertEquals(JobStatus.FAILED, status);
-    }
-
-    @DisplayName("Only ThreadPoolTaskExecutor.getMaxPoolSize() jobs started at a time")
-    @Test
-    void limitRunningJobsByCallableSpeed() {
-        Bundle bundle1 = buildBundle(0, 10);
-        bundle1.setLink(Collections.singletonList(new Bundle.BundleLinkComponent().setRelation(Bundle.LINK_NEXT)));
-
-        Bundle bundle2 = buildBundle(10, 20);
-
-        Mockito.clearInvocations();
-        when(bfdClient.requestPartDEnrolleesFromServer(anyString(), anyInt())).thenReturn(bundle1);
-        when(bfdClient.requestNextBundleFromServer(any(Bundle.class))).thenReturn(bundle2);
-
-        ThreadPoolTaskExecutor singleThread = new ThreadPoolTaskExecutor();
-        singleThread.setMaxPoolSize(1);
-        singleThread.initialize();
-
-        ReflectionTestUtils.setField(processor, "executor", singleThread);
-
-        processor.queueCoveragePeriod(january, false);
-        processor.queueCoveragePeriod(february, false);
-
-        processor.loadMappingJob();
-        processor.loadMappingJob();
-
-        assertEquals(1, singleThread.getActiveCount());
-
     }
 
     @DisplayName("Only ThreadPoolTaskExecutor.getMaxPoolSize() job results allowed in insertion queue")

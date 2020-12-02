@@ -1,4 +1,4 @@
-package gov.cms.ab2d.worker.processor;
+package gov.cms.ab2d.worker.processor.coverage;
 
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.model.Contract;
@@ -7,6 +7,7 @@ import gov.cms.ab2d.common.model.CoveragePeriod;
 import gov.cms.ab2d.common.model.CoverageSearch;
 import gov.cms.ab2d.common.service.ContractService;
 import gov.cms.ab2d.common.service.CoverageService;
+import gov.cms.ab2d.common.service.PropertiesService;
 import gov.cms.ab2d.common.util.DateUtil;
 import gov.cms.ab2d.worker.config.CoverageMappingConfig;
 import gov.cms.ab2d.worker.processor.domainmodel.ContractSearchLock;
@@ -31,13 +32,14 @@ import static gov.cms.ab2d.common.util.DateUtil.getAB2DEpoch;
 public class CoverageProcessorImpl implements CoverageProcessor {
 
     private static final long ONE_SECOND = 1000;
-    private static final long THIRTY_SECONDS = 30000;
+    private static final long SIXTY_SECONDS = 60000;
 
     private final ContractService contractService;
     private final CoverageService coverageService;
     private final BFDClient bfdClient;
     private final ThreadPoolTaskExecutor executor;
     private final ContractSearchLock searchLock;
+    private final PropertiesService propertiesService;
 
     private final CoverageMappingConfig config;
 
@@ -49,11 +51,12 @@ public class CoverageProcessorImpl implements CoverageProcessor {
     private final AtomicBoolean inShutdown = new AtomicBoolean(false);
 
     public CoverageProcessorImpl(ContractService contractService, CoverageService coverageService,
-                                 BFDClient bfdClient,
+                                 PropertiesService propertiesService, BFDClient bfdClient,
                                  @Qualifier("patientCoverageThreadPool") ThreadPoolTaskExecutor executor,
                                  CoverageMappingConfig coverageMappingConfig, ContractSearchLock searchLock) {
         this.contractService = contractService;
         this.coverageService = coverageService;
+        this.propertiesService = propertiesService;
         this.bfdClient = bfdClient;
         this.executor = executor;
         this.config = coverageMappingConfig;
@@ -68,6 +71,9 @@ public class CoverageProcessorImpl implements CoverageProcessor {
      */
     @Override
     public void queueStaleCoveragePeriods() {
+
+        log.info("attempting to find all stale coverage periods");
+
         // Use a linked hash set to order by discovery
         // Add all new coverage periods that have never been mapped/searched
         Set<CoveragePeriod> outOfDateInfo = new LinkedHashSet<>(coverageService.coveragePeriodNeverSearchedSuccessfully());
@@ -78,9 +84,13 @@ public class CoverageProcessorImpl implements CoverageProcessor {
         // For all months into the past find old coverage searches
         outOfDateInfo.addAll(findStaleCoverageInformation());
 
+        log.info("queueing all stale coverage periods");
+
         for (CoveragePeriod period : outOfDateInfo) {
             queueCoveragePeriod(period, false);
         }
+
+        log.info("queued all stale coverage periods");
     }
 
     /**
@@ -88,6 +98,8 @@ public class CoverageProcessorImpl implements CoverageProcessor {
      */
     @Override
     public void discoverCoveragePeriods() {
+
+        log.info("discovering all coverage periods that should exist");
 
         List<Contract> attestedContracts = contractService.getAllAttestedContracts();
 
@@ -101,18 +113,28 @@ public class CoverageProcessorImpl implements CoverageProcessor {
             // Force first coverage period to be after
             // January 1st 2020 which is the first moment we report data for
             if (attestationTime.isBefore(epoch)) {
+                log.debug("contract attested before ab2d epoch setting to epoch");
                 attestationTime = getAB2DEpoch();
             }
 
+            int coveragePeriodsForContracts = 0;
             while (attestationTime.isBefore(now)) {
                 coverageService.getOrCreateCoveragePeriod(contract, attestationTime.getMonthValue(), attestationTime.getYear());
+                coveragePeriodsForContracts += 1;
 
                 attestationTime = attestationTime.plusMonths(1);
             }
+
+            log.info("discovered {} coverage periods for contract {}", coveragePeriodsForContracts,
+                    contract.getContractName());
         }
+
+        log.info("discovered all coverage periods now exiting");
     }
 
     private Set<CoveragePeriod> findAndCancelStuckCoverageJobs() {
+
+        log.info("attempting to find all stuck coverage searches and then cancel those stuck coverage searches");
 
         Set<CoveragePeriod> stuckJobs = new LinkedHashSet<>(
                 coverageService.coveragePeriodStuckJobs(OffsetDateTime.now(ZoneOffset.UTC).minusHours(config.getStuckHours())));
@@ -126,9 +148,13 @@ public class CoverageProcessorImpl implements CoverageProcessor {
     }
 
     private Set<CoveragePeriod> findStaleCoverageInformation() {
+
+        log.info("attempting to find all coverage information that is out of date and reduce down to coverage periods");
+
         Set<CoveragePeriod> stalePeriods = new LinkedHashSet<>();
         int monthsInPast = 0;
         OffsetDateTime dateTime = OffsetDateTime.now(DateUtil.AB2D_ZONE);
+
         do {
             // Get past month and year
             OffsetDateTime pastMonthTime = dateTime.minusMonths(monthsInPast);
@@ -172,7 +198,8 @@ public class CoverageProcessorImpl implements CoverageProcessor {
         }
     }
 
-    public boolean startJob(CoverageMapping mapping) {
+    private boolean startJob(CoverageMapping mapping) {
+
         synchronized (inProgressMappings) {
 
             if (inShutdown.get()) {
@@ -191,13 +218,17 @@ public class CoverageProcessorImpl implements CoverageProcessor {
         }
     }
 
-    @Scheduled(fixedDelay = THIRTY_SECONDS, initialDelayString = "${coverage.update.initial.delay}")
+    @Scheduled(fixedDelay = SIXTY_SECONDS, initialDelayString = "${coverage.update.initial.delay}")
     public void loadMappingJob() {
-        log.info("Loading stuff yay!");
+
+        if (propertiesService.isInMaintenanceMode()) {
+            log.debug("waiting to execute queued coverage searches because api is in maintenance mode");
+        }
 
         if (isProcessorBusy()) {
             log.debug("not starting any new coverage mapping jobs because service is full. " +
                     "Currently executing {}. Currently inserting {}", executor.getActiveCount(), coverageInsertionQueue.size());
+            return;
         }
 
         while (!isProcessorBusy()) {
@@ -205,6 +236,7 @@ public class CoverageProcessorImpl implements CoverageProcessor {
             if (search.isEmpty()) {
                 break;
             }
+
             Optional<CoverageMapping> maybeSearch = coverageService.startSearch(search.get(), "starting a job");
             if (maybeSearch.isEmpty()) {
                 break;
@@ -232,7 +264,7 @@ public class CoverageProcessorImpl implements CoverageProcessor {
         queueCoveragePeriod(mapping.getPeriod(), mapping.getCoverageSearch().getAttempts(), b);
     }
 
-    @Scheduled(fixedDelay = THIRTY_SECONDS, initialDelayString = "${coverage.update.initial.delay}")
+    @Scheduled(fixedDelay = SIXTY_SECONDS, initialDelayString = "${coverage.update.initial.delay}")
     public void monitorMappingJobs() {
 
         synchronized (inProgressMappings) {
@@ -282,7 +314,7 @@ public class CoverageProcessorImpl implements CoverageProcessor {
     public void insertJobResults() {
 
         try {
-            CoverageMapping result = coverageInsertionQueue.poll(THIRTY_SECONDS, TimeUnit.MILLISECONDS);
+            CoverageMapping result = coverageInsertionQueue.poll(SIXTY_SECONDS, TimeUnit.MILLISECONDS);
 
             if (result == null) {
                 return;
