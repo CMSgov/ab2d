@@ -166,7 +166,7 @@ export PGPASSWORD="${DATABASE_PASSWORD}"
 # Create get user account id command string
 
 COMMAND_01="SELECT e.id FROM ${DATABASE_SCHEMA_NAME}.sponsor a "
-COMMAND_02="LEFT OUTER JOIN ${DATABASE_SCHEMA_NAME}.user_account e ON a.parent_id = e.sponsor_id "
+COMMAND_02="LEFT OUTER JOIN ${DATABASE_SCHEMA_NAME}.user_account e ON a.id = e.sponsor_id "
 COMMAND_03="LEFT OUTER JOIN ${DATABASE_SCHEMA_NAME}.contract d ON a.id = d.sponsor_id "
 COMMAND_04="WHERE e.enabled = true AND d.contract_number = '${CONTRACT_NUMBER}';"
 
