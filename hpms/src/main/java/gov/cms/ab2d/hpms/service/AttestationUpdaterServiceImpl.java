@@ -70,7 +70,7 @@ public class AttestationUpdaterServiceImpl implements AttestationUpdaterService 
             return contractHolder;
 
         Contract contract = contractHolder.get();
-        return (hpmsInfo.hasChanges(contract)) ? Optional.of(hpmsInfo.updateContract(contract)) : Optional.empty();
+        return hpmsInfo.hasChanges(contract) ? Optional.of(hpmsInfo.updateContract(contract)) : Optional.empty();
     }
 
     // Limit the size of the request to BATCH_SIZE, avoiding URLs that are too long and keeping the burden down
