@@ -3,6 +3,7 @@ package gov.cms.ab2d.worker.adapter.bluebutton;
 import com.newrelic.api.agent.NewRelic;
 import com.newrelic.api.agent.Segment;
 import gov.cms.ab2d.bfd.client.BFDClient;
+import gov.cms.ab2d.common.model.Identifiers;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.events.ReloadEvent;
 import gov.cms.ab2d.common.util.FilterOutByDate;
@@ -67,7 +68,8 @@ public class ContractBeneSearchImpl implements ContractBeneSearch {
         tracker.setCurrentMonth(currentMonth);
 
         for (var month = 1; month <= currentMonth; month++) {
-            PatientContractCallable callable = new PatientContractCallable(contractNumber, month, YEAR, bfdClient, skipBillablePeriodCheck);
+            PatientContractCallable callable = new PatientContractCallable(contractNumber, month, YEAR, bfdClient,
+                    skipBillablePeriodCheck, tracker.getJobUuid());
             futureHandles.add(patientContractThreadPool.submit(callable));
         }
 
@@ -85,11 +87,11 @@ public class ContractBeneSearchImpl implements ContractBeneSearch {
         patientSegment.setMetricName("DateRangePatients");
 
         for (ContractMapping mapping : results) {
-            Set<String> patients = mapping.getPatients();
+            Set<Identifiers> patients = mapping.getPatients();
             if (patients != null && !patients.isEmpty()) {
                 DateRange monthDateRange = toDateRange(mapping.getMonth());
-                for (String bfdPatientId : patients) {
-                    addDateRangeToExistingOrNewPatient(contractBeneficiaries, monthDateRange, bfdPatientId);
+                for (Identifiers patient : patients) {
+                    addDateRangeToExistingOrNewPatient(contractBeneficiaries, monthDateRange, patient);
                 }
             }
         }
@@ -165,12 +167,14 @@ public class ContractBeneSearchImpl implements ContractBeneSearch {
     }
 
     private void addDateRangeToExistingOrNewPatient(ContractBeneficiaries beneficiaries,
-                                                    DateRange monthDateRange, String bfdPatientId) {
+                                                    DateRange monthDateRange, Identifiers patientIds) {
+
         if (beneficiaries == null) {
             return;
         }
+
         Map<String, PatientDTO> patientDTOMap = beneficiaries.getPatients();
-        PatientDTO patientDTO = patientDTOMap.get(bfdPatientId);
+        PatientDTO patientDTO = patientDTOMap.get(patientIds.getBeneficiaryId());
 
         if (patientDTO != null) {
             // patient id was already active on this contract in previous month(s)
@@ -184,14 +188,15 @@ public class ContractBeneSearchImpl implements ContractBeneSearch {
             // And then add this month to the patient's dateRangesUnderContract
 
             patientDTO = PatientDTO.builder()
-                    .patientId(bfdPatientId)
+                    .identifiers(patientIds)
                     .dateRangesUnderContract(new ArrayList<>())
                     .build();
 
             if (monthDateRange != null) {
                 patientDTO.getDateRangesUnderContract().add(monthDateRange);
             }
-            beneficiaries.getPatients().put(bfdPatientId, patientDTO);
+
+            beneficiaries.getPatients().put(patientIds.getBeneficiaryId(), patientDTO);
         }
     }
 

@@ -1,11 +1,14 @@
 package gov.cms.ab2d.e2etest;
 
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.impl.DefaultClaims;
 import io.jsonwebtoken.security.Keys;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.assertj.core.util.Sets;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -15,7 +18,6 @@ import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.data.util.Pair;
 import org.testcontainers.containers.DockerComposeContainer;
-import org.testcontainers.containers.output.Slf4jLogConsumer;
 import org.testcontainers.containers.wait.strategy.HostPortWaitStrategy;
 import org.yaml.snakeyaml.Yaml;
 
@@ -39,7 +41,6 @@ import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
-import java.util.stream.Collectors;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -50,6 +51,7 @@ import static gov.cms.ab2d.e2etest.APIClient.PATIENT_EXPORT_PATH;
 import static java.time.format.DateTimeFormatter.ISO_DATE_TIME;
 import static java.time.temporal.ChronoUnit.SECONDS;
 import static org.hamcrest.Matchers.matchesPattern;
+import static org.junit.jupiter.api.Assertions.*;
 
 // Unit tests here can be run from the IDE and will use LOCAL as the default, they can also be run from the TestLauncher
 // class to specify a custom environment
@@ -58,7 +60,13 @@ import static org.hamcrest.Matchers.matchesPattern;
 @Slf4j
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class TestRunner {
+
+    public static final String MBI_ID = "http://hl7.org/fhir/sid/us-mbi";
+
     private static final String FHIR_TYPE = "application/fhir+ndjson";
+
+    private static final String CURRENCY_IDENTIFIER =
+            "https://bluebutton.cms.gov/resources/codesystem/identifier-currency";
 
     private static APIClient apiClient;
 
@@ -159,6 +167,7 @@ public class TestRunner {
                 .withEnv("API_PORT", "" + apiPort)
                 .withLocalCompose(true)
                 .withScaledService("worker", 2)
+                .withScaledService("api", 1)
                 .withExposedService("api", DEFAULT_API_PORT, new HostPortWaitStrategy()
                     .withStartupTimeout(Duration.of(200, SECONDS)));
         //.withLogConsumer("worker", new Slf4jLogConsumer(log)) // Use to debug, for now there's too much log data
@@ -324,33 +333,26 @@ public class TestRunner {
                 Assert.fail("No acceptable ID string was found, received " + idString);
             }
 
-            final JSONObject patientJson = jsonObject.getJSONObject("patient");
-            String referenceString = patientJson.getString("reference");
-            Assert.assertTrue(referenceString.startsWith("Patient"));
+            // Check that beneficiary id is included and follows expected format
+            // published in data dictionary
+            checkBeneficiaryId(jsonObject);
 
-            String patientId = referenceString.substring(referenceString.indexOf('-') + 1);
+            // Check that standard eob fields are present and not empty
+            // These fields are the bulk of the report and what PDPs care about
+            checkStandardEOBFields(jsonObject);
 
-            final JSONObject typeJson = jsonObject.getJSONObject("type");
-            Assert.assertNotNull(typeJson);
-            final JSONArray codingJson = typeJson.getJSONArray("coding");
-            Assert.assertNotNull(codingJson);
-            Assert.assertTrue(codingJson.length() >= 3);
-            final JSONArray identifierJson = jsonObject.getJSONArray("identifier");
-            Assert.assertNotNull(identifierJson);
-            Assert.assertEquals(2, identifierJson.length());
-            final JSONArray diagnosisJson = jsonObject.getJSONArray("diagnosis");
-            Assert.assertNotNull(diagnosisJson);
-            final JSONArray itemJson = jsonObject.getJSONArray("item");
-            Assert.assertNotNull(itemJson);
+            // Check whether extensions are correct
+            checkEOBExtensions(jsonObject);
 
-            final JSONObject metaJson = jsonObject.getJSONObject("meta");
-            final String lastUpdated = metaJson.getString("lastUpdated");
-            Instant lastUpdatedInstant = Instant.parse(lastUpdated);
-            if (since != null) {
-                Assert.assertTrue(lastUpdatedInstant.isAfter(since.toInstant()));
-            }
+            // Check correctness of metadata
+            checkMetadata(since, jsonObject);
         }
 
+        // Check metadata used to verify the file sent by AB2D for correctness
+        checkDownloadExtensions(fileContent, extension);
+    }
+
+    private void checkDownloadExtensions(String fileContent, JSONArray extension) throws JSONException {
         JSONObject checkSumObject = extension.getJSONObject(0);
         String checkSumUrl = checkSumObject.getString("url");
         Assert.assertEquals("https://ab2d.cms.gov/checksum", checkSumUrl);
@@ -368,12 +370,80 @@ public class TestRunner {
         Assert.assertEquals(length, fileContent.getBytes().length);
     }
 
+    private void checkStandardEOBFields(JSONObject jsonObject) throws JSONException {
+        final JSONObject typeJson = jsonObject.getJSONObject("type");
+        Assert.assertNotNull(typeJson);
+        final JSONArray codingJson = typeJson.getJSONArray("coding");
+        Assert.assertNotNull(codingJson);
+        Assert.assertTrue(codingJson.length() >= 3);
+        final JSONArray identifierJson = jsonObject.getJSONArray("identifier");
+        Assert.assertNotNull(identifierJson);
+        Assert.assertEquals(2, identifierJson.length());
+        final JSONArray diagnosisJson = jsonObject.getJSONArray("diagnosis");
+        Assert.assertNotNull(diagnosisJson);
+        final JSONArray itemJson = jsonObject.getJSONArray("item");
+        Assert.assertNotNull(itemJson);
+    }
+
+    private void checkBeneficiaryId(JSONObject jsonObject) throws JSONException {
+        final JSONObject patientJson = jsonObject.getJSONObject("patient");
+        String referenceString = patientJson.getString("reference");
+        Assert.assertTrue(StringUtils.isNotBlank(referenceString));
+        Assert.assertTrue(referenceString.startsWith("Patient"));
+        String patientId = referenceString.substring(referenceString.indexOf('-') + 1);
+        Assert.assertTrue(StringUtils.isNotBlank(patientId));
+    }
+
+    private void checkMetadata(OffsetDateTime since, JSONObject jsonObject) throws JSONException {
+        final JSONObject metaJson = jsonObject.getJSONObject("meta");
+        final String lastUpdated = metaJson.getString("lastUpdated");
+        Instant lastUpdatedInstant = Instant.parse(lastUpdated);
+        if (since != null) {
+            Assert.assertTrue(lastUpdatedInstant.isAfter(since.toInstant()));
+        }
+    }
+
+    private void checkEOBExtensions(JSONObject jsonObject) throws JSONException {
+
+        final JSONArray extensions = jsonObject.getJSONArray("extension");
+        Assert.assertNotNull(extensions);
+        Assert.assertEquals(1, extensions.length());
+
+        // Assume first extension is MBI object
+        JSONObject idObj = extensions.getJSONObject(0);
+        Assert.assertNotNull(idObj);
+
+        // Unwrap identifier
+        JSONObject valueIdentifier = idObj.getJSONObject("valueIdentifier");
+        Assert.assertNotNull(valueIdentifier);
+
+        // Test that we gave correct label to identifier
+        String system = valueIdentifier.getString("system");
+        Assert.assertFalse(StringUtils.isBlank(system));
+        Assert.assertEquals(MBI_ID, system);
+
+        // Check that mbi is present and not empty
+        String mbi = valueIdentifier.getString("value");
+        Assert.assertFalse(StringUtils.isBlank(mbi));
+
+        JSONArray extensionsArray = valueIdentifier.getJSONArray("extension");
+        assertEquals(1, extensionsArray.length());
+
+        JSONObject currencyExtension = extensionsArray.getJSONObject(0);
+        assertEquals(CURRENCY_IDENTIFIER, currencyExtension.getString("url"));
+        assertTrue(currencyExtension.has("valueCoding"));
+
+        JSONObject valueCoding = currencyExtension.getJSONObject("valueCoding");
+        assertTrue(valueCoding.has("code"));
+        assertEquals("current", valueCoding.getString("code"));
+    }
+
     private boolean validFields(JSONObject jsonObject) {
         Set<String> allowedFields = Set.of("identifier", "item", "meta", "patient", "billablePeriod", "diagnosis",
                 "provider", "id", "type", "precedence", "resourceType", "organization", "facility", "careTeam",
-                "procedure");
+                "procedure", "extension");
 
-        Set<String> disallowedFields = Set.of("status", "extension", "patientTarget", "created", "enterer",
+        Set<String> disallowedFields = Set.of("status", "patientTarget", "created", "enterer",
             "entererTarget", "insurer", "insurerTarget", "providerTarget", "organizationTarget", "referral",
             "referralTarget", "facilityTarget", "claim", "claimTarget", "claimResponse", "claimResponseTarget",
             "outcome", "disposition", "related", "prescription", "prescriptionTarget", "originalPrescription",
@@ -645,6 +715,43 @@ public class TestRunner {
         SecretKey sharedSecret = Keys.hmacShaKeyFor(clientSecret.getBytes(StandardCharsets.UTF_8));
         Instant now = Instant.now();
 
+        Map<String, Object> claimsMap = new HashMap<>();
+        claimsMap.put("exp", now.toEpochMilli() + 3600);
+        claimsMap.put("iat", now.toEpochMilli());
+        claimsMap.put("issuer", "https://sandbox.ab2d.cms.gov");
+        Claims claims = new DefaultClaims(claimsMap);
+
+        String jwtStr = Jwts.builder()
+                .setAudience(System.getenv("AB2D_OKTA_JWT_AUDIENCE"))
+                .setIssuedAt(Date.from(now))
+                .setExpiration(Date.from(now.plus(2L, ChronoUnit.HOURS)))
+                .setIssuer(System.getenv("AB2D_OKTA_JWT_ISSUER"))
+                .setId(UUID.randomUUID().toString())
+                .setClaims(claims)
+                .signWith(sharedSecret)
+                .compact();
+
+        HttpRequest exportRequest = HttpRequest.newBuilder()
+                .uri(URI.create(AB2D_API_URL + PATIENT_EXPORT_PATH))
+                .timeout(Duration.ofSeconds(30))
+                .header("Content-Type", "application/json")
+                .header("Authorization", "Bearer " + jwtStr)
+                .GET()
+                .build();
+
+        HttpResponse<String> response = apiClient.getHttpClient().send(exportRequest, HttpResponse.BodyHandlers.ofString());
+
+        Assert.assertEquals(403, response.statusCode());
+    }
+
+    @Test
+    @Order(13)
+    public void testUserCannotMakeRequestWithNullClaims() throws IOException, InterruptedException, JSONException {
+        System.out.println("Starting test 12");
+        String clientSecret = "wefikjweglkhjwelgkjweglkwegwegewg";
+        SecretKey sharedSecret = Keys.hmacShaKeyFor(clientSecret.getBytes(StandardCharsets.UTF_8));
+        Instant now = Instant.now();
+
         String jwtStr = Jwts.builder()
                 .setAudience(System.getenv("AB2D_OKTA_JWT_AUDIENCE"))
                 .setIssuedAt(Date.from(now))
@@ -664,19 +771,11 @@ public class TestRunner {
 
         HttpResponse<String> response = apiClient.getHttpClient().send(exportRequest, HttpResponse.BodyHandlers.ofString());
 
-        Assert.assertEquals(500, response.statusCode());
-
-        final JSONObject json = new JSONObject(response.body());
-        JSONArray issueJsonArr = json.getJSONArray("issue");
-        JSONObject issueJson = issueJsonArr.getJSONObject(0);
-        JSONObject detailsJson = issueJson.getJSONObject("details");
-        String text = detailsJson.getString("text");
-
-        Assert.assertEquals(text, "An internal error occurred");
+        Assert.assertEquals(403, response.statusCode());
     }
 
     @Test
-    @Order(13)
+    @Order(14)
     public void testBadQueryParameterResource() throws IOException, InterruptedException {
         System.out.println("Starting test 13");
         var params = new HashMap<>(){{
@@ -689,7 +788,7 @@ public class TestRunner {
     }
 
     @Test
-    @Order(14)
+    @Order(15)
     public void testBadQueryParameterOutputFormat() throws IOException, InterruptedException {
         System.out.println("Starting test 14");
         var params = new HashMap<>(){{
@@ -703,7 +802,7 @@ public class TestRunner {
     }
 
     @Test
-    @Order(15)
+    @Order(16)
     public void testHealthEndPoint() throws IOException, InterruptedException {
         System.out.println("Starting test 15");
         HttpResponse<String> healthCheckResponse = apiClient.healthCheck();

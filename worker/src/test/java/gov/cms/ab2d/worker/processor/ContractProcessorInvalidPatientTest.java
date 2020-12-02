@@ -34,6 +34,7 @@ import java.text.ParseException;
 import java.time.OffsetDateTime;
 import java.util.*;
 
+import static gov.cms.ab2d.worker.processor.BundleUtils.createIdentifierWithoutMbi;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -86,9 +87,15 @@ public class ContractProcessorInvalidPatientTest {
         Map<String, ContractBeneficiaries.PatientDTO> map = new HashMap<>();
         cb.setPatients(map);
         List<FilterOutByDate.DateRange> dates = Collections.singletonList(TestUtil.getOpenRange());
-        map.put("1", ContractBeneficiaries.PatientDTO.builder().patientId("1").dateRangesUnderContract(dates).build());
-        map.put("2", ContractBeneficiaries.PatientDTO.builder().patientId("2").dateRangesUnderContract(dates).build());
-        map.put("3", ContractBeneficiaries.PatientDTO.builder().patientId("3").dateRangesUnderContract(dates).build());
+        map.put("1", ContractBeneficiaries.PatientDTO.builder()
+                .identifiers(createIdentifierWithoutMbi("1"))
+                .dateRangesUnderContract(dates).build());
+        map.put("2", ContractBeneficiaries.PatientDTO.builder()
+                .identifiers(createIdentifierWithoutMbi("2"))
+                .dateRangesUnderContract(dates).build());
+        map.put("3", ContractBeneficiaries.PatientDTO.builder()
+                .identifiers(createIdentifierWithoutMbi("3"))
+                .dateRangesUnderContract(dates).build());
         tracker.addPatientsByContract(cb);
         ReflectionTestUtils.setField(cut, "cancellationCheckFrequency", 20);
         ReflectionTestUtils.setField(patientClaimsProcessor, "startDate", "01/01/2020");

@@ -97,10 +97,10 @@ public class ProgressTrackerIntegrationTest {
                 .currentMonth(2)
                 .build();
 
-        Bundle.BundleEntryComponent entry1 = BundleUtils.createBundleEntry("P1", year);
-        Bundle.BundleEntryComponent entry2 = BundleUtils.createBundleEntry("P2", year);
-        Bundle.BundleEntryComponent entry3 = BundleUtils.createBundleEntry("P3", year);
-        Bundle.BundleEntryComponent entry4 = BundleUtils.createBundleEntry("P4", year);
+        Bundle.BundleEntryComponent entry1 = BundleUtils.createBundleEntry("P1", "mbi1", year);
+        Bundle.BundleEntryComponent entry2 = BundleUtils.createBundleEntry("P2", "mbi2", year);
+        Bundle.BundleEntryComponent entry3 = BundleUtils.createBundleEntry("P3", "mbi3", year);
+        Bundle.BundleEntryComponent entry4 = BundleUtils.createBundleEntry("P4", "mbi4", year);
 
         Bundle bundleA = BundleUtils.createBundle(entry1, entry2, entry3);
         Bundle bundleB = BundleUtils.createBundle(entry1, entry2, entry3, entry4);

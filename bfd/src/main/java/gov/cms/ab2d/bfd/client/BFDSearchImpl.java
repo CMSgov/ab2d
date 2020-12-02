@@ -38,7 +38,7 @@ public class BFDSearchImpl implements BFDSearch {
     }
 
     @Override
-    public Bundle searchEOB(String patientId, OffsetDateTime since, int pageSize) throws IOException {
+    public Bundle searchEOB(String patientId, OffsetDateTime since, int pageSize, String bulkJobId) throws IOException {
         StringBuilder url = new StringBuilder(serverBaseUrl + "ExplanationOfBenefit?patient=" + patientId + "&excludeSAMHSA=true");
 
         if (since != null) {
@@ -57,6 +57,8 @@ public class BFDSearchImpl implements BFDSearch {
 
         request.addHeader(HttpHeaders.ACCEPT, "gzip");
         request.addHeader(HttpHeaders.ACCEPT_CHARSET, "utf-8");
+        request.addHeader(BFDClient.BFD_HDR_BULK_CLIENTID, BFDClient.BFD_CLIENT_ID);
+        request.addHeader(BFDClient.BFD_HDR_BULK_JOBID, bulkJobId);
 
         try (CloseableHttpResponse response = (CloseableHttpResponse) httpClient.execute(request)) {
             int status = response.getStatusLine().getStatusCode();

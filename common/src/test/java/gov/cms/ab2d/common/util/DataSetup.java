@@ -5,13 +5,23 @@ import gov.cms.ab2d.common.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import javax.sql.DataSource;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.time.Instant;
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 @Component
 public class DataSetup {
+
+    @Autowired
+    private DataSource dataSource;
 
     @Autowired
     private ContractRepository contractRepository;
@@ -24,9 +34,6 @@ public class DataSetup {
 
     @Autowired
     private SponsorRepository sponsorRepository;
-
-    @Autowired
-    private CoverageRepository coverageRepo;
 
     @Autowired
     private CoveragePeriodRepository coveragePeriodRepo;
@@ -44,6 +51,10 @@ public class DataSetup {
         return "patientId_" + Instant.now().getNano();
     }
 
+    public static String createMbiId() {
+        return "mbi_" + Instant.now().getNano();
+    }
+
     public CoveragePeriod createCoveragePeriod(Contract contract, int month, int year) {
         CoveragePeriod coveragePeriod = new CoveragePeriod();
         coveragePeriod.setContract(contract);
@@ -51,6 +62,54 @@ public class DataSetup {
         coveragePeriod.setYear(year);
 
         return coveragePeriodRepo.saveAndFlush(coveragePeriod);
+    }
+
+    public void deleteCoveragePeriod(CoveragePeriod coveragePeriod) {
+        coveragePeriodRepo.delete(coveragePeriod);
+    }
+
+    public int countCoverage() {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement("SELECT COUNT(*) FROM COVERAGE")) {
+            ResultSet rs = statement.executeQuery();
+
+            rs.next();
+            return rs.getInt(1);
+        } catch (SQLException sqlException) {
+            throw new RuntimeException(sqlException);
+        }
+    }
+
+    public void deleteCoverage() {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement("DELETE FROM coverage")) {
+            statement.execute();
+        } catch (SQLException sqlException) {
+            throw new RuntimeException(sqlException);
+        }
+    }
+
+    public List<Coverage> findCoverage() {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement("SELECT * FROM coverage")) {
+            ResultSet rs = statement.executeQuery();
+
+            List<Coverage> memberships = new ArrayList<>();
+            while (rs.next()) {
+                long id = rs.getLong(1);
+                int periodId = rs.getInt(2);
+                long searchEventId = rs.getInt(3);
+                String beneficiaryId = rs.getString(4);
+                String currentMbi = rs.getString(5);
+                String historicalMbis = rs.getString(6);
+
+                memberships.add(new Coverage(id, periodId, searchEventId, beneficiaryId, currentMbi, historicalMbis));
+            }
+
+            return memberships;
+        } catch (SQLException sqlException) {
+            throw new RuntimeException(sqlException);
+        }
     }
 
     public CoverageSearchEvent createCoverageSearchEvent(CoveragePeriod coveragePeriod, String description) {
@@ -62,13 +121,10 @@ public class DataSetup {
         return coverageSearchEventRepo.saveAndFlush(coverageSearchEvent);
     }
 
-    public Coverage createCoverage(CoveragePeriod coveragePeriod, CoverageSearchEvent coverageSearchEvent, String bene) {
-        Coverage coverage = new Coverage();
-        coverage.setCoveragePeriod(coveragePeriod);
-        coverage.setCoverageSearchEvent(coverageSearchEvent);
-        coverage.setBeneficiaryId(bene);
-        return coverageRepo.saveAndFlush(coverage);
+    public void deleteCoverageSearchEvent(CoverageSearchEvent event) {
+        coverageSearchEventRepo.delete(event);
     }
+
 
     public Sponsor createSponsor(String parentName, int parentHpmsId, String childName, int childHpmsId) {
         Sponsor parent = new Sponsor();
@@ -84,6 +140,13 @@ public class DataSetup {
         return sponsorRepository.save(sponsor);
     }
 
+    public void deleteSponsor(Sponsor sponsor) {
+        sponsorRepository.delete(sponsor);
+        if (sponsor.getParent() != null) {
+            deleteSponsor(sponsor.getParent());
+        }
+    }
+
     public Contract setupContract(Sponsor sponsor, String contractNumber) {
         Contract contract = new Contract();
         contract.setAttestedOn(OffsetDateTime.now());
@@ -94,6 +157,10 @@ public class DataSetup {
         contract.setSponsor(sponsor);
 
         return contractRepository.save(contract);
+    }
+
+    public void deleteContract(Contract contract) {
+        contractRepository.delete(contract);
     }
 
     public void setupContractWithNoAttestation(List<String> userRoles) {
@@ -144,6 +211,12 @@ public class DataSetup {
         }
 
         return userRepository.save(user);
+    }
+
+    public void deleteUser(User user) {
+        Set<Role> roles = user.getRoles();
+        roles.forEach(c -> roleRepository.delete(c));
+        userRepository.delete(user);
     }
 
     public User setupUser(List<String> userRoles) {

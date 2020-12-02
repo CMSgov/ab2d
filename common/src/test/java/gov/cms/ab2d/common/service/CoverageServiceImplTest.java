@@ -3,6 +3,7 @@ package gov.cms.ab2d.common.service;
 import gov.cms.ab2d.common.model.*;
 import gov.cms.ab2d.common.repository.*;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
+import gov.cms.ab2d.common.util.Coverage;
 import gov.cms.ab2d.common.util.DataSetup;
 import gov.cms.ab2d.common.util.FilterOutByDate;
 import org.junit.jupiter.api.*;
@@ -13,7 +14,7 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.*;
 
 import static java.util.Collections.disjoint;
@@ -22,6 +23,7 @@ import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
 import static org.junit.jupiter.api.Assertions.*;
 
+@SuppressWarnings("OptionalGetWithoutIsPresent")
 @SpringBootTest
 @Testcontainers
 @TestPropertySource(locations = "/application.common.properties")
@@ -51,13 +53,16 @@ class CoverageServiceImplTest {
     private static final PostgreSQLContainer postgreSQLContainer= new AB2DPostgresqlContainer();
 
     @Autowired
-    CoverageRepository coverageRepo;
-
-    @Autowired
     CoveragePeriodRepository coveragePeriodRepo;
 
     @Autowired
     CoverageSearchEventRepository coverageSearchEventRepo;
+
+    @Autowired
+    CoverageSearchRepository coverageSearchRepo;
+
+    @Autowired
+    CoverageServiceRepository coverageServiceRepo;
 
     @Autowired
     SponsorRepository sponsorRepo;
@@ -99,8 +104,9 @@ class CoverageServiceImplTest {
 
     @AfterEach
     public void cleanUp() {
-        coverageRepo.deleteAll();
+        dataSetup.deleteCoverage();
         coverageSearchEventRepo.deleteAll();
+        coverageSearchRepo.deleteAll();
         coveragePeriodRepo.deleteAll();
         contractRepo.delete(contract1);
         contractRepo.delete(contract2);
@@ -126,17 +132,18 @@ class CoverageServiceImplTest {
     @Test
     void checkCoveragePeriodStatus() {
 
-        coverageService.submitCoverageSearch(period1Jan.getId(), "testing");
+        coverageService.submitSearch(period1Jan.getId(), "testing");
 
         assertTrue(coverageService.canEOBSearchBeStarted(period1Jan.getId()));
         assertFalse(coverageService.isCoveragePeriodInProgress(period1Jan.getId()));
 
-        coverageService.startCoverageSearch(period1Jan.getId(), "testing");
+        Optional<CoverageSearch> search = coverageSearchRepo.findFirstByOrderByCreatedAsc();
+        coverageService.startSearch(search.get(), "testing");
 
         assertFalse(coverageService.canEOBSearchBeStarted(period1Jan.getId()));
         assertTrue(coverageService.isCoveragePeriodInProgress(period1Jan.getId()));
 
-        coverageService.completeCoverageSearch(period1Jan.getId(), "testing");
+        coverageService.completeSearch(period1Jan.getId(), "testing");
 
         assertTrue(coverageService.canEOBSearchBeStarted(period1Jan.getId()));
         assertFalse(coverageService.isCoveragePeriodInProgress(period1Jan.getId()));
@@ -146,7 +153,7 @@ class CoverageServiceImplTest {
     @Test
     void verifyDBStructure() {
 
-        CoverageSearchEvent cs1 = coverageService.submitCoverageSearch(period1Jan.getId(), "testing");
+        CoverageSearchEvent cs1 = coverageService.submitSearch(period1Jan.getId(), "testing").get();
 
         assertNotNull(cs1.getId());
 
@@ -160,6 +167,13 @@ class CoverageServiceImplTest {
         assertEquals(cs1.getCoveragePeriod(), csCopy.getCoveragePeriod());
         assertEquals(cs1.getDescription(), csCopy.getDescription());
         assertEquals(cs1.getNewStatus(), csCopy.getNewStatus());
+
+        // Submitting a coverage search added row to coverage search table
+
+        Optional<CoverageSearch> search = coverageSearchRepo.findFirstByOrderByCreatedAsc();
+        assertTrue(search.isPresent());
+        assertNotNull(search.get().getCreated());
+        assertEquals(period1Jan, search.get().getPeriod());
     }
 
     @DisplayName("Check search status on CoveragePeriod")
@@ -170,7 +184,7 @@ class CoverageServiceImplTest {
 
         assertTrue(lastEvent.isEmpty());
 
-        CoverageSearchEvent submission = coverageService.submitCoverageSearch(period1Jan.getId(), "testing");
+        CoverageSearchEvent submission = coverageService.submitSearch(period1Jan.getId(), "testing").get();
         lastEvent = coverageService.findLastEvent(period1Jan.getId());
 
         assertTrue(lastEvent.isPresent());
@@ -178,7 +192,7 @@ class CoverageServiceImplTest {
         assertNull(lastEvent.get().getOldStatus());
         assertEquals(JobStatus.SUBMITTED, lastEvent.get().getNewStatus());
 
-        CoverageSearchEvent inProgress = coverageService.startCoverageSearch(period1Jan.getId(), "testing");
+        CoverageSearchEvent inProgress = startSearchAndPullEvent();
         lastEvent = coverageService.findLastEvent(period1Jan.getId());
 
         assertTrue(lastEvent.isPresent());
@@ -191,20 +205,133 @@ class CoverageServiceImplTest {
     @DisplayName("Insert coverage events into database")
     @Test
     void insertCoverage() {
-        coverageService.submitCoverageSearch(period1Jan.getId(), "testing");
-        CoverageSearchEvent inProgress = coverageService.startCoverageSearch(period1Jan.getId(), "testing");
+        coverageService.submitSearch(period1Jan.getId(), "testing");
+        CoverageSearchEvent inProgress = startSearchAndPullEvent();
 
-        List<String> beneficiaryIds = List.of("testing-123", "testing-456", "testing-789");
+        // Check that beneficiary IDs are correctly preserved
 
-        CoverageSearchEvent savedTo = coverageService.insertCoverage(period1Jan.getId(), inProgress.getId(), beneficiaryIds);
+        Set<Identifiers> identifiers = Set.of(createIdentifier("123"), createIdentifier("456"),
+                createIdentifier("789"));
+        List<String> originalBeneIds = identifiers.stream().map(Identifiers::getBeneficiaryId)
+                                        .collect(toList());
+
+        CoverageSearchEvent savedTo = coverageService.insertCoverage(inProgress.getId(), identifiers);
 
         assertEquals(inProgress, savedTo);
 
-        List<String> savedBeneficiaryIds = coverageService.findActiveBeneficiaryIds(0, 1000,
-                singletonList(period1Jan.getId()));
+        CoveragePagingRequest pagingRequest = new CoveragePagingRequest(1000, null, singletonList(period1Jan.getId()));
+        List<String> savedBeneficiaryIds = coverageServiceRepo.findActiveBeneficiaryIds(pagingRequest);
 
-        assertTrue(savedBeneficiaryIds.containsAll(beneficiaryIds));
-        assertTrue(beneficiaryIds.containsAll(savedBeneficiaryIds));
+        assertTrue(savedBeneficiaryIds.containsAll(originalBeneIds));
+        assertTrue(originalBeneIds.containsAll(savedBeneficiaryIds));
+
+        // Check that MBIs are correctly preserved
+
+        List<Coverage> coverage = dataSetup.findCoverage();
+
+        coverage.forEach(cov -> {
+            String beneId = cov.getBeneficiaryId();
+            String mbi = cov.getCurrentMbi();
+
+            String beneNumber = beneId.substring(beneId.indexOf('-') + 1);
+            String mbiNumber = mbi.substring(mbi.indexOf('-') + 1);
+
+            assertEquals(beneNumber, mbiNumber);
+        });
+    }
+
+    @DisplayName("Page coverage from database correctly provides next requests")
+    @Test
+    void pageCoverage() {
+        coverageService.submitSearch(period1Jan.getId(), "testing");
+        CoverageSearchEvent inProgress = startSearchAndPullEvent();
+
+        // Last page will have only one id
+        int totalBeneficiaries = 501;
+        int pageSize = 250;
+
+        // Add 700 beneficiaries to
+        Set<Identifiers> identifiers = new LinkedHashSet<>();
+        for (int idx = 0; idx < totalBeneficiaries; idx++) {
+            identifiers.add(createIdentifier("" + idx));
+        }
+
+        CoverageSearchEvent savedTo = coverageService.insertCoverage(inProgress.getId(), identifiers);
+
+        assertEquals(inProgress, savedTo);
+
+        CoveragePagingRequest pagingRequest = new CoveragePagingRequest(pageSize, null, singletonList(period1Jan.getId()));
+
+        // Complete first request which should return exactly 333 results, and the next
+        CoveragePagingResult pagingResult = coverageServiceRepo.pageCoverage(period1Jan.getContract(), pagingRequest);
+        List<CoverageSummary> coverageSummaries = pagingResult.getCoverageSummaries();
+
+        assertEquals(pageSize, coverageSummaries.size());
+        assertTrue(pagingResult.getNextRequest().isPresent());
+
+        pagingRequest = pagingResult.getNextRequest().get();
+        assertTrue(pagingRequest.getCursor().isPresent());
+
+        assertEquals(pageSize, pagingRequest.getPageSize());
+        assertEquals(1, pagingRequest.getCoveragePeriodIds().size());
+
+
+        // Complete second request which should return exactly 333
+        String cursor = pagingRequest.getCursor().get();
+        pagingResult = coverageServiceRepo.pageCoverage(period1Jan.getContract(), pagingRequest);
+        coverageSummaries = pagingResult.getCoverageSummaries();
+        coverageSummaries.sort(Comparator.comparing(summary -> summary.getIdentifiers().getBeneficiaryId()));
+
+        assertEquals(cursor, coverageSummaries.get(0).getIdentifiers().getBeneficiaryId());
+        assertEquals(pageSize, coverageSummaries.size());
+        assertTrue(pagingResult.getNextRequest().isPresent());
+
+        pagingRequest = pagingResult.getNextRequest().get();
+        assertTrue(pagingRequest.getCursor().isPresent());
+
+        assertEquals(pageSize, pagingRequest.getPageSize());
+        assertEquals(1, pagingRequest.getCoveragePeriodIds().size());
+
+        // Complete third request should return one record with no next cursor
+        cursor = pagingRequest.getCursor().get();
+        pagingResult = coverageServiceRepo.pageCoverage(period1Jan.getContract(), pagingRequest);
+        coverageSummaries = pagingResult.getCoverageSummaries();
+        coverageSummaries.sort(Comparator.comparing(summary -> summary.getIdentifiers().getBeneficiaryId()));
+
+        assertEquals(cursor, coverageSummaries.get(0).getIdentifiers().getBeneficiaryId());
+        assertEquals(1, coverageSummaries.size());
+        assertTrue(pagingResult.getNextRequest().isEmpty());
+    }
+
+    @DisplayName("Page coverage when database ")
+    @Test
+    void pageCoverageEdgeCase() {
+        coverageService.submitSearch(period1Jan.getId(), "testing");
+        CoverageSearchEvent inProgress = startSearchAndPullEvent();
+
+        // Last page will have only one id
+        int totalBeneficiaries = 500;
+        int pageSize = 500;
+
+        // Add 700 beneficiaries to
+        Set<Identifiers> identifiers = new LinkedHashSet<>();
+        for (int idx = 0; idx < totalBeneficiaries; idx++) {
+            identifiers.add(createIdentifier("" + idx));
+        }
+
+        CoverageSearchEvent savedTo = coverageService.insertCoverage(inProgress.getId(), identifiers);
+
+        assertEquals(inProgress, savedTo);
+
+        CoveragePagingRequest pagingRequest = new CoveragePagingRequest(pageSize, null, singletonList(period1Jan.getId()));
+
+        // Complete third request should return one record with no next cursor
+        CoveragePagingResult pagingResult = coverageServiceRepo.pageCoverage(period1Jan.getContract(), pagingRequest);
+        List<CoverageSummary> coverageSummaries = pagingResult.getCoverageSummaries();
+        coverageSummaries.sort(Comparator.comparing(summary -> summary.getIdentifiers().getBeneficiaryId()));
+
+        assertEquals(pageSize, coverageSummaries.size());
+        assertTrue(pagingResult.getNextRequest().isEmpty());
     }
 
     @DisplayName("Coverage summary whole period or nothing")
@@ -218,32 +345,36 @@ class CoverageServiceImplTest {
 
         // Bootstrap coverage periods
 
-        coverageService.submitCoverageSearch(period1Jan.getId(), "testing");
-        CoverageSearchEvent inProgressJan = coverageService.startCoverageSearch(period1Jan.getId(), "testing");
+        coverageService.submitSearch(period1Jan.getId(), "testing");
+        CoverageSearchEvent inProgressJan = startSearchAndPullEvent();
 
-        coverageService.submitCoverageSearch(period1Feb.getId(), "testing");
-        CoverageSearchEvent inProgressFeb = coverageService.startCoverageSearch(period1Feb.getId(), "testing");
+        coverageService.submitSearch(period1Feb.getId(), "testing");
+        CoverageSearchEvent inProgressFeb = startSearchAndPullEvent();
 
-        coverageService.submitCoverageSearch(period1March.getId(), "testing");
-        CoverageSearchEvent inProgressMarch = coverageService.startCoverageSearch(period1March.getId(), "testing");
+        coverageService.submitSearch(period1March.getId(), "testing");
+        CoverageSearchEvent inProgressMarch = startSearchAndPullEvent();
 
-        coverageService.submitCoverageSearch(period1April.getId(), "testing");
-        CoverageSearchEvent inProgressApril = coverageService.startCoverageSearch(period1April.getId(), "testing");
-
-
-        coverageService.insertCoverage(period1Jan.getId(), inProgressJan.getId(), List.of("testing-1"));
-        coverageService.insertCoverage(period1Feb.getId(), inProgressFeb.getId(), List.of("testing-1"));
-        coverageService.insertCoverage(period1March.getId(), inProgressMarch.getId(), List.of("testing-1"));
-        coverageService.insertCoverage(period1April.getId(), inProgressApril.getId(), List.of("testing-1"));
+        coverageService.submitSearch(period1April.getId(), "testing");
+        CoverageSearchEvent inProgressApril = startSearchAndPullEvent();
 
 
-        List<CoverageSummary> coverageSummaries = coverageService.pageCoverage(0, 2,
+        Identifiers testing1 = createIdentifier("1");
+        coverageService.insertCoverage(inProgressJan.getId(), Set.of(testing1));
+        coverageService.insertCoverage(inProgressFeb.getId(), Set.of(testing1));
+        coverageService.insertCoverage(inProgressMarch.getId(), Set.of(testing1));
+        coverageService.insertCoverage(inProgressApril.getId(), Set.of(testing1));
+
+
+        CoveragePagingRequest pagingRequest = new CoveragePagingRequest(2, null,
                 period1Jan.getId(), period1Feb.getId(), period1March.getId(), period1April.getId());
+        CoveragePagingResult pagingResult = coverageService.pageCoverage(pagingRequest);
+        List<CoverageSummary> coverageSummaries = pagingResult.getCoverageSummaries();
 
         assertEquals(1, coverageSummaries.size());
 
         CoverageSummary summary = coverageSummaries.get(0);
-        assertEquals("testing-1", summary.getBeneficiaryId());
+        assertEquals(testing1.getBeneficiaryId(), summary.getIdentifiers().getBeneficiaryId());
+        assertEquals(testing1.getCurrentMbi(), summary.getIdentifiers().getCurrentMbi());
 
         assertTrue(summary.getDateRanges().stream().anyMatch(dr -> dr.inRange(START_JAN)));
         assertFalse(summary.getDateRanges().stream().anyMatch(dr -> dr.inRange(END_DEC)));
@@ -264,33 +395,37 @@ class CoverageServiceImplTest {
 
         // Bootstrap coverage periods
 
-        coverageService.submitCoverageSearch(period1Jan.getId(), "testing");
-        CoverageSearchEvent inProgressJan = coverageService.startCoverageSearch(period1Jan.getId(), "testing");
+        coverageService.submitSearch(period1Jan.getId(), "testing");
+        CoverageSearchEvent inProgressJan = startSearchAndPullEvent();
 
-        coverageService.submitCoverageSearch(period1Feb.getId(), "testing");
-        CoverageSearchEvent inProgressFeb = coverageService.startCoverageSearch(period1Feb.getId(), "testing");
+        coverageService.submitSearch(period1Feb.getId(), "testing");
+        CoverageSearchEvent inProgressFeb = startSearchAndPullEvent();
 
-        coverageService.submitCoverageSearch(period1March.getId(), "testing");
-        CoverageSearchEvent inProgressMarch = coverageService.startCoverageSearch(period1March.getId(), "testing");
+        coverageService.submitSearch(period1March.getId(), "testing");
+        CoverageSearchEvent inProgressMarch = startSearchAndPullEvent();
 
-        coverageService.submitCoverageSearch(period1April.getId(), "testing");
-        CoverageSearchEvent inProgressApril = coverageService.startCoverageSearch(period1April.getId(), "testing");
+        coverageService.submitSearch(period1April.getId(), "testing");
+        CoverageSearchEvent inProgressApril = startSearchAndPullEvent();
 
-        coverageService.insertCoverage(period1Jan.getId(), inProgressJan.getId(), List.of("testing-1"));
-        coverageService.insertCoverage(period1Feb.getId(), inProgressFeb.getId(), List.of("testing-1", "testing-2"));
-        coverageService.insertCoverage(period1March.getId(), inProgressMarch.getId(), List.of("testing-1", "testing-2"));
-        coverageService.insertCoverage(period1April.getId(), inProgressApril.getId(), List.of("testing-2"));
+        Identifiers testing1 = createIdentifier("1");
+        Identifiers testing2 = createIdentifier("2");
+        coverageService.insertCoverage(inProgressJan.getId(), Set.of(testing1));
+        coverageService.insertCoverage(inProgressFeb.getId(), Set.of(testing1, testing2));
+        coverageService.insertCoverage(inProgressMarch.getId(), Set.of(testing1, testing2));
+        coverageService.insertCoverage(inProgressApril.getId(), Set.of(testing2));
 
 
-        List<CoverageSummary> coverageSummaries = coverageService.pageCoverage(0, 2,
+        CoveragePagingRequest pagingRequest = new CoveragePagingRequest(2, null,
                 period1Jan.getId(), period1Feb.getId(), period1March.getId(), period1April.getId());
+        CoveragePagingResult pagingResult = coverageService.pageCoverage(pagingRequest);
+        List<CoverageSummary> coverageSummaries = pagingResult.getCoverageSummaries();
 
-        coverageSummaries.sort(Comparator.comparing(CoverageSummary::getBeneficiaryId));
+        coverageSummaries.sort(Comparator.comparing(summary -> summary.getIdentifiers().getBeneficiaryId()));
 
         assertEquals(2, coverageSummaries.size());
 
         CoverageSummary summary1 = coverageSummaries.get(0);
-        assertEquals("testing-1", summary1.getBeneficiaryId());
+        assertEquals("testing-1", summary1.getIdentifiers().getBeneficiaryId());
 
         assertTrue(summary1.getDateRanges().stream().anyMatch(dr -> dr.inRange(START_JAN)));
         assertFalse(summary1.getDateRanges().stream().anyMatch(dr -> dr.inRange(END_DEC)));
@@ -299,7 +434,7 @@ class CoverageServiceImplTest {
         assertFalse(summary1.getDateRanges().stream().anyMatch(dr -> dr.inRange(START_APRIL)));
 
         CoverageSummary summary2 = coverageSummaries.get(1);
-        assertEquals("testing-2", summary2.getBeneficiaryId());
+        assertEquals("testing-2", summary2.getIdentifiers().getBeneficiaryId());
 
         assertTrue(summary2.getDateRanges().stream().anyMatch(dr -> dr.inRange(START_FEB)));
         assertFalse(summary2.getDateRanges().stream().anyMatch(dr -> dr.inRange(END_JAN)));
@@ -320,34 +455,36 @@ class CoverageServiceImplTest {
 
         // Bootstrap coverage periods
 
-        coverageService.submitCoverageSearch(period1Jan.getId(), "testing");
-        CoverageSearchEvent inProgressJan = coverageService.startCoverageSearch(period1Jan.getId(), "testing");
+        coverageService.submitSearch(period1Jan.getId(), "testing");
+        CoverageSearchEvent inProgressJan = startSearchAndPullEvent();
 
-        coverageService.submitCoverageSearch(period1Feb.getId(), "testing");
-        CoverageSearchEvent inProgressFeb = coverageService.startCoverageSearch(period1Feb.getId(), "testing");
+        coverageService.submitSearch(period1Feb.getId(), "testing");
+        CoverageSearchEvent inProgressFeb = startSearchAndPullEvent();
 
-        coverageService.submitCoverageSearch(period1March.getId(), "testing");
-        CoverageSearchEvent inProgressMarch = coverageService.startCoverageSearch(period1March.getId(), "testing");
+        coverageService.submitSearch(period1March.getId(), "testing");
+        CoverageSearchEvent inProgressMarch = startSearchAndPullEvent();
 
-        coverageService.submitCoverageSearch(period1April.getId(), "testing");
-        CoverageSearchEvent inProgressApril = coverageService.startCoverageSearch(period1April.getId(), "testing");
-
-
-        coverageService.insertCoverage(period1Jan.getId(), inProgressJan.getId(), List.of("testing-1"));
-        coverageService.insertCoverage(period1Feb.getId(), inProgressFeb.getId(), List.of("testing-2"));
-        coverageService.insertCoverage(period1March.getId(), inProgressMarch.getId(), List.of("testing-1"));
-        coverageService.insertCoverage(period1April.getId(), inProgressApril.getId(), List.of("testing-2"));
+        coverageService.submitSearch(period1April.getId(), "testing");
+        CoverageSearchEvent inProgressApril = startSearchAndPullEvent();
 
 
-        List<CoverageSummary> coverageSummaries = coverageService.pageCoverage(0, 2,
+
+        coverageService.insertCoverage(inProgressJan.getId(), Set.of(createIdentifier("1")));
+        coverageService.insertCoverage(inProgressFeb.getId(), Set.of(createIdentifier("2")));
+        coverageService.insertCoverage(inProgressMarch.getId(), Set.of(createIdentifier("1")));
+        coverageService.insertCoverage(inProgressApril.getId(), Set.of(createIdentifier("2")));
+
+        CoveragePagingRequest pagingRequest = new CoveragePagingRequest(2, null,
                 period1Jan.getId(), period1Feb.getId(), period1March.getId(), period1April.getId());
+        CoveragePagingResult pagingResult = coverageService.pageCoverage(pagingRequest);
+        List<CoverageSummary> coverageSummaries = pagingResult.getCoverageSummaries();
 
-        coverageSummaries.sort(Comparator.comparing(CoverageSummary::getBeneficiaryId));
+        coverageSummaries.sort(Comparator.comparing(summary -> summary.getIdentifiers().getBeneficiaryId()));
 
         assertEquals(2, coverageSummaries.size());
 
         CoverageSummary summary1 = coverageSummaries.get(0);
-        assertEquals("testing-1", summary1.getBeneficiaryId());
+        assertEquals("testing-1", summary1.getIdentifiers().getBeneficiaryId());
 
         assertTrue(summary1.getDateRanges().stream().anyMatch(dr -> dr.inRange(START_JAN)));
         assertFalse(summary1.getDateRanges().stream().anyMatch(dr -> dr.inRange(END_DEC)));
@@ -358,7 +495,7 @@ class CoverageServiceImplTest {
         assertFalse(summary1.getDateRanges().stream().anyMatch(dr -> dr.inRange(START_APRIL)));
 
         CoverageSummary summary2 = coverageSummaries.get(1);
-        assertEquals("testing-2", summary2.getBeneficiaryId());
+        assertEquals("testing-2", summary2.getIdentifiers().getBeneficiaryId());
 
         assertTrue(summary2.getDateRanges().stream().anyMatch(dr -> dr.inRange(START_FEB)));
         assertFalse(summary2.getDateRanges().stream().anyMatch(dr -> dr.inRange(END_JAN)));
@@ -382,34 +519,40 @@ class CoverageServiceImplTest {
 
         // Bootstrap coverage periods
 
-        coverageService.submitCoverageSearch(period1Jan.getId(), "testing");
-        CoverageSearchEvent inProgressJan = coverageService.startCoverageSearch(period1Jan.getId(), "testing");
+        coverageService.submitSearch(period1Jan.getId(), "testing");
+        CoverageSearchEvent inProgressJan = startSearchAndPullEvent();
 
-        coverageService.submitCoverageSearch(period1Feb.getId(), "testing");
-        CoverageSearchEvent inProgressFeb = coverageService.startCoverageSearch(period1Feb.getId(), "testing");
+        coverageService.submitSearch(period1Feb.getId(), "testing");
+        CoverageSearchEvent inProgressFeb = startSearchAndPullEvent();
 
-        coverageService.submitCoverageSearch(period1March.getId(), "testing");
-        CoverageSearchEvent inProgressMarch = coverageService.startCoverageSearch(period1March.getId(), "testing");
+        coverageService.submitSearch(period1March.getId(), "testing");
+        CoverageSearchEvent inProgressMarch = startSearchAndPullEvent();
 
-        coverageService.submitCoverageSearch(period1April.getId(), "testing");
-        CoverageSearchEvent inProgressApril = coverageService.startCoverageSearch(period1April.getId(), "testing");
-
-
-        coverageService.insertCoverage(period1Jan.getId(), inProgressJan.getId(), List.of("testing-1", "testing-2"));
-        coverageService.insertCoverage(period1Feb.getId(), inProgressFeb.getId(), List.of("testing-1", "testing-3"));
-        coverageService.insertCoverage(period1March.getId(), inProgressMarch.getId(), List.of("testing-2", "testing-3"));
-        coverageService.insertCoverage(period1April.getId(), inProgressApril.getId(), List.of("testing-1", "testing-2"));
+        coverageService.submitSearch(period1April.getId(), "testing");
+        CoverageSearchEvent inProgressApril = startSearchAndPullEvent();
 
 
-        List<CoverageSummary> coverageSummaries = coverageService.pageCoverage(0, 3,
+        Identifiers testing1 = createIdentifier("1");
+        Identifiers testing2 = createIdentifier("2");
+        Identifiers testing3 = createIdentifier("3");
+
+        coverageService.insertCoverage(inProgressJan.getId(), Set.of(testing1, testing2));
+        coverageService.insertCoverage(inProgressFeb.getId(), Set.of(testing1, testing3));
+        coverageService.insertCoverage(inProgressMarch.getId(), Set.of(testing2, testing3));
+        coverageService.insertCoverage(inProgressApril.getId(), Set.of(testing1, testing2));
+
+
+        CoveragePagingRequest pagingRequest = new CoveragePagingRequest(3, null,
                 period1Jan.getId(), period1Feb.getId(), period1March.getId(), period1April.getId());
+        CoveragePagingResult pagingResult = coverageService.pageCoverage(pagingRequest);
+        List<CoverageSummary> coverageSummaries = pagingResult.getCoverageSummaries();
 
-        coverageSummaries.sort(Comparator.comparing(CoverageSummary::getBeneficiaryId));
+        coverageSummaries.sort(Comparator.comparing(summary -> summary.getIdentifiers().getBeneficiaryId()));
 
         assertEquals(3, coverageSummaries.size());
 
         CoverageSummary summary1 = coverageSummaries.get(0);
-        assertEquals("testing-1", summary1.getBeneficiaryId());
+        assertEquals("testing-1", summary1.getIdentifiers().getBeneficiaryId());
 
         assertTrue(summary1.getDateRanges().stream().anyMatch(dr -> dr.inRange(START_JAN)));
         assertTrue(summary1.getDateRanges().stream().anyMatch(dr -> dr.inRange(START_FEB)));
@@ -418,7 +561,7 @@ class CoverageServiceImplTest {
         assertFalse(summary1.getDateRanges().stream().anyMatch(dr -> dr.inRange(START_MAY)));
 
         CoverageSummary summary2 = coverageSummaries.get(1);
-        assertEquals("testing-2", summary2.getBeneficiaryId());
+        assertEquals("testing-2", summary2.getIdentifiers().getBeneficiaryId());
 
         assertTrue(summary2.getDateRanges().stream().anyMatch(dr -> dr.inRange(START_JAN)));
         assertFalse(summary2.getDateRanges().stream().anyMatch(dr -> dr.inRange(START_FEB)));
@@ -427,7 +570,7 @@ class CoverageServiceImplTest {
         assertFalse(summary2.getDateRanges().stream().anyMatch(dr -> dr.inRange(START_MAY)));
 
         CoverageSummary summary3 = coverageSummaries.get(2);
-        assertEquals("testing-3", summary3.getBeneficiaryId());
+        assertEquals("testing-3", summary3.getIdentifiers().getBeneficiaryId());
 
         assertFalse(summary3.getDateRanges().stream().anyMatch(dr -> dr.inRange(START_JAN)));
         assertTrue(summary3.getDateRanges().stream().anyMatch(dr -> dr.inRange(START_FEB)));
@@ -447,28 +590,30 @@ class CoverageServiceImplTest {
 
         // Bootstrap coverage periods
 
-        coverageService.submitCoverageSearch(period1Jan.getId(), "testing");
-        CoverageSearchEvent inProgressJan = coverageService.startCoverageSearch(period1Jan.getId(), "testing");
+        coverageService.submitSearch(period1Jan.getId(), "testing");
+        CoverageSearchEvent inProgressJan = startSearchAndPullEvent();
 
-        coverageService.submitCoverageSearch(period1Feb.getId(), "testing");
-        CoverageSearchEvent inProgressFeb = coverageService.startCoverageSearch(period1Feb.getId(), "testing");
+        coverageService.submitSearch(period1Feb.getId(), "testing");
+        CoverageSearchEvent inProgressFeb = startSearchAndPullEvent();
 
-        coverageService.submitCoverageSearch(period1March.getId(), "testing");
-        CoverageSearchEvent inProgressMarch = coverageService.startCoverageSearch(period1March.getId(), "testing");
+        coverageService.submitSearch(period1March.getId(), "testing");
+        CoverageSearchEvent inProgressMarch = startSearchAndPullEvent();
 
-        coverageService.submitCoverageSearch(period1April.getId(), "testing");
-        CoverageSearchEvent inProgressApril = coverageService.startCoverageSearch(period1April.getId(), "testing");
+        coverageService.submitSearch(period1April.getId(), "testing");
+        CoverageSearchEvent inProgressApril = startSearchAndPullEvent();
 
 
-        coverageService.insertCoverage(period1Feb.getId(), inProgressFeb.getId(), List.of("testing-1"));
+        coverageService.insertCoverage(inProgressFeb.getId(), Set.of(createIdentifier("1")));
 
-        List<CoverageSummary> coverageSummaries = coverageService.pageCoverage(0, 3,
+        CoveragePagingRequest pagingRequest = new CoveragePagingRequest(3, null,
                 period1Jan.getId(), period1Feb.getId(), period1March.getId(), period1April.getId());
+        CoveragePagingResult pagingResult = coverageService.pageCoverage(pagingRequest);
+        List<CoverageSummary> coverageSummaries = pagingResult.getCoverageSummaries();
 
         assertEquals(1, coverageSummaries.size());
 
         CoverageSummary summary1 = coverageSummaries.get(0);
-        assertEquals("testing-1", summary1.getBeneficiaryId());
+        assertEquals("testing-1", summary1.getIdentifiers().getBeneficiaryId());
 
         assertFalse(summary1.getDateRanges().stream().anyMatch(dr -> dr.inRange(START_JAN)));
         assertTrue(summary1.getDateRanges().stream().anyMatch(dr -> dr.inRange(START_FEB)));
@@ -479,11 +624,12 @@ class CoverageServiceImplTest {
     @DisplayName("Get differences between first search and empty")
     @Test
     void diffCoverageWhenFirstSearch() {
-        List<String> results1 = List.of("testing-123-1", "testing-456-1", "testing-789-1");
+        Set<Identifiers> results1 = Set.of(createIdentifier("123-1"),
+                createIdentifier("456-1"), createIdentifier("789-1"));
 
-        coverageService.submitCoverageSearch(period1Jan.getId(), "testing");
-        CoverageSearchEvent inProgress1 = coverageService.startCoverageSearch(period1Jan.getId(), "testing");
-        CoverageSearchEvent savedTo1 = coverageService.insertCoverage(period1Jan.getId(), inProgress1.getId(), results1);
+        coverageService.submitSearch(period1Jan.getId(), "testing");
+        CoverageSearchEvent inProgress1 = startSearchAndPullEvent();
+        CoverageSearchEvent savedTo1 = coverageService.insertCoverage(inProgress1.getId(), results1);
 
         assertEquals(inProgress1, savedTo1);
 
@@ -500,23 +646,25 @@ class CoverageServiceImplTest {
     @DisplayName("Get differences between two searches")
     @Test
     void diffCoverageBetweenTwoSearches() {
-        List<String> results1 = List.of("testing-123-1", "testing-456-1", "testing-789-1");
-        List<String> results2 = List.of("testing-123-1", "testing-456-2", "testing-789-2");
+        Set<Identifiers> results1 = Set.of(createIdentifier("123-1"),
+                createIdentifier("456-1"), createIdentifier("789-1"));
+        Set<Identifiers> results2 = Set.of(createIdentifier("123-1"),
+                createIdentifier("456-2"), createIdentifier("789-2"));
 
-        coverageService.submitCoverageSearch(period1Jan.getId(), "testing");
-        CoverageSearchEvent inProgress1 = coverageService.startCoverageSearch(period1Jan.getId(), "testing");
-        CoverageSearchEvent savedTo1 = coverageService.insertCoverage(period1Jan.getId(), inProgress1.getId(), results1);
-        coverageService.completeCoverageSearch(period1Jan.getId(), "testing");
+        coverageService.submitSearch(period1Jan.getId(), "testing");
+        CoverageSearchEvent inProgress1 = startSearchAndPullEvent();
+        CoverageSearchEvent savedTo1 = coverageService.insertCoverage(inProgress1.getId(), results1);
+        coverageService.completeSearch(period1Jan.getId(), "testing");
 
         assertEquals(inProgress1, savedTo1);
 
-        coverageService.submitCoverageSearch(period1Jan.getId(), "testing");
+        coverageService.submitSearch(period1Jan.getId(), "testing");
 
         // Search must currently be in progress or exception is thrown
         assertThrows(InvalidJobStateTransition.class, () -> coverageService.searchDiff(period1Jan.getId()));
 
-        CoverageSearchEvent inProgress2 = coverageService.startCoverageSearch(period1Jan.getId(), "testing");
-        CoverageSearchEvent savedTo2 = coverageService.insertCoverage(period1Jan.getId(), inProgress2.getId(), results2);
+        CoverageSearchEvent inProgress2 = startSearchAndPullEvent();
+        CoverageSearchEvent savedTo2 = coverageService.insertCoverage(inProgress2.getId(), results2);
 
         assertEquals(inProgress2, savedTo2);
 
@@ -532,34 +680,40 @@ class CoverageServiceImplTest {
     @DisplayName("Delete previous search")
     @Test
     void deletePreviousSearch() {
-        List<String> results1 = List.of("testing-123-1", "testing-456-1", "testing-789-1");
-        List<String> results2 = List.of("testing-123-2", "testing-456-2", "testing-789-2");
+        Set<Identifiers> results1 = Set.of(createIdentifier("123-1"),
+                createIdentifier("456-1"), createIdentifier("789-1"));
+        Set<Identifiers> results2 = Set.of(createIdentifier("123-2"),
+                createIdentifier("456-2"), createIdentifier("789-2"));
+        Set<String> beneIds2 = results2.stream()
+                .map(Identifiers::getBeneficiaryId)
+                .collect(toSet());
 
-        coverageService.submitCoverageSearch(period1Jan.getId(), "testing");
-        CoverageSearchEvent inProgress1 = coverageService.startCoverageSearch(period1Jan.getId(), "testing");
-        CoverageSearchEvent savedTo1 = coverageService.insertCoverage(period1Jan.getId(), inProgress1.getId(), results1);
-        coverageService.completeCoverageSearch(period1Jan.getId(), "testing");
+        coverageService.submitSearch(period1Jan.getId(), "testing");
+        CoverageSearchEvent inProgress1 = startSearchAndPullEvent();
+        CoverageSearchEvent savedTo1 = coverageService.insertCoverage(inProgress1.getId(), results1);
+        coverageService.completeSearch(period1Jan.getId(), "testing");
 
         assertEquals(inProgress1, savedTo1);
 
-        coverageService.submitCoverageSearch(period1Jan.getId(), "testing");
-        CoverageSearchEvent inProgress2 = coverageService.startCoverageSearch(period1Jan.getId(), "testing");
-        CoverageSearchEvent savedTo2 = coverageService.insertCoverage(period1Jan.getId(), inProgress2.getId(), results2);
+        coverageService.submitSearch(period1Jan.getId(), "testing");
+        CoverageSearchEvent inProgress2 = startSearchAndPullEvent();
+        CoverageSearchEvent savedTo2 = coverageService.insertCoverage(inProgress2.getId(), results2);
 
         assertEquals(inProgress2, savedTo2);
 
         coverageService.deletePreviousSearch(period1Jan.getId());
 
-        List<String> coverages = coverageRepo.findAll().stream().map(Coverage::getBeneficiaryId).collect(toList());
+        List<String> coverages = dataSetup.findCoverage()
+                .stream().map(Coverage::getBeneficiaryId).collect(toList());
 
         assertTrue(disjoint(results1, coverages));
-        assertTrue(coverages.containsAll(results2));
+        assertTrue(coverages.containsAll(beneIds2));
 
-        Set<CoverageSearchEvent> distinctSearchEvents = coverageRepo.findAll().stream()
-                .map(Coverage::getCoverageSearchEvent).collect(toSet());
+        Set<Long> distinctSearchEvents = dataSetup.findCoverage().stream()
+                .map(Coverage::getSearchEventId).collect(toSet());
 
-        assertFalse(distinctSearchEvents.contains(inProgress1));
-        assertTrue(distinctSearchEvents.contains(inProgress2));
+        assertFalse(distinctSearchEvents.contains(inProgress1.getId()));
+        assertTrue(distinctSearchEvents.contains(inProgress2.getId()));
     }
 
     @DisplayName("Check search status on CoveragePeriod")
@@ -570,94 +724,153 @@ class CoverageServiceImplTest {
 
         assertNull(status);
 
-        coverageService.submitCoverageSearch(period1Jan.getId(), "testing");
+        coverageService.submitSearch(period1Jan.getId(), "testing");
 
         status = coverageService.getSearchStatus(period1Jan.getId());
 
         assertEquals(JobStatus.SUBMITTED, status);
     }
 
+    @DisplayName("Find all coverage periods that have not been searched since x time")
+    @Test
+    void findSearchedSince() {
+
+        OffsetDateTime startTest = OffsetDateTime.now();
+
+        // Both January periods have never been searched so neither will be returned but
+        // this call doesn't check for null values
+        List<CoveragePeriod> coveragePeriods = coverageService.coveragePeriodNotUpdatedSince(1, 2020, startTest.minusDays(1));
+        assertEquals(0, coveragePeriods.size());
+
+        coverageService.submitSearch(period1Jan.getId(), "testing");
+        startSearchAndPullEvent();
+        CoverageSearchEvent completedEvent = coverageService.completeSearch(period1Jan.getId(), "testing");
+
+        // Searching using future date should return stale january coverage period
+        coveragePeriods = coverageService.coveragePeriodNotUpdatedSince(1, 2020, completedEvent.getCreated().plusSeconds(1));
+        assertEquals(1, coveragePeriods.size());
+
+        // Searching using past date should return nothing because january period was searched recently
+        coveragePeriods = coverageService.coveragePeriodNotUpdatedSince(1, 2020, startTest.minusDays(1));
+        assertEquals(0, coveragePeriods.size());
+    }
+
+    @DisplayName("Find all stuck jobs")
+    @Test
+    void findStuckJobs() {
+
+        OffsetDateTime startTest = OffsetDateTime.now();
+
+        coverageService.submitSearch(period1Jan.getId(), "testing");
+        Optional<CoverageSearch> search1 = coverageSearchRepo.findFirstByOrderByCreatedAsc();
+        coverageSearchRepo.delete(search1.get());
+        coverageService.startSearch(search1.get(), "testing");
+
+        coverageService.submitSearch(period2Jan.getId(), "testing");
+        Optional<CoverageSearch> search2 = coverageSearchRepo.findFirstByOrderByCreatedAsc();
+        coverageSearchRepo.delete(search2.get());
+        Optional<CoverageMapping> coverageMapping = coverageService.startSearch(search2.get(), "testing");
+        coverageService.completeSearch(coverageMapping.get().getPeriodId(), "testing");
+
+        coverageService.submitSearch(period1Feb.getId(), "testing");
+        Optional<CoverageSearch> search3 = coverageSearchRepo.findFirstByOrderByCreatedAsc();
+        coverageSearchRepo.delete(search3.get());
+        coverageService.startSearch(search3.get(), "testing");
+
+        OffsetDateTime midTest = OffsetDateTime.now();
+
+        coverageService.submitSearch(period1March.getId(), "testing");
+        Optional<CoverageSearch> search4 = coverageSearchRepo.findFirstByOrderByCreatedAsc();
+        coverageSearchRepo.delete(search4.get());
+        coverageService.startSearch(search4.get(), "testing");
+
+        coverageService.submitSearch(period1April.getId(), "testing");
+        Optional<CoverageSearch> search5 = coverageSearchRepo.findFirstByOrderByCreatedAsc();
+        coverageSearchRepo.delete(search5.get());
+        coverageService.startSearch(search5.get(), "testing");
+
+        OffsetDateTime afterTest = OffsetDateTime.now();
+
+        List<CoveragePeriod> stuckJobs = coverageService.coveragePeriodStuckJobs(afterTest);
+        assertEquals(4, stuckJobs.size());
+        assertFalse(stuckJobs.stream().anyMatch(p -> p.getId().equals(period2Jan.getId())));
+        assertTrue(stuckJobs.stream().anyMatch(p -> p.getId().equals(period1Jan.getId())));
+        assertTrue(stuckJobs.stream().anyMatch(p -> p.getId().equals(period1Feb.getId())));
+        assertTrue(stuckJobs.stream().anyMatch(p -> p.getId().equals(period1March.getId())));
+        assertTrue(stuckJobs.stream().anyMatch(p -> p.getId().equals(period1April.getId())));
+
+        stuckJobs = coverageService.coveragePeriodStuckJobs(midTest);
+        assertEquals(2, stuckJobs.size());
+        assertTrue(stuckJobs.stream().anyMatch(p -> p.equals(period1Jan)));
+        assertTrue(stuckJobs.stream().anyMatch(p -> p.equals(period1Feb)));
+
+        stuckJobs = coverageService.coveragePeriodStuckJobs(startTest);
+        assertEquals(0, stuckJobs.size());
+    }
+
     @DisplayName("Coverage period searches are successfully submitted")
     @Test
     void submitSearches() {
-        CoverageSearchEvent cs1 = coverageService.submitCoverageSearch(period1Jan.getId(), "testing");
+        CoverageSearchEvent cs1 = coverageService.submitSearch(period1Jan.getId(), "testing").get();
 
         CoverageSearchEvent cs1Copy = coverageSearchEventRepo.findById(cs1.getId()).get();
+        CoverageSearch coverageSearch = coverageSearchRepo.findFirstByOrderByCreatedAsc().get();
 
         assertEquals(JobStatus.SUBMITTED, cs1Copy.getNewStatus());
+        // Make sure that coverage search and search event match
+        assertEquals(cs1Copy.getCoveragePeriod(), coverageSearch.getPeriod());
 
-        coverageService.startCoverageSearch(period1Jan.getId(), "testing");
-
-        assertThrows(InvalidJobStateTransition.class, () -> coverageService.submitCoverageSearch(period1Jan.getId(), "testing"));
+        startSearchAndPullEvent();
     }
 
     @DisplayName("Coverage period searches are successfully started")
     @Test
     void startSearches() {
 
-        coverageService.submitCoverageSearch(period1Jan.getId(), "testing");
-        coverageService.submitCoverageSearch(period2Jan.getId(), "testing");
+        coverageService.submitSearch(period1Jan.getId(), "testing");
+        coverageService.submitSearch(period2Jan.getId(), "testing");
 
-        // Cannot start search that has not been submitted
-        assertThrows(InvalidJobStateTransition.class, () -> coverageService.startCoverageSearch(period1Feb.getId(), "testing"));
-
-        CoverageSearchEvent started = coverageService.startCoverageSearch(period1Jan.getId(), "testing");
+        CoverageSearchEvent started = startSearchAndPullEvent();
         CoverageSearchEvent startedCopy = coverageSearchEventRepo.findById(started.getId()).get();
 
         assertEquals(JobStatus.SUBMITTED, startedCopy.getOldStatus());
         assertEquals(JobStatus.IN_PROGRESS, startedCopy.getNewStatus());
+    }
 
-        // Add status changes that should invalidate marking a job in progress
-
-        CoverageSearchEvent cancel = new CoverageSearchEvent();
-        cancel.setCoveragePeriod(period2Jan);
-        cancel.setNewStatus(JobStatus.CANCELLED);
-        cancel.setOldStatus(JobStatus.SUBMITTED);
-        cancel.setDescription("testing");
-
-        CoverageSearchEvent failed = new CoverageSearchEvent();
-        failed.setCoveragePeriod(period1Jan);
-        failed.setNewStatus(JobStatus.FAILED);
-        failed.setOldStatus(JobStatus.IN_PROGRESS);
-        failed.setDescription("testing");
-
-        coverageSearchEventRepo.saveAndFlush(cancel);
-        coverageSearchEventRepo.saveAndFlush(failed);
-
-        period1Jan.setStatus(JobStatus.CANCELLED);
-        period2Jan.setStatus(JobStatus.FAILED);
-        coveragePeriodRepo.saveAndFlush(period1Jan);
-        coveragePeriodRepo.saveAndFlush(period2Jan);
-
-        assertThrows(InvalidJobStateTransition.class, () -> coverageService.startCoverageSearch(period1Jan.getId(), "testing"));
-        assertThrows(InvalidJobStateTransition.class, () -> coverageService.startCoverageSearch(period2Jan.getId(), "testing"));
+    private CoverageSearchEvent startSearchAndPullEvent() {
+        Optional<CoverageSearch> search = coverageSearchRepo.findFirstByOrderByCreatedAsc();
+        coverageSearchRepo.delete(search.get());
+        return coverageService.startSearch(search.get(), "testing").get().getCoverageSearchEvent();
     }
 
     @DisplayName("Coverage period searches can be marked successful")
     @Test
     void completeSearches() {
 
-        coverageService.submitCoverageSearch(period1Jan.getId(), "testing");
-        coverageService.submitCoverageSearch(period2Jan.getId(), "testing");
+        coverageService.submitSearch(period1Jan.getId(), "testing");
+        coverageService.submitSearch(period2Jan.getId(), "testing");
 
         // Cannot start search that has not been submitted
-        assertThrows(InvalidJobStateTransition.class, () -> coverageService.completeCoverageSearch(period1Feb.getId(), "testing"));
+        assertThrows(InvalidJobStateTransition.class, () -> coverageService.completeSearch(period1Feb.getId(), "testing"));
 
-        coverageService.startCoverageSearch(period1Jan.getId(), "testing");
+        startSearchAndPullEvent();
 
-        CoverageSearchEvent completed = coverageService.completeCoverageSearch(period1Jan.getId(), "testing");
+        CoverageSearchEvent completed = coverageService.completeSearch(period1Jan.getId(), "testing");
         CoverageSearchEvent completedCopy = coverageSearchEventRepo.findById(completed.getId()).get();
 
         assertEquals(JobStatus.IN_PROGRESS, completedCopy.getOldStatus());
         assertEquals(JobStatus.SUCCESSFUL, completedCopy.getNewStatus());
 
+        // Check that last successful job is updated
+        assertNotNull(completedCopy.getCoveragePeriod().getLastSuccessfulJob());
+
         // Cannot complete job twice
-        assertThrows(InvalidJobStateTransition.class, () -> coverageService.completeCoverageSearch(period1Jan.getId(), "testing"));
+        assertThrows(InvalidJobStateTransition.class, () -> coverageService.completeSearch(period1Jan.getId(), "testing"));
 
         // Add status changes that should invalidate marking a job completed
 
-        coverageService.submitCoverageSearch(period1Jan.getId(), "testing");
-        coverageService.startCoverageSearch(period1Jan.getId(), "testing");
+        coverageService.submitSearch(period1Jan.getId(), "testing");
+        startSearchAndPullEvent();
 
         CoverageSearchEvent cancel = new CoverageSearchEvent();
         cancel.setCoveragePeriod(period2Jan);
@@ -679,49 +892,48 @@ class CoverageServiceImplTest {
         coveragePeriodRepo.save(period1Jan);
         coveragePeriodRepo.save(period2Jan);
 
-        assertThrows(InvalidJobStateTransition.class, () -> coverageService.completeCoverageSearch(period1Jan.getId(), "testing"));
-        assertThrows(InvalidJobStateTransition.class, () -> coverageService.completeCoverageSearch(period2Jan.getId(), "testing"));
+        assertThrows(InvalidJobStateTransition.class, () -> coverageService.completeSearch(period1Jan.getId(), "testing"));
+        assertThrows(InvalidJobStateTransition.class, () -> coverageService.completeSearch(period2Jan.getId(), "testing"));
     }
 
     @DisplayName("Coverage period searches can be cancelled")
     @Test
     void cancelSearches() {
 
-        coverageService.submitCoverageSearch(period1Jan.getId(), "testing");
-        coverageService.submitCoverageSearch(period2Jan.getId(), "testing");
+        coverageService.submitSearch(period1Jan.getId(), "testing");
 
         // Cannot complete search that has not been started
-        CoverageSearchEvent cancelled = coverageService.cancelCoverageSearch(period1Jan.getId(), "testing");
+        CoverageSearchEvent cancelled = coverageService.cancelSearch(period1Jan.getId(), "testing");
         CoverageSearchEvent cancelledCopy = coverageSearchEventRepo.findById(cancelled.getId()).get();
 
         assertEquals(JobStatus.SUBMITTED, cancelledCopy.getOldStatus());
         assertEquals(JobStatus.CANCELLED, cancelledCopy.getNewStatus());
 
         // Cannot cancel job twice
-        assertThrows(InvalidJobStateTransition.class, () -> coverageService.cancelCoverageSearch(period1Jan.getId(), "testing"));
+        assertThrows(InvalidJobStateTransition.class, () -> coverageService.cancelSearch(period1Jan.getId(), "testing"));
 
         // Add status changes that should invalidate marking a job completed
-        coverageService.submitCoverageSearch(period1Jan.getId(), "testing");
-        coverageService.startCoverageSearch(period1Jan.getId(), "testing");
+        coverageService.submitSearch(period1Jan.getId(), "testing");
+        startSearchAndPullEvent();
 
         // Cannot cancel in progress job
-        assertThrows(InvalidJobStateTransition.class, () -> coverageService.cancelCoverageSearch(period1Jan.getId(), "testing"));
+        assertThrows(InvalidJobStateTransition.class, () -> coverageService.cancelSearch(period1Jan.getId(), "testing"));
     }
 
     @DisplayName("Coverage period searches can be cancelled")
     @Test
     void failSearches() {
 
-        coverageService.submitCoverageSearch(period1Jan.getId(), "testing");
-        coverageService.submitCoverageSearch(period2Jan.getId(), "testing");
+        coverageService.submitSearch(period1Jan.getId(), "testing");
+        coverageService.submitSearch(period2Jan.getId(), "testing");
 
         // Cannot fail search that has not been started
         assertThrows(InvalidJobStateTransition.class,
-                () -> coverageService.failCoverageSearch(period1Jan.getId(), "testing"));
+                () -> coverageService.failSearch(period1Jan.getId(), "testing"));
 
-        coverageService.startCoverageSearch(period1Jan.getId(), "testing");
+        startSearchAndPullEvent();
 
-        CoverageSearchEvent failed = coverageService.failCoverageSearch(period1Jan.getId(), "testing");
+        CoverageSearchEvent failed = coverageService.failSearch(period1Jan.getId(), "testing");
         CoverageSearchEvent failedCopy = coverageSearchEventRepo.findById(failed.getId()).get();
 
         assertEquals(JobStatus.IN_PROGRESS, failedCopy.getOldStatus());
@@ -739,9 +951,13 @@ class CoverageServiceImplTest {
                 () -> coverageService.getCoveragePeriod(contract1.getId(), 13, 2020));
 
         assertThrows(IllegalArgumentException.class,
-                () -> coverageService.getCoveragePeriod(contract1.getId(), 12, 2020));
+                () -> coverageService.getCoveragePeriod(contract1.getId(), 12, 2040));
 
         assertThrows(IllegalArgumentException.class,
                 () -> coverageService.getCoveragePeriod(contract1.getId(), 12, 2019));
+    }
+
+    private Identifiers createIdentifier(String suffix) {
+        return new Identifiers("testing-" + suffix, "mbi-" + suffix, new LinkedHashSet<>());
     }
 }

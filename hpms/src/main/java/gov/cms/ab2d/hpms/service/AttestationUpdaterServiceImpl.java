@@ -4,10 +4,7 @@ import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.Sponsor;
 import gov.cms.ab2d.common.repository.ContractRepository;
 import gov.cms.ab2d.common.repository.SponsorRepository;
-import gov.cms.ab2d.common.service.PropertiesService;
-import gov.cms.ab2d.common.util.Constants;
 import gov.cms.ab2d.hpms.hmsapi.*;  // NOPMD
-import gov.cms.ab2d.common.service.WorkerDrive;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
@@ -27,31 +24,12 @@ public class AttestationUpdaterServiceImpl implements AttestationUpdaterService 
 
     private final ContractRepository contractRepository;
 
-    private final PropertiesService propertiesService;
-
-//    private static final String HOURLY = "0 0 0/1 1/1 * ?";
-
     @Autowired
     public AttestationUpdaterServiceImpl(SponsorRepository sponsorRepository, ContractRepository contractRepository,
-                                         HPMSFetcher hpmsFetcher, PropertiesService propertiesService) {
+                                         HPMSFetcher hpmsFetcher) {
         this.sponsorRepository = sponsorRepository;
         this.contractRepository = contractRepository;
         this.hpmsFetcher = hpmsFetcher;
-        this.propertiesService = propertiesService;
-    }
-
-    public WorkerDrive getEngagement() {
-        return WorkerDrive.fromString(propertiesService.getPropertiesByKey(Constants.HPMS_INGESTION_ENGAGEMENT).getValue());
-    }
-
-/*  todo: remove the comments and enable this code when integrating with the real hpms service
-    @Scheduled(cron = AttestationUpdaterService.HOURLY)
- */
-@SuppressWarnings("unused")
-public void pollHmsData() {
-        if (WorkerDrive.IN_GEAR == getEngagement()) {
-            pollOrganizations();
-        }
     }
 
     @Override
@@ -126,6 +104,11 @@ public void pollHmsData() {
 
     private void considerContract(List<Contract> contractAttestList, Contract contract,
                                   HPMSOrganizationInfo hpmsOrganizationInfo) {
+        // Ignore Test contracts
+        if (contract.isTestContract()) {
+            return;
+        }
+
         if (hpmsOrganizationInfo == null) {
             // Missing in refresh, need to update as having no attestation.
             if (contract.hasAttestation()) {

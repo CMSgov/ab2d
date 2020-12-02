@@ -3,6 +3,7 @@ package gov.cms.ab2d.common.repository;
 import gov.cms.ab2d.common.model.CoveragePeriod;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.time.OffsetDateTime;
 import java.util.List;
 
 public interface CoveragePeriodRepository extends JpaRepository<CoveragePeriod, Integer> {
@@ -10,6 +11,10 @@ public interface CoveragePeriodRepository extends JpaRepository<CoveragePeriod, 
     List<CoveragePeriod> findAllByContractId(Long contractId);
 
     List<CoveragePeriod> findAllByMonthAndYear(int month, int year);
+
+    List<CoveragePeriod> findAllByLastSuccessfulJobIsNull();
+
+    List<CoveragePeriod> findAllByMonthAndYearAndLastSuccessfulJobLessThanEqual(int month, int year, OffsetDateTime time);
 
     CoveragePeriod getByContractIdAndMonthAndYear(Long contractId, int month, int year);
 }
