@@ -67,6 +67,10 @@ public class Contract extends TimestampBase {
     @OneToMany(mappedBy = "contract")
     private Set<CoveragePeriod> coveragePeriods = new HashSet<>();
 
+    public boolean isTestContract() {
+        return updateMode == UpdateMode.TEST;
+    }
+
     public boolean hasAttestation() {
         return attestedOn != null;
     }
