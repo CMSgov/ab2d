@@ -14,7 +14,7 @@ FROM public.sponsor a
 INNER JOIN public.contract d
 ON a.id = d.sponsor_id
 INNER JOIN public.user_account e
-ON a.id = e.sponsor_id OR a.parent_id = e.sponsor_id
+ON a.id = e.sponsor_id
 INNER JOIN public.job f
 ON e.id = f.user_account_id
 WHERE d.attested_on is not null
@@ -29,7 +29,7 @@ AND e.username IN (
     INNER JOIN public.contract d
     ON a.id = d.sponsor_id
     INNER JOIN public.user_account e
-    ON a.id = e.sponsor_id OR a.parent_id = e.sponsor_id
+    ON a.id = e.sponsor_id
     WHERE d.attested_on is not null
     AND d.contract_number NOT LIKE 'Z%'
     AND e.enabled = true
