@@ -7,8 +7,7 @@ import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 import static gov.cms.ab2d.common.util.DateUtil.getESTOffset;
 
@@ -77,6 +76,23 @@ public class Contract extends TimestampBase {
 
     public void clearAttestation() {
         attestedOn = null;
+    }
+
+    public boolean hasChanges(String hmpsContractName, long parentOrgId, String parentOrgName, String orgMarketingName) {
+        boolean allEqual = Objects.equals(hmpsContractName, contractName) &&
+                        Objects.equals(parentOrgId, hpmsParentOrgId) &&
+                        Objects.equals(parentOrgName, hpmsParentOrg) &&
+                        Objects.equals(orgMarketingName, hpmsOrgMarketingName);
+
+        return !allEqual;
+    }
+
+    public Contract updateOrg(String hmpsContractName, long parentOrgId, String parentOrgName, String orgMarketingName) {
+        contractName = hmpsContractName;
+        hpmsParentOrgId = parentOrgId;
+        hpmsParentOrg = parentOrgName;
+        hpmsOrgMarketingName = orgMarketingName;
+        return this;
     }
 
     /*
