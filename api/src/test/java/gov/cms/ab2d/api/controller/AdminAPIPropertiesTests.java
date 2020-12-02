@@ -88,7 +88,7 @@ public class AdminAPIPropertiesTests {
             put(ZIP_SUPPORT_ON, "false");
             put(WORKER_ENGAGEMENT, "engaged");
             put(HPMS_INGESTION_ENGAGEMENT, "engaged");
-            put(COVERAGE_SEARCH_ENGAGEMENT, "engaged");
+            put(COVERAGE_SEARCH_ENGAGEMENT, "idle");
         }};
 
         MvcResult mvcResult = this.mockMvc.perform(
