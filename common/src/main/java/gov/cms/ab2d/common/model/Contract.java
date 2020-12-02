@@ -21,7 +21,7 @@ public class Contract extends TimestampBase {
 
     public static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd H:m:s Z");
 
-    enum UpdateMode {AUTOMATIC, TEST, MANUAL}
+    enum UpdateMode { AUTOMATIC, TEST, MANUAL }
 
     @Id
     @GeneratedValue
