@@ -3,14 +3,7 @@ package gov.cms.ab2d.common.model;
 
 import lombok.*;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
-import javax.persistence.OneToMany;
-import javax.persistence.PreRemove;
+import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
@@ -27,6 +20,8 @@ import static gov.cms.ab2d.common.util.DateUtil.getESTOffset;
 public class Contract extends TimestampBase {
 
     public static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd H:m:s Z");
+
+    enum UpdateMode {AUTOMATIC, TEST, MANUAL}
 
     @Id
     @GeneratedValue
@@ -47,6 +42,9 @@ public class Contract extends TimestampBase {
 
     @Column(name = "hpms_org_marketing_name")
     private String hpmsOrgMarketingName;
+
+    @Enumerated(EnumType.STRING)
+    private UpdateMode updateMode = UpdateMode.AUTOMATIC;
 
     public Contract(@NotNull String contractNumber, String contractName, Long hpmsParentOrgId, String hpmsParentOrg,
                     String hpmsOrgMarketingName, @NotNull Sponsor sponsor) {
@@ -81,6 +79,9 @@ public class Contract extends TimestampBase {
      * Returns true if new state differs from existing which requires a save.
      */
     public boolean updateAttestation(boolean attested, String attestationDate) {
+        if (updateMode != UpdateMode.AUTOMATIC)
+            return false;
+
         boolean hasAttestation = hasAttestation();
         if (attested == hasAttestation) {
             return false;   // No changes needed
