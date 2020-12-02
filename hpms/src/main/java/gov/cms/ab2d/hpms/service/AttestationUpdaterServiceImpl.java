@@ -47,7 +47,9 @@ public class AttestationUpdaterServiceImpl implements AttestationUpdaterService 
                 .filter(Optional::isPresent)
                 .map(Optional::get)
                 .collect(Collectors.toList());
-        contractRepository.saveAll(changedContracts);
+        if (!changedContracts.isEmpty()) {
+            contractRepository.saveAll(changedContracts);
+        }
 
         // detect new Contracts
         List<HPMSOrganizationInfo> newContracts = orgInfo.getOrgs().stream()
