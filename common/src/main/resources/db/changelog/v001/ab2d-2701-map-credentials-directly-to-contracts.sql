@@ -1,4 +1,4 @@
--- Set notifications to 'warning or greater
+-- Set notifications to 'warning' or greater
 
 SET client_min_messages TO WARNING;
 
