@@ -66,18 +66,4 @@ ADD CONSTRAINT "fk_user_account_to_contract"
 FOREIGN KEY (contract_id)
 REFERENCES contract (id);
 
---------
--- Audit
---------
 
--- S2893 OK
--- S3285 OK
--- S3875 MISSING
--- S4501 OK
--- S5540 OK
--- S5596 NEW
--- S5609 NEW
--- S6946 OK
--- S7126 OK
--- S8067 OK
--- S9701 OK
