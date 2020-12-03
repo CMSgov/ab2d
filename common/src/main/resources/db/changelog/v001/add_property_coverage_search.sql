@@ -3,4 +3,5 @@
 
 --changeset wnyffenegger:add_property_coverage_search failOnError:true
 
-INSERT INTO properties (id, key, value) VALUES((select nextval('hibernate_sequence')), 'coverage.update.engaged', 'idle');
+INSERT INTO properties (id, key, value) VALUES((select nextval('hibernate_sequence')), 'coverage.update.discovery', 'idle');
+INSERT INTO properties (id, key, value) VALUES((select nextval('hibernate_sequence')), 'coverage.update.queueing', 'idle');

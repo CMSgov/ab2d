@@ -21,22 +21,27 @@ public class CoveragePeriodQuartzJob extends QuartzJobBean {
     @Override
     protected void executeInternal(JobExecutionContext jobExecutionContext) throws JobExecutionException {
 
-        String engagement = propertiesService.getPropertiesByKey(Constants.COVERAGE_SEARCH_ENGAGEMENT).getValue();
-        FeatureEngagement state = FeatureEngagement.fromString(engagement);
-
-        if (state != FeatureEngagement.IN_GEAR) {
-            log.warn("coverage search engagement is not engaged so skipping discovery and" +
-                    " queueing of coverage searches");
-            return;
-        }
-
         log.info("running coverage period quartz job by first looking for new coverage periods and then queueing new" +
                 " and stale coverage periods");
 
         try {
-            processor.discoverCoveragePeriods();
 
-            processor.queueStaleCoveragePeriods();
+            String discoveryEngagement = propertiesService.getPropertiesByKey(Constants.COVERAGE_SEARCH_DISCOVERY).getValue();
+            FeatureEngagement disvoeryState = FeatureEngagement.fromString(discoveryEngagement);
+
+            if (disvoeryState == FeatureEngagement.IN_GEAR) {
+                log.info("coverage search discovery is engaged so attempting to discover new coverage periods");
+                processor.discoverCoveragePeriods();
+            }
+
+            String queueEngagement = propertiesService.getPropertiesByKey(Constants.COVERAGE_SEARCH_QUEUEING).getValue();
+            FeatureEngagement queueState = FeatureEngagement.fromString(queueEngagement);
+
+            if (queueState == FeatureEngagement.IN_GEAR) {
+                log.info("coverage search queueing is engaged so attempting to queue searches for new coverage periods " +
+                        "and stale coverage periods");
+                processor.queueStaleCoveragePeriods();
+            }
         } catch (Exception exception) {
             log.error("coverage period updates could not be conducted");
             throw new JobExecutionException(exception);

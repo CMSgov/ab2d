@@ -20,9 +20,16 @@ class CoveragePeriodQuartzJobTest {
 
         PropertiesService propertiesService = mock(PropertiesService.class);
 
-        when(propertiesService.getPropertiesByKey(eq(Constants.COVERAGE_SEARCH_ENGAGEMENT))).thenAnswer((arg) -> {
+        when(propertiesService.getPropertiesByKey(eq(Constants.COVERAGE_SEARCH_DISCOVERY))).thenAnswer((arg) -> {
             Properties engaged = new Properties();
-            engaged.setKey(Constants.COVERAGE_SEARCH_ENGAGEMENT);
+            engaged.setKey(Constants.COVERAGE_SEARCH_DISCOVERY);
+            engaged.setValue("idle");
+            return engaged;
+        });
+
+        when(propertiesService.getPropertiesByKey(eq(Constants.COVERAGE_SEARCH_QUEUEING))).thenAnswer((arg) -> {
+            Properties engaged = new Properties();
+            engaged.setKey(Constants.COVERAGE_SEARCH_QUEUEING);
             engaged.setValue("idle");
             return engaged;
         });
@@ -48,9 +55,16 @@ class CoveragePeriodQuartzJobTest {
 
         PropertiesService propertiesService = mock(PropertiesService.class);
 
-        when(propertiesService.getPropertiesByKey(eq(Constants.COVERAGE_SEARCH_ENGAGEMENT))).thenAnswer((arg) -> {
+        when(propertiesService.getPropertiesByKey(eq(Constants.COVERAGE_SEARCH_DISCOVERY))).thenAnswer((arg) -> {
             Properties engaged = new Properties();
-            engaged.setKey(Constants.COVERAGE_SEARCH_ENGAGEMENT);
+            engaged.setKey(Constants.COVERAGE_SEARCH_DISCOVERY);
+            engaged.setValue("engaged");
+            return engaged;
+        });
+
+        when(propertiesService.getPropertiesByKey(eq(Constants.COVERAGE_SEARCH_QUEUEING))).thenAnswer((arg) -> {
+            Properties engaged = new Properties();
+            engaged.setKey(Constants.COVERAGE_SEARCH_QUEUEING);
             engaged.setValue("engaged");
             return engaged;
         });
