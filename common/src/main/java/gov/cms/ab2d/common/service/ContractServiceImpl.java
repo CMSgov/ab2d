@@ -19,6 +19,8 @@ public class ContractServiceImpl implements ContractService {
     private ContractRepository contractRepository;
 
     public List<Contract> getAllAttestedContracts() {
+        // There are about 100 contracts including test contracts so this call has minimal cost.
+        // This call is only made once a day as well.
         return contractRepository.findAll()
                 .stream().filter(Contract::hasAttestation).collect(toList());
     }

@@ -66,7 +66,7 @@ public class CoverageServiceImpl implements CoverageService {
     }
 
     @Override
-    public CoveragePeriod getOrCreateCoveragePeriod(Contract contract, int month, int year) {
+    public CoveragePeriod getCreateIfAbsentCoveragePeriod(Contract contract, int month, int year) {
         checkMonthAndYear(month, year);
 
         Optional<CoveragePeriod> existing = coveragePeriodRepo.findByContractIdAndMonthAndYear(contract.getId(), month, year);

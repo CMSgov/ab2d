@@ -134,7 +134,7 @@ class CoverageServiceImplTest {
 
         long periods = coveragePeriodRepo.count();
 
-        coverageService.getOrCreateCoveragePeriod(contract1, JANUARY, YEAR);
+        coverageService.getCreateIfAbsentCoveragePeriod(contract1, JANUARY, YEAR);
 
         assertEquals(periods, coveragePeriodRepo.count());
     }
@@ -142,7 +142,7 @@ class CoverageServiceImplTest {
     @DisplayName("Get or create does not insert duplicate period")
     @Test
     void getOrCreateInsertsNew() {
-        CoveragePeriod period = coverageService.getOrCreateCoveragePeriod(contract1, 12, 2020);
+        CoveragePeriod period = coverageService.getCreateIfAbsentCoveragePeriod(contract1, 12, 2020);
         coveragePeriodRepo.delete(period);
     }
 

@@ -33,7 +33,7 @@ public interface CoverageService {
      * @param year year of the period
      * @return coverage period as it exists in database
      */
-    CoveragePeriod getOrCreateCoveragePeriod(Contract contract, int month, int year);
+    CoveragePeriod getCreateIfAbsentCoveragePeriod(Contract contract, int month, int year);
 
     /**
      * Check current status of a {@link CoveragePeriod}

@@ -119,7 +119,7 @@ public class CoverageProcessorImpl implements CoverageProcessor {
 
             int coveragePeriodsForContracts = 0;
             while (attestationTime.isBefore(now)) {
-                coverageService.getOrCreateCoveragePeriod(contract, attestationTime.getMonthValue(), attestationTime.getYear());
+                coverageService.getCreateIfAbsentCoveragePeriod(contract, attestationTime.getMonthValue(), attestationTime.getYear());
                 coveragePeriodsForContracts += 1;
 
                 attestationTime = attestationTime.plusMonths(1);
