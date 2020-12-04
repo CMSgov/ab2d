@@ -32,28 +32,6 @@ INNER JOIN public.user_account e
 ON a.id = e.sponsor_id
 WHERE h.id = e.id;
 
--- Delete user role records where user accounts have no contract record
-
-DELETE FROM user_role c
-WHERE c.user_account_id IN (
-  SELECT b.user_account_id
-  FROM user_role b
-  INNER JOIN user_account a
-  ON b.user_account_id = a.id
-  WHERE sponsor_id NOT IN (
-    SELECT sponsor_id
-    FROM contract
-  )
-);
-
--- Delete user accounts that have no contract record
-
-DELETE FROM user_account
-WHERE sponsor_id NOT IN (
-  SELECT sponsor_id
-  FROM contract
-);
-
 -- Add 'not null' constraint to contract_id column of the user_account table
 
 ALTER TABLE user_account
@@ -65,5 +43,3 @@ ALTER TABLE user_account
 ADD CONSTRAINT "fk_user_account_to_contract"
 FOREIGN KEY (contract_id)
 REFERENCES contract (id);
-
-
