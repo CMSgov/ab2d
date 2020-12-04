@@ -25,7 +25,7 @@ public final class DateUtil {
     }
 
     public static String getESTOffset() {
-        return String.format("%tz", Instant.now().atZone(ZoneId.of("America/New_York")));
+        return String.format("%tz", Instant.now().atZone(AB2D_ZONE));
     }
 
     /**
