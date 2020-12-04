@@ -1414,7 +1414,8 @@ else
     aws --region "${AWS_DEFAULT_REGION}" ecs update-container-instances-state \
       --cluster "${CMS_ENV}-api" \
       --status DRAINING \
-      --container-instances $OLD_API_INSTANCE_LIST
+      --container-instances $OLD_API_INSTANCE_LIST \
+      1> /dev/null
   fi
   if [ -n "${OLD_WORKER_CONTAINER_INSTANCES}" ]; then
     OLD_WORKER_INSTANCE_LIST=$(echo $OLD_WORKER_CONTAINER_INSTANCES \
@@ -1426,7 +1427,8 @@ else
     aws --region "${AWS_DEFAULT_REGION}" ecs update-container-instances-state \
       --cluster "${CMS_ENV}-worker" \
       --status DRAINING \
-      --container-instances $OLD_WORKER_INSTANCE_LIST
+      --container-instances $OLD_WORKER_INSTANCE_LIST \
+      1> /dev/null
     echo "Allowing all instances to drain for 60 seconds before proceeding..."
     sleep 60
   fi
