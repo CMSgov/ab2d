@@ -32,14 +32,4 @@ INNER JOIN public.user_account e
 ON a.id = e.sponsor_id
 WHERE h.id = e.id;
 
--- Add 'not null' constraint to contract_id column of the user_account table
 
-ALTER TABLE user_account
-ALTER COLUMN contract_id SET NOT NULL;
-
--- Add foreign key to the user_account table that directly references the contract associated with the user account mapping
-
-ALTER TABLE user_account
-ADD CONSTRAINT "fk_user_account_to_contract"
-FOREIGN KEY (contract_id)
-REFERENCES contract (id);
