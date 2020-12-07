@@ -54,9 +54,6 @@ public class BulkDataAccessAPIUnusualDataTests {
     private RoleRepository roleRepository;
 
     @Autowired
-    private SponsorRepository sponsorRepository;
-
-    @Autowired
     private TestUtil testUtil;
 
     @Autowired
@@ -74,7 +71,6 @@ public class BulkDataAccessAPIUnusualDataTests {
         contractRepository.deleteAll();
         userRepository.deleteAll();
         roleRepository.deleteAll();
-        sponsorRepository.deleteAll();
         doAll.delete();
     }
 
@@ -157,7 +153,7 @@ public class BulkDataAccessAPIUnusualDataTests {
         Assert.assertEquals(job.getProgress(), Integer.valueOf(0));
         Assert.assertEquals(job.getRequestUrl(),
                 "http://localhost" + API_PREFIX + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export");
-        Assert.assertEquals(job.getResourceTypes(), null);
+        Assert.assertNull(job.getResourceTypes());
         Assert.assertEquals(job.getUser(), userRepository.findByUsername(TEST_USER));
 
     }

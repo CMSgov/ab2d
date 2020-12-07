@@ -1,9 +1,7 @@
 package gov.cms.ab2d.hpms.service;
 
 import gov.cms.ab2d.common.model.Contract;
-import gov.cms.ab2d.common.model.Sponsor;
 import gov.cms.ab2d.common.repository.ContractRepository;
-import gov.cms.ab2d.common.repository.SponsorRepository;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.hpms.SpringBootTestApp;
 import org.assertj.core.util.Lists;
@@ -19,7 +17,6 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.util.List;
-import java.util.Optional;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -31,7 +28,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 public class AttestationUpdaterServiceTest {
 
     @Autowired
-    SponsorRepository sponsorRepository;
+    private ContractRepository contractRepository;
 
     @SuppressWarnings({"rawtypes", "unused"})
     @Container
@@ -45,12 +42,8 @@ public class AttestationUpdaterServiceTest {
     public void contractUpdated() {
         assertNotNull(aus);
         aus.pollOrganizations();
-        Optional<Sponsor> optSponsor =
-            sponsorRepository.findAll().stream()
-                    .filter(sponsor -> sponsor.getOrgName().equals("ABC Org")).findFirst();
-        assertTrue(optSponsor.isPresent());
-        Sponsor sponsor = optSponsor.get();
-        assertEquals(1, sponsor.getContracts().size());
+        List<Contract> contracts = contractRepository.findAll();
+        assertEquals(1, contracts.size());
     }
 
     @Test
@@ -60,20 +53,13 @@ public class AttestationUpdaterServiceTest {
     }
 
     @TestConfiguration
-    static class MockHpmsFetcherConfig {
-
-        @Autowired
-        private SponsorRepository sponsorRepository;
-
-        @Autowired
-        private ContractRepository contractRepository;
+    class MockHpmsFetcherConfig {
 
         @Qualifier("for_testing")
         @Bean()
         public AttestationUpdaterServiceImpl getMockService()
         {
-            return new AttestationUpdaterServiceImpl(sponsorRepository, contractRepository,
-                    new MockHpmsFetcher());
+            return new AttestationUpdaterServiceImpl(contractRepository, new MockHpmsFetcher());
         }
     }
 

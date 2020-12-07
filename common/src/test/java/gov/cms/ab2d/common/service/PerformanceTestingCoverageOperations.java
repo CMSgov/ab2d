@@ -41,9 +41,6 @@ class PerformanceTestingCoverageOperations {
     private ContractRepository contractRepo;
 
     @Autowired
-    private SponsorRepository sponsorRepo;
-
-    @Autowired
     private CoveragePeriodRepository coveragePeriodRepo;
 
     @Autowired
@@ -66,7 +63,6 @@ class PerformanceTestingCoverageOperations {
 
     @Autowired CoverageSearchRepository coverageSearchRepository;
 
-    private Sponsor sponsor;
     private Contract contract;
     private CoveragePeriod period1;
     private CoveragePeriod period2;
@@ -99,7 +95,6 @@ class PerformanceTestingCoverageOperations {
 //        }
 
 // You will have to find the sponsor repo id manually
-        sponsor = sponsorRepo.findById(90L).get();
         contract = contractRepo.findContractByContractNumber("TST-12").get();
 //        contract = contractRepo.findContractByContractNumber("TST-34").get();
 //        contract = contractRepo.findContractByContractNumber("TST-56").get();

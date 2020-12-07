@@ -1,12 +1,8 @@
 package gov.cms.ab2d.worker.service;
 
 import gov.cms.ab2d.common.dto.PropertiesDTO;
-import gov.cms.ab2d.common.model.Job;
-import gov.cms.ab2d.common.model.JobStatus;
-import gov.cms.ab2d.common.model.Sponsor;
-import gov.cms.ab2d.common.model.User;
+import gov.cms.ab2d.common.model.*;
 import gov.cms.ab2d.common.repository.JobRepository;
-import gov.cms.ab2d.common.repository.SponsorRepository;
 import gov.cms.ab2d.common.repository.UserRepository;
 import gov.cms.ab2d.common.service.PropertiesService;
 import gov.cms.ab2d.common.service.FeatureEngagement;
@@ -46,7 +42,6 @@ public class WorkerServiceDisengagementTest {
 
     @Autowired private DataSetup dataSetup;
     @Autowired private JobRepository jobRepository;
-    @Autowired private SponsorRepository sponsorRepository;
     @Autowired private UserRepository userRepository;
     @Autowired private PropertiesService propertiesService;
 
@@ -59,7 +54,6 @@ public class WorkerServiceDisengagementTest {
         jobRepository.deleteAll();
         userRepository.deleteAll();
         dataSetup.deleteCoverage();
-        sponsorRepository.deleteAll();
         disableWorker();
     }
 
@@ -153,24 +147,9 @@ public class WorkerServiceDisengagementTest {
         final User user = new User();
         user.setId((long) getIntRandom());
         user.setUsername("testuser" + getIntRandom());
-        user.setSponsor(createSponsor());
+        user.setContract(new Contract());
         user.setEnabled(true);
         return userRepository.save(user);
-    }
-
-    private Sponsor createSponsor() {
-        final Sponsor parentSponsor = new Sponsor();
-        parentSponsor.setId((long) getIntRandom());
-        parentSponsor.setHpmsId(getIntRandom());
-        parentSponsor.setOrgName("BCBS - PARENT");
-        sponsorRepository.save(parentSponsor);
-
-        final Sponsor sponsor = new Sponsor();
-        sponsor.setId((long) getIntRandom());
-        sponsor.setHpmsId(getIntRandom());
-        sponsor.setOrgName("BCBS");
-        sponsor.setParent(parentSponsor);
-        return sponsorRepository.save(sponsor);
     }
 
     private int getIntRandom() {

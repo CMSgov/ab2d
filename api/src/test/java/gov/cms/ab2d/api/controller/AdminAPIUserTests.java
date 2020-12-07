@@ -4,11 +4,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.okta.jwt.JwtVerificationException;
 import gov.cms.ab2d.api.SpringBootApp;
 import gov.cms.ab2d.common.dto.ContractDTO;
-import gov.cms.ab2d.common.dto.SponsorDTO;
 import gov.cms.ab2d.common.dto.UserDTO;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.Job;
-import gov.cms.ab2d.common.model.Sponsor;
 import gov.cms.ab2d.common.model.User;
 import gov.cms.ab2d.common.repository.*;
 import gov.cms.ab2d.common.model.Role;
@@ -22,7 +20,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.data.domain.Sort;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
@@ -31,7 +28,6 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.util.List;
-import java.util.Set;
 
 import static gov.cms.ab2d.common.util.Constants.*;
 import static gov.cms.ab2d.common.util.Constants.ADMIN_ROLE;
@@ -51,9 +47,6 @@ public class AdminAPIUserTests {
 
     @Container
     private static final PostgreSQLContainer postgreSQLContainer= new AB2DPostgresqlContainer();
-
-    @Autowired
-    private SponsorRepository sponsorRepository;
 
     @Autowired
     private UserRepository userRepository;
@@ -88,7 +81,6 @@ public class AdminAPIUserTests {
         contractRepository.deleteAll();
         userRepository.deleteAll();
         roleRepository.deleteAll();
-        sponsorRepository.deleteAll();
 
         token = testUtil.setupToken(List.of(ADMIN_ROLE, SPONSOR_ROLE, ATTESTOR_ROLE));
     }
@@ -101,8 +93,7 @@ public class AdminAPIUserTests {
         userDTO.setEnabled(true);
         userDTO.setFirstName("Test");
         userDTO.setLastName("User");
-        Sponsor sponsor = sponsorRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
-        userDTO.setSponsor(new SponsorDTO(sponsor.getHpmsId(), sponsor.getOrgName()));
+        userDTO.setContract(new ContractDTO());
         userDTO.setRole(ADMIN_ROLE);
         Role role = roleService.findRoleByName(ADMIN_ROLE);
         userDTO.setRole(role.getName());
@@ -124,8 +115,8 @@ public class AdminAPIUserTests {
         Assert.assertEquals(createdUserDTO.getFirstName(), userDTO.getFirstName());
         Assert.assertEquals(createdUserDTO.getLastName(), userDTO.getLastName());
         Assert.assertEquals(createdUserDTO.getEnabled(), userDTO.getEnabled());
-        Assert.assertEquals(createdUserDTO.getSponsor().getHpmsId(), userDTO.getSponsor().getHpmsId());
-        Assert.assertEquals(createdUserDTO.getSponsor().getOrgName(), userDTO.getSponsor().getOrgName());
+        Assert.assertEquals(createdUserDTO.getContract().getContractNumber(), userDTO.getContract().getContractNumber());
+        Assert.assertEquals(createdUserDTO.getContract().getContractName(), userDTO.getContract().getContractName());
         Assert.assertEquals(createdUserDTO.getRole(), userDTO.getRole());
     }
 
@@ -137,8 +128,7 @@ public class AdminAPIUserTests {
         userDTO.setEnabled(true);
         userDTO.setFirstName("Test");
         userDTO.setLastName("User");
-        Sponsor sponsor = sponsorRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
-        userDTO.setSponsor(new SponsorDTO(sponsor.getHpmsId(), sponsor.getOrgName()));
+        userDTO.setContract(new ContractDTO());
         Role role = roleService.findRoleByName(ATTESTOR_ROLE);
         userDTO.setRole(role.getName());
 
@@ -159,8 +149,8 @@ public class AdminAPIUserTests {
         Assert.assertEquals(createdUserDTO.getFirstName(), userDTO.getFirstName());
         Assert.assertEquals(createdUserDTO.getLastName(), userDTO.getLastName());
         Assert.assertEquals(createdUserDTO.getEnabled(), userDTO.getEnabled());
-        Assert.assertEquals(createdUserDTO.getSponsor().getHpmsId(), userDTO.getSponsor().getHpmsId());
-        Assert.assertEquals(createdUserDTO.getSponsor().getOrgName(), userDTO.getSponsor().getOrgName());
+        Assert.assertEquals(createdUserDTO.getContract().getContractNumber(), userDTO.getContract().getContractNumber());
+        Assert.assertEquals(createdUserDTO.getContract().getContractName(), userDTO.getContract().getContractName());
         Assert.assertEquals(createdUserDTO.getRole(), userDTO.getRole());
     }
 
@@ -172,8 +162,7 @@ public class AdminAPIUserTests {
         userDTO.setEnabled(true);
         userDTO.setFirstName("Test");
         userDTO.setLastName("User");
-        Sponsor sponsor = sponsorRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
-        userDTO.setSponsor(new SponsorDTO(sponsor.getHpmsId(), sponsor.getOrgName()));
+        userDTO.setContract(new ContractDTO());
         userDTO.setRole(ADMIN_ROLE);
         Role role = roleService.findRoleByName(ADMIN_ROLE);
         userDTO.setRole(role.getName());
@@ -207,8 +196,9 @@ public class AdminAPIUserTests {
         userDTO.setEnabled(true);
         userDTO.setFirstName("Test");
         userDTO.setLastName("User");
-        Sponsor sponsor = sponsorRepository.findByHpmsIdAndOrgName(123, "Test").get();
-        userDTO.setSponsor(new SponsorDTO(sponsor.getHpmsId(), sponsor.getOrgName()));
+        ContractDTO contractDTO = new ContractDTO();
+        contractDTO.setContractNumber("T111");
+        userDTO.setContract(contractDTO);
         userDTO.setRole(ADMIN_ROLE);
 
         ObjectMapper mapper = new ObjectMapper();
@@ -227,8 +217,7 @@ public class AdminAPIUserTests {
         createdUserDTO.setEnabled(false);
         createdUserDTO.setFirstName("Updated");
         createdUserDTO.setLastName("Username");
-        createdUserDTO.getSponsor().setHpmsId(sponsor.getParent().getHpmsId());
-        createdUserDTO.getSponsor().setOrgName(sponsor.getParent().getOrgName());
+        createdUserDTO.getContract().setContractNumber(contractDTO.getContractNumber());
         createdUserDTO.setRole(SPONSOR_ROLE);
 
         MvcResult updateMvcResult = this.mockMvc.perform(
@@ -245,8 +234,7 @@ public class AdminAPIUserTests {
         Assert.assertEquals(updatedUserDTO.getFirstName(), createdUserDTO.getFirstName());
         Assert.assertEquals(updatedUserDTO.getLastName(), createdUserDTO.getLastName());
         Assert.assertEquals(updatedUserDTO.getEnabled(), createdUserDTO.getEnabled());
-        Assert.assertEquals(updatedUserDTO.getSponsor().getHpmsId(), createdUserDTO.getSponsor().getHpmsId());
-        Assert.assertEquals(updatedUserDTO.getSponsor().getOrgName(), createdUserDTO.getSponsor().getOrgName());
+        Assert.assertEquals(updatedUserDTO.getContract().getContractNumber(), createdUserDTO.getContract().getContractNumber());
         Assert.assertEquals(updatedUserDTO.getRole(), createdUserDTO.getRole());
     }
 
@@ -270,8 +258,7 @@ public class AdminAPIUserTests {
         userDTO.setEnabled(true);
         userDTO.setFirstName("Test");
         userDTO.setLastName("User");
-        Sponsor sponsor = sponsorRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
-        userDTO.setSponsor(new SponsorDTO(sponsor.getHpmsId(), sponsor.getOrgName()));
+        userDTO.setContract(new ContractDTO());
         userDTO.setRole(SPONSOR_ROLE);
 
         return userDTO;
@@ -412,9 +399,7 @@ public class AdminAPIUserTests {
         Assert.assertEquals(userDTO.getFirstName(), "test");
         Assert.assertEquals(userDTO.getLastName(), "user");
         Assert.assertEquals(userDTO.getEnabled(), true);
-        Assert.assertEquals(userDTO.getSponsor().getHpmsId(), Integer.valueOf(123543));
-        Assert.assertEquals(userDTO.getSponsor().getOrgName(), "Test 1");
-        ContractDTO contractDTO = userDTO.getContracts().iterator().next();
+        ContractDTO contractDTO = userDTO.getContract();
         Assert.assertEquals(contractDTO.getContractNumber(), "Z0000");
         Assert.assertEquals(contractDTO.getContractName(), "Test Contract");
         Assert.assertNotNull(contractDTO.getAttestedOn());
@@ -432,16 +417,14 @@ public class AdminAPIUserTests {
     }
 
     private void setupUser(boolean enabled) {
-        Sponsor savedSponsor = dataSetup.createSponsor("Parent Corp. 1", 34534, "Test 1", 123543);
-        Contract contract = dataSetup.setupContract(savedSponsor, "Z0000");
-        savedSponsor.setContracts(Set.of(contract));
+        Contract contract = dataSetup.setupContract("Z0000");
         User user = new User();
         user.setUsername(ENABLE_DISABLE_USER);
         user.setEmail("test@test.com");
         user.setFirstName("test");
         user.setLastName("user");
         user.setEnabled(enabled);
-        user.setSponsor(savedSponsor);
+        user.setContract(contract);
 
         userRepository.save(user);
     }
