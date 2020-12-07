@@ -5,7 +5,6 @@ import gov.cms.ab2d.api.SpringBootApp;
 import gov.cms.ab2d.common.model.User;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.common.repository.RoleRepository;
-import gov.cms.ab2d.common.repository.SponsorRepository;
 import gov.cms.ab2d.common.repository.UserRepository;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.eventlogger.LoggableEvent;
@@ -44,9 +43,6 @@ public class AuthenticationTests {
     private TestUtil testUtil;
 
     @Autowired
-    private SponsorRepository sponsorRepository;
-
-    @Autowired
     private UserRepository userRepository;
 
     @Autowired
@@ -68,7 +64,6 @@ public class AuthenticationTests {
         jobRepository.deleteAll();
         userRepository.deleteAll();
         roleRepository.deleteAll();
-        sponsorRepository.deleteAll();
         doAll.delete();
         token = testUtil.setupToken(List.of(SPONSOR_ROLE));
     }

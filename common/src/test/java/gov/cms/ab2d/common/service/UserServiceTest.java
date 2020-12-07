@@ -1,12 +1,8 @@
 package gov.cms.ab2d.common.service;
 
 import gov.cms.ab2d.common.SpringBootApp;
-import gov.cms.ab2d.common.dto.SponsorDTO;
-import gov.cms.ab2d.common.dto.UserDTO;
-import gov.cms.ab2d.common.model.Role;
-import gov.cms.ab2d.common.model.Sponsor;
-import gov.cms.ab2d.common.model.User;
-import gov.cms.ab2d.common.repository.SponsorRepository;
+import gov.cms.ab2d.common.dto.*;
+import gov.cms.ab2d.common.model.*;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.DataSetup;
 import org.junit.Assert;
@@ -14,7 +10,6 @@ import org.junit.jupiter.api.Assertions;
 import gov.cms.ab2d.common.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.modelmapper.MappingException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -32,16 +27,13 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 import javax.annotation.Nullable;
 import javax.servlet.http.HttpServletRequest;
-import javax.validation.ConstraintViolationException;
 
 import java.util.List;
 
 import static gov.cms.ab2d.common.util.Constants.ADMIN_ROLE;
 import static gov.cms.ab2d.common.util.Constants.SPONSOR_ROLE;
-import static gov.cms.ab2d.common.util.DataSetup.TEST_USER;
 import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThat;
+import static org.junit.Assert.*;
 
 @SpringBootTest(classes = SpringBootApp.class)
 @TestPropertySource(locations = "/application.common.properties")
@@ -55,9 +47,6 @@ public class UserServiceTest {
     private UserRepository userRepository;
 
     @Autowired
-    private SponsorRepository sponsorRepository;
-
-    @Autowired
     private RoleService roleService;
 
     @Container
@@ -69,21 +58,18 @@ public class UserServiceTest {
     @BeforeEach
     public void init() {
         userRepository.deleteAll();
-        sponsorRepository.deleteAll();
     }
 
     @Test
     public void testUser() {
         User user = userService.getCurrentUser();
 
-        assertEquals(null, user); // no authentication for now, so will be null
+        assertNull(user); // no authentication for now, so will be null
     }
 
     @Test
     public void testCreateUser() {
-        Sponsor sponsor = dataSetup.createSponsor("Parent Corp.", 456, "Test", 123);
-
-        UserDTO user = createUser(sponsor, SPONSOR_ROLE);
+        UserDTO user = buildUserDTO("Test", SPONSOR_ROLE);
 
         UserDTO createdUser = userService.createUser(user);
         Assert.assertEquals(createdUser.getUsername(), user.getUsername());
@@ -91,15 +77,13 @@ public class UserServiceTest {
         Assert.assertEquals(createdUser.getFirstName(), user.getFirstName());
         Assert.assertEquals(createdUser.getLastName(), user.getLastName());
         Assert.assertEquals(createdUser.getEnabled(), user.getEnabled());
-        Assert.assertEquals(createdUser.getSponsor(), user.getSponsor());
+        Assert.assertEquals(createdUser.getContract(), user.getContract());
         Assert.assertEquals(createdUser.getRole(), SPONSOR_ROLE);
     }
 
     @Test
     public void testCreateDuplicateUser() {
-        Sponsor sponsor = dataSetup.createSponsor("Parent Corp.", 456, "Test", 123);
-
-        UserDTO user = createUser(sponsor, SPONSOR_ROLE);
+        UserDTO user = buildUserDTO("Test", SPONSOR_ROLE);
 
         userService.createUser(user);
         var exceptionThrown = Assertions.assertThrows(DataIntegrityViolationException.class, () -> {
@@ -110,10 +94,15 @@ public class UserServiceTest {
     }
 
 //    @Test - todo: fix or delete
-    public void testCreateDuplicateUserByEmail() {
-        Sponsor sponsor = dataSetup.createSponsor("Parent Corp.", 456, "Test", 123);
+    private UserDTO buildUserDTO(String test, String sponsorRole) {
+        Contract contract = dataSetup.setupContract(test);
 
-        UserDTO user = createUser(sponsor, SPONSOR_ROLE);
+        return createUser(contract, sponsorRole);
+    }
+
+    @Test
+    public void testCreateDuplicateUserByEmail() {
+        UserDTO user = buildUserDTO("N123", SPONSOR_ROLE);
 
         userService.createUser(user);
 
@@ -124,53 +113,29 @@ public class UserServiceTest {
         assertThat(exceptionThrown.getMessage(), is("could not execute statement; SQL [n/a]; constraint [uc_user_account_email]; nested exception is org.hibernate.exception.ConstraintViolationException: could not execute statement"));
     }
 
-    static private final String EXPECTED_BAD_SPONSOR =
-            "ModelMapper mapping errors:" + System.lineSeparator() + System.lineSeparator() +
-                    "1) Converter Converter<class gov.cms.ab2d.common.dto.SponsorDTO, " +
-                    "class gov.cms.ab2d.common.model.Sponsor> failed to convert " +
-                    "gov.cms.ab2d.common.dto.SponsorDTO to gov.cms.ab2d.common.model.Sponsor." +
-                    System.lineSeparator() + System.lineSeparator() +"1 error";
-
-
-    @Test
-    public void testCreateUserBadSponsor() {
+    private UserDTO createUser(Contract contract, @Nullable String roleName) {
         UserDTO user = new UserDTO();
         user.setEmail("test@test.com");
         user.setUsername("test@test.com");
         user.setFirstName("Test");
         user.setLastName("User");
         user.setEnabled(true);
-        Role role = roleService.findRoleByName(SPONSOR_ROLE);
-        user.setRole(role.getName());
-
-        var exceptionThrown = Assertions.assertThrows(MappingException.class, () -> {
-            userService.createUser(user);
-        });
-        assertEquals(EXPECTED_BAD_SPONSOR, exceptionThrown.getMessage());
-    }
-
-    private UserDTO createUser(Sponsor sponsor, @Nullable String roleName) {
-        UserDTO user = new UserDTO();
-        user.setEmail("test@test.com");
-        user.setUsername("test@test.com");
-        user.setFirstName("Test");
-        user.setLastName("User");
-        user.setEnabled(true);
-        SponsorDTO sponsorDTO = new SponsorDTO(sponsor.getHpmsId(), sponsor.getOrgName());
-        user.setSponsor(sponsorDTO);
+        ContractDTO contractDTO = new ContractDTO();
+        user.setContract(contractDTO);
         if(roleName != null) {
             Role role = roleService.findRoleByName(roleName);
             user.setRole(role.getName());
         }
+
+        // todo: get rid of
+        user.setUsername(contract.getContractName());
 
         return user;
     }
 
     @Test
     public void testUpdateUser() {
-        Sponsor sponsor = dataSetup.createSponsor("Parent Corp.", 456, "Test", 123);
-
-        UserDTO user = createUser(sponsor, SPONSOR_ROLE);
+        UserDTO user = buildUserDTO("Test", SPONSOR_ROLE);
 
         UserDTO createdUser = userService.createUser(user);
 
@@ -178,8 +143,8 @@ public class UserServiceTest {
         createdUser.setFirstName("New");
         createdUser.setLastName("User");
         createdUser.setEnabled(false);
-        SponsorDTO sponsorDTOUpdate = new SponsorDTO(sponsor.getParent().getHpmsId(), sponsor.getParent().getOrgName());
-        createdUser.setSponsor(sponsorDTOUpdate);
+        ContractDTO contractDTO = new ContractDTO();
+        createdUser.setContract(contractDTO);
         createdUser.setRole(SPONSOR_ROLE);
 
         UserDTO updatedUser = userService.updateUser(createdUser);
@@ -189,16 +154,14 @@ public class UserServiceTest {
         Assert.assertEquals(updatedUser.getFirstName(), createdUser.getFirstName());
         Assert.assertEquals(updatedUser.getLastName(), createdUser.getLastName());
         Assert.assertEquals(updatedUser.getEnabled(), createdUser.getEnabled());
-        Assert.assertEquals(updatedUser.getSponsor().getOrgName(), createdUser.getSponsor().getOrgName());
-        Assert.assertEquals(updatedUser.getSponsor().getHpmsId(), createdUser.getSponsor().getHpmsId());
+        Assert.assertEquals(updatedUser.getContract().getContractName(), createdUser.getContract().getContractName());
+        Assert.assertEquals(updatedUser.getContract().getContractNumber(), createdUser.getContract().getContractNumber());
         Assert.assertEquals(updatedUser.getRole(), createdUser.getRole());
     }
 
     @Test
     public void testUpdateUserAddRole() {
-        Sponsor sponsor = dataSetup.createSponsor("Parent Corp.", 456, "Test", 123);
-
-        UserDTO user = createUser(sponsor, null);
+        UserDTO user = buildUserDTO("Test", null);
 
         Assert.assertNull(user.getRole());
 
@@ -213,9 +176,7 @@ public class UserServiceTest {
 
     @Test
     public void testUpdateUserRemoveRole() {
-        Sponsor sponsor = dataSetup.createSponsor("Parent Corp.", 456, "Test", 123);
-
-        UserDTO user = createUser(sponsor, SPONSOR_ROLE);
+        UserDTO user = buildUserDTO("TEST", SPONSOR_ROLE);
 
         Assert.assertEquals(user.getRole(), SPONSOR_ROLE);
 
@@ -228,28 +189,6 @@ public class UserServiceTest {
         Assert.assertNull(updatedUser.getRole());
     }
 
-    private static final String EXPECTED_REMOVE_MESSAGE =
-            "ModelMapper mapping errors:" + System.lineSeparator() + System.lineSeparator() +
-            "1) Converter Converter<class gov.cms.ab2d.common.dto.SponsorDTO, class gov.cms.ab2d.common.model.Sponsor> " +
-            "failed to convert gov.cms.ab2d.common.dto.SponsorDTO to gov.cms.ab2d.common.model.Sponsor." +
-            System.lineSeparator() + System.lineSeparator() + "1 error";
-
-    @Test
-    public void testUpdateUserRemoveSponsor() {
-        Sponsor sponsor = dataSetup.createSponsor("Parent Corp.", 456, "Test", 123);
-
-        UserDTO user = createUser(sponsor, SPONSOR_ROLE);
-
-        UserDTO createdUser = userService.createUser(user);
-
-        createdUser.setSponsor(null);
-
-        var exceptionThrown = Assertions.assertThrows(MappingException.class, () -> {
-            userService.updateUser(createdUser);
-        });
-        assertEquals(EXPECTED_REMOVE_MESSAGE, exceptionThrown.getMessage());
-    }
-
     @Test
     public void testSetupUserAndRolesInSecurityContext() {
         HttpServletRequest httpServletRequest = new MockHttpServletRequest();
@@ -260,8 +199,7 @@ public class UserServiceTest {
         auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(httpServletRequest));
         SecurityContextHolder.getContext().setAuthentication(auth);
 
-        Sponsor sponsor = dataSetup.createSponsor("Parent Corp.", 456, "Test", 123);
-        UserDTO user = createUser(sponsor, SPONSOR_ROLE);
+        UserDTO user = buildUserDTO("Test", SPONSOR_ROLE);
         UserDTO createdUser = userService.createUser(user);
 
         String username = createdUser.getUsername();
@@ -286,9 +224,7 @@ public class UserServiceTest {
 
     @Test
     public void testEnableUser() {
-        Sponsor sponsor = dataSetup.createSponsor("Parent Corp.", 456, "Test", 123);
-
-        UserDTO user = createUser(sponsor, SPONSOR_ROLE);
+        UserDTO user = buildUserDTO("Test", SPONSOR_ROLE);
         user.setEnabled(false);
 
         userService.createUser(user);
@@ -299,9 +235,7 @@ public class UserServiceTest {
 
     @Test
     public void testDisableUser() {
-        Sponsor sponsor = dataSetup.createSponsor("Parent Corp.", 456, "Test", 123);
-
-        UserDTO user = createUser(sponsor, SPONSOR_ROLE);
+        UserDTO user = buildUserDTO("Test", SPONSOR_ROLE);
         userService.createUser(user);
 
         UserDTO updatedUser = userService.disableUser(user.getUsername());

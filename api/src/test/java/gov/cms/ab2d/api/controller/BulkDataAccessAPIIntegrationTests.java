@@ -78,9 +78,6 @@ public class BulkDataAccessAPIIntegrationTests {
     private RoleRepository roleRepository;
 
     @Autowired
-    private SponsorRepository sponsorRepository;
-
-    @Autowired
     private ContractRepository contractRepository;
 
     @Value("${efs.mount}")
@@ -110,7 +107,6 @@ public class BulkDataAccessAPIIntegrationTests {
         contractRepository.deleteAll();
         userRepository.deleteAll();
         roleRepository.deleteAll();
-        sponsorRepository.deleteAll();
 
         doAll.delete();
 
@@ -274,8 +270,8 @@ public class BulkDataAccessAPIIntegrationTests {
 
         List<Job> jobs = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id"));
         User user = new User();
-        Sponsor sponsor = dataSetup.createSponsor("Parent Spons", 4441, "Child Spons", 1114);
-        user.setSponsor(sponsor);
+        Contract contract = dataSetup.setupContract("Test");
+        user.setContract(contract);
         user.setEnabled(true);
         user.setUsername("test");
         user.setEmail("test@test.com");
@@ -1255,11 +1251,11 @@ public class BulkDataAccessAPIIntegrationTests {
                     .andExpect(status().is(202));
         }
 
-        Sponsor sponsor = dataSetup.createSponsor("Parent Spons", 4441, "Child Spons", 1114);
+        Contract contract1 = dataSetup.setupContract("Test1");
         User user = userRepository.findByUsername(TEST_USER);
-        user.setSponsor(sponsor);
+        user.setContract(contract1);
         userRepository.saveAndFlush(user);
-        Contract contractNew = dataSetup.setupContract(sponsor, "New Contract");
+        Contract contractNew = dataSetup.setupContract("New Contract");
 
         this.mockMvc.perform(
                 get(API_PREFIX + FHIR_PREFIX + "/Group/" + contractNew.getContractNumber() + "/$export").contentType(MediaType.APPLICATION_JSON)
@@ -1274,8 +1270,7 @@ public class BulkDataAccessAPIIntegrationTests {
         createMaxJobsWithContract(contract);
 
         User user = new User();
-        Sponsor sponsor = dataSetup.createSponsor("Parent Spons", 4441, "Child Spons", 1114);
-        user.setSponsor(sponsor);
+        user.setContract(contract);
         user.setEnabled(true);
         user.setUsername("test");
         user.setEmail("test@test.com");

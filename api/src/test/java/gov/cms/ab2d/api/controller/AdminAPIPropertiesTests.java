@@ -43,9 +43,6 @@ public class AdminAPIPropertiesTests {
     private TestUtil testUtil;
 
     @Autowired
-    private SponsorRepository sponsorRepository;
-
-    @Autowired
     private UserRepository userRepository;
 
     @Autowired
@@ -71,7 +68,6 @@ public class AdminAPIPropertiesTests {
         contractRepository.deleteAll();
         userRepository.deleteAll();
         roleRepository.deleteAll();
-        sponsorRepository.deleteAll();
 
         token = testUtil.setupToken(List.of(ADMIN_ROLE));
     }

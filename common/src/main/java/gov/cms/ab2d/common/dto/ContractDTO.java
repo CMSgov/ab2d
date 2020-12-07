@@ -13,8 +13,5 @@ public class ContractDTO {
     @NotNull
     private String contractName;
 
-    @NotNull
-    private SponsorDTO sponsor;
-
     private String attestedOn;
 }

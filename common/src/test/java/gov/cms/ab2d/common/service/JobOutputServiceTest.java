@@ -44,9 +44,6 @@ public class JobOutputServiceTest {
     UserRepository userRepository;
 
     @Autowired
-    SponsorRepository sponsorRepository;
-
-    @Autowired
     ContractRepository contractRepository;
 
     @Autowired
@@ -77,7 +74,6 @@ public class JobOutputServiceTest {
         contractRepository.deleteAll();
         jobRepository.deleteAll();
         userRepository.deleteAll();
-        sponsorRepository.deleteAll();
     }
 
     @Test

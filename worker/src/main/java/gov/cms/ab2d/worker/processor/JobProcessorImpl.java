@@ -6,7 +6,6 @@ import com.newrelic.api.agent.Trace;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.Job;
-import gov.cms.ab2d.common.model.Sponsor;
 import gov.cms.ab2d.common.repository.JobOutputRepository;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.common.util.EventUtils;
@@ -53,7 +52,9 @@ public class JobProcessorImpl implements JobProcessor {
     @Value("${audit.files.ttl.hours}")
     private int auditFilesTTLHours;
 
-    /** Failure threshold an integer expressed as a percentage of failure tolerated in a batch **/
+    /**
+     * Failure threshold an integer expressed as a percentage of failure tolerated in a batch
+     **/
     @Value("${failure.threshold}")
     private int failureThreshold;
 
@@ -108,12 +109,12 @@ public class JobProcessorImpl implements JobProcessor {
     /**
      * Process in individual contract
      *
-     * @param contract - the contract to process
-     * @param job - the job in which the contract belongs
-     * @param month - the month to search for beneficiaries for
-     * @param outputDirPath - the location of the job output
+     * @param contract        - the contract to process
+     * @param job             - the job in which the contract belongs
+     * @param month           - the month to search for beneficiaries for
+     * @param outputDirPath   - the location of the job output
      * @param progressTracker - the progress tracker which indicates how far the job is along
-     * @throws ExecutionException when there is an issue with searching
+     * @throws ExecutionException   when there is an issue with searching
      * @throws InterruptedException - when the search is interrupted
      */
     void processContract(Contract contract, Job job, int month, Path outputDirPath, ProgressTracker progressTracker) throws ExecutionException, InterruptedException {
@@ -162,7 +163,7 @@ public class JobProcessorImpl implements JobProcessor {
     /**
      * Process the Job and put the contents into the output directory
      *
-     * @param job - the job to process
+     * @param job           - the job to process
      * @param outputDirPath - the output directory to put all the files
      */
     @SuppressFBWarnings("REC_CATCH_EXCEPTION")
@@ -278,27 +279,11 @@ public class JobProcessorImpl implements JobProcessor {
      * @return the list of contracts (all or only 1 if the contract was specified in the job).
      */
     private List<Contract> getAttestedContracts(Job job) {
-
-        // Get the aggregated attested Contracts for the sponsor
-        final Sponsor sponsor = job.getUser().getSponsor();
-        final List<Contract> attestedContracts = sponsor.getAggregatedAttestedContracts();
-
         // If a contract was specified for request, make sure the sponsor can access the contract and then return only it
         final Contract jobSpecificContract = job.getContract();
-        if (jobSpecificContract != null && jobSpecificContract.hasAttestation()) {
-            boolean ownsContract = attestedContracts.stream()
-                    .anyMatch(c -> jobSpecificContract.getContractNumber().equalsIgnoreCase(c.getContractNumber()));
-            if (!ownsContract) {
-                log.info("Job [{}] submitted for a specific attested contract [{}] that the sponsor [{}] does not own",
-                        job.getJobUuid(), jobSpecificContract.getContractNumber(), sponsor.getOrgName());
-            }
-            log.info("Job [{}] submitted for a specific attested contract [{}] ", job.getJobUuid(), jobSpecificContract.getContractNumber());
-            return Collections.singletonList(jobSpecificContract);
-        }
-
-        // Otherwise, return the list of attested contracts
-        log.info("Job [{}] has [{}] attested contracts", job.getJobUuid(), attestedContracts.size());
-        return attestedContracts;
+        assert jobSpecificContract != null;
+        log.info("Job [{}] submitted for a specific attested contract [{}] ", job.getJobUuid(), jobSpecificContract.getContractNumber());
+        return Collections.singletonList(jobSpecificContract);
     }
 
     /**

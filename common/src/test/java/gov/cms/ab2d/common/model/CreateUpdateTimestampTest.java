@@ -1,6 +1,6 @@
 package gov.cms.ab2d.common.model;
 
-import gov.cms.ab2d.common.repository.SponsorRepository;
+import gov.cms.ab2d.common.repository.CoverageSearchEventRepository;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,15 +10,9 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
+import static org.junit.Assert.*;
 
 @SpringBootTest
 @Testcontainers
@@ -30,33 +24,31 @@ class CreateUpdateTimestampTest {
     private static final PostgreSQLContainer postgreSQLContainer = new AB2DPostgresqlContainer();
 
     @Autowired
-    private SponsorRepository sponsorRepository;
+    private CoverageSearchEventRepository coverageSearchEventRepository;
 
     @Test
     void testTimestamps() {
-        Sponsor sponsor = new Sponsor();
-        sponsor.setHpmsId(52);
-        sponsor.setOrgName("TEST");
+        CoverageSearchEvent coverageSearchEvent = new CoverageSearchEvent();
+        coverageSearchEvent.setDescription("TEST");
 
-        assertNotNull(sponsor.getHpmsId());
-        assertNotNull(sponsor.getOrgName());
-        assertNull(sponsor.getCreated());
-        assertNull(sponsor.getModified());
+        assertNull(coverageSearchEvent.getCreated());
+        assertNull(coverageSearchEvent.getModified());
 
-        Sponsor savedSponsor = sponsorRepository.save(sponsor);
-        assertEquals("TEST", savedSponsor.getOrgName());
-        assertNotNull(savedSponsor.getId());
-        assertNotNull(savedSponsor.getCreated());
-        assertNotNull(savedSponsor.getModified());
+        CoverageSearchEvent savedCSE = coverageSearchEventRepository.save(coverageSearchEvent);
+        assertEquals("TEST", savedCSE.getDescription());
+        assertNotNull(savedCSE.getId());
+        assertNotNull(savedCSE.getCreated());
+        assertNotNull(savedCSE.getModified());
 
-        OffsetDateTime created = savedSponsor.getCreated();
-        OffsetDateTime modified = savedSponsor.getModified();
-        savedSponsor.setOrgName("TEST2");
-        Sponsor finaleSponsor = sponsorRepository.save(savedSponsor);
-        assertEquals(created, finaleSponsor.getCreated());
-        assertNotEquals(modified, finaleSponsor.getModified());
+        OffsetDateTime created = savedCSE.getCreated();
+        OffsetDateTime modified = savedCSE.getModified();
+        savedCSE.setDescription("TEST2");
+        CoverageSearchEvent finaleCSE = coverageSearchEventRepository.save(savedCSE);
+
+        assertEquals(created, finaleCSE.getCreated());
+        assertNotEquals(modified, finaleCSE.getModified());
 
         // Cleanup
-        sponsorRepository.delete(finaleSponsor);
+        coverageSearchEventRepository.delete(finaleCSE);
     }
 }

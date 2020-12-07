@@ -36,9 +36,9 @@ public class User extends TimestampBase implements UserDetails {
     private Boolean enabled;
 
     @ManyToOne
-    @JoinColumn(name = "sponsor_id")
+    @JoinColumn(name = "contract_id")
     @NotNull
-    private Sponsor sponsor;
+    private Contract contract;
 
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(

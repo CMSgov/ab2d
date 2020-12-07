@@ -1,15 +1,9 @@
 package gov.cms.ab2d.common.config;
 
-import gov.cms.ab2d.common.dto.SponsorDTO;
-import gov.cms.ab2d.common.dto.SponsorIPDTO;
 import gov.cms.ab2d.common.dto.UserDTO;
 import gov.cms.ab2d.common.model.Role;
-import gov.cms.ab2d.common.model.Sponsor;
-import gov.cms.ab2d.common.model.SponsorIP;
 import gov.cms.ab2d.common.model.User;
 import gov.cms.ab2d.common.service.RoleService;
-import gov.cms.ab2d.common.service.SponsorService;
-import org.modelmapper.AbstractConverter;
 import org.modelmapper.Converter;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,9 +14,6 @@ import java.util.Set;
 
 @Component
 public class Mapping {
-
-    @Autowired
-    private SponsorService sponsorService;
 
     @Autowired
     private RoleService roleService;
@@ -49,22 +40,11 @@ public class Mapping {
             }
         };
 
-        Converter<Sponsor, SponsorDTO> sponsorSponsorDTOConverter = context -> new SponsorDTO(context.getSource().getHpmsId(), context.getSource().getOrgName());
-        Converter<SponsorDTO, Sponsor> sponsorDTOSponsorConverter = new AbstractConverter<>() {
-            protected Sponsor convert(SponsorDTO source) {
-                return sponsorService.findByHpmsIdAndOrgName(source.getHpmsId(), source.getOrgName());
-            }
-        };
-
-        modelMapper.addConverter(sponsorDTOSponsorConverter);
         modelMapper.createTypeMap(User.class, UserDTO.class)
-                .addMappings(mapper -> mapper.using(sponsorSponsorDTOConverter).map(src -> src.getSponsor(), UserDTO::setSponsor))
-                .addMappings(mapper -> mapper.using(roleToRoleDTOConverter).map(src -> src.getRoles(), UserDTO::setRole))
-                .addMappings(mapper -> mapper.map(src -> src.getSponsor().getContracts(), UserDTO::setContracts));
+                .addMappings(mapper -> mapper.using(roleToRoleDTOConverter).map(User::getRoles, UserDTO::setRole))
+                .addMappings(mapper -> mapper.map(User::getContract, UserDTO::setContract));
         modelMapper.createTypeMap(UserDTO.class, User.class)
-                .addMappings(mapper -> mapper.using(roleDTOToRoleConverter).map(src -> src.getRole(), User::addRole));
-        modelMapper.createTypeMap(SponsorIP.class, SponsorIPDTO.class)
-                .addMappings(mapper -> mapper.using(sponsorSponsorDTOConverter).map(src -> src.getSponsorIPID().getSponsor(), SponsorIPDTO::setSponsor));
+                .addMappings(mapper -> mapper.using(roleDTOToRoleConverter).map(UserDTO::getRole, User::addRole));
     }
 
     public ModelMapper getModelMapper() {

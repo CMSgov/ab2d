@@ -57,9 +57,6 @@ public class AdminAPIMaintenanceModeTests {
     private static final PostgreSQLContainer postgreSQLContainer = new AB2DPostgresqlContainer();
 
     @Autowired
-    private SponsorRepository sponsorRepository;
-
-    @Autowired
     private UserRepository userRepository;
 
     @Autowired
@@ -87,7 +84,6 @@ public class AdminAPIMaintenanceModeTests {
         jobRepository.deleteAll();
         userRepository.deleteAll();
         roleRepository.deleteAll();
-        sponsorRepository.deleteAll();
         doAll.delete();
 
         token = testUtil.setupToken(List.of(SPONSOR_ROLE, ADMIN_ROLE));
@@ -187,7 +183,7 @@ public class AdminAPIMaintenanceModeTests {
                         .header("Accept-Encoding", "gzip, deflate, br"))
                         .andExpect(status().is(200));
 
-        Assert.assertTrue(!Files.exists(Paths.get(destinationStr + File.separator + testFile)));
+        Assert.assertFalse(Files.exists(Paths.get(destinationStr + File.separator + testFile)));
 
         // Cleanup
         propertiesDTOs.clear();
