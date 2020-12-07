@@ -15,7 +15,8 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
+
+import static java.util.stream.Collectors.toList;
 
 @Entity
 @Getter
@@ -76,7 +77,7 @@ public class Sponsor extends TimestampBase {
         return children.stream()
                 .map(Sponsor::getAttestedContracts)
                 .flatMap(Collection::stream)
-                .collect(Collectors.toList());
+                .collect(toList());
     }
 
     /**
@@ -86,7 +87,7 @@ public class Sponsor extends TimestampBase {
      */
     public List<Contract> getAttestedContracts() {
         return getContracts().stream()
-                .filter(contract -> contract.getAttestedOn() != null)
-                .collect(Collectors.toList());
+                .filter(Contract::hasAttestation)
+                .collect(toList());
     }
 }

@@ -94,6 +94,8 @@ public class PropertiesServiceImpl implements PropertiesService {
 
         case WORKER_ENGAGEMENT:
         case HPMS_INGESTION_ENGAGEMENT:
+        case COVERAGE_SEARCH_DISCOVERY:
+        case COVERAGE_SEARCH_QUEUEING:
             validateString(key, propertiesDTO);
             addUpdatedPropertiesToList(propertiesDTOsReturn, propertiesDTO);
             break;
