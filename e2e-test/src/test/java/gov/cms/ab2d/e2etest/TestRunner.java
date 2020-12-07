@@ -131,30 +131,17 @@ public class TestRunner {
         loadApiClientConfiguration(apiPort);
     }
 
-    // /**
-    //  * Get the api port that is either a default or random based on the environment the end
-    //  * to end tests are running in.
-    //  *
-    //  * Use a random port to prevent issues when CI jobs share a VM in Jenkins.
-    //  *
-    //  * @return port to expose api on
-    //  * @throws IOException on failure to find an open port
-    //  */
-    // private int getApiPort() throws IOException {
-
-    //     // https://stackoverflow.com/questions/2675362/how-to-find-an-available-port
-    //     // Causes a race condition that should be extremely rarely which may cause more than one job
-    //     // to attempt to use the same port
-    //     if (environment == Environment.CI) {
-    //         try (ServerSocket socket = new ServerSocket(0)) {
-    //             return socket.getLocalPort();
-    //         }
-    //     }
-
-    //     return DEFAULT_API_PORT;
-    // }
-
+    /**
+     * Get the api port that is either a default or random based on the environment the end
+     * to end tests are running in.
+     *
+     * Use a random port to prevent issues when CI jobs share a VM in Jenkins.
+     *
+     * @return port to expose api on
+     * @throws IOException on failure to find an open port
+     */
     private int getApiPort() throws IOException {
+
         // https://stackoverflow.com/questions/2675362/how-to-find-an-available-port
         // Causes a race condition that should be extremely rarely which may cause more than one job
         // to attempt to use the same port
@@ -163,12 +150,10 @@ public class TestRunner {
                 return socket.getLocalPort();
             }
         }
-        if (System.getenv("API_PORT") != null) {
-            return Integer.parseInt(System.getenv("API_PORT"));
-        }
+
         return DEFAULT_API_PORT;
     }
-    
+
     /**
      * Load docker-compose containers to support e2e tests locally.
      * @param apiPort the port to expose the api on
