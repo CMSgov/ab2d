@@ -1,4 +1,4 @@
-package gov.cms.ab2d.worker.processor;
+package gov.cms.ab2d.worker.processor.coverage;
 
 import gov.cms.ab2d.common.model.CoveragePeriod;
 
@@ -13,6 +13,11 @@ public interface CoverageProcessor {
      */
     void queueStaleCoveragePeriods();
 
+    /**
+     * Check all {@link gov.cms.ab2d.common.model.Contract} for attestation dates and create {@link CoveragePeriod}s
+     * for all months since the attestation of those contracts.
+     */
+    void discoverCoveragePeriods();
 
     /**
      * Add a {@link CoveragePeriod} to the queue of periods to be mapped

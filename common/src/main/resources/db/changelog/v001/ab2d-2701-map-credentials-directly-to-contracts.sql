@@ -21,7 +21,7 @@ INNER JOIN public.user_account e
 ON a.id = e.sponsor_id OR a.parent_id = e.sponsor_id
 WHERE h.id = e.id;
 
--- Update existing user_account records with their correct contract_id
+-- Update existing user_account records with their correct contract id
 
 UPDATE public.user_account h
 SET contract_id = d.id

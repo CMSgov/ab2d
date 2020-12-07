@@ -285,7 +285,7 @@ public class JobProcessorImpl implements JobProcessor {
 
         // If a contract was specified for request, make sure the sponsor can access the contract and then return only it
         final Contract jobSpecificContract = job.getContract();
-        if (jobSpecificContract != null && jobSpecificContract.getAttestedOn() != null) {
+        if (jobSpecificContract != null && jobSpecificContract.hasAttestation()) {
             boolean ownsContract = attestedContracts.stream()
                     .anyMatch(c -> jobSpecificContract.getContractNumber().equalsIgnoreCase(c.getContractNumber()));
             if (!ownsContract) {
