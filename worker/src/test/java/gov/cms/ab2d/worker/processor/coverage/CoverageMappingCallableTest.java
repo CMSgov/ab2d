@@ -1,6 +1,5 @@
-package gov.cms.ab2d.worker.processor;
+package gov.cms.ab2d.worker.processor.coverage;
 
-import ca.uhn.fhir.rest.server.exceptions.InternalErrorException;
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.model.*;
 import gov.cms.ab2d.common.model.Contract;
