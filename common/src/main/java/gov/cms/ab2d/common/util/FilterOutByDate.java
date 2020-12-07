@@ -7,9 +7,10 @@ import org.hl7.fhir.dstu3.model.Period;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.time.ZoneId;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static gov.cms.ab2d.common.util.DateUtil.AB2D_ZONE;
 
 /**
  * Utility class to take different subscription ranges and attestation dates and
@@ -22,8 +23,7 @@ public final class FilterOutByDate {
     private static final String SHORT = "MM/dd/yyyy";
     private static final String FULL = "MM/dd/yyyy HH:mm:ss:SSS";
 
-    public static final TimeZone TIMEZONE = TimeZone.getTimeZone("America/New_York");
-    public static final ZoneId ZONE_ID = ZoneId.of("America/New_York");
+    public static final TimeZone TIMEZONE = TimeZone.getTimeZone(AB2D_ZONE);
 
     /**
      * Date range class used to define a from and to date for a subscribers membership.

@@ -1,21 +1,15 @@
 package gov.cms.ab2d.common.model;
 
 
+import gov.cms.ab2d.common.util.DateUtil;
 import lombok.*;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
-import javax.persistence.OneToMany;
-import javax.persistence.PreRemove;
+import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import java.time.OffsetDateTime;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 import static gov.cms.ab2d.common.util.DateUtil.getESTOffset;
 
@@ -27,6 +21,8 @@ import static gov.cms.ab2d.common.util.DateUtil.getESTOffset;
 public class Contract extends TimestampBase {
 
     public static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd H:m:s Z");
+
+    enum UpdateMode { AUTOMATIC, TEST, MANUAL }
 
     @Id
     @GeneratedValue
@@ -47,6 +43,9 @@ public class Contract extends TimestampBase {
 
     @Column(name = "hpms_org_marketing_name")
     private String hpmsOrgMarketingName;
+
+    @Enumerated(EnumType.STRING)
+    private UpdateMode updateMode = UpdateMode.AUTOMATIC;
 
     public Contract(@NotNull String contractNumber, String contractName, Long hpmsParentOrgId, String hpmsParentOrg,
                     String hpmsOrgMarketingName, @NotNull Sponsor sponsor) {
@@ -69,6 +68,10 @@ public class Contract extends TimestampBase {
     @OneToMany(mappedBy = "contract")
     private Set<CoveragePeriod> coveragePeriods = new HashSet<>();
 
+    public boolean isTestContract() {
+        return updateMode == UpdateMode.TEST;
+    }
+
     public boolean hasAttestation() {
         return attestedOn != null;
     }
@@ -77,10 +80,37 @@ public class Contract extends TimestampBase {
         attestedOn = null;
     }
 
+    public boolean hasChanges(String hmpsContractName, long parentOrgId, String parentOrgName, String orgMarketingName) {
+        boolean allEqual = Objects.equals(hmpsContractName, contractName) &&
+                        Objects.equals(parentOrgId, hpmsParentOrgId) &&
+                        Objects.equals(parentOrgName, hpmsParentOrg) &&
+                        Objects.equals(orgMarketingName, hpmsOrgMarketingName);
+
+        return !allEqual;
+    }
+
+    public Contract updateOrg(String hmpsContractName, long parentOrgId, String parentOrgName, String orgMarketingName) {
+        contractName = hmpsContractName;
+        hpmsParentOrgId = parentOrgId;
+        hpmsParentOrg = parentOrgName;
+        hpmsOrgMarketingName = orgMarketingName;
+        return this;
+    }
+
+    /**
+     * Get time zone in EST time which is the standard for CMS
+     */
+    public ZonedDateTime getESTAttestationTime() {
+        return hasAttestation() ? attestedOn.atZoneSameInstant(DateUtil.AB2D_ZONE) : null;
+    }
+
     /*
      * Returns true if new state differs from existing which requires a save.
      */
     public boolean updateAttestation(boolean attested, String attestationDate) {
+        if (updateMode != UpdateMode.AUTOMATIC)
+            return false;
+
         boolean hasAttestation = hasAttestation();
         if (attested == hasAttestation) {
             return false;   // No changes needed

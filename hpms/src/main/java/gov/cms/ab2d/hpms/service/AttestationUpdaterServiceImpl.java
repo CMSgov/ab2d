@@ -39,6 +39,18 @@ public class AttestationUpdaterServiceImpl implements AttestationUpdaterService 
 
     private void processOrgInfo(HPMSOrganizations orgInfo) {
         Map<String, Contract> existingMap = buildExistingContractMap();
+
+        // detect changed organizational information, specifically populating the new hpms fields
+        List<Contract> changedContracts = orgInfo.getOrgs().stream()
+                .filter(hpmsInfo -> existingMap.containsKey(hpmsInfo.getContractId()))
+                .map(this::updateContract)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .collect(Collectors.toList());
+        if (!changedContracts.isEmpty()) {
+            contractRepository.saveAll(changedContracts);
+        }
+
         // detect new Contracts
         List<HPMSOrganizationInfo> newContracts = orgInfo.getOrgs().stream()
                 .filter(hpmsInfo -> !existingMap.containsKey(hpmsInfo.getContractId()))
@@ -50,6 +62,15 @@ public class AttestationUpdaterServiceImpl implements AttestationUpdaterService 
                 considerContract(contractAttestList, contract, refreshed.get(contractId)));
 
         batchAttestations(contractAttestList.stream().map(Contract::getContractNumber).collect(Collectors.toList()));
+    }
+
+    private Optional<Contract> updateContract(HPMSOrganizationInfo hpmsInfo) {
+        Optional<Contract> contractHolder = contractRepository.findContractByContractNumber(hpmsInfo.getContractId());
+        if (contractHolder.isEmpty())
+            return contractHolder;
+
+        Contract contract = contractHolder.get();
+        return hpmsInfo.hasChanges(contract) ? Optional.of(hpmsInfo.updateContract(contract)) : Optional.empty();
     }
 
     // Limit the size of the request to BATCH_SIZE, avoiding URLs that are too long and keeping the burden down
@@ -96,16 +117,13 @@ public class AttestationUpdaterServiceImpl implements AttestationUpdaterService 
         Sponsor savedSponsor =
                 sponsorRepository.save(new Sponsor(hpmsInfo.getParentOrgName(), hpmsInfo.getOrgMarketingName()));
 
-        Contract retContract = new Contract(hpmsInfo.getContractId(), hpmsInfo.getContractName(),
-                hpmsInfo.getParentOrgId().longValue(), hpmsInfo.getParentOrgName(), hpmsInfo.getOrgMarketingName(),
-                savedSponsor);
-        return contractRepository.save(retContract);
+        return contractRepository.save(hpmsInfo.build(savedSponsor));
     }
 
     private void considerContract(List<Contract> contractAttestList, Contract contract,
                                   HPMSOrganizationInfo hpmsOrganizationInfo) {
         // Ignore Test contracts
-        if (contract.getContractNumber().startsWith("Z")) {
+        if (contract.isTestContract()) {
             return;
         }
 
