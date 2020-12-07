@@ -9,8 +9,7 @@ import gov.cms.ab2d.common.service.PropertiesService;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.DataSetup;
 import gov.cms.ab2d.common.util.DateUtil;
-import gov.cms.ab2d.worker.config.CoverageMappingConfig;
-import gov.cms.ab2d.worker.processor.domainmodel.ContractSearchLock;
+import gov.cms.ab2d.worker.config.CoverageUpdateConfig;
 import org.hl7.fhir.dstu3.model.Bundle;
 import org.hl7.fhir.dstu3.model.Identifier;
 import org.hl7.fhir.dstu3.model.Patient;
@@ -41,7 +40,7 @@ import static org.mockito.Mockito.*;
 // Never run internal coverage processor so this coverage processor runs unimpeded
 @SpringBootTest(properties = "coverage.update.initial.delay=1000000")
 @Testcontainers
-class CoverageProcessorImplTest {
+class CoverageUpdateAndProcessorTest {
 
     private static final int PAST_MONTHS = 3;
     private static final int STALE_DAYS = 3;
@@ -79,7 +78,7 @@ class CoverageProcessorImplTest {
     private DataSetup dataSetup;
 
     @Autowired
-    private ContractSearchLock searchLock;
+    private CoverageLockWrapper searchLock;
 
     private Contract contract;
     private CoveragePeriod january;
@@ -88,6 +87,7 @@ class CoverageProcessorImplTest {
 
     private BFDClient bfdClient;
 
+    private CoverageDriverImpl driver;
     private CoverageProcessorImpl processor;
 
     private List<Contract> contractsToDelete;
@@ -114,10 +114,10 @@ class CoverageProcessorImplTest {
         taskExecutor.setCorePoolSize(3);
         taskExecutor.initialize();
 
-        CoverageMappingConfig config = new CoverageMappingConfig(PAST_MONTHS, STALE_DAYS, MAX_ATTEMPTS, STUCK_HOURS);
+        CoverageUpdateConfig config = new CoverageUpdateConfig(PAST_MONTHS, STALE_DAYS, STUCK_HOURS);
 
-        processor = new CoverageProcessorImpl(contractService, coverageService, propertiesService,
-                bfdClient, taskExecutor, config, searchLock);
+        processor = new CoverageProcessorImpl(coverageService, bfdClient, taskExecutor, MAX_ATTEMPTS);
+        driver = new CoverageDriverImpl(contractService, coverageService, propertiesService, processor, config, searchLock);
     }
 
     @AfterEach
@@ -152,7 +152,7 @@ class CoverageProcessorImplTest {
         long months = ChronoUnit.MONTHS.between(epoch, OffsetDateTime.now());
         long expectedNumPeriods = months + 1;
 
-        processor.discoverCoveragePeriods();
+        driver.discoverCoveragePeriods();
 
         List<CoveragePeriod> periods = coveragePeriodRepo.findAllByContractId(contract.getId());
         assertFalse(periods.isEmpty());
@@ -194,7 +194,7 @@ class CoverageProcessorImplTest {
         march.setStatus(null);
         coveragePeriodRepo.saveAndFlush(march);
 
-        processor.queueStaleCoveragePeriods();
+        driver.queueStaleCoveragePeriods();
 
         assertEquals(3, coverageSearchRepo.findAll().size());
 
@@ -212,7 +212,7 @@ class CoverageProcessorImplTest {
         march.setStatus(null);
         coveragePeriodRepo.saveAndFlush(march);
 
-        processor.queueStaleCoveragePeriods();
+        driver.queueStaleCoveragePeriods();
         assertEquals(2, coverageSearchRepo.findAll().size());
     }
 
@@ -232,7 +232,7 @@ class CoverageProcessorImplTest {
         createEvent(january, JobStatus.CANCELLED, OffsetDateTime.now());
         createEvent(february, JobStatus.FAILED, OffsetDateTime.now());
 
-        processor.queueStaleCoveragePeriods();
+        driver.queueStaleCoveragePeriods();
         assertEquals(3, coverageSearchRepo.findAll().size());
     }
 
@@ -266,7 +266,7 @@ class CoverageProcessorImplTest {
         createEvent(oneMonth, JobStatus.SUCCESSFUL, currentDate.minusDays(2 * STALE_DAYS - 1));
         createEvent(twoMonth, JobStatus.SUCCESSFUL, currentDate.minusDays(3 * STALE_DAYS - 1));
 
-        processor.queueStaleCoveragePeriods();
+        driver.queueStaleCoveragePeriods();
 
         assertEquals(0, coverageSearchRepo.findAll().size());
     }
@@ -308,7 +308,7 @@ class CoverageProcessorImplTest {
         createEvent(twoMonth, JobStatus.SUCCESSFUL, currentDate.minusDays(3 * STALE_DAYS + 1));
         createEvent(threeMonth, JobStatus.SUCCESSFUL, currentDate.minusDays(4 * STALE_DAYS + 1));
 
-        processor.queueStaleCoveragePeriods();
+        driver.queueStaleCoveragePeriods();
 
         // Only three because we ignore three months ago
         assertEquals(3, coverageSearchRepo.findAll().size());
@@ -330,7 +330,7 @@ class CoverageProcessorImplTest {
         createEvent(currentMonth, JobStatus.SUCCESSFUL, currentDate.minusDays(STALE_DAYS + 1));
         createEvent(currentMonth, JobStatus.IN_PROGRESS, currentDate.minusDays(1).minusMinutes(1));
 
-        processor.queueStaleCoveragePeriods();
+        driver.queueStaleCoveragePeriods();
 
         assertEquals(1, coverageSearchRepo.findAll().size());
 
@@ -357,7 +357,7 @@ class CoverageProcessorImplTest {
         createEvent(currentMonth, JobStatus.SUCCESSFUL, currentDate.minusDays(STALE_DAYS + 1));
         createEvent(currentMonth, JobStatus.IN_PROGRESS, currentDate.minusMinutes(1));
 
-        processor.queueStaleCoveragePeriods();
+        driver.queueStaleCoveragePeriods();
 
         assertEquals(0, coverageSearchRepo.findAll().size());
 
@@ -373,7 +373,7 @@ class CoverageProcessorImplTest {
         createEvent(currentMonth, JobStatus.SUCCESSFUL, currentDate.minusDays(STALE_DAYS + 1));
         createEvent(currentMonth, JobStatus.SUBMITTED, currentDate.minusMinutes(1));
 
-        processor.queueStaleCoveragePeriods();
+        driver.queueStaleCoveragePeriods();
 
         assertEquals(0, coverageSearchRepo.findAll().size());
         assertEquals(JobStatus.SUBMITTED, coveragePeriodRepo.findById(currentMonth.getId()).get().getStatus());
@@ -395,7 +395,7 @@ class CoverageProcessorImplTest {
         JobStatus status = coverageService.getSearchStatus(january.getId());
         assertEquals(JobStatus.SUBMITTED, status);
 
-        processor.loadMappingJob();
+        driver.loadMappingJob();
         status = coverageService.getSearchStatus(january.getId());
         assertEquals(JobStatus.IN_PROGRESS, status);
 
@@ -420,7 +420,7 @@ class CoverageProcessorImplTest {
         JobStatus status = coverageService.getSearchStatus(january.getId());
         assertEquals(JobStatus.SUBMITTED, status);
 
-        processor.loadMappingJob();
+        driver.loadMappingJob();
         status = coverageService.getSearchStatus(january.getId());
         assertEquals(JobStatus.IN_PROGRESS, status);
 
@@ -443,7 +443,7 @@ class CoverageProcessorImplTest {
         when(bfdClient.requestPartDEnrolleesFromServer(anyString(), anyInt())).thenReturn(bundle1);
         when(bfdClient.requestNextBundleFromServer(any(Bundle.class))).thenReturn(bundle2);
 
-        processor.loadMappingJob();
+        driver.loadMappingJob();
 
         sleep(1000);
 
@@ -500,14 +500,14 @@ class CoverageProcessorImplTest {
         processor.queueCoveragePeriod(february, false);
         processor.queueCoveragePeriod(march, false);
 
-        processor.loadMappingJob();
-        processor.loadMappingJob();
+        driver.loadMappingJob();
+        driver.loadMappingJob();
 
         sleep(1000);
 
         processor.monitorMappingJobs();
 
-        processor.loadMappingJob();
+        driver.loadMappingJob();
 
         assertEquals(0, twoThreads.getActiveCount());
     }
@@ -528,7 +528,7 @@ class CoverageProcessorImplTest {
 
     private JobStatus iterateFailingJob() {
         JobStatus status;
-        processor.loadMappingJob();
+        driver.loadMappingJob();
         status = coverageService.getSearchStatus(january.getId());
         assertEquals(JobStatus.IN_PROGRESS, status);
 
