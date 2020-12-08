@@ -110,8 +110,8 @@ public class JobServiceTest {
         // todo: Very bizarre behavior happens if these are moved to an @AfterEach method instead.  Doing deleteAll()
         // in a setup method is definitely a code smell.
         jobRepository.deleteAll();
-        contractRepository.deleteAll();
         userRepository.deleteAll();
+        contractRepository.deleteAll();
 
         dataSetup.setupUser(List.of());
 
@@ -168,12 +168,6 @@ public class JobServiceTest {
 
         // Verify it actually got persisted in the DB
         assertThat(jobRepository.findById(job.getId())).get().isEqualTo(job);
-    }
-
-    @Test
-    public void createJobWithBadContract() {
-        Assertions.assertThrows(ContractNotFoundException.class,
-                () -> jobService.createJob(EOB, LOCAL_HOST, "BadContract", NDJSON_FIRE_CONTENT_TYPE, null));
     }
 
     @Test

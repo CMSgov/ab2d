@@ -1,0 +1,2 @@
+ALTER TABLE contract ALTER COLUMN sponsor_id DROP NOT NULL;
+ALTER TABLE user_account ALTER COLUMN sponsor_id DROP NOT NULL;
