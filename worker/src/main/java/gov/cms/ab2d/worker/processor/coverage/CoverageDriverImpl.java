@@ -250,14 +250,25 @@ public class CoverageDriverImpl implements CoverageDriver {
         if (lock.tryLock()) {
             try {
 
-                // manipulate protected state
-                Optional<CoverageSearch> searchOpt = coverageSearchRepository.findFirstByOrderByCreatedAsc();
+                // First find if a submitted eob job is waiting on a current search
+                // and pick those searches first
+                Optional<CoverageSearch> searchOpt = coverageSearchRepository.findHighestPrioritySearch();
+
+                // If no high priority search has been found
+                // instead pick the first submitted search
+                if (searchOpt.isEmpty()) {
+                    searchOpt = coverageSearchRepository.findFirstByOrderByCreatedAsc();
+                }
+
+                // If no search found just return empty
                 if (searchOpt.isEmpty()) {
                     return searchOpt;
                 }
+
                 CoverageSearch search = searchOpt.get();
                 coverageSearchRepository.delete(search);
                 coverageSearchRepository.flush();
+
                 search.setId(null);
                 return Optional.of(search);
             } finally {

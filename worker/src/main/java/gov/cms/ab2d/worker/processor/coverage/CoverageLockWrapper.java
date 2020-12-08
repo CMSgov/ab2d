@@ -1,14 +1,11 @@
 package gov.cms.ab2d.worker.processor.coverage;
 
-import gov.cms.ab2d.common.model.CoverageSearch;
-import gov.cms.ab2d.common.repository.CoverageSearchRepository;
 import org.springframework.integration.jdbc.lock.DefaultLockRepository;
 import org.springframework.integration.jdbc.lock.JdbcLockRegistry;
 import org.springframework.integration.jdbc.lock.LockRepository;
 import org.springframework.stereotype.Component;
 
 import javax.sql.DataSource;
-import java.util.Optional;
 import java.util.concurrent.locks.Lock;
 
 @Component
@@ -28,13 +25,11 @@ public class CoverageLockWrapper {
     private static final int LOCK_TIME = 60_000; // 60 seconds
 
     private final DataSource dataSource;
-    private final CoverageSearchRepository coverageSearchRepository;
 
     private JdbcLockRegistry lockRegistry;
 
-    public CoverageLockWrapper(DataSource dataSource, CoverageSearchRepository coverageSearchRepository) {
+    public CoverageLockWrapper(DataSource dataSource) {
         this.dataSource = dataSource;
-        this.coverageSearchRepository = coverageSearchRepository;
     }
 
     public JdbcLockRegistry contractLockRegistry(LockRepository lockRepository) {

@@ -23,13 +23,9 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.time.*;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
-import static gov.cms.ab2d.common.util.DateUtil.AB2D_ZONE;
-import static gov.cms.ab2d.common.util.DateUtil.getAB2DEpoch;
+import static gov.cms.ab2d.common.util.DateUtil.*;
 import static gov.cms.ab2d.worker.processor.coverage.CoverageMappingCallable.BENEFICIARY_ID;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -64,6 +60,12 @@ class CoverageDriverTest {
     private CoverageSearchEventRepository coverageSearchEventRepo;
 
     @Autowired
+    private JobRepository jobRepo;
+
+    @Autowired
+    private UserRepository userRepo;
+
+    @Autowired
     private ContractService contractService;
 
     @Autowired
@@ -80,9 +82,11 @@ class CoverageDriverTest {
 
     private Sponsor sponsor;
     private Contract contract;
+    private Contract contract1;
     private CoveragePeriod january;
     private CoveragePeriod february;
     private CoveragePeriod march;
+    private Job job;
 
     private BFDClient bfdClient;
 
@@ -99,13 +103,27 @@ class CoverageDriverTest {
         sponsor = dataSetup.createSponsor("Cal Ripken", 200, "Cal Ripken Jr.", 201);
         contract = dataSetup.setupContract(sponsor, "TST-123");
         contract.setAttestedOn(getAB2DEpoch().toOffsetDateTime());
+
+        contract1 = dataSetup.setupContract(sponsor, "TST-456");
+        contract1.setAttestedOn(getAB2DEpoch().toOffsetDateTime());
+
         contractRepo.saveAndFlush(contract);
 
         contractsToDelete.add(contract);
+        contractsToDelete.add(contract1);
 
         january = dataSetup.createCoveragePeriod(contract, 1, 2020);
         february = dataSetup.createCoveragePeriod(contract, 2, 2020);
         march = dataSetup.createCoveragePeriod(contract, 3, 2020);
+
+        User user = userRepo.findAll().get(0);
+        job = new Job();
+        job.setContract(contract);
+        job.setJobUuid("unique");
+        job.setUser(user);
+        job.setStatus(JobStatus.SUBMITTED);
+        job.setCreatedAt(OffsetDateTime.now());
+        jobRepo.saveAndFlush(job);
 
         bfdClient = mock(BFDClient.class);
 
@@ -128,6 +146,11 @@ class CoverageDriverTest {
         coverageSearchEventRepo.deleteAll();
         coverageSearchRepo.deleteAll();
         coveragePeriodRepo.deleteAll();
+
+        if (job != null) {
+            jobRepo.delete(job);
+            jobRepo.flush();
+        }
 
         for (Contract contract : contractsToDelete) {
             contractRepo.delete(contract);
@@ -415,22 +438,42 @@ class CoverageDriverTest {
      */
     @DisplayName("Getting another search gets and removes a coverage search specification")
     @Test
-    void getNextSearch() {
+    void getNextSearchDefaultsToFirst() {
         assertTrue(driver.getNextSearch().isEmpty());
 
-        Sponsor sponsor = dataSetup.createSponsor("Cal Ripken", 200, "Cal Ripken Jr.", 201);
-        Contract contract1 = dataSetup.setupContract(sponsor, "c123");
-        CoveragePeriod period1 = dataSetup.createCoveragePeriod(contract1, 10, 2020);
-        CoverageSearch search1 = new CoverageSearch(null, period1, OffsetDateTime.now(), 0);
+        CoverageSearch search1 = new CoverageSearch(null, january, OffsetDateTime.now(), 0);
         CoverageSearch savedSearch1 = coverageSearchRepo.save(search1);
         Optional<CoverageSearch> returnedSearch = driver.getNextSearch();
+
         assertEquals(savedSearch1.getPeriod().getMonth(), returnedSearch.get().getPeriod().getMonth());
         assertEquals(savedSearch1.getPeriod().getYear(), returnedSearch.get().getPeriod().getYear());
         assertTrue(driver.getNextSearch().isEmpty());
+    }
 
-        dataSetup.deleteCoveragePeriod(period1);
-        dataSetup.deleteContract(contract1);
-        dataSetup.deleteSponsor(sponsor);
+    /**
+     * Verify that null is returned if there are no searches, a search there is one and verify that it
+     * was deleted after it was searched.
+     */
+    @DisplayName("Getting a search prioritizes coverage searches for already submitted eob jobs")
+    @Test
+    void getNextSearchPrioritizesCoverageForExistinEobJobs() {
+
+        CoveragePeriod secondPeriod = dataSetup.createCoveragePeriod(contract1, 2, 2020);
+
+        assertTrue(driver.getNextSearch().isEmpty());
+
+        coverageService.submitSearch(secondPeriod.getId(), "first submitted");
+        coverageService.submitSearch(january.getId(), "second submitted");
+
+        Optional<CoverageSearch> coverageSearch = driver.getNextSearch();
+        assertTrue(coverageSearch.isPresent());
+        assertEquals(january, coverageSearch.get().getPeriod());
+
+        coverageSearch = driver.getNextSearch();
+        assertTrue(coverageSearch.isPresent());
+        assertEquals(secondPeriod, coverageSearch.get().getPeriod());
+
+        assertTrue(driver.getNextSearch().isEmpty());
     }
 
     @DisplayName("Do not start an eob job if any relevant coverage period has never had data pulled for it")
@@ -457,9 +500,7 @@ class CoverageDriverTest {
         Job job = new Job();
         job.setContract(contract);
 
-        coverageService.submitSearch(january.getId(), "testing");
-        coverageService.submitSearch(february.getId(), "testing");
-        coverageService.submitSearch(march.getId(), "testing");
+        changeStatus(contract, DateUtil.getAB2DEpoch().toOffsetDateTime(), JobStatus.SUBMITTED);
 
         try {
             boolean submittedCoverageStatus = driver.isCoverageAvailable(job);
@@ -477,9 +518,7 @@ class CoverageDriverTest {
         Job job = new Job();
         job.setContract(contract);
 
-        january.setStatus(JobStatus.IN_PROGRESS);
-        february.setStatus(JobStatus.IN_PROGRESS);
-        march.setStatus(JobStatus.IN_PROGRESS);
+        changeStatus(contract, DateUtil.getAB2DEpoch().toOffsetDateTime(), JobStatus.IN_PROGRESS);
 
         try {
             boolean inProgressCoverageStatus = driver.isCoverageAvailable(job);
@@ -496,15 +535,7 @@ class CoverageDriverTest {
         Job job = new Job();
         job.setContract(contract);
 
-        january.setStatus(JobStatus.SUCCESSFUL);
-        january.setLastSuccessfulJob(OffsetDateTime.now());
-        february.setStatus(JobStatus.SUCCESSFUL);
-        february.setLastSuccessfulJob(OffsetDateTime.now());
-        march.setStatus(JobStatus.SUCCESSFUL);
-        march.setLastSuccessfulJob(OffsetDateTime.now());
-
-        coveragePeriodRepo.saveAll(List.of(january, february, march));
-        coveragePeriodRepo.flush();
+        changeStatus(contract, DateUtil.getAB2DEpoch().toOffsetDateTime(), JobStatus.SUCCESSFUL);
 
         try {
             boolean submittedCoverageStatus = driver.isCoverageAvailable(job);
@@ -520,11 +551,15 @@ class CoverageDriverTest {
     void availableCoverageWhenSinceContainsOnlySuccessful() {
 
         Job job = new Job();
-        job.setContract(contract);
 
-        march.setStatus(JobStatus.SUCCESSFUL);
-        march.setLastSuccessfulJob(OffsetDateTime.now());
-        coveragePeriodRepo.saveAndFlush(march);
+        Contract temp = contractRepo.findContractByContractNumber(contract.getContractNumber()).get();
+        job.setContract(temp);
+
+
+        OffsetDateTime since = OffsetDateTime.of(LocalDate.of(2020, 3, 1),
+                LocalTime.of(0, 0, 0), AB2D_ZONE.getRules().getOffset(Instant.now()));
+
+        changeStatus(contract, since, JobStatus.SUCCESSFUL);
 
         try {
             LocalDate startMonth = LocalDate.of(2020, 3, 1);
@@ -542,6 +577,67 @@ class CoverageDriverTest {
 
             boolean inProgressEndMonth = driver.isCoverageAvailable(job);
             assertTrue(inProgressEndMonth, "eob searches should run when only month after since is successful");
+        } catch (CoverageDriverException driverException) {
+            fail("could not check for available coverage", driverException);
+        }
+    }
+
+    @DisplayName("Do not start an eob job if periods including and after since have not been searched")
+    @Test
+    void availableCoverageWhenSinceContainsNeverSearched() {
+
+        Job job = new Job();
+        job.setContract(contract);
+
+        OffsetDateTime since = OffsetDateTime.of(LocalDate.of(2020, 3, 1),
+                LocalTime.of(0, 0, 0), AB2D_ZONE.getRules().getOffset(Instant.now()));
+
+        changeStatus(contract, since, null);
+
+        try {
+            LocalDate startMonth = LocalDate.of(2020, 3, 1);
+            LocalTime startDay = LocalTime.of(0,0,0);
+
+            job.setSince(OffsetDateTime.of(startMonth, startDay, AB2D_ZONE.getRules().getOffset(Instant.now())));
+
+            boolean inProgressBeginningMonth = driver.isCoverageAvailable(job);
+            assertFalse(inProgressBeginningMonth, "eob searches should run when only month after since is successful");
+
+            LocalDate endMonth = LocalDate.of(2020, 3, 31);
+            LocalTime endDay = LocalTime.of(23,59,59);
+
+            job.setSince(OffsetDateTime.of(endMonth, endDay, AB2D_ZONE.getRules().getOffset(Instant.now())));
+
+            boolean inProgressEndMonth = driver.isCoverageAvailable(job);
+            assertFalse(inProgressEndMonth, "eob searches should run when only month after since is successful");
+        } catch (CoverageDriverException driverException) {
+            fail("could not check for available coverage", driverException);
+        }
+    }
+
+    @DisplayName("Create a coverage period and a mapping job for an eob job if any periods do not exist or have never" +
+            " been searched")
+    @Test
+    void availableCoverageDiscoversCoveragePeriodsAndQueuesThem() {
+
+        Job job = new Job();
+        job.setContract(contract);
+
+        OffsetDateTime since = OffsetDateTime.of(LocalDate.of(2020, 3, 1),
+                LocalTime.of(0, 0, 0), AB2D_ZONE.getRules().getOffset(Instant.now()));
+
+        long numberPeriodsBeforeCheck = coveragePeriodRepo.count();
+
+        try {
+
+            boolean inProgressBeginningMonth = driver.isCoverageAvailable(job);
+            assertFalse(inProgressBeginningMonth, "eob searches should run when only month after since is successful");
+
+            assertTrue(numberPeriodsBeforeCheck < coveragePeriodRepo.count());
+
+            Set<CoveragePeriod> periods = contract.getCoveragePeriods();
+            periods.forEach(period -> assertEquals(JobStatus.SUBMITTED, period.getStatus()));
+
         } catch (CoverageDriverException driverException) {
             fail("could not check for available coverage", driverException);
         }
@@ -585,6 +681,22 @@ class CoverageDriverTest {
             Thread.sleep(milliseconds);
         } catch (InterruptedException ie) {
 
+        }
+    }
+
+    private void changeStatus(Contract contract, OffsetDateTime sinceTime, JobStatus status) {
+
+        OffsetDateTime now = OffsetDateTime.now();
+        while (sinceTime.isBefore(now)) {
+            CoveragePeriod period = coverageService.getCreateIfAbsentCoveragePeriod(contract, sinceTime.getMonthValue(), sinceTime.getYear());
+
+            period.setStatus(status);
+            if (status == JobStatus.SUCCESSFUL) {
+                period.setLastSuccessfulJob(now);
+            }
+            coveragePeriodRepo.saveAndFlush(period);
+
+            sinceTime = sinceTime.plusMonths(1);
         }
     }
 }
