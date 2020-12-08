@@ -165,10 +165,9 @@ export PGPASSWORD="${DATABASE_PASSWORD}"
 
 # Create get user account id command string
 
-COMMAND_01="SELECT e.id FROM ${DATABASE_SCHEMA_NAME}.sponsor a "
-COMMAND_02="LEFT OUTER JOIN ${DATABASE_SCHEMA_NAME}.user_account e ON a.id = e.sponsor_id "
-COMMAND_03="LEFT OUTER JOIN ${DATABASE_SCHEMA_NAME}.contract d ON a.id = d.sponsor_id "
-COMMAND_04="WHERE e.enabled = true AND d.contract_number = '${CONTRACT_NUMBER}';"
+COMMAND_01="SELECT e.id FROM ${DATABASE_SCHEMA_NAME}.contract d "
+COMMAND_02="INNER JOIN ${DATABASE_SCHEMA_NAME}.user_account e ON d.id = e.contract_id "
+COMMAND_03="WHERE e.enabled = true AND d.contract_number = '${CONTRACT_NUMBER}';"
 
 USER_ACCOUNT_ID=$(
   psql \
@@ -177,7 +176,7 @@ USER_ACCOUNT_ID=$(
     --port="${DATABASE_PORT}" \
     --username="${DATABASE_USER}" \
     --dbname="${DATABASE_NAME}" \
-    --command="${COMMAND_01}${COMMAND_02}${COMMAND_03}${COMMAND_04}" \
+    --command="${COMMAND_01}${COMMAND_02}${COMMAND_03}" \
     | head -n 1 \
     | xargs \
     | tr -d '\r')
