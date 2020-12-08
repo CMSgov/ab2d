@@ -1,6 +1,6 @@
 package gov.cms.ab2d.common.model;
 
-import gov.cms.ab2d.common.repository.CoverageSearchEventRepository;
+import gov.cms.ab2d.common.repository.ContractRepository;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,31 +24,33 @@ class CreateUpdateTimestampTest {
     private static final PostgreSQLContainer postgreSQLContainer = new AB2DPostgresqlContainer();
 
     @Autowired
-    private CoverageSearchEventRepository coverageSearchEventRepository;
+    private ContractRepository contractRepository;
 
     @Test
     void testTimestamps() {
-        CoverageSearchEvent coverageSearchEvent = new CoverageSearchEvent();
-        coverageSearchEvent.setDescription("TEST");
+        Contract contract = new Contract();
+        contract.setContractNumber("TEST123");
+        contract.setContractName("TEST123");
 
-        assertNull(coverageSearchEvent.getCreated());
-        assertNull(coverageSearchEvent.getModified());
+        assertNull(contract.getCreated());
+        assertNull(contract.getModified());
 
-        CoverageSearchEvent savedCSE = coverageSearchEventRepository.save(coverageSearchEvent);
-        assertEquals("TEST", savedCSE.getDescription());
+        Contract savedCSE = contractRepository.save(contract);
+        assertEquals("TEST123", savedCSE.getContractNumber());
         assertNotNull(savedCSE.getId());
         assertNotNull(savedCSE.getCreated());
         assertNotNull(savedCSE.getModified());
 
         OffsetDateTime created = savedCSE.getCreated();
         OffsetDateTime modified = savedCSE.getModified();
-        savedCSE.setDescription("TEST2");
-        CoverageSearchEvent finaleCSE = coverageSearchEventRepository.save(savedCSE);
+        contract.setContractNumber("TEST456");
+        contract.setContractName("TEST456");
+        Contract finaleCSE = contractRepository.save(savedCSE);
 
         assertEquals(created, finaleCSE.getCreated());
         assertNotEquals(modified, finaleCSE.getModified());
 
         // Cleanup
-        coverageSearchEventRepository.delete(finaleCSE);
+        contractRepository.delete(finaleCSE);
     }
 }
