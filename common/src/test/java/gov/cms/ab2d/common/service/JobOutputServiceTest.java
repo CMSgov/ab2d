@@ -71,9 +71,9 @@ public class JobOutputServiceTest {
 
     @AfterEach
     public void tearDown() {
-        contractRepository.deleteAll();
         jobRepository.deleteAll();
         userRepository.deleteAll();
+        contractRepository.deleteAll();
     }
 
     @Test
