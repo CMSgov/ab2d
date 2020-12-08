@@ -290,6 +290,8 @@
 
 1. Change to your "ab2d" repo directory
 
+   *Example:*
+   
    ```ShellSession
    $ cd ~/code/ab2d
    ```
@@ -303,7 +305,8 @@
      && export OWNER_PARAM=743302140042 \
      && export REGION_PARAM=us-east-1 \
      && export SSH_USERNAME_PARAM=ec2-user \
-     && export VPC_ID_PARAM=vpc-08dbf3fa96684151c
+     && export VPC_ID_PARAM=vpc-08dbf3fa96684151c \
+     && export CLOUD_TAMER_PARAM=true
    ```
 
 1. Create or update AMI with latest gold disk

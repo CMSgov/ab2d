@@ -414,7 +414,8 @@
      && export OWNER_PARAM=743302140042 \
      && export REGION_PARAM=us-east-1 \
      && export SSH_USERNAME_PARAM=ec2-user \
-     && export VPC_ID_PARAM=vpc-0c6413ec40c5fdac3
+     && export VPC_ID_PARAM=vpc-0c6413ec40c5fdac3 \
+     && export CLOUD_TAMER_PARAM=true
    ```
 
 1. Create or update AMI with latest gold disk

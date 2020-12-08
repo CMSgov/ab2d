@@ -733,54 +733,15 @@ lication-load-balancer)
 
 ### Create or update AMI with latest gold disk
 
-1. Change to the "Deploy" directory
+1. Change to your "ab2d" repo directory
 
+   *Example:*
+   
    ```ShellSession
-   $ cd ~/code/ab2d/Deploy
+   $ cd ~/code/ab2d
    ```
 
-1. Set gold disk test parameters
-
-   *Example for "Dev" environment:*
-
-   ```ShellSession
-   $ export CMS_ENV_PARAM=ab2d-dev \
-     && export DEBUG_LEVEL_PARAM=WARN \
-     && export EC2_INSTANCE_TYPE_PACKER_PARAM=m5.xlarge \
-     && export OWNER_PARAM=743302140042 \
-     && export REGION_PARAM=us-east-1 \
-     && export SSH_USERNAME_PARAM=ec2-user \
-     && export VPC_ID_PARAM=vpc-0c6413ec40c5fdac3 \
-     && export CLOUD_TAMER_PARAM=true
-   ```
-
-   *Example for "Sbx" environment:*
-
-   ```ShellSession
-   $ export CMS_ENV_PARAM=ab2d-sbx-sandbox \
-     && export DEBUG_LEVEL_PARAM=WARN \
-     && export EC2_INSTANCE_TYPE_PACKER_PARAM=m5.xlarge \
-     && export OWNER_PARAM=743302140042 \
-     && export REGION_PARAM=us-east-1 \
-     && export SSH_USERNAME_PARAM=ec2-user \
-     && export VPC_ID_PARAM=vpc-08dbf3fa96684151c \
-     && export CLOUD_TAMER_PARAM=true
-   ```
-
-   *Example for "Impl" environment:*
-
-   ```ShellSession
-   $ export CMS_ENV_PARAM=ab2d-east-impl \
-     && export DEBUG_LEVEL_PARAM=WARN \
-     && export EC2_INSTANCE_TYPE_PACKER_PARAM=m5.xlarge \
-     && export OWNER_PARAM=743302140042 \
-     && export REGION_PARAM=us-east-1 \
-     && export SSH_USERNAME_PARAM=ec2-user \
-     && export VPC_ID_PARAM=vpc-0e5d2e88de7f9cad4 \
-     && export CLOUD_TAMER_PARAM=true
-   ```
-
-   *Example for "Prod" environment:*
+1. Set gold disk parameters
 
    ```ShellSession
    $ export CMS_ENV_PARAM=ab2d-east-prod \
@@ -796,7 +757,7 @@ lication-load-balancer)
 1. Create or update AMI with latest gold disk
 
    ```ShellSession
-   $ ./bash/update-gold-disk.sh
+   $ ./Deploy/bash/update-gold-disk.sh
    ```
 
 ### Create or update infrastructure
@@ -827,10 +788,12 @@ lication-load-balancer)
 
 ### Create or update application
 
-1. Change to the "Deploy" directory
+1. Change to your "ab2d" repo directory
 
+   *Example:*
+   
    ```ShellSession
-   $ cd ~/code/ab2d/Deploy
+   $ cd ~/code/ab2d
    ```
 
 1. Set parameters
@@ -858,7 +821,7 @@ lication-load-balancer)
 1. Deploy application
 
    ```ShellSession
-   $ ./bash/deploy-application.sh
+   $ ./Deploy/bash/deploy-application.sh
    ```
 
 ## Upload HPMS Reports
