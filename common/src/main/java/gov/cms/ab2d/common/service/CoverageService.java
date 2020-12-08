@@ -1,5 +1,6 @@
 package gov.cms.ab2d.common.service;
 
+import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.CoverageMapping;
 import gov.cms.ab2d.common.model.CoveragePagingRequest;
 import gov.cms.ab2d.common.model.CoveragePagingResult;
@@ -19,11 +20,20 @@ public interface CoverageService {
 
     /**
      * Get {@link CoveragePeriod} in database matching provided triple
-     * @param contractId existing {@link gov.cms.ab2d.common.model.Contract#getId()}
+     * @param contract existing {@link gov.cms.ab2d.common.model.Contract#getId()}
      * @param month valid month
      * @param year valid year (not later than current year)
      */
-    CoveragePeriod getCoveragePeriod(long contractId, int month, int year);
+    CoveragePeriod getCoveragePeriod(Contract contract, int month, int year);
+
+    /**
+     * Create {@link CoveragePeriod} matching the provided triple
+     * @param contract contract to add coverage period for
+     * @param month month of the period
+     * @param year year of the period
+     * @return coverage period as it exists in database
+     */
+    CoveragePeriod getCreateIfAbsentCoveragePeriod(Contract contract, int month, int year);
 
     /**
      * Check current status of a {@link CoveragePeriod}

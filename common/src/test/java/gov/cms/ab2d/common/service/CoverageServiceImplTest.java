@@ -120,12 +120,30 @@ class CoverageServiceImplTest {
     @DisplayName("Get a coverage period")
     @Test
     void getCoveragePeriod() {
-        CoveragePeriod period = coverageService.getCoveragePeriod(contract1.getId(), JANUARY, YEAR);
+        CoveragePeriod period = coverageService.getCoveragePeriod(contract1, JANUARY, YEAR);
         assertEquals(period1Jan, period);
 
-        assertThrows(IllegalArgumentException.class, () -> coverageService.getCoveragePeriod(contract1.getId(), JANUARY, 2000));
+        assertThrows(IllegalArgumentException.class, () -> coverageService.getCoveragePeriod(contract1, JANUARY, 2000));
 
-        assertThrows(IllegalArgumentException.class, () -> coverageService.getCoveragePeriod(contract1.getId(), JANUARY, 2100));
+        assertThrows(IllegalArgumentException.class, () -> coverageService.getCoveragePeriod(contract1, JANUARY, 2100));
+    }
+
+    @DisplayName("Get or create does not insert duplicate period")
+    @Test
+    void getOrCreateDoesNotDuplicate() {
+
+        long periods = coveragePeriodRepo.count();
+
+        coverageService.getCreateIfAbsentCoveragePeriod(contract1, JANUARY, YEAR);
+
+        assertEquals(periods, coveragePeriodRepo.count());
+    }
+
+    @DisplayName("Get or create does not insert duplicate period")
+    @Test
+    void getOrCreateInsertsNew() {
+        CoveragePeriod period = coverageService.getCreateIfAbsentCoveragePeriod(contract1, 12, 2020);
+        coveragePeriodRepo.delete(period);
     }
 
     @DisplayName("Coverage search status works")
@@ -945,16 +963,16 @@ class CoverageServiceImplTest {
     void checkMonthAndYear() {
 
         assertThrows(IllegalArgumentException.class,
-                () -> coverageService.getCoveragePeriod(contract1.getId(), 0, 2020));
+                () -> coverageService.getCoveragePeriod(contract1, 0, 2020));
 
         assertThrows(IllegalArgumentException.class,
-                () -> coverageService.getCoveragePeriod(contract1.getId(), 13, 2020));
+                () -> coverageService.getCoveragePeriod(contract1, 13, 2020));
 
         assertThrows(IllegalArgumentException.class,
-                () -> coverageService.getCoveragePeriod(contract1.getId(), 12, 2040));
+                () -> coverageService.getCoveragePeriod(contract1, 12, 2040));
 
         assertThrows(IllegalArgumentException.class,
-                () -> coverageService.getCoveragePeriod(contract1.getId(), 12, 2019));
+                () -> coverageService.getCoveragePeriod(contract1, 12, 2019));
     }
 
     private Identifiers createIdentifier(String suffix) {

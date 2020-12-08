@@ -1,4 +1,4 @@
-package gov.cms.ab2d.worker.processor;
+package gov.cms.ab2d.worker.processor.coverage;
 
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.CoveragePeriod;
