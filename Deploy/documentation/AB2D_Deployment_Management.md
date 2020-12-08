@@ -4499,7 +4499,34 @@
       ```ShellSession
       $ sudo systemctl restart sshd
       ```
+
+1. Set jenkins password to never expires
+
+   *Note that even though password is not allowed, you still need to set password expiration to never. If you don't, password expirtation will lock the jenkins account, thus causing SSH to fail.*
    
+   ```ShellSession
+   $ sudo passwd -x -1 -n -1 -w -1 jenkins
+   ```
+
+1. Verify the jenkins user password settings
+
+   1. Enter the following
+
+      ```ShellSession
+      $ sudo chage -l jenkins
+      ```
+
+   1. Note the following six settings should look like this
+
+      ```
+      Password expires                                  : never
+      Password inactive                                 : never
+      Account expires                                   : never
+      Minimum number of days between password change    : -1
+      Maximum number of days between password change    : -1
+      Number of days of warning before password expires : -1
+      ```
+      
 1. Exit Jenkins agent
 
    ```ShellSession
@@ -4810,7 +4837,7 @@
       ```ShellSession
       $ ssh -i ~/.ssh/ab2d-mgmt-east-dev.pem ec2-user@$JENKINS_AGENT_02_PRIVATE_IP
       ```
-   
+
 1. Disallow password authentication on jenkins agent
 
    1. Open the "sshd_config" file
@@ -4830,7 +4857,34 @@
       ```ShellSession
       $ sudo systemctl restart sshd
       ```
+
+1. Set jenkins password to never expires
+
+   *Note that even though password is not allowed, you still need to set password expiration to never. If you don't, password expirtation will lock the jenkins account, thus causing SSH to fail.*
    
+   ```ShellSession
+   $ sudo passwd -x -1 -n -1 -w -1 jenkins
+   ```
+
+1. Verify the jenkins user password settings
+
+   1. Enter the following
+
+      ```ShellSession
+      $ sudo chage -l jenkins
+      ```
+
+   1. Note the following six settings should look like this
+
+      ```
+      Password expires                                  : never
+      Password inactive                                 : never
+      Account expires                                   : never
+      Minimum number of days between password change    : -1
+      Maximum number of days between password change    : -1
+      Number of days of warning before password expires : -1
+      ```
+
 1. Exit Jenkins agent
 
    ```ShellSession
@@ -5161,7 +5215,34 @@
       ```ShellSession
       $ sudo systemctl restart sshd
       ```
+
+1. Set jenkins password to never expires
+
+   *Note that even though password is not allowed, you still need to set password expiration to never. If you don't, password expirtation will lock the jenkins account, thus causing SSH to fail.*
    
+   ```ShellSession
+   $ sudo passwd -x -1 -n -1 -w -1 jenkins
+   ```
+
+1. Verify the jenkins user password settings
+
+   1. Enter the following
+
+      ```ShellSession
+      $ sudo chage -l jenkins
+      ```
+
+   1. Note the following six settings should look like this
+
+      ```
+      Password expires                                  : never
+      Password inactive                                 : never
+      Account expires                                   : never
+      Minimum number of days between password change    : -1
+      Maximum number of days between password change    : -1
+      Number of days of warning before password expires : -1
+      ```
+
 1. Exit Jenkins agent
 
    ```ShellSession
@@ -5492,7 +5573,34 @@
       ```ShellSession
       $ sudo systemctl restart sshd
       ```
+
+1. Set jenkins password to never expires
+
+   *Note that even though password is not allowed, you still need to set password expiration to never. If you don't, password expirtation will lock the jenkins account, thus causing SSH to fail.*
    
+   ```ShellSession
+   $ sudo passwd -x -1 -n -1 -w -1 jenkins
+   ```
+
+1. Verify the jenkins user password settings
+
+   1. Enter the following
+
+      ```ShellSession
+      $ sudo chage -l jenkins
+      ```
+
+   1. Note the following six settings should look like this
+
+      ```
+      Password expires                                  : never
+      Password inactive                                 : never
+      Account expires                                   : never
+      Minimum number of days between password change    : -1
+      Maximum number of days between password change    : -1
+      Number of days of warning before password expires : -1
+      ```
+
 1. Exit Jenkins agent
 
    ```ShellSession
@@ -5837,7 +5945,34 @@
       ```ShellSession
       $ sudo systemctl restart sshd
       ```
+
+1. Set jenkins password to never expires
+
+   *Note that even though password is not allowed, you still need to set password expiration to never. If you don't, password expirtation will lock the jenkins account, thus causing SSH to fail.*
    
+   ```ShellSession
+   $ sudo passwd -x -1 -n -1 -w -1 jenkins
+   ```
+
+1. Verify the jenkins user password settings
+
+   1. Enter the following
+
+      ```ShellSession
+      $ sudo chage -l jenkins
+      ```
+
+   1. Note the following six settings should look like this
+
+      ```
+      Password expires                                  : never
+      Password inactive                                 : never
+      Account expires                                   : never
+      Minimum number of days between password change    : -1
+      Maximum number of days between password change    : -1
+      Number of days of warning before password expires : -1
+      ```
+
 1. Exit Jenkins agent
 
    ```ShellSession
