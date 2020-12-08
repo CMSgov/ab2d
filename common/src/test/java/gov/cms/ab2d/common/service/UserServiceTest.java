@@ -93,7 +93,6 @@ public class UserServiceTest {
         assertThat(exceptionThrown.getMessage(), is("could not execute statement; SQL [n/a]; constraint [uc_user_account_username]; nested exception is org.hibernate.exception.ConstraintViolationException: could not execute statement"));
     }
 
-//    @Test - todo: fix or delete
     private UserDTO buildUserDTO(String test, String sponsorRole) {
         Contract contract = dataSetup.setupContract(test);
 
@@ -120,15 +119,13 @@ public class UserServiceTest {
         user.setFirstName("Test");
         user.setLastName("User");
         user.setEnabled(true);
-        ContractDTO contractDTO = new ContractDTO();
+        ContractDTO contractDTO = new ContractDTO(contract.getContractNumber(), contract.getContractName(),
+                contract.getAttestedOn().toString());
         user.setContract(contractDTO);
         if(roleName != null) {
             Role role = roleService.findRoleByName(roleName);
             user.setRole(role.getName());
         }
-
-        // todo: get rid of
-        user.setUsername(contract.getContractName());
 
         return user;
     }
@@ -143,7 +140,7 @@ public class UserServiceTest {
         createdUser.setFirstName("New");
         createdUser.setLastName("User");
         createdUser.setEnabled(false);
-        ContractDTO contractDTO = new ContractDTO();
+        ContractDTO contractDTO = buildContractDTO(dataSetup.setupContract("T12345"));
         createdUser.setContract(contractDTO);
         createdUser.setRole(SPONSOR_ROLE);
 
@@ -157,6 +154,14 @@ public class UserServiceTest {
         Assert.assertEquals(updatedUser.getContract().getContractName(), createdUser.getContract().getContractName());
         Assert.assertEquals(updatedUser.getContract().getContractNumber(), createdUser.getContract().getContractNumber());
         Assert.assertEquals(updatedUser.getRole(), createdUser.getRole());
+    }
+
+    private ContractDTO buildContractDTO(Contract contract) {
+        ContractDTO contractDTO = new ContractDTO();
+        contractDTO.setContractName(contract.getContractName());
+        contractDTO.setContractNumber(contract.getContractNumber());
+        contractDTO.setAttestedOn(contract.getAttestedOn().toString());
+        return contractDTO;
     }
 
     @Test

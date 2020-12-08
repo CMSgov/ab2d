@@ -37,7 +37,6 @@ public class User extends TimestampBase implements UserDetails {
 
     @ManyToOne
     @JoinColumn(name = "contract_id")
-    @NotNull
     private Contract contract;
 
     @ManyToMany(fetch = FetchType.EAGER)

@@ -125,7 +125,7 @@ public class DataSetup {
     public Contract setupContract(String contractNumber) {
         Contract contract = new Contract();
         contract.setAttestedOn(OffsetDateTime.now());
-        contract.setContractName("Test Contract");
+        contract.setContractName("Test Contract " + contractNumber);
         contract.setContractNumber(contractNumber);
 
         return contractRepository.save(contract);
