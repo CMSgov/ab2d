@@ -15,5 +15,6 @@ public class ContractDTO {
     @NotNull
     private String contractName;
 
+    @EqualsAndHashCode.Exclude  // contractNumber is sufficient, breaks on Windows due sub-seconds not matching
     private String attestedOn;
 }

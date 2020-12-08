@@ -3,13 +3,12 @@ package gov.cms.ab2d.common.service;
 import gov.cms.ab2d.common.SpringBootApp;
 import gov.cms.ab2d.common.dto.*;
 import gov.cms.ab2d.common.model.*;
+import gov.cms.ab2d.common.repository.ContractRepository;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.DataSetup;
 import org.junit.Assert;
-import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.*;
 import gov.cms.ab2d.common.repository.UserRepository;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -47,6 +46,9 @@ public class UserServiceTest {
     private UserRepository userRepository;
 
     @Autowired
+    private ContractRepository contractRepository;
+
+    @Autowired
     private RoleService roleService;
 
     @Container
@@ -55,9 +57,10 @@ public class UserServiceTest {
     @Autowired
     private DataSetup dataSetup;
 
-    @BeforeEach
-    public void init() {
+    @AfterEach
+    public void teardown() {
         userRepository.deleteAll();
+        contractRepository.deleteAll();
     }
 
     @Test
@@ -97,19 +100,6 @@ public class UserServiceTest {
         Contract contract = dataSetup.setupContract(test);
 
         return createUser(contract, sponsorRole);
-    }
-
-    @Test
-    public void testCreateDuplicateUserByEmail() {
-        UserDTO user = buildUserDTO("N123", SPONSOR_ROLE);
-
-        userService.createUser(user);
-
-        user.setUsername("something_different");
-        var exceptionThrown = Assertions.assertThrows(DataIntegrityViolationException.class, () -> {
-            userService.createUser(user);
-        });
-        assertThat(exceptionThrown.getMessage(), is("could not execute statement; SQL [n/a]; constraint [uc_user_account_email]; nested exception is org.hibernate.exception.ConstraintViolationException: could not execute statement"));
     }
 
     private UserDTO createUser(Contract contract, @Nullable String roleName) {
