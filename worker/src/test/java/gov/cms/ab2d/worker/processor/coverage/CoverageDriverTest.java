@@ -14,23 +14,21 @@ import org.hl7.fhir.dstu3.model.Bundle;
 import org.hl7.fhir.dstu3.model.Identifier;
 import org.hl7.fhir.dstu3.model.Patient;
 import org.junit.jupiter.api.*;
-import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
-import org.springframework.test.util.ReflectionTestUtils;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-import java.time.OffsetDateTime;
-import java.time.ZonedDateTime;
+import java.time.*;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
+import static gov.cms.ab2d.common.util.DateUtil.AB2D_ZONE;
 import static gov.cms.ab2d.common.util.DateUtil.getAB2DEpoch;
 import static gov.cms.ab2d.worker.processor.coverage.CoverageMappingCallable.BENEFICIARY_ID;
 import static org.junit.jupiter.api.Assertions.*;
@@ -40,7 +38,7 @@ import static org.mockito.Mockito.*;
 // Never run internal coverage processor so this coverage processor runs unimpeded
 @SpringBootTest(properties = "coverage.update.initial.delay=1000000")
 @Testcontainers
-class CoverageUpdateAndProcessorTest {
+class CoverageDriverTest {
 
     private static final int PAST_MONTHS = 3;
     private static final int STALE_DAYS = 3;
@@ -49,9 +47,6 @@ class CoverageUpdateAndProcessorTest {
 
     @Container
     private static final PostgreSQLContainer postgres = new AB2DPostgresqlContainer();
-
-    @Value("${coverage.update.max.attempts}")
-    private int maxRetries;
 
     @Autowired
     private SponsorRepository sponsorRepo;
@@ -122,7 +117,7 @@ class CoverageUpdateAndProcessorTest {
         CoverageUpdateConfig config = new CoverageUpdateConfig(PAST_MONTHS, STALE_DAYS, STUCK_HOURS);
 
         processor = new CoverageProcessorImpl(coverageService, bfdClient, taskExecutor, MAX_ATTEMPTS);
-        driver = new CoverageDriverImpl(contractService, coverageService, propertiesService, processor, config, searchLock);
+        driver = new CoverageDriverImpl(coverageSearchRepo, contractService, coverageService, propertiesService, processor, config, searchLock);
     }
 
     @AfterEach
@@ -163,7 +158,11 @@ class CoverageUpdateAndProcessorTest {
         long months = ChronoUnit.MONTHS.between(epoch, OffsetDateTime.now());
         long expectedNumPeriods = months + 1;
 
-        driver.discoverCoveragePeriods();
+        try {
+            driver.discoverCoveragePeriods();
+        } catch (CoverageDriverException | InterruptedException exception) {
+            fail("could not queue periods due to driver exception", exception);
+        }
 
         List<CoveragePeriod> periods = coveragePeriodRepo.findAllByContractId(contract.getId());
         assertFalse(periods.isEmpty());
@@ -179,19 +178,6 @@ class CoverageUpdateAndProcessorTest {
 
     }
 
-    @DisplayName("Cannot submit twice")
-    @Test
-    void cannotSubmitTwice() {
-
-        coverageService.submitSearch(january.getId(), "testing");
-
-        assertEquals(1, coverageSearchRepo.count());
-
-        processor.queueCoveragePeriod(january, false);
-
-        assertEquals(1, coverageSearchRepo.count());
-    }
-
     @DisplayName("Queue stale coverage find never searched")
     @Test
     void queueStaleCoverageNeverSearched() {
@@ -205,7 +191,7 @@ class CoverageUpdateAndProcessorTest {
         march.setStatus(null);
         coveragePeriodRepo.saveAndFlush(march);
 
-        driver.queueStaleCoveragePeriods();
+        assertDoesNotThrow(() -> driver.queueStaleCoveragePeriods(), "could not queue periods due to driver exception");
 
         assertEquals(3, coverageSearchRepo.findAll().size());
 
@@ -223,7 +209,8 @@ class CoverageUpdateAndProcessorTest {
         march.setStatus(null);
         coveragePeriodRepo.saveAndFlush(march);
 
-        driver.queueStaleCoveragePeriods();
+        assertDoesNotThrow(() -> driver.queueStaleCoveragePeriods(), "could not queue periods due to driver exception");
+
         assertEquals(2, coverageSearchRepo.findAll().size());
     }
 
@@ -243,7 +230,8 @@ class CoverageUpdateAndProcessorTest {
         createEvent(january, JobStatus.CANCELLED, OffsetDateTime.now());
         createEvent(february, JobStatus.FAILED, OffsetDateTime.now());
 
-        driver.queueStaleCoveragePeriods();
+        assertDoesNotThrow(() -> driver.queueStaleCoveragePeriods(), "could not queue periods due to driver exception");
+
         assertEquals(3, coverageSearchRepo.findAll().size());
     }
 
@@ -277,7 +265,7 @@ class CoverageUpdateAndProcessorTest {
         createEvent(oneMonth, JobStatus.SUCCESSFUL, currentDate.minusDays(2 * STALE_DAYS - 1));
         createEvent(twoMonth, JobStatus.SUCCESSFUL, currentDate.minusDays(3 * STALE_DAYS - 1));
 
-        driver.queueStaleCoveragePeriods();
+        assertDoesNotThrow(() -> driver.queueStaleCoveragePeriods(), "could not queue periods due to driver exception");
 
         assertEquals(0, coverageSearchRepo.findAll().size());
     }
@@ -319,7 +307,7 @@ class CoverageUpdateAndProcessorTest {
         createEvent(twoMonth, JobStatus.SUCCESSFUL, currentDate.minusDays(3 * STALE_DAYS + 1));
         createEvent(threeMonth, JobStatus.SUCCESSFUL, currentDate.minusDays(4 * STALE_DAYS + 1));
 
-        driver.queueStaleCoveragePeriods();
+        assertDoesNotThrow(() -> driver.queueStaleCoveragePeriods(), "could not queue periods due to driver exception");
 
         // Only three because we ignore three months ago
         assertEquals(3, coverageSearchRepo.findAll().size());
@@ -341,7 +329,7 @@ class CoverageUpdateAndProcessorTest {
         createEvent(currentMonth, JobStatus.SUCCESSFUL, currentDate.minusDays(STALE_DAYS + 1));
         createEvent(currentMonth, JobStatus.IN_PROGRESS, currentDate.minusDays(1).minusMinutes(1));
 
-        driver.queueStaleCoveragePeriods();
+        assertDoesNotThrow(() -> driver.queueStaleCoveragePeriods(), "could not queue periods due to driver exception");
 
         assertEquals(1, coverageSearchRepo.findAll().size());
 
@@ -368,7 +356,7 @@ class CoverageUpdateAndProcessorTest {
         createEvent(currentMonth, JobStatus.SUCCESSFUL, currentDate.minusDays(STALE_DAYS + 1));
         createEvent(currentMonth, JobStatus.IN_PROGRESS, currentDate.minusMinutes(1));
 
-        driver.queueStaleCoveragePeriods();
+        assertDoesNotThrow(() -> driver.queueStaleCoveragePeriods(), "could not queue periods due to driver exception");
 
         assertEquals(0, coverageSearchRepo.findAll().size());
 
@@ -384,7 +372,7 @@ class CoverageUpdateAndProcessorTest {
         createEvent(currentMonth, JobStatus.SUCCESSFUL, currentDate.minusDays(STALE_DAYS + 1));
         createEvent(currentMonth, JobStatus.SUBMITTED, currentDate.minusMinutes(1));
 
-        driver.queueStaleCoveragePeriods();
+        assertDoesNotThrow(() -> driver.queueStaleCoveragePeriods(), "could not queue periods due to driver exception");
 
         assertEquals(0, coverageSearchRepo.findAll().size());
         assertEquals(JobStatus.SUBMITTED, coveragePeriodRepo.findById(currentMonth.getId()).get().getStatus());
@@ -421,106 +409,142 @@ class CoverageUpdateAndProcessorTest {
         assertEquals(JobStatus.SUCCESSFUL, status);
     }
 
-    @DisplayName("Mapping failure leads to retry but still can succeed on retry")
+    /**
+     * Verify that null is returned if there are no searches, a search there is one and verify that it
+     * was deleted after it was searched.
+     */
+    @DisplayName("Getting another search gets and removes a coverage search specification")
     @Test
-    void mappingRetried() {
+    void getNextSearch() {
+        assertTrue(driver.getNextSearch().isEmpty());
 
-        when(bfdClient.requestPartDEnrolleesFromServer(anyString(), anyInt())).thenThrow(new RuntimeException("oops"));
+        Sponsor sponsor = dataSetup.createSponsor("Cal Ripken", 200, "Cal Ripken Jr.", 201);
+        Contract contract1 = dataSetup.setupContract(sponsor, "c123");
+        CoveragePeriod period1 = dataSetup.createCoveragePeriod(contract1, 10, 2020);
+        CoverageSearch search1 = new CoverageSearch(null, period1, OffsetDateTime.now(), 0);
+        CoverageSearch savedSearch1 = coverageSearchRepo.save(search1);
+        Optional<CoverageSearch> returnedSearch = driver.getNextSearch();
+        assertEquals(savedSearch1.getPeriod().getMonth(), returnedSearch.get().getPeriod().getMonth());
+        assertEquals(savedSearch1.getPeriod().getYear(), returnedSearch.get().getPeriod().getYear());
+        assertTrue(driver.getNextSearch().isEmpty());
 
-        processor.queueCoveragePeriod(january, false);
-        JobStatus status = coverageService.getSearchStatus(january.getId());
-        assertEquals(JobStatus.SUBMITTED, status);
-
-        driver.loadMappingJob();
-        status = coverageService.getSearchStatus(january.getId());
-        assertEquals(JobStatus.IN_PROGRESS, status);
-
-        sleep(1000);
-
-        processor.monitorMappingJobs();
-        assertTrue(coverageSearchEventRepo.findAll().stream().anyMatch(event -> event.getNewStatus() == JobStatus.FAILED));
-
-        status = coverageService.getSearchStatus(january.getId());
-        assertEquals(JobStatus.SUBMITTED, status);
-
-        reset(bfdClient);
-
-        Bundle bundle1 = buildBundle(0, 10);
-        bundle1.setLink(Collections.singletonList(new Bundle.BundleLinkComponent().setRelation(Bundle.LINK_NEXT)));
-
-        Bundle bundle2 = buildBundle(10, 20);
-
-        Mockito.clearInvocations();
-        when(bfdClient.requestPartDEnrolleesFromServer(anyString(), anyInt())).thenReturn(bundle1);
-        when(bfdClient.requestNextBundleFromServer(any(Bundle.class))).thenReturn(bundle2);
-
-        driver.loadMappingJob();
-
-        sleep(1000);
-
-        processor.monitorMappingJobs();
-
-        sleep(1000);
-
-        processor.insertJobResults();
-
-        status = coverageService.getSearchStatus(january.getId());
-        assertEquals(JobStatus.SUCCESSFUL, status);
+        dataSetup.deleteCoveragePeriod(period1);
+        dataSetup.deleteContract(contract1);
+        dataSetup.deleteSponsor(sponsor);
     }
 
-    @DisplayName("Mapping failure after x retries")
+    @DisplayName("Do not start an eob job if any relevant coverage period has never had data pulled for it")
     @Test
-    void mappingFailsAfterXRetries() {
+    void availableCoverageWhenNeverSearched() {
 
-        when(bfdClient.requestPartDEnrolleesFromServer(anyString(), anyInt())).thenThrow(new RuntimeException("oops"));
+        Job job = new Job();
+        job.setContract(contract);
 
+        try {
+            boolean noCoverageStatuses = driver.isCoverageAvailable(job);
 
-        processor.queueCoveragePeriod(january, false);
-        JobStatus status = coverageService.getSearchStatus(january.getId());
-        assertEquals(JobStatus.SUBMITTED, status);
-
-        // Should retry x times
-        for (int i = 0; i < maxRetries; i++) {
-            status = iterateFailingJob();
-            assertEquals(JobStatus.SUBMITTED, status);
+            assertFalse(noCoverageStatuses, "eob searches should not run when a" +
+                    " coverage period has no information");
+        } catch (CoverageDriverException driverException) {
+            fail("could not check for available coverage", driverException);
         }
-
-        status = iterateFailingJob();
-        assertEquals(JobStatus.FAILED, status);
     }
 
-    @DisplayName("Only ThreadPoolTaskExecutor.getMaxPoolSize() job results allowed in insertion queue")
+    @DisplayName("Do not start an eob job if any relevant coverage period is queued for an update")
     @Test
-    void limitRunningJobsByDBSpeed() {
-        Bundle bundle1 = buildBundle(0, 10);
-        bundle1.setLink(Collections.singletonList(new Bundle.BundleLinkComponent().setRelation(Bundle.LINK_NEXT)));
+    void availableCoverageWhenPeriodSubmitted() {
 
-        Bundle bundle2 = buildBundle(10, 20);
+        Job job = new Job();
+        job.setContract(contract);
 
-        Mockito.clearInvocations();
-        when(bfdClient.requestPartDEnrolleesFromServer(anyString(), anyInt())).thenReturn(bundle1);
-        when(bfdClient.requestNextBundleFromServer(any(Bundle.class))).thenReturn(bundle2);
+        coverageService.submitSearch(january.getId(), "testing");
+        coverageService.submitSearch(february.getId(), "testing");
+        coverageService.submitSearch(march.getId(), "testing");
 
-        ThreadPoolTaskExecutor twoThreads = new ThreadPoolTaskExecutor();
-        twoThreads.setMaxPoolSize(2);
-        twoThreads.initialize();
+        try {
+            boolean submittedCoverageStatus = driver.isCoverageAvailable(job);
+            assertFalse(submittedCoverageStatus, "eob searches should not run if a " +
+                    "coverage period is submitted");
+        } catch (CoverageDriverException driverException) {
+            fail("could not check for available coverage", driverException);
+        }
+    }
 
-        ReflectionTestUtils.setField(processor, "executor", twoThreads);
+    @DisplayName("Do not start an eob job if any relevant coverage period is being updated")
+    @Test
+    void availableCoverageWhenPeriodInProgress() {
 
-        processor.queueCoveragePeriod(january, false);
-        processor.queueCoveragePeriod(february, false);
-        processor.queueCoveragePeriod(march, false);
+        Job job = new Job();
+        job.setContract(contract);
 
-        driver.loadMappingJob();
-        driver.loadMappingJob();
+        january.setStatus(JobStatus.IN_PROGRESS);
+        february.setStatus(JobStatus.IN_PROGRESS);
+        march.setStatus(JobStatus.IN_PROGRESS);
 
-        sleep(1000);
+        try {
+            boolean inProgressCoverageStatus = driver.isCoverageAvailable(job);
+            assertFalse(inProgressCoverageStatus, "eob searches should not run when a coverage period is in progress");
+        } catch (CoverageDriverException driverException) {
+            fail("could not check for available coverage", driverException);
+        }
+    }
 
-        processor.monitorMappingJobs();
+    @DisplayName("Do start an eob job if all coverage periods are in progress")
+    @Test
+    void availableCoverageWhenAllSuccessful() {
 
-        driver.loadMappingJob();
+        Job job = new Job();
+        job.setContract(contract);
 
-        assertEquals(0, twoThreads.getActiveCount());
+        january.setStatus(JobStatus.SUCCESSFUL);
+        january.setLastSuccessfulJob(OffsetDateTime.now());
+        february.setStatus(JobStatus.SUCCESSFUL);
+        february.setLastSuccessfulJob(OffsetDateTime.now());
+        march.setStatus(JobStatus.SUCCESSFUL);
+        march.setLastSuccessfulJob(OffsetDateTime.now());
+
+        coveragePeriodRepo.saveAll(List.of(january, february, march));
+        coveragePeriodRepo.flush();
+
+        try {
+            boolean submittedCoverageStatus = driver.isCoverageAvailable(job);
+            assertTrue(submittedCoverageStatus, "eob searches should not run if a " +
+                    "coverage period is submitted");
+        } catch (CoverageDriverException driverException) {
+            fail("could not check for available coverage", driverException);
+        }
+    }
+
+    @DisplayName("Do start an eob job if periods including and after since are not being worked on")
+    @Test
+    void availableCoverageWhenSinceContainsOnlySuccessful() {
+
+        Job job = new Job();
+        job.setContract(contract);
+
+        march.setStatus(JobStatus.SUCCESSFUL);
+        march.setLastSuccessfulJob(OffsetDateTime.now());
+        coveragePeriodRepo.saveAndFlush(march);
+
+        try {
+            LocalDate startMonth = LocalDate.of(2020, 3, 1);
+            LocalTime startDay = LocalTime.of(0,0,0);
+
+            job.setSince(OffsetDateTime.of(startMonth, startDay, AB2D_ZONE.getRules().getOffset(Instant.now())));
+
+            boolean inProgressBeginningMonth = driver.isCoverageAvailable(job);
+            assertTrue(inProgressBeginningMonth, "eob searches should run when only month after since is successful");
+
+            LocalDate endMonth = LocalDate.of(2020, 3, 31);
+            LocalTime endDay = LocalTime.of(23,59,59);
+
+            job.setSince(OffsetDateTime.of(endMonth, endDay, AB2D_ZONE.getRules().getOffset(Instant.now())));
+
+            boolean inProgressEndMonth = driver.isCoverageAvailable(job);
+            assertTrue(inProgressEndMonth, "eob searches should run when only month after since is successful");
+        } catch (CoverageDriverException driverException) {
+            fail("could not check for available coverage", driverException);
+        }
     }
 
     private CoverageSearchEvent createEvent(CoveragePeriod period, JobStatus status, OffsetDateTime created) {
@@ -535,19 +559,6 @@ class CoverageUpdateAndProcessorTest {
         coverageSearchEventRepo.saveAndFlush(event);
 
         return event;
-    }
-
-    private JobStatus iterateFailingJob() {
-        JobStatus status;
-        driver.loadMappingJob();
-        status = coverageService.getSearchStatus(january.getId());
-        assertEquals(JobStatus.IN_PROGRESS, status);
-
-        sleep(1000);
-
-        processor.monitorMappingJobs();
-        status = coverageService.getSearchStatus(january.getId());
-        return status;
     }
 
     private Bundle buildBundle(int startIndex, int endIndex) {

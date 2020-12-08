@@ -55,34 +55,4 @@ public class CoverageLockWrapper {
 
         return lockRegistry.obtain(COVERAGE_LOCK_NAME);
     }
-
-    /**
-     * This is the most important part of the class. It retrieves the next search in the table
-     * assuming that another thread or application is not currently pulling anything from the table.
-     * If there are no jobs to pull or the table is locked, it returns null
-     *
-     * @return the next search or else null if there are none or if the table is locked
-     */
-    public Optional<CoverageSearch> getNextSearch() {
-        Lock lock = getCoverageLock();
-        if (lock.tryLock()) {
-            try {
-                // manipulate protected state
-                Optional<CoverageSearch> searchOpt = coverageSearchRepository.findFirstByOrderByCreatedAsc();
-                if (searchOpt.isEmpty()) {
-                    return searchOpt;
-                }
-                CoverageSearch search = searchOpt.get();
-                coverageSearchRepository.delete(search);
-                coverageSearchRepository.flush();
-                search.setId(null);
-                return Optional.of(search);
-            } finally {
-                lock.unlock();
-            }
-        } else {
-            // perform alternative actions
-            return Optional.empty();
-        }
-    }
 }

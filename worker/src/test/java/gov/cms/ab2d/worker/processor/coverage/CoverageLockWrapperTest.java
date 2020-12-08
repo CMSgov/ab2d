@@ -37,29 +37,6 @@ class CoverageLockWrapperTest {
     private DataSetup dataSetup;
 
     /**
-     * Verify that null is returned if there are no searches, a search there is one and verify that it
-     * was deleted after it was searched.
-     */
-    @Test
-    void getNextSearch() {
-        assertTrue(coverageLockWrapper.getNextSearch().isEmpty());
-
-        Sponsor sponsor = dataSetup.createSponsor("Cal Ripken", 200, "Cal Ripken Jr.", 201);
-        Contract contract1 = dataSetup.setupContract(sponsor, "c123");
-        CoveragePeriod period1 = dataSetup.createCoveragePeriod(contract1, 10, 2020);
-        CoverageSearch search1 = new CoverageSearch(null, period1, OffsetDateTime.now(), 0);
-        CoverageSearch savedSearch1 = coverageSearchRepository.save(search1);
-        Optional<CoverageSearch> returnedSearch = coverageLockWrapper.getNextSearch();
-        assertEquals(savedSearch1.getPeriod().getMonth(), returnedSearch.get().getPeriod().getMonth());
-        assertEquals(savedSearch1.getPeriod().getYear(), returnedSearch.get().getPeriod().getYear());
-        assertTrue(coverageLockWrapper.getNextSearch().isEmpty());
-
-        dataSetup.deleteCoveragePeriod(period1);
-        dataSetup.deleteContract(contract1);
-        dataSetup.deleteSponsor(sponsor);
-    }
-
-    /**
      * The only way to trigger a lock error is if different threads are trying to use the lock at
      * the same time. This holds a lock for a period of time while another thread tries and fails
      * to get it and once the first thread is done, a third thread can then get the lock.
