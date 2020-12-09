@@ -10,8 +10,7 @@ import gov.cms.ab2d.eventlogger.events.*;
 import gov.cms.ab2d.eventlogger.reports.sql.DoAll;
 import gov.cms.ab2d.eventlogger.utils.UtilMethods;
 import org.junit.Assert;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -65,12 +64,12 @@ public class BulkDataAccessAPIUnusualDataTests {
     @Container
     private static final PostgreSQLContainer postgreSQLContainer= new AB2DPostgresqlContainer();
 
-    @BeforeEach
+    @AfterEach
     public void clearUser() {
         jobRepository.deleteAll();
-        contractRepository.deleteAll();
         userRepository.deleteAll();
         roleRepository.deleteAll();
+        contractRepository.deleteAll();
         doAll.delete();
     }
 

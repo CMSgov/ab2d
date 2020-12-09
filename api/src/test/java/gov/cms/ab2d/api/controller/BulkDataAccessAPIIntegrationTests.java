@@ -18,8 +18,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.hamcrest.core.Is;
 import org.hl7.fhir.dstu3.model.DateTimeType;
 import org.junit.Assert;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -103,15 +102,18 @@ public class BulkDataAccessAPIIntegrationTests {
 
     @BeforeEach
     public void setup() throws JwtVerificationException {
-        jobRepository.deleteAll();
-        contractRepository.deleteAll();
-        userRepository.deleteAll();
-        roleRepository.deleteAll();
-
-        doAll.delete();
-
         testUtil.turnMaintenanceModeOff();
         token = testUtil.setupToken(List.of(SPONSOR_ROLE));
+    }
+
+    @AfterEach
+    public void tearDown() {
+        jobRepository.deleteAll();
+        userRepository.deleteAll();
+        roleRepository.deleteAll();
+        contractRepository.deleteAll();
+
+        doAll.delete();
     }
 
     private void createMaxJobs() throws Exception {

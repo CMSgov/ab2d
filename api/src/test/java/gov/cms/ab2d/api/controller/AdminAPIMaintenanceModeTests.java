@@ -13,8 +13,7 @@ import gov.cms.ab2d.eventlogger.events.*;
 import gov.cms.ab2d.eventlogger.reports.sql.DoAll;
 import gov.cms.ab2d.eventlogger.utils.UtilMethods;
 import org.junit.Assert;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -80,13 +79,16 @@ public class AdminAPIMaintenanceModeTests {
 
     @BeforeEach
     public void setup() throws JwtVerificationException {
-        contractRepository.deleteAll();
+        token = testUtil.setupToken(List.of(SPONSOR_ROLE, ADMIN_ROLE));
+    }
+
+    @AfterEach
+    public void tearDown() {
         jobRepository.deleteAll();
         userRepository.deleteAll();
         roleRepository.deleteAll();
+        contractRepository.deleteAll();
         doAll.delete();
-
-        token = testUtil.setupToken(List.of(SPONSOR_ROLE, ADMIN_ROLE));
     }
 
     @Test

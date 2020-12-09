@@ -3,16 +3,13 @@ package gov.cms.ab2d.api.controller;
 import com.okta.jwt.JwtVerificationException;
 import gov.cms.ab2d.api.SpringBootApp;
 import gov.cms.ab2d.common.model.User;
-import gov.cms.ab2d.common.repository.JobRepository;
-import gov.cms.ab2d.common.repository.RoleRepository;
-import gov.cms.ab2d.common.repository.UserRepository;
+import gov.cms.ab2d.common.repository.*;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.eventlogger.LoggableEvent;
 import gov.cms.ab2d.eventlogger.events.ApiRequestEvent;
 import gov.cms.ab2d.eventlogger.events.ApiResponseEvent;
 import gov.cms.ab2d.eventlogger.reports.sql.DoAll;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -52,6 +49,9 @@ public class AuthenticationTests {
     private JobRepository jobRepository;
 
     @Autowired
+    private ContractRepository contractRepository;
+
+    @Autowired
     private DoAll doAll;
 
     @Container
@@ -61,11 +61,16 @@ public class AuthenticationTests {
 
     @BeforeEach
     public void setup() throws JwtVerificationException {
+        token = testUtil.setupToken(List.of(SPONSOR_ROLE));
+    }
+
+    @AfterEach
+    public void tearDown() throws JwtVerificationException {
         jobRepository.deleteAll();
         userRepository.deleteAll();
         roleRepository.deleteAll();
+        contractRepository.deleteAll();
         doAll.delete();
-        token = testUtil.setupToken(List.of(SPONSOR_ROLE));
     }
 
     // Negative tests, successful auth tests are essentially done in other suites

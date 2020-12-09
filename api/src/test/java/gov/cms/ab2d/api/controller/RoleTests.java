@@ -2,12 +2,9 @@ package gov.cms.ab2d.api.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import gov.cms.ab2d.api.SpringBootApp;
-import gov.cms.ab2d.common.repository.JobRepository;
-import gov.cms.ab2d.common.repository.RoleRepository;
-import gov.cms.ab2d.common.repository.UserRepository;
+import gov.cms.ab2d.common.repository.*;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -47,6 +44,9 @@ public class RoleTests {
     @Autowired
     private JobRepository jobRepository;
 
+    @Autowired
+    private ContractRepository contractRepository;
+
     @Container
     private static final PostgreSQLContainer postgreSQLContainer= new AB2DPostgresqlContainer();
 
@@ -55,10 +55,14 @@ public class RoleTests {
     @BeforeEach
     public void setup() {
         testUtil.turnMaintenanceModeOff();
+    }
 
+    @AfterEach
+    public void tearDown() {
         jobRepository.deleteAll();
         userRepository.deleteAll();
         roleRepository.deleteAll();
+        contractRepository.deleteAll();
     }
 
     // This will test the API using a role that should not be able to access sponsor URLs

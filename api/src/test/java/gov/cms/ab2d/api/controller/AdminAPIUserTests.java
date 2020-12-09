@@ -15,8 +15,7 @@ import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.DataSetup;
 import org.hamcrest.core.Is;
 import org.junit.Assert;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -77,12 +76,15 @@ public class AdminAPIUserTests {
 
     @BeforeEach
     public void setup() throws JwtVerificationException {
+        token = testUtil.setupToken(List.of(ADMIN_ROLE, SPONSOR_ROLE, ATTESTOR_ROLE));
+    }
+
+    @AfterEach
+    public void tearDown() {
         jobRepository.deleteAll();
-        contractRepository.deleteAll();
         userRepository.deleteAll();
         roleRepository.deleteAll();
-
-        token = testUtil.setupToken(List.of(ADMIN_ROLE, SPONSOR_ROLE, ATTESTOR_ROLE));
+        contractRepository.deleteAll();
     }
 
     @Test
