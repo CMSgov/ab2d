@@ -29,7 +29,6 @@ if [ -z "${CLOUD_TAMER_PARAM}" ] \
     || [ -z "${EC2_MINIMUM_INSTANCE_COUNT_API_PARAM}" ] \
     || [ -z "${EC2_MINIMUM_INSTANCE_COUNT_WORKER_PARAM}" ] \
     || [ -z "${INTERNET_FACING_PARAM}" ] \
-    || [ -z "${REGION_PARAM}" ] \
     || [ -z "${SSH_USERNAME_PARAM}" ] \
     || [ -z "${TARGET_AWS_ACCOUNT_NUMBER_PARAM}" ] \
     || [ -z "${TARGET_CMS_ENV_PARAM}" ] \
