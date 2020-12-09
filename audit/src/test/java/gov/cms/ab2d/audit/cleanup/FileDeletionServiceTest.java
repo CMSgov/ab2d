@@ -122,8 +122,8 @@ class FileDeletionServiceTest {
         job = new Job();
         job.setStatus(JobStatus.SUCCESSFUL);
         job.setJobUuid(UUID.randomUUID().toString());
-        job.setCreatedAt(OffsetDateTime.now().minusDays(3));
-        job.setCompletedAt(OffsetDateTime.now().minusDays(2));
+        job.setCreatedAt(OffsetDateTime.now().minusDays(5));
+        job.setCompletedAt(OffsetDateTime.now().minusDays(4));
         job.setExpiresAt(OffsetDateTime.now().minusDays(1));
         job.setUser(user);
         jobService.updateJob(job);
@@ -140,9 +140,9 @@ class FileDeletionServiceTest {
         jobNotExpiredYet = new Job();
         jobNotExpiredYet.setStatus(JobStatus.SUCCESSFUL);
         jobNotExpiredYet.setJobUuid(UUID.randomUUID().toString());
-        jobNotExpiredYet.setCreatedAt(OffsetDateTime.now().minusHours(10));
-        jobNotExpiredYet.setCompletedAt(OffsetDateTime.now().minusHours(5));
-        jobNotExpiredYet.setExpiresAt(OffsetDateTime.now().plusHours(19));
+        jobNotExpiredYet.setCreatedAt(OffsetDateTime.now().minusHours(60));
+        jobNotExpiredYet.setCompletedAt(OffsetDateTime.now().minusHours(55));
+        jobNotExpiredYet.setExpiresAt(OffsetDateTime.now().plusHours(17));
         jobNotExpiredYet.setUser(user);
 
         jobCancelled = new Job();
