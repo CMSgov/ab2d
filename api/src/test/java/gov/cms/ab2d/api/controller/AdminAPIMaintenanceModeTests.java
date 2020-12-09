@@ -79,16 +79,13 @@ public class AdminAPIMaintenanceModeTests {
 
     @BeforeEach
     public void setup() throws JwtVerificationException {
-        token = testUtil.setupToken(List.of(SPONSOR_ROLE, ADMIN_ROLE));
-    }
-
-    @AfterEach
-    public void tearDown() {
         jobRepository.deleteAll();
         userRepository.deleteAll();
         roleRepository.deleteAll();
         contractRepository.deleteAll();
         doAll.delete();
+
+        token = testUtil.setupToken(List.of(SPONSOR_ROLE, ADMIN_ROLE));
     }
 
     @Test

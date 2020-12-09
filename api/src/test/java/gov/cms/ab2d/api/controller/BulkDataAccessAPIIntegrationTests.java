@@ -102,18 +102,14 @@ public class BulkDataAccessAPIIntegrationTests {
 
     @BeforeEach
     public void setup() throws JwtVerificationException {
-        testUtil.turnMaintenanceModeOff();
-        token = testUtil.setupToken(List.of(SPONSOR_ROLE));
-    }
-
-    @AfterEach
-    public void tearDown() {
         jobRepository.deleteAll();
         userRepository.deleteAll();
         roleRepository.deleteAll();
         contractRepository.deleteAll();
 
         doAll.delete();
+        testUtil.turnMaintenanceModeOff();
+        token = testUtil.setupToken(List.of(SPONSOR_ROLE));
     }
 
     private void createMaxJobs() throws Exception {
@@ -865,7 +861,7 @@ public class BulkDataAccessAPIIntegrationTests {
         assertEquals(1, fileEvents.size());
         FileEvent fileEvent = (FileEvent) fileEvents.get(0);
         assertEquals(FileEvent.FileStatus.DELETE, fileEvent.getStatus());
-        assertEquals(destinationStr + "/" + testFile, fileEvent.getFileName());
+        assertEquals(destinationStr + File.separator + testFile, fileEvent.getFileName());
         assertNotNull(fileEvent.getFileHash());
 
         String downloadedFile = downloadFileCall.getResponse().getContentAsString();
@@ -1163,19 +1159,6 @@ public class BulkDataAccessAPIIntegrationTests {
                                 "valid")));
     }
 
-    @Test
-    public void testPatientExportWithInvalidContract() throws Exception {
-        this.mockMvc.perform(get(API_PREFIX + FHIR_PREFIX + "/Group/" + "badContract" + "/$export")
-                .contentType(MediaType.APPLICATION_JSON)
-                .header("Authorization", "Bearer " + token))
-                .andExpect(status().is(404))
-                .andExpect(jsonPath("$.resourceType", Is.is("OperationOutcome")))
-                .andExpect(jsonPath("$.issue[0].severity", Is.is("error")))
-                .andExpect(jsonPath("$.issue[0].code", Is.is("invalid")))
-                .andExpect(jsonPath("$.issue[0].details.text",
-                        Is.is("Contract badContract was not found")));
-    }
-
     private void createMaxJobsWithContract(Contract contract) throws Exception {
         for(int i = 0; i < MAX_JOBS_PER_USER; i++) {
             this.mockMvc.perform(
@@ -1262,7 +1245,7 @@ public class BulkDataAccessAPIIntegrationTests {
         this.mockMvc.perform(
                 get(API_PREFIX + FHIR_PREFIX + "/Group/" + contractNew.getContractNumber() + "/$export").contentType(MediaType.APPLICATION_JSON)
                         .header("Authorization", "Bearer " + token))
-                .andExpect(status().is(202));
+                .andExpect(status().is(403));
     }
 
     @Test

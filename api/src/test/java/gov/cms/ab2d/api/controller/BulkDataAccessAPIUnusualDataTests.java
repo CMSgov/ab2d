@@ -64,41 +64,13 @@ public class BulkDataAccessAPIUnusualDataTests {
     @Container
     private static final PostgreSQLContainer postgreSQLContainer= new AB2DPostgresqlContainer();
 
-    @AfterEach
+    @BeforeEach
     public void clearUser() {
         jobRepository.deleteAll();
         userRepository.deleteAll();
         roleRepository.deleteAll();
         contractRepository.deleteAll();
         doAll.delete();
-    }
-
-    @Test
-    public void testPatientExportWithContractNotTiedToUser() throws Exception {
-        String token = testUtil.setupBadSponsorUserData(List.of(SPONSOR_ROLE));
-        Optional<Contract> contractOptional = contractRepository.findContractByContractNumber(BAD_CONTRACT_NUMBER);
-        Contract contract = contractOptional.get();
-        this.mockMvc.perform(get(API_PREFIX + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export")
-                .contentType(MediaType.APPLICATION_JSON)
-                .header("Authorization", "Bearer " + token))
-                .andExpect(status().is(403));
-        List<LoggableEvent> apiRequestEvents = doAll.load(ApiRequestEvent.class);
-        ApiRequestEvent requestEvent = (ApiRequestEvent) apiRequestEvents.get(0);
-
-        List<LoggableEvent> apiResponseEvents = doAll.load(ApiResponseEvent.class);
-        ApiResponseEvent responseEvent = (ApiResponseEvent) apiResponseEvents.get(0);
-        assertEquals(requestEvent.getRequestId(), responseEvent.getRequestId());
-
-        List<LoggableEvent> errorEvents = doAll.load(ErrorEvent.class);
-        ErrorEvent errorEvent = (ErrorEvent) errorEvents.get(0);
-        assertEquals(errorEvent.getErrorType(), ErrorEvent.ErrorType.UNAUTHORIZED_CONTRACT);
-
-        assertTrue(UtilMethods.allEmpty(
-                doAll.load(ReloadEvent.class),
-                doAll.load(ContractBeneSearchEvent.class),
-                doAll.load(JobStatusChangeEvent.class),
-                doAll.load(FileEvent.class)
-        ));
     }
 
     @Test

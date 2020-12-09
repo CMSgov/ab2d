@@ -54,15 +54,12 @@ public class RoleTests {
 
     @BeforeEach
     public void setup() {
-        testUtil.turnMaintenanceModeOff();
-    }
-
-    @AfterEach
-    public void tearDown() {
         jobRepository.deleteAll();
         userRepository.deleteAll();
         roleRepository.deleteAll();
         contractRepository.deleteAll();
+
+        testUtil.turnMaintenanceModeOff();
     }
 
     // This will test the API using a role that should not be able to access sponsor URLs

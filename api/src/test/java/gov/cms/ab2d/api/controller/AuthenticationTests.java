@@ -61,16 +61,13 @@ public class AuthenticationTests {
 
     @BeforeEach
     public void setup() throws JwtVerificationException {
-        token = testUtil.setupToken(List.of(SPONSOR_ROLE));
-    }
-
-    @AfterEach
-    public void tearDown() throws JwtVerificationException {
         jobRepository.deleteAll();
         userRepository.deleteAll();
         roleRepository.deleteAll();
         contractRepository.deleteAll();
         doAll.delete();
+
+        token = testUtil.setupToken(List.of(SPONSOR_ROLE));
     }
 
     // Negative tests, successful auth tests are essentially done in other suites

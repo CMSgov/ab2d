@@ -30,6 +30,7 @@ import java.util.List;
 
 import static gov.cms.ab2d.common.util.Constants.*;
 import static gov.cms.ab2d.common.util.Constants.ADMIN_ROLE;
+import static gov.cms.ab2d.common.util.DataSetup.VALID_CONTRACT_NUMBER;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -76,15 +77,12 @@ public class AdminAPIUserTests {
 
     @BeforeEach
     public void setup() throws JwtVerificationException {
-        token = testUtil.setupToken(List.of(ADMIN_ROLE, SPONSOR_ROLE, ATTESTOR_ROLE));
-    }
-
-    @AfterEach
-    public void tearDown() {
         jobRepository.deleteAll();
         userRepository.deleteAll();
         roleRepository.deleteAll();
         contractRepository.deleteAll();
+
+        token = testUtil.setupToken(List.of(ADMIN_ROLE, SPONSOR_ROLE, ATTESTOR_ROLE));
     }
 
     @Test
@@ -95,7 +93,7 @@ public class AdminAPIUserTests {
         userDTO.setEnabled(true);
         userDTO.setFirstName("Test");
         userDTO.setLastName("User");
-        userDTO.setContract(new ContractDTO());
+        userDTO.setContract(buildContractDTO());
         userDTO.setRole(ADMIN_ROLE);
         Role role = roleService.findRoleByName(ADMIN_ROLE);
         userDTO.setRole(role.getName());
@@ -130,7 +128,7 @@ public class AdminAPIUserTests {
         userDTO.setEnabled(true);
         userDTO.setFirstName("Test");
         userDTO.setLastName("User");
-        userDTO.setContract(new ContractDTO());
+        userDTO.setContract(buildContractDTO());
         Role role = roleService.findRoleByName(ATTESTOR_ROLE);
         userDTO.setRole(role.getName());
 
@@ -164,7 +162,7 @@ public class AdminAPIUserTests {
         userDTO.setEnabled(true);
         userDTO.setFirstName("Test");
         userDTO.setLastName("User");
-        userDTO.setContract(new ContractDTO());
+        userDTO.setContract(buildContractDTO());
         userDTO.setRole(ADMIN_ROLE);
         Role role = roleService.findRoleByName(ADMIN_ROLE);
         userDTO.setRole(role.getName());
@@ -198,9 +196,7 @@ public class AdminAPIUserTests {
         userDTO.setEnabled(true);
         userDTO.setFirstName("Test");
         userDTO.setLastName("User");
-        ContractDTO contractDTO = new ContractDTO();
-        contractDTO.setContractNumber("T111");
-        userDTO.setContract(contractDTO);
+        userDTO.setContract(buildContractDTO());
         userDTO.setRole(ADMIN_ROLE);
 
         ObjectMapper mapper = new ObjectMapper();
@@ -219,7 +215,7 @@ public class AdminAPIUserTests {
         createdUserDTO.setEnabled(false);
         createdUserDTO.setFirstName("Updated");
         createdUserDTO.setLastName("Username");
-        createdUserDTO.getContract().setContractNumber(contractDTO.getContractNumber());
+        createdUserDTO.getContract().setContractNumber(userDTO.getContract().getContractNumber());
         createdUserDTO.setRole(SPONSOR_ROLE);
 
         MvcResult updateMvcResult = this.mockMvc.perform(
@@ -260,7 +256,7 @@ public class AdminAPIUserTests {
         userDTO.setEnabled(true);
         userDTO.setFirstName("Test");
         userDTO.setLastName("User");
-        userDTO.setContract(new ContractDTO());
+        userDTO.setContract(buildContractDTO());
         userDTO.setRole(SPONSOR_ROLE);
 
         return userDTO;
@@ -403,7 +399,7 @@ public class AdminAPIUserTests {
         Assert.assertEquals(userDTO.getEnabled(), true);
         ContractDTO contractDTO = userDTO.getContract();
         Assert.assertEquals(contractDTO.getContractNumber(), "Z0000");
-        Assert.assertEquals(contractDTO.getContractName(), "Test Contract");
+        Assert.assertEquals("Test Contract Z0000", contractDTO.getContractName());
         Assert.assertNotNull(contractDTO.getAttestedOn());
     }
 
@@ -429,5 +425,13 @@ public class AdminAPIUserTests {
         user.setContract(contract);
 
         userRepository.save(user);
+    }
+
+    private ContractDTO buildContractDTO() {
+
+        ContractDTO contractDTO = new ContractDTO();
+        contractDTO.setContractNumber(VALID_CONTRACT_NUMBER);
+        contractDTO.setContractName("Test Contract " + VALID_CONTRACT_NUMBER);
+        return contractDTO;
     }
 }

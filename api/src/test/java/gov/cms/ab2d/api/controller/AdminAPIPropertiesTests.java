@@ -64,15 +64,12 @@ public class AdminAPIPropertiesTests {
 
     @BeforeEach
     public void setup() throws JwtVerificationException {
-        token = testUtil.setupToken(List.of(ADMIN_ROLE));
-    }
-
-    @AfterEach
-    public void tearDown() {
         jobRepository.deleteAll();
-        userRepository.deleteAll();
+        userRepository.deleteAll();     // Needed in the setup because TEST_USER is disabled
         roleRepository.deleteAll();
         contractRepository.deleteAll();
+
+        token = testUtil.setupToken(List.of(ADMIN_ROLE));
     }
 
     @Test
