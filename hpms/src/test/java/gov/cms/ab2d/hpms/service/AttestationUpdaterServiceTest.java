@@ -17,6 +17,7 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -42,7 +43,9 @@ public class AttestationUpdaterServiceTest {
     public void contractUpdated() {
         assertNotNull(aus);
         aus.pollOrganizations();
-        List<Contract> contracts = contractRepository.findAll();
+        List<Contract> contracts = contractRepository.findAll()
+                .stream().filter(contract -> "ABC Org".equals(contract.getHpmsParentOrg()))
+                .collect(Collectors.toList());
         assertEquals(1, contracts.size());
     }
 
@@ -53,7 +56,10 @@ public class AttestationUpdaterServiceTest {
     }
 
     @TestConfiguration
-    class MockHpmsFetcherConfig {
+    static class MockHpmsFetcherConfig {
+
+        @Autowired
+        private ContractRepository contractRepository;
 
         @Qualifier("for_testing")
         @Bean()
