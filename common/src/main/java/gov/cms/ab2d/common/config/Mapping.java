@@ -2,7 +2,7 @@ package gov.cms.ab2d.common.config;
 
 import gov.cms.ab2d.common.dto.ContractDTO;
 import gov.cms.ab2d.common.dto.UserDTO;
-import gov.cms.ab2d.common.model.*;
+import gov.cms.ab2d.common.model.*;    // NOPMD
 import gov.cms.ab2d.common.service.ContractService;
 import gov.cms.ab2d.common.service.RoleService;
 import org.modelmapper.*;
