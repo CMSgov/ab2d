@@ -229,7 +229,7 @@ fi
 
 AMI_ID=$(aws --region "${AWS_DEFAULT_REGION}" ec2 describe-images \
   --owners self \
-  --filters "Name=tag:Name,Values=ab2d-ami" \
+  --filters "Name=tag:Name,Values=${CMS_ENV}-ami" \
   --query "Images[*].[ImageId]" \
   --output text)
 
@@ -242,7 +242,7 @@ else
 
   GOLD_IMAGE_NAME=$(aws --region "${AWS_DEFAULT_REGION}" ec2 describe-images \
     --owners self \
-    --filters "Name=tag:Name,Values=ab2d-ami" \
+    --filters "Name=tag:Name,Values=${CMS_ENV}-ami" \
     --query "Images[*].Tags[?Key=='gold_disk_name'].Value" \
     --output text)
 
