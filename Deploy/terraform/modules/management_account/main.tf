@@ -269,7 +269,8 @@ data "aws_iam_policy_document" "lambda_ec2_policy" {
   statement {
     actions = [
       "ec2:Start*",
-      "ec2:Stop*"
+      "ec2:Stop*",
+      "ec2:Describe*"
     ]
 
     resources = [
