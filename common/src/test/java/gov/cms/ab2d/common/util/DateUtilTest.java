@@ -9,6 +9,8 @@ import java.time.*;
 import java.util.Date;
 import java.util.TimeZone;
 
+import static gov.cms.ab2d.common.util.DateUtil.AB2D_ZONE;
+
 public class DateUtilTest {
 
     @Test
@@ -33,7 +35,7 @@ public class DateUtilTest {
 
     @Test
     public void testGetESTOffset() {
-        String expectedOffset = TimeZone.getTimeZone("America/New_York").inDaylightTime(new Date()) ? "-0400" : "-0500";
+        String expectedOffset = TimeZone.getTimeZone(AB2D_ZONE).inDaylightTime(new Date()) ? "-0400" : "-0500";
         String offset = DateUtil.getESTOffset();
         Assert.assertEquals(expectedOffset, offset);
     }
