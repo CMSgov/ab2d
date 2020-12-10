@@ -95,7 +95,6 @@ class CoverageProcessorImplTest {
     @BeforeEach
     void before() {
 
-        contract = dataSetup.setupContract("TST-123");
         contractsToDelete = new ArrayList<>();
 
         contract = dataSetup.setupContract("TST-123");
@@ -129,8 +128,10 @@ class CoverageProcessorImplTest {
         coverageSearchEventRepo.deleteAll();
         coverageSearchRepo.deleteAll();
         coveragePeriodRepo.deleteAll();
-        contractRepo.delete(contract);
-        contractRepo.flush();
+        for (Contract contract : contractsToDelete) {
+            contractRepo.delete(contract);
+            contractRepo.flush();
+        }
     }
 
     @DisplayName("Loading coverage periods")

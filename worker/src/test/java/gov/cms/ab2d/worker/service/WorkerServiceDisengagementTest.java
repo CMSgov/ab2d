@@ -147,7 +147,6 @@ public class WorkerServiceDisengagementTest {
         final User user = new User();
         user.setId((long) getIntRandom());
         user.setUsername("testuser" + getIntRandom());
-        user.setContract(new Contract());
         user.setEnabled(true);
         return userRepository.save(user);
     }

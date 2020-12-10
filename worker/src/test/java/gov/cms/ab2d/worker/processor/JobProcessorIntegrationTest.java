@@ -274,7 +274,7 @@ class JobProcessorIntegrationTest {
         user.setLastName("Potter");
         user.setEmail("harry_potter@hogwarts.com");
         user.setEnabled(TRUE);
-        user.setContract(createContract());
+//        user.setContract(createContract());
         return userRepository.save(user);
     }
 
