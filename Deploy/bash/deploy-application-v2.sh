@@ -1184,28 +1184,9 @@ elif [ "$TARGET_CMS_ENV" == "ab2d-east-prod" ]; then
 elif [ "$TARGET_CMS_ENV" == "ab2d-east-impl" ]; then
   ALB_LISTENER_PORT=443
   ALB_LISTENER_PROTOCOL="HTTPS"
-
-  # Set certificate ARN for "ab2d-east-impl"
-
-  #####################
-  # *** TO DO *** BEGIN
-  #####################
-
-  # TEMPORARY SOLUTION USING SELF-SIGNED CERTIFICATE (ab2dtemp.com)
-
-  ALB_LISTENER_CERTIFICATE_ARN=$(aws --region "${AWS_DEFAULT_REGION}" iam list-server-certificates \
-    --query "ServerCertificateMetadataList[?ServerCertificateName=='Ab2dTempCom'].Arn" \
+  ALB_LISTENER_CERTIFICATE_ARN=$(aws --region "${AWS_DEFAULT_REGION}" acm list-certificates \
+    --query "CertificateSummaryList[?DomainName=='impl.ab2d.cms.gov'].CertificateArn" \
     --output text)
-
-  # DESIRED SOLUTION USING COMMON CERTIFICATE (impl.ab2d.cms.gov)
-  # ALB_LISTENER_CERTIFICATE_ARN=$(aws --region "${AWS_DEFAULT_REGION}" acm list-certificates \
-  #   --query "CertificateSummaryList[?DomainName=='impl.ab2d.cms.gov'].CertificateArn" \
-  #   --output text)
-
-  #####################
-  # *** TO DO *** END
-  #####################
-
   ALB_SECURITY_GROUP_IP_RANGE="${VPN_PRIVATE_IP_ADDRESS_CIDR_RANGE}"
 else
   echo "ERROR: '${TARGET_CMS_ENV}' is unknown."
