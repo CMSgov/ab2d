@@ -3,17 +3,20 @@ package gov.cms.ab2d.worker.service;
 import gov.cms.ab2d.common.dto.PropertiesDTO;
 import gov.cms.ab2d.common.model.*;
 import gov.cms.ab2d.common.repository.*;
+import gov.cms.ab2d.common.service.JobService;
 import gov.cms.ab2d.common.service.PropertiesService;
 import gov.cms.ab2d.common.service.FeatureEngagement;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.Constants;
 import gov.cms.ab2d.common.util.DataSetup;
+import gov.cms.ab2d.worker.config.JobHandler;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -24,7 +27,6 @@ import java.util.Optional;
 import java.util.Random;
 import java.util.UUID;
 
-import static gov.cms.ab2d.common.model.JobStatus.*;
 import static gov.cms.ab2d.common.util.Constants.EOB;
 import static gov.cms.ab2d.common.util.Constants.NDJSON_FIRE_CONTENT_TYPE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -43,6 +45,12 @@ class WorkerServiceDisengagementTest {
     @Autowired private UserRepository userRepository;
     @Autowired private ContractRepository contractRepository;
     @Autowired private PropertiesService propertiesService;
+    @Autowired private JobService jobService;
+
+    @Autowired private WorkerServiceImpl workerServiceImpl;
+    @Autowired private JobHandler jobHandler;
+
+    private WorkerServiceStub workerServiceStub;
 
     @SuppressWarnings("rawtypes")
     @Container
@@ -54,19 +62,14 @@ class WorkerServiceDisengagementTest {
         userRepository.deleteAll();
         dataSetup.deleteCoverage();
         contractRepository.deleteAll();
-        disableWorker();
+
+        workerServiceStub = new WorkerServiceStub(jobService, propertiesService);
+        ReflectionTestUtils.setField(jobHandler, "workerService", workerServiceStub);
     }
 
     @AfterEach
     public void cleanup() {
-        enableWorker();
-    }
-
-    private void disableWorker() {
-        setEngagement(FeatureEngagement.NEUTRAL);
-    }
-
-    private void enableWorker() {
+        ReflectionTestUtils.setField(jobHandler, "workerService", workerServiceImpl);
         setEngagement(FeatureEngagement.IN_GEAR);
     }
 
@@ -83,50 +86,55 @@ class WorkerServiceDisengagementTest {
     }
 
     @Test
+    @DisplayName("Disengagement in database is checked by worker service impl")
+    void checkEngagementUsed() {
+        setEngagement(FeatureEngagement.NEUTRAL);
+
+        FeatureEngagement shouldBeNeutral = workerServiceImpl.getEngagement();
+        assertEquals(FeatureEngagement.NEUTRAL, shouldBeNeutral);
+    }
+
+    @Test
     @DisplayName("When a job is submitted into the job table, a disengaged worker never processes it")
     void whenJobSubmittedWorkerGetsTriggered() throws InterruptedException {
 
+        setEngagement(FeatureEngagement.NEUTRAL);
+
         final User user = createUser();
-        Job submittedJob = createJob(user);
+        createJob(user);
 
         Thread.sleep(6000L);
 
-        Job processedJob = jobRepository.findByJobUuid(submittedJob.getJobUuid());
-        checkIdleResult(processedJob);
+        assertEquals(0, workerServiceStub.processingCalls);
 
         // Now confirm that switching workers back on ... works!
-        enableWorker();
+        setEngagement(FeatureEngagement.IN_GEAR);
+
         Thread.sleep(6000L);
-        processedJob = jobRepository.findByJobUuid(submittedJob.getJobUuid());
-        checkEngagedResult(processedJob);
+        assertEquals(1, workerServiceStub.processingCalls);
     }
 
     @Test
     @DisplayName("When multiple jobs are submitted into the job table, they are processed in parallel by the workers")
     void whenTwoJobsSubmittedWorkerGetsTriggeredProcessesBothInParallel() throws InterruptedException {
 
-        Job submittedJob1 = createJob(createUser());
-        Job submittedJob2 = createJob(createUser2());
+        setEngagement(FeatureEngagement.NEUTRAL);
+
+        createJob(createUser());
+        createJob(createUser2());
 
         // There is a 5 second sleep in the WorkerService.
         // So if the result for two jobs comes before 10 seconds, it implies they were not processed sequentially
         Thread.sleep(10000L);
 
-        Job processedJob1 = jobRepository.findByJobUuid(submittedJob1.getJobUuid());
-        checkIdleResult(processedJob1);
-
-        Job processedJob2 = jobRepository.findByJobUuid(submittedJob2.getJobUuid());
-        checkIdleResult(processedJob2);
+        assertEquals(0, workerServiceStub.processingCalls);
 
         // Now confirm that switching workers back on ... works!
-        enableWorker();
+        setEngagement(FeatureEngagement.IN_GEAR);
+
         Thread.sleep(10000L);
 
-        processedJob1 = jobRepository.findByJobUuid(submittedJob1.getJobUuid());
-        checkEngagedResult(processedJob1);
-
-        processedJob2 = jobRepository.findByJobUuid(submittedJob2.getJobUuid());
-        checkEngagedResult(processedJob2);
+        assertEquals(2, workerServiceStub.processingCalls);
     }
 
     private Job createJob(final User user) {
@@ -164,14 +172,4 @@ class WorkerServiceDisengagementTest {
     private int getIntRandom() {
         return random.nextInt(100);
     }
-
-
-    private void checkIdleResult(Job processedJob) {
-        assertEquals(SUBMITTED, processedJob.getStatus());
-        assertEquals( "0%", processedJob.getStatusMessage());
-    }
-
-    private void checkEngagedResult(Job processedJob) {
-        assertEquals(SUCCESSFUL, processedJob.getStatus());
-        assertEquals("100%", processedJob.getStatusMessage());    }
 }

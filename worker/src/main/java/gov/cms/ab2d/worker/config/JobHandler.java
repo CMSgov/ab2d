@@ -32,12 +32,13 @@ public class JobHandler implements MessageHandler {
      * Export requests must be locked globally to avoid race conditions among workers,
      * which is important in a distributed deployments such as ours.
      */
-    @Autowired
-    private LockRegistry lockRegistry;
+    private final LockRegistry lockRegistry;
+    private final WorkerService workerService;
 
-    @Autowired
-    private WorkerService workerService;
-
+    public JobHandler(LockRegistry lockRegistry, WorkerService workerService) {
+        this.lockRegistry = lockRegistry;
+        this.workerService = workerService;
+    }
 
     @Override
     public void handleMessage(Message<?> message) throws MessagingException {

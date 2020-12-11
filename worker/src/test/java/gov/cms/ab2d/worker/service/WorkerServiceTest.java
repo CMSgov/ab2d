@@ -2,13 +2,18 @@ package gov.cms.ab2d.worker.service;
 
 import gov.cms.ab2d.common.model.*;
 import gov.cms.ab2d.common.repository.*;
+import gov.cms.ab2d.common.service.JobService;
+import gov.cms.ab2d.common.service.PropertiesService;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.DataSetup;
+import gov.cms.ab2d.worker.config.JobHandler;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -35,9 +40,16 @@ class WorkerServiceTest {
     @Autowired private JobRepository jobRepository;
     @Autowired private UserRepository userRepository;
     @Autowired private ContractRepository contractRepository;
+    @Autowired private JobService jobService;
+    @Autowired private PropertiesService propertiesService;
+
+    @Autowired private WorkerServiceImpl workerServiceImpl;
+    @Autowired private JobHandler jobHandler;
 
     @Container
     private static final PostgreSQLContainer postgreSQLContainer= new AB2DPostgresqlContainer();
+
+    private WorkerServiceStub workerServiceStub;
 
     @BeforeEach
     public void init() {
@@ -45,6 +57,15 @@ class WorkerServiceTest {
         userRepository.deleteAll();
         dataSetup.deleteCoverage();
         contractRepository.deleteAll();
+
+        workerServiceStub = new WorkerServiceStub(jobService, propertiesService);
+
+        ReflectionTestUtils.setField(jobHandler, "workerService", workerServiceStub);
+    }
+
+    @AfterEach
+    public void after() {
+        ReflectionTestUtils.setField(jobHandler, "workerService", workerServiceImpl);
     }
 
     @Test
@@ -52,30 +73,25 @@ class WorkerServiceTest {
     void whenJobSubmittedWorkerGetsTriggered() throws InterruptedException {
 
         final User user = createUser();
-        Job submittedJob = createJob(user);
+        createJob(user);
 
         Thread.sleep(6000L);
 
-        final Job processedJob = jobRepository.findByJobUuid(submittedJob.getJobUuid());
-        checkResult(processedJob);
+        assertEquals(1, workerServiceStub.processingCalls);
     }
 
     @Test
     @DisplayName("When multiple jobs are submitted into the job table, they are processed in parallel by the workers")
     void whenTwoJobsSubmittedWorkerGetsTriggeredProcessesBothInParallel() throws InterruptedException {
 
-        Job submittedJob1 = createJob(createUser());
-        Job submittedJob2 = createJob(createUser2());
+        createJob(createUser());
+        createJob(createUser2());
 
         // There is a 5 second sleep in the WorkerService.
         // So if the result for two jobs comes before 10 seconds, it implies they were not processed sequentially
         Thread.sleep(10000L);
 
-        final Job processedJob1 = jobRepository.findByJobUuid(submittedJob1.getJobUuid());
-        checkResult(processedJob1);
-
-        final Job processedJob2 = jobRepository.findByJobUuid(submittedJob2.getJobUuid());
-        checkResult(processedJob2);
+        assertEquals(2, workerServiceStub.processingCalls);
     }
 
     private Job createJob(final User user) {
