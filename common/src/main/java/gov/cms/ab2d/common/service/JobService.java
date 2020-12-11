@@ -10,8 +10,7 @@ import java.time.OffsetDateTime;
 public interface JobService {
     String ZIPFORMAT = "application/zip";
 
-    // todo: get rid of the contractNumber as an argument
-    Job createJob(String resourceTypes, String url, @Deprecated String contractNumber, String outputFormat, OffsetDateTime since);
+    Job createJob(String resourceTypes, String url, String contractNumber, String outputFormat, OffsetDateTime since);
 
     void cancelJob(String jobUuid);
 
