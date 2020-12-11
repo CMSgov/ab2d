@@ -104,11 +104,14 @@ class JobProcessorIntegrationTest {
 
         LogManager logManager = new LogManager(sqlEventLogger, kinesisEventLogger);
         User user = createUser();
-        job = createJob(user);
 
+        Contract contract = createContract();
+        contract = contractRepository.saveAndFlush(contract);
+
+        job = createJob(user);
+        job.setContract(contract);
         job.setStatus(JobStatus.IN_PROGRESS);
-        jobRepository.save(job);
-        createContract();
+        jobRepository.saveAndFlush(job);
 
         ExplanationOfBenefit eob = EobTestDataUtil.createEOB();
         bundle1 = EobTestDataUtil.createBundle(eob.copy());

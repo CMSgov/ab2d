@@ -87,6 +87,7 @@ class JobProcessorUnitTest {
         job = createJob(user);
 
         var contract = createContract();
+        job.setContract(contract);
         when(jobRepository.findByJobUuid(anyString())).thenReturn(job);
 
         patientsByContract = createPatientsByContractResponse(contract);
