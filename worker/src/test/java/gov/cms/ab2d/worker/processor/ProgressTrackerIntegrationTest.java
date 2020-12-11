@@ -88,6 +88,7 @@ public class ProgressTrackerIntegrationTest {
         contract.setContractNumber(contractId);
 
         Job job = createJob(null);
+        job.setContract(contract);
 
         progressTracker = ProgressTracker.builder()
                 .failureThreshold(2)
