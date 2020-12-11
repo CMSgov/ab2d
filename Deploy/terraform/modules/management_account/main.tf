@@ -248,6 +248,11 @@ resource "aws_iam_role" "ab2d_mgmt_role" {
   permissions_boundary = "arn:aws:iam::${var.aws_account_number}:policy/cms-cloud-admin/developer-boundary-policy"
 }
 
+resource "aws_iam_role_policy_attachment" "mgmt_role_administrator_access_policy_attach" {
+  role       = aws_iam_role.ab2d_mgmt_role.name
+  policy_arn = "arn:aws:iam::aws:policy/AdministratorAccess"
+}
+
 # Create lambda role for the management account
 
 data "aws_iam_policy_document" "lambda_ec2_policy" {
