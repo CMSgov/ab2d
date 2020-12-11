@@ -152,9 +152,20 @@ pipeline {
                 // Setting api port won't cause problems because the containers are only ever torn down
                 sh '''
                     export API_PORT=8443
-                    docker-compose -f docker-compose.yml -f docker-compose.jenkins.yml down
+		    
+                    # First pass of docker deletions
+                    docker volume ls -qf dangling=true | xargs -I name docker volume rm name
+                    docker ps -aq | xargs -I name docker rm --force name
+                    docker images | grep _api | awk '{print $3}' | xargs -I name docker rmi --force name
+                    docker images | grep _worker | awk '{print $3}' | xargs -I name docker rmi --force name
 
-                    docker volume prune --force
+                    # Second pass of docker deletions to be sure there are no remnants
+                    docker volume ls -qf dangling=true | xargs -I name docker volume rm name
+                    docker images | grep _api | awk '{print $3}' | xargs -I name docker rmi --force name
+                    docker images | grep _worker | awk '{print $3}' | xargs -I name docker rmi --force name
+
+                    # Delete all but the defaut docker networks
+                    docker network ls | awk '{print $1, $2}' | grep -v " bridge" | grep -v " host" | grep -v " none" | grep -v "NETWORK ID" | awk '{print $1}' | xargs -I name docker network rm name
 
                     rm -rf "$WORKSPACE/opt/ab2d" 2> /dev/null
 
