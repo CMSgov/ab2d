@@ -121,7 +121,7 @@ public class JobProcessorImpl implements JobProcessor {
         log.info("Job [{}] - contract [{}] ", job.getJobUuid(), contract.getContractNumber());
         // Retrieve the contract beneficiaries
         try {
-            processContractBenes(job, contract, month, progressTracker);
+            processContractBenes(job, month, progressTracker);
         } catch (ExecutionException | InterruptedException ex) {
             log.error("Having issue retrieving patients for contract " + contract.getContractNumber());
             throw ex;
@@ -147,7 +147,10 @@ public class JobProcessorImpl implements JobProcessor {
                 progressTracker.getFailureCount()));
     }
 
-    void processContractBenes(Job job, Contract contract, int month, ProgressTracker progressTracker) throws ExecutionException, InterruptedException {
+    void processContractBenes(Job job, int month, ProgressTracker progressTracker)
+            throws ExecutionException, InterruptedException {
+        Contract contract = job.getContract();
+        assert contract != null;
         try {
             progressTracker.addPatientsByContract(contractBeneSearch.getPatients(contract.getContractNumber(), month, progressTracker));
             int progress = progressTracker.getPercentageCompleted();
