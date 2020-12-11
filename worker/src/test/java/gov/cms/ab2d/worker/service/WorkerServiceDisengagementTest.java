@@ -2,8 +2,7 @@ package gov.cms.ab2d.worker.service;
 
 import gov.cms.ab2d.common.dto.PropertiesDTO;
 import gov.cms.ab2d.common.model.*;
-import gov.cms.ab2d.common.repository.JobRepository;
-import gov.cms.ab2d.common.repository.UserRepository;
+import gov.cms.ab2d.common.repository.*;
 import gov.cms.ab2d.common.service.PropertiesService;
 import gov.cms.ab2d.common.service.FeatureEngagement;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
@@ -29,7 +28,6 @@ import static gov.cms.ab2d.common.model.JobStatus.*;
 import static gov.cms.ab2d.common.util.Constants.EOB;
 import static gov.cms.ab2d.common.util.Constants.NDJSON_FIRE_CONTENT_TYPE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 
 /**
@@ -43,6 +41,7 @@ class WorkerServiceDisengagementTest {
     @Autowired private DataSetup dataSetup;
     @Autowired private JobRepository jobRepository;
     @Autowired private UserRepository userRepository;
+    @Autowired private ContractRepository contractRepository;
     @Autowired private PropertiesService propertiesService;
 
     @SuppressWarnings("rawtypes")
@@ -54,6 +53,7 @@ class WorkerServiceDisengagementTest {
         jobRepository.deleteAll();
         userRepository.deleteAll();
         dataSetup.deleteCoverage();
+        contractRepository.deleteAll();
         disableWorker();
     }
 
@@ -105,9 +105,8 @@ class WorkerServiceDisengagementTest {
     @DisplayName("When multiple jobs are submitted into the job table, they are processed in parallel by the workers")
     void whenTwoJobsSubmittedWorkerGetsTriggeredProcessesBothInParallel() throws InterruptedException {
 
-        final User user = createUser();
-        Job submittedJob1 = createJob(user);
-        Job submittedJob2 = createJob(user);
+        Job submittedJob1 = createJob(createUser());
+        Job submittedJob2 = createJob(createUser2());
 
         // There is a 5 second sleep in the WorkerService.
         // So if the result for two jobs comes before 10 seconds, it implies they were not processed sequentially
@@ -148,6 +147,16 @@ class WorkerServiceDisengagementTest {
         user.setId((long) getIntRandom());
         user.setUsername("testuser" + getIntRandom());
         user.setEnabled(true);
+        user.setContract(dataSetup.setupContract("W1234"));
+        return userRepository.save(user);
+    }
+
+    private User createUser2() {
+        final User user = new User();
+        user.setId((long) getIntRandom());
+        user.setUsername("testuser2" + getIntRandom());
+        user.setEnabled(true);
+        user.setContract(dataSetup.setupContract("W5678"));
         return userRepository.save(user);
     }
 
@@ -162,7 +171,6 @@ class WorkerServiceDisengagementTest {
     }
 
     private void checkEngagedResult(Job processedJob) {
-        assertTrue(processedJob.getStatus() == SUCCESSFUL || processedJob.getStatus() == IN_PROGRESS);
-    }
-
+        assertEquals(processedJob.getStatus(), SUCCESSFUL);
+        assertEquals(processedJob.getStatusMessage(), "100%");    }
 }

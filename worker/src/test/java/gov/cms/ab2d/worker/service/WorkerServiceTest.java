@@ -1,8 +1,7 @@
 package gov.cms.ab2d.worker.service;
 
 import gov.cms.ab2d.common.model.*;
-import gov.cms.ab2d.common.repository.JobRepository;
-import gov.cms.ab2d.common.repository.UserRepository;
+import gov.cms.ab2d.common.repository.*;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.DataSetup;
 import org.junit.jupiter.api.BeforeEach;
@@ -18,12 +17,10 @@ import java.time.OffsetDateTime;
 import java.util.Random;
 import java.util.UUID;
 
-import static gov.cms.ab2d.common.model.JobStatus.IN_PROGRESS;
 import static gov.cms.ab2d.common.model.JobStatus.SUCCESSFUL;
 import static gov.cms.ab2d.common.util.Constants.EOB;
 import static gov.cms.ab2d.common.util.Constants.NDJSON_FIRE_CONTENT_TYPE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 
 /**
@@ -37,6 +34,7 @@ class WorkerServiceTest {
     @Autowired private DataSetup dataSetup;
     @Autowired private JobRepository jobRepository;
     @Autowired private UserRepository userRepository;
+    @Autowired private ContractRepository contractRepository;
 
     @Container
     private static final PostgreSQLContainer postgreSQLContainer= new AB2DPostgresqlContainer();
@@ -46,6 +44,7 @@ class WorkerServiceTest {
         jobRepository.deleteAll();
         userRepository.deleteAll();
         dataSetup.deleteCoverage();
+        contractRepository.deleteAll();
     }
 
     @Test
@@ -65,9 +64,8 @@ class WorkerServiceTest {
     @DisplayName("When multiple jobs are submitted into the job table, they are processed in parallel by the workers")
     void whenTwoJobsSubmittedWorkerGetsTriggeredProcessesBothInParallel() throws InterruptedException {
 
-        final User user = createUser();
-        Job submittedJob1 = createJob(user);
-        Job submittedJob2 = createJob(user);
+        Job submittedJob1 = createJob(createUser());
+        Job submittedJob2 = createJob(createUser2());
 
         // There is a 5 second sleep in the WorkerService.
         // So if the result for two jobs comes before 10 seconds, it implies they were not processed sequentially
@@ -90,6 +88,7 @@ class WorkerServiceTest {
         job.setCreatedAt(OffsetDateTime.now());
         job.setUser(user);
         job.setOutputFormat(NDJSON_FIRE_CONTENT_TYPE);
+        job.setContract(user.getContract());
         return jobRepository.save(job);
     }
 
@@ -98,6 +97,16 @@ class WorkerServiceTest {
         user.setId((long) getIntRandom());
         user.setUsername("testuser" + getIntRandom());
         user.setEnabled(true);
+        user.setContract(dataSetup.setupContract("W9876"));
+        return userRepository.save(user);
+    }
+
+    private User createUser2() {
+        final User user = new User();
+        user.setId((long) getIntRandom());
+        user.setUsername("testuser2" + getIntRandom());
+        user.setEnabled(true);
+        user.setContract(dataSetup.setupContract("W8765"));
         return userRepository.save(user);
     }
 
@@ -107,7 +116,6 @@ class WorkerServiceTest {
 
 
     private void checkResult(Job processedJob) {
-        assertTrue(processedJob.getStatus() == SUCCESSFUL || processedJob.getStatus() == IN_PROGRESS);
-    }
-
+        assertEquals(SUCCESSFUL, processedJob.getStatus());
+        assertEquals("100%", processedJob.getStatusMessage());    }
 }
