@@ -8,6 +8,17 @@ pipeline {
     label 'deployment'
   }
   stages {
+    stage('Initialize or verify base environment') {
+      steps {
+        script {
+	      dir ('Deploy/bash') {
+	        sh '''
+	          ./initialize-environment-v2.sh
+	        sh '''
+	      }
+	    }
+      }
+    }
     stage('Deploy or update application') {
       steps {
         script {
