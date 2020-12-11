@@ -76,6 +76,8 @@ public class AutoScalingServiceImpl implements AutoScalingService, ApplicationLi
     @Override
     @Scheduled(fixedDelay = 5000)
     public void autoscale() {
+        log.error("PCP Thread Pool {} {}", corePoolSize, maxPoolSize);
+
         int activeCount = executor.getActiveCount();
         if (activeCount == 0) {
             // No busy threads -- no active jobs. We can scale back to minimums immediately;
