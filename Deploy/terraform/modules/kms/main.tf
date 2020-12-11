@@ -45,7 +45,8 @@ resource "aws_kms_key" "a" {
             "Effect": "Allow",
             "Principal": {
                 "AWS": [
-		    "arn:aws:iam::${var.aws_account_number}:role/ct-ado-ab2d-application-admin",
+                    "arn:aws:iam::${var.aws_account_number}:role/delegatedadmin/developer/Ab2dMgmtV2Role",
+                    "arn:aws:iam::${var.aws_account_number}:role/ct-ado-ab2d-application-admin",
                     "arn:aws:iam::${var.aws_account_number}:role/delegatedadmin/developer/Ab2dInstanceV2Role"
                 ]
             },
