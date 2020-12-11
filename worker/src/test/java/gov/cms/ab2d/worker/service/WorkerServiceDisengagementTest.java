@@ -139,6 +139,7 @@ class WorkerServiceDisengagementTest {
         job.setCreatedAt(OffsetDateTime.now());
         job.setUser(user);
         job.setOutputFormat(NDJSON_FIRE_CONTENT_TYPE);
+        job.setContract(user.getContract());
         return jobRepository.save(job);
     }
 
@@ -171,6 +172,6 @@ class WorkerServiceDisengagementTest {
     }
 
     private void checkEngagedResult(Job processedJob) {
-        assertEquals(processedJob.getStatus(), SUCCESSFUL);
-        assertEquals(processedJob.getStatusMessage(), "100%");    }
+        assertEquals(SUCCESSFUL, processedJob.getStatus());
+        assertEquals("100%", processedJob.getStatusMessage());    }
 }
