@@ -4,7 +4,6 @@ import gov.cms.ab2d.common.service.FeatureEngagement;
 import gov.cms.ab2d.worker.service.WorkerService;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.integration.support.locks.LockRegistry;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageHandler;
