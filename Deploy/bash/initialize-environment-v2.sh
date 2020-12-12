@@ -187,6 +187,33 @@ terraform init \
 terraform validate
 
 #
+# Create or refresh IAM components for target environment
+#
+
+cd "${START_DIR}/.."
+cd "terraform/environments/${TARGET_CMS_ENV}"
+
+terraform apply \
+  --var "env=${TARGET_CMS_ENV}" \
+  --var "mgmt_aws_account_number=${CMS_ECR_REPO_ENV_AWS_ACCOUNT_NUMBER}" \
+  --var "aws_account_number=${TARGET_AWS_ACCOUNT_NUMBER}" \
+  --target module.iam \
+  --auto-approve
+
+#
+# Create or verify KMS components
+#
+
+cd "${START_DIR}/.."
+cd "terraform/environments/${TARGET_CMS_ENV}"
+
+terraform apply \
+  --var "env=${TARGET_CMS_ENV}" \
+  --var "aws_account_number=${TARGET_AWS_ACCOUNT_NUMBER}" \
+  --target module.kms \
+  --auto-approve
+
+#
 # Get secrets
 #
 
@@ -228,7 +255,7 @@ if [ "${AB2D_BFD_INSIGHTS_S3_BUCKET}" == "ERROR: Cannot get database secret beca
 fi
 
 #
-# Create or refresh IAM components for target environment
+# Create or refresh BFD Insights IAM components for target environment
 #
 
 cd "${START_DIR}/.."
@@ -240,20 +267,7 @@ terraform apply \
   --var "aws_account_number=${TARGET_AWS_ACCOUNT_NUMBER}" \
   --var "ab2d_bfd_insights_s3_bucket=${AB2D_BFD_INSIGHTS_S3_BUCKET}" \
   --var "ab2d_bfd_kms_arn=${AB2D_BFD_KMS_ARN}" \
-  --target module.iam \
-  --auto-approve
-
-#
-# Create or verify KMS components
-#
-
-cd "${START_DIR}/.."
-cd "terraform/environments/${TARGET_CMS_ENV}"
-
-terraform apply \
-  --var "env=${TARGET_CMS_ENV}" \
-  --var "aws_account_number=${TARGET_AWS_ACCOUNT_NUMBER}" \
-  --target module.kms \
+  --target module.iam_bfd_insights \
   --auto-approve
 
 #
