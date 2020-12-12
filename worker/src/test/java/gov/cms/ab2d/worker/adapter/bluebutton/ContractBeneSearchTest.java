@@ -2,7 +2,6 @@ package gov.cms.ab2d.worker.adapter.bluebutton;
 
 import ca.uhn.fhir.rest.server.exceptions.InvalidRequestException;
 import gov.cms.ab2d.bfd.client.BFDClient;
-import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.common.util.FilterOutByDate;
 import gov.cms.ab2d.worker.processor.BundleUtils;
@@ -62,9 +61,6 @@ class ContractBeneSearchTest {
         bundle = createBundle();
         lenient().when(client.requestPartDEnrolleesFromServer(anyString(), anyInt())).thenReturn(bundle);
 
-        Contract contract = new Contract();
-        contract.setId(Long.valueOf(Instant.now().getNano()));
-        contract.setContractNumber(contractNumber);
         tracker = ProgressTracker.builder()
                 .jobUuid("JOBID")
                 .numContracts(1)

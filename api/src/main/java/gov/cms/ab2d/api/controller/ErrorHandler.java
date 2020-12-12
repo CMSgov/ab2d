@@ -13,7 +13,6 @@ import gov.cms.ab2d.common.service.InvalidPropertiesException;
 import gov.cms.ab2d.common.service.InvalidContractException;
 import gov.cms.ab2d.common.service.InvalidJobAccessException;
 import gov.cms.ab2d.common.service.ResourceNotFoundException;
-import gov.cms.ab2d.common.service.ContractNotFoundException;
 import gov.cms.ab2d.common.service.JobOutputMissingException;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.events.ApiResponseEvent;
@@ -72,7 +71,6 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
             put(TooManyRequestsException.class, HttpStatus.TOO_MANY_REQUESTS);
             put(InMaintenanceModeException.class, HttpStatus.SERVICE_UNAVAILABLE);
             put(URISyntaxException.class, HttpStatus.SERVICE_UNAVAILABLE);
-            put(ContractNotFoundException.class, HttpStatus.NOT_FOUND);
             put(JobOutputMissingException.class, HttpStatus.INTERNAL_SERVER_ERROR);
             put(JobProcessingException.class, HttpStatus.INTERNAL_SERVER_ERROR);
             put(DataIntegrityViolationException.class, HttpStatus.INTERNAL_SERVER_ERROR);
@@ -101,13 +99,6 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
             ResourceNotFoundException.class
     })
     public ResponseEntity<JsonNode> assertionException(final Exception e, HttpServletRequest request) throws IOException {
-        return generateFHIRError(e, request);
-    }
-
-    @ExceptionHandler({ContractNotFoundException.class})
-    public ResponseEntity<JsonNode> contractNotFoundException(final Exception e, HttpServletRequest request) throws IOException {
-        eventLogger.log(new ErrorEvent(MDC.get(USERNAME), null,
-                ErrorEvent.ErrorType.CONTRACT_NOT_FOUND, getRootCause(e)));
         return generateFHIRError(e, request);
     }
 

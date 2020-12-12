@@ -44,9 +44,6 @@ public class JobOutputServiceTest {
     UserRepository userRepository;
 
     @Autowired
-    SponsorRepository sponsorRepository;
-
-    @Autowired
     ContractRepository contractRepository;
 
     @Autowired
@@ -74,10 +71,9 @@ public class JobOutputServiceTest {
 
     @AfterEach
     public void tearDown() {
-        contractRepository.deleteAll();
         jobRepository.deleteAll();
         userRepository.deleteAll();
-        sponsorRepository.deleteAll();
+        contractRepository.deleteAll();
     }
 
     @Test
