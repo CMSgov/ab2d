@@ -23,7 +23,6 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import javax.transaction.Transactional;
-import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.concurrent.ExecutionException;
 
@@ -89,6 +88,7 @@ public class ProgressTrackerIntegrationTest {
         contract.setContractNumber(contractId);
 
         Job job = createJob(null);
+        job.setContract(contract);
 
         progressTracker = ProgressTracker.builder()
                 .failureThreshold(2)
@@ -108,7 +108,7 @@ public class ProgressTrackerIntegrationTest {
         when(bfdClient.requestPartDEnrolleesFromServer(contractId, 1)).thenReturn(bundleA);
         when(bfdClient.requestPartDEnrolleesFromServer(contractId, 2)).thenReturn(bundleB);
 
-        cut.processContractBenes(job, contract, month, progressTracker);
+        cut.processContractBenes(job, month, progressTracker);
 
         Job loadedVal = jobRepository.findById(job.getId()).get();
         assertEquals(30, loadedVal.getProgress());

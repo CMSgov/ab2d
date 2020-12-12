@@ -70,11 +70,9 @@ class ContractProcessorUnitTest {
         ReflectionTestUtils.setField(cut, "reportProgressLogFrequency", 3);
         ReflectionTestUtils.setField(cut, "tryLockTimeout", 30);
 
-        var parentSponsor = createParentSponsor();
-        var childSponsor = createChildSponsor(parentSponsor);
-        var user = createUser(childSponsor);
+        var user = createUser();
         var job = createJob(user);
-        var contract = createContract(childSponsor);
+        var contract = createContract();
 
         patientsByContract = createPatientsByContractResponse(contract);
 
@@ -115,43 +113,23 @@ class ContractProcessorUnitTest {
         verify(patientClaimsProcessor, atLeast(1)).process(any());
     }
 
-    private Sponsor createParentSponsor() {
-        Sponsor parentSponsor = new Sponsor();
-        parentSponsor.setOrgName("PARENT");
-        parentSponsor.setLegalName("LEGAL PARENT");
-        return parentSponsor;
-    }
-
-    private Sponsor createChildSponsor(Sponsor parentSponsor) {
-        Sponsor childSponsor = new Sponsor();
-        childSponsor.setOrgName("Hogwarts School of Wizardry");
-        childSponsor.setLegalName("Hogwarts School of Wizardry LLC");
-
-        childSponsor.setParent(parentSponsor);
-        parentSponsor.getChildren().add(childSponsor);
-
-        return childSponsor;
-    }
-
-    private User createUser(Sponsor sponsor) {
+    private User createUser() {
         User user = new User();
         user.setUsername("Harry_Potter");
         user.setFirstName("Harry");
         user.setLastName("Potter");
         user.setEmail("harry_potter@hogwarts.edu");
         user.setEnabled(TRUE);
-        user.setSponsor(sponsor);
+        user.setContract(createContract());
         return user;
     }
 
-    private Contract createContract(Sponsor sponsor) {
+    private Contract createContract() {
         Contract contract = new Contract();
         contract.setContractName("CONTRACT_NM_00000");
         contract.setContractNumber("CONTRACT_00000");
         contract.setAttestedOn(OffsetDateTime.now().minusDays(10));
-        contract.setSponsor(sponsor);
 
-        sponsor.getContracts().add(contract);
         return contract;
     }
 

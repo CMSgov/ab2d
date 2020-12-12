@@ -6,7 +6,6 @@ import com.newrelic.api.agent.Trace;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.Job;
-import gov.cms.ab2d.common.model.Sponsor;
 import gov.cms.ab2d.common.repository.JobOutputRepository;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.common.util.EventUtils;
@@ -33,8 +32,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
-import java.util.Collections;
-import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 import static gov.cms.ab2d.common.model.JobStatus.FAILED;
@@ -53,7 +50,9 @@ public class JobProcessorImpl implements JobProcessor {
     @Value("${audit.files.ttl.hours}")
     private int auditFilesTTLHours;
 
-    /** Failure threshold an integer expressed as a percentage of failure tolerated in a batch **/
+    /**
+     * Failure threshold an integer expressed as a percentage of failure tolerated in a batch
+     **/
     @Value("${failure.threshold}")
     private int failureThreshold;
 
@@ -108,19 +107,21 @@ public class JobProcessorImpl implements JobProcessor {
     /**
      * Process in individual contract
      *
-     * @param contract - the contract to process
-     * @param job - the job in which the contract belongs
-     * @param month - the month to search for beneficiaries for
-     * @param outputDirPath - the location of the job output
+     * @param job             - the job in which the contract belongs
+     * @param month           - the month to search for beneficiaries for
+     * @param outputDirPath   - the location of the job output
      * @param progressTracker - the progress tracker which indicates how far the job is along
-     * @throws ExecutionException when there is an issue with searching
+     * @throws ExecutionException   when there is an issue with searching
      * @throws InterruptedException - when the search is interrupted
      */
-    void processContract(Contract contract, Job job, int month, Path outputDirPath, ProgressTracker progressTracker) throws ExecutionException, InterruptedException {
+    void processContract(Job job, int month, Path outputDirPath, ProgressTracker progressTracker)
+            throws ExecutionException, InterruptedException {
+        Contract contract = job.getContract();
+        assert contract != null;
         log.info("Job [{}] - contract [{}] ", job.getJobUuid(), contract.getContractNumber());
         // Retrieve the contract beneficiaries
         try {
-            processContractBenes(job, contract, month, progressTracker);
+            processContractBenes(job, month, progressTracker);
         } catch (ExecutionException | InterruptedException ex) {
             log.error("Having issue retrieving patients for contract " + contract.getContractNumber());
             throw ex;
@@ -146,7 +147,10 @@ public class JobProcessorImpl implements JobProcessor {
                 progressTracker.getFailureCount()));
     }
 
-    void processContractBenes(Job job, Contract contract, int month, ProgressTracker progressTracker) throws ExecutionException, InterruptedException {
+    void processContractBenes(Job job, int month, ProgressTracker progressTracker)
+            throws ExecutionException, InterruptedException {
+        Contract contract = job.getContract();
+        assert contract != null;
         try {
             progressTracker.addPatientsByContract(contractBeneSearch.getPatients(contract.getContractNumber(), month, progressTracker));
             int progress = progressTracker.getPercentageCompleted();
@@ -162,7 +166,7 @@ public class JobProcessorImpl implements JobProcessor {
     /**
      * Process the Job and put the contents into the output directory
      *
-     * @param job - the job to process
+     * @param job           - the job to process
      * @param outputDirPath - the output directory to put all the files
      */
     @SuppressFBWarnings("REC_CATCH_EXCEPTION")
@@ -171,24 +175,19 @@ public class JobProcessorImpl implements JobProcessor {
         createOutputDirectory(outputDirPath, job);
         int month = LocalDate.now().getMonthValue();
 
-        // Get all attested contracts for that job (or the one specified in the job)
-        var attestedContracts = getAttestedContracts(job);
         // Retrieve the patients for each contract and start a progress tracker
         ProgressTracker progressTracker = ProgressTracker.builder()
                 .jobUuid(job.getJobUuid())
-                .numContracts(attestedContracts.size())
+                .numContracts(1)
                 .failureThreshold(failureThreshold)
                 .currentMonth(month)
                 .build();
 
-        for (Contract contract : attestedContracts) {
-            // Retrieve the contract beneficiaries
-            try {
-                processContract(contract, job, month, outputDirPath, progressTracker);
-            } catch (ExecutionException | InterruptedException ex) {
-                log.error("Having issue retrieving patients for contract " + contract);
-                throw ex;
-            }
+        try {
+            processContract(job, month, outputDirPath, progressTracker);
+        } catch (ExecutionException | InterruptedException ex) {
+            log.error("Having issue retrieving patients for contract " + job.getContract());
+            throw ex;
         }
 
         completeJob(job);
@@ -267,38 +266,6 @@ public class JobProcessorImpl implements JobProcessor {
             log.error("{} : {} ", errMsg, path.toAbsolutePath());
             throw new UncheckedIOException(errMsg + path.toFile().getName(), ex);
         }
-    }
-
-    /**
-     * Return the list of attested contracts for a job. If a contract was specified in the job, just return that
-     * after checking to make sure the sponsor has access to the contract, otherwise, search for all the contracts
-     * for the sponsor
-     *
-     * @param job - the submitted job
-     * @return the list of contracts (all or only 1 if the contract was specified in the job).
-     */
-    private List<Contract> getAttestedContracts(Job job) {
-
-        // Get the aggregated attested Contracts for the sponsor
-        final Sponsor sponsor = job.getUser().getSponsor();
-        final List<Contract> attestedContracts = sponsor.getAggregatedAttestedContracts();
-
-        // If a contract was specified for request, make sure the sponsor can access the contract and then return only it
-        final Contract jobSpecificContract = job.getContract();
-        if (jobSpecificContract != null && jobSpecificContract.hasAttestation()) {
-            boolean ownsContract = attestedContracts.stream()
-                    .anyMatch(c -> jobSpecificContract.getContractNumber().equalsIgnoreCase(c.getContractNumber()));
-            if (!ownsContract) {
-                log.info("Job [{}] submitted for a specific attested contract [{}] that the sponsor [{}] does not own",
-                        job.getJobUuid(), jobSpecificContract.getContractNumber(), sponsor.getOrgName());
-            }
-            log.info("Job [{}] submitted for a specific attested contract [{}] ", job.getJobUuid(), jobSpecificContract.getContractNumber());
-            return Collections.singletonList(jobSpecificContract);
-        }
-
-        // Otherwise, return the list of attested contracts
-        log.info("Job [{}] has [{}] attested contracts", job.getJobUuid(), attestedContracts.size());
-        return attestedContracts;
     }
 
     /**

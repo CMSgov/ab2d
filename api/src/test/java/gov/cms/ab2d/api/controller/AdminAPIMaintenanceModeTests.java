@@ -13,8 +13,7 @@ import gov.cms.ab2d.eventlogger.events.*;
 import gov.cms.ab2d.eventlogger.reports.sql.DoAll;
 import gov.cms.ab2d.eventlogger.utils.UtilMethods;
 import org.junit.Assert;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -57,9 +56,6 @@ public class AdminAPIMaintenanceModeTests {
     private static final PostgreSQLContainer postgreSQLContainer = new AB2DPostgresqlContainer();
 
     @Autowired
-    private SponsorRepository sponsorRepository;
-
-    @Autowired
     private UserRepository userRepository;
 
     @Autowired
@@ -83,11 +79,10 @@ public class AdminAPIMaintenanceModeTests {
 
     @BeforeEach
     public void setup() throws JwtVerificationException {
-        contractRepository.deleteAll();
         jobRepository.deleteAll();
         userRepository.deleteAll();
         roleRepository.deleteAll();
-        sponsorRepository.deleteAll();
+        contractRepository.deleteAll();
         doAll.delete();
 
         token = testUtil.setupToken(List.of(SPONSOR_ROLE, ADMIN_ROLE));
@@ -187,7 +182,7 @@ public class AdminAPIMaintenanceModeTests {
                         .header("Accept-Encoding", "gzip, deflate, br"))
                         .andExpect(status().is(200));
 
-        Assert.assertTrue(!Files.exists(Paths.get(destinationStr + File.separator + testFile)));
+        Assert.assertFalse(Files.exists(Paths.get(destinationStr + File.separator + testFile)));
 
         // Cleanup
         propertiesDTOs.clear();

@@ -1,9 +1,7 @@
 package gov.cms.ab2d.hpms.service;
 
 import gov.cms.ab2d.common.model.Contract;
-import gov.cms.ab2d.common.model.Sponsor;
 import gov.cms.ab2d.common.repository.ContractRepository;
-import gov.cms.ab2d.common.repository.SponsorRepository;
 import gov.cms.ab2d.hpms.hmsapi.*;  // NOPMD
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Primary;
@@ -20,14 +18,11 @@ public class AttestationUpdaterServiceImpl implements AttestationUpdaterService 
 
     private final HPMSFetcher hpmsFetcher;
 
-    private final SponsorRepository sponsorRepository;
-
     private final ContractRepository contractRepository;
 
     @Autowired
-    public AttestationUpdaterServiceImpl(SponsorRepository sponsorRepository, ContractRepository contractRepository,
+    public AttestationUpdaterServiceImpl(ContractRepository contractRepository,
                                          HPMSFetcher hpmsFetcher) {
-        this.sponsorRepository = sponsorRepository;
         this.contractRepository = contractRepository;
         this.hpmsFetcher = hpmsFetcher;
     }
@@ -114,10 +109,7 @@ public class AttestationUpdaterServiceImpl implements AttestationUpdaterService 
     }
 
     private Contract sponsorAdd(HPMSOrganizationInfo hpmsInfo) {
-        Sponsor savedSponsor =
-                sponsorRepository.save(new Sponsor(hpmsInfo.getParentOrgName(), hpmsInfo.getOrgMarketingName()));
-
-        return contractRepository.save(hpmsInfo.build(savedSponsor));
+        return contractRepository.save(hpmsInfo.build());
     }
 
     private void considerContract(List<Contract> contractAttestList, Contract contract,

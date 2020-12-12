@@ -67,9 +67,6 @@ public class JobServiceTest {
     private UserRepository userRepository;
 
     @Autowired
-    private SponsorRepository sponsorRepository;
-
-    @Autowired
     private ContractRepository contractRepository;
 
     @Autowired
@@ -107,15 +104,14 @@ public class JobServiceTest {
     @BeforeEach
     public void setup() {
         LogManager logManager = new LogManager(sqlEventLogger, kinesisEventLogger);
-        jobService = new JobServiceImpl(userService, jobRepository, contractRepository, jobOutputService, logManager, doSummary);
+        jobService = new JobServiceImpl(userService, jobRepository, jobOutputService, logManager, doSummary);
         ReflectionTestUtils.setField(jobService, "fileDownloadPath", tmpJobLocation);
 
         // todo: Very bizarre behavior happens if these are moved to an @AfterEach method instead.  Doing deleteAll()
         // in a setup method is definitely a code smell.
         jobRepository.deleteAll();
-        contractRepository.deleteAll();
         userRepository.deleteAll();
-        sponsorRepository.deleteAll();
+        contractRepository.deleteAll();
 
         dataSetup.setupUser(List.of());
 
@@ -172,12 +168,6 @@ public class JobServiceTest {
 
         // Verify it actually got persisted in the DB
         assertThat(jobRepository.findById(job.getId())).get().isEqualTo(job);
-    }
-
-    @Test
-    public void createJobWithBadContract() {
-        Assertions.assertThrows(ContractNotFoundException.class,
-                () -> jobService.createJob(EOB, LOCAL_HOST, "BadContract", NDJSON_FIRE_CONTENT_TYPE, null));
     }
 
     @Test
@@ -261,10 +251,8 @@ public class JobServiceTest {
         Role role = roleService.findRoleByName(ADMIN_ROLE);
         user.addRole(role);
 
-        Sponsor sponsor = buildSecondSponsor();
-        Contract contract = dataSetup.setupContract(sponsor, "Y0000");
-        sponsor.setContracts(Set.of(contract));
-        user.setSponsor(sponsor);
+        Contract contract = dataSetup.setupContract("Y0000");
+        user.setContract(contract);
 
         userRepository.saveAndFlush(user);
 
@@ -417,11 +405,8 @@ public class JobServiceTest {
         user.setUsername("BadUser");
         user.setEnabled(true);
 
-        Sponsor savedSponsor = buildSecondSponsor();
-
-        dataSetup.setupContract(savedSponsor, "New Contract");
-
-        user.setSponsor(savedSponsor);
+        Contract contract = dataSetup.setupContract("New Contract");
+        user.setContract(contract);
         User savedUser = userRepository.save(user);
 
         SecurityContextHolder.getContext().setAuthentication(
@@ -434,10 +419,6 @@ public class JobServiceTest {
                 () -> jobService.getResourceForJob(job.getJobUuid(), testFile));
 
         Assert.assertEquals(exceptionThrown.getMessage(), "Unauthorized");
-    }
-
-    private Sponsor buildSecondSponsor() {
-        return dataSetup.createSponsor("Parent Corp. #2", 12345, "Test #2", 6789);
     }
 
     private void createNDJSONFile(String file, String destinationStr) throws IOException {

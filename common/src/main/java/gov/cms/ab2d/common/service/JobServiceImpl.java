@@ -7,9 +7,7 @@ import gov.cms.ab2d.common.repository.JobRepository;
 
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.JobStatus;
-import gov.cms.ab2d.common.model.Sponsor;
 import gov.cms.ab2d.common.model.Contract;
-import gov.cms.ab2d.common.repository.ContractRepository;
 import gov.cms.ab2d.common.util.EventUtils;
 import gov.cms.ab2d.eventlogger.events.FileEvent;
 import gov.cms.ab2d.common.util.JobUtil;
@@ -39,7 +37,6 @@ public class JobServiceImpl implements JobService {
 
     private final UserService userService;
     private final JobRepository jobRepository;
-    private final ContractRepository contractRepository;
     private final JobOutputService jobOutputService;
     private final LogManager eventLogger;
     private final DoSummary doSummary;
@@ -49,11 +46,10 @@ public class JobServiceImpl implements JobService {
 
     public static final String INITIAL_JOB_STATUS_MESSAGE = "0%";
 
-    public JobServiceImpl(UserService userService, JobRepository jobRepository, ContractRepository contractRepository,
+    public JobServiceImpl(UserService userService, JobRepository jobRepository,
                           JobOutputService jobOutputService, LogManager eventLogger, DoSummary doSummary) {
         this.userService = userService;
         this.jobRepository = jobRepository;
-        this.contractRepository = contractRepository;
         this.jobOutputService = jobOutputService;
         this.eventLogger = eventLogger;
         this.doSummary = doSummary;
@@ -74,38 +70,23 @@ public class JobServiceImpl implements JobService {
 
         // Check to see if there is any attestation
         User user = userService.getCurrentUser();
-        Sponsor userSponsor = user.getSponsor();
-        List<Contract> contracts = userSponsor.getAggregatedAttestedContracts();
-        if (contracts.isEmpty()) {
-            String errorMsg = (contractNumber == null) ?
-                "No attested contracts found for the user." :
-                "No attested contract with contract number {} found for the user" + contractNumber;
+        Contract contract = user.getContract();
+        if (contractNumber != null && !contractNumber.equals(contract.getContractNumber())) {
+            String errorMsg = "Specifying contract: " + contractNumber + " not associated with user: " + user.getUsername();
             log.error(errorMsg);
             throw new InvalidContractException(errorMsg);
         }
 
-        if (contractNumber != null) {
-            contractRepository.findContractByContractNumber(contractNumber).ifPresentOrElse(contractFound ->
-                processFoundContract(job, contracts, contractFound), () -> contractNotFound(contractNumber));
+        if (!contract.hasAttestation()) {
+            String errorMsg = "Contract: " + contractNumber + " is not attested.";
+            log.error(errorMsg);
+            throw new InvalidContractException(errorMsg);
         }
+
         eventLogger.log(EventUtils.getJobChangeEvent(job, JobStatus.SUBMITTED, "Job Created"));
+        job.setContract(contract);
         job.setStatus(JobStatus.SUBMITTED);
         return jobRepository.save(job);
-    }
-
-    private void contractNotFound(String contractNumber) {
-        log.error("Contract {} was not found", contractNumber);
-        throw new ContractNotFoundException("Contract " + contractNumber + " was not found");
-    }
-
-    private void processFoundContract(Job job, List<Contract> contracts, Contract contractFound) {
-        if (!contracts.contains(contractFound)) {
-            log.error("No attested contract with contract number {} found for the user", contractFound.getContractNumber());
-            throw new InvalidContractException("No attested contract with contract number " + contractFound.getContractNumber() +
-                " found for the user");
-        }
-
-        job.setContract(contractFound);
     }
 
     @Override
