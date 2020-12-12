@@ -165,7 +165,8 @@ pipeline {
                     docker images | grep _worker | awk '{print $3}' | xargs -I name docker rmi --force name
 
                     # Delete all but the defaut docker networks
-                    docker network ls | awk '{print $1, $2}' | grep -v " bridge" | grep -v " host" | grep -v " none" | grep -v "NETWORK ID" | awk '{print $1}' | xargs -I name docker network rm name
+                    docker network ls | awk '{print $1, $2}' | grep -v " bridge" | grep -v " host" | grep -v " none" \
+		      | grep -v "NETWORK ID" | awk '{print $1}' | xargs -I name docker network rm name
 
                     rm -rf "$WORKSPACE/opt/ab2d" 2> /dev/null
 
