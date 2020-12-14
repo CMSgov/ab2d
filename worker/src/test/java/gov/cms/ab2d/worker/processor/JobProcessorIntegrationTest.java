@@ -6,12 +6,10 @@ import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.JobOutput;
 import gov.cms.ab2d.common.model.JobStatus;
-import gov.cms.ab2d.common.model.Sponsor;
 import gov.cms.ab2d.common.model.User;
 import gov.cms.ab2d.common.repository.ContractRepository;
 import gov.cms.ab2d.common.repository.JobOutputRepository;
 import gov.cms.ab2d.common.repository.JobRepository;
-import gov.cms.ab2d.common.repository.SponsorRepository;
 import gov.cms.ab2d.common.repository.UserRepository;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.eventlogger.LogManager;
@@ -45,7 +43,6 @@ import javax.transaction.Transactional;
 import java.io.File;
 import java.time.OffsetDateTime;
 import java.util.List;
-import java.util.Random;
 
 import static gov.cms.ab2d.common.util.Constants.NDJSON_FIRE_CONTENT_TYPE;
 import static gov.cms.ab2d.eventlogger.events.ErrorEvent.ErrorType.TOO_MANY_SEARCH_ERRORS;
@@ -61,7 +58,6 @@ import static org.mockito.Mockito.when;
 @SpringIntegrationTest(noAutoStartup = {"inboundChannelAdapter", "*Source*"})
 @Transactional
 class JobProcessorIntegrationTest {
-    private final Random random = new Random();
 
     private JobProcessor cut;       // class under test
 
@@ -71,8 +67,6 @@ class JobProcessorIntegrationTest {
     private DoAll doAll;
     @Autowired
     private JobRepository jobRepository;
-    @Autowired
-    private SponsorRepository sponsorRepository;
     @Autowired
     private UserRepository userRepository;
     @Autowired
@@ -94,8 +88,6 @@ class JobProcessorIntegrationTest {
     @TempDir
     File tmpEfsMountDir;
 
-    private Sponsor sponsor;
-    private User user;
     private Job job;
 
     @Container
@@ -108,17 +100,18 @@ class JobProcessorIntegrationTest {
     void setUp() {
         jobRepository.deleteAll();
         userRepository.deleteAll();
-        sponsorRepository.deleteAll();
         doAll.delete();
 
         LogManager logManager = new LogManager(sqlEventLogger, kinesisEventLogger);
-        sponsor = createSponsor();
-        user = createUser(sponsor);
-        job = createJob(user);
+        User user = createUser();
 
+        Contract contract = createContract();
+        contract = contractRepository.saveAndFlush(contract);
+
+        job = createJob(user);
+        job.setContract(contract);
         job.setStatus(JobStatus.IN_PROGRESS);
-        jobRepository.save(job);
-        createContract(sponsor);
+        jobRepository.saveAndFlush(job);
 
         ExplanationOfBenefit eob = EobTestDataUtil.createEOB();
         bundle1 = EobTestDataUtil.createBundle(eob.copy());
@@ -177,10 +170,6 @@ class JobProcessorIntegrationTest {
     @Test
     @DisplayName("When a job is in submitted by the parent user, it process the contracts for the children")
     void whenJobSubmittedByParentUser_ProcessAllContractsForChildrenSponsors() {
-        // switch the user to the parent sponsor
-        user.setSponsor(sponsor.getParent());
-        userRepository.save(user);
-
         var processedJob = cut.process("S0000");
 
         assertEquals(processedJob.getStatus(), JobStatus.SUCCESSFUL);
@@ -281,40 +270,23 @@ class JobProcessorIntegrationTest {
         return new Bundle[]{bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1};
     }
 
-    private Sponsor createSponsor() {
-        Sponsor parent = new Sponsor();
-        parent.setOrgName("Parent");
-        parent.setLegalName("Parent");
-        parent.setHpmsId(350);
-
-        Sponsor sponsor = new Sponsor();
-        sponsor.setOrgName("Hogwarts School of Wizardry");
-        sponsor.setLegalName("Hogwarts School of Wizardry LLC");
-        sponsor.setHpmsId(random.nextInt());
-        sponsor.setParent(parent);
-        parent.getChildren().add(sponsor);
-        return sponsorRepository.save(sponsor);
-    }
-
-    private User createUser(Sponsor sponsor) {
+    private User createUser() {
         User user = new User();
         user.setUsername("Harry_Potter");
         user.setFirstName("Harry");
         user.setLastName("Potter");
         user.setEmail("harry_potter@hogwarts.com");
         user.setEnabled(TRUE);
-        user.setSponsor(sponsor);
+//        user.setContract(createContract());
         return userRepository.save(user);
     }
 
-    private Contract createContract(Sponsor sponsor) {
+    private Contract createContract() {
         Contract contract = new Contract();
         contract.setContractName("CONTRACT_0000");
         contract.setContractNumber("CONTRACT_0000");
         contract.setAttestedOn(OffsetDateTime.now().minusDays(10));
-        contract.setSponsor(sponsor);
 
-        sponsor.getContracts().add(contract);
         return contractRepository.save(contract);
     }
 

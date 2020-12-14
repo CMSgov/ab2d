@@ -2,20 +2,12 @@ package gov.cms.ab2d.api.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import gov.cms.ab2d.api.SpringBootApp;
-import gov.cms.ab2d.common.dto.SponsorDTO;
-import gov.cms.ab2d.common.dto.SponsorIPDTO;
-import gov.cms.ab2d.common.model.Sponsor;
-import gov.cms.ab2d.common.repository.JobRepository;
-import gov.cms.ab2d.common.repository.RoleRepository;
-import gov.cms.ab2d.common.repository.SponsorRepository;
-import gov.cms.ab2d.common.repository.UserRepository;
+import gov.cms.ab2d.common.repository.*;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.data.domain.Sort;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.MockMvc;
@@ -26,7 +18,6 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.io.InputStream;
 import java.util.List;
-import java.util.Set;
 
 import static gov.cms.ab2d.common.util.Constants.*;
 import static gov.cms.ab2d.common.util.DataSetup.TEST_USER;
@@ -45,9 +36,6 @@ public class RoleTests {
     private TestUtil testUtil;
 
     @Autowired
-    private SponsorRepository sponsorRepository;
-
-    @Autowired
     private UserRepository userRepository;
 
     @Autowired
@@ -56,6 +44,9 @@ public class RoleTests {
     @Autowired
     private JobRepository jobRepository;
 
+    @Autowired
+    private ContractRepository contractRepository;
+
     @Container
     private static final PostgreSQLContainer postgreSQLContainer= new AB2DPostgresqlContainer();
 
@@ -63,12 +54,12 @@ public class RoleTests {
 
     @BeforeEach
     public void setup() {
-        testUtil.turnMaintenanceModeOff();
-
         jobRepository.deleteAll();
         userRepository.deleteAll();
         roleRepository.deleteAll();
-        sponsorRepository.deleteAll();
+        contractRepository.deleteAll();
+
+        testUtil.turnMaintenanceModeOff();
     }
 
     // This will test the API using a role that should not be able to access sponsor URLs
@@ -241,13 +232,10 @@ public class RoleTests {
     public void testWrongRoleIPs() throws Exception {
         token = testUtil.setupToken(List.of(SPONSOR_ROLE));
 
-        Sponsor sponsor = sponsorRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
-        SponsorDTO sponsorDTO = new SponsorDTO(sponsor.getHpmsId(), sponsor.getOrgName());
-
         ObjectMapper mapper = new ObjectMapper();
 
         this.mockMvc.perform(get(API_PREFIX +  ADMIN_PREFIX + "/ip")
-                .contentType(MediaType.APPLICATION_JSON).content(mapper.writeValueAsString(sponsorDTO))
+                .contentType(MediaType.APPLICATION_JSON).content(mapper.writeValueAsString("sponsorDTO"))
                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(403));
     }

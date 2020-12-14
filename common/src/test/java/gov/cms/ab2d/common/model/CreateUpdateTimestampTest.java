@@ -1,6 +1,6 @@
 package gov.cms.ab2d.common.model;
 
-import gov.cms.ab2d.common.repository.SponsorRepository;
+import gov.cms.ab2d.common.repository.ContractRepository;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,15 +10,9 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
+import static org.junit.Assert.*;
 
 @SpringBootTest
 @Testcontainers
@@ -30,33 +24,33 @@ class CreateUpdateTimestampTest {
     private static final PostgreSQLContainer postgreSQLContainer = new AB2DPostgresqlContainer();
 
     @Autowired
-    private SponsorRepository sponsorRepository;
+    private ContractRepository contractRepository;
 
     @Test
     void testTimestamps() {
-        Sponsor sponsor = new Sponsor();
-        sponsor.setHpmsId(52);
-        sponsor.setOrgName("TEST");
+        Contract contract = new Contract();
+        contract.setContractNumber("TEST123");
+        contract.setContractName("TEST123");
 
-        assertNotNull(sponsor.getHpmsId());
-        assertNotNull(sponsor.getOrgName());
-        assertNull(sponsor.getCreated());
-        assertNull(sponsor.getModified());
+        assertNull(contract.getCreated());
+        assertNull(contract.getModified());
 
-        Sponsor savedSponsor = sponsorRepository.save(sponsor);
-        assertEquals("TEST", savedSponsor.getOrgName());
-        assertNotNull(savedSponsor.getId());
-        assertNotNull(savedSponsor.getCreated());
-        assertNotNull(savedSponsor.getModified());
+        Contract savedCSE = contractRepository.save(contract);
+        assertEquals("TEST123", savedCSE.getContractNumber());
+        assertNotNull(savedCSE.getId());
+        assertNotNull(savedCSE.getCreated());
+        assertNotNull(savedCSE.getModified());
 
-        OffsetDateTime created = savedSponsor.getCreated();
-        OffsetDateTime modified = savedSponsor.getModified();
-        savedSponsor.setOrgName("TEST2");
-        Sponsor finaleSponsor = sponsorRepository.save(savedSponsor);
-        assertEquals(created, finaleSponsor.getCreated());
-        assertNotEquals(modified, finaleSponsor.getModified());
+        OffsetDateTime created = savedCSE.getCreated();
+        OffsetDateTime modified = savedCSE.getModified();
+        contract.setContractNumber("TEST456");
+        contract.setContractName("TEST456");
+        Contract finaleCSE = contractRepository.save(savedCSE);
+
+        assertEquals(created, finaleCSE.getCreated());
+        assertNotEquals(modified, finaleCSE.getModified());
 
         // Cleanup
-        sponsorRepository.delete(finaleSponsor);
+        contractRepository.delete(finaleCSE);
     }
 }
