@@ -18,6 +18,7 @@ import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.data.util.Pair;
 import org.testcontainers.containers.DockerComposeContainer;
+import org.testcontainers.containers.output.Slf4jLogConsumer;
 import org.testcontainers.containers.wait.strategy.HostPortWaitStrategy;
 import org.yaml.snakeyaml.Yaml;
 
@@ -169,9 +170,9 @@ public class TestRunner {
                 .withScaledService("worker", 2)
                 .withScaledService("api", 1)
                 .withExposedService("api", DEFAULT_API_PORT, new HostPortWaitStrategy()
-                    .withStartupTimeout(Duration.of(200, SECONDS)));
-//                .withLogConsumer("worker", new Slf4jLogConsumer(log)) // Use to debug, for now there's too much log data
-//                .withLogConsumer("api", new Slf4jLogConsumer(log));
+                    .withStartupTimeout(Duration.of(200, SECONDS)))
+                .withLogConsumer("worker", new Slf4jLogConsumer(log)) // Use to debug, for now there's too much log data
+                .withLogConsumer("api", new Slf4jLogConsumer(log));
 
         container.start();
     }
