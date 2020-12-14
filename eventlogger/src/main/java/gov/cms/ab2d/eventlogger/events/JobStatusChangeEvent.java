@@ -27,4 +27,12 @@ public class JobStatusChangeEvent extends LoggableEvent {
         this.newStatus = newStatus;
         this.description = description;
     }
+
+    public JobStatusChangeEvent clone() {
+        JobStatusChangeEvent event = (JobStatusChangeEvent) super.clone();
+        event.setOldStatus(this.getOldStatus());
+        event.setNewStatus(this.getNewStatus());
+        event.setDescription(this.getDescription());
+        return event;
+    }
 }

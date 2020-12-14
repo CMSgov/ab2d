@@ -34,4 +34,13 @@ public class ApiResponseEvent extends LoggableEvent {
         this.description = description;
         this.requestId = requestId;
     }
+
+    public ApiResponseEvent clone() {
+        ApiResponseEvent event = (ApiResponseEvent) super.clone();
+        event.setResponseCode(this.getResponseCode());
+        event.setDescription(this.getDescription());
+        event.setResponseString(this.getResponseString());
+        event.setRequestId(this.getRequestId());
+        return event;
+    }
 }

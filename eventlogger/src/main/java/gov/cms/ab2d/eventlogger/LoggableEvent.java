@@ -8,7 +8,7 @@ import java.time.OffsetDateTime;
  * Interface describing a loggable event
  */
 @Data
-public abstract class LoggableEvent {
+public abstract class LoggableEvent implements Cloneable {
     public LoggableEvent() { }
 
     // If it's dev, prod, etc.
@@ -54,6 +54,22 @@ public abstract class LoggableEvent {
         String jobId = this.getJobId();
         result = result * 59 + (jobId == null ? 43 : jobId.hashCode());
         return result;
+    }
+
+    public LoggableEvent clone() {
+        LoggableEvent event = null;
+        try {
+            event = (LoggableEvent) super.clone();
+        } catch (CloneNotSupportedException ex) {
+            return null;
+        }
+        event.setAwsId(this.getAwsId());
+        event.setEnvironment(this.getEnvironment());
+        event.setId(this.getId());
+        event.setJobId(this.getJobId());
+        event.setTimeOfEvent(this.getTimeOfEvent());
+        event.setUser(this.getUser());
+        return event;
     }
 
     /**

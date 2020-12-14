@@ -34,4 +34,13 @@ public class ApiRequestEvent extends LoggableEvent {
         }
         this.requestId = requestId;
     }
+
+    public ApiRequestEvent clone() {
+        ApiRequestEvent event = (ApiRequestEvent) super.clone();
+        event.setUrl(this.getUrl());
+        event.setIpAddress(this.getIpAddress());
+        event.setTokenHash(this.getTokenHash());
+        event.setRequestId(this.getRequestId());
+        return event;
+    }
 }

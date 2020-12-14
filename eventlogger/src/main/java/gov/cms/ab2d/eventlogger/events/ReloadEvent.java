@@ -34,4 +34,12 @@ public class ReloadEvent extends LoggableEvent {
         this.fileName = fileName;
         this.numberLoaded = numLoaded;
     }
+
+    public ReloadEvent clone() {
+        ReloadEvent event = (ReloadEvent) super.clone();
+        event.setFileType(this.getFileType());
+        event.setFileName(this.getFileName());
+        event.setNumberLoaded(this.getNumberLoaded());
+        return event;
+    }
 }

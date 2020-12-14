@@ -31,4 +31,11 @@ public class ErrorEvent extends LoggableEvent {
         this.errorType = errorType;
         this.description = description;
     }
+
+    public ErrorEvent clone() {
+        ErrorEvent event = (ErrorEvent) super.clone();
+        event.setErrorType(this.getErrorType());
+        event.setDescription(this.getDescription());
+        return event;
+    }
 }

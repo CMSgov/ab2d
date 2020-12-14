@@ -4,6 +4,7 @@ import com.amazonaws.services.kinesisfirehose.AmazonKinesisFirehose;
 import gov.cms.ab2d.eventlogger.EventLogger;
 import gov.cms.ab2d.eventlogger.LoggableEvent;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
@@ -42,8 +43,12 @@ public class KinesisEventLogger implements EventLogger {
             return;
         }
         try {
+            LoggableEvent newLogEvent = event.clone();
+            if (event.getUser() != null && !event.getUser().isEmpty()) {
+                newLogEvent.setUser(DigestUtils.md5Hex(event.getUser()).toUpperCase());
+            }
             ThreadPoolTaskExecutor ex = config.kinesisLogProcessingPool();
-            KinesisEventProcessor processor = new KinesisEventProcessor(event, client, streamId);
+            KinesisEventProcessor processor = new KinesisEventProcessor(newLogEvent, client, streamId);
             Future<Void> future = ex.submit(processor);
             if (block) {
                 try {

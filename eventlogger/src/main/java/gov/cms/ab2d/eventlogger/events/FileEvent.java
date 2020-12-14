@@ -51,4 +51,13 @@ public class FileEvent extends LoggableEvent {
             return "";
         }
     }
+
+    public FileEvent clone() {
+        FileEvent event = (FileEvent) super.clone();
+        event.setFileName(this.getFileName());
+        event.setStatus(this.getStatus());
+        event.setFileSize(this.getFileSize());
+        event.setFileHash(this.getFileHash());
+        return event;
+    }
 }

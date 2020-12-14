@@ -29,4 +29,13 @@ public class BeneficiarySearchEvent extends LoggableEvent {
         this.responseDate = endTime;
         this.beneId = beneId;
     }
+
+    public BeneficiarySearchEvent clone() {
+        BeneficiarySearchEvent event = (BeneficiarySearchEvent) super.clone();
+        event.setResponse(this.getResponse());
+        event.setResponseDate(this.getResponseDate());
+        event.setBeneId(this.getBeneId());
+        event.setContractNum(this.getContractNum());
+        return event;
+    }
 }
