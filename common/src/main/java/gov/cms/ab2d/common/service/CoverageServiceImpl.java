@@ -84,11 +84,6 @@ public class CoverageServiceImpl implements CoverageService {
     }
 
     @Override
-    public List<CoveragePeriod> findAssociatedCoveragePeriods(Contract contract) {
-        return coveragePeriodRepo.findAllByContractId(contract.getId());
-    }
-
-    @Override
     public boolean isCoveragePeriodInProgress(int periodId) {
         CoveragePeriod period = findCoveragePeriod(periodId);
         JobStatus jobStatus = period.getStatus();

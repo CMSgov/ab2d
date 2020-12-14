@@ -79,6 +79,12 @@ databaseChangeLog:
   - include:
       file: db/changelog/v001/add_mbi_to_coverage.sql
   - include:
+      file: db/changelog/v001/ab2d-2701-map-credentials-directly-to-contracts.sql
+  - include:
+      file: db/changelog/v001/ab2d-2701-add-created-and-modified-values-to-test-user.sql
+  - include:
       file: db/changelog/v001/add_update_mode_to_contract.sql
   - include:
       file: db/changelog/v001/add_property_coverage_search.sql
+  - include:
+      file: db/changelog/v001/drop-sponsor-ref-not-null.sql

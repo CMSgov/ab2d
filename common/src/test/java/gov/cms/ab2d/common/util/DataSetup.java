@@ -33,9 +33,6 @@ public class DataSetup {
     private RoleRepository roleRepository;
 
     @Autowired
-    private SponsorRepository sponsorRepository;
-
-    @Autowired
     private CoveragePeriodRepository coveragePeriodRepo;
 
     @Autowired
@@ -125,35 +122,11 @@ public class DataSetup {
         coverageSearchEventRepo.delete(event);
     }
 
-
-    public Sponsor createSponsor(String parentName, int parentHpmsId, String childName, int childHpmsId) {
-        Sponsor parent = new Sponsor();
-        parent.setOrgName(parentName);
-        parent.setHpmsId(parentHpmsId);
-        parent.setLegalName(parentName);
-
-        Sponsor sponsor = new Sponsor();
-        sponsor.setOrgName(childName);
-        sponsor.setHpmsId(childHpmsId);
-        sponsor.setLegalName(childName);
-        sponsor.setParent(parent);
-        return sponsorRepository.save(sponsor);
-    }
-
-    public void deleteSponsor(Sponsor sponsor) {
-        sponsorRepository.delete(sponsor);
-        if (sponsor.getParent() != null) {
-            deleteSponsor(sponsor.getParent());
-        }
-    }
-
-    public Contract setupContract(Sponsor sponsor, String contractNumber) {
+    public Contract setupContract(String contractNumber) {
         Contract contract = new Contract();
         contract.setAttestedOn(OffsetDateTime.now());
-        contract.setContractName("Test Contract");
+        contract.setContractName("Test Contract " + contractNumber);
         contract.setContractNumber(contractNumber);
-
-        contract.setSponsor(sponsor);
 
         return contractRepository.save(contract);
     }
@@ -174,32 +147,26 @@ public class DataSetup {
     }
 
     public void setupContractSponsorForParentUserData(List<String> userRoles) {
-        Sponsor savedSponsor = createSponsor("Parent Corp.", 456, "Test", 123);
+        Contract contract = setupContract("ABC123");
 
-        setupContract(savedSponsor, "ABC123");
-
-        saveUser(savedSponsor.getParent(), userRoles);
+        saveUser(contract, userRoles);
     }
 
     public void setupUserBadSponsorData(List<String> userRoles) {
-        Sponsor savedSponsor = createSponsor("Parent Corp.", 456, "Test", 123);
+        setupContract("ABC123");
 
-        setupContract(savedSponsor, "ABC123");
+        Contract contract = setupContract(BAD_CONTRACT_NUMBER);
 
-        Sponsor savedBadSponsor = createSponsor("Bad Parent Corp.", 789, "Bad Child", 10001);
-
-        setupContract(savedBadSponsor, BAD_CONTRACT_NUMBER);
-
-        saveUser(savedSponsor, userRoles);
+        saveUser(contract, userRoles);
     }
 
-    private User saveUser(Sponsor sponsor, List<String> userRoles) {
+    private User saveUser(Contract contract, List<String> userRoles) {
         User user = new User();
         user.setEmail(TEST_USER);
         user.setFirstName("Eileen");
         user.setLastName("Frierson");
         user.setUsername(TEST_USER);
-        user.setSponsor(sponsor);
+        user.setContract(contract);
         user.setEnabled(true);
         user.setMaxParallelJobs(3);
         for(String userRole :  userRoles) {
@@ -224,10 +191,8 @@ public class DataSetup {
             return testUser;
         }
 
-        Sponsor savedSponsor = createSponsor("Parent Corp.", 456, "Test", 123);
+        Contract contract = setupContract(VALID_CONTRACT_NUMBER);
 
-        setupContract(savedSponsor, VALID_CONTRACT_NUMBER);
-
-        return saveUser(savedSponsor, userRoles);
+        return saveUser(contract, userRoles);
     }
 }

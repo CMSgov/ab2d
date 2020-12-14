@@ -65,9 +65,6 @@ class CoverageServiceImplTest {
     CoverageServiceRepository coverageServiceRepo;
 
     @Autowired
-    SponsorRepository sponsorRepo;
-
-    @Autowired
     ContractRepository contractRepo;
 
     @Autowired
@@ -75,8 +72,6 @@ class CoverageServiceImplTest {
 
     @Autowired
     DataSetup dataSetup;
-
-    private Sponsor sponsor;
 
     private Contract contract1;
     private Contract contract2;
@@ -90,9 +85,8 @@ class CoverageServiceImplTest {
 
     @BeforeEach
     public void insertContractAndDefaultCoveragePeriod() {
-        sponsor = dataSetup.createSponsor("Cal Ripken", 200, "Cal Ripken Jr.", 201);
-        contract1 = dataSetup.setupContract(sponsor, "TST-123");
-        contract2 = dataSetup.setupContract(sponsor, "TST-456");
+        contract1 = dataSetup.setupContract("TST-123");
+        contract2 = dataSetup.setupContract("TST-456");
 
         period1Jan = dataSetup.createCoveragePeriod(contract1, JANUARY, YEAR);
         period1Feb = dataSetup.createCoveragePeriod(contract1, FEBRUARY, YEAR);
@@ -111,10 +105,6 @@ class CoverageServiceImplTest {
         contractRepo.delete(contract1);
         contractRepo.delete(contract2);
         contractRepo.flush();
-
-        if (sponsor != null) {
-            sponsorRepo.delete(sponsor);
-        }
     }
 
     @DisplayName("Get a coverage period")

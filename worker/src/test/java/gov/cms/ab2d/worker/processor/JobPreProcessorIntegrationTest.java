@@ -1,12 +1,7 @@
 package gov.cms.ab2d.worker.processor;
 
-import gov.cms.ab2d.common.model.Job;
-import gov.cms.ab2d.common.model.JobStatus;
-import gov.cms.ab2d.common.model.Sponsor;
-import gov.cms.ab2d.common.model.User;
-import gov.cms.ab2d.common.repository.ContractRepository;
+import gov.cms.ab2d.common.model.*;
 import gov.cms.ab2d.common.repository.JobRepository;
-import gov.cms.ab2d.common.repository.SponsorRepository;
 import gov.cms.ab2d.common.repository.UserRepository;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.eventlogger.LogManager;
@@ -47,10 +42,6 @@ class JobPreProcessorIntegrationTest {
     @Autowired
     private JobRepository jobRepository;
     @Autowired
-    private SponsorRepository sponsorRepository;
-    @Autowired
-    private ContractRepository contractRepository;
-    @Autowired
     private UserRepository userRepository;
     @Autowired
     private DoAll doAll;
@@ -60,7 +51,6 @@ class JobPreProcessorIntegrationTest {
     @Mock
     private KinesisEventLogger kinesisEventLogger;
 
-    private Sponsor sponsor;
     private User user;
     private Job job;
 
@@ -73,8 +63,7 @@ class JobPreProcessorIntegrationTest {
 
         cut = new JobPreProcessorImpl(jobRepository, manager);
 
-        sponsor = createSponsor();
-        user = createUser(sponsor);
+        user = createUser();
         job = createJob(user);
     }
 
@@ -88,11 +77,6 @@ class JobPreProcessorIntegrationTest {
         if (user != null) {
             userRepository.delete(user);
             userRepository.flush();
-        }
-
-        if (sponsor != null) {
-            sponsorRepository.delete(sponsor);
-            sponsorRepository.flush();
         }
     }
 
@@ -140,22 +124,13 @@ class JobPreProcessorIntegrationTest {
         assertThat(exceptionThrown.getMessage(), is("Job S0000 is not in SUBMITTED status"));
     }
 
-    private Sponsor createSponsor() {
-        Sponsor sponsor = new Sponsor();
-        sponsor.setOrgName("Hogwarts School of Wizardry");
-        sponsor.setLegalName("Hogwarts School of Wizardry LLC");
-        sponsor.setHpmsId(random.nextInt());
-        return sponsorRepository.save(sponsor);
-    }
-
-    private User createUser(Sponsor sponsor) {
+    private User createUser() {
         User user = new User();
         user.setUsername("Harry_Potter");
         user.setFirstName("Harry");
         user.setLastName("Potter");
         user.setEmail("harry_potter@hogwarts.edu");
         user.setEnabled(TRUE);
-        user.setSponsor(sponsor);
         return userRepository.save(user);
     }
 

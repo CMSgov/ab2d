@@ -3,7 +3,6 @@ package gov.cms.ab2d.worker.processor.coverage;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.CoveragePeriod;
 import gov.cms.ab2d.common.model.CoverageSearch;
-import gov.cms.ab2d.common.model.Sponsor;
 import gov.cms.ab2d.common.repository.CoverageSearchRepository;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.DataSetup;
@@ -35,6 +34,27 @@ class CoverageLockWrapperTest {
 
     @Autowired
     private DataSetup dataSetup;
+
+    /**
+     * Verify that null is returned if there are no searches, a search there is one and verify that it
+     * was deleted after it was searched.
+     */
+    @Test
+    void getNextSearch() {
+        assertTrue(coverageLockWrapper.getNextSearch().isEmpty());
+
+        Contract contract1 = dataSetup.setupContract("c123");
+        CoveragePeriod period1 = dataSetup.createCoveragePeriod(contract1, 10, 2020);
+        CoverageSearch search1 = new CoverageSearch(null, period1, OffsetDateTime.now(), 0);
+        CoverageSearch savedSearch1 = coverageSearchRepository.save(search1);
+        Optional<CoverageSearch> returnedSearch = coverageLockWrapper.getNextSearch();
+        assertEquals(savedSearch1.getPeriod().getMonth(), returnedSearch.get().getPeriod().getMonth());
+        assertEquals(savedSearch1.getPeriod().getYear(), returnedSearch.get().getPeriod().getYear());
+        assertTrue(coverageLockWrapper.getNextSearch().isEmpty());
+
+        dataSetup.deleteCoveragePeriod(period1);
+        dataSetup.deleteContract(contract1);
+    }
 
     /**
      * The only way to trigger a lock error is if different threads are trying to use the lock at

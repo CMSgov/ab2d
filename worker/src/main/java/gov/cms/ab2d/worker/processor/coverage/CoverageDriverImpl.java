@@ -97,6 +97,14 @@ public class CoverageDriverImpl implements CoverageDriver {
 
         // For all months into the past find old coverage searches
         outOfDateInfo.addAll(findStaleCoverageInformation());
+
+        log.info("queueing all stale coverage periods");
+
+        for (CoveragePeriod period : outOfDateInfo) {
+            coverageProcessor.queueCoveragePeriod(period, false);
+        }
+
+        log.info("queued all stale coverage periods");
         return outOfDateInfo;
     }
 
