@@ -21,12 +21,12 @@ services:
     environment:
       # Limit running threads on lower powered jenkins agents
       - CONTRACT_CORE_POOL_SIZE=3
-      - CONTRACT_MAX_POOL_SIZE=6
+      - CONTRACT_MAX_POOL_SIZE=3
       - COVERAGE_CORE_POOL_SIZE=3
-      - COVERAGE_MAX_POOL_SIZE=6
+      - COVERAGE_MAX_POOL_SIZE=3
       - SPRING_TASK_SCHEDULING_POOL_SIZE=4
-      - PCP_CORE_POOL_SIZE=5
-      - PCP_CORE_POOL_MAX=10
+      - PCP_CORE_POOL_SIZE=3
+      - PCP_MAX_POOL_SIZE=3
       - PROPERTY_CHANGE_DETECTION=false
 
 # Override directory on machine which is the main volume mapped into each containers
