@@ -148,7 +148,7 @@ pipeline {
 
     post {
         always {
-            lock(resource: 'docker') {
+	    script {
                 // Setting api port won't cause problems because the containers are only ever torn down
                 sh '''
                     export API_PORT=8443
