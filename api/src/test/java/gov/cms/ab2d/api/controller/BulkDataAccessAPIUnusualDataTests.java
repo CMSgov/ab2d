@@ -10,8 +10,7 @@ import gov.cms.ab2d.eventlogger.events.*;
 import gov.cms.ab2d.eventlogger.reports.sql.DoAll;
 import gov.cms.ab2d.eventlogger.utils.UtilMethods;
 import org.junit.Assert;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -54,9 +53,6 @@ public class BulkDataAccessAPIUnusualDataTests {
     private RoleRepository roleRepository;
 
     @Autowired
-    private SponsorRepository sponsorRepository;
-
-    @Autowired
     private TestUtil testUtil;
 
     @Autowired
@@ -71,39 +67,10 @@ public class BulkDataAccessAPIUnusualDataTests {
     @BeforeEach
     public void clearUser() {
         jobRepository.deleteAll();
-        contractRepository.deleteAll();
         userRepository.deleteAll();
         roleRepository.deleteAll();
-        sponsorRepository.deleteAll();
+        contractRepository.deleteAll();
         doAll.delete();
-    }
-
-    @Test
-    public void testPatientExportWithContractNotTiedToUser() throws Exception {
-        String token = testUtil.setupBadSponsorUserData(List.of(SPONSOR_ROLE));
-        Optional<Contract> contractOptional = contractRepository.findContractByContractNumber(BAD_CONTRACT_NUMBER);
-        Contract contract = contractOptional.get();
-        this.mockMvc.perform(get(API_PREFIX + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export")
-                .contentType(MediaType.APPLICATION_JSON)
-                .header("Authorization", "Bearer " + token))
-                .andExpect(status().is(403));
-        List<LoggableEvent> apiRequestEvents = doAll.load(ApiRequestEvent.class);
-        ApiRequestEvent requestEvent = (ApiRequestEvent) apiRequestEvents.get(0);
-
-        List<LoggableEvent> apiResponseEvents = doAll.load(ApiResponseEvent.class);
-        ApiResponseEvent responseEvent = (ApiResponseEvent) apiResponseEvents.get(0);
-        assertEquals(requestEvent.getRequestId(), responseEvent.getRequestId());
-
-        List<LoggableEvent> errorEvents = doAll.load(ErrorEvent.class);
-        ErrorEvent errorEvent = (ErrorEvent) errorEvents.get(0);
-        assertEquals(errorEvent.getErrorType(), ErrorEvent.ErrorType.UNAUTHORIZED_CONTRACT);
-
-        assertTrue(UtilMethods.allEmpty(
-                doAll.load(ReloadEvent.class),
-                doAll.load(ContractBeneSearchEvent.class),
-                doAll.load(JobStatusChangeEvent.class),
-                doAll.load(FileEvent.class)
-        ));
     }
 
     @Test
@@ -157,7 +124,7 @@ public class BulkDataAccessAPIUnusualDataTests {
         Assert.assertEquals(job.getProgress(), Integer.valueOf(0));
         Assert.assertEquals(job.getRequestUrl(),
                 "http://localhost" + API_PREFIX + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export");
-        Assert.assertEquals(job.getResourceTypes(), null);
+        Assert.assertNull(job.getResourceTypes());
         Assert.assertEquals(job.getUser(), userRepository.findByUsername(TEST_USER));
 
     }

@@ -3,7 +3,6 @@ package gov.cms.ab2d.api.controller;
 import com.okta.jwt.JwtVerificationException;
 import gov.cms.ab2d.api.SpringBootApp;
 import gov.cms.ab2d.common.repository.RoleRepository;
-import gov.cms.ab2d.common.repository.SponsorRepository;
 import gov.cms.ab2d.common.repository.UserRepository;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
@@ -62,9 +61,6 @@ public class TLSTest {
     private UserRepository userRepository;
 
     @Autowired
-    private SponsorRepository sponsorRepository;
-
-    @Autowired
     private RoleRepository roleRepository;
 
     @Container
@@ -73,7 +69,6 @@ public class TLSTest {
     @BeforeEach
     public void setup() {
         userRepository.deleteAll();
-        sponsorRepository.deleteAll();
         roleRepository.deleteAll();
     }
 

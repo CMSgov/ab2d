@@ -43,9 +43,6 @@ public class AdminAPIPropertiesTests {
     private TestUtil testUtil;
 
     @Autowired
-    private SponsorRepository sponsorRepository;
-
-    @Autowired
     private UserRepository userRepository;
 
     @Autowired
@@ -68,10 +65,9 @@ public class AdminAPIPropertiesTests {
     @BeforeEach
     public void setup() throws JwtVerificationException {
         jobRepository.deleteAll();
-        contractRepository.deleteAll();
-        userRepository.deleteAll();
+        userRepository.deleteAll();     // Needed in the setup because TEST_USER is disabled
         roleRepository.deleteAll();
-        sponsorRepository.deleteAll();
+        contractRepository.deleteAll();
 
         token = testUtil.setupToken(List.of(ADMIN_ROLE));
     }

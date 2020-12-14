@@ -1,7 +1,6 @@
 package gov.cms.ab2d.worker.adapter.bluebutton;
 
 import gov.cms.ab2d.bfd.client.BFDClient;
-import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.LoggableEvent;
@@ -24,8 +23,6 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-import java.time.OffsetDateTime;
-import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
@@ -82,12 +79,6 @@ import static org.mockito.Mockito.lenient;
         String contractId = "C1234";
         Bundle bundle = createBundle();
         lenient().when(bfdClient.requestPartDEnrolleesFromServer(anyString(), anyInt())).thenReturn(bundle);
-        Contract contract = new Contract();
-        contract.setContractNumber(contractId);
-        contract.setAttestedOn(OffsetDateTime.MIN);
-        contract.setContractName("1234");
-        contract.setId(1L);
-        contract.setCoveragePeriods(new HashSet<>());
         tracker.setCurrentMonth(1);
         cai.getPatients(contractId, 1, tracker);
 
