@@ -12,7 +12,7 @@ data "aws_iam_policy_document" "allow_assume_role_in_mgmt_account_policy" {
       type        = "AWS"
       identifiers = [
         "arn:aws:iam::${var.mgmt_aws_account_number}:role/ct-ado-ab2d-application-admin",
-	"arn:aws:iam::${var.mgmt_aws_account_number}:role/delegatedadmin/developer/Ab2dInstanceV2Role"
+        "arn:aws:iam::${var.mgmt_aws_account_number}:role/delegatedadmin/developer/Ab2dInstanceV2Role"
       ]
     }
   }
