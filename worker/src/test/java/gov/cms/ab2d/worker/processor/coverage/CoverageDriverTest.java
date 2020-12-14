@@ -45,9 +45,6 @@ class CoverageDriverTest {
     private static final PostgreSQLContainer postgres = new AB2DPostgresqlContainer();
 
     @Autowired
-    private SponsorRepository sponsorRepo;
-
-    @Autowired
     private ContractRepository contractRepo;
 
     @Autowired
@@ -80,7 +77,6 @@ class CoverageDriverTest {
     @Autowired
     private CoverageLockWrapper searchLock;
 
-    private Sponsor sponsor;
     private Contract contract;
     private Contract contract1;
     private CoveragePeriod january;
@@ -100,11 +96,10 @@ class CoverageDriverTest {
 
         contractsToDelete = new ArrayList<>();
 
-        sponsor = dataSetup.createSponsor("Cal Ripken", 200, "Cal Ripken Jr.", 201);
-        contract = dataSetup.setupContract(sponsor, "TST-123");
+        contract = dataSetup.setupContract("TST-123");
         contract.setAttestedOn(getAB2DEpoch().toOffsetDateTime());
 
-        contract1 = dataSetup.setupContract(sponsor, "TST-456");
+        contract1 = dataSetup.setupContract("TST-456");
         contract1.setAttestedOn(getAB2DEpoch().toOffsetDateTime());
 
         contractRepo.saveAndFlush(contract);
@@ -156,23 +151,18 @@ class CoverageDriverTest {
             contractRepo.delete(contract);
             contractRepo.flush();
         }
-
-        if (sponsor != null) {
-            sponsorRepo.delete(sponsor);
-            sponsorRepo.flush();
-        }
     }
 
     @DisplayName("Loading coverage periods")
     @Test
     void discoverCoveragePeriods() {
 
-        Contract attestedAfterEpoch = dataSetup.setupContract(sponsor, "TST-AFTER-EPOCH");
+        Contract attestedAfterEpoch = dataSetup.setupContract("TST-AFTER-EPOCH");
         attestedAfterEpoch.setAttestedOn(getAB2DEpoch().toOffsetDateTime().plusMonths(3));
         contractRepo.saveAndFlush(attestedAfterEpoch);
         contractsToDelete.add(attestedAfterEpoch);
 
-        Contract attestedBeforeEpoch = dataSetup.setupContract(sponsor, "TST-BEFORE-EPOCH");
+        Contract attestedBeforeEpoch = dataSetup.setupContract("TST-BEFORE-EPOCH");
         attestedBeforeEpoch.setAttestedOn(getAB2DEpoch().toOffsetDateTime().minusNanos(1));
         contractRepo.saveAndFlush(attestedBeforeEpoch);
         contractsToDelete.add(attestedBeforeEpoch);

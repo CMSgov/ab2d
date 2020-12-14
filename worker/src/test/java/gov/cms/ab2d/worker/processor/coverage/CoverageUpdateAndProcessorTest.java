@@ -117,7 +117,7 @@ class CoverageUpdateAndProcessorTest {
         CoverageUpdateConfig config = new CoverageUpdateConfig(PAST_MONTHS, STALE_DAYS, STUCK_HOURS);
 
         processor = new CoverageProcessorImpl(coverageService, bfdClient, taskExecutor, MAX_ATTEMPTS);
-        driver = new CoverageDriverImpl(contractService, coverageService, propertiesService, processor, config, searchLock);
+        driver = new CoverageDriverImpl(coverageSearchRepo, contractService, coverageService, propertiesService, processor, config, searchLock);
     }
 
     @AfterEach
@@ -136,7 +136,7 @@ class CoverageUpdateAndProcessorTest {
 
     @DisplayName("Loading coverage periods")
     @Test
-    void discoverCoveragePeriods() {
+    void discoverCoveragePeriods() throws CoverageDriverException, InterruptedException {
 
         Contract attestedAfterEpoch = dataSetup.setupContract("TST-AFTER-EPOCH");
         attestedAfterEpoch.setAttestedOn(getAB2DEpoch().toOffsetDateTime().plusMonths(3));
@@ -183,7 +183,7 @@ class CoverageUpdateAndProcessorTest {
 
     @DisplayName("Queue stale coverage find never searched")
     @Test
-    void queueStaleCoverageNeverSearched() {
+    void queueStaleCoverageNeverSearched() throws CoverageDriverException, InterruptedException {
 
         january.setStatus(null);
         coveragePeriodRepo.saveAndFlush(january);
@@ -218,7 +218,7 @@ class CoverageUpdateAndProcessorTest {
 
     @DisplayName("Queue stale coverage find never successful")
     @Test
-    void queueStaleCoverageNeverSuccessful() {
+    void queueStaleCoverageNeverSuccessful() throws CoverageDriverException, InterruptedException {
 
         january.setStatus(JobStatus.CANCELLED);
         coveragePeriodRepo.saveAndFlush(january);
@@ -238,7 +238,7 @@ class CoverageUpdateAndProcessorTest {
 
     @DisplayName("Queue stale coverages ignores coverage periods with last successful search after a boundary in time")
     @Test
-    void queueStaleCoverageTimeRanges() {
+    void queueStaleCoverageTimeRanges() throws CoverageDriverException, InterruptedException {
 
         coveragePeriodRepo.deleteAll();
 
@@ -273,7 +273,7 @@ class CoverageUpdateAndProcessorTest {
 
     @DisplayName("Queue stale coverages finds coverage periods whose last successful search is before a boundary in time")
     @Test
-    void queueStaleCoverageIgnoresOldMonths() {
+    void queueStaleCoverageIgnoresOldMonths() throws CoverageDriverException, InterruptedException {
 
         coveragePeriodRepo.deleteAll();
 
@@ -316,7 +316,7 @@ class CoverageUpdateAndProcessorTest {
 
     @DisplayName("Queue stale coverages finds coverage periods whose last successful search before a boundary")
     @Test
-    void queueStaleCoverageFindStuckJobs() {
+    void queueStaleCoverageFindStuckJobs() throws CoverageDriverException, InterruptedException {
 
         coveragePeriodRepo.deleteAll();
 
@@ -341,7 +341,7 @@ class CoverageUpdateAndProcessorTest {
 
     @DisplayName("Queue stale coverages ignore coverage periods with non-stuck submitted or in progress jobs")
     @Test
-    void queueStaleCoverageIgnoreSubmittedOrInProgress() {
+    void queueStaleCoverageIgnoreSubmittedOrInProgress() throws CoverageDriverException, InterruptedException {
 
         coveragePeriodRepo.deleteAll();
 
@@ -381,7 +381,7 @@ class CoverageUpdateAndProcessorTest {
 
     @DisplayName("Normal workflow functions")
     @Test
-    void normalExecution() {
+    void normalExecution() throws CoverageDriverException, InterruptedException {
 
         Bundle bundle1 = buildBundle(0, 10);
         bundle1.setLink(Collections.singletonList(new Bundle.BundleLinkComponent().setRelation(Bundle.LINK_NEXT)));
