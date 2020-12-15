@@ -82,7 +82,7 @@ pipeline {
             steps {
                 sh '''
                     export AB2D_EFS_MOUNT="${AB2D_HOME}"
-                    mvn test -pl eventlogger,common,api,worker,bfd,filter,audit,hpms,mock-hpms
+                    mvn test -pl eventlogger,common,api,worker,bfd,filter,audit,hpms
                 '''
             }
         }
@@ -144,24 +144,61 @@ pipeline {
             }
         }
 
+        stage('Cleanup - first pass of docker deletions part 1') {
+            steps {
+                catchError(buildResult: 'SUCCESS', stageResult: 'SUCCESS') {
+                    sh '''
+                      docker volume ls -qf dangling=true | xargs -I name docker volume rm name
+                      docker ps -aq | xargs -I name docker rm --force name
+                    '''
+                }
+            }
+        }
+
+        stage('Cleanup - first pass of docker deletions part 2') {
+            steps {
+                catchError(buildResult: 'SUCCESS', stageResult: 'SUCCESS') {
+                    sh '''
+                      docker images | grep _api | awk '{print $3}' | xargs -I name docker rmi --force name
+                      docker images | grep _worker | awk '{print $3}' | xargs -I name docker rmi --force name
+                    '''
+                }
+            }
+        }
+
+        stage('Cleanup - second pass of docker deletions') {
+            steps {
+                catchError(buildResult: 'SUCCESS', stageResult: 'SUCCESS') {
+                    sh '''
+                      docker volume ls -qf dangling=true | xargs -I name docker volume rm name
+                      docker images | grep _api | awk '{print $3}' | xargs -I name docker rmi --force name
+                      docker images | grep _worker | awk '{print $3}' | xargs -I name docker rmi --force name
+                    '''
+                }
+            }
+        }
+
+        stage('Cleanup - delete all but the defaut docker networks') {
+            steps {
+                catchError(buildResult: 'SUCCESS', stageResult: 'SUCCESS') {
+                    sh '''
+                      # Delete all but the defaut docker networks
+                      docker network ls | awk '{print $1, $2}' | grep -v " bridge" | grep -v " host" | grep -v " none" \
+		        | grep -v "NETWORK ID" | awk '{print $1}' | xargs -I name docker network rm name
+                    '''
+                }
+            }
+        }
+
     }
 
     post {
-
         always {
-            lock(resource: 'docker') {
-                // Setting api port won't cause problems because the containers are only ever torn down
+	    script {
                 sh '''
-                    export API_PORT=8443
-                    docker-compose -f docker-compose.yml -f docker-compose.jenkins.yml down
-
-                    docker volume prune --force
-
-                    rm -rf "$WORKSPACE/opt/ab2d" 2> /dev/null
-
-                    rm -rf "$WORKSPACE/.m2/repository/gov/cms/ab2d" 2> /dev/null
-
-                    rm -rf target **/target 2> /dev/null
+                  rm -rf "$WORKSPACE/opt/ab2d" 2> /dev/null
+                  rm -rf "$WORKSPACE/.m2/repository/gov/cms/ab2d" 2> /dev/null
+                  rm -rf target **/target 2> /dev/null
                 '''
             }
         }
