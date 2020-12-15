@@ -107,6 +107,9 @@ public class CoverageProcessorImpl implements CoverageProcessor {
         queueCoveragePeriod(mapping.getPeriod(), mapping.getCoverageSearch().getAttempts(), b);
     }
 
+    /**
+     * Only monitors jobs running in the current application, not jobs running on other machines
+     */
     @Scheduled(fixedDelay = SIXTY_SECONDS, initialDelayString = "${coverage.update.initial.delay}")
     public void monitorMappingJobs() {
 
@@ -153,6 +156,9 @@ public class CoverageProcessorImpl implements CoverageProcessor {
         }
     }
 
+    /**
+     * Only inserts results of coverage mapping jobs run on the current application, not jobs running on other machines
+     */
     @Scheduled(fixedDelay = ONE_SECOND, initialDelayString = "${coverage.update.initial.delay}")
     public void insertJobResults() {
 

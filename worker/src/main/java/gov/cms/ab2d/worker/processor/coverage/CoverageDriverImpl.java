@@ -20,7 +20,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import static gov.cms.ab2d.common.util.DateUtil.getAB2DEpoch;
+import static gov.cms.ab2d.common.util.DateUtil.AB2D_EPOCH;
 
 @Slf4j
 public class CoverageDriverImpl implements CoverageDriver {
@@ -85,16 +85,14 @@ public class CoverageDriverImpl implements CoverageDriver {
 
         ZonedDateTime now = ZonedDateTime.now();
 
-        ZonedDateTime epoch = getAB2DEpoch();
-
         for (Contract contract : attestedContracts) {
             ZonedDateTime attestationTime = contract.getESTAttestationTime();
 
             // Force first coverage period to be after
             // January 1st 2020 which is the first moment we report data for
-            if (attestationTime.isBefore(epoch)) {
+            if (attestationTime.isBefore(AB2D_EPOCH)) {
                 log.debug("contract attested before ab2d epoch setting to epoch");
-                attestationTime = getAB2DEpoch();
+                attestationTime = AB2D_EPOCH;
             }
 
             int coveragePeriodsForContracts = 0;
@@ -132,7 +130,7 @@ public class CoverageDriverImpl implements CoverageDriver {
         log.info("attempting to find all coverage information that is out of date and reduce down to coverage periods");
 
         Set<CoveragePeriod> stalePeriods = new LinkedHashSet<>();
-        int monthsInPast = 0;
+        long monthsInPast = 0;
         OffsetDateTime dateTime = OffsetDateTime.now(DateUtil.AB2D_ZONE);
 
         do {
@@ -152,11 +150,16 @@ public class CoverageDriverImpl implements CoverageDriver {
         return stalePeriods;
     }
 
+    /**
+     * Queues coverage mapping jobs to run on this machine. Coverage mapping jobs are split
+     * between workers
+     */
     @Scheduled(fixedDelay = SIXTY_SECONDS, initialDelayString = "${coverage.update.initial.delay}")
     public void loadMappingJob() {
 
         if (propertiesService.isInMaintenanceMode()) {
             log.debug("waiting to execute queued coverage searches because api is in maintenance mode");
+            return;
         }
 
         if (coverageProcessor.isProcessorBusy()) {
@@ -164,15 +167,15 @@ public class CoverageDriverImpl implements CoverageDriver {
             return;
         }
 
-        while (!coverageProcessor.isProcessorBusy()) {
+        if (!coverageProcessor.isProcessorBusy()) {
             Optional<CoverageSearch> search = coverageLockWrapper.getNextSearch();
             if (search.isEmpty()) {
-                break;
+                return;
             }
 
             Optional<CoverageMapping> maybeSearch = coverageService.startSearch(search.get(), "starting a job");
             if (maybeSearch.isEmpty()) {
-                break;
+                return;
             }
 
             CoverageMapping mapping = maybeSearch.get();

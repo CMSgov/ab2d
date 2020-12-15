@@ -28,8 +28,8 @@ public interface CoverageProcessor {
     void queueMapping(CoverageMapping coverageMapping, boolean prioritize);
 
     /**
-     * Check if processor can except
-     * @return
+     * Check if processor can accept a new job or whether it is busy
+     * @return true if executor has room for another job
      */
     boolean isProcessorBusy();
 
