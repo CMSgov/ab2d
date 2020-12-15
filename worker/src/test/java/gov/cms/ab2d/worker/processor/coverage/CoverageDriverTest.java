@@ -97,10 +97,10 @@ class CoverageDriverTest {
         contractsToDelete = new ArrayList<>();
 
         contract = dataSetup.setupContract("TST-123");
-        contract.setAttestedOn(getAB2DEpoch().toOffsetDateTime());
+        contract.setAttestedOn(AB2D_EPOCH.toOffsetDateTime());
 
         contract1 = dataSetup.setupContract("TST-456");
-        contract1.setAttestedOn(getAB2DEpoch().toOffsetDateTime());
+        contract1.setAttestedOn(AB2D_EPOCH.toOffsetDateTime());
 
         contractRepo.saveAndFlush(contract);
 
@@ -158,17 +158,16 @@ class CoverageDriverTest {
     void discoverCoveragePeriods() {
 
         Contract attestedAfterEpoch = dataSetup.setupContract("TST-AFTER-EPOCH");
-        attestedAfterEpoch.setAttestedOn(getAB2DEpoch().toOffsetDateTime().plusMonths(3));
+        attestedAfterEpoch.setAttestedOn(AB2D_EPOCH.toOffsetDateTime().plusMonths(3));
         contractRepo.saveAndFlush(attestedAfterEpoch);
         contractsToDelete.add(attestedAfterEpoch);
 
         Contract attestedBeforeEpoch = dataSetup.setupContract("TST-BEFORE-EPOCH");
-        attestedBeforeEpoch.setAttestedOn(getAB2DEpoch().toOffsetDateTime().minusNanos(1));
+        attestedBeforeEpoch.setAttestedOn(AB2D_EPOCH.toOffsetDateTime().minusNanos(1));
         contractRepo.saveAndFlush(attestedBeforeEpoch);
         contractsToDelete.add(attestedBeforeEpoch);
 
-        ZonedDateTime epoch = getAB2DEpoch();
-        long months = ChronoUnit.MONTHS.between(epoch, OffsetDateTime.now());
+        long months = ChronoUnit.MONTHS.between(AB2D_EPOCH.toOffsetDateTime(), OffsetDateTime.now());
         long expectedNumPeriods = months + 1;
 
         try {
@@ -490,7 +489,7 @@ class CoverageDriverTest {
         Job job = new Job();
         job.setContract(contract);
 
-        changeStatus(contract, DateUtil.getAB2DEpoch().toOffsetDateTime(), JobStatus.SUBMITTED);
+        changeStatus(contract, AB2D_EPOCH.toOffsetDateTime(), JobStatus.SUBMITTED);
 
         try {
             boolean submittedCoverageStatus = driver.isCoverageAvailable(job);
@@ -508,7 +507,7 @@ class CoverageDriverTest {
         Job job = new Job();
         job.setContract(contract);
 
-        changeStatus(contract, DateUtil.getAB2DEpoch().toOffsetDateTime(), JobStatus.IN_PROGRESS);
+        changeStatus(contract, AB2D_EPOCH.toOffsetDateTime(), JobStatus.IN_PROGRESS);
 
         try {
             boolean inProgressCoverageStatus = driver.isCoverageAvailable(job);
@@ -525,7 +524,7 @@ class CoverageDriverTest {
         Job job = new Job();
         job.setContract(contract);
 
-        changeStatus(contract, DateUtil.getAB2DEpoch().toOffsetDateTime(), JobStatus.SUCCESSFUL);
+        changeStatus(contract, AB2D_EPOCH.toOffsetDateTime(), JobStatus.SUCCESSFUL);
 
         try {
             boolean submittedCoverageStatus = driver.isCoverageAvailable(job);
