@@ -1,7 +1,0 @@
-{
-  "error": {
-    "statusCode": 400,
-    "name": "Bad Request",
-    "message": "Missing or invalid contractIds"
-  }
-}
