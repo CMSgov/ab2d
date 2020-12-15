@@ -6,9 +6,12 @@ import java.util.Date;
 
 public final class DateUtil {
 
-    public static final int AB2D_EPOCH = 2020;
+    public static final int AB2D_EPOCH_YEAR = 2020;
 
     public static final ZoneId AB2D_ZONE = ZoneId.of("America/New_York");
+
+    public static final ZonedDateTime AB2D_EPOCH = ZonedDateTime.of(2020, 1, 1,
+            0, 0, 0, 0, AB2D_ZONE);
 
     private DateUtil() { }
 
@@ -26,14 +29,5 @@ public final class DateUtil {
 
     public static String getESTOffset() {
         return String.format("%tz", Instant.now().atZone(AB2D_ZONE));
-    }
-
-    /**
-     * Get OffsetDateTime
-     * @return earliest offset date time that AB2D reports EOBs for
-     */
-    public static ZonedDateTime getAB2DEpoch() {
-        return ZonedDateTime.of(2020, 1, 1,
-                0, 0, 0, 0, AB2D_ZONE);
     }
 }
