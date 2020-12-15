@@ -166,7 +166,7 @@ pipeline {
             }
         }
 
-        stage('Cleanup - second pass of docker deletions) {
+        stage('Cleanup - second pass of docker deletions') {
             steps {
                 catchError(buildResult: 'SUCCESS', stageResult: 'SUCCESS') {
                     sh '''
@@ -178,7 +178,7 @@ pipeline {
             }
         }
 
-        stage('Cleanup - delete all but the defaut docker networks) {
+        stage('Cleanup - delete all but the defaut docker networks') {
             steps {
                 catchError(buildResult: 'SUCCESS', stageResult: 'SUCCESS') {
                     sh '''
