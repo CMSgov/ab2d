@@ -39,7 +39,7 @@ public class KinesisEventLogger implements EventLogger {
 
     public void log(LoggableEvent event, boolean block) {
         event.setEnvironment(appEnv);
-        if (appEnv.equalsIgnoreCase("local")) {
+        if (appEnv == null || appEnv.equalsIgnoreCase("local")) {
             return;
         }
         try {

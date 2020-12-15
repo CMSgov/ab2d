@@ -84,19 +84,12 @@ public class CloningTest {
     void testCloneFileEvent() {
         File f = new File("/tmp");
         long length = f.length();
-        String hash = "";
-        try (FileInputStream fileInputStream = new FileInputStream(f)) {
-            hash = UtilMethods.hashIt(fileInputStream);
-        } catch (IOException e) {
-            fail();
-        }
         FileEvent event = new FileEvent("user", "jobId", f, FileEvent.FileStatus.OPEN);
         setSuperClassVariables(event);
         FileEvent clone = event.clone();
         assertEquals(clone.getFileName(), "/tmp");
         assertEquals(clone.getStatus(), FileEvent.FileStatus.OPEN);
         assertEquals(clone.getFileSize(), length);
-        assertEquals(clone.getFileHash(), hash);
         testSuperClass(event, clone);
     }
 
