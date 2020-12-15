@@ -21,7 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.*;
 import java.util.*;
 
-import static gov.cms.ab2d.common.util.DateUtil.AB2D_EPOCH;
+import static gov.cms.ab2d.common.util.DateUtil.AB2D_EPOCH_YEAR;
 import static java.util.stream.Collectors.toList;
 
 /**
@@ -334,8 +334,8 @@ public class CoverageServiceImpl implements CoverageService {
         OffsetDateTime time = OffsetDateTime.now(ZoneOffset.UTC);
         int currentYear = time.getYear();
 
-        if (year < AB2D_EPOCH || year > currentYear) {
-            final String errMsg = "invalid value for year. Year must be between " + AB2D_EPOCH + " and " + currentYear;
+        if (year < AB2D_EPOCH_YEAR || year > currentYear) {
+            final String errMsg = "invalid value for year. Year must be between " + AB2D_EPOCH_YEAR + " and " + currentYear;
             log.error("{} - invalid year :[{}]", errMsg, year);
             throw new IllegalArgumentException(errMsg);
         }
