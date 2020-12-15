@@ -7,6 +7,7 @@ import com.amazonaws.services.kinesisfirehose.model.PutRecordResult;
 import com.amazonaws.services.kinesisfirehose.model.Record;
 import gov.cms.ab2d.eventlogger.LoggableEvent;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.codehaus.jettison.json.JSONObject;
 
 import java.lang.reflect.InvocationTargetException;
@@ -83,7 +84,11 @@ public class KinesisEventProcessor implements Callable<Void> {
     public Void call() {
         String json = null;
         try {
-            json = getJsonString(event) + "\n";
+            LoggableEvent newLogEvent = event.clone();
+            if (event.getUser() != null && !event.getUser().isEmpty()) {
+                newLogEvent.setUser(DigestUtils.md5Hex(event.getUser()).toUpperCase());
+            }
+            json = getJsonString(newLogEvent) + "\n";
 
             ByteBuffer asBytes = ByteBuffer.wrap(json.getBytes(StandardCharsets.UTF_8));
             Record record = new Record().withData(asBytes);
