@@ -3,7 +3,6 @@ package gov.cms.ab2d.worker.processor;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.JobStatus;
-import gov.cms.ab2d.common.model.Sponsor;
 import gov.cms.ab2d.common.model.User;
 import gov.cms.ab2d.common.repository.JobOutputRepository;
 import gov.cms.ab2d.common.repository.JobRepository;
@@ -84,12 +83,11 @@ class JobProcessorUnitTest {
 
         ReflectionTestUtils.setField(cut, "efsMount", efsMountTmpDir.toString());
 
-        final Sponsor parentSponsor = createParentSponsor();
-        final Sponsor childSponsor = createChildSponsor(parentSponsor);
-        final User user = createUser(childSponsor);
+        final User user = createUser();
         job = createJob(user);
 
-        var contract = createContract(childSponsor);
+        var contract = createContract();
+        job.setContract(contract);
         when(jobRepository.findByJobUuid(anyString())).thenReturn(job);
 
         patientsByContract = createPatientsByContractResponse(contract);
@@ -116,35 +114,6 @@ class JobProcessorUnitTest {
     @DisplayName("When user belongs to a parent sponsor, contracts for the children sponsors are processed")
     void whenTheUserBelongsToParent_ChildContractsAreProcessed() throws ExecutionException, InterruptedException {
         var user = job.getUser();
-
-        //switch user to parent sponsor
-        var childSponsor = user.getSponsor();
-        var parent = childSponsor.getParent();
-        user.setSponsor(parent);
-
-        var processedJob = cut.process(jobUuid);
-
-        assertThat(processedJob.getStatus(), is(JobStatus.SUCCESSFUL));
-        assertThat(processedJob.getStatusMessage(), is("100%"));
-        assertThat(processedJob.getExpiresAt(), notNullValue());
-        doVerify();
-    }
-
-    @Test
-    @DisplayName("When a job is submitted for a specific contract, process the export file for that contract only")
-    void whenJobIsSubmittedForSpecificContract_processOnlyThatContract() throws ExecutionException, InterruptedException {
-
-        final Sponsor sponsor = job.getUser().getSponsor();
-        final Contract contract = sponsor.getAttestedContracts().get(0);
-
-        // create 3 additional contracts for the sponsor.
-        // But associate the submitted job with the (original) contract for which PatientsByContractResponse test data was setup
-        final Contract contract1 = createContract(sponsor);
-        final Contract contract2 = createContract(sponsor);
-        final Contract contract3 = createContract(sponsor);
-        job.setContract(contract);
-
-        when(jobRepository.findByJobUuid(anyString())).thenReturn(job);
 
         var processedJob = cut.process(jobUuid);
 
@@ -237,43 +206,23 @@ class JobProcessorUnitTest {
         verify(contractBeneSearch, never()).getPatients(anyString(), anyInt(), any());
     }
 
-    private Sponsor createParentSponsor() {
-        Sponsor parentSponsor = new Sponsor();
-        parentSponsor.setOrgName("PARENT");
-        parentSponsor.setLegalName("LEGAL PARENT");
-        return parentSponsor;
-    }
-
-    private Sponsor createChildSponsor(Sponsor parentSponsor) {
-        Sponsor childSponsor = new Sponsor();
-        childSponsor.setOrgName("Hogwarts School of Wizardry");
-        childSponsor.setLegalName("Hogwarts School of Wizardry LLC");
-
-        childSponsor.setParent(parentSponsor);
-        parentSponsor.getChildren().add(childSponsor);
-
-        return childSponsor;
-    }
-
-    private User createUser(Sponsor sponsor) {
+    private User createUser() {
         User user = new User();
         user.setUsername("Harry_Potter");
         user.setFirstName("Harry");
         user.setLastName("Potter");
         user.setEmail("harry_potter@hogwarts.edu");
         user.setEnabled(TRUE);
-        user.setSponsor(sponsor);
+        user.setContract(createContract());
         return user;
     }
 
-    private Contract createContract(Sponsor sponsor) {
+    private Contract createContract() {
         Contract contract = new Contract();
         contract.setContractName("CONTRACT_NM_00000");
         contract.setContractNumber("CONTRACT_00000");
         contract.setAttestedOn(OffsetDateTime.now().minusDays(10));
-        contract.setSponsor(sponsor);
 
-        sponsor.getContracts().add(contract);
         return contract;
     }
 
