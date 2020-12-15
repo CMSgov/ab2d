@@ -25,13 +25,12 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.time.OffsetDateTime;
-import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import static gov.cms.ab2d.common.util.DateUtil.getAB2DEpoch;
+import static gov.cms.ab2d.common.util.DateUtil.AB2D_EPOCH;
 import static gov.cms.ab2d.worker.processor.coverage.CoverageMappingCallable.BENEFICIARY_ID;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -98,7 +97,7 @@ class CoverageUpdateAndProcessorTest {
         contractsToDelete = new ArrayList<>();
 
         contract = dataSetup.setupContract("TST-123");
-        contract.setAttestedOn(getAB2DEpoch().toOffsetDateTime());
+        contract.setAttestedOn(AB2D_EPOCH.toOffsetDateTime());
         contractRepo.saveAndFlush(contract);
 
         contractsToDelete.add(contract);
@@ -139,17 +138,16 @@ class CoverageUpdateAndProcessorTest {
     void discoverCoveragePeriods() throws CoverageDriverException, InterruptedException {
 
         Contract attestedAfterEpoch = dataSetup.setupContract("TST-AFTER-EPOCH");
-        attestedAfterEpoch.setAttestedOn(getAB2DEpoch().toOffsetDateTime().plusMonths(3));
+        attestedAfterEpoch.setAttestedOn(AB2D_EPOCH.toOffsetDateTime().plusMonths(3));
         contractRepo.saveAndFlush(attestedAfterEpoch);
         contractsToDelete.add(attestedAfterEpoch);
 
         Contract attestedBeforeEpoch = dataSetup.setupContract("TST-BEFORE-EPOCH");
-        attestedBeforeEpoch.setAttestedOn(getAB2DEpoch().toOffsetDateTime().minusNanos(1));
+        attestedBeforeEpoch.setAttestedOn(AB2D_EPOCH.toOffsetDateTime().minusNanos(1));
         contractRepo.saveAndFlush(attestedBeforeEpoch);
         contractsToDelete.add(attestedBeforeEpoch);
 
-        ZonedDateTime epoch = getAB2DEpoch();
-        long months = ChronoUnit.MONTHS.between(epoch, OffsetDateTime.now());
+        long months = ChronoUnit.MONTHS.between(AB2D_EPOCH.toOffsetDateTime(), OffsetDateTime.now());
         long expectedNumPeriods = months + 1;
 
         driver.discoverCoveragePeriods();
