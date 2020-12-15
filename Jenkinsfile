@@ -144,17 +144,17 @@ pipeline {
             }
         }
 
-    }
+        stage('First pass of docker deletions part 1') {
+            steps {
+                catchError(buildResult: 'SUCCESS', stageResult: 'SUCCESS') {
+                    sh '''
+                      docker volume ls -qf dangling=true | xargs -I name docker volume rm name
+                      docker ps -aq | xargs -I name docker rm --force name
+                    '''
+                }
+            }
+        }
 
-    stage('First pass of docker deletions part 1') {
-        steps {
-	    catchError(buildResult: 'SUCCESS', stageResult: 'SUCCESS') {
-              sh '''
-                  docker volume ls -qf dangling=true | xargs -I name docker volume rm name
-                  docker ps -aq | xargs -I name docker rm --force name
-              '''
-	    }
-	}
     }
 
     post {
