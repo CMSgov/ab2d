@@ -16,6 +16,8 @@ import org.json.JSONObject;
 import org.junit.Assert;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.util.Pair;
 import org.testcontainers.containers.DockerComposeContainer;
 import org.testcontainers.containers.output.Slf4jLogConsumer;
@@ -61,6 +63,9 @@ import static org.junit.jupiter.api.Assertions.*;
 @Slf4j
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class TestRunner {
+
+    private Logger apiLogger = LoggerFactory.getLogger("gov.cms.ab2d.api");
+    private Logger workerLogger = LoggerFactory.getLogger("gov.cms.ab2d.worker");
 
     public static final String MBI_ID = "http://hl7.org/fhir/sid/us-mbi";
 
@@ -171,8 +176,8 @@ public class TestRunner {
                 .withScaledService("api", 1)
                 .withExposedService("api", DEFAULT_API_PORT, new HostPortWaitStrategy()
                     .withStartupTimeout(Duration.of(200, SECONDS)))
-                .withLogConsumer("worker", new Slf4jLogConsumer(log)) // Use to debug, for now there's too much log data
-                .withLogConsumer("api", new Slf4jLogConsumer(log));
+                .withLogConsumer("worker", new Slf4jLogConsumer(workerLogger)) // Use to debug, for now there's too much log data
+                .withLogConsumer("api", new Slf4jLogConsumer(apiLogger));
 
         container.start();
     }
