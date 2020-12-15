@@ -1,16 +1,12 @@
 package gov.cms.ab2d.worker.config;
 
-import gov.cms.ab2d.bfd.client.BFDClientConfiguration;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.*;
 import org.springframework.integration.channel.ExecutorChannel;
 import org.springframework.integration.config.EnableIntegration;
 import org.springframework.integration.dsl.*;
-import org.springframework.messaging.SubscribableChannel;
 import org.springframework.scheduling.annotation.EnableAsync;
-import org.springframework.scheduling.annotation.EnableScheduling;
 
 import javax.sql.DataSource;
 import java.util.concurrent.Executor;
@@ -24,31 +20,24 @@ import java.util.concurrent.Executor;
 @Configuration
 @EnableAsync
 @EnableIntegration
-@EnableScheduling
-@Import(BFDClientConfiguration.class)
-// Use @DependsOn to control the loading order so that properties are set before they are used
-@DependsOn("propertiesInit")
 public class WorkerFlowConfig {
 
-    @Autowired
-    private DataSource dataSource;
+    private final DataSource dataSource;
 
-    @Autowired
-    private JobHandler handler;
+    private final JobHandler handler;
 
-    @Autowired
-    @Qualifier("mainJobPool")
-    private Executor mainJobPool;
+    private final Executor mainJobPool;
 
-    @Bean
-    public SubscribableChannel channel() {
-        return new ExecutorChannel(mainJobPool);
+    public WorkerFlowConfig(DataSource dataSource, JobHandler handler, @Qualifier("mainJobPool") Executor mainJobPool) {
+        this.dataSource = dataSource;
+        this.handler = handler;
+        this.mainJobPool = mainJobPool;
     }
 
     @Bean
     public IntegrationFlow flow() {
         return IntegrationFlows.from(new JobMessageSource(dataSource), c -> c.poller(Pollers.fixedDelay(1000)))
-                            .channel(channel())
+                            .channel(new ExecutorChannel(mainJobPool))
                             .handle(handler)
                             .get();
     }
