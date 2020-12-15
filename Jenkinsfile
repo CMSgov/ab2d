@@ -149,6 +149,7 @@ pipeline {
     post {
         always {
 	    script {
+              catchError(buildResult: 'SUCCESS', stageResult: 'UNSTABLE') {
                 // Setting api port won't cause problems because the containers are only ever torn down
                 sh '''
                     export API_PORT=8443
@@ -174,6 +175,17 @@ pipeline {
 
                     rm -rf target **/target 2> /dev/null
                 '''
+              }
+	      if(currentStage.getCurrentResult() == "UNSTABLE") {
+                # Continue cleanup, if "docker ps -aq | xargs -I name docker rm --force name" failed
+                docker images | grep _api | awk '{print $3}' | xargs -I name docker rmi --force name
+                docker images | grep _worker | awk '{print $3}' | xargs -I name docker rmi --force name
+                docker volume ls -qf dangling=true | xargs -I name docker volume rm name
+                docker images | grep _api | awk '{print $3}' | xargs -I name docker rmi --force name
+                docker images | grep _worker | awk '{print $3}' | xargs -I name docker rmi --force name
+                docker network ls | awk '{print $1, $2}' | grep -v " bridge" | grep -v " host" | grep -v " none" \
+                  | grep -v "NETWORK ID" | awk '{print $1}' | xargs -I name docker network rm na
+              }
             }
         }
     }
