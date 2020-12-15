@@ -12,7 +12,6 @@
         <module>filter</module>
         <module>audit</module>
         <module>hpms</module>
-        <module>mock-hpms</module>
         <module>e2e-test</module>
         <module>load-test</module>
     </modules>
