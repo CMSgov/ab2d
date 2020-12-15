@@ -167,27 +167,25 @@ public class CoverageDriverImpl implements CoverageDriver {
             return;
         }
 
-        if (!coverageProcessor.isProcessorBusy()) {
-            Optional<CoverageSearch> search = coverageLockWrapper.getNextSearch();
-            if (search.isEmpty()) {
-                return;
-            }
+        Optional<CoverageSearch> search = coverageLockWrapper.getNextSearch();
+        if (search.isEmpty()) {
+            return;
+        }
 
-            Optional<CoverageMapping> maybeSearch = coverageService.startSearch(search.get(), "starting a job");
-            if (maybeSearch.isEmpty()) {
-                return;
-            }
+        Optional<CoverageMapping> maybeSearch = coverageService.startSearch(search.get(), "starting a job");
+        if (maybeSearch.isEmpty()) {
+            return;
+        }
 
-            CoverageMapping mapping = maybeSearch.get();
+        CoverageMapping mapping = maybeSearch.get();
 
-            log.debug("found a search in queue for contract {} during {}-{}, attempting to search",
-                    mapping.getContract().getContractNumber(), mapping.getPeriod().getMonth(),
-                    mapping.getPeriod().getYear());
+        log.debug("found a search in queue for contract {} during {}-{}, attempting to search",
+                mapping.getContract().getContractNumber(), mapping.getPeriod().getMonth(),
+                mapping.getPeriod().getYear());
 
-            if (!coverageProcessor.startJob(mapping)) {
-                coverageService.cancelSearch(mapping.getPeriodId(), "failed to start job");
-                coverageProcessor.queueMapping(mapping, false);
-            }
+        if (!coverageProcessor.startJob(mapping)) {
+            coverageService.cancelSearch(mapping.getPeriodId(), "failed to start job");
+            coverageProcessor.queueMapping(mapping, false);
         }
     }
 }
