@@ -176,7 +176,8 @@ public class TestRunner {
                 .withScaledService("api", 1)
                 .withExposedService("api", DEFAULT_API_PORT, new HostPortWaitStrategy()
                     .withStartupTimeout(Duration.of(200, SECONDS)))
-                .withLogConsumer("worker", new Slf4jLogConsumer(workerLogger)) // Use to debug, for now there's too much log data
+                // Used to debug failures in tests by piping container logs to console
+                .withLogConsumer("worker", new Slf4jLogConsumer(workerLogger))
                 .withLogConsumer("api", new Slf4jLogConsumer(apiLogger));
 
         container.start();
