@@ -9,6 +9,7 @@ import gov.cms.ab2d.common.util.DateUtil;
 import gov.cms.ab2d.worker.config.CoverageUpdateConfig;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
@@ -22,6 +23,7 @@ import static gov.cms.ab2d.common.util.DateUtil.AB2D_EPOCH;
 import static java.util.stream.Collectors.toList;
 
 @Slf4j
+@Service
 public class CoverageDriverImpl implements CoverageDriver {
 
     private static final long SIXTY_SECONDS = 60000;
