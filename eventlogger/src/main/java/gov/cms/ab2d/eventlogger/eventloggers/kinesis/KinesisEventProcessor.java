@@ -63,7 +63,7 @@ public class KinesisEventProcessor implements Callable<Void> {
                 // Retrieve the value of the field
                 Object attValue = m.invoke(event);
                 if (m.getName().equalsIgnoreCase("getUser") && event.getUser() != null && !event.getUser().isEmpty()) {
-                    attValue = DigestUtils.sha1Hex((String) attValue).toUpperCase();
+                    attValue = DigestUtils.sha1Hex((String) event.getUser()).toUpperCase();
                 }
                 // If we are an OffsetDateTime, convert to UTC, then make it a string in the correct format
                 if (attValue != null && attValue.getClass() == OffsetDateTime.class) {
