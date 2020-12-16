@@ -169,6 +169,8 @@ COMMAND_01="SELECT e.id FROM ${DATABASE_SCHEMA_NAME}.contract d "
 COMMAND_02="INNER JOIN ${DATABASE_SCHEMA_NAME}.user_account e ON d.id = e.contract_id "
 COMMAND_03="WHERE e.enabled = true AND d.contract_number = '${CONTRACT_NUMBER}';"
 
+# Get user account id
+
 USER_ACCOUNT_ID=$(
   psql \
     -t \
@@ -177,6 +179,25 @@ USER_ACCOUNT_ID=$(
     --username="${DATABASE_USER}" \
     --dbname="${DATABASE_NAME}" \
     --command="${COMMAND_01}${COMMAND_02}${COMMAND_03}" \
+    | head -n 1 \
+    | xargs \
+    | tr -d '\r')
+
+# Create get contract id command string
+
+COMMAND_01="SELECT a.contract_id FROM ${DATABASE_SCHEMA_NAME}.user_account a "
+COMMAND_02="WHERE a.id = ${USER_ACCOUNT_ID};"
+
+# Get contract id
+
+CONTRACT_ID=$(
+  psql \
+    -t \
+    --host="${DATABASE_HOST}" \
+    --port="${DATABASE_PORT}" \
+    --username="${DATABASE_USER}" \
+    --dbname="${DATABASE_NAME}" \
+    --command="${COMMAND_01}" \
     | head -n 1 \
     | xargs \
     | tr -d '\r')
@@ -190,7 +211,7 @@ COMMAND_03="request_url, progress, last_poll_time, completed_at, contract_id, ou
 COMMAND_04="VALUES ((select nextval('hibernate_sequence')), '${JOB_ID}', ${USER_ACCOUNT_ID}, (select now()), "
 COMMAND_05="(select now() + INTERVAL '1 day'), 'ExplanationOfBenefit', 'SUBMITTED', '0%', "
 COMMAND_06="'${API_URL_PREFIX}/v1/fhir/Patient/\$export?_outputFormat=application%252Ffhir%252Bndjson&_type=ExplanationOfBenefit', "
-COMMAND_07="0, null, null, null, null, null);"
+COMMAND_07="0, null, null, ${CONTRACT_ID}, null, null);"
 
 # Insert job record
 
