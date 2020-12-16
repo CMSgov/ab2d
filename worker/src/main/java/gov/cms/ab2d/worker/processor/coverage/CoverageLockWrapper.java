@@ -1,8 +1,7 @@
-package gov.cms.ab2d.worker.processor.domainmodel;
+package gov.cms.ab2d.worker.processor.coverage;
 
 import gov.cms.ab2d.common.model.CoverageSearch;
 import gov.cms.ab2d.common.repository.CoverageSearchRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.integration.jdbc.lock.DefaultLockRepository;
 import org.springframework.integration.jdbc.lock.JdbcLockRegistry;
 import org.springframework.integration.jdbc.lock.LockRepository;
@@ -23,14 +22,20 @@ import java.util.concurrent.locks.Lock;
  * entry in the int_lock table (that expires after an amount of time). When the lock is released,
  * the entry is deleted. This allows different instances of worker to not step on each other.
  */
-public class ContractSearchLock {
-    @Autowired
-    private DataSource dataSource;
-    @Autowired
-    private CoverageSearchRepository coverageSearchRepository;
-    private JdbcLockRegistry lockRegistry;
-    private static final String SEARCH_LOCK_NAME = "SEARCH_LOCK";
+public class CoverageLockWrapper {
+
+    private static final String COVERAGE_LOCK_NAME = "COVERAGE_LOCK";
     private static final int LOCK_TIME = 60_000; // 60 seconds
+
+    private final DataSource dataSource;
+    private final CoverageSearchRepository coverageSearchRepository;
+
+    private JdbcLockRegistry lockRegistry;
+
+    public CoverageLockWrapper(DataSource dataSource, CoverageSearchRepository coverageSearchRepository) {
+        this.dataSource = dataSource;
+        this.coverageSearchRepository = coverageSearchRepository;
+    }
 
     public JdbcLockRegistry contractLockRegistry(LockRepository lockRepository) {
         return new JdbcLockRegistry(lockRepository);
@@ -43,12 +48,12 @@ public class ContractSearchLock {
         return defaultLockRepository;
     }
 
-    public Lock getLock(String lockId) {
+    public Lock getCoverageLock() {
         if (lockRegistry == null) {
             lockRegistry = contractLockRegistry(contractLockRepository());
         }
-        Lock lock = lockRegistry.obtain(lockId);
-        return lock;
+
+        return lockRegistry.obtain(COVERAGE_LOCK_NAME);
     }
 
     /**
@@ -59,7 +64,7 @@ public class ContractSearchLock {
      * @return the next search or else null if there are none or if the table is locked
      */
     public Optional<CoverageSearch> getNextSearch() {
-        Lock lock = getLock(SEARCH_LOCK_NAME);
+        Lock lock = getCoverageLock();
         if (lock.tryLock()) {
             try {
                 // manipulate protected state

@@ -15,7 +15,7 @@ import org.springframework.scheduling.quartz.QuartzJobBean;
 @DisallowConcurrentExecution
 public class CoveragePeriodQuartzJob extends QuartzJobBean {
 
-    private final CoverageProcessor processor;
+    private final CoverageDriver driver;
     private final PropertiesService propertiesService;
 
     @Override
@@ -31,7 +31,7 @@ public class CoveragePeriodQuartzJob extends QuartzJobBean {
 
             if (disvoeryState == FeatureEngagement.IN_GEAR) {
                 log.info("coverage search discovery is engaged so attempting to discover new coverage periods");
-                processor.discoverCoveragePeriods();
+                driver.discoverCoveragePeriods();
             }
 
             String queueEngagement = propertiesService.getPropertiesByKey(Constants.COVERAGE_SEARCH_QUEUEING).getValue();
@@ -40,7 +40,7 @@ public class CoveragePeriodQuartzJob extends QuartzJobBean {
             if (queueState == FeatureEngagement.IN_GEAR) {
                 log.info("coverage search queueing is engaged so attempting to queue searches for new coverage periods " +
                         "and stale coverage periods");
-                processor.queueStaleCoveragePeriods();
+                driver.queueStaleCoveragePeriods();
             }
         } catch (Exception exception) {
             log.error("coverage period updates could not be conducted");
