@@ -106,7 +106,7 @@ public class CloningTest {
 
         LoggableEvent newLogEvent = event.clone();
         if (event.getUser() != null && !event.getUser().isEmpty()) {
-            newLogEvent.setUser(DigestUtils.md5Hex(event.getUser()).toUpperCase());
+            newLogEvent.setUser(DigestUtils.sha1Hex(event.getUser()).toUpperCase());
         }
         assertEquals(((JobStatusChangeEvent) newLogEvent).getOldStatus(), "oldStatus");
         assertEquals(((JobStatusChangeEvent) newLogEvent).getNewStatus(), "newStatus");
@@ -115,7 +115,7 @@ public class CloningTest {
         assertEquals(newLogEvent.getId(), 1L);
         assertEquals(newLogEvent.getAwsId(), "awsId");
         assertEquals(newLogEvent.getJobId(), "jobId");
-        assertEquals(newLogEvent.getUser(), DigestUtils.md5Hex("user").toUpperCase());
+        assertEquals(newLogEvent.getUser(), DigestUtils.sha1Hex("user").toUpperCase());
         assertEquals(newLogEvent.getTimeOfEvent(), event.getTimeOfEvent());
         assertNotNull(newLogEvent.getTimeOfEvent());
     }

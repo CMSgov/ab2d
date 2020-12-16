@@ -86,7 +86,7 @@ public class KinesisEventProcessor implements Callable<Void> {
         try {
             LoggableEvent newLogEvent = event.clone();
             if (event.getUser() != null && !event.getUser().isEmpty()) {
-                newLogEvent.setUser(DigestUtils.md5Hex(event.getUser()).toUpperCase());
+                newLogEvent.setUser(DigestUtils.sha1Hex(event.getUser()).toUpperCase());
             }
             json = getJsonString(newLogEvent) + "\n";
 
