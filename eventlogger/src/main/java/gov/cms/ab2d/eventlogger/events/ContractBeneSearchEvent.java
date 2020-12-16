@@ -32,13 +32,4 @@ public class ContractBeneSearchEvent extends LoggableEvent {
         this.numInContract = numInContract;
         this.numErrors = numErrors;
     }
-
-    public ContractBeneSearchEvent clone() {
-        ContractBeneSearchEvent event = (ContractBeneSearchEvent) super.clone();
-        event.setContractNumber(this.getContractNumber());
-        event.setNumInContract(this.getNumInContract());
-        event.setNumSearched(this.getNumSearched());
-        event.setNumErrors(this.getNumErrors());
-        return event;
-    }
 }

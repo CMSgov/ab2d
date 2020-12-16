@@ -8,6 +8,7 @@ import gov.cms.ab2d.eventlogger.AB2DPostgresqlContainer;
 import gov.cms.ab2d.eventlogger.LoggableEvent;
 import gov.cms.ab2d.eventlogger.SpringBootApp;
 import gov.cms.ab2d.eventlogger.events.*;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.jupiter.api.BeforeEach;
@@ -167,7 +168,7 @@ class KinesisEventLoggerTest {
         assertEquals(1, jsonObj.getInt("id"));
         assertEquals("JOB123", jsonObj.getString("job_id"));
         assertEquals("UNAUTHORIZED_CONTRACT", jsonObj.getString("error_type"));
-        assertEquals("ME", jsonObj.getString("user"));
+        assertEquals(DigestUtils.sha1Hex("ME").toUpperCase(), jsonObj.getString("user"));
         assertEquals("BOGUS", jsonObj.getString("aws_id"));
         assertEquals("dev", jsonObj.getString("environment"));
         String dateString = jsonObj.getString("time_of_event");

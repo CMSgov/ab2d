@@ -62,6 +62,9 @@ public class KinesisEventProcessor implements Callable<Void> {
             try {
                 // Retrieve the value of the field
                 Object attValue = m.invoke(event);
+                if (m.getName().equalsIgnoreCase("getUser") && event.getUser() != null && !event.getUser().isEmpty()) {
+                    attValue = DigestUtils.sha1Hex((String) attValue).toUpperCase();
+                }
                 // If we are an OffsetDateTime, convert to UTC, then make it a string in the correct format
                 if (attValue != null && attValue.getClass() == OffsetDateTime.class) {
                     OffsetDateTime timeValue = (OffsetDateTime) attValue;
@@ -84,11 +87,7 @@ public class KinesisEventProcessor implements Callable<Void> {
     public Void call() {
         String json = null;
         try {
-            LoggableEvent newLogEvent = event.clone();
-            if (event.getUser() != null && !event.getUser().isEmpty()) {
-                newLogEvent.setUser(DigestUtils.sha1Hex(event.getUser()).toUpperCase());
-            }
-            json = getJsonString(newLogEvent) + "\n";
+            json = getJsonString(event) + "\n";
 
             ByteBuffer asBytes = ByteBuffer.wrap(json.getBytes(StandardCharsets.UTF_8));
             Record record = new Record().withData(asBytes);

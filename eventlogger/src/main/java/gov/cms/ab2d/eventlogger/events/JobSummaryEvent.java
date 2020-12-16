@@ -26,21 +26,4 @@ public class JobSummaryEvent extends LoggableEvent {
     private int errorSearched;
 
     public JobSummaryEvent() { }
-
-    public JobSummaryEvent clone() {
-        JobSummaryEvent event = (JobSummaryEvent) super.clone();
-        event.setSubmittedTime(this.getSubmittedTime());
-        event.setInProgressTime(this.getInProgressTime());
-        event.setSuccessfulTime(this.getSuccessfulTime());
-        event.setCancelledTime(this.getCancelledTime());
-        event.setFailedTime(this.getFailedTime());
-        event.setNumFilesCreated(this.getNumFilesCreated());
-        event.setNumFilesDeleted(this.getNumFilesDeleted());
-        event.setNumFilesDownloaded(this.getNumFilesDownloaded());
-        event.setTotalNum(this.getTotalNum());
-        event.setSuccessfullySearched(this.getSuccessfullySearched());
-        event.setNumOptedOut(this.getNumOptedOut());
-        event.setErrorSearched(this.getErrorSearched());
-        return event;
-    }
 }
