@@ -34,7 +34,7 @@ class CoveragePeriodQuartzJobTest {
             return engaged;
         });
 
-        CoverageProcessorStub coverageProcessor = new CoverageProcessorStub();
+        CoverageDriverStub coverageProcessor = new CoverageDriverStub();
 
         CoveragePeriodQuartzJob quartzJob = new CoveragePeriodQuartzJob(coverageProcessor, propertiesService);
 
@@ -69,7 +69,7 @@ class CoveragePeriodQuartzJobTest {
             return engaged;
         });
 
-        CoverageProcessorStub coverageProcessor = new CoverageProcessorStub();
+        CoverageDriverStub coverageProcessor = new CoverageDriverStub();
         CoveragePeriodQuartzJob quartzJob = new CoveragePeriodQuartzJob(coverageProcessor, propertiesService);
 
         try {
