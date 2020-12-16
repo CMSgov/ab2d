@@ -24,7 +24,7 @@ pipeline {
     }
 
     agent {
-        label 'build-temp'
+        label 'build'
     }
 
     tools {
