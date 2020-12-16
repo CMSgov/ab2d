@@ -5,7 +5,8 @@ SELECT
   f.status,
   f.progress,
   f.job_uuid,
-  f.user_account_id
+  f.user_account_id,
+  f.contract_id
 FROM job f
 INNER JOIN user_account e
 ON f.user_account_id = e.id
