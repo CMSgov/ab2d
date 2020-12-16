@@ -197,7 +197,7 @@ CONTRACT_ID=$(
     --port="${DATABASE_PORT}" \
     --username="${DATABASE_USER}" \
     --dbname="${DATABASE_NAME}" \
-    --command="${COMMAND_01}" \
+    --command="${COMMAND_01}${COMMAND_02}" \
     | head -n 1 \
     | xargs \
     | tr -d '\r')
