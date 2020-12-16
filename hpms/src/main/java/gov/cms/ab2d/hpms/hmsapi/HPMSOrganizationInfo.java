@@ -1,10 +1,7 @@
 package gov.cms.ab2d.hpms.hmsapi;
 
 import gov.cms.ab2d.common.model.Contract;
-import gov.cms.ab2d.common.model.Sponsor;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 @NoArgsConstructor  // Needed for Jackson
 @AllArgsConstructor
@@ -22,9 +19,9 @@ public class HPMSOrganizationInfo {
         return contract.hasChanges(contractName, parentOrgId.longValue(), parentOrgName, orgMarketingName);
     }
 
-    public Contract build(Sponsor savedSponsor) {
+    public Contract build() {
         return new Contract(contractId, contractName, parentOrgId.longValue(),
-                parentOrgName, orgMarketingName, savedSponsor);
+                parentOrgName, orgMarketingName);
     }
 
     public Contract updateContract(Contract contract) {

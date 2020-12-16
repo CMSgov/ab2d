@@ -1,13 +1,11 @@
-package gov.cms.ab2d.worker.processor.model;
+package gov.cms.ab2d.worker.processor.coverage;
 
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.CoveragePeriod;
 import gov.cms.ab2d.common.model.CoverageSearch;
-import gov.cms.ab2d.common.model.Sponsor;
 import gov.cms.ab2d.common.repository.CoverageSearchRepository;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.DataSetup;
-import gov.cms.ab2d.worker.processor.domainmodel.ContractSearchLock;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -23,7 +21,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
 @Testcontainers
-class ContractSearchLockTest {
+class CoverageLockWrapperTest {
     @SuppressWarnings({"rawtypes", "unused"})
     @Container
     private static final PostgreSQLContainer postgreSQLContainer = new AB2DPostgresqlContainer();
@@ -32,7 +30,7 @@ class ContractSearchLockTest {
     private CoverageSearchRepository coverageSearchRepository;
 
     @Autowired
-    private ContractSearchLock contractSearchLock;
+    private CoverageLockWrapper coverageLockWrapper;
 
     @Autowired
     private DataSetup dataSetup;
@@ -43,21 +41,19 @@ class ContractSearchLockTest {
      */
     @Test
     void getNextSearch() {
-        assertTrue(contractSearchLock.getNextSearch().isEmpty());
+        assertTrue(coverageLockWrapper.getNextSearch().isEmpty());
 
-        Sponsor sponsor = dataSetup.createSponsor("Cal Ripken", 200, "Cal Ripken Jr.", 201);
-        Contract contract1 = dataSetup.setupContract(sponsor, "c123");
+        Contract contract1 = dataSetup.setupContract("c123");
         CoveragePeriod period1 = dataSetup.createCoveragePeriod(contract1, 10, 2020);
         CoverageSearch search1 = new CoverageSearch(null, period1, OffsetDateTime.now(), 0);
         CoverageSearch savedSearch1 = coverageSearchRepository.save(search1);
-        Optional<CoverageSearch> returnedSearch = contractSearchLock.getNextSearch();
+        Optional<CoverageSearch> returnedSearch = coverageLockWrapper.getNextSearch();
         assertEquals(savedSearch1.getPeriod().getMonth(), returnedSearch.get().getPeriod().getMonth());
         assertEquals(savedSearch1.getPeriod().getYear(), returnedSearch.get().getPeriod().getYear());
-        assertTrue(contractSearchLock.getNextSearch().isEmpty());
+        assertTrue(coverageLockWrapper.getNextSearch().isEmpty());
 
         dataSetup.deleteCoveragePeriod(period1);
         dataSetup.deleteContract(contract1);
-        dataSetup.deleteSponsor(sponsor);
     }
 
     /**
@@ -71,9 +67,9 @@ class ContractSearchLockTest {
     @Test
     void testLockThreads() throws ExecutionException, InterruptedException {
         ExecutorService executor = Executors.newFixedThreadPool(10);
-        LockThread callable1 = new LockThread(contractSearchLock, 1);
-        LockThread callable2 = new LockThread(contractSearchLock, 2);
-        LockThread callable3 = new LockThread(contractSearchLock, 3);
+        LockThread callable1 = new LockThread(coverageLockWrapper, 1);
+        LockThread callable2 = new LockThread(coverageLockWrapper, 2);
+        LockThread callable3 = new LockThread(coverageLockWrapper, 3);
         Future<Boolean> task1 = executor.submit(callable1);
         Future<Boolean> task2 = executor.submit(callable2);
         Thread.sleep(5000);

@@ -1,7 +1,6 @@
 package gov.cms.ab2d.common.service;
 
 import gov.cms.ab2d.common.model.Contract;
-import gov.cms.ab2d.common.model.Sponsor;
 import gov.cms.ab2d.common.repository.ContractRepository;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.DataSetup;
@@ -16,7 +15,6 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -40,18 +38,13 @@ class ContractServiceImplTest {
     @Autowired
     private DataSetup dataSetup;
 
-    private Sponsor sponsor;
     private Contract contract;
 
     @BeforeEach
     private void before() {
-        sponsor = dataSetup.createSponsor("Parent Corp.", 456, "Test", 123);
-
         contract = new Contract();
         contract.setContractName("Test Contract");
         contract.setContractNumber("NATTE");
-
-        contract.setSponsor(sponsor);
 
         contract = contractRepo.save(contract);    }
 
@@ -59,10 +52,6 @@ class ContractServiceImplTest {
     private void after() {
         if (contract != null) {
             dataSetup.deleteContract(contract);
-        }
-
-        if (sponsor != null) {
-            dataSetup.deleteSponsor(sponsor);
         }
     }
 

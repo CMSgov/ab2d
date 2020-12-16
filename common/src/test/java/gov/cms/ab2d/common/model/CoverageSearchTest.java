@@ -27,9 +27,6 @@ class CoverageSearchTest {
     private static final PostgreSQLContainer postgreSQLContainer = new AB2DPostgresqlContainer();
 
     @Autowired
-    private SponsorRepository sponsorRepo;
-
-    @Autowired
     private ContractRepository contractRepo;
 
     @Autowired
@@ -44,7 +41,6 @@ class CoverageSearchTest {
     @Autowired
     private DataSetup dataSetup;
 
-    private Sponsor sponsor;
     private Contract contract1;
     private Contract contract2;
 
@@ -58,18 +54,14 @@ class CoverageSearchTest {
         contractRepo.delete(contract1);
         contractRepo.delete(contract2);
         contractRepo.flush();
-
-        sponsorRepo.delete(sponsor);
-        sponsorRepo.flush();
     }
 
     @Test
     void testSearches() {
         try {
 
-            sponsor = dataSetup.createSponsor("Cal Ripken", 200, "Cal Ripken Jr.", 201);
-            contract1 = dataSetup.setupContract(sponsor, "c123");
-            contract2 = dataSetup.setupContract(sponsor, "c456");
+            contract1 = dataSetup.setupContract("c123");
+            contract2 = dataSetup.setupContract("c456");
 
             CoveragePeriod period1 = dataSetup.createCoveragePeriod(contract1, 10, 2020);
             CoveragePeriod period2 = dataSetup.createCoveragePeriod(contract2, 10, 2020);

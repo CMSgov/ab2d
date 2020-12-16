@@ -4,29 +4,16 @@ import gov.cms.ab2d.bfd.client.BFDClientConfiguration;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.DependsOn;
-import org.springframework.context.annotation.Import;
-import org.springframework.integration.channel.ExecutorChannel;
+import org.springframework.context.annotation.*;
 import org.springframework.integration.config.EnableIntegration;
-import org.springframework.integration.core.MessageSource;
-import org.springframework.integration.dsl.IntegrationFlow;
-import org.springframework.integration.dsl.IntegrationFlows;
-import org.springframework.integration.dsl.Pollers;
-import org.springframework.integration.jdbc.lock.DefaultLockRepository;
-import org.springframework.integration.jdbc.lock.JdbcLockRegistry;
-import org.springframework.integration.jdbc.lock.LockRepository;
+import org.springframework.integration.jdbc.lock.*;
 import org.springframework.integration.support.locks.LockRegistry;
-import org.springframework.messaging.SubscribableChannel;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 import javax.sql.DataSource;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.Executor;
-import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.*;
 
 /**
  * Configures Spring Integration.
@@ -45,9 +32,6 @@ public class WorkerConfig {
 
     @Autowired
     private DataSource dataSource;
-
-    @Autowired
-    private JobHandler handler;
 
     @Value("${pcp.core.pool.size}")
     private int pcpCorePoolSize;
@@ -79,7 +63,7 @@ public class WorkerConfig {
         return taskExecutor;
     }
 
-    @Bean
+    @Bean(name = "mainJobPool")
     public Executor mainJobProcessingPool() {
         final ThreadPoolTaskExecutor taskExecutor = new ThreadPoolTaskExecutor();
         taskExecutor.setCorePoolSize(jobCorePoolSize);
@@ -88,24 +72,6 @@ public class WorkerConfig {
         taskExecutor.setRejectedExecutionHandler(new ThreadPoolExecutor.DiscardPolicy());
         taskExecutor.setThreadNamePrefix("jp-");
         return taskExecutor;
-    }
-
-    @Bean
-    public SubscribableChannel channel() {
-        return new ExecutorChannel(mainJobProcessingPool());
-    }
-
-    @Bean
-    public MessageSource<Object> jdbcMessageSource() {
-        return new JobMessageSource(dataSource);
-    }
-
-    @Bean
-    public IntegrationFlow flow() {
-        return IntegrationFlows.from(jdbcMessageSource(), c -> c.poller(Pollers.fixedDelay(1000)))
-                            .channel(channel())
-                            .handle(handler)
-                            .get();
     }
 
     @Bean

@@ -1,7 +1,6 @@
 package gov.cms.ab2d.common.model;
 
 import gov.cms.ab2d.common.repository.ContractRepository;
-import gov.cms.ab2d.common.repository.SponsorRepository;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,9 +27,6 @@ class ContractUpdateModeTest {
     @Autowired
     private ContractRepository contractRepository;
 
-    @Autowired
-    private SponsorRepository sponsorRepository;
-
     @Test
     void testAutomaticUpdate() {
         Contract contract = buildContract();
@@ -53,20 +49,13 @@ class ContractUpdateModeTest {
     }
 
     private void cleanup(Contract contract) {
-        Sponsor sponsor = contract.getSponsor();
         // Cleanup
         contractRepository.delete(contract);
-        sponsorRepository.delete(sponsor);
     }
 
     private Contract buildContract() {
-        Sponsor sponsor = new Sponsor();
-        sponsor.setHpmsId(52);
-        sponsor.setOrgName("TEST");
-        Sponsor savedSponsor = sponsorRepository.save(sponsor);
-
         return contractRepository.save(new Contract("Z1234", "Test Contract",
                 9999L, "Test Parent Org",
-                "Test Parent Org Marketing Name", savedSponsor));
+                "Test Parent Org Marketing Name"));
     }
 }
