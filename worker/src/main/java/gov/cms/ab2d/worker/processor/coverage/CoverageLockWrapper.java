@@ -6,7 +6,6 @@ import org.springframework.integration.jdbc.lock.LockRepository;
 import org.springframework.stereotype.Component;
 
 import javax.sql.DataSource;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 
 @Component

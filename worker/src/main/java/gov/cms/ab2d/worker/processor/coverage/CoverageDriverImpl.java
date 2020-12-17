@@ -54,7 +54,7 @@ public class CoverageDriverImpl implements CoverageDriver {
      * and coverage information that is too old.
      */
     @Override
-    public void queueStaleCoveragePeriods() throws CoverageDriverException, InterruptedException {
+    public void queueStaleCoveragePeriods() throws InterruptedException {
 
         Lock lock = coverageLockWrapper.getCoverageLock();
         boolean locked = false;
@@ -295,7 +295,7 @@ public class CoverageDriverImpl implements CoverageDriver {
     }
 
     @Override
-    public boolean isCoverageAvailable(Job job) throws CoverageDriverException {
+    public boolean isCoverageAvailable(Job job) throws InterruptedException {
 
         Lock coverageLock = coverageLockWrapper.getCoverageLock();
 
@@ -343,7 +343,7 @@ public class CoverageDriverImpl implements CoverageDriver {
                     status == JobStatus.IN_PROGRESS || status == JobStatus.SUBMITTED);
         } catch (InterruptedException interruptedException) {
             log.error("Interrupted attempting to retrieve lock. Cannot confirm coverage metadata is available");
-            throw new CoverageDriverException("Interrupted attempting to retrieve database lock", interruptedException);
+            throw interruptedException;
         } finally {
             if (locked) {
                 coverageLock.unlock();

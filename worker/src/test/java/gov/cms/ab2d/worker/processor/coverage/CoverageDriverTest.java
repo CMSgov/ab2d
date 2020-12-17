@@ -477,8 +477,8 @@ class CoverageDriverTest {
 
             assertFalse(noCoverageStatuses, "eob searches should not run when a" +
                     " coverage period has no information");
-        } catch (CoverageDriverException driverException) {
-            fail("could not check for available coverage", driverException);
+        } catch (InterruptedException | CoverageDriverException exception) {
+            fail("could not check for available coverage", exception);
         }
     }
 
@@ -495,8 +495,8 @@ class CoverageDriverTest {
             boolean submittedCoverageStatus = driver.isCoverageAvailable(job);
             assertFalse(submittedCoverageStatus, "eob searches should not run if a " +
                     "coverage period is submitted");
-        } catch (CoverageDriverException driverException) {
-            fail("could not check for available coverage", driverException);
+        } catch (InterruptedException | CoverageDriverException exception) {
+            fail("could not check for available coverage", exception);
         }
     }
 
@@ -512,8 +512,8 @@ class CoverageDriverTest {
         try {
             boolean inProgressCoverageStatus = driver.isCoverageAvailable(job);
             assertFalse(inProgressCoverageStatus, "eob searches should not run when a coverage period is in progress");
-        } catch (CoverageDriverException driverException) {
-            fail("could not check for available coverage", driverException);
+        } catch (InterruptedException | CoverageDriverException exception) {
+            fail("could not check for available coverage", exception);
         }
     }
 
@@ -530,8 +530,8 @@ class CoverageDriverTest {
             boolean submittedCoverageStatus = driver.isCoverageAvailable(job);
             assertTrue(submittedCoverageStatus, "eob searches should not run if a " +
                     "coverage period is submitted");
-        } catch (CoverageDriverException driverException) {
-            fail("could not check for available coverage", driverException);
+        } catch (InterruptedException | CoverageDriverException exception) {
+            fail("could not check for available coverage", exception);
         }
     }
 
@@ -566,8 +566,8 @@ class CoverageDriverTest {
 
             boolean inProgressEndMonth = driver.isCoverageAvailable(job);
             assertTrue(inProgressEndMonth, "eob searches should run when only month after since is successful");
-        } catch (CoverageDriverException driverException) {
-            fail("could not check for available coverage", driverException);
+        } catch (InterruptedException | CoverageDriverException exception) {
+            fail("could not check for available coverage", exception);
         }
     }
 
@@ -599,8 +599,8 @@ class CoverageDriverTest {
 
             boolean inProgressEndMonth = driver.isCoverageAvailable(job);
             assertFalse(inProgressEndMonth, "eob searches should run when only month after since is successful");
-        } catch (CoverageDriverException driverException) {
-            fail("could not check for available coverage", driverException);
+        } catch (InterruptedException | CoverageDriverException exception) {
+            fail("could not check for available coverage", exception);
         }
     }
 
@@ -627,8 +627,8 @@ class CoverageDriverTest {
             Set<CoveragePeriod> periods = contract.getCoveragePeriods();
             periods.forEach(period -> assertEquals(JobStatus.SUBMITTED, period.getStatus()));
 
-        } catch (CoverageDriverException driverException) {
-            fail("could not check for available coverage", driverException);
+        } catch (InterruptedException | CoverageDriverException exception) {
+            fail("could not check for available coverage", exception);
         }
     }
 
